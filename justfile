@@ -74,6 +74,7 @@ run:
         --socket=wayland \
         --device=dri \
         --talk-name=org.freedesktop.portal.Desktop \
+        --bind-mount="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/doc=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/doc" \
         --env=WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-wayland-0}" \
         --env=QT_QPA_PLATFORM=wayland \
         build-dir \
