@@ -51,12 +51,15 @@ fn kio_include_dirs() -> Vec<PathBuf> {
 
     let mut dirs = BTreeSet::new();
     add_kf6_include_dirs(&mut dirs, Path::new("/usr/include"));
+    add_qt_mkspec_include_dirs(&mut dirs, Path::new("/usr/include"));
 
     for path in flag_paths("NIX_CFLAGS_COMPILE", "-isystem") {
         add_kf6_include_dirs(&mut dirs, &path);
+        add_qt_mkspec_include_dirs(&mut dirs, &path);
     }
     for path in flag_paths("NIX_CFLAGS_COMPILE", "-I") {
         add_kf6_include_dirs(&mut dirs, &path);
+        add_qt_mkspec_include_dirs(&mut dirs, &path);
     }
 
     dirs.into_iter().collect()
@@ -68,6 +71,17 @@ fn add_kf6_include_dirs(dirs: &mut BTreeSet<PathBuf>, include_root: &Path) {
         if dir.exists() {
             dirs.insert(dir);
         }
+    }
+}
+
+fn add_qt_mkspec_include_dirs(dirs: &mut BTreeSet<PathBuf>, include_root: &Path) {
+    let Some(qt_root) = include_root.parent() else {
+        return;
+    };
+
+    let dir = qt_root.join("mkspecs/linux-g++");
+    if dir.exists() {
+        dirs.insert(dir);
     }
 }
 

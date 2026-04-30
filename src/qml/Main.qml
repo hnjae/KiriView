@@ -40,6 +40,20 @@ Kirigami.ApplicationWindow {
             anchors.fill: parent
         }
 
+        Shortcut {
+            context: Qt.WindowShortcut
+            sequence: StandardKey.MoveToPreviousPage
+
+            onActivated: imageView.openPreviousImage()
+        }
+
+        Shortcut {
+            context: Qt.WindowShortcut
+            sequence: StandardKey.MoveToNextPage
+
+            onActivated: imageView.openNextImage()
+        }
+
         Controls.BusyIndicator {
             anchors.centerIn: parent
             running: visible

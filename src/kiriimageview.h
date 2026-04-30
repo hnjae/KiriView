@@ -19,10 +19,12 @@
 #include <vector>
 
 namespace KIO {
+class Job;
 class StoredTransferJob;
 }
 
 class QBuffer;
+class KCoreDirLister;
 class QImageReader;
 
 class KiriImageView : public QQuickPaintedItem
@@ -54,6 +56,9 @@ public:
     QString errorString() const;
     QSize imageSize() const;
 
+    Q_INVOKABLE void openPreviousImage();
+    Q_INVOKABLE void openNextImage();
+
     void paint(QPainter *painter) override;
 
 Q_SIGNALS:
@@ -63,8 +68,18 @@ Q_SIGNALS:
     void imageSizeChanged();
 
 private:
+    enum class NavigationDirection {
+        Previous,
+        Next,
+    };
+
     void startLoad();
     void cancelLoad();
+    void openAdjacentImage(NavigationDirection direction);
+    void cancelNavigation();
+    void finishNavigation(
+        KCoreDirLister *lister, quint64 generation, NavigationDirection direction);
+    void finishNavigationWithError(KCoreDirLister *lister, quint64 generation);
     void finishWithImageData(const QByteArray &data);
     void startAnimation(
         const QByteArray &data, const QByteArray &format, int loopCount, int firstFrameDelay);
@@ -96,7 +111,9 @@ private:
     int m_animationLoopCount = 0;
     int m_completedAnimationLoops = 0;
     KIO::StoredTransferJob *m_job = nullptr;
+    KCoreDirLister *m_navigationLister = nullptr;
     quint64 m_loadGeneration = 0;
+    quint64 m_navigationGeneration = 0;
 };
 
 #endif

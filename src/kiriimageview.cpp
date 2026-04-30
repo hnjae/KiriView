@@ -5,22 +5,34 @@
 
 #include "avifcompat.h"
 
+#include <KCoreDirLister>
+#include <KFileItem>
+#include <KIO/Job>
 #include <KIO/StoredTransferJob>
 #include <KJob>
 #include <QBuffer>
 #include <QByteArray>
+#include <QCollator>
 #include <QIODevice>
 #include <QImageReader>
+#include <QLocale>
 #include <QPainter>
 #include <QRectF>
+#include <QStringList>
 #include <Qt>
 #include <algorithm>
+#include <iterator>
 #include <memory>
 #include <utility>
 
 namespace {
 constexpr int defaultAnimationFrameDelay = 100;
 constexpr int minimumAnimationFrameDelay = 10;
+
+struct ImageNavigationCandidate {
+    QUrl url;
+    QString name;
+};
 
 int normalizedAnimationFrameDelay(int delay)
 {
@@ -29,6 +41,59 @@ int normalizedAnimationFrameDelay(int delay)
     }
 
     return std::max(delay, minimumAnimationFrameDelay);
+}
+
+bool isSupportedImageFileName(const QString &name)
+{
+    static const QStringList supportedExtensions = {
+        QStringLiteral("avif"),
+        QStringLiteral("bmp"),
+        QStringLiteral("gif"),
+        QStringLiteral("jpeg"),
+        QStringLiteral("jpg"),
+        QStringLiteral("png"),
+        QStringLiteral("svg"),
+        QStringLiteral("webp"),
+    };
+
+    const qsizetype dotIndex = name.lastIndexOf(QLatin1Char('.'));
+    if (dotIndex <= 0 || dotIndex == name.size() - 1) {
+        return false;
+    }
+
+    return supportedExtensions.contains(name.mid(dotIndex + 1).toCaseFolded());
+}
+
+std::vector<ImageNavigationCandidate> imageNavigationCandidates(const KFileItemList &items)
+{
+    std::vector<ImageNavigationCandidate> candidates;
+    candidates.reserve(static_cast<std::size_t>(items.size()));
+
+    for (const KFileItem &item : items) {
+        const QString name = item.name();
+        if (!item.isFile() || !isSupportedImageFileName(name)) {
+            continue;
+        }
+
+        candidates.push_back(ImageNavigationCandidate { item.url(), name });
+    }
+
+    QCollator collator(QLocale::system());
+    collator.setCaseSensitivity(Qt::CaseSensitive);
+    collator.setNumericMode(false);
+    collator.setIgnorePunctuation(false);
+
+    std::stable_sort(candidates.begin(), candidates.end(),
+        [&collator](const ImageNavigationCandidate &left, const ImageNavigationCandidate &right) {
+            const int nameComparison = collator.compare(left.name, right.name);
+            if (nameComparison != 0) {
+                return nameComparison < 0;
+            }
+
+            return left.url.toEncoded() < right.url.toEncoded();
+        });
+
+    return candidates;
 }
 }
 
@@ -42,6 +107,7 @@ KiriImageView::KiriImageView(QQuickItem *parent)
 KiriImageView::~KiriImageView()
 {
     stopAnimation();
+    cancelNavigation();
     cancelLoad();
 }
 
@@ -53,6 +119,7 @@ void KiriImageView::setSourceUrl(const QUrl &sourceUrl)
         return;
     }
 
+    cancelNavigation();
     m_sourceUrl = sourceUrl;
     Q_EMIT sourceUrlChanged();
     startLoad();
@@ -63,6 +130,10 @@ KiriImageView::Status KiriImageView::status() const { return m_status; }
 QString KiriImageView::errorString() const { return m_errorString; }
 
 QSize KiriImageView::imageSize() const { return m_imageSize; }
+
+void KiriImageView::openPreviousImage() { openAdjacentImage(NavigationDirection::Previous); }
+
+void KiriImageView::openNextImage() { openAdjacentImage(NavigationDirection::Next); }
 
 void KiriImageView::paint(QPainter *painter)
 {
@@ -137,6 +208,100 @@ void KiriImageView::cancelLoad()
     m_job = nullptr;
     ++m_loadGeneration;
     job->kill(KJob::Quietly);
+}
+
+void KiriImageView::openAdjacentImage(NavigationDirection direction)
+{
+    if (m_sourceUrl.isEmpty()) {
+        return;
+    }
+
+    const QUrl parentUrl = m_sourceUrl.adjusted(QUrl::RemoveFilename | QUrl::NormalizePathSegments);
+    if (!parentUrl.isValid() || parentUrl.isEmpty()) {
+        return;
+    }
+
+    cancelNavigation();
+
+    auto *lister = new KCoreDirLister(this);
+    lister->setAutoErrorHandlingEnabled(false);
+    lister->setAutoUpdate(false);
+    lister->setDelayedMimeTypes(true);
+    lister->setShowHiddenFiles(true);
+
+    const quint64 generation = ++m_navigationGeneration;
+    m_navigationLister = lister;
+
+    connect(lister, &KCoreDirLister::completed, this, [this, lister, generation, direction]() {
+        finishNavigation(lister, generation, direction);
+    });
+    connect(lister, &KCoreDirLister::jobError, this,
+        [this, lister, generation](KIO::Job *) { finishNavigationWithError(lister, generation); });
+
+    if (!lister->openUrl(parentUrl, KCoreDirLister::Reload)) {
+        finishNavigationWithError(lister, generation);
+    }
+}
+
+void KiriImageView::cancelNavigation()
+{
+    if (m_navigationLister == nullptr) {
+        return;
+    }
+
+    auto *lister = m_navigationLister;
+    m_navigationLister = nullptr;
+    ++m_navigationGeneration;
+    lister->stop();
+    lister->deleteLater();
+}
+
+void KiriImageView::finishNavigation(
+    KCoreDirLister *lister, quint64 generation, NavigationDirection direction)
+{
+    if (generation != m_navigationGeneration || lister != m_navigationLister) {
+        return;
+    }
+
+    const std::vector<ImageNavigationCandidate> candidates
+        = imageNavigationCandidates(lister->items(KCoreDirLister::AllItems));
+
+    m_navigationLister = nullptr;
+    lister->deleteLater();
+
+    const auto current = std::find_if(
+        candidates.cbegin(), candidates.cend(), [this](const ImageNavigationCandidate &candidate) {
+            return candidate.url.matches(m_sourceUrl, QUrl::NormalizePathSegments);
+        });
+    if (current == candidates.cend()) {
+        return;
+    }
+
+    QUrl targetUrl;
+    if (direction == NavigationDirection::Previous) {
+        if (current == candidates.cbegin()) {
+            return;
+        }
+        targetUrl = std::prev(current)->url;
+    } else {
+        const auto next = std::next(current);
+        if (next == candidates.cend()) {
+            return;
+        }
+        targetUrl = next->url;
+    }
+
+    setSourceUrl(targetUrl);
+}
+
+void KiriImageView::finishNavigationWithError(KCoreDirLister *lister, quint64 generation)
+{
+    if (generation != m_navigationGeneration || lister != m_navigationLister) {
+        return;
+    }
+
+    m_navigationLister = nullptr;
+    lister->deleteLater();
 }
 
 void KiriImageView::finishWithImageData(const QByteArray &data)
