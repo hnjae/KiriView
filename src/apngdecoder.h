@@ -9,8 +9,7 @@
 #include <QString>
 #include <vector>
 
-namespace KiriView
-{
+namespace KiriView {
 struct AnimationFrame {
     QImage image;
     int delay = 0;

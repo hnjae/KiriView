@@ -7,8 +7,8 @@
 #include <KJob>
 #include <QBuffer>
 #include <QByteArray>
-#include <QImageReader>
 #include <QIODevice>
+#include <QImageReader>
 #include <QPainter>
 #include <QRectF>
 #include <Qt>
@@ -16,8 +16,7 @@
 #include <memory>
 #include <utility>
 
-namespace
-{
+namespace {
 constexpr int defaultAnimationFrameDelay = 100;
 constexpr int minimumAnimationFrameDelay = 10;
 
@@ -44,10 +43,7 @@ KiriImageView::~KiriImageView()
     cancelLoad();
 }
 
-QUrl KiriImageView::sourceUrl() const
-{
-    return m_sourceUrl;
-}
+QUrl KiriImageView::sourceUrl() const { return m_sourceUrl; }
 
 void KiriImageView::setSourceUrl(const QUrl &sourceUrl)
 {
@@ -60,20 +56,11 @@ void KiriImageView::setSourceUrl(const QUrl &sourceUrl)
     startLoad();
 }
 
-KiriImageView::Status KiriImageView::status() const
-{
-    return m_status;
-}
+KiriImageView::Status KiriImageView::status() const { return m_status; }
 
-QString KiriImageView::errorString() const
-{
-    return m_errorString;
-}
+QString KiriImageView::errorString() const { return m_errorString; }
 
-QSize KiriImageView::imageSize() const
-{
-    return m_imageSize;
-}
+QSize KiriImageView::imageSize() const { return m_imageSize; }
 
 void KiriImageView::paint(QPainter *painter)
 {
@@ -88,13 +75,10 @@ void KiriImageView::paint(QPainter *painter)
 
     const QSize imageSize = m_image.size();
     const qreal scale = std::min<qreal>(
-        1.0,
-        std::min(bounds.width() / imageSize.width(), bounds.height() / imageSize.height()));
+        1.0, std::min(bounds.width() / imageSize.width(), bounds.height() / imageSize.height()));
     const QSizeF targetSize(imageSize.width() * scale, imageSize.height() * scale);
     const QRectF targetRect(bounds.center().x() - targetSize.width() / 2.0,
-                            bounds.center().y() - targetSize.height() / 2.0,
-                            targetSize.width(),
-                            targetSize.height());
+        bounds.center().y() - targetSize.height() / 2.0, targetSize.width(), targetSize.height());
 
     painter->setRenderHint(QPainter::SmoothPixmapTransform, true);
     painter->drawImage(targetRect, m_image);
@@ -162,7 +146,8 @@ void KiriImageView::finishWithImageData(const QByteArray &data)
         setDisplayedImage(apngResult.animation.frames.front().image);
         setErrorString(QString());
         setStatus(Status::Ready);
-        startDecodedAnimation(std::move(apngResult.animation.frames), apngResult.animation.loopCount);
+        startDecodedAnimation(
+            std::move(apngResult.animation.frames), apngResult.animation.loopCount);
         return;
     }
     if (apngResult.status == KiriView::ApngDecodeStatus::Error) {
@@ -208,10 +193,8 @@ void KiriImageView::finishWithImageData(const QByteArray &data)
     }
 }
 
-void KiriImageView::startAnimation(const QByteArray &data,
-                                   const QByteArray &format,
-                                   int loopCount,
-                                   int firstFrameDelay)
+void KiriImageView::startAnimation(
+    const QByteArray &data, const QByteArray &format, int loopCount, int firstFrameDelay)
 {
     m_animationData = data;
     m_animationFormat = format;
@@ -235,8 +218,8 @@ void KiriImageView::startAnimation(const QByteArray &data,
     }
 }
 
-void KiriImageView::startDecodedAnimation(std::vector<KiriView::AnimationFrame> frames,
-                                          int loopCount)
+void KiriImageView::startDecodedAnimation(
+    std::vector<KiriView::AnimationFrame> frames, int loopCount)
 {
     m_decodedAnimationFrames = std::move(frames);
     m_decodedAnimationFrameIndex = 0;
@@ -309,8 +292,8 @@ void KiriImageView::advanceDecodedAnimationFrame()
         ++m_decodedAnimationFrameIndex;
     }
 
-    const KiriView::AnimationFrame &frame =
-        m_decodedAnimationFrames.at(m_decodedAnimationFrameIndex);
+    const KiriView::AnimationFrame &frame
+        = m_decodedAnimationFrames.at(m_decodedAnimationFrameIndex);
     setDisplayedImage(frame.image);
 
     if (m_decodedAnimationFrameIndex + 1 < m_decodedAnimationFrames.size()
@@ -368,8 +351,9 @@ void KiriImageView::stopAnimation()
 void KiriImageView::finishWithAnimationError(const QString &errorString)
 {
     clearImage();
-    const QString message =
-        errorString.isEmpty() ? tr("Could not decode the selected image animation.") : errorString;
+    const QString message = errorString.isEmpty()
+        ? tr("Could not decode the selected image animation.")
+        : errorString;
     setErrorString(message);
     setStatus(Status::Error);
 }

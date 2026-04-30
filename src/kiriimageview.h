@@ -18,8 +18,7 @@
 #include <memory>
 #include <vector>
 
-namespace KIO
-{
+namespace KIO {
 class StoredTransferJob;
 }
 
@@ -67,10 +66,8 @@ private:
     void startLoad();
     void cancelLoad();
     void finishWithImageData(const QByteArray &data);
-    void startAnimation(const QByteArray &data,
-                        const QByteArray &format,
-                        int loopCount,
-                        int firstFrameDelay);
+    void startAnimation(
+        const QByteArray &data, const QByteArray &format, int loopCount, int firstFrameDelay);
     void startDecodedAnimation(std::vector<KiriView::AnimationFrame> frames, int loopCount);
     void advanceAnimationFrame();
     void advanceDecodedAnimationFrame();

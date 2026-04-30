@@ -4,8 +4,8 @@
 #include "apngdecoder.h"
 
 #include <QBuffer>
-#include <QImageReader>
 #include <QIODevice>
+#include <QImageReader>
 #include <QPainter>
 #include <QPoint>
 #include <QRect>
@@ -15,11 +15,10 @@
 #include <optional>
 #include <utility>
 
-namespace
-{
+namespace {
 constexpr qsizetype pngSignatureSize = 8;
-constexpr unsigned char pngSignature[pngSignatureSize] = {0x89, 0x50, 0x4e, 0x47,
-                                                          0x0d, 0x0a, 0x1a, 0x0a};
+constexpr unsigned char pngSignature[pngSignatureSize]
+    = { 0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a };
 constexpr int apngDefaultDelayDenominator = 100;
 constexpr unsigned char apngDisposeOpNone = 0;
 constexpr unsigned char apngDisposeOpBackground = 1;
@@ -137,10 +136,7 @@ void appendPngChunk(QByteArray *png, const QByteArray &type, const QByteArray &p
     appendUint32(png, crc32(type, payload));
 }
 
-KiriView::ApngDecodeResult notApng()
-{
-    return {};
-}
+KiriView::ApngDecodeResult notApng() { return {}; }
 
 KiriView::ApngDecodeResult apngError(const QString &message)
 {
@@ -152,9 +148,8 @@ KiriView::ApngDecodeResult apngError(const QString &message)
     return result;
 }
 
-bool finishCurrentFrame(std::optional<RawFrame> *currentFrame,
-                        std::vector<RawFrame> *frames,
-                        QString *errorString)
+bool finishCurrentFrame(
+    std::optional<RawFrame> *currentFrame, std::vector<RawFrame> *frames, QString *errorString)
 {
     if (!currentFrame->has_value()) {
         return true;
@@ -279,7 +274,7 @@ std::optional<ParsedApng> parseApng(const QByteArray &data, QString *errorString
                 return std::nullopt;
             }
 
-            currentFrame = RawFrame{*control, QByteArray(), !seenIdat};
+            currentFrame = RawFrame { *control, QByteArray(), !seenIdat };
         } else if (chunkTypeIs(type, "IDAT")) {
             if (!seenIhdr) {
                 *errorString = QStringLiteral("Could not decode the selected PNG image.");
@@ -304,7 +299,7 @@ std::optional<ParsedApng> parseApng(const QByteArray &data, QString *errorString
             seenIend = true;
             break;
         } else if (!seenIdat) {
-            parsed.headerChunks.push_back(PngChunk{type, chunkData});
+            parsed.headerChunks.push_back(PngChunk { type, chunkData });
         }
     }
 
@@ -321,8 +316,8 @@ std::optional<ParsedApng> parseApng(const QByteArray &data, QString *errorString
 
 int frameDelay(const FrameControl &control)
 {
-    const quint16 denominator =
-        control.delayDen == 0 ? apngDefaultDelayDenominator : control.delayDen;
+    const quint16 denominator
+        = control.delayDen == 0 ? apngDefaultDelayDenominator : control.delayDen;
     const quint64 delay = quint64(control.delayNum) * 1000U / denominator;
     return static_cast<int>(std::min<quint64>(delay, std::numeric_limits<int>::max()));
 }
@@ -384,12 +379,11 @@ void clearRect(QImage *image, const QRect &rect)
     painter.fillRect(rect, Qt::transparent);
 }
 
-std::optional<std::vector<KiriView::AnimationFrame>> renderFrames(const ParsedApng &apng,
-                                                                  QString *errorString)
+std::optional<std::vector<KiriView::AnimationFrame>> renderFrames(
+    const ParsedApng &apng, QString *errorString)
 {
-    QImage canvas(static_cast<int>(apng.canvasWidth),
-                  static_cast<int>(apng.canvasHeight),
-                  QImage::Format_ARGB32_Premultiplied);
+    QImage canvas(static_cast<int>(apng.canvasWidth), static_cast<int>(apng.canvasHeight),
+        QImage::Format_ARGB32_Premultiplied);
     canvas.fill(Qt::transparent);
 
     std::vector<KiriView::AnimationFrame> frames;
@@ -402,29 +396,30 @@ std::optional<std::vector<KiriView::AnimationFrame>> renderFrames(const ParsedAp
         if (!decodedFrame.has_value()) {
             return std::nullopt;
         }
-        if (decodedFrame->size() != QSize(static_cast<int>(frame.control.width),
-                                          static_cast<int>(frame.control.height))) {
+        if (decodedFrame->size()
+            != QSize(
+                static_cast<int>(frame.control.width), static_cast<int>(frame.control.height))) {
             *errorString = QStringLiteral("Could not decode the selected APNG animation.");
             return std::nullopt;
         }
 
         const QRect frameRect(static_cast<int>(frame.control.xOffset),
-                              static_cast<int>(frame.control.yOffset),
-                              static_cast<int>(frame.control.width),
-                              static_cast<int>(frame.control.height));
-        const std::optional<QImage> previousFrameRegion =
-            frame.control.disposeOp == apngDisposeOpPrevious ? std::make_optional(canvas.copy(frameRect))
-                                                             : std::nullopt;
+            static_cast<int>(frame.control.yOffset), static_cast<int>(frame.control.width),
+            static_cast<int>(frame.control.height));
+        const std::optional<QImage> previousFrameRegion
+            = frame.control.disposeOp == apngDisposeOpPrevious
+            ? std::make_optional(canvas.copy(frameRect))
+            : std::nullopt;
 
         {
             QPainter painter(&canvas);
             painter.setCompositionMode(frame.control.blendOp == apngBlendOpSource
-                                           ? QPainter::CompositionMode_Source
-                                           : QPainter::CompositionMode_SourceOver);
+                    ? QPainter::CompositionMode_Source
+                    : QPainter::CompositionMode_SourceOver);
             painter.drawImage(frameRect.topLeft(), *decodedFrame);
         }
 
-        frames.push_back(KiriView::AnimationFrame{canvas, frameDelay(frame.control)});
+        frames.push_back(KiriView::AnimationFrame { canvas, frameDelay(frame.control) });
 
         if (frame.control.disposeOp == apngDisposeOpBackground
             || (index == 0 && frame.control.disposeOp == apngDisposeOpPrevious)) {
@@ -440,8 +435,7 @@ std::optional<std::vector<KiriView::AnimationFrame>> renderFrames(const ParsedAp
 }
 }
 
-namespace KiriView
-{
+namespace KiriView {
 ApngDecodeResult decodeApngAnimation(const QByteArray &data)
 {
     QString errorString;
