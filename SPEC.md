@@ -2,7 +2,8 @@
 
 ## Current Scope
 
-KiriView opens one user-selected image file and displays it in the main window.
+KiriView opens one user-selected image file, displays it in the main window, and
+can navigate to adjacent images in the same location.
 
 The main window provides one open action. Activating it shows the system file chooser through the XDG portal. The file chooser accepts a single selection only.
 
@@ -37,4 +38,23 @@ When a new image is selected, any currently running animation stops before the n
 
 If KIO cannot read the selected URL, or Qt cannot decode the returned bytes as an image, the UI shows an error state and keeps the app ready for another open action.
 
-The first supported behavior is successful display of one selected image, including still images and decoder-supported animated images. Multi-image browsing, editing, metadata panels, zoom controls, pan controls, and file management actions are out of scope for the current version.
+## Image Navigation
+
+When an image is open, Page Up opens the previous supported image file in the
+same parent URL and Page Down opens the next supported image file in the same
+parent URL. The supported image files are those matching the open dialog image
+extensions: AVIF, BMP, GIF, JPEG, PNG, SVG, and WebP, case-insensitively.
+
+The previous and next files are determined by sorting candidate file names with
+the process locale collation order, including `LC_COLLATE`. Navigation does not
+wrap; pressing Page Up on the first candidate or Page Down on the last candidate
+keeps the current image open.
+
+If the parent URL cannot be listed, the current image is not found in the
+candidate list, or no adjacent supported image exists, the current image remains
+open and the app remains ready for another open action.
+
+The first supported behavior is successful display of user-selected images,
+including still images and decoder-supported animated images, plus adjacent image
+navigation. Editing, metadata panels, zoom controls, pan controls, and file
+management actions are out of scope for the current version.
