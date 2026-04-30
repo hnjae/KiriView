@@ -22,6 +22,14 @@ runtime sandbox must expose the XDG document portal mount at
 `$XDG_RUNTIME_DIR/doc` so portal-selected document URLs resolve inside the
 sandbox.
 
+The Flatpak sandbox grants read-only access to the user's home directory, common
+removable or manually mounted media locations, and the per-user GVFS mount
+location. The granted filesystem paths are `home`, `/media`, `/mnt`,
+`/run/media`, and `$XDG_RUNTIME_DIR/gvfs`. This allows adjacent image navigation
+to list neighboring files when the opened image is under one of those locations.
+Files outside the granted filesystem paths remain available only when explicitly
+provided by the XDG portal.
+
 ## Image Display
 
 KIO provides the readable image data. Qt image APIs decode that data, and the decoded image is shown in QML.
