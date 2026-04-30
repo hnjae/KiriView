@@ -77,8 +77,8 @@ private:
     void cancelLoad();
     void openAdjacentImage(NavigationDirection direction);
     void cancelNavigation();
-    void finishNavigation(
-        KCoreDirLister *lister, quint64 generation, NavigationDirection direction);
+    void finishNavigation(KCoreDirLister *lister, quint64 generation, NavigationDirection direction,
+        const QUrl &currentUrl);
     void finishNavigationWithError(KCoreDirLister *lister, quint64 generation);
     void finishWithImageData(const QByteArray &data);
     void startAnimation(

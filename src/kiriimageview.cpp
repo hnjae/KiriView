@@ -13,6 +13,7 @@
 #include <QBuffer>
 #include <QByteArray>
 #include <QCollator>
+#include <QFile>
 #include <QIODevice>
 #include <QImageReader>
 #include <QLocale>
@@ -23,11 +24,15 @@
 #include <algorithm>
 #include <iterator>
 #include <memory>
+#include <optional>
+#include <sys/types.h>
+#include <sys/xattr.h>
 #include <utility>
 
 namespace {
 constexpr int defaultAnimationFrameDelay = 100;
 constexpr int minimumAnimationFrameDelay = 10;
+constexpr const char *documentPortalHostPathAttribute = "user.document-portal.host-path";
 
 struct ImageNavigationCandidate {
     QUrl url;
@@ -94,6 +99,57 @@ std::vector<ImageNavigationCandidate> imageNavigationCandidates(const KFileItemL
         });
 
     return candidates;
+}
+
+std::optional<QUrl> documentPortalHostUrl(const QUrl &url)
+{
+    if (!url.isLocalFile()) {
+        return std::nullopt;
+    }
+
+    const QString localPath = url.toLocalFile();
+    const QByteArray encodedLocalPath = QFile::encodeName(localPath);
+    if (encodedLocalPath.isEmpty()) {
+        return std::nullopt;
+    }
+
+    // File dialogs can return document-portal URLs; navigation needs the real directory.
+    const ssize_t valueSize
+        = getxattr(encodedLocalPath.constData(), documentPortalHostPathAttribute, nullptr, 0);
+    if (valueSize <= 0) {
+        return std::nullopt;
+    }
+
+    QByteArray value;
+    value.resize(valueSize);
+
+    const ssize_t bytesRead = getxattr(encodedLocalPath.constData(),
+        documentPortalHostPathAttribute, value.data(), static_cast<std::size_t>(value.size()));
+    if (bytesRead <= 0) {
+        return std::nullopt;
+    }
+
+    value.resize(bytesRead);
+    if (value.endsWith('\0')) {
+        value.chop(1);
+    }
+
+    const QString hostPath = QFile::decodeName(value);
+    if (hostPath.isEmpty() || hostPath == localPath) {
+        return std::nullopt;
+    }
+
+    return QUrl::fromLocalFile(hostPath);
+}
+
+QUrl navigationSourceUrl(const QUrl &url)
+{
+    const std::optional<QUrl> hostUrl = documentPortalHostUrl(url);
+    if (hostUrl.has_value()) {
+        return hostUrl.value();
+    }
+
+    return url;
 }
 }
 
@@ -216,7 +272,8 @@ void KiriImageView::openAdjacentImage(NavigationDirection direction)
         return;
     }
 
-    const QUrl parentUrl = m_sourceUrl.adjusted(QUrl::RemoveFilename | QUrl::NormalizePathSegments);
+    const QUrl currentUrl = navigationSourceUrl(m_sourceUrl);
+    const QUrl parentUrl = currentUrl.adjusted(QUrl::RemoveFilename | QUrl::NormalizePathSegments);
     if (!parentUrl.isValid() || parentUrl.isEmpty()) {
         return;
     }
@@ -232,9 +289,10 @@ void KiriImageView::openAdjacentImage(NavigationDirection direction)
     const quint64 generation = ++m_navigationGeneration;
     m_navigationLister = lister;
 
-    connect(lister, &KCoreDirLister::completed, this, [this, lister, generation, direction]() {
-        finishNavigation(lister, generation, direction);
-    });
+    connect(lister, &KCoreDirLister::completed, this,
+        [this, lister, generation, direction, currentUrl]() {
+            finishNavigation(lister, generation, direction, currentUrl);
+        });
     connect(lister, &KCoreDirLister::jobError, this,
         [this, lister, generation](KIO::Job *) { finishNavigationWithError(lister, generation); });
 
@@ -256,8 +314,8 @@ void KiriImageView::cancelNavigation()
     lister->deleteLater();
 }
 
-void KiriImageView::finishNavigation(
-    KCoreDirLister *lister, quint64 generation, NavigationDirection direction)
+void KiriImageView::finishNavigation(KCoreDirLister *lister, quint64 generation,
+    NavigationDirection direction, const QUrl &currentUrl)
 {
     if (generation != m_navigationGeneration || lister != m_navigationLister) {
         return;
@@ -269,9 +327,9 @@ void KiriImageView::finishNavigation(
     m_navigationLister = nullptr;
     lister->deleteLater();
 
-    const auto current = std::find_if(
-        candidates.cbegin(), candidates.cend(), [this](const ImageNavigationCandidate &candidate) {
-            return candidate.url.matches(m_sourceUrl, QUrl::NormalizePathSegments);
+    const auto current = std::find_if(candidates.cbegin(), candidates.cend(),
+        [&currentUrl](const ImageNavigationCandidate &candidate) {
+            return candidate.url.matches(currentUrl, QUrl::NormalizePathSegments);
         });
     if (current == candidates.cend()) {
         return;
