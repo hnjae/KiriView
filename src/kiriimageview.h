@@ -10,11 +10,15 @@
 #include <QString>
 #include <QUrl>
 #include <QtQml/qqmlregistration.h>
+#include <memory>
 
 namespace KIO
 {
 class StoredTransferJob;
 }
+
+class QBuffer;
+class QMovie;
 
 class KiriImageView : public QQuickPaintedItem
 {
@@ -57,6 +61,10 @@ private:
     void startLoad();
     void cancelLoad();
     void finishWithImageData(const QByteArray &data);
+    void startAnimation(const QByteArray &data, const QByteArray &format);
+    void stopAnimation();
+    void finishWithAnimationError(const QString &errorString);
+    void setDisplayedImage(const QImage &image);
     void setStatus(Status status);
     void setErrorString(const QString &errorString);
     void setImageSize(const QSize &imageSize);
@@ -67,6 +75,8 @@ private:
     QString m_errorString;
     QSize m_imageSize;
     QImage m_image;
+    std::unique_ptr<QBuffer> m_animationBuffer;
+    std::unique_ptr<QMovie> m_movie;
     KIO::StoredTransferJob *m_job = nullptr;
     quint64 m_loadGeneration = 0;
 };

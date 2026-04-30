@@ -9,10 +9,15 @@
 #include <QByteArray>
 #include <QImageReader>
 #include <QIODevice>
+#include <QMetaObject>
+#include <QMovie>
 #include <QPainter>
+#include <QPointer>
 #include <QRectF>
 #include <Qt>
 #include <algorithm>
+#include <memory>
+#include <utility>
 
 KiriImageView::KiriImageView(QQuickItem *parent)
     : QQuickPaintedItem(parent)
@@ -21,6 +26,7 @@ KiriImageView::KiriImageView(QQuickItem *parent)
 
 KiriImageView::~KiriImageView()
 {
+    stopAnimation();
     cancelLoad();
 }
 
@@ -135,6 +141,8 @@ void KiriImageView::cancelLoad()
 
 void KiriImageView::finishWithImageData(const QByteArray &data)
 {
+    stopAnimation();
+
     QBuffer buffer;
     buffer.setData(data);
 
@@ -147,6 +155,7 @@ void KiriImageView::finishWithImageData(const QByteArray &data)
 
     QImageReader reader(&buffer);
     reader.setAutoTransform(true);
+    const bool supportsAnimation = reader.supportsAnimation();
 
     QImage image = reader.read();
     if (image.isNull()) {
@@ -156,10 +165,102 @@ void KiriImageView::finishWithImageData(const QByteArray &data)
         return;
     }
 
-    m_image = image;
-    setImageSize(m_image.size());
+    const QByteArray format = reader.format();
+
+    setDisplayedImage(image);
     setErrorString(QString());
     setStatus(Status::Ready);
+
+    if (supportsAnimation) {
+        startAnimation(data, format);
+    }
+}
+
+void KiriImageView::startAnimation(const QByteArray &data, const QByteArray &format)
+{
+    auto buffer = std::make_unique<QBuffer>();
+    buffer->setData(data);
+
+    if (!buffer->open(QIODevice::ReadOnly)) {
+        finishWithAnimationError(tr("Could not read the selected image data."));
+        return;
+    }
+
+    auto movie = std::make_unique<QMovie>(buffer.get(), format);
+    if (!movie->isValid()) {
+        finishWithAnimationError(movie->lastErrorString());
+        return;
+    }
+
+    auto *moviePtr = movie.get();
+    const QPointer<QMovie> movieGuard(moviePtr);
+
+    connect(moviePtr, &QMovie::frameChanged, this, [this, movieGuard]() {
+        auto *movie = movieGuard.data();
+        if (movie == nullptr || movie != m_movie.get()) {
+            return;
+        }
+
+        const QImage frame = movie->currentImage();
+        if (frame.isNull()) {
+            return;
+        }
+
+        setDisplayedImage(frame);
+    });
+
+    connect(moviePtr, &QMovie::error, this, [this, movieGuard]() {
+        auto *movie = movieGuard.data();
+        if (movie == nullptr || movie != m_movie.get()) {
+            return;
+        }
+
+        const QString errorString = movie->lastErrorString();
+        movie->stop();
+        QMetaObject::invokeMethod(
+            this,
+            [this, movieGuard, errorString]() {
+                auto *movie = movieGuard.data();
+                if (movie == nullptr || movie != m_movie.get()) {
+                    return;
+                }
+
+                finishWithAnimationError(errorString);
+            },
+            Qt::QueuedConnection);
+    });
+
+    m_animationBuffer = std::move(buffer);
+    m_movie = std::move(movie);
+    m_movie->start();
+}
+
+void KiriImageView::stopAnimation()
+{
+    if (m_movie != nullptr) {
+        m_movie->stop();
+        m_movie.reset();
+    }
+
+    if (m_animationBuffer != nullptr) {
+        m_animationBuffer->close();
+        m_animationBuffer.reset();
+    }
+}
+
+void KiriImageView::finishWithAnimationError(const QString &errorString)
+{
+    clearImage();
+    const QString message =
+        errorString.isEmpty() ? tr("Could not decode the selected image animation.") : errorString;
+    setErrorString(message);
+    setStatus(Status::Error);
+}
+
+void KiriImageView::setDisplayedImage(const QImage &image)
+{
+    m_image = image;
+    setImageSize(m_image.size());
     update();
 }
 
@@ -195,6 +296,8 @@ void KiriImageView::setImageSize(const QSize &imageSize)
 
 void KiriImageView::clearImage()
 {
+    stopAnimation();
+
     if (!m_image.isNull()) {
         m_image = QImage();
         update();
