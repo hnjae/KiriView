@@ -1,0 +1,12 @@
+---
+BasedOnStyle: WebKit
+ColumnLimit: 100
+IndentWidth: 4
+UseTab: Never
+PointerAlignment: Right
+ReferenceAlignment: Pointer
+BreakBeforeBraces: Custom
+BraceWrapping:
+  AfterClass: true
+  AfterControlStatement: Never
+  AfterFunction: true

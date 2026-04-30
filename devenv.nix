@@ -25,6 +25,10 @@
 
   languages.rust.enable = true;
   languages.nix.enable = true;
+  languages.cplusplus = {
+    enable = true;
+    lsp.package = pkgs.clang-tools;
+  };
 
   git-hooks.excludes = [
     "devenv\.lock"
@@ -49,6 +53,14 @@
       '';
       files = ''\.qml$'';
       entry = "qmlformat -i";
+    };
+
+    # C++
+    clang-format = {
+      enable = true;
+      package = pkgs.clang-tools;
+      files = ''\.(c|cc|cpp|cxx|h|hh|hpp|hxx)$'';
+      entry = "clang-format -i --style=file";
     };
 
     # Nix
