@@ -157,6 +157,21 @@ void KiriImageView::finishWithImageData(const QByteArray &data)
 {
     stopAnimation();
 
+    KiriView::ApngDecodeResult apngResult = KiriView::decodeApngAnimation(data);
+    if (apngResult.status == KiriView::ApngDecodeStatus::Success) {
+        setDisplayedImage(apngResult.animation.frames.front().image);
+        setErrorString(QString());
+        setStatus(Status::Ready);
+        startDecodedAnimation(std::move(apngResult.animation.frames), apngResult.animation.loopCount);
+        return;
+    }
+    if (apngResult.status == KiriView::ApngDecodeStatus::Error) {
+        clearImage();
+        setErrorString(apngResult.errorString);
+        setStatus(Status::Error);
+        return;
+    }
+
     QBuffer buffer;
     buffer.setData(data);
 
@@ -220,8 +235,27 @@ void KiriImageView::startAnimation(const QByteArray &data,
     }
 }
 
+void KiriImageView::startDecodedAnimation(std::vector<KiriView::AnimationFrame> frames,
+                                          int loopCount)
+{
+    m_decodedAnimationFrames = std::move(frames);
+    m_decodedAnimationFrameIndex = 0;
+    m_animationLoopCount = loopCount;
+    m_completedAnimationLoops = 0;
+
+    if (m_decodedAnimationFrames.size() > 1) {
+        m_animationTimer.start(
+            normalizedAnimationFrameDelay(m_decodedAnimationFrames.front().delay));
+    }
+}
+
 void KiriImageView::advanceAnimationFrame()
 {
+    if (!m_decodedAnimationFrames.empty()) {
+        advanceDecodedAnimationFrame();
+        return;
+    }
+
     if (m_animationReader == nullptr) {
         return;
     }
@@ -252,6 +286,36 @@ void KiriImageView::advanceAnimationFrame()
 
     if (m_animationReader->canRead() || hasRemainingAnimationLoops()) {
         m_animationTimer.start(delay);
+    } else {
+        stopAnimation();
+    }
+}
+
+void KiriImageView::advanceDecodedAnimationFrame()
+{
+    if (m_decodedAnimationFrames.empty()) {
+        return;
+    }
+
+    if (m_decodedAnimationFrameIndex + 1 >= m_decodedAnimationFrames.size()) {
+        if (!hasRemainingAnimationLoops()) {
+            stopAnimation();
+            return;
+        }
+
+        ++m_completedAnimationLoops;
+        m_decodedAnimationFrameIndex = 0;
+    } else {
+        ++m_decodedAnimationFrameIndex;
+    }
+
+    const KiriView::AnimationFrame &frame =
+        m_decodedAnimationFrames.at(m_decodedAnimationFrameIndex);
+    setDisplayedImage(frame.image);
+
+    if (m_decodedAnimationFrameIndex + 1 < m_decodedAnimationFrames.size()
+        || hasRemainingAnimationLoops()) {
+        m_animationTimer.start(normalizedAnimationFrameDelay(frame.delay));
     } else {
         stopAnimation();
     }
@@ -295,6 +359,8 @@ void KiriImageView::stopAnimation()
     m_animationBuffer.reset();
     m_animationData.clear();
     m_animationFormat.clear();
+    m_decodedAnimationFrames.clear();
+    m_decodedAnimationFrameIndex = 0;
     m_animationLoopCount = 0;
     m_completedAnimationLoops = 0;
 }

@@ -16,6 +16,7 @@ fn main() {
         QmlModule::new("io.github.hnjae.kiriview").qml_file("src/qml/Main.qml"),
     )
     .cpp_file(CppFile::from("src/kiriimageview.h"))
+    .cpp_file("src/apngdecoder.cpp")
     .cpp_file("src/kiriimageview.cpp")
     .qt_module("Quick")
     .qt_module("Network")

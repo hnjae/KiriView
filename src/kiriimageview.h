@@ -4,6 +4,8 @@
 #ifndef KIRIVIEW_KIRIIMAGEVIEW_H
 #define KIRIVIEW_KIRIIMAGEVIEW_H
 
+#include "apngdecoder.h"
+
 #include <QByteArray>
 #include <QImage>
 #include <QQuickPaintedItem>
@@ -12,7 +14,9 @@
 #include <QTimer>
 #include <QUrl>
 #include <QtQml/qqmlregistration.h>
+#include <cstddef>
 #include <memory>
+#include <vector>
 
 namespace KIO
 {
@@ -67,7 +71,9 @@ private:
                         const QByteArray &format,
                         int loopCount,
                         int firstFrameDelay);
+    void startDecodedAnimation(std::vector<KiriView::AnimationFrame> frames, int loopCount);
     void advanceAnimationFrame();
+    void advanceDecodedAnimationFrame();
     bool resetAnimationReader(QString *errorString);
     bool hasRemainingAnimationLoops() const;
     void stopAnimation();
@@ -85,9 +91,11 @@ private:
     QImage m_image;
     QByteArray m_animationData;
     QByteArray m_animationFormat;
+    std::vector<KiriView::AnimationFrame> m_decodedAnimationFrames;
     std::unique_ptr<QBuffer> m_animationBuffer;
     std::unique_ptr<QImageReader> m_animationReader;
     QTimer m_animationTimer;
+    std::size_t m_decodedAnimationFrameIndex = 0;
     int m_animationLoopCount = 0;
     int m_completedAnimationLoops = 0;
     KIO::StoredTransferJob *m_job = nullptr;
