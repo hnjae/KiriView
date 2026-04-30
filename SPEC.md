@@ -13,7 +13,7 @@ KiriView treats files as `QUrl`s. User-visible file access is delegated to KIO s
 The image loading pipeline is:
 
 ```text
-XDG Portal file chooser -> QUrl -> KIO read -> QByteArray/QIODevice -> QImageReader -> QML display
+XDG Portal file chooser -> QUrl -> KIO read -> QByteArray/QIODevice -> Qt image decoder -> QML display
 ```
 
 When KiriView is launched from the Flatpak build directory for development, the
@@ -29,6 +29,10 @@ Image loading is asynchronous. While a selected image is being read and decoded,
 
 Decoded images are displayed centered in the available page area while preserving their aspect ratio. If the image is larger than the available area, it is scaled down to fit. If it is smaller, it remains centered without being scaled up.
 
+Animated image files, such as GIF, are displayed as animations when Qt's decoder reports multiple frames. The first decoded frame is shown once loading succeeds, then subsequent frames replace it using the frame delay reported by the decoder. The animation loops according to the decoder's loop count metadata, and an infinite loop continues until another image is selected or the view is cleared.
+
+When a new image is selected, any currently running animation stops before the new load starts. If animation frame decoding fails after the first frame was displayed, the UI switches to the error state and remains ready for another open action.
+
 If KIO cannot read the selected URL, or Qt cannot decode the returned bytes as an image, the UI shows an error state and keeps the app ready for another open action.
 
-The first supported behavior is successful display of a single still image. Multi-image browsing, editing, metadata panels, zoom controls, pan controls, and file management actions are out of scope for the current version.
+The first supported behavior is successful display of one selected image, including still images and decoder-supported animated images. Multi-image browsing, editing, metadata panels, zoom controls, pan controls, and file management actions are out of scope for the current version.
