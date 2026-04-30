@@ -21,14 +21,14 @@ dependency metadata, or repository maintenance.
 - `just build`: build the Flatpak app into `build-dir/` with tests disabled.
 - `just build-with-tests`: run the full Flatpak build including manifest test commands.
 - `just run`: launch `kiriview` from the Flatpak build directory.
-- `just lint`: run offline `cargo clippy --all-targets --all-features` with warnings denied.
-- `just test`: run offline `cargo test --all-targets --all-features`.
+- `just lint`: run offline `cargo clippy --all-targets --all-features` with warnings denied inside the Flatpak build environment.
+- `just test`: run offline `cargo test --all-targets --all-features` inside the Flatpak build environment.
 - `just format`: run the configured pre-commit formatters and checks for all files.
 - `just format-check`: verify Rust formatting with `cargo fmt --all --check`.
 
 ## Coding Style & Naming Conventions
 
-Rust and QML use 4-space indentation. Keep app IDs as `io.github.hnjae.KiriView`.
+Rust, QML, C++, and headers use 4-space indentation. Keep app IDs as `io.github.hnjae.KiriView`.
 
 ## Commit & Pull Request Guidelines
 
