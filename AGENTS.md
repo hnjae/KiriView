@@ -6,8 +6,14 @@ KiriView is a Rust 2024 desktop app using CXX-Qt and KDE Kirigami.
 
 ## Spec-Driven Development
 
-Follow spec-driven development for product behavior and implementation changes.
-Before implementing a change, update `SPEC.md` to describe the intended behavior, commit that specification update, and then carry out the work according to the committed spec.
+Follow spec-driven development for product behavior and user-facing implementation
+changes. Before implementing a product behavior change, update `SPEC.md` to
+describe the intended behavior from the user's perspective, commit that
+specification update, and then carry out the work according to the committed spec.
+Do not update `SPEC.md` for implementation-dependent changes that do not affect
+user-visible behavior. This includes development-only or verification-only
+changes, such as build tooling, formatter/linter/test configuration, CI wiring,
+dependency metadata, or repository maintenance.
 
 ## Build, Test, and Development Commands
 
