@@ -1,0 +1,46 @@
+# Devenv
+.devenv*
+devenv.local.nix
+devenv.local.yaml
+
+# direnv
+.direnv
+
+# pre-commit
+.pre-commit-config.yaml
+
+# Flatpak build artifacts
+.flatpak-builder/
+.flatpak-cargo/
+build-dir/
+repo/
+target/
+.qmlls.ini
+*.flatpak
+*.flatpakref
+*.flatpakrepo
+
+# CMake / Ninja
+build/
+cmake-build-*/
+CMakeCache.txt
+CMakeFiles/
+compile_commands.json
+install_manifest.txt
+*.ninja
+.ninja_deps
+.ninja_log
+
+# Editor / local tooling
+.cache/
+.direnv/
+.envrc
+.idea/
+.vscode/
+.codex
+.rumdl_cache/
+
+# Logs and temporary files
+*.log
+*.tmp
+*~

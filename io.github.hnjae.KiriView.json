@@ -1,0 +1,45 @@
+{
+  "id": "io.github.hnjae.KiriView",
+  "runtime": "org.kde.Platform",
+  "runtime-version": "6.10",
+  "sdk": "org.kde.Sdk",
+  "command": "kiriview",
+  "sdk-extensions": ["org.freedesktop.Sdk.Extension.rust-stable"],
+  "build-options": {
+    "append-path": "/usr/lib/sdk/rust-stable/bin"
+  },
+  "finish-args": ["--socket=wayland", "--device=dri"],
+  "modules": [
+    {
+      "name": "kiriview",
+      "buildsystem": "simple",
+      "build-commands": [
+        "cargo --offline build --release",
+        "install -Dm755 target/release/kiriview /app/bin/kiriview",
+        "install -Dm644 io.github.hnjae.KiriView.desktop /app/share/applications/io.github.hnjae.KiriView.desktop"
+      ],
+      "run-tests": true,
+      "test-rule": "",
+      "test-commands": [
+        "cargo fmt --all --check",
+        "cargo --offline clippy --all-targets --all-features -- -D warnings",
+        "cargo --offline test --all-targets --all-features"
+      ],
+      "sources": [
+        "cargo-sources.json",
+        {
+          "type": "dir",
+          "path": ".",
+          "skip": [".git", ".flatpak-builder", "build-dir", "repo", "target"]
+        },
+        {
+          "type": "shell",
+          "commands": [
+            "mkdir -p .cargo",
+            "cp -vf cargo/config .cargo/config.toml"
+          ]
+        }
+      ]
+    }
+  ]
+}

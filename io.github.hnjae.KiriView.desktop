@@ -1,0 +1,10 @@
+[Desktop Entry]
+Type=Application
+Name=KiriView
+GenericName=Image Viewer
+Exec=kiriview %U
+Icon=accessories-image-viewer
+Terminal=false
+Categories=Graphics;Viewer;Qt;KDE;
+MimeType=image/png;image/jpeg;image/gif;image/webp;image/bmp;image/tiff;image/svg+xml;
+StartupNotify=true
