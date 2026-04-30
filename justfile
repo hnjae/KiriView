@@ -31,9 +31,36 @@ _module command: _cargo-vendor _flatpak-build-dir
         build-dir \
         {{ command }}
 
+[private]
+_module-llvm command: _cargo-vendor _flatpak-build-dir
+    llvm_sdk="$(flatpak info --show-location org.freedesktop.Sdk.Extension.llvm21//25.08)/files" && \
+    flatpak build \
+        "--bind-mount=/usr/lib/sdk/llvm21=$llvm_sdk" \
+        '--bind-mount=/run/build/kiriview={{ justfile_directory() }}' \
+        '--bind-mount=/run/build/kiriview/.cargo={{ justfile_directory() }}/.flatpak-cargo/.cargo' \
+        '--bind-mount=/run/build/kiriview/cargo/vendor={{ justfile_directory() }}/.flatpak-cargo/vendor' \
+        --build-dir=/run/build/kiriview \
+        --env=PATH=/usr/lib/sdk/rust-stable/bin:/usr/lib/sdk/llvm21/bin:/app/bin:/usr/bin \
+        build-dir \
+        {{ command }}
+
 [group('ci')]
 lint:
     just _module 'cargo --offline clippy --all-targets --all-features -- -D warnings'
+    just cpp-lint
+
+[group('ci')]
+cpp-lint:
+    just clang-tidy
+    just clazy
+
+[group('ci')]
+clang-tidy:
+    just _module-llvm 'bash scripts/cpp-lint clang-tidy'
+
+[group('ci')]
+clazy:
+    devenv shell -- bash scripts/cpp-lint clazy
 
 [group('ci')]
 test:

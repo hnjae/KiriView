@@ -11,6 +11,7 @@
     flatpak-builder
 
     # Rust/Qt host development
+    clazy
     cmake
     kdePackages.extra-cmake-modules
     kdePackages.kirigami

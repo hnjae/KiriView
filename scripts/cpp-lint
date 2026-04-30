@@ -1,0 +1,158 @@
+#!/usr/bin/env bash
+# SPDX-FileCopyrightText: 2026 KIM Hyunjae
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+set -euo pipefail
+
+mode="${1:-all}"
+
+sources=(
+    src/apngdecoder.cpp
+    src/avifcompat.cpp
+    src/kiriimageview.cpp
+)
+
+qt_packages=(
+    Qt6Core
+    Qt6Gui
+    Qt6Quick
+    Qt6Qml
+    Qt6Network
+    Qt6DBus
+)
+
+declare -A seen_system_include_dirs=()
+declare -A seen_include_roots=()
+system_include_flags=()
+compile_args=(-std=c++17 -Isrc)
+
+add_system_include_dir() {
+    local dir="$1"
+
+    if [[ ! -d "$dir" || -n "${seen_system_include_dirs[$dir]+x}" ]]; then
+        return
+    fi
+
+    seen_system_include_dirs["$dir"]=1
+    system_include_flags+=(-isystem "$dir")
+}
+
+add_include_root() {
+    local dir="$1"
+
+    if [[ ! -d "$dir" || -n "${seen_include_roots[$dir]+x}" ]]; then
+        return
+    fi
+
+    seen_include_roots["$dir"]=1
+
+    case "$dir" in
+        */KF6/KIOCore | */KF6/KIO | */KF6/KCoreAddons)
+            add_system_include_dir "$dir"
+            ;;
+    esac
+
+    add_system_include_dir "$dir/KF6/KIOCore"
+    add_system_include_dir "$dir/KF6/KIO"
+    add_system_include_dir "$dir/KF6/KCoreAddons"
+}
+
+add_compile_include_roots() {
+    local flags="$1"
+    local words=()
+    read -r -a words <<< "$flags"
+
+    for ((i = 0; i < ${#words[@]}; i++)); do
+        case "${words[$i]}" in
+            -I | -isystem)
+                i=$((i + 1))
+                if ((i < ${#words[@]})); then
+                    add_include_root "${words[$i]}"
+                fi
+                ;;
+            -I*)
+                add_include_root "${words[$i]#-I}"
+                ;;
+            -isystem*)
+                add_include_root "${words[$i]#-isystem}"
+                ;;
+        esac
+    done
+}
+
+add_colon_separated_include_roots() {
+    local paths="$1"
+    local dirs=()
+    IFS=: read -r -a dirs <<< "$paths"
+
+    for dir in "${dirs[@]}"; do
+        add_include_root "$dir"
+    done
+}
+
+add_qt_flags() {
+    local qt_flags=()
+    read -r -a qt_flags <<< "$(pkg-config --cflags "${qt_packages[@]}")"
+
+    for flag in "${qt_flags[@]}"; do
+        case "$flag" in
+            -I*)
+                add_system_include_dir "${flag#-I}"
+                ;;
+            *)
+                compile_args+=("$flag")
+                ;;
+        esac
+    done
+}
+
+prepare_compile_args() {
+    add_qt_flags
+    add_include_root /usr/include
+    add_compile_include_roots "${NIX_CFLAGS_COMPILE:-}"
+    add_colon_separated_include_roots "${CMAKE_INCLUDE_PATH:-}"
+
+    compile_args+=("${system_include_flags[@]}")
+}
+
+run_clang_tidy() {
+    if ! command -v clang-tidy >/dev/null; then
+        echo "clang-tidy was not found in PATH" >&2
+        exit 127
+    fi
+
+    for source in "${sources[@]}"; do
+        clang-tidy --quiet "$source" -- "${compile_args[@]}"
+    done
+}
+
+run_clazy() {
+    if ! command -v clazy >/dev/null; then
+        echo "clazy was not found in PATH" >&2
+        exit 127
+    fi
+
+    local checks="${CLAZY_CHECKS:-level0}"
+    for source in "${sources[@]}"; do
+        CLAZY_CHECKS="$checks" clazy -fsyntax-only "${compile_args[@]}" "$source"
+    done
+}
+
+prepare_compile_args
+
+case "$mode" in
+    all)
+        run_clang_tidy
+        run_clazy
+        ;;
+    clang-tidy)
+        run_clang_tidy
+        ;;
+    clazy)
+        run_clazy
+        ;;
+    *)
+        echo "usage: $0 [all|clang-tidy|clazy]" >&2
+        exit 2
+        ;;
+esac
