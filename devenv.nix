@@ -14,6 +14,7 @@
     cmake
     kdePackages.extra-cmake-modules
     kdePackages.kirigami
+    kdePackages.kio
     kdePackages.qqc2-desktop-style
     kdePackages.qtbase
     kdePackages.qtdeclarative
