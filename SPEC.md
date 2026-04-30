@@ -29,7 +29,9 @@ Image loading is asynchronous. While a selected image is being read and decoded,
 
 Decoded images are displayed centered in the available page area while preserving their aspect ratio. If the image is larger than the available area, it is scaled down to fit. If it is smaller, it remains centered without being scaled up.
 
-Animated image files, such as GIF, are displayed as animations when Qt's decoder reports multiple frames. The first decoded frame is shown once loading succeeds, then subsequent frames replace it using the frame delay reported by the decoder. The animation loops according to the decoder's loop count metadata, and an infinite loop continues until another image is selected or the view is cleared.
+Animated image files, such as GIF, are displayed as animations when Qt's decoder reports multiple frames. Animated PNG files are also displayed as animations when APNG control chunks are present, even if Qt's generic PNG decoder exposes only the default still image. The first decoded animation frame is shown once loading succeeds, then subsequent frames replace it using the frame delay reported by the decoder or APNG frame metadata. The animation loops according to the file's loop count metadata, and an infinite loop continues until another image is selected or the view is cleared.
+
+Animated PNG playback follows APNG frame composition rules. KiriView decodes each frame image, composites it onto the PNG canvas using the frame blend and disposal operations, and treats an APNG play count of `0` as infinite looping.
 
 When a new image is selected, any currently running animation stops before the new load starts. If animation frame decoding fails after the first frame was displayed, the UI switches to the error state and remains ready for another open action.
 
