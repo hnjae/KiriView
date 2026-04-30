@@ -12,6 +12,11 @@
     "--socket=wayland",
     "--device=dri",
     "--share=network",
+    "--filesystem=home:ro",
+    "--filesystem=/media:ro",
+    "--filesystem=/mnt:ro",
+    "--filesystem=/run/media:ro",
+    "--filesystem=xdg-run/gvfs:ro",
     "--talk-name=org.freedesktop.portal.Desktop"
   ],
   "modules": [
