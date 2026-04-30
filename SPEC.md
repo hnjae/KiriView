@@ -40,9 +40,10 @@ another open action.
 
 ## Image Navigation
 
-When an image is open, Page Up opens the previous supported image file in the
-same parent URL and Page Down opens the next one. Supported extensions match the
-open dialog: AVIF, BMP, GIF, JPEG, PNG, SVG, and WebP, case-insensitively.
+When an image is open, Page Up or the Previous window button opens the previous
+supported image file in the same parent URL. Page Down or the Next window button
+opens the next one. Supported extensions match the open dialog: AVIF, BMP, GIF,
+JPEG, PNG, SVG, and WebP, case-insensitively.
 
 The previous and next files are determined by sorting candidate file names with
 the process locale collation order, including `LC_COLLATE`. Navigation does not
