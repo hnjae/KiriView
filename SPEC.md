@@ -16,6 +16,11 @@ The image loading pipeline is:
 XDG Portal file chooser -> QUrl -> KIO read -> QByteArray/QIODevice -> QImageReader -> QML display
 ```
 
+When KiriView is launched from the Flatpak build directory for development, the
+runtime sandbox must expose the XDG document portal mount at
+`$XDG_RUNTIME_DIR/doc` so portal-selected document URLs resolve inside the
+sandbox.
+
 ## Image Display
 
 KIO provides the readable image data. Qt image APIs decode that data, and the decoded image is shown in QML.
