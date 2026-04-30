@@ -105,10 +105,10 @@ fn flag_paths(env_var: &str, flag: &str) -> Vec<PathBuf> {
             if let Some(path) = tokens.next() {
                 paths.push(PathBuf::from(path));
             }
-        } else if let Some(path) = token.strip_prefix(flag) {
-            if !path.is_empty() {
-                paths.push(PathBuf::from(path));
-            }
+        } else if let Some(path) = token.strip_prefix(flag)
+            && !path.is_empty()
+        {
+            paths.push(PathBuf::from(path));
         }
     }
 
