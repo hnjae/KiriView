@@ -4,10 +4,12 @@
 #ifndef KIRIVIEW_KIRIIMAGEVIEW_H
 #define KIRIVIEW_KIRIIMAGEVIEW_H
 
+#include <QByteArray>
 #include <QImage>
 #include <QQuickPaintedItem>
 #include <QSize>
 #include <QString>
+#include <QTimer>
 #include <QUrl>
 #include <QtQml/qqmlregistration.h>
 #include <memory>
@@ -18,7 +20,7 @@ class StoredTransferJob;
 }
 
 class QBuffer;
-class QMovie;
+class QImageReader;
 
 class KiriImageView : public QQuickPaintedItem
 {
@@ -61,7 +63,13 @@ private:
     void startLoad();
     void cancelLoad();
     void finishWithImageData(const QByteArray &data);
-    void startAnimation(const QByteArray &data, const QByteArray &format);
+    void startAnimation(const QByteArray &data,
+                        const QByteArray &format,
+                        int loopCount,
+                        int firstFrameDelay);
+    void advanceAnimationFrame();
+    bool resetAnimationReader(QString *errorString);
+    bool hasRemainingAnimationLoops() const;
     void stopAnimation();
     void finishWithAnimationError(const QString &errorString);
     void setDisplayedImage(const QImage &image);
@@ -75,8 +83,13 @@ private:
     QString m_errorString;
     QSize m_imageSize;
     QImage m_image;
+    QByteArray m_animationData;
+    QByteArray m_animationFormat;
     std::unique_ptr<QBuffer> m_animationBuffer;
-    std::unique_ptr<QMovie> m_movie;
+    std::unique_ptr<QImageReader> m_animationReader;
+    QTimer m_animationTimer;
+    int m_animationLoopCount = 0;
+    int m_completedAnimationLoops = 0;
     KIO::StoredTransferJob *m_job = nullptr;
     quint64 m_loadGeneration = 0;
 };

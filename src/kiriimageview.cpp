@@ -9,19 +9,33 @@
 #include <QByteArray>
 #include <QImageReader>
 #include <QIODevice>
-#include <QMetaObject>
-#include <QMovie>
 #include <QPainter>
-#include <QPointer>
 #include <QRectF>
 #include <Qt>
 #include <algorithm>
 #include <memory>
 #include <utility>
 
+namespace
+{
+constexpr int defaultAnimationFrameDelay = 100;
+constexpr int minimumAnimationFrameDelay = 10;
+
+int normalizedAnimationFrameDelay(int delay)
+{
+    if (delay < 0) {
+        return defaultAnimationFrameDelay;
+    }
+
+    return std::max(delay, minimumAnimationFrameDelay);
+}
+}
+
 KiriImageView::KiriImageView(QQuickItem *parent)
     : QQuickPaintedItem(parent)
 {
+    m_animationTimer.setSingleShot(true);
+    connect(&m_animationTimer, &QTimer::timeout, this, &KiriImageView::advanceAnimationFrame);
 }
 
 KiriImageView::~KiriImageView()
@@ -166,86 +180,123 @@ void KiriImageView::finishWithImageData(const QByteArray &data)
     }
 
     const QByteArray format = reader.format();
+    const int firstFrameDelay = reader.nextImageDelay();
+    const int loopCount = reader.loopCount();
+    const bool hasMoreFrames = reader.canRead();
 
     setDisplayedImage(image);
     setErrorString(QString());
     setStatus(Status::Ready);
 
-    if (supportsAnimation) {
-        startAnimation(data, format);
+    if (supportsAnimation && hasMoreFrames) {
+        startAnimation(data, format, loopCount, firstFrameDelay);
     }
 }
 
-void KiriImageView::startAnimation(const QByteArray &data, const QByteArray &format)
+void KiriImageView::startAnimation(const QByteArray &data,
+                                   const QByteArray &format,
+                                   int loopCount,
+                                   int firstFrameDelay)
 {
+    m_animationData = data;
+    m_animationFormat = format;
+    m_animationLoopCount = loopCount;
+    m_completedAnimationLoops = 0;
+
+    QString errorString;
+    if (!resetAnimationReader(&errorString)) {
+        finishWithAnimationError(errorString);
+        return;
+    }
+
+    const QImage firstFrame = m_animationReader->read();
+    if (firstFrame.isNull()) {
+        finishWithAnimationError(m_animationReader->errorString());
+        return;
+    }
+
+    if (m_animationReader->canRead()) {
+        m_animationTimer.start(normalizedAnimationFrameDelay(firstFrameDelay));
+    }
+}
+
+void KiriImageView::advanceAnimationFrame()
+{
+    if (m_animationReader == nullptr) {
+        return;
+    }
+
+    if (!m_animationReader->canRead()) {
+        if (!hasRemainingAnimationLoops()) {
+            stopAnimation();
+            return;
+        }
+
+        ++m_completedAnimationLoops;
+
+        QString errorString;
+        if (!resetAnimationReader(&errorString)) {
+            finishWithAnimationError(errorString);
+            return;
+        }
+    }
+
+    QImage frame = m_animationReader->read();
+    if (frame.isNull()) {
+        finishWithAnimationError(m_animationReader->errorString());
+        return;
+    }
+
+    const int delay = normalizedAnimationFrameDelay(m_animationReader->nextImageDelay());
+    setDisplayedImage(frame);
+
+    if (m_animationReader->canRead() || hasRemainingAnimationLoops()) {
+        m_animationTimer.start(delay);
+    } else {
+        stopAnimation();
+    }
+}
+
+bool KiriImageView::resetAnimationReader(QString *errorString)
+{
+    m_animationReader.reset();
+    m_animationBuffer.reset();
+
     auto buffer = std::make_unique<QBuffer>();
-    buffer->setData(data);
+    buffer->setData(m_animationData);
 
     if (!buffer->open(QIODevice::ReadOnly)) {
-        finishWithAnimationError(tr("Could not read the selected image data."));
-        return;
+        *errorString = tr("Could not read the selected image data.");
+        return false;
     }
 
-    auto movie = std::make_unique<QMovie>(buffer.get(), format);
-    if (!movie->isValid()) {
-        finishWithAnimationError(movie->lastErrorString());
-        return;
+    auto reader = std::make_unique<QImageReader>(buffer.get(), m_animationFormat);
+    reader->setAutoTransform(true);
+
+    if (!reader->canRead()) {
+        *errorString = reader->errorString();
+        return false;
     }
-
-    auto *moviePtr = movie.get();
-    const QPointer<QMovie> movieGuard(moviePtr);
-
-    connect(moviePtr, &QMovie::frameChanged, this, [this, movieGuard]() {
-        auto *movie = movieGuard.data();
-        if (movie == nullptr || movie != m_movie.get()) {
-            return;
-        }
-
-        const QImage frame = movie->currentImage();
-        if (frame.isNull()) {
-            return;
-        }
-
-        setDisplayedImage(frame);
-    });
-
-    connect(moviePtr, &QMovie::error, this, [this, movieGuard]() {
-        auto *movie = movieGuard.data();
-        if (movie == nullptr || movie != m_movie.get()) {
-            return;
-        }
-
-        const QString errorString = movie->lastErrorString();
-        movie->stop();
-        QMetaObject::invokeMethod(
-            this,
-            [this, movieGuard, errorString]() {
-                auto *movie = movieGuard.data();
-                if (movie == nullptr || movie != m_movie.get()) {
-                    return;
-                }
-
-                finishWithAnimationError(errorString);
-            },
-            Qt::QueuedConnection);
-    });
 
     m_animationBuffer = std::move(buffer);
-    m_movie = std::move(movie);
-    m_movie->start();
+    m_animationReader = std::move(reader);
+    return true;
+}
+
+bool KiriImageView::hasRemainingAnimationLoops() const
+{
+    return m_animationLoopCount < 0 || m_completedAnimationLoops < m_animationLoopCount;
 }
 
 void KiriImageView::stopAnimation()
 {
-    if (m_movie != nullptr) {
-        m_movie->stop();
-        m_movie.reset();
-    }
-
-    if (m_animationBuffer != nullptr) {
-        m_animationBuffer->close();
-        m_animationBuffer.reset();
-    }
+    m_animationTimer.stop();
+    m_animationReader.reset();
+    m_animationBuffer.reset();
+    m_animationData.clear();
+    m_animationFormat.clear();
+    m_animationLoopCount = 0;
+    m_completedAnimationLoops = 0;
 }
 
 void KiriImageView::finishWithAnimationError(const QString &errorString)
