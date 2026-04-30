@@ -3,6 +3,8 @@
 
 #include "kiriimageview.h"
 
+#include "avifcompat.h"
+
 #include <KIO/StoredTransferJob>
 #include <KJob>
 #include <QBuffer>
@@ -157,8 +159,10 @@ void KiriImageView::finishWithImageData(const QByteArray &data)
         return;
     }
 
+    const QByteArray imageData = KiriView::avifDataWithCompatibilityFixes(data);
+
     QBuffer buffer;
-    buffer.setData(data);
+    buffer.setData(imageData);
 
     if (!buffer.open(QIODevice::ReadOnly)) {
         clearImage();
@@ -189,7 +193,7 @@ void KiriImageView::finishWithImageData(const QByteArray &data)
     setStatus(Status::Ready);
 
     if (supportsAnimation && hasMoreFrames) {
-        startAnimation(data, format, loopCount, firstFrameDelay);
+        startAnimation(imageData, format, loopCount, firstFrameDelay);
     }
 }
 
