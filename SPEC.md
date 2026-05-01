@@ -51,6 +51,10 @@ the previous load finishes, only the most recent selection is displayed.
 Opened images are displayed centered in the available page area while preserving
 their aspect ratio. Image zoom is expressed in physical display pixels: 100%
 means one image pixel maps to one physical monitor pixel.
+For SVG files, 100% uses the SVG's intrinsic size. KiriView renders SVGs for
+the current displayed size and display device pixel ratio, so Fit mode, manual
+zoom, window resizing, and display scale changes preserve vector sharpness up to
+the maximum renderable texture size.
 
 KiriView starts in Fit mode. Fit mode scales the image as large as possible
 while keeping the full image visible in the viewport, including upscaling small
