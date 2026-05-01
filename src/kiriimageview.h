@@ -21,6 +21,7 @@
 namespace KiriView {
 class ImageAnimationPlayer;
 class ImageNavigationService;
+class ImagePredecodeCoordinator;
 enum class NavigationDirection : int;
 }
 
@@ -112,8 +113,6 @@ Q_SIGNALS:
     void containerNavigationChanged();
 
 private:
-    class PredecodeCoordinator;
-
     void setSourceUrlForLoad(const QUrl &sourceUrl, const QUrl &containerNavigationUrl);
     void startLoad();
     void cancelLoad();
@@ -193,7 +192,7 @@ private:
     std::unique_ptr<KiriView::ImageAnimationPlayer> m_animationPlayer;
     std::unique_ptr<KiriView::ImageNavigationService> m_navigationService;
     std::unique_ptr<KiriView::ImageLoader> m_imageLoader;
-    std::unique_ptr<PredecodeCoordinator> m_predecodeCoordinator;
+    std::unique_ptr<KiriView::ImagePredecodeCoordinator> m_predecodeCoordinator;
     QUrl m_containerNavigationUrl;
     QUrl m_loadingContainerNavigationUrl;
 };

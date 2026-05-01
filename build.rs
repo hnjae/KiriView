@@ -23,6 +23,7 @@ fn main() {
     .cpp_file("src/asyncobjectslot.cpp")
     .cpp_file("src/imageformatregistry.cpp")
     .cpp_file("src/imageloader.cpp")
+    .cpp_file("src/imagepredecodecoordinator.cpp")
     .cpp_file("src/imageanimationplayer.cpp")
     .cpp_file("src/apngdecoder.cpp")
     .cpp_file("src/kiriimagedecoder.cpp")
