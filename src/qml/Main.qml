@@ -19,6 +19,13 @@ Kirigami.ApplicationWindow {
     width: minimumWidth
     height: minimumHeight
 
+    Shortcut {
+        context: Qt.WindowShortcut
+        sequence: "Esc"
+
+        onActivated: root.close()
+    }
+
     pageStack.initialPage: Kirigami.Page {
         id: page
 
