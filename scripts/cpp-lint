@@ -36,6 +36,21 @@ add_system_include_dir() {
     system_include_flags+=(-isystem "$dir")
 }
 
+add_qt_rhi_include_dirs() {
+    local dir="$1"
+    local candidate
+
+    for candidate in \
+        "$dir" \
+        "$dir"/QtGui \
+        "$dir"/QtGui/*/QtGui \
+        "$dir"/*/QtGui; do
+        if [[ -f "$candidate/rhi/qrhi.h" && -f "$candidate/rhi/qshader.h" ]]; then
+            add_system_include_dir "$candidate"
+        fi
+    done
+}
+
 add_include_root() {
     local dir="$1"
 
@@ -54,6 +69,7 @@ add_include_root() {
     add_system_include_dir "$dir/KF6/KIOCore"
     add_system_include_dir "$dir/KF6/KIO"
     add_system_include_dir "$dir/KF6/KCoreAddons"
+    add_qt_rhi_include_dirs "$dir"
 }
 
 add_compile_include_roots() {
@@ -89,6 +105,14 @@ add_colon_separated_include_roots() {
     done
 }
 
+add_generated_include_dirs() {
+    local dir
+
+    for dir in target/debug/build/*/out/cxxqtbuild/include target/release/build/*/out/cxxqtbuild/include; do
+        add_system_include_dir "$dir"
+    done
+}
+
 add_qt_flags() {
     local qt_flags=()
     read -r -a qt_flags <<< "$(pkg-config --cflags "${qt_packages[@]}")"
@@ -110,6 +134,7 @@ prepare_compile_args() {
     add_include_root /usr/include
     add_compile_include_roots "${NIX_CFLAGS_COMPILE:-}"
     add_colon_separated_include_roots "${CMAKE_INCLUDE_PATH:-}"
+    add_generated_include_dirs
 
     compile_args+=("${system_include_flags[@]}")
 }

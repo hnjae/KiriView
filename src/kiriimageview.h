@@ -8,7 +8,7 @@
 
 #include <QByteArray>
 #include <QImage>
-#include <QQuickPaintedItem>
+#include <QQuickItem>
 #include <QSize>
 #include <QString>
 #include <QTimer>
@@ -27,7 +27,7 @@ class QBuffer;
 class KCoreDirLister;
 class QImageReader;
 
-class KiriImageView : public QQuickPaintedItem
+class KiriImageView : public QQuickItem
 {
     Q_OBJECT
     QML_ELEMENT
@@ -59,7 +59,7 @@ public:
     Q_INVOKABLE void openPreviousImage();
     Q_INVOKABLE void openNextImage();
 
-    void paint(QPainter *painter) override;
+    QSGNode *updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *) override;
 
 Q_SIGNALS:
     void sourceUrlChanged();
@@ -101,6 +101,7 @@ private:
     QString m_errorString;
     QSize m_imageSize;
     QImage m_image;
+    quint64 m_imageRevision = 0;
     QByteArray m_animationData;
     QByteArray m_animationFormat;
     std::vector<KiriView::AnimationFrame> m_decodedAnimationFrames;
