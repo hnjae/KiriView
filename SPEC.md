@@ -30,8 +30,21 @@ shows a loading state and remains responsive. If another file is selected before
 the previous load finishes, only the most recent selection is displayed.
 
 Opened images are displayed centered in the available page area while preserving
-their aspect ratio. If the image is larger than the available area, it is scaled
-down to fit. If it is smaller, it remains centered without being scaled up.
+their aspect ratio. Image zoom is expressed in physical display pixels: 100%
+means one image pixel maps to one physical monitor pixel. On displays using
+desktop scaling, the default zoom for a newly opened image matches the display's
+device pixel ratio. For example, a small image opens at 200% on a display using
+200% scaling, which gives the image a logical 1:1 size in the desktop
+coordinate system. If the image would exceed the available viewport at that
+default zoom, it is scaled down only as far as needed to fit.
+
+When a ready image is larger than the viewport at the current zoom, horizontal
+and vertical scrollbars allow panning across the image. When the image is
+smaller than the viewport, it remains centered.
+
+The toolbar provides a zoom percentage input for ready images. Users can enter
+manual zoom values from 10% through 800%. A fit action returns the image to the
+default display-scale-aware fit behavior.
 
 Animated image files, including GIF and APNG, play when animation frames are
 available. The first frame is shown once loading succeeds; later frames use the
@@ -67,5 +80,5 @@ If the parent URL cannot be listed, the current image is not found, or no
 adjacent supported image exists, the current image remains open and the app
 remains ready for another open action.
 
-Out of scope for the current version: editing, metadata panels, zoom controls,
-pan controls, and file management actions.
+Out of scope for the current version: editing, metadata panels, and file
+management actions.
