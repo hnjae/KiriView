@@ -39,9 +39,75 @@ Kirigami.ApplicationWindow {
         globalToolBarStyle: Kirigami.ApplicationHeaderStyle.None
 
         readonly property bool imageReady: imageView.status === KiriImageView.Ready
+        readonly property real dragZoomPercentPerPixel: zoomStepPercent / Math.max(1, Kirigami.Units.gridUnit * 2)
+        readonly property bool imagePannable: imageFlickable.contentWidth > imageFlickable.width || imageFlickable.contentHeight > imageFlickable.height
+        readonly property int keyboardPanDistance: 64
+        readonly property int maximumManualZoomPercent: 800
+        readonly property int minimumManualZoomPercent: 10
+        readonly property int zoomStepPercent: 10
+
+        function clampValue(value, minimum, maximum) {
+            return Math.max(minimum, Math.min(maximum, value));
+        }
+
+        function maximumContentX() {
+            return Math.max(0, Math.max(imageFlickable.width, imageView.x + imageView.width) - imageFlickable.width);
+        }
+
+        function maximumContentY() {
+            return Math.max(0, Math.max(imageFlickable.height, imageView.y + imageView.height) - imageFlickable.height);
+        }
+
+        function panBy(deltaX, deltaY) {
+            if (!imagePannable) {
+                return false;
+            }
+
+            const nextContentX = clampValue(imageFlickable.contentX + deltaX, 0, maximumContentX());
+            const nextContentY = clampValue(imageFlickable.contentY + deltaY, 0, maximumContentY());
+            const moved = nextContentX !== imageFlickable.contentX || nextContentY !== imageFlickable.contentY;
+            imageFlickable.contentX = nextContentX;
+            imageFlickable.contentY = nextContentY;
+            return moved;
+        }
 
         function pageNumberText() {
             return imageView.currentPageNumber > 0 ? imageView.currentPageNumber.toString() : "0";
+        }
+
+        function textInputFocused() {
+            return pageNumberField.activeFocus || zoomSpinBox.activeFocus || (zoomSpinBox.contentItem !== null && zoomSpinBox.contentItem.activeFocus);
+        }
+
+        function viewportPointInsideImage(viewportX, viewportY) {
+            if (!imageReady || imageView.width <= 0 || imageView.height <= 0) {
+                return false;
+            }
+
+            const contentPointX = imageFlickable.contentX + viewportX;
+            const contentPointY = imageFlickable.contentY + viewportY;
+            return contentPointX >= imageView.x && contentPointX <= imageView.x + imageView.width && contentPointY >= imageView.y && contentPointY <= imageView.y + imageView.height;
+        }
+
+        function zoomBy(deltaPercent, viewportX, viewportY) {
+            if (!imageReady) {
+                return false;
+            }
+
+            const nextZoomPercent = clampValue(imageView.zoomPercent + deltaPercent, minimumManualZoomPercent, maximumManualZoomPercent);
+            if (Math.abs(nextZoomPercent - imageView.zoomPercent) < 0.001) {
+                return false;
+            }
+
+            const anchorViewportX = Number.isFinite(viewportX) ? clampValue(viewportX, 0, imageFlickable.width) : imageFlickable.width / 2;
+            const anchorViewportY = Number.isFinite(viewportY) ? clampValue(viewportY, 0, imageFlickable.height) : imageFlickable.height / 2;
+            const anchorRatioX = imageView.width > 0 ? clampValue((imageFlickable.contentX + anchorViewportX - imageView.x) / imageView.width, 0, 1) : 0.5;
+            const anchorRatioY = imageView.height > 0 ? clampValue((imageFlickable.contentY + anchorViewportY - imageView.y) / imageView.height, 0, 1) : 0.5;
+
+            imageView.zoomPercent = nextZoomPercent;
+            imageFlickable.contentX = clampValue(imageView.x + anchorRatioX * imageView.width - anchorViewportX, 0, maximumContentX());
+            imageFlickable.contentY = clampValue(imageView.y + anchorRatioY * imageView.height - anchorViewportY, 0, maximumContentY());
+            return true;
         }
 
         Controls.Action {
@@ -311,6 +377,103 @@ Kirigami.ApplicationWindow {
                     }
                 }
             }
+        }
+
+        MouseArea {
+            id: zoomDragArea
+
+            anchors.fill: imageFlickable
+            acceptedButtons: Qt.LeftButton
+            enabled: page.imageReady
+
+            property real lastY: 0
+            property bool zoomDragActive: false
+
+            onCanceled: zoomDragActive = false
+            onPositionChanged: mouse => {
+                if (!zoomDragActive) {
+                    mouse.accepted = false;
+                    return;
+                }
+
+                const deltaY = mouse.y - lastY;
+                if (deltaY !== 0) {
+                    page.zoomBy(-deltaY * page.dragZoomPercentPerPixel, mouse.x, mouse.y);
+                    lastY = mouse.y;
+                }
+                mouse.accepted = true;
+            }
+            onPressed: mouse => {
+                if ((mouse.modifiers & Qt.ControlModifier) && page.viewportPointInsideImage(mouse.x, mouse.y)) {
+                    zoomDragActive = true;
+                    lastY = mouse.y;
+                    mouse.accepted = true;
+                    return;
+                }
+
+                zoomDragActive = false;
+                mouse.accepted = false;
+            }
+            onReleased: mouse => {
+                zoomDragActive = false;
+                mouse.accepted = true;
+            }
+        }
+
+        Shortcut {
+            context: Qt.WindowShortcut
+            enabled: page.imageReady
+            sequence: "Ctrl+="
+
+            onActivated: page.zoomBy(page.zoomStepPercent, imageFlickable.width / 2, imageFlickable.height / 2)
+        }
+
+        Shortcut {
+            context: Qt.WindowShortcut
+            enabled: page.imageReady
+            sequence: "Ctrl++"
+
+            onActivated: page.zoomBy(page.zoomStepPercent, imageFlickable.width / 2, imageFlickable.height / 2)
+        }
+
+        Shortcut {
+            context: Qt.WindowShortcut
+            enabled: page.imageReady
+            sequence: "Ctrl+-"
+
+            onActivated: page.zoomBy(-page.zoomStepPercent, imageFlickable.width / 2, imageFlickable.height / 2)
+        }
+
+        Shortcut {
+            context: Qt.WindowShortcut
+            enabled: page.imagePannable && !page.textInputFocused()
+            sequence: "Left"
+
+            onActivated: page.panBy(-page.keyboardPanDistance, 0)
+        }
+
+        Shortcut {
+            context: Qt.WindowShortcut
+            enabled: page.imagePannable && !page.textInputFocused()
+            sequence: "Right"
+
+            onActivated: page.panBy(page.keyboardPanDistance, 0)
+        }
+
+        Shortcut {
+            context: Qt.WindowShortcut
+            enabled: page.imagePannable && !page.textInputFocused()
+            sequence: "Up"
+
+            onActivated: page.panBy(0, -page.keyboardPanDistance)
+        }
+
+        Shortcut {
+            context: Qt.WindowShortcut
+            enabled: page.imagePannable && !page.textInputFocused()
+            sequence: "Down"
+
+            onActivated: page.panBy(0, page.keyboardPanDistance)
         }
 
         Shortcut {
