@@ -22,6 +22,8 @@ Kirigami.ApplicationWindow {
     pageStack.initialPage: Kirigami.Page {
         id: page
 
+        padding: 0
+
         readonly property bool imageReady: imageView.status === KiriImageView.Ready
 
         actions: [
@@ -87,6 +89,12 @@ Kirigami.ApplicationWindow {
                 }
             }
         ]
+
+        Rectangle {
+            anchors.fill: parent
+            color: "#3c3c3c"
+            visible: page.imageReady
+        }
 
         Flickable {
             id: imageFlickable
