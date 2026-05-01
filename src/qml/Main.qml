@@ -31,6 +31,20 @@ Kirigami.ApplicationWindow {
                 text: "Open"
 
                 onTriggered: fileDialog.open()
+            },
+            Kirigami.Action {
+                icon.name: "go-previous-symbolic"
+                text: "Previous"
+                visible: imageView.status === KiriImageView.Ready
+
+                onTriggered: imageView.openPreviousImage()
+            },
+            Kirigami.Action {
+                icon.name: "go-next-symbolic"
+                text: "Next"
+                visible: imageView.status === KiriImageView.Ready
+
+                onTriggered: imageView.openNextImage()
             }
         ]
 
@@ -52,28 +66,6 @@ Kirigami.ApplicationWindow {
             sequence: StandardKey.MoveToNextPage
 
             onActivated: imageView.openNextImage()
-        }
-
-        RowLayout {
-            anchors.bottom: parent.bottom
-            anchors.horizontalCenter: parent.horizontalCenter
-            anchors.margins: Kirigami.Units.largeSpacing
-            spacing: Kirigami.Units.smallSpacing
-            visible: imageView.status === KiriImageView.Ready
-
-            Controls.Button {
-                icon.name: "go-previous-symbolic"
-                text: "Previous"
-
-                onClicked: imageView.openPreviousImage()
-            }
-
-            Controls.Button {
-                icon.name: "go-next-symbolic"
-                text: "Next"
-
-                onClicked: imageView.openNextImage()
-            }
         }
 
         Controls.BusyIndicator {
