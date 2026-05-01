@@ -20,6 +20,7 @@ fn main() {
     )
     .cpp_file(CppFile::from("src/kiriimageview.h"))
     .file("src/avifcompat.rs")
+    .cpp_file("src/imageanimationplayer.cpp")
     .cpp_file("src/apngdecoder.cpp")
     .cpp_file("src/kiriimagedecoder.cpp")
     .cpp_file("src/kiriimagenavigation.cpp")

@@ -4,7 +4,6 @@
 #ifndef KIRIVIEW_KIRIIMAGEVIEW_H
 #define KIRIVIEW_KIRIIMAGEVIEW_H
 
-#include "apngdecoder.h"
 #include "predecodecache.h"
 
 #include <QByteArray>
@@ -13,10 +12,8 @@
 #include <QSize>
 #include <QSizeF>
 #include <QString>
-#include <QTimer>
 #include <QUrl>
 #include <QtQml/qqmlregistration.h>
-#include <cstddef>
 #include <memory>
 #include <vector>
 
@@ -26,9 +23,11 @@ class ListJob;
 class StoredTransferJob;
 }
 
-class QBuffer;
 class KCoreDirLister;
-class QImageReader;
+
+namespace KiriView {
+class ImageAnimationPlayer;
+}
 
 class KiriImageView : public QQuickItem
 {
@@ -175,13 +174,6 @@ private:
     void finishSvgLoadSuccessfully(QByteArray data, const QSize &intrinsicSize);
     void prepareSuccessfulImageLoad();
     void finishSuccessfulImageLoad();
-    void startAnimation(
-        const QByteArray &data, const QByteArray &format, int loopCount, int firstFrameDelay);
-    void startDecodedAnimation(std::vector<KiriView::AnimationFrame> frames, int loopCount);
-    void advanceAnimationFrame();
-    void advanceDecodedAnimationFrame();
-    bool resetAnimationReader(QString *errorString);
-    bool hasRemainingAnimationLoops() const;
     bool hasDisplayedImage() const;
     void stopAnimation();
     void finishWithAnimationError(const QString &errorString);
@@ -227,15 +219,7 @@ private:
     QSize m_svgIntrinsicSize;
     QSize m_svgRasterSize;
     quint64 m_imageRevision = 0;
-    QByteArray m_animationData;
-    QByteArray m_animationFormat;
-    std::vector<KiriView::AnimationFrame> m_decodedAnimationFrames;
-    std::unique_ptr<QBuffer> m_animationBuffer;
-    std::unique_ptr<QImageReader> m_animationReader;
-    QTimer m_animationTimer;
-    std::size_t m_decodedAnimationFrameIndex = 0;
-    int m_animationLoopCount = 0;
-    int m_completedAnimationLoops = 0;
+    std::unique_ptr<KiriView::ImageAnimationPlayer> m_animationPlayer;
     KIO::StoredTransferJob *m_job = nullptr;
     KIO::ListJob *m_archiveListJob = nullptr;
     KCoreDirLister *m_navigationLister = nullptr;

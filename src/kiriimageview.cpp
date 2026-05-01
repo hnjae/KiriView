@@ -3,6 +3,7 @@
 
 #include "kiriimageview.h"
 
+#include "imageanimationplayer.h"
 #include "kiriimagedecoder.h"
 #include "kiriimagenavigation.h"
 #include "kiriimagerendernode.h"
@@ -13,10 +14,7 @@
 #include <KIO/StoredTransferJob>
 #include <KIO/UDSEntry>
 #include <KJob>
-#include <QBuffer>
 #include <QByteArray>
-#include <QIODevice>
-#include <QImageReader>
 #include <QMetaObject>
 #include <QPointer>
 #include <QQuickWindow>
@@ -32,8 +30,6 @@
 #include <utility>
 
 namespace {
-constexpr int defaultAnimationFrameDelay = 100;
-constexpr int minimumAnimationFrameDelay = 10;
 constexpr qreal minimumManualZoomPercent = 10.0;
 constexpr qreal maximumManualZoomPercent = 800.0;
 
@@ -62,15 +58,6 @@ using KiriView::sortImageNavigationCandidates;
 using KiriView::svgRasterSize;
 using KiriView::windowTitleFileNameForDisplayedUrl;
 
-int normalizedAnimationFrameDelay(int delay)
-{
-    if (delay < 0) {
-        return defaultAnimationFrameDelay;
-    }
-
-    return std::max(delay, minimumAnimationFrameDelay);
-}
-
 bool approximatelyEqual(qreal left, qreal right) { return std::abs(left - right) < 0.001; }
 
 bool approximatelyEqual(const QSizeF &left, const QSizeF &right)
@@ -83,9 +70,12 @@ bool approximatelyEqual(const QSizeF &left, const QSizeF &right)
 KiriImageView::KiriImageView(QQuickItem *parent)
     : QQuickItem(parent)
 {
+    auto frameReady = [this](const QImage &image) { setDisplayedImage(image); };
+    auto animationError
+        = [this](const QString &errorString) { finishWithAnimationError(errorString); };
+    m_animationPlayer = std::make_unique<KiriView::ImageAnimationPlayer>(
+        this, std::move(frameReady), std::move(animationError));
     setFlag(ItemHasContents, true);
-    m_animationTimer.setSingleShot(true);
-    connect(&m_animationTimer, &QTimer::timeout, this, &KiriImageView::advanceAnimationFrame);
 }
 
 KiriImageView::~KiriImageView()
@@ -1354,11 +1344,12 @@ void KiriImageView::startImageDecode(QByteArray data, quint64 generation)
                         *result, KiriView::PredecodeCache::byteBudget());
                     view->finishLoadSuccessfully(result->image, predecodeCacheable);
                     if (!result->decodedAnimationFrames.empty()) {
-                        view->startDecodedAnimation(
+                        view->m_animationPlayer->startDecoded(
                             std::move(result->decodedAnimationFrames), result->animationLoopCount);
                     } else if (result->hasAnimationReaderFrames) {
-                        view->startAnimation(result->animationData, result->animationFormat,
-                            result->animationLoopCount, result->firstFrameDelay);
+                        view->m_animationPlayer->start(result->animationData,
+                            result->animationFormat, result->animationLoopCount,
+                            result->firstFrameDelay);
                     }
                     view->scheduleAdjacentImagePredecode();
                 },
@@ -1474,162 +1465,9 @@ void KiriImageView::finishSuccessfulImageLoad()
     updatePageNavigation();
 }
 
-void KiriImageView::startAnimation(
-    const QByteArray &data, const QByteArray &format, int loopCount, int firstFrameDelay)
-{
-    m_animationData = data;
-    m_animationFormat = format;
-    m_animationLoopCount = loopCount;
-    m_completedAnimationLoops = 0;
-
-    QString errorString;
-    if (!resetAnimationReader(&errorString)) {
-        finishWithAnimationError(errorString);
-        return;
-    }
-
-    const QImage firstFrame = m_animationReader->read();
-    if (firstFrame.isNull()) {
-        finishWithAnimationError(m_animationReader->errorString());
-        return;
-    }
-
-    if (m_animationReader->canRead()) {
-        m_animationTimer.start(normalizedAnimationFrameDelay(firstFrameDelay));
-    }
-}
-
-void KiriImageView::startDecodedAnimation(
-    std::vector<KiriView::AnimationFrame> frames, int loopCount)
-{
-    m_decodedAnimationFrames = std::move(frames);
-    m_decodedAnimationFrameIndex = 0;
-    m_animationLoopCount = loopCount;
-    m_completedAnimationLoops = 0;
-
-    if (m_decodedAnimationFrames.size() > 1) {
-        m_animationTimer.start(
-            normalizedAnimationFrameDelay(m_decodedAnimationFrames.front().delay));
-    }
-}
-
-void KiriImageView::advanceAnimationFrame()
-{
-    if (!m_decodedAnimationFrames.empty()) {
-        advanceDecodedAnimationFrame();
-        return;
-    }
-
-    if (m_animationReader == nullptr) {
-        return;
-    }
-
-    if (!m_animationReader->canRead()) {
-        if (!hasRemainingAnimationLoops()) {
-            stopAnimation();
-            return;
-        }
-
-        ++m_completedAnimationLoops;
-
-        QString errorString;
-        if (!resetAnimationReader(&errorString)) {
-            finishWithAnimationError(errorString);
-            return;
-        }
-    }
-
-    QImage frame = m_animationReader->read();
-    if (frame.isNull()) {
-        finishWithAnimationError(m_animationReader->errorString());
-        return;
-    }
-
-    const int delay = normalizedAnimationFrameDelay(m_animationReader->nextImageDelay());
-    setDisplayedImage(frame);
-
-    if (m_animationReader->canRead() || hasRemainingAnimationLoops()) {
-        m_animationTimer.start(delay);
-    } else {
-        stopAnimation();
-    }
-}
-
-void KiriImageView::advanceDecodedAnimationFrame()
-{
-    if (m_decodedAnimationFrames.empty()) {
-        return;
-    }
-
-    if (m_decodedAnimationFrameIndex + 1 >= m_decodedAnimationFrames.size()) {
-        if (!hasRemainingAnimationLoops()) {
-            stopAnimation();
-            return;
-        }
-
-        ++m_completedAnimationLoops;
-        m_decodedAnimationFrameIndex = 0;
-    } else {
-        ++m_decodedAnimationFrameIndex;
-    }
-
-    const KiriView::AnimationFrame &frame
-        = m_decodedAnimationFrames.at(m_decodedAnimationFrameIndex);
-    setDisplayedImage(frame.image);
-
-    if (m_decodedAnimationFrameIndex + 1 < m_decodedAnimationFrames.size()
-        || hasRemainingAnimationLoops()) {
-        m_animationTimer.start(normalizedAnimationFrameDelay(frame.delay));
-    } else {
-        stopAnimation();
-    }
-}
-
-bool KiriImageView::resetAnimationReader(QString *errorString)
-{
-    m_animationReader.reset();
-    m_animationBuffer.reset();
-
-    auto buffer = std::make_unique<QBuffer>();
-    buffer->setData(m_animationData);
-
-    if (!buffer->open(QIODevice::ReadOnly)) {
-        *errorString = tr("Could not read the selected image data.");
-        return false;
-    }
-
-    auto reader = std::make_unique<QImageReader>(buffer.get(), m_animationFormat);
-    reader->setAutoTransform(true);
-
-    if (!reader->canRead()) {
-        *errorString = reader->errorString();
-        return false;
-    }
-
-    m_animationBuffer = std::move(buffer);
-    m_animationReader = std::move(reader);
-    return true;
-}
-
-bool KiriImageView::hasRemainingAnimationLoops() const
-{
-    return m_animationLoopCount < 0 || m_completedAnimationLoops < m_animationLoopCount;
-}
-
 bool KiriImageView::hasDisplayedImage() const { return !m_image.isNull(); }
 
-void KiriImageView::stopAnimation()
-{
-    m_animationTimer.stop();
-    m_animationReader.reset();
-    m_animationBuffer.reset();
-    m_animationData.clear();
-    m_animationFormat.clear();
-    m_decodedAnimationFrames.clear();
-    m_decodedAnimationFrameIndex = 0;
-    m_animationLoopCount = 0;
-    m_completedAnimationLoops = 0;
-}
+void KiriImageView::stopAnimation() { m_animationPlayer->stop(); }
 
 void KiriImageView::finishWithAnimationError(const QString &errorString)
 {
