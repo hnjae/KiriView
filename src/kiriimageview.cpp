@@ -286,6 +286,7 @@ bool isSupportedImageFileName(const QString &name)
 {
     static const QStringList supportedExtensions = {
         QStringLiteral("avif"),
+        QStringLiteral("avifs"),
         QStringLiteral("bmp"),
         QStringLiteral("gif"),
         QStringLiteral("jpeg"),
