@@ -16,18 +16,23 @@
 #include <QBuffer>
 #include <QByteArray>
 #include <QCollator>
+#include <QCoreApplication>
 #include <QDir>
 #include <QFile>
 #include <QIODevice>
 #include <QImageReader>
 #include <QLocale>
 #include <QMatrix4x4>
+#include <QMetaObject>
 #include <QMimeDatabase>
 #include <QMimeType>
+#include <QPointer>
 #include <QQuickWindow>
 #include <QRectF>
+#include <QRunnable>
 #include <QSGRenderNode>
 #include <QStringList>
+#include <QThreadPool>
 #include <QVector4D>
 #include <Qt>
 #include <algorithm>
@@ -60,6 +65,18 @@ struct Vertex {
     float texCoord[2];
 };
 
+struct DecodedImageResult {
+    bool success = false;
+    QString errorString;
+    QImage image;
+    std::vector<KiriView::AnimationFrame> decodedAnimationFrames;
+    QByteArray animationData;
+    QByteArray animationFormat;
+    int animationLoopCount = 0;
+    int firstFrameDelay = 0;
+    bool hasAnimationReaderFrames = false;
+};
+
 constexpr std::array<Vertex, 6> quadVertices = { {
     { { 0.0F, 0.0F }, { 0.0F, 0.0F } },
     { { 1.0F, 0.0F }, { 1.0F, 0.0F } },
@@ -84,6 +101,82 @@ bool approximatelyEqual(const QSizeF &left, const QSizeF &right)
 {
     return approximatelyEqual(left.width(), right.width())
         && approximatelyEqual(left.height(), right.height());
+}
+
+QImage displayReadyImage(const QImage &image)
+{
+    if (image.format() == QImage::Format_RGBA8888_Premultiplied) {
+        return image;
+    }
+    return image.convertToFormat(QImage::Format_RGBA8888_Premultiplied);
+}
+
+DecodedImageResult decodedImageFailure(const QString &errorString)
+{
+    DecodedImageResult result;
+    result.errorString = errorString;
+    return result;
+}
+
+DecodedImageResult decodeImageData(const QByteArray &data)
+{
+    KiriView::ApngDecodeResult apngResult = KiriView::decodeApngAnimation(data);
+    if (apngResult.status == KiriView::ApngDecodeStatus::Success) {
+        if (apngResult.animation.frames.empty()) {
+            return decodedImageFailure(QCoreApplication::translate(
+                "KiriImageView", "Could not decode the selected APNG animation."));
+        }
+
+        for (KiriView::AnimationFrame &frame : apngResult.animation.frames) {
+            frame.image = displayReadyImage(frame.image);
+        }
+
+        DecodedImageResult result;
+        result.success = true;
+        result.image = apngResult.animation.frames.front().image;
+        result.decodedAnimationFrames = std::move(apngResult.animation.frames);
+        result.animationLoopCount = apngResult.animation.loopCount;
+        return result;
+    }
+    if (apngResult.status == KiriView::ApngDecodeStatus::Error) {
+        return decodedImageFailure(apngResult.errorString);
+    }
+
+    const QByteArray imageData = KiriView::avifDataWithCompatibilityFixes(data);
+
+    QBuffer buffer;
+    buffer.setData(imageData);
+
+    if (!buffer.open(QIODevice::ReadOnly)) {
+        return decodedImageFailure(QCoreApplication::translate(
+            "KiriImageView", "Could not read the selected image data."));
+    }
+
+    QImageReader reader(&buffer);
+    reader.setAutoTransform(true);
+    const bool supportsAnimation = reader.supportsAnimation();
+
+    QImage image = reader.read();
+    if (image.isNull()) {
+        return decodedImageFailure(reader.errorString());
+    }
+
+    const QByteArray format = reader.format();
+    const int firstFrameDelay = reader.nextImageDelay();
+    const int loopCount = reader.loopCount();
+    const bool hasMoreFrames = reader.canRead();
+
+    DecodedImageResult result;
+    result.success = true;
+    result.image = displayReadyImage(image);
+    if (supportsAnimation && hasMoreFrames) {
+        result.animationData = imageData;
+        result.animationFormat = format;
+        result.animationLoopCount = loopCount;
+        result.firstFrameDelay = firstFrameDelay;
+        result.hasAnimationReaderFrames = true;
+    }
+    return result;
 }
 
 bool isSupportedImageFileName(const QString &name)
@@ -882,6 +975,7 @@ void KiriImageView::itemChange(ItemChange change, const ItemChangeData &value)
 void KiriImageView::startLoad()
 {
     cancelLoad();
+    const quint64 generation = ++m_loadGeneration;
     setErrorString(QString());
 
     if (m_sourceUrl.isEmpty()) {
@@ -904,7 +998,6 @@ void KiriImageView::startLoad()
         setStatus(Status::Ready);
     }
 
-    const quint64 generation = ++m_loadGeneration;
     const std::optional<QUrl> selectedArchiveRootUrl = comicBookArchiveRootUrl(m_sourceUrl);
     if (selectedArchiveRootUrl.has_value()) {
         m_comicBookRootUrl = selectedArchiveRootUrl.value();
@@ -941,7 +1034,7 @@ void KiriImageView::startImageLoad(const QUrl &url, quint64 generation)
             return;
         }
 
-        finishWithImageData(job->data());
+        startImageDecode(job->data(), generation);
     });
 
     connect(job, &QObject::destroyed, this, [this, job]() {
@@ -1199,50 +1292,39 @@ void KiriImageView::finishNavigationWithError(KCoreDirLister *lister, quint64 ge
     lister->deleteLater();
 }
 
-void KiriImageView::finishWithImageData(const QByteArray &data)
+void KiriImageView::startImageDecode(QByteArray data, quint64 generation)
 {
-    KiriView::ApngDecodeResult apngResult = KiriView::decodeApngAnimation(data);
-    if (apngResult.status == KiriView::ApngDecodeStatus::Success) {
-        finishLoadSuccessfully(apngResult.animation.frames.front().image);
-        startDecodedAnimation(
-            std::move(apngResult.animation.frames), apngResult.animation.loopCount);
-        return;
-    }
-    if (apngResult.status == KiriView::ApngDecodeStatus::Error) {
-        finishLoadWithError(apngResult.errorString);
-        return;
-    }
+    const QPointer<KiriImageView> view(this);
+    QThreadPool::globalInstance()->start(
+        QRunnable::create([view, data = std::move(data), generation]() mutable {
+            auto result = std::make_shared<DecodedImageResult>(decodeImageData(data));
+            if (view == nullptr) {
+                return;
+            }
 
-    const QByteArray imageData = KiriView::avifDataWithCompatibilityFixes(data);
+            QMetaObject::invokeMethod(
+                view.data(),
+                [view, generation, result]() mutable {
+                    if (view == nullptr || generation != view->m_loadGeneration) {
+                        return;
+                    }
 
-    QBuffer buffer;
-    buffer.setData(imageData);
+                    if (!result->success) {
+                        view->finishLoadWithError(result->errorString);
+                        return;
+                    }
 
-    if (!buffer.open(QIODevice::ReadOnly)) {
-        finishLoadWithError(tr("Could not read the selected image data."));
-        return;
-    }
-
-    QImageReader reader(&buffer);
-    reader.setAutoTransform(true);
-    const bool supportsAnimation = reader.supportsAnimation();
-
-    QImage image = reader.read();
-    if (image.isNull()) {
-        finishLoadWithError(reader.errorString());
-        return;
-    }
-
-    const QByteArray format = reader.format();
-    const int firstFrameDelay = reader.nextImageDelay();
-    const int loopCount = reader.loopCount();
-    const bool hasMoreFrames = reader.canRead();
-
-    finishLoadSuccessfully(image);
-
-    if (supportsAnimation && hasMoreFrames) {
-        startAnimation(imageData, format, loopCount, firstFrameDelay);
-    }
+                    view->finishLoadSuccessfully(result->image);
+                    if (!result->decodedAnimationFrames.empty()) {
+                        view->startDecodedAnimation(
+                            std::move(result->decodedAnimationFrames), result->animationLoopCount);
+                    } else if (result->hasAnimationReaderFrames) {
+                        view->startAnimation(result->animationData, result->animationFormat,
+                            result->animationLoopCount, result->firstFrameDelay);
+                    }
+                },
+                Qt::QueuedConnection);
+        }));
 }
 
 void KiriImageView::finishLoadWithError(const QString &errorString)
@@ -1448,7 +1530,7 @@ void KiriImageView::finishWithAnimationError(const QString &errorString)
 
 void KiriImageView::setDisplayedImage(const QImage &image)
 {
-    m_image = image.convertToFormat(QImage::Format_RGBA8888_Premultiplied);
+    m_image = displayReadyImage(image);
     ++m_imageRevision;
     setImageSize(m_image.size());
     update();

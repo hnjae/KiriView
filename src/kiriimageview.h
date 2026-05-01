@@ -103,6 +103,7 @@ private:
 
     void startLoad();
     void startImageLoad(const QUrl &url, quint64 generation);
+    void startImageDecode(QByteArray data, quint64 generation);
     void startComicBookLoad(const QUrl &archiveRootUrl, quint64 generation);
     void cancelLoad();
     void openAdjacentImage(NavigationDirection direction);
@@ -111,7 +112,6 @@ private:
     void finishNavigation(KCoreDirLister *lister, quint64 generation, NavigationDirection direction,
         const QUrl &currentUrl);
     void finishNavigationWithError(KCoreDirLister *lister, quint64 generation);
-    void finishWithImageData(const QByteArray &data);
     void finishLoadWithError(const QString &errorString);
     void finishLoadSuccessfully(const QImage &image);
     void startAnimation(
