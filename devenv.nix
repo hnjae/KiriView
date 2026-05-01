@@ -5,8 +5,59 @@
   lib,
   ...
 }:
+let
+  qtToolPrefix = pkgs.symlinkJoin {
+    name = "kiriview-qt-tools";
+    paths = with pkgs.kdePackages; [
+      qtbase
+      qtdeclarative
+    ];
+  };
+  qmake = pkgs.writeShellScriptBin "qmake6" ''
+    if [ "$#" -eq 2 ] && [ "$1" = "-query" ]; then
+      case "$2" in
+        QT_INSTALL_PREFIX|QT_INSTALL_PREFIX/get|QT_HOST_PREFIX|QT_HOST_PREFIX/get|QT_INSTALL_ARCHDATA|QT_INSTALL_ARCHDATA/get|QT_INSTALL_DATA|QT_INSTALL_DATA/get|QT_HOST_DATA|QT_HOST_DATA/get)
+          printf '%s\n' '${qtToolPrefix}'
+          exit 0
+          ;;
+        QT_INSTALL_HEADERS|QT_INSTALL_HEADERS/get)
+          printf '%s\n' '${qtToolPrefix}/include'
+          exit 0
+          ;;
+        QT_INSTALL_LIBS|QT_INSTALL_LIBS/get|QT_HOST_LIBS|QT_HOST_LIBS/get)
+          printf '%s\n' '${qtToolPrefix}/lib'
+          exit 0
+          ;;
+        QT_HOST_LIBEXECS|QT_HOST_LIBEXECS/get|QT_INSTALL_LIBEXECS|QT_INSTALL_LIBEXECS/get)
+          printf '%s\n' '${qtToolPrefix}/libexec'
+          exit 0
+          ;;
+        QT_HOST_BINS|QT_HOST_BINS/get|QT_INSTALL_BINS|QT_INSTALL_BINS/get)
+          printf '%s\n' '${qtToolPrefix}/bin'
+          exit 0
+          ;;
+        QT_INSTALL_PLUGINS|QT_INSTALL_PLUGINS/get)
+          printf '%s\n' '${qtToolPrefix}/lib/qt-6/plugins'
+          exit 0
+          ;;
+        QT_INSTALL_QML|QT_INSTALL_QML/get)
+          printf '%s\n' '${qtToolPrefix}/lib/qt-6/qml'
+          exit 0
+          ;;
+      esac
+    fi
+
+    exec ${lib.getExe' pkgs.kdePackages.qtbase "qmake6"} "$@"
+  '';
+in
 {
+  enterShell = ''
+    export QMAKE=${lib.getExe' qmake "qmake6"}
+  '';
+
   packages = with pkgs; [
+    qmake
+
     # Flatpak
     flatpak-builder
 
