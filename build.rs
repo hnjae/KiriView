@@ -16,7 +16,12 @@ fn main() {
     link_kio();
 
     let mut builder = CxxQtBuilder::new_qml_module(
-        QmlModule::new("io.github.hnjae.kiriview").qml_file("src/qml/Main.qml"),
+        QmlModule::new("io.github.hnjae.kiriview")
+            .qml_file("src/qml/Main.qml")
+            .qml_file("src/qml/ImageToolBar.qml")
+            .qml_file("src/qml/ImageViewport.qml")
+            .qml_file("src/qml/ImageStateOverlay.qml")
+            .qml_file("src/qml/ShortcutHelpDialog.qml"),
     )
     .cpp_file(CppFile::from("src/kiriimageview.h"))
     .file("src/avifcompat.rs")
