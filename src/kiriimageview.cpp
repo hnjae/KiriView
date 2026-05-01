@@ -357,13 +357,12 @@ std::vector<QUrl> predecodeWindowImageUrls(
         urls.push_back(candidates.at(static_cast<std::size_t>(targetIndex)).url);
     };
 
-    appendOffset(1);
-    appendOffset(-1);
-    appendOffset(2);
-    appendOffset(-predecodePreviousImageCount);
-
-    for (std::ptrdiff_t offset = 3; offset <= predecodeNextImageCount; ++offset) {
+    appendOffset(0);
+    for (std::ptrdiff_t offset = 1; offset <= predecodeNextImageCount; ++offset) {
         appendOffset(offset);
+        if (offset <= predecodePreviousImageCount) {
+            appendOffset(-offset);
+        }
     }
     return urls;
 }
@@ -2274,8 +2273,13 @@ void KiriImageView::startPredecodeImageLoads(
     }
 
     trimPredecodedImagesToPredecodeWindow();
+    cacheDisplayedImageForPredecode();
 
+    const QUrl displayedUrl = normalizedImageUrl(m_displayedUrl);
     for (const QUrl &url : m_predecodeWindowUrls) {
+        if (url == displayedUrl) {
+            continue;
+        }
         if (!hasPredecodedImage(url) && !isPredecodeInFlight(url)) {
             m_predecodeQueue.push_back(PredecodeRequest { url, comicBookRootUrl });
         }
@@ -2414,28 +2418,28 @@ bool KiriImageView::tryDisplayPredecodedImage(const QUrl &url)
 {
     QImage image;
     QUrl comicBookRootUrl;
-    if (!takePredecodedImage(url, &image, &comicBookRootUrl)) {
+    if (!findPredecodedImage(url, &image, &comicBookRootUrl)) {
         return false;
     }
 
     m_comicBookRootUrl = comicBookRootUrl;
-    finishLoadSuccessfully(image);
+    finishLoadSuccessfully(image, true);
     scheduleAdjacentImagePredecode();
     return true;
 }
 
-bool KiriImageView::takePredecodedImage(const QUrl &url, QImage *image, QUrl *comicBookRootUrl)
+bool KiriImageView::findPredecodedImage(
+    const QUrl &url, QImage *image, QUrl *comicBookRootUrl) const
 {
     const QUrl normalizedUrl = normalizedImageUrl(url);
-    const auto cached = std::find_if(m_predecodedImages.begin(), m_predecodedImages.end(),
+    const auto cached = std::find_if(m_predecodedImages.cbegin(), m_predecodedImages.cend(),
         [&normalizedUrl](const PredecodedImage &entry) { return entry.url == normalizedUrl; });
-    if (cached == m_predecodedImages.end()) {
+    if (cached == m_predecodedImages.cend()) {
         return false;
     }
 
-    *image = std::move(cached->image);
+    *image = cached->image;
     *comicBookRootUrl = cached->comicBookRootUrl;
-    m_predecodedImages.erase(cached);
     return true;
 }
 
@@ -2460,6 +2464,15 @@ void KiriImageView::cachePredecodedImage(
         PredecodedImage { normalizedUrl, comicBookRootUrl, image, byteCost });
 
     trimPredecodedImagesToPredecodeWindow();
+}
+
+void KiriImageView::cacheDisplayedImageForPredecode()
+{
+    if (!m_displayedImageIsPredecodeCacheable || m_displayedUrl.isEmpty() || m_image.isNull()) {
+        return;
+    }
+
+    cachePredecodedImage(m_displayedUrl, m_displayedComicBookRootUrl, m_image);
 }
 
 bool KiriImageView::predecodeWindowContains(const QUrl &url) const
@@ -2548,7 +2561,8 @@ void KiriImageView::startImageDecode(QByteArray data, quint64 generation)
                         return;
                     }
 
-                    view->finishLoadSuccessfully(result->image);
+                    const bool predecodeCacheable = decodedImageResultIsPredecodeCacheable(*result);
+                    view->finishLoadSuccessfully(result->image, predecodeCacheable);
                     if (!result->decodedAnimationFrames.empty()) {
                         view->startDecodedAnimation(
                             std::move(result->decodedAnimationFrames), result->animationLoopCount);
@@ -2594,9 +2608,10 @@ void KiriImageView::finishLoadWithError(const QString &errorString)
     setStatus(Status::Error);
 }
 
-void KiriImageView::finishLoadSuccessfully(const QImage &image)
+void KiriImageView::finishLoadSuccessfully(const QImage &image, bool predecodeCacheable)
 {
     prepareSuccessfulImageLoad();
+    m_displayedImageIsPredecodeCacheable = predecodeCacheable;
     setDisplayedImage(image);
     updateZoomState();
     finishSuccessfulImageLoad();
@@ -2627,6 +2642,7 @@ void KiriImageView::finishSvgLoadSuccessfully(QByteArray data, const QSize &intr
     }
 
     stopAnimation();
+    m_displayedImageIsPredecodeCacheable = false;
     if (m_zoomMode != loadedZoomMode) {
         m_zoomMode = loadedZoomMode;
         Q_EMIT zoomModeChanged();
@@ -3089,6 +3105,7 @@ void KiriImageView::clearImage()
     m_predecodeWindowUrls.clear();
     m_predecodedImages.clear();
     stopAnimation();
+    m_displayedImageIsPredecodeCacheable = false;
     m_displayedUrl = QUrl();
     m_displayedComicBookRootUrl = QUrl();
     m_zoomContainerUrl = QUrl();

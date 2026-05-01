@@ -181,14 +181,15 @@ private:
         QByteArray data, const QUrl &url, const QUrl &comicBookRootUrl, quint64 generation);
     void cancelPredecode();
     bool tryDisplayPredecodedImage(const QUrl &url);
-    bool takePredecodedImage(const QUrl &url, QImage *image, QUrl *comicBookRootUrl);
+    bool findPredecodedImage(const QUrl &url, QImage *image, QUrl *comicBookRootUrl) const;
     void cachePredecodedImage(const QUrl &url, const QUrl &comicBookRootUrl, const QImage &image);
+    void cacheDisplayedImageForPredecode();
     bool predecodeWindowContains(const QUrl &url) const;
     void trimPredecodedImagesToPredecodeWindow();
     bool hasPredecodedImage(const QUrl &url) const;
     bool isPredecodeInFlight(const QUrl &url) const;
     void finishLoadWithError(const QString &errorString);
-    void finishLoadSuccessfully(const QImage &image);
+    void finishLoadSuccessfully(const QImage &image, bool predecodeCacheable);
     void finishSvgLoadSuccessfully(QByteArray data, const QSize &intrinsicSize);
     void prepareSuccessfulImageLoad();
     void finishSuccessfulImageLoad();
@@ -239,6 +240,7 @@ private:
     QUrl m_zoomContainerUrl;
     QImage m_image;
     bool m_displayedImageIsSvg = false;
+    bool m_displayedImageIsPredecodeCacheable = false;
     QByteArray m_svgData;
     QSize m_svgIntrinsicSize;
     QSize m_svgRasterSize;
