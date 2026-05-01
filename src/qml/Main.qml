@@ -14,6 +14,8 @@ Kirigami.ApplicationWindow {
     title: "KiriView"
     visible: true
 
+    property url initialSourceUrl
+
     minimumWidth: Kirigami.Units.gridUnit * 28
     minimumHeight: Kirigami.Units.gridUnit * 20
     width: minimumWidth
@@ -302,6 +304,12 @@ Kirigami.ApplicationWindow {
                 width: displaySize.width
                 x: Math.max(0, (imageFlickable.width - width) / 2)
                 y: Math.max(0, (imageFlickable.height - height) / 2)
+
+                Component.onCompleted: {
+                    if (root.initialSourceUrl.toString().length > 0) {
+                        sourceUrl = root.initialSourceUrl;
+                    }
+                }
             }
         }
 
