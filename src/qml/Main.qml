@@ -157,8 +157,8 @@ Kirigami.ApplicationWindow {
         id: fileDialog
 
         fileMode: Dialogs.FileDialog.OpenFile
-        nameFilters: ["Image files (*.avif *.bmp *.gif *.jpeg *.jpg *.png *.svg *.webp)", "All files (*)"]
-        title: "Open Image"
+        nameFilters: ["Image and comic book files (*.avif *.bmp *.cbz *.gif *.jpeg *.jpg *.png *.svg *.webp)", "All files (*)"]
+        title: "Open Image or Comic Book"
 
         onAccepted: imageView.sourceUrl = selectedFile
     }

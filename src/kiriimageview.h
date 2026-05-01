@@ -20,6 +20,7 @@
 
 namespace KIO {
 class Job;
+class ListJob;
 class StoredTransferJob;
 }
 
@@ -74,8 +75,11 @@ private:
     };
 
     void startLoad();
+    void startImageLoad(const QUrl &url, quint64 generation);
+    void startComicBookLoad(const QUrl &archiveRootUrl, quint64 generation);
     void cancelLoad();
     void openAdjacentImage(NavigationDirection direction);
+    void openAdjacentComicBookImage(NavigationDirection direction);
     void cancelNavigation();
     void finishNavigation(KCoreDirLister *lister, quint64 generation, NavigationDirection direction,
         const QUrl &currentUrl);
@@ -112,9 +116,12 @@ private:
     int m_animationLoopCount = 0;
     int m_completedAnimationLoops = 0;
     KIO::StoredTransferJob *m_job = nullptr;
+    KIO::ListJob *m_archiveListJob = nullptr;
     KCoreDirLister *m_navigationLister = nullptr;
+    KIO::ListJob *m_navigationListJob = nullptr;
     quint64 m_loadGeneration = 0;
     quint64 m_navigationGeneration = 0;
+    QUrl m_comicBookRootUrl;
 };
 
 #endif

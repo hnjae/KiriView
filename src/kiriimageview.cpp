@@ -9,7 +9,9 @@
 #include <KCoreDirLister>
 #include <KFileItem>
 #include <KIO/Job>
+#include <KIO/ListJob>
 #include <KIO/StoredTransferJob>
+#include <KIO/UDSEntry>
 #include <KJob>
 #include <QBuffer>
 #include <QByteArray>
@@ -20,6 +22,8 @@
 #include <QImageReader>
 #include <QLocale>
 #include <QMatrix4x4>
+#include <QMimeDatabase>
+#include <QMimeType>
 #include <QQuickWindow>
 #include <QRectF>
 #include <QSGRenderNode>
@@ -92,6 +96,31 @@ bool isSupportedImageFileName(const QString &name)
     return supportedExtensions.contains(name.mid(dotIndex + 1).toCaseFolded());
 }
 
+bool isComicBookArchiveFileName(const QString &name)
+{
+    const qsizetype dotIndex = name.lastIndexOf(QLatin1Char('.'));
+    if (dotIndex <= 0 || dotIndex == name.size() - 1) {
+        return false;
+    }
+
+    return name.mid(dotIndex + 1).toCaseFolded() == QStringLiteral("cbz");
+}
+
+bool isComicBookArchiveUrl(const QUrl &url)
+{
+    if (!url.isLocalFile()) {
+        return false;
+    }
+
+    if (isComicBookArchiveFileName(url.fileName())) {
+        return true;
+    }
+
+    const QMimeType mimeType
+        = QMimeDatabase().mimeTypeForFile(url.toLocalFile(), QMimeDatabase::MatchExtension);
+    return mimeType.name() == QStringLiteral("application/vnd.comicbook+zip");
+}
+
 bool isKioFuseArchiveScheme(const QString &scheme)
 {
     static const QStringList archiveSchemes = {
@@ -157,6 +186,108 @@ QUrl navigationUrlForLocalPath(const QString &localPath)
     return QUrl::fromLocalFile(localPath);
 }
 
+std::optional<QUrl> comicBookArchiveRootUrl(const QUrl &url)
+{
+    if (!isComicBookArchiveUrl(url)) {
+        return std::nullopt;
+    }
+
+    const QString localPath = QDir::cleanPath(url.toLocalFile());
+    if (localPath.isEmpty()) {
+        return std::nullopt;
+    }
+
+    QUrl archiveRootUrl;
+    archiveRootUrl.setScheme(QStringLiteral("zip"));
+    archiveRootUrl.setPath(localPath + QLatin1Char('/'));
+    if (!archiveRootUrl.isValid() || archiveRootUrl.path().isEmpty()) {
+        return std::nullopt;
+    }
+
+    return archiveRootUrl;
+}
+
+QString normalizedArchiveRootPath(const QUrl &archiveRootUrl)
+{
+    QString path = QDir::cleanPath(archiveRootUrl.path());
+    if (!path.endsWith(QLatin1Char('/'))) {
+        path += QLatin1Char('/');
+    }
+
+    return path;
+}
+
+bool isUrlInsideArchiveRoot(const QUrl &url, const QUrl &archiveRootUrl)
+{
+    if (url.isEmpty() || archiveRootUrl.isEmpty() || url.scheme() != archiveRootUrl.scheme()) {
+        return false;
+    }
+
+    const QString rootPath = normalizedArchiveRootPath(archiveRootUrl);
+    const QString path = QDir::cleanPath(url.path());
+    return path.size() > rootPath.size() && path.startsWith(rootPath);
+}
+
+std::optional<QUrl> containingComicBookArchiveRootUrl(const QUrl &url)
+{
+    if (url.scheme() != QStringLiteral("zip")) {
+        return std::nullopt;
+    }
+
+    const QString path = QDir::cleanPath(url.path());
+    const QString foldedPath = path.toCaseFolded();
+    const QString marker = QStringLiteral(".cbz/");
+    const qsizetype markerIndex = foldedPath.indexOf(marker);
+    if (markerIndex < 0) {
+        return std::nullopt;
+    }
+
+    QUrl archiveRootUrl = url;
+    archiveRootUrl.setPath(path.left(markerIndex + 4) + QLatin1Char('/'));
+    archiveRootUrl.setQuery(QString());
+    archiveRootUrl.setFragment(QString());
+    if (!archiveRootUrl.isValid() || archiveRootUrl.path().isEmpty()) {
+        return std::nullopt;
+    }
+
+    return archiveRootUrl;
+}
+
+QString archiveRelativeImageName(const QUrl &archiveRootUrl, const QUrl &imageUrl)
+{
+    const QString rootPath = normalizedArchiveRootPath(archiveRootUrl);
+    const QString path = QDir::cleanPath(imageUrl.path());
+    if (!path.startsWith(rootPath)) {
+        return imageUrl.fileName();
+    }
+
+    return path.mid(rootPath.size());
+}
+
+void sortImageNavigationCandidates(std::vector<ImageNavigationCandidate> *candidates)
+{
+    QCollator collator(QLocale::system());
+    collator.setCaseSensitivity(Qt::CaseSensitive);
+    collator.setNumericMode(false);
+    collator.setIgnorePunctuation(false);
+
+    std::stable_sort(candidates->begin(), candidates->end(),
+        [&collator](const ImageNavigationCandidate &left, const ImageNavigationCandidate &right) {
+            const int nameComparison = collator.compare(left.name, right.name);
+            if (nameComparison != 0) {
+                return nameComparison < 0;
+            }
+
+            return left.url.toEncoded() < right.url.toEncoded();
+        });
+
+    const auto duplicateStart = std::unique(candidates->begin(), candidates->end(),
+        [](const ImageNavigationCandidate &left, const ImageNavigationCandidate &right) {
+            return left.url.matches(right.url, QUrl::NormalizePathSegments);
+        });
+    candidates->erase(duplicateStart, candidates->end());
+}
+
 std::vector<ImageNavigationCandidate> imageNavigationCandidates(const KFileItemList &items)
 {
     std::vector<ImageNavigationCandidate> candidates;
@@ -171,22 +302,26 @@ std::vector<ImageNavigationCandidate> imageNavigationCandidates(const KFileItemL
         candidates.push_back(ImageNavigationCandidate { item.url(), name });
     }
 
-    QCollator collator(QLocale::system());
-    collator.setCaseSensitivity(Qt::CaseSensitive);
-    collator.setNumericMode(false);
-    collator.setIgnorePunctuation(false);
-
-    std::stable_sort(candidates.begin(), candidates.end(),
-        [&collator](const ImageNavigationCandidate &left, const ImageNavigationCandidate &right) {
-            const int nameComparison = collator.compare(left.name, right.name);
-            if (nameComparison != 0) {
-                return nameComparison < 0;
-            }
-
-            return left.url.toEncoded() < right.url.toEncoded();
-        });
-
+    sortImageNavigationCandidates(&candidates);
     return candidates;
+}
+
+void appendArchiveImageNavigationCandidates(std::vector<ImageNavigationCandidate> *candidates,
+    const KIO::UDSEntryList &entries, const QUrl &directoryUrl, const QUrl &archiveRootUrl)
+{
+    candidates->reserve(candidates->size() + static_cast<std::size_t>(entries.size()));
+
+    for (const KIO::UDSEntry &entry : entries) {
+        const KFileItem item(entry, directoryUrl, true, true);
+        const QString name = item.name();
+        if (!item.isFile() || !isSupportedImageFileName(name)) {
+            continue;
+        }
+
+        const QUrl imageUrl = item.url().adjusted(QUrl::NormalizePathSegments);
+        candidates->push_back(ImageNavigationCandidate {
+            imageUrl, archiveRelativeImageName(archiveRootUrl, imageUrl) });
+    }
 }
 
 std::optional<QUrl> documentPortalHostUrl(const QUrl &url)
@@ -681,7 +816,28 @@ void KiriImageView::startLoad()
     setStatus(Status::Loading);
 
     const quint64 generation = ++m_loadGeneration;
-    auto *job = KIO::storedGet(m_sourceUrl, KIO::NoReload, KIO::HideProgressInfo);
+    const std::optional<QUrl> selectedArchiveRootUrl = comicBookArchiveRootUrl(m_sourceUrl);
+    if (selectedArchiveRootUrl.has_value()) {
+        m_comicBookRootUrl = selectedArchiveRootUrl.value();
+        startComicBookLoad(m_comicBookRootUrl, generation);
+        return;
+    }
+
+    if (!isUrlInsideArchiveRoot(m_sourceUrl, m_comicBookRootUrl)) {
+        const std::optional<QUrl> containingArchiveRootUrl
+            = containingComicBookArchiveRootUrl(m_sourceUrl);
+        m_comicBookRootUrl = containingArchiveRootUrl.has_value()
+                && isUrlInsideArchiveRoot(m_sourceUrl, containingArchiveRootUrl.value())
+            ? containingArchiveRootUrl.value()
+            : QUrl();
+    }
+
+    startImageLoad(m_sourceUrl, generation);
+}
+
+void KiriImageView::startImageLoad(const QUrl &url, quint64 generation)
+{
+    auto *job = KIO::storedGet(url, KIO::NoReload, KIO::HideProgressInfo);
     m_job = job;
 
     connect(job, &KJob::result, this, [this, job, generation](KJob *finishedJob) {
@@ -708,21 +864,87 @@ void KiriImageView::startLoad()
     });
 }
 
+void KiriImageView::startComicBookLoad(const QUrl &archiveRootUrl, quint64 generation)
+{
+    auto *job = KIO::listRecursive(archiveRootUrl, KIO::HideProgressInfo,
+        KIO::ListJob::ListFlags(KIO::ListJob::ListFlag::IncludeHidden));
+    auto candidates = std::make_shared<std::vector<ImageNavigationCandidate>>();
+    m_archiveListJob = job;
+
+    connect(job, &KIO::ListJob::entries, this,
+        [archiveRootUrl, candidates](KIO::Job *entriesJob, const KIO::UDSEntryList &entries) {
+            auto *listJob = qobject_cast<KIO::ListJob *>(entriesJob);
+            const QUrl directoryUrl = listJob == nullptr ? archiveRootUrl : listJob->url();
+            appendArchiveImageNavigationCandidates(
+                candidates.get(), entries, directoryUrl, archiveRootUrl);
+        });
+
+    connect(job, &KJob::result, this,
+        [this, job, generation, archiveRootUrl, candidates](KJob *finishedJob) {
+            if (generation != m_loadGeneration || job != m_archiveListJob) {
+                return;
+            }
+
+            m_archiveListJob = nullptr;
+
+            if (finishedJob->error() != KJob::NoError) {
+                clearImage();
+                m_comicBookRootUrl = QUrl();
+                setErrorString(finishedJob->errorString());
+                setStatus(Status::Error);
+                return;
+            }
+
+            sortImageNavigationCandidates(candidates.get());
+            if (candidates->empty()) {
+                clearImage();
+                m_comicBookRootUrl = QUrl();
+                setErrorString(
+                    tr("The selected comic book archive does not contain any supported images."));
+                setStatus(Status::Error);
+                return;
+            }
+
+            m_comicBookRootUrl = archiveRootUrl;
+            setSourceUrl(candidates->front().url);
+        });
+
+    connect(job, &QObject::destroyed, this, [this, job]() {
+        if (job == m_archiveListJob) {
+            m_archiveListJob = nullptr;
+        }
+    });
+}
+
 void KiriImageView::cancelLoad()
 {
-    if (m_job == nullptr) {
+    if (m_job == nullptr && m_archiveListJob == nullptr) {
         return;
     }
 
-    auto *job = m_job;
-    m_job = nullptr;
     ++m_loadGeneration;
-    job->kill(KJob::Quietly);
+
+    if (m_job != nullptr) {
+        auto *job = m_job;
+        m_job = nullptr;
+        job->kill(KJob::Quietly);
+    }
+
+    if (m_archiveListJob != nullptr) {
+        auto *job = m_archiveListJob;
+        m_archiveListJob = nullptr;
+        job->kill(KJob::Quietly);
+    }
 }
 
 void KiriImageView::openAdjacentImage(NavigationDirection direction)
 {
     if (m_sourceUrl.isEmpty()) {
+        return;
+    }
+
+    if (isUrlInsideArchiveRoot(m_sourceUrl, m_comicBookRootUrl)) {
+        openAdjacentComicBookImage(direction);
         return;
     }
 
@@ -755,17 +977,95 @@ void KiriImageView::openAdjacentImage(NavigationDirection direction)
     }
 }
 
-void KiriImageView::cancelNavigation()
+void KiriImageView::openAdjacentComicBookImage(NavigationDirection direction)
 {
-    if (m_navigationLister == nullptr) {
+    const QUrl currentUrl = m_sourceUrl.adjusted(QUrl::NormalizePathSegments);
+    const QUrl archiveRootUrl = m_comicBookRootUrl;
+    if (!currentUrl.isValid() || archiveRootUrl.isEmpty()) {
         return;
     }
 
-    auto *lister = m_navigationLister;
-    m_navigationLister = nullptr;
+    cancelNavigation();
+
+    auto *job = KIO::listRecursive(archiveRootUrl, KIO::HideProgressInfo,
+        KIO::ListJob::ListFlags(KIO::ListJob::ListFlag::IncludeHidden));
+    auto candidates = std::make_shared<std::vector<ImageNavigationCandidate>>();
+    const quint64 generation = ++m_navigationGeneration;
+    m_navigationListJob = job;
+
+    connect(job, &KIO::ListJob::entries, this,
+        [archiveRootUrl, candidates](KIO::Job *entriesJob, const KIO::UDSEntryList &entries) {
+            auto *listJob = qobject_cast<KIO::ListJob *>(entriesJob);
+            const QUrl directoryUrl = listJob == nullptr ? archiveRootUrl : listJob->url();
+            appendArchiveImageNavigationCandidates(
+                candidates.get(), entries, directoryUrl, archiveRootUrl);
+        });
+
+    connect(job, &KJob::result, this,
+        [this, job, generation, direction, currentUrl, candidates](KJob *finishedJob) {
+            if (generation != m_navigationGeneration || job != m_navigationListJob) {
+                return;
+            }
+
+            m_navigationListJob = nullptr;
+
+            if (finishedJob->error() != KJob::NoError) {
+                return;
+            }
+
+            sortImageNavigationCandidates(candidates.get());
+            const auto current = std::find_if(candidates->cbegin(), candidates->cend(),
+                [&currentUrl](const ImageNavigationCandidate &candidate) {
+                    return candidate.url.matches(currentUrl, QUrl::NormalizePathSegments);
+                });
+            if (current == candidates->cend()) {
+                return;
+            }
+
+            QUrl targetUrl;
+            if (direction == NavigationDirection::Previous) {
+                if (current == candidates->cbegin()) {
+                    return;
+                }
+                targetUrl = std::prev(current)->url;
+            } else {
+                const auto next = std::next(current);
+                if (next == candidates->cend()) {
+                    return;
+                }
+                targetUrl = next->url;
+            }
+
+            setSourceUrl(targetUrl);
+        });
+
+    connect(job, &QObject::destroyed, this, [this, job]() {
+        if (job == m_navigationListJob) {
+            m_navigationListJob = nullptr;
+        }
+    });
+}
+
+void KiriImageView::cancelNavigation()
+{
+    if (m_navigationLister == nullptr && m_navigationListJob == nullptr) {
+        return;
+    }
+
     ++m_navigationGeneration;
-    lister->stop();
-    lister->deleteLater();
+
+    if (m_navigationLister != nullptr) {
+        auto *lister = m_navigationLister;
+        m_navigationLister = nullptr;
+        lister->stop();
+        lister->deleteLater();
+    }
+
+    if (m_navigationListJob != nullptr) {
+        auto *job = m_navigationListJob;
+        m_navigationListJob = nullptr;
+        job->kill(KJob::Quietly);
+    }
 }
 
 void KiriImageView::finishNavigation(KCoreDirLister *lister, quint64 generation,
