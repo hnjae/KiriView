@@ -4,6 +4,7 @@
 #include "kiriimageview.h"
 
 #include "imageanimationplayer.h"
+#include "imageformatregistry.h"
 #include "kiriimagedecoder.h"
 #include "kiriimagenavigation.h"
 #include "kiriimagerendernode.h"
@@ -36,6 +37,7 @@ constexpr qreal maximumManualZoomPercent = 800.0;
 using KiriView::adjacentContainerNavigationCandidate;
 using KiriView::adjacentImageNavigationUrl;
 using KiriView::appendArchiveImageNavigationCandidates;
+using KiriView::AsyncObjectSlot;
 using KiriView::comicBookArchiveRootUrl;
 using KiriView::ContainerNavigationCandidate;
 using KiriView::containerNavigationCandidates;
@@ -126,56 +128,6 @@ std::shared_ptr<std::vector<ImageNavigationCandidate>> collectArchiveImageCandid
 }
 }
 
-quint64 KiriImageView::AsyncObjectSlot::start(QObject *object, CancelCallback cancelCallback)
-{
-    cancel();
-    m_object = object;
-    m_cancelCallback = std::move(cancelCallback);
-    ++m_token;
-    return m_token;
-}
-
-bool KiriImageView::AsyncObjectSlot::accepts(quint64 token, const QObject *object) const
-{
-    return token == m_token && object == m_object;
-}
-
-bool KiriImageView::AsyncObjectSlot::claim(quint64 token, QObject *object)
-{
-    if (!accepts(token, object)) {
-        return false;
-    }
-
-    m_object = nullptr;
-    m_cancelCallback = {};
-    return true;
-}
-
-void KiriImageView::AsyncObjectSlot::clear(QObject *object)
-{
-    if (object != m_object) {
-        return;
-    }
-
-    m_object = nullptr;
-    m_cancelCallback = {};
-}
-
-void KiriImageView::AsyncObjectSlot::cancel()
-{
-    if (m_object == nullptr) {
-        return;
-    }
-
-    QObject *object = m_object;
-    CancelCallback cancelCallback = std::move(m_cancelCallback);
-    m_object = nullptr;
-    ++m_token;
-    if (cancelCallback) {
-        cancelCallback(object);
-    }
-}
-
 class KiriImageView::PredecodeCoordinator
 {
 public:
@@ -207,9 +159,9 @@ private:
         QByteArray data, const QUrl &url, const QUrl &comicBookRootUrl, quint64 generation);
 
     KiriImageView *m_view = nullptr;
-    KiriImageView::AsyncObjectSlot m_listerSlot;
-    KiriImageView::AsyncObjectSlot m_listJobSlot;
-    KiriImageView::AsyncObjectSlot m_imageLoadSlot;
+    AsyncObjectSlot m_listerSlot;
+    AsyncObjectSlot m_listJobSlot;
+    AsyncObjectSlot m_imageLoadSlot;
     KiriView::PredecodeCache m_cache;
     QUrl m_activePredecodeUrl;
     quint64 m_generation = 0;
@@ -317,6 +269,11 @@ void KiriImageView::setZoomPercent(qreal zoomPercent)
 }
 
 KiriImageView::ZoomMode KiriImageView::zoomMode() const { return m_zoomMode; }
+
+QStringList KiriImageView::openDialogNameFilters() const
+{
+    return KiriView::openDialogNameFilters();
+}
 
 int KiriImageView::currentPageNumber() const
 {

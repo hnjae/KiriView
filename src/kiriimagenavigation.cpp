@@ -3,13 +3,13 @@
 
 #include "kiriimagenavigation.h"
 
+#include "imageformatregistry.h"
+
 #include <QByteArray>
 #include <QCollator>
 #include <QDir>
 #include <QFile>
 #include <QLocale>
-#include <QMimeDatabase>
-#include <QMimeType>
 #include <QStringList>
 #include <Qt>
 #include <QtGlobal>
@@ -49,58 +49,6 @@ QUrl normalizedDirectoryContainerUrl(const QUrl &url)
         normalizedUrl.setPath(path);
     }
     return normalizedUrl;
-}
-
-bool isSupportedImageFileName(const QString &name)
-{
-    static const QStringList supportedExtensions = {
-        QStringLiteral("avif"),
-        QStringLiteral("avifs"),
-        QStringLiteral("bmp"),
-        QStringLiteral("gif"),
-        QStringLiteral("heic"),
-        QStringLiteral("heif"),
-        QStringLiteral("hif"),
-        QStringLiteral("jpeg"),
-        QStringLiteral("jpg"),
-        QStringLiteral("jp2"),
-        QStringLiteral("jxl"),
-        QStringLiteral("png"),
-        QStringLiteral("svg"),
-        QStringLiteral("webp"),
-    };
-
-    const qsizetype dotIndex = name.lastIndexOf(QLatin1Char('.'));
-    if (dotIndex <= 0 || dotIndex == name.size() - 1) {
-        return false;
-    }
-
-    return supportedExtensions.contains(name.mid(dotIndex + 1).toCaseFolded());
-}
-
-bool isComicBookArchiveFileName(const QString &name)
-{
-    const qsizetype dotIndex = name.lastIndexOf(QLatin1Char('.'));
-    if (dotIndex <= 0 || dotIndex == name.size() - 1) {
-        return false;
-    }
-
-    return name.mid(dotIndex + 1).toCaseFolded() == QStringLiteral("cbz");
-}
-
-bool isComicBookArchiveUrl(const QUrl &url)
-{
-    if (!url.isLocalFile()) {
-        return false;
-    }
-
-    if (isComicBookArchiveFileName(url.fileName())) {
-        return true;
-    }
-
-    const QMimeType mimeType
-        = QMimeDatabase().mimeTypeForFile(url.toLocalFile(), QMimeDatabase::MatchExtension);
-    return mimeType.name() == QStringLiteral("application/vnd.comicbook+zip");
 }
 
 bool isKioFuseArchiveScheme(const QString &scheme)
@@ -411,7 +359,7 @@ PageNavigationState pageNavigationStateForUrls(std::vector<QUrl> urls, const QUr
 
 std::optional<QUrl> comicBookArchiveRootUrl(const QUrl &url)
 {
-    if (!isComicBookArchiveUrl(url)) {
+    if (!KiriView::isComicBookArchiveUrl(url)) {
         return std::nullopt;
     }
 
@@ -517,7 +465,7 @@ std::vector<ImageNavigationCandidate> imageNavigationCandidates(const KFileItemL
 
     for (const KFileItem &item : items) {
         const QString name = item.name();
-        if (!item.isFile() || !isSupportedImageFileName(name)) {
+        if (!item.isFile() || !KiriView::isSupportedImageFileName(name)) {
             continue;
         }
 
@@ -542,7 +490,8 @@ std::vector<ContainerNavigationCandidate> containerNavigationCandidates(const KF
             continue;
         }
 
-        if (item.isFile() && item.url().isLocalFile() && isComicBookArchiveFileName(name)) {
+        if (item.isFile() && item.url().isLocalFile()
+            && KiriView::isComicBookArchiveFileName(name)) {
             candidates.push_back(
                 ContainerNavigationCandidate { normalizedFileContainerUrl(item.url()), name,
                     ContainerNavigationCandidateType::ComicBookArchive });
@@ -561,7 +510,7 @@ void appendArchiveImageNavigationCandidates(std::vector<ImageNavigationCandidate
     for (const KIO::UDSEntry &entry : entries) {
         const KFileItem item(entry, directoryUrl, true, true);
         const QString name = item.name();
-        if (!item.isFile() || !isSupportedImageFileName(name)) {
+        if (!item.isFile() || !KiriView::isSupportedImageFileName(name)) {
             continue;
         }
 
