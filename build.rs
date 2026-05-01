@@ -21,6 +21,7 @@ fn main() {
     .cpp_file(CppFile::from("src/kiriimageview.h"))
     .file("src/avifcompat.rs")
     .cpp_file("src/apngdecoder.cpp")
+    .cpp_file("src/kiriimagerendernode.cpp")
     .cpp_file("src/kiriimageview.cpp")
     .qt_module("Quick")
     .qt_module("Svg")
