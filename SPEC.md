@@ -15,6 +15,13 @@ archive at startup. Activating the open action shows the XDG portal file
 chooser, which accepts a single selection only. Pressing Escape closes the main
 window.
 
+When an image file is displayed, the main window title is the displayed image
+file name, a spaced em dash, and `KiriView`. When a CBZ comic book archive
+opened by KiriView is displayed, the title is the CBZ archive file name, a
+spaced em dash, and `KiriView`. KiriView does not show file paths in the window
+title. When no image or comic book page is displayed, the window title is
+`KiriView`.
+
 The toolbar also provides icon-only Previous Container and Next Container
 buttons next to the open action. These buttons navigate between sibling image
 containers and are labeled only by their tooltips.
