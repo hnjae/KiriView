@@ -19,10 +19,10 @@ dependency metadata, or repository maintenance.
 
 - `devenv shell`: enter the development environment with Rust, Qt, Flatpak, and formatters.
 - `just build`: build the Flatpak app into `build-dir/` with tests disabled.
-- `just build-with-tests`: run the full Flatpak build including manifest test commands.
+- `just build-with-tests`: run the full Flatpak build plus manifest test commands.
 - `just run`: launch `kiriview` from the Flatpak build directory.
-- `just lint`: run offline `cargo clippy --all-targets --all-features` with warnings denied inside the Flatpak build environment.
-- `just test`: run offline `cargo test --all-targets --all-features` inside the Flatpak build environment.
+- `just lint`: run host/devenv Rust and C++ linters using the normal host Cargo target directory.
+- `just test`: run offline `cargo test --all-targets --all-features` inside the Flatpak build environment with an isolated `target/flatpak` Cargo target directory.
 - `just format`: run the configured pre-commit formatters and checks for all files.
 - `just format-check`: verify Rust formatting with `cargo fmt --all --check`.
 

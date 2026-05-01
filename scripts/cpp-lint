@@ -107,9 +107,10 @@ add_colon_separated_include_roots() {
 }
 
 add_generated_include_dirs() {
+    local cargo_target_dir="${CARGO_TARGET_DIR:-target}"
     local dir
 
-    for dir in target/debug/build/*/out/cxxqtbuild/include target/release/build/*/out/cxxqtbuild/include; do
+    for dir in "$cargo_target_dir"/debug/build/*/out/cxxqtbuild/include "$cargo_target_dir"/release/build/*/out/cxxqtbuild/include; do
         add_system_include_dir "$dir"
     done
 }

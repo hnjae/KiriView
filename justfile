@@ -27,6 +27,7 @@ _module command: _cargo-vendor _flatpak-build-dir
         '--bind-mount=/run/build/kiriview/.cargo={{ justfile_directory() }}/.flatpak-cargo/.cargo' \
         '--bind-mount=/run/build/kiriview/cargo/vendor={{ justfile_directory() }}/.flatpak-cargo/vendor' \
         --build-dir=/run/build/kiriview \
+        --env=CARGO_TARGET_DIR=/run/build/kiriview/target/flatpak \
         --env=PATH=/usr/lib/sdk/rust-stable/bin:/app/bin:/usr/bin \
         build-dir \
         {{ command }}
@@ -40,13 +41,18 @@ _module-llvm command: _cargo-vendor _flatpak-build-dir
         '--bind-mount=/run/build/kiriview/.cargo={{ justfile_directory() }}/.flatpak-cargo/.cargo' \
         '--bind-mount=/run/build/kiriview/cargo/vendor={{ justfile_directory() }}/.flatpak-cargo/vendor' \
         --build-dir=/run/build/kiriview \
+        --env=CARGO_TARGET_DIR=/run/build/kiriview/target/flatpak \
         --env=PATH=/usr/lib/sdk/rust-stable/bin:/usr/lib/sdk/llvm21/bin:/app/bin:/usr/bin \
         build-dir \
         {{ command }}
 
 [group('ci')]
-lint:
-    just _module 'cargo --offline clippy --all-targets --all-features -- -D warnings'
+lint: _cargo-vendor
+    devenv shell -- cargo \
+        --config 'source.vendored-sources.directory="{{ justfile_directory() }}/.flatpak-cargo/vendor"' \
+        --config 'source.crates-io.replace-with="vendored-sources"' \
+        --offline \
+        clippy --all-targets --all-features -- -D warnings
     just cpp-lint
 
 [group('ci')]
@@ -56,7 +62,7 @@ cpp-lint:
 
 [group('ci')]
 clang-tidy:
-    just _module-llvm 'bash scripts/cpp-lint clang-tidy'
+    devenv shell -- bash scripts/cpp-lint clang-tidy
 
 [group('ci')]
 clazy:
