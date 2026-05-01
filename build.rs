@@ -23,6 +23,7 @@ fn main() {
     .cpp_file("src/apngdecoder.cpp")
     .cpp_file("src/kiriimageview.cpp")
     .qt_module("Quick")
+    .qt_module("Svg")
     .qt_module("Network")
     .qt_module("DBus");
 

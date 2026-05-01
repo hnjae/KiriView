@@ -16,6 +16,7 @@ qt_packages=(
     Qt6Gui
     Qt6Quick
     Qt6Qml
+    Qt6Svg
     Qt6Network
     Qt6DBus
 )

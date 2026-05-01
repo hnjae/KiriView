@@ -189,6 +189,9 @@ private:
     bool isPredecodeInFlight(const QUrl &url) const;
     void finishLoadWithError(const QString &errorString);
     void finishLoadSuccessfully(const QImage &image);
+    void finishSvgLoadSuccessfully(QByteArray data, const QSize &intrinsicSize);
+    void prepareSuccessfulImageLoad();
+    void finishSuccessfulImageLoad();
     void startAnimation(
         const QByteArray &data, const QByteArray &format, int loopCount, int firstFrameDelay);
     void startDecodedAnimation(std::vector<KiriView::AnimationFrame> frames, int loopCount);
@@ -200,6 +203,10 @@ private:
     void stopAnimation();
     void finishWithAnimationError(const QString &errorString);
     void setDisplayedImage(const QImage &image);
+    void setDisplayedSvgImage(
+        QByteArray data, const QSize &intrinsicSize, const QImage &image, const QSize &rasterSize);
+    void clearDisplayedSvgImage();
+    bool updateDisplayedSvgRaster();
     void setLoading(bool loading);
     void setStatus(Status status);
     void setErrorString(const QString &errorString);
@@ -210,8 +217,11 @@ private:
     void setZoomMode(ZoomMode zoomMode);
     void updateZoomState();
     qreal displayDevicePixelRatio() const;
+    int maximumTextureSize() const;
     qreal fitZoomPercent(ZoomMode zoomMode) const;
+    qreal fitZoomPercentForImageSize(ZoomMode zoomMode, const QSize &imageSize) const;
     QSizeF displaySizeForZoomPercent(qreal zoomPercent) const;
+    QSizeF displaySizeForZoomPercent(qreal zoomPercent, const QSize &imageSize) const;
     void clearImage();
 
     QUrl m_sourceUrl;
@@ -228,6 +238,10 @@ private:
     ZoomMode m_zoomMode = ZoomMode::Fit;
     QUrl m_zoomContainerUrl;
     QImage m_image;
+    bool m_displayedImageIsSvg = false;
+    QByteArray m_svgData;
+    QSize m_svgIntrinsicSize;
+    QSize m_svgRasterSize;
     quint64 m_imageRevision = 0;
     QByteArray m_animationData;
     QByteArray m_animationFormat;

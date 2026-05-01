@@ -11,6 +11,7 @@ let
     paths = with pkgs.kdePackages; [
       qtbase
       qtdeclarative
+      qtsvg
     ];
   };
   qmake = pkgs.writeShellScriptBin "qmake6" ''
@@ -70,6 +71,7 @@ in
     kdePackages.qqc2-desktop-style
     kdePackages.qtbase
     kdePackages.qtdeclarative
+    kdePackages.qtsvg
     kdePackages.qttools
     ninja
     pkg-config

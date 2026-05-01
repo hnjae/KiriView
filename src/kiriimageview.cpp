@@ -26,12 +26,14 @@
 #include <QMetaObject>
 #include <QMimeDatabase>
 #include <QMimeType>
+#include <QPainter>
 #include <QPointer>
 #include <QQuickWindow>
 #include <QRectF>
 #include <QRunnable>
 #include <QSGRenderNode>
 #include <QStringList>
+#include <QSvgRenderer>
 #include <QThreadPool>
 #include <QVector4D>
 #include <Qt>
@@ -57,6 +59,7 @@ constexpr quint32 uniformBufferSize = 96;
 constexpr std::ptrdiff_t predecodePreviousImageCount = 2;
 constexpr std::ptrdiff_t predecodeNextImageCount = 10;
 constexpr qsizetype predecodeCacheByteBudget = 512 * 1024 * 1024;
+constexpr int fallbackTextureSizeMax = 16384;
 
 struct ImageNavigationCandidate {
     QUrl url;
@@ -81,8 +84,11 @@ struct Vertex {
 
 struct DecodedImageResult {
     bool success = false;
+    bool isSvg = false;
     QString errorString;
     QImage image;
+    QByteArray svgData;
+    QSize svgIntrinsicSize;
     std::vector<KiriView::AnimationFrame> decodedAnimationFrames;
     QByteArray animationData;
     QByteArray animationFormat;
@@ -125,6 +131,62 @@ QImage displayReadyImage(const QImage &image)
     return image.convertToFormat(QImage::Format_RGBA8888_Premultiplied);
 }
 
+QSize svgIntrinsicSize(const QSvgRenderer &renderer)
+{
+    const QSize defaultSize = renderer.defaultSize();
+    if (!defaultSize.isEmpty()) {
+        return defaultSize;
+    }
+
+    const QRectF viewBox = renderer.viewBoxF();
+    if (!viewBox.isValid()) {
+        return {};
+    }
+
+    return QSize(std::max(1, static_cast<int>(std::ceil(viewBox.width()))),
+        std::max(1, static_cast<int>(std::ceil(viewBox.height()))));
+}
+
+QSize svgRasterSize(const QSizeF &displaySize, qreal devicePixelRatio, int maximumTextureSize)
+{
+    if (displaySize.isEmpty() || !std::isfinite(devicePixelRatio) || devicePixelRatio <= 0.0) {
+        return {};
+    }
+
+    const qreal width = displaySize.width() * devicePixelRatio;
+    const qreal height = displaySize.height() * devicePixelRatio;
+    if (!std::isfinite(width) || !std::isfinite(height) || width <= 0.0 || height <= 0.0) {
+        return {};
+    }
+
+    const int maximumSize = maximumTextureSize > 0 ? maximumTextureSize : fallbackTextureSizeMax;
+    const qreal scale = std::min<qreal>(1.0, std::min(maximumSize / width, maximumSize / height));
+    return QSize(std::clamp(static_cast<int>(std::ceil(width * scale)), 1, maximumSize),
+        std::clamp(static_cast<int>(std::ceil(height * scale)), 1, maximumSize));
+}
+
+QImage renderSvgImage(const QByteArray &data, const QSize &size)
+{
+    if (data.isEmpty() || size.isEmpty()) {
+        return {};
+    }
+
+    QSvgRenderer renderer(data);
+    if (!renderer.isValid()) {
+        return {};
+    }
+
+    QImage image(size, QImage::Format_RGBA8888_Premultiplied);
+    if (image.isNull()) {
+        return {};
+    }
+
+    image.fill(Qt::transparent);
+    QPainter painter(&image);
+    renderer.render(&painter, QRectF(QPointF(0.0, 0.0), QSizeF(size)));
+    return image;
+}
+
 DecodedImageResult decodedImageFailure(const QString &errorString)
 {
     DecodedImageResult result;
@@ -132,8 +194,33 @@ DecodedImageResult decodedImageFailure(const QString &errorString)
     return result;
 }
 
+std::optional<DecodedImageResult> decodeSvgImageData(const QByteArray &data)
+{
+    QSvgRenderer renderer(data);
+    if (!renderer.isValid()) {
+        return std::nullopt;
+    }
+
+    const QSize intrinsicSize = svgIntrinsicSize(renderer);
+    if (intrinsicSize.isEmpty()) {
+        return decodedImageFailure(QCoreApplication::translate(
+            "KiriImageView", "Could not determine the selected SVG image size."));
+    }
+
+    DecodedImageResult result;
+    result.success = true;
+    result.isSvg = true;
+    result.svgData = data;
+    result.svgIntrinsicSize = intrinsicSize;
+    return result;
+}
+
 DecodedImageResult decodeImageData(const QByteArray &data)
 {
+    if (const std::optional<DecodedImageResult> svgResult = decodeSvgImageData(data)) {
+        return *svgResult;
+    }
+
     KiriView::ApngDecodeResult apngResult = KiriView::decodeApngAnimation(data);
     if (apngResult.status == KiriView::ApngDecodeStatus::Success) {
         if (apngResult.animation.frames.empty()) {
@@ -243,8 +330,8 @@ qsizetype imageByteCost(const QImage &image)
 
 bool decodedImageResultIsPredecodeCacheable(const DecodedImageResult &result)
 {
-    return result.success && !result.image.isNull() && result.decodedAnimationFrames.empty()
-        && !result.hasAnimationReaderFrames
+    return result.success && !result.isSvg && !result.image.isNull()
+        && result.decodedAnimationFrames.empty() && !result.hasAnimationReaderFrames
         && imageByteCost(result.image) <= predecodeCacheByteBudget;
 }
 
@@ -2454,6 +2541,13 @@ void KiriImageView::startImageDecode(QByteArray data, quint64 generation)
                         return;
                     }
 
+                    if (result->isSvg) {
+                        view->finishSvgLoadSuccessfully(
+                            std::move(result->svgData), result->svgIntrinsicSize);
+                        view->scheduleAdjacentImagePredecode();
+                        return;
+                    }
+
                     view->finishLoadSuccessfully(result->image);
                     if (!result->decodedAnimationFrames.empty()) {
                         view->startDecodedAnimation(
@@ -2502,14 +2596,63 @@ void KiriImageView::finishLoadWithError(const QString &errorString)
 
 void KiriImageView::finishLoadSuccessfully(const QImage &image)
 {
+    prepareSuccessfulImageLoad();
+    setDisplayedImage(image);
+    updateZoomState();
+    finishSuccessfulImageLoad();
+}
+
+void KiriImageView::finishSvgLoadSuccessfully(QByteArray data, const QSize &intrinsicSize)
+{
+    if (data.isEmpty() || intrinsicSize.isEmpty()) {
+        finishLoadWithError(tr("Could not decode the selected SVG image."));
+        return;
+    }
+
+    const QUrl loadedContainerUrl = containerNavigationUrlForImage(m_sourceUrl, m_comicBookRootUrl);
+    ZoomMode loadedZoomMode = ZoomMode::Fit;
+    if (sameContainerNavigationUrl(loadedContainerUrl, m_zoomContainerUrl)) {
+        loadedZoomMode = m_zoomMode;
+    }
+    const qreal loadedZoomPercent = loadedZoomMode == ZoomMode::Manual
+        ? m_zoomPercent
+        : fitZoomPercentForImageSize(loadedZoomMode, intrinsicSize);
+    const QSizeF loadedDisplaySize = displaySizeForZoomPercent(loadedZoomPercent, intrinsicSize);
+    const QSize rasterSize
+        = svgRasterSize(loadedDisplaySize, displayDevicePixelRatio(), maximumTextureSize());
+    const QImage image = renderSvgImage(data, rasterSize);
+    if (image.isNull()) {
+        finishLoadWithError(tr("Could not render the selected SVG image."));
+        return;
+    }
+
+    stopAnimation();
+    if (m_zoomMode != loadedZoomMode) {
+        m_zoomMode = loadedZoomMode;
+        Q_EMIT zoomModeChanged();
+    }
+    if (!approximatelyEqual(m_zoomPercent, loadedZoomPercent)) {
+        m_zoomPercent = loadedZoomPercent;
+        Q_EMIT zoomPercentChanged();
+    }
+    m_zoomContainerUrl = loadedContainerUrl;
+    setDisplayedSvgImage(std::move(data), intrinsicSize, image, rasterSize);
+    setDisplaySize(loadedDisplaySize);
+    finishSuccessfulImageLoad();
+}
+
+void KiriImageView::prepareSuccessfulImageLoad()
+{
     stopAnimation();
     const QUrl loadedContainerUrl = containerNavigationUrlForImage(m_sourceUrl, m_comicBookRootUrl);
     if (!sameContainerNavigationUrl(loadedContainerUrl, m_zoomContainerUrl)) {
         setZoomMode(ZoomMode::Fit);
     }
     m_zoomContainerUrl = loadedContainerUrl;
-    setDisplayedImage(image);
-    updateZoomState();
+}
+
+void KiriImageView::finishSuccessfulImageLoad()
+{
     m_displayedUrl = m_sourceUrl;
     m_displayedComicBookRootUrl = m_comicBookRootUrl;
     updateWindowTitleFileName();
@@ -2699,10 +2842,59 @@ void KiriImageView::finishWithAnimationError(const QString &errorString)
 
 void KiriImageView::setDisplayedImage(const QImage &image)
 {
+    clearDisplayedSvgImage();
     m_image = displayReadyImage(image);
     ++m_imageRevision;
     setImageSize(m_image.size());
     update();
+}
+
+void KiriImageView::setDisplayedSvgImage(
+    QByteArray data, const QSize &intrinsicSize, const QImage &image, const QSize &rasterSize)
+{
+    m_displayedImageIsSvg = true;
+    m_svgData = std::move(data);
+    m_svgIntrinsicSize = intrinsicSize;
+    m_svgRasterSize = rasterSize;
+    m_image = displayReadyImage(image);
+    ++m_imageRevision;
+    setImageSize(intrinsicSize);
+    update();
+}
+
+void KiriImageView::clearDisplayedSvgImage()
+{
+    m_displayedImageIsSvg = false;
+    m_svgData.clear();
+    m_svgIntrinsicSize = QSize();
+    m_svgRasterSize = QSize();
+}
+
+bool KiriImageView::updateDisplayedSvgRaster()
+{
+    if (!m_displayedImageIsSvg) {
+        return true;
+    }
+
+    const QSize rasterSize
+        = svgRasterSize(m_displaySize, displayDevicePixelRatio(), maximumTextureSize());
+    if (rasterSize.isEmpty()) {
+        return false;
+    }
+    if (!m_image.isNull() && m_svgRasterSize == rasterSize) {
+        return true;
+    }
+
+    const QImage image = renderSvgImage(m_svgData, rasterSize);
+    if (image.isNull()) {
+        return false;
+    }
+
+    m_image = displayReadyImage(image);
+    m_svgRasterSize = rasterSize;
+    ++m_imageRevision;
+    update();
+    return true;
 }
 
 void KiriImageView::setLoading(bool loading)
@@ -2772,6 +2964,7 @@ void KiriImageView::setDisplaySize(const QSizeF &displaySize)
 
     m_displaySize = normalizedDisplaySize;
     Q_EMIT displaySizeChanged();
+    updateDisplayedSvgRaster();
     update();
 }
 
@@ -2796,6 +2989,7 @@ void KiriImageView::updateZoomState()
     }
 
     setDisplaySize(displaySizeForZoomPercent(m_zoomPercent));
+    updateDisplayedSvgRaster();
 }
 
 qreal KiriImageView::displayDevicePixelRatio() const
@@ -2813,30 +3007,47 @@ qreal KiriImageView::displayDevicePixelRatio() const
     return devicePixelRatio;
 }
 
+int KiriImageView::maximumTextureSize() const
+{
+    const QQuickWindow *quickWindow = window();
+    QRhi *rhi = quickWindow == nullptr ? nullptr : quickWindow->rhi();
+    if (rhi == nullptr) {
+        return fallbackTextureSizeMax;
+    }
+
+    const int maximumTextureSize = rhi->resourceLimit(QRhi::TextureSizeMax);
+    return maximumTextureSize > 0 ? maximumTextureSize : fallbackTextureSizeMax;
+}
+
 qreal KiriImageView::fitZoomPercent(ZoomMode zoomMode) const
+{
+    return fitZoomPercentForImageSize(zoomMode, m_imageSize);
+}
+
+qreal KiriImageView::fitZoomPercentForImageSize(ZoomMode zoomMode, const QSize &imageSize) const
 {
     const qreal devicePixelRatio = displayDevicePixelRatio();
     const qreal fallbackZoomPercent = devicePixelRatio * 100.0;
 
-    if (m_imageSize.isEmpty()) {
+    if (imageSize.isEmpty()) {
         return fallbackZoomPercent;
     }
 
-    const auto fitWidthZoomPercent = [this, devicePixelRatio, fallbackZoomPercent]() {
+    const auto fitWidthZoomPercent = [this, devicePixelRatio, fallbackZoomPercent, imageSize]() {
         if (m_viewportSize.width() <= 0.0) {
             return fallbackZoomPercent;
         }
 
         return std::max<qreal>(
-            0.0, m_viewportSize.width() * devicePixelRatio * 100.0 / m_imageSize.width());
+            0.0, m_viewportSize.width() * devicePixelRatio * 100.0 / imageSize.width());
     };
-    const auto fitHeightZoomPercent = [this, devicePixelRatio, fallbackZoomPercent]() {
+    const auto fitHeightZoomPercent = [this, devicePixelRatio, fallbackZoomPercent, imageSize]() {
         if (m_viewportSize.height() <= 0.0) {
             return fallbackZoomPercent;
         }
 
         return std::max<qreal>(
-            0.0, m_viewportSize.height() * devicePixelRatio * 100.0 / m_imageSize.height());
+            0.0, m_viewportSize.height() * devicePixelRatio * 100.0 / imageSize.height());
     };
 
     switch (zoomMode) {
@@ -2858,12 +3069,17 @@ qreal KiriImageView::fitZoomPercent(ZoomMode zoomMode) const
 
 QSizeF KiriImageView::displaySizeForZoomPercent(qreal zoomPercent) const
 {
-    if (m_imageSize.isEmpty() || !std::isfinite(zoomPercent) || zoomPercent <= 0.0) {
+    return displaySizeForZoomPercent(zoomPercent, m_imageSize);
+}
+
+QSizeF KiriImageView::displaySizeForZoomPercent(qreal zoomPercent, const QSize &imageSize) const
+{
+    if (imageSize.isEmpty() || !std::isfinite(zoomPercent) || zoomPercent <= 0.0) {
         return {};
     }
 
     const qreal scale = zoomPercent / (displayDevicePixelRatio() * 100.0);
-    return QSizeF(m_imageSize.width() * scale, m_imageSize.height() * scale);
+    return QSizeF(imageSize.width() * scale, imageSize.height() * scale);
 }
 
 void KiriImageView::clearImage()
@@ -2876,6 +3092,7 @@ void KiriImageView::clearImage()
     m_displayedUrl = QUrl();
     m_displayedComicBookRootUrl = QUrl();
     m_zoomContainerUrl = QUrl();
+    clearDisplayedSvgImage();
     updateWindowTitleFileName();
     clearPageNavigation();
 
