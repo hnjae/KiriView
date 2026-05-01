@@ -3,7 +3,7 @@
 
 #include "kiriimageview.h"
 
-#include "avifcompat.h"
+#include "kiriview/src/avifcompat.cxx.h"
 
 #include <KCoreDirLister>
 #include <KFileItem>
