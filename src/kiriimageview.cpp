@@ -1796,7 +1796,9 @@ void KiriImageView::updateContainerNavigationFromDisplayedImage()
 
     if (isUrlInsideArchiveRoot(m_displayedUrl, m_displayedComicBookRootUrl)) {
         const std::optional<QUrl> archiveUrl = comicBookArchiveFileUrl(m_displayedComicBookRootUrl);
-        setContainerNavigationUrl(archiveUrl.value_or(QUrl()));
+        setContainerNavigationUrl(archiveUrl.has_value()
+                ? normalizedFileContainerUrl(navigationSourceUrl(*archiveUrl))
+                : QUrl());
         return;
     }
 
