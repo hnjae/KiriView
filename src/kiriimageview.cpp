@@ -14,6 +14,7 @@
 #include <QBuffer>
 #include <QByteArray>
 #include <QCollator>
+#include <QDir>
 #include <QFile>
 #include <QIODevice>
 #include <QImageReader>
@@ -91,6 +92,71 @@ bool isSupportedImageFileName(const QString &name)
     return supportedExtensions.contains(name.mid(dotIndex + 1).toCaseFolded());
 }
 
+bool isKioFuseArchiveScheme(const QString &scheme)
+{
+    static const QStringList archiveSchemes = {
+        QStringLiteral("zip"),
+    };
+
+    return archiveSchemes.contains(scheme);
+}
+
+std::optional<QUrl> kioFuseArchiveUrl(const QString &localPath)
+{
+    const QString cleanPath = QDir::cleanPath(localPath);
+    const QString runtimeDir = QFile::decodeName(qgetenv("XDG_RUNTIME_DIR"));
+    const QString marker = QStringLiteral("/kio-fuse-");
+    qsizetype markerIndex = -1;
+
+    if (!runtimeDir.isEmpty()) {
+        const QString prefix = QDir::cleanPath(runtimeDir) + marker;
+        if (!cleanPath.startsWith(prefix)) {
+            return std::nullopt;
+        }
+        markerIndex = prefix.size() - marker.size();
+    } else {
+        markerIndex = cleanPath.indexOf(marker);
+        if (markerIndex < 0) {
+            return std::nullopt;
+        }
+    }
+
+    const qsizetype mountEnd = cleanPath.indexOf(QLatin1Char('/'), markerIndex + marker.size());
+    if (mountEnd < 0 || mountEnd == cleanPath.size() - 1) {
+        return std::nullopt;
+    }
+
+    const QString relativePath = cleanPath.mid(mountEnd + 1);
+    const qsizetype schemeEnd = relativePath.indexOf(QLatin1Char('/'));
+    if (schemeEnd <= 0 || schemeEnd == relativePath.size() - 1) {
+        return std::nullopt;
+    }
+
+    const QString scheme = relativePath.left(schemeEnd);
+    if (!isKioFuseArchiveScheme(scheme)) {
+        return std::nullopt;
+    }
+
+    QUrl url;
+    url.setScheme(scheme);
+    url.setPath(relativePath.mid(schemeEnd));
+    if (!url.isValid() || url.path().isEmpty()) {
+        return std::nullopt;
+    }
+
+    return url;
+}
+
+QUrl navigationUrlForLocalPath(const QString &localPath)
+{
+    const std::optional<QUrl> kioUrl = kioFuseArchiveUrl(localPath);
+    if (kioUrl.has_value()) {
+        return kioUrl.value();
+    }
+
+    return QUrl::fromLocalFile(localPath);
+}
+
 std::vector<ImageNavigationCandidate> imageNavigationCandidates(const KFileItemList &items)
 {
     std::vector<ImageNavigationCandidate> candidates;
@@ -161,7 +227,7 @@ std::optional<QUrl> documentPortalHostUrl(const QUrl &url)
         return std::nullopt;
     }
 
-    return QUrl::fromLocalFile(hostPath);
+    return navigationUrlForLocalPath(hostPath);
 }
 
 QUrl navigationSourceUrl(const QUrl &url)
@@ -169,6 +235,13 @@ QUrl navigationSourceUrl(const QUrl &url)
     const std::optional<QUrl> hostUrl = documentPortalHostUrl(url);
     if (hostUrl.has_value()) {
         return hostUrl.value();
+    }
+
+    if (url.isLocalFile()) {
+        const std::optional<QUrl> kioUrl = kioFuseArchiveUrl(url.toLocalFile());
+        if (kioUrl.has_value()) {
+            return kioUrl.value();
+        }
     }
 
     return url;
