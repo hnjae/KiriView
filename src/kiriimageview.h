@@ -101,6 +101,18 @@ private:
         Next,
     };
 
+    struct PredecodedImage {
+        QUrl url;
+        QUrl comicBookRootUrl;
+        QImage image;
+        qsizetype byteCost = 0;
+    };
+
+    struct PredecodeJob {
+        QUrl url;
+        KIO::StoredTransferJob *job = nullptr;
+    };
+
     void startLoad();
     void startImageLoad(const QUrl &url, quint64 generation);
     void startImageDecode(QByteArray data, quint64 generation);
@@ -112,6 +124,21 @@ private:
     void finishNavigation(KCoreDirLister *lister, quint64 generation, NavigationDirection direction,
         const QUrl &currentUrl);
     void finishNavigationWithError(KCoreDirLister *lister, quint64 generation);
+    void scheduleAdjacentImagePredecode();
+    void scheduleFileAdjacentImagePredecode(quint64 generation);
+    void scheduleComicBookAdjacentImagePredecode(quint64 generation);
+    void startPredecodeImageLoads(
+        const std::vector<QUrl> &urls, const QUrl &comicBookRootUrl, quint64 generation);
+    void startPredecodeImageLoad(const QUrl &url, const QUrl &comicBookRootUrl, quint64 generation);
+    void startPredecodeImageDecode(
+        QByteArray data, const QUrl &url, const QUrl &comicBookRootUrl, quint64 generation);
+    void removePredecodeJob(KIO::StoredTransferJob *job);
+    void cancelPredecode();
+    bool tryDisplayPredecodedImage(const QUrl &url);
+    bool takePredecodedImage(const QUrl &url, QImage *image, QUrl *comicBookRootUrl);
+    void cachePredecodedImage(const QUrl &url, const QUrl &comicBookRootUrl, const QImage &image);
+    bool hasPredecodedImage(const QUrl &url) const;
+    bool isPredecodeInFlight(const QUrl &url) const;
     void finishLoadWithError(const QString &errorString);
     void finishLoadSuccessfully(const QImage &image);
     void startAnimation(
@@ -163,8 +190,13 @@ private:
     KIO::ListJob *m_archiveListJob = nullptr;
     KCoreDirLister *m_navigationLister = nullptr;
     KIO::ListJob *m_navigationListJob = nullptr;
+    KCoreDirLister *m_predecodeLister = nullptr;
+    KIO::ListJob *m_predecodeListJob = nullptr;
+    std::vector<PredecodeJob> m_predecodeJobs;
+    std::vector<PredecodedImage> m_predecodedImages;
     quint64 m_loadGeneration = 0;
     quint64 m_navigationGeneration = 0;
+    quint64 m_predecodeGeneration = 0;
     QUrl m_comicBookRootUrl;
 };
 
