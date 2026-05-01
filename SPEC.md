@@ -121,8 +121,8 @@ ready for another open action.
 When an image is open, Page Up or the Previous window action opens the previous
 supported image file in the same parent URL. Page Down or the Next window action
 opens the next one. Supported image extensions match the open dialog: AVIF
-(`.avif` and `.avifs`), BMP, GIF, JPEG, PNG, SVG, and WebP,
-case-insensitively.
+(`.avif` and `.avifs`), BMP, GIF, JPEG, JPEG 2000 (`.jp2`), JPEG XL (`.jxl`),
+PNG, SVG, and WebP, case-insensitively.
 
 When an image is opened from a KDE-supported archive URL such as `zip://`,
 navigation moves between supported image files in the same directory inside the
