@@ -3,8 +3,8 @@
 
 #include "kiriimageview.h"
 
+#include "kiriimagedecoder.h"
 #include "kiriimagerendernode.h"
-#include "kiriview/src/avifcompat.cxx.h"
 
 #include <KCoreDirLister>
 #include <KFileItem>
@@ -16,7 +16,6 @@
 #include <QBuffer>
 #include <QByteArray>
 #include <QCollator>
-#include <QCoreApplication>
 #include <QDir>
 #include <QFile>
 #include <QIODevice>
@@ -25,12 +24,10 @@
 #include <QMetaObject>
 #include <QMimeDatabase>
 #include <QMimeType>
-#include <QPainter>
 #include <QPointer>
 #include <QQuickWindow>
 #include <QRunnable>
 #include <QStringList>
-#include <QSvgRenderer>
 #include <QThreadPool>
 #include <Qt>
 #include <algorithm>
@@ -39,7 +36,6 @@
 #include <memory>
 #include <optional>
 #include <rhi/qrhi.h>
-#include <rhi/qshader.h>
 #include <sys/types.h>
 #include <sys/xattr.h>
 #include <utility>
@@ -53,7 +49,14 @@ constexpr const char *documentPortalHostPathAttribute = "user.document-portal.ho
 constexpr std::ptrdiff_t predecodePreviousImageCount = 2;
 constexpr std::ptrdiff_t predecodeNextImageCount = 10;
 constexpr qsizetype predecodeCacheByteBudget = 512 * 1024 * 1024;
-constexpr int fallbackTextureSizeMax = 16384;
+
+using KiriView::DecodedImageResult;
+using KiriView::decodedImageResultIsPredecodeCacheable;
+using KiriView::decodeImageData;
+using KiriView::displayReadyImage;
+using KiriView::imageByteCost;
+using KiriView::renderSvgImage;
+using KiriView::svgRasterSize;
 
 struct ImageNavigationCandidate {
     QUrl url;
@@ -71,21 +74,6 @@ struct ContainerNavigationCandidate {
     ContainerNavigationCandidateType type = ContainerNavigationCandidateType::Directory;
 };
 
-struct DecodedImageResult {
-    bool success = false;
-    bool isSvg = false;
-    QString errorString;
-    QImage image;
-    QByteArray svgData;
-    QSize svgIntrinsicSize;
-    std::vector<KiriView::AnimationFrame> decodedAnimationFrames;
-    QByteArray animationData;
-    QByteArray animationFormat;
-    int animationLoopCount = 0;
-    int firstFrameDelay = 0;
-    bool hasAnimationReaderFrames = false;
-};
-
 int normalizedAnimationFrameDelay(int delay)
 {
     if (delay < 0) {
@@ -101,163 +89,6 @@ bool approximatelyEqual(const QSizeF &left, const QSizeF &right)
 {
     return approximatelyEqual(left.width(), right.width())
         && approximatelyEqual(left.height(), right.height());
-}
-
-QImage displayReadyImage(const QImage &image)
-{
-    if (image.format() == QImage::Format_RGBA8888_Premultiplied) {
-        return image;
-    }
-    return image.convertToFormat(QImage::Format_RGBA8888_Premultiplied);
-}
-
-QSize svgIntrinsicSize(const QSvgRenderer &renderer)
-{
-    const QSize defaultSize = renderer.defaultSize();
-    if (!defaultSize.isEmpty()) {
-        return defaultSize;
-    }
-
-    const QRectF viewBox = renderer.viewBoxF();
-    if (!viewBox.isValid()) {
-        return {};
-    }
-
-    return QSize(std::max(1, static_cast<int>(std::ceil(viewBox.width()))),
-        std::max(1, static_cast<int>(std::ceil(viewBox.height()))));
-}
-
-QSize svgRasterSize(const QSizeF &displaySize, qreal devicePixelRatio, int maximumTextureSize)
-{
-    if (displaySize.isEmpty() || !std::isfinite(devicePixelRatio) || devicePixelRatio <= 0.0) {
-        return {};
-    }
-
-    const qreal width = displaySize.width() * devicePixelRatio;
-    const qreal height = displaySize.height() * devicePixelRatio;
-    if (!std::isfinite(width) || !std::isfinite(height) || width <= 0.0 || height <= 0.0) {
-        return {};
-    }
-
-    const int maximumSize = maximumTextureSize > 0 ? maximumTextureSize : fallbackTextureSizeMax;
-    const qreal scale = std::min<qreal>(1.0, std::min(maximumSize / width, maximumSize / height));
-    return QSize(std::clamp(static_cast<int>(std::ceil(width * scale)), 1, maximumSize),
-        std::clamp(static_cast<int>(std::ceil(height * scale)), 1, maximumSize));
-}
-
-QImage renderSvgImage(const QByteArray &data, const QSize &size)
-{
-    if (data.isEmpty() || size.isEmpty()) {
-        return {};
-    }
-
-    QSvgRenderer renderer(data);
-    if (!renderer.isValid()) {
-        return {};
-    }
-
-    QImage image(size, QImage::Format_RGBA8888_Premultiplied);
-    if (image.isNull()) {
-        return {};
-    }
-
-    image.fill(Qt::transparent);
-    QPainter painter(&image);
-    renderer.render(&painter, QRectF(QPointF(0.0, 0.0), QSizeF(size)));
-    return image;
-}
-
-DecodedImageResult decodedImageFailure(const QString &errorString)
-{
-    DecodedImageResult result;
-    result.errorString = errorString;
-    return result;
-}
-
-std::optional<DecodedImageResult> decodeSvgImageData(const QByteArray &data)
-{
-    QSvgRenderer renderer(data);
-    if (!renderer.isValid()) {
-        return std::nullopt;
-    }
-
-    const QSize intrinsicSize = svgIntrinsicSize(renderer);
-    if (intrinsicSize.isEmpty()) {
-        return decodedImageFailure(QCoreApplication::translate(
-            "KiriImageView", "Could not determine the selected SVG image size."));
-    }
-
-    DecodedImageResult result;
-    result.success = true;
-    result.isSvg = true;
-    result.svgData = data;
-    result.svgIntrinsicSize = intrinsicSize;
-    return result;
-}
-
-DecodedImageResult decodeImageData(const QByteArray &data)
-{
-    if (const std::optional<DecodedImageResult> svgResult = decodeSvgImageData(data)) {
-        return *svgResult;
-    }
-
-    KiriView::ApngDecodeResult apngResult = KiriView::decodeApngAnimation(data);
-    if (apngResult.status == KiriView::ApngDecodeStatus::Success) {
-        if (apngResult.animation.frames.empty()) {
-            return decodedImageFailure(QCoreApplication::translate(
-                "KiriImageView", "Could not decode the selected APNG animation."));
-        }
-
-        for (KiriView::AnimationFrame &frame : apngResult.animation.frames) {
-            frame.image = displayReadyImage(frame.image);
-        }
-
-        DecodedImageResult result;
-        result.success = true;
-        result.image = apngResult.animation.frames.front().image;
-        result.decodedAnimationFrames = std::move(apngResult.animation.frames);
-        result.animationLoopCount = apngResult.animation.loopCount;
-        return result;
-    }
-    if (apngResult.status == KiriView::ApngDecodeStatus::Error) {
-        return decodedImageFailure(apngResult.errorString);
-    }
-
-    const QByteArray imageData = KiriView::avifDataWithCompatibilityFixes(data);
-
-    QBuffer buffer;
-    buffer.setData(imageData);
-
-    if (!buffer.open(QIODevice::ReadOnly)) {
-        return decodedImageFailure(QCoreApplication::translate(
-            "KiriImageView", "Could not read the selected image data."));
-    }
-
-    QImageReader reader(&buffer);
-    reader.setAutoTransform(true);
-    const bool supportsAnimation = reader.supportsAnimation();
-
-    QImage image = reader.read();
-    if (image.isNull()) {
-        return decodedImageFailure(reader.errorString());
-    }
-
-    const QByteArray format = reader.format();
-    const int firstFrameDelay = reader.nextImageDelay();
-    const int loopCount = reader.loopCount();
-    const bool hasMoreFrames = reader.canRead();
-
-    DecodedImageResult result;
-    result.success = true;
-    result.image = displayReadyImage(image);
-    if (supportsAnimation && hasMoreFrames) {
-        result.animationData = imageData;
-        result.animationFormat = format;
-        result.animationLoopCount = loopCount;
-        result.firstFrameDelay = firstFrameDelay;
-        result.hasAnimationReaderFrames = true;
-    }
-    return result;
 }
 
 QUrl normalizedImageUrl(const QUrl &url) { return url.adjusted(QUrl::NormalizePathSegments); }
@@ -298,21 +129,6 @@ QUrl parentUrlForContainerNavigation(const QUrl &containerUrl)
     }
 
     return parentSourceUrl.adjusted(QUrl::RemoveFilename | QUrl::NormalizePathSegments);
-}
-
-qsizetype imageByteCost(const QImage &image)
-{
-    if (image.isNull()) {
-        return 0;
-    }
-    return image.sizeInBytes();
-}
-
-bool decodedImageResultIsPredecodeCacheable(const DecodedImageResult &result)
-{
-    return result.success && !result.isSvg && !result.image.isNull()
-        && result.decodedAnimationFrames.empty() && !result.hasAnimationReaderFrames
-        && imageByteCost(result.image) <= predecodeCacheByteBudget;
 }
 
 std::vector<QUrl> predecodeWindowImageUrls(
@@ -2007,7 +1823,7 @@ void KiriImageView::startPredecodeImageDecode(
                         return;
                     }
 
-                    if (decodedImageResultIsPredecodeCacheable(*result)) {
+                    if (decodedImageResultIsPredecodeCacheable(*result, predecodeCacheByteBudget)) {
                         view->cachePredecodedImage(url, comicBookRootUrl, result->image);
                     }
 
@@ -2191,7 +2007,8 @@ void KiriImageView::startImageDecode(QByteArray data, quint64 generation)
                         return;
                     }
 
-                    const bool predecodeCacheable = decodedImageResultIsPredecodeCacheable(*result);
+                    const bool predecodeCacheable
+                        = decodedImageResultIsPredecodeCacheable(*result, predecodeCacheByteBudget);
                     view->finishLoadSuccessfully(result->image, predecodeCacheable);
                     if (!result->decodedAnimationFrames.empty()) {
                         view->startDecodedAnimation(
@@ -2658,11 +2475,11 @@ int KiriImageView::maximumTextureSize() const
     const QQuickWindow *quickWindow = window();
     QRhi *rhi = quickWindow == nullptr ? nullptr : quickWindow->rhi();
     if (rhi == nullptr) {
-        return fallbackTextureSizeMax;
+        return KiriView::fallbackTextureSizeMax;
     }
 
     const int maximumTextureSize = rhi->resourceLimit(QRhi::TextureSizeMax);
-    return maximumTextureSize > 0 ? maximumTextureSize : fallbackTextureSizeMax;
+    return maximumTextureSize > 0 ? maximumTextureSize : KiriView::fallbackTextureSizeMax;
 }
 
 qreal KiriImageView::fitZoomPercent(ZoomMode zoomMode) const
