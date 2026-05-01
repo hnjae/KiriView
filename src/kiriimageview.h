@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_KIRIIMAGEVIEW_H
 #define KIRIVIEW_KIRIIMAGEVIEW_H
 
-#include "asyncobjectslot.h"
+#include "imageloader.h"
 
 #include <QByteArray>
 #include <QImage>
@@ -17,7 +17,6 @@
 #include <QtQml/qqmlregistration.h>
 #include <memory>
 #include <optional>
-#include <vector>
 
 namespace KiriView {
 class ImageAnimationPlayer;
@@ -113,24 +112,11 @@ Q_SIGNALS:
     void containerNavigationChanged();
 
 private:
-    struct LoadSession {
-        quint64 id = 0;
-        QUrl requestedSourceUrl;
-        QUrl imageUrl;
-        QUrl comicBookRootUrl;
-        QUrl containerNavigationUrl;
-    };
-
     class PredecodeCoordinator;
 
     void setSourceUrlForLoad(const QUrl &sourceUrl, const QUrl &containerNavigationUrl);
     void startLoad();
-    void startImageLoad(LoadSession session);
-    void startImageDecode(QByteArray data, LoadSession session);
-    void startComicBookLoad(LoadSession session);
     void cancelLoad();
-    bool isCurrentLoadSession(const LoadSession &session) const;
-    void clearLoadSession(const LoadSession &session);
     void setSourceUrlFromResolvedLoad(const QUrl &sourceUrl);
     void openAdjacentImage(KiriView::NavigationDirection direction);
     void cancelNavigation();
@@ -147,14 +133,18 @@ private:
     void clearPageNavigation();
     void scheduleAdjacentImagePredecode();
     void cancelPredecode();
-    bool tryDisplayPredecodedImage(LoadSession session);
-    void finishLoadWithError(const LoadSession &session, const QString &errorString);
+    std::optional<KiriView::PredecodedImage> takePredecodedImage(const QUrl &url) const;
+    void finishPredecodedImageLoad(KiriView::ImageLoadSession session, const QImage &image);
+    void finishDecodedImageLoad(
+        KiriView::ImageLoadSession session, std::shared_ptr<KiriView::DecodedImageResult> result);
+    void finishLoadWithError(const KiriView::ImageLoadSession &session,
+        KiriView::ImageLoadError error, const QString &errorString);
     void finishLoadSuccessfully(
-        const LoadSession &session, const QImage &image, bool predecodeCacheable);
+        const KiriView::ImageLoadSession &session, const QImage &image, bool predecodeCacheable);
     void finishSvgLoadSuccessfully(
-        LoadSession session, QByteArray data, const QSize &intrinsicSize);
-    void prepareSuccessfulImageLoad(const LoadSession &session);
-    void finishSuccessfulImageLoad(const LoadSession &session);
+        KiriView::ImageLoadSession session, QByteArray data, const QSize &intrinsicSize);
+    void prepareSuccessfulImageLoad(const KiriView::ImageLoadSession &session);
+    void finishSuccessfulImageLoad(const KiriView::ImageLoadSession &session);
     bool hasDisplayedImage() const;
     void stopAnimation();
     void finishWithAnimationError(const QString &errorString);
@@ -202,11 +192,8 @@ private:
     quint64 m_imageRevision = 0;
     std::unique_ptr<KiriView::ImageAnimationPlayer> m_animationPlayer;
     std::unique_ptr<KiriView::ImageNavigationService> m_navigationService;
-    KiriView::AsyncObjectSlot m_imageLoadSlot;
-    KiriView::AsyncObjectSlot m_archiveListSlot;
+    std::unique_ptr<KiriView::ImageLoader> m_imageLoader;
     std::unique_ptr<PredecodeCoordinator> m_predecodeCoordinator;
-    quint64 m_nextLoadSessionId = 0;
-    std::optional<LoadSession> m_loadSession;
     QUrl m_containerNavigationUrl;
     QUrl m_loadingContainerNavigationUrl;
 };
