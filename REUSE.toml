@@ -8,6 +8,7 @@ path = [
   ".editorconfig",
   ".gitignore",
   ".rumdl.toml",
+  ".typos.toml",
   ".yamlfmt.yaml",
   "statix.toml",
   "AGENTS.md",

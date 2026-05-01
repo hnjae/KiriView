@@ -97,10 +97,7 @@ in
     editorconfig-checker.enable = true;
     gitlint.enable = true;
     reuse.enable = true;
-    typos = {
-      enable = true;
-      settings.ignored-words = [ "INVOKABLE" ];
-    };
+    typos.enable = true;
 
     # Rust
     rustfmt.enable = true;
