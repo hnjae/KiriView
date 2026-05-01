@@ -6,8 +6,9 @@ KiriView opens one user-selected image file, displays it in the main window, and
 can navigate to adjacent images in the same location.
 
 The main window toolbar shows image controls without a page title. The toolbar
-always provides open, previous, next, fit, and zoom controls in fixed positions.
-Controls that require a ready image are disabled until an image is ready.
+always provides open, page navigation, fit, and zoom controls in fixed
+positions. Controls that require a ready image are disabled until an image is
+ready.
 Activating the open action shows the XDG portal file chooser, which accepts a
 single selection only. Pressing Escape closes the main window.
 
@@ -55,6 +56,13 @@ smaller than the viewport, it remains centered.
 The toolbar provides a zoom percentage input. When an image is ready, users can
 enter manual zoom values from 10% through 800%. A fit action returns the image
 to the default display-scale-aware fit behavior.
+
+The toolbar centers page navigation as an up-arrow Previous button, an editable
+current page number, the text `of`, the total number of supported images in the
+current directory or archive scope, and a down-arrow Next button. Page numbers
+are shown to users starting at 1. Entering a valid page number opens that image;
+entering an invalid number leaves the current image open and restores the
+displayed page number.
 
 Animated image files, including GIF and APNG, play when animation frames are
 available. The first frame is shown once loading succeeds; later frames use the
