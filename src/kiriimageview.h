@@ -5,6 +5,7 @@
 #define KIRIVIEW_KIRIIMAGEVIEW_H
 
 #include "imageloader.h"
+#include "imagezoomstate.h"
 
 #include <QByteArray>
 #include <QImage>
@@ -158,15 +159,10 @@ private:
     void setWindowTitleFileName(const QString &fileName);
     void updateWindowTitleFileName();
     void setImageSize(const QSize &imageSize);
-    void setDisplaySize(const QSizeF &displaySize);
-    void setZoomMode(ZoomMode zoomMode);
+    void applyZoomStateChanges(const KiriView::ImageZoomSnapshot &previous);
     void updateZoomState();
     qreal displayDevicePixelRatio() const;
     int maximumTextureSize() const;
-    qreal fitZoomPercent(ZoomMode zoomMode) const;
-    qreal fitZoomPercentForImageSize(ZoomMode zoomMode, const QSize &imageSize) const;
-    QSizeF displaySizeForZoomPercent(qreal zoomPercent) const;
-    QSizeF displaySizeForZoomPercent(qreal zoomPercent, const QSize &imageSize) const;
     void clearImage();
 
     QUrl m_sourceUrl;
@@ -176,12 +172,7 @@ private:
     bool m_loading = false;
     QString m_errorString;
     QString m_windowTitleFileName;
-    QSize m_imageSize;
-    QSizeF m_viewportSize;
-    QSizeF m_displaySize;
-    qreal m_zoomPercent = 100.0;
-    ZoomMode m_zoomMode = ZoomMode::Fit;
-    QUrl m_zoomContainerUrl;
+    KiriView::ImageZoomState m_zoomState;
     QImage m_image;
     bool m_displayedImageIsSvg = false;
     bool m_displayedImageIsPredecodeCacheable = false;

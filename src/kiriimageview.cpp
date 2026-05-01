@@ -14,7 +14,6 @@
 #include <QByteArray>
 #include <QQuickWindow>
 #include <Qt>
-#include <algorithm>
 #include <cmath>
 #include <memory>
 #include <optional>
@@ -22,26 +21,47 @@
 #include <utility>
 
 namespace {
-constexpr qreal minimumManualZoomPercent = 10.0;
-constexpr qreal maximumManualZoomPercent = 800.0;
-
 using KiriView::containerNavigationUrlForImage;
 using KiriView::decodedImageResultIsPredecodeCacheable;
 using KiriView::displayReadyImage;
+using KiriView::imageZoomApproximatelyEqual;
+using KiriView::ImageZoomMode;
 using KiriView::NavigationDirection;
 using KiriView::renderSvgImage;
-using KiriView::sameContainerNavigationUrl;
 using KiriView::svgRasterSize;
 using KiriView::windowTitleFileNameForDisplayedUrl;
 
-bool approximatelyEqual(qreal left, qreal right) { return std::abs(left - right) < 0.001; }
-
-bool approximatelyEqual(const QSizeF &left, const QSizeF &right)
+ImageZoomMode toImageZoomMode(KiriImageView::ZoomMode zoomMode)
 {
-    return approximatelyEqual(left.width(), right.width())
-        && approximatelyEqual(left.height(), right.height());
+    switch (zoomMode) {
+    case KiriImageView::ZoomMode::Fit:
+        return ImageZoomMode::Fit;
+    case KiriImageView::ZoomMode::FitHeight:
+        return ImageZoomMode::FitHeight;
+    case KiriImageView::ZoomMode::FitWidth:
+        return ImageZoomMode::FitWidth;
+    case KiriImageView::ZoomMode::Manual:
+        return ImageZoomMode::Manual;
+    }
+
+    return ImageZoomMode::Fit;
 }
 
+KiriImageView::ZoomMode fromImageZoomMode(ImageZoomMode zoomMode)
+{
+    switch (zoomMode) {
+    case ImageZoomMode::Fit:
+        return KiriImageView::ZoomMode::Fit;
+    case ImageZoomMode::FitHeight:
+        return KiriImageView::ZoomMode::FitHeight;
+    case ImageZoomMode::FitWidth:
+        return KiriImageView::ZoomMode::FitWidth;
+    case ImageZoomMode::Manual:
+        return KiriImageView::ZoomMode::Manual;
+    }
+
+    return KiriImageView::ZoomMode::Fit;
+}
 }
 
 KiriImageView::KiriImageView(QQuickItem *parent)
@@ -137,56 +157,38 @@ QString KiriImageView::errorString() const { return m_errorString; }
 
 QString KiriImageView::windowTitleFileName() const { return m_windowTitleFileName; }
 
-QSize KiriImageView::imageSize() const { return m_imageSize; }
+QSize KiriImageView::imageSize() const { return m_zoomState.imageSize(); }
 
-QSizeF KiriImageView::viewportSize() const { return m_viewportSize; }
+QSizeF KiriImageView::viewportSize() const { return m_zoomState.viewportSize(); }
 
 void KiriImageView::setViewportSize(const QSizeF &viewportSize)
 {
-    const QSizeF normalizedViewportSize(
-        std::max<qreal>(0.0, viewportSize.width()), std::max<qreal>(0.0, viewportSize.height()));
-    if (approximatelyEqual(m_viewportSize, normalizedViewportSize)) {
+    const KiriView::ImageZoomSnapshot previous = m_zoomState.snapshot();
+    if (!m_zoomState.setViewportSize(viewportSize, displayDevicePixelRatio())) {
         return;
     }
 
-    m_viewportSize = normalizedViewportSize;
-    Q_EMIT viewportSizeChanged();
-    updateZoomState();
+    applyZoomStateChanges(previous);
 }
 
-QSizeF KiriImageView::displaySize() const { return m_displaySize; }
+QSizeF KiriImageView::displaySize() const { return m_zoomState.displaySize(); }
 
-qreal KiriImageView::zoomPercent() const { return m_zoomPercent; }
+qreal KiriImageView::zoomPercent() const { return m_zoomState.zoomPercent(); }
 
 void KiriImageView::setZoomPercent(qreal zoomPercent)
 {
-    if (!std::isfinite(zoomPercent)) {
+    const KiriView::ImageZoomSnapshot previous = m_zoomState.snapshot();
+    if (!m_zoomState.setManualZoomPercent(zoomPercent, displayDevicePixelRatio())) {
         return;
     }
 
-    const qreal clampedZoomPercent
-        = std::clamp(zoomPercent, minimumManualZoomPercent, maximumManualZoomPercent);
-    const bool zoomChanged = !approximatelyEqual(m_zoomPercent, clampedZoomPercent);
-    const bool modeChanged = m_zoomMode != ZoomMode::Manual;
-
-    if (!zoomChanged && !modeChanged) {
-        return;
-    }
-
-    m_zoomMode = ZoomMode::Manual;
-    m_zoomPercent = clampedZoomPercent;
-
-    if (modeChanged) {
-        Q_EMIT zoomModeChanged();
-    }
-    if (zoomChanged) {
-        Q_EMIT zoomPercentChanged();
-    }
-
-    setDisplaySize(displaySizeForZoomPercent(m_zoomPercent));
+    applyZoomStateChanges(previous);
 }
 
-KiriImageView::ZoomMode KiriImageView::zoomMode() const { return m_zoomMode; }
+KiriImageView::ZoomMode KiriImageView::zoomMode() const
+{
+    return fromImageZoomMode(m_zoomState.zoomMode());
+}
 
 QStringList KiriImageView::openDialogNameFilters() const
 {
@@ -225,8 +227,9 @@ void KiriImageView::openImageAtPage(int pageNumber)
 
 void KiriImageView::resetZoom()
 {
-    setZoomMode(ZoomMode::Fit);
-    updateZoomState();
+    const KiriView::ImageZoomSnapshot previous = m_zoomState.snapshot();
+    m_zoomState.resetZoom(displayDevicePixelRatio());
+    applyZoomStateChanges(previous);
 }
 
 void KiriImageView::setFitMode(ZoomMode zoomMode)
@@ -235,8 +238,11 @@ void KiriImageView::setFitMode(ZoomMode zoomMode)
         return;
     }
 
-    setZoomMode(zoomMode);
-    updateZoomState();
+    const KiriView::ImageZoomSnapshot previous = m_zoomState.snapshot();
+    if (!m_zoomState.setFitMode(toImageZoomMode(zoomMode), displayDevicePixelRatio())) {
+        return;
+    }
+    applyZoomStateChanges(previous);
 }
 
 QSGNode *KiriImageView::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *)
@@ -281,8 +287,7 @@ void KiriImageView::startLoad()
 
     if (m_sourceUrl.isEmpty()) {
         clearImage();
-        setZoomMode(ZoomMode::Fit);
-        updateZoomState();
+        resetZoom();
         setLoading(false);
         m_loadingContainerNavigationUrl = QUrl();
         setContainerNavigationUrl(QUrl());
@@ -297,8 +302,7 @@ void KiriImageView::startLoad()
     setLoading(true);
     if (!hasDisplayedImage()) {
         clearImage();
-        setZoomMode(ZoomMode::Fit);
-        updateZoomState();
+        resetZoom();
         setStatus(Status::Loading);
     } else {
         setStatus(Status::Ready);
@@ -357,9 +361,11 @@ void KiriImageView::finishContainerNavigationLoadWithError(
     m_loadingContainerNavigationUrl = QUrl();
 
     clearImage();
-    m_zoomContainerUrl = containerUrl;
-    setZoomMode(ZoomMode::Fit);
-    updateZoomState();
+    const KiriView::ImageZoomSnapshot previous = m_zoomState.snapshot();
+    m_zoomState.clearContainer();
+    m_zoomState.prepareImageContainer(containerUrl);
+    m_zoomState.resetZoom(displayDevicePixelRatio());
+    applyZoomStateChanges(previous);
     setLoading(false);
     setContainerNavigationUrl(containerUrl);
 
@@ -498,7 +504,7 @@ void KiriImageView::finishLoadWithError(const KiriView::ImageLoadSession &sessio
     }
 
     clearImage();
-    m_zoomContainerUrl = QUrl();
+    m_zoomState.clearContainer();
     setContainerNavigationUrl(QUrl());
     setErrorString(message);
     setStatus(Status::Error);
@@ -525,16 +531,10 @@ void KiriImageView::finishSvgLoadSuccessfully(
 
     const QUrl loadedContainerUrl
         = containerNavigationUrlForImage(session.imageUrl, session.comicBookRootUrl);
-    ZoomMode loadedZoomMode = ZoomMode::Fit;
-    if (sameContainerNavigationUrl(loadedContainerUrl, m_zoomContainerUrl)) {
-        loadedZoomMode = m_zoomMode;
-    }
-    const qreal loadedZoomPercent = loadedZoomMode == ZoomMode::Manual
-        ? m_zoomPercent
-        : fitZoomPercentForImageSize(loadedZoomMode, intrinsicSize);
-    const QSizeF loadedDisplaySize = displaySizeForZoomPercent(loadedZoomPercent, intrinsicSize);
+    const KiriView::LoadedImageZoom loadedZoom
+        = m_zoomState.loadedImageZoom(loadedContainerUrl, intrinsicSize, displayDevicePixelRatio());
     const QSize rasterSize
-        = svgRasterSize(loadedDisplaySize, displayDevicePixelRatio(), maximumTextureSize());
+        = svgRasterSize(loadedZoom.displaySize, displayDevicePixelRatio(), maximumTextureSize());
     const QImage image = renderSvgImage(data, rasterSize);
     if (image.isNull()) {
         finishLoadWithError(session, KiriView::ImageLoadError::Generic,
@@ -544,17 +544,10 @@ void KiriImageView::finishSvgLoadSuccessfully(
 
     stopAnimation();
     m_displayedImageIsPredecodeCacheable = false;
-    if (m_zoomMode != loadedZoomMode) {
-        m_zoomMode = loadedZoomMode;
-        Q_EMIT zoomModeChanged();
-    }
-    if (!approximatelyEqual(m_zoomPercent, loadedZoomPercent)) {
-        m_zoomPercent = loadedZoomPercent;
-        Q_EMIT zoomPercentChanged();
-    }
-    m_zoomContainerUrl = loadedContainerUrl;
+    const KiriView::ImageZoomSnapshot previous = m_zoomState.snapshot();
+    m_zoomState.setLoadedSvgZoom(loadedContainerUrl, loadedZoom);
+    applyZoomStateChanges(previous);
     setDisplayedSvgImage(std::move(data), intrinsicSize, image, rasterSize);
-    setDisplaySize(loadedDisplaySize);
     finishSuccessfulImageLoad(session);
 }
 
@@ -563,10 +556,9 @@ void KiriImageView::prepareSuccessfulImageLoad(const KiriView::ImageLoadSession 
     stopAnimation();
     const QUrl loadedContainerUrl
         = containerNavigationUrlForImage(session.imageUrl, session.comicBookRootUrl);
-    if (!sameContainerNavigationUrl(loadedContainerUrl, m_zoomContainerUrl)) {
-        setZoomMode(ZoomMode::Fit);
-    }
-    m_zoomContainerUrl = loadedContainerUrl;
+    const KiriView::ImageZoomSnapshot previous = m_zoomState.snapshot();
+    m_zoomState.prepareImageContainer(loadedContainerUrl);
+    applyZoomStateChanges(previous);
 }
 
 void KiriImageView::finishSuccessfulImageLoad(const KiriView::ImageLoadSession &session)
@@ -595,8 +587,7 @@ void KiriImageView::finishWithAnimationError(const QString &errorString)
 {
     setLoading(false);
     clearImage();
-    setZoomMode(ZoomMode::Fit);
-    updateZoomState();
+    resetZoom();
     setContainerNavigationUrl(QUrl());
     clearPageNavigation();
     const QString message = errorString.isEmpty()
@@ -643,7 +634,7 @@ bool KiriImageView::updateDisplayedSvgRaster()
     }
 
     const QSize rasterSize
-        = svgRasterSize(m_displaySize, displayDevicePixelRatio(), maximumTextureSize());
+        = svgRasterSize(m_zoomState.displaySize(), displayDevicePixelRatio(), maximumTextureSize());
     if (rasterSize.isEmpty()) {
         return false;
     }
@@ -711,51 +702,42 @@ void KiriImageView::updateWindowTitleFileName()
 
 void KiriImageView::setImageSize(const QSize &imageSize)
 {
-    if (m_imageSize == imageSize) {
+    const KiriView::ImageZoomSnapshot previous = m_zoomState.snapshot();
+    if (!m_zoomState.setImageSize(imageSize, displayDevicePixelRatio())) {
         return;
     }
 
-    m_imageSize = imageSize;
-    Q_EMIT imageSizeChanged();
-    updateZoomState();
-}
-
-void KiriImageView::setDisplaySize(const QSizeF &displaySize)
-{
-    const QSizeF normalizedDisplaySize(
-        std::max<qreal>(0.0, displaySize.width()), std::max<qreal>(0.0, displaySize.height()));
-    if (approximatelyEqual(m_displaySize, normalizedDisplaySize)) {
-        return;
-    }
-
-    m_displaySize = normalizedDisplaySize;
-    Q_EMIT displaySizeChanged();
-    updateDisplayedSvgRaster();
-    update();
-}
-
-void KiriImageView::setZoomMode(ZoomMode zoomMode)
-{
-    if (m_zoomMode == zoomMode) {
-        return;
-    }
-
-    m_zoomMode = zoomMode;
-    Q_EMIT zoomModeChanged();
+    applyZoomStateChanges(previous);
 }
 
 void KiriImageView::updateZoomState()
 {
-    if (m_zoomMode != ZoomMode::Manual) {
-        const qreal zoomPercent = fitZoomPercent(m_zoomMode);
-        if (!approximatelyEqual(m_zoomPercent, zoomPercent)) {
-            m_zoomPercent = zoomPercent;
-            Q_EMIT zoomPercentChanged();
-        }
+    const KiriView::ImageZoomSnapshot previous = m_zoomState.snapshot();
+    m_zoomState.update(displayDevicePixelRatio());
+    applyZoomStateChanges(previous);
+}
+
+void KiriImageView::applyZoomStateChanges(const KiriView::ImageZoomSnapshot &previous)
+{
+    const KiriView::ImageZoomSnapshot current = m_zoomState.snapshot();
+    if (previous.imageSize != current.imageSize) {
+        Q_EMIT imageSizeChanged();
+    }
+    if (!imageZoomApproximatelyEqual(previous.viewportSize, current.viewportSize)) {
+        Q_EMIT viewportSizeChanged();
+    }
+    if (previous.zoomMode != current.zoomMode) {
+        Q_EMIT zoomModeChanged();
+    }
+    if (!imageZoomApproximatelyEqual(previous.zoomPercent, current.zoomPercent)) {
+        Q_EMIT zoomPercentChanged();
     }
 
-    setDisplaySize(displaySizeForZoomPercent(m_zoomPercent));
-    updateDisplayedSvgRaster();
+    if (!imageZoomApproximatelyEqual(previous.displaySize, current.displaySize)) {
+        Q_EMIT displaySizeChanged();
+        updateDisplayedSvgRaster();
+        update();
+    }
 }
 
 qreal KiriImageView::displayDevicePixelRatio() const
@@ -785,69 +767,6 @@ int KiriImageView::maximumTextureSize() const
     return maximumTextureSize > 0 ? maximumTextureSize : KiriView::fallbackTextureSizeMax;
 }
 
-qreal KiriImageView::fitZoomPercent(ZoomMode zoomMode) const
-{
-    return fitZoomPercentForImageSize(zoomMode, m_imageSize);
-}
-
-qreal KiriImageView::fitZoomPercentForImageSize(ZoomMode zoomMode, const QSize &imageSize) const
-{
-    const qreal devicePixelRatio = displayDevicePixelRatio();
-    const qreal fallbackZoomPercent = devicePixelRatio * 100.0;
-
-    if (imageSize.isEmpty()) {
-        return fallbackZoomPercent;
-    }
-
-    const auto fitWidthZoomPercent = [this, devicePixelRatio, fallbackZoomPercent, imageSize]() {
-        if (m_viewportSize.width() <= 0.0) {
-            return fallbackZoomPercent;
-        }
-
-        return std::max<qreal>(
-            0.0, m_viewportSize.width() * devicePixelRatio * 100.0 / imageSize.width());
-    };
-    const auto fitHeightZoomPercent = [this, devicePixelRatio, fallbackZoomPercent, imageSize]() {
-        if (m_viewportSize.height() <= 0.0) {
-            return fallbackZoomPercent;
-        }
-
-        return std::max<qreal>(
-            0.0, m_viewportSize.height() * devicePixelRatio * 100.0 / imageSize.height());
-    };
-
-    switch (zoomMode) {
-    case ZoomMode::Fit:
-        if (m_viewportSize.isEmpty()) {
-            return fallbackZoomPercent;
-        }
-        return std::min(fitWidthZoomPercent(), fitHeightZoomPercent());
-    case ZoomMode::FitHeight:
-        return fitHeightZoomPercent();
-    case ZoomMode::FitWidth:
-        return fitWidthZoomPercent();
-    case ZoomMode::Manual:
-        return m_zoomPercent;
-    }
-
-    return fallbackZoomPercent;
-}
-
-QSizeF KiriImageView::displaySizeForZoomPercent(qreal zoomPercent) const
-{
-    return displaySizeForZoomPercent(zoomPercent, m_imageSize);
-}
-
-QSizeF KiriImageView::displaySizeForZoomPercent(qreal zoomPercent, const QSize &imageSize) const
-{
-    if (imageSize.isEmpty() || !std::isfinite(zoomPercent) || zoomPercent <= 0.0) {
-        return {};
-    }
-
-    const qreal scale = zoomPercent / (displayDevicePixelRatio() * 100.0);
-    return QSizeF(imageSize.width() * scale, imageSize.height() * scale);
-}
-
 void KiriImageView::clearImage()
 {
     if (m_predecodeCoordinator != nullptr) {
@@ -858,7 +777,7 @@ void KiriImageView::clearImage()
     m_displayedImageIsPredecodeCacheable = false;
     m_displayedUrl = QUrl();
     m_displayedComicBookRootUrl = QUrl();
-    m_zoomContainerUrl = QUrl();
+    m_zoomState.clearContainer();
     clearDisplayedSvgImage();
     updateWindowTitleFileName();
     clearPageNavigation();
