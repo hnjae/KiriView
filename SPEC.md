@@ -50,12 +50,21 @@ the previous load finishes, only the most recent selection is displayed.
 
 Opened images are displayed centered in the available page area while preserving
 their aspect ratio. Image zoom is expressed in physical display pixels: 100%
-means one image pixel maps to one physical monitor pixel. On displays using
-desktop scaling, the default zoom for a newly opened image matches the display's
-device pixel ratio. For example, a small image opens at 200% on a display using
-200% scaling, which gives the image a logical 1:1 size in the desktop
-coordinate system. If the image would exceed the available viewport at that
-default zoom, it is scaled down only as far as needed to fit.
+means one image pixel maps to one physical monitor pixel.
+
+KiriView starts in Fit mode. Fit mode scales the image as large as possible
+while keeping the full image visible in the viewport, including upscaling small
+images when space is available. Fit Height mode scales the image height to the
+viewport height while preserving aspect ratio. Fit Width mode scales the image
+width to the viewport width while preserving aspect ratio.
+
+Within the same image container, KiriView preserves the current zoom state while
+users navigate between images. If the user has selected Fit, Fit Height, or Fit
+Width, that fit mode remains selected and recalculates for each image and
+viewport size. If the user has entered a manual zoom value, that exact
+percentage remains active while moving to previous, next, or numbered pages in
+the same directory or CBZ archive. Starting KiriView or opening an image in a
+different container resets zoom to Fit mode.
 
 The image viewing area behind empty, loading, ready, and error states uses
 `#3c3c3c` as its background color, so navigation transitions do not flash to a
@@ -68,8 +77,9 @@ and vertical scrollbars allow panning across the image. When the image is
 smaller than the viewport, it remains centered.
 
 The toolbar provides a zoom percentage input. When an image is ready, users can
-enter manual zoom values from 10% through 800%. A fit action returns the image
-to the default display-scale-aware fit behavior.
+enter manual zoom values from 10% through 800%. Editing the zoom input switches
+to manual zoom. A fit menu provides Fit, Fit Height, and Fit Width actions and
+shows the selected fit mode. The fit action returns the image to Fit mode.
 
 When an image is ready, Ctrl+= or Ctrl++ zooms in by 10 percentage points and
 Ctrl+- zooms out by 10 percentage points. Keyboard zoom uses the same 10%
