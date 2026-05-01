@@ -12,6 +12,10 @@ ready.
 Activating the open action shows the XDG portal file chooser, which accepts a
 single selection only. Pressing Escape closes the main window.
 
+The toolbar also provides icon-only Previous Container and Next Container
+buttons next to the open action. These buttons navigate between sibling image
+containers and are labeled only by their tooltips.
+
 ## File Access
 
 KiriView opens user-selected image URLs, including local files,
@@ -105,6 +109,31 @@ After an image is displayed, KiriView may prepare adjacent images in the
 background so pressing Previous or Next can switch images without showing a
 full-page loading state. Background preparation must not replace the current
 image until the user opens that prepared image.
+
+## Container Navigation
+
+A container is either a directory or a local CBZ comic book archive. When the
+current image is a normal file, its container is the image's parent directory.
+When the current image is inside a CBZ archive opened by KiriView, its container
+is that `.cbz` file. The Previous Container and Next Container toolbar actions
+open the previous or next sibling container beside the current container.
+
+Sibling container candidates are directly contained directories and local `.cbz`
+files in the current container's parent directory. Candidates are sorted with the
+same process-locale collation order used for image navigation. Navigation does
+not wrap; pressing Previous Container on the first candidate or Next Container on
+the last candidate keeps the current view unchanged.
+
+Opening a directory container displays the first directly contained supported
+image file in that directory. Directory container opening is non-recursive.
+Opening a CBZ container displays the first supported image in that archive using
+the same archive image ordering as page navigation.
+
+If a target sibling container has no supported images, KiriView clears any
+displayed image and shows an error state explaining that the selected container
+does not contain supported images. That empty container remains the current
+container navigation position, so Previous Container and Next Container can
+continue to move to neighboring containers.
 
 Out of scope for the current version: editing, metadata panels, and file
 management actions.
