@@ -8,7 +8,6 @@ mode="${1:-all}"
 
 sources=(
     src/apngdecoder.cpp
-    src/avifcompat.cpp
     src/kiriimageview.cpp
 )
 

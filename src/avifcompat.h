@@ -7,7 +7,7 @@
 #include <QByteArray>
 
 namespace KiriView {
-QByteArray avifDataWithCompatibilityFixes(const QByteArray &data);
+QByteArray avifDataWithCompatibilityFixes(const QByteArray &data) noexcept;
 }
 
 #endif
