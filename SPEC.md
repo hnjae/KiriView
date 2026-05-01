@@ -14,6 +14,10 @@ KiriView opens user-selected image URLs, including local files,
 KDE-supported remote URLs such as `smb://`, and KDE-supported archive URLs
 such as `zip://`.
 
+KiriView also opens local CBZ comic book archives with the
+`application/vnd.comicbook+zip` MIME type. Opening a CBZ archive displays the
+first supported image inside that archive.
+
 In Flatpak, adjacent image navigation can list neighboring files under `home`,
 `/media`, `/mnt`, `/run/media`, and `$XDG_RUNTIME_DIR/gvfs`. Files outside those
 paths remain available only when explicitly provided by the XDG portal.
@@ -43,12 +47,15 @@ another open action.
 
 When an image is open, Page Up or the Previous window button opens the previous
 supported image file in the same parent URL. Page Down or the Next window button
-opens the next one. Supported extensions match the open dialog: AVIF, BMP, GIF,
-JPEG, PNG, SVG, and WebP, case-insensitively.
+opens the next one. Supported image extensions match the open dialog: AVIF, BMP,
+GIF, JPEG, PNG, SVG, and WebP, case-insensitively.
 
 When an image is opened from a KDE-supported archive URL such as `zip://`,
 navigation moves between supported image files in the same directory inside the
 archive.
+
+When an image is opened by selecting a CBZ archive, navigation moves between all
+supported image files inside that archive, including images in subdirectories.
 
 The previous and next files are determined by sorting candidate file names with
 the process locale collation order, including `LC_COLLATE`. Navigation does not
