@@ -21,6 +21,7 @@ class KCoreDirLister;
 
 namespace KiriView {
 class ImageAnimationPlayer;
+enum class NavigationDirection : int;
 }
 
 class KiriImageView : public QQuickItem
@@ -109,11 +110,6 @@ Q_SIGNALS:
     void containerNavigationChanged();
 
 private:
-    enum class NavigationDirection {
-        Previous,
-        Next,
-    };
-
     class AsyncObjectSlot
     {
     public:
@@ -150,16 +146,16 @@ private:
     bool isCurrentLoadSession(const LoadSession &session) const;
     void clearLoadSession(const LoadSession &session);
     void setSourceUrlFromResolvedLoad(const QUrl &sourceUrl);
-    void openAdjacentImage(NavigationDirection direction);
-    void openAdjacentComicBookImage(NavigationDirection direction);
+    void openAdjacentImage(KiriView::NavigationDirection direction);
+    void openAdjacentComicBookImage(KiriView::NavigationDirection direction);
     void cancelNavigation();
-    void finishNavigation(KCoreDirLister *lister, quint64 generation, NavigationDirection direction,
-        const QUrl &currentUrl);
+    void finishNavigation(KCoreDirLister *lister, quint64 generation,
+        KiriView::NavigationDirection direction, const QUrl &currentUrl);
     void finishNavigationWithError(KCoreDirLister *lister, quint64 generation);
-    void openAdjacentContainer(NavigationDirection direction);
+    void openAdjacentContainer(KiriView::NavigationDirection direction);
     void cancelContainerNavigation();
     void finishContainerNavigation(KCoreDirLister *lister, quint64 generation,
-        NavigationDirection direction, const QUrl &currentContainerUrl);
+        KiriView::NavigationDirection direction, const QUrl &currentContainerUrl);
     void finishContainerNavigationWithError(KCoreDirLister *lister, quint64 generation);
     void openDirectoryContainer(const QUrl &containerUrl);
     void finishDirectoryContainerNavigation(

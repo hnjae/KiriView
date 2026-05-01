@@ -18,6 +18,7 @@
 #include <iterator>
 #include <sys/types.h>
 #include <sys/xattr.h>
+#include <utility>
 
 namespace {
 constexpr const char *documentPortalHostPathAttribute = "user.document-portal.host-path";
@@ -207,6 +208,33 @@ QString archiveRelativeImageName(const QUrl &archiveRootUrl, const QUrl &imageUr
     return path.mid(rootPath.size());
 }
 
+template <typename Candidate>
+std::optional<std::size_t> adjacentCandidateIndex(const std::vector<Candidate> &candidates,
+    const QUrl &currentUrl, KiriView::NavigationDirection direction)
+{
+    const auto current = std::find_if(
+        candidates.cbegin(), candidates.cend(), [&currentUrl](const Candidate &candidate) {
+            return candidate.url.matches(currentUrl, QUrl::NormalizePathSegments);
+        });
+    if (current == candidates.cend()) {
+        return std::nullopt;
+    }
+
+    const auto currentIndex = std::distance(candidates.cbegin(), current);
+    if (direction == KiriView::NavigationDirection::Previous) {
+        if (currentIndex == 0) {
+            return std::nullopt;
+        }
+        return static_cast<std::size_t>(currentIndex - 1);
+    }
+
+    const auto nextIndex = currentIndex + 1;
+    if (nextIndex == static_cast<std::ptrdiff_t>(candidates.size())) {
+        return std::nullopt;
+    }
+    return static_cast<std::size_t>(nextIndex);
+}
+
 void sortContainerNavigationCandidates(
     std::vector<KiriView::ContainerNavigationCandidate> *candidates)
 {
@@ -333,6 +361,52 @@ std::vector<QUrl> imageNavigationCandidateUrls(
         urls.push_back(candidate.url);
     }
     return urls;
+}
+
+std::optional<QUrl> adjacentImageNavigationUrl(
+    const std::vector<ImageNavigationCandidate> &candidates, const QUrl &currentUrl,
+    NavigationDirection direction)
+{
+    const std::optional<std::size_t> targetIndex
+        = adjacentCandidateIndex(candidates, currentUrl, direction);
+    if (!targetIndex.has_value()) {
+        return std::nullopt;
+    }
+
+    return candidates.at(*targetIndex).url;
+}
+
+std::optional<ContainerNavigationCandidate> adjacentContainerNavigationCandidate(
+    const std::vector<ContainerNavigationCandidate> &candidates, const QUrl &currentContainerUrl,
+    NavigationDirection direction)
+{
+    const std::optional<std::size_t> targetIndex
+        = adjacentCandidateIndex(candidates, currentContainerUrl, direction);
+    if (!targetIndex.has_value()) {
+        return std::nullopt;
+    }
+
+    return candidates.at(*targetIndex);
+}
+
+PageNavigationState pageNavigationStateForUrls(std::vector<QUrl> urls, const QUrl &currentUrl)
+{
+    PageNavigationState state { std::move(urls), -1 };
+    const auto matchesCurrentUrl = [&currentUrl](const QUrl &url) {
+        return url.matches(currentUrl, QUrl::NormalizePathSegments);
+    };
+    const auto current = std::find_if(state.urls.cbegin(), state.urls.cend(), matchesCurrentUrl);
+
+    if (current == state.urls.cend()) {
+        if (currentUrl.isValid() && !currentUrl.isEmpty()) {
+            state.urls.insert(state.urls.begin(), currentUrl.adjusted(QUrl::NormalizePathSegments));
+            state.currentIndex = 0;
+        }
+    } else {
+        state.currentIndex = static_cast<int>(std::distance(state.urls.cbegin(), current));
+    }
+
+    return state;
 }
 
 std::optional<QUrl> comicBookArchiveRootUrl(const QUrl &url)

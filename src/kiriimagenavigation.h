@@ -17,6 +17,11 @@ struct ImageNavigationCandidate {
     QString name;
 };
 
+enum class NavigationDirection : int {
+    Previous,
+    Next,
+};
+
 enum class ContainerNavigationCandidateType {
     Directory,
     ComicBookArchive,
@@ -28,12 +33,24 @@ struct ContainerNavigationCandidate {
     ContainerNavigationCandidateType type = ContainerNavigationCandidateType::Directory;
 };
 
+struct PageNavigationState {
+    std::vector<QUrl> urls;
+    int currentIndex = -1;
+};
+
 QUrl normalizedImageUrl(const QUrl &url);
 QUrl parentUrlForContainerNavigation(const QUrl &containerUrl);
 std::vector<QUrl> predecodeWindowImageUrls(
     const std::vector<ImageNavigationCandidate> &candidates, const QUrl &currentUrl);
 std::vector<QUrl> imageNavigationCandidateUrls(
     const std::vector<ImageNavigationCandidate> &candidates);
+std::optional<QUrl> adjacentImageNavigationUrl(
+    const std::vector<ImageNavigationCandidate> &candidates, const QUrl &currentUrl,
+    NavigationDirection direction);
+std::optional<ContainerNavigationCandidate> adjacentContainerNavigationCandidate(
+    const std::vector<ContainerNavigationCandidate> &candidates, const QUrl &currentContainerUrl,
+    NavigationDirection direction);
+PageNavigationState pageNavigationStateForUrls(std::vector<QUrl> urls, const QUrl &currentUrl);
 std::optional<QUrl> comicBookArchiveRootUrl(const QUrl &url);
 bool isUrlInsideArchiveRoot(const QUrl &url, const QUrl &archiveRootUrl);
 std::optional<QUrl> containingComicBookArchiveRootUrl(const QUrl &url);
