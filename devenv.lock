@@ -3,11 +3,11 @@
     "devenv": {
       "locked": {
         "dir": "src/modules",
-        "lastModified": 1777498918,
-        "narHash": "sha256-SBx9JMs4OGrhADeU6qlfTZzJ7Dp/RuVgXErECF0adUo=",
+        "lastModified": 1777652549,
+        "narHash": "sha256-eFmJS84zVhFAJqhjgRKq+vlg6gYbdwdtK55WwAePSiY=",
         "owner": "cachix",
         "repo": "devenv",
-        "rev": "28668b6851e4e649aadd329527059344d14561cf",
+        "rev": "070577452d0c81d62168ef8b158ee4317ace7e21",
         "type": "github"
       },
       "original": {
@@ -87,7 +87,7 @@
       },
       "original": {
         "type": "tarball",
-        "url": "https://flakehub.com/f/DeterminateSystems/nixpkgs-weekly/0"
+        "url": "https://flakehub.com/f/DeterminateSystems/nixpkgs-weekly/0.1"
       }
     },
     "root": {
