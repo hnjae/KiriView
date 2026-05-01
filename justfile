@@ -53,19 +53,7 @@ lint: _cargo-vendor
         --config 'source.crates-io.replace-with="vendored-sources"' \
         --offline \
         clippy --all-targets --all-features -- -D warnings
-    just cpp-lint
-
-[group('ci')]
-cpp-lint:
-    just clang-tidy
-    just clazy
-
-[group('ci')]
-clang-tidy:
     devenv shell -- bash scripts/cpp-lint clang-tidy
-
-[group('ci')]
-clazy:
     devenv shell -- bash scripts/cpp-lint clazy
 
 [group('ci')]
