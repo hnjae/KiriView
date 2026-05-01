@@ -9,7 +9,7 @@ The main window toolbar shows image controls without a page title. The toolbar
 always provides open, previous, next, fit, and zoom controls in fixed positions.
 Controls that require a ready image are disabled until an image is ready.
 Activating the open action shows the XDG portal file chooser, which accepts a
-single selection only.
+single selection only. Pressing Escape closes the main window.
 
 ## File Access
 
