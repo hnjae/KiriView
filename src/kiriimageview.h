@@ -19,10 +19,9 @@
 #include <optional>
 #include <vector>
 
-class KCoreDirLister;
-
 namespace KiriView {
 class ImageAnimationPlayer;
+class ImageNavigationService;
 enum class NavigationDirection : int;
 }
 
@@ -134,22 +133,9 @@ private:
     void clearLoadSession(const LoadSession &session);
     void setSourceUrlFromResolvedLoad(const QUrl &sourceUrl);
     void openAdjacentImage(KiriView::NavigationDirection direction);
-    void openAdjacentComicBookImage(KiriView::NavigationDirection direction);
     void cancelNavigation();
-    void finishNavigation(KCoreDirLister *lister, quint64 generation,
-        KiriView::NavigationDirection direction, const QUrl &currentUrl);
-    void finishNavigationWithError(KCoreDirLister *lister, quint64 generation);
     void openAdjacentContainer(KiriView::NavigationDirection direction);
     void cancelContainerNavigation();
-    void finishContainerNavigation(KCoreDirLister *lister, quint64 generation,
-        KiriView::NavigationDirection direction, const QUrl &currentContainerUrl);
-    void finishContainerNavigationWithError(KCoreDirLister *lister, quint64 generation);
-    void openDirectoryContainer(const QUrl &containerUrl);
-    void finishDirectoryContainerNavigation(
-        KCoreDirLister *lister, quint64 generation, const QUrl &containerUrl);
-    void finishDirectoryContainerNavigationWithError(KCoreDirLister *lister, quint64 generation,
-        const QUrl &containerUrl, const QString &errorString);
-    void openComicBookContainer(const QUrl &containerUrl);
     void openImageFromContainerNavigation(const QUrl &imageUrl, const QUrl &containerUrl);
     void finishContainerNavigationWithEmptyContainer(const QUrl &containerUrl);
     void finishContainerNavigationLoadWithError(
@@ -157,12 +143,7 @@ private:
     void setContainerNavigationUrl(const QUrl &containerUrl);
     void updateContainerNavigationFromDisplayedImage();
     void updatePageNavigation();
-    void updateFilePageNavigation(const QUrl &currentUrl);
-    void updateComicBookPageNavigation(const QUrl &currentUrl, const QUrl &archiveRootUrl);
     void cancelPageNavigationUpdate();
-    void finishPageNavigationUpdateWithError(KCoreDirLister *lister, quint64 generation);
-    void setPageNavigationUrls(std::vector<QUrl> urls, const QUrl &currentUrl);
-    void setFallbackPageNavigationUrl(const QUrl &currentUrl);
     void clearPageNavigation();
     void scheduleAdjacentImagePredecode();
     void cancelPredecode();
@@ -220,17 +201,10 @@ private:
     QSize m_svgRasterSize;
     quint64 m_imageRevision = 0;
     std::unique_ptr<KiriView::ImageAnimationPlayer> m_animationPlayer;
+    std::unique_ptr<KiriView::ImageNavigationService> m_navigationService;
     KiriView::AsyncObjectSlot m_imageLoadSlot;
     KiriView::AsyncObjectSlot m_archiveListSlot;
-    KiriView::AsyncObjectSlot m_navigationListerSlot;
-    KiriView::AsyncObjectSlot m_navigationListSlot;
-    KiriView::AsyncObjectSlot m_containerNavigationListerSlot;
-    KiriView::AsyncObjectSlot m_containerNavigationListSlot;
-    KiriView::AsyncObjectSlot m_pageNavigationListerSlot;
-    KiriView::AsyncObjectSlot m_pageNavigationListSlot;
-    std::vector<QUrl> m_pageNavigationUrls;
     std::unique_ptr<PredecodeCoordinator> m_predecodeCoordinator;
-    int m_currentPageIndex = -1;
     quint64 m_nextLoadSessionId = 0;
     std::optional<LoadSession> m_loadSession;
     QUrl m_containerNavigationUrl;

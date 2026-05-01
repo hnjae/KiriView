@@ -5,6 +5,7 @@
 
 #include "imageanimationplayer.h"
 #include "imageformatregistry.h"
+#include "imagenavigationservice.h"
 #include "kiriimagedecoder.h"
 #include "kiriimagenavigation.h"
 #include "kiriimagerendernode.h"
@@ -34,14 +35,9 @@ namespace {
 constexpr qreal minimumManualZoomPercent = 10.0;
 constexpr qreal maximumManualZoomPercent = 800.0;
 
-using KiriView::adjacentContainerNavigationCandidate;
-using KiriView::adjacentImageNavigationUrl;
 using KiriView::appendArchiveImageNavigationCandidates;
 using KiriView::AsyncObjectSlot;
 using KiriView::comicBookArchiveRootUrl;
-using KiriView::ContainerNavigationCandidate;
-using KiriView::containerNavigationCandidates;
-using KiriView::ContainerNavigationCandidateType;
 using KiriView::containerNavigationUrlForImage;
 using KiriView::containingComicBookArchiveRootUrl;
 using KiriView::DecodedImageResult;
@@ -50,13 +46,10 @@ using KiriView::decodeImageData;
 using KiriView::displayReadyImage;
 using KiriView::ImageNavigationCandidate;
 using KiriView::imageNavigationCandidates;
-using KiriView::imageNavigationCandidateUrls;
 using KiriView::isUrlInsideArchiveRoot;
 using KiriView::NavigationDirection;
 using KiriView::navigationSourceUrl;
 using KiriView::normalizedImageUrl;
-using KiriView::pageNavigationStateForUrls;
-using KiriView::parentUrlForContainerNavigation;
 using KiriView::predecodeWindowImageUrls;
 using KiriView::renderSvgImage;
 using KiriView::sameContainerNavigationUrl;
@@ -175,6 +168,30 @@ KiriImageView::KiriImageView(QQuickItem *parent)
         = [this](const QString &errorString) { finishWithAnimationError(errorString); };
     m_animationPlayer = std::make_unique<KiriView::ImageAnimationPlayer>(
         this, std::move(frameReady), std::move(animationError));
+    m_navigationService = std::make_unique<KiriView::ImageNavigationService>(this);
+    m_navigationService->setOpenUrlCallback([this](const QUrl &url) { setSourceUrl(url); });
+    m_navigationService->setOpenContainerImageCallback(
+        [this](const QUrl &imageUrl, const QUrl &containerUrl) {
+            openImageFromContainerNavigation(imageUrl, containerUrl);
+        });
+    m_navigationService->setContainerNavigationErrorCallback(
+        [this](const QUrl &containerUrl, KiriView::ContainerNavigationError error,
+            const QString &errorString) {
+            if (error == KiriView::ContainerNavigationError::EmptyContainer) {
+                finishContainerNavigationWithEmptyContainer(containerUrl);
+                return;
+            }
+
+            if (error == KiriView::ContainerNavigationError::InvalidComicBookArchive) {
+                finishContainerNavigationLoadWithError(
+                    containerUrl, tr("Could not open the selected comic book archive."));
+                return;
+            }
+
+            finishContainerNavigationLoadWithError(containerUrl, errorString);
+        });
+    m_navigationService->setPageNavigationChangedCallback(
+        [this]() { Q_EMIT pageNavigationChanged(); });
     m_predecodeCoordinator = std::make_unique<PredecodeCoordinator>(this);
     setFlag(ItemHasContents, true);
 }
@@ -275,12 +292,9 @@ QStringList KiriImageView::openDialogNameFilters() const
     return KiriView::openDialogNameFilters();
 }
 
-int KiriImageView::currentPageNumber() const
-{
-    return m_currentPageIndex < 0 ? 0 : m_currentPageIndex + 1;
-}
+int KiriImageView::currentPageNumber() const { return m_navigationService->currentPageNumber(); }
 
-int KiriImageView::imageCount() const { return static_cast<int>(m_pageNavigationUrls.size()); }
+int KiriImageView::imageCount() const { return m_navigationService->imageCount(); }
 
 bool KiriImageView::containerNavigationAvailable() const
 {
@@ -300,16 +314,12 @@ void KiriImageView::openNextContainer() { openAdjacentContainer(NavigationDirect
 
 void KiriImageView::openImageAtPage(int pageNumber)
 {
-    if (pageNumber <= 0 || pageNumber > imageCount()) {
+    const std::optional<QUrl> pageUrl = m_navigationService->urlAtPage(pageNumber);
+    if (!pageUrl.has_value()) {
         return;
     }
 
-    const int pageIndex = pageNumber - 1;
-    if (pageIndex == m_currentPageIndex) {
-        return;
-    }
-
-    setSourceUrl(m_pageNavigationUrls.at(static_cast<std::size_t>(pageIndex)));
+    setSourceUrl(*pageUrl);
 }
 
 void KiriImageView::resetZoom()
@@ -512,266 +522,22 @@ void KiriImageView::setSourceUrlFromResolvedLoad(const QUrl &sourceUrl)
 
 void KiriImageView::openAdjacentImage(NavigationDirection direction)
 {
-    if (!hasDisplayedImage() || m_displayedUrl.isEmpty()) {
-        return;
-    }
-
-    cancelContainerNavigation();
-
-    if (isUrlInsideArchiveRoot(m_displayedUrl, m_displayedComicBookRootUrl)) {
-        openAdjacentComicBookImage(direction);
-        return;
-    }
-
-    const QUrl currentUrl = navigationSourceUrl(m_displayedUrl);
-    const QUrl parentUrl = currentUrl.adjusted(QUrl::RemoveFilename | QUrl::NormalizePathSegments);
-    if (!parentUrl.isValid() || parentUrl.isEmpty()) {
-        return;
-    }
-
-    cancelNavigation();
-
-    auto *lister = createImageCandidateLister(this);
-    const quint64 token = m_navigationListerSlot.start(lister, cancelDirLister);
-
-    connect(
-        lister, &KCoreDirLister::completed, this, [this, lister, token, direction, currentUrl]() {
-            finishNavigation(lister, token, direction, currentUrl);
-        });
-    connect(lister, &KCoreDirLister::jobError, this,
-        [this, lister, token](KIO::Job *) { finishNavigationWithError(lister, token); });
-
-    if (!lister->openUrl(parentUrl, KCoreDirLister::Reload)) {
-        finishNavigationWithError(lister, token);
-    }
+    m_navigationService->openAdjacentImage(
+        KiriView::ImageNavigationService::DisplayContext {
+            hasDisplayedImage(), m_displayedUrl, m_displayedComicBookRootUrl },
+        direction);
 }
 
-void KiriImageView::openAdjacentComicBookImage(NavigationDirection direction)
-{
-    const QUrl currentUrl = m_displayedUrl.adjusted(QUrl::NormalizePathSegments);
-    const QUrl archiveRootUrl = m_displayedComicBookRootUrl;
-    if (!currentUrl.isValid() || archiveRootUrl.isEmpty()) {
-        return;
-    }
-
-    cancelNavigation();
-
-    auto *job
-        = KIO::listRecursive(archiveRootUrl, KIO::HideProgressInfo, recursiveImageListFlags());
-    auto candidates = collectArchiveImageCandidates(job, this, archiveRootUrl);
-    const quint64 token = m_navigationListSlot.start(job, cancelKJob);
-
-    connect(job, &KJob::result, this,
-        [this, job, token, direction, currentUrl, candidates](KJob *finishedJob) {
-            if (!m_navigationListSlot.claim(token, job)) {
-                return;
-            }
-
-            if (finishedJob->error() != KJob::NoError) {
-                return;
-            }
-
-            sortImageNavigationCandidates(candidates.get());
-            const std::optional<QUrl> targetUrl
-                = adjacentImageNavigationUrl(*candidates, currentUrl, direction);
-            if (!targetUrl.has_value()) {
-                return;
-            }
-
-            setSourceUrl(*targetUrl);
-        });
-
-    connect(job, &QObject::destroyed, this, [this, job]() { m_navigationListSlot.clear(job); });
-}
-
-void KiriImageView::cancelNavigation()
-{
-    m_navigationListerSlot.cancel();
-    m_navigationListSlot.cancel();
-}
-
-void KiriImageView::finishNavigation(KCoreDirLister *lister, quint64 generation,
-    NavigationDirection direction, const QUrl &currentUrl)
-{
-    if (!m_navigationListerSlot.claim(generation, lister)) {
-        return;
-    }
-
-    const std::vector<ImageNavigationCandidate> candidates = imageCandidatesFromLister(lister);
-    lister->deleteLater();
-
-    const std::optional<QUrl> targetUrl
-        = adjacentImageNavigationUrl(candidates, currentUrl, direction);
-    if (!targetUrl.has_value()) {
-        return;
-    }
-
-    setSourceUrl(*targetUrl);
-}
-
-void KiriImageView::finishNavigationWithError(KCoreDirLister *lister, quint64 generation)
-{
-    if (!m_navigationListerSlot.claim(generation, lister)) {
-        return;
-    }
-
-    lister->deleteLater();
-}
+void KiriImageView::cancelNavigation() { m_navigationService->cancelNavigation(); }
 
 void KiriImageView::openAdjacentContainer(NavigationDirection direction)
 {
-    if (!containerNavigationAvailable()) {
-        return;
-    }
-
-    const QUrl currentContainerUrl = m_containerNavigationUrl;
-    const QUrl parentUrl = parentUrlForContainerNavigation(currentContainerUrl);
-    if (!parentUrl.isValid() || parentUrl.isEmpty()) {
-        return;
-    }
-
-    cancelNavigation();
-    cancelContainerNavigation();
-
-    auto *lister = createImageCandidateLister(this);
-    const quint64 token = m_containerNavigationListerSlot.start(lister, cancelDirLister);
-
-    connect(lister, &KCoreDirLister::completed, this,
-        [this, lister, token, direction, currentContainerUrl]() {
-            finishContainerNavigation(lister, token, direction, currentContainerUrl);
-        });
-    connect(lister, &KCoreDirLister::jobError, this,
-        [this, lister, token](KIO::Job *) { finishContainerNavigationWithError(lister, token); });
-
-    if (!lister->openUrl(parentUrl, KCoreDirLister::Reload)) {
-        finishContainerNavigationWithError(lister, token);
-    }
+    m_navigationService->openAdjacentContainer(m_containerNavigationUrl, direction);
 }
 
 void KiriImageView::cancelContainerNavigation()
 {
-    m_containerNavigationListerSlot.cancel();
-    m_containerNavigationListSlot.cancel();
-}
-
-void KiriImageView::finishContainerNavigation(KCoreDirLister *lister, quint64 generation,
-    NavigationDirection direction, const QUrl &currentContainerUrl)
-{
-    if (!m_containerNavigationListerSlot.claim(generation, lister)) {
-        return;
-    }
-
-    const std::vector<ContainerNavigationCandidate> candidates
-        = containerNavigationCandidates(lister->items(KCoreDirLister::AllItems));
-
-    lister->deleteLater();
-
-    const auto target
-        = adjacentContainerNavigationCandidate(candidates, currentContainerUrl, direction);
-    if (!target.has_value()) {
-        return;
-    }
-
-    if (target->type == ContainerNavigationCandidateType::Directory) {
-        openDirectoryContainer(target->url);
-    } else {
-        openComicBookContainer(target->url);
-    }
-}
-
-void KiriImageView::finishContainerNavigationWithError(KCoreDirLister *lister, quint64 generation)
-{
-    if (!m_containerNavigationListerSlot.claim(generation, lister)) {
-        return;
-    }
-
-    lister->deleteLater();
-}
-
-void KiriImageView::openDirectoryContainer(const QUrl &containerUrl)
-{
-    auto *lister = createImageCandidateLister(this);
-    const quint64 token = m_containerNavigationListerSlot.start(lister, cancelDirLister);
-
-    connect(lister, &KCoreDirLister::completed, this, [this, lister, token, containerUrl]() {
-        finishDirectoryContainerNavigation(lister, token, containerUrl);
-    });
-    connect(lister, &KCoreDirLister::jobError, this,
-        [this, lister, token, containerUrl](KIO::Job *job) {
-            const QString errorString = job == nullptr ? QString() : job->errorString();
-            finishDirectoryContainerNavigationWithError(lister, token, containerUrl, errorString);
-        });
-
-    if (!lister->openUrl(containerUrl, KCoreDirLister::Reload)) {
-        finishDirectoryContainerNavigationWithError(lister, token, containerUrl, QString());
-    }
-}
-
-void KiriImageView::finishDirectoryContainerNavigation(
-    KCoreDirLister *lister, quint64 generation, const QUrl &containerUrl)
-{
-    if (!m_containerNavigationListerSlot.claim(generation, lister)) {
-        return;
-    }
-
-    const std::vector<ImageNavigationCandidate> candidates = imageCandidatesFromLister(lister);
-    lister->deleteLater();
-
-    if (candidates.empty()) {
-        finishContainerNavigationWithEmptyContainer(containerUrl);
-        return;
-    }
-
-    openImageFromContainerNavigation(candidates.front().url, containerUrl);
-}
-
-void KiriImageView::finishDirectoryContainerNavigationWithError(KCoreDirLister *lister,
-    quint64 generation, const QUrl &containerUrl, const QString &errorString)
-{
-    if (!m_containerNavigationListerSlot.claim(generation, lister)) {
-        return;
-    }
-
-    lister->deleteLater();
-    finishContainerNavigationLoadWithError(containerUrl, errorString);
-}
-
-void KiriImageView::openComicBookContainer(const QUrl &containerUrl)
-{
-    const std::optional<QUrl> archiveRootUrl = comicBookArchiveRootUrl(containerUrl);
-    if (!archiveRootUrl.has_value()) {
-        finishContainerNavigationLoadWithError(
-            containerUrl, tr("Could not open the selected comic book archive."));
-        return;
-    }
-
-    const QUrl archiveRoot = archiveRootUrl.value();
-    auto *job = KIO::listRecursive(archiveRoot, KIO::HideProgressInfo, recursiveImageListFlags());
-    auto candidates = collectArchiveImageCandidates(job, this, archiveRoot);
-    const quint64 token = m_containerNavigationListSlot.start(job, cancelKJob);
-
-    connect(
-        job, &KJob::result, this, [this, job, token, containerUrl, candidates](KJob *finishedJob) {
-            if (!m_containerNavigationListSlot.claim(token, job)) {
-                return;
-            }
-
-            if (finishedJob->error() != KJob::NoError) {
-                finishContainerNavigationLoadWithError(containerUrl, finishedJob->errorString());
-                return;
-            }
-
-            sortImageNavigationCandidates(candidates.get());
-            if (candidates->empty()) {
-                finishContainerNavigationWithEmptyContainer(containerUrl);
-                return;
-            }
-
-            openImageFromContainerNavigation(candidates->front().url, containerUrl);
-        });
-
-    connect(job, &QObject::destroyed, this,
-        [this, job]() { m_containerNavigationListSlot.clear(job); });
+    m_navigationService->cancelContainerNavigation();
 }
 
 void KiriImageView::openImageFromContainerNavigation(const QUrl &imageUrl, const QUrl &containerUrl)
@@ -832,137 +598,16 @@ void KiriImageView::updateContainerNavigationFromDisplayedImage()
 
 void KiriImageView::updatePageNavigation()
 {
-    cancelPageNavigationUpdate();
-
-    if (!hasDisplayedImage() || m_displayedUrl.isEmpty()) {
-        clearPageNavigation();
-        return;
-    }
-
-    const bool isComicBookPage
-        = isUrlInsideArchiveRoot(m_displayedUrl, m_displayedComicBookRootUrl);
-    const QUrl currentUrl = isComicBookPage ? m_displayedUrl.adjusted(QUrl::NormalizePathSegments)
-                                            : navigationSourceUrl(m_displayedUrl);
-    if (!currentUrl.isValid() || currentUrl.isEmpty()) {
-        clearPageNavigation();
-        return;
-    }
-
-    setFallbackPageNavigationUrl(currentUrl);
-
-    if (isComicBookPage) {
-        updateComicBookPageNavigation(currentUrl, m_displayedComicBookRootUrl);
-        return;
-    }
-
-    updateFilePageNavigation(currentUrl);
-}
-
-void KiriImageView::updateFilePageNavigation(const QUrl &currentUrl)
-{
-    const QUrl parentUrl = currentUrl.adjusted(QUrl::RemoveFilename | QUrl::NormalizePathSegments);
-    if (!parentUrl.isValid() || parentUrl.isEmpty()) {
-        return;
-    }
-
-    auto *lister = createImageCandidateLister(this);
-    const quint64 token = m_pageNavigationListerSlot.start(lister, cancelDirLister);
-
-    connect(lister, &KCoreDirLister::completed, this, [this, lister, token, currentUrl]() {
-        if (!m_pageNavigationListerSlot.claim(token, lister)) {
-            return;
-        }
-
-        const std::vector<ImageNavigationCandidate> candidates = imageCandidatesFromLister(lister);
-        lister->deleteLater();
-
-        setPageNavigationUrls(imageNavigationCandidateUrls(candidates), currentUrl);
-    });
-    connect(lister, &KCoreDirLister::jobError, this,
-        [this, lister, token](KIO::Job *) { finishPageNavigationUpdateWithError(lister, token); });
-
-    if (!lister->openUrl(parentUrl, KCoreDirLister::Reload)) {
-        finishPageNavigationUpdateWithError(lister, token);
-    }
-}
-
-void KiriImageView::updateComicBookPageNavigation(
-    const QUrl &currentUrl, const QUrl &archiveRootUrl)
-{
-    if (archiveRootUrl.isEmpty()) {
-        return;
-    }
-
-    auto *job
-        = KIO::listRecursive(archiveRootUrl, KIO::HideProgressInfo, recursiveImageListFlags());
-    auto candidates = collectArchiveImageCandidates(job, this, archiveRootUrl);
-    const quint64 token = m_pageNavigationListSlot.start(job, cancelKJob);
-
-    connect(
-        job, &KJob::result, this, [this, job, token, currentUrl, candidates](KJob *finishedJob) {
-            if (!m_pageNavigationListSlot.claim(token, job)) {
-                return;
-            }
-
-            if (finishedJob->error() != KJob::NoError) {
-                return;
-            }
-
-            sortImageNavigationCandidates(candidates.get());
-            setPageNavigationUrls(imageNavigationCandidateUrls(*candidates), currentUrl);
-        });
-
-    connect(job, &QObject::destroyed, this, [this, job]() { m_pageNavigationListSlot.clear(job); });
+    m_navigationService->updatePageNavigation(KiriView::ImageNavigationService::DisplayContext {
+        hasDisplayedImage(), m_displayedUrl, m_displayedComicBookRootUrl });
 }
 
 void KiriImageView::cancelPageNavigationUpdate()
 {
-    m_pageNavigationListerSlot.cancel();
-    m_pageNavigationListSlot.cancel();
+    m_navigationService->cancelPageNavigationUpdate();
 }
 
-void KiriImageView::finishPageNavigationUpdateWithError(KCoreDirLister *lister, quint64 generation)
-{
-    if (!m_pageNavigationListerSlot.claim(generation, lister)) {
-        return;
-    }
-
-    lister->deleteLater();
-}
-
-void KiriImageView::setPageNavigationUrls(std::vector<QUrl> urls, const QUrl &currentUrl)
-{
-    auto state = pageNavigationStateForUrls(std::move(urls), currentUrl);
-
-    if (m_pageNavigationUrls == state.urls && m_currentPageIndex == state.currentIndex) {
-        return;
-    }
-
-    m_pageNavigationUrls = std::move(state.urls);
-    m_currentPageIndex = state.currentIndex;
-    Q_EMIT pageNavigationChanged();
-}
-
-void KiriImageView::setFallbackPageNavigationUrl(const QUrl &currentUrl)
-{
-    if (!currentUrl.isValid() || currentUrl.isEmpty()) {
-        clearPageNavigation();
-        return;
-    }
-
-    setPageNavigationUrls({ currentUrl.adjusted(QUrl::NormalizePathSegments) }, currentUrl);
-}
-
-void KiriImageView::clearPageNavigation()
-{
-    if (m_pageNavigationUrls.empty() && m_currentPageIndex == -1) {
-        return;
-    }
-
-    m_pageNavigationUrls.clear();
-    m_currentPageIndex = -1;
-    Q_EMIT pageNavigationChanged();
-}
+void KiriImageView::clearPageNavigation() { m_navigationService->clearPageNavigation(); }
 
 void KiriImageView::PredecodeCoordinator::schedule(Context context)
 {
