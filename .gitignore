@@ -11,6 +11,7 @@ devenv.local.yaml
 
 # Flatpak build artifacts
 .flatpak-builder/
+.cargo-vendor/
 .flatpak-cargo/
 build-dir/
 repo/

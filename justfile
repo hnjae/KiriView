@@ -5,14 +5,19 @@ set lazy
 
 export DEVENV_TUI := "false"
 
+cargo_vendor_root := justfile_directory() + "/.cargo-vendor"
+cargo_vendor_config_dir := cargo_vendor_root + "/.cargo"
+cargo_vendor_dir := cargo_vendor_root + "/vendor"
+
 _:
     @just --list
 
 [no-cd]
 [private]
-_cargo-vendor:
-    install -Dm644 '{{ justfile_directory() }}/cargo/config' '{{ justfile_directory() }}/.flatpak-cargo/.cargo/config.toml'
-    devenv shell -- cargo vendor --locked --versioned-dirs --quiet '{{ justfile_directory() }}/.flatpak-cargo/vendor'
+_cargo-vendor-sources:
+    # Shared crate source cache only; host and Flatpak builds still use separate target dirs.
+    install -Dm644 '{{ justfile_directory() }}/cargo/config' '{{ cargo_vendor_config_dir }}/config.toml'
+    devenv shell -- cargo vendor --locked --versioned-dirs --quiet '{{ cargo_vendor_dir }}'
 
 [private]
 _flatpak-build-dir:
@@ -21,11 +26,11 @@ _flatpak-build-dir:
     fi
 
 [private]
-_module command: _cargo-vendor _flatpak-build-dir
+_module command: _cargo-vendor-sources _flatpak-build-dir
     flatpak build \
         '--bind-mount=/run/build/kiriview={{ justfile_directory() }}' \
-        '--bind-mount=/run/build/kiriview/.cargo={{ justfile_directory() }}/.flatpak-cargo/.cargo' \
-        '--bind-mount=/run/build/kiriview/cargo/vendor={{ justfile_directory() }}/.flatpak-cargo/vendor' \
+        '--bind-mount=/run/build/kiriview/.cargo={{ cargo_vendor_config_dir }}' \
+        '--bind-mount=/run/build/kiriview/cargo/vendor={{ cargo_vendor_dir }}' \
         --build-dir=/run/build/kiriview \
         --env=CARGO_TARGET_DIR=/run/build/kiriview/target/flatpak \
         --env=PATH=/usr/lib/sdk/rust-stable/bin:/app/bin:/usr/bin \
@@ -33,13 +38,13 @@ _module command: _cargo-vendor _flatpak-build-dir
         {{ command }}
 
 [private]
-_module-llvm command: _cargo-vendor _flatpak-build-dir
+_module-llvm command: _cargo-vendor-sources _flatpak-build-dir
     llvm_sdk="$(flatpak info --show-location org.freedesktop.Sdk.Extension.llvm21//25.08)/files" && \
     flatpak build \
         "--bind-mount=/usr/lib/sdk/llvm21=$llvm_sdk" \
         '--bind-mount=/run/build/kiriview={{ justfile_directory() }}' \
-        '--bind-mount=/run/build/kiriview/.cargo={{ justfile_directory() }}/.flatpak-cargo/.cargo' \
-        '--bind-mount=/run/build/kiriview/cargo/vendor={{ justfile_directory() }}/.flatpak-cargo/vendor' \
+        '--bind-mount=/run/build/kiriview/.cargo={{ cargo_vendor_config_dir }}' \
+        '--bind-mount=/run/build/kiriview/cargo/vendor={{ cargo_vendor_dir }}' \
         --build-dir=/run/build/kiriview \
         --env=CARGO_TARGET_DIR=/run/build/kiriview/target/flatpak \
         --env=PATH=/usr/lib/sdk/rust-stable/bin:/usr/lib/sdk/llvm21/bin:/app/bin:/usr/bin \
@@ -47,9 +52,9 @@ _module-llvm command: _cargo-vendor _flatpak-build-dir
         {{ command }}
 
 [group('ci')]
-lint: _cargo-vendor
+lint: _cargo-vendor-sources
     devenv shell -- cargo \
-        --config 'source.vendored-sources.directory="{{ justfile_directory() }}/.flatpak-cargo/vendor"' \
+        --config 'source.vendored-sources.directory="{{ cargo_vendor_dir }}"' \
         --config 'source.crates-io.replace-with="vendored-sources"' \
         --offline \
         clippy --all-targets --all-features -- -D warnings
