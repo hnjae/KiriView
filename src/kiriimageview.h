@@ -10,6 +10,7 @@
 #include <QImage>
 #include <QQuickItem>
 #include <QSize>
+#include <QSizeF>
 #include <QString>
 #include <QTimer>
 #include <QUrl>
@@ -37,6 +38,11 @@ class KiriImageView : public QQuickItem
     Q_PROPERTY(Status status READ status NOTIFY statusChanged)
     Q_PROPERTY(QString errorString READ errorString NOTIFY errorStringChanged)
     Q_PROPERTY(QSize imageSize READ imageSize NOTIFY imageSizeChanged)
+    Q_PROPERTY(
+        QSizeF viewportSize READ viewportSize WRITE setViewportSize NOTIFY viewportSizeChanged)
+    Q_PROPERTY(QSizeF displaySize READ displaySize NOTIFY displaySizeChanged)
+    Q_PROPERTY(qreal zoomPercent READ zoomPercent WRITE setZoomPercent NOTIFY zoomPercentChanged)
+    Q_PROPERTY(ZoomMode zoomMode READ zoomMode NOTIFY zoomModeChanged)
 
 public:
     enum class Status {
@@ -47,6 +53,12 @@ public:
     };
     Q_ENUM(Status)
 
+    enum class ZoomMode {
+        LogicalScaleFit,
+        Manual,
+    };
+    Q_ENUM(ZoomMode)
+
     explicit KiriImageView(QQuickItem *parent = nullptr);
     ~KiriImageView() override;
 
@@ -56,17 +68,29 @@ public:
     Status status() const;
     QString errorString() const;
     QSize imageSize() const;
+    QSizeF viewportSize() const;
+    void setViewportSize(const QSizeF &viewportSize);
+    QSizeF displaySize() const;
+    qreal zoomPercent() const;
+    void setZoomPercent(qreal zoomPercent);
+    ZoomMode zoomMode() const;
 
     Q_INVOKABLE void openPreviousImage();
     Q_INVOKABLE void openNextImage();
+    Q_INVOKABLE void resetZoom();
 
     QSGNode *updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *) override;
+    void itemChange(ItemChange change, const ItemChangeData &value) override;
 
 Q_SIGNALS:
     void sourceUrlChanged();
     void statusChanged();
     void errorStringChanged();
     void imageSizeChanged();
+    void viewportSizeChanged();
+    void displaySizeChanged();
+    void zoomPercentChanged();
+    void zoomModeChanged();
 
 private:
     enum class NavigationDirection {
@@ -98,12 +122,22 @@ private:
     void setStatus(Status status);
     void setErrorString(const QString &errorString);
     void setImageSize(const QSize &imageSize);
+    void setDisplaySize(const QSizeF &displaySize);
+    void setZoomMode(ZoomMode zoomMode);
+    void updateZoomState();
+    qreal displayDevicePixelRatio() const;
+    qreal logicalScaleFitZoomPercent() const;
+    QSizeF displaySizeForZoomPercent(qreal zoomPercent) const;
     void clearImage();
 
     QUrl m_sourceUrl;
     Status m_status = Status::Null;
     QString m_errorString;
     QSize m_imageSize;
+    QSizeF m_viewportSize;
+    QSizeF m_displaySize;
+    qreal m_zoomPercent = 100.0;
+    ZoomMode m_zoomMode = ZoomMode::LogicalScaleFit;
     QImage m_image;
     quint64 m_imageRevision = 0;
     QByteArray m_animationData;

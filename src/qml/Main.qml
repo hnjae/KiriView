@@ -45,13 +45,76 @@ Kirigami.ApplicationWindow {
                 visible: imageView.status === KiriImageView.Ready
 
                 onTriggered: imageView.openNextImage()
+            },
+            Kirigami.Action {
+                icon.name: "zoom-fit-best-symbolic"
+                text: "Fit"
+                visible: imageView.status === KiriImageView.Ready
+
+                onTriggered: imageView.resetZoom()
+            },
+            Kirigami.Action {
+                text: "Zoom"
+                visible: imageView.status === KiriImageView.Ready
+
+                displayComponent: Controls.SpinBox {
+                    id: zoomSpinBox
+
+                    editable: true
+                    enabled: imageView.status === KiriImageView.Ready
+                    from: Math.min(10, Math.floor(imageView.zoomPercent))
+                    implicitWidth: Kirigami.Units.gridUnit * 5
+                    stepSize: 10
+                    to: 800
+                    value: Math.round(imageView.zoomPercent)
+
+                    textFromValue: function (value, locale) {
+                        return Number(value).toLocaleString(locale, "f", 0) + "%";
+                    }
+
+                    valueFromText: function (text, locale) {
+                        const withoutPercent = text.toString().replace("%", "").trim();
+                        const parsedValue = Number.fromLocaleString(locale, withoutPercent);
+                        return Number.isFinite(parsedValue) ? Math.round(parsedValue) : zoomSpinBox.value;
+                    }
+
+                    validator: IntValidator {
+                        bottom: zoomSpinBox.from
+                        top: zoomSpinBox.to
+                    }
+
+                    onValueModified: imageView.zoomPercent = value
+                }
             }
         ]
 
-        KiriImageView {
-            id: imageView
+        Flickable {
+            id: imageFlickable
 
             anchors.fill: parent
+            boundsBehavior: Flickable.StopAtBounds
+            clip: true
+            contentHeight: Math.max(height, imageView.y + imageView.height)
+            contentWidth: Math.max(width, imageView.x + imageView.width)
+            interactive: imageView.status === KiriImageView.Ready && (contentWidth > width || contentHeight > height)
+
+            Controls.ScrollBar.horizontal: Controls.ScrollBar {
+                policy: imageFlickable.contentWidth > imageFlickable.width ? Controls.ScrollBar.AsNeeded : Controls.ScrollBar.AlwaysOff
+            }
+
+            Controls.ScrollBar.vertical: Controls.ScrollBar {
+                policy: imageFlickable.contentHeight > imageFlickable.height ? Controls.ScrollBar.AsNeeded : Controls.ScrollBar.AlwaysOff
+            }
+
+            KiriImageView {
+                id: imageView
+
+                height: displaySize.height
+                viewportSize: Qt.size(imageFlickable.width, imageFlickable.height)
+                width: displaySize.width
+                x: Math.max(0, (imageFlickable.width - width) / 2)
+                y: Math.max(0, (imageFlickable.height - height) / 2)
+            }
         }
 
         Shortcut {

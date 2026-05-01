@@ -32,6 +32,7 @@
 #include <Qt>
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <iterator>
 #include <memory>
 #include <optional>
@@ -44,6 +45,8 @@
 namespace {
 constexpr int defaultAnimationFrameDelay = 100;
 constexpr int minimumAnimationFrameDelay = 10;
+constexpr qreal minimumManualZoomPercent = 10.0;
+constexpr qreal maximumManualZoomPercent = 800.0;
 constexpr const char *documentPortalHostPathAttribute = "user.document-portal.host-path";
 constexpr quint32 uniformBufferSize = 96;
 
@@ -73,6 +76,14 @@ int normalizedAnimationFrameDelay(int delay)
     }
 
     return std::max(delay, minimumAnimationFrameDelay);
+}
+
+bool approximatelyEqual(qreal left, qreal right) { return std::abs(left - right) < 0.001; }
+
+bool approximatelyEqual(const QSizeF &left, const QSizeF &right)
+{
+    return approximatelyEqual(left.width(), right.width())
+        && approximatelyEqual(left.height(), right.height());
 }
 
 bool isSupportedImageFileName(const QString &name)
@@ -388,8 +399,8 @@ QRectF imageTargetRect(const QSize &imageSize, const QSizeF &boundsSize)
         return {};
     }
 
-    const qreal scale = std::min<qreal>(1.0,
-        std::min(boundsSize.width() / imageSize.width(), boundsSize.height() / imageSize.height()));
+    const qreal scale = std::min(
+        boundsSize.width() / imageSize.width(), boundsSize.height() / imageSize.height());
     const QSizeF targetSize(imageSize.width() * scale, imageSize.height() * scale);
     return QRectF((boundsSize.width() - targetSize.width()) / 2.0,
         (boundsSize.height() - targetSize.height()) / 2.0, targetSize.width(), targetSize.height());
@@ -773,9 +784,64 @@ QString KiriImageView::errorString() const { return m_errorString; }
 
 QSize KiriImageView::imageSize() const { return m_imageSize; }
 
+QSizeF KiriImageView::viewportSize() const { return m_viewportSize; }
+
+void KiriImageView::setViewportSize(const QSizeF &viewportSize)
+{
+    const QSizeF normalizedViewportSize(
+        std::max<qreal>(0.0, viewportSize.width()), std::max<qreal>(0.0, viewportSize.height()));
+    if (approximatelyEqual(m_viewportSize, normalizedViewportSize)) {
+        return;
+    }
+
+    m_viewportSize = normalizedViewportSize;
+    Q_EMIT viewportSizeChanged();
+    updateZoomState();
+}
+
+QSizeF KiriImageView::displaySize() const { return m_displaySize; }
+
+qreal KiriImageView::zoomPercent() const { return m_zoomPercent; }
+
+void KiriImageView::setZoomPercent(qreal zoomPercent)
+{
+    if (!std::isfinite(zoomPercent)) {
+        return;
+    }
+
+    const qreal clampedZoomPercent
+        = std::clamp(zoomPercent, minimumManualZoomPercent, maximumManualZoomPercent);
+    const bool zoomChanged = !approximatelyEqual(m_zoomPercent, clampedZoomPercent);
+    const bool modeChanged = m_zoomMode != ZoomMode::Manual;
+
+    if (!zoomChanged && !modeChanged) {
+        return;
+    }
+
+    m_zoomMode = ZoomMode::Manual;
+    m_zoomPercent = clampedZoomPercent;
+
+    if (modeChanged) {
+        Q_EMIT zoomModeChanged();
+    }
+    if (zoomChanged) {
+        Q_EMIT zoomPercentChanged();
+    }
+
+    setDisplaySize(displaySizeForZoomPercent(m_zoomPercent));
+}
+
+KiriImageView::ZoomMode KiriImageView::zoomMode() const { return m_zoomMode; }
+
 void KiriImageView::openPreviousImage() { openAdjacentImage(NavigationDirection::Previous); }
 
 void KiriImageView::openNextImage() { openAdjacentImage(NavigationDirection::Next); }
+
+void KiriImageView::resetZoom()
+{
+    setZoomMode(ZoomMode::LogicalScaleFit);
+    updateZoomState();
+}
 
 QSGNode *KiriImageView::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *)
 {
@@ -802,11 +868,22 @@ QSGNode *KiriImageView::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *)
     return node;
 }
 
+void KiriImageView::itemChange(ItemChange change, const ItemChangeData &value)
+{
+    QQuickItem::itemChange(change, value);
+
+    if (change == ItemSceneChange || change == ItemDevicePixelRatioHasChanged) {
+        updateZoomState();
+    }
+}
+
 void KiriImageView::startLoad()
 {
     cancelLoad();
     clearImage();
     setErrorString(QString());
+    setZoomMode(ZoomMode::LogicalScaleFit);
+    updateZoomState();
 
     if (m_sourceUrl.isEmpty()) {
         setStatus(Status::Null);
@@ -1375,6 +1452,85 @@ void KiriImageView::setImageSize(const QSize &imageSize)
 
     m_imageSize = imageSize;
     Q_EMIT imageSizeChanged();
+    updateZoomState();
+}
+
+void KiriImageView::setDisplaySize(const QSizeF &displaySize)
+{
+    const QSizeF normalizedDisplaySize(
+        std::max<qreal>(0.0, displaySize.width()), std::max<qreal>(0.0, displaySize.height()));
+    if (approximatelyEqual(m_displaySize, normalizedDisplaySize)) {
+        return;
+    }
+
+    m_displaySize = normalizedDisplaySize;
+    Q_EMIT displaySizeChanged();
+    update();
+}
+
+void KiriImageView::setZoomMode(ZoomMode zoomMode)
+{
+    if (m_zoomMode == zoomMode) {
+        return;
+    }
+
+    m_zoomMode = zoomMode;
+    Q_EMIT zoomModeChanged();
+}
+
+void KiriImageView::updateZoomState()
+{
+    if (m_zoomMode == ZoomMode::LogicalScaleFit) {
+        const qreal zoomPercent = logicalScaleFitZoomPercent();
+        if (!approximatelyEqual(m_zoomPercent, zoomPercent)) {
+            m_zoomPercent = zoomPercent;
+            Q_EMIT zoomPercentChanged();
+        }
+    }
+
+    setDisplaySize(displaySizeForZoomPercent(m_zoomPercent));
+}
+
+qreal KiriImageView::displayDevicePixelRatio() const
+{
+    const QQuickWindow *quickWindow = window();
+    if (quickWindow == nullptr) {
+        return 1.0;
+    }
+
+    const qreal devicePixelRatio = quickWindow->effectiveDevicePixelRatio();
+    if (!std::isfinite(devicePixelRatio) || devicePixelRatio <= 0.0) {
+        return 1.0;
+    }
+
+    return devicePixelRatio;
+}
+
+qreal KiriImageView::logicalScaleFitZoomPercent() const
+{
+    const qreal devicePixelRatio = displayDevicePixelRatio();
+    qreal zoomPercent = devicePixelRatio * 100.0;
+
+    if (m_imageSize.isEmpty() || m_viewportSize.isEmpty()) {
+        return zoomPercent;
+    }
+
+    const qreal horizontalFitZoomPercent
+        = m_viewportSize.width() * devicePixelRatio * 100.0 / m_imageSize.width();
+    const qreal verticalFitZoomPercent
+        = m_viewportSize.height() * devicePixelRatio * 100.0 / m_imageSize.height();
+    return std::max<qreal>(
+        0.0, std::min({ zoomPercent, horizontalFitZoomPercent, verticalFitZoomPercent }));
+}
+
+QSizeF KiriImageView::displaySizeForZoomPercent(qreal zoomPercent) const
+{
+    if (m_imageSize.isEmpty() || !std::isfinite(zoomPercent) || zoomPercent <= 0.0) {
+        return {};
+    }
+
+    const qreal scale = zoomPercent / (displayDevicePixelRatio() * 100.0);
+    return QSizeF(m_imageSize.width() * scale, m_imageSize.height() * scale);
 }
 
 void KiriImageView::clearImage()
