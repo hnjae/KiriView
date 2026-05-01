@@ -71,6 +71,16 @@ The toolbar provides a zoom percentage input. When an image is ready, users can
 enter manual zoom values from 10% through 800%. A fit action returns the image
 to the default display-scale-aware fit behavior.
 
+When an image is ready, Ctrl+= or Ctrl++ zooms in by 10 percentage points and
+Ctrl+- zooms out by 10 percentage points. Keyboard zoom uses the same 10%
+through 800% manual zoom range as the toolbar zoom input. Holding Ctrl and
+dragging vertically on the image zooms around the cursor: dragging up zooms in
+and dragging down zooms out.
+
+When an image is zoomed large enough to pan, the arrow keys pan the image within
+the available scroll bounds. Arrow-key panning is inactive while the page number
+or zoom input is focused.
+
 The toolbar centers page navigation as an up-arrow Previous button, an editable
 current page number, the text `of`, the total number of supported images in the
 current directory or archive scope, and a down-arrow Next button. Page numbers
@@ -135,6 +145,10 @@ same process-locale collation order used for image navigation. Navigation does
 not wrap; pressing Previous Container on the first candidate or Next Container on
 the last candidate keeps the current view unchanged.
 
+The `[` key opens the previous sibling container and the `]` key opens the next
+sibling container when container navigation is available. These shortcuts are
+inactive while the page number or zoom input is focused.
+
 Opening a directory container displays the first directly contained supported
 image file in that directory. Directory container opening is non-recursive.
 Opening a CBZ container displays the first supported image in that archive using
@@ -145,6 +159,18 @@ displayed image and shows an error state explaining that the selected container
 does not contain supported images. That empty container remains the current
 container navigation position, so Previous Container and Next Container can
 continue to move to neighboring containers.
+
+## Window Shortcuts
+
+The `f` key and F11 toggle the main window between normal windowed display and
+system fullscreen. Fullscreen hides the system titlebar and window decorations
+while keeping the app toolbar available. Leaving fullscreen restores the
+window's previous windowed, maximized, or minimized state. The `f` shortcut is
+inactive while the page number or zoom input is focused.
+
+The `?` key and F1 open a modal shortcut help dialog listing KiriView's keyboard
+and mouse shortcuts. While the shortcut help dialog is open, Escape closes the
+dialog instead of closing the main window.
 
 Out of scope for the current version: editing, metadata panels, and file
 management actions.
