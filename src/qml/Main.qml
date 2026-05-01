@@ -22,7 +22,7 @@ Kirigami.ApplicationWindow {
     pageStack.initialPage: Kirigami.Page {
         id: page
 
-        title: "KiriView"
+        readonly property bool imageReady: imageView.status === KiriImageView.Ready
 
         actions: [
             Kirigami.Action {
@@ -33,35 +33,35 @@ Kirigami.ApplicationWindow {
                 onTriggered: fileDialog.open()
             },
             Kirigami.Action {
+                enabled: page.imageReady
                 icon.name: "go-previous-symbolic"
                 text: "Previous"
-                visible: imageView.status === KiriImageView.Ready
 
                 onTriggered: imageView.openPreviousImage()
             },
             Kirigami.Action {
+                enabled: page.imageReady
                 icon.name: "go-next-symbolic"
                 text: "Next"
-                visible: imageView.status === KiriImageView.Ready
 
                 onTriggered: imageView.openNextImage()
             },
             Kirigami.Action {
+                enabled: page.imageReady
                 icon.name: "zoom-fit-best-symbolic"
                 text: "Fit"
-                visible: imageView.status === KiriImageView.Ready
 
                 onTriggered: imageView.resetZoom()
             },
             Kirigami.Action {
+                enabled: page.imageReady
                 text: "Zoom"
-                visible: imageView.status === KiriImageView.Ready
 
                 displayComponent: Controls.SpinBox {
                     id: zoomSpinBox
 
                     editable: true
-                    enabled: imageView.status === KiriImageView.Ready
+                    enabled: page.imageReady
                     from: Math.min(10, Math.floor(imageView.zoomPercent))
                     implicitWidth: Kirigami.Units.gridUnit * 5
                     stepSize: 10
