@@ -10,8 +10,9 @@ file chooser, which accepts a single selection only.
 
 ## File Access
 
-KiriView opens user-selected image URLs, including local files and
-KDE-supported remote URLs such as `smb://`.
+KiriView opens user-selected image URLs, including local files,
+KDE-supported remote URLs such as `smb://`, and KDE-supported archive URLs
+such as `zip://`.
 
 In Flatpak, adjacent image navigation can list neighboring files under `home`,
 `/media`, `/mnt`, `/run/media`, and `$XDG_RUNTIME_DIR/gvfs`. Files outside those
@@ -44,6 +45,10 @@ When an image is open, Page Up or the Previous window button opens the previous
 supported image file in the same parent URL. Page Down or the Next window button
 opens the next one. Supported extensions match the open dialog: AVIF, BMP, GIF,
 JPEG, PNG, SVG, and WebP, case-insensitively.
+
+When an image is opened from a KDE-supported archive URL such as `zip://`,
+navigation moves between supported image files in the same directory inside the
+archive.
 
 The previous and next files are determined by sorting candidate file names with
 the process locale collation order, including `LC_COLLATE`. Navigation does not
