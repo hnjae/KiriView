@@ -61,7 +61,9 @@ public:
     Q_ENUM(Status)
 
     enum class ZoomMode {
-        LogicalScaleFit,
+        Fit,
+        FitHeight,
+        FitWidth,
         Manual,
     };
     Q_ENUM(ZoomMode)
@@ -93,6 +95,7 @@ public:
     Q_INVOKABLE void openPreviousContainer();
     Q_INVOKABLE void openNextContainer();
     Q_INVOKABLE void resetZoom();
+    Q_INVOKABLE void setFitMode(KiriImageView::ZoomMode zoomMode);
 
     QSGNode *updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *) override;
     void itemChange(ItemChange change, const ItemChangeData &value) override;
@@ -205,7 +208,7 @@ private:
     void setZoomMode(ZoomMode zoomMode);
     void updateZoomState();
     qreal displayDevicePixelRatio() const;
-    qreal logicalScaleFitZoomPercent() const;
+    qreal fitZoomPercent(ZoomMode zoomMode) const;
     QSizeF displaySizeForZoomPercent(qreal zoomPercent) const;
     void clearImage();
 
@@ -220,7 +223,8 @@ private:
     QSizeF m_viewportSize;
     QSizeF m_displaySize;
     qreal m_zoomPercent = 100.0;
-    ZoomMode m_zoomMode = ZoomMode::LogicalScaleFit;
+    ZoomMode m_zoomMode = ZoomMode::Fit;
+    QUrl m_zoomContainerUrl;
     QImage m_image;
     quint64 m_imageRevision = 0;
     QByteArray m_animationData;

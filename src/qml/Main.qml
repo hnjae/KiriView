@@ -201,6 +201,24 @@ Kirigami.ApplicationWindow {
             onTriggered: imageView.resetZoom()
         }
 
+        Controls.Action {
+            id: fitHeightAction
+
+            enabled: page.imageReady && !root.helpDialogOpen
+            text: "Fit Height"
+
+            onTriggered: imageView.setFitMode(KiriImageView.FitHeight)
+        }
+
+        Controls.Action {
+            id: fitWidthAction
+
+            enabled: page.imageReady && !root.helpDialogOpen
+            text: "Fit Width"
+
+            onTriggered: imageView.setFitMode(KiriImageView.FitWidth)
+        }
+
         header: Controls.ToolBar {
             contentItem: Item {
                 implicitHeight: Math.max(leftActions.implicitHeight, pageNavigation.implicitHeight, rightActions.implicitHeight) + Kirigami.Units.smallSpacing * 2
@@ -326,11 +344,41 @@ Kirigami.ApplicationWindow {
                     spacing: Kirigami.Units.smallSpacing
 
                     Controls.ToolButton {
-                        action: fitAction
-                        display: Controls.AbstractButton.IconOnly
+                        id: fitMenuButton
 
-                        Controls.ToolTip.text: action.text
+                        enabled: page.imageReady && !root.helpDialogOpen
+                        display: Controls.AbstractButton.IconOnly
+                        icon.name: "zoom-fit-best-symbolic"
+                        text: "Fit"
+
+                        onClicked: fitMenu.open()
+
+                        Controls.ToolTip.text: text
                         Controls.ToolTip.visible: hovered
+
+                        Controls.Menu {
+                            id: fitMenu
+
+                            y: fitMenuButton.height
+
+                            Controls.MenuItem {
+                                action: fitAction
+                                checkable: true
+                                checked: imageView.zoomMode === KiriImageView.Fit
+                            }
+
+                            Controls.MenuItem {
+                                action: fitHeightAction
+                                checkable: true
+                                checked: imageView.zoomMode === KiriImageView.FitHeight
+                            }
+
+                            Controls.MenuItem {
+                                action: fitWidthAction
+                                checkable: true
+                                checked: imageView.zoomMode === KiriImageView.FitWidth
+                            }
+                        }
                     }
 
                     Controls.SpinBox {
@@ -338,10 +386,10 @@ Kirigami.ApplicationWindow {
 
                         editable: true
                         enabled: page.imageReady
-                        from: Math.min(10, Math.floor(imageView.zoomPercent))
+                        from: Math.min(page.minimumManualZoomPercent, Math.floor(imageView.zoomPercent))
                         implicitWidth: Kirigami.Units.gridUnit * 5
-                        stepSize: 10
-                        to: 800
+                        stepSize: page.zoomStepPercent
+                        to: Math.max(page.maximumManualZoomPercent, Math.ceil(imageView.zoomPercent))
                         value: Math.round(imageView.zoomPercent)
 
                         textFromValue: function (value, locale) {
@@ -359,7 +407,7 @@ Kirigami.ApplicationWindow {
                             top: zoomSpinBox.to
                         }
 
-                        onValueModified: imageView.zoomPercent = value
+                        onValueModified: imageView.zoomPercent = page.clampValue(value, page.minimumManualZoomPercent, page.maximumManualZoomPercent)
                     }
                 }
             }

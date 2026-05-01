@@ -679,6 +679,35 @@ QUrl navigationSourceUrl(const QUrl &url)
     return url;
 }
 
+QUrl containerNavigationUrlForImage(const QUrl &imageUrl, const QUrl &comicBookRootUrl)
+{
+    if (imageUrl.isEmpty()) {
+        return {};
+    }
+
+    if (isUrlInsideArchiveRoot(imageUrl, comicBookRootUrl)) {
+        const std::optional<QUrl> archiveUrl = comicBookArchiveFileUrl(comicBookRootUrl);
+        if (!archiveUrl.has_value()) {
+            return {};
+        }
+
+        return normalizedFileContainerUrl(navigationSourceUrl(*archiveUrl));
+    }
+
+    const QUrl currentUrl = navigationSourceUrl(imageUrl);
+    const QUrl parentUrl = currentUrl.adjusted(QUrl::RemoveFilename | QUrl::NormalizePathSegments);
+    if (!parentUrl.isValid() || parentUrl.isEmpty()) {
+        return {};
+    }
+
+    return normalizedDirectoryContainerUrl(parentUrl);
+}
+
+bool sameContainerNavigationUrl(const QUrl &left, const QUrl &right)
+{
+    return !left.isEmpty() && !right.isEmpty() && left.matches(right, QUrl::NormalizePathSegments);
+}
+
 QRectF imageTargetRect(const QSize &imageSize, const QSizeF &boundsSize)
 {
     if (imageSize.isEmpty() || boundsSize.isEmpty()) {
@@ -1173,7 +1202,17 @@ void KiriImageView::openImageAtPage(int pageNumber)
 
 void KiriImageView::resetZoom()
 {
-    setZoomMode(ZoomMode::LogicalScaleFit);
+    setZoomMode(ZoomMode::Fit);
+    updateZoomState();
+}
+
+void KiriImageView::setFitMode(ZoomMode zoomMode)
+{
+    if (zoomMode == ZoomMode::Manual) {
+        return;
+    }
+
+    setZoomMode(zoomMode);
     updateZoomState();
 }
 
@@ -1220,7 +1259,7 @@ void KiriImageView::startLoad()
 
     if (m_sourceUrl.isEmpty()) {
         clearImage();
-        setZoomMode(ZoomMode::LogicalScaleFit);
+        setZoomMode(ZoomMode::Fit);
         updateZoomState();
         setLoading(false);
         m_comicBookRootUrl = QUrl();
@@ -1237,7 +1276,7 @@ void KiriImageView::startLoad()
     setLoading(true);
     if (!hasDisplayedImage()) {
         clearImage();
-        setZoomMode(ZoomMode::LogicalScaleFit);
+        setZoomMode(ZoomMode::Fit);
         updateZoomState();
         setStatus(Status::Loading);
     } else {
@@ -1784,7 +1823,8 @@ void KiriImageView::finishContainerNavigationLoadWithError(
     m_comicBookRootUrl = QUrl();
 
     clearImage();
-    setZoomMode(ZoomMode::LogicalScaleFit);
+    m_zoomContainerUrl = containerUrl;
+    setZoomMode(ZoomMode::Fit);
     updateZoomState();
     setLoading(false);
     setContainerNavigationUrl(containerUrl);
@@ -1817,22 +1857,8 @@ void KiriImageView::updateContainerNavigationFromDisplayedImage()
         return;
     }
 
-    if (isUrlInsideArchiveRoot(m_displayedUrl, m_displayedComicBookRootUrl)) {
-        const std::optional<QUrl> archiveUrl = comicBookArchiveFileUrl(m_displayedComicBookRootUrl);
-        setContainerNavigationUrl(archiveUrl.has_value()
-                ? normalizedFileContainerUrl(navigationSourceUrl(*archiveUrl))
-                : QUrl());
-        return;
-    }
-
-    const QUrl currentUrl = navigationSourceUrl(m_displayedUrl);
-    const QUrl parentUrl = currentUrl.adjusted(QUrl::RemoveFilename | QUrl::NormalizePathSegments);
-    if (!parentUrl.isValid() || parentUrl.isEmpty()) {
-        setContainerNavigationUrl(QUrl());
-        return;
-    }
-
-    setContainerNavigationUrl(normalizedDirectoryContainerUrl(parentUrl));
+    setContainerNavigationUrl(
+        containerNavigationUrlForImage(m_displayedUrl, m_displayedComicBookRootUrl));
 }
 
 void KiriImageView::updatePageNavigation()
@@ -2346,6 +2372,7 @@ void KiriImageView::finishLoadWithError(const QString &errorString)
     }
 
     clearImage();
+    m_zoomContainerUrl = QUrl();
     setContainerNavigationUrl(QUrl());
     setErrorString(errorString);
     setStatus(Status::Error);
@@ -2354,8 +2381,13 @@ void KiriImageView::finishLoadWithError(const QString &errorString)
 void KiriImageView::finishLoadSuccessfully(const QImage &image)
 {
     stopAnimation();
-    setZoomMode(ZoomMode::LogicalScaleFit);
+    const QUrl loadedContainerUrl = containerNavigationUrlForImage(m_sourceUrl, m_comicBookRootUrl);
+    if (!sameContainerNavigationUrl(loadedContainerUrl, m_zoomContainerUrl)) {
+        setZoomMode(ZoomMode::Fit);
+    }
+    m_zoomContainerUrl = loadedContainerUrl;
     setDisplayedImage(image);
+    updateZoomState();
     m_displayedUrl = m_sourceUrl;
     m_displayedComicBookRootUrl = m_comicBookRootUrl;
     updateWindowTitleFileName();
@@ -2532,6 +2564,8 @@ void KiriImageView::finishWithAnimationError(const QString &errorString)
 {
     setLoading(false);
     clearImage();
+    setZoomMode(ZoomMode::Fit);
+    updateZoomState();
     setContainerNavigationUrl(QUrl());
     clearPageNavigation();
     const QString message = errorString.isEmpty()
@@ -2631,8 +2665,8 @@ void KiriImageView::setZoomMode(ZoomMode zoomMode)
 
 void KiriImageView::updateZoomState()
 {
-    if (m_zoomMode == ZoomMode::LogicalScaleFit) {
-        const qreal zoomPercent = logicalScaleFitZoomPercent();
+    if (m_zoomMode != ZoomMode::Manual) {
+        const qreal zoomPercent = fitZoomPercent(m_zoomMode);
         if (!approximatelyEqual(m_zoomPercent, zoomPercent)) {
             m_zoomPercent = zoomPercent;
             Q_EMIT zoomPercentChanged();
@@ -2657,21 +2691,47 @@ qreal KiriImageView::displayDevicePixelRatio() const
     return devicePixelRatio;
 }
 
-qreal KiriImageView::logicalScaleFitZoomPercent() const
+qreal KiriImageView::fitZoomPercent(ZoomMode zoomMode) const
 {
     const qreal devicePixelRatio = displayDevicePixelRatio();
-    qreal zoomPercent = devicePixelRatio * 100.0;
+    const qreal fallbackZoomPercent = devicePixelRatio * 100.0;
 
-    if (m_imageSize.isEmpty() || m_viewportSize.isEmpty()) {
-        return zoomPercent;
+    if (m_imageSize.isEmpty()) {
+        return fallbackZoomPercent;
     }
 
-    const qreal horizontalFitZoomPercent
-        = m_viewportSize.width() * devicePixelRatio * 100.0 / m_imageSize.width();
-    const qreal verticalFitZoomPercent
-        = m_viewportSize.height() * devicePixelRatio * 100.0 / m_imageSize.height();
-    return std::max<qreal>(
-        0.0, std::min({ zoomPercent, horizontalFitZoomPercent, verticalFitZoomPercent }));
+    const auto fitWidthZoomPercent = [this, devicePixelRatio, fallbackZoomPercent]() {
+        if (m_viewportSize.width() <= 0.0) {
+            return fallbackZoomPercent;
+        }
+
+        return std::max<qreal>(
+            0.0, m_viewportSize.width() * devicePixelRatio * 100.0 / m_imageSize.width());
+    };
+    const auto fitHeightZoomPercent = [this, devicePixelRatio, fallbackZoomPercent]() {
+        if (m_viewportSize.height() <= 0.0) {
+            return fallbackZoomPercent;
+        }
+
+        return std::max<qreal>(
+            0.0, m_viewportSize.height() * devicePixelRatio * 100.0 / m_imageSize.height());
+    };
+
+    switch (zoomMode) {
+    case ZoomMode::Fit:
+        if (m_viewportSize.isEmpty()) {
+            return fallbackZoomPercent;
+        }
+        return std::min(fitWidthZoomPercent(), fitHeightZoomPercent());
+    case ZoomMode::FitHeight:
+        return fitHeightZoomPercent();
+    case ZoomMode::FitWidth:
+        return fitWidthZoomPercent();
+    case ZoomMode::Manual:
+        return m_zoomPercent;
+    }
+
+    return fallbackZoomPercent;
 }
 
 QSizeF KiriImageView::displaySizeForZoomPercent(qreal zoomPercent) const
@@ -2692,6 +2752,7 @@ void KiriImageView::clearImage()
     stopAnimation();
     m_displayedUrl = QUrl();
     m_displayedComicBookRootUrl = QUrl();
+    m_zoomContainerUrl = QUrl();
     updateWindowTitleFileName();
     clearPageNavigation();
 
