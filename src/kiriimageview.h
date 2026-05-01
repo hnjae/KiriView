@@ -44,6 +44,8 @@ class KiriImageView : public QQuickItem
     Q_PROPERTY(QSizeF displaySize READ displaySize NOTIFY displaySizeChanged)
     Q_PROPERTY(qreal zoomPercent READ zoomPercent WRITE setZoomPercent NOTIFY zoomPercentChanged)
     Q_PROPERTY(ZoomMode zoomMode READ zoomMode NOTIFY zoomModeChanged)
+    Q_PROPERTY(int currentPageNumber READ currentPageNumber NOTIFY pageNavigationChanged)
+    Q_PROPERTY(int imageCount READ imageCount NOTIFY pageNavigationChanged)
 
 public:
     enum class Status {
@@ -76,9 +78,12 @@ public:
     qreal zoomPercent() const;
     void setZoomPercent(qreal zoomPercent);
     ZoomMode zoomMode() const;
+    int currentPageNumber() const;
+    int imageCount() const;
 
     Q_INVOKABLE void openPreviousImage();
     Q_INVOKABLE void openNextImage();
+    Q_INVOKABLE void openImageAtPage(int pageNumber);
     Q_INVOKABLE void resetZoom();
 
     QSGNode *updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *) override;
@@ -94,6 +99,7 @@ Q_SIGNALS:
     void displaySizeChanged();
     void zoomPercentChanged();
     void zoomModeChanged();
+    void pageNavigationChanged();
 
 private:
     enum class NavigationDirection {
@@ -124,6 +130,15 @@ private:
     void finishNavigation(KCoreDirLister *lister, quint64 generation, NavigationDirection direction,
         const QUrl &currentUrl);
     void finishNavigationWithError(KCoreDirLister *lister, quint64 generation);
+    void updatePageNavigation();
+    void updateFilePageNavigation(quint64 generation, const QUrl &currentUrl);
+    void updateComicBookPageNavigation(
+        quint64 generation, const QUrl &currentUrl, const QUrl &archiveRootUrl);
+    void cancelPageNavigationUpdate();
+    void finishPageNavigationUpdateWithError(KCoreDirLister *lister, quint64 generation);
+    void setPageNavigationUrls(std::vector<QUrl> urls, const QUrl &currentUrl);
+    void setFallbackPageNavigationUrl(const QUrl &currentUrl);
+    void clearPageNavigation();
     void scheduleAdjacentImagePredecode();
     void scheduleFileAdjacentImagePredecode(quint64 generation);
     void scheduleComicBookAdjacentImagePredecode(quint64 generation);
@@ -190,12 +205,17 @@ private:
     KIO::ListJob *m_archiveListJob = nullptr;
     KCoreDirLister *m_navigationLister = nullptr;
     KIO::ListJob *m_navigationListJob = nullptr;
+    KCoreDirLister *m_pageNavigationLister = nullptr;
+    KIO::ListJob *m_pageNavigationListJob = nullptr;
     KCoreDirLister *m_predecodeLister = nullptr;
     KIO::ListJob *m_predecodeListJob = nullptr;
+    std::vector<QUrl> m_pageNavigationUrls;
     std::vector<PredecodeJob> m_predecodeJobs;
     std::vector<PredecodedImage> m_predecodedImages;
+    int m_currentPageIndex = -1;
     quint64 m_loadGeneration = 0;
     quint64 m_navigationGeneration = 0;
+    quint64 m_pageNavigationGeneration = 0;
     quint64 m_predecodeGeneration = 0;
     QUrl m_comicBookRootUrl;
 };

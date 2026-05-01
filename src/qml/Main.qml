@@ -34,72 +34,211 @@ Kirigami.ApplicationWindow {
         }
 
         padding: 0
+        globalToolBarStyle: Kirigami.ApplicationHeaderStyle.None
 
         readonly property bool imageReady: imageView.status === KiriImageView.Ready
 
-        actions: [
-            Kirigami.Action {
-                icon.name: "document-open-symbolic"
-                shortcut: StandardKey.Open
-                text: "Open"
+        function pageNumberText() {
+            return imageView.currentPageNumber > 0 ? imageView.currentPageNumber.toString() : "0";
+        }
 
-                onTriggered: fileDialog.open()
-            },
-            Kirigami.Action {
-                enabled: page.imageReady
-                icon.name: "go-previous-symbolic"
-                text: "Previous"
+        Controls.Action {
+            id: openAction
 
-                onTriggered: imageView.openPreviousImage()
-            },
-            Kirigami.Action {
-                enabled: page.imageReady
-                icon.name: "go-next-symbolic"
-                text: "Next"
+            icon.name: "document-open-symbolic"
+            shortcut: StandardKey.Open
+            text: "Open"
 
-                onTriggered: imageView.openNextImage()
-            },
-            Kirigami.Action {
-                enabled: page.imageReady
-                icon.name: "zoom-fit-best-symbolic"
-                text: "Fit"
+            onTriggered: fileDialog.open()
+        }
 
-                onTriggered: imageView.resetZoom()
-            },
-            Kirigami.Action {
-                enabled: page.imageReady
-                text: "Zoom"
+        Controls.Action {
+            id: previousImageAction
 
-                displayComponent: Controls.SpinBox {
-                    id: zoomSpinBox
+            enabled: page.imageReady
+            icon.name: "go-up-symbolic"
+            text: "Previous"
 
-                    editable: true
+            onTriggered: imageView.openPreviousImage()
+        }
+
+        Controls.Action {
+            id: nextImageAction
+
+            enabled: page.imageReady
+            icon.name: "go-down-symbolic"
+            text: "Next"
+
+            onTriggered: imageView.openNextImage()
+        }
+
+        Controls.Action {
+            id: fitAction
+
+            enabled: page.imageReady
+            icon.name: "zoom-fit-best-symbolic"
+            text: "Fit"
+
+            onTriggered: imageView.resetZoom()
+        }
+
+        header: Controls.ToolBar {
+            contentItem: Item {
+                implicitHeight: Math.max(leftActions.implicitHeight, pageNavigation.implicitHeight, rightActions.implicitHeight) + Kirigami.Units.smallSpacing * 2
+
+                RowLayout {
+                    id: leftActions
+
+                    anchors.left: parent.left
+                    anchors.leftMargin: Kirigami.Units.smallSpacing
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: Kirigami.Units.smallSpacing
+
+                    Controls.ToolButton {
+                        action: openAction
+                        display: Controls.AbstractButton.IconOnly
+
+                        Controls.ToolTip.text: action.text
+                        Controls.ToolTip.visible: hovered
+                    }
+                }
+
+                RowLayout {
+                    id: pageNavigation
+
+                    anchors.centerIn: parent
                     enabled: page.imageReady
-                    from: Math.min(10, Math.floor(imageView.zoomPercent))
-                    implicitWidth: Kirigami.Units.gridUnit * 5
-                    stepSize: 10
-                    to: 800
-                    value: Math.round(imageView.zoomPercent)
+                    spacing: Kirigami.Units.smallSpacing
 
-                    textFromValue: function (value, locale) {
-                        return Number(value).toLocaleString(locale, "f", 0) + "%";
+                    Controls.ToolButton {
+                        action: previousImageAction
+                        display: Controls.AbstractButton.IconOnly
+
+                        Controls.ToolTip.text: action.text
+                        Controls.ToolTip.visible: hovered
                     }
 
-                    valueFromText: function (text, locale) {
-                        const withoutPercent = text.toString().replace("%", "").trim();
-                        const parsedValue = Number.fromLocaleString(locale, withoutPercent);
-                        return Number.isFinite(parsedValue) ? Math.round(parsedValue) : zoomSpinBox.value;
+                    Controls.TextField {
+                        id: pageNumberField
+
+                        Layout.preferredWidth: Math.max(Kirigami.Units.gridUnit * 3, pageNumberMetrics.advanceWidth + leftPadding + rightPadding + Kirigami.Units.smallSpacing * 2)
+                        enabled: page.imageReady && imageView.imageCount > 0
+                        horizontalAlignment: Text.AlignHCenter
+                        inputMethodHints: Qt.ImhDigitsOnly
+                        selectByMouse: true
+                        validator: IntValidator {
+                            bottom: imageView.imageCount > 0 ? 1 : 0
+                            top: Math.max(1, imageView.imageCount)
+                        }
+
+                        function commitPageNumber() {
+                            if (!enabled) {
+                                resetPageNumberText();
+                                return;
+                            }
+
+                            const pageNumber = Number(text.trim());
+                            if (Number.isInteger(pageNumber) && pageNumber >= 1 && pageNumber <= imageView.imageCount) {
+                                imageView.openImageAtPage(pageNumber);
+                            }
+                            resetPageNumberText();
+                        }
+
+                        function resetPageNumberText() {
+                            text = page.pageNumberText();
+                        }
+
+                        Component.onCompleted: resetPageNumberText()
+                        onAccepted: {
+                            commitPageNumber();
+                            focus = false;
+                        }
+                        onEditingFinished: commitPageNumber()
                     }
 
-                    validator: IntValidator {
-                        bottom: zoomSpinBox.from
-                        top: zoomSpinBox.to
+                    TextMetrics {
+                        id: pageNumberMetrics
+
+                        font: pageNumberField.font
+                        text: Array(Math.max(1, Math.max(1, imageView.imageCount).toString().length) + 1).join("8")
                     }
 
-                    onValueModified: imageView.zoomPercent = value
+                    Controls.Label {
+                        text: "of"
+                        textFormat: Text.PlainText
+                    }
+
+                    Controls.Label {
+                        text: imageView.imageCount.toString()
+                        textFormat: Text.PlainText
+                    }
+
+                    Controls.ToolButton {
+                        action: nextImageAction
+                        display: Controls.AbstractButton.IconOnly
+
+                        Controls.ToolTip.text: action.text
+                        Controls.ToolTip.visible: hovered
+                    }
+                }
+
+                RowLayout {
+                    id: rightActions
+
+                    anchors.right: parent.right
+                    anchors.rightMargin: Kirigami.Units.smallSpacing
+                    anchors.verticalCenter: parent.verticalCenter
+                    spacing: Kirigami.Units.smallSpacing
+
+                    Controls.ToolButton {
+                        action: fitAction
+                        display: Controls.AbstractButton.IconOnly
+
+                        Controls.ToolTip.text: action.text
+                        Controls.ToolTip.visible: hovered
+                    }
+
+                    Controls.SpinBox {
+                        id: zoomSpinBox
+
+                        editable: true
+                        enabled: page.imageReady
+                        from: Math.min(10, Math.floor(imageView.zoomPercent))
+                        implicitWidth: Kirigami.Units.gridUnit * 5
+                        stepSize: 10
+                        to: 800
+                        value: Math.round(imageView.zoomPercent)
+
+                        textFromValue: function (value, locale) {
+                            return Number(value).toLocaleString(locale, "f", 0) + "%";
+                        }
+
+                        valueFromText: function (text, locale) {
+                            const withoutPercent = text.toString().replace("%", "").trim();
+                            const parsedValue = Number.fromLocaleString(locale, withoutPercent);
+                            return Number.isFinite(parsedValue) ? Math.round(parsedValue) : zoomSpinBox.value;
+                        }
+
+                        validator: IntValidator {
+                            bottom: zoomSpinBox.from
+                            top: zoomSpinBox.to
+                        }
+
+                        onValueModified: imageView.zoomPercent = value
+                    }
                 }
             }
-        ]
+        }
+
+        Connections {
+            target: imageView
+
+            function onPageNavigationChanged() {
+                if (!pageNumberField.activeFocus) {
+                    pageNumberField.resetPageNumberText();
+                }
+            }
+        }
 
         Flickable {
             id: imageFlickable
