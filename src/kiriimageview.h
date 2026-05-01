@@ -46,6 +46,8 @@ class KiriImageView : public QQuickItem
     Q_PROPERTY(ZoomMode zoomMode READ zoomMode NOTIFY zoomModeChanged)
     Q_PROPERTY(int currentPageNumber READ currentPageNumber NOTIFY pageNavigationChanged)
     Q_PROPERTY(int imageCount READ imageCount NOTIFY pageNavigationChanged)
+    Q_PROPERTY(bool containerNavigationAvailable READ containerNavigationAvailable NOTIFY
+            containerNavigationChanged)
 
 public:
     enum class Status {
@@ -80,10 +82,13 @@ public:
     ZoomMode zoomMode() const;
     int currentPageNumber() const;
     int imageCount() const;
+    bool containerNavigationAvailable() const;
 
     Q_INVOKABLE void openPreviousImage();
     Q_INVOKABLE void openNextImage();
     Q_INVOKABLE void openImageAtPage(int pageNumber);
+    Q_INVOKABLE void openPreviousContainer();
+    Q_INVOKABLE void openNextContainer();
     Q_INVOKABLE void resetZoom();
 
     QSGNode *updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *) override;
@@ -100,6 +105,7 @@ Q_SIGNALS:
     void zoomPercentChanged();
     void zoomModeChanged();
     void pageNavigationChanged();
+    void containerNavigationChanged();
 
 private:
     enum class NavigationDirection {
@@ -119,6 +125,7 @@ private:
         KIO::StoredTransferJob *job = nullptr;
     };
 
+    void setSourceUrlForLoad(const QUrl &sourceUrl, const QUrl &containerNavigationUrl);
     void startLoad();
     void startImageLoad(const QUrl &url, quint64 generation);
     void startImageDecode(QByteArray data, quint64 generation);
@@ -130,6 +137,23 @@ private:
     void finishNavigation(KCoreDirLister *lister, quint64 generation, NavigationDirection direction,
         const QUrl &currentUrl);
     void finishNavigationWithError(KCoreDirLister *lister, quint64 generation);
+    void openAdjacentContainer(NavigationDirection direction);
+    void cancelContainerNavigation();
+    void finishContainerNavigation(KCoreDirLister *lister, quint64 generation,
+        NavigationDirection direction, const QUrl &currentContainerUrl);
+    void finishContainerNavigationWithError(KCoreDirLister *lister, quint64 generation);
+    void openDirectoryContainer(const QUrl &containerUrl, quint64 generation);
+    void finishDirectoryContainerNavigation(
+        KCoreDirLister *lister, quint64 generation, const QUrl &containerUrl);
+    void finishDirectoryContainerNavigationWithError(KCoreDirLister *lister, quint64 generation,
+        const QUrl &containerUrl, const QString &errorString);
+    void openComicBookContainer(const QUrl &containerUrl, quint64 generation);
+    void openImageFromContainerNavigation(const QUrl &imageUrl, const QUrl &containerUrl);
+    void finishContainerNavigationWithEmptyContainer(const QUrl &containerUrl);
+    void finishContainerNavigationLoadWithError(
+        const QUrl &containerUrl, const QString &errorString);
+    void setContainerNavigationUrl(const QUrl &containerUrl);
+    void updateContainerNavigationFromDisplayedImage();
     void updatePageNavigation();
     void updateFilePageNavigation(quint64 generation, const QUrl &currentUrl);
     void updateComicBookPageNavigation(
@@ -205,6 +229,8 @@ private:
     KIO::ListJob *m_archiveListJob = nullptr;
     KCoreDirLister *m_navigationLister = nullptr;
     KIO::ListJob *m_navigationListJob = nullptr;
+    KCoreDirLister *m_containerNavigationLister = nullptr;
+    KIO::ListJob *m_containerNavigationListJob = nullptr;
     KCoreDirLister *m_pageNavigationLister = nullptr;
     KIO::ListJob *m_pageNavigationListJob = nullptr;
     KCoreDirLister *m_predecodeLister = nullptr;
@@ -215,9 +241,12 @@ private:
     int m_currentPageIndex = -1;
     quint64 m_loadGeneration = 0;
     quint64 m_navigationGeneration = 0;
+    quint64 m_containerNavigationGeneration = 0;
     quint64 m_pageNavigationGeneration = 0;
     quint64 m_predecodeGeneration = 0;
     QUrl m_comicBookRootUrl;
+    QUrl m_containerNavigationUrl;
+    QUrl m_loadingContainerNavigationUrl;
 };
 
 #endif

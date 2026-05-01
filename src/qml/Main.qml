@@ -73,6 +73,26 @@ Kirigami.ApplicationWindow {
         }
 
         Controls.Action {
+            id: previousContainerAction
+
+            enabled: imageView.containerNavigationAvailable
+            icon.name: "go-previous-symbolic"
+            text: "Previous Container"
+
+            onTriggered: imageView.openPreviousContainer()
+        }
+
+        Controls.Action {
+            id: nextContainerAction
+
+            enabled: imageView.containerNavigationAvailable
+            icon.name: "go-next-symbolic"
+            text: "Next Container"
+
+            onTriggered: imageView.openNextContainer()
+        }
+
+        Controls.Action {
             id: fitAction
 
             enabled: page.imageReady
@@ -96,6 +116,22 @@ Kirigami.ApplicationWindow {
 
                     Controls.ToolButton {
                         action: openAction
+                        display: Controls.AbstractButton.IconOnly
+
+                        Controls.ToolTip.text: action.text
+                        Controls.ToolTip.visible: hovered
+                    }
+
+                    Controls.ToolButton {
+                        action: previousContainerAction
+                        display: Controls.AbstractButton.IconOnly
+
+                        Controls.ToolTip.text: action.text
+                        Controls.ToolTip.visible: hovered
+                    }
+
+                    Controls.ToolButton {
+                        action: nextContainerAction
                         display: Controls.AbstractButton.IconOnly
 
                         Controls.ToolTip.text: action.text
