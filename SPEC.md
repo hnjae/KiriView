@@ -28,7 +28,9 @@ paths remain available only when explicitly provided by the XDG portal.
 ## Image Display
 
 Image loading is asynchronous. While a selected image is being opened, the UI
-shows a loading state and remains responsive. If another file is selected before
+remains responsive. If no image is currently displayed, the UI shows a loading
+state. If an image is already displayed, that image remains visible until the
+newly selected image is ready to replace it. If another file is selected before
 the previous load finishes, only the most recent selection is displayed.
 
 Opened images are displayed centered in the available page area while preserving
@@ -60,10 +62,13 @@ file's frame delays and loop count. Infinite loops continue until another image
 is selected or the view is cleared. APNG playback follows frame composition
 rules, including blend and disposal operations.
 
-When a new image is selected, any running animation stops before the new load
-starts. If the selected URL cannot be read, the file is not a decodable image,
-or animation playback fails, the UI shows an error state and remains ready for
-another open action.
+When a new image is selected while an image is already displayed, any running
+animation keeps playing until the replacement image is ready. If the selected
+URL cannot be read or the file is not a decodable image, the current image
+remains visible and the app reports the error without disrupting the view. If no
+image is currently displayed, failures show an error state. If animation
+playback fails for the displayed image, the UI shows an error state and remains
+ready for another open action.
 
 ## Image Navigation
 
@@ -87,6 +92,11 @@ keeps the current image open.
 If the parent URL cannot be listed, the current image is not found, or no
 adjacent supported image exists, the current image remains open and the app
 remains ready for another open action.
+
+After an image is displayed, KiriView may prepare adjacent images in the
+background so pressing Previous or Next can switch images without showing a
+full-page loading state. Background preparation must not replace the current
+image until the user opens that prepared image.
 
 Out of scope for the current version: editing, metadata panels, and file
 management actions.
