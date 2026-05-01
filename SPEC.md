@@ -40,8 +40,11 @@ device pixel ratio. For example, a small image opens at 200% on a display using
 coordinate system. If the image would exceed the available viewport at that
 default zoom, it is scaled down only as far as needed to fit.
 
-When an image is ready, the image viewing viewport uses `#3c3c3c` as its
-background color and does not add page padding around the image area.
+The image viewing area behind empty, loading, ready, and error states uses
+`#3c3c3c` as its background color, so navigation transitions do not flash to a
+different page color. The toolbar keeps its normal application styling. When an
+image is ready, the image viewing viewport does not add page padding around the
+image area.
 
 When a ready image is larger than the viewport at the current zoom, horizontal
 and vertical scrollbars allow panning across the image. When the image is
