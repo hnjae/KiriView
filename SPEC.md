@@ -142,10 +142,11 @@ remains ready for another open action.
 
 After an image is displayed, KiriView may prepare adjacent images in the
 background so pressing Previous or Next can switch images without showing a
-full-page loading state. KiriView prepares up to two previous and ten next
-static images, subject to a decoded-image memory limit that may keep fewer
-images prepared. Background preparation must not replace the current image until
-the user opens that prepared image.
+full-page loading state. KiriView keeps prepared static images reusable while
+they remain in the current cache window, including the current image, up to two
+previous images, and up to ten next images. A decoded-image memory limit may
+keep fewer images prepared. Background preparation must not replace the current
+image until the user opens that prepared image.
 
 ## Container Navigation
 
