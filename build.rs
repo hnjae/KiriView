@@ -24,6 +24,7 @@ fn main() {
     .cpp_file("src/kiriimagedecoder.cpp")
     .cpp_file("src/kiriimagenavigation.cpp")
     .cpp_file("src/kiriimagerendernode.cpp")
+    .cpp_file("src/predecodecache.cpp")
     .cpp_file("src/kiriimageview.cpp")
     .qt_module("Quick")
     .qt_module("Svg")

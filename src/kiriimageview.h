@@ -5,6 +5,7 @@
 #define KIRIVIEW_KIRIIMAGEVIEW_H
 
 #include "apngdecoder.h"
+#include "predecodecache.h"
 
 #include <QByteArray>
 #include <QImage>
@@ -120,18 +121,6 @@ private:
         Next,
     };
 
-    struct PredecodedImage {
-        QUrl url;
-        QUrl comicBookRootUrl;
-        QImage image;
-        qsizetype byteCost = 0;
-    };
-
-    struct PredecodeRequest {
-        QUrl url;
-        QUrl comicBookRootUrl;
-    };
-
     void setSourceUrlForLoad(const QUrl &sourceUrl, const QUrl &containerNavigationUrl);
     void startLoad();
     void startImageLoad(const QUrl &url, quint64 generation);
@@ -181,13 +170,6 @@ private:
         QByteArray data, const QUrl &url, const QUrl &comicBookRootUrl, quint64 generation);
     void cancelPredecode();
     bool tryDisplayPredecodedImage(const QUrl &url);
-    bool findPredecodedImage(const QUrl &url, QImage *image, QUrl *comicBookRootUrl) const;
-    void cachePredecodedImage(const QUrl &url, const QUrl &comicBookRootUrl, const QImage &image);
-    void cacheDisplayedImageForPredecode();
-    bool predecodeWindowContains(const QUrl &url) const;
-    void trimPredecodedImagesToPredecodeWindow();
-    bool hasPredecodedImage(const QUrl &url) const;
-    bool isPredecodeInFlight(const QUrl &url) const;
     void finishLoadWithError(const QString &errorString);
     void finishLoadSuccessfully(const QImage &image, bool predecodeCacheable);
     void finishSvgLoadSuccessfully(QByteArray data, const QSize &intrinsicSize);
@@ -267,9 +249,7 @@ private:
     std::vector<QUrl> m_pageNavigationUrls;
     KIO::StoredTransferJob *m_predecodeJob = nullptr;
     QUrl m_activePredecodeUrl;
-    std::vector<QUrl> m_predecodeWindowUrls;
-    std::vector<PredecodeRequest> m_predecodeQueue;
-    std::vector<PredecodedImage> m_predecodedImages;
+    KiriView::PredecodeCache m_predecodeCache;
     int m_currentPageIndex = -1;
     quint64 m_loadGeneration = 0;
     quint64 m_navigationGeneration = 0;
