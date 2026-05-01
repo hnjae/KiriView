@@ -38,6 +38,8 @@ class KiriImageView : public QQuickItem
     Q_PROPERTY(Status status READ status NOTIFY statusChanged)
     Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged)
     Q_PROPERTY(QString errorString READ errorString NOTIFY errorStringChanged)
+    Q_PROPERTY(
+        QString windowTitleFileName READ windowTitleFileName NOTIFY windowTitleFileNameChanged)
     Q_PROPERTY(QSize imageSize READ imageSize NOTIFY imageSizeChanged)
     Q_PROPERTY(
         QSizeF viewportSize READ viewportSize WRITE setViewportSize NOTIFY viewportSizeChanged)
@@ -73,6 +75,7 @@ public:
     Status status() const;
     bool loading() const;
     QString errorString() const;
+    QString windowTitleFileName() const;
     QSize imageSize() const;
     QSizeF viewportSize() const;
     void setViewportSize(const QSizeF &viewportSize);
@@ -99,6 +102,7 @@ Q_SIGNALS:
     void statusChanged();
     void loadingChanged();
     void errorStringChanged();
+    void windowTitleFileNameChanged();
     void imageSizeChanged();
     void viewportSizeChanged();
     void displaySizeChanged();
@@ -194,6 +198,8 @@ private:
     void setLoading(bool loading);
     void setStatus(Status status);
     void setErrorString(const QString &errorString);
+    void setWindowTitleFileName(const QString &fileName);
+    void updateWindowTitleFileName();
     void setImageSize(const QSize &imageSize);
     void setDisplaySize(const QSizeF &displaySize);
     void setZoomMode(ZoomMode zoomMode);
@@ -209,6 +215,7 @@ private:
     Status m_status = Status::Null;
     bool m_loading = false;
     QString m_errorString;
+    QString m_windowTitleFileName;
     QSize m_imageSize;
     QSizeF m_viewportSize;
     QSizeF m_displaySize;

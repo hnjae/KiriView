@@ -11,7 +11,7 @@ import org.kde.kirigami as Kirigami
 Kirigami.ApplicationWindow {
     id: root
 
-    title: "KiriView"
+    title: imageView.windowTitleFileName.length > 0 ? imageView.windowTitleFileName + " — KiriView" : "KiriView"
     visible: true
 
     property url initialSourceUrl

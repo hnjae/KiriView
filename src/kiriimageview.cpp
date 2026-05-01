@@ -491,6 +491,26 @@ QString archiveRelativeImageName(const QUrl &archiveRootUrl, const QUrl &imageUr
     return path.mid(rootPath.size());
 }
 
+QString windowTitleFileNameForDisplayedUrl(
+    const QUrl &displayedUrl, const QUrl &displayedComicBookRootUrl)
+{
+    if (displayedUrl.isEmpty()) {
+        return {};
+    }
+
+    if (isUrlInsideArchiveRoot(displayedUrl, displayedComicBookRootUrl)) {
+        const std::optional<QUrl> archiveUrl = comicBookArchiveFileUrl(displayedComicBookRootUrl);
+        if (archiveUrl.has_value()) {
+            const QString archiveName = archiveUrl->fileName();
+            if (!archiveName.isEmpty()) {
+                return archiveName;
+            }
+        }
+    }
+
+    return displayedUrl.fileName();
+}
+
 void sortImageNavigationCandidates(std::vector<ImageNavigationCandidate> *candidates)
 {
     QCollator collator(QLocale::system());
@@ -1060,6 +1080,8 @@ KiriImageView::Status KiriImageView::status() const { return m_status; }
 bool KiriImageView::loading() const { return m_loading; }
 
 QString KiriImageView::errorString() const { return m_errorString; }
+
+QString KiriImageView::windowTitleFileName() const { return m_windowTitleFileName; }
 
 QSize KiriImageView::imageSize() const { return m_imageSize; }
 
@@ -2336,6 +2358,7 @@ void KiriImageView::finishLoadSuccessfully(const QImage &image)
     setDisplayedImage(image);
     m_displayedUrl = m_sourceUrl;
     m_displayedComicBookRootUrl = m_comicBookRootUrl;
+    updateWindowTitleFileName();
     if (!m_loadingContainerNavigationUrl.isEmpty()) {
         setContainerNavigationUrl(m_loadingContainerNavigationUrl);
         m_loadingContainerNavigationUrl = QUrl();
@@ -2556,6 +2579,22 @@ void KiriImageView::setErrorString(const QString &errorString)
     Q_EMIT errorStringChanged();
 }
 
+void KiriImageView::setWindowTitleFileName(const QString &fileName)
+{
+    if (m_windowTitleFileName == fileName) {
+        return;
+    }
+
+    m_windowTitleFileName = fileName;
+    Q_EMIT windowTitleFileNameChanged();
+}
+
+void KiriImageView::updateWindowTitleFileName()
+{
+    setWindowTitleFileName(
+        windowTitleFileNameForDisplayedUrl(m_displayedUrl, m_displayedComicBookRootUrl));
+}
+
 void KiriImageView::setImageSize(const QSize &imageSize)
 {
     if (m_imageSize == imageSize) {
@@ -2653,6 +2692,7 @@ void KiriImageView::clearImage()
     stopAnimation();
     m_displayedUrl = QUrl();
     m_displayedComicBookRootUrl = QUrl();
+    updateWindowTitleFileName();
     clearPageNavigation();
 
     if (!m_image.isNull()) {
