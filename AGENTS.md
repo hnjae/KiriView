@@ -32,7 +32,14 @@ Rust, QML, C++, and headers use 4-space indentation. Keep app IDs as `io.github.
 
 ## Commit & Pull Request Guidelines
 
-Use Conventional Commit style, such as `feat: init project`. Pull requests should describe the change, list the commands run, link related issues when applicable, and include screenshots or notes for visible QML/UI changes.
+Use Conventional Commit style, such as `feat: init project`. After completing a
+requested repository change, create a commit before ending the task unless the
+user explicitly asks not to commit or asks to pause. If the work naturally
+requires multiple independent steps, commit after each step is complete,
+keeping the `SPEC.md` update as the first commit for product behavior changes.
+Do not include unrelated user changes in these commits. Pull requests should
+describe the change, list the commands run, link related issues when applicable,
+and include screenshots or notes for visible QML/UI changes.
 
 ## Licensing & Configuration
 
