@@ -388,6 +388,8 @@ bool isSupportedImageFileName(const QString &name)
         QStringLiteral("gif"),
         QStringLiteral("jpeg"),
         QStringLiteral("jpg"),
+        QStringLiteral("jp2"),
+        QStringLiteral("jxl"),
         QStringLiteral("png"),
         QStringLiteral("svg"),
         QStringLiteral("webp"),

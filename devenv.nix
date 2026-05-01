@@ -9,8 +9,10 @@ let
   qtToolPrefix = pkgs.symlinkJoin {
     name = "kiriview-qt-tools";
     paths = with pkgs.kdePackages; [
+      kimageformats
       qtbase
       qtdeclarative
+      qtimageformats
       qtsvg
     ];
   };
@@ -66,11 +68,13 @@ in
     clazy
     cmake
     kdePackages.extra-cmake-modules
+    kdePackages.kimageformats
     kdePackages.kirigami
     kdePackages.kio
     kdePackages.qqc2-desktop-style
     kdePackages.qtbase
     kdePackages.qtdeclarative
+    kdePackages.qtimageformats
     kdePackages.qtsvg
     kdePackages.qttools
     ninja
