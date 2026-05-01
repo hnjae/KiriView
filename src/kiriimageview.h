@@ -4,8 +4,6 @@
 #ifndef KIRIVIEW_KIRIIMAGEVIEW_H
 #define KIRIVIEW_KIRIIMAGEVIEW_H
 
-#include "predecodecache.h"
-
 #include <QByteArray>
 #include <QImage>
 #include <QQuickItem>
@@ -14,14 +12,10 @@
 #include <QString>
 #include <QUrl>
 #include <QtQml/qqmlregistration.h>
+#include <functional>
 #include <memory>
+#include <optional>
 #include <vector>
-
-namespace KIO {
-class Job;
-class ListJob;
-class StoredTransferJob;
-}
 
 class KCoreDirLister;
 
@@ -120,12 +114,42 @@ private:
         Next,
     };
 
+    class AsyncObjectSlot
+    {
+    public:
+        using CancelCallback = std::function<void(QObject *)>;
+
+        quint64 start(QObject *object, CancelCallback cancelCallback);
+        bool accepts(quint64 token, const QObject *object) const;
+        bool claim(quint64 token, QObject *object);
+        void clear(QObject *object);
+        void cancel();
+
+    private:
+        QObject *m_object = nullptr;
+        CancelCallback m_cancelCallback;
+        quint64 m_token = 0;
+    };
+
+    struct LoadSession {
+        quint64 id = 0;
+        QUrl requestedSourceUrl;
+        QUrl imageUrl;
+        QUrl comicBookRootUrl;
+        QUrl containerNavigationUrl;
+    };
+
+    class PredecodeCoordinator;
+
     void setSourceUrlForLoad(const QUrl &sourceUrl, const QUrl &containerNavigationUrl);
     void startLoad();
-    void startImageLoad(const QUrl &url, quint64 generation);
-    void startImageDecode(QByteArray data, quint64 generation);
-    void startComicBookLoad(const QUrl &archiveRootUrl, quint64 generation);
+    void startImageLoad(LoadSession session);
+    void startImageDecode(QByteArray data, LoadSession session);
+    void startComicBookLoad(LoadSession session);
     void cancelLoad();
+    bool isCurrentLoadSession(const LoadSession &session) const;
+    void clearLoadSession(const LoadSession &session);
+    void setSourceUrlFromResolvedLoad(const QUrl &sourceUrl);
     void openAdjacentImage(NavigationDirection direction);
     void openAdjacentComicBookImage(NavigationDirection direction);
     void cancelNavigation();
@@ -137,12 +161,12 @@ private:
     void finishContainerNavigation(KCoreDirLister *lister, quint64 generation,
         NavigationDirection direction, const QUrl &currentContainerUrl);
     void finishContainerNavigationWithError(KCoreDirLister *lister, quint64 generation);
-    void openDirectoryContainer(const QUrl &containerUrl, quint64 generation);
+    void openDirectoryContainer(const QUrl &containerUrl);
     void finishDirectoryContainerNavigation(
         KCoreDirLister *lister, quint64 generation, const QUrl &containerUrl);
     void finishDirectoryContainerNavigationWithError(KCoreDirLister *lister, quint64 generation,
         const QUrl &containerUrl, const QString &errorString);
-    void openComicBookContainer(const QUrl &containerUrl, quint64 generation);
+    void openComicBookContainer(const QUrl &containerUrl);
     void openImageFromContainerNavigation(const QUrl &imageUrl, const QUrl &containerUrl);
     void finishContainerNavigationWithEmptyContainer(const QUrl &containerUrl);
     void finishContainerNavigationLoadWithError(
@@ -150,30 +174,23 @@ private:
     void setContainerNavigationUrl(const QUrl &containerUrl);
     void updateContainerNavigationFromDisplayedImage();
     void updatePageNavigation();
-    void updateFilePageNavigation(quint64 generation, const QUrl &currentUrl);
-    void updateComicBookPageNavigation(
-        quint64 generation, const QUrl &currentUrl, const QUrl &archiveRootUrl);
+    void updateFilePageNavigation(const QUrl &currentUrl);
+    void updateComicBookPageNavigation(const QUrl &currentUrl, const QUrl &archiveRootUrl);
     void cancelPageNavigationUpdate();
     void finishPageNavigationUpdateWithError(KCoreDirLister *lister, quint64 generation);
     void setPageNavigationUrls(std::vector<QUrl> urls, const QUrl &currentUrl);
     void setFallbackPageNavigationUrl(const QUrl &currentUrl);
     void clearPageNavigation();
     void scheduleAdjacentImagePredecode();
-    void scheduleFileAdjacentImagePredecode(quint64 generation);
-    void scheduleComicBookAdjacentImagePredecode(quint64 generation);
-    void startPredecodeImageLoads(
-        const std::vector<QUrl> &urls, const QUrl &comicBookRootUrl, quint64 generation);
-    void startNextPredecodeImageLoad(quint64 generation);
-    void startPredecodeImageLoad(const QUrl &url, const QUrl &comicBookRootUrl, quint64 generation);
-    void startPredecodeImageDecode(
-        QByteArray data, const QUrl &url, const QUrl &comicBookRootUrl, quint64 generation);
     void cancelPredecode();
-    bool tryDisplayPredecodedImage(const QUrl &url);
-    void finishLoadWithError(const QString &errorString);
-    void finishLoadSuccessfully(const QImage &image, bool predecodeCacheable);
-    void finishSvgLoadSuccessfully(QByteArray data, const QSize &intrinsicSize);
-    void prepareSuccessfulImageLoad();
-    void finishSuccessfulImageLoad();
+    bool tryDisplayPredecodedImage(LoadSession session);
+    void finishLoadWithError(const LoadSession &session, const QString &errorString);
+    void finishLoadSuccessfully(
+        const LoadSession &session, const QImage &image, bool predecodeCacheable);
+    void finishSvgLoadSuccessfully(
+        LoadSession session, QByteArray data, const QSize &intrinsicSize);
+    void prepareSuccessfulImageLoad(const LoadSession &session);
+    void finishSuccessfulImageLoad(const LoadSession &session);
     bool hasDisplayedImage() const;
     void stopAnimation();
     void finishWithAnimationError(const QString &errorString);
@@ -220,27 +237,19 @@ private:
     QSize m_svgRasterSize;
     quint64 m_imageRevision = 0;
     std::unique_ptr<KiriView::ImageAnimationPlayer> m_animationPlayer;
-    KIO::StoredTransferJob *m_job = nullptr;
-    KIO::ListJob *m_archiveListJob = nullptr;
-    KCoreDirLister *m_navigationLister = nullptr;
-    KIO::ListJob *m_navigationListJob = nullptr;
-    KCoreDirLister *m_containerNavigationLister = nullptr;
-    KIO::ListJob *m_containerNavigationListJob = nullptr;
-    KCoreDirLister *m_pageNavigationLister = nullptr;
-    KIO::ListJob *m_pageNavigationListJob = nullptr;
-    KCoreDirLister *m_predecodeLister = nullptr;
-    KIO::ListJob *m_predecodeListJob = nullptr;
+    AsyncObjectSlot m_imageLoadSlot;
+    AsyncObjectSlot m_archiveListSlot;
+    AsyncObjectSlot m_navigationListerSlot;
+    AsyncObjectSlot m_navigationListSlot;
+    AsyncObjectSlot m_containerNavigationListerSlot;
+    AsyncObjectSlot m_containerNavigationListSlot;
+    AsyncObjectSlot m_pageNavigationListerSlot;
+    AsyncObjectSlot m_pageNavigationListSlot;
     std::vector<QUrl> m_pageNavigationUrls;
-    KIO::StoredTransferJob *m_predecodeJob = nullptr;
-    QUrl m_activePredecodeUrl;
-    KiriView::PredecodeCache m_predecodeCache;
+    std::unique_ptr<PredecodeCoordinator> m_predecodeCoordinator;
     int m_currentPageIndex = -1;
-    quint64 m_loadGeneration = 0;
-    quint64 m_navigationGeneration = 0;
-    quint64 m_containerNavigationGeneration = 0;
-    quint64 m_pageNavigationGeneration = 0;
-    quint64 m_predecodeGeneration = 0;
-    QUrl m_comicBookRootUrl;
+    quint64 m_nextLoadSessionId = 0;
+    std::optional<LoadSession> m_loadSession;
     QUrl m_containerNavigationUrl;
     QUrl m_loadingContainerNavigationUrl;
 };
