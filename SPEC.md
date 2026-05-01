@@ -9,8 +9,11 @@ The main window toolbar shows image controls without a page title. The toolbar
 always provides open, page navigation, fit, and zoom controls in fixed
 positions. Controls that require a ready image are disabled until an image is
 ready.
-Activating the open action shows the XDG portal file chooser, which accepts a
-single selection only. Pressing Escape closes the main window.
+When KiriView is launched with a file path or URL argument, including from a
+file manager's Open With action, it opens the first provided image or comic book
+archive at startup. Activating the open action shows the XDG portal file
+chooser, which accepts a single selection only. Pressing Escape closes the main
+window.
 
 The toolbar also provides icon-only Previous Container and Next Container
 buttons next to the open action. These buttons navigate between sibling image
