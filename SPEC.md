@@ -6,7 +6,8 @@ KiriView opens one user-selected image file, displays it in the main window, and
 can navigate to adjacent images in the same location.
 
 The main window provides one open action. Activating it shows the XDG portal
-file chooser, which accepts a single selection only.
+file chooser, which accepts a single selection only. When an image is open,
+previous and next navigation actions appear alongside the open action.
 
 ## File Access
 
@@ -45,8 +46,8 @@ another open action.
 
 ## Image Navigation
 
-When an image is open, Page Up or the Previous window button opens the previous
-supported image file in the same parent URL. Page Down or the Next window button
+When an image is open, Page Up or the Previous window action opens the previous
+supported image file in the same parent URL. Page Down or the Next window action
 opens the next one. Supported image extensions match the open dialog: AVIF, BMP,
 GIF, JPEG, PNG, SVG, and WebP, case-insensitively.
 
