@@ -111,3 +111,15 @@ run:
         --env=QT_QPA_PLATFORM=wayland \
         build-dir \
         kiriview
+
+[group('build')]
+install:
+    devenv shell -- flatpak-builder \
+        --user \
+        --install \
+        --install-deps-from=flathub \
+        --ccache \
+        --keep-build-dirs \
+        --disable-tests \
+        --force-clean build-dir \
+        io.github.hnjae.KiriView.json
