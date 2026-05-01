@@ -127,9 +127,9 @@ private:
         qsizetype byteCost = 0;
     };
 
-    struct PredecodeJob {
+    struct PredecodeRequest {
         QUrl url;
-        KIO::StoredTransferJob *job = nullptr;
+        QUrl comicBookRootUrl;
     };
 
     void setSourceUrlForLoad(const QUrl &sourceUrl, const QUrl &containerNavigationUrl);
@@ -175,14 +175,16 @@ private:
     void scheduleComicBookAdjacentImagePredecode(quint64 generation);
     void startPredecodeImageLoads(
         const std::vector<QUrl> &urls, const QUrl &comicBookRootUrl, quint64 generation);
+    void startNextPredecodeImageLoad(quint64 generation);
     void startPredecodeImageLoad(const QUrl &url, const QUrl &comicBookRootUrl, quint64 generation);
     void startPredecodeImageDecode(
         QByteArray data, const QUrl &url, const QUrl &comicBookRootUrl, quint64 generation);
-    void removePredecodeJob(KIO::StoredTransferJob *job);
     void cancelPredecode();
     bool tryDisplayPredecodedImage(const QUrl &url);
     bool takePredecodedImage(const QUrl &url, QImage *image, QUrl *comicBookRootUrl);
     void cachePredecodedImage(const QUrl &url, const QUrl &comicBookRootUrl, const QImage &image);
+    bool predecodeWindowContains(const QUrl &url) const;
+    void trimPredecodedImagesToPredecodeWindow();
     bool hasPredecodedImage(const QUrl &url) const;
     bool isPredecodeInFlight(const QUrl &url) const;
     void finishLoadWithError(const QString &errorString);
@@ -247,7 +249,10 @@ private:
     KCoreDirLister *m_predecodeLister = nullptr;
     KIO::ListJob *m_predecodeListJob = nullptr;
     std::vector<QUrl> m_pageNavigationUrls;
-    std::vector<PredecodeJob> m_predecodeJobs;
+    KIO::StoredTransferJob *m_predecodeJob = nullptr;
+    QUrl m_activePredecodeUrl;
+    std::vector<QUrl> m_predecodeWindowUrls;
+    std::vector<PredecodeRequest> m_predecodeQueue;
     std::vector<PredecodedImage> m_predecodedImages;
     int m_currentPageIndex = -1;
     quint64 m_loadGeneration = 0;
