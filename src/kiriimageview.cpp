@@ -780,6 +780,8 @@ void KiriImageView::setSourceUrl(const QUrl &sourceUrl)
 
 KiriImageView::Status KiriImageView::status() const { return m_status; }
 
+bool KiriImageView::loading() const { return m_loading; }
+
 QString KiriImageView::errorString() const { return m_errorString; }
 
 QSize KiriImageView::imageSize() const { return m_imageSize; }
@@ -880,17 +882,27 @@ void KiriImageView::itemChange(ItemChange change, const ItemChangeData &value)
 void KiriImageView::startLoad()
 {
     cancelLoad();
-    clearImage();
     setErrorString(QString());
-    setZoomMode(ZoomMode::LogicalScaleFit);
-    updateZoomState();
 
     if (m_sourceUrl.isEmpty()) {
+        clearImage();
+        setZoomMode(ZoomMode::LogicalScaleFit);
+        updateZoomState();
+        setLoading(false);
+        m_comicBookRootUrl = QUrl();
         setStatus(Status::Null);
         return;
     }
 
-    setStatus(Status::Loading);
+    setLoading(true);
+    if (!hasDisplayedImage()) {
+        clearImage();
+        setZoomMode(ZoomMode::LogicalScaleFit);
+        updateZoomState();
+        setStatus(Status::Loading);
+    } else {
+        setStatus(Status::Ready);
+    }
 
     const quint64 generation = ++m_loadGeneration;
     const std::optional<QUrl> selectedArchiveRootUrl = comicBookArchiveRootUrl(m_sourceUrl);
@@ -925,9 +937,7 @@ void KiriImageView::startImageLoad(const QUrl &url, quint64 generation)
         m_job = nullptr;
 
         if (finishedJob->error() != KJob::NoError) {
-            clearImage();
-            setErrorString(finishedJob->errorString());
-            setStatus(Status::Error);
+            finishLoadWithError(finishedJob->errorString());
             return;
         }
 
@@ -965,20 +975,16 @@ void KiriImageView::startComicBookLoad(const QUrl &archiveRootUrl, quint64 gener
             m_archiveListJob = nullptr;
 
             if (finishedJob->error() != KJob::NoError) {
-                clearImage();
                 m_comicBookRootUrl = QUrl();
-                setErrorString(finishedJob->errorString());
-                setStatus(Status::Error);
+                finishLoadWithError(finishedJob->errorString());
                 return;
             }
 
             sortImageNavigationCandidates(candidates.get());
             if (candidates->empty()) {
-                clearImage();
                 m_comicBookRootUrl = QUrl();
-                setErrorString(
+                finishLoadWithError(
                     tr("The selected comic book archive does not contain any supported images."));
-                setStatus(Status::Error);
                 return;
             }
 
@@ -1195,21 +1201,15 @@ void KiriImageView::finishNavigationWithError(KCoreDirLister *lister, quint64 ge
 
 void KiriImageView::finishWithImageData(const QByteArray &data)
 {
-    stopAnimation();
-
     KiriView::ApngDecodeResult apngResult = KiriView::decodeApngAnimation(data);
     if (apngResult.status == KiriView::ApngDecodeStatus::Success) {
-        setDisplayedImage(apngResult.animation.frames.front().image);
-        setErrorString(QString());
-        setStatus(Status::Ready);
+        finishLoadSuccessfully(apngResult.animation.frames.front().image);
         startDecodedAnimation(
             std::move(apngResult.animation.frames), apngResult.animation.loopCount);
         return;
     }
     if (apngResult.status == KiriView::ApngDecodeStatus::Error) {
-        clearImage();
-        setErrorString(apngResult.errorString);
-        setStatus(Status::Error);
+        finishLoadWithError(apngResult.errorString);
         return;
     }
 
@@ -1219,9 +1219,7 @@ void KiriImageView::finishWithImageData(const QByteArray &data)
     buffer.setData(imageData);
 
     if (!buffer.open(QIODevice::ReadOnly)) {
-        clearImage();
-        setErrorString(tr("Could not read the selected image data."));
-        setStatus(Status::Error);
+        finishLoadWithError(tr("Could not read the selected image data."));
         return;
     }
 
@@ -1231,9 +1229,7 @@ void KiriImageView::finishWithImageData(const QByteArray &data)
 
     QImage image = reader.read();
     if (image.isNull()) {
-        clearImage();
-        setErrorString(reader.errorString());
-        setStatus(Status::Error);
+        finishLoadWithError(reader.errorString());
         return;
     }
 
@@ -1242,13 +1238,44 @@ void KiriImageView::finishWithImageData(const QByteArray &data)
     const int loopCount = reader.loopCount();
     const bool hasMoreFrames = reader.canRead();
 
-    setDisplayedImage(image);
-    setErrorString(QString());
-    setStatus(Status::Ready);
+    finishLoadSuccessfully(image);
 
     if (supportsAnimation && hasMoreFrames) {
         startAnimation(imageData, format, loopCount, firstFrameDelay);
     }
+}
+
+void KiriImageView::finishLoadWithError(const QString &errorString)
+{
+    setLoading(false);
+
+    if (hasDisplayedImage()) {
+        setErrorString(errorString);
+        setStatus(Status::Ready);
+
+        if (!m_displayedUrl.isEmpty() && m_sourceUrl != m_displayedUrl) {
+            m_sourceUrl = m_displayedUrl;
+            Q_EMIT sourceUrlChanged();
+        }
+        m_comicBookRootUrl = m_displayedComicBookRootUrl;
+        return;
+    }
+
+    clearImage();
+    setErrorString(errorString);
+    setStatus(Status::Error);
+}
+
+void KiriImageView::finishLoadSuccessfully(const QImage &image)
+{
+    stopAnimation();
+    setZoomMode(ZoomMode::LogicalScaleFit);
+    setDisplayedImage(image);
+    m_displayedUrl = m_sourceUrl;
+    m_displayedComicBookRootUrl = m_comicBookRootUrl;
+    setErrorString(QString());
+    setLoading(false);
+    setStatus(Status::Ready);
 }
 
 void KiriImageView::startAnimation(
@@ -1393,6 +1420,8 @@ bool KiriImageView::hasRemainingAnimationLoops() const
     return m_animationLoopCount < 0 || m_completedAnimationLoops < m_animationLoopCount;
 }
 
+bool KiriImageView::hasDisplayedImage() const { return !m_image.isNull(); }
+
 void KiriImageView::stopAnimation()
 {
     m_animationTimer.stop();
@@ -1408,6 +1437,7 @@ void KiriImageView::stopAnimation()
 
 void KiriImageView::finishWithAnimationError(const QString &errorString)
 {
+    setLoading(false);
     clearImage();
     const QString message = errorString.isEmpty()
         ? tr("Could not decode the selected image animation.")
@@ -1422,6 +1452,16 @@ void KiriImageView::setDisplayedImage(const QImage &image)
     ++m_imageRevision;
     setImageSize(m_image.size());
     update();
+}
+
+void KiriImageView::setLoading(bool loading)
+{
+    if (m_loading == loading) {
+        return;
+    }
+
+    m_loading = loading;
+    Q_EMIT loadingChanged();
 }
 
 void KiriImageView::setStatus(Status status)
@@ -1536,6 +1576,8 @@ QSizeF KiriImageView::displaySizeForZoomPercent(qreal zoomPercent) const
 void KiriImageView::clearImage()
 {
     stopAnimation();
+    m_displayedUrl = QUrl();
+    m_displayedComicBookRootUrl = QUrl();
 
     if (!m_image.isNull()) {
         m_image = QImage();

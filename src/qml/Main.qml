@@ -150,6 +150,33 @@ Kirigami.ApplicationWindow {
             visible: imageView.status === KiriImageView.Loading
         }
 
+        Rectangle {
+            anchors.margins: Kirigami.Units.largeSpacing
+            anchors.right: parent.right
+            anchors.top: parent.top
+            color: Qt.rgba(0, 0, 0, 0.55)
+            height: Kirigami.Units.gridUnit * 2
+            radius: Kirigami.Units.smallSpacing
+            visible: page.imageReady && imageView.loading
+            width: height
+
+            Controls.BusyIndicator {
+                anchors.fill: parent
+                anchors.margins: Kirigami.Units.smallSpacing
+                running: visible
+            }
+        }
+
+        Kirigami.InlineMessage {
+            anchors.bottom: parent.bottom
+            anchors.left: parent.left
+            anchors.margins: Kirigami.Units.largeSpacing
+            anchors.right: parent.right
+            text: imageView.errorString
+            type: Kirigami.MessageType.Error
+            visible: page.imageReady && !imageView.loading && imageView.errorString.length > 0
+        }
+
         ColumnLayout {
             anchors.centerIn: parent
             spacing: Kirigami.Units.largeSpacing

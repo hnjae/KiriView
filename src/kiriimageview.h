@@ -36,6 +36,7 @@ class KiriImageView : public QQuickItem
 
     Q_PROPERTY(QUrl sourceUrl READ sourceUrl WRITE setSourceUrl NOTIFY sourceUrlChanged)
     Q_PROPERTY(Status status READ status NOTIFY statusChanged)
+    Q_PROPERTY(bool loading READ loading NOTIFY loadingChanged)
     Q_PROPERTY(QString errorString READ errorString NOTIFY errorStringChanged)
     Q_PROPERTY(QSize imageSize READ imageSize NOTIFY imageSizeChanged)
     Q_PROPERTY(
@@ -66,6 +67,7 @@ public:
     void setSourceUrl(const QUrl &sourceUrl);
 
     Status status() const;
+    bool loading() const;
     QString errorString() const;
     QSize imageSize() const;
     QSizeF viewportSize() const;
@@ -85,6 +87,7 @@ public:
 Q_SIGNALS:
     void sourceUrlChanged();
     void statusChanged();
+    void loadingChanged();
     void errorStringChanged();
     void imageSizeChanged();
     void viewportSizeChanged();
@@ -109,6 +112,8 @@ private:
         const QUrl &currentUrl);
     void finishNavigationWithError(KCoreDirLister *lister, quint64 generation);
     void finishWithImageData(const QByteArray &data);
+    void finishLoadWithError(const QString &errorString);
+    void finishLoadSuccessfully(const QImage &image);
     void startAnimation(
         const QByteArray &data, const QByteArray &format, int loopCount, int firstFrameDelay);
     void startDecodedAnimation(std::vector<KiriView::AnimationFrame> frames, int loopCount);
@@ -116,9 +121,11 @@ private:
     void advanceDecodedAnimationFrame();
     bool resetAnimationReader(QString *errorString);
     bool hasRemainingAnimationLoops() const;
+    bool hasDisplayedImage() const;
     void stopAnimation();
     void finishWithAnimationError(const QString &errorString);
     void setDisplayedImage(const QImage &image);
+    void setLoading(bool loading);
     void setStatus(Status status);
     void setErrorString(const QString &errorString);
     void setImageSize(const QSize &imageSize);
@@ -131,7 +138,10 @@ private:
     void clearImage();
 
     QUrl m_sourceUrl;
+    QUrl m_displayedUrl;
+    QUrl m_displayedComicBookRootUrl;
     Status m_status = Status::Null;
+    bool m_loading = false;
     QString m_errorString;
     QSize m_imageSize;
     QSizeF m_viewportSize;
