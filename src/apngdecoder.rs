@@ -503,7 +503,8 @@ fn render_frames(parsed: &ParsedApng) -> Result<Vec<DecodedApngFrame>, RustApngE
         premultiply_rgba(&mut decoded_frame);
         let rect = rect_from_frame(frame)?;
         let previous_frame_region = (frame.control.dispose_op == DisposeOp::Previous)
-            .then(|| copy_region(&canvas, canvas_width, rect));
+            .then(|| copy_region(&canvas, canvas_width, rect))
+            .transpose()?;
 
         blend_frame(
             &mut canvas,
@@ -519,10 +520,10 @@ fn render_frames(parsed: &ParsedApng) -> Result<Vec<DecodedApngFrame>, RustApngE
 
         match frame.control.dispose_op {
             DisposeOp::None => {}
-            DisposeOp::Background => clear_region(&mut canvas, canvas_width, rect),
+            DisposeOp::Background => clear_region(&mut canvas, canvas_width, rect)?,
             DisposeOp::Previous => {
                 if index == 0 {
-                    clear_region(&mut canvas, canvas_width, rect);
+                    clear_region(&mut canvas, canvas_width, rect)?;
                 } else if let Some(previous_frame_region) = previous_frame_region {
                     restore_region(&mut canvas, canvas_width, rect, &previous_frame_region)?;
                 }
@@ -715,14 +716,26 @@ fn div_255_u16(value: u16) -> u16 {
     (value + 127) / 255
 }
 
-fn copy_region(canvas: &[u8], canvas_width: usize, rect: Rect) -> Vec<u8> {
-    let row_len = rect.width * 4;
-    let mut region = Vec::with_capacity(row_len * rect.height);
+fn copy_region(
+    canvas: &[u8],
+    canvas_width: usize,
+    rect: Rect,
+) -> Result<Vec<u8>, RustApngErrorKind> {
+    let row_len = rect.width.checked_mul(4).ok_or(RustApngErrorKind::Apng)?;
+    let mut region = Vec::with_capacity(
+        row_len
+            .checked_mul(rect.height)
+            .ok_or(RustApngErrorKind::Apng)?,
+    );
     for row in 0..rect.height {
-        let start = canvas_offset(canvas_width, rect.x, rect.y + row).unwrap_or(0);
-        region.extend_from_slice(&canvas[start..start + row_len]);
+        let start = canvas_offset(canvas_width, rect.x, rect.y + row)?;
+        region.extend_from_slice(
+            canvas
+                .get(start..start + row_len)
+                .ok_or(RustApngErrorKind::Apng)?,
+        );
     }
-    region
+    Ok(region)
 }
 
 fn restore_region(
@@ -749,12 +762,20 @@ fn restore_region(
     Ok(())
 }
 
-fn clear_region(canvas: &mut [u8], canvas_width: usize, rect: Rect) {
-    let row_len = rect.width * 4;
+fn clear_region(
+    canvas: &mut [u8],
+    canvas_width: usize,
+    rect: Rect,
+) -> Result<(), RustApngErrorKind> {
+    let row_len = rect.width.checked_mul(4).ok_or(RustApngErrorKind::Apng)?;
     for row in 0..rect.height {
-        let start = canvas_offset(canvas_width, rect.x, rect.y + row).unwrap_or(0);
-        canvas[start..start + row_len].fill(0);
+        let start = canvas_offset(canvas_width, rect.x, rect.y + row)?;
+        canvas
+            .get_mut(start..start + row_len)
+            .ok_or(RustApngErrorKind::Apng)?
+            .fill(0);
     }
+    Ok(())
 }
 
 fn canvas_offset(canvas_width: usize, x: usize, y: usize) -> Result<usize, RustApngErrorKind> {
@@ -924,6 +945,25 @@ mod tests {
         extract_chunks(data, b"IDAT").concat()
     }
 
+    fn chunk_offset(data: &[u8], expected_kind: &[u8; 4]) -> usize {
+        let mut offset = PNG_SIGNATURE.len();
+        while offset < data.len() {
+            let length = read_u32(data, offset).expect("chunk length") as usize;
+            let kind: [u8; 4] = data[offset + 4..offset + 8].try_into().expect("chunk kind");
+            if &kind == expected_kind {
+                return offset;
+            }
+            offset += 12 + length;
+        }
+        panic!("expected chunk should exist");
+    }
+
+    fn corrupt_chunk_crc(data: &mut [u8], expected_kind: &[u8; 4]) {
+        let offset = chunk_offset(data, expected_kind);
+        let length = read_u32(data, offset).expect("chunk length") as usize;
+        data[offset + 8 + length + 3] ^= 0x01;
+    }
+
     fn frame_control_payload(sequence_number: u32, frame: &FrameSpec) -> Vec<u8> {
         let mut payload = Vec::with_capacity(26);
         payload.extend_from_slice(&sequence_number.to_be_bytes());
@@ -1082,6 +1122,72 @@ mod tests {
         append_test_chunk(&mut fctl_before_actl, b"IEND", &[]);
         assert!(matches!(
             decode_apng(&fctl_before_actl),
+            DecodeOutcome::Error(RustApngErrorKind::Apng)
+        ));
+    }
+
+    #[test]
+    fn validates_animation_sequence_numbers() {
+        let base_png = encode_rgba_png(1, 1, &[0, 0, 0, 0]);
+        let frame = FrameSpec::full_canvas(1, 1, vec![0, 0, 0, 0]);
+        let mut wrong_fctl_sequence = Vec::new();
+        wrong_fctl_sequence.extend_from_slice(&PNG_SIGNATURE);
+        append_test_chunk(&mut wrong_fctl_sequence, b"IHDR", &extract_ihdr(&base_png));
+        append_test_chunk(&mut wrong_fctl_sequence, b"acTL", &[0, 0, 0, 1, 0, 0, 0, 0]);
+        append_test_chunk(
+            &mut wrong_fctl_sequence,
+            b"fcTL",
+            &frame_control_payload(1, &frame),
+        );
+        append_test_chunk(
+            &mut wrong_fctl_sequence,
+            b"IDAT",
+            &extract_image_data(&base_png),
+        );
+        append_test_chunk(&mut wrong_fctl_sequence, b"IEND", &[]);
+        assert!(matches!(
+            decode_apng(&wrong_fctl_sequence),
+            DecodeOutcome::Error(RustApngErrorKind::Apng)
+        ));
+
+        let first = FrameSpec::full_canvas(1, 1, vec![0, 0, 0, 0]);
+        let second = FrameSpec {
+            width: 1,
+            height: 1,
+            x_offset: 0,
+            y_offset: 0,
+            delay_num: 1,
+            delay_den: 10,
+            dispose_op: DisposeOp::None,
+            blend_op: BlendOp::Source,
+            pixels: vec![255, 0, 0, 255],
+        };
+        let mut wrong_fdat_sequence = make_apng(1, 1, 1, &[first, second]);
+        let fdat_offset = chunk_offset(&wrong_fdat_sequence, b"fdAT");
+        wrong_fdat_sequence[fdat_offset + 8..fdat_offset + 12]
+            .copy_from_slice(&99_u32.to_be_bytes());
+        let length = read_u32(&wrong_fdat_sequence, fdat_offset).expect("fdAT length") as usize;
+        let crc = crc32(
+            b"fdAT",
+            &wrong_fdat_sequence[fdat_offset + 8..fdat_offset + 8 + length],
+        );
+        wrong_fdat_sequence[fdat_offset + 8 + length..fdat_offset + 12 + length]
+            .copy_from_slice(&crc.to_be_bytes());
+
+        assert!(matches!(
+            decode_apng(&wrong_fdat_sequence),
+            DecodeOutcome::Error(RustApngErrorKind::Apng)
+        ));
+    }
+
+    #[test]
+    fn crc_mismatch_returns_parse_error() {
+        let first = FrameSpec::full_canvas(1, 1, vec![0, 0, 0, 0]);
+        let mut apng = make_apng(1, 1, 1, &[first]);
+        corrupt_chunk_crc(&mut apng, b"acTL");
+
+        assert!(matches!(
+            decode_apng(&apng),
             DecodeOutcome::Error(RustApngErrorKind::Apng)
         ));
     }
