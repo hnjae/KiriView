@@ -6,21 +6,16 @@
 #include "imagecontainer.h"
 #include "imagedocumentstate.h"
 #include "imagepresentationcontroller.h"
+#include "imageviewtext.h"
 #include "kiriimagedecoder.h"
 #include "predecodecache.h"
 
-#include <QCoreApplication>
 #include <memory>
 #include <utility>
 
 namespace {
 using KiriView::containerNavigationUrlForImage;
 using KiriView::decodedImageResultIsPredecodeCacheable;
-
-QString imageViewText(const char *sourceText)
-{
-    return QCoreApplication::translate("KiriImageView", sourceText);
-}
 }
 
 namespace KiriView {

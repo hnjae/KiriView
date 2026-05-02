@@ -50,6 +50,7 @@ fn main() {
     .cpp_file("src/imagepredecodecoordinator.cpp")
     .cpp_file("src/imagepresentationcontroller.cpp")
     .cpp_file("src/imageurl.cpp")
+    .cpp_file("src/imageviewtext.cpp")
     .cpp_file("src/imagezoomstate.cpp")
     .cpp_file("src/imageanimationplayer.cpp")
     .cpp_file("src/apngdecoder.cpp")

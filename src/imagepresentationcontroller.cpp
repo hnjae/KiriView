@@ -4,9 +4,9 @@
 #include "imagepresentationcontroller.h"
 
 #include "displayedimagestate.h"
+#include "imageviewtext.h"
 #include "kiriimagedecoder.h"
 
-#include <QCoreApplication>
 #include <cmath>
 #include <utility>
 
@@ -14,11 +14,6 @@ namespace {
 using KiriView::imageZoomApproximatelyEqual;
 using KiriView::renderSvgImage;
 using KiriView::svgRasterSize;
-
-QString imageViewText(const char *sourceText)
-{
-    return QCoreApplication::translate("KiriImageView", sourceText);
-}
 }
 
 namespace KiriView {

@@ -3,8 +3,9 @@
 
 #include "imageanimationplayer.h"
 
+#include "imageviewtext.h"
+
 #include <QBuffer>
-#include <QCoreApplication>
 #include <QIODevice>
 #include <QImageReader>
 #include <QObject>
@@ -171,8 +172,7 @@ bool ImageAnimationPlayer::resetReader(QString *errorString)
     buffer->setData(m_data);
 
     if (!buffer->open(QIODevice::ReadOnly)) {
-        *errorString = QCoreApplication::translate(
-            "KiriImageView", "Could not read the selected image data.");
+        *errorString = imageViewText("Could not read the selected image data.");
         return false;
     }
 

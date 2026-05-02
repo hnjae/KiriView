@@ -3,10 +3,10 @@
 
 #include "kiriimagedecoder.h"
 
+#include "imageviewtext.h"
 #include "kiriview/src/avifcompat.cxx.h"
 
 #include <QBuffer>
-#include <QCoreApplication>
 #include <QIODevice>
 #include <QImageReader>
 #include <QPainter>
@@ -51,8 +51,8 @@ std::optional<KiriView::DecodedImageResult> decodeSvgImageData(const QByteArray 
 
     const QSize intrinsicSize = svgIntrinsicSize(renderer);
     if (intrinsicSize.isEmpty()) {
-        return decodedImageFailure(QCoreApplication::translate(
-            "KiriImageView", "Could not determine the selected SVG image size."));
+        return decodedImageFailure(
+            KiriView::imageViewText("Could not determine the selected SVG image size."));
     }
 
     KiriView::DecodedImageResult result;
@@ -122,8 +122,8 @@ DecodedImageResult decodeImageData(const QByteArray &data)
     ApngDecodeResult apngResult = decodeApngAnimation(data);
     if (apngResult.status == ApngDecodeStatus::Success) {
         if (apngResult.animation.frames.empty()) {
-            return decodedImageFailure(QCoreApplication::translate(
-                "KiriImageView", "Could not decode the selected APNG animation."));
+            return decodedImageFailure(
+                imageViewText("Could not decode the selected APNG animation."));
         }
 
         for (AnimationFrame &frame : apngResult.animation.frames) {
@@ -147,8 +147,7 @@ DecodedImageResult decodeImageData(const QByteArray &data)
     buffer.setData(imageData);
 
     if (!buffer.open(QIODevice::ReadOnly)) {
-        return decodedImageFailure(QCoreApplication::translate(
-            "KiriImageView", "Could not read the selected image data."));
+        return decodedImageFailure(imageViewText("Could not read the selected image data."));
     }
 
     QImageReader reader(&buffer);

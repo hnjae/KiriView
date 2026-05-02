@@ -5,17 +5,10 @@
 
 #include "imagedocumentstate.h"
 #include "imagepresentationcontroller.h"
+#include "imageviewtext.h"
 
-#include <QCoreApplication>
 #include <optional>
 #include <utility>
-
-namespace {
-QString imageViewText(const char *sourceText)
-{
-    return QCoreApplication::translate("KiriImageView", sourceText);
-}
-}
 
 namespace KiriView {
 ImageDocumentNavigationController::ImageDocumentNavigationController(QObject *parent,

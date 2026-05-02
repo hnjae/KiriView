@@ -66,7 +66,6 @@ public:
 
 private:
     void handleEvent(DocumentEvent event);
-    void dispatch(DocumentCommand command);
     void setSourceUrlForLoad(const QUrl &sourceUrl, const QUrl &containerNavigationUrl);
     void scheduleAdjacentImagePredecode();
     void cancelPredecode();

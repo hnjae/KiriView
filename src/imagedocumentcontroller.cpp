@@ -7,20 +7,13 @@
 #include "imageopencontroller.h"
 #include "imagepredecodecoordinator.h"
 #include "imagepresentationcontroller.h"
+#include "imageviewtext.h"
 
-#include <QCoreApplication>
 #include <memory>
 #include <optional>
 #include <type_traits>
 #include <utility>
 #include <variant>
-
-namespace {
-QString imageViewText(const char *sourceText)
-{
-    return QCoreApplication::translate("KiriImageView", sourceText);
-}
-}
 
 namespace KiriView {
 ImageDocumentController::ImageDocumentController(
@@ -159,53 +152,25 @@ void ImageDocumentController::handleEvent(DocumentEvent event)
         [this](const auto &payload) {
             using Event = std::decay_t<decltype(payload)>;
             if constexpr (std::is_same_v<Event, ClearImageRequestedEvent>) {
-                dispatch(DocumentCommand::clearImage());
-            } else if constexpr (std::is_same_v<Event, PageNavigationUpdateRequestedEvent>) {
-                dispatch(DocumentCommand::updatePageNavigation());
-            } else if constexpr (std::is_same_v<Event, AdjacentImagePredecodeRequestedEvent>) {
-                dispatch(DocumentCommand::scheduleAdjacentImagePredecode());
-            } else if constexpr (std::is_same_v<Event, OpenUrlRequestedEvent>) {
-                dispatch(DocumentCommand::openUrl(payload.url));
-            } else if constexpr (std::is_same_v<Event, ContainerImageSelectedEvent>) {
-                dispatch(
-                    DocumentCommand::openContainerImage(payload.imageUrl, payload.containerUrl));
-            } else if constexpr (std::is_same_v<Event, EmptyContainerSelectedEvent>) {
-                dispatch(DocumentCommand::finishEmptyContainerNavigation(payload.containerUrl));
-            } else if constexpr (std::is_same_v<Event, ContainerNavigationFailedEvent>) {
-                dispatch(DocumentCommand::finishContainerNavigationError(
-                    payload.containerUrl, payload.errorString));
-            } else if constexpr (std::is_same_v<Event, AnimationFailedEvent>) {
-                dispatch(DocumentCommand::finishAnimationError(payload.errorString));
-            }
-        },
-        event.payload);
-}
-
-void ImageDocumentController::dispatch(DocumentCommand command)
-{
-    std::visit(
-        [this](const auto &payload) {
-            using Command = std::decay_t<decltype(payload)>;
-            if constexpr (std::is_same_v<Command, ClearImageCommand>) {
                 clearImage();
-            } else if constexpr (std::is_same_v<Command, UpdatePageNavigationCommand>) {
+            } else if constexpr (std::is_same_v<Event, PageNavigationUpdateRequestedEvent>) {
                 m_navigationController->updatePageNavigation();
-            } else if constexpr (std::is_same_v<Command, ScheduleAdjacentImagePredecodeCommand>) {
+            } else if constexpr (std::is_same_v<Event, AdjacentImagePredecodeRequestedEvent>) {
                 scheduleAdjacentImagePredecode();
-            } else if constexpr (std::is_same_v<Command, OpenUrlCommand>) {
+            } else if constexpr (std::is_same_v<Event, OpenUrlRequestedEvent>) {
                 setSourceUrl(payload.url);
-            } else if constexpr (std::is_same_v<Command, OpenContainerImageCommand>) {
+            } else if constexpr (std::is_same_v<Event, ContainerImageSelectedEvent>) {
                 setSourceUrlForLoad(payload.imageUrl, payload.containerUrl);
-            } else if constexpr (std::is_same_v<Command, FinishEmptyContainerNavigationCommand>) {
+            } else if constexpr (std::is_same_v<Event, EmptyContainerSelectedEvent>) {
                 m_openController->finishContainerNavigationWithEmptyContainer(payload.containerUrl);
-            } else if constexpr (std::is_same_v<Command, FinishContainerNavigationErrorCommand>) {
+            } else if constexpr (std::is_same_v<Event, ContainerNavigationFailedEvent>) {
                 m_openController->finishContainerNavigationLoadWithError(
                     payload.containerUrl, payload.errorString);
-            } else if constexpr (std::is_same_v<Command, FinishAnimationErrorCommand>) {
+            } else if constexpr (std::is_same_v<Event, AnimationFailedEvent>) {
                 finishWithAnimationError(payload.errorString);
             }
         },
-        command.payload);
+        event.payload);
 }
 
 void ImageDocumentController::setSourceUrlForLoad(
