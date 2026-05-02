@@ -40,6 +40,7 @@ class TestPredecodeCache : public QObject
 
 private Q_SLOTS:
     void queueContainsOnlyMissingWindowImages();
+    void byteBudgetUsesPreferredLimitAndSystemMemoryCap();
     void cacheStoresAndFindsWindowImages();
     void cacheRejectsUncacheableAndOversizedImages();
     void cacheEvictsLowestPriorityImagesWhenBudgetIsExceeded();
@@ -64,6 +65,19 @@ void TestPredecodeCache::queueContainsOnlyMissingWindowImages()
     QCOMPARE(request->url, secondQueuedUrl);
     QCOMPARE(request->comicBookRootUrl, comicBookRootUrl());
     QVERIFY(!cache.takeNextRequest(QUrl()).has_value());
+}
+
+void TestPredecodeCache::byteBudgetUsesPreferredLimitAndSystemMemoryCap()
+{
+    const qsizetype preferredByteBudget = 1024 * 1024 * 1024;
+    QCOMPARE(KiriView::PredecodeCache::preferredByteBudget(), preferredByteBudget);
+    QCOMPARE(KiriView::PredecodeCache::byteBudgetForSystemMemory(0), preferredByteBudget);
+    QCOMPARE(KiriView::PredecodeCache::byteBudgetForSystemMemory(preferredByteBudget),
+        preferredByteBudget / 8);
+    QCOMPARE(KiriView::PredecodeCache::byteBudgetForSystemMemory(preferredByteBudget * 16),
+        preferredByteBudget);
+    QVERIFY(KiriView::PredecodeCache::defaultByteBudget() > 0);
+    QVERIFY(KiriView::PredecodeCache::defaultByteBudget() <= preferredByteBudget);
 }
 
 void TestPredecodeCache::cacheStoresAndFindsWindowImages()

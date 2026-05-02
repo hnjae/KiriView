@@ -49,7 +49,7 @@ private Q_SLOTS:
     void adjacentImageNavigationDoesNotWrap();
     void adjacentContainerNavigationUsesTheSameRules();
     void pageNavigationInsertsFallbackCurrentUrl();
-    void predecodeWindowPrioritizesCurrentAndForwardPages();
+    void predecodeWindowKeepsTwoPreviousAndFourNextPages();
 };
 
 void TestImageNavigationModel::adjacentImageNavigationDoesNotWrap()
@@ -121,14 +121,14 @@ void TestImageNavigationModel::pageNavigationInsertsFallbackCurrentUrl()
     compareUrls(state.urls, { imageUrl(9), imageUrl(0), imageUrl(1) });
 }
 
-void TestImageNavigationModel::predecodeWindowPrioritizesCurrentAndForwardPages()
+void TestImageNavigationModel::predecodeWindowKeepsTwoPreviousAndFourNextPages()
 {
     const std::vector<QUrl> urls
         = KiriView::predecodeWindowImageUrls(imageCandidates(15), imageUrl(5));
 
     compareUrls(urls,
-        { imageUrl(5), imageUrl(6), imageUrl(4), imageUrl(7), imageUrl(3), imageUrl(8), imageUrl(9),
-            imageUrl(10), imageUrl(11), imageUrl(12), imageUrl(13), imageUrl(14) });
+        { imageUrl(5), imageUrl(6), imageUrl(4), imageUrl(7), imageUrl(3), imageUrl(8),
+            imageUrl(9) });
 }
 
 QTEST_GUILESS_MAIN(TestImageNavigationModel)

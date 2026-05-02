@@ -15,7 +15,7 @@
 
 namespace {
 constexpr std::ptrdiff_t predecodePreviousImageCount = 2;
-constexpr std::ptrdiff_t predecodeNextImageCount = 10;
+constexpr std::ptrdiff_t predecodeNextImageCount = 4;
 
 template <typename Candidate>
 std::optional<std::size_t> adjacentCandidateIndex(const std::vector<Candidate> &candidates,
