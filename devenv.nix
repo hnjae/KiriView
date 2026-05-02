@@ -53,11 +53,84 @@ let
 
     exec ${lib.getExe' pkgs.kdePackages.qtbase "qmake6"} "$@"
   '';
+  qtVersion = lib.getVersion pkgs.kdePackages.qtbase;
+  cppSources = [
+    "src/apngdecoder.cpp"
+    "src/asyncobjectslot.cpp"
+    "src/imageanimationplayer.cpp"
+    "src/imageformatregistry.cpp"
+    "src/imageloader.cpp"
+    "src/imagepredecodecoordinator.cpp"
+    "src/imagezoomstate.cpp"
+    "src/imagenavigationservice.cpp"
+    "src/kiriimagedecoder.cpp"
+    "src/kiriimagenavigation.cpp"
+    "src/kiriimagerendernode.cpp"
+    "src/kiriimageview.cpp"
+    "src/predecodecache.cpp"
+  ];
+  qtCompileDefines = [
+    "-DQT_CORE_LIB"
+    "-DQT_DBUS_LIB"
+    "-DQT_GUI_LIB"
+    "-DQT_NETWORK_LIB"
+    "-DQT_QML_LIB"
+    "-DQT_QUICK_LIB"
+    "-DQT_SVG_LIB"
+  ];
+  qtIncludeModules = [
+    "QtCore"
+    "QtDBus"
+    "QtGui"
+    "QtNetwork"
+    "QtQml"
+    "QtQmlIntegration"
+    "QtQuick"
+    "QtSvg"
+  ];
+  systemIncludeDirs = [
+    ".devenv/profile/include"
+    ".devenv/profile/include/KF6/KCoreAddons"
+    ".devenv/profile/include/KF6/KIO"
+    ".devenv/profile/include/KF6/KIOCore"
+    ".devenv/profile/include/QtGui/${qtVersion}/QtGui"
+    ".devenv/profile/mkspecs/linux-g++"
+  ]
+  ++ map (module: ".devenv/profile/include/${module}") qtIncludeModules;
+  compileCommands = map (source: {
+    directory = config.devenv.root;
+    file = source;
+    arguments = [
+      "clang++"
+      "-std=c++17"
+      "-Isrc"
+      "-Itarget/cxxqt/clangd/include"
+    ]
+    ++ qtCompileDefines
+    ++ lib.concatMap (dir: [
+      "-isystem"
+      dir
+    ]) systemIncludeDirs
+    ++ [ source ];
+  }) cppSources;
 in
 {
   enterShell = ''
     export QMAKE=${lib.getExe' qmake "qmake6"}
+
+    cxxqt_clangd_include="${config.devenv.root}/target/cxxqt/clangd/include"
+    mkdir -p "$cxxqt_clangd_include"
+    for cxxqt_include in \
+      "${config.devenv.root}"/target/debug/build/*/out/cxxqtbuild/include \
+      "${config.devenv.root}"/target/devenv/debug/build/*/out/cxxqtbuild/include \
+      "${config.devenv.root}"/target/rust-analyzer/debug/build/*/out/cxxqtbuild/include; do
+      if [ -d "$cxxqt_include" ]; then
+        find "$cxxqt_include" -mindepth 1 -maxdepth 1 -exec ln -sfn {} "$cxxqt_clangd_include/" \;
+      fi
+    done
   '';
+
+  files."compile_commands.json".json = compileCommands;
 
   files.".vscode/settings.json".json = {
     "rust-analyzer.linkedProjects" = [ "Cargo.toml" ];
