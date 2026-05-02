@@ -47,6 +47,7 @@ fn main() {
     .cpp_file("src/imageloader.cpp")
     .cpp_file("src/imagenavigationmodel.cpp")
     .cpp_file("src/imageopencontroller.cpp")
+    .cpp_file("src/imageopenworkflow.cpp")
     .cpp_file("src/imagepredecodecoordinator.cpp")
     .cpp_file("src/imagepresentationcontroller.cpp")
     .cpp_file("src/imageurl.cpp")

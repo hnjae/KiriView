@@ -27,6 +27,7 @@ add_library(kiriview_test_core STATIC
     ../../src/imageiojobs.cpp
     ../../src/imagenavigationmodel.cpp
     ../../src/imagenavigationservice.cpp
+    ../../src/imageopenworkflow.cpp
     ../../src/imageurl.cpp
     ../../src/imagezoomstate.cpp
     ../../src/predecodecache.cpp
@@ -58,3 +59,4 @@ add_kiriview_cpp_test(test_imagenavigationmodel test_imagenavigationmodel.cpp)
 add_kiriview_cpp_test(test_imagenavigationservice test_imagenavigationservice.cpp)
 add_kiriview_cpp_test(test_imageurl test_imageurl.cpp)
 add_kiriview_cpp_test(test_predecodecache test_predecodecache.cpp)
+add_kiriview_cpp_test(test_imageopenworkflow test_imageopenworkflow.cpp)

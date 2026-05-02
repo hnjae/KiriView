@@ -5,6 +5,7 @@
 
 #include "imagecontainer.h"
 #include "imagedocumentstate.h"
+#include "imageopenworkflow.h"
 #include "imagepresentationcontroller.h"
 #include "imageviewtext.h"
 #include "kiriimagedecoder.h"
@@ -68,28 +69,12 @@ void ImageOpenController::cancel() { m_imageLoader->cancel(); }
 
 void ImageOpenController::finishEmptySourceLoad()
 {
-    report(DocumentEvent::clearImageRequested());
-    m_presentationController.resetZoom();
-    m_state.setLoading(false);
-    m_state.clearLoadingContainerNavigationUrl();
-    m_state.setContainerNavigationUrl(QUrl());
-    m_state.setStatus(ImageDocumentStatus::Null);
+    applyCommands(ImageOpenWorkflow::finishEmptySourceLoad(m_state));
 }
 
 void ImageOpenController::beginSourceLoad()
 {
-    if (!m_presentationController.hasImage() && m_state.loadingContainerNavigationUrl().isEmpty()) {
-        m_state.setContainerNavigationUrl(QUrl());
-    }
-
-    m_state.setLoading(true);
-    if (!m_presentationController.hasImage()) {
-        report(DocumentEvent::clearImageRequested());
-        m_presentationController.resetZoom();
-        m_state.setStatus(ImageDocumentStatus::Loading);
-    } else {
-        m_state.setStatus(ImageDocumentStatus::Ready);
-    }
+    applyCommands(ImageOpenWorkflow::beginSourceLoad(m_state, m_presentationController.hasImage()));
 }
 
 void ImageOpenController::finishContainerNavigationWithEmptyContainer(const QUrl &containerUrl)
@@ -102,19 +87,12 @@ void ImageOpenController::finishContainerNavigationLoadWithError(
     const QUrl &containerUrl, const QString &errorString)
 {
     cancel();
-    m_state.clearLoadingContainerNavigationUrl();
-
-    report(DocumentEvent::clearImageRequested());
-    m_presentationController.prepareFailedContainer(containerUrl);
-    m_state.setLoading(false);
-    m_state.setContainerNavigationUrl(containerUrl);
-    m_state.setSourceUrl(containerUrl);
 
     const QString message = errorString.isEmpty()
         ? imageViewText("Could not open the selected container.")
         : errorString;
-    m_state.setErrorString(message);
-    m_state.setStatus(ImageDocumentStatus::Error);
+    applyCommands(
+        ImageOpenWorkflow::finishContainerNavigationLoadWithError(m_state, containerUrl, message));
 }
 
 void ImageOpenController::setSourceUrlFromResolvedLoad(const QUrl &sourceUrl)
@@ -166,8 +144,6 @@ void ImageOpenController::finishLoadWithError(
     const ImageLoadSession &session, ImageLoadError error, const QString &errorString)
 {
     const QUrl containerNavigationUrl = session.request.containerNavigationUrl;
-    m_state.clearLoadingContainerNavigationUrl();
-
     const QString message = error == ImageLoadError::EmptyComicBookArchive
         ? imageViewText("The selected comic book archive does not contain any supported images.")
         : errorString;
@@ -176,7 +152,6 @@ void ImageOpenController::finishLoadWithError(
         return;
     }
 
-    m_state.setLoading(false);
     if (m_presentationController.hasImage()) {
         finishReplacementLoadWithError(message);
         return;
@@ -187,22 +162,12 @@ void ImageOpenController::finishLoadWithError(
 
 void ImageOpenController::finishReplacementLoadWithError(const QString &errorString)
 {
-    m_state.setErrorString(errorString);
-    m_state.setStatus(ImageDocumentStatus::Ready);
-
-    if (!m_state.displayedUrl().isEmpty()) {
-        m_state.setSourceUrl(m_state.displayedUrl());
-    }
-    report(DocumentEvent::pageNavigationUpdateRequested());
-    report(DocumentEvent::adjacentImagePredecodeRequested());
+    applyCommands(ImageOpenWorkflow::finishReplacementLoadWithError(m_state, errorString));
 }
 
 void ImageOpenController::finishInitialLoadWithError(const QString &errorString)
 {
-    report(DocumentEvent::clearImageRequested());
-    m_state.setContainerNavigationUrl(QUrl());
-    m_state.setErrorString(errorString);
-    m_state.setStatus(ImageDocumentStatus::Error);
+    applyCommands(ImageOpenWorkflow::finishInitialLoadWithError(m_state, errorString));
 }
 
 void ImageOpenController::finishLoadSuccessfully(
@@ -240,29 +205,26 @@ void ImageOpenController::prepareSuccessfulImageLoad(const ImageLoadSession &ses
 
 void ImageOpenController::finishSuccessfulImageLoad(const ImageLoadSession &session)
 {
-    setSourceUrlFromResolvedLoad(session.location.imageUrl);
-    m_state.setDisplayedImageLocation(session.location);
-    if (!session.request.containerNavigationUrl.isEmpty()) {
-        m_state.setContainerNavigationUrl(session.request.containerNavigationUrl);
-    } else {
-        updateContainerNavigationFromDisplayedImage();
-    }
-    m_state.clearLoadingContainerNavigationUrl();
-    m_state.setErrorString(QString());
-    m_state.setLoading(false);
-    m_state.setStatus(ImageDocumentStatus::Ready);
-    report(DocumentEvent::pageNavigationUpdateRequested());
+    applyCommands(ImageOpenWorkflow::finishSuccessfulImageLoad(m_state, session));
 }
 
-void ImageOpenController::updateContainerNavigationFromDisplayedImage()
+void ImageOpenController::applyCommands(const ImageOpenCommands &commands)
 {
-    if (!m_presentationController.hasImage() || m_state.displayedUrl().isEmpty()) {
-        m_state.setContainerNavigationUrl(QUrl());
-        return;
+    if (commands.clearImage) {
+        report(DocumentEvent::clearImageRequested());
     }
-
-    m_state.setContainerNavigationUrl(containerNavigationUrlForImage(
-        m_state.displayedUrl(), m_state.displayedComicBookRootUrl()));
+    if (commands.resetZoom) {
+        m_presentationController.resetZoom();
+    }
+    if (!commands.failedContainerUrl.isEmpty()) {
+        m_presentationController.prepareFailedContainer(commands.failedContainerUrl);
+    }
+    if (commands.updatePageNavigation) {
+        report(DocumentEvent::pageNavigationUpdateRequested());
+    }
+    if (commands.scheduleAdjacentPredecode) {
+        report(DocumentEvent::adjacentImagePredecodeRequested());
+    }
 }
 
 void ImageOpenController::report(DocumentEvent event)

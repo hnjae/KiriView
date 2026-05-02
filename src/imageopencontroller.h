@@ -6,6 +6,7 @@
 
 #include "imagedocumentevents.h"
 #include "imageloader.h"
+#include "imageopenworkflow.h"
 
 #include <QByteArray>
 #include <QImage>
@@ -56,7 +57,7 @@ private:
         ImageLoadSession session, QByteArray data, const QSize &intrinsicSize);
     void prepareSuccessfulImageLoad(const ImageLoadSession &session);
     void finishSuccessfulImageLoad(const ImageLoadSession &session);
-    void updateContainerNavigationFromDisplayedImage();
+    void applyCommands(const ImageOpenCommands &commands);
     void report(DocumentEvent event);
 
     ImageDocumentState &m_state;
