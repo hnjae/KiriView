@@ -9,7 +9,7 @@ import org.kde.kirigami as Kirigami
 Kirigami.ApplicationWindow {
     id: root
 
-    title: page.imageView.windowTitleFileName.length > 0 ? page.imageView.windowTitleFileName + " — KiriView" : "KiriView"
+    title: page.imageDocument.windowTitleFileName.length > 0 ? page.imageDocument.windowTitleFileName + " — KiriView" : "KiriView"
     visible: true
 
     property bool helpDialogOpen: false
@@ -59,8 +59,8 @@ Kirigami.ApplicationWindow {
     pageStack.initialPage: Kirigami.Page {
         id: page
 
-        readonly property var imageView: imageViewport.imageView
-        readonly property bool imageReady: imageView.status === KiriImageView.Ready
+        readonly property var imageDocument: imageViewport.imageDocument
+        readonly property bool imageReady: imageDocument.status === KiriImageDocument.Ready
 
         background: Rectangle {
             color: "#3c3c3c"
@@ -73,8 +73,8 @@ Kirigami.ApplicationWindow {
             id: imageActions
 
             helpDialogOpen: root.helpDialogOpen
+            imageDocument: page.imageDocument
             imageReady: page.imageReady
-            imageView: page.imageView
 
             onOpenDialogRequested: fileDialog.open()
         }
@@ -83,11 +83,11 @@ Kirigami.ApplicationWindow {
             id: imageToolBar
 
             actions: imageActions
+            imageDocument: page.imageDocument
             imageReady: page.imageReady
-            imageView: page.imageView
-            maximumManualZoomPercent: page.imageView.maximumManualZoomPercent
-            minimumManualZoomPercent: page.imageView.minimumManualZoomPercent
-            zoomStepPercent: page.imageView.zoomStepPercent
+            maximumManualZoomPercent: page.imageDocument.maximumManualZoomPercent
+            minimumManualZoomPercent: page.imageDocument.minimumManualZoomPercent
+            zoomStepPercent: page.imageDocument.zoomStepPercent
         }
 
         ImageViewport {
@@ -99,8 +99,8 @@ Kirigami.ApplicationWindow {
 
         ImageShortcuts {
             helpDialogOpen: root.helpDialogOpen
+            imageDocument: page.imageDocument
             imageToolBar: imageToolBar
-            imageView: page.imageView
             imageViewport: imageViewport
 
             onShortcutHelpRequested: shortcutHelpDialog.open()
@@ -109,8 +109,8 @@ Kirigami.ApplicationWindow {
 
         ImageStateOverlay {
             anchors.fill: parent
+            imageDocument: page.imageDocument
             imageReady: page.imageReady
-            imageView: page.imageView
             openAction: imageActions.openAction
         }
     }
@@ -129,9 +129,9 @@ Kirigami.ApplicationWindow {
         id: fileDialog
 
         fileMode: Dialogs.FileDialog.OpenFile
-        nameFilters: page.imageView.openDialogNameFilters
+        nameFilters: page.imageDocument.openDialogNameFilters
         title: "Open Image or Comic Book"
 
-        onAccepted: page.imageView.sourceUrl = selectedFile
+        onAccepted: page.imageDocument.sourceUrl = selectedFile
     }
 }

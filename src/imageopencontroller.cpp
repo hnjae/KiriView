@@ -184,7 +184,7 @@ void ImageOpenController::finishSvgLoadSuccessfully(
     ImageLoadSession session, QByteArray data, const QSize &intrinsicSize)
 {
     const QUrl loadedContainerUrl = containerNavigationUrlForImage(
-        session.location.imageUrl, session.location.comicBookRootUrl);
+        session.location.imageUrl(), session.location.comicBookRootUrl());
     const std::optional<QString> errorString = m_presentationController.setLoadedSvgImage(
         std::move(data), intrinsicSize, loadedContainerUrl);
     if (errorString.has_value()) {
@@ -199,7 +199,7 @@ void ImageOpenController::prepareSuccessfulImageLoad(const ImageLoadSession &ses
 {
     m_presentationController.stopAnimation();
     const QUrl loadedContainerUrl = containerNavigationUrlForImage(
-        session.location.imageUrl, session.location.comicBookRootUrl);
+        session.location.imageUrl(), session.location.comicBookRootUrl());
     m_presentationController.prepareImageContainer(loadedContainerUrl);
 }
 

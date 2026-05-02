@@ -19,7 +19,7 @@ KiriView::ImageLoadSession loadSession(const QUrl &sourceUrl, const QUrl &imageU
     return KiriView::ImageLoadSession {
         1,
         KiriView::ImageLoadRequest::fromUrls(sourceUrl, comicBookRootUrl, containerNavigationUrl),
-        KiriView::DisplayedImageLocation { imageUrl, comicBookRootUrl },
+        KiriView::DisplayedImageLocation::fromUrls(imageUrl, comicBookRootUrl),
     };
 }
 }
@@ -32,6 +32,7 @@ private Q_SLOTS:
     void firstImageLoadSuccessTransitionsToReady();
     void replacementLoadFailureKeepsDisplayedImage();
     void emptyContainerFailureSelectsFailedContainer();
+    void animationFailureClearsImageAndResetsZoom();
 };
 
 void TestImageOpenWorkflow::firstImageLoadSuccessTransitionsToReady()
@@ -64,7 +65,7 @@ void TestImageOpenWorkflow::replacementLoadFailureKeepsDisplayedImage()
     KiriView::ImageDocumentState state;
     const QUrl displayedUrl = localUrl(QStringLiteral("/images/current.png"));
     const QUrl replacementUrl = localUrl(QStringLiteral("/images/missing.png"));
-    state.setDisplayedImageLocation({ displayedUrl, QUrl() });
+    state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromUrls(displayedUrl));
     state.setSourceUrl(replacementUrl);
     state.setLoading(true);
     state.setStatus(KiriView::ImageDocumentStatus::Ready);
@@ -97,6 +98,27 @@ void TestImageOpenWorkflow::emptyContainerFailureSelectsFailedContainer()
     QCOMPARE(state.sourceUrl(), containerUrl);
     QCOMPARE(state.containerNavigationUrl(), containerUrl);
     QCOMPARE(state.errorString(), QStringLiteral("empty"));
+    QVERIFY(!state.loading());
+    QCOMPARE(state.status(), KiriView::ImageDocumentStatus::Error);
+}
+
+void TestImageOpenWorkflow::animationFailureClearsImageAndResetsZoom()
+{
+    KiriView::ImageDocumentState state;
+    const QUrl displayedUrl = localUrl(QStringLiteral("/images/animated.png"));
+    state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromUrls(displayedUrl));
+    state.setContainerNavigationUrl(localUrl(QStringLiteral("/images/")));
+    state.setLoading(true);
+    state.setStatus(KiriView::ImageDocumentStatus::Ready);
+
+    const KiriView::ImageOpenCommands commands
+        = KiriView::ImageOpenWorkflow::finishAnimationLoadWithError(
+            state, QStringLiteral("animation failed"));
+
+    QVERIFY(commands.clearImage);
+    QVERIFY(commands.resetZoom);
+    QVERIFY(state.containerNavigationUrl().isEmpty());
+    QCOMPARE(state.errorString(), QStringLiteral("animation failed"));
     QVERIFY(!state.loading());
     QCOMPARE(state.status(), KiriView::ImageDocumentStatus::Error);
 }

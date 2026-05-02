@@ -9,13 +9,14 @@ import org.kde.kirigami as Kirigami
 Item {
     id: root
 
+    property alias imageDocument: imageDocument
     property alias imageView: imageView
     property alias flickable: imageFlickable
-    property bool imageReady: imageView.status === KiriImageView.Ready
+    property bool imageReady: imageDocument.status === KiriImageDocument.Ready
     property url initialSourceUrl
-    readonly property int minimumManualZoomPercent: imageView.minimumManualZoomPercent
-    readonly property int maximumManualZoomPercent: imageView.maximumManualZoomPercent
-    readonly property int zoomStepPercent: imageView.zoomStepPercent
+    readonly property int minimumManualZoomPercent: imageDocument.minimumManualZoomPercent
+    readonly property int maximumManualZoomPercent: imageDocument.maximumManualZoomPercent
+    readonly property int zoomStepPercent: imageDocument.zoomStepPercent
     readonly property real dragZoomPercentPerPixel: zoomStepPercent / Math.max(1, Kirigami.Units.gridUnit * 2)
     readonly property bool imagePannable: imageFlickable.contentWidth > imageFlickable.width || imageFlickable.contentHeight > imageFlickable.height
     readonly property real viewportWidth: imageFlickable.width
@@ -51,15 +52,27 @@ Item {
             return false;
         }
 
-        const nextZoomPercent = imageView.clampedManualZoomPercent(imageView.zoomPercent + deltaPercent);
-        if (Math.abs(nextZoomPercent - imageView.zoomPercent) < 0.001) {
+        const nextZoomPercent = imageDocument.clampedManualZoomPercent(imageDocument.zoomPercent + deltaPercent);
+        if (Math.abs(nextZoomPercent - imageDocument.zoomPercent) < 0.001) {
             return false;
         }
 
         const nextContentPosition = imageView.zoomContentPosition(Qt.point(imageFlickable.contentX, imageFlickable.contentY), Qt.point(viewportX, viewportY), nextZoomPercent);
-        imageView.zoomPercent = nextZoomPercent;
+        imageDocument.zoomPercent = nextZoomPercent;
         setContentPosition(nextContentPosition);
         return true;
+    }
+
+    KiriImageDocument {
+        id: imageDocument
+
+        viewportSize: Qt.size(imageFlickable.width, imageFlickable.height)
+
+        Component.onCompleted: {
+            if (root.initialSourceUrl.toString().length > 0) {
+                sourceUrl = root.initialSourceUrl;
+            }
+        }
     }
 
     Flickable {
@@ -70,7 +83,7 @@ Item {
         clip: true
         contentHeight: Math.max(height, imageView.y + imageView.height)
         contentWidth: Math.max(width, imageView.x + imageView.width)
-        interactive: imageView.status === KiriImageView.Ready && (contentWidth > width || contentHeight > height)
+        interactive: imageDocument.status === KiriImageDocument.Ready && (contentWidth > width || contentHeight > height)
 
         Controls.ScrollBar.horizontal: Controls.ScrollBar {
             policy: imageFlickable.contentWidth > imageFlickable.width ? Controls.ScrollBar.AsNeeded : Controls.ScrollBar.AlwaysOff
@@ -83,17 +96,11 @@ Item {
         KiriImageView {
             id: imageView
 
-            height: displaySize.height
-            viewportSize: Qt.size(imageFlickable.width, imageFlickable.height)
-            width: displaySize.width
+            document: imageDocument
+            height: imageDocument.displaySize.height
+            width: imageDocument.displaySize.width
             x: Math.max(0, (imageFlickable.width - width) / 2)
             y: Math.max(0, (imageFlickable.height - height) / 2)
-
-            Component.onCompleted: {
-                if (root.initialSourceUrl.toString().length > 0) {
-                    sourceUrl = root.initialSourceUrl;
-                }
-            }
         }
     }
 

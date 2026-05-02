@@ -10,7 +10,7 @@ import org.kde.kirigami as Kirigami
 Controls.ToolBar {
     id: root
 
-    required property KiriImageView imageView
+    required property KiriImageDocument imageDocument
     required property bool imageReady
     required property int minimumManualZoomPercent
     required property int maximumManualZoomPercent
@@ -22,7 +22,7 @@ Controls.ToolBar {
     }
 
     function pageNumberText() {
-        return imageView.currentPageNumber > 0 ? imageView.currentPageNumber.toString() : "0";
+        return imageDocument.currentPageNumber > 0 ? imageDocument.currentPageNumber.toString() : "0";
     }
 
     function resetPageNumberText() {
@@ -88,13 +88,13 @@ Controls.ToolBar {
                 id: pageNumberField
 
                 Layout.preferredWidth: Math.max(Kirigami.Units.gridUnit * 3, pageNumberMetrics.advanceWidth + leftPadding + rightPadding + Kirigami.Units.smallSpacing * 2)
-                enabled: root.imageReady && root.imageView.imageCount > 0
+                enabled: root.imageReady && root.imageDocument.imageCount > 0
                 horizontalAlignment: Text.AlignHCenter
                 inputMethodHints: Qt.ImhDigitsOnly
                 selectByMouse: true
                 validator: IntValidator {
-                    bottom: root.imageView.imageCount > 0 ? 1 : 0
-                    top: Math.max(1, root.imageView.imageCount)
+                    bottom: root.imageDocument.imageCount > 0 ? 1 : 0
+                    top: Math.max(1, root.imageDocument.imageCount)
                 }
 
                 function commitPageNumber() {
@@ -104,8 +104,8 @@ Controls.ToolBar {
                     }
 
                     const pageNumber = Number(text.trim());
-                    if (Number.isInteger(pageNumber) && pageNumber >= 1 && pageNumber <= root.imageView.imageCount) {
-                        root.imageView.openImageAtPage(pageNumber);
+                    if (Number.isInteger(pageNumber) && pageNumber >= 1 && pageNumber <= root.imageDocument.imageCount) {
+                        root.imageDocument.openImageAtPage(pageNumber);
                     }
                     resetPageNumberText();
                 }
@@ -126,7 +126,7 @@ Controls.ToolBar {
                 id: pageNumberMetrics
 
                 font: pageNumberField.font
-                text: Array(Math.max(1, Math.max(1, root.imageView.imageCount).toString().length) + 1).join("8")
+                text: Array(Math.max(1, Math.max(1, root.imageDocument.imageCount).toString().length) + 1).join("8")
             }
 
             Controls.Label {
@@ -135,7 +135,7 @@ Controls.ToolBar {
             }
 
             Controls.Label {
-                text: root.imageView.imageCount.toString()
+                text: root.imageDocument.imageCount.toString()
                 textFormat: Text.PlainText
             }
 
@@ -177,19 +177,19 @@ Controls.ToolBar {
                     Controls.MenuItem {
                         action: root.actions.fitAction
                         checkable: true
-                        checked: root.imageView.zoomMode === KiriImageView.Fit
+                        checked: root.imageDocument.zoomMode === KiriImageDocument.Fit
                     }
 
                     Controls.MenuItem {
                         action: root.actions.fitHeightAction
                         checkable: true
-                        checked: root.imageView.zoomMode === KiriImageView.FitHeight
+                        checked: root.imageDocument.zoomMode === KiriImageDocument.FitHeight
                     }
 
                     Controls.MenuItem {
                         action: root.actions.fitWidthAction
                         checkable: true
-                        checked: root.imageView.zoomMode === KiriImageView.FitWidth
+                        checked: root.imageDocument.zoomMode === KiriImageDocument.FitWidth
                     }
                 }
             }
@@ -199,11 +199,11 @@ Controls.ToolBar {
 
                 editable: true
                 enabled: root.imageReady
-                from: Math.min(root.minimumManualZoomPercent, Math.floor(root.imageView.zoomPercent))
+                from: Math.min(root.minimumManualZoomPercent, Math.floor(root.imageDocument.zoomPercent))
                 implicitWidth: Kirigami.Units.gridUnit * 5
                 stepSize: root.zoomStepPercent
-                to: Math.max(root.maximumManualZoomPercent, Math.ceil(root.imageView.zoomPercent))
-                value: Math.round(root.imageView.zoomPercent)
+                to: Math.max(root.maximumManualZoomPercent, Math.ceil(root.imageDocument.zoomPercent))
+                value: Math.round(root.imageDocument.zoomPercent)
 
                 textFromValue: function (value, locale) {
                     return Number(value).toLocaleString(locale, "f", 0) + "%";
@@ -220,13 +220,13 @@ Controls.ToolBar {
                     top: zoomSpinBox.to
                 }
 
-                onValueModified: root.imageView.zoomPercent = root.clampValue(value, root.minimumManualZoomPercent, root.maximumManualZoomPercent)
+                onValueModified: root.imageDocument.zoomPercent = root.clampValue(value, root.minimumManualZoomPercent, root.maximumManualZoomPercent)
             }
         }
     }
 
     Connections {
-        target: root.imageView
+        target: root.imageDocument
 
         function onPageNavigationChanged() {
             if (!pageNumberField.activeFocus) {

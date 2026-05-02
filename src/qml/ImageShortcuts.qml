@@ -7,15 +7,15 @@ import io.github.hnjae.kiriview
 Item {
     id: root
 
-    required property KiriImageView imageView
+    required property KiriImageDocument imageDocument
     required property var imageViewport
     required property var imageToolBar
     required property bool helpDialogOpen
 
-    readonly property bool imageReady: imageView.status === KiriImageView.Ready
+    readonly property bool imageReady: imageDocument.status === KiriImageDocument.Ready
     readonly property bool imagePannable: imageViewport.imagePannable
     readonly property int keyboardPanDistance: 64
-    readonly property int zoomStepPercent: imageView.zoomStepPercent
+    readonly property int zoomStepPercent: imageDocument.zoomStepPercent
 
     signal shortcutHelpRequested
     signal toggleFullScreenRequested
@@ -93,7 +93,7 @@ Item {
         enabled: root.imageReady && !root.helpDialogOpen
         sequence: StandardKey.MoveToPreviousPage
 
-        onActivated: root.imageView.openPreviousImage()
+        onActivated: root.imageDocument.openPreviousImage()
     }
 
     Shortcut {
@@ -101,23 +101,23 @@ Item {
         enabled: root.imageReady && !root.helpDialogOpen
         sequence: StandardKey.MoveToNextPage
 
-        onActivated: root.imageView.openNextImage()
+        onActivated: root.imageDocument.openNextImage()
     }
 
     Shortcut {
         context: Qt.WindowShortcut
-        enabled: root.imageView.containerNavigationAvailable && !root.textInputFocused() && !root.helpDialogOpen
+        enabled: root.imageDocument.containerNavigationAvailable && !root.textInputFocused() && !root.helpDialogOpen
         sequence: "["
 
-        onActivated: root.imageView.openPreviousContainer()
+        onActivated: root.imageDocument.openPreviousContainer()
     }
 
     Shortcut {
         context: Qt.WindowShortcut
-        enabled: root.imageView.containerNavigationAvailable && !root.textInputFocused() && !root.helpDialogOpen
+        enabled: root.imageDocument.containerNavigationAvailable && !root.textInputFocused() && !root.helpDialogOpen
         sequence: "]"
 
-        onActivated: root.imageView.openNextContainer()
+        onActivated: root.imageDocument.openNextContainer()
     }
 
     Shortcut {

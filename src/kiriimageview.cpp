@@ -3,174 +3,36 @@
 
 #include "kiriimageview.h"
 
-#include "imagedocumentcontroller.h"
-#include "imageformatregistry.h"
 #include "imageviewportgeometry.h"
 #include "kiriimagedecoder.h"
+#include "kiriimagedocument.h"
 #include "kiriimagerendernode.h"
 
 #include <QQuickWindow>
-#include <algorithm>
 #include <cmath>
-#include <memory>
 #include <rhi/qrhi.h>
-
-namespace {
-using KiriView::ImageDocumentChange;
-using KiriView::ImageDocumentStatus;
-using KiriView::ImageZoomMode;
-
-ImageZoomMode toImageZoomMode(KiriImageView::ZoomMode zoomMode)
-{
-    switch (zoomMode) {
-    case KiriImageView::ZoomMode::Fit:
-        return ImageZoomMode::Fit;
-    case KiriImageView::ZoomMode::FitHeight:
-        return ImageZoomMode::FitHeight;
-    case KiriImageView::ZoomMode::FitWidth:
-        return ImageZoomMode::FitWidth;
-    case KiriImageView::ZoomMode::Manual:
-        return ImageZoomMode::Manual;
-    }
-
-    return ImageZoomMode::Fit;
-}
-
-KiriImageView::ZoomMode fromImageZoomMode(ImageZoomMode zoomMode)
-{
-    switch (zoomMode) {
-    case ImageZoomMode::Fit:
-        return KiriImageView::ZoomMode::Fit;
-    case ImageZoomMode::FitHeight:
-        return KiriImageView::ZoomMode::FitHeight;
-    case ImageZoomMode::FitWidth:
-        return KiriImageView::ZoomMode::FitWidth;
-    case ImageZoomMode::Manual:
-        return KiriImageView::ZoomMode::Manual;
-    }
-
-    return KiriImageView::ZoomMode::Fit;
-}
-
-KiriImageView::Status fromImageDocumentStatus(ImageDocumentStatus status)
-{
-    switch (status) {
-    case ImageDocumentStatus::Null:
-        return KiriImageView::Status::Null;
-    case ImageDocumentStatus::Loading:
-        return KiriImageView::Status::Loading;
-    case ImageDocumentStatus::Ready:
-        return KiriImageView::Status::Ready;
-    case ImageDocumentStatus::Error:
-        return KiriImageView::Status::Error;
-    }
-
-    return KiriImageView::Status::Null;
-}
-}
 
 KiriImageView::KiriImageView(QQuickItem *parent)
     : QQuickItem(parent)
 {
-    m_documentController = std::make_unique<KiriView::ImageDocumentController>(
-        this, [this]() { return renderContext(); },
-        [this](ImageDocumentChange change) { handleDocumentChange(change); });
     setFlag(ItemHasContents, true);
 }
 
-KiriImageView::~KiriImageView() = default;
+KiriImageView::~KiriImageView() { disconnectDocument(); }
 
-QUrl KiriImageView::sourceUrl() const { return m_documentController->sourceUrl(); }
+KiriImageDocument *KiriImageView::document() const { return m_document; }
 
-void KiriImageView::setSourceUrl(const QUrl &sourceUrl)
+void KiriImageView::setDocument(KiriImageDocument *document)
 {
-    m_documentController->setSourceUrl(sourceUrl);
-}
+    if (m_document == document) {
+        return;
+    }
 
-KiriImageView::Status KiriImageView::status() const
-{
-    return fromImageDocumentStatus(m_documentController->status());
-}
-
-bool KiriImageView::loading() const { return m_documentController->loading(); }
-
-QString KiriImageView::errorString() const { return m_documentController->errorString(); }
-
-QString KiriImageView::windowTitleFileName() const
-{
-    return m_documentController->windowTitleFileName();
-}
-
-QSize KiriImageView::imageSize() const { return m_documentController->imageSize(); }
-
-QSizeF KiriImageView::viewportSize() const { return m_documentController->viewportSize(); }
-
-void KiriImageView::setViewportSize(const QSizeF &viewportSize)
-{
-    m_documentController->setViewportSize(viewportSize);
-}
-
-QSizeF KiriImageView::displaySize() const { return m_documentController->displaySize(); }
-
-double KiriImageView::zoomPercent() const { return m_documentController->zoomPercent(); }
-
-void KiriImageView::setZoomPercent(double zoomPercent)
-{
-    m_documentController->setZoomPercent(zoomPercent);
-}
-
-KiriImageView::ZoomMode KiriImageView::zoomMode() const
-{
-    return fromImageZoomMode(m_documentController->zoomMode());
-}
-
-int KiriImageView::minimumManualZoomPercent() const
-{
-    return static_cast<int>(KiriView::ImageZoomState::minimumManualZoomPercent);
-}
-
-int KiriImageView::maximumManualZoomPercent() const
-{
-    return static_cast<int>(KiriView::ImageZoomState::maximumManualZoomPercent);
-}
-
-int KiriImageView::zoomStepPercent() const
-{
-    return KiriView::ImageZoomState::manualZoomStepPercent;
-}
-
-QStringList KiriImageView::openDialogNameFilters() const
-{
-    return KiriView::openDialogNameFilters();
-}
-
-int KiriImageView::currentPageNumber() const { return m_documentController->currentPageNumber(); }
-
-int KiriImageView::imageCount() const { return m_documentController->imageCount(); }
-
-bool KiriImageView::containerNavigationAvailable() const
-{
-    return m_documentController->containerNavigationAvailable();
-}
-
-void KiriImageView::openPreviousImage() { m_documentController->openPreviousImage(); }
-
-void KiriImageView::openNextImage() { m_documentController->openNextImage(); }
-
-void KiriImageView::openPreviousContainer() { m_documentController->openPreviousContainer(); }
-
-void KiriImageView::openNextContainer() { m_documentController->openNextContainer(); }
-
-void KiriImageView::openImageAtPage(int pageNumber)
-{
-    m_documentController->openImageAtPage(pageNumber);
-}
-
-void KiriImageView::resetZoom() { m_documentController->resetZoom(); }
-
-void KiriImageView::setFitMode(ZoomMode zoomMode)
-{
-    m_documentController->setFitMode(toImageZoomMode(zoomMode));
+    disconnectDocument();
+    m_document = document;
+    connectDocument();
+    Q_EMIT documentChanged();
+    update();
 }
 
 QPointF KiriImageView::panContentPosition(
@@ -187,16 +49,6 @@ bool KiriImageView::viewportPointInsideImage(
     return KiriView::imageViewportPointInsideImage(contentPosition, viewportPoint, imageRect);
 }
 
-double KiriImageView::clampedManualZoomPercent(double zoomPercent) const
-{
-    if (!std::isfinite(zoomPercent)) {
-        return zoomPercent;
-    }
-
-    return std::clamp(zoomPercent, KiriView::ImageZoomState::minimumManualZoomPercent,
-        KiriView::ImageZoomState::maximumManualZoomPercent);
-}
-
 QPointF KiriImageView::zoomContentPosition(const QPointF &contentPosition,
     const QPointF &viewportAnchorPoint, double nextZoomPercent) const
 {
@@ -208,7 +60,7 @@ QPointF KiriImageView::zoomContentPosition(const QPointF &contentPosition,
 
 QSGNode *KiriImageView::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *)
 {
-    if (m_documentController->image().isNull()) {
+    if (m_document == nullptr || m_document->image().isNull()) {
         delete oldNode;
         return nullptr;
     }
@@ -225,9 +77,8 @@ QSGNode *KiriImageView::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *)
     }
 
     node->setRhi(window() == nullptr ? nullptr : window()->rhi());
-    node->setImage(m_documentController->image(), m_documentController->imageRevision());
-    node->setTargetRect(
-        KiriView::imageTargetRect(m_documentController->image().size(), boundsSize));
+    node->setImage(m_document->image(), m_document->imageRevision());
+    node->setTargetRect(KiriView::imageTargetRect(m_document->image().size(), boundsSize));
     node->markDirty(QSGNode::DirtyGeometry | QSGNode::DirtyMaterial);
     return node;
 }
@@ -236,53 +87,55 @@ void KiriImageView::itemChange(ItemChange change, const ItemChangeData &value)
 {
     QQuickItem::itemChange(change, value);
 
-    if (change == ItemSceneChange || change == ItemDevicePixelRatioHasChanged) {
-        m_documentController->updateRenderContext();
+    if (m_document != nullptr
+        && (change == ItemSceneChange || change == ItemDevicePixelRatioHasChanged)) {
+        m_document->updateRenderContext();
     }
 }
 
-void KiriImageView::handleDocumentChange(ImageDocumentChange change)
+QSize KiriImageView::imageSize() const
 {
-    switch (change) {
-    case ImageDocumentChange::SourceUrl:
-        Q_EMIT sourceUrlChanged();
+    return m_document == nullptr ? QSize() : m_document->imageSize();
+}
+
+QSizeF KiriImageView::viewportSize() const
+{
+    return m_document == nullptr ? QSizeF() : m_document->viewportSize();
+}
+
+QSizeF KiriImageView::displaySize() const
+{
+    return m_document == nullptr ? QSizeF() : m_document->displaySize();
+}
+
+void KiriImageView::connectDocument()
+{
+    if (m_document == nullptr) {
         return;
-    case ImageDocumentChange::Status:
-        Q_EMIT statusChanged();
-        return;
-    case ImageDocumentChange::Loading:
-        Q_EMIT loadingChanged();
-        return;
-    case ImageDocumentChange::ErrorString:
-        Q_EMIT errorStringChanged();
-        return;
-    case ImageDocumentChange::WindowTitleFileName:
-        Q_EMIT windowTitleFileNameChanged();
-        return;
-    case ImageDocumentChange::ImageSize:
-        Q_EMIT imageSizeChanged();
-        return;
-    case ImageDocumentChange::ViewportSize:
-        Q_EMIT viewportSizeChanged();
-        return;
-    case ImageDocumentChange::DisplaySize:
-        Q_EMIT displaySizeChanged();
-        return;
-    case ImageDocumentChange::ZoomPercent:
-        Q_EMIT zoomPercentChanged();
-        return;
-    case ImageDocumentChange::ZoomMode:
-        Q_EMIT zoomModeChanged();
-        return;
-    case ImageDocumentChange::PageNavigation:
-        Q_EMIT pageNavigationChanged();
-        return;
-    case ImageDocumentChange::ContainerNavigation:
-        Q_EMIT containerNavigationChanged();
-        return;
-    case ImageDocumentChange::Repaint:
+    }
+
+    m_repaintConnection
+        = connect(m_document, &KiriImageDocument::repaintRequested, this, &KiriImageView::update);
+    m_documentDestroyedConnection = connect(m_document, &QObject::destroyed, this, [this]() {
+        m_document = nullptr;
+        m_repaintConnection = {};
+        m_documentDestroyedConnection = {};
+        Q_EMIT documentChanged();
         update();
-        return;
+    });
+    m_document->setRenderContextProvider([this]() { return renderContext(); });
+}
+
+void KiriImageView::disconnectDocument()
+{
+    KiriImageDocument *document = m_document;
+    m_document = nullptr;
+    QObject::disconnect(m_repaintConnection);
+    QObject::disconnect(m_documentDestroyedConnection);
+    m_repaintConnection = {};
+    m_documentDestroyedConnection = {};
+    if (document != nullptr) {
+        document->setRenderContextProvider({});
     }
 }
 

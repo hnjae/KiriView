@@ -29,6 +29,7 @@ fn main() {
     // Do not export the whole crate root as C++ headers. That makes Cargo watch
     // build artifacts such as build-dir/, including symlinks into /run.
     .crate_include_root(None)
+    .cpp_file(CppFile::from("src/kiriimagedocument.h"))
     .cpp_file(CppFile::from("src/kiriimageview.h"))
     .file("src/apngdecoder.rs")
     .file("src/avifcompat.rs")
@@ -56,6 +57,7 @@ fn main() {
     .cpp_file("src/imagezoomstate.cpp")
     .cpp_file("src/imageanimationplayer.cpp")
     .cpp_file("src/apngdecoder.cpp")
+    .cpp_file("src/kiriimagedocument.cpp")
     .cpp_file("src/kiriimagedecoder.cpp")
     .cpp_file("src/imagenavigationservice.cpp")
     .cpp_file("src/kiriimagerendernode.cpp")

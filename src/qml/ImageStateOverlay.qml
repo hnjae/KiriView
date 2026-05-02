@@ -10,14 +10,14 @@ import org.kde.kirigami as Kirigami
 Item {
     id: root
 
-    required property KiriImageView imageView
+    required property KiriImageDocument imageDocument
     required property bool imageReady
     required property var openAction
 
     Controls.BusyIndicator {
         anchors.centerIn: parent
         running: visible
-        visible: root.imageView.status === KiriImageView.Loading
+        visible: root.imageDocument.status === KiriImageDocument.Loading
     }
 
     Rectangle {
@@ -27,7 +27,7 @@ Item {
         color: Qt.rgba(0, 0, 0, 0.55)
         height: Kirigami.Units.gridUnit * 2
         radius: Kirigami.Units.smallSpacing
-        visible: root.imageReady && root.imageView.loading
+        visible: root.imageReady && root.imageDocument.loading
         width: height
 
         Controls.BusyIndicator {
@@ -42,15 +42,15 @@ Item {
         anchors.left: parent.left
         anchors.margins: Kirigami.Units.largeSpacing
         anchors.right: parent.right
-        text: root.imageView.errorString
+        text: root.imageDocument.errorString
         type: Kirigami.MessageType.Error
-        visible: root.imageReady && !root.imageView.loading && root.imageView.errorString.length > 0
+        visible: root.imageReady && !root.imageDocument.loading && root.imageDocument.errorString.length > 0
     }
 
     ColumnLayout {
         anchors.centerIn: parent
         spacing: Kirigami.Units.largeSpacing
-        visible: root.imageView.status === KiriImageView.Null
+        visible: root.imageDocument.status === KiriImageDocument.Null
         width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, Kirigami.Units.gridUnit * 18)
 
         Kirigami.Icon {
@@ -77,7 +77,7 @@ Item {
     ColumnLayout {
         anchors.centerIn: parent
         spacing: Kirigami.Units.largeSpacing
-        visible: root.imageView.status === KiriImageView.Error
+        visible: root.imageDocument.status === KiriImageDocument.Error
         width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, Kirigami.Units.gridUnit * 24)
 
         Kirigami.Icon {
@@ -99,7 +99,7 @@ Item {
             Layout.fillWidth: true
             color: Kirigami.Theme.disabledTextColor
             horizontalAlignment: Text.AlignHCenter
-            text: root.imageView.errorString
+            text: root.imageDocument.errorString
             textFormat: Text.PlainText
             visible: text.length > 0
             wrapMode: Text.Wrap

@@ -33,6 +33,8 @@ public:
         ImageDocumentState &state, const QString &errorString);
     static ImageOpenCommands finishInitialLoadWithError(
         ImageDocumentState &state, const QString &errorString);
+    static ImageOpenCommands finishAnimationLoadWithError(
+        ImageDocumentState &state, const QString &errorString);
 };
 }
 

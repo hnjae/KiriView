@@ -20,11 +20,11 @@ const DisplayedImageLocation &ImageDocumentState::displayedImageLocation() const
     return m_displayedImageLocation;
 }
 
-const QUrl &ImageDocumentState::displayedUrl() const { return m_displayedImageLocation.imageUrl; }
+const QUrl &ImageDocumentState::displayedUrl() const { return m_displayedImageLocation.imageUrl(); }
 
 const QUrl &ImageDocumentState::displayedComicBookRootUrl() const
 {
-    return m_displayedImageLocation.comicBookRootUrl;
+    return m_displayedImageLocation.comicBookRootUrl();
 }
 
 ImageDocumentStatus ImageDocumentState::status() const { return m_status; }

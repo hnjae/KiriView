@@ -8,7 +8,7 @@ import io.github.hnjae.kiriview
 QtObject {
     id: root
 
-    required property KiriImageView imageView
+    required property KiriImageDocument imageDocument
     required property bool imageReady
     required property bool helpDialogOpen
 
@@ -24,19 +24,19 @@ QtObject {
     }
 
     property Controls.Action previousContainerAction: Controls.Action {
-        enabled: root.imageView.containerNavigationAvailable && !root.helpDialogOpen
+        enabled: root.imageDocument.containerNavigationAvailable && !root.helpDialogOpen
         icon.name: "go-previous-symbolic"
         text: "Previous Container"
 
-        onTriggered: root.imageView.openPreviousContainer()
+        onTriggered: root.imageDocument.openPreviousContainer()
     }
 
     property Controls.Action nextContainerAction: Controls.Action {
-        enabled: root.imageView.containerNavigationAvailable && !root.helpDialogOpen
+        enabled: root.imageDocument.containerNavigationAvailable && !root.helpDialogOpen
         icon.name: "go-next-symbolic"
         text: "Next Container"
 
-        onTriggered: root.imageView.openNextContainer()
+        onTriggered: root.imageDocument.openNextContainer()
     }
 
     property Controls.Action previousImageAction: Controls.Action {
@@ -44,7 +44,7 @@ QtObject {
         icon.name: "go-up-symbolic"
         text: "Previous"
 
-        onTriggered: root.imageView.openPreviousImage()
+        onTriggered: root.imageDocument.openPreviousImage()
     }
 
     property Controls.Action nextImageAction: Controls.Action {
@@ -52,7 +52,7 @@ QtObject {
         icon.name: "go-down-symbolic"
         text: "Next"
 
-        onTriggered: root.imageView.openNextImage()
+        onTriggered: root.imageDocument.openNextImage()
     }
 
     property Controls.Action fitAction: Controls.Action {
@@ -60,20 +60,20 @@ QtObject {
         icon.name: "zoom-fit-best-symbolic"
         text: "Fit"
 
-        onTriggered: root.imageView.resetZoom()
+        onTriggered: root.imageDocument.resetZoom()
     }
 
     property Controls.Action fitHeightAction: Controls.Action {
         enabled: root.imageReady && !root.helpDialogOpen
         text: "Fit Height"
 
-        onTriggered: root.imageView.setFitMode(KiriImageView.FitHeight)
+        onTriggered: root.imageDocument.setFitMode(KiriImageDocument.FitHeight)
     }
 
     property Controls.Action fitWidthAction: Controls.Action {
         enabled: root.imageReady && !root.helpDialogOpen
         text: "Fit Width"
 
-        onTriggered: root.imageView.setFitMode(KiriImageView.FitWidth)
+        onTriggered: root.imageDocument.setFitMode(KiriImageDocument.FitWidth)
     }
 }

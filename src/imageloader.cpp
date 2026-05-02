@@ -76,28 +76,28 @@ void ImageLoader::start(ImageLoadRequest request)
     ImageLoadSession session;
     session.id = ++m_nextLoadSessionId;
     session.request = std::move(request);
-    session.location.imageUrl = session.request.sourceUrl();
+    session.location.setImageUrl(session.request.sourceUrl());
 
     const std::optional<QUrl> selectedArchiveRootUrl
         = comicBookArchiveRootUrl(session.request.sourceUrl());
     if (selectedArchiveRootUrl.has_value()) {
-        session.location.comicBookRootUrl = selectedArchiveRootUrl.value();
+        session.location.setComicBookRootUrl(selectedArchiveRootUrl.value());
         m_loadSession = session;
         startComicBookLoad(session);
         return;
     }
 
     if (isUrlInsideArchiveRoot(
-            session.request.sourceUrl(), session.request.displayedComicBookRootUrl)) {
-        session.location.comicBookRootUrl = session.request.displayedComicBookRootUrl;
+            session.request.sourceUrl(), session.request.displayedComicBookRootUrl())) {
+        session.location.setComicBookRootUrl(session.request.displayedComicBookRootUrl());
     } else {
         const std::optional<QUrl> containingArchiveRootUrl
             = containingComicBookArchiveRootUrl(session.request.sourceUrl());
-        session.location.comicBookRootUrl = containingArchiveRootUrl.has_value()
-                && isUrlInsideArchiveRoot(
-                    session.request.sourceUrl(), containingArchiveRootUrl.value())
-            ? containingArchiveRootUrl.value()
-            : QUrl();
+        session.location.setComicBookRootUrl(containingArchiveRootUrl.has_value()
+                    && isUrlInsideArchiveRoot(
+                        session.request.sourceUrl(), containingArchiveRootUrl.value())
+                ? containingArchiveRootUrl.value()
+                : QUrl());
     }
 
     m_loadSession = session;
@@ -114,15 +114,15 @@ void ImageLoader::startImageLoad(ImageLoadSession session)
         return;
     }
 
-    m_decodeJob.start(ImageDecodeRequest { session.id, session.location.imageUrl });
+    m_decodeJob.start(ImageDecodeRequest { session.id, session.location.imageUrl() });
 }
 
 void ImageLoader::startComicBookLoad(ImageLoadSession session)
 {
     const ImageCandidateListContext candidateContext {
-        session.location.imageUrl,
-        session.location.comicBookRootUrl,
-        session.location.comicBookRootUrl,
+        session.location.imageUrl(),
+        session.location.comicBookRootUrl(),
+        session.location.comicBookRootUrl(),
         ImageCandidateContainerType::ComicBookArchive,
     };
     m_archiveListJob = m_candidateRepository.loadImages(
@@ -137,10 +137,10 @@ void ImageLoader::startComicBookLoad(ImageLoadSession session)
                 return;
             }
 
-            session.location.imageUrl = candidates.front().url;
+            session.location.setImageUrl(candidates.front().url);
             m_loadSession = session;
             if (m_sourceResolved) {
-                m_sourceResolved(session.location.imageUrl);
+                m_sourceResolved(session.location.imageUrl());
             }
             startImageLoad(session);
         },
@@ -164,7 +164,7 @@ std::optional<ImageLoadSession> ImageLoader::currentLoadSessionForDecodeRequest(
     const ImageDecodeRequest &request) const
 {
     if (!m_loadSession.has_value() || m_loadSession->id != request.id
-        || !m_loadSession->location.imageUrl.matches(
+        || !m_loadSession->location.imageUrl().matches(
             request.imageUrl, QUrl::NormalizePathSegments)) {
         return std::nullopt;
     }
@@ -190,7 +190,7 @@ bool ImageLoader::tryDisplayPredecodedImage(ImageLoadSession session)
         return false;
     }
 
-    std::optional<PredecodedImage> predecoded = m_takePredecodedImage(session.location.imageUrl);
+    std::optional<PredecodedImage> predecoded = m_takePredecodedImage(session.location.imageUrl());
     if (!predecoded.has_value()) {
         return false;
     }

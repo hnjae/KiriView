@@ -5,6 +5,7 @@
 
 #include "imagedocumentnavigationcontroller.h"
 #include "imageopencontroller.h"
+#include "imageopenworkflow.h"
 #include "imagepredecodecoordinator.h"
 #include "imagepresentationcontroller.h"
 #include "imageviewtext.h"
@@ -222,16 +223,17 @@ std::optional<PredecodedImage> ImageDocumentController::takePredecodedImage(cons
 
 void ImageDocumentController::finishWithAnimationError(const QString &errorString)
 {
-    m_state.setLoading(false);
-    clearImage();
-    resetZoom();
-    m_state.setContainerNavigationUrl(QUrl());
-    m_navigationController->clearPageNavigation();
     const QString message = errorString.isEmpty()
         ? imageViewText("Could not decode the selected image animation.")
         : errorString;
-    m_state.setErrorString(message);
-    m_state.setStatus(ImageDocumentStatus::Error);
+    const ImageOpenCommands commands
+        = ImageOpenWorkflow::finishAnimationLoadWithError(m_state, message);
+    if (commands.clearImage) {
+        clearImage();
+    }
+    if (commands.resetZoom) {
+        resetZoom();
+    }
 }
 
 void ImageDocumentController::notify(ImageDocumentChange change)

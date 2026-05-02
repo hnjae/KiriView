@@ -41,13 +41,13 @@ ImageOpenCommands ImageOpenWorkflow::finishSuccessfulImageLoad(
     ImageDocumentState &state, const ImageLoadSession &session)
 {
     ImageOpenCommands commands;
-    state.setSourceUrl(session.location.imageUrl);
+    state.setSourceUrl(session.location.imageUrl());
     state.setDisplayedImageLocation(session.location);
     if (!session.request.containerNavigationUrl().isEmpty()) {
         state.setContainerNavigationUrl(session.request.containerNavigationUrl());
     } else {
         state.setContainerNavigationUrl(containerNavigationUrlForImage(
-            session.location.imageUrl, session.location.comicBookRootUrl));
+            session.location.imageUrl(), session.location.comicBookRootUrl()));
     }
     state.clearLoadingContainerNavigationUrl();
     state.setErrorString(QString());
@@ -96,6 +96,19 @@ ImageOpenCommands ImageOpenWorkflow::finishInitialLoadWithError(
     ImageOpenCommands commands;
     commands.clearImage = true;
     state.clearLoadingContainerNavigationUrl();
+    state.setLoading(false);
+    state.setContainerNavigationUrl(QUrl());
+    state.setErrorString(errorString);
+    state.setStatus(ImageDocumentStatus::Error);
+    return commands;
+}
+
+ImageOpenCommands ImageOpenWorkflow::finishAnimationLoadWithError(
+    ImageDocumentState &state, const QString &errorString)
+{
+    ImageOpenCommands commands;
+    commands.clearImage = true;
+    commands.resetZoom = true;
     state.setLoading(false);
     state.setContainerNavigationUrl(QUrl());
     state.setErrorString(errorString);

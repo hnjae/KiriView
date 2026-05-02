@@ -58,22 +58,23 @@ void TestImageUrl::imageLocationTypesExposeExplicitState()
     const KiriView::DisplayedImageLocation emptyLocation;
     QVERIFY(emptyLocation.isEmpty());
 
-    const KiriView::DisplayedImageLocation location {
+    const KiriView::DisplayedImageLocation location = KiriView::DisplayedImageLocation::fromUrls(
         QUrl::fromLocalFile(QStringLiteral("/images/page.png")),
-        QUrl(QStringLiteral("zip:///books/book.cbz/")),
-    };
+        QUrl(QStringLiteral("zip:///books/book.cbz/")));
     QVERIFY(!location.isEmpty());
 
     const KiriView::ImageLoadRequest plainOpen
-        = KiriView::ImageLoadRequest::fromUrls(location.imageUrl, QUrl());
+        = KiriView::ImageLoadRequest::fromUrls(location.imageUrl(), QUrl());
     QVERIFY(!plainOpen.isEmpty());
     QVERIFY(!plainOpen.isContainerNavigation());
-    QCOMPARE(plainOpen.sourceUrl(), location.imageUrl);
+    QCOMPARE(plainOpen.sourceUrl(), location.imageUrl());
+    QVERIFY(plainOpen.displayedComicBookRootUrl().isEmpty());
 
     const QUrl containerUrl = QUrl::fromLocalFile(QStringLiteral("/images/"));
     const KiriView::ImageLoadRequest containerOpen = KiriView::ImageLoadRequest::fromUrls(
-        location.imageUrl, location.comicBookRootUrl, containerUrl);
+        location.imageUrl(), location.comicBookRootUrl(), containerUrl);
     QVERIFY(containerOpen.isContainerNavigation());
+    QCOMPARE(containerOpen.displayedComicBookRootUrl(), location.comicBookRootUrl());
     QCOMPARE(containerOpen.containerNavigationUrl(), containerUrl);
 }
 

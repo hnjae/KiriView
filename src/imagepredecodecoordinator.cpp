@@ -48,11 +48,11 @@ void ImagePredecodeCoordinator::scheduleAdjacentImagePredecode(
     const Context &context, quint64 generation)
 {
     const std::optional<ImageCandidateListContext> candidateContext
-        = imageCandidateListContextForDisplayedImage(context.displayedImageLocation.imageUrl,
-            context.displayedImageLocation.comicBookRootUrl);
+        = imageCandidateListContextForDisplayedImage(context.displayedImageLocation.imageUrl(),
+            context.displayedImageLocation.comicBookRootUrl());
     if (!candidateContext.has_value()) {
         startPredecodeImageLoads(
-            {}, context.displayedImageLocation.comicBookRootUrl, context, generation);
+            {}, context.displayedImageLocation.comicBookRootUrl(), context, generation);
         return;
     }
 
@@ -79,10 +79,10 @@ void ImagePredecodeCoordinator::startPredecodeImageLoads(const std::vector<QUrl>
 
     m_cache.setWindowUrls(urls);
     m_cache.cacheDisplayedImage(context.displayedImageIsCacheable,
-        context.displayedImageLocation.imageUrl, context.displayedImageLocation.comicBookRootUrl,
-        context.displayedImage);
+        context.displayedImageLocation.imageUrl(),
+        context.displayedImageLocation.comicBookRootUrl(), context.displayedImage);
     m_cache.enqueueMissingWindowLoads(
-        context.displayedImageLocation.imageUrl, comicBookRootUrl, m_activePredecodeUrl);
+        context.displayedImageLocation.imageUrl(), comicBookRootUrl, m_activePredecodeUrl);
 
     startNextPredecodeImageLoad(generation);
 }
@@ -170,6 +170,6 @@ std::optional<PredecodedImage> ImagePredecodeCoordinator::tryTake(const QUrl &ur
         return std::nullopt;
     }
 
-    return PredecodedImage { image, DisplayedImageLocation { url, comicBookRootUrl } };
+    return PredecodedImage { image, DisplayedImageLocation::fromUrls(url, comicBookRootUrl) };
 }
 }
