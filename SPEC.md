@@ -89,20 +89,22 @@ enter manual zoom values from 10% through 800%. Editing the zoom input switches
 to manual zoom. A fit menu provides Fit, Fit Height, and Fit Width actions and
 shows the selected fit mode. The fit action returns the image to Fit mode.
 
-When an image is ready, Ctrl+= or Ctrl++ zooms in by 10 percentage points and
-Ctrl+- zooms out by 10 percentage points. Keyboard zoom uses the same 10%
-through 800% manual zoom range as the toolbar zoom input. Holding Ctrl and
-dragging vertically on the image zooms around the cursor: dragging up zooms in
-and dragging down zooms out.
+When an image is ready, Ctrl+=, Ctrl++, `=`, or `+` zooms in by 10 percentage
+points and Ctrl+- or `-` zooms out by 10 percentage points. Keyboard zoom uses
+the same 10% through 800% manual zoom range as the toolbar zoom input. Holding
+Ctrl and dragging vertically on the image zooms around the cursor: dragging up
+zooms in and dragging down zooms out. The unmodified `-`, `=`, and `+`
+shortcuts are inactive while the page number or zoom input is focused.
 
 When an image is ready, the `1` key selects Fit mode, `2` selects Fit Height
 mode, `3` selects Fit Width mode, and `0` switches to 100% manual zoom. These
 shortcuts are inactive while the page number or zoom input is focused.
 
 When an image is zoomed large enough to pan, the arrow keys pan the image within
-the available scroll bounds, Shift+mouse wheel pans horizontally, and the mouse
-cursor shows that the image can be dragged to pan. Arrow-key panning is
-inactive while the page number or zoom input is focused.
+the available scroll bounds, `<` moves the pan position to the top-left, `>`
+moves the pan position to the bottom-right, Shift+mouse wheel pans horizontally,
+and the mouse cursor shows that the image can be dragged to pan. Keyboard
+panning is inactive while the page number or zoom input is focused.
 
 When an image is zoomed large enough to pan, the `.` key scans forward through
 the image in row-major Z order. Each scan step moves horizontally or vertically
@@ -110,8 +112,10 @@ by at most three quarters of the visible viewport, except that moving from the
 right edge of one row to the next row jumps directly to the left edge of the
 next row. At the final scan position, `.` opens the next image. The `,` key
 scans backward through the same positions; at the initial scan position, it
-opens the previous image, starting that image at its final scan position. These
-scan shortcuts are inactive while the page number or zoom input is focused.
+opens the previous image, starting that image at its final scan position. When
+the current image is not zoomed large enough to pan, `.` opens the next image
+and `,` opens the previous image. These shortcuts are inactive while the page
+number or zoom input is focused.
 
 The toolbar centers page navigation as an up-arrow Previous button, an editable
 current page number, the text `of`, the total number of supported images in the
