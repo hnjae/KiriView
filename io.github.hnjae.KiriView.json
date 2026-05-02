@@ -29,6 +29,7 @@
       "build-commands": [
         "cargo --offline build --release",
         "install -Dm755 target/release/kiriview /app/bin/kiriview",
+        "install -Dm644 data/icons/hicolor/scalable/apps/io.github.hnjae.KiriView.svg /app/share/icons/hicolor/scalable/apps/io.github.hnjae.KiriView.svg",
         "install -Dm644 io.github.hnjae.KiriView.desktop /app/share/applications/io.github.hnjae.KiriView.desktop"
       ],
       "run-tests": true,
