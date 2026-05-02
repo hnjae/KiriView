@@ -36,6 +36,7 @@ fn main() {
     .cpp_file("src/imageformatregistry.cpp")
     .cpp_file("src/imageiojobs.cpp")
     .cpp_file("src/imageloader.cpp")
+    .cpp_file("src/imageopencontroller.cpp")
     .cpp_file("src/imagepredecodecoordinator.cpp")
     .cpp_file("src/imagepresentationcontroller.cpp")
     .cpp_file("src/imagezoomstate.cpp")

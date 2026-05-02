@@ -22,6 +22,7 @@
 
 namespace KiriView {
 class ImageNavigationService;
+class ImageOpenController;
 class ImagePresentationController;
 class ImagePredecodeCoordinator;
 enum class NavigationDirection : int;
@@ -66,36 +67,19 @@ public:
 
 private:
     void setSourceUrlForLoad(const QUrl &sourceUrl, const QUrl &containerNavigationUrl);
-    void startLoad();
     void cancelLoad();
-    void setSourceUrlFromResolvedLoad(const QUrl &sourceUrl);
     void openAdjacentImage(NavigationDirection direction);
     void cancelNavigation();
     void openAdjacentContainer(NavigationDirection direction);
     void cancelContainerNavigation();
     void openImageFromContainerNavigation(const QUrl &imageUrl, const QUrl &containerUrl);
-    void finishContainerNavigationWithEmptyContainer(const QUrl &containerUrl);
-    void finishContainerNavigationLoadWithError(
-        const QUrl &containerUrl, const QString &errorString);
     void setContainerNavigationUrl(const QUrl &containerUrl);
-    void updateContainerNavigationFromDisplayedImage();
     void updatePageNavigation();
     void cancelPageNavigationUpdate();
     void clearPageNavigation();
     void scheduleAdjacentImagePredecode();
     void cancelPredecode();
     std::optional<PredecodedImage> takePredecodedImage(const QUrl &url) const;
-    void finishPredecodedImageLoad(ImageLoadSession session, const QImage &image);
-    void finishDecodedImageLoad(
-        ImageLoadSession session, std::shared_ptr<DecodedImageResult> result);
-    void finishLoadWithError(
-        const ImageLoadSession &session, ImageLoadError error, const QString &errorString);
-    void finishLoadSuccessfully(
-        const ImageLoadSession &session, const QImage &image, bool predecodeCacheable);
-    void finishSvgLoadSuccessfully(
-        ImageLoadSession session, QByteArray data, const QSize &intrinsicSize);
-    void prepareSuccessfulImageLoad(const ImageLoadSession &session);
-    void finishSuccessfulImageLoad(const ImageLoadSession &session);
     bool hasDisplayedImage() const;
     void stopAnimation();
     void finishWithAnimationError(const QString &errorString);
@@ -111,8 +95,8 @@ private:
     ChangeCallback m_changeCallback;
     ImageDocumentState m_state;
     std::unique_ptr<ImagePresentationController> m_presentationController;
+    std::unique_ptr<ImageOpenController> m_openController;
     std::unique_ptr<ImageNavigationService> m_navigationService;
-    std::unique_ptr<ImageLoader> m_imageLoader;
     std::unique_ptr<ImagePredecodeCoordinator> m_predecodeCoordinator;
 };
 }
