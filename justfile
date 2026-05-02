@@ -53,13 +53,14 @@ _module-llvm command: _cargo-vendor-sources _flatpak-build-dir
 
 [group('ci')]
 lint: _cargo-vendor-sources
-    devenv shell -- cargo \
+    #!/usr/bin/env -S devenv shell --quiet -- sh -eu
+    cargo \
         --config 'source.vendored-sources.directory="{{ cargo_vendor_dir }}"' \
         --config 'source.crates-io.replace-with="vendored-sources"' \
         --offline \
         clippy --all-targets --all-features -- -D warnings
-    devenv shell -- bash scripts/cpp-lint clang-tidy
-    devenv shell -- bash scripts/cpp-lint clazy
+    scripts/cpp-lint clang-tidy
+    scripts/cpp-lint clazy
 
 [group('ci')]
 test:
