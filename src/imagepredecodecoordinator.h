@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_IMAGEPREDECODECOORDINATOR_H
 #define KIRIVIEW_IMAGEPREDECODECOORDINATOR_H
 
+#include "imageasyncticket.h"
 #include "imagecandidaterepository.h"
 #include "imagedecodejob.h"
 #include "imageiojob.h"
@@ -51,7 +52,7 @@ private:
     PredecodeCache m_cache;
     QUrl m_activePredecodeUrl;
     QUrl m_activePredecodeComicBookRootUrl;
-    quint64 m_generation = 0;
+    ImageAsyncTicket m_generation;
 };
 }
 

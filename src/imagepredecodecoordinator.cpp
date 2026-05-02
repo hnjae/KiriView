@@ -43,7 +43,7 @@ void ImagePredecodeCoordinator::schedule(Context context)
         return;
     }
 
-    const quint64 generation = m_generation;
+    const quint64 generation = m_generation.next();
     scheduleAdjacentImagePredecode(context, generation);
 }
 
@@ -76,7 +76,7 @@ void ImagePredecodeCoordinator::scheduleAdjacentImagePredecode(
 void ImagePredecodeCoordinator::startPredecodeImageLoads(const std::vector<QUrl> &urls,
     const QUrl &comicBookRootUrl, const Context &context, quint64 generation)
 {
-    if (generation != m_generation) {
+    if (!m_generation.accepts(generation)) {
         return;
     }
 
@@ -92,7 +92,7 @@ void ImagePredecodeCoordinator::startPredecodeImageLoads(const std::vector<QUrl>
 
 void ImagePredecodeCoordinator::startNextPredecodeImageLoad(quint64 generation)
 {
-    if (generation != m_generation) {
+    if (!m_generation.accepts(generation)) {
         return;
     }
 
@@ -121,7 +121,7 @@ void ImagePredecodeCoordinator::startPredecodeImageLoad(
 
 void ImagePredecodeCoordinator::finishPredecodeImageLoadError(const ImageDecodeRequest &request)
 {
-    if (request.id != m_generation
+    if (!m_generation.accepts(request.id)
         || normalizedImageUrl(request.imageUrl) != m_activePredecodeUrl) {
         return;
     }
@@ -134,7 +134,7 @@ void ImagePredecodeCoordinator::finishPredecodeImageLoadError(const ImageDecodeR
 void ImagePredecodeCoordinator::finishPredecodeImageDecode(
     ImageDecodeRequest request, const DecodedImageResult &result)
 {
-    if (request.id != m_generation
+    if (!m_generation.accepts(request.id)
         || normalizedImageUrl(request.imageUrl) != m_activePredecodeUrl) {
         return;
     }
@@ -151,7 +151,7 @@ void ImagePredecodeCoordinator::finishPredecodeImageDecode(
 
 void ImagePredecodeCoordinator::cancel()
 {
-    ++m_generation;
+    m_generation.invalidate();
     m_listerJob.cancel();
     m_decodeJob.cancel();
     m_activePredecodeUrl = QUrl();

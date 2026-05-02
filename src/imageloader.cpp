@@ -76,7 +76,7 @@ void ImageLoader::start(ImageLoadRequest request)
     cancel();
 
     ImageLoadSession session;
-    session.id = ++m_nextLoadSessionId;
+    session.id = m_loadTickets.next();
     session.request = std::move(request);
     session.location.setImageUrl(session.request.sourceUrl());
 
@@ -157,6 +157,7 @@ void ImageLoader::startComicBookLoad(ImageLoadSession session)
 
 void ImageLoader::cancel()
 {
+    m_loadTickets.invalidate();
     m_loadSession.reset();
     m_decodeJob.cancel();
     m_archiveListJob.cancel();
@@ -176,7 +177,8 @@ std::optional<ImageLoadSession> ImageLoader::currentLoadSessionForDecodeRequest(
 
 bool ImageLoader::isCurrentLoadSession(const ImageLoadSession &session) const
 {
-    return m_loadSession.has_value() && m_loadSession->id == session.id;
+    return m_loadTickets.accepts(session.id) && m_loadSession.has_value()
+        && m_loadSession->id == session.id;
 }
 
 void ImageLoader::clearLoadSession(const ImageLoadSession &session)
