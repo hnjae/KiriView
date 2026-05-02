@@ -20,6 +20,7 @@ add_library(kiriview_test_core STATIC
     ../../src/imagebytecost.cpp
     ../../src/imagecontainer.cpp
     ../../src/imageformatregistry.cpp
+    ../../src/imageiojob.cpp
     ../../src/imagenavigationmodel.cpp
     ../../src/imageurl.cpp
     ../../src/imagezoomstate.cpp
@@ -44,6 +45,7 @@ endfunction()
 
 add_kiriview_cpp_test(test_imagezoomstate test_imagezoomstate.cpp)
 add_kiriview_cpp_test(test_imagecontainer test_imagecontainer.cpp)
+add_kiriview_cpp_test(test_imageiojob test_imageiojob.cpp)
 add_kiriview_cpp_test(test_imagenavigationmodel test_imagenavigationmodel.cpp)
 add_kiriview_cpp_test(test_imageurl test_imageurl.cpp)
 add_kiriview_cpp_test(test_predecodecache test_predecodecache.cpp)

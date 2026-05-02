@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGEPREDECODECOORDINATOR_H
 #define KIRIVIEW_IMAGEPREDECODECOORDINATOR_H
 
-#include "asyncobjectslot.h"
+#include "imageiojob.h"
 #include "predecodecache.h"
 
 #include <QByteArray>
@@ -41,9 +41,9 @@ private:
     void startPredecodeImageDecode(
         QByteArray data, const QUrl &url, const QUrl &comicBookRootUrl, quint64 generation);
 
-    AsyncObjectSlot m_listerSlot;
-    AsyncObjectSlot m_listJobSlot;
-    AsyncObjectSlot m_imageLoadSlot;
+    ImageIoJob m_listerJob;
+    ImageIoJob m_listJob;
+    ImageIoJob m_imageLoadJob;
     PredecodeCache m_cache;
     QUrl m_activePredecodeUrl;
     quint64 m_generation = 0;

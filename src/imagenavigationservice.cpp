@@ -87,8 +87,8 @@ void ImageNavigationService::openAdjacentImage(
 
     cancelNavigation();
 
-    startDirectoryImageCandidateList(
-        this, &m_navigationListerSlot, parentUrl,
+    m_navigationListerJob = startDirectoryImageCandidateList(
+        this, parentUrl,
         [this, direction, currentUrl](std::vector<ImageNavigationCandidate> candidates) {
             finishNavigation(std::move(candidates), direction, currentUrl);
         },
@@ -106,8 +106,8 @@ void ImageNavigationService::openAdjacentComicBookImage(
 
     cancelNavigation();
 
-    startArchiveImageCandidateList(
-        this, &m_navigationListSlot, archiveRootUrl,
+    m_navigationListJob = startArchiveImageCandidateList(
+        this, archiveRootUrl,
         [this, direction, currentUrl](std::vector<ImageNavigationCandidate> candidates) {
             const std::optional<QUrl> targetUrl
                 = adjacentImageNavigationUrl(candidates, currentUrl, direction);
@@ -124,8 +124,8 @@ void ImageNavigationService::openAdjacentComicBookImage(
 
 void ImageNavigationService::cancelNavigation()
 {
-    m_navigationListerSlot.cancel();
-    m_navigationListSlot.cancel();
+    m_navigationListerJob.cancel();
+    m_navigationListJob.cancel();
 }
 
 void ImageNavigationService::finishNavigation(std::vector<ImageNavigationCandidate> candidates,
@@ -157,8 +157,8 @@ void ImageNavigationService::openAdjacentContainer(
     cancelNavigation();
     cancelContainerNavigation();
 
-    startDirectoryContainerCandidateList(
-        this, &m_containerNavigationListerSlot, parentUrl,
+    m_containerNavigationListerJob = startDirectoryContainerCandidateList(
+        this, parentUrl,
         [this, direction, currentContainerUrl](
             std::vector<ContainerNavigationCandidate> candidates) {
             finishContainerNavigation(std::move(candidates), direction, currentContainerUrl);
@@ -168,8 +168,8 @@ void ImageNavigationService::openAdjacentContainer(
 
 void ImageNavigationService::cancelContainerNavigation()
 {
-    m_containerNavigationListerSlot.cancel();
-    m_containerNavigationListSlot.cancel();
+    m_containerNavigationListerJob.cancel();
+    m_containerNavigationListJob.cancel();
 }
 
 void ImageNavigationService::finishContainerNavigation(
@@ -191,8 +191,8 @@ void ImageNavigationService::finishContainerNavigation(
 
 void ImageNavigationService::openDirectoryContainer(const QUrl &containerUrl)
 {
-    startDirectoryImageCandidateList(
-        this, &m_containerNavigationListerSlot, containerUrl,
+    m_containerNavigationListerJob = startDirectoryImageCandidateList(
+        this, containerUrl,
         [this, containerUrl](std::vector<ImageNavigationCandidate> candidates) {
             finishDirectoryContainerNavigation(std::move(candidates), containerUrl);
         },
@@ -228,8 +228,8 @@ void ImageNavigationService::openComicBookContainer(const QUrl &containerUrl)
         return;
     }
 
-    startArchiveImageCandidateList(
-        this, &m_containerNavigationListSlot, archiveRootUrl.value(),
+    m_containerNavigationListJob = startArchiveImageCandidateList(
+        this, archiveRootUrl.value(),
         [this, containerUrl](std::vector<ImageNavigationCandidate> candidates) {
             if (candidates.empty()) {
                 finishContainerNavigationWithEmptyContainer(containerUrl);
@@ -302,8 +302,8 @@ void ImageNavigationService::updateFilePageNavigation(const QUrl &currentUrl)
         return;
     }
 
-    startDirectoryImageCandidateList(
-        this, &m_pageNavigationListerSlot, parentUrl,
+    m_pageNavigationListerJob = startDirectoryImageCandidateList(
+        this, parentUrl,
         [this, currentUrl](std::vector<ImageNavigationCandidate> candidates) {
             setPageNavigationUrls(imageNavigationCandidateUrls(candidates), currentUrl);
         },
@@ -317,8 +317,8 @@ void ImageNavigationService::updateComicBookPageNavigation(
         return;
     }
 
-    startArchiveImageCandidateList(
-        this, &m_pageNavigationListSlot, archiveRootUrl,
+    m_pageNavigationListJob = startArchiveImageCandidateList(
+        this, archiveRootUrl,
         [this, currentUrl](std::vector<ImageNavigationCandidate> candidates) {
             setPageNavigationUrls(imageNavigationCandidateUrls(candidates), currentUrl);
         },
@@ -327,8 +327,8 @@ void ImageNavigationService::updateComicBookPageNavigation(
 
 void ImageNavigationService::cancelPageNavigationUpdate()
 {
-    m_pageNavigationListerSlot.cancel();
-    m_pageNavigationListSlot.cancel();
+    m_pageNavigationListerJob.cancel();
+    m_pageNavigationListJob.cancel();
 }
 
 void ImageNavigationService::setPageNavigationUrls(std::vector<QUrl> urls, const QUrl &currentUrl)

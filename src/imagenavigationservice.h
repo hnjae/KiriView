@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGENAVIGATIONSERVICE_H
 #define KIRIVIEW_IMAGENAVIGATIONSERVICE_H
 
-#include "asyncobjectslot.h"
+#include "imageiojob.h"
 #include "imagenavigationtypes.h"
 
 #include <QObject>
@@ -83,12 +83,12 @@ private:
     OpenContainerImageCallback m_openContainerImage;
     ContainerNavigationErrorCallback m_containerNavigationError;
     PageNavigationChangedCallback m_pageNavigationChanged;
-    AsyncObjectSlot m_navigationListerSlot;
-    AsyncObjectSlot m_navigationListSlot;
-    AsyncObjectSlot m_containerNavigationListerSlot;
-    AsyncObjectSlot m_containerNavigationListSlot;
-    AsyncObjectSlot m_pageNavigationListerSlot;
-    AsyncObjectSlot m_pageNavigationListSlot;
+    ImageIoJob m_navigationListerJob;
+    ImageIoJob m_navigationListJob;
+    ImageIoJob m_containerNavigationListerJob;
+    ImageIoJob m_containerNavigationListJob;
+    ImageIoJob m_pageNavigationListerJob;
+    ImageIoJob m_pageNavigationListJob;
     std::vector<QUrl> m_pageNavigationUrls;
     int m_currentPageIndex = -1;
 };

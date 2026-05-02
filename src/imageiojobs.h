@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_IMAGEIOJOBS_H
 #define KIRIVIEW_IMAGEIOJOBS_H
 
+#include "imageiojob.h"
 #include "imagenavigationtypes.h"
 
 #include <QByteArray>
@@ -15,21 +16,19 @@
 class QObject;
 
 namespace KiriView {
-class AsyncObjectSlot;
-
 using ImageCandidatesCallback = std::function<void(std::vector<ImageNavigationCandidate>)>;
 using ContainerCandidatesCallback = std::function<void(std::vector<ContainerNavigationCandidate>)>;
 using ImageDataCallback = std::function<void(QByteArray)>;
 using ErrorCallback = std::function<void(const QString &)>;
 
-void startDirectoryImageCandidateList(QObject *receiver, AsyncObjectSlot *slot, QUrl directoryUrl,
+ImageIoJob startDirectoryImageCandidateList(QObject *receiver, QUrl directoryUrl,
     ImageCandidatesCallback callback, ErrorCallback errorCallback);
-void startDirectoryContainerCandidateList(QObject *receiver, AsyncObjectSlot *slot,
-    QUrl directoryUrl, ContainerCandidatesCallback callback, ErrorCallback errorCallback);
-void startArchiveImageCandidateList(QObject *receiver, AsyncObjectSlot *slot, QUrl archiveRootUrl,
+ImageIoJob startDirectoryContainerCandidateList(QObject *receiver, QUrl directoryUrl,
+    ContainerCandidatesCallback callback, ErrorCallback errorCallback);
+ImageIoJob startArchiveImageCandidateList(QObject *receiver, QUrl archiveRootUrl,
     ImageCandidatesCallback callback, ErrorCallback errorCallback);
-void startStoredImageDataLoad(QObject *receiver, AsyncObjectSlot *slot, QUrl imageUrl,
-    ImageDataCallback callback, ErrorCallback errorCallback);
+ImageIoJob startStoredImageDataLoad(
+    QObject *receiver, QUrl imageUrl, ImageDataCallback callback, ErrorCallback errorCallback);
 }
 
 #endif

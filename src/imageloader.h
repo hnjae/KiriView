@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGELOADER_H
 #define KIRIVIEW_IMAGELOADER_H
 
-#include "asyncobjectslot.h"
+#include "imageiojob.h"
 
 #include <QByteArray>
 #include <QImage>
@@ -76,8 +76,8 @@ private:
     DecodedImageCallback m_decodedImage;
     PredecodedImageCallback m_predecodedImage;
     TakePredecodedImageCallback m_takePredecodedImage;
-    AsyncObjectSlot m_imageLoadSlot;
-    AsyncObjectSlot m_archiveListSlot;
+    ImageIoJob m_imageLoadJob;
+    ImageIoJob m_archiveListJob;
     quint64 m_nextLoadSessionId = 0;
     std::optional<ImageLoadSession> m_loadSession;
 };

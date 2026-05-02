@@ -62,8 +62,8 @@ void ImagePredecodeCoordinator::scheduleFileAdjacentImagePredecode(
         return;
     }
 
-    startDirectoryImageCandidateList(
-        this, &m_listerSlot, parentUrl,
+    m_listerJob = startDirectoryImageCandidateList(
+        this, parentUrl,
         [this, context, currentUrl, generation](std::vector<ImageNavigationCandidate> candidates) {
             startPredecodeImageLoads(
                 predecodeWindowImageUrls(candidates, currentUrl), QUrl(), context, generation);
@@ -82,8 +82,8 @@ void ImagePredecodeCoordinator::scheduleComicBookAdjacentImagePredecode(
         return;
     }
 
-    startArchiveImageCandidateList(
-        this, &m_listJobSlot, archiveRootUrl,
+    m_listJob = startArchiveImageCandidateList(
+        this, archiveRootUrl,
         [this, context, generation, currentUrl, archiveRootUrl](
             std::vector<ImageNavigationCandidate> candidates) {
             startPredecodeImageLoads(predecodeWindowImageUrls(candidates, currentUrl),
@@ -134,8 +134,8 @@ void ImagePredecodeCoordinator::startPredecodeImageLoad(
 
     const QUrl normalizedUrl = normalizedImageUrl(url);
     m_activePredecodeUrl = normalizedUrl;
-    startStoredImageDataLoad(
-        this, &m_imageLoadSlot, url,
+    m_imageLoadJob = startStoredImageDataLoad(
+        this, url,
         [this, generation, url, comicBookRootUrl, normalizedUrl](QByteArray data) {
             if (generation != m_generation || normalizedUrl != m_activePredecodeUrl) {
                 return;
@@ -191,9 +191,9 @@ void ImagePredecodeCoordinator::startPredecodeImageDecode(
 void ImagePredecodeCoordinator::cancel()
 {
     ++m_generation;
-    m_listerSlot.cancel();
-    m_listJobSlot.cancel();
-    m_imageLoadSlot.cancel();
+    m_listerJob.cancel();
+    m_listJob.cancel();
+    m_imageLoadJob.cancel();
     m_activePredecodeUrl = QUrl();
     m_cache.clearQueuedLoads();
 }

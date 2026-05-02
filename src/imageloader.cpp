@@ -94,8 +94,8 @@ void ImageLoader::start(const QUrl &sourceUrl, const QUrl &displayedComicBookRoo
 
 void ImageLoader::startImageLoad(ImageLoadSession session)
 {
-    startStoredImageDataLoad(
-        this, &m_imageLoadSlot, session.imageUrl,
+    m_imageLoadJob = startStoredImageDataLoad(
+        this, session.imageUrl,
         [this, session](QByteArray data) {
             if (!isCurrentLoadSession(session)) {
                 return;
@@ -143,8 +143,8 @@ void ImageLoader::startImageDecode(QByteArray data, ImageLoadSession session)
 
 void ImageLoader::startComicBookLoad(ImageLoadSession session)
 {
-    startArchiveImageCandidateList(
-        this, &m_archiveListSlot, session.comicBookRootUrl,
+    m_archiveListJob = startArchiveImageCandidateList(
+        this, session.comicBookRootUrl,
         [this, session](std::vector<ImageNavigationCandidate> candidates) mutable {
             if (!isCurrentLoadSession(session)) {
                 return;
@@ -174,8 +174,8 @@ void ImageLoader::startComicBookLoad(ImageLoadSession session)
 void ImageLoader::cancel()
 {
     m_loadSession.reset();
-    m_imageLoadSlot.cancel();
-    m_archiveListSlot.cancel();
+    m_imageLoadJob.cancel();
+    m_archiveListJob.cancel();
 }
 
 bool ImageLoader::isCurrentLoadSession(const ImageLoadSession &session) const
