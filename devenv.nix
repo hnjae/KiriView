@@ -53,6 +53,9 @@ let
 
     exec ${lib.getExe' pkgs.kdePackages.qtbase "qmake6"} "$@"
   '';
+  cxxCompiler = pkgs.stdenv.cc.cc;
+  cxxStandardLibraryVersion = lib.getVersion cxxCompiler;
+  cxxTarget = pkgs.stdenv.hostPlatform.config;
   qtVersion = lib.getVersion pkgs.kdePackages.qtbase;
   cppSources = [
     "src/apngdecoder.cpp"
@@ -88,6 +91,11 @@ let
     "QtQuick"
     "QtSvg"
   ];
+  cxxStandardLibraryIncludeDirs = [
+    "${cxxCompiler}/include/c++/${cxxStandardLibraryVersion}"
+    "${cxxCompiler}/include/c++/${cxxStandardLibraryVersion}/${cxxTarget}"
+    "${pkgs.stdenv.cc.libc_dev}/include"
+  ];
   systemIncludeDirs = [
     ".devenv/profile/include"
     ".devenv/profile/include/KF6/KCoreAddons"
@@ -96,6 +104,7 @@ let
     ".devenv/profile/include/QtGui/${qtVersion}/QtGui"
     ".devenv/profile/mkspecs/linux-g++"
   ]
+  ++ cxxStandardLibraryIncludeDirs
   ++ map (module: ".devenv/profile/include/${module}") qtIncludeModules;
   compileCommands = map (source: {
     directory = config.devenv.root;
