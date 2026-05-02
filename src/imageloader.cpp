@@ -16,6 +16,46 @@ namespace {
 using KiriView::comicBookArchiveRootUrl;
 using KiriView::containingComicBookArchiveRootUrl;
 using KiriView::isUrlInsideArchiveRoot;
+
+struct PreparedImageLoadSession {
+    KiriView::ImageLoadSession session;
+    bool loadComicBookArchive = false;
+};
+
+QUrl comicBookRootUrlForImageLoadRequest(const KiriView::ImageLoadRequest &request)
+{
+    if (isUrlInsideArchiveRoot(request.sourceUrl(), request.displayedComicBookRootUrl())) {
+        return request.displayedComicBookRootUrl();
+    }
+
+    const std::optional<QUrl> containingArchiveRootUrl
+        = containingComicBookArchiveRootUrl(request.sourceUrl());
+    if (containingArchiveRootUrl.has_value()
+        && isUrlInsideArchiveRoot(request.sourceUrl(), containingArchiveRootUrl.value())) {
+        return containingArchiveRootUrl.value();
+    }
+
+    return {};
+}
+
+PreparedImageLoadSession prepareImageLoadSession(quint64 id, KiriView::ImageLoadRequest request)
+{
+    const QUrl sourceUrl = request.sourceUrl();
+    KiriView::ImageLoadSession session {
+        id,
+        std::move(request),
+        KiriView::DisplayedImageLocation::fromUrls(sourceUrl),
+    };
+
+    const std::optional<QUrl> selectedArchiveRootUrl = comicBookArchiveRootUrl(sourceUrl);
+    if (selectedArchiveRootUrl.has_value()) {
+        session.location.setComicBookRootUrl(selectedArchiveRootUrl.value());
+        return PreparedImageLoadSession { std::move(session), true };
+    }
+
+    session.location.setComicBookRootUrl(comicBookRootUrlForImageLoadRequest(session.request));
+    return PreparedImageLoadSession { std::move(session), false };
+}
 }
 
 namespace KiriView {
@@ -75,31 +115,13 @@ void ImageLoader::start(ImageLoadRequest request)
 {
     cancel();
 
-    ImageLoadSession session;
-    session.id = m_loadTickets.next();
-    session.request = std::move(request);
-    session.location.setImageUrl(session.request.sourceUrl());
-
-    const std::optional<QUrl> selectedArchiveRootUrl
-        = comicBookArchiveRootUrl(session.request.sourceUrl());
-    if (selectedArchiveRootUrl.has_value()) {
-        session.location.setComicBookRootUrl(selectedArchiveRootUrl.value());
+    PreparedImageLoadSession prepared
+        = prepareImageLoadSession(m_loadTickets.next(), std::move(request));
+    const ImageLoadSession session = std::move(prepared.session);
+    if (prepared.loadComicBookArchive) {
         m_loadSession = session;
         startComicBookLoad(session);
         return;
-    }
-
-    if (isUrlInsideArchiveRoot(
-            session.request.sourceUrl(), session.request.displayedComicBookRootUrl())) {
-        session.location.setComicBookRootUrl(session.request.displayedComicBookRootUrl());
-    } else {
-        const std::optional<QUrl> containingArchiveRootUrl
-            = containingComicBookArchiveRootUrl(session.request.sourceUrl());
-        session.location.setComicBookRootUrl(containingArchiveRootUrl.has_value()
-                    && isUrlInsideArchiveRoot(
-                        session.request.sourceUrl(), containingArchiveRootUrl.value())
-                ? containingArchiveRootUrl.value()
-                : QUrl());
     }
 
     m_loadSession = session;

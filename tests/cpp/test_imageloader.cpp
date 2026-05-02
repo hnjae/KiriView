@@ -111,6 +111,7 @@ private Q_SLOTS:
     void imageLoadDeliversDecodedResult();
     void predecodedImageBypassesDataLoad();
     void comicBookArchiveResolvesFirstImage();
+    void archiveInteriorImageKeepsComicBookRoot();
     void staleLoadResultIsIgnored();
 };
 
@@ -197,6 +198,33 @@ void TestImageLoader::comicBookArchiveResolvesFirstImage()
     QCOMPARE(resolvedUrl, firstImageUrl);
     QCOMPARE(dataLoader.loads.size(), std::size_t(1));
     QCOMPARE(dataLoader.loads.front()->url, firstImageUrl);
+}
+
+void TestImageLoader::archiveInteriorImageKeepsComicBookRoot()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    KiriView::ImageLoader loader = createLoader(this, candidateProvider, dataLoader);
+
+    std::optional<KiriView::ImageLoadSession> decodedSession;
+    loader.setDecodedImageCallback([&decodedSession](KiriView::ImageLoadSession session, auto) {
+        decodedSession = std::move(session);
+    });
+
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
+    const std::optional<QUrl> archiveRootUrl = KiriView::comicBookArchiveRootUrl(archiveUrl);
+    QVERIFY(archiveRootUrl.has_value());
+    const QUrl imageUrl = archivePageUrl(*archiveRootUrl, QStringLiteral("02.png"));
+
+    loader.start(KiriView::ImageLoadRequest::fromUrls(imageUrl, *archiveRootUrl));
+
+    QCOMPARE(dataLoader.loads.size(), std::size_t(1));
+    QCOMPARE(dataLoader.loads.front()->url, imageUrl);
+    dataLoader.loads.front()->dataCallback(QByteArrayLiteral("ok"));
+
+    QTRY_VERIFY(decodedSession.has_value());
+    QCOMPARE(decodedSession->location.imageUrl(), imageUrl);
+    QCOMPARE(decodedSession->location.comicBookRootUrl(), *archiveRootUrl);
 }
 
 void TestImageLoader::staleLoadResultIsIgnored()
