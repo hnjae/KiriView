@@ -40,8 +40,12 @@ public:
         = std::function<void(ImageLoadSession, std::shared_ptr<DecodedImageResult>)>;
     using PredecodedImageCallback = std::function<void(ImageLoadSession, const QImage &)>;
     using TakePredecodedImageCallback = std::function<std::optional<PredecodedImage>(const QUrl &)>;
+    using DataLoader = ImageDecodeJob::DataLoader;
+    using DataDecoder = ImageDecodeJob::DataDecoder;
 
     explicit ImageLoader(QObject *parent = nullptr);
+    ImageLoader(QObject *parent, ImageNavigationCandidateProvider candidateProvider,
+        DataLoader dataLoader, DataDecoder dataDecoder);
 
     void setSourceResolvedCallback(SourceResolvedCallback callback);
     void setErrorCallback(ErrorCallback callback);

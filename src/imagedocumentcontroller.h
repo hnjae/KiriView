@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_IMAGEDOCUMENTCONTROLLER_H
 #define KIRIVIEW_IMAGEDOCUMENTCONTROLLER_H
 
+#include "imageasyncdependencies.h"
 #include "imagedocumentevents.h"
 #include "imagedocumentstate.h"
 #include "imageloader.h"
@@ -34,6 +35,8 @@ public:
 
     ImageDocumentController(QObject *parent, RenderContextProvider renderContextProvider,
         ChangeCallback changeCallback);
+    ImageDocumentController(QObject *parent, RenderContextProvider renderContextProvider,
+        ChangeCallback changeCallback, ImageAsyncDependencies dependencies);
     ~ImageDocumentController() override;
 
     QUrl sourceUrl() const;

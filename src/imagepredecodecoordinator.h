@@ -28,6 +28,8 @@ public:
     };
 
     explicit ImagePredecodeCoordinator(QObject *parent = nullptr);
+    ImagePredecodeCoordinator(QObject *parent, ImageNavigationCandidateProvider candidateProvider,
+        ImageDecodeJob::DataLoader dataLoader, ImageDecodeJob::DataDecoder dataDecoder);
 
     void schedule(Context context);
     void cancel();

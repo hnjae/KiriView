@@ -23,13 +23,15 @@ using KiriView::decodedImageResultIsPredecodeCacheable;
 namespace KiriView {
 ImageOpenController::ImageOpenController(QObject *parent, ImageDocumentState &state,
     ImagePresentationController &presentationController,
-    TakePredecodedImageCallback takePredecodedImage, EventCallback eventCallback)
+    TakePredecodedImageCallback takePredecodedImage, EventCallback eventCallback,
+    const ImageAsyncDependencies &dependencies)
     : m_state(state)
     , m_presentationController(presentationController)
     , m_takePredecodedImage(std::move(takePredecodedImage))
     , m_eventCallback(std::move(eventCallback))
 {
-    m_imageLoader = std::make_unique<ImageLoader>(parent);
+    m_imageLoader = std::make_unique<ImageLoader>(parent, dependencies.candidateProvider,
+        dependencies.imageDataLoader, dependencies.imageDataDecoder);
     m_imageLoader->setSourceResolvedCallback(
         [this](const QUrl &sourceUrl) { setSourceUrlFromResolvedLoad(sourceUrl); });
     m_imageLoader->setErrorCallback(

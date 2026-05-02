@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_IMAGEOPENCONTROLLER_H
 #define KIRIVIEW_IMAGEOPENCONTROLLER_H
 
+#include "imageasyncdependencies.h"
 #include "imagedocumentevents.h"
 #include "imageloader.h"
 #include "imageopenworkflow.h"
@@ -31,7 +32,8 @@ public:
 
     ImageOpenController(QObject *parent, ImageDocumentState &state,
         ImagePresentationController &presentationController,
-        TakePredecodedImageCallback takePredecodedImage, EventCallback eventCallback);
+        TakePredecodedImageCallback takePredecodedImage, EventCallback eventCallback,
+        const ImageAsyncDependencies &dependencies);
     ~ImageOpenController();
 
     void open();

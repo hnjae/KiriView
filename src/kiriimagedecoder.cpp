@@ -168,9 +168,4 @@ DecodedImageResult decodeImageData(const QByteArray &data)
     return StaticDecodedImage { std::move(firstFrame) };
 }
 
-bool decodedImageResultIsPredecodeCacheable(const DecodedImageResult &result, qsizetype byteBudget)
-{
-    const auto *image = std::get_if<StaticDecodedImage>(&result);
-    return image != nullptr && !image->image.isNull() && imageByteCost(image->image) <= byteBudget;
-}
 }

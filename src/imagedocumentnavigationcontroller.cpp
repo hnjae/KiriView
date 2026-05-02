@@ -13,13 +13,15 @@
 namespace KiriView {
 ImageDocumentNavigationController::ImageDocumentNavigationController(QObject *parent,
     ImageDocumentState &state, ImagePresentationController &presentationController,
-    ChangeCallback changeCallback, EventCallback eventCallback)
+    ChangeCallback changeCallback, EventCallback eventCallback,
+    ImageNavigationCandidateProvider candidateProvider)
     : m_state(state)
     , m_presentationController(presentationController)
     , m_changeCallback(std::move(changeCallback))
     , m_eventCallback(std::move(eventCallback))
 {
-    m_navigationService = std::make_unique<ImageNavigationService>(parent);
+    m_navigationService
+        = std::make_unique<ImageNavigationService>(parent, std::move(candidateProvider));
     m_navigationService->setOpenUrlCallback([this](const QUrl &url) {
         if (m_eventCallback) {
             m_eventCallback(DocumentEvent::openUrlRequested(url));

@@ -1,14 +1,15 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "imagedecodejob.h"
+#include "imageloader.h"
 
 #include "imageasyncdependencies.h"
 
 namespace KiriView {
 // clang-format off
-ImageDecodeJob::ImageDecodeJob(QObject *parent)
-    : ImageDecodeJob(parent, defaultImageAsyncDependencies().imageDataLoader,
+ImageLoader::ImageLoader(QObject *parent)
+    : ImageLoader(parent, defaultImageAsyncDependencies().candidateProvider,
+        defaultImageAsyncDependencies().imageDataLoader,
         defaultImageAsyncDependencies().imageDataDecoder)
 {
 }

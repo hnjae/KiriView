@@ -17,8 +17,9 @@
 #include <variant>
 
 namespace KiriView {
-ImageDocumentController::ImageDocumentController(
-    QObject *parent, RenderContextProvider renderContextProvider, ChangeCallback changeCallback)
+ImageDocumentController::ImageDocumentController(QObject *parent,
+    RenderContextProvider renderContextProvider, ChangeCallback changeCallback,
+    ImageAsyncDependencies dependencies)
     : QObject(parent)
     , m_changeCallback(std::move(changeCallback))
     , m_state([this](ImageDocumentChange change) { notify(change); })
@@ -32,12 +33,15 @@ ImageDocumentController::ImageDocumentController(
     m_openController = std::make_unique<ImageOpenController>(
         this, m_state, *m_presentationController,
         [this](const QUrl &url) { return takePredecodedImage(url); },
-        [this](DocumentEvent event) { handleEvent(std::move(event)); });
+        [this](DocumentEvent event) { handleEvent(std::move(event)); }, dependencies);
     m_navigationController = std::make_unique<ImageDocumentNavigationController>(
         this, m_state, *m_presentationController,
         [this](ImageDocumentChange change) { notify(change); },
-        [this](DocumentEvent event) { handleEvent(std::move(event)); });
-    m_predecodeCoordinator = std::make_unique<ImagePredecodeCoordinator>(this);
+        [this](DocumentEvent event) { handleEvent(std::move(event)); },
+        dependencies.candidateProvider);
+    m_predecodeCoordinator
+        = std::make_unique<ImagePredecodeCoordinator>(this, dependencies.candidateProvider,
+            dependencies.imageDataLoader, dependencies.imageDataDecoder);
 }
 
 ImageDocumentController::~ImageDocumentController()

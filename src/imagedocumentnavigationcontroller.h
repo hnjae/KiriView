@@ -27,7 +27,7 @@ public:
 
     ImageDocumentNavigationController(QObject *parent, ImageDocumentState &state,
         ImagePresentationController &presentationController, ChangeCallback changeCallback,
-        EventCallback eventCallback);
+        EventCallback eventCallback, ImageNavigationCandidateProvider candidateProvider);
     ~ImageDocumentNavigationController();
 
     int currentPageNumber() const;
