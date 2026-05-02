@@ -36,6 +36,9 @@ class KiriImageView : public QQuickItem
     Q_PROPERTY(QSizeF displaySize READ displaySize NOTIFY displaySizeChanged)
     Q_PROPERTY(double zoomPercent READ zoomPercent WRITE setZoomPercent NOTIFY zoomPercentChanged)
     Q_PROPERTY(ZoomMode zoomMode READ zoomMode NOTIFY zoomModeChanged)
+    Q_PROPERTY(int minimumManualZoomPercent READ minimumManualZoomPercent CONSTANT)
+    Q_PROPERTY(int maximumManualZoomPercent READ maximumManualZoomPercent CONSTANT)
+    Q_PROPERTY(int zoomStepPercent READ zoomStepPercent CONSTANT)
     Q_PROPERTY(QStringList openDialogNameFilters READ openDialogNameFilters CONSTANT)
     Q_PROPERTY(int currentPageNumber READ currentPageNumber NOTIFY pageNavigationChanged)
     Q_PROPERTY(int imageCount READ imageCount NOTIFY pageNavigationChanged)
@@ -76,6 +79,9 @@ public:
     double zoomPercent() const;
     void setZoomPercent(double zoomPercent);
     ZoomMode zoomMode() const;
+    int minimumManualZoomPercent() const;
+    int maximumManualZoomPercent() const;
+    int zoomStepPercent() const;
     QStringList openDialogNameFilters() const;
     int currentPageNumber() const;
     int imageCount() const;

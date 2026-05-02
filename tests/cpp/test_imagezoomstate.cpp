@@ -27,6 +27,7 @@ private Q_SLOTS:
     void fitModesUsePhysicalPixels();
     void manualZoomIsClampedAndRejectsInvalidValues();
     void zoomIsPreservedWithinAContainer();
+    void manualZoomConstantsStayCentralized();
 };
 
 void TestImageZoomState::fitModesUsePhysicalPixels()
@@ -96,6 +97,13 @@ void TestImageZoomState::zoomIsPreservedWithinAContainer()
 
     state.prepareImageContainer(secondContainer);
     QCOMPARE(state.zoomMode(), ImageZoomMode::Fit);
+}
+
+void TestImageZoomState::manualZoomConstantsStayCentralized()
+{
+    QCOMPARE(ImageZoomState::minimumManualZoomPercent, 10.0);
+    QCOMPARE(ImageZoomState::maximumManualZoomPercent, 800.0);
+    QCOMPARE(ImageZoomState::manualZoomStepPercent, 10);
 }
 
 QTEST_GUILESS_MAIN(TestImageZoomState)

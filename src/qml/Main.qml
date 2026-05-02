@@ -64,9 +64,9 @@ Kirigami.ApplicationWindow {
         readonly property bool imageReady: imageView.status === KiriImageView.Ready
         readonly property bool imagePannable: imageViewport.imagePannable
         readonly property int keyboardPanDistance: 64
-        readonly property int maximumManualZoomPercent: 800
-        readonly property int minimumManualZoomPercent: 10
-        readonly property int zoomStepPercent: 10
+        readonly property int maximumManualZoomPercent: imageView.maximumManualZoomPercent
+        readonly property int minimumManualZoomPercent: imageView.minimumManualZoomPercent
+        readonly property int zoomStepPercent: imageView.zoomStepPercent
 
         function panBy(deltaX, deltaY) {
             return imageViewport.panBy(deltaX, deltaY);
@@ -190,9 +190,6 @@ Kirigami.ApplicationWindow {
 
             anchors.fill: parent
             initialSourceUrl: root.initialSourceUrl
-            maximumManualZoomPercent: page.maximumManualZoomPercent
-            minimumManualZoomPercent: page.minimumManualZoomPercent
-            zoomStepPercent: page.zoomStepPercent
         }
 
         Shortcut {

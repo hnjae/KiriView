@@ -122,6 +122,21 @@ KiriImageView::ZoomMode KiriImageView::zoomMode() const
     return fromImageZoomMode(m_documentController->zoomMode());
 }
 
+int KiriImageView::minimumManualZoomPercent() const
+{
+    return static_cast<int>(KiriView::ImageZoomState::minimumManualZoomPercent);
+}
+
+int KiriImageView::maximumManualZoomPercent() const
+{
+    return static_cast<int>(KiriView::ImageZoomState::maximumManualZoomPercent);
+}
+
+int KiriImageView::zoomStepPercent() const
+{
+    return KiriView::ImageZoomState::manualZoomStepPercent;
+}
+
 QStringList KiriImageView::openDialogNameFilters() const
 {
     return KiriView::openDialogNameFilters();

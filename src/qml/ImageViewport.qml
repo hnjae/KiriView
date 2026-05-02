@@ -13,9 +13,9 @@ Item {
     property alias flickable: imageFlickable
     property bool imageReady: imageView.status === KiriImageView.Ready
     property url initialSourceUrl
-    property int minimumManualZoomPercent: 10
-    property int maximumManualZoomPercent: 800
-    property int zoomStepPercent: 10
+    readonly property int minimumManualZoomPercent: imageView.minimumManualZoomPercent
+    readonly property int maximumManualZoomPercent: imageView.maximumManualZoomPercent
+    readonly property int zoomStepPercent: imageView.zoomStepPercent
     readonly property real dragZoomPercentPerPixel: zoomStepPercent / Math.max(1, Kirigami.Units.gridUnit * 2)
     readonly property bool imagePannable: imageFlickable.contentWidth > imageFlickable.width || imageFlickable.contentHeight > imageFlickable.height
     readonly property real viewportWidth: imageFlickable.width
