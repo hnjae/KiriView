@@ -8,9 +8,6 @@ use cxx_qt_lib::{
 use cxx_qt_lib_extras::QApplication;
 use std::env;
 
-mod apngdecoder;
-mod avifcompat;
-
 fn initial_source_url() -> Option<QUrl> {
     let argument = env::args_os().skip(1).find(|argument| argument != "--")?;
     let argument = argument.to_string_lossy();
@@ -28,6 +25,8 @@ fn initial_source_url() -> Option<QUrl> {
 }
 
 fn main() {
+    kiriview::initialize_rust_modules();
+
     let mut app = QApplication::new();
     let initial_source_url = initial_source_url();
 

@@ -162,14 +162,21 @@ let
           done < <(find "$generated_include_dir" -mindepth 1 -maxdepth 1 -print0)
       }
 
-      for generated_include_dir in \
-          "$repo_root"/target/rust-analyzer/debug/build/*/out/cxxqtbuild/include \
-          "$repo_root"/target/devenv/debug/build/*/out/cxxqtbuild/include \
-          "$repo_root"/target/devenv/release/build/*/out/cxxqtbuild/include \
-          "$repo_root"/target/release/build/*/out/cxxqtbuild/include \
-          "$repo_root"/target/debug/build/*/out/cxxqtbuild/include; do
+      while IFS= read -r generated_include_dir; do
           link_generated_include_dir "$generated_include_dir"
-      done
+      done < <(
+          find \
+              "$repo_root"/target/rust-analyzer \
+              "$repo_root"/target/devenv \
+              "$repo_root"/target/flatpak \
+              "$repo_root"/target/release \
+              "$repo_root"/target/debug \
+              -path "*/out/cxxqtbuild/include" \
+              -type d \
+              -printf "%T@ %p\n" 2>/dev/null \
+              | sort -n \
+              | sed "s/^[^ ]* //"
+      )
     '';
   };
   cppLintPrelude = ''

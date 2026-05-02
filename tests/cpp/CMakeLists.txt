@@ -12,9 +12,24 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Svg Test)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2 Svg Test Widgets)
 find_package(KF6CoreAddons CONFIG REQUIRED)
 find_package(KF6KIO CONFIG REQUIRED)
+
+set(KIRIVIEW_CARGO_TARGET_DIR "${CMAKE_SOURCE_DIR}/../../target/flatpak/debug")
+file(GLOB KIRIVIEW_RUST_STATICLIBS
+    "${KIRIVIEW_CARGO_TARGET_DIR}/deps/libkiriview-*.a"
+)
+list(SORT KIRIVIEW_RUST_STATICLIBS)
+list(POP_BACK KIRIVIEW_RUST_STATICLIBS KIRIVIEW_RUST_STATICLIB)
+file(GLOB KIRIVIEW_CXXQT_INCLUDE_DIRS
+    "${KIRIVIEW_CARGO_TARGET_DIR}/build/kiriview-*/out/cxxqtbuild/include"
+)
+list(SORT KIRIVIEW_CXXQT_INCLUDE_DIRS)
+list(POP_BACK KIRIVIEW_CXXQT_INCLUDE_DIRS KIRIVIEW_CXXQT_INCLUDE_DIR)
+if(NOT KIRIVIEW_CXXQT_INCLUDE_DIR OR NOT EXISTS "${KIRIVIEW_RUST_STATICLIB}")
+    message(FATAL_ERROR "Rust bridge artifacts are missing. Run the Cargo test/build step first.")
+endif()
 
 file(STRINGS "../../src/cpp_core_sources.txt" KIRIVIEW_CORE_SOURCES
     REGEX "^[A-Za-z0-9_./-]+\\.cpp$"
@@ -26,13 +41,18 @@ endforeach()
 add_library(kiriview_test_core STATIC
     ${KIRIVIEW_CORE_SOURCE_PATHS}
 )
-target_include_directories(kiriview_test_core PUBLIC ../../src)
+target_include_directories(kiriview_test_core PUBLIC ../../src "${KIRIVIEW_CXXQT_INCLUDE_DIR}")
 target_link_libraries(kiriview_test_core PUBLIC
     Qt6::Core
     Qt6::Gui
+    Qt6::Qml
+    Qt6::Quick
+    Qt6::QuickControls2
     Qt6::Svg
+    Qt6::Widgets
     KF6::CoreAddons
     KF6::KIOCore
+    "${KIRIVIEW_RUST_STATICLIB}"
 )
 
 function(add_kiriview_cpp_test target source)

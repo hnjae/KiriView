@@ -5,6 +5,9 @@ edition = "2024"
 license = "AGPL-3.0-or-later"
 publish = false
 
+[lib]
+crate-type = ["rlib", "staticlib"]
+
 [dependencies]
 cxx = "1.0.192"
 cxx-qt = "0.8.0"
