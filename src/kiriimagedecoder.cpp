@@ -37,9 +37,7 @@ QSize svgIntrinsicSize(const QSvgRenderer &renderer)
 
 KiriView::DecodedImageResult decodedImageFailure(const QString &errorString)
 {
-    KiriView::DecodedImageResult result;
-    result.errorString = errorString;
-    return result;
+    return KiriView::DecodedImageFailure { errorString };
 }
 
 std::optional<KiriView::DecodedImageResult> decodeSvgImageData(const QByteArray &data)
@@ -55,12 +53,7 @@ std::optional<KiriView::DecodedImageResult> decodeSvgImageData(const QByteArray 
             KiriView::imageViewText("Could not determine the selected SVG image size."));
     }
 
-    KiriView::DecodedImageResult result;
-    result.success = true;
-    result.isSvg = true;
-    result.svgData = data;
-    result.svgIntrinsicSize = intrinsicSize;
-    return result;
+    return KiriView::SvgDecodedImage { data, intrinsicSize };
 }
 }
 
@@ -130,12 +123,10 @@ DecodedImageResult decodeImageData(const QByteArray &data)
             frame.image = displayReadyImage(frame.image);
         }
 
-        DecodedImageResult result;
-        result.success = true;
-        result.image = apngResult.animation.frames.front().image;
-        result.decodedAnimationFrames = std::move(apngResult.animation.frames);
-        result.animationLoopCount = apngResult.animation.loopCount;
-        return result;
+        return DecodedAnimationImage {
+            std::move(apngResult.animation.frames),
+            apngResult.animation.loopCount,
+        };
     }
     if (apngResult.status == ApngDecodeStatus::Error) {
         return decodedImageFailure(apngResult.errorString);
@@ -164,23 +155,22 @@ DecodedImageResult decodeImageData(const QByteArray &data)
     const int loopCount = reader.loopCount();
     const bool hasMoreFrames = reader.canRead();
 
-    DecodedImageResult result;
-    result.success = true;
-    result.image = displayReadyImage(image);
+    QImage firstFrame = displayReadyImage(image);
     if (supportsAnimation && hasMoreFrames) {
-        result.animationData = imageData;
-        result.animationFormat = format;
-        result.animationLoopCount = loopCount;
-        result.firstFrameDelay = firstFrameDelay;
-        result.hasAnimationReaderFrames = true;
+        return ReaderAnimationImage {
+            std::move(firstFrame),
+            imageData,
+            format,
+            loopCount,
+            firstFrameDelay,
+        };
     }
-    return result;
+    return StaticDecodedImage { std::move(firstFrame) };
 }
 
 bool decodedImageResultIsPredecodeCacheable(const DecodedImageResult &result, qsizetype byteBudget)
 {
-    return result.success && !result.isSvg && !result.image.isNull()
-        && result.decodedAnimationFrames.empty() && !result.hasAnimationReaderFrames
-        && imageByteCost(result.image) <= byteBudget;
+    const auto *image = std::get_if<StaticDecodedImage>(&result);
+    return image != nullptr && !image->image.isNull() && imageByteCost(image->image) <= byteBudget;
 }
 }

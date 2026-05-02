@@ -137,7 +137,8 @@ void ImagePredecodeCoordinator::finishPredecodeImageDecode(
     }
 
     if (decodedImageResultIsPredecodeCacheable(result, KiriView::PredecodeCache::byteBudget())) {
-        m_cache.cacheImage(request.imageUrl, m_activePredecodeComicBookRootUrl, result.image);
+        m_cache.cacheImage(request.imageUrl, m_activePredecodeComicBookRootUrl,
+            std::get<StaticDecodedImage>(result).image);
     }
 
     m_activePredecodeUrl = QUrl();

@@ -13,25 +13,40 @@
 #include <QSizeF>
 #include <QString>
 #include <QtGlobal>
+#include <variant>
 #include <vector>
 
 namespace KiriView {
 inline constexpr int fallbackTextureSizeMax = 16384;
 
-struct DecodedImageResult {
-    bool success = false;
-    bool isSvg = false;
+struct DecodedImageFailure {
     QString errorString;
-    QImage image;
-    QByteArray svgData;
-    QSize svgIntrinsicSize;
-    std::vector<AnimationFrame> decodedAnimationFrames;
-    QByteArray animationData;
-    QByteArray animationFormat;
-    int animationLoopCount = 0;
-    int firstFrameDelay = 0;
-    bool hasAnimationReaderFrames = false;
 };
+
+struct StaticDecodedImage {
+    QImage image;
+};
+
+struct SvgDecodedImage {
+    QByteArray data;
+    QSize svgIntrinsicSize;
+};
+
+struct DecodedAnimationImage {
+    std::vector<AnimationFrame> frames;
+    int loopCount = 0;
+};
+
+struct ReaderAnimationImage {
+    QImage firstFrame;
+    QByteArray data;
+    QByteArray format;
+    int loopCount = 0;
+    int firstFrameDelay = 0;
+};
+
+using DecodedImageResult = std::variant<DecodedImageFailure, StaticDecodedImage, SvgDecodedImage,
+    DecodedAnimationImage, ReaderAnimationImage>;
 
 QImage displayReadyImage(const QImage &image);
 QSize svgRasterSize(const QSizeF &displaySize, qreal devicePixelRatio, int maximumTextureSize);

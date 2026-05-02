@@ -49,16 +49,13 @@ public:
 
 KiriView::DecodedImageResult decodeTestImageData(const QByteArray &data)
 {
-    KiriView::DecodedImageResult result;
     if (data == QByteArrayLiteral("bad")) {
-        result.errorString = QStringLiteral("decode failed");
-        return result;
+        return KiriView::DecodedImageFailure { QStringLiteral("decode failed") };
     }
 
-    result.success = true;
-    result.image = QImage(1, 1, QImage::Format_RGBA8888_Premultiplied);
-    result.image.fill(Qt::transparent);
-    return result;
+    QImage image(1, 1, QImage::Format_RGBA8888_Premultiplied);
+    image.fill(Qt::transparent);
+    return KiriView::StaticDecodedImage { std::move(image) };
 }
 
 QUrl imageUrl(int index) { return QUrl(QStringLiteral("file:///images/%1.png").arg(index)); }
@@ -185,8 +182,9 @@ void TestImageDecodeJob::decodeErrorsAreDeliveredAsResults()
     dataLoader.loads.front()->dataCallback(QByteArrayLiteral("bad"));
 
     QTRY_VERIFY(decodedResult != nullptr);
-    QVERIFY(!decodedResult->success);
-    QCOMPARE(decodedResult->errorString, QStringLiteral("decode failed"));
+    const auto *failure = std::get_if<KiriView::DecodedImageFailure>(decodedResult.get());
+    QVERIFY(failure != nullptr);
+    QCOMPARE(failure->errorString, QStringLiteral("decode failed"));
     QVERIFY(!decodeJob.hasActiveRequest());
 }
 

@@ -29,8 +29,8 @@ ImageLoader::ImageLoader(QObject *parent)
                 return;
             }
 
-            if (!result->success) {
-                finishLoadWithError(*session, ImageLoadError::Generic, result->errorString);
+            if (const auto *failure = std::get_if<DecodedImageFailure>(result.get())) {
+                finishLoadWithError(*session, ImageLoadError::Generic, failure->errorString);
                 return;
             }
 

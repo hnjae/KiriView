@@ -19,8 +19,6 @@
 #include <optional>
 
 namespace KiriView {
-struct DecodedImageResult;
-
 struct ImageLoadSession {
     quint64 id = 0;
     ImageLoadRequest request;

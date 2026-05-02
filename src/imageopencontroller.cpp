@@ -11,6 +11,7 @@
 #include "predecodecache.h"
 
 #include <memory>
+#include <type_traits>
 #include <utility>
 
 namespace {
@@ -130,23 +131,34 @@ void ImageOpenController::finishPredecodedImageLoad(ImageLoadSession session, co
 void ImageOpenController::finishDecodedImageLoad(
     ImageLoadSession session, std::shared_ptr<DecodedImageResult> result)
 {
-    if (result->isSvg) {
-        finishSvgLoadSuccessfully(
-            std::move(session), std::move(result->svgData), result->svgIntrinsicSize);
-        report(DocumentEvent::adjacentImagePredecodeRequested());
-        return;
-    }
-
-    const bool predecodeCacheable
-        = decodedImageResultIsPredecodeCacheable(*result, PredecodeCache::byteBudget());
-    finishLoadSuccessfully(session, result->image, predecodeCacheable);
-    if (!result->decodedAnimationFrames.empty()) {
-        m_presentationController.startDecodedAnimation(
-            std::move(result->decodedAnimationFrames), result->animationLoopCount);
-    } else if (result->hasAnimationReaderFrames) {
-        m_presentationController.startAnimation(result->animationData, result->animationFormat,
-            result->animationLoopCount, result->firstFrameDelay);
-    }
+    std::visit(
+        [this, &session, result](auto &decoded) {
+            using Result = std::decay_t<decltype(decoded)>;
+            if constexpr (std::is_same_v<Result, DecodedImageFailure>) {
+                finishLoadWithError(session, ImageLoadError::Generic, decoded.errorString);
+            } else if constexpr (std::is_same_v<Result, SvgDecodedImage>) {
+                finishSvgLoadSuccessfully(
+                    session, std::move(decoded.data), decoded.svgIntrinsicSize);
+            } else if constexpr (std::is_same_v<Result, StaticDecodedImage>) {
+                const bool predecodeCacheable
+                    = decodedImageResultIsPredecodeCacheable(*result, PredecodeCache::byteBudget());
+                finishLoadSuccessfully(session, decoded.image, predecodeCacheable);
+            } else if constexpr (std::is_same_v<Result, DecodedAnimationImage>) {
+                if (decoded.frames.empty()) {
+                    finishLoadWithError(session, ImageLoadError::Generic,
+                        imageViewText("Could not decode the selected image animation."));
+                    return;
+                }
+                finishLoadSuccessfully(session, decoded.frames.front().image, false);
+                m_presentationController.startDecodedAnimation(
+                    std::move(decoded.frames), decoded.loopCount);
+            } else if constexpr (std::is_same_v<Result, ReaderAnimationImage>) {
+                finishLoadSuccessfully(session, decoded.firstFrame, false);
+                m_presentationController.startAnimation(
+                    decoded.data, decoded.format, decoded.loopCount, decoded.firstFrameDelay);
+            }
+        },
+        *result);
     report(DocumentEvent::adjacentImagePredecodeRequested());
 }
 
