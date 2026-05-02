@@ -3,59 +3,23 @@
 
 #include "imagedocumentcontroller.h"
 
+#include "image_test_support.h"
 #include "imagecontainer.h"
 
-#include <QImage>
 #include <QObject>
 #include <QTest>
 #include <QUrl>
 #include <map>
 #include <memory>
-#include <utility>
 #include <vector>
 
 namespace {
-struct ManualLoad {
-    QObject *object = nullptr;
-    QUrl url;
-    KiriView::ImageDecodeJob::DataCallback dataCallback;
-    KiriView::ImageDecodeJob::ErrorCallback errorCallback;
-    bool canceled = false;
-};
-
-class ManualImageDataLoader
-{
-public:
-    KiriView::ImageIoJob start(QObject *receiver, QUrl url,
-        KiriView::ImageDecodeJob::DataCallback callback,
-        KiriView::ImageDecodeJob::ErrorCallback errorCallback)
-    {
-        auto load = std::make_shared<ManualLoad>();
-        load->object = new QObject(receiver);
-        load->url = std::move(url);
-        load->dataCallback = std::move(callback);
-        load->errorCallback = std::move(errorCallback);
-        loads.push_back(load);
-
-        return KiriView::ImageIoJob(load->object, [load](QObject *object) {
-            load->canceled = true;
-            if (object != nullptr) {
-                object->deleteLater();
-            }
-        });
-    }
-
-    std::vector<std::shared_ptr<ManualLoad>> loads;
-};
-
-QString keyForUrl(const QUrl &url) { return url.adjusted(QUrl::NormalizePathSegments).toString(); }
-
-QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
-
-KiriView::ImageNavigationCandidate imageCandidate(const QUrl &url)
-{
-    return KiriView::ImageNavigationCandidate { url, url.fileName() };
-}
+using KiriView::TestSupport::dataLoaderFor;
+using KiriView::TestSupport::imageCandidate;
+using KiriView::TestSupport::keyForUrl;
+using KiriView::TestSupport::localUrl;
+using KiriView::TestSupport::ManualImageDataLoader;
+using KiriView::TestSupport::testImage;
 
 KiriView::ContainerNavigationCandidate directoryContainerCandidate(const QUrl &url)
 {
@@ -66,16 +30,9 @@ KiriView::ContainerNavigationCandidate directoryContainerCandidate(const QUrl &u
     };
 }
 
-QImage testImage()
-{
-    QImage image(2, 1, QImage::Format_RGBA8888_Premultiplied);
-    image.fill(Qt::transparent);
-    return image;
-}
-
 KiriView::DecodedImageResult decodeTestImageData(const QByteArray &)
 {
-    return KiriView::StaticDecodedImage { testImage() };
+    return KiriView::StaticDecodedImage { testImage(2) };
 }
 
 class FakeCandidateProvider
@@ -117,11 +74,7 @@ KiriView::ImageAsyncDependencies dependenciesFor(
 {
     return KiriView::ImageAsyncDependencies {
         candidateProvider.provider(),
-        [&dataLoader](QObject *receiver, QUrl url, KiriView::ImageDecodeJob::DataCallback callback,
-            KiriView::ImageDecodeJob::ErrorCallback errorCallback) {
-            return dataLoader.start(
-                receiver, std::move(url), std::move(callback), std::move(errorCallback));
-        },
+        dataLoaderFor(dataLoader),
         decodeTestImageData,
     };
 }
