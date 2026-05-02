@@ -5,10 +5,11 @@
 KiriView opens one user-selected image file, displays it in the main window, and
 can navigate to adjacent images in the same location.
 
-The main window toolbar shows image controls without a page title. The toolbar
-always provides open, page navigation, fit, and zoom controls in fixed
-positions. Controls that require a ready image are disabled until an image is
-ready.
+The main window toolbar shows image controls without a page title. The compact
+toolbar always provides open, page navigation, fit, and zoom controls in fixed
+positions. Outside fullscreen, the toolbar uses normal application header
+placement and reserves layout space above the image viewing area. Controls that
+require a ready image are disabled until an image is ready.
 When KiriView is launched with a file path or URL argument, including from a
 file manager's Open With action, it opens the first provided image or comic book
 archive at startup. Activating the open action shows the XDG portal file
@@ -211,9 +212,14 @@ continue to move to neighboring containers.
 
 The `f` key and F11 toggle the main window between normal windowed display and
 system fullscreen. Fullscreen hides the system titlebar and window decorations
-while keeping the app toolbar available. Leaving fullscreen restores the
-window's previous windowed, maximized, or minimized state. The `f` shortcut is
-inactive while the page number or zoom input is focused.
+and shows the app toolbar as a compact, translucent overlay above the image
+viewing area without reserving layout space. The fullscreen overlay toolbar is
+shown when entering fullscreen and when the pointer moves over the window. It
+hides after 1.0 seconds of inactivity unless the pointer is over the toolbar, a
+toolbar input is focused, or a toolbar menu is open. Leaving fullscreen restores
+the window's previous windowed, maximized, or minimized state and restores the
+normal header toolbar. The `f` shortcut is inactive while the page number or
+zoom input is focused.
 
 The `?` key and F1 open a modal shortcut help dialog listing KiriView's keyboard
 and mouse shortcuts. While the shortcut help dialog is open, Escape closes the
