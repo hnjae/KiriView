@@ -101,6 +101,11 @@ current directory or archive scope, and a down-arrow Next button. Page numbers
 are shown to users starting at 1. Entering a valid page number opens that image;
 entering an invalid number leaves the current image open and restores the
 displayed page number.
+When moving between images in the current directory or archive scope, the
+centered page navigation controls keep their layout stable. The current page
+number updates to the newly displayed image, and the known total image count
+does not temporarily collapse to a single-image fallback while KiriView refreshes
+the navigation list.
 
 Animated image files, including GIF and APNG, play when animation frames are
 available. The first frame is shown once loading succeeds; later frames use the
