@@ -7,40 +7,40 @@
 #include "imagedocumentstate.h"
 
 namespace KiriView {
-ImageOpenCommands ImageOpenWorkflow::beginSourceLoad(ImageDocumentState &state, bool hasImage)
+ImageDocumentEffects ImageOpenWorkflow::beginSourceLoad(ImageDocumentState &state, bool hasImage)
 {
-    ImageOpenCommands commands;
+    ImageDocumentEffects effects;
     if (!hasImage && state.loadingContainerNavigationUrl().isEmpty()) {
         state.setContainerNavigationUrl(QUrl());
     }
 
     state.setLoading(true);
     if (!hasImage) {
-        commands.clearImage = true;
-        commands.resetZoom = true;
+        effects.add(ImageDocumentEffect::clearImage());
+        effects.add(ImageDocumentEffect::resetZoom());
         state.setStatus(ImageDocumentStatus::Loading);
     } else {
         state.setStatus(ImageDocumentStatus::Ready);
     }
-    return commands;
+    return effects;
 }
 
-ImageOpenCommands ImageOpenWorkflow::finishEmptySourceLoad(ImageDocumentState &state)
+ImageDocumentEffects ImageOpenWorkflow::finishEmptySourceLoad(ImageDocumentState &state)
 {
-    ImageOpenCommands commands;
-    commands.clearImage = true;
-    commands.resetZoom = true;
+    ImageDocumentEffects effects;
+    effects.add(ImageDocumentEffect::clearImage());
+    effects.add(ImageDocumentEffect::resetZoom());
     state.setLoading(false);
     state.clearLoadingContainerNavigationUrl();
     state.setContainerNavigationUrl(QUrl());
     state.setStatus(ImageDocumentStatus::Null);
-    return commands;
+    return effects;
 }
 
-ImageOpenCommands ImageOpenWorkflow::finishSuccessfulImageLoad(
+ImageDocumentEffects ImageOpenWorkflow::finishSuccessfulImageLoad(
     ImageDocumentState &state, const ImageLoadSession &session)
 {
-    ImageOpenCommands commands;
+    ImageDocumentEffects effects;
     state.setSourceUrl(session.location.imageUrl());
     state.setDisplayedImageLocation(session.location);
     if (!session.request.containerNavigationUrl().isEmpty()) {
@@ -53,29 +53,29 @@ ImageOpenCommands ImageOpenWorkflow::finishSuccessfulImageLoad(
     state.setErrorString(QString());
     state.setLoading(false);
     state.setStatus(ImageDocumentStatus::Ready);
-    commands.updatePageNavigation = true;
-    return commands;
+    effects.add(ImageDocumentEffect::updatePageNavigation());
+    return effects;
 }
 
-ImageOpenCommands ImageOpenWorkflow::finishContainerNavigationLoadWithError(
+ImageDocumentEffects ImageOpenWorkflow::finishContainerNavigationLoadWithError(
     ImageDocumentState &state, const QUrl &containerUrl, const QString &errorString)
 {
-    ImageOpenCommands commands;
-    commands.clearImage = true;
-    commands.failedContainerUrl = containerUrl;
+    ImageDocumentEffects effects;
+    effects.add(ImageDocumentEffect::clearImage());
+    effects.add(ImageDocumentEffect::prepareFailedContainer(containerUrl));
     state.clearLoadingContainerNavigationUrl();
     state.setLoading(false);
     state.setContainerNavigationUrl(containerUrl);
     state.setSourceUrl(containerUrl);
     state.setErrorString(errorString);
     state.setStatus(ImageDocumentStatus::Error);
-    return commands;
+    return effects;
 }
 
-ImageOpenCommands ImageOpenWorkflow::finishReplacementLoadWithError(
+ImageDocumentEffects ImageOpenWorkflow::finishReplacementLoadWithError(
     ImageDocumentState &state, const QString &errorString)
 {
-    ImageOpenCommands commands;
+    ImageDocumentEffects effects;
     state.clearLoadingContainerNavigationUrl();
     state.setLoading(false);
     state.setErrorString(errorString);
@@ -85,34 +85,34 @@ ImageOpenCommands ImageOpenWorkflow::finishReplacementLoadWithError(
         state.setSourceUrl(state.displayedUrl());
     }
 
-    commands.updatePageNavigation = true;
-    commands.scheduleAdjacentPredecode = true;
-    return commands;
+    effects.add(ImageDocumentEffect::updatePageNavigation());
+    effects.add(ImageDocumentEffect::scheduleAdjacentImagePredecode());
+    return effects;
 }
 
-ImageOpenCommands ImageOpenWorkflow::finishInitialLoadWithError(
+ImageDocumentEffects ImageOpenWorkflow::finishInitialLoadWithError(
     ImageDocumentState &state, const QString &errorString)
 {
-    ImageOpenCommands commands;
-    commands.clearImage = true;
+    ImageDocumentEffects effects;
+    effects.add(ImageDocumentEffect::clearImage());
     state.clearLoadingContainerNavigationUrl();
     state.setLoading(false);
     state.setContainerNavigationUrl(QUrl());
     state.setErrorString(errorString);
     state.setStatus(ImageDocumentStatus::Error);
-    return commands;
+    return effects;
 }
 
-ImageOpenCommands ImageOpenWorkflow::finishAnimationLoadWithError(
+ImageDocumentEffects ImageOpenWorkflow::finishAnimationLoadWithError(
     ImageDocumentState &state, const QString &errorString)
 {
-    ImageOpenCommands commands;
-    commands.clearImage = true;
-    commands.resetZoom = true;
+    ImageDocumentEffects effects;
+    effects.add(ImageDocumentEffect::clearImage());
+    effects.add(ImageDocumentEffect::resetZoom());
     state.setLoading(false);
     state.setContainerNavigationUrl(QUrl());
     state.setErrorString(errorString);
     state.setStatus(ImageDocumentStatus::Error);
-    return commands;
+    return effects;
 }
 }

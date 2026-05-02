@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_IMAGEOPENWORKFLOW_H
 #define KIRIVIEW_IMAGEOPENWORKFLOW_H
 
+#include "imagedocumenteffects.h"
 #include "imageloader.h"
 
 #include <QString>
@@ -12,28 +13,20 @@
 namespace KiriView {
 class ImageDocumentState;
 
-struct ImageOpenCommands {
-    bool clearImage = false;
-    bool resetZoom = false;
-    bool updatePageNavigation = false;
-    bool scheduleAdjacentPredecode = false;
-    QUrl failedContainerUrl;
-};
-
 class ImageOpenWorkflow
 {
 public:
-    static ImageOpenCommands beginSourceLoad(ImageDocumentState &state, bool hasImage);
-    static ImageOpenCommands finishEmptySourceLoad(ImageDocumentState &state);
-    static ImageOpenCommands finishSuccessfulImageLoad(
+    static ImageDocumentEffects beginSourceLoad(ImageDocumentState &state, bool hasImage);
+    static ImageDocumentEffects finishEmptySourceLoad(ImageDocumentState &state);
+    static ImageDocumentEffects finishSuccessfulImageLoad(
         ImageDocumentState &state, const ImageLoadSession &session);
-    static ImageOpenCommands finishContainerNavigationLoadWithError(
+    static ImageDocumentEffects finishContainerNavigationLoadWithError(
         ImageDocumentState &state, const QUrl &containerUrl, const QString &errorString);
-    static ImageOpenCommands finishReplacementLoadWithError(
+    static ImageDocumentEffects finishReplacementLoadWithError(
         ImageDocumentState &state, const QString &errorString);
-    static ImageOpenCommands finishInitialLoadWithError(
+    static ImageDocumentEffects finishInitialLoadWithError(
         ImageDocumentState &state, const QString &errorString);
-    static ImageOpenCommands finishAnimationLoadWithError(
+    static ImageDocumentEffects finishAnimationLoadWithError(
         ImageDocumentState &state, const QString &errorString);
 };
 }

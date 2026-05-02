@@ -28,16 +28,16 @@ ImageDocumentController::ImageDocumentController(QObject *parent,
         this, std::move(renderContextProvider),
         [this](ImageDocumentChange change) { notify(change); },
         [this](const QString &errorString) {
-            handleEvent(DocumentEvent::animationFailed(errorString));
+            dispatchEffect(ImageDocumentEffect::animationFailed(errorString));
         });
     m_openController = std::make_unique<ImageOpenController>(
         this, m_state, *m_presentationController,
         [this](const QUrl &url) { return takePredecodedImage(url); },
-        [this](DocumentEvent event) { handleEvent(std::move(event)); }, dependencies);
+        [this](ImageDocumentEffect effect) { dispatchEffect(std::move(effect)); }, dependencies);
     m_navigationController = std::make_unique<ImageDocumentNavigationController>(
         this, m_state, *m_presentationController,
         [this](ImageDocumentChange change) { notify(change); },
-        [this](DocumentEvent event) { handleEvent(std::move(event)); },
+        [this](ImageDocumentEffect effect) { dispatchEffect(std::move(effect)); },
         dependencies.candidateProvider);
     m_predecodeCoordinator
         = std::make_unique<ImagePredecodeCoordinator>(this, dependencies.candidateProvider,
@@ -151,31 +151,42 @@ void ImageDocumentController::updateRenderContext()
     m_presentationController->updateRenderContext();
 }
 
-void ImageDocumentController::handleEvent(DocumentEvent event)
+void ImageDocumentController::dispatchEffect(ImageDocumentEffect effect)
 {
     std::visit(
         [this](const auto &payload) {
             using Event = std::decay_t<decltype(payload)>;
-            if constexpr (std::is_same_v<Event, ClearImageRequestedEvent>) {
+            if constexpr (std::is_same_v<Event, ClearImageEffect>) {
                 clearImage();
-            } else if constexpr (std::is_same_v<Event, PageNavigationUpdateRequestedEvent>) {
+            } else if constexpr (std::is_same_v<Event, ResetZoomEffect>) {
+                resetZoom();
+            } else if constexpr (std::is_same_v<Event, UpdatePageNavigationEffect>) {
                 m_navigationController->updatePageNavigation();
-            } else if constexpr (std::is_same_v<Event, AdjacentImagePredecodeRequestedEvent>) {
+            } else if constexpr (std::is_same_v<Event, ScheduleAdjacentImagePredecodeEffect>) {
                 scheduleAdjacentImagePredecode();
-            } else if constexpr (std::is_same_v<Event, OpenUrlRequestedEvent>) {
+            } else if constexpr (std::is_same_v<Event, OpenUrlEffect>) {
                 setSourceUrl(payload.url);
-            } else if constexpr (std::is_same_v<Event, ContainerImageSelectedEvent>) {
+            } else if constexpr (std::is_same_v<Event, ContainerImageSelectedEffect>) {
                 setSourceUrlForLoad(payload.imageUrl, payload.containerUrl);
-            } else if constexpr (std::is_same_v<Event, EmptyContainerSelectedEvent>) {
+            } else if constexpr (std::is_same_v<Event, EmptyContainerSelectedEffect>) {
                 m_openController->finishContainerNavigationWithEmptyContainer(payload.containerUrl);
-            } else if constexpr (std::is_same_v<Event, ContainerNavigationFailedEvent>) {
+            } else if constexpr (std::is_same_v<Event, ContainerNavigationFailedEffect>) {
                 m_openController->finishContainerNavigationLoadWithError(
                     payload.containerUrl, payload.errorString);
-            } else if constexpr (std::is_same_v<Event, AnimationFailedEvent>) {
+            } else if constexpr (std::is_same_v<Event, PrepareFailedContainerEffect>) {
+                m_presentationController->prepareFailedContainer(payload.containerUrl);
+            } else if constexpr (std::is_same_v<Event, AnimationFailedEffect>) {
                 finishWithAnimationError(payload.errorString);
             }
         },
-        event.payload);
+        effect.payload);
+}
+
+void ImageDocumentController::dispatchEffects(const ImageDocumentEffects &effects)
+{
+    for (const ImageDocumentEffect &effect : effects.items()) {
+        dispatchEffect(effect);
+    }
 }
 
 void ImageDocumentController::setSourceUrlForLoad(
@@ -230,14 +241,9 @@ void ImageDocumentController::finishWithAnimationError(const QString &errorStrin
     const QString message = errorString.isEmpty()
         ? imageViewText("Could not decode the selected image animation.")
         : errorString;
-    const ImageOpenCommands commands
+    const ImageDocumentEffects effects
         = ImageOpenWorkflow::finishAnimationLoadWithError(m_state, message);
-    if (commands.clearImage) {
-        clearImage();
-    }
-    if (commands.resetZoom) {
-        resetZoom();
-    }
+    dispatchEffects(effects);
 }
 
 void ImageDocumentController::notify(ImageDocumentChange change)

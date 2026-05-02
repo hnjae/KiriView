@@ -9,6 +9,7 @@
 #include <QObject>
 #include <QTest>
 #include <QUrl>
+#include <variant>
 
 namespace {
 QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
@@ -21,6 +22,22 @@ KiriView::ImageLoadSession loadSession(const QUrl &sourceUrl, const QUrl &imageU
         KiriView::ImageLoadRequest::fromUrls(sourceUrl, comicBookRootUrl, containerNavigationUrl),
         KiriView::DisplayedImageLocation::fromUrls(imageUrl, comicBookRootUrl),
     };
+}
+
+template <typename Effect> const Effect *findEffect(const KiriView::ImageDocumentEffects &effects)
+{
+    for (const KiriView::ImageDocumentEffect &effect : effects.items()) {
+        if (const auto *payload = std::get_if<Effect>(&effect.payload)) {
+            return payload;
+        }
+    }
+
+    return nullptr;
+}
+
+template <typename Effect> bool hasEffect(const KiriView::ImageDocumentEffects &effects)
+{
+    return findEffect<Effect>(effects) != nullptr;
 }
 }
 
@@ -41,17 +58,17 @@ void TestImageOpenWorkflow::firstImageLoadSuccessTransitionsToReady()
     const QUrl imageUrl = localUrl(QStringLiteral("/images/page.png"));
     state.setSourceUrl(imageUrl);
 
-    const KiriView::ImageOpenCommands beginCommands
+    const KiriView::ImageDocumentEffects beginEffects
         = KiriView::ImageOpenWorkflow::beginSourceLoad(state, false);
-    QVERIFY(beginCommands.clearImage);
-    QVERIFY(beginCommands.resetZoom);
+    QVERIFY(hasEffect<KiriView::ClearImageEffect>(beginEffects));
+    QVERIFY(hasEffect<KiriView::ResetZoomEffect>(beginEffects));
     QVERIFY(state.loading());
     QCOMPARE(state.status(), KiriView::ImageDocumentStatus::Loading);
 
-    const KiriView::ImageOpenCommands successCommands
+    const KiriView::ImageDocumentEffects successEffects
         = KiriView::ImageOpenWorkflow::finishSuccessfulImageLoad(
             state, loadSession(imageUrl, imageUrl));
-    QVERIFY(successCommands.updatePageNavigation);
+    QVERIFY(hasEffect<KiriView::UpdatePageNavigationEffect>(successEffects));
     QCOMPARE(state.sourceUrl(), imageUrl);
     QCOMPARE(state.displayedUrl(), imageUrl);
     QCOMPARE(state.containerNavigationUrl(), localUrl(QStringLiteral("/images/")));
@@ -70,12 +87,12 @@ void TestImageOpenWorkflow::replacementLoadFailureKeepsDisplayedImage()
     state.setLoading(true);
     state.setStatus(KiriView::ImageDocumentStatus::Ready);
 
-    const KiriView::ImageOpenCommands commands
+    const KiriView::ImageDocumentEffects effects
         = KiriView::ImageOpenWorkflow::finishReplacementLoadWithError(
             state, QStringLiteral("missing"));
-    QVERIFY(!commands.clearImage);
-    QVERIFY(commands.updatePageNavigation);
-    QVERIFY(commands.scheduleAdjacentPredecode);
+    QVERIFY(!hasEffect<KiriView::ClearImageEffect>(effects));
+    QVERIFY(hasEffect<KiriView::UpdatePageNavigationEffect>(effects));
+    QVERIFY(hasEffect<KiriView::ScheduleAdjacentImagePredecodeEffect>(effects));
     QCOMPARE(state.sourceUrl(), displayedUrl);
     QCOMPARE(state.displayedUrl(), displayedUrl);
     QCOMPARE(state.errorString(), QStringLiteral("missing"));
@@ -90,11 +107,14 @@ void TestImageOpenWorkflow::emptyContainerFailureSelectsFailedContainer()
     state.setLoading(true);
     state.setLoadingContainerNavigationUrl(containerUrl);
 
-    const KiriView::ImageOpenCommands commands
+    const KiriView::ImageDocumentEffects effects
         = KiriView::ImageOpenWorkflow::finishContainerNavigationLoadWithError(
             state, containerUrl, QStringLiteral("empty"));
-    QVERIFY(commands.clearImage);
-    QCOMPARE(commands.failedContainerUrl, containerUrl);
+    QVERIFY(hasEffect<KiriView::ClearImageEffect>(effects));
+    const auto *prepareFailedContainer
+        = findEffect<KiriView::PrepareFailedContainerEffect>(effects);
+    QVERIFY(prepareFailedContainer != nullptr);
+    QCOMPARE(prepareFailedContainer->containerUrl, containerUrl);
     QCOMPARE(state.sourceUrl(), containerUrl);
     QCOMPARE(state.containerNavigationUrl(), containerUrl);
     QCOMPARE(state.errorString(), QStringLiteral("empty"));
@@ -111,12 +131,12 @@ void TestImageOpenWorkflow::animationFailureClearsImageAndResetsZoom()
     state.setLoading(true);
     state.setStatus(KiriView::ImageDocumentStatus::Ready);
 
-    const KiriView::ImageOpenCommands commands
+    const KiriView::ImageDocumentEffects effects
         = KiriView::ImageOpenWorkflow::finishAnimationLoadWithError(
             state, QStringLiteral("animation failed"));
 
-    QVERIFY(commands.clearImage);
-    QVERIFY(commands.resetZoom);
+    QVERIFY(hasEffect<KiriView::ClearImageEffect>(effects));
+    QVERIFY(hasEffect<KiriView::ResetZoomEffect>(effects));
     QVERIFY(state.containerNavigationUrl().isEmpty());
     QCOMPARE(state.errorString(), QStringLiteral("animation failed"));
     QVERIFY(!state.loading());

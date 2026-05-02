@@ -23,12 +23,12 @@ using KiriView::decodedImageResultIsPredecodeCacheable;
 namespace KiriView {
 ImageOpenController::ImageOpenController(QObject *parent, ImageDocumentState &state,
     ImagePresentationController &presentationController,
-    TakePredecodedImageCallback takePredecodedImage, EventCallback eventCallback,
+    TakePredecodedImageCallback takePredecodedImage, EffectCallback effectCallback,
     const ImageAsyncDependencies &dependencies)
     : m_state(state)
     , m_presentationController(presentationController)
     , m_takePredecodedImage(std::move(takePredecodedImage))
-    , m_eventCallback(std::move(eventCallback))
+    , m_effectCallback(std::move(effectCallback))
 {
     m_imageLoader = std::make_unique<ImageLoader>(parent, dependencies.candidateProvider,
         dependencies.imageDataLoader, dependencies.imageDataDecoder);
@@ -71,12 +71,12 @@ void ImageOpenController::cancel() { m_imageLoader->cancel(); }
 
 void ImageOpenController::finishEmptySourceLoad()
 {
-    applyCommands(ImageOpenWorkflow::finishEmptySourceLoad(m_state));
+    reportEffects(ImageOpenWorkflow::finishEmptySourceLoad(m_state));
 }
 
 void ImageOpenController::beginSourceLoad()
 {
-    applyCommands(ImageOpenWorkflow::beginSourceLoad(m_state, m_presentationController.hasImage()));
+    reportEffects(ImageOpenWorkflow::beginSourceLoad(m_state, m_presentationController.hasImage()));
 }
 
 void ImageOpenController::finishContainerNavigationWithEmptyContainer(const QUrl &containerUrl)
@@ -93,7 +93,7 @@ void ImageOpenController::finishContainerNavigationLoadWithError(
     const QString message = errorString.isEmpty()
         ? imageViewText("Could not open the selected container.")
         : errorString;
-    applyCommands(
+    reportEffects(
         ImageOpenWorkflow::finishContainerNavigationLoadWithError(m_state, containerUrl, message));
 }
 
@@ -105,7 +105,7 @@ void ImageOpenController::setSourceUrlFromResolvedLoad(const QUrl &sourceUrl)
 void ImageOpenController::finishPredecodedImageLoad(ImageLoadSession session, const QImage &image)
 {
     finishLoadSuccessfully(session, image, true);
-    report(DocumentEvent::adjacentImagePredecodeRequested());
+    report(ImageDocumentEffect::scheduleAdjacentImagePredecode());
 }
 
 void ImageOpenController::finishDecodedImageLoad(
@@ -139,7 +139,7 @@ void ImageOpenController::finishDecodedImageLoad(
             }
         },
         *result);
-    report(DocumentEvent::adjacentImagePredecodeRequested());
+    report(ImageDocumentEffect::scheduleAdjacentImagePredecode());
 }
 
 void ImageOpenController::finishLoadWithError(
@@ -164,12 +164,12 @@ void ImageOpenController::finishLoadWithError(
 
 void ImageOpenController::finishReplacementLoadWithError(const QString &errorString)
 {
-    applyCommands(ImageOpenWorkflow::finishReplacementLoadWithError(m_state, errorString));
+    reportEffects(ImageOpenWorkflow::finishReplacementLoadWithError(m_state, errorString));
 }
 
 void ImageOpenController::finishInitialLoadWithError(const QString &errorString)
 {
-    applyCommands(ImageOpenWorkflow::finishInitialLoadWithError(m_state, errorString));
+    reportEffects(ImageOpenWorkflow::finishInitialLoadWithError(m_state, errorString));
 }
 
 void ImageOpenController::finishLoadSuccessfully(
@@ -207,32 +207,20 @@ void ImageOpenController::prepareSuccessfulImageLoad(const ImageLoadSession &ses
 
 void ImageOpenController::finishSuccessfulImageLoad(const ImageLoadSession &session)
 {
-    applyCommands(ImageOpenWorkflow::finishSuccessfulImageLoad(m_state, session));
+    reportEffects(ImageOpenWorkflow::finishSuccessfulImageLoad(m_state, session));
 }
 
-void ImageOpenController::applyCommands(const ImageOpenCommands &commands)
+void ImageOpenController::reportEffects(const ImageDocumentEffects &effects)
 {
-    if (commands.clearImage) {
-        report(DocumentEvent::clearImageRequested());
-    }
-    if (commands.resetZoom) {
-        m_presentationController.resetZoom();
-    }
-    if (!commands.failedContainerUrl.isEmpty()) {
-        m_presentationController.prepareFailedContainer(commands.failedContainerUrl);
-    }
-    if (commands.updatePageNavigation) {
-        report(DocumentEvent::pageNavigationUpdateRequested());
-    }
-    if (commands.scheduleAdjacentPredecode) {
-        report(DocumentEvent::adjacentImagePredecodeRequested());
+    for (const ImageDocumentEffect &effect : effects.items()) {
+        report(effect);
     }
 }
 
-void ImageOpenController::report(DocumentEvent event)
+void ImageOpenController::report(ImageDocumentEffect effect)
 {
-    if (m_eventCallback) {
-        m_eventCallback(std::move(event));
+    if (m_effectCallback) {
+        m_effectCallback(std::move(effect));
     }
 }
 }

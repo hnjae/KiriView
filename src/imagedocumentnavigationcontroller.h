@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGEDOCUMENTNAVIGATIONCONTROLLER_H
 #define KIRIVIEW_IMAGEDOCUMENTNAVIGATIONCONTROLLER_H
 
-#include "imagedocumentevents.h"
+#include "imagedocumenteffects.h"
 #include "imagedocumenttypes.h"
 #include "imagenavigationservice.h"
 
@@ -23,11 +23,11 @@ class ImageDocumentNavigationController final
 {
 public:
     using ChangeCallback = std::function<void(ImageDocumentChange)>;
-    using EventCallback = std::function<void(DocumentEvent)>;
+    using EffectCallback = std::function<void(ImageDocumentEffect)>;
 
     ImageDocumentNavigationController(QObject *parent, ImageDocumentState &state,
         ImagePresentationController &presentationController, ChangeCallback changeCallback,
-        EventCallback eventCallback, ImageNavigationCandidateProvider candidateProvider);
+        EffectCallback effectCallback, ImageNavigationCandidateProvider candidateProvider);
     ~ImageDocumentNavigationController();
 
     int currentPageNumber() const;
@@ -54,7 +54,7 @@ private:
     ImageDocumentState &m_state;
     ImagePresentationController &m_presentationController;
     ChangeCallback m_changeCallback;
-    EventCallback m_eventCallback;
+    EffectCallback m_effectCallback;
     std::unique_ptr<ImageNavigationService> m_navigationService;
 };
 }

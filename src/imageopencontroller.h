@@ -5,7 +5,7 @@
 #define KIRIVIEW_IMAGEOPENCONTROLLER_H
 
 #include "imageasyncdependencies.h"
-#include "imagedocumentevents.h"
+#include "imagedocumenteffects.h"
 #include "imageloader.h"
 #include "imageopenworkflow.h"
 
@@ -28,11 +28,11 @@ class ImageOpenController final
 {
 public:
     using TakePredecodedImageCallback = std::function<std::optional<PredecodedImage>(const QUrl &)>;
-    using EventCallback = std::function<void(DocumentEvent)>;
+    using EffectCallback = std::function<void(ImageDocumentEffect)>;
 
     ImageOpenController(QObject *parent, ImageDocumentState &state,
         ImagePresentationController &presentationController,
-        TakePredecodedImageCallback takePredecodedImage, EventCallback eventCallback,
+        TakePredecodedImageCallback takePredecodedImage, EffectCallback effectCallback,
         const ImageAsyncDependencies &dependencies);
     ~ImageOpenController();
 
@@ -59,13 +59,13 @@ private:
         ImageLoadSession session, QByteArray data, const QSize &intrinsicSize);
     void prepareSuccessfulImageLoad(const ImageLoadSession &session);
     void finishSuccessfulImageLoad(const ImageLoadSession &session);
-    void applyCommands(const ImageOpenCommands &commands);
-    void report(DocumentEvent event);
+    void reportEffects(const ImageDocumentEffects &effects);
+    void report(ImageDocumentEffect effect);
 
     ImageDocumentState &m_state;
     ImagePresentationController &m_presentationController;
     TakePredecodedImageCallback m_takePredecodedImage;
-    EventCallback m_eventCallback;
+    EffectCallback m_effectCallback;
     std::unique_ptr<ImageLoader> m_imageLoader;
 };
 }

@@ -5,7 +5,7 @@
 #define KIRIVIEW_IMAGEDOCUMENTCONTROLLER_H
 
 #include "imageasyncdependencies.h"
-#include "imagedocumentevents.h"
+#include "imagedocumenteffects.h"
 #include "imagedocumentstate.h"
 #include "imageloader.h"
 #include "imagezoomstate.h"
@@ -68,7 +68,8 @@ public:
     void updateRenderContext();
 
 private:
-    void handleEvent(DocumentEvent event);
+    void dispatchEffect(ImageDocumentEffect effect);
+    void dispatchEffects(const ImageDocumentEffects &effects);
     void setSourceUrlForLoad(const QUrl &sourceUrl, const QUrl &containerNavigationUrl);
     void scheduleAdjacentImagePredecode();
     void cancelPredecode();
