@@ -166,12 +166,6 @@ void ImagePredecodeCoordinator::clear()
 
 std::optional<PredecodedImage> ImagePredecodeCoordinator::tryTake(const QUrl &url) const
 {
-    QImage image;
-    QUrl comicBookRootUrl;
-    if (!m_cache.findImage(url, &image, &comicBookRootUrl)) {
-        return std::nullopt;
-    }
-
-    return PredecodedImage { image, DisplayedImageLocation::fromUrls(url, comicBookRootUrl) };
+    return m_cache.findImage(url);
 }
 }

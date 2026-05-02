@@ -90,11 +90,11 @@ void TestPredecodeCache::cacheStoresAndFindsWindowImages()
     cache.setWindowUrls({ url });
     cache.cacheImage(url, rootUrl, image);
 
-    QImage foundImage;
-    QUrl foundRootUrl;
-    QVERIFY(cache.findImage(url, &foundImage, &foundRootUrl));
-    QCOMPARE(foundImage.size(), image.size());
-    QCOMPARE(foundRootUrl, rootUrl);
+    const std::optional<KiriView::PredecodedImage> found = cache.findImage(url);
+    QVERIFY(found.has_value());
+    QCOMPARE(found->image.size(), image.size());
+    QCOMPARE(found->location.imageUrl(), url);
+    QCOMPARE(found->location.comicBookRootUrl(), rootUrl);
 }
 
 void TestPredecodeCache::cacheRejectsUncacheableAndOversizedImages()

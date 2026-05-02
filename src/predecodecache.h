@@ -4,6 +4,8 @@
 #ifndef KIRIVIEW_PREDECODECACHE_H
 #define KIRIVIEW_PREDECODECACHE_H
 
+#include "imagelocation.h"
+
 #include <QImage>
 #include <QUrl>
 #include <QtGlobal>
@@ -37,20 +39,20 @@ public:
     bool windowContains(const QUrl &url) const;
     bool hasImage(const QUrl &url) const;
     bool isInFlight(const QUrl &url, const QUrl &activePredecodeUrl) const;
-    bool findImage(const QUrl &url, QImage *image, QUrl *comicBookRootUrl) const;
+    std::optional<PredecodedImage> findImage(const QUrl &url) const;
     void cacheImage(const QUrl &url, const QUrl &comicBookRootUrl, const QImage &image);
     void cacheDisplayedImage(
         bool cacheable, const QUrl &url, const QUrl &comicBookRootUrl, const QImage &image);
 
 private:
-    struct PredecodedImage {
+    struct CachedImage {
         QUrl url;
         QUrl comicBookRootUrl;
         QImage image;
         qsizetype byteCost = 0;
     };
-    using CachedImageIterator = std::vector<PredecodedImage>::iterator;
-    using ConstCachedImageIterator = std::vector<PredecodedImage>::const_iterator;
+    using CachedImageIterator = std::vector<CachedImage>::iterator;
+    using ConstCachedImageIterator = std::vector<CachedImage>::const_iterator;
 
     static bool containsUrl(const std::vector<QUrl> &urls, const QUrl &url);
     CachedImageIterator findCachedImage(const QUrl &normalizedUrl);
@@ -61,7 +63,7 @@ private:
 
     std::vector<QUrl> m_windowUrls;
     std::deque<PredecodeRequest> m_queue;
-    std::vector<PredecodedImage> m_images;
+    std::vector<CachedImage> m_images;
     qsizetype m_byteBudget = defaultByteBudget();
 };
 }
