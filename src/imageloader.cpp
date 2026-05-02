@@ -7,12 +7,6 @@
 #include "imageiojobs.h"
 #include "kiriimagedecoder.h"
 
-#include <QByteArray>
-#include <QMetaObject>
-#include <QPointer>
-#include <QRunnable>
-#include <QThreadPool>
-#include <Qt>
 #include <memory>
 #include <optional>
 #include <utility>
@@ -23,13 +17,48 @@ using KiriView::comicBookArchiveRootUrl;
 using KiriView::containingComicBookArchiveRootUrl;
 using KiriView::DecodedImageResult;
 using KiriView::decodeImageData;
+using KiriView::ImageDecodeJob;
+using KiriView::ImageIoJob;
 using KiriView::isUrlInsideArchiveRoot;
+
+ImageIoJob startImageDataLoad(QObject *receiver, QUrl imageUrl,
+    ImageDecodeJob::DataCallback callback, ImageDecodeJob::ErrorCallback errorCallback)
+{
+    return KiriView::startStoredImageDataLoad(
+        receiver, std::move(imageUrl), std::move(callback), std::move(errorCallback));
+}
+
+DecodedImageResult decodeImageBytes(const QByteArray &data) { return decodeImageData(data); }
 }
 
 namespace KiriView {
 ImageLoader::ImageLoader(QObject *parent)
     : QObject(parent)
+    , m_decodeJob(this, startImageDataLoad, decodeImageBytes)
 {
+    m_decodeJob.setDecodedCallback(
+        [this](ImageDecodeRequest request, std::shared_ptr<DecodedImageResult> result) {
+            std::optional<ImageLoadSession> session = currentLoadSessionForDecodeRequest(request);
+            if (!session.has_value()) {
+                return;
+            }
+
+            if (!result->success) {
+                finishLoadWithError(*session, ImageLoadError::Generic, result->errorString);
+                return;
+            }
+
+            finishDecodedImage(*session, std::move(result));
+        });
+    m_decodeJob.setLoadErrorCallback(
+        [this](const ImageDecodeRequest &request, const QString &errorString) {
+            std::optional<ImageLoadSession> session = currentLoadSessionForDecodeRequest(request);
+            if (!session.has_value()) {
+                return;
+            }
+
+            finishLoadWithError(*session, ImageLoadError::Generic, errorString);
+        });
 }
 
 void ImageLoader::setSourceResolvedCallback(SourceResolvedCallback callback)
@@ -95,51 +124,11 @@ void ImageLoader::start(ImageLoadRequest request)
 
 void ImageLoader::startImageLoad(ImageLoadSession session)
 {
-    m_imageLoadJob = startStoredImageDataLoad(
-        this, session.location.imageUrl,
-        [this, session](QByteArray data) {
-            if (!isCurrentLoadSession(session)) {
-                return;
-            }
+    if (!isCurrentLoadSession(session)) {
+        return;
+    }
 
-            startImageDecode(std::move(data), session);
-        },
-        [this, session](const QString &errorString) {
-            if (!isCurrentLoadSession(session)) {
-                return;
-            }
-
-            finishLoadWithError(session, ImageLoadError::Generic, errorString);
-        });
-}
-
-void ImageLoader::startImageDecode(QByteArray data, ImageLoadSession session)
-{
-    const QPointer<ImageLoader> loader(this);
-    QThreadPool::globalInstance()->start(
-        QRunnable::create([loader, data = std::move(data), session]() mutable {
-            auto result = std::make_shared<DecodedImageResult>(decodeImageData(data));
-            if (loader == nullptr) {
-                return;
-            }
-
-            QMetaObject::invokeMethod(
-                loader.data(),
-                [loader, session, result]() mutable {
-                    if (loader == nullptr || !loader->isCurrentLoadSession(session)) {
-                        return;
-                    }
-
-                    if (!result->success) {
-                        loader->finishLoadWithError(
-                            session, ImageLoadError::Generic, result->errorString);
-                        return;
-                    }
-
-                    loader->finishDecodedImage(session, std::move(result));
-                },
-                Qt::QueuedConnection);
-        }));
+    m_decodeJob.start(ImageDecodeRequest { session.id, session.location.imageUrl });
 }
 
 void ImageLoader::startComicBookLoad(ImageLoadSession session)
@@ -175,8 +164,20 @@ void ImageLoader::startComicBookLoad(ImageLoadSession session)
 void ImageLoader::cancel()
 {
     m_loadSession.reset();
-    m_imageLoadJob.cancel();
+    m_decodeJob.cancel();
     m_archiveListJob.cancel();
+}
+
+std::optional<ImageLoadSession> ImageLoader::currentLoadSessionForDecodeRequest(
+    const ImageDecodeRequest &request) const
+{
+    if (!m_loadSession.has_value() || m_loadSession->id != request.id
+        || !m_loadSession->location.imageUrl.matches(
+            request.imageUrl, QUrl::NormalizePathSegments)) {
+        return std::nullopt;
+    }
+
+    return *m_loadSession;
 }
 
 bool ImageLoader::isCurrentLoadSession(const ImageLoadSession &session) const

@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_IMAGELOADER_H
 #define KIRIVIEW_IMAGELOADER_H
 
+#include "imagedecodejob.h"
 #include "imageiojob.h"
 #include "imagelocation.h"
 
@@ -54,8 +55,9 @@ public:
 
 private:
     void startImageLoad(ImageLoadSession session);
-    void startImageDecode(QByteArray data, ImageLoadSession session);
     void startComicBookLoad(ImageLoadSession session);
+    std::optional<ImageLoadSession> currentLoadSessionForDecodeRequest(
+        const ImageDecodeRequest &request) const;
     bool isCurrentLoadSession(const ImageLoadSession &session) const;
     void clearLoadSession(const ImageLoadSession &session);
     bool tryDisplayPredecodedImage(ImageLoadSession session);
@@ -69,7 +71,7 @@ private:
     DecodedImageCallback m_decodedImage;
     PredecodedImageCallback m_predecodedImage;
     TakePredecodedImageCallback m_takePredecodedImage;
-    ImageIoJob m_imageLoadJob;
+    ImageDecodeJob m_decodeJob;
     ImageIoJob m_archiveListJob;
     quint64 m_nextLoadSessionId = 0;
     std::optional<ImageLoadSession> m_loadSession;

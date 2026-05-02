@@ -9,12 +9,6 @@
 #include "imageurl.h"
 #include "kiriimagedecoder.h"
 
-#include <QByteArray>
-#include <QMetaObject>
-#include <QPointer>
-#include <QRunnable>
-#include <QThreadPool>
-#include <Qt>
 #include <memory>
 #include <optional>
 #include <utility>
@@ -24,16 +18,35 @@ namespace {
 using KiriView::DecodedImageResult;
 using KiriView::decodedImageResultIsPredecodeCacheable;
 using KiriView::decodeImageData;
+using KiriView::ImageDecodeJob;
+using KiriView::ImageIoJob;
 using KiriView::isUrlInsideArchiveRoot;
 using KiriView::navigationSourceUrl;
 using KiriView::normalizedImageUrl;
 using KiriView::predecodeWindowImageUrls;
+
+ImageIoJob startImageDataLoad(QObject *receiver, QUrl imageUrl,
+    ImageDecodeJob::DataCallback callback, ImageDecodeJob::ErrorCallback errorCallback)
+{
+    return KiriView::startStoredImageDataLoad(
+        receiver, std::move(imageUrl), std::move(callback), std::move(errorCallback));
+}
+
+DecodedImageResult decodeImageBytes(const QByteArray &data) { return decodeImageData(data); }
 }
 
 namespace KiriView {
 ImagePredecodeCoordinator::ImagePredecodeCoordinator(QObject *parent)
     : QObject(parent)
+    , m_decodeJob(this, startImageDataLoad, decodeImageBytes)
 {
+    m_decodeJob.setDecodedCallback(
+        [this](ImageDecodeRequest request, std::shared_ptr<DecodedImageResult> result) {
+            finishPredecodeImageDecode(request, *result);
+        });
+    m_decodeJob.setLoadErrorCallback([this](const ImageDecodeRequest &request, const QString &) {
+        finishPredecodeImageLoadError(request);
+    });
 }
 
 void ImagePredecodeCoordinator::schedule(Context context)
@@ -138,58 +151,37 @@ void ImagePredecodeCoordinator::startPredecodeImageLoad(
 
     const QUrl normalizedUrl = normalizedImageUrl(url);
     m_activePredecodeUrl = normalizedUrl;
-    m_imageLoadJob = startStoredImageDataLoad(
-        this, url,
-        [this, generation, url, comicBookRootUrl, normalizedUrl](QByteArray data) {
-            if (generation != m_generation || normalizedUrl != m_activePredecodeUrl) {
-                return;
-            }
-
-            startPredecodeImageDecode(std::move(data), url, comicBookRootUrl, generation);
-        },
-        [this, generation, normalizedUrl](const QString &) {
-            if (generation != m_generation || normalizedUrl != m_activePredecodeUrl) {
-                return;
-            }
-
-            m_activePredecodeUrl = QUrl();
-            startNextPredecodeImageLoad(generation);
-        });
+    m_activePredecodeComicBookRootUrl = comicBookRootUrl;
+    m_decodeJob.start(ImageDecodeRequest { generation, url });
 }
 
-void ImagePredecodeCoordinator::startPredecodeImageDecode(
-    QByteArray data, const QUrl &url, const QUrl &comicBookRootUrl, quint64 generation)
+void ImagePredecodeCoordinator::finishPredecodeImageLoadError(const ImageDecodeRequest &request)
 {
-    const QPointer<ImagePredecodeCoordinator> coordinator(this);
-    QThreadPool::globalInstance()->start(QRunnable::create(
-        [coordinator, data = std::move(data), url, comicBookRootUrl, generation]() mutable {
-            auto result = std::make_shared<DecodedImageResult>(decodeImageData(data));
-            if (coordinator == nullptr) {
-                return;
-            }
+    if (request.id != m_generation
+        || normalizedImageUrl(request.imageUrl) != m_activePredecodeUrl) {
+        return;
+    }
 
-            QMetaObject::invokeMethod(
-                coordinator.data(),
-                [coordinator, generation, url, comicBookRootUrl, result]() {
-                    if (coordinator == nullptr || generation != coordinator->m_generation) {
-                        return;
-                    }
+    m_activePredecodeUrl = QUrl();
+    m_activePredecodeComicBookRootUrl = QUrl();
+    startNextPredecodeImageLoad(request.id);
+}
 
-                    const QUrl normalizedUrl = normalizedImageUrl(url);
-                    if (normalizedUrl != coordinator->m_activePredecodeUrl) {
-                        return;
-                    }
+void ImagePredecodeCoordinator::finishPredecodeImageDecode(
+    ImageDecodeRequest request, const DecodedImageResult &result)
+{
+    if (request.id != m_generation
+        || normalizedImageUrl(request.imageUrl) != m_activePredecodeUrl) {
+        return;
+    }
 
-                    if (decodedImageResultIsPredecodeCacheable(
-                            *result, KiriView::PredecodeCache::byteBudget())) {
-                        coordinator->m_cache.cacheImage(url, comicBookRootUrl, result->image);
-                    }
+    if (decodedImageResultIsPredecodeCacheable(result, KiriView::PredecodeCache::byteBudget())) {
+        m_cache.cacheImage(request.imageUrl, m_activePredecodeComicBookRootUrl, result.image);
+    }
 
-                    coordinator->m_activePredecodeUrl = QUrl();
-                    coordinator->startNextPredecodeImageLoad(generation);
-                },
-                Qt::QueuedConnection);
-        }));
+    m_activePredecodeUrl = QUrl();
+    m_activePredecodeComicBookRootUrl = QUrl();
+    startNextPredecodeImageLoad(request.id);
 }
 
 void ImagePredecodeCoordinator::cancel()
@@ -197,8 +189,9 @@ void ImagePredecodeCoordinator::cancel()
     ++m_generation;
     m_listerJob.cancel();
     m_listJob.cancel();
-    m_imageLoadJob.cancel();
+    m_decodeJob.cancel();
     m_activePredecodeUrl = QUrl();
+    m_activePredecodeComicBookRootUrl = QUrl();
     m_cache.clearQueuedLoads();
 }
 

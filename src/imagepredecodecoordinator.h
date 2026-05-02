@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_IMAGEPREDECODECOORDINATOR_H
 #define KIRIVIEW_IMAGEPREDECODECOORDINATOR_H
 
+#include "imagedecodejob.h"
 #include "imageiojob.h"
 #include "imagelocation.h"
 #include "predecodecache.h"
@@ -39,14 +40,15 @@ private:
         const Context &context, quint64 generation);
     void startNextPredecodeImageLoad(quint64 generation);
     void startPredecodeImageLoad(const QUrl &url, const QUrl &comicBookRootUrl, quint64 generation);
-    void startPredecodeImageDecode(
-        QByteArray data, const QUrl &url, const QUrl &comicBookRootUrl, quint64 generation);
+    void finishPredecodeImageLoadError(const ImageDecodeRequest &request);
+    void finishPredecodeImageDecode(ImageDecodeRequest request, const DecodedImageResult &result);
 
     ImageIoJob m_listerJob;
     ImageIoJob m_listJob;
-    ImageIoJob m_imageLoadJob;
+    ImageDecodeJob m_decodeJob;
     PredecodeCache m_cache;
     QUrl m_activePredecodeUrl;
+    QUrl m_activePredecodeComicBookRootUrl;
     quint64 m_generation = 0;
 };
 }

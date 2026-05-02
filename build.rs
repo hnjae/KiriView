@@ -34,6 +34,7 @@ fn main() {
     .cpp_file("src/imagedocumentcontroller.cpp")
     .cpp_file("src/imagedocumentnavigationcontroller.cpp")
     .cpp_file("src/imagedocumentstate.cpp")
+    .cpp_file("src/imagedecodejob.cpp")
     .cpp_file("src/imagebytecost.cpp")
     .cpp_file("src/imagecontainer.cpp")
     .cpp_file("src/imageformatregistry.cpp")
