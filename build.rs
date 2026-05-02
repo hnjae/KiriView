@@ -40,6 +40,7 @@ fn main() {
     .cpp_file(CppFile::from("src/kiriimageview.h"))
     .file("src/apngdecoder.rs")
     .file("src/avifcompat.rs")
+    .file("src/imagenavigationmodel.rs")
     .file("src/imageviewportgeometry.rs")
     .file("src/imagezoomstate.rs")
     .cpp_file("src/imagedocumentcontrollerdefaults.cpp")

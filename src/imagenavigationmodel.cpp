@@ -5,6 +5,7 @@
 
 #include "imageformatregistry.h"
 #include "imageurl.h"
+#include "kiriview/src/imagenavigationmodel.cxx.h"
 
 #include <QCollator>
 #include <QLocale>
@@ -15,12 +16,30 @@
 #include <utility>
 
 namespace {
-constexpr std::ptrdiff_t predecodePreviousImageCount = 2;
-constexpr std::ptrdiff_t predecodeNextImageCount = 4;
+KiriView::RustNavigationDirection rustNavigationDirection(KiriView::NavigationDirection direction)
+{
+    switch (direction) {
+    case KiriView::NavigationDirection::Previous:
+        return KiriView::RustNavigationDirection::Previous;
+    case KiriView::NavigationDirection::Next:
+        return KiriView::RustNavigationDirection::Next;
+    }
+
+    return KiriView::RustNavigationDirection::Next;
+}
+
+KiriView::RustNavigationIndex rustNavigationIndex(std::optional<std::size_t> index)
+{
+    if (!index.has_value()) {
+        return KiriView::RustNavigationIndex { false, 0 };
+    }
+
+    return KiriView::RustNavigationIndex { true, *index };
+}
 
 template <typename Candidate>
-std::optional<std::size_t> adjacentCandidateIndex(const std::vector<Candidate> &candidates,
-    const QUrl &currentUrl, KiriView::NavigationDirection direction)
+std::optional<std::size_t> currentCandidateIndex(
+    const std::vector<Candidate> &candidates, const QUrl &currentUrl)
 {
     const auto current = std::find_if(
         candidates.cbegin(), candidates.cend(), [&currentUrl](const Candidate &candidate) {
@@ -30,19 +49,7 @@ std::optional<std::size_t> adjacentCandidateIndex(const std::vector<Candidate> &
         return std::nullopt;
     }
 
-    const auto currentIndex = std::distance(candidates.cbegin(), current);
-    if (direction == KiriView::NavigationDirection::Previous) {
-        if (currentIndex == 0) {
-            return std::nullopt;
-        }
-        return static_cast<std::size_t>(currentIndex - 1);
-    }
-
-    const auto nextIndex = currentIndex + 1;
-    if (nextIndex == static_cast<std::ptrdiff_t>(candidates.size())) {
-        return std::nullopt;
-    }
-    return static_cast<std::size_t>(nextIndex);
+    return static_cast<std::size_t>(std::distance(candidates.cbegin(), current));
 }
 
 template <typename Candidate> void sortNavigationCandidates(std::vector<Candidate> *candidates)
@@ -75,30 +82,11 @@ std::vector<QUrl> predecodeWindowImageUrls(
     const std::vector<ImageNavigationCandidate> &candidates, const QUrl &currentUrl)
 {
     std::vector<QUrl> urls;
-    const auto current = std::find_if(candidates.cbegin(), candidates.cend(),
-        [&currentUrl](const ImageNavigationCandidate &candidate) {
-            return sameNormalizedUrl(candidate.url, currentUrl);
-        });
-    if (current == candidates.cend()) {
-        return urls;
-    }
-
-    const auto currentIndex = std::distance(candidates.cbegin(), current);
-    auto appendOffset = [&urls, &candidates, currentIndex](std::ptrdiff_t offset) {
-        const std::ptrdiff_t targetIndex = currentIndex + offset;
-        if (targetIndex < 0 || targetIndex >= static_cast<std::ptrdiff_t>(candidates.size())) {
-            return;
-        }
-
-        urls.push_back(candidates.at(static_cast<std::size_t>(targetIndex)).url);
-    };
-
-    appendOffset(0);
-    for (std::ptrdiff_t offset = 1; offset <= predecodeNextImageCount; ++offset) {
-        appendOffset(offset);
-        if (offset <= predecodePreviousImageCount) {
-            appendOffset(-offset);
-        }
+    const rust::Vec<std::size_t> indices = rustPredecodeWindowImageIndices(
+        candidates.size(), rustNavigationIndex(currentCandidateIndex(candidates, currentUrl)));
+    urls.reserve(indices.size());
+    for (std::size_t index : indices) {
+        urls.push_back(candidates.at(index).url);
     }
     return urls;
 }
@@ -109,8 +97,10 @@ std::vector<QUrl> imageNavigationCandidateUrls(
     std::vector<QUrl> urls;
     urls.reserve(candidates.size());
 
-    for (const ImageNavigationCandidate &candidate : candidates) {
-        urls.push_back(candidate.url);
+    const rust::Vec<std::size_t> indices
+        = rustImageNavigationCandidateUrlIndices(candidates.size());
+    for (std::size_t index : indices) {
+        urls.push_back(candidates.at(index).url);
     }
     return urls;
 }
@@ -119,26 +109,28 @@ std::optional<QUrl> adjacentImageNavigationUrl(
     const std::vector<ImageNavigationCandidate> &candidates, const QUrl &currentUrl,
     NavigationDirection direction)
 {
-    const std::optional<std::size_t> targetIndex
-        = adjacentCandidateIndex(candidates, currentUrl, direction);
-    if (!targetIndex.has_value()) {
+    const RustNavigationIndex targetIndex = rustAdjacentNavigationCandidateIndex(candidates.size(),
+        rustNavigationIndex(currentCandidateIndex(candidates, currentUrl)),
+        rustNavigationDirection(direction));
+    if (!targetIndex.found) {
         return std::nullopt;
     }
 
-    return candidates.at(*targetIndex).url;
+    return candidates.at(targetIndex.index).url;
 }
 
 std::optional<ContainerNavigationCandidate> adjacentContainerNavigationCandidate(
     const std::vector<ContainerNavigationCandidate> &candidates, const QUrl &currentContainerUrl,
     NavigationDirection direction)
 {
-    const std::optional<std::size_t> targetIndex
-        = adjacentCandidateIndex(candidates, currentContainerUrl, direction);
-    if (!targetIndex.has_value()) {
+    const RustNavigationIndex targetIndex = rustAdjacentNavigationCandidateIndex(candidates.size(),
+        rustNavigationIndex(currentCandidateIndex(candidates, currentContainerUrl)),
+        rustNavigationDirection(direction));
+    if (!targetIndex.found) {
         return std::nullopt;
     }
 
-    return candidates.at(*targetIndex);
+    return candidates.at(targetIndex.index);
 }
 
 PageNavigationState pageNavigationStateForUrls(std::vector<QUrl> urls, const QUrl &currentUrl)
@@ -148,14 +140,16 @@ PageNavigationState pageNavigationStateForUrls(std::vector<QUrl> urls, const QUr
         = [&currentUrl](const QUrl &url) { return sameNormalizedUrl(url, currentUrl); };
     const auto current = std::find_if(state.urls.cbegin(), state.urls.cend(), matchesCurrentUrl);
 
-    if (current == state.urls.cend()) {
-        if (currentUrl.isValid() && !currentUrl.isEmpty()) {
-            state.urls.insert(state.urls.begin(), normalizedImageUrl(currentUrl));
-            state.currentIndex = 0;
-        }
-    } else {
-        state.currentIndex = static_cast<int>(std::distance(state.urls.cbegin(), current));
+    std::optional<std::size_t> currentIndex;
+    if (current != state.urls.cend()) {
+        currentIndex = static_cast<std::size_t>(std::distance(state.urls.cbegin(), current));
     }
+    const RustPageNavigationUpdate update = rustPageNavigationStateUpdate(
+        rustNavigationIndex(currentIndex), currentUrl.isValid() && !currentUrl.isEmpty());
+    if (update.insert_current_url) {
+        state.urls.insert(state.urls.begin(), normalizedImageUrl(currentUrl));
+    }
+    state.currentIndex = update.current_index;
 
     return state;
 }
