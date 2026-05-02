@@ -23,6 +23,9 @@ fn main() {
             .qml_file("src/qml/ImageStateOverlay.qml")
             .qml_file("src/qml/ShortcutHelpDialog.qml"),
     )
+    // Do not export the whole crate root as C++ headers. That makes Cargo watch
+    // build artifacts such as build-dir/, including symlinks into /run.
+    .crate_include_root(None)
     .cpp_file(CppFile::from("src/kiriimageview.h"))
     .file("src/avifcompat.rs")
     .cpp_file("src/asyncobjectslot.cpp")
