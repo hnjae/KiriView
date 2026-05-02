@@ -7,6 +7,7 @@
 #include <QImage>
 #include <QUrl>
 #include <QtGlobal>
+#include <deque>
 #include <optional>
 #include <vector>
 
@@ -49,7 +50,7 @@ private:
     void trimImagesToWindow();
 
     std::vector<QUrl> m_windowUrls;
-    std::vector<PredecodeRequest> m_queue;
+    std::deque<PredecodeRequest> m_queue;
     std::vector<PredecodedImage> m_images;
     qsizetype m_byteBudget = defaultByteBudget();
 };

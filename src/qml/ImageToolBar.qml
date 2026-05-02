@@ -12,18 +12,10 @@ Controls.ToolBar {
 
     required property KiriImageView imageView
     required property bool imageReady
-    required property bool helpDialogOpen
     required property int minimumManualZoomPercent
     required property int maximumManualZoomPercent
     required property int zoomStepPercent
-    required property var openAction
-    required property var previousContainerAction
-    required property var nextContainerAction
-    required property var previousImageAction
-    required property var nextImageAction
-    required property var fitAction
-    required property var fitHeightAction
-    required property var fitWidthAction
+    required property var actions
 
     function clampValue(value, minimum, maximum) {
         return Math.max(minimum, Math.min(maximum, value));
@@ -53,7 +45,7 @@ Controls.ToolBar {
             spacing: Kirigami.Units.smallSpacing
 
             Controls.ToolButton {
-                action: root.openAction
+                action: root.actions.openAction
                 display: Controls.AbstractButton.IconOnly
 
                 Controls.ToolTip.text: action.text
@@ -61,7 +53,7 @@ Controls.ToolBar {
             }
 
             Controls.ToolButton {
-                action: root.previousContainerAction
+                action: root.actions.previousContainerAction
                 display: Controls.AbstractButton.IconOnly
 
                 Controls.ToolTip.text: action.text
@@ -69,7 +61,7 @@ Controls.ToolBar {
             }
 
             Controls.ToolButton {
-                action: root.nextContainerAction
+                action: root.actions.nextContainerAction
                 display: Controls.AbstractButton.IconOnly
 
                 Controls.ToolTip.text: action.text
@@ -85,7 +77,7 @@ Controls.ToolBar {
             spacing: Kirigami.Units.smallSpacing
 
             Controls.ToolButton {
-                action: root.previousImageAction
+                action: root.actions.previousImageAction
                 display: Controls.AbstractButton.IconOnly
 
                 Controls.ToolTip.text: action.text
@@ -148,7 +140,7 @@ Controls.ToolBar {
             }
 
             Controls.ToolButton {
-                action: root.nextImageAction
+                action: root.actions.nextImageAction
                 display: Controls.AbstractButton.IconOnly
 
                 Controls.ToolTip.text: action.text
@@ -167,7 +159,7 @@ Controls.ToolBar {
             Controls.ToolButton {
                 id: fitMenuButton
 
-                enabled: root.imageReady && !root.helpDialogOpen
+                enabled: root.actions.fitAction.enabled
                 display: Controls.AbstractButton.IconOnly
                 icon.name: "zoom-fit-best-symbolic"
                 text: "Fit"
@@ -183,19 +175,19 @@ Controls.ToolBar {
                     y: fitMenuButton.height
 
                     Controls.MenuItem {
-                        action: root.fitAction
+                        action: root.actions.fitAction
                         checkable: true
                         checked: root.imageView.zoomMode === KiriImageView.Fit
                     }
 
                     Controls.MenuItem {
-                        action: root.fitHeightAction
+                        action: root.actions.fitHeightAction
                         checkable: true
                         checked: root.imageView.zoomMode === KiriImageView.FitHeight
                     }
 
                     Controls.MenuItem {
-                        action: root.fitWidthAction
+                        action: root.actions.fitWidthAction
                         checkable: true
                         checked: root.imageView.zoomMode === KiriImageView.FitWidth
                     }

@@ -3,7 +3,6 @@
 
 #include "imagepredecodecoordinator.h"
 
-#include "imageiojobs.h"
 #include "imagenavigationmodel.h"
 #include "imageurl.h"
 #include "kiriimagedecoder.h"
@@ -16,26 +15,14 @@
 namespace {
 using KiriView::DecodedImageResult;
 using KiriView::decodedImageResultIsPredecodeCacheable;
-using KiriView::decodeImageData;
-using KiriView::ImageDecodeJob;
-using KiriView::ImageIoJob;
 using KiriView::normalizedImageUrl;
 using KiriView::predecodeWindowImageUrls;
-
-ImageIoJob startImageDataLoad(QObject *receiver, QUrl imageUrl,
-    ImageDecodeJob::DataCallback callback, ImageDecodeJob::ErrorCallback errorCallback)
-{
-    return KiriView::startStoredImageDataLoad(
-        receiver, std::move(imageUrl), std::move(callback), std::move(errorCallback));
-}
-
-DecodedImageResult decodeImageBytes(const QByteArray &data) { return decodeImageData(data); }
 }
 
 namespace KiriView {
 ImagePredecodeCoordinator::ImagePredecodeCoordinator(QObject *parent)
     : QObject(parent)
-    , m_decodeJob(this, startImageDataLoad, decodeImageBytes)
+    , m_decodeJob(this)
 {
     m_decodeJob.setDecodedCallback(
         [this](ImageDecodeRequest request, std::shared_ptr<DecodedImageResult> result) {

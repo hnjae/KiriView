@@ -32,6 +32,7 @@ public:
         = std::function<void(ImageDecodeRequest, std::shared_ptr<DecodedImageResult>)>;
     using LoadErrorCallback = std::function<void(const ImageDecodeRequest &, const QString &)>;
 
+    explicit ImageDecodeJob(QObject *parent = nullptr);
     ImageDecodeJob(QObject *parent, DataLoader dataLoader, DataDecoder dataDecoder);
 
     void setDecodedCallback(DecodedCallback callback);

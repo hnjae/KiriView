@@ -1,0 +1,154 @@
+// SPDX-FileCopyrightText: 2026 KIM Hyunjae
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+import QtQuick
+import io.github.hnjae.kiriview
+
+Item {
+    id: root
+
+    required property KiriImageView imageView
+    required property var imageViewport
+    required property var imageToolBar
+    required property bool helpDialogOpen
+
+    readonly property bool imageReady: imageView.status === KiriImageView.Ready
+    readonly property bool imagePannable: imageViewport.imagePannable
+    readonly property int keyboardPanDistance: 64
+    readonly property int zoomStepPercent: imageView.zoomStepPercent
+
+    signal shortcutHelpRequested
+    signal toggleFullScreenRequested
+
+    function panBy(deltaX, deltaY) {
+        return imageViewport.panBy(deltaX, deltaY);
+    }
+
+    function textInputFocused() {
+        return imageToolBar.textInputFocused();
+    }
+
+    function zoomBy(deltaPercent, viewportX, viewportY) {
+        return imageViewport.zoomBy(deltaPercent, viewportX, viewportY);
+    }
+
+    Shortcut {
+        context: Qt.WindowShortcut
+        enabled: root.imageReady && !root.helpDialogOpen
+        sequence: "Ctrl+="
+
+        onActivated: root.zoomBy(root.zoomStepPercent, root.imageViewport.viewportWidth / 2, root.imageViewport.viewportHeight / 2)
+    }
+
+    Shortcut {
+        context: Qt.WindowShortcut
+        enabled: root.imageReady && !root.helpDialogOpen
+        sequence: "Ctrl++"
+
+        onActivated: root.zoomBy(root.zoomStepPercent, root.imageViewport.viewportWidth / 2, root.imageViewport.viewportHeight / 2)
+    }
+
+    Shortcut {
+        context: Qt.WindowShortcut
+        enabled: root.imageReady && !root.helpDialogOpen
+        sequence: "Ctrl+-"
+
+        onActivated: root.zoomBy(-root.zoomStepPercent, root.imageViewport.viewportWidth / 2, root.imageViewport.viewportHeight / 2)
+    }
+
+    Shortcut {
+        context: Qt.WindowShortcut
+        enabled: root.imagePannable && !root.textInputFocused() && !root.helpDialogOpen
+        sequence: "Left"
+
+        onActivated: root.panBy(-root.keyboardPanDistance, 0)
+    }
+
+    Shortcut {
+        context: Qt.WindowShortcut
+        enabled: root.imagePannable && !root.textInputFocused() && !root.helpDialogOpen
+        sequence: "Right"
+
+        onActivated: root.panBy(root.keyboardPanDistance, 0)
+    }
+
+    Shortcut {
+        context: Qt.WindowShortcut
+        enabled: root.imagePannable && !root.textInputFocused() && !root.helpDialogOpen
+        sequence: "Up"
+
+        onActivated: root.panBy(0, -root.keyboardPanDistance)
+    }
+
+    Shortcut {
+        context: Qt.WindowShortcut
+        enabled: root.imagePannable && !root.textInputFocused() && !root.helpDialogOpen
+        sequence: "Down"
+
+        onActivated: root.panBy(0, root.keyboardPanDistance)
+    }
+
+    Shortcut {
+        context: Qt.WindowShortcut
+        enabled: root.imageReady && !root.helpDialogOpen
+        sequence: StandardKey.MoveToPreviousPage
+
+        onActivated: root.imageView.openPreviousImage()
+    }
+
+    Shortcut {
+        context: Qt.WindowShortcut
+        enabled: root.imageReady && !root.helpDialogOpen
+        sequence: StandardKey.MoveToNextPage
+
+        onActivated: root.imageView.openNextImage()
+    }
+
+    Shortcut {
+        context: Qt.WindowShortcut
+        enabled: root.imageView.containerNavigationAvailable && !root.textInputFocused() && !root.helpDialogOpen
+        sequence: "["
+
+        onActivated: root.imageView.openPreviousContainer()
+    }
+
+    Shortcut {
+        context: Qt.WindowShortcut
+        enabled: root.imageView.containerNavigationAvailable && !root.textInputFocused() && !root.helpDialogOpen
+        sequence: "]"
+
+        onActivated: root.imageView.openNextContainer()
+    }
+
+    Shortcut {
+        context: Qt.WindowShortcut
+        enabled: !root.textInputFocused() && !root.helpDialogOpen
+        sequence: "F"
+
+        onActivated: root.toggleFullScreenRequested()
+    }
+
+    Shortcut {
+        context: Qt.WindowShortcut
+        enabled: !root.helpDialogOpen
+        sequence: "F11"
+
+        onActivated: root.toggleFullScreenRequested()
+    }
+
+    Shortcut {
+        context: Qt.WindowShortcut
+        enabled: !root.textInputFocused() && !root.helpDialogOpen
+        sequence: "?"
+
+        onActivated: root.shortcutHelpRequested()
+    }
+
+    Shortcut {
+        context: Qt.WindowShortcut
+        enabled: !root.helpDialogOpen
+        sequence: "F1"
+
+        onActivated: root.shortcutHelpRequested()
+    }
+}

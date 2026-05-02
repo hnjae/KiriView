@@ -10,6 +10,18 @@
 #include <cstddef>
 #include <iterator>
 
+namespace {
+std::optional<QUrl> normalizedValidImageUrl(const QUrl &url)
+{
+    const QUrl normalizedUrl = KiriView::normalizedImageUrl(url);
+    if (!normalizedUrl.isValid() || normalizedUrl.isEmpty()) {
+        return std::nullopt;
+    }
+
+    return normalizedUrl;
+}
+}
+
 namespace KiriView {
 PredecodeCache::PredecodeCache(qsizetype byteBudget)
     : m_byteBudget(byteBudget > 0 ? byteBudget : defaultByteBudget())
@@ -31,15 +43,18 @@ void PredecodeCache::setWindowUrls(const std::vector<QUrl> &urls)
     m_queue.clear();
 
     for (const QUrl &url : urls) {
-        const QUrl normalizedUrl = normalizedImageUrl(url);
+        const std::optional<QUrl> normalizedUrl = normalizedValidImageUrl(url);
+        if (!normalizedUrl.has_value()) {
+            continue;
+        }
         const bool alreadyInWindow
-            = std::find(m_windowUrls.cbegin(), m_windowUrls.cend(), normalizedUrl)
+            = std::find(m_windowUrls.cbegin(), m_windowUrls.cend(), *normalizedUrl)
             != m_windowUrls.cend();
-        if (!normalizedUrl.isValid() || normalizedUrl.isEmpty() || alreadyInWindow) {
+        if (alreadyInWindow) {
             continue;
         }
 
-        m_windowUrls.push_back(normalizedUrl);
+        m_windowUrls.push_back(*normalizedUrl);
     }
 
     trimImagesToWindow();
@@ -67,7 +82,7 @@ std::optional<PredecodeRequest> PredecodeCache::takeNextRequest(const QUrl &acti
 
     while (!m_queue.empty()) {
         PredecodeRequest request = std::move(m_queue.front());
-        m_queue.erase(m_queue.begin());
+        m_queue.pop_front();
 
         if (!request.url.isValid() || request.url.isEmpty() || !windowContains(request.url)
             || hasImage(request.url)) {
@@ -82,33 +97,46 @@ std::optional<PredecodeRequest> PredecodeCache::takeNextRequest(const QUrl &acti
 
 bool PredecodeCache::windowContains(const QUrl &url) const
 {
-    const QUrl normalizedUrl = normalizedImageUrl(url);
-    return std::find(m_windowUrls.cbegin(), m_windowUrls.cend(), normalizedUrl)
+    const std::optional<QUrl> normalizedUrl = normalizedValidImageUrl(url);
+    return normalizedUrl.has_value()
+        && std::find(m_windowUrls.cbegin(), m_windowUrls.cend(), *normalizedUrl)
         != m_windowUrls.cend();
 }
 
 bool PredecodeCache::hasImage(const QUrl &url) const
 {
-    const QUrl normalizedUrl = normalizedImageUrl(url);
+    const std::optional<QUrl> normalizedUrl = normalizedValidImageUrl(url);
+    if (!normalizedUrl.has_value()) {
+        return false;
+    }
+
     return std::any_of(m_images.cbegin(), m_images.cend(),
-        [&normalizedUrl](const PredecodedImage &entry) { return entry.url == normalizedUrl; });
+        [&normalizedUrl](const PredecodedImage &entry) { return entry.url == *normalizedUrl; });
 }
 
 bool PredecodeCache::isInFlight(const QUrl &url, const QUrl &activePredecodeUrl) const
 {
-    const QUrl normalizedUrl = normalizedImageUrl(url);
-    return normalizedUrl == activePredecodeUrl
+    const std::optional<QUrl> normalizedUrl = normalizedValidImageUrl(url);
+    if (!normalizedUrl.has_value()) {
+        return false;
+    }
+
+    return *normalizedUrl == activePredecodeUrl
         || std::any_of(
             m_queue.cbegin(), m_queue.cend(), [&normalizedUrl](const PredecodeRequest &request) {
-                return request.url == normalizedUrl;
+                return request.url == *normalizedUrl;
             });
 }
 
 bool PredecodeCache::findImage(const QUrl &url, QImage *image, QUrl *comicBookRootUrl) const
 {
-    const QUrl normalizedUrl = normalizedImageUrl(url);
+    const std::optional<QUrl> normalizedUrl = normalizedValidImageUrl(url);
+    if (!normalizedUrl.has_value()) {
+        return false;
+    }
+
     const auto cached = std::find_if(m_images.cbegin(), m_images.cend(),
-        [&normalizedUrl](const PredecodedImage &entry) { return entry.url == normalizedUrl; });
+        [&normalizedUrl](const PredecodedImage &entry) { return entry.url == *normalizedUrl; });
     if (cached == m_images.cend()) {
         return false;
     }
@@ -125,16 +153,16 @@ void PredecodeCache::cacheImage(const QUrl &url, const QUrl &comicBookRootUrl, c
         return;
     }
 
-    const QUrl normalizedUrl = normalizedImageUrl(url);
-    if (!windowContains(normalizedUrl)) {
+    const std::optional<QUrl> normalizedUrl = normalizedValidImageUrl(url);
+    if (!normalizedUrl.has_value() || !windowContains(*normalizedUrl)) {
         return;
     }
 
     m_images.erase(
         std::remove_if(m_images.begin(), m_images.end(),
-            [&normalizedUrl](const PredecodedImage &entry) { return entry.url == normalizedUrl; }),
+            [&normalizedUrl](const PredecodedImage &entry) { return entry.url == *normalizedUrl; }),
         m_images.end());
-    m_images.push_back(PredecodedImage { normalizedUrl, comicBookRootUrl, image, byteCost });
+    m_images.push_back(PredecodedImage { *normalizedUrl, comicBookRootUrl, image, byteCost });
 
     trimImagesToWindow();
 }

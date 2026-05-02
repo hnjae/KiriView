@@ -19,9 +19,11 @@ fn main() {
         QmlModule::new("io.github.hnjae.kiriview")
             .depend("QtQuick")
             .qml_file("src/qml/Main.qml")
+            .qml_file("src/qml/ImageActions.qml")
             .qml_file("src/qml/ImageToolBar.qml")
             .qml_file("src/qml/ImageViewport.qml")
             .qml_file("src/qml/ImageStateOverlay.qml")
+            .qml_file("src/qml/ImageShortcuts.qml")
             .qml_file("src/qml/ShortcutHelpDialog.qml"),
     )
     // Do not export the whole crate root as C++ headers. That makes Cargo watch
@@ -35,6 +37,7 @@ fn main() {
     .cpp_file("src/imagedocumentnavigationcontroller.cpp")
     .cpp_file("src/imagedocumentstate.cpp")
     .cpp_file("src/imagedecodejob.cpp")
+    .cpp_file("src/imagedecodejobdefaults.cpp")
     .cpp_file("src/imagebytecost.cpp")
     .cpp_file("src/imagecandidaterepository.cpp")
     .cpp_file("src/imagecontainer.cpp")

@@ -4,7 +4,6 @@
 #include "imageloader.h"
 
 #include "imagecontainer.h"
-#include "imageiojobs.h"
 #include "kiriimagedecoder.h"
 
 #include <memory>
@@ -15,26 +14,13 @@
 namespace {
 using KiriView::comicBookArchiveRootUrl;
 using KiriView::containingComicBookArchiveRootUrl;
-using KiriView::DecodedImageResult;
-using KiriView::decodeImageData;
-using KiriView::ImageDecodeJob;
-using KiriView::ImageIoJob;
 using KiriView::isUrlInsideArchiveRoot;
-
-ImageIoJob startImageDataLoad(QObject *receiver, QUrl imageUrl,
-    ImageDecodeJob::DataCallback callback, ImageDecodeJob::ErrorCallback errorCallback)
-{
-    return KiriView::startStoredImageDataLoad(
-        receiver, std::move(imageUrl), std::move(callback), std::move(errorCallback));
-}
-
-DecodedImageResult decodeImageBytes(const QByteArray &data) { return decodeImageData(data); }
 }
 
 namespace KiriView {
 ImageLoader::ImageLoader(QObject *parent)
     : QObject(parent)
-    , m_decodeJob(this, startImageDataLoad, decodeImageBytes)
+    , m_decodeJob(this)
 {
     m_decodeJob.setDecodedCallback(
         [this](ImageDecodeRequest request, std::shared_ptr<DecodedImageResult> result) {

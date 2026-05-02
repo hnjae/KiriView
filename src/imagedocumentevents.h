@@ -6,143 +6,176 @@
 
 #include <QString>
 #include <QUrl>
+#include <utility>
+#include <variant>
 
 namespace KiriView {
-enum class DocumentCommandType {
-    ClearImage,
-    UpdatePageNavigation,
-    ScheduleAdjacentImagePredecode,
-    OpenUrl,
-    OpenContainerImage,
-    FinishEmptyContainerNavigation,
-    FinishContainerNavigationError,
-    FinishAnimationError,
+struct ClearImageCommand {
+};
+
+struct UpdatePageNavigationCommand {
+};
+
+struct ScheduleAdjacentImagePredecodeCommand {
+};
+
+struct OpenUrlCommand {
+    QUrl url;
+};
+
+struct OpenContainerImageCommand {
+    QUrl imageUrl;
+    QUrl containerUrl;
+};
+
+struct FinishEmptyContainerNavigationCommand {
+    QUrl containerUrl;
+};
+
+struct FinishContainerNavigationErrorCommand {
+    QUrl containerUrl;
+    QString errorString;
+};
+
+struct FinishAnimationErrorCommand {
+    QString errorString;
 };
 
 struct DocumentCommand {
-    static DocumentCommand clearImage() { return DocumentCommand(DocumentCommandType::ClearImage); }
+    using Payload = std::variant<ClearImageCommand, UpdatePageNavigationCommand,
+        ScheduleAdjacentImagePredecodeCommand, OpenUrlCommand, OpenContainerImageCommand,
+        FinishEmptyContainerNavigationCommand, FinishContainerNavigationErrorCommand,
+        FinishAnimationErrorCommand>;
+
+    static DocumentCommand clearImage() { return DocumentCommand(ClearImageCommand {}); }
 
     static DocumentCommand updatePageNavigation()
     {
-        return DocumentCommand(DocumentCommandType::UpdatePageNavigation);
+        return DocumentCommand(UpdatePageNavigationCommand {});
     }
 
     static DocumentCommand scheduleAdjacentImagePredecode()
     {
-        return DocumentCommand(DocumentCommandType::ScheduleAdjacentImagePredecode);
+        return DocumentCommand(ScheduleAdjacentImagePredecodeCommand {});
     }
 
     static DocumentCommand openUrl(const QUrl &url)
     {
-        return DocumentCommand(DocumentCommandType::OpenUrl, url);
+        return DocumentCommand(OpenUrlCommand { url });
     }
 
     static DocumentCommand openContainerImage(const QUrl &imageUrl, const QUrl &containerUrl)
     {
-        return DocumentCommand(DocumentCommandType::OpenContainerImage, imageUrl, containerUrl);
+        return DocumentCommand(OpenContainerImageCommand { imageUrl, containerUrl });
     }
 
     static DocumentCommand finishEmptyContainerNavigation(const QUrl &containerUrl)
     {
-        return DocumentCommand(
-            DocumentCommandType::FinishEmptyContainerNavigation, QUrl(), containerUrl);
+        return DocumentCommand(FinishEmptyContainerNavigationCommand { containerUrl });
     }
 
     static DocumentCommand finishContainerNavigationError(
         const QUrl &containerUrl, const QString &errorString)
     {
-        return DocumentCommand(
-            DocumentCommandType::FinishContainerNavigationError, QUrl(), containerUrl, errorString);
+        return DocumentCommand(FinishContainerNavigationErrorCommand { containerUrl, errorString });
     }
 
     static DocumentCommand finishAnimationError(const QString &errorString)
     {
-        return DocumentCommand(
-            DocumentCommandType::FinishAnimationError, QUrl(), QUrl(), errorString);
+        return DocumentCommand(FinishAnimationErrorCommand { errorString });
     }
 
-    explicit DocumentCommand(DocumentCommandType commandType, const QUrl &commandUrl = QUrl(),
-        const QUrl &commandContainerUrl = QUrl(), const QString &commandErrorString = QString())
-        : type(commandType)
-        , url(commandUrl)
-        , containerUrl(commandContainerUrl)
-        , errorString(commandErrorString)
+    explicit DocumentCommand(Payload commandPayload)
+        : payload(std::move(commandPayload))
     {
     }
 
-    DocumentCommandType type = DocumentCommandType::ClearImage;
+    Payload payload;
+};
+
+struct ClearImageRequestedEvent {
+};
+
+struct PageNavigationUpdateRequestedEvent {
+};
+
+struct AdjacentImagePredecodeRequestedEvent {
+};
+
+struct OpenUrlRequestedEvent {
     QUrl url;
+};
+
+struct ContainerImageSelectedEvent {
+    QUrl imageUrl;
+    QUrl containerUrl;
+};
+
+struct EmptyContainerSelectedEvent {
+    QUrl containerUrl;
+};
+
+struct ContainerNavigationFailedEvent {
     QUrl containerUrl;
     QString errorString;
 };
 
-enum class DocumentEventType {
-    ClearImageRequested,
-    PageNavigationUpdateRequested,
-    AdjacentImagePredecodeRequested,
-    OpenUrlRequested,
-    ContainerImageSelected,
-    EmptyContainerSelected,
-    ContainerNavigationFailed,
-    AnimationFailed,
+struct AnimationFailedEvent {
+    QString errorString;
 };
 
 struct DocumentEvent {
+    using Payload = std::variant<ClearImageRequestedEvent, PageNavigationUpdateRequestedEvent,
+        AdjacentImagePredecodeRequestedEvent, OpenUrlRequestedEvent, ContainerImageSelectedEvent,
+        EmptyContainerSelectedEvent, ContainerNavigationFailedEvent, AnimationFailedEvent>;
+
     static DocumentEvent clearImageRequested()
     {
-        return DocumentEvent(DocumentEventType::ClearImageRequested);
+        return DocumentEvent(ClearImageRequestedEvent {});
     }
 
     static DocumentEvent pageNavigationUpdateRequested()
     {
-        return DocumentEvent(DocumentEventType::PageNavigationUpdateRequested);
+        return DocumentEvent(PageNavigationUpdateRequestedEvent {});
     }
 
     static DocumentEvent adjacentImagePredecodeRequested()
     {
-        return DocumentEvent(DocumentEventType::AdjacentImagePredecodeRequested);
+        return DocumentEvent(AdjacentImagePredecodeRequestedEvent {});
     }
 
     static DocumentEvent openUrlRequested(const QUrl &url)
     {
-        return DocumentEvent(DocumentEventType::OpenUrlRequested, url);
+        return DocumentEvent(OpenUrlRequestedEvent { url });
     }
 
     static DocumentEvent containerImageSelected(const QUrl &imageUrl, const QUrl &containerUrl)
     {
-        return DocumentEvent(DocumentEventType::ContainerImageSelected, imageUrl, containerUrl);
+        return DocumentEvent(ContainerImageSelectedEvent { imageUrl, containerUrl });
     }
 
     static DocumentEvent emptyContainerSelected(const QUrl &containerUrl)
     {
-        return DocumentEvent(DocumentEventType::EmptyContainerSelected, QUrl(), containerUrl);
+        return DocumentEvent(EmptyContainerSelectedEvent { containerUrl });
     }
 
     static DocumentEvent containerNavigationFailed(
         const QUrl &containerUrl, const QString &errorString)
     {
-        return DocumentEvent(
-            DocumentEventType::ContainerNavigationFailed, QUrl(), containerUrl, errorString);
+        return DocumentEvent(ContainerNavigationFailedEvent { containerUrl, errorString });
     }
 
     static DocumentEvent animationFailed(const QString &errorString)
     {
-        return DocumentEvent(DocumentEventType::AnimationFailed, QUrl(), QUrl(), errorString);
+        return DocumentEvent(AnimationFailedEvent { errorString });
     }
 
-    explicit DocumentEvent(DocumentEventType eventType, const QUrl &eventUrl = QUrl(),
-        const QUrl &eventContainerUrl = QUrl(), const QString &eventErrorString = QString())
-        : type(eventType)
-        , url(eventUrl)
-        , containerUrl(eventContainerUrl)
-        , errorString(eventErrorString)
+    explicit DocumentEvent(Payload eventPayload)
+        : payload(std::move(eventPayload))
     {
     }
 
-    DocumentEventType type = DocumentEventType::ClearImageRequested;
-    QUrl url;
-    QUrl containerUrl;
-    QString errorString;
+    Payload payload;
 };
 }
 

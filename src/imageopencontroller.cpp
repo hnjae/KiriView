@@ -59,15 +59,29 @@ void ImageOpenController::open()
     m_state.setErrorString(QString());
 
     if (m_state.sourceUrl().isEmpty()) {
-        report(DocumentEvent::clearImageRequested());
-        m_presentationController.resetZoom();
-        m_state.setLoading(false);
-        m_state.clearLoadingContainerNavigationUrl();
-        m_state.setContainerNavigationUrl(QUrl());
-        m_state.setStatus(ImageDocumentStatus::Null);
+        finishEmptySourceLoad();
         return;
     }
 
+    beginSourceLoad();
+    m_imageLoader->start(ImageLoadRequest { m_state.sourceUrl(),
+        m_state.displayedComicBookRootUrl(), m_state.loadingContainerNavigationUrl() });
+}
+
+void ImageOpenController::cancel() { m_imageLoader->cancel(); }
+
+void ImageOpenController::finishEmptySourceLoad()
+{
+    report(DocumentEvent::clearImageRequested());
+    m_presentationController.resetZoom();
+    m_state.setLoading(false);
+    m_state.clearLoadingContainerNavigationUrl();
+    m_state.setContainerNavigationUrl(QUrl());
+    m_state.setStatus(ImageDocumentStatus::Null);
+}
+
+void ImageOpenController::beginSourceLoad()
+{
     if (!m_presentationController.hasImage() && m_state.loadingContainerNavigationUrl().isEmpty()) {
         m_state.setContainerNavigationUrl(QUrl());
     }
@@ -80,12 +94,7 @@ void ImageOpenController::open()
     } else {
         m_state.setStatus(ImageDocumentStatus::Ready);
     }
-
-    m_imageLoader->start(ImageLoadRequest { m_state.sourceUrl(),
-        m_state.displayedComicBookRootUrl(), m_state.loadingContainerNavigationUrl() });
 }
-
-void ImageOpenController::cancel() { m_imageLoader->cancel(); }
 
 void ImageOpenController::finishContainerNavigationWithEmptyContainer(const QUrl &containerUrl)
 {
@@ -161,22 +170,31 @@ void ImageOpenController::finishLoadWithError(
     }
 
     m_state.setLoading(false);
-
     if (m_presentationController.hasImage()) {
-        m_state.setErrorString(message);
-        m_state.setStatus(ImageDocumentStatus::Ready);
-
-        if (!m_state.displayedUrl().isEmpty()) {
-            m_state.setSourceUrl(m_state.displayedUrl());
-        }
-        report(DocumentEvent::pageNavigationUpdateRequested());
-        report(DocumentEvent::adjacentImagePredecodeRequested());
+        finishReplacementLoadWithError(message);
         return;
     }
 
+    finishInitialLoadWithError(message);
+}
+
+void ImageOpenController::finishReplacementLoadWithError(const QString &errorString)
+{
+    m_state.setErrorString(errorString);
+    m_state.setStatus(ImageDocumentStatus::Ready);
+
+    if (!m_state.displayedUrl().isEmpty()) {
+        m_state.setSourceUrl(m_state.displayedUrl());
+    }
+    report(DocumentEvent::pageNavigationUpdateRequested());
+    report(DocumentEvent::adjacentImagePredecodeRequested());
+}
+
+void ImageOpenController::finishInitialLoadWithError(const QString &errorString)
+{
     report(DocumentEvent::clearImageRequested());
     m_state.setContainerNavigationUrl(QUrl());
-    m_state.setErrorString(message);
+    m_state.setErrorString(errorString);
     m_state.setStatus(ImageDocumentStatus::Error);
 }
 

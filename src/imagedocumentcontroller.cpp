@@ -11,7 +11,9 @@
 #include <QCoreApplication>
 #include <memory>
 #include <optional>
+#include <type_traits>
 #include <utility>
+#include <variant>
 
 namespace {
 QString imageViewText(const char *sourceText)
@@ -153,64 +155,57 @@ void ImageDocumentController::updateRenderContext()
 
 void ImageDocumentController::handleEvent(DocumentEvent event)
 {
-    switch (event.type) {
-    case DocumentEventType::ClearImageRequested:
-        dispatch(DocumentCommand::clearImage());
-        return;
-    case DocumentEventType::PageNavigationUpdateRequested:
-        dispatch(DocumentCommand::updatePageNavigation());
-        return;
-    case DocumentEventType::AdjacentImagePredecodeRequested:
-        dispatch(DocumentCommand::scheduleAdjacentImagePredecode());
-        return;
-    case DocumentEventType::OpenUrlRequested:
-        dispatch(DocumentCommand::openUrl(event.url));
-        return;
-    case DocumentEventType::ContainerImageSelected:
-        dispatch(DocumentCommand::openContainerImage(event.url, event.containerUrl));
-        return;
-    case DocumentEventType::EmptyContainerSelected:
-        dispatch(DocumentCommand::finishEmptyContainerNavigation(event.containerUrl));
-        return;
-    case DocumentEventType::ContainerNavigationFailed:
-        dispatch(
-            DocumentCommand::finishContainerNavigationError(event.containerUrl, event.errorString));
-        return;
-    case DocumentEventType::AnimationFailed:
-        dispatch(DocumentCommand::finishAnimationError(event.errorString));
-        return;
-    }
+    std::visit(
+        [this](const auto &payload) {
+            using Event = std::decay_t<decltype(payload)>;
+            if constexpr (std::is_same_v<Event, ClearImageRequestedEvent>) {
+                dispatch(DocumentCommand::clearImage());
+            } else if constexpr (std::is_same_v<Event, PageNavigationUpdateRequestedEvent>) {
+                dispatch(DocumentCommand::updatePageNavigation());
+            } else if constexpr (std::is_same_v<Event, AdjacentImagePredecodeRequestedEvent>) {
+                dispatch(DocumentCommand::scheduleAdjacentImagePredecode());
+            } else if constexpr (std::is_same_v<Event, OpenUrlRequestedEvent>) {
+                dispatch(DocumentCommand::openUrl(payload.url));
+            } else if constexpr (std::is_same_v<Event, ContainerImageSelectedEvent>) {
+                dispatch(
+                    DocumentCommand::openContainerImage(payload.imageUrl, payload.containerUrl));
+            } else if constexpr (std::is_same_v<Event, EmptyContainerSelectedEvent>) {
+                dispatch(DocumentCommand::finishEmptyContainerNavigation(payload.containerUrl));
+            } else if constexpr (std::is_same_v<Event, ContainerNavigationFailedEvent>) {
+                dispatch(DocumentCommand::finishContainerNavigationError(
+                    payload.containerUrl, payload.errorString));
+            } else if constexpr (std::is_same_v<Event, AnimationFailedEvent>) {
+                dispatch(DocumentCommand::finishAnimationError(payload.errorString));
+            }
+        },
+        event.payload);
 }
 
 void ImageDocumentController::dispatch(DocumentCommand command)
 {
-    switch (command.type) {
-    case DocumentCommandType::ClearImage:
-        clearImage();
-        return;
-    case DocumentCommandType::UpdatePageNavigation:
-        m_navigationController->updatePageNavigation();
-        return;
-    case DocumentCommandType::ScheduleAdjacentImagePredecode:
-        scheduleAdjacentImagePredecode();
-        return;
-    case DocumentCommandType::OpenUrl:
-        setSourceUrl(command.url);
-        return;
-    case DocumentCommandType::OpenContainerImage:
-        setSourceUrlForLoad(command.url, command.containerUrl);
-        return;
-    case DocumentCommandType::FinishEmptyContainerNavigation:
-        m_openController->finishContainerNavigationWithEmptyContainer(command.containerUrl);
-        return;
-    case DocumentCommandType::FinishContainerNavigationError:
-        m_openController->finishContainerNavigationLoadWithError(
-            command.containerUrl, command.errorString);
-        return;
-    case DocumentCommandType::FinishAnimationError:
-        finishWithAnimationError(command.errorString);
-        return;
-    }
+    std::visit(
+        [this](const auto &payload) {
+            using Command = std::decay_t<decltype(payload)>;
+            if constexpr (std::is_same_v<Command, ClearImageCommand>) {
+                clearImage();
+            } else if constexpr (std::is_same_v<Command, UpdatePageNavigationCommand>) {
+                m_navigationController->updatePageNavigation();
+            } else if constexpr (std::is_same_v<Command, ScheduleAdjacentImagePredecodeCommand>) {
+                scheduleAdjacentImagePredecode();
+            } else if constexpr (std::is_same_v<Command, OpenUrlCommand>) {
+                setSourceUrl(payload.url);
+            } else if constexpr (std::is_same_v<Command, OpenContainerImageCommand>) {
+                setSourceUrlForLoad(payload.imageUrl, payload.containerUrl);
+            } else if constexpr (std::is_same_v<Command, FinishEmptyContainerNavigationCommand>) {
+                m_openController->finishContainerNavigationWithEmptyContainer(payload.containerUrl);
+            } else if constexpr (std::is_same_v<Command, FinishContainerNavigationErrorCommand>) {
+                m_openController->finishContainerNavigationLoadWithError(
+                    payload.containerUrl, payload.errorString);
+            } else if constexpr (std::is_same_v<Command, FinishAnimationErrorCommand>) {
+                finishWithAnimationError(payload.errorString);
+            }
+        },
+        command.payload);
 }
 
 void ImageDocumentController::setSourceUrlForLoad(

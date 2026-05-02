@@ -40,12 +40,16 @@ public:
         const QUrl &containerUrl, const QString &errorString);
 
 private:
+    void finishEmptySourceLoad();
+    void beginSourceLoad();
     void setSourceUrlFromResolvedLoad(const QUrl &sourceUrl);
     void finishPredecodedImageLoad(ImageLoadSession session, const QImage &image);
     void finishDecodedImageLoad(
         ImageLoadSession session, std::shared_ptr<DecodedImageResult> result);
     void finishLoadWithError(
         const ImageLoadSession &session, ImageLoadError error, const QString &errorString);
+    void finishReplacementLoadWithError(const QString &errorString);
+    void finishInitialLoadWithError(const QString &errorString);
     void finishLoadSuccessfully(
         const ImageLoadSession &session, const QImage &image, bool predecodeCacheable);
     void finishSvgLoadSuccessfully(
