@@ -36,6 +36,10 @@ Controls.Dialog {
                     keys: "Page Up / Page Down"
                 }
                 ListElement {
+                    description: "First or last image in container"
+                    keys: "Ctrl+Home / Ctrl+End"
+                }
+                ListElement {
                     description: "Zoom in"
                     keys: "Ctrl+= / Ctrl++"
                 }

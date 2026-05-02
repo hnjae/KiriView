@@ -12,6 +12,9 @@ QtObject {
     required property bool imageReady
     required property bool helpDialogOpen
 
+    readonly property bool canOpenNextImage: root.imageReady && root.imageDocument.currentPageNumber > 0 && root.imageDocument.currentPageNumber < root.imageDocument.imageCount
+    readonly property bool canOpenPreviousImage: root.imageReady && root.imageDocument.currentPageNumber > 1
+
     signal openDialogRequested
 
     property Controls.Action openAction: Controls.Action {
@@ -40,7 +43,7 @@ QtObject {
     }
 
     property Controls.Action previousImageAction: Controls.Action {
-        enabled: root.imageReady && !root.helpDialogOpen
+        enabled: root.canOpenPreviousImage && !root.helpDialogOpen
         icon.name: "go-up-symbolic"
         text: "Previous"
 
@@ -48,7 +51,7 @@ QtObject {
     }
 
     property Controls.Action nextImageAction: Controls.Action {
-        enabled: root.imageReady && !root.helpDialogOpen
+        enabled: root.canOpenNextImage && !root.helpDialogOpen
         icon.name: "go-down-symbolic"
         text: "Next"
 

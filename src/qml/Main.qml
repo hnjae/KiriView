@@ -97,6 +97,9 @@ Kirigami.ApplicationWindow {
             imageToolBar: imageToolBar
             imageViewport: imageViewport
 
+            onImageBoundaryReached: function (message) {
+                root.showPassiveNotification(message);
+            }
             onShortcutHelpRequested: shortcutHelpDialog.open()
             onToggleFullScreenRequested: root.toggleFullScreen()
         }

@@ -14,11 +14,44 @@ Item {
 
     readonly property bool imageReady: imageDocument.status === KiriImageDocument.Ready
     readonly property bool imagePannable: imageViewport.imagePannable
+    readonly property bool atFirstImage: imageReady && imageDocument.currentPageNumber === 1 && imageDocument.imageCount > 0
+    readonly property bool atLastImage: imageReady && imageDocument.currentPageNumber > 0 && imageDocument.currentPageNumber === imageDocument.imageCount
     readonly property int keyboardPanDistance: 64
     readonly property int zoomStepPercent: imageDocument.zoomStepPercent
 
+    signal imageBoundaryReached(string message)
     signal shortcutHelpRequested
     signal toggleFullScreenRequested
+
+    function openFirstImage() {
+        if (root.imageDocument.imageCount > 0) {
+            root.imageDocument.openImageAtPage(1);
+        }
+    }
+
+    function openLastImage() {
+        if (root.imageDocument.imageCount > 0) {
+            root.imageDocument.openImageAtPage(root.imageDocument.imageCount);
+        }
+    }
+
+    function openNextImage() {
+        if (root.atLastImage) {
+            root.imageBoundaryReached("Last image");
+            return;
+        }
+
+        root.imageDocument.openNextImage();
+    }
+
+    function openPreviousImage() {
+        if (root.atFirstImage) {
+            root.imageBoundaryReached("First image");
+            return;
+        }
+
+        root.imageDocument.openPreviousImage();
+    }
 
     function panBy(deltaX, deltaY) {
         return imageViewport.panBy(deltaX, deltaY);
@@ -125,7 +158,7 @@ Item {
         enabled: root.imageReady && !root.helpDialogOpen
         sequence: StandardKey.MoveToPreviousPage
 
-        onActivated: root.imageDocument.openPreviousImage()
+        onActivated: root.openPreviousImage()
     }
 
     Shortcut {
@@ -133,7 +166,23 @@ Item {
         enabled: root.imageReady && !root.helpDialogOpen
         sequence: StandardKey.MoveToNextPage
 
-        onActivated: root.imageDocument.openNextImage()
+        onActivated: root.openNextImage()
+    }
+
+    Shortcut {
+        context: Qt.WindowShortcut
+        enabled: root.imageReady && root.imageDocument.imageCount > 0 && !root.textInputFocused() && !root.helpDialogOpen
+        sequence: "Ctrl+Home"
+
+        onActivated: root.openFirstImage()
+    }
+
+    Shortcut {
+        context: Qt.WindowShortcut
+        enabled: root.imageReady && root.imageDocument.imageCount > 0 && !root.textInputFocused() && !root.helpDialogOpen
+        sequence: "Ctrl+End"
+
+        onActivated: root.openLastImage()
     }
 
     Shortcut {
