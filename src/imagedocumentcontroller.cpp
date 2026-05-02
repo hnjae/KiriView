@@ -3,7 +3,6 @@
 
 #include "imagedocumentcontroller.h"
 
-#include "imagecontainer.h"
 #include "imagedocumentnavigationcontroller.h"
 #include "imageopencontroller.h"
 #include "imagepredecodecoordinator.h"
@@ -15,8 +14,6 @@
 #include <utility>
 
 namespace {
-using KiriView::windowTitleFileNameForDisplayedUrl;
-
 QString imageViewText(const char *sourceText)
 {
     return QCoreApplication::translate("KiriImageView", sourceText);
@@ -33,27 +30,17 @@ ImageDocumentController::ImageDocumentController(
     m_presentationController = std::make_unique<ImagePresentationController>(
         this, std::move(renderContextProvider),
         [this](ImageDocumentChange change) { notify(change); },
-        [this](const QString &errorString) { finishWithAnimationError(errorString); });
+        [this](const QString &errorString) {
+            handleEvent(DocumentEvent::animationFailed(errorString));
+        });
     m_openController = std::make_unique<ImageOpenController>(
         this, m_state, *m_presentationController,
         [this](const QUrl &url) { return takePredecodedImage(url); },
-        [this]() { dispatch(Command(CommandType::ClearImage)); },
-        [this]() { dispatch(Command(CommandType::UpdatePageNavigation)); },
-        [this]() { dispatch(Command(CommandType::ScheduleAdjacentImagePredecode)); });
+        [this](DocumentEvent event) { handleEvent(std::move(event)); });
     m_navigationController = std::make_unique<ImageDocumentNavigationController>(
         this, m_state, *m_presentationController,
         [this](ImageDocumentChange change) { notify(change); },
-        [this](const QUrl &url) { dispatch(Command(CommandType::OpenUrl, url)); },
-        [this](const QUrl &imageUrl, const QUrl &containerUrl) {
-            dispatch(Command(CommandType::OpenContainerImage, imageUrl, containerUrl));
-        },
-        [this](const QUrl &containerUrl) {
-            dispatch(Command(CommandType::FinishEmptyContainerNavigation, QUrl(), containerUrl));
-        },
-        [this](const QUrl &containerUrl, const QString &errorString) {
-            dispatch(Command(
-                CommandType::FinishContainerNavigationError, QUrl(), containerUrl, errorString));
-        });
+        [this](DocumentEvent event) { handleEvent(std::move(event)); });
     m_predecodeCoordinator = std::make_unique<ImagePredecodeCoordinator>(this);
 }
 
@@ -164,30 +151,64 @@ void ImageDocumentController::updateRenderContext()
     m_presentationController->updateRenderContext();
 }
 
-void ImageDocumentController::dispatch(Command command)
+void ImageDocumentController::handleEvent(DocumentEvent event)
+{
+    switch (event.type) {
+    case DocumentEventType::ClearImageRequested:
+        dispatch(DocumentCommand::clearImage());
+        return;
+    case DocumentEventType::PageNavigationUpdateRequested:
+        dispatch(DocumentCommand::updatePageNavigation());
+        return;
+    case DocumentEventType::AdjacentImagePredecodeRequested:
+        dispatch(DocumentCommand::scheduleAdjacentImagePredecode());
+        return;
+    case DocumentEventType::OpenUrlRequested:
+        dispatch(DocumentCommand::openUrl(event.url));
+        return;
+    case DocumentEventType::ContainerImageSelected:
+        dispatch(DocumentCommand::openContainerImage(event.url, event.containerUrl));
+        return;
+    case DocumentEventType::EmptyContainerSelected:
+        dispatch(DocumentCommand::finishEmptyContainerNavigation(event.containerUrl));
+        return;
+    case DocumentEventType::ContainerNavigationFailed:
+        dispatch(
+            DocumentCommand::finishContainerNavigationError(event.containerUrl, event.errorString));
+        return;
+    case DocumentEventType::AnimationFailed:
+        dispatch(DocumentCommand::finishAnimationError(event.errorString));
+        return;
+    }
+}
+
+void ImageDocumentController::dispatch(DocumentCommand command)
 {
     switch (command.type) {
-    case CommandType::ClearImage:
+    case DocumentCommandType::ClearImage:
         clearImage();
         return;
-    case CommandType::UpdatePageNavigation:
+    case DocumentCommandType::UpdatePageNavigation:
         m_navigationController->updatePageNavigation();
         return;
-    case CommandType::ScheduleAdjacentImagePredecode:
+    case DocumentCommandType::ScheduleAdjacentImagePredecode:
         scheduleAdjacentImagePredecode();
         return;
-    case CommandType::OpenUrl:
+    case DocumentCommandType::OpenUrl:
         setSourceUrl(command.url);
         return;
-    case CommandType::OpenContainerImage:
+    case DocumentCommandType::OpenContainerImage:
         setSourceUrlForLoad(command.url, command.containerUrl);
         return;
-    case CommandType::FinishEmptyContainerNavigation:
+    case DocumentCommandType::FinishEmptyContainerNavigation:
         m_openController->finishContainerNavigationWithEmptyContainer(command.containerUrl);
         return;
-    case CommandType::FinishContainerNavigationError:
+    case DocumentCommandType::FinishContainerNavigationError:
         m_openController->finishContainerNavigationLoadWithError(
             command.containerUrl, command.errorString);
+        return;
+    case DocumentCommandType::FinishAnimationError:
+        finishWithAnimationError(command.errorString);
         return;
     }
 }
@@ -268,8 +289,6 @@ void ImageDocumentController::clearImage()
     m_navigationController->cancelPageNavigationUpdate();
     m_state.clearDisplayedImageUrls();
     m_presentationController->clearImage();
-    m_state.setWindowTitleFileName(windowTitleFileNameForDisplayedUrl(
-        m_state.displayedUrl(), m_state.displayedComicBookRootUrl()));
     m_navigationController->clearPageNavigation();
 }
 }

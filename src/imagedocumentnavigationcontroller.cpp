@@ -20,52 +20,45 @@ QString imageViewText(const char *sourceText)
 namespace KiriView {
 ImageDocumentNavigationController::ImageDocumentNavigationController(QObject *parent,
     ImageDocumentState &state, ImagePresentationController &presentationController,
-    ChangeCallback changeCallback, OpenUrlCallback openUrl,
-    OpenContainerImageCallback openContainerImage,
-    ContainerNavigationEmptyCallback containerNavigationEmpty,
-    ContainerNavigationErrorCallback containerNavigationError)
+    ChangeCallback changeCallback, EventCallback eventCallback)
     : m_state(state)
     , m_presentationController(presentationController)
     , m_changeCallback(std::move(changeCallback))
-    , m_openUrl(std::move(openUrl))
-    , m_openContainerImage(std::move(openContainerImage))
-    , m_containerNavigationEmpty(std::move(containerNavigationEmpty))
-    , m_containerNavigationError(std::move(containerNavigationError))
+    , m_eventCallback(std::move(eventCallback))
 {
     m_navigationService = std::make_unique<ImageNavigationService>(parent);
     m_navigationService->setOpenUrlCallback([this](const QUrl &url) {
-        if (m_openUrl) {
-            m_openUrl(url);
+        if (m_eventCallback) {
+            m_eventCallback(DocumentEvent::openUrlRequested(url));
         }
     });
     m_navigationService->setOpenContainerImageCallback(
         [this](const QUrl &imageUrl, const QUrl &containerUrl) {
-            if (m_openContainerImage) {
-                m_openContainerImage(imageUrl, containerUrl);
+            if (m_eventCallback) {
+                m_eventCallback(DocumentEvent::containerImageSelected(imageUrl, containerUrl));
             }
         });
-    m_navigationService->setContainerNavigationErrorCallback(
-        [this](
-            const QUrl &containerUrl, ContainerNavigationError error, const QString &errorString) {
-            if (error == ContainerNavigationError::EmptyContainer) {
-                if (m_containerNavigationEmpty) {
-                    m_containerNavigationEmpty(containerUrl);
-                }
-                return;
+    auto handleError = [this](const auto &url, auto error, const auto &message) {
+        if (error == ContainerNavigationError::EmptyContainer) {
+            if (m_eventCallback) {
+                m_eventCallback(DocumentEvent::emptyContainerSelected(url));
             }
+            return;
+        }
 
-            if (error == ContainerNavigationError::InvalidComicBookArchive) {
-                if (m_containerNavigationError) {
-                    m_containerNavigationError(containerUrl,
-                        imageViewText("Could not open the selected comic book archive."));
-                }
-                return;
+        if (error == ContainerNavigationError::InvalidComicBookArchive) {
+            if (m_eventCallback) {
+                m_eventCallback(DocumentEvent::containerNavigationFailed(
+                    url, imageViewText("Could not open the selected comic book archive.")));
             }
+            return;
+        }
 
-            if (m_containerNavigationError) {
-                m_containerNavigationError(containerUrl, errorString);
-            }
-        });
+        if (m_eventCallback) {
+            m_eventCallback(DocumentEvent::containerNavigationFailed(url, message));
+        }
+    };
+    m_navigationService->setContainerNavigationErrorCallback(std::move(handleError));
     m_navigationService->setPageNavigationChangedCallback(
         [this]() { notify(ImageDocumentChange::PageNavigation); });
 }
@@ -95,11 +88,11 @@ void ImageDocumentNavigationController::openNextImage()
 void ImageDocumentNavigationController::openImageAtPage(int pageNumber)
 {
     const std::optional<QUrl> pageUrl = m_navigationService->urlAtPage(pageNumber);
-    if (!pageUrl.has_value() || !m_openUrl) {
+    if (!pageUrl.has_value() || !m_eventCallback) {
         return;
     }
 
-    m_openUrl(*pageUrl);
+    m_eventCallback(DocumentEvent::openUrlRequested(*pageUrl));
 }
 
 void ImageDocumentNavigationController::openPreviousContainer()

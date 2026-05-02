@@ -3,6 +3,8 @@
 
 #include "imagedocumentstate.h"
 
+#include "imagecontainer.h"
+
 #include <utility>
 
 namespace KiriView {
@@ -31,7 +33,10 @@ bool ImageDocumentState::loading() const { return m_loading; }
 
 const QString &ImageDocumentState::errorString() const { return m_errorString; }
 
-const QString &ImageDocumentState::windowTitleFileName() const { return m_windowTitleFileName; }
+QString ImageDocumentState::windowTitleFileName() const
+{
+    return windowTitleFileNameForDisplayedUrl(displayedUrl(), displayedComicBookRootUrl());
+}
 
 const QUrl &ImageDocumentState::containerNavigationUrl() const { return m_containerNavigationUrl; }
 
@@ -57,10 +62,21 @@ void ImageDocumentState::setSourceUrl(const QUrl &sourceUrl)
 
 void ImageDocumentState::setDisplayedImageLocation(const DisplayedImageLocation &location)
 {
+    const QString previousWindowTitle = windowTitleFileName();
     m_displayedImageLocation = location;
+    if (previousWindowTitle != windowTitleFileName()) {
+        notify(ImageDocumentChange::WindowTitleFileName);
+    }
 }
 
-void ImageDocumentState::clearDisplayedImageUrls() { m_displayedImageLocation = {}; }
+void ImageDocumentState::clearDisplayedImageUrls()
+{
+    const QString previousWindowTitle = windowTitleFileName();
+    m_displayedImageLocation = {};
+    if (previousWindowTitle != windowTitleFileName()) {
+        notify(ImageDocumentChange::WindowTitleFileName);
+    }
+}
 
 void ImageDocumentState::setStatus(ImageDocumentStatus status)
 {
@@ -90,16 +106,6 @@ void ImageDocumentState::setErrorString(const QString &errorString)
 
     m_errorString = errorString;
     notify(ImageDocumentChange::ErrorString);
-}
-
-void ImageDocumentState::setWindowTitleFileName(const QString &fileName)
-{
-    if (m_windowTitleFileName == fileName) {
-        return;
-    }
-
-    m_windowTitleFileName = fileName;
-    notify(ImageDocumentChange::WindowTitleFileName);
 }
 
 void ImageDocumentState::setContainerNavigationUrl(const QUrl &containerUrl)

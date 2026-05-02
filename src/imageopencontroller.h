@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_IMAGEOPENCONTROLLER_H
 #define KIRIVIEW_IMAGEOPENCONTROLLER_H
 
+#include "imagedocumentevents.h"
 #include "imageloader.h"
 
 #include <QByteArray>
@@ -25,12 +26,11 @@ class ImageOpenController final
 {
 public:
     using TakePredecodedImageCallback = std::function<std::optional<PredecodedImage>(const QUrl &)>;
-    using VoidCallback = std::function<void()>;
+    using EventCallback = std::function<void(DocumentEvent)>;
 
     ImageOpenController(QObject *parent, ImageDocumentState &state,
         ImagePresentationController &presentationController,
-        TakePredecodedImageCallback takePredecodedImage, VoidCallback clearImage,
-        VoidCallback updatePageNavigation, VoidCallback scheduleAdjacentImagePredecode);
+        TakePredecodedImageCallback takePredecodedImage, EventCallback eventCallback);
     ~ImageOpenController();
 
     void open();
@@ -53,13 +53,12 @@ private:
     void prepareSuccessfulImageLoad(const ImageLoadSession &session);
     void finishSuccessfulImageLoad(const ImageLoadSession &session);
     void updateContainerNavigationFromDisplayedImage();
+    void report(DocumentEvent event);
 
     ImageDocumentState &m_state;
     ImagePresentationController &m_presentationController;
     TakePredecodedImageCallback m_takePredecodedImage;
-    VoidCallback m_clearImage;
-    VoidCallback m_updatePageNavigation;
-    VoidCallback m_scheduleAdjacentImagePredecode;
+    EventCallback m_eventCallback;
     std::unique_ptr<ImageLoader> m_imageLoader;
 };
 }

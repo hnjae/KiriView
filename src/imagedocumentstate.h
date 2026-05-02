@@ -26,7 +26,7 @@ public:
     ImageDocumentStatus status() const;
     bool loading() const;
     const QString &errorString() const;
-    const QString &windowTitleFileName() const;
+    QString windowTitleFileName() const;
     const QUrl &containerNavigationUrl() const;
     const QUrl &loadingContainerNavigationUrl() const;
     bool containerNavigationAvailable() const;
@@ -37,7 +37,6 @@ public:
     void setStatus(ImageDocumentStatus status);
     void setLoading(bool loading);
     void setErrorString(const QString &errorString);
-    void setWindowTitleFileName(const QString &fileName);
     void setContainerNavigationUrl(const QUrl &containerUrl);
     void setLoadingContainerNavigationUrl(const QUrl &containerUrl);
     void clearLoadingContainerNavigationUrl();
@@ -51,7 +50,6 @@ private:
     ImageDocumentStatus m_status = ImageDocumentStatus::Null;
     bool m_loading = false;
     QString m_errorString;
-    QString m_windowTitleFileName;
     QUrl m_containerNavigationUrl;
     QUrl m_loadingContainerNavigationUrl;
 };

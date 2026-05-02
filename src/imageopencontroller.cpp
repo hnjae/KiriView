@@ -16,7 +16,6 @@
 namespace {
 using KiriView::containerNavigationUrlForImage;
 using KiriView::decodedImageResultIsPredecodeCacheable;
-using KiriView::windowTitleFileNameForDisplayedUrl;
 
 QString imageViewText(const char *sourceText)
 {
@@ -27,14 +26,11 @@ QString imageViewText(const char *sourceText)
 namespace KiriView {
 ImageOpenController::ImageOpenController(QObject *parent, ImageDocumentState &state,
     ImagePresentationController &presentationController,
-    TakePredecodedImageCallback takePredecodedImage, VoidCallback clearImage,
-    VoidCallback updatePageNavigation, VoidCallback scheduleAdjacentImagePredecode)
+    TakePredecodedImageCallback takePredecodedImage, EventCallback eventCallback)
     : m_state(state)
     , m_presentationController(presentationController)
     , m_takePredecodedImage(std::move(takePredecodedImage))
-    , m_clearImage(std::move(clearImage))
-    , m_updatePageNavigation(std::move(updatePageNavigation))
-    , m_scheduleAdjacentImagePredecode(std::move(scheduleAdjacentImagePredecode))
+    , m_eventCallback(std::move(eventCallback))
 {
     m_imageLoader = std::make_unique<ImageLoader>(parent);
     m_imageLoader->setSourceResolvedCallback(
@@ -63,7 +59,7 @@ void ImageOpenController::open()
     m_state.setErrorString(QString());
 
     if (m_state.sourceUrl().isEmpty()) {
-        m_clearImage();
+        report(DocumentEvent::clearImageRequested());
         m_presentationController.resetZoom();
         m_state.setLoading(false);
         m_state.clearLoadingContainerNavigationUrl();
@@ -78,7 +74,7 @@ void ImageOpenController::open()
 
     m_state.setLoading(true);
     if (!m_presentationController.hasImage()) {
-        m_clearImage();
+        report(DocumentEvent::clearImageRequested());
         m_presentationController.resetZoom();
         m_state.setStatus(ImageDocumentStatus::Loading);
     } else {
@@ -103,7 +99,7 @@ void ImageOpenController::finishContainerNavigationLoadWithError(
     cancel();
     m_state.clearLoadingContainerNavigationUrl();
 
-    m_clearImage();
+    report(DocumentEvent::clearImageRequested());
     m_presentationController.prepareFailedContainer(containerUrl);
     m_state.setLoading(false);
     m_state.setContainerNavigationUrl(containerUrl);
@@ -124,7 +120,7 @@ void ImageOpenController::setSourceUrlFromResolvedLoad(const QUrl &sourceUrl)
 void ImageOpenController::finishPredecodedImageLoad(ImageLoadSession session, const QImage &image)
 {
     finishLoadSuccessfully(session, image, true);
-    m_scheduleAdjacentImagePredecode();
+    report(DocumentEvent::adjacentImagePredecodeRequested());
 }
 
 void ImageOpenController::finishDecodedImageLoad(
@@ -133,7 +129,7 @@ void ImageOpenController::finishDecodedImageLoad(
     if (result->isSvg) {
         finishSvgLoadSuccessfully(
             std::move(session), std::move(result->svgData), result->svgIntrinsicSize);
-        m_scheduleAdjacentImagePredecode();
+        report(DocumentEvent::adjacentImagePredecodeRequested());
         return;
     }
 
@@ -147,7 +143,7 @@ void ImageOpenController::finishDecodedImageLoad(
         m_presentationController.startAnimation(result->animationData, result->animationFormat,
             result->animationLoopCount, result->firstFrameDelay);
     }
-    m_scheduleAdjacentImagePredecode();
+    report(DocumentEvent::adjacentImagePredecodeRequested());
 }
 
 void ImageOpenController::finishLoadWithError(
@@ -173,12 +169,12 @@ void ImageOpenController::finishLoadWithError(
         if (!m_state.displayedUrl().isEmpty()) {
             m_state.setSourceUrl(m_state.displayedUrl());
         }
-        m_updatePageNavigation();
-        m_scheduleAdjacentImagePredecode();
+        report(DocumentEvent::pageNavigationUpdateRequested());
+        report(DocumentEvent::adjacentImagePredecodeRequested());
         return;
     }
 
-    m_clearImage();
+    report(DocumentEvent::clearImageRequested());
     m_state.setContainerNavigationUrl(QUrl());
     m_state.setErrorString(message);
     m_state.setStatus(ImageDocumentStatus::Error);
@@ -221,8 +217,6 @@ void ImageOpenController::finishSuccessfulImageLoad(const ImageLoadSession &sess
 {
     setSourceUrlFromResolvedLoad(session.location.imageUrl);
     m_state.setDisplayedImageLocation(session.location);
-    m_state.setWindowTitleFileName(windowTitleFileNameForDisplayedUrl(
-        m_state.displayedUrl(), m_state.displayedComicBookRootUrl()));
     if (!session.request.containerNavigationUrl.isEmpty()) {
         m_state.setContainerNavigationUrl(session.request.containerNavigationUrl);
     } else {
@@ -232,7 +226,7 @@ void ImageOpenController::finishSuccessfulImageLoad(const ImageLoadSession &sess
     m_state.setErrorString(QString());
     m_state.setLoading(false);
     m_state.setStatus(ImageDocumentStatus::Ready);
-    m_updatePageNavigation();
+    report(DocumentEvent::pageNavigationUpdateRequested());
 }
 
 void ImageOpenController::updateContainerNavigationFromDisplayedImage()
@@ -244,5 +238,12 @@ void ImageOpenController::updateContainerNavigationFromDisplayedImage()
 
     m_state.setContainerNavigationUrl(containerNavigationUrlForImage(
         m_state.displayedUrl(), m_state.displayedComicBookRootUrl()));
+}
+
+void ImageOpenController::report(DocumentEvent event)
+{
+    if (m_eventCallback) {
+        m_eventCallback(std::move(event));
+    }
 }
 }

@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_IMAGEDOCUMENTNAVIGATIONCONTROLLER_H
 #define KIRIVIEW_IMAGEDOCUMENTNAVIGATIONCONTROLLER_H
 
+#include "imagedocumentevents.h"
 #include "imagedocumenttypes.h"
 #include "imagenavigationservice.h"
 
@@ -22,16 +23,11 @@ class ImageDocumentNavigationController final
 {
 public:
     using ChangeCallback = std::function<void(ImageDocumentChange)>;
-    using OpenUrlCallback = std::function<void(const QUrl &)>;
-    using OpenContainerImageCallback = std::function<void(const QUrl &, const QUrl &)>;
-    using ContainerNavigationEmptyCallback = std::function<void(const QUrl &)>;
-    using ContainerNavigationErrorCallback = std::function<void(const QUrl &, const QString &)>;
+    using EventCallback = std::function<void(DocumentEvent)>;
 
     ImageDocumentNavigationController(QObject *parent, ImageDocumentState &state,
         ImagePresentationController &presentationController, ChangeCallback changeCallback,
-        OpenUrlCallback openUrl, OpenContainerImageCallback openContainerImage,
-        ContainerNavigationEmptyCallback containerNavigationEmpty,
-        ContainerNavigationErrorCallback containerNavigationError);
+        EventCallback eventCallback);
     ~ImageDocumentNavigationController();
 
     int currentPageNumber() const;
@@ -58,10 +54,7 @@ private:
     ImageDocumentState &m_state;
     ImagePresentationController &m_presentationController;
     ChangeCallback m_changeCallback;
-    OpenUrlCallback m_openUrl;
-    OpenContainerImageCallback m_openContainerImage;
-    ContainerNavigationEmptyCallback m_containerNavigationEmpty;
-    ContainerNavigationErrorCallback m_containerNavigationError;
+    EventCallback m_eventCallback;
     std::unique_ptr<ImageNavigationService> m_navigationService;
 };
 }
