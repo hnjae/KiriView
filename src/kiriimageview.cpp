@@ -5,10 +5,12 @@
 
 #include "imagedocumentcontroller.h"
 #include "imageformatregistry.h"
+#include "imageviewportgeometry.h"
 #include "kiriimagedecoder.h"
 #include "kiriimagerendernode.h"
 
 #include <QQuickWindow>
+#include <algorithm>
 #include <cmath>
 #include <memory>
 #include <rhi/qrhi.h>
@@ -169,6 +171,39 @@ void KiriImageView::resetZoom() { m_documentController->resetZoom(); }
 void KiriImageView::setFitMode(ZoomMode zoomMode)
 {
     m_documentController->setFitMode(toImageZoomMode(zoomMode));
+}
+
+QPointF KiriImageView::panContentPosition(
+    const QPointF &contentPosition, const QPointF &delta) const
+{
+    const QRectF imageRect = KiriView::imageViewportImageRect(viewportSize(), displaySize());
+    return KiriView::imageViewportPanPosition(viewportSize(), imageRect, contentPosition, delta);
+}
+
+bool KiriImageView::viewportPointInsideImage(
+    const QPointF &contentPosition, const QPointF &viewportPoint) const
+{
+    const QRectF imageRect = KiriView::imageViewportImageRect(viewportSize(), displaySize());
+    return KiriView::imageViewportPointInsideImage(contentPosition, viewportPoint, imageRect);
+}
+
+double KiriImageView::clampedManualZoomPercent(double zoomPercent) const
+{
+    if (!std::isfinite(zoomPercent)) {
+        return zoomPercent;
+    }
+
+    return std::clamp(zoomPercent, KiriView::ImageZoomState::minimumManualZoomPercent,
+        KiriView::ImageZoomState::maximumManualZoomPercent);
+}
+
+QPointF KiriImageView::zoomContentPosition(const QPointF &contentPosition,
+    const QPointF &viewportAnchorPoint, double nextZoomPercent) const
+{
+    const QSizeF nextDisplaySize = KiriView::imageViewportDisplaySizeForZoom(
+        imageSize(), nextZoomPercent, displayDevicePixelRatio());
+    return KiriView::imageViewportContentPositionForZoom(
+        viewportSize(), displaySize(), nextDisplaySize, contentPosition, viewportAnchorPoint);
 }
 
 QSGNode *KiriImageView::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *)

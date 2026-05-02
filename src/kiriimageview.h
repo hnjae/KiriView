@@ -6,6 +6,7 @@
 
 #include "imagedocumenttypes.h"
 
+#include <QPointF>
 #include <QQuickItem>
 #include <QSize>
 #include <QSizeF>
@@ -94,6 +95,13 @@ public:
     Q_INVOKABLE void openNextContainer();
     Q_INVOKABLE void resetZoom();
     Q_INVOKABLE void setFitMode(KiriImageView::ZoomMode zoomMode);
+    Q_INVOKABLE QPointF panContentPosition(
+        const QPointF &contentPosition, const QPointF &delta) const;
+    Q_INVOKABLE bool viewportPointInsideImage(
+        const QPointF &contentPosition, const QPointF &viewportPoint) const;
+    Q_INVOKABLE double clampedManualZoomPercent(double zoomPercent) const;
+    Q_INVOKABLE QPointF zoomContentPosition(const QPointF &contentPosition,
+        const QPointF &viewportAnchorPoint, double nextZoomPercent) const;
 
     QSGNode *updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *) override;
     void itemChange(ItemChange change, const ItemChangeData &value) override;

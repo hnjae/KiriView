@@ -21,16 +21,9 @@ Item {
     readonly property real viewportWidth: imageFlickable.width
     readonly property real viewportHeight: imageFlickable.height
 
-    function clampValue(value, minimum, maximum) {
-        return Math.max(minimum, Math.min(maximum, value));
-    }
-
-    function maximumContentX() {
-        return Math.max(0, Math.max(imageFlickable.width, imageView.x + imageView.width) - imageFlickable.width);
-    }
-
-    function maximumContentY() {
-        return Math.max(0, Math.max(imageFlickable.height, imageView.y + imageView.height) - imageFlickable.height);
+    function setContentPosition(contentPosition) {
+        imageFlickable.contentX = contentPosition.x;
+        imageFlickable.contentY = contentPosition.y;
     }
 
     function panBy(deltaX, deltaY) {
@@ -38,11 +31,10 @@ Item {
             return false;
         }
 
-        const nextContentX = clampValue(imageFlickable.contentX + deltaX, 0, maximumContentX());
-        const nextContentY = clampValue(imageFlickable.contentY + deltaY, 0, maximumContentY());
-        const moved = nextContentX !== imageFlickable.contentX || nextContentY !== imageFlickable.contentY;
-        imageFlickable.contentX = nextContentX;
-        imageFlickable.contentY = nextContentY;
+        const currentContentPosition = Qt.point(imageFlickable.contentX, imageFlickable.contentY);
+        const nextContentPosition = imageView.panContentPosition(currentContentPosition, Qt.point(deltaX, deltaY));
+        const moved = nextContentPosition.x !== imageFlickable.contentX || nextContentPosition.y !== imageFlickable.contentY;
+        setContentPosition(nextContentPosition);
         return moved;
     }
 
@@ -51,9 +43,7 @@ Item {
             return false;
         }
 
-        const contentPointX = imageFlickable.contentX + viewportX;
-        const contentPointY = imageFlickable.contentY + viewportY;
-        return contentPointX >= imageView.x && contentPointX <= imageView.x + imageView.width && contentPointY >= imageView.y && contentPointY <= imageView.y + imageView.height;
+        return imageView.viewportPointInsideImage(Qt.point(imageFlickable.contentX, imageFlickable.contentY), Qt.point(viewportX, viewportY));
     }
 
     function zoomBy(deltaPercent, viewportX, viewportY) {
@@ -61,19 +51,14 @@ Item {
             return false;
         }
 
-        const nextZoomPercent = clampValue(imageView.zoomPercent + deltaPercent, minimumManualZoomPercent, maximumManualZoomPercent);
+        const nextZoomPercent = imageView.clampedManualZoomPercent(imageView.zoomPercent + deltaPercent);
         if (Math.abs(nextZoomPercent - imageView.zoomPercent) < 0.001) {
             return false;
         }
 
-        const anchorViewportX = Number.isFinite(viewportX) ? clampValue(viewportX, 0, imageFlickable.width) : imageFlickable.width / 2;
-        const anchorViewportY = Number.isFinite(viewportY) ? clampValue(viewportY, 0, imageFlickable.height) : imageFlickable.height / 2;
-        const anchorRatioX = imageView.width > 0 ? clampValue((imageFlickable.contentX + anchorViewportX - imageView.x) / imageView.width, 0, 1) : 0.5;
-        const anchorRatioY = imageView.height > 0 ? clampValue((imageFlickable.contentY + anchorViewportY - imageView.y) / imageView.height, 0, 1) : 0.5;
-
+        const nextContentPosition = imageView.zoomContentPosition(Qt.point(imageFlickable.contentX, imageFlickable.contentY), Qt.point(viewportX, viewportY), nextZoomPercent);
         imageView.zoomPercent = nextZoomPercent;
-        imageFlickable.contentX = clampValue(imageView.x + anchorRatioX * imageView.width - anchorViewportX, 0, maximumContentX());
-        imageFlickable.contentY = clampValue(imageView.y + anchorRatioY * imageView.height - anchorViewportY, 0, maximumContentY());
+        setContentPosition(nextContentPosition);
         return true;
     }
 
