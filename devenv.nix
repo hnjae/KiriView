@@ -58,6 +58,22 @@ in
     export QMAKE=${lib.getExe' qmake "qmake6"}
   '';
 
+  files.".vscode/settings.json".json = {
+    "rust-analyzer.linkedProjects" = [ "Cargo.toml" ];
+    "rust-analyzer.cargo.targetDir" = "target/rust-analyzer";
+    "rust-analyzer.files.exclude" = [
+      ".cargo-vendor"
+      ".devenv"
+      ".direnv"
+      ".flatpak-builder"
+      ".flatpak-cargo"
+      ".rumdl_cache"
+      "build-dir"
+      "repo"
+      "target"
+    ];
+  };
+
   packages = with pkgs; [
     qmake
 
