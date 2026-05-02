@@ -37,6 +37,7 @@ fn main() {
     .file("src/avifcompat.rs")
     .cpp_file("src/decodedimageresult.cpp")
     .cpp_file("src/displayedimagestate.cpp")
+    .cpp_file("src/imagerendering.cpp")
     .cpp_file("src/imageasyncdependencies.cpp")
     .cpp_file("src/imagedocumentcontroller.cpp")
     .cpp_file("src/imagedocumentcontrollerdefaults.cpp")

@@ -12,15 +12,20 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Test)
+find_package(Qt6 REQUIRED COMPONENTS Core Gui Svg Test)
 find_package(KF6CoreAddons CONFIG REQUIRED)
 find_package(KF6KIO CONFIG REQUIRED)
 
 add_library(kiriview_test_core STATIC
     ../../src/decodedimageresult.cpp
+    ../../src/displayedimagestate.cpp
+    ../../src/imageanimationplayer.cpp
     ../../src/imageasyncdependencies.cpp
     ../../src/imagebytecost.cpp
     ../../src/imagecontainer.cpp
+    ../../src/imagerendering.cpp
+    ../../src/imagedocumentcontroller.cpp
+    ../../src/imagedocumentnavigationcontroller.cpp
     ../../src/imagedecodejob.cpp
     ../../src/imagedocumentstate.cpp
     ../../src/imageformatregistry.cpp
@@ -30,10 +35,13 @@ add_library(kiriview_test_core STATIC
     ../../src/imageloader.cpp
     ../../src/imagenavigationmodel.cpp
     ../../src/imagenavigationservice.cpp
+    ../../src/imageopencontroller.cpp
     ../../src/imageopenworkflow.cpp
     ../../src/imagepredecodecoordinator.cpp
+    ../../src/imagepresentationcontroller.cpp
     ../../src/imageurl.cpp
     ../../src/imageviewportgeometry.cpp
+    ../../src/imageviewtext.cpp
     ../../src/imagezoomstate.cpp
     ../../src/predecodecache.cpp
 )
@@ -41,6 +49,7 @@ target_include_directories(kiriview_test_core PUBLIC ../../src)
 target_link_libraries(kiriview_test_core PUBLIC
     Qt6::Core
     Qt6::Gui
+    Qt6::Svg
     KF6::CoreAddons
     KF6::KIOCore
 )
@@ -68,3 +77,4 @@ add_kiriview_cpp_test(test_predecodecache test_predecodecache.cpp)
 add_kiriview_cpp_test(test_imageopenworkflow test_imageopenworkflow.cpp)
 add_kiriview_cpp_test(test_imageviewportgeometry test_imageviewportgeometry.cpp)
 add_kiriview_cpp_test(test_imagepredecodecoordinator test_imagepredecodecoordinator.cpp)
+add_kiriview_cpp_test(test_imagedocumentcontroller test_imagedocumentcontroller.cpp)
