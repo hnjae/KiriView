@@ -92,6 +92,10 @@ through 800% manual zoom range as the toolbar zoom input. Holding Ctrl and
 dragging vertically on the image zooms around the cursor: dragging up zooms in
 and dragging down zooms out.
 
+When an image is ready, the `1` key selects Fit mode, `2` selects Fit Height
+mode, `3` selects Fit Width mode, and `0` switches to 100% manual zoom. These
+shortcuts are inactive while the page number or zoom input is focused.
+
 When an image is zoomed large enough to pan, the arrow keys pan the image within
 the available scroll bounds. Arrow-key panning is inactive while the page number
 or zoom input is focused.
