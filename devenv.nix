@@ -66,21 +66,14 @@ let
     kirigamiQmlRoot
   ];
   qtVersion = lib.getVersion pkgs.kdePackages.qtbase;
-  cppSources = [
-    "src/apngdecoder.cpp"
-    "src/asyncobjectslot.cpp"
-    "src/imageanimationplayer.cpp"
-    "src/imageformatregistry.cpp"
-    "src/imageloader.cpp"
-    "src/imagepredecodecoordinator.cpp"
-    "src/imagezoomstate.cpp"
-    "src/imagenavigationservice.cpp"
-    "src/kiriimagedecoder.cpp"
-    "src/kiriimagenavigation.cpp"
-    "src/kiriimagerendernode.cpp"
-    "src/kiriimageview.cpp"
-    "src/predecodecache.cpp"
-  ];
+  srcEntries = builtins.readDir ./src;
+  cppSources = map (source: "src/${source}") (
+    lib.sort builtins.lessThan (
+      lib.filter (source: srcEntries.${source} == "regular" && lib.hasSuffix ".cpp" source) (
+        builtins.attrNames srcEntries
+      )
+    )
+  );
   qtCompileDefines = [
     "-DQT_CORE_LIB"
     "-DQT_DBUS_LIB"
@@ -143,16 +136,7 @@ in
   enterShell = ''
     export QMAKE=${lib.getExe' qmake "qmake6"}
 
-    cxxqt_clangd_include="${config.devenv.root}/target/cxxqt/clangd/include"
-    mkdir -p "$cxxqt_clangd_include"
-    for cxxqt_include in \
-      "${config.devenv.root}"/target/debug/build/*/out/cxxqtbuild/include \
-      "${config.devenv.root}"/target/devenv/debug/build/*/out/cxxqtbuild/include \
-      "${config.devenv.root}"/target/rust-analyzer/debug/build/*/out/cxxqtbuild/include; do
-      if [ -d "$cxxqt_include" ]; then
-        find "$cxxqt_include" -mindepth 1 -maxdepth 1 -exec ln -sfn {} "$cxxqt_clangd_include/" \;
-      fi
-    done
+    "${config.devenv.root}/scripts/refresh-cxxqt-includes"
   '';
 
   files."compile_commands.json".json = compileCommands;
@@ -198,6 +182,7 @@ in
     kdePackages.qtimageformats
     kdePackages.qtsvg
     kdePackages.qttools
+    jq
     ninja
     pkg-config
   ];

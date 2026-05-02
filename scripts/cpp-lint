@@ -4,142 +4,37 @@
 
 set -euo pipefail
 
+script_dir=$(CDPATH='' cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
+repo_root=$(CDPATH='' cd -- "$script_dir/.." && pwd)
 mode="${1:-all}"
 
-sources=(
-    src/apngdecoder.cpp
-    src/kiriimageview.cpp
-)
+case "$mode" in
+    all | clang-tidy | clazy) ;;
+    *)
+        echo "usage: $0 [all|clang-tidy|clazy]" >&2
+        exit 2
+        ;;
+esac
 
-qt_packages=(
-    Qt6Core
-    Qt6Gui
-    Qt6Quick
-    Qt6Qml
-    Qt6Svg
-    Qt6Network
-    Qt6DBus
-)
+cd "$repo_root"
+"$script_dir/refresh-cxxqt-includes"
 
-declare -A seen_system_include_dirs=()
-declare -A seen_include_roots=()
-system_include_flags=()
-compile_args=(-std=c++17 -Isrc)
+if [[ ! -f compile_commands.json ]]; then
+    echo "compile_commands.json was not found; enter the devenv shell to generate it" >&2
+    exit 1
+fi
 
-add_system_include_dir() {
-    local dir="$1"
+if ! command -v jq >/dev/null; then
+    echo "jq was not found in PATH" >&2
+    exit 127
+fi
 
-    if [[ ! -d "$dir" || -n "${seen_system_include_dirs[$dir]+x}" ]]; then
-        return
-    fi
+mapfile -t sources < <(jq -r '.[].file' compile_commands.json)
 
-    seen_system_include_dirs["$dir"]=1
-    system_include_flags+=(-isystem "$dir")
-}
-
-add_qt_rhi_include_dirs() {
-    local dir="$1"
-    local candidate
-
-    for candidate in \
-        "$dir" \
-        "$dir"/QtGui \
-        "$dir"/QtGui/*/QtGui \
-        "$dir"/*/QtGui; do
-        if [[ -f "$candidate/rhi/qrhi.h" && -f "$candidate/rhi/qshader.h" ]]; then
-            add_system_include_dir "$candidate"
-        fi
-    done
-}
-
-add_include_root() {
-    local dir="$1"
-
-    if [[ ! -d "$dir" || -n "${seen_include_roots[$dir]+x}" ]]; then
-        return
-    fi
-
-    seen_include_roots["$dir"]=1
-
-    case "$dir" in
-        */KF6/KIOCore | */KF6/KIO | */KF6/KCoreAddons)
-            add_system_include_dir "$dir"
-            ;;
-    esac
-
-    add_system_include_dir "$dir/KF6/KIOCore"
-    add_system_include_dir "$dir/KF6/KIO"
-    add_system_include_dir "$dir/KF6/KCoreAddons"
-    add_qt_rhi_include_dirs "$dir"
-}
-
-add_compile_include_roots() {
-    local flags="$1"
-    local words=()
-    read -r -a words <<< "$flags"
-
-    for ((i = 0; i < ${#words[@]}; i++)); do
-        case "${words[$i]}" in
-            -I | -isystem)
-                i=$((i + 1))
-                if ((i < ${#words[@]})); then
-                    add_include_root "${words[$i]}"
-                fi
-                ;;
-            -I*)
-                add_include_root "${words[$i]#-I}"
-                ;;
-            -isystem*)
-                add_include_root "${words[$i]#-isystem}"
-                ;;
-        esac
-    done
-}
-
-add_colon_separated_include_roots() {
-    local paths="$1"
-    local dirs=()
-    IFS=: read -r -a dirs <<< "$paths"
-
-    for dir in "${dirs[@]}"; do
-        add_include_root "$dir"
-    done
-}
-
-add_generated_include_dirs() {
-    local cargo_target_dir="${CARGO_TARGET_DIR:-target}"
-    local dir
-
-    for dir in "$cargo_target_dir"/debug/build/*/out/cxxqtbuild/include "$cargo_target_dir"/release/build/*/out/cxxqtbuild/include; do
-        add_system_include_dir "$dir"
-    done
-}
-
-add_qt_flags() {
-    local qt_flags=()
-    read -r -a qt_flags <<< "$(pkg-config --cflags "${qt_packages[@]}")"
-
-    for flag in "${qt_flags[@]}"; do
-        case "$flag" in
-            -I*)
-                add_system_include_dir "${flag#-I}"
-                ;;
-            *)
-                compile_args+=("$flag")
-                ;;
-        esac
-    done
-}
-
-prepare_compile_args() {
-    add_qt_flags
-    add_include_root /usr/include
-    add_compile_include_roots "${NIX_CFLAGS_COMPILE:-}"
-    add_colon_separated_include_roots "${CMAKE_INCLUDE_PATH:-}"
-    add_generated_include_dirs
-
-    compile_args+=("${system_include_flags[@]}")
-}
+if ((${#sources[@]} == 0)); then
+    echo "compile_commands.json does not contain any C++ sources" >&2
+    exit 1
+fi
 
 run_clang_tidy() {
     if ! command -v clang-tidy >/dev/null; then
@@ -147,24 +42,17 @@ run_clang_tidy() {
         exit 127
     fi
 
-    for source in "${sources[@]}"; do
-        clang-tidy --quiet "$source" -- "${compile_args[@]}"
-    done
+    clang-tidy --quiet -p . "${sources[@]}"
 }
 
 run_clazy() {
-    if ! command -v clazy >/dev/null; then
-        echo "clazy was not found in PATH" >&2
+    if ! command -v clazy-standalone >/dev/null; then
+        echo "clazy-standalone was not found in PATH" >&2
         exit 127
     fi
 
-    local checks="${CLAZY_CHECKS:-level0}"
-    for source in "${sources[@]}"; do
-        CLAZY_CHECKS="$checks" clazy -fsyntax-only "${compile_args[@]}" "$source"
-    done
+    clazy-standalone --checks="${CLAZY_CHECKS:-level0}" -p . "${sources[@]}"
 }
-
-prepare_compile_args
 
 case "$mode" in
     all)
@@ -176,9 +64,5 @@ case "$mode" in
         ;;
     clazy)
         run_clazy
-        ;;
-    *)
-        echo "usage: $0 [all|clang-tidy|clazy]" >&2
-        exit 2
         ;;
 esac
