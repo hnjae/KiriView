@@ -21,11 +21,10 @@
 #include <optional>
 
 namespace KiriView {
-class ImageNavigationService;
+class ImageDocumentNavigationController;
 class ImageOpenController;
 class ImagePresentationController;
 class ImagePredecodeCoordinator;
-enum class NavigationDirection : int;
 
 class ImageDocumentController final : public QObject
 {
@@ -68,9 +67,7 @@ public:
 private:
     void setSourceUrlForLoad(const QUrl &sourceUrl, const QUrl &containerNavigationUrl);
     void cancelLoad();
-    void openAdjacentImage(NavigationDirection direction);
     void cancelNavigation();
-    void openAdjacentContainer(NavigationDirection direction);
     void cancelContainerNavigation();
     void openImageFromContainerNavigation(const QUrl &imageUrl, const QUrl &containerUrl);
     void setContainerNavigationUrl(const QUrl &containerUrl);
@@ -96,7 +93,7 @@ private:
     ImageDocumentState m_state;
     std::unique_ptr<ImagePresentationController> m_presentationController;
     std::unique_ptr<ImageOpenController> m_openController;
-    std::unique_ptr<ImageNavigationService> m_navigationService;
+    std::unique_ptr<ImageDocumentNavigationController> m_navigationController;
     std::unique_ptr<ImagePredecodeCoordinator> m_predecodeCoordinator;
 };
 }

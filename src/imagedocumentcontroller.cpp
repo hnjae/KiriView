@@ -3,7 +3,7 @@
 
 #include "imagedocumentcontroller.h"
 
-#include "imagenavigationservice.h"
+#include "imagedocumentnavigationcontroller.h"
 #include "imageopencontroller.h"
 #include "imagepredecodecoordinator.h"
 #include "imagepresentationcontroller.h"
@@ -14,7 +14,6 @@
 #include <utility>
 
 namespace {
-using KiriView::NavigationDirection;
 using KiriView::windowTitleFileNameForDisplayedUrl;
 
 QString imageViewText(const char *sourceText)
@@ -38,30 +37,19 @@ ImageDocumentController::ImageDocumentController(
         this, m_state, *m_presentationController,
         [this](const QUrl &url) { return takePredecodedImage(url); }, [this]() { clearImage(); },
         [this]() { updatePageNavigation(); }, [this]() { scheduleAdjacentImagePredecode(); });
-    m_navigationService = std::make_unique<ImageNavigationService>(this);
-    m_navigationService->setOpenUrlCallback([this](const QUrl &url) { setSourceUrl(url); });
-    m_navigationService->setOpenContainerImageCallback(
+    m_navigationController = std::make_unique<ImageDocumentNavigationController>(
+        this, m_state, *m_presentationController,
+        [this](ImageDocumentChange change) { notify(change); },
+        [this](const QUrl &url) { setSourceUrl(url); },
         [this](const QUrl &imageUrl, const QUrl &containerUrl) {
             openImageFromContainerNavigation(imageUrl, containerUrl);
-        });
-    m_navigationService->setContainerNavigationErrorCallback(
-        [this](
-            const QUrl &containerUrl, ContainerNavigationError error, const QString &errorString) {
-            if (error == ContainerNavigationError::EmptyContainer) {
-                m_openController->finishContainerNavigationWithEmptyContainer(containerUrl);
-                return;
-            }
-
-            if (error == ContainerNavigationError::InvalidComicBookArchive) {
-                m_openController->finishContainerNavigationLoadWithError(
-                    containerUrl, imageViewText("Could not open the selected comic book archive."));
-                return;
-            }
-
+        },
+        [this](const QUrl &containerUrl) {
+            m_openController->finishContainerNavigationWithEmptyContainer(containerUrl);
+        },
+        [this](const QUrl &containerUrl, const QString &errorString) {
             m_openController->finishContainerNavigationLoadWithError(containerUrl, errorString);
         });
-    m_navigationService->setPageNavigationChangedCallback(
-        [this]() { notify(ImageDocumentChange::PageNavigation); });
     m_predecodeCoordinator = std::make_unique<ImagePredecodeCoordinator>(this);
 }
 
@@ -127,10 +115,10 @@ ImageZoomMode ImageDocumentController::zoomMode() const
 
 int ImageDocumentController::currentPageNumber() const
 {
-    return m_navigationService->currentPageNumber();
+    return m_navigationController->currentPageNumber();
 }
 
-int ImageDocumentController::imageCount() const { return m_navigationService->imageCount(); }
+int ImageDocumentController::imageCount() const { return m_navigationController->imageCount(); }
 
 bool ImageDocumentController::containerNavigationAvailable() const
 {
@@ -144,31 +132,20 @@ quint64 ImageDocumentController::imageRevision() const
     return m_presentationController->imageRevision();
 }
 
-void ImageDocumentController::openPreviousImage()
-{
-    openAdjacentImage(NavigationDirection::Previous);
-}
+void ImageDocumentController::openPreviousImage() { m_navigationController->openPreviousImage(); }
 
-void ImageDocumentController::openNextImage() { openAdjacentImage(NavigationDirection::Next); }
+void ImageDocumentController::openNextImage() { m_navigationController->openNextImage(); }
 
 void ImageDocumentController::openPreviousContainer()
 {
-    openAdjacentContainer(NavigationDirection::Previous);
+    m_navigationController->openPreviousContainer();
 }
 
-void ImageDocumentController::openNextContainer()
-{
-    openAdjacentContainer(NavigationDirection::Next);
-}
+void ImageDocumentController::openNextContainer() { m_navigationController->openNextContainer(); }
 
 void ImageDocumentController::openImageAtPage(int pageNumber)
 {
-    const std::optional<QUrl> pageUrl = m_navigationService->urlAtPage(pageNumber);
-    if (!pageUrl.has_value()) {
-        return;
-    }
-
-    setSourceUrl(*pageUrl);
+    m_navigationController->openImageAtPage(pageNumber);
 }
 
 void ImageDocumentController::resetZoom() { m_presentationController->resetZoom(); }
@@ -204,24 +181,11 @@ void ImageDocumentController::setSourceUrlForLoad(
 
 void ImageDocumentController::cancelLoad() { m_openController->cancel(); }
 
-void ImageDocumentController::openAdjacentImage(NavigationDirection direction)
-{
-    m_navigationService->openAdjacentImage(
-        ImageNavigationService::DisplayContext {
-            hasDisplayedImage(), m_state.displayedUrl(), m_state.displayedComicBookRootUrl() },
-        direction);
-}
-
-void ImageDocumentController::cancelNavigation() { m_navigationService->cancelNavigation(); }
-
-void ImageDocumentController::openAdjacentContainer(NavigationDirection direction)
-{
-    m_navigationService->openAdjacentContainer(m_state.containerNavigationUrl(), direction);
-}
+void ImageDocumentController::cancelNavigation() { m_navigationController->cancelNavigation(); }
 
 void ImageDocumentController::cancelContainerNavigation()
 {
-    m_navigationService->cancelContainerNavigation();
+    m_navigationController->cancelContainerNavigation();
 }
 
 void ImageDocumentController::openImageFromContainerNavigation(
@@ -237,16 +201,18 @@ void ImageDocumentController::setContainerNavigationUrl(const QUrl &containerUrl
 
 void ImageDocumentController::updatePageNavigation()
 {
-    m_navigationService->updatePageNavigation(ImageNavigationService::DisplayContext {
-        hasDisplayedImage(), m_state.displayedUrl(), m_state.displayedComicBookRootUrl() });
+    m_navigationController->updatePageNavigation();
 }
 
 void ImageDocumentController::cancelPageNavigationUpdate()
 {
-    m_navigationService->cancelPageNavigationUpdate();
+    m_navigationController->cancelPageNavigationUpdate();
 }
 
-void ImageDocumentController::clearPageNavigation() { m_navigationService->clearPageNavigation(); }
+void ImageDocumentController::clearPageNavigation()
+{
+    m_navigationController->clearPageNavigation();
+}
 
 void ImageDocumentController::scheduleAdjacentImagePredecode()
 {
