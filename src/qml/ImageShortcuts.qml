@@ -58,6 +58,38 @@ Item {
 
     Shortcut {
         context: Qt.WindowShortcut
+        enabled: root.imageReady && !root.textInputFocused() && !root.helpDialogOpen
+        sequence: "1"
+
+        onActivated: root.imageDocument.resetZoom()
+    }
+
+    Shortcut {
+        context: Qt.WindowShortcut
+        enabled: root.imageReady && !root.textInputFocused() && !root.helpDialogOpen
+        sequence: "2"
+
+        onActivated: root.imageDocument.setFitMode(KiriImageDocument.FitHeight)
+    }
+
+    Shortcut {
+        context: Qt.WindowShortcut
+        enabled: root.imageReady && !root.textInputFocused() && !root.helpDialogOpen
+        sequence: "3"
+
+        onActivated: root.imageDocument.setFitMode(KiriImageDocument.FitWidth)
+    }
+
+    Shortcut {
+        context: Qt.WindowShortcut
+        enabled: root.imageReady && !root.textInputFocused() && !root.helpDialogOpen
+        sequence: "0"
+
+        onActivated: root.imageDocument.zoomPercent = 100
+    }
+
+    Shortcut {
+        context: Qt.WindowShortcut
         enabled: root.imagePannable && !root.textInputFocused() && !root.helpDialogOpen
         sequence: "Left"
 

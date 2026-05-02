@@ -44,16 +44,10 @@ Kirigami.ApplicationWindow {
 
     Shortcut {
         context: Qt.WindowShortcut
+        enabled: !root.helpDialogOpen
         sequence: "Esc"
 
-        onActivated: {
-            if (root.helpDialogOpen) {
-                shortcutHelpDialog.close();
-                return;
-            }
-
-            root.close();
-        }
+        onActivated: root.close()
     }
 
     pageStack.initialPage: Kirigami.Page {

@@ -10,7 +10,7 @@ Controls.Dialog {
     required property real windowWidth
     required property real windowHeight
 
-    closePolicy: Controls.Popup.NoAutoClose
+    closePolicy: Controls.Popup.CloseOnEscape
     modal: true
     standardButtons: Controls.Dialog.Close
     title: "Keyboard Shortcuts"
@@ -42,6 +42,22 @@ Controls.Dialog {
                 ListElement {
                     description: "Zoom out"
                     keys: "Ctrl+-"
+                }
+                ListElement {
+                    description: "Fit image"
+                    keys: "1"
+                }
+                ListElement {
+                    description: "Fit image height"
+                    keys: "2"
+                }
+                ListElement {
+                    description: "Fit image width"
+                    keys: "3"
+                }
+                ListElement {
+                    description: "Set 100% zoom"
+                    keys: "0"
                 }
                 ListElement {
                     description: "Zoom around the cursor"
