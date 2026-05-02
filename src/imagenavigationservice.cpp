@@ -3,7 +3,10 @@
 
 #include "imagenavigationservice.h"
 
+#include "imagecontainer.h"
 #include "imageiojobs.h"
+#include "imagenavigationmodel.h"
+#include "imageurl.h"
 
 #include <QString>
 #include <optional>

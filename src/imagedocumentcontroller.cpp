@@ -3,11 +3,11 @@
 
 #include "imagedocumentcontroller.h"
 
+#include "imagecontainer.h"
 #include "imagedocumentnavigationcontroller.h"
 #include "imageopencontroller.h"
 #include "imagepredecodecoordinator.h"
 #include "imagepresentationcontroller.h"
-#include "kiriimagenavigation.h"
 
 #include <QCoreApplication>
 #include <memory>

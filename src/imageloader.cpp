@@ -3,9 +3,9 @@
 
 #include "imageloader.h"
 
+#include "imagecontainer.h"
 #include "imageiojobs.h"
 #include "kiriimagedecoder.h"
-#include "kiriimagenavigation.h"
 
 #include <QByteArray>
 #include <QMetaObject>

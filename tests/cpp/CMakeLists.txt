@@ -18,9 +18,11 @@ find_package(KF6KIO CONFIG REQUIRED)
 
 add_library(kiriview_test_core STATIC
     ../../src/imagebytecost.cpp
+    ../../src/imagecontainer.cpp
     ../../src/imageformatregistry.cpp
+    ../../src/imagenavigationmodel.cpp
+    ../../src/imageurl.cpp
     ../../src/imagezoomstate.cpp
-    ../../src/kiriimagenavigation.cpp
     ../../src/predecodecache.cpp
 )
 target_include_directories(kiriview_test_core PUBLIC ../../src)
@@ -41,5 +43,7 @@ function(add_kiriview_cpp_test target source)
 endfunction()
 
 add_kiriview_cpp_test(test_imagezoomstate test_imagezoomstate.cpp)
-add_kiriview_cpp_test(test_kiriimagenavigation test_kiriimagenavigation.cpp)
+add_kiriview_cpp_test(test_imagecontainer test_imagecontainer.cpp)
+add_kiriview_cpp_test(test_imagenavigationmodel test_imagenavigationmodel.cpp)
+add_kiriview_cpp_test(test_imageurl test_imageurl.cpp)
 add_kiriview_cpp_test(test_predecodecache test_predecodecache.cpp)

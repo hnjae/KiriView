@@ -3,9 +3,11 @@
 
 #include "imagepredecodecoordinator.h"
 
+#include "imagecontainer.h"
 #include "imageiojobs.h"
+#include "imagenavigationmodel.h"
+#include "imageurl.h"
 #include "kiriimagedecoder.h"
-#include "kiriimagenavigation.h"
 
 #include <QByteArray>
 #include <QMetaObject>

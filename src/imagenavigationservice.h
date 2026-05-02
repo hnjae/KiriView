@@ -5,7 +5,7 @@
 #define KIRIVIEW_IMAGENAVIGATIONSERVICE_H
 
 #include "asyncobjectslot.h"
-#include "kiriimagenavigation.h"
+#include "imagenavigationtypes.h"
 
 #include <QObject>
 #include <QString>

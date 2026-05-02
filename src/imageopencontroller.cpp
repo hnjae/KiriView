@@ -3,10 +3,10 @@
 
 #include "imageopencontroller.h"
 
+#include "imagecontainer.h"
 #include "imagedocumentstate.h"
 #include "imagepresentationcontroller.h"
 #include "kiriimagedecoder.h"
-#include "kiriimagenavigation.h"
 #include "predecodecache.h"
 
 #include <QCoreApplication>

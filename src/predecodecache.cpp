@@ -4,7 +4,7 @@
 #include "predecodecache.h"
 
 #include "imagebytecost.h"
-#include "kiriimagenavigation.h"
+#include "imageurl.h"
 
 #include <algorithm>
 #include <cstddef>

@@ -3,7 +3,7 @@
 
 #include "imagezoomstate.h"
 
-#include "kiriimagenavigation.h"
+#include "imageurl.h"
 
 #include <algorithm>
 #include <cmath>

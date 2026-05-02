@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "kiriimagenavigation.h"
+#include "imagenavigationmodel.h"
 
 #include <QObject>
 #include <QTest>
@@ -41,7 +41,7 @@ void compareUrls(const std::vector<QUrl> &actual, const std::vector<QUrl> &expec
 }
 }
 
-class TestKiriImageNavigation : public QObject
+class TestImageNavigationModel : public QObject
 {
     Q_OBJECT
 
@@ -50,11 +50,9 @@ private Q_SLOTS:
     void adjacentContainerNavigationUsesTheSameRules();
     void pageNavigationInsertsFallbackCurrentUrl();
     void predecodeWindowPrioritizesCurrentAndForwardPages();
-    void comicBookArchiveUrlsResolveToTheirContainer();
-    void regularImageContainerUrlsResolveToParentDirectory();
 };
 
-void TestKiriImageNavigation::adjacentImageNavigationDoesNotWrap()
+void TestImageNavigationModel::adjacentImageNavigationDoesNotWrap()
 {
     const std::vector<ImageNavigationCandidate> candidates = imageCandidates(3);
 
@@ -79,7 +77,7 @@ void TestKiriImageNavigation::adjacentImageNavigationDoesNotWrap()
             .has_value());
 }
 
-void TestKiriImageNavigation::adjacentContainerNavigationUsesTheSameRules()
+void TestImageNavigationModel::adjacentContainerNavigationUsesTheSameRules()
 {
     const QUrl first = QUrl::fromLocalFile(QStringLiteral("/books/a/"));
     const QUrl second = QUrl::fromLocalFile(QStringLiteral("/books/b.cbz"));
@@ -111,7 +109,7 @@ void TestKiriImageNavigation::adjacentContainerNavigationUsesTheSameRules()
             .has_value());
 }
 
-void TestKiriImageNavigation::pageNavigationInsertsFallbackCurrentUrl()
+void TestImageNavigationModel::pageNavigationInsertsFallbackCurrentUrl()
 {
     PageNavigationState state
         = KiriView::pageNavigationStateForUrls({ imageUrl(0), imageUrl(1) }, imageUrl(1));
@@ -123,7 +121,7 @@ void TestKiriImageNavigation::pageNavigationInsertsFallbackCurrentUrl()
     compareUrls(state.urls, { imageUrl(9), imageUrl(0), imageUrl(1) });
 }
 
-void TestKiriImageNavigation::predecodeWindowPrioritizesCurrentAndForwardPages()
+void TestImageNavigationModel::predecodeWindowPrioritizesCurrentAndForwardPages()
 {
     const std::vector<QUrl> urls
         = KiriView::predecodeWindowImageUrls(imageCandidates(15), imageUrl(5));
@@ -133,36 +131,6 @@ void TestKiriImageNavigation::predecodeWindowPrioritizesCurrentAndForwardPages()
             imageUrl(10), imageUrl(11), imageUrl(12), imageUrl(13), imageUrl(14) });
 }
 
-void TestKiriImageNavigation::comicBookArchiveUrlsResolveToTheirContainer()
-{
-    const QUrl archiveUrl = QUrl::fromLocalFile(QStringLiteral("/books/book.cbz"));
-    const std::optional<QUrl> archiveRootUrl = KiriView::comicBookArchiveRootUrl(archiveUrl);
-    QVERIFY(archiveRootUrl.has_value());
-    QCOMPARE(archiveRootUrl->scheme(), QStringLiteral("zip"));
-    QCOMPARE(archiveRootUrl->path(), QStringLiteral("/books/book.cbz/"));
+QTEST_GUILESS_MAIN(TestImageNavigationModel)
 
-    QUrl pageUrl = *archiveRootUrl;
-    pageUrl.setPath(archiveRootUrl->path() + QStringLiteral("chapter/page001.png"));
-
-    QVERIFY(KiriView::isUrlInsideArchiveRoot(pageUrl, *archiveRootUrl));
-    QCOMPARE(KiriView::containingComicBookArchiveRootUrl(pageUrl), archiveRootUrl);
-    QCOMPARE(KiriView::windowTitleFileNameForDisplayedUrl(pageUrl, *archiveRootUrl),
-        QStringLiteral("book.cbz"));
-    QCOMPARE(KiriView::containerNavigationUrlForImage(pageUrl, *archiveRootUrl), archiveUrl);
-}
-
-void TestKiriImageNavigation::regularImageContainerUrlsResolveToParentDirectory()
-{
-    const QUrl fileUrl = QUrl::fromLocalFile(QStringLiteral("/images/page.png"));
-    const QUrl parentUrl = QUrl::fromLocalFile(QStringLiteral("/images/"));
-
-    QVERIFY(KiriView::sameContainerNavigationUrl(
-        KiriView::containerNavigationUrlForImage(fileUrl, QUrl()), parentUrl));
-    QVERIFY(
-        KiriView::sameContainerNavigationUrl(KiriView::parentUrlForContainerNavigation(parentUrl),
-            QUrl::fromLocalFile(QStringLiteral("/"))));
-}
-
-QTEST_GUILESS_MAIN(TestKiriImageNavigation)
-
-#include "test_kiriimagenavigation.moc"
+#include "test_imagenavigationmodel.moc"

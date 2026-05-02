@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGEIOJOBS_H
 #define KIRIVIEW_IMAGEIOJOBS_H
 
-#include "kiriimagenavigation.h"
+#include "imagenavigationtypes.h"
 
 #include <QByteArray>
 #include <QString>

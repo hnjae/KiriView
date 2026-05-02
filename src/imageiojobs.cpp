@@ -4,6 +4,8 @@
 #include "imageiojobs.h"
 
 #include "asyncobjectslot.h"
+#include "imagecontainer.h"
+#include "imagenavigationmodel.h"
 
 #include <KCoreDirLister>
 #include <KIO/Job>
