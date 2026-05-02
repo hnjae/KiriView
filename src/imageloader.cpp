@@ -76,10 +76,10 @@ void ImageLoader::start(ImageLoadRequest request)
     ImageLoadSession session;
     session.id = ++m_nextLoadSessionId;
     session.request = std::move(request);
-    session.location.imageUrl = session.request.sourceUrl;
+    session.location.imageUrl = session.request.sourceUrl();
 
     const std::optional<QUrl> selectedArchiveRootUrl
-        = comicBookArchiveRootUrl(session.request.sourceUrl);
+        = comicBookArchiveRootUrl(session.request.sourceUrl());
     if (selectedArchiveRootUrl.has_value()) {
         session.location.comicBookRootUrl = selectedArchiveRootUrl.value();
         m_loadSession = session;
@@ -88,14 +88,14 @@ void ImageLoader::start(ImageLoadRequest request)
     }
 
     if (isUrlInsideArchiveRoot(
-            session.request.sourceUrl, session.request.displayedComicBookRootUrl)) {
+            session.request.sourceUrl(), session.request.displayedComicBookRootUrl)) {
         session.location.comicBookRootUrl = session.request.displayedComicBookRootUrl;
     } else {
         const std::optional<QUrl> containingArchiveRootUrl
-            = containingComicBookArchiveRootUrl(session.request.sourceUrl);
+            = containingComicBookArchiveRootUrl(session.request.sourceUrl());
         session.location.comicBookRootUrl = containingArchiveRootUrl.has_value()
                 && isUrlInsideArchiveRoot(
-                    session.request.sourceUrl, containingArchiveRootUrl.value())
+                    session.request.sourceUrl(), containingArchiveRootUrl.value())
             ? containingArchiveRootUrl.value()
             : QUrl();
     }

@@ -43,8 +43,8 @@ ImageOpenCommands ImageOpenWorkflow::finishSuccessfulImageLoad(
     ImageOpenCommands commands;
     state.setSourceUrl(session.location.imageUrl);
     state.setDisplayedImageLocation(session.location);
-    if (!session.request.containerNavigationUrl.isEmpty()) {
-        state.setContainerNavigationUrl(session.request.containerNavigationUrl);
+    if (!session.request.containerNavigationUrl().isEmpty()) {
+        state.setContainerNavigationUrl(session.request.containerNavigationUrl());
     } else {
         state.setContainerNavigationUrl(containerNavigationUrlForImage(
             session.location.imageUrl, session.location.comicBookRootUrl));

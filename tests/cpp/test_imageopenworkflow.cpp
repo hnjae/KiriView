@@ -18,7 +18,7 @@ KiriView::ImageLoadSession loadSession(const QUrl &sourceUrl, const QUrl &imageU
 {
     return KiriView::ImageLoadSession {
         1,
-        KiriView::ImageLoadRequest { sourceUrl, comicBookRootUrl, containerNavigationUrl },
+        KiriView::ImageLoadRequest::fromUrls(sourceUrl, comicBookRootUrl, containerNavigationUrl),
         KiriView::DisplayedImageLocation { imageUrl, comicBookRootUrl },
     };
 }

@@ -64,16 +64,17 @@ void TestImageUrl::imageLocationTypesExposeExplicitState()
     };
     QVERIFY(!location.isEmpty());
 
-    const KiriView::ImageLoadRequest plainOpen { location.imageUrl, QUrl(), QUrl() };
+    const KiriView::ImageLoadRequest plainOpen
+        = KiriView::ImageLoadRequest::fromUrls(location.imageUrl, QUrl());
     QVERIFY(!plainOpen.isEmpty());
     QVERIFY(!plainOpen.isContainerNavigation());
+    QCOMPARE(plainOpen.sourceUrl(), location.imageUrl);
 
-    const KiriView::ImageLoadRequest containerOpen {
-        location.imageUrl,
-        location.comicBookRootUrl,
-        QUrl::fromLocalFile(QStringLiteral("/images/")),
-    };
+    const QUrl containerUrl = QUrl::fromLocalFile(QStringLiteral("/images/"));
+    const KiriView::ImageLoadRequest containerOpen = KiriView::ImageLoadRequest::fromUrls(
+        location.imageUrl, location.comicBookRootUrl, containerUrl);
     QVERIFY(containerOpen.isContainerNavigation());
+    QCOMPARE(containerOpen.containerNavigationUrl(), containerUrl);
 }
 
 QTEST_GUILESS_MAIN(TestImageUrl)

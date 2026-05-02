@@ -61,8 +61,8 @@ void ImageOpenController::open()
     }
 
     beginSourceLoad();
-    m_imageLoader->start(ImageLoadRequest { m_state.sourceUrl(),
-        m_state.displayedComicBookRootUrl(), m_state.loadingContainerNavigationUrl() });
+    m_imageLoader->start(ImageLoadRequest::fromUrls(m_state.sourceUrl(),
+        m_state.displayedComicBookRootUrl(), m_state.loadingContainerNavigationUrl()));
 }
 
 void ImageOpenController::cancel() { m_imageLoader->cancel(); }
@@ -143,7 +143,7 @@ void ImageOpenController::finishDecodedImageLoad(
 void ImageOpenController::finishLoadWithError(
     const ImageLoadSession &session, ImageLoadError error, const QString &errorString)
 {
-    const QUrl containerNavigationUrl = session.request.containerNavigationUrl;
+    const QUrl containerNavigationUrl = session.request.containerNavigationUrl();
     const QString message = error == ImageLoadError::EmptyComicBookArchive
         ? imageViewText("The selected comic book archive does not contain any supported images.")
         : errorString;
