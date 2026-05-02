@@ -133,8 +133,14 @@ void ImageLoader::startImageLoad(ImageLoadSession session)
 
 void ImageLoader::startComicBookLoad(ImageLoadSession session)
 {
-    m_archiveListJob = startArchiveImageCandidateList(
-        this, session.location.comicBookRootUrl,
+    const ImageCandidateListContext candidateContext {
+        session.location.imageUrl,
+        session.location.comicBookRootUrl,
+        session.location.comicBookRootUrl,
+        ImageCandidateContainerType::ComicBookArchive,
+    };
+    m_archiveListJob = m_candidateRepository.loadImages(
+        this, candidateContext,
         [this, session](std::vector<ImageNavigationCandidate> candidates) mutable {
             if (!isCurrentLoadSession(session)) {
                 return;

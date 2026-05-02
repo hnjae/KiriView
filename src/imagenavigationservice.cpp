@@ -3,8 +3,6 @@
 
 #include "imagenavigationservice.h"
 
-#include "imagecontainer.h"
-#include "imageiojobs.h"
 #include "imagenavigationmodel.h"
 #include "imageurl.h"
 
@@ -14,27 +12,16 @@
 #include <vector>
 
 namespace KiriView {
-namespace {
-    ImageNavigationCandidateProvider defaultCandidateProvider()
-    {
-        return ImageNavigationCandidateProvider {
-            startDirectoryImageCandidateList,
-            startDirectoryContainerCandidateList,
-            startArchiveImageCandidateList,
-        };
-    }
-}
-
 ImageNavigationService::ImageNavigationService(QObject *parent)
     : QObject(parent)
-    , m_candidateProvider(defaultCandidateProvider())
+    , m_candidateRepository()
 {
 }
 
 ImageNavigationService::ImageNavigationService(
     QObject *parent, ImageNavigationCandidateProvider candidateProvider)
     : QObject(parent)
-    , m_candidateProvider(std::move(candidateProvider))
+    , m_candidateRepository(std::move(candidateProvider))
 {
 }
 
@@ -93,67 +80,25 @@ void ImageNavigationService::openAdjacentImage(
 
     cancelContainerNavigation();
 
-    if (isUrlInsideArchiveRoot(context.displayedUrl, context.comicBookRootUrl)) {
-        openAdjacentComicBookImage(context, direction);
-        return;
-    }
-
-    const QUrl currentUrl = navigationSourceUrl(context.displayedUrl);
-    const QUrl parentUrl = currentUrl.adjusted(QUrl::RemoveFilename | QUrl::NormalizePathSegments);
-    if (!parentUrl.isValid() || parentUrl.isEmpty()) {
+    const std::optional<ImageCandidateListContext> candidateContext
+        = imageCandidateListContextForDisplayedImage(
+            context.displayedUrl, context.comicBookRootUrl);
+    if (!candidateContext.has_value()) {
         return;
     }
 
     cancelNavigation();
 
-    if (!m_candidateProvider.directoryImages) {
-        return;
-    }
-
-    m_navigationListerJob = m_candidateProvider.directoryImages(
-        this, parentUrl,
-        [this, direction, currentUrl](std::vector<ImageNavigationCandidate> candidates) {
+    m_navigationListerJob = m_candidateRepository.loadImages(
+        this, *candidateContext,
+        [this, direction, currentUrl = candidateContext->currentUrl](
+            std::vector<ImageNavigationCandidate> candidates) {
             finishNavigation(std::move(candidates), direction, currentUrl);
         },
         [](const QString &) {});
 }
 
-void ImageNavigationService::openAdjacentComicBookImage(
-    const DisplayContext &context, NavigationDirection direction)
-{
-    const QUrl currentUrl = context.displayedUrl.adjusted(QUrl::NormalizePathSegments);
-    const QUrl archiveRootUrl = context.comicBookRootUrl;
-    if (!currentUrl.isValid() || archiveRootUrl.isEmpty()) {
-        return;
-    }
-
-    cancelNavigation();
-
-    if (!m_candidateProvider.archiveImages) {
-        return;
-    }
-
-    m_navigationListJob = m_candidateProvider.archiveImages(
-        this, archiveRootUrl,
-        [this, direction, currentUrl](std::vector<ImageNavigationCandidate> candidates) {
-            const std::optional<QUrl> targetUrl
-                = adjacentImageNavigationUrl(candidates, currentUrl, direction);
-            if (!targetUrl.has_value()) {
-                return;
-            }
-
-            if (m_openUrl) {
-                m_openUrl(*targetUrl);
-            }
-        },
-        [](const QString &) {});
-}
-
-void ImageNavigationService::cancelNavigation()
-{
-    m_navigationListerJob.cancel();
-    m_navigationListJob.cancel();
-}
+void ImageNavigationService::cancelNavigation() { m_navigationListerJob.cancel(); }
 
 void ImageNavigationService::finishNavigation(std::vector<ImageNavigationCandidate> candidates,
     NavigationDirection direction, const QUrl &currentUrl)
@@ -184,11 +129,7 @@ void ImageNavigationService::openAdjacentContainer(
     cancelNavigation();
     cancelContainerNavigation();
 
-    if (!m_candidateProvider.directoryContainers) {
-        return;
-    }
-
-    m_containerNavigationListerJob = m_candidateProvider.directoryContainers(
+    m_containerNavigationListerJob = m_candidateRepository.loadContainers(
         this, parentUrl,
         [this, direction, currentContainerUrl](
             std::vector<ContainerNavigationCandidate> candidates) {
@@ -213,73 +154,14 @@ void ImageNavigationService::finishContainerNavigation(
         return;
     }
 
-    if (target->type == ContainerNavigationCandidateType::Directory) {
-        openDirectoryContainer(target->url);
-    } else {
-        openComicBookContainer(target->url);
-    }
-}
-
-void ImageNavigationService::openDirectoryContainer(const QUrl &containerUrl)
-{
-    if (!m_candidateProvider.directoryImages) {
-        return;
-    }
-
-    m_containerNavigationListerJob = m_candidateProvider.directoryImages(
-        this, containerUrl,
-        [this, containerUrl](std::vector<ImageNavigationCandidate> candidates) {
-            finishDirectoryContainerNavigation(std::move(candidates), containerUrl);
+    m_containerNavigationListJob = m_candidateRepository.loadFirstImageInContainer(
+        this, *target,
+        [this](const QUrl &imageUrl, const QUrl &containerUrl) {
+            openImageFromContainerNavigation(imageUrl, containerUrl);
         },
-        [this, containerUrl](const QString &errorString) {
-            finishDirectoryContainerNavigationWithError(containerUrl, errorString);
-        });
-}
-
-void ImageNavigationService::finishDirectoryContainerNavigation(
-    std::vector<ImageNavigationCandidate> candidates, const QUrl &containerUrl)
-{
-    if (candidates.empty()) {
-        finishContainerNavigationWithEmptyContainer(containerUrl);
-        return;
-    }
-
-    openImageFromContainerNavigation(candidates.front().url, containerUrl);
-}
-
-void ImageNavigationService::finishDirectoryContainerNavigationWithError(
-    const QUrl &containerUrl, const QString &errorString)
-{
-    finishContainerNavigationLoadWithError(
-        containerUrl, ContainerNavigationError::Generic, errorString);
-}
-
-void ImageNavigationService::openComicBookContainer(const QUrl &containerUrl)
-{
-    const std::optional<QUrl> archiveRootUrl = comicBookArchiveRootUrl(containerUrl);
-    if (!archiveRootUrl.has_value()) {
-        finishContainerNavigationLoadWithError(
-            containerUrl, ContainerNavigationError::InvalidComicBookArchive, QString());
-        return;
-    }
-
-    if (!m_candidateProvider.archiveImages) {
-        return;
-    }
-
-    m_containerNavigationListJob = m_candidateProvider.archiveImages(
-        this, archiveRootUrl.value(),
-        [this, containerUrl](std::vector<ImageNavigationCandidate> candidates) {
-            if (candidates.empty()) {
-                finishContainerNavigationWithEmptyContainer(containerUrl);
-                return;
-            }
-
-            openImageFromContainerNavigation(candidates.front().url, containerUrl);
-        },
-        [this, containerUrl](const QString &errorString) {
-            finishContainerNavigationLoadWithError(
-                containerUrl, ContainerNavigationError::Generic, errorString);
+        [this](const QUrl &containerUrl, ImageCandidateRepositoryError error,
+            const QString &errorString) {
+            finishContainerNavigationLoadWithRepositoryError(containerUrl, error, errorString);
         });
 }
 
@@ -291,17 +173,30 @@ void ImageNavigationService::openImageFromContainerNavigation(
     }
 }
 
-void ImageNavigationService::finishContainerNavigationWithEmptyContainer(const QUrl &containerUrl)
-{
-    finishContainerNavigationLoadWithError(
-        containerUrl, ContainerNavigationError::EmptyContainer, QString());
-}
-
 void ImageNavigationService::finishContainerNavigationLoadWithError(
     const QUrl &containerUrl, ContainerNavigationError error, const QString &errorString)
 {
     if (m_containerNavigationError) {
         m_containerNavigationError(containerUrl, error, errorString);
+    }
+}
+
+void ImageNavigationService::finishContainerNavigationLoadWithRepositoryError(
+    const QUrl &containerUrl, ImageCandidateRepositoryError error, const QString &errorString)
+{
+    switch (error) {
+    case ImageCandidateRepositoryError::Generic:
+        finishContainerNavigationLoadWithError(
+            containerUrl, ContainerNavigationError::Generic, errorString);
+        return;
+    case ImageCandidateRepositoryError::EmptyContainer:
+        finishContainerNavigationLoadWithError(
+            containerUrl, ContainerNavigationError::EmptyContainer, errorString);
+        return;
+    case ImageCandidateRepositoryError::InvalidComicBookArchive:
+        finishContainerNavigationLoadWithError(
+            containerUrl, ContainerNavigationError::InvalidComicBookArchive, errorString);
+        return;
     }
 }
 
@@ -314,69 +209,26 @@ void ImageNavigationService::updatePageNavigation(const DisplayContext &context)
         return;
     }
 
-    const bool isComicBookPage
-        = isUrlInsideArchiveRoot(context.displayedUrl, context.comicBookRootUrl);
-    const QUrl currentUrl = isComicBookPage
-        ? context.displayedUrl.adjusted(QUrl::NormalizePathSegments)
-        : navigationSourceUrl(context.displayedUrl);
-    if (!currentUrl.isValid() || currentUrl.isEmpty()) {
+    const std::optional<ImageCandidateListContext> candidateContext
+        = imageCandidateListContextForDisplayedImage(
+            context.displayedUrl, context.comicBookRootUrl);
+    if (!candidateContext.has_value()) {
         clearPageNavigation();
         return;
     }
 
-    setFallbackPageNavigationUrl(currentUrl);
+    setFallbackPageNavigationUrl(candidateContext->currentUrl);
 
-    if (isComicBookPage) {
-        updateComicBookPageNavigation(currentUrl, context.comicBookRootUrl);
-        return;
-    }
-
-    updateFilePageNavigation(currentUrl);
-}
-
-void ImageNavigationService::updateFilePageNavigation(const QUrl &currentUrl)
-{
-    const QUrl parentUrl = currentUrl.adjusted(QUrl::RemoveFilename | QUrl::NormalizePathSegments);
-    if (!parentUrl.isValid() || parentUrl.isEmpty()) {
-        return;
-    }
-
-    if (!m_candidateProvider.directoryImages) {
-        return;
-    }
-
-    m_pageNavigationListerJob = m_candidateProvider.directoryImages(
-        this, parentUrl,
-        [this, currentUrl](std::vector<ImageNavigationCandidate> candidates) {
+    m_pageNavigationListerJob = m_candidateRepository.loadImages(
+        this, *candidateContext,
+        [this, currentUrl = candidateContext->currentUrl](
+            std::vector<ImageNavigationCandidate> candidates) {
             setPageNavigationUrls(imageNavigationCandidateUrls(candidates), currentUrl);
         },
         [](const QString &) {});
 }
 
-void ImageNavigationService::updateComicBookPageNavigation(
-    const QUrl &currentUrl, const QUrl &archiveRootUrl)
-{
-    if (archiveRootUrl.isEmpty()) {
-        return;
-    }
-
-    if (!m_candidateProvider.archiveImages) {
-        return;
-    }
-
-    m_pageNavigationListJob = m_candidateProvider.archiveImages(
-        this, archiveRootUrl,
-        [this, currentUrl](std::vector<ImageNavigationCandidate> candidates) {
-            setPageNavigationUrls(imageNavigationCandidateUrls(candidates), currentUrl);
-        },
-        [](const QString &) {});
-}
-
-void ImageNavigationService::cancelPageNavigationUpdate()
-{
-    m_pageNavigationListerJob.cancel();
-    m_pageNavigationListJob.cancel();
-}
+void ImageNavigationService::cancelPageNavigationUpdate() { m_pageNavigationListerJob.cancel(); }
 
 void ImageNavigationService::setPageNavigationUrls(std::vector<QUrl> urls, const QUrl &currentUrl)
 {

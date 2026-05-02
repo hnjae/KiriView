@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_IMAGELOADER_H
 #define KIRIVIEW_IMAGELOADER_H
 
+#include "imagecandidaterepository.h"
 #include "imagedecodejob.h"
 #include "imageiojob.h"
 #include "imagelocation.h"
@@ -72,6 +73,7 @@ private:
     PredecodedImageCallback m_predecodedImage;
     TakePredecodedImageCallback m_takePredecodedImage;
     ImageDecodeJob m_decodeJob;
+    ImageCandidateRepository m_candidateRepository;
     ImageIoJob m_archiveListJob;
     quint64 m_nextLoadSessionId = 0;
     std::optional<ImageLoadSession> m_loadSession;

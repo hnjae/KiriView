@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGENAVIGATIONSERVICE_H
 #define KIRIVIEW_IMAGENAVIGATIONSERVICE_H
 
-#include "imageiojobs.h"
+#include "imagecandidaterepository.h"
 #include "imagenavigationtypes.h"
 
 #include <QObject>
@@ -19,17 +19,6 @@ enum class ContainerNavigationError {
     Generic,
     EmptyContainer,
     InvalidComicBookArchive,
-};
-
-struct ImageNavigationCandidateProvider {
-    using ImageCandidateLoader
-        = std::function<ImageIoJob(QObject *, QUrl, ImageCandidatesCallback, ErrorCallback)>;
-    using ContainerCandidateLoader
-        = std::function<ImageIoJob(QObject *, QUrl, ContainerCandidatesCallback, ErrorCallback)>;
-
-    ImageCandidateLoader directoryImages;
-    ContainerCandidateLoader directoryContainers;
-    ImageCandidateLoader archiveImages;
 };
 
 class ImageNavigationService final : public QObject
@@ -69,25 +58,17 @@ public:
     void clearPageNavigation();
 
 private:
-    void openAdjacentComicBookImage(const DisplayContext &context, NavigationDirection direction);
     void finishNavigation(std::vector<ImageNavigationCandidate> candidates,
         NavigationDirection direction, const QUrl &currentUrl);
 
     void finishContainerNavigation(std::vector<ContainerNavigationCandidate> candidates,
         NavigationDirection direction, const QUrl &currentContainerUrl);
-    void openDirectoryContainer(const QUrl &containerUrl);
-    void finishDirectoryContainerNavigation(
-        std::vector<ImageNavigationCandidate> candidates, const QUrl &containerUrl);
-    void finishDirectoryContainerNavigationWithError(
-        const QUrl &containerUrl, const QString &errorString);
-    void openComicBookContainer(const QUrl &containerUrl);
     void openImageFromContainerNavigation(const QUrl &imageUrl, const QUrl &containerUrl);
-    void finishContainerNavigationWithEmptyContainer(const QUrl &containerUrl);
     void finishContainerNavigationLoadWithError(
         const QUrl &containerUrl, ContainerNavigationError error, const QString &errorString);
+    void finishContainerNavigationLoadWithRepositoryError(
+        const QUrl &containerUrl, ImageCandidateRepositoryError error, const QString &errorString);
 
-    void updateFilePageNavigation(const QUrl &currentUrl);
-    void updateComicBookPageNavigation(const QUrl &currentUrl, const QUrl &archiveRootUrl);
     void setPageNavigationUrls(std::vector<QUrl> urls, const QUrl &currentUrl);
     void setFallbackPageNavigationUrl(const QUrl &currentUrl);
 
@@ -95,13 +76,11 @@ private:
     OpenContainerImageCallback m_openContainerImage;
     ContainerNavigationErrorCallback m_containerNavigationError;
     PageNavigationChangedCallback m_pageNavigationChanged;
-    ImageNavigationCandidateProvider m_candidateProvider;
+    ImageCandidateRepository m_candidateRepository;
     ImageIoJob m_navigationListerJob;
-    ImageIoJob m_navigationListJob;
     ImageIoJob m_containerNavigationListerJob;
     ImageIoJob m_containerNavigationListJob;
     ImageIoJob m_pageNavigationListerJob;
-    ImageIoJob m_pageNavigationListJob;
     std::vector<QUrl> m_pageNavigationUrls;
     int m_currentPageIndex = -1;
 };

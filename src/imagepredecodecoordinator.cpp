@@ -3,7 +3,6 @@
 
 #include "imagepredecodecoordinator.h"
 
-#include "imagecontainer.h"
 #include "imageiojobs.h"
 #include "imagenavigationmodel.h"
 #include "imageurl.h"
@@ -20,8 +19,6 @@ using KiriView::decodedImageResultIsPredecodeCacheable;
 using KiriView::decodeImageData;
 using KiriView::ImageDecodeJob;
 using KiriView::ImageIoJob;
-using KiriView::isUrlInsideArchiveRoot;
-using KiriView::navigationSourceUrl;
 using KiriView::normalizedImageUrl;
 using KiriView::predecodeWindowImageUrls;
 
@@ -57,55 +54,32 @@ void ImagePredecodeCoordinator::schedule(Context context)
     }
 
     const quint64 generation = m_generation;
-    if (isUrlInsideArchiveRoot(context.displayedImageLocation.imageUrl,
-            context.displayedImageLocation.comicBookRootUrl)) {
-        scheduleComicBookAdjacentImagePredecode(context, generation);
-        return;
-    }
-
-    scheduleFileAdjacentImagePredecode(context, generation);
+    scheduleAdjacentImagePredecode(context, generation);
 }
 
-void ImagePredecodeCoordinator::scheduleFileAdjacentImagePredecode(
+void ImagePredecodeCoordinator::scheduleAdjacentImagePredecode(
     const Context &context, quint64 generation)
 {
-    const QUrl currentUrl = navigationSourceUrl(context.displayedImageLocation.imageUrl);
-    const QUrl parentUrl = currentUrl.adjusted(QUrl::RemoveFilename | QUrl::NormalizePathSegments);
-    if (!parentUrl.isValid() || parentUrl.isEmpty()) {
-        startPredecodeImageLoads({}, QUrl(), context, generation);
+    const std::optional<ImageCandidateListContext> candidateContext
+        = imageCandidateListContextForDisplayedImage(context.displayedImageLocation.imageUrl,
+            context.displayedImageLocation.comicBookRootUrl);
+    if (!candidateContext.has_value()) {
+        startPredecodeImageLoads(
+            {}, context.displayedImageLocation.comicBookRootUrl, context, generation);
         return;
     }
 
-    m_listerJob = startDirectoryImageCandidateList(
-        this, parentUrl,
-        [this, context, currentUrl, generation](std::vector<ImageNavigationCandidate> candidates) {
-            startPredecodeImageLoads(
-                predecodeWindowImageUrls(candidates, currentUrl), QUrl(), context, generation);
-        },
-        [this, context, generation](
-            const QString &) { startPredecodeImageLoads({}, QUrl(), context, generation); });
-}
-
-void ImagePredecodeCoordinator::scheduleComicBookAdjacentImagePredecode(
-    const Context &context, quint64 generation)
-{
-    const QUrl currentUrl
-        = context.displayedImageLocation.imageUrl.adjusted(QUrl::NormalizePathSegments);
-    const QUrl archiveRootUrl = context.displayedImageLocation.comicBookRootUrl;
-    if (!currentUrl.isValid() || archiveRootUrl.isEmpty()) {
-        startPredecodeImageLoads({}, archiveRootUrl, context, generation);
-        return;
-    }
-
-    m_listJob = startArchiveImageCandidateList(
-        this, archiveRootUrl,
-        [this, context, generation, currentUrl, archiveRootUrl](
+    m_listerJob = m_candidateRepository.loadImages(
+        this, *candidateContext,
+        [this, context, generation, candidateContext](
             std::vector<ImageNavigationCandidate> candidates) {
-            startPredecodeImageLoads(predecodeWindowImageUrls(candidates, currentUrl),
-                archiveRootUrl, context, generation);
+            startPredecodeImageLoads(
+                predecodeWindowImageUrls(candidates, candidateContext->currentUrl),
+                candidateContext->comicBookRootUrl, context, generation);
         },
-        [this, context, generation, archiveRootUrl](const QString &) {
-            startPredecodeImageLoads({}, archiveRootUrl, context, generation);
+        [this, context, generation, comicBookRootUrl = candidateContext->comicBookRootUrl](
+            const QString &) {
+            startPredecodeImageLoads({}, comicBookRootUrl, context, generation);
         });
 }
 
@@ -188,7 +162,6 @@ void ImagePredecodeCoordinator::cancel()
 {
     ++m_generation;
     m_listerJob.cancel();
-    m_listJob.cancel();
     m_decodeJob.cancel();
     m_activePredecodeUrl = QUrl();
     m_activePredecodeComicBookRootUrl = QUrl();

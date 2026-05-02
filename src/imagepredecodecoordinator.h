@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_IMAGEPREDECODECOORDINATOR_H
 #define KIRIVIEW_IMAGEPREDECODECOORDINATOR_H
 
+#include "imagecandidaterepository.h"
 #include "imagedecodejob.h"
 #include "imageiojob.h"
 #include "imagelocation.h"
@@ -34,8 +35,7 @@ public:
     std::optional<PredecodedImage> tryTake(const QUrl &url) const;
 
 private:
-    void scheduleFileAdjacentImagePredecode(const Context &context, quint64 generation);
-    void scheduleComicBookAdjacentImagePredecode(const Context &context, quint64 generation);
+    void scheduleAdjacentImagePredecode(const Context &context, quint64 generation);
     void startPredecodeImageLoads(const std::vector<QUrl> &urls, const QUrl &comicBookRootUrl,
         const Context &context, quint64 generation);
     void startNextPredecodeImageLoad(quint64 generation);
@@ -44,8 +44,8 @@ private:
     void finishPredecodeImageDecode(ImageDecodeRequest request, const DecodedImageResult &result);
 
     ImageIoJob m_listerJob;
-    ImageIoJob m_listJob;
     ImageDecodeJob m_decodeJob;
+    ImageCandidateRepository m_candidateRepository;
     PredecodeCache m_cache;
     QUrl m_activePredecodeUrl;
     QUrl m_activePredecodeComicBookRootUrl;

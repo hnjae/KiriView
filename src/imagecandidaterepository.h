@@ -1,0 +1,77 @@
+// SPDX-FileCopyrightText: 2026 KIM Hyunjae
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+#ifndef KIRIVIEW_IMAGECANDIDATEREPOSITORY_H
+#define KIRIVIEW_IMAGECANDIDATEREPOSITORY_H
+
+#include "imageiojobs.h"
+#include "imagenavigationtypes.h"
+
+#include <QObject>
+#include <QString>
+#include <QUrl>
+#include <functional>
+#include <optional>
+
+namespace KiriView {
+enum class ImageCandidateContainerType {
+    Directory,
+    ComicBookArchive,
+};
+
+enum class ImageCandidateRepositoryError {
+    Generic,
+    EmptyContainer,
+    InvalidComicBookArchive,
+};
+
+struct ImageCandidateListContext {
+    QUrl currentUrl;
+    QUrl listUrl;
+    QUrl comicBookRootUrl;
+    ImageCandidateContainerType containerType = ImageCandidateContainerType::Directory;
+};
+
+struct ImageNavigationCandidateProvider {
+    using ImageCandidateLoader
+        = std::function<ImageIoJob(QObject *, QUrl, ImageCandidatesCallback, ErrorCallback)>;
+    using ContainerCandidateLoader
+        = std::function<ImageIoJob(QObject *, QUrl, ContainerCandidatesCallback, ErrorCallback)>;
+
+    ImageCandidateLoader directoryImages;
+    ContainerCandidateLoader directoryContainers;
+    ImageCandidateLoader archiveImages;
+};
+
+using ContainerImageCallback = std::function<void(const QUrl &, const QUrl &)>;
+using CandidateRepositoryErrorCallback
+    = std::function<void(const QUrl &, ImageCandidateRepositoryError, const QString &)>;
+
+ImageNavigationCandidateProvider defaultImageNavigationCandidateProvider();
+std::optional<ImageCandidateListContext> imageCandidateListContextForDisplayedImage(
+    const QUrl &displayedUrl, const QUrl &comicBookRootUrl);
+
+class ImageCandidateRepository
+{
+public:
+    ImageCandidateRepository();
+    explicit ImageCandidateRepository(ImageNavigationCandidateProvider provider);
+
+    ImageIoJob loadImages(QObject *receiver, const ImageCandidateListContext &context,
+        ImageCandidatesCallback callback, ErrorCallback errorCallback) const;
+    ImageIoJob loadDirectoryImages(QObject *receiver, const QUrl &directoryUrl,
+        ImageCandidatesCallback callback, ErrorCallback errorCallback) const;
+    ImageIoJob loadArchiveImages(QObject *receiver, const QUrl &archiveRootUrl,
+        ImageCandidatesCallback callback, ErrorCallback errorCallback) const;
+    ImageIoJob loadContainers(QObject *receiver, const QUrl &directoryUrl,
+        ContainerCandidatesCallback callback, ErrorCallback errorCallback) const;
+    ImageIoJob loadFirstImageInContainer(QObject *receiver,
+        const ContainerNavigationCandidate &container, ContainerImageCallback callback,
+        CandidateRepositoryErrorCallback errorCallback) const;
+
+private:
+    ImageNavigationCandidateProvider m_provider;
+};
+}
+
+#endif
