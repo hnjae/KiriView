@@ -22,13 +22,11 @@ using KiriView::decodedImageResultIsPredecodeCacheable;
 
 namespace KiriView {
 ImageOpenController::ImageOpenController(QObject *parent, ImageDocumentState &state,
-    ImagePresentationController &presentationController,
-    TakePredecodedImageCallback takePredecodedImage, EffectCallback effectCallback,
+    ImagePresentationController &presentationController, ImageOpenController::Callbacks callbacks,
     const ImageAsyncDependencies &dependencies)
     : m_state(state)
     , m_presentationController(presentationController)
-    , m_takePredecodedImage(std::move(takePredecodedImage))
-    , m_effectCallback(std::move(effectCallback))
+    , m_callbacks(std::move(callbacks))
 {
     m_imageLoader = std::make_unique<ImageLoader>(parent, dependencies.candidateProvider,
         dependencies.imageDataLoader, dependencies.imageDataDecoder);
@@ -46,8 +44,13 @@ ImageOpenController::ImageOpenController(QObject *parent, ImageDocumentState &st
         [this](ImageLoadSession session, const QImage &image) {
             finishPredecodedImageLoad(std::move(session), image);
         });
-    m_imageLoader->setTakePredecodedImageCallback(
-        [this](const QUrl &url) { return m_takePredecodedImage(url); });
+    m_imageLoader->setTakePredecodedImageCallback([this](const QUrl &url) {
+        if (!m_callbacks.takePredecodedImage) {
+            return std::optional<PredecodedImage>();
+        }
+
+        return m_callbacks.takePredecodedImage(url);
+    });
 }
 
 ImageOpenController::~ImageOpenController() { cancel(); }
@@ -219,8 +222,8 @@ void ImageOpenController::reportEffects(const ImageDocumentEffects &effects)
 
 void ImageOpenController::report(ImageDocumentEffect effect)
 {
-    if (m_effectCallback) {
-        m_effectCallback(std::move(effect));
+    if (m_callbacks.effect) {
+        m_callbacks.effect(std::move(effect));
     }
 }
 }

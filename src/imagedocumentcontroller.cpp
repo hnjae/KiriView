@@ -24,20 +24,27 @@ ImageDocumentController::ImageDocumentController(QObject *parent,
     , m_changeCallback(std::move(changeCallback))
     , m_state([this](ImageDocumentChange change) { notify(change); })
 {
-    m_presentationController = std::make_unique<ImagePresentationController>(
-        this, std::move(renderContextProvider),
-        [this](ImageDocumentChange change) { notify(change); },
-        [this](const QString &errorString) {
-            dispatchEffect(ImageDocumentEffect::animationFailed(errorString));
-        });
-    m_openController = std::make_unique<ImageOpenController>(
-        this, m_state, *m_presentationController,
-        [this](const QUrl &url) { return takePredecodedImage(url); },
-        [this](ImageDocumentEffect effect) { dispatchEffect(std::move(effect)); }, dependencies);
-    m_navigationController = std::make_unique<ImageDocumentNavigationController>(
-        this, m_state, *m_presentationController,
-        [this](ImageDocumentChange change) { notify(change); },
-        [this](ImageDocumentEffect effect) { dispatchEffect(std::move(effect)); },
+    m_presentationController
+        = std::make_unique<ImagePresentationController>(this, std::move(renderContextProvider),
+            ImagePresentationController::Callbacks {
+                [this](ImageDocumentChange change) { notify(change); },
+                [this](const QString &errorString) {
+                    dispatchEffect(ImageDocumentEffect::animationFailed(errorString));
+                },
+            });
+    m_openController
+        = std::make_unique<ImageOpenController>(this, m_state, *m_presentationController,
+            ImageOpenController::Callbacks {
+                [this](const QUrl &url) { return takePredecodedImage(url); },
+                [this](ImageDocumentEffect effect) { dispatchEffect(std::move(effect)); },
+            },
+            dependencies);
+    m_navigationController = std::make_unique<ImageDocumentNavigationController>(this, m_state,
+        *m_presentationController,
+        ImageDocumentNavigationController::Callbacks {
+            [this](ImageDocumentChange change) { notify(change); },
+            [this](ImageDocumentEffect effect) { dispatchEffect(std::move(effect)); },
+        },
         dependencies.candidateProvider);
     m_predecodeCoordinator
         = std::make_unique<ImagePredecodeCoordinator>(this, dependencies.candidateProvider,

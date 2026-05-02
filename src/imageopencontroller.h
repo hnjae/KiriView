@@ -30,9 +30,13 @@ public:
     using TakePredecodedImageCallback = std::function<std::optional<PredecodedImage>(const QUrl &)>;
     using EffectCallback = std::function<void(ImageDocumentEffect)>;
 
+    struct Callbacks {
+        TakePredecodedImageCallback takePredecodedImage;
+        EffectCallback effect;
+    };
+
     ImageOpenController(QObject *parent, ImageDocumentState &state,
-        ImagePresentationController &presentationController,
-        TakePredecodedImageCallback takePredecodedImage, EffectCallback effectCallback,
+        ImagePresentationController &presentationController, Callbacks callbacks,
         const ImageAsyncDependencies &dependencies);
     ~ImageOpenController();
 
@@ -64,8 +68,7 @@ private:
 
     ImageDocumentState &m_state;
     ImagePresentationController &m_presentationController;
-    TakePredecodedImageCallback m_takePredecodedImage;
-    EffectCallback m_effectCallback;
+    Callbacks m_callbacks;
     std::unique_ptr<ImageLoader> m_imageLoader;
 };
 }

@@ -25,9 +25,14 @@ public:
     using ChangeCallback = std::function<void(ImageDocumentChange)>;
     using EffectCallback = std::function<void(ImageDocumentEffect)>;
 
+    struct Callbacks {
+        ChangeCallback change;
+        EffectCallback effect;
+    };
+
     ImageDocumentNavigationController(QObject *parent, ImageDocumentState &state,
-        ImagePresentationController &presentationController, ChangeCallback changeCallback,
-        EffectCallback effectCallback, ImageNavigationCandidateProvider candidateProvider);
+        ImagePresentationController &presentationController, Callbacks callbacks,
+        ImageNavigationCandidateProvider candidateProvider);
     ~ImageDocumentNavigationController();
 
     int currentPageNumber() const;
@@ -53,8 +58,7 @@ private:
 
     ImageDocumentState &m_state;
     ImagePresentationController &m_presentationController;
-    ChangeCallback m_changeCallback;
-    EffectCallback m_effectCallback;
+    Callbacks m_callbacks;
     std::unique_ptr<ImageNavigationService> m_navigationService;
 };
 }

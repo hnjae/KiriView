@@ -18,11 +18,9 @@ using KiriView::svgRasterSize;
 
 namespace KiriView {
 ImagePresentationController::ImagePresentationController(QObject *context,
-    RenderContextProvider renderContextProvider, ChangeCallback changeCallback,
-    AnimationErrorCallback animationErrorCallback)
+    RenderContextProvider renderContextProvider, ImagePresentationController::Callbacks callbacks)
     : m_renderContextProvider(std::move(renderContextProvider))
-    , m_changeCallback(std::move(changeCallback))
-    , m_animationErrorCallback(std::move(animationErrorCallback))
+    , m_callbacks(std::move(callbacks))
 {
     m_displayedImageState = std::make_unique<DisplayedImageState>(
         context,
@@ -31,8 +29,8 @@ ImagePresentationController::ImagePresentationController(QObject *context,
             notify(ImageDocumentChange::Repaint);
         },
         [this](const QString &errorString) {
-            if (m_animationErrorCallback) {
-                m_animationErrorCallback(errorString);
+            if (m_callbacks.animationError) {
+                m_callbacks.animationError(errorString);
             }
         });
 }
@@ -246,8 +244,8 @@ ImageDocumentRenderContext ImagePresentationController::renderContext() const
 
 void ImagePresentationController::notify(ImageDocumentChange change)
 {
-    if (m_changeCallback) {
-        m_changeCallback(change);
+    if (m_callbacks.change) {
+        m_callbacks.change(change);
     }
 }
 }

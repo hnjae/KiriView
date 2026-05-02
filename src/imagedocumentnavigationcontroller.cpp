@@ -13,44 +13,43 @@
 namespace KiriView {
 ImageDocumentNavigationController::ImageDocumentNavigationController(QObject *parent,
     ImageDocumentState &state, ImagePresentationController &presentationController,
-    ChangeCallback changeCallback, EffectCallback effectCallback,
+    ImageDocumentNavigationController::Callbacks callbacks,
     ImageNavigationCandidateProvider candidateProvider)
     : m_state(state)
     , m_presentationController(presentationController)
-    , m_changeCallback(std::move(changeCallback))
-    , m_effectCallback(std::move(effectCallback))
+    , m_callbacks(std::move(callbacks))
 {
     m_navigationService
         = std::make_unique<ImageNavigationService>(parent, std::move(candidateProvider));
     m_navigationService->setOpenUrlCallback([this](const QUrl &url) {
-        if (m_effectCallback) {
-            m_effectCallback(ImageDocumentEffect::openUrl(url));
+        if (m_callbacks.effect) {
+            m_callbacks.effect(ImageDocumentEffect::openUrl(url));
         }
     });
     auto openContainerImage = [this](const QUrl &imageUrl, const QUrl &containerUrl) {
-        if (m_effectCallback) {
-            m_effectCallback(ImageDocumentEffect::containerImageSelected(imageUrl, containerUrl));
+        if (m_callbacks.effect) {
+            m_callbacks.effect(ImageDocumentEffect::containerImageSelected(imageUrl, containerUrl));
         }
     };
     m_navigationService->setOpenContainerImageCallback(std::move(openContainerImage));
     auto handleError = [this](const auto &url, auto error, const auto &message) {
         if (error == ContainerNavigationError::EmptyContainer) {
-            if (m_effectCallback) {
-                m_effectCallback(ImageDocumentEffect::emptyContainerSelected(url));
+            if (m_callbacks.effect) {
+                m_callbacks.effect(ImageDocumentEffect::emptyContainerSelected(url));
             }
             return;
         }
 
         if (error == ContainerNavigationError::InvalidComicBookArchive) {
-            if (m_effectCallback) {
-                m_effectCallback(ImageDocumentEffect::containerNavigationFailed(
+            if (m_callbacks.effect) {
+                m_callbacks.effect(ImageDocumentEffect::containerNavigationFailed(
                     url, imageViewText("Could not open the selected comic book archive.")));
             }
             return;
         }
 
-        if (m_effectCallback) {
-            m_effectCallback(ImageDocumentEffect::containerNavigationFailed(url, message));
+        if (m_callbacks.effect) {
+            m_callbacks.effect(ImageDocumentEffect::containerNavigationFailed(url, message));
         }
     };
     m_navigationService->setContainerNavigationErrorCallback(std::move(handleError));
@@ -83,11 +82,11 @@ void ImageDocumentNavigationController::openNextImage()
 void ImageDocumentNavigationController::openImageAtPage(int pageNumber)
 {
     const std::optional<QUrl> pageUrl = m_navigationService->urlAtPage(pageNumber);
-    if (!pageUrl.has_value() || !m_effectCallback) {
+    if (!pageUrl.has_value() || !m_callbacks.effect) {
         return;
     }
 
-    m_effectCallback(ImageDocumentEffect::openUrl(*pageUrl));
+    m_callbacks.effect(ImageDocumentEffect::openUrl(*pageUrl));
 }
 
 void ImageDocumentNavigationController::openPreviousContainer()
@@ -143,8 +142,8 @@ void ImageDocumentNavigationController::openAdjacentContainer(NavigationDirectio
 
 void ImageDocumentNavigationController::notify(ImageDocumentChange change)
 {
-    if (m_changeCallback) {
-        m_changeCallback(change);
+    if (m_callbacks.change) {
+        m_callbacks.change(change);
     }
 }
 }

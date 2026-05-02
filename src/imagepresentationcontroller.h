@@ -31,8 +31,13 @@ public:
     using ChangeCallback = std::function<void(ImageDocumentChange)>;
     using AnimationErrorCallback = std::function<void(const QString &)>;
 
-    ImagePresentationController(QObject *context, RenderContextProvider renderContextProvider,
-        ChangeCallback changeCallback, AnimationErrorCallback animationErrorCallback);
+    struct Callbacks {
+        ChangeCallback change;
+        AnimationErrorCallback animationError;
+    };
+
+    ImagePresentationController(
+        QObject *context, RenderContextProvider renderContextProvider, Callbacks callbacks);
     ~ImagePresentationController();
 
     QSize imageSize() const;
@@ -73,8 +78,7 @@ private:
     void notify(ImageDocumentChange change);
 
     RenderContextProvider m_renderContextProvider;
-    ChangeCallback m_changeCallback;
-    AnimationErrorCallback m_animationErrorCallback;
+    Callbacks m_callbacks;
     ImageZoomState m_zoomState;
     std::unique_ptr<DisplayedImageState> m_displayedImageState;
 };
