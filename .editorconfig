@@ -7,7 +7,7 @@ insert_final_newline = true
 trim_trailing_whitespace = true
 tab_width = 8
 
-[*.{rs,qml,cpp,h}]
+[*.{rs,qml,cpp,h,frag,vert}]
 indent_size = 4
 indent_style = space
 
