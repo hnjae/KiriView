@@ -6,12 +6,8 @@
 #include "imageasyncdependencies.h"
 
 namespace KiriView {
-// clang-format off
 ImageLoader::ImageLoader(QObject *parent)
-    : ImageLoader(parent, defaultImageAsyncDependencies().candidateProvider,
-        defaultImageAsyncDependencies().imageDataLoader,
-        defaultImageAsyncDependencies().imageDataDecoder)
+    : ImageLoader(parent, defaultImageAsyncDependencies())
 {
 }
-// clang-format on
 }

@@ -45,9 +45,7 @@ ImageDocumentController::ImageDocumentController(QObject *parent,
             [this](ImageDocumentEffect effect) { dispatchEffect(std::move(effect)); },
         },
         dependencies.candidateProvider);
-    m_predecodeCoordinator
-        = std::make_unique<ImagePredecodeCoordinator>(this, dependencies.candidateProvider,
-            dependencies.imageDataLoader, dependencies.imageDataDecoder);
+    m_predecodeCoordinator = std::make_unique<ImagePredecodeCoordinator>(this, dependencies);
 }
 
 ImageDocumentController::~ImageDocumentController()

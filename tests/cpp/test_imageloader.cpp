@@ -94,8 +94,12 @@ private:
 KiriView::ImageLoader createLoader(
     QObject *parent, FakeCandidateProvider &candidateProvider, ManualImageDataLoader &dataLoader)
 {
-    return KiriView::ImageLoader(
-        parent, candidateProvider.provider(), dataLoaderFor(dataLoader), decodeTestImageData);
+    return KiriView::ImageLoader(parent,
+        KiriView::ImageAsyncDependencies {
+            candidateProvider.provider(),
+            dataLoaderFor(dataLoader),
+            decodeTestImageData,
+        });
 }
 }
 

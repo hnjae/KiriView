@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_IMAGEPREDECODECOORDINATOR_H
 #define KIRIVIEW_IMAGEPREDECODECOORDINATOR_H
 
+#include "imageasyncdependencies.h"
 #include "imageasyncticket.h"
 #include "imagecandidaterepository.h"
 #include "imagedecodejob.h"
@@ -29,8 +30,7 @@ public:
     };
 
     explicit ImagePredecodeCoordinator(QObject *parent = nullptr);
-    ImagePredecodeCoordinator(QObject *parent, ImageNavigationCandidateProvider candidateProvider,
-        ImageDecodeJob::DataLoader dataLoader, ImageDecodeJob::DataDecoder dataDecoder);
+    ImagePredecodeCoordinator(QObject *parent, const ImageAsyncDependencies &dependencies);
 
     void schedule(Context context);
     void cancel();

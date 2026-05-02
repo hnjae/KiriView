@@ -28,8 +28,7 @@ ImageOpenController::ImageOpenController(QObject *parent, ImageDocumentState &st
     , m_presentationController(presentationController)
     , m_callbacks(std::move(callbacks))
 {
-    m_imageLoader = std::make_unique<ImageLoader>(parent, dependencies.candidateProvider,
-        dependencies.imageDataLoader, dependencies.imageDataDecoder);
+    m_imageLoader = std::make_unique<ImageLoader>(parent, dependencies);
     m_imageLoader->setSourceResolvedCallback(
         [this](const QUrl &sourceUrl) { setSourceUrlFromResolvedLoad(sourceUrl); });
     m_imageLoader->setErrorCallback(

@@ -61,8 +61,12 @@ public:
 KiriView::ImagePredecodeCoordinator createCoordinator(
     QObject *parent, FakeCandidateProvider &candidateProvider, ManualImageDataLoader &dataLoader)
 {
-    return KiriView::ImagePredecodeCoordinator(
-        parent, candidateProvider.provider(), dataLoaderFor(dataLoader), decodeStaticTestImageData);
+    return KiriView::ImagePredecodeCoordinator(parent,
+        KiriView::ImageAsyncDependencies {
+            candidateProvider.provider(),
+            dataLoaderFor(dataLoader),
+            decodeStaticTestImageData,
+        });
 }
 }
 

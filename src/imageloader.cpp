@@ -19,11 +19,10 @@ using KiriView::isUrlInsideArchiveRoot;
 }
 
 namespace KiriView {
-ImageLoader::ImageLoader(QObject *parent, ImageNavigationCandidateProvider candidateProvider,
-    DataLoader dataLoader, DataDecoder dataDecoder)
+ImageLoader::ImageLoader(QObject *parent, const ImageAsyncDependencies &dependencies)
     : QObject(parent)
-    , m_decodeJob(this, std::move(dataLoader), std::move(dataDecoder))
-    , m_candidateRepository(std::move(candidateProvider))
+    , m_decodeJob(this, dependencies.imageDataLoader, dependencies.imageDataDecoder)
+    , m_candidateRepository(dependencies.candidateProvider)
 {
     m_decodeJob.setDecodedCallback(
         [this](ImageDecodeRequest request, std::shared_ptr<DecodedImageResult> result) {

@@ -4,8 +4,8 @@
 #ifndef KIRIVIEW_IMAGELOADER_H
 #define KIRIVIEW_IMAGELOADER_H
 
+#include "imageasyncdependencies.h"
 #include "imageasyncticket.h"
-#include "imagecandidaterepository.h"
 #include "imagedecodejob.h"
 #include "imageiojob.h"
 #include "imagelocation.h"
@@ -41,12 +41,9 @@ public:
         = std::function<void(ImageLoadSession, std::shared_ptr<DecodedImageResult>)>;
     using PredecodedImageCallback = std::function<void(ImageLoadSession, const QImage &)>;
     using TakePredecodedImageCallback = std::function<std::optional<PredecodedImage>(const QUrl &)>;
-    using DataLoader = ImageDecodeJob::DataLoader;
-    using DataDecoder = ImageDecodeJob::DataDecoder;
 
     explicit ImageLoader(QObject *parent = nullptr);
-    ImageLoader(QObject *parent, ImageNavigationCandidateProvider candidateProvider,
-        DataLoader dataLoader, DataDecoder dataDecoder);
+    ImageLoader(QObject *parent, const ImageAsyncDependencies &dependencies);
 
     void setSourceResolvedCallback(SourceResolvedCallback callback);
     void setErrorCallback(ErrorCallback callback);
