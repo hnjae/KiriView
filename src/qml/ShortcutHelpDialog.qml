@@ -69,7 +69,11 @@ Controls.Dialog {
                 }
                 ListElement {
                     description: "Pan the zoomed image"
-                    keys: "Arrow keys"
+                    keys: "Drag / Arrow keys"
+                }
+                ListElement {
+                    description: "Pan the zoomed image horizontally"
+                    keys: "Shift+wheel"
                 }
                 ListElement {
                     description: "Previous or next container"

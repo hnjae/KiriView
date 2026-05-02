@@ -32,6 +32,7 @@ class KiriImageDocument : public QObject
     Q_PROPERTY(QString errorString READ errorString NOTIFY errorStringChanged)
     Q_PROPERTY(
         QString windowTitleFileName READ windowTitleFileName NOTIFY windowTitleFileNameChanged)
+    Q_PROPERTY(QUrl displayedUrl READ displayedUrl NOTIFY displayedUrlChanged)
     Q_PROPERTY(QSize imageSize READ imageSize NOTIFY imageSizeChanged)
     Q_PROPERTY(
         QSizeF viewportSize READ viewportSize WRITE setViewportSize NOTIFY viewportSizeChanged)
@@ -76,6 +77,7 @@ public:
     bool loading() const;
     QString errorString() const;
     QString windowTitleFileName() const;
+    QUrl displayedUrl() const;
     QSize imageSize() const;
     QSizeF viewportSize() const;
     void setViewportSize(const QSizeF &viewportSize);
@@ -111,6 +113,7 @@ Q_SIGNALS:
     void loadingChanged();
     void errorStringChanged();
     void windowTitleFileNameChanged();
+    void displayedUrlChanged();
     void imageSizeChanged();
     void viewportSizeChanged();
     void displaySizeChanged();

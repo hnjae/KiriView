@@ -45,6 +45,7 @@ public:
     bool loading() const;
     QString errorString() const;
     QString windowTitleFileName() const;
+    QUrl displayedUrl() const;
     QSize imageSize() const;
     QSizeF viewportSize() const;
     void setViewportSize(const QSizeF &viewportSize);

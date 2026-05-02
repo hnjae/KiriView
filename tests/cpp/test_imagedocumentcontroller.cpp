@@ -177,6 +177,7 @@ void TestImageDocumentController::initialLoadSuccessUpdatesDocumentState()
 
     QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
     QCOMPARE(controller->sourceUrl(), imageUrl);
+    QCOMPARE(controller->displayedUrl(), imageUrl);
     QCOMPARE(controller->imageSize(), QSize(2, 1));
     QCOMPARE(controller->currentPageNumber(), 1);
     QCOMPARE(controller->imageCount(), 1);
@@ -211,6 +212,7 @@ void TestImageDocumentController::replacementLoadFailureKeepsDisplayedImage()
 
     QCOMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
     QCOMPARE(controller->sourceUrl(), imageUrl);
+    QCOMPARE(controller->displayedUrl(), imageUrl);
     QCOMPARE(controller->errorString(), QStringLiteral("missing"));
     QCOMPARE(controller->imageSize(), QSize(2, 1));
     QCOMPARE(controller->imageRevision(), displayedRevision);
@@ -244,6 +246,7 @@ void TestImageDocumentController::emptyContainerNavigationClearsImageAndSelectsC
 
     QCOMPARE(controller->status(), KiriView::ImageDocumentStatus::Error);
     QCOMPARE(controller->sourceUrl(), targetContainerUrl);
+    QCOMPARE(controller->displayedUrl(), QUrl());
     QVERIFY(controller->containerNavigationAvailable());
     QVERIFY(controller->image().isNull());
     QCOMPARE(controller->imageSize(), QSize());

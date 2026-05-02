@@ -72,6 +72,8 @@ QString ImageDocumentController::windowTitleFileName() const
     return m_state.windowTitleFileName();
 }
 
+QUrl ImageDocumentController::displayedUrl() const { return m_state.displayedUrl(); }
+
 QSize ImageDocumentController::imageSize() const { return m_presentationController->imageSize(); }
 
 QSizeF ImageDocumentController::viewportSize() const

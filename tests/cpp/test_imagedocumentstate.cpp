@@ -26,36 +26,44 @@ class TestImageDocumentState : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
-    void windowTitleFollowsDisplayedImageLocation();
+    void displayedUrlAndWindowTitleFollowDisplayedImageLocation();
     void containerNavigationAvailabilityFollowsContainerUrl();
 };
 
-void TestImageDocumentState::windowTitleFollowsDisplayedImageLocation()
+void TestImageDocumentState::displayedUrlAndWindowTitleFollowDisplayedImageLocation()
 {
     std::vector<KiriView::ImageDocumentChange> changes;
     KiriView::ImageDocumentState state(
         [&changes](KiriView::ImageDocumentChange change) { changes.push_back(change); });
 
-    state.setDisplayedImageLocation(
-        KiriView::DisplayedImageLocation::fromUrls(localUrl(QStringLiteral("/images/page.png"))));
+    const QUrl localImageUrl = localUrl(QStringLiteral("/images/page.png"));
+    state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromUrls(localImageUrl));
+    QCOMPARE(state.displayedUrl(), localImageUrl);
     QCOMPARE(state.windowTitleFileName(), QStringLiteral("page.png"));
     QCOMPARE(changes.back(), KiriView::ImageDocumentChange::WindowTitleFileName);
 
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
     const std::optional<QUrl> archiveRootUrl = KiriView::comicBookArchiveRootUrl(archiveUrl);
     QVERIFY(archiveRootUrl.has_value());
-    state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromUrls(
-        archivePageUrl(*archiveRootUrl, QStringLiteral("page001.png")), *archiveRootUrl));
+    const QUrl firstArchivePageUrl = archivePageUrl(*archiveRootUrl, QStringLiteral("page001.png"));
+    state.setDisplayedImageLocation(
+        KiriView::DisplayedImageLocation::fromUrls(firstArchivePageUrl, *archiveRootUrl));
+    QCOMPARE(state.displayedUrl(), firstArchivePageUrl);
     QCOMPARE(state.windowTitleFileName(), QStringLiteral("book.cbz"));
     QCOMPARE(changes.back(), KiriView::ImageDocumentChange::WindowTitleFileName);
 
     const std::size_t changeCount = changes.size();
-    state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromUrls(
-        archivePageUrl(*archiveRootUrl, QStringLiteral("page002.png")), *archiveRootUrl));
+    const QUrl secondArchivePageUrl
+        = archivePageUrl(*archiveRootUrl, QStringLiteral("page002.png"));
+    state.setDisplayedImageLocation(
+        KiriView::DisplayedImageLocation::fromUrls(secondArchivePageUrl, *archiveRootUrl));
+    QCOMPARE(state.displayedUrl(), secondArchivePageUrl);
     QCOMPARE(state.windowTitleFileName(), QStringLiteral("book.cbz"));
-    QCOMPARE(changes.size(), changeCount);
+    QCOMPARE(changes.size(), changeCount + 1);
+    QCOMPARE(changes.back(), KiriView::ImageDocumentChange::DisplayedUrl);
 
     state.clearDisplayedImageUrls();
+    QCOMPARE(state.displayedUrl(), QUrl());
     QCOMPARE(state.windowTitleFileName(), QString());
     QCOMPARE(changes.back(), KiriView::ImageDocumentChange::WindowTitleFileName);
 }

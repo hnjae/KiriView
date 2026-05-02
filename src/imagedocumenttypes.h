@@ -20,6 +20,7 @@ enum class ImageDocumentChange {
     Loading,
     ErrorString,
     WindowTitleFileName,
+    DisplayedUrl,
     ImageSize,
     ViewportSize,
     DisplaySize,

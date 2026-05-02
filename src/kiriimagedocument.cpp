@@ -96,6 +96,8 @@ QString KiriImageDocument::windowTitleFileName() const
     return m_documentController->windowTitleFileName();
 }
 
+QUrl KiriImageDocument::displayedUrl() const { return m_documentController->displayedUrl(); }
+
 QSize KiriImageDocument::imageSize() const { return m_documentController->imageSize(); }
 
 QSizeF KiriImageDocument::viewportSize() const { return m_documentController->viewportSize(); }
@@ -210,6 +212,9 @@ void KiriImageDocument::handleDocumentChange(ImageDocumentChange change)
         return;
     case ImageDocumentChange::WindowTitleFileName:
         Q_EMIT windowTitleFileNameChanged();
+        return;
+    case ImageDocumentChange::DisplayedUrl:
+        Q_EMIT displayedUrlChanged();
         return;
     case ImageDocumentChange::ImageSize:
         Q_EMIT imageSizeChanged();

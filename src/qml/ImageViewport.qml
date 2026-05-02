@@ -18,9 +18,15 @@ Item {
     readonly property int maximumManualZoomPercent: imageDocument.maximumManualZoomPercent
     readonly property int zoomStepPercent: imageDocument.zoomStepPercent
     readonly property real dragZoomPercentPerPixel: zoomStepPercent / Math.max(1, Kirigami.Units.gridUnit * 2)
+    readonly property bool imageHorizontallyPannable: imageFlickable.contentWidth > imageFlickable.width
     readonly property bool imagePannable: imageFlickable.contentWidth > imageFlickable.width || imageFlickable.contentHeight > imageFlickable.height
     readonly property real viewportWidth: imageFlickable.width
     readonly property real viewportHeight: imageFlickable.height
+
+    function resetContentPositionToTopLeft() {
+        imageFlickable.contentX = 0;
+        imageFlickable.contentY = 0;
+    }
 
     function setContentPosition(contentPosition) {
         imageFlickable.contentX = contentPosition.x;
@@ -68,6 +74,8 @@ Item {
 
         viewportSize: Qt.size(imageFlickable.width, imageFlickable.height)
 
+        onDisplayedUrlChanged: Qt.callLater(root.resetContentPositionToTopLeft)
+
         Component.onCompleted: {
             if (root.initialSourceUrl.toString().length > 0) {
                 sourceUrl = root.initialSourceUrl;
@@ -109,12 +117,29 @@ Item {
 
         anchors.fill: imageFlickable
         acceptedButtons: Qt.LeftButton
+        cursorShape: root.imagePannable ? (dragCursorActive ? Qt.ClosedHandCursor : Qt.OpenHandCursor) : Qt.ArrowCursor
         enabled: root.imageReady
 
+        property bool dragCursorActive: imageFlickable.draggingHorizontally || imageFlickable.draggingVertically || zoomDragActive
         property real lastY: 0
         property bool zoomDragActive: false
 
         onCanceled: zoomDragActive = false
+        onWheel: wheel => {
+            if (!(wheel.modifiers & Qt.ShiftModifier) || !root.imageHorizontallyPannable) {
+                wheel.accepted = false;
+                return;
+            }
+
+            const verticalDelta = wheel.pixelDelta.y !== 0 ? wheel.pixelDelta.y : wheel.angleDelta.y;
+            if (verticalDelta === 0) {
+                wheel.accepted = false;
+                return;
+            }
+
+            root.panBy(-verticalDelta, 0);
+            wheel.accepted = true;
+        }
         onPositionChanged: mouse => {
             if (!zoomDragActive) {
                 mouse.accepted = false;
