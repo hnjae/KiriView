@@ -103,6 +103,15 @@ the available scroll bounds, Shift+mouse wheel pans horizontally, and the mouse
 cursor shows that the image can be dragged to pan. Arrow-key panning is
 inactive while the page number or zoom input is focused.
 
+When an image is zoomed large enough to pan, the `.` key scans forward through
+the image in row-major Z order. Each scan step moves horizontally or vertically
+by at most three quarters of the visible viewport, except that moving from the
+right edge of one row to the next row jumps directly to the left edge of the
+next row. At the final scan position, `.` opens the next image. The `,` key
+scans backward through the same positions; at the initial scan position, it
+opens the previous image, starting that image at its final scan position. These
+scan shortcuts are inactive while the page number or zoom input is focused.
+
 The toolbar centers page navigation as an up-arrow Previous button, an editable
 current page number, the text `of`, the total number of supported images in the
 current directory or archive scope, and a down-arrow Next button. The Previous
