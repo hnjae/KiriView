@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+#include "imagelocation.h"
 #include "imageurl.h"
 
 #include <QObject>
@@ -15,6 +16,7 @@ private Q_SLOTS:
     void normalizedContainerUrlsStripQueryFragmentsAndCleanLocalPaths();
     void sameContainerNavigationUrlMatchesNormalizedPaths();
     void parentUrlForContainerNavigationHandlesContainers();
+    void imageLocationTypesExposeExplicitState();
 };
 
 void TestImageUrl::normalizedContainerUrlsStripQueryFragmentsAndCleanLocalPaths()
@@ -49,6 +51,29 @@ void TestImageUrl::parentUrlForContainerNavigationHandlesContainers()
     const QUrl archiveUrl = QUrl::fromLocalFile(QStringLiteral("/books/book.cbz"));
     QCOMPARE(KiriView::parentUrlForContainerNavigation(archiveUrl),
         QUrl::fromLocalFile(QStringLiteral("/books/")));
+}
+
+void TestImageUrl::imageLocationTypesExposeExplicitState()
+{
+    const KiriView::DisplayedImageLocation emptyLocation;
+    QVERIFY(emptyLocation.isEmpty());
+
+    const KiriView::DisplayedImageLocation location {
+        QUrl::fromLocalFile(QStringLiteral("/images/page.png")),
+        QUrl(QStringLiteral("zip:///books/book.cbz/")),
+    };
+    QVERIFY(!location.isEmpty());
+
+    const KiriView::ImageLoadRequest plainOpen { location.imageUrl, QUrl(), QUrl() };
+    QVERIFY(!plainOpen.isEmpty());
+    QVERIFY(!plainOpen.isContainerNavigation());
+
+    const KiriView::ImageLoadRequest containerOpen {
+        location.imageUrl,
+        location.comicBookRootUrl,
+        QUrl::fromLocalFile(QStringLiteral("/images/")),
+    };
+    QVERIFY(containerOpen.isContainerNavigation());
 }
 
 QTEST_GUILESS_MAIN(TestImageUrl)

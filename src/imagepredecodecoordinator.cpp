@@ -39,12 +39,13 @@ ImagePredecodeCoordinator::ImagePredecodeCoordinator(QObject *parent)
 void ImagePredecodeCoordinator::schedule(Context context)
 {
     cancel();
-    if (context.displayedUrl.isEmpty() || context.displayedImage.isNull()) {
+    if (context.displayedImageLocation.isEmpty() || context.displayedImage.isNull()) {
         return;
     }
 
     const quint64 generation = m_generation;
-    if (isUrlInsideArchiveRoot(context.displayedUrl, context.comicBookRootUrl)) {
+    if (isUrlInsideArchiveRoot(context.displayedImageLocation.imageUrl,
+            context.displayedImageLocation.comicBookRootUrl)) {
         scheduleComicBookAdjacentImagePredecode(context, generation);
         return;
     }
@@ -55,7 +56,7 @@ void ImagePredecodeCoordinator::schedule(Context context)
 void ImagePredecodeCoordinator::scheduleFileAdjacentImagePredecode(
     const Context &context, quint64 generation)
 {
-    const QUrl currentUrl = navigationSourceUrl(context.displayedUrl);
+    const QUrl currentUrl = navigationSourceUrl(context.displayedImageLocation.imageUrl);
     const QUrl parentUrl = currentUrl.adjusted(QUrl::RemoveFilename | QUrl::NormalizePathSegments);
     if (!parentUrl.isValid() || parentUrl.isEmpty()) {
         startPredecodeImageLoads({}, QUrl(), context, generation);
@@ -75,8 +76,9 @@ void ImagePredecodeCoordinator::scheduleFileAdjacentImagePredecode(
 void ImagePredecodeCoordinator::scheduleComicBookAdjacentImagePredecode(
     const Context &context, quint64 generation)
 {
-    const QUrl currentUrl = context.displayedUrl.adjusted(QUrl::NormalizePathSegments);
-    const QUrl archiveRootUrl = context.comicBookRootUrl;
+    const QUrl currentUrl
+        = context.displayedImageLocation.imageUrl.adjusted(QUrl::NormalizePathSegments);
+    const QUrl archiveRootUrl = context.displayedImageLocation.comicBookRootUrl;
     if (!currentUrl.isValid() || archiveRootUrl.isEmpty()) {
         startPredecodeImageLoads({}, archiveRootUrl, context, generation);
         return;
@@ -102,9 +104,11 @@ void ImagePredecodeCoordinator::startPredecodeImageLoads(const std::vector<QUrl>
     }
 
     m_cache.setWindowUrls(urls);
-    m_cache.cacheDisplayedImage(context.displayedImageIsCacheable, context.displayedUrl,
-        context.comicBookRootUrl, context.displayedImage);
-    m_cache.enqueueMissingWindowLoads(context.displayedUrl, comicBookRootUrl, m_activePredecodeUrl);
+    m_cache.cacheDisplayedImage(context.displayedImageIsCacheable,
+        context.displayedImageLocation.imageUrl, context.displayedImageLocation.comicBookRootUrl,
+        context.displayedImage);
+    m_cache.enqueueMissingWindowLoads(
+        context.displayedImageLocation.imageUrl, comicBookRootUrl, m_activePredecodeUrl);
 
     startNextPredecodeImageLoad(generation);
 }
@@ -204,9 +208,14 @@ void ImagePredecodeCoordinator::clear()
     m_cache.clear();
 }
 
-bool ImagePredecodeCoordinator::tryTake(
-    const QUrl &url, QImage *image, QUrl *comicBookRootUrl) const
+std::optional<PredecodedImage> ImagePredecodeCoordinator::tryTake(const QUrl &url) const
 {
-    return m_cache.findImage(url, image, comicBookRootUrl);
+    QImage image;
+    QUrl comicBookRootUrl;
+    if (!m_cache.findImage(url, &image, &comicBookRootUrl)) {
+        return std::nullopt;
+    }
+
+    return PredecodedImage { image, DisplayedImageLocation { url, comicBookRootUrl } };
 }
 }

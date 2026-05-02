@@ -188,9 +188,9 @@ void ImageDocumentController::scheduleAdjacentImagePredecode()
         return;
     }
 
-    m_predecodeCoordinator->schedule(ImagePredecodeCoordinator::Context { m_state.displayedUrl(),
-        m_state.displayedComicBookRootUrl(), m_presentationController->isPredecodeCacheable(),
-        m_presentationController->image() });
+    m_predecodeCoordinator->schedule(
+        ImagePredecodeCoordinator::Context { m_state.displayedImageLocation(),
+            m_presentationController->isPredecodeCacheable(), m_presentationController->image() });
 }
 
 void ImageDocumentController::cancelPredecode()
@@ -202,14 +202,11 @@ void ImageDocumentController::cancelPredecode()
 
 std::optional<PredecodedImage> ImageDocumentController::takePredecodedImage(const QUrl &url) const
 {
-    QImage image;
-    QUrl comicBookRootUrl;
-    if (m_predecodeCoordinator == nullptr
-        || !m_predecodeCoordinator->tryTake(url, &image, &comicBookRootUrl)) {
+    if (m_predecodeCoordinator == nullptr) {
         return std::nullopt;
     }
 
-    return PredecodedImage { image, comicBookRootUrl };
+    return m_predecodeCoordinator->tryTake(url);
 }
 
 void ImageDocumentController::finishWithAnimationError(const QString &errorString)

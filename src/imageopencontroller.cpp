@@ -85,8 +85,8 @@ void ImageOpenController::open()
         m_state.setStatus(ImageDocumentStatus::Ready);
     }
 
-    m_imageLoader->start(m_state.sourceUrl(), m_state.displayedComicBookRootUrl(),
-        m_state.loadingContainerNavigationUrl());
+    m_imageLoader->start(ImageLoadRequest { m_state.sourceUrl(),
+        m_state.displayedComicBookRootUrl(), m_state.loadingContainerNavigationUrl() });
 }
 
 void ImageOpenController::cancel() { m_imageLoader->cancel(); }
@@ -153,7 +153,7 @@ void ImageOpenController::finishDecodedImageLoad(
 void ImageOpenController::finishLoadWithError(
     const ImageLoadSession &session, ImageLoadError error, const QString &errorString)
 {
-    const QUrl containerNavigationUrl = session.containerNavigationUrl;
+    const QUrl containerNavigationUrl = session.request.containerNavigationUrl;
     m_state.clearLoadingContainerNavigationUrl();
 
     const QString message = error == ImageLoadError::EmptyComicBookArchive
@@ -197,8 +197,8 @@ void ImageOpenController::finishLoadSuccessfully(
 void ImageOpenController::finishSvgLoadSuccessfully(
     ImageLoadSession session, QByteArray data, const QSize &intrinsicSize)
 {
-    const QUrl loadedContainerUrl
-        = containerNavigationUrlForImage(session.imageUrl, session.comicBookRootUrl);
+    const QUrl loadedContainerUrl = containerNavigationUrlForImage(
+        session.location.imageUrl, session.location.comicBookRootUrl);
     const std::optional<QString> errorString = m_presentationController.setLoadedSvgImage(
         std::move(data), intrinsicSize, loadedContainerUrl);
     if (errorString.has_value()) {
@@ -212,19 +212,19 @@ void ImageOpenController::finishSvgLoadSuccessfully(
 void ImageOpenController::prepareSuccessfulImageLoad(const ImageLoadSession &session)
 {
     m_presentationController.stopAnimation();
-    const QUrl loadedContainerUrl
-        = containerNavigationUrlForImage(session.imageUrl, session.comicBookRootUrl);
+    const QUrl loadedContainerUrl = containerNavigationUrlForImage(
+        session.location.imageUrl, session.location.comicBookRootUrl);
     m_presentationController.prepareImageContainer(loadedContainerUrl);
 }
 
 void ImageOpenController::finishSuccessfulImageLoad(const ImageLoadSession &session)
 {
-    setSourceUrlFromResolvedLoad(session.imageUrl);
-    m_state.setDisplayedImageUrls(session.imageUrl, session.comicBookRootUrl);
+    setSourceUrlFromResolvedLoad(session.location.imageUrl);
+    m_state.setDisplayedImageLocation(session.location);
     m_state.setWindowTitleFileName(windowTitleFileNameForDisplayedUrl(
         m_state.displayedUrl(), m_state.displayedComicBookRootUrl()));
-    if (!session.containerNavigationUrl.isEmpty()) {
-        m_state.setContainerNavigationUrl(session.containerNavigationUrl);
+    if (!session.request.containerNavigationUrl.isEmpty()) {
+        m_state.setContainerNavigationUrl(session.request.containerNavigationUrl);
     } else {
         updateContainerNavigationFromDisplayedImage();
     }

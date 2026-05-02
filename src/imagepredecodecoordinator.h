@@ -5,12 +5,14 @@
 #define KIRIVIEW_IMAGEPREDECODECOORDINATOR_H
 
 #include "imageiojob.h"
+#include "imagelocation.h"
 #include "predecodecache.h"
 
 #include <QByteArray>
 #include <QImage>
 #include <QObject>
 #include <QUrl>
+#include <optional>
 #include <vector>
 
 namespace KiriView {
@@ -18,8 +20,7 @@ class ImagePredecodeCoordinator final : public QObject
 {
 public:
     struct Context {
-        QUrl displayedUrl;
-        QUrl comicBookRootUrl;
+        DisplayedImageLocation displayedImageLocation;
         bool displayedImageIsCacheable = false;
         QImage displayedImage;
     };
@@ -29,7 +30,7 @@ public:
     void schedule(Context context);
     void cancel();
     void clear();
-    bool tryTake(const QUrl &url, QImage *image, QUrl *comicBookRootUrl) const;
+    std::optional<PredecodedImage> tryTake(const QUrl &url) const;
 
 private:
     void scheduleFileAdjacentImagePredecode(const Context &context, quint64 generation);

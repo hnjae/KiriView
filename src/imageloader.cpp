@@ -54,32 +54,33 @@ void ImageLoader::setTakePredecodedImageCallback(TakePredecodedImageCallback cal
     m_takePredecodedImage = std::move(callback);
 }
 
-void ImageLoader::start(const QUrl &sourceUrl, const QUrl &displayedComicBookRootUrl,
-    const QUrl &containerNavigationUrl)
+void ImageLoader::start(ImageLoadRequest request)
 {
     cancel();
 
     ImageLoadSession session;
     session.id = ++m_nextLoadSessionId;
-    session.requestedSourceUrl = sourceUrl;
-    session.imageUrl = sourceUrl;
-    session.containerNavigationUrl = containerNavigationUrl;
+    session.request = std::move(request);
+    session.location.imageUrl = session.request.sourceUrl;
 
-    const std::optional<QUrl> selectedArchiveRootUrl = comicBookArchiveRootUrl(sourceUrl);
+    const std::optional<QUrl> selectedArchiveRootUrl
+        = comicBookArchiveRootUrl(session.request.sourceUrl);
     if (selectedArchiveRootUrl.has_value()) {
-        session.comicBookRootUrl = selectedArchiveRootUrl.value();
+        session.location.comicBookRootUrl = selectedArchiveRootUrl.value();
         m_loadSession = session;
         startComicBookLoad(session);
         return;
     }
 
-    if (isUrlInsideArchiveRoot(sourceUrl, displayedComicBookRootUrl)) {
-        session.comicBookRootUrl = displayedComicBookRootUrl;
+    if (isUrlInsideArchiveRoot(
+            session.request.sourceUrl, session.request.displayedComicBookRootUrl)) {
+        session.location.comicBookRootUrl = session.request.displayedComicBookRootUrl;
     } else {
         const std::optional<QUrl> containingArchiveRootUrl
-            = containingComicBookArchiveRootUrl(sourceUrl);
-        session.comicBookRootUrl = containingArchiveRootUrl.has_value()
-                && isUrlInsideArchiveRoot(sourceUrl, containingArchiveRootUrl.value())
+            = containingComicBookArchiveRootUrl(session.request.sourceUrl);
+        session.location.comicBookRootUrl = containingArchiveRootUrl.has_value()
+                && isUrlInsideArchiveRoot(
+                    session.request.sourceUrl, containingArchiveRootUrl.value())
             ? containingArchiveRootUrl.value()
             : QUrl();
     }
@@ -95,7 +96,7 @@ void ImageLoader::start(const QUrl &sourceUrl, const QUrl &displayedComicBookRoo
 void ImageLoader::startImageLoad(ImageLoadSession session)
 {
     m_imageLoadJob = startStoredImageDataLoad(
-        this, session.imageUrl,
+        this, session.location.imageUrl,
         [this, session](QByteArray data) {
             if (!isCurrentLoadSession(session)) {
                 return;
@@ -144,7 +145,7 @@ void ImageLoader::startImageDecode(QByteArray data, ImageLoadSession session)
 void ImageLoader::startComicBookLoad(ImageLoadSession session)
 {
     m_archiveListJob = startArchiveImageCandidateList(
-        this, session.comicBookRootUrl,
+        this, session.location.comicBookRootUrl,
         [this, session](std::vector<ImageNavigationCandidate> candidates) mutable {
             if (!isCurrentLoadSession(session)) {
                 return;
@@ -155,10 +156,10 @@ void ImageLoader::startComicBookLoad(ImageLoadSession session)
                 return;
             }
 
-            session.imageUrl = candidates.front().url;
+            session.location.imageUrl = candidates.front().url;
             m_loadSession = session;
             if (m_sourceResolved) {
-                m_sourceResolved(session.imageUrl);
+                m_sourceResolved(session.location.imageUrl);
             }
             startImageLoad(session);
         },
@@ -196,12 +197,12 @@ bool ImageLoader::tryDisplayPredecodedImage(ImageLoadSession session)
         return false;
     }
 
-    std::optional<PredecodedImage> predecoded = m_takePredecodedImage(session.imageUrl);
+    std::optional<PredecodedImage> predecoded = m_takePredecodedImage(session.location.imageUrl);
     if (!predecoded.has_value()) {
         return false;
     }
 
-    session.comicBookRootUrl = predecoded->comicBookRootUrl;
+    session.location = predecoded->location;
     m_loadSession = session;
     finishPredecodedImage(session, predecoded->image);
     return true;

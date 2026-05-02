@@ -13,11 +13,16 @@ ImageDocumentState::ImageDocumentState(ChangeCallback changeCallback)
 
 const QUrl &ImageDocumentState::sourceUrl() const { return m_sourceUrl; }
 
-const QUrl &ImageDocumentState::displayedUrl() const { return m_displayedUrl; }
+const DisplayedImageLocation &ImageDocumentState::displayedImageLocation() const
+{
+    return m_displayedImageLocation;
+}
+
+const QUrl &ImageDocumentState::displayedUrl() const { return m_displayedImageLocation.imageUrl; }
 
 const QUrl &ImageDocumentState::displayedComicBookRootUrl() const
 {
-    return m_displayedComicBookRootUrl;
+    return m_displayedImageLocation.comicBookRootUrl;
 }
 
 ImageDocumentStatus ImageDocumentState::status() const { return m_status; }
@@ -50,18 +55,12 @@ void ImageDocumentState::setSourceUrl(const QUrl &sourceUrl)
     notify(ImageDocumentChange::SourceUrl);
 }
 
-void ImageDocumentState::setDisplayedImageUrls(
-    const QUrl &displayedUrl, const QUrl &comicBookRootUrl)
+void ImageDocumentState::setDisplayedImageLocation(const DisplayedImageLocation &location)
 {
-    m_displayedUrl = displayedUrl;
-    m_displayedComicBookRootUrl = comicBookRootUrl;
+    m_displayedImageLocation = location;
 }
 
-void ImageDocumentState::clearDisplayedImageUrls()
-{
-    m_displayedUrl = QUrl();
-    m_displayedComicBookRootUrl = QUrl();
-}
+void ImageDocumentState::clearDisplayedImageUrls() { m_displayedImageLocation = {}; }
 
 void ImageDocumentState::setStatus(ImageDocumentStatus status)
 {

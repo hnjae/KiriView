@@ -5,6 +5,7 @@
 #define KIRIVIEW_IMAGEDOCUMENTSTATE_H
 
 #include "imagedocumenttypes.h"
+#include "imagelocation.h"
 
 #include <QString>
 #include <QUrl>
@@ -19,6 +20,7 @@ public:
     explicit ImageDocumentState(ChangeCallback changeCallback = {});
 
     const QUrl &sourceUrl() const;
+    const DisplayedImageLocation &displayedImageLocation() const;
     const QUrl &displayedUrl() const;
     const QUrl &displayedComicBookRootUrl() const;
     ImageDocumentStatus status() const;
@@ -30,7 +32,7 @@ public:
     bool containerNavigationAvailable() const;
 
     void setSourceUrl(const QUrl &sourceUrl);
-    void setDisplayedImageUrls(const QUrl &displayedUrl, const QUrl &comicBookRootUrl);
+    void setDisplayedImageLocation(const DisplayedImageLocation &location);
     void clearDisplayedImageUrls();
     void setStatus(ImageDocumentStatus status);
     void setLoading(bool loading);
@@ -45,8 +47,7 @@ private:
 
     ChangeCallback m_changeCallback;
     QUrl m_sourceUrl;
-    QUrl m_displayedUrl;
-    QUrl m_displayedComicBookRootUrl;
+    DisplayedImageLocation m_displayedImageLocation;
     ImageDocumentStatus m_status = ImageDocumentStatus::Null;
     bool m_loading = false;
     QString m_errorString;

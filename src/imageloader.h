@@ -5,6 +5,7 @@
 #define KIRIVIEW_IMAGELOADER_H
 
 #include "imageiojob.h"
+#include "imagelocation.h"
 
 #include <QByteArray>
 #include <QImage>
@@ -20,20 +21,13 @@ struct DecodedImageResult;
 
 struct ImageLoadSession {
     quint64 id = 0;
-    QUrl requestedSourceUrl;
-    QUrl imageUrl;
-    QUrl comicBookRootUrl;
-    QUrl containerNavigationUrl;
+    ImageLoadRequest request;
+    DisplayedImageLocation location;
 };
 
 enum class ImageLoadError {
     Generic,
     EmptyComicBookArchive,
-};
-
-struct PredecodedImage {
-    QImage image;
-    QUrl comicBookRootUrl;
 };
 
 class ImageLoader final : public QObject
@@ -55,8 +49,7 @@ public:
     void setPredecodedImageCallback(PredecodedImageCallback callback);
     void setTakePredecodedImageCallback(TakePredecodedImageCallback callback);
 
-    void start(const QUrl &sourceUrl, const QUrl &displayedComicBookRootUrl,
-        const QUrl &containerNavigationUrl);
+    void start(ImageLoadRequest request);
     void cancel();
 
 private:
