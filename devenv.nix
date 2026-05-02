@@ -57,6 +57,12 @@ let
   cxxStandardLibraryVersion = lib.getVersion cxxCompiler;
   cxxTarget = pkgs.stdenv.hostPlatform.config;
   kcoreaddonsDev = pkgs.kdePackages.kcoreaddons.dev or pkgs.kdePackages.kcoreaddons;
+  qtQmlRoot = "${config.devenv.root}/.devenv/profile/lib/qt-6/qml";
+  kirigamiQmlRoot = "${pkgs.kdePackages.kirigami.unwrapped}/lib/qt-6/qml";
+  qmlImportPaths = [
+    qtQmlRoot
+    kirigamiQmlRoot
+  ];
   qtVersion = lib.getVersion pkgs.kdePackages.qtbase;
   cppSources = [
     "src/apngdecoder.cpp"
@@ -160,6 +166,7 @@ in
 
   files.".qmlls.ini".ini.General = {
     buildDir = "${config.devenv.root}/target/cxxqt/qml_modules";
+    importPaths = lib.concatStringsSep ":" qmlImportPaths;
     "no-cmake-calls" = true;
   };
 
