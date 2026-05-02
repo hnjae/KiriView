@@ -102,10 +102,11 @@ or zoom input is focused.
 
 The toolbar centers page navigation as an up-arrow Previous button, an editable
 current page number, the text `of`, the total number of supported images in the
-current directory or archive scope, and a down-arrow Next button. Page numbers
-are shown to users starting at 1. Entering a valid page number opens that image;
-entering an invalid number leaves the current image open and restores the
-displayed page number.
+current directory or archive scope, and a down-arrow Next button. The Previous
+button is disabled on the first image, and the Next button is disabled on the
+last image. Page numbers are shown to users starting at 1. Entering a valid page
+number opens that image; entering an invalid number leaves the current image
+open and restores the displayed page number.
 When moving between images in the current directory or archive scope, the
 centered page navigation controls keep their layout stable. The current page
 number updates to the newly displayed image, and the known total image count
@@ -128,11 +129,14 @@ ready for another open action.
 
 ## Image Navigation
 
-When an image is open, Page Up or the Previous window action opens the previous
-supported image file in the same parent URL. Page Down or the Next window action
-opens the next one. Supported image extensions match the open dialog: AVIF
-(`.avif` and `.avifs`), BMP, GIF, HEIF (`.heic`, `.heif`, and `.hif`), JPEG,
-JPEG 2000 (`.jp2`), JPEG XL (`.jxl`), PNG, SVG, and WebP, case-insensitively.
+When an image is open, Page Up opens the previous supported image file in the
+same parent URL and Page Down opens the next one. If the current image is the
+first image, pressing Page Up keeps the current image open and notifies the user
+that it is the first image. If the current image is the last image, pressing
+Page Down keeps the current image open and notifies the user that it is the last
+image. Supported image extensions match the open dialog: AVIF (`.avif` and
+`.avifs`), BMP, GIF, HEIF (`.heic`, `.heif`, and `.hif`), JPEG, JPEG 2000
+(`.jp2`), JPEG XL (`.jxl`), PNG, SVG, and WebP, case-insensitively.
 
 When an image is opened from a KDE-supported archive URL such as `zip://`,
 navigation moves between supported image files in the same directory inside the
@@ -175,8 +179,10 @@ not wrap; pressing Previous Container on the first candidate or Next Container o
 the last candidate keeps the current view unchanged.
 
 The `[` key opens the previous sibling container and the `]` key opens the next
-sibling container when container navigation is available. These shortcuts are
-inactive while the page number or zoom input is focused.
+sibling container when container navigation is available. Ctrl+Home opens the
+first image in the current container, and Ctrl+End opens the last image in the
+current container. These shortcuts are inactive while the page number or zoom
+input is focused.
 
 Opening a directory container displays the first directly contained supported
 image file in that directory. Directory container opening is non-recursive.
