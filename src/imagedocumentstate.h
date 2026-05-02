@@ -10,6 +10,7 @@
 #include <QString>
 #include <QUrl>
 #include <functional>
+#include <vector>
 
 namespace KiriView {
 class ImageDocumentState
@@ -17,7 +18,24 @@ class ImageDocumentState
 public:
     using ChangeCallback = std::function<void(ImageDocumentChange)>;
 
+    class ChangeBatch final
+    {
+    public:
+        explicit ChangeBatch(ImageDocumentState &state);
+        ~ChangeBatch();
+
+        ChangeBatch(const ChangeBatch &) = delete;
+        ChangeBatch &operator=(const ChangeBatch &) = delete;
+        ChangeBatch(ChangeBatch &&other) noexcept;
+        ChangeBatch &operator=(ChangeBatch &&) = delete;
+
+    private:
+        ImageDocumentState *m_state = nullptr;
+    };
+
     explicit ImageDocumentState(ChangeCallback changeCallback = {});
+
+    ChangeBatch beginChangeBatch();
 
     const QUrl &sourceUrl() const;
     const DisplayedImageLocation &displayedImageLocation() const;
@@ -42,9 +60,14 @@ public:
     void clearLoadingContainerNavigationUrl();
 
 private:
+    void beginBatch();
+    void endBatch();
     void notify(ImageDocumentChange change);
+    void emitChange(ImageDocumentChange change);
 
     ChangeCallback m_changeCallback;
+    int m_batchDepth = 0;
+    std::vector<ImageDocumentChange> m_pendingChanges;
     QUrl m_sourceUrl;
     DisplayedImageLocation m_displayedImageLocation;
     ImageDocumentStatus m_status = ImageDocumentStatus::Null;

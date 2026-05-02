@@ -28,6 +28,7 @@ class TestImageDocumentState : public QObject
 private Q_SLOTS:
     void displayedUrlAndWindowTitleFollowDisplayedImageLocation();
     void containerNavigationAvailabilityFollowsContainerUrl();
+    void changeBatchQueuesUniqueChangesUntilDestroyed();
 };
 
 void TestImageDocumentState::displayedUrlAndWindowTitleFollowDisplayedImageLocation()
@@ -78,6 +79,42 @@ void TestImageDocumentState::containerNavigationAvailabilityFollowsContainerUrl(
 
     state.setContainerNavigationUrl(QUrl());
     QVERIFY(!state.containerNavigationAvailable());
+}
+
+void TestImageDocumentState::changeBatchQueuesUniqueChangesUntilDestroyed()
+{
+    std::vector<KiriView::ImageDocumentChange> changes;
+    KiriView::ImageDocumentState state(
+        [&changes](KiriView::ImageDocumentChange change) { changes.push_back(change); });
+
+    {
+        [[maybe_unused]] auto batch = state.beginChangeBatch();
+        state.setLoading(true);
+        state.setLoading(true);
+        state.setStatus(KiriView::ImageDocumentStatus::Loading);
+        QVERIFY(changes.empty());
+    }
+
+    QCOMPARE(changes.size(), std::size_t(2));
+    QCOMPARE(changes.at(0), KiriView::ImageDocumentChange::Loading);
+    QCOMPARE(changes.at(1), KiriView::ImageDocumentChange::Status);
+
+    changes.clear();
+    {
+        [[maybe_unused]] auto batch = state.beginChangeBatch();
+        state.setLoading(false);
+        {
+            [[maybe_unused]] auto nestedBatch = state.beginChangeBatch();
+            state.setErrorString(QStringLiteral("failed"));
+        }
+        QVERIFY(changes.empty());
+        state.setStatus(KiriView::ImageDocumentStatus::Error);
+    }
+
+    QCOMPARE(changes.size(), std::size_t(3));
+    QCOMPARE(changes.at(0), KiriView::ImageDocumentChange::Loading);
+    QCOMPARE(changes.at(1), KiriView::ImageDocumentChange::ErrorString);
+    QCOMPARE(changes.at(2), KiriView::ImageDocumentChange::Status);
 }
 
 QTEST_GUILESS_MAIN(TestImageDocumentState)

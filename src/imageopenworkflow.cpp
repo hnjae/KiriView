@@ -9,6 +9,7 @@
 namespace KiriView {
 ImageDocumentEffects ImageOpenWorkflow::beginSourceLoad(ImageDocumentState &state, bool hasImage)
 {
+    [[maybe_unused]] auto batch = state.beginChangeBatch();
     ImageDocumentEffects effects;
     if (!hasImage && state.loadingContainerNavigationUrl().isEmpty()) {
         state.setContainerNavigationUrl(QUrl());
@@ -27,6 +28,7 @@ ImageDocumentEffects ImageOpenWorkflow::beginSourceLoad(ImageDocumentState &stat
 
 ImageDocumentEffects ImageOpenWorkflow::finishEmptySourceLoad(ImageDocumentState &state)
 {
+    [[maybe_unused]] auto batch = state.beginChangeBatch();
     ImageDocumentEffects effects;
     effects.add(ImageDocumentEffect::clearImage());
     effects.add(ImageDocumentEffect::resetZoom());
@@ -40,6 +42,7 @@ ImageDocumentEffects ImageOpenWorkflow::finishEmptySourceLoad(ImageDocumentState
 ImageDocumentEffects ImageOpenWorkflow::finishSuccessfulImageLoad(
     ImageDocumentState &state, const ImageLoadSession &session)
 {
+    [[maybe_unused]] auto batch = state.beginChangeBatch();
     ImageDocumentEffects effects;
     state.setSourceUrl(session.location.imageUrl());
     state.setDisplayedImageLocation(session.location);
@@ -60,6 +63,7 @@ ImageDocumentEffects ImageOpenWorkflow::finishSuccessfulImageLoad(
 ImageDocumentEffects ImageOpenWorkflow::finishContainerNavigationLoadWithError(
     ImageDocumentState &state, const QUrl &containerUrl, const QString &errorString)
 {
+    [[maybe_unused]] auto batch = state.beginChangeBatch();
     ImageDocumentEffects effects;
     effects.add(ImageDocumentEffect::clearImage());
     effects.add(ImageDocumentEffect::prepareFailedContainer(containerUrl));
@@ -75,6 +79,7 @@ ImageDocumentEffects ImageOpenWorkflow::finishContainerNavigationLoadWithError(
 ImageDocumentEffects ImageOpenWorkflow::finishReplacementLoadWithError(
     ImageDocumentState &state, const QString &errorString)
 {
+    [[maybe_unused]] auto batch = state.beginChangeBatch();
     ImageDocumentEffects effects;
     state.clearLoadingContainerNavigationUrl();
     state.setLoading(false);
@@ -93,6 +98,7 @@ ImageDocumentEffects ImageOpenWorkflow::finishReplacementLoadWithError(
 ImageDocumentEffects ImageOpenWorkflow::finishInitialLoadWithError(
     ImageDocumentState &state, const QString &errorString)
 {
+    [[maybe_unused]] auto batch = state.beginChangeBatch();
     ImageDocumentEffects effects;
     effects.add(ImageDocumentEffect::clearImage());
     state.clearLoadingContainerNavigationUrl();
@@ -106,6 +112,7 @@ ImageDocumentEffects ImageOpenWorkflow::finishInitialLoadWithError(
 ImageDocumentEffects ImageOpenWorkflow::finishAnimationLoadWithError(
     ImageDocumentState &state, const QString &errorString)
 {
+    [[maybe_unused]] auto batch = state.beginChangeBatch();
     ImageDocumentEffects effects;
     effects.add(ImageDocumentEffect::clearImage());
     effects.add(ImageDocumentEffect::resetZoom());
