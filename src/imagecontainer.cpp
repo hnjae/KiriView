@@ -169,7 +169,7 @@ void appendArchiveImageNavigationCandidates(std::vector<ImageNavigationCandidate
             continue;
         }
 
-        const QUrl imageUrl = item.url().adjusted(QUrl::NormalizePathSegments);
+        const QUrl imageUrl = KiriView::normalizedImageUrl(item.url());
         candidates->push_back(ImageNavigationCandidate {
             imageUrl, archiveRelativeImageName(archiveRootUrl, imageUrl) });
     }

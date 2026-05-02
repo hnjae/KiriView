@@ -14,6 +14,7 @@ class TestImageUrl : public QObject
 
 private Q_SLOTS:
     void normalizedContainerUrlsStripQueryFragmentsAndCleanLocalPaths();
+    void sameNormalizedUrlMatchesPathSegments();
     void sameContainerNavigationUrlMatchesNormalizedPaths();
     void parentUrlForContainerNavigationHandlesContainers();
     void imageLocationTypesExposeExplicitState();
@@ -32,6 +33,15 @@ void TestImageUrl::normalizedContainerUrlsStripQueryFragmentsAndCleanLocalPaths(
     directoryUrl.setFragment(QStringLiteral("view"));
     QCOMPARE(KiriView::normalizedDirectoryContainerUrl(directoryUrl),
         QUrl::fromLocalFile(QStringLiteral("/images/chapter/")));
+}
+
+void TestImageUrl::sameNormalizedUrlMatchesPathSegments()
+{
+    QVERIFY(KiriView::sameNormalizedUrl(
+        QUrl::fromLocalFile(QStringLiteral("/images/chapter/../page.png")),
+        QUrl::fromLocalFile(QStringLiteral("/images/page.png"))));
+    QVERIFY(!KiriView::sameNormalizedUrl(QUrl::fromLocalFile(QStringLiteral("/images/page.png")),
+        QUrl::fromLocalFile(QStringLiteral("/images/other.png"))));
 }
 
 void TestImageUrl::sameContainerNavigationUrlMatchesNormalizedPaths()

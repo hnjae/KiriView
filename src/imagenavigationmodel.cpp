@@ -4,6 +4,7 @@
 #include "imagenavigationmodel.h"
 
 #include "imageformatregistry.h"
+#include "imageurl.h"
 
 #include <QCollator>
 #include <QLocale>
@@ -23,7 +24,7 @@ std::optional<std::size_t> adjacentCandidateIndex(const std::vector<Candidate> &
 {
     const auto current = std::find_if(
         candidates.cbegin(), candidates.cend(), [&currentUrl](const Candidate &candidate) {
-            return candidate.url.matches(currentUrl, QUrl::NormalizePathSegments);
+            return KiriView::sameNormalizedUrl(candidate.url, currentUrl);
         });
     if (current == candidates.cend()) {
         return std::nullopt;
@@ -63,7 +64,7 @@ template <typename Candidate> void sortNavigationCandidates(std::vector<Candidat
 
     const auto duplicateStart = std::unique(
         candidates->begin(), candidates->end(), [](const Candidate &left, const Candidate &right) {
-            return left.url.matches(right.url, QUrl::NormalizePathSegments);
+            return KiriView::sameNormalizedUrl(left.url, right.url);
         });
     candidates->erase(duplicateStart, candidates->end());
 }
@@ -76,7 +77,7 @@ std::vector<QUrl> predecodeWindowImageUrls(
     std::vector<QUrl> urls;
     const auto current = std::find_if(candidates.cbegin(), candidates.cend(),
         [&currentUrl](const ImageNavigationCandidate &candidate) {
-            return candidate.url.matches(currentUrl, QUrl::NormalizePathSegments);
+            return sameNormalizedUrl(candidate.url, currentUrl);
         });
     if (current == candidates.cend()) {
         return urls;
@@ -143,14 +144,13 @@ std::optional<ContainerNavigationCandidate> adjacentContainerNavigationCandidate
 PageNavigationState pageNavigationStateForUrls(std::vector<QUrl> urls, const QUrl &currentUrl)
 {
     PageNavigationState state { std::move(urls), -1 };
-    const auto matchesCurrentUrl = [&currentUrl](const QUrl &url) {
-        return url.matches(currentUrl, QUrl::NormalizePathSegments);
-    };
+    const auto matchesCurrentUrl
+        = [&currentUrl](const QUrl &url) { return sameNormalizedUrl(url, currentUrl); };
     const auto current = std::find_if(state.urls.cbegin(), state.urls.cend(), matchesCurrentUrl);
 
     if (current == state.urls.cend()) {
         if (currentUrl.isValid() && !currentUrl.isEmpty()) {
-            state.urls.insert(state.urls.begin(), currentUrl.adjusted(QUrl::NormalizePathSegments));
+            state.urls.insert(state.urls.begin(), normalizedImageUrl(currentUrl));
             state.currentIndex = 0;
         }
     } else {

@@ -28,7 +28,7 @@ std::optional<ImageCandidateListContext> imageCandidateListContextForDisplayedIm
     }
 
     if (isUrlInsideArchiveRoot(displayedUrl, comicBookRootUrl)) {
-        const QUrl currentUrl = displayedUrl.adjusted(QUrl::NormalizePathSegments);
+        const QUrl currentUrl = normalizedImageUrl(displayedUrl);
         if (!currentUrl.isValid() || comicBookRootUrl.isEmpty()) {
             return std::nullopt;
         }

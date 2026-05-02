@@ -256,7 +256,7 @@ void ImageNavigationService::setFallbackPageNavigationUrl(const QUrl &currentUrl
         return;
     }
 
-    setPageNavigationUrls({ currentUrl.adjusted(QUrl::NormalizePathSegments) }, currentUrl);
+    setPageNavigationUrls({ normalizedImageUrl(currentUrl) }, currentUrl);
 }
 
 bool ImageNavigationService::setKnownPageNavigationCurrentUrl(const QUrl &currentUrl)
@@ -265,10 +265,8 @@ bool ImageNavigationService::setKnownPageNavigationCurrentUrl(const QUrl &curren
         return false;
     }
 
-    const auto current = std::find_if(
-        m_pageNavigationUrls.cbegin(), m_pageNavigationUrls.cend(), [&currentUrl](const QUrl &url) {
-            return url.matches(currentUrl, QUrl::NormalizePathSegments);
-        });
+    const auto current = std::find_if(m_pageNavigationUrls.cbegin(), m_pageNavigationUrls.cend(),
+        [&currentUrl](const QUrl &url) { return sameNormalizedUrl(url, currentUrl); });
     if (current == m_pageNavigationUrls.cend()) {
         return false;
     }

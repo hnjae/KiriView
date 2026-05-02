@@ -12,6 +12,7 @@ QUrl normalizedFileContainerUrl(const QUrl &url);
 QUrl normalizedDirectoryContainerUrl(const QUrl &url);
 QUrl parentUrlForContainerNavigation(const QUrl &containerUrl);
 QUrl navigationSourceUrl(const QUrl &url);
+bool sameNormalizedUrl(const QUrl &left, const QUrl &right);
 bool sameContainerNavigationUrl(const QUrl &left, const QUrl &right);
 }
 

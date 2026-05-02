@@ -4,6 +4,7 @@
 #include "imageloader.h"
 
 #include "imagecontainer.h"
+#include "imageurl.h"
 #include "kiriimagedecoder.h"
 
 #include <memory>
@@ -167,8 +168,7 @@ std::optional<ImageLoadSession> ImageLoader::currentLoadSessionForDecodeRequest(
     const ImageDecodeRequest &request) const
 {
     if (!m_loadSession.has_value() || m_loadSession->id != request.id
-        || !m_loadSession->location.imageUrl().matches(
-            request.imageUrl, QUrl::NormalizePathSegments)) {
+        || !sameNormalizedUrl(m_loadSession->location.imageUrl(), request.imageUrl)) {
         return std::nullopt;
     }
 

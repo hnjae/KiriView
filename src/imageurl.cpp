@@ -182,8 +182,13 @@ QUrl navigationSourceUrl(const QUrl &url)
     return url;
 }
 
+bool sameNormalizedUrl(const QUrl &left, const QUrl &right)
+{
+    return left.matches(right, QUrl::NormalizePathSegments);
+}
+
 bool sameContainerNavigationUrl(const QUrl &left, const QUrl &right)
 {
-    return !left.isEmpty() && !right.isEmpty() && left.matches(right, QUrl::NormalizePathSegments);
+    return !left.isEmpty() && !right.isEmpty() && sameNormalizedUrl(left, right);
 }
 }

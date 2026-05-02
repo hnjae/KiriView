@@ -3,21 +3,14 @@
 
 #include "imagedecodejob.h"
 
+#include "imageurl.h"
+
 #include <QMetaObject>
 #include <QPointer>
 #include <QRunnable>
 #include <QThreadPool>
 #include <Qt>
 #include <utility>
-
-namespace {
-bool sameDecodeRequest(
-    const KiriView::ImageDecodeRequest &left, const KiriView::ImageDecodeRequest &right)
-{
-    return left.id == right.id
-        && left.imageUrl.matches(right.imageUrl, QUrl::NormalizePathSegments);
-}
-}
 
 namespace KiriView {
 ImageDecodeJob::ImageDecodeJob(QObject *parent, DataLoader dataLoader, DataDecoder dataDecoder)
@@ -103,7 +96,8 @@ void ImageDecodeJob::startDecode(QByteArray data, ImageDecodeRequest request)
 
 bool ImageDecodeJob::isCurrentRequest(const ImageDecodeRequest &request) const
 {
-    return m_request.has_value() && sameDecodeRequest(*m_request, request);
+    return m_request.has_value() && m_request->id == request.id
+        && sameNormalizedUrl(m_request->imageUrl, request.imageUrl);
 }
 
 void ImageDecodeJob::clearRequest(const ImageDecodeRequest &request)
