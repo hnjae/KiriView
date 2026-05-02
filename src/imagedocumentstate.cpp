@@ -87,22 +87,19 @@ void ImageDocumentState::setSourceUrl(const QUrl &sourceUrl)
 
 void ImageDocumentState::setDisplayedImageLocation(const DisplayedImageLocation &location)
 {
-    const QString previousWindowTitle = windowTitleFileName();
-    const QUrl previousDisplayedUrl = displayedUrl();
-    m_displayedImageLocation = location;
-    if (previousDisplayedUrl != displayedUrl()) {
-        notify(ImageDocumentChange::DisplayedUrl);
-    }
-    if (previousWindowTitle != windowTitleFileName()) {
-        notify(ImageDocumentChange::WindowTitleFileName);
-    }
+    replaceDisplayedImageLocation(location);
 }
 
 void ImageDocumentState::clearDisplayedImageUrls()
 {
+    replaceDisplayedImageLocation(DisplayedImageLocation {});
+}
+
+void ImageDocumentState::replaceDisplayedImageLocation(DisplayedImageLocation location)
+{
     const QString previousWindowTitle = windowTitleFileName();
     const QUrl previousDisplayedUrl = displayedUrl();
-    m_displayedImageLocation = {};
+    m_displayedImageLocation = std::move(location);
     if (previousDisplayedUrl != displayedUrl()) {
         notify(ImageDocumentChange::DisplayedUrl);
     }

@@ -60,6 +60,7 @@ public:
     void clearLoadingContainerNavigationUrl();
 
 private:
+    void replaceDisplayedImageLocation(DisplayedImageLocation location);
     void beginBatch();
     void endBatch();
     void notify(ImageDocumentChange change);
