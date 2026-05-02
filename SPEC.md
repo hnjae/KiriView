@@ -182,10 +182,10 @@ not wrap; pressing Previous Container on the first candidate or Next Container o
 the last candidate keeps the current view unchanged.
 
 The `[` key opens the previous sibling container and the `]` key opens the next
-sibling container when container navigation is available. Ctrl+Home opens the
-first image in the current container, and Ctrl+End opens the last image in the
-current container. These shortcuts are inactive while the page number or zoom
-input is focused.
+sibling container when container navigation is available. Home and Ctrl+Home open
+the first image in the current container, and End and Ctrl+End open the last
+image in the current container. These shortcuts are inactive while the page
+number or zoom input is focused.
 
 Opening a directory container displays the first directly contained supported
 image file in that directory. Directory container opening is non-recursive.
