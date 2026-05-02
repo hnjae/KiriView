@@ -57,6 +57,33 @@ Item {
         return imageViewport.panBy(deltaX, deltaY);
     }
 
+    function scanForward() {
+        if (root.imageViewport.scanForward()) {
+            return;
+        }
+
+        root.openNextImage();
+    }
+
+    function scanBackward() {
+        if (root.imageViewport.scanBackward()) {
+            return;
+        }
+
+        if (root.atFirstImage) {
+            root.imageBoundaryReached("First image");
+            return;
+        }
+
+        if (root.imageDocument.currentPageNumber > 1) {
+            root.imageViewport.setNextDisplayedImageStartToFinalScanPosition();
+            root.imageDocument.openImageAtPage(root.imageDocument.currentPageNumber - 1);
+            return;
+        }
+
+        root.imageDocument.openPreviousImage();
+    }
+
     function textInputFocused() {
         return imageToolBar.textInputFocused();
     }
@@ -151,6 +178,22 @@ Item {
         sequence: "Down"
 
         onActivated: root.panBy(0, root.keyboardPanDistance)
+    }
+
+    Shortcut {
+        context: Qt.WindowShortcut
+        enabled: root.imagePannable && !root.textInputFocused() && !root.helpDialogOpen
+        sequence: "."
+
+        onActivated: root.scanForward()
+    }
+
+    Shortcut {
+        context: Qt.WindowShortcut
+        enabled: root.imagePannable && !root.textInputFocused() && !root.helpDialogOpen
+        sequence: ","
+
+        onActivated: root.scanBackward()
     }
 
     Shortcut {

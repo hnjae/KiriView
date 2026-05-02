@@ -76,6 +76,10 @@ Controls.Dialog {
                     keys: "Shift+wheel"
                 }
                 ListElement {
+                    description: "Scan the zoomed image"
+                    keys: ". / ,"
+                }
+                ListElement {
                     description: "Previous or next container"
                     keys: "[ / ]"
                 }

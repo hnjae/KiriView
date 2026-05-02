@@ -42,6 +42,24 @@ QPointF KiriImageView::panContentPosition(
     return KiriView::imageViewportPanPosition(viewportSize(), imageRect, contentPosition, delta);
 }
 
+QPointF KiriImageView::nextScanContentPosition(const QPointF &contentPosition) const
+{
+    const QRectF imageRect = KiriView::imageViewportImageRect(viewportSize(), displaySize());
+    return KiriView::imageViewportNextZScanPosition(viewportSize(), imageRect, contentPosition);
+}
+
+QPointF KiriImageView::previousScanContentPosition(const QPointF &contentPosition) const
+{
+    const QRectF imageRect = KiriView::imageViewportImageRect(viewportSize(), displaySize());
+    return KiriView::imageViewportPreviousZScanPosition(viewportSize(), imageRect, contentPosition);
+}
+
+QPointF KiriImageView::finalScanContentPosition() const
+{
+    const QRectF imageRect = KiriView::imageViewportImageRect(viewportSize(), displaySize());
+    return KiriView::imageViewportFinalZScanPosition(viewportSize(), imageRect);
+}
+
 bool KiriImageView::viewportPointInsideImage(
     const QPointF &contentPosition, const QPointF &viewportPoint) const
 {

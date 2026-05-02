@@ -13,6 +13,8 @@ Item {
     property alias imageView: imageView
     property alias flickable: imageFlickable
     property bool imageReady: imageDocument.status === KiriImageDocument.Ready
+    property bool pendingFinalScanStart: false
+    property bool displayedImageUsesFinalScanStart: false
     property url initialSourceUrl
     readonly property int minimumManualZoomPercent: imageDocument.minimumManualZoomPercent
     readonly property int maximumManualZoomPercent: imageDocument.maximumManualZoomPercent
@@ -33,6 +35,20 @@ Item {
         imageFlickable.contentY = contentPosition.y;
     }
 
+    function setNextDisplayedImageStartToFinalScanPosition() {
+        pendingFinalScanStart = true;
+    }
+
+    function applyDisplayedImageInitialContentPosition() {
+        if (displayedImageUsesFinalScanStart) {
+            setContentPosition(imageView.finalScanContentPosition());
+            displayedImageUsesFinalScanStart = false;
+            return;
+        }
+
+        resetContentPositionToTopLeft();
+    }
+
     function panBy(deltaX, deltaY) {
         if (!imagePannable) {
             return false;
@@ -40,6 +56,30 @@ Item {
 
         const currentContentPosition = Qt.point(imageFlickable.contentX, imageFlickable.contentY);
         const nextContentPosition = imageView.panContentPosition(currentContentPosition, Qt.point(deltaX, deltaY));
+        const moved = nextContentPosition.x !== imageFlickable.contentX || nextContentPosition.y !== imageFlickable.contentY;
+        setContentPosition(nextContentPosition);
+        return moved;
+    }
+
+    function scanForward() {
+        if (!imagePannable) {
+            return false;
+        }
+
+        const currentContentPosition = Qt.point(imageFlickable.contentX, imageFlickable.contentY);
+        const nextContentPosition = imageView.nextScanContentPosition(currentContentPosition);
+        const moved = nextContentPosition.x !== imageFlickable.contentX || nextContentPosition.y !== imageFlickable.contentY;
+        setContentPosition(nextContentPosition);
+        return moved;
+    }
+
+    function scanBackward() {
+        if (!imagePannable) {
+            return false;
+        }
+
+        const currentContentPosition = Qt.point(imageFlickable.contentX, imageFlickable.contentY);
+        const nextContentPosition = imageView.previousScanContentPosition(currentContentPosition);
         const moved = nextContentPosition.x !== imageFlickable.contentX || nextContentPosition.y !== imageFlickable.contentY;
         setContentPosition(nextContentPosition);
         return moved;
@@ -74,7 +114,16 @@ Item {
 
         viewportSize: Qt.size(imageFlickable.width, imageFlickable.height)
 
-        onDisplayedUrlChanged: Qt.callLater(root.resetContentPositionToTopLeft)
+        onDisplayedUrlChanged: {
+            root.displayedImageUsesFinalScanStart = root.pendingFinalScanStart;
+            root.pendingFinalScanStart = false;
+            Qt.callLater(root.applyDisplayedImageInitialContentPosition);
+        }
+        onLoadingChanged: {
+            if (!loading) {
+                root.pendingFinalScanStart = false;
+            }
+        }
 
         Component.onCompleted: {
             if (root.initialSourceUrl.toString().length > 0) {

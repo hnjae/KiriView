@@ -7,6 +7,9 @@
 #include <cmath>
 
 namespace {
+constexpr qreal scanStepViewportRatio = 0.75;
+constexpr qreal positionEpsilon = 0.001;
+
 qreal normalizedLength(qreal length)
 {
     return std::isfinite(length) ? std::max<qreal>(0.0, length) : 0.0;
@@ -26,6 +29,35 @@ QPointF normalizedPoint(const QPointF &point, const QPointF &fallback)
 qreal clampedValue(qreal value, qreal minimum, qreal maximum)
 {
     return std::clamp(std::isfinite(value) ? value : minimum, minimum, maximum);
+}
+
+bool axisPannable(qreal maximum) { return maximum > positionEpsilon; }
+
+qreal scanStepLength(qreal viewportLength)
+{
+    return normalizedLength(viewportLength) * scanStepViewportRatio;
+}
+
+qreal nextAxisScanPosition(qreal position, qreal step, qreal maximum)
+{
+    const qreal current = clampedValue(position, 0.0, maximum);
+    if (!axisPannable(maximum) || step <= positionEpsilon || current >= maximum - positionEpsilon) {
+        return current;
+    }
+
+    const qreal nextPosition = (std::floor(current / step) + 1.0) * step;
+    return std::min(maximum, nextPosition);
+}
+
+qreal previousAxisScanPosition(qreal position, qreal step, qreal maximum)
+{
+    const qreal current = clampedValue(position, 0.0, maximum);
+    if (!axisPannable(maximum) || step <= positionEpsilon || current <= positionEpsilon) {
+        return current;
+    }
+
+    const qreal previousPosition = (std::ceil(current / step) - 1.0) * step;
+    return std::max<qreal>(0.0, previousPosition);
 }
 }
 
@@ -62,6 +94,65 @@ QPointF imageViewportPanPosition(const QSizeF &viewportSize, const QRectF &image
 {
     return imageViewportClampedContentPosition(viewportSize, imageRect,
         QPointF(contentPosition.x() + delta.x(), contentPosition.y() + delta.y()));
+}
+
+QPointF imageViewportNextZScanPosition(
+    const QSizeF &viewportSize, const QRectF &imageRect, const QPointF &contentPosition)
+{
+    const QSizeF viewport = normalizedSize(viewportSize);
+    const QPointF maximum = imageViewportMaximumContentPosition(viewport, imageRect);
+    const QPointF current
+        = imageViewportClampedContentPosition(viewport, imageRect, contentPosition);
+
+    if (axisPannable(maximum.x())) {
+        const qreal nextX
+            = nextAxisScanPosition(current.x(), scanStepLength(viewport.width()), maximum.x());
+        if (nextX != current.x()) {
+            return QPointF(nextX, current.y());
+        }
+    }
+
+    if (axisPannable(maximum.y())) {
+        const qreal nextY
+            = nextAxisScanPosition(current.y(), scanStepLength(viewport.height()), maximum.y());
+        if (nextY != current.y()) {
+            return QPointF(axisPannable(maximum.x()) ? 0.0 : current.x(), nextY);
+        }
+    }
+
+    return current;
+}
+
+QPointF imageViewportPreviousZScanPosition(
+    const QSizeF &viewportSize, const QRectF &imageRect, const QPointF &contentPosition)
+{
+    const QSizeF viewport = normalizedSize(viewportSize);
+    const QPointF maximum = imageViewportMaximumContentPosition(viewport, imageRect);
+    const QPointF current
+        = imageViewportClampedContentPosition(viewport, imageRect, contentPosition);
+
+    if (axisPannable(maximum.x())) {
+        const qreal previousX
+            = previousAxisScanPosition(current.x(), scanStepLength(viewport.width()), maximum.x());
+        if (previousX != current.x()) {
+            return QPointF(previousX, current.y());
+        }
+    }
+
+    if (axisPannable(maximum.y())) {
+        const qreal previousY
+            = previousAxisScanPosition(current.y(), scanStepLength(viewport.height()), maximum.y());
+        if (previousY != current.y()) {
+            return QPointF(axisPannable(maximum.x()) ? maximum.x() : current.x(), previousY);
+        }
+    }
+
+    return current;
+}
+
+QPointF imageViewportFinalZScanPosition(const QSizeF &viewportSize, const QRectF &imageRect)
+{
+    return imageViewportMaximumContentPosition(viewportSize, imageRect);
 }
 
 bool imageViewportPointInsideImage(

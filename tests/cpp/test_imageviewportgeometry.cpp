@@ -30,6 +30,10 @@ class TestImageViewportGeometry : public QObject
 private Q_SLOTS:
     void anchoredZoomKeepsViewportPointOnSameImageRatio();
     void panPositionClampsToContentBounds();
+    void zScanMovesForwardByThreeQuartersOfViewport();
+    void zScanMovesBackwardThroughSamePositions();
+    void zScanStopsAtBoundaries();
+    void zScanHandlesSingleAxisPanning();
     void smallImagesAreCenteredAndNotPannable();
 };
 
@@ -57,6 +61,75 @@ void TestImageViewportGeometry::panPositionClampsToContentBounds()
     const QPointF clampedToMinimum = KiriView::imageViewportPanPosition(
         viewportSize, imageRect, QPointF(10.0, 0.0), QPointF(-50.0, 0.0));
     comparePoint(clampedToMinimum, QPointF(0.0, 0.0));
+}
+
+void TestImageViewportGeometry::zScanMovesForwardByThreeQuartersOfViewport()
+{
+    const QSizeF viewportSize(100.0, 100.0);
+    const QRectF imageRect(0.0, 0.0, 400.0, 300.0);
+
+    comparePoint(
+        KiriView::imageViewportNextZScanPosition(viewportSize, imageRect, QPointF(0.0, 0.0)),
+        QPointF(75.0, 0.0));
+    comparePoint(
+        KiriView::imageViewportNextZScanPosition(viewportSize, imageRect, QPointF(225.0, 0.0)),
+        QPointF(300.0, 0.0));
+    comparePoint(
+        KiriView::imageViewportNextZScanPosition(viewportSize, imageRect, QPointF(300.0, 0.0)),
+        QPointF(0.0, 75.0));
+}
+
+void TestImageViewportGeometry::zScanMovesBackwardThroughSamePositions()
+{
+    const QSizeF viewportSize(100.0, 100.0);
+    const QRectF imageRect(0.0, 0.0, 400.0, 300.0);
+
+    comparePoint(
+        KiriView::imageViewportPreviousZScanPosition(viewportSize, imageRect, QPointF(0.0, 75.0)),
+        QPointF(300.0, 0.0));
+    comparePoint(
+        KiriView::imageViewportPreviousZScanPosition(viewportSize, imageRect, QPointF(300.0, 0.0)),
+        QPointF(225.0, 0.0));
+}
+
+void TestImageViewportGeometry::zScanStopsAtBoundaries()
+{
+    const QSizeF viewportSize(100.0, 100.0);
+    const QRectF imageRect(0.0, 0.0, 150.0, 150.0);
+
+    comparePoint(
+        KiriView::imageViewportPreviousZScanPosition(viewportSize, imageRect, QPointF(0.0, 0.0)),
+        QPointF(0.0, 0.0));
+    comparePoint(
+        KiriView::imageViewportNextZScanPosition(viewportSize, imageRect, QPointF(50.0, 50.0)),
+        QPointF(50.0, 50.0));
+    comparePoint(
+        KiriView::imageViewportFinalZScanPosition(viewportSize, imageRect), QPointF(50.0, 50.0));
+}
+
+void TestImageViewportGeometry::zScanHandlesSingleAxisPanning()
+{
+    const QSizeF viewportSize(100.0, 100.0);
+
+    const QRectF tallImageRect(10.0, 0.0, 80.0, 300.0);
+    comparePoint(
+        KiriView::imageViewportNextZScanPosition(viewportSize, tallImageRect, QPointF(0.0, 0.0)),
+        QPointF(0.0, 75.0));
+    const QPointF previousTallScanPosition = KiriView::imageViewportPreviousZScanPosition(
+        viewportSize, tallImageRect, QPointF(0.0, 75.0));
+    comparePoint(previousTallScanPosition, QPointF(0.0, 0.0));
+    comparePoint(KiriView::imageViewportFinalZScanPosition(viewportSize, tallImageRect),
+        QPointF(0.0, 200.0));
+
+    const QRectF wideImageRect(0.0, 10.0, 300.0, 80.0);
+    comparePoint(
+        KiriView::imageViewportNextZScanPosition(viewportSize, wideImageRect, QPointF(150.0, 0.0)),
+        QPointF(200.0, 0.0));
+    const QPointF previousWideScanPosition = KiriView::imageViewportPreviousZScanPosition(
+        viewportSize, wideImageRect, QPointF(200.0, 0.0));
+    comparePoint(previousWideScanPosition, QPointF(150.0, 0.0));
+    comparePoint(KiriView::imageViewportFinalZScanPosition(viewportSize, wideImageRect),
+        QPointF(200.0, 0.0));
 }
 
 void TestImageViewportGeometry::smallImagesAreCenteredAndNotPannable()
