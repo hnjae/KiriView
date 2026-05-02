@@ -19,7 +19,10 @@ struct PredecodeRequest {
 class PredecodeCache
 {
 public:
-    static constexpr qsizetype byteBudget() { return 512 * 1024 * 1024; }
+    static constexpr qsizetype defaultByteBudget() { return 512 * 1024 * 1024; }
+    static constexpr qsizetype byteBudget() { return defaultByteBudget(); }
+
+    explicit PredecodeCache(qsizetype byteBudget = defaultByteBudget());
 
     void clear();
     void clearQueuedLoads();
@@ -48,6 +51,7 @@ private:
     std::vector<QUrl> m_windowUrls;
     std::vector<PredecodeRequest> m_queue;
     std::vector<PredecodedImage> m_images;
+    qsizetype m_byteBudget = defaultByteBudget();
 };
 }
 

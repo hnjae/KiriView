@@ -61,6 +61,9 @@ lint: _cargo-vendor-sources
 [group('ci')]
 test:
     just _module 'cargo --offline test --all-targets --all-features'
+    just _module 'cmake -S tests/cpp -B target/flatpak/cpp-tests -DCMAKE_BUILD_TYPE=Debug'
+    just _module 'cmake --build target/flatpak/cpp-tests'
+    just _module 'ctest --test-dir target/flatpak/cpp-tests --output-on-failure'
 
 [group('ci')]
 format:

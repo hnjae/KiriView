@@ -178,14 +178,6 @@ DecodedImageResult decodeImageData(const QByteArray &data)
     return result;
 }
 
-qsizetype imageByteCost(const QImage &image)
-{
-    if (image.isNull()) {
-        return 0;
-    }
-    return image.sizeInBytes();
-}
-
 bool decodedImageResultIsPredecodeCacheable(const DecodedImageResult &result, qsizetype byteBudget)
 {
     return result.success && !result.isSvg && !result.image.isNull()

@@ -5,6 +5,7 @@
 #define KIRIVIEW_KIRIIMAGEDECODER_H
 
 #include "apngdecoder.h"
+#include "imagebytecost.h"
 
 #include <QByteArray>
 #include <QImage>
@@ -36,7 +37,6 @@ QImage displayReadyImage(const QImage &image);
 QSize svgRasterSize(const QSizeF &displaySize, qreal devicePixelRatio, int maximumTextureSize);
 QImage renderSvgImage(const QByteArray &data, const QSize &size);
 DecodedImageResult decodeImageData(const QByteArray &data);
-qsizetype imageByteCost(const QImage &image);
 bool decodedImageResultIsPredecodeCacheable(const DecodedImageResult &result, qsizetype byteBudget);
 }
 

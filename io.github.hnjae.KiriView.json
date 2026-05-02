@@ -33,7 +33,12 @@
       ],
       "run-tests": true,
       "test-rule": "",
-      "test-commands": ["cargo --offline test --all-targets --all-features"],
+      "test-commands": [
+        "cargo --offline test --all-targets --all-features",
+        "cmake -S tests/cpp -B target/flatpak/cpp-tests -DCMAKE_BUILD_TYPE=Debug",
+        "cmake --build target/flatpak/cpp-tests",
+        "ctest --test-dir target/flatpak/cpp-tests --output-on-failure"
+      ],
       "sources": [
         "cargo-sources.json",
         {
