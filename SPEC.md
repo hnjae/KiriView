@@ -68,8 +68,10 @@ users navigate between images. If the user has selected Fit, Fit Height, or Fit
 Width, that fit mode remains selected and recalculates for each image and
 viewport size. If the user has entered a manual zoom value, that exact
 percentage remains active while moving to previous, next, or numbered pages in
-the same directory or CBZ archive. Starting KiriView or opening an image in a
-different container resets zoom to Fit mode.
+the same directory or CBZ archive. When the displayed image changes, any
+panning position from the previous image is cleared so the newly displayed image
+starts at its top-left at the preserved zoom level. Starting KiriView or
+opening an image in a different container resets zoom to Fit mode.
 
 The image viewing area behind empty, loading, ready, and error states uses
 `#3c3c3c` as its background color, so navigation transitions do not flash to a
@@ -97,8 +99,9 @@ mode, `3` selects Fit Width mode, and `0` switches to 100% manual zoom. These
 shortcuts are inactive while the page number or zoom input is focused.
 
 When an image is zoomed large enough to pan, the arrow keys pan the image within
-the available scroll bounds. Arrow-key panning is inactive while the page number
-or zoom input is focused.
+the available scroll bounds, Shift+mouse wheel pans horizontally, and the mouse
+cursor shows that the image can be dragged to pan. Arrow-key panning is
+inactive while the page number or zoom input is focused.
 
 The toolbar centers page navigation as an up-arrow Previous button, an editable
 current page number, the text `of`, the total number of supported images in the
