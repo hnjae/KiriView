@@ -1,0 +1,83 @@
+// SPDX-FileCopyrightText: 2026 KIM Hyunjae
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+#ifndef KIRIVIEW_IMAGEPRESENTATIONCONTROLLER_H
+#define KIRIVIEW_IMAGEPRESENTATIONCONTROLLER_H
+
+#include "imagedocumenttypes.h"
+#include "imagezoomstate.h"
+
+#include <QByteArray>
+#include <QImage>
+#include <QSize>
+#include <QSizeF>
+#include <QString>
+#include <QUrl>
+#include <functional>
+#include <memory>
+#include <optional>
+#include <vector>
+
+class QObject;
+
+namespace KiriView {
+class DisplayedImageState;
+struct AnimationFrame;
+
+class ImagePresentationController final
+{
+public:
+    using RenderContextProvider = std::function<ImageDocumentRenderContext()>;
+    using ChangeCallback = std::function<void(ImageDocumentChange)>;
+    using AnimationErrorCallback = std::function<void(const QString &)>;
+
+    ImagePresentationController(QObject *context, RenderContextProvider renderContextProvider,
+        ChangeCallback changeCallback, AnimationErrorCallback animationErrorCallback);
+    ~ImagePresentationController();
+
+    QSize imageSize() const;
+    QSizeF viewportSize() const;
+    void setViewportSize(const QSizeF &viewportSize);
+    QSizeF displaySize() const;
+    qreal zoomPercent() const;
+    void setZoomPercent(qreal zoomPercent);
+    ImageZoomMode zoomMode() const;
+    const QImage &image() const;
+    quint64 imageRevision() const;
+    bool hasImage() const;
+    bool isPredecodeCacheable() const;
+
+    void resetZoom();
+    void setFitMode(ImageZoomMode zoomMode);
+    void updateRenderContext();
+    void prepareImageContainer(const QUrl &containerUrl);
+    void prepareFailedContainer(const QUrl &containerUrl);
+    void setPredecodeCacheable(bool cacheable);
+    void setImage(const QImage &image);
+    std::optional<QString> setLoadedSvgImage(
+        QByteArray data, const QSize &intrinsicSize, const QUrl &containerUrl);
+    void clearImage();
+
+    void startAnimation(
+        const QByteArray &data, const QByteArray &format, int loopCount, int firstFrameDelay);
+    void startDecodedAnimation(std::vector<AnimationFrame> frames, int loopCount);
+    void stopAnimation();
+
+private:
+    void setImageSize(const QSize &imageSize);
+    bool updateDisplayedSvgRaster();
+    void applyZoomStateChanges(const ImageZoomSnapshot &previous);
+    qreal displayDevicePixelRatio() const;
+    int maximumTextureSize() const;
+    ImageDocumentRenderContext renderContext() const;
+    void notify(ImageDocumentChange change);
+
+    RenderContextProvider m_renderContextProvider;
+    ChangeCallback m_changeCallback;
+    AnimationErrorCallback m_animationErrorCallback;
+    ImageZoomState m_zoomState;
+    std::unique_ptr<DisplayedImageState> m_displayedImageState;
+};
+}
+
+#endif

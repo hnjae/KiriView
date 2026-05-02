@@ -3,14 +3,13 @@
 
 #include "imagedocumentcontroller.h"
 
-#include "displayedimagestate.h"
 #include "imagenavigationservice.h"
 #include "imagepredecodecoordinator.h"
+#include "imagepresentationcontroller.h"
 #include "kiriimagedecoder.h"
 #include "predecodecache.h"
 
 #include <QCoreApplication>
-#include <cmath>
 #include <memory>
 #include <optional>
 #include <utility>
@@ -18,10 +17,7 @@
 namespace {
 using KiriView::containerNavigationUrlForImage;
 using KiriView::decodedImageResultIsPredecodeCacheable;
-using KiriView::imageZoomApproximatelyEqual;
 using KiriView::NavigationDirection;
-using KiriView::renderSvgImage;
-using KiriView::svgRasterSize;
 using KiriView::windowTitleFileNameForDisplayedUrl;
 
 QString imageViewText(const char *sourceText)
@@ -38,12 +34,8 @@ ImageDocumentController::ImageDocumentController(
     , m_changeCallback(std::move(changeCallback))
     , m_state([this](ImageDocumentChange change) { notify(change); })
 {
-    m_displayedImageState = std::make_unique<DisplayedImageState>(
-        this,
-        [this](const QSize &imageSize) {
-            setImageSize(imageSize);
-            notify(ImageDocumentChange::Repaint);
-        },
+    m_presentationController = std::make_unique<ImagePresentationController>(
+        this, m_renderContextProvider, [this](ImageDocumentChange change) { notify(change); },
         [this](const QString &errorString) { finishWithAnimationError(errorString); });
     m_navigationService = std::make_unique<ImageNavigationService>(this);
     m_navigationService->setOpenUrlCallback([this](const QUrl &url) { setSourceUrl(url); });
@@ -117,35 +109,37 @@ QString ImageDocumentController::windowTitleFileName() const
     return m_state.windowTitleFileName();
 }
 
-QSize ImageDocumentController::imageSize() const { return m_zoomState.imageSize(); }
+QSize ImageDocumentController::imageSize() const { return m_presentationController->imageSize(); }
 
-QSizeF ImageDocumentController::viewportSize() const { return m_zoomState.viewportSize(); }
+QSizeF ImageDocumentController::viewportSize() const
+{
+    return m_presentationController->viewportSize();
+}
 
 void ImageDocumentController::setViewportSize(const QSizeF &viewportSize)
 {
-    const ImageZoomSnapshot previous = m_zoomState.snapshot();
-    if (!m_zoomState.setViewportSize(viewportSize, displayDevicePixelRatio())) {
-        return;
-    }
-
-    applyZoomStateChanges(previous);
+    m_presentationController->setViewportSize(viewportSize);
 }
 
-QSizeF ImageDocumentController::displaySize() const { return m_zoomState.displaySize(); }
+QSizeF ImageDocumentController::displaySize() const
+{
+    return m_presentationController->displaySize();
+}
 
-qreal ImageDocumentController::zoomPercent() const { return m_zoomState.zoomPercent(); }
+qreal ImageDocumentController::zoomPercent() const
+{
+    return m_presentationController->zoomPercent();
+}
 
 void ImageDocumentController::setZoomPercent(qreal zoomPercent)
 {
-    const ImageZoomSnapshot previous = m_zoomState.snapshot();
-    if (!m_zoomState.setManualZoomPercent(zoomPercent, displayDevicePixelRatio())) {
-        return;
-    }
-
-    applyZoomStateChanges(previous);
+    m_presentationController->setZoomPercent(zoomPercent);
 }
 
-ImageZoomMode ImageDocumentController::zoomMode() const { return m_zoomState.zoomMode(); }
+ImageZoomMode ImageDocumentController::zoomMode() const
+{
+    return m_presentationController->zoomMode();
+}
 
 int ImageDocumentController::currentPageNumber() const
 {
@@ -159,9 +153,12 @@ bool ImageDocumentController::containerNavigationAvailable() const
     return m_state.containerNavigationAvailable();
 }
 
-const QImage &ImageDocumentController::image() const { return m_displayedImageState->image(); }
+const QImage &ImageDocumentController::image() const { return m_presentationController->image(); }
 
-quint64 ImageDocumentController::imageRevision() const { return m_displayedImageState->revision(); }
+quint64 ImageDocumentController::imageRevision() const
+{
+    return m_presentationController->imageRevision();
+}
 
 void ImageDocumentController::openPreviousImage()
 {
@@ -190,31 +187,16 @@ void ImageDocumentController::openImageAtPage(int pageNumber)
     setSourceUrl(*pageUrl);
 }
 
-void ImageDocumentController::resetZoom()
-{
-    const ImageZoomSnapshot previous = m_zoomState.snapshot();
-    m_zoomState.resetZoom(displayDevicePixelRatio());
-    applyZoomStateChanges(previous);
-}
+void ImageDocumentController::resetZoom() { m_presentationController->resetZoom(); }
 
 void ImageDocumentController::setFitMode(ImageZoomMode zoomMode)
 {
-    if (zoomMode == ImageZoomMode::Manual) {
-        return;
-    }
-
-    const ImageZoomSnapshot previous = m_zoomState.snapshot();
-    if (!m_zoomState.setFitMode(zoomMode, displayDevicePixelRatio())) {
-        return;
-    }
-    applyZoomStateChanges(previous);
+    m_presentationController->setFitMode(zoomMode);
 }
 
 void ImageDocumentController::updateRenderContext()
 {
-    const ImageZoomSnapshot previous = m_zoomState.snapshot();
-    m_zoomState.update(displayDevicePixelRatio());
-    applyZoomStateChanges(previous);
+    m_presentationController->updateRenderContext();
 }
 
 void ImageDocumentController::setSourceUrlForLoad(
@@ -314,11 +296,7 @@ void ImageDocumentController::finishContainerNavigationLoadWithError(
     m_state.clearLoadingContainerNavigationUrl();
 
     clearImage();
-    const ImageZoomSnapshot previous = m_zoomState.snapshot();
-    m_zoomState.clearContainer();
-    m_zoomState.prepareImageContainer(containerUrl);
-    m_zoomState.resetZoom(displayDevicePixelRatio());
-    applyZoomStateChanges(previous);
+    m_presentationController->prepareFailedContainer(containerUrl);
     setLoading(false);
     setContainerNavigationUrl(containerUrl);
 
@@ -368,8 +346,8 @@ void ImageDocumentController::scheduleAdjacentImagePredecode()
     }
 
     m_predecodeCoordinator->schedule(ImagePredecodeCoordinator::Context { m_state.displayedUrl(),
-        m_state.displayedComicBookRootUrl(), m_displayedImageState->isPredecodeCacheable(),
-        m_displayedImageState->image() });
+        m_state.displayedComicBookRootUrl(), m_presentationController->isPredecodeCacheable(),
+        m_presentationController->image() });
 }
 
 void ImageDocumentController::cancelPredecode()
@@ -412,10 +390,10 @@ void ImageDocumentController::finishDecodedImageLoad(
         = decodedImageResultIsPredecodeCacheable(*result, PredecodeCache::byteBudget());
     finishLoadSuccessfully(session, result->image, predecodeCacheable);
     if (!result->decodedAnimationFrames.empty()) {
-        m_displayedImageState->startDecodedAnimation(
+        m_presentationController->startDecodedAnimation(
             std::move(result->decodedAnimationFrames), result->animationLoopCount);
     } else if (result->hasAnimationReaderFrames) {
-        m_displayedImageState->startAnimation(result->animationData, result->animationFormat,
+        m_presentationController->startAnimation(result->animationData, result->animationFormat,
             result->animationLoopCount, result->firstFrameDelay);
     }
     scheduleAdjacentImagePredecode();
@@ -450,7 +428,6 @@ void ImageDocumentController::finishLoadWithError(
     }
 
     clearImage();
-    m_zoomState.clearContainer();
     setContainerNavigationUrl(QUrl());
     setErrorString(message);
     setStatus(ImageDocumentStatus::Error);
@@ -460,8 +437,8 @@ void ImageDocumentController::finishLoadSuccessfully(
     const ImageLoadSession &session, const QImage &image, bool predecodeCacheable)
 {
     prepareSuccessfulImageLoad(session);
-    m_displayedImageState->setPredecodeCacheable(predecodeCacheable);
-    setDisplayedImage(image);
+    m_presentationController->setPredecodeCacheable(predecodeCacheable);
+    m_presentationController->setImage(image);
     updateRenderContext();
     finishSuccessfulImageLoad(session);
 }
@@ -469,31 +446,15 @@ void ImageDocumentController::finishLoadSuccessfully(
 void ImageDocumentController::finishSvgLoadSuccessfully(
     ImageLoadSession session, QByteArray data, const QSize &intrinsicSize)
 {
-    if (data.isEmpty() || intrinsicSize.isEmpty()) {
-        finishLoadWithError(session, ImageLoadError::Generic,
-            imageViewText("Could not decode the selected SVG image."));
-        return;
-    }
-
     const QUrl loadedContainerUrl
         = containerNavigationUrlForImage(session.imageUrl, session.comicBookRootUrl);
-    const LoadedImageZoom loadedZoom
-        = m_zoomState.loadedImageZoom(loadedContainerUrl, intrinsicSize, displayDevicePixelRatio());
-    const QSize rasterSize
-        = svgRasterSize(loadedZoom.displaySize, displayDevicePixelRatio(), maximumTextureSize());
-    const QImage image = renderSvgImage(data, rasterSize);
-    if (image.isNull()) {
-        finishLoadWithError(session, ImageLoadError::Generic,
-            imageViewText("Could not render the selected SVG image."));
+    const std::optional<QString> errorString = m_presentationController->setLoadedSvgImage(
+        std::move(data), intrinsicSize, loadedContainerUrl);
+    if (errorString.has_value()) {
+        finishLoadWithError(session, ImageLoadError::Generic, *errorString);
         return;
     }
 
-    stopAnimation();
-    m_displayedImageState->setPredecodeCacheable(false);
-    const ImageZoomSnapshot previous = m_zoomState.snapshot();
-    m_zoomState.setLoadedSvgZoom(loadedContainerUrl, loadedZoom);
-    applyZoomStateChanges(previous);
-    setDisplayedSvgImage(std::move(data), intrinsicSize, image, rasterSize);
     finishSuccessfulImageLoad(session);
 }
 
@@ -502,9 +463,7 @@ void ImageDocumentController::prepareSuccessfulImageLoad(const ImageLoadSession 
     stopAnimation();
     const QUrl loadedContainerUrl
         = containerNavigationUrlForImage(session.imageUrl, session.comicBookRootUrl);
-    const ImageZoomSnapshot previous = m_zoomState.snapshot();
-    m_zoomState.prepareImageContainer(loadedContainerUrl);
-    applyZoomStateChanges(previous);
+    m_presentationController->prepareImageContainer(loadedContainerUrl);
 }
 
 void ImageDocumentController::finishSuccessfulImageLoad(const ImageLoadSession &session)
@@ -526,10 +485,10 @@ void ImageDocumentController::finishSuccessfulImageLoad(const ImageLoadSession &
 
 bool ImageDocumentController::hasDisplayedImage() const
 {
-    return m_displayedImageState->hasImage();
+    return m_presentationController->hasImage();
 }
 
-void ImageDocumentController::stopAnimation() { m_displayedImageState->stopAnimation(); }
+void ImageDocumentController::stopAnimation() { m_presentationController->stopAnimation(); }
 
 void ImageDocumentController::finishWithAnimationError(const QString &errorString)
 {
@@ -543,23 +502,6 @@ void ImageDocumentController::finishWithAnimationError(const QString &errorStrin
         : errorString;
     setErrorString(message);
     setStatus(ImageDocumentStatus::Error);
-}
-
-void ImageDocumentController::setDisplayedImage(const QImage &image)
-{
-    m_displayedImageState->setImage(image);
-}
-
-void ImageDocumentController::setDisplayedSvgImage(
-    QByteArray data, const QSize &intrinsicSize, const QImage &image, const QSize &rasterSize)
-{
-    m_displayedImageState->setSvgImage(std::move(data), intrinsicSize, image, rasterSize);
-}
-
-bool ImageDocumentController::updateDisplayedSvgRaster()
-{
-    return m_displayedImageState->updateSvgRaster(
-        m_zoomState.displaySize(), displayDevicePixelRatio(), maximumTextureSize());
 }
 
 void ImageDocumentController::setLoading(bool loading) { m_state.setLoading(loading); }
@@ -582,62 +524,6 @@ void ImageDocumentController::updateWindowTitleFileName()
         m_state.displayedUrl(), m_state.displayedComicBookRootUrl()));
 }
 
-void ImageDocumentController::setImageSize(const QSize &imageSize)
-{
-    const ImageZoomSnapshot previous = m_zoomState.snapshot();
-    if (!m_zoomState.setImageSize(imageSize, displayDevicePixelRatio())) {
-        return;
-    }
-
-    applyZoomStateChanges(previous);
-}
-
-void ImageDocumentController::applyZoomStateChanges(const ImageZoomSnapshot &previous)
-{
-    const ImageZoomSnapshot current = m_zoomState.snapshot();
-    if (previous.imageSize != current.imageSize) {
-        notify(ImageDocumentChange::ImageSize);
-    }
-    if (!imageZoomApproximatelyEqual(previous.viewportSize, current.viewportSize)) {
-        notify(ImageDocumentChange::ViewportSize);
-    }
-    if (previous.zoomMode != current.zoomMode) {
-        notify(ImageDocumentChange::ZoomMode);
-    }
-    if (!imageZoomApproximatelyEqual(previous.zoomPercent, current.zoomPercent)) {
-        notify(ImageDocumentChange::ZoomPercent);
-    }
-
-    if (!imageZoomApproximatelyEqual(previous.displaySize, current.displaySize)) {
-        notify(ImageDocumentChange::DisplaySize);
-        updateDisplayedSvgRaster();
-        notify(ImageDocumentChange::Repaint);
-    }
-}
-
-qreal ImageDocumentController::displayDevicePixelRatio() const
-{
-    return renderContext().devicePixelRatio;
-}
-
-int ImageDocumentController::maximumTextureSize() const
-{
-    return renderContext().maximumTextureSize;
-}
-
-ImageDocumentRenderContext ImageDocumentController::renderContext() const
-{
-    ImageDocumentRenderContext context
-        = m_renderContextProvider ? m_renderContextProvider() : ImageDocumentRenderContext {};
-    if (!std::isfinite(context.devicePixelRatio) || context.devicePixelRatio <= 0.0) {
-        context.devicePixelRatio = 1.0;
-    }
-    if (context.maximumTextureSize <= 0) {
-        context.maximumTextureSize = fallbackTextureSizeMax;
-    }
-    return context;
-}
-
 void ImageDocumentController::notify(ImageDocumentChange change)
 {
     if (m_changeCallback) {
@@ -652,11 +538,8 @@ void ImageDocumentController::clearImage()
     }
     cancelPageNavigationUpdate();
     m_state.clearDisplayedImageUrls();
-    m_zoomState.clearContainer();
-    m_displayedImageState->clear();
+    m_presentationController->clearImage();
     updateWindowTitleFileName();
     clearPageNavigation();
-
-    setImageSize(QSize());
 }
 }

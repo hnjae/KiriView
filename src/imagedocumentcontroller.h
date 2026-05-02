@@ -21,8 +21,8 @@
 #include <optional>
 
 namespace KiriView {
-class DisplayedImageState;
 class ImageNavigationService;
+class ImagePresentationController;
 class ImagePredecodeCoordinator;
 enum class NavigationDirection : int;
 
@@ -99,28 +99,18 @@ private:
     bool hasDisplayedImage() const;
     void stopAnimation();
     void finishWithAnimationError(const QString &errorString);
-    void setDisplayedImage(const QImage &image);
-    void setDisplayedSvgImage(
-        QByteArray data, const QSize &intrinsicSize, const QImage &image, const QSize &rasterSize);
-    bool updateDisplayedSvgRaster();
     void setLoading(bool loading);
     void setStatus(ImageDocumentStatus status);
     void setErrorString(const QString &errorString);
     void setWindowTitleFileName(const QString &fileName);
     void updateWindowTitleFileName();
-    void setImageSize(const QSize &imageSize);
-    void applyZoomStateChanges(const ImageZoomSnapshot &previous);
-    qreal displayDevicePixelRatio() const;
-    int maximumTextureSize() const;
-    ImageDocumentRenderContext renderContext() const;
     void notify(ImageDocumentChange change);
     void clearImage();
 
     RenderContextProvider m_renderContextProvider;
     ChangeCallback m_changeCallback;
     ImageDocumentState m_state;
-    ImageZoomState m_zoomState;
-    std::unique_ptr<DisplayedImageState> m_displayedImageState;
+    std::unique_ptr<ImagePresentationController> m_presentationController;
     std::unique_ptr<ImageNavigationService> m_navigationService;
     std::unique_ptr<ImageLoader> m_imageLoader;
     std::unique_ptr<ImagePredecodeCoordinator> m_predecodeCoordinator;
