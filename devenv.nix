@@ -56,6 +56,7 @@ let
   cxxCompiler = pkgs.stdenv.cc.cc;
   cxxStandardLibraryVersion = lib.getVersion cxxCompiler;
   cxxTarget = pkgs.stdenv.hostPlatform.config;
+  kcoreaddonsDev = pkgs.kdePackages.kcoreaddons.dev or pkgs.kdePackages.kcoreaddons;
   qtVersion = lib.getVersion pkgs.kdePackages.qtbase;
   cppSources = [
     "src/apngdecoder.cpp"
@@ -98,11 +99,11 @@ let
   ];
   systemIncludeDirs = [
     ".devenv/profile/include"
-    ".devenv/profile/include/KF6/KCoreAddons"
     ".devenv/profile/include/KF6/KIO"
     ".devenv/profile/include/KF6/KIOCore"
     ".devenv/profile/include/QtGui/${qtVersion}/QtGui"
     ".devenv/profile/mkspecs/linux-g++"
+    "${kcoreaddonsDev}/include/KF6/KCoreAddons"
   ]
   ++ cxxStandardLibraryIncludeDirs
   ++ map (module: ".devenv/profile/include/${module}") qtIncludeModules;
