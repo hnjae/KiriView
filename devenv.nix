@@ -1,6 +1,7 @@
 # SPDX-FileCopyrightText: 2026 KIM Hyunjae
 # SPDX-License-Identifier: AGPL-3.0-or-later
 {
+  config,
   pkgs,
   lib,
   ...
@@ -72,6 +73,11 @@ in
       "repo"
       "target"
     ];
+  };
+
+  files.".qmlls.ini".ini.General = {
+    buildDir = "${config.devenv.root}/target/cxxqt/qml_modules";
+    "no-cmake-calls" = true;
   };
 
   packages = with pkgs; [
