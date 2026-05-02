@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGENAVIGATIONSERVICE_H
 #define KIRIVIEW_IMAGENAVIGATIONSERVICE_H
 
-#include "imageiojob.h"
+#include "imageiojobs.h"
 #include "imagenavigationtypes.h"
 
 #include <QObject>
@@ -19,6 +19,17 @@ enum class ContainerNavigationError {
     Generic,
     EmptyContainer,
     InvalidComicBookArchive,
+};
+
+struct ImageNavigationCandidateProvider {
+    using ImageCandidateLoader
+        = std::function<ImageIoJob(QObject *, QUrl, ImageCandidatesCallback, ErrorCallback)>;
+    using ContainerCandidateLoader
+        = std::function<ImageIoJob(QObject *, QUrl, ContainerCandidatesCallback, ErrorCallback)>;
+
+    ImageCandidateLoader directoryImages;
+    ContainerCandidateLoader directoryContainers;
+    ImageCandidateLoader archiveImages;
 };
 
 class ImageNavigationService final : public QObject
@@ -37,6 +48,7 @@ public:
     using PageNavigationChangedCallback = std::function<void()>;
 
     explicit ImageNavigationService(QObject *parent = nullptr);
+    ImageNavigationService(QObject *parent, ImageNavigationCandidateProvider candidateProvider);
 
     void setOpenUrlCallback(OpenUrlCallback callback);
     void setOpenContainerImageCallback(OpenContainerImageCallback callback);
@@ -83,6 +95,7 @@ private:
     OpenContainerImageCallback m_openContainerImage;
     ContainerNavigationErrorCallback m_containerNavigationError;
     PageNavigationChangedCallback m_pageNavigationChanged;
+    ImageNavigationCandidateProvider m_candidateProvider;
     ImageIoJob m_navigationListerJob;
     ImageIoJob m_navigationListJob;
     ImageIoJob m_containerNavigationListerJob;

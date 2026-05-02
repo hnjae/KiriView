@@ -14,8 +14,27 @@
 #include <vector>
 
 namespace KiriView {
+namespace {
+    ImageNavigationCandidateProvider defaultCandidateProvider()
+    {
+        return ImageNavigationCandidateProvider {
+            startDirectoryImageCandidateList,
+            startDirectoryContainerCandidateList,
+            startArchiveImageCandidateList,
+        };
+    }
+}
+
 ImageNavigationService::ImageNavigationService(QObject *parent)
     : QObject(parent)
+    , m_candidateProvider(defaultCandidateProvider())
+{
+}
+
+ImageNavigationService::ImageNavigationService(
+    QObject *parent, ImageNavigationCandidateProvider candidateProvider)
+    : QObject(parent)
+    , m_candidateProvider(std::move(candidateProvider))
 {
 }
 
@@ -87,7 +106,11 @@ void ImageNavigationService::openAdjacentImage(
 
     cancelNavigation();
 
-    m_navigationListerJob = startDirectoryImageCandidateList(
+    if (!m_candidateProvider.directoryImages) {
+        return;
+    }
+
+    m_navigationListerJob = m_candidateProvider.directoryImages(
         this, parentUrl,
         [this, direction, currentUrl](std::vector<ImageNavigationCandidate> candidates) {
             finishNavigation(std::move(candidates), direction, currentUrl);
@@ -106,7 +129,11 @@ void ImageNavigationService::openAdjacentComicBookImage(
 
     cancelNavigation();
 
-    m_navigationListJob = startArchiveImageCandidateList(
+    if (!m_candidateProvider.archiveImages) {
+        return;
+    }
+
+    m_navigationListJob = m_candidateProvider.archiveImages(
         this, archiveRootUrl,
         [this, direction, currentUrl](std::vector<ImageNavigationCandidate> candidates) {
             const std::optional<QUrl> targetUrl
@@ -157,7 +184,11 @@ void ImageNavigationService::openAdjacentContainer(
     cancelNavigation();
     cancelContainerNavigation();
 
-    m_containerNavigationListerJob = startDirectoryContainerCandidateList(
+    if (!m_candidateProvider.directoryContainers) {
+        return;
+    }
+
+    m_containerNavigationListerJob = m_candidateProvider.directoryContainers(
         this, parentUrl,
         [this, direction, currentContainerUrl](
             std::vector<ContainerNavigationCandidate> candidates) {
@@ -191,7 +222,11 @@ void ImageNavigationService::finishContainerNavigation(
 
 void ImageNavigationService::openDirectoryContainer(const QUrl &containerUrl)
 {
-    m_containerNavigationListerJob = startDirectoryImageCandidateList(
+    if (!m_candidateProvider.directoryImages) {
+        return;
+    }
+
+    m_containerNavigationListerJob = m_candidateProvider.directoryImages(
         this, containerUrl,
         [this, containerUrl](std::vector<ImageNavigationCandidate> candidates) {
             finishDirectoryContainerNavigation(std::move(candidates), containerUrl);
@@ -228,7 +263,11 @@ void ImageNavigationService::openComicBookContainer(const QUrl &containerUrl)
         return;
     }
 
-    m_containerNavigationListJob = startArchiveImageCandidateList(
+    if (!m_candidateProvider.archiveImages) {
+        return;
+    }
+
+    m_containerNavigationListJob = m_candidateProvider.archiveImages(
         this, archiveRootUrl.value(),
         [this, containerUrl](std::vector<ImageNavigationCandidate> candidates) {
             if (candidates.empty()) {
@@ -302,7 +341,11 @@ void ImageNavigationService::updateFilePageNavigation(const QUrl &currentUrl)
         return;
     }
 
-    m_pageNavigationListerJob = startDirectoryImageCandidateList(
+    if (!m_candidateProvider.directoryImages) {
+        return;
+    }
+
+    m_pageNavigationListerJob = m_candidateProvider.directoryImages(
         this, parentUrl,
         [this, currentUrl](std::vector<ImageNavigationCandidate> candidates) {
             setPageNavigationUrls(imageNavigationCandidateUrls(candidates), currentUrl);
@@ -317,7 +360,11 @@ void ImageNavigationService::updateComicBookPageNavigation(
         return;
     }
 
-    m_pageNavigationListJob = startArchiveImageCandidateList(
+    if (!m_candidateProvider.archiveImages) {
+        return;
+    }
+
+    m_pageNavigationListJob = m_candidateProvider.archiveImages(
         this, archiveRootUrl,
         [this, currentUrl](std::vector<ImageNavigationCandidate> candidates) {
             setPageNavigationUrls(imageNavigationCandidateUrls(candidates), currentUrl);
