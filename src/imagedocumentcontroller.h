@@ -70,6 +70,16 @@ public:
 
 private:
     void dispatchEffect(ImageDocumentEffect effect);
+    void dispatchEffectPayload(const ClearImageEffect &);
+    void dispatchEffectPayload(const ResetZoomEffect &);
+    void dispatchEffectPayload(const UpdatePageNavigationEffect &);
+    void dispatchEffectPayload(const ScheduleAdjacentImagePredecodeEffect &);
+    void dispatchEffectPayload(const OpenUrlEffect &payload);
+    void dispatchEffectPayload(const ContainerImageSelectedEffect &payload);
+    void dispatchEffectPayload(const EmptyContainerSelectedEffect &payload);
+    void dispatchEffectPayload(const ContainerNavigationFailedEffect &payload);
+    void dispatchEffectPayload(const PrepareFailedContainerEffect &payload);
+    void dispatchEffectPayload(const AnimationFailedEffect &payload);
     void dispatchEffects(const ImageDocumentEffects &effects);
     void setSourceUrlForLoad(const QUrl &sourceUrl, const QUrl &containerNavigationUrl);
     void scheduleAdjacentImagePredecode();

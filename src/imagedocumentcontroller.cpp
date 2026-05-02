@@ -12,7 +12,6 @@
 
 #include <memory>
 #include <optional>
-#include <type_traits>
 #include <utility>
 #include <variant>
 
@@ -162,33 +161,52 @@ void ImageDocumentController::updateRenderContext()
 
 void ImageDocumentController::dispatchEffect(ImageDocumentEffect effect)
 {
-    std::visit(
-        [this](const auto &payload) {
-            using Event = std::decay_t<decltype(payload)>;
-            if constexpr (std::is_same_v<Event, ClearImageEffect>) {
-                clearImage();
-            } else if constexpr (std::is_same_v<Event, ResetZoomEffect>) {
-                resetZoom();
-            } else if constexpr (std::is_same_v<Event, UpdatePageNavigationEffect>) {
-                m_navigationController->updatePageNavigation();
-            } else if constexpr (std::is_same_v<Event, ScheduleAdjacentImagePredecodeEffect>) {
-                scheduleAdjacentImagePredecode();
-            } else if constexpr (std::is_same_v<Event, OpenUrlEffect>) {
-                setSourceUrl(payload.url);
-            } else if constexpr (std::is_same_v<Event, ContainerImageSelectedEffect>) {
-                setSourceUrlForLoad(payload.imageUrl, payload.containerUrl);
-            } else if constexpr (std::is_same_v<Event, EmptyContainerSelectedEffect>) {
-                m_openController->finishContainerNavigationWithEmptyContainer(payload.containerUrl);
-            } else if constexpr (std::is_same_v<Event, ContainerNavigationFailedEffect>) {
-                m_openController->finishContainerNavigationLoadWithError(
-                    payload.containerUrl, payload.errorString);
-            } else if constexpr (std::is_same_v<Event, PrepareFailedContainerEffect>) {
-                m_presentationController->prepareFailedContainer(payload.containerUrl);
-            } else if constexpr (std::is_same_v<Event, AnimationFailedEffect>) {
-                finishWithAnimationError(payload.errorString);
-            }
-        },
-        effect.payload);
+    std::visit([this](const auto &payload) { dispatchEffectPayload(payload); }, effect.payload);
+}
+
+void ImageDocumentController::dispatchEffectPayload(const ClearImageEffect &) { clearImage(); }
+
+void ImageDocumentController::dispatchEffectPayload(const ResetZoomEffect &) { resetZoom(); }
+
+void ImageDocumentController::dispatchEffectPayload(const UpdatePageNavigationEffect &)
+{
+    m_navigationController->updatePageNavigation();
+}
+
+void ImageDocumentController::dispatchEffectPayload(const ScheduleAdjacentImagePredecodeEffect &)
+{
+    scheduleAdjacentImagePredecode();
+}
+
+void ImageDocumentController::dispatchEffectPayload(const OpenUrlEffect &payload)
+{
+    setSourceUrl(payload.url);
+}
+
+void ImageDocumentController::dispatchEffectPayload(const ContainerImageSelectedEffect &payload)
+{
+    setSourceUrlForLoad(payload.imageUrl, payload.containerUrl);
+}
+
+void ImageDocumentController::dispatchEffectPayload(const EmptyContainerSelectedEffect &payload)
+{
+    m_openController->finishContainerNavigationWithEmptyContainer(payload.containerUrl);
+}
+
+void ImageDocumentController::dispatchEffectPayload(const ContainerNavigationFailedEffect &payload)
+{
+    m_openController->finishContainerNavigationLoadWithError(
+        payload.containerUrl, payload.errorString);
+}
+
+void ImageDocumentController::dispatchEffectPayload(const PrepareFailedContainerEffect &payload)
+{
+    m_presentationController->prepareFailedContainer(payload.containerUrl);
+}
+
+void ImageDocumentController::dispatchEffectPayload(const AnimationFailedEffect &payload)
+{
+    finishWithAnimationError(payload.errorString);
 }
 
 void ImageDocumentController::dispatchEffects(const ImageDocumentEffects &effects)
