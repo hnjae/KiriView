@@ -12,8 +12,8 @@
 #include "predecodecache.h"
 
 #include <memory>
-#include <type_traits>
 #include <utility>
+#include <variant>
 
 namespace {
 using KiriView::containerNavigationUrlForImage;
@@ -114,35 +114,52 @@ void ImageOpenController::finishPredecodedImageLoad(ImageLoadSession session, co
 void ImageOpenController::finishDecodedImageLoad(
     ImageLoadSession session, std::shared_ptr<DecodedImageResult> result)
 {
-    std::visit(
-        [this, &session, result](auto &decoded) {
-            using Result = std::decay_t<decltype(decoded)>;
-            if constexpr (std::is_same_v<Result, DecodedImageFailure>) {
-                finishLoadWithError(session, ImageLoadError::Generic, decoded.errorString);
-            } else if constexpr (std::is_same_v<Result, SvgDecodedImage>) {
-                finishSvgLoadSuccessfully(
-                    session, std::move(decoded.data), decoded.svgIntrinsicSize);
-            } else if constexpr (std::is_same_v<Result, StaticDecodedImage>) {
-                const bool predecodeCacheable
-                    = decodedImageResultIsPredecodeCacheable(*result, PredecodeCache::byteBudget());
-                finishLoadSuccessfully(session, decoded.image, predecodeCacheable);
-            } else if constexpr (std::is_same_v<Result, DecodedAnimationImage>) {
-                if (decoded.frames.empty()) {
-                    finishLoadWithError(session, ImageLoadError::Generic,
-                        imageViewText("Could not decode the selected image animation."));
-                    return;
-                }
-                finishLoadSuccessfully(session, decoded.frames.front().image, false);
-                m_presentationController.startDecodedAnimation(
-                    std::move(decoded.frames), decoded.loopCount);
-            } else if constexpr (std::is_same_v<Result, ReaderAnimationImage>) {
-                finishLoadSuccessfully(session, decoded.firstFrame, false);
-                m_presentationController.startAnimation(
-                    decoded.data, decoded.format, decoded.loopCount, decoded.firstFrameDelay);
-            }
-        },
-        *result);
+    auto handleDecoded = [this, &session, &result](auto &decoded) {
+        finishDecodedImageResult(session, decoded, *result);
+    };
+    std::visit(handleDecoded, *result);
     report(ImageDocumentEffect::scheduleAdjacentImagePredecode());
+}
+
+void ImageOpenController::finishDecodedImageResult(
+    ImageLoadSession &session, DecodedImageFailure &decoded, const DecodedImageResult &)
+{
+    finishLoadWithError(session, ImageLoadError::Generic, decoded.errorString);
+}
+
+void ImageOpenController::finishDecodedImageResult(
+    ImageLoadSession &session, SvgDecodedImage &decoded, const DecodedImageResult &)
+{
+    finishSvgLoadSuccessfully(session, std::move(decoded.data), decoded.svgIntrinsicSize);
+}
+
+void ImageOpenController::finishDecodedImageResult(
+    ImageLoadSession &session, StaticDecodedImage &decoded, const DecodedImageResult &result)
+{
+    const bool predecodeCacheable
+        = decodedImageResultIsPredecodeCacheable(result, PredecodeCache::byteBudget());
+    finishLoadSuccessfully(session, decoded.image, predecodeCacheable);
+}
+
+void ImageOpenController::finishDecodedImageResult(
+    ImageLoadSession &session, DecodedAnimationImage &decoded, const DecodedImageResult &)
+{
+    if (decoded.frames.empty()) {
+        finishLoadWithError(session, ImageLoadError::Generic,
+            imageViewText("Could not decode the selected image animation."));
+        return;
+    }
+
+    finishLoadSuccessfully(session, decoded.frames.front().image, false);
+    m_presentationController.startDecodedAnimation(std::move(decoded.frames), decoded.loopCount);
+}
+
+void ImageOpenController::finishDecodedImageResult(
+    ImageLoadSession &session, ReaderAnimationImage &decoded, const DecodedImageResult &)
+{
+    finishLoadSuccessfully(session, decoded.firstFrame, false);
+    m_presentationController.startAnimation(
+        decoded.data, decoded.format, decoded.loopCount, decoded.firstFrameDelay);
 }
 
 void ImageOpenController::finishLoadWithError(

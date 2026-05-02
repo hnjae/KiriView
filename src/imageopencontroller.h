@@ -53,6 +53,16 @@ private:
     void finishPredecodedImageLoad(ImageLoadSession session, const QImage &image);
     void finishDecodedImageLoad(
         ImageLoadSession session, std::shared_ptr<DecodedImageResult> result);
+    void finishDecodedImageResult(
+        ImageLoadSession &session, DecodedImageFailure &decoded, const DecodedImageResult &result);
+    void finishDecodedImageResult(
+        ImageLoadSession &session, SvgDecodedImage &decoded, const DecodedImageResult &result);
+    void finishDecodedImageResult(
+        ImageLoadSession &session, StaticDecodedImage &decoded, const DecodedImageResult &result);
+    void finishDecodedImageResult(ImageLoadSession &session, DecodedAnimationImage &decoded,
+        const DecodedImageResult &result);
+    void finishDecodedImageResult(
+        ImageLoadSession &session, ReaderAnimationImage &decoded, const DecodedImageResult &result);
     void finishLoadWithError(
         const ImageLoadSession &session, ImageLoadError error, const QString &errorString);
     void finishReplacementLoadWithError(const QString &errorString);
