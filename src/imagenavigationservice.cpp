@@ -13,6 +13,14 @@
 #include <utility>
 #include <vector>
 
+namespace {
+bool samePageNavigationState(
+    const KiriView::PageNavigationState &left, const KiriView::PageNavigationState &right)
+{
+    return left.urls == right.urls && left.currentIndex == right.currentIndex;
+}
+}
+
 namespace KiriView {
 ImageNavigationService::ImageNavigationService(QObject *parent)
     : QObject(parent)
@@ -51,12 +59,12 @@ void ImageNavigationService::setPageNavigationChangedCallback(
 
 int ImageNavigationService::currentPageNumber() const
 {
-    return m_currentPageIndex < 0 ? 0 : m_currentPageIndex + 1;
+    return m_pageNavigation.currentIndex < 0 ? 0 : m_pageNavigation.currentIndex + 1;
 }
 
 int ImageNavigationService::imageCount() const
 {
-    return static_cast<int>(m_pageNavigationUrls.size());
+    return static_cast<int>(m_pageNavigation.urls.size());
 }
 
 std::optional<QUrl> ImageNavigationService::urlAtPage(int pageNumber) const
@@ -66,11 +74,11 @@ std::optional<QUrl> ImageNavigationService::urlAtPage(int pageNumber) const
     }
 
     const int pageIndex = pageNumber - 1;
-    if (pageIndex == m_currentPageIndex) {
+    if (pageIndex == m_pageNavigation.currentIndex) {
         return std::nullopt;
     }
 
-    return m_pageNavigationUrls.at(static_cast<std::size_t>(pageIndex));
+    return m_pageNavigation.urls.at(static_cast<std::size_t>(pageIndex));
 }
 
 void ImageNavigationService::openAdjacentImage(
@@ -236,14 +244,16 @@ void ImageNavigationService::cancelPageNavigationUpdate() { m_pageNavigationList
 
 void ImageNavigationService::setPageNavigationUrls(std::vector<QUrl> urls, const QUrl &currentUrl)
 {
-    auto state = pageNavigationStateForUrls(std::move(urls), currentUrl);
+    setPageNavigationState(pageNavigationStateForUrls(std::move(urls), currentUrl));
+}
 
-    if (m_pageNavigationUrls == state.urls && m_currentPageIndex == state.currentIndex) {
+void ImageNavigationService::setPageNavigationState(PageNavigationState state)
+{
+    if (samePageNavigationState(m_pageNavigation, state)) {
         return;
     }
 
-    m_pageNavigationUrls = std::move(state.urls);
-    m_currentPageIndex = state.currentIndex;
+    m_pageNavigation = std::move(state);
     if (m_pageNavigationChanged) {
         m_pageNavigationChanged();
     }
@@ -265,19 +275,19 @@ bool ImageNavigationService::setKnownPageNavigationCurrentUrl(const QUrl &curren
         return false;
     }
 
-    const auto current = std::find_if(m_pageNavigationUrls.cbegin(), m_pageNavigationUrls.cend(),
+    const auto current = std::find_if(m_pageNavigation.urls.cbegin(), m_pageNavigation.urls.cend(),
         [&currentUrl](const QUrl &url) { return sameNormalizedUrl(url, currentUrl); });
-    if (current == m_pageNavigationUrls.cend()) {
+    if (current == m_pageNavigation.urls.cend()) {
         return false;
     }
 
     const int currentPageIndex
-        = static_cast<int>(std::distance(m_pageNavigationUrls.cbegin(), current));
-    if (m_currentPageIndex == currentPageIndex) {
+        = static_cast<int>(std::distance(m_pageNavigation.urls.cbegin(), current));
+    if (m_pageNavigation.currentIndex == currentPageIndex) {
         return true;
     }
 
-    m_currentPageIndex = currentPageIndex;
+    m_pageNavigation.currentIndex = currentPageIndex;
     if (m_pageNavigationChanged) {
         m_pageNavigationChanged();
     }
@@ -286,14 +296,6 @@ bool ImageNavigationService::setKnownPageNavigationCurrentUrl(const QUrl &curren
 
 void ImageNavigationService::clearPageNavigation()
 {
-    if (m_pageNavigationUrls.empty() && m_currentPageIndex == -1) {
-        return;
-    }
-
-    m_pageNavigationUrls.clear();
-    m_currentPageIndex = -1;
-    if (m_pageNavigationChanged) {
-        m_pageNavigationChanged();
-    }
+    setPageNavigationState(PageNavigationState {});
 }
 }

@@ -70,6 +70,7 @@ private:
         const QUrl &containerUrl, ImageCandidateRepositoryError error, const QString &errorString);
 
     void setPageNavigationUrls(std::vector<QUrl> urls, const QUrl &currentUrl);
+    void setPageNavigationState(PageNavigationState state);
     void setFallbackPageNavigationUrl(const QUrl &currentUrl);
     bool setKnownPageNavigationCurrentUrl(const QUrl &currentUrl);
 
@@ -82,8 +83,7 @@ private:
     ImageIoJob m_containerNavigationListerJob;
     ImageIoJob m_containerNavigationListJob;
     ImageIoJob m_pageNavigationListerJob;
-    std::vector<QUrl> m_pageNavigationUrls;
-    int m_currentPageIndex = -1;
+    PageNavigationState m_pageNavigation;
 };
 }
 
