@@ -23,6 +23,7 @@ fn main() {
             .depend("QtQuick")
             .qml_file("src/qml/Main.qml")
             .qml_file("src/qml/ImageActions.qml")
+            .qml_file("src/qml/ImageDocumentToolBar.qml")
             .qml_file("src/qml/ImageToolBar.qml")
             .qml_file("src/qml/ImagePageNavigation.qml")
             .qml_file("src/qml/ImageZoomControls.qml")

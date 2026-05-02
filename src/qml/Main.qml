@@ -122,19 +122,15 @@ Kirigami.ApplicationWindow {
             onOpenDialogRequested: fileDialog.open()
         }
 
-        header: ImageToolBar {
+        header: ImageDocumentToolBar {
             id: headerImageToolBar
 
             actions: imageActions
-            compact: true
             enabled: !root.fullscreen
             height: root.fullscreen ? 0 : implicitHeight
             imageDocument: page.imageDocument
             imageReady: page.imageReady
-            maximumManualZoomPercent: page.imageDocument.maximumManualZoomPercent
-            minimumManualZoomPercent: page.imageDocument.minimumManualZoomPercent
             visible: !root.fullscreen
-            zoomStepPercent: page.imageDocument.zoomStepPercent
         }
 
         onFullscreenPointerPositionChanged: {
@@ -182,7 +178,7 @@ Kirigami.ApplicationWindow {
             openAction: imageActions.openAction
         }
 
-        ImageToolBar {
+        ImageDocumentToolBar {
             id: fullscreenImageToolBar
 
             actions: imageActions
@@ -192,17 +188,13 @@ Kirigami.ApplicationWindow {
             anchors.rightMargin: Kirigami.Units.smallSpacing
             anchors.top: parent.top
             anchors.topMargin: Kirigami.Units.smallSpacing
-            compact: true
             enabled: visible
             floating: true
             height: implicitHeight
             imageDocument: page.imageDocument
             imageReady: page.imageReady
-            maximumManualZoomPercent: page.imageDocument.maximumManualZoomPercent
-            minimumManualZoomPercent: page.imageDocument.minimumManualZoomPercent
             visible: root.fullscreen && root.fullscreenToolBarRevealed
             z: 20
-            zoomStepPercent: page.imageDocument.zoomStepPercent
 
             onInteractionActiveChanged: {
                 if (!root.fullscreen) {
