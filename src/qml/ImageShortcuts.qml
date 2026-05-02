@@ -57,7 +57,20 @@ Item {
         return imageViewport.panBy(deltaX, deltaY);
     }
 
+    function panToBottomRight() {
+        return imageViewport.panToBottomRight();
+    }
+
+    function panToTopLeft() {
+        return imageViewport.panToTopLeft();
+    }
+
     function scanForward() {
+        if (!root.imagePannable) {
+            root.openNextImage();
+            return;
+        }
+
         if (root.imageViewport.scanForward()) {
             return;
         }
@@ -66,6 +79,11 @@ Item {
     }
 
     function scanBackward() {
+        if (!root.imagePannable) {
+            root.openPreviousImage();
+            return;
+        }
+
         if (root.imageViewport.scanBackward()) {
             return;
         }
@@ -92,12 +110,16 @@ Item {
         return imageViewport.zoomBy(deltaPercent, viewportX, viewportY);
     }
 
+    function zoomByAtCenter(deltaPercent) {
+        return root.zoomBy(deltaPercent, root.imageViewport.viewportWidth / 2, root.imageViewport.viewportHeight / 2);
+    }
+
     Shortcut {
         context: Qt.WindowShortcut
         enabled: root.imageReady && !root.helpDialogOpen
         sequence: "Ctrl+="
 
-        onActivated: root.zoomBy(root.zoomStepPercent, root.imageViewport.viewportWidth / 2, root.imageViewport.viewportHeight / 2)
+        onActivated: root.zoomByAtCenter(root.zoomStepPercent)
     }
 
     Shortcut {
@@ -105,7 +127,7 @@ Item {
         enabled: root.imageReady && !root.helpDialogOpen
         sequence: "Ctrl++"
 
-        onActivated: root.zoomBy(root.zoomStepPercent, root.imageViewport.viewportWidth / 2, root.imageViewport.viewportHeight / 2)
+        onActivated: root.zoomByAtCenter(root.zoomStepPercent)
     }
 
     Shortcut {
@@ -113,7 +135,31 @@ Item {
         enabled: root.imageReady && !root.helpDialogOpen
         sequence: "Ctrl+-"
 
-        onActivated: root.zoomBy(-root.zoomStepPercent, root.imageViewport.viewportWidth / 2, root.imageViewport.viewportHeight / 2)
+        onActivated: root.zoomByAtCenter(-root.zoomStepPercent)
+    }
+
+    Shortcut {
+        context: Qt.WindowShortcut
+        enabled: root.imageReady && !root.textInputFocused() && !root.helpDialogOpen
+        sequence: "="
+
+        onActivated: root.zoomByAtCenter(root.zoomStepPercent)
+    }
+
+    Shortcut {
+        context: Qt.WindowShortcut
+        enabled: root.imageReady && !root.textInputFocused() && !root.helpDialogOpen
+        sequence: "+"
+
+        onActivated: root.zoomByAtCenter(root.zoomStepPercent)
+    }
+
+    Shortcut {
+        context: Qt.WindowShortcut
+        enabled: root.imageReady && !root.textInputFocused() && !root.helpDialogOpen
+        sequence: "-"
+
+        onActivated: root.zoomByAtCenter(-root.zoomStepPercent)
     }
 
     Shortcut {
@@ -183,6 +229,22 @@ Item {
     Shortcut {
         context: Qt.WindowShortcut
         enabled: root.imagePannable && !root.textInputFocused() && !root.helpDialogOpen
+        sequence: "<"
+
+        onActivated: root.panToTopLeft()
+    }
+
+    Shortcut {
+        context: Qt.WindowShortcut
+        enabled: root.imagePannable && !root.textInputFocused() && !root.helpDialogOpen
+        sequence: ">"
+
+        onActivated: root.panToBottomRight()
+    }
+
+    Shortcut {
+        context: Qt.WindowShortcut
+        enabled: root.imageReady && !root.textInputFocused() && !root.helpDialogOpen
         sequence: "."
 
         onActivated: root.scanForward()
@@ -190,7 +252,7 @@ Item {
 
     Shortcut {
         context: Qt.WindowShortcut
-        enabled: root.imagePannable && !root.textInputFocused() && !root.helpDialogOpen
+        enabled: root.imageReady && !root.textInputFocused() && !root.helpDialogOpen
         sequence: ","
 
         onActivated: root.scanBackward()

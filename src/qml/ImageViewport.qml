@@ -61,6 +61,27 @@ Item {
         return moved;
     }
 
+    function panToBottomRight() {
+        if (!imagePannable) {
+            return false;
+        }
+
+        const nextContentPosition = imageView.finalScanContentPosition();
+        const moved = nextContentPosition.x !== imageFlickable.contentX || nextContentPosition.y !== imageFlickable.contentY;
+        setContentPosition(nextContentPosition);
+        return moved;
+    }
+
+    function panToTopLeft() {
+        if (!imagePannable) {
+            return false;
+        }
+
+        const moved = imageFlickable.contentX !== 0 || imageFlickable.contentY !== 0;
+        resetContentPositionToTopLeft();
+        return moved;
+    }
+
     function scanForward() {
         if (!imagePannable) {
             return false;
@@ -168,6 +189,7 @@ Item {
         acceptedButtons: Qt.LeftButton
         cursorShape: root.imagePannable ? (dragCursorActive ? Qt.ClosedHandCursor : Qt.OpenHandCursor) : Qt.ArrowCursor
         enabled: root.imageReady
+        preventStealing: zoomDragActive
 
         property bool dragCursorActive: imageFlickable.draggingHorizontally || imageFlickable.draggingVertically || zoomDragActive
         property real lastY: 0

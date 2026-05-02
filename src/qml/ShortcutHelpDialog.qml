@@ -41,11 +41,11 @@ Controls.Dialog {
                 }
                 ListElement {
                     description: "Zoom in"
-                    keys: "Ctrl+= / Ctrl++"
+                    keys: "= / + / Ctrl+= / Ctrl++"
                 }
                 ListElement {
                     description: "Zoom out"
-                    keys: "Ctrl+-"
+                    keys: "- / Ctrl+-"
                 }
                 ListElement {
                     description: "Fit image"
@@ -72,11 +72,15 @@ Controls.Dialog {
                     keys: "Drag / Arrow keys"
                 }
                 ListElement {
+                    description: "Jump to image pan boundary"
+                    keys: "< / >"
+                }
+                ListElement {
                     description: "Pan the zoomed image horizontally"
                     keys: "Shift+wheel"
                 }
                 ListElement {
-                    description: "Scan the zoomed image"
+                    description: "Scan image or go previous/next"
                     keys: ". / ,"
                 }
                 ListElement {
