@@ -17,6 +17,13 @@ Item {
     readonly property bool atFirstImage: imageReady && imageDocument.currentPageNumber === 1 && imageDocument.imageCount > 0
     readonly property bool atLastImage: imageReady && imageDocument.currentPageNumber > 0 && imageDocument.currentPageNumber === imageDocument.imageCount
     readonly property int keyboardPanDistance: 64
+    readonly property bool commandShortcutsEnabled: !root.textInputFocused() && !root.helpDialogOpen
+    readonly property bool helpShortcutsEnabled: !root.helpDialogOpen
+    readonly property bool readyShortcutsEnabled: root.imageReady && root.helpShortcutsEnabled
+    readonly property bool readyCommandShortcutsEnabled: root.imageReady && root.commandShortcutsEnabled
+    readonly property bool pageCommandShortcutsEnabled: readyCommandShortcutsEnabled && root.imageDocument.imageCount > 0
+    readonly property bool pannableCommandShortcutsEnabled: root.imagePannable && root.commandShortcutsEnabled
+    readonly property bool containerCommandShortcutsEnabled: root.imageDocument.containerNavigationAvailable && root.commandShortcutsEnabled
     readonly property int zoomStepPercent: imageDocument.zoomStepPercent
 
     signal imageBoundaryReached(string message)
@@ -114,241 +121,211 @@ Item {
         return root.zoomBy(deltaPercent, root.imageViewport.viewportWidth / 2, root.imageViewport.viewportHeight / 2);
     }
 
-    Shortcut {
-        context: Qt.WindowShortcut
-        enabled: root.imageReady && !root.helpDialogOpen
+    ImageShortcut {
+        enabled: root.readyShortcutsEnabled
         sequence: "Ctrl+="
 
         onActivated: root.zoomByAtCenter(root.zoomStepPercent)
     }
 
-    Shortcut {
-        context: Qt.WindowShortcut
-        enabled: root.imageReady && !root.helpDialogOpen
+    ImageShortcut {
+        enabled: root.readyShortcutsEnabled
         sequence: "Ctrl++"
 
         onActivated: root.zoomByAtCenter(root.zoomStepPercent)
     }
 
-    Shortcut {
-        context: Qt.WindowShortcut
-        enabled: root.imageReady && !root.helpDialogOpen
+    ImageShortcut {
+        enabled: root.readyShortcutsEnabled
         sequence: "Ctrl+-"
 
         onActivated: root.zoomByAtCenter(-root.zoomStepPercent)
     }
 
-    Shortcut {
-        context: Qt.WindowShortcut
-        enabled: root.imageReady && !root.textInputFocused() && !root.helpDialogOpen
+    ImageShortcut {
+        enabled: root.readyCommandShortcutsEnabled
         sequence: "="
 
         onActivated: root.zoomByAtCenter(root.zoomStepPercent)
     }
 
-    Shortcut {
-        context: Qt.WindowShortcut
-        enabled: root.imageReady && !root.textInputFocused() && !root.helpDialogOpen
+    ImageShortcut {
+        enabled: root.readyCommandShortcutsEnabled
         sequence: "+"
 
         onActivated: root.zoomByAtCenter(root.zoomStepPercent)
     }
 
-    Shortcut {
-        context: Qt.WindowShortcut
-        enabled: root.imageReady && !root.textInputFocused() && !root.helpDialogOpen
+    ImageShortcut {
+        enabled: root.readyCommandShortcutsEnabled
         sequence: "-"
 
         onActivated: root.zoomByAtCenter(-root.zoomStepPercent)
     }
 
-    Shortcut {
-        context: Qt.WindowShortcut
-        enabled: root.imageReady && !root.textInputFocused() && !root.helpDialogOpen
+    ImageShortcut {
+        enabled: root.readyCommandShortcutsEnabled
         sequence: "1"
 
         onActivated: root.imageDocument.resetZoom()
     }
 
-    Shortcut {
-        context: Qt.WindowShortcut
-        enabled: root.imageReady && !root.textInputFocused() && !root.helpDialogOpen
+    ImageShortcut {
+        enabled: root.readyCommandShortcutsEnabled
         sequence: "2"
 
         onActivated: root.imageDocument.setFitMode(KiriImageDocument.FitHeight)
     }
 
-    Shortcut {
-        context: Qt.WindowShortcut
-        enabled: root.imageReady && !root.textInputFocused() && !root.helpDialogOpen
+    ImageShortcut {
+        enabled: root.readyCommandShortcutsEnabled
         sequence: "3"
 
         onActivated: root.imageDocument.setFitMode(KiriImageDocument.FitWidth)
     }
 
-    Shortcut {
-        context: Qt.WindowShortcut
-        enabled: root.imageReady && !root.textInputFocused() && !root.helpDialogOpen
+    ImageShortcut {
+        enabled: root.readyCommandShortcutsEnabled
         sequence: "0"
 
         onActivated: root.imageDocument.zoomPercent = 100
     }
 
-    Shortcut {
-        context: Qt.WindowShortcut
-        enabled: root.imagePannable && !root.textInputFocused() && !root.helpDialogOpen
+    ImageShortcut {
+        enabled: root.pannableCommandShortcutsEnabled
         sequence: "Left"
 
         onActivated: root.panBy(-root.keyboardPanDistance, 0)
     }
 
-    Shortcut {
-        context: Qt.WindowShortcut
-        enabled: root.imagePannable && !root.textInputFocused() && !root.helpDialogOpen
+    ImageShortcut {
+        enabled: root.pannableCommandShortcutsEnabled
         sequence: "Right"
 
         onActivated: root.panBy(root.keyboardPanDistance, 0)
     }
 
-    Shortcut {
-        context: Qt.WindowShortcut
-        enabled: root.imagePannable && !root.textInputFocused() && !root.helpDialogOpen
+    ImageShortcut {
+        enabled: root.pannableCommandShortcutsEnabled
         sequence: "Up"
 
         onActivated: root.panBy(0, -root.keyboardPanDistance)
     }
 
-    Shortcut {
-        context: Qt.WindowShortcut
-        enabled: root.imagePannable && !root.textInputFocused() && !root.helpDialogOpen
+    ImageShortcut {
+        enabled: root.pannableCommandShortcutsEnabled
         sequence: "Down"
 
         onActivated: root.panBy(0, root.keyboardPanDistance)
     }
 
-    Shortcut {
-        context: Qt.WindowShortcut
-        enabled: root.imagePannable && !root.textInputFocused() && !root.helpDialogOpen
+    ImageShortcut {
+        enabled: root.pannableCommandShortcutsEnabled
         sequence: "<"
 
         onActivated: root.panToTopLeft()
     }
 
-    Shortcut {
-        context: Qt.WindowShortcut
-        enabled: root.imagePannable && !root.textInputFocused() && !root.helpDialogOpen
+    ImageShortcut {
+        enabled: root.pannableCommandShortcutsEnabled
         sequence: ">"
 
         onActivated: root.panToBottomRight()
     }
 
-    Shortcut {
-        context: Qt.WindowShortcut
-        enabled: root.imageReady && !root.textInputFocused() && !root.helpDialogOpen
+    ImageShortcut {
+        enabled: root.readyCommandShortcutsEnabled
         sequence: "."
 
         onActivated: root.scanForward()
     }
 
-    Shortcut {
-        context: Qt.WindowShortcut
-        enabled: root.imageReady && !root.textInputFocused() && !root.helpDialogOpen
+    ImageShortcut {
+        enabled: root.readyCommandShortcutsEnabled
         sequence: ","
 
         onActivated: root.scanBackward()
     }
 
-    Shortcut {
-        context: Qt.WindowShortcut
-        enabled: root.imageReady && !root.helpDialogOpen
+    ImageShortcut {
+        enabled: root.readyShortcutsEnabled
         sequence: StandardKey.MoveToPreviousPage
 
         onActivated: root.openPreviousImage()
     }
 
-    Shortcut {
-        context: Qt.WindowShortcut
-        enabled: root.imageReady && !root.helpDialogOpen
+    ImageShortcut {
+        enabled: root.readyShortcutsEnabled
         sequence: StandardKey.MoveToNextPage
 
         onActivated: root.openNextImage()
     }
 
-    Shortcut {
-        context: Qt.WindowShortcut
-        enabled: root.imageReady && root.imageDocument.imageCount > 0 && !root.textInputFocused() && !root.helpDialogOpen
+    ImageShortcut {
+        enabled: root.pageCommandShortcutsEnabled
         sequence: "Ctrl+Home"
 
         onActivated: root.openFirstImage()
     }
 
-    Shortcut {
-        context: Qt.WindowShortcut
-        enabled: root.imageReady && root.imageDocument.imageCount > 0 && !root.textInputFocused() && !root.helpDialogOpen
+    ImageShortcut {
+        enabled: root.pageCommandShortcutsEnabled
         sequence: "Home"
 
         onActivated: root.openFirstImage()
     }
 
-    Shortcut {
-        context: Qt.WindowShortcut
-        enabled: root.imageReady && root.imageDocument.imageCount > 0 && !root.textInputFocused() && !root.helpDialogOpen
+    ImageShortcut {
+        enabled: root.pageCommandShortcutsEnabled
         sequence: "Ctrl+End"
 
         onActivated: root.openLastImage()
     }
 
-    Shortcut {
-        context: Qt.WindowShortcut
-        enabled: root.imageReady && root.imageDocument.imageCount > 0 && !root.textInputFocused() && !root.helpDialogOpen
+    ImageShortcut {
+        enabled: root.pageCommandShortcutsEnabled
         sequence: "End"
 
         onActivated: root.openLastImage()
     }
 
-    Shortcut {
-        context: Qt.WindowShortcut
-        enabled: root.imageDocument.containerNavigationAvailable && !root.textInputFocused() && !root.helpDialogOpen
+    ImageShortcut {
+        enabled: root.containerCommandShortcutsEnabled
         sequence: "["
 
         onActivated: root.imageDocument.openPreviousContainer()
     }
 
-    Shortcut {
-        context: Qt.WindowShortcut
-        enabled: root.imageDocument.containerNavigationAvailable && !root.textInputFocused() && !root.helpDialogOpen
+    ImageShortcut {
+        enabled: root.containerCommandShortcutsEnabled
         sequence: "]"
 
         onActivated: root.imageDocument.openNextContainer()
     }
 
-    Shortcut {
-        context: Qt.WindowShortcut
-        enabled: !root.textInputFocused() && !root.helpDialogOpen
+    ImageShortcut {
+        enabled: root.commandShortcutsEnabled
         sequence: "F"
 
         onActivated: root.toggleFullScreenRequested()
     }
 
-    Shortcut {
-        context: Qt.WindowShortcut
-        enabled: !root.helpDialogOpen
+    ImageShortcut {
+        enabled: root.helpShortcutsEnabled
         sequence: "F11"
 
         onActivated: root.toggleFullScreenRequested()
     }
 
-    Shortcut {
-        context: Qt.WindowShortcut
-        enabled: !root.textInputFocused() && !root.helpDialogOpen
+    ImageShortcut {
+        enabled: root.commandShortcutsEnabled
         sequence: "?"
 
         onActivated: root.shortcutHelpRequested()
     }
 
-    Shortcut {
-        context: Qt.WindowShortcut
-        enabled: !root.helpDialogOpen
+    ImageShortcut {
+        enabled: root.helpShortcutsEnabled
         sequence: "F1"
 
         onActivated: root.shortcutHelpRequested()
