@@ -56,6 +56,9 @@ let
   cxxCompiler = pkgs.stdenv.cc.cc;
   cxxStandardLibraryVersion = lib.getVersion cxxCompiler;
   cxxTarget = pkgs.stdenv.hostPlatform.config;
+  cargoVendorDir = "${config.devenv.root}/.cargo-vendor/vendor";
+  cargoVendorSourceConfig = "source.vendored-sources.directory=\"${cargoVendorDir}\"";
+  cargoCratesIoReplaceConfig = "source.crates-io.replace-with=\"vendored-sources\"";
   kcoreaddonsDev = pkgs.kdePackages.kcoreaddons.dev or pkgs.kdePackages.kcoreaddons;
   appQmlRoot = "${config.devenv.root}/target/cxxqt/qml_modules";
   qtQmlRoot = "${config.devenv.root}/.devenv/profile/lib/qt-6/qml";
@@ -124,6 +127,66 @@ let
     ]) systemIncludeDirs
     ++ [ source ];
   }) cppSources;
+  cppSourcesShellArgs = lib.escapeShellArgs cppSources;
+  qmlLintImportArgs = lib.escapeShellArgs (
+    lib.concatMap (path: [
+      "-I"
+      path
+    ]) qmlImportPaths
+  );
+  refreshCxxqtIncludes = pkgs.writeShellApplication {
+    name = "refresh-cxxqt-includes";
+    runtimeInputs = with pkgs; [
+      coreutils
+      findutils
+    ];
+    text = ''
+      set -euo pipefail
+
+      repo_root=${lib.escapeShellArg config.devenv.root}
+      cxxqt_clangd_include="$repo_root/target/cxxqt/clangd/include"
+
+      mkdir -p "$cxxqt_clangd_include"
+      find "$cxxqt_clangd_include" -mindepth 1 -maxdepth 1 -type l -delete
+
+      link_generated_include_dir() {
+          local generated_include_dir="$1"
+          local generated_include
+
+          if [[ ! -d "$generated_include_dir" ]]; then
+              return
+          fi
+
+          while IFS= read -r -d "" generated_include; do
+              ln -sfn "$generated_include" "$cxxqt_clangd_include/''${generated_include##*/}"
+          done < <(find "$generated_include_dir" -mindepth 1 -maxdepth 1 -print0)
+      }
+
+      for generated_include_dir in \
+          "$repo_root"/target/rust-analyzer/debug/build/*/out/cxxqtbuild/include \
+          "$repo_root"/target/devenv/debug/build/*/out/cxxqtbuild/include \
+          "$repo_root"/target/devenv/release/build/*/out/cxxqtbuild/include \
+          "$repo_root"/target/release/build/*/out/cxxqtbuild/include \
+          "$repo_root"/target/debug/build/*/out/cxxqtbuild/include; do
+          link_generated_include_dir "$generated_include_dir"
+      done
+    '';
+  };
+  cppLintPrelude = ''
+    set -euo pipefail
+
+    cd ${lib.escapeShellArg config.devenv.root}
+    ${lib.getExe refreshCxxqtIncludes}
+
+    if [[ ! -f compile_commands.json ]]; then
+        echo "compile_commands.json was not found; enter the devenv shell to generate it" >&2
+        exit 1
+    fi
+  ''
+  + lib.optionalString (cppSources == [ ]) ''
+    echo "compile_commands.json does not contain any C++ sources" >&2
+    exit 1
+  '';
 in
 {
   # Cargo debug builds compile the C++ bridge sources without optimization,
@@ -136,7 +199,7 @@ in
   enterShell = ''
     export QMAKE=${lib.getExe' qmake "qmake6"}
 
-    "${config.devenv.root}/scripts/refresh-cxxqt-includes"
+    "${lib.getExe refreshCxxqtIncludes}"
   '';
 
   files."compile_commands.json".json = compileCommands;
@@ -163,6 +226,51 @@ in
     "no-cmake-calls" = true;
   };
 
+  scripts = {
+    "lint-clippy" = {
+      description = "Run Rust clippy with vendored dependencies";
+      exec = ''
+        set -euo pipefail
+
+        cd ${lib.escapeShellArg config.devenv.root}
+
+        if [[ ! -d ${lib.escapeShellArg cargoVendorDir} ]]; then
+            echo ".cargo-vendor/vendor was not found; run 'just lint' to vendor dependencies" >&2
+            exit 1
+        fi
+
+        cargo \
+            --config ${lib.escapeShellArg cargoVendorSourceConfig} \
+            --config ${lib.escapeShellArg cargoCratesIoReplaceConfig} \
+            --offline \
+            clippy --all-targets --all-features -- -D warnings
+      '';
+    };
+    "lint-qmllint" = {
+      description = "Run qmllint against QML sources";
+      exec = ''
+        set -euo pipefail
+
+        cd ${lib.escapeShellArg config.devenv.root}
+        ${lib.getExe' pkgs.kdePackages.qtdeclarative "qmllint"} ${qmlLintImportArgs} --ignore-settings --max-warnings 0 src/qml/*.qml
+      '';
+    };
+    "lint-clang-tidy" = {
+      description = "Run clang-tidy against C++ sources";
+      exec = ''
+        ${cppLintPrelude}
+        ${lib.getExe' pkgs.clang-tools "clang-tidy"} --quiet -p . ${cppSourcesShellArgs}
+      '';
+    };
+    "lint-clazy" = {
+      description = "Run clazy against C++ sources";
+      exec = ''
+        ${cppLintPrelude}
+        ${lib.getExe' pkgs.clazy "clazy-standalone"} --checks="''${CLAZY_CHECKS:-level0}" -p . ${cppSourcesShellArgs}
+      '';
+    };
+  };
+
   packages = with pkgs; [
     qmake
 
@@ -182,7 +290,6 @@ in
     kdePackages.qtimageformats
     kdePackages.qtsvg
     kdePackages.qttools
-    jq
     ninja
     pkg-config
   ];

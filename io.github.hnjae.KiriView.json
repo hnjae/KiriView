@@ -33,12 +33,7 @@
       ],
       "run-tests": true,
       "test-rule": "",
-      "test-commands": [
-        "cargo fmt --all --check",
-        "cargo --offline clippy --all-targets --all-features -- -D warnings",
-        "bash scripts/cpp-lint clang-tidy",
-        "cargo --offline test --all-targets --all-features"
-      ],
+      "test-commands": ["cargo --offline test --all-targets --all-features"],
       "sources": [
         "cargo-sources.json",
         {
