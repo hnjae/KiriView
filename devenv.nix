@@ -133,6 +133,13 @@ let
   }) cppSources;
 in
 {
+  # Cargo debug builds compile the C++ bridge sources without optimization,
+  # which makes glibc's fortify headers emit one warning per translation unit.
+  hardeningDisable = [
+    "fortify"
+    "fortify3"
+  ];
+
   enterShell = ''
     export QMAKE=${lib.getExe' qmake "qmake6"}
 
