@@ -43,6 +43,30 @@ std::optional<std::size_t> adjacentCandidateIndex(const std::vector<Candidate> &
     }
     return static_cast<std::size_t>(nextIndex);
 }
+
+template <typename Candidate> void sortNavigationCandidates(std::vector<Candidate> *candidates)
+{
+    QCollator collator(QLocale::system());
+    collator.setCaseSensitivity(Qt::CaseSensitive);
+    collator.setNumericMode(false);
+    collator.setIgnorePunctuation(false);
+
+    std::stable_sort(candidates->begin(), candidates->end(),
+        [&collator](const Candidate &left, const Candidate &right) {
+            const int nameComparison = collator.compare(left.name, right.name);
+            if (nameComparison != 0) {
+                return nameComparison < 0;
+            }
+
+            return left.url.toEncoded() < right.url.toEncoded();
+        });
+
+    const auto duplicateStart = std::unique(
+        candidates->begin(), candidates->end(), [](const Candidate &left, const Candidate &right) {
+            return left.url.matches(right.url, QUrl::NormalizePathSegments);
+        });
+    candidates->erase(duplicateStart, candidates->end());
+}
 }
 
 namespace KiriView {
@@ -138,26 +162,12 @@ PageNavigationState pageNavigationStateForUrls(std::vector<QUrl> urls, const QUr
 
 void sortImageNavigationCandidates(std::vector<ImageNavigationCandidate> *candidates)
 {
-    QCollator collator(QLocale::system());
-    collator.setCaseSensitivity(Qt::CaseSensitive);
-    collator.setNumericMode(false);
-    collator.setIgnorePunctuation(false);
+    sortNavigationCandidates(candidates);
+}
 
-    std::stable_sort(candidates->begin(), candidates->end(),
-        [&collator](const ImageNavigationCandidate &left, const ImageNavigationCandidate &right) {
-            const int nameComparison = collator.compare(left.name, right.name);
-            if (nameComparison != 0) {
-                return nameComparison < 0;
-            }
-
-            return left.url.toEncoded() < right.url.toEncoded();
-        });
-
-    const auto duplicateStart = std::unique(candidates->begin(), candidates->end(),
-        [](const ImageNavigationCandidate &left, const ImageNavigationCandidate &right) {
-            return left.url.matches(right.url, QUrl::NormalizePathSegments);
-        });
-    candidates->erase(duplicateStart, candidates->end());
+void sortContainerNavigationCandidates(std::vector<ContainerNavigationCandidate> *candidates)
+{
+    sortNavigationCandidates(candidates);
 }
 
 std::vector<ImageNavigationCandidate> imageNavigationCandidates(const KFileItemList &items)

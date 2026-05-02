@@ -4,13 +4,10 @@
 #include "imagecontainer.h"
 
 #include "imageformatregistry.h"
+#include "imagenavigationmodel.h"
 #include "imageurl.h"
 
-#include <QCollator>
 #include <QDir>
-#include <QLocale>
-#include <Qt>
-#include <algorithm>
 #include <cstddef>
 
 namespace {
@@ -54,32 +51,6 @@ QString archiveRelativeImageName(const QUrl &archiveRootUrl, const QUrl &imageUr
     return path.mid(rootPath.size());
 }
 
-void sortContainerNavigationCandidates(
-    std::vector<KiriView::ContainerNavigationCandidate> *candidates)
-{
-    QCollator collator(QLocale::system());
-    collator.setCaseSensitivity(Qt::CaseSensitive);
-    collator.setNumericMode(false);
-    collator.setIgnorePunctuation(false);
-
-    std::stable_sort(candidates->begin(), candidates->end(),
-        [&collator](const KiriView::ContainerNavigationCandidate &left,
-            const KiriView::ContainerNavigationCandidate &right) {
-            const int nameComparison = collator.compare(left.name, right.name);
-            if (nameComparison != 0) {
-                return nameComparison < 0;
-            }
-
-            return left.url.toEncoded() < right.url.toEncoded();
-        });
-
-    const auto duplicateStart = std::unique(candidates->begin(), candidates->end(),
-        [](const KiriView::ContainerNavigationCandidate &left,
-            const KiriView::ContainerNavigationCandidate &right) {
-            return left.url.matches(right.url, QUrl::NormalizePathSegments);
-        });
-    candidates->erase(duplicateStart, candidates->end());
-}
 }
 
 namespace KiriView {

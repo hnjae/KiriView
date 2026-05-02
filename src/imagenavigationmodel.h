@@ -24,6 +24,7 @@ std::optional<ContainerNavigationCandidate> adjacentContainerNavigationCandidate
     NavigationDirection direction);
 PageNavigationState pageNavigationStateForUrls(std::vector<QUrl> urls, const QUrl &currentUrl);
 void sortImageNavigationCandidates(std::vector<ImageNavigationCandidate> *candidates);
+void sortContainerNavigationCandidates(std::vector<ContainerNavigationCandidate> *candidates);
 std::vector<ImageNavigationCandidate> imageNavigationCandidates(const KFileItemList &items);
 }
 
