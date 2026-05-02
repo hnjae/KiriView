@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_IMAGEDOCUMENTCONTROLLER_H
 #define KIRIVIEW_IMAGEDOCUMENTCONTROLLER_H
 
+#include "imagedocumentstate.h"
 #include "imageloader.h"
 #include "imagezoomstate.h"
 
@@ -24,34 +25,6 @@ class DisplayedImageState;
 class ImageNavigationService;
 class ImagePredecodeCoordinator;
 enum class NavigationDirection : int;
-
-enum class ImageDocumentStatus {
-    Null,
-    Loading,
-    Ready,
-    Error,
-};
-
-enum class ImageDocumentChange {
-    SourceUrl,
-    Status,
-    Loading,
-    ErrorString,
-    WindowTitleFileName,
-    ImageSize,
-    ViewportSize,
-    DisplaySize,
-    ZoomPercent,
-    ZoomMode,
-    PageNavigation,
-    ContainerNavigation,
-    Repaint,
-};
-
-struct ImageDocumentRenderContext {
-    qreal devicePixelRatio = 1.0;
-    int maximumTextureSize = 0;
-};
 
 class ImageDocumentController final : public QObject
 {
@@ -145,20 +118,12 @@ private:
 
     RenderContextProvider m_renderContextProvider;
     ChangeCallback m_changeCallback;
-    QUrl m_sourceUrl;
-    QUrl m_displayedUrl;
-    QUrl m_displayedComicBookRootUrl;
-    ImageDocumentStatus m_status = ImageDocumentStatus::Null;
-    bool m_loading = false;
-    QString m_errorString;
-    QString m_windowTitleFileName;
+    ImageDocumentState m_state;
     ImageZoomState m_zoomState;
     std::unique_ptr<DisplayedImageState> m_displayedImageState;
     std::unique_ptr<ImageNavigationService> m_navigationService;
     std::unique_ptr<ImageLoader> m_imageLoader;
     std::unique_ptr<ImagePredecodeCoordinator> m_predecodeCoordinator;
-    QUrl m_containerNavigationUrl;
-    QUrl m_loadingContainerNavigationUrl;
 };
 }
 

@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_KIRIIMAGEVIEW_H
 #define KIRIVIEW_KIRIIMAGEVIEW_H
 
-#include "imagedocumentcontroller.h"
+#include "imagedocumenttypes.h"
 
 #include <QQuickItem>
 #include <QSize>
@@ -14,6 +14,10 @@
 #include <QUrl>
 #include <QtQml/qqmlregistration.h>
 #include <memory>
+
+namespace KiriView {
+class ImageDocumentController;
+}
 
 class KiriImageView : public QQuickItem
 {

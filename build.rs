@@ -32,6 +32,7 @@ fn main() {
     .cpp_file("src/asyncobjectslot.cpp")
     .cpp_file("src/displayedimagestate.cpp")
     .cpp_file("src/imagedocumentcontroller.cpp")
+    .cpp_file("src/imagedocumentstate.cpp")
     .cpp_file("src/imageformatregistry.cpp")
     .cpp_file("src/imageiojobs.cpp")
     .cpp_file("src/imageloader.cpp")

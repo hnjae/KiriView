@@ -36,6 +36,7 @@ ImageDocumentController::ImageDocumentController(
     : QObject(parent)
     , m_renderContextProvider(std::move(renderContextProvider))
     , m_changeCallback(std::move(changeCallback))
+    , m_state([this](ImageDocumentChange change) { notify(change); })
 {
     m_displayedImageState = std::make_unique<DisplayedImageState>(
         this,
@@ -98,20 +99,23 @@ ImageDocumentController::~ImageDocumentController()
     cancelLoad();
 }
 
-QUrl ImageDocumentController::sourceUrl() const { return m_sourceUrl; }
+QUrl ImageDocumentController::sourceUrl() const { return m_state.sourceUrl(); }
 
 void ImageDocumentController::setSourceUrl(const QUrl &sourceUrl)
 {
     setSourceUrlForLoad(sourceUrl, QUrl());
 }
 
-ImageDocumentStatus ImageDocumentController::status() const { return m_status; }
+ImageDocumentStatus ImageDocumentController::status() const { return m_state.status(); }
 
-bool ImageDocumentController::loading() const { return m_loading; }
+bool ImageDocumentController::loading() const { return m_state.loading(); }
 
-QString ImageDocumentController::errorString() const { return m_errorString; }
+QString ImageDocumentController::errorString() const { return m_state.errorString(); }
 
-QString ImageDocumentController::windowTitleFileName() const { return m_windowTitleFileName; }
+QString ImageDocumentController::windowTitleFileName() const
+{
+    return m_state.windowTitleFileName();
+}
 
 QSize ImageDocumentController::imageSize() const { return m_zoomState.imageSize(); }
 
@@ -152,7 +156,7 @@ int ImageDocumentController::imageCount() const { return m_navigationService->im
 
 bool ImageDocumentController::containerNavigationAvailable() const
 {
-    return !m_containerNavigationUrl.isEmpty();
+    return m_state.containerNavigationAvailable();
 }
 
 const QImage &ImageDocumentController::image() const { return m_displayedImageState->image(); }
@@ -216,8 +220,8 @@ void ImageDocumentController::updateRenderContext()
 void ImageDocumentController::setSourceUrlForLoad(
     const QUrl &sourceUrl, const QUrl &containerNavigationUrl)
 {
-    if (m_sourceUrl == sourceUrl) {
-        m_loadingContainerNavigationUrl = QUrl();
+    if (m_state.sourceUrl() == sourceUrl) {
+        m_state.clearLoadingContainerNavigationUrl();
         if (!containerNavigationUrl.isEmpty()) {
             setContainerNavigationUrl(containerNavigationUrl);
         }
@@ -226,9 +230,8 @@ void ImageDocumentController::setSourceUrlForLoad(
 
     cancelNavigation();
     cancelContainerNavigation();
-    m_loadingContainerNavigationUrl = containerNavigationUrl;
-    m_sourceUrl = sourceUrl;
-    notify(ImageDocumentChange::SourceUrl);
+    m_state.setLoadingContainerNavigationUrl(containerNavigationUrl);
+    m_state.setSourceUrl(sourceUrl);
     startLoad();
 }
 
@@ -238,17 +241,17 @@ void ImageDocumentController::startLoad()
     cancelPredecode();
     setErrorString(QString());
 
-    if (m_sourceUrl.isEmpty()) {
+    if (m_state.sourceUrl().isEmpty()) {
         clearImage();
         resetZoom();
         setLoading(false);
-        m_loadingContainerNavigationUrl = QUrl();
+        m_state.clearLoadingContainerNavigationUrl();
         setContainerNavigationUrl(QUrl());
         setStatus(ImageDocumentStatus::Null);
         return;
     }
 
-    if (!hasDisplayedImage() && m_loadingContainerNavigationUrl.isEmpty()) {
+    if (!hasDisplayedImage() && m_state.loadingContainerNavigationUrl().isEmpty()) {
         setContainerNavigationUrl(QUrl());
     }
 
@@ -261,26 +264,22 @@ void ImageDocumentController::startLoad()
         setStatus(ImageDocumentStatus::Ready);
     }
 
-    m_imageLoader->start(m_sourceUrl, m_displayedComicBookRootUrl, m_loadingContainerNavigationUrl);
+    m_imageLoader->start(m_state.sourceUrl(), m_state.displayedComicBookRootUrl(),
+        m_state.loadingContainerNavigationUrl());
 }
 
 void ImageDocumentController::cancelLoad() { m_imageLoader->cancel(); }
 
 void ImageDocumentController::setSourceUrlFromResolvedLoad(const QUrl &sourceUrl)
 {
-    if (m_sourceUrl == sourceUrl) {
-        return;
-    }
-
-    m_sourceUrl = sourceUrl;
-    notify(ImageDocumentChange::SourceUrl);
+    m_state.setSourceUrl(sourceUrl);
 }
 
 void ImageDocumentController::openAdjacentImage(NavigationDirection direction)
 {
     m_navigationService->openAdjacentImage(
         ImageNavigationService::DisplayContext {
-            hasDisplayedImage(), m_displayedUrl, m_displayedComicBookRootUrl },
+            hasDisplayedImage(), m_state.displayedUrl(), m_state.displayedComicBookRootUrl() },
         direction);
 }
 
@@ -288,7 +287,7 @@ void ImageDocumentController::cancelNavigation() { m_navigationService->cancelNa
 
 void ImageDocumentController::openAdjacentContainer(NavigationDirection direction)
 {
-    m_navigationService->openAdjacentContainer(m_containerNavigationUrl, direction);
+    m_navigationService->openAdjacentContainer(m_state.containerNavigationUrl(), direction);
 }
 
 void ImageDocumentController::cancelContainerNavigation()
@@ -312,7 +311,7 @@ void ImageDocumentController::finishContainerNavigationLoadWithError(
     const QUrl &containerUrl, const QString &errorString)
 {
     cancelLoad();
-    m_loadingContainerNavigationUrl = QUrl();
+    m_state.clearLoadingContainerNavigationUrl();
 
     clearImage();
     const ImageZoomSnapshot previous = m_zoomState.snapshot();
@@ -323,10 +322,7 @@ void ImageDocumentController::finishContainerNavigationLoadWithError(
     setLoading(false);
     setContainerNavigationUrl(containerUrl);
 
-    if (m_sourceUrl != containerUrl) {
-        m_sourceUrl = containerUrl;
-        notify(ImageDocumentChange::SourceUrl);
-    }
+    m_state.setSourceUrl(containerUrl);
 
     const QString message = errorString.isEmpty()
         ? imageViewText("Could not open the selected container.")
@@ -337,29 +333,24 @@ void ImageDocumentController::finishContainerNavigationLoadWithError(
 
 void ImageDocumentController::setContainerNavigationUrl(const QUrl &containerUrl)
 {
-    if (m_containerNavigationUrl == containerUrl) {
-        return;
-    }
-
-    m_containerNavigationUrl = containerUrl;
-    notify(ImageDocumentChange::ContainerNavigation);
+    m_state.setContainerNavigationUrl(containerUrl);
 }
 
 void ImageDocumentController::updateContainerNavigationFromDisplayedImage()
 {
-    if (!hasDisplayedImage() || m_displayedUrl.isEmpty()) {
+    if (!hasDisplayedImage() || m_state.displayedUrl().isEmpty()) {
         setContainerNavigationUrl(QUrl());
         return;
     }
 
-    setContainerNavigationUrl(
-        containerNavigationUrlForImage(m_displayedUrl, m_displayedComicBookRootUrl));
+    setContainerNavigationUrl(containerNavigationUrlForImage(
+        m_state.displayedUrl(), m_state.displayedComicBookRootUrl()));
 }
 
 void ImageDocumentController::updatePageNavigation()
 {
     m_navigationService->updatePageNavigation(ImageNavigationService::DisplayContext {
-        hasDisplayedImage(), m_displayedUrl, m_displayedComicBookRootUrl });
+        hasDisplayedImage(), m_state.displayedUrl(), m_state.displayedComicBookRootUrl() });
 }
 
 void ImageDocumentController::cancelPageNavigationUpdate()
@@ -371,14 +362,14 @@ void ImageDocumentController::clearPageNavigation() { m_navigationService->clear
 
 void ImageDocumentController::scheduleAdjacentImagePredecode()
 {
-    if (!hasDisplayedImage() || m_displayedUrl.isEmpty()) {
+    if (!hasDisplayedImage() || m_state.displayedUrl().isEmpty()) {
         cancelPredecode();
         return;
     }
 
-    m_predecodeCoordinator->schedule(
-        ImagePredecodeCoordinator::Context { m_displayedUrl, m_displayedComicBookRootUrl,
-            m_displayedImageState->isPredecodeCacheable(), m_displayedImageState->image() });
+    m_predecodeCoordinator->schedule(ImagePredecodeCoordinator::Context { m_state.displayedUrl(),
+        m_state.displayedComicBookRootUrl(), m_displayedImageState->isPredecodeCacheable(),
+        m_displayedImageState->image() });
 }
 
 void ImageDocumentController::cancelPredecode()
@@ -434,7 +425,7 @@ void ImageDocumentController::finishLoadWithError(
     const ImageLoadSession &session, ImageLoadError error, const QString &errorString)
 {
     const QUrl containerNavigationUrl = session.containerNavigationUrl;
-    m_loadingContainerNavigationUrl = QUrl();
+    m_state.clearLoadingContainerNavigationUrl();
 
     const QString message = error == ImageLoadError::EmptyComicBookArchive
         ? imageViewText("The selected comic book archive does not contain any supported images.")
@@ -450,9 +441,8 @@ void ImageDocumentController::finishLoadWithError(
         setErrorString(message);
         setStatus(ImageDocumentStatus::Ready);
 
-        if (!m_displayedUrl.isEmpty() && m_sourceUrl != m_displayedUrl) {
-            m_sourceUrl = m_displayedUrl;
-            notify(ImageDocumentChange::SourceUrl);
+        if (!m_state.displayedUrl().isEmpty()) {
+            m_state.setSourceUrl(m_state.displayedUrl());
         }
         updatePageNavigation();
         scheduleAdjacentImagePredecode();
@@ -520,15 +510,14 @@ void ImageDocumentController::prepareSuccessfulImageLoad(const ImageLoadSession 
 void ImageDocumentController::finishSuccessfulImageLoad(const ImageLoadSession &session)
 {
     setSourceUrlFromResolvedLoad(session.imageUrl);
-    m_displayedUrl = session.imageUrl;
-    m_displayedComicBookRootUrl = session.comicBookRootUrl;
+    m_state.setDisplayedImageUrls(session.imageUrl, session.comicBookRootUrl);
     updateWindowTitleFileName();
     if (!session.containerNavigationUrl.isEmpty()) {
         setContainerNavigationUrl(session.containerNavigationUrl);
     } else {
         updateContainerNavigationFromDisplayedImage();
     }
-    m_loadingContainerNavigationUrl = QUrl();
+    m_state.clearLoadingContainerNavigationUrl();
     setErrorString(QString());
     setLoading(false);
     setStatus(ImageDocumentStatus::Ready);
@@ -573,50 +562,24 @@ bool ImageDocumentController::updateDisplayedSvgRaster()
         m_zoomState.displaySize(), displayDevicePixelRatio(), maximumTextureSize());
 }
 
-void ImageDocumentController::setLoading(bool loading)
-{
-    if (m_loading == loading) {
-        return;
-    }
+void ImageDocumentController::setLoading(bool loading) { m_state.setLoading(loading); }
 
-    m_loading = loading;
-    notify(ImageDocumentChange::Loading);
-}
-
-void ImageDocumentController::setStatus(ImageDocumentStatus status)
-{
-    if (m_status == status) {
-        return;
-    }
-
-    m_status = status;
-    notify(ImageDocumentChange::Status);
-}
+void ImageDocumentController::setStatus(ImageDocumentStatus status) { m_state.setStatus(status); }
 
 void ImageDocumentController::setErrorString(const QString &errorString)
 {
-    if (m_errorString == errorString) {
-        return;
-    }
-
-    m_errorString = errorString;
-    notify(ImageDocumentChange::ErrorString);
+    m_state.setErrorString(errorString);
 }
 
 void ImageDocumentController::setWindowTitleFileName(const QString &fileName)
 {
-    if (m_windowTitleFileName == fileName) {
-        return;
-    }
-
-    m_windowTitleFileName = fileName;
-    notify(ImageDocumentChange::WindowTitleFileName);
+    m_state.setWindowTitleFileName(fileName);
 }
 
 void ImageDocumentController::updateWindowTitleFileName()
 {
-    setWindowTitleFileName(
-        windowTitleFileNameForDisplayedUrl(m_displayedUrl, m_displayedComicBookRootUrl));
+    setWindowTitleFileName(windowTitleFileNameForDisplayedUrl(
+        m_state.displayedUrl(), m_state.displayedComicBookRootUrl()));
 }
 
 void ImageDocumentController::setImageSize(const QSize &imageSize)
@@ -688,8 +651,7 @@ void ImageDocumentController::clearImage()
         m_predecodeCoordinator->clear();
     }
     cancelPageNavigationUpdate();
-    m_displayedUrl = QUrl();
-    m_displayedComicBookRootUrl = QUrl();
+    m_state.clearDisplayedImageUrls();
     m_zoomState.clearContainer();
     m_displayedImageState->clear();
     updateWindowTitleFileName();

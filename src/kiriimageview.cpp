@@ -3,6 +3,7 @@
 
 #include "kiriimageview.h"
 
+#include "imagedocumentcontroller.h"
 #include "imageformatregistry.h"
 #include "kiriimagedecoder.h"
 #include "kiriimagerendernode.h"
