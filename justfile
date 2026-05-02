@@ -59,6 +59,15 @@ lint: _cargo-vendor-sources
         --config 'source.crates-io.replace-with="vendored-sources"' \
         --offline \
         clippy --all-targets --all-features -- -D warnings
+    qml_import_paths="$(sed -n 's/^importPaths=//p' .qmlls.ini)"
+    old_ifs="$IFS"
+    IFS=:
+    set --
+    for qml_import_path in $qml_import_paths; do
+        set -- "$@" -I "$qml_import_path"
+    done
+    IFS="$old_ifs"
+    qmllint "$@" --ignore-settings --max-warnings 0 src/qml/*.qml
     scripts/cpp-lint clang-tidy
     scripts/cpp-lint clazy
 

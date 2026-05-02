@@ -173,9 +173,9 @@ void KiriImageView::setViewportSize(const QSizeF &viewportSize)
 
 QSizeF KiriImageView::displaySize() const { return m_zoomState.displaySize(); }
 
-qreal KiriImageView::zoomPercent() const { return m_zoomState.zoomPercent(); }
+double KiriImageView::zoomPercent() const { return m_zoomState.zoomPercent(); }
 
-void KiriImageView::setZoomPercent(qreal zoomPercent)
+void KiriImageView::setZoomPercent(double zoomPercent)
 {
     const KiriView::ImageZoomSnapshot previous = m_zoomState.snapshot();
     if (!m_zoomState.setManualZoomPercent(zoomPercent, displayDevicePixelRatio())) {

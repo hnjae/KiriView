@@ -17,6 +17,7 @@ fn main() {
 
     let mut builder = CxxQtBuilder::new_qml_module(
         QmlModule::new("io.github.hnjae.kiriview")
+            .depend("QtQuick")
             .qml_file("src/qml/Main.qml")
             .qml_file("src/qml/ImageToolBar.qml")
             .qml_file("src/qml/ImageViewport.qml")

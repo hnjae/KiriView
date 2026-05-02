@@ -57,9 +57,11 @@ let
   cxxStandardLibraryVersion = lib.getVersion cxxCompiler;
   cxxTarget = pkgs.stdenv.hostPlatform.config;
   kcoreaddonsDev = pkgs.kdePackages.kcoreaddons.dev or pkgs.kdePackages.kcoreaddons;
+  appQmlRoot = "${config.devenv.root}/target/cxxqt/qml_modules";
   qtQmlRoot = "${config.devenv.root}/.devenv/profile/lib/qt-6/qml";
   kirigamiQmlRoot = "${pkgs.kdePackages.kirigami.unwrapped}/lib/qt-6/qml";
   qmlImportPaths = [
+    appQmlRoot
     qtQmlRoot
     kirigamiQmlRoot
   ];

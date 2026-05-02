@@ -66,20 +66,25 @@ Controls.Dialog {
             }
 
             delegate: RowLayout {
+                id: shortcutRow
+
+                required property string description
+                required property string keys
+
                 Layout.fillWidth: true
                 spacing: Kirigami.Units.largeSpacing
 
                 Controls.Label {
                     Layout.preferredWidth: Kirigami.Units.gridUnit * 9
                     font.family: "monospace"
-                    text: keys
+                    text: shortcutRow.keys
                     textFormat: Text.PlainText
                     wrapMode: Text.Wrap
                 }
 
                 Controls.Label {
                     Layout.fillWidth: true
-                    text: description
+                    text: shortcutRow.description
                     textFormat: Text.PlainText
                     wrapMode: Text.Wrap
                 }
