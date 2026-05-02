@@ -8,7 +8,6 @@
 #include "imageloader.h"
 #include "imagezoomstate.h"
 
-#include <QByteArray>
 #include <QImage>
 #include <QObject>
 #include <QSize>
@@ -66,29 +65,13 @@ public:
 
 private:
     void setSourceUrlForLoad(const QUrl &sourceUrl, const QUrl &containerNavigationUrl);
-    void cancelLoad();
-    void cancelNavigation();
-    void cancelContainerNavigation();
-    void openImageFromContainerNavigation(const QUrl &imageUrl, const QUrl &containerUrl);
-    void setContainerNavigationUrl(const QUrl &containerUrl);
-    void updatePageNavigation();
-    void cancelPageNavigationUpdate();
-    void clearPageNavigation();
     void scheduleAdjacentImagePredecode();
     void cancelPredecode();
     std::optional<PredecodedImage> takePredecodedImage(const QUrl &url) const;
-    bool hasDisplayedImage() const;
-    void stopAnimation();
     void finishWithAnimationError(const QString &errorString);
-    void setLoading(bool loading);
-    void setStatus(ImageDocumentStatus status);
-    void setErrorString(const QString &errorString);
-    void setWindowTitleFileName(const QString &fileName);
-    void updateWindowTitleFileName();
     void notify(ImageDocumentChange change);
     void clearImage();
 
-    RenderContextProvider m_renderContextProvider;
     ChangeCallback m_changeCallback;
     ImageDocumentState m_state;
     std::unique_ptr<ImagePresentationController> m_presentationController;

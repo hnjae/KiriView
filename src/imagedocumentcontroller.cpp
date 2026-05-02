@@ -7,6 +7,7 @@
 #include "imageopencontroller.h"
 #include "imagepredecodecoordinator.h"
 #include "imagepresentationcontroller.h"
+#include "kiriimagenavigation.h"
 
 #include <QCoreApplication>
 #include <memory>
@@ -26,23 +27,24 @@ namespace KiriView {
 ImageDocumentController::ImageDocumentController(
     QObject *parent, RenderContextProvider renderContextProvider, ChangeCallback changeCallback)
     : QObject(parent)
-    , m_renderContextProvider(std::move(renderContextProvider))
     , m_changeCallback(std::move(changeCallback))
     , m_state([this](ImageDocumentChange change) { notify(change); })
 {
     m_presentationController = std::make_unique<ImagePresentationController>(
-        this, m_renderContextProvider, [this](ImageDocumentChange change) { notify(change); },
+        this, std::move(renderContextProvider),
+        [this](ImageDocumentChange change) { notify(change); },
         [this](const QString &errorString) { finishWithAnimationError(errorString); });
     m_openController = std::make_unique<ImageOpenController>(
         this, m_state, *m_presentationController,
         [this](const QUrl &url) { return takePredecodedImage(url); }, [this]() { clearImage(); },
-        [this]() { updatePageNavigation(); }, [this]() { scheduleAdjacentImagePredecode(); });
+        [this]() { m_navigationController->updatePageNavigation(); },
+        [this]() { scheduleAdjacentImagePredecode(); });
     m_navigationController = std::make_unique<ImageDocumentNavigationController>(
         this, m_state, *m_presentationController,
         [this](ImageDocumentChange change) { notify(change); },
         [this](const QUrl &url) { setSourceUrl(url); },
         [this](const QUrl &imageUrl, const QUrl &containerUrl) {
-            openImageFromContainerNavigation(imageUrl, containerUrl);
+            setSourceUrlForLoad(imageUrl, containerUrl);
         },
         [this](const QUrl &containerUrl) {
             m_openController->finishContainerNavigationWithEmptyContainer(containerUrl);
@@ -55,12 +57,12 @@ ImageDocumentController::ImageDocumentController(
 
 ImageDocumentController::~ImageDocumentController()
 {
-    stopAnimation();
+    m_presentationController->stopAnimation();
     cancelPredecode();
-    cancelPageNavigationUpdate();
-    cancelContainerNavigation();
-    cancelNavigation();
-    cancelLoad();
+    m_navigationController->cancelPageNavigationUpdate();
+    m_navigationController->cancelContainerNavigation();
+    m_navigationController->cancelNavigation();
+    m_openController->cancel();
 }
 
 QUrl ImageDocumentController::sourceUrl() const { return m_state.sourceUrl(); }
@@ -166,57 +168,22 @@ void ImageDocumentController::setSourceUrlForLoad(
     if (m_state.sourceUrl() == sourceUrl) {
         m_state.clearLoadingContainerNavigationUrl();
         if (!containerNavigationUrl.isEmpty()) {
-            setContainerNavigationUrl(containerNavigationUrl);
+            m_state.setContainerNavigationUrl(containerNavigationUrl);
         }
         return;
     }
 
-    cancelNavigation();
-    cancelContainerNavigation();
+    m_navigationController->cancelNavigation();
+    m_navigationController->cancelContainerNavigation();
     cancelPredecode();
     m_state.setLoadingContainerNavigationUrl(containerNavigationUrl);
     m_state.setSourceUrl(sourceUrl);
     m_openController->open();
 }
 
-void ImageDocumentController::cancelLoad() { m_openController->cancel(); }
-
-void ImageDocumentController::cancelNavigation() { m_navigationController->cancelNavigation(); }
-
-void ImageDocumentController::cancelContainerNavigation()
-{
-    m_navigationController->cancelContainerNavigation();
-}
-
-void ImageDocumentController::openImageFromContainerNavigation(
-    const QUrl &imageUrl, const QUrl &containerUrl)
-{
-    setSourceUrlForLoad(imageUrl, containerUrl);
-}
-
-void ImageDocumentController::setContainerNavigationUrl(const QUrl &containerUrl)
-{
-    m_state.setContainerNavigationUrl(containerUrl);
-}
-
-void ImageDocumentController::updatePageNavigation()
-{
-    m_navigationController->updatePageNavigation();
-}
-
-void ImageDocumentController::cancelPageNavigationUpdate()
-{
-    m_navigationController->cancelPageNavigationUpdate();
-}
-
-void ImageDocumentController::clearPageNavigation()
-{
-    m_navigationController->clearPageNavigation();
-}
-
 void ImageDocumentController::scheduleAdjacentImagePredecode()
 {
-    if (!hasDisplayedImage() || m_state.displayedUrl().isEmpty()) {
+    if (!m_presentationController->hasImage() || m_state.displayedUrl().isEmpty()) {
         cancelPredecode();
         return;
     }
@@ -245,45 +212,18 @@ std::optional<PredecodedImage> ImageDocumentController::takePredecodedImage(cons
     return PredecodedImage { image, comicBookRootUrl };
 }
 
-bool ImageDocumentController::hasDisplayedImage() const
-{
-    return m_presentationController->hasImage();
-}
-
-void ImageDocumentController::stopAnimation() { m_presentationController->stopAnimation(); }
-
 void ImageDocumentController::finishWithAnimationError(const QString &errorString)
 {
-    setLoading(false);
+    m_state.setLoading(false);
     clearImage();
     resetZoom();
-    setContainerNavigationUrl(QUrl());
-    clearPageNavigation();
+    m_state.setContainerNavigationUrl(QUrl());
+    m_navigationController->clearPageNavigation();
     const QString message = errorString.isEmpty()
         ? imageViewText("Could not decode the selected image animation.")
         : errorString;
-    setErrorString(message);
-    setStatus(ImageDocumentStatus::Error);
-}
-
-void ImageDocumentController::setLoading(bool loading) { m_state.setLoading(loading); }
-
-void ImageDocumentController::setStatus(ImageDocumentStatus status) { m_state.setStatus(status); }
-
-void ImageDocumentController::setErrorString(const QString &errorString)
-{
-    m_state.setErrorString(errorString);
-}
-
-void ImageDocumentController::setWindowTitleFileName(const QString &fileName)
-{
-    m_state.setWindowTitleFileName(fileName);
-}
-
-void ImageDocumentController::updateWindowTitleFileName()
-{
-    setWindowTitleFileName(windowTitleFileNameForDisplayedUrl(
-        m_state.displayedUrl(), m_state.displayedComicBookRootUrl()));
+    m_state.setErrorString(message);
+    m_state.setStatus(ImageDocumentStatus::Error);
 }
 
 void ImageDocumentController::notify(ImageDocumentChange change)
@@ -298,10 +238,11 @@ void ImageDocumentController::clearImage()
     if (m_predecodeCoordinator != nullptr) {
         m_predecodeCoordinator->clear();
     }
-    cancelPageNavigationUpdate();
+    m_navigationController->cancelPageNavigationUpdate();
     m_state.clearDisplayedImageUrls();
     m_presentationController->clearImage();
-    updateWindowTitleFileName();
-    clearPageNavigation();
+    m_state.setWindowTitleFileName(windowTitleFileNameForDisplayedUrl(
+        m_state.displayedUrl(), m_state.displayedComicBookRootUrl()));
+    m_navigationController->clearPageNavigation();
 }
 }
