@@ -7,6 +7,7 @@
 #include <QImage>
 #include <QUrl>
 #include <QtGlobal>
+#include <cstddef>
 #include <deque>
 #include <optional>
 #include <vector>
@@ -48,7 +49,14 @@ private:
         QImage image;
         qsizetype byteCost = 0;
     };
+    using CachedImageIterator = std::vector<PredecodedImage>::iterator;
+    using ConstCachedImageIterator = std::vector<PredecodedImage>::const_iterator;
 
+    static bool containsUrl(const std::vector<QUrl> &urls, const QUrl &url);
+    CachedImageIterator findCachedImage(const QUrl &normalizedUrl);
+    ConstCachedImageIterator findCachedImage(const QUrl &normalizedUrl) const;
+    void removeCachedImage(const QUrl &normalizedUrl);
+    std::size_t windowPriority(const QUrl &normalizedUrl) const;
     void trimImagesToWindow();
 
     std::vector<QUrl> m_windowUrls;
