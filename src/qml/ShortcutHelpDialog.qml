@@ -37,7 +37,7 @@ Controls.Dialog {
                 }
                 ListElement {
                     description: "First or last image in container"
-                    keys: "Ctrl+Home / Ctrl+End"
+                    keys: "Home / End / Ctrl+Home / Ctrl+End"
                 }
                 ListElement {
                     description: "Zoom in"

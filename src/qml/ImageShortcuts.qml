@@ -180,7 +180,23 @@ Item {
     Shortcut {
         context: Qt.WindowShortcut
         enabled: root.imageReady && root.imageDocument.imageCount > 0 && !root.textInputFocused() && !root.helpDialogOpen
+        sequence: "Home"
+
+        onActivated: root.openFirstImage()
+    }
+
+    Shortcut {
+        context: Qt.WindowShortcut
+        enabled: root.imageReady && root.imageDocument.imageCount > 0 && !root.textInputFocused() && !root.helpDialogOpen
         sequence: "Ctrl+End"
+
+        onActivated: root.openLastImage()
+    }
+
+    Shortcut {
+        context: Qt.WindowShortcut
+        enabled: root.imageReady && root.imageDocument.imageCount > 0 && !root.textInputFocused() && !root.helpDialogOpen
+        sequence: "End"
 
         onActivated: root.openLastImage()
     }
