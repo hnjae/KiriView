@@ -7,6 +7,8 @@
 #include "imageurl.h"
 
 #include <QString>
+#include <algorithm>
+#include <iterator>
 #include <optional>
 #include <utility>
 #include <vector>
@@ -217,7 +219,9 @@ void ImageNavigationService::updatePageNavigation(const DisplayContext &context)
         return;
     }
 
-    setFallbackPageNavigationUrl(candidateContext->currentUrl);
+    if (!setKnownPageNavigationCurrentUrl(candidateContext->currentUrl)) {
+        setFallbackPageNavigationUrl(candidateContext->currentUrl);
+    }
 
     m_pageNavigationListerJob = m_candidateRepository.loadImages(
         this, *candidateContext,
@@ -253,6 +257,33 @@ void ImageNavigationService::setFallbackPageNavigationUrl(const QUrl &currentUrl
     }
 
     setPageNavigationUrls({ currentUrl.adjusted(QUrl::NormalizePathSegments) }, currentUrl);
+}
+
+bool ImageNavigationService::setKnownPageNavigationCurrentUrl(const QUrl &currentUrl)
+{
+    if (!currentUrl.isValid() || currentUrl.isEmpty()) {
+        return false;
+    }
+
+    const auto current = std::find_if(
+        m_pageNavigationUrls.cbegin(), m_pageNavigationUrls.cend(), [&currentUrl](const QUrl &url) {
+            return url.matches(currentUrl, QUrl::NormalizePathSegments);
+        });
+    if (current == m_pageNavigationUrls.cend()) {
+        return false;
+    }
+
+    const int currentPageIndex
+        = static_cast<int>(std::distance(m_pageNavigationUrls.cbegin(), current));
+    if (m_currentPageIndex == currentPageIndex) {
+        return true;
+    }
+
+    m_currentPageIndex = currentPageIndex;
+    if (m_pageNavigationChanged) {
+        m_pageNavigationChanged();
+    }
+    return true;
 }
 
 void ImageNavigationService::clearPageNavigation()

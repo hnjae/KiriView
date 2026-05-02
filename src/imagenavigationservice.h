@@ -71,6 +71,7 @@ private:
 
     void setPageNavigationUrls(std::vector<QUrl> urls, const QUrl &currentUrl);
     void setFallbackPageNavigationUrl(const QUrl &currentUrl);
+    bool setKnownPageNavigationCurrentUrl(const QUrl &currentUrl);
 
     OpenUrlCallback m_openUrl;
     OpenContainerImageCallback m_openContainerImage;

@@ -113,6 +113,7 @@ class TestImageNavigationService : public QObject
 private Q_SLOTS:
     void directoryAdjacentImageUsesInjectedProvider();
     void comicBookAdjacentImageUsesInjectedProvider();
+    void pageNavigationKeepsKnownListWhileRefreshingCurrentImage();
     void directoryContainerNavigationOpensFirstImage();
     void emptyContainerReportsNavigationError();
     void invalidArchiveContainerReportsNavigationError();
@@ -162,6 +163,41 @@ void TestImageNavigationService::comicBookAdjacentImageUsesInjectedProvider()
         NavigationDirection::Next);
 
     QCOMPARE(openedUrl, nextUrl);
+}
+
+void TestImageNavigationService::pageNavigationKeepsKnownListWhileRefreshingCurrentImage()
+{
+    FakeCandidateProvider fakeProvider;
+    const QUrl parentUrl = localUrl(QStringLiteral("/images/"));
+    const QUrl firstUrl = localUrl(QStringLiteral("/images/01.png"));
+    const QUrl secondUrl = localUrl(QStringLiteral("/images/02.png"));
+    const QUrl thirdUrl = localUrl(QStringLiteral("/images/03.png"));
+    fakeProvider.directoryImagesByUrl[keyForUrl(parentUrl)] = {
+        imageCandidate(firstUrl),
+        imageCandidate(secondUrl),
+        imageCandidate(thirdUrl),
+    };
+
+    KiriView::ImageNavigationService service(nullptr, fakeProvider.provider());
+    std::vector<std::pair<int, int>> observedStates;
+    service.setPageNavigationChangedCallback([&service, &observedStates]() {
+        observedStates.push_back({ service.currentPageNumber(), service.imageCount() });
+    });
+
+    service.updatePageNavigation(
+        KiriView::ImageNavigationService::DisplayContext { true, firstUrl, QUrl() });
+    QCOMPARE(service.currentPageNumber(), 1);
+    QCOMPARE(service.imageCount(), 3);
+
+    observedStates.clear();
+    service.updatePageNavigation(
+        KiriView::ImageNavigationService::DisplayContext { true, secondUrl, QUrl() });
+
+    QCOMPARE(service.currentPageNumber(), 2);
+    QCOMPARE(service.imageCount(), 3);
+    QCOMPARE(static_cast<int>(observedStates.size()), 1);
+    QCOMPARE(observedStates.front().first, 2);
+    QCOMPARE(observedStates.front().second, 3);
 }
 
 void TestImageNavigationService::directoryContainerNavigationOpensFirstImage()
