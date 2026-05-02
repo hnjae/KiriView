@@ -64,6 +64,44 @@ public:
     void updateRenderContext();
 
 private:
+    enum class CommandType {
+        ClearImage,
+        UpdatePageNavigation,
+        ScheduleAdjacentImagePredecode,
+        OpenUrl,
+        OpenContainerImage,
+        FinishEmptyContainerNavigation,
+        FinishContainerNavigationError,
+    };
+
+    struct Command {
+        explicit Command(CommandType commandType)
+            : type(commandType)
+        {
+        }
+
+        Command(CommandType commandType, const QUrl &commandUrl)
+            : type(commandType)
+            , url(commandUrl)
+        {
+        }
+
+        Command(CommandType commandType, const QUrl &commandUrl, const QUrl &commandContainerUrl,
+            const QString &commandErrorString = {})
+            : type(commandType)
+            , url(commandUrl)
+            , containerUrl(commandContainerUrl)
+            , errorString(commandErrorString)
+        {
+        }
+
+        CommandType type = CommandType::ClearImage;
+        QUrl url;
+        QUrl containerUrl;
+        QString errorString;
+    };
+
+    void dispatch(Command command);
     void setSourceUrlForLoad(const QUrl &sourceUrl, const QUrl &containerNavigationUrl);
     void scheduleAdjacentImagePredecode();
     void cancelPredecode();

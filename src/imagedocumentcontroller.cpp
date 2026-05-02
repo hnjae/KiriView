@@ -36,21 +36,23 @@ ImageDocumentController::ImageDocumentController(
         [this](const QString &errorString) { finishWithAnimationError(errorString); });
     m_openController = std::make_unique<ImageOpenController>(
         this, m_state, *m_presentationController,
-        [this](const QUrl &url) { return takePredecodedImage(url); }, [this]() { clearImage(); },
-        [this]() { m_navigationController->updatePageNavigation(); },
-        [this]() { scheduleAdjacentImagePredecode(); });
+        [this](const QUrl &url) { return takePredecodedImage(url); },
+        [this]() { dispatch(Command(CommandType::ClearImage)); },
+        [this]() { dispatch(Command(CommandType::UpdatePageNavigation)); },
+        [this]() { dispatch(Command(CommandType::ScheduleAdjacentImagePredecode)); });
     m_navigationController = std::make_unique<ImageDocumentNavigationController>(
         this, m_state, *m_presentationController,
         [this](ImageDocumentChange change) { notify(change); },
-        [this](const QUrl &url) { setSourceUrl(url); },
+        [this](const QUrl &url) { dispatch(Command(CommandType::OpenUrl, url)); },
         [this](const QUrl &imageUrl, const QUrl &containerUrl) {
-            setSourceUrlForLoad(imageUrl, containerUrl);
+            dispatch(Command(CommandType::OpenContainerImage, imageUrl, containerUrl));
         },
         [this](const QUrl &containerUrl) {
-            m_openController->finishContainerNavigationWithEmptyContainer(containerUrl);
+            dispatch(Command(CommandType::FinishEmptyContainerNavigation, QUrl(), containerUrl));
         },
         [this](const QUrl &containerUrl, const QString &errorString) {
-            m_openController->finishContainerNavigationLoadWithError(containerUrl, errorString);
+            dispatch(Command(
+                CommandType::FinishContainerNavigationError, QUrl(), containerUrl, errorString));
         });
     m_predecodeCoordinator = std::make_unique<ImagePredecodeCoordinator>(this);
 }
@@ -160,6 +162,34 @@ void ImageDocumentController::setFitMode(ImageZoomMode zoomMode)
 void ImageDocumentController::updateRenderContext()
 {
     m_presentationController->updateRenderContext();
+}
+
+void ImageDocumentController::dispatch(Command command)
+{
+    switch (command.type) {
+    case CommandType::ClearImage:
+        clearImage();
+        return;
+    case CommandType::UpdatePageNavigation:
+        m_navigationController->updatePageNavigation();
+        return;
+    case CommandType::ScheduleAdjacentImagePredecode:
+        scheduleAdjacentImagePredecode();
+        return;
+    case CommandType::OpenUrl:
+        setSourceUrl(command.url);
+        return;
+    case CommandType::OpenContainerImage:
+        setSourceUrlForLoad(command.url, command.containerUrl);
+        return;
+    case CommandType::FinishEmptyContainerNavigation:
+        m_openController->finishContainerNavigationWithEmptyContainer(command.containerUrl);
+        return;
+    case CommandType::FinishContainerNavigationError:
+        m_openController->finishContainerNavigationLoadWithError(
+            command.containerUrl, command.errorString);
+        return;
+    }
 }
 
 void ImageDocumentController::setSourceUrlForLoad(
