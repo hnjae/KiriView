@@ -16,6 +16,12 @@ Controls.ToolBar {
     required property int maximumManualZoomPercent
     required property int zoomStepPercent
     required property var actions
+    property bool compact: false
+    property bool floating: false
+    readonly property int controlSpacing: compact ? Math.max(1, Math.round(Kirigami.Units.smallSpacing / 2)) : Kirigami.Units.smallSpacing
+    readonly property int edgeMargin: controlSpacing
+    readonly property bool interactionActive: toolbarHoverHandler.hovered || textInputFocused() || zoomControls.menuOpen
+    readonly property int toolbarVerticalPadding: controlSpacing
 
     function resetPageNumberText() {
         pageNavigation.resetPageNumberText();
@@ -25,16 +31,46 @@ Controls.ToolBar {
         return pageNavigation.textInputFocused() || zoomControls.textInputFocused();
     }
 
+    Component.onCompleted: {
+        if (floating) {
+            background = floatingBackgroundComponent.createObject(root);
+        }
+    }
+
+    HoverHandler {
+        id: toolbarHoverHandler
+
+        enabled: root.floating
+    }
+
+    Component {
+        id: floatingBackgroundComponent
+
+        Kirigami.ShadowedRectangle {
+            color: Kirigami.Theme.backgroundColor
+            opacity: 0.84
+            radius: Kirigami.Units.cornerRadius
+
+            border.color: Kirigami.ColorUtils.linearInterpolation(Kirigami.Theme.backgroundColor, Kirigami.Theme.textColor, Kirigami.Theme.frameContrast)
+            border.width: 1
+
+            shadow.color: Qt.rgba(0, 0, 0, 0.35)
+            shadow.size: Kirigami.Units.smallSpacing
+            shadow.xOffset: 0
+            shadow.yOffset: Math.max(1, Math.round(Kirigami.Units.smallSpacing / 2))
+        }
+    }
+
     contentItem: Item {
-        implicitHeight: Math.max(leftActions.implicitHeight, pageNavigation.implicitHeight, zoomControls.implicitHeight) + Kirigami.Units.smallSpacing * 2
+        implicitHeight: Math.max(leftActions.implicitHeight, pageNavigation.implicitHeight, zoomControls.implicitHeight) + root.toolbarVerticalPadding * 2
 
         RowLayout {
             id: leftActions
 
             anchors.left: parent.left
-            anchors.leftMargin: Kirigami.Units.smallSpacing
+            anchors.leftMargin: root.edgeMargin
             anchors.verticalCenter: parent.verticalCenter
-            spacing: Kirigami.Units.smallSpacing
+            spacing: root.controlSpacing
 
             Controls.ToolButton {
                 action: root.actions.openAction
@@ -67,6 +103,7 @@ Controls.ToolBar {
             anchors.centerIn: parent
 
             actions: root.actions
+            compact: root.compact
             imageDocument: root.imageDocument
             imageReady: root.imageReady
         }
@@ -75,10 +112,11 @@ Controls.ToolBar {
             id: zoomControls
 
             anchors.right: parent.right
-            anchors.rightMargin: Kirigami.Units.smallSpacing
+            anchors.rightMargin: root.edgeMargin
             anchors.verticalCenter: parent.verticalCenter
 
             actions: root.actions
+            compact: root.compact
             imageDocument: root.imageDocument
             imageReady: root.imageReady
             maximumManualZoomPercent: root.maximumManualZoomPercent

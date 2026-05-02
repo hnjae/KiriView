@@ -16,8 +16,11 @@ RowLayout {
     required property int maximumManualZoomPercent
     required property int zoomStepPercent
     required property var actions
+    property bool compact: false
+    readonly property int controlSpacing: compact ? Math.max(1, Math.round(Kirigami.Units.smallSpacing / 2)) : Kirigami.Units.smallSpacing
+    readonly property bool menuOpen: fitMenu.opened
 
-    spacing: Kirigami.Units.smallSpacing
+    spacing: controlSpacing
 
     function clampValue(value, minimum, maximum) {
         return Math.max(minimum, Math.min(maximum, value));

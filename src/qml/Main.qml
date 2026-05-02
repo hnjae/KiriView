@@ -15,6 +15,8 @@ Kirigami.ApplicationWindow {
     property bool helpDialogOpen: false
     property url initialSourceUrl
     property int visibilityBeforeFullscreen: Window.Windowed
+    readonly property bool fullscreen: visibility === Window.FullScreen
+    property bool fullscreenToolBarRevealed: false
 
     function restoredVisibility(visibility) {
         switch (visibility) {
@@ -37,10 +39,43 @@ Kirigami.ApplicationWindow {
         visibility = Window.FullScreen;
     }
 
+    function revealFullscreenToolBar() {
+        if (!fullscreen || helpDialogOpen) {
+            return;
+        }
+
+        fullscreenToolBarRevealed = true;
+        scheduleFullscreenToolBarHide();
+    }
+
+    function scheduleFullscreenToolBarHide() {
+        if (!fullscreen || !fullscreenToolBarRevealed) {
+            fullscreenToolBarHideTimer.stop();
+            return;
+        }
+
+        if (fullscreenImageToolBar.interactionActive) {
+            fullscreenToolBarHideTimer.stop();
+            return;
+        }
+
+        fullscreenToolBarHideTimer.restart();
+    }
+
     minimumWidth: Kirigami.Units.gridUnit * 28
     minimumHeight: Kirigami.Units.gridUnit * 20
     width: minimumWidth
     height: minimumHeight
+
+    onFullscreenChanged: {
+        if (fullscreen) {
+            revealFullscreenToolBar();
+            return;
+        }
+
+        fullscreenToolBarHideTimer.stop();
+        fullscreenToolBarRevealed = false;
+    }
 
     Shortcut {
         context: Qt.WindowShortcut
@@ -50,11 +85,25 @@ Kirigami.ApplicationWindow {
         onActivated: root.close()
     }
 
+    Timer {
+        id: fullscreenToolBarHideTimer
+
+        interval: 1000
+        repeat: false
+
+        onTriggered: {
+            if (root.fullscreen && !fullscreenImageToolBar.interactionActive) {
+                root.fullscreenToolBarRevealed = false;
+            }
+        }
+    }
+
     pageStack.initialPage: Kirigami.Page {
         id: page
 
         readonly property var imageDocument: imageViewport.imageDocument
         readonly property bool imageReady: imageDocument.status === KiriImageDocument.Ready
+        readonly property point fullscreenPointerPosition: fullscreenRevealHandler.point.position
 
         background: Rectangle {
             color: "#3c3c3c"
@@ -74,14 +123,36 @@ Kirigami.ApplicationWindow {
         }
 
         header: ImageToolBar {
-            id: imageToolBar
+            id: headerImageToolBar
 
             actions: imageActions
+            compact: true
+            enabled: !root.fullscreen
+            height: root.fullscreen ? 0 : implicitHeight
             imageDocument: page.imageDocument
             imageReady: page.imageReady
             maximumManualZoomPercent: page.imageDocument.maximumManualZoomPercent
             minimumManualZoomPercent: page.imageDocument.minimumManualZoomPercent
+            visible: !root.fullscreen
             zoomStepPercent: page.imageDocument.zoomStepPercent
+        }
+
+        onFullscreenPointerPositionChanged: {
+            if (root.fullscreen && fullscreenRevealHandler.hovered) {
+                root.revealFullscreenToolBar();
+            }
+        }
+
+        HoverHandler {
+            id: fullscreenRevealHandler
+
+            enabled: root.fullscreen && !root.helpDialogOpen
+
+            onHoveredChanged: {
+                if (hovered) {
+                    root.revealFullscreenToolBar();
+                }
+            }
         }
 
         ImageViewport {
@@ -94,7 +165,7 @@ Kirigami.ApplicationWindow {
         ImageShortcuts {
             helpDialogOpen: root.helpDialogOpen
             imageDocument: page.imageDocument
-            imageToolBar: imageToolBar
+            imageToolBar: root.fullscreen ? fullscreenImageToolBar : headerImageToolBar
             imageViewport: imageViewport
 
             onImageBoundaryReached: function (message) {
@@ -109,6 +180,42 @@ Kirigami.ApplicationWindow {
             imageDocument: page.imageDocument
             imageReady: page.imageReady
             openAction: imageActions.openAction
+        }
+
+        ImageToolBar {
+            id: fullscreenImageToolBar
+
+            actions: imageActions
+            anchors.left: parent.left
+            anchors.leftMargin: Kirigami.Units.smallSpacing
+            anchors.right: parent.right
+            anchors.rightMargin: Kirigami.Units.smallSpacing
+            anchors.top: parent.top
+            anchors.topMargin: Kirigami.Units.smallSpacing
+            compact: true
+            enabled: visible
+            floating: true
+            height: implicitHeight
+            imageDocument: page.imageDocument
+            imageReady: page.imageReady
+            maximumManualZoomPercent: page.imageDocument.maximumManualZoomPercent
+            minimumManualZoomPercent: page.imageDocument.minimumManualZoomPercent
+            visible: root.fullscreen && root.fullscreenToolBarRevealed
+            z: 20
+            zoomStepPercent: page.imageDocument.zoomStepPercent
+
+            onInteractionActiveChanged: {
+                if (!root.fullscreen) {
+                    return;
+                }
+
+                if (interactionActive) {
+                    root.revealFullscreenToolBar();
+                    return;
+                }
+
+                root.scheduleFullscreenToolBarHide();
+            }
         }
     }
 

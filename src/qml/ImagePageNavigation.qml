@@ -13,9 +13,11 @@ RowLayout {
     required property KiriImageDocument imageDocument
     required property bool imageReady
     required property var actions
+    property bool compact: false
+    readonly property int controlSpacing: compact ? Math.max(1, Math.round(Kirigami.Units.smallSpacing / 2)) : Kirigami.Units.smallSpacing
 
     enabled: imageReady
-    spacing: Kirigami.Units.smallSpacing
+    spacing: controlSpacing
 
     function pageNumberText() {
         return imageDocument.currentPageNumber > 0 ? imageDocument.currentPageNumber.toString() : "0";
@@ -40,7 +42,7 @@ RowLayout {
     Controls.TextField {
         id: pageNumberField
 
-        Layout.preferredWidth: Math.max(Kirigami.Units.gridUnit * 3, pageNumberMetrics.advanceWidth + leftPadding + rightPadding + Kirigami.Units.smallSpacing * 2)
+        Layout.preferredWidth: Math.max(Kirigami.Units.gridUnit * 3, pageNumberMetrics.advanceWidth + leftPadding + rightPadding + root.controlSpacing * 2)
         enabled: root.imageReady && root.imageDocument.imageCount > 0
         horizontalAlignment: Text.AlignHCenter
         inputMethodHints: Qt.ImhDigitsOnly
