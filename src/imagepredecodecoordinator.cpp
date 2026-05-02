@@ -3,15 +3,10 @@
 
 #include "imagepredecodecoordinator.h"
 
+#include "imageiojobs.h"
 #include "kiriimagedecoder.h"
 #include "kiriimagenavigation.h"
 
-#include <KCoreDirLister>
-#include <KIO/Job>
-#include <KIO/ListJob>
-#include <KIO/StoredTransferJob>
-#include <KIO/UDSEntry>
-#include <KJob>
 #include <QByteArray>
 #include <QMetaObject>
 #include <QPointer>
@@ -21,74 +16,16 @@
 #include <memory>
 #include <optional>
 #include <utility>
+#include <vector>
 
 namespace {
-using KiriView::appendArchiveImageNavigationCandidates;
 using KiriView::DecodedImageResult;
 using KiriView::decodedImageResultIsPredecodeCacheable;
 using KiriView::decodeImageData;
-using KiriView::ImageNavigationCandidate;
-using KiriView::imageNavigationCandidates;
 using KiriView::isUrlInsideArchiveRoot;
 using KiriView::navigationSourceUrl;
 using KiriView::normalizedImageUrl;
 using KiriView::predecodeWindowImageUrls;
-using KiriView::sortImageNavigationCandidates;
-
-KIO::ListJob::ListFlags recursiveImageListFlags()
-{
-    return KIO::ListJob::ListFlags(KIO::ListJob::ListFlag::IncludeHidden);
-}
-
-void cancelKJob(QObject *object)
-{
-    auto *job = qobject_cast<KJob *>(object);
-    if (job == nullptr) {
-        return;
-    }
-
-    job->kill(KJob::Quietly);
-}
-
-void cancelDirLister(QObject *object)
-{
-    auto *lister = qobject_cast<KCoreDirLister *>(object);
-    if (lister == nullptr) {
-        return;
-    }
-
-    lister->stop();
-    lister->deleteLater();
-}
-
-KCoreDirLister *createImageCandidateLister(QObject *parent)
-{
-    auto *lister = new KCoreDirLister(parent);
-    lister->setAutoErrorHandlingEnabled(false);
-    lister->setAutoUpdate(false);
-    lister->setDelayedMimeTypes(true);
-    lister->setShowHiddenFiles(true);
-    return lister;
-}
-
-std::vector<ImageNavigationCandidate> imageCandidatesFromLister(KCoreDirLister *lister)
-{
-    return imageNavigationCandidates(lister->items(KCoreDirLister::AllItems));
-}
-
-std::shared_ptr<std::vector<ImageNavigationCandidate>> collectArchiveImageCandidates(
-    KIO::ListJob *job, QObject *receiver, const QUrl &archiveRootUrl)
-{
-    auto candidates = std::make_shared<std::vector<ImageNavigationCandidate>>();
-    QObject::connect(job, &KIO::ListJob::entries, receiver,
-        [archiveRootUrl, candidates](KIO::Job *entriesJob, const KIO::UDSEntryList &entries) {
-            auto *listJob = qobject_cast<KIO::ListJob *>(entriesJob);
-            const QUrl directoryUrl = listJob == nullptr ? archiveRootUrl : listJob->url();
-            appendArchiveImageNavigationCandidates(
-                candidates.get(), entries, directoryUrl, archiveRootUrl);
-        });
-    return candidates;
-}
 }
 
 namespace KiriView {
@@ -123,37 +60,14 @@ void ImagePredecodeCoordinator::scheduleFileAdjacentImagePredecode(
         return;
     }
 
-    auto *lister = createImageCandidateLister(this);
-    const quint64 token = m_listerSlot.start(lister, cancelDirLister);
-
-    connect(lister, &KCoreDirLister::completed, this,
-        [this, lister, token, context, currentUrl, generation]() {
-            if (!m_listerSlot.claim(token, lister)) {
-                return;
-            }
-
-            const std::vector<ImageNavigationCandidate> candidates
-                = imageCandidatesFromLister(lister);
-            lister->deleteLater();
+    startDirectoryImageCandidateList(
+        this, &m_listerSlot, parentUrl,
+        [this, context, currentUrl, generation](std::vector<ImageNavigationCandidate> candidates) {
             startPredecodeImageLoads(
                 predecodeWindowImageUrls(candidates, currentUrl), QUrl(), context, generation);
-        });
-    connect(lister, &KCoreDirLister::jobError, this,
-        [this, lister, token, context, generation](KIO::Job *) {
-            if (!m_listerSlot.claim(token, lister)) {
-                return;
-            }
-
-            lister->deleteLater();
-            startPredecodeImageLoads({}, QUrl(), context, generation);
-        });
-
-    if (!lister->openUrl(parentUrl, KCoreDirLister::Reload)) {
-        if (m_listerSlot.claim(token, lister)) {
-            lister->deleteLater();
-            startPredecodeImageLoads({}, QUrl(), context, generation);
-        }
-    }
+        },
+        [this, context, generation](
+            const QString &) { startPredecodeImageLoads({}, QUrl(), context, generation); });
 }
 
 void ImagePredecodeCoordinator::scheduleComicBookAdjacentImagePredecode(
@@ -166,29 +80,16 @@ void ImagePredecodeCoordinator::scheduleComicBookAdjacentImagePredecode(
         return;
     }
 
-    auto *job
-        = KIO::listRecursive(archiveRootUrl, KIO::HideProgressInfo, recursiveImageListFlags());
-    auto candidates = collectArchiveImageCandidates(job, this, archiveRootUrl);
-    const quint64 token = m_listJobSlot.start(job, cancelKJob);
-
-    connect(job, &KJob::result, this,
-        [this, job, token, context, generation, currentUrl, archiveRootUrl, candidates](
-            KJob *finishedJob) {
-            if (!m_listJobSlot.claim(token, job)) {
-                return;
-            }
-
-            if (finishedJob->error() != KJob::NoError) {
-                startPredecodeImageLoads({}, archiveRootUrl, context, generation);
-                return;
-            }
-
-            sortImageNavigationCandidates(candidates.get());
-            startPredecodeImageLoads(predecodeWindowImageUrls(*candidates, currentUrl),
+    startArchiveImageCandidateList(
+        this, &m_listJobSlot, archiveRootUrl,
+        [this, context, generation, currentUrl, archiveRootUrl](
+            std::vector<ImageNavigationCandidate> candidates) {
+            startPredecodeImageLoads(predecodeWindowImageUrls(candidates, currentUrl),
                 archiveRootUrl, context, generation);
+        },
+        [this, context, generation, archiveRootUrl](const QString &) {
+            startPredecodeImageLoads({}, archiveRootUrl, context, generation);
         });
-
-    connect(job, &QObject::destroyed, this, [this, job]() { m_listJobSlot.clear(job); });
 }
 
 void ImagePredecodeCoordinator::startPredecodeImageLoads(const std::vector<QUrl> &urls,
@@ -229,38 +130,25 @@ void ImagePredecodeCoordinator::startPredecodeImageLoad(
         return;
     }
 
-    auto *job = KIO::storedGet(url, KIO::NoReload, KIO::HideProgressInfo);
     const QUrl normalizedUrl = normalizedImageUrl(url);
-    const quint64 token = m_imageLoadSlot.start(job, cancelKJob);
     m_activePredecodeUrl = normalizedUrl;
-
-    connect(job, &KJob::result, this,
-        [this, job, token, generation, url, comicBookRootUrl, normalizedUrl](KJob *finishedJob) {
-            if (!m_imageLoadSlot.claim(token, job) || generation != m_generation
-                || normalizedUrl != m_activePredecodeUrl) {
+    startStoredImageDataLoad(
+        this, &m_imageLoadSlot, url,
+        [this, generation, url, comicBookRootUrl, normalizedUrl](QByteArray data) {
+            if (generation != m_generation || normalizedUrl != m_activePredecodeUrl) {
                 return;
             }
 
-            if (finishedJob->error() != KJob::NoError) {
-                m_activePredecodeUrl = QUrl();
-                startNextPredecodeImageLoad(generation);
+            startPredecodeImageDecode(std::move(data), url, comicBookRootUrl, generation);
+        },
+        [this, generation, normalizedUrl](const QString &) {
+            if (generation != m_generation || normalizedUrl != m_activePredecodeUrl) {
                 return;
             }
 
-            startPredecodeImageDecode(job->data(), url, comicBookRootUrl, generation);
-        });
-
-    connect(job, &QObject::destroyed, this, [this, job, token, generation, normalizedUrl]() {
-        if (!m_imageLoadSlot.accepts(token, job)) {
-            return;
-        }
-
-        m_imageLoadSlot.clear(job);
-        if (generation == m_generation && normalizedUrl == m_activePredecodeUrl) {
             m_activePredecodeUrl = QUrl();
             startNextPredecodeImageLoad(generation);
-        }
-    });
+        });
 }
 
 void ImagePredecodeCoordinator::startPredecodeImageDecode(

@@ -3,14 +3,10 @@
 
 #include "imageloader.h"
 
+#include "imageiojobs.h"
 #include "kiriimagedecoder.h"
 #include "kiriimagenavigation.h"
 
-#include <KIO/Job>
-#include <KIO/ListJob>
-#include <KIO/StoredTransferJob>
-#include <KIO/UDSEntry>
-#include <KJob>
 #include <QByteArray>
 #include <QMetaObject>
 #include <QPointer>
@@ -18,47 +14,16 @@
 #include <QThreadPool>
 #include <Qt>
 #include <memory>
+#include <optional>
 #include <utility>
 #include <vector>
 
 namespace {
-using KiriView::appendArchiveImageNavigationCandidates;
 using KiriView::comicBookArchiveRootUrl;
 using KiriView::containingComicBookArchiveRootUrl;
 using KiriView::DecodedImageResult;
 using KiriView::decodeImageData;
-using KiriView::ImageNavigationCandidate;
 using KiriView::isUrlInsideArchiveRoot;
-using KiriView::sortImageNavigationCandidates;
-
-KIO::ListJob::ListFlags recursiveImageListFlags()
-{
-    return KIO::ListJob::ListFlags(KIO::ListJob::ListFlag::IncludeHidden);
-}
-
-void cancelKJob(QObject *object)
-{
-    auto *job = qobject_cast<KJob *>(object);
-    if (job == nullptr) {
-        return;
-    }
-
-    job->kill(KJob::Quietly);
-}
-
-std::shared_ptr<std::vector<ImageNavigationCandidate>> collectArchiveImageCandidates(
-    KIO::ListJob *job, QObject *receiver, const QUrl &archiveRootUrl)
-{
-    auto candidates = std::make_shared<std::vector<ImageNavigationCandidate>>();
-    QObject::connect(job, &KIO::ListJob::entries, receiver,
-        [archiveRootUrl, candidates](KIO::Job *entriesJob, const KIO::UDSEntryList &entries) {
-            auto *listJob = qobject_cast<KIO::ListJob *>(entriesJob);
-            const QUrl directoryUrl = listJob == nullptr ? archiveRootUrl : listJob->url();
-            appendArchiveImageNavigationCandidates(
-                candidates.get(), entries, directoryUrl, archiveRootUrl);
-        });
-    return candidates;
-}
 }
 
 namespace KiriView {
@@ -129,23 +94,22 @@ void ImageLoader::start(const QUrl &sourceUrl, const QUrl &displayedComicBookRoo
 
 void ImageLoader::startImageLoad(ImageLoadSession session)
 {
-    auto *job = KIO::storedGet(session.imageUrl, KIO::NoReload, KIO::HideProgressInfo);
-    const quint64 token = m_imageLoadSlot.start(job, cancelKJob);
+    startStoredImageDataLoad(
+        this, &m_imageLoadSlot, session.imageUrl,
+        [this, session](QByteArray data) {
+            if (!isCurrentLoadSession(session)) {
+                return;
+            }
 
-    connect(job, &KJob::result, this, [this, job, token, session](KJob *finishedJob) {
-        if (!m_imageLoadSlot.claim(token, job) || !isCurrentLoadSession(session)) {
-            return;
-        }
+            startImageDecode(std::move(data), session);
+        },
+        [this, session](const QString &errorString) {
+            if (!isCurrentLoadSession(session)) {
+                return;
+            }
 
-        if (finishedJob->error() != KJob::NoError) {
-            finishLoadWithError(session, ImageLoadError::Generic, finishedJob->errorString());
-            return;
-        }
-
-        startImageDecode(job->data(), session);
-    });
-
-    connect(job, &QObject::destroyed, this, [this, job]() { m_imageLoadSlot.clear(job); });
+            finishLoadWithError(session, ImageLoadError::Generic, errorString);
+        });
 }
 
 void ImageLoader::startImageDecode(QByteArray data, ImageLoadSession session)
@@ -179,37 +143,32 @@ void ImageLoader::startImageDecode(QByteArray data, ImageLoadSession session)
 
 void ImageLoader::startComicBookLoad(ImageLoadSession session)
 {
-    auto *job = KIO::listRecursive(
-        session.comicBookRootUrl, KIO::HideProgressInfo, recursiveImageListFlags());
-    auto candidates = collectArchiveImageCandidates(job, this, session.comicBookRootUrl);
-    const quint64 token = m_archiveListSlot.start(job, cancelKJob);
-
-    connect(job, &KJob::result, this,
-        [this, job, token, session, candidates](KJob *finishedJob) mutable {
-            if (!m_archiveListSlot.claim(token, job) || !isCurrentLoadSession(session)) {
+    startArchiveImageCandidateList(
+        this, &m_archiveListSlot, session.comicBookRootUrl,
+        [this, session](std::vector<ImageNavigationCandidate> candidates) mutable {
+            if (!isCurrentLoadSession(session)) {
                 return;
             }
 
-            if (finishedJob->error() != KJob::NoError) {
-                finishLoadWithError(session, ImageLoadError::Generic, finishedJob->errorString());
-                return;
-            }
-
-            sortImageNavigationCandidates(candidates.get());
-            if (candidates->empty()) {
+            if (candidates.empty()) {
                 finishLoadWithError(session, ImageLoadError::EmptyComicBookArchive, QString());
                 return;
             }
 
-            session.imageUrl = candidates->front().url;
+            session.imageUrl = candidates.front().url;
             m_loadSession = session;
             if (m_sourceResolved) {
                 m_sourceResolved(session.imageUrl);
             }
             startImageLoad(session);
-        });
+        },
+        [this, session](const QString &errorString) {
+            if (!isCurrentLoadSession(session)) {
+                return;
+            }
 
-    connect(job, &QObject::destroyed, this, [this, job]() { m_archiveListSlot.clear(job); });
+            finishLoadWithError(session, ImageLoadError::Generic, errorString);
+        });
 }
 
 void ImageLoader::cancel()

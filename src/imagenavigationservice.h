@@ -14,8 +14,6 @@
 #include <optional>
 #include <vector>
 
-class KCoreDirLister;
-
 namespace KiriView {
 enum class ContainerNavigationError {
     Generic,
@@ -60,17 +58,15 @@ public:
 
 private:
     void openAdjacentComicBookImage(const DisplayContext &context, NavigationDirection direction);
-    void finishNavigation(KCoreDirLister *lister, quint64 generation, NavigationDirection direction,
-        const QUrl &currentUrl);
-    void finishNavigationWithError(KCoreDirLister *lister, quint64 generation);
+    void finishNavigation(std::vector<ImageNavigationCandidate> candidates,
+        NavigationDirection direction, const QUrl &currentUrl);
 
-    void finishContainerNavigation(KCoreDirLister *lister, quint64 generation,
+    void finishContainerNavigation(std::vector<ContainerNavigationCandidate> candidates,
         NavigationDirection direction, const QUrl &currentContainerUrl);
-    void finishContainerNavigationWithError(KCoreDirLister *lister, quint64 generation);
     void openDirectoryContainer(const QUrl &containerUrl);
     void finishDirectoryContainerNavigation(
-        KCoreDirLister *lister, quint64 generation, const QUrl &containerUrl);
-    void finishDirectoryContainerNavigationWithError(KCoreDirLister *lister, quint64 generation,
+        std::vector<ImageNavigationCandidate> candidates, const QUrl &containerUrl);
+    void finishDirectoryContainerNavigationWithError(
         const QUrl &containerUrl, const QString &errorString);
     void openComicBookContainer(const QUrl &containerUrl);
     void openImageFromContainerNavigation(const QUrl &imageUrl, const QUrl &containerUrl);
@@ -80,7 +76,6 @@ private:
 
     void updateFilePageNavigation(const QUrl &currentUrl);
     void updateComicBookPageNavigation(const QUrl &currentUrl, const QUrl &archiveRootUrl);
-    void finishPageNavigationUpdateWithError(KCoreDirLister *lister, quint64 generation);
     void setPageNavigationUrls(std::vector<QUrl> urls, const QUrl &currentUrl);
     void setFallbackPageNavigationUrl(const QUrl &currentUrl);
 

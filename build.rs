@@ -31,6 +31,7 @@ fn main() {
     .file("src/avifcompat.rs")
     .cpp_file("src/asyncobjectslot.cpp")
     .cpp_file("src/imageformatregistry.cpp")
+    .cpp_file("src/imageiojobs.cpp")
     .cpp_file("src/imageloader.cpp")
     .cpp_file("src/imagepredecodecoordinator.cpp")
     .cpp_file("src/imagezoomstate.cpp")
