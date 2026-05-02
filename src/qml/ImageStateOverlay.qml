@@ -21,8 +21,8 @@ Item {
     }
 
     Rectangle {
+        anchors.left: parent.left
         anchors.margins: Kirigami.Units.largeSpacing
-        anchors.right: parent.right
         anchors.top: parent.top
         color: Qt.rgba(0, 0, 0, 0.55)
         height: Kirigami.Units.gridUnit * 2
