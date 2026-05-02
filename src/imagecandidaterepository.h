@@ -70,6 +70,10 @@ public:
         CandidateRepositoryErrorCallback errorCallback) const;
 
 private:
+    ImageIoJob loadImagesInContainer(QObject *receiver,
+        const ContainerNavigationCandidate &container, ImageCandidatesCallback callback,
+        CandidateRepositoryErrorCallback errorCallback) const;
+
     ImageNavigationCandidateProvider m_provider;
 };
 }

@@ -10,6 +10,36 @@
 #include <utility>
 #include <vector>
 
+namespace {
+void reportCandidateRepositoryError(const QUrl &containerUrl,
+    KiriView::ImageCandidateRepositoryError error, const QString &errorString,
+    const KiriView::CandidateRepositoryErrorCallback &errorCallback)
+{
+    if (errorCallback) {
+        errorCallback(containerUrl, error, errorString);
+    }
+}
+
+struct FirstContainerImageSelector {
+    QUrl containerUrl;
+    KiriView::ContainerImageCallback imageCallback;
+    KiriView::CandidateRepositoryErrorCallback errorCallback;
+
+    void operator()(std::vector<KiriView::ImageNavigationCandidate> candidates)
+    {
+        if (candidates.empty()) {
+            reportCandidateRepositoryError(containerUrl,
+                KiriView::ImageCandidateRepositoryError::EmptyContainer, QString(), errorCallback);
+            return;
+        }
+
+        if (imageCallback) {
+            imageCallback(candidates.front().url, containerUrl);
+        }
+    }
+};
+}
+
 namespace KiriView {
 ImageNavigationCandidateProvider defaultImageNavigationCandidateProvider()
 {
@@ -125,60 +155,39 @@ ImageIoJob ImageCandidateRepository::loadFirstImageInContainer(QObject *receiver
     const ContainerNavigationCandidate &container, ContainerImageCallback callback,
     CandidateRepositoryErrorCallback errorCallback) const
 {
+    CandidateRepositoryErrorCallback sharedErrorCallback = std::move(errorCallback);
+    ImageCandidatesCallback firstImageCallback = FirstContainerImageSelector {
+        container.url,
+        std::move(callback),
+        sharedErrorCallback,
+    };
+    return loadImagesInContainer(
+        receiver, container, std::move(firstImageCallback), std::move(sharedErrorCallback));
+}
+
+ImageIoJob ImageCandidateRepository::loadImagesInContainer(QObject *receiver,
+    const ContainerNavigationCandidate &container, ImageCandidatesCallback callback,
+    CandidateRepositoryErrorCallback errorCallback) const
+{
     if (container.type == ContainerNavigationCandidateType::ComicBookArchive) {
         const std::optional<QUrl> archiveRootUrl = comicBookArchiveRootUrl(container.url);
         if (!archiveRootUrl.has_value()) {
-            if (errorCallback) {
-                errorCallback(container.url, ImageCandidateRepositoryError::InvalidComicBookArchive,
-                    QString());
-            }
+            reportCandidateRepositoryError(container.url,
+                ImageCandidateRepositoryError::InvalidComicBookArchive, QString(), errorCallback);
             return ImageIoJob();
         }
 
-        return loadArchiveImages(
-            receiver, archiveRootUrl.value(),
-            [containerUrl = container.url, callback = std::move(callback), errorCallback](
-                std::vector<ImageNavigationCandidate> candidates) mutable {
-                if (candidates.empty()) {
-                    if (errorCallback) {
-                        errorCallback(
-                            containerUrl, ImageCandidateRepositoryError::EmptyContainer, QString());
-                    }
-                    return;
-                }
-
-                if (callback) {
-                    callback(candidates.front().url, containerUrl);
-                }
-            },
+        return loadArchiveImages(receiver, archiveRootUrl.value(), std::move(callback),
             [containerUrl = container.url, errorCallback](const QString &errorString) {
-                if (errorCallback) {
-                    errorCallback(
-                        containerUrl, ImageCandidateRepositoryError::Generic, errorString);
-                }
+                reportCandidateRepositoryError(containerUrl, ImageCandidateRepositoryError::Generic,
+                    errorString, errorCallback);
             });
     }
 
-    return loadDirectoryImages(
-        receiver, container.url,
-        [containerUrl = container.url, callback = std::move(callback), errorCallback](
-            std::vector<ImageNavigationCandidate> candidates) mutable {
-            if (candidates.empty()) {
-                if (errorCallback) {
-                    errorCallback(
-                        containerUrl, ImageCandidateRepositoryError::EmptyContainer, QString());
-                }
-                return;
-            }
-
-            if (callback) {
-                callback(candidates.front().url, containerUrl);
-            }
-        },
+    return loadDirectoryImages(receiver, container.url, std::move(callback),
         [containerUrl = container.url, errorCallback](const QString &errorString) {
-            if (errorCallback) {
-                errorCallback(containerUrl, ImageCandidateRepositoryError::Generic, errorString);
-            }
+            reportCandidateRepositoryError(
+                containerUrl, ImageCandidateRepositoryError::Generic, errorString, errorCallback);
         });
 }
 }
