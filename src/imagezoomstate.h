@@ -9,6 +9,8 @@
 #include <QUrl>
 
 namespace KiriView {
+struct RustImageZoomState;
+
 enum class ImageZoomMode {
     Fit,
     FitHeight,
@@ -66,6 +68,9 @@ public:
         qreal zoomPercent, const QSize &imageSize, qreal devicePixelRatio) const;
 
 private:
+    RustImageZoomState rustState() const;
+    void applyRustState(const RustImageZoomState &state);
+
     QSize m_imageSize;
     QSizeF m_viewportSize;
     QSizeF m_displaySize;

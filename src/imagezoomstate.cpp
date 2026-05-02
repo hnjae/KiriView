@@ -4,17 +4,67 @@
 #include "imagezoomstate.h"
 
 #include "imageurl.h"
+#include "kiriview/src/imagezoomstate.cxx.h"
 
-#include <algorithm>
-#include <cmath>
+namespace {
+KiriView::RustZoomSize rustZoomSize(const QSize &size)
+{
+    return KiriView::RustZoomSize { size.width(), size.height() };
+}
+
+KiriView::RustZoomSizeF rustZoomSizeF(const QSizeF &size)
+{
+    return KiriView::RustZoomSizeF { size.width(), size.height() };
+}
+
+QSize qtSize(const KiriView::RustZoomSize &size) { return QSize(size.width, size.height); }
+
+QSizeF qtSizeF(const KiriView::RustZoomSizeF &size) { return QSizeF(size.width, size.height); }
+
+QSizeF qtSizeF(qreal width, qreal height) { return QSizeF(width, height); }
+
+KiriView::RustImageZoomMode rustZoomMode(KiriView::ImageZoomMode zoomMode)
+{
+    switch (zoomMode) {
+    case KiriView::ImageZoomMode::Fit:
+        return KiriView::RustImageZoomMode::Fit;
+    case KiriView::ImageZoomMode::FitHeight:
+        return KiriView::RustImageZoomMode::FitHeight;
+    case KiriView::ImageZoomMode::FitWidth:
+        return KiriView::RustImageZoomMode::FitWidth;
+    case KiriView::ImageZoomMode::Manual:
+        return KiriView::RustImageZoomMode::Manual;
+    }
+
+    return KiriView::RustImageZoomMode::Fit;
+}
+
+KiriView::ImageZoomMode qtZoomMode(KiriView::RustImageZoomMode zoomMode)
+{
+    switch (zoomMode) {
+    case KiriView::RustImageZoomMode::Fit:
+        return KiriView::ImageZoomMode::Fit;
+    case KiriView::RustImageZoomMode::FitHeight:
+        return KiriView::ImageZoomMode::FitHeight;
+    case KiriView::RustImageZoomMode::FitWidth:
+        return KiriView::ImageZoomMode::FitWidth;
+    case KiriView::RustImageZoomMode::Manual:
+        return KiriView::ImageZoomMode::Manual;
+    }
+
+    return KiriView::ImageZoomMode::Fit;
+}
+}
 
 namespace KiriView {
-bool imageZoomApproximatelyEqual(qreal left, qreal right) { return std::abs(left - right) < 0.001; }
+bool imageZoomApproximatelyEqual(qreal left, qreal right)
+{
+    return rustImageZoomApproximatelyEqual(left, right);
+}
 
 bool imageZoomApproximatelyEqual(const QSizeF &left, const QSizeF &right)
 {
-    return imageZoomApproximatelyEqual(left.width(), right.width())
-        && imageZoomApproximatelyEqual(left.height(), right.height());
+    return rustImageZoomSizeApproximatelyEqual(rustZoomSizeF(left), rustZoomSizeF(right));
 }
 
 const QSize &ImageZoomState::imageSize() const { return m_imageSize; }
@@ -35,97 +85,81 @@ ImageZoomSnapshot ImageZoomState::snapshot() const
         m_zoomMode, m_containerUrl };
 }
 
+RustImageZoomState ImageZoomState::rustState() const
+{
+    return RustImageZoomState { m_imageSize.width(), m_imageSize.height(), m_viewportSize.width(),
+        m_viewportSize.height(), m_displaySize.width(), m_displaySize.height(), m_zoomPercent,
+        rustZoomMode(m_zoomMode) };
+}
+
+void ImageZoomState::applyRustState(const RustImageZoomState &state)
+{
+    m_imageSize = qtSize(RustZoomSize { state.image_width, state.image_height });
+    m_viewportSize = qtSizeF(state.viewport_width, state.viewport_height);
+    m_displaySize = qtSizeF(state.display_width, state.display_height);
+    m_zoomPercent = state.zoom_percent;
+    m_zoomMode = qtZoomMode(state.zoom_mode);
+}
+
 bool ImageZoomState::setViewportSize(const QSizeF &viewportSize, qreal devicePixelRatio)
 {
-    const QSizeF normalizedViewportSize(
-        std::max<qreal>(0.0, viewportSize.width()), std::max<qreal>(0.0, viewportSize.height()));
-    if (imageZoomApproximatelyEqual(m_viewportSize, normalizedViewportSize)) {
-        return false;
-    }
-
-    m_viewportSize = normalizedViewportSize;
-    update(devicePixelRatio);
-    return true;
+    const RustImageZoomStateChange change
+        = rustImageZoomSetViewportSize(rustState(), rustZoomSizeF(viewportSize), devicePixelRatio);
+    applyRustState(change.state);
+    return change.changed;
 }
 
 bool ImageZoomState::setImageSize(const QSize &imageSize, qreal devicePixelRatio)
 {
-    if (m_imageSize == imageSize) {
-        return false;
-    }
-
-    m_imageSize = imageSize;
-    update(devicePixelRatio);
-    return true;
+    const RustImageZoomStateChange change
+        = rustImageZoomSetImageSize(rustState(), rustZoomSize(imageSize), devicePixelRatio);
+    applyRustState(change.state);
+    return change.changed;
 }
 
 bool ImageZoomState::setManualZoomPercent(qreal zoomPercent, qreal devicePixelRatio)
 {
-    if (!std::isfinite(zoomPercent)) {
-        return false;
-    }
-
-    const qreal clampedZoomPercent
-        = std::clamp(zoomPercent, minimumManualZoomPercent, maximumManualZoomPercent);
-    const bool zoomChanged = !imageZoomApproximatelyEqual(m_zoomPercent, clampedZoomPercent);
-    const bool modeChanged = m_zoomMode != ImageZoomMode::Manual;
-
-    if (!zoomChanged && !modeChanged) {
-        return false;
-    }
-
-    m_zoomMode = ImageZoomMode::Manual;
-    m_zoomPercent = clampedZoomPercent;
-    m_displaySize = displaySizeForZoomPercent(m_zoomPercent, devicePixelRatio);
-    return true;
+    const RustImageZoomStateChange change
+        = rustImageZoomSetManualZoomPercent(rustState(), zoomPercent, devicePixelRatio);
+    applyRustState(change.state);
+    return change.changed;
 }
 
 bool ImageZoomState::setFitMode(ImageZoomMode zoomMode, qreal devicePixelRatio)
 {
-    if (zoomMode == ImageZoomMode::Manual || m_zoomMode == zoomMode) {
-        return false;
-    }
-
-    m_zoomMode = zoomMode;
-    update(devicePixelRatio);
-    return true;
+    const RustImageZoomStateChange change
+        = rustImageZoomSetFitMode(rustState(), rustZoomMode(zoomMode), devicePixelRatio);
+    applyRustState(change.state);
+    return change.changed;
 }
 
 void ImageZoomState::resetZoom(qreal devicePixelRatio)
 {
-    m_zoomMode = ImageZoomMode::Fit;
-    update(devicePixelRatio);
+    applyRustState(rustImageZoomResetZoom(rustState(), devicePixelRatio));
 }
 
 void ImageZoomState::prepareImageContainer(const QUrl &containerUrl)
 {
-    if (!sameContainerNavigationUrl(containerUrl, m_containerUrl)) {
-        m_zoomMode = ImageZoomMode::Fit;
-    }
+    applyRustState(rustImageZoomPrepareImageContainer(
+        rustState(), sameContainerNavigationUrl(containerUrl, m_containerUrl)));
     m_containerUrl = containerUrl;
 }
 
 LoadedImageZoom ImageZoomState::loadedImageZoom(
     const QUrl &containerUrl, const QSize &imageSize, qreal devicePixelRatio) const
 {
-    ImageZoomMode loadedZoomMode = ImageZoomMode::Fit;
-    if (sameContainerNavigationUrl(containerUrl, m_containerUrl)) {
-        loadedZoomMode = m_zoomMode;
-    }
-
-    const qreal loadedZoomPercent = loadedZoomMode == ImageZoomMode::Manual
-        ? m_zoomPercent
-        : fitZoomPercentForImageSize(loadedZoomMode, imageSize, devicePixelRatio);
-    return LoadedImageZoom { loadedZoomMode, loadedZoomPercent,
-        displaySizeForZoomPercent(loadedZoomPercent, imageSize, devicePixelRatio) };
+    const RustLoadedImageZoom zoom = rustImageZoomLoadedImageZoom(rustState(),
+        sameContainerNavigationUrl(containerUrl, m_containerUrl), rustZoomSize(imageSize),
+        devicePixelRatio);
+    return LoadedImageZoom { qtZoomMode(zoom.zoom_mode), zoom.zoom_percent,
+        qtSizeF(zoom.display_width, zoom.display_height) };
 }
 
 void ImageZoomState::setLoadedSvgZoom(const QUrl &containerUrl, const LoadedImageZoom &zoom)
 {
-    m_zoomMode = zoom.zoomMode;
-    m_zoomPercent = zoom.zoomPercent;
-    m_displaySize = QSizeF(std::max<qreal>(0.0, zoom.displaySize.width()),
-        std::max<qreal>(0.0, zoom.displaySize.height()));
+    applyRustState(rustImageZoomSetLoadedSvgZoom(rustState(),
+        RustLoadedImageZoom { rustZoomMode(zoom.zoomMode), zoom.zoomPercent,
+            zoom.displaySize.width(), zoom.displaySize.height() }));
     m_containerUrl = containerUrl;
 }
 
@@ -133,59 +167,19 @@ void ImageZoomState::clearContainer() { m_containerUrl = QUrl(); }
 
 void ImageZoomState::update(qreal devicePixelRatio)
 {
-    if (m_zoomMode != ImageZoomMode::Manual) {
-        m_zoomPercent = fitZoomPercent(m_zoomMode, devicePixelRatio);
-    }
-
-    m_displaySize = displaySizeForZoomPercent(m_zoomPercent, devicePixelRatio);
+    applyRustState(rustImageZoomUpdate(rustState(), devicePixelRatio));
 }
 
 qreal ImageZoomState::fitZoomPercent(ImageZoomMode zoomMode, qreal devicePixelRatio) const
 {
-    return fitZoomPercentForImageSize(zoomMode, m_imageSize, devicePixelRatio);
+    return rustImageZoomFitZoomPercent(rustState(), rustZoomMode(zoomMode), devicePixelRatio);
 }
 
 qreal ImageZoomState::fitZoomPercentForImageSize(
     ImageZoomMode zoomMode, const QSize &imageSize, qreal devicePixelRatio) const
 {
-    const qreal fallbackZoomPercent = devicePixelRatio * 100.0;
-
-    if (imageSize.isEmpty()) {
-        return fallbackZoomPercent;
-    }
-
-    const auto fitWidthZoomPercent = [this, devicePixelRatio, fallbackZoomPercent, imageSize]() {
-        if (m_viewportSize.width() <= 0.0) {
-            return fallbackZoomPercent;
-        }
-
-        return std::max<qreal>(
-            0.0, m_viewportSize.width() * devicePixelRatio * 100.0 / imageSize.width());
-    };
-    const auto fitHeightZoomPercent = [this, devicePixelRatio, fallbackZoomPercent, imageSize]() {
-        if (m_viewportSize.height() <= 0.0) {
-            return fallbackZoomPercent;
-        }
-
-        return std::max<qreal>(
-            0.0, m_viewportSize.height() * devicePixelRatio * 100.0 / imageSize.height());
-    };
-
-    switch (zoomMode) {
-    case ImageZoomMode::Fit:
-        if (m_viewportSize.isEmpty()) {
-            return fallbackZoomPercent;
-        }
-        return std::min(fitWidthZoomPercent(), fitHeightZoomPercent());
-    case ImageZoomMode::FitHeight:
-        return fitHeightZoomPercent();
-    case ImageZoomMode::FitWidth:
-        return fitWidthZoomPercent();
-    case ImageZoomMode::Manual:
-        return m_zoomPercent;
-    }
-
-    return fallbackZoomPercent;
+    return rustImageZoomFitZoomPercentForImageSize(
+        rustState(), rustZoomMode(zoomMode), rustZoomSize(imageSize), devicePixelRatio);
 }
 
 QSizeF ImageZoomState::displaySizeForZoomPercent(qreal zoomPercent, qreal devicePixelRatio) const
@@ -196,11 +190,7 @@ QSizeF ImageZoomState::displaySizeForZoomPercent(qreal zoomPercent, qreal device
 QSizeF ImageZoomState::displaySizeForZoomPercent(
     qreal zoomPercent, const QSize &imageSize, qreal devicePixelRatio) const
 {
-    if (imageSize.isEmpty() || !std::isfinite(zoomPercent) || zoomPercent <= 0.0) {
-        return {};
-    }
-
-    const qreal scale = zoomPercent / (devicePixelRatio * 100.0);
-    return QSizeF(imageSize.width() * scale, imageSize.height() * scale);
+    return qtSizeF(rustImageZoomDisplaySizeForZoomPercent(
+        rustZoomSize(imageSize), zoomPercent, devicePixelRatio));
 }
 }

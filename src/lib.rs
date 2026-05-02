@@ -4,6 +4,7 @@
 mod apngdecoder;
 mod avifcompat;
 mod imageviewportgeometry;
+mod imagezoomstate;
 
 pub fn initialize_rust_modules() {
     let _ = core::mem::size_of::<cxx_qt_lib_extras::QApplication>();
