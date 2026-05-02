@@ -4,12 +4,8 @@
 #ifndef KIRIVIEW_KIRIIMAGEVIEW_H
 #define KIRIVIEW_KIRIIMAGEVIEW_H
 
-#include "displayedimagestate.h"
-#include "imageloader.h"
-#include "imagezoomstate.h"
+#include "imagedocumentcontroller.h"
 
-#include <QByteArray>
-#include <QImage>
 #include <QQuickItem>
 #include <QSize>
 #include <QSizeF>
@@ -18,13 +14,6 @@
 #include <QUrl>
 #include <QtQml/qqmlregistration.h>
 #include <memory>
-#include <optional>
-
-namespace KiriView {
-class ImageNavigationService;
-class ImagePredecodeCoordinator;
-enum class NavigationDirection : int;
-}
 
 class KiriImageView : public QQuickItem
 {
@@ -114,70 +103,12 @@ Q_SIGNALS:
     void containerNavigationChanged();
 
 private:
-    void setSourceUrlForLoad(const QUrl &sourceUrl, const QUrl &containerNavigationUrl);
-    void startLoad();
-    void cancelLoad();
-    void setSourceUrlFromResolvedLoad(const QUrl &sourceUrl);
-    void openAdjacentImage(KiriView::NavigationDirection direction);
-    void cancelNavigation();
-    void openAdjacentContainer(KiriView::NavigationDirection direction);
-    void cancelContainerNavigation();
-    void openImageFromContainerNavigation(const QUrl &imageUrl, const QUrl &containerUrl);
-    void finishContainerNavigationWithEmptyContainer(const QUrl &containerUrl);
-    void finishContainerNavigationLoadWithError(
-        const QUrl &containerUrl, const QString &errorString);
-    void setContainerNavigationUrl(const QUrl &containerUrl);
-    void updateContainerNavigationFromDisplayedImage();
-    void updatePageNavigation();
-    void cancelPageNavigationUpdate();
-    void clearPageNavigation();
-    void scheduleAdjacentImagePredecode();
-    void cancelPredecode();
-    std::optional<KiriView::PredecodedImage> takePredecodedImage(const QUrl &url) const;
-    void finishPredecodedImageLoad(KiriView::ImageLoadSession session, const QImage &image);
-    void finishDecodedImageLoad(
-        KiriView::ImageLoadSession session, std::shared_ptr<KiriView::DecodedImageResult> result);
-    void finishLoadWithError(const KiriView::ImageLoadSession &session,
-        KiriView::ImageLoadError error, const QString &errorString);
-    void finishLoadSuccessfully(
-        const KiriView::ImageLoadSession &session, const QImage &image, bool predecodeCacheable);
-    void finishSvgLoadSuccessfully(
-        KiriView::ImageLoadSession session, QByteArray data, const QSize &intrinsicSize);
-    void prepareSuccessfulImageLoad(const KiriView::ImageLoadSession &session);
-    void finishSuccessfulImageLoad(const KiriView::ImageLoadSession &session);
-    bool hasDisplayedImage() const;
-    void stopAnimation();
-    void finishWithAnimationError(const QString &errorString);
-    void setDisplayedImage(const QImage &image);
-    void setDisplayedSvgImage(
-        QByteArray data, const QSize &intrinsicSize, const QImage &image, const QSize &rasterSize);
-    bool updateDisplayedSvgRaster();
-    void setLoading(bool loading);
-    void setStatus(Status status);
-    void setErrorString(const QString &errorString);
-    void setWindowTitleFileName(const QString &fileName);
-    void updateWindowTitleFileName();
-    void setImageSize(const QSize &imageSize);
-    void applyZoomStateChanges(const KiriView::ImageZoomSnapshot &previous);
-    void updateZoomState();
+    void handleDocumentChange(KiriView::ImageDocumentChange change);
+    KiriView::ImageDocumentRenderContext renderContext() const;
     qreal displayDevicePixelRatio() const;
     int maximumTextureSize() const;
-    void clearImage();
 
-    QUrl m_sourceUrl;
-    QUrl m_displayedUrl;
-    QUrl m_displayedComicBookRootUrl;
-    Status m_status = Status::Null;
-    bool m_loading = false;
-    QString m_errorString;
-    QString m_windowTitleFileName;
-    KiriView::ImageZoomState m_zoomState;
-    std::unique_ptr<KiriView::DisplayedImageState> m_displayedImageState;
-    std::unique_ptr<KiriView::ImageNavigationService> m_navigationService;
-    std::unique_ptr<KiriView::ImageLoader> m_imageLoader;
-    std::unique_ptr<KiriView::ImagePredecodeCoordinator> m_predecodeCoordinator;
-    QUrl m_containerNavigationUrl;
-    QUrl m_loadingContainerNavigationUrl;
+    std::unique_ptr<KiriView::ImageDocumentController> m_documentController;
 };
 
 #endif
