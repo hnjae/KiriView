@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_KIRIIMAGEVIEW_H
 #define KIRIVIEW_KIRIIMAGEVIEW_H
 
+#include "displayedimagestate.h"
 #include "imageloader.h"
 #include "imagezoomstate.h"
 
@@ -20,7 +21,6 @@
 #include <optional>
 
 namespace KiriView {
-class ImageAnimationPlayer;
 class ImageNavigationService;
 class ImagePredecodeCoordinator;
 enum class NavigationDirection : int;
@@ -151,7 +151,6 @@ private:
     void setDisplayedImage(const QImage &image);
     void setDisplayedSvgImage(
         QByteArray data, const QSize &intrinsicSize, const QImage &image, const QSize &rasterSize);
-    void clearDisplayedSvgImage();
     bool updateDisplayedSvgRaster();
     void setLoading(bool loading);
     void setStatus(Status status);
@@ -173,14 +172,7 @@ private:
     QString m_errorString;
     QString m_windowTitleFileName;
     KiriView::ImageZoomState m_zoomState;
-    QImage m_image;
-    bool m_displayedImageIsSvg = false;
-    bool m_displayedImageIsPredecodeCacheable = false;
-    QByteArray m_svgData;
-    QSize m_svgIntrinsicSize;
-    QSize m_svgRasterSize;
-    quint64 m_imageRevision = 0;
-    std::unique_ptr<KiriView::ImageAnimationPlayer> m_animationPlayer;
+    std::unique_ptr<KiriView::DisplayedImageState> m_displayedImageState;
     std::unique_ptr<KiriView::ImageNavigationService> m_navigationService;
     std::unique_ptr<KiriView::ImageLoader> m_imageLoader;
     std::unique_ptr<KiriView::ImagePredecodeCoordinator> m_predecodeCoordinator;

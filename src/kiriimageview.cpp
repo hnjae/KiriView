@@ -3,7 +3,6 @@
 
 #include "kiriimageview.h"
 
-#include "imageanimationplayer.h"
 #include "imageformatregistry.h"
 #include "imagenavigationservice.h"
 #include "imagepredecodecoordinator.h"
@@ -23,7 +22,6 @@
 namespace {
 using KiriView::containerNavigationUrlForImage;
 using KiriView::decodedImageResultIsPredecodeCacheable;
-using KiriView::displayReadyImage;
 using KiriView::imageZoomApproximatelyEqual;
 using KiriView::ImageZoomMode;
 using KiriView::NavigationDirection;
@@ -67,11 +65,13 @@ KiriImageView::ZoomMode fromImageZoomMode(ImageZoomMode zoomMode)
 KiriImageView::KiriImageView(QQuickItem *parent)
     : QQuickItem(parent)
 {
-    auto frameReady = [this](const QImage &image) { setDisplayedImage(image); };
-    auto animationError
-        = [this](const QString &errorString) { finishWithAnimationError(errorString); };
-    m_animationPlayer = std::make_unique<KiriView::ImageAnimationPlayer>(
-        this, std::move(frameReady), std::move(animationError));
+    m_displayedImageState = std::make_unique<KiriView::DisplayedImageState>(
+        this,
+        [this](const QSize &imageSize) {
+            setImageSize(imageSize);
+            update();
+        },
+        [this](const QString &errorString) { finishWithAnimationError(errorString); });
     m_navigationService = std::make_unique<KiriView::ImageNavigationService>(this);
     m_navigationService->setOpenUrlCallback([this](const QUrl &url) { setSourceUrl(url); });
     m_navigationService->setOpenContainerImageCallback(
@@ -247,7 +247,7 @@ void KiriImageView::setFitMode(ZoomMode zoomMode)
 
 QSGNode *KiriImageView::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *)
 {
-    if (m_image.isNull()) {
+    if (m_displayedImageState->image().isNull()) {
         delete oldNode;
         return nullptr;
     }
@@ -264,8 +264,9 @@ QSGNode *KiriImageView::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *)
     }
 
     node->setRhi(window() == nullptr ? nullptr : window()->rhi());
-    node->setImage(m_image, m_imageRevision);
-    node->setTargetRect(KiriView::imageTargetRect(m_image.size(), boundsSize));
+    node->setImage(m_displayedImageState->image(), m_displayedImageState->revision());
+    node->setTargetRect(
+        KiriView::imageTargetRect(m_displayedImageState->image().size(), boundsSize));
     node->markDirty(QSGNode::DirtyGeometry | QSGNode::DirtyMaterial);
     return node;
 }
@@ -421,8 +422,9 @@ void KiriImageView::scheduleAdjacentImagePredecode()
         return;
     }
 
-    m_predecodeCoordinator->schedule(KiriView::ImagePredecodeCoordinator::Context { m_displayedUrl,
-        m_displayedComicBookRootUrl, m_displayedImageIsPredecodeCacheable, m_image });
+    m_predecodeCoordinator->schedule(
+        KiriView::ImagePredecodeCoordinator::Context { m_displayedUrl, m_displayedComicBookRootUrl,
+            m_displayedImageState->isPredecodeCacheable(), m_displayedImageState->image() });
 }
 
 void KiriImageView::cancelPredecode()
@@ -465,10 +467,10 @@ void KiriImageView::finishDecodedImageLoad(
         = decodedImageResultIsPredecodeCacheable(*result, KiriView::PredecodeCache::byteBudget());
     finishLoadSuccessfully(session, result->image, predecodeCacheable);
     if (!result->decodedAnimationFrames.empty()) {
-        m_animationPlayer->startDecoded(
+        m_displayedImageState->startDecodedAnimation(
             std::move(result->decodedAnimationFrames), result->animationLoopCount);
     } else if (result->hasAnimationReaderFrames) {
-        m_animationPlayer->start(result->animationData, result->animationFormat,
+        m_displayedImageState->startAnimation(result->animationData, result->animationFormat,
             result->animationLoopCount, result->firstFrameDelay);
     }
     scheduleAdjacentImagePredecode();
@@ -514,7 +516,7 @@ void KiriImageView::finishLoadSuccessfully(
     const KiriView::ImageLoadSession &session, const QImage &image, bool predecodeCacheable)
 {
     prepareSuccessfulImageLoad(session);
-    m_displayedImageIsPredecodeCacheable = predecodeCacheable;
+    m_displayedImageState->setPredecodeCacheable(predecodeCacheable);
     setDisplayedImage(image);
     updateZoomState();
     finishSuccessfulImageLoad(session);
@@ -543,7 +545,7 @@ void KiriImageView::finishSvgLoadSuccessfully(
     }
 
     stopAnimation();
-    m_displayedImageIsPredecodeCacheable = false;
+    m_displayedImageState->setPredecodeCacheable(false);
     const KiriView::ImageZoomSnapshot previous = m_zoomState.snapshot();
     m_zoomState.setLoadedSvgZoom(loadedContainerUrl, loadedZoom);
     applyZoomStateChanges(previous);
@@ -579,9 +581,9 @@ void KiriImageView::finishSuccessfulImageLoad(const KiriView::ImageLoadSession &
     updatePageNavigation();
 }
 
-bool KiriImageView::hasDisplayedImage() const { return !m_image.isNull(); }
+bool KiriImageView::hasDisplayedImage() const { return m_displayedImageState->hasImage(); }
 
-void KiriImageView::stopAnimation() { m_animationPlayer->stop(); }
+void KiriImageView::stopAnimation() { m_displayedImageState->stopAnimation(); }
 
 void KiriImageView::finishWithAnimationError(const QString &errorString)
 {
@@ -599,59 +601,19 @@ void KiriImageView::finishWithAnimationError(const QString &errorString)
 
 void KiriImageView::setDisplayedImage(const QImage &image)
 {
-    clearDisplayedSvgImage();
-    m_image = displayReadyImage(image);
-    ++m_imageRevision;
-    setImageSize(m_image.size());
-    update();
+    m_displayedImageState->setImage(image);
 }
 
 void KiriImageView::setDisplayedSvgImage(
     QByteArray data, const QSize &intrinsicSize, const QImage &image, const QSize &rasterSize)
 {
-    m_displayedImageIsSvg = true;
-    m_svgData = std::move(data);
-    m_svgIntrinsicSize = intrinsicSize;
-    m_svgRasterSize = rasterSize;
-    m_image = displayReadyImage(image);
-    ++m_imageRevision;
-    setImageSize(intrinsicSize);
-    update();
-}
-
-void KiriImageView::clearDisplayedSvgImage()
-{
-    m_displayedImageIsSvg = false;
-    m_svgData.clear();
-    m_svgIntrinsicSize = QSize();
-    m_svgRasterSize = QSize();
+    m_displayedImageState->setSvgImage(std::move(data), intrinsicSize, image, rasterSize);
 }
 
 bool KiriImageView::updateDisplayedSvgRaster()
 {
-    if (!m_displayedImageIsSvg) {
-        return true;
-    }
-
-    const QSize rasterSize
-        = svgRasterSize(m_zoomState.displaySize(), displayDevicePixelRatio(), maximumTextureSize());
-    if (rasterSize.isEmpty()) {
-        return false;
-    }
-    if (!m_image.isNull() && m_svgRasterSize == rasterSize) {
-        return true;
-    }
-
-    const QImage image = renderSvgImage(m_svgData, rasterSize);
-    if (image.isNull()) {
-        return false;
-    }
-
-    m_image = displayReadyImage(image);
-    m_svgRasterSize = rasterSize;
-    ++m_imageRevision;
-    update();
-    return true;
+    return m_displayedImageState->updateSvgRaster(
+        m_zoomState.displaySize(), displayDevicePixelRatio(), maximumTextureSize());
 }
 
 void KiriImageView::setLoading(bool loading)
@@ -773,20 +735,12 @@ void KiriImageView::clearImage()
         m_predecodeCoordinator->clear();
     }
     cancelPageNavigationUpdate();
-    stopAnimation();
-    m_displayedImageIsPredecodeCacheable = false;
     m_displayedUrl = QUrl();
     m_displayedComicBookRootUrl = QUrl();
     m_zoomState.clearContainer();
-    clearDisplayedSvgImage();
+    m_displayedImageState->clear();
     updateWindowTitleFileName();
     clearPageNavigation();
-
-    if (!m_image.isNull()) {
-        m_image = QImage();
-        ++m_imageRevision;
-        update();
-    }
 
     setImageSize(QSize());
 }

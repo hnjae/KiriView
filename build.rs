@@ -30,6 +30,7 @@ fn main() {
     .cpp_file(CppFile::from("src/kiriimageview.h"))
     .file("src/avifcompat.rs")
     .cpp_file("src/asyncobjectslot.cpp")
+    .cpp_file("src/displayedimagestate.cpp")
     .cpp_file("src/imageformatregistry.cpp")
     .cpp_file("src/imageiojobs.cpp")
     .cpp_file("src/imageloader.cpp")
