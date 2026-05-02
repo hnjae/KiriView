@@ -45,8 +45,9 @@ paths remain available only when explicitly provided by the XDG portal.
 Image loading is asynchronous. While a selected image is being opened, the UI
 remains responsive. If no image is currently displayed, the UI shows a loading
 state. If an image is already displayed, that image remains visible until the
-newly selected image is ready to replace it. If another file is selected before
-the previous load finishes, only the most recent selection is displayed.
+newly selected image is ready to replace it, with a compact loading indicator
+shown at the top-left of the image viewing area. If another file is selected
+before the previous load finishes, only the most recent selection is displayed.
 
 Opened images are displayed centered in the available page area while preserving
 their aspect ratio. Image zoom is expressed in physical display pixels: 100%
