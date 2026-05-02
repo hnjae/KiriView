@@ -28,6 +28,7 @@ fn main() {
     // build artifacts such as build-dir/, including symlinks into /run.
     .crate_include_root(None)
     .cpp_file(CppFile::from("src/kiriimageview.h"))
+    .file("src/apngdecoder.rs")
     .file("src/avifcompat.rs")
     .cpp_file("src/asyncobjectslot.cpp")
     .cpp_file("src/displayedimagestate.cpp")

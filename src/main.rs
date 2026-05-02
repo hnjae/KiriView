@@ -8,6 +8,7 @@ use cxx_qt_lib::{
 use cxx_qt_lib_extras::QApplication;
 use std::env;
 
+mod apngdecoder;
 mod avifcompat;
 
 fn initial_source_url() -> Option<QUrl> {
