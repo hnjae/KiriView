@@ -16,34 +16,15 @@ find_package(Qt6 REQUIRED COMPONENTS Core Gui Svg Test)
 find_package(KF6CoreAddons CONFIG REQUIRED)
 find_package(KF6KIO CONFIG REQUIRED)
 
+file(STRINGS "../../src/cpp_core_sources.txt" KIRIVIEW_CORE_SOURCES
+    REGEX "^[A-Za-z0-9_./-]+\\.cpp$"
+)
+foreach(source IN LISTS KIRIVIEW_CORE_SOURCES)
+    list(APPEND KIRIVIEW_CORE_SOURCE_PATHS "../../${source}")
+endforeach()
+
 add_library(kiriview_test_core STATIC
-    ../../src/decodedimageresult.cpp
-    ../../src/displayedimagestate.cpp
-    ../../src/imageanimationplayer.cpp
-    ../../src/imageasyncdependencies.cpp
-    ../../src/imagebytecost.cpp
-    ../../src/imagecontainer.cpp
-    ../../src/imagerendering.cpp
-    ../../src/imagedocumentcontroller.cpp
-    ../../src/imagedocumentnavigationcontroller.cpp
-    ../../src/imagedecodejob.cpp
-    ../../src/imagedocumentstate.cpp
-    ../../src/imageformatregistry.cpp
-    ../../src/imagecandidaterepository.cpp
-    ../../src/imageiojob.cpp
-    ../../src/imageiojobs.cpp
-    ../../src/imageloader.cpp
-    ../../src/imagenavigationmodel.cpp
-    ../../src/imagenavigationservice.cpp
-    ../../src/imageopencontroller.cpp
-    ../../src/imageopenworkflow.cpp
-    ../../src/imagepredecodecoordinator.cpp
-    ../../src/imagepresentationcontroller.cpp
-    ../../src/imageurl.cpp
-    ../../src/imageviewportgeometry.cpp
-    ../../src/imageviewtext.cpp
-    ../../src/imagezoomstate.cpp
-    ../../src/predecodecache.cpp
+    ${KIRIVIEW_CORE_SOURCE_PATHS}
 )
 target_include_directories(kiriview_test_core PUBLIC ../../src)
 target_link_libraries(kiriview_test_core PUBLIC

@@ -9,10 +9,13 @@ use std::{
     process::Command,
 };
 
+const CPP_CORE_SOURCES_FILE: &str = "src/cpp_core_sources.txt";
+
 fn main() {
     let kio_include_dirs = kio_include_dirs();
     let qt_rhi_include_dirs = qt_rhi_include_dirs();
     let shader_source = bake_shaders();
+    let cpp_core_sources = cpp_core_sources();
     link_kio();
 
     let mut builder = CxxQtBuilder::new_qml_module(
@@ -35,46 +38,23 @@ fn main() {
     .cpp_file(CppFile::from("src/kiriimageview.h"))
     .file("src/apngdecoder.rs")
     .file("src/avifcompat.rs")
-    .cpp_file("src/decodedimageresult.cpp")
-    .cpp_file("src/displayedimagestate.cpp")
-    .cpp_file("src/imagerendering.cpp")
-    .cpp_file("src/imageasyncdependencies.cpp")
-    .cpp_file("src/imagedocumentcontroller.cpp")
     .cpp_file("src/imagedocumentcontrollerdefaults.cpp")
-    .cpp_file("src/imagedocumentnavigationcontroller.cpp")
-    .cpp_file("src/imagedocumentstate.cpp")
-    .cpp_file("src/imagedecodejob.cpp")
     .cpp_file("src/imagedecodejobdefaults.cpp")
-    .cpp_file("src/imagebytecost.cpp")
-    .cpp_file("src/imagecandidaterepository.cpp")
-    .cpp_file("src/imagecontainer.cpp")
-    .cpp_file("src/imageformatregistry.cpp")
-    .cpp_file("src/imageiojob.cpp")
-    .cpp_file("src/imageiojobs.cpp")
-    .cpp_file("src/imageloader.cpp")
     .cpp_file("src/imageloaderdefaults.cpp")
-    .cpp_file("src/imagenavigationmodel.cpp")
-    .cpp_file("src/imageopencontroller.cpp")
-    .cpp_file("src/imageopenworkflow.cpp")
-    .cpp_file("src/imagepredecodecoordinator.cpp")
     .cpp_file("src/imagepredecodecoordinatordefaults.cpp")
-    .cpp_file("src/imagepresentationcontroller.cpp")
-    .cpp_file("src/imageurl.cpp")
-    .cpp_file("src/imageviewportgeometry.cpp")
-    .cpp_file("src/imageviewtext.cpp")
-    .cpp_file("src/imagezoomstate.cpp")
-    .cpp_file("src/imageanimationplayer.cpp")
     .cpp_file("src/apngdecoder.cpp")
     .cpp_file("src/kiriimagedocument.cpp")
     .cpp_file("src/kiriimagedecoder.cpp")
-    .cpp_file("src/imagenavigationservice.cpp")
     .cpp_file("src/kiriimagerendernode.cpp")
-    .cpp_file("src/predecodecache.cpp")
     .cpp_file("src/kiriimageview.cpp")
     .qt_module("Quick")
     .qt_module("Svg")
     .qt_module("Network")
     .qt_module("DBus");
+
+    for source in cpp_core_sources {
+        builder = builder.cpp_file(CppFile::from(source.as_str()));
+    }
 
     unsafe {
         builder = builder.cc_builder(move |cc| {
@@ -91,6 +71,17 @@ fn main() {
     }
 
     builder.build();
+}
+
+fn cpp_core_sources() -> Vec<String> {
+    println!("cargo::rerun-if-changed={CPP_CORE_SOURCES_FILE}");
+    fs::read_to_string(CPP_CORE_SOURCES_FILE)
+        .expect("failed to read C++ core source list")
+        .lines()
+        .map(str::trim)
+        .filter(|line| !line.is_empty() && !line.starts_with('#'))
+        .map(str::to_owned)
+        .collect()
 }
 
 fn bake_shaders() -> PathBuf {
