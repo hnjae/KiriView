@@ -16,6 +16,9 @@ file manager's Open With action, it opens the first provided image or comic book
 archive at startup. Activating the open action shows the XDG portal file
 chooser, which accepts a single selection only. Pressing Escape closes the main
 window.
+If KiriView is launched with a local file path or file URL argument and that
+file does not exist, it prints a clear error message naming the path and reason
+to standard error, does not open the main window, and exits with code 2.
 
 When an image file is displayed, the main window title is the displayed image
 file name, a spaced em dash, and `KiriView`. When a CBZ, CBT, or CB7 comic book
