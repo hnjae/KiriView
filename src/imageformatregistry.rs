@@ -6,7 +6,48 @@ const SUPPORTED_IMAGE_EXTENSIONS: &[&str] = &[
     "jpg", "jp2", "jxl", "png", "svg", "webp",
 ];
 
-const COMIC_BOOK_ARCHIVE_EXTENSIONS: &[&str] = &["cbz", "cbt", "cb7", "cbr"];
+struct ArchiveFormat {
+    scheme: &'static str,
+    comic_book_extension: &'static str,
+    direct_archive_extension: &'static str,
+    comic_book_mime_types: &'static [&'static str],
+    direct_archive_mime_types: &'static [&'static str],
+}
+
+const ARCHIVE_FORMATS: &[ArchiveFormat] = &[
+    ArchiveFormat {
+        scheme: "zip",
+        comic_book_extension: "cbz",
+        direct_archive_extension: "zip",
+        comic_book_mime_types: &["application/vnd.comicbook+zip"],
+        direct_archive_mime_types: &["application/zip"],
+    },
+    ArchiveFormat {
+        scheme: "tar",
+        comic_book_extension: "cbt",
+        direct_archive_extension: "tar",
+        comic_book_mime_types: &["application/x-cbt"],
+        direct_archive_mime_types: &["application/x-tar"],
+    },
+    ArchiveFormat {
+        scheme: "sevenz",
+        comic_book_extension: "cb7",
+        direct_archive_extension: "7z",
+        comic_book_mime_types: &["application/x-cb7"],
+        direct_archive_mime_types: &["application/x-7z-compressed"],
+    },
+    ArchiveFormat {
+        scheme: "rar",
+        comic_book_extension: "cbr",
+        direct_archive_extension: "rar",
+        comic_book_mime_types: &["application/vnd.comicbook-rar", "application/x-cbr"],
+        direct_archive_mime_types: &[
+            "application/vnd.rar",
+            "application/x-rar",
+            "application/x-rar-compressed",
+        ],
+    },
+];
 
 #[cxx::bridge(namespace = "KiriView")]
 mod ffi {
@@ -43,7 +84,11 @@ fn rust_supported_image_extensions() -> Vec<String> {
 
 fn rust_supported_open_extensions() -> Vec<String> {
     let mut extensions = strings(SUPPORTED_IMAGE_EXTENSIONS);
-    extensions.extend(strings(COMIC_BOOK_ARCHIVE_EXTENSIONS));
+    extensions.extend(
+        ARCHIVE_FORMATS
+            .iter()
+            .map(|format| format.comic_book_extension.to_owned()),
+    );
     extensions.sort();
     extensions
 }
@@ -99,41 +144,36 @@ fn extension_for_file_name(name: &str) -> Option<String> {
 }
 
 fn comic_book_archive_kio_scheme_for_extension(extension: &str) -> Option<&'static str> {
-    match extension {
-        "cbz" => Some("zip"),
-        "cbt" => Some("tar"),
-        "cb7" => Some("sevenz"),
-        "cbr" => Some("rar"),
-        _ => None,
-    }
+    archive_format_for_comic_book_extension(extension).map(|format| format.scheme)
 }
 
 fn direct_archive_open_kio_scheme_for_extension(extension: &str) -> Option<&'static str> {
-    comic_book_archive_kio_scheme_for_extension(extension).or(match extension {
-        "zip" => Some("zip"),
-        "tar" => Some("tar"),
-        "7z" => Some("sevenz"),
-        "rar" => Some("rar"),
-        _ => None,
+    comic_book_archive_kio_scheme_for_extension(extension).or_else(|| {
+        ARCHIVE_FORMATS
+            .iter()
+            .find(|format| format.direct_archive_extension == extension)
+            .map(|format| format.scheme)
     })
 }
 
 fn comic_book_archive_kio_scheme_for_mime_type_name(mime_type_name: &str) -> Option<&'static str> {
-    match mime_type_name {
-        "application/vnd.comicbook+zip" => Some("zip"),
-        "application/x-cbt" => Some("tar"),
-        "application/x-cb7" => Some("sevenz"),
-        "application/vnd.comicbook-rar" | "application/x-cbr" => Some("rar"),
-        _ => None,
-    }
+    ARCHIVE_FORMATS
+        .iter()
+        .find(|format| format.comic_book_mime_types.contains(&mime_type_name))
+        .map(|format| format.scheme)
 }
 
 fn direct_archive_open_kio_scheme_for_mime_type_name(mime_type_name: &str) -> Option<&'static str> {
-    comic_book_archive_kio_scheme_for_mime_type_name(mime_type_name).or(match mime_type_name {
-        "application/zip" => Some("zip"),
-        "application/x-tar" => Some("tar"),
-        "application/x-7z-compressed" => Some("sevenz"),
-        "application/vnd.rar" | "application/x-rar" | "application/x-rar-compressed" => Some("rar"),
-        _ => None,
+    comic_book_archive_kio_scheme_for_mime_type_name(mime_type_name).or_else(|| {
+        ARCHIVE_FORMATS
+            .iter()
+            .find(|format| format.direct_archive_mime_types.contains(&mime_type_name))
+            .map(|format| format.scheme)
     })
+}
+
+fn archive_format_for_comic_book_extension(extension: &str) -> Option<&'static ArchiveFormat> {
+    ARCHIVE_FORMATS
+        .iter()
+        .find(|format| format.comic_book_extension == extension)
 }
