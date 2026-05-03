@@ -3,6 +3,7 @@
 
 #include "imagecontainer.h"
 
+#include "archiveformat.h"
 #include "imageformatregistry.h"
 #include "imagenavigationmodel.h"
 #include "imageurl.h"
@@ -12,54 +13,6 @@
 #include <cstddef>
 
 namespace {
-bool isComicBookArchiveRootScheme(const QString &scheme)
-{
-    static const QStringList archiveSchemes = {
-        QStringLiteral("zip"),
-        QStringLiteral("tar"),
-        QStringLiteral("sevenz"),
-        QStringLiteral("rar"),
-    };
-
-    return archiveSchemes.contains(scheme);
-}
-
-QString comicBookArchiveMarkerForRootScheme(const QString &scheme)
-{
-    if (scheme == QStringLiteral("zip")) {
-        return QStringLiteral(".cbz/");
-    }
-    if (scheme == QStringLiteral("tar")) {
-        return QStringLiteral(".cbt/");
-    }
-    if (scheme == QStringLiteral("sevenz")) {
-        return QStringLiteral(".cb7/");
-    }
-    if (scheme == QStringLiteral("rar")) {
-        return QStringLiteral(".cbr/");
-    }
-
-    return {};
-}
-
-QStringList directArchiveOpenMarkersForRootScheme(const QString &scheme)
-{
-    if (scheme == QStringLiteral("zip")) {
-        return { QStringLiteral(".cbz/"), QStringLiteral(".zip/") };
-    }
-    if (scheme == QStringLiteral("tar")) {
-        return { QStringLiteral(".cbt/"), QStringLiteral(".tar/") };
-    }
-    if (scheme == QStringLiteral("sevenz")) {
-        return { QStringLiteral(".cb7/"), QStringLiteral(".7z/") };
-    }
-    if (scheme == QStringLiteral("rar")) {
-        return { QStringLiteral(".cbr/"), QStringLiteral(".rar/") };
-    }
-
-    return {};
-}
-
 QString normalizedArchiveRootPath(const QUrl &archiveRootUrl)
 {
     QString path = QDir::cleanPath(archiveRootUrl.path());
@@ -72,7 +25,7 @@ QString normalizedArchiveRootPath(const QUrl &archiveRootUrl)
 
 std::optional<QUrl> archiveFileUrl(const QUrl &archiveRootUrl)
 {
-    if (!isComicBookArchiveRootScheme(archiveRootUrl.scheme())) {
+    if (!KiriView::isSupportedArchiveRootScheme(archiveRootUrl.scheme())) {
         return std::nullopt;
     }
 
@@ -204,13 +157,14 @@ bool isUrlInsideArchiveRoot(const QUrl &url, const QUrl &archiveRootUrl)
 
 std::optional<QUrl> containingComicBookArchiveRootUrl(const QUrl &url)
 {
-    const QString marker = comicBookArchiveMarkerForRootScheme(url.scheme());
+    const QString marker = KiriView::comicBookArchiveMarkerForRootScheme(url.scheme());
     return containingArchiveRootUrl(url, marker.isEmpty() ? QStringList() : QStringList { marker });
 }
 
 std::optional<QUrl> containingDirectArchiveOpenRootUrl(const QUrl &url)
 {
-    return containingArchiveRootUrl(url, directArchiveOpenMarkersForRootScheme(url.scheme()));
+    return containingArchiveRootUrl(
+        url, KiriView::directArchiveOpenMarkersForRootScheme(url.scheme()));
 }
 
 QString windowTitleFileNameForDisplayedLocation(const DisplayedImageLocation &location)

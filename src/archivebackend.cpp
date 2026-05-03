@@ -3,6 +3,7 @@
 
 #include "archivebackend.h"
 
+#include "archiveformat.h"
 #include "imagecontainer.h"
 #include "imageformatregistry.h"
 #include "imagenavigationmodel.h"
@@ -33,15 +34,16 @@ std::unique_ptr<KArchive> createArchive(const KiriView::ArchiveDocumentLocation 
         return nullptr;
     }
 
-    const QString scheme = archiveDocument.rootUrl().scheme();
-    if (scheme == QStringLiteral("zip")) {
+    switch (KiriView::archiveStorageBackendForRootScheme(archiveDocument.rootUrl().scheme())) {
+    case KiriView::ArchiveStorageBackend::KZip:
         return std::make_unique<KZip>(filePath);
-    }
-    if (scheme == QStringLiteral("tar")) {
+    case KiriView::ArchiveStorageBackend::KTar:
         return std::make_unique<KTar>(filePath);
-    }
-    if (scheme == QStringLiteral("sevenz")) {
+    case KiriView::ArchiveStorageBackend::K7Zip:
         return std::make_unique<K7Zip>(filePath);
+    case KiriView::ArchiveStorageBackend::LibArchive:
+    case KiriView::ArchiveStorageBackend::None:
+        return nullptr;
     }
 
     return nullptr;
@@ -49,7 +51,8 @@ std::unique_ptr<KArchive> createArchive(const KiriView::ArchiveDocumentLocation 
 
 bool isLibArchiveDocument(const KiriView::ArchiveDocumentLocation &archiveDocument)
 {
-    return archiveDocument.rootUrl().scheme() == QStringLiteral("rar");
+    return KiriView::archiveStorageBackendForRootScheme(archiveDocument.rootUrl().scheme())
+        == KiriView::ArchiveStorageBackend::LibArchive;
 }
 
 QString normalizeEntryPath(const QString &path)
