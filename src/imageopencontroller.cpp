@@ -237,7 +237,7 @@ void ImageOpenController::finishSuccessfulImageLoad(const ImageLoadSession &sess
 
 void ImageOpenController::reportEffects(const ImageDocumentEffects &effects)
 {
-    for (const ImageDocumentEffect &effect : effects.items()) {
+    for (const ImageDocumentEffect &effect : effects) {
         report(effect);
     }
 }

@@ -21,36 +21,25 @@ ImageDocumentNavigationController::ImageDocumentNavigationController(QObject *pa
 {
     m_navigationService
         = std::make_unique<ImageNavigationService>(parent, std::move(candidateProvider));
-    m_navigationService->setOpenUrlCallback([this](const QUrl &url) {
-        if (m_callbacks.effect) {
-            m_callbacks.effect(ImageDocumentEffect::openUrl(url));
-        }
-    });
+    m_navigationService->setOpenUrlCallback(
+        [this](const QUrl &url) { report(ImageDocumentEffect::openUrl(url)); });
     auto openContainerImage = [this](const QUrl &imageUrl, const QUrl &containerUrl) {
-        if (m_callbacks.effect) {
-            m_callbacks.effect(ImageDocumentEffect::containerImageSelected(imageUrl, containerUrl));
-        }
+        report(ImageDocumentEffect::containerImageSelected(imageUrl, containerUrl));
     };
     m_navigationService->setOpenContainerImageCallback(std::move(openContainerImage));
     auto handleError = [this](const auto &url, auto error, const auto &message) {
         if (error == ContainerNavigationError::EmptyContainer) {
-            if (m_callbacks.effect) {
-                m_callbacks.effect(ImageDocumentEffect::emptyContainerSelected(url));
-            }
+            report(ImageDocumentEffect::emptyContainerSelected(url));
             return;
         }
 
         if (error == ContainerNavigationError::InvalidComicBookArchive) {
-            if (m_callbacks.effect) {
-                m_callbacks.effect(ImageDocumentEffect::containerNavigationFailed(
-                    url, imageViewText("Could not open the selected comic book archive.")));
-            }
+            report(ImageDocumentEffect::containerNavigationFailed(
+                url, imageViewText("Could not open the selected comic book archive.")));
             return;
         }
 
-        if (m_callbacks.effect) {
-            m_callbacks.effect(ImageDocumentEffect::containerNavigationFailed(url, message));
-        }
+        report(ImageDocumentEffect::containerNavigationFailed(url, message));
     };
     m_navigationService->setContainerNavigationErrorCallback(std::move(handleError));
     m_navigationService->setPageNavigationChangedCallback(
@@ -82,11 +71,11 @@ void ImageDocumentNavigationController::openNextImage()
 void ImageDocumentNavigationController::openImageAtPage(int pageNumber)
 {
     const std::optional<QUrl> pageUrl = m_navigationService->urlAtPage(pageNumber);
-    if (!pageUrl.has_value() || !m_callbacks.effect) {
+    if (!pageUrl.has_value()) {
         return;
     }
 
-    m_callbacks.effect(ImageDocumentEffect::openUrl(*pageUrl));
+    report(ImageDocumentEffect::openUrl(*pageUrl));
 }
 
 void ImageDocumentNavigationController::openPreviousContainer()
@@ -138,6 +127,13 @@ void ImageDocumentNavigationController::openAdjacentImage(NavigationDirection di
 void ImageDocumentNavigationController::openAdjacentContainer(NavigationDirection direction)
 {
     m_navigationService->openAdjacentContainer(m_state.containerNavigationUrl(), direction);
+}
+
+void ImageDocumentNavigationController::report(ImageDocumentEffect effect)
+{
+    if (m_callbacks.effect) {
+        m_callbacks.effect(std::move(effect));
+    }
 }
 
 void ImageDocumentNavigationController::notify(ImageDocumentChange change)

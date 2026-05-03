@@ -112,11 +112,14 @@ struct ImageDocumentEffect {
 class ImageDocumentEffects
 {
 public:
+    using ConstIterator = std::vector<ImageDocumentEffect>::const_iterator;
+
     void add(ImageDocumentEffect effect) { m_effects.push_back(std::move(effect)); }
 
     bool empty() const { return m_effects.empty(); }
 
-    const std::vector<ImageDocumentEffect> &items() const { return m_effects; }
+    ConstIterator begin() const { return m_effects.cbegin(); }
+    ConstIterator end() const { return m_effects.cend(); }
 
 private:
     std::vector<ImageDocumentEffect> m_effects;

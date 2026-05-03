@@ -54,6 +54,7 @@ private:
     ImageNavigationService::DisplayContext displayContext() const;
     void openAdjacentImage(NavigationDirection direction);
     void openAdjacentContainer(NavigationDirection direction);
+    void report(ImageDocumentEffect effect);
     void notify(ImageDocumentChange change);
 
     ImageDocumentState &m_state;

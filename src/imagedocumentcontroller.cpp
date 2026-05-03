@@ -209,7 +209,7 @@ void ImageDocumentController::dispatchEffectPayload(const AnimationFailedEffect 
 
 void ImageDocumentController::dispatchEffects(const ImageDocumentEffects &effects)
 {
-    for (const ImageDocumentEffect &effect : effects.items()) {
+    for (const ImageDocumentEffect &effect : effects) {
         dispatchEffect(effect);
     }
 }

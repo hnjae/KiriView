@@ -32,7 +32,7 @@ KiriView::ImageLoadSession loadSession(const QUrl &sourceUrl, const QUrl &imageU
 
 template <typename Effect> const Effect *findEffect(const KiriView::ImageDocumentEffects &effects)
 {
-    for (const KiriView::ImageDocumentEffect &effect : effects.items()) {
+    for (const KiriView::ImageDocumentEffect &effect : effects) {
         if (const auto *payload = std::get_if<Effect>(&effect.payload)) {
             return payload;
         }
