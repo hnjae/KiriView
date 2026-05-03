@@ -75,6 +75,11 @@ For SVG files, 100% uses the SVG's intrinsic size. SVGs remain sharp instead of
 pixelated when Fit mode, manual zoom, window resizing, or display scale changes
 the displayed size.
 
+HEIF still images are supported when the primary image item is encoded with
+HEVC, AVC/H.264, JPEG, JPEG 2000, or VVC/H.266. If a recognized HEIF file uses
+an unsupported compression format or cannot be decoded, KiriView reports the
+decode error without replacing the currently displayed image.
+
 KiriView starts in Fit mode. Fit mode scales the image as large as possible
 while keeping the full image visible in the viewport, including upscaling small
 images when space is available. Fit Height mode scales the image height to the
