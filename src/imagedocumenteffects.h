@@ -116,8 +116,6 @@ public:
 
     void add(ImageDocumentEffect effect) { m_effects.push_back(std::move(effect)); }
 
-    bool empty() const { return m_effects.empty(); }
-
     ConstIterator begin() const { return m_effects.cbegin(); }
     ConstIterator end() const { return m_effects.cend(); }
 

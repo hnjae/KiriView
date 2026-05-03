@@ -52,11 +52,6 @@ const ArchiveDocumentLocation &ImageDocumentState::displayedArchiveDocument() co
 
 const QUrl &ImageDocumentState::displayedUrl() const { return m_displayedImageLocation.imageUrl(); }
 
-const QUrl &ImageDocumentState::displayedArchiveDocumentRootUrl() const
-{
-    return m_displayedImageLocation.archiveDocumentRootUrl();
-}
-
 ImageDocumentStatus ImageDocumentState::status() const { return m_status; }
 
 bool ImageDocumentState::loading() const { return m_loading; }

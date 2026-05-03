@@ -142,10 +142,6 @@ struct ImageLoadRequest {
 
     const QUrl &sourceUrl() const { return source.url(); }
     const ArchiveDocumentLocation &archiveDocument() const { return displayedArchiveDocument; }
-    const QUrl &displayedArchiveDocumentRootUrl() const
-    {
-        return displayedArchiveDocument.rootUrl();
-    }
     const QUrl &containerNavigationUrl() const { return containerNavigation.url(); }
     bool isEmpty() const { return source.isEmpty(); }
     bool isContainerNavigation() const { return !containerNavigation.isEmpty(); }

@@ -125,13 +125,13 @@ void TestImageUrl::imageLocationTypesExposeExplicitState()
     QVERIFY(!plainOpen.isEmpty());
     QVERIFY(!plainOpen.isContainerNavigation());
     QCOMPARE(plainOpen.sourceUrl(), location.imageUrl());
-    QVERIFY(plainOpen.displayedArchiveDocumentRootUrl().isEmpty());
+    QVERIFY(plainOpen.archiveDocument().rootUrl().isEmpty());
 
     const QUrl containerUrl = QUrl::fromLocalFile(QStringLiteral("/images/"));
     const KiriView::ImageLoadRequest containerOpen = KiriView::ImageLoadRequest::fromLocation(
         location.imageUrl(), location.archiveDocument(), containerUrl);
     QVERIFY(containerOpen.isContainerNavigation());
-    QCOMPARE(containerOpen.displayedArchiveDocumentRootUrl(), location.archiveDocumentRootUrl());
+    QCOMPARE(containerOpen.archiveDocument().rootUrl(), location.archiveDocumentRootUrl());
     QCOMPARE(containerOpen.containerNavigationUrl(), containerUrl);
 }
 

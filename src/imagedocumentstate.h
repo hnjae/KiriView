@@ -41,7 +41,6 @@ public:
     const DisplayedImageLocation &displayedImageLocation() const;
     const ArchiveDocumentLocation &displayedArchiveDocument() const;
     const QUrl &displayedUrl() const;
-    const QUrl &displayedArchiveDocumentRootUrl() const;
     ImageDocumentStatus status() const;
     bool loading() const;
     const QString &errorString() const;
