@@ -2,8 +2,8 @@
 
 ## Current Scope
 
-KiriView opens one user-selected image file or comic book archive, displays it
-in the main window, and can navigate to adjacent images or pages in the same
+KiriView opens one user-selected image file or supported archive, displays it in
+the main window, and can navigate to adjacent images or pages in the same
 location.
 
 The main window toolbar shows image controls without a page title. The compact
@@ -21,10 +21,10 @@ file does not exist, it prints a clear error message naming the path and reason
 to standard error, does not open the main window, and exits with code 2.
 
 When an image file is displayed, the main window title is the displayed image
-file name, a spaced em dash, and `KiriView`. When a CBZ, CBT, or CB7 comic book
-archive opened by KiriView is displayed, the title is the archive file name, a
-spaced em dash, and `KiriView`. KiriView does not show file paths in the window
-title. When no image or comic book page is displayed, the window title is
+file name, a spaced em dash, and `KiriView`. When a CBZ, CBT, CB7, ZIP, TAR, or
+7Z archive opened by KiriView is displayed, the title is the archive file name,
+a spaced em dash, and `KiriView`. KiriView does not show file paths in the
+window title. When no image or archive page is displayed, the window title is
 `KiriView`.
 
 The toolbar also provides icon-only Previous Container and Next Container
@@ -40,6 +40,12 @@ such as `zip://`, `tar://`, and `sevenz://`.
 KiriView also opens local `.cbz`, `.cbt`, and `.cb7` comic book archives.
 Opening a comic book archive displays the first supported image inside that
 archive.
+
+KiriView opens local `.zip`, `.tar`, and `.7z` archives only when they are
+directly provided, such as through a startup argument or the open dialog's
+`All files (*)` filter. These general archives are not advertised through the
+desktop file's file associations, the open dialog's default image and comic book
+filter, or sibling container navigation.
 
 In Flatpak, adjacent image navigation can list neighboring files under `home`,
 `/media`, `/mnt`, `/run/media`, and `$XDG_RUNTIME_DIR/gvfs`. Files outside those
@@ -163,9 +169,9 @@ When an image is opened from a KDE-supported archive URL such as `zip://`,
 `tar://`, or `sevenz://`, navigation moves between supported image files in the
 same directory inside the archive.
 
-When an image is opened by selecting a CBZ, CBT, or CB7 archive, navigation
-moves between all supported image files inside that archive, including images in
-subdirectories.
+When an image is opened by selecting a CBZ, CBT, CB7, ZIP, TAR, or 7Z archive,
+navigation moves between all supported image files inside that archive,
+including images in subdirectories.
 
 The previous and next files are determined by sorting candidate file names with
 the user's locale-aware file name order. Navigation does not wrap; pressing Page
@@ -191,6 +197,9 @@ directory. When the current image is inside a comic book archive opened by
 KiriView, its container is that archive file. The Previous Container and Next
 Container toolbar actions open the previous or next sibling container beside the
 current container.
+
+When the current image is inside a directly opened ZIP, TAR, or 7Z archive, the
+Previous Container and Next Container toolbar actions are disabled.
 
 Sibling container candidates are directly contained directories and local
 `.cbz`, `.cbt`, or `.cb7` files in the current container's parent directory.
