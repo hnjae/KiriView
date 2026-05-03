@@ -28,8 +28,9 @@ window title. When no image or archive page is displayed, the window title is
 `KiriView`.
 
 The toolbar also provides icon-only Previous Container and Next Container
-buttons next to the open action. These buttons navigate between sibling image
-containers and are labeled only by their tooltips.
+buttons next to the open action. When container navigation is available, these
+buttons navigate between sibling comic book archive containers and are labeled
+only by their tooltips.
 
 ## File Access
 
@@ -38,14 +39,21 @@ KDE-supported remote URLs such as `smb://`, and KDE-supported archive URLs
 such as `zip://`, `tar://`, and `sevenz://`.
 
 KiriView also opens local `.cbz`, `.cbt`, and `.cb7` comic book archives.
-Opening a comic book archive displays the first supported image inside that
-archive.
+When a local comic book archive is opened directly, KiriView owns that archive
+as the current archive document and displays the first supported image inside
+that archive.
 
 KiriView opens local `.zip`, `.tar`, and `.7z` archives only when they are
 directly provided, such as through a startup argument or the open dialog's
-`All files (*)` filter. These general archives are not advertised through the
-desktop file's file associations, the open dialog's default image and comic book
-filter, or sibling container navigation.
+`All files (*)` filter. When a local general archive is opened directly,
+KiriView owns that archive as the current archive document and displays the
+first supported image inside that archive. These general archives are not
+advertised through the desktop file's file associations, the open dialog's
+default image and comic book filter, or sibling container navigation.
+
+When an image is opened from a KDE-supported archive URL such as `zip://`,
+`tar://`, or `sevenz://`, KiriView opens that image URL rather than owning the
+whole archive as an archive document.
 
 In Flatpak, adjacent image navigation can list neighboring files under `home`,
 `/media`, `/mnt`, `/run/media`, and `$XDG_RUNTIME_DIR/gvfs`. Files outside those
@@ -167,11 +175,11 @@ image. Supported image extensions match the open dialog: AVIF (`.avif` and
 
 When an image is opened from a KDE-supported archive URL such as `zip://`,
 `tar://`, or `sevenz://`, navigation moves between supported image files in the
-same directory inside the archive.
+same directory inside the archive URL.
 
-When an image is opened by selecting a CBZ, CBT, CB7, ZIP, TAR, or 7Z archive,
-navigation moves between all supported image files inside that archive,
-including images in subdirectories.
+When an image is displayed from a local CBZ, CBT, CB7, ZIP, TAR, or 7Z archive
+document opened directly by KiriView, navigation moves between all supported
+image files inside that archive document, including images in subdirectories.
 
 The previous and next files are determined by sorting candidate file names with
 the user's locale-aware file name order. Navigation does not wrap; pressing Page
@@ -189,24 +197,23 @@ until the user opens an adjacent image.
 
 ## Container Navigation
 
-A container is either a directory or a local CBZ, CBT, or CB7 comic book
-archive. The current container can be the directory or archive whose image is
-displayed, or an empty sibling container reached through container navigation.
-When the current image is a normal file, its container is the image's parent
-directory. When the current image is inside a comic book archive opened by
-KiriView, its container is that archive file. The Previous Container and Next
-Container toolbar actions open the previous or next sibling container beside the
+A container is a local CBZ, CBT, or CB7 comic book archive. The current
+container can be the comic book archive whose image is displayed, or an empty
+sibling comic book archive reached through container navigation. When the
+current image is inside a local comic book archive opened directly by KiriView,
+its container is that archive file. The Previous Container and Next Container
+toolbar actions open the previous or next sibling comic book archive beside the
 current container.
 
-When the current image is inside a directly opened ZIP, TAR, or 7Z archive, the
-Previous Container and Next Container toolbar actions are disabled.
+When the current image is a normal image file, inside a KDE-supported archive
+URL, or inside a directly opened ZIP, TAR, or 7Z archive document, the Previous
+Container and Next Container toolbar actions are disabled.
 
-Sibling container candidates are directly contained directories and local
-`.cbz`, `.cbt`, or `.cb7` files in the current container's parent directory.
-Candidates are sorted with the same user locale-aware file name order used for
-image navigation. Navigation does not wrap; pressing Previous Container on the
-first candidate or Next Container on the last candidate keeps the current view
-unchanged.
+Sibling container candidates are local `.cbz`, `.cbt`, or `.cb7` files in the
+current container's parent directory. Candidates are sorted with the same user
+locale-aware file name order used for image navigation. Navigation does not
+wrap; pressing Previous Container on the first candidate or Next Container on
+the last candidate keeps the current view unchanged.
 
 The `[` key opens the previous sibling container and the `]` key opens the next
 sibling container when container navigation is available. Home and Ctrl+Home open
@@ -214,8 +221,6 @@ the first image in the current container, and End and Ctrl+End open the last
 image in the current container. These shortcuts are inactive while the page
 number or zoom input is focused.
 
-Opening a directory container displays the first directly contained supported
-image file in that directory. Directory container opening is non-recursive.
 Opening a comic book archive container displays the first supported image in
 that archive using the same archive image ordering as page navigation.
 
