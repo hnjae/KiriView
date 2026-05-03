@@ -1,6 +1,15 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+// Compatibility shim: KiriView decodes selected HEIF data through libheif
+// because current KImageFormats/QImageReader support does not reliably cover
+// every HEIF variant KiriView supports. HEIF image sequences are read here so
+// they play as authored animations with frames, delays, alpha, and supported
+// JPEG/JPEG 2000/AVC/HEVC/VVC sequence codecs. Remove the sequence reader and
+// route HEIF sequences through QImageReader once KImageFormats reliably exposes
+// those semantics. Re-evaluate the still-image fallback separately once
+// KImageFormats covers the still HEIF variants KiriView supports.
+
 #include "heifdecoder.h"
 
 #include "imagerendering.h"
