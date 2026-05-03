@@ -11,13 +11,7 @@
   "build-options": {
     "append-path": "/usr/lib/sdk/rust-stable/bin:/usr/lib/sdk/llvm21/bin"
   },
-  "cleanup": [
-    "/include",
-    "/lib/cmake",
-    "/lib/libopenh264.so",
-    "/lib/libvvdec.so",
-    "/lib/pkgconfig"
-  ],
+  "cleanup": ["/include", "/lib/cmake", "/lib/libvvdec.so", "/lib/pkgconfig"],
   "finish-args": [
     "--socket=wayland",
     "--device=dri",
@@ -31,19 +25,6 @@
     "--env=LIBHEIF_PLUGIN_PATH=/app/lib/libheif:/usr/lib/x86_64-linux-gnu/codecs-extra/lib/libheif:/usr/lib/aarch64-linux-gnu/codecs-extra/lib/libheif"
   ],
   "modules": [
-    {
-      "name": "openh264",
-      "buildsystem": "meson",
-      "config-opts": ["--buildtype=release", "-Dtests=disabled"],
-      "sources": [
-        {
-          "type": "git",
-          "url": "https://github.com/cisco/openh264.git",
-          "tag": "v2.6.0",
-          "commit": "652bdb7719f30b52b08e506645a7322ff1b2cc6f"
-        }
-      ]
-    },
     {
       "name": "vvdec",
       "buildsystem": "cmake-ninja",
@@ -67,9 +48,8 @@
       "name": "libheif-codec-plugins",
       "buildsystem": "simple",
       "build-commands": [
-        "cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=/app -DCMAKE_INSTALL_PREFIX=/app -DCMAKE_INSTALL_LIBDIR=lib -DENABLE_PLUGIN_LOADING=ON -DPLUGIN_DIRECTORY=/app/lib/libheif -DPLUGIN_INSTALL_DIRECTORY=/app/lib/libheif -DWITH_GDK_PIXBUF=OFF -DWITH_OpenH264_DECODER=ON -DWITH_OpenH264_DECODER_PLUGIN=ON -DWITH_VVDEC=ON -DWITH_VVDEC_PLUGIN=ON -DWITH_FFMPEG_DECODER=ON -DWITH_FFMPEG_DECODER_PLUGIN=ON -DWITH_LIBDE265=OFF -DWITH_X265=OFF -DWITH_KVAZAAR=OFF -DWITH_UVG266=OFF -DWITH_AOM_DECODER=OFF -DWITH_AOM_ENCODER=OFF -DWITH_DAV1D=OFF -DWITH_SvtEnc=OFF -DWITH_RAV1E=OFF -DWITH_JPEG_DECODER=OFF -DWITH_JPEG_ENCODER=OFF -DWITH_OpenJPEG_DECODER=OFF -DWITH_OpenJPEG_ENCODER=OFF -DWITH_OPENJPH_ENCODER=OFF -DWITH_VVENC=OFF -DWITH_UNCOMPRESSED_CODEC=OFF -DWITH_LIBSHARPYUV=OFF -DWITH_EXAMPLES=OFF -DWITH_FUZZERS=OFF",
-        "cmake --build build --target heif-openh264dec heif-vvdec heif-ffmpegdec",
-        "install -Dm755 build/libheif/plugins/libheif-openh264dec.so /app/lib/libheif/libheif-openh264dec.so",
+        "cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=/app -DCMAKE_INSTALL_PREFIX=/app -DCMAKE_INSTALL_LIBDIR=lib -DENABLE_PLUGIN_LOADING=ON -DPLUGIN_DIRECTORY=/app/lib/libheif -DPLUGIN_INSTALL_DIRECTORY=/app/lib/libheif -DWITH_GDK_PIXBUF=OFF -DWITH_OpenH264_DECODER=OFF -DWITH_VVDEC=ON -DWITH_VVDEC_PLUGIN=ON -DWITH_FFMPEG_DECODER=ON -DWITH_FFMPEG_DECODER_PLUGIN=ON -DWITH_LIBDE265=OFF -DWITH_X265=OFF -DWITH_KVAZAAR=OFF -DWITH_UVG266=OFF -DWITH_AOM_DECODER=OFF -DWITH_AOM_ENCODER=OFF -DWITH_DAV1D=OFF -DWITH_SvtEnc=OFF -DWITH_RAV1E=OFF -DWITH_JPEG_DECODER=OFF -DWITH_JPEG_ENCODER=OFF -DWITH_OpenJPEG_DECODER=OFF -DWITH_OpenJPEG_ENCODER=OFF -DWITH_OPENJPH_ENCODER=OFF -DWITH_VVENC=OFF -DWITH_UNCOMPRESSED_CODEC=OFF -DWITH_LIBSHARPYUV=OFF -DWITH_EXAMPLES=OFF -DWITH_FUZZERS=OFF",
+        "cmake --build build --target heif-vvdec heif-ffmpegdec",
         "install -Dm755 build/libheif/plugins/libheif-vvdec.so /app/lib/libheif/libheif-vvdec.so",
         "install -Dm755 build/libheif/plugins/libheif-ffmpegdec.so /app/lib/libheif/libheif-ffmpegdec.so"
       ],
@@ -79,10 +59,6 @@
           "url": "https://github.com/strukturag/libheif.git",
           "tag": "v1.20.2",
           "commit": "35dad50a9145332a7bfdf1ff6aef6801fb613d68"
-        },
-        {
-          "type": "patch",
-          "path": "flatpak/patches/libheif-openh264-vflip.patch"
         },
         {
           "type": "patch",
