@@ -16,6 +16,10 @@ runtime. KiriView does not implement archive format parsers itself, so archive
 compatibility, unsupported variants, encryption behavior, and error handling are
 bounded by the capabilities and limitations of those libraries.
 
+As of May 2026, this has been verified with libarchive 3.8.5 in the current
+Flatpak SDK and libarchive 3.8.6 in the Nix/devenv environment: RAR4 solid
+archives are not supported by libarchive.
+
 ## Install the Current Development Version
 
 These instructions install the current source checkout as a local Flatpak
