@@ -304,6 +304,7 @@ in
     kdePackages.qtimageformats
     kdePackages.qtsvg
     kdePackages.qttools
+    libarchive
     ninja
     pkg-config
   ];

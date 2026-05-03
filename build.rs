@@ -13,6 +13,7 @@ const CPP_CORE_SOURCES_FILE: &str = "src/cpp_core_sources.txt";
 
 fn main() {
     let kio_include_dirs = kio_include_dirs();
+    let libarchive_include_dirs = libarchive_include_dirs();
     let qt_rhi_include_dirs = qt_rhi_include_dirs();
     let shader_source = bake_shaders();
     let cpp_core_sources = cpp_core_sources();
@@ -67,6 +68,9 @@ fn main() {
             cc.file(&shader_source);
             cc.include("src");
             for dir in &kio_include_dirs {
+                cc.include(dir);
+            }
+            for dir in &libarchive_include_dirs {
                 cc.include(dir);
             }
             for dir in &qt_rhi_include_dirs {
@@ -166,6 +170,7 @@ fn link_kio() {
     println!("cargo::rustc-link-lib=KF6Archive");
     println!("cargo::rustc-link-lib=KF6KIOCore");
     println!("cargo::rustc-link-lib=KF6CoreAddons");
+    println!("cargo::rustc-link-lib=archive");
 }
 
 fn kio_include_dirs() -> Vec<PathBuf> {
@@ -204,6 +209,31 @@ fn qt_rhi_include_dirs() -> Vec<PathBuf> {
     }
 
     dirs.into_iter().collect()
+}
+
+fn libarchive_include_dirs() -> Vec<PathBuf> {
+    println!("cargo::rerun-if-env-changed=NIX_CFLAGS_COMPILE");
+
+    let mut dirs = BTreeSet::new();
+    add_libarchive_include_dir(&mut dirs, Path::new("/usr/include"));
+
+    for path in flag_paths("NIX_CFLAGS_COMPILE", "-isystem") {
+        add_libarchive_include_dir(&mut dirs, &path);
+    }
+    for path in flag_paths("NIX_CFLAGS_COMPILE", "-I") {
+        add_libarchive_include_dir(&mut dirs, &path);
+    }
+    for path in pkg_config_include_dirs("libarchive") {
+        add_libarchive_include_dir(&mut dirs, &path);
+    }
+
+    dirs.into_iter().collect()
+}
+
+fn add_libarchive_include_dir(dirs: &mut BTreeSet<PathBuf>, include_root: &Path) {
+    if include_root.join("archive.h").exists() && include_root.join("archive_entry.h").exists() {
+        dirs.insert(include_root.to_path_buf());
+    }
 }
 
 fn add_qt_rhi_include_dirs(dirs: &mut BTreeSet<PathBuf>, include_root: &Path) {
@@ -317,6 +347,7 @@ fn kio_library_dirs() -> Vec<PathBuf> {
         if contains_archive_library(&path)
             || contains_kio_library(&path)
             || contains_core_addons_library(&path)
+            || contains_libarchive_library(&path)
         {
             dirs.insert(path);
         }
@@ -335,6 +366,10 @@ fn contains_kio_library(dir: &Path) -> bool {
 
 fn contains_core_addons_library(dir: &Path) -> bool {
     dir.join("libKF6CoreAddons.so").exists()
+}
+
+fn contains_libarchive_library(dir: &Path) -> bool {
+    dir.join("libarchive.so").exists()
 }
 
 fn flag_paths(env_var: &str, flag: &str) -> Vec<PathBuf> {

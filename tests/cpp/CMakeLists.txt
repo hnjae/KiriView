@@ -16,6 +16,8 @@ find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2 Svg Test 
 find_package(KF6Archive CONFIG REQUIRED)
 find_package(KF6CoreAddons CONFIG REQUIRED)
 find_package(KF6KIO CONFIG REQUIRED)
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(LibArchive REQUIRED IMPORTED_TARGET libarchive)
 
 set(KIRIVIEW_CARGO_TARGET_DIR "${CMAKE_SOURCE_DIR}/../../target/flatpak/debug")
 file(GLOB KIRIVIEW_RUST_STATICLIBS
@@ -55,6 +57,7 @@ target_link_libraries(kiriview_test_core PUBLIC
     KF6::Archive
     KF6::CoreAddons
     KF6::KIOCore
+    PkgConfig::LibArchive
 )
 
 function(add_kiriview_cpp_test target source)
