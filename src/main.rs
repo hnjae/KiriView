@@ -9,19 +9,8 @@ use cxx_qt_lib_extras::QApplication;
 use std::env;
 
 fn initial_source_url() -> Option<QUrl> {
-    let argument = env::args_os().skip(1).find(|argument| argument != "--")?;
-    let argument = argument.to_string_lossy();
-    let working_directory = env::current_dir()
-        .ok()
-        .map(|path| QString::from(path.to_string_lossy().as_ref()))
-        .unwrap_or_else(|| QString::from(""));
-    let url = QUrl::from_user_input(&QString::from(argument.as_ref()), &working_directory);
-
-    if url.is_empty() || !url.is_valid() {
-        None
-    } else {
-        Some(url)
-    }
+    let working_directory = env::current_dir().ok();
+    kiriview::initial_source_url_from_args(env::args_os(), working_directory.as_deref())
 }
 
 fn main() {
