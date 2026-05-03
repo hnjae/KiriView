@@ -15,7 +15,9 @@ class TestImageContainer : public QObject
 
 private Q_SLOTS:
     void comicBookArchiveRootUrlsUseZipScheme();
+    void comicBookArchiveRootUrlsUseFormatSpecificKioSchemes();
     void archiveInteriorUrlsResolveToTheirRootAndTitle();
+    void cbtAndCb7InteriorUrlsResolveToTheirRoots();
     void archiveImageContainerUrlsResolveToArchiveFile();
     void regularImageContainerUrlsResolveToParentDirectory();
 };
@@ -28,6 +30,21 @@ void TestImageContainer::comicBookArchiveRootUrlsUseZipScheme()
     QVERIFY(archiveRootUrl.has_value());
     QCOMPARE(archiveRootUrl->scheme(), QStringLiteral("zip"));
     QCOMPARE(archiveRootUrl->path(), QStringLiteral("/books/book.cbz/"));
+}
+
+void TestImageContainer::comicBookArchiveRootUrlsUseFormatSpecificKioSchemes()
+{
+    const std::optional<QUrl> cbtRootUrl
+        = KiriView::comicBookArchiveRootUrl(QUrl::fromLocalFile(QStringLiteral("/books/book.cbt")));
+    QVERIFY(cbtRootUrl.has_value());
+    QCOMPARE(cbtRootUrl->scheme(), QStringLiteral("tar"));
+    QCOMPARE(cbtRootUrl->path(), QStringLiteral("/books/book.cbt/"));
+
+    const std::optional<QUrl> cb7RootUrl
+        = KiriView::comicBookArchiveRootUrl(QUrl::fromLocalFile(QStringLiteral("/books/book.cb7")));
+    QVERIFY(cb7RootUrl.has_value());
+    QCOMPARE(cb7RootUrl->scheme(), QStringLiteral("sevenz"));
+    QCOMPARE(cb7RootUrl->path(), QStringLiteral("/books/book.cb7/"));
 }
 
 void TestImageContainer::archiveInteriorUrlsResolveToTheirRootAndTitle()
@@ -43,6 +60,23 @@ void TestImageContainer::archiveInteriorUrlsResolveToTheirRootAndTitle()
     QCOMPARE(KiriView::containingComicBookArchiveRootUrl(pageUrl), archiveRootUrl);
     QCOMPARE(KiriView::windowTitleFileNameForDisplayedUrl(pageUrl, *archiveRootUrl),
         QStringLiteral("book.cbz"));
+}
+
+void TestImageContainer::cbtAndCb7InteriorUrlsResolveToTheirRoots()
+{
+    const QUrl cbtRootUrl(QStringLiteral("tar:///books/book.cbt/"));
+    QUrl cbtPageUrl = cbtRootUrl;
+    cbtPageUrl.setPath(cbtRootUrl.path() + QStringLiteral("chapter/page001.png"));
+    QCOMPARE(KiriView::containingComicBookArchiveRootUrl(cbtPageUrl), cbtRootUrl);
+    QCOMPARE(KiriView::windowTitleFileNameForDisplayedUrl(cbtPageUrl, cbtRootUrl),
+        QStringLiteral("book.cbt"));
+
+    const QUrl cb7RootUrl(QStringLiteral("sevenz:///books/book.cb7/"));
+    QUrl cb7PageUrl = cb7RootUrl;
+    cb7PageUrl.setPath(cb7RootUrl.path() + QStringLiteral("chapter/page001.png"));
+    QCOMPARE(KiriView::containingComicBookArchiveRootUrl(cb7PageUrl), cb7RootUrl);
+    QCOMPARE(KiriView::windowTitleFileNameForDisplayedUrl(cb7PageUrl, cb7RootUrl),
+        QStringLiteral("book.cb7"));
 }
 
 void TestImageContainer::archiveImageContainerUrlsResolveToArchiveFile()

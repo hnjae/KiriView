@@ -17,6 +17,36 @@ QString extensionForFileName(const QString &name)
 
     return name.mid(dotIndex + 1).toCaseFolded();
 }
+
+QString comicBookArchiveKioSchemeForExtension(const QString &extension)
+{
+    if (extension == QStringLiteral("cbz")) {
+        return QStringLiteral("zip");
+    }
+    if (extension == QStringLiteral("cbt")) {
+        return QStringLiteral("tar");
+    }
+    if (extension == QStringLiteral("cb7")) {
+        return QStringLiteral("sevenz");
+    }
+
+    return {};
+}
+
+QString comicBookArchiveKioSchemeForMimeTypeName(const QString &mimeTypeName)
+{
+    if (mimeTypeName == QStringLiteral("application/vnd.comicbook+zip")) {
+        return QStringLiteral("zip");
+    }
+    if (mimeTypeName == QStringLiteral("application/x-cbt")) {
+        return QStringLiteral("tar");
+    }
+    if (mimeTypeName == QStringLiteral("application/x-cb7")) {
+        return QStringLiteral("sevenz");
+    }
+
+    return {};
+}
 }
 
 namespace KiriView {
@@ -44,6 +74,8 @@ QStringList supportedOpenExtensions()
 {
     QStringList extensions = supportedImageExtensions();
     extensions.append(QStringLiteral("cbz"));
+    extensions.append(QStringLiteral("cbt"));
+    extensions.append(QStringLiteral("cb7"));
     extensions.sort(Qt::CaseSensitive);
     return extensions;
 }
@@ -56,22 +88,29 @@ bool isSupportedImageFileName(const QString &name)
 
 bool isComicBookArchiveFileName(const QString &name)
 {
-    return extensionForFileName(name) == QStringLiteral("cbz");
+    return !comicBookArchiveKioSchemeForExtension(extensionForFileName(name)).isEmpty();
 }
 
 bool isComicBookArchiveUrl(const QUrl &url)
 {
+    return !comicBookArchiveKioSchemeForUrl(url).isEmpty();
+}
+
+QString comicBookArchiveKioSchemeForUrl(const QUrl &url)
+{
     if (!url.isLocalFile()) {
-        return false;
+        return {};
     }
 
-    if (isComicBookArchiveFileName(url.fileName())) {
-        return true;
+    const QString extensionScheme
+        = comicBookArchiveKioSchemeForExtension(extensionForFileName(url.fileName()));
+    if (!extensionScheme.isEmpty()) {
+        return extensionScheme;
     }
 
     const QMimeType mimeType
         = QMimeDatabase().mimeTypeForFile(url.toLocalFile(), QMimeDatabase::MatchExtension);
-    return mimeType.name() == QStringLiteral("application/vnd.comicbook+zip");
+    return comicBookArchiveKioSchemeForMimeTypeName(mimeType.name());
 }
 
 QStringList openDialogNameFilters()

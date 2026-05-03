@@ -21,6 +21,8 @@ bool isKioFuseArchiveScheme(const QString &scheme)
 {
     static const QStringList archiveSchemes = {
         QStringLiteral("zip"),
+        QStringLiteral("tar"),
+        QStringLiteral("sevenz"),
     };
 
     return archiveSchemes.contains(scheme);

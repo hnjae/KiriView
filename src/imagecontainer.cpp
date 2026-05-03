@@ -8,9 +8,36 @@
 #include "imageurl.h"
 
 #include <QDir>
+#include <QStringList>
 #include <cstddef>
 
 namespace {
+bool isComicBookArchiveRootScheme(const QString &scheme)
+{
+    static const QStringList archiveSchemes = {
+        QStringLiteral("zip"),
+        QStringLiteral("tar"),
+        QStringLiteral("sevenz"),
+    };
+
+    return archiveSchemes.contains(scheme);
+}
+
+QString comicBookArchiveMarkerForRootScheme(const QString &scheme)
+{
+    if (scheme == QStringLiteral("zip")) {
+        return QStringLiteral(".cbz/");
+    }
+    if (scheme == QStringLiteral("tar")) {
+        return QStringLiteral(".cbt/");
+    }
+    if (scheme == QStringLiteral("sevenz")) {
+        return QStringLiteral(".cb7/");
+    }
+
+    return {};
+}
+
 QString normalizedArchiveRootPath(const QUrl &archiveRootUrl)
 {
     QString path = QDir::cleanPath(archiveRootUrl.path());
@@ -23,7 +50,7 @@ QString normalizedArchiveRootPath(const QUrl &archiveRootUrl)
 
 std::optional<QUrl> comicBookArchiveFileUrl(const QUrl &archiveRootUrl)
 {
-    if (archiveRootUrl.scheme() != QStringLiteral("zip")) {
+    if (!isComicBookArchiveRootScheme(archiveRootUrl.scheme())) {
         return std::nullopt;
     }
 
@@ -56,7 +83,8 @@ QString archiveRelativeImageName(const QUrl &archiveRootUrl, const QUrl &imageUr
 namespace KiriView {
 std::optional<QUrl> comicBookArchiveRootUrl(const QUrl &url)
 {
-    if (!KiriView::isComicBookArchiveUrl(url)) {
+    const QString archiveScheme = KiriView::comicBookArchiveKioSchemeForUrl(url);
+    if (archiveScheme.isEmpty()) {
         return std::nullopt;
     }
 
@@ -66,7 +94,7 @@ std::optional<QUrl> comicBookArchiveRootUrl(const QUrl &url)
     }
 
     QUrl archiveRootUrl;
-    archiveRootUrl.setScheme(QStringLiteral("zip"));
+    archiveRootUrl.setScheme(archiveScheme);
     archiveRootUrl.setPath(localPath + QLatin1Char('/'));
     if (!archiveRootUrl.isValid() || archiveRootUrl.path().isEmpty()) {
         return std::nullopt;
@@ -88,20 +116,20 @@ bool isUrlInsideArchiveRoot(const QUrl &url, const QUrl &archiveRootUrl)
 
 std::optional<QUrl> containingComicBookArchiveRootUrl(const QUrl &url)
 {
-    if (url.scheme() != QStringLiteral("zip")) {
+    const QString marker = comicBookArchiveMarkerForRootScheme(url.scheme());
+    if (marker.isEmpty()) {
         return std::nullopt;
     }
 
     const QString path = QDir::cleanPath(url.path());
     const QString foldedPath = path.toCaseFolded();
-    const QString marker = QStringLiteral(".cbz/");
     const qsizetype markerIndex = foldedPath.indexOf(marker);
     if (markerIndex < 0) {
         return std::nullopt;
     }
 
     QUrl archiveRootUrl = url;
-    archiveRootUrl.setPath(path.left(markerIndex + 4) + QLatin1Char('/'));
+    archiveRootUrl.setPath(path.left(markerIndex + marker.size() - 1) + QLatin1Char('/'));
     archiveRootUrl.setQuery(QString());
     archiveRootUrl.setFragment(QString());
     if (!archiveRootUrl.isValid() || archiveRootUrl.path().isEmpty()) {

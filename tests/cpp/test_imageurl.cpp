@@ -4,9 +4,21 @@
 #include "imagelocation.h"
 #include "imageurl.h"
 
+#include <QByteArray>
 #include <QObject>
 #include <QTest>
 #include <QUrl>
+#include <QtGlobal>
+
+namespace {
+QUrl archiveUrl(const QString &scheme, const QString &path)
+{
+    QUrl url;
+    url.setScheme(scheme);
+    url.setPath(path);
+    return url;
+}
+}
 
 class TestImageUrl : public QObject
 {
@@ -17,6 +29,7 @@ private Q_SLOTS:
     void sameNormalizedUrlMatchesPathSegments();
     void sameContainerNavigationUrlMatchesNormalizedPaths();
     void parentUrlForContainerNavigationHandlesContainers();
+    void kioFuseArchivePathsRestoreSupportedArchiveSchemes();
     void imageLocationTypesExposeExplicitState();
 };
 
@@ -61,6 +74,33 @@ void TestImageUrl::parentUrlForContainerNavigationHandlesContainers()
     const QUrl archiveUrl = QUrl::fromLocalFile(QStringLiteral("/books/book.cbz"));
     QCOMPARE(KiriView::parentUrlForContainerNavigation(archiveUrl),
         QUrl::fromLocalFile(QStringLiteral("/books/")));
+}
+
+void TestImageUrl::kioFuseArchivePathsRestoreSupportedArchiveSchemes()
+{
+    const bool hadRuntimeDir = qEnvironmentVariableIsSet("XDG_RUNTIME_DIR");
+    const QByteArray originalRuntimeDir = qgetenv("XDG_RUNTIME_DIR");
+    qputenv("XDG_RUNTIME_DIR", "/run/user/1000");
+
+    const QString cbzFusePath
+        = QStringLiteral("/run/user/1000/kio-fuse-test/zip/books/book.cbz/page.png");
+    const QString cbtFusePath
+        = QStringLiteral("/run/user/1000/kio-fuse-test/tar/books/book.cbt/page.png");
+    const QString cb7FusePath
+        = QStringLiteral("/run/user/1000/kio-fuse-test/sevenz/books/book.cb7/page.png");
+
+    QCOMPARE(KiriView::navigationSourceUrl(QUrl::fromLocalFile(cbzFusePath)),
+        archiveUrl(QStringLiteral("zip"), QStringLiteral("/books/book.cbz/page.png")));
+    QCOMPARE(KiriView::navigationSourceUrl(QUrl::fromLocalFile(cbtFusePath)),
+        archiveUrl(QStringLiteral("tar"), QStringLiteral("/books/book.cbt/page.png")));
+    QCOMPARE(KiriView::navigationSourceUrl(QUrl::fromLocalFile(cb7FusePath)),
+        archiveUrl(QStringLiteral("sevenz"), QStringLiteral("/books/book.cb7/page.png")));
+
+    if (hadRuntimeDir) {
+        qputenv("XDG_RUNTIME_DIR", originalRuntimeDir);
+    } else {
+        qunsetenv("XDG_RUNTIME_DIR");
+    }
 }
 
 void TestImageUrl::imageLocationTypesExposeExplicitState()
