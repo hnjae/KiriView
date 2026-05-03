@@ -6,18 +6,25 @@ use cxx_qt_lib::{
     QUrl, QVariant,
 };
 use cxx_qt_lib_extras::QApplication;
-use std::env;
+use std::{env, process};
 
-fn initial_source_url() -> Option<QUrl> {
+fn initial_source_url() -> Result<Option<QUrl>, kiriview::StartupArgumentError> {
     let working_directory = env::current_dir().ok();
     kiriview::initial_source_url_from_args(env::args_os(), working_directory.as_deref())
 }
 
 fn main() {
+    let initial_source_url = match initial_source_url() {
+        Ok(url) => url,
+        Err(error) => {
+            eprintln!("KiriView: {error}");
+            process::exit(kiriview::STARTUP_ARGUMENT_ERROR_EXIT_CODE);
+        }
+    };
+
     kiriview::initialize_rust_modules();
 
     let mut app = QApplication::new();
-    let initial_source_url = initial_source_url();
 
     QGuiApplication::set_desktop_file_name(&QString::from("io.github.hnjae.KiriView"));
 
