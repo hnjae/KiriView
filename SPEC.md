@@ -175,8 +175,10 @@ first image, pressing Page Up keeps the current image open and notifies the user
 that it is the first image. If the current image is the last image, pressing
 Page Down keeps the current image open and notifies the user that it is the last
 image. Supported image extensions match the open dialog: AVIF (`.avif` and
-`.avifs`), BMP, GIF, HEIF (`.heic`, `.heif`, and `.hif`), JPEG, JPEG 2000
-(`.jp2`), JPEG XL (`.jxl`), PNG, SVG, and WebP, case-insensitively.
+`.avifs`), BMP, GIF, HEIF (`.heic`, `.heif`, `.hif`, `.avci`, and `.hej2`),
+JPEG, JPEG 2000 (`.jp2`), JPEG XL (`.jxl`), PNG, SVG, and WebP,
+case-insensitively. JPEG-compressed HEIF files use the generic HEIF extensions
+because they do not have a dedicated extension.
 
 When an image is opened from a KDE-supported archive URL such as `zip://`,
 `tar://`, or `sevenz://`, navigation moves between supported image files in the
