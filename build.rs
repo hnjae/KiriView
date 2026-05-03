@@ -10,6 +10,18 @@ use std::{
 };
 
 const CPP_CORE_SOURCES_FILE: &str = "src/cpp_core_sources.txt";
+const DEFAULT_INCLUDE_ROOTS: &[&str] = &["/usr/include"];
+const DEFAULT_LIBRARY_DIRS: &[&str] = &["/usr/lib/x86_64-linux-gnu", "/usr/lib"];
+const NATIVE_LIBRARY_FILES: &[&str] = &[
+    "libKF6Archive.so",
+    "libKF6KIOCore.so",
+    "libKF6CoreAddons.so",
+    "libarchive.so",
+    "libheif.so",
+];
+const NATIVE_LIBRARY_PKG_CONFIG_PACKAGES: &[&str] = &["libarchive", "libheif"];
+
+type IncludeDirCollector = fn(&mut BTreeSet<PathBuf>, &Path);
 
 fn main() {
     let kio_include_dirs = kio_include_dirs();
@@ -180,80 +192,45 @@ fn link_native_libraries() {
 }
 
 fn kio_include_dirs() -> Vec<PathBuf> {
-    println!("cargo::rerun-if-env-changed=NIX_CFLAGS_COMPILE");
-
-    let mut dirs = BTreeSet::new();
-    add_kf6_include_dirs(&mut dirs, Path::new("/usr/include"));
-    add_qt_mkspec_include_dirs(&mut dirs, Path::new("/usr/include"));
-
-    for path in flag_paths("NIX_CFLAGS_COMPILE", "-isystem") {
-        add_kf6_include_dirs(&mut dirs, &path);
-        add_qt_mkspec_include_dirs(&mut dirs, &path);
-    }
-    for path in flag_paths("NIX_CFLAGS_COMPILE", "-I") {
-        add_kf6_include_dirs(&mut dirs, &path);
-        add_qt_mkspec_include_dirs(&mut dirs, &path);
-    }
-
-    dirs.into_iter().collect()
+    include_dirs(&[add_kf6_include_dirs, add_qt_mkspec_include_dirs], &[])
 }
 
 fn qt_rhi_include_dirs() -> Vec<PathBuf> {
-    println!("cargo::rerun-if-env-changed=NIX_CFLAGS_COMPILE");
-
-    let mut dirs = BTreeSet::new();
-    add_qt_rhi_include_dirs(&mut dirs, Path::new("/usr/include"));
-
-    for path in flag_paths("NIX_CFLAGS_COMPILE", "-isystem") {
-        add_qt_rhi_include_dirs(&mut dirs, &path);
-    }
-    for path in flag_paths("NIX_CFLAGS_COMPILE", "-I") {
-        add_qt_rhi_include_dirs(&mut dirs, &path);
-    }
-    for path in pkg_config_include_dirs("Qt6Gui") {
-        add_qt_rhi_include_dirs(&mut dirs, &path);
-    }
-
-    dirs.into_iter().collect()
+    include_dirs(&[add_qt_rhi_include_dirs], &["Qt6Gui"])
 }
 
 fn libarchive_include_dirs() -> Vec<PathBuf> {
+    include_dirs(&[add_libarchive_include_dir], &["libarchive"])
+}
+
+fn libheif_include_dirs() -> Vec<PathBuf> {
+    include_dirs(&[add_libheif_include_dir], &["libheif"])
+}
+
+fn include_dirs(collectors: &[IncludeDirCollector], pkg_config_packages: &[&str]) -> Vec<PathBuf> {
     println!("cargo::rerun-if-env-changed=NIX_CFLAGS_COMPILE");
+    if !pkg_config_packages.is_empty() {
+        println!("cargo::rerun-if-env-changed=PKG_CONFIG_PATH");
+    }
 
     let mut dirs = BTreeSet::new();
-    add_libarchive_include_dir(&mut dirs, Path::new("/usr/include"));
-
-    for path in flag_paths("NIX_CFLAGS_COMPILE", "-isystem") {
-        add_libarchive_include_dir(&mut dirs, &path);
-    }
-    for path in flag_paths("NIX_CFLAGS_COMPILE", "-I") {
-        add_libarchive_include_dir(&mut dirs, &path);
-    }
-    for path in pkg_config_include_dirs("libarchive") {
-        add_libarchive_include_dir(&mut dirs, &path);
+    for root in include_candidate_roots(pkg_config_packages) {
+        for collector in collectors {
+            collector(&mut dirs, &root);
+        }
     }
 
     dirs.into_iter().collect()
 }
 
-fn libheif_include_dirs() -> Vec<PathBuf> {
-    println!("cargo::rerun-if-env-changed=NIX_CFLAGS_COMPILE");
-    println!("cargo::rerun-if-env-changed=PKG_CONFIG_PATH");
-
-    let mut dirs = BTreeSet::new();
-    add_libheif_include_dir(&mut dirs, Path::new("/usr/include"));
-
-    for path in flag_paths("NIX_CFLAGS_COMPILE", "-isystem") {
-        add_libheif_include_dir(&mut dirs, &path);
+fn include_candidate_roots(pkg_config_packages: &[&str]) -> Vec<PathBuf> {
+    let mut roots: Vec<PathBuf> = DEFAULT_INCLUDE_ROOTS.iter().map(PathBuf::from).collect();
+    roots.extend(flag_paths("NIX_CFLAGS_COMPILE", "-isystem"));
+    roots.extend(flag_paths("NIX_CFLAGS_COMPILE", "-I"));
+    for package in pkg_config_packages {
+        roots.extend(pkg_config_include_dirs(package));
     }
-    for path in flag_paths("NIX_CFLAGS_COMPILE", "-I") {
-        add_libheif_include_dir(&mut dirs, &path);
-    }
-    for path in pkg_config_include_dirs("libheif") {
-        add_libheif_include_dir(&mut dirs, &path);
-    }
-
-    dirs.into_iter().collect()
+    roots
 }
 
 fn add_libarchive_include_dir(dirs: &mut BTreeSet<PathBuf>, include_root: &Path) {
@@ -368,7 +345,7 @@ fn add_qt_mkspec_include_dirs(dirs: &mut BTreeSet<PathBuf>, include_root: &Path)
 
 fn native_library_dirs() -> Vec<PathBuf> {
     let mut dirs = BTreeSet::new();
-    for dir in ["/usr/lib/x86_64-linux-gnu", "/usr/lib"] {
+    for dir in DEFAULT_LIBRARY_DIRS {
         let path = PathBuf::from(dir);
         if path.exists() {
             dirs.insert(path);
@@ -376,40 +353,23 @@ fn native_library_dirs() -> Vec<PathBuf> {
     }
 
     for path in flag_paths("NIX_LDFLAGS", "-L") {
-        if contains_archive_library(&path)
-            || contains_kio_library(&path)
-            || contains_core_addons_library(&path)
-            || contains_libarchive_library(&path)
-            || contains_libheif_library(&path)
-        {
+        if contains_native_library(&path) {
             dirs.insert(path);
         }
     }
-    for path in pkg_config_library_dirs("libheif") {
-        dirs.insert(path);
+    for package in NATIVE_LIBRARY_PKG_CONFIG_PACKAGES {
+        for path in pkg_config_library_dirs(package) {
+            dirs.insert(path);
+        }
     }
 
     dirs.into_iter().collect()
 }
 
-fn contains_archive_library(dir: &Path) -> bool {
-    dir.join("libKF6Archive.so").exists()
-}
-
-fn contains_kio_library(dir: &Path) -> bool {
-    dir.join("libKF6KIOCore.so").exists()
-}
-
-fn contains_core_addons_library(dir: &Path) -> bool {
-    dir.join("libKF6CoreAddons.so").exists()
-}
-
-fn contains_libarchive_library(dir: &Path) -> bool {
-    dir.join("libarchive.so").exists()
-}
-
-fn contains_libheif_library(dir: &Path) -> bool {
-    dir.join("libheif.so").exists()
+fn contains_native_library(dir: &Path) -> bool {
+    NATIVE_LIBRARY_FILES
+        .iter()
+        .any(|library| dir.join(library).exists())
 }
 
 fn pkg_config_library_dirs(package: &str) -> Vec<PathBuf> {
