@@ -50,6 +50,24 @@ void writeTarArchive(const QString &path, const std::vector<ArchiveEntryData> &e
     QVERIFY(archive.close());
 }
 
+QByteArray rarArchiveData()
+{
+    return QByteArray::fromBase64(QByteArrayLiteral(
+        "UmFyIRoHAQAzkrXlCgEFBgAFAQGAgAATXcDkLAIDC4MABIMApIMCZorKEYAAAQ5jaGFwdGVyLzAy"
+        "LmpwZwoDE+AS92n+PI8KdHdvA6j5MycCAwuEAASEAKSDAn1VdviAAAEJbm90ZXMudHh0CgMT4BL3"
+        "aUJ/ngpza2lw69IrPiwCAwuDAASDAKSDAvGGbHqAAAEOY2hhcHRlci8wMS5wbmcKAxPgEvdp/jyP"
+        "Cm9uZR13VlEDBQQA"));
+}
+
+void writeRarArchive(const QString &path)
+{
+    QFile archive(path);
+    QVERIFY(archive.open(QIODevice::WriteOnly));
+    const QByteArray data = rarArchiveData();
+    QCOMPARE(archive.write(data), static_cast<qint64>(data.size()));
+    archive.close();
+}
+
 std::optional<KiriView::ArchiveDocumentLocation> archiveDocumentForPath(const QString &path)
 {
     return KiriView::archiveDocumentLocationForLocalArchiveUrl(localUrl(path));
@@ -63,7 +81,9 @@ class TestArchiveBackend : public QObject
 private Q_SLOTS:
     void zipListingIncludesNestedSupportedImages();
     void tarListingUsesSameOrdering();
+    void rarListingUsesLibArchive();
     void readingArchiveEntryReturnsOriginalBytes();
+    void readingRarEntryReturnsOriginalBytes();
     void missingEmptyAndInvalidArchivesReportExpectedResults();
 };
 
@@ -117,6 +137,28 @@ void TestArchiveBackend::tarListingUsesSameOrdering()
     QCOMPARE(result.candidates.at(1).name, QStringLiteral("pages/02.webp"));
 }
 
+void TestArchiveBackend::rarListingUsesLibArchive()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString archivePath = dir.filePath(QStringLiteral("book.cbr"));
+    writeRarArchive(archivePath);
+
+    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+        = archiveDocumentForPath(archivePath);
+    QVERIFY(archiveDocument.has_value());
+    QCOMPARE(archiveDocument->rootUrl().scheme(), QStringLiteral("rar"));
+    const KiriView::ArchiveImageCandidatesResult result
+        = KiriView::loadArchiveDocumentImageCandidates(*archiveDocument);
+
+    QVERIFY(result.success);
+    QCOMPARE(result.candidates.size(), std::size_t(2));
+    QCOMPARE(result.candidates.at(0).name, QStringLiteral("chapter/01.png"));
+    QCOMPARE(result.candidates.at(0).url,
+        archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("chapter/01.png")));
+    QCOMPARE(result.candidates.at(1).name, QStringLiteral("chapter/02.jpg"));
+}
+
 void TestArchiveBackend::readingArchiveEntryReturnsOriginalBytes()
 {
     QTemporaryDir dir;
@@ -136,6 +178,25 @@ void TestArchiveBackend::readingArchiveEntryReturnsOriginalBytes()
 
     QVERIFY(result.success);
     QCOMPARE(result.data, expected);
+}
+
+void TestArchiveBackend::readingRarEntryReturnsOriginalBytes()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString archivePath = dir.filePath(QStringLiteral("book.rar"));
+    writeRarArchive(archivePath);
+
+    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+        = archiveDocumentForPath(archivePath);
+    QVERIFY(archiveDocument.has_value());
+    QCOMPARE(archiveDocument->kind(), KiriView::ArchiveDocumentKind::General);
+    const KiriView::ArchiveImageDataResult result
+        = KiriView::loadArchiveDocumentImageData(*archiveDocument,
+            archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("chapter/02.jpg")));
+
+    QVERIFY(result.success);
+    QCOMPARE(result.data, QByteArrayLiteral("two"));
 }
 
 void TestArchiveBackend::missingEmptyAndInvalidArchivesReportExpectedResults()
