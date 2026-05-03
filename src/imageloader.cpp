@@ -4,64 +4,13 @@
 #include "imageloader.h"
 
 #include "decodedimageresult.h"
-#include "imagecontainer.h"
+#include "imageloadplan.h"
 #include "imageurl.h"
 
 #include <memory>
 #include <optional>
 #include <utility>
 #include <vector>
-
-namespace {
-using KiriView::ArchiveDocumentLocation;
-using KiriView::archiveDocumentLocationForLocalArchiveUrl;
-using KiriView::isUrlInsideArchiveRoot;
-
-struct PreparedImageLoadSession {
-    KiriView::ImageLoadSession session;
-    bool loadArchive = false;
-};
-
-ArchiveDocumentLocation archiveDocumentForImageLoadRequest(
-    const KiriView::ImageLoadRequest &request)
-{
-    if (request.isContainerNavigation()) {
-        const std::optional<ArchiveDocumentLocation> containerArchive
-            = archiveDocumentLocationForLocalArchiveUrl(request.containerNavigationUrl());
-        if (containerArchive.has_value()
-            && isUrlInsideArchiveRoot(request.sourceUrl(), containerArchive->rootUrl())) {
-            return *containerArchive;
-        }
-    }
-
-    if (!request.archiveDocument().isEmpty()
-        && isUrlInsideArchiveRoot(request.sourceUrl(), request.archiveDocument().rootUrl())) {
-        return request.archiveDocument();
-    }
-
-    return ArchiveDocumentLocation::none();
-}
-
-PreparedImageLoadSession prepareImageLoadSession(quint64 id, KiriView::ImageLoadRequest request)
-{
-    const QUrl sourceUrl = request.sourceUrl();
-    KiriView::ImageLoadSession session {
-        id,
-        std::move(request),
-        KiriView::DisplayedImageLocation::fromUrl(sourceUrl),
-    };
-
-    const std::optional<ArchiveDocumentLocation> selectedArchiveDocument
-        = archiveDocumentLocationForLocalArchiveUrl(sourceUrl);
-    if (selectedArchiveDocument.has_value()) {
-        session.location.setArchiveDocument(*selectedArchiveDocument);
-        return PreparedImageLoadSession { std::move(session), true };
-    }
-
-    session.location.setArchiveDocument(archiveDocumentForImageLoadRequest(session.request));
-    return PreparedImageLoadSession { std::move(session), false };
-}
-}
 
 namespace KiriView {
 ImageLoader::ImageLoader(QObject *parent, const ImageAsyncDependencies &dependencies)
@@ -120,10 +69,9 @@ void ImageLoader::start(ImageLoadRequest request)
 {
     cancel();
 
-    PreparedImageLoadSession prepared
-        = prepareImageLoadSession(m_loadTickets.next(), std::move(request));
-    const ImageLoadSession session = std::move(prepared.session);
-    if (prepared.loadArchive) {
+    ImageLoadPlan plan = imageLoadPlan(m_loadTickets.next(), std::move(request));
+    const ImageLoadSession session = std::move(plan.session);
+    if (plan.requiresArchiveListing) {
         m_loadSession = session;
         startArchiveLoad(session);
         return;

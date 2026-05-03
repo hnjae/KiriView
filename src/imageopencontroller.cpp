@@ -5,6 +5,7 @@
 
 #include "imagecontainer.h"
 #include "imagedocumentstate.h"
+#include "imageloader.h"
 #include "imageopenworkflow.h"
 #include "imagepresentationcontroller.h"
 #include "imageviewtext.h"

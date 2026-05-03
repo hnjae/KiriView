@@ -5,7 +5,7 @@
 #define KIRIVIEW_IMAGEOPENWORKFLOW_H
 
 #include "imagedocumenteffects.h"
-#include "imageloader.h"
+#include "imageloadtypes.h"
 
 #include <QString>
 #include <QUrl>

@@ -7,7 +7,7 @@
 #include "decodedimageresult.h"
 #include "imageasyncdependencies.h"
 #include "imagedocumenteffects.h"
-#include "imageloader.h"
+#include "imageloadtypes.h"
 #include "imageopenworkflow.h"
 
 #include <QByteArray>
@@ -23,6 +23,7 @@ class QObject;
 
 namespace KiriView {
 class ImageDocumentState;
+class ImageLoader;
 class ImagePresentationController;
 
 class ImageOpenController final

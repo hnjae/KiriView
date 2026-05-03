@@ -19,6 +19,7 @@ src/imagecandidaterepository.cpp
 src/imageiojob.cpp
 src/imageiojobs.cpp
 src/imageloader.cpp
+src/imageloadplan.cpp
 src/imagenavigationmodel.cpp
 src/imagenavigationservice.cpp
 src/imageopencontroller.cpp

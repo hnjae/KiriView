@@ -8,7 +8,7 @@
 #include "imageasyncticket.h"
 #include "imagedecodejob.h"
 #include "imageiojob.h"
-#include "imagelocation.h"
+#include "imageloadtypes.h"
 
 #include <QByteArray>
 #include <QImage>
@@ -20,17 +20,6 @@
 #include <optional>
 
 namespace KiriView {
-struct ImageLoadSession {
-    quint64 id = 0;
-    ImageLoadRequest request;
-    DisplayedImageLocation location;
-};
-
-enum class ImageLoadError {
-    Generic,
-    EmptyArchive,
-};
-
 class ImageLoader final : public QObject
 {
 public:

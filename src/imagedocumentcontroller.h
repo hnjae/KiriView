@@ -7,7 +7,7 @@
 #include "imageasyncdependencies.h"
 #include "imagedocumenteffects.h"
 #include "imagedocumentstate.h"
-#include "imageloader.h"
+#include "imageloadtypes.h"
 #include "imagezoomstate.h"
 
 #include <QImage>
