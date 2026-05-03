@@ -19,6 +19,7 @@ class QImageReader;
 class QString;
 
 namespace KiriView {
+class HeifSequenceReader;
 class ImageAnimationPlayer
 {
 public:
@@ -32,13 +33,16 @@ public:
     void start(
         const QByteArray &data, const QByteArray &format, int loopCount, int firstFrameDelay);
     void startDecoded(std::vector<AnimationFrame> frames, int loopCount);
+    void startHeifSequence(const QByteArray &data, int firstFrameDelay);
     void stop();
 
 private:
     void advanceFrame();
     void advanceReaderFrame();
     void advanceDecodedFrame();
+    void advanceHeifSequenceFrame();
     bool resetReader(QString *errorString);
+    bool resetHeifSequence(QString *errorString);
     bool hasRemainingLoops() const;
     void finishWithError(const QString &errorString);
 
@@ -49,10 +53,12 @@ private:
     std::vector<AnimationFrame> m_decodedFrames;
     std::unique_ptr<QBuffer> m_buffer;
     std::unique_ptr<QImageReader> m_reader;
+    std::unique_ptr<HeifSequenceReader> m_heifSequenceReader;
     QTimer m_timer;
     std::size_t m_decodedFrameIndex = 0;
     int m_loopCount = 0;
     int m_completedLoops = 0;
+    int m_heifFirstFrameDelay = 0;
 };
 }
 

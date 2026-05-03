@@ -161,6 +161,13 @@ void ImageOpenController::finishDecodedImageResult(
         decoded.data, decoded.format, decoded.loopCount, decoded.firstFrameDelay);
 }
 
+void ImageOpenController::finishDecodedImageResult(
+    ImageLoadSession &session, HeifSequenceAnimationImage &decoded, const DecodedImageResult &)
+{
+    finishLoadSuccessfully(session, decoded.firstFrame, false);
+    m_presentationController.startHeifSequenceAnimation(decoded.data, decoded.firstFrameDelay);
+}
+
 void ImageOpenController::finishLoadWithError(
     const ImageLoadSession &session, ImageLoadError error, const QString &errorString)
 {

@@ -63,6 +63,8 @@ private:
         const DecodedImageResult &result);
     void finishDecodedImageResult(
         ImageLoadSession &session, ReaderAnimationImage &decoded, const DecodedImageResult &result);
+    void finishDecodedImageResult(ImageLoadSession &session, HeifSequenceAnimationImage &decoded,
+        const DecodedImageResult &result);
     void finishLoadWithError(
         const ImageLoadSession &session, ImageLoadError error, const QString &errorString);
     void finishReplacementLoadWithError(const QString &errorString);

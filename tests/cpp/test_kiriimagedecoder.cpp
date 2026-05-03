@@ -6,9 +6,11 @@
 #include <libheif/heif.h>
 
 #include <QByteArray>
+#include <QFile>
 #include <QObject>
 #include <QSize>
 #include <QTest>
+#include <QtGlobal>
 #include <array>
 #include <cstring>
 #include <limits>
@@ -173,6 +175,7 @@ class TestKiriImageDecoder : public QObject
 
 private Q_SLOTS:
     void jpegCompressedHeifStillImageDecodes();
+    void heifSequenceDecodesAsStreamingAnimation();
 };
 
 void TestKiriImageDecoder::jpegCompressedHeifStillImageDecodes()
@@ -188,6 +191,41 @@ void TestKiriImageDecoder::jpegCompressedHeifStillImageDecodes()
     QVERIFY2(decoded != nullptr, "JPEG-compressed HEIF should decode as a static image");
     QCOMPARE(decoded->image.size(), QSize(2, 2));
     QVERIFY(!decoded->image.isNull());
+}
+
+void TestKiriImageDecoder::heifSequenceDecodesAsStreamingAnimation()
+{
+    QFile file(QStringLiteral(KIRIVIEW_TEST_SOURCE_DIR "/../fixtures/heif-sequence-alpha.heics"));
+    QVERIFY2(file.open(QIODevice::ReadOnly), qPrintable(file.errorString()));
+    const QByteArray imageData = file.readAll();
+    QVERIFY(!imageData.isEmpty());
+
+    KiriView::DecodedImageResult result = KiriView::decodeImageData(imageData);
+    const auto *decoded = std::get_if<KiriView::HeifSequenceAnimationImage>(&result);
+    QVERIFY2(decoded != nullptr, "HEIF image sequences should decode as streaming animations");
+    QCOMPARE(decoded->firstFrame.size(), QSize(64, 64));
+    QVERIFY(!decoded->data.isEmpty());
+    QVERIFY(decoded->firstFrameDelay > 0);
+    QVERIFY(qAlpha(decoded->firstFrame.pixel(48, 32)) < 255);
+
+    KiriView::HeifSequenceReader reader;
+    const KiriView::HeifSequenceOpenResult openResult = reader.open(imageData);
+    QCOMPARE(openResult.status, KiriView::HeifSequenceOpenStatus::Success);
+
+    QString errorString;
+    const std::optional<KiriView::AnimationFrame> firstFrame = reader.readNextFrame(&errorString);
+    QVERIFY2(firstFrame.has_value(), qPrintable(errorString));
+    QCOMPARE(firstFrame->image.size(), QSize(64, 64));
+    QVERIFY(firstFrame->delay > 0);
+    QVERIFY(qAlpha(firstFrame->image.pixel(16, 32)) > 0);
+    QVERIFY(qAlpha(firstFrame->image.pixel(48, 32)) < 255);
+
+    const std::optional<KiriView::AnimationFrame> secondFrame = reader.readNextFrame(&errorString);
+    QVERIFY2(secondFrame.has_value(), qPrintable(errorString));
+    QCOMPARE(secondFrame->image.size(), QSize(64, 64));
+    QVERIFY(secondFrame->delay > 0);
+    QVERIFY(qAlpha(secondFrame->image.pixel(16, 32)) < 255);
+    QVERIFY(qAlpha(secondFrame->image.pixel(48, 32)) > 0);
 }
 
 QTEST_GUILESS_MAIN(TestKiriImageDecoder)

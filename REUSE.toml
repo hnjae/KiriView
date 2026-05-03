@@ -25,6 +25,7 @@ path = [
   "io.github.hnjae.KiriView.desktop",
   "io.github.hnjae.KiriView.json",
   "justfile",
+  "tests/fixtures/heif-sequence-alpha.heics",
 ]
 precedence = "closest"
 SPDX-FileCopyrightText = "2026 KIM Hyunjae"

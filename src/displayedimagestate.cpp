@@ -117,6 +117,11 @@ void DisplayedImageState::startDecodedAnimation(std::vector<AnimationFrame> fram
     m_animationPlayer->startDecoded(std::move(frames), loopCount);
 }
 
+void DisplayedImageState::startHeifSequenceAnimation(const QByteArray &data, int firstFrameDelay)
+{
+    m_animationPlayer->startHeifSequence(data, firstFrameDelay);
+}
+
 void DisplayedImageState::stopAnimation() { m_animationPlayer->stop(); }
 
 void DisplayedImageState::clearSvgImage()

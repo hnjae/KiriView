@@ -178,6 +178,12 @@ void ImagePresentationController::startDecodedAnimation(
     m_displayedImageState->startDecodedAnimation(std::move(frames), loopCount);
 }
 
+void ImagePresentationController::startHeifSequenceAnimation(
+    const QByteArray &data, int firstFrameDelay)
+{
+    m_displayedImageState->startHeifSequenceAnimation(data, firstFrameDelay);
+}
+
 void ImagePresentationController::stopAnimation() { m_displayedImageState->stopAnimation(); }
 
 void ImagePresentationController::setImageSize(const QSize &imageSize)

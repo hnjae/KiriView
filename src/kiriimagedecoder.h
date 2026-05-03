@@ -13,6 +13,8 @@
 #include <QSizeF>
 #include <QString>
 #include <QtGlobal>
+#include <memory>
+#include <optional>
 #include <variant>
 #include <vector>
 
@@ -45,8 +47,46 @@ struct ReaderAnimationImage {
     int firstFrameDelay = 0;
 };
 
+struct HeifSequenceAnimationImage {
+    QImage firstFrame;
+    QByteArray data;
+    int firstFrameDelay = 0;
+};
+
 using DecodedImageResult = std::variant<DecodedImageFailure, StaticDecodedImage, SvgDecodedImage,
-    DecodedAnimationImage, ReaderAnimationImage>;
+    DecodedAnimationImage, ReaderAnimationImage, HeifSequenceAnimationImage>;
+
+enum class HeifSequenceOpenStatus {
+    NotHeif,
+    NotSequence,
+    Success,
+    Error,
+};
+
+struct HeifSequenceOpenResult {
+    HeifSequenceOpenStatus status = HeifSequenceOpenStatus::NotHeif;
+    QString errorString;
+};
+
+class HeifSequenceReader final
+{
+public:
+    HeifSequenceReader();
+    ~HeifSequenceReader();
+
+    HeifSequenceReader(const HeifSequenceReader &) = delete;
+    HeifSequenceReader &operator=(const HeifSequenceReader &) = delete;
+    HeifSequenceReader(HeifSequenceReader &&) noexcept;
+    HeifSequenceReader &operator=(HeifSequenceReader &&) noexcept;
+
+    HeifSequenceOpenResult open(QByteArray data);
+    std::optional<AnimationFrame> readNextFrame(QString *errorString);
+    void close();
+
+private:
+    class Private;
+    std::unique_ptr<Private> d;
+};
 
 QImage displayReadyImage(const QImage &image);
 QSize svgRasterSize(const QSizeF &displaySize, qreal devicePixelRatio, int maximumTextureSize);

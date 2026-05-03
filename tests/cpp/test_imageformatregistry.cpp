@@ -28,8 +28,12 @@ void TestImageFormatRegistry::supportedImageExtensionsIncludeCodecSpecificHeifEx
 
     QVERIFY(extensions.contains(QStringLiteral("avci")));
     QVERIFY(extensions.contains(QStringLiteral("hej2")));
+    QVERIFY(extensions.contains(QStringLiteral("heics")));
+    QVERIFY(extensions.contains(QStringLiteral("heifs")));
     QVERIFY(KiriView::isSupportedImageFileName(QStringLiteral("still.AVCI")));
     QVERIFY(KiriView::isSupportedImageFileName(QStringLiteral("still.HEJ2")));
+    QVERIFY(KiriView::isSupportedImageFileName(QStringLiteral("sequence.HEICS")));
+    QVERIFY(KiriView::isSupportedImageFileName(QStringLiteral("sequence.HEIFS")));
 }
 
 void TestImageFormatRegistry::supportedOpenExtensionsIncludeComicBookArchives()

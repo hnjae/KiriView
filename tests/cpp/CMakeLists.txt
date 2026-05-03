@@ -64,6 +64,9 @@ target_link_libraries(kiriview_test_core PUBLIC
 
 function(add_kiriview_cpp_test target source)
     add_executable(${target} ${source})
+    target_compile_definitions(${target} PRIVATE
+        KIRIVIEW_TEST_SOURCE_DIR="${CMAKE_SOURCE_DIR}"
+    )
     target_link_libraries(${target} PRIVATE
         kiriview_test_core
         Qt6::Test
