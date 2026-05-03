@@ -39,6 +39,18 @@ Kirigami.ApplicationWindow {
         visibility = Window.FullScreen;
     }
 
+    function canOpenDroppedUrls(dropEvent) {
+        return dropEvent.hasUrls && dropEvent.urls.length > 0;
+    }
+
+    function openDroppedUrls(urls) {
+        if (urls.length <= 0) {
+            return;
+        }
+
+        page.imageDocument.sourceUrl = urls[0];
+    }
+
     function revealFullscreenToolBar() {
         if (!fullscreen || helpDialogOpen) {
             return;
@@ -95,6 +107,28 @@ Kirigami.ApplicationWindow {
             if (root.fullscreen && !fullscreenImageToolBar.interactionActive) {
                 root.fullscreenToolBarRevealed = false;
             }
+        }
+    }
+
+    DropArea {
+        anchors.fill: parent
+        enabled: !root.helpDialogOpen
+        z: 100
+
+        onDropped: drop => {
+            if (!root.canOpenDroppedUrls(drop)) {
+                drop.accepted = false;
+                return;
+            }
+
+            root.openDroppedUrls(drop.urls);
+            drop.acceptProposedAction();
+        }
+        onEntered: drag => {
+            drag.accepted = root.canOpenDroppedUrls(drag);
+        }
+        onPositionChanged: drag => {
+            drag.accepted = root.canOpenDroppedUrls(drag);
         }
     }
 
