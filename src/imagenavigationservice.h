@@ -16,11 +16,7 @@
 #include <vector>
 
 namespace KiriView {
-enum class ContainerNavigationError {
-    Generic,
-    EmptyContainer,
-    InvalidComicBookArchive,
-};
+using ContainerNavigationError = ImageCandidateRepositoryError;
 
 class ImageNavigationService final : public QObject
 {
@@ -66,8 +62,6 @@ private:
     void openImageFromContainerNavigation(const QUrl &imageUrl, const QUrl &containerUrl);
     void finishContainerNavigationLoadWithError(
         const QUrl &containerUrl, ContainerNavigationError error, const QString &errorString);
-    void finishContainerNavigationLoadWithRepositoryError(
-        const QUrl &containerUrl, ImageCandidateRepositoryError error, const QString &errorString);
 
     void setPageNavigationUrls(std::vector<QUrl> urls, const QUrl &currentUrl);
     void setPageNavigationState(PageNavigationState state);

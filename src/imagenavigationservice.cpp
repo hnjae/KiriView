@@ -170,7 +170,7 @@ void ImageNavigationService::finishContainerNavigation(
         },
         [this](const QUrl &containerUrl, ImageCandidateRepositoryError error,
             const QString &errorString) {
-            finishContainerNavigationLoadWithRepositoryError(containerUrl, error, errorString);
+            finishContainerNavigationLoadWithError(containerUrl, error, errorString);
         });
 }
 
@@ -187,25 +187,6 @@ void ImageNavigationService::finishContainerNavigationLoadWithError(
 {
     if (m_containerNavigationError) {
         m_containerNavigationError(containerUrl, error, errorString);
-    }
-}
-
-void ImageNavigationService::finishContainerNavigationLoadWithRepositoryError(
-    const QUrl &containerUrl, ImageCandidateRepositoryError error, const QString &errorString)
-{
-    switch (error) {
-    case ImageCandidateRepositoryError::Generic:
-        finishContainerNavigationLoadWithError(
-            containerUrl, ContainerNavigationError::Generic, errorString);
-        return;
-    case ImageCandidateRepositoryError::EmptyContainer:
-        finishContainerNavigationLoadWithError(
-            containerUrl, ContainerNavigationError::EmptyContainer, errorString);
-        return;
-    case ImageCandidateRepositoryError::InvalidComicBookArchive:
-        finishContainerNavigationLoadWithError(
-            containerUrl, ContainerNavigationError::InvalidComicBookArchive, errorString);
-        return;
     }
 }
 
