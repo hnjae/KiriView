@@ -21,14 +21,11 @@ std::optional<ArchiveDocumentLocation> archiveDocumentLocationForLocalArchiveUrl
 bool isUrlInsideArchiveRoot(const QUrl &url, const QUrl &archiveRootUrl);
 std::optional<QUrl> containingComicBookArchiveRootUrl(const QUrl &url);
 std::optional<QUrl> containingDirectArchiveOpenRootUrl(const QUrl &url);
-QString windowTitleFileNameForDisplayedUrl(
-    const QUrl &displayedUrl, const QUrl &displayedComicBookRootUrl);
 QString windowTitleFileNameForDisplayedLocation(const DisplayedImageLocation &location);
 std::vector<ContainerNavigationCandidate> containerNavigationCandidates(const KFileItemList &items);
 void appendArchiveImageNavigationCandidates(std::vector<ImageNavigationCandidate> *candidates,
     const KIO::UDSEntryList &entries, const QUrl &directoryUrl, const QUrl &archiveRootUrl);
 QUrl imageContainerUrlForImage(const QUrl &imageUrl, const QUrl &archiveRootUrl);
-QUrl containerNavigationUrlForImage(const QUrl &imageUrl, const QUrl &comicBookRootUrl);
 QUrl imageContainerUrlForLocation(const DisplayedImageLocation &location);
 QUrl containerNavigationUrlForLocation(const DisplayedImageLocation &location);
 }

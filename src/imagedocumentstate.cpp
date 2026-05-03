@@ -57,11 +57,6 @@ const QUrl &ImageDocumentState::displayedArchiveDocumentRootUrl() const
     return m_displayedImageLocation.archiveDocumentRootUrl();
 }
 
-const QUrl &ImageDocumentState::displayedComicBookRootUrl() const
-{
-    return m_displayedImageLocation.archiveDocumentRootUrl();
-}
-
 ImageDocumentStatus ImageDocumentState::status() const { return m_status; }
 
 bool ImageDocumentState::loading() const { return m_loading; }

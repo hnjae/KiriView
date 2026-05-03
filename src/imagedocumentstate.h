@@ -42,7 +42,6 @@ public:
     const ArchiveDocumentLocation &displayedArchiveDocument() const;
     const QUrl &displayedUrl() const;
     const QUrl &displayedArchiveDocumentRootUrl() const;
-    const QUrl &displayedComicBookRootUrl() const;
     ImageDocumentStatus status() const;
     bool loading() const;
     const QString &errorString() const;

@@ -107,7 +107,6 @@ public:
     const ArchiveDocumentLocation &archiveDocument() const { return m_archiveDocument; }
     const QUrl &archiveDocumentFileUrl() const { return m_archiveDocument.fileUrl(); }
     const QUrl &archiveDocumentRootUrl() const { return m_archiveDocument.rootUrl(); }
-    const QUrl &comicBookRootUrl() const { return m_archiveDocument.rootUrl(); }
     bool isEmpty() const { return m_image.isEmpty(); }
     void setImageUrl(QUrl url) { m_image = ImageLocation::fromUrl(std::move(url)); }
     void setArchiveDocument(ArchiveDocumentLocation archiveDocument)
@@ -147,7 +146,6 @@ struct ImageLoadRequest {
     {
         return displayedArchiveDocument.rootUrl();
     }
-    const QUrl &displayedComicBookRootUrl() const { return displayedArchiveDocument.rootUrl(); }
     const QUrl &containerNavigationUrl() const { return containerNavigation.url(); }
     bool isEmpty() const { return source.isEmpty(); }
     bool isContainerNavigation() const { return !containerNavigation.isEmpty(); }

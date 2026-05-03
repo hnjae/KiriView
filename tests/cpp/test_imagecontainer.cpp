@@ -11,6 +11,18 @@
 #include <sys/stat.h>
 #include <vector>
 
+namespace {
+QString archivePageWindowTitle(const QUrl &pageUrl, const QUrl &archiveFileUrl,
+    const QUrl &archiveRootUrl, KiriView::ArchiveDocumentKind kind)
+{
+    const KiriView::ArchiveDocumentLocation archiveDocument
+        = KiriView::ArchiveDocumentLocation::fromUrls(archiveFileUrl, archiveRootUrl, kind);
+    const KiriView::DisplayedImageLocation location
+        = KiriView::DisplayedImageLocation::fromArchiveDocument(pageUrl, archiveDocument);
+    return KiriView::windowTitleFileNameForDisplayedLocation(location);
+}
+}
+
 class TestImageContainer : public QObject
 {
     Q_OBJECT
@@ -97,8 +109,9 @@ void TestImageContainer::archiveInteriorUrlsResolveToTheirRootAndTitle()
 
     QVERIFY(KiriView::isUrlInsideArchiveRoot(pageUrl, *archiveRootUrl));
     QCOMPARE(KiriView::containingComicBookArchiveRootUrl(pageUrl), archiveRootUrl);
-    QCOMPARE(KiriView::windowTitleFileNameForDisplayedUrl(pageUrl, *archiveRootUrl),
-        QStringLiteral("book.cbz"));
+    const QString title = archivePageWindowTitle(
+        pageUrl, archiveUrl, *archiveRootUrl, KiriView::ArchiveDocumentKind::ComicBook);
+    QCOMPARE(title, QStringLiteral("book.cbz"));
 }
 
 void TestImageContainer::directArchiveInteriorUrlsResolveToTheirRootAndTitle()
@@ -112,8 +125,9 @@ void TestImageContainer::directArchiveInteriorUrlsResolveToTheirRootAndTitle()
 
     QVERIFY(KiriView::isUrlInsideArchiveRoot(pageUrl, *archiveRootUrl));
     QCOMPARE(KiriView::containingDirectArchiveOpenRootUrl(pageUrl), archiveRootUrl);
-    QCOMPARE(KiriView::windowTitleFileNameForDisplayedUrl(pageUrl, *archiveRootUrl),
-        QStringLiteral("book.zip"));
+    const QString title = archivePageWindowTitle(
+        pageUrl, archiveUrl, *archiveRootUrl, KiriView::ArchiveDocumentKind::General);
+    QCOMPARE(title, QStringLiteral("book.zip"));
 }
 
 void TestImageContainer::cbtAndCb7InteriorUrlsResolveToTheirRoots()
@@ -122,28 +136,36 @@ void TestImageContainer::cbtAndCb7InteriorUrlsResolveToTheirRoots()
     QUrl cbtPageUrl = cbtRootUrl;
     cbtPageUrl.setPath(cbtRootUrl.path() + QStringLiteral("chapter/page001.png"));
     QCOMPARE(KiriView::containingComicBookArchiveRootUrl(cbtPageUrl), cbtRootUrl);
-    QCOMPARE(KiriView::windowTitleFileNameForDisplayedUrl(cbtPageUrl, cbtRootUrl),
+    QCOMPARE(
+        archivePageWindowTitle(cbtPageUrl, QUrl::fromLocalFile(QStringLiteral("/books/book.cbt")),
+            cbtRootUrl, KiriView::ArchiveDocumentKind::ComicBook),
         QStringLiteral("book.cbt"));
 
     const QUrl cb7RootUrl(QStringLiteral("sevenz:///books/book.cb7/"));
     QUrl cb7PageUrl = cb7RootUrl;
     cb7PageUrl.setPath(cb7RootUrl.path() + QStringLiteral("chapter/page001.png"));
     QCOMPARE(KiriView::containingComicBookArchiveRootUrl(cb7PageUrl), cb7RootUrl);
-    QCOMPARE(KiriView::windowTitleFileNameForDisplayedUrl(cb7PageUrl, cb7RootUrl),
+    QCOMPARE(
+        archivePageWindowTitle(cb7PageUrl, QUrl::fromLocalFile(QStringLiteral("/books/book.cb7")),
+            cb7RootUrl, KiriView::ArchiveDocumentKind::ComicBook),
         QStringLiteral("book.cb7"));
 
     const QUrl cbrRootUrl(QStringLiteral("rar:///books/book.cbr/"));
     QUrl cbrPageUrl = cbrRootUrl;
     cbrPageUrl.setPath(cbrRootUrl.path() + QStringLiteral("chapter/page001.png"));
     QCOMPARE(KiriView::containingComicBookArchiveRootUrl(cbrPageUrl), cbrRootUrl);
-    QCOMPARE(KiriView::windowTitleFileNameForDisplayedUrl(cbrPageUrl, cbrRootUrl),
+    QCOMPARE(
+        archivePageWindowTitle(cbrPageUrl, QUrl::fromLocalFile(QStringLiteral("/books/book.cbr")),
+            cbrRootUrl, KiriView::ArchiveDocumentKind::ComicBook),
         QStringLiteral("book.cbr"));
 
     const QUrl rarRootUrl(QStringLiteral("rar:///books/book.rar/"));
     QUrl rarPageUrl = rarRootUrl;
     rarPageUrl.setPath(rarRootUrl.path() + QStringLiteral("chapter/page001.png"));
     QCOMPARE(KiriView::containingDirectArchiveOpenRootUrl(rarPageUrl), rarRootUrl);
-    QCOMPARE(KiriView::windowTitleFileNameForDisplayedUrl(rarPageUrl, rarRootUrl),
+    QCOMPARE(
+        archivePageWindowTitle(rarPageUrl, QUrl::fromLocalFile(QStringLiteral("/books/book.rar")),
+            rarRootUrl, KiriView::ArchiveDocumentKind::General),
         QStringLiteral("book.rar"));
 }
 
