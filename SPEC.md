@@ -21,11 +21,11 @@ file does not exist, it prints a clear error message naming the path and reason
 to standard error, does not open the main window, and exits with code 2.
 
 When an image file is displayed, the main window title is the displayed image
-file name, a spaced em dash, and `KiriView`. When a CBZ, CBT, CB7, ZIP, TAR, or
-7Z archive opened by KiriView is displayed, the title is the archive file name,
-a spaced em dash, and `KiriView`. KiriView does not show file paths in the
-window title. When no image or archive page is displayed, the window title is
-`KiriView`.
+file name, a spaced em dash, and `KiriView`. When a CBZ, CBT, CB7, CBR, ZIP,
+TAR, 7Z, or RAR archive opened by KiriView is displayed, the title is the
+archive file name, a spaced em dash, and `KiriView`. KiriView does not show file
+paths in the window title. When no image or archive page is displayed, the
+window title is `KiriView`.
 
 The toolbar also provides icon-only Previous Container and Next Container
 buttons next to the open action. When container navigation is available, these
@@ -38,12 +38,12 @@ KiriView opens user-selected image URLs, including local files,
 KDE-supported remote URLs such as `smb://`, and KDE-supported archive URLs
 such as `zip://`, `tar://`, and `sevenz://`.
 
-KiriView also opens local `.cbz`, `.cbt`, and `.cb7` comic book archives.
+KiriView also opens local `.cbz`, `.cbt`, `.cb7`, and `.cbr` comic book archives.
 When a local comic book archive is opened directly, KiriView owns that archive
 as the current archive document and displays the first supported image inside
 that archive.
 
-KiriView opens local `.zip`, `.tar`, and `.7z` archives only when they are
+KiriView opens local `.zip`, `.tar`, `.7z`, and `.rar` archives only when they are
 directly provided, such as through a startup argument or the open dialog's
 `All files (*)` filter. When a local general archive is opened directly,
 KiriView owns that archive as the current archive document and displays the
@@ -177,9 +177,10 @@ When an image is opened from a KDE-supported archive URL such as `zip://`,
 `tar://`, or `sevenz://`, navigation moves between supported image files in the
 same directory inside the archive URL.
 
-When an image is displayed from a local CBZ, CBT, CB7, ZIP, TAR, or 7Z archive
-document opened directly by KiriView, navigation moves between all supported
-image files inside that archive document, including images in subdirectories.
+When an image is displayed from a local CBZ, CBT, CB7, CBR, ZIP, TAR, 7Z, or
+RAR archive document opened directly by KiriView, navigation moves between all
+supported image files inside that archive document, including images in
+subdirectories.
 
 The previous and next files are determined by sorting candidate file names with
 the user's locale-aware file name order. Navigation does not wrap; pressing Page
@@ -197,7 +198,7 @@ until the user opens an adjacent image.
 
 ## Container Navigation
 
-A container is a local CBZ, CBT, or CB7 comic book archive. The current
+A container is a local CBZ, CBT, CB7, or CBR comic book archive. The current
 container can be the comic book archive whose image is displayed, or an empty
 sibling comic book archive reached through container navigation. When the
 current image is inside a local comic book archive opened directly by KiriView,
@@ -206,12 +207,12 @@ toolbar actions open the previous or next sibling comic book archive beside the
 current container.
 
 When the current image is a normal image file, inside a KDE-supported archive
-URL, or inside a directly opened ZIP, TAR, or 7Z archive document, the Previous
-Container and Next Container toolbar actions are disabled.
+URL, or inside a directly opened ZIP, TAR, 7Z, or RAR archive document, the
+Previous Container and Next Container toolbar actions are disabled.
 
-Sibling container candidates are local `.cbz`, `.cbt`, or `.cb7` files in the
-current container's parent directory. Candidates are sorted with the same user
-locale-aware file name order used for image navigation. Navigation does not
+Sibling container candidates are local `.cbz`, `.cbt`, `.cb7`, or `.cbr` files
+in the current container's parent directory. Candidates are sorted with the same
+user locale-aware file name order used for image navigation. Navigation does not
 wrap; pressing Previous Container on the first candidate or Next Container on
 the last candidate keeps the current view unchanged.
 
