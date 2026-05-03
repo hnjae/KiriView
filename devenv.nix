@@ -288,6 +288,7 @@ in
     qmake
 
     # Flatpak
+    desktop-file-utils
     flatpak-builder
 
     # Rust/Qt host development
