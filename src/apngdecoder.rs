@@ -1,6 +1,12 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+// Compatibility shim: KiriView decodes APNG here because the Qt PNG image
+// plugin currently exposes affected APNG files as still PNG images instead of
+// their authored animations. Remove this module and route APNG through
+// QImageReader once Qt's PNG stack reliably exposes APNG frames, delays,
+// blend/disposal operations, and loop counts.
+
 use cxx_qt_lib::QByteArray;
 use png::{BitDepth, ColorType};
 use std::cmp;

@@ -1,6 +1,11 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+// Compatibility shim: the APNG implementation lives in apngdecoder.rs because
+// QImageReader's normal PNG path does not reliably expose authored APNG
+// animations yet. Remove this adapter with the Rust decoder once Qt's PNG stack
+// handles APNG playback itself.
+
 #include "apngdecoder.h"
 
 #include "kiriview/src/apngdecoder.cxx.h"

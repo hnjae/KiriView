@@ -1,6 +1,12 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+// Compatibility shim: KiriView normalizes selected alpha AVIF/AVIFS BMFF
+// metadata in memory before QImageReader sees the bytes because current
+// KDE imageformats cannot read affected files without these fixes. Original
+// files are not modified. Remove this module once KDE imageformats accepts
+// those files without normalization.
+
 use cxx_qt_lib::QByteArray;
 
 const BOX_HEADER_SIZE: usize = 8;
