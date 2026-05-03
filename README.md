@@ -5,6 +5,16 @@ KiriView is a desktop image viewer built with KDE Kirigami.
 > [!IMPORTANT]
 > All documentation, code, and artwork in this repository were vibe coded.
 
+## Supported Archives
+
+KiriView supports comic book archive containers with `.cbz`, `.cbr`, `.cb7`,
+and `.cbt` extensions. Archive decoding is delegated to system archive
+libraries: ZIP, 7Z, and TAR containers are handled through KDE KArchive, while
+RAR containers are handled through libarchive. KiriView does not implement
+archive format parsers itself, so archive compatibility, unsupported variants,
+encryption behavior, and error handling are bounded by the capabilities and
+limitations of those libraries.
+
 ## Install the Current Development Version
 
 These instructions install the current source checkout as a local Flatpak
