@@ -4,8 +4,8 @@
 #include "imagepresentationcontroller.h"
 
 #include "displayedimagestate.h"
+#include "imagerendering.h"
 #include "imageviewtext.h"
-#include "kiriimagedecoder.h"
 
 #include <cmath>
 #include <utility>

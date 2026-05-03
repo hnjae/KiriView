@@ -4,17 +4,13 @@
 #ifndef KIRIVIEW_APNGDECODER_H
 #define KIRIVIEW_APNGDECODER_H
 
+#include "animationframe.h"
+
 #include <QByteArray>
-#include <QImage>
 #include <QString>
 #include <vector>
 
 namespace KiriView {
-struct AnimationFrame {
-    QImage image;
-    int delay = 0;
-};
-
 struct ApngAnimation {
     std::vector<AnimationFrame> frames;
     int loopCount = 0;

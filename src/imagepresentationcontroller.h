@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_IMAGEPRESENTATIONCONTROLLER_H
 #define KIRIVIEW_IMAGEPRESENTATIONCONTROLLER_H
 
+#include "animationframe.h"
 #include "imagedocumenttypes.h"
 #include "imagezoomstate.h"
 
@@ -22,7 +23,6 @@ class QObject;
 
 namespace KiriView {
 class DisplayedImageState;
-struct AnimationFrame;
 
 class ImagePresentationController final
 {

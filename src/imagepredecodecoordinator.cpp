@@ -3,9 +3,9 @@
 
 #include "imagepredecodecoordinator.h"
 
+#include "decodedimageresult.h"
 #include "imagenavigationmodel.h"
 #include "imageurl.h"
-#include "kiriimagedecoder.h"
 
 #include <memory>
 #include <optional>

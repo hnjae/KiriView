@@ -3,6 +3,8 @@
 
 #include "kiriimagedecoder.h"
 
+#include "apngdecoder.h"
+#include "imagerendering.h"
 #include "imageviewtext.h"
 #include "kiriview/src/avifcompat.cxx.h"
 

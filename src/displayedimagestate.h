@@ -4,6 +4,8 @@
 #ifndef KIRIVIEW_DISPLAYEDIMAGESTATE_H
 #define KIRIVIEW_DISPLAYEDIMAGESTATE_H
 
+#include "animationframe.h"
+
 #include <QByteArray>
 #include <QImage>
 #include <QSize>
@@ -16,7 +18,6 @@
 class QObject;
 
 namespace KiriView {
-struct AnimationFrame;
 class ImageAnimationPlayer;
 
 class DisplayedImageState

@@ -5,6 +5,7 @@
 
 #include "image_test_support.h"
 #include "imagecontainer.h"
+#include "imagerendering.h"
 
 #include <QObject>
 #include <QTest>

@@ -3,9 +3,9 @@
 
 #include "imageloader.h"
 
+#include "decodedimageresult.h"
 #include "imagecontainer.h"
 #include "imageurl.h"
-#include "kiriimagedecoder.h"
 
 #include <memory>
 #include <optional>

@@ -4,58 +4,15 @@
 #ifndef KIRIVIEW_KIRIIMAGEDECODER_H
 #define KIRIVIEW_KIRIIMAGEDECODER_H
 
-#include "apngdecoder.h"
-#include "imagebytecost.h"
+#include "animationframe.h"
+#include "decodedimageresult.h"
 
 #include <QByteArray>
-#include <QImage>
-#include <QSize>
-#include <QSizeF>
 #include <QString>
-#include <QtGlobal>
 #include <memory>
 #include <optional>
-#include <variant>
-#include <vector>
 
 namespace KiriView {
-inline constexpr int fallbackTextureSizeMax = 16384;
-
-struct DecodedImageFailure {
-    QString errorString;
-};
-
-struct StaticDecodedImage {
-    QImage image;
-};
-
-struct SvgDecodedImage {
-    QByteArray data;
-    QSize svgIntrinsicSize;
-};
-
-struct DecodedAnimationImage {
-    std::vector<AnimationFrame> frames;
-    int loopCount = 0;
-};
-
-struct ReaderAnimationImage {
-    QImage firstFrame;
-    QByteArray data;
-    QByteArray format;
-    int loopCount = 0;
-    int firstFrameDelay = 0;
-};
-
-struct HeifSequenceAnimationImage {
-    QImage firstFrame;
-    QByteArray data;
-    int firstFrameDelay = 0;
-};
-
-using DecodedImageResult = std::variant<DecodedImageFailure, StaticDecodedImage, SvgDecodedImage,
-    DecodedAnimationImage, ReaderAnimationImage, HeifSequenceAnimationImage>;
-
 enum class HeifSequenceOpenStatus {
     NotHeif,
     NotSequence,
@@ -88,11 +45,7 @@ private:
     std::unique_ptr<Private> d;
 };
 
-QImage displayReadyImage(const QImage &image);
-QSize svgRasterSize(const QSizeF &displaySize, qreal devicePixelRatio, int maximumTextureSize);
-QImage renderSvgImage(const QByteArray &data, const QSize &size);
 DecodedImageResult decodeImageData(const QByteArray &data);
-bool decodedImageResultIsPredecodeCacheable(const DecodedImageResult &result, qsizetype byteBudget);
 }
 
 #endif

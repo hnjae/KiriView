@@ -4,7 +4,7 @@
 #include "displayedimagestate.h"
 
 #include "imageanimationplayer.h"
-#include "kiriimagedecoder.h"
+#include "imagerendering.h"
 
 #include <QObject>
 #include <utility>
