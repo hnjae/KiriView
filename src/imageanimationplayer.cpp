@@ -3,8 +3,8 @@
 
 #include "imageanimationplayer.h"
 
+#include "heifdecoder.h"
 #include "imageviewtext.h"
-#include "kiriimagedecoder.h"
 
 #include <QBuffer>
 #include <QIODevice>

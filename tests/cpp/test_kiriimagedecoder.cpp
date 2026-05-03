@@ -3,6 +3,8 @@
 
 #include "kiriimagedecoder.h"
 
+#include "heifdecoder.h"
+
 #include <libheif/heif.h>
 
 #include <QByteArray>

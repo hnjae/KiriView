@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGEANIMATIONPLAYER_H
 #define KIRIVIEW_IMAGEANIMATIONPLAYER_H
 
-#include "apngdecoder.h"
+#include "animationframe.h"
 
 #include <QByteArray>
 #include <QImage>
