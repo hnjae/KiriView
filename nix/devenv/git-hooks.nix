@@ -8,7 +8,6 @@
   git-hooks.hooks = {
     # Static checkers
     detect-private-keys.enable = true;
-    editorconfig-checker.enable = true;
     gitlint.enable = true;
     reuse.enable = true;
     typos.enable = true;
