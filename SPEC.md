@@ -222,7 +222,8 @@ normal header toolbar. The `f` shortcut is inactive while the page number or
 zoom input is focused.
 
 The `?` key and F1 open a modal shortcut help dialog listing KiriView's keyboard
-and mouse shortcuts. While the shortcut help dialog is open, Escape closes the
+and mouse shortcuts. The `?` shortcut is inactive while the page number or zoom
+input is focused. While the shortcut help dialog is open, Escape closes the
 dialog instead of closing the main window.
 
 Out of scope for the current version: editing, metadata panels, and file
