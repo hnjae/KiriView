@@ -33,6 +33,7 @@ _module command: _cargo-vendor-sources _flatpak-build-dir
         '--bind-mount=/run/build/kiriview/cargo/vendor={{ cargo_vendor_dir }}' \
         --build-dir=/run/build/kiriview \
         --env=CARGO_TARGET_DIR=/run/build/kiriview/target/flatpak \
+        --env=LIBHEIF_PLUGIN_PATH=/app/lib/libheif \
         --env=PATH=/usr/lib/sdk/rust-stable/bin:/app/bin:/usr/bin \
         build-dir \
         {{ command }}
@@ -47,6 +48,7 @@ _module-llvm command: _cargo-vendor-sources _flatpak-build-dir
         '--bind-mount=/run/build/kiriview/cargo/vendor={{ cargo_vendor_dir }}' \
         --build-dir=/run/build/kiriview \
         --env=CARGO_TARGET_DIR=/run/build/kiriview/target/flatpak \
+        --env=LIBHEIF_PLUGIN_PATH=/app/lib/libheif \
         --env=PATH=/usr/lib/sdk/rust-stable/bin:/usr/lib/sdk/llvm21/bin:/app/bin:/usr/bin \
         build-dir \
         {{ command }}
@@ -106,6 +108,7 @@ run:
         --filesystem=/run/media:ro \
         --filesystem=xdg-run/gvfs:ro \
         --bind-mount="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/doc=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/doc" \
+        --env=LIBHEIF_PLUGIN_PATH=/app/lib/libheif \
         --env=WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-wayland-0}" \
         --env=QT_QPA_PLATFORM=wayland \
         build-dir \

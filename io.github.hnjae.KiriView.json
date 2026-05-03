@@ -22,7 +22,7 @@
     "--filesystem=/run/media:ro",
     "--filesystem=xdg-run/gvfs:ro",
     "--talk-name=org.freedesktop.portal.Desktop",
-    "--env=LIBHEIF_PLUGIN_PATH=/app/lib/libheif:/usr/lib/x86_64-linux-gnu/codecs-extra/lib/libheif:/usr/lib/aarch64-linux-gnu/codecs-extra/lib/libheif"
+    "--env=LIBHEIF_PLUGIN_PATH=/app/lib/libheif"
   ],
   "modules": [
     {
@@ -77,10 +77,10 @@
       "run-tests": true,
       "test-rule": "",
       "test-commands": [
-        "env CARGO_TARGET_DIR=target/flatpak cargo --offline test --all-targets --all-features",
-        "cmake -S tests/cpp -B target/flatpak/cpp-tests -DCMAKE_BUILD_TYPE=Debug",
-        "cmake --build target/flatpak/cpp-tests",
-        "ctest --test-dir target/flatpak/cpp-tests --output-on-failure"
+        "env CARGO_TARGET_DIR=target/flatpak LIBHEIF_PLUGIN_PATH=/app/lib/libheif cargo --offline test --all-targets --all-features",
+        "env LIBHEIF_PLUGIN_PATH=/app/lib/libheif cmake -S tests/cpp -B target/flatpak/cpp-tests -DCMAKE_BUILD_TYPE=Debug",
+        "env LIBHEIF_PLUGIN_PATH=/app/lib/libheif cmake --build target/flatpak/cpp-tests",
+        "env LIBHEIF_PLUGIN_PATH=/app/lib/libheif ctest --test-dir target/flatpak/cpp-tests --output-on-failure"
       ],
       "sources": [
         "cargo-sources.json",
