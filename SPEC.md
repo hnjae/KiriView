@@ -154,10 +154,11 @@ centered page navigation controls keep their layout stable. The current page
 number updates to the newly displayed image, and the known total image count
 remains visible while KiriView updates the current position.
 
-Animated image files, including GIF and APNG, play when animation frames are
-available. The first frame is shown once loading succeeds; later frames use the
-file's frame delays and loop count. Infinite loops continue until another image
-is selected or the view is cleared. APNG animations play as authored.
+Animated image files, including GIF, APNG, and HEIF image sequences, play when
+animation frames are available. The first frame is shown once loading succeeds;
+later frames use the file's frame delays and loop count. Infinite loops
+continue until another image is selected or the view is cleared. APNG
+animations and HEIF image sequences play as authored.
 
 When a new image is selected while an image is already displayed, any running
 animation keeps playing until the replacement image is ready. If the selected
@@ -175,10 +176,10 @@ first image, pressing Page Up keeps the current image open and notifies the user
 that it is the first image. If the current image is the last image, pressing
 Page Down keeps the current image open and notifies the user that it is the last
 image. Supported image extensions match the open dialog: AVIF (`.avif` and
-`.avifs`), BMP, GIF, HEIF (`.heic`, `.heif`, `.hif`, `.avci`, and `.hej2`),
-JPEG, JPEG 2000 (`.jp2`), JPEG XL (`.jxl`), PNG, SVG, and WebP,
-case-insensitively. JPEG-compressed HEIF files use the generic HEIF extensions
-because they do not have a dedicated extension.
+`.avifs`), BMP, GIF, HEIF (`.heic`, `.heics`, `.heif`, `.heifs`, `.hif`,
+`.avci`, and `.hej2`), JPEG, JPEG 2000 (`.jp2`), JPEG XL (`.jxl`), PNG, SVG,
+and WebP, case-insensitively. JPEG-compressed HEIF files use the generic HEIF
+extensions because they do not have a dedicated extension.
 
 When an image is opened from a KDE-supported archive URL such as `zip://`,
 `tar://`, or `sevenz://`, navigation moves between supported image files in the
