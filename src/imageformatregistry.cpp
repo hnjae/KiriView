@@ -83,10 +83,12 @@ namespace KiriView {
 QStringList supportedImageExtensions()
 {
     return {
+        QStringLiteral("avci"),
         QStringLiteral("avif"),
         QStringLiteral("avifs"),
         QStringLiteral("bmp"),
         QStringLiteral("gif"),
+        QStringLiteral("hej2"),
         QStringLiteral("heic"),
         QStringLiteral("heif"),
         QStringLiteral("hif"),

@@ -13,6 +13,7 @@ class TestImageFormatRegistry : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
+    void supportedImageExtensionsIncludeCodecSpecificHeifExtensions();
     void supportedOpenExtensionsIncludeComicBookArchives();
     void supportedOpenExtensionsDoNotAdvertiseGeneralArchives();
     void comicBookArchiveFileNamesAreCaseInsensitive();
@@ -20,6 +21,16 @@ private Q_SLOTS:
     void directArchiveOpenUrlsMapGeneralArchivesToKioSchemes();
     void directArchiveOpenMimeTypesMapGeneralArchivesToKioSchemes();
 };
+
+void TestImageFormatRegistry::supportedImageExtensionsIncludeCodecSpecificHeifExtensions()
+{
+    const QStringList extensions = KiriView::supportedImageExtensions();
+
+    QVERIFY(extensions.contains(QStringLiteral("avci")));
+    QVERIFY(extensions.contains(QStringLiteral("hej2")));
+    QVERIFY(KiriView::isSupportedImageFileName(QStringLiteral("still.AVCI")));
+    QVERIFY(KiriView::isSupportedImageFileName(QStringLiteral("still.HEJ2")));
+}
 
 void TestImageFormatRegistry::supportedOpenExtensionsIncludeComicBookArchives()
 {
