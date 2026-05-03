@@ -2,8 +2,9 @@
 
 ## Current Scope
 
-KiriView opens one user-selected image file, displays it in the main window, and
-can navigate to adjacent images in the same location.
+KiriView opens one user-selected image file or comic book archive, displays it
+in the main window, and can navigate to adjacent images or pages in the same
+location.
 
 The main window toolbar shows image controls without a page title. The compact
 toolbar always provides open, page navigation, fit, and zoom controls in fixed
@@ -33,9 +34,8 @@ KiriView opens user-selected image URLs, including local files,
 KDE-supported remote URLs such as `smb://`, and KDE-supported archive URLs
 such as `zip://`.
 
-KiriView also opens local CBZ comic book archives with the
-`application/vnd.comicbook+zip` MIME type. Opening a CBZ archive displays the
-first supported image inside that archive.
+KiriView also opens local `.cbz` comic book archives. Opening a CBZ archive
+displays the first supported image inside that archive.
 
 In Flatpak, adjacent image navigation can list neighboring files under `home`,
 `/media`, `/mnt`, `/run/media`, and `$XDG_RUNTIME_DIR/gvfs`. Files outside those
@@ -43,20 +43,19 @@ paths remain available only when explicitly provided by the XDG portal.
 
 ## Image Display
 
-Image loading is asynchronous. While a selected image is being opened, the UI
-remains responsive. If no image is currently displayed, the UI shows a loading
-state. If an image is already displayed, that image remains visible until the
-newly selected image is ready to replace it, with a compact loading indicator
-shown at the top-left of the image viewing area. If another file is selected
-before the previous load finishes, only the most recent selection is displayed.
+The UI remains responsive while a selected image is being opened. If no image
+is currently displayed, the UI shows a loading state. If an image is already
+displayed, that image remains visible until the newly selected image is ready to
+replace it, with a compact loading indicator shown at the top-left of the image
+viewing area. If another file is selected before the previous load finishes,
+only the most recent selection is displayed.
 
 Opened images are displayed centered in the available page area while preserving
 their aspect ratio. Image zoom is expressed in physical display pixels: 100%
 means one image pixel maps to one physical monitor pixel.
-For SVG files, 100% uses the SVG's intrinsic size. KiriView renders SVGs for
-the current displayed size and display device pixel ratio, so Fit mode, manual
-zoom, window resizing, and display scale changes preserve vector sharpness up to
-the maximum renderable texture size.
+For SVG files, 100% uses the SVG's intrinsic size. SVGs remain sharp instead of
+pixelated when Fit mode, manual zoom, window resizing, or display scale changes
+the displayed size.
 
 KiriView starts in Fit mode. Fit mode scales the image as large as possible
 while keeping the full image visible in the viewport, including upscaling small
@@ -69,10 +68,12 @@ users navigate between images. If the user has selected Fit, Fit Height, or Fit
 Width, that fit mode remains selected and recalculates for each image and
 viewport size. If the user has entered a manual zoom value, that exact
 percentage remains active while moving to previous, next, or numbered pages in
-the same directory or CBZ archive. When the displayed image changes, any
-panning position from the previous image is cleared so the newly displayed image
-starts at its top-left at the preserved zoom level. Starting KiriView or
-opening an image in a different container resets zoom to Fit mode.
+the same directory or CBZ archive. When the displayed image changes through
+ordinary page or container navigation, any panning position from the previous
+image is cleared so the newly displayed image starts at its top-left at the
+preserved zoom level. The scan-backward shortcut may open the previous image at
+its final scan position instead. Starting KiriView or opening an image in a
+different container resets zoom to Fit mode.
 
 The image viewing area behind empty, loading, ready, and error states uses
 `#3c3c3c` as its background color, so navigation transitions do not flash to a
@@ -107,15 +108,15 @@ and the mouse cursor shows that the image can be dragged to pan. Keyboard
 panning is inactive while the page number or zoom input is focused.
 
 When an image is zoomed large enough to pan, the `.` key scans forward through
-the image in row-major Z order. Each scan step moves horizontally or vertically
-by at most three quarters of the visible viewport, except that moving from the
-right edge of one row to the next row jumps directly to the left edge of the
-next row. At the final scan position, `.` opens the next image. The `,` key
-scans backward through the same positions; at the initial scan position, it
-opens the previous image, starting that image at its final scan position. When
-the current image is not zoomed large enough to pan, `.` opens the next image
-and `,` opens the previous image. These shortcuts are inactive while the page
-number or zoom input is focused.
+the image from left to right and then top to bottom. Each scan step moves
+horizontally or vertically by at most three quarters of the visible viewport,
+except that moving from the right edge of one row to the next row jumps directly
+to the left edge of the next row. At the final scan position, `.` opens the next
+image. The `,` key scans backward through the same positions; at the initial
+scan position, it opens the previous image, starting that image at its final
+scan position. When the current image is not zoomed large enough to pan, `.`
+opens the next image and `,` opens the previous image. These shortcuts are
+inactive while the page number or zoom input is focused.
 
 The toolbar centers page navigation as an up-arrow Previous button, an editable
 current page number, the text `of`, the total number of supported images in the
@@ -127,14 +128,12 @@ open and restores the displayed page number.
 When moving between images in the current directory or archive scope, the
 centered page navigation controls keep their layout stable. The current page
 number updates to the newly displayed image, and the known total image count
-does not temporarily collapse to a single-image fallback while KiriView refreshes
-the navigation list.
+remains visible while KiriView updates the current position.
 
 Animated image files, including GIF and APNG, play when animation frames are
 available. The first frame is shown once loading succeeds; later frames use the
 file's frame delays and loop count. Infinite loops continue until another image
-is selected or the view is cleared. APNG playback follows frame composition
-rules, including blend and disposal operations.
+is selected or the view is cleared. APNG animations play as authored.
 
 When a new image is selected while an image is already displayed, any running
 animation keeps playing until the replacement image is ready. If the selected
@@ -163,37 +162,34 @@ When an image is opened by selecting a CBZ archive, navigation moves between all
 supported image files inside that archive, including images in subdirectories.
 
 The previous and next files are determined by sorting candidate file names with
-the process locale collation order, including `LC_COLLATE`. Navigation does not
-wrap; pressing Page Up on the first candidate or Page Down on the last candidate
-keeps the current image open.
+the user's locale-aware file name order. Navigation does not wrap; pressing Page
+Up on the first candidate or Page Down on the last candidate keeps the current
+image open.
 
 If the parent URL cannot be listed, the current image is not found, or no
 adjacent supported image exists, the current image remains open and the app
 remains ready for another open action.
 
-After an image is displayed, KiriView may prepare adjacent images in the
-background so pressing Previous or Next can switch images without showing a
-full-page loading state. KiriView keeps prepared static images reusable while
-they remain in the current cache window, including the current image, up to two
-previous images, and up to four next images. KiriView keeps decoded prepared
-images within a 1024MiB memory limit that does not exceed one eighth of system
-memory, so fewer images may remain prepared on memory-constrained systems.
-Background preparation must not replace the current image until the user opens
-that prepared image.
+After an image is displayed, KiriView may make adjacent images available for
+quicker Previous or Next navigation, so the switch can happen without showing a
+full-page loading state. This preparation must not change what is displayed
+until the user opens an adjacent image.
 
 ## Container Navigation
 
-A container is either a directory or a local CBZ comic book archive. When the
-current image is a normal file, its container is the image's parent directory.
-When the current image is inside a CBZ archive opened by KiriView, its container
-is that `.cbz` file. The Previous Container and Next Container toolbar actions
-open the previous or next sibling container beside the current container.
+A container is either a directory or a local CBZ comic book archive. The current
+container can be the directory or archive whose image is displayed, or an empty
+sibling container reached through container navigation. When the current image is
+a normal file, its container is the image's parent directory. When the current
+image is inside a CBZ archive opened by KiriView, its container is that `.cbz`
+file. The Previous Container and Next Container toolbar actions open the
+previous or next sibling container beside the current container.
 
 Sibling container candidates are directly contained directories and local `.cbz`
-files in the current container's parent directory. Candidates are sorted with the
-same process-locale collation order used for image navigation. Navigation does
-not wrap; pressing Previous Container on the first candidate or Next Container on
-the last candidate keeps the current view unchanged.
+files in the current container's parent directory. Candidates are sorted with
+the same user locale-aware file name order used for image navigation. Navigation
+does not wrap; pressing Previous Container on the first candidate or Next
+Container on the last candidate keeps the current view unchanged.
 
 The `[` key opens the previous sibling container and the `]` key opens the next
 sibling container when container navigation is available. Home and Ctrl+Home open
