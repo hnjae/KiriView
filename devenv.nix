@@ -306,6 +306,8 @@ in
     kdePackages.qtsvg
     kdePackages.qttools
     libarchive
+    libheif.dev
+    libheif.lib
     ninja
     pkg-config
   ];

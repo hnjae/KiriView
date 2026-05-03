@@ -14,10 +14,11 @@ const CPP_CORE_SOURCES_FILE: &str = "src/cpp_core_sources.txt";
 fn main() {
     let kio_include_dirs = kio_include_dirs();
     let libarchive_include_dirs = libarchive_include_dirs();
+    let libheif_include_dirs = libheif_include_dirs();
     let qt_rhi_include_dirs = qt_rhi_include_dirs();
     let shader_source = bake_shaders();
     let cpp_core_sources = cpp_core_sources();
-    link_kio();
+    link_native_libraries();
 
     let mut builder = CxxQtBuilder::new_qml_module(
         QmlModule::new("io.github.hnjae.kiriview")
@@ -71,6 +72,9 @@ fn main() {
                 cc.include(dir);
             }
             for dir in &libarchive_include_dirs {
+                cc.include(dir);
+            }
+            for dir in &libheif_include_dirs {
                 cc.include(dir);
             }
             for dir in &qt_rhi_include_dirs {
@@ -160,10 +164,11 @@ fn append_byte_array(source: &mut String, name: &str, size_name: &str, data: &[u
     source.push_str(");\n\n");
 }
 
-fn link_kio() {
+fn link_native_libraries() {
     println!("cargo::rerun-if-env-changed=NIX_LDFLAGS");
+    println!("cargo::rerun-if-env-changed=PKG_CONFIG_PATH");
 
-    for dir in kio_library_dirs() {
+    for dir in native_library_dirs() {
         println!("cargo::rustc-link-search=native={}", dir.display());
     }
 
@@ -171,6 +176,7 @@ fn link_kio() {
     println!("cargo::rustc-link-lib=KF6KIOCore");
     println!("cargo::rustc-link-lib=KF6CoreAddons");
     println!("cargo::rustc-link-lib=archive");
+    println!("cargo::rustc-link-lib=heif");
 }
 
 fn kio_include_dirs() -> Vec<PathBuf> {
@@ -230,8 +236,34 @@ fn libarchive_include_dirs() -> Vec<PathBuf> {
     dirs.into_iter().collect()
 }
 
+fn libheif_include_dirs() -> Vec<PathBuf> {
+    println!("cargo::rerun-if-env-changed=NIX_CFLAGS_COMPILE");
+    println!("cargo::rerun-if-env-changed=PKG_CONFIG_PATH");
+
+    let mut dirs = BTreeSet::new();
+    add_libheif_include_dir(&mut dirs, Path::new("/usr/include"));
+
+    for path in flag_paths("NIX_CFLAGS_COMPILE", "-isystem") {
+        add_libheif_include_dir(&mut dirs, &path);
+    }
+    for path in flag_paths("NIX_CFLAGS_COMPILE", "-I") {
+        add_libheif_include_dir(&mut dirs, &path);
+    }
+    for path in pkg_config_include_dirs("libheif") {
+        add_libheif_include_dir(&mut dirs, &path);
+    }
+
+    dirs.into_iter().collect()
+}
+
 fn add_libarchive_include_dir(dirs: &mut BTreeSet<PathBuf>, include_root: &Path) {
     if include_root.join("archive.h").exists() && include_root.join("archive_entry.h").exists() {
+        dirs.insert(include_root.to_path_buf());
+    }
+}
+
+fn add_libheif_include_dir(dirs: &mut BTreeSet<PathBuf>, include_root: &Path) {
+    if include_root.join("libheif").join("heif.h").exists() {
         dirs.insert(include_root.to_path_buf());
     }
 }
@@ -334,7 +366,7 @@ fn add_qt_mkspec_include_dirs(dirs: &mut BTreeSet<PathBuf>, include_root: &Path)
     }
 }
 
-fn kio_library_dirs() -> Vec<PathBuf> {
+fn native_library_dirs() -> Vec<PathBuf> {
     let mut dirs = BTreeSet::new();
     for dir in ["/usr/lib/x86_64-linux-gnu", "/usr/lib"] {
         let path = PathBuf::from(dir);
@@ -348,9 +380,13 @@ fn kio_library_dirs() -> Vec<PathBuf> {
             || contains_kio_library(&path)
             || contains_core_addons_library(&path)
             || contains_libarchive_library(&path)
+            || contains_libheif_library(&path)
         {
             dirs.insert(path);
         }
+    }
+    for path in pkg_config_library_dirs("libheif") {
+        dirs.insert(path);
     }
 
     dirs.into_iter().collect()
@@ -370,6 +406,38 @@ fn contains_core_addons_library(dir: &Path) -> bool {
 
 fn contains_libarchive_library(dir: &Path) -> bool {
     dir.join("libarchive.so").exists()
+}
+
+fn contains_libheif_library(dir: &Path) -> bool {
+    dir.join("libheif.so").exists()
+}
+
+fn pkg_config_library_dirs(package: &str) -> Vec<PathBuf> {
+    let output = Command::new("pkg-config")
+        .args(["--libs", package])
+        .output();
+    let Ok(output) = output else {
+        return Vec::new();
+    };
+    if !output.status.success() {
+        return Vec::new();
+    }
+
+    let libs = String::from_utf8_lossy(&output.stdout);
+    let mut dirs = Vec::new();
+    let mut tokens = libs.split_whitespace();
+    while let Some(token) = tokens.next() {
+        if token == "-L" {
+            if let Some(path) = tokens.next() {
+                dirs.push(PathBuf::from(path));
+            }
+        } else if let Some(path) = token.strip_prefix("-L")
+            && !path.is_empty()
+        {
+            dirs.push(PathBuf::from(path));
+        }
+    }
+    dirs
 }
 
 fn flag_paths(env_var: &str, flag: &str) -> Vec<PathBuf> {
