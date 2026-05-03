@@ -5,24 +5,17 @@
 #define KIRIVIEW_IMAGEDECODEJOB_H
 
 #include "decodedimageresult.h"
+#include "imagedecoderequest.h"
 #include "imageiojob.h"
-#include "imagelocation.h"
 
 #include <QByteArray>
 #include <QObject>
 #include <QString>
-#include <QUrl>
 #include <functional>
 #include <memory>
 #include <optional>
 
 namespace KiriView {
-struct ImageDecodeRequest {
-    quint64 id = 0;
-    QUrl imageUrl;
-    ArchiveDocumentLocation archiveDocument;
-};
-
 class ImageDecodeJob final : public QObject
 {
 public:

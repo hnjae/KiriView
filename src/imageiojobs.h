@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGEIOJOBS_H
 #define KIRIVIEW_IMAGEIOJOBS_H
 
-#include "imagedecodejob.h"
+#include "imagedecoderequest.h"
 #include "imageiojob.h"
 #include "imagelocation.h"
 #include "imagenavigationtypes.h"
