@@ -5,6 +5,13 @@ KiriView is a desktop image viewer built with KDE Kirigami.
 > [!IMPORTANT]
 > All documentation, code, and artwork in this repository were vibe coded.
 
+## Supported Image Formats
+
+KiriView aims to display modern and uncommon image variants that are commonly
+poorly supported by desktop image viewers. This includes AVIF images with alpha
+channels, animated PNG (APNG) images, and HEIF container images that store
+AVC, JPEG, or VVC image data.
+
 ## Supported Archives
 
 KiriView supports comic book archive containers with `.cbz`, `.cbr`, `.cb7`,
