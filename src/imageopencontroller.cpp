@@ -16,8 +16,8 @@
 #include <variant>
 
 namespace {
-using KiriView::containerNavigationUrlForImage;
 using KiriView::decodedImageResultIsPredecodeCacheable;
+using KiriView::imageContainerUrlForImage;
 }
 
 namespace KiriView {
@@ -165,8 +165,8 @@ void ImageOpenController::finishLoadWithError(
     const ImageLoadSession &session, ImageLoadError error, const QString &errorString)
 {
     const QUrl containerNavigationUrl = session.request.containerNavigationUrl();
-    const QString message = error == ImageLoadError::EmptyComicBookArchive
-        ? imageViewText("The selected comic book archive does not contain any supported images.")
+    const QString message = error == ImageLoadError::EmptyArchive
+        ? imageViewText("The selected archive does not contain any supported images.")
         : errorString;
     if (!containerNavigationUrl.isEmpty()) {
         finishContainerNavigationLoadWithError(containerNavigationUrl, message);
@@ -204,7 +204,7 @@ void ImageOpenController::finishLoadSuccessfully(
 void ImageOpenController::finishSvgLoadSuccessfully(
     ImageLoadSession session, QByteArray data, const QSize &intrinsicSize)
 {
-    const QUrl loadedContainerUrl = containerNavigationUrlForImage(
+    const QUrl loadedContainerUrl = imageContainerUrlForImage(
         session.location.imageUrl(), session.location.comicBookRootUrl());
     const std::optional<QString> errorString = m_presentationController.setLoadedSvgImage(
         std::move(data), intrinsicSize, loadedContainerUrl);
@@ -219,7 +219,7 @@ void ImageOpenController::finishSvgLoadSuccessfully(
 void ImageOpenController::prepareSuccessfulImageLoad(const ImageLoadSession &session)
 {
     m_presentationController.stopAnimation();
-    const QUrl loadedContainerUrl = containerNavigationUrlForImage(
+    const QUrl loadedContainerUrl = imageContainerUrlForImage(
         session.location.imageUrl(), session.location.comicBookRootUrl());
     m_presentationController.prepareImageContainer(loadedContainerUrl);
 }

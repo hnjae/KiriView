@@ -38,6 +38,21 @@ QString comicBookArchiveMarkerForRootScheme(const QString &scheme)
     return {};
 }
 
+QStringList directArchiveOpenMarkersForRootScheme(const QString &scheme)
+{
+    if (scheme == QStringLiteral("zip")) {
+        return { QStringLiteral(".cbz/"), QStringLiteral(".zip/") };
+    }
+    if (scheme == QStringLiteral("tar")) {
+        return { QStringLiteral(".cbt/"), QStringLiteral(".tar/") };
+    }
+    if (scheme == QStringLiteral("sevenz")) {
+        return { QStringLiteral(".cb7/"), QStringLiteral(".7z/") };
+    }
+
+    return {};
+}
+
 QString normalizedArchiveRootPath(const QUrl &archiveRootUrl)
 {
     QString path = QDir::cleanPath(archiveRootUrl.path());
@@ -48,7 +63,7 @@ QString normalizedArchiveRootPath(const QUrl &archiveRootUrl)
     return path;
 }
 
-std::optional<QUrl> comicBookArchiveFileUrl(const QUrl &archiveRootUrl)
+std::optional<QUrl> archiveFileUrl(const QUrl &archiveRootUrl)
 {
     if (!isComicBookArchiveRootScheme(archiveRootUrl.scheme())) {
         return std::nullopt;
@@ -67,23 +82,8 @@ std::optional<QUrl> comicBookArchiveFileUrl(const QUrl &archiveRootUrl)
     return KiriView::normalizedFileContainerUrl(QUrl::fromLocalFile(archivePath));
 }
 
-QString archiveRelativeImageName(const QUrl &archiveRootUrl, const QUrl &imageUrl)
+std::optional<QUrl> archiveRootUrlForLocalArchive(const QUrl &url, const QString &archiveScheme)
 {
-    const QString rootPath = normalizedArchiveRootPath(archiveRootUrl);
-    const QString path = QDir::cleanPath(imageUrl.path());
-    if (!path.startsWith(rootPath)) {
-        return imageUrl.fileName();
-    }
-
-    return path.mid(rootPath.size());
-}
-
-}
-
-namespace KiriView {
-std::optional<QUrl> comicBookArchiveRootUrl(const QUrl &url)
-{
-    const QString archiveScheme = KiriView::comicBookArchiveKioSchemeForUrl(url);
     if (archiveScheme.isEmpty()) {
         return std::nullopt;
     }
@@ -103,6 +103,67 @@ std::optional<QUrl> comicBookArchiveRootUrl(const QUrl &url)
     return archiveRootUrl;
 }
 
+std::optional<QUrl> containingArchiveRootUrl(const QUrl &url, const QStringList &archiveMarkers)
+{
+    if (archiveMarkers.isEmpty()) {
+        return std::nullopt;
+    }
+
+    const QString path = QDir::cleanPath(url.path());
+    const QString foldedPath = path.toCaseFolded();
+    qsizetype markerIndex = -1;
+    qsizetype markerSize = 0;
+    for (const QString &marker : archiveMarkers) {
+        const qsizetype candidateIndex = foldedPath.indexOf(marker);
+        if (candidateIndex < 0 || (markerIndex >= 0 && candidateIndex >= markerIndex)) {
+            continue;
+        }
+
+        markerIndex = candidateIndex;
+        markerSize = marker.size();
+    }
+
+    if (markerIndex < 0) {
+        return std::nullopt;
+    }
+
+    QUrl archiveRootUrl = url;
+    archiveRootUrl.setPath(path.left(markerIndex + markerSize - 1) + QLatin1Char('/'));
+    archiveRootUrl.setQuery(QString());
+    archiveRootUrl.setFragment(QString());
+    if (!archiveRootUrl.isValid() || archiveRootUrl.path().isEmpty()) {
+        return std::nullopt;
+    }
+
+    return archiveRootUrl;
+}
+
+QString archiveRelativeImageName(const QUrl &archiveRootUrl, const QUrl &imageUrl)
+{
+    const QString rootPath = normalizedArchiveRootPath(archiveRootUrl);
+    const QString path = QDir::cleanPath(imageUrl.path());
+    if (!path.startsWith(rootPath)) {
+        return imageUrl.fileName();
+    }
+
+    return path.mid(rootPath.size());
+}
+
+}
+
+namespace KiriView {
+std::optional<QUrl> comicBookArchiveRootUrl(const QUrl &url)
+{
+    const QString archiveScheme = KiriView::comicBookArchiveKioSchemeForUrl(url);
+    return archiveRootUrlForLocalArchive(url, archiveScheme);
+}
+
+std::optional<QUrl> directArchiveOpenRootUrl(const QUrl &url)
+{
+    const QString archiveScheme = KiriView::directArchiveOpenKioSchemeForUrl(url);
+    return archiveRootUrlForLocalArchive(url, archiveScheme);
+}
+
 bool isUrlInsideArchiveRoot(const QUrl &url, const QUrl &archiveRootUrl)
 {
     if (url.isEmpty() || archiveRootUrl.isEmpty() || url.scheme() != archiveRootUrl.scheme()) {
@@ -117,26 +178,12 @@ bool isUrlInsideArchiveRoot(const QUrl &url, const QUrl &archiveRootUrl)
 std::optional<QUrl> containingComicBookArchiveRootUrl(const QUrl &url)
 {
     const QString marker = comicBookArchiveMarkerForRootScheme(url.scheme());
-    if (marker.isEmpty()) {
-        return std::nullopt;
-    }
+    return containingArchiveRootUrl(url, marker.isEmpty() ? QStringList() : QStringList { marker });
+}
 
-    const QString path = QDir::cleanPath(url.path());
-    const QString foldedPath = path.toCaseFolded();
-    const qsizetype markerIndex = foldedPath.indexOf(marker);
-    if (markerIndex < 0) {
-        return std::nullopt;
-    }
-
-    QUrl archiveRootUrl = url;
-    archiveRootUrl.setPath(path.left(markerIndex + marker.size() - 1) + QLatin1Char('/'));
-    archiveRootUrl.setQuery(QString());
-    archiveRootUrl.setFragment(QString());
-    if (!archiveRootUrl.isValid() || archiveRootUrl.path().isEmpty()) {
-        return std::nullopt;
-    }
-
-    return archiveRootUrl;
+std::optional<QUrl> containingDirectArchiveOpenRootUrl(const QUrl &url)
+{
+    return containingArchiveRootUrl(url, directArchiveOpenMarkersForRootScheme(url.scheme()));
 }
 
 QString windowTitleFileNameForDisplayedUrl(
@@ -147,7 +194,7 @@ QString windowTitleFileNameForDisplayedUrl(
     }
 
     if (isUrlInsideArchiveRoot(displayedUrl, displayedComicBookRootUrl)) {
-        const std::optional<QUrl> archiveUrl = comicBookArchiveFileUrl(displayedComicBookRootUrl);
+        const std::optional<QUrl> archiveUrl = archiveFileUrl(displayedComicBookRootUrl);
         if (archiveUrl.has_value()) {
             const QString archiveName = archiveUrl->fileName();
             if (!archiveName.isEmpty()) {
@@ -203,14 +250,14 @@ void appendArchiveImageNavigationCandidates(std::vector<ImageNavigationCandidate
     }
 }
 
-QUrl containerNavigationUrlForImage(const QUrl &imageUrl, const QUrl &comicBookRootUrl)
+QUrl imageContainerUrlForImage(const QUrl &imageUrl, const QUrl &archiveRootUrl)
 {
     if (imageUrl.isEmpty()) {
         return {};
     }
 
-    if (isUrlInsideArchiveRoot(imageUrl, comicBookRootUrl)) {
-        const std::optional<QUrl> archiveUrl = comicBookArchiveFileUrl(comicBookRootUrl);
+    if (isUrlInsideArchiveRoot(imageUrl, archiveRootUrl)) {
+        const std::optional<QUrl> archiveUrl = archiveFileUrl(archiveRootUrl);
         if (!archiveUrl.has_value()) {
             return {};
         }
@@ -225,5 +272,23 @@ QUrl containerNavigationUrlForImage(const QUrl &imageUrl, const QUrl &comicBookR
     }
 
     return normalizedDirectoryContainerUrl(parentUrl);
+}
+
+QUrl containerNavigationUrlForImage(const QUrl &imageUrl, const QUrl &comicBookRootUrl)
+{
+    if (imageUrl.isEmpty()) {
+        return {};
+    }
+
+    if (isUrlInsideArchiveRoot(imageUrl, comicBookRootUrl)) {
+        const std::optional<QUrl> archiveUrl = archiveFileUrl(comicBookRootUrl);
+        if (!archiveUrl.has_value() || !isComicBookArchiveUrl(*archiveUrl)) {
+            return {};
+        }
+
+        return normalizedFileContainerUrl(navigationSourceUrl(*archiveUrl));
+    }
+
+    return imageContainerUrlForImage(imageUrl, QUrl());
 }
 }

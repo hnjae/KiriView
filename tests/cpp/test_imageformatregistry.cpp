@@ -14,8 +14,11 @@ class TestImageFormatRegistry : public QObject
 
 private Q_SLOTS:
     void supportedOpenExtensionsIncludeComicBookArchives();
+    void supportedOpenExtensionsDoNotAdvertiseGeneralArchives();
     void comicBookArchiveFileNamesAreCaseInsensitive();
     void comicBookArchiveUrlsMapToKioSchemes();
+    void directArchiveOpenUrlsMapGeneralArchivesToKioSchemes();
+    void directArchiveOpenMimeTypesMapGeneralArchivesToKioSchemes();
 };
 
 void TestImageFormatRegistry::supportedOpenExtensionsIncludeComicBookArchives()
@@ -25,6 +28,15 @@ void TestImageFormatRegistry::supportedOpenExtensionsIncludeComicBookArchives()
     QVERIFY(extensions.contains(QStringLiteral("cbz")));
     QVERIFY(extensions.contains(QStringLiteral("cbt")));
     QVERIFY(extensions.contains(QStringLiteral("cb7")));
+}
+
+void TestImageFormatRegistry::supportedOpenExtensionsDoNotAdvertiseGeneralArchives()
+{
+    const QStringList extensions = KiriView::supportedOpenExtensions();
+
+    QVERIFY(!extensions.contains(QStringLiteral("zip")));
+    QVERIFY(!extensions.contains(QStringLiteral("tar")));
+    QVERIFY(!extensions.contains(QStringLiteral("7z")));
 }
 
 void TestImageFormatRegistry::comicBookArchiveFileNamesAreCaseInsensitive()
@@ -47,6 +59,33 @@ void TestImageFormatRegistry::comicBookArchiveUrlsMapToKioSchemes()
     QVERIFY(KiriView::comicBookArchiveKioSchemeForUrl(
         QUrl(QStringLiteral("smb://server/books/book.cb7")))
             .isEmpty());
+}
+
+void TestImageFormatRegistry::directArchiveOpenUrlsMapGeneralArchivesToKioSchemes()
+{
+    const QUrl zipUrl = QUrl::fromLocalFile(QStringLiteral("/books/book.zip"));
+    const QUrl tarUrl = QUrl::fromLocalFile(QStringLiteral("/books/book.tar"));
+    const QUrl sevenZipUrl = QUrl::fromLocalFile(QStringLiteral("/books/book.7z"));
+
+    QCOMPARE(KiriView::directArchiveOpenKioSchemeForUrl(zipUrl), QStringLiteral("zip"));
+    QCOMPARE(KiriView::directArchiveOpenKioSchemeForUrl(tarUrl), QStringLiteral("tar"));
+    QCOMPARE(KiriView::directArchiveOpenKioSchemeForUrl(sevenZipUrl), QStringLiteral("sevenz"));
+    QVERIFY(KiriView::directArchiveOpenKioSchemeForUrl(
+        QUrl(QStringLiteral("smb://server/books/book.zip")))
+            .isEmpty());
+    QVERIFY(KiriView::comicBookArchiveKioSchemeForUrl(zipUrl).isEmpty());
+}
+
+void TestImageFormatRegistry::directArchiveOpenMimeTypesMapGeneralArchivesToKioSchemes()
+{
+    QCOMPARE(KiriView::directArchiveOpenKioSchemeForMimeTypeName(QStringLiteral("application/zip")),
+        QStringLiteral("zip"));
+    QCOMPARE(
+        KiriView::directArchiveOpenKioSchemeForMimeTypeName(QStringLiteral("application/x-tar")),
+        QStringLiteral("tar"));
+    const QString sevenZipMimeType = QStringLiteral("application/x-7z-compressed");
+    QCOMPARE(KiriView::directArchiveOpenKioSchemeForMimeTypeName(sevenZipMimeType),
+        QStringLiteral("sevenz"));
 }
 
 QTEST_GUILESS_MAIN(TestImageFormatRegistry)

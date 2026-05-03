@@ -28,7 +28,7 @@ struct ImageLoadSession {
 
 enum class ImageLoadError {
     Generic,
-    EmptyComicBookArchive,
+    EmptyArchive,
 };
 
 class ImageLoader final : public QObject
@@ -56,7 +56,7 @@ public:
 
 private:
     void startImageLoad(ImageLoadSession session);
-    void startComicBookLoad(ImageLoadSession session);
+    void startArchiveLoad(ImageLoadSession session);
     std::optional<ImageLoadSession> currentLoadSessionForDecodeRequest(
         const ImageDecodeRequest &request) const;
     bool isCurrentLoadSession(const ImageLoadSession &session) const;

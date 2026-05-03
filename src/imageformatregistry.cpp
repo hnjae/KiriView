@@ -33,6 +33,26 @@ QString comicBookArchiveKioSchemeForExtension(const QString &extension)
     return {};
 }
 
+QString directArchiveOpenKioSchemeForExtension(const QString &extension)
+{
+    const QString comicBookScheme = comicBookArchiveKioSchemeForExtension(extension);
+    if (!comicBookScheme.isEmpty()) {
+        return comicBookScheme;
+    }
+
+    if (extension == QStringLiteral("zip")) {
+        return QStringLiteral("zip");
+    }
+    if (extension == QStringLiteral("tar")) {
+        return QStringLiteral("tar");
+    }
+    if (extension == QStringLiteral("7z")) {
+        return QStringLiteral("sevenz");
+    }
+
+    return {};
+}
+
 QString comicBookArchiveKioSchemeForMimeTypeName(const QString &mimeTypeName)
 {
     if (mimeTypeName == QStringLiteral("application/vnd.comicbook+zip")) {
@@ -111,6 +131,42 @@ QString comicBookArchiveKioSchemeForUrl(const QUrl &url)
     const QMimeType mimeType
         = QMimeDatabase().mimeTypeForFile(url.toLocalFile(), QMimeDatabase::MatchExtension);
     return comicBookArchiveKioSchemeForMimeTypeName(mimeType.name());
+}
+
+QString directArchiveOpenKioSchemeForMimeTypeName(const QString &mimeTypeName)
+{
+    const QString comicBookScheme = comicBookArchiveKioSchemeForMimeTypeName(mimeTypeName);
+    if (!comicBookScheme.isEmpty()) {
+        return comicBookScheme;
+    }
+
+    if (mimeTypeName == QStringLiteral("application/zip")) {
+        return QStringLiteral("zip");
+    }
+    if (mimeTypeName == QStringLiteral("application/x-tar")) {
+        return QStringLiteral("tar");
+    }
+    if (mimeTypeName == QStringLiteral("application/x-7z-compressed")) {
+        return QStringLiteral("sevenz");
+    }
+
+    return {};
+}
+
+QString directArchiveOpenKioSchemeForUrl(const QUrl &url)
+{
+    if (!url.isLocalFile()) {
+        return {};
+    }
+
+    const QString extensionScheme
+        = directArchiveOpenKioSchemeForExtension(extensionForFileName(url.fileName()));
+    if (!extensionScheme.isEmpty()) {
+        return extensionScheme;
+    }
+
+    const QMimeType mimeType = QMimeDatabase().mimeTypeForFile(url.toLocalFile());
+    return directArchiveOpenKioSchemeForMimeTypeName(mimeType.name());
 }
 
 QStringList openDialogNameFilters()

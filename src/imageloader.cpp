@@ -13,23 +13,23 @@
 #include <vector>
 
 namespace {
-using KiriView::comicBookArchiveRootUrl;
-using KiriView::containingComicBookArchiveRootUrl;
+using KiriView::containingDirectArchiveOpenRootUrl;
+using KiriView::directArchiveOpenRootUrl;
 using KiriView::isUrlInsideArchiveRoot;
 
 struct PreparedImageLoadSession {
     KiriView::ImageLoadSession session;
-    bool loadComicBookArchive = false;
+    bool loadArchive = false;
 };
 
-QUrl comicBookRootUrlForImageLoadRequest(const KiriView::ImageLoadRequest &request)
+QUrl archiveRootUrlForImageLoadRequest(const KiriView::ImageLoadRequest &request)
 {
     if (isUrlInsideArchiveRoot(request.sourceUrl(), request.displayedComicBookRootUrl())) {
         return request.displayedComicBookRootUrl();
     }
 
     const std::optional<QUrl> containingArchiveRootUrl
-        = containingComicBookArchiveRootUrl(request.sourceUrl());
+        = containingDirectArchiveOpenRootUrl(request.sourceUrl());
     if (containingArchiveRootUrl.has_value()
         && isUrlInsideArchiveRoot(request.sourceUrl(), containingArchiveRootUrl.value())) {
         return containingArchiveRootUrl.value();
@@ -47,13 +47,13 @@ PreparedImageLoadSession prepareImageLoadSession(quint64 id, KiriView::ImageLoad
         KiriView::DisplayedImageLocation::fromUrls(sourceUrl),
     };
 
-    const std::optional<QUrl> selectedArchiveRootUrl = comicBookArchiveRootUrl(sourceUrl);
+    const std::optional<QUrl> selectedArchiveRootUrl = directArchiveOpenRootUrl(sourceUrl);
     if (selectedArchiveRootUrl.has_value()) {
         session.location.setComicBookRootUrl(selectedArchiveRootUrl.value());
         return PreparedImageLoadSession { std::move(session), true };
     }
 
-    session.location.setComicBookRootUrl(comicBookRootUrlForImageLoadRequest(session.request));
+    session.location.setComicBookRootUrl(archiveRootUrlForImageLoadRequest(session.request));
     return PreparedImageLoadSession { std::move(session), false };
 }
 }
@@ -118,9 +118,9 @@ void ImageLoader::start(ImageLoadRequest request)
     PreparedImageLoadSession prepared
         = prepareImageLoadSession(m_loadTickets.next(), std::move(request));
     const ImageLoadSession session = std::move(prepared.session);
-    if (prepared.loadComicBookArchive) {
+    if (prepared.loadArchive) {
         m_loadSession = session;
-        startComicBookLoad(session);
+        startArchiveLoad(session);
         return;
     }
 
@@ -141,7 +141,7 @@ void ImageLoader::startImageLoad(ImageLoadSession session)
     m_decodeJob.start(ImageDecodeRequest { session.id, session.location.imageUrl() });
 }
 
-void ImageLoader::startComicBookLoad(ImageLoadSession session)
+void ImageLoader::startArchiveLoad(ImageLoadSession session)
 {
     const ImageCandidateListContext candidateContext {
         session.location.imageUrl(),
@@ -157,7 +157,7 @@ void ImageLoader::startComicBookLoad(ImageLoadSession session)
             }
 
             if (candidates.empty()) {
-                finishLoadWithError(session, ImageLoadError::EmptyComicBookArchive, QString());
+                finishLoadWithError(session, ImageLoadError::EmptyArchive, QString());
                 return;
             }
 

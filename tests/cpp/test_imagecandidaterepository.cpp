@@ -140,6 +140,23 @@ void TestImageCandidateRepository::displayedImageContextsSelectDirectoryOrArchiv
     QCOMPARE(archiveContext->comicBookRootUrl, *archiveRootUrl);
     QCOMPARE(
         archiveContext->containerType, KiriView::ImageCandidateContainerType::ComicBookArchive);
+
+    const QUrl directArchiveUrl = localUrl(QStringLiteral("/books/book.zip"));
+    const std::optional<QUrl> directArchiveRootUrl
+        = KiriView::directArchiveOpenRootUrl(directArchiveUrl);
+    QVERIFY(directArchiveRootUrl.has_value());
+    const QUrl directArchivePageUrl
+        = archivePageUrl(*directArchiveRootUrl, QStringLiteral("02.png"));
+
+    const std::optional<KiriView::ImageCandidateListContext> directArchiveContext
+        = KiriView::imageCandidateListContextForDisplayedImage(
+            directArchivePageUrl, *directArchiveRootUrl);
+    QVERIFY(directArchiveContext.has_value());
+    QCOMPARE(directArchiveContext->currentUrl, directArchivePageUrl);
+    QCOMPARE(directArchiveContext->listUrl, *directArchiveRootUrl);
+    QCOMPARE(directArchiveContext->comicBookRootUrl, *directArchiveRootUrl);
+    QCOMPARE(directArchiveContext->containerType,
+        KiriView::ImageCandidateContainerType::ComicBookArchive);
 }
 
 void TestImageCandidateRepository::directoryContainerOpensFirstImage()

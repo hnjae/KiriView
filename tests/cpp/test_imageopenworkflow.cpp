@@ -47,6 +47,7 @@ class TestImageOpenWorkflow : public QObject
 
 private Q_SLOTS:
     void firstImageLoadSuccessTransitionsToReady();
+    void directArchiveImageLoadSuccessDisablesContainerNavigation();
     void replacementLoadFailureKeepsDisplayedImage();
     void emptyContainerFailureSelectsFailedContainer();
     void animationFailureClearsImageAndResetsZoom();
@@ -75,6 +76,30 @@ void TestImageOpenWorkflow::firstImageLoadSuccessTransitionsToReady()
     QVERIFY(!state.loading());
     QCOMPARE(state.status(), KiriView::ImageDocumentStatus::Ready);
     QVERIFY(state.errorString().isEmpty());
+}
+
+void TestImageOpenWorkflow::directArchiveImageLoadSuccessDisablesContainerNavigation()
+{
+    KiriView::ImageDocumentState state;
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.zip"));
+    const std::optional<QUrl> archiveRootUrl = KiriView::directArchiveOpenRootUrl(archiveUrl);
+    QVERIFY(archiveRootUrl.has_value());
+    QUrl imageUrl = *archiveRootUrl;
+    imageUrl.setPath(archiveRootUrl->path() + QStringLiteral("01.png"));
+
+    state.setSourceUrl(archiveUrl);
+
+    const KiriView::ImageDocumentEffects successEffects
+        = KiriView::ImageOpenWorkflow::finishSuccessfulImageLoad(
+            state, loadSession(archiveUrl, imageUrl, *archiveRootUrl));
+
+    QVERIFY(hasEffect<KiriView::UpdatePageNavigationEffect>(successEffects));
+    QCOMPARE(state.sourceUrl(), imageUrl);
+    QCOMPARE(state.displayedUrl(), imageUrl);
+    QCOMPARE(state.windowTitleFileName(), QStringLiteral("book.zip"));
+    QVERIFY(state.containerNavigationUrl().isEmpty());
+    QVERIFY(!state.containerNavigationAvailable());
+    QCOMPARE(state.status(), KiriView::ImageDocumentStatus::Ready);
 }
 
 void TestImageOpenWorkflow::replacementLoadFailureKeepsDisplayedImage()

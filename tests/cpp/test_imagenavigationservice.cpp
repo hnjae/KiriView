@@ -113,6 +113,7 @@ class TestImageNavigationService : public QObject
 private Q_SLOTS:
     void directoryAdjacentImageUsesInjectedProvider();
     void comicBookAdjacentImageUsesInjectedProvider();
+    void directArchiveAdjacentImageUsesInjectedProvider();
     void pageNavigationKeepsKnownListWhileRefreshingCurrentImage();
     void directoryContainerNavigationOpensFirstImage();
     void emptyContainerReportsNavigationError();
@@ -147,6 +148,29 @@ void TestImageNavigationService::comicBookAdjacentImageUsesInjectedProvider()
     FakeCandidateProvider fakeProvider;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
     const std::optional<QUrl> archiveRootUrl = KiriView::comicBookArchiveRootUrl(archiveUrl);
+    QVERIFY(archiveRootUrl.has_value());
+    const QUrl currentUrl = archivePageUrl(*archiveRootUrl, QStringLiteral("01.png"));
+    const QUrl nextUrl = archivePageUrl(*archiveRootUrl, QStringLiteral("02.png"));
+    fakeProvider.archiveImagesByUrl[keyForUrl(*archiveRootUrl)] = {
+        imageCandidate(currentUrl),
+        imageCandidate(nextUrl),
+    };
+
+    KiriView::ImageNavigationService service(nullptr, fakeProvider.provider());
+    QUrl openedUrl;
+    service.setOpenUrlCallback([&openedUrl](const QUrl &url) { openedUrl = url; });
+    service.openAdjacentImage(
+        KiriView::ImageNavigationService::DisplayContext { true, currentUrl, *archiveRootUrl },
+        NavigationDirection::Next);
+
+    QCOMPARE(openedUrl, nextUrl);
+}
+
+void TestImageNavigationService::directArchiveAdjacentImageUsesInjectedProvider()
+{
+    FakeCandidateProvider fakeProvider;
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.zip"));
+    const std::optional<QUrl> archiveRootUrl = KiriView::directArchiveOpenRootUrl(archiveUrl);
     QVERIFY(archiveRootUrl.has_value());
     const QUrl currentUrl = archivePageUrl(*archiveRootUrl, QStringLiteral("01.png"));
     const QUrl nextUrl = archivePageUrl(*archiveRootUrl, QStringLiteral("02.png"));

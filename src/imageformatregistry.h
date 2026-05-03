@@ -15,6 +15,8 @@ bool isSupportedImageFileName(const QString &name);
 bool isComicBookArchiveFileName(const QString &name);
 bool isComicBookArchiveUrl(const QUrl &url);
 QString comicBookArchiveKioSchemeForUrl(const QUrl &url);
+QString directArchiveOpenKioSchemeForMimeTypeName(const QString &mimeTypeName);
+QString directArchiveOpenKioSchemeForUrl(const QUrl &url);
 QStringList openDialogNameFilters();
 }
 

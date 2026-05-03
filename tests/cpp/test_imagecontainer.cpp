@@ -16,9 +16,12 @@ class TestImageContainer : public QObject
 private Q_SLOTS:
     void comicBookArchiveRootUrlsUseZipScheme();
     void comicBookArchiveRootUrlsUseFormatSpecificKioSchemes();
+    void directArchiveRootUrlsUseFormatSpecificKioSchemes();
     void archiveInteriorUrlsResolveToTheirRootAndTitle();
+    void directArchiveInteriorUrlsResolveToTheirRootAndTitle();
     void cbtAndCb7InteriorUrlsResolveToTheirRoots();
     void archiveImageContainerUrlsResolveToArchiveFile();
+    void directArchivePagesDoNotResolveToContainerNavigationUrls();
     void regularImageContainerUrlsResolveToParentDirectory();
 };
 
@@ -47,6 +50,27 @@ void TestImageContainer::comicBookArchiveRootUrlsUseFormatSpecificKioSchemes()
     QCOMPARE(cb7RootUrl->path(), QStringLiteral("/books/book.cb7/"));
 }
 
+void TestImageContainer::directArchiveRootUrlsUseFormatSpecificKioSchemes()
+{
+    const std::optional<QUrl> zipRootUrl = KiriView::directArchiveOpenRootUrl(
+        QUrl::fromLocalFile(QStringLiteral("/books/book.zip")));
+    QVERIFY(zipRootUrl.has_value());
+    QCOMPARE(zipRootUrl->scheme(), QStringLiteral("zip"));
+    QCOMPARE(zipRootUrl->path(), QStringLiteral("/books/book.zip/"));
+
+    const std::optional<QUrl> tarRootUrl = KiriView::directArchiveOpenRootUrl(
+        QUrl::fromLocalFile(QStringLiteral("/books/book.tar")));
+    QVERIFY(tarRootUrl.has_value());
+    QCOMPARE(tarRootUrl->scheme(), QStringLiteral("tar"));
+    QCOMPARE(tarRootUrl->path(), QStringLiteral("/books/book.tar/"));
+
+    const std::optional<QUrl> sevenZipRootUrl
+        = KiriView::directArchiveOpenRootUrl(QUrl::fromLocalFile(QStringLiteral("/books/book.7z")));
+    QVERIFY(sevenZipRootUrl.has_value());
+    QCOMPARE(sevenZipRootUrl->scheme(), QStringLiteral("sevenz"));
+    QCOMPARE(sevenZipRootUrl->path(), QStringLiteral("/books/book.7z/"));
+}
+
 void TestImageContainer::archiveInteriorUrlsResolveToTheirRootAndTitle()
 {
     const QUrl archiveUrl = QUrl::fromLocalFile(QStringLiteral("/books/book.cbz"));
@@ -60,6 +84,21 @@ void TestImageContainer::archiveInteriorUrlsResolveToTheirRootAndTitle()
     QCOMPARE(KiriView::containingComicBookArchiveRootUrl(pageUrl), archiveRootUrl);
     QCOMPARE(KiriView::windowTitleFileNameForDisplayedUrl(pageUrl, *archiveRootUrl),
         QStringLiteral("book.cbz"));
+}
+
+void TestImageContainer::directArchiveInteriorUrlsResolveToTheirRootAndTitle()
+{
+    const QUrl archiveUrl = QUrl::fromLocalFile(QStringLiteral("/books/book.zip"));
+    const std::optional<QUrl> archiveRootUrl = KiriView::directArchiveOpenRootUrl(archiveUrl);
+    QVERIFY(archiveRootUrl.has_value());
+
+    QUrl pageUrl = *archiveRootUrl;
+    pageUrl.setPath(archiveRootUrl->path() + QStringLiteral("chapter/page001.png"));
+
+    QVERIFY(KiriView::isUrlInsideArchiveRoot(pageUrl, *archiveRootUrl));
+    QCOMPARE(KiriView::containingDirectArchiveOpenRootUrl(pageUrl), archiveRootUrl);
+    QCOMPARE(KiriView::windowTitleFileNameForDisplayedUrl(pageUrl, *archiveRootUrl),
+        QStringLiteral("book.zip"));
 }
 
 void TestImageContainer::cbtAndCb7InteriorUrlsResolveToTheirRoots()
@@ -89,6 +128,20 @@ void TestImageContainer::archiveImageContainerUrlsResolveToArchiveFile()
     pageUrl.setPath(archiveRootUrl->path() + QStringLiteral("chapter/page001.png"));
 
     QCOMPARE(KiriView::containerNavigationUrlForImage(pageUrl, *archiveRootUrl), archiveUrl);
+    QCOMPARE(KiriView::imageContainerUrlForImage(pageUrl, *archiveRootUrl), archiveUrl);
+}
+
+void TestImageContainer::directArchivePagesDoNotResolveToContainerNavigationUrls()
+{
+    const QUrl archiveUrl = QUrl::fromLocalFile(QStringLiteral("/books/book.zip"));
+    const std::optional<QUrl> archiveRootUrl = KiriView::directArchiveOpenRootUrl(archiveUrl);
+    QVERIFY(archiveRootUrl.has_value());
+
+    QUrl pageUrl = *archiveRootUrl;
+    pageUrl.setPath(archiveRootUrl->path() + QStringLiteral("chapter/page001.png"));
+
+    QVERIFY(KiriView::containerNavigationUrlForImage(pageUrl, *archiveRootUrl).isEmpty());
+    QCOMPARE(KiriView::imageContainerUrlForImage(pageUrl, *archiveRootUrl), archiveUrl);
 }
 
 void TestImageContainer::regularImageContainerUrlsResolveToParentDirectory()

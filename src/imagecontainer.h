@@ -15,13 +15,16 @@
 
 namespace KiriView {
 std::optional<QUrl> comicBookArchiveRootUrl(const QUrl &url);
+std::optional<QUrl> directArchiveOpenRootUrl(const QUrl &url);
 bool isUrlInsideArchiveRoot(const QUrl &url, const QUrl &archiveRootUrl);
 std::optional<QUrl> containingComicBookArchiveRootUrl(const QUrl &url);
+std::optional<QUrl> containingDirectArchiveOpenRootUrl(const QUrl &url);
 QString windowTitleFileNameForDisplayedUrl(
     const QUrl &displayedUrl, const QUrl &displayedComicBookRootUrl);
 std::vector<ContainerNavigationCandidate> containerNavigationCandidates(const KFileItemList &items);
 void appendArchiveImageNavigationCandidates(std::vector<ImageNavigationCandidate> *candidates,
     const KIO::UDSEntryList &entries, const QUrl &directoryUrl, const QUrl &archiveRootUrl);
+QUrl imageContainerUrlForImage(const QUrl &imageUrl, const QUrl &archiveRootUrl);
 QUrl containerNavigationUrlForImage(const QUrl &imageUrl, const QUrl &comicBookRootUrl);
 }
 

@@ -111,6 +111,7 @@ private Q_SLOTS:
     void imageLoadDeliversDecodedResult();
     void predecodedImageBypassesDataLoad();
     void comicBookArchiveResolvesFirstImage();
+    void directArchiveResolvesFirstImage();
     void archiveInteriorImageKeepsComicBookRoot();
     void staleLoadResultIsIgnored();
 };
@@ -198,6 +199,39 @@ void TestImageLoader::comicBookArchiveResolvesFirstImage()
     QCOMPARE(resolvedUrl, firstImageUrl);
     QCOMPARE(dataLoader.loads.size(), std::size_t(1));
     QCOMPARE(dataLoader.loads.front()->url, firstImageUrl);
+}
+
+void TestImageLoader::directArchiveResolvesFirstImage()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    KiriView::ImageLoader loader = createLoader(this, candidateProvider, dataLoader);
+
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.zip"));
+    const std::optional<QUrl> archiveRootUrl = KiriView::directArchiveOpenRootUrl(archiveUrl);
+    QVERIFY(archiveRootUrl.has_value());
+    const QUrl firstImageUrl = archivePageUrl(*archiveRootUrl, QStringLiteral("01.png"));
+    candidateProvider.archiveImagesByUrl[keyForUrl(*archiveRootUrl)] = {
+        imageCandidate(firstImageUrl),
+    };
+
+    QUrl resolvedUrl;
+    std::optional<KiriView::ImageLoadSession> decodedSession;
+    loader.setSourceResolvedCallback([&resolvedUrl](const QUrl &url) { resolvedUrl = url; });
+    loader.setDecodedImageCallback([&decodedSession](KiriView::ImageLoadSession session, auto) {
+        decodedSession = std::move(session);
+    });
+
+    loader.start(KiriView::ImageLoadRequest::fromUrls(archiveUrl, QUrl()));
+
+    QCOMPARE(resolvedUrl, firstImageUrl);
+    QCOMPARE(dataLoader.loads.size(), std::size_t(1));
+    QCOMPARE(dataLoader.loads.front()->url, firstImageUrl);
+    dataLoader.loads.front()->dataCallback(QByteArrayLiteral("ok"));
+
+    QTRY_VERIFY(decodedSession.has_value());
+    QCOMPARE(decodedSession->location.imageUrl(), firstImageUrl);
+    QCOMPARE(decodedSession->location.comicBookRootUrl(), *archiveRootUrl);
 }
 
 void TestImageLoader::archiveInteriorImageKeepsComicBookRoot()
