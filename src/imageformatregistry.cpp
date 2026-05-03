@@ -3,127 +3,67 @@
 
 #include "imageformatregistry.h"
 
+#include "kiriview/src/imageformatregistry.cxx.h"
+
+#include <QByteArray>
 #include <QMimeDatabase>
 #include <QMimeType>
-#include <Qt>
+#include <cstddef>
 
 namespace {
-QString extensionForFileName(const QString &name)
+rust::Str rustStringView(const QByteArray &bytes)
 {
-    const qsizetype dotIndex = name.lastIndexOf(QLatin1Char('.'));
-    if (dotIndex <= 0 || dotIndex == name.size() - 1) {
-        return {};
-    }
-
-    return name.mid(dotIndex + 1).toCaseFolded();
+    return rust::Str(bytes.constData(), static_cast<std::size_t>(bytes.size()));
 }
 
-QString comicBookArchiveKioSchemeForExtension(const QString &extension)
+QString rustStringToQString(const rust::String &value)
 {
-    if (extension == QStringLiteral("cbz")) {
-        return QStringLiteral("zip");
-    }
-    if (extension == QStringLiteral("cbt")) {
-        return QStringLiteral("tar");
-    }
-    if (extension == QStringLiteral("cb7")) {
-        return QStringLiteral("sevenz");
-    }
-    if (extension == QStringLiteral("cbr")) {
-        return QStringLiteral("rar");
-    }
-
-    return {};
+    return QString::fromUtf8(value.data(), static_cast<qsizetype>(value.size()));
 }
 
-QString directArchiveOpenKioSchemeForExtension(const QString &extension)
+QStringList rustStringsToQStringList(const rust::Vec<rust::String> &values)
 {
-    const QString comicBookScheme = comicBookArchiveKioSchemeForExtension(extension);
-    if (!comicBookScheme.isEmpty()) {
-        return comicBookScheme;
+    QStringList list;
+    list.reserve(static_cast<qsizetype>(values.size()));
+    for (const rust::String &value : values) {
+        list.append(rustStringToQString(value));
     }
 
-    if (extension == QStringLiteral("zip")) {
-        return QStringLiteral("zip");
-    }
-    if (extension == QStringLiteral("tar")) {
-        return QStringLiteral("tar");
-    }
-    if (extension == QStringLiteral("7z")) {
-        return QStringLiteral("sevenz");
-    }
-    if (extension == QStringLiteral("rar")) {
-        return QStringLiteral("rar");
-    }
-
-    return {};
+    return list;
 }
 
-QString comicBookArchiveKioSchemeForMimeTypeName(const QString &mimeTypeName)
+QString rustStringForQString(const QString &value, rust::String (*rustFunction)(rust::Str value))
 {
-    if (mimeTypeName == QStringLiteral("application/vnd.comicbook+zip")) {
-        return QStringLiteral("zip");
-    }
-    if (mimeTypeName == QStringLiteral("application/x-cbt")) {
-        return QStringLiteral("tar");
-    }
-    if (mimeTypeName == QStringLiteral("application/x-cb7")) {
-        return QStringLiteral("sevenz");
-    }
-    if (mimeTypeName == QStringLiteral("application/vnd.comicbook-rar")
-        || mimeTypeName == QStringLiteral("application/x-cbr")) {
-        return QStringLiteral("rar");
-    }
+    const QByteArray bytes = value.toUtf8();
+    return rustStringToQString(rustFunction(rustStringView(bytes)));
+}
 
-    return {};
+bool rustBoolForQString(const QString &value, bool (*rustFunction)(rust::Str value))
+{
+    const QByteArray bytes = value.toUtf8();
+    return rustFunction(rustStringView(bytes));
 }
 }
 
 namespace KiriView {
 QStringList supportedImageExtensions()
 {
-    return {
-        QStringLiteral("avci"),
-        QStringLiteral("avif"),
-        QStringLiteral("avifs"),
-        QStringLiteral("bmp"),
-        QStringLiteral("gif"),
-        QStringLiteral("hej2"),
-        QStringLiteral("heic"),
-        QStringLiteral("heics"),
-        QStringLiteral("heif"),
-        QStringLiteral("heifs"),
-        QStringLiteral("hif"),
-        QStringLiteral("jpeg"),
-        QStringLiteral("jpg"),
-        QStringLiteral("jp2"),
-        QStringLiteral("jxl"),
-        QStringLiteral("png"),
-        QStringLiteral("svg"),
-        QStringLiteral("webp"),
-    };
+    return rustStringsToQStringList(rustSupportedImageExtensions());
 }
 
 QStringList supportedOpenExtensions()
 {
-    QStringList extensions = supportedImageExtensions();
-    extensions.append(QStringLiteral("cbz"));
-    extensions.append(QStringLiteral("cbt"));
-    extensions.append(QStringLiteral("cb7"));
-    extensions.append(QStringLiteral("cbr"));
-    extensions.sort(Qt::CaseSensitive);
-    return extensions;
+    return rustStringsToQStringList(rustSupportedOpenExtensions());
 }
 
 bool isSupportedImageFileName(const QString &name)
 {
-    const QString extension = extensionForFileName(name);
-    return !extension.isEmpty() && supportedImageExtensions().contains(extension);
+    return rustBoolForQString(name, rustIsSupportedImageFileName);
 }
 
 bool isComicBookArchiveFileName(const QString &name)
 {
-    return !comicBookArchiveKioSchemeForExtension(extensionForFileName(name)).isEmpty();
+    return rustBoolForQString(name, rustIsComicBookArchiveFileName);
 }
 
 bool isComicBookArchiveUrl(const QUrl &url)
@@ -138,39 +78,19 @@ QString comicBookArchiveKioSchemeForUrl(const QUrl &url)
     }
 
     const QString extensionScheme
-        = comicBookArchiveKioSchemeForExtension(extensionForFileName(url.fileName()));
+        = rustStringForQString(url.fileName(), rustComicBookArchiveKioSchemeForFileName);
     if (!extensionScheme.isEmpty()) {
         return extensionScheme;
     }
 
     const QMimeType mimeType
         = QMimeDatabase().mimeTypeForFile(url.toLocalFile(), QMimeDatabase::MatchExtension);
-    return comicBookArchiveKioSchemeForMimeTypeName(mimeType.name());
+    return rustStringForQString(mimeType.name(), rustComicBookArchiveKioSchemeForMimeTypeName);
 }
 
 QString directArchiveOpenKioSchemeForMimeTypeName(const QString &mimeTypeName)
 {
-    const QString comicBookScheme = comicBookArchiveKioSchemeForMimeTypeName(mimeTypeName);
-    if (!comicBookScheme.isEmpty()) {
-        return comicBookScheme;
-    }
-
-    if (mimeTypeName == QStringLiteral("application/zip")) {
-        return QStringLiteral("zip");
-    }
-    if (mimeTypeName == QStringLiteral("application/x-tar")) {
-        return QStringLiteral("tar");
-    }
-    if (mimeTypeName == QStringLiteral("application/x-7z-compressed")) {
-        return QStringLiteral("sevenz");
-    }
-    if (mimeTypeName == QStringLiteral("application/vnd.rar")
-        || mimeTypeName == QStringLiteral("application/x-rar")
-        || mimeTypeName == QStringLiteral("application/x-rar-compressed")) {
-        return QStringLiteral("rar");
-    }
-
-    return {};
+    return rustStringForQString(mimeTypeName, rustDirectArchiveOpenKioSchemeForMimeTypeName);
 }
 
 QString directArchiveOpenKioSchemeForUrl(const QUrl &url)
@@ -180,7 +100,7 @@ QString directArchiveOpenKioSchemeForUrl(const QUrl &url)
     }
 
     const QString extensionScheme
-        = directArchiveOpenKioSchemeForExtension(extensionForFileName(url.fileName()));
+        = rustStringForQString(url.fileName(), rustDirectArchiveOpenKioSchemeForFileName);
     if (!extensionScheme.isEmpty()) {
         return extensionScheme;
     }

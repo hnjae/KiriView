@@ -3,6 +3,7 @@
 
 mod apngdecoder;
 mod avifcompat;
+mod imageformatregistry;
 mod imagenavigationmodel;
 mod imageviewportgeometry;
 mod imagezoomstate;
