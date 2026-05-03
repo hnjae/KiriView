@@ -9,8 +9,8 @@ KiriView is a desktop image viewer built with KDE Kirigami.
 
 KiriView aims to display modern and uncommon image variants that are commonly
 poorly supported by desktop image viewers. This includes AVIF images with alpha
-channels, animated PNG (APNG) images, and HEIF container images that store
-AVC, JPEG, or VVC image data.
+channels, animated PNG (APNG) images, and HEIF still images or image sequences
+that store JPEG, JPEG 2000, AVC/H.264, HEVC/H.265, or VVC/H.266 image data.
 
 ## Supported Archives
 
