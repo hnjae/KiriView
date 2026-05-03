@@ -18,6 +18,7 @@ bool isComicBookArchiveRootScheme(const QString &scheme)
         QStringLiteral("zip"),
         QStringLiteral("tar"),
         QStringLiteral("sevenz"),
+        QStringLiteral("rar"),
     };
 
     return archiveSchemes.contains(scheme);
@@ -34,6 +35,9 @@ QString comicBookArchiveMarkerForRootScheme(const QString &scheme)
     if (scheme == QStringLiteral("sevenz")) {
         return QStringLiteral(".cb7/");
     }
+    if (scheme == QStringLiteral("rar")) {
+        return QStringLiteral(".cbr/");
+    }
 
     return {};
 }
@@ -48,6 +52,9 @@ QStringList directArchiveOpenMarkersForRootScheme(const QString &scheme)
     }
     if (scheme == QStringLiteral("sevenz")) {
         return { QStringLiteral(".cb7/"), QStringLiteral(".7z/") };
+    }
+    if (scheme == QStringLiteral("rar")) {
+        return { QStringLiteral(".cbr/"), QStringLiteral(".rar/") };
     }
 
     return {};

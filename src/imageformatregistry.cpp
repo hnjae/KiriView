@@ -29,6 +29,9 @@ QString comicBookArchiveKioSchemeForExtension(const QString &extension)
     if (extension == QStringLiteral("cb7")) {
         return QStringLiteral("sevenz");
     }
+    if (extension == QStringLiteral("cbr")) {
+        return QStringLiteral("rar");
+    }
 
     return {};
 }
@@ -49,6 +52,9 @@ QString directArchiveOpenKioSchemeForExtension(const QString &extension)
     if (extension == QStringLiteral("7z")) {
         return QStringLiteral("sevenz");
     }
+    if (extension == QStringLiteral("rar")) {
+        return QStringLiteral("rar");
+    }
 
     return {};
 }
@@ -63,6 +69,10 @@ QString comicBookArchiveKioSchemeForMimeTypeName(const QString &mimeTypeName)
     }
     if (mimeTypeName == QStringLiteral("application/x-cb7")) {
         return QStringLiteral("sevenz");
+    }
+    if (mimeTypeName == QStringLiteral("application/vnd.comicbook-rar")
+        || mimeTypeName == QStringLiteral("application/x-cbr")) {
+        return QStringLiteral("rar");
     }
 
     return {};
@@ -96,6 +106,7 @@ QStringList supportedOpenExtensions()
     extensions.append(QStringLiteral("cbz"));
     extensions.append(QStringLiteral("cbt"));
     extensions.append(QStringLiteral("cb7"));
+    extensions.append(QStringLiteral("cbr"));
     extensions.sort(Qt::CaseSensitive);
     return extensions;
 }
@@ -148,6 +159,11 @@ QString directArchiveOpenKioSchemeForMimeTypeName(const QString &mimeTypeName)
     }
     if (mimeTypeName == QStringLiteral("application/x-7z-compressed")) {
         return QStringLiteral("sevenz");
+    }
+    if (mimeTypeName == QStringLiteral("application/vnd.rar")
+        || mimeTypeName == QStringLiteral("application/x-rar")
+        || mimeTypeName == QStringLiteral("application/x-rar-compressed")) {
+        return QStringLiteral("rar");
     }
 
     return {};
