@@ -163,6 +163,7 @@ fn link_kio() {
         println!("cargo::rustc-link-search=native={}", dir.display());
     }
 
+    println!("cargo::rustc-link-lib=KF6Archive");
     println!("cargo::rustc-link-lib=KF6KIOCore");
     println!("cargo::rustc-link-lib=KF6CoreAddons");
 }
@@ -284,7 +285,7 @@ fn pkg_config_include_dirs(package: &str) -> Vec<PathBuf> {
 }
 
 fn add_kf6_include_dirs(dirs: &mut BTreeSet<PathBuf>, include_root: &Path) {
-    for suffix in ["KF6/KIOCore", "KF6/KIO", "KF6/KCoreAddons"] {
+    for suffix in ["KF6/KArchive", "KF6/KIOCore", "KF6/KIO", "KF6/KCoreAddons"] {
         let dir = include_root.join(suffix);
         if dir.exists() {
             dirs.insert(dir);
@@ -313,12 +314,19 @@ fn kio_library_dirs() -> Vec<PathBuf> {
     }
 
     for path in flag_paths("NIX_LDFLAGS", "-L") {
-        if contains_kio_library(&path) || contains_core_addons_library(&path) {
+        if contains_archive_library(&path)
+            || contains_kio_library(&path)
+            || contains_core_addons_library(&path)
+        {
             dirs.insert(path);
         }
     }
 
     dirs.into_iter().collect()
+}
+
+fn contains_archive_library(dir: &Path) -> bool {
+    dir.join("libKF6Archive.so").exists()
 }
 
 fn contains_kio_library(dir: &Path) -> bool {

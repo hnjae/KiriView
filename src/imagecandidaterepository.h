@@ -5,6 +5,7 @@
 #define KIRIVIEW_IMAGECANDIDATEREPOSITORY_H
 
 #include "imageiojobs.h"
+#include "imagelocation.h"
 #include "imagenavigationtypes.h"
 
 #include <QObject>
@@ -16,7 +17,7 @@
 namespace KiriView {
 enum class ImageCandidateContainerType {
     Directory,
-    ComicBookArchive,
+    ArchiveDocument,
 };
 
 enum class ImageCandidateRepositoryError {
@@ -28,19 +29,21 @@ enum class ImageCandidateRepositoryError {
 struct ImageCandidateListContext {
     QUrl currentUrl;
     QUrl listUrl;
-    QUrl comicBookRootUrl;
+    ArchiveDocumentLocation archiveDocument;
     ImageCandidateContainerType containerType = ImageCandidateContainerType::Directory;
 };
 
 struct ImageNavigationCandidateProvider {
     using ImageCandidateLoader
         = std::function<ImageIoJob(QObject *, QUrl, ImageCandidatesCallback, ErrorCallback)>;
+    using ArchiveImageCandidateLoader = std::function<ImageIoJob(
+        QObject *, ArchiveDocumentLocation, ImageCandidatesCallback, ErrorCallback)>;
     using ContainerCandidateLoader
         = std::function<ImageIoJob(QObject *, QUrl, ContainerCandidatesCallback, ErrorCallback)>;
 
     ImageCandidateLoader directoryImages;
     ContainerCandidateLoader directoryContainers;
-    ImageCandidateLoader archiveImages;
+    ArchiveImageCandidateLoader archiveImages;
 };
 
 using ContainerImageCallback = std::function<void(const QUrl &, const QUrl &)>;
@@ -49,7 +52,7 @@ using CandidateRepositoryErrorCallback
 
 ImageNavigationCandidateProvider defaultImageNavigationCandidateProvider();
 std::optional<ImageCandidateListContext> imageCandidateListContextForDisplayedImage(
-    const QUrl &displayedUrl, const QUrl &comicBookRootUrl);
+    const DisplayedImageLocation &location);
 
 class ImageCandidateRepository
 {
@@ -61,7 +64,7 @@ public:
         ImageCandidatesCallback callback, ErrorCallback errorCallback) const;
     ImageIoJob loadDirectoryImages(QObject *receiver, const QUrl &directoryUrl,
         ImageCandidatesCallback callback, ErrorCallback errorCallback) const;
-    ImageIoJob loadArchiveImages(QObject *receiver, const QUrl &archiveRootUrl,
+    ImageIoJob loadArchiveImages(QObject *receiver, ArchiveDocumentLocation archiveDocument,
         ImageCandidatesCallback callback, ErrorCallback errorCallback) const;
     ImageIoJob loadContainers(QObject *receiver, const QUrl &directoryUrl,
         ContainerCandidatesCallback callback, ErrorCallback errorCallback) const;

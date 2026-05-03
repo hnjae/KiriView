@@ -49,8 +49,7 @@ ImageDocumentEffects ImageOpenWorkflow::finishSuccessfulImageLoad(
     if (!session.request.containerNavigationUrl().isEmpty()) {
         state.setContainerNavigationUrl(session.request.containerNavigationUrl());
     } else {
-        state.setContainerNavigationUrl(containerNavigationUrlForImage(
-            session.location.imageUrl(), session.location.comicBookRootUrl()));
+        state.setContainerNavigationUrl(containerNavigationUrlForLocation(session.location));
     }
     state.clearLoadingContainerNavigationUrl();
     state.setErrorString(QString());

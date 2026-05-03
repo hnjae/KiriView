@@ -84,15 +84,14 @@ std::optional<QUrl> ImageNavigationService::urlAtPage(int pageNumber) const
 void ImageNavigationService::openAdjacentImage(
     const DisplayContext &context, NavigationDirection direction)
 {
-    if (!context.hasDisplayedImage || context.displayedUrl.isEmpty()) {
+    if (!context.hasDisplayedImage || context.location.imageUrl().isEmpty()) {
         return;
     }
 
     cancelContainerNavigation();
 
     const std::optional<ImageCandidateListContext> candidateContext
-        = imageCandidateListContextForDisplayedImage(
-            context.displayedUrl, context.comicBookRootUrl);
+        = imageCandidateListContextForDisplayedImage(context.location);
     if (!candidateContext.has_value()) {
         return;
     }
@@ -214,14 +213,13 @@ void ImageNavigationService::updatePageNavigation(const DisplayContext &context)
 {
     cancelPageNavigationUpdate();
 
-    if (!context.hasDisplayedImage || context.displayedUrl.isEmpty()) {
+    if (!context.hasDisplayedImage || context.location.imageUrl().isEmpty()) {
         clearPageNavigation();
         return;
     }
 
     const std::optional<ImageCandidateListContext> candidateContext
-        = imageCandidateListContextForDisplayedImage(
-            context.displayedUrl, context.comicBookRootUrl);
+        = imageCandidateListContextForDisplayedImage(context.location);
     if (!candidateContext.has_value()) {
         clearPageNavigation();
         return;

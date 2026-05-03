@@ -46,70 +46,108 @@ private:
     QUrl m_url;
 };
 
-class ComicBookRootLocation
+enum class ArchiveDocumentKind {
+    ComicBook,
+    General,
+};
+
+class ArchiveDocumentLocation
 {
 public:
-    ComicBookRootLocation() = default;
-    explicit ComicBookRootLocation(QUrl url)
-        : m_url(std::move(url))
+    ArchiveDocumentLocation() = default;
+    ArchiveDocumentLocation(QUrl fileUrl, QUrl rootUrl, ArchiveDocumentKind kind)
+        : m_fileUrl(std::move(fileUrl))
+        , m_rootUrl(std::move(rootUrl))
+        , m_kind(kind)
     {
     }
 
-    static ComicBookRootLocation none() { return ComicBookRootLocation(); }
-    static ComicBookRootLocation fromUrl(QUrl url) { return ComicBookRootLocation(std::move(url)); }
+    static ArchiveDocumentLocation none() { return ArchiveDocumentLocation(); }
+    static ArchiveDocumentLocation fromUrls(QUrl fileUrl, QUrl rootUrl, ArchiveDocumentKind kind)
+    {
+        return ArchiveDocumentLocation(std::move(fileUrl), std::move(rootUrl), kind);
+    }
 
-    const QUrl &url() const { return m_url; }
-    bool isEmpty() const { return m_url.isEmpty(); }
+    const QUrl &fileUrl() const { return m_fileUrl; }
+    const QUrl &rootUrl() const { return m_rootUrl; }
+    ArchiveDocumentKind kind() const { return m_kind; }
+    bool isEmpty() const { return m_fileUrl.isEmpty() || m_rootUrl.isEmpty(); }
+    bool isComicBook() const { return !isEmpty() && m_kind == ArchiveDocumentKind::ComicBook; }
 
 private:
-    QUrl m_url;
+    QUrl m_fileUrl;
+    QUrl m_rootUrl;
+    ArchiveDocumentKind m_kind = ArchiveDocumentKind::General;
 };
 
 class DisplayedImageLocation
 {
 public:
     DisplayedImageLocation() = default;
-    DisplayedImageLocation(ImageLocation image, ComicBookRootLocation comicBookRoot)
+    DisplayedImageLocation(ImageLocation image, ArchiveDocumentLocation archiveDocument)
         : m_image(std::move(image))
-        , m_comicBookRoot(std::move(comicBookRoot))
+        , m_archiveDocument(std::move(archiveDocument))
     {
     }
 
-    static DisplayedImageLocation fromUrls(QUrl imageUrl, QUrl comicBookRootUrl = QUrl())
+    static DisplayedImageLocation fromUrl(QUrl imageUrl)
     {
         return DisplayedImageLocation { ImageLocation::fromUrl(std::move(imageUrl)),
-            ComicBookRootLocation::fromUrl(std::move(comicBookRootUrl)) };
+            ArchiveDocumentLocation::none() };
+    }
+
+    static DisplayedImageLocation fromArchiveDocument(
+        QUrl imageUrl, ArchiveDocumentLocation archiveDocument)
+    {
+        return DisplayedImageLocation { ImageLocation::fromUrl(std::move(imageUrl)),
+            std::move(archiveDocument) };
     }
 
     const QUrl &imageUrl() const { return m_image.url(); }
-    const QUrl &comicBookRootUrl() const { return m_comicBookRoot.url(); }
+    const ArchiveDocumentLocation &archiveDocument() const { return m_archiveDocument; }
+    const QUrl &archiveDocumentFileUrl() const { return m_archiveDocument.fileUrl(); }
+    const QUrl &archiveDocumentRootUrl() const { return m_archiveDocument.rootUrl(); }
+    const QUrl &comicBookRootUrl() const { return m_archiveDocument.rootUrl(); }
     bool isEmpty() const { return m_image.isEmpty(); }
     void setImageUrl(QUrl url) { m_image = ImageLocation::fromUrl(std::move(url)); }
-    void setComicBookRootUrl(QUrl url)
+    void setArchiveDocument(ArchiveDocumentLocation archiveDocument)
     {
-        m_comicBookRoot = ComicBookRootLocation::fromUrl(std::move(url));
+        m_archiveDocument = std::move(archiveDocument);
     }
+    void clearArchiveDocument() { m_archiveDocument = ArchiveDocumentLocation::none(); }
 
 private:
     ImageLocation m_image;
-    ComicBookRootLocation m_comicBookRoot;
+    ArchiveDocumentLocation m_archiveDocument;
 };
 
 struct ImageLoadRequest {
     ImageLocation source;
-    ComicBookRootLocation displayedComicBookRoot;
+    ArchiveDocumentLocation displayedArchiveDocument;
     ContainerLocation containerNavigation;
 
-    static ImageLoadRequest fromUrls(
-        QUrl sourceUrl, QUrl displayedComicBookRootUrl, QUrl containerNavigationUrl = QUrl())
+    static ImageLoadRequest fromUrl(QUrl sourceUrl, QUrl containerNavigationUrl = QUrl())
     {
         return ImageLoadRequest { ImageLocation::fromUrl(std::move(sourceUrl)),
-            ComicBookRootLocation::fromUrl(std::move(displayedComicBookRootUrl)),
+            ArchiveDocumentLocation::none(),
+            ContainerLocation::fromUrl(std::move(containerNavigationUrl)) };
+    }
+
+    static ImageLoadRequest fromLocation(QUrl sourceUrl,
+        ArchiveDocumentLocation displayedArchiveDocument, QUrl containerNavigationUrl = QUrl())
+    {
+        return ImageLoadRequest { ImageLocation::fromUrl(std::move(sourceUrl)),
+            std::move(displayedArchiveDocument),
             ContainerLocation::fromUrl(std::move(containerNavigationUrl)) };
     }
 
     const QUrl &sourceUrl() const { return source.url(); }
-    const QUrl &displayedComicBookRootUrl() const { return displayedComicBookRoot.url(); }
+    const ArchiveDocumentLocation &archiveDocument() const { return displayedArchiveDocument; }
+    const QUrl &displayedArchiveDocumentRootUrl() const
+    {
+        return displayedArchiveDocument.rootUrl();
+    }
+    const QUrl &displayedComicBookRootUrl() const { return displayedArchiveDocument.rootUrl(); }
     const QUrl &containerNavigationUrl() const { return containerNavigation.url(); }
     bool isEmpty() const { return source.isEmpty(); }
     bool isContainerNavigation() const { return !containerNavigation.isEmpty(); }

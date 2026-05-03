@@ -9,18 +9,24 @@
 #include <QObject>
 #include <QTest>
 #include <QUrl>
+#include <optional>
 #include <variant>
 
 namespace {
 QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
 
 KiriView::ImageLoadSession loadSession(const QUrl &sourceUrl, const QUrl &imageUrl,
-    const QUrl &comicBookRootUrl = QUrl(), const QUrl &containerNavigationUrl = QUrl())
+    const KiriView::ArchiveDocumentLocation &archiveDocument
+    = KiriView::ArchiveDocumentLocation::none(),
+    const QUrl &containerNavigationUrl = QUrl())
 {
     return KiriView::ImageLoadSession {
         1,
-        KiriView::ImageLoadRequest::fromUrls(sourceUrl, comicBookRootUrl, containerNavigationUrl),
-        KiriView::DisplayedImageLocation::fromUrls(imageUrl, comicBookRootUrl),
+        KiriView::ImageLoadRequest::fromLocation(
+            sourceUrl, archiveDocument, containerNavigationUrl),
+        archiveDocument.isEmpty()
+            ? KiriView::DisplayedImageLocation::fromUrl(imageUrl)
+            : KiriView::DisplayedImageLocation::fromArchiveDocument(imageUrl, archiveDocument),
     };
 }
 
@@ -72,7 +78,7 @@ void TestImageOpenWorkflow::firstImageLoadSuccessTransitionsToReady()
     QVERIFY(hasEffect<KiriView::UpdatePageNavigationEffect>(successEffects));
     QCOMPARE(state.sourceUrl(), imageUrl);
     QCOMPARE(state.displayedUrl(), imageUrl);
-    QCOMPARE(state.containerNavigationUrl(), localUrl(QStringLiteral("/images/")));
+    QVERIFY(state.containerNavigationUrl().isEmpty());
     QVERIFY(!state.loading());
     QCOMPARE(state.status(), KiriView::ImageDocumentStatus::Ready);
     QVERIFY(state.errorString().isEmpty());
@@ -82,16 +88,17 @@ void TestImageOpenWorkflow::directArchiveImageLoadSuccessDisablesContainerNaviga
 {
     KiriView::ImageDocumentState state;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.zip"));
-    const std::optional<QUrl> archiveRootUrl = KiriView::directArchiveOpenRootUrl(archiveUrl);
-    QVERIFY(archiveRootUrl.has_value());
-    QUrl imageUrl = *archiveRootUrl;
-    imageUrl.setPath(archiveRootUrl->path() + QStringLiteral("01.png"));
+    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveDocument.has_value());
+    QUrl imageUrl = archiveDocument->rootUrl();
+    imageUrl.setPath(archiveDocument->rootUrl().path() + QStringLiteral("01.png"));
 
     state.setSourceUrl(archiveUrl);
 
     const KiriView::ImageDocumentEffects successEffects
         = KiriView::ImageOpenWorkflow::finishSuccessfulImageLoad(
-            state, loadSession(archiveUrl, imageUrl, *archiveRootUrl));
+            state, loadSession(archiveUrl, imageUrl, *archiveDocument));
 
     QVERIFY(hasEffect<KiriView::UpdatePageNavigationEffect>(successEffects));
     QCOMPARE(state.sourceUrl(), imageUrl);
@@ -107,7 +114,7 @@ void TestImageOpenWorkflow::replacementLoadFailureKeepsDisplayedImage()
     KiriView::ImageDocumentState state;
     const QUrl displayedUrl = localUrl(QStringLiteral("/images/current.png"));
     const QUrl replacementUrl = localUrl(QStringLiteral("/images/missing.png"));
-    state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromUrls(displayedUrl));
+    state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromUrl(displayedUrl));
     state.setSourceUrl(replacementUrl);
     state.setLoading(true);
     state.setStatus(KiriView::ImageDocumentStatus::Ready);
@@ -151,7 +158,7 @@ void TestImageOpenWorkflow::animationFailureClearsImageAndResetsZoom()
 {
     KiriView::ImageDocumentState state;
     const QUrl displayedUrl = localUrl(QStringLiteral("/images/animated.png"));
-    state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromUrls(displayedUrl));
+    state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromUrl(displayedUrl));
     state.setContainerNavigationUrl(localUrl(QStringLiteral("/images/")));
     state.setLoading(true);
     state.setStatus(KiriView::ImageDocumentStatus::Ready);

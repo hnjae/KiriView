@@ -45,8 +45,8 @@ public:
                 }
                 return KiriView::ImageIoJob();
             },
-            [](QObject *, QUrl, KiriView::ImageCandidatesCallback callback,
-                KiriView::ErrorCallback) {
+            [](QObject *, KiriView::ArchiveDocumentLocation,
+                KiriView::ImageCandidatesCallback callback, KiriView::ErrorCallback) {
                 if (callback) {
                     callback({});
                 }
@@ -96,7 +96,7 @@ void TestImagePredecodeCoordinator::scheduleCachesDisplayedImageAndPredecodesWin
     };
 
     coordinator.schedule(KiriView::ImagePredecodeCoordinator::Context {
-        KiriView::DisplayedImageLocation::fromUrls(displayedUrl),
+        KiriView::DisplayedImageLocation::fromUrl(displayedUrl),
         true,
         testImage(),
     });
@@ -129,7 +129,7 @@ void TestImagePredecodeCoordinator::cancelSuppressesPendingDecode()
     };
 
     coordinator.schedule(KiriView::ImagePredecodeCoordinator::Context {
-        KiriView::DisplayedImageLocation::fromUrls(displayedUrl),
+        KiriView::DisplayedImageLocation::fromUrl(displayedUrl),
         false,
         testImage(),
     });

@@ -17,7 +17,7 @@
 
 namespace {
 using KiriView::decodedImageResultIsPredecodeCacheable;
-using KiriView::imageContainerUrlForImage;
+using KiriView::imageContainerUrlForLocation;
 }
 
 namespace KiriView {
@@ -65,8 +65,8 @@ void ImageOpenController::open()
     }
 
     beginSourceLoad();
-    m_imageLoader->start(ImageLoadRequest::fromUrls(m_state.sourceUrl(),
-        m_state.displayedComicBookRootUrl(), m_state.loadingContainerNavigationUrl()));
+    m_imageLoader->start(ImageLoadRequest::fromLocation(m_state.sourceUrl(),
+        m_state.displayedArchiveDocument(), m_state.loadingContainerNavigationUrl()));
 }
 
 void ImageOpenController::cancel() { m_imageLoader->cancel(); }
@@ -204,8 +204,7 @@ void ImageOpenController::finishLoadSuccessfully(
 void ImageOpenController::finishSvgLoadSuccessfully(
     ImageLoadSession session, QByteArray data, const QSize &intrinsicSize)
 {
-    const QUrl loadedContainerUrl = imageContainerUrlForImage(
-        session.location.imageUrl(), session.location.comicBookRootUrl());
+    const QUrl loadedContainerUrl = imageContainerUrlForLocation(session.location);
     const std::optional<QString> errorString = m_presentationController.setLoadedSvgImage(
         std::move(data), intrinsicSize, loadedContainerUrl);
     if (errorString.has_value()) {
@@ -219,8 +218,7 @@ void ImageOpenController::finishSvgLoadSuccessfully(
 void ImageOpenController::prepareSuccessfulImageLoad(const ImageLoadSession &session)
 {
     m_presentationController.stopAnimation();
-    const QUrl loadedContainerUrl = imageContainerUrlForImage(
-        session.location.imageUrl(), session.location.comicBookRootUrl());
+    const QUrl loadedContainerUrl = imageContainerUrlForLocation(session.location);
     m_presentationController.prepareImageContainer(loadedContainerUrl);
 }
 

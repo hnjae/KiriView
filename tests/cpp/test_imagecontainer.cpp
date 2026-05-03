@@ -8,6 +8,8 @@
 #include <QTest>
 #include <QUrl>
 #include <optional>
+#include <sys/stat.h>
+#include <vector>
 
 class TestImageContainer : public QObject
 {
@@ -23,6 +25,7 @@ private Q_SLOTS:
     void archiveImageContainerUrlsResolveToArchiveFile();
     void directArchivePagesDoNotResolveToContainerNavigationUrls();
     void regularImageContainerUrlsResolveToParentDirectory();
+    void containerCandidatesOnlyIncludeComicBookArchives();
 };
 
 void TestImageContainer::comicBookArchiveRootUrlsUseZipScheme()
@@ -121,36 +124,61 @@ void TestImageContainer::cbtAndCb7InteriorUrlsResolveToTheirRoots()
 void TestImageContainer::archiveImageContainerUrlsResolveToArchiveFile()
 {
     const QUrl archiveUrl = QUrl::fromLocalFile(QStringLiteral("/books/book.cbz"));
-    const std::optional<QUrl> archiveRootUrl = KiriView::comicBookArchiveRootUrl(archiveUrl);
-    QVERIFY(archiveRootUrl.has_value());
+    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveDocument.has_value());
 
-    QUrl pageUrl = *archiveRootUrl;
-    pageUrl.setPath(archiveRootUrl->path() + QStringLiteral("chapter/page001.png"));
+    QUrl pageUrl = archiveDocument->rootUrl();
+    pageUrl.setPath(archiveDocument->rootUrl().path() + QStringLiteral("chapter/page001.png"));
+    const KiriView::DisplayedImageLocation location
+        = KiriView::DisplayedImageLocation::fromArchiveDocument(pageUrl, *archiveDocument);
 
-    QCOMPARE(KiriView::containerNavigationUrlForImage(pageUrl, *archiveRootUrl), archiveUrl);
-    QCOMPARE(KiriView::imageContainerUrlForImage(pageUrl, *archiveRootUrl), archiveUrl);
+    QCOMPARE(KiriView::containerNavigationUrlForLocation(location), archiveUrl);
+    QCOMPARE(KiriView::imageContainerUrlForLocation(location), archiveUrl);
 }
 
 void TestImageContainer::directArchivePagesDoNotResolveToContainerNavigationUrls()
 {
     const QUrl archiveUrl = QUrl::fromLocalFile(QStringLiteral("/books/book.zip"));
-    const std::optional<QUrl> archiveRootUrl = KiriView::directArchiveOpenRootUrl(archiveUrl);
-    QVERIFY(archiveRootUrl.has_value());
+    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveDocument.has_value());
 
-    QUrl pageUrl = *archiveRootUrl;
-    pageUrl.setPath(archiveRootUrl->path() + QStringLiteral("chapter/page001.png"));
+    QUrl pageUrl = archiveDocument->rootUrl();
+    pageUrl.setPath(archiveDocument->rootUrl().path() + QStringLiteral("chapter/page001.png"));
+    const KiriView::DisplayedImageLocation location
+        = KiriView::DisplayedImageLocation::fromArchiveDocument(pageUrl, *archiveDocument);
 
-    QVERIFY(KiriView::containerNavigationUrlForImage(pageUrl, *archiveRootUrl).isEmpty());
-    QCOMPARE(KiriView::imageContainerUrlForImage(pageUrl, *archiveRootUrl), archiveUrl);
+    QVERIFY(KiriView::containerNavigationUrlForLocation(location).isEmpty());
+    QCOMPARE(KiriView::imageContainerUrlForLocation(location), archiveUrl);
 }
 
 void TestImageContainer::regularImageContainerUrlsResolveToParentDirectory()
 {
     const QUrl fileUrl = QUrl::fromLocalFile(QStringLiteral("/images/page.png"));
     const QUrl parentUrl = QUrl::fromLocalFile(QStringLiteral("/images/"));
+    const KiriView::DisplayedImageLocation location
+        = KiriView::DisplayedImageLocation::fromUrl(fileUrl);
 
     QVERIFY(KiriView::sameContainerNavigationUrl(
-        KiriView::containerNavigationUrlForImage(fileUrl, QUrl()), parentUrl));
+        KiriView::imageContainerUrlForLocation(location), parentUrl));
+    QVERIFY(KiriView::containerNavigationUrlForLocation(location).isEmpty());
+}
+
+void TestImageContainer::containerCandidatesOnlyIncludeComicBookArchives()
+{
+    KFileItemList items;
+    items.append(KFileItem(QUrl::fromLocalFile(QStringLiteral("/books/a/")), QString(), S_IFDIR));
+    items.append(
+        KFileItem(QUrl::fromLocalFile(QStringLiteral("/books/book.cbz")), QString(), S_IFREG));
+    items.append(
+        KFileItem(QUrl::fromLocalFile(QStringLiteral("/books/book.zip")), QString(), S_IFREG));
+
+    const std::vector<KiriView::ContainerNavigationCandidate> candidates
+        = KiriView::containerNavigationCandidates(items);
+    QCOMPARE(candidates.size(), std::size_t(1));
+    QCOMPARE(candidates.front().url, QUrl::fromLocalFile(QStringLiteral("/books/book.cbz")));
+    QCOMPARE(candidates.front().type, KiriView::ContainerNavigationCandidateType::ComicBookArchive);
 }
 
 QTEST_GUILESS_MAIN(TestImageContainer)

@@ -5,6 +5,7 @@
 #define KIRIVIEW_IMAGENAVIGATIONSERVICE_H
 
 #include "imagecandidaterepository.h"
+#include "imagelocation.h"
 #include "imagenavigationtypes.h"
 
 #include <QObject>
@@ -26,8 +27,7 @@ class ImageNavigationService final : public QObject
 public:
     struct DisplayContext {
         bool hasDisplayedImage = false;
-        QUrl displayedUrl;
-        QUrl comicBookRootUrl;
+        DisplayedImageLocation location;
     };
 
     using OpenUrlCallback = std::function<void(const QUrl &)>;

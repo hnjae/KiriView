@@ -5,6 +5,7 @@
 #define KIRIVIEW_IMAGEDECODEJOB_H
 
 #include "imageiojob.h"
+#include "imagelocation.h"
 #include "kiriimagedecoder.h"
 
 #include <QByteArray>
@@ -19,6 +20,7 @@ namespace KiriView {
 struct ImageDecodeRequest {
     quint64 id = 0;
     QUrl imageUrl;
+    ArchiveDocumentLocation archiveDocument;
 };
 
 class ImageDecodeJob final : public QObject
@@ -26,7 +28,8 @@ class ImageDecodeJob final : public QObject
 public:
     using DataCallback = std::function<void(QByteArray)>;
     using ErrorCallback = std::function<void(const QString &)>;
-    using DataLoader = std::function<ImageIoJob(QObject *, QUrl, DataCallback, ErrorCallback)>;
+    using DataLoader
+        = std::function<ImageIoJob(QObject *, ImageDecodeRequest, DataCallback, ErrorCallback)>;
     using DataDecoder = std::function<DecodedImageResult(const QByteArray &)>;
     using DecodedCallback
         = std::function<void(ImageDecodeRequest, std::shared_ptr<DecodedImageResult>)>;

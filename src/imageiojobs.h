@@ -4,7 +4,9 @@
 #ifndef KIRIVIEW_IMAGEIOJOBS_H
 #define KIRIVIEW_IMAGEIOJOBS_H
 
+#include "imagedecodejob.h"
 #include "imageiojob.h"
+#include "imagelocation.h"
 #include "imagenavigationtypes.h"
 
 #include <QByteArray>
@@ -25,10 +27,11 @@ ImageIoJob startDirectoryImageCandidateList(QObject *receiver, QUrl directoryUrl
     ImageCandidatesCallback callback, ErrorCallback errorCallback);
 ImageIoJob startDirectoryContainerCandidateList(QObject *receiver, QUrl directoryUrl,
     ContainerCandidatesCallback callback, ErrorCallback errorCallback);
-ImageIoJob startArchiveImageCandidateList(QObject *receiver, QUrl archiveRootUrl,
-    ImageCandidatesCallback callback, ErrorCallback errorCallback);
-ImageIoJob startStoredImageDataLoad(
-    QObject *receiver, QUrl imageUrl, ImageDataCallback callback, ErrorCallback errorCallback);
+ImageIoJob startArchiveImageCandidateList(QObject *receiver,
+    ArchiveDocumentLocation archiveDocument, ImageCandidatesCallback callback,
+    ErrorCallback errorCallback);
+ImageIoJob startStoredImageDataLoad(QObject *receiver, ImageDecodeRequest request,
+    ImageDataCallback callback, ErrorCallback errorCallback);
 }
 
 #endif

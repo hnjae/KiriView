@@ -108,23 +108,30 @@ void TestImageUrl::imageLocationTypesExposeExplicitState()
     const KiriView::DisplayedImageLocation emptyLocation;
     QVERIFY(emptyLocation.isEmpty());
 
-    const KiriView::DisplayedImageLocation location = KiriView::DisplayedImageLocation::fromUrls(
-        QUrl::fromLocalFile(QStringLiteral("/images/page.png")),
-        QUrl(QStringLiteral("zip:///books/book.cbz/")));
+    const KiriView::ArchiveDocumentLocation archiveDocument
+        = KiriView::ArchiveDocumentLocation::fromUrls(
+            QUrl::fromLocalFile(QStringLiteral("/books/book.cbz")),
+            QUrl(QStringLiteral("zip:///books/book.cbz/")),
+            KiriView::ArchiveDocumentKind::ComicBook);
+    const KiriView::DisplayedImageLocation location
+        = KiriView::DisplayedImageLocation::fromArchiveDocument(
+            QUrl(QStringLiteral("zip:///books/book.cbz/page.png")), archiveDocument);
     QVERIFY(!location.isEmpty());
+    QCOMPARE(location.archiveDocumentFileUrl(), archiveDocument.fileUrl());
+    QCOMPARE(location.archiveDocumentRootUrl(), archiveDocument.rootUrl());
 
     const KiriView::ImageLoadRequest plainOpen
-        = KiriView::ImageLoadRequest::fromUrls(location.imageUrl(), QUrl());
+        = KiriView::ImageLoadRequest::fromUrl(location.imageUrl());
     QVERIFY(!plainOpen.isEmpty());
     QVERIFY(!plainOpen.isContainerNavigation());
     QCOMPARE(plainOpen.sourceUrl(), location.imageUrl());
     QVERIFY(plainOpen.displayedComicBookRootUrl().isEmpty());
 
     const QUrl containerUrl = QUrl::fromLocalFile(QStringLiteral("/images/"));
-    const KiriView::ImageLoadRequest containerOpen = KiriView::ImageLoadRequest::fromUrls(
-        location.imageUrl(), location.comicBookRootUrl(), containerUrl);
+    const KiriView::ImageLoadRequest containerOpen = KiriView::ImageLoadRequest::fromLocation(
+        location.imageUrl(), location.archiveDocument(), containerUrl);
     QVERIFY(containerOpen.isContainerNavigation());
-    QCOMPARE(containerOpen.displayedComicBookRootUrl(), location.comicBookRootUrl());
+    QCOMPARE(containerOpen.displayedComicBookRootUrl(), location.archiveDocumentRootUrl());
     QCOMPARE(containerOpen.containerNavigationUrl(), containerUrl);
 }
 

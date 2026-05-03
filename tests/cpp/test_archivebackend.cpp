@@ -1,0 +1,183 @@
+// SPDX-FileCopyrightText: 2026 KIM Hyunjae
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+#include "archivebackend.h"
+
+#include "imagecontainer.h"
+
+#include <KTar>
+#include <KZip>
+#include <QFile>
+#include <QObject>
+#include <QTemporaryDir>
+#include <QTest>
+#include <QUrl>
+#include <optional>
+#include <vector>
+
+namespace {
+struct ArchiveEntryData {
+    QString path;
+    QByteArray data;
+};
+
+QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
+
+QUrl archivePageUrl(const QUrl &archiveRootUrl, const QString &pageName)
+{
+    QUrl pageUrl = archiveRootUrl;
+    pageUrl.setPath(archiveRootUrl.path() + pageName);
+    return pageUrl;
+}
+
+void writeZipArchive(const QString &path, const std::vector<ArchiveEntryData> &entries)
+{
+    KZip archive(path);
+    QVERIFY(archive.open(QIODevice::WriteOnly));
+    for (const ArchiveEntryData &entry : entries) {
+        QVERIFY(archive.writeFile(entry.path, entry.data));
+    }
+    QVERIFY(archive.close());
+}
+
+void writeTarArchive(const QString &path, const std::vector<ArchiveEntryData> &entries)
+{
+    KTar archive(path);
+    QVERIFY(archive.open(QIODevice::WriteOnly));
+    for (const ArchiveEntryData &entry : entries) {
+        QVERIFY(archive.writeFile(entry.path, entry.data));
+    }
+    QVERIFY(archive.close());
+}
+
+std::optional<KiriView::ArchiveDocumentLocation> archiveDocumentForPath(const QString &path)
+{
+    return KiriView::archiveDocumentLocationForLocalArchiveUrl(localUrl(path));
+}
+}
+
+class TestArchiveBackend : public QObject
+{
+    Q_OBJECT
+
+private Q_SLOTS:
+    void zipListingIncludesNestedSupportedImages();
+    void tarListingUsesSameOrdering();
+    void readingArchiveEntryReturnsOriginalBytes();
+    void missingEmptyAndInvalidArchivesReportExpectedResults();
+};
+
+void TestArchiveBackend::zipListingIncludesNestedSupportedImages()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString archivePath = dir.filePath(QStringLiteral("book.cbz"));
+    writeZipArchive(archivePath,
+        {
+            { QStringLiteral("chapter/02.jpg"), QByteArrayLiteral("two") },
+            { QStringLiteral("notes.txt"), QByteArrayLiteral("skip") },
+            { QStringLiteral("chapter/01.png"), QByteArrayLiteral("one") },
+        });
+
+    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+        = archiveDocumentForPath(archivePath);
+    QVERIFY(archiveDocument.has_value());
+    const KiriView::ArchiveImageCandidatesResult result
+        = KiriView::loadArchiveDocumentImageCandidates(*archiveDocument);
+
+    QVERIFY(result.success);
+    QCOMPARE(result.candidates.size(), std::size_t(2));
+    QCOMPARE(result.candidates.at(0).name, QStringLiteral("chapter/01.png"));
+    QCOMPARE(result.candidates.at(0).url,
+        archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("chapter/01.png")));
+    QCOMPARE(result.candidates.at(1).name, QStringLiteral("chapter/02.jpg"));
+}
+
+void TestArchiveBackend::tarListingUsesSameOrdering()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString archivePath = dir.filePath(QStringLiteral("book.cbt"));
+    writeTarArchive(archivePath,
+        {
+            { QStringLiteral("pages/02.webp"), QByteArrayLiteral("two") },
+            { QStringLiteral("pages/01.png"), QByteArrayLiteral("one") },
+            { QStringLiteral("pages/readme.md"), QByteArrayLiteral("skip") },
+        });
+
+    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+        = archiveDocumentForPath(archivePath);
+    QVERIFY(archiveDocument.has_value());
+    const KiriView::ArchiveImageCandidatesResult result
+        = KiriView::loadArchiveDocumentImageCandidates(*archiveDocument);
+
+    QVERIFY(result.success);
+    QCOMPARE(result.candidates.size(), std::size_t(2));
+    QCOMPARE(result.candidates.at(0).name, QStringLiteral("pages/01.png"));
+    QCOMPARE(result.candidates.at(1).name, QStringLiteral("pages/02.webp"));
+}
+
+void TestArchiveBackend::readingArchiveEntryReturnsOriginalBytes()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString archivePath = dir.filePath(QStringLiteral("book.zip"));
+    const QByteArray expected = QByteArrayLiteral("image-bytes");
+    writeZipArchive(archivePath,
+        {
+            { QStringLiteral("page.png"), expected },
+        });
+
+    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+        = archiveDocumentForPath(archivePath);
+    QVERIFY(archiveDocument.has_value());
+    const KiriView::ArchiveImageDataResult result = KiriView::loadArchiveDocumentImageData(
+        *archiveDocument, archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("page.png")));
+
+    QVERIFY(result.success);
+    QCOMPARE(result.data, expected);
+}
+
+void TestArchiveBackend::missingEmptyAndInvalidArchivesReportExpectedResults()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+
+    const KiriView::ArchiveDocumentLocation missingArchive
+        = KiriView::ArchiveDocumentLocation::fromUrls(
+            localUrl(dir.filePath(QStringLiteral("missing.cbz"))),
+            QUrl(QStringLiteral("zip:///missing.cbz/")), KiriView::ArchiveDocumentKind::ComicBook);
+    const KiriView::ArchiveImageCandidatesResult missingResult
+        = KiriView::loadArchiveDocumentImageCandidates(missingArchive);
+    QVERIFY(!missingResult.success);
+    QVERIFY(!missingResult.errorString.isEmpty());
+
+    const QString emptyArchivePath = dir.filePath(QStringLiteral("empty.cbz"));
+    writeZipArchive(emptyArchivePath, {});
+    const std::optional<KiriView::ArchiveDocumentLocation> emptyArchiveDocument
+        = archiveDocumentForPath(emptyArchivePath);
+    QVERIFY(emptyArchiveDocument.has_value());
+    const KiriView::ArchiveImageCandidatesResult emptyResult
+        = KiriView::loadArchiveDocumentImageCandidates(*emptyArchiveDocument);
+    QVERIFY(emptyResult.success);
+    QVERIFY(emptyResult.candidates.empty());
+
+    const QString invalidArchivePath = dir.filePath(QStringLiteral("invalid.cbz"));
+    QFile invalidArchive(invalidArchivePath);
+    QVERIFY(invalidArchive.open(QIODevice::WriteOnly));
+    QCOMPARE(invalidArchive.write(QByteArrayLiteral("not an archive")),
+        qsizetype(QByteArrayLiteral("not an archive").size()));
+    invalidArchive.close();
+
+    const std::optional<KiriView::ArchiveDocumentLocation> invalidArchiveDocument
+        = archiveDocumentForPath(invalidArchivePath);
+    QVERIFY(invalidArchiveDocument.has_value());
+    const KiriView::ArchiveImageCandidatesResult invalidResult
+        = KiriView::loadArchiveDocumentImageCandidates(*invalidArchiveDocument);
+    QVERIFY(!invalidResult.success);
+    QVERIFY(!invalidResult.errorString.isEmpty());
+}
+
+QTEST_GUILESS_MAIN(TestArchiveBackend)
+
+#include "test_archivebackend.moc"

@@ -45,11 +45,21 @@ const DisplayedImageLocation &ImageDocumentState::displayedImageLocation() const
     return m_displayedImageLocation;
 }
 
+const ArchiveDocumentLocation &ImageDocumentState::displayedArchiveDocument() const
+{
+    return m_displayedImageLocation.archiveDocument();
+}
+
 const QUrl &ImageDocumentState::displayedUrl() const { return m_displayedImageLocation.imageUrl(); }
+
+const QUrl &ImageDocumentState::displayedArchiveDocumentRootUrl() const
+{
+    return m_displayedImageLocation.archiveDocumentRootUrl();
+}
 
 const QUrl &ImageDocumentState::displayedComicBookRootUrl() const
 {
-    return m_displayedImageLocation.comicBookRootUrl();
+    return m_displayedImageLocation.archiveDocumentRootUrl();
 }
 
 ImageDocumentStatus ImageDocumentState::status() const { return m_status; }
@@ -60,7 +70,7 @@ const QString &ImageDocumentState::errorString() const { return m_errorString; }
 
 QString ImageDocumentState::windowTitleFileName() const
 {
-    return windowTitleFileNameForDisplayedUrl(displayedUrl(), displayedComicBookRootUrl());
+    return windowTitleFileNameForDisplayedLocation(m_displayedImageLocation);
 }
 
 const QUrl &ImageDocumentState::containerNavigationUrl() const { return m_containerNavigationUrl; }

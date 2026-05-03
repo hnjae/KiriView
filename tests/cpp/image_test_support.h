@@ -22,6 +22,7 @@ namespace KiriView::TestSupport {
 struct ManualImageDataLoad {
     QObject *object = nullptr;
     QUrl url;
+    ArchiveDocumentLocation archiveDocument;
     ImageDecodeJob::DataCallback dataCallback;
     ImageDecodeJob::ErrorCallback errorCallback;
     bool canceled = false;
@@ -30,12 +31,13 @@ struct ManualImageDataLoad {
 class ManualImageDataLoader
 {
 public:
-    ImageIoJob start(QObject *receiver, QUrl url, ImageDecodeJob::DataCallback callback,
-        ImageDecodeJob::ErrorCallback errorCallback)
+    ImageIoJob start(QObject *receiver, ImageDecodeRequest request,
+        ImageDecodeJob::DataCallback callback, ImageDecodeJob::ErrorCallback errorCallback)
     {
         auto load = std::make_shared<ManualImageDataLoad>();
         load->object = new QObject(receiver);
-        load->url = std::move(url);
+        load->url = std::move(request.imageUrl);
+        load->archiveDocument = std::move(request.archiveDocument);
         load->dataCallback = std::move(callback);
         load->errorCallback = std::move(errorCallback);
         loads.push_back(load);
@@ -51,15 +53,28 @@ public:
     std::vector<std::shared_ptr<ManualImageDataLoad>> loads;
 };
 
+class ManualImageDataLoaderAdapter
+{
+public:
+    explicit ManualImageDataLoaderAdapter(ManualImageDataLoader &dataLoader)
+        : m_dataLoader(&dataLoader)
+    {
+    }
+
+    ImageIoJob operator()(QObject *receiver, ImageDecodeRequest request,
+        ImageDecodeJob::DataCallback callback, ImageDecodeJob::ErrorCallback errorCallback) const
+    {
+        return m_dataLoader->start(
+            receiver, std::move(request), std::move(callback), std::move(errorCallback));
+    }
+
+private:
+    ManualImageDataLoader *m_dataLoader = nullptr;
+};
+
 inline ImageDecodeJob::DataLoader dataLoaderFor(ManualImageDataLoader &dataLoader)
 {
-    using DataCb = ImageDecodeJob::DataCallback;
-    using ErrorCb = ImageDecodeJob::ErrorCallback;
-
-    return [&dataLoader](QObject *receiver, QUrl url, DataCb callback, ErrorCb errorCallback) {
-        return dataLoader.start(
-            receiver, std::move(url), std::move(callback), std::move(errorCallback));
-    };
+    return ManualImageDataLoaderAdapter(dataLoader);
 }
 
 inline QString keyForUrl(const QUrl &url)

@@ -3,32 +3,31 @@
 
 #include "imageiojobs.h"
 
+#include "archivebackend.h"
 #include "imagecontainer.h"
 #include "imagenavigationmodel.h"
 
 #include <KCoreDirLister>
 #include <KIO/Job>
-#include <KIO/ListJob>
 #include <KIO/StoredTransferJob>
-#include <KIO/UDSEntry>
 #include <KJob>
+#include <QMetaObject>
 #include <QObject>
+#include <QPointer>
+#include <QRunnable>
+#include <QThreadPool>
+#include <Qt>
 #include <memory>
 #include <utility>
 
 namespace {
-using KiriView::appendArchiveImageNavigationCandidates;
+using KiriView::ArchiveImageCandidatesResult;
+using KiriView::ArchiveImageDataResult;
 using KiriView::ContainerNavigationCandidate;
 using KiriView::containerNavigationCandidates;
 using KiriView::ErrorCallback;
 using KiriView::ImageNavigationCandidate;
 using KiriView::imageNavigationCandidates;
-using KiriView::sortImageNavigationCandidates;
-
-KIO::ListJob::ListFlags recursiveImageListFlags()
-{
-    return KIO::ListJob::ListFlags(KIO::ListJob::ListFlag::IncludeHidden);
-}
 
 void cancelKJob(QObject *object)
 {
@@ -69,20 +68,6 @@ std::vector<ImageNavigationCandidate> imageCandidatesFromLister(KCoreDirLister *
 std::vector<ContainerNavigationCandidate> containerCandidatesFromLister(KCoreDirLister *lister)
 {
     return containerNavigationCandidates(lister->items(KCoreDirLister::AllItems));
-}
-
-std::shared_ptr<std::vector<ImageNavigationCandidate>> collectArchiveImageCandidates(
-    KIO::ListJob *job, QObject *receiver, const QUrl &archiveRootUrl)
-{
-    auto candidates = std::make_shared<std::vector<ImageNavigationCandidate>>();
-    QObject::connect(job, &KIO::ListJob::entries, receiver,
-        [archiveRootUrl, candidates](KIO::Job *entriesJob, const KIO::UDSEntryList &entries) {
-            auto *listJob = qobject_cast<KIO::ListJob *>(entriesJob);
-            const QUrl directoryUrl = listJob == nullptr ? archiveRootUrl : listJob->url();
-            appendArchiveImageNavigationCandidates(
-                candidates.get(), entries, directoryUrl, archiveRootUrl);
-        });
-    return candidates;
 }
 
 void finishDirectoryCandidateListWithError(std::shared_ptr<KiriView::ImageIoJobState> jobState,
@@ -131,6 +116,61 @@ KiriView::ImageIoJob startDirectoryCandidateList(QObject *receiver, const QUrl &
 
     return ioJob;
 }
+
+void cancelArchiveWorkerToken(QObject *object)
+{
+    if (object != nullptr) {
+        object->deleteLater();
+    }
+}
+
+template <typename Work, typename Finish> struct ArchiveWorkerCallbacks {
+    Work work;
+    Finish finish;
+};
+
+template <typename Work, typename Finish>
+KiriView::ImageIoJob startArchiveWorkerJob(QObject *receiver, Work work, Finish finish)
+{
+    if (receiver == nullptr) {
+        finish(work());
+        return KiriView::ImageIoJob();
+    }
+
+    auto *token = new QObject(receiver);
+    KiriView::ImageIoJob ioJob(token, cancelArchiveWorkerToken);
+    auto jobState = ioJob.state();
+    QObject::connect(
+        token, &QObject::destroyed, receiver, [jobState, token]() { jobState->clear(token); });
+
+    const QPointer<QObject> guardedReceiver(receiver);
+    ArchiveWorkerCallbacks<Work, Finish> workerCallbacks {
+        std::move(work),
+        std::move(finish),
+    };
+    auto callbacks
+        = std::make_shared<ArchiveWorkerCallbacks<Work, Finish>>(std::move(workerCallbacks));
+    QThreadPool::globalInstance()->start(
+        QRunnable::create([guardedReceiver, token, jobState, callbacks]() mutable {
+            auto result = callbacks->work();
+            if (guardedReceiver == nullptr) {
+                return;
+            }
+
+            QMetaObject::invokeMethod(
+                guardedReceiver.data(),
+                [token, jobState, callbacks, result = std::move(result)]() mutable {
+                    if (!jobState->claim(token)) {
+                        return;
+                    }
+
+                    token->deleteLater();
+                    callbacks->finish(std::move(result));
+                },
+                Qt::QueuedConnection);
+        }));
+    return ioJob;
+}
 }
 
 namespace KiriView {
@@ -148,42 +188,56 @@ ImageIoJob startDirectoryContainerCandidateList(QObject *receiver, QUrl director
         directoryUrl, std::move(callback), std::move(errorCallback), containerCandidatesFromLister);
 }
 
-ImageIoJob startArchiveImageCandidateList(QObject *receiver, QUrl archiveRootUrl,
-    ImageCandidatesCallback callback, ErrorCallback errorCallback)
+ImageIoJob startArchiveImageCandidateList(QObject *receiver,
+    ArchiveDocumentLocation archiveDocument, ImageCandidatesCallback callback,
+    ErrorCallback errorCallback)
 {
-    auto *job
-        = KIO::listRecursive(archiveRootUrl, KIO::HideProgressInfo, recursiveImageListFlags());
-    auto candidates = collectArchiveImageCandidates(job, receiver, archiveRootUrl);
-    ImageIoJob ioJob(job, cancelKJob);
-    auto jobState = ioJob.state();
-
-    QObject::connect(job, &KJob::result, receiver,
-        [jobState, job, candidates, callback = std::move(callback),
-            errorCallback = std::move(errorCallback)](KJob *finishedJob) mutable {
-            if (!jobState->claim(job)) {
-                return;
-            }
-
-            if (finishedJob->error() != KJob::NoError) {
+    return startArchiveWorkerJob(
+        receiver,
+        [archiveDocument = std::move(archiveDocument)]() {
+            return loadArchiveDocumentImageCandidates(archiveDocument);
+        },
+        [callback = std::move(callback), errorCallback = std::move(errorCallback)](
+            ArchiveImageCandidatesResult result) mutable {
+            if (!result.success) {
                 if (errorCallback) {
-                    errorCallback(finishedJob->errorString());
+                    errorCallback(result.errorString);
                 }
                 return;
             }
 
-            sortImageNavigationCandidates(candidates.get());
-            callback(std::move(*candidates));
+            if (callback) {
+                callback(std::move(result.candidates));
+            }
         });
-
-    QObject::connect(
-        job, &QObject::destroyed, receiver, [jobState, job]() { jobState->clear(job); });
-    return ioJob;
 }
 
-ImageIoJob startStoredImageDataLoad(
-    QObject *receiver, QUrl imageUrl, ImageDataCallback callback, ErrorCallback errorCallback)
+ImageIoJob startStoredImageDataLoad(QObject *receiver, ImageDecodeRequest request,
+    ImageDataCallback callback, ErrorCallback errorCallback)
 {
-    auto *job = KIO::storedGet(imageUrl, KIO::NoReload, KIO::HideProgressInfo);
+    if (!request.archiveDocument.isEmpty()
+        && isUrlInsideArchiveRoot(request.imageUrl, request.archiveDocument.rootUrl())) {
+        return startArchiveWorkerJob(
+            receiver,
+            [request = std::move(request)]() {
+                return loadArchiveDocumentImageData(request.archiveDocument, request.imageUrl);
+            },
+            [callback = std::move(callback), errorCallback = std::move(errorCallback)](
+                ArchiveImageDataResult result) mutable {
+                if (!result.success) {
+                    if (errorCallback) {
+                        errorCallback(result.errorString);
+                    }
+                    return;
+                }
+
+                if (callback) {
+                    callback(std::move(result.data));
+                }
+            });
+    }
+
+    auto *job = KIO::storedGet(request.imageUrl, KIO::NoReload, KIO::HideProgressInfo);
     ImageIoJob ioJob(job, cancelKJob);
     auto jobState = ioJob.state();
 

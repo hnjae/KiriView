@@ -84,6 +84,10 @@ std::optional<QUrl> archiveFileUrl(const QUrl &archiveRootUrl)
 
 std::optional<QUrl> archiveRootUrlForLocalArchive(const QUrl &url, const QString &archiveScheme)
 {
+    if (!url.isLocalFile()) {
+        return std::nullopt;
+    }
+
     if (archiveScheme.isEmpty()) {
         return std::nullopt;
     }
@@ -164,6 +168,22 @@ std::optional<QUrl> directArchiveOpenRootUrl(const QUrl &url)
     return archiveRootUrlForLocalArchive(url, archiveScheme);
 }
 
+std::optional<ArchiveDocumentLocation> archiveDocumentLocationForLocalArchiveUrl(const QUrl &url)
+{
+    if (!url.isLocalFile()) {
+        return std::nullopt;
+    }
+
+    const std::optional<QUrl> rootUrl = directArchiveOpenRootUrl(url);
+    if (!rootUrl.has_value()) {
+        return std::nullopt;
+    }
+
+    const ArchiveDocumentKind kind = isComicBookArchiveUrl(url) ? ArchiveDocumentKind::ComicBook
+                                                                : ArchiveDocumentKind::General;
+    return ArchiveDocumentLocation::fromUrls(normalizedFileContainerUrl(url), *rootUrl, kind);
+}
+
 bool isUrlInsideArchiveRoot(const QUrl &url, const QUrl &archiveRootUrl)
 {
     if (url.isEmpty() || archiveRootUrl.isEmpty() || url.scheme() != archiveRootUrl.scheme()) {
@@ -206,6 +226,23 @@ QString windowTitleFileNameForDisplayedUrl(
     return displayedUrl.fileName();
 }
 
+QString windowTitleFileNameForDisplayedLocation(const DisplayedImageLocation &location)
+{
+    if (location.imageUrl().isEmpty()) {
+        return {};
+    }
+
+    if (!location.archiveDocument().isEmpty()
+        && isUrlInsideArchiveRoot(location.imageUrl(), location.archiveDocumentRootUrl())) {
+        const QString archiveName = location.archiveDocumentFileUrl().fileName();
+        if (!archiveName.isEmpty()) {
+            return archiveName;
+        }
+    }
+
+    return location.imageUrl().fileName();
+}
+
 std::vector<ContainerNavigationCandidate> containerNavigationCandidates(const KFileItemList &items)
 {
     std::vector<ContainerNavigationCandidate> candidates;
@@ -213,13 +250,6 @@ std::vector<ContainerNavigationCandidate> containerNavigationCandidates(const KF
 
     for (const KFileItem &item : items) {
         const QString name = item.name();
-        if (item.isDir()) {
-            candidates.push_back(
-                ContainerNavigationCandidate { normalizedDirectoryContainerUrl(item.url()), name,
-                    ContainerNavigationCandidateType::Directory });
-            continue;
-        }
-
         if (item.isFile() && item.url().isLocalFile()
             && KiriView::isComicBookArchiveFileName(name)) {
             candidates.push_back(
@@ -289,6 +319,26 @@ QUrl containerNavigationUrlForImage(const QUrl &imageUrl, const QUrl &comicBookR
         return normalizedFileContainerUrl(navigationSourceUrl(*archiveUrl));
     }
 
-    return imageContainerUrlForImage(imageUrl, QUrl());
+    return {};
+}
+
+QUrl imageContainerUrlForLocation(const DisplayedImageLocation &location)
+{
+    if (!location.archiveDocument().isEmpty()
+        && isUrlInsideArchiveRoot(location.imageUrl(), location.archiveDocumentRootUrl())) {
+        return normalizedFileContainerUrl(navigationSourceUrl(location.archiveDocumentFileUrl()));
+    }
+
+    return imageContainerUrlForImage(location.imageUrl(), QUrl());
+}
+
+QUrl containerNavigationUrlForLocation(const DisplayedImageLocation &location)
+{
+    if (!location.archiveDocument().isComicBook()
+        || !isUrlInsideArchiveRoot(location.imageUrl(), location.archiveDocumentRootUrl())) {
+        return {};
+    }
+
+    return normalizedFileContainerUrl(navigationSourceUrl(location.archiveDocumentFileUrl()));
 }
 }

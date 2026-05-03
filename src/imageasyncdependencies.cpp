@@ -9,12 +9,12 @@
 #include <utility>
 
 namespace {
-KiriView::ImageIoJob loadImageData(QObject *receiver, QUrl imageUrl,
+KiriView::ImageIoJob loadImageData(QObject *receiver, KiriView::ImageDecodeRequest request,
     KiriView::ImageDecodeJob::DataCallback callback,
     KiriView::ImageDecodeJob::ErrorCallback errorCallback)
 {
     return KiriView::startStoredImageDataLoad(
-        receiver, std::move(imageUrl), std::move(callback), std::move(errorCallback));
+        receiver, std::move(request), std::move(callback), std::move(errorCallback));
 }
 
 KiriView::DecodedImageResult decodeImageDataWithDefaults(const QByteArray &data)

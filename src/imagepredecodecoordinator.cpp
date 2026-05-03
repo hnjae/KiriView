@@ -50,11 +50,10 @@ void ImagePredecodeCoordinator::scheduleAdjacentImagePredecode(
     const Context &context, quint64 generation)
 {
     const std::optional<ImageCandidateListContext> candidateContext
-        = imageCandidateListContextForDisplayedImage(context.displayedImageLocation.imageUrl(),
-            context.displayedImageLocation.comicBookRootUrl());
+        = imageCandidateListContextForDisplayedImage(context.displayedImageLocation);
     if (!candidateContext.has_value()) {
         startPredecodeImageLoads(
-            {}, context.displayedImageLocation.comicBookRootUrl(), context, generation);
+            {}, context.displayedImageLocation.archiveDocument(), context, generation);
         return;
     }
 
@@ -64,16 +63,16 @@ void ImagePredecodeCoordinator::scheduleAdjacentImagePredecode(
             std::vector<ImageNavigationCandidate> candidates) {
             startPredecodeImageLoads(
                 predecodeWindowImageUrls(candidates, candidateContext->currentUrl),
-                candidateContext->comicBookRootUrl, context, generation);
+                candidateContext->archiveDocument, context, generation);
         },
-        [this, context, generation, comicBookRootUrl = candidateContext->comicBookRootUrl](
+        [this, context, generation, archiveDocument = candidateContext->archiveDocument](
             const QString &) {
-            startPredecodeImageLoads({}, comicBookRootUrl, context, generation);
+            startPredecodeImageLoads({}, archiveDocument, context, generation);
         });
 }
 
 void ImagePredecodeCoordinator::startPredecodeImageLoads(const std::vector<QUrl> &urls,
-    const QUrl &comicBookRootUrl, const Context &context, quint64 generation)
+    const ArchiveDocumentLocation &archiveDocument, const Context &context, quint64 generation)
 {
     if (!m_generation.accepts(generation)) {
         return;
@@ -81,10 +80,10 @@ void ImagePredecodeCoordinator::startPredecodeImageLoads(const std::vector<QUrl>
 
     m_cache.setWindowUrls(urls);
     m_cache.cacheDisplayedImage(context.displayedImageIsCacheable,
-        context.displayedImageLocation.imageUrl(),
-        context.displayedImageLocation.comicBookRootUrl(), context.displayedImage);
+        context.displayedImageLocation.imageUrl(), context.displayedImageLocation.archiveDocument(),
+        context.displayedImage);
     m_cache.enqueueMissingWindowLoads(
-        context.displayedImageLocation.imageUrl(), comicBookRootUrl, m_activePredecodeUrl);
+        context.displayedImageLocation.imageUrl(), archiveDocument, m_activePredecodeUrl);
 
     startNextPredecodeImageLoad(generation);
 }
@@ -101,11 +100,11 @@ void ImagePredecodeCoordinator::startNextPredecodeImageLoad(quint64 generation)
         return;
     }
 
-    startPredecodeImageLoad(request->url, request->comicBookRootUrl, generation);
+    startPredecodeImageLoad(request->url, request->archiveDocument, generation);
 }
 
 void ImagePredecodeCoordinator::startPredecodeImageLoad(
-    const QUrl &url, const QUrl &comicBookRootUrl, quint64 generation)
+    const QUrl &url, const ArchiveDocumentLocation &archiveDocument, quint64 generation)
 {
     if (!url.isValid() || url.isEmpty() || !m_activePredecodeUrl.isEmpty() || m_cache.hasImage(url)
         || !m_cache.windowContains(url)) {
@@ -114,8 +113,8 @@ void ImagePredecodeCoordinator::startPredecodeImageLoad(
 
     const QUrl normalizedUrl = normalizedImageUrl(url);
     m_activePredecodeUrl = normalizedUrl;
-    m_activePredecodeComicBookRootUrl = comicBookRootUrl;
-    m_decodeJob.start(ImageDecodeRequest { generation, url });
+    m_activePredecodeArchiveDocument = archiveDocument;
+    m_decodeJob.start(ImageDecodeRequest { generation, url, archiveDocument });
 }
 
 void ImagePredecodeCoordinator::finishPredecodeImageLoadError(const ImageDecodeRequest &request)
@@ -126,7 +125,7 @@ void ImagePredecodeCoordinator::finishPredecodeImageLoadError(const ImageDecodeR
     }
 
     m_activePredecodeUrl = QUrl();
-    m_activePredecodeComicBookRootUrl = QUrl();
+    m_activePredecodeArchiveDocument = ArchiveDocumentLocation::none();
     startNextPredecodeImageLoad(request.id);
 }
 
@@ -139,12 +138,12 @@ void ImagePredecodeCoordinator::finishPredecodeImageDecode(
     }
 
     if (decodedImageResultIsPredecodeCacheable(result, KiriView::PredecodeCache::byteBudget())) {
-        m_cache.cacheImage(request.imageUrl, m_activePredecodeComicBookRootUrl,
+        m_cache.cacheImage(request.imageUrl, m_activePredecodeArchiveDocument,
             std::get<StaticDecodedImage>(result).image);
     }
 
     m_activePredecodeUrl = QUrl();
-    m_activePredecodeComicBookRootUrl = QUrl();
+    m_activePredecodeArchiveDocument = ArchiveDocumentLocation::none();
     startNextPredecodeImageLoad(request.id);
 }
 
@@ -154,7 +153,7 @@ void ImagePredecodeCoordinator::cancel()
     m_listerJob.cancel();
     m_decodeJob.cancel();
     m_activePredecodeUrl = QUrl();
-    m_activePredecodeComicBookRootUrl = QUrl();
+    m_activePredecodeArchiveDocument = ArchiveDocumentLocation::none();
     m_cache.clearQueuedLoads();
 }
 

@@ -39,7 +39,7 @@ void ImageDecodeJob::start(ImageDecodeRequest request)
 
     m_request = request;
     m_dataLoadJob = m_dataLoader(
-        this, request.imageUrl,
+        this, request,
         [this, request](QByteArray data) {
             if (!isCurrentRequest(request)) {
                 return;

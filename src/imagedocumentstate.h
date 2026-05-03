@@ -39,7 +39,9 @@ public:
 
     const QUrl &sourceUrl() const;
     const DisplayedImageLocation &displayedImageLocation() const;
+    const ArchiveDocumentLocation &displayedArchiveDocument() const;
     const QUrl &displayedUrl() const;
+    const QUrl &displayedArchiveDocumentRootUrl() const;
     const QUrl &displayedComicBookRootUrl() const;
     ImageDocumentStatus status() const;
     bool loading() const;

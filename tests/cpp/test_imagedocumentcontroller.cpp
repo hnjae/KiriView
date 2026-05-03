@@ -11,6 +11,7 @@
 #include <QUrl>
 #include <map>
 #include <memory>
+#include <optional>
 #include <vector>
 
 namespace {
@@ -21,12 +22,19 @@ using KiriView::TestSupport::localUrl;
 using KiriView::TestSupport::ManualImageDataLoader;
 using KiriView::TestSupport::testImage;
 
-KiriView::ContainerNavigationCandidate directoryContainerCandidate(const QUrl &url)
+QUrl archivePageUrl(const QUrl &archiveRootUrl, const QString &pageName)
+{
+    QUrl pageUrl = archiveRootUrl;
+    pageUrl.setPath(archiveRootUrl.path() + pageName);
+    return pageUrl;
+}
+
+KiriView::ContainerNavigationCandidate comicBookContainerCandidate(const QUrl &url)
 {
     return KiriView::ContainerNavigationCandidate {
         url,
         url.fileName(),
-        KiriView::ContainerNavigationCandidateType::Directory,
+        KiriView::ContainerNavigationCandidateType::ComicBookArchive,
     };
 }
 
@@ -55,10 +63,10 @@ public:
                 }
                 return KiriView::ImageIoJob();
             },
-            [](QObject *, QUrl, KiriView::ImageCandidatesCallback callback,
-                KiriView::ErrorCallback) {
+            [this](QObject *, KiriView::ArchiveDocumentLocation archiveDocument,
+                KiriView::ImageCandidatesCallback callback, KiriView::ErrorCallback) {
                 if (callback) {
-                    callback({});
+                    callback(archiveImagesByUrl[keyForUrl(archiveDocument.rootUrl())]);
                 }
                 return KiriView::ImageIoJob();
             },
@@ -66,6 +74,7 @@ public:
     }
 
     std::map<QString, std::vector<KiriView::ImageNavigationCandidate>> directoryImagesByUrl;
+    std::map<QString, std::vector<KiriView::ImageNavigationCandidate>> archiveImagesByUrl;
     std::map<QString, std::vector<KiriView::ContainerNavigationCandidate>> containerCandidatesByUrl;
 };
 
@@ -134,7 +143,7 @@ void TestImageDocumentController::initialLoadSuccessUpdatesDocumentState()
     QCOMPARE(controller->imageSize(), QSize(2, 1));
     QCOMPARE(controller->currentPageNumber(), 1);
     QCOMPARE(controller->imageCount(), 1);
-    QVERIFY(controller->containerNavigationAvailable());
+    QVERIFY(!controller->containerNavigationAvailable());
     QVERIFY(!controller->image().isNull());
 }
 
@@ -176,22 +185,29 @@ void TestImageDocumentController::emptyContainerNavigationClearsImageAndSelectsC
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
-    const QUrl currentContainerUrl = localUrl(QStringLiteral("/books/a/"));
-    const QUrl targetContainerUrl = localUrl(QStringLiteral("/books/b/"));
-    const QUrl currentImageUrl = localUrl(QStringLiteral("/books/a/01.png"));
-    candidateProvider.directoryImagesByUrl[keyForUrl(currentContainerUrl)] = {
+    const QUrl currentContainerUrl = localUrl(QStringLiteral("/books/a.cbz"));
+    const QUrl targetContainerUrl = localUrl(QStringLiteral("/books/b.cbz"));
+    const std::optional<KiriView::ArchiveDocumentLocation> currentArchiveDocument
+        = KiriView::archiveDocumentLocationForLocalArchiveUrl(currentContainerUrl);
+    const std::optional<KiriView::ArchiveDocumentLocation> targetArchiveDocument
+        = KiriView::archiveDocumentLocationForLocalArchiveUrl(targetContainerUrl);
+    QVERIFY(currentArchiveDocument.has_value());
+    QVERIFY(targetArchiveDocument.has_value());
+    const QUrl currentImageUrl
+        = archivePageUrl(currentArchiveDocument->rootUrl(), QStringLiteral("01.png"));
+    candidateProvider.archiveImagesByUrl[keyForUrl(currentArchiveDocument->rootUrl())] = {
         imageCandidate(currentImageUrl),
     };
     candidateProvider.containerCandidatesByUrl[keyForUrl(localUrl(QStringLiteral("/books/")))] = {
-        directoryContainerCandidate(currentContainerUrl),
-        directoryContainerCandidate(targetContainerUrl),
+        comicBookContainerCandidate(currentContainerUrl),
+        comicBookContainerCandidate(targetContainerUrl),
     };
-    candidateProvider.directoryImagesByUrl[keyForUrl(targetContainerUrl)] = {};
+    candidateProvider.archiveImagesByUrl[keyForUrl(targetArchiveDocument->rootUrl())] = {};
 
     std::unique_ptr<KiriView::ImageDocumentController> controller
         = createController(this, candidateProvider, dataLoader);
     controller->setViewportSize(QSizeF(400.0, 300.0));
-    controller->setSourceUrl(currentImageUrl);
+    controller->setSourceUrl(currentContainerUrl);
     finishLoad(dataLoader);
     QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
 

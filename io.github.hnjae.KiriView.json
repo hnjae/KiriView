@@ -35,7 +35,7 @@
       "run-tests": true,
       "test-rule": "",
       "test-commands": [
-        "cargo --offline test --all-targets --all-features",
+        "env CARGO_TARGET_DIR=target/flatpak cargo --offline test --all-targets --all-features",
         "cmake -S tests/cpp -B target/flatpak/cpp-tests -DCMAKE_BUILD_TYPE=Debug",
         "cmake --build target/flatpak/cpp-tests",
         "ctest --test-dir target/flatpak/cpp-tests --output-on-failure"

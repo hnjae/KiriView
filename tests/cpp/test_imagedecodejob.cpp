@@ -25,13 +25,13 @@ using DecodedResultPtr = std::shared_ptr<KiriView::DecodedImageResult>;
 class ManualImageDataLoader
 {
 public:
-    KiriView::ImageIoJob start(QObject *receiver, QUrl url,
+    KiriView::ImageIoJob start(QObject *receiver, KiriView::ImageDecodeRequest request,
         KiriView::ImageDecodeJob::DataCallback callback,
         KiriView::ImageDecodeJob::ErrorCallback errorCallback)
     {
         auto load = std::make_shared<ManualLoad>();
         load->object = new QObject(receiver);
-        load->url = std::move(url);
+        load->url = std::move(request.imageUrl);
         load->dataCallback = std::move(callback);
         load->errorCallback = std::move(errorCallback);
         loads.push_back(load);
@@ -77,10 +77,11 @@ void TestImageDecodeJob::cancelSuppressesPendingLoad()
     ManualImageDataLoader dataLoader;
     KiriView::ImageDecodeJob decodeJob(
         this,
-        [&dataLoader](QObject *receiver, QUrl url, KiriView::ImageDecodeJob::DataCallback callback,
+        [&dataLoader](QObject *receiver, KiriView::ImageDecodeRequest request,
+            KiriView::ImageDecodeJob::DataCallback callback,
             KiriView::ImageDecodeJob::ErrorCallback errorCallback) {
             return dataLoader.start(
-                receiver, std::move(url), std::move(callback), std::move(errorCallback));
+                receiver, std::move(request), std::move(callback), std::move(errorCallback));
         },
         decodeTestImageData);
 
@@ -105,10 +106,11 @@ void TestImageDecodeJob::staleLoadResultIsIgnored()
     ManualImageDataLoader dataLoader;
     KiriView::ImageDecodeJob decodeJob(
         this,
-        [&dataLoader](QObject *receiver, QUrl url, KiriView::ImageDecodeJob::DataCallback callback,
+        [&dataLoader](QObject *receiver, KiriView::ImageDecodeRequest request,
+            KiriView::ImageDecodeJob::DataCallback callback,
             KiriView::ImageDecodeJob::ErrorCallback errorCallback) {
             return dataLoader.start(
-                receiver, std::move(url), std::move(callback), std::move(errorCallback));
+                receiver, std::move(request), std::move(callback), std::move(errorCallback));
         },
         decodeTestImageData);
 
@@ -135,10 +137,11 @@ void TestImageDecodeJob::loadErrorsAreDeliveredForCurrentRequest()
     ManualImageDataLoader dataLoader;
     KiriView::ImageDecodeJob decodeJob(
         this,
-        [&dataLoader](QObject *receiver, QUrl url, KiriView::ImageDecodeJob::DataCallback callback,
+        [&dataLoader](QObject *receiver, KiriView::ImageDecodeRequest request,
+            KiriView::ImageDecodeJob::DataCallback callback,
             KiriView::ImageDecodeJob::ErrorCallback errorCallback) {
             return dataLoader.start(
-                receiver, std::move(url), std::move(callback), std::move(errorCallback));
+                receiver, std::move(request), std::move(callback), std::move(errorCallback));
         },
         decodeTestImageData);
 
@@ -165,10 +168,11 @@ void TestImageDecodeJob::decodeErrorsAreDeliveredAsResults()
     ManualImageDataLoader dataLoader;
     KiriView::ImageDecodeJob decodeJob(
         this,
-        [&dataLoader](QObject *receiver, QUrl url, KiriView::ImageDecodeJob::DataCallback callback,
+        [&dataLoader](QObject *receiver, KiriView::ImageDecodeRequest request,
+            KiriView::ImageDecodeJob::DataCallback callback,
             KiriView::ImageDecodeJob::ErrorCallback errorCallback) {
             return dataLoader.start(
-                receiver, std::move(url), std::move(callback), std::move(errorCallback));
+                receiver, std::move(request), std::move(callback), std::move(errorCallback));
         },
         decodeTestImageData);
 

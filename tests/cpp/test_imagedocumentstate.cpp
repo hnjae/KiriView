@@ -38,26 +38,28 @@ void TestImageDocumentState::displayedUrlAndWindowTitleFollowDisplayedImageLocat
         [&changes](KiriView::ImageDocumentChange change) { changes.push_back(change); });
 
     const QUrl localImageUrl = localUrl(QStringLiteral("/images/page.png"));
-    state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromUrls(localImageUrl));
+    state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromUrl(localImageUrl));
     QCOMPARE(state.displayedUrl(), localImageUrl);
     QCOMPARE(state.windowTitleFileName(), QStringLiteral("page.png"));
     QCOMPARE(changes.back(), KiriView::ImageDocumentChange::WindowTitleFileName);
 
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<QUrl> archiveRootUrl = KiriView::comicBookArchiveRootUrl(archiveUrl);
-    QVERIFY(archiveRootUrl.has_value());
-    const QUrl firstArchivePageUrl = archivePageUrl(*archiveRootUrl, QStringLiteral("page001.png"));
-    state.setDisplayedImageLocation(
-        KiriView::DisplayedImageLocation::fromUrls(firstArchivePageUrl, *archiveRootUrl));
+    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveDocument.has_value());
+    const QUrl firstArchivePageUrl
+        = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("page001.png"));
+    state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromArchiveDocument(
+        firstArchivePageUrl, *archiveDocument));
     QCOMPARE(state.displayedUrl(), firstArchivePageUrl);
     QCOMPARE(state.windowTitleFileName(), QStringLiteral("book.cbz"));
     QCOMPARE(changes.back(), KiriView::ImageDocumentChange::WindowTitleFileName);
 
     const std::size_t changeCount = changes.size();
     const QUrl secondArchivePageUrl
-        = archivePageUrl(*archiveRootUrl, QStringLiteral("page002.png"));
-    state.setDisplayedImageLocation(
-        KiriView::DisplayedImageLocation::fromUrls(secondArchivePageUrl, *archiveRootUrl));
+        = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("page002.png"));
+    state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromArchiveDocument(
+        secondArchivePageUrl, *archiveDocument));
     QCOMPARE(state.displayedUrl(), secondArchivePageUrl);
     QCOMPARE(state.windowTitleFileName(), QStringLiteral("book.cbz"));
     QCOMPARE(changes.size(), changeCount + 1);

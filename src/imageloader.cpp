@@ -13,8 +13,8 @@
 #include <vector>
 
 namespace {
-using KiriView::containingDirectArchiveOpenRootUrl;
-using KiriView::directArchiveOpenRootUrl;
+using KiriView::ArchiveDocumentLocation;
+using KiriView::archiveDocumentLocationForLocalArchiveUrl;
 using KiriView::isUrlInsideArchiveRoot;
 
 struct PreparedImageLoadSession {
@@ -22,20 +22,24 @@ struct PreparedImageLoadSession {
     bool loadArchive = false;
 };
 
-QUrl archiveRootUrlForImageLoadRequest(const KiriView::ImageLoadRequest &request)
+ArchiveDocumentLocation archiveDocumentForImageLoadRequest(
+    const KiriView::ImageLoadRequest &request)
 {
-    if (isUrlInsideArchiveRoot(request.sourceUrl(), request.displayedComicBookRootUrl())) {
-        return request.displayedComicBookRootUrl();
+    if (request.isContainerNavigation()) {
+        const std::optional<ArchiveDocumentLocation> containerArchive
+            = archiveDocumentLocationForLocalArchiveUrl(request.containerNavigationUrl());
+        if (containerArchive.has_value()
+            && isUrlInsideArchiveRoot(request.sourceUrl(), containerArchive->rootUrl())) {
+            return *containerArchive;
+        }
     }
 
-    const std::optional<QUrl> containingArchiveRootUrl
-        = containingDirectArchiveOpenRootUrl(request.sourceUrl());
-    if (containingArchiveRootUrl.has_value()
-        && isUrlInsideArchiveRoot(request.sourceUrl(), containingArchiveRootUrl.value())) {
-        return containingArchiveRootUrl.value();
+    if (!request.archiveDocument().isEmpty()
+        && isUrlInsideArchiveRoot(request.sourceUrl(), request.archiveDocument().rootUrl())) {
+        return request.archiveDocument();
     }
 
-    return {};
+    return ArchiveDocumentLocation::none();
 }
 
 PreparedImageLoadSession prepareImageLoadSession(quint64 id, KiriView::ImageLoadRequest request)
@@ -44,16 +48,17 @@ PreparedImageLoadSession prepareImageLoadSession(quint64 id, KiriView::ImageLoad
     KiriView::ImageLoadSession session {
         id,
         std::move(request),
-        KiriView::DisplayedImageLocation::fromUrls(sourceUrl),
+        KiriView::DisplayedImageLocation::fromUrl(sourceUrl),
     };
 
-    const std::optional<QUrl> selectedArchiveRootUrl = directArchiveOpenRootUrl(sourceUrl);
-    if (selectedArchiveRootUrl.has_value()) {
-        session.location.setComicBookRootUrl(selectedArchiveRootUrl.value());
+    const std::optional<ArchiveDocumentLocation> selectedArchiveDocument
+        = archiveDocumentLocationForLocalArchiveUrl(sourceUrl);
+    if (selectedArchiveDocument.has_value()) {
+        session.location.setArchiveDocument(*selectedArchiveDocument);
         return PreparedImageLoadSession { std::move(session), true };
     }
 
-    session.location.setComicBookRootUrl(archiveRootUrlForImageLoadRequest(session.request));
+    session.location.setArchiveDocument(archiveDocumentForImageLoadRequest(session.request));
     return PreparedImageLoadSession { std::move(session), false };
 }
 }
@@ -138,16 +143,17 @@ void ImageLoader::startImageLoad(ImageLoadSession session)
         return;
     }
 
-    m_decodeJob.start(ImageDecodeRequest { session.id, session.location.imageUrl() });
+    m_decodeJob.start(ImageDecodeRequest {
+        session.id, session.location.imageUrl(), session.location.archiveDocument() });
 }
 
 void ImageLoader::startArchiveLoad(ImageLoadSession session)
 {
     const ImageCandidateListContext candidateContext {
         session.location.imageUrl(),
-        session.location.comicBookRootUrl(),
-        session.location.comicBookRootUrl(),
-        ImageCandidateContainerType::ComicBookArchive,
+        session.location.archiveDocumentRootUrl(),
+        session.location.archiveDocument(),
+        ImageCandidateContainerType::ArchiveDocument,
     };
     m_archiveListJob = m_candidateRepository.loadImages(
         this, candidateContext,

@@ -10,6 +10,7 @@ let
   qtToolPrefix = pkgs.symlinkJoin {
     name = "kiriview-qt-tools";
     paths = with pkgs.kdePackages; [
+      karchive
       kimageformats
       qtbase
       qtdeclarative
@@ -59,6 +60,7 @@ let
   cargoVendorDir = "${config.devenv.root}/.cargo-vendor/vendor";
   cargoVendorSourceConfig = "source.vendored-sources.directory=\"${cargoVendorDir}\"";
   cargoCratesIoReplaceConfig = "source.crates-io.replace-with=\"vendored-sources\"";
+  karchiveDev = pkgs.kdePackages.karchive.dev or pkgs.kdePackages.karchive;
   kcoreaddonsDev = pkgs.kdePackages.kcoreaddons.dev or pkgs.kdePackages.kcoreaddons;
   appQmlRoot = "${config.devenv.root}/target/cxxqt/qml_modules";
   qtQmlRoot = "${config.devenv.root}/.devenv/profile/lib/qt-6/qml";
@@ -103,10 +105,12 @@ let
   ];
   systemIncludeDirs = [
     ".devenv/profile/include"
+    ".devenv/profile/include/KF6/KArchive"
     ".devenv/profile/include/KF6/KIO"
     ".devenv/profile/include/KF6/KIOCore"
     ".devenv/profile/include/QtGui/${qtVersion}/QtGui"
     ".devenv/profile/mkspecs/linux-g++"
+    "${karchiveDev}/include/KF6/KArchive"
     "${kcoreaddonsDev}/include/KF6/KCoreAddons"
   ]
   ++ cxxStandardLibraryIncludeDirs
@@ -290,6 +294,7 @@ in
     clazy
     cmake
     kdePackages.extra-cmake-modules
+    kdePackages.karchive
     kdePackages.kimageformats
     kdePackages.kirigami
     kdePackages.kio

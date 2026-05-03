@@ -127,7 +127,7 @@ void ImageDocumentNavigationController::clearPageNavigation()
 ImageNavigationService::DisplayContext ImageDocumentNavigationController::displayContext() const
 {
     return ImageNavigationService::DisplayContext { m_presentationController.hasImage(),
-        m_state.displayedUrl(), m_state.displayedComicBookRootUrl() };
+        m_state.displayedImageLocation() };
 }
 
 void ImageDocumentNavigationController::openAdjacentImage(NavigationDirection direction)

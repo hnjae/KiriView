@@ -51,23 +51,25 @@ ImageNavigationCandidateProvider defaultImageNavigationCandidateProvider()
 }
 
 std::optional<ImageCandidateListContext> imageCandidateListContextForDisplayedImage(
-    const QUrl &displayedUrl, const QUrl &comicBookRootUrl)
+    const DisplayedImageLocation &location)
 {
+    const QUrl &displayedUrl = location.imageUrl();
     if (displayedUrl.isEmpty()) {
         return std::nullopt;
     }
 
-    if (isUrlInsideArchiveRoot(displayedUrl, comicBookRootUrl)) {
+    if (!location.archiveDocument().isEmpty()
+        && isUrlInsideArchiveRoot(displayedUrl, location.archiveDocumentRootUrl())) {
         const QUrl currentUrl = normalizedImageUrl(displayedUrl);
-        if (!currentUrl.isValid() || comicBookRootUrl.isEmpty()) {
+        if (!currentUrl.isValid()) {
             return std::nullopt;
         }
 
         return ImageCandidateListContext {
             currentUrl,
-            comicBookRootUrl,
-            comicBookRootUrl,
-            ImageCandidateContainerType::ComicBookArchive,
+            location.archiveDocumentRootUrl(),
+            location.archiveDocument(),
+            ImageCandidateContainerType::ArchiveDocument,
         };
     }
 
@@ -81,7 +83,7 @@ std::optional<ImageCandidateListContext> imageCandidateListContextForDisplayedIm
     return ImageCandidateListContext {
         currentUrl,
         parentUrl,
-        QUrl(),
+        ArchiveDocumentLocation::none(),
         ImageCandidateContainerType::Directory,
     };
 }
@@ -100,9 +102,9 @@ ImageIoJob ImageCandidateRepository::loadImages(QObject *receiver,
     const ImageCandidateListContext &context, ImageCandidatesCallback callback,
     ErrorCallback errorCallback) const
 {
-    if (context.containerType == ImageCandidateContainerType::ComicBookArchive) {
+    if (context.containerType == ImageCandidateContainerType::ArchiveDocument) {
         return loadArchiveImages(
-            receiver, context.listUrl, std::move(callback), std::move(errorCallback));
+            receiver, context.archiveDocument, std::move(callback), std::move(errorCallback));
     }
 
     return loadDirectoryImages(
@@ -124,7 +126,8 @@ ImageIoJob ImageCandidateRepository::loadDirectoryImages(QObject *receiver,
 }
 
 ImageIoJob ImageCandidateRepository::loadArchiveImages(QObject *receiver,
-    const QUrl &archiveRootUrl, ImageCandidatesCallback callback, ErrorCallback errorCallback) const
+    ArchiveDocumentLocation archiveDocument, ImageCandidatesCallback callback,
+    ErrorCallback errorCallback) const
 {
     if (!m_provider.archiveImages) {
         if (errorCallback) {
@@ -134,7 +137,7 @@ ImageIoJob ImageCandidateRepository::loadArchiveImages(QObject *receiver,
     }
 
     return m_provider.archiveImages(
-        receiver, archiveRootUrl, std::move(callback), std::move(errorCallback));
+        receiver, std::move(archiveDocument), std::move(callback), std::move(errorCallback));
 }
 
 ImageIoJob ImageCandidateRepository::loadContainers(QObject *receiver, const QUrl &directoryUrl,
@@ -170,14 +173,15 @@ ImageIoJob ImageCandidateRepository::loadImagesInContainer(QObject *receiver,
     CandidateRepositoryErrorCallback errorCallback) const
 {
     if (container.type == ContainerNavigationCandidateType::ComicBookArchive) {
-        const std::optional<QUrl> archiveRootUrl = comicBookArchiveRootUrl(container.url);
-        if (!archiveRootUrl.has_value()) {
+        const std::optional<ArchiveDocumentLocation> archiveDocument
+            = archiveDocumentLocationForLocalArchiveUrl(container.url);
+        if (!archiveDocument.has_value() || !archiveDocument->isComicBook()) {
             reportCandidateRepositoryError(container.url,
                 ImageCandidateRepositoryError::InvalidComicBookArchive, QString(), errorCallback);
             return ImageIoJob();
         }
 
-        return loadArchiveImages(receiver, archiveRootUrl.value(), std::move(callback),
+        return loadArchiveImages(receiver, *archiveDocument, std::move(callback),
             [containerUrl = container.url, errorCallback](const QString &errorString) {
                 reportCandidateRepositoryError(containerUrl, ImageCandidateRepositoryError::Generic,
                     errorString, errorCallback);

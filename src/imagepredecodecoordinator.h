@@ -39,10 +39,11 @@ public:
 
 private:
     void scheduleAdjacentImagePredecode(const Context &context, quint64 generation);
-    void startPredecodeImageLoads(const std::vector<QUrl> &urls, const QUrl &comicBookRootUrl,
-        const Context &context, quint64 generation);
+    void startPredecodeImageLoads(const std::vector<QUrl> &urls,
+        const ArchiveDocumentLocation &archiveDocument, const Context &context, quint64 generation);
     void startNextPredecodeImageLoad(quint64 generation);
-    void startPredecodeImageLoad(const QUrl &url, const QUrl &comicBookRootUrl, quint64 generation);
+    void startPredecodeImageLoad(
+        const QUrl &url, const ArchiveDocumentLocation &archiveDocument, quint64 generation);
     void finishPredecodeImageLoadError(const ImageDecodeRequest &request);
     void finishPredecodeImageDecode(ImageDecodeRequest request, const DecodedImageResult &result);
 
@@ -51,7 +52,7 @@ private:
     ImageCandidateRepository m_candidateRepository;
     PredecodeCache m_cache;
     QUrl m_activePredecodeUrl;
-    QUrl m_activePredecodeComicBookRootUrl;
+    ArchiveDocumentLocation m_activePredecodeArchiveDocument;
     ImageAsyncTicket m_generation;
 };
 }

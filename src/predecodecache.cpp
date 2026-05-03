@@ -103,8 +103,8 @@ void PredecodeCache::setWindowUrls(const std::vector<QUrl> &urls)
     trimImagesToWindow();
 }
 
-void PredecodeCache::enqueueMissingWindowLoads(
-    const QUrl &displayedUrl, const QUrl &comicBookRootUrl, const QUrl &activePredecodeUrl)
+void PredecodeCache::enqueueMissingWindowLoads(const QUrl &displayedUrl,
+    const ArchiveDocumentLocation &archiveDocument, const QUrl &activePredecodeUrl)
 {
     const QUrl normalizedDisplayedUrl = normalizedImageUrl(displayedUrl);
     for (const QUrl &url : m_windowUrls) {
@@ -112,7 +112,7 @@ void PredecodeCache::enqueueMissingWindowLoads(
             continue;
         }
         if (!hasImage(url) && !isInFlight(url, activePredecodeUrl)) {
-            m_queue.push_back(PredecodeRequest { url, comicBookRootUrl });
+            m_queue.push_back(PredecodeRequest { url, archiveDocument });
         }
     }
 }
@@ -180,13 +180,14 @@ std::optional<PredecodedImage> PredecodeCache::findImage(const QUrl &url) const
         return std::nullopt;
     }
 
-    return PredecodedImage {
-        cached->image,
-        DisplayedImageLocation::fromUrls(cached->url, cached->comicBookRootUrl),
-    };
+    const DisplayedImageLocation location = cached->archiveDocument.isEmpty()
+        ? DisplayedImageLocation::fromUrl(cached->url)
+        : DisplayedImageLocation::fromArchiveDocument(cached->url, cached->archiveDocument);
+    return PredecodedImage { cached->image, location };
 }
 
-void PredecodeCache::cacheImage(const QUrl &url, const QUrl &comicBookRootUrl, const QImage &image)
+void PredecodeCache::cacheImage(
+    const QUrl &url, const ArchiveDocumentLocation &archiveDocument, const QImage &image)
 {
     const qsizetype byteCost = imageByteCost(image);
     if (byteCost <= 0 || byteCost > m_byteBudget) {
@@ -199,19 +200,19 @@ void PredecodeCache::cacheImage(const QUrl &url, const QUrl &comicBookRootUrl, c
     }
 
     removeCachedImage(*normalizedUrl);
-    m_images.push_back(CachedImage { *normalizedUrl, comicBookRootUrl, image, byteCost });
+    m_images.push_back(CachedImage { *normalizedUrl, archiveDocument, image, byteCost });
 
     trimImagesToWindow();
 }
 
-void PredecodeCache::cacheDisplayedImage(
-    bool cacheable, const QUrl &url, const QUrl &comicBookRootUrl, const QImage &image)
+void PredecodeCache::cacheDisplayedImage(bool cacheable, const QUrl &url,
+    const ArchiveDocumentLocation &archiveDocument, const QImage &image)
 {
     if (!cacheable || url.isEmpty() || image.isNull()) {
         return;
     }
 
-    cacheImage(url, comicBookRootUrl, image);
+    cacheImage(url, archiveDocument, image);
 }
 
 bool PredecodeCache::containsUrl(const std::vector<QUrl> &urls, const QUrl &url)
