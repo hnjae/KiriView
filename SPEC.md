@@ -18,7 +18,7 @@ chooser, which accepts a single selection only. Pressing Escape closes the main
 window.
 
 When an image file is displayed, the main window title is the displayed image
-file name, a spaced em dash, and `KiriView`. When a CBZ or CBT comic book
+file name, a spaced em dash, and `KiriView`. When a CBZ, CBT, or CB7 comic book
 archive opened by KiriView is displayed, the title is the archive file name, a
 spaced em dash, and `KiriView`. KiriView does not show file paths in the window
 title. When no image or comic book page is displayed, the window title is
@@ -32,10 +32,11 @@ containers and are labeled only by their tooltips.
 
 KiriView opens user-selected image URLs, including local files,
 KDE-supported remote URLs such as `smb://`, and KDE-supported archive URLs
-such as `zip://` and `tar://`.
+such as `zip://`, `tar://`, and `sevenz://`.
 
-KiriView also opens local `.cbz` and `.cbt` comic book archives. Opening a
-comic book archive displays the first supported image inside that archive.
+KiriView also opens local `.cbz`, `.cbt`, and `.cb7` comic book archives.
+Opening a comic book archive displays the first supported image inside that
+archive.
 
 In Flatpak, adjacent image navigation can list neighboring files under `home`,
 `/media`, `/mnt`, `/run/media`, and `$XDG_RUNTIME_DIR/gvfs`. Files outside those
@@ -155,12 +156,12 @@ image. Supported image extensions match the open dialog: AVIF (`.avif` and
 `.avifs`), BMP, GIF, HEIF (`.heic`, `.heif`, and `.hif`), JPEG, JPEG 2000
 (`.jp2`), JPEG XL (`.jxl`), PNG, SVG, and WebP, case-insensitively.
 
-When an image is opened from a KDE-supported archive URL such as `zip://` or
-`tar://`, navigation moves between supported image files in the same directory
-inside the archive.
+When an image is opened from a KDE-supported archive URL such as `zip://`,
+`tar://`, or `sevenz://`, navigation moves between supported image files in the
+same directory inside the archive.
 
-When an image is opened by selecting a CBZ or CBT archive, navigation moves
-between all supported image files inside that archive, including images in
+When an image is opened by selecting a CBZ, CBT, or CB7 archive, navigation
+moves between all supported image files inside that archive, including images in
 subdirectories.
 
 The previous and next files are determined by sorting candidate file names with
@@ -179,19 +180,20 @@ until the user opens an adjacent image.
 
 ## Container Navigation
 
-A container is either a directory or a local CBZ or CBT comic book archive. The
-current container can be the directory or archive whose image is displayed, or an
-empty sibling container reached through container navigation. When the current
-image is a normal file, its container is the image's parent directory. When the
-current image is inside a comic book archive opened by KiriView, its container
-is that archive file. The Previous Container and Next Container toolbar actions
-open the previous or next sibling container beside the current container.
+A container is either a directory or a local CBZ, CBT, or CB7 comic book
+archive. The current container can be the directory or archive whose image is
+displayed, or an empty sibling container reached through container navigation.
+When the current image is a normal file, its container is the image's parent
+directory. When the current image is inside a comic book archive opened by
+KiriView, its container is that archive file. The Previous Container and Next
+Container toolbar actions open the previous or next sibling container beside the
+current container.
 
-Sibling container candidates are directly contained directories and local `.cbz`
-or `.cbt` files in the current container's parent directory. Candidates are
-sorted with the same user locale-aware file name order used for image
-navigation. Navigation does not wrap; pressing Previous Container on the first
-candidate or Next Container on the last candidate keeps the current view
+Sibling container candidates are directly contained directories and local
+`.cbz`, `.cbt`, or `.cb7` files in the current container's parent directory.
+Candidates are sorted with the same user locale-aware file name order used for
+image navigation. Navigation does not wrap; pressing Previous Container on the
+first candidate or Next Container on the last candidate keeps the current view
 unchanged.
 
 The `[` key opens the previous sibling container and the `]` key opens the next
