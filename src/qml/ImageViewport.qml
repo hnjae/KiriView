@@ -133,6 +133,7 @@ Item {
     KiriImageDocument {
         id: imageDocument
 
+        visibleItemRect: Qt.rect(imageFlickable.contentX - imageView.x, imageFlickable.contentY - imageView.y, imageFlickable.width, imageFlickable.height)
         viewportSize: Qt.size(imageFlickable.width, imageFlickable.height)
 
         onDisplayedUrlChanged: {

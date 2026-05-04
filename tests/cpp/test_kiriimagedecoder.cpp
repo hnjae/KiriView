@@ -191,8 +191,10 @@ void TestKiriImageDecoder::jpegCompressedHeifStillImageDecodes()
     KiriView::DecodedImageResult result = KiriView::decodeImageData(*imageData);
     const auto *decoded = std::get_if<KiriView::StaticDecodedImage>(&result);
     QVERIFY2(decoded != nullptr, "JPEG-compressed HEIF should decode as a static image");
-    QCOMPARE(decoded->image.size(), QSize(2, 2));
-    QVERIFY(!decoded->image.isNull());
+    QVERIFY(decoded->source != nullptr);
+    QCOMPARE(decoded->source->imageSize(), QSize(2, 2));
+    QCOMPARE(decoded->preview.size(), QSize(2, 2));
+    QVERIFY(!decoded->preview.isNull());
 }
 
 void TestKiriImageDecoder::heifSequenceDecodesAsStreamingAnimation()

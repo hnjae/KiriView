@@ -20,6 +20,7 @@ using KiriView::TestSupport::imageCandidate;
 using KiriView::TestSupport::keyForUrl;
 using KiriView::TestSupport::localUrl;
 using KiriView::TestSupport::ManualImageDataLoader;
+using KiriView::TestSupport::staticDecodedTestImage;
 using KiriView::TestSupport::testImage;
 
 QUrl archivePageUrl(const QUrl &archiveRootUrl, const QString &pageName)
@@ -35,7 +36,7 @@ KiriView::DecodedImageResult decodeTestImageData(const QByteArray &data)
         return KiriView::DecodedImageFailure { QStringLiteral("decode failed") };
     }
 
-    return KiriView::StaticDecodedImage { testImage() };
+    return staticDecodedTestImage();
 }
 
 class FakeCandidateProvider
@@ -160,16 +161,19 @@ void TestImageLoader::predecodedImageBypassesDataLoad()
             return std::optional<KiriView::PredecodedImage>();
         }
 
-        return std::optional<KiriView::PredecodedImage>(KiriView::PredecodedImage { testImage(),
+        const QImage image = testImage();
+        return std::optional<KiriView::PredecodedImage>(KiriView::PredecodedImage {
+            std::make_shared<KiriView::TestSupport::TestImageTileSource>(image), image,
             KiriView::DisplayedImageLocation::fromArchiveDocument(imageUrl, *archiveDocument) });
     });
 
     std::optional<KiriView::ImageLoadSession> predecodedSession;
     QSize imageSize;
     loader.setPredecodedImageCallback(
-        [&predecodedSession, &imageSize](KiriView::ImageLoadSession session, const QImage &image) {
+        [&predecodedSession, &imageSize](
+            KiriView::ImageLoadSession session, KiriView::PredecodedImage image) {
             predecodedSession = std::move(session);
-            imageSize = image.size();
+            imageSize = image.preview.size();
         });
 
     loader.start(KiriView::ImageLoadRequest::fromUrl(imageUrl));

@@ -28,7 +28,7 @@ public:
         = std::function<void(const ImageLoadSession &, ImageLoadError, const QString &)>;
     using DecodedImageCallback
         = std::function<void(ImageLoadSession, std::shared_ptr<DecodedImageResult>)>;
-    using PredecodedImageCallback = std::function<void(ImageLoadSession, const QImage &)>;
+    using PredecodedImageCallback = std::function<void(ImageLoadSession, PredecodedImage)>;
     using TakePredecodedImageCallback = std::function<std::optional<PredecodedImage>(const QUrl &)>;
 
     explicit ImageLoader(QObject *parent = nullptr);
@@ -54,7 +54,7 @@ private:
     void finishLoadWithError(
         const ImageLoadSession &session, ImageLoadError error, const QString &errorString);
     void finishDecodedImage(ImageLoadSession session, std::shared_ptr<DecodedImageResult> result);
-    void finishPredecodedImage(ImageLoadSession session, const QImage &image);
+    void finishPredecodedImage(ImageLoadSession session, PredecodedImage image);
 
     SourceResolvedCallback m_sourceResolved;
     ErrorCallback m_error;

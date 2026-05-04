@@ -14,9 +14,10 @@
 #include <cstddef>
 #include <rhi/qrhi.h>
 #include <rhi/qshader.h>
+#include <type_traits>
 
 namespace {
-constexpr quint32 uniformBufferSize = 96;
+constexpr quint32 uniformBufferSize = 112;
 
 struct Vertex {
     float position[2];
@@ -77,19 +78,20 @@ void KiriImageRenderNode::setRhi(QRhi *rhi)
 
     releaseResources();
     m_rhi = rhi;
-    m_uploadedImageRevision = 0;
-    m_textureDirty = true;
+    m_uploadedSurfaceRevision = 0;
+    m_texturesDirty = true;
 }
 
-void KiriImageRenderNode::setImage(const QImage &image, quint64 revision)
+void KiriImageRenderNode::setSurface(
+    std::shared_ptr<DisplayedImageSurface> surface, quint64 revision)
 {
-    if (m_imageRevision == revision) {
+    if (m_surfaceRevision == revision && m_surface == surface) {
         return;
     }
 
-    m_image = image;
-    m_imageRevision = revision;
-    m_textureDirty = true;
+    m_surface = std::move(surface);
+    m_surfaceRevision = revision;
+    m_texturesDirty = true;
 }
 
 void KiriImageRenderNode::setTargetRect(const QRectF &targetRect) { m_targetRect = targetRect; }
@@ -108,7 +110,7 @@ QRectF KiriImageRenderNode::rect() const { return m_targetRect; }
 
 void KiriImageRenderNode::prepare()
 {
-    if (m_rhi == nullptr || m_image.isNull()) {
+    if (m_rhi == nullptr || m_surface == nullptr || displayedImageSurfaceIsNull(*m_surface)) {
         return;
     }
 
@@ -124,12 +126,15 @@ void KiriImageRenderNode::prepare()
         releasePendingResourceUpdates(resourceUpdates);
         return;
     }
-    if (!ensureTexture(resourceUpdates)) {
+    if (!ensureUniformBuffer() || !ensureSampler()) {
         releasePendingResourceUpdates(resourceUpdates);
         return;
     }
-    if (!ensureUniformBuffer() || !ensureSampler() || !ensureShaderResourceBindings()
-        || !ensurePipeline(rt)) {
+    if (!ensureTextures(resourceUpdates)) {
+        releasePendingResourceUpdates(resourceUpdates);
+        return;
+    }
+    if (!ensurePipeline(rt)) {
         releasePendingResourceUpdates(resourceUpdates);
         return;
     }
@@ -141,8 +146,8 @@ void KiriImageRenderNode::prepare()
 
 void KiriImageRenderNode::render(const RenderState *state)
 {
-    if (m_rhi == nullptr || m_pipeline == nullptr || m_srb == nullptr || m_uniformBuffer == nullptr
-        || m_vertexBuffer == nullptr || m_targetRect.isEmpty()) {
+    if (m_rhi == nullptr || m_pipeline == nullptr || m_uniformBuffer == nullptr
+        || m_vertexBuffer == nullptr || m_targetRect.isEmpty() || m_drawTextures.empty()) {
         return;
     }
 
@@ -151,8 +156,6 @@ void KiriImageRenderNode::render(const RenderState *state)
     if (cb == nullptr || rt == nullptr) {
         return;
     }
-
-    updateUniformBuffer(state);
 
     const QSize pixelSize = rt->pixelSize();
     cb->setViewport(QRhiViewport(
@@ -165,23 +168,29 @@ void KiriImageRenderNode::render(const RenderState *state)
         cb->setScissor(QRhiScissor(0, 0, pixelSize.width(), pixelSize.height()));
     }
 
-    cb->setGraphicsPipeline(m_pipeline.get());
-    cb->setShaderResources(m_srb.get());
     const QRhiCommandBuffer::VertexInput vertexBinding(m_vertexBuffer.get(), 0);
-    cb->setVertexInput(0, 1, &vertexBinding);
-    cb->draw(static_cast<quint32>(quadVertices.size()));
+    cb->setGraphicsPipeline(m_pipeline.get());
+    for (const DrawTexture &drawTexture : m_drawTextures) {
+        if (drawTexture.srb == nullptr || drawTexture.targetRect.isEmpty()) {
+            continue;
+        }
+
+        updateUniformBuffer(state, drawTexture.targetRect, drawTexture.textureRect);
+        cb->setShaderResources(drawTexture.srb.get());
+        cb->setVertexInput(0, 1, &vertexBinding);
+        cb->draw(static_cast<quint32>(quadVertices.size()));
+    }
 }
 
 void KiriImageRenderNode::releaseResources()
 {
     m_pipeline.reset();
-    m_srb.reset();
     m_sampler.reset();
-    m_texture.reset();
+    m_drawTextures.clear();
     m_uniformBuffer.reset();
     m_vertexBuffer.reset();
-    m_uploadedImageRevision = 0;
-    m_textureDirty = true;
+    m_uploadedSurfaceRevision = 0;
+    m_texturesDirty = true;
     m_renderPassDescriptor = nullptr;
 }
 
@@ -199,6 +208,43 @@ QRhiResourceUpdateBatch *KiriImageRenderNode::ensureResourceUpdates(
         resourceUpdates = m_rhi->nextResourceUpdateBatch();
     }
     return resourceUpdates;
+}
+
+bool KiriImageRenderNode::addDrawTexture(QRhiResourceUpdateBatch *&resourceUpdates,
+    const QImage &image, const QRectF &targetRect, const QRectF &textureRect)
+{
+    if (image.isNull() || targetRect.isEmpty()) {
+        return true;
+    }
+
+    DrawTexture drawTexture;
+    drawTexture.targetRect = targetRect;
+    drawTexture.textureRect = textureRect;
+    drawTexture.texture.reset(m_rhi->newTexture(QRhiTexture::RGBA8, image.size(), 1,
+        QRhiTexture::MipMapped | QRhiTexture::UsedWithGenerateMips));
+    if (drawTexture.texture == nullptr || !drawTexture.texture->create()) {
+        return false;
+    }
+
+    drawTexture.srb.reset(m_rhi->newShaderResourceBindings());
+    if (drawTexture.srb == nullptr) {
+        return false;
+    }
+    drawTexture.srb->setBindings({
+        QRhiShaderResourceBinding::uniformBuffer(0,
+            QRhiShaderResourceBinding::VertexStage | QRhiShaderResourceBinding::FragmentStage,
+            m_uniformBuffer.get()),
+        QRhiShaderResourceBinding::sampledTexture(1, QRhiShaderResourceBinding::FragmentStage,
+            drawTexture.texture.get(), m_sampler.get()),
+    });
+    if (!drawTexture.srb->create()) {
+        return false;
+    }
+
+    ensureResourceUpdates(resourceUpdates)->uploadTexture(drawTexture.texture.get(), image);
+    ensureResourceUpdates(resourceUpdates)->generateMips(drawTexture.texture.get());
+    m_drawTextures.push_back(std::move(drawTexture));
+    return true;
 }
 
 bool KiriImageRenderNode::ensureVertexBuffer(QRhiResourceUpdateBatch *&resourceUpdates)
@@ -219,25 +265,76 @@ bool KiriImageRenderNode::ensureVertexBuffer(QRhiResourceUpdateBatch *&resourceU
     return true;
 }
 
-bool KiriImageRenderNode::ensureTexture(QRhiResourceUpdateBatch *&resourceUpdates)
+bool KiriImageRenderNode::ensureTextures(QRhiResourceUpdateBatch *&resourceUpdates)
 {
-    if (!m_textureDirty && m_uploadedImageRevision == m_imageRevision) {
+    if (!m_texturesDirty && m_uploadedSurfaceRevision == m_surfaceRevision) {
         return true;
     }
 
-    if (m_texture == nullptr || m_texture->pixelSize() != m_image.size()) {
-        m_pipeline.reset();
-        m_srb.reset();
-        m_texture.reset(m_rhi->newTexture(QRhiTexture::RGBA8, m_image.size()));
-        if (m_texture == nullptr || !m_texture->create()) {
-            m_texture.reset();
+    m_pipeline.reset();
+    m_drawTextures.clear();
+
+    const auto addLegacy = [&](const LegacyFrameSurface &surface) {
+        return addDrawTexture(
+            resourceUpdates, surface.image, m_targetRect, QRectF(0.0, 0.0, 1.0, 1.0));
+    };
+    const auto addStatic = [&](const StaticTileSurface &surface) {
+        if (!addDrawTexture(
+                resourceUpdates, surface.preview(), m_targetRect, QRectF(0.0, 0.0, 1.0, 1.0))) {
             return false;
         }
+
+        const QSize imageSize = surface.imageSize();
+        if (imageSize.isEmpty()) {
+            return true;
+        }
+
+        for (const DecodedTile &tile : surface.tiles()) {
+            const QRect sourceRect
+                = surface.pyramid().sourceRectForLevelRect(tile.key.level, tile.levelRect);
+            if (sourceRect.isEmpty() || tile.textureLevelRect.isEmpty()) {
+                continue;
+            }
+
+            const QRectF targetRect(m_targetRect.x()
+                    + (static_cast<qreal>(sourceRect.x()) / imageSize.width())
+                        * m_targetRect.width(),
+                m_targetRect.y()
+                    + (static_cast<qreal>(sourceRect.y()) / imageSize.height())
+                        * m_targetRect.height(),
+                (static_cast<qreal>(sourceRect.width()) / imageSize.width()) * m_targetRect.width(),
+                (static_cast<qreal>(sourceRect.height()) / imageSize.height())
+                    * m_targetRect.height());
+            const QRectF textureRect(
+                static_cast<qreal>(tile.levelRect.x() - tile.textureLevelRect.x())
+                    / tile.textureLevelRect.width(),
+                static_cast<qreal>(tile.levelRect.y() - tile.textureLevelRect.y())
+                    / tile.textureLevelRect.height(),
+                static_cast<qreal>(tile.levelRect.width()) / tile.textureLevelRect.width(),
+                static_cast<qreal>(tile.levelRect.height()) / tile.textureLevelRect.height());
+            if (!addDrawTexture(resourceUpdates, tile.image, targetRect, textureRect)) {
+                return false;
+            }
+        }
+        return true;
+    };
+
+    if (!std::visit(
+            [&](const auto &surface) {
+                using Surface = std::decay_t<decltype(surface)>;
+                if constexpr (std::is_same_v<Surface, LegacyFrameSurface>) {
+                    return addLegacy(surface);
+                } else {
+                    return addStatic(surface);
+                }
+            },
+            *m_surface)) {
+        m_drawTextures.clear();
+        return false;
     }
 
-    ensureResourceUpdates(resourceUpdates)->uploadTexture(m_texture.get(), m_image);
-    m_uploadedImageRevision = m_imageRevision;
-    m_textureDirty = false;
+    m_uploadedSurfaceRevision = m_surfaceRevision;
+    m_texturesDirty = false;
     return true;
 }
 
@@ -248,7 +345,7 @@ bool KiriImageRenderNode::ensureUniformBuffer()
     }
 
     m_pipeline.reset();
-    m_srb.reset();
+    m_drawTextures.clear();
     m_uniformBuffer.reset(
         m_rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, uniformBufferSize));
     if (m_uniformBuffer == nullptr || !m_uniformBuffer->create()) {
@@ -265,37 +362,10 @@ bool KiriImageRenderNode::ensureSampler()
     }
 
     m_pipeline.reset();
-    m_srb.reset();
-    m_sampler.reset(m_rhi->newSampler(QRhiSampler::Linear, QRhiSampler::Linear, QRhiSampler::None,
+    m_sampler.reset(m_rhi->newSampler(QRhiSampler::Linear, QRhiSampler::Linear, QRhiSampler::Linear,
         QRhiSampler::ClampToEdge, QRhiSampler::ClampToEdge));
     if (m_sampler == nullptr || !m_sampler->create()) {
         m_sampler.reset();
-        return false;
-    }
-    return true;
-}
-
-bool KiriImageRenderNode::ensureShaderResourceBindings()
-{
-    if (m_srb != nullptr) {
-        return true;
-    }
-
-    m_pipeline.reset();
-    m_srb.reset(m_rhi->newShaderResourceBindings());
-    if (m_srb == nullptr) {
-        return false;
-    }
-
-    m_srb->setBindings({
-        QRhiShaderResourceBinding::uniformBuffer(0,
-            QRhiShaderResourceBinding::VertexStage | QRhiShaderResourceBinding::FragmentStage,
-            m_uniformBuffer.get()),
-        QRhiShaderResourceBinding::sampledTexture(
-            1, QRhiShaderResourceBinding::FragmentStage, m_texture.get(), m_sampler.get()),
-    });
-    if (!m_srb->create()) {
-        m_srb.reset();
         return false;
     }
     return true;
@@ -306,6 +376,9 @@ bool KiriImageRenderNode::ensurePipeline(QRhiRenderTarget *renderTarget)
     auto *renderPassDescriptor = renderTarget->renderPassDescriptor();
     if (m_pipeline != nullptr && m_renderPassDescriptor == renderPassDescriptor) {
         return true;
+    }
+    if (m_drawTextures.empty() || m_drawTextures.front().srb == nullptr) {
+        return false;
     }
 
     m_pipeline.reset();
@@ -342,7 +415,7 @@ bool KiriImageRenderNode::ensurePipeline(QRhiRenderTarget *renderTarget)
         QRhiShaderStage(QRhiShaderStage::Fragment, fragmentShader),
     });
     m_pipeline->setVertexInputLayout(inputLayout);
-    m_pipeline->setShaderResourceBindings(m_srb.get());
+    m_pipeline->setShaderResourceBindings(m_drawTextures.front().srb.get());
     m_pipeline->setRenderPassDescriptor(renderPassDescriptor);
     m_pipeline->setSampleCount(renderTarget->sampleCount());
     m_pipeline->setTargetBlends({ targetBlend });
@@ -353,7 +426,8 @@ bool KiriImageRenderNode::ensurePipeline(QRhiRenderTarget *renderTarget)
     return true;
 }
 
-void KiriImageRenderNode::updateUniformBuffer(const RenderState *state)
+void KiriImageRenderNode::updateUniformBuffer(
+    const RenderState *state, const QRectF &targetRect, const QRectF &textureRect)
 {
     QMatrix4x4 matrix;
     if (state != nullptr && state->projectionMatrix() != nullptr) {
@@ -366,11 +440,15 @@ void KiriImageRenderNode::updateUniformBuffer(const RenderState *state)
     const float opacity = static_cast<float>(inheritedOpacity());
     std::array<float, uniformBufferSize / sizeof(float)> uniformData {};
     std::copy(matrix.constData(), matrix.constData() + 16, uniformData.begin());
-    uniformData[16] = static_cast<float>(m_targetRect.x());
-    uniformData[17] = static_cast<float>(m_targetRect.y());
-    uniformData[18] = static_cast<float>(m_targetRect.width());
-    uniformData[19] = static_cast<float>(m_targetRect.height());
+    uniformData[16] = static_cast<float>(targetRect.x());
+    uniformData[17] = static_cast<float>(targetRect.y());
+    uniformData[18] = static_cast<float>(targetRect.width());
+    uniformData[19] = static_cast<float>(targetRect.height());
     uniformData[20] = opacity;
+    uniformData[24] = static_cast<float>(textureRect.x());
+    uniformData[25] = static_cast<float>(textureRect.y());
+    uniformData[26] = static_cast<float>(textureRect.width());
+    uniformData[27] = static_cast<float>(textureRect.height());
 
     m_uniformBuffer->fullDynamicBufferUpdateForCurrentFrame(uniformData.data(), uniformBufferSize);
 }

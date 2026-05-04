@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+#include "image_test_support.h"
 #include "imagedecodejob.h"
 
 #include <QImage>
@@ -55,7 +56,7 @@ KiriView::DecodedImageResult decodeTestImageData(const QByteArray &data)
 
     QImage image(1, 1, QImage::Format_RGBA8888_Premultiplied);
     image.fill(Qt::transparent);
-    return KiriView::StaticDecodedImage { std::move(image) };
+    return KiriView::TestSupport::staticDecodedTestImage(image);
 }
 
 QUrl imageUrl(int index) { return QUrl(QStringLiteral("file:///images/%1.png").arg(index)); }

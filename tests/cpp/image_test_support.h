@@ -7,6 +7,7 @@
 #include "imagecandidaterepository.h"
 #include "imagedecodejob.h"
 #include "imageiojob.h"
+#include "imagesurface.h"
 
 #include <QByteArray>
 #include <QImage>
@@ -15,6 +16,7 @@
 #include <QString>
 #include <QUrl>
 #include <memory>
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -98,9 +100,47 @@ inline QImage testImage(const QSize &size = QSize(1, 1))
 
 inline QImage testImage(int width, int height = 1) { return testImage(QSize(width, height)); }
 
+class TestImageTileSource final : public ImageTileSource
+{
+public:
+    explicit TestImageTileSource(QImage image)
+        : m_image(std::move(image))
+        , m_pyramid(m_image.size())
+    {
+    }
+
+    QSize imageSize() const override { return m_image.size(); }
+    int levelCount() const override { return m_pyramid.levelCount(); }
+    QSize levelSize(int level) const override { return m_pyramid.levelSize(level); }
+    qsizetype byteCost() const override { return m_image.sizeInBytes(); }
+
+    QImage decodePreview(int, QString *) const override { return m_image; }
+
+    std::optional<DecodedTile> decodeTile(const TileRequest &request, QString *) const override
+    {
+        if (request.textureLevelRect.isEmpty()) {
+            return std::nullopt;
+        }
+
+        QImage levelImage
+            = m_image.scaled(request.levelSize, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
+        return DecodedTile { request.key, request.levelSize, request.levelRect,
+            request.textureLevelRect, levelImage.copy(request.textureLevelRect) };
+    }
+
+private:
+    QImage m_image;
+    TilePyramid m_pyramid;
+};
+
+inline StaticDecodedImage staticDecodedTestImage(const QImage &image = testImage())
+{
+    return StaticDecodedImage { std::make_shared<TestImageTileSource>(image), image };
+}
+
 inline DecodedImageResult decodeStaticTestImageData(const QByteArray &)
 {
-    return StaticDecodedImage { testImage() };
+    return staticDecodedTestImage();
 }
 }
 

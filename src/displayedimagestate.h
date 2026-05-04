@@ -5,6 +5,7 @@
 #define KIRIVIEW_DISPLAYEDIMAGESTATE_H
 
 #include "animationframe.h"
+#include "imagesurface.h"
 
 #include <QByteArray>
 #include <QImage>
@@ -31,6 +32,7 @@ public:
     ~DisplayedImageState();
 
     bool hasImage() const;
+    std::shared_ptr<DisplayedImageSurface> imageSurface() const;
     const QImage &image() const;
     QSize imageSize() const;
     quint64 revision() const;
@@ -38,9 +40,8 @@ public:
 
     void setPredecodeCacheable(bool cacheable);
     void setImage(const QImage &image);
-    void setSvgImage(
-        QByteArray data, const QSize &intrinsicSize, const QImage &image, const QSize &rasterSize);
-    bool updateSvgRaster(const QSizeF &displaySize, qreal devicePixelRatio, int maximumTextureSize);
+    void setStaticImage(std::shared_ptr<ImageTileSource> source, const QImage &preview);
+    bool insertTile(DecodedTile tile);
     void clear();
 
     void startAnimation(
@@ -50,17 +51,13 @@ public:
     void stopAnimation();
 
 private:
-    void clearSvgImage();
     void notifyImageChanged();
 
     ImageChangedCallback m_imageChanged;
     AnimationErrorCallback m_animationError;
+    std::shared_ptr<DisplayedImageSurface> m_surface;
     QImage m_image;
-    bool m_imageIsSvg = false;
     bool m_imageIsPredecodeCacheable = false;
-    QByteArray m_svgData;
-    QSize m_svgIntrinsicSize;
-    QSize m_svgRasterSize;
     quint64 m_imageRevision = 0;
     std::unique_ptr<ImageAnimationPlayer> m_animationPlayer;
 };

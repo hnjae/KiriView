@@ -8,10 +8,12 @@
 #include "imagedocumenteffects.h"
 #include "imagedocumentstate.h"
 #include "imageloadtypes.h"
+#include "imagesurface.h"
 #include "imagezoomstate.h"
 
 #include <QImage>
 #include <QObject>
+#include <QRectF>
 #include <QSize>
 #include <QSizeF>
 #include <QString>
@@ -49,6 +51,8 @@ public:
     QSize imageSize() const;
     QSizeF viewportSize() const;
     void setViewportSize(const QSizeF &viewportSize);
+    QRectF visibleItemRect() const;
+    void setVisibleItemRect(const QRectF &visibleItemRect);
     QSizeF displaySize() const;
     qreal zoomPercent() const;
     void setZoomPercent(qreal zoomPercent);
@@ -56,6 +60,7 @@ public:
     int currentPageNumber() const;
     int imageCount() const;
     bool containerNavigationAvailable() const;
+    std::shared_ptr<DisplayedImageSurface> imageSurface() const;
     const QImage &image() const;
     quint64 imageRevision() const;
 

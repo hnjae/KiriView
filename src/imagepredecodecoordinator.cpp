@@ -38,7 +38,8 @@ ImagePredecodeCoordinator::ImagePredecodeCoordinator(
 void ImagePredecodeCoordinator::schedule(Context context)
 {
     cancel();
-    if (context.displayedImageLocation.isEmpty() || context.displayedImage.isNull()) {
+    if (context.displayedImageLocation.isEmpty() || context.displayedImageSource == nullptr
+        || context.displayedImagePreview.isNull()) {
         return;
     }
 
@@ -81,7 +82,7 @@ void ImagePredecodeCoordinator::startPredecodeImageLoads(const std::vector<QUrl>
     m_cache.setWindowUrls(urls);
     m_cache.cacheDisplayedImage(context.displayedImageIsCacheable,
         context.displayedImageLocation.imageUrl(), context.displayedImageLocation.archiveDocument(),
-        context.displayedImage);
+        context.displayedImageSource, context.displayedImagePreview);
     m_cache.enqueueMissingWindowLoads(
         context.displayedImageLocation.imageUrl(), archiveDocument, m_activePredecodeUrl);
 
@@ -137,9 +138,11 @@ void ImagePredecodeCoordinator::finishPredecodeImageDecode(
         return;
     }
 
-    if (decodedImageResultIsPredecodeCacheable(result, KiriView::PredecodeCache::byteBudget())) {
-        m_cache.cacheImage(request.imageUrl, m_activePredecodeArchiveDocument,
-            std::get<StaticDecodedImage>(result).image);
+    const auto *staticImage = std::get_if<StaticDecodedImage>(&result);
+    if (staticImage != nullptr
+        && decodedImageResultIsPredecodeCacheable(result, KiriView::PredecodeCache::byteBudget())) {
+        m_cache.cacheImage(request.imageUrl, m_activePredecodeArchiveDocument, staticImage->source,
+            staticImage->preview);
     }
 
     m_activePredecodeUrl = QUrl();

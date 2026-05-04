@@ -10,6 +10,7 @@
 #include "imagedecodejob.h"
 #include "imageiojob.h"
 #include "imagelocation.h"
+#include "imagesurface.h"
 #include "predecodecache.h"
 
 #include <QByteArray>
@@ -26,7 +27,8 @@ public:
     struct Context {
         DisplayedImageLocation displayedImageLocation;
         bool displayedImageIsCacheable = false;
-        QImage displayedImage;
+        std::shared_ptr<ImageTileSource> displayedImageSource;
+        QImage displayedImagePreview;
     };
 
     explicit ImagePredecodeCoordinator(QObject *parent = nullptr);

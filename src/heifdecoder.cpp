@@ -13,6 +13,7 @@
 #include "heifdecoder.h"
 
 #include "imagerendering.h"
+#include "imagetilesource.h"
 #include "imageviewtext.h"
 
 #include <libheif/heif.h>
@@ -317,43 +318,18 @@ std::optional<DecodedImageResult> decodeHeifStillImageData(const QByteArray &dat
         return std::nullopt;
     }
 
-    if (std::optional<QString> initError = initializeHeifLibrary()) {
-        return decodedImageFailure(*initError);
+    QString errorString;
+    std::shared_ptr<ImageTileSource> source = openHeifTileSource(data, &errorString);
+    if (source == nullptr) {
+        return decodedImageFailure(errorString);
     }
 
-    HeifContext context;
-    if (context.get() == nullptr) {
-        return decodedImageFailure(imageViewText(
-            "Could not decode the selected HEIF image: libheif could not allocate a context."));
+    QImage preview = source->decodePreview(imagePreviewLongEdgeMax, &errorString);
+    if (preview.isNull()) {
+        return decodedImageFailure(errorString);
     }
 
-    heif_error error = heif_context_read_from_memory_without_copy(
-        context.get(), data.constData(), static_cast<size_t>(data.size()), nullptr);
-    if (error.code != heif_error_Ok) {
-        return decodedImageFailure(heifErrorString("reading the HEIF container", error));
-    }
-
-    HeifImageHandle handle;
-    error = heif_context_get_primary_image_handle(context.get(), handle.out());
-    if (error.code != heif_error_Ok) {
-        return decodedImageFailure(heifErrorString("reading the primary image", error));
-    }
-
-    HeifDecodingOptions options;
-    HeifImage heifImage;
-    error = heif_decode_image(handle.get(), heifImage.out(), heif_colorspace_RGB,
-        heif_chroma_interleaved_RGBA, options.get());
-    if (error.code != heif_error_Ok) {
-        return decodedImageFailure(heifErrorString("decoding the primary image", error));
-    }
-
-    QString conversionError;
-    std::optional<QImage> image = qImageFromHeifImage(heifImage.get(), &conversionError);
-    if (!image.has_value()) {
-        return decodedImageFailure(conversionError);
-    }
-
-    return StaticDecodedImage { std::move(*image) };
+    return StaticDecodedImage { std::move(source), std::move(preview) };
 }
 
 std::optional<DecodedImageResult> decodeHeifSequenceImageData(const QByteArray &data)

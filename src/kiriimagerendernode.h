@@ -4,10 +4,13 @@
 #ifndef KIRIVIEW_KIRIIMAGERENDERNODE_H
 #define KIRIVIEW_KIRIIMAGERENDERNODE_H
 
+#include "imagesurface.h"
+
 #include <QImage>
 #include <QRectF>
 #include <QSGRenderNode>
 #include <memory>
+#include <vector>
 
 class QRhi;
 class QRhiBuffer;
@@ -31,7 +34,7 @@ public:
     ~KiriImageRenderNode() override;
 
     void setRhi(QRhi *rhi);
-    void setImage(const QImage &image, quint64 revision);
+    void setSurface(std::shared_ptr<DisplayedImageSurface> surface, quint64 revision);
     void setTargetRect(const QRectF &targetRect);
 
     StateFlags changedStates() const override;
@@ -45,27 +48,35 @@ private:
     static void releasePendingResourceUpdates(QRhiResourceUpdateBatch *resourceUpdates);
 
     QRhiResourceUpdateBatch *ensureResourceUpdates(QRhiResourceUpdateBatch *&resourceUpdates);
+    bool addDrawTexture(QRhiResourceUpdateBatch *&resourceUpdates, const QImage &image,
+        const QRectF &targetRect, const QRectF &textureRect);
     bool ensureVertexBuffer(QRhiResourceUpdateBatch *&resourceUpdates);
-    bool ensureTexture(QRhiResourceUpdateBatch *&resourceUpdates);
+    bool ensureTextures(QRhiResourceUpdateBatch *&resourceUpdates);
     bool ensureUniformBuffer();
     bool ensureSampler();
-    bool ensureShaderResourceBindings();
     bool ensurePipeline(QRhiRenderTarget *renderTarget);
-    void updateUniformBuffer(const RenderState *state);
+    void updateUniformBuffer(
+        const RenderState *state, const QRectF &targetRect, const QRectF &textureRect);
 
     QRhi *m_rhi = nullptr;
-    QImage m_image;
-    quint64 m_imageRevision = 0;
-    quint64 m_uploadedImageRevision = 0;
+    std::shared_ptr<DisplayedImageSurface> m_surface;
+    quint64 m_surfaceRevision = 0;
+    quint64 m_uploadedSurfaceRevision = 0;
     QRectF m_targetRect;
-    bool m_textureDirty = true;
+    bool m_texturesDirty = true;
     QRhiRenderPassDescriptor *m_renderPassDescriptor = nullptr;
     std::unique_ptr<QRhiBuffer> m_vertexBuffer;
     std::unique_ptr<QRhiBuffer> m_uniformBuffer;
-    std::unique_ptr<QRhiTexture> m_texture;
     std::unique_ptr<QRhiSampler> m_sampler;
-    std::unique_ptr<QRhiShaderResourceBindings> m_srb;
     std::unique_ptr<QRhiGraphicsPipeline> m_pipeline;
+
+    struct DrawTexture {
+        QRectF targetRect;
+        QRectF textureRect;
+        std::unique_ptr<QRhiTexture> texture;
+        std::unique_ptr<QRhiShaderResourceBindings> srb;
+    };
+    std::vector<DrawTexture> m_drawTextures;
 };
 }
 

@@ -5,9 +5,11 @@
 #define KIRIVIEW_KIRIIMAGEDOCUMENT_H
 
 #include "imagedocumenttypes.h"
+#include "imagesurface.h"
 
 #include <QImage>
 #include <QObject>
+#include <QRectF>
 #include <QSize>
 #include <QSizeF>
 #include <QString>
@@ -36,6 +38,8 @@ class KiriImageDocument : public QObject
     Q_PROPERTY(QSize imageSize READ imageSize NOTIFY imageSizeChanged)
     Q_PROPERTY(
         QSizeF viewportSize READ viewportSize WRITE setViewportSize NOTIFY viewportSizeChanged)
+    Q_PROPERTY(QRectF visibleItemRect READ visibleItemRect WRITE setVisibleItemRect NOTIFY
+            visibleItemRectChanged)
     Q_PROPERTY(QSizeF displaySize READ displaySize NOTIFY displaySizeChanged)
     Q_PROPERTY(double zoomPercent READ zoomPercent WRITE setZoomPercent NOTIFY zoomPercentChanged)
     Q_PROPERTY(ZoomMode zoomMode READ zoomMode NOTIFY zoomModeChanged)
@@ -81,6 +85,8 @@ public:
     QSize imageSize() const;
     QSizeF viewportSize() const;
     void setViewportSize(const QSizeF &viewportSize);
+    QRectF visibleItemRect() const;
+    void setVisibleItemRect(const QRectF &visibleItemRect);
     QSizeF displaySize() const;
     double zoomPercent() const;
     void setZoomPercent(double zoomPercent);
@@ -92,8 +98,10 @@ public:
     int currentPageNumber() const;
     int imageCount() const;
     bool containerNavigationAvailable() const;
+    std::shared_ptr<KiriView::DisplayedImageSurface> imageSurface() const;
     const QImage &image() const;
     quint64 imageRevision() const;
+    quint64 renderRevision() const;
 
     void setRenderContextProvider(RenderContextProvider provider);
 
@@ -116,6 +124,7 @@ Q_SIGNALS:
     void displayedUrlChanged();
     void imageSizeChanged();
     void viewportSizeChanged();
+    void visibleItemRectChanged();
     void displaySizeChanged();
     void zoomPercentChanged();
     void zoomModeChanged();

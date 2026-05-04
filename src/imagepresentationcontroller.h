@@ -6,10 +6,13 @@
 
 #include "animationframe.h"
 #include "imagedocumenttypes.h"
+#include "imagesurface.h"
 #include "imagezoomstate.h"
 
 #include <QByteArray>
 #include <QImage>
+#include <QRectF>
+#include <QSet>
 #include <QSize>
 #include <QSizeF>
 #include <QString>
@@ -44,9 +47,12 @@ public:
     QSizeF viewportSize() const;
     void setViewportSize(const QSizeF &viewportSize);
     QSizeF displaySize() const;
+    QRectF visibleItemRect() const;
+    void setVisibleItemRect(const QRectF &visibleItemRect);
     qreal zoomPercent() const;
     void setZoomPercent(qreal zoomPercent);
     ImageZoomMode zoomMode() const;
+    std::shared_ptr<DisplayedImageSurface> imageSurface() const;
     const QImage &image() const;
     quint64 imageRevision() const;
     bool hasImage() const;
@@ -59,8 +65,7 @@ public:
     void prepareFailedContainer(const QUrl &containerUrl);
     void setPredecodeCacheable(bool cacheable);
     void setImage(const QImage &image);
-    std::optional<QString> setLoadedSvgImage(
-        QByteArray data, const QSize &intrinsicSize, const QUrl &containerUrl);
+    void setStaticImage(std::shared_ptr<ImageTileSource> source, const QImage &preview);
     void clearImage();
 
     void startAnimation(
@@ -71,7 +76,11 @@ public:
 
 private:
     void setImageSize(const QSize &imageSize);
-    bool updateDisplayedSvgRaster();
+    void scheduleVisibleTileDecode();
+    std::vector<TileKey> visibleTileKeys(const StaticTileSurface &surface) const;
+    QRect levelRectForItemRect(const TilePyramid &pyramid, int level, const QRectF &itemRect) const;
+    bool tileRequestIsCurrent(quint64 generation, const TileKey &key) const;
+    void finishTileDecode(quint64 generation, TileKey key, std::optional<DecodedTile> tile);
     void applyZoomStateChanges(const ImageZoomSnapshot &previous);
     qreal displayDevicePixelRatio() const;
     int maximumTextureSize() const;
@@ -82,6 +91,11 @@ private:
     Callbacks m_callbacks;
     ImageZoomState m_zoomState;
     std::unique_ptr<DisplayedImageState> m_displayedImageState;
+    QObject *m_context = nullptr;
+    QRectF m_visibleItemRect;
+    quint64 m_tileGeneration = 0;
+    QSet<TileKey> m_pendingTileKeys;
+    QSet<TileKey> m_failedTileKeys;
 };
 }
 

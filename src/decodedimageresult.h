@@ -5,12 +5,14 @@
 #define KIRIVIEW_DECODEDIMAGERESULT_H
 
 #include "animationframe.h"
+#include "imagesurface.h"
 
 #include <QByteArray>
 #include <QImage>
 #include <QSize>
 #include <QString>
 #include <QtGlobal>
+#include <memory>
 #include <variant>
 #include <vector>
 
@@ -20,7 +22,8 @@ struct DecodedImageFailure {
 };
 
 struct StaticDecodedImage {
-    QImage image;
+    std::shared_ptr<ImageTileSource> source;
+    QImage preview;
 };
 
 struct SvgDecodedImage {

@@ -6,36 +6,18 @@
 #include "apngdecoder.h"
 #include "heifdecoder.h"
 #include "imagerendering.h"
+#include "imagetilesource.h"
 #include "imageviewtext.h"
 #include "kiriview/src/avifcompat.cxx.h"
 
 #include <QBuffer>
 #include <QIODevice>
 #include <QImageReader>
-#include <QRectF>
-#include <QSvgRenderer>
-#include <algorithm>
-#include <cmath>
+#include <memory>
 #include <optional>
 #include <utility>
 
 namespace {
-QSize svgIntrinsicSize(const QSvgRenderer &renderer)
-{
-    const QSize defaultSize = renderer.defaultSize();
-    if (!defaultSize.isEmpty()) {
-        return defaultSize;
-    }
-
-    const QRectF viewBox = renderer.viewBoxF();
-    if (!viewBox.isValid()) {
-        return {};
-    }
-
-    return QSize(std::max(1, static_cast<int>(std::ceil(viewBox.width()))),
-        std::max(1, static_cast<int>(std::ceil(viewBox.height()))));
-}
-
 KiriView::DecodedImageResult decodedImageFailure(const QString &errorString)
 {
     return KiriView::DecodedImageFailure { errorString };
@@ -43,18 +25,46 @@ KiriView::DecodedImageResult decodedImageFailure(const QString &errorString)
 
 std::optional<KiriView::DecodedImageResult> decodeSvgImageData(const QByteArray &data)
 {
-    QSvgRenderer renderer(data);
-    if (!renderer.isValid()) {
+    QString errorString;
+    std::shared_ptr<KiriView::SvgTileSource> source
+        = KiriView::SvgTileSource::open(data, &errorString);
+    if (source == nullptr) {
         return std::nullopt;
     }
 
-    const QSize intrinsicSize = svgIntrinsicSize(renderer);
-    if (intrinsicSize.isEmpty()) {
-        return decodedImageFailure(
-            KiriView::imageViewText("Could not determine the selected SVG image size."));
+    QImage preview = source->decodePreview(KiriView::imagePreviewLongEdgeMax, &errorString);
+    if (preview.isNull()) {
+        return decodedImageFailure(errorString);
     }
 
-    return KiriView::SvgDecodedImage { data, intrinsicSize };
+    return KiriView::StaticDecodedImage { std::move(source), std::move(preview) };
+}
+
+KiriView::DecodedImageResult openedStaticImageResult(const QByteArray &data)
+{
+    QString errorString;
+    std::shared_ptr<KiriView::ImageTileSource> source
+        = KiriView::QImageReaderTileSource::open(data, &errorString);
+    if (source == nullptr) {
+        source = KiriView::openHeifTileSource(data, &errorString);
+    }
+    if (source == nullptr) {
+        return decodedImageFailure(errorString);
+    }
+
+    QImage preview = source->decodePreview(KiriView::imagePreviewLongEdgeMax, &errorString);
+    if (preview.isNull()) {
+        if (std::shared_ptr<KiriView::ImageTileSource> heifSource
+            = KiriView::openHeifTileSource(data, &errorString)) {
+            source = std::move(heifSource);
+            preview = source->decodePreview(KiriView::imagePreviewLongEdgeMax, &errorString);
+        }
+    }
+    if (preview.isNull()) {
+        return decodedImageFailure(errorString);
+    }
+
+    return KiriView::StaticDecodedImage { std::move(source), std::move(preview) };
 }
 }
 
@@ -102,12 +112,13 @@ DecodedImageResult decodeImageData(const QByteArray &data)
     reader.setAutoTransform(true);
     const bool supportsAnimation = reader.supportsAnimation();
 
+    if (!supportsAnimation) {
+        return openedStaticImageResult(imageData);
+    }
+
     QImage image = reader.read();
     if (image.isNull()) {
-        if (std::optional<DecodedImageResult> heifResult = decodeHeifStillImageData(imageData)) {
-            return *heifResult;
-        }
-        return decodedImageFailure(reader.errorString());
+        return openedStaticImageResult(imageData);
     }
 
     const QByteArray format = reader.format();
@@ -125,7 +136,7 @@ DecodedImageResult decodeImageData(const QByteArray &data)
             firstFrameDelay,
         };
     }
-    return StaticDecodedImage { std::move(firstFrame) };
+    return openedStaticImageResult(imageData);
 }
 
 }

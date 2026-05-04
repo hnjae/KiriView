@@ -39,6 +39,7 @@ struct TileLevel {
 
 struct TileRequest {
     TileKey key;
+    QSize levelSize;
     QRect levelRect;
     QRect textureLevelRect;
     QRect sourceRect;
@@ -94,6 +95,7 @@ public:
     qsizetype byteCost() const;
     bool contains(const TileKey &key) const;
     std::optional<DecodedTile> find(const TileKey &key);
+    std::vector<DecodedTile> tiles() const;
     void insert(DecodedTile tile);
     void clear();
 

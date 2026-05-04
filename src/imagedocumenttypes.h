@@ -23,6 +23,7 @@ enum class ImageDocumentChange {
     DisplayedUrl,
     ImageSize,
     ViewportSize,
+    VisibleItemRect,
     DisplaySize,
     ZoomPercent,
     ZoomMode,

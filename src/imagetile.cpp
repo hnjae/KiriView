@@ -144,6 +144,7 @@ TileRequest TilePyramid::requestForTile(const TileKey &key) const
     const QRect textureLevelRect = levelTileTextureRect(key);
     return TileRequest {
         key,
+        levelSize(key.level),
         levelRect,
         textureLevelRect,
         sourceRectForLevelRect(key.level, textureLevelRect),
@@ -231,6 +232,16 @@ std::optional<DecodedTile> DecodedTileCache::find(const TileKey &key)
 
     entry->lastUse = ++m_useClock;
     return entry->tile;
+}
+
+std::vector<DecodedTile> DecodedTileCache::tiles() const
+{
+    std::vector<DecodedTile> tiles;
+    tiles.reserve(m_entries.size());
+    for (const Entry &entry : m_entries) {
+        tiles.push_back(entry.tile);
+    }
+    return tiles;
 }
 
 void DecodedTileCache::insert(DecodedTile tile)

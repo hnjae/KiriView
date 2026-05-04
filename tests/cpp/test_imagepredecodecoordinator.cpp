@@ -17,6 +17,7 @@ using KiriView::TestSupport::imageCandidate;
 using KiriView::TestSupport::keyForUrl;
 using KiriView::TestSupport::ManualImageDataLoader;
 using KiriView::TestSupport::testImage;
+using KiriView::TestSupport::TestImageTileSource;
 
 QUrl imageUrl(int index)
 {
@@ -95,10 +96,12 @@ void TestImagePredecodeCoordinator::scheduleCachesDisplayedImageAndPredecodesWin
         imageCandidate(nextUrl),
     };
 
+    const QImage displayedImage = testImage();
     coordinator.schedule(KiriView::ImagePredecodeCoordinator::Context {
         KiriView::DisplayedImageLocation::fromUrl(displayedUrl),
         true,
-        testImage(),
+        std::make_shared<TestImageTileSource>(displayedImage),
+        displayedImage,
     });
 
     const std::optional<KiriView::PredecodedImage> displayed = coordinator.tryTake(displayedUrl);
@@ -128,10 +131,12 @@ void TestImagePredecodeCoordinator::cancelSuppressesPendingDecode()
         imageCandidate(nextUrl),
     };
 
+    const QImage displayedImage = testImage();
     coordinator.schedule(KiriView::ImagePredecodeCoordinator::Context {
         KiriView::DisplayedImageLocation::fromUrl(displayedUrl),
         false,
-        testImage(),
+        std::make_shared<TestImageTileSource>(displayedImage),
+        displayedImage,
     });
 
     QCOMPARE(dataLoader.loads.size(), std::size_t(1));

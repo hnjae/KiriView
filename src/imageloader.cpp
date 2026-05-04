@@ -176,7 +176,7 @@ bool ImageLoader::tryDisplayPredecodedImage(ImageLoadSession session)
 
     session.location = predecoded->location;
     m_loadSession = session;
-    finishPredecodedImage(session, predecoded->image);
+    finishPredecodedImage(session, std::move(*predecoded));
     return true;
 }
 
@@ -206,7 +206,7 @@ void ImageLoader::finishDecodedImage(
     }
 }
 
-void ImageLoader::finishPredecodedImage(ImageLoadSession session, const QImage &image)
+void ImageLoader::finishPredecodedImage(ImageLoadSession session, PredecodedImage image)
 {
     if (!isCurrentLoadSession(session)) {
         return;
@@ -214,7 +214,7 @@ void ImageLoader::finishPredecodedImage(ImageLoadSession session, const QImage &
 
     clearLoadSession(session);
     if (m_predecodedImage) {
-        m_predecodedImage(std::move(session), image);
+        m_predecodedImage(std::move(session), std::move(image));
     }
 }
 }

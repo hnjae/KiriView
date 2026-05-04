@@ -7,6 +7,7 @@
 #include "imagerendering.h"
 
 #include <QObject>
+#include <memory>
 #include <utility>
 
 namespace KiriView {
@@ -24,17 +25,25 @@ DisplayedImageState::DisplayedImageState(
 
 DisplayedImageState::~DisplayedImageState() = default;
 
-bool DisplayedImageState::hasImage() const { return !m_image.isNull(); }
+bool DisplayedImageState::hasImage() const
+{
+    return m_surface != nullptr && !displayedImageSurfaceIsNull(*m_surface);
+}
+
+std::shared_ptr<DisplayedImageSurface> DisplayedImageState::imageSurface() const
+{
+    return m_surface;
+}
 
 const QImage &DisplayedImageState::image() const { return m_image; }
 
 QSize DisplayedImageState::imageSize() const
 {
-    if (m_imageIsSvg) {
-        return m_svgIntrinsicSize;
+    if (m_surface != nullptr) {
+        return displayedImageSurfaceSize(*m_surface);
     }
 
-    return m_image.size();
+    return {};
 }
 
 quint64 DisplayedImageState::revision() const { return m_imageRevision; }
@@ -48,46 +57,33 @@ void DisplayedImageState::setPredecodeCacheable(bool cacheable)
 
 void DisplayedImageState::setImage(const QImage &image)
 {
-    clearSvgImage();
     m_image = displayReadyImage(image);
+    m_surface = std::make_shared<DisplayedImageSurface>(LegacyFrameSurface { m_image });
     ++m_imageRevision;
     notifyImageChanged();
 }
 
-void DisplayedImageState::setSvgImage(
-    QByteArray data, const QSize &intrinsicSize, const QImage &image, const QSize &rasterSize)
+void DisplayedImageState::setStaticImage(
+    std::shared_ptr<ImageTileSource> source, const QImage &preview)
 {
-    m_imageIsSvg = true;
-    m_svgData = std::move(data);
-    m_svgIntrinsicSize = intrinsicSize;
-    m_svgRasterSize = rasterSize;
-    m_image = displayReadyImage(image);
+    m_image = displayReadyImage(preview);
+    m_surface
+        = std::make_shared<DisplayedImageSurface>(StaticTileSurface { std::move(source), m_image });
     ++m_imageRevision;
     notifyImageChanged();
 }
 
-bool DisplayedImageState::updateSvgRaster(
-    const QSizeF &displaySize, qreal devicePixelRatio, int maximumTextureSize)
+bool DisplayedImageState::insertTile(DecodedTile tile)
 {
-    if (!m_imageIsSvg) {
-        return true;
-    }
-
-    const QSize rasterSize = svgRasterSize(displaySize, devicePixelRatio, maximumTextureSize);
-    if (rasterSize.isEmpty()) {
+    if (m_surface == nullptr) {
         return false;
     }
-    if (!m_image.isNull() && m_svgRasterSize == rasterSize) {
-        return true;
-    }
-
-    const QImage image = renderSvgImage(m_svgData, rasterSize);
-    if (image.isNull()) {
+    auto *surface = std::get_if<StaticTileSurface>(m_surface.get());
+    if (surface == nullptr) {
         return false;
     }
 
-    m_image = displayReadyImage(image);
-    m_svgRasterSize = rasterSize;
+    surface->insertTile(std::move(tile));
     ++m_imageRevision;
     notifyImageChanged();
     return true;
@@ -97,9 +93,9 @@ void DisplayedImageState::clear()
 {
     stopAnimation();
     m_imageIsPredecodeCacheable = false;
-    clearSvgImage();
 
-    if (!m_image.isNull()) {
+    if (m_surface != nullptr || !m_image.isNull()) {
+        m_surface.reset();
         m_image = QImage();
         ++m_imageRevision;
         notifyImageChanged();
@@ -123,14 +119,6 @@ void DisplayedImageState::startHeifSequenceAnimation(const QByteArray &data, int
 }
 
 void DisplayedImageState::stopAnimation() { m_animationPlayer->stop(); }
-
-void DisplayedImageState::clearSvgImage()
-{
-    m_imageIsSvg = false;
-    m_svgData.clear();
-    m_svgIntrinsicSize = QSize();
-    m_svgRasterSize = QSize();
-}
 
 void DisplayedImageState::notifyImageChanged()
 {

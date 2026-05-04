@@ -10,6 +10,7 @@ layout(std140, binding = 0) uniform buf
     mat4 matrix;
     vec4 targetRect;
     vec4 opacity;
+    vec4 textureRect;
 } ubuf;
 
 layout(binding = 1) uniform sampler2D imageTexture;

@@ -8,6 +8,7 @@
 #include "imageloader.h"
 #include "imageopenworkflow.h"
 #include "imagepresentationcontroller.h"
+#include "imagetilesource.h"
 #include "imageviewtext.h"
 #include "kiriimagedecoder.h"
 #include "predecodecache.h"
@@ -41,8 +42,8 @@ ImageOpenController::ImageOpenController(QObject *parent, ImageDocumentState &st
             finishDecodedImageLoad(std::move(session), std::move(result));
         });
     m_imageLoader->setPredecodedImageCallback(
-        [this](ImageLoadSession session, const QImage &image) {
-            finishPredecodedImageLoad(std::move(session), image);
+        [this](ImageLoadSession session, PredecodedImage image) {
+            finishPredecodedImageLoad(std::move(session), std::move(image));
         });
     m_imageLoader->setTakePredecodedImageCallback([this](const QUrl &url) {
         if (!m_callbacks.takePredecodedImage) {
@@ -105,9 +106,13 @@ void ImageOpenController::setSourceUrlFromResolvedLoad(const QUrl &sourceUrl)
     m_state.setSourceUrl(sourceUrl);
 }
 
-void ImageOpenController::finishPredecodedImageLoad(ImageLoadSession session, const QImage &image)
+void ImageOpenController::finishPredecodedImageLoad(ImageLoadSession session, PredecodedImage image)
 {
-    finishLoadSuccessfully(session, image, true);
+    prepareSuccessfulImageLoad(session);
+    m_presentationController.setPredecodeCacheable(true);
+    m_presentationController.setStaticImage(std::move(image.source), image.preview);
+    m_presentationController.updateRenderContext();
+    finishSuccessfulImageLoad(session);
     report(ImageDocumentEffect::scheduleAdjacentImagePredecode());
 }
 
@@ -130,7 +135,23 @@ void ImageOpenController::finishDecodedImageResult(
 void ImageOpenController::finishDecodedImageResult(
     ImageLoadSession &session, SvgDecodedImage &decoded, const DecodedImageResult &)
 {
-    finishSvgLoadSuccessfully(session, std::move(decoded.data), decoded.svgIntrinsicSize);
+    QString errorString;
+    std::shared_ptr<SvgTileSource> source = SvgTileSource::open(decoded.data, &errorString);
+    if (source == nullptr) {
+        finishLoadWithError(session, ImageLoadError::Generic, errorString);
+        return;
+    }
+    QImage preview = source->decodePreview(imagePreviewLongEdgeMax, &errorString);
+    if (preview.isNull()) {
+        finishLoadWithError(session, ImageLoadError::Generic, errorString);
+        return;
+    }
+
+    prepareSuccessfulImageLoad(session);
+    m_presentationController.setPredecodeCacheable(false);
+    m_presentationController.setStaticImage(std::move(source), preview);
+    m_presentationController.updateRenderContext();
+    finishSuccessfulImageLoad(session);
 }
 
 void ImageOpenController::finishDecodedImageResult(
@@ -138,7 +159,11 @@ void ImageOpenController::finishDecodedImageResult(
 {
     const bool predecodeCacheable
         = decodedImageResultIsPredecodeCacheable(result, PredecodeCache::byteBudget());
-    finishLoadSuccessfully(session, decoded.image, predecodeCacheable);
+    prepareSuccessfulImageLoad(session);
+    m_presentationController.setPredecodeCacheable(predecodeCacheable);
+    m_presentationController.setStaticImage(std::move(decoded.source), decoded.preview);
+    m_presentationController.updateRenderContext();
+    finishSuccessfulImageLoad(session);
 }
 
 void ImageOpenController::finishDecodedImageResult(
@@ -212,15 +237,10 @@ void ImageOpenController::finishLoadSuccessfully(
 void ImageOpenController::finishSvgLoadSuccessfully(
     ImageLoadSession session, QByteArray data, const QSize &intrinsicSize)
 {
-    const QUrl loadedContainerUrl = imageContainerUrlForLocation(session.location);
-    const std::optional<QString> errorString = m_presentationController.setLoadedSvgImage(
-        std::move(data), intrinsicSize, loadedContainerUrl);
-    if (errorString.has_value()) {
-        finishLoadWithError(session, ImageLoadError::Generic, *errorString);
-        return;
-    }
-
-    finishSuccessfulImageLoad(session);
+    Q_UNUSED(data);
+    Q_UNUSED(intrinsicSize);
+    finishLoadWithError(session, ImageLoadError::Generic,
+        imageViewText("Could not decode the selected SVG image."));
 }
 
 void ImageOpenController::prepareSuccessfulImageLoad(const ImageLoadSession &session)

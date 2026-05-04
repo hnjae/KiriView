@@ -11,6 +11,7 @@ layout(std140, binding = 0) uniform buf
     mat4 matrix;
     vec4 targetRect;
     vec4 opacity;
+    vec4 textureRect;
 } ubuf;
 
 layout(location = 0) out vec2 texCoord;
@@ -18,6 +19,6 @@ layout(location = 0) out vec2 texCoord;
 void main()
 {
     vec2 position = ubuf.targetRect.xy + inPosition * ubuf.targetRect.zw;
-    texCoord = inTexCoord;
+    texCoord = ubuf.textureRect.xy + inTexCoord * ubuf.textureRect.zw;
     gl_Position = ubuf.matrix * vec4(position, 0.0, 1.0);
 }

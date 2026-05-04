@@ -21,6 +21,7 @@ using KiriView::TestSupport::imageCandidate;
 using KiriView::TestSupport::keyForUrl;
 using KiriView::TestSupport::localUrl;
 using KiriView::TestSupport::ManualImageDataLoader;
+using KiriView::TestSupport::staticDecodedTestImage;
 using KiriView::TestSupport::testImage;
 
 QUrl archivePageUrl(const QUrl &archiveRootUrl, const QString &pageName)
@@ -41,7 +42,7 @@ KiriView::ContainerNavigationCandidate comicBookContainerCandidate(const QUrl &u
 
 KiriView::DecodedImageResult decodeTestImageData(const QByteArray &)
 {
-    return KiriView::StaticDecodedImage { testImage(2) };
+    return staticDecodedTestImage(testImage(2));
 }
 
 class FakeCandidateProvider

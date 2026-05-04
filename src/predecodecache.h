@@ -11,6 +11,7 @@
 #include <QtGlobal>
 #include <cstddef>
 #include <deque>
+#include <memory>
 #include <optional>
 #include <vector>
 
@@ -40,16 +41,18 @@ public:
     bool hasImage(const QUrl &url) const;
     bool isInFlight(const QUrl &url, const QUrl &activePredecodeUrl) const;
     std::optional<PredecodedImage> findImage(const QUrl &url) const;
-    void cacheImage(
-        const QUrl &url, const ArchiveDocumentLocation &archiveDocument, const QImage &image);
+    void cacheImage(const QUrl &url, const ArchiveDocumentLocation &archiveDocument,
+        std::shared_ptr<ImageTileSource> source, const QImage &preview);
     void cacheDisplayedImage(bool cacheable, const QUrl &url,
-        const ArchiveDocumentLocation &archiveDocument, const QImage &image);
+        const ArchiveDocumentLocation &archiveDocument, std::shared_ptr<ImageTileSource> source,
+        const QImage &preview);
 
 private:
     struct CachedImage {
         QUrl url;
         ArchiveDocumentLocation archiveDocument;
-        QImage image;
+        std::shared_ptr<ImageTileSource> source;
+        QImage preview;
         qsizetype byteCost = 0;
     };
     using CachedImageIterator = std::vector<CachedImage>::iterator;

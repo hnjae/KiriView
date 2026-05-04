@@ -15,11 +15,13 @@ src/imagedocumentcontroller.cpp
 src/imagedocumentnavigationcontroller.cpp
 src/imagedecodejob.cpp
 src/imagedocumentstate.cpp
+src/imagesurface.cpp
 src/imageformatregistry.cpp
 src/imagecandidaterepository.cpp
 src/imageiojob.cpp
 src/imageiojobs.cpp
 src/imagetile.cpp
+src/imagetilesource.cpp
 src/imageloader.cpp
 src/imageloadplan.cpp
 src/imagenavigationmodel.cpp

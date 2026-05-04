@@ -107,6 +107,16 @@ void KiriImageDocument::setViewportSize(const QSizeF &viewportSize)
     m_documentController->setViewportSize(viewportSize);
 }
 
+QRectF KiriImageDocument::visibleItemRect() const
+{
+    return m_documentController->visibleItemRect();
+}
+
+void KiriImageDocument::setVisibleItemRect(const QRectF &visibleItemRect)
+{
+    m_documentController->setVisibleItemRect(visibleItemRect);
+}
+
 QSizeF KiriImageDocument::displaySize() const { return m_documentController->displaySize(); }
 
 double KiriImageDocument::zoomPercent() const { return m_documentController->zoomPercent(); }
@@ -153,9 +163,16 @@ bool KiriImageDocument::containerNavigationAvailable() const
     return m_documentController->containerNavigationAvailable();
 }
 
+std::shared_ptr<KiriView::DisplayedImageSurface> KiriImageDocument::imageSurface() const
+{
+    return m_documentController->imageSurface();
+}
+
 const QImage &KiriImageDocument::image() const { return m_documentController->image(); }
 
 quint64 KiriImageDocument::imageRevision() const { return m_documentController->imageRevision(); }
+
+quint64 KiriImageDocument::renderRevision() const { return imageRevision(); }
 
 void KiriImageDocument::setRenderContextProvider(RenderContextProvider provider)
 {
@@ -221,6 +238,9 @@ void KiriImageDocument::handleDocumentChange(ImageDocumentChange change)
         return;
     case ImageDocumentChange::ViewportSize:
         Q_EMIT viewportSizeChanged();
+        return;
+    case ImageDocumentChange::VisibleItemRect:
+        Q_EMIT visibleItemRectChanged();
         return;
     case ImageDocumentChange::DisplaySize:
         Q_EMIT displaySizeChanged();

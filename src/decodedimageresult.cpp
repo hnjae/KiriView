@@ -9,6 +9,10 @@ namespace KiriView {
 bool decodedImageResultIsPredecodeCacheable(const DecodedImageResult &result, qsizetype byteBudget)
 {
     const auto *image = std::get_if<StaticDecodedImage>(&result);
-    return image != nullptr && !image->image.isNull() && imageByteCost(image->image) <= byteBudget;
+    if (image == nullptr || image->source == nullptr || image->preview.isNull()) {
+        return false;
+    }
+
+    return image->source->byteCost() + imageByteCost(image->preview) <= byteBudget;
 }
 }

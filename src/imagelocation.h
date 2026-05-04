@@ -4,6 +4,8 @@
 #ifndef KIRIVIEW_IMAGELOCATION_H
 #define KIRIVIEW_IMAGELOCATION_H
 
+#include "imagesurface.h"
+
 #include <QImage>
 #include <QUrl>
 #include <utility>
@@ -148,7 +150,8 @@ struct ImageLoadRequest {
 };
 
 struct PredecodedImage {
-    QImage image;
+    std::shared_ptr<ImageTileSource> source;
+    QImage preview;
     DisplayedImageLocation location;
 };
 }

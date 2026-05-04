@@ -90,6 +90,16 @@ void ImageDocumentController::setViewportSize(const QSizeF &viewportSize)
     m_presentationController->setViewportSize(viewportSize);
 }
 
+QRectF ImageDocumentController::visibleItemRect() const
+{
+    return m_presentationController->visibleItemRect();
+}
+
+void ImageDocumentController::setVisibleItemRect(const QRectF &visibleItemRect)
+{
+    m_presentationController->setVisibleItemRect(visibleItemRect);
+}
+
 QSizeF ImageDocumentController::displaySize() const
 {
     return m_presentationController->displaySize();
@@ -120,6 +130,11 @@ int ImageDocumentController::imageCount() const { return m_navigationController-
 bool ImageDocumentController::containerNavigationAvailable() const
 {
     return m_state.containerNavigationAvailable();
+}
+
+std::shared_ptr<DisplayedImageSurface> ImageDocumentController::imageSurface() const
+{
+    return m_presentationController->imageSurface();
 }
 
 const QImage &ImageDocumentController::image() const { return m_presentationController->image(); }
@@ -240,9 +255,17 @@ void ImageDocumentController::scheduleAdjacentImagePredecode()
         return;
     }
 
-    m_predecodeCoordinator->schedule(
-        ImagePredecodeCoordinator::Context { m_state.displayedImageLocation(),
-            m_presentationController->isPredecodeCacheable(), m_presentationController->image() });
+    std::shared_ptr<DisplayedImageSurface> surface = m_presentationController->imageSurface();
+    auto *staticSurface
+        = surface == nullptr ? nullptr : std::get_if<StaticTileSurface>(surface.get());
+    if (staticSurface == nullptr || !staticSurface->isValid()) {
+        cancelPredecode();
+        return;
+    }
+
+    m_predecodeCoordinator->schedule(ImagePredecodeCoordinator::Context {
+        m_state.displayedImageLocation(), m_presentationController->isPredecodeCacheable(),
+        staticSurface->source(), staticSurface->preview() });
 }
 
 void ImageDocumentController::cancelPredecode()

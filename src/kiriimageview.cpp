@@ -10,6 +10,7 @@
 
 #include <QQuickWindow>
 #include <cmath>
+#include <memory>
 #include <rhi/qrhi.h>
 
 KiriImageView::KiriImageView(QQuickItem *parent)
@@ -78,7 +79,13 @@ QPointF KiriImageView::zoomContentPosition(const QPointF &contentPosition,
 
 QSGNode *KiriImageView::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *)
 {
-    if (m_document == nullptr || m_document->image().isNull()) {
+    if (m_document == nullptr) {
+        delete oldNode;
+        return nullptr;
+    }
+
+    std::shared_ptr<KiriView::DisplayedImageSurface> surface = m_document->imageSurface();
+    if (surface == nullptr || KiriView::displayedImageSurfaceIsNull(*surface)) {
         delete oldNode;
         return nullptr;
     }
@@ -95,8 +102,8 @@ QSGNode *KiriImageView::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *)
     }
 
     node->setRhi(window() == nullptr ? nullptr : window()->rhi());
-    node->setImage(m_document->image(), m_document->imageRevision());
-    node->setTargetRect(KiriView::imageTargetRect(m_document->image().size(), boundsSize));
+    node->setSurface(std::move(surface), m_document->renderRevision());
+    node->setTargetRect(KiriView::imageTargetRect(m_document->imageSize(), boundsSize));
     node->markDirty(QSGNode::DirtyGeometry | QSGNode::DirtyMaterial);
     return node;
 }
