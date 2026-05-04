@@ -1,0 +1,25 @@
+// SPDX-FileCopyrightText: 2026 KIM Hyunjae
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+#ifndef KIRIVIEW_IMAGETILESOURCE_P_H
+#define KIRIVIEW_IMAGETILESOURCE_P_H
+
+#include "imagetile.h"
+
+#include <QImage>
+#include <QSize>
+#include <QString>
+
+class QSvgRenderer;
+
+namespace KiriView {
+QSize boundedPreviewSize(const QSize &imageSize, int maximumLongEdge);
+qsizetype estimatedRgbaByteCost(const QSize &size);
+QImage scaledTileImage(const QImage &image, const QSize &size);
+QImage cropLevelTexture(const QImage &levelImage, const QRect &textureLevelRect);
+DecodedTile decodedTileFromImage(const TileRequest &request, QImage image);
+void setTileSourceError(QString *errorString, const QString &message);
+QSize svgIntrinsicSize(const QSvgRenderer &renderer);
+}
+
+#endif

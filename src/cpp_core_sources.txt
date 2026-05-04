@@ -8,6 +8,7 @@ src/displayedimagestate.cpp
 src/heifcontainer.cpp
 src/heifdecoder.cpp
 src/heifsupport.cpp
+src/heiftilesource.cpp
 src/imageanimationplayer.cpp
 src/imageasyncdependencies.cpp
 src/imagebytecost.cpp
@@ -24,6 +25,7 @@ src/imageiojob.cpp
 src/imageiojobs.cpp
 src/imagetile.cpp
 src/imagetilesource.cpp
+src/imagetilesourcehelpers.cpp
 src/imageloader.cpp
 src/imageloadplan.cpp
 src/imagenavigationmodel.cpp
