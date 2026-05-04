@@ -79,16 +79,20 @@ the displayed size.
 Static image files, including bitmap images and SVG files, may be displayed as
 one full-resolution image surface or as a progressive tiled image surface.
 Images small enough to fit the full-image display threshold are shown directly
-at full resolution. Larger images may first show a lower-resolution whole-image
-preview and then refine the visible area with sharper image tiles as they are
-decoded. Tile refinement follows the current zoom, pan position, viewport size,
-and display scale; newly visible areas may briefly use preview or coarser image
-data until their matching tiles are ready. This avoids blank holes during normal
-panning and keeps very large static images usable even when the image is too
-large for full-image display. If a decoder cannot provide region or downsampled
-static image data and the image is too large for KiriView's bounded fallback
-decode, KiriView reports a decode error without replacing the currently
-displayed image.
+at full resolution. Larger JPEG images may first show a whole-image first
+display decoded only large enough to cover the image viewport's physical pixel
+size, then refine the visible area with sharper image tiles when the current
+zoom, pan position, viewport size, or display scale needs more detail than that
+first display provides. If an adjacent image has already been prepared, KiriView
+uses that prepared image before starting a fresh decode, so Previous and Next
+navigation can replace the view immediately. Tile refinement follows the current
+zoom, pan position, viewport size, and display scale; newly visible areas may
+briefly use first-display or coarser image data until their matching tiles are
+ready. This avoids blank holes during normal panning and keeps very large static
+images usable even when the image is too large for full-image display. If a
+decoder cannot provide region or downsampled static image data and the image is
+too large for KiriView's bounded fallback decode, KiriView reports a decode
+error without replacing the currently displayed image.
 
 HEIF-family still images, including AVIF still images, are supported when the
 primary image item is encoded with AV1, HEVC, AVC/H.264, JPEG, JPEG 2000, or
