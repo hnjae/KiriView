@@ -76,6 +76,19 @@ For SVG files, 100% uses the SVG's intrinsic size. SVGs remain sharp instead of
 pixelated when Fit mode, manual zoom, window resizing, or display scale changes
 the displayed size.
 
+Static image files, including bitmap images and SVG files, are displayed through
+a progressive tiled image surface instead of depending on one full-resolution
+GPU texture. When a static image is ready, KiriView may first show a lower
+resolution preview and then refine the visible area with sharper image tiles as
+they are decoded. Tile refinement follows the current zoom, pan position,
+viewport size, and display scale; newly visible areas may briefly use preview
+or coarser image data until their matching tiles are ready. This avoids blank
+holes during normal panning and keeps very large static images usable even when
+the image is larger than the GPU's maximum single texture size. If a decoder
+cannot provide region or downsampled static image data and the image is too
+large for KiriView's bounded fallback decode, KiriView reports a decode error
+without replacing the currently displayed image.
+
 HEIF still images are supported when the primary image item is encoded with
 HEVC, AVC/H.264, JPEG, JPEG 2000, or VVC/H.266. If a recognized HEIF file uses
 an unsupported compression format or cannot be decoded, KiriView reports the
@@ -159,7 +172,8 @@ Animated image files, including GIF, APNG, and HEIF image sequences, play when
 animation frames are available. The first frame is shown once loading succeeds;
 later frames use the file's frame delays and loop count. Infinite loops
 continue until another image is selected or the view is cleared. APNG
-animations and HEIF image sequences play as authored.
+animations and HEIF image sequences continue to use full-frame playback and play
+as authored.
 
 When a new image is selected while an image is already displayed, any running
 animation keeps playing until the replacement image is ready. If the selected
