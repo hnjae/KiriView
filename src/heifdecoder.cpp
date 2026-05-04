@@ -210,7 +210,7 @@ int heifFrameDelay(uint32_t duration, uint32_t timescale)
 namespace KiriView {
 std::optional<DecodedImageResult> decodeHeifStillImageData(const QByteArray &data)
 {
-    if (!isLikelyHeifContainer(data)) {
+    if (!isLikelyHeifStillImageContainer(data)) {
         return std::nullopt;
     }
 

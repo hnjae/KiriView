@@ -46,20 +46,10 @@ KiriView::DecodedImageResult openedStaticImageResult(const QByteArray &data)
     std::shared_ptr<KiriView::ImageTileSource> source
         = KiriView::QImageReaderTileSource::open(data, &errorString);
     if (source == nullptr) {
-        source = KiriView::openHeifTileSource(data, &errorString);
-    }
-    if (source == nullptr) {
         return decodedImageFailure(errorString);
     }
 
     QImage preview = source->decodePreview(KiriView::imagePreviewLongEdgeMax, &errorString);
-    if (preview.isNull()) {
-        if (std::shared_ptr<KiriView::ImageTileSource> heifSource
-            = KiriView::openHeifTileSource(data, &errorString)) {
-            source = std::move(heifSource);
-            preview = source->decodePreview(KiriView::imagePreviewLongEdgeMax, &errorString);
-        }
-    }
     if (preview.isNull()) {
         return decodedImageFailure(errorString);
     }
@@ -99,6 +89,10 @@ DecodedImageResult decodeImageData(const QByteArray &data)
     if (const std::optional<DecodedImageResult> heifSequenceResult
         = decodeHeifSequenceImageData(imageData)) {
         return *heifSequenceResult;
+    }
+    if (const std::optional<DecodedImageResult> heifStillResult
+        = decodeHeifStillImageData(imageData)) {
+        return *heifStillResult;
     }
 
     QBuffer buffer;

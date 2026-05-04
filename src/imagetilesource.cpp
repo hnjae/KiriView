@@ -732,7 +732,7 @@ qsizetype SvgTileSource::byteCost() const { return m_data.size(); }
 
 std::shared_ptr<ImageTileSource> openHeifTileSource(const QByteArray &data, QString *errorString)
 {
-    if (!isLikelyHeifContainer(data)) {
+    if (!isLikelyHeifStillImageContainer(data)) {
         return {};
     }
     if (std::optional<QString> initError = initializeHeifLibrary()) {
