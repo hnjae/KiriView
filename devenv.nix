@@ -200,8 +200,6 @@ let
   '';
 in
 {
-  imports = [ ./nix/devenv/git-hooks.nix ];
-
   # Cargo debug builds compile the C++ bridge sources without optimization,
   # which makes glibc's fortify headers emit one warning per translation unit.
   hardeningDisable = [
