@@ -68,6 +68,79 @@ QRectF imageTargetRect(const QSize &imageSize, const QSizeF &boundsSize)
         (boundsSize.height() - targetSize.height()) / 2.0, targetSize.width(), targetSize.height());
 }
 
+std::vector<ImageSurfaceDrawEntry> imageSurfaceDrawEntries(
+    const DisplayedImageSurface &surface, const QRectF &targetRect)
+{
+    std::vector<ImageSurfaceDrawEntry> entries;
+    if (targetRect.isEmpty()) {
+        return entries;
+    }
+
+    const auto addLegacy = [&](const LegacyFrameSurface &legacySurface) {
+        if (!legacySurface.image.isNull()) {
+            entries.push_back(ImageSurfaceDrawEntry {
+                targetRect,
+                QRectF(0.0, 0.0, 1.0, 1.0),
+            });
+        }
+    };
+    const auto addStatic = [&](const StaticTileSurface &staticSurface) {
+        if (!staticSurface.isValid()) {
+            return;
+        }
+
+        entries.push_back(ImageSurfaceDrawEntry {
+            targetRect,
+            QRectF(0.0, 0.0, 1.0, 1.0),
+        });
+
+        const QSize imageSize = staticSurface.imageSize();
+        if (imageSize.isEmpty()) {
+            return;
+        }
+
+        for (const DecodedTile &tile : staticSurface.tiles()) {
+            const QRect sourceRect
+                = staticSurface.pyramid().sourceRectForLevelRect(tile.key.level, tile.levelRect);
+            if (sourceRect.isEmpty() || tile.textureLevelRect.isEmpty() || tile.image.isNull()) {
+                continue;
+            }
+
+            const QRectF tileTargetRect(targetRect.x()
+                    + (static_cast<qreal>(sourceRect.x()) / imageSize.width()) * targetRect.width(),
+                targetRect.y()
+                    + (static_cast<qreal>(sourceRect.y()) / imageSize.height())
+                        * targetRect.height(),
+                (static_cast<qreal>(sourceRect.width()) / imageSize.width()) * targetRect.width(),
+                (static_cast<qreal>(sourceRect.height()) / imageSize.height())
+                    * targetRect.height());
+            const QRectF textureRect(
+                static_cast<qreal>(tile.levelRect.x() - tile.textureLevelRect.x())
+                    / tile.textureLevelRect.width(),
+                static_cast<qreal>(tile.levelRect.y() - tile.textureLevelRect.y())
+                    / tile.textureLevelRect.height(),
+                static_cast<qreal>(tile.levelRect.width()) / tile.textureLevelRect.width(),
+                static_cast<qreal>(tile.levelRect.height()) / tile.textureLevelRect.height());
+            entries.push_back(ImageSurfaceDrawEntry {
+                tileTargetRect,
+                textureRect,
+            });
+        }
+    };
+
+    std::visit(
+        [&](const auto &payload) {
+            using Payload = std::decay_t<decltype(payload)>;
+            if constexpr (std::is_same_v<Payload, LegacyFrameSurface>) {
+                addLegacy(payload);
+            } else {
+                addStatic(payload);
+            }
+        },
+        surface);
+    return entries;
+}
+
 KiriImageRenderNode::~KiriImageRenderNode() { releaseResources(); }
 
 void KiriImageRenderNode::setRhi(QRhi *rhi)
@@ -80,6 +153,7 @@ void KiriImageRenderNode::setRhi(QRhi *rhi)
     m_rhi = rhi;
     m_uploadedSurfaceRevision = 0;
     m_texturesDirty = true;
+    m_drawGeometryDirty = true;
 }
 
 void KiriImageRenderNode::setSurface(
@@ -92,9 +166,18 @@ void KiriImageRenderNode::setSurface(
     m_surface = std::move(surface);
     m_surfaceRevision = revision;
     m_texturesDirty = true;
+    m_drawGeometryDirty = true;
 }
 
-void KiriImageRenderNode::setTargetRect(const QRectF &targetRect) { m_targetRect = targetRect; }
+void KiriImageRenderNode::setTargetRect(const QRectF &targetRect)
+{
+    if (m_targetRect == targetRect) {
+        return;
+    }
+
+    m_targetRect = targetRect;
+    m_drawGeometryDirty = true;
+}
 
 QSGRenderNode::StateFlags KiriImageRenderNode::changedStates() const
 {
@@ -126,7 +209,7 @@ void KiriImageRenderNode::prepare()
         releasePendingResourceUpdates(resourceUpdates);
         return;
     }
-    if (!ensureUniformBuffer() || !ensureSampler()) {
+    if (!ensureSampler()) {
         releasePendingResourceUpdates(resourceUpdates);
         return;
     }
@@ -146,8 +229,8 @@ void KiriImageRenderNode::prepare()
 
 void KiriImageRenderNode::render(const RenderState *state)
 {
-    if (m_rhi == nullptr || m_pipeline == nullptr || m_uniformBuffer == nullptr
-        || m_vertexBuffer == nullptr || m_targetRect.isEmpty() || m_drawTextures.empty()) {
+    if (m_rhi == nullptr || m_pipeline == nullptr || m_vertexBuffer == nullptr
+        || m_targetRect.isEmpty() || m_drawTextures.empty()) {
         return;
     }
 
@@ -171,11 +254,13 @@ void KiriImageRenderNode::render(const RenderState *state)
     const QRhiCommandBuffer::VertexInput vertexBinding(m_vertexBuffer.get(), 0);
     cb->setGraphicsPipeline(m_pipeline.get());
     for (const DrawTexture &drawTexture : m_drawTextures) {
-        if (drawTexture.srb == nullptr || drawTexture.targetRect.isEmpty()) {
+        if (drawTexture.uniformBuffer == nullptr || drawTexture.srb == nullptr
+            || drawTexture.targetRect.isEmpty()) {
             continue;
         }
 
-        updateUniformBuffer(state, drawTexture.targetRect, drawTexture.textureRect);
+        updateUniformBuffer(drawTexture.uniformBuffer.get(), state, drawTexture.targetRect,
+            drawTexture.textureRect);
         cb->setShaderResources(drawTexture.srb.get());
         cb->setVertexInput(0, 1, &vertexBinding);
         cb->draw(static_cast<quint32>(quadVertices.size()));
@@ -187,10 +272,10 @@ void KiriImageRenderNode::releaseResources()
     m_pipeline.reset();
     m_sampler.reset();
     m_drawTextures.clear();
-    m_uniformBuffer.reset();
     m_vertexBuffer.reset();
     m_uploadedSurfaceRevision = 0;
     m_texturesDirty = true;
+    m_drawGeometryDirty = true;
     m_renderPassDescriptor = nullptr;
 }
 
@@ -211,15 +296,20 @@ QRhiResourceUpdateBatch *KiriImageRenderNode::ensureResourceUpdates(
 }
 
 bool KiriImageRenderNode::addDrawTexture(QRhiResourceUpdateBatch *&resourceUpdates,
-    const QImage &image, const QRectF &targetRect, const QRectF &textureRect)
+    const QImage &image, const ImageSurfaceDrawEntry &entry)
 {
-    if (image.isNull() || targetRect.isEmpty()) {
+    if (image.isNull() || entry.targetRect.isEmpty()) {
         return true;
     }
 
     DrawTexture drawTexture;
-    drawTexture.targetRect = targetRect;
-    drawTexture.textureRect = textureRect;
+    drawTexture.targetRect = entry.targetRect;
+    drawTexture.textureRect = entry.textureRect;
+    drawTexture.uniformBuffer.reset(
+        m_rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, uniformBufferSize));
+    if (drawTexture.uniformBuffer == nullptr || !drawTexture.uniformBuffer->create()) {
+        return false;
+    }
     drawTexture.texture.reset(m_rhi->newTexture(QRhiTexture::RGBA8, image.size(), 1,
         QRhiTexture::MipMapped | QRhiTexture::UsedWithGenerateMips));
     if (drawTexture.texture == nullptr || !drawTexture.texture->create()) {
@@ -233,7 +323,7 @@ bool KiriImageRenderNode::addDrawTexture(QRhiResourceUpdateBatch *&resourceUpdat
     drawTexture.srb->setBindings({
         QRhiShaderResourceBinding::uniformBuffer(0,
             QRhiShaderResourceBinding::VertexStage | QRhiShaderResourceBinding::FragmentStage,
-            m_uniformBuffer.get()),
+            drawTexture.uniformBuffer.get()),
         QRhiShaderResourceBinding::sampledTexture(1, QRhiShaderResourceBinding::FragmentStage,
             drawTexture.texture.get(), m_sampler.get()),
     });
@@ -268,51 +358,50 @@ bool KiriImageRenderNode::ensureVertexBuffer(QRhiResourceUpdateBatch *&resourceU
 bool KiriImageRenderNode::ensureTextures(QRhiResourceUpdateBatch *&resourceUpdates)
 {
     if (!m_texturesDirty && m_uploadedSurfaceRevision == m_surfaceRevision) {
+        if (m_drawGeometryDirty && !syncDrawTextureEntries()) {
+            m_texturesDirty = true;
+        } else {
+            return true;
+        }
+    }
+
+    if (!m_texturesDirty && m_uploadedSurfaceRevision == m_surfaceRevision) {
         return true;
     }
 
     m_pipeline.reset();
     m_drawTextures.clear();
+    const std::vector<ImageSurfaceDrawEntry> entries
+        = imageSurfaceDrawEntries(*m_surface, m_targetRect);
+    std::size_t entryIndex = 0;
 
     const auto addLegacy = [&](const LegacyFrameSurface &surface) {
-        return addDrawTexture(
-            resourceUpdates, surface.image, m_targetRect, QRectF(0.0, 0.0, 1.0, 1.0));
-    };
-    const auto addStatic = [&](const StaticTileSurface &surface) {
-        if (!addDrawTexture(
-                resourceUpdates, surface.preview(), m_targetRect, QRectF(0.0, 0.0, 1.0, 1.0))) {
-            return false;
+        if (entryIndex >= entries.size()) {
+            return true;
         }
 
-        const QSize imageSize = surface.imageSize();
-        if (imageSize.isEmpty()) {
+        return addDrawTexture(resourceUpdates, surface.image, entries[entryIndex++]);
+    };
+    const auto addStatic = [&](const StaticTileSurface &surface) {
+        if (entryIndex >= entries.size()) {
             return true;
+        }
+
+        if (!addDrawTexture(resourceUpdates, surface.preview(), entries[entryIndex++])) {
+            return false;
         }
 
         for (const DecodedTile &tile : surface.tiles()) {
             const QRect sourceRect
                 = surface.pyramid().sourceRectForLevelRect(tile.key.level, tile.levelRect);
-            if (sourceRect.isEmpty() || tile.textureLevelRect.isEmpty()) {
+            if (sourceRect.isEmpty() || tile.textureLevelRect.isEmpty() || tile.image.isNull()) {
                 continue;
             }
+            if (entryIndex >= entries.size()) {
+                return true;
+            }
 
-            const QRectF targetRect(m_targetRect.x()
-                    + (static_cast<qreal>(sourceRect.x()) / imageSize.width())
-                        * m_targetRect.width(),
-                m_targetRect.y()
-                    + (static_cast<qreal>(sourceRect.y()) / imageSize.height())
-                        * m_targetRect.height(),
-                (static_cast<qreal>(sourceRect.width()) / imageSize.width()) * m_targetRect.width(),
-                (static_cast<qreal>(sourceRect.height()) / imageSize.height())
-                    * m_targetRect.height());
-            const QRectF textureRect(
-                static_cast<qreal>(tile.levelRect.x() - tile.textureLevelRect.x())
-                    / tile.textureLevelRect.width(),
-                static_cast<qreal>(tile.levelRect.y() - tile.textureLevelRect.y())
-                    / tile.textureLevelRect.height(),
-                static_cast<qreal>(tile.levelRect.width()) / tile.textureLevelRect.width(),
-                static_cast<qreal>(tile.levelRect.height()) / tile.textureLevelRect.height());
-            if (!addDrawTexture(resourceUpdates, tile.image, targetRect, textureRect)) {
+            if (!addDrawTexture(resourceUpdates, tile.image, entries[entryIndex++])) {
                 return false;
             }
         }
@@ -335,23 +424,27 @@ bool KiriImageRenderNode::ensureTextures(QRhiResourceUpdateBatch *&resourceUpdat
 
     m_uploadedSurfaceRevision = m_surfaceRevision;
     m_texturesDirty = false;
+    m_drawGeometryDirty = false;
     return true;
 }
 
-bool KiriImageRenderNode::ensureUniformBuffer()
+bool KiriImageRenderNode::syncDrawTextureEntries()
 {
-    if (m_uniformBuffer != nullptr) {
-        return true;
-    }
-
-    m_pipeline.reset();
-    m_drawTextures.clear();
-    m_uniformBuffer.reset(
-        m_rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, uniformBufferSize));
-    if (m_uniformBuffer == nullptr || !m_uniformBuffer->create()) {
-        m_uniformBuffer.reset();
+    if (m_surface == nullptr) {
         return false;
     }
+
+    const std::vector<ImageSurfaceDrawEntry> entries
+        = imageSurfaceDrawEntries(*m_surface, m_targetRect);
+    if (entries.size() != m_drawTextures.size()) {
+        return false;
+    }
+
+    for (std::size_t index = 0; index < entries.size(); ++index) {
+        m_drawTextures[index].targetRect = entries[index].targetRect;
+        m_drawTextures[index].textureRect = entries[index].textureRect;
+    }
+    m_drawGeometryDirty = false;
     return true;
 }
 
@@ -426,8 +519,8 @@ bool KiriImageRenderNode::ensurePipeline(QRhiRenderTarget *renderTarget)
     return true;
 }
 
-void KiriImageRenderNode::updateUniformBuffer(
-    const RenderState *state, const QRectF &targetRect, const QRectF &textureRect)
+void KiriImageRenderNode::updateUniformBuffer(QRhiBuffer *uniformBuffer, const RenderState *state,
+    const QRectF &targetRect, const QRectF &textureRect)
 {
     QMatrix4x4 matrix;
     if (state != nullptr && state->projectionMatrix() != nullptr) {
@@ -450,6 +543,6 @@ void KiriImageRenderNode::updateUniformBuffer(
     uniformData[26] = static_cast<float>(textureRect.width());
     uniformData[27] = static_cast<float>(textureRect.height());
 
-    m_uniformBuffer->fullDynamicBufferUpdateForCurrentFrame(uniformData.data(), uniformBufferSize);
+    uniformBuffer->fullDynamicBufferUpdateForCurrentFrame(uniformData.data(), uniformBufferSize);
 }
 }
