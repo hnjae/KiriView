@@ -10,6 +10,7 @@
 #include <QObject>
 #include <QTest>
 #include <QUrl>
+#include <cstddef>
 #include <map>
 #include <memory>
 #include <optional>
@@ -123,6 +124,14 @@ void finishLoad(ManualImageDataLoader &dataLoader)
 {
     dataLoader.loads.back()->dataCallback(QByteArrayLiteral("ok"));
 }
+
+std::size_t staticTileCount(const KiriView::ImageDocumentController &controller)
+{
+    std::shared_ptr<KiriView::DisplayedImageSurface> surface = controller.imageSurface();
+    auto *staticSurface
+        = surface == nullptr ? nullptr : std::get_if<KiriView::StaticTileSurface>(surface.get());
+    return staticSurface == nullptr ? 0 : staticSurface->tiles().size();
+}
 }
 
 class TestImageDocumentController : public QObject
@@ -133,6 +142,7 @@ private Q_SLOTS:
     void initialLoadSuccessUpdatesDocumentState();
     void smallStaticImageUsesFullImageSurface();
     void largeStaticImageUsesTiledSurface();
+    void tiledStaticImageRefinesNewVisibleTilesAfterPan();
     void smallFullImageSurfaceStillSchedulesAdjacentPredecode();
     void replacementLoadFailureKeepsDisplayedImage();
     void emptyContainerNavigationClearsImageAndSelectsContainer();
@@ -219,6 +229,37 @@ void TestImageDocumentController::largeStaticImageUsesTiledSurface()
     QVERIFY(staticSurface != nullptr);
     QCOMPARE(staticSurface->imageSize(), QSize(KiriView::imagePreviewLongEdgeMax + 1, 1));
     QCOMPARE(staticSurface->preview().size(), QSize(KiriView::imagePreviewLongEdgeMax, 1));
+}
+
+void TestImageDocumentController::tiledStaticImageRefinesNewVisibleTilesAfterPan()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    const QUrl imageUrl = localUrl(QStringLiteral("/images/large.png"));
+    candidateProvider.directoryImagesByUrl[keyForUrl(localUrl(QStringLiteral("/images/")))] = {
+        imageCandidate(imageUrl),
+    };
+
+    std::unique_ptr<KiriView::ImageDocumentController> controller = createController(
+        this, candidateProvider, dataLoader,
+        [](const QByteArray &) {
+            return staticDecodedImageWithPreview(QSize(KiriView::imagePreviewLongEdgeMax + 1, 512),
+                QSize(KiriView::imagePreviewLongEdgeMax, 512));
+        },
+        KiriView::fallbackTextureSizeMax);
+    controller->setViewportSize(QSizeF(512.0, 512.0));
+    controller->setSourceUrl(imageUrl);
+    finishLoad(dataLoader);
+
+    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
+    controller->setZoomPercent(100.0);
+    controller->setVisibleItemRect(QRectF(0.0, 0.0, 512.0, 512.0));
+    QTRY_VERIFY(staticTileCount(*controller) > std::size_t(0));
+    const std::size_t initialTileCount = staticTileCount(*controller);
+
+    controller->setVisibleItemRect(QRectF(1536.0, 0.0, 512.0, 512.0));
+
+    QTRY_VERIFY(staticTileCount(*controller) > initialTileCount);
 }
 
 void TestImageDocumentController::smallFullImageSurfaceStillSchedulesAdjacentPredecode()
