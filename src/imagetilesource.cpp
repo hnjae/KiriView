@@ -4,14 +4,13 @@
 #include "imagetilesource.h"
 
 #include "heifcontainer.h"
+#include "heifsupport.h"
 #include "imagerendering.h"
 #include "imageviewtext.h"
 
-#include <libheif/heif.h>
 #include <libheif/heif_tiling.h>
 
 #include <QBuffer>
-#include <QColorSpace>
 #include <QIODevice>
 #include <QImageIOHandler>
 #include <QImageReader>
@@ -21,13 +20,19 @@
 #include <QSvgRenderer>
 #include <algorithm>
 #include <cmath>
-#include <cstring>
 #include <limits>
-#include <mutex>
 #include <optional>
 #include <utility>
 
 namespace {
+using KiriView::HeifContext;
+using KiriView::HeifDecodingOptions;
+using KiriView::heifErrorString;
+using KiriView::HeifImage;
+using KiriView::HeifImageHandle;
+using KiriView::initializeHeifLibrary;
+using KiriView::qImageFromHeifImage;
+
 QSize boundedPreviewSize(const QSize &imageSize, int maximumLongEdge)
 {
     if (imageSize.isEmpty() || maximumLongEdge <= 0) {
@@ -111,197 +116,6 @@ QSize svgIntrinsicSize(const QSvgRenderer &renderer)
 
     return QSize(std::max(1, static_cast<int>(std::ceil(viewBox.width()))),
         std::max(1, static_cast<int>(std::ceil(viewBox.height()))));
-}
-
-QString heifErrorString(const char *action, const heif_error &error)
-{
-    const QString message = error.message != nullptr
-        ? QString::fromUtf8(error.message)
-        : KiriView::imageViewText("Unknown libheif error.");
-    return KiriView::imageViewText("Could not decode the selected HEIF image: ")
-        + QString::fromUtf8(action) + QStringLiteral(": ") + message;
-}
-
-std::optional<QString> initializeHeifLibrary()
-{
-    static std::once_flag initFlag;
-    static heif_error initError {};
-    std::call_once(initFlag, [] { initError = heif_init(nullptr); });
-
-    if (initError.code != heif_error_Ok) {
-        return heifErrorString("initializing libheif", initError);
-    }
-    return std::nullopt;
-}
-
-class HeifContext
-{
-public:
-    HeifContext()
-        : m_context(heif_context_alloc())
-    {
-    }
-
-    ~HeifContext()
-    {
-        if (m_context != nullptr) {
-            heif_context_free(m_context);
-        }
-    }
-
-    HeifContext(const HeifContext &) = delete;
-    HeifContext &operator=(const HeifContext &) = delete;
-    HeifContext(HeifContext &&other) noexcept
-        : m_context(std::exchange(other.m_context, nullptr))
-    {
-    }
-    HeifContext &operator=(HeifContext &&other) noexcept
-    {
-        if (this == &other) {
-            return *this;
-        }
-        if (m_context != nullptr) {
-            heif_context_free(m_context);
-        }
-        m_context = std::exchange(other.m_context, nullptr);
-        return *this;
-    }
-
-    heif_context *get() const { return m_context; }
-
-private:
-    heif_context *m_context = nullptr;
-};
-
-class HeifImageHandle
-{
-public:
-    HeifImageHandle() = default;
-
-    ~HeifImageHandle()
-    {
-        if (m_handle != nullptr) {
-            heif_image_handle_release(m_handle);
-        }
-    }
-
-    HeifImageHandle(const HeifImageHandle &) = delete;
-    HeifImageHandle &operator=(const HeifImageHandle &) = delete;
-    HeifImageHandle(HeifImageHandle &&other) noexcept
-        : m_handle(std::exchange(other.m_handle, nullptr))
-    {
-    }
-    HeifImageHandle &operator=(HeifImageHandle &&other) noexcept
-    {
-        if (this == &other) {
-            return *this;
-        }
-        if (m_handle != nullptr) {
-            heif_image_handle_release(m_handle);
-        }
-        m_handle = std::exchange(other.m_handle, nullptr);
-        return *this;
-    }
-
-    heif_image_handle **out() { return &m_handle; }
-    const heif_image_handle *get() const { return m_handle; }
-
-private:
-    heif_image_handle *m_handle = nullptr;
-};
-
-class HeifImage
-{
-public:
-    HeifImage() = default;
-
-    ~HeifImage()
-    {
-        if (m_image != nullptr) {
-            heif_image_release(m_image);
-        }
-    }
-
-    HeifImage(const HeifImage &) = delete;
-    HeifImage &operator=(const HeifImage &) = delete;
-
-    heif_image **out() { return &m_image; }
-    const heif_image *get() const { return m_image; }
-
-private:
-    heif_image *m_image = nullptr;
-};
-
-class HeifDecodingOptions
-{
-public:
-    HeifDecodingOptions()
-        : m_options(heif_decoding_options_alloc())
-    {
-        if (m_options != nullptr) {
-            m_options->convert_hdr_to_8bit = 1;
-        }
-    }
-
-    ~HeifDecodingOptions()
-    {
-        if (m_options != nullptr) {
-            heif_decoding_options_free(m_options);
-        }
-    }
-
-    HeifDecodingOptions(const HeifDecodingOptions &) = delete;
-    HeifDecodingOptions &operator=(const HeifDecodingOptions &) = delete;
-
-    const heif_decoding_options *get() const { return m_options; }
-
-private:
-    heif_decoding_options *m_options = nullptr;
-};
-
-std::optional<QImage> qImageFromHeifImage(const heif_image *heifImage, QString *errorString)
-{
-    if (heifImage == nullptr) {
-        setError(errorString,
-            KiriView::imageViewText(
-                "Could not decode the selected HEIF image: decoded image is invalid."));
-        return std::nullopt;
-    }
-
-    const int imageWidth = heif_image_get_width(heifImage, heif_channel_interleaved);
-    const int imageHeight = heif_image_get_height(heifImage, heif_channel_interleaved);
-    if (imageWidth <= 0 || imageHeight <= 0) {
-        setError(errorString,
-            KiriView::imageViewText(
-                "Could not decode the selected HEIF image: decoded image size is invalid."));
-        return std::nullopt;
-    }
-
-    size_t sourceStride = 0;
-    const uint8_t *source
-        = heif_image_get_plane_readonly2(heifImage, heif_channel_interleaved, &sourceStride);
-    constexpr size_t bytesPerPixel = 4;
-    const size_t rowBytes = static_cast<size_t>(imageWidth) * bytesPerPixel;
-    if (source == nullptr || sourceStride < rowBytes) {
-        setError(errorString,
-            KiriView::imageViewText(
-                "Could not decode the selected HEIF image: decoded pixel data is invalid."));
-        return std::nullopt;
-    }
-
-    QImage image(imageWidth, imageHeight, QImage::Format_RGBA8888);
-    if (image.isNull()) {
-        setError(errorString,
-            KiriView::imageViewText(
-                "Could not decode the selected HEIF image: decoded image allocation failed."));
-        return std::nullopt;
-    }
-
-    for (int y = 0; y < imageHeight; ++y) {
-        std::memcpy(image.scanLine(y), source + (static_cast<size_t>(y) * sourceStride), rowBytes);
-    }
-    image.setColorSpace(QColorSpace(QColorSpace::SRgb));
-    return KiriView::displayReadyImage(image);
 }
 
 class HeifTileSource final : public KiriView::ImageTileSource
