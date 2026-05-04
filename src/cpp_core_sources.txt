@@ -24,7 +24,6 @@ src/imagecandidaterepository.cpp
 src/imageiojob.cpp
 src/imageiojobs.cpp
 src/imagetile.cpp
-src/imagetilesource.cpp
 src/imagetilesourcehelpers.cpp
 src/imageloader.cpp
 src/imageloadplan.cpp
@@ -39,3 +38,5 @@ src/imageviewportgeometry.cpp
 src/imageviewtext.cpp
 src/imagezoomstate.cpp
 src/predecodecache.cpp
+src/qimagereadertilesource.cpp
+src/svgtilesource.cpp
