@@ -11,14 +11,15 @@ toolbar always provides open, page navigation, fit, and zoom controls in fixed
 positions. Outside fullscreen, the toolbar uses normal application header
 placement and reserves layout space above the image viewing area. Controls that
 require a ready image are disabled until an image is ready.
-When KiriView is launched with a file path or URL argument, including from a
-file manager's Open With action, it opens the first provided image or comic book
-archive at startup. Activating the open action shows the XDG portal file
-chooser, which accepts a single selection only. Dropping one or more file or URL
-items onto the running main window opens the first dropped item. Pressing Escape
-closes the main window.
-If KiriView is launched with a local file path or file URL argument and that
-file does not exist, it prints a clear error message naming the path and reason
+When KiriView is launched with one or more file path or URL arguments, including
+from a file manager's Open With action, it processes only the first argument in
+the supplied order and opens it at startup. Activating the open action shows the
+XDG portal file chooser, which accepts a single selection only. Dropping one or
+more file or URL items onto the running main window opens only the first item in
+the order supplied by the desktop environment. Pressing Escape closes the main
+window.
+If the first startup argument is a local file path or file URL and that file
+does not exist, KiriView prints a clear error message naming the path and reason
 to standard error, does not open the main window, and exits with code 2.
 
 When an image file is displayed, the main window title is the displayed image
@@ -28,10 +29,10 @@ archive file name, a spaced em dash, and `KiriView`. KiriView does not show file
 paths in the window title. When no image or archive page is displayed, the
 window title is `KiriView`.
 
-The toolbar also provides icon-only Previous Container and Next Container
-buttons next to the open action. When container navigation is available, these
-buttons navigate between sibling comic book archive containers and are labeled
-only by their tooltips.
+The toolbar also provides icon-only Previous Archive and Next Archive buttons
+next to the open action. When archive navigation is available, these buttons
+navigate between sibling comic book archives and are labeled only by their
+tooltips.
 
 ## File Access
 
@@ -50,11 +51,11 @@ directly provided, such as through a startup argument or the open dialog's
 KiriView owns that archive as the current archive document and displays the
 first supported image inside that archive. These general archives are not
 advertised through the desktop file's file associations, the open dialog's
-default image and comic book filter, or sibling container navigation.
+default image and comic book filter, or sibling archive navigation.
 
 When an image is opened from a KDE-supported archive URL such as `zip://`,
-`tar://`, or `sevenz://`, KiriView opens that image URL rather than owning the
-whole archive as an archive document.
+`tar://`, or `sevenz://`, KiriView treats it as a single image URL supplied by
+KIO rather than owning the whole archive as an archive document.
 
 In Flatpak, adjacent image navigation can list neighboring files under `home`,
 `/media`, `/mnt`, `/run/media`, and `$XDG_RUNTIME_DIR/gvfs`. Files outside those
@@ -76,30 +77,23 @@ For SVG files, 100% uses the SVG's intrinsic size. SVGs remain sharp instead of
 pixelated when Fit mode, manual zoom, window resizing, or display scale changes
 the displayed size.
 
-Static image files, including bitmap images and SVG files, may be displayed as
-one full-resolution image surface or as a progressive tiled image surface.
-Images small enough to fit the full-image display threshold are shown directly
-at full resolution. Larger JPEG images may first show a whole-image first
-display decoded only large enough to cover the image viewport's physical pixel
-size, then refine the visible area with sharper image tiles when the current
-zoom, pan position, viewport size, or display scale needs more detail than that
-first display provides. If an adjacent image has already been prepared, KiriView
-uses that prepared image before starting a fresh decode, so Previous and Next
-navigation can replace the view immediately. Tile refinement follows the current
-zoom, pan position, viewport size, and display scale; newly visible areas may
-briefly use first-display or coarser image data until their matching tiles are
-ready. This avoids blank holes during normal panning and keeps very large static
-images usable even when the image is too large for full-image display. If a
-decoder cannot provide region or downsampled static image data and the image is
-too large for KiriView's bounded fallback decode, KiriView reports a decode
-error without replacing the currently displayed image.
+Static image files, including bitmap images and SVG files, appear at full
+resolution when they are small enough to display directly. Larger JPEG images
+may first appear quickly at a lower level of detail, then the visible area
+becomes sharper as KiriView prepares the detail needed for the current zoom,
+pan position, viewport size, and display scale. Newly visible areas may briefly
+show less detail until sharper data is ready, but normal panning should avoid
+blank holes. If an adjacent image has already been prepared, KiriView uses that
+prepared image before starting a fresh decode, so Previous and Next navigation
+can replace the view immediately. If a very large static image cannot be opened
+because it is too large, KiriView reports a decode error without replacing the
+currently displayed image.
 
 HEIF-family still images, including AVIF still images, are supported when the
-primary image item is encoded with AV1, HEVC, AVC/H.264, JPEG, JPEG 2000, or
-VVC/H.266. KiriView displays them as progressive tiled static image surfaces
-using the HEIF-family image path. If a recognized HEIF-family still image uses
-an unsupported compression format or cannot be decoded, KiriView reports the
-decode error without replacing the currently displayed image.
+still image is encoded with AV1, HEVC, AVC/H.264, JPEG, JPEG 2000, or
+VVC/H.266. If a recognized HEIF-family still image uses an unsupported
+compression format or cannot be decoded, KiriView reports the decode error
+without replacing the currently displayed image.
 
 KiriView starts in Fit mode. Fit mode scales the image as large as possible
 while keeping the full image visible in the viewport, including upscaling small
@@ -107,18 +101,17 @@ images when space is available. Fit Height mode scales the image height to the
 viewport height while preserving aspect ratio. Fit Width mode scales the image
 width to the viewport width while preserving aspect ratio.
 
-Within the same image container, KiriView preserves the current zoom state while
-users navigate between images. If the user has selected Fit, Fit Height, or Fit
-Width, that fit mode remains selected and recalculates for each image and
-viewport size. If the user has entered a manual zoom value, that exact
+Within the same image navigation scope, KiriView preserves the current zoom
+state while users navigate between images. If the user has selected Fit, Fit
+Height, or Fit Width, that fit mode remains selected and recalculates for each
+image and viewport size. If the user has entered a manual zoom value, that exact
 percentage remains active while moving to previous, next, or numbered pages in
-the same directory or comic book archive. When the displayed image changes
-through
-ordinary page or container navigation, any panning position from the previous
-image is cleared so the newly displayed image starts at its top-left at the
-preserved zoom level. The scan-backward shortcut may open the previous image at
-its final scan position instead. Starting KiriView or opening an image in a
-different container resets zoom to Fit mode.
+the same directory or directly opened archive document. When the displayed
+image changes through ordinary page or archive navigation, any panning position
+from the previous image is cleared so the newly displayed image starts at its
+top-left at the preserved zoom level. The scan-backward shortcut may open the
+previous image at its final scan position instead. Starting KiriView or opening
+an image in a different image navigation scope resets zoom to Fit mode.
 
 The image viewing area behind empty, loading, ready, and error states uses
 `#3c3c3c` as its background color, so navigation transitions do not flash to a
@@ -163,17 +156,17 @@ scan position. When the current image is not zoomed large enough to pan, `.`
 opens the next image and `,` opens the previous image. These shortcuts are
 inactive while the page number or zoom input is focused.
 
-The toolbar centers page navigation as an up-arrow Previous button, an editable
-current page number, the text `of`, the total number of supported images in the
-current directory or archive scope, and a down-arrow Next button. The Previous
-button is disabled on the first image, and the Next button is disabled on the
-last image. Page numbers are shown to users starting at 1. Entering a valid page
-number opens that image; entering an invalid number leaves the current image
-open and restores the displayed page number.
+The toolbar provides page navigation with Previous and Next actions, the current
+page number, the total number of supported images in the current directory or
+archive scope, and editable page number entry. The Previous action is disabled
+on the first image, and the Next action is disabled on the last image. Page
+numbers are shown to users starting at 1. Entering a valid page number opens
+that image; entering an invalid number leaves the current image open and
+restores the displayed page number.
 When moving between images in the current directory or archive scope, the
-centered page navigation controls keep their layout stable. The current page
-number updates to the newly displayed image, and the known total image count
-remains visible while KiriView updates the current position.
+page navigation controls keep their layout stable. The current page number
+updates to the newly displayed image, and the known total image count remains
+visible while KiriView updates the current position.
 
 Animated image files, including GIF, APNG, and HEIF-family image sequences such
 as `.heics` and `.avifs`, play when animation frames are available. The first
@@ -204,18 +197,22 @@ and WebP, case-insensitively. JPEG-compressed HEIF files use the generic HEIF
 extensions because they do not have a dedicated extension.
 
 When an image is opened from a KDE-supported archive URL such as `zip://`,
-`tar://`, or `sevenz://`, navigation moves between supported image files in the
-same directory inside the archive URL.
+`tar://`, or `sevenz://`, KiriView treats the opened item as a single image URL,
+and navigation moves between supported image files in the same directory inside
+that archive URL.
 
 When an image is displayed from a local CBZ, CBT, CB7, CBR, ZIP, TAR, 7Z, or
 RAR archive document opened directly by KiriView, navigation moves between all
 supported image files inside that archive document, including images in
 subdirectories.
 
-The previous and next files are determined by sorting candidate file names with
-the user's locale-aware file name order. Navigation does not wrap; pressing Page
-Up on the first candidate or Page Down on the last candidate keeps the current
-image open.
+The previous and next files are determined by sorting candidate names with the
+user's locale-aware file name order. For ordinary directory navigation, the
+candidate name is the file name. For archive documents opened directly by
+KiriView, candidate names are archive-relative paths such as `foo/a.jpg` and
+`bar/a.jpg`. Navigation does not wrap; pressing Page Up on the first candidate
+or Page Down on the last candidate keeps the current image open and notifies the
+user that it is the first or last image.
 
 If the parent URL cannot be listed, the current image is not found, or no
 adjacent supported image exists, the current image remains open and the app
@@ -226,40 +223,40 @@ quicker Previous or Next navigation, so the switch can happen without showing a
 full-page loading state. This preparation must not change what is displayed
 until the user opens an adjacent image.
 
-## Container Navigation
+## Archive Navigation
 
-A container is a local CBZ, CBT, CB7, or CBR comic book archive. The current
-container can be the comic book archive whose image is displayed, or an empty
-sibling comic book archive reached through container navigation. When the
-current image is inside a local comic book archive opened directly by KiriView,
-its container is that archive file. The Previous Container and Next Container
-toolbar actions open the previous or next sibling comic book archive beside the
-current container.
+An archive for archive navigation is a local CBZ, CBT, CB7, or CBR comic book
+archive. The current archive can be the comic book archive whose image is
+displayed, or an empty sibling comic book archive reached through archive
+navigation. When the current image is inside a local comic book archive opened
+directly by KiriView, its archive is that archive file. The Previous Archive and
+Next Archive toolbar actions open the previous or next sibling comic book
+archive beside the current archive.
 
 When the current image is a normal image file, inside a KDE-supported archive
 URL, or inside a directly opened ZIP, TAR, 7Z, or RAR archive document, the
-Previous Container and Next Container toolbar actions are disabled.
+Previous Archive and Next Archive toolbar actions are disabled.
 
-Sibling container candidates are local `.cbz`, `.cbt`, `.cb7`, or `.cbr` files
-in the current container's parent directory. Candidates are sorted with the same
-user locale-aware file name order used for image navigation. Navigation does not
-wrap; pressing Previous Container on the first candidate or Next Container on
-the last candidate keeps the current view unchanged.
+Sibling archive candidates are local `.cbz`, `.cbt`, `.cb7`, or `.cbr` files in
+the current archive's parent directory. Candidates are sorted with the same user
+locale-aware file name order used for image navigation. Navigation does not
+wrap; pressing Previous Archive on the first candidate or Next Archive on the
+last candidate keeps the current view unchanged.
 
-The `[` key opens the previous sibling container and the `]` key opens the next
-sibling container when container navigation is available. Home and Ctrl+Home open
-the first image in the current container, and End and Ctrl+End open the last
-image in the current container. These shortcuts are inactive while the page
-number or zoom input is focused.
+The `[` key opens the previous sibling archive and the `]` key opens the next
+sibling archive when archive navigation is available. Home and Ctrl+Home open
+the first image in the current archive, and End and Ctrl+End open the last image
+in the current archive. These shortcuts are inactive while the page number or
+zoom input is focused.
 
-Opening a comic book archive container displays the first supported image in
-that archive using the same archive image ordering as page navigation.
+Opening a comic book archive displays the first supported image in that archive
+using the same archive image ordering as page navigation.
 
-If a target sibling container has no supported images, KiriView clears any
-displayed image and shows an error state explaining that the selected container
-does not contain supported images. That empty container remains the current
-container navigation position, so Previous Container and Next Container can
-continue to move to neighboring containers.
+If a target sibling archive has no supported images, KiriView clears any
+displayed image and shows an error state explaining that the selected archive
+does not contain supported images. That empty archive remains the current
+archive navigation position, so Previous Archive and Next Archive can continue
+to move to neighboring archives.
 
 ## Window Shortcuts
 
