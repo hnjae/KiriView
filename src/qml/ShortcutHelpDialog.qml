@@ -36,7 +36,7 @@ Controls.Dialog {
                     keys: "Page Up / Page Down"
                 }
                 ListElement {
-                    description: "First or last image in container"
+                    description: "First or last image"
                     keys: "Home / End / Ctrl+Home / Ctrl+End"
                 }
                 ListElement {
@@ -84,7 +84,7 @@ Controls.Dialog {
                     keys: ". / ,"
                 }
                 ListElement {
-                    description: "Previous or next container"
+                    description: "Previous or next archive"
                     keys: "[ / ]"
                 }
                 ListElement {

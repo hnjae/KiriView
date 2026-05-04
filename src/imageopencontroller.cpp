@@ -87,8 +87,8 @@ void ImageOpenController::beginSourceLoad()
 
 void ImageOpenController::finishContainerNavigationWithEmptyContainer(const QUrl &containerUrl)
 {
-    finishContainerNavigationLoadWithError(containerUrl,
-        imageViewText("The selected container does not contain any supported images."));
+    finishContainerNavigationLoadWithError(
+        containerUrl, imageViewText("The selected archive does not contain any supported images."));
 }
 
 void ImageOpenController::finishContainerNavigationLoadWithError(
@@ -97,7 +97,7 @@ void ImageOpenController::finishContainerNavigationLoadWithError(
     cancel();
 
     const QString message = errorString.isEmpty()
-        ? imageViewText("Could not open the selected container.")
+        ? imageViewText("Could not open the selected archive.")
         : errorString;
     reportEffects(
         ImageOpenWorkflow::finishContainerNavigationLoadWithError(m_state, containerUrl, message));

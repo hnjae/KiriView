@@ -29,7 +29,7 @@ QtObject {
     property Controls.Action previousContainerAction: Controls.Action {
         enabled: root.imageDocument.containerNavigationAvailable && !root.helpDialogOpen
         icon.name: "go-previous-symbolic"
-        text: "Previous Container"
+        text: "Previous Archive"
 
         onTriggered: root.imageDocument.openPreviousContainer()
     }
@@ -37,7 +37,7 @@ QtObject {
     property Controls.Action nextContainerAction: Controls.Action {
         enabled: root.imageDocument.containerNavigationAvailable && !root.helpDialogOpen
         icon.name: "go-next-symbolic"
-        text: "Next Container"
+        text: "Next Archive"
 
         onTriggered: root.imageDocument.openNextContainer()
     }
