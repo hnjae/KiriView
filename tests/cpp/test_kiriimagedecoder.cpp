@@ -3,7 +3,9 @@
 
 #include "kiriimagedecoder.h"
 
+#include "heifcontainer.h"
 #include "heifdecoder.h"
+#include "imagetilesource.h"
 
 #include <libheif/heif.h>
 
@@ -15,9 +17,11 @@
 #include <QtGlobal>
 #include <array>
 #include <cstring>
+#include <initializer_list>
 #include <limits>
 #include <memory>
 #include <optional>
+#include <string_view>
 
 namespace {
 struct HeifLibraryScope {
@@ -70,6 +74,23 @@ QString heifErrorText(const char *action, const heif_error &error)
 {
     return QString::fromLatin1(action) + QStringLiteral(": ")
         + QString::fromUtf8(error.message != nullptr ? error.message : "");
+}
+
+QByteArray heifFtypBox(std::string_view majorBrand, std::initializer_list<std::string_view> brands)
+{
+    const quint32 boxSize = 16 + static_cast<quint32>(brands.size() * 4);
+    QByteArray data;
+    data.append(static_cast<char>((boxSize >> 24) & 0xff));
+    data.append(static_cast<char>((boxSize >> 16) & 0xff));
+    data.append(static_cast<char>((boxSize >> 8) & 0xff));
+    data.append(static_cast<char>(boxSize & 0xff));
+    data.append("ftyp", 4);
+    data.append(majorBrand.data(), 4);
+    data.append(4, '\0');
+    for (std::string_view brand : brands) {
+        data.append(brand.data(), 4);
+    }
+    return data;
 }
 
 std::optional<QByteArray> createJpegCompressedHeifData(QString *errorText)
@@ -177,6 +198,8 @@ class TestKiriImageDecoder : public QObject
 
 private Q_SLOTS:
     void jpegCompressedHeifStillImageDecodes();
+    void avifStillBrandUsesHeifStaticPath();
+    void avifsSequenceBrandUsesHeifSequencePath();
     void heifSequenceDecodesAsStreamingAnimation();
 };
 
@@ -195,6 +218,34 @@ void TestKiriImageDecoder::jpegCompressedHeifStillImageDecodes()
     QCOMPARE(decoded->source->imageSize(), QSize(2, 2));
     QCOMPARE(decoded->preview.size(), QSize(2, 2));
     QVERIFY(!decoded->preview.isNull());
+}
+
+void TestKiriImageDecoder::avifStillBrandUsesHeifStaticPath()
+{
+    QString encodeError;
+    std::optional<QByteArray> imageData = createJpegCompressedHeifData(&encodeError);
+    QVERIFY2(imageData.has_value(), qPrintable(encodeError));
+    std::memcpy(imageData->data() + 8, "avif", 4);
+    QVERIFY(KiriView::isLikelyHeifStillImageContainer(*imageData));
+
+    KiriView::DecodedImageResult result = KiriView::decodeImageData(*imageData);
+    const auto *decoded = std::get_if<KiriView::StaticDecodedImage>(&result);
+    QVERIFY2(decoded != nullptr, "AVIF still brand should use the HEIF static image path");
+    QVERIFY(decoded->source != nullptr);
+    QVERIFY(dynamic_cast<KiriView::QImageReaderTileSource *>(decoded->source.get()) == nullptr);
+    QCOMPARE(decoded->source->imageSize(), QSize(2, 2));
+    QCOMPARE(decoded->preview.size(), QSize(2, 2));
+}
+
+void TestKiriImageDecoder::avifsSequenceBrandUsesHeifSequencePath()
+{
+    const QByteArray imageData = heifFtypBox("avis", {});
+    QVERIFY(KiriView::isLikelyHeifSequenceContainer(imageData));
+
+    KiriView::DecodedImageResult result = KiriView::decodeImageData(imageData);
+    const auto *failure = std::get_if<KiriView::DecodedImageFailure>(&result);
+    QVERIFY2(failure != nullptr, "AVIF sequence brand should be handled by the HEIF sequence path");
+    QVERIFY(failure->errorString.contains(QStringLiteral("HEIF image")));
 }
 
 void TestKiriImageDecoder::heifSequenceDecodesAsStreamingAnimation()
