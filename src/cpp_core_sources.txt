@@ -19,6 +19,7 @@ src/imageformatregistry.cpp
 src/imagecandidaterepository.cpp
 src/imageiojob.cpp
 src/imageiojobs.cpp
+src/imagetile.cpp
 src/imageloader.cpp
 src/imageloadplan.cpp
 src/imagenavigationmodel.cpp
