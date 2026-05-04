@@ -89,8 +89,10 @@ cannot provide region or downsampled static image data and the image is too
 large for KiriView's bounded fallback decode, KiriView reports a decode error
 without replacing the currently displayed image.
 
-HEIF still images are supported when the primary image item is encoded with
-HEVC, AVC/H.264, JPEG, JPEG 2000, or VVC/H.266. If a recognized HEIF file uses
+HEIF-family still images, including AVIF still images, are supported when the
+primary image item is encoded with AV1, HEVC, AVC/H.264, JPEG, JPEG 2000, or
+VVC/H.266. KiriView displays them as progressive tiled static image surfaces
+using the HEIF-family image path. If a recognized HEIF-family still image uses
 an unsupported compression format or cannot be decoded, KiriView reports the
 decode error without replacing the currently displayed image.
 
@@ -168,12 +170,12 @@ centered page navigation controls keep their layout stable. The current page
 number updates to the newly displayed image, and the known total image count
 remains visible while KiriView updates the current position.
 
-Animated image files, including GIF, APNG, and HEIF image sequences, play when
-animation frames are available. The first frame is shown once loading succeeds;
-later frames use the file's frame delays and loop count. Infinite loops
-continue until another image is selected or the view is cleared. APNG
-animations and HEIF image sequences continue to use full-frame playback and play
-as authored.
+Animated image files, including GIF, APNG, and HEIF-family image sequences such
+as `.heics` and `.avifs`, play when animation frames are available. The first
+frame is shown once loading succeeds; later frames use the file's frame delays
+and loop count. Infinite loops continue until another image is selected or the
+view is cleared. APNG animations and HEIF-family image sequences continue to use
+full-frame playback and play as authored.
 
 When a new image is selected while an image is already displayed, any running
 animation keeps playing until the replacement image is ready. If the selected
