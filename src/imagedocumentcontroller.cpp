@@ -255,17 +255,17 @@ void ImageDocumentController::scheduleAdjacentImagePredecode()
         return;
     }
 
-    std::shared_ptr<DisplayedImageSurface> surface = m_presentationController->imageSurface();
-    auto *staticSurface
-        = surface == nullptr ? nullptr : std::get_if<StaticTileSurface>(surface.get());
-    if (staticSurface == nullptr || !staticSurface->isValid()) {
+    std::shared_ptr<ImageTileSource> staticImageSource
+        = m_presentationController->staticImageSource();
+    const QImage &staticImagePreview = m_presentationController->staticImagePreview();
+    if (staticImageSource == nullptr || staticImagePreview.isNull()) {
         cancelPredecode();
         return;
     }
 
     m_predecodeCoordinator->schedule(ImagePredecodeCoordinator::Context {
         m_state.displayedImageLocation(), m_presentationController->isPredecodeCacheable(),
-        staticSurface->source(), staticSurface->preview() });
+        std::move(staticImageSource), staticImagePreview });
 }
 
 void ImageDocumentController::cancelPredecode()

@@ -91,6 +91,18 @@ qsizetype StaticTileSurface::tileCacheByteBudgetForSystemMemory(qsizetype system
     return std::min(imageFullDecodeFallbackByteLimit, systemMemoryByteSize / 16);
 }
 
+bool staticImageFitsFullImageSurface(
+    const ImageTileSource &source, const QImage &preview, int maximumTextureSize)
+{
+    const QSize imageSize = source.imageSize();
+    if (imageSize.isEmpty() || preview.isNull() || preview.size() != imageSize
+        || maximumTextureSize <= 0) {
+        return false;
+    }
+
+    return imageSize.width() <= maximumTextureSize && imageSize.height() <= maximumTextureSize;
+}
+
 QSize displayedImageSurfaceSize(const DisplayedImageSurface &surface)
 {
     return std::visit(

@@ -13,6 +13,8 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <utility>
+#include <variant>
 #include <vector>
 
 namespace {
@@ -43,6 +45,15 @@ KiriView::ContainerNavigationCandidate comicBookContainerCandidate(const QUrl &u
 KiriView::DecodedImageResult decodeTestImageData(const QByteArray &)
 {
     return staticDecodedTestImage(testImage(2));
+}
+
+KiriView::DecodedImageResult staticDecodedImageWithPreview(
+    const QSize &sourceSize, const QSize &previewSize)
+{
+    return KiriView::StaticDecodedImage {
+        std::make_shared<KiriView::TestSupport::TestImageTileSource>(testImage(sourceSize)),
+        testImage(previewSize),
+    };
 }
 
 class FakeCandidateProvider
@@ -80,29 +91,32 @@ public:
     std::map<QString, std::vector<KiriView::ContainerNavigationCandidate>> containerCandidatesByUrl;
 };
 
-KiriView::ImageAsyncDependencies dependenciesFor(
-    FakeCandidateProvider &candidateProvider, ManualImageDataLoader &dataLoader)
+KiriView::ImageAsyncDependencies dependenciesFor(FakeCandidateProvider &candidateProvider,
+    ManualImageDataLoader &dataLoader,
+    KiriView::ImageDecodeJob::DataDecoder dataDecoder = decodeTestImageData)
 {
     return KiriView::ImageAsyncDependencies {
         candidateProvider.provider(),
         dataLoaderFor(dataLoader),
-        decodeTestImageData,
+        std::move(dataDecoder),
     };
 }
 
-std::unique_ptr<KiriView::ImageDocumentController> createController(
-    QObject *parent, FakeCandidateProvider &candidateProvider, ManualImageDataLoader &dataLoader)
+std::unique_ptr<KiriView::ImageDocumentController> createController(QObject *parent,
+    FakeCandidateProvider &candidateProvider, ManualImageDataLoader &dataLoader,
+    KiriView::ImageDecodeJob::DataDecoder dataDecoder = decodeTestImageData,
+    int maximumTextureSize = KiriView::fallbackTextureSizeMax)
 {
     return std::make_unique<KiriView::ImageDocumentController>(
         parent,
-        []() {
+        [maximumTextureSize]() {
             return KiriView::ImageDocumentRenderContext {
                 1.0,
-                KiriView::fallbackTextureSizeMax,
+                maximumTextureSize,
             };
         },
         KiriView::ImageDocumentController::ChangeCallback {},
-        dependenciesFor(candidateProvider, dataLoader));
+        dependenciesFor(candidateProvider, dataLoader, std::move(dataDecoder)));
 }
 
 void finishLoad(ManualImageDataLoader &dataLoader)
@@ -117,6 +131,9 @@ class TestImageDocumentController : public QObject
 
 private Q_SLOTS:
     void initialLoadSuccessUpdatesDocumentState();
+    void smallStaticImageUsesFullImageSurface();
+    void largeStaticImageUsesTiledSurface();
+    void smallFullImageSurfaceStillSchedulesAdjacentPredecode();
     void replacementLoadFailureKeepsDisplayedImage();
     void emptyContainerNavigationClearsImageAndSelectsContainer();
 };
@@ -147,6 +164,90 @@ void TestImageDocumentController::initialLoadSuccessUpdatesDocumentState()
     QCOMPARE(controller->imageCount(), 1);
     QVERIFY(!controller->containerNavigationAvailable());
     QVERIFY(!controller->image().isNull());
+}
+
+void TestImageDocumentController::smallStaticImageUsesFullImageSurface()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    const QUrl imageUrl = localUrl(QStringLiteral("/images/small.png"));
+    candidateProvider.directoryImagesByUrl[keyForUrl(localUrl(QStringLiteral("/images/")))] = {
+        imageCandidate(imageUrl),
+    };
+
+    std::unique_ptr<KiriView::ImageDocumentController> controller = createController(
+        this, candidateProvider, dataLoader,
+        [](const QByteArray &) {
+            return staticDecodedImageWithPreview(QSize(1024, 1), QSize(1024, 1));
+        },
+        KiriView::fallbackTextureSizeMax);
+    controller->setViewportSize(QSizeF(400.0, 300.0));
+    controller->setSourceUrl(imageUrl);
+    finishLoad(dataLoader);
+
+    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
+    std::shared_ptr<KiriView::DisplayedImageSurface> surface = controller->imageSurface();
+    QVERIFY(surface != nullptr);
+    QVERIFY(std::holds_alternative<KiriView::LegacyFrameSurface>(*surface));
+    QCOMPARE(controller->imageSize(), QSize(1024, 1));
+}
+
+void TestImageDocumentController::largeStaticImageUsesTiledSurface()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    const QUrl imageUrl = localUrl(QStringLiteral("/images/large.png"));
+    candidateProvider.directoryImagesByUrl[keyForUrl(localUrl(QStringLiteral("/images/")))] = {
+        imageCandidate(imageUrl),
+    };
+
+    std::unique_ptr<KiriView::ImageDocumentController> controller = createController(
+        this, candidateProvider, dataLoader,
+        [](const QByteArray &) {
+            return staticDecodedImageWithPreview(QSize(KiriView::imagePreviewLongEdgeMax + 1, 1),
+                QSize(KiriView::imagePreviewLongEdgeMax, 1));
+        },
+        KiriView::fallbackTextureSizeMax);
+    controller->setViewportSize(QSizeF(400.0, 300.0));
+    controller->setSourceUrl(imageUrl);
+    finishLoad(dataLoader);
+
+    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
+    std::shared_ptr<KiriView::DisplayedImageSurface> surface = controller->imageSurface();
+    QVERIFY(surface != nullptr);
+    auto *staticSurface = std::get_if<KiriView::StaticTileSurface>(surface.get());
+    QVERIFY(staticSurface != nullptr);
+    QCOMPARE(staticSurface->imageSize(), QSize(KiriView::imagePreviewLongEdgeMax + 1, 1));
+    QCOMPARE(staticSurface->preview().size(), QSize(KiriView::imagePreviewLongEdgeMax, 1));
+}
+
+void TestImageDocumentController::smallFullImageSurfaceStillSchedulesAdjacentPredecode()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    const QUrl imageUrl = localUrl(QStringLiteral("/images/01.png"));
+    const QUrl nextImageUrl = localUrl(QStringLiteral("/images/02.png"));
+    candidateProvider.directoryImagesByUrl[keyForUrl(localUrl(QStringLiteral("/images/")))] = {
+        imageCandidate(imageUrl),
+        imageCandidate(nextImageUrl),
+    };
+
+    std::unique_ptr<KiriView::ImageDocumentController> controller = createController(
+        this, candidateProvider, dataLoader,
+        [](const QByteArray &) {
+            return staticDecodedImageWithPreview(QSize(1024, 1), QSize(1024, 1));
+        },
+        KiriView::fallbackTextureSizeMax);
+    controller->setViewportSize(QSizeF(400.0, 300.0));
+    controller->setSourceUrl(imageUrl);
+    finishLoad(dataLoader);
+
+    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
+    std::shared_ptr<KiriView::DisplayedImageSurface> surface = controller->imageSurface();
+    QVERIFY(surface != nullptr);
+    QVERIFY(std::holds_alternative<KiriView::LegacyFrameSurface>(*surface));
+    QTRY_COMPARE(dataLoader.loads.size(), std::size_t(2));
+    QCOMPARE(dataLoader.loads.back()->url, nextImageUrl);
 }
 
 void TestImageDocumentController::replacementLoadFailureKeepsDisplayedImage()

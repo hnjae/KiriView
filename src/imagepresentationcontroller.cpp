@@ -104,6 +104,16 @@ bool ImagePresentationController::isPredecodeCacheable() const
     return m_displayedImageState->isPredecodeCacheable();
 }
 
+std::shared_ptr<ImageTileSource> ImagePresentationController::staticImageSource() const
+{
+    return m_displayedImageState->staticImageSource();
+}
+
+const QImage &ImagePresentationController::staticImagePreview() const
+{
+    return m_displayedImageState->staticImagePreview();
+}
+
 void ImagePresentationController::resetZoom()
 {
     const ImageZoomSnapshot previous = m_zoomState.snapshot();
@@ -167,8 +177,12 @@ void ImagePresentationController::setStaticImage(
     ++m_tileGeneration;
     m_pendingTileKeys.clear();
     m_failedTileKeys.clear();
-    m_displayedImageState->setStaticImage(std::move(source), preview);
-    scheduleVisibleTileDecode();
+    const bool useFullImageSurface = source != nullptr
+        && staticImageFitsFullImageSurface(*source, preview, maximumTextureSize());
+    m_displayedImageState->setStaticImage(std::move(source), preview, useFullImageSurface);
+    if (!useFullImageSurface) {
+        scheduleVisibleTileDecode();
+    }
 }
 
 void ImagePresentationController::clearImage()

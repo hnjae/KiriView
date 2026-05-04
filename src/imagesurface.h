@@ -65,6 +65,8 @@ struct LegacyFrameSurface {
 
 using DisplayedImageSurface = std::variant<LegacyFrameSurface, StaticTileSurface>;
 
+bool staticImageFitsFullImageSurface(
+    const ImageTileSource &source, const QImage &preview, int maximumTextureSize);
 QSize displayedImageSurfaceSize(const DisplayedImageSurface &surface);
 bool displayedImageSurfaceIsNull(const DisplayedImageSurface &surface);
 }

@@ -57,6 +57,8 @@ public:
     quint64 imageRevision() const;
     bool hasImage() const;
     bool isPredecodeCacheable() const;
+    std::shared_ptr<ImageTileSource> staticImageSource() const;
+    const QImage &staticImagePreview() const;
 
     void resetZoom();
     void setFitMode(ImageZoomMode zoomMode);
