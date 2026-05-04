@@ -12,6 +12,7 @@
 
 #include "heifdecoder.h"
 
+#include "heifcontainer.h"
 #include "imagerendering.h"
 #include "imagetilesource.h"
 #include "imageviewtext.h"
@@ -23,7 +24,6 @@
 #include <algorithm>
 #include <cstdint>
 #include <cstring>
-#include <iterator>
 #include <limits>
 #include <mutex>
 #include <utility>
@@ -205,110 +205,6 @@ int heifFrameDelay(uint32_t duration, uint32_t timescale)
         std::min<uint64_t>(delay, static_cast<uint64_t>(std::numeric_limits<int>::max())));
 }
 
-quint32 readBigEndianUint32(const char *data)
-{
-    return (static_cast<quint32>(static_cast<unsigned char>(data[0])) << 24)
-        | (static_cast<quint32>(static_cast<unsigned char>(data[1])) << 16)
-        | (static_cast<quint32>(static_cast<unsigned char>(data[2])) << 8)
-        | static_cast<quint32>(static_cast<unsigned char>(data[3]));
-}
-
-bool isHeifBrand(const char *brand)
-{
-    static constexpr const char *brands[] = {
-        "avci",
-        "avcs",
-        "avif",
-        "avis",
-        "heic",
-        "heim",
-        "heis",
-        "heix",
-        "hevc",
-        "hevm",
-        "hevs",
-        "hevx",
-        "j2is",
-        "j2ki",
-        "jpgs",
-        "jpeg",
-        "mif1",
-        "mif2",
-        "msf1",
-        "vvic",
-        "vvis",
-    };
-
-    return std::any_of(std::begin(brands), std::end(brands),
-        [brand](const char *candidate) { return std::memcmp(brand, candidate, 4) == 0; });
-}
-
-bool isHeifSequenceBrand(const char *brand)
-{
-    static constexpr const char *brands[] = {
-        "avcs",
-        "avis",
-        "hevc",
-        "hevm",
-        "hevs",
-        "hevx",
-        "j2is",
-        "jpgs",
-        "msf1",
-        "vvis",
-    };
-
-    return std::any_of(std::begin(brands), std::end(brands),
-        [brand](const char *candidate) { return std::memcmp(brand, candidate, 4) == 0; });
-}
-
-bool isLikelyHeifContainer(const QByteArray &data)
-{
-    if (data.size() < 16 || std::memcmp(data.constData() + 4, "ftyp", 4) != 0) {
-        return false;
-    }
-
-    const quint32 boxSize = readBigEndianUint32(data.constData());
-    if (boxSize < 16 || boxSize > static_cast<quint32>(data.size())) {
-        return false;
-    }
-
-    if (isHeifBrand(data.constData() + 8)) {
-        return true;
-    }
-
-    for (quint32 offset = 16; offset + 4 <= boxSize; offset += 4) {
-        if (isHeifBrand(data.constData() + offset)) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-bool isLikelyHeifSequenceContainer(const QByteArray &data)
-{
-    if (data.size() < 16 || std::memcmp(data.constData() + 4, "ftyp", 4) != 0) {
-        return false;
-    }
-
-    const quint32 boxSize = readBigEndianUint32(data.constData());
-    if (boxSize < 16 || boxSize > static_cast<quint32>(data.size())) {
-        return false;
-    }
-
-    if (isHeifSequenceBrand(data.constData() + 8)) {
-        return true;
-    }
-
-    for (quint32 offset = 16; offset + 4 <= boxSize; offset += 4) {
-        if (isHeifSequenceBrand(data.constData() + offset)) {
-            return true;
-        }
-    }
-
-    return false;
-}
 }
 
 namespace KiriView {

@@ -5,6 +5,7 @@ src/decodedimageresult.cpp
 src/archivebackend.cpp
 src/archiveformat.cpp
 src/displayedimagestate.cpp
+src/heifcontainer.cpp
 src/heifdecoder.cpp
 src/imageanimationplayer.cpp
 src/imageasyncdependencies.cpp
