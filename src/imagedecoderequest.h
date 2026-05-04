@@ -14,6 +14,7 @@ struct ImageDecodeRequest {
     quint64 id = 0;
     QUrl imageUrl;
     ArchiveDocumentLocation archiveDocument;
+    ImageFirstDisplayDecodeContext firstDisplay;
 };
 }
 

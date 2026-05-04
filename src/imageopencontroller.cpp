@@ -67,8 +67,10 @@ void ImageOpenController::open()
     }
 
     beginSourceLoad();
-    m_imageLoader->start(ImageLoadRequest::fromLocation(m_state.sourceUrl(),
-        m_state.displayedArchiveDocument(), m_state.loadingContainerNavigationUrl()));
+    m_imageLoader->start(
+        ImageLoadRequest::fromLocation(m_state.sourceUrl(), m_state.displayedArchiveDocument(),
+            m_state.loadingContainerNavigationUrl()),
+        m_presentationController.firstDisplayDecodeContext());
 }
 
 void ImageOpenController::cancel() { m_imageLoader->cancel(); }
@@ -110,7 +112,8 @@ void ImageOpenController::finishPredecodedImageLoad(ImageLoadSession session, Pr
 {
     prepareSuccessfulImageLoad(session);
     m_presentationController.setPredecodeCacheable(true);
-    m_presentationController.setStaticImage(std::move(image.source), image.preview);
+    m_presentationController.setStaticImage(
+        std::move(image.source), image.preview, image.displayHints);
     m_presentationController.updateRenderContext();
     finishSuccessfulImageLoad(session);
     report(ImageDocumentEffect::scheduleAdjacentImagePredecode());
@@ -141,7 +144,8 @@ void ImageOpenController::finishDecodedImageResult(
         finishLoadWithError(session, ImageLoadError::Generic, errorString);
         return;
     }
-    QImage preview = source->decodePreview(imagePreviewLongEdgeMax, &errorString);
+    QImage preview
+        = source->decodeBlockingDisplayImage(imageBlockingDisplayLongEdgeMax, &errorString);
     if (preview.isNull()) {
         finishLoadWithError(session, ImageLoadError::Generic, errorString);
         return;
@@ -161,7 +165,8 @@ void ImageOpenController::finishDecodedImageResult(
         = decodedImageResultIsPredecodeCacheable(result, PredecodeCache::byteBudget());
     prepareSuccessfulImageLoad(session);
     m_presentationController.setPredecodeCacheable(predecodeCacheable);
-    m_presentationController.setStaticImage(std::move(decoded.source), decoded.preview);
+    m_presentationController.setStaticImage(
+        std::move(decoded.source), decoded.preview, decoded.displayHints);
     m_presentationController.updateRenderContext();
     finishSuccessfulImageLoad(session);
 }

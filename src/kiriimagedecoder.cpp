@@ -32,15 +32,17 @@ std::optional<KiriView::DecodedImageResult> decodeSvgImageData(const QByteArray 
         return std::nullopt;
     }
 
-    QImage preview = source->decodePreview(KiriView::imagePreviewLongEdgeMax, &errorString);
+    QImage preview = source->decodeBlockingDisplayImage(
+        KiriView::imageBlockingDisplayLongEdgeMax, &errorString);
     if (preview.isNull()) {
         return decodedImageFailure(errorString);
     }
 
-    return KiriView::StaticDecodedImage { std::move(source), std::move(preview) };
+    return KiriView::StaticDecodedImage { std::move(source), std::move(preview), {} };
 }
 
-KiriView::DecodedImageResult openedStaticImageResult(const QByteArray &data)
+KiriView::DecodedImageResult openedStaticImageResult(
+    const QByteArray &data, const KiriView::ImageDecodeRequest &request)
 {
     QString errorString;
     std::shared_ptr<KiriView::ImageTileSource> source
@@ -49,17 +51,37 @@ KiriView::DecodedImageResult openedStaticImageResult(const QByteArray &data)
         return decodedImageFailure(errorString);
     }
 
-    QImage preview = source->decodePreview(KiriView::imagePreviewLongEdgeMax, &errorString);
+    const KiriView::FirstDisplayImageDecodeResult firstDisplay
+        = source->decodeFirstDisplayImage(request.firstDisplay, &errorString);
+    if (firstDisplay.status == KiriView::FirstDisplayImageDecodeStatus::Ready) {
+        if (firstDisplay.image.isNull()) {
+            return decodedImageFailure(errorString);
+        }
+
+        return KiriView::StaticDecodedImage { std::move(source), std::move(firstDisplay.image),
+            KiriView::StaticImageDisplayHints { firstDisplay.displayPixelsPerSourcePixel } };
+    }
+    if (firstDisplay.status == KiriView::FirstDisplayImageDecodeStatus::Error) {
+        return decodedImageFailure(errorString);
+    }
+
+    QImage preview = source->decodeBlockingDisplayImage(
+        KiriView::imageBlockingDisplayLongEdgeMax, &errorString);
     if (preview.isNull()) {
         return decodedImageFailure(errorString);
     }
 
-    return KiriView::StaticDecodedImage { std::move(source), std::move(preview) };
+    return KiriView::StaticDecodedImage { std::move(source), std::move(preview), {} };
 }
 }
 
 namespace KiriView {
 DecodedImageResult decodeImageData(const QByteArray &data)
+{
+    return decodeImageData(data, ImageDecodeRequest {});
+}
+
+DecodedImageResult decodeImageData(const QByteArray &data, const ImageDecodeRequest &request)
 {
     if (const std::optional<DecodedImageResult> svgResult = decodeSvgImageData(data)) {
         return *svgResult;
@@ -107,12 +129,12 @@ DecodedImageResult decodeImageData(const QByteArray &data)
     const bool supportsAnimation = reader.supportsAnimation();
 
     if (!supportsAnimation) {
-        return openedStaticImageResult(imageData);
+        return openedStaticImageResult(imageData, request);
     }
 
     QImage image = reader.read();
     if (image.isNull()) {
-        return openedStaticImageResult(imageData);
+        return openedStaticImageResult(imageData, request);
     }
 
     const QByteArray format = reader.format();
@@ -130,7 +152,7 @@ DecodedImageResult decodeImageData(const QByteArray &data)
             firstFrameDelay,
         };
     }
-    return openedStaticImageResult(imageData);
+    return openedStaticImageResult(imageData, request);
 }
 
 }

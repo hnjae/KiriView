@@ -40,7 +40,7 @@ public:
     void setPredecodedImageCallback(PredecodedImageCallback callback);
     void setTakePredecodedImageCallback(TakePredecodedImageCallback callback);
 
-    void start(ImageLoadRequest request);
+    void start(ImageLoadRequest request, ImageFirstDisplayDecodeContext firstDisplayContext = {});
     void cancel();
 
 private:
@@ -66,6 +66,7 @@ private:
     ImageCandidateRepository m_candidateRepository;
     ImageIoJob m_archiveListJob;
     std::optional<ImageLoadSession> m_loadSession;
+    ImageFirstDisplayDecodeContext m_firstDisplayContext;
 };
 }
 

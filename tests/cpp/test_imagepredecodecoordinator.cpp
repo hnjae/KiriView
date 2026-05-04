@@ -5,6 +5,7 @@
 #include "imagepredecodecoordinator.h"
 
 #include <QObject>
+#include <QSize>
 #include <QTest>
 #include <QUrl>
 #include <map>
@@ -102,14 +103,18 @@ void TestImagePredecodeCoordinator::scheduleCachesDisplayedImageAndPredecodesWin
         true,
         std::make_shared<TestImageTileSource>(displayedImage),
         displayedImage,
+        KiriView::StaticImageDisplayHints { 0.5 },
+        KiriView::ImageFirstDisplayDecodeContext { QSize(640, 480) },
     });
 
     const std::optional<KiriView::PredecodedImage> displayed = coordinator.tryTake(displayedUrl);
     QVERIFY(displayed.has_value());
     QCOMPARE(displayed->location.imageUrl(), displayedUrl);
+    QCOMPARE(displayed->displayHints.firstDisplayPixelsPerSourcePixel, 0.5);
 
     QCOMPARE(dataLoader.loads.size(), std::size_t(1));
     QCOMPARE(dataLoader.loads.front()->url, nextUrl);
+    QCOMPARE(dataLoader.loads.front()->firstDisplay.physicalViewportSize, QSize(640, 480));
     dataLoader.loads.front()->dataCallback(QByteArrayLiteral("next"));
 
     QTRY_VERIFY(coordinator.tryTake(nextUrl).has_value());

@@ -59,6 +59,8 @@ public:
     bool isPredecodeCacheable() const;
     std::shared_ptr<ImageTileSource> staticImageSource() const;
     const QImage &staticImagePreview() const;
+    const StaticImageDisplayHints &staticImageDisplayHints() const;
+    ImageFirstDisplayDecodeContext firstDisplayDecodeContext() const;
 
     void resetZoom();
     void setFitMode(ImageZoomMode zoomMode);
@@ -67,7 +69,8 @@ public:
     void prepareFailedContainer(const QUrl &containerUrl);
     void setPredecodeCacheable(bool cacheable);
     void setImage(const QImage &image);
-    void setStaticImage(std::shared_ptr<ImageTileSource> source, const QImage &preview);
+    void setStaticImage(std::shared_ptr<ImageTileSource> source, const QImage &preview,
+        StaticImageDisplayHints displayHints = {});
     void clearImage();
 
     void startAnimation(
@@ -79,6 +82,8 @@ public:
 private:
     void setImageSize(const QSize &imageSize);
     void scheduleVisibleTileDecode();
+    bool staticTileSurfaceFirstDisplayIsSufficient(const StaticTileSurface &surface) const;
+    qreal displayPixelsPerSourcePixel(const TilePyramid &pyramid) const;
     std::vector<TileKey> visibleTileKeys(const StaticTileSurface &surface) const;
     QRect levelRectForItemRect(const TilePyramid &pyramid, int level, const QRectF &itemRect) const;
     bool tileRequestIsCurrent(quint64 generation, const TileKey &key) const;

@@ -57,6 +57,11 @@ std::shared_ptr<ImageTileSource> DisplayedImageState::staticImageSource() const
 
 const QImage &DisplayedImageState::staticImagePreview() const { return m_staticImagePreview; }
 
+const StaticImageDisplayHints &DisplayedImageState::staticImageDisplayHints() const
+{
+    return m_staticImageDisplayHints;
+}
+
 void DisplayedImageState::setPredecodeCacheable(bool cacheable)
 {
     m_imageIsPredecodeCacheable = cacheable;
@@ -67,22 +72,24 @@ void DisplayedImageState::setImage(const QImage &image)
     m_image = displayReadyImage(image);
     m_staticImageSource.reset();
     m_staticImagePreview = QImage();
+    m_staticImageDisplayHints = StaticImageDisplayHints {};
     m_surface = std::make_shared<DisplayedImageSurface>(LegacyFrameSurface { m_image });
     ++m_imageRevision;
     notifyImageChanged();
 }
 
-void DisplayedImageState::setStaticImage(
-    std::shared_ptr<ImageTileSource> source, const QImage &preview, bool useFullImageSurface)
+void DisplayedImageState::setStaticImage(std::shared_ptr<ImageTileSource> source,
+    const QImage &preview, StaticImageDisplayHints displayHints, bool useFullImageSurface)
 {
     m_image = displayReadyImage(preview);
     m_staticImageSource = std::move(source);
     m_staticImagePreview = m_image;
+    m_staticImageDisplayHints = displayHints;
     if (useFullImageSurface) {
         m_surface = std::make_shared<DisplayedImageSurface>(LegacyFrameSurface { m_image });
     } else {
         m_surface = std::make_shared<DisplayedImageSurface>(
-            StaticTileSurface { m_staticImageSource, m_image });
+            StaticTileSurface { m_staticImageSource, m_image, displayHints });
     }
     ++m_imageRevision;
     notifyImageChanged();
@@ -114,6 +121,7 @@ void DisplayedImageState::clear()
         m_image = QImage();
         m_staticImageSource.reset();
         m_staticImagePreview = QImage();
+        m_staticImageDisplayHints = StaticImageDisplayHints {};
         ++m_imageRevision;
         notifyImageChanged();
     }

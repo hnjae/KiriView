@@ -23,7 +23,8 @@ public:
     using ErrorCallback = std::function<void(const QString &)>;
     using DataLoader
         = std::function<ImageIoJob(QObject *, ImageDecodeRequest, DataCallback, ErrorCallback)>;
-    using DataDecoder = std::function<DecodedImageResult(const QByteArray &)>;
+    using DataDecoder
+        = std::function<DecodedImageResult(const QByteArray &, const ImageDecodeRequest &)>;
     using DecodedCallback
         = std::function<void(ImageDecodeRequest, std::shared_ptr<DecodedImageResult>)>;
     using LoadErrorCallback = std::function<void(const ImageDecodeRequest &, const QString &)>;

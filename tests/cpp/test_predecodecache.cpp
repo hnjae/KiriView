@@ -101,13 +101,15 @@ void TestPredecodeCache::cacheStoresAndFindsWindowImages()
     const QImage image = cacheImage();
 
     cache.setWindowUrls({ url });
-    cache.cacheImage(url, archiveDocument, tileSourceFor(image), image);
+    cache.cacheImage(url, archiveDocument, tileSourceFor(image), image,
+        KiriView::StaticImageDisplayHints { 0.5 });
 
     const std::optional<KiriView::PredecodedImage> found = cache.findImage(url);
     QVERIFY(found.has_value());
     QCOMPARE(found->preview.size(), image.size());
     QCOMPARE(found->location.imageUrl(), url);
     QCOMPARE(found->location.archiveDocumentRootUrl(), archiveDocument.rootUrl());
+    QCOMPARE(found->displayHints.firstDisplayPixelsPerSourcePixel, 0.5);
 }
 
 void TestPredecodeCache::cacheRejectsUncacheableAndOversizedImages()

@@ -73,7 +73,7 @@ void ImageDecodeJob::startDecode(QByteArray data, ImageDecodeRequest request)
     const DataDecoder decoder = m_dataDecoder;
     QThreadPool::globalInstance()->start(
         QRunnable::create([decodeJob, decoder, data = std::move(data), request]() mutable {
-            auto result = std::make_shared<DecodedImageResult>(decoder(data));
+            auto result = std::make_shared<DecodedImageResult>(decoder(data, request));
             if (decodeJob == nullptr) {
                 return;
             }

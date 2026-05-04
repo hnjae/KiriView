@@ -28,10 +28,14 @@ public:
     QSize levelSize(int level) const override;
     std::optional<DecodedTile> decodeTile(
         const TileRequest &request, QString *errorString) const override;
-    QImage decodePreview(int maximumLongEdge, QString *errorString) const override;
+    FirstDisplayImageDecodeResult decodeFirstDisplayImage(
+        const ImageFirstDisplayDecodeContext &context, QString *errorString) const override;
+    QImage decodeBlockingDisplayImage(int maximumLongEdge, QString *errorString) const override;
     qsizetype byteCost() const override;
 
 private:
+    bool supportsJpegScaledFirstDisplay() const;
+    QSize firstDisplayScaledSize(const QSize &physicalViewportSize) const;
     QImage readScaledImage(const QSize &scaledSize, QString *errorString) const;
     QImage readFullImage(QString *errorString) const;
     QImage readSourceClip(const QRect &sourceRect, QString *errorString) const;
@@ -59,7 +63,9 @@ public:
     QSize levelSize(int level) const override;
     std::optional<DecodedTile> decodeTile(
         const TileRequest &request, QString *errorString) const override;
-    QImage decodePreview(int maximumLongEdge, QString *errorString) const override;
+    FirstDisplayImageDecodeResult decodeFirstDisplayImage(
+        const ImageFirstDisplayDecodeContext &context, QString *errorString) const override;
+    QImage decodeBlockingDisplayImage(int maximumLongEdge, QString *errorString) const override;
     qsizetype byteCost() const override;
 
 private:

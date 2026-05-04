@@ -153,6 +153,7 @@ struct PredecodedImage {
     std::shared_ptr<ImageTileSource> source;
     QImage preview;
     DisplayedImageLocation location;
+    StaticImageDisplayHints displayHints;
 };
 }
 

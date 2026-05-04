@@ -44,12 +44,13 @@ std::optional<DecodedImageResult> decodeHeifStillImageData(const QByteArray &dat
         return decodedImageFailure(errorString);
     }
 
-    QImage preview = source->decodePreview(imagePreviewLongEdgeMax, &errorString);
+    QImage preview
+        = source->decodeBlockingDisplayImage(imageBlockingDisplayLongEdgeMax, &errorString);
     if (preview.isNull()) {
         return decodedImageFailure(errorString);
     }
 
-    return StaticDecodedImage { std::move(source), std::move(preview) };
+    return StaticDecodedImage { std::move(source), std::move(preview), {} };
 }
 
 std::optional<DecodedImageResult> decodeHeifSequenceImageData(const QByteArray &data)

@@ -65,9 +65,11 @@ void ImageLoader::setTakePredecodedImageCallback(TakePredecodedImageCallback cal
     m_takePredecodedImage = std::move(callback);
 }
 
-void ImageLoader::start(ImageLoadRequest request)
+void ImageLoader::start(
+    ImageLoadRequest request, ImageFirstDisplayDecodeContext firstDisplayContext)
 {
     cancel();
+    m_firstDisplayContext = firstDisplayContext;
 
     ImageLoadPlan plan = imageLoadPlan(m_loadTickets.next(), std::move(request));
     const ImageLoadSession session = std::move(plan.session);
@@ -91,8 +93,8 @@ void ImageLoader::startImageLoad(ImageLoadSession session)
         return;
     }
 
-    m_decodeJob.start(ImageDecodeRequest {
-        session.id, session.location.imageUrl(), session.location.archiveDocument() });
+    m_decodeJob.start(ImageDecodeRequest { session.id, session.location.imageUrl(),
+        session.location.archiveDocument(), m_firstDisplayContext });
 }
 
 void ImageLoader::startArchiveLoad(ImageLoadSession session)
@@ -135,6 +137,7 @@ void ImageLoader::cancel()
 {
     m_loadTickets.invalidate();
     m_loadSession.reset();
+    m_firstDisplayContext = {};
     m_decodeJob.cancel();
     m_archiveListJob.cancel();
 }

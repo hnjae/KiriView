@@ -17,9 +17,10 @@ KiriView::ImageIoJob loadImageData(QObject *receiver, KiriView::ImageDecodeReque
         receiver, std::move(request), std::move(callback), std::move(errorCallback));
 }
 
-KiriView::DecodedImageResult decodeImageDataWithDefaults(const QByteArray &data)
+KiriView::DecodedImageResult decodeImageDataWithDefaults(
+    const QByteArray &data, const KiriView::ImageDecodeRequest &request)
 {
-    return KiriView::decodeImageData(data);
+    return KiriView::decodeImageData(data, request);
 }
 }
 

@@ -35,7 +35,17 @@ public:
     QSize levelSize(int level) const override { return m_pyramid.levelSize(level); }
     qsizetype byteCost() const override { return m_data.size(); }
 
-    QImage decodePreview(int maximumLongEdge, QString *errorString) const override
+    KiriView::FirstDisplayImageDecodeResult decodeFirstDisplayImage(
+        const KiriView::ImageFirstDisplayDecodeContext &context,
+        QString *errorString) const override
+    {
+        Q_UNUSED(context);
+        Q_UNUSED(errorString);
+        // TODO: Add a HEIF-family first-display path that can avoid full fallback decode.
+        return {};
+    }
+
+    QImage decodeBlockingDisplayImage(int maximumLongEdge, QString *errorString) const override
     {
         return decodeFullOrScaled(
             KiriView::boundedPreviewSize(m_imageSize, maximumLongEdge), errorString);

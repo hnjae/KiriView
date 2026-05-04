@@ -263,9 +263,11 @@ void ImageDocumentController::scheduleAdjacentImagePredecode()
         return;
     }
 
-    m_predecodeCoordinator->schedule(ImagePredecodeCoordinator::Context {
-        m_state.displayedImageLocation(), m_presentationController->isPredecodeCacheable(),
-        std::move(staticImageSource), staticImagePreview });
+    m_predecodeCoordinator->schedule(
+        ImagePredecodeCoordinator::Context { m_state.displayedImageLocation(),
+            m_presentationController->isPredecodeCacheable(), std::move(staticImageSource),
+            staticImagePreview, m_presentationController->staticImageDisplayHints(),
+            m_presentationController->firstDisplayDecodeContext() });
 }
 
 void ImageDocumentController::cancelPredecode()

@@ -5,11 +5,13 @@
 #define KIRIVIEW_KIRIIMAGEDECODER_H
 
 #include "decodedimageresult.h"
+#include "imagedecoderequest.h"
 
 #include <QByteArray>
 
 namespace KiriView {
 DecodedImageResult decodeImageData(const QByteArray &data);
+DecodedImageResult decodeImageData(const QByteArray &data, const ImageDecodeRequest &request);
 }
 
 #endif

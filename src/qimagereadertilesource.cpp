@@ -13,6 +13,7 @@
 #include <QImageReader>
 #include <QMutexLocker>
 #include <algorithm>
+#include <cmath>
 #include <memory>
 #include <optional>
 #include <utility>
@@ -116,12 +117,77 @@ std::optional<DecodedTile> QImageReaderTileSource::decodeTile(
     return decodedTileFromImage(request, std::move(image));
 }
 
-QImage QImageReaderTileSource::decodePreview(int maximumLongEdge, QString *errorString) const
+FirstDisplayImageDecodeResult QImageReaderTileSource::decodeFirstDisplayImage(
+    const ImageFirstDisplayDecodeContext &context, QString *errorString) const
+{
+    if (!context.isValid() || !supportsJpegScaledFirstDisplay()) {
+        return {};
+    }
+
+    const QSize scaledSize = firstDisplayScaledSize(context.physicalViewportSize);
+    if (scaledSize.isEmpty()) {
+        return {};
+    }
+
+    QImage image = readScaledImage(scaledSize, errorString);
+    if (image.isNull()) {
+        return { FirstDisplayImageDecodeStatus::Error, {}, 0.0 };
+    }
+
+    const qreal displayPixelsPerSourcePixel
+        = std::min(static_cast<qreal>(image.width()) / m_imageSize.width(),
+            static_cast<qreal>(image.height()) / m_imageSize.height());
+    if (!std::isfinite(displayPixelsPerSourcePixel) || displayPixelsPerSourcePixel <= 0.0) {
+        setTileSourceError(errorString,
+            imageViewText("Could not determine the selected JPEG first-display size."));
+        return { FirstDisplayImageDecodeStatus::Error, {}, 0.0 };
+    }
+
+    return { FirstDisplayImageDecodeStatus::Ready, std::move(image), displayPixelsPerSourcePixel };
+}
+
+QImage QImageReaderTileSource::decodeBlockingDisplayImage(
+    int maximumLongEdge, QString *errorString) const
 {
     return readScaledImage(boundedPreviewSize(m_imageSize, maximumLongEdge), errorString);
 }
 
 qsizetype QImageReaderTileSource::byteCost() const { return m_data.size(); }
+
+bool QImageReaderTileSource::supportsJpegScaledFirstDisplay() const
+{
+    const QByteArray format = m_format.toLower();
+    return format == QByteArrayLiteral("jpg") || format == QByteArrayLiteral("jpeg");
+}
+
+QSize QImageReaderTileSource::firstDisplayScaledSize(const QSize &physicalViewportSize) const
+{
+    if (m_imageSize.isEmpty() || physicalViewportSize.isEmpty()) {
+        return {};
+    }
+    if (m_imageSize.width() <= physicalViewportSize.width()
+        && m_imageSize.height() <= physicalViewportSize.height()) {
+        return {};
+    }
+
+    const qreal scale = std::min(
+        static_cast<qreal>(physicalViewportSize.width()) / static_cast<qreal>(m_imageSize.width()),
+        static_cast<qreal>(physicalViewportSize.height())
+            / static_cast<qreal>(m_imageSize.height()));
+    if (!std::isfinite(scale) || scale <= 0.0 || scale >= 1.0) {
+        return {};
+    }
+
+    const int width = std::clamp(
+        static_cast<int>(std::ceil(m_imageSize.width() * scale)), 1, m_imageSize.width());
+    const int height = std::clamp(
+        static_cast<int>(std::ceil(m_imageSize.height() * scale)), 1, m_imageSize.height());
+    if (width >= m_imageSize.width() && height >= m_imageSize.height()) {
+        return {};
+    }
+
+    return QSize(width, height);
+}
 
 QImage QImageReaderTileSource::readScaledImage(const QSize &scaledSize, QString *errorString) const
 {

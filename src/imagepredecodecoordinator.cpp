@@ -44,6 +44,7 @@ void ImagePredecodeCoordinator::schedule(Context context)
     }
 
     const quint64 generation = m_generation.next();
+    m_firstDisplayContext = context.firstDisplayContext;
     scheduleAdjacentImagePredecode(context, generation);
 }
 
@@ -82,7 +83,8 @@ void ImagePredecodeCoordinator::startPredecodeImageLoads(const std::vector<QUrl>
     m_cache.setWindowUrls(urls);
     m_cache.cacheDisplayedImage(context.displayedImageIsCacheable,
         context.displayedImageLocation.imageUrl(), context.displayedImageLocation.archiveDocument(),
-        context.displayedImageSource, context.displayedImagePreview);
+        context.displayedImageSource, context.displayedImagePreview,
+        context.displayedImageDisplayHints);
     m_cache.enqueueMissingWindowLoads(
         context.displayedImageLocation.imageUrl(), archiveDocument, m_activePredecodeUrl);
 
@@ -115,7 +117,8 @@ void ImagePredecodeCoordinator::startPredecodeImageLoad(
     const QUrl normalizedUrl = normalizedImageUrl(url);
     m_activePredecodeUrl = normalizedUrl;
     m_activePredecodeArchiveDocument = archiveDocument;
-    m_decodeJob.start(ImageDecodeRequest { generation, url, archiveDocument });
+    m_decodeJob.start(
+        ImageDecodeRequest { generation, url, archiveDocument, m_firstDisplayContext });
 }
 
 void ImagePredecodeCoordinator::finishPredecodeImageLoadError(const ImageDecodeRequest &request)
@@ -142,7 +145,7 @@ void ImagePredecodeCoordinator::finishPredecodeImageDecode(
     if (staticImage != nullptr
         && decodedImageResultIsPredecodeCacheable(result, KiriView::PredecodeCache::byteBudget())) {
         m_cache.cacheImage(request.imageUrl, m_activePredecodeArchiveDocument, staticImage->source,
-            staticImage->preview);
+            staticImage->preview, staticImage->displayHints);
     }
 
     m_activePredecodeUrl = QUrl();
@@ -157,6 +160,7 @@ void ImagePredecodeCoordinator::cancel()
     m_decodeJob.cancel();
     m_activePredecodeUrl = QUrl();
     m_activePredecodeArchiveDocument = ArchiveDocumentLocation::none();
+    m_firstDisplayContext = {};
     m_cache.clearQueuedLoads();
 }
 

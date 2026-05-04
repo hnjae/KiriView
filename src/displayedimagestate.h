@@ -39,11 +39,12 @@ public:
     bool isPredecodeCacheable() const;
     std::shared_ptr<ImageTileSource> staticImageSource() const;
     const QImage &staticImagePreview() const;
+    const StaticImageDisplayHints &staticImageDisplayHints() const;
 
     void setPredecodeCacheable(bool cacheable);
     void setImage(const QImage &image);
-    void setStaticImage(
-        std::shared_ptr<ImageTileSource> source, const QImage &preview, bool useFullImageSurface);
+    void setStaticImage(std::shared_ptr<ImageTileSource> source, const QImage &preview,
+        StaticImageDisplayHints displayHints, bool useFullImageSurface);
     bool insertTile(DecodedTile tile);
     void clear();
 
@@ -62,6 +63,7 @@ private:
     QImage m_image;
     std::shared_ptr<ImageTileSource> m_staticImageSource;
     QImage m_staticImagePreview;
+    StaticImageDisplayHints m_staticImageDisplayHints;
     bool m_imageIsPredecodeCacheable = false;
     quint64 m_imageRevision = 0;
     std::unique_ptr<ImageAnimationPlayer> m_animationPlayer;

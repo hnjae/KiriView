@@ -38,10 +38,12 @@ std::optional<qsizetype> systemMemoryByteSize()
 }
 
 namespace KiriView {
-StaticTileSurface::StaticTileSurface(std::shared_ptr<ImageTileSource> source, QImage preview)
+StaticTileSurface::StaticTileSurface(
+    std::shared_ptr<ImageTileSource> source, QImage preview, StaticImageDisplayHints displayHints)
     : m_source(std::move(source))
     , m_pyramid(m_source == nullptr ? QSize() : m_source->imageSize())
     , m_preview(std::move(preview))
+    , m_displayHints(displayHints)
     , m_tileCache(defaultTileCacheByteBudget())
 {
 }
@@ -58,6 +60,8 @@ const TilePyramid &StaticTileSurface::pyramid() const { return m_pyramid; }
 QSize StaticTileSurface::imageSize() const { return m_pyramid.imageSize(); }
 
 const QImage &StaticTileSurface::preview() const { return m_preview; }
+
+const StaticImageDisplayHints &StaticTileSurface::displayHints() const { return m_displayHints; }
 
 bool StaticTileSurface::containsTile(const TileKey &key) const { return m_tileCache.contains(key); }
 

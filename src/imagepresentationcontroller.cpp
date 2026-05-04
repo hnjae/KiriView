@@ -114,6 +114,28 @@ const QImage &ImagePresentationController::staticImagePreview() const
     return m_displayedImageState->staticImagePreview();
 }
 
+const StaticImageDisplayHints &ImagePresentationController::staticImageDisplayHints() const
+{
+    return m_displayedImageState->staticImageDisplayHints();
+}
+
+ImageFirstDisplayDecodeContext ImagePresentationController::firstDisplayDecodeContext() const
+{
+    const QSizeF viewport = viewportSize();
+    const qreal devicePixelRatio = displayDevicePixelRatio();
+    if (viewport.isEmpty() || !std::isfinite(devicePixelRatio) || devicePixelRatio <= 0.0) {
+        return {};
+    }
+
+    const int width = static_cast<int>(std::ceil(viewport.width() * devicePixelRatio));
+    const int height = static_cast<int>(std::ceil(viewport.height() * devicePixelRatio));
+    if (width <= 0 || height <= 0) {
+        return {};
+    }
+
+    return ImageFirstDisplayDecodeContext { QSize(width, height) };
+}
+
 void ImagePresentationController::resetZoom()
 {
     const ImageZoomSnapshot previous = m_zoomState.snapshot();
@@ -170,8 +192,8 @@ void ImagePresentationController::setImage(const QImage &image)
     m_displayedImageState->setImage(image);
 }
 
-void ImagePresentationController::setStaticImage(
-    std::shared_ptr<ImageTileSource> source, const QImage &preview)
+void ImagePresentationController::setStaticImage(std::shared_ptr<ImageTileSource> source,
+    const QImage &preview, StaticImageDisplayHints displayHints)
 {
     stopAnimation();
     ++m_tileGeneration;
@@ -179,7 +201,8 @@ void ImagePresentationController::setStaticImage(
     m_failedTileKeys.clear();
     const bool useFullImageSurface = source != nullptr
         && staticImageFitsFullImageSurface(*source, preview, maximumTextureSize());
-    m_displayedImageState->setStaticImage(std::move(source), preview, useFullImageSurface);
+    m_displayedImageState->setStaticImage(
+        std::move(source), preview, displayHints, useFullImageSurface);
     if (!useFullImageSurface) {
         scheduleVisibleTileDecode();
     }
@@ -237,6 +260,9 @@ void ImagePresentationController::scheduleVisibleTileDecode()
     if (surface == nullptr || !surface->isValid()) {
         return;
     }
+    if (staticTileSurfaceFirstDisplayIsSufficient(*surface)) {
+        return;
+    }
 
     std::shared_ptr<ImageTileSource> source = surface->source();
     if (source == nullptr) {
@@ -278,6 +304,37 @@ void ImagePresentationController::scheduleVisibleTileDecode()
     }
 }
 
+bool ImagePresentationController::staticTileSurfaceFirstDisplayIsSufficient(
+    const StaticTileSurface &surface) const
+{
+    const qreal firstDisplayPixelsPerSourcePixel
+        = surface.displayHints().firstDisplayPixelsPerSourcePixel;
+    if (!std::isfinite(firstDisplayPixelsPerSourcePixel)
+        || firstDisplayPixelsPerSourcePixel <= 0.0) {
+        return false;
+    }
+
+    const qreal currentDisplayPixelsPerSourcePixel = displayPixelsPerSourcePixel(surface.pyramid());
+    if (!std::isfinite(currentDisplayPixelsPerSourcePixel)
+        || currentDisplayPixelsPerSourcePixel <= 0.0) {
+        return false;
+    }
+
+    return currentDisplayPixelsPerSourcePixel <= firstDisplayPixelsPerSourcePixel + 0.001;
+}
+
+qreal ImagePresentationController::displayPixelsPerSourcePixel(const TilePyramid &pyramid) const
+{
+    if (pyramid.imageSize().isEmpty() || m_zoomState.displaySize().isEmpty()) {
+        return 0.0;
+    }
+
+    return std::min((m_zoomState.displaySize().width() * displayDevicePixelRatio())
+            / pyramid.imageSize().width(),
+        (m_zoomState.displaySize().height() * displayDevicePixelRatio())
+            / pyramid.imageSize().height());
+}
+
 std::vector<TileKey> ImagePresentationController::visibleTileKeys(
     const StaticTileSurface &surface) const
 {
@@ -288,12 +345,7 @@ std::vector<TileKey> ImagePresentationController::visibleTileKeys(
         return keys;
     }
 
-    const qreal displayPixelsPerSourcePixel
-        = std::min((m_zoomState.displaySize().width() * displayDevicePixelRatio())
-                / pyramid.imageSize().width(),
-            (m_zoomState.displaySize().height() * displayDevicePixelRatio())
-                / pyramid.imageSize().height());
-    const int level = pyramid.selectLevelForDisplayScale(displayPixelsPerSourcePixel);
+    const int level = pyramid.selectLevelForDisplayScale(displayPixelsPerSourcePixel(pyramid));
     const QRect currentLevelRect = levelRectForItemRect(pyramid, level, m_visibleItemRect);
     keys = pyramid.tilesIntersectingLevelRect(level, currentLevelRect);
 

@@ -6,6 +6,7 @@
 #include "imageloader.h"
 
 #include <QObject>
+#include <QSize>
 #include <QTest>
 #include <QUrl>
 #include <map>
@@ -30,7 +31,8 @@ QUrl archivePageUrl(const QUrl &archiveRootUrl, const QString &pageName)
     return pageUrl;
 }
 
-KiriView::DecodedImageResult decodeTestImageData(const QByteArray &data)
+KiriView::DecodedImageResult decodeTestImageData(
+    const QByteArray &data, const KiriView::ImageDecodeRequest &)
 {
     if (data == QByteArrayLiteral("bad")) {
         return KiriView::DecodedImageFailure { QStringLiteral("decode failed") };
@@ -134,9 +136,11 @@ void TestImageLoader::imageLoadDeliversDecodedResult()
         });
 
     const QUrl imageUrl = localUrl(QStringLiteral("/images/01.png"));
-    loader.start(KiriView::ImageLoadRequest::fromUrl(imageUrl));
+    loader.start(KiriView::ImageLoadRequest::fromUrl(imageUrl),
+        KiriView::ImageFirstDisplayDecodeContext { QSize(320, 240) });
     QCOMPARE(dataLoader.loads.size(), std::size_t(1));
     QCOMPARE(dataLoader.loads.front()->url, imageUrl);
+    QCOMPARE(dataLoader.loads.front()->firstDisplay.physicalViewportSize, QSize(320, 240));
     dataLoader.loads.front()->dataCallback(QByteArrayLiteral("ok"));
 
     QTRY_VERIFY(decodedResult != nullptr);

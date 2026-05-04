@@ -25,6 +25,7 @@ struct ManualImageDataLoad {
     QObject *object = nullptr;
     QUrl url;
     ArchiveDocumentLocation archiveDocument;
+    ImageFirstDisplayDecodeContext firstDisplay;
     ImageDecodeJob::DataCallback dataCallback;
     ImageDecodeJob::ErrorCallback errorCallback;
     bool canceled = false;
@@ -40,6 +41,7 @@ public:
         load->object = new QObject(receiver);
         load->url = std::move(request.imageUrl);
         load->archiveDocument = std::move(request.archiveDocument);
+        load->firstDisplay = request.firstDisplay;
         load->dataCallback = std::move(callback);
         load->errorCallback = std::move(errorCallback);
         loads.push_back(load);
@@ -114,7 +116,13 @@ public:
     QSize levelSize(int level) const override { return m_pyramid.levelSize(level); }
     qsizetype byteCost() const override { return m_image.sizeInBytes(); }
 
-    QImage decodePreview(int, QString *) const override { return m_image; }
+    FirstDisplayImageDecodeResult decodeFirstDisplayImage(
+        const ImageFirstDisplayDecodeContext &, QString *) const override
+    {
+        return {};
+    }
+
+    QImage decodeBlockingDisplayImage(int, QString *) const override { return m_image; }
 
     std::optional<DecodedTile> decodeTile(const TileRequest &request, QString *) const override
     {
@@ -135,10 +143,10 @@ private:
 
 inline StaticDecodedImage staticDecodedTestImage(const QImage &image = testImage())
 {
-    return StaticDecodedImage { std::make_shared<TestImageTileSource>(image), image };
+    return StaticDecodedImage { std::make_shared<TestImageTileSource>(image), image, {} };
 }
 
-inline DecodedImageResult decodeStaticTestImageData(const QByteArray &)
+inline DecodedImageResult decodeStaticTestImageData(const QByteArray &, const ImageDecodeRequest &)
 {
     return staticDecodedTestImage();
 }

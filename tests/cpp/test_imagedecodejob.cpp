@@ -9,6 +9,7 @@
 #include <QTest>
 #include <QUrl>
 #include <memory>
+#include <optional>
 #include <utility>
 #include <vector>
 
@@ -16,6 +17,7 @@ namespace {
 struct ManualLoad {
     QObject *object = nullptr;
     QUrl url;
+    KiriView::ImageFirstDisplayDecodeContext firstDisplay;
     KiriView::ImageDecodeJob::DataCallback dataCallback;
     KiriView::ImageDecodeJob::ErrorCallback errorCallback;
     bool canceled = false;
@@ -33,6 +35,7 @@ public:
         auto load = std::make_shared<ManualLoad>();
         load->object = new QObject(receiver);
         load->url = std::move(request.imageUrl);
+        load->firstDisplay = request.firstDisplay;
         load->dataCallback = std::move(callback);
         load->errorCallback = std::move(errorCallback);
         loads.push_back(load);
@@ -48,7 +51,8 @@ public:
     std::vector<std::shared_ptr<ManualLoad>> loads;
 };
 
-KiriView::DecodedImageResult decodeTestImageData(const QByteArray &data)
+KiriView::DecodedImageResult decodeTestImageData(
+    const QByteArray &data, const KiriView::ImageDecodeRequest &)
 {
     if (data == QByteArrayLiteral("bad")) {
         return KiriView::DecodedImageFailure { QStringLiteral("decode failed") };
@@ -71,6 +75,7 @@ private Q_SLOTS:
     void staleLoadResultIsIgnored();
     void loadErrorsAreDeliveredForCurrentRequest();
     void decodeErrorsAreDeliveredAsResults();
+    void decodeRequestIsPassedToDecoder();
 };
 
 void TestImageDecodeJob::cancelSuppressesPendingLoad()
@@ -191,6 +196,36 @@ void TestImageDecodeJob::decodeErrorsAreDeliveredAsResults()
     QVERIFY(failure != nullptr);
     QCOMPARE(failure->errorString, QStringLiteral("decode failed"));
     QVERIFY(!decodeJob.hasActiveRequest());
+}
+
+void TestImageDecodeJob::decodeRequestIsPassedToDecoder()
+{
+    ManualImageDataLoader dataLoader;
+    std::optional<KiriView::ImageDecodeRequest> decoderRequest;
+    KiriView::ImageDecodeJob decodeJob(
+        this,
+        [&dataLoader](QObject *receiver, KiriView::ImageDecodeRequest request,
+            KiriView::ImageDecodeJob::DataCallback callback,
+            KiriView::ImageDecodeJob::ErrorCallback errorCallback) {
+            return dataLoader.start(
+                receiver, std::move(request), std::move(callback), std::move(errorCallback));
+        },
+        [&decoderRequest](const QByteArray &, const KiriView::ImageDecodeRequest &request) {
+            decoderRequest = request;
+            return KiriView::TestSupport::staticDecodedTestImage();
+        });
+
+    decodeJob.setDecodedCallback(
+        [](KiriView::ImageDecodeRequest, std::shared_ptr<KiriView::DecodedImageResult>) { });
+
+    decodeJob.start(
+        KiriView::ImageDecodeRequest { 5, imageUrl(5), KiriView::ArchiveDocumentLocation::none(),
+            KiriView::ImageFirstDisplayDecodeContext { QSize(320, 200) } });
+    dataLoader.loads.front()->dataCallback(QByteArrayLiteral("ok"));
+
+    QTRY_VERIFY(decoderRequest.has_value());
+    QCOMPARE(decoderRequest->id, quint64(5));
+    QCOMPARE(decoderRequest->firstDisplay.physicalViewportSize, QSize(320, 200));
 }
 
 QTEST_GUILESS_MAIN(TestImageDecodeJob)

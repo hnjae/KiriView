@@ -29,6 +29,8 @@ public:
         bool displayedImageIsCacheable = false;
         std::shared_ptr<ImageTileSource> displayedImageSource;
         QImage displayedImagePreview;
+        StaticImageDisplayHints displayedImageDisplayHints;
+        ImageFirstDisplayDecodeContext firstDisplayContext;
     };
 
     explicit ImagePredecodeCoordinator(QObject *parent = nullptr);
@@ -55,6 +57,7 @@ private:
     PredecodeCache m_cache;
     QUrl m_activePredecodeUrl;
     ArchiveDocumentLocation m_activePredecodeArchiveDocument;
+    ImageFirstDisplayDecodeContext m_firstDisplayContext;
     ImageAsyncTicket m_generation;
 };
 }

@@ -24,6 +24,7 @@ struct DecodedImageFailure {
 struct StaticDecodedImage {
     std::shared_ptr<ImageTileSource> source;
     QImage preview;
+    StaticImageDisplayHints displayHints;
 };
 
 struct SvgDecodedImage {
