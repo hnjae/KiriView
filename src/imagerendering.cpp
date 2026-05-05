@@ -9,8 +9,99 @@
 #include <Qt>
 #include <algorithm>
 #include <cmath>
+#include <type_traits>
+#include <variant>
 
 namespace KiriView {
+QRectF imageTargetRect(const QSize &imageSize, const QSizeF &boundsSize)
+{
+    if (imageSize.isEmpty() || boundsSize.isEmpty()) {
+        return {};
+    }
+
+    const qreal scale = std::min(
+        boundsSize.width() / imageSize.width(), boundsSize.height() / imageSize.height());
+    const QSizeF targetSize(imageSize.width() * scale, imageSize.height() * scale);
+    return QRectF((boundsSize.width() - targetSize.width()) / 2.0,
+        (boundsSize.height() - targetSize.height()) / 2.0, targetSize.width(), targetSize.height());
+}
+
+std::vector<ImageSurfaceDrawEntry> imageSurfaceDrawEntries(
+    const DisplayedImageSurface &surface, const QRectF &targetRect)
+{
+    std::vector<ImageSurfaceDrawEntry> entries;
+    if (targetRect.isEmpty()) {
+        return entries;
+    }
+
+    const auto addLegacy = [&](const LegacyFrameSurface &legacySurface) {
+        if (!legacySurface.image.isNull()) {
+            entries.push_back(ImageSurfaceDrawEntry {
+                legacySurface.image,
+                targetRect,
+                QRectF(0.0, 0.0, 1.0, 1.0),
+            });
+        }
+    };
+    const auto addStatic = [&](const StaticTileSurface &staticSurface) {
+        if (!staticSurface.isValid()) {
+            return;
+        }
+
+        entries.push_back(ImageSurfaceDrawEntry {
+            staticSurface.preview(),
+            targetRect,
+            QRectF(0.0, 0.0, 1.0, 1.0),
+        });
+
+        const QSize imageSize = staticSurface.imageSize();
+        if (imageSize.isEmpty()) {
+            return;
+        }
+
+        for (const DecodedTile &tile : staticSurface.tiles()) {
+            const QRect sourceRect
+                = staticSurface.pyramid().sourceRectForLevelRect(tile.key.level, tile.levelRect);
+            if (sourceRect.isEmpty() || tile.textureLevelRect.isEmpty() || tile.image.isNull()) {
+                continue;
+            }
+
+            const QRectF tileTargetRect(targetRect.x()
+                    + (static_cast<qreal>(sourceRect.x()) / imageSize.width()) * targetRect.width(),
+                targetRect.y()
+                    + (static_cast<qreal>(sourceRect.y()) / imageSize.height())
+                        * targetRect.height(),
+                (static_cast<qreal>(sourceRect.width()) / imageSize.width()) * targetRect.width(),
+                (static_cast<qreal>(sourceRect.height()) / imageSize.height())
+                    * targetRect.height());
+            const QRectF textureRect(
+                static_cast<qreal>(tile.levelRect.x() - tile.textureLevelRect.x())
+                    / tile.textureLevelRect.width(),
+                static_cast<qreal>(tile.levelRect.y() - tile.textureLevelRect.y())
+                    / tile.textureLevelRect.height(),
+                static_cast<qreal>(tile.levelRect.width()) / tile.textureLevelRect.width(),
+                static_cast<qreal>(tile.levelRect.height()) / tile.textureLevelRect.height());
+            entries.push_back(ImageSurfaceDrawEntry {
+                tile.image,
+                tileTargetRect,
+                textureRect,
+            });
+        }
+    };
+
+    std::visit(
+        [&](const auto &payload) {
+            using Payload = std::decay_t<decltype(payload)>;
+            if constexpr (std::is_same_v<Payload, LegacyFrameSurface>) {
+                addLegacy(payload);
+            } else {
+                addStatic(payload);
+            }
+        },
+        surface);
+    return entries;
+}
+
 QImage displayReadyImage(const QImage &image)
 {
     if (image.format() == QImage::Format_RGBA8888_Premultiplied) {

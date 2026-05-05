@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "kiriimagerendernode.h"
+#include "imagerendering.h"
 
 #include "image_test_support.h"
 
@@ -11,7 +11,7 @@
 #include <memory>
 #include <vector>
 
-class TestKiriImageRenderNode : public QObject
+class TestImageRendering : public QObject
 {
     Q_OBJECT
 
@@ -19,7 +19,7 @@ private Q_SLOTS:
     void staticSurfaceDrawEntriesKeepPreviewAndTileRectsSeparate();
 };
 
-void TestKiriImageRenderNode::staticSurfaceDrawEntriesKeepPreviewAndTileRectsSeparate()
+void TestImageRendering::staticSurfaceDrawEntriesKeepPreviewAndTileRectsSeparate()
 {
     const QImage sourceImage = KiriView::TestSupport::testImage(1024, 1024);
     auto source = std::make_shared<KiriView::TestSupport::TestImageTileSource>(sourceImage);
@@ -49,6 +49,6 @@ void TestKiriImageRenderNode::staticSurfaceDrawEntriesKeepPreviewAndTileRectsSep
     QVERIFY(qFuzzyCompare(entries[1].textureRect.height(), 512.0 / 513.0));
 }
 
-QTEST_GUILESS_MAIN(TestKiriImageRenderNode)
+QTEST_GUILESS_MAIN(TestImageRendering)
 
-#include "test_kiriimagerendernode.moc"
+#include "test_imagerendering.moc"

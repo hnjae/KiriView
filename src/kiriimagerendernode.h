@@ -4,9 +4,8 @@
 #ifndef KIRIVIEW_KIRIIMAGERENDERNODE_H
 #define KIRIVIEW_KIRIIMAGERENDERNODE_H
 
-#include "imagesurface.h"
+#include "imagerendering.h"
 
-#include <QImage>
 #include <QRectF>
 #include <QSGRenderNode>
 #include <memory>
@@ -21,20 +20,8 @@ class QRhiResourceUpdateBatch;
 class QRhiSampler;
 class QRhiShaderResourceBindings;
 class QRhiTexture;
-class QSize;
-class QSizeF;
 
 namespace KiriView {
-QRectF imageTargetRect(const QSize &imageSize, const QSizeF &boundsSize);
-
-struct ImageSurfaceDrawEntry {
-    QRectF targetRect;
-    QRectF textureRect;
-};
-
-std::vector<ImageSurfaceDrawEntry> imageSurfaceDrawEntries(
-    const DisplayedImageSurface &surface, const QRectF &targetRect);
-
 class KiriImageRenderNode final : public QSGRenderNode
 {
 public:
@@ -56,8 +43,8 @@ private:
     static void releasePendingResourceUpdates(QRhiResourceUpdateBatch *resourceUpdates);
 
     QRhiResourceUpdateBatch *ensureResourceUpdates(QRhiResourceUpdateBatch *&resourceUpdates);
-    bool addDrawTexture(QRhiResourceUpdateBatch *&resourceUpdates, const QImage &image,
-        const ImageSurfaceDrawEntry &entry);
+    bool addDrawTexture(
+        QRhiResourceUpdateBatch *&resourceUpdates, const ImageSurfaceDrawEntry &entry);
     bool ensureVertexBuffer(QRhiResourceUpdateBatch *&resourceUpdates);
     bool ensureTextures(QRhiResourceUpdateBatch *&resourceUpdates);
     bool syncDrawTextureEntries();
