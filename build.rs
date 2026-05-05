@@ -12,16 +12,41 @@ use std::{
 const CPP_CORE_SOURCES_FILE: &str = "src/cpp_core_sources.txt";
 const DEFAULT_INCLUDE_ROOTS: &[&str] = &["/usr/include"];
 const DEFAULT_LIBRARY_DIRS: &[&str] = &["/usr/lib/x86_64-linux-gnu", "/usr/lib"];
-const NATIVE_LIBRARY_FILES: &[&str] = &[
-    "libKF6Archive.so",
-    "libKF6KIOCore.so",
-    "libKF6CoreAddons.so",
-    "libarchive.so",
-    "libheif.so",
+const NATIVE_LIBRARIES: &[NativeLibrary] = &[
+    NativeLibrary {
+        link_name: "KF6Archive",
+        file_name: "libKF6Archive.so",
+        pkg_config_package: None,
+    },
+    NativeLibrary {
+        link_name: "KF6KIOCore",
+        file_name: "libKF6KIOCore.so",
+        pkg_config_package: None,
+    },
+    NativeLibrary {
+        link_name: "KF6CoreAddons",
+        file_name: "libKF6CoreAddons.so",
+        pkg_config_package: None,
+    },
+    NativeLibrary {
+        link_name: "archive",
+        file_name: "libarchive.so",
+        pkg_config_package: Some("libarchive"),
+    },
+    NativeLibrary {
+        link_name: "heif",
+        file_name: "libheif.so",
+        pkg_config_package: Some("libheif"),
+    },
 ];
-const NATIVE_LIBRARY_PKG_CONFIG_PACKAGES: &[&str] = &["libarchive", "libheif"];
 
 type IncludeDirCollector = fn(&mut BTreeSet<PathBuf>, &Path);
+
+struct NativeLibrary {
+    link_name: &'static str,
+    file_name: &'static str,
+    pkg_config_package: Option<&'static str>,
+}
 
 fn main() {
     let kio_include_dirs = kio_include_dirs();
@@ -185,11 +210,9 @@ fn link_native_libraries() {
         println!("cargo::rustc-link-search=native={}", dir.display());
     }
 
-    println!("cargo::rustc-link-lib=KF6Archive");
-    println!("cargo::rustc-link-lib=KF6KIOCore");
-    println!("cargo::rustc-link-lib=KF6CoreAddons");
-    println!("cargo::rustc-link-lib=archive");
-    println!("cargo::rustc-link-lib=heif");
+    for library in NATIVE_LIBRARIES {
+        println!("cargo::rustc-link-lib={}", library.link_name);
+    }
 }
 
 fn kio_include_dirs() -> Vec<PathBuf> {
@@ -345,7 +368,10 @@ fn native_library_dirs() -> Vec<PathBuf> {
             dirs.insert(path);
         }
     }
-    for package in NATIVE_LIBRARY_PKG_CONFIG_PACKAGES {
+    for package in NATIVE_LIBRARIES
+        .iter()
+        .filter_map(|library| library.pkg_config_package)
+    {
         for path in pkg_config_library_dirs(package) {
             dirs.insert(path);
         }
@@ -355,9 +381,9 @@ fn native_library_dirs() -> Vec<PathBuf> {
 }
 
 fn contains_native_library(dir: &Path) -> bool {
-    NATIVE_LIBRARY_FILES
+    NATIVE_LIBRARIES
         .iter()
-        .any(|library| dir.join(library).exists())
+        .any(|library| dir.join(library.file_name).exists())
 }
 
 fn pkg_config_library_dirs(package: &str) -> Vec<PathBuf> {
