@@ -8,6 +8,8 @@
 #include "imageasyncdependencies.h"
 #include "imagedocumenteffects.h"
 #include "imageloadtypes.h"
+#include "imagesurface.h"
+#include "predecodedimage.h"
 
 #include <QImage>
 #include <QString>

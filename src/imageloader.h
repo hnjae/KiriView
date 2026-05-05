@@ -9,6 +9,8 @@
 #include "imagedecodejob.h"
 #include "imageiojob.h"
 #include "imageloadtypes.h"
+#include "imagesurface.h"
+#include "predecodedimage.h"
 
 #include <QByteArray>
 #include <QImage>

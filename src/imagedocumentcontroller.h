@@ -10,6 +10,7 @@
 #include "imageloadtypes.h"
 #include "imagesurface.h"
 #include "imagezoomstate.h"
+#include "predecodedimage.h"
 
 #include <QImage>
 #include <QObject>

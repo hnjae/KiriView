@@ -12,6 +12,7 @@
 #include "imagelocation.h"
 #include "imagesurface.h"
 #include "predecodecache.h"
+#include "predecodedimage.h"
 
 #include <QByteArray>
 #include <QImage>

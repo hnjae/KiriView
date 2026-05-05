@@ -5,6 +5,8 @@
 #define KIRIVIEW_PREDECODECACHE_H
 
 #include "imagelocation.h"
+#include "imagesurface.h"
+#include "predecodedimage.h"
 
 #include <QImage>
 #include <QUrl>
