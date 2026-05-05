@@ -8,7 +8,14 @@
   git-hooks.hooks = {
     # Static checkers
     detect-private-keys.enable = true;
-    gitlint.enable = true;
+    cocogitto = {
+      enable = true;
+      name = "cog verify";
+      description = "Lint commit messages with Cocogitto.";
+      package = pkgs.cocogitto;
+      entry = "${lib.getExe pkgs.cocogitto} verify --file";
+      stages = [ "commit-msg" ];
+    };
     reuse.enable = true;
     typos.enable = true;
     desktop-file-utils-validate = {
