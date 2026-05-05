@@ -89,9 +89,6 @@ private:
     void invalidateTiles();
     void scheduleVisibleTileDecode();
     bool staticTileSurfaceFirstDisplayIsSufficient(const StaticTileSurface &surface) const;
-    qreal displayPixelsPerSourcePixel(const TilePyramid &pyramid) const;
-    std::vector<TileKey> visibleTileKeys(const StaticTileSurface &surface) const;
-    QRect levelRectForItemRect(const TilePyramid &pyramid, int level, const QRectF &itemRect) const;
     bool tileRequestIsCurrent(quint64 generation, const TileKey &key) const;
     void finishTileDecode(quint64 generation, TileKey key, std::optional<DecodedTile> tile);
     bool mutateZoomState(const ZoomStateMutation &mutation);

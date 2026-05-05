@@ -5,13 +5,13 @@
 
 #include "displayedimagestate.h"
 #include "imagerendering.h"
+#include "imagetilevisibility.h"
 
 #include <QMetaObject>
 #include <QPointer>
 #include <QRunnable>
 #include <QThreadPool>
 #include <Qt>
-#include <algorithm>
 #include <cmath>
 #include <memory>
 #include <utility>
@@ -275,7 +275,12 @@ void ImagePresentationController::scheduleVisibleTileDecode()
     }
 
     const quint64 generation = m_tileGeneration.current();
-    for (const TileKey &key : visibleTileKeys(*surface)) {
+    const TileVisibilityContext visibilityContext {
+        m_zoomState.displaySize(),
+        m_visibleItemRect,
+        displayDevicePixelRatio(),
+    };
+    for (const TileKey &key : visibleTileKeys(surface->pyramid(), visibilityContext)) {
         if (surface->containsTile(key) || m_pendingTileKeys.contains(key)
             || m_failedTileKeys.contains(key)) {
             continue;
@@ -321,82 +326,14 @@ bool ImagePresentationController::staticTileSurfaceFirstDisplayIsSufficient(
         return false;
     }
 
-    const qreal currentDisplayPixelsPerSourcePixel = displayPixelsPerSourcePixel(surface.pyramid());
+    const qreal currentDisplayPixelsPerSourcePixel = tileDisplayPixelsPerSourcePixel(
+        surface.pyramid(), m_zoomState.displaySize(), displayDevicePixelRatio());
     if (!std::isfinite(currentDisplayPixelsPerSourcePixel)
         || currentDisplayPixelsPerSourcePixel <= 0.0) {
         return false;
     }
 
     return currentDisplayPixelsPerSourcePixel <= firstDisplayPixelsPerSourcePixel + 0.001;
-}
-
-qreal ImagePresentationController::displayPixelsPerSourcePixel(const TilePyramid &pyramid) const
-{
-    if (pyramid.imageSize().isEmpty() || m_zoomState.displaySize().isEmpty()) {
-        return 0.0;
-    }
-
-    return std::min((m_zoomState.displaySize().width() * displayDevicePixelRatio())
-            / pyramid.imageSize().width(),
-        (m_zoomState.displaySize().height() * displayDevicePixelRatio())
-            / pyramid.imageSize().height());
-}
-
-std::vector<TileKey> ImagePresentationController::visibleTileKeys(
-    const StaticTileSurface &surface) const
-{
-    std::vector<TileKey> keys;
-    const TilePyramid &pyramid = surface.pyramid();
-    if (pyramid.imageSize().isEmpty() || m_zoomState.displaySize().isEmpty()
-        || m_visibleItemRect.isEmpty()) {
-        return keys;
-    }
-
-    const int level = pyramid.selectLevelForDisplayScale(displayPixelsPerSourcePixel(pyramid));
-    const QRect currentLevelRect = levelRectForItemRect(pyramid, level, m_visibleItemRect);
-    keys = pyramid.tilesIntersectingLevelRect(level, currentLevelRect);
-
-    QRectF prefetchItemRect = m_visibleItemRect.adjusted(-m_visibleItemRect.width(),
-        -m_visibleItemRect.height(), m_visibleItemRect.width(), m_visibleItemRect.height());
-    prefetchItemRect
-        = prefetchItemRect.intersected(QRectF(QPointF(0.0, 0.0), m_zoomState.displaySize()));
-    const QRect prefetchLevelRect = levelRectForItemRect(pyramid, level, prefetchItemRect);
-    for (const TileKey &key : pyramid.tilesIntersectingLevelRect(level, prefetchLevelRect)) {
-        if (std::find(keys.cbegin(), keys.cend(), key) == keys.cend()) {
-            keys.push_back(key);
-        }
-    }
-
-    return keys;
-}
-
-QRect ImagePresentationController::levelRectForItemRect(
-    const TilePyramid &pyramid, int level, const QRectF &itemRect) const
-{
-    if (itemRect.isEmpty() || m_zoomState.displaySize().isEmpty()
-        || pyramid.imageSize().isEmpty()) {
-        return {};
-    }
-
-    const QRectF bounded
-        = itemRect.intersected(QRectF(QPointF(0.0, 0.0), m_zoomState.displaySize()));
-    if (bounded.isEmpty()) {
-        return {};
-    }
-
-    const QSize levelSize = pyramid.levelSize(level);
-    const qreal xScale = static_cast<qreal>(levelSize.width()) / m_zoomState.displaySize().width();
-    const qreal yScale
-        = static_cast<qreal>(levelSize.height()) / m_zoomState.displaySize().height();
-    const int left
-        = std::clamp(static_cast<int>(std::floor(bounded.left() * xScale)), 0, levelSize.width());
-    const int top
-        = std::clamp(static_cast<int>(std::floor(bounded.top() * yScale)), 0, levelSize.height());
-    const int right = std::clamp(
-        static_cast<int>(std::ceil(bounded.right() * xScale)), left, levelSize.width());
-    const int bottom = std::clamp(
-        static_cast<int>(std::ceil(bounded.bottom() * yScale)), top, levelSize.height());
-    return QRect(left, top, right - left, bottom - top);
 }
 
 bool ImagePresentationController::tileRequestIsCurrent(quint64 generation, const TileKey &key) const
