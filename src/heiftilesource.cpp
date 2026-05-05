@@ -27,13 +27,10 @@ public:
         , m_imageSize(std::move(imageSize))
         , m_tiling(tiling)
         , m_tiled(tiled)
-        , m_pyramid(m_imageSize)
     {
     }
 
     QSize imageSize() const override { return m_imageSize; }
-    int levelCount() const override { return m_pyramid.levelCount(); }
-    QSize levelSize(int level) const override { return m_pyramid.levelSize(level); }
     qsizetype byteCost() const override { return m_data.size(); }
 
     KiriView::FirstDisplayImageDecodeResult decodeFirstDisplayImage(
@@ -178,7 +175,6 @@ private:
     QSize m_imageSize;
     heif_image_tiling m_tiling {};
     bool m_tiled = false;
-    KiriView::TilePyramid m_pyramid;
 };
 }
 

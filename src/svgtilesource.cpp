@@ -35,15 +35,10 @@ std::shared_ptr<SvgTileSource> SvgTileSource::open(const QByteArray &data, QStri
 SvgTileSource::SvgTileSource(QByteArray data, QSize imageSize)
     : m_data(std::move(data))
     , m_imageSize(std::move(imageSize))
-    , m_pyramid(m_imageSize)
 {
 }
 
 QSize SvgTileSource::imageSize() const { return m_imageSize; }
-
-int SvgTileSource::levelCount() const { return m_pyramid.levelCount(); }
-
-QSize SvgTileSource::levelSize(int level) const { return m_pyramid.levelSize(level); }
 
 std::optional<DecodedTile> SvgTileSource::decodeTile(
     const TileRequest &request, QString *errorString) const

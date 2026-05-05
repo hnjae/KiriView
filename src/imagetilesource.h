@@ -24,8 +24,6 @@ public:
     QImageReaderTileSource(QByteArray data, QByteArray format, QSize imageSize, bool hasTransform);
 
     QSize imageSize() const override;
-    int levelCount() const override;
-    QSize levelSize(int level) const override;
     std::optional<DecodedTile> decodeTile(
         const TileRequest &request, QString *errorString) const override;
     FirstDisplayImageDecodeResult decodeFirstDisplayImage(
@@ -46,7 +44,6 @@ private:
     QByteArray m_format;
     QSize m_imageSize;
     bool m_hasTransform = false;
-    TilePyramid m_pyramid;
     mutable QMutex m_scaledLevelCacheMutex;
     mutable std::vector<std::pair<int, QImage>> m_scaledLevelCache;
 };
@@ -59,8 +56,6 @@ public:
     SvgTileSource(QByteArray data, QSize imageSize);
 
     QSize imageSize() const override;
-    int levelCount() const override;
-    QSize levelSize(int level) const override;
     std::optional<DecodedTile> decodeTile(
         const TileRequest &request, QString *errorString) const override;
     FirstDisplayImageDecodeResult decodeFirstDisplayImage(
@@ -71,7 +66,6 @@ public:
 private:
     QByteArray m_data;
     QSize m_imageSize;
-    TilePyramid m_pyramid;
 };
 
 std::shared_ptr<ImageTileSource> openHeifTileSource(const QByteArray &data, QString *errorString);

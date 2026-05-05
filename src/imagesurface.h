@@ -46,8 +46,6 @@ public:
     virtual ~ImageTileSource() = default;
 
     virtual QSize imageSize() const = 0;
-    virtual int levelCount() const = 0;
-    virtual QSize levelSize(int level) const = 0;
     virtual std::optional<DecodedTile> decodeTile(
         const TileRequest &request, QString *errorString) const
         = 0;

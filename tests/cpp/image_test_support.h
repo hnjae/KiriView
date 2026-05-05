@@ -266,13 +266,10 @@ class TestImageTileSource final : public ImageTileSource
 public:
     explicit TestImageTileSource(QImage image)
         : m_image(std::move(image))
-        , m_pyramid(m_image.size())
     {
     }
 
     QSize imageSize() const override { return m_image.size(); }
-    int levelCount() const override { return m_pyramid.levelCount(); }
-    QSize levelSize(int level) const override { return m_pyramid.levelSize(level); }
     qsizetype byteCost() const override { return m_image.sizeInBytes(); }
 
     FirstDisplayImageDecodeResult decodeFirstDisplayImage(
@@ -297,7 +294,6 @@ public:
 
 private:
     QImage m_image;
-    TilePyramid m_pyramid;
 };
 
 inline StaticDecodedImage staticDecodedTestImage(const QImage &image = testImage())

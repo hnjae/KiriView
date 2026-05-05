@@ -44,15 +44,10 @@ QImageReaderTileSource::QImageReaderTileSource(
     , m_format(std::move(format))
     , m_imageSize(std::move(imageSize))
     , m_hasTransform(hasTransform)
-    , m_pyramid(m_imageSize)
 {
 }
 
 QSize QImageReaderTileSource::imageSize() const { return m_imageSize; }
-
-int QImageReaderTileSource::levelCount() const { return m_pyramid.levelCount(); }
-
-QSize QImageReaderTileSource::levelSize(int level) const { return m_pyramid.levelSize(level); }
 
 std::optional<DecodedTile> QImageReaderTileSource::decodeTile(
     const TileRequest &request, QString *errorString) const
