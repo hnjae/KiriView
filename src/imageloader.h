@@ -31,14 +31,18 @@ public:
     using PredecodedImageCallback = std::function<void(ImageLoadSession, PredecodedImage)>;
     using TakePredecodedImageCallback = std::function<std::optional<PredecodedImage>(const QUrl &)>;
 
-    explicit ImageLoader(QObject *parent = nullptr);
-    ImageLoader(QObject *parent, const ImageAsyncDependencies &dependencies);
+    struct Callbacks {
+        SourceResolvedCallback sourceResolved;
+        ErrorCallback error;
+        DecodedImageCallback decodedImage;
+        PredecodedImageCallback predecodedImage;
+        TakePredecodedImageCallback takePredecodedImage;
+    };
 
-    void setSourceResolvedCallback(SourceResolvedCallback callback);
-    void setErrorCallback(ErrorCallback callback);
-    void setDecodedImageCallback(DecodedImageCallback callback);
-    void setPredecodedImageCallback(PredecodedImageCallback callback);
-    void setTakePredecodedImageCallback(TakePredecodedImageCallback callback);
+    explicit ImageLoader(QObject *parent = nullptr);
+    ImageLoader(QObject *parent, Callbacks callbacks);
+    ImageLoader(QObject *parent, const ImageAsyncDependencies &dependencies);
+    ImageLoader(QObject *parent, const ImageAsyncDependencies &dependencies, Callbacks callbacks);
 
     void start(ImageLoadRequest request, ImageFirstDisplayDecodeContext firstDisplayContext = {});
     void cancel();
@@ -56,11 +60,7 @@ private:
     void finishDecodedImage(ImageLoadSession session, std::shared_ptr<DecodedImageResult> result);
     void finishPredecodedImage(ImageLoadSession session, PredecodedImage image);
 
-    SourceResolvedCallback m_sourceResolved;
-    ErrorCallback m_error;
-    DecodedImageCallback m_decodedImage;
-    PredecodedImageCallback m_predecodedImage;
-    TakePredecodedImageCallback m_takePredecodedImage;
+    Callbacks m_callbacks;
     ImageAsyncTicket m_loadTickets;
     ImageDecodeJob m_decodeJob;
     ImageCandidateRepository m_candidateRepository;

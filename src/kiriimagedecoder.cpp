@@ -106,13 +106,8 @@ DecodedImageResult decodeImageData(const QByteArray &data, const ImageDecodeRequ
     }
 
     const QByteArray imageData = avifDataWithCompatibilityFixes(data);
-    if (const std::optional<DecodedImageResult> heifSequenceResult
-        = decodeHeifSequenceImageData(imageData)) {
-        return *heifSequenceResult;
-    }
-    if (const std::optional<DecodedImageResult> heifStillResult
-        = decodeHeifStillImageData(imageData)) {
-        return *heifStillResult;
+    if (const std::optional<DecodedImageResult> heifResult = decodeHeifImageData(imageData)) {
+        return *heifResult;
     }
 
     BufferedImageReader reader(imageData);

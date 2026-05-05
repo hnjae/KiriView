@@ -28,28 +28,25 @@ ImageOpenController::ImageOpenController(QObject *parent, ImageDocumentState &st
     , m_presentationController(presentationController)
     , m_callbacks(std::move(callbacks))
 {
-    m_imageLoader = std::make_unique<ImageLoader>(parent, dependencies);
-    m_imageLoader->setSourceResolvedCallback(
-        [this](const QUrl &sourceUrl) { setSourceUrlFromResolvedLoad(sourceUrl); });
-    m_imageLoader->setErrorCallback(
-        [this](const ImageLoadSession &session, ImageLoadError error, const QString &errorString) {
-            finishLoadWithError(session, error, errorString);
-        });
-    m_imageLoader->setDecodedImageCallback(
-        [this](ImageLoadSession session, std::shared_ptr<DecodedImageResult> result) {
-            finishDecodedImageLoad(std::move(session), std::move(result));
-        });
-    m_imageLoader->setPredecodedImageCallback(
-        [this](ImageLoadSession session, PredecodedImage image) {
-            finishPredecodedImageLoad(std::move(session), std::move(image));
-        });
-    m_imageLoader->setTakePredecodedImageCallback([this](const QUrl &url) {
-        if (!m_callbacks.takePredecodedImage) {
-            return std::optional<PredecodedImage>();
-        }
+    m_imageLoader = std::make_unique<ImageLoader>(parent, dependencies,
+        ImageLoader::Callbacks {
+            [this](const QUrl &sourceUrl) { setSourceUrlFromResolvedLoad(sourceUrl); },
+            [this](const ImageLoadSession &session, ImageLoadError error,
+                const QString &errorString) { finishLoadWithError(session, error, errorString); },
+            [this](ImageLoadSession session, std::shared_ptr<DecodedImageResult> result) {
+                finishDecodedImageLoad(std::move(session), std::move(result));
+            },
+            [this](ImageLoadSession session, PredecodedImage image) {
+                finishPredecodedImageLoad(std::move(session), std::move(image));
+            },
+            [this](const QUrl &url) {
+                if (!m_callbacks.takePredecodedImage) {
+                    return std::optional<PredecodedImage>();
+                }
 
-        return m_callbacks.takePredecodedImage(url);
-    });
+                return m_callbacks.takePredecodedImage(url);
+            },
+        });
 }
 
 ImageOpenController::~ImageOpenController() { cancel(); }

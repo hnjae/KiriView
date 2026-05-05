@@ -29,60 +29,85 @@ KiriView::DecodedImageResult decodedImageFailure(const QString &errorString)
 {
     return KiriView::DecodedImageFailure { errorString };
 }
+
+std::optional<KiriView::DecodedImageResult> decodeHeifStillImageDataForInfo(
+    const QByteArray &data, const KiriView::HeifContainerInfo &info)
+{
+    if (!info.stillImage) {
+        return std::nullopt;
+    }
+
+    QString errorString;
+    std::shared_ptr<KiriView::ImageTileSource> source
+        = KiriView::openHeifTileSource(data, &errorString);
+    if (source == nullptr) {
+        return decodedImageFailure(errorString);
+    }
+
+    QImage preview = source->decodeBlockingDisplayImage(
+        KiriView::imageBlockingDisplayLongEdgeMax, &errorString);
+    if (preview.isNull()) {
+        return decodedImageFailure(errorString);
+    }
+
+    return KiriView::StaticDecodedImage { std::move(source), std::move(preview), {} };
+}
+
+std::optional<KiriView::DecodedImageResult> decodeHeifSequenceImageDataForInfo(
+    const QByteArray &data, const KiriView::HeifContainerInfo &info)
+{
+    if (!info.imageSequence) {
+        return std::nullopt;
+    }
+
+    KiriView::HeifSequenceReader reader;
+    const KiriView::HeifSequenceOpenResult openResult = reader.open(data);
+    if (openResult.status == KiriView::HeifSequenceOpenStatus::NotHeif
+        || openResult.status == KiriView::HeifSequenceOpenStatus::NotSequence) {
+        return std::nullopt;
+    }
+    if (openResult.status == KiriView::HeifSequenceOpenStatus::Error) {
+        return decodedImageFailure(openResult.errorString);
+    }
+
+    QString errorString;
+    std::optional<KiriView::AnimationFrame> firstFrame = reader.readNextFrame(&errorString);
+    if (!firstFrame.has_value()) {
+        if (errorString.isEmpty()) {
+            errorString
+                = KiriView::imageViewText("Could not decode the selected HEIF image sequence.");
+        }
+        return decodedImageFailure(errorString);
+    }
+
+    return KiriView::HeifSequenceAnimationImage {
+        std::move(firstFrame->image),
+        data,
+        firstFrame->delay,
+    };
+}
 }
 
 namespace KiriView {
 std::optional<DecodedImageResult> decodeHeifStillImageData(const QByteArray &data)
 {
-    if (!isLikelyHeifStillImageContainer(data)) {
-        return std::nullopt;
-    }
-
-    QString errorString;
-    std::shared_ptr<ImageTileSource> source = openHeifTileSource(data, &errorString);
-    if (source == nullptr) {
-        return decodedImageFailure(errorString);
-    }
-
-    QImage preview
-        = source->decodeBlockingDisplayImage(imageBlockingDisplayLongEdgeMax, &errorString);
-    if (preview.isNull()) {
-        return decodedImageFailure(errorString);
-    }
-
-    return StaticDecodedImage { std::move(source), std::move(preview), {} };
+    return decodeHeifStillImageDataForInfo(data, heifContainerInfo(data));
 }
 
 std::optional<DecodedImageResult> decodeHeifSequenceImageData(const QByteArray &data)
 {
-    if (!isLikelyHeifSequenceContainer(data)) {
-        return std::nullopt;
+    return decodeHeifSequenceImageDataForInfo(data, heifContainerInfo(data));
+}
+
+std::optional<DecodedImageResult> decodeHeifImageData(const QByteArray &data)
+{
+    const HeifContainerInfo info = heifContainerInfo(data);
+    if (std::optional<DecodedImageResult> sequenceResult
+        = decodeHeifSequenceImageDataForInfo(data, info)) {
+        return sequenceResult;
     }
 
-    HeifSequenceReader reader;
-    const HeifSequenceOpenResult openResult = reader.open(data);
-    if (openResult.status == HeifSequenceOpenStatus::NotHeif
-        || openResult.status == HeifSequenceOpenStatus::NotSequence) {
-        return std::nullopt;
-    }
-    if (openResult.status == HeifSequenceOpenStatus::Error) {
-        return decodedImageFailure(openResult.errorString);
-    }
-
-    QString errorString;
-    std::optional<AnimationFrame> firstFrame = reader.readNextFrame(&errorString);
-    if (!firstFrame.has_value()) {
-        if (errorString.isEmpty()) {
-            errorString = imageViewText("Could not decode the selected HEIF image sequence.");
-        }
-        return decodedImageFailure(errorString);
-    }
-
-    return HeifSequenceAnimationImage {
-        std::move(firstFrame->image),
-        data,
-        firstFrame->delay,
-    };
+    return decodeHeifStillImageDataForInfo(data, info);
 }
 
 class HeifSequenceReader::Private

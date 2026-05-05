@@ -13,8 +13,20 @@
 #include <vector>
 
 namespace KiriView {
+ImageLoader::ImageLoader(QObject *parent, Callbacks callbacks)
+    : ImageLoader(parent, defaultImageAsyncDependencies(), std::move(callbacks))
+{
+}
+
 ImageLoader::ImageLoader(QObject *parent, const ImageAsyncDependencies &dependencies)
+    : ImageLoader(parent, dependencies, {})
+{
+}
+
+ImageLoader::ImageLoader(
+    QObject *parent, const ImageAsyncDependencies &dependencies, Callbacks callbacks)
     : QObject(parent)
+    , m_callbacks(std::move(callbacks))
     , m_decodeJob(this, dependencies.imageDataLoader, dependencies.imageDataDecoder)
     , m_candidateRepository(dependencies.candidateProvider)
 {
@@ -41,28 +53,6 @@ ImageLoader::ImageLoader(QObject *parent, const ImageAsyncDependencies &dependen
 
             finishLoadWithError(*session, ImageLoadError::Generic, errorString);
         });
-}
-
-void ImageLoader::setSourceResolvedCallback(SourceResolvedCallback callback)
-{
-    m_sourceResolved = std::move(callback);
-}
-
-void ImageLoader::setErrorCallback(ErrorCallback callback) { m_error = std::move(callback); }
-
-void ImageLoader::setDecodedImageCallback(DecodedImageCallback callback)
-{
-    m_decodedImage = std::move(callback);
-}
-
-void ImageLoader::setPredecodedImageCallback(PredecodedImageCallback callback)
-{
-    m_predecodedImage = std::move(callback);
-}
-
-void ImageLoader::setTakePredecodedImageCallback(TakePredecodedImageCallback callback)
-{
-    m_takePredecodedImage = std::move(callback);
 }
 
 void ImageLoader::start(
@@ -116,8 +106,8 @@ void ImageLoader::startArchiveLoad(ImageLoadSession session)
 
             session.location.setImageUrl(candidates.front().url);
             m_loadSession = session;
-            if (m_sourceResolved) {
-                m_sourceResolved(session.location.imageUrl());
+            if (m_callbacks.sourceResolved) {
+                m_callbacks.sourceResolved(session.location.imageUrl());
             }
             startImageLoad(session);
         },
@@ -169,11 +159,12 @@ std::optional<ImageLoadSession> ImageLoader::takeCurrentLoadSession(const ImageL
 
 bool ImageLoader::tryDisplayPredecodedImage(ImageLoadSession session)
 {
-    if (!m_takePredecodedImage) {
+    if (!m_callbacks.takePredecodedImage) {
         return false;
     }
 
-    std::optional<PredecodedImage> predecoded = m_takePredecodedImage(session.location.imageUrl());
+    std::optional<PredecodedImage> predecoded
+        = m_callbacks.takePredecodedImage(session.location.imageUrl());
     if (!predecoded.has_value()) {
         return false;
     }
@@ -192,8 +183,8 @@ void ImageLoader::finishLoadWithError(
         return;
     }
 
-    if (m_error) {
-        m_error(*currentSession, error, errorString);
+    if (m_callbacks.error) {
+        m_callbacks.error(*currentSession, error, errorString);
     }
 }
 
@@ -205,8 +196,8 @@ void ImageLoader::finishDecodedImage(
         return;
     }
 
-    if (m_decodedImage) {
-        m_decodedImage(std::move(*currentSession), std::move(result));
+    if (m_callbacks.decodedImage) {
+        m_callbacks.decodedImage(std::move(*currentSession), std::move(result));
     }
 }
 
@@ -217,8 +208,8 @@ void ImageLoader::finishPredecodedImage(ImageLoadSession session, PredecodedImag
         return;
     }
 
-    if (m_predecodedImage) {
-        m_predecodedImage(std::move(*currentSession), std::move(image));
+    if (m_callbacks.predecodedImage) {
+        m_callbacks.predecodedImage(std::move(*currentSession), std::move(image));
     }
 }
 }

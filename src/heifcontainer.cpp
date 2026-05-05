@@ -7,7 +7,6 @@
 #include <algorithm>
 #include <array>
 #include <cstring>
-#include <optional>
 
 namespace {
 quint32 readBigEndianUint32(const char *data)
@@ -18,42 +17,37 @@ quint32 readBigEndianUint32(const char *data)
         | static_cast<quint32>(static_cast<unsigned char>(data[3]));
 }
 
-struct HeifBrandScan {
-    bool stillImage = false;
-    bool imageSequence = false;
-};
-
-void recordBrand(HeifBrandScan &scan, std::string_view brand)
+void recordBrand(KiriView::HeifContainerInfo &info, std::string_view brand)
 {
     switch (KiriView::heifBrandKind(brand)) {
     case KiriView::HeifBrandKind::StillImage:
-        scan.stillImage = true;
+        info.stillImage = true;
         break;
     case KiriView::HeifBrandKind::ImageSequence:
-        scan.imageSequence = true;
+        info.imageSequence = true;
         break;
     case KiriView::HeifBrandKind::Unknown:
         break;
     }
 }
 
-std::optional<HeifBrandScan> scanHeifBrands(const QByteArray &data)
+KiriView::HeifContainerInfo scanHeifBrands(const QByteArray &data)
 {
     if (data.size() < 16 || std::memcmp(data.constData() + 4, "ftyp", 4) != 0) {
-        return std::nullopt;
+        return {};
     }
 
     const quint32 boxSize = readBigEndianUint32(data.constData());
     if (boxSize < 16 || boxSize > static_cast<quint32>(data.size())) {
-        return std::nullopt;
+        return {};
     }
 
-    HeifBrandScan scan;
-    recordBrand(scan, std::string_view(data.constData() + 8, 4));
+    KiriView::HeifContainerInfo info;
+    recordBrand(info, std::string_view(data.constData() + 8, 4));
     for (quint32 offset = 16; offset + 4 <= boxSize; offset += 4) {
-        recordBrand(scan, std::string_view(data.constData() + offset, 4));
+        recordBrand(info, std::string_view(data.constData() + offset, 4));
     }
-    return scan;
+    return info;
 }
 }
 
@@ -102,21 +96,17 @@ HeifBrandKind heifBrandKind(std::string_view brand)
     return HeifBrandKind::Unknown;
 }
 
-bool isLikelyHeifContainer(const QByteArray &data)
-{
-    const std::optional<HeifBrandScan> scan = scanHeifBrands(data);
-    return scan.has_value() && (scan->stillImage || scan->imageSequence);
-}
+bool isLikelyHeifContainer(const QByteArray &data) { return heifContainerInfo(data).isHeif(); }
 
 bool isLikelyHeifStillImageContainer(const QByteArray &data)
 {
-    const std::optional<HeifBrandScan> scan = scanHeifBrands(data);
-    return scan.has_value() && scan->stillImage;
+    return heifContainerInfo(data).stillImage;
 }
 
 bool isLikelyHeifSequenceContainer(const QByteArray &data)
 {
-    const std::optional<HeifBrandScan> scan = scanHeifBrands(data);
-    return scan.has_value() && scan->imageSequence;
+    return heifContainerInfo(data).imageSequence;
 }
+
+HeifContainerInfo heifContainerInfo(const QByteArray &data) { return scanHeifBrands(data); }
 }

@@ -44,11 +44,19 @@ void TestHeifContainer::classifiesStillAndSequenceBrands()
 void TestHeifContainer::detectsMajorAndCompatibleBrands()
 {
     const QByteArray avifStill = heifFtypBox("avif", {});
+    const KiriView::HeifContainerInfo avifStillInfo = KiriView::heifContainerInfo(avifStill);
+    QVERIFY(avifStillInfo.isHeif());
+    QVERIFY(avifStillInfo.stillImage);
+    QVERIFY(!avifStillInfo.imageSequence);
     QVERIFY(KiriView::isLikelyHeifContainer(avifStill));
     QVERIFY(KiriView::isLikelyHeifStillImageContainer(avifStill));
     QVERIFY(!KiriView::isLikelyHeifSequenceContainer(avifStill));
 
     const QByteArray avifSequence = heifFtypBox("avis", {});
+    const KiriView::HeifContainerInfo avifSequenceInfo = KiriView::heifContainerInfo(avifSequence);
+    QVERIFY(avifSequenceInfo.isHeif());
+    QVERIFY(!avifSequenceInfo.stillImage);
+    QVERIFY(avifSequenceInfo.imageSequence);
     QVERIFY(KiriView::isLikelyHeifContainer(avifSequence));
     QVERIFY(!KiriView::isLikelyHeifStillImageContainer(avifSequence));
     QVERIFY(KiriView::isLikelyHeifSequenceContainer(avifSequence));
@@ -64,6 +72,10 @@ void TestHeifContainer::detectsMajorAndCompatibleBrands()
     QVERIFY(KiriView::isLikelyHeifSequenceContainer(compatibleSequence));
 
     const QByteArray nonHeif = heifFtypBox("png ", {});
+    const KiriView::HeifContainerInfo nonHeifInfo = KiriView::heifContainerInfo(nonHeif);
+    QVERIFY(!nonHeifInfo.isHeif());
+    QVERIFY(!nonHeifInfo.stillImage);
+    QVERIFY(!nonHeifInfo.imageSequence);
     QVERIFY(!KiriView::isLikelyHeifContainer(nonHeif));
     QVERIFY(!KiriView::isLikelyHeifStillImageContainer(nonHeif));
     QVERIFY(!KiriView::isLikelyHeifSequenceContainer(nonHeif));
