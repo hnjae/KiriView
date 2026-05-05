@@ -16,7 +16,6 @@
 #include <variant>
 
 namespace {
-using KiriView::decodedImageIsPredecodeCacheable;
 using KiriView::imageContainerUrlForLocation;
 }
 
@@ -112,9 +111,8 @@ void ImageOpenController::finishPredecodedImageLoad(ImageLoadSession session, Pr
 void ImageOpenController::finishDecodedImageLoad(
     ImageLoadSession session, std::shared_ptr<DecodedImage> image)
 {
-    auto handleDecoded = [this, &session, &image](auto &decoded) {
-        return finishDecodedImageResult(session, decoded, *image);
-    };
+    auto handleDecoded
+        = [this, &session](auto &decoded) { return finishDecodedImageResult(session, decoded); };
     const bool displayedImage = std::visit(handleDecoded, *image);
     if (displayedImage) {
         report(ImageDocumentEffect::scheduleAdjacentImagePredecode());
@@ -122,16 +120,16 @@ void ImageOpenController::finishDecodedImageLoad(
 }
 
 bool ImageOpenController::finishDecodedImageResult(
-    ImageLoadSession &session, StaticDecodedImage &decoded, const DecodedImage &image)
+    ImageLoadSession &session, StaticDecodedImage &decoded)
 {
     const bool predecodeCacheable
-        = decodedImageIsPredecodeCacheable(image, PredecodeCache::byteBudget());
+        = decoded.staticImage.byteCostWithinBudget(PredecodeCache::byteBudget()).has_value();
     finishStaticImageLoad(session, std::move(decoded.staticImage), predecodeCacheable);
     return true;
 }
 
 bool ImageOpenController::finishDecodedImageResult(
-    ImageLoadSession &session, DecodedAnimationImage &decoded, const DecodedImage &)
+    ImageLoadSession &session, DecodedAnimationImage &decoded)
 {
     if (decoded.frames.empty()) {
         finishLoadWithError(session, ImageLoadError::Generic,
@@ -145,7 +143,7 @@ bool ImageOpenController::finishDecodedImageResult(
 }
 
 bool ImageOpenController::finishDecodedImageResult(
-    ImageLoadSession &session, ReaderAnimationImage &decoded, const DecodedImage &)
+    ImageLoadSession &session, ReaderAnimationImage &decoded)
 {
     finishLoadSuccessfully(session, decoded.firstFrame, false);
     m_presentationController.startAnimation(
@@ -154,7 +152,7 @@ bool ImageOpenController::finishDecodedImageResult(
 }
 
 bool ImageOpenController::finishDecodedImageResult(
-    ImageLoadSession &session, HeifSequenceAnimationImage &decoded, const DecodedImage &)
+    ImageLoadSession &session, HeifSequenceAnimationImage &decoded)
 {
     finishLoadSuccessfully(session, decoded.firstFrame, false);
     m_presentationController.startHeifSequenceAnimation(decoded.data, decoded.firstFrameDelay);

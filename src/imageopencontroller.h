@@ -53,14 +53,10 @@ private:
     void setSourceUrlFromResolvedLoad(const QUrl &sourceUrl);
     void finishPredecodedImageLoad(ImageLoadSession session, PredecodedImage image);
     void finishDecodedImageLoad(ImageLoadSession session, std::shared_ptr<DecodedImage> image);
-    bool finishDecodedImageResult(
-        ImageLoadSession &session, StaticDecodedImage &decoded, const DecodedImage &image);
-    bool finishDecodedImageResult(
-        ImageLoadSession &session, DecodedAnimationImage &decoded, const DecodedImage &image);
-    bool finishDecodedImageResult(
-        ImageLoadSession &session, ReaderAnimationImage &decoded, const DecodedImage &image);
-    bool finishDecodedImageResult(
-        ImageLoadSession &session, HeifSequenceAnimationImage &decoded, const DecodedImage &image);
+    bool finishDecodedImageResult(ImageLoadSession &session, StaticDecodedImage &decoded);
+    bool finishDecodedImageResult(ImageLoadSession &session, DecodedAnimationImage &decoded);
+    bool finishDecodedImageResult(ImageLoadSession &session, ReaderAnimationImage &decoded);
+    bool finishDecodedImageResult(ImageLoadSession &session, HeifSequenceAnimationImage &decoded);
     void finishLoadWithError(
         const ImageLoadSession &session, ImageLoadError error, const QString &errorString);
     void finishReplacementLoadWithError(const QString &errorString);

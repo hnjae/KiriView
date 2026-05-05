@@ -153,12 +153,8 @@ std::optional<PredecodedImage> PredecodeCache::findImage(const QUrl &url) const
 void PredecodeCache::cacheImage(
     const QUrl &url, const ArchiveDocumentLocation &archiveDocument, StaticImagePayload staticImage)
 {
-    if (!staticImage.isValid()) {
-        return;
-    }
-
-    const qsizetype byteCost = staticImage.byteCost();
-    if (byteCost <= 0 || byteCost > m_byteBudget) {
+    const std::optional<qsizetype> byteCost = staticImage.byteCostWithinBudget(m_byteBudget);
+    if (!byteCost.has_value()) {
         return;
     }
 
@@ -169,7 +165,7 @@ void PredecodeCache::cacheImage(
 
     removeCachedImage(*normalizedUrl);
     m_images.push_back(
-        CachedImage { *normalizedUrl, archiveDocument, std::move(staticImage), byteCost });
+        CachedImage { *normalizedUrl, archiveDocument, std::move(staticImage), *byteCost });
 
     trimImagesToWindow();
 }

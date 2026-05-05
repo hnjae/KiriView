@@ -57,8 +57,6 @@ template <typename Image> DecodedImageResult successfulDecodedImageResult(Image 
 const DecodedImageFailure *decodedImageResultFailure(const DecodedImageResult &result);
 const DecodedImage *decodedImageResultImage(const DecodedImageResult &result);
 std::optional<DecodedImage> decodedImageFromResult(DecodedImageResult result);
-bool decodedImageIsPredecodeCacheable(const DecodedImage &image, qsizetype byteBudget);
-bool decodedImageResultIsPredecodeCacheable(const DecodedImageResult &result, qsizetype byteBudget);
 }
 
 #endif

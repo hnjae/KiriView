@@ -63,6 +63,7 @@ struct StaticImagePayload {
 
     bool isValid() const;
     qsizetype byteCost() const;
+    std::optional<qsizetype> byteCostWithinBudget(qsizetype byteBudget) const;
 };
 
 class StaticTileSurface
