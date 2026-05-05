@@ -50,6 +50,10 @@ private:
         const QUrl &url, const ArchiveDocumentLocation &archiveDocument, quint64 generation);
     void finishPredecodeImageLoadError(const ImageDecodeRequest &request);
     void finishPredecodeImageDecode(ImageDecodeRequest request, const DecodedImageResult &result);
+    std::optional<ArchiveDocumentLocation> takeActivePredecodeArchiveDocument(
+        const ImageDecodeRequest &request);
+    bool predecodeRequestIsActive(const ImageDecodeRequest &request) const;
+    void clearActivePredecodeRequest();
 
     ImageIoJob m_listerJob;
     ImageDecodeJob m_decodeJob;

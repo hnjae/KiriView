@@ -123,34 +123,54 @@ void ImagePredecodeCoordinator::startPredecodeImageLoad(
 
 void ImagePredecodeCoordinator::finishPredecodeImageLoadError(const ImageDecodeRequest &request)
 {
-    if (!m_generation.accepts(request.id)
-        || normalizedImageUrl(request.imageUrl) != m_activePredecodeUrl) {
+    if (!takeActivePredecodeArchiveDocument(request).has_value()) {
         return;
     }
 
-    m_activePredecodeUrl = QUrl();
-    m_activePredecodeArchiveDocument = ArchiveDocumentLocation::none();
     startNextPredecodeImageLoad(request.id);
 }
 
 void ImagePredecodeCoordinator::finishPredecodeImageDecode(
     ImageDecodeRequest request, const DecodedImageResult &result)
 {
-    if (!m_generation.accepts(request.id)
-        || normalizedImageUrl(request.imageUrl) != m_activePredecodeUrl) {
+    std::optional<ArchiveDocumentLocation> archiveDocument
+        = takeActivePredecodeArchiveDocument(request);
+    if (!archiveDocument.has_value()) {
         return;
     }
 
     const auto *staticImage = std::get_if<StaticDecodedImage>(&result);
     if (staticImage != nullptr
         && decodedImageResultIsPredecodeCacheable(result, KiriView::PredecodeCache::byteBudget())) {
-        m_cache.cacheImage(request.imageUrl, m_activePredecodeArchiveDocument, staticImage->source,
+        m_cache.cacheImage(request.imageUrl, *archiveDocument, staticImage->source,
             staticImage->preview, staticImage->displayHints);
     }
 
+    startNextPredecodeImageLoad(request.id);
+}
+
+std::optional<ArchiveDocumentLocation>
+ImagePredecodeCoordinator::takeActivePredecodeArchiveDocument(const ImageDecodeRequest &request)
+{
+    if (!predecodeRequestIsActive(request)) {
+        return std::nullopt;
+    }
+
+    ArchiveDocumentLocation archiveDocument = std::move(m_activePredecodeArchiveDocument);
+    clearActivePredecodeRequest();
+    return archiveDocument;
+}
+
+bool ImagePredecodeCoordinator::predecodeRequestIsActive(const ImageDecodeRequest &request) const
+{
+    return m_generation.accepts(request.id)
+        && normalizedImageUrl(request.imageUrl) == m_activePredecodeUrl;
+}
+
+void ImagePredecodeCoordinator::clearActivePredecodeRequest()
+{
     m_activePredecodeUrl = QUrl();
     m_activePredecodeArchiveDocument = ArchiveDocumentLocation::none();
-    startNextPredecodeImageLoad(request.id);
 }
 
 void ImagePredecodeCoordinator::cancel()
@@ -158,8 +178,7 @@ void ImagePredecodeCoordinator::cancel()
     m_generation.invalidate();
     m_listerJob.cancel();
     m_decodeJob.cancel();
-    m_activePredecodeUrl = QUrl();
-    m_activePredecodeArchiveDocument = ArchiveDocumentLocation::none();
+    clearActivePredecodeRequest();
     m_firstDisplayContext = {};
     m_cache.clearQueuedLoads();
 }

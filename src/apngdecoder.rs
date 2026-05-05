@@ -730,48 +730,28 @@ fn rgba_from_png_output(
 
     match info.color_type {
         ColorType::Rgba => {
-            if output.len()
-                != pixel_count
-                    .checked_mul(4)
-                    .ok_or(RustApngErrorKind::FrameData)?
-            {
-                return Err(RustApngErrorKind::FrameData);
-            }
+            validate_png_output_len(output, pixel_count, RGBA_BYTES_PER_PIXEL)?;
             Ok(output.to_vec())
         }
         ColorType::Rgb => {
-            if output.len()
-                != pixel_count
-                    .checked_mul(3)
-                    .ok_or(RustApngErrorKind::FrameData)?
-            {
-                return Err(RustApngErrorKind::FrameData);
-            }
-            let mut rgba = Vec::with_capacity(pixel_count * 4);
+            validate_png_output_len(output, pixel_count, 3)?;
+            let mut rgba = Vec::with_capacity(pixel_count * RGBA_BYTES_PER_PIXEL);
             for pixel in output.chunks_exact(3) {
                 rgba.extend_from_slice(&[pixel[0], pixel[1], pixel[2], 255]);
             }
             Ok(rgba)
         }
         ColorType::Grayscale => {
-            if output.len() != pixel_count {
-                return Err(RustApngErrorKind::FrameData);
-            }
-            let mut rgba = Vec::with_capacity(pixel_count * 4);
+            validate_png_output_len(output, pixel_count, 1)?;
+            let mut rgba = Vec::with_capacity(pixel_count * RGBA_BYTES_PER_PIXEL);
             for gray in output {
                 rgba.extend_from_slice(&[*gray, *gray, *gray, 255]);
             }
             Ok(rgba)
         }
         ColorType::GrayscaleAlpha => {
-            if output.len()
-                != pixel_count
-                    .checked_mul(2)
-                    .ok_or(RustApngErrorKind::FrameData)?
-            {
-                return Err(RustApngErrorKind::FrameData);
-            }
-            let mut rgba = Vec::with_capacity(pixel_count * 4);
+            validate_png_output_len(output, pixel_count, 2)?;
+            let mut rgba = Vec::with_capacity(pixel_count * RGBA_BYTES_PER_PIXEL);
             for pixel in output.chunks_exact(2) {
                 rgba.extend_from_slice(&[pixel[0], pixel[0], pixel[0], pixel[1]]);
             }
@@ -779,6 +759,21 @@ fn rgba_from_png_output(
         }
         ColorType::Indexed => Err(RustApngErrorKind::FrameData),
     }
+}
+
+fn validate_png_output_len(
+    output: &[u8],
+    pixel_count: usize,
+    bytes_per_pixel: usize,
+) -> Result<(), RustApngErrorKind> {
+    let expected_len = pixel_count
+        .checked_mul(bytes_per_pixel)
+        .ok_or(RustApngErrorKind::FrameData)?;
+    if output.len() != expected_len {
+        return Err(RustApngErrorKind::FrameData);
+    }
+
+    Ok(())
 }
 
 fn frame_png_data(parsed: &ParsedApng, frame: &RawFrame) -> Result<Vec<u8>, RustApngErrorKind> {
