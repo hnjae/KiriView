@@ -11,6 +11,54 @@
 #include <vector>
 
 namespace {
+const QUrl &emptyDirectoryUrl()
+{
+    static const QUrl url;
+    return url;
+}
+
+const KiriView::ArchiveDocumentLocation &emptyArchiveDocument()
+{
+    static const KiriView::ArchiveDocumentLocation archiveDocument
+        = KiriView::ArchiveDocumentLocation::none();
+    return archiveDocument;
+}
+
+void reportLoadProviderMissing(const KiriView::ErrorCallback &errorCallback)
+{
+    if (errorCallback) {
+        errorCallback(QString());
+    }
+}
+
+template <typename Provider, typename... Args>
+KiriView::ImageIoJob loadWithProvider(
+    const Provider &provider, KiriView::ErrorCallback errorCallback, Args &&...args)
+{
+    if (!provider) {
+        reportLoadProviderMissing(errorCallback);
+        return KiriView::ImageIoJob();
+    }
+
+    return provider(std::forward<Args>(args)..., std::move(errorCallback));
+}
+
+KiriView::ImageIoJob loadImagesForContext(const KiriView::ImageCandidateRepository &repository,
+    QObject *receiver, const KiriView::ImageCandidateListContext::DirectoryContext &context,
+    KiriView::ImageCandidatesCallback callback, KiriView::ErrorCallback errorCallback)
+{
+    return repository.loadDirectoryImages(
+        receiver, context.directoryUrl, std::move(callback), std::move(errorCallback));
+}
+
+KiriView::ImageIoJob loadImagesForContext(const KiriView::ImageCandidateRepository &repository,
+    QObject *receiver, const KiriView::ImageCandidateListContext::ArchiveDocumentContext &context,
+    KiriView::ImageCandidatesCallback callback, KiriView::ErrorCallback errorCallback)
+{
+    return repository.loadArchiveImages(
+        receiver, context.archiveDocument, std::move(callback), std::move(errorCallback));
+}
+
 void reportCandidateRepositoryError(const QUrl &containerUrl,
     KiriView::ImageCandidateRepositoryError error, const QString &errorString,
     const KiriView::CandidateRepositoryErrorCallback &errorCallback)
@@ -53,37 +101,43 @@ ImageNavigationCandidateProvider defaultImageNavigationCandidateProvider()
 ImageCandidateListContext ImageCandidateListContext::forDirectory(
     QUrl currentUrl, QUrl directoryUrl)
 {
-    return ImageCandidateListContext { ContainerType::Directory, std::move(currentUrl),
-        std::move(directoryUrl), ArchiveDocumentLocation::none() };
+    return ImageCandidateListContext {
+        DirectoryContext { std::move(currentUrl), std::move(directoryUrl) },
+    };
 }
 
 ImageCandidateListContext ImageCandidateListContext::forArchiveDocument(
     QUrl currentUrl, ArchiveDocumentLocation archiveDocument)
 {
-    return ImageCandidateListContext { ContainerType::ArchiveDocument, std::move(currentUrl),
-        QUrl(), std::move(archiveDocument) };
+    return ImageCandidateListContext {
+        ArchiveDocumentContext { std::move(currentUrl), std::move(archiveDocument) },
+    };
 }
 
-const QUrl &ImageCandidateListContext::currentUrl() const { return m_currentUrl; }
+const QUrl &ImageCandidateListContext::currentUrl() const
+{
+    return visit([](const auto &context) -> const QUrl & { return context.currentUrl; });
+}
 
-const QUrl &ImageCandidateListContext::directoryUrl() const { return m_directoryUrl; }
+const QUrl &ImageCandidateListContext::directoryUrl() const
+{
+    const auto *context = std::get_if<DirectoryContext>(&m_context);
+    return context == nullptr ? emptyDirectoryUrl() : context->directoryUrl;
+}
 
 const ArchiveDocumentLocation &ImageCandidateListContext::archiveDocument() const
 {
-    return m_archiveDocument;
+    const auto *context = std::get_if<ArchiveDocumentContext>(&m_context);
+    return context == nullptr ? emptyArchiveDocument() : context->archiveDocument;
 }
 
 bool ImageCandidateListContext::isArchiveDocument() const
 {
-    return m_containerType == ContainerType::ArchiveDocument;
+    return std::holds_alternative<ArchiveDocumentContext>(m_context);
 }
 
-ImageCandidateListContext::ImageCandidateListContext(ContainerType containerType, QUrl currentUrl,
-    QUrl directoryUrl, ArchiveDocumentLocation archiveDocument)
-    : m_containerType(containerType)
-    , m_currentUrl(std::move(currentUrl))
-    , m_directoryUrl(std::move(directoryUrl))
-    , m_archiveDocument(std::move(archiveDocument))
+ImageCandidateListContext::ImageCandidateListContext(Context context)
+    : m_context(std::move(context))
 {
 }
 
@@ -129,56 +183,34 @@ ImageIoJob ImageCandidateRepository::loadImages(QObject *receiver,
     const ImageCandidateListContext &context, ImageCandidatesCallback callback,
     ErrorCallback errorCallback) const
 {
-    if (context.isArchiveDocument()) {
-        return loadArchiveImages(
-            receiver, context.archiveDocument(), std::move(callback), std::move(errorCallback));
-    }
-
-    return loadDirectoryImages(
-        receiver, context.directoryUrl(), std::move(callback), std::move(errorCallback));
+    return context.visit(
+        [this, receiver, callback = std::move(callback), errorCallback = std::move(errorCallback)](
+            const auto &typedContext) mutable {
+            return loadImagesForContext(
+                *this, receiver, typedContext, std::move(callback), std::move(errorCallback));
+        });
 }
 
 ImageIoJob ImageCandidateRepository::loadDirectoryImages(QObject *receiver,
     const QUrl &directoryUrl, ImageCandidatesCallback callback, ErrorCallback errorCallback) const
 {
-    if (!m_provider.directoryImages) {
-        if (errorCallback) {
-            errorCallback(QString());
-        }
-        return ImageIoJob();
-    }
-
-    return m_provider.directoryImages(
-        receiver, directoryUrl, std::move(callback), std::move(errorCallback));
+    return loadWithProvider(m_provider.directoryImages, std::move(errorCallback), receiver,
+        directoryUrl, std::move(callback));
 }
 
 ImageIoJob ImageCandidateRepository::loadArchiveImages(QObject *receiver,
     ArchiveDocumentLocation archiveDocument, ImageCandidatesCallback callback,
     ErrorCallback errorCallback) const
 {
-    if (!m_provider.archiveImages) {
-        if (errorCallback) {
-            errorCallback(QString());
-        }
-        return ImageIoJob();
-    }
-
-    return m_provider.archiveImages(
-        receiver, std::move(archiveDocument), std::move(callback), std::move(errorCallback));
+    return loadWithProvider(m_provider.archiveImages, std::move(errorCallback), receiver,
+        std::move(archiveDocument), std::move(callback));
 }
 
 ImageIoJob ImageCandidateRepository::loadContainers(QObject *receiver, const QUrl &directoryUrl,
     ContainerCandidatesCallback callback, ErrorCallback errorCallback) const
 {
-    if (!m_provider.directoryContainers) {
-        if (errorCallback) {
-            errorCallback(QString());
-        }
-        return ImageIoJob();
-    }
-
-    return m_provider.directoryContainers(
-        receiver, directoryUrl, std::move(callback), std::move(errorCallback));
+    return loadWithProvider(m_provider.directoryContainers, std::move(errorCallback), receiver,
+        directoryUrl, std::move(callback));
 }
 
 ImageIoJob ImageCandidateRepository::loadFirstImageInContainer(QObject *receiver,

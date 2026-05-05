@@ -13,6 +13,8 @@
 #include <QUrl>
 #include <functional>
 #include <optional>
+#include <utility>
+#include <variant>
 
 namespace KiriView {
 enum class ImageCandidateRepositoryError {
@@ -24,6 +26,16 @@ enum class ImageCandidateRepositoryError {
 class ImageCandidateListContext
 {
 public:
+    struct DirectoryContext {
+        QUrl currentUrl;
+        QUrl directoryUrl;
+    };
+
+    struct ArchiveDocumentContext {
+        QUrl currentUrl;
+        ArchiveDocumentLocation archiveDocument;
+    };
+
     static ImageCandidateListContext forDirectory(QUrl currentUrl, QUrl directoryUrl);
     static ImageCandidateListContext forArchiveDocument(
         QUrl currentUrl, ArchiveDocumentLocation archiveDocument);
@@ -33,19 +45,17 @@ public:
     const ArchiveDocumentLocation &archiveDocument() const;
     bool isArchiveDocument() const;
 
+    template <typename Visitor> decltype(auto) visit(Visitor &&visitor) const
+    {
+        return std::visit(std::forward<Visitor>(visitor), m_context);
+    }
+
 private:
-    enum class ContainerType {
-        Directory,
-        ArchiveDocument,
-    };
+    using Context = std::variant<DirectoryContext, ArchiveDocumentContext>;
 
-    ImageCandidateListContext(ContainerType containerType, QUrl currentUrl, QUrl directoryUrl,
-        ArchiveDocumentLocation archiveDocument);
+    explicit ImageCandidateListContext(Context context);
 
-    ContainerType m_containerType = ContainerType::Directory;
-    QUrl m_currentUrl;
-    QUrl m_directoryUrl;
-    ArchiveDocumentLocation m_archiveDocument;
+    Context m_context;
 };
 
 struct ImageNavigationCandidateProvider {
