@@ -361,6 +361,109 @@ struct Rect {
     height: usize,
 }
 
+#[derive(Clone, Copy)]
+struct RgbaRegion {
+    rect: Rect,
+    row_len: usize,
+    byte_len: usize,
+}
+
+impl RgbaRegion {
+    fn new(rect: Rect) -> Result<Self, RustApngErrorKind> {
+        let row_len = rect
+            .width
+            .checked_mul(RGBA_BYTES_PER_PIXEL)
+            .ok_or(RustApngErrorKind::Apng)?;
+        let byte_len = row_len
+            .checked_mul(rect.height)
+            .ok_or(RustApngErrorKind::Apng)?;
+
+        Ok(Self {
+            rect,
+            row_len,
+            byte_len,
+        })
+    }
+
+    fn height(self) -> usize {
+        self.rect.height
+    }
+
+    fn byte_len(self) -> usize {
+        self.byte_len
+    }
+
+    fn validate_data_len(self, data: &[u8]) -> Result<(), RustApngErrorKind> {
+        if data.len() != self.byte_len {
+            return Err(RustApngErrorKind::Apng);
+        }
+
+        Ok(())
+    }
+
+    fn canvas_row<'a>(
+        self,
+        canvas: &'a [u8],
+        canvas_width: usize,
+        row: usize,
+    ) -> Result<&'a [u8], RustApngErrorKind> {
+        canvas
+            .get(self.canvas_row_range(canvas_width, row)?)
+            .ok_or(RustApngErrorKind::Apng)
+    }
+
+    fn canvas_row_mut<'a>(
+        self,
+        canvas: &'a mut [u8],
+        canvas_width: usize,
+        row: usize,
+    ) -> Result<&'a mut [u8], RustApngErrorKind> {
+        canvas
+            .get_mut(self.canvas_row_range(canvas_width, row)?)
+            .ok_or(RustApngErrorKind::Apng)
+    }
+
+    fn data_row<'a>(self, data: &'a [u8], row: usize) -> Result<&'a [u8], RustApngErrorKind> {
+        data.get(self.region_row_range(row)?)
+            .ok_or(RustApngErrorKind::Apng)
+    }
+
+    fn canvas_row_range(
+        self,
+        canvas_width: usize,
+        row: usize,
+    ) -> Result<Range<usize>, RustApngErrorKind> {
+        if row >= self.rect.height {
+            return Err(RustApngErrorKind::Apng);
+        }
+
+        let y = self
+            .rect
+            .y
+            .checked_add(row)
+            .ok_or(RustApngErrorKind::Apng)?;
+        let start = canvas_offset(canvas_width, self.rect.x, y)?;
+        let end = start
+            .checked_add(self.row_len)
+            .ok_or(RustApngErrorKind::Apng)?;
+        Ok(start..end)
+    }
+
+    fn region_row_range(self, row: usize) -> Result<Range<usize>, RustApngErrorKind> {
+        if row >= self.rect.height {
+            return Err(RustApngErrorKind::Apng);
+        }
+
+        let start = row
+            .checked_mul(self.row_len)
+            .ok_or(RustApngErrorKind::Apng)?;
+        let end = start
+            .checked_add(self.row_len)
+            .ok_or(RustApngErrorKind::Apng)?;
+        Ok(start..end)
+    }
+}
+
 enum DecodeOutcome {
     NotApng,
     Success(DecodedApngAnimation),
@@ -709,16 +812,12 @@ fn blend_frame(
     source: &[u8],
     blend_op: BlendOp,
 ) -> Result<(), RustApngErrorKind> {
-    let row_len = rect_row_len(rect)?;
-    if source.len() != rect_byte_len(rect)? {
-        return Err(RustApngErrorKind::Apng);
-    }
+    let region = RgbaRegion::new(rect)?;
+    region.validate_data_len(source)?;
 
-    for row in 0..rect.height {
-        let dst_range = canvas_row_range(canvas_width, rect, row, row_len)?;
-        let src_range = region_row_range(row, row_len)?;
-        let dst_row = canvas.get_mut(dst_range).ok_or(RustApngErrorKind::Apng)?;
-        let src_row = source.get(src_range).ok_or(RustApngErrorKind::Apng)?;
+    for row in 0..region.height() {
+        let dst_row = region.canvas_row_mut(canvas, canvas_width, row)?;
+        let src_row = region.data_row(source, row)?;
 
         match blend_op {
             BlendOp::Source => dst_row.copy_from_slice(src_row),
@@ -766,13 +865,12 @@ fn copy_region(
     canvas_width: usize,
     rect: Rect,
 ) -> Result<Vec<u8>, RustApngErrorKind> {
-    let row_len = rect_row_len(rect)?;
-    let mut region = Vec::with_capacity(rect_byte_len(rect)?);
-    for row in 0..rect.height {
-        let row_range = canvas_row_range(canvas_width, rect, row, row_len)?;
-        region.extend_from_slice(canvas.get(row_range).ok_or(RustApngErrorKind::Apng)?);
+    let region = RgbaRegion::new(rect)?;
+    let mut data = Vec::with_capacity(region.byte_len());
+    for row in 0..region.height() {
+        data.extend_from_slice(region.canvas_row(canvas, canvas_width, row)?);
     }
-    Ok(region)
+    Ok(data)
 }
 
 fn restore_region(
@@ -781,16 +879,12 @@ fn restore_region(
     rect: Rect,
     region: &[u8],
 ) -> Result<(), RustApngErrorKind> {
-    let row_len = rect_row_len(rect)?;
-    if region.len() != rect_byte_len(rect)? {
-        return Err(RustApngErrorKind::Apng);
-    }
+    let area = RgbaRegion::new(rect)?;
+    area.validate_data_len(region)?;
 
-    for row in 0..rect.height {
-        let dst_range = canvas_row_range(canvas_width, rect, row, row_len)?;
-        let src_range = region_row_range(row, row_len)?;
-        let dst_row = canvas.get_mut(dst_range).ok_or(RustApngErrorKind::Apng)?;
-        let src_row = region.get(src_range).ok_or(RustApngErrorKind::Apng)?;
+    for row in 0..area.height() {
+        let dst_row = area.canvas_row_mut(canvas, canvas_width, row)?;
+        let src_row = area.data_row(region, row)?;
         dst_row.copy_from_slice(src_row);
     }
     Ok(())
@@ -801,48 +895,11 @@ fn clear_region(
     canvas_width: usize,
     rect: Rect,
 ) -> Result<(), RustApngErrorKind> {
-    let row_len = rect_row_len(rect)?;
-    for row in 0..rect.height {
-        let row_range = canvas_row_range(canvas_width, rect, row, row_len)?;
-        canvas
-            .get_mut(row_range)
-            .ok_or(RustApngErrorKind::Apng)?
-            .fill(0);
+    let region = RgbaRegion::new(rect)?;
+    for row in 0..region.height() {
+        region.canvas_row_mut(canvas, canvas_width, row)?.fill(0);
     }
     Ok(())
-}
-
-fn rect_row_len(rect: Rect) -> Result<usize, RustApngErrorKind> {
-    rect.width
-        .checked_mul(RGBA_BYTES_PER_PIXEL)
-        .ok_or(RustApngErrorKind::Apng)
-}
-
-fn rect_byte_len(rect: Rect) -> Result<usize, RustApngErrorKind> {
-    rect_row_len(rect)?
-        .checked_mul(rect.height)
-        .ok_or(RustApngErrorKind::Apng)
-}
-
-fn canvas_row_range(
-    canvas_width: usize,
-    rect: Rect,
-    row: usize,
-    row_len: usize,
-) -> Result<Range<usize>, RustApngErrorKind> {
-    if row >= rect.height {
-        return Err(RustApngErrorKind::Apng);
-    }
-
-    let start = canvas_offset(canvas_width, rect.x, rect.y + row)?;
-    let end = start.checked_add(row_len).ok_or(RustApngErrorKind::Apng)?;
-    Ok(start..end)
-}
-
-fn region_row_range(row: usize, row_len: usize) -> Result<Range<usize>, RustApngErrorKind> {
-    let start = row.checked_mul(row_len).ok_or(RustApngErrorKind::Apng)?;
-    let end = start.checked_add(row_len).ok_or(RustApngErrorKind::Apng)?;
-    Ok(start..end)
 }
 
 fn canvas_offset(canvas_width: usize, x: usize, y: usize) -> Result<usize, RustApngErrorKind> {
@@ -1367,6 +1424,21 @@ mod tests {
         assert!(copy_region(&canvas, 1, rect).is_err());
         assert!(clear_region(&mut canvas, 1, rect).is_err());
         assert!(restore_region(&mut canvas, 1, rect, &source).is_err());
+    }
+
+    #[test]
+    fn region_operations_reject_mismatched_source_lengths() {
+        let rect = Rect {
+            x: 0,
+            y: 0,
+            width: 1,
+            height: 1,
+        };
+        let mut canvas = vec![0; 4];
+        let too_short = vec![255, 0, 0];
+
+        assert!(blend_frame(&mut canvas, 1, rect, &too_short, BlendOp::Source).is_err());
+        assert!(restore_region(&mut canvas, 1, rect, &too_short).is_err());
     }
 
     #[test]
