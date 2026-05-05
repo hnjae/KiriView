@@ -10,6 +10,7 @@ use std::{
 };
 
 const CPP_CORE_SOURCES_FILE: &str = "src/cpp_core_sources.txt";
+const QML_SOURCE_DIR: &str = "src/qml";
 const DEFAULT_INCLUDE_ROOTS: &[&str] = &["/usr/include"];
 const DEFAULT_LIBRARY_DIRS: &[&str] = &["/usr/lib/x86_64-linux-gnu", "/usr/lib"];
 const NATIVE_LIBRARIES: &[NativeLibrary] = &[
@@ -55,48 +56,34 @@ fn main() {
     let qt_rhi_include_dirs = qt_rhi_include_dirs();
     let shader_source = bake_shaders();
     let cpp_core_sources = cpp_core_sources();
+    let qml_module = qml_module();
     link_native_libraries();
 
-    let mut builder = CxxQtBuilder::new_qml_module(
-        QmlModule::new("io.github.hnjae.kiriview")
-            .depend("QtQuick")
-            .qml_file("src/qml/Main.qml")
-            .qml_file("src/qml/ImageActions.qml")
-            .qml_file("src/qml/ImageDocumentToolBar.qml")
-            .qml_file("src/qml/ImageToolBar.qml")
-            .qml_file("src/qml/ImagePageNavigation.qml")
-            .qml_file("src/qml/ImageZoomControls.qml")
-            .qml_file("src/qml/ImageViewport.qml")
-            .qml_file("src/qml/ImageStateOverlay.qml")
-            .qml_file("src/qml/ImageShortcut.qml")
-            .qml_file("src/qml/ImageShortcutSet.qml")
-            .qml_file("src/qml/ImageShortcuts.qml")
-            .qml_file("src/qml/ShortcutHelpDialog.qml"),
-    )
-    // Do not export the whole crate root as C++ headers. That makes Cargo watch
-    // build artifacts such as build-dir/, including symlinks into /run.
-    .crate_include_root(None)
-    .cpp_file(CppFile::from("src/kiriimagedocument.h"))
-    .cpp_file(CppFile::from("src/kiriimageview.h"))
-    .file("src/apngdecoder.rs")
-    .file("src/avifcompat.rs")
-    .file("src/imageformatregistry.rs")
-    .file("src/imagenavigationmodel.rs")
-    .file("src/imageviewportgeometry.rs")
-    .file("src/imagezoomstate.rs")
-    .cpp_file("src/imagedocumentcontrollerdefaults.cpp")
-    .cpp_file("src/imagedecodejobdefaults.cpp")
-    .cpp_file("src/imageloaderdefaults.cpp")
-    .cpp_file("src/imagepredecodecoordinatordefaults.cpp")
-    .cpp_file("src/apngdecoder.cpp")
-    .cpp_file("src/kiriimagedocument.cpp")
-    .cpp_file("src/kiriimagedecoder.cpp")
-    .cpp_file("src/kiriimagerendernode.cpp")
-    .cpp_file("src/kiriimageview.cpp")
-    .qt_module("Quick")
-    .qt_module("Svg")
-    .qt_module("Network")
-    .qt_module("DBus");
+    let mut builder = CxxQtBuilder::new_qml_module(qml_module)
+        // Do not export the whole crate root as C++ headers. That makes Cargo watch
+        // build artifacts such as build-dir/, including symlinks into /run.
+        .crate_include_root(None)
+        .cpp_file(CppFile::from("src/kiriimagedocument.h"))
+        .cpp_file(CppFile::from("src/kiriimageview.h"))
+        .file("src/apngdecoder.rs")
+        .file("src/avifcompat.rs")
+        .file("src/imageformatregistry.rs")
+        .file("src/imagenavigationmodel.rs")
+        .file("src/imageviewportgeometry.rs")
+        .file("src/imagezoomstate.rs")
+        .cpp_file("src/imagedocumentcontrollerdefaults.cpp")
+        .cpp_file("src/imagedecodejobdefaults.cpp")
+        .cpp_file("src/imageloaderdefaults.cpp")
+        .cpp_file("src/imagepredecodecoordinatordefaults.cpp")
+        .cpp_file("src/apngdecoder.cpp")
+        .cpp_file("src/kiriimagedocument.cpp")
+        .cpp_file("src/kiriimagedecoder.cpp")
+        .cpp_file("src/kiriimagerendernode.cpp")
+        .cpp_file("src/kiriimageview.cpp")
+        .qt_module("Quick")
+        .qt_module("Svg")
+        .qt_module("Network")
+        .qt_module("DBus");
 
     for source in cpp_core_sources {
         builder = builder.cpp_file(CppFile::from(source.as_str()));
@@ -123,6 +110,31 @@ fn main() {
     }
 
     builder.build();
+}
+
+fn qml_module() -> QmlModule {
+    let mut module = QmlModule::new("io.github.hnjae.kiriview").depend("QtQuick");
+    for qml_file in qml_files() {
+        module = module.qml_file(qml_file);
+    }
+    module
+}
+
+fn qml_files() -> Vec<String> {
+    println!("cargo::rerun-if-changed={QML_SOURCE_DIR}");
+
+    let mut files = Vec::new();
+    for entry in fs::read_dir(QML_SOURCE_DIR).expect("failed to read QML source directory") {
+        let path = entry
+            .expect("failed to read QML source directory entry")
+            .path();
+        if path.extension().is_some_and(|extension| extension == "qml") {
+            println!("cargo::rerun-if-changed={}", path.display());
+            files.push(path.to_string_lossy().into_owned());
+        }
+    }
+    files.sort();
+    files
 }
 
 fn cpp_core_sources() -> Vec<String> {

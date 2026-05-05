@@ -17,10 +17,12 @@ QtObject {
 
     signal openDialogRequested
 
+    readonly property ShortcutDefinitions shortcutDefinitions: ShortcutDefinitions {}
+
     property Controls.Action openAction: Controls.Action {
         enabled: !root.helpDialogOpen
         icon.name: "document-open-symbolic"
-        shortcut: StandardKey.Open
+        shortcut: root.shortcutDefinitions.openSequence
         text: "Open"
 
         onTriggered: root.openDialogRequested()

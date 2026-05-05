@@ -30,6 +30,10 @@ Item {
     signal shortcutHelpRequested
     signal toggleFullScreenRequested
 
+    ShortcutDefinitions {
+        id: shortcutDefinitions
+    }
+
     function openFirstImage() {
         if (root.imageDocument.imageCount > 0) {
             root.imageDocument.openImageAtPage(1);
@@ -123,182 +127,182 @@ Item {
 
     ImageShortcutSet {
         enabled: root.readyShortcutsEnabled
-        sequences: ["Ctrl+=", "Ctrl++"]
+        sequences: shortcutDefinitions.zoomInControlSequences
 
         onActivated: root.zoomByAtCenter(root.zoomStepPercent)
     }
 
     ImageShortcut {
         enabled: root.readyShortcutsEnabled
-        sequence: "Ctrl+-"
+        sequence: shortcutDefinitions.zoomOutControlSequence
 
         onActivated: root.zoomByAtCenter(-root.zoomStepPercent)
     }
 
     ImageShortcutSet {
         enabled: root.readyCommandShortcutsEnabled
-        sequences: ["=", "+"]
+        sequences: shortcutDefinitions.zoomInCommandSequences
 
         onActivated: root.zoomByAtCenter(root.zoomStepPercent)
     }
 
     ImageShortcut {
         enabled: root.readyCommandShortcutsEnabled
-        sequence: "-"
+        sequence: shortcutDefinitions.zoomOutCommandSequence
 
         onActivated: root.zoomByAtCenter(-root.zoomStepPercent)
     }
 
     ImageShortcut {
         enabled: root.readyCommandShortcutsEnabled
-        sequence: "1"
+        sequence: shortcutDefinitions.fitImageSequence
 
         onActivated: root.imageDocument.resetZoom()
     }
 
     ImageShortcut {
         enabled: root.readyCommandShortcutsEnabled
-        sequence: "2"
+        sequence: shortcutDefinitions.fitHeightSequence
 
         onActivated: root.imageDocument.setFitMode(KiriImageDocument.FitHeight)
     }
 
     ImageShortcut {
         enabled: root.readyCommandShortcutsEnabled
-        sequence: "3"
+        sequence: shortcutDefinitions.fitWidthSequence
 
         onActivated: root.imageDocument.setFitMode(KiriImageDocument.FitWidth)
     }
 
     ImageShortcut {
         enabled: root.readyCommandShortcutsEnabled
-        sequence: "0"
+        sequence: shortcutDefinitions.actualSizeSequence
 
         onActivated: root.imageDocument.zoomPercent = 100
     }
 
     ImageShortcut {
         enabled: root.pannableCommandShortcutsEnabled
-        sequence: "Left"
+        sequence: shortcutDefinitions.panLeftSequence
 
         onActivated: root.panBy(-root.keyboardPanDistance, 0)
     }
 
     ImageShortcut {
         enabled: root.pannableCommandShortcutsEnabled
-        sequence: "Right"
+        sequence: shortcutDefinitions.panRightSequence
 
         onActivated: root.panBy(root.keyboardPanDistance, 0)
     }
 
     ImageShortcut {
         enabled: root.pannableCommandShortcutsEnabled
-        sequence: "Up"
+        sequence: shortcutDefinitions.panUpSequence
 
         onActivated: root.panBy(0, -root.keyboardPanDistance)
     }
 
     ImageShortcut {
         enabled: root.pannableCommandShortcutsEnabled
-        sequence: "Down"
+        sequence: shortcutDefinitions.panDownSequence
 
         onActivated: root.panBy(0, root.keyboardPanDistance)
     }
 
     ImageShortcut {
         enabled: root.pannableCommandShortcutsEnabled
-        sequence: "<"
+        sequence: shortcutDefinitions.panTopLeftSequence
 
         onActivated: root.panToTopLeft()
     }
 
     ImageShortcut {
         enabled: root.pannableCommandShortcutsEnabled
-        sequence: ">"
+        sequence: shortcutDefinitions.panBottomRightSequence
 
         onActivated: root.panToBottomRight()
     }
 
     ImageShortcut {
         enabled: root.readyCommandShortcutsEnabled
-        sequence: "."
+        sequence: shortcutDefinitions.scanForwardSequence
 
         onActivated: root.scanForward()
     }
 
     ImageShortcut {
         enabled: root.readyCommandShortcutsEnabled
-        sequence: ","
+        sequence: shortcutDefinitions.scanBackwardSequence
 
         onActivated: root.scanBackward()
     }
 
     ImageShortcut {
         enabled: root.readyShortcutsEnabled
-        sequence: StandardKey.MoveToPreviousPage
+        sequence: shortcutDefinitions.previousPageSequence
 
         onActivated: root.openPreviousImage()
     }
 
     ImageShortcut {
         enabled: root.readyShortcutsEnabled
-        sequence: StandardKey.MoveToNextPage
+        sequence: shortcutDefinitions.nextPageSequence
 
         onActivated: root.openNextImage()
     }
 
     ImageShortcutSet {
         enabled: root.pageCommandShortcutsEnabled
-        sequences: ["Ctrl+Home", "Home"]
+        sequences: shortcutDefinitions.firstImageSequences
 
         onActivated: root.openFirstImage()
     }
 
     ImageShortcutSet {
         enabled: root.pageCommandShortcutsEnabled
-        sequences: ["Ctrl+End", "End"]
+        sequences: shortcutDefinitions.lastImageSequences
 
         onActivated: root.openLastImage()
     }
 
     ImageShortcut {
         enabled: root.containerCommandShortcutsEnabled
-        sequence: "["
+        sequence: shortcutDefinitions.previousContainerSequence
 
         onActivated: root.imageDocument.openPreviousContainer()
     }
 
     ImageShortcut {
         enabled: root.containerCommandShortcutsEnabled
-        sequence: "]"
+        sequence: shortcutDefinitions.nextContainerSequence
 
         onActivated: root.imageDocument.openNextContainer()
     }
 
     ImageShortcut {
         enabled: root.commandShortcutsEnabled
-        sequence: "F"
+        sequence: shortcutDefinitions.fullscreenCommandSequence
 
         onActivated: root.toggleFullScreenRequested()
     }
 
     ImageShortcut {
         enabled: root.helpShortcutsEnabled
-        sequence: "F11"
+        sequence: shortcutDefinitions.fullscreenFunctionSequence
 
         onActivated: root.toggleFullScreenRequested()
     }
 
     ImageShortcut {
         enabled: root.commandShortcutsEnabled
-        sequence: "?"
+        sequence: shortcutDefinitions.helpCommandSequence
 
         onActivated: root.shortcutHelpRequested()
     }
 
     ImageShortcut {
         enabled: root.helpShortcutsEnabled
-        sequence: "F1"
+        sequence: shortcutDefinitions.helpFunctionSequence
 
         onActivated: root.shortcutHelpRequested()
     }

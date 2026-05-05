@@ -79,6 +79,10 @@ Kirigami.ApplicationWindow {
     width: minimumWidth
     height: minimumHeight
 
+    ShortcutDefinitions {
+        id: shortcutDefinitions
+    }
+
     onFullscreenChanged: {
         if (fullscreen) {
             revealFullscreenToolBar();
@@ -92,7 +96,7 @@ Kirigami.ApplicationWindow {
     Shortcut {
         context: Qt.WindowShortcut
         enabled: !root.helpDialogOpen
-        sequence: "Esc"
+        sequence: shortcutDefinitions.closeSequence
 
         onActivated: root.close()
     }
