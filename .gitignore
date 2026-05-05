@@ -36,7 +36,6 @@ install_manifest.txt
 # Editor / local tooling
 .cache/
 .direnv/
-.envrc
 .idea/
 .vscode/
 .codex
