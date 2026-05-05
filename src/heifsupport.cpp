@@ -104,6 +104,37 @@ heif_image_handle **HeifImageHandle::out() { return &m_handle; }
 
 const heif_image_handle *HeifImageHandle::get() const { return m_handle; }
 
+HeifTrack::HeifTrack(heif_track *track)
+    : m_track(track)
+{
+}
+
+HeifTrack::~HeifTrack()
+{
+    if (m_track != nullptr) {
+        heif_track_release(m_track);
+    }
+}
+
+HeifTrack::HeifTrack(HeifTrack &&other) noexcept
+    : m_track(std::exchange(other.m_track, nullptr))
+{
+}
+
+HeifTrack &HeifTrack::operator=(HeifTrack &&other) noexcept
+{
+    if (this == &other) {
+        return *this;
+    }
+    if (m_track != nullptr) {
+        heif_track_release(m_track);
+    }
+    m_track = std::exchange(other.m_track, nullptr);
+    return *this;
+}
+
+heif_track *HeifTrack::get() const { return m_track; }
+
 HeifImage::~HeifImage()
 {
     if (m_image != nullptr) {

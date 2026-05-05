@@ -5,6 +5,7 @@
 #define KIRIVIEW_HEIFSUPPORT_H
 
 #include <libheif/heif.h>
+#include <libheif/heif_sequences.h>
 
 #include <QByteArray>
 #include <QImage>
@@ -49,6 +50,24 @@ public:
 
 private:
     heif_image_handle *m_handle = nullptr;
+};
+
+class HeifTrack final
+{
+public:
+    HeifTrack() = default;
+    explicit HeifTrack(heif_track *track);
+    ~HeifTrack();
+
+    HeifTrack(const HeifTrack &) = delete;
+    HeifTrack &operator=(const HeifTrack &) = delete;
+    HeifTrack(HeifTrack &&other) noexcept;
+    HeifTrack &operator=(HeifTrack &&other) noexcept;
+
+    heif_track *get() const;
+
+private:
+    heif_track *m_track = nullptr;
 };
 
 class HeifImage final

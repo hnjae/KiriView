@@ -96,6 +96,12 @@ struct PngChunk {
     data: Vec<u8>,
 }
 
+struct PngChunkView<'a> {
+    kind: [u8; 4],
+    data: &'a [u8],
+    next_offset: usize,
+}
+
 #[derive(Clone, Copy)]
 struct FrameControl {
     sequence_number: u32,
@@ -267,34 +273,10 @@ fn parse_apng(data: &[u8]) -> Result<Option<ParsedApng>, RustApngErrorKind> {
     let mut current_frame = None;
 
     while offset < data.len() {
-        if data.len() - offset < 12 {
-            return Err(RustApngErrorKind::Png);
-        }
-
-        let length = read_u32(data, offset).ok_or(RustApngErrorKind::Png)?;
-        let length = usize::try_from(length).map_err(|_| RustApngErrorKind::Png)?;
-        let chunk_type_offset = offset.checked_add(4).ok_or(RustApngErrorKind::Png)?;
-        let chunk_data_offset = offset.checked_add(8).ok_or(RustApngErrorKind::Png)?;
-        let chunk_data_end = chunk_data_offset
-            .checked_add(length)
-            .ok_or(RustApngErrorKind::Png)?;
-        let chunk_end = chunk_data_end
-            .checked_add(4)
-            .ok_or(RustApngErrorKind::Png)?;
-        if chunk_end > data.len() {
-            return Err(RustApngErrorKind::Png);
-        }
-
-        let kind = data[chunk_type_offset..chunk_type_offset + 4]
-            .try_into()
-            .map_err(|_| RustApngErrorKind::Png)?;
-        let chunk_data = &data[chunk_data_offset..chunk_data_end];
-        let stored_crc = read_u32(data, chunk_data_end).ok_or(RustApngErrorKind::Png)?;
-        if stored_crc != crc32(&kind, chunk_data) {
-            return Err(chunk_error_kind(kind));
-        }
-
-        offset = chunk_end;
+        let chunk = read_png_chunk(data, offset)?;
+        let kind = chunk.kind;
+        let chunk_data = chunk.data;
+        offset = chunk.next_offset;
 
         if !seen_ihdr && kind != *b"IHDR" {
             return Err(RustApngErrorKind::Png);
@@ -836,6 +818,41 @@ fn append_png_chunk(
     Ok(())
 }
 
+fn read_png_chunk(data: &[u8], offset: usize) -> Result<PngChunkView<'_>, RustApngErrorKind> {
+    if data.len().saturating_sub(offset) < 12 {
+        return Err(RustApngErrorKind::Png);
+    }
+
+    let length = read_u32(data, offset).ok_or(RustApngErrorKind::Png)?;
+    let length = usize::try_from(length).map_err(|_| RustApngErrorKind::Png)?;
+    let chunk_type_offset = offset.checked_add(4).ok_or(RustApngErrorKind::Png)?;
+    let chunk_data_offset = offset.checked_add(8).ok_or(RustApngErrorKind::Png)?;
+    let chunk_data_end = chunk_data_offset
+        .checked_add(length)
+        .ok_or(RustApngErrorKind::Png)?;
+    let chunk_end = chunk_data_end
+        .checked_add(4)
+        .ok_or(RustApngErrorKind::Png)?;
+    if chunk_end > data.len() {
+        return Err(RustApngErrorKind::Png);
+    }
+
+    let kind = data[chunk_type_offset..chunk_type_offset + 4]
+        .try_into()
+        .map_err(|_| RustApngErrorKind::Png)?;
+    let chunk_data = &data[chunk_data_offset..chunk_data_end];
+    let stored_crc = read_u32(data, chunk_data_end).ok_or(RustApngErrorKind::Png)?;
+    if stored_crc != crc32(&kind, chunk_data) {
+        return Err(chunk_error_kind(kind));
+    }
+
+    Ok(PngChunkView {
+        kind,
+        data: chunk_data,
+        next_offset: chunk_end,
+    })
+}
+
 fn chunk_error_kind(kind: [u8; 4]) -> RustApngErrorKind {
     match &kind {
         b"acTL" | b"fcTL" | b"fdAT" => RustApngErrorKind::Apng,
@@ -929,13 +946,14 @@ mod tests {
         let mut offset = PNG_SIGNATURE.len();
         let mut chunks = Vec::new();
         while offset < data.len() {
-            let length = read_u32(data, offset).expect("chunk length") as usize;
-            let kind: [u8; 4] = data[offset + 4..offset + 8].try_into().expect("chunk kind");
-            let chunk_data = data[offset + 8..offset + 8 + length].to_vec();
-            if &kind == expected_kind {
-                chunks.push(chunk_data);
+            let chunk = match read_png_chunk(data, offset) {
+                Ok(chunk) => chunk,
+                Err(_) => panic!("chunk should parse"),
+            };
+            if &chunk.kind == expected_kind {
+                chunks.push(chunk.data.to_vec());
             }
-            offset += 12 + length;
+            offset = chunk.next_offset;
         }
         chunks
     }
@@ -954,12 +972,14 @@ mod tests {
     fn chunk_offset(data: &[u8], expected_kind: &[u8; 4]) -> usize {
         let mut offset = PNG_SIGNATURE.len();
         while offset < data.len() {
-            let length = read_u32(data, offset).expect("chunk length") as usize;
-            let kind: [u8; 4] = data[offset + 4..offset + 8].try_into().expect("chunk kind");
-            if &kind == expected_kind {
+            let chunk = match read_png_chunk(data, offset) {
+                Ok(chunk) => chunk,
+                Err(_) => panic!("chunk should parse"),
+            };
+            if &chunk.kind == expected_kind {
                 return offset;
             }
-            offset += 12 + length;
+            offset = chunk.next_offset;
         }
         panic!("expected chunk should exist");
     }

@@ -89,34 +89,24 @@ class HeifSequenceReader::Private
 {
 public:
     Private() = default;
-    ~Private() { reset(); }
+    ~Private() = default;
 
     Private(const Private &) = delete;
     Private &operator=(const Private &) = delete;
 
     void reset()
     {
-        if (track != nullptr) {
-            heif_track_release(track);
-            track = nullptr;
-        }
-        if (context != nullptr) {
-            heif_context_free(context);
-            context = nullptr;
-        }
-        if (options != nullptr) {
-            heif_decoding_options_free(options);
-            options = nullptr;
-        }
-
+        options.reset();
+        track = HeifTrack();
+        context.reset();
         data.clear();
         timescale = 0;
     }
 
     QByteArray data;
-    heif_context *context = nullptr;
-    heif_track *track = nullptr;
-    heif_decoding_options *options = nullptr;
+    std::optional<HeifContext> context;
+    HeifTrack track;
+    std::optional<HeifDecodingOptions> options;
     uint32_t timescale = 0;
 };
 
@@ -143,8 +133,8 @@ HeifSequenceOpenResult HeifSequenceReader::open(QByteArray data)
         return { HeifSequenceOpenStatus::Error, *initError };
     }
 
-    d->context = heif_context_alloc();
-    if (d->context == nullptr) {
+    d->context.emplace();
+    if (d->context->get() == nullptr) {
         const QString message = imageViewText(
             "Could not decode the selected HEIF image: libheif could not allocate a context.");
         return { HeifSequenceOpenStatus::Error, message };
@@ -152,39 +142,38 @@ HeifSequenceOpenResult HeifSequenceReader::open(QByteArray data)
 
     d->data = std::move(data);
     heif_error error = heif_context_read_from_memory_without_copy(
-        d->context, d->data.constData(), static_cast<size_t>(d->data.size()), nullptr);
+        d->context->get(), d->data.constData(), static_cast<size_t>(d->data.size()), nullptr);
     if (error.code != heif_error_Ok) {
         const QString message = heifErrorString("reading the HEIF container", error);
         close();
         return { HeifSequenceOpenStatus::Error, message };
     }
 
-    if (!heif_context_has_sequence(d->context)) {
+    if (!heif_context_has_sequence(d->context->get())) {
         close();
         return { HeifSequenceOpenStatus::NotSequence, {} };
     }
 
-    d->track = heif_context_get_track(d->context, 0);
-    if (d->track == nullptr) {
+    d->track = HeifTrack(heif_context_get_track(d->context->get(), 0));
+    if (d->track.get() == nullptr) {
         close();
         return { HeifSequenceOpenStatus::Error,
             imageViewText("Could not decode the selected HEIF image: sequence track is missing.") };
     }
 
-    if (heif_track_get_track_handler_type(d->track) != heif_track_type_image_sequence) {
+    if (heif_track_get_track_handler_type(d->track.get()) != heif_track_type_image_sequence) {
         close();
         return { HeifSequenceOpenStatus::NotSequence, {} };
     }
 
-    d->options = heif_decoding_options_alloc();
-    if (d->options == nullptr) {
+    d->options.emplace();
+    if (d->options->get() == nullptr) {
         close();
         constexpr const char messageStr[] = "Could not decode the selected HEIF image: libheif "
                                             "could not allocate decoding options.";
         return { HeifSequenceOpenStatus::Error, imageViewText(messageStr) };
     }
-    d->options->convert_hdr_to_8bit = 1;
-    d->timescale = heif_track_get_timescale(d->track);
+    d->timescale = heif_track_get_timescale(d->track.get());
 
     return { HeifSequenceOpenStatus::Success, {} };
 }
@@ -195,7 +184,7 @@ std::optional<AnimationFrame> HeifSequenceReader::readNextFrame(QString *errorSt
         errorString->clear();
     }
 
-    if (d->track == nullptr) {
+    if (d->track.get() == nullptr) {
         if (errorString != nullptr) {
             *errorString
                 = imageViewText("Could not decode the selected HEIF image: sequence track is "
@@ -205,8 +194,8 @@ std::optional<AnimationFrame> HeifSequenceReader::readNextFrame(QString *errorSt
     }
 
     HeifImage heifImage;
-    const heif_error error = heif_track_decode_next_image(
-        d->track, heifImage.out(), heif_colorspace_RGB, heif_chroma_interleaved_RGBA, d->options);
+    const heif_error error = heif_track_decode_next_image(d->track.get(), heifImage.out(),
+        heif_colorspace_RGB, heif_chroma_interleaved_RGBA, d->options->get());
     if (error.code == heif_error_End_of_sequence) {
         return std::nullopt;
     }
