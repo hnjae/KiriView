@@ -27,7 +27,10 @@ namespace {
 using KiriView::ArchiveDocumentLocation;
 using KiriView::archiveEntryPathForUrl;
 using KiriView::archiveEntryUrl;
+using KiriView::ArchiveError;
+using KiriView::ArchiveImageCandidates;
 using KiriView::ArchiveImageCandidatesResult;
+using KiriView::ArchiveImageData;
 using KiriView::ArchiveImageDataResult;
 using KiriView::ImageNavigationCandidate;
 using KiriView::normalizedArchiveEntryPath;
@@ -170,23 +173,23 @@ QString archiveImageReadError()
 
 ArchiveImageCandidatesResult archiveImageCandidatesError(QString errorString)
 {
-    return ArchiveImageCandidatesResult { {}, std::move(errorString), false };
+    return ArchiveError { std::move(errorString) };
 }
 
 ArchiveImageCandidatesResult archiveImageCandidatesSuccess(
     std::vector<KiriView::ImageNavigationCandidate> candidates)
 {
-    return ArchiveImageCandidatesResult { std::move(candidates), QString(), true };
+    return ArchiveImageCandidates { std::move(candidates) };
 }
 
 ArchiveImageDataResult archiveImageDataError(QString errorString)
 {
-    return ArchiveImageDataResult { {}, std::move(errorString), false };
+    return ArchiveError { std::move(errorString) };
 }
 
 ArchiveImageDataResult archiveImageDataSuccess(QByteArray data)
 {
-    return ArchiveImageDataResult { std::move(data), QString(), true };
+    return ArchiveImageData { std::move(data) };
 }
 
 OpenKArchiveResult openKArchiveDocument(const KiriView::ArchiveDocumentLocation &archiveDocument)

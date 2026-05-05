@@ -14,6 +14,7 @@
 #include <QTest>
 #include <QUrl>
 #include <optional>
+#include <variant>
 #include <vector>
 
 namespace {
@@ -67,6 +68,22 @@ std::optional<KiriView::ArchiveDocumentLocation> archiveDocumentForPath(const QS
 {
     return KiriView::archiveDocumentLocationForLocalArchiveUrl(localUrl(path));
 }
+
+const KiriView::ArchiveImageCandidates *archiveImageCandidates(
+    const KiriView::ArchiveImageCandidatesResult &result)
+{
+    return std::get_if<KiriView::ArchiveImageCandidates>(&result);
+}
+
+const KiriView::ArchiveImageData *archiveImageData(const KiriView::ArchiveImageDataResult &result)
+{
+    return std::get_if<KiriView::ArchiveImageData>(&result);
+}
+
+const KiriView::ArchiveError *archiveError(const KiriView::ArchiveImageCandidatesResult &result)
+{
+    return std::get_if<KiriView::ArchiveError>(&result);
+}
 }
 
 class TestArchiveBackend : public QObject
@@ -99,13 +116,14 @@ void TestArchiveBackend::zipListingIncludesNestedSupportedImages()
     QVERIFY(archiveDocument.has_value());
     const KiriView::ArchiveImageCandidatesResult result
         = KiriView::loadArchiveDocumentImageCandidates(*archiveDocument);
+    const KiriView::ArchiveImageCandidates *success = archiveImageCandidates(result);
 
-    QVERIFY(result.success);
-    QCOMPARE(result.candidates.size(), std::size_t(2));
-    QCOMPARE(result.candidates.at(0).name, QStringLiteral("chapter/01.png"));
-    QCOMPARE(result.candidates.at(0).url,
+    QVERIFY(success != nullptr);
+    QCOMPARE(success->candidates.size(), std::size_t(2));
+    QCOMPARE(success->candidates.at(0).name, QStringLiteral("chapter/01.png"));
+    QCOMPARE(success->candidates.at(0).url,
         archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("chapter/01.png")));
-    QCOMPARE(result.candidates.at(1).name, QStringLiteral("chapter/02.jpg"));
+    QCOMPARE(success->candidates.at(1).name, QStringLiteral("chapter/02.jpg"));
 }
 
 void TestArchiveBackend::tarListingUsesSameOrdering()
@@ -125,11 +143,12 @@ void TestArchiveBackend::tarListingUsesSameOrdering()
     QVERIFY(archiveDocument.has_value());
     const KiriView::ArchiveImageCandidatesResult result
         = KiriView::loadArchiveDocumentImageCandidates(*archiveDocument);
+    const KiriView::ArchiveImageCandidates *success = archiveImageCandidates(result);
 
-    QVERIFY(result.success);
-    QCOMPARE(result.candidates.size(), std::size_t(2));
-    QCOMPARE(result.candidates.at(0).name, QStringLiteral("pages/01.png"));
-    QCOMPARE(result.candidates.at(1).name, QStringLiteral("pages/02.webp"));
+    QVERIFY(success != nullptr);
+    QCOMPARE(success->candidates.size(), std::size_t(2));
+    QCOMPARE(success->candidates.at(0).name, QStringLiteral("pages/01.png"));
+    QCOMPARE(success->candidates.at(1).name, QStringLiteral("pages/02.webp"));
 }
 
 void TestArchiveBackend::rarListingUsesLibArchive()
@@ -145,13 +164,14 @@ void TestArchiveBackend::rarListingUsesLibArchive()
     QCOMPARE(archiveDocument->rootUrl().scheme(), QStringLiteral("rar"));
     const KiriView::ArchiveImageCandidatesResult result
         = KiriView::loadArchiveDocumentImageCandidates(*archiveDocument);
+    const KiriView::ArchiveImageCandidates *success = archiveImageCandidates(result);
 
-    QVERIFY(result.success);
-    QCOMPARE(result.candidates.size(), std::size_t(2));
-    QCOMPARE(result.candidates.at(0).name, QStringLiteral("chapter/01.png"));
-    QCOMPARE(result.candidates.at(0).url,
+    QVERIFY(success != nullptr);
+    QCOMPARE(success->candidates.size(), std::size_t(2));
+    QCOMPARE(success->candidates.at(0).name, QStringLiteral("chapter/01.png"));
+    QCOMPARE(success->candidates.at(0).url,
         archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("chapter/01.png")));
-    QCOMPARE(result.candidates.at(1).name, QStringLiteral("chapter/02.jpg"));
+    QCOMPARE(success->candidates.at(1).name, QStringLiteral("chapter/02.jpg"));
 }
 
 void TestArchiveBackend::readingArchiveEntryReturnsOriginalBytes()
@@ -170,9 +190,10 @@ void TestArchiveBackend::readingArchiveEntryReturnsOriginalBytes()
     QVERIFY(archiveDocument.has_value());
     const KiriView::ArchiveImageDataResult result = KiriView::loadArchiveDocumentImageData(
         *archiveDocument, archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("page.png")));
+    const KiriView::ArchiveImageData *success = archiveImageData(result);
 
-    QVERIFY(result.success);
-    QCOMPARE(result.data, expected);
+    QVERIFY(success != nullptr);
+    QCOMPARE(success->data, expected);
 }
 
 void TestArchiveBackend::readingRarEntryReturnsOriginalBytes()
@@ -189,9 +210,10 @@ void TestArchiveBackend::readingRarEntryReturnsOriginalBytes()
     const KiriView::ArchiveImageDataResult result
         = KiriView::loadArchiveDocumentImageData(*archiveDocument,
             archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("chapter/02.jpg")));
+    const KiriView::ArchiveImageData *success = archiveImageData(result);
 
-    QVERIFY(result.success);
-    QCOMPARE(result.data, QByteArrayLiteral("two"));
+    QVERIFY(success != nullptr);
+    QCOMPARE(success->data, QByteArrayLiteral("two"));
 }
 
 void TestArchiveBackend::missingEmptyAndInvalidArchivesReportExpectedResults()
@@ -205,8 +227,9 @@ void TestArchiveBackend::missingEmptyAndInvalidArchivesReportExpectedResults()
             QUrl(QStringLiteral("zip:///missing.cbz/")), KiriView::ArchiveDocumentKind::ComicBook);
     const KiriView::ArchiveImageCandidatesResult missingResult
         = KiriView::loadArchiveDocumentImageCandidates(missingArchive);
-    QVERIFY(!missingResult.success);
-    QVERIFY(!missingResult.errorString.isEmpty());
+    const KiriView::ArchiveError *missingError = archiveError(missingResult);
+    QVERIFY(missingError != nullptr);
+    QVERIFY(!missingError->errorString.isEmpty());
 
     const QString emptyArchivePath = dir.filePath(QStringLiteral("empty.cbz"));
     writeZipArchive(emptyArchivePath, {});
@@ -215,8 +238,9 @@ void TestArchiveBackend::missingEmptyAndInvalidArchivesReportExpectedResults()
     QVERIFY(emptyArchiveDocument.has_value());
     const KiriView::ArchiveImageCandidatesResult emptyResult
         = KiriView::loadArchiveDocumentImageCandidates(*emptyArchiveDocument);
-    QVERIFY(emptyResult.success);
-    QVERIFY(emptyResult.candidates.empty());
+    const KiriView::ArchiveImageCandidates *emptySuccess = archiveImageCandidates(emptyResult);
+    QVERIFY(emptySuccess != nullptr);
+    QVERIFY(emptySuccess->candidates.empty());
 
     const QString invalidArchivePath = dir.filePath(QStringLiteral("invalid.cbz"));
     QFile invalidArchive(invalidArchivePath);
@@ -230,8 +254,9 @@ void TestArchiveBackend::missingEmptyAndInvalidArchivesReportExpectedResults()
     QVERIFY(invalidArchiveDocument.has_value());
     const KiriView::ArchiveImageCandidatesResult invalidResult
         = KiriView::loadArchiveDocumentImageCandidates(*invalidArchiveDocument);
-    QVERIFY(!invalidResult.success);
-    QVERIFY(!invalidResult.errorString.isEmpty());
+    const KiriView::ArchiveError *invalidError = archiveError(invalidResult);
+    QVERIFY(invalidError != nullptr);
+    QVERIFY(!invalidError->errorString.isEmpty());
 }
 
 QTEST_GUILESS_MAIN(TestArchiveBackend)

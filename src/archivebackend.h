@@ -9,20 +9,24 @@
 
 #include <QByteArray>
 #include <QString>
+#include <variant>
 #include <vector>
 
 namespace KiriView {
-struct ArchiveImageCandidatesResult {
-    std::vector<ImageNavigationCandidate> candidates;
+struct ArchiveError {
     QString errorString;
-    bool success = false;
 };
 
-struct ArchiveImageDataResult {
-    QByteArray data;
-    QString errorString;
-    bool success = false;
+struct ArchiveImageCandidates {
+    std::vector<ImageNavigationCandidate> candidates;
 };
+
+struct ArchiveImageData {
+    QByteArray data;
+};
+
+using ArchiveImageCandidatesResult = std::variant<ArchiveImageCandidates, ArchiveError>;
+using ArchiveImageDataResult = std::variant<ArchiveImageData, ArchiveError>;
 
 ArchiveImageCandidatesResult loadArchiveDocumentImageCandidates(
     const ArchiveDocumentLocation &archiveDocument);
