@@ -42,7 +42,13 @@ ImageLoader::ImageLoader(
                 return;
             }
 
-            finishDecodedImage(*session, std::move(result));
+            std::optional<DecodedImage> decodedImage = decodedImageFromResult(std::move(*result));
+            if (!decodedImage.has_value()) {
+                finishLoadWithError(*session, ImageLoadError::Generic, QString());
+                return;
+            }
+
+            finishDecodedImage(*session, std::make_shared<DecodedImage>(std::move(*decodedImage)));
         });
     m_decodeJob.setLoadErrorCallback(
         [this](const ImageDecodeRequest &request, const QString &errorString) {
@@ -181,10 +187,9 @@ void ImageLoader::finishLoadWithError(
     finishCurrentLoadSession(session, m_callbacks.error, error, errorString);
 }
 
-void ImageLoader::finishDecodedImage(
-    ImageLoadSession session, std::shared_ptr<DecodedImageResult> result)
+void ImageLoader::finishDecodedImage(ImageLoadSession session, std::shared_ptr<DecodedImage> image)
 {
-    finishCurrentLoadSession(session, m_callbacks.decodedImage, std::move(result));
+    finishCurrentLoadSession(session, m_callbacks.decodedImage, std::move(image));
 }
 
 void ImageLoader::finishPredecodedImage(ImageLoadSession session, PredecodedImage image)

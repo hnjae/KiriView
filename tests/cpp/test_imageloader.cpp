@@ -53,6 +53,7 @@ class TestImageLoader : public QObject
 
 private Q_SLOTS:
     void imageLoadDeliversDecodedResult();
+    void decodeFailureUsesErrorCallback();
     void predecodedImageBypassesDataLoad();
     void comicBookArchiveResolvesFirstImage();
     void directArchiveResolvesFirstImage();
@@ -66,10 +67,10 @@ void TestImageLoader::imageLoadDeliversDecodedResult()
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
     std::optional<KiriView::ImageLoadSession> decodedSession;
-    std::shared_ptr<KiriView::DecodedImageResult> decodedResult;
+    std::shared_ptr<KiriView::DecodedImage> decodedResult;
     KiriView::ImageLoader::Callbacks callbacks;
     callbacks.decodedImage = [&decodedSession, &decodedResult](KiriView::ImageLoadSession session,
-                                 std::shared_ptr<KiriView::DecodedImageResult> result) {
+                                 std::shared_ptr<KiriView::DecodedImage> result) {
         decodedSession = std::move(session);
         decodedResult = std::move(result);
     };
@@ -88,6 +89,37 @@ void TestImageLoader::imageLoadDeliversDecodedResult()
     QVERIFY(decodedSession.has_value());
     QCOMPARE(decodedSession->location.imageUrl(), imageUrl);
     QVERIFY(std::get_if<KiriView::StaticDecodedImage>(decodedResult.get()) != nullptr);
+}
+
+void TestImageLoader::decodeFailureUsesErrorCallback()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    std::optional<KiriView::ImageLoadSession> errorSession;
+    KiriView::ImageLoadError error = KiriView::ImageLoadError::Generic;
+    QString errorString;
+    int decodedCount = 0;
+    KiriView::ImageLoader::Callbacks callbacks;
+    callbacks.error = [&errorSession, &error, &errorString](KiriView::ImageLoadSession session,
+                          KiriView::ImageLoadError loadError, const QString &message) {
+        errorSession = std::move(session);
+        error = loadError;
+        errorString = message;
+    };
+    callbacks.decodedImage = [&decodedCount](KiriView::ImageLoadSession, auto) { ++decodedCount; };
+    KiriView::ImageLoader loader
+        = createLoader(this, candidateProvider, dataLoader, std::move(callbacks));
+
+    const QUrl imageUrl = localUrl(QStringLiteral("/images/bad.png"));
+    loader.start(KiriView::ImageLoadRequest::fromUrl(imageUrl));
+    QCOMPARE(dataLoader.loads.size(), std::size_t(1));
+    dataLoader.loads.front()->dataCallback(QByteArrayLiteral("bad"));
+
+    QTRY_VERIFY(errorSession.has_value());
+    QCOMPARE(errorSession->location.imageUrl(), imageUrl);
+    QCOMPARE(error, KiriView::ImageLoadError::Generic);
+    QCOMPARE(errorString, QStringLiteral("decode failed"));
+    QCOMPARE(decodedCount, 0);
 }
 
 void TestImageLoader::predecodedImageBypassesDataLoad()

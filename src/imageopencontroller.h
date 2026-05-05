@@ -50,18 +50,15 @@ private:
     void beginSourceLoad();
     void setSourceUrlFromResolvedLoad(const QUrl &sourceUrl);
     void finishPredecodedImageLoad(ImageLoadSession session, PredecodedImage image);
-    void finishDecodedImageLoad(
-        ImageLoadSession session, std::shared_ptr<DecodedImageResult> result);
+    void finishDecodedImageLoad(ImageLoadSession session, std::shared_ptr<DecodedImage> image);
     bool finishDecodedImageResult(
-        ImageLoadSession &session, DecodedImageFailure &decoded, const DecodedImageResult &result);
+        ImageLoadSession &session, StaticDecodedImage &decoded, const DecodedImage &image);
     bool finishDecodedImageResult(
-        ImageLoadSession &session, StaticDecodedImage &decoded, const DecodedImageResult &result);
-    bool finishDecodedImageResult(ImageLoadSession &session, DecodedAnimationImage &decoded,
-        const DecodedImageResult &result);
+        ImageLoadSession &session, DecodedAnimationImage &decoded, const DecodedImage &image);
     bool finishDecodedImageResult(
-        ImageLoadSession &session, ReaderAnimationImage &decoded, const DecodedImageResult &result);
-    bool finishDecodedImageResult(ImageLoadSession &session, HeifSequenceAnimationImage &decoded,
-        const DecodedImageResult &result);
+        ImageLoadSession &session, ReaderAnimationImage &decoded, const DecodedImage &image);
+    bool finishDecodedImageResult(
+        ImageLoadSession &session, HeifSequenceAnimationImage &decoded, const DecodedImage &image);
     void finishLoadWithError(
         const ImageLoadSession &session, ImageLoadError error, const QString &errorString);
     void finishReplacementLoadWithError(const QString &errorString);

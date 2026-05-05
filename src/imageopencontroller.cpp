@@ -16,7 +16,7 @@
 #include <variant>
 
 namespace {
-using KiriView::decodedImageResultIsPredecodeCacheable;
+using KiriView::decodedImageIsPredecodeCacheable;
 using KiriView::imageContainerUrlForLocation;
 }
 
@@ -33,8 +33,8 @@ ImageOpenController::ImageOpenController(QObject *parent, ImageDocumentState &st
             [this](const QUrl &sourceUrl) { setSourceUrlFromResolvedLoad(sourceUrl); },
             [this](const ImageLoadSession &session, ImageLoadError error,
                 const QString &errorString) { finishLoadWithError(session, error, errorString); },
-            [this](ImageLoadSession session, std::shared_ptr<DecodedImageResult> result) {
-                finishDecodedImageLoad(std::move(session), std::move(result));
+            [this](ImageLoadSession session, std::shared_ptr<DecodedImage> image) {
+                finishDecodedImageLoad(std::move(session), std::move(image));
             },
             [this](ImageLoadSession session, PredecodedImage image) {
                 finishPredecodedImageLoad(std::move(session), std::move(image));
@@ -110,35 +110,28 @@ void ImageOpenController::finishPredecodedImageLoad(ImageLoadSession session, Pr
 }
 
 void ImageOpenController::finishDecodedImageLoad(
-    ImageLoadSession session, std::shared_ptr<DecodedImageResult> result)
+    ImageLoadSession session, std::shared_ptr<DecodedImage> image)
 {
-    auto handleDecoded = [this, &session, &result](auto &decoded) {
-        return finishDecodedImageResult(session, decoded, *result);
+    auto handleDecoded = [this, &session, &image](auto &decoded) {
+        return finishDecodedImageResult(session, decoded, *image);
     };
-    const bool displayedImage = std::visit(handleDecoded, *result);
+    const bool displayedImage = std::visit(handleDecoded, *image);
     if (displayedImage) {
         report(ImageDocumentEffect::scheduleAdjacentImagePredecode());
     }
 }
 
 bool ImageOpenController::finishDecodedImageResult(
-    ImageLoadSession &session, DecodedImageFailure &decoded, const DecodedImageResult &)
-{
-    finishLoadWithError(session, ImageLoadError::Generic, decoded.errorString);
-    return false;
-}
-
-bool ImageOpenController::finishDecodedImageResult(
-    ImageLoadSession &session, StaticDecodedImage &decoded, const DecodedImageResult &result)
+    ImageLoadSession &session, StaticDecodedImage &decoded, const DecodedImage &image)
 {
     const bool predecodeCacheable
-        = decodedImageResultIsPredecodeCacheable(result, PredecodeCache::byteBudget());
+        = decodedImageIsPredecodeCacheable(image, PredecodeCache::byteBudget());
     finishStaticImageLoad(session, std::move(decoded.staticImage), predecodeCacheable);
     return true;
 }
 
 bool ImageOpenController::finishDecodedImageResult(
-    ImageLoadSession &session, DecodedAnimationImage &decoded, const DecodedImageResult &)
+    ImageLoadSession &session, DecodedAnimationImage &decoded, const DecodedImage &)
 {
     if (decoded.frames.empty()) {
         finishLoadWithError(session, ImageLoadError::Generic,
@@ -152,7 +145,7 @@ bool ImageOpenController::finishDecodedImageResult(
 }
 
 bool ImageOpenController::finishDecodedImageResult(
-    ImageLoadSession &session, ReaderAnimationImage &decoded, const DecodedImageResult &)
+    ImageLoadSession &session, ReaderAnimationImage &decoded, const DecodedImage &)
 {
     finishLoadSuccessfully(session, decoded.firstFrame, false);
     m_presentationController.startAnimation(
@@ -161,7 +154,7 @@ bool ImageOpenController::finishDecodedImageResult(
 }
 
 bool ImageOpenController::finishDecodedImageResult(
-    ImageLoadSession &session, HeifSequenceAnimationImage &decoded, const DecodedImageResult &)
+    ImageLoadSession &session, HeifSequenceAnimationImage &decoded, const DecodedImage &)
 {
     finishLoadSuccessfully(session, decoded.firstFrame, false);
     m_presentationController.startHeifSequenceAnimation(decoded.data, decoded.firstFrameDelay);

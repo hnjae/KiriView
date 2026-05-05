@@ -12,6 +12,7 @@
 #include <QString>
 #include <QtGlobal>
 #include <memory>
+#include <optional>
 #include <variant>
 #include <vector>
 
@@ -43,9 +44,13 @@ struct HeifSequenceAnimationImage {
     int firstFrameDelay = 0;
 };
 
+using DecodedImage = std::variant<StaticDecodedImage, DecodedAnimationImage, ReaderAnimationImage,
+    HeifSequenceAnimationImage>;
 using DecodedImageResult = std::variant<DecodedImageFailure, StaticDecodedImage,
     DecodedAnimationImage, ReaderAnimationImage, HeifSequenceAnimationImage>;
 
+std::optional<DecodedImage> decodedImageFromResult(DecodedImageResult result);
+bool decodedImageIsPredecodeCacheable(const DecodedImage &image, qsizetype byteBudget);
 bool decodedImageResultIsPredecodeCacheable(const DecodedImageResult &result, qsizetype byteBudget);
 }
 

@@ -26,7 +26,7 @@ public:
     using SourceResolvedCallback = std::function<void(const QUrl &)>;
     using ErrorCallback = std::function<void(ImageLoadSession, ImageLoadError, const QString &)>;
     using DecodedImageCallback
-        = std::function<void(ImageLoadSession, std::shared_ptr<DecodedImageResult>)>;
+        = std::function<void(ImageLoadSession, std::shared_ptr<DecodedImage>)>;
     using PredecodedImageCallback = std::function<void(ImageLoadSession, PredecodedImage)>;
     using TakePredecodedImageCallback = std::function<std::optional<PredecodedImage>(const QUrl &)>;
 
@@ -56,7 +56,7 @@ private:
     bool tryDisplayPredecodedImage(ImageLoadSession session);
     void finishLoadWithError(
         const ImageLoadSession &session, ImageLoadError error, const QString &errorString);
-    void finishDecodedImage(ImageLoadSession session, std::shared_ptr<DecodedImageResult> result);
+    void finishDecodedImage(ImageLoadSession session, std::shared_ptr<DecodedImage> image);
     void finishPredecodedImage(ImageLoadSession session, PredecodedImage image);
     template <typename Callback, typename... Args>
     void finishCurrentLoadSession(
