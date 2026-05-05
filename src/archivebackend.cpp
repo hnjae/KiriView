@@ -206,6 +206,17 @@ ArchiveImageDataResult archiveImageDataSuccess(QByteArray data)
     return ArchiveImageData { std::move(data) };
 }
 
+std::optional<QString> archiveImageEntryPathForRead(
+    const ArchiveDocumentLocation &archiveDocument, const QUrl &imageUrl)
+{
+    const QString entryPath = archiveEntryPathForUrl(archiveDocument, imageUrl);
+    if (archiveDocument.isEmpty() || entryPath.isEmpty()) {
+        return std::nullopt;
+    }
+
+    return entryPath;
+}
+
 OpenKArchiveResult openKArchiveDocument(const KiriView::ArchiveDocumentLocation &archiveDocument)
 {
     std::unique_ptr<KArchive> archive = createArchive(archiveDocument);
@@ -384,13 +395,8 @@ ArchiveImageDataResult readLibArchiveEntryData(archive *reader, archive_entry *e
 }
 
 ArchiveImageDataResult loadLibArchiveDocumentImageData(
-    const ArchiveDocumentLocation &archiveDocument, const QUrl &imageUrl)
+    const ArchiveDocumentLocation &archiveDocument, const QString &entryPath)
 {
-    const QString entryPath = archiveEntryPathForUrl(archiveDocument, imageUrl);
-    if (archiveDocument.isEmpty() || entryPath.isEmpty()) {
-        return archiveImageDataError(archiveImageNotFoundError());
-    }
-
     QString errorString;
     LibArchiveReader reader = openLibArchiveReader(archiveDocument, &errorString);
     if (reader == nullptr) {
@@ -447,13 +453,14 @@ ArchiveImageCandidatesResult loadArchiveDocumentImageCandidates(
 ArchiveImageDataResult loadArchiveDocumentImageData(
     const ArchiveDocumentLocation &archiveDocument, const QUrl &imageUrl)
 {
-    const QString entryPath = archiveEntryPathForUrl(archiveDocument, imageUrl);
-    if (archiveDocument.isEmpty() || entryPath.isEmpty()) {
+    const std::optional<QString> entryPath
+        = archiveImageEntryPathForRead(archiveDocument, imageUrl);
+    if (!entryPath.has_value()) {
         return archiveImageDataError(archiveImageNotFoundError());
     }
 
     if (isLibArchiveDocument(archiveDocument)) {
-        return loadLibArchiveDocumentImageData(archiveDocument, imageUrl);
+        return loadLibArchiveDocumentImageData(archiveDocument, *entryPath);
     }
 
     OpenKArchiveResult opened = openKArchiveDocument(archiveDocument);
@@ -462,7 +469,7 @@ ArchiveImageDataResult loadArchiveDocumentImageData(
     }
 
     const KArchiveDirectory *directory = opened.archive.directory();
-    const KArchiveFile *file = directory == nullptr ? nullptr : directory->file(entryPath);
+    const KArchiveFile *file = directory == nullptr ? nullptr : directory->file(*entryPath);
     if (file == nullptr) {
         return archiveImageDataError(archiveImageNotFoundError());
     }

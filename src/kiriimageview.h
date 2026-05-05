@@ -10,6 +10,7 @@
 #include <QMetaObject>
 #include <QPointF>
 #include <QQuickItem>
+#include <QRectF>
 #include <QSize>
 #include <QSizeF>
 #include <QtQml/qqmlregistration.h>
@@ -48,6 +49,7 @@ private:
     QSize imageSize() const;
     QSizeF viewportSize() const;
     QSizeF displaySize() const;
+    QRectF viewportImageRect() const;
     void connectDocument();
     void disconnectDocument();
     KiriView::ImageDocumentRenderContext renderContext() const;

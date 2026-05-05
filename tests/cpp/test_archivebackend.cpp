@@ -84,6 +84,11 @@ const KiriView::ArchiveError *archiveError(const KiriView::ArchiveImageCandidate
 {
     return std::get_if<KiriView::ArchiveError>(&result);
 }
+
+const KiriView::ArchiveError *archiveDataError(const KiriView::ArchiveImageDataResult &result)
+{
+    return std::get_if<KiriView::ArchiveError>(&result);
+}
 }
 
 class TestArchiveBackend : public QObject
@@ -96,6 +101,7 @@ private Q_SLOTS:
     void rarListingUsesLibArchive();
     void readingArchiveEntryReturnsOriginalBytes();
     void readingRarEntryReturnsOriginalBytes();
+    void readingUrlOutsideArchiveReturnsNotFound();
     void missingEmptyAndInvalidArchivesReportExpectedResults();
 };
 
@@ -214,6 +220,27 @@ void TestArchiveBackend::readingRarEntryReturnsOriginalBytes()
 
     QVERIFY(success != nullptr);
     QCOMPARE(success->data, QByteArrayLiteral("two"));
+}
+
+void TestArchiveBackend::readingUrlOutsideArchiveReturnsNotFound()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString archivePath = dir.filePath(QStringLiteral("book.zip"));
+    writeZipArchive(archivePath,
+        {
+            { QStringLiteral("page.png"), QByteArrayLiteral("image-bytes") },
+        });
+
+    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+        = archiveDocumentForPath(archivePath);
+    QVERIFY(archiveDocument.has_value());
+    const KiriView::ArchiveImageDataResult result = KiriView::loadArchiveDocumentImageData(
+        *archiveDocument, localUrl(QStringLiteral("/outside/page.png")));
+    const KiriView::ArchiveError *error = archiveDataError(result);
+
+    QVERIFY(error != nullptr);
+    QVERIFY(!error->errorString.isEmpty());
 }
 
 void TestArchiveBackend::missingEmptyAndInvalidArchivesReportExpectedResults()

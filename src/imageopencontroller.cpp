@@ -17,6 +17,23 @@
 
 namespace {
 using KiriView::imageContainerUrlForLocation;
+
+QString emptyArchiveErrorMessage()
+{
+    return KiriView::imageViewText("The selected archive does not contain any supported images.");
+}
+
+QString archiveOpenErrorMessage(const QString &errorString)
+{
+    return errorString.isEmpty() ? KiriView::imageViewText("Could not open the selected archive.")
+                                 : errorString;
+}
+
+QString loadErrorMessage(KiriView::ImageLoadError error, const QString &errorString)
+{
+    return error == KiriView::ImageLoadError::EmptyArchive ? emptyArchiveErrorMessage()
+                                                           : errorString;
+}
 }
 
 namespace KiriView {
@@ -81,8 +98,7 @@ void ImageOpenController::beginSourceLoad()
 
 void ImageOpenController::finishContainerNavigationWithEmptyContainer(const QUrl &containerUrl)
 {
-    finishContainerNavigationLoadWithError(
-        containerUrl, imageViewText("The selected archive does not contain any supported images."));
+    finishContainerNavigationLoadWithError(containerUrl, emptyArchiveErrorMessage());
 }
 
 void ImageOpenController::finishContainerNavigationLoadWithError(
@@ -90,9 +106,7 @@ void ImageOpenController::finishContainerNavigationLoadWithError(
 {
     cancel();
 
-    const QString message = errorString.isEmpty()
-        ? imageViewText("Could not open the selected archive.")
-        : errorString;
+    const QString message = archiveOpenErrorMessage(errorString);
     reportEffects(
         ImageOpenWorkflow::finishContainerNavigationLoadWithError(m_state, containerUrl, message));
 }
@@ -163,9 +177,7 @@ void ImageOpenController::finishLoadWithError(
     const ImageLoadSession &session, ImageLoadError error, const QString &errorString)
 {
     const QUrl containerNavigationUrl = session.request.containerNavigationUrl();
-    const QString message = error == ImageLoadError::EmptyArchive
-        ? imageViewText("The selected archive does not contain any supported images.")
-        : errorString;
+    const QString message = loadErrorMessage(error, errorString);
     if (!containerNavigationUrl.isEmpty()) {
         finishContainerNavigationLoadWithError(containerNavigationUrl, message);
         return;

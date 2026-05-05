@@ -39,33 +39,32 @@ void KiriImageView::setDocument(KiriImageDocument *document)
 QPointF KiriImageView::panContentPosition(
     const QPointF &contentPosition, const QPointF &delta) const
 {
-    const QRectF imageRect = KiriView::imageViewportImageRect(viewportSize(), displaySize());
-    return KiriView::imageViewportPanPosition(viewportSize(), imageRect, contentPosition, delta);
+    return KiriView::imageViewportPanPosition(
+        viewportSize(), viewportImageRect(), contentPosition, delta);
 }
 
 QPointF KiriImageView::nextScanContentPosition(const QPointF &contentPosition) const
 {
-    const QRectF imageRect = KiriView::imageViewportImageRect(viewportSize(), displaySize());
-    return KiriView::imageViewportNextZScanPosition(viewportSize(), imageRect, contentPosition);
+    return KiriView::imageViewportNextZScanPosition(
+        viewportSize(), viewportImageRect(), contentPosition);
 }
 
 QPointF KiriImageView::previousScanContentPosition(const QPointF &contentPosition) const
 {
-    const QRectF imageRect = KiriView::imageViewportImageRect(viewportSize(), displaySize());
-    return KiriView::imageViewportPreviousZScanPosition(viewportSize(), imageRect, contentPosition);
+    return KiriView::imageViewportPreviousZScanPosition(
+        viewportSize(), viewportImageRect(), contentPosition);
 }
 
 QPointF KiriImageView::finalScanContentPosition() const
 {
-    const QRectF imageRect = KiriView::imageViewportImageRect(viewportSize(), displaySize());
-    return KiriView::imageViewportFinalZScanPosition(viewportSize(), imageRect);
+    return KiriView::imageViewportFinalZScanPosition(viewportSize(), viewportImageRect());
 }
 
 bool KiriImageView::viewportPointInsideImage(
     const QPointF &contentPosition, const QPointF &viewportPoint) const
 {
-    const QRectF imageRect = KiriView::imageViewportImageRect(viewportSize(), displaySize());
-    return KiriView::imageViewportPointInsideImage(contentPosition, viewportPoint, imageRect);
+    return KiriView::imageViewportPointInsideImage(
+        contentPosition, viewportPoint, viewportImageRect());
 }
 
 QPointF KiriImageView::zoomContentPosition(const QPointF &contentPosition,
@@ -131,6 +130,11 @@ QSizeF KiriImageView::viewportSize() const
 QSizeF KiriImageView::displaySize() const
 {
     return m_document == nullptr ? QSizeF() : m_document->displaySize();
+}
+
+QRectF KiriImageView::viewportImageRect() const
+{
+    return KiriView::imageViewportImageRect(viewportSize(), displaySize());
 }
 
 void KiriImageView::connectDocument()
