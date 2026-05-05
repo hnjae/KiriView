@@ -11,10 +11,12 @@ use cxx_qt_lib::QByteArray;
 use png::{BitDepth, ColorType};
 use std::cmp;
 use std::io::Cursor;
+use std::ops::Range;
 
 const PNG_SIGNATURE: [u8; 8] = [0x89, b'P', b'N', b'G', 0x0d, 0x0a, 0x1a, 0x0a];
 const APNG_DEFAULT_DELAY_DENOMINATOR: u16 = 100;
 const MAX_QIMAGE_DIMENSION: u32 = i32::MAX as u32;
+const RGBA_BYTES_PER_PIXEL: usize = 4;
 
 #[cxx::bridge(namespace = "KiriView")]
 mod ffi {
@@ -143,6 +145,214 @@ struct ParsedApng {
     frames: Vec<RawFrame>,
 }
 
+struct ApngParseState {
+    seen_ihdr: bool,
+    seen_actl: bool,
+    seen_idat: bool,
+    idat_chunks_open: bool,
+    seen_iend: bool,
+    expected_frame_count: u32,
+    expected_sequence_number: u32,
+    parsed: ParsedApng,
+    current_frame: Option<RawFrame>,
+}
+
+impl ApngParseState {
+    fn new() -> Self {
+        Self {
+            seen_ihdr: false,
+            seen_actl: false,
+            seen_idat: false,
+            idat_chunks_open: false,
+            seen_iend: false,
+            expected_frame_count: 0,
+            expected_sequence_number: 0,
+            parsed: ParsedApng {
+                canvas_width: 0,
+                canvas_height: 0,
+                play_count: 0,
+                ihdr_data: Vec::new(),
+                header_chunks: Vec::new(),
+                frames: Vec::new(),
+            },
+            current_frame: None,
+        }
+    }
+
+    fn is_complete(&self) -> bool {
+        self.seen_iend
+    }
+
+    fn handle_chunk(&mut self, chunk: PngChunkView<'_>) -> Result<(), RustApngErrorKind> {
+        let kind = chunk.kind;
+        let chunk_data = chunk.data;
+
+        if !self.seen_ihdr && kind != *b"IHDR" {
+            return Err(RustApngErrorKind::Png);
+        }
+
+        match &kind {
+            b"IHDR" => self.handle_ihdr(chunk_data),
+            b"acTL" => self.handle_actl(chunk_data),
+            b"fcTL" => self.handle_fctl(chunk_data),
+            b"IDAT" => self.handle_idat(chunk_data),
+            b"fdAT" => self.handle_fdat(chunk_data),
+            b"IEND" => self.handle_iend(),
+            _ => {
+                self.handle_other_chunk(kind, chunk_data);
+                Ok(())
+            }
+        }
+    }
+
+    fn finish(self) -> Result<Option<ParsedApng>, RustApngErrorKind> {
+        if !self.seen_ihdr || !self.seen_iend {
+            return Err(RustApngErrorKind::Png);
+        }
+        if !self.seen_actl {
+            return Ok(None);
+        }
+        if !self.seen_idat
+            || usize::try_from(self.expected_frame_count).ok() != Some(self.parsed.frames.len())
+        {
+            return Err(RustApngErrorKind::Apng);
+        }
+
+        Ok(Some(self.parsed))
+    }
+
+    fn handle_ihdr(&mut self, chunk_data: &[u8]) -> Result<(), RustApngErrorKind> {
+        if self.seen_ihdr || !self.parsed.ihdr_data.is_empty() || chunk_data.len() != 13 {
+            return Err(RustApngErrorKind::Png);
+        }
+        self.seen_ihdr = true;
+        self.parsed.ihdr_data = chunk_data.to_vec();
+        self.parsed.canvas_width = read_u32(chunk_data, 0).ok_or(RustApngErrorKind::Png)?;
+        self.parsed.canvas_height = read_u32(chunk_data, 4).ok_or(RustApngErrorKind::Png)?;
+        validate_dimensions(
+            self.parsed.canvas_width,
+            self.parsed.canvas_height,
+            RustApngErrorKind::Png,
+        )
+    }
+
+    fn handle_actl(&mut self, chunk_data: &[u8]) -> Result<(), RustApngErrorKind> {
+        if !self.seen_ihdr || self.seen_actl || self.seen_idat || chunk_data.len() != 8 {
+            return Err(RustApngErrorKind::Apng);
+        }
+        self.seen_actl = true;
+        self.expected_frame_count = read_u32(chunk_data, 0).ok_or(RustApngErrorKind::Apng)?;
+        self.parsed.play_count = read_u32(chunk_data, 4).ok_or(RustApngErrorKind::Apng)?;
+        if self.expected_frame_count == 0 {
+            return Err(RustApngErrorKind::Apng);
+        }
+        Ok(())
+    }
+
+    fn handle_fctl(&mut self, chunk_data: &[u8]) -> Result<(), RustApngErrorKind> {
+        if !self.seen_actl {
+            return Err(RustApngErrorKind::Apng);
+        }
+        self.finish_current_frame()?;
+        let control = read_frame_control(chunk_data)?;
+        if control.sequence_number != self.expected_sequence_number {
+            return Err(RustApngErrorKind::Apng);
+        }
+        self.advance_sequence_number()?;
+        validate_frame_bounds(
+            &control,
+            self.parsed.canvas_width,
+            self.parsed.canvas_height,
+        )?;
+        self.current_frame = Some(RawFrame {
+            control,
+            image_data: Vec::new(),
+            uses_default_image_data: !self.seen_idat,
+        });
+        self.idat_chunks_open = false;
+        Ok(())
+    }
+
+    fn handle_idat(&mut self, chunk_data: &[u8]) -> Result<(), RustApngErrorKind> {
+        if !self.seen_ihdr {
+            return Err(RustApngErrorKind::Png);
+        }
+        if self.seen_idat && !self.idat_chunks_open {
+            return Err(RustApngErrorKind::Png);
+        }
+        if self
+            .current_frame
+            .as_ref()
+            .is_some_and(|frame| !frame.uses_default_image_data)
+        {
+            return Err(RustApngErrorKind::Apng);
+        }
+
+        self.seen_idat = true;
+        self.idat_chunks_open = true;
+        if let Some(frame) = self.current_frame.as_mut()
+            && frame.uses_default_image_data
+        {
+            frame.image_data.extend_from_slice(chunk_data);
+        }
+        Ok(())
+    }
+
+    fn handle_fdat(&mut self, chunk_data: &[u8]) -> Result<(), RustApngErrorKind> {
+        if !self.seen_actl || !self.seen_idat || chunk_data.len() < 4 {
+            return Err(RustApngErrorKind::Apng);
+        }
+        let sequence_number = read_u32(chunk_data, 0).ok_or(RustApngErrorKind::Apng)?;
+        if sequence_number != self.expected_sequence_number {
+            return Err(RustApngErrorKind::Apng);
+        }
+        self.advance_sequence_number()?;
+        let frame = self.current_frame.as_mut().ok_or(RustApngErrorKind::Apng)?;
+        if frame.uses_default_image_data {
+            return Err(RustApngErrorKind::Apng);
+        }
+        frame.image_data.extend_from_slice(&chunk_data[4..]);
+        self.idat_chunks_open = false;
+        Ok(())
+    }
+
+    fn handle_iend(&mut self) -> Result<(), RustApngErrorKind> {
+        self.finish_current_frame()?;
+        self.seen_iend = true;
+        Ok(())
+    }
+
+    fn handle_other_chunk(&mut self, kind: [u8; 4], chunk_data: &[u8]) {
+        if !self.seen_idat {
+            self.parsed.header_chunks.push(PngChunk {
+                kind,
+                data: chunk_data.to_vec(),
+            });
+        } else {
+            self.idat_chunks_open = false;
+        }
+    }
+
+    fn finish_current_frame(&mut self) -> Result<(), RustApngErrorKind> {
+        let Some(frame) = self.current_frame.take() else {
+            return Ok(());
+        };
+        if frame.image_data.is_empty() {
+            return Err(RustApngErrorKind::Apng);
+        }
+        self.parsed.frames.push(frame);
+        Ok(())
+    }
+
+    fn advance_sequence_number(&mut self) -> Result<(), RustApngErrorKind> {
+        self.expected_sequence_number = self
+            .expected_sequence_number
+            .checked_add(1)
+            .ok_or(RustApngErrorKind::Apng)?;
+        Ok(())
+    }
+}
+
 #[derive(Clone, Copy)]
 struct Rect {
     x: usize,
@@ -255,162 +465,15 @@ fn parse_apng(data: &[u8]) -> Result<Option<ParsedApng>, RustApngErrorKind> {
     }
 
     let mut offset = PNG_SIGNATURE.len();
-    let mut seen_ihdr = false;
-    let mut seen_actl = false;
-    let mut seen_idat = false;
-    let mut idat_chunks_open = false;
-    let mut seen_iend = false;
-    let mut expected_frame_count = 0;
-    let mut expected_sequence_number = 0;
-    let mut parsed = ParsedApng {
-        canvas_width: 0,
-        canvas_height: 0,
-        play_count: 0,
-        ihdr_data: Vec::new(),
-        header_chunks: Vec::new(),
-        frames: Vec::new(),
-    };
-    let mut current_frame = None;
+    let mut state = ApngParseState::new();
 
-    while offset < data.len() {
+    while offset < data.len() && !state.is_complete() {
         let chunk = read_png_chunk(data, offset)?;
-        let kind = chunk.kind;
-        let chunk_data = chunk.data;
         offset = chunk.next_offset;
-
-        if !seen_ihdr && kind != *b"IHDR" {
-            return Err(RustApngErrorKind::Png);
-        }
-
-        match &kind {
-            b"IHDR" => {
-                if seen_ihdr || !parsed.ihdr_data.is_empty() || chunk_data.len() != 13 {
-                    return Err(RustApngErrorKind::Png);
-                }
-                seen_ihdr = true;
-                parsed.ihdr_data = chunk_data.to_vec();
-                parsed.canvas_width = read_u32(chunk_data, 0).ok_or(RustApngErrorKind::Png)?;
-                parsed.canvas_height = read_u32(chunk_data, 4).ok_or(RustApngErrorKind::Png)?;
-                validate_dimensions(
-                    parsed.canvas_width,
-                    parsed.canvas_height,
-                    RustApngErrorKind::Png,
-                )?;
-            }
-            b"acTL" => {
-                if !seen_ihdr || seen_actl || seen_idat || chunk_data.len() != 8 {
-                    return Err(RustApngErrorKind::Apng);
-                }
-                seen_actl = true;
-                expected_frame_count = read_u32(chunk_data, 0).ok_or(RustApngErrorKind::Apng)?;
-                parsed.play_count = read_u32(chunk_data, 4).ok_or(RustApngErrorKind::Apng)?;
-                if expected_frame_count == 0 {
-                    return Err(RustApngErrorKind::Apng);
-                }
-            }
-            b"fcTL" => {
-                if !seen_actl {
-                    return Err(RustApngErrorKind::Apng);
-                }
-                finish_current_frame(&mut current_frame, &mut parsed.frames)?;
-                let control = read_frame_control(chunk_data)?;
-                if control.sequence_number != expected_sequence_number {
-                    return Err(RustApngErrorKind::Apng);
-                }
-                expected_sequence_number = expected_sequence_number
-                    .checked_add(1)
-                    .ok_or(RustApngErrorKind::Apng)?;
-                validate_frame_bounds(&control, parsed.canvas_width, parsed.canvas_height)?;
-                current_frame = Some(RawFrame {
-                    control,
-                    image_data: Vec::new(),
-                    uses_default_image_data: !seen_idat,
-                });
-                idat_chunks_open = false;
-            }
-            b"IDAT" => {
-                if !seen_ihdr {
-                    return Err(RustApngErrorKind::Png);
-                }
-                if seen_idat && !idat_chunks_open {
-                    return Err(RustApngErrorKind::Png);
-                }
-                if current_frame
-                    .as_ref()
-                    .is_some_and(|frame| !frame.uses_default_image_data)
-                {
-                    return Err(RustApngErrorKind::Apng);
-                }
-
-                seen_idat = true;
-                idat_chunks_open = true;
-                if let Some(frame) = current_frame.as_mut()
-                    && frame.uses_default_image_data
-                {
-                    frame.image_data.extend_from_slice(chunk_data);
-                }
-            }
-            b"fdAT" => {
-                if !seen_actl || !seen_idat || chunk_data.len() < 4 {
-                    return Err(RustApngErrorKind::Apng);
-                }
-                let frame = current_frame.as_mut().ok_or(RustApngErrorKind::Apng)?;
-                if frame.uses_default_image_data {
-                    return Err(RustApngErrorKind::Apng);
-                }
-                let sequence_number = read_u32(chunk_data, 0).ok_or(RustApngErrorKind::Apng)?;
-                if sequence_number != expected_sequence_number {
-                    return Err(RustApngErrorKind::Apng);
-                }
-                expected_sequence_number = expected_sequence_number
-                    .checked_add(1)
-                    .ok_or(RustApngErrorKind::Apng)?;
-                frame.image_data.extend_from_slice(&chunk_data[4..]);
-                idat_chunks_open = false;
-            }
-            b"IEND" => {
-                finish_current_frame(&mut current_frame, &mut parsed.frames)?;
-                seen_iend = true;
-                break;
-            }
-            _ => {
-                if !seen_idat {
-                    parsed.header_chunks.push(PngChunk {
-                        kind,
-                        data: chunk_data.to_vec(),
-                    });
-                } else {
-                    idat_chunks_open = false;
-                }
-            }
-        }
+        state.handle_chunk(chunk)?;
     }
 
-    if !seen_ihdr || !seen_iend {
-        return Err(RustApngErrorKind::Png);
-    }
-    if !seen_actl {
-        return Ok(None);
-    }
-    if !seen_idat || usize::try_from(expected_frame_count).ok() != Some(parsed.frames.len()) {
-        return Err(RustApngErrorKind::Apng);
-    }
-
-    Ok(Some(parsed))
-}
-
-fn finish_current_frame(
-    current_frame: &mut Option<RawFrame>,
-    frames: &mut Vec<RawFrame>,
-) -> Result<(), RustApngErrorKind> {
-    let Some(frame) = current_frame.take() else {
-        return Ok(());
-    };
-    if frame.image_data.is_empty() {
-        return Err(RustApngErrorKind::Apng);
-    }
-    frames.push(frame);
-    Ok(())
+    state.finish()
 }
 
 fn read_frame_control(data: &[u8]) -> Result<FrameControl, RustApngErrorKind> {
@@ -646,22 +709,16 @@ fn blend_frame(
     source: &[u8],
     blend_op: BlendOp,
 ) -> Result<(), RustApngErrorKind> {
-    let row_len = rect.width.checked_mul(4).ok_or(RustApngErrorKind::Apng)?;
-    if source.len()
-        != row_len
-            .checked_mul(rect.height)
-            .ok_or(RustApngErrorKind::Apng)?
-    {
+    let row_len = rect_row_len(rect)?;
+    if source.len() != rect_byte_len(rect)? {
         return Err(RustApngErrorKind::Apng);
     }
 
     for row in 0..rect.height {
-        let dst_start = canvas_offset(canvas_width, rect.x, rect.y + row)?;
-        let src_start = row.checked_mul(row_len).ok_or(RustApngErrorKind::Apng)?;
-        let dst_row = canvas
-            .get_mut(dst_start..dst_start + row_len)
-            .ok_or(RustApngErrorKind::Apng)?;
-        let src_row = &source[src_start..src_start + row_len];
+        let dst_range = canvas_row_range(canvas_width, rect, row, row_len)?;
+        let src_range = region_row_range(row, row_len)?;
+        let dst_row = canvas.get_mut(dst_range).ok_or(RustApngErrorKind::Apng)?;
+        let src_row = source.get(src_range).ok_or(RustApngErrorKind::Apng)?;
 
         match blend_op {
             BlendOp::Source => dst_row.copy_from_slice(src_row),
@@ -709,19 +766,11 @@ fn copy_region(
     canvas_width: usize,
     rect: Rect,
 ) -> Result<Vec<u8>, RustApngErrorKind> {
-    let row_len = rect.width.checked_mul(4).ok_or(RustApngErrorKind::Apng)?;
-    let mut region = Vec::with_capacity(
-        row_len
-            .checked_mul(rect.height)
-            .ok_or(RustApngErrorKind::Apng)?,
-    );
+    let row_len = rect_row_len(rect)?;
+    let mut region = Vec::with_capacity(rect_byte_len(rect)?);
     for row in 0..rect.height {
-        let start = canvas_offset(canvas_width, rect.x, rect.y + row)?;
-        region.extend_from_slice(
-            canvas
-                .get(start..start + row_len)
-                .ok_or(RustApngErrorKind::Apng)?,
-        );
+        let row_range = canvas_row_range(canvas_width, rect, row, row_len)?;
+        region.extend_from_slice(canvas.get(row_range).ok_or(RustApngErrorKind::Apng)?);
     }
     Ok(region)
 }
@@ -732,20 +781,17 @@ fn restore_region(
     rect: Rect,
     region: &[u8],
 ) -> Result<(), RustApngErrorKind> {
-    let row_len = rect.width.checked_mul(4).ok_or(RustApngErrorKind::Apng)?;
-    if region.len()
-        != row_len
-            .checked_mul(rect.height)
-            .ok_or(RustApngErrorKind::Apng)?
-    {
+    let row_len = rect_row_len(rect)?;
+    if region.len() != rect_byte_len(rect)? {
         return Err(RustApngErrorKind::Apng);
     }
 
     for row in 0..rect.height {
-        let dst_start = canvas_offset(canvas_width, rect.x, rect.y + row)?;
-        let src_start = row.checked_mul(row_len).ok_or(RustApngErrorKind::Apng)?;
-        canvas[dst_start..dst_start + row_len]
-            .copy_from_slice(&region[src_start..src_start + row_len]);
+        let dst_range = canvas_row_range(canvas_width, rect, row, row_len)?;
+        let src_range = region_row_range(row, row_len)?;
+        let dst_row = canvas.get_mut(dst_range).ok_or(RustApngErrorKind::Apng)?;
+        let src_row = region.get(src_range).ok_or(RustApngErrorKind::Apng)?;
+        dst_row.copy_from_slice(src_row);
     }
     Ok(())
 }
@@ -755,21 +801,54 @@ fn clear_region(
     canvas_width: usize,
     rect: Rect,
 ) -> Result<(), RustApngErrorKind> {
-    let row_len = rect.width.checked_mul(4).ok_or(RustApngErrorKind::Apng)?;
+    let row_len = rect_row_len(rect)?;
     for row in 0..rect.height {
-        let start = canvas_offset(canvas_width, rect.x, rect.y + row)?;
+        let row_range = canvas_row_range(canvas_width, rect, row, row_len)?;
         canvas
-            .get_mut(start..start + row_len)
+            .get_mut(row_range)
             .ok_or(RustApngErrorKind::Apng)?
             .fill(0);
     }
     Ok(())
 }
 
+fn rect_row_len(rect: Rect) -> Result<usize, RustApngErrorKind> {
+    rect.width
+        .checked_mul(RGBA_BYTES_PER_PIXEL)
+        .ok_or(RustApngErrorKind::Apng)
+}
+
+fn rect_byte_len(rect: Rect) -> Result<usize, RustApngErrorKind> {
+    rect_row_len(rect)?
+        .checked_mul(rect.height)
+        .ok_or(RustApngErrorKind::Apng)
+}
+
+fn canvas_row_range(
+    canvas_width: usize,
+    rect: Rect,
+    row: usize,
+    row_len: usize,
+) -> Result<Range<usize>, RustApngErrorKind> {
+    if row >= rect.height {
+        return Err(RustApngErrorKind::Apng);
+    }
+
+    let start = canvas_offset(canvas_width, rect.x, rect.y + row)?;
+    let end = start.checked_add(row_len).ok_or(RustApngErrorKind::Apng)?;
+    Ok(start..end)
+}
+
+fn region_row_range(row: usize, row_len: usize) -> Result<Range<usize>, RustApngErrorKind> {
+    let start = row.checked_mul(row_len).ok_or(RustApngErrorKind::Apng)?;
+    let end = start.checked_add(row_len).ok_or(RustApngErrorKind::Apng)?;
+    Ok(start..end)
+}
+
 fn canvas_offset(canvas_width: usize, x: usize, y: usize) -> Result<usize, RustApngErrorKind> {
     y.checked_mul(canvas_width)
         .and_then(|offset| offset.checked_add(x))
-        .and_then(|offset| offset.checked_mul(4))
+        .and_then(|offset| offset.checked_mul(RGBA_BYTES_PER_PIXEL))
         .ok_or(RustApngErrorKind::Apng)
 }
 
@@ -1271,6 +1350,23 @@ mod tests {
         let animation = decoded_animation(&apng);
 
         assert_eq!(pixel(&animation.frames[1], 0), [127, 0, 128, 255]);
+    }
+
+    #[test]
+    fn region_operations_report_out_of_bounds_canvas() {
+        let rect = Rect {
+            x: 1,
+            y: 0,
+            width: 1,
+            height: 1,
+        };
+        let source = vec![255, 0, 0, 255];
+        let mut canvas = vec![0; 4];
+
+        assert!(blend_frame(&mut canvas, 1, rect, &source, BlendOp::Source).is_err());
+        assert!(copy_region(&canvas, 1, rect).is_err());
+        assert!(clear_region(&mut canvas, 1, rect).is_err());
+        assert!(restore_region(&mut canvas, 1, rect, &source).is_err());
     }
 
     #[test]
