@@ -173,13 +173,11 @@ fn primary_item_id(data: &[u8], meta_box: BoxHeader) -> Option<u32> {
 
         let version_offset = box_header.body_offset();
         let version = *data.get(version_offset)?;
+        let item_id_size = primary_item_id_size(version)?;
         let item_id_offset = version_offset + FULL_BOX_HEADER_SIZE;
 
-        if version == 0 && item_id_offset + 2 <= box_header.end_offset() {
-            return Some(u32::from(read_be_u16(data, item_id_offset)?));
-        }
-        if version == 1 && item_id_offset + 4 <= box_header.end_offset() {
-            return read_be_u32(data, item_id_offset);
+        if item_id_offset + item_id_size <= box_header.end_offset() {
+            return read_item_id(data, item_id_offset, item_id_size);
         }
     }
 
@@ -217,6 +215,36 @@ fn has_alpha_auxiliary_property(data: &[u8], meta_box: BoxHeader) -> bool {
     false
 }
 
+fn primary_item_id_size(version: u8) -> Option<usize> {
+    match version {
+        0 => Some(2),
+        1 => Some(4),
+        _ => None,
+    }
+}
+
+fn item_reference_id_size(version: u8) -> usize {
+    if version == 1 { 4 } else { 2 }
+}
+
+fn read_item_id(data: &[u8], offset: usize, id_size: usize) -> Option<u32> {
+    match id_size {
+        2 => Some(u32::from(read_be_u16(data, offset)?)),
+        4 => read_be_u32(data, offset),
+        _ => None,
+    }
+}
+
+fn write_item_id(data: &mut [u8], offset: usize, id_size: usize, item_id: u32) -> bool {
+    match id_size {
+        2 => u16::try_from(item_id)
+            .ok()
+            .is_some_and(|item_id| write_be_u16(data, offset, item_id)),
+        4 => write_be_u32(data, offset, item_id),
+        _ => false,
+    }
+}
+
 fn patch_item_reference(data: &mut [u8], iref_box: BoxHeader, item_id: u32) -> bool {
     if iref_box.size < iref_box.header_size + FULL_BOX_HEADER_SIZE {
         return false;
@@ -226,7 +254,7 @@ fn patch_item_reference(data: &mut [u8], iref_box: BoxHeader, item_id: u32) -> b
     let Some(version) = data.get(iref_box.body_offset()).copied() else {
         return false;
     };
-    let id_size = if version == 1 { 4 } else { 2 };
+    let id_size = item_reference_id_size(version);
     let mut offset = iref_box.body_offset() + FULL_BOX_HEADER_SIZE;
 
     while offset < iref_box.end_offset() {
@@ -251,21 +279,11 @@ fn patch_item_reference(data: &mut [u8], iref_box: BoxHeader, item_id: u32) -> b
                     return changed;
                 }
 
-                let referenced_item_id = if id_size == 4 {
-                    read_be_u32(data, cursor).unwrap_or_default()
-                } else {
-                    u32::from(read_be_u16(data, cursor).unwrap_or_default())
+                let Some(referenced_item_id) = read_item_id(data, cursor, id_size) else {
+                    return changed;
                 };
                 if referenced_item_id == 0 {
-                    if id_size == 4 {
-                        if !write_be_u32(data, cursor, item_id) {
-                            return changed;
-                        }
-                    } else if let Ok(item_id) = u16::try_from(item_id) {
-                        if !write_be_u16(data, cursor, item_id) {
-                            return changed;
-                        }
-                    } else {
+                    if !write_item_id(data, cursor, id_size, item_id) {
                         return changed;
                     }
                     changed = true;
@@ -516,6 +534,20 @@ mod tests {
 
         assert!(find_bytes(&data, &[0, 2, 0, 1, 0, 0]).is_some());
         assert!(find_bytes(&fixed, &[0, 2, 0, 1, 0, 7]).is_some());
+    }
+
+    #[test]
+    fn patches_version_one_zero_auxl_reference_to_primary_item_id() {
+        let pitm = make_full_box(b"pitm", [1, 0, 0, 0], &7_u32.to_be_bytes());
+        let auxl = make_box(b"auxl", &[0, 0, 0, 2, 0, 1, 0, 0, 0, 0]);
+        let iref = make_full_box(b"iref", [1, 0, 0, 0], &auxl);
+        let iprp = make_alpha_iprp(Vec::new());
+        let data = make_avif_with_meta_children(&[pitm, iprp, iref]);
+
+        let fixed = fixed_avif_data(&data).expect("version-1 auxl reference should be patched");
+
+        assert!(find_bytes(&data, &[0, 0, 0, 2, 0, 1, 0, 0, 0, 0]).is_some());
+        assert!(find_bytes(&fixed, &[0, 0, 0, 2, 0, 1, 0, 0, 0, 7]).is_some());
     }
 
     #[test]

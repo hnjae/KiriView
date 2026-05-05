@@ -25,9 +25,6 @@ mod ffi {
     }
 
     extern "Rust" {
-        #[cxx_name = "rustImageNavigationCandidateUrlIndices"]
-        fn rust_image_navigation_candidate_url_indices(candidate_count: usize) -> Vec<usize>;
-
         #[cxx_name = "rustPredecodeWindowImageIndices"]
         fn rust_predecode_window_image_indices(
             candidate_count: usize,
@@ -50,10 +47,6 @@ mod ffi {
 }
 
 use ffi::{RustNavigationDirection, RustNavigationIndex, RustPageNavigationUpdate};
-
-fn rust_image_navigation_candidate_url_indices(candidate_count: usize) -> Vec<usize> {
-    (0..candidate_count).collect()
-}
 
 fn rust_predecode_window_image_indices(
     candidate_count: usize,

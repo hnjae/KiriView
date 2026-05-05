@@ -96,11 +96,8 @@ std::vector<QUrl> imageNavigationCandidateUrls(
 {
     std::vector<QUrl> urls;
     urls.reserve(candidates.size());
-
-    const rust::Vec<std::size_t> indices
-        = rustImageNavigationCandidateUrlIndices(candidates.size());
-    for (std::size_t index : indices) {
-        urls.push_back(candidates.at(index).url);
+    for (const ImageNavigationCandidate &candidate : candidates) {
+        urls.push_back(candidate.url);
     }
     return urls;
 }
