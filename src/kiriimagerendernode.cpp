@@ -52,46 +52,42 @@ const QShader &imageFragmentShader()
         KiriView::kiriImageViewFragmentShader, KiriView::kiriImageViewFragmentShaderSize);
     return shader;
 }
-}
 
-namespace KiriView {
-QRectF imageTargetRect(const QSize &imageSize, const QSizeF &boundsSize)
+struct ImageSurfaceDrawImage {
+    QImage image;
+    KiriView::ImageSurfaceDrawEntry entry;
+};
+
+std::vector<ImageSurfaceDrawImage> imageSurfaceDrawImages(
+    const KiriView::DisplayedImageSurface &surface, const QRectF &targetRect)
 {
-    if (imageSize.isEmpty() || boundsSize.isEmpty()) {
-        return {};
-    }
-
-    const qreal scale = std::min(
-        boundsSize.width() / imageSize.width(), boundsSize.height() / imageSize.height());
-    const QSizeF targetSize(imageSize.width() * scale, imageSize.height() * scale);
-    return QRectF((boundsSize.width() - targetSize.width()) / 2.0,
-        (boundsSize.height() - targetSize.height()) / 2.0, targetSize.width(), targetSize.height());
-}
-
-std::vector<ImageSurfaceDrawEntry> imageSurfaceDrawEntries(
-    const DisplayedImageSurface &surface, const QRectF &targetRect)
-{
-    std::vector<ImageSurfaceDrawEntry> entries;
+    std::vector<ImageSurfaceDrawImage> drawImages;
     if (targetRect.isEmpty()) {
-        return entries;
+        return drawImages;
     }
 
-    const auto addLegacy = [&](const LegacyFrameSurface &legacySurface) {
+    const auto addLegacy = [&](const KiriView::LegacyFrameSurface &legacySurface) {
         if (!legacySurface.image.isNull()) {
-            entries.push_back(ImageSurfaceDrawEntry {
-                targetRect,
-                QRectF(0.0, 0.0, 1.0, 1.0),
+            drawImages.push_back(ImageSurfaceDrawImage {
+                legacySurface.image,
+                KiriView::ImageSurfaceDrawEntry {
+                    targetRect,
+                    QRectF(0.0, 0.0, 1.0, 1.0),
+                },
             });
         }
     };
-    const auto addStatic = [&](const StaticTileSurface &staticSurface) {
+    const auto addStatic = [&](const KiriView::StaticTileSurface &staticSurface) {
         if (!staticSurface.isValid()) {
             return;
         }
 
-        entries.push_back(ImageSurfaceDrawEntry {
-            targetRect,
-            QRectF(0.0, 0.0, 1.0, 1.0),
+        drawImages.push_back(ImageSurfaceDrawImage {
+            staticSurface.preview(),
+            KiriView::ImageSurfaceDrawEntry {
+                targetRect,
+                QRectF(0.0, 0.0, 1.0, 1.0),
+            },
         });
 
         const QSize imageSize = staticSurface.imageSize();
@@ -99,7 +95,7 @@ std::vector<ImageSurfaceDrawEntry> imageSurfaceDrawEntries(
             return;
         }
 
-        for (const DecodedTile &tile : staticSurface.tiles()) {
+        for (const KiriView::DecodedTile &tile : staticSurface.tiles()) {
             const QRect sourceRect
                 = staticSurface.pyramid().sourceRectForLevelRect(tile.key.level, tile.levelRect);
             if (sourceRect.isEmpty() || tile.textureLevelRect.isEmpty() || tile.image.isNull()) {
@@ -121,9 +117,12 @@ std::vector<ImageSurfaceDrawEntry> imageSurfaceDrawEntries(
                     / tile.textureLevelRect.height(),
                 static_cast<qreal>(tile.levelRect.width()) / tile.textureLevelRect.width(),
                 static_cast<qreal>(tile.levelRect.height()) / tile.textureLevelRect.height());
-            entries.push_back(ImageSurfaceDrawEntry {
-                tileTargetRect,
-                textureRect,
+            drawImages.push_back(ImageSurfaceDrawImage {
+                tile.image,
+                KiriView::ImageSurfaceDrawEntry {
+                    tileTargetRect,
+                    textureRect,
+                },
             });
         }
     };
@@ -131,13 +130,41 @@ std::vector<ImageSurfaceDrawEntry> imageSurfaceDrawEntries(
     std::visit(
         [&](const auto &payload) {
             using Payload = std::decay_t<decltype(payload)>;
-            if constexpr (std::is_same_v<Payload, LegacyFrameSurface>) {
+            if constexpr (std::is_same_v<Payload, KiriView::LegacyFrameSurface>) {
                 addLegacy(payload);
             } else {
                 addStatic(payload);
             }
         },
         surface);
+    return drawImages;
+}
+}
+
+namespace KiriView {
+QRectF imageTargetRect(const QSize &imageSize, const QSizeF &boundsSize)
+{
+    if (imageSize.isEmpty() || boundsSize.isEmpty()) {
+        return {};
+    }
+
+    const qreal scale = std::min(
+        boundsSize.width() / imageSize.width(), boundsSize.height() / imageSize.height());
+    const QSizeF targetSize(imageSize.width() * scale, imageSize.height() * scale);
+    return QRectF((boundsSize.width() - targetSize.width()) / 2.0,
+        (boundsSize.height() - targetSize.height()) / 2.0, targetSize.width(), targetSize.height());
+}
+
+std::vector<ImageSurfaceDrawEntry> imageSurfaceDrawEntries(
+    const DisplayedImageSurface &surface, const QRectF &targetRect)
+{
+    std::vector<ImageSurfaceDrawEntry> entries;
+    const std::vector<ImageSurfaceDrawImage> drawImages
+        = imageSurfaceDrawImages(surface, targetRect);
+    entries.reserve(drawImages.size());
+    for (const ImageSurfaceDrawImage &drawImage : drawImages) {
+        entries.push_back(drawImage.entry);
+    }
     return entries;
 }
 
@@ -371,55 +398,13 @@ bool KiriImageRenderNode::ensureTextures(QRhiResourceUpdateBatch *&resourceUpdat
 
     m_pipeline.reset();
     m_drawTextures.clear();
-    const std::vector<ImageSurfaceDrawEntry> entries
-        = imageSurfaceDrawEntries(*m_surface, m_targetRect);
-    std::size_t entryIndex = 0;
-
-    const auto addLegacy = [&](const LegacyFrameSurface &surface) {
-        if (entryIndex >= entries.size()) {
-            return true;
-        }
-
-        return addDrawTexture(resourceUpdates, surface.image, entries[entryIndex++]);
-    };
-    const auto addStatic = [&](const StaticTileSurface &surface) {
-        if (entryIndex >= entries.size()) {
-            return true;
-        }
-
-        if (!addDrawTexture(resourceUpdates, surface.preview(), entries[entryIndex++])) {
+    const std::vector<ImageSurfaceDrawImage> drawImages
+        = imageSurfaceDrawImages(*m_surface, m_targetRect);
+    for (const ImageSurfaceDrawImage &drawImage : drawImages) {
+        if (!addDrawTexture(resourceUpdates, drawImage.image, drawImage.entry)) {
+            m_drawTextures.clear();
             return false;
         }
-
-        for (const DecodedTile &tile : surface.tiles()) {
-            const QRect sourceRect
-                = surface.pyramid().sourceRectForLevelRect(tile.key.level, tile.levelRect);
-            if (sourceRect.isEmpty() || tile.textureLevelRect.isEmpty() || tile.image.isNull()) {
-                continue;
-            }
-            if (entryIndex >= entries.size()) {
-                return true;
-            }
-
-            if (!addDrawTexture(resourceUpdates, tile.image, entries[entryIndex++])) {
-                return false;
-            }
-        }
-        return true;
-    };
-
-    if (!std::visit(
-            [&](const auto &surface) {
-                using Surface = std::decay_t<decltype(surface)>;
-                if constexpr (std::is_same_v<Surface, LegacyFrameSurface>) {
-                    return addLegacy(surface);
-                } else {
-                    return addStatic(surface);
-                }
-            },
-            *m_surface)) {
-        m_drawTextures.clear();
-        return false;
     }
 
     m_uploadedSurfaceRevision = m_surfaceRevision;
