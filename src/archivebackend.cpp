@@ -21,11 +21,14 @@
 #include <archive_entry.h>
 #include <cstddef>
 #include <memory>
+#include <optional>
 #include <utility>
 
 namespace {
+using KiriView::ArchiveDocumentLocation;
 using KiriView::ArchiveImageCandidatesResult;
 using KiriView::ArchiveImageDataResult;
+using KiriView::ImageNavigationCandidate;
 using LibArchiveReader = std::unique_ptr<archive, int (*)(archive *)>;
 
 class ScopedKArchive final
@@ -328,8 +331,38 @@ bool skipLibArchiveEntry(archive *reader, QString *errorString)
     return false;
 }
 
+enum class LibArchiveEntryAction {
+    Continue,
+    Stop,
+};
+
+template <typename EntryHandler>
+bool visitLibArchiveEntries(archive *reader, const ArchiveDocumentLocation &archiveDocument,
+    QString *errorString, EntryHandler handleEntry)
+{
+    archive_entry *entry = nullptr;
+    while (true) {
+        const int status = archive_read_next_header(reader, &entry);
+        if (status == ARCHIVE_EOF) {
+            return true;
+        }
+        if (status != ARCHIVE_OK) {
+            *errorString = libArchiveErrorString(reader, fallbackArchiveOpenError(archiveDocument));
+            return false;
+        }
+
+        if (handleEntry(reader, entry) == LibArchiveEntryAction::Stop) {
+            return true;
+        }
+
+        if (!skipLibArchiveEntry(reader, errorString)) {
+            return false;
+        }
+    }
+}
+
 ArchiveImageCandidatesResult loadLibArchiveDocumentImageCandidates(
-    const KiriView::ArchiveDocumentLocation &archiveDocument)
+    const ArchiveDocumentLocation &archiveDocument)
 {
     QString errorString;
     LibArchiveReader reader = openLibArchiveReader(archiveDocument, &errorString);
@@ -337,30 +370,22 @@ ArchiveImageCandidatesResult loadLibArchiveDocumentImageCandidates(
         return archiveImageCandidatesError(errorString);
     }
 
-    std::vector<KiriView::ImageNavigationCandidate> candidates;
-    archive_entry *entry = nullptr;
-    while (true) {
-        const int status = archive_read_next_header(reader.get(), &entry);
-        if (status == ARCHIVE_EOF) {
-            break;
-        }
-        if (status != ARCHIVE_OK) {
-            return archiveImageCandidatesError(
-                libArchiveErrorString(reader.get(), fallbackArchiveOpenError(archiveDocument)));
-        }
-
-        const QString entryPath = normalizeEntryPath(libArchiveEntryPath(entry));
-        if (archive_entry_filetype(entry) == AE_IFREG && !entryPath.isEmpty()
-            && KiriView::isSupportedImageFileName(entryPath)) {
-            const QUrl url = archiveEntryUrl(archiveDocument, entryPath);
-            if (!url.isEmpty()) {
-                candidates.push_back(KiriView::ImageNavigationCandidate { url, entryPath });
+    std::vector<ImageNavigationCandidate> candidates;
+    const bool visitedEntries = visitLibArchiveEntries(
+        reader.get(), archiveDocument, &errorString, [&](archive *, archive_entry *entry) {
+            const QString entryPath = normalizeEntryPath(libArchiveEntryPath(entry));
+            if (archive_entry_filetype(entry) == AE_IFREG && !entryPath.isEmpty()
+                && KiriView::isSupportedImageFileName(entryPath)) {
+                const QUrl url = archiveEntryUrl(archiveDocument, entryPath);
+                if (!url.isEmpty()) {
+                    candidates.push_back(ImageNavigationCandidate { url, entryPath });
+                }
             }
-        }
 
-        if (!skipLibArchiveEntry(reader.get(), &errorString)) {
-            return archiveImageCandidatesError(errorString);
-        }
+            return LibArchiveEntryAction::Continue;
+        });
+    if (!visitedEntries) {
+        return archiveImageCandidatesError(errorString);
     }
 
     KiriView::sortImageNavigationCandidates(&candidates);
@@ -394,7 +419,7 @@ ArchiveImageDataResult readLibArchiveEntryData(archive *reader, archive_entry *e
 }
 
 ArchiveImageDataResult loadLibArchiveDocumentImageData(
-    const KiriView::ArchiveDocumentLocation &archiveDocument, const QUrl &imageUrl)
+    const ArchiveDocumentLocation &archiveDocument, const QUrl &imageUrl)
 {
     const QString entryPath = archiveEntryPathForUrl(archiveDocument, imageUrl);
     if (archiveDocument.isEmpty() || entryPath.isEmpty()) {
@@ -407,25 +432,23 @@ ArchiveImageDataResult loadLibArchiveDocumentImageData(
         return archiveImageDataError(errorString);
     }
 
-    archive_entry *entry = nullptr;
-    while (true) {
-        const int status = archive_read_next_header(reader.get(), &entry);
-        if (status == ARCHIVE_EOF) {
-            break;
-        }
-        if (status != ARCHIVE_OK) {
-            return archiveImageDataError(
-                libArchiveErrorString(reader.get(), fallbackArchiveOpenError(archiveDocument)));
-        }
+    std::optional<ArchiveImageDataResult> result;
+    const bool visitedEntries = visitLibArchiveEntries(
+        reader.get(), archiveDocument, &errorString, [&](archive *reader, archive_entry *entry) {
+            const QString currentPath = normalizeEntryPath(libArchiveEntryPath(entry));
+            if (archive_entry_filetype(entry) == AE_IFREG && currentPath == entryPath) {
+                result = readLibArchiveEntryData(reader, entry);
+                return LibArchiveEntryAction::Stop;
+            }
 
-        const QString currentPath = normalizeEntryPath(libArchiveEntryPath(entry));
-        if (archive_entry_filetype(entry) == AE_IFREG && currentPath == entryPath) {
-            return readLibArchiveEntryData(reader.get(), entry);
-        }
+            return LibArchiveEntryAction::Continue;
+        });
+    if (!visitedEntries) {
+        return archiveImageDataError(errorString);
+    }
 
-        if (!skipLibArchiveEntry(reader.get(), &errorString)) {
-            return archiveImageDataError(errorString);
-        }
+    if (result.has_value()) {
+        return std::move(*result);
     }
 
     return archiveImageDataError(archiveImageNotFoundError());
