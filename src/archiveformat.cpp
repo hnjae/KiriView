@@ -12,14 +12,16 @@ struct ArchiveMimeTypes {
     std::size_t size = 0;
 };
 
+struct ArchiveOpenProfile {
+    const char *extension;
+    ArchiveMimeTypes mimeTypes;
+    const char *marker;
+};
+
 struct ArchiveFormat {
     const char *scheme;
-    const char *comicBookExtension;
-    const char *directArchiveExtension;
-    ArchiveMimeTypes comicBookMimeTypes;
-    ArchiveMimeTypes directArchiveMimeTypes;
-    const char *comicBookMarker;
-    const char *generalArchiveMarker;
+    ArchiveOpenProfile comicBook;
+    ArchiveOpenProfile directArchive;
     KiriView::ArchiveStorageBackend backend;
 };
 
@@ -46,17 +48,17 @@ const char *const rarDirectArchiveMimeTypes[]
     = { "application/vnd.rar", "application/x-rar", "application/x-rar-compressed" };
 
 const ArchiveFormat archiveFormats[] = {
-    { "zip", "cbz", "zip", archiveMimeTypes(zipComicBookMimeTypes),
-        archiveMimeTypes(zipDirectArchiveMimeTypes), ".cbz/", ".zip/",
+    { "zip", { "cbz", archiveMimeTypes(zipComicBookMimeTypes), ".cbz/" },
+        { "zip", archiveMimeTypes(zipDirectArchiveMimeTypes), ".zip/" },
         KiriView::ArchiveStorageBackend::KZip },
-    { "tar", "cbt", "tar", archiveMimeTypes(tarComicBookMimeTypes),
-        archiveMimeTypes(tarDirectArchiveMimeTypes), ".cbt/", ".tar/",
+    { "tar", { "cbt", archiveMimeTypes(tarComicBookMimeTypes), ".cbt/" },
+        { "tar", archiveMimeTypes(tarDirectArchiveMimeTypes), ".tar/" },
         KiriView::ArchiveStorageBackend::KTar },
-    { "sevenz", "cb7", "7z", archiveMimeTypes(sevenZipComicBookMimeTypes),
-        archiveMimeTypes(sevenZipDirectArchiveMimeTypes), ".cb7/", ".7z/",
+    { "sevenz", { "cb7", archiveMimeTypes(sevenZipComicBookMimeTypes), ".cb7/" },
+        { "7z", archiveMimeTypes(sevenZipDirectArchiveMimeTypes), ".7z/" },
         KiriView::ArchiveStorageBackend::K7Zip },
-    { "rar", "cbr", "rar", archiveMimeTypes(rarComicBookMimeTypes),
-        archiveMimeTypes(rarDirectArchiveMimeTypes), ".cbr/", ".rar/",
+    { "rar", { "cbr", archiveMimeTypes(rarComicBookMimeTypes), ".cbr/" },
+        { "rar", archiveMimeTypes(rarDirectArchiveMimeTypes), ".rar/" },
         KiriView::ArchiveStorageBackend::LibArchive },
 };
 
@@ -81,15 +83,22 @@ QString extensionForFileName(const QString &fileName)
     return fileName.mid(dotIndex + 1).toCaseFolded();
 }
 
-bool archiveFormatAcceptsExtension(
-    const ArchiveFormat &format, const QString &extension, ArchiveOpenMode mode)
+template <typename Predicate>
+bool acceptedProfileMatches(const ArchiveFormat &format, ArchiveOpenMode mode, Predicate predicate)
 {
-    if (extension == QString::fromLatin1(format.comicBookExtension)) {
+    if (predicate(format.comicBook)) {
         return true;
     }
 
-    return mode == ArchiveOpenMode::DirectArchive
-        && extension == QString::fromLatin1(format.directArchiveExtension);
+    return mode == ArchiveOpenMode::DirectArchive && predicate(format.directArchive);
+}
+
+bool archiveFormatAcceptsExtension(
+    const ArchiveFormat &format, const QString &extension, ArchiveOpenMode mode)
+{
+    return acceptedProfileMatches(format, mode, [&extension](const ArchiveOpenProfile &profile) {
+        return extension == QString::fromLatin1(profile.extension);
+    });
 }
 
 const ArchiveFormat *archiveFormatForExtension(const QString &extension, ArchiveOpenMode mode)
@@ -117,12 +126,9 @@ bool mimeTypesContain(const ArchiveMimeTypes &mimeTypes, const QString &mimeType
 bool archiveFormatAcceptsMimeTypeName(
     const ArchiveFormat &format, const QString &mimeTypeName, ArchiveOpenMode mode)
 {
-    if (mimeTypesContain(format.comicBookMimeTypes, mimeTypeName)) {
-        return true;
-    }
-
-    return mode == ArchiveOpenMode::DirectArchive
-        && mimeTypesContain(format.directArchiveMimeTypes, mimeTypeName);
+    return acceptedProfileMatches(format, mode, [&mimeTypeName](const ArchiveOpenProfile &profile) {
+        return mimeTypesContain(profile.mimeTypes, mimeTypeName);
+    });
 }
 
 const ArchiveFormat *archiveFormatForMimeTypeName(const QString &mimeTypeName, ArchiveOpenMode mode)
@@ -181,7 +187,7 @@ QStringList supportedComicBookArchiveExtensions()
     QStringList extensions;
     extensions.reserve(static_cast<qsizetype>(std::size(archiveFormats)));
     for (const ArchiveFormat &format : archiveFormats) {
-        extensions.append(QString::fromLatin1(format.comicBookExtension));
+        extensions.append(QString::fromLatin1(format.comicBook.extension));
     }
 
     return extensions;
@@ -212,7 +218,7 @@ QString directArchiveOpenKioSchemeForMimeTypeName(const QString &mimeTypeName)
 QString comicBookArchiveMarkerForRootScheme(const QString &scheme)
 {
     const ArchiveFormat *format = archiveFormatForScheme(scheme);
-    return format == nullptr ? QString() : markerString(format->comicBookMarker);
+    return format == nullptr ? QString() : markerString(format->comicBook.marker);
 }
 
 QStringList directArchiveOpenMarkersForRootScheme(const QString &scheme)
@@ -223,8 +229,8 @@ QStringList directArchiveOpenMarkersForRootScheme(const QString &scheme)
     }
 
     return {
-        markerString(format->comicBookMarker),
-        markerString(format->generalArchiveMarker),
+        markerString(format->comicBook.marker),
+        markerString(format->directArchive.marker),
     };
 }
 }
