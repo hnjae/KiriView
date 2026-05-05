@@ -81,6 +81,7 @@ public:
 
 private:
     void setImageSize(const QSize &imageSize);
+    void invalidateTiles();
     void scheduleVisibleTileDecode();
     bool staticTileSurfaceFirstDisplayIsSufficient(const StaticTileSurface &surface) const;
     qreal displayPixelsPerSourcePixel(const TilePyramid &pyramid) const;

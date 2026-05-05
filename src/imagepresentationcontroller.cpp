@@ -186,9 +186,7 @@ void ImagePresentationController::setPredecodeCacheable(bool cacheable)
 
 void ImagePresentationController::setImage(const QImage &image)
 {
-    ++m_tileGeneration;
-    m_pendingTileKeys.clear();
-    m_failedTileKeys.clear();
+    invalidateTiles();
     m_displayedImageState->setImage(image);
 }
 
@@ -196,9 +194,7 @@ void ImagePresentationController::setStaticImage(std::shared_ptr<ImageTileSource
     const QImage &preview, StaticImageDisplayHints displayHints)
 {
     stopAnimation();
-    ++m_tileGeneration;
-    m_pendingTileKeys.clear();
-    m_failedTileKeys.clear();
+    invalidateTiles();
     const bool useFullImageSurface = source != nullptr
         && staticImageFitsFullImageSurface(*source, preview, maximumTextureSize());
     m_displayedImageState->setStaticImage(
@@ -210,9 +206,7 @@ void ImagePresentationController::setStaticImage(std::shared_ptr<ImageTileSource
 
 void ImagePresentationController::clearImage()
 {
-    ++m_tileGeneration;
-    m_pendingTileKeys.clear();
-    m_failedTileKeys.clear();
+    invalidateTiles();
     m_zoomState.clearContainer();
     m_displayedImageState->clear();
     setImageSize(QSize());
@@ -246,6 +240,13 @@ void ImagePresentationController::setImageSize(const QSize &imageSize)
     }
 
     applyZoomStateChanges(previous);
+}
+
+void ImagePresentationController::invalidateTiles()
+{
+    ++m_tileGeneration;
+    m_pendingTileKeys.clear();
+    m_failedTileKeys.clear();
 }
 
 void ImagePresentationController::scheduleVisibleTileDecode()

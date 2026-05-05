@@ -10,9 +10,7 @@
 #include "imageloadtypes.h"
 #include "imageopenworkflow.h"
 
-#include <QByteArray>
 #include <QImage>
-#include <QSize>
 #include <QString>
 #include <QUrl>
 #include <functional>
@@ -71,10 +69,11 @@ private:
         const ImageLoadSession &session, ImageLoadError error, const QString &errorString);
     void finishReplacementLoadWithError(const QString &errorString);
     void finishInitialLoadWithError(const QString &errorString);
+    void finishStaticImageLoad(const ImageLoadSession &session,
+        std::shared_ptr<ImageTileSource> source, const QImage &preview,
+        StaticImageDisplayHints displayHints, bool predecodeCacheable);
     void finishLoadSuccessfully(
         const ImageLoadSession &session, const QImage &image, bool predecodeCacheable);
-    void finishSvgLoadSuccessfully(
-        ImageLoadSession session, QByteArray data, const QSize &intrinsicSize);
     void prepareSuccessfulImageLoad(const ImageLoadSession &session);
     void finishSuccessfulImageLoad(const ImageLoadSession &session);
     void reportEffects(const ImageDocumentEffects &effects);
