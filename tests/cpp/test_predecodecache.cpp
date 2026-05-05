@@ -58,6 +58,7 @@ class TestPredecodeCache : public QObject
 private Q_SLOTS:
     void queueContainsOnlyMissingWindowImages();
     void byteBudgetUsesPreferredLimitAndSystemMemoryCap();
+    void cacheEligibilityUsesByteBudgetPolicy();
     void cacheStoresAndFindsWindowImages();
     void cacheRejectsUncacheableAndOversizedImages();
     void cacheEvictsLowestPriorityImagesWhenBudgetIsExceeded();
@@ -97,6 +98,18 @@ void TestPredecodeCache::byteBudgetUsesPreferredLimitAndSystemMemoryCap()
         preferredByteBudget);
     QVERIFY(KiriView::PredecodeCache::defaultByteBudget() > 0);
     QVERIFY(KiriView::PredecodeCache::defaultByteBudget() <= preferredByteBudget);
+}
+
+void TestPredecodeCache::cacheEligibilityUsesByteBudgetPolicy()
+{
+    const KiriView::StaticImagePayload image = staticImageFor(cacheImage());
+    const qsizetype byteCost = image.byteCost();
+
+    QVERIFY(KiriView::PredecodeCache::canCacheImage(image));
+    QVERIFY(KiriView::PredecodeCache::canCacheImage(image, byteCost));
+    QVERIFY(!KiriView::PredecodeCache::canCacheImage(image, byteCost - 1));
+    QVERIFY(!KiriView::PredecodeCache::canCacheImage(KiriView::StaticImagePayload {}, byteCost));
+    QVERIFY(!KiriView::PredecodeCache::canCacheImage(image, 0));
 }
 
 void TestPredecodeCache::cacheStoresAndFindsWindowImages()

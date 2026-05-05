@@ -141,9 +141,7 @@ void ImagePredecodeCoordinator::finishPredecodeImageDecode(
     const DecodedImage *decodedImage = decodedImageResultImage(result);
     const auto *staticImage
         = decodedImage == nullptr ? nullptr : std::get_if<StaticDecodedImage>(decodedImage);
-    if (staticImage != nullptr
-        && staticImage->staticImage.byteCostWithinBudget(KiriView::PredecodeCache::byteBudget())
-            .has_value()) {
+    if (staticImage != nullptr) {
         m_cache.cacheImage(request.imageUrl, *archiveDocument, staticImage->staticImage);
     }
 

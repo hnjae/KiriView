@@ -136,8 +136,7 @@ void ImageOpenController::finishDecodedImageLoad(
 bool ImageOpenController::finishDecodedImageResult(
     ImageLoadSession &session, StaticDecodedImage &decoded)
 {
-    const bool predecodeCacheable
-        = decoded.staticImage.byteCostWithinBudget(PredecodeCache::byteBudget()).has_value();
+    const bool predecodeCacheable = PredecodeCache::canCacheImage(decoded.staticImage);
     finishStaticImageLoad(session, std::move(decoded.staticImage), predecodeCacheable);
     return true;
 }

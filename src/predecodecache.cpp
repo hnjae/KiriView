@@ -33,6 +33,16 @@ qsizetype PredecodeCache::byteBudgetForSystemMemory(qsizetype systemMemoryByteSi
     return systemMemoryCappedByteBudget(preferredByteBudget(), systemMemoryByteSize, 8);
 }
 
+bool PredecodeCache::canCacheImage(const StaticImagePayload &staticImage)
+{
+    return canCacheImage(staticImage, defaultByteBudget());
+}
+
+bool PredecodeCache::canCacheImage(const StaticImagePayload &staticImage, qsizetype byteBudget)
+{
+    return cacheableByteCost(staticImage, byteBudget).has_value();
+}
+
 PredecodeCache::PredecodeCache(qsizetype byteBudget)
     : m_byteBudget(byteBudget > 0 ? byteBudget : defaultByteBudget())
 {
@@ -152,7 +162,7 @@ std::optional<PredecodedImage> PredecodeCache::findImage(const QUrl &url) const
 void PredecodeCache::cacheImage(
     const QUrl &url, const ArchiveDocumentLocation &archiveDocument, StaticImagePayload staticImage)
 {
-    const std::optional<qsizetype> byteCost = staticImage.byteCostWithinBudget(m_byteBudget);
+    const std::optional<qsizetype> byteCost = cacheableByteCost(staticImage, m_byteBudget);
     if (!byteCost.has_value()) {
         return;
     }
@@ -182,6 +192,12 @@ void PredecodeCache::cacheDisplayedImage(bool cacheable, const QUrl &url,
 bool PredecodeCache::containsUrl(const std::vector<QUrl> &urls, const QUrl &url)
 {
     return std::find(urls.cbegin(), urls.cend(), url) != urls.cend();
+}
+
+std::optional<qsizetype> PredecodeCache::cacheableByteCost(
+    const StaticImagePayload &staticImage, qsizetype byteBudget)
+{
+    return staticImage.byteCostWithinBudget(byteBudget);
 }
 
 PredecodeCache::CachedImageIterator PredecodeCache::findCachedImage(const QUrl &normalizedUrl)

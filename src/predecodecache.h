@@ -30,6 +30,8 @@ public:
     static qsizetype defaultByteBudget();
     static qsizetype byteBudget() { return defaultByteBudget(); }
     static qsizetype byteBudgetForSystemMemory(qsizetype systemMemoryByteSize);
+    static bool canCacheImage(const StaticImagePayload &staticImage);
+    static bool canCacheImage(const StaticImagePayload &staticImage, qsizetype byteBudget);
 
     explicit PredecodeCache(qsizetype byteBudget = defaultByteBudget());
 
@@ -59,6 +61,8 @@ private:
     using ConstCachedImageIterator = std::vector<CachedImage>::const_iterator;
 
     static bool containsUrl(const std::vector<QUrl> &urls, const QUrl &url);
+    static std::optional<qsizetype> cacheableByteCost(
+        const StaticImagePayload &staticImage, qsizetype byteBudget);
     CachedImageIterator findCachedImage(const QUrl &normalizedUrl);
     ConstCachedImageIterator findCachedImage(const QUrl &normalizedUrl) const;
     void removeCachedImage(const QUrl &normalizedUrl);
