@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+#include "image_test_support.h"
 #include "imagecontainer.h"
 #include "imagedocumentstate.h"
 
@@ -11,14 +12,8 @@
 #include <vector>
 
 namespace {
-QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
-
-QUrl archivePageUrl(const QUrl &archiveRootUrl, const QString &pageName)
-{
-    QUrl pageUrl = archiveRootUrl;
-    pageUrl.setPath(archiveRootUrl.path() + pageName);
-    return pageUrl;
-}
+using KiriView::TestSupport::archivePageUrl;
+using KiriView::TestSupport::localUrl;
 }
 
 class TestImageDocumentState : public QObject

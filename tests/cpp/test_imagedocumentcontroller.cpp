@@ -11,14 +11,14 @@
 #include <QTest>
 #include <QUrl>
 #include <cstddef>
-#include <map>
 #include <memory>
 #include <optional>
 #include <utility>
 #include <variant>
-#include <vector>
 
 namespace {
+using KiriView::TestSupport::archivePageUrl;
+using KiriView::TestSupport::comicBookContainerCandidate;
 using KiriView::TestSupport::dataLoaderFor;
 using KiriView::TestSupport::imageCandidate;
 using KiriView::TestSupport::keyForUrl;
@@ -27,21 +27,7 @@ using KiriView::TestSupport::ManualImageDataLoader;
 using KiriView::TestSupport::staticDecodedTestImage;
 using KiriView::TestSupport::testImage;
 
-QUrl archivePageUrl(const QUrl &archiveRootUrl, const QString &pageName)
-{
-    QUrl pageUrl = archiveRootUrl;
-    pageUrl.setPath(archiveRootUrl.path() + pageName);
-    return pageUrl;
-}
-
-KiriView::ContainerNavigationCandidate comicBookContainerCandidate(const QUrl &url)
-{
-    return KiriView::ContainerNavigationCandidate {
-        url,
-        url.fileName(),
-        KiriView::ContainerNavigationCandidateType::ComicBookArchive,
-    };
-}
+using FakeCandidateProvider = KiriView::TestSupport::FakeImageNavigationCandidateProvider;
 
 KiriView::DecodedImageResult decodeTestImageData(
     const QByteArray &, const KiriView::ImageDecodeRequest &)
@@ -58,41 +44,6 @@ KiriView::DecodedImageResult staticDecodedImageWithPreview(const QSize &sourceSi
         displayHints,
     };
 }
-
-class FakeCandidateProvider
-{
-public:
-    KiriView::ImageNavigationCandidateProvider provider()
-    {
-        return KiriView::ImageNavigationCandidateProvider {
-            [this](QObject *, QUrl directoryUrl, KiriView::ImageCandidatesCallback callback,
-                KiriView::ErrorCallback) {
-                if (callback) {
-                    callback(directoryImagesByUrl[keyForUrl(directoryUrl)]);
-                }
-                return KiriView::ImageIoJob();
-            },
-            [this](QObject *, QUrl directoryUrl, KiriView::ContainerCandidatesCallback callback,
-                KiriView::ErrorCallback) {
-                if (callback) {
-                    callback(containerCandidatesByUrl[keyForUrl(directoryUrl)]);
-                }
-                return KiriView::ImageIoJob();
-            },
-            [this](QObject *, KiriView::ArchiveDocumentLocation archiveDocument,
-                KiriView::ImageCandidatesCallback callback, KiriView::ErrorCallback) {
-                if (callback) {
-                    callback(archiveImagesByUrl[keyForUrl(archiveDocument.rootUrl())]);
-                }
-                return KiriView::ImageIoJob();
-            },
-        };
-    }
-
-    std::map<QString, std::vector<KiriView::ImageNavigationCandidate>> directoryImagesByUrl;
-    std::map<QString, std::vector<KiriView::ImageNavigationCandidate>> archiveImagesByUrl;
-    std::map<QString, std::vector<KiriView::ContainerNavigationCandidate>> containerCandidatesByUrl;
-};
 
 KiriView::ImageAsyncDependencies dependenciesFor(FakeCandidateProvider &candidateProvider,
     ManualImageDataLoader &dataLoader,

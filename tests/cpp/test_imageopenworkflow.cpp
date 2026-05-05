@@ -3,6 +3,7 @@
 
 #include "imageopenworkflow.h"
 
+#include "image_test_support.h"
 #include "imagecontainer.h"
 #include "imagedocumentstate.h"
 
@@ -13,7 +14,8 @@
 #include <variant>
 
 namespace {
-QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
+using KiriView::TestSupport::archivePageUrl;
+using KiriView::TestSupport::localUrl;
 
 KiriView::ImageLoadSession loadSession(const QUrl &sourceUrl, const QUrl &imageUrl,
     const KiriView::ArchiveDocumentLocation &archiveDocument
@@ -91,8 +93,7 @@ void TestImageOpenWorkflow::directArchiveImageLoadSuccessDisablesContainerNaviga
     const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
         = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveDocument.has_value());
-    QUrl imageUrl = archiveDocument->rootUrl();
-    imageUrl.setPath(archiveDocument->rootUrl().path() + QStringLiteral("01.png"));
+    const QUrl imageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
 
     state.setSourceUrl(archiveUrl);
 

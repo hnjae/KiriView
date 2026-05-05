@@ -3,6 +3,7 @@
 
 #include "archivebackend.h"
 
+#include "image_test_support.h"
 #include "imagecontainer.h"
 
 #include <KTar>
@@ -16,19 +17,13 @@
 #include <vector>
 
 namespace {
+using KiriView::TestSupport::archivePageUrl;
+using KiriView::TestSupport::localUrl;
+
 struct ArchiveEntryData {
     QString path;
     QByteArray data;
 };
-
-QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
-
-QUrl archivePageUrl(const QUrl &archiveRootUrl, const QString &pageName)
-{
-    QUrl pageUrl = archiveRootUrl;
-    pageUrl.setPath(archiveRootUrl.path() + pageName);
-    return pageUrl;
-}
 
 void writeZipArchive(const QString &path, const std::vector<ArchiveEntryData> &entries)
 {

@@ -1,109 +1,27 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+#include "image_test_support.h"
 #include "imagecontainer.h"
 #include "imagenavigationservice.h"
 
 #include <QObject>
 #include <QTest>
 #include <QUrl>
-#include <map>
 #include <optional>
 #include <utility>
 #include <vector>
 
 namespace {
-using KiriView::ContainerNavigationCandidate;
 using KiriView::ContainerNavigationCandidateType;
-using KiriView::ImageNavigationCandidate;
 using KiriView::NavigationDirection;
+using KiriView::TestSupport::archivePageUrl;
+using KiriView::TestSupport::containerCandidate;
+using KiriView::TestSupport::imageCandidate;
+using KiriView::TestSupport::keyForUrl;
+using KiriView::TestSupport::localUrl;
 
-QString keyForUrl(const QUrl &url) { return url.adjusted(QUrl::NormalizePathSegments).toString(); }
-
-QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
-
-QUrl archivePageUrl(const QUrl &archiveRootUrl, const QString &pageName)
-{
-    QUrl pageUrl = archiveRootUrl;
-    pageUrl.setPath(archiveRootUrl.path() + pageName);
-    return pageUrl;
-}
-
-ImageNavigationCandidate imageCandidate(const QUrl &url)
-{
-    return ImageNavigationCandidate { url, url.fileName() };
-}
-
-ContainerNavigationCandidate containerCandidate(
-    const QUrl &url, ContainerNavigationCandidateType type)
-{
-    return ContainerNavigationCandidate { url, url.fileName(), type };
-}
-
-class FakeCandidateProvider
-{
-public:
-    KiriView::ImageNavigationCandidateProvider provider()
-    {
-        return KiriView::ImageNavigationCandidateProvider {
-            [this](QObject *, QUrl directoryUrl, KiriView::ImageCandidatesCallback callback,
-                KiriView::ErrorCallback errorCallback) {
-                loadImages(directoryImagesByUrl, std::move(directoryUrl), std::move(callback),
-                    std::move(errorCallback));
-                return KiriView::ImageIoJob();
-            },
-            [this](QObject *, QUrl directoryUrl, KiriView::ContainerCandidatesCallback callback,
-                KiriView::ErrorCallback errorCallback) {
-                const QString key = keyForUrl(directoryUrl);
-                const auto error = containerErrorsByUrl.find(key);
-                if (error != containerErrorsByUrl.cend()) {
-                    if (errorCallback) {
-                        errorCallback(error->second);
-                    }
-                    return KiriView::ImageIoJob();
-                }
-
-                if (callback) {
-                    callback(containerCandidatesByUrl[key]);
-                }
-                return KiriView::ImageIoJob();
-            },
-            [this](QObject *, KiriView::ArchiveDocumentLocation archiveDocument,
-                KiriView::ImageCandidatesCallback callback, KiriView::ErrorCallback errorCallback) {
-                loadImages(archiveImagesByUrl, archiveDocument.rootUrl(), std::move(callback),
-                    std::move(errorCallback));
-                return KiriView::ImageIoJob();
-            },
-        };
-    }
-
-    std::map<QString, std::vector<ImageNavigationCandidate>> directoryImagesByUrl;
-    std::map<QString, std::vector<ImageNavigationCandidate>> archiveImagesByUrl;
-    std::map<QString, std::vector<ContainerNavigationCandidate>> containerCandidatesByUrl;
-    std::map<QString, QString> directoryImageErrorsByUrl;
-    std::map<QString, QString> archiveImageErrorsByUrl;
-    std::map<QString, QString> containerErrorsByUrl;
-
-private:
-    void loadImages(std::map<QString, std::vector<ImageNavigationCandidate>> &imagesByUrl, QUrl url,
-        KiriView::ImageCandidatesCallback callback, KiriView::ErrorCallback errorCallback)
-    {
-        const QString key = keyForUrl(url);
-        const auto &errorsByUrl = &imagesByUrl == &directoryImagesByUrl ? directoryImageErrorsByUrl
-                                                                        : archiveImageErrorsByUrl;
-        const auto error = errorsByUrl.find(key);
-        if (error != errorsByUrl.cend()) {
-            if (errorCallback) {
-                errorCallback(error->second);
-            }
-            return;
-        }
-
-        if (callback) {
-            callback(imagesByUrl[key]);
-        }
-    }
-};
+using FakeCandidateProvider = KiriView::TestSupport::FakeImageNavigationCandidateProvider;
 }
 
 class TestImageNavigationService : public QObject

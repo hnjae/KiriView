@@ -8,8 +8,6 @@
 #include <QSize>
 #include <QTest>
 #include <QUrl>
-#include <map>
-#include <vector>
 
 namespace {
 using KiriView::TestSupport::dataLoaderFor;
@@ -20,45 +18,14 @@ using KiriView::TestSupport::ManualImageDataLoader;
 using KiriView::TestSupport::testImage;
 using KiriView::TestSupport::TestImageTileSource;
 
+using FakeCandidateProvider = KiriView::TestSupport::FakeImageNavigationCandidateProvider;
+
 QUrl imageUrl(int index)
 {
     return QUrl(QStringLiteral("file:///images/%1.png").arg(index, 2, 10, QLatin1Char('0')));
 }
 
 QUrl parentUrl() { return QUrl(QStringLiteral("file:///images/")); }
-
-class FakeCandidateProvider
-{
-public:
-    KiriView::ImageNavigationCandidateProvider provider()
-    {
-        return KiriView::ImageNavigationCandidateProvider {
-            [this](QObject *, QUrl directoryUrl, KiriView::ImageCandidatesCallback callback,
-                KiriView::ErrorCallback) {
-                if (callback) {
-                    callback(directoryImagesByUrl[keyForUrl(directoryUrl)]);
-                }
-                return KiriView::ImageIoJob();
-            },
-            [](QObject *, QUrl, KiriView::ContainerCandidatesCallback callback,
-                KiriView::ErrorCallback) {
-                if (callback) {
-                    callback({});
-                }
-                return KiriView::ImageIoJob();
-            },
-            [](QObject *, KiriView::ArchiveDocumentLocation,
-                KiriView::ImageCandidatesCallback callback, KiriView::ErrorCallback) {
-                if (callback) {
-                    callback({});
-                }
-                return KiriView::ImageIoJob();
-            },
-        };
-    }
-
-    std::map<QString, std::vector<KiriView::ImageNavigationCandidate>> directoryImagesByUrl;
-};
 
 KiriView::ImagePredecodeCoordinator createCoordinator(
     QObject *parent, FakeCandidateProvider &candidateProvider, ManualImageDataLoader &dataLoader)
