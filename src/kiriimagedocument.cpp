@@ -133,17 +133,17 @@ KiriImageDocument::ZoomMode KiriImageDocument::zoomMode() const
 
 int KiriImageDocument::minimumManualZoomPercent() const
 {
-    return static_cast<int>(KiriView::ImageZoomState::minimumManualZoomPercent);
+    return static_cast<int>(KiriView::ImageZoomState::minimumManualZoomPercent());
 }
 
 int KiriImageDocument::maximumManualZoomPercent() const
 {
-    return static_cast<int>(KiriView::ImageZoomState::maximumManualZoomPercent);
+    return static_cast<int>(KiriView::ImageZoomState::maximumManualZoomPercent());
 }
 
 int KiriImageDocument::zoomStepPercent() const
 {
-    return KiriView::ImageZoomState::manualZoomStepPercent;
+    return KiriView::ImageZoomState::manualZoomStepPercent();
 }
 
 QStringList KiriImageDocument::openDialogNameFilters() const
@@ -206,8 +206,8 @@ double KiriImageDocument::clampedManualZoomPercent(double zoomPercent) const
         return zoomPercent;
     }
 
-    return std::clamp(zoomPercent, KiriView::ImageZoomState::minimumManualZoomPercent,
-        KiriView::ImageZoomState::maximumManualZoomPercent);
+    return std::clamp(zoomPercent, KiriView::ImageZoomState::minimumManualZoomPercent(),
+        KiriView::ImageZoomState::maximumManualZoomPercent());
 }
 
 void KiriImageDocument::updateRenderContext() { m_documentController->updateRenderContext(); }

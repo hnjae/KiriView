@@ -3,6 +3,7 @@
 
 const MINIMUM_MANUAL_ZOOM_PERCENT: f64 = 10.0;
 const MAXIMUM_MANUAL_ZOOM_PERCENT: f64 = 800.0;
+const MANUAL_ZOOM_STEP_PERCENT: i32 = 10;
 const ZOOM_EPSILON: f64 = 0.001;
 
 #[cxx::bridge(namespace = "KiriView")]
@@ -62,6 +63,15 @@ mod ffi {
             left: RustZoomSizeF,
             right: RustZoomSizeF,
         ) -> bool;
+
+        #[cxx_name = "rustImageZoomMinimumManualZoomPercent"]
+        fn rust_image_zoom_minimum_manual_zoom_percent() -> f64;
+
+        #[cxx_name = "rustImageZoomMaximumManualZoomPercent"]
+        fn rust_image_zoom_maximum_manual_zoom_percent() -> f64;
+
+        #[cxx_name = "rustImageZoomManualZoomStepPercent"]
+        fn rust_image_zoom_manual_zoom_step_percent() -> i32;
 
         #[cxx_name = "rustImageZoomSetViewportSize"]
         fn rust_image_zoom_set_viewport_size(
@@ -159,6 +169,18 @@ fn rust_image_zoom_approximately_equal(left: f64, right: f64) -> bool {
 fn rust_image_zoom_size_approximately_equal(left: RustZoomSizeF, right: RustZoomSizeF) -> bool {
     rust_image_zoom_approximately_equal(left.width, right.width)
         && rust_image_zoom_approximately_equal(left.height, right.height)
+}
+
+fn rust_image_zoom_minimum_manual_zoom_percent() -> f64 {
+    MINIMUM_MANUAL_ZOOM_PERCENT
+}
+
+fn rust_image_zoom_maximum_manual_zoom_percent() -> f64 {
+    MAXIMUM_MANUAL_ZOOM_PERCENT
+}
+
+fn rust_image_zoom_manual_zoom_step_percent() -> i32 {
+    MANUAL_ZOOM_STEP_PERCENT
 }
 
 fn rust_image_zoom_set_viewport_size(

@@ -36,9 +36,9 @@ struct LoadedImageZoom {
 class ImageZoomState
 {
 public:
-    static constexpr qreal minimumManualZoomPercent = 10.0;
-    static constexpr qreal maximumManualZoomPercent = 800.0;
-    static constexpr int manualZoomStepPercent = 10;
+    static qreal minimumManualZoomPercent();
+    static qreal maximumManualZoomPercent();
+    static int manualZoomStepPercent();
 
     const QSize &imageSize() const;
     const QSizeF &viewportSize() const;

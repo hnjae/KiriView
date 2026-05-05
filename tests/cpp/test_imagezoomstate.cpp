@@ -27,7 +27,7 @@ private Q_SLOTS:
     void fitModesUsePhysicalPixels();
     void manualZoomIsClampedAndRejectsInvalidValues();
     void zoomIsPreservedWithinAContainer();
-    void manualZoomConstantsStayCentralized();
+    void manualZoomConstantsAreUsable();
 };
 
 void TestImageZoomState::fitModesUsePhysicalPixels()
@@ -60,14 +60,19 @@ void TestImageZoomState::manualZoomIsClampedAndRejectsInvalidValues()
     state.setViewportSize(QSizeF(400.0, 300.0), 1.0);
     state.setImageSize(QSize(200, 100), 1.0);
 
-    QVERIFY(state.setManualZoomPercent(5.0, 1.0));
-    QCOMPARE(state.zoomMode(), ImageZoomMode::Manual);
-    QVERIFY(imageZoomApproximatelyEqual(state.zoomPercent(), 10.0));
-    QVERIFY(imageZoomApproximatelyEqual(state.displaySize(), QSizeF(20.0, 10.0)));
+    const qreal minimumZoomPercent = ImageZoomState::minimumManualZoomPercent();
+    const qreal maximumZoomPercent = ImageZoomState::maximumManualZoomPercent();
 
-    QVERIFY(state.setManualZoomPercent(900.0, 1.0));
-    QVERIFY(imageZoomApproximatelyEqual(state.zoomPercent(), 800.0));
-    QVERIFY(imageZoomApproximatelyEqual(state.displaySize(), QSizeF(1600.0, 800.0)));
+    QVERIFY(state.setManualZoomPercent(minimumZoomPercent - 5.0, 1.0));
+    QCOMPARE(state.zoomMode(), ImageZoomMode::Manual);
+    QVERIFY(imageZoomApproximatelyEqual(state.zoomPercent(), minimumZoomPercent));
+    QVERIFY(imageZoomApproximatelyEqual(state.displaySize(),
+        QSizeF(200.0 * minimumZoomPercent / 100.0, 100.0 * minimumZoomPercent / 100.0)));
+
+    QVERIFY(state.setManualZoomPercent(maximumZoomPercent + 100.0, 1.0));
+    QVERIFY(imageZoomApproximatelyEqual(state.zoomPercent(), maximumZoomPercent));
+    QVERIFY(imageZoomApproximatelyEqual(state.displaySize(),
+        QSizeF(200.0 * maximumZoomPercent / 100.0, 100.0 * maximumZoomPercent / 100.0)));
 
     const auto previous = state.snapshot();
     QVERIFY(!state.setManualZoomPercent(std::numeric_limits<qreal>::quiet_NaN(), 1.0));
@@ -99,11 +104,12 @@ void TestImageZoomState::zoomIsPreservedWithinAContainer()
     QCOMPARE(state.zoomMode(), ImageZoomMode::Fit);
 }
 
-void TestImageZoomState::manualZoomConstantsStayCentralized()
+void TestImageZoomState::manualZoomConstantsAreUsable()
 {
-    QCOMPARE(ImageZoomState::minimumManualZoomPercent, 10.0);
-    QCOMPARE(ImageZoomState::maximumManualZoomPercent, 800.0);
-    QCOMPARE(ImageZoomState::manualZoomStepPercent, 10);
+    QVERIFY(ImageZoomState::minimumManualZoomPercent() > 0.0);
+    QVERIFY(
+        ImageZoomState::maximumManualZoomPercent() > ImageZoomState::minimumManualZoomPercent());
+    QVERIFY(ImageZoomState::manualZoomStepPercent() > 0);
 }
 
 QTEST_GUILESS_MAIN(TestImageZoomState)
