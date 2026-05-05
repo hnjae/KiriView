@@ -11,10 +11,15 @@ use crate::byteio::{read_be_u16, read_be_u32, read_be_u64, write_be_u16, write_b
 use cxx_qt_lib::QByteArray;
 
 const BOX_HEADER_SIZE: usize = 8;
+const BOX_KIND_OFFSET: usize = 4;
+const BOX_KIND_SIZE: usize = 4;
 const LARGE_BOX_EXTRA_SIZE: usize = 8;
 const FULL_BOX_HEADER_SIZE: usize = 4;
 const IPMA_ENTRY_COUNT_SIZE: usize = 4;
-const EMPTY_IPMA_BOX_SIZE: usize = 16;
+const IPMA_VERSION_AND_FLAGS_OFFSET: usize = BOX_HEADER_SIZE;
+const IPMA_ENTRY_COUNT_OFFSET: usize = IPMA_VERSION_AND_FLAGS_OFFSET + FULL_BOX_HEADER_SIZE;
+const IPMA_ENTRIES_OFFSET: usize = IPMA_ENTRY_COUNT_OFFSET + IPMA_ENTRY_COUNT_SIZE;
+const EMPTY_IPMA_BOX_SIZE: usize = IPMA_ENTRIES_OFFSET;
 
 #[cxx::bridge]
 mod ffi {
@@ -75,7 +80,10 @@ fn read_box(data: &[u8], offset: usize, end_offset: usize) -> Option<BoxHeader> 
     }
 
     let small_size = read_be_u32(data, offset)?;
-    let kind = data.get(offset + 4..offset + 8)?.try_into().ok()?;
+    let kind = data
+        .get(offset + BOX_KIND_OFFSET..offset + BOX_KIND_OFFSET + BOX_KIND_SIZE)?
+        .try_into()
+        .ok()?;
     let mut header_size = BOX_HEADER_SIZE;
     let mut size = u64::from(small_size);
 
@@ -324,14 +332,14 @@ fn read_ipma_box(data: &[u8], box_header: BoxHeader) -> Option<IpmaBox> {
         return None;
     }
 
-    let body_offset = box_header.body_offset();
+    let box_offset = box_header.offset;
     let version_and_flags = data
-        .get(body_offset..body_offset + FULL_BOX_HEADER_SIZE)?
+        .get(box_offset + IPMA_VERSION_AND_FLAGS_OFFSET..box_offset + IPMA_ENTRY_COUNT_OFFSET)?
         .try_into()
         .ok()?;
-    let entry_count = read_be_u32(data, body_offset + FULL_BOX_HEADER_SIZE)?;
+    let entry_count = read_be_u32(data, box_offset + IPMA_ENTRY_COUNT_OFFSET)?;
     let entries = data
-        .get(body_offset + FULL_BOX_HEADER_SIZE + IPMA_ENTRY_COUNT_SIZE..box_header.end_offset())?
+        .get(box_offset + IPMA_ENTRIES_OFFSET..box_header.end_offset())?
         .to_vec();
 
     Some(IpmaBox {
@@ -342,12 +350,50 @@ fn read_ipma_box(data: &[u8], box_header: BoxHeader) -> Option<IpmaBox> {
     })
 }
 
+fn ipma_box_size(entries_len: usize) -> Option<usize> {
+    IPMA_ENTRIES_OFFSET.checked_add(entries_len)
+}
+
+fn write_box_header(data: &mut [u8], kind: &[u8; BOX_KIND_SIZE], size: usize) -> bool {
+    if size > u32::MAX as usize || data.len() < BOX_HEADER_SIZE {
+        return false;
+    }
+
+    if !write_be_u32(data, 0, size as u32) {
+        return false;
+    }
+    data[BOX_KIND_OFFSET..BOX_KIND_OFFSET + BOX_KIND_SIZE].copy_from_slice(kind);
+    true
+}
+
+fn write_ipma_box(
+    data: &mut [u8],
+    version_and_flags: [u8; FULL_BOX_HEADER_SIZE],
+    entry_count: u32,
+    entries: &[u8],
+) -> bool {
+    let Some(size) = ipma_box_size(entries.len()) else {
+        return false;
+    };
+    if data.len() != size || !write_box_header(data, b"ipma", size) {
+        return false;
+    }
+
+    data[IPMA_VERSION_AND_FLAGS_OFFSET..IPMA_ENTRY_COUNT_OFFSET]
+        .copy_from_slice(&version_and_flags);
+    if !write_be_u32(data, IPMA_ENTRY_COUNT_OFFSET, entry_count) {
+        return false;
+    }
+    data[IPMA_ENTRIES_OFFSET..].copy_from_slice(entries);
+    true
+}
+
 fn empty_ipma_box_with_alternate_version(version_and_flags: [u8; FULL_BOX_HEADER_SIZE]) -> Vec<u8> {
     let mut box_data = vec![0; EMPTY_IPMA_BOX_SIZE];
-    write_be_u32(&mut box_data, 0, EMPTY_IPMA_BOX_SIZE as u32);
-    box_data[4..8].copy_from_slice(b"ipma");
-    box_data[8] = if version_and_flags[0] == 0 { 1 } else { 0 };
-    box_data[9..12].copy_from_slice(&version_and_flags[1..4]);
+    let mut alternate_version_and_flags = version_and_flags;
+    alternate_version_and_flags[0] = if version_and_flags[0] == 0 { 1 } else { 0 };
+    let wrote = write_ipma_box(&mut box_data, alternate_version_and_flags, 0, &[]);
+    debug_assert!(wrote);
     box_data
 }
 
@@ -361,11 +407,7 @@ fn patch_adjacent_duplicate_ipma_boxes(data: &mut [u8], first: &IpmaBox, second:
     let mut entries = first.entries.clone();
     entries.extend_from_slice(&second.entries);
 
-    let Some(merged_size) = BOX_HEADER_SIZE
-        .checked_add(FULL_BOX_HEADER_SIZE)
-        .and_then(|size| size.checked_add(IPMA_ENTRY_COUNT_SIZE))
-        .and_then(|size| size.checked_add(entries.len()))
-    else {
+    let Some(merged_size) = ipma_box_size(entries.len()) else {
         return false;
     };
     let Some(available_size) = first.box_header.size.checked_add(second.box_header.size) else {
@@ -375,19 +417,23 @@ fn patch_adjacent_duplicate_ipma_boxes(data: &mut [u8], first: &IpmaBox, second:
         return false;
     };
 
-    if remaining_size != EMPTY_IPMA_BOX_SIZE
-        || merged_size > u32::MAX as usize
-        || first.entry_count > u32::MAX - second.entry_count
-    {
+    let Some(entry_count) = first.entry_count.checked_add(second.entry_count) else {
+        return false;
+    };
+
+    if remaining_size != EMPTY_IPMA_BOX_SIZE {
         return false;
     }
 
     let mut replacement = vec![0; merged_size];
-    write_be_u32(&mut replacement, 0, merged_size as u32);
-    replacement[4..8].copy_from_slice(b"ipma");
-    replacement[8..12].copy_from_slice(&first.version_and_flags);
-    write_be_u32(&mut replacement, 12, first.entry_count + second.entry_count);
-    replacement[16..].copy_from_slice(&entries);
+    if !write_ipma_box(
+        &mut replacement,
+        first.version_and_flags,
+        entry_count,
+        &entries,
+    ) {
+        return false;
+    }
     replacement.extend_from_slice(&empty_ipma_box_with_alternate_version(
         first.version_and_flags,
     ));

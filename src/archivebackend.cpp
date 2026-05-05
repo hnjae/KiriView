@@ -113,6 +113,22 @@ bool isLibArchiveDocument(const KiriView::ArchiveDocumentLocation &archiveDocume
         == KiriView::ArchiveStorageBackend::LibArchive;
 }
 
+std::optional<KiriView::ImageNavigationCandidate> archiveImageCandidate(
+    const KiriView::ArchiveDocumentLocation &archiveDocument, const QString &entryPath)
+{
+    const QString candidateName = normalizedArchiveEntryPath(entryPath);
+    if (candidateName.isEmpty() || !KiriView::isSupportedImageFileName(candidateName)) {
+        return std::nullopt;
+    }
+
+    const QUrl url = archiveEntryUrl(archiveDocument, candidateName);
+    if (url.isEmpty()) {
+        return std::nullopt;
+    }
+
+    return KiriView::ImageNavigationCandidate { url, candidateName };
+}
+
 void appendArchiveDirectoryImageCandidates(
     std::vector<KiriView::ImageNavigationCandidate> *candidates, const KArchiveDirectory *directory,
     const KiriView::ArchiveDocumentLocation &archiveDocument, const QString &prefix)
@@ -137,17 +153,15 @@ void appendArchiveDirectoryImageCandidates(
             continue;
         }
 
-        if (!entry->isFile() || !KiriView::isSupportedImageFileName(entry->name())) {
+        if (!entry->isFile()) {
             continue;
         }
 
-        const QString candidateName = normalizedArchiveEntryPath(entryPath);
-        const QUrl url = archiveEntryUrl(archiveDocument, candidateName);
-        if (candidateName.isEmpty() || url.isEmpty()) {
-            continue;
+        std::optional<KiriView::ImageNavigationCandidate> candidate
+            = archiveImageCandidate(archiveDocument, entryPath);
+        if (candidate.has_value()) {
+            candidates->push_back(std::move(*candidate));
         }
-
-        candidates->push_back(KiriView::ImageNavigationCandidate { url, candidateName });
     }
 }
 
@@ -325,12 +339,11 @@ ArchiveImageCandidatesResult loadLibArchiveDocumentImageCandidates(
     std::vector<ImageNavigationCandidate> candidates;
     const bool visitedEntries = visitLibArchiveEntries(
         reader.get(), archiveDocument, &errorString, [&](archive *, archive_entry *entry) {
-            const QString entryPath = normalizedArchiveEntryPath(libArchiveEntryPath(entry));
-            if (archive_entry_filetype(entry) == AE_IFREG && !entryPath.isEmpty()
-                && KiriView::isSupportedImageFileName(entryPath)) {
-                const QUrl url = archiveEntryUrl(archiveDocument, entryPath);
-                if (!url.isEmpty()) {
-                    candidates.push_back(ImageNavigationCandidate { url, entryPath });
+            if (archive_entry_filetype(entry) == AE_IFREG) {
+                std::optional<ImageNavigationCandidate> candidate
+                    = archiveImageCandidate(archiveDocument, libArchiveEntryPath(entry));
+                if (candidate.has_value()) {
+                    candidates.push_back(std::move(*candidate));
                 }
             }
 
