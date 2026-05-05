@@ -402,29 +402,29 @@ impl RgbaRegion {
         Ok(())
     }
 
-    fn canvas_row<'a>(
+    fn canvas_row(
         self,
-        canvas: &'a [u8],
+        canvas: &[u8],
         canvas_width: usize,
         row: usize,
-    ) -> Result<&'a [u8], RustApngErrorKind> {
+    ) -> Result<&[u8], RustApngErrorKind> {
         canvas
             .get(self.canvas_row_range(canvas_width, row)?)
             .ok_or(RustApngErrorKind::Apng)
     }
 
-    fn canvas_row_mut<'a>(
+    fn canvas_row_mut(
         self,
-        canvas: &'a mut [u8],
+        canvas: &mut [u8],
         canvas_width: usize,
         row: usize,
-    ) -> Result<&'a mut [u8], RustApngErrorKind> {
+    ) -> Result<&mut [u8], RustApngErrorKind> {
         canvas
             .get_mut(self.canvas_row_range(canvas_width, row)?)
             .ok_or(RustApngErrorKind::Apng)
     }
 
-    fn data_row<'a>(self, data: &'a [u8], row: usize) -> Result<&'a [u8], RustApngErrorKind> {
+    fn data_row(self, data: &[u8], row: usize) -> Result<&[u8], RustApngErrorKind> {
         data.get(self.region_row_range(row)?)
             .ok_or(RustApngErrorKind::Apng)
     }

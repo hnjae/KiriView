@@ -43,6 +43,7 @@ private:
     bool resetReader(QString *errorString);
     bool resetHeifSequence(QString *errorString);
     bool hasRemainingLoops() const;
+    void clearPlaybackState();
     void finishWithError(const QString &errorString);
 
     FrameReadyCallback m_frameReady;

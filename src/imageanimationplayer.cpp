@@ -41,14 +41,10 @@ ImageAnimationPlayer::~ImageAnimationPlayer() { stop(); }
 void ImageAnimationPlayer::start(
     const QByteArray &data, const QByteArray &format, int loopCount, int firstFrameDelay)
 {
+    clearPlaybackState();
     m_data = data;
     m_format = format;
-    m_decodedFrames.clear();
-    m_decodedFrameIndex = 0;
-    m_heifSequenceReader.reset();
-    m_heifFirstFrameDelay = 0;
     m_loopCount = loopCount;
-    m_completedLoops = 0;
 
     QString errorString;
     if (!resetReader(&errorString)) {
@@ -69,15 +65,9 @@ void ImageAnimationPlayer::start(
 
 void ImageAnimationPlayer::startDecoded(std::vector<AnimationFrame> frames, int loopCount)
 {
-    m_reader.reset();
-    m_heifSequenceReader.reset();
-    m_data.clear();
-    m_format.clear();
-    m_heifFirstFrameDelay = 0;
+    clearPlaybackState();
     m_decodedFrames = std::move(frames);
-    m_decodedFrameIndex = 0;
     m_loopCount = loopCount;
-    m_completedLoops = 0;
 
     if (m_decodedFrames.size() > 1) {
         m_timer.start(normalizedAnimationFrameDelay(m_decodedFrames.front().delay));
@@ -86,13 +76,8 @@ void ImageAnimationPlayer::startDecoded(std::vector<AnimationFrame> frames, int 
 
 void ImageAnimationPlayer::startHeifSequence(const QByteArray &data, int firstFrameDelay)
 {
-    m_reader.reset();
+    clearPlaybackState();
     m_data = data;
-    m_format.clear();
-    m_decodedFrames.clear();
-    m_decodedFrameIndex = 0;
-    m_loopCount = 0;
-    m_completedLoops = 0;
     m_heifFirstFrameDelay = firstFrameDelay;
 
     QString errorString;
@@ -104,19 +89,7 @@ void ImageAnimationPlayer::startHeifSequence(const QByteArray &data, int firstFr
     m_timer.start(normalizedAnimationFrameDelay(m_heifFirstFrameDelay));
 }
 
-void ImageAnimationPlayer::stop()
-{
-    m_timer.stop();
-    m_reader.reset();
-    m_heifSequenceReader.reset();
-    m_data.clear();
-    m_format.clear();
-    m_decodedFrames.clear();
-    m_decodedFrameIndex = 0;
-    m_loopCount = 0;
-    m_completedLoops = 0;
-    m_heifFirstFrameDelay = 0;
-}
+void ImageAnimationPlayer::stop() { clearPlaybackState(); }
 
 void ImageAnimationPlayer::advanceFrame()
 {
@@ -266,6 +239,20 @@ bool ImageAnimationPlayer::resetHeifSequence(QString *errorString)
 bool ImageAnimationPlayer::hasRemainingLoops() const
 {
     return m_loopCount < 0 || m_completedLoops < m_loopCount;
+}
+
+void ImageAnimationPlayer::clearPlaybackState()
+{
+    m_timer.stop();
+    m_reader.reset();
+    m_heifSequenceReader.reset();
+    m_data.clear();
+    m_format.clear();
+    m_decodedFrames.clear();
+    m_decodedFrameIndex = 0;
+    m_loopCount = 0;
+    m_completedLoops = 0;
+    m_heifFirstFrameDelay = 0;
 }
 
 void ImageAnimationPlayer::finishWithError(const QString &errorString)
