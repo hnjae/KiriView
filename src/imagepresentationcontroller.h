@@ -80,18 +80,18 @@ public:
 private:
     struct TileDecodeLifetime;
 
-    using ZoomStateMutation = std::function<bool(ImageZoomState &)>;
+    using ZoomStateMutation = std::function<bool(ImageZoomState &, qreal devicePixelRatio)>;
 
     void setImageSize(const QSize &imageSize);
     void invalidateTiles();
-    void scheduleVisibleTileDecode();
-    bool staticTileSurfaceFirstDisplayIsSufficient(const StaticTileSurface &surface) const;
+    void scheduleVisibleTileDecode(const ImageDocumentRenderContext &context);
+    bool staticTileSurfaceFirstDisplayIsSufficient(
+        const StaticTileSurface &surface, const ImageDocumentRenderContext &context) const;
     bool tileRequestIsCurrent(quint64 generation, const TileKey &key) const;
     void finishTileDecode(quint64 generation, TileKey key, std::optional<DecodedTile> tile);
     bool mutateZoomState(const ZoomStateMutation &mutation);
-    void applyZoomStateChanges(const ImageZoomSnapshot &previous);
-    qreal displayDevicePixelRatio() const;
-    int maximumTextureSize() const;
+    void applyZoomStateChanges(
+        const ImageZoomSnapshot &previous, const ImageDocumentRenderContext &context);
     ImageDocumentRenderContext renderContext() const;
     void notify(ImageDocumentChange change);
 

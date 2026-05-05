@@ -48,8 +48,7 @@ QSizeF ImagePresentationController::viewportSize() const { return m_zoomState.vi
 
 void ImagePresentationController::setViewportSize(const QSizeF &viewportSize)
 {
-    const qreal devicePixelRatio = displayDevicePixelRatio();
-    mutateZoomState([&viewportSize, devicePixelRatio](ImageZoomState &zoomState) {
+    mutateZoomState([&viewportSize](ImageZoomState &zoomState, qreal devicePixelRatio) {
         return zoomState.setViewportSize(viewportSize, devicePixelRatio);
     });
 }
@@ -66,15 +65,14 @@ void ImagePresentationController::setVisibleItemRect(const QRectF &visibleItemRe
 
     m_visibleItemRect = visibleItemRect;
     notify(ImageDocumentChange::VisibleItemRect);
-    scheduleVisibleTileDecode();
+    scheduleVisibleTileDecode(renderContext());
 }
 
 qreal ImagePresentationController::zoomPercent() const { return m_zoomState.zoomPercent(); }
 
 void ImagePresentationController::setZoomPercent(qreal zoomPercent)
 {
-    const qreal devicePixelRatio = displayDevicePixelRatio();
-    mutateZoomState([zoomPercent, devicePixelRatio](ImageZoomState &zoomState) {
+    mutateZoomState([zoomPercent](ImageZoomState &zoomState, qreal devicePixelRatio) {
         return zoomState.setManualZoomPercent(zoomPercent, devicePixelRatio);
     });
 }
@@ -108,13 +106,13 @@ std::optional<StaticImagePayload> ImagePresentationController::staticImage() con
 ImageFirstDisplayDecodeContext ImagePresentationController::firstDisplayDecodeContext() const
 {
     const QSizeF viewport = viewportSize();
-    const qreal devicePixelRatio = displayDevicePixelRatio();
-    if (viewport.isEmpty() || !std::isfinite(devicePixelRatio) || devicePixelRatio <= 0.0) {
+    const ImageDocumentRenderContext context = renderContext();
+    if (viewport.isEmpty()) {
         return {};
     }
 
-    const int width = static_cast<int>(std::ceil(viewport.width() * devicePixelRatio));
-    const int height = static_cast<int>(std::ceil(viewport.height() * devicePixelRatio));
+    const int width = static_cast<int>(std::ceil(viewport.width() * context.devicePixelRatio));
+    const int height = static_cast<int>(std::ceil(viewport.height() * context.devicePixelRatio));
     if (width <= 0 || height <= 0) {
         return {};
     }
@@ -124,8 +122,7 @@ ImageFirstDisplayDecodeContext ImagePresentationController::firstDisplayDecodeCo
 
 void ImagePresentationController::resetZoom()
 {
-    const qreal devicePixelRatio = displayDevicePixelRatio();
-    mutateZoomState([devicePixelRatio](ImageZoomState &zoomState) {
+    mutateZoomState([](ImageZoomState &zoomState, qreal devicePixelRatio) {
         zoomState.resetZoom(devicePixelRatio);
         return true;
     });
@@ -137,16 +134,14 @@ void ImagePresentationController::setFitMode(ImageZoomMode zoomMode)
         return;
     }
 
-    const qreal devicePixelRatio = displayDevicePixelRatio();
-    mutateZoomState([zoomMode, devicePixelRatio](ImageZoomState &zoomState) {
+    mutateZoomState([zoomMode](ImageZoomState &zoomState, qreal devicePixelRatio) {
         return zoomState.setFitMode(zoomMode, devicePixelRatio);
     });
 }
 
 void ImagePresentationController::updateRenderContext()
 {
-    const qreal devicePixelRatio = displayDevicePixelRatio();
-    mutateZoomState([devicePixelRatio](ImageZoomState &zoomState) {
+    mutateZoomState([](ImageZoomState &zoomState, qreal devicePixelRatio) {
         zoomState.update(devicePixelRatio);
         return true;
     });
@@ -154,7 +149,7 @@ void ImagePresentationController::updateRenderContext()
 
 void ImagePresentationController::prepareImageContainer(const QUrl &containerUrl)
 {
-    mutateZoomState([&containerUrl](ImageZoomState &zoomState) {
+    mutateZoomState([&containerUrl](ImageZoomState &zoomState, qreal) {
         zoomState.prepareImageContainer(containerUrl);
         return true;
     });
@@ -162,8 +157,7 @@ void ImagePresentationController::prepareImageContainer(const QUrl &containerUrl
 
 void ImagePresentationController::prepareFailedContainer(const QUrl &containerUrl)
 {
-    const qreal devicePixelRatio = displayDevicePixelRatio();
-    mutateZoomState([&containerUrl, devicePixelRatio](ImageZoomState &zoomState) {
+    mutateZoomState([&containerUrl](ImageZoomState &zoomState, qreal devicePixelRatio) {
         zoomState.clearContainer();
         zoomState.prepareImageContainer(containerUrl);
         zoomState.resetZoom(devicePixelRatio);
@@ -184,13 +178,14 @@ void ImagePresentationController::setImage(const QImage &image)
 
 void ImagePresentationController::setStaticImage(StaticImagePayload staticImage)
 {
+    const ImageDocumentRenderContext context = renderContext();
     stopAnimation();
     invalidateTiles();
     const bool useFullImageSurface
-        = staticImageFitsFullImageSurface(staticImage, maximumTextureSize());
+        = staticImageFitsFullImageSurface(staticImage, context.maximumTextureSize);
     m_displayedImageState->setStaticImage(std::move(staticImage), useFullImageSurface);
     if (!useFullImageSurface) {
-        scheduleVisibleTileDecode();
+        scheduleVisibleTileDecode(context);
     }
 }
 
@@ -224,8 +219,7 @@ void ImagePresentationController::stopAnimation() { m_displayedImageState->stopA
 
 void ImagePresentationController::setImageSize(const QSize &imageSize)
 {
-    const qreal devicePixelRatio = displayDevicePixelRatio();
-    mutateZoomState([&imageSize, devicePixelRatio](ImageZoomState &zoomState) {
+    mutateZoomState([&imageSize](ImageZoomState &zoomState, qreal devicePixelRatio) {
         return zoomState.setImageSize(imageSize, devicePixelRatio);
     });
 }
@@ -237,7 +231,8 @@ void ImagePresentationController::invalidateTiles()
     m_failedTileKeys.clear();
 }
 
-void ImagePresentationController::scheduleVisibleTileDecode()
+void ImagePresentationController::scheduleVisibleTileDecode(
+    const ImageDocumentRenderContext &context)
 {
     const std::shared_ptr<DisplayedImageSurface> displayedSurface
         = m_displayedImageState->imageSurface();
@@ -249,7 +244,7 @@ void ImagePresentationController::scheduleVisibleTileDecode()
     if (surface == nullptr || !surface->isValid()) {
         return;
     }
-    if (staticTileSurfaceFirstDisplayIsSufficient(*surface)) {
+    if (staticTileSurfaceFirstDisplayIsSufficient(*surface, context)) {
         return;
     }
 
@@ -262,7 +257,7 @@ void ImagePresentationController::scheduleVisibleTileDecode()
     const TileVisibilityContext visibilityContext {
         m_zoomState.displaySize(),
         m_visibleItemRect,
-        displayDevicePixelRatio(),
+        context.devicePixelRatio,
     };
     for (const TileKey &key : visibleTileKeys(surface->pyramid(), visibilityContext)) {
         if (surface->containsTile(key) || m_pendingTileKeys.contains(key)
@@ -296,7 +291,7 @@ void ImagePresentationController::scheduleVisibleTileDecode()
 }
 
 bool ImagePresentationController::staticTileSurfaceFirstDisplayIsSufficient(
-    const StaticTileSurface &surface) const
+    const StaticTileSurface &surface, const ImageDocumentRenderContext &context) const
 {
     const qreal firstDisplayPixelsPerSourcePixel
         = surface.displayHints().firstDisplayPixelsPerSourcePixel;
@@ -306,7 +301,7 @@ bool ImagePresentationController::staticTileSurfaceFirstDisplayIsSufficient(
     }
 
     const qreal currentDisplayPixelsPerSourcePixel = tileDisplayPixelsPerSourcePixel(
-        surface.pyramid(), m_zoomState.displaySize(), displayDevicePixelRatio());
+        surface.pyramid(), m_zoomState.displaySize(), context.devicePixelRatio);
     if (!std::isfinite(currentDisplayPixelsPerSourcePixel)
         || currentDisplayPixelsPerSourcePixel <= 0.0) {
         return false;
@@ -340,16 +335,18 @@ void ImagePresentationController::finishTileDecode(
 
 bool ImagePresentationController::mutateZoomState(const ZoomStateMutation &mutation)
 {
+    const ImageDocumentRenderContext context = renderContext();
     const ImageZoomSnapshot previous = m_zoomState.snapshot();
-    if (!mutation(m_zoomState)) {
+    if (!mutation(m_zoomState, context.devicePixelRatio)) {
         return false;
     }
 
-    applyZoomStateChanges(previous);
+    applyZoomStateChanges(previous, context);
     return true;
 }
 
-void ImagePresentationController::applyZoomStateChanges(const ImageZoomSnapshot &previous)
+void ImagePresentationController::applyZoomStateChanges(
+    const ImageZoomSnapshot &previous, const ImageDocumentRenderContext &context)
 {
     const ImageZoomSnapshot current = m_zoomState.snapshot();
     if (previous.imageSize != current.imageSize) {
@@ -369,17 +366,7 @@ void ImagePresentationController::applyZoomStateChanges(const ImageZoomSnapshot 
         notify(ImageDocumentChange::DisplaySize);
         notify(ImageDocumentChange::Repaint);
     }
-    scheduleVisibleTileDecode();
-}
-
-qreal ImagePresentationController::displayDevicePixelRatio() const
-{
-    return renderContext().devicePixelRatio;
-}
-
-int ImagePresentationController::maximumTextureSize() const
-{
-    return renderContext().maximumTextureSize;
+    scheduleVisibleTileDecode(context);
 }
 
 ImageDocumentRenderContext ImagePresentationController::renderContext() const
