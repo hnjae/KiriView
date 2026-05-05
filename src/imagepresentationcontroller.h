@@ -81,6 +81,8 @@ public:
     void stopAnimation();
 
 private:
+    using ZoomStateMutation = std::function<bool(ImageZoomState &)>;
+
     void setImageSize(const QSize &imageSize);
     void invalidateTiles();
     void scheduleVisibleTileDecode();
@@ -90,6 +92,7 @@ private:
     QRect levelRectForItemRect(const TilePyramid &pyramid, int level, const QRectF &itemRect) const;
     bool tileRequestIsCurrent(quint64 generation, const TileKey &key) const;
     void finishTileDecode(quint64 generation, TileKey key, std::optional<DecodedTile> tile);
+    bool mutateZoomState(const ZoomStateMutation &mutation);
     void applyZoomStateChanges(const ImageZoomSnapshot &previous);
     qreal displayDevicePixelRatio() const;
     int maximumTextureSize() const;

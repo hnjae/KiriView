@@ -48,12 +48,10 @@ QSizeF ImagePresentationController::viewportSize() const { return m_zoomState.vi
 
 void ImagePresentationController::setViewportSize(const QSizeF &viewportSize)
 {
-    const ImageZoomSnapshot previous = m_zoomState.snapshot();
-    if (!m_zoomState.setViewportSize(viewportSize, displayDevicePixelRatio())) {
-        return;
-    }
-
-    applyZoomStateChanges(previous);
+    const qreal devicePixelRatio = displayDevicePixelRatio();
+    mutateZoomState([&viewportSize, devicePixelRatio](ImageZoomState &zoomState) {
+        return zoomState.setViewportSize(viewportSize, devicePixelRatio);
+    });
 }
 
 QSizeF ImagePresentationController::displaySize() const { return m_zoomState.displaySize(); }
@@ -75,12 +73,10 @@ qreal ImagePresentationController::zoomPercent() const { return m_zoomState.zoom
 
 void ImagePresentationController::setZoomPercent(qreal zoomPercent)
 {
-    const ImageZoomSnapshot previous = m_zoomState.snapshot();
-    if (!m_zoomState.setManualZoomPercent(zoomPercent, displayDevicePixelRatio())) {
-        return;
-    }
-
-    applyZoomStateChanges(previous);
+    const qreal devicePixelRatio = displayDevicePixelRatio();
+    mutateZoomState([zoomPercent, devicePixelRatio](ImageZoomState &zoomState) {
+        return zoomState.setManualZoomPercent(zoomPercent, devicePixelRatio);
+    });
 }
 
 ImageZoomMode ImagePresentationController::zoomMode() const { return m_zoomState.zoomMode(); }
@@ -138,9 +134,11 @@ ImageFirstDisplayDecodeContext ImagePresentationController::firstDisplayDecodeCo
 
 void ImagePresentationController::resetZoom()
 {
-    const ImageZoomSnapshot previous = m_zoomState.snapshot();
-    m_zoomState.resetZoom(displayDevicePixelRatio());
-    applyZoomStateChanges(previous);
+    const qreal devicePixelRatio = displayDevicePixelRatio();
+    mutateZoomState([devicePixelRatio](ImageZoomState &zoomState) {
+        zoomState.resetZoom(devicePixelRatio);
+        return true;
+    });
 }
 
 void ImagePresentationController::setFitMode(ImageZoomMode zoomMode)
@@ -149,34 +147,38 @@ void ImagePresentationController::setFitMode(ImageZoomMode zoomMode)
         return;
     }
 
-    const ImageZoomSnapshot previous = m_zoomState.snapshot();
-    if (!m_zoomState.setFitMode(zoomMode, displayDevicePixelRatio())) {
-        return;
-    }
-    applyZoomStateChanges(previous);
+    const qreal devicePixelRatio = displayDevicePixelRatio();
+    mutateZoomState([zoomMode, devicePixelRatio](ImageZoomState &zoomState) {
+        return zoomState.setFitMode(zoomMode, devicePixelRatio);
+    });
 }
 
 void ImagePresentationController::updateRenderContext()
 {
-    const ImageZoomSnapshot previous = m_zoomState.snapshot();
-    m_zoomState.update(displayDevicePixelRatio());
-    applyZoomStateChanges(previous);
+    const qreal devicePixelRatio = displayDevicePixelRatio();
+    mutateZoomState([devicePixelRatio](ImageZoomState &zoomState) {
+        zoomState.update(devicePixelRatio);
+        return true;
+    });
 }
 
 void ImagePresentationController::prepareImageContainer(const QUrl &containerUrl)
 {
-    const ImageZoomSnapshot previous = m_zoomState.snapshot();
-    m_zoomState.prepareImageContainer(containerUrl);
-    applyZoomStateChanges(previous);
+    mutateZoomState([&containerUrl](ImageZoomState &zoomState) {
+        zoomState.prepareImageContainer(containerUrl);
+        return true;
+    });
 }
 
 void ImagePresentationController::prepareFailedContainer(const QUrl &containerUrl)
 {
-    const ImageZoomSnapshot previous = m_zoomState.snapshot();
-    m_zoomState.clearContainer();
-    m_zoomState.prepareImageContainer(containerUrl);
-    m_zoomState.resetZoom(displayDevicePixelRatio());
-    applyZoomStateChanges(previous);
+    const qreal devicePixelRatio = displayDevicePixelRatio();
+    mutateZoomState([&containerUrl, devicePixelRatio](ImageZoomState &zoomState) {
+        zoomState.clearContainer();
+        zoomState.prepareImageContainer(containerUrl);
+        zoomState.resetZoom(devicePixelRatio);
+        return true;
+    });
 }
 
 void ImagePresentationController::setPredecodeCacheable(bool cacheable)
@@ -234,12 +236,10 @@ void ImagePresentationController::stopAnimation() { m_displayedImageState->stopA
 
 void ImagePresentationController::setImageSize(const QSize &imageSize)
 {
-    const ImageZoomSnapshot previous = m_zoomState.snapshot();
-    if (!m_zoomState.setImageSize(imageSize, displayDevicePixelRatio())) {
-        return;
-    }
-
-    applyZoomStateChanges(previous);
+    const qreal devicePixelRatio = displayDevicePixelRatio();
+    mutateZoomState([&imageSize, devicePixelRatio](ImageZoomState &zoomState) {
+        return zoomState.setImageSize(imageSize, devicePixelRatio);
+    });
 }
 
 void ImagePresentationController::invalidateTiles()
@@ -414,6 +414,17 @@ void ImagePresentationController::finishTileDecode(
     if (m_displayedImageState->insertTile(std::move(*tile))) {
         notify(ImageDocumentChange::Repaint);
     }
+}
+
+bool ImagePresentationController::mutateZoomState(const ZoomStateMutation &mutation)
+{
+    const ImageZoomSnapshot previous = m_zoomState.snapshot();
+    if (!mutation(m_zoomState)) {
+        return false;
+    }
+
+    applyZoomStateChanges(previous);
+    return true;
 }
 
 void ImagePresentationController::applyZoomStateChanges(const ImageZoomSnapshot &previous)

@@ -8,6 +8,18 @@
 #include <algorithm>
 #include <utility>
 
+namespace {
+template <typename Value> bool replaceIfChanged(Value &current, const Value &next)
+{
+    if (current == next) {
+        return false;
+    }
+
+    current = next;
+    return true;
+}
+}
+
 namespace KiriView {
 ImageDocumentState::ChangeBatch::ChangeBatch(ImageDocumentState &state)
     : m_state(&state)
@@ -77,12 +89,9 @@ bool ImageDocumentState::containerNavigationAvailable() const
 
 void ImageDocumentState::setSourceUrl(const QUrl &sourceUrl)
 {
-    if (m_sourceUrl == sourceUrl) {
-        return;
+    if (replaceIfChanged(m_sourceUrl, sourceUrl)) {
+        notify(ImageDocumentChange::SourceUrl);
     }
-
-    m_sourceUrl = sourceUrl;
-    notify(ImageDocumentChange::SourceUrl);
 }
 
 void ImageDocumentState::setDisplayedImageLocation(const DisplayedImageLocation &location)
@@ -110,42 +119,30 @@ void ImageDocumentState::replaceDisplayedImageLocation(DisplayedImageLocation lo
 
 void ImageDocumentState::setStatus(ImageDocumentStatus status)
 {
-    if (m_status == status) {
-        return;
+    if (replaceIfChanged(m_status, status)) {
+        notify(ImageDocumentChange::Status);
     }
-
-    m_status = status;
-    notify(ImageDocumentChange::Status);
 }
 
 void ImageDocumentState::setLoading(bool loading)
 {
-    if (m_loading == loading) {
-        return;
+    if (replaceIfChanged(m_loading, loading)) {
+        notify(ImageDocumentChange::Loading);
     }
-
-    m_loading = loading;
-    notify(ImageDocumentChange::Loading);
 }
 
 void ImageDocumentState::setErrorString(const QString &errorString)
 {
-    if (m_errorString == errorString) {
-        return;
+    if (replaceIfChanged(m_errorString, errorString)) {
+        notify(ImageDocumentChange::ErrorString);
     }
-
-    m_errorString = errorString;
-    notify(ImageDocumentChange::ErrorString);
 }
 
 void ImageDocumentState::setContainerNavigationUrl(const QUrl &containerUrl)
 {
-    if (m_containerNavigationUrl == containerUrl) {
-        return;
+    if (replaceIfChanged(m_containerNavigationUrl, containerUrl)) {
+        notify(ImageDocumentChange::ContainerNavigation);
     }
-
-    m_containerNavigationUrl = containerUrl;
-    notify(ImageDocumentChange::ContainerNavigation);
 }
 
 void ImageDocumentState::setLoadingContainerNavigationUrl(const QUrl &containerUrl)
