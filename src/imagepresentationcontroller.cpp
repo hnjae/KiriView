@@ -244,7 +244,7 @@ void ImagePresentationController::setImageSize(const QSize &imageSize)
 
 void ImagePresentationController::invalidateTiles()
 {
-    ++m_tileGeneration;
+    m_tileGeneration.invalidate();
     m_pendingTileKeys.clear();
     m_failedTileKeys.clear();
 }
@@ -270,7 +270,7 @@ void ImagePresentationController::scheduleVisibleTileDecode()
         return;
     }
 
-    const quint64 generation = m_tileGeneration;
+    const quint64 generation = m_tileGeneration.current();
     for (const TileKey &key : visibleTileKeys(*surface)) {
         if (surface->containsTile(key) || m_pendingTileKeys.contains(key)
             || m_failedTileKeys.contains(key)) {
@@ -395,7 +395,7 @@ QRect ImagePresentationController::levelRectForItemRect(
 
 bool ImagePresentationController::tileRequestIsCurrent(quint64 generation, const TileKey &key) const
 {
-    return generation == m_tileGeneration && m_pendingTileKeys.contains(key);
+    return m_tileGeneration.accepts(generation) && m_pendingTileKeys.contains(key);
 }
 
 void ImagePresentationController::finishTileDecode(

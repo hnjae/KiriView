@@ -9,7 +9,6 @@
 #include <QSvgRenderer>
 #include <algorithm>
 #include <cmath>
-#include <limits>
 
 namespace KiriView {
 QSize boundedPreviewSize(const QSize &imageSize, int maximumLongEdge)
@@ -26,21 +25,6 @@ QSize boundedPreviewSize(const QSize &imageSize, int maximumLongEdge)
     const qreal scale = static_cast<qreal>(maximumLongEdge) / longEdge;
     return QSize(std::max(1, static_cast<int>(std::ceil(imageSize.width() * scale))),
         std::max(1, static_cast<int>(std::ceil(imageSize.height() * scale))));
-}
-
-qsizetype estimatedRgbaByteCost(const QSize &size)
-{
-    if (size.isEmpty()) {
-        return 0;
-    }
-    constexpr qsizetype bytesPerPixel = 4;
-    const qsizetype width = static_cast<qsizetype>(size.width());
-    const qsizetype height = static_cast<qsizetype>(size.height());
-    if (width > std::numeric_limits<qsizetype>::max() / height
-        || width * height > std::numeric_limits<qsizetype>::max() / bytesPerPixel) {
-        return std::numeric_limits<qsizetype>::max();
-    }
-    return width * height * bytesPerPixel;
 }
 
 QImage scaledTileImage(const QImage &image, const QSize &size)

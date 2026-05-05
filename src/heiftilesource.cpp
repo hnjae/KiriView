@@ -5,6 +5,7 @@
 
 #include "heifcontainer.h"
 #include "heifsupport.h"
+#include "imagebytecost.h"
 #include "imagetilesource_p.h"
 #include "imageviewtext.h"
 

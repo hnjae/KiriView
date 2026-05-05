@@ -5,6 +5,7 @@
 #define KIRIVIEW_IMAGEPRESENTATIONCONTROLLER_H
 
 #include "animationframe.h"
+#include "imageasyncticket.h"
 #include "imagedocumenttypes.h"
 #include "imagesurface.h"
 #include "imagezoomstate.h"
@@ -101,7 +102,7 @@ private:
     std::unique_ptr<DisplayedImageState> m_displayedImageState;
     QObject *m_context = nullptr;
     QRectF m_visibleItemRect;
-    quint64 m_tileGeneration = 0;
+    ImageAsyncTicket m_tileGeneration;
     QSet<TileKey> m_pendingTileKeys;
     QSet<TileKey> m_failedTileKeys;
 };

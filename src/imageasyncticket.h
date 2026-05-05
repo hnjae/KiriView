@@ -18,6 +18,8 @@ public:
 
     void invalidate() { ++m_current; }
 
+    quint64 current() const { return m_current; }
+
     bool accepts(quint64 ticket) const { return ticket == m_current; }
 
 private:

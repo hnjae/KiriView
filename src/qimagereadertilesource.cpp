@@ -3,6 +3,7 @@
 
 #include "imagetilesource.h"
 
+#include "imagebytecost.h"
 #include "imagerendering.h"
 #include "imagetilesource_p.h"
 #include "imageviewtext.h"

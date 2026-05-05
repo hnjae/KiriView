@@ -3,39 +3,11 @@
 
 #include "imagesurface.h"
 
-#include <algorithm>
-#include <limits>
+#include "imagebytecost.h"
+
 #include <optional>
 #include <type_traits>
 #include <utility>
-
-#if defined(Q_OS_LINUX)
-#include <unistd.h>
-#endif
-
-namespace {
-std::optional<qsizetype> systemMemoryByteSize()
-{
-#if defined(Q_OS_LINUX)
-    const long pageCount = ::sysconf(_SC_PHYS_PAGES);
-    const long pageSize = ::sysconf(_SC_PAGE_SIZE);
-    if (pageCount <= 0 || pageSize <= 0) {
-        return std::nullopt;
-    }
-
-    const qsizetype normalizedPageCount = static_cast<qsizetype>(pageCount);
-    const qsizetype normalizedPageSize = static_cast<qsizetype>(pageSize);
-    const qsizetype maximumByteSize = std::numeric_limits<qsizetype>::max();
-    if (normalizedPageCount > maximumByteSize / normalizedPageSize) {
-        return maximumByteSize;
-    }
-
-    return normalizedPageCount * normalizedPageSize;
-#else
-    return std::nullopt;
-#endif
-}
-}
 
 namespace KiriView {
 StaticTileSurface::StaticTileSurface(
@@ -88,11 +60,7 @@ qsizetype StaticTileSurface::defaultTileCacheByteBudget()
 
 qsizetype StaticTileSurface::tileCacheByteBudgetForSystemMemory(qsizetype systemMemoryByteSize)
 {
-    if (systemMemoryByteSize <= 0) {
-        return imageFullDecodeFallbackByteLimit;
-    }
-
-    return std::min(imageFullDecodeFallbackByteLimit, systemMemoryByteSize / 16);
+    return systemMemoryCappedByteBudget(imageFullDecodeFallbackByteLimit, systemMemoryByteSize, 16);
 }
 
 bool staticImageFitsFullImageSurface(

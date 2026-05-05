@@ -9,11 +9,6 @@
 #include <algorithm>
 #include <cstddef>
 #include <iterator>
-#include <limits>
-
-#if defined(Q_OS_LINUX)
-#include <unistd.h>
-#endif
 
 namespace {
 std::optional<QUrl> normalizedValidImageUrl(const QUrl &url)
@@ -24,28 +19,6 @@ std::optional<QUrl> normalizedValidImageUrl(const QUrl &url)
     }
 
     return normalizedUrl;
-}
-
-std::optional<qsizetype> systemMemoryByteSize()
-{
-#if defined(Q_OS_LINUX)
-    const long pageCount = ::sysconf(_SC_PHYS_PAGES);
-    const long pageSize = ::sysconf(_SC_PAGE_SIZE);
-    if (pageCount <= 0 || pageSize <= 0) {
-        return std::nullopt;
-    }
-
-    const qsizetype normalizedPageCount = static_cast<qsizetype>(pageCount);
-    const qsizetype normalizedPageSize = static_cast<qsizetype>(pageSize);
-    const qsizetype maximumByteSize = std::numeric_limits<qsizetype>::max();
-    if (normalizedPageCount > maximumByteSize / normalizedPageSize) {
-        return maximumByteSize;
-    }
-
-    return normalizedPageCount * normalizedPageSize;
-#else
-    return std::nullopt;
-#endif
 }
 }
 
@@ -62,11 +35,7 @@ qsizetype PredecodeCache::defaultByteBudget()
 
 qsizetype PredecodeCache::byteBudgetForSystemMemory(qsizetype systemMemoryByteSize)
 {
-    if (systemMemoryByteSize <= 0) {
-        return preferredByteBudget();
-    }
-
-    return std::min(preferredByteBudget(), systemMemoryByteSize / 8);
+    return systemMemoryCappedByteBudget(preferredByteBudget(), systemMemoryByteSize, 8);
 }
 
 PredecodeCache::PredecodeCache(qsizetype byteBudget)

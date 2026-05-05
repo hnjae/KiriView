@@ -5,10 +5,16 @@
 #define KIRIVIEW_IMAGEBYTECOST_H
 
 #include <QImage>
+#include <QSize>
 #include <QtGlobal>
+#include <optional>
 
 namespace KiriView {
 qsizetype imageByteCost(const QImage &image);
+qsizetype estimatedRgbaByteCost(const QSize &size);
+std::optional<qsizetype> systemMemoryByteSize();
+qsizetype systemMemoryCappedByteBudget(
+    qsizetype preferredByteBudget, qsizetype systemMemoryByteSize, qsizetype memoryDivisor);
 }
 
 #endif
