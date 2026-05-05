@@ -10,6 +10,7 @@
 
 namespace KiriView {
 struct RustImageZoomState;
+struct RustImageZoomStateChange;
 
 enum class ImageZoomMode {
     Fit,
@@ -70,6 +71,7 @@ public:
 private:
     RustImageZoomState rustState() const;
     void applyRustState(const RustImageZoomState &state);
+    bool applyRustStateChange(const RustImageZoomStateChange &change);
 
     QSize m_imageSize;
     QSizeF m_viewportSize;

@@ -27,6 +27,7 @@ private Q_SLOTS:
     void fitModesUsePhysicalPixels();
     void manualZoomIsClampedAndRejectsInvalidValues();
     void zoomIsPreservedWithinAContainer();
+    void displaySizeForZoomRejectsInvalidInputs();
     void manualZoomConstantsAreUsable();
 };
 
@@ -102,6 +103,22 @@ void TestImageZoomState::zoomIsPreservedWithinAContainer()
 
     state.prepareImageContainer(secondContainer);
     QCOMPARE(state.zoomMode(), ImageZoomMode::Fit);
+}
+
+void TestImageZoomState::displaySizeForZoomRejectsInvalidInputs()
+{
+    ImageZoomState state;
+
+    QVERIFY(imageZoomApproximatelyEqual(
+        state.displaySizeForZoomPercent(100.0, QSize(200, 100), 2.0), QSizeF(100.0, 50.0)));
+    QVERIFY(state.displaySizeForZoomPercent(100.0, QSize(200, 100), 0.0).isEmpty());
+    QVERIFY(state.displaySizeForZoomPercent(100.0, QSize(200, 100), -1.0).isEmpty());
+    QVERIFY(state
+            .displaySizeForZoomPercent(
+                100.0, QSize(200, 100), std::numeric_limits<qreal>::quiet_NaN())
+            .isEmpty());
+    QVERIFY(state.displaySizeForZoomPercent(0.0, QSize(200, 100), 1.0).isEmpty());
+    QVERIFY(state.displaySizeForZoomPercent(100.0, QSize(), 1.0).isEmpty());
 }
 
 void TestImageZoomState::manualZoomConstantsAreUsable()

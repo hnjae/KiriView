@@ -107,36 +107,34 @@ void ImageZoomState::applyRustState(const RustImageZoomState &state)
     m_zoomMode = qtZoomMode(state.zoom_mode);
 }
 
-bool ImageZoomState::setViewportSize(const QSizeF &viewportSize, qreal devicePixelRatio)
+bool ImageZoomState::applyRustStateChange(const RustImageZoomStateChange &change)
 {
-    const RustImageZoomStateChange change
-        = rustImageZoomSetViewportSize(rustState(), rustZoomSizeF(viewportSize), devicePixelRatio);
     applyRustState(change.state);
     return change.changed;
+}
+
+bool ImageZoomState::setViewportSize(const QSizeF &viewportSize, qreal devicePixelRatio)
+{
+    return applyRustStateChange(
+        rustImageZoomSetViewportSize(rustState(), rustZoomSizeF(viewportSize), devicePixelRatio));
 }
 
 bool ImageZoomState::setImageSize(const QSize &imageSize, qreal devicePixelRatio)
 {
-    const RustImageZoomStateChange change
-        = rustImageZoomSetImageSize(rustState(), rustZoomSize(imageSize), devicePixelRatio);
-    applyRustState(change.state);
-    return change.changed;
+    return applyRustStateChange(
+        rustImageZoomSetImageSize(rustState(), rustZoomSize(imageSize), devicePixelRatio));
 }
 
 bool ImageZoomState::setManualZoomPercent(qreal zoomPercent, qreal devicePixelRatio)
 {
-    const RustImageZoomStateChange change
-        = rustImageZoomSetManualZoomPercent(rustState(), zoomPercent, devicePixelRatio);
-    applyRustState(change.state);
-    return change.changed;
+    return applyRustStateChange(
+        rustImageZoomSetManualZoomPercent(rustState(), zoomPercent, devicePixelRatio));
 }
 
 bool ImageZoomState::setFitMode(ImageZoomMode zoomMode, qreal devicePixelRatio)
 {
-    const RustImageZoomStateChange change
-        = rustImageZoomSetFitMode(rustState(), rustZoomMode(zoomMode), devicePixelRatio);
-    applyRustState(change.state);
-    return change.changed;
+    return applyRustStateChange(
+        rustImageZoomSetFitMode(rustState(), rustZoomMode(zoomMode), devicePixelRatio));
 }
 
 void ImageZoomState::resetZoom(qreal devicePixelRatio)

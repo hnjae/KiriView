@@ -371,22 +371,11 @@ fn rust_image_viewport_display_size_for_zoom(
     zoom_percent: f64,
     device_pixel_ratio: f64,
 ) -> RustSizeF {
-    if image_size.width <= 0
-        || image_size.height <= 0
-        || !zoom_percent.is_finite()
-        || zoom_percent <= 0.0
-        || !device_pixel_ratio.is_finite()
-        || device_pixel_ratio <= 0.0
-    {
-        return RustSizeF {
-            width: 0.0,
-            height: 0.0,
-        };
-    }
-
-    let scale = zoom_percent / (device_pixel_ratio * 100.0);
-    RustSizeF {
-        width: f64::from(image_size.width) * scale,
-        height: f64::from(image_size.height) * scale,
-    }
+    let (width, height) = crate::imagemath::display_size_for_zoom_percent(
+        image_size.width,
+        image_size.height,
+        zoom_percent,
+        device_pixel_ratio,
+    );
+    RustSizeF { width, height }
 }
