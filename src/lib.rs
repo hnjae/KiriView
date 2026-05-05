@@ -3,6 +3,7 @@
 
 mod apngdecoder;
 mod avifcompat;
+mod bmff;
 mod byteio;
 mod imageformatregistry;
 mod imagemath;

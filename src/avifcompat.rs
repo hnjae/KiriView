@@ -7,13 +7,15 @@
 // files are not modified. Remove this module once KDE imageformats accepts
 // those files without normalization.
 
-use crate::byteio::{read_be_u16, read_be_u32, read_be_u64, write_be_u16, write_be_u32};
+use crate::{
+    bmff::{
+        BOX_HEADER_SIZE, BOX_KIND_OFFSET, BOX_KIND_SIZE, BoxHeader, child_boxes, read_box,
+        top_level_boxes,
+    },
+    byteio::{read_be_u16, read_be_u32, write_be_u16, write_be_u32},
+};
 use cxx_qt_lib::QByteArray;
 
-const BOX_HEADER_SIZE: usize = 8;
-const BOX_KIND_OFFSET: usize = 4;
-const BOX_KIND_SIZE: usize = 4;
-const LARGE_BOX_EXTRA_SIZE: usize = 8;
 const FULL_BOX_HEADER_SIZE: usize = 4;
 const IPMA_ENTRY_COUNT_SIZE: usize = 4;
 const IPMA_VERSION_AND_FLAGS_OFFSET: usize = BOX_HEADER_SIZE;
@@ -36,24 +38,6 @@ mod ffi {
     }
 }
 
-#[derive(Clone, Copy)]
-struct BoxHeader {
-    offset: usize,
-    size: usize,
-    header_size: usize,
-    kind: [u8; 4],
-}
-
-impl BoxHeader {
-    fn body_offset(self) -> usize {
-        self.offset + self.header_size
-    }
-
-    fn end_offset(self) -> usize {
-        self.offset + self.size
-    }
-}
-
 struct IpmaBox {
     box_header: BoxHeader,
     version_and_flags: [u8; FULL_BOX_HEADER_SIZE],
@@ -67,74 +51,8 @@ fn avif_data_with_compatibility_fixes(data: &QByteArray) -> QByteArray {
         .unwrap_or_else(|| data.clone())
 }
 
-fn type_is(kind: [u8; 4], expected: &[u8; 4]) -> bool {
-    kind == *expected
-}
-
-fn read_box(data: &[u8], offset: usize, end_offset: usize) -> Option<BoxHeader> {
-    if end_offset > data.len()
-        || end_offset < offset
-        || end_offset.checked_sub(offset)? < BOX_HEADER_SIZE
-    {
-        return None;
-    }
-
-    let small_size = read_be_u32(data, offset)?;
-    let kind = data
-        .get(offset + BOX_KIND_OFFSET..offset + BOX_KIND_OFFSET + BOX_KIND_SIZE)?
-        .try_into()
-        .ok()?;
-    let mut header_size = BOX_HEADER_SIZE;
-    let mut size = u64::from(small_size);
-
-    if small_size == 1 {
-        if end_offset - offset < BOX_HEADER_SIZE + LARGE_BOX_EXTRA_SIZE {
-            return None;
-        }
-        size = read_be_u64(data, offset + BOX_HEADER_SIZE)?;
-        header_size += LARGE_BOX_EXTRA_SIZE;
-    } else if small_size == 0 {
-        size = u64::try_from(end_offset - offset).ok()?;
-    }
-
-    if size < u64::try_from(header_size).ok()? || size > usize::MAX as u64 {
-        return None;
-    }
-
-    let size = usize::try_from(size).ok()?;
-    if size > end_offset - offset {
-        return None;
-    }
-
-    Some(BoxHeader {
-        offset,
-        size,
-        header_size,
-        kind,
-    })
-}
-
-fn child_boxes(data: &[u8], mut offset: usize, end_offset: usize) -> Vec<BoxHeader> {
-    let mut boxes = Vec::new();
-
-    while offset < end_offset {
-        let Some(box_header) = read_box(data, offset, end_offset) else {
-            return Vec::new();
-        };
-
-        boxes.push(box_header);
-        offset = box_header.end_offset();
-    }
-
-    boxes
-}
-
-fn top_level_boxes(data: &[u8]) -> Vec<BoxHeader> {
-    child_boxes(data, 0, data.len())
-}
-
 fn has_avif_brand(data: &[u8], ftyp_box: BoxHeader) -> bool {
-    if !type_is(ftyp_box.kind, b"ftyp") || ftyp_box.size < ftyp_box.header_size + 8 {
+    if !ftyp_box.is_type(b"ftyp") || ftyp_box.size < ftyp_box.header_size + 8 {
         return false;
     }
 
@@ -158,9 +76,7 @@ fn is_avif_file(data: &[u8]) -> bool {
 }
 
 fn meta_child_boxes(data: &[u8], meta_box: BoxHeader) -> Vec<BoxHeader> {
-    if !type_is(meta_box.kind, b"meta")
-        || meta_box.size < meta_box.header_size + FULL_BOX_HEADER_SIZE
-    {
+    if !meta_box.is_type(b"meta") || meta_box.size < meta_box.header_size + FULL_BOX_HEADER_SIZE {
         return Vec::new();
     }
 
@@ -173,7 +89,7 @@ fn meta_child_boxes(data: &[u8], meta_box: BoxHeader) -> Vec<BoxHeader> {
 
 fn primary_item_id(data: &[u8], meta_box: BoxHeader) -> Option<u32> {
     for box_header in meta_child_boxes(data, meta_box) {
-        if !type_is(box_header.kind, b"pitm")
+        if !box_header.is_type(b"pitm")
             || box_header.size < box_header.header_size + FULL_BOX_HEADER_SIZE + 2
         {
             continue;
@@ -202,18 +118,18 @@ fn aux_c_contains_alpha(data: &[u8], aux_c_box: BoxHeader) -> bool {
 
 fn has_alpha_auxiliary_property(data: &[u8], meta_box: BoxHeader) -> bool {
     for box_header in meta_child_boxes(data, meta_box) {
-        if !type_is(box_header.kind, b"iprp") {
+        if !box_header.is_type(b"iprp") {
             continue;
         }
 
         for iprp_child in child_boxes(data, box_header.body_offset(), box_header.end_offset()) {
-            if !type_is(iprp_child.kind, b"ipco") {
+            if !iprp_child.is_type(b"ipco") {
                 continue;
             }
 
             for property_box in child_boxes(data, iprp_child.body_offset(), iprp_child.end_offset())
             {
-                if type_is(property_box.kind, b"auxC") && aux_c_contains_alpha(data, property_box) {
+                if property_box.is_type(b"auxC") && aux_c_contains_alpha(data, property_box) {
                     return true;
                 }
             }
@@ -281,7 +197,7 @@ fn patch_item_reference(data: &mut [u8], iref_box: BoxHeader, item_id: u32) -> b
         };
         cursor += 2;
 
-        if type_is(reference_box.kind, b"auxl") {
+        if reference_box.is_type(b"auxl") {
             for _ in 0..reference_count {
                 if cursor + id_size > reference_box.end_offset() {
                     return changed;
@@ -317,7 +233,7 @@ fn patch_zero_auxl_references(data: &mut [u8], meta_box: BoxHeader) -> bool {
 
     let mut changed = false;
     for box_header in meta_child_boxes(data, meta_box) {
-        if type_is(box_header.kind, b"iref") {
+        if box_header.is_type(b"iref") {
             changed = patch_item_reference(data, box_header, item_id) || changed;
         }
     }
@@ -326,7 +242,7 @@ fn patch_zero_auxl_references(data: &mut [u8], meta_box: BoxHeader) -> bool {
 }
 
 fn read_ipma_box(data: &[u8], box_header: BoxHeader) -> Option<IpmaBox> {
-    if !type_is(box_header.kind, b"ipma")
+    if !box_header.is_type(b"ipma")
         || box_header.size < box_header.header_size + FULL_BOX_HEADER_SIZE + IPMA_ENTRY_COUNT_SIZE
     {
         return None;
@@ -454,7 +370,7 @@ fn patch_duplicate_ipma_boxes(data: &mut [u8], meta_box: BoxHeader) -> bool {
     let mut changed = false;
 
     for box_header in meta_child_boxes(data, meta_box) {
-        if !type_is(box_header.kind, b"iprp") {
+        if !box_header.is_type(b"iprp") {
             continue;
         }
 
@@ -489,7 +405,7 @@ fn fixed_avif_data(data: &[u8]) -> Option<Vec<u8>> {
     let mut changed = false;
 
     for box_header in top_level_boxes(data) {
-        if !type_is(box_header.kind, b"meta") || !has_alpha_auxiliary_property(data, box_header) {
+        if !box_header.is_type(b"meta") || !has_alpha_auxiliary_property(data, box_header) {
             continue;
         }
 
