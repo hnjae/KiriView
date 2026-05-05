@@ -36,6 +36,21 @@ template <typename... Handlers> struct ArchiveResultHandler : Handlers... {
 template <typename... Handlers>
 ArchiveResultHandler(Handlers...) -> ArchiveResultHandler<Handlers...>;
 
+template <typename Success, typename Result, typename SuccessCallback>
+void finishArchiveWorkerResult(
+    Result result, ErrorCallback errorCallback, SuccessCallback successCallback)
+{
+    auto resultHandler = ArchiveResultHandler {
+        [&errorCallback](const ArchiveError &error) {
+            if (errorCallback) {
+                errorCallback(error.errorString);
+            }
+        },
+        [&successCallback](Success &success) mutable { successCallback(std::move(success)); },
+    };
+    std::visit(resultHandler, result);
+}
+
 void cancelKJob(QObject *object)
 {
     auto *job = qobject_cast<KJob *>(object);
@@ -184,19 +199,13 @@ ImageIoJob startArchiveImageCandidateList(QObject *receiver,
         },
         [callback = std::move(callback), errorCallback = std::move(errorCallback)](
             ArchiveImageCandidatesResult result) mutable {
-            auto resultHandler = ArchiveResultHandler {
-                [&errorCallback](const ArchiveError &error) {
-                    if (errorCallback) {
-                        errorCallback(error.errorString);
-                    }
-                },
-                [&callback](ArchiveImageCandidates &candidates) {
+            finishArchiveWorkerResult<ArchiveImageCandidates>(std::move(result),
+                std::move(errorCallback),
+                [callback = std::move(callback)](ArchiveImageCandidates candidates) mutable {
                     if (callback) {
                         callback(std::move(candidates.candidates));
                     }
-                },
-            };
-            std::visit(resultHandler, result);
+                });
         });
 }
 
@@ -211,19 +220,13 @@ ImageIoJob startStoredImageDataLoad(QObject *receiver, ImageDecodeRequest reques
             },
             [callback = std::move(callback), errorCallback = std::move(errorCallback)](
                 ArchiveImageDataResult result) mutable {
-                auto resultHandler = ArchiveResultHandler {
-                    [&errorCallback](const ArchiveError &error) {
-                        if (errorCallback) {
-                            errorCallback(error.errorString);
-                        }
-                    },
-                    [&callback](ArchiveImageData &data) {
+                finishArchiveWorkerResult<ArchiveImageData>(std::move(result),
+                    std::move(errorCallback),
+                    [callback = std::move(callback)](ArchiveImageData data) mutable {
                         if (callback) {
                             callback(std::move(data.data));
                         }
-                    },
-                };
-                std::visit(resultHandler, result);
+                    });
             });
     }
 

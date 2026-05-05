@@ -9,6 +9,8 @@
 #include <QSvgRenderer>
 #include <algorithm>
 #include <cmath>
+#include <optional>
+#include <utility>
 
 namespace KiriView {
 QSize boundedPreviewSize(const QSize &imageSize, int maximumLongEdge)
@@ -55,6 +57,28 @@ DecodedTile decodedTileFromImage(const TileRequest &request, QImage image)
         request.textureLevelRect,
         displayReadyImage(image),
     };
+}
+
+std::optional<DecodedTile> decodedTileFromLevelImage(
+    const TileRequest &request, const QImage &levelImage)
+{
+    QImage image = cropLevelTexture(levelImage, request.textureLevelRect);
+    if (image.isNull()) {
+        return std::nullopt;
+    }
+
+    return decodedTileFromImage(request, std::move(image));
+}
+
+std::optional<DecodedTile> decodedTileFromSourceImage(
+    const TileRequest &request, const QImage &sourceImage)
+{
+    QImage image = scaledTileImage(sourceImage, request.textureLevelRect.size());
+    if (image.isNull()) {
+        return std::nullopt;
+    }
+
+    return decodedTileFromImage(request, std::move(image));
 }
 
 void setTileSourceError(QString *errorString, const QString &message)

@@ -5,12 +5,14 @@
 
 #include "imageasyncdependencies.h"
 
+#include <utility>
+
 namespace KiriView {
-// clang-format off
 ImageDecodeJob::ImageDecodeJob(QObject *parent)
-    : ImageDecodeJob(parent, defaultImageAsyncDependencies().imageDataLoader,
-        defaultImageAsyncDependencies().imageDataDecoder)
+    : QObject(parent)
 {
+    ImageAsyncDependencies dependencies = defaultImageAsyncDependencies();
+    m_dataLoader = std::move(dependencies.imageDataLoader);
+    m_dataDecoder = std::move(dependencies.imageDataDecoder);
 }
-// clang-format on
 }

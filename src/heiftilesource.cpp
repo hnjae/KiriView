@@ -64,9 +64,9 @@ public:
             sourceImage = decodeGridSourceRect(request.sourceRect, errorString);
         } else {
             sourceImage = decodeFullOrScaled(request.levelSize, errorString);
-            sourceImage = KiriView::cropLevelTexture(sourceImage, request.textureLevelRect);
-            if (!sourceImage.isNull()) {
-                return KiriView::decodedTileFromImage(request, sourceImage);
+            if (std::optional<KiriView::DecodedTile> tile
+                = KiriView::decodedTileFromLevelImage(request, sourceImage)) {
+                return tile;
             }
         }
 
@@ -74,13 +74,14 @@ public:
             return std::nullopt;
         }
 
-        QImage image = KiriView::scaledTileImage(sourceImage, request.textureLevelRect.size());
-        if (image.isNull()) {
+        std::optional<KiriView::DecodedTile> tile
+            = KiriView::decodedTileFromSourceImage(request, sourceImage);
+        if (!tile.has_value()) {
             KiriView::setTileSourceError(
                 errorString, KiriView::imageViewText("Could not render the selected tile."));
             return std::nullopt;
         }
-        return KiriView::decodedTileFromImage(request, std::move(image));
+        return tile;
     }
 
 private:
