@@ -21,7 +21,6 @@ using KiriView::TestSupport::archivePageUrl;
 using KiriView::TestSupport::comicBookContainerCandidate;
 using KiriView::TestSupport::dataLoaderFor;
 using KiriView::TestSupport::imageCandidate;
-using KiriView::TestSupport::keyForUrl;
 using KiriView::TestSupport::localUrl;
 using KiriView::TestSupport::ManualImageDataLoader;
 using KiriView::TestSupport::staticDecodedTestImage;
@@ -119,9 +118,10 @@ void TestImageDocumentController::initialLoadSuccessUpdatesDocumentState()
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
     const QUrl imageUrl = localUrl(QStringLiteral("/images/01.png"));
-    candidateProvider.directoryImagesByUrl[keyForUrl(localUrl(QStringLiteral("/images/")))] = {
-        imageCandidate(imageUrl),
-    };
+    candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
+        {
+            imageCandidate(imageUrl),
+        });
 
     std::unique_ptr<KiriView::ImageDocumentController> controller
         = createController(this, candidateProvider, dataLoader);
@@ -148,10 +148,11 @@ void TestImageDocumentController::imageLoadsUsePhysicalViewportForFirstDisplayDe
     ManualImageDataLoader dataLoader;
     const QUrl imageUrl = localUrl(QStringLiteral("/images/01.png"));
     const QUrl nextImageUrl = localUrl(QStringLiteral("/images/02.png"));
-    candidateProvider.directoryImagesByUrl[keyForUrl(localUrl(QStringLiteral("/images/")))] = {
-        imageCandidate(imageUrl),
-        imageCandidate(nextImageUrl),
-    };
+    candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
+        {
+            imageCandidate(imageUrl),
+            imageCandidate(nextImageUrl),
+        });
 
     std::unique_ptr<KiriView::ImageDocumentController> controller = createController(this,
         candidateProvider, dataLoader, decodeTestImageData, KiriView::fallbackTextureSizeMax, 2.0);
@@ -173,9 +174,10 @@ void TestImageDocumentController::smallStaticImageUsesFullImageSurface()
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
     const QUrl imageUrl = localUrl(QStringLiteral("/images/small.png"));
-    candidateProvider.directoryImagesByUrl[keyForUrl(localUrl(QStringLiteral("/images/")))] = {
-        imageCandidate(imageUrl),
-    };
+    candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
+        {
+            imageCandidate(imageUrl),
+        });
 
     std::unique_ptr<KiriView::ImageDocumentController> controller = createController(
         this, candidateProvider, dataLoader,
@@ -199,9 +201,10 @@ void TestImageDocumentController::largeStaticImageUsesTiledSurface()
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
     const QUrl imageUrl = localUrl(QStringLiteral("/images/large.png"));
-    candidateProvider.directoryImagesByUrl[keyForUrl(localUrl(QStringLiteral("/images/")))] = {
-        imageCandidate(imageUrl),
-    };
+    candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
+        {
+            imageCandidate(imageUrl),
+        });
 
     std::unique_ptr<KiriView::ImageDocumentController> controller = createController(
         this, candidateProvider, dataLoader,
@@ -229,9 +232,10 @@ void TestImageDocumentController::tiledStaticImageRefinesNewVisibleTilesAfterPan
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
     const QUrl imageUrl = localUrl(QStringLiteral("/images/large.png"));
-    candidateProvider.directoryImagesByUrl[keyForUrl(localUrl(QStringLiteral("/images/")))] = {
-        imageCandidate(imageUrl),
-    };
+    candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
+        {
+            imageCandidate(imageUrl),
+        });
 
     std::unique_ptr<KiriView::ImageDocumentController> controller = createController(
         this, candidateProvider, dataLoader,
@@ -261,9 +265,10 @@ void TestImageDocumentController::firstDisplayDefersTilesUntilZoomNeedsMoreDetai
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
     const QUrl imageUrl = localUrl(QStringLiteral("/images/large.jpg"));
-    candidateProvider.directoryImagesByUrl[keyForUrl(localUrl(QStringLiteral("/images/")))] = {
-        imageCandidate(imageUrl),
-    };
+    candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
+        {
+            imageCandidate(imageUrl),
+        });
 
     std::unique_ptr<KiriView::ImageDocumentController> controller = createController(
         this, candidateProvider, dataLoader,
@@ -292,10 +297,11 @@ void TestImageDocumentController::smallFullImageSurfaceStillSchedulesAdjacentPre
     ManualImageDataLoader dataLoader;
     const QUrl imageUrl = localUrl(QStringLiteral("/images/01.png"));
     const QUrl nextImageUrl = localUrl(QStringLiteral("/images/02.png"));
-    candidateProvider.directoryImagesByUrl[keyForUrl(localUrl(QStringLiteral("/images/")))] = {
-        imageCandidate(imageUrl),
-        imageCandidate(nextImageUrl),
-    };
+    candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
+        {
+            imageCandidate(imageUrl),
+            imageCandidate(nextImageUrl),
+        });
 
     std::unique_ptr<KiriView::ImageDocumentController> controller = createController(
         this, candidateProvider, dataLoader,
@@ -321,10 +327,11 @@ void TestImageDocumentController::replacementLoadFailureKeepsDisplayedImage()
     ManualImageDataLoader dataLoader;
     const QUrl imageUrl = localUrl(QStringLiteral("/images/01.png"));
     const QUrl missingUrl = localUrl(QStringLiteral("/images/missing.png"));
-    candidateProvider.directoryImagesByUrl[keyForUrl(localUrl(QStringLiteral("/images/")))] = {
-        imageCandidate(imageUrl),
-        imageCandidate(missingUrl),
-    };
+    candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
+        {
+            imageCandidate(imageUrl),
+            imageCandidate(missingUrl),
+        });
 
     std::unique_ptr<KiriView::ImageDocumentController> controller
         = createController(this, candidateProvider, dataLoader);
@@ -355,10 +362,11 @@ void TestImageDocumentController::decodedReplacementFailureSchedulesRecoveryPred
     ManualImageDataLoader dataLoader;
     const QUrl imageUrl = localUrl(QStringLiteral("/images/01.png"));
     const QUrl badUrl = localUrl(QStringLiteral("/images/02.png"));
-    candidateProvider.directoryImagesByUrl[keyForUrl(localUrl(QStringLiteral("/images/")))] = {
-        imageCandidate(imageUrl),
-        imageCandidate(badUrl),
-    };
+    candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
+        {
+            imageCandidate(imageUrl),
+            imageCandidate(badUrl),
+        });
 
     std::unique_ptr<KiriView::ImageDocumentController> controller
         = createController(this, candidateProvider, dataLoader, decodeBadDataAsFailure);
@@ -397,14 +405,16 @@ void TestImageDocumentController::emptyContainerNavigationClearsImageAndSelectsC
     QVERIFY(targetArchiveDocument.has_value());
     const QUrl currentImageUrl
         = archivePageUrl(currentArchiveDocument->rootUrl(), QStringLiteral("01.png"));
-    candidateProvider.archiveImagesByUrl[keyForUrl(currentArchiveDocument->rootUrl())] = {
-        imageCandidate(currentImageUrl),
-    };
-    candidateProvider.containerCandidatesByUrl[keyForUrl(localUrl(QStringLiteral("/books/")))] = {
-        comicBookContainerCandidate(currentContainerUrl),
-        comicBookContainerCandidate(targetContainerUrl),
-    };
-    candidateProvider.archiveImagesByUrl[keyForUrl(targetArchiveDocument->rootUrl())] = {};
+    candidateProvider.setArchiveImages(currentArchiveDocument->rootUrl(),
+        {
+            imageCandidate(currentImageUrl),
+        });
+    candidateProvider.setContainerCandidates(localUrl(QStringLiteral("/books/")),
+        {
+            comicBookContainerCandidate(currentContainerUrl),
+            comicBookContainerCandidate(targetContainerUrl),
+        });
+    candidateProvider.setArchiveImages(targetArchiveDocument->rootUrl(), {});
 
     std::unique_ptr<KiriView::ImageDocumentController> controller
         = createController(this, candidateProvider, dataLoader);

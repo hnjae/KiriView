@@ -17,7 +17,6 @@ namespace {
 using KiriView::TestSupport::archivePageUrl;
 using KiriView::TestSupport::dataLoaderFor;
 using KiriView::TestSupport::imageCandidate;
-using KiriView::TestSupport::keyForUrl;
 using KiriView::TestSupport::localUrl;
 using KiriView::TestSupport::ManualImageDataLoader;
 using KiriView::TestSupport::staticDecodedTestImage;
@@ -140,9 +139,10 @@ void TestImageLoader::comicBookArchiveResolvesFirstImage()
     const std::optional<QUrl> archiveRootUrl = KiriView::comicBookArchiveRootUrl(archiveUrl);
     QVERIFY(archiveRootUrl.has_value());
     const QUrl firstImageUrl = archivePageUrl(*archiveRootUrl, QStringLiteral("01.png"));
-    candidateProvider.archiveImagesByUrl[keyForUrl(*archiveRootUrl)] = {
-        imageCandidate(firstImageUrl),
-    };
+    candidateProvider.setArchiveImages(*archiveRootUrl,
+        {
+            imageCandidate(firstImageUrl),
+        });
 
     QUrl resolvedUrl;
     loader.setSourceResolvedCallback([&resolvedUrl](const QUrl &url) { resolvedUrl = url; });
@@ -164,9 +164,10 @@ void TestImageLoader::directArchiveResolvesFirstImage()
     const std::optional<QUrl> archiveRootUrl = KiriView::directArchiveOpenRootUrl(archiveUrl);
     QVERIFY(archiveRootUrl.has_value());
     const QUrl firstImageUrl = archivePageUrl(*archiveRootUrl, QStringLiteral("01.png"));
-    candidateProvider.archiveImagesByUrl[keyForUrl(*archiveRootUrl)] = {
-        imageCandidate(firstImageUrl),
-    };
+    candidateProvider.setArchiveImages(*archiveRootUrl,
+        {
+            imageCandidate(firstImageUrl),
+        });
 
     QUrl resolvedUrl;
     std::optional<KiriView::ImageLoadSession> decodedSession;

@@ -17,7 +17,6 @@ using KiriView::ImageCandidateRepositoryError;
 using KiriView::TestSupport::archivePageUrl;
 using KiriView::TestSupport::containerCandidate;
 using KiriView::TestSupport::imageCandidate;
-using KiriView::TestSupport::keyForUrl;
 using KiriView::TestSupport::localUrl;
 
 using FakeCandidateProvider = KiriView::TestSupport::FakeImageNavigationCandidateProvider;
@@ -97,7 +96,7 @@ void TestImageCandidateRepository::directoryContainerOpensFirstImage()
     FakeCandidateProvider fakeProvider;
     const QUrl containerUrl = localUrl(QStringLiteral("/books/a/"));
     const QUrl imageUrl = localUrl(QStringLiteral("/books/a/01.png"));
-    fakeProvider.directoryImagesByUrl[keyForUrl(containerUrl)] = { imageCandidate(imageUrl) };
+    fakeProvider.setDirectoryImages(containerUrl, { imageCandidate(imageUrl) });
 
     KiriView::ImageCandidateRepository repository(fakeProvider.provider());
     QUrl openedImageUrl;
@@ -123,9 +122,10 @@ void TestImageCandidateRepository::archiveContainerOpensFirstImage()
         = KiriView::archiveDocumentLocationForLocalArchiveUrl(containerUrl);
     QVERIFY(archiveDocument.has_value());
     const QUrl imageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
-    fakeProvider.archiveImagesByUrl[keyForUrl(archiveDocument->rootUrl())] = {
-        imageCandidate(imageUrl),
-    };
+    fakeProvider.setArchiveImages(archiveDocument->rootUrl(),
+        {
+            imageCandidate(imageUrl),
+        });
 
     KiriView::ImageCandidateRepository repository(fakeProvider.provider());
     QUrl openedImageUrl;
@@ -147,7 +147,7 @@ void TestImageCandidateRepository::emptyContainerReportsError()
 {
     FakeCandidateProvider fakeProvider;
     const QUrl containerUrl = localUrl(QStringLiteral("/books/a/"));
-    fakeProvider.directoryImagesByUrl[keyForUrl(containerUrl)] = {};
+    fakeProvider.setDirectoryImages(containerUrl, {});
 
     KiriView::ImageCandidateRepository repository(fakeProvider.provider());
     QUrl errorContainerUrl;
@@ -168,7 +168,7 @@ void TestImageCandidateRepository::listingErrorIsForwarded()
 {
     FakeCandidateProvider fakeProvider;
     const QUrl containerUrl = localUrl(QStringLiteral("/books/a/"));
-    fakeProvider.directoryImageErrorsByUrl[keyForUrl(containerUrl)] = QStringLiteral("No access");
+    fakeProvider.setDirectoryImageError(containerUrl, QStringLiteral("No access"));
 
     KiriView::ImageCandidateRepository repository(fakeProvider.provider());
     QUrl errorContainerUrl;

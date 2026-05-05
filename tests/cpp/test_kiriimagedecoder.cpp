@@ -5,6 +5,7 @@
 
 #include "heifcontainer.h"
 #include "heifdecoder.h"
+#include "image_test_support.h"
 #include "imagetilesource.h"
 
 #include <libheif/heif.h>
@@ -17,13 +18,13 @@
 #include <QtGlobal>
 #include <array>
 #include <cstring>
-#include <initializer_list>
 #include <limits>
 #include <memory>
 #include <optional>
-#include <string_view>
 
 namespace {
+using KiriView::TestSupport::heifFtypBox;
+
 struct HeifLibraryScope {
     explicit HeifLibraryScope(QString *error)
     {
@@ -74,23 +75,6 @@ QString heifErrorText(const char *action, const heif_error &error)
 {
     return QString::fromLatin1(action) + QStringLiteral(": ")
         + QString::fromUtf8(error.message != nullptr ? error.message : "");
-}
-
-QByteArray heifFtypBox(std::string_view majorBrand, std::initializer_list<std::string_view> brands)
-{
-    const quint32 boxSize = 16 + static_cast<quint32>(brands.size() * 4);
-    QByteArray data;
-    data.append(static_cast<char>((boxSize >> 24) & 0xff));
-    data.append(static_cast<char>((boxSize >> 16) & 0xff));
-    data.append(static_cast<char>((boxSize >> 8) & 0xff));
-    data.append(static_cast<char>(boxSize & 0xff));
-    data.append("ftyp", 4);
-    data.append(majorBrand.data(), 4);
-    data.append(4, '\0');
-    for (std::string_view brand : brands) {
-        data.append(brand.data(), 4);
-    }
-    return data;
 }
 
 std::optional<QByteArray> createJpegCompressedHeifData(QString *errorText)

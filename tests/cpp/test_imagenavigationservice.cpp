@@ -18,7 +18,6 @@ using KiriView::NavigationDirection;
 using KiriView::TestSupport::archivePageUrl;
 using KiriView::TestSupport::containerCandidate;
 using KiriView::TestSupport::imageCandidate;
-using KiriView::TestSupport::keyForUrl;
 using KiriView::TestSupport::localUrl;
 
 using FakeCandidateProvider = KiriView::TestSupport::FakeImageNavigationCandidateProvider;
@@ -45,11 +44,12 @@ void TestImageNavigationService::directoryAdjacentImageUsesInjectedProvider()
     const QUrl parentUrl = localUrl(QStringLiteral("/images/"));
     const QUrl currentUrl = localUrl(QStringLiteral("/images/02.png"));
     const QUrl nextUrl = localUrl(QStringLiteral("/images/03.png"));
-    fakeProvider.directoryImagesByUrl[keyForUrl(parentUrl)] = {
-        imageCandidate(localUrl(QStringLiteral("/images/01.png"))),
-        imageCandidate(currentUrl),
-        imageCandidate(nextUrl),
-    };
+    fakeProvider.setDirectoryImages(parentUrl,
+        {
+            imageCandidate(localUrl(QStringLiteral("/images/01.png"))),
+            imageCandidate(currentUrl),
+            imageCandidate(nextUrl),
+        });
 
     KiriView::ImageNavigationService service(nullptr, fakeProvider.provider());
     QUrl openedUrl;
@@ -73,10 +73,11 @@ void TestImageNavigationService::comicBookAdjacentImageUsesInjectedProvider()
     QVERIFY(archiveDocument.has_value());
     const QUrl currentUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
     const QUrl nextUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("02.png"));
-    fakeProvider.archiveImagesByUrl[keyForUrl(archiveDocument->rootUrl())] = {
-        imageCandidate(currentUrl),
-        imageCandidate(nextUrl),
-    };
+    fakeProvider.setArchiveImages(archiveDocument->rootUrl(),
+        {
+            imageCandidate(currentUrl),
+            imageCandidate(nextUrl),
+        });
 
     KiriView::ImageNavigationService service(nullptr, fakeProvider.provider());
     QUrl openedUrl;
@@ -100,10 +101,11 @@ void TestImageNavigationService::directArchiveAdjacentImageUsesInjectedProvider(
     QVERIFY(archiveDocument.has_value());
     const QUrl currentUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
     const QUrl nextUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("02.png"));
-    fakeProvider.archiveImagesByUrl[keyForUrl(archiveDocument->rootUrl())] = {
-        imageCandidate(currentUrl),
-        imageCandidate(nextUrl),
-    };
+    fakeProvider.setArchiveImages(archiveDocument->rootUrl(),
+        {
+            imageCandidate(currentUrl),
+            imageCandidate(nextUrl),
+        });
 
     KiriView::ImageNavigationService service(nullptr, fakeProvider.provider());
     QUrl openedUrl;
@@ -125,11 +127,12 @@ void TestImageNavigationService::pageNavigationKeepsKnownListWhileRefreshingCurr
     const QUrl firstUrl = localUrl(QStringLiteral("/images/01.png"));
     const QUrl secondUrl = localUrl(QStringLiteral("/images/02.png"));
     const QUrl thirdUrl = localUrl(QStringLiteral("/images/03.png"));
-    fakeProvider.directoryImagesByUrl[keyForUrl(parentUrl)] = {
-        imageCandidate(firstUrl),
-        imageCandidate(secondUrl),
-        imageCandidate(thirdUrl),
-    };
+    fakeProvider.setDirectoryImages(parentUrl,
+        {
+            imageCandidate(firstUrl),
+            imageCandidate(secondUrl),
+            imageCandidate(thirdUrl),
+        });
 
     KiriView::ImageNavigationService service(nullptr, fakeProvider.provider());
     std::vector<std::pair<int, int>> observedStates;
@@ -168,13 +171,17 @@ void TestImageNavigationService::directoryContainerNavigationOpensFirstImage()
     QVERIFY(targetArchiveDocument.has_value());
     const QUrl targetImageUrl
         = archivePageUrl(targetArchiveDocument->rootUrl(), QStringLiteral("01.png"));
-    fakeProvider.containerCandidatesByUrl[keyForUrl(parentUrl)] = {
-        containerCandidate(currentContainerUrl, ContainerNavigationCandidateType::ComicBookArchive),
-        containerCandidate(targetContainerUrl, ContainerNavigationCandidateType::ComicBookArchive),
-    };
-    fakeProvider.archiveImagesByUrl[keyForUrl(targetArchiveDocument->rootUrl())] = {
-        imageCandidate(targetImageUrl),
-    };
+    fakeProvider.setContainerCandidates(parentUrl,
+        {
+            containerCandidate(
+                currentContainerUrl, ContainerNavigationCandidateType::ComicBookArchive),
+            containerCandidate(
+                targetContainerUrl, ContainerNavigationCandidateType::ComicBookArchive),
+        });
+    fakeProvider.setArchiveImages(targetArchiveDocument->rootUrl(),
+        {
+            imageCandidate(targetImageUrl),
+        });
 
     KiriView::ImageNavigationService service(nullptr, fakeProvider.provider());
     QUrl openedImageUrl;
@@ -199,11 +206,14 @@ void TestImageNavigationService::emptyContainerReportsNavigationError()
     const std::optional<KiriView::ArchiveDocumentLocation> targetArchiveDocument
         = KiriView::archiveDocumentLocationForLocalArchiveUrl(targetContainerUrl);
     QVERIFY(targetArchiveDocument.has_value());
-    fakeProvider.containerCandidatesByUrl[keyForUrl(parentUrl)] = {
-        containerCandidate(currentContainerUrl, ContainerNavigationCandidateType::ComicBookArchive),
-        containerCandidate(targetContainerUrl, ContainerNavigationCandidateType::ComicBookArchive),
-    };
-    fakeProvider.archiveImagesByUrl[keyForUrl(targetArchiveDocument->rootUrl())] = {};
+    fakeProvider.setContainerCandidates(parentUrl,
+        {
+            containerCandidate(
+                currentContainerUrl, ContainerNavigationCandidateType::ComicBookArchive),
+            containerCandidate(
+                targetContainerUrl, ContainerNavigationCandidateType::ComicBookArchive),
+        });
+    fakeProvider.setArchiveImages(targetArchiveDocument->rootUrl(), {});
 
     KiriView::ImageNavigationService service(nullptr, fakeProvider.provider());
     QUrl errorContainerUrl;
@@ -227,10 +237,13 @@ void TestImageNavigationService::invalidArchiveContainerReportsNavigationError()
     const QUrl parentUrl = localUrl(QStringLiteral("/books/"));
     const QUrl currentContainerUrl = localUrl(QStringLiteral("/books/a.cbz"));
     const QUrl targetContainerUrl = localUrl(QStringLiteral("/books/not-archive.txt"));
-    fakeProvider.containerCandidatesByUrl[keyForUrl(parentUrl)] = {
-        containerCandidate(currentContainerUrl, ContainerNavigationCandidateType::ComicBookArchive),
-        containerCandidate(targetContainerUrl, ContainerNavigationCandidateType::ComicBookArchive),
-    };
+    fakeProvider.setContainerCandidates(parentUrl,
+        {
+            containerCandidate(
+                currentContainerUrl, ContainerNavigationCandidateType::ComicBookArchive),
+            containerCandidate(
+                targetContainerUrl, ContainerNavigationCandidateType::ComicBookArchive),
+        });
 
     KiriView::ImageNavigationService service(nullptr, fakeProvider.provider());
     QUrl errorContainerUrl;
@@ -259,13 +272,17 @@ void TestImageNavigationService::archiveContainerNavigationOpensFirstImage()
     QVERIFY(targetArchiveDocument.has_value());
     const QUrl targetImageUrl
         = archivePageUrl(targetArchiveDocument->rootUrl(), QStringLiteral("01.png"));
-    fakeProvider.containerCandidatesByUrl[keyForUrl(parentUrl)] = {
-        containerCandidate(currentContainerUrl, ContainerNavigationCandidateType::ComicBookArchive),
-        containerCandidate(targetContainerUrl, ContainerNavigationCandidateType::ComicBookArchive),
-    };
-    fakeProvider.archiveImagesByUrl[keyForUrl(targetArchiveDocument->rootUrl())] = {
-        imageCandidate(targetImageUrl),
-    };
+    fakeProvider.setContainerCandidates(parentUrl,
+        {
+            containerCandidate(
+                currentContainerUrl, ContainerNavigationCandidateType::ComicBookArchive),
+            containerCandidate(
+                targetContainerUrl, ContainerNavigationCandidateType::ComicBookArchive),
+        });
+    fakeProvider.setArchiveImages(targetArchiveDocument->rootUrl(),
+        {
+            imageCandidate(targetImageUrl),
+        });
 
     KiriView::ImageNavigationService service(nullptr, fakeProvider.provider());
     QUrl openedImageUrl;

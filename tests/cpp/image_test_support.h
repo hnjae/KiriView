@@ -15,9 +15,12 @@
 #include <QSize>
 #include <QString>
 #include <QUrl>
+#include <QtGlobal>
+#include <initializer_list>
 #include <map>
 #include <memory>
 #include <optional>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -96,6 +99,39 @@ inline QUrl archivePageUrl(const QUrl &archiveRootUrl, const QString &pageName)
     return pageUrl;
 }
 
+namespace Detail {
+    inline void appendFourCc(QByteArray &data, std::string_view fourCc)
+    {
+        Q_ASSERT(fourCc.size() == 4);
+
+        if (fourCc.size() >= 4) {
+            data.append(fourCc.data(), 4);
+            return;
+        }
+
+        data.append(fourCc.data(), static_cast<qsizetype>(fourCc.size()));
+        data.append(4 - static_cast<qsizetype>(fourCc.size()), '\0');
+    }
+}
+
+inline QByteArray heifFtypBox(
+    std::string_view majorBrand, std::initializer_list<std::string_view> compatibleBrands)
+{
+    const quint32 boxSize = 16 + static_cast<quint32>(compatibleBrands.size() * 4);
+    QByteArray data;
+    data.append(static_cast<char>((boxSize >> 24) & 0xff));
+    data.append(static_cast<char>((boxSize >> 16) & 0xff));
+    data.append(static_cast<char>((boxSize >> 8) & 0xff));
+    data.append(static_cast<char>(boxSize & 0xff));
+    Detail::appendFourCc(data, "ftyp");
+    Detail::appendFourCc(data, majorBrand);
+    data.append(4, '\0');
+    for (std::string_view brand : compatibleBrands) {
+        Detail::appendFourCc(data, brand);
+    }
+    return data;
+}
+
 inline ImageNavigationCandidate imageCandidate(const QUrl &url)
 {
     return ImageNavigationCandidate { url, url.fileName() };
@@ -115,13 +151,46 @@ inline ContainerNavigationCandidate comicBookContainerCandidate(const QUrl &url)
 class FakeImageNavigationCandidateProvider
 {
 public:
+    void setDirectoryImages(
+        const QUrl &directoryUrl, std::vector<ImageNavigationCandidate> candidates)
+    {
+        m_directoryImagesByUrl[keyForUrl(directoryUrl)] = std::move(candidates);
+    }
+
+    void setArchiveImages(
+        const QUrl &archiveRootUrl, std::vector<ImageNavigationCandidate> candidates)
+    {
+        m_archiveImagesByUrl[keyForUrl(archiveRootUrl)] = std::move(candidates);
+    }
+
+    void setContainerCandidates(
+        const QUrl &directoryUrl, std::vector<ContainerNavigationCandidate> candidates)
+    {
+        m_containerCandidatesByUrl[keyForUrl(directoryUrl)] = std::move(candidates);
+    }
+
+    void setDirectoryImageError(const QUrl &directoryUrl, QString errorString)
+    {
+        m_directoryImageErrorsByUrl[keyForUrl(directoryUrl)] = std::move(errorString);
+    }
+
+    void setArchiveImageError(const QUrl &archiveRootUrl, QString errorString)
+    {
+        m_archiveImageErrorsByUrl[keyForUrl(archiveRootUrl)] = std::move(errorString);
+    }
+
+    void setContainerError(const QUrl &directoryUrl, QString errorString)
+    {
+        m_containerErrorsByUrl[keyForUrl(directoryUrl)] = std::move(errorString);
+    }
+
     ImageNavigationCandidateProvider provider()
     {
         return ImageNavigationCandidateProvider {
             [this](QObject *, QUrl directoryUrl, ImageCandidatesCallback callback,
                 ErrorCallback errorCallback) {
-                loadImages(directoryImagesByUrl, directoryImageErrorsByUrl, std::move(directoryUrl),
-                    std::move(callback), std::move(errorCallback));
+                loadImages(m_directoryImagesByUrl, m_directoryImageErrorsByUrl,
+                    std::move(directoryUrl), std::move(callback), std::move(errorCallback));
                 return ImageIoJob();
             },
             [this](QObject *, QUrl directoryUrl, ContainerCandidatesCallback callback,
@@ -132,19 +201,12 @@ public:
             },
             [this](QObject *, ArchiveDocumentLocation archiveDocument,
                 ImageCandidatesCallback callback, ErrorCallback errorCallback) {
-                loadImages(archiveImagesByUrl, archiveImageErrorsByUrl, archiveDocument.rootUrl(),
-                    std::move(callback), std::move(errorCallback));
+                loadImages(m_archiveImagesByUrl, m_archiveImageErrorsByUrl,
+                    archiveDocument.rootUrl(), std::move(callback), std::move(errorCallback));
                 return ImageIoJob();
             },
         };
     }
-
-    std::map<QString, std::vector<ImageNavigationCandidate>> directoryImagesByUrl;
-    std::map<QString, std::vector<ImageNavigationCandidate>> archiveImagesByUrl;
-    std::map<QString, std::vector<ContainerNavigationCandidate>> containerCandidatesByUrl;
-    std::map<QString, QString> directoryImageErrorsByUrl;
-    std::map<QString, QString> archiveImageErrorsByUrl;
-    std::map<QString, QString> containerErrorsByUrl;
 
 private:
     void loadImages(std::map<QString, std::vector<ImageNavigationCandidate>> &imagesByUrl,
@@ -169,8 +231,8 @@ private:
         QUrl directoryUrl, ContainerCandidatesCallback callback, ErrorCallback errorCallback)
     {
         const QString key = keyForUrl(directoryUrl);
-        const auto error = containerErrorsByUrl.find(key);
-        if (error != containerErrorsByUrl.cend()) {
+        const auto error = m_containerErrorsByUrl.find(key);
+        if (error != m_containerErrorsByUrl.cend()) {
             if (errorCallback) {
                 errorCallback(error->second);
             }
@@ -178,9 +240,16 @@ private:
         }
 
         if (callback) {
-            callback(containerCandidatesByUrl[key]);
+            callback(m_containerCandidatesByUrl[key]);
         }
     }
+
+    std::map<QString, std::vector<ImageNavigationCandidate>> m_directoryImagesByUrl;
+    std::map<QString, std::vector<ImageNavigationCandidate>> m_archiveImagesByUrl;
+    std::map<QString, std::vector<ContainerNavigationCandidate>> m_containerCandidatesByUrl;
+    std::map<QString, QString> m_directoryImageErrorsByUrl;
+    std::map<QString, QString> m_archiveImageErrorsByUrl;
+    std::map<QString, QString> m_containerErrorsByUrl;
 };
 
 inline QImage testImage(const QSize &size = QSize(1, 1))

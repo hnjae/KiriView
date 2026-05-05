@@ -13,7 +13,6 @@ namespace {
 using KiriView::TestSupport::dataLoaderFor;
 using KiriView::TestSupport::decodeStaticTestImageData;
 using KiriView::TestSupport::imageCandidate;
-using KiriView::TestSupport::keyForUrl;
 using KiriView::TestSupport::ManualImageDataLoader;
 using KiriView::TestSupport::testImage;
 using KiriView::TestSupport::TestImageTileSource;
@@ -58,11 +57,12 @@ void TestImagePredecodeCoordinator::scheduleCachesDisplayedImageAndPredecodesWin
     const QUrl previousUrl = imageUrl(0);
     const QUrl displayedUrl = imageUrl(1);
     const QUrl nextUrl = imageUrl(2);
-    candidateProvider.directoryImagesByUrl[keyForUrl(parentUrl())] = {
-        imageCandidate(previousUrl),
-        imageCandidate(displayedUrl),
-        imageCandidate(nextUrl),
-    };
+    candidateProvider.setDirectoryImages(parentUrl(),
+        {
+            imageCandidate(previousUrl),
+            imageCandidate(displayedUrl),
+            imageCandidate(nextUrl),
+        });
 
     const QImage displayedImage = testImage();
     coordinator.schedule(KiriView::ImagePredecodeCoordinator::Context {
@@ -98,10 +98,11 @@ void TestImagePredecodeCoordinator::cancelSuppressesPendingDecode()
 
     const QUrl displayedUrl = imageUrl(1);
     const QUrl nextUrl = imageUrl(2);
-    candidateProvider.directoryImagesByUrl[keyForUrl(parentUrl())] = {
-        imageCandidate(displayedUrl),
-        imageCandidate(nextUrl),
-    };
+    candidateProvider.setDirectoryImages(parentUrl(),
+        {
+            imageCandidate(displayedUrl),
+            imageCandidate(nextUrl),
+        });
 
     const QImage displayedImage = testImage();
     coordinator.schedule(KiriView::ImagePredecodeCoordinator::Context {

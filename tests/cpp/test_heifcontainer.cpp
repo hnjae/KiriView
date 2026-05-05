@@ -3,30 +3,14 @@
 
 #include "heifcontainer.h"
 
+#include "image_test_support.h"
+
 #include <QByteArray>
 #include <QObject>
 #include <QTest>
-#include <QtGlobal>
-#include <initializer_list>
-#include <string_view>
 
 namespace {
-QByteArray heifFtypBox(std::string_view majorBrand, std::initializer_list<std::string_view> brands)
-{
-    const quint32 boxSize = 16 + static_cast<quint32>(brands.size() * 4);
-    QByteArray data;
-    data.append(static_cast<char>((boxSize >> 24) & 0xff));
-    data.append(static_cast<char>((boxSize >> 16) & 0xff));
-    data.append(static_cast<char>((boxSize >> 8) & 0xff));
-    data.append(static_cast<char>(boxSize & 0xff));
-    data.append("ftyp", 4);
-    data.append(majorBrand.data(), 4);
-    data.append(4, '\0');
-    for (std::string_view brand : brands) {
-        data.append(brand.data(), 4);
-    }
-    return data;
-}
+using KiriView::TestSupport::heifFtypBox;
 }
 
 class TestHeifContainer : public QObject
