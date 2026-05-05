@@ -58,8 +58,7 @@ std::optional<ImageCandidateListContext> imageCandidateListContextForDisplayedIm
         return std::nullopt;
     }
 
-    if (!location.archiveDocument().isEmpty()
-        && isUrlInsideArchiveRoot(displayedUrl, location.archiveDocumentRootUrl())) {
+    if (displayedLocationIsInsideArchiveDocument(location)) {
         const QUrl currentUrl = normalizedImageUrl(displayedUrl);
         if (!currentUrl.isValid()) {
             return std::nullopt;

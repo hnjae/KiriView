@@ -141,7 +141,7 @@ QUrl archiveEntryUrl(
 QString archiveEntryPathForUrl(
     const KiriView::ArchiveDocumentLocation &archiveDocument, const QUrl &imageUrl)
 {
-    if (!KiriView::isUrlInsideArchiveRoot(imageUrl, archiveDocument.rootUrl())) {
+    if (!KiriView::archiveDocumentContainsUrl(archiveDocument, imageUrl)) {
         return {};
     }
 

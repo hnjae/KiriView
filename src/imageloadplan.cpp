@@ -10,9 +10,9 @@
 #include <utility>
 
 namespace {
+using KiriView::archiveDocumentContainsUrl;
 using KiriView::ArchiveDocumentLocation;
 using KiriView::archiveDocumentLocationForLocalArchiveUrl;
-using KiriView::isUrlInsideArchiveRoot;
 
 ArchiveDocumentLocation archiveDocumentForImageLoadRequest(
     const KiriView::ImageLoadRequest &request)
@@ -21,13 +21,12 @@ ArchiveDocumentLocation archiveDocumentForImageLoadRequest(
         const std::optional<ArchiveDocumentLocation> containerArchive
             = archiveDocumentLocationForLocalArchiveUrl(request.containerNavigationUrl());
         if (containerArchive.has_value()
-            && isUrlInsideArchiveRoot(request.sourceUrl(), containerArchive->rootUrl())) {
+            && archiveDocumentContainsUrl(*containerArchive, request.sourceUrl())) {
             return *containerArchive;
         }
     }
 
-    if (!request.archiveDocument().isEmpty()
-        && isUrlInsideArchiveRoot(request.sourceUrl(), request.archiveDocument().rootUrl())) {
+    if (archiveDocumentContainsUrl(request.archiveDocument(), request.sourceUrl())) {
         return request.archiveDocument();
     }
 

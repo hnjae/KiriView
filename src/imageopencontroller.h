@@ -53,17 +53,17 @@ private:
     void finishPredecodedImageLoad(ImageLoadSession session, PredecodedImage image);
     void finishDecodedImageLoad(
         ImageLoadSession session, std::shared_ptr<DecodedImageResult> result);
-    void finishDecodedImageResult(
+    bool finishDecodedImageResult(
         ImageLoadSession &session, DecodedImageFailure &decoded, const DecodedImageResult &result);
-    void finishDecodedImageResult(
+    bool finishDecodedImageResult(
         ImageLoadSession &session, SvgDecodedImage &decoded, const DecodedImageResult &result);
-    void finishDecodedImageResult(
+    bool finishDecodedImageResult(
         ImageLoadSession &session, StaticDecodedImage &decoded, const DecodedImageResult &result);
-    void finishDecodedImageResult(ImageLoadSession &session, DecodedAnimationImage &decoded,
+    bool finishDecodedImageResult(ImageLoadSession &session, DecodedAnimationImage &decoded,
         const DecodedImageResult &result);
-    void finishDecodedImageResult(
+    bool finishDecodedImageResult(
         ImageLoadSession &session, ReaderAnimationImage &decoded, const DecodedImageResult &result);
-    void finishDecodedImageResult(ImageLoadSession &session, HeifSequenceAnimationImage &decoded,
+    bool finishDecodedImageResult(ImageLoadSession &session, HeifSequenceAnimationImage &decoded,
         const DecodedImageResult &result);
     void finishLoadWithError(
         const ImageLoadSession &session, ImageLoadError error, const QString &errorString);

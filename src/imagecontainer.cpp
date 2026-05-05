@@ -155,6 +155,16 @@ bool isUrlInsideArchiveRoot(const QUrl &url, const QUrl &archiveRootUrl)
     return path.size() > rootPath.size() && path.startsWith(rootPath);
 }
 
+bool archiveDocumentContainsUrl(const ArchiveDocumentLocation &archiveDocument, const QUrl &url)
+{
+    return !archiveDocument.isEmpty() && isUrlInsideArchiveRoot(url, archiveDocument.rootUrl());
+}
+
+bool displayedLocationIsInsideArchiveDocument(const DisplayedImageLocation &location)
+{
+    return archiveDocumentContainsUrl(location.archiveDocument(), location.imageUrl());
+}
+
 std::optional<QUrl> containingComicBookArchiveRootUrl(const QUrl &url)
 {
     const QString marker = KiriView::comicBookArchiveMarkerForRootScheme(url.scheme());
@@ -173,8 +183,7 @@ QString windowTitleFileNameForDisplayedLocation(const DisplayedImageLocation &lo
         return {};
     }
 
-    if (!location.archiveDocument().isEmpty()
-        && isUrlInsideArchiveRoot(location.imageUrl(), location.archiveDocumentRootUrl())) {
+    if (displayedLocationIsInsideArchiveDocument(location)) {
         const QString archiveName = location.archiveDocumentFileUrl().fileName();
         if (!archiveName.isEmpty()) {
             return archiveName;
@@ -247,8 +256,7 @@ QUrl imageContainerUrlForImage(const QUrl &imageUrl, const QUrl &archiveRootUrl)
 
 QUrl imageContainerUrlForLocation(const DisplayedImageLocation &location)
 {
-    if (!location.archiveDocument().isEmpty()
-        && isUrlInsideArchiveRoot(location.imageUrl(), location.archiveDocumentRootUrl())) {
+    if (displayedLocationIsInsideArchiveDocument(location)) {
         return normalizedFileContainerUrl(navigationSourceUrl(location.archiveDocumentFileUrl()));
     }
 
@@ -258,7 +266,7 @@ QUrl imageContainerUrlForLocation(const DisplayedImageLocation &location)
 QUrl containerNavigationUrlForLocation(const DisplayedImageLocation &location)
 {
     if (!location.archiveDocument().isComicBook()
-        || !isUrlInsideArchiveRoot(location.imageUrl(), location.archiveDocumentRootUrl())) {
+        || !displayedLocationIsInsideArchiveDocument(location)) {
         return {};
     }
 

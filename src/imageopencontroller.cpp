@@ -119,72 +119,80 @@ void ImageOpenController::finishDecodedImageLoad(
     ImageLoadSession session, std::shared_ptr<DecodedImageResult> result)
 {
     auto handleDecoded = [this, &session, &result](auto &decoded) {
-        finishDecodedImageResult(session, decoded, *result);
+        return finishDecodedImageResult(session, decoded, *result);
     };
-    std::visit(handleDecoded, *result);
-    report(ImageDocumentEffect::scheduleAdjacentImagePredecode());
+    const bool displayedImage = std::visit(handleDecoded, *result);
+    if (displayedImage) {
+        report(ImageDocumentEffect::scheduleAdjacentImagePredecode());
+    }
 }
 
-void ImageOpenController::finishDecodedImageResult(
+bool ImageOpenController::finishDecodedImageResult(
     ImageLoadSession &session, DecodedImageFailure &decoded, const DecodedImageResult &)
 {
     finishLoadWithError(session, ImageLoadError::Generic, decoded.errorString);
+    return false;
 }
 
-void ImageOpenController::finishDecodedImageResult(
+bool ImageOpenController::finishDecodedImageResult(
     ImageLoadSession &session, SvgDecodedImage &decoded, const DecodedImageResult &)
 {
     QString errorString;
     std::shared_ptr<SvgTileSource> source = SvgTileSource::open(decoded.data, &errorString);
     if (source == nullptr) {
         finishLoadWithError(session, ImageLoadError::Generic, errorString);
-        return;
+        return false;
     }
     QImage preview
         = source->decodeBlockingDisplayImage(imageBlockingDisplayLongEdgeMax, &errorString);
     if (preview.isNull()) {
         finishLoadWithError(session, ImageLoadError::Generic, errorString);
-        return;
+        return false;
     }
 
     finishStaticImageLoad(session, std::move(source), preview, {}, false);
+    return true;
 }
 
-void ImageOpenController::finishDecodedImageResult(
+bool ImageOpenController::finishDecodedImageResult(
     ImageLoadSession &session, StaticDecodedImage &decoded, const DecodedImageResult &result)
 {
     const bool predecodeCacheable
         = decodedImageResultIsPredecodeCacheable(result, PredecodeCache::byteBudget());
     finishStaticImageLoad(session, std::move(decoded.source), decoded.preview, decoded.displayHints,
         predecodeCacheable);
+    return true;
 }
 
-void ImageOpenController::finishDecodedImageResult(
+bool ImageOpenController::finishDecodedImageResult(
     ImageLoadSession &session, DecodedAnimationImage &decoded, const DecodedImageResult &)
 {
     if (decoded.frames.empty()) {
         finishLoadWithError(session, ImageLoadError::Generic,
             imageViewText("Could not decode the selected image animation."));
-        return;
+        return false;
     }
 
     finishLoadSuccessfully(session, decoded.frames.front().image, false);
     m_presentationController.startDecodedAnimation(std::move(decoded.frames), decoded.loopCount);
+    return true;
 }
 
-void ImageOpenController::finishDecodedImageResult(
+bool ImageOpenController::finishDecodedImageResult(
     ImageLoadSession &session, ReaderAnimationImage &decoded, const DecodedImageResult &)
 {
     finishLoadSuccessfully(session, decoded.firstFrame, false);
     m_presentationController.startAnimation(
         decoded.data, decoded.format, decoded.loopCount, decoded.firstFrameDelay);
+    return true;
 }
 
-void ImageOpenController::finishDecodedImageResult(
+bool ImageOpenController::finishDecodedImageResult(
     ImageLoadSession &session, HeifSequenceAnimationImage &decoded, const DecodedImageResult &)
 {
     finishLoadSuccessfully(session, decoded.firstFrame, false);
     m_presentationController.startHeifSequenceAnimation(decoded.data, decoded.firstFrameDelay);
+    return true;
 }
 
 void ImageOpenController::finishLoadWithError(

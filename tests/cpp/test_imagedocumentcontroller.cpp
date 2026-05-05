@@ -35,6 +35,16 @@ KiriView::DecodedImageResult decodeTestImageData(
     return staticDecodedTestImage(testImage(2));
 }
 
+KiriView::DecodedImageResult decodeBadDataAsFailure(
+    const QByteArray &data, const KiriView::ImageDecodeRequest &request)
+{
+    if (data == QByteArrayLiteral("bad")) {
+        return KiriView::DecodedImageFailure { QStringLiteral("decode failed") };
+    }
+
+    return decodeTestImageData(data, request);
+}
+
 KiriView::DecodedImageResult staticDecodedImageWithPreview(const QSize &sourceSize,
     const QSize &previewSize, KiriView::StaticImageDisplayHints displayHints = {})
 {
@@ -100,6 +110,7 @@ private Q_SLOTS:
     void firstDisplayDefersTilesUntilZoomNeedsMoreDetail();
     void smallFullImageSurfaceStillSchedulesAdjacentPredecode();
     void replacementLoadFailureKeepsDisplayedImage();
+    void decodedReplacementFailureSchedulesRecoveryPredecodeOnce();
     void emptyContainerNavigationClearsImageAndSelectsContainer();
 };
 
@@ -336,6 +347,40 @@ void TestImageDocumentController::replacementLoadFailureKeepsDisplayedImage()
     QCOMPARE(controller->imageSize(), QSize(2, 1));
     QCOMPARE(controller->imageRevision(), displayedRevision);
     QVERIFY(!controller->image().isNull());
+}
+
+void TestImageDocumentController::decodedReplacementFailureSchedulesRecoveryPredecodeOnce()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    const QUrl imageUrl = localUrl(QStringLiteral("/images/01.png"));
+    const QUrl badUrl = localUrl(QStringLiteral("/images/02.png"));
+    candidateProvider.directoryImagesByUrl[keyForUrl(localUrl(QStringLiteral("/images/")))] = {
+        imageCandidate(imageUrl),
+        imageCandidate(badUrl),
+    };
+
+    std::unique_ptr<KiriView::ImageDocumentController> controller
+        = createController(this, candidateProvider, dataLoader, decodeBadDataAsFailure);
+    controller->setViewportSize(QSizeF(400.0, 300.0));
+    controller->setSourceUrl(imageUrl);
+    finishLoad(dataLoader);
+
+    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(dataLoader.loads.size(), std::size_t(2));
+    QCOMPARE(dataLoader.loads.back()->url, badUrl);
+    const std::size_t loadCountBeforeReplacement = dataLoader.loads.size();
+
+    controller->setSourceUrl(badUrl);
+    QCOMPARE(dataLoader.loads.size(), loadCountBeforeReplacement + 1);
+    QCOMPARE(dataLoader.loads.back()->url, badUrl);
+    dataLoader.loads.back()->dataCallback(QByteArrayLiteral("bad"));
+
+    QTRY_COMPARE(controller->errorString(), QStringLiteral("decode failed"));
+    QCOMPARE(controller->sourceUrl(), imageUrl);
+    QCOMPARE(controller->displayedUrl(), imageUrl);
+    QCOMPARE(dataLoader.loads.size(), loadCountBeforeReplacement + 2);
+    QCOMPARE(dataLoader.loads.back()->url, badUrl);
 }
 
 void TestImageDocumentController::emptyContainerNavigationClearsImageAndSelectsContainer()

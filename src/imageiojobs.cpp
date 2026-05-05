@@ -215,8 +215,7 @@ ImageIoJob startArchiveImageCandidateList(QObject *receiver,
 ImageIoJob startStoredImageDataLoad(QObject *receiver, ImageDecodeRequest request,
     ImageDataCallback callback, ErrorCallback errorCallback)
 {
-    if (!request.archiveDocument.isEmpty()
-        && isUrlInsideArchiveRoot(request.imageUrl, request.archiveDocument.rootUrl())) {
+    if (archiveDocumentContainsUrl(request.archiveDocument, request.imageUrl)) {
         return startArchiveWorkerJob(
             receiver,
             [request = std::move(request)]() {

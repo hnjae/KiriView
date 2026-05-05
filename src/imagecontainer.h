@@ -19,6 +19,8 @@ std::optional<QUrl> comicBookArchiveRootUrl(const QUrl &url);
 std::optional<QUrl> directArchiveOpenRootUrl(const QUrl &url);
 std::optional<ArchiveDocumentLocation> archiveDocumentLocationForLocalArchiveUrl(const QUrl &url);
 bool isUrlInsideArchiveRoot(const QUrl &url, const QUrl &archiveRootUrl);
+bool archiveDocumentContainsUrl(const ArchiveDocumentLocation &archiveDocument, const QUrl &url);
+bool displayedLocationIsInsideArchiveDocument(const DisplayedImageLocation &location);
 std::optional<QUrl> containingComicBookArchiveRootUrl(const QUrl &url);
 std::optional<QUrl> containingDirectArchiveOpenRootUrl(const QUrl &url);
 QString windowTitleFileNameForDisplayedLocation(const DisplayedImageLocation &location);
