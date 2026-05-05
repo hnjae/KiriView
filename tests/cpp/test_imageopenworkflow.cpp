@@ -59,6 +59,7 @@ private Q_SLOTS:
     void replacementLoadFailureKeepsDisplayedImage();
     void emptyContainerFailureSelectsFailedContainer();
     void animationFailureClearsImageAndResetsZoom();
+    void trackedLoadCompletionsClearLoadingContainerNavigationUrl();
 };
 
 void TestImageOpenWorkflow::firstImageLoadSuccessTransitionsToReady()
@@ -174,6 +175,77 @@ void TestImageOpenWorkflow::animationFailureClearsImageAndResetsZoom()
     QCOMPARE(state.errorString(), QStringLiteral("animation failed"));
     QVERIFY(!state.loading());
     QCOMPARE(state.status(), KiriView::ImageDocumentStatus::Error);
+}
+
+void TestImageOpenWorkflow::trackedLoadCompletionsClearLoadingContainerNavigationUrl()
+{
+    const QUrl loadingContainerUrl = localUrl(QStringLiteral("/books/loading.cbz"));
+    const QUrl imageUrl = localUrl(QStringLiteral("/images/page.png"));
+
+    {
+        KiriView::ImageDocumentState state;
+        state.setLoading(true);
+        state.setLoadingContainerNavigationUrl(loadingContainerUrl);
+
+        KiriView::ImageOpenWorkflow::finishEmptySourceLoad(state);
+
+        QVERIFY(state.loadingContainerNavigationUrl().isEmpty());
+    }
+
+    {
+        KiriView::ImageDocumentState state;
+        state.setLoading(true);
+        state.setLoadingContainerNavigationUrl(loadingContainerUrl);
+
+        KiriView::ImageOpenWorkflow::finishSuccessfulImageLoad(
+            state, loadSession(imageUrl, imageUrl));
+
+        QVERIFY(state.loadingContainerNavigationUrl().isEmpty());
+    }
+
+    {
+        KiriView::ImageDocumentState state;
+        state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromUrl(imageUrl));
+        state.setLoading(true);
+        state.setLoadingContainerNavigationUrl(loadingContainerUrl);
+
+        KiriView::ImageOpenWorkflow::finishReplacementLoadWithError(
+            state, QStringLiteral("missing"));
+
+        QVERIFY(state.loadingContainerNavigationUrl().isEmpty());
+    }
+
+    {
+        KiriView::ImageDocumentState state;
+        state.setLoading(true);
+        state.setLoadingContainerNavigationUrl(loadingContainerUrl);
+
+        KiriView::ImageOpenWorkflow::finishInitialLoadWithError(state, QStringLiteral("missing"));
+
+        QVERIFY(state.loadingContainerNavigationUrl().isEmpty());
+    }
+
+    {
+        KiriView::ImageDocumentState state;
+        state.setLoading(true);
+        state.setLoadingContainerNavigationUrl(loadingContainerUrl);
+
+        KiriView::ImageOpenWorkflow::finishContainerNavigationLoadWithError(
+            state, loadingContainerUrl, QStringLiteral("missing"));
+
+        QVERIFY(state.loadingContainerNavigationUrl().isEmpty());
+    }
+
+    {
+        KiriView::ImageDocumentState state;
+        state.setLoading(true);
+        state.setLoadingContainerNavigationUrl(loadingContainerUrl);
+
+        KiriView::ImageOpenWorkflow::finishAnimationLoadWithError(
+            state, QStringLiteral("animation failed"));
+
+        QVERIFY(state.loadingContainerNavigationUrl().isEmpty());
+    }
 }
 
 QTEST_GUILESS_MAIN(TestImageOpenWorkflow)

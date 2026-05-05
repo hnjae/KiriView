@@ -15,9 +15,8 @@ void finishTrackedLoad(KiriView::ImageDocumentState &state)
 
 void finishSuccessfulTrackedLoad(KiriView::ImageDocumentState &state)
 {
-    state.clearLoadingContainerNavigationUrl();
     state.setErrorString(QString());
-    state.setLoading(false);
+    finishTrackedLoad(state);
     state.setStatus(KiriView::ImageDocumentStatus::Ready);
 }
 
@@ -26,6 +25,21 @@ void finishWithError(KiriView::ImageDocumentState &state, const QString &errorSt
 {
     state.setErrorString(errorString);
     state.setStatus(status);
+}
+
+template <typename BeforeError>
+void finishTrackedLoadWithError(KiriView::ImageDocumentState &state, const QString &errorString,
+    KiriView::ImageDocumentStatus status, BeforeError beforeError)
+{
+    finishTrackedLoad(state);
+    beforeError();
+    finishWithError(state, errorString, status);
+}
+
+void finishTrackedLoadWithError(KiriView::ImageDocumentState &state, const QString &errorString,
+    KiriView::ImageDocumentStatus status)
+{
+    finishTrackedLoadWithError(state, errorString, status, []() { });
 }
 }
 
@@ -55,8 +69,7 @@ ImageDocumentEffects ImageOpenWorkflow::finishEmptySourceLoad(ImageDocumentState
     ImageDocumentEffects effects;
     effects.add(ImageDocumentEffect::clearImage());
     effects.add(ImageDocumentEffect::resetZoom());
-    state.setLoading(false);
-    state.clearLoadingContainerNavigationUrl();
+    finishTrackedLoad(state);
     state.setContainerNavigationUrl(QUrl());
     state.setStatus(ImageDocumentStatus::Null);
     return effects;
@@ -86,10 +99,10 @@ ImageDocumentEffects ImageOpenWorkflow::finishContainerNavigationLoadWithError(
     ImageDocumentEffects effects;
     effects.add(ImageDocumentEffect::clearImage());
     effects.add(ImageDocumentEffect::prepareFailedContainer(containerUrl));
-    finishTrackedLoad(state);
-    state.setContainerNavigationUrl(containerUrl);
-    state.setSourceUrl(containerUrl);
-    finishWithError(state, errorString, ImageDocumentStatus::Error);
+    finishTrackedLoadWithError(state, errorString, ImageDocumentStatus::Error, [&]() {
+        state.setContainerNavigationUrl(containerUrl);
+        state.setSourceUrl(containerUrl);
+    });
     return effects;
 }
 
@@ -98,8 +111,7 @@ ImageDocumentEffects ImageOpenWorkflow::finishReplacementLoadWithError(
 {
     [[maybe_unused]] auto batch = state.beginChangeBatch();
     ImageDocumentEffects effects;
-    finishTrackedLoad(state);
-    finishWithError(state, errorString, ImageDocumentStatus::Ready);
+    finishTrackedLoadWithError(state, errorString, ImageDocumentStatus::Ready);
 
     if (!state.displayedUrl().isEmpty()) {
         state.setSourceUrl(state.displayedUrl());
@@ -116,9 +128,8 @@ ImageDocumentEffects ImageOpenWorkflow::finishInitialLoadWithError(
     [[maybe_unused]] auto batch = state.beginChangeBatch();
     ImageDocumentEffects effects;
     effects.add(ImageDocumentEffect::clearImage());
-    finishTrackedLoad(state);
-    state.setContainerNavigationUrl(QUrl());
-    finishWithError(state, errorString, ImageDocumentStatus::Error);
+    finishTrackedLoadWithError(state, errorString, ImageDocumentStatus::Error,
+        [&]() { state.setContainerNavigationUrl(QUrl()); });
     return effects;
 }
 
@@ -129,9 +140,8 @@ ImageDocumentEffects ImageOpenWorkflow::finishAnimationLoadWithError(
     ImageDocumentEffects effects;
     effects.add(ImageDocumentEffect::clearImage());
     effects.add(ImageDocumentEffect::resetZoom());
-    state.setLoading(false);
-    state.setContainerNavigationUrl(QUrl());
-    finishWithError(state, errorString, ImageDocumentStatus::Error);
+    finishTrackedLoadWithError(state, errorString, ImageDocumentStatus::Error,
+        [&]() { state.setContainerNavigationUrl(QUrl()); });
     return effects;
 }
 }
