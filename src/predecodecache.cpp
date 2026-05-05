@@ -25,12 +25,7 @@ std::optional<QUrl> normalizedValidImageUrl(const QUrl &url)
 namespace KiriView {
 qsizetype PredecodeCache::defaultByteBudget()
 {
-    const std::optional<qsizetype> systemMemory = systemMemoryByteSize();
-    if (!systemMemory.has_value()) {
-        return preferredByteBudget();
-    }
-
-    return byteBudgetForSystemMemory(*systemMemory);
+    return defaultSystemMemoryCappedByteBudget(preferredByteBudget(), 8);
 }
 
 qsizetype PredecodeCache::byteBudgetForSystemMemory(qsizetype systemMemoryByteSize)

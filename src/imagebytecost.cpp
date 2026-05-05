@@ -70,4 +70,15 @@ qsizetype systemMemoryCappedByteBudget(
 
     return std::min(preferredByteBudget, systemMemoryByteSize / memoryDivisor);
 }
+
+qsizetype defaultSystemMemoryCappedByteBudget(
+    qsizetype preferredByteBudget, qsizetype memoryDivisor)
+{
+    const std::optional<qsizetype> systemMemory = systemMemoryByteSize();
+    if (!systemMemory.has_value()) {
+        return systemMemoryCappedByteBudget(preferredByteBudget, 0, memoryDivisor);
+    }
+
+    return systemMemoryCappedByteBudget(preferredByteBudget, *systemMemory, memoryDivisor);
+}
 }

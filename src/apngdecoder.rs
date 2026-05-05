@@ -7,6 +7,7 @@
 // QImageReader once Qt's PNG stack reliably exposes APNG frames, delays,
 // blend/disposal operations, and loop counts.
 
+use crate::byteio::{read_be_u16, read_be_u32, write_be_u32};
 use cxx_qt_lib::QByteArray;
 use png::{BitDepth, ColorType};
 use std::cmp;
@@ -227,8 +228,8 @@ impl ApngParseState {
         }
         self.seen_ihdr = true;
         self.parsed.ihdr_data = chunk_data.to_vec();
-        self.parsed.canvas_width = read_u32(chunk_data, 0).ok_or(RustApngErrorKind::Png)?;
-        self.parsed.canvas_height = read_u32(chunk_data, 4).ok_or(RustApngErrorKind::Png)?;
+        self.parsed.canvas_width = read_be_u32(chunk_data, 0).ok_or(RustApngErrorKind::Png)?;
+        self.parsed.canvas_height = read_be_u32(chunk_data, 4).ok_or(RustApngErrorKind::Png)?;
         validate_dimensions(
             self.parsed.canvas_width,
             self.parsed.canvas_height,
@@ -241,8 +242,8 @@ impl ApngParseState {
             return Err(RustApngErrorKind::Apng);
         }
         self.seen_actl = true;
-        self.expected_frame_count = read_u32(chunk_data, 0).ok_or(RustApngErrorKind::Apng)?;
-        self.parsed.play_count = read_u32(chunk_data, 4).ok_or(RustApngErrorKind::Apng)?;
+        self.expected_frame_count = read_be_u32(chunk_data, 0).ok_or(RustApngErrorKind::Apng)?;
+        self.parsed.play_count = read_be_u32(chunk_data, 4).ok_or(RustApngErrorKind::Apng)?;
         if self.expected_frame_count == 0 {
             return Err(RustApngErrorKind::Apng);
         }
@@ -302,7 +303,7 @@ impl ApngParseState {
         if !self.seen_actl || !self.seen_idat || chunk_data.len() < 4 {
             return Err(RustApngErrorKind::Apng);
         }
-        let sequence_number = read_u32(chunk_data, 0).ok_or(RustApngErrorKind::Apng)?;
+        let sequence_number = read_be_u32(chunk_data, 0).ok_or(RustApngErrorKind::Apng)?;
         if sequence_number != self.expected_sequence_number {
             return Err(RustApngErrorKind::Apng);
         }
@@ -597,13 +598,13 @@ fn read_frame_control(data: &[u8]) -> Result<FrameControl, RustApngErrorKind> {
     };
 
     let control = FrameControl {
-        sequence_number: read_u32(data, 0).ok_or(RustApngErrorKind::Apng)?,
-        width: read_u32(data, 4).ok_or(RustApngErrorKind::Apng)?,
-        height: read_u32(data, 8).ok_or(RustApngErrorKind::Apng)?,
-        x_offset: read_u32(data, 12).ok_or(RustApngErrorKind::Apng)?,
-        y_offset: read_u32(data, 16).ok_or(RustApngErrorKind::Apng)?,
-        delay_num: read_u16(data, 20).ok_or(RustApngErrorKind::Apng)?,
-        delay_den: read_u16(data, 22).ok_or(RustApngErrorKind::Apng)?,
+        sequence_number: read_be_u32(data, 0).ok_or(RustApngErrorKind::Apng)?,
+        width: read_be_u32(data, 4).ok_or(RustApngErrorKind::Apng)?,
+        height: read_be_u32(data, 8).ok_or(RustApngErrorKind::Apng)?,
+        x_offset: read_be_u32(data, 12).ok_or(RustApngErrorKind::Apng)?,
+        y_offset: read_be_u32(data, 16).ok_or(RustApngErrorKind::Apng)?,
+        delay_num: read_be_u16(data, 20).ok_or(RustApngErrorKind::Apng)?,
+        delay_den: read_be_u16(data, 22).ok_or(RustApngErrorKind::Apng)?,
         dispose_op,
         blend_op,
     };
@@ -959,7 +960,7 @@ fn read_png_chunk(data: &[u8], offset: usize) -> Result<PngChunkView<'_>, RustAp
         return Err(RustApngErrorKind::Png);
     }
 
-    let length = read_u32(data, offset).ok_or(RustApngErrorKind::Png)?;
+    let length = read_be_u32(data, offset).ok_or(RustApngErrorKind::Png)?;
     let length = usize::try_from(length).map_err(|_| RustApngErrorKind::Png)?;
     let chunk_type_offset = offset.checked_add(4).ok_or(RustApngErrorKind::Png)?;
     let chunk_data_offset = offset.checked_add(8).ok_or(RustApngErrorKind::Png)?;
@@ -977,7 +978,7 @@ fn read_png_chunk(data: &[u8], offset: usize) -> Result<PngChunkView<'_>, RustAp
         .try_into()
         .map_err(|_| RustApngErrorKind::Png)?;
     let chunk_data = &data[chunk_data_offset..chunk_data_end];
-    let stored_crc = read_u32(data, chunk_data_end).ok_or(RustApngErrorKind::Png)?;
+    let stored_crc = read_be_u32(data, chunk_data_end).ok_or(RustApngErrorKind::Png)?;
     if stored_crc != crc32(&kind, chunk_data) {
         return Err(chunk_error_kind(kind));
     }
@@ -996,24 +997,10 @@ fn chunk_error_kind(kind: [u8; 4]) -> RustApngErrorKind {
     }
 }
 
-fn read_u16(data: &[u8], offset: usize) -> Option<u16> {
-    Some(u16::from_be_bytes(
-        data.get(offset..offset.checked_add(2)?)?.try_into().ok()?,
-    ))
-}
-
-fn read_u32(data: &[u8], offset: usize) -> Option<u32> {
-    Some(u32::from_be_bytes(
-        data.get(offset..offset.checked_add(4)?)?.try_into().ok()?,
-    ))
-}
-
 fn write_u32(data: &mut [u8], offset: usize, value: u32) -> Result<(), RustApngErrorKind> {
-    let target = data
-        .get_mut(offset..offset.saturating_add(4))
-        .ok_or(RustApngErrorKind::Apng)?;
-    target.copy_from_slice(&value.to_be_bytes());
-    Ok(())
+    write_be_u32(data, offset, value)
+        .then_some(())
+        .ok_or(RustApngErrorKind::Apng)
 }
 
 fn crc32(kind: &[u8; 4], payload: &[u8]) -> u32 {
@@ -1122,7 +1109,7 @@ mod tests {
 
     fn corrupt_chunk_crc(data: &mut [u8], expected_kind: &[u8; 4]) {
         let offset = chunk_offset(data, expected_kind);
-        let length = read_u32(data, offset).expect("chunk length") as usize;
+        let length = read_be_u32(data, offset).expect("chunk length") as usize;
         data[offset + 8 + length + 3] ^= 0x01;
     }
 
@@ -1328,7 +1315,7 @@ mod tests {
         let fdat_offset = chunk_offset(&wrong_fdat_sequence, b"fdAT");
         wrong_fdat_sequence[fdat_offset + 8..fdat_offset + 12]
             .copy_from_slice(&99_u32.to_be_bytes());
-        let length = read_u32(&wrong_fdat_sequence, fdat_offset).expect("fdAT length") as usize;
+        let length = read_be_u32(&wrong_fdat_sequence, fdat_offset).expect("fdAT length") as usize;
         let crc = crc32(
             b"fdAT",
             &wrong_fdat_sequence[fdat_offset + 8..fdat_offset + 8 + length],

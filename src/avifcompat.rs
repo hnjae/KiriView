@@ -7,6 +7,7 @@
 // files are not modified. Remove this module once KDE imageformats accepts
 // those files without normalization.
 
+use crate::byteio::{read_be_u16, read_be_u32, read_be_u64, write_be_u16, write_be_u32};
 use cxx_qt_lib::QByteArray;
 
 const BOX_HEADER_SIZE: usize = 8;
@@ -61,37 +62,6 @@ fn avif_data_with_compatibility_fixes(data: &QByteArray) -> QByteArray {
         .unwrap_or_else(|| data.clone())
 }
 
-fn read_u16(data: &[u8], offset: usize) -> Option<u16> {
-    let bytes: [u8; 2] = data.get(offset..offset.checked_add(2)?)?.try_into().ok()?;
-    Some(u16::from_be_bytes(bytes))
-}
-
-fn read_u32(data: &[u8], offset: usize) -> Option<u32> {
-    let bytes: [u8; 4] = data.get(offset..offset.checked_add(4)?)?.try_into().ok()?;
-    Some(u32::from_be_bytes(bytes))
-}
-
-fn read_u64(data: &[u8], offset: usize) -> Option<u64> {
-    let bytes: [u8; 8] = data.get(offset..offset.checked_add(8)?)?.try_into().ok()?;
-    Some(u64::from_be_bytes(bytes))
-}
-
-fn write_u16(data: &mut [u8], offset: usize, value: u16) -> bool {
-    let Some(target) = data.get_mut(offset..offset.saturating_add(2)) else {
-        return false;
-    };
-    target.copy_from_slice(&value.to_be_bytes());
-    true
-}
-
-fn write_u32(data: &mut [u8], offset: usize, value: u32) -> bool {
-    let Some(target) = data.get_mut(offset..offset.saturating_add(4)) else {
-        return false;
-    };
-    target.copy_from_slice(&value.to_be_bytes());
-    true
-}
-
 fn type_is(kind: [u8; 4], expected: &[u8; 4]) -> bool {
     kind == *expected
 }
@@ -104,7 +74,7 @@ fn read_box(data: &[u8], offset: usize, end_offset: usize) -> Option<BoxHeader> 
         return None;
     }
 
-    let small_size = read_u32(data, offset)?;
+    let small_size = read_be_u32(data, offset)?;
     let kind = data.get(offset + 4..offset + 8)?.try_into().ok()?;
     let mut header_size = BOX_HEADER_SIZE;
     let mut size = u64::from(small_size);
@@ -113,7 +83,7 @@ fn read_box(data: &[u8], offset: usize, end_offset: usize) -> Option<BoxHeader> 
         if end_offset - offset < BOX_HEADER_SIZE + LARGE_BOX_EXTRA_SIZE {
             return None;
         }
-        size = read_u64(data, offset + BOX_HEADER_SIZE)?;
+        size = read_be_u64(data, offset + BOX_HEADER_SIZE)?;
         header_size += LARGE_BOX_EXTRA_SIZE;
     } else if small_size == 0 {
         size = u64::try_from(end_offset - offset).ok()?;
@@ -206,10 +176,10 @@ fn primary_item_id(data: &[u8], meta_box: BoxHeader) -> Option<u32> {
         let item_id_offset = version_offset + FULL_BOX_HEADER_SIZE;
 
         if version == 0 && item_id_offset + 2 <= box_header.end_offset() {
-            return Some(u32::from(read_u16(data, item_id_offset)?));
+            return Some(u32::from(read_be_u16(data, item_id_offset)?));
         }
         if version == 1 && item_id_offset + 4 <= box_header.end_offset() {
-            return read_u32(data, item_id_offset);
+            return read_be_u32(data, item_id_offset);
         }
     }
 
@@ -270,7 +240,7 @@ fn patch_item_reference(data: &mut [u8], iref_box: BoxHeader, item_id: u32) -> b
         }
 
         cursor += id_size;
-        let Some(reference_count) = read_u16(data, cursor) else {
+        let Some(reference_count) = read_be_u16(data, cursor) else {
             return changed;
         };
         cursor += 2;
@@ -282,17 +252,17 @@ fn patch_item_reference(data: &mut [u8], iref_box: BoxHeader, item_id: u32) -> b
                 }
 
                 let referenced_item_id = if id_size == 4 {
-                    read_u32(data, cursor).unwrap_or_default()
+                    read_be_u32(data, cursor).unwrap_or_default()
                 } else {
-                    u32::from(read_u16(data, cursor).unwrap_or_default())
+                    u32::from(read_be_u16(data, cursor).unwrap_or_default())
                 };
                 if referenced_item_id == 0 {
                     if id_size == 4 {
-                        if !write_u32(data, cursor, item_id) {
+                        if !write_be_u32(data, cursor, item_id) {
                             return changed;
                         }
                     } else if let Ok(item_id) = u16::try_from(item_id) {
-                        if !write_u16(data, cursor, item_id) {
+                        if !write_be_u16(data, cursor, item_id) {
                             return changed;
                         }
                     } else {
@@ -341,7 +311,7 @@ fn read_ipma_box(data: &[u8], box_header: BoxHeader) -> Option<IpmaBox> {
         .get(body_offset..body_offset + FULL_BOX_HEADER_SIZE)?
         .try_into()
         .ok()?;
-    let entry_count = read_u32(data, body_offset + FULL_BOX_HEADER_SIZE)?;
+    let entry_count = read_be_u32(data, body_offset + FULL_BOX_HEADER_SIZE)?;
     let entries = data
         .get(body_offset + FULL_BOX_HEADER_SIZE + IPMA_ENTRY_COUNT_SIZE..box_header.end_offset())?
         .to_vec();
@@ -356,7 +326,7 @@ fn read_ipma_box(data: &[u8], box_header: BoxHeader) -> Option<IpmaBox> {
 
 fn empty_ipma_box_with_alternate_version(version_and_flags: [u8; FULL_BOX_HEADER_SIZE]) -> Vec<u8> {
     let mut box_data = vec![0; EMPTY_IPMA_BOX_SIZE];
-    write_u32(&mut box_data, 0, EMPTY_IPMA_BOX_SIZE as u32);
+    write_be_u32(&mut box_data, 0, EMPTY_IPMA_BOX_SIZE as u32);
     box_data[4..8].copy_from_slice(b"ipma");
     box_data[8] = if version_and_flags[0] == 0 { 1 } else { 0 };
     box_data[9..12].copy_from_slice(&version_and_flags[1..4]);
@@ -395,10 +365,10 @@ fn patch_adjacent_duplicate_ipma_boxes(data: &mut [u8], first: &IpmaBox, second:
     }
 
     let mut replacement = vec![0; merged_size];
-    write_u32(&mut replacement, 0, merged_size as u32);
+    write_be_u32(&mut replacement, 0, merged_size as u32);
     replacement[4..8].copy_from_slice(b"ipma");
     replacement[8..12].copy_from_slice(&first.version_and_flags);
-    write_u32(&mut replacement, 12, first.entry_count + second.entry_count);
+    write_be_u32(&mut replacement, 12, first.entry_count + second.entry_count);
     replacement[16..].copy_from_slice(&entries);
     replacement.extend_from_slice(&empty_ipma_box_with_alternate_version(
         first.version_and_flags,

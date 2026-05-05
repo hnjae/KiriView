@@ -15,6 +15,8 @@ qsizetype estimatedRgbaByteCost(const QSize &size);
 std::optional<qsizetype> systemMemoryByteSize();
 qsizetype systemMemoryCappedByteBudget(
     qsizetype preferredByteBudget, qsizetype systemMemoryByteSize, qsizetype memoryDivisor);
+qsizetype defaultSystemMemoryCappedByteBudget(
+    qsizetype preferredByteBudget, qsizetype memoryDivisor);
 }
 
 #endif

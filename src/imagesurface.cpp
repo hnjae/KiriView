@@ -50,12 +50,7 @@ void StaticTileSurface::clearTiles() { m_tileCache.clear(); }
 
 qsizetype StaticTileSurface::defaultTileCacheByteBudget()
 {
-    const std::optional<qsizetype> systemMemory = systemMemoryByteSize();
-    if (!systemMemory.has_value()) {
-        return imageFullDecodeFallbackByteLimit;
-    }
-
-    return tileCacheByteBudgetForSystemMemory(*systemMemory);
+    return defaultSystemMemoryCappedByteBudget(imageFullDecodeFallbackByteLimit, 16);
 }
 
 qsizetype StaticTileSurface::tileCacheByteBudgetForSystemMemory(qsizetype systemMemoryByteSize)

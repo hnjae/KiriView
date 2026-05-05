@@ -18,6 +18,7 @@ private Q_SLOTS:
     void imageByteCostUsesQtImageStorageSize();
     void estimatedRgbaByteCostHandlesEmptyAndOverflow();
     void systemMemoryCappedByteBudgetCapsPreferredBudget();
+    void defaultSystemMemoryCappedByteBudgetReturnsPositiveCappedBudget();
 };
 
 void TestImageByteCost::imageByteCostUsesQtImageStorageSize()
@@ -51,6 +52,18 @@ void TestImageByteCost::systemMemoryCappedByteBudgetCapsPreferredBudget()
         preferredByteBudget);
     QCOMPARE(KiriView::systemMemoryCappedByteBudget(preferredByteBudget, preferredByteBudget, 0),
         preferredByteBudget);
+    QCOMPARE(KiriView::systemMemoryCappedByteBudget(-1, 0, 8), qsizetype(0));
+}
+
+void TestImageByteCost::defaultSystemMemoryCappedByteBudgetReturnsPositiveCappedBudget()
+{
+    constexpr qsizetype preferredByteBudget = 1024;
+
+    const qsizetype byteBudget
+        = KiriView::defaultSystemMemoryCappedByteBudget(preferredByteBudget, 8);
+
+    QVERIFY(byteBudget > 0);
+    QVERIFY(byteBudget <= preferredByteBudget);
 }
 
 QTEST_GUILESS_MAIN(TestImageByteCost)
