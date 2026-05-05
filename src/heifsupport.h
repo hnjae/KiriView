@@ -12,10 +12,63 @@
 #include <QString>
 #include <cstdint>
 #include <optional>
+#include <utility>
 
 namespace KiriView {
 QString heifErrorString(const char *action, const heif_error &error);
 std::optional<QString> initializeHeifLibrary();
+
+namespace Detail {
+    template <typename Resource, auto Release> class HeifResource final
+    {
+    public:
+        HeifResource() = default;
+
+        explicit HeifResource(Resource *resource)
+            : m_resource(resource)
+        {
+        }
+
+        ~HeifResource() { reset(); }
+
+        HeifResource(const HeifResource &) = delete;
+        HeifResource &operator=(const HeifResource &) = delete;
+
+        HeifResource(HeifResource &&other) noexcept
+            : m_resource(std::exchange(other.m_resource, nullptr))
+        {
+        }
+
+        HeifResource &operator=(HeifResource &&other) noexcept
+        {
+            if (this == &other) {
+                return *this;
+            }
+
+            reset(std::exchange(other.m_resource, nullptr));
+            return *this;
+        }
+
+        Resource *get() const { return m_resource; }
+
+        Resource **out()
+        {
+            reset();
+            return &m_resource;
+        }
+
+        void reset(Resource *resource = nullptr)
+        {
+            if (m_resource != nullptr) {
+                Release(m_resource);
+            }
+            m_resource = resource;
+        }
+
+    private:
+        Resource *m_resource = nullptr;
+    };
+}
 
 class HeifContext final
 {
@@ -31,7 +84,7 @@ public:
     heif_context *get() const;
 
 private:
-    heif_context *m_context = nullptr;
+    Detail::HeifResource<heif_context, heif_context_free> m_context;
 };
 
 class HeifImageHandle final
@@ -49,7 +102,7 @@ public:
     const heif_image_handle *get() const;
 
 private:
-    heif_image_handle *m_handle = nullptr;
+    Detail::HeifResource<heif_image_handle, heif_image_handle_release> m_handle;
 };
 
 class HeifTrack final
@@ -67,7 +120,7 @@ public:
     heif_track *get() const;
 
 private:
-    heif_track *m_track = nullptr;
+    Detail::HeifResource<heif_track, heif_track_release> m_track;
 };
 
 class HeifImage final
@@ -85,7 +138,7 @@ public:
     const heif_image *get() const;
 
 private:
-    heif_image *m_image = nullptr;
+    Detail::HeifResource<heif_image, heif_image_release> m_image;
 };
 
 class HeifDecodingOptions final
@@ -102,7 +155,7 @@ public:
     const heif_decoding_options *get() const;
 
 private:
-    heif_decoding_options *m_options = nullptr;
+    Detail::HeifResource<heif_decoding_options, heif_decoding_options_free> m_options;
 };
 
 struct HeifPrimaryImage {

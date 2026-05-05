@@ -50,152 +50,62 @@ HeifContext::HeifContext()
 {
 }
 
-HeifContext::~HeifContext()
-{
-    if (m_context != nullptr) {
-        heif_context_free(m_context);
-    }
-}
+HeifContext::~HeifContext() = default;
 
-HeifContext::HeifContext(HeifContext &&other) noexcept
-    : m_context(std::exchange(other.m_context, nullptr))
-{
-}
+HeifContext::HeifContext(HeifContext &&other) noexcept = default;
 
-HeifContext &HeifContext::operator=(HeifContext &&other) noexcept
-{
-    if (this == &other) {
-        return *this;
-    }
-    if (m_context != nullptr) {
-        heif_context_free(m_context);
-    }
-    m_context = std::exchange(other.m_context, nullptr);
-    return *this;
-}
+HeifContext &HeifContext::operator=(HeifContext &&other) noexcept = default;
 
-heif_context *HeifContext::get() const { return m_context; }
+heif_context *HeifContext::get() const { return m_context.get(); }
 
-HeifImageHandle::~HeifImageHandle()
-{
-    if (m_handle != nullptr) {
-        heif_image_handle_release(m_handle);
-    }
-}
+HeifImageHandle::~HeifImageHandle() = default;
 
-HeifImageHandle::HeifImageHandle(HeifImageHandle &&other) noexcept
-    : m_handle(std::exchange(other.m_handle, nullptr))
-{
-}
+HeifImageHandle::HeifImageHandle(HeifImageHandle &&other) noexcept = default;
 
-HeifImageHandle &HeifImageHandle::operator=(HeifImageHandle &&other) noexcept
-{
-    if (this == &other) {
-        return *this;
-    }
-    if (m_handle != nullptr) {
-        heif_image_handle_release(m_handle);
-    }
-    m_handle = std::exchange(other.m_handle, nullptr);
-    return *this;
-}
+HeifImageHandle &HeifImageHandle::operator=(HeifImageHandle &&other) noexcept = default;
 
-heif_image_handle **HeifImageHandle::out() { return &m_handle; }
+heif_image_handle **HeifImageHandle::out() { return m_handle.out(); }
 
-const heif_image_handle *HeifImageHandle::get() const { return m_handle; }
+const heif_image_handle *HeifImageHandle::get() const { return m_handle.get(); }
 
 HeifTrack::HeifTrack(heif_track *track)
     : m_track(track)
 {
 }
 
-HeifTrack::~HeifTrack()
-{
-    if (m_track != nullptr) {
-        heif_track_release(m_track);
-    }
-}
+HeifTrack::~HeifTrack() = default;
 
-HeifTrack::HeifTrack(HeifTrack &&other) noexcept
-    : m_track(std::exchange(other.m_track, nullptr))
-{
-}
+HeifTrack::HeifTrack(HeifTrack &&other) noexcept = default;
 
-HeifTrack &HeifTrack::operator=(HeifTrack &&other) noexcept
-{
-    if (this == &other) {
-        return *this;
-    }
-    if (m_track != nullptr) {
-        heif_track_release(m_track);
-    }
-    m_track = std::exchange(other.m_track, nullptr);
-    return *this;
-}
+HeifTrack &HeifTrack::operator=(HeifTrack &&other) noexcept = default;
 
-heif_track *HeifTrack::get() const { return m_track; }
+heif_track *HeifTrack::get() const { return m_track.get(); }
 
-HeifImage::~HeifImage()
-{
-    if (m_image != nullptr) {
-        heif_image_release(m_image);
-    }
-}
+HeifImage::~HeifImage() = default;
 
-HeifImage::HeifImage(HeifImage &&other) noexcept
-    : m_image(std::exchange(other.m_image, nullptr))
-{
-}
+HeifImage::HeifImage(HeifImage &&other) noexcept = default;
 
-HeifImage &HeifImage::operator=(HeifImage &&other) noexcept
-{
-    if (this == &other) {
-        return *this;
-    }
-    if (m_image != nullptr) {
-        heif_image_release(m_image);
-    }
-    m_image = std::exchange(other.m_image, nullptr);
-    return *this;
-}
+HeifImage &HeifImage::operator=(HeifImage &&other) noexcept = default;
 
-heif_image **HeifImage::out() { return &m_image; }
+heif_image **HeifImage::out() { return m_image.out(); }
 
-const heif_image *HeifImage::get() const { return m_image; }
+const heif_image *HeifImage::get() const { return m_image.get(); }
 
 HeifDecodingOptions::HeifDecodingOptions()
     : m_options(heif_decoding_options_alloc())
 {
-    if (m_options != nullptr) {
-        m_options->convert_hdr_to_8bit = 1;
+    if (m_options.get() != nullptr) {
+        m_options.get()->convert_hdr_to_8bit = 1;
     }
 }
 
-HeifDecodingOptions::~HeifDecodingOptions()
-{
-    if (m_options != nullptr) {
-        heif_decoding_options_free(m_options);
-    }
-}
+HeifDecodingOptions::~HeifDecodingOptions() = default;
 
-HeifDecodingOptions::HeifDecodingOptions(HeifDecodingOptions &&other) noexcept
-    : m_options(std::exchange(other.m_options, nullptr))
-{
-}
+HeifDecodingOptions::HeifDecodingOptions(HeifDecodingOptions &&other) noexcept = default;
 
-HeifDecodingOptions &HeifDecodingOptions::operator=(HeifDecodingOptions &&other) noexcept
-{
-    if (this == &other) {
-        return *this;
-    }
-    if (m_options != nullptr) {
-        heif_decoding_options_free(m_options);
-    }
-    m_options = std::exchange(other.m_options, nullptr);
-    return *this;
-}
+HeifDecodingOptions &HeifDecodingOptions::operator=(HeifDecodingOptions &&other) noexcept = default;
 
-const heif_decoding_options *HeifDecodingOptions::get() const { return m_options; }
+const heif_decoding_options *HeifDecodingOptions::get() const { return m_options.get(); }
 
 std::optional<HeifPrimaryImage> openHeifPrimaryImage(const QByteArray &data, QString *errorString)
 {
