@@ -150,10 +150,8 @@ struct ImageLoadRequest {
 };
 
 struct PredecodedImage {
-    std::shared_ptr<ImageTileSource> source;
-    QImage preview;
+    StaticImagePayload staticImage;
     DisplayedImageLocation location;
-    StaticImageDisplayHints displayHints;
 };
 }
 

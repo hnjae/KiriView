@@ -48,9 +48,11 @@ KiriView::DecodedImageResult staticDecodedImageWithPreview(const QSize &sourceSi
     const QSize &previewSize, KiriView::StaticImageDisplayHints displayHints = {})
 {
     return KiriView::StaticDecodedImage {
-        std::make_shared<KiriView::TestSupport::TestImageTileSource>(testImage(sourceSize)),
-        testImage(previewSize),
-        displayHints,
+        KiriView::StaticImagePayload {
+            std::make_shared<KiriView::TestSupport::TestImageTileSource>(testImage(sourceSize)),
+            testImage(previewSize),
+            displayHints,
+        },
     };
 }
 

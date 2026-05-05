@@ -58,9 +58,7 @@ public:
     quint64 imageRevision() const;
     bool hasImage() const;
     bool isPredecodeCacheable() const;
-    std::shared_ptr<ImageTileSource> staticImageSource() const;
-    const QImage &staticImagePreview() const;
-    const StaticImageDisplayHints &staticImageDisplayHints() const;
+    std::optional<StaticImagePayload> staticImage() const;
     ImageFirstDisplayDecodeContext firstDisplayDecodeContext() const;
 
     void resetZoom();
@@ -70,8 +68,7 @@ public:
     void prepareFailedContainer(const QUrl &containerUrl);
     void setPredecodeCacheable(bool cacheable);
     void setImage(const QImage &image);
-    void setStaticImage(std::shared_ptr<ImageTileSource> source, const QImage &preview,
-        StaticImageDisplayHints displayHints = {});
+    void setStaticImage(StaticImagePayload staticImage);
     void clearImage();
 
     void startAnimation(

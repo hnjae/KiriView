@@ -298,7 +298,9 @@ private:
 
 inline StaticDecodedImage staticDecodedTestImage(const QImage &image = testImage())
 {
-    return StaticDecodedImage { std::make_shared<TestImageTileSource>(image), image, {} };
+    return StaticDecodedImage {
+        StaticImagePayload { std::make_shared<TestImageTileSource>(image), image, {} },
+    };
 }
 
 inline DecodedImageResult decodeStaticTestImageData(const QByteArray &, const ImageDecodeRequest &)

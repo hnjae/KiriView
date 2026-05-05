@@ -36,7 +36,9 @@ std::optional<KiriView::DecodedImageResult> decodeSvgImageData(const QByteArray 
         return decodedImageFailure(errorString);
     }
 
-    return KiriView::StaticDecodedImage { std::move(source), std::move(preview), {} };
+    return KiriView::StaticDecodedImage {
+        KiriView::StaticImagePayload { std::move(source), std::move(preview), {} },
+    };
 }
 
 KiriView::DecodedImageResult openedStaticImageResult(
@@ -56,8 +58,10 @@ KiriView::DecodedImageResult openedStaticImageResult(
             return decodedImageFailure(errorString);
         }
 
-        return KiriView::StaticDecodedImage { std::move(source), std::move(firstDisplay.image),
-            KiriView::StaticImageDisplayHints { firstDisplay.displayPixelsPerSourcePixel } };
+        return KiriView::StaticDecodedImage {
+            KiriView::StaticImagePayload { std::move(source), std::move(firstDisplay.image),
+                KiriView::StaticImageDisplayHints { firstDisplay.displayPixelsPerSourcePixel } },
+        };
     }
     if (firstDisplay.status == KiriView::FirstDisplayImageDecodeStatus::Error) {
         return decodedImageFailure(errorString);
@@ -69,7 +73,9 @@ KiriView::DecodedImageResult openedStaticImageResult(
         return decodedImageFailure(errorString);
     }
 
-    return KiriView::StaticDecodedImage { std::move(source), std::move(preview), {} };
+    return KiriView::StaticDecodedImage {
+        KiriView::StaticImagePayload { std::move(source), std::move(preview), {} },
+    };
 }
 }
 

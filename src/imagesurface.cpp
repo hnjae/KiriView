@@ -10,30 +10,43 @@
 #include <utility>
 
 namespace KiriView {
-StaticTileSurface::StaticTileSurface(
-    std::shared_ptr<ImageTileSource> source, QImage preview, StaticImageDisplayHints displayHints)
-    : m_source(std::move(source))
-    , m_pyramid(m_source == nullptr ? QSize() : m_source->imageSize())
-    , m_preview(std::move(preview))
-    , m_displayHints(displayHints)
+bool StaticImagePayload::isValid() const { return source != nullptr && !preview.isNull(); }
+
+qsizetype StaticImagePayload::byteCost() const
+{
+    if (!isValid()) {
+        return 0;
+    }
+
+    return source->byteCost() + imageByteCost(preview);
+}
+
+StaticTileSurface::StaticTileSurface(StaticImagePayload image)
+    : m_image(std::move(image))
+    , m_pyramid(m_image.source == nullptr ? QSize() : m_image.source->imageSize())
     , m_tileCache(defaultTileCacheByteBudget())
 {
 }
 
 bool StaticTileSurface::isValid() const
 {
-    return m_source != nullptr && !m_source->imageSize().isEmpty() && !m_preview.isNull();
+    return m_image.isValid() && !m_image.source->imageSize().isEmpty();
 }
 
-std::shared_ptr<ImageTileSource> StaticTileSurface::source() const { return m_source; }
+const StaticImagePayload &StaticTileSurface::image() const { return m_image; }
+
+std::shared_ptr<ImageTileSource> StaticTileSurface::source() const { return m_image.source; }
 
 const TilePyramid &StaticTileSurface::pyramid() const { return m_pyramid; }
 
 QSize StaticTileSurface::imageSize() const { return m_pyramid.imageSize(); }
 
-const QImage &StaticTileSurface::preview() const { return m_preview; }
+const QImage &StaticTileSurface::preview() const { return m_image.preview; }
 
-const StaticImageDisplayHints &StaticTileSurface::displayHints() const { return m_displayHints; }
+const StaticImageDisplayHints &StaticTileSurface::displayHints() const
+{
+    return m_image.displayHints;
+}
 
 bool StaticTileSurface::containsTile(const TileKey &key) const { return m_tileCache.contains(key); }
 
@@ -58,12 +71,14 @@ qsizetype StaticTileSurface::tileCacheByteBudgetForSystemMemory(qsizetype system
     return systemMemoryCappedByteBudget(imageFullDecodeFallbackByteLimit, systemMemoryByteSize, 16);
 }
 
-bool staticImageFitsFullImageSurface(
-    const ImageTileSource &source, const QImage &preview, int maximumTextureSize)
+bool staticImageFitsFullImageSurface(const StaticImagePayload &image, int maximumTextureSize)
 {
-    const QSize imageSize = source.imageSize();
-    if (imageSize.isEmpty() || preview.isNull() || preview.size() != imageSize
-        || maximumTextureSize <= 0) {
+    if (!image.isValid()) {
+        return false;
+    }
+
+    const QSize imageSize = image.source->imageSize();
+    if (imageSize.isEmpty() || image.preview.size() != imageSize || maximumTextureSize <= 0) {
         return false;
     }
 

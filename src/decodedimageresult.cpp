@@ -3,16 +3,14 @@
 
 #include "decodedimageresult.h"
 
-#include "imagebytecost.h"
-
 namespace KiriView {
 bool decodedImageResultIsPredecodeCacheable(const DecodedImageResult &result, qsizetype byteBudget)
 {
     const auto *image = std::get_if<StaticDecodedImage>(&result);
-    if (image == nullptr || image->source == nullptr || image->preview.isNull()) {
+    if (image == nullptr || !image->staticImage.isValid()) {
         return false;
     }
 
-    return image->source->byteCost() + imageByteCost(image->preview) <= byteBudget;
+    return image->staticImage.byteCost() <= byteBudget;
 }
 }

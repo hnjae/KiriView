@@ -42,19 +42,15 @@ public:
     bool isInFlight(const QUrl &url, const QUrl &activePredecodeUrl) const;
     std::optional<PredecodedImage> findImage(const QUrl &url) const;
     void cacheImage(const QUrl &url, const ArchiveDocumentLocation &archiveDocument,
-        std::shared_ptr<ImageTileSource> source, const QImage &preview,
-        StaticImageDisplayHints displayHints = {});
+        StaticImagePayload staticImage);
     void cacheDisplayedImage(bool cacheable, const QUrl &url,
-        const ArchiveDocumentLocation &archiveDocument, std::shared_ptr<ImageTileSource> source,
-        const QImage &preview, StaticImageDisplayHints displayHints = {});
+        const ArchiveDocumentLocation &archiveDocument, StaticImagePayload staticImage);
 
 private:
     struct CachedImage {
         QUrl url;
         ArchiveDocumentLocation archiveDocument;
-        std::shared_ptr<ImageTileSource> source;
-        QImage preview;
-        StaticImageDisplayHints displayHints;
+        StaticImagePayload staticImage;
         qsizetype byteCost = 0;
     };
     using CachedImageIterator = std::vector<CachedImage>::iterator;

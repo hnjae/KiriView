@@ -68,16 +68,15 @@ void TestImagePredecodeCoordinator::scheduleCachesDisplayedImageAndPredecodesWin
     coordinator.schedule(KiriView::ImagePredecodeCoordinator::Context {
         KiriView::DisplayedImageLocation::fromUrl(displayedUrl),
         true,
-        std::make_shared<TestImageTileSource>(displayedImage),
-        displayedImage,
-        KiriView::StaticImageDisplayHints { 0.5 },
+        KiriView::StaticImagePayload { std::make_shared<TestImageTileSource>(displayedImage),
+            displayedImage, KiriView::StaticImageDisplayHints { 0.5 } },
         KiriView::ImageFirstDisplayDecodeContext { QSize(640, 480) },
     });
 
     const std::optional<KiriView::PredecodedImage> displayed = coordinator.tryTake(displayedUrl);
     QVERIFY(displayed.has_value());
     QCOMPARE(displayed->location.imageUrl(), displayedUrl);
-    QCOMPARE(displayed->displayHints.firstDisplayPixelsPerSourcePixel, 0.5);
+    QCOMPARE(displayed->staticImage.displayHints.firstDisplayPixelsPerSourcePixel, 0.5);
 
     QCOMPARE(dataLoader.loads.size(), std::size_t(1));
     QCOMPARE(dataLoader.loads.front()->url, nextUrl);
@@ -108,8 +107,8 @@ void TestImagePredecodeCoordinator::cancelSuppressesPendingDecode()
     coordinator.schedule(KiriView::ImagePredecodeCoordinator::Context {
         KiriView::DisplayedImageLocation::fromUrl(displayedUrl),
         false,
-        std::make_shared<TestImageTileSource>(displayedImage),
-        displayedImage,
+        KiriView::StaticImagePayload {
+            std::make_shared<TestImageTileSource>(displayedImage), displayedImage, {} },
     });
 
     QCOMPARE(dataLoader.loads.size(), std::size_t(1));

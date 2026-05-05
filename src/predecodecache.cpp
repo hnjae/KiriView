@@ -147,18 +147,17 @@ std::optional<PredecodedImage> PredecodeCache::findImage(const QUrl &url) const
     const DisplayedImageLocation location = cached->archiveDocument.isEmpty()
         ? DisplayedImageLocation::fromUrl(cached->url)
         : DisplayedImageLocation::fromArchiveDocument(cached->url, cached->archiveDocument);
-    return PredecodedImage { cached->source, cached->preview, location, cached->displayHints };
+    return PredecodedImage { cached->staticImage, location };
 }
 
-void PredecodeCache::cacheImage(const QUrl &url, const ArchiveDocumentLocation &archiveDocument,
-    std::shared_ptr<ImageTileSource> source, const QImage &preview,
-    StaticImageDisplayHints displayHints)
+void PredecodeCache::cacheImage(
+    const QUrl &url, const ArchiveDocumentLocation &archiveDocument, StaticImagePayload staticImage)
 {
-    if (source == nullptr || preview.isNull()) {
+    if (!staticImage.isValid()) {
         return;
     }
 
-    const qsizetype byteCost = source->byteCost() + imageByteCost(preview);
+    const qsizetype byteCost = staticImage.byteCost();
     if (byteCost <= 0 || byteCost > m_byteBudget) {
         return;
     }
@@ -169,21 +168,20 @@ void PredecodeCache::cacheImage(const QUrl &url, const ArchiveDocumentLocation &
     }
 
     removeCachedImage(*normalizedUrl);
-    m_images.push_back(CachedImage {
-        *normalizedUrl, archiveDocument, std::move(source), preview, displayHints, byteCost });
+    m_images.push_back(
+        CachedImage { *normalizedUrl, archiveDocument, std::move(staticImage), byteCost });
 
     trimImagesToWindow();
 }
 
 void PredecodeCache::cacheDisplayedImage(bool cacheable, const QUrl &url,
-    const ArchiveDocumentLocation &archiveDocument, std::shared_ptr<ImageTileSource> source,
-    const QImage &preview, StaticImageDisplayHints displayHints)
+    const ArchiveDocumentLocation &archiveDocument, StaticImagePayload staticImage)
 {
-    if (!cacheable || url.isEmpty() || source == nullptr || preview.isNull()) {
+    if (!cacheable || url.isEmpty()) {
         return;
     }
 
-    cacheImage(url, archiveDocument, std::move(source), preview, displayHints);
+    cacheImage(url, archiveDocument, std::move(staticImage));
 }
 
 bool PredecodeCache::containsUrl(const std::vector<QUrl> &urls, const QUrl &url)

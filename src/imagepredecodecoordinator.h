@@ -27,9 +27,7 @@ public:
     struct Context {
         DisplayedImageLocation displayedImageLocation;
         bool displayedImageIsCacheable = false;
-        std::shared_ptr<ImageTileSource> displayedImageSource;
-        QImage displayedImagePreview;
-        StaticImageDisplayHints displayedImageDisplayHints;
+        StaticImagePayload displayedImage;
         ImageFirstDisplayDecodeContext firstDisplayContext;
     };
 

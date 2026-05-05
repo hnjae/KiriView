@@ -105,8 +105,7 @@ void ImageOpenController::setSourceUrlFromResolvedLoad(const QUrl &sourceUrl)
 
 void ImageOpenController::finishPredecodedImageLoad(ImageLoadSession session, PredecodedImage image)
 {
-    finishStaticImageLoad(
-        session, std::move(image.source), image.preview, image.displayHints, true);
+    finishStaticImageLoad(session, std::move(image.staticImage), true);
     report(ImageDocumentEffect::scheduleAdjacentImagePredecode());
 }
 
@@ -134,8 +133,7 @@ bool ImageOpenController::finishDecodedImageResult(
 {
     const bool predecodeCacheable
         = decodedImageResultIsPredecodeCacheable(result, PredecodeCache::byteBudget());
-    finishStaticImageLoad(session, std::move(decoded.source), decoded.preview, decoded.displayHints,
-        predecodeCacheable);
+    finishStaticImageLoad(session, std::move(decoded.staticImage), predecodeCacheable);
     return true;
 }
 
@@ -200,12 +198,11 @@ void ImageOpenController::finishInitialLoadWithError(const QString &errorString)
     reportEffects(ImageOpenWorkflow::finishInitialLoadWithError(m_state, errorString));
 }
 
-void ImageOpenController::finishStaticImageLoad(const ImageLoadSession &session,
-    std::shared_ptr<ImageTileSource> source, const QImage &preview,
-    StaticImageDisplayHints displayHints, bool predecodeCacheable)
+void ImageOpenController::finishStaticImageLoad(
+    const ImageLoadSession &session, StaticImagePayload staticImage, bool predecodeCacheable)
 {
     beginSuccessfulImagePresentation(session, predecodeCacheable);
-    m_presentationController.setStaticImage(std::move(source), preview, displayHints);
+    m_presentationController.setStaticImage(std::move(staticImage));
     finishSuccessfulImagePresentation(session);
 }
 

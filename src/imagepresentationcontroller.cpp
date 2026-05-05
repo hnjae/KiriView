@@ -100,19 +100,9 @@ bool ImagePresentationController::isPredecodeCacheable() const
     return m_displayedImageState->isPredecodeCacheable();
 }
 
-std::shared_ptr<ImageTileSource> ImagePresentationController::staticImageSource() const
+std::optional<StaticImagePayload> ImagePresentationController::staticImage() const
 {
-    return m_displayedImageState->staticImageSource();
-}
-
-const QImage &ImagePresentationController::staticImagePreview() const
-{
-    return m_displayedImageState->staticImagePreview();
-}
-
-const StaticImageDisplayHints &ImagePresentationController::staticImageDisplayHints() const
-{
-    return m_displayedImageState->staticImageDisplayHints();
+    return m_displayedImageState->staticImage();
 }
 
 ImageFirstDisplayDecodeContext ImagePresentationController::firstDisplayDecodeContext() const
@@ -192,15 +182,13 @@ void ImagePresentationController::setImage(const QImage &image)
     m_displayedImageState->setImage(image);
 }
 
-void ImagePresentationController::setStaticImage(std::shared_ptr<ImageTileSource> source,
-    const QImage &preview, StaticImageDisplayHints displayHints)
+void ImagePresentationController::setStaticImage(StaticImagePayload staticImage)
 {
     stopAnimation();
     invalidateTiles();
-    const bool useFullImageSurface = source != nullptr
-        && staticImageFitsFullImageSurface(*source, preview, maximumTextureSize());
-    m_displayedImageState->setStaticImage(
-        std::move(source), preview, displayHints, useFullImageSurface);
+    const bool useFullImageSurface
+        = staticImageFitsFullImageSurface(staticImage, maximumTextureSize());
+    m_displayedImageState->setStaticImage(std::move(staticImage), useFullImageSurface);
     if (!useFullImageSurface) {
         scheduleVisibleTileDecode();
     }

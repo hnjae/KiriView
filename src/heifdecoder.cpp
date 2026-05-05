@@ -50,7 +50,9 @@ std::optional<KiriView::DecodedImageResult> decodeHeifStillImageDataForInfo(
         return decodedImageFailure(errorString);
     }
 
-    return KiriView::StaticDecodedImage { std::move(source), std::move(preview), {} };
+    return KiriView::StaticDecodedImage {
+        KiriView::StaticImagePayload { std::move(source), std::move(preview), {} },
+    };
 }
 
 std::optional<KiriView::DecodedImageResult> decodeHeifSequenceImageDataForInfo(

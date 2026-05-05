@@ -66,9 +66,8 @@ private:
         const ImageLoadSession &session, ImageLoadError error, const QString &errorString);
     void finishReplacementLoadWithError(const QString &errorString);
     void finishInitialLoadWithError(const QString &errorString);
-    void finishStaticImageLoad(const ImageLoadSession &session,
-        std::shared_ptr<ImageTileSource> source, const QImage &preview,
-        StaticImageDisplayHints displayHints, bool predecodeCacheable);
+    void finishStaticImageLoad(
+        const ImageLoadSession &session, StaticImagePayload staticImage, bool predecodeCacheable);
     void finishLoadSuccessfully(
         const ImageLoadSession &session, const QImage &image, bool predecodeCacheable);
     void beginSuccessfulImagePresentation(const ImageLoadSession &session, bool predecodeCacheable);

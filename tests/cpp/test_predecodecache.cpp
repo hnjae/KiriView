@@ -37,6 +37,12 @@ std::shared_ptr<KiriView::ImageTileSource> tileSourceFor(const QImage &image)
     return std::make_shared<KiriView::TestSupport::TestImageTileSource>(image);
 }
 
+KiriView::StaticImagePayload staticImageFor(
+    const QImage &image, KiriView::StaticImageDisplayHints displayHints = {})
+{
+    return KiriView::StaticImagePayload { tileSourceFor(image), image, displayHints };
+}
+
 KiriView::ArchiveDocumentLocation comicBookArchiveDocument()
 {
     return KiriView::ArchiveDocumentLocation::fromUrls(
@@ -67,7 +73,7 @@ void TestPredecodeCache::queueContainsOnlyMissingWindowImages()
     cache.setWindowUrls({ displayedUrl, firstQueuedUrl, firstQueuedUrl, QUrl(), secondQueuedUrl });
     const KiriView::ArchiveDocumentLocation archiveDocument = comicBookArchiveDocument();
     const QImage firstImage = cacheImage();
-    cache.cacheImage(firstQueuedUrl, archiveDocument, tileSourceFor(firstImage), firstImage);
+    cache.cacheImage(firstQueuedUrl, archiveDocument, staticImageFor(firstImage));
     cache.enqueueMissingWindowLoads(displayedUrl, archiveDocument, QUrl());
 
     QVERIFY(cache.isInFlight(secondQueuedUrl, QUrl()));
@@ -101,15 +107,15 @@ void TestPredecodeCache::cacheStoresAndFindsWindowImages()
     const QImage image = cacheImage();
 
     cache.setWindowUrls({ url });
-    cache.cacheImage(url, archiveDocument, tileSourceFor(image), image,
-        KiriView::StaticImageDisplayHints { 0.5 });
+    cache.cacheImage(
+        url, archiveDocument, staticImageFor(image, KiriView::StaticImageDisplayHints { 0.5 }));
 
     const std::optional<KiriView::PredecodedImage> found = cache.findImage(url);
     QVERIFY(found.has_value());
-    QCOMPARE(found->preview.size(), image.size());
+    QCOMPARE(found->staticImage.preview.size(), image.size());
     QCOMPARE(found->location.imageUrl(), url);
     QCOMPARE(found->location.archiveDocumentRootUrl(), archiveDocument.rootUrl());
-    QCOMPARE(found->displayHints.firstDisplayPixelsPerSourcePixel, 0.5);
+    QCOMPARE(found->staticImage.displayHints.firstDisplayPixelsPerSourcePixel, 0.5);
 }
 
 void TestPredecodeCache::cacheRejectsUncacheableAndOversizedImages()
@@ -121,17 +127,17 @@ void TestPredecodeCache::cacheRejectsUncacheableAndOversizedImages()
 
     cache.setWindowUrls({ url });
     const QImage image = cacheImage();
-    cache.cacheDisplayedImage(false, url, archiveDocument, tileSourceFor(image), image);
+    cache.cacheDisplayedImage(false, url, archiveDocument, staticImageFor(image));
     QVERIFY(!cache.hasImage(url));
 
-    cache.cacheDisplayedImage(true, url, archiveDocument, {}, QImage());
+    cache.cacheDisplayedImage(true, url, archiveDocument, KiriView::StaticImagePayload {});
     QVERIFY(!cache.hasImage(url));
 
-    cache.cacheImage(outsideWindowUrl, archiveDocument, tileSourceFor(image), image);
+    cache.cacheImage(outsideWindowUrl, archiveDocument, staticImageFor(image));
     QVERIFY(!cache.hasImage(outsideWindowUrl));
 
     const QImage largeImage = tooLargeImage();
-    cache.cacheImage(url, archiveDocument, tileSourceFor(largeImage), largeImage);
+    cache.cacheImage(url, archiveDocument, staticImageFor(largeImage));
     QVERIFY(!cache.hasImage(url));
 }
 
@@ -145,9 +151,9 @@ void TestPredecodeCache::cacheEvictsLowestPriorityImagesWhenBudgetIsExceeded()
 
     cache.setWindowUrls({ firstUrl, secondUrl, thirdUrl });
     const QImage image = cacheImage();
-    cache.cacheImage(thirdUrl, archiveDocument, tileSourceFor(image), image);
-    cache.cacheImage(firstUrl, archiveDocument, tileSourceFor(image), image);
-    cache.cacheImage(secondUrl, archiveDocument, tileSourceFor(image), image);
+    cache.cacheImage(thirdUrl, archiveDocument, staticImageFor(image));
+    cache.cacheImage(firstUrl, archiveDocument, staticImageFor(image));
+    cache.cacheImage(secondUrl, archiveDocument, staticImageFor(image));
 
     QVERIFY(cache.hasImage(firstUrl));
     QVERIFY(cache.hasImage(secondUrl));

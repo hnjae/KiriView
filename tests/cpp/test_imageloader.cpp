@@ -109,13 +109,14 @@ void TestImageLoader::predecodedImageBypassesDataLoad()
 
         const QImage image = testImage();
         return std::optional<KiriView::PredecodedImage>(KiriView::PredecodedImage {
-            std::make_shared<KiriView::TestSupport::TestImageTileSource>(image), image,
+            KiriView::StaticImagePayload {
+                std::make_shared<KiriView::TestSupport::TestImageTileSource>(image), image, {} },
             KiriView::DisplayedImageLocation::fromArchiveDocument(imageUrl, *archiveDocument) });
     };
     callbacks.predecodedImage = [&predecodedSession, &imageSize](KiriView::ImageLoadSession session,
                                     KiriView::PredecodedImage image) {
         predecodedSession = std::move(session);
-        imageSize = image.preview.size();
+        imageSize = image.staticImage.preview.size();
     };
     KiriView::ImageLoader loader
         = createLoader(this, candidateProvider, dataLoader, std::move(callbacks));

@@ -56,13 +56,22 @@ public:
     virtual qsizetype byteCost() const = 0;
 };
 
+struct StaticImagePayload {
+    std::shared_ptr<ImageTileSource> source;
+    QImage preview;
+    StaticImageDisplayHints displayHints;
+
+    bool isValid() const;
+    qsizetype byteCost() const;
+};
+
 class StaticTileSurface
 {
 public:
-    explicit StaticTileSurface(std::shared_ptr<ImageTileSource> source = {}, QImage preview = {},
-        StaticImageDisplayHints displayHints = {});
+    explicit StaticTileSurface(StaticImagePayload image = {});
 
     bool isValid() const;
+    const StaticImagePayload &image() const;
     std::shared_ptr<ImageTileSource> source() const;
     const TilePyramid &pyramid() const;
     QSize imageSize() const;
@@ -78,10 +87,8 @@ public:
     static qsizetype tileCacheByteBudgetForSystemMemory(qsizetype systemMemoryByteSize);
 
 private:
-    std::shared_ptr<ImageTileSource> m_source;
+    StaticImagePayload m_image;
     TilePyramid m_pyramid;
-    QImage m_preview;
-    StaticImageDisplayHints m_displayHints;
     DecodedTileCache m_tileCache;
 };
 
@@ -91,8 +98,7 @@ struct LegacyFrameSurface {
 
 using DisplayedImageSurface = std::variant<LegacyFrameSurface, StaticTileSurface>;
 
-bool staticImageFitsFullImageSurface(
-    const ImageTileSource &source, const QImage &preview, int maximumTextureSize);
+bool staticImageFitsFullImageSurface(const StaticImagePayload &image, int maximumTextureSize);
 QSize displayedImageSurfaceSize(const DisplayedImageSurface &surface);
 bool displayedImageSurfaceIsNull(const DisplayedImageSurface &surface);
 }

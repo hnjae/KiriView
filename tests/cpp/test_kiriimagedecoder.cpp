@@ -198,10 +198,10 @@ void TestKiriImageDecoder::jpegCompressedHeifStillImageDecodes()
     KiriView::DecodedImageResult result = KiriView::decodeImageData(*imageData);
     const auto *decoded = std::get_if<KiriView::StaticDecodedImage>(&result);
     QVERIFY2(decoded != nullptr, "JPEG-compressed HEIF should decode as a static image");
-    QVERIFY(decoded->source != nullptr);
-    QCOMPARE(decoded->source->imageSize(), QSize(2, 2));
-    QCOMPARE(decoded->preview.size(), QSize(2, 2));
-    QVERIFY(!decoded->preview.isNull());
+    QVERIFY(decoded->staticImage.source != nullptr);
+    QCOMPARE(decoded->staticImage.source->imageSize(), QSize(2, 2));
+    QCOMPARE(decoded->staticImage.preview.size(), QSize(2, 2));
+    QVERIFY(!decoded->staticImage.preview.isNull());
 }
 
 void TestKiriImageDecoder::avifStillBrandUsesHeifStaticPath()
@@ -215,10 +215,11 @@ void TestKiriImageDecoder::avifStillBrandUsesHeifStaticPath()
     KiriView::DecodedImageResult result = KiriView::decodeImageData(*imageData);
     const auto *decoded = std::get_if<KiriView::StaticDecodedImage>(&result);
     QVERIFY2(decoded != nullptr, "AVIF still brand should use the HEIF static image path");
-    QVERIFY(decoded->source != nullptr);
-    QVERIFY(dynamic_cast<KiriView::QImageReaderTileSource *>(decoded->source.get()) == nullptr);
-    QCOMPARE(decoded->source->imageSize(), QSize(2, 2));
-    QCOMPARE(decoded->preview.size(), QSize(2, 2));
+    QVERIFY(decoded->staticImage.source != nullptr);
+    QVERIFY(dynamic_cast<KiriView::QImageReaderTileSource *>(decoded->staticImage.source.get())
+        == nullptr);
+    QCOMPARE(decoded->staticImage.source->imageSize(), QSize(2, 2));
+    QCOMPARE(decoded->staticImage.preview.size(), QSize(2, 2));
 }
 
 void TestKiriImageDecoder::avifsSequenceBrandUsesHeifSequencePath()
