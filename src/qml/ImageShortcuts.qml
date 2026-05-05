@@ -121,16 +121,9 @@ Item {
         return root.zoomBy(deltaPercent, root.imageViewport.viewportWidth / 2, root.imageViewport.viewportHeight / 2);
     }
 
-    ImageShortcut {
+    ImageShortcutSet {
         enabled: root.readyShortcutsEnabled
-        sequence: "Ctrl+="
-
-        onActivated: root.zoomByAtCenter(root.zoomStepPercent)
-    }
-
-    ImageShortcut {
-        enabled: root.readyShortcutsEnabled
-        sequence: "Ctrl++"
+        sequences: ["Ctrl+=", "Ctrl++"]
 
         onActivated: root.zoomByAtCenter(root.zoomStepPercent)
     }
@@ -142,16 +135,9 @@ Item {
         onActivated: root.zoomByAtCenter(-root.zoomStepPercent)
     }
 
-    ImageShortcut {
+    ImageShortcutSet {
         enabled: root.readyCommandShortcutsEnabled
-        sequence: "="
-
-        onActivated: root.zoomByAtCenter(root.zoomStepPercent)
-    }
-
-    ImageShortcut {
-        enabled: root.readyCommandShortcutsEnabled
-        sequence: "+"
+        sequences: ["=", "+"]
 
         onActivated: root.zoomByAtCenter(root.zoomStepPercent)
     }
@@ -261,30 +247,16 @@ Item {
         onActivated: root.openNextImage()
     }
 
-    ImageShortcut {
+    ImageShortcutSet {
         enabled: root.pageCommandShortcutsEnabled
-        sequence: "Ctrl+Home"
+        sequences: ["Ctrl+Home", "Home"]
 
         onActivated: root.openFirstImage()
     }
 
-    ImageShortcut {
+    ImageShortcutSet {
         enabled: root.pageCommandShortcutsEnabled
-        sequence: "Home"
-
-        onActivated: root.openFirstImage()
-    }
-
-    ImageShortcut {
-        enabled: root.pageCommandShortcutsEnabled
-        sequence: "Ctrl+End"
-
-        onActivated: root.openLastImage()
-    }
-
-    ImageShortcut {
-        enabled: root.pageCommandShortcutsEnabled
-        sequence: "End"
+        sequences: ["Ctrl+End", "End"]
 
         onActivated: root.openLastImage()
     }

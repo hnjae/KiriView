@@ -69,6 +69,7 @@ fn main() {
             .qml_file("src/qml/ImageViewport.qml")
             .qml_file("src/qml/ImageStateOverlay.qml")
             .qml_file("src/qml/ImageShortcut.qml")
+            .qml_file("src/qml/ImageShortcutSet.qml")
             .qml_file("src/qml/ImageShortcuts.qml")
             .qml_file("src/qml/ShortcutHelpDialog.qml"),
     )
