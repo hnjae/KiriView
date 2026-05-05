@@ -4,6 +4,7 @@
 src/decodedimageresult.cpp
 src/archivebackend.cpp
 src/archiveformat.cpp
+src/archivepath.cpp
 src/bufferedimagereader.cpp
 src/displayedimagestate.cpp
 src/heifcontainer.cpp

@@ -4,7 +4,7 @@
 #include "archivebackend.h"
 
 #include "archiveformat.h"
-#include "imagecontainer.h"
+#include "archivepath.h"
 #include "imageformatregistry.h"
 #include "imagenavigationmodel.h"
 
@@ -14,7 +14,6 @@
 #include <KArchiveFile>
 #include <KTar>
 #include <KZip>
-#include <QDir>
 #include <QFile>
 #include <QIODevice>
 #include <archive.h>
@@ -26,9 +25,12 @@
 
 namespace {
 using KiriView::ArchiveDocumentLocation;
+using KiriView::archiveEntryPathForUrl;
+using KiriView::archiveEntryUrl;
 using KiriView::ArchiveImageCandidatesResult;
 using KiriView::ArchiveImageDataResult;
 using KiriView::ImageNavigationCandidate;
+using KiriView::normalizedArchiveEntryPath;
 using LibArchiveReader = std::unique_ptr<archive, int (*)(archive *)>;
 
 class ScopedKArchive final
@@ -108,59 +110,6 @@ bool isLibArchiveDocument(const KiriView::ArchiveDocumentLocation &archiveDocume
         == KiriView::ArchiveStorageBackend::LibArchive;
 }
 
-QString normalizeEntryPath(const QString &path)
-{
-    QString cleanPath = QDir::cleanPath(path);
-    while (cleanPath.startsWith(QStringLiteral("./"))) {
-        cleanPath.remove(0, 2);
-    }
-    if (cleanPath == QStringLiteral(".") || cleanPath == QStringLiteral("..")
-        || cleanPath.startsWith(QStringLiteral("../")) || cleanPath.startsWith(QLatin1Char('/'))) {
-        return {};
-    }
-
-    return cleanPath;
-}
-
-QUrl archiveEntryUrl(
-    const KiriView::ArchiveDocumentLocation &archiveDocument, const QString &entryPath)
-{
-    const QString cleanEntryPath = normalizeEntryPath(entryPath);
-    if (cleanEntryPath.isEmpty()) {
-        return {};
-    }
-
-    QUrl url = archiveDocument.rootUrl();
-    QString rootPath = QDir::cleanPath(url.path());
-    if (!rootPath.endsWith(QLatin1Char('/'))) {
-        rootPath += QLatin1Char('/');
-    }
-    url.setPath(rootPath + cleanEntryPath);
-    url.setQuery(QString());
-    url.setFragment(QString());
-    return url;
-}
-
-QString archiveEntryPathForUrl(
-    const KiriView::ArchiveDocumentLocation &archiveDocument, const QUrl &imageUrl)
-{
-    if (!KiriView::archiveDocumentContainsUrl(archiveDocument, imageUrl)) {
-        return {};
-    }
-
-    QString rootPath = QDir::cleanPath(archiveDocument.rootUrl().path());
-    if (!rootPath.endsWith(QLatin1Char('/'))) {
-        rootPath += QLatin1Char('/');
-    }
-
-    const QString path = QDir::cleanPath(imageUrl.path());
-    if (!path.startsWith(rootPath)) {
-        return {};
-    }
-
-    return normalizeEntryPath(path.mid(rootPath.size()));
-}
-
 void appendArchiveDirectoryImageCandidates(
     std::vector<KiriView::ImageNavigationCandidate> *candidates, const KArchiveDirectory *directory,
     const KiriView::ArchiveDocumentLocation &archiveDocument, const QString &prefix)
@@ -189,7 +138,7 @@ void appendArchiveDirectoryImageCandidates(
             continue;
         }
 
-        const QString candidateName = normalizeEntryPath(entryPath);
+        const QString candidateName = normalizedArchiveEntryPath(entryPath);
         const QUrl url = archiveEntryUrl(archiveDocument, candidateName);
         if (candidateName.isEmpty() || url.isEmpty()) {
             continue;
@@ -373,7 +322,7 @@ ArchiveImageCandidatesResult loadLibArchiveDocumentImageCandidates(
     std::vector<ImageNavigationCandidate> candidates;
     const bool visitedEntries = visitLibArchiveEntries(
         reader.get(), archiveDocument, &errorString, [&](archive *, archive_entry *entry) {
-            const QString entryPath = normalizeEntryPath(libArchiveEntryPath(entry));
+            const QString entryPath = normalizedArchiveEntryPath(libArchiveEntryPath(entry));
             if (archive_entry_filetype(entry) == AE_IFREG && !entryPath.isEmpty()
                 && KiriView::isSupportedImageFileName(entryPath)) {
                 const QUrl url = archiveEntryUrl(archiveDocument, entryPath);
@@ -435,7 +384,7 @@ ArchiveImageDataResult loadLibArchiveDocumentImageData(
     std::optional<ArchiveImageDataResult> result;
     const bool visitedEntries = visitLibArchiveEntries(
         reader.get(), archiveDocument, &errorString, [&](archive *reader, archive_entry *entry) {
-            const QString currentPath = normalizeEntryPath(libArchiveEntryPath(entry));
+            const QString currentPath = normalizedArchiveEntryPath(libArchiveEntryPath(entry));
             if (archive_entry_filetype(entry) == AE_IFREG && currentPath == entryPath) {
                 result = readLibArchiveEntryData(reader, entry);
                 return LibArchiveEntryAction::Stop;

@@ -4,6 +4,7 @@
 #include "imagecontainer.h"
 
 #include "archiveformat.h"
+#include "archivepath.h"
 #include "imageformatregistry.h"
 #include "imagenavigationmodel.h"
 #include "imageurl.h"
@@ -13,27 +14,13 @@
 #include <cstddef>
 
 namespace {
-QString normalizedArchiveRootPath(const QUrl &archiveRootUrl)
-{
-    QString path = QDir::cleanPath(archiveRootUrl.path());
-    if (!path.endsWith(QLatin1Char('/'))) {
-        path += QLatin1Char('/');
-    }
-
-    return path;
-}
-
 std::optional<QUrl> archiveFileUrl(const QUrl &archiveRootUrl)
 {
     if (!KiriView::isSupportedArchiveRootScheme(archiveRootUrl.scheme())) {
         return std::nullopt;
     }
 
-    QString archivePath = normalizedArchiveRootPath(archiveRootUrl);
-    if (!archivePath.endsWith(QLatin1Char('/'))) {
-        return std::nullopt;
-    }
-
+    QString archivePath = KiriView::normalizedArchiveRootPath(archiveRootUrl);
     archivePath.chop(1);
     if (archivePath.isEmpty()) {
         return std::nullopt;
@@ -104,13 +91,8 @@ std::optional<QUrl> containingArchiveRootUrl(const QUrl &url, const QStringList 
 
 QString archiveRelativeImageName(const QUrl &archiveRootUrl, const QUrl &imageUrl)
 {
-    const QString rootPath = normalizedArchiveRootPath(archiveRootUrl);
-    const QString path = QDir::cleanPath(imageUrl.path());
-    if (!path.startsWith(rootPath)) {
-        return imageUrl.fileName();
-    }
-
-    return path.mid(rootPath.size());
+    const QString relativePath = KiriView::archiveRelativePathForUrl(archiveRootUrl, imageUrl);
+    return relativePath.isEmpty() ? imageUrl.fileName() : relativePath;
 }
 
 }
@@ -146,13 +128,7 @@ std::optional<ArchiveDocumentLocation> archiveDocumentLocationForLocalArchiveUrl
 
 bool isUrlInsideArchiveRoot(const QUrl &url, const QUrl &archiveRootUrl)
 {
-    if (url.isEmpty() || archiveRootUrl.isEmpty() || url.scheme() != archiveRootUrl.scheme()) {
-        return false;
-    }
-
-    const QString rootPath = normalizedArchiveRootPath(archiveRootUrl);
-    const QString path = QDir::cleanPath(url.path());
-    return path.size() > rootPath.size() && path.startsWith(rootPath);
+    return !archiveRelativePathForUrl(archiveRootUrl, url).isEmpty();
 }
 
 bool archiveDocumentContainsUrl(const ArchiveDocumentLocation &archiveDocument, const QUrl &url)
