@@ -52,29 +52,49 @@ QSize QImageReaderTileSource::imageSize() const { return m_imageSize; }
 std::optional<DecodedTile> QImageReaderTileSource::decodeTile(
     const TileRequest &request, QString *errorString) const
 {
-    if (request.textureLevelRect.isEmpty() || request.sourceRect.isEmpty()) {
+    if (!tileRequestCanDecode(request)) {
         return std::nullopt;
     }
 
-    if (!m_hasTransform) {
-        BufferedImageReader reader(m_data, m_format);
-        if (reader) {
-            reader.setScaledSize(request.levelSize);
-            reader.setScaledClipRect(request.textureLevelRect);
-            QImage image = reader.read();
-            if (!image.isNull() && image.size() == request.textureLevelRect.size()) {
-                return decodedTileFromImage(request, std::move(image));
-            }
-        }
+    if (std::optional<DecodedTile> tile = decodeReaderClipTile(request, errorString)) {
+        return tile;
+    }
 
-        QImage clipped = readSourceClip(request.sourceRect, errorString);
-        if (!clipped.isNull()) {
-            if (std::optional<DecodedTile> tile = decodedTileFromSourceImage(request, clipped)) {
-                return tile;
-            }
+    if (std::optional<DecodedTile> tile = decodeCachedOrScaledLevelTile(request, errorString)) {
+        return tile;
+    }
+
+    return decodeFullImageFallbackTile(request, errorString);
+}
+
+std::optional<DecodedTile> QImageReaderTileSource::decodeReaderClipTile(
+    const TileRequest &request, QString *errorString) const
+{
+    if (m_hasTransform) {
+        return std::nullopt;
+    }
+
+    BufferedImageReader reader(m_data, m_format);
+    if (reader) {
+        reader.setScaledSize(request.levelSize);
+        reader.setScaledClipRect(request.textureLevelRect);
+        QImage image = reader.read();
+        if (!image.isNull() && image.size() == request.textureLevelRect.size()) {
+            return decodedTileFromImage(request, std::move(image));
         }
     }
 
+    QImage clipped = readSourceClip(request.sourceRect, errorString);
+    if (clipped.isNull()) {
+        return std::nullopt;
+    }
+
+    return decodedTileFromSourceImage(request, clipped);
+}
+
+std::optional<DecodedTile> QImageReaderTileSource::decodeCachedOrScaledLevelTile(
+    const TileRequest &request, QString *errorString) const
+{
     if (std::optional<QImage> cached = cachedScaledLevel(request.key.level)) {
         if (std::optional<DecodedTile> tile = decodedTileFromLevelImage(request, *cached)) {
             return tile;
@@ -82,13 +102,17 @@ std::optional<DecodedTile> QImageReaderTileSource::decodeTile(
     }
 
     QImage levelImage = readScaledImage(request.levelSize, errorString);
-    if (!levelImage.isNull()) {
-        cacheScaledLevel(request.key.level, levelImage);
-        if (std::optional<DecodedTile> tile = decodedTileFromLevelImage(request, levelImage)) {
-            return tile;
-        }
+    if (levelImage.isNull()) {
+        return std::nullopt;
     }
 
+    cacheScaledLevel(request.key.level, levelImage);
+    return decodedTileFromLevelImage(request, levelImage);
+}
+
+std::optional<DecodedTile> QImageReaderTileSource::decodeFullImageFallbackTile(
+    const TileRequest &request, QString *errorString) const
+{
     QImage fullImage = readFullImage(errorString);
     if (fullImage.isNull()) {
         return std::nullopt;

@@ -52,7 +52,7 @@ public:
     std::optional<KiriView::DecodedTile> decodeTile(
         const KiriView::TileRequest &request, QString *errorString) const override
     {
-        if (request.textureLevelRect.isEmpty() || request.sourceRect.isEmpty()) {
+        if (!KiriView::tileRequestCanDecode(request)) {
             return std::nullopt;
         }
 

@@ -64,6 +64,7 @@ private Q_SLOTS:
     void jpegSourceSkipsFirstDisplayWhenImageFitsViewport();
     void pngSourceLeavesFirstDisplayNotImplemented();
     void svgSourceRendersIntrinsicPreviewAndTile();
+    void svgSourceRejectsEmptyTileRequest();
 };
 
 void TestImageTileSource::qImageReaderSourceDecodesBlockingDisplayImageAndTile()
@@ -179,6 +180,24 @@ void TestImageTileSource::svgSourceRendersIntrinsicPreviewAndTile()
     QVERIFY2(tile.has_value(), qPrintable(errorString));
     QCOMPARE(tile->image.size(), QSize(80, 40));
     QVERIFY(qRed(tile->image.pixel(10, 10)) > 0);
+}
+
+void TestImageTileSource::svgSourceRejectsEmptyTileRequest()
+{
+    const QByteArray data
+        = QByteArrayLiteral("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"80\" height=\"40\">"
+                            "<rect width=\"80\" height=\"40\" fill=\"red\"/>"
+                            "</svg>");
+
+    QString errorString;
+    std::shared_ptr<KiriView::SvgTileSource> source
+        = KiriView::SvgTileSource::open(data, &errorString);
+    QVERIFY2(source != nullptr, qPrintable(errorString));
+
+    const std::optional<KiriView::DecodedTile> tile
+        = source->decodeTile(KiriView::TileRequest {}, &errorString);
+
+    QVERIFY(!tile.has_value());
 }
 
 QTEST_GUILESS_MAIN(TestImageTileSource)

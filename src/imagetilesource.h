@@ -34,6 +34,12 @@ public:
 private:
     bool supportsJpegScaledFirstDisplay() const;
     QSize firstDisplayScaledSize(const QSize &physicalViewportSize) const;
+    std::optional<DecodedTile> decodeReaderClipTile(
+        const TileRequest &request, QString *errorString) const;
+    std::optional<DecodedTile> decodeCachedOrScaledLevelTile(
+        const TileRequest &request, QString *errorString) const;
+    std::optional<DecodedTile> decodeFullImageFallbackTile(
+        const TileRequest &request, QString *errorString) const;
     QImage readScaledImage(const QSize &scaledSize, QString *errorString) const;
     QImage readFullImage(QString *errorString) const;
     QImage readSourceClip(const QRect &sourceRect, QString *errorString) const;

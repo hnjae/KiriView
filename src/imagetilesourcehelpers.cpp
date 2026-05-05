@@ -29,6 +29,11 @@ QSize boundedPreviewSize(const QSize &imageSize, int maximumLongEdge)
         std::max(1, static_cast<int>(std::ceil(imageSize.height() * scale))));
 }
 
+bool tileRequestCanDecode(const TileRequest &request)
+{
+    return !request.textureLevelRect.isEmpty() && !request.sourceRect.isEmpty();
+}
+
 QImage scaledTileImage(const QImage &image, const QSize &size)
 {
     if (image.isNull() || size.isEmpty()) {

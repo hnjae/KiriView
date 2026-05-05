@@ -15,6 +15,7 @@ class QSvgRenderer;
 
 namespace KiriView {
 QSize boundedPreviewSize(const QSize &imageSize, int maximumLongEdge);
+bool tileRequestCanDecode(const TileRequest &request);
 QImage scaledTileImage(const QImage &image, const QSize &size);
 QImage cropLevelTexture(const QImage &levelImage, const QRect &textureLevelRect);
 DecodedTile decodedTileFromImage(const TileRequest &request, QImage image);

@@ -24,8 +24,7 @@ class ImageLoader final : public QObject
 {
 public:
     using SourceResolvedCallback = std::function<void(const QUrl &)>;
-    using ErrorCallback
-        = std::function<void(const ImageLoadSession &, ImageLoadError, const QString &)>;
+    using ErrorCallback = std::function<void(ImageLoadSession, ImageLoadError, const QString &)>;
     using DecodedImageCallback
         = std::function<void(ImageLoadSession, std::shared_ptr<DecodedImageResult>)>;
     using PredecodedImageCallback = std::function<void(ImageLoadSession, PredecodedImage)>;
@@ -59,6 +58,9 @@ private:
         const ImageLoadSession &session, ImageLoadError error, const QString &errorString);
     void finishDecodedImage(ImageLoadSession session, std::shared_ptr<DecodedImageResult> result);
     void finishPredecodedImage(ImageLoadSession session, PredecodedImage image);
+    template <typename Callback, typename... Args>
+    void finishCurrentLoadSession(
+        const ImageLoadSession &session, Callback &callback, Args &&...args);
 
     Callbacks m_callbacks;
     ImageAsyncTicket m_loadTickets;

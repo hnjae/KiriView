@@ -43,6 +43,10 @@ QSize SvgTileSource::imageSize() const { return m_imageSize; }
 std::optional<DecodedTile> SvgTileSource::decodeTile(
     const TileRequest &request, QString *errorString) const
 {
+    if (!tileRequestCanDecode(request)) {
+        return std::nullopt;
+    }
+
     QSvgRenderer renderer(m_data);
     if (!renderer.isValid()) {
         setTileSourceError(errorString, imageViewText("Could not decode the selected SVG image."));

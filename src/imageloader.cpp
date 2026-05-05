@@ -178,38 +178,29 @@ bool ImageLoader::tryDisplayPredecodedImage(ImageLoadSession session)
 void ImageLoader::finishLoadWithError(
     const ImageLoadSession &session, ImageLoadError error, const QString &errorString)
 {
-    std::optional<ImageLoadSession> currentSession = takeCurrentLoadSession(session);
-    if (!currentSession.has_value()) {
-        return;
-    }
-
-    if (m_callbacks.error) {
-        m_callbacks.error(*currentSession, error, errorString);
-    }
+    finishCurrentLoadSession(session, m_callbacks.error, error, errorString);
 }
 
 void ImageLoader::finishDecodedImage(
     ImageLoadSession session, std::shared_ptr<DecodedImageResult> result)
 {
-    std::optional<ImageLoadSession> currentSession = takeCurrentLoadSession(session);
-    if (!currentSession.has_value()) {
-        return;
-    }
-
-    if (m_callbacks.decodedImage) {
-        m_callbacks.decodedImage(std::move(*currentSession), std::move(result));
-    }
+    finishCurrentLoadSession(session, m_callbacks.decodedImage, std::move(result));
 }
 
 void ImageLoader::finishPredecodedImage(ImageLoadSession session, PredecodedImage image)
 {
+    finishCurrentLoadSession(session, m_callbacks.predecodedImage, std::move(image));
+}
+
+template <typename Callback, typename... Args>
+void ImageLoader::finishCurrentLoadSession(
+    const ImageLoadSession &session, Callback &callback, Args &&...args)
+{
     std::optional<ImageLoadSession> currentSession = takeCurrentLoadSession(session);
-    if (!currentSession.has_value()) {
+    if (!currentSession.has_value() || !callback) {
         return;
     }
 
-    if (m_callbacks.predecodedImage) {
-        m_callbacks.predecodedImage(std::move(*currentSession), std::move(image));
-    }
+    callback(std::move(*currentSession), std::forward<Args>(args)...);
 }
 }
