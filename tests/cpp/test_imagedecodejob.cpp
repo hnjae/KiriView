@@ -8,13 +8,11 @@
 #include <QObject>
 #include <QTest>
 #include <QUrl>
-#include <memory>
 #include <optional>
 #include <utility>
 #include <vector>
 
 namespace {
-using DecodedResultPtr = std::shared_ptr<KiriView::DecodedImageResult>;
 using KiriView::TestSupport::dataLoaderFor;
 using KiriView::TestSupport::ManualImageDataLoader;
 
@@ -52,9 +50,8 @@ void TestImageDecodeJob::cancelSuppressesPendingLoad()
     KiriView::ImageDecodeJob decodeJob(this, dataLoaderFor(dataLoader), decodeTestImageData);
 
     int decodedCount = 0;
-    decodeJob.setDecodedCallback(
-        [&decodedCount](KiriView::ImageDecodeRequest,
-            std::shared_ptr<KiriView::DecodedImageResult>) { ++decodedCount; });
+    decodeJob.setDecodedCallback([&decodedCount](KiriView::ImageDecodeRequest,
+                                     KiriView::DecodedImageResult) { ++decodedCount; });
 
     decodeJob.start(KiriView::ImageDecodeRequest { 1, imageUrl(1) });
     QCOMPARE(dataLoader.loads.size(), std::size_t(1));
@@ -74,8 +71,9 @@ void TestImageDecodeJob::staleLoadResultIsIgnored()
 
     std::vector<KiriView::ImageDecodeRequest> decodedRequests;
     decodeJob.setDecodedCallback(
-        [&decodedRequests](KiriView::ImageDecodeRequest request,
-            std::shared_ptr<KiriView::DecodedImageResult>) { decodedRequests.push_back(request); });
+        [&decodedRequests](KiriView::ImageDecodeRequest request, KiriView::DecodedImageResult) {
+            decodedRequests.push_back(request);
+        });
 
     decodeJob.start(KiriView::ImageDecodeRequest { 1, imageUrl(1) });
     decodeJob.start(KiriView::ImageDecodeRequest { 2, imageUrl(2) });
@@ -118,16 +116,16 @@ void TestImageDecodeJob::decodeErrorsAreDeliveredAsResults()
     ManualImageDataLoader dataLoader;
     KiriView::ImageDecodeJob decodeJob(this, dataLoaderFor(dataLoader), decodeTestImageData);
 
-    DecodedResultPtr decodedResult;
+    std::optional<KiriView::DecodedImageResult> decodedResult;
     decodeJob.setDecodedCallback(
-        [&decodedResult](KiriView::ImageDecodeRequest, DecodedResultPtr result) {
+        [&decodedResult](KiriView::ImageDecodeRequest, KiriView::DecodedImageResult result) {
             decodedResult = std::move(result);
         });
 
     decodeJob.start(KiriView::ImageDecodeRequest { 4, imageUrl(4) });
     dataLoader.loads.front()->dataCallback(QByteArrayLiteral("bad"));
 
-    QTRY_VERIFY(decodedResult != nullptr);
+    QTRY_VERIFY(decodedResult.has_value());
     const auto *failure = KiriView::decodedImageResultFailure(*decodedResult);
     QVERIFY(failure != nullptr);
     QCOMPARE(failure->errorString, QStringLiteral("decode failed"));
@@ -146,7 +144,7 @@ void TestImageDecodeJob::decodeRequestIsPassedToDecoder()
         });
 
     decodeJob.setDecodedCallback(
-        [](KiriView::ImageDecodeRequest, std::shared_ptr<KiriView::DecodedImageResult>) { });
+        [](KiriView::ImageDecodeRequest, KiriView::DecodedImageResult) { });
 
     decodeJob.start(
         KiriView::ImageDecodeRequest { 5, imageUrl(5), KiriView::ArchiveDocumentLocation::none(),

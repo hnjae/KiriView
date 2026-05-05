@@ -49,7 +49,7 @@ ImageOpenController::ImageOpenController(QObject *parent, ImageDocumentState &st
             [this](const QUrl &sourceUrl) { setSourceUrlFromResolvedLoad(sourceUrl); },
             [this](const ImageLoadSession &session, ImageLoadError error,
                 const QString &errorString) { finishLoadWithError(session, error, errorString); },
-            [this](ImageLoadSession session, std::shared_ptr<DecodedImage> image) {
+            [this](ImageLoadSession session, DecodedImage image) {
                 finishDecodedImageLoad(std::move(session), std::move(image));
             },
             [this](ImageLoadSession session, PredecodedImage image) {
@@ -122,12 +122,11 @@ void ImageOpenController::finishPredecodedImageLoad(ImageLoadSession session, Pr
     report(ImageDocumentEffect::scheduleAdjacentImagePredecode());
 }
 
-void ImageOpenController::finishDecodedImageLoad(
-    ImageLoadSession session, std::shared_ptr<DecodedImage> image)
+void ImageOpenController::finishDecodedImageLoad(ImageLoadSession session, DecodedImage image)
 {
     auto handleDecoded
         = [this, &session](auto &decoded) { return finishDecodedImageResult(session, decoded); };
-    const bool displayedImage = std::visit(handleDecoded, *image);
+    const bool displayedImage = std::visit(handleDecoded, image);
     if (displayedImage) {
         report(ImageDocumentEffect::scheduleAdjacentImagePredecode());
     }

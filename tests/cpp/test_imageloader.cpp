@@ -67,10 +67,10 @@ void TestImageLoader::imageLoadDeliversDecodedResult()
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
     std::optional<KiriView::ImageLoadSession> decodedSession;
-    std::shared_ptr<KiriView::DecodedImage> decodedResult;
+    std::optional<KiriView::DecodedImage> decodedResult;
     KiriView::ImageLoader::Callbacks callbacks;
     callbacks.decodedImage = [&decodedSession, &decodedResult](KiriView::ImageLoadSession session,
-                                 std::shared_ptr<KiriView::DecodedImage> result) {
+                                 KiriView::DecodedImage result) {
         decodedSession = std::move(session);
         decodedResult = std::move(result);
     };
@@ -85,10 +85,10 @@ void TestImageLoader::imageLoadDeliversDecodedResult()
     QCOMPARE(dataLoader.loads.front()->firstDisplay.physicalViewportSize, QSize(320, 240));
     dataLoader.loads.front()->dataCallback(QByteArrayLiteral("ok"));
 
-    QTRY_VERIFY(decodedResult != nullptr);
+    QTRY_VERIFY(decodedResult.has_value());
     QVERIFY(decodedSession.has_value());
     QCOMPARE(decodedSession->location.imageUrl(), imageUrl);
-    QVERIFY(std::get_if<KiriView::StaticDecodedImage>(decodedResult.get()) != nullptr);
+    QVERIFY(std::get_if<KiriView::StaticDecodedImage>(&*decodedResult) != nullptr);
 }
 
 void TestImageLoader::decodeFailureUsesErrorCallback()

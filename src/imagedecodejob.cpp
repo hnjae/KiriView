@@ -68,11 +68,8 @@ void ImageDecodeJob::startDecode(QByteArray data, ImageDecodeRequest request)
     const DataDecoder decoder = m_dataDecoder;
     runAsyncWorker(
         this,
-        [decoder, data = std::move(data), request]() mutable {
-            auto result = std::make_shared<DecodedImageResult>(decoder(data, request));
-            return result;
-        },
-        [this, request](std::shared_ptr<DecodedImageResult> result) mutable {
+        [decoder, data = std::move(data), request]() mutable { return decoder(data, request); },
+        [this, request](DecodedImageResult result) mutable {
             if (!isCurrentRequest(request)) {
                 return;
             }

@@ -12,7 +12,6 @@
 #include <QObject>
 #include <QString>
 #include <functional>
-#include <memory>
 #include <optional>
 
 namespace KiriView {
@@ -25,8 +24,7 @@ public:
         = std::function<ImageIoJob(QObject *, ImageDecodeRequest, DataCallback, ErrorCallback)>;
     using DataDecoder
         = std::function<DecodedImageResult(const QByteArray &, const ImageDecodeRequest &)>;
-    using DecodedCallback
-        = std::function<void(ImageDecodeRequest, std::shared_ptr<DecodedImageResult>)>;
+    using DecodedCallback = std::function<void(ImageDecodeRequest, DecodedImageResult)>;
     using LoadErrorCallback = std::function<void(const ImageDecodeRequest &, const QString &)>;
 
     explicit ImageDecodeJob(QObject *parent = nullptr);

@@ -7,7 +7,6 @@
 #include "imagenavigationmodel.h"
 #include "imageurl.h"
 
-#include <memory>
 #include <optional>
 #include <utility>
 #include <vector>
@@ -27,10 +26,9 @@ ImagePredecodeCoordinator::ImagePredecodeCoordinator(
     , m_decodeJob(this, dependencies.imageDataLoader, dependencies.imageDataDecoder)
     , m_candidateRepository(dependencies.candidateProvider)
 {
-    m_decodeJob.setDecodedCallback(
-        [this](ImageDecodeRequest request, std::shared_ptr<DecodedImageResult> result) {
-            finishPredecodeImageDecode(request, *result);
-        });
+    m_decodeJob.setDecodedCallback([this](ImageDecodeRequest request, DecodedImageResult result) {
+        finishPredecodeImageDecode(request, result);
+    });
     m_decodeJob.setLoadErrorCallback([this](const ImageDecodeRequest &request, const QString &) {
         finishPredecodeImageLoadError(request);
     });

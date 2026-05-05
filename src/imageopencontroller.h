@@ -52,7 +52,7 @@ private:
     void beginSourceLoad();
     void setSourceUrlFromResolvedLoad(const QUrl &sourceUrl);
     void finishPredecodedImageLoad(ImageLoadSession session, PredecodedImage image);
-    void finishDecodedImageLoad(ImageLoadSession session, std::shared_ptr<DecodedImage> image);
+    void finishDecodedImageLoad(ImageLoadSession session, DecodedImage image);
     bool finishDecodedImageResult(ImageLoadSession &session, StaticDecodedImage &decoded);
     bool finishDecodedImageResult(ImageLoadSession &session, DecodedAnimationImage &decoded);
     bool finishDecodedImageResult(ImageLoadSession &session, ReaderAnimationImage &decoded);

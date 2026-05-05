@@ -7,7 +7,6 @@
 #include "imageloadplan.h"
 #include "imageurl.h"
 
-#include <memory>
 #include <optional>
 #include <utility>
 #include <vector>
@@ -30,26 +29,25 @@ ImageLoader::ImageLoader(
     , m_decodeJob(this, dependencies.imageDataLoader, dependencies.imageDataDecoder)
     , m_candidateRepository(dependencies.candidateProvider)
 {
-    m_decodeJob.setDecodedCallback(
-        [this](ImageDecodeRequest request, std::shared_ptr<DecodedImageResult> result) {
-            std::optional<ImageLoadSession> session = currentLoadSessionForDecodeRequest(request);
-            if (!session.has_value()) {
-                return;
-            }
+    m_decodeJob.setDecodedCallback([this](ImageDecodeRequest request, DecodedImageResult result) {
+        std::optional<ImageLoadSession> session = currentLoadSessionForDecodeRequest(request);
+        if (!session.has_value()) {
+            return;
+        }
 
-            if (const auto *failure = decodedImageResultFailure(*result)) {
-                finishLoadWithError(*session, ImageLoadError::Generic, failure->errorString);
-                return;
-            }
+        if (const auto *failure = decodedImageResultFailure(result)) {
+            finishLoadWithError(*session, ImageLoadError::Generic, failure->errorString);
+            return;
+        }
 
-            std::optional<DecodedImage> decodedImage = decodedImageFromResult(std::move(*result));
-            if (!decodedImage.has_value()) {
-                finishLoadWithError(*session, ImageLoadError::Generic, QString());
-                return;
-            }
+        std::optional<DecodedImage> decodedImage = decodedImageFromResult(std::move(result));
+        if (!decodedImage.has_value()) {
+            finishLoadWithError(*session, ImageLoadError::Generic, QString());
+            return;
+        }
 
-            finishDecodedImage(*session, std::make_shared<DecodedImage>(std::move(*decodedImage)));
-        });
+        finishDecodedImage(*session, std::move(*decodedImage));
+    });
     m_decodeJob.setLoadErrorCallback(
         [this](const ImageDecodeRequest &request, const QString &errorString) {
             std::optional<ImageLoadSession> session = currentLoadSessionForDecodeRequest(request);
@@ -187,7 +185,7 @@ void ImageLoader::finishLoadWithError(
     finishCurrentLoadSession(session, m_callbacks.error, error, errorString);
 }
 
-void ImageLoader::finishDecodedImage(ImageLoadSession session, std::shared_ptr<DecodedImage> image)
+void ImageLoader::finishDecodedImage(ImageLoadSession session, DecodedImage image)
 {
     finishCurrentLoadSession(session, m_callbacks.decodedImage, std::move(image));
 }
