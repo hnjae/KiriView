@@ -4,15 +4,13 @@
 #include "kiriimagedecoder.h"
 
 #include "apngdecoder.h"
+#include "bufferedimagereader.h"
 #include "heifdecoder.h"
 #include "imagerendering.h"
 #include "imagetilesource.h"
 #include "imageviewtext.h"
 #include "kiriview/src/avifcompat.cxx.h"
 
-#include <QBuffer>
-#include <QIODevice>
-#include <QImageReader>
 #include <memory>
 #include <optional>
 #include <utility>
@@ -117,15 +115,11 @@ DecodedImageResult decodeImageData(const QByteArray &data, const ImageDecodeRequ
         return *heifStillResult;
     }
 
-    QBuffer buffer;
-    buffer.setData(imageData);
-
-    if (!buffer.open(QIODevice::ReadOnly)) {
+    BufferedImageReader reader(imageData);
+    if (!reader) {
         return decodedImageFailure(imageViewText("Could not read the selected image data."));
     }
 
-    QImageReader reader(&buffer);
-    reader.setAutoTransform(true);
     const bool supportsAnimation = reader.supportsAnimation();
 
     if (!supportsAnimation) {

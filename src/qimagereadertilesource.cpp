@@ -3,15 +3,13 @@
 
 #include "imagetilesource.h"
 
+#include "bufferedimagereader.h"
 #include "imagebytecost.h"
 #include "imagerendering.h"
 #include "imagetilesource_p.h"
 #include "imageviewtext.h"
 
-#include <QBuffer>
-#include <QIODevice>
 #include <QImageIOHandler>
-#include <QImageReader>
 #include <QMutexLocker>
 #include <algorithm>
 #include <cmath>
@@ -23,15 +21,12 @@ namespace KiriView {
 std::shared_ptr<QImageReaderTileSource> QImageReaderTileSource::open(
     const QByteArray &data, QString *errorString)
 {
-    QBuffer buffer;
-    buffer.setData(data);
-    if (!buffer.open(QIODevice::ReadOnly)) {
+    BufferedImageReader reader(data);
+    if (!reader) {
         setTileSourceError(errorString, imageViewText("Could not read the selected image data."));
         return {};
     }
 
-    QImageReader reader(&buffer);
-    reader.setAutoTransform(true);
     const QSize imageSize = reader.size();
     const QByteArray format = reader.format();
     if (imageSize.isEmpty()) {
@@ -67,11 +62,8 @@ std::optional<DecodedTile> QImageReaderTileSource::decodeTile(
     }
 
     if (!m_hasTransform) {
-        QBuffer buffer;
-        buffer.setData(m_data);
-        if (buffer.open(QIODevice::ReadOnly)) {
-            QImageReader reader(&buffer, m_format);
-            reader.setAutoTransform(true);
+        BufferedImageReader reader(m_data, m_format);
+        if (reader) {
             reader.setScaledSize(request.levelSize);
             reader.setScaledClipRect(request.textureLevelRect);
             QImage image = reader.read();
@@ -192,15 +184,12 @@ QSize QImageReaderTileSource::firstDisplayScaledSize(const QSize &physicalViewpo
 
 QImage QImageReaderTileSource::readScaledImage(const QSize &scaledSize, QString *errorString) const
 {
-    QBuffer buffer;
-    buffer.setData(m_data);
-    if (!buffer.open(QIODevice::ReadOnly)) {
+    BufferedImageReader reader(m_data, m_format);
+    if (!reader) {
         setTileSourceError(errorString, imageViewText("Could not read the selected image data."));
         return {};
     }
 
-    QImageReader reader(&buffer, m_format);
-    reader.setAutoTransform(true);
     if (!scaledSize.isEmpty()) {
         reader.setScaledSize(scaledSize);
     }
@@ -225,15 +214,12 @@ QImage QImageReaderTileSource::readFullImage(QString *errorString) const
 
 QImage QImageReaderTileSource::readSourceClip(const QRect &sourceRect, QString *errorString) const
 {
-    QBuffer buffer;
-    buffer.setData(m_data);
-    if (!buffer.open(QIODevice::ReadOnly)) {
+    BufferedImageReader reader(m_data, m_format, false);
+    if (!reader) {
         setTileSourceError(errorString, imageViewText("Could not read the selected image data."));
         return {};
     }
 
-    QImageReader reader(&buffer, m_format);
-    reader.setAutoTransform(false);
     reader.setClipRect(sourceRect);
     QImage image = reader.read();
     if (image.isNull()) {

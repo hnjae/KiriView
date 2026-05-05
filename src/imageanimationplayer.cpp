@@ -3,12 +3,10 @@
 
 #include "imageanimationplayer.h"
 
+#include "bufferedimagereader.h"
 #include "heifdecoder.h"
 #include "imageviewtext.h"
 
-#include <QBuffer>
-#include <QIODevice>
-#include <QImageReader>
 #include <QObject>
 #include <algorithm>
 #include <optional>
@@ -72,7 +70,6 @@ void ImageAnimationPlayer::start(
 void ImageAnimationPlayer::startDecoded(std::vector<AnimationFrame> frames, int loopCount)
 {
     m_reader.reset();
-    m_buffer.reset();
     m_heifSequenceReader.reset();
     m_data.clear();
     m_format.clear();
@@ -90,7 +87,6 @@ void ImageAnimationPlayer::startDecoded(std::vector<AnimationFrame> frames, int 
 void ImageAnimationPlayer::startHeifSequence(const QByteArray &data, int firstFrameDelay)
 {
     m_reader.reset();
-    m_buffer.reset();
     m_data = data;
     m_format.clear();
     m_decodedFrames.clear();
@@ -112,7 +108,6 @@ void ImageAnimationPlayer::stop()
 {
     m_timer.stop();
     m_reader.reset();
-    m_buffer.reset();
     m_heifSequenceReader.reset();
     m_data.clear();
     m_format.clear();
@@ -227,25 +222,18 @@ void ImageAnimationPlayer::advanceHeifSequenceFrame()
 bool ImageAnimationPlayer::resetReader(QString *errorString)
 {
     m_reader.reset();
-    m_buffer.reset();
 
-    auto buffer = std::make_unique<QBuffer>();
-    buffer->setData(m_data);
-
-    if (!buffer->open(QIODevice::ReadOnly)) {
+    auto reader = std::make_unique<BufferedImageReader>(m_data, m_format);
+    if (!*reader) {
         *errorString = imageViewText("Could not read the selected image data.");
         return false;
     }
-
-    auto reader = std::make_unique<QImageReader>(buffer.get(), m_format);
-    reader->setAutoTransform(true);
 
     if (!reader->canRead()) {
         *errorString = reader->errorString();
         return false;
     }
 
-    m_buffer = std::move(buffer);
     m_reader = std::move(reader);
     return true;
 }

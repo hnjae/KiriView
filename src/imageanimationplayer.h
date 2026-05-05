@@ -13,12 +13,11 @@
 #include <memory>
 #include <vector>
 
-class QBuffer;
 class QObject;
-class QImageReader;
 class QString;
 
 namespace KiriView {
+class BufferedImageReader;
 class HeifSequenceReader;
 class ImageAnimationPlayer
 {
@@ -51,8 +50,7 @@ private:
     QByteArray m_data;
     QByteArray m_format;
     std::vector<AnimationFrame> m_decodedFrames;
-    std::unique_ptr<QBuffer> m_buffer;
-    std::unique_ptr<QImageReader> m_reader;
+    std::unique_ptr<BufferedImageReader> m_reader;
     std::unique_ptr<HeifSequenceReader> m_heifSequenceReader;
     QTimer m_timer;
     std::size_t m_decodedFrameIndex = 0;
