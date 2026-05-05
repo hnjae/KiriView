@@ -49,11 +49,14 @@ using DecodedImage = std::variant<StaticDecodedImage, DecodedAnimationImage, Rea
     HeifSequenceAnimationImage>;
 using DecodedImageResult = std::variant<DecodedImageFailure, DecodedImage>;
 
+DecodedImageResult failedDecodedImageResult(QString errorString);
 DecodedImageResult successfulDecodedImageResult(DecodedImage image);
 template <typename Image> DecodedImageResult successfulDecodedImageResult(Image image)
 {
     return successfulDecodedImageResult(DecodedImage { std::move(image) });
 }
+DecodedImageResult staticDecodedImageResult(std::shared_ptr<ImageTileSource> source,
+    const ImageFirstDisplayDecodeContext &firstDisplay, QString *errorString);
 const DecodedImageFailure *decodedImageResultFailure(const DecodedImageResult &result);
 const DecodedImage *decodedImageResultImage(const DecodedImageResult &result);
 std::optional<DecodedImage> decodedImageFromResult(DecodedImageResult result);

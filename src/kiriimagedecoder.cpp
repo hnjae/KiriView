@@ -16,11 +16,6 @@
 #include <utility>
 
 namespace {
-KiriView::DecodedImageResult decodedImageFailure(const QString &errorString)
-{
-    return KiriView::DecodedImageFailure { errorString };
-}
-
 std::optional<KiriView::DecodedImageResult> decodeSvgImageData(const QByteArray &data)
 {
     QString errorString;
@@ -30,15 +25,7 @@ std::optional<KiriView::DecodedImageResult> decodeSvgImageData(const QByteArray 
         return std::nullopt;
     }
 
-    QImage preview = source->decodeBlockingDisplayImage(
-        KiriView::imageBlockingDisplayLongEdgeMax, &errorString);
-    if (preview.isNull()) {
-        return decodedImageFailure(errorString);
-    }
-
-    return KiriView::successfulDecodedImageResult(KiriView::StaticDecodedImage {
-        KiriView::StaticImagePayload { std::move(source), std::move(preview), {} },
-    });
+    return KiriView::staticDecodedImageResult(std::move(source), {}, &errorString);
 }
 
 KiriView::DecodedImageResult openedStaticImageResult(
@@ -48,34 +35,11 @@ KiriView::DecodedImageResult openedStaticImageResult(
     std::shared_ptr<KiriView::ImageTileSource> source
         = KiriView::QImageReaderTileSource::open(data, &errorString);
     if (source == nullptr) {
-        return decodedImageFailure(errorString);
+        return KiriView::failedDecodedImageResult(errorString);
     }
 
-    const KiriView::FirstDisplayImageDecodeResult firstDisplay
-        = source->decodeFirstDisplayImage(request.firstDisplay, &errorString);
-    if (firstDisplay.status == KiriView::FirstDisplayImageDecodeStatus::Ready) {
-        if (firstDisplay.image.isNull()) {
-            return decodedImageFailure(errorString);
-        }
-
-        return KiriView::successfulDecodedImageResult(KiriView::StaticDecodedImage {
-            KiriView::StaticImagePayload { std::move(source), std::move(firstDisplay.image),
-                KiriView::StaticImageDisplayHints { firstDisplay.displayPixelsPerSourcePixel } },
-        });
-    }
-    if (firstDisplay.status == KiriView::FirstDisplayImageDecodeStatus::Error) {
-        return decodedImageFailure(errorString);
-    }
-
-    QImage preview = source->decodeBlockingDisplayImage(
-        KiriView::imageBlockingDisplayLongEdgeMax, &errorString);
-    if (preview.isNull()) {
-        return decodedImageFailure(errorString);
-    }
-
-    return KiriView::successfulDecodedImageResult(KiriView::StaticDecodedImage {
-        KiriView::StaticImagePayload { std::move(source), std::move(preview), {} },
-    });
+    return KiriView::staticDecodedImageResult(
+        std::move(source), request.firstDisplay, &errorString);
 }
 }
 
@@ -94,7 +58,7 @@ DecodedImageResult decodeImageData(const QByteArray &data, const ImageDecodeRequ
     ApngDecodeResult apngResult = decodeApngAnimation(data);
     if (apngResult.status == ApngDecodeStatus::Success) {
         if (apngResult.animation.frames.empty()) {
-            return decodedImageFailure(
+            return failedDecodedImageResult(
                 imageViewText("Could not decode the selected APNG animation."));
         }
 
@@ -108,7 +72,7 @@ DecodedImageResult decodeImageData(const QByteArray &data, const ImageDecodeRequ
         });
     }
     if (apngResult.status == ApngDecodeStatus::Error) {
-        return decodedImageFailure(apngResult.errorString);
+        return failedDecodedImageResult(apngResult.errorString);
     }
 
     const QByteArray imageData = avifDataWithCompatibilityFixes(data);
@@ -118,7 +82,7 @@ DecodedImageResult decodeImageData(const QByteArray &data, const ImageDecodeRequ
 
     BufferedImageReader reader(imageData);
     if (!reader) {
-        return decodedImageFailure(imageViewText("Could not read the selected image data."));
+        return failedDecodedImageResult(imageViewText("Could not read the selected image data."));
     }
 
     const bool supportsAnimation = reader.supportsAnimation();

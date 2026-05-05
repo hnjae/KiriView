@@ -25,11 +25,6 @@
 #include <utility>
 
 namespace {
-KiriView::DecodedImageResult decodedImageFailure(const QString &errorString)
-{
-    return KiriView::DecodedImageFailure { errorString };
-}
-
 std::optional<KiriView::DecodedImageResult> decodeHeifStillImageDataForInfo(
     const QByteArray &data, const KiriView::HeifContainerInfo &info)
 {
@@ -41,18 +36,10 @@ std::optional<KiriView::DecodedImageResult> decodeHeifStillImageDataForInfo(
     std::shared_ptr<KiriView::ImageTileSource> source
         = KiriView::openHeifTileSource(data, &errorString);
     if (source == nullptr) {
-        return decodedImageFailure(errorString);
+        return KiriView::failedDecodedImageResult(errorString);
     }
 
-    QImage preview = source->decodeBlockingDisplayImage(
-        KiriView::imageBlockingDisplayLongEdgeMax, &errorString);
-    if (preview.isNull()) {
-        return decodedImageFailure(errorString);
-    }
-
-    return KiriView::successfulDecodedImageResult(KiriView::StaticDecodedImage {
-        KiriView::StaticImagePayload { std::move(source), std::move(preview), {} },
-    });
+    return KiriView::staticDecodedImageResult(std::move(source), {}, &errorString);
 }
 
 std::optional<KiriView::DecodedImageResult> decodeHeifSequenceImageDataForInfo(
@@ -69,7 +56,7 @@ std::optional<KiriView::DecodedImageResult> decodeHeifSequenceImageDataForInfo(
         return std::nullopt;
     }
     if (openResult.status == KiriView::HeifSequenceOpenStatus::Error) {
-        return decodedImageFailure(openResult.errorString);
+        return KiriView::failedDecodedImageResult(openResult.errorString);
     }
 
     QString errorString;
@@ -79,7 +66,7 @@ std::optional<KiriView::DecodedImageResult> decodeHeifSequenceImageDataForInfo(
             errorString
                 = KiriView::imageViewText("Could not decode the selected HEIF image sequence.");
         }
-        return decodedImageFailure(errorString);
+        return KiriView::failedDecodedImageResult(errorString);
     }
 
     return KiriView::successfulDecodedImageResult(KiriView::HeifSequenceAnimationImage {
