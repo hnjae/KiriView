@@ -18,6 +18,7 @@ enum class ArchiveStorageBackend {
 
 bool isSupportedArchiveRootScheme(const QString &scheme);
 ArchiveStorageBackend archiveStorageBackendForRootScheme(const QString &scheme);
+bool archiveRootSchemeUsesKioFuse(const QString &scheme);
 QStringList supportedComicBookArchiveExtensions();
 QString comicBookArchiveKioSchemeForFileName(const QString &fileName);
 QString directArchiveOpenKioSchemeForFileName(const QString &fileName);

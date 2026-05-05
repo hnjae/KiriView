@@ -3,6 +3,8 @@
 
 #include "imageformatregistry.h"
 
+#include "archiveformat.h"
+
 #include <QObject>
 #include <QStringList>
 #include <QTest>
@@ -20,6 +22,7 @@ private Q_SLOTS:
     void comicBookArchiveUrlsMapToKioSchemes();
     void directArchiveOpenUrlsMapGeneralArchivesToKioSchemes();
     void directArchiveOpenMimeTypesMapGeneralArchivesToKioSchemes();
+    void archiveRootSchemesReportKioFuseSupportByBackend();
 };
 
 void TestImageFormatRegistry::supportedImageExtensionsIncludeCodecSpecificHeifExtensions()
@@ -125,6 +128,15 @@ void TestImageFormatRegistry::directArchiveOpenMimeTypesMapGeneralArchivesToKioS
     const QString rarCompressedAliasMimeType = QStringLiteral("application/x-rar-compressed");
     QCOMPARE(KiriView::directArchiveOpenKioSchemeForMimeTypeName(rarCompressedAliasMimeType),
         QStringLiteral("rar"));
+}
+
+void TestImageFormatRegistry::archiveRootSchemesReportKioFuseSupportByBackend()
+{
+    QVERIFY(KiriView::archiveRootSchemeUsesKioFuse(QStringLiteral("zip")));
+    QVERIFY(KiriView::archiveRootSchemeUsesKioFuse(QStringLiteral("tar")));
+    QVERIFY(KiriView::archiveRootSchemeUsesKioFuse(QStringLiteral("sevenz")));
+    QVERIFY(!KiriView::archiveRootSchemeUsesKioFuse(QStringLiteral("rar")));
+    QVERIFY(!KiriView::archiveRootSchemeUsesKioFuse(QStringLiteral("unknown")));
 }
 
 QTEST_GUILESS_MAIN(TestImageFormatRegistry)

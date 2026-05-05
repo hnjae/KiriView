@@ -3,11 +3,12 @@
 
 #include "imageurl.h"
 
+#include "archiveformat.h"
+
 #include <QByteArray>
 #include <QDir>
 #include <QFile>
 #include <QString>
-#include <QStringList>
 #include <QtGlobal>
 #include <cstddef>
 #include <optional>
@@ -19,13 +20,7 @@ constexpr const char *documentPortalHostPathAttribute = "user.document-portal.ho
 
 bool isKioFuseArchiveScheme(const QString &scheme)
 {
-    static const QStringList archiveSchemes = {
-        QStringLiteral("zip"),
-        QStringLiteral("tar"),
-        QStringLiteral("sevenz"),
-    };
-
-    return archiveSchemes.contains(scheme);
+    return KiriView::archiveRootSchemeUsesKioFuse(scheme);
 }
 
 std::optional<QUrl> kioFuseArchiveUrl(const QString &localPath)
