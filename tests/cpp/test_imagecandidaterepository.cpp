@@ -41,9 +41,9 @@ void TestImageCandidateRepository::displayedImageContextsSelectDirectoryOrArchiv
         = KiriView::imageCandidateListContextForDisplayedImage(
             KiriView::DisplayedImageLocation::fromUrl(fileUrl));
     QVERIFY(directoryContext.has_value());
-    QCOMPARE(directoryContext->currentUrl, fileUrl);
-    QCOMPARE(directoryContext->listUrl, localUrl(QStringLiteral("/images/")));
-    QCOMPARE(directoryContext->containerType, KiriView::ImageCandidateContainerType::Directory);
+    QCOMPARE(directoryContext->currentUrl(), fileUrl);
+    QCOMPARE(directoryContext->directoryUrl(), localUrl(QStringLiteral("/images/")));
+    QVERIFY(!directoryContext->isArchiveDocument());
 
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
     const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
@@ -55,10 +55,9 @@ void TestImageCandidateRepository::displayedImageContextsSelectDirectoryOrArchiv
         = KiriView::imageCandidateListContextForDisplayedImage(
             KiriView::DisplayedImageLocation::fromArchiveDocument(pageUrl, *archiveDocument));
     QVERIFY(archiveContext.has_value());
-    QCOMPARE(archiveContext->currentUrl, pageUrl);
-    QCOMPARE(archiveContext->listUrl, archiveDocument->rootUrl());
-    QCOMPARE(archiveContext->archiveDocument.rootUrl(), archiveDocument->rootUrl());
-    QCOMPARE(archiveContext->containerType, KiriView::ImageCandidateContainerType::ArchiveDocument);
+    QCOMPARE(archiveContext->currentUrl(), pageUrl);
+    QCOMPARE(archiveContext->archiveDocument().rootUrl(), archiveDocument->rootUrl());
+    QVERIFY(archiveContext->isArchiveDocument());
 
     const QUrl directArchiveUrl = localUrl(QStringLiteral("/books/book.zip"));
     const std::optional<KiriView::ArchiveDocumentLocation> directArchiveDocument
@@ -72,23 +71,20 @@ void TestImageCandidateRepository::displayedImageContextsSelectDirectoryOrArchiv
             KiriView::DisplayedImageLocation::fromArchiveDocument(
                 directArchivePageUrl, *directArchiveDocument));
     QVERIFY(directArchiveContext.has_value());
-    QCOMPARE(directArchiveContext->currentUrl, directArchivePageUrl);
-    QCOMPARE(directArchiveContext->listUrl, directArchiveDocument->rootUrl());
-    QCOMPARE(directArchiveContext->archiveDocument.rootUrl(), directArchiveDocument->rootUrl());
-    QCOMPARE(directArchiveContext->containerType,
-        KiriView::ImageCandidateContainerType::ArchiveDocument);
+    QCOMPARE(directArchiveContext->currentUrl(), directArchivePageUrl);
+    QCOMPARE(directArchiveContext->archiveDocument().rootUrl(), directArchiveDocument->rootUrl());
+    QVERIFY(directArchiveContext->isArchiveDocument());
 
     const QUrl explicitArchiveImageUrl(QStringLiteral("zip:///books/book.cbz/chapter/02.png"));
     const std::optional<KiriView::ImageCandidateListContext> explicitArchiveContext
         = KiriView::imageCandidateListContextForDisplayedImage(
             KiriView::DisplayedImageLocation::fromUrl(explicitArchiveImageUrl));
     QVERIFY(explicitArchiveContext.has_value());
-    QCOMPARE(explicitArchiveContext->currentUrl, explicitArchiveImageUrl);
-    QCOMPARE(
-        explicitArchiveContext->listUrl, QUrl(QStringLiteral("zip:///books/book.cbz/chapter/")));
-    QVERIFY(explicitArchiveContext->archiveDocument.isEmpty());
-    QCOMPARE(
-        explicitArchiveContext->containerType, KiriView::ImageCandidateContainerType::Directory);
+    QCOMPARE(explicitArchiveContext->currentUrl(), explicitArchiveImageUrl);
+    QCOMPARE(explicitArchiveContext->directoryUrl(),
+        QUrl(QStringLiteral("zip:///books/book.cbz/chapter/")));
+    QVERIFY(explicitArchiveContext->archiveDocument().isEmpty());
+    QVERIFY(!explicitArchiveContext->isArchiveDocument());
 }
 
 void TestImageCandidateRepository::directoryContainerOpensFirstImage()

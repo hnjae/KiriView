@@ -100,7 +100,7 @@ void ImageNavigationService::openAdjacentImage(
 
     m_navigationListerJob = m_candidateRepository.loadImages(
         this, *candidateContext,
-        [this, direction, currentUrl = candidateContext->currentUrl](
+        [this, direction, currentUrl = candidateContext->currentUrl()](
             std::vector<ImageNavigationCandidate> candidates) {
             finishNavigation(std::move(candidates), direction, currentUrl);
         },
@@ -206,13 +206,13 @@ void ImageNavigationService::updatePageNavigation(const DisplayContext &context)
         return;
     }
 
-    if (!setKnownPageNavigationCurrentUrl(candidateContext->currentUrl)) {
-        setFallbackPageNavigationUrl(candidateContext->currentUrl);
+    if (!setKnownPageNavigationCurrentUrl(candidateContext->currentUrl())) {
+        setFallbackPageNavigationUrl(candidateContext->currentUrl());
     }
 
     m_pageNavigationListerJob = m_candidateRepository.loadImages(
         this, *candidateContext,
-        [this, currentUrl = candidateContext->currentUrl](
+        [this, currentUrl = candidateContext->currentUrl()](
             std::vector<ImageNavigationCandidate> candidates) {
             setPageNavigationUrls(imageNavigationCandidateUrls(candidates), currentUrl);
         },

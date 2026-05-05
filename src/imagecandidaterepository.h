@@ -15,22 +15,37 @@
 #include <optional>
 
 namespace KiriView {
-enum class ImageCandidateContainerType {
-    Directory,
-    ArchiveDocument,
-};
-
 enum class ImageCandidateRepositoryError {
     Generic,
     EmptyContainer,
     InvalidComicBookArchive,
 };
 
-struct ImageCandidateListContext {
-    QUrl currentUrl;
-    QUrl listUrl;
-    ArchiveDocumentLocation archiveDocument;
-    ImageCandidateContainerType containerType = ImageCandidateContainerType::Directory;
+class ImageCandidateListContext
+{
+public:
+    static ImageCandidateListContext forDirectory(QUrl currentUrl, QUrl directoryUrl);
+    static ImageCandidateListContext forArchiveDocument(
+        QUrl currentUrl, ArchiveDocumentLocation archiveDocument);
+
+    const QUrl &currentUrl() const;
+    const QUrl &directoryUrl() const;
+    const ArchiveDocumentLocation &archiveDocument() const;
+    bool isArchiveDocument() const;
+
+private:
+    enum class ContainerType {
+        Directory,
+        ArchiveDocument,
+    };
+
+    ImageCandidateListContext(ContainerType containerType, QUrl currentUrl, QUrl directoryUrl,
+        ArchiveDocumentLocation archiveDocument);
+
+    ContainerType m_containerType = ContainerType::Directory;
+    QUrl m_currentUrl;
+    QUrl m_directoryUrl;
+    ArchiveDocumentLocation m_archiveDocument;
 };
 
 struct ImageNavigationCandidateProvider {

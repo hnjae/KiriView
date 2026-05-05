@@ -50,6 +50,43 @@ ImageNavigationCandidateProvider defaultImageNavigationCandidateProvider()
     };
 }
 
+ImageCandidateListContext ImageCandidateListContext::forDirectory(
+    QUrl currentUrl, QUrl directoryUrl)
+{
+    return ImageCandidateListContext { ContainerType::Directory, std::move(currentUrl),
+        std::move(directoryUrl), ArchiveDocumentLocation::none() };
+}
+
+ImageCandidateListContext ImageCandidateListContext::forArchiveDocument(
+    QUrl currentUrl, ArchiveDocumentLocation archiveDocument)
+{
+    return ImageCandidateListContext { ContainerType::ArchiveDocument, std::move(currentUrl),
+        QUrl(), std::move(archiveDocument) };
+}
+
+const QUrl &ImageCandidateListContext::currentUrl() const { return m_currentUrl; }
+
+const QUrl &ImageCandidateListContext::directoryUrl() const { return m_directoryUrl; }
+
+const ArchiveDocumentLocation &ImageCandidateListContext::archiveDocument() const
+{
+    return m_archiveDocument;
+}
+
+bool ImageCandidateListContext::isArchiveDocument() const
+{
+    return m_containerType == ContainerType::ArchiveDocument;
+}
+
+ImageCandidateListContext::ImageCandidateListContext(ContainerType containerType, QUrl currentUrl,
+    QUrl directoryUrl, ArchiveDocumentLocation archiveDocument)
+    : m_containerType(containerType)
+    , m_currentUrl(std::move(currentUrl))
+    , m_directoryUrl(std::move(directoryUrl))
+    , m_archiveDocument(std::move(archiveDocument))
+{
+}
+
 std::optional<ImageCandidateListContext> imageCandidateListContextForDisplayedImage(
     const DisplayedImageLocation &location)
 {
@@ -64,12 +101,8 @@ std::optional<ImageCandidateListContext> imageCandidateListContextForDisplayedIm
             return std::nullopt;
         }
 
-        return ImageCandidateListContext {
-            currentUrl,
-            location.archiveDocumentRootUrl(),
-            location.archiveDocument(),
-            ImageCandidateContainerType::ArchiveDocument,
-        };
+        return ImageCandidateListContext::forArchiveDocument(
+            currentUrl, location.archiveDocument());
     }
 
     const QUrl currentUrl = navigationSourceUrl(displayedUrl);
@@ -79,12 +112,7 @@ std::optional<ImageCandidateListContext> imageCandidateListContextForDisplayedIm
         return std::nullopt;
     }
 
-    return ImageCandidateListContext {
-        currentUrl,
-        parentUrl,
-        ArchiveDocumentLocation::none(),
-        ImageCandidateContainerType::Directory,
-    };
+    return ImageCandidateListContext::forDirectory(currentUrl, parentUrl);
 }
 
 ImageCandidateRepository::ImageCandidateRepository()
@@ -101,13 +129,13 @@ ImageIoJob ImageCandidateRepository::loadImages(QObject *receiver,
     const ImageCandidateListContext &context, ImageCandidatesCallback callback,
     ErrorCallback errorCallback) const
 {
-    if (context.containerType == ImageCandidateContainerType::ArchiveDocument) {
+    if (context.isArchiveDocument()) {
         return loadArchiveImages(
-            receiver, context.archiveDocument, std::move(callback), std::move(errorCallback));
+            receiver, context.archiveDocument(), std::move(callback), std::move(errorCallback));
     }
 
     return loadDirectoryImages(
-        receiver, context.listUrl, std::move(callback), std::move(errorCallback));
+        receiver, context.directoryUrl(), std::move(callback), std::move(errorCallback));
 }
 
 ImageIoJob ImageCandidateRepository::loadDirectoryImages(QObject *receiver,

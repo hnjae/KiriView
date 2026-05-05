@@ -64,10 +64,10 @@ void ImagePredecodeCoordinator::scheduleAdjacentImagePredecode(
         [this, context, generation, candidateContext](
             std::vector<ImageNavigationCandidate> candidates) {
             startPredecodeImageLoads(
-                predecodeWindowImageUrls(candidates, candidateContext->currentUrl),
-                candidateContext->archiveDocument, context, generation);
+                predecodeWindowImageUrls(candidates, candidateContext->currentUrl()),
+                candidateContext->archiveDocument(), context, generation);
         },
-        [this, context, generation, archiveDocument = candidateContext->archiveDocument](
+        [this, context, generation, archiveDocument = candidateContext->archiveDocument()](
             const QString &) {
             startPredecodeImageLoads({}, archiveDocument, context, generation);
         });
