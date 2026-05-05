@@ -28,13 +28,13 @@ void TestImageRendering::staticSurfaceDrawEntriesKeepPreviewAndTileRectsSeparate
         KiriView::TestSupport::testImage(256, 256),
         {},
     });
-    surface.insertTile(KiriView::DecodedTile {
+    QVERIFY(surface.insertTile(KiriView::DecodedTile {
         KiriView::TileKey { 0, 0, 0 },
         QSize(1024, 1024),
         QRect(0, 0, 512, 512),
         QRect(0, 0, 513, 513),
         KiriView::TestSupport::testImage(513, 513),
-    });
+    }));
 
     const KiriView::DisplayedImageSurface displayedSurface = surface;
     const QRectF targetRect(10.0, 20.0, 1000.0, 500.0);

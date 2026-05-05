@@ -3,7 +3,6 @@
 
 #include "decodedimageresult.h"
 
-#include <type_traits>
 #include <utility>
 
 namespace {
@@ -19,18 +18,29 @@ bool staticDecodedImageIsPredecodeCacheable(
 }
 
 namespace KiriView {
+DecodedImageResult successfulDecodedImageResult(DecodedImage image)
+{
+    return DecodedImageResult { std::move(image) };
+}
+
+const DecodedImageFailure *decodedImageResultFailure(const DecodedImageResult &result)
+{
+    return std::get_if<DecodedImageFailure>(&result);
+}
+
+const DecodedImage *decodedImageResultImage(const DecodedImageResult &result)
+{
+    return std::get_if<DecodedImage>(&result);
+}
+
 std::optional<DecodedImage> decodedImageFromResult(DecodedImageResult result)
 {
-    return std::visit(
-        [](auto &decoded) -> std::optional<DecodedImage> {
-            using Decoded = std::decay_t<decltype(decoded)>;
-            if constexpr (std::is_same_v<Decoded, DecodedImageFailure>) {
-                return std::nullopt;
-            } else {
-                return DecodedImage { std::move(decoded) };
-            }
-        },
-        result);
+    auto *decoded = std::get_if<DecodedImage>(&result);
+    if (decoded == nullptr) {
+        return std::nullopt;
+    }
+
+    return std::move(*decoded);
 }
 
 bool decodedImageIsPredecodeCacheable(const DecodedImage &image, qsizetype byteBudget)
@@ -41,7 +51,7 @@ bool decodedImageIsPredecodeCacheable(const DecodedImage &image, qsizetype byteB
 
 bool decodedImageResultIsPredecodeCacheable(const DecodedImageResult &result, qsizetype byteBudget)
 {
-    return staticDecodedImageIsPredecodeCacheable(
-        std::get_if<StaticDecodedImage>(&result), byteBudget);
+    const DecodedImage *image = decodedImageResultImage(result);
+    return image != nullptr && decodedImageIsPredecodeCacheable(*image, byteBudget);
 }
 }

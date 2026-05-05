@@ -97,7 +97,10 @@ bool DisplayedImageState::insertTile(DecodedTile tile)
         return false;
     }
 
-    surface->insertTile(std::move(tile));
+    if (!surface->insertTile(std::move(tile))) {
+        return false;
+    }
+
     ++m_imageRevision;
     notifyImageChanged();
     return true;

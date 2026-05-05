@@ -27,7 +27,8 @@ KiriView::DecodedImageResult decodeTestImageData(
 
     QImage image(1, 1, QImage::Format_RGBA8888_Premultiplied);
     image.fill(Qt::transparent);
-    return KiriView::TestSupport::staticDecodedTestImage(image);
+    return KiriView::successfulDecodedImageResult(
+        KiriView::TestSupport::staticDecodedTestImage(image));
 }
 
 QUrl imageUrl(int index) { return QUrl(QStringLiteral("file:///images/%1.png").arg(index)); }
@@ -127,7 +128,7 @@ void TestImageDecodeJob::decodeErrorsAreDeliveredAsResults()
     dataLoader.loads.front()->dataCallback(QByteArrayLiteral("bad"));
 
     QTRY_VERIFY(decodedResult != nullptr);
-    const auto *failure = std::get_if<KiriView::DecodedImageFailure>(decodedResult.get());
+    const auto *failure = KiriView::decodedImageResultFailure(*decodedResult);
     QVERIFY(failure != nullptr);
     QCOMPARE(failure->errorString, QStringLiteral("decode failed"));
     QVERIFY(!decodeJob.hasActiveRequest());
@@ -140,7 +141,8 @@ void TestImageDecodeJob::decodeRequestIsPassedToDecoder()
     KiriView::ImageDecodeJob decodeJob(this, dataLoaderFor(dataLoader),
         [&decoderRequest](const QByteArray &, const KiriView::ImageDecodeRequest &request) {
             decoderRequest = request;
-            return KiriView::TestSupport::staticDecodedTestImage();
+            return KiriView::successfulDecodedImageResult(
+                KiriView::TestSupport::staticDecodedTestImage());
         });
 
     decodeJob.setDecodedCallback(

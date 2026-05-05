@@ -31,7 +31,7 @@ using FakeCandidateProvider = KiriView::TestSupport::FakeImageNavigationCandidat
 KiriView::DecodedImageResult decodeTestImageData(
     const QByteArray &, const KiriView::ImageDecodeRequest &)
 {
-    return staticDecodedTestImage(testImage(2));
+    return KiriView::successfulDecodedImageResult(staticDecodedTestImage(testImage(2)));
 }
 
 KiriView::DecodedImageResult decodeBadDataAsFailure(
@@ -47,13 +47,13 @@ KiriView::DecodedImageResult decodeBadDataAsFailure(
 KiriView::DecodedImageResult staticDecodedImageWithPreview(const QSize &sourceSize,
     const QSize &previewSize, KiriView::StaticImageDisplayHints displayHints = {})
 {
-    return KiriView::StaticDecodedImage {
+    return KiriView::successfulDecodedImageResult(KiriView::StaticDecodedImage {
         KiriView::StaticImagePayload {
             std::make_shared<KiriView::TestSupport::TestImageTileSource>(testImage(sourceSize)),
             testImage(previewSize),
             displayHints,
         },
-    };
+    });
 }
 
 KiriView::ImageAsyncDependencies dependenciesFor(FakeCandidateProvider &candidateProvider,

@@ -31,7 +31,7 @@ KiriView::DecodedImageResult decodeTestImageData(
         return KiriView::DecodedImageFailure { QStringLiteral("decode failed") };
     }
 
-    return staticDecodedTestImage();
+    return KiriView::successfulDecodedImageResult(staticDecodedTestImage());
 }
 
 KiriView::ImageLoader createLoader(QObject *parent, FakeCandidateProvider &candidateProvider,

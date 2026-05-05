@@ -80,7 +80,7 @@ public:
     bool containsTile(const TileKey &key) const;
     std::optional<DecodedTile> tile(const TileKey &key);
     std::vector<DecodedTile> tiles() const;
-    void insertTile(DecodedTile tile);
+    bool insertTile(DecodedTile tile);
     void clearTiles();
 
     static qsizetype defaultTileCacheByteBudget();

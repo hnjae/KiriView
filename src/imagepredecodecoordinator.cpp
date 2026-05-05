@@ -15,6 +15,7 @@
 namespace {
 using KiriView::ArchiveDocumentLocation;
 using KiriView::DecodedImageResult;
+using KiriView::decodedImageResultImage;
 using KiriView::decodedImageResultIsPredecodeCacheable;
 using KiriView::ImageCandidateListContext;
 using KiriView::normalizedImageUrl;
@@ -158,7 +159,9 @@ void ImagePredecodeCoordinator::finishPredecodeImageDecode(
         return;
     }
 
-    const auto *staticImage = std::get_if<StaticDecodedImage>(&result);
+    const DecodedImage *decodedImage = decodedImageResultImage(result);
+    const auto *staticImage
+        = decodedImage == nullptr ? nullptr : std::get_if<StaticDecodedImage>(decodedImage);
     if (staticImage != nullptr
         && decodedImageResultIsPredecodeCacheable(result, KiriView::PredecodeCache::byteBudget())) {
         m_cache.cacheImage(request.imageUrl, *archiveDocument, staticImage->staticImage);

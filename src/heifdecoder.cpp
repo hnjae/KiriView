@@ -50,9 +50,9 @@ std::optional<KiriView::DecodedImageResult> decodeHeifStillImageDataForInfo(
         return decodedImageFailure(errorString);
     }
 
-    return KiriView::StaticDecodedImage {
+    return KiriView::successfulDecodedImageResult(KiriView::StaticDecodedImage {
         KiriView::StaticImagePayload { std::move(source), std::move(preview), {} },
-    };
+    });
 }
 
 std::optional<KiriView::DecodedImageResult> decodeHeifSequenceImageDataForInfo(
@@ -82,11 +82,11 @@ std::optional<KiriView::DecodedImageResult> decodeHeifSequenceImageDataForInfo(
         return decodedImageFailure(errorString);
     }
 
-    return KiriView::HeifSequenceAnimationImage {
+    return KiriView::successfulDecodedImageResult(KiriView::HeifSequenceAnimationImage {
         std::move(firstFrame->image),
         data,
         firstFrame->delay,
-    };
+    });
 }
 }
 

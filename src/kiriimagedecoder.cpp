@@ -36,9 +36,9 @@ std::optional<KiriView::DecodedImageResult> decodeSvgImageData(const QByteArray 
         return decodedImageFailure(errorString);
     }
 
-    return KiriView::StaticDecodedImage {
+    return KiriView::successfulDecodedImageResult(KiriView::StaticDecodedImage {
         KiriView::StaticImagePayload { std::move(source), std::move(preview), {} },
-    };
+    });
 }
 
 KiriView::DecodedImageResult openedStaticImageResult(
@@ -58,10 +58,10 @@ KiriView::DecodedImageResult openedStaticImageResult(
             return decodedImageFailure(errorString);
         }
 
-        return KiriView::StaticDecodedImage {
+        return KiriView::successfulDecodedImageResult(KiriView::StaticDecodedImage {
             KiriView::StaticImagePayload { std::move(source), std::move(firstDisplay.image),
                 KiriView::StaticImageDisplayHints { firstDisplay.displayPixelsPerSourcePixel } },
-        };
+        });
     }
     if (firstDisplay.status == KiriView::FirstDisplayImageDecodeStatus::Error) {
         return decodedImageFailure(errorString);
@@ -73,9 +73,9 @@ KiriView::DecodedImageResult openedStaticImageResult(
         return decodedImageFailure(errorString);
     }
 
-    return KiriView::StaticDecodedImage {
+    return KiriView::successfulDecodedImageResult(KiriView::StaticDecodedImage {
         KiriView::StaticImagePayload { std::move(source), std::move(preview), {} },
-    };
+    });
 }
 }
 
@@ -102,10 +102,10 @@ DecodedImageResult decodeImageData(const QByteArray &data, const ImageDecodeRequ
             frame.image = displayReadyImage(frame.image);
         }
 
-        return DecodedAnimationImage {
+        return successfulDecodedImageResult(DecodedAnimationImage {
             std::move(apngResult.animation.frames),
             apngResult.animation.loopCount,
-        };
+        });
     }
     if (apngResult.status == ApngDecodeStatus::Error) {
         return decodedImageFailure(apngResult.errorString);
@@ -139,13 +139,13 @@ DecodedImageResult decodeImageData(const QByteArray &data, const ImageDecodeRequ
 
     QImage firstFrame = displayReadyImage(image);
     if (supportsAnimation && hasMoreFrames) {
-        return ReaderAnimationImage {
+        return successfulDecodedImageResult(ReaderAnimationImage {
             std::move(firstFrame),
             imageData,
             format,
             loopCount,
             firstFrameDelay,
-        };
+        });
     }
     return openedStaticImageResult(imageData, request);
 }

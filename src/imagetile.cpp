@@ -244,11 +244,11 @@ std::vector<DecodedTile> DecodedTileCache::tiles() const
     return tiles;
 }
 
-void DecodedTileCache::insert(DecodedTile tile)
+bool DecodedTileCache::insert(DecodedTile tile)
 {
     const qsizetype byteCost = decodedTileByteCost(tile);
     if (byteCost <= 0 || byteCost > m_byteBudget) {
-        return;
+        return false;
     }
 
     auto existing = findEntry(tile.key);
@@ -260,6 +260,7 @@ void DecodedTileCache::insert(DecodedTile tile)
     m_entries.push_back(Entry { std::move(tile), byteCost, ++m_useClock });
     m_byteCost += byteCost;
     trimToBudget();
+    return true;
 }
 
 void DecodedTileCache::clear()

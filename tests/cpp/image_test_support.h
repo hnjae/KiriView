@@ -305,7 +305,7 @@ inline StaticDecodedImage staticDecodedTestImage(const QImage &image = testImage
 
 inline DecodedImageResult decodeStaticTestImageData(const QByteArray &, const ImageDecodeRequest &)
 {
-    return staticDecodedTestImage();
+    return successfulDecodedImageResult(staticDecodedTestImage());
 }
 }
 

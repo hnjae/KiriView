@@ -96,7 +96,7 @@ public:
     bool contains(const TileKey &key) const;
     std::optional<DecodedTile> find(const TileKey &key);
     std::vector<DecodedTile> tiles() const;
-    void insert(DecodedTile tile);
+    bool insert(DecodedTile tile);
     void clear();
 
 private:

@@ -37,7 +37,7 @@ ImageLoader::ImageLoader(
                 return;
             }
 
-            if (const auto *failure = std::get_if<DecodedImageFailure>(result.get())) {
+            if (const auto *failure = decodedImageResultFailure(*result)) {
                 finishLoadWithError(*session, ImageLoadError::Generic, failure->errorString);
                 return;
             }

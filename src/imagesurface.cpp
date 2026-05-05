@@ -57,7 +57,7 @@ std::optional<DecodedTile> StaticTileSurface::tile(const TileKey &key)
 
 std::vector<DecodedTile> StaticTileSurface::tiles() const { return m_tileCache.tiles(); }
 
-void StaticTileSurface::insertTile(DecodedTile tile) { m_tileCache.insert(std::move(tile)); }
+bool StaticTileSurface::insertTile(DecodedTile tile) { return m_tileCache.insert(std::move(tile)); }
 
 void StaticTileSurface::clearTiles() { m_tileCache.clear(); }
 
