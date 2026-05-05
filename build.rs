@@ -293,8 +293,12 @@ fn qt_version() -> String {
 }
 
 fn pkg_config_include_dirs(package: &str) -> Vec<PathBuf> {
+    pkg_config_paths(package, "--cflags", &["-I", "-isystem"])
+}
+
+fn pkg_config_paths(package: &str, pkg_config_arg: &str, flags: &[&str]) -> Vec<PathBuf> {
     let output = Command::new("pkg-config")
-        .args(["--cflags", package])
+        .args([pkg_config_arg, package])
         .output();
     let Ok(output) = output else {
         return Vec::new();
@@ -303,25 +307,8 @@ fn pkg_config_include_dirs(package: &str) -> Vec<PathBuf> {
         return Vec::new();
     }
 
-    let cflags = String::from_utf8_lossy(&output.stdout);
-    let mut dirs = Vec::new();
-    let mut tokens = cflags.split_whitespace();
-    while let Some(token) = tokens.next() {
-        if token == "-I" || token == "-isystem" {
-            if let Some(path) = tokens.next() {
-                dirs.push(PathBuf::from(path));
-            }
-        } else if let Some(path) = token.strip_prefix("-I")
-            && !path.is_empty()
-        {
-            dirs.push(PathBuf::from(path));
-        } else if let Some(path) = token.strip_prefix("-isystem")
-            && !path.is_empty()
-        {
-            dirs.push(PathBuf::from(path));
-        }
-    }
-    dirs
+    let paths = String::from_utf8_lossy(&output.stdout);
+    flag_paths_from_tokens(paths.split_whitespace(), flags)
 }
 
 fn add_kf6_include_dirs(dirs: &mut BTreeSet<PathBuf>, include_root: &Path) {
@@ -374,49 +361,42 @@ fn contains_native_library(dir: &Path) -> bool {
 }
 
 fn pkg_config_library_dirs(package: &str) -> Vec<PathBuf> {
-    let output = Command::new("pkg-config")
-        .args(["--libs", package])
-        .output();
-    let Ok(output) = output else {
-        return Vec::new();
-    };
-    if !output.status.success() {
-        return Vec::new();
-    }
-
-    let libs = String::from_utf8_lossy(&output.stdout);
-    let mut dirs = Vec::new();
-    let mut tokens = libs.split_whitespace();
-    while let Some(token) = tokens.next() {
-        if token == "-L" {
-            if let Some(path) = tokens.next() {
-                dirs.push(PathBuf::from(path));
-            }
-        } else if let Some(path) = token.strip_prefix("-L")
-            && !path.is_empty()
-        {
-            dirs.push(PathBuf::from(path));
-        }
-    }
-    dirs
+    pkg_config_paths(package, "--libs", &["-L"])
 }
 
 fn flag_paths(env_var: &str, flag: &str) -> Vec<PathBuf> {
     let value = env::var(env_var).unwrap_or_default();
+    flag_paths_from_tokens(value.split_whitespace(), &[flag])
+}
+
+fn flag_paths_from_tokens<'a>(
+    tokens: impl IntoIterator<Item = &'a str>,
+    flags: &[&str],
+) -> Vec<PathBuf> {
     let mut paths = Vec::new();
-    let mut tokens = value.split_whitespace();
+    let mut tokens = tokens.into_iter();
 
     while let Some(token) = tokens.next() {
-        if token == flag {
+        if flags.contains(&token) {
             if let Some(path) = tokens.next() {
                 paths.push(PathBuf::from(path));
             }
-        } else if let Some(path) = token.strip_prefix(flag)
-            && !path.is_empty()
-        {
+        } else if let Some(path) = joined_flag_path(token, flags) {
             paths.push(PathBuf::from(path));
         }
     }
 
     paths
+}
+
+fn joined_flag_path<'a>(token: &'a str, flags: &[&str]) -> Option<&'a str> {
+    for flag in flags {
+        if let Some(path) = token.strip_prefix(flag)
+            && !path.is_empty()
+        {
+            return Some(path);
+        }
+    }
+
+    None
 }

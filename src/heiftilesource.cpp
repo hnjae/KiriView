@@ -83,41 +83,6 @@ public:
     }
 
 private:
-    std::optional<std::pair<KiriView::HeifContext, KiriView::HeifImageHandle>> openHandle(
-        QString *errorString) const
-    {
-        if (std::optional<QString> initError = KiriView::initializeHeifLibrary()) {
-            KiriView::setTileSourceError(errorString, *initError);
-            return std::nullopt;
-        }
-
-        KiriView::HeifContext context;
-        if (context.get() == nullptr) {
-            KiriView::setTileSourceError(errorString,
-                KiriView::imageViewText("Could not decode the selected HEIF image: libheif could "
-                                        "not allocate a context."));
-            return std::nullopt;
-        }
-
-        heif_error error = heif_context_read_from_memory_without_copy(
-            context.get(), m_data.constData(), static_cast<size_t>(m_data.size()), nullptr);
-        if (error.code != heif_error_Ok) {
-            KiriView::setTileSourceError(
-                errorString, KiriView::heifErrorString("reading the HEIF container", error));
-            return std::nullopt;
-        }
-
-        KiriView::HeifImageHandle handle;
-        error = heif_context_get_primary_image_handle(context.get(), handle.out());
-        if (error.code != heif_error_Ok) {
-            KiriView::setTileSourceError(
-                errorString, KiriView::heifErrorString("reading the primary image", error));
-            return std::nullopt;
-        }
-
-        return std::make_pair(std::move(context), std::move(handle));
-    }
-
     QImage decodeFullOrScaled(const QSize &targetSize, QString *errorString) const
     {
         if (KiriView::estimatedRgbaByteCost(m_imageSize)
@@ -128,15 +93,15 @@ private:
             return {};
         }
 
-        std::optional<std::pair<KiriView::HeifContext, KiriView::HeifImageHandle>> opened
-            = openHandle(errorString);
+        std::optional<KiriView::HeifPrimaryImage> opened
+            = KiriView::openHeifPrimaryImage(m_data, errorString);
         if (!opened.has_value()) {
             return {};
         }
 
         KiriView::HeifDecodingOptions options;
         KiriView::HeifImage heifImage;
-        heif_error error = heif_decode_image(opened->second.get(), heifImage.out(),
+        heif_error error = heif_decode_image(opened->handle.get(), heifImage.out(),
             heif_colorspace_RGB, heif_chroma_interleaved_RGBA, options.get());
         if (error.code != heif_error_Ok) {
             KiriView::setTileSourceError(
@@ -154,8 +119,8 @@ private:
 
     QImage decodeGridSourceRect(const QRect &sourceRect, QString *errorString) const
     {
-        std::optional<std::pair<KiriView::HeifContext, KiriView::HeifImageHandle>> opened
-            = openHandle(errorString);
+        std::optional<KiriView::HeifPrimaryImage> opened
+            = KiriView::openHeifPrimaryImage(m_data, errorString);
         if (!opened.has_value()) {
             return {};
         }
@@ -183,7 +148,7 @@ private:
             for (int tileX = firstTileX; tileX <= lastTileX; ++tileX) {
                 KiriView::HeifImage heifImage;
                 const heif_error error
-                    = heif_image_handle_decode_image_tile(opened->second.get(), heifImage.out(),
+                    = heif_image_handle_decode_image_tile(opened->handle.get(), heifImage.out(),
                         heif_colorspace_RGB, heif_chroma_interleaved_RGBA, options.get(),
                         static_cast<std::uint32_t>(tileX), static_cast<std::uint32_t>(tileY));
                 if (error.code != heif_error_Ok) {
@@ -221,35 +186,14 @@ std::shared_ptr<ImageTileSource> openHeifTileSource(const QByteArray &data, QStr
     if (!isLikelyHeifStillImageContainer(data)) {
         return {};
     }
-    if (std::optional<QString> initError = initializeHeifLibrary()) {
-        setTileSourceError(errorString, *initError);
+
+    std::optional<HeifPrimaryImage> opened = openHeifPrimaryImage(data, errorString);
+    if (!opened.has_value()) {
         return {};
     }
 
-    HeifContext context;
-    if (context.get() == nullptr) {
-        setTileSourceError(errorString,
-            imageViewText(
-                "Could not decode the selected HEIF image: libheif could not allocate a context."));
-        return {};
-    }
-
-    heif_error error = heif_context_read_from_memory_without_copy(
-        context.get(), data.constData(), static_cast<size_t>(data.size()), nullptr);
-    if (error.code != heif_error_Ok) {
-        setTileSourceError(errorString, heifErrorString("reading the HEIF container", error));
-        return {};
-    }
-
-    HeifImageHandle handle;
-    error = heif_context_get_primary_image_handle(context.get(), handle.out());
-    if (error.code != heif_error_Ok) {
-        setTileSourceError(errorString, heifErrorString("reading the primary image", error));
-        return {};
-    }
-
-    const QSize imageSize(
-        heif_image_handle_get_width(handle.get()), heif_image_handle_get_height(handle.get()));
+    const QSize imageSize(heif_image_handle_get_width(opened->handle.get()),
+        heif_image_handle_get_height(opened->handle.get()));
     if (imageSize.isEmpty()) {
         setTileSourceError(errorString,
             imageViewText("Could not decode the selected HEIF image: image size is invalid."));
@@ -258,7 +202,7 @@ std::shared_ptr<ImageTileSource> openHeifTileSource(const QByteArray &data, QStr
 
     heif_image_tiling tiling {};
     tiling.version = 1;
-    error = heif_image_handle_get_image_tiling(handle.get(), 1, &tiling);
+    heif_error error = heif_image_handle_get_image_tiling(opened->handle.get(), 1, &tiling);
     const bool tiled = error.code == heif_error_Ok && tiling.num_columns > 0 && tiling.num_rows > 0
         && tiling.tile_width > 0 && tiling.tile_height > 0
         && (tiling.num_columns > 1 || tiling.num_rows > 1);

@@ -6,6 +6,7 @@
 
 #include <libheif/heif.h>
 
+#include <QByteArray>
 #include <QImage>
 #include <QString>
 #include <cstdint>
@@ -85,6 +86,13 @@ private:
     heif_decoding_options *m_options = nullptr;
 };
 
+struct HeifPrimaryImage {
+    HeifContext context;
+    HeifImageHandle handle;
+};
+
+// The input data must outlive the returned context because libheif reads it without copying.
+std::optional<HeifPrimaryImage> openHeifPrimaryImage(const QByteArray &data, QString *errorString);
 std::optional<QImage> qImageFromHeifImage(const heif_image *heifImage, QString *errorString);
 int heifFrameDelay(std::uint32_t duration, std::uint32_t timescale);
 }

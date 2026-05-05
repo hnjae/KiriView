@@ -13,6 +13,15 @@
 #include <mutex>
 #include <utility>
 
+namespace {
+void setHeifSupportError(QString *errorString, const QString &message)
+{
+    if (errorString != nullptr) {
+        *errorString = message;
+    }
+}
+}
+
 namespace KiriView {
 QString heifErrorString(const char *action, const heif_error &error)
 {
@@ -156,6 +165,38 @@ HeifDecodingOptions &HeifDecodingOptions::operator=(HeifDecodingOptions &&other)
 }
 
 const heif_decoding_options *HeifDecodingOptions::get() const { return m_options; }
+
+std::optional<HeifPrimaryImage> openHeifPrimaryImage(const QByteArray &data, QString *errorString)
+{
+    if (std::optional<QString> initError = initializeHeifLibrary()) {
+        setHeifSupportError(errorString, *initError);
+        return std::nullopt;
+    }
+
+    HeifContext context;
+    if (context.get() == nullptr) {
+        setHeifSupportError(errorString,
+            imageViewText(
+                "Could not decode the selected HEIF image: libheif could not allocate a context."));
+        return std::nullopt;
+    }
+
+    heif_error error = heif_context_read_from_memory_without_copy(
+        context.get(), data.constData(), static_cast<size_t>(data.size()), nullptr);
+    if (error.code != heif_error_Ok) {
+        setHeifSupportError(errorString, heifErrorString("reading the HEIF container", error));
+        return std::nullopt;
+    }
+
+    HeifImageHandle handle;
+    error = heif_context_get_primary_image_handle(context.get(), handle.out());
+    if (error.code != heif_error_Ok) {
+        setHeifSupportError(errorString, heifErrorString("reading the primary image", error));
+        return std::nullopt;
+    }
+
+    return HeifPrimaryImage { std::move(context), std::move(handle) };
+}
 
 std::optional<QImage> qImageFromHeifImage(const heif_image *heifImage, QString *errorString)
 {
