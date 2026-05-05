@@ -205,10 +205,9 @@ void ImagePresentationController::startDecodedAnimation(
     m_displayedImageState->startDecodedAnimation(std::move(frames), loopCount);
 }
 
-void ImagePresentationController::startHeifSequenceAnimation(
-    const QByteArray &data, int firstFrameDelay)
+void ImagePresentationController::startHeifSequenceAnimation(const QByteArray &data)
 {
-    m_displayedImageState->startHeifSequenceAnimation(data, firstFrameDelay);
+    m_displayedImageState->startHeifSequenceAnimation(data);
 }
 
 void ImagePresentationController::stopAnimation() { m_displayedImageState->stopAnimation(); }

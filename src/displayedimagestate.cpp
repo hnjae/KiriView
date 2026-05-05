@@ -131,9 +131,9 @@ void DisplayedImageState::startDecodedAnimation(std::vector<AnimationFrame> fram
     m_animationPlayer->startDecoded(std::move(frames), loopCount);
 }
 
-void DisplayedImageState::startHeifSequenceAnimation(const QByteArray &data, int firstFrameDelay)
+void DisplayedImageState::startHeifSequenceAnimation(const QByteArray &data)
 {
-    m_animationPlayer->startHeifSequence(data, firstFrameDelay);
+    m_animationPlayer->startHeifSequence(data);
 }
 
 void DisplayedImageState::stopAnimation() { m_animationPlayer->stop(); }

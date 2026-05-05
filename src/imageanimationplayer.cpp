@@ -9,8 +9,11 @@
 
 #include <QObject>
 #include <algorithm>
+#include <cstddef>
+#include <memory>
 #include <optional>
 #include <utility>
+#include <variant>
 
 namespace {
 constexpr int defaultAnimationFrameDelay = 100;
@@ -27,6 +30,22 @@ int normalizedAnimationFrameDelay(int delay)
 }
 
 namespace KiriView {
+struct ImageAnimationPlayer::ReaderPlayback final {
+    QByteArray data;
+    QByteArray format;
+    std::unique_ptr<BufferedImageReader> reader;
+};
+
+struct ImageAnimationPlayer::DecodedPlayback final {
+    std::vector<AnimationFrame> frames;
+    std::size_t frameIndex = 0;
+};
+
+struct ImageAnimationPlayer::HeifSequencePlayback final {
+    QByteArray data;
+    std::unique_ptr<HeifSequenceReader> reader;
+};
+
 ImageAnimationPlayer::ImageAnimationPlayer(
     QObject *context, FrameReadyCallback frameReady, ErrorCallback animationError)
     : m_frameReady(std::move(frameReady))
@@ -42,23 +61,27 @@ void ImageAnimationPlayer::start(
     const QByteArray &data, const QByteArray &format, int loopCount, int firstFrameDelay)
 {
     clearPlaybackState();
-    m_data = data;
-    m_format = format;
     m_loopCount = loopCount;
 
+    auto playback = std::make_unique<ReaderPlayback>();
+    playback->data = data;
+    playback->format = format;
+
     QString errorString;
-    if (!resetReader(&errorString)) {
+    if (!resetReader(*playback, &errorString)) {
         finishWithError(errorString);
         return;
     }
 
-    const QImage firstFrame = m_reader->read();
+    const QImage firstFrame = playback->reader->read();
     if (firstFrame.isNull()) {
-        finishWithError(m_reader->errorString());
+        finishWithError(playback->reader->errorString());
         return;
     }
 
-    if (m_reader->canRead()) {
+    const bool hasMoreFrames = playback->reader->canRead();
+    m_playback = std::move(playback);
+    if (hasMoreFrames) {
         m_timer.start(normalizedAnimationFrameDelay(firstFrameDelay));
     }
 }
@@ -66,53 +89,75 @@ void ImageAnimationPlayer::start(
 void ImageAnimationPlayer::startDecoded(std::vector<AnimationFrame> frames, int loopCount)
 {
     clearPlaybackState();
-    m_decodedFrames = std::move(frames);
     m_loopCount = loopCount;
 
-    if (m_decodedFrames.size() > 1) {
-        m_timer.start(normalizedAnimationFrameDelay(m_decodedFrames.front().delay));
+    auto playback = std::make_unique<DecodedPlayback>();
+    playback->frames = std::move(frames);
+    const bool hasMoreFrames = playback->frames.size() > 1;
+    const int nextFrameDelay
+        = hasMoreFrames ? normalizedAnimationFrameDelay(playback->frames.front().delay) : 0;
+
+    m_playback = std::move(playback);
+    if (hasMoreFrames) {
+        m_timer.start(nextFrameDelay);
     }
 }
 
-void ImageAnimationPlayer::startHeifSequence(const QByteArray &data, int firstFrameDelay)
+void ImageAnimationPlayer::startHeifSequence(const QByteArray &data)
 {
     clearPlaybackState();
-    m_data = data;
-    m_heifFirstFrameDelay = firstFrameDelay;
+    auto playback = std::make_unique<HeifSequencePlayback>();
+    playback->data = data;
 
     QString errorString;
-    if (!resetHeifSequence(&errorString)) {
+    int firstFrameDelay = 0;
+    if (!resetHeifSequence(*playback, &firstFrameDelay, &errorString)) {
         finishWithError(errorString);
         return;
     }
 
-    m_timer.start(normalizedAnimationFrameDelay(m_heifFirstFrameDelay));
+    m_playback = std::move(playback);
+    m_timer.start(normalizedAnimationFrameDelay(firstFrameDelay));
 }
 
 void ImageAnimationPlayer::stop() { clearPlaybackState(); }
 
 void ImageAnimationPlayer::advanceFrame()
 {
-    if (m_heifSequenceReader != nullptr) {
-        advanceHeifSequenceFrame();
-        return;
-    }
+    struct PlaybackVisitor {
+        ImageAnimationPlayer *player = nullptr;
 
-    if (!m_decodedFrames.empty()) {
-        advanceDecodedFrame();
-        return;
-    }
+        void operator()(std::monostate &) const { }
+        void operator()(std::unique_ptr<ReaderPlayback> &playback) const
+        {
+            if (playback != nullptr) {
+                player->advanceReaderFrame(*playback);
+            }
+        }
+        void operator()(std::unique_ptr<DecodedPlayback> &playback) const
+        {
+            if (playback != nullptr) {
+                player->advanceDecodedFrame(*playback);
+            }
+        }
+        void operator()(std::unique_ptr<HeifSequencePlayback> &playback) const
+        {
+            if (playback != nullptr) {
+                player->advanceHeifSequenceFrame(*playback);
+            }
+        }
+    };
 
-    advanceReaderFrame();
+    std::visit(PlaybackVisitor { this }, m_playback);
 }
 
-void ImageAnimationPlayer::advanceReaderFrame()
+void ImageAnimationPlayer::advanceReaderFrame(ReaderPlayback &playback)
 {
-    if (m_reader == nullptr) {
+    if (playback.reader == nullptr) {
         return;
     }
 
-    if (!m_reader->canRead()) {
+    if (!playback.reader->canRead()) {
         if (!hasRemainingLoops()) {
             stop();
             return;
@@ -121,64 +166,64 @@ void ImageAnimationPlayer::advanceReaderFrame()
         ++m_completedLoops;
 
         QString errorString;
-        if (!resetReader(&errorString)) {
+        if (!resetReader(playback, &errorString)) {
             finishWithError(errorString);
             return;
         }
     }
 
-    QImage frame = m_reader->read();
+    QImage frame = playback.reader->read();
     if (frame.isNull()) {
-        finishWithError(m_reader->errorString());
+        finishWithError(playback.reader->errorString());
         return;
     }
 
-    const int delay = normalizedAnimationFrameDelay(m_reader->nextImageDelay());
+    const int delay = normalizedAnimationFrameDelay(playback.reader->nextImageDelay());
     m_frameReady(frame);
 
-    if (m_reader->canRead() || hasRemainingLoops()) {
+    if (playback.reader->canRead() || hasRemainingLoops()) {
         m_timer.start(delay);
     } else {
         stop();
     }
 }
 
-void ImageAnimationPlayer::advanceDecodedFrame()
+void ImageAnimationPlayer::advanceDecodedFrame(DecodedPlayback &playback)
 {
-    if (m_decodedFrames.empty()) {
+    if (playback.frames.empty()) {
         return;
     }
 
-    if (m_decodedFrameIndex + 1 >= m_decodedFrames.size()) {
+    if (playback.frameIndex + 1 >= playback.frames.size()) {
         if (!hasRemainingLoops()) {
             stop();
             return;
         }
 
         ++m_completedLoops;
-        m_decodedFrameIndex = 0;
+        playback.frameIndex = 0;
     } else {
-        ++m_decodedFrameIndex;
+        ++playback.frameIndex;
     }
 
-    const AnimationFrame &frame = m_decodedFrames.at(m_decodedFrameIndex);
+    const AnimationFrame &frame = playback.frames.at(playback.frameIndex);
     m_frameReady(frame.image);
 
-    if (m_decodedFrameIndex + 1 < m_decodedFrames.size() || hasRemainingLoops()) {
+    if (playback.frameIndex + 1 < playback.frames.size() || hasRemainingLoops()) {
         m_timer.start(normalizedAnimationFrameDelay(frame.delay));
     } else {
         stop();
     }
 }
 
-void ImageAnimationPlayer::advanceHeifSequenceFrame()
+void ImageAnimationPlayer::advanceHeifSequenceFrame(HeifSequencePlayback &playback)
 {
-    if (m_heifSequenceReader == nullptr) {
+    if (playback.reader == nullptr) {
         return;
     }
 
     QString errorString;
-    std::optional<AnimationFrame> frame = m_heifSequenceReader->readNextFrame(&errorString);
+    std::optional<AnimationFrame> frame = playback.reader->readNextFrame(&errorString);
     if (!frame.has_value()) {
         if (errorString.isEmpty()) {
             stop();
@@ -192,11 +237,11 @@ void ImageAnimationPlayer::advanceHeifSequenceFrame()
     m_timer.start(normalizedAnimationFrameDelay(frame->delay));
 }
 
-bool ImageAnimationPlayer::resetReader(QString *errorString)
+bool ImageAnimationPlayer::resetReader(ReaderPlayback &playback, QString *errorString)
 {
-    m_reader.reset();
+    playback.reader.reset();
 
-    auto reader = std::make_unique<BufferedImageReader>(m_data, m_format);
+    auto reader = std::make_unique<BufferedImageReader>(playback.data, playback.format);
     if (!*reader) {
         *errorString = imageViewText("Could not read the selected image data.");
         return false;
@@ -207,32 +252,33 @@ bool ImageAnimationPlayer::resetReader(QString *errorString)
         return false;
     }
 
-    m_reader = std::move(reader);
+    playback.reader = std::move(reader);
     return true;
 }
 
-bool ImageAnimationPlayer::resetHeifSequence(QString *errorString)
+bool ImageAnimationPlayer::resetHeifSequence(
+    HeifSequencePlayback &playback, int *firstFrameDelay, QString *errorString)
 {
-    m_heifSequenceReader = std::make_unique<HeifSequenceReader>();
-    const HeifSequenceOpenResult openResult = m_heifSequenceReader->open(m_data);
+    playback.reader = std::make_unique<HeifSequenceReader>();
+    const HeifSequenceOpenResult openResult = playback.reader->open(playback.data);
     if (openResult.status != HeifSequenceOpenStatus::Success) {
         *errorString = openResult.errorString.isEmpty()
             ? imageViewText("Could not decode the selected HEIF image sequence.")
             : openResult.errorString;
-        m_heifSequenceReader.reset();
+        playback.reader.reset();
         return false;
     }
 
-    std::optional<AnimationFrame> firstFrame = m_heifSequenceReader->readNextFrame(errorString);
+    std::optional<AnimationFrame> firstFrame = playback.reader->readNextFrame(errorString);
     if (!firstFrame.has_value()) {
         if (errorString->isEmpty()) {
             *errorString = imageViewText("Could not decode the selected HEIF image sequence.");
         }
-        m_heifSequenceReader.reset();
+        playback.reader.reset();
         return false;
     }
 
-    m_heifFirstFrameDelay = firstFrame->delay;
+    *firstFrameDelay = firstFrame->delay;
     return true;
 }
 
@@ -244,15 +290,9 @@ bool ImageAnimationPlayer::hasRemainingLoops() const
 void ImageAnimationPlayer::clearPlaybackState()
 {
     m_timer.stop();
-    m_reader.reset();
-    m_heifSequenceReader.reset();
-    m_data.clear();
-    m_format.clear();
-    m_decodedFrames.clear();
-    m_decodedFrameIndex = 0;
+    m_playback = std::monostate();
     m_loopCount = 0;
     m_completedLoops = 0;
-    m_heifFirstFrameDelay = 0;
 }
 
 void ImageAnimationPlayer::finishWithError(const QString &errorString)

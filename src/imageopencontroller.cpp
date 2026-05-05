@@ -155,7 +155,7 @@ bool ImageOpenController::finishDecodedImageResult(
     ImageLoadSession &session, HeifSequenceAnimationImage &decoded)
 {
     finishLoadSuccessfully(session, decoded.firstFrame, false);
-    m_presentationController.startHeifSequenceAnimation(decoded.data, decoded.firstFrameDelay);
+    m_presentationController.startHeifSequenceAnimation(decoded.data);
     return true;
 }
 
