@@ -11,19 +11,6 @@
 #include <vector>
 
 namespace {
-const QUrl &emptyDirectoryUrl()
-{
-    static const QUrl url;
-    return url;
-}
-
-const KiriView::ArchiveDocumentLocation &emptyArchiveDocument()
-{
-    static const KiriView::ArchiveDocumentLocation archiveDocument
-        = KiriView::ArchiveDocumentLocation::none();
-    return archiveDocument;
-}
-
 void reportLoadProviderMissing(const KiriView::ErrorCallback &errorCallback)
 {
     if (errorCallback) {
@@ -117,23 +104,6 @@ ImageCandidateListContext ImageCandidateListContext::forArchiveDocument(
 const QUrl &ImageCandidateListContext::currentUrl() const
 {
     return visit([](const auto &context) -> const QUrl & { return context.currentUrl; });
-}
-
-const QUrl &ImageCandidateListContext::directoryUrl() const
-{
-    const auto *context = std::get_if<DirectoryContext>(&m_context);
-    return context == nullptr ? emptyDirectoryUrl() : context->directoryUrl;
-}
-
-const ArchiveDocumentLocation &ImageCandidateListContext::archiveDocument() const
-{
-    const auto *context = std::get_if<ArchiveDocumentContext>(&m_context);
-    return context == nullptr ? emptyArchiveDocument() : context->archiveDocument;
-}
-
-bool ImageCandidateListContext::isArchiveDocument() const
-{
-    return std::holds_alternative<ArchiveDocumentContext>(m_context);
 }
 
 ImageCandidateListContext::ImageCandidateListContext(Context context)

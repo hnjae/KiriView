@@ -13,10 +13,30 @@
 #include <vector>
 
 namespace {
+using KiriView::ArchiveDocumentLocation;
 using KiriView::DecodedImageResult;
 using KiriView::decodedImageResultIsPredecodeCacheable;
+using KiriView::ImageCandidateListContext;
 using KiriView::normalizedImageUrl;
 using KiriView::predecodeWindowImageUrls;
+
+template <typename... Handlers> struct ContextVisitor : Handlers... {
+    using Handlers::operator()...;
+};
+
+template <typename... Handlers> ContextVisitor(Handlers...) -> ContextVisitor<Handlers...>;
+
+ArchiveDocumentLocation predecodeArchiveDocumentForContext(const ImageCandidateListContext &context)
+{
+    return context.visit(ContextVisitor {
+        [](const ImageCandidateListContext::DirectoryContext &) {
+            return ArchiveDocumentLocation::none();
+        },
+        [](const ImageCandidateListContext::ArchiveDocumentContext &archiveContext) {
+            return archiveContext.archiveDocument;
+        },
+    });
+}
 }
 
 namespace KiriView {
@@ -58,16 +78,17 @@ void ImagePredecodeCoordinator::scheduleAdjacentImagePredecode(
         return;
     }
 
+    const QUrl currentUrl = candidateContext->currentUrl();
+    const ArchiveDocumentLocation archiveDocument
+        = predecodeArchiveDocumentForContext(*candidateContext);
     m_listerJob = m_candidateRepository.loadImages(
         this, *candidateContext,
-        [this, context, generation, candidateContext](
+        [this, context, generation, currentUrl, archiveDocument](
             std::vector<ImageNavigationCandidate> candidates) {
-            startPredecodeImageLoads(
-                predecodeWindowImageUrls(candidates, candidateContext->currentUrl()),
-                candidateContext->archiveDocument(), context, generation);
+            startPredecodeImageLoads(predecodeWindowImageUrls(candidates, currentUrl),
+                archiveDocument, context, generation);
         },
-        [this, context, generation, archiveDocument = candidateContext->archiveDocument()](
-            const QString &) {
+        [this, context, generation, archiveDocument](const QString &) {
             startPredecodeImageLoads({}, archiveDocument, context, generation);
         });
 }

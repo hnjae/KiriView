@@ -10,16 +10,33 @@
 #include <QTest>
 #include <QUrl>
 #include <optional>
+#include <type_traits>
 
 namespace {
 using KiriView::ContainerNavigationCandidateType;
+using KiriView::ImageCandidateListContext;
 using KiriView::ImageCandidateRepositoryError;
 using KiriView::TestSupport::archivePageUrl;
 using KiriView::TestSupport::containerCandidate;
 using KiriView::TestSupport::imageCandidate;
 using KiriView::TestSupport::localUrl;
 
+using ArchiveCandidateContext = ImageCandidateListContext::ArchiveDocumentContext;
+using DirectoryCandidateContext = ImageCandidateListContext::DirectoryContext;
 using FakeCandidateProvider = KiriView::TestSupport::FakeImageNavigationCandidateProvider;
+
+template <typename ExpectedContext>
+const ExpectedContext *typedCandidateContext(const ImageCandidateListContext &context)
+{
+    return context.visit([](const auto &typedContext) -> const ExpectedContext * {
+        using Context = std::decay_t<decltype(typedContext)>;
+        if constexpr (std::is_same_v<Context, ExpectedContext>) {
+            return &typedContext;
+        } else {
+            return nullptr;
+        }
+    });
+}
 }
 
 class TestImageCandidateRepository : public QObject
@@ -42,8 +59,10 @@ void TestImageCandidateRepository::displayedImageContextsSelectDirectoryOrArchiv
             KiriView::DisplayedImageLocation::fromUrl(fileUrl));
     QVERIFY(directoryContext.has_value());
     QCOMPARE(directoryContext->currentUrl(), fileUrl);
-    QCOMPARE(directoryContext->directoryUrl(), localUrl(QStringLiteral("/images/")));
-    QVERIFY(!directoryContext->isArchiveDocument());
+    const DirectoryCandidateContext *directory
+        = typedCandidateContext<DirectoryCandidateContext>(*directoryContext);
+    QVERIFY(directory != nullptr);
+    QCOMPARE(directory->directoryUrl, localUrl(QStringLiteral("/images/")));
 
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
     const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
@@ -56,8 +75,10 @@ void TestImageCandidateRepository::displayedImageContextsSelectDirectoryOrArchiv
             KiriView::DisplayedImageLocation::fromArchiveDocument(pageUrl, *archiveDocument));
     QVERIFY(archiveContext.has_value());
     QCOMPARE(archiveContext->currentUrl(), pageUrl);
-    QCOMPARE(archiveContext->archiveDocument().rootUrl(), archiveDocument->rootUrl());
-    QVERIFY(archiveContext->isArchiveDocument());
+    const ArchiveCandidateContext *archive
+        = typedCandidateContext<ArchiveCandidateContext>(*archiveContext);
+    QVERIFY(archive != nullptr);
+    QCOMPARE(archive->archiveDocument.rootUrl(), archiveDocument->rootUrl());
 
     const QUrl directArchiveUrl = localUrl(QStringLiteral("/books/book.zip"));
     const std::optional<KiriView::ArchiveDocumentLocation> directArchiveDocument
@@ -72,8 +93,10 @@ void TestImageCandidateRepository::displayedImageContextsSelectDirectoryOrArchiv
                 directArchivePageUrl, *directArchiveDocument));
     QVERIFY(directArchiveContext.has_value());
     QCOMPARE(directArchiveContext->currentUrl(), directArchivePageUrl);
-    QCOMPARE(directArchiveContext->archiveDocument().rootUrl(), directArchiveDocument->rootUrl());
-    QVERIFY(directArchiveContext->isArchiveDocument());
+    const ArchiveCandidateContext *directArchive
+        = typedCandidateContext<ArchiveCandidateContext>(*directArchiveContext);
+    QVERIFY(directArchive != nullptr);
+    QCOMPARE(directArchive->archiveDocument.rootUrl(), directArchiveDocument->rootUrl());
 
     const QUrl explicitArchiveImageUrl(QStringLiteral("zip:///books/book.cbz/chapter/02.png"));
     const std::optional<KiriView::ImageCandidateListContext> explicitArchiveContext
@@ -81,10 +104,11 @@ void TestImageCandidateRepository::displayedImageContextsSelectDirectoryOrArchiv
             KiriView::DisplayedImageLocation::fromUrl(explicitArchiveImageUrl));
     QVERIFY(explicitArchiveContext.has_value());
     QCOMPARE(explicitArchiveContext->currentUrl(), explicitArchiveImageUrl);
-    QCOMPARE(explicitArchiveContext->directoryUrl(),
+    const DirectoryCandidateContext *explicitArchiveDirectory
+        = typedCandidateContext<DirectoryCandidateContext>(*explicitArchiveContext);
+    QVERIFY(explicitArchiveDirectory != nullptr);
+    QCOMPARE(explicitArchiveDirectory->directoryUrl,
         QUrl(QStringLiteral("zip:///books/book.cbz/chapter/")));
-    QVERIFY(explicitArchiveContext->archiveDocument().isEmpty());
-    QVERIFY(!explicitArchiveContext->isArchiveDocument());
 }
 
 void TestImageCandidateRepository::directoryContainerOpensFirstImage()
