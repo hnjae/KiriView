@@ -3,6 +3,7 @@
 
 #include "imageformatregistry.h"
 
+#include "archiveformat.h"
 #include "kiriview/src/imageformatregistry.cxx.h"
 
 #include <QByteArray>
@@ -32,12 +33,6 @@ QStringList rustStringsToQStringList(const rust::Vec<rust::String> &values)
     return list;
 }
 
-QString rustStringForQString(const QString &value, rust::String (*rustFunction)(rust::Str value))
-{
-    const QByteArray bytes = value.toUtf8();
-    return rustStringToQString(rustFunction(rustStringView(bytes)));
-}
-
 bool rustBoolForQString(const QString &value, bool (*rustFunction)(rust::Str value))
 {
     const QByteArray bytes = value.toUtf8();
@@ -53,7 +48,10 @@ QStringList supportedImageExtensions()
 
 QStringList supportedOpenExtensions()
 {
-    return rustStringsToQStringList(rustSupportedOpenExtensions());
+    QStringList extensions = supportedImageExtensions();
+    extensions.append(supportedComicBookArchiveExtensions());
+    extensions.sort();
+    return extensions;
 }
 
 bool isSupportedImageFileName(const QString &name)
@@ -63,7 +61,7 @@ bool isSupportedImageFileName(const QString &name)
 
 bool isComicBookArchiveFileName(const QString &name)
 {
-    return rustBoolForQString(name, rustIsComicBookArchiveFileName);
+    return !KiriView::comicBookArchiveKioSchemeForFileName(name).isEmpty();
 }
 
 bool isComicBookArchiveUrl(const QUrl &url)
@@ -77,20 +75,14 @@ QString comicBookArchiveKioSchemeForUrl(const QUrl &url)
         return {};
     }
 
-    const QString extensionScheme
-        = rustStringForQString(url.fileName(), rustComicBookArchiveKioSchemeForFileName);
+    const QString extensionScheme = KiriView::comicBookArchiveKioSchemeForFileName(url.fileName());
     if (!extensionScheme.isEmpty()) {
         return extensionScheme;
     }
 
     const QMimeType mimeType
         = QMimeDatabase().mimeTypeForFile(url.toLocalFile(), QMimeDatabase::MatchExtension);
-    return rustStringForQString(mimeType.name(), rustComicBookArchiveKioSchemeForMimeTypeName);
-}
-
-QString directArchiveOpenKioSchemeForMimeTypeName(const QString &mimeTypeName)
-{
-    return rustStringForQString(mimeTypeName, rustDirectArchiveOpenKioSchemeForMimeTypeName);
+    return KiriView::comicBookArchiveKioSchemeForMimeTypeName(mimeType.name());
 }
 
 QString directArchiveOpenKioSchemeForUrl(const QUrl &url)
@@ -99,8 +91,7 @@ QString directArchiveOpenKioSchemeForUrl(const QUrl &url)
         return {};
     }
 
-    const QString extensionScheme
-        = rustStringForQString(url.fileName(), rustDirectArchiveOpenKioSchemeForFileName);
+    const QString extensionScheme = KiriView::directArchiveOpenKioSchemeForFileName(url.fileName());
     if (!extensionScheme.isEmpty()) {
         return extensionScheme;
     }
