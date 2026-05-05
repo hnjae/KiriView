@@ -9,7 +9,6 @@
 
 #include <QByteArray>
 #include <QImage>
-#include <QSize>
 #include <QString>
 #include <QtGlobal>
 #include <memory>
@@ -25,11 +24,6 @@ struct StaticDecodedImage {
     std::shared_ptr<ImageTileSource> source;
     QImage preview;
     StaticImageDisplayHints displayHints;
-};
-
-struct SvgDecodedImage {
-    QByteArray data;
-    QSize svgIntrinsicSize;
 };
 
 struct DecodedAnimationImage {
@@ -51,7 +45,7 @@ struct HeifSequenceAnimationImage {
     int firstFrameDelay = 0;
 };
 
-using DecodedImageResult = std::variant<DecodedImageFailure, StaticDecodedImage, SvgDecodedImage,
+using DecodedImageResult = std::variant<DecodedImageFailure, StaticDecodedImage,
     DecodedAnimationImage, ReaderAnimationImage, HeifSequenceAnimationImage>;
 
 bool decodedImageResultIsPredecodeCacheable(const DecodedImageResult &result, qsizetype byteBudget);

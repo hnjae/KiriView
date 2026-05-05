@@ -159,11 +159,15 @@ bool ImageLoader::isCurrentLoadSession(const ImageLoadSession &session) const
         && m_loadSession->id == session.id;
 }
 
-void ImageLoader::clearLoadSession(const ImageLoadSession &session)
+std::optional<ImageLoadSession> ImageLoader::takeCurrentLoadSession(const ImageLoadSession &session)
 {
-    if (isCurrentLoadSession(session)) {
-        m_loadSession.reset();
+    if (!isCurrentLoadSession(session)) {
+        return std::nullopt;
     }
+
+    std::optional<ImageLoadSession> currentSession = std::move(m_loadSession);
+    m_loadSession.reset();
+    return currentSession;
 }
 
 bool ImageLoader::tryDisplayPredecodedImage(ImageLoadSession session)
@@ -186,38 +190,38 @@ bool ImageLoader::tryDisplayPredecodedImage(ImageLoadSession session)
 void ImageLoader::finishLoadWithError(
     const ImageLoadSession &session, ImageLoadError error, const QString &errorString)
 {
-    if (!isCurrentLoadSession(session)) {
+    std::optional<ImageLoadSession> currentSession = takeCurrentLoadSession(session);
+    if (!currentSession.has_value()) {
         return;
     }
 
-    clearLoadSession(session);
     if (m_error) {
-        m_error(session, error, errorString);
+        m_error(*currentSession, error, errorString);
     }
 }
 
 void ImageLoader::finishDecodedImage(
     ImageLoadSession session, std::shared_ptr<DecodedImageResult> result)
 {
-    if (!isCurrentLoadSession(session)) {
+    std::optional<ImageLoadSession> currentSession = takeCurrentLoadSession(session);
+    if (!currentSession.has_value()) {
         return;
     }
 
-    clearLoadSession(session);
     if (m_decodedImage) {
-        m_decodedImage(std::move(session), std::move(result));
+        m_decodedImage(std::move(*currentSession), std::move(result));
     }
 }
 
 void ImageLoader::finishPredecodedImage(ImageLoadSession session, PredecodedImage image)
 {
-    if (!isCurrentLoadSession(session)) {
+    std::optional<ImageLoadSession> currentSession = takeCurrentLoadSession(session);
+    if (!currentSession.has_value()) {
         return;
     }
 
-    clearLoadSession(session);
     if (m_predecodedImage) {
-        m_predecodedImage(std::move(session), std::move(image));
+        m_predecodedImage(std::move(*currentSession), std::move(image));
     }
 }
 }

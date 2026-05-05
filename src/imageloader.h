@@ -49,7 +49,7 @@ private:
     std::optional<ImageLoadSession> currentLoadSessionForDecodeRequest(
         const ImageDecodeRequest &request) const;
     bool isCurrentLoadSession(const ImageLoadSession &session) const;
-    void clearLoadSession(const ImageLoadSession &session);
+    std::optional<ImageLoadSession> takeCurrentLoadSession(const ImageLoadSession &session);
     bool tryDisplayPredecodedImage(ImageLoadSession session);
     void finishLoadWithError(
         const ImageLoadSession &session, ImageLoadError error, const QString &errorString);

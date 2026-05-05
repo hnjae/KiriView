@@ -8,9 +8,7 @@
 #include "imageloader.h"
 #include "imageopenworkflow.h"
 #include "imagepresentationcontroller.h"
-#include "imagetilesource.h"
 #include "imageviewtext.h"
-#include "kiriimagedecoder.h"
 #include "predecodecache.h"
 
 #include <memory>
@@ -132,26 +130,6 @@ bool ImageOpenController::finishDecodedImageResult(
 {
     finishLoadWithError(session, ImageLoadError::Generic, decoded.errorString);
     return false;
-}
-
-bool ImageOpenController::finishDecodedImageResult(
-    ImageLoadSession &session, SvgDecodedImage &decoded, const DecodedImageResult &)
-{
-    QString errorString;
-    std::shared_ptr<SvgTileSource> source = SvgTileSource::open(decoded.data, &errorString);
-    if (source == nullptr) {
-        finishLoadWithError(session, ImageLoadError::Generic, errorString);
-        return false;
-    }
-    QImage preview
-        = source->decodeBlockingDisplayImage(imageBlockingDisplayLongEdgeMax, &errorString);
-    if (preview.isNull()) {
-        finishLoadWithError(session, ImageLoadError::Generic, errorString);
-        return false;
-    }
-
-    finishStaticImageLoad(session, std::move(source), preview, {}, false);
-    return true;
 }
 
 bool ImageOpenController::finishDecodedImageResult(

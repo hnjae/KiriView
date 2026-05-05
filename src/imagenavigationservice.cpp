@@ -266,10 +266,9 @@ bool ImageNavigationService::setKnownPageNavigationCurrentUrl(const QUrl &curren
         return true;
     }
 
-    m_pageNavigation.currentIndex = currentPageIndex;
-    if (m_pageNavigationChanged) {
-        m_pageNavigationChanged();
-    }
+    PageNavigationState state = m_pageNavigation;
+    state.currentIndex = currentPageIndex;
+    setPageNavigationState(std::move(state));
     return true;
 }
 

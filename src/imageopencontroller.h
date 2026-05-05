@@ -8,7 +8,6 @@
 #include "imageasyncdependencies.h"
 #include "imagedocumenteffects.h"
 #include "imageloadtypes.h"
-#include "imageopenworkflow.h"
 
 #include <QImage>
 #include <QString>
@@ -55,8 +54,6 @@ private:
         ImageLoadSession session, std::shared_ptr<DecodedImageResult> result);
     bool finishDecodedImageResult(
         ImageLoadSession &session, DecodedImageFailure &decoded, const DecodedImageResult &result);
-    bool finishDecodedImageResult(
-        ImageLoadSession &session, SvgDecodedImage &decoded, const DecodedImageResult &result);
     bool finishDecodedImageResult(
         ImageLoadSession &session, StaticDecodedImage &decoded, const DecodedImageResult &result);
     bool finishDecodedImageResult(ImageLoadSession &session, DecodedAnimationImage &decoded,
