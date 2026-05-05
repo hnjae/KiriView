@@ -4,14 +4,10 @@
 #include "imagepresentationcontroller.h"
 
 #include "displayedimagestate.h"
+#include "imageasyncworker.h"
 #include "imagerendering.h"
 #include "imagetilevisibility.h"
 
-#include <QMetaObject>
-#include <QPointer>
-#include <QRunnable>
-#include <QThreadPool>
-#include <Qt>
 #include <cmath>
 #include <memory>
 #include <utility>
@@ -292,27 +288,22 @@ void ImagePresentationController::scheduleVisibleTileDecode()
         }
 
         m_pendingTileKeys.insert(key);
-        const QPointer<QObject> context(m_context);
         // Tile workers can outlive this non-QObject controller while the Qt context survives.
         const std::weak_ptr<TileDecodeLifetime> lifetime = m_tileDecodeLifetime;
-        QThreadPool::globalInstance()->start(QRunnable::create(
-            [this, context, lifetime, source, request, generation, key]() mutable {
+        runAsyncWorker(
+            m_context,
+            [source, request]() mutable {
                 QString errorString;
                 std::optional<DecodedTile> tile = source->decodeTile(request, &errorString);
-                if (context == nullptr || lifetime.expired()) {
+                return tile;
+            },
+            [this, lifetime, generation, key](std::optional<DecodedTile> tile) mutable {
+                if (lifetime.expired()) {
                     return;
                 }
 
-                QMetaObject::invokeMethod(
-                    context.data(),
-                    [this, context, lifetime, generation, key, tile = std::move(tile)]() mutable {
-                        if (context == nullptr || lifetime.expired()) {
-                            return;
-                        }
-                        finishTileDecode(generation, key, std::move(tile));
-                    },
-                    Qt::QueuedConnection);
-            }));
+                finishTileDecode(generation, key, std::move(tile));
+            });
     }
 }
 

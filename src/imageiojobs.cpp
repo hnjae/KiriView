@@ -4,6 +4,7 @@
 #include "imageiojobs.h"
 
 #include "archivebackend.h"
+#include "imageasyncworker.h"
 #include "imagecontainer.h"
 #include "imagenavigationmodel.h"
 
@@ -11,12 +12,7 @@
 #include <KIO/Job>
 #include <KIO/StoredTransferJob>
 #include <KJob>
-#include <QMetaObject>
 #include <QObject>
-#include <QPointer>
-#include <QRunnable>
-#include <QThreadPool>
-#include <Qt>
 #include <memory>
 #include <utility>
 #include <variant>
@@ -135,11 +131,6 @@ void cancelArchiveWorkerToken(QObject *object)
     }
 }
 
-template <typename Work, typename Finish> struct ArchiveWorkerCallbacks {
-    Work work;
-    Finish finish;
-};
-
 template <typename Work, typename Finish>
 KiriView::ImageIoJob startArchiveWorkerJob(QObject *receiver, Work work, Finish finish)
 {
@@ -154,32 +145,15 @@ KiriView::ImageIoJob startArchiveWorkerJob(QObject *receiver, Work work, Finish 
     QObject::connect(
         token, &QObject::destroyed, receiver, [jobState, token]() { jobState->clear(token); });
 
-    const QPointer<QObject> guardedReceiver(receiver);
-    ArchiveWorkerCallbacks<Work, Finish> workerCallbacks {
-        std::move(work),
-        std::move(finish),
-    };
-    auto callbacks
-        = std::make_shared<ArchiveWorkerCallbacks<Work, Finish>>(std::move(workerCallbacks));
-    QThreadPool::globalInstance()->start(
-        QRunnable::create([guardedReceiver, token, jobState, callbacks]() mutable {
-            auto result = callbacks->work();
-            if (guardedReceiver == nullptr) {
+    KiriView::runAsyncWorker(receiver, std::move(work),
+        [token, jobState, finish = std::move(finish)](auto result) mutable {
+            if (!jobState->claim(token)) {
                 return;
             }
 
-            QMetaObject::invokeMethod(
-                guardedReceiver.data(),
-                [token, jobState, callbacks, result = std::move(result)]() mutable {
-                    if (!jobState->claim(token)) {
-                        return;
-                    }
-
-                    token->deleteLater();
-                    callbacks->finish(std::move(result));
-                },
-                Qt::QueuedConnection);
-        }));
+            token->deleteLater();
+            finish(std::move(result));
+        });
     return ioJob;
 }
 }

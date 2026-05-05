@@ -3,13 +3,9 @@
 
 #include "imagedecodejob.h"
 
+#include "imageasyncworker.h"
 #include "imageurl.h"
 
-#include <QMetaObject>
-#include <QPointer>
-#include <QRunnable>
-#include <QThreadPool>
-#include <Qt>
 #include <utility>
 
 namespace KiriView {
@@ -69,29 +65,23 @@ bool ImageDecodeJob::hasActiveRequest() const { return m_request.has_value(); }
 
 void ImageDecodeJob::startDecode(QByteArray data, ImageDecodeRequest request)
 {
-    const QPointer<ImageDecodeJob> decodeJob(this);
     const DataDecoder decoder = m_dataDecoder;
-    QThreadPool::globalInstance()->start(
-        QRunnable::create([decodeJob, decoder, data = std::move(data), request]() mutable {
+    runAsyncWorker(
+        this,
+        [decoder, data = std::move(data), request]() mutable {
             auto result = std::make_shared<DecodedImageResult>(decoder(data, request));
-            if (decodeJob == nullptr) {
+            return result;
+        },
+        [this, request](std::shared_ptr<DecodedImageResult> result) mutable {
+            if (!isCurrentRequest(request)) {
                 return;
             }
 
-            QMetaObject::invokeMethod(
-                decodeJob.data(),
-                [decodeJob, request, result]() mutable {
-                    if (decodeJob == nullptr || !decodeJob->isCurrentRequest(request)) {
-                        return;
-                    }
-
-                    decodeJob->clearRequest(request);
-                    if (decodeJob->m_decoded) {
-                        decodeJob->m_decoded(request, std::move(result));
-                    }
-                },
-                Qt::QueuedConnection);
-        }));
+            clearRequest(request);
+            if (m_decoded) {
+                m_decoded(request, std::move(result));
+            }
+        });
 }
 
 bool ImageDecodeJob::isCurrentRequest(const ImageDecodeRequest &request) const
