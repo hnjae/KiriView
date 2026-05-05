@@ -74,7 +74,8 @@ private:
         StaticImageDisplayHints displayHints, bool predecodeCacheable);
     void finishLoadSuccessfully(
         const ImageLoadSession &session, const QImage &image, bool predecodeCacheable);
-    void prepareSuccessfulImageLoad(const ImageLoadSession &session);
+    void beginSuccessfulImagePresentation(const ImageLoadSession &session, bool predecodeCacheable);
+    void finishSuccessfulImagePresentation(const ImageLoadSession &session);
     void finishSuccessfulImageLoad(const ImageLoadSession &session);
     void reportEffects(const ImageDocumentEffects &effects);
     void report(ImageDocumentEffect effect);

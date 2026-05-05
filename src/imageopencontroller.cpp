@@ -229,28 +229,32 @@ void ImageOpenController::finishStaticImageLoad(const ImageLoadSession &session,
     std::shared_ptr<ImageTileSource> source, const QImage &preview,
     StaticImageDisplayHints displayHints, bool predecodeCacheable)
 {
-    prepareSuccessfulImageLoad(session);
-    m_presentationController.setPredecodeCacheable(predecodeCacheable);
+    beginSuccessfulImagePresentation(session, predecodeCacheable);
     m_presentationController.setStaticImage(std::move(source), preview, displayHints);
-    m_presentationController.updateRenderContext();
-    finishSuccessfulImageLoad(session);
+    finishSuccessfulImagePresentation(session);
 }
 
 void ImageOpenController::finishLoadSuccessfully(
     const ImageLoadSession &session, const QImage &image, bool predecodeCacheable)
 {
-    prepareSuccessfulImageLoad(session);
-    m_presentationController.setPredecodeCacheable(predecodeCacheable);
+    beginSuccessfulImagePresentation(session, predecodeCacheable);
     m_presentationController.setImage(image);
-    m_presentationController.updateRenderContext();
-    finishSuccessfulImageLoad(session);
+    finishSuccessfulImagePresentation(session);
 }
 
-void ImageOpenController::prepareSuccessfulImageLoad(const ImageLoadSession &session)
+void ImageOpenController::beginSuccessfulImagePresentation(
+    const ImageLoadSession &session, bool predecodeCacheable)
 {
     m_presentationController.stopAnimation();
     const QUrl loadedContainerUrl = imageContainerUrlForLocation(session.location);
     m_presentationController.prepareImageContainer(loadedContainerUrl);
+    m_presentationController.setPredecodeCacheable(predecodeCacheable);
+}
+
+void ImageOpenController::finishSuccessfulImagePresentation(const ImageLoadSession &session)
+{
+    m_presentationController.updateRenderContext();
+    finishSuccessfulImageLoad(session);
 }
 
 void ImageOpenController::finishSuccessfulImageLoad(const ImageLoadSession &session)

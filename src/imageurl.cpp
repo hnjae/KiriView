@@ -84,6 +84,14 @@ QUrl navigationUrlForLocalPath(const QString &localPath)
     return QUrl::fromLocalFile(localPath);
 }
 
+QUrl normalizedContainerBaseUrl(const QUrl &url)
+{
+    QUrl normalizedUrl = url.adjusted(QUrl::NormalizePathSegments);
+    normalizedUrl.setQuery(QString());
+    normalizedUrl.setFragment(QString());
+    return normalizedUrl;
+}
+
 std::optional<QUrl> documentPortalHostUrl(const QUrl &url)
 {
     if (!url.isLocalFile()) {
@@ -131,9 +139,7 @@ QUrl normalizedImageUrl(const QUrl &url) { return url.adjusted(QUrl::NormalizePa
 
 QUrl normalizedFileContainerUrl(const QUrl &url)
 {
-    QUrl normalizedUrl = url.adjusted(QUrl::NormalizePathSegments);
-    normalizedUrl.setQuery(QString());
-    normalizedUrl.setFragment(QString());
+    QUrl normalizedUrl = normalizedContainerBaseUrl(url);
 
     if (normalizedUrl.isLocalFile()) {
         normalizedUrl = QUrl::fromLocalFile(QDir::cleanPath(normalizedUrl.toLocalFile()));
@@ -143,9 +149,7 @@ QUrl normalizedFileContainerUrl(const QUrl &url)
 
 QUrl normalizedDirectoryContainerUrl(const QUrl &url)
 {
-    QUrl normalizedUrl = url.adjusted(QUrl::NormalizePathSegments);
-    normalizedUrl.setQuery(QString());
-    normalizedUrl.setFragment(QString());
+    QUrl normalizedUrl = normalizedContainerBaseUrl(url);
 
     QString path = normalizedUrl.path();
     if (!path.endsWith(QLatin1Char('/'))) {
