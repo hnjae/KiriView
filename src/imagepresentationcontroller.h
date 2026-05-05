@@ -5,7 +5,6 @@
 #define KIRIVIEW_IMAGEPRESENTATIONCONTROLLER_H
 
 #include "animationframe.h"
-#include "imageasyncticket.h"
 #include "imagedocumenttypes.h"
 #include "imagesurface.h"
 #include "imagezoomstate.h"
@@ -13,7 +12,6 @@
 #include <QByteArray>
 #include <QImage>
 #include <QRectF>
-#include <QSet>
 #include <QSize>
 #include <QSizeF>
 #include <QString>
@@ -27,6 +25,7 @@ class QObject;
 
 namespace KiriView {
 class DisplayedImageState;
+class ImageTileDecodeScheduler;
 
 class ImagePresentationController final
 {
@@ -78,17 +77,11 @@ public:
     void stopAnimation();
 
 private:
-    struct TileDecodeLifetime;
-
     using ZoomStateMutation = std::function<bool(ImageZoomState &, qreal devicePixelRatio)>;
 
     void setImageSize(const QSize &imageSize);
     void invalidateTiles();
     void scheduleVisibleTileDecode(const ImageDocumentRenderContext &context);
-    bool staticTileSurfaceFirstDisplayIsSufficient(
-        const StaticTileSurface &surface, const ImageDocumentRenderContext &context) const;
-    bool tileRequestIsCurrent(quint64 generation, const TileKey &key) const;
-    void finishTileDecode(quint64 generation, TileKey key, std::optional<DecodedTile> tile);
     bool mutateZoomState(const ZoomStateMutation &mutation);
     void applyZoomStateChanges(
         const ImageZoomSnapshot &previous, const ImageDocumentRenderContext &context);
@@ -99,12 +92,8 @@ private:
     Callbacks m_callbacks;
     ImageZoomState m_zoomState;
     std::unique_ptr<DisplayedImageState> m_displayedImageState;
-    std::shared_ptr<TileDecodeLifetime> m_tileDecodeLifetime;
-    QObject *m_context = nullptr;
+    std::unique_ptr<ImageTileDecodeScheduler> m_tileDecodeScheduler;
     QRectF m_visibleItemRect;
-    ImageAsyncTicket m_tileGeneration;
-    QSet<TileKey> m_pendingTileKeys;
-    QSet<TileKey> m_failedTileKeys;
 };
 }
 

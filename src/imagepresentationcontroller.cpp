@@ -4,28 +4,18 @@
 #include "imagepresentationcontroller.h"
 
 #include "displayedimagestate.h"
-#include "imageasyncworker.h"
 #include "imagerendering.h"
-#include "imagetilevisibility.h"
+#include "imagetiledecodescheduler.h"
 
 #include <cmath>
 #include <memory>
 #include <utility>
 
-namespace {
-using KiriView::imageZoomApproximatelyEqual;
-}
-
 namespace KiriView {
-struct ImagePresentationController::TileDecodeLifetime {
-};
-
 ImagePresentationController::ImagePresentationController(QObject *context,
     RenderContextProvider renderContextProvider, ImagePresentationController::Callbacks callbacks)
     : m_renderContextProvider(std::move(renderContextProvider))
     , m_callbacks(std::move(callbacks))
-    , m_tileDecodeLifetime(std::make_shared<TileDecodeLifetime>())
-    , m_context(context)
 {
     m_displayedImageState = std::make_unique<DisplayedImageState>(
         context,
@@ -38,9 +28,15 @@ ImagePresentationController::ImagePresentationController(QObject *context,
                 m_callbacks.animationError(errorString);
             }
         });
+    m_tileDecodeScheduler
+        = std::make_unique<ImageTileDecodeScheduler>(context, [this](DecodedTile tile) {
+              if (m_displayedImageState->insertTile(std::move(tile))) {
+                  notify(ImageDocumentChange::Repaint);
+              }
+          });
 }
 
-ImagePresentationController::~ImagePresentationController() { m_tileDecodeLifetime.reset(); }
+ImagePresentationController::~ImagePresentationController() = default;
 
 QSize ImagePresentationController::imageSize() const { return m_zoomState.imageSize(); }
 
@@ -224,113 +220,13 @@ void ImagePresentationController::setImageSize(const QSize &imageSize)
     });
 }
 
-void ImagePresentationController::invalidateTiles()
-{
-    m_tileGeneration.invalidate();
-    m_pendingTileKeys.clear();
-    m_failedTileKeys.clear();
-}
+void ImagePresentationController::invalidateTiles() { m_tileDecodeScheduler->invalidate(); }
 
 void ImagePresentationController::scheduleVisibleTileDecode(
     const ImageDocumentRenderContext &context)
 {
-    const std::shared_ptr<DisplayedImageSurface> displayedSurface
-        = m_displayedImageState->imageSurface();
-    if (displayedSurface == nullptr) {
-        return;
-    }
-
-    auto *surface = std::get_if<StaticTileSurface>(displayedSurface.get());
-    if (surface == nullptr || !surface->isValid()) {
-        return;
-    }
-    if (staticTileSurfaceFirstDisplayIsSufficient(*surface, context)) {
-        return;
-    }
-
-    std::shared_ptr<ImageTileSource> source = surface->source();
-    if (source == nullptr) {
-        return;
-    }
-
-    const quint64 generation = m_tileGeneration.current();
-    const TileVisibilityContext visibilityContext {
-        m_zoomState.displaySize(),
-        m_visibleItemRect,
-        context.devicePixelRatio,
-    };
-    for (const TileKey &key : visibleTileKeys(surface->pyramid(), visibilityContext)) {
-        if (surface->containsTile(key) || m_pendingTileKeys.contains(key)
-            || m_failedTileKeys.contains(key)) {
-            continue;
-        }
-
-        const TileRequest request = surface->pyramid().requestForTile(key);
-        if (request.textureLevelRect.isEmpty() || request.sourceRect.isEmpty()) {
-            continue;
-        }
-
-        m_pendingTileKeys.insert(key);
-        // Tile workers can outlive this non-QObject controller while the Qt context survives.
-        const std::weak_ptr<TileDecodeLifetime> lifetime = m_tileDecodeLifetime;
-        runAsyncWorker(
-            m_context,
-            [source, request]() mutable {
-                QString errorString;
-                std::optional<DecodedTile> tile = source->decodeTile(request, &errorString);
-                return tile;
-            },
-            [this, lifetime, generation, key](std::optional<DecodedTile> tile) mutable {
-                if (lifetime.expired()) {
-                    return;
-                }
-
-                finishTileDecode(generation, key, std::move(tile));
-            });
-    }
-}
-
-bool ImagePresentationController::staticTileSurfaceFirstDisplayIsSufficient(
-    const StaticTileSurface &surface, const ImageDocumentRenderContext &context) const
-{
-    const qreal firstDisplayPixelsPerSourcePixel
-        = surface.displayHints().firstDisplayPixelsPerSourcePixel;
-    if (!std::isfinite(firstDisplayPixelsPerSourcePixel)
-        || firstDisplayPixelsPerSourcePixel <= 0.0) {
-        return false;
-    }
-
-    const qreal currentDisplayPixelsPerSourcePixel = tileDisplayPixelsPerSourcePixel(
-        surface.pyramid(), m_zoomState.displaySize(), context.devicePixelRatio);
-    if (!std::isfinite(currentDisplayPixelsPerSourcePixel)
-        || currentDisplayPixelsPerSourcePixel <= 0.0) {
-        return false;
-    }
-
-    return currentDisplayPixelsPerSourcePixel <= firstDisplayPixelsPerSourcePixel + 0.001;
-}
-
-bool ImagePresentationController::tileRequestIsCurrent(quint64 generation, const TileKey &key) const
-{
-    return m_tileGeneration.accepts(generation) && m_pendingTileKeys.contains(key);
-}
-
-void ImagePresentationController::finishTileDecode(
-    quint64 generation, TileKey key, std::optional<DecodedTile> tile)
-{
-    if (!tileRequestIsCurrent(generation, key)) {
-        return;
-    }
-
-    m_pendingTileKeys.remove(key);
-    if (!tile.has_value()) {
-        m_failedTileKeys.insert(key);
-        return;
-    }
-
-    if (m_displayedImageState->insertTile(std::move(*tile))) {
-        notify(ImageDocumentChange::Repaint);
-    }
+    m_tileDecodeScheduler->schedule(m_displayedImageState->imageSurface(),
+        m_zoomState.displaySize(), m_visibleItemRect, context);
 }
 
 bool ImagePresentationController::mutateZoomState(const ZoomStateMutation &mutation)

@@ -26,6 +26,7 @@ src/imagecandidaterepository.cpp
 src/imageiojob.cpp
 src/imageiojobs.cpp
 src/imagetile.cpp
+src/imagetiledecodescheduler.cpp
 src/imagetilevisibility.cpp
 src/imagetilesourcehelpers.cpp
 src/imageloader.cpp
