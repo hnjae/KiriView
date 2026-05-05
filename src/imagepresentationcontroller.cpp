@@ -21,10 +21,14 @@ using KiriView::imageZoomApproximatelyEqual;
 }
 
 namespace KiriView {
+struct ImagePresentationController::TileDecodeLifetime {
+};
+
 ImagePresentationController::ImagePresentationController(QObject *context,
     RenderContextProvider renderContextProvider, ImagePresentationController::Callbacks callbacks)
     : m_renderContextProvider(std::move(renderContextProvider))
     , m_callbacks(std::move(callbacks))
+    , m_tileDecodeLifetime(std::make_shared<TileDecodeLifetime>())
     , m_context(context)
 {
     m_displayedImageState = std::make_unique<DisplayedImageState>(
@@ -40,7 +44,7 @@ ImagePresentationController::ImagePresentationController(QObject *context,
         });
 }
 
-ImagePresentationController::~ImagePresentationController() = default;
+ImagePresentationController::~ImagePresentationController() { m_tileDecodeLifetime.reset(); }
 
 QSize ImagePresentationController::imageSize() const { return m_zoomState.imageSize(); }
 
@@ -284,18 +288,20 @@ void ImagePresentationController::scheduleVisibleTileDecode()
 
         m_pendingTileKeys.insert(key);
         const QPointer<QObject> context(m_context);
-        QThreadPool::globalInstance()->start(
-            QRunnable::create([this, context, source, request, generation, key]() mutable {
+        // Tile workers can outlive this non-QObject controller while the Qt context survives.
+        const std::weak_ptr<TileDecodeLifetime> lifetime = m_tileDecodeLifetime;
+        QThreadPool::globalInstance()->start(QRunnable::create(
+            [this, context, lifetime, source, request, generation, key]() mutable {
                 QString errorString;
                 std::optional<DecodedTile> tile = source->decodeTile(request, &errorString);
-                if (context == nullptr) {
+                if (context == nullptr || lifetime.expired()) {
                     return;
                 }
 
                 QMetaObject::invokeMethod(
                     context.data(),
-                    [this, context, generation, key, tile = std::move(tile)]() mutable {
-                        if (context == nullptr) {
+                    [this, context, lifetime, generation, key, tile = std::move(tile)]() mutable {
+                        if (context == nullptr || lifetime.expired()) {
                             return;
                         }
                         finishTileDecode(generation, key, std::move(tile));

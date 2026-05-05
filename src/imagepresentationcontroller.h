@@ -81,6 +81,8 @@ public:
     void stopAnimation();
 
 private:
+    struct TileDecodeLifetime;
+
     using ZoomStateMutation = std::function<bool(ImageZoomState &)>;
 
     void setImageSize(const QSize &imageSize);
@@ -103,6 +105,7 @@ private:
     Callbacks m_callbacks;
     ImageZoomState m_zoomState;
     std::unique_ptr<DisplayedImageState> m_displayedImageState;
+    std::shared_ptr<TileDecodeLifetime> m_tileDecodeLifetime;
     QObject *m_context = nullptr;
     QRectF m_visibleItemRect;
     ImageAsyncTicket m_tileGeneration;
