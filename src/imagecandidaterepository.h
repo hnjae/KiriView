@@ -41,6 +41,7 @@ public:
         QUrl currentUrl, ArchiveDocumentLocation archiveDocument);
 
     const QUrl &currentUrl() const;
+    ArchiveDocumentLocation archiveDocument() const;
 
     template <typename Visitor> decltype(auto) visit(Visitor &&visitor) const
     {

@@ -144,9 +144,8 @@ std::optional<PredecodedImage> PredecodeCache::findImage(const QUrl &url) const
         return std::nullopt;
     }
 
-    const DisplayedImageLocation location = cached->archiveDocument.isEmpty()
-        ? DisplayedImageLocation::fromUrl(cached->url)
-        : DisplayedImageLocation::fromArchiveDocument(cached->url, cached->archiveDocument);
+    const DisplayedImageLocation location
+        = DisplayedImageLocation::fromUrl(cached->url, cached->archiveDocument);
     return PredecodedImage { cached->staticImage, location };
 }
 

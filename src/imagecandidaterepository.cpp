@@ -8,6 +8,7 @@
 #include "imageurl.h"
 
 #include <utility>
+#include <variant>
 #include <vector>
 
 namespace {
@@ -104,6 +105,13 @@ ImageCandidateListContext ImageCandidateListContext::forArchiveDocument(
 const QUrl &ImageCandidateListContext::currentUrl() const
 {
     return visit([](const auto &context) -> const QUrl & { return context.currentUrl; });
+}
+
+ArchiveDocumentLocation ImageCandidateListContext::archiveDocument() const
+{
+    const auto *archiveContext = std::get_if<ArchiveDocumentContext>(&m_context);
+    return archiveContext == nullptr ? ArchiveDocumentLocation::none()
+                                     : archiveContext->archiveDocument;
 }
 
 ImageCandidateListContext::ImageCandidateListContext(Context context)

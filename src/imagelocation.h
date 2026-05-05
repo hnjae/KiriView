@@ -95,11 +95,16 @@ public:
             ArchiveDocumentLocation::none() };
     }
 
-    static DisplayedImageLocation fromArchiveDocument(
-        QUrl imageUrl, ArchiveDocumentLocation archiveDocument)
+    static DisplayedImageLocation fromUrl(QUrl imageUrl, ArchiveDocumentLocation archiveDocument)
     {
         return DisplayedImageLocation { ImageLocation::fromUrl(std::move(imageUrl)),
             std::move(archiveDocument) };
+    }
+
+    static DisplayedImageLocation fromArchiveDocument(
+        QUrl imageUrl, ArchiveDocumentLocation archiveDocument)
+    {
+        return fromUrl(std::move(imageUrl), std::move(archiveDocument));
     }
 
     const QUrl &imageUrl() const { return m_image.url(); }

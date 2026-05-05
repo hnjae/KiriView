@@ -14,6 +14,11 @@ using KiriView::archiveDocumentContainsUrl;
 using KiriView::ArchiveDocumentLocation;
 using KiriView::archiveDocumentLocationForLocalArchiveUrl;
 
+struct ArchiveDocumentLoadPlan {
+    ArchiveDocumentLocation archiveDocument;
+    bool requiresArchiveListing = false;
+};
+
 ArchiveDocumentLocation archiveDocumentForImageLoadRequest(
     const KiriView::ImageLoadRequest &request)
 {
@@ -32,26 +37,33 @@ ArchiveDocumentLocation archiveDocumentForImageLoadRequest(
 
     return ArchiveDocumentLocation::none();
 }
+
+ArchiveDocumentLoadPlan archiveDocumentLoadPlanForImageLoadRequest(
+    const KiriView::ImageLoadRequest &request)
+{
+    const std::optional<ArchiveDocumentLocation> selectedArchiveDocument
+        = archiveDocumentLocationForLocalArchiveUrl(request.sourceUrl());
+    if (selectedArchiveDocument.has_value()) {
+        return ArchiveDocumentLoadPlan { *selectedArchiveDocument, true };
+    }
+
+    return ArchiveDocumentLoadPlan { archiveDocumentForImageLoadRequest(request), false };
+}
 }
 
 namespace KiriView {
 ImageLoadPlan imageLoadPlan(quint64 id, ImageLoadRequest request)
 {
-    const QUrl sourceUrl = request.sourceUrl();
+    QUrl sourceUrl = request.sourceUrl();
+    ArchiveDocumentLoadPlan archivePlan = archiveDocumentLoadPlanForImageLoadRequest(request);
+    const bool requiresArchiveListing = archivePlan.requiresArchiveListing;
     ImageLoadSession session {
         id,
         std::move(request),
-        DisplayedImageLocation::fromUrl(sourceUrl),
+        DisplayedImageLocation::fromUrl(
+            std::move(sourceUrl), std::move(archivePlan.archiveDocument)),
     };
 
-    const std::optional<ArchiveDocumentLocation> selectedArchiveDocument
-        = archiveDocumentLocationForLocalArchiveUrl(sourceUrl);
-    if (selectedArchiveDocument.has_value()) {
-        session.location.setArchiveDocument(*selectedArchiveDocument);
-        return ImageLoadPlan { std::move(session), true };
-    }
-
-    session.location.setArchiveDocument(archiveDocumentForImageLoadRequest(session.request));
-    return ImageLoadPlan { std::move(session), false };
+    return ImageLoadPlan { std::move(session), requiresArchiveListing };
 }
 }

@@ -13,30 +13,11 @@
 #include <vector>
 
 namespace {
-using KiriView::ArchiveDocumentLocation;
 using KiriView::DecodedImageResult;
 using KiriView::decodedImageResultImage;
 using KiriView::ImageCandidateListContext;
 using KiriView::normalizedImageUrl;
 using KiriView::predecodeWindowImageUrls;
-
-template <typename... Handlers> struct ContextVisitor : Handlers... {
-    using Handlers::operator()...;
-};
-
-template <typename... Handlers> ContextVisitor(Handlers...) -> ContextVisitor<Handlers...>;
-
-ArchiveDocumentLocation predecodeArchiveDocumentForContext(const ImageCandidateListContext &context)
-{
-    return context.visit(ContextVisitor {
-        [](const ImageCandidateListContext::DirectoryContext &) {
-            return ArchiveDocumentLocation::none();
-        },
-        [](const ImageCandidateListContext::ArchiveDocumentContext &archiveContext) {
-            return archiveContext.archiveDocument;
-        },
-    });
-}
 }
 
 namespace KiriView {
@@ -79,8 +60,7 @@ void ImagePredecodeCoordinator::scheduleAdjacentImagePredecode(
     }
 
     const QUrl currentUrl = candidateContext->currentUrl();
-    const ArchiveDocumentLocation archiveDocument
-        = predecodeArchiveDocumentForContext(*candidateContext);
+    const ArchiveDocumentLocation archiveDocument = candidateContext->archiveDocument();
     m_listerJob = m_candidateRepository.loadImages(
         this, *candidateContext,
         [this, context, generation, currentUrl, archiveDocument](

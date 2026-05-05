@@ -26,9 +26,7 @@ KiriView::ImageLoadSession loadSession(const QUrl &sourceUrl, const QUrl &imageU
         1,
         KiriView::ImageLoadRequest::fromLocation(
             sourceUrl, archiveDocument, containerNavigationUrl),
-        archiveDocument.isEmpty()
-            ? KiriView::DisplayedImageLocation::fromUrl(imageUrl)
-            : KiriView::DisplayedImageLocation::fromArchiveDocument(imageUrl, archiveDocument),
+        KiriView::DisplayedImageLocation::fromUrl(imageUrl, archiveDocument),
     };
 }
 
