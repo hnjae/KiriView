@@ -3,7 +3,6 @@
 
 import QtQuick
 import org.kde.kirigami as Kirigami
-import org.kde.kirigami.private as KirigamiPrivate
 
 Kirigami.Action {
     id: root
@@ -16,13 +15,9 @@ Kirigami.Action {
     checkable: checkableOverride
     checked: checkable && checkedOverride
     enabled: sourceAction && enabledOverride
-    icon.name: sourceAction ? KirigamiPrivate.ActionHelper.iconName(sourceAction.icon) : ""
-    text: sourceAction ? sourceAction.text : ""
+    fromQAction: sourceAction
+    shortcut: ""
     tooltip: text
 
-    onTriggered: {
-        if (sourceAction) {
-            sourceAction.trigger();
-        }
-    }
+    alternateShortcut.enabled: false
 }
