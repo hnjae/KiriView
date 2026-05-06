@@ -178,7 +178,7 @@ std::optional<QByteArray> createJpegCompressedHeifData(QString *errorText)
 
 template <typename Image> const Image *decodedImage(const KiriView::DecodedImageResult &result)
 {
-    return std::get_if<Image>(&result);
+    return KiriView::decodedImageResultImageAs<Image>(result);
 }
 }
 

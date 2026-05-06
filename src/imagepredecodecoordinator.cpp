@@ -9,7 +9,6 @@
 
 #include <optional>
 #include <utility>
-#include <variant>
 #include <vector>
 
 namespace {
@@ -138,7 +137,7 @@ void ImagePredecodeCoordinator::finishPredecodeImageDecode(
         return;
     }
 
-    const auto *staticImage = std::get_if<StaticDecodedImage>(&result);
+    const auto *staticImage = decodedImageResultImageAs<StaticDecodedImage>(result);
     if (staticImage != nullptr) {
         m_cache.cacheImage(request.imageUrl(), *archiveDocument, staticImage->staticImage);
     }

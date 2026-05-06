@@ -9,9 +9,7 @@
 #include "imageurl.h"
 
 #include <optional>
-#include <type_traits>
 #include <utility>
-#include <variant>
 #include <vector>
 
 namespace KiriView {
@@ -49,16 +47,17 @@ void ImageLoader::finishDecodeResult(ImageDecodeRequest request, DecodedImageRes
         return;
     }
 
-    std::visit(
-        [this, session = std::move(*session)](auto &&payload) mutable {
-            using Payload = std::decay_t<decltype(payload)>;
-            if constexpr (std::is_same_v<Payload, DecodedImageFailure>) {
-                finishLoadWithError(session, ImageLoadError::Generic, payload.errorString);
-            } else {
-                finishDecodedImage(session, DecodedImage { std::move(payload) });
-            }
-        },
-        std::move(result));
+    if (const DecodedImageFailure *failure = result.failure()) {
+        finishLoadWithError(*session, ImageLoadError::Generic, failure->errorString);
+        return;
+    }
+
+    std::optional<DecodedImage> image = std::move(result).takeImage();
+    if (!image.has_value()) {
+        return;
+    }
+
+    finishDecodedImage(std::move(*session), std::move(*image));
 }
 
 void ImageLoader::finishImageLoadError(

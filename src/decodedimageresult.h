@@ -12,6 +12,7 @@
 #include <QString>
 #include <QtGlobal>
 #include <memory>
+#include <optional>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -46,18 +47,38 @@ struct HeifSequenceAnimationImage {
 
 using DecodedImage = std::variant<StaticDecodedImage, DecodedAnimationImage, ReaderAnimationImage,
     HeifSequenceAnimationImage>;
-using DecodedImageResult = std::variant<DecodedImageFailure, StaticDecodedImage,
-    DecodedAnimationImage, ReaderAnimationImage, HeifSequenceAnimationImage>;
+
+class DecodedImageResult
+{
+public:
+    explicit DecodedImageResult(DecodedImageFailure failure);
+    explicit DecodedImageResult(DecodedImage image);
+
+    const DecodedImageFailure *failure() const;
+    const DecodedImage *image() const;
+    std::optional<DecodedImage> takeImage() &&;
+
+private:
+    using Payload = std::variant<DecodedImageFailure, DecodedImage>;
+
+    Payload m_payload;
+};
 
 DecodedImageResult failedDecodedImageResult(QString errorString);
 DecodedImageResult successfulDecodedImageResult(DecodedImage image);
 template <typename Image> DecodedImageResult successfulDecodedImageResult(Image image)
 {
-    return DecodedImageResult { std::move(image) };
+    return successfulDecodedImageResult(DecodedImage { std::move(image) });
 }
 DecodedImageResult staticDecodedImageResult(std::shared_ptr<ImageTileSource> source,
     const ImageFirstDisplayDecodeContext &firstDisplay, QString *errorString);
 const DecodedImageFailure *decodedImageResultFailure(const DecodedImageResult &result);
+const DecodedImage *decodedImageResultImage(const DecodedImageResult &result);
+template <typename Image> const Image *decodedImageResultImageAs(const DecodedImageResult &result)
+{
+    const DecodedImage *image = decodedImageResultImage(result);
+    return image == nullptr ? nullptr : std::get_if<Image>(image);
+}
 }
 
 #endif

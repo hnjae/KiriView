@@ -339,7 +339,7 @@ inline QString testImageDecodeFailureString() { return QStringLiteral("decode fa
 
 inline DecodedImageResult failedTestImageDecodeResult()
 {
-    return DecodedImageFailure { testImageDecodeFailureString() };
+    return failedDecodedImageResult(testImageDecodeFailureString());
 }
 
 inline ImageDataDecoder staticImageDataDecoder(QImage image = testImage())

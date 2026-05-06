@@ -9,7 +9,6 @@
 #include <memory>
 #include <optional>
 #include <utility>
-#include <variant>
 
 namespace {
 QImage testImage(const QSize &size)
@@ -70,7 +69,7 @@ private:
 
 const KiriView::StaticDecodedImage *staticDecodedImage(const KiriView::DecodedImageResult &result)
 {
-    return std::get_if<KiriView::StaticDecodedImage>(&result);
+    return KiriView::decodedImageResultImageAs<KiriView::StaticDecodedImage>(result);
 }
 }
 
