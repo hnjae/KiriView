@@ -134,17 +134,19 @@ images when space is available. Fit Height mode scales the image height to the
 viewport height while preserving aspect ratio. Fit Width mode scales the image
 width to the viewport width while preserving aspect ratio.
 
-Within the same image navigation scope, KiriView preserves the current zoom
-state while users navigate between images. If the user has selected Fit, Fit
-Height, or Fit Width, that fit mode remains selected and recalculates for each
-image and viewport size. If the user has entered a manual zoom value, that exact
-percentage remains active while moving to previous, next, or numbered pages in
-the same directory or directly opened archive document. When the displayed
-image changes through ordinary page or archive navigation, any panning position
-from the previous image is cleared so the newly displayed image starts at its
-top-left at the preserved zoom level. The scan-backward shortcut may open the
-previous image at its final scan position instead. Starting KiriView or opening
-an image in a different image navigation scope resets zoom to Fit mode.
+Within the same directly opened archive document, KiriView preserves the
+current zoom state while users move between pages with Previous, Next, or page
+number navigation. If the user has selected Fit, Fit Height, or Fit Width, that
+fit mode remains selected and recalculates for each page and viewport size. If
+the user has entered a manual zoom value, that exact percentage remains active.
+When the displayed page changes inside the archive document through ordinary
+page navigation, any panning position from the previous page is cleared so the
+newly displayed page starts at its top-left at the preserved zoom level. The
+scan-backward shortcut may open the previous image at its final scan position
+instead. Starting KiriView, opening a regular image, moving between regular
+directory images, opening a KDE archive URL image directly, opening a different
+archive document, or moving to a sibling archive resets zoom to Fit mode when
+the new image is displayed.
 
 The image viewing area behind empty, loading, ready, and error states uses
 `#3c3c3c` as its background color, so navigation transitions do not flash to a
