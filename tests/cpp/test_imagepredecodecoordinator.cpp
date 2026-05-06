@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 #include "image_test_support.h"
+#include "imagecontainer.h"
 #include "imagepredecodecoordinator.h"
 
 #include <QObject>
@@ -10,10 +11,12 @@
 #include <QUrl>
 
 namespace {
+using KiriView::TestSupport::archivePageUrl;
 using KiriView::TestSupport::imageAsyncDependenciesFor;
 using KiriView::TestSupport::imageCandidate;
 using KiriView::TestSupport::imagesDirectoryUrl;
 using KiriView::TestSupport::indexedImageUrl;
+using KiriView::TestSupport::localUrl;
 using KiriView::TestSupport::ManualImageDataLoader;
 using KiriView::TestSupport::staticImageDataDecoder;
 using KiriView::TestSupport::staticTestImagePayload;
@@ -35,6 +38,7 @@ class TestImagePredecodeCoordinator : public QObject
 
 private Q_SLOTS:
     void scheduleCachesDisplayedImageAndPredecodesWindow();
+    void archivePredecodeKeepsArchiveDocumentContext();
     void cancelSuppressesPendingDecode();
 };
 
@@ -76,6 +80,42 @@ void TestImagePredecodeCoordinator::scheduleCachesDisplayedImageAndPredecodesWin
     QTRY_VERIFY(coordinator.tryTake(nextUrl).has_value());
     QTRY_COMPARE(dataLoader.loads.size(), std::size_t(2));
     QCOMPARE(dataLoader.loads.back()->url, previousUrl);
+}
+
+void TestImagePredecodeCoordinator::archivePredecodeKeepsArchiveDocumentContext()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    KiriView::ImagePredecodeCoordinator coordinator
+        = createCoordinator(this, candidateProvider, dataLoader);
+
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
+    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveDocument.has_value());
+    const QUrl displayedUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
+    const QUrl nextUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("02.png"));
+    candidateProvider.setArchiveImages(archiveDocument->rootUrl(),
+        {
+            imageCandidate(displayedUrl),
+            imageCandidate(nextUrl),
+        });
+
+    coordinator.schedule(KiriView::ImagePredecodeCoordinator::Context {
+        KiriView::DisplayedImageLocation::fromArchiveDocument(displayedUrl, *archiveDocument),
+        false,
+        staticTestImagePayload(testImage()),
+    });
+
+    QCOMPARE(dataLoader.loads.size(), std::size_t(1));
+    QCOMPARE(dataLoader.loads.front()->url, nextUrl);
+    QCOMPARE(dataLoader.loads.front()->archiveDocument.rootUrl(), archiveDocument->rootUrl());
+    dataLoader.loads.front()->dataCallback(QByteArrayLiteral("next"));
+
+    QTRY_VERIFY(coordinator.tryTake(nextUrl).has_value());
+    const std::optional<KiriView::PredecodedImage> predecoded = coordinator.tryTake(nextUrl);
+    QVERIFY(predecoded.has_value());
+    QCOMPARE(predecoded->location.archiveDocumentRootUrl(), archiveDocument->rootUrl());
 }
 
 void TestImagePredecodeCoordinator::cancelSuppressesPendingDecode()

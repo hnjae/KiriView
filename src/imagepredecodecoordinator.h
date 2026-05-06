@@ -41,6 +41,11 @@ public:
     std::optional<PredecodedImage> tryTake(const QUrl &url) const;
 
 private:
+    struct ActivePredecodeRequest {
+        QUrl url;
+        ArchiveDocumentLocation archiveDocument;
+    };
+
     void scheduleAdjacentImagePredecode(const Context &context, quint64 generation);
     void startPredecodeImageLoads(const std::vector<QUrl> &urls,
         const ArchiveDocumentLocation &archiveDocument, const Context &context, quint64 generation);
@@ -49,7 +54,9 @@ private:
         const QUrl &url, const ArchiveDocumentLocation &archiveDocument, quint64 generation);
     void finishPredecodeImageLoadError(const ImageDecodeRequest &request);
     void finishPredecodeImageDecode(ImageDecodeRequest request, const DecodedImageResult &result);
-    std::optional<ArchiveDocumentLocation> takeActivePredecodeArchiveDocument(
+    QUrl activePredecodeUrl() const;
+    bool hasActivePredecodeRequest() const;
+    std::optional<ActivePredecodeRequest> takeActivePredecodeRequest(
         const ImageDecodeRequest &request);
     bool predecodeRequestIsActive(const ImageDecodeRequest &request) const;
     void clearActivePredecodeRequest();
@@ -58,8 +65,7 @@ private:
     ImageDecodeJob m_decodeJob;
     ImageCandidateRepository m_candidateRepository;
     PredecodeCache m_cache;
-    QUrl m_activePredecodeUrl;
-    ArchiveDocumentLocation m_activePredecodeArchiveDocument;
+    std::optional<ActivePredecodeRequest> m_activePredecodeRequest;
     ImageFirstDisplayDecodeContext m_firstDisplayContext;
     ImageAsyncTicket m_generation;
 };
