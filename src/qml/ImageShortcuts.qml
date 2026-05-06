@@ -26,21 +26,11 @@ Item {
     readonly property bool pannableCommandShortcutsEnabled: root.imagePannable && root.commandShortcutsEnabled
     readonly property bool containerCommandShortcutsEnabled: root.imageDocument.containerNavigationAvailable && root.commandShortcutsEnabled
     readonly property int zoomStepPercent: imageDocument.zoomStepPercent
-    readonly property int shortcutRevision: root.application.shortcutRevision
 
-    readonly property var openQAction: root.application.action("file_open")
     readonly property var previousImageQAction: root.application.action("go_previous_image")
     readonly property var nextImageQAction: root.application.action("go_next_image")
-    readonly property var firstImageQAction: root.application.action("go_first_image")
-    readonly property var lastImageQAction: root.application.action("go_last_image")
-    readonly property var previousContainerQAction: root.application.action("go_previous_archive")
-    readonly property var nextContainerQAction: root.application.action("go_next_archive")
     readonly property var zoomInQAction: root.application.action("view_zoom_in")
     readonly property var zoomOutQAction: root.application.action("view_zoom_out")
-    readonly property var fitQAction: root.application.action("view_fit")
-    readonly property var fitHeightQAction: root.application.action("view_fit_height")
-    readonly property var fitWidthQAction: root.application.action("view_fit_width")
-    readonly property var actualSizeQAction: root.application.action("view_actual_size")
     readonly property var panLeftQAction: root.application.action("view_pan_left")
     readonly property var panRightQAction: root.application.action("view_pan_right")
     readonly property var panUpQAction: root.application.action("view_pan_up")
@@ -49,12 +39,6 @@ Item {
     readonly property var panBottomRightQAction: root.application.action("view_pan_bottom_right")
     readonly property var scanForwardQAction: root.application.action("view_scan_forward")
     readonly property var scanBackwardQAction: root.application.action("view_scan_backward")
-    readonly property var fullscreenQAction: root.application.action("window_fullscreen")
-    readonly property var shortcutHelpQAction: root.application.action("help_shortcuts")
-    readonly property var configureQAction: root.application.action("options_configure")
-    readonly property var configureShortcutsQAction: root.application.action("options_configure_keybinding")
-    readonly property var showMenubarQAction: root.application.action("options_show_menubar")
-    readonly property var quitQAction: root.application.action("file_quit")
 
     signal imageBoundaryReached(string message)
 
@@ -107,33 +91,8 @@ Item {
         root.previousImageQAction.trigger();
     }
 
-    function actionShortcuts(actionName) {
-        root.shortcutRevision;
-        return root.application.shortcuts(actionName);
-    }
-
-    function actionShortcutsWithCommandModifier(actionName) {
-        root.shortcutRevision;
-        return root.application.shortcutsWithCommandModifier(actionName);
-    }
-
-    function actionShortcutsWithoutCommandModifier(actionName) {
-        root.shortcutRevision;
-        return root.application.shortcutsWithoutCommandModifier(actionName);
-    }
-
-    function actionShortcutsEnabled(shortcutsEnabled, action) {
-        return shortcutsEnabled && action !== null && action !== undefined && action.enabled;
-    }
-
     function textInputFocused() {
         return imageToolBar.textInputFocused();
-    }
-
-    function triggerAction(action) {
-        if (action && action.enabled) {
-            action.trigger();
-        }
     }
 
     function zoomBy(deltaPercent, viewportX, viewportY) {
@@ -144,200 +103,174 @@ Item {
         return root.zoomBy(deltaPercent, root.imageViewport.viewportWidth / 2, root.imageViewport.viewportHeight / 2);
     }
 
-    ImageActionShortcut {
-        sequences: root.actionShortcuts("file_open")
-        shortcutsEnabled: root.actionShortcutsEnabled(root.helpShortcutsEnabled, root.openQAction)
-
-        onActivated: root.triggerAction(root.openQAction)
+    ConfiguredActionShortcut {
+        actionName: "file_open"
+        application: root.application
+        shortcutsEnabled: root.helpShortcutsEnabled
     }
 
-    ImageActionShortcut {
-        sequences: root.actionShortcutsWithoutCommandModifier("file_quit")
-        shortcutsEnabled: root.actionShortcutsEnabled(root.commandShortcutsEnabled, root.quitQAction)
-
-        onActivated: root.triggerAction(root.quitQAction)
+    ConfiguredActionShortcut {
+        actionName: "file_quit"
+        application: root.application
+        shortcutFilter: ConfiguredActionShortcut.WithoutCommandModifier
+        shortcutsEnabled: root.commandShortcutsEnabled
     }
 
-    ImageActionShortcut {
-        sequences: root.actionShortcutsWithCommandModifier("file_quit")
-        shortcutsEnabled: root.actionShortcutsEnabled(root.helpShortcutsEnabled, root.quitQAction)
-
-        onActivated: root.triggerAction(root.quitQAction)
+    ConfiguredActionShortcut {
+        actionName: "file_quit"
+        application: root.application
+        shortcutFilter: ConfiguredActionShortcut.WithCommandModifier
+        shortcutsEnabled: root.helpShortcutsEnabled
     }
 
-    ImageActionShortcut {
-        sequences: root.actionShortcuts("view_zoom_in")
-        shortcutsEnabled: root.actionShortcutsEnabled(root.readyCommandShortcutsEnabled, root.zoomInQAction)
-
-        onActivated: root.triggerAction(root.zoomInQAction)
+    ConfiguredActionShortcut {
+        actionName: "view_zoom_in"
+        application: root.application
+        shortcutsEnabled: root.readyCommandShortcutsEnabled
     }
 
-    ImageActionShortcut {
-        sequences: root.actionShortcuts("view_zoom_out")
-        shortcutsEnabled: root.actionShortcutsEnabled(root.readyCommandShortcutsEnabled, root.zoomOutQAction)
-
-        onActivated: root.triggerAction(root.zoomOutQAction)
+    ConfiguredActionShortcut {
+        actionName: "view_zoom_out"
+        application: root.application
+        shortcutsEnabled: root.readyCommandShortcutsEnabled
     }
 
-    ImageActionShortcut {
-        sequences: root.actionShortcuts("view_fit")
-        shortcutsEnabled: root.actionShortcutsEnabled(root.readyCommandShortcutsEnabled, root.fitQAction)
-
-        onActivated: root.triggerAction(root.fitQAction)
+    ConfiguredActionShortcut {
+        actionName: "view_fit"
+        application: root.application
+        shortcutsEnabled: root.readyCommandShortcutsEnabled
     }
 
-    ImageActionShortcut {
-        sequences: root.actionShortcuts("view_fit_height")
-        shortcutsEnabled: root.actionShortcutsEnabled(root.readyCommandShortcutsEnabled, root.fitHeightQAction)
-
-        onActivated: root.triggerAction(root.fitHeightQAction)
+    ConfiguredActionShortcut {
+        actionName: "view_fit_height"
+        application: root.application
+        shortcutsEnabled: root.readyCommandShortcutsEnabled
     }
 
-    ImageActionShortcut {
-        sequences: root.actionShortcuts("view_fit_width")
-        shortcutsEnabled: root.actionShortcutsEnabled(root.readyCommandShortcutsEnabled, root.fitWidthQAction)
-
-        onActivated: root.triggerAction(root.fitWidthQAction)
+    ConfiguredActionShortcut {
+        actionName: "view_fit_width"
+        application: root.application
+        shortcutsEnabled: root.readyCommandShortcutsEnabled
     }
 
-    ImageActionShortcut {
-        sequences: root.actionShortcuts("view_actual_size")
-        shortcutsEnabled: root.actionShortcutsEnabled(root.readyCommandShortcutsEnabled, root.actualSizeQAction)
-
-        onActivated: root.triggerAction(root.actualSizeQAction)
+    ConfiguredActionShortcut {
+        actionName: "view_actual_size"
+        application: root.application
+        shortcutsEnabled: root.readyCommandShortcutsEnabled
     }
 
-    ImageActionShortcut {
-        sequences: root.actionShortcuts("view_pan_left")
-        shortcutsEnabled: root.actionShortcutsEnabled(root.pannableCommandShortcutsEnabled, root.panLeftQAction)
-
-        onActivated: root.triggerAction(root.panLeftQAction)
+    ConfiguredActionShortcut {
+        actionName: "view_pan_left"
+        application: root.application
+        shortcutsEnabled: root.pannableCommandShortcutsEnabled
     }
 
-    ImageActionShortcut {
-        sequences: root.actionShortcuts("view_pan_right")
-        shortcutsEnabled: root.actionShortcutsEnabled(root.pannableCommandShortcutsEnabled, root.panRightQAction)
-
-        onActivated: root.triggerAction(root.panRightQAction)
+    ConfiguredActionShortcut {
+        actionName: "view_pan_right"
+        application: root.application
+        shortcutsEnabled: root.pannableCommandShortcutsEnabled
     }
 
-    ImageActionShortcut {
-        sequences: root.actionShortcuts("view_pan_up")
-        shortcutsEnabled: root.actionShortcutsEnabled(root.pannableCommandShortcutsEnabled, root.panUpQAction)
-
-        onActivated: root.triggerAction(root.panUpQAction)
+    ConfiguredActionShortcut {
+        actionName: "view_pan_up"
+        application: root.application
+        shortcutsEnabled: root.pannableCommandShortcutsEnabled
     }
 
-    ImageActionShortcut {
-        sequences: root.actionShortcuts("view_pan_down")
-        shortcutsEnabled: root.actionShortcutsEnabled(root.pannableCommandShortcutsEnabled, root.panDownQAction)
-
-        onActivated: root.triggerAction(root.panDownQAction)
+    ConfiguredActionShortcut {
+        actionName: "view_pan_down"
+        application: root.application
+        shortcutsEnabled: root.pannableCommandShortcutsEnabled
     }
 
-    ImageActionShortcut {
-        sequences: root.actionShortcuts("view_pan_top_left")
-        shortcutsEnabled: root.actionShortcutsEnabled(root.pannableCommandShortcutsEnabled, root.panTopLeftQAction)
-
-        onActivated: root.triggerAction(root.panTopLeftQAction)
+    ConfiguredActionShortcut {
+        actionName: "view_pan_top_left"
+        application: root.application
+        shortcutsEnabled: root.pannableCommandShortcutsEnabled
     }
 
-    ImageActionShortcut {
-        sequences: root.actionShortcuts("view_pan_bottom_right")
-        shortcutsEnabled: root.actionShortcutsEnabled(root.pannableCommandShortcutsEnabled, root.panBottomRightQAction)
-
-        onActivated: root.triggerAction(root.panBottomRightQAction)
+    ConfiguredActionShortcut {
+        actionName: "view_pan_bottom_right"
+        application: root.application
+        shortcutsEnabled: root.pannableCommandShortcutsEnabled
     }
 
-    ImageActionShortcut {
-        sequences: root.actionShortcuts("view_scan_forward")
-        shortcutsEnabled: root.actionShortcutsEnabled(root.readyCommandShortcutsEnabled, root.scanForwardQAction)
-
-        onActivated: root.triggerAction(root.scanForwardQAction)
+    ConfiguredActionShortcut {
+        actionName: "view_scan_forward"
+        application: root.application
+        shortcutsEnabled: root.readyCommandShortcutsEnabled
     }
 
-    ImageActionShortcut {
-        sequences: root.actionShortcuts("view_scan_backward")
-        shortcutsEnabled: root.actionShortcutsEnabled(root.readyCommandShortcutsEnabled, root.scanBackwardQAction)
-
-        onActivated: root.triggerAction(root.scanBackwardQAction)
+    ConfiguredActionShortcut {
+        actionName: "view_scan_backward"
+        application: root.application
+        shortcutsEnabled: root.readyCommandShortcutsEnabled
     }
 
-    ImageActionShortcut {
-        sequences: root.actionShortcuts("go_previous_image")
-        shortcutsEnabled: root.actionShortcutsEnabled(root.readyShortcutsEnabled, root.previousImageQAction)
-
-        onActivated: root.triggerAction(root.previousImageQAction)
+    ConfiguredActionShortcut {
+        actionName: "go_previous_image"
+        application: root.application
+        shortcutsEnabled: root.readyShortcutsEnabled
     }
 
-    ImageActionShortcut {
-        sequences: root.actionShortcuts("go_next_image")
-        shortcutsEnabled: root.actionShortcutsEnabled(root.readyShortcutsEnabled, root.nextImageQAction)
-
-        onActivated: root.triggerAction(root.nextImageQAction)
+    ConfiguredActionShortcut {
+        actionName: "go_next_image"
+        application: root.application
+        shortcutsEnabled: root.readyShortcutsEnabled
     }
 
-    ImageActionShortcut {
-        sequences: root.actionShortcuts("go_first_image")
-        shortcutsEnabled: root.actionShortcutsEnabled(root.pageCommandShortcutsEnabled, root.firstImageQAction)
-
-        onActivated: root.triggerAction(root.firstImageQAction)
+    ConfiguredActionShortcut {
+        actionName: "go_first_image"
+        application: root.application
+        shortcutsEnabled: root.pageCommandShortcutsEnabled
     }
 
-    ImageActionShortcut {
-        sequences: root.actionShortcuts("go_last_image")
-        shortcutsEnabled: root.actionShortcutsEnabled(root.pageCommandShortcutsEnabled, root.lastImageQAction)
-
-        onActivated: root.triggerAction(root.lastImageQAction)
+    ConfiguredActionShortcut {
+        actionName: "go_last_image"
+        application: root.application
+        shortcutsEnabled: root.pageCommandShortcutsEnabled
     }
 
-    ImageActionShortcut {
-        sequences: root.actionShortcuts("go_previous_archive")
-        shortcutsEnabled: root.actionShortcutsEnabled(root.containerCommandShortcutsEnabled, root.previousContainerQAction)
-
-        onActivated: root.triggerAction(root.previousContainerQAction)
+    ConfiguredActionShortcut {
+        actionName: "go_previous_archive"
+        application: root.application
+        shortcutsEnabled: root.containerCommandShortcutsEnabled
     }
 
-    ImageActionShortcut {
-        sequences: root.actionShortcuts("go_next_archive")
-        shortcutsEnabled: root.actionShortcutsEnabled(root.containerCommandShortcutsEnabled, root.nextContainerQAction)
-
-        onActivated: root.triggerAction(root.nextContainerQAction)
+    ConfiguredActionShortcut {
+        actionName: "go_next_archive"
+        application: root.application
+        shortcutsEnabled: root.containerCommandShortcutsEnabled
     }
 
-    ImageActionShortcut {
-        sequences: root.actionShortcuts("window_fullscreen")
-        shortcutsEnabled: root.actionShortcutsEnabled(root.commandShortcutsEnabled, root.fullscreenQAction)
-
-        onActivated: root.triggerAction(root.fullscreenQAction)
+    ConfiguredActionShortcut {
+        actionName: "window_fullscreen"
+        application: root.application
+        shortcutsEnabled: root.commandShortcutsEnabled
     }
 
-    ImageActionShortcut {
-        sequences: root.actionShortcuts("help_shortcuts")
-        shortcutsEnabled: root.actionShortcutsEnabled(root.commandShortcutsEnabled, root.shortcutHelpQAction)
-
-        onActivated: root.triggerAction(root.shortcutHelpQAction)
+    ConfiguredActionShortcut {
+        actionName: "help_shortcuts"
+        application: root.application
+        shortcutsEnabled: root.commandShortcutsEnabled
     }
 
-    ImageActionShortcut {
-        sequences: root.actionShortcuts("options_configure")
-        shortcutsEnabled: root.actionShortcutsEnabled(root.helpShortcutsEnabled, root.configureQAction)
-
-        onActivated: root.triggerAction(root.configureQAction)
+    ConfiguredActionShortcut {
+        actionName: "options_configure"
+        application: root.application
+        shortcutsEnabled: root.helpShortcutsEnabled
     }
 
-    ImageActionShortcut {
-        sequences: root.actionShortcuts("options_configure_keybinding")
-        shortcutsEnabled: root.actionShortcutsEnabled(root.helpShortcutsEnabled, root.configureShortcutsQAction)
-
-        onActivated: root.triggerAction(root.configureShortcutsQAction)
+    ConfiguredActionShortcut {
+        actionName: "options_configure_keybinding"
+        application: root.application
+        shortcutsEnabled: root.helpShortcutsEnabled
     }
 
-    ImageActionShortcut {
-        sequences: root.actionShortcuts("options_show_menubar")
-        shortcutsEnabled: root.actionShortcutsEnabled(root.helpShortcutsEnabled, root.showMenubarQAction)
-
-        onActivated: root.triggerAction(root.showMenubarQAction)
+    ConfiguredActionShortcut {
+        actionName: "options_show_menubar"
+        application: root.application
+        shortcutsEnabled: root.helpShortcutsEnabled
     }
 
     Connections {
