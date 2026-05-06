@@ -80,9 +80,7 @@ default image and comic book filter, or sibling archive navigation.
 
 KiriView's desktop file advertises file-manager Open With handling for the image
 and comic book archive MIME types corresponding to its default open dialog
-filter, and also advertises TIFF (`image/tiff`). TIFF is not part of the default
-open dialog image and comic book filter or adjacent image navigation candidate
-list.
+filter.
 
 When an image is opened from a KDE-supported archive URL such as `zip://`,
 `tar://`, or `sevenz://`, KiriView treats it as a single image URL supplied by
@@ -228,8 +226,9 @@ Page Down keeps the current image open and notifies the user that it is the last
 image. Supported image extensions match the open dialog: AVIF (`.avif` and
 `.avifs`), BMP, GIF, HEIF (`.heic`, `.heics`, `.heif`, `.heifs`, `.hif`,
 `.avci`, and `.hej2`), JPEG, JPEG 2000 (`.jp2`), JPEG XL (`.jxl`), PNG, SVG,
-and WebP, case-insensitively. JPEG-compressed HEIF files use the generic HEIF
-extensions because they do not have a dedicated extension.
+TIFF (`.tif` and `.tiff`), and WebP, case-insensitively. JPEG-compressed HEIF
+files use the generic HEIF extensions because they do not have a dedicated
+extension.
 
 When an image is opened from a KDE-supported archive URL such as `zip://`,
 `tar://`, or `sevenz://`, KiriView treats the opened item as a single image URL,
