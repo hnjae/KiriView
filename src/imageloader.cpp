@@ -27,7 +27,7 @@ ImageLoader::ImageLoader(
     QObject *parent, const ImageAsyncDependencies &dependencies, Callbacks callbacks)
     : QObject(parent)
     , m_callbacks(std::move(callbacks))
-    , m_decodeJob(this, dependencies.imageDataLoader, dependencies.imageDataDecoder,
+    , m_decodeJob(this, dependencies.imageDecode,
           ImageDecodeJob::Callbacks {
               [this](ImageDecodeRequest request, DecodedImageResult result) {
                   finishDecodeResult(std::move(request), std::move(result));

@@ -21,12 +21,17 @@ using ImageDataLoader
 using ImageDataDecoder
     = std::function<DecodedImageResult(const QByteArray &, const ImageDecodeRequest &)>;
 
-struct ImageAsyncDependencies {
-    ImageNavigationCandidateProvider candidateProvider;
-    ImageDataLoader imageDataLoader;
-    ImageDataDecoder imageDataDecoder;
+struct ImageDecodeDependencies {
+    ImageDataLoader dataLoader;
+    ImageDataDecoder dataDecoder;
 };
 
+struct ImageAsyncDependencies {
+    ImageNavigationCandidateProvider candidateProvider;
+    ImageDecodeDependencies imageDecode;
+};
+
+ImageDecodeDependencies defaultImageDecodeDependencies();
 ImageAsyncDependencies defaultImageAsyncDependencies();
 }
 

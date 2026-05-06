@@ -14,11 +14,7 @@ ImageDecodeJob::ImageDecodeJob(QObject *parent)
 }
 
 ImageDecodeJob::ImageDecodeJob(QObject *parent, Callbacks callbacks)
-    : QObject(parent)
-    , m_callbacks(std::move(callbacks))
+    : ImageDecodeJob(parent, defaultImageDecodeDependencies(), std::move(callbacks))
 {
-    ImageAsyncDependencies dependencies = defaultImageAsyncDependencies();
-    m_dataLoader = std::move(dependencies.imageDataLoader);
-    m_dataDecoder = std::move(dependencies.imageDataDecoder);
 }
 }

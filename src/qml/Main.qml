@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import QtQuick
-import QtQuick.Controls as Controls
 import QtQuick.Dialogs as Dialogs
 import io.github.hnjae.kiriview
 import org.kde.kirigami as Kirigami
@@ -270,128 +269,11 @@ StatefulApp.StatefulWindow {
         isMenu: true
     }
 
-    menuBar: Controls.MenuBar {
+    menuBar: ApplicationMenuBar {
+        actions: imageActions
+        fullscreen: root.fullscreen
+        imageDocument: page.imageDocument
         visible: root.menuBarMode && !root.fullscreen
-
-        Controls.Menu {
-            title: "File"
-
-            Controls.MenuItem {
-                action: imageActions.openAction
-            }
-
-            Controls.MenuSeparator {}
-
-            Controls.MenuItem {
-                action: imageActions.quitAction
-            }
-        }
-
-        Controls.Menu {
-            title: "Go"
-
-            Controls.MenuItem {
-                action: imageActions.previousImageAction
-            }
-
-            Controls.MenuItem {
-                action: imageActions.nextImageAction
-            }
-
-            Controls.MenuSeparator {}
-
-            Controls.MenuItem {
-                action: imageActions.firstImageAction
-            }
-
-            Controls.MenuItem {
-                action: imageActions.lastImageAction
-            }
-
-            Controls.MenuSeparator {}
-
-            Controls.MenuItem {
-                action: imageActions.previousContainerAction
-            }
-
-            Controls.MenuItem {
-                action: imageActions.nextContainerAction
-            }
-        }
-
-        Controls.Menu {
-            title: "View"
-
-            Controls.MenuItem {
-                action: imageActions.zoomInAction
-            }
-
-            Controls.MenuItem {
-                action: imageActions.zoomOutAction
-            }
-
-            Controls.MenuSeparator {}
-
-            Controls.Menu {
-                title: "Fit"
-
-                Controls.MenuItem {
-                    action: imageActions.fitAction
-                    checkable: true
-                    checked: page.imageDocument.zoomMode === KiriImageDocument.Fit
-                }
-
-                Controls.MenuItem {
-                    action: imageActions.fitHeightAction
-                    checkable: true
-                    checked: page.imageDocument.zoomMode === KiriImageDocument.FitHeight
-                }
-
-                Controls.MenuItem {
-                    action: imageActions.fitWidthAction
-                    checkable: true
-                    checked: page.imageDocument.zoomMode === KiriImageDocument.FitWidth
-                }
-            }
-
-            Controls.MenuItem {
-                action: imageActions.actualSizeAction
-            }
-
-            Controls.MenuSeparator {}
-
-            Controls.MenuItem {
-                action: imageActions.fullscreenAction
-                checkable: true
-                checked: root.fullscreen
-            }
-        }
-
-        Controls.Menu {
-            title: "Settings"
-
-            Controls.MenuItem {
-                action: imageActions.showMenubarAction
-            }
-
-            Controls.MenuSeparator {}
-
-            Controls.MenuItem {
-                action: imageActions.configureAction
-            }
-
-            Controls.MenuItem {
-                action: imageActions.configureShortcutsAction
-            }
-        }
-
-        Controls.Menu {
-            title: "Help"
-
-            Controls.MenuItem {
-                action: imageActions.shortcutHelpAction
-            }
-        }
     }
 
     KirigamiSettings.ConfigurationView {

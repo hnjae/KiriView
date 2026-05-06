@@ -29,9 +29,8 @@ public:
 
     explicit ImageDecodeJob(QObject *parent = nullptr);
     ImageDecodeJob(QObject *parent, Callbacks callbacks);
-    ImageDecodeJob(QObject *parent, ImageDataLoader dataLoader, ImageDataDecoder dataDecoder);
-    ImageDecodeJob(QObject *parent, ImageDataLoader dataLoader, ImageDataDecoder dataDecoder,
-        Callbacks callbacks);
+    ImageDecodeJob(QObject *parent, ImageDecodeDependencies dependencies);
+    ImageDecodeJob(QObject *parent, ImageDecodeDependencies dependencies, Callbacks callbacks);
 
     void start(ImageDecodeRequest request);
     void cancel();

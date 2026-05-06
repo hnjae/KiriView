@@ -24,12 +24,19 @@ KiriView::DecodedImageResult decodeImageDataWithDefaults(
 }
 
 namespace KiriView {
+ImageDecodeDependencies defaultImageDecodeDependencies()
+{
+    return ImageDecodeDependencies {
+        loadImageData,
+        decodeImageDataWithDefaults,
+    };
+}
+
 ImageAsyncDependencies defaultImageAsyncDependencies()
 {
     return ImageAsyncDependencies {
         defaultImageNavigationCandidateProvider(),
-        loadImageData,
-        decodeImageDataWithDefaults,
+        defaultImageDecodeDependencies(),
     };
 }
 }

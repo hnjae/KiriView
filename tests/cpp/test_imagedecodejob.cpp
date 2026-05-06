@@ -12,7 +12,7 @@
 #include <vector>
 
 namespace {
-using KiriView::TestSupport::dataLoaderFor;
+using KiriView::TestSupport::imageDecodeDependenciesFor;
 using KiriView::TestSupport::indexedImageUrl;
 using KiriView::TestSupport::ManualImageDataLoader;
 using KiriView::TestSupport::staticImageDataDecoderRejectingBadData;
@@ -42,8 +42,8 @@ void TestImageDecodeJob::cancelSuppressesPendingLoad()
 {
     ManualImageDataLoader dataLoader;
     int decodedCount = 0;
-    KiriView::ImageDecodeJob decodeJob(this, dataLoaderFor(dataLoader),
-        staticImageDataDecoderRejectingBadData(),
+    KiriView::ImageDecodeJob decodeJob(this,
+        imageDecodeDependenciesFor(dataLoader, staticImageDataDecoderRejectingBadData()),
         decodeJobCallbacks([&decodedCount](KiriView::ImageDecodeRequest,
                                KiriView::DecodedImageResult) { ++decodedCount; }));
 
@@ -62,8 +62,8 @@ void TestImageDecodeJob::staleLoadResultIsIgnored()
 {
     ManualImageDataLoader dataLoader;
     std::vector<KiriView::ImageDecodeRequest> decodedRequests;
-    KiriView::ImageDecodeJob decodeJob(this, dataLoaderFor(dataLoader),
-        staticImageDataDecoderRejectingBadData(),
+    KiriView::ImageDecodeJob decodeJob(this,
+        imageDecodeDependenciesFor(dataLoader, staticImageDataDecoderRejectingBadData()),
         decodeJobCallbacks(
             [&decodedRequests](KiriView::ImageDecodeRequest request, KiriView::DecodedImageResult) {
                 decodedRequests.push_back(request);
@@ -87,8 +87,8 @@ void TestImageDecodeJob::loadErrorsAreDeliveredForCurrentRequest()
     ManualImageDataLoader dataLoader;
     std::vector<KiriView::ImageDecodeRequest> errorRequests;
     QString errorString;
-    KiriView::ImageDecodeJob decodeJob(this, dataLoaderFor(dataLoader),
-        staticImageDataDecoderRejectingBadData(),
+    KiriView::ImageDecodeJob decodeJob(this,
+        imageDecodeDependenciesFor(dataLoader, staticImageDataDecoderRejectingBadData()),
         decodeJobCallbacks({},
             [&errorRequests, &errorString](
                 const KiriView::ImageDecodeRequest &request, const QString &error) {
@@ -109,8 +109,8 @@ void TestImageDecodeJob::decodeErrorsAreDeliveredAsResults()
 {
     ManualImageDataLoader dataLoader;
     std::optional<KiriView::DecodedImageResult> decodedResult;
-    KiriView::ImageDecodeJob decodeJob(this, dataLoaderFor(dataLoader),
-        staticImageDataDecoderRejectingBadData(),
+    KiriView::ImageDecodeJob decodeJob(this,
+        imageDecodeDependenciesFor(dataLoader, staticImageDataDecoderRejectingBadData()),
         decodeJobCallbacks(
             [&decodedResult](KiriView::ImageDecodeRequest, KiriView::DecodedImageResult result) {
                 decodedResult = std::move(result);
@@ -130,13 +130,13 @@ void TestImageDecodeJob::decodeRequestIsPassedToDecoder()
 {
     ManualImageDataLoader dataLoader;
     std::optional<KiriView::ImageDecodeRequest> decoderRequest;
-    KiriView::ImageDecodeJob decodeJob(
-        this, dataLoaderFor(dataLoader),
-        [&decoderRequest](const QByteArray &, const KiriView::ImageDecodeRequest &request) {
-            decoderRequest = request;
-            return KiriView::successfulDecodedImageResult(
-                KiriView::TestSupport::staticDecodedTestImage());
-        },
+    KiriView::ImageDecodeJob decodeJob(this,
+        imageDecodeDependenciesFor(dataLoader,
+            [&decoderRequest](const QByteArray &, const KiriView::ImageDecodeRequest &request) {
+                decoderRequest = request;
+                return KiriView::successfulDecodedImageResult(
+                    KiriView::TestSupport::staticDecodedTestImage());
+            }),
         decodeJobCallbacks([](KiriView::ImageDecodeRequest, KiriView::DecodedImageResult) {}));
 
     decodeJob.start(KiriView::ImageDecodeRequest { 5, indexedImageUrl(5),
