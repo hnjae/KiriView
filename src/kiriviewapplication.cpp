@@ -106,7 +106,7 @@ constexpr ActionDefinition showMenubarAction(KiriViewApplication::ActionId actio
 }
 
 constexpr std::size_t actionDefinitionCount
-    = static_cast<std::size_t>(KiriViewApplication::FileQuitAction) + 1;
+    = static_cast<std::size_t>(KiriViewApplication::ActionCount);
 
 constexpr std::array actionDefinitions {
     standardAction(KiriViewApplication::FileOpenAction, "file_open", KStandardActions::Open, "Open",

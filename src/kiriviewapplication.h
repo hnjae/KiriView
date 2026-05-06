@@ -57,6 +57,7 @@ public:
         OptionsConfigureKeybindingAction,
         OptionsShowMenubarAction,
         FileQuitAction,
+        ActionCount,
     };
     Q_ENUM(ActionId)
 

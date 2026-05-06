@@ -178,21 +178,15 @@ void TestImageNavigationService::directoryContainerNavigationOpensFirstImage()
 {
     FakeCandidateProvider fakeProvider;
     const QUrl parentUrl = localUrl(QStringLiteral("/books/"));
-    const QUrl currentContainerUrl = localUrl(QStringLiteral("/books/a.cbz"));
-    const QUrl targetContainerUrl = localUrl(QStringLiteral("/books/b.cbz"));
-    const std::optional<KiriView::ArchiveDocumentLocation> targetArchiveDocument
-        = KiriView::archiveDocumentLocationForLocalArchiveUrl(targetContainerUrl);
-    QVERIFY(targetArchiveDocument.has_value());
-    const QUrl targetImageUrl
-        = archivePageUrl(targetArchiveDocument->rootUrl(), QStringLiteral("01.png"));
+    const QUrl currentContainerUrl = localUrl(QStringLiteral("/books/a/"));
+    const QUrl targetContainerUrl = localUrl(QStringLiteral("/books/b/"));
+    const QUrl targetImageUrl = localUrl(QStringLiteral("/books/b/01.png"));
     fakeProvider.setContainerCandidates(parentUrl,
         {
-            containerCandidate(
-                currentContainerUrl, ContainerNavigationCandidateType::ComicBookArchive),
-            containerCandidate(
-                targetContainerUrl, ContainerNavigationCandidateType::ComicBookArchive),
+            containerCandidate(currentContainerUrl, ContainerNavigationCandidateType::Directory),
+            containerCandidate(targetContainerUrl, ContainerNavigationCandidateType::Directory),
         });
-    fakeProvider.setArchiveImages(targetArchiveDocument->rootUrl(),
+    fakeProvider.setDirectoryImages(targetContainerUrl,
         {
             imageCandidate(targetImageUrl),
         });
