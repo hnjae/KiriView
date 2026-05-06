@@ -15,18 +15,7 @@
 namespace KiriView {
 QSize boundedPreviewSize(const QSize &imageSize, int maximumLongEdge)
 {
-    if (imageSize.isEmpty() || maximumLongEdge <= 0) {
-        return {};
-    }
-
-    const int longEdge = std::max(imageSize.width(), imageSize.height());
-    if (longEdge <= maximumLongEdge) {
-        return imageSize;
-    }
-
-    const qreal scale = static_cast<qreal>(maximumLongEdge) / longEdge;
-    return QSize(std::max(1, static_cast<int>(std::ceil(imageSize.width() * scale))),
-        std::max(1, static_cast<int>(std::ceil(imageSize.height() * scale))));
+    return scaledImageSizeToFit(QSizeF(imageSize), QSize(maximumLongEdge, maximumLongEdge));
 }
 
 bool tileRequestCanDecode(const TileRequest &request)

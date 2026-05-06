@@ -24,6 +24,29 @@ QRectF imageTargetRect(const QSize &imageSize, const QSizeF &boundsSize)
         (boundsSize.height() - targetSize.height()) / 2.0, targetSize.width(), targetSize.height());
 }
 
+QSize scaledImageSizeToFit(const QSizeF &imageSize, const QSize &boundsSize)
+{
+    if (imageSize.isEmpty() || boundsSize.isEmpty()) {
+        return {};
+    }
+
+    const qreal imageWidth = imageSize.width();
+    const qreal imageHeight = imageSize.height();
+    if (!std::isfinite(imageWidth) || !std::isfinite(imageHeight) || imageWidth <= 0.0
+        || imageHeight <= 0.0) {
+        return {};
+    }
+
+    const qreal scale = std::min<qreal>(
+        1.0, std::min(boundsSize.width() / imageWidth, boundsSize.height() / imageHeight));
+    if (!std::isfinite(scale) || scale <= 0.0) {
+        return {};
+    }
+
+    return QSize(std::clamp(static_cast<int>(std::ceil(imageWidth * scale)), 1, boundsSize.width()),
+        std::clamp(static_cast<int>(std::ceil(imageHeight * scale)), 1, boundsSize.height()));
+}
+
 std::vector<ImageSurfaceDrawEntry> imageSurfaceDrawEntries(
     const DisplayedImageSurface &surface, const QRectF &targetRect)
 {
@@ -111,14 +134,8 @@ QSize svgRasterSize(const QSizeF &displaySize, qreal devicePixelRatio, int maxim
 
     const qreal width = displaySize.width() * devicePixelRatio;
     const qreal height = displaySize.height() * devicePixelRatio;
-    if (!std::isfinite(width) || !std::isfinite(height) || width <= 0.0 || height <= 0.0) {
-        return {};
-    }
-
     const int maximumSize = maximumTextureSize > 0 ? maximumTextureSize : fallbackTextureSizeMax;
-    const qreal scale = std::min<qreal>(1.0, std::min(maximumSize / width, maximumSize / height));
-    return QSize(std::clamp(static_cast<int>(std::ceil(width * scale)), 1, maximumSize),
-        std::clamp(static_cast<int>(std::ceil(height * scale)), 1, maximumSize));
+    return scaledImageSizeToFit(QSizeF(width, height), QSize(maximumSize, maximumSize));
 }
 
 QImage renderSvgImage(const QByteArray &data, const QSize &size)

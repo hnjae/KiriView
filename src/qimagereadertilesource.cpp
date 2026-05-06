@@ -167,31 +167,12 @@ bool QImageReaderTileSource::supportsJpegScaledFirstDisplay() const
 
 QSize QImageReaderTileSource::firstDisplayScaledSize(const QSize &physicalViewportSize) const
 {
-    if (m_imageSize.isEmpty() || physicalViewportSize.isEmpty()) {
-        return {};
-    }
-    if (m_imageSize.width() <= physicalViewportSize.width()
-        && m_imageSize.height() <= physicalViewportSize.height()) {
+    const QSize scaledSize = scaledImageSizeToFit(QSizeF(m_imageSize), physicalViewportSize);
+    if (scaledSize.isEmpty() || scaledSize == m_imageSize) {
         return {};
     }
 
-    const qreal scale = std::min(
-        static_cast<qreal>(physicalViewportSize.width()) / static_cast<qreal>(m_imageSize.width()),
-        static_cast<qreal>(physicalViewportSize.height())
-            / static_cast<qreal>(m_imageSize.height()));
-    if (!std::isfinite(scale) || scale <= 0.0 || scale >= 1.0) {
-        return {};
-    }
-
-    const int width = std::clamp(
-        static_cast<int>(std::ceil(m_imageSize.width() * scale)), 1, m_imageSize.width());
-    const int height = std::clamp(
-        static_cast<int>(std::ceil(m_imageSize.height() * scale)), 1, m_imageSize.height());
-    if (width >= m_imageSize.width() && height >= m_imageSize.height()) {
-        return {};
-    }
-
-    return QSize(width, height);
+    return scaledSize;
 }
 
 QImage QImageReaderTileSource::readScaledImage(const QSize &scaledSize, QString *errorString) const

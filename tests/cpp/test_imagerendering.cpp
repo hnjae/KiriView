@@ -8,6 +8,7 @@
 #include <QObject>
 #include <QRectF>
 #include <QTest>
+#include <limits>
 #include <utility>
 #include <vector>
 
@@ -16,8 +17,28 @@ class TestImageRendering : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
+    void scaledImageSizeToFitKeepsAspectRatioWithoutUpscaling();
+    void scaledImageSizeToFitRejectsInvalidInput();
     void staticSurfaceDrawEntriesKeepPreviewAndTileRectsSeparate();
 };
+
+void TestImageRendering::scaledImageSizeToFitKeepsAspectRatioWithoutUpscaling()
+{
+    QCOMPARE(KiriView::scaledImageSizeToFit(QSizeF(4000.0, 2000.0), QSize(1000, 1000)),
+        QSize(1000, 500));
+    QCOMPARE(KiriView::scaledImageSizeToFit(QSizeF(333.0, 100.0), QSize(200, 200)), QSize(200, 61));
+    QCOMPARE(
+        KiriView::scaledImageSizeToFit(QSizeF(200.0, 100.0), QSize(1000, 1000)), QSize(200, 100));
+    QCOMPARE(KiriView::scaledImageSizeToFit(QSizeF(0.5, 0.5), QSize(100, 100)), QSize(1, 1));
+}
+
+void TestImageRendering::scaledImageSizeToFitRejectsInvalidInput()
+{
+    const qreal nan = std::numeric_limits<qreal>::quiet_NaN();
+    QCOMPARE(KiriView::scaledImageSizeToFit(QSizeF(), QSize(100, 100)), QSize());
+    QCOMPARE(KiriView::scaledImageSizeToFit(QSizeF(100.0, 100.0), QSize()), QSize());
+    QCOMPARE(KiriView::scaledImageSizeToFit(QSizeF(nan, 100.0), QSize(100, 100)), QSize());
+}
 
 void TestImageRendering::staticSurfaceDrawEntriesKeepPreviewAndTileRectsSeparate()
 {
