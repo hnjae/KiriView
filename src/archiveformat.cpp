@@ -15,7 +15,6 @@ struct ArchiveMimeTypes {
 struct ArchiveOpenProfile {
     const char *extension;
     ArchiveMimeTypes mimeTypes;
-    const char *marker;
 };
 
 struct ArchiveFormat {
@@ -48,17 +47,17 @@ const char *const rarDirectArchiveMimeTypes[]
     = { "application/vnd.rar", "application/x-rar", "application/x-rar-compressed" };
 
 const ArchiveFormat archiveFormats[] = {
-    { "zip", { "cbz", archiveMimeTypes(zipComicBookMimeTypes), ".cbz/" },
-        { "zip", archiveMimeTypes(zipDirectArchiveMimeTypes), ".zip/" },
+    { "zip", { "cbz", archiveMimeTypes(zipComicBookMimeTypes) },
+        { "zip", archiveMimeTypes(zipDirectArchiveMimeTypes) },
         KiriView::ArchiveStorageBackend::KZip },
-    { "tar", { "cbt", archiveMimeTypes(tarComicBookMimeTypes), ".cbt/" },
-        { "tar", archiveMimeTypes(tarDirectArchiveMimeTypes), ".tar/" },
+    { "tar", { "cbt", archiveMimeTypes(tarComicBookMimeTypes) },
+        { "tar", archiveMimeTypes(tarDirectArchiveMimeTypes) },
         KiriView::ArchiveStorageBackend::KTar },
-    { "sevenz", { "cb7", archiveMimeTypes(sevenZipComicBookMimeTypes), ".cb7/" },
-        { "7z", archiveMimeTypes(sevenZipDirectArchiveMimeTypes), ".7z/" },
+    { "sevenz", { "cb7", archiveMimeTypes(sevenZipComicBookMimeTypes) },
+        { "7z", archiveMimeTypes(sevenZipDirectArchiveMimeTypes) },
         KiriView::ArchiveStorageBackend::K7Zip },
-    { "rar", { "cbr", archiveMimeTypes(rarComicBookMimeTypes), ".cbr/" },
-        { "rar", archiveMimeTypes(rarDirectArchiveMimeTypes), ".rar/" },
+    { "rar", { "cbr", archiveMimeTypes(rarComicBookMimeTypes) },
+        { "rar", archiveMimeTypes(rarDirectArchiveMimeTypes) },
         KiriView::ArchiveStorageBackend::LibArchive },
 };
 
@@ -162,7 +161,10 @@ QString schemeString(const ArchiveFormat *format)
     return format == nullptr ? QString() : QString::fromLatin1(format->scheme);
 }
 
-QString markerString(const char *marker) { return QString::fromLatin1(marker); }
+QString markerString(const ArchiveOpenProfile &profile)
+{
+    return QStringLiteral(".") + QString::fromLatin1(profile.extension) + QLatin1Char('/');
+}
 
 void appendMimeTypes(QStringList *mimeTypeNames, const ArchiveMimeTypes &mimeTypes)
 {
@@ -237,7 +239,7 @@ QString directArchiveOpenKioSchemeForMimeTypeName(const QString &mimeTypeName)
 QString comicBookArchiveMarkerForRootScheme(const QString &scheme)
 {
     const ArchiveFormat *format = archiveFormatForScheme(scheme);
-    return format == nullptr ? QString() : markerString(format->comicBook.marker);
+    return format == nullptr ? QString() : markerString(format->comicBook);
 }
 
 QStringList directArchiveOpenMarkersForRootScheme(const QString &scheme)
@@ -248,8 +250,8 @@ QStringList directArchiveOpenMarkersForRootScheme(const QString &scheme)
     }
 
     return {
-        markerString(format->comicBook.marker),
-        markerString(format->directArchive.marker),
+        markerString(format->comicBook),
+        markerString(format->directArchive),
     };
 }
 }
