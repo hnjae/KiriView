@@ -4,7 +4,6 @@
 #include "image_test_support.h"
 #include "imagedecodejob.h"
 
-#include <QImage>
 #include <QObject>
 #include <QTest>
 #include <QUrl>
@@ -15,19 +14,8 @@
 namespace {
 using KiriView::TestSupport::dataLoaderFor;
 using KiriView::TestSupport::ManualImageDataLoader;
-
-KiriView::DecodedImageResult decodeTestImageData(
-    const QByteArray &data, const KiriView::ImageDecodeRequest &)
-{
-    if (data == QByteArrayLiteral("bad")) {
-        return KiriView::DecodedImageFailure { QStringLiteral("decode failed") };
-    }
-
-    QImage image(1, 1, QImage::Format_RGBA8888_Premultiplied);
-    image.fill(Qt::transparent);
-    return KiriView::successfulDecodedImageResult(
-        KiriView::TestSupport::staticDecodedTestImage(image));
-}
+using KiriView::TestSupport::staticImageDataDecoderRejectingBadData;
+using KiriView::TestSupport::testImageDecodeFailureString;
 
 QUrl imageUrl(int index) { return QUrl(QStringLiteral("file:///images/%1.png").arg(index)); }
 }
@@ -47,7 +35,8 @@ private Q_SLOTS:
 void TestImageDecodeJob::cancelSuppressesPendingLoad()
 {
     ManualImageDataLoader dataLoader;
-    KiriView::ImageDecodeJob decodeJob(this, dataLoaderFor(dataLoader), decodeTestImageData);
+    KiriView::ImageDecodeJob decodeJob(
+        this, dataLoaderFor(dataLoader), staticImageDataDecoderRejectingBadData());
 
     int decodedCount = 0;
     decodeJob.setDecodedCallback([&decodedCount](KiriView::ImageDecodeRequest,
@@ -67,7 +56,8 @@ void TestImageDecodeJob::cancelSuppressesPendingLoad()
 void TestImageDecodeJob::staleLoadResultIsIgnored()
 {
     ManualImageDataLoader dataLoader;
-    KiriView::ImageDecodeJob decodeJob(this, dataLoaderFor(dataLoader), decodeTestImageData);
+    KiriView::ImageDecodeJob decodeJob(
+        this, dataLoaderFor(dataLoader), staticImageDataDecoderRejectingBadData());
 
     std::vector<KiriView::ImageDecodeRequest> decodedRequests;
     decodeJob.setDecodedCallback(
@@ -91,7 +81,8 @@ void TestImageDecodeJob::staleLoadResultIsIgnored()
 void TestImageDecodeJob::loadErrorsAreDeliveredForCurrentRequest()
 {
     ManualImageDataLoader dataLoader;
-    KiriView::ImageDecodeJob decodeJob(this, dataLoaderFor(dataLoader), decodeTestImageData);
+    KiriView::ImageDecodeJob decodeJob(
+        this, dataLoaderFor(dataLoader), staticImageDataDecoderRejectingBadData());
 
     std::vector<KiriView::ImageDecodeRequest> errorRequests;
     QString errorString;
@@ -114,7 +105,8 @@ void TestImageDecodeJob::loadErrorsAreDeliveredForCurrentRequest()
 void TestImageDecodeJob::decodeErrorsAreDeliveredAsResults()
 {
     ManualImageDataLoader dataLoader;
-    KiriView::ImageDecodeJob decodeJob(this, dataLoaderFor(dataLoader), decodeTestImageData);
+    KiriView::ImageDecodeJob decodeJob(
+        this, dataLoaderFor(dataLoader), staticImageDataDecoderRejectingBadData());
 
     std::optional<KiriView::DecodedImageResult> decodedResult;
     decodeJob.setDecodedCallback(
@@ -128,7 +120,7 @@ void TestImageDecodeJob::decodeErrorsAreDeliveredAsResults()
     QTRY_VERIFY(decodedResult.has_value());
     const auto *failure = KiriView::decodedImageResultFailure(*decodedResult);
     QVERIFY(failure != nullptr);
-    QCOMPARE(failure->errorString, QStringLiteral("decode failed"));
+    QCOMPARE(failure->errorString, testImageDecodeFailureString());
     QVERIFY(!decodeJob.hasActiveRequest());
 }
 

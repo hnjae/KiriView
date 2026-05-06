@@ -23,26 +23,12 @@ using KiriView::TestSupport::dataLoaderFor;
 using KiriView::TestSupport::imageCandidate;
 using KiriView::TestSupport::localUrl;
 using KiriView::TestSupport::ManualImageDataLoader;
-using KiriView::TestSupport::staticDecodedTestImage;
+using KiriView::TestSupport::staticImageDataDecoder;
+using KiriView::TestSupport::staticImageDataDecoderRejectingBadData;
 using KiriView::TestSupport::testImage;
+using KiriView::TestSupport::testImageDecodeFailureString;
 
 using FakeCandidateProvider = KiriView::TestSupport::FakeImageNavigationCandidateProvider;
-
-KiriView::DecodedImageResult decodeTestImageData(
-    const QByteArray &, const KiriView::ImageDecodeRequest &)
-{
-    return KiriView::successfulDecodedImageResult(staticDecodedTestImage(testImage(2)));
-}
-
-KiriView::DecodedImageResult decodeBadDataAsFailure(
-    const QByteArray &data, const KiriView::ImageDecodeRequest &request)
-{
-    if (data == QByteArrayLiteral("bad")) {
-        return KiriView::DecodedImageFailure { QStringLiteral("decode failed") };
-    }
-
-    return decodeTestImageData(data, request);
-}
 
 KiriView::DecodedImageResult staticDecodedImageWithPreview(const QSize &sourceSize,
     const QSize &previewSize, KiriView::StaticImageDisplayHints displayHints = {})
@@ -58,7 +44,7 @@ KiriView::DecodedImageResult staticDecodedImageWithPreview(const QSize &sourceSi
 
 KiriView::ImageAsyncDependencies dependenciesFor(FakeCandidateProvider &candidateProvider,
     ManualImageDataLoader &dataLoader,
-    KiriView::ImageDecodeJob::DataDecoder dataDecoder = decodeTestImageData)
+    KiriView::ImageDecodeJob::DataDecoder dataDecoder = staticImageDataDecoder(testImage(2)))
 {
     return KiriView::ImageAsyncDependencies {
         candidateProvider.provider(),
@@ -69,7 +55,7 @@ KiriView::ImageAsyncDependencies dependenciesFor(FakeCandidateProvider &candidat
 
 std::unique_ptr<KiriView::ImageDocumentController> createController(QObject *parent,
     FakeCandidateProvider &candidateProvider, ManualImageDataLoader &dataLoader,
-    KiriView::ImageDecodeJob::DataDecoder dataDecoder = decodeTestImageData,
+    KiriView::ImageDecodeJob::DataDecoder dataDecoder = staticImageDataDecoder(testImage(2)),
     int maximumTextureSize = KiriView::fallbackTextureSizeMax, qreal devicePixelRatio = 1.0)
 {
     return std::make_unique<KiriView::ImageDocumentController>(
@@ -159,8 +145,9 @@ void TestImageDocumentController::imageLoadsUsePhysicalViewportForFirstDisplayDe
             imageCandidate(nextImageUrl),
         });
 
-    std::unique_ptr<KiriView::ImageDocumentController> controller = createController(this,
-        candidateProvider, dataLoader, decodeTestImageData, KiriView::fallbackTextureSizeMax, 2.0);
+    std::unique_ptr<KiriView::ImageDocumentController> controller
+        = createController(this, candidateProvider, dataLoader,
+            staticImageDataDecoder(testImage(2)), KiriView::fallbackTextureSizeMax, 2.0);
     controller->setViewportSize(QSizeF(400.0, 300.0));
     controller->setSourceUrl(imageUrl);
 
@@ -497,8 +484,8 @@ void TestImageDocumentController::decodedReplacementFailureSchedulesRecoveryPred
             imageCandidate(badUrl),
         });
 
-    std::unique_ptr<KiriView::ImageDocumentController> controller
-        = createController(this, candidateProvider, dataLoader, decodeBadDataAsFailure);
+    std::unique_ptr<KiriView::ImageDocumentController> controller = createController(
+        this, candidateProvider, dataLoader, staticImageDataDecoderRejectingBadData(testImage(2)));
     controller->setViewportSize(QSizeF(400.0, 300.0));
     controller->setSourceUrl(imageUrl);
     finishLoad(dataLoader);
@@ -513,7 +500,7 @@ void TestImageDocumentController::decodedReplacementFailureSchedulesRecoveryPred
     QCOMPARE(dataLoader.loads.back()->url, badUrl);
     dataLoader.loads.back()->dataCallback(QByteArrayLiteral("bad"));
 
-    QTRY_COMPARE(controller->errorString(), QStringLiteral("decode failed"));
+    QTRY_COMPARE(controller->errorString(), testImageDecodeFailureString());
     QCOMPARE(controller->sourceUrl(), imageUrl);
     QCOMPARE(controller->displayedUrl(), imageUrl);
     QCOMPARE(dataLoader.loads.size(), loadCountBeforeReplacement + 2);

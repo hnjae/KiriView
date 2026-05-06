@@ -19,29 +19,21 @@ using KiriView::TestSupport::dataLoaderFor;
 using KiriView::TestSupport::imageCandidate;
 using KiriView::TestSupport::localUrl;
 using KiriView::TestSupport::ManualImageDataLoader;
-using KiriView::TestSupport::staticDecodedTestImage;
+using KiriView::TestSupport::staticImageDataDecoderRejectingBadData;
 using KiriView::TestSupport::testImage;
+using KiriView::TestSupport::testImageDecodeFailureString;
 
 using FakeCandidateProvider = KiriView::TestSupport::FakeImageNavigationCandidateProvider;
 
-KiriView::DecodedImageResult decodeTestImageData(
-    const QByteArray &data, const KiriView::ImageDecodeRequest &)
-{
-    if (data == QByteArrayLiteral("bad")) {
-        return KiriView::DecodedImageFailure { QStringLiteral("decode failed") };
-    }
-
-    return KiriView::successfulDecodedImageResult(staticDecodedTestImage());
-}
-
 KiriView::ImageLoader createLoader(QObject *parent, FakeCandidateProvider &candidateProvider,
-    ManualImageDataLoader &dataLoader, KiriView::ImageLoader::Callbacks callbacks = {})
+    ManualImageDataLoader &dataLoader, KiriView::ImageLoader::Callbacks callbacks = {},
+    KiriView::ImageDecodeJob::DataDecoder dataDecoder = staticImageDataDecoderRejectingBadData())
 {
     return KiriView::ImageLoader(parent,
         KiriView::ImageAsyncDependencies {
             candidateProvider.provider(),
             dataLoaderFor(dataLoader),
-            decodeTestImageData,
+            std::move(dataDecoder),
         },
         std::move(callbacks));
 }
@@ -118,7 +110,7 @@ void TestImageLoader::decodeFailureUsesErrorCallback()
     QTRY_VERIFY(errorSession.has_value());
     QCOMPARE(errorSession->location.imageUrl(), imageUrl);
     QCOMPARE(error, KiriView::ImageLoadError::Generic);
-    QCOMPARE(errorString, QStringLiteral("decode failed"));
+    QCOMPARE(errorString, testImageDecodeFailureString());
     QCOMPARE(decodedCount, 0);
 }
 

@@ -11,9 +11,9 @@
 
 namespace {
 using KiriView::TestSupport::dataLoaderFor;
-using KiriView::TestSupport::decodeStaticTestImageData;
 using KiriView::TestSupport::imageCandidate;
 using KiriView::TestSupport::ManualImageDataLoader;
+using KiriView::TestSupport::staticImageDataDecoder;
 using KiriView::TestSupport::testImage;
 using KiriView::TestSupport::TestImageTileSource;
 
@@ -33,7 +33,7 @@ KiriView::ImagePredecodeCoordinator createCoordinator(
         KiriView::ImageAsyncDependencies {
             candidateProvider.provider(),
             dataLoaderFor(dataLoader),
-            decodeStaticTestImageData,
+            staticImageDataDecoder(),
         });
 }
 }

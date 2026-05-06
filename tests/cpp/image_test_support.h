@@ -303,10 +303,33 @@ inline StaticDecodedImage staticDecodedTestImage(const QImage &image = testImage
     };
 }
 
-inline DecodedImageResult decodeStaticTestImageData(const QByteArray &, const ImageDecodeRequest &)
+inline QString testImageDecodeFailureString() { return QStringLiteral("decode failed"); }
+
+inline DecodedImageResult failedTestImageDecodeResult()
 {
-    return successfulDecodedImageResult(staticDecodedTestImage());
+    return DecodedImageFailure { testImageDecodeFailureString() };
 }
+
+inline ImageDecodeJob::DataDecoder staticImageDataDecoder(QImage image = testImage())
+{
+    return [image = std::move(image)](const QByteArray &, const ImageDecodeRequest &) {
+        return successfulDecodedImageResult(staticDecodedTestImage(image));
+    };
+}
+
+inline ImageDecodeJob::DataDecoder staticImageDataDecoderRejectingBadData(
+    QImage image = testImage())
+{
+    return [decoder = staticImageDataDecoder(std::move(image))](
+               const QByteArray &data, const ImageDecodeRequest &request) {
+        if (data == QByteArrayLiteral("bad")) {
+            return failedTestImageDecodeResult();
+        }
+
+        return decoder(data, request);
+    };
+}
+
 }
 
 #endif
