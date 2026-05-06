@@ -45,6 +45,10 @@ struct IpmaBox {
     entries: Vec<u8>,
 }
 
+struct MetaBox {
+    child_boxes: Vec<BoxHeader>,
+}
+
 fn avif_data_with_compatibility_fixes(data: &QByteArray) -> QByteArray {
     fixed_avif_data(data.as_slice())
         .map(|fixed_data| QByteArray::from(fixed_data.as_slice()))
@@ -75,17 +79,17 @@ fn is_avif_file(data: &[u8]) -> bool {
         .any(|box_header| has_avif_brand(data, box_header))
 }
 
-fn meta_child_boxes(data: &[u8], meta_box: BoxHeader) -> Vec<BoxHeader> {
-    let Some(full_box) = read_full_box(data, meta_box, b"meta", 0) else {
-        return Vec::new();
-    };
+fn read_meta_box(data: &[u8], meta_box: BoxHeader) -> Option<MetaBox> {
+    let full_box = read_full_box(data, meta_box, b"meta", 0)?;
 
-    child_boxes(data, full_box.payload_offset(), full_box.end_offset())
+    Some(MetaBox {
+        child_boxes: child_boxes(data, full_box.payload_offset(), full_box.end_offset()),
+    })
 }
 
-fn primary_item_id(data: &[u8], meta_box: BoxHeader) -> Option<u32> {
-    for box_header in meta_child_boxes(data, meta_box) {
-        let Some(full_box) = read_full_box(data, box_header, b"pitm", 0) else {
+fn primary_item_id(data: &[u8], meta_box: &MetaBox) -> Option<u32> {
+    for box_header in &meta_box.child_boxes {
+        let Some(full_box) = read_full_box(data, *box_header, b"pitm", 0) else {
             continue;
         };
 
@@ -111,8 +115,8 @@ fn aux_c_contains_alpha(data: &[u8], aux_c_box: BoxHeader) -> bool {
         })
 }
 
-fn has_alpha_auxiliary_property(data: &[u8], meta_box: BoxHeader) -> bool {
-    for box_header in meta_child_boxes(data, meta_box) {
+fn has_alpha_auxiliary_property(data: &[u8], meta_box: &MetaBox) -> bool {
+    for box_header in &meta_box.child_boxes {
         if !box_header.is_type(b"iprp") {
             continue;
         }
@@ -215,7 +219,7 @@ fn patch_item_reference(data: &mut [u8], iref_box: BoxHeader, item_id: u32) -> b
     changed
 }
 
-fn patch_zero_auxl_references(data: &mut [u8], meta_box: BoxHeader) -> bool {
+fn patch_zero_auxl_references(data: &mut [u8], meta_box: &MetaBox) -> bool {
     let Some(item_id) = primary_item_id(data, meta_box) else {
         return false;
     };
@@ -224,9 +228,9 @@ fn patch_zero_auxl_references(data: &mut [u8], meta_box: BoxHeader) -> bool {
     }
 
     let mut changed = false;
-    for box_header in meta_child_boxes(data, meta_box) {
+    for box_header in &meta_box.child_boxes {
         if box_header.is_type(b"iref") {
-            changed = patch_item_reference(data, box_header, item_id) || changed;
+            changed = patch_item_reference(data, *box_header, item_id) || changed;
         }
     }
 
@@ -356,10 +360,10 @@ fn patch_adjacent_duplicate_ipma_boxes(data: &mut [u8], first: &IpmaBox, second:
     true
 }
 
-fn patch_duplicate_ipma_boxes(data: &mut [u8], meta_box: BoxHeader) -> bool {
+fn patch_duplicate_ipma_boxes(data: &mut [u8], meta_box: &MetaBox) -> bool {
     let mut changed = false;
 
-    for box_header in meta_child_boxes(data, meta_box) {
+    for box_header in &meta_box.child_boxes {
         if !box_header.is_type(b"iprp") {
             continue;
         }
@@ -395,13 +399,19 @@ fn fixed_avif_data(data: &[u8]) -> Option<Vec<u8>> {
     let mut changed = false;
 
     for box_header in top_level_boxes(data) {
-        if !box_header.is_type(b"meta") || !has_alpha_auxiliary_property(data, box_header) {
+        if !box_header.is_type(b"meta") {
+            continue;
+        }
+        let Some(meta_box) = read_meta_box(data, box_header) else {
+            continue;
+        };
+        if !has_alpha_auxiliary_property(data, &meta_box) {
             continue;
         }
 
         let fixed_data = fixed_data.get_or_insert_with(|| data.to_vec());
-        changed = patch_zero_auxl_references(fixed_data, box_header) || changed;
-        changed = patch_duplicate_ipma_boxes(fixed_data, box_header) || changed;
+        changed = patch_zero_auxl_references(fixed_data, &meta_box) || changed;
+        changed = patch_duplicate_ipma_boxes(fixed_data, &meta_box) || changed;
     }
 
     changed.then_some(fixed_data?)

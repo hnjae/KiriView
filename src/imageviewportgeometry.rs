@@ -4,6 +4,12 @@
 const SCAN_STEP_VIEWPORT_RATIO: f64 = 0.75;
 const POSITION_EPSILON: f64 = 0.001;
 
+#[derive(Clone, Copy)]
+enum ZScanDirection {
+    Next,
+    Previous,
+}
+
 #[cxx::bridge(namespace = "KiriView")]
 mod ffi {
     #[derive(Clone, Copy)]
@@ -150,25 +156,30 @@ fn scan_step_length(viewport_length: f64) -> f64 {
     normalized_length(viewport_length) * SCAN_STEP_VIEWPORT_RATIO
 }
 
-fn next_axis_scan_position(position: f64, step: f64, maximum: f64) -> f64 {
+fn axis_scan_position(position: f64, step: f64, maximum: f64, direction: ZScanDirection) -> f64 {
     let current = clamped_value(position, 0.0, maximum);
-    if !axis_pannable(maximum) || step <= POSITION_EPSILON || current >= maximum - POSITION_EPSILON
-    {
+    if !axis_pannable(maximum) || step <= POSITION_EPSILON {
         return current;
     }
 
-    let next_position = (current / step).floor().mul_add(step, step);
-    maximum.min(next_position)
-}
+    match direction {
+        ZScanDirection::Next => {
+            if current >= maximum - POSITION_EPSILON {
+                return current;
+            }
 
-fn previous_axis_scan_position(position: f64, step: f64, maximum: f64) -> f64 {
-    let current = clamped_value(position, 0.0, maximum);
-    if !axis_pannable(maximum) || step <= POSITION_EPSILON || current <= POSITION_EPSILON {
-        return current;
+            let next_position = (current / step).floor().mul_add(step, step);
+            maximum.min(next_position)
+        }
+        ZScanDirection::Previous => {
+            if current <= POSITION_EPSILON {
+                return current;
+            }
+
+            let previous_position = ((current / step).ceil() - 1.0) * step;
+            0.0_f64.max(previous_position)
+        }
     }
-
-    let previous_position = ((current / step).ceil() - 1.0) * step;
-    0.0_f64.max(previous_position)
 }
 
 fn rust_image_viewport_image_rect(viewport_size: RustSizeF, display_size: RustSizeF) -> RustRectF {
@@ -226,38 +237,12 @@ fn rust_image_viewport_next_z_scan_position(
     image_rect: RustRectF,
     content_position: RustPointF,
 ) -> RustPointF {
-    let viewport = normalized_size(viewport_size);
-    let maximum = rust_image_viewport_maximum_content_position(viewport, image_rect);
-    let current =
-        rust_image_viewport_clamped_content_position(viewport, image_rect, content_position);
-
-    if axis_pannable(maximum.x) {
-        let next_x =
-            next_axis_scan_position(current.x, scan_step_length(viewport.width), maximum.x);
-        if next_x != current.x {
-            return RustPointF {
-                x: next_x,
-                y: current.y,
-            };
-        }
-    }
-
-    if axis_pannable(maximum.y) {
-        let next_y =
-            next_axis_scan_position(current.y, scan_step_length(viewport.height), maximum.y);
-        if next_y != current.y {
-            return RustPointF {
-                x: if axis_pannable(maximum.x) {
-                    0.0
-                } else {
-                    current.x
-                },
-                y: next_y,
-            };
-        }
-    }
-
-    current
+    rust_image_viewport_z_scan_position(
+        viewport_size,
+        image_rect,
+        content_position,
+        ZScanDirection::Next,
+    )
 }
 
 fn rust_image_viewport_previous_z_scan_position(
@@ -265,38 +250,67 @@ fn rust_image_viewport_previous_z_scan_position(
     image_rect: RustRectF,
     content_position: RustPointF,
 ) -> RustPointF {
+    rust_image_viewport_z_scan_position(
+        viewport_size,
+        image_rect,
+        content_position,
+        ZScanDirection::Previous,
+    )
+}
+
+fn rust_image_viewport_z_scan_position(
+    viewport_size: RustSizeF,
+    image_rect: RustRectF,
+    content_position: RustPointF,
+    direction: ZScanDirection,
+) -> RustPointF {
     let viewport = normalized_size(viewport_size);
     let maximum = rust_image_viewport_maximum_content_position(viewport, image_rect);
     let current =
         rust_image_viewport_clamped_content_position(viewport, image_rect, content_position);
 
     if axis_pannable(maximum.x) {
-        let previous_x =
-            previous_axis_scan_position(current.x, scan_step_length(viewport.width), maximum.x);
-        if previous_x != current.x {
+        let scanned_x = axis_scan_position(
+            current.x,
+            scan_step_length(viewport.width),
+            maximum.x,
+            direction,
+        );
+        if scanned_x != current.x {
             return RustPointF {
-                x: previous_x,
+                x: scanned_x,
                 y: current.y,
             };
         }
     }
 
     if axis_pannable(maximum.y) {
-        let previous_y =
-            previous_axis_scan_position(current.y, scan_step_length(viewport.height), maximum.y);
-        if previous_y != current.y {
+        let scanned_y = axis_scan_position(
+            current.y,
+            scan_step_length(viewport.height),
+            maximum.y,
+            direction,
+        );
+        if scanned_y != current.y {
             return RustPointF {
-                x: if axis_pannable(maximum.x) {
-                    maximum.x
-                } else {
-                    current.x
-                },
-                y: previous_y,
+                x: z_scan_row_start_x(current.x, maximum.x, direction),
+                y: scanned_y,
             };
         }
     }
 
     current
+}
+
+fn z_scan_row_start_x(current_x: f64, maximum_x: f64, direction: ZScanDirection) -> f64 {
+    if !axis_pannable(maximum_x) {
+        return current_x;
+    }
+
+    match direction {
+        ZScanDirection::Next => 0.0,
+        ZScanDirection::Previous => maximum_x,
+    }
 }
 
 fn rust_image_viewport_final_z_scan_position(
