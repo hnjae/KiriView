@@ -18,10 +18,13 @@ Controls.ToolBar {
     required property var actions
     property bool compact: false
     property bool floating: false
+    property bool showApplicationMenuButton: false
     readonly property int controlSpacing: compact ? Math.max(1, Math.round(Kirigami.Units.smallSpacing / 2)) : Kirigami.Units.smallSpacing
     readonly property int edgeMargin: controlSpacing
     readonly property bool interactionActive: toolbarHoverHandler.hovered || textInputFocused() || zoomControls.menuOpen
     readonly property int toolbarVerticalPadding: controlSpacing
+
+    signal applicationMenuRequested
 
     function resetPageNumberText() {
         pageNavigation.resetPageNumberText();
@@ -71,6 +74,18 @@ Controls.ToolBar {
             anchors.leftMargin: root.edgeMargin
             anchors.verticalCenter: parent.verticalCenter
             spacing: root.controlSpacing
+
+            Controls.ToolButton {
+                display: Controls.AbstractButton.IconOnly
+                icon.name: "application-menu-symbolic"
+                text: "Menu"
+                visible: root.showApplicationMenuButton
+
+                onClicked: root.applicationMenuRequested()
+
+                Controls.ToolTip.text: text
+                Controls.ToolTip.visible: hovered
+            }
 
             Controls.ToolButton {
                 action: root.actions.openAction

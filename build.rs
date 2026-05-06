@@ -10,6 +10,8 @@ use std::{
 };
 
 const CPP_CORE_SOURCES_FILE: &str = "src/cpp_core_sources.txt";
+const KCONFIG_SCHEMA_FILE: &str = "src/kiriviewsettings.kcfg";
+const KCONFIG_COMPILER_FILE: &str = "src/kiriviewsettings.kcfgc";
 const QML_SOURCE_DIR: &str = "src/qml";
 const DEFAULT_INCLUDE_ROOTS: &[&str] = &["/usr/include"];
 const DEFAULT_LIBRARY_DIRS: &[&str] = &["/usr/lib/x86_64-linux-gnu", "/usr/lib"];
@@ -27,6 +29,21 @@ const NATIVE_LIBRARIES: &[NativeLibrary] = &[
     NativeLibrary {
         link_name: "KF6CoreAddons",
         file_name: "libKF6CoreAddons.so",
+        pkg_config_package: None,
+    },
+    NativeLibrary {
+        link_name: "KF6ConfigCore",
+        file_name: "libKF6ConfigCore.so",
+        pkg_config_package: None,
+    },
+    NativeLibrary {
+        link_name: "KF6ConfigGui",
+        file_name: "libKF6ConfigGui.so",
+        pkg_config_package: None,
+    },
+    NativeLibrary {
+        link_name: "KirigamiAddonsStatefulApp",
+        file_name: "libKirigamiAddonsStatefulApp.so",
         pkg_config_package: None,
     },
     NativeLibrary {
@@ -49,6 +66,11 @@ struct NativeLibrary {
     pkg_config_package: Option<&'static str>,
 }
 
+struct GeneratedSettings {
+    include_dir: PathBuf,
+    source: PathBuf,
+}
+
 fn main() {
     let kio_include_dirs = kio_include_dirs();
     let libarchive_include_dirs = libarchive_include_dirs();
@@ -56,6 +78,8 @@ fn main() {
     let qt_rhi_include_dirs = qt_rhi_include_dirs();
     let shader_source = bake_shaders();
     let cpp_core_sources = cpp_core_sources();
+    let generated_settings = generate_kconfig_settings();
+    let generated_settings_source = generated_settings.source.to_string_lossy().into_owned();
     let qml_module = qml_module();
     link_native_libraries();
 
@@ -65,6 +89,8 @@ fn main() {
         .crate_include_root(None)
         .cpp_file(CppFile::from("src/kiriimagedocument.h"))
         .cpp_file(CppFile::from("src/kiriimageview.h"))
+        .cpp_file(CppFile::from("src/kiriviewapplication.h"))
+        .cpp_file(CppFile::from(generated_settings_source.as_str()))
         .file("src/apngdecoder.rs")
         .file("src/avifcompat.rs")
         .file("src/imageformatregistry.rs")
@@ -80,6 +106,9 @@ fn main() {
         .cpp_file("src/kiriimagedecoder.cpp")
         .cpp_file("src/kiriimagerendernode.cpp")
         .cpp_file("src/kiriimageview.cpp")
+        .cpp_file("src/kiriviewapplication.cpp")
+        .qt_module("Gui")
+        .qt_module("Qml")
         .qt_module("Quick")
         .qt_module("Svg")
         .qt_module("Network")
@@ -94,6 +123,7 @@ fn main() {
             cc.flag_if_supported("-Wno-attributes");
             cc.file(&shader_source);
             cc.include("src");
+            cc.include(&generated_settings.include_dir);
             for dir in &kio_include_dirs {
                 cc.include(dir);
             }
@@ -113,11 +143,39 @@ fn main() {
 }
 
 fn qml_module() -> QmlModule {
-    let mut module = QmlModule::new("io.github.hnjae.kiriview").depend("QtQuick");
+    let mut module = QmlModule::new("io.github.hnjae.kiriview")
+        .depend("QtQuick")
+        .depend("org.kde.kirigamiaddons.statefulapp");
     for qml_file in qml_files() {
         module = module.qml_file(qml_file);
     }
     module
+}
+
+fn generate_kconfig_settings() -> GeneratedSettings {
+    println!("cargo::rerun-if-changed={KCONFIG_SCHEMA_FILE}");
+    println!("cargo::rerun-if-changed={KCONFIG_COMPILER_FILE}");
+
+    let out_dir = PathBuf::from(env::var_os("OUT_DIR").expect("OUT_DIR must be set"));
+    let include_dir = out_dir.join("kconfig");
+    fs::create_dir_all(&include_dir).expect("failed to create KConfigXT output directory");
+
+    let status = Command::new(kconfig_compiler())
+        .args(["-d"])
+        .arg(&include_dir)
+        .arg(KCONFIG_SCHEMA_FILE)
+        .arg(KCONFIG_COMPILER_FILE)
+        .status()
+        .expect("failed to run kconfig_compiler_kf6; make sure KConfig is installed");
+
+    if !status.success() {
+        panic!("kconfig_compiler_kf6 failed for {KCONFIG_SCHEMA_FILE}");
+    }
+
+    GeneratedSettings {
+        include_dir: include_dir.clone(),
+        source: include_dir.join("kiriviewsettings.cpp"),
+    }
 }
 
 fn qml_files() -> Vec<String> {
@@ -348,7 +406,16 @@ fn pkg_config_paths(package: &str, pkg_config_arg: &str, flags: &[&str]) -> Vec<
 }
 
 fn add_kf6_include_dirs(dirs: &mut BTreeSet<PathBuf>, include_root: &Path) {
-    for suffix in ["KF6/KArchive", "KF6/KIOCore", "KF6/KIO", "KF6/KCoreAddons"] {
+    for suffix in [
+        "KF6/KArchive",
+        "KF6/KIOCore",
+        "KF6/KIO",
+        "KF6/KCoreAddons",
+        "KF6/KConfig",
+        "KF6/KConfigCore",
+        "KF6/KConfigGui",
+        "KirigamiAddonsStatefulApp",
+    ] {
         let dir = include_root.join(suffix);
         if dir.exists() {
             dirs.insert(dir);
@@ -401,6 +468,50 @@ fn contains_native_library(dir: &Path) -> bool {
 
 fn pkg_config_library_dirs(package: &str) -> Vec<PathBuf> {
     pkg_config_paths(package, "--libs", &["-L"])
+}
+
+fn kconfig_compiler() -> PathBuf {
+    if let Some(path) = command_in_path("kconfig_compiler_kf6") {
+        return path;
+    }
+
+    for candidate in kconfig_compiler_candidates() {
+        if candidate.exists() {
+            return candidate;
+        }
+    }
+
+    PathBuf::from("kconfig_compiler_kf6")
+}
+
+fn command_in_path(command: &str) -> Option<PathBuf> {
+    let path = env::var_os("PATH")?;
+    for dir in env::split_paths(&path) {
+        let candidate = dir.join(command);
+        if candidate.exists() {
+            return Some(candidate);
+        }
+    }
+
+    None
+}
+
+fn kconfig_compiler_candidates() -> Vec<PathBuf> {
+    let mut candidates = Vec::new();
+    for root in [PathBuf::from("/usr"), PathBuf::from("/app")] {
+        candidates.push(root.join("libexec/kf6/kconfig_compiler_kf6"));
+    }
+    for lib_dir in DEFAULT_LIBRARY_DIRS {
+        candidates.push(PathBuf::from(lib_dir).join("libexec/kf6/kconfig_compiler_kf6"));
+    }
+
+    for lib_dir in flag_paths("NIX_LDFLAGS", "-L") {
+        if let Some(root) = lib_dir.parent() {
+            candidates.push(root.join("libexec/kf6/kconfig_compiler_kf6"));
+        }
+    }
+
+    candidates
 }
 
 fn flag_paths(env_var: &str, flag: &str) -> Vec<PathBuf> {

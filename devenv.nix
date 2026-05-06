@@ -11,7 +11,9 @@ let
     name = "kiriview-qt-tools";
     paths = with pkgs.kdePackages; [
       karchive
+      kconfig
       kimageformats
+      kirigami-addons
       qtbase
       qtdeclarative
       qtimageformats
@@ -61,14 +63,20 @@ let
   cargoVendorSourceConfig = "source.vendored-sources.directory=\"${cargoVendorDir}\"";
   cargoCratesIoReplaceConfig = "source.crates-io.replace-with=\"vendored-sources\"";
   karchiveDev = pkgs.kdePackages.karchive.dev or pkgs.kdePackages.karchive;
+  kconfigDev = pkgs.kdePackages.kconfig.dev or pkgs.kdePackages.kconfig;
   kcoreaddonsDev = pkgs.kdePackages.kcoreaddons.dev or pkgs.kdePackages.kcoreaddons;
+  kirigamiAddonsDev = pkgs.kdePackages.kirigami-addons.dev or pkgs.kdePackages.kirigami-addons;
   appQmlRoot = "${config.devenv.root}/target/cxxqt/qml_modules";
   qtQmlRoot = "${config.devenv.root}/.devenv/profile/lib/qt-6/qml";
+  kconfigQmlRoot = "${pkgs.kdePackages.kconfig}/lib/qt-6/qml";
   kirigamiQmlRoot = "${pkgs.kdePackages.kirigami.unwrapped}/lib/qt-6/qml";
+  kirigamiAddonsQmlRoot = "${pkgs.kdePackages.kirigami-addons}/lib/qt-6/qml";
   qmlImportPaths = [
     appQmlRoot
     qtQmlRoot
+    kconfigQmlRoot
     kirigamiQmlRoot
+    kirigamiAddonsQmlRoot
   ];
   qtVersion = lib.getVersion pkgs.kdePackages.qtbase;
   srcEntries = builtins.readDir ./src;
@@ -106,12 +114,20 @@ let
   systemIncludeDirs = [
     ".devenv/profile/include"
     ".devenv/profile/include/KF6/KArchive"
+    ".devenv/profile/include/KF6/KConfig"
+    ".devenv/profile/include/KF6/KConfigCore"
+    ".devenv/profile/include/KF6/KConfigGui"
     ".devenv/profile/include/KF6/KIO"
     ".devenv/profile/include/KF6/KIOCore"
+    ".devenv/profile/include/KirigamiAddonsStatefulApp"
     ".devenv/profile/include/QtGui/${qtVersion}/QtGui"
     ".devenv/profile/mkspecs/linux-g++"
     "${karchiveDev}/include/KF6/KArchive"
+    "${kconfigDev}/include/KF6/KConfig"
+    "${kconfigDev}/include/KF6/KConfigCore"
+    "${kconfigDev}/include/KF6/KConfigGui"
     "${kcoreaddonsDev}/include/KF6/KCoreAddons"
+    "${kirigamiAddonsDev}/include/KirigamiAddonsStatefulApp"
   ]
   ++ cxxStandardLibraryIncludeDirs
   ++ map (module: ".devenv/profile/include/${module}") qtIncludeModules;
@@ -175,7 +191,7 @@ let
               "$repo_root"/target/flatpak \
               "$repo_root"/target/release \
               "$repo_root"/target/debug \
-              -path "*/out/cxxqtbuild/include" \
+              \( -path "*/out/cxxqtbuild/include" -o -path "*/out/kconfig" \) \
               -type d \
               -printf "%T@ %p\n" 2>/dev/null \
               | sort -n \
@@ -294,8 +310,10 @@ in
     cmake
     kdePackages.extra-cmake-modules
     kdePackages.karchive
+    kdePackages.kconfig
     kdePackages.kimageformats
     kdePackages.kirigami
+    kdePackages.kirigami-addons
     kdePackages.kio
     kdePackages.qqc2-desktop-style
     kdePackages.qtbase

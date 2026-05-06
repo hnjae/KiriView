@@ -2,20 +2,30 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import QtQuick
+import QtQuick.Controls as Controls
 import QtQuick.Dialogs as Dialogs
 import io.github.hnjae.kiriview
 import org.kde.kirigami as Kirigami
+import org.kde.kirigamiaddons.settings as KirigamiSettings
+import org.kde.kirigamiaddons.statefulapp as StatefulApp
 
-Kirigami.ApplicationWindow {
+StatefulApp.StatefulWindow {
     id: root
 
+    application: KiriViewApplication {
+        id: kiriApplication
+
+        configurationView: settingsView
+    }
     title: page.imageDocument.windowTitleFileName.length > 0 ? page.imageDocument.windowTitleFileName + " — KiriView" : "KiriView"
     visible: true
+    windowName: "Main"
 
     property bool helpDialogOpen: false
     property url initialSourceUrl
     property int visibilityBeforeFullscreen: Window.Windowed
     readonly property bool fullscreen: visibility === Window.FullScreen
+    readonly property bool menuBarMode: kiriApplication.menuPresentation === KiriViewApplication.MenuBar
     property bool fullscreenToolBarRevealed: false
 
     function restoredVisibility(visibility) {
@@ -153,11 +163,18 @@ Kirigami.ApplicationWindow {
         ImageActions {
             id: imageActions
 
+            application: kiriApplication
+            fullscreen: root.fullscreen
             helpDialogOpen: root.helpDialogOpen
             imageDocument: page.imageDocument
             imageReady: page.imageReady
 
+            onImageBoundaryReached: function (message) {
+                root.showPassiveNotification(message);
+            }
             onOpenDialogRequested: fileDialog.open()
+            onShortcutHelpRequested: shortcutHelpDialog.open()
+            onToggleFullScreenRequested: root.toggleFullScreen()
         }
 
         header: ImageDocumentToolBar {
@@ -168,7 +185,10 @@ Kirigami.ApplicationWindow {
             height: root.fullscreen ? 0 : implicitHeight
             imageDocument: page.imageDocument
             imageReady: page.imageReady
+            showApplicationMenuButton: !root.menuBarMode
             visible: !root.fullscreen
+
+            onApplicationMenuRequested: appGlobalDrawer.open()
         }
 
         onFullscreenPointerPositionChanged: {
@@ -197,6 +217,7 @@ Kirigami.ApplicationWindow {
         }
 
         ImageShortcuts {
+            application: kiriApplication
             helpDialogOpen: root.helpDialogOpen
             imageDocument: page.imageDocument
             imageToolBar: root.fullscreen ? fullscreenImageToolBar : headerImageToolBar
@@ -205,8 +226,6 @@ Kirigami.ApplicationWindow {
             onImageBoundaryReached: function (message) {
                 root.showPassiveNotification(message);
             }
-            onShortcutHelpRequested: shortcutHelpDialog.open()
-            onToggleFullScreenRequested: root.toggleFullScreen()
         }
 
         ImageStateOverlay {
@@ -231,9 +250,11 @@ Kirigami.ApplicationWindow {
             height: implicitHeight
             imageDocument: page.imageDocument
             imageReady: page.imageReady
+            showApplicationMenuButton: !root.menuBarMode
             visible: root.fullscreen && root.fullscreenToolBarRevealed
             z: 20
 
+            onApplicationMenuRequested: appGlobalDrawer.open()
             onInteractionActiveChanged: {
                 if (!root.fullscreen) {
                     return;
@@ -249,9 +270,166 @@ Kirigami.ApplicationWindow {
         }
     }
 
+    globalDrawer: Kirigami.GlobalDrawer {
+        id: appGlobalDrawer
+
+        actions: root.menuBarMode ? [] : imageActions.hamburgerActions
+        handleVisible: false
+        modal: true
+        title: "KiriView"
+    }
+
+    menuBar: Controls.MenuBar {
+        visible: root.menuBarMode && !root.fullscreen
+
+        Controls.Menu {
+            title: "File"
+
+            Controls.MenuItem {
+                action: imageActions.openAction
+            }
+
+            Controls.MenuSeparator {}
+
+            Controls.MenuItem {
+                action: imageActions.quitAction
+            }
+        }
+
+        Controls.Menu {
+            title: "Go"
+
+            Controls.MenuItem {
+                action: imageActions.previousImageAction
+            }
+
+            Controls.MenuItem {
+                action: imageActions.nextImageAction
+            }
+
+            Controls.MenuSeparator {}
+
+            Controls.MenuItem {
+                action: imageActions.firstImageAction
+            }
+
+            Controls.MenuItem {
+                action: imageActions.lastImageAction
+            }
+
+            Controls.MenuSeparator {}
+
+            Controls.MenuItem {
+                action: imageActions.previousContainerAction
+            }
+
+            Controls.MenuItem {
+                action: imageActions.nextContainerAction
+            }
+        }
+
+        Controls.Menu {
+            title: "View"
+
+            Controls.MenuItem {
+                action: imageActions.zoomInAction
+            }
+
+            Controls.MenuItem {
+                action: imageActions.zoomOutAction
+            }
+
+            Controls.MenuSeparator {}
+
+            Controls.Menu {
+                title: "Fit"
+
+                Controls.MenuItem {
+                    action: imageActions.fitAction
+                    checkable: true
+                    checked: page.imageDocument.zoomMode === KiriImageDocument.Fit
+                }
+
+                Controls.MenuItem {
+                    action: imageActions.fitHeightAction
+                    checkable: true
+                    checked: page.imageDocument.zoomMode === KiriImageDocument.FitHeight
+                }
+
+                Controls.MenuItem {
+                    action: imageActions.fitWidthAction
+                    checkable: true
+                    checked: page.imageDocument.zoomMode === KiriImageDocument.FitWidth
+                }
+            }
+
+            Controls.MenuItem {
+                action: imageActions.actualSizeAction
+            }
+
+            Controls.MenuSeparator {}
+
+            Controls.MenuItem {
+                action: imageActions.fullscreenAction
+                checkable: true
+                checked: root.fullscreen
+            }
+        }
+
+        Controls.Menu {
+            title: "Settings"
+
+            Controls.MenuItem {
+                action: imageActions.showMenubarAction
+            }
+
+            Controls.MenuSeparator {}
+
+            Controls.MenuItem {
+                action: imageActions.configureAction
+            }
+
+            Controls.MenuItem {
+                action: imageActions.configureShortcutsAction
+            }
+        }
+
+        Controls.Menu {
+            title: "Help"
+
+            Controls.MenuItem {
+                action: imageActions.shortcutHelpAction
+            }
+        }
+    }
+
+    KirigamiSettings.ConfigurationView {
+        id: settingsView
+
+        window: root
+
+        modules: [
+            KirigamiSettings.ConfigurationModule {
+                moduleId: "interface"
+                text: "Interface"
+                icon.name: "preferences-desktop-symbolic"
+                page: () => Qt.createComponent("io.github.hnjae.kiriview", "InterfaceSettingsPage")
+                initialProperties: () => {
+                    return {
+                        "application": kiriApplication
+                    };
+                }
+            },
+            KirigamiSettings.ShortcutsConfigurationModule {
+                application: root.application
+            }
+        ]
+    }
+
     ShortcutHelpDialog {
         id: shortcutHelpDialog
 
+        application: kiriApplication
         windowHeight: root.height
         windowWidth: root.width
 

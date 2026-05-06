@@ -14,7 +14,9 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2 Svg Test Widgets)
 find_package(KF6Archive CONFIG REQUIRED)
+find_package(KF6Config CONFIG REQUIRED)
 find_package(KF6CoreAddons CONFIG REQUIRED)
+find_package(KF6KirigamiAddons CONFIG REQUIRED)
 find_package(KF6KIO CONFIG REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(LibArchive REQUIRED IMPORTED_TARGET libarchive)
@@ -41,11 +43,17 @@ file(STRINGS "../../src/cpp_core_sources.txt" KIRIVIEW_CORE_SOURCES
 foreach(source IN LISTS KIRIVIEW_CORE_SOURCES)
     list(APPEND KIRIVIEW_CORE_SOURCE_PATHS "../../${source}")
 endforeach()
+list(APPEND KIRIVIEW_CORE_SOURCE_PATHS "../../src/kiriviewapplication.cpp")
 
 add_library(kiriview_test_core STATIC
     ${KIRIVIEW_CORE_SOURCE_PATHS}
 )
-target_include_directories(kiriview_test_core PUBLIC ../../src "${KIRIVIEW_CXXQT_INCLUDE_DIR}")
+target_include_directories(kiriview_test_core PUBLIC
+    ../../src
+    "${CMAKE_CURRENT_BINARY_DIR}"
+    "${KIRIVIEW_CXXQT_INCLUDE_DIR}"
+)
+kconfig_add_kcfg_files(kiriview_test_core ../../src/kiriviewsettings.kcfgc)
 target_link_libraries(kiriview_test_core PUBLIC
     "${KIRIVIEW_RUST_STATICLIB}"
     Qt6::Core
@@ -56,8 +64,11 @@ target_link_libraries(kiriview_test_core PUBLIC
     Qt6::Svg
     Qt6::Widgets
     KF6::Archive
+    KF6::ConfigCore
+    KF6::ConfigGui
     KF6::CoreAddons
     KF6::KIOCore
+    KirigamiAddonsStatefulApp
     PkgConfig::LibArchive
     PkgConfig::LibHeif
 )
