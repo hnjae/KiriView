@@ -105,11 +105,12 @@ constexpr ActionDefinition showMenubarAction(KiriViewApplication::ActionId actio
         nullptr, defaultShortcuts };
 }
 
+constexpr std::size_t actionDefinitionCount
+    = static_cast<std::size_t>(KiriViewApplication::FileQuitAction) + 1;
+
 constexpr std::array actionDefinitions {
     standardAction(KiriViewApplication::FileOpenAction, "file_open", KStandardActions::Open, "Open",
         standardShortcutSpec(QKeySequence::Open)),
-    existingAction(
-        KiriViewApplication::FileQuitAction, "file_quit", portableShortcutSpec("Q", "Ctrl+Q")),
     registeredAction(KiriViewApplication::GoPreviousArchiveAction, "go_previous_archive",
         "Previous Archive", "go-previous-symbolic", portableShortcutSpec("[")),
     registeredAction(KiriViewApplication::GoNextArchiveAction, "go_next_archive", "Next Archive",
@@ -159,26 +160,17 @@ constexpr std::array actionDefinitions {
         KiriViewApplication::OptionsConfigureKeybindingAction, "options_configure_keybinding"),
     showMenubarAction(KiriViewApplication::OptionsShowMenubarAction, "options_show_menubar",
         KStandardActions::ShowMenubar, "Show Menubar", noDefaultShortcuts()),
+    existingAction(
+        KiriViewApplication::FileQuitAction, "file_quit", portableShortcutSpec("Q", "Ctrl+Q")),
 };
 
-static_assert(
-    actionDefinitions.size() == static_cast<std::size_t>(KiriViewApplication::FileQuitAction) + 1);
+static_assert(actionDefinitions.size() == actionDefinitionCount);
 
-constexpr bool actionDefinitionsContainActionId(KiriViewApplication::ActionId actionId)
-{
-    for (const ActionDefinition &definition : actionDefinitions) {
-        if (definition.actionId == actionId) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-constexpr bool actionDefinitionsCoverActionIds()
+constexpr bool actionDefinitionsFollowActionIdOrder()
 {
     for (std::size_t index = 0; index < actionDefinitions.size(); ++index) {
-        if (!actionDefinitionsContainActionId(static_cast<KiriViewApplication::ActionId>(index))) {
+        if (actionDefinitions[index].actionId
+            != static_cast<KiriViewApplication::ActionId>(index)) {
             return false;
         }
     }
@@ -186,31 +178,21 @@ constexpr bool actionDefinitionsCoverActionIds()
     return true;
 }
 
-constexpr bool actionDefinitionsHaveUniqueActionIds()
+static_assert(actionDefinitionsFollowActionIdOrder());
+
+bool actionIdInRange(KiriViewApplication::ActionId actionId)
 {
-    for (std::size_t left = 0; left < actionDefinitions.size(); ++left) {
-        for (std::size_t right = left + 1; right < actionDefinitions.size(); ++right) {
-            if (actionDefinitions[left].actionId == actionDefinitions[right].actionId) {
-                return false;
-            }
-        }
-    }
-
-    return true;
+    const int index = static_cast<int>(actionId);
+    return index >= 0 && index < static_cast<int>(actionDefinitionCount);
 }
-
-static_assert(actionDefinitionsCoverActionIds());
-static_assert(actionDefinitionsHaveUniqueActionIds());
 
 const ActionDefinition *actionDefinitionForId(KiriViewApplication::ActionId actionId)
 {
-    for (const ActionDefinition &definition : actionDefinitions) {
-        if (definition.actionId == actionId) {
-            return &definition;
-        }
+    if (!actionIdInRange(actionId)) {
+        return nullptr;
     }
 
-    return nullptr;
+    return &actionDefinitions[static_cast<std::size_t>(actionId)];
 }
 
 QString latin1String(const char *text)
