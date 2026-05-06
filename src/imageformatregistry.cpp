@@ -64,6 +64,11 @@ QStringList supportedImageExtensions()
     return rustStringsToQStringList(rustSupportedImageExtensions());
 }
 
+QStringList supportedImageMimeTypes()
+{
+    return rustStringsToQStringList(rustSupportedImageMimeTypes());
+}
+
 QStringList supportedOpenExtensions()
 {
     QStringList extensions = supportedImageExtensions();

@@ -20,6 +20,7 @@ bool isSupportedArchiveRootScheme(const QString &scheme);
 ArchiveStorageBackend archiveStorageBackendForRootScheme(const QString &scheme);
 bool archiveRootSchemeUsesKioFuse(const QString &scheme);
 QStringList supportedComicBookArchiveExtensions();
+QStringList supportedComicBookArchiveMimeTypes();
 QString comicBookArchiveKioSchemeForFileName(const QString &fileName);
 QString directArchiveOpenKioSchemeForFileName(const QString &fileName);
 QString comicBookArchiveKioSchemeForMimeTypeName(const QString &mimeTypeName);

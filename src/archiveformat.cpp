@@ -163,6 +163,13 @@ QString schemeString(const ArchiveFormat *format)
 }
 
 QString markerString(const char *marker) { return QString::fromLatin1(marker); }
+
+void appendMimeTypes(QStringList *mimeTypeNames, const ArchiveMimeTypes &mimeTypes)
+{
+    for (std::size_t index = 0; index < mimeTypes.size; ++index) {
+        mimeTypeNames->append(QString::fromLatin1(mimeTypes.values[index]));
+    }
+}
 }
 
 namespace KiriView {
@@ -191,6 +198,18 @@ QStringList supportedComicBookArchiveExtensions()
     }
 
     return extensions;
+}
+
+QStringList supportedComicBookArchiveMimeTypes()
+{
+    QStringList mimeTypes;
+    for (const ArchiveFormat &format : archiveFormats) {
+        appendMimeTypes(&mimeTypes, format.comicBook.mimeTypes);
+    }
+
+    mimeTypes.sort();
+    mimeTypes.removeDuplicates();
+    return mimeTypes;
 }
 
 QString comicBookArchiveKioSchemeForFileName(const QString &fileName)

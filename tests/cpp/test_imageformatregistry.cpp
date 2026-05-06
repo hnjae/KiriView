@@ -5,19 +5,31 @@
 
 #include "archiveformat.h"
 
+#include <QFile>
 #include <QObject>
 #include <QStringList>
 #include <QTest>
 #include <QUrl>
+
+namespace {
+QStringList sortedUnique(QStringList values)
+{
+    values.removeAll(QString());
+    values.sort();
+    values.removeDuplicates();
+    return values;
+}
+}
 
 class TestImageFormatRegistry : public QObject
 {
     Q_OBJECT
 
 private Q_SLOTS:
-    void supportedImageExtensionsIncludeCodecSpecificHeifExtensions();
+    void supportedImageExtensionsIncludeAdvertisedFormats();
     void supportedOpenExtensionsIncludeComicBookArchives();
     void supportedOpenExtensionsDoNotAdvertiseGeneralArchives();
+    void desktopMimeTypesMatchSupportedOpenMimeTypes();
     void comicBookArchiveFileNamesAreCaseInsensitive();
     void comicBookArchiveUrlsMapToKioSchemes();
     void directArchiveOpenUrlsMapGeneralArchivesToKioSchemes();
@@ -25,7 +37,7 @@ private Q_SLOTS:
     void archiveRootSchemesReportKioFuseSupportByBackend();
 };
 
-void TestImageFormatRegistry::supportedImageExtensionsIncludeCodecSpecificHeifExtensions()
+void TestImageFormatRegistry::supportedImageExtensionsIncludeAdvertisedFormats()
 {
     const QStringList extensions = KiriView::supportedImageExtensions();
 
@@ -33,10 +45,14 @@ void TestImageFormatRegistry::supportedImageExtensionsIncludeCodecSpecificHeifEx
     QVERIFY(extensions.contains(QStringLiteral("hej2")));
     QVERIFY(extensions.contains(QStringLiteral("heics")));
     QVERIFY(extensions.contains(QStringLiteral("heifs")));
+    QVERIFY(extensions.contains(QStringLiteral("tif")));
+    QVERIFY(extensions.contains(QStringLiteral("tiff")));
     QVERIFY(KiriView::isSupportedImageFileName(QStringLiteral("still.AVCI")));
     QVERIFY(KiriView::isSupportedImageFileName(QStringLiteral("still.HEJ2")));
     QVERIFY(KiriView::isSupportedImageFileName(QStringLiteral("sequence.HEICS")));
     QVERIFY(KiriView::isSupportedImageFileName(QStringLiteral("sequence.HEIFS")));
+    QVERIFY(KiriView::isSupportedImageFileName(QStringLiteral("scan.TIF")));
+    QVERIFY(KiriView::isSupportedImageFileName(QStringLiteral("scan.TIFF")));
 }
 
 void TestImageFormatRegistry::supportedOpenExtensionsIncludeComicBookArchives()
@@ -57,6 +73,30 @@ void TestImageFormatRegistry::supportedOpenExtensionsDoNotAdvertiseGeneralArchiv
     QVERIFY(!extensions.contains(QStringLiteral("tar")));
     QVERIFY(!extensions.contains(QStringLiteral("7z")));
     QVERIFY(!extensions.contains(QStringLiteral("rar")));
+}
+
+void TestImageFormatRegistry::desktopMimeTypesMatchSupportedOpenMimeTypes()
+{
+    QFile desktopFile(
+        QStringLiteral(KIRIVIEW_TEST_SOURCE_DIR "/../../io.github.hnjae.KiriView.desktop"));
+    QVERIFY(desktopFile.open(QIODevice::ReadOnly | QIODevice::Text));
+
+    const QString mimePrefix = QStringLiteral("MimeType=");
+    QString mimeLine;
+    const QString desktopText = QString::fromUtf8(desktopFile.readAll());
+    for (const QString &line : desktopText.split(QLatin1Char('\n'))) {
+        if (line.startsWith(mimePrefix)) {
+            mimeLine = line.mid(mimePrefix.size());
+            break;
+        }
+    }
+    QVERIFY(!mimeLine.isEmpty());
+
+    QStringList expectedMimeTypes = KiriView::supportedImageMimeTypes();
+    expectedMimeTypes.append(KiriView::supportedComicBookArchiveMimeTypes());
+
+    QCOMPARE(sortedUnique(mimeLine.split(QLatin1Char(';'), Qt::SkipEmptyParts)),
+        sortedUnique(expectedMimeTypes));
 }
 
 void TestImageFormatRegistry::comicBookArchiveFileNamesAreCaseInsensitive()

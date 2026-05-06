@@ -1,9 +1,72 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-const SUPPORTED_IMAGE_EXTENSIONS: &[&str] = &[
-    "avci", "avif", "avifs", "bmp", "gif", "hej2", "heic", "heics", "heif", "heifs", "hif", "jpeg",
-    "jpg", "jp2", "jxl", "png", "svg", "webp",
+struct ImageFormat {
+    extensions: &'static [&'static str],
+    mime_types: &'static [&'static str],
+}
+
+const SUPPORTED_IMAGE_FORMATS: &[ImageFormat] = &[
+    ImageFormat {
+        extensions: &["png"],
+        mime_types: &["image/png", "image/apng"],
+    },
+    ImageFormat {
+        extensions: &["jpeg", "jpg"],
+        mime_types: &["image/jpeg"],
+    },
+    ImageFormat {
+        extensions: &["jp2"],
+        mime_types: &["image/jp2"],
+    },
+    ImageFormat {
+        extensions: &["jxl"],
+        mime_types: &["image/jxl"],
+    },
+    ImageFormat {
+        extensions: &["gif"],
+        mime_types: &["image/gif"],
+    },
+    ImageFormat {
+        extensions: &["webp"],
+        mime_types: &["image/webp"],
+    },
+    ImageFormat {
+        extensions: &["avif"],
+        mime_types: &["image/avif"],
+    },
+    ImageFormat {
+        extensions: &["avifs"],
+        mime_types: &["image/avif-sequence"],
+    },
+    ImageFormat {
+        extensions: &["avci"],
+        mime_types: &["image/avci"],
+    },
+    ImageFormat {
+        extensions: &["heic", "heif", "hif"],
+        mime_types: &["image/heic", "image/heif"],
+    },
+    ImageFormat {
+        extensions: &["heics", "heifs"],
+        mime_types: &["image/heic-sequence", "image/heif-sequence"],
+    },
+    ImageFormat {
+        extensions: &["hej2"],
+        mime_types: &["image/hej2k"],
+    },
+    ImageFormat {
+        extensions: &["bmp"],
+        mime_types: &["image/bmp"],
+    },
+    ImageFormat {
+        extensions: &["tif", "tiff"],
+        mime_types: &["image/tiff"],
+    },
+    ImageFormat {
+        extensions: &["svg"],
+        mime_types: &["image/svg+xml"],
+    },
 ];
 
 #[cxx::bridge(namespace = "KiriView")]
@@ -12,22 +75,46 @@ mod ffi {
         #[cxx_name = "rustSupportedImageExtensions"]
         fn rust_supported_image_extensions() -> Vec<String>;
 
+        #[cxx_name = "rustSupportedImageMimeTypes"]
+        fn rust_supported_image_mime_types() -> Vec<String>;
+
         #[cxx_name = "rustIsSupportedImageFileName"]
         fn rust_is_supported_image_file_name(name: &str) -> bool;
     }
 }
 
 fn rust_supported_image_extensions() -> Vec<String> {
-    strings(SUPPORTED_IMAGE_EXTENSIONS)
+    unique_sorted_strings(
+        SUPPORTED_IMAGE_FORMATS
+            .iter()
+            .flat_map(|format| format.extensions.iter().copied()),
+    )
+}
+
+fn rust_supported_image_mime_types() -> Vec<String> {
+    unique_sorted_strings(
+        SUPPORTED_IMAGE_FORMATS
+            .iter()
+            .flat_map(|format| format.mime_types.iter().copied()),
+    )
 }
 
 fn rust_is_supported_image_file_name(name: &str) -> bool {
     extension_for_file_name(name)
-        .is_some_and(|extension| SUPPORTED_IMAGE_EXTENSIONS.contains(&extension.as_str()))
+        .is_some_and(|extension| image_extension_is_supported(extension.as_str()))
 }
 
-fn strings(values: &[&str]) -> Vec<String> {
-    values.iter().map(|value| (*value).to_owned()).collect()
+fn image_extension_is_supported(extension: &str) -> bool {
+    SUPPORTED_IMAGE_FORMATS
+        .iter()
+        .any(|format| format.extensions.contains(&extension))
+}
+
+fn unique_sorted_strings(values: impl IntoIterator<Item = &'static str>) -> Vec<String> {
+    let mut strings: Vec<String> = values.into_iter().map(str::to_owned).collect();
+    strings.sort();
+    strings.dedup();
+    strings
 }
 
 fn extension_for_file_name(name: &str) -> Option<String> {

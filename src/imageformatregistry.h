@@ -10,6 +10,7 @@
 
 namespace KiriView {
 QStringList supportedImageExtensions();
+QStringList supportedImageMimeTypes();
 QStringList supportedOpenExtensions();
 bool isSupportedImageFileName(const QString &name);
 bool isComicBookArchiveFileName(const QString &name);
