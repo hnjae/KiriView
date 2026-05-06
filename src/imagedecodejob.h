@@ -5,6 +5,7 @@
 #define KIRIVIEW_IMAGEDECODEJOB_H
 
 #include "decodedimageresult.h"
+#include "imageasyncdependencies.h"
 #include "imagedecoderequest.h"
 #include "imageiojob.h"
 
@@ -18,17 +19,11 @@ namespace KiriView {
 class ImageDecodeJob final : public QObject
 {
 public:
-    using DataCallback = std::function<void(QByteArray)>;
-    using ErrorCallback = std::function<void(const QString &)>;
-    using DataLoader
-        = std::function<ImageIoJob(QObject *, ImageDecodeRequest, DataCallback, ErrorCallback)>;
-    using DataDecoder
-        = std::function<DecodedImageResult(const QByteArray &, const ImageDecodeRequest &)>;
     using DecodedCallback = std::function<void(ImageDecodeRequest, DecodedImageResult)>;
     using LoadErrorCallback = std::function<void(const ImageDecodeRequest &, const QString &)>;
 
     explicit ImageDecodeJob(QObject *parent = nullptr);
-    ImageDecodeJob(QObject *parent, DataLoader dataLoader, DataDecoder dataDecoder);
+    ImageDecodeJob(QObject *parent, ImageDataLoader dataLoader, ImageDataDecoder dataDecoder);
 
     void setDecodedCallback(DecodedCallback callback);
     void setLoadErrorCallback(LoadErrorCallback callback);
@@ -42,8 +37,8 @@ private:
     bool isCurrentRequest(const ImageDecodeRequest &request) const;
     void clearRequest(const ImageDecodeRequest &request);
 
-    DataLoader m_dataLoader;
-    DataDecoder m_dataDecoder;
+    ImageDataLoader m_dataLoader;
+    ImageDataDecoder m_dataDecoder;
     DecodedCallback m_decoded;
     LoadErrorCallback m_loadError;
     ImageIoJob m_dataLoadJob;

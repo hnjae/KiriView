@@ -9,7 +9,8 @@
 #include <utility>
 
 namespace KiriView {
-ImageDecodeJob::ImageDecodeJob(QObject *parent, DataLoader dataLoader, DataDecoder dataDecoder)
+ImageDecodeJob::ImageDecodeJob(
+    QObject *parent, ImageDataLoader dataLoader, ImageDataDecoder dataDecoder)
     : QObject(parent)
     , m_dataLoader(std::move(dataLoader))
     , m_dataDecoder(std::move(dataDecoder))
@@ -65,7 +66,7 @@ bool ImageDecodeJob::hasActiveRequest() const { return m_request.has_value(); }
 
 void ImageDecodeJob::startDecode(QByteArray data, ImageDecodeRequest request)
 {
-    const DataDecoder decoder = m_dataDecoder;
+    const ImageDataDecoder decoder = m_dataDecoder;
     runAsyncWorker(
         this,
         [decoder, data = std::move(data), request]() mutable { return decoder(data, request); },

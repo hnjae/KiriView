@@ -27,7 +27,7 @@ using FakeCandidateProvider = KiriView::TestSupport::FakeImageNavigationCandidat
 
 KiriView::ImageLoader createLoader(QObject *parent, FakeCandidateProvider &candidateProvider,
     ManualImageDataLoader &dataLoader, KiriView::ImageLoader::Callbacks callbacks = {},
-    KiriView::ImageDecodeJob::DataDecoder dataDecoder = staticImageDataDecoderRejectingBadData())
+    KiriView::ImageDataDecoder dataDecoder = staticImageDataDecoderRejectingBadData())
 {
     return KiriView::ImageLoader(parent,
         KiriView::ImageAsyncDependencies {

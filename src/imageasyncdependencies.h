@@ -4,14 +4,27 @@
 #ifndef KIRIVIEW_IMAGEASYNCDEPENDENCIES_H
 #define KIRIVIEW_IMAGEASYNCDEPENDENCIES_H
 
+#include "decodedimageresult.h"
 #include "imagecandidaterepository.h"
-#include "imagedecodejob.h"
+#include "imagedecoderequest.h"
+#include "imageiojob.h"
+#include "imageiojobs.h"
+
+#include <QByteArray>
+#include <functional>
+
+class QObject;
 
 namespace KiriView {
+using ImageDataLoader
+    = std::function<ImageIoJob(QObject *, ImageDecodeRequest, ImageDataCallback, ErrorCallback)>;
+using ImageDataDecoder
+    = std::function<DecodedImageResult(const QByteArray &, const ImageDecodeRequest &)>;
+
 struct ImageAsyncDependencies {
     ImageNavigationCandidateProvider candidateProvider;
-    ImageDecodeJob::DataLoader imageDataLoader;
-    ImageDecodeJob::DataDecoder imageDataDecoder;
+    ImageDataLoader imageDataLoader;
+    ImageDataDecoder imageDataDecoder;
 };
 
 ImageAsyncDependencies defaultImageAsyncDependencies();

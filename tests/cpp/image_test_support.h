@@ -4,8 +4,8 @@
 #ifndef KIRIVIEW_TESTS_IMAGE_TEST_SUPPORT_H
 #define KIRIVIEW_TESTS_IMAGE_TEST_SUPPORT_H
 
+#include "imageasyncdependencies.h"
 #include "imagecandidaterepository.h"
-#include "imagedecodejob.h"
 #include "imageiojob.h"
 #include "imagesurface.h"
 
@@ -30,16 +30,16 @@ struct ManualImageDataLoad {
     QUrl url;
     ArchiveDocumentLocation archiveDocument;
     ImageFirstDisplayDecodeContext firstDisplay;
-    ImageDecodeJob::DataCallback dataCallback;
-    ImageDecodeJob::ErrorCallback errorCallback;
+    ImageDataCallback dataCallback;
+    ErrorCallback errorCallback;
     bool canceled = false;
 };
 
 class ManualImageDataLoader
 {
 public:
-    ImageIoJob start(QObject *receiver, ImageDecodeRequest request,
-        ImageDecodeJob::DataCallback callback, ImageDecodeJob::ErrorCallback errorCallback)
+    ImageIoJob start(QObject *receiver, ImageDecodeRequest request, ImageDataCallback callback,
+        ErrorCallback errorCallback)
     {
         auto load = std::make_shared<ManualImageDataLoad>();
         load->object = new QObject(receiver);
@@ -69,8 +69,8 @@ public:
     {
     }
 
-    ImageIoJob operator()(QObject *receiver, ImageDecodeRequest request,
-        ImageDecodeJob::DataCallback callback, ImageDecodeJob::ErrorCallback errorCallback) const
+    ImageIoJob operator()(QObject *receiver, ImageDecodeRequest request, ImageDataCallback callback,
+        ErrorCallback errorCallback) const
     {
         return m_dataLoader->start(
             receiver, std::move(request), std::move(callback), std::move(errorCallback));
@@ -80,7 +80,7 @@ private:
     ManualImageDataLoader *m_dataLoader = nullptr;
 };
 
-inline ImageDecodeJob::DataLoader dataLoaderFor(ManualImageDataLoader &dataLoader)
+inline ImageDataLoader dataLoaderFor(ManualImageDataLoader &dataLoader)
 {
     return ManualImageDataLoaderAdapter(dataLoader);
 }
@@ -310,15 +310,14 @@ inline DecodedImageResult failedTestImageDecodeResult()
     return DecodedImageFailure { testImageDecodeFailureString() };
 }
 
-inline ImageDecodeJob::DataDecoder staticImageDataDecoder(QImage image = testImage())
+inline ImageDataDecoder staticImageDataDecoder(QImage image = testImage())
 {
     return [image = std::move(image)](const QByteArray &, const ImageDecodeRequest &) {
         return successfulDecodedImageResult(staticDecodedTestImage(image));
     };
 }
 
-inline ImageDecodeJob::DataDecoder staticImageDataDecoderRejectingBadData(
-    QImage image = testImage())
+inline ImageDataDecoder staticImageDataDecoderRejectingBadData(QImage image = testImage())
 {
     return [decoder = staticImageDataDecoder(std::move(image))](
                const QByteArray &data, const ImageDecodeRequest &request) {

@@ -10,8 +10,7 @@
 
 namespace {
 KiriView::ImageIoJob loadImageData(QObject *receiver, KiriView::ImageDecodeRequest request,
-    KiriView::ImageDecodeJob::DataCallback callback,
-    KiriView::ImageDecodeJob::ErrorCallback errorCallback)
+    KiriView::ImageDataCallback callback, KiriView::ErrorCallback errorCallback)
 {
     return KiriView::startStoredImageDataLoad(
         receiver, std::move(request), std::move(callback), std::move(errorCallback));

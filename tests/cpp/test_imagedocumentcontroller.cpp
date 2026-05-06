@@ -43,7 +43,7 @@ KiriView::DecodedImageResult staticDecodedImageWithPreview(const QSize &sourceSi
 
 KiriView::ImageAsyncDependencies dependenciesFor(FakeCandidateProvider &candidateProvider,
     ManualImageDataLoader &dataLoader,
-    KiriView::ImageDecodeJob::DataDecoder dataDecoder = staticImageDataDecoder(testImage(2)))
+    KiriView::ImageDataDecoder dataDecoder = staticImageDataDecoder(testImage(2)))
 {
     return KiriView::ImageAsyncDependencies {
         candidateProvider.provider(),
@@ -54,7 +54,7 @@ KiriView::ImageAsyncDependencies dependenciesFor(FakeCandidateProvider &candidat
 
 std::unique_ptr<KiriView::ImageDocumentController> createController(QObject *parent,
     FakeCandidateProvider &candidateProvider, ManualImageDataLoader &dataLoader,
-    KiriView::ImageDecodeJob::DataDecoder dataDecoder = staticImageDataDecoder(testImage(2)),
+    KiriView::ImageDataDecoder dataDecoder = staticImageDataDecoder(testImage(2)),
     int maximumTextureSize = KiriView::fallbackTextureSizeMax, qreal devicePixelRatio = 1.0)
 {
     return std::make_unique<KiriView::ImageDocumentController>(
