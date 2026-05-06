@@ -43,7 +43,7 @@ QSizeF ImagePresentationController::viewportSize() const { return m_zoomState.vi
 void ImagePresentationController::setViewportSize(const QSizeF &viewportSize)
 {
     mutateZoomState([&viewportSize](ImageZoomState &zoomState, qreal devicePixelRatio) {
-        return zoomState.setViewportSize(viewportSize, devicePixelRatio);
+        zoomState.setViewportSize(viewportSize, devicePixelRatio);
     });
 }
 
@@ -67,7 +67,7 @@ qreal ImagePresentationController::zoomPercent() const { return m_zoomState.zoom
 void ImagePresentationController::setZoomPercent(qreal zoomPercent)
 {
     mutateZoomState([zoomPercent](ImageZoomState &zoomState, qreal devicePixelRatio) {
-        return zoomState.setManualZoomPercent(zoomPercent, devicePixelRatio);
+        zoomState.setManualZoomPercent(zoomPercent, devicePixelRatio);
     });
 }
 
@@ -118,7 +118,6 @@ void ImagePresentationController::resetZoom()
 {
     mutateZoomState([](ImageZoomState &zoomState, qreal devicePixelRatio) {
         zoomState.resetZoom(devicePixelRatio);
-        return true;
     });
 }
 
@@ -129,23 +128,21 @@ void ImagePresentationController::setFitMode(ImageZoomMode zoomMode)
     }
 
     mutateZoomState([zoomMode](ImageZoomState &zoomState, qreal devicePixelRatio) {
-        return zoomState.setFitMode(zoomMode, devicePixelRatio);
+        zoomState.setFitMode(zoomMode, devicePixelRatio);
     });
 }
 
 void ImagePresentationController::updateRenderContext()
 {
-    mutateZoomState([](ImageZoomState &zoomState, qreal devicePixelRatio) {
-        zoomState.update(devicePixelRatio);
-        return true;
-    });
+    mutateZoomState([](ImageZoomState &zoomState,
+                        qreal devicePixelRatio) { zoomState.update(devicePixelRatio); },
+        TileRefresh::Always);
 }
 
 void ImagePresentationController::prepareImageContainer(const QUrl &containerUrl)
 {
     mutateZoomState([&containerUrl](ImageZoomState &zoomState, qreal) {
         zoomState.prepareImageContainer(containerUrl);
-        return true;
     });
 }
 
@@ -155,7 +152,6 @@ void ImagePresentationController::prepareFailedContainer(const QUrl &containerUr
         zoomState.clearContainer();
         zoomState.prepareImageContainer(containerUrl);
         zoomState.resetZoom(devicePixelRatio);
-        return true;
     });
 }
 
@@ -213,7 +209,7 @@ void ImagePresentationController::stopAnimation() { m_displayedImageState->stopA
 void ImagePresentationController::setImageSize(const QSize &imageSize)
 {
     mutateZoomState([&imageSize](ImageZoomState &zoomState, qreal devicePixelRatio) {
-        return zoomState.setImageSize(imageSize, devicePixelRatio);
+        zoomState.setImageSize(imageSize, devicePixelRatio);
     });
 }
 
@@ -226,40 +222,47 @@ void ImagePresentationController::scheduleVisibleTileDecode(
         m_zoomState.displaySize(), m_visibleItemRect, context);
 }
 
-bool ImagePresentationController::mutateZoomState(const ZoomStateMutation &mutation)
+void ImagePresentationController::mutateZoomState(
+    const ZoomStateMutation &mutation, TileRefresh tileRefresh)
 {
     const ImageDocumentRenderContext context = renderContext();
     const ImageZoomSnapshot previous = m_zoomState.snapshot();
-    if (!mutation(m_zoomState, context.devicePixelRatio)) {
-        return false;
-    }
+    mutation(m_zoomState, context.devicePixelRatio);
 
-    applyZoomStateChanges(previous, context);
-    return true;
+    applyZoomStateChanges(previous, context, tileRefresh);
 }
 
-void ImagePresentationController::applyZoomStateChanges(
-    const ImageZoomSnapshot &previous, const ImageDocumentRenderContext &context)
+void ImagePresentationController::applyZoomStateChanges(const ImageZoomSnapshot &previous,
+    const ImageDocumentRenderContext &context, TileRefresh tileRefresh)
 {
     const ImageZoomSnapshot current = m_zoomState.snapshot();
+    bool changed = false;
     if (previous.imageSize != current.imageSize) {
         notify(ImageDocumentChange::ImageSize);
+        changed = true;
     }
     if (!imageZoomApproximatelyEqual(previous.viewportSize, current.viewportSize)) {
         notify(ImageDocumentChange::ViewportSize);
+        changed = true;
     }
     if (previous.zoomMode != current.zoomMode) {
         notify(ImageDocumentChange::ZoomMode);
+        changed = true;
     }
     if (!imageZoomApproximatelyEqual(previous.zoomPercent, current.zoomPercent)) {
         notify(ImageDocumentChange::ZoomPercent);
+        changed = true;
     }
 
     if (!imageZoomApproximatelyEqual(previous.displaySize, current.displaySize)) {
         notify(ImageDocumentChange::DisplaySize);
         notify(ImageDocumentChange::Repaint);
+        changed = true;
     }
-    scheduleVisibleTileDecode(context);
+
+    if (changed || tileRefresh == TileRefresh::Always) {
+        scheduleVisibleTileDecode(context);
+    }
 }
 
 ImageDocumentRenderContext ImagePresentationController::renderContext() const

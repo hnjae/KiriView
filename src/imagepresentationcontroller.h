@@ -77,14 +77,20 @@ public:
     void stopAnimation();
 
 private:
-    using ZoomStateMutation = std::function<bool(ImageZoomState &, qreal devicePixelRatio)>;
+    enum class TileRefresh {
+        WhenZoomStateChanges,
+        Always,
+    };
+
+    using ZoomStateMutation = std::function<void(ImageZoomState &, qreal devicePixelRatio)>;
 
     void setImageSize(const QSize &imageSize);
     void invalidateTiles();
     void scheduleVisibleTileDecode(const ImageDocumentRenderContext &context);
-    bool mutateZoomState(const ZoomStateMutation &mutation);
-    void applyZoomStateChanges(
-        const ImageZoomSnapshot &previous, const ImageDocumentRenderContext &context);
+    void mutateZoomState(const ZoomStateMutation &mutation,
+        TileRefresh tileRefresh = TileRefresh::WhenZoomStateChanges);
+    void applyZoomStateChanges(const ImageZoomSnapshot &previous,
+        const ImageDocumentRenderContext &context, TileRefresh tileRefresh);
     ImageDocumentRenderContext renderContext() const;
     void notify(ImageDocumentChange change);
 
