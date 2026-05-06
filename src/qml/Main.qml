@@ -89,10 +89,6 @@ StatefulApp.StatefulWindow {
     width: Kirigami.Units.gridUnit * 24
     height: Kirigami.Units.gridUnit * 20
 
-    ShortcutDefinitions {
-        id: shortcutDefinitions
-    }
-
     onFullscreenChanged: {
         if (fullscreen) {
             revealFullscreenToolBar();
@@ -106,7 +102,7 @@ StatefulApp.StatefulWindow {
     Shortcut {
         context: Qt.WindowShortcut
         enabled: !root.helpDialogOpen
-        sequence: shortcutDefinitions.closeSequence
+        sequence: "Esc"
 
         onActivated: root.close()
     }
