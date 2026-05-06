@@ -54,6 +54,7 @@ private Q_SLOTS:
     void init();
     void cleanup();
     void actionsAreRegisteredWithDefaultShortcuts();
+    void actionIdsResolveActionNamesAndShortcuts();
     void shortcutsApiReturnsCurrentShortcuts();
     void shortcutModifierPartitionsTextInputShortcuts();
     void menuPresentationDefaultsToHamburgerMenu();
@@ -161,6 +162,67 @@ void TestKiriViewApplication::actionsAreRegisteredWithDefaultShortcuts()
         { shortcut(QStringLiteral("?")), shortcut(QStringLiteral("F1")) });
     expectDefaultShortcuts(application, QStringLiteral("file_quit"),
         { shortcut(QStringLiteral("Q")), shortcut(QStringLiteral("Ctrl+Q")) });
+}
+
+void TestKiriViewApplication::actionIdsResolveActionNamesAndShortcuts()
+{
+    struct ExpectedActionId {
+        KiriViewApplication::ActionId actionId;
+        const char *actionName;
+    };
+
+    const ExpectedActionId expectedActionIds[] = {
+        { KiriViewApplication::FileOpenAction, "file_open" },
+        { KiriViewApplication::GoPreviousArchiveAction, "go_previous_archive" },
+        { KiriViewApplication::GoNextArchiveAction, "go_next_archive" },
+        { KiriViewApplication::GoPreviousImageAction, "go_previous_image" },
+        { KiriViewApplication::GoNextImageAction, "go_next_image" },
+        { KiriViewApplication::GoFirstImageAction, "go_first_image" },
+        { KiriViewApplication::GoLastImageAction, "go_last_image" },
+        { KiriViewApplication::ViewZoomInAction, "view_zoom_in" },
+        { KiriViewApplication::ViewZoomOutAction, "view_zoom_out" },
+        { KiriViewApplication::ViewFitAction, "view_fit" },
+        { KiriViewApplication::ViewFitHeightAction, "view_fit_height" },
+        { KiriViewApplication::ViewFitWidthAction, "view_fit_width" },
+        { KiriViewApplication::ViewActualSizeAction, "view_actual_size" },
+        { KiriViewApplication::ViewPanLeftAction, "view_pan_left" },
+        { KiriViewApplication::ViewPanRightAction, "view_pan_right" },
+        { KiriViewApplication::ViewPanUpAction, "view_pan_up" },
+        { KiriViewApplication::ViewPanDownAction, "view_pan_down" },
+        { KiriViewApplication::ViewPanTopLeftAction, "view_pan_top_left" },
+        { KiriViewApplication::ViewPanBottomRightAction, "view_pan_bottom_right" },
+        { KiriViewApplication::ViewScanForwardAction, "view_scan_forward" },
+        { KiriViewApplication::ViewScanBackwardAction, "view_scan_backward" },
+        { KiriViewApplication::WindowFullscreenAction, "window_fullscreen" },
+        { KiriViewApplication::HelpShortcutsAction, "help_shortcuts" },
+        { KiriViewApplication::OptionsConfigureAction, "options_configure" },
+        { KiriViewApplication::OptionsConfigureKeybindingAction, "options_configure_keybinding" },
+        { KiriViewApplication::OptionsShowMenubarAction, "options_show_menubar" },
+        { KiriViewApplication::FileQuitAction, "file_quit" },
+    };
+
+    KiriViewApplication application;
+    QObject configurationView;
+    application.setConfigurationView(&configurationView);
+
+    for (const ExpectedActionId &expected : expectedActionIds) {
+        const QString actionName = QString::fromLatin1(expected.actionName);
+        QCOMPARE(application.actionName(expected.actionId), actionName);
+        QCOMPARE(application.actionForId(expected.actionId), application.action(actionName));
+        QCOMPARE(application.shortcutsForId(expected.actionId), application.shortcuts(actionName));
+        QCOMPARE(application.shortcutsWithCommandModifierForId(expected.actionId),
+            application.shortcutsWithCommandModifier(actionName));
+        QCOMPARE(application.shortcutsWithoutCommandModifierForId(expected.actionId),
+            application.shortcutsWithoutCommandModifier(actionName));
+        QCOMPARE(
+            application.shortcutTextForId(expected.actionId), application.shortcutText(actionName));
+    }
+
+    const auto invalidActionId = static_cast<KiriViewApplication::ActionId>(-1);
+    QVERIFY(application.actionName(invalidActionId).isEmpty());
+    QCOMPARE(application.actionForId(invalidActionId), nullptr);
+    QCOMPARE(application.shortcutsForId(invalidActionId), QList<QKeySequence>());
+    QVERIFY(application.shortcutTextForId(invalidActionId).isEmpty());
 }
 
 void TestKiriViewApplication::shortcutsApiReturnsCurrentShortcuts()

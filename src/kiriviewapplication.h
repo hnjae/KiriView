@@ -29,6 +29,37 @@ public:
     };
     Q_ENUM(MenuPresentation)
 
+    enum ActionId {
+        FileOpenAction = 0,
+        GoPreviousArchiveAction,
+        GoNextArchiveAction,
+        GoPreviousImageAction,
+        GoNextImageAction,
+        GoFirstImageAction,
+        GoLastImageAction,
+        ViewZoomInAction,
+        ViewZoomOutAction,
+        ViewFitAction,
+        ViewFitHeightAction,
+        ViewFitWidthAction,
+        ViewActualSizeAction,
+        ViewPanLeftAction,
+        ViewPanRightAction,
+        ViewPanUpAction,
+        ViewPanDownAction,
+        ViewPanTopLeftAction,
+        ViewPanBottomRightAction,
+        ViewScanForwardAction,
+        ViewScanBackwardAction,
+        WindowFullscreenAction,
+        HelpShortcutsAction,
+        OptionsConfigureAction,
+        OptionsConfigureKeybindingAction,
+        OptionsShowMenubarAction,
+        FileQuitAction,
+    };
+    Q_ENUM(ActionId)
+
     explicit KiriViewApplication(QObject *parent = nullptr);
     ~KiriViewApplication() override;
 
@@ -37,11 +68,19 @@ public:
     int shortcutRevision() const;
 
     Q_INVOKABLE QAction *action(const QString &actionName);
+    Q_INVOKABLE QAction *actionForId(KiriViewApplication::ActionId actionId);
+    Q_INVOKABLE QString actionName(KiriViewApplication::ActionId actionId) const;
     Q_INVOKABLE QList<QKeySequence> shortcuts(const QString &actionName) const;
+    Q_INVOKABLE QList<QKeySequence> shortcutsForId(KiriViewApplication::ActionId actionId) const;
     Q_INVOKABLE QList<QKeySequence> shortcutsWithCommandModifier(const QString &actionName) const;
+    Q_INVOKABLE QList<QKeySequence> shortcutsWithCommandModifierForId(
+        KiriViewApplication::ActionId actionId) const;
     Q_INVOKABLE QList<QKeySequence> shortcutsWithoutCommandModifier(
         const QString &actionName) const;
+    Q_INVOKABLE QList<QKeySequence> shortcutsWithoutCommandModifierForId(
+        KiriViewApplication::ActionId actionId) const;
     Q_INVOKABLE QString shortcutText(const QString &actionName) const;
+    Q_INVOKABLE QString shortcutTextForId(KiriViewApplication::ActionId actionId) const;
 
 Q_SIGNALS:
     void menuPresentationChanged();

@@ -15,7 +15,7 @@ Kirigami.OverlaySheet {
     readonly property int shortcutRevision: application.shortcutRevision
     readonly property var helpEntries: [
         {
-            "keyText": root.shortcutText("file_open"),
+            "keyText": root.shortcutText(KiriViewApplication.FileOpenAction),
             "description": "Open an image or comic book"
         },
         {
@@ -23,39 +23,39 @@ Kirigami.OverlaySheet {
             "description": "Close dialog or leave fullscreen"
         },
         {
-            "keyText": root.shortcutText("file_quit"),
+            "keyText": root.shortcutText(KiriViewApplication.FileQuitAction),
             "description": "Quit KiriView"
         },
         {
-            "keyText": root.shortcutTexts(["go_previous_image", "go_next_image"]),
+            "keyText": root.shortcutTexts([KiriViewApplication.GoPreviousImageAction, KiriViewApplication.GoNextImageAction]),
             "description": "Previous or next image"
         },
         {
-            "keyText": root.shortcutTexts(["go_first_image", "go_last_image"]),
+            "keyText": root.shortcutTexts([KiriViewApplication.GoFirstImageAction, KiriViewApplication.GoLastImageAction]),
             "description": "First or last image"
         },
         {
-            "keyText": root.shortcutText("view_zoom_in"),
+            "keyText": root.shortcutText(KiriViewApplication.ViewZoomInAction),
             "description": "Zoom in"
         },
         {
-            "keyText": root.shortcutText("view_zoom_out"),
+            "keyText": root.shortcutText(KiriViewApplication.ViewZoomOutAction),
             "description": "Zoom out"
         },
         {
-            "keyText": root.shortcutText("view_fit"),
+            "keyText": root.shortcutText(KiriViewApplication.ViewFitAction),
             "description": "Fit image"
         },
         {
-            "keyText": root.shortcutText("view_fit_height"),
+            "keyText": root.shortcutText(KiriViewApplication.ViewFitHeightAction),
             "description": "Fit image height"
         },
         {
-            "keyText": root.shortcutText("view_fit_width"),
+            "keyText": root.shortcutText(KiriViewApplication.ViewFitWidthAction),
             "description": "Fit image width"
         },
         {
-            "keyText": root.shortcutText("view_actual_size"),
+            "keyText": root.shortcutText(KiriViewApplication.ViewActualSizeAction),
             "description": "Set 100% zoom"
         },
         {
@@ -63,11 +63,11 @@ Kirigami.OverlaySheet {
             "description": "Zoom around the cursor"
         },
         {
-            "keyText": "Drag / " + root.shortcutTexts(["view_pan_left", "view_pan_right", "view_pan_up", "view_pan_down"]),
+            "keyText": "Drag / " + root.shortcutTexts([KiriViewApplication.ViewPanLeftAction, KiriViewApplication.ViewPanRightAction, KiriViewApplication.ViewPanUpAction, KiriViewApplication.ViewPanDownAction]),
             "description": "Pan the zoomed image"
         },
         {
-            "keyText": root.shortcutTexts(["view_pan_top_left", "view_pan_bottom_right"]),
+            "keyText": root.shortcutTexts([KiriViewApplication.ViewPanTopLeftAction, KiriViewApplication.ViewPanBottomRightAction]),
             "description": "Jump to image pan boundary"
         },
         {
@@ -75,19 +75,19 @@ Kirigami.OverlaySheet {
             "description": "Pan the zoomed image horizontally"
         },
         {
-            "keyText": root.shortcutTexts(["view_scan_forward", "view_scan_backward"]),
+            "keyText": root.shortcutTexts([KiriViewApplication.ViewScanForwardAction, KiriViewApplication.ViewScanBackwardAction]),
             "description": "Scan image or go previous/next"
         },
         {
-            "keyText": root.shortcutTexts(["go_previous_archive", "go_next_archive"]),
+            "keyText": root.shortcutTexts([KiriViewApplication.GoPreviousArchiveAction, KiriViewApplication.GoNextArchiveAction]),
             "description": "Previous or next archive"
         },
         {
-            "keyText": root.shortcutText("window_fullscreen"),
+            "keyText": root.shortcutText(KiriViewApplication.WindowFullscreenAction),
             "description": "Toggle fullscreen"
         },
         {
-            "keyText": root.shortcutText("help_shortcuts"),
+            "keyText": root.shortcutText(KiriViewApplication.HelpShortcutsAction),
             "description": "Show this shortcut help"
         }
     ]
@@ -95,14 +95,14 @@ Kirigami.OverlaySheet {
     showCloseButton: true
     title: "Keyboard Shortcuts"
 
-    function shortcutText(actionName) {
+    function shortcutText(actionId) {
         root.shortcutRevision;
-        return root.application.shortcutText(actionName);
+        return root.application.shortcutTextForId(actionId);
     }
 
-    function shortcutTexts(actionNames) {
+    function shortcutTexts(actionIds) {
         root.shortcutRevision;
-        return actionNames.map(actionName => root.application.shortcutText(actionName)).filter(text => text.length > 0).join(" / ");
+        return actionIds.map(actionId => root.application.shortcutTextForId(actionId)).filter(text => text.length > 0).join(" / ");
     }
 
     ColumnLayout {

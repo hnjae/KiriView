@@ -27,18 +27,18 @@ Item {
     readonly property bool containerCommandShortcutsEnabled: root.imageDocument.containerNavigationAvailable && root.commandShortcutsEnabled
     readonly property int zoomStepPercent: imageDocument.zoomStepPercent
 
-    readonly property var previousImageQAction: root.application.action("go_previous_image")
-    readonly property var nextImageQAction: root.application.action("go_next_image")
-    readonly property var zoomInQAction: root.application.action("view_zoom_in")
-    readonly property var zoomOutQAction: root.application.action("view_zoom_out")
-    readonly property var panLeftQAction: root.application.action("view_pan_left")
-    readonly property var panRightQAction: root.application.action("view_pan_right")
-    readonly property var panUpQAction: root.application.action("view_pan_up")
-    readonly property var panDownQAction: root.application.action("view_pan_down")
-    readonly property var panTopLeftQAction: root.application.action("view_pan_top_left")
-    readonly property var panBottomRightQAction: root.application.action("view_pan_bottom_right")
-    readonly property var scanForwardQAction: root.application.action("view_scan_forward")
-    readonly property var scanBackwardQAction: root.application.action("view_scan_backward")
+    readonly property var previousImageQAction: root.application.actionForId(KiriViewApplication.GoPreviousImageAction)
+    readonly property var nextImageQAction: root.application.actionForId(KiriViewApplication.GoNextImageAction)
+    readonly property var zoomInQAction: root.application.actionForId(KiriViewApplication.ViewZoomInAction)
+    readonly property var zoomOutQAction: root.application.actionForId(KiriViewApplication.ViewZoomOutAction)
+    readonly property var panLeftQAction: root.application.actionForId(KiriViewApplication.ViewPanLeftAction)
+    readonly property var panRightQAction: root.application.actionForId(KiriViewApplication.ViewPanRightAction)
+    readonly property var panUpQAction: root.application.actionForId(KiriViewApplication.ViewPanUpAction)
+    readonly property var panDownQAction: root.application.actionForId(KiriViewApplication.ViewPanDownAction)
+    readonly property var panTopLeftQAction: root.application.actionForId(KiriViewApplication.ViewPanTopLeftAction)
+    readonly property var panBottomRightQAction: root.application.actionForId(KiriViewApplication.ViewPanBottomRightAction)
+    readonly property var scanForwardQAction: root.application.actionForId(KiriViewApplication.ViewScanForwardAction)
+    readonly property var scanBackwardQAction: root.application.actionForId(KiriViewApplication.ViewScanBackwardAction)
 
     signal imageBoundaryReached(string message)
 
@@ -104,69 +104,69 @@ Item {
     }
 
     ActionShortcutGroup {
-        actionNames: ["file_open"]
+        actionIds: [KiriViewApplication.FileOpenAction]
         application: root.application
         shortcutsEnabled: root.helpShortcutsEnabled
     }
 
     ActionShortcutGroup {
-        actionNames: ["file_quit"]
+        actionIds: [KiriViewApplication.FileQuitAction]
         application: root.application
         shortcutFilter: ConfiguredActionShortcut.WithoutCommandModifier
         shortcutsEnabled: root.commandShortcutsEnabled
     }
 
     ActionShortcutGroup {
-        actionNames: ["file_quit"]
+        actionIds: [KiriViewApplication.FileQuitAction]
         application: root.application
         shortcutFilter: ConfiguredActionShortcut.WithCommandModifier
         shortcutsEnabled: root.helpShortcutsEnabled
     }
 
     ActionShortcutGroup {
-        actionNames: ["view_zoom_in", "view_zoom_out", "view_fit", "view_fit_height", "view_fit_width", "view_actual_size"]
+        actionIds: [KiriViewApplication.ViewZoomInAction, KiriViewApplication.ViewZoomOutAction, KiriViewApplication.ViewFitAction, KiriViewApplication.ViewFitHeightAction, KiriViewApplication.ViewFitWidthAction, KiriViewApplication.ViewActualSizeAction]
         application: root.application
         shortcutsEnabled: root.readyCommandShortcutsEnabled
     }
 
     ActionShortcutGroup {
-        actionNames: ["view_pan_left", "view_pan_right", "view_pan_up", "view_pan_down", "view_pan_top_left", "view_pan_bottom_right"]
+        actionIds: [KiriViewApplication.ViewPanLeftAction, KiriViewApplication.ViewPanRightAction, KiriViewApplication.ViewPanUpAction, KiriViewApplication.ViewPanDownAction, KiriViewApplication.ViewPanTopLeftAction, KiriViewApplication.ViewPanBottomRightAction]
         application: root.application
         shortcutsEnabled: root.pannableCommandShortcutsEnabled
     }
 
     ActionShortcutGroup {
-        actionNames: ["view_scan_forward", "view_scan_backward"]
+        actionIds: [KiriViewApplication.ViewScanForwardAction, KiriViewApplication.ViewScanBackwardAction]
         application: root.application
         shortcutsEnabled: root.readyCommandShortcutsEnabled
     }
 
     ActionShortcutGroup {
-        actionNames: ["go_previous_image", "go_next_image"]
+        actionIds: [KiriViewApplication.GoPreviousImageAction, KiriViewApplication.GoNextImageAction]
         application: root.application
         shortcutsEnabled: root.readyShortcutsEnabled
     }
 
     ActionShortcutGroup {
-        actionNames: ["go_first_image", "go_last_image"]
+        actionIds: [KiriViewApplication.GoFirstImageAction, KiriViewApplication.GoLastImageAction]
         application: root.application
         shortcutsEnabled: root.pageCommandShortcutsEnabled
     }
 
     ActionShortcutGroup {
-        actionNames: ["go_previous_archive", "go_next_archive"]
+        actionIds: [KiriViewApplication.GoPreviousArchiveAction, KiriViewApplication.GoNextArchiveAction]
         application: root.application
         shortcutsEnabled: root.containerCommandShortcutsEnabled
     }
 
     ActionShortcutGroup {
-        actionNames: ["window_fullscreen", "help_shortcuts"]
+        actionIds: [KiriViewApplication.WindowFullscreenAction, KiriViewApplication.HelpShortcutsAction]
         application: root.application
         shortcutsEnabled: root.commandShortcutsEnabled
     }
 
     ActionShortcutGroup {
-        actionNames: ["options_configure", "options_configure_keybinding", "options_show_menubar"]
+        actionIds: [KiriViewApplication.OptionsConfigureAction, KiriViewApplication.OptionsConfigureKeybindingAction, KiriViewApplication.OptionsShowMenubarAction]
         application: root.application
         shortcutsEnabled: root.helpShortcutsEnabled
     }

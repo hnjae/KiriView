@@ -106,7 +106,7 @@ Item {
         id: openManagedAction
 
         actionEnabled: !root.helpDialogOpen
-        actionName: "file_open"
+        actionId: KiriViewApplication.FileOpenAction
         application: root.application
         bindEnabled: true
         displayHint: Kirigami.DisplayHint.AlwaysHide
@@ -118,7 +118,7 @@ Item {
         id: previousContainerManagedAction
 
         actionEnabled: root.imageDocument.containerNavigationAvailable && !root.helpDialogOpen
-        actionName: "go_previous_archive"
+        actionId: KiriViewApplication.GoPreviousArchiveAction
         application: root.application
         bindEnabled: true
         displayHint: Kirigami.DisplayHint.AlwaysHide
@@ -130,7 +130,7 @@ Item {
         id: nextContainerManagedAction
 
         actionEnabled: root.imageDocument.containerNavigationAvailable && !root.helpDialogOpen
-        actionName: "go_next_archive"
+        actionId: KiriViewApplication.GoNextArchiveAction
         application: root.application
         bindEnabled: true
         displayHint: Kirigami.DisplayHint.AlwaysHide
@@ -142,7 +142,7 @@ Item {
         id: previousImageManagedAction
 
         actionEnabled: root.canUseReadyActions
-        actionName: "go_previous_image"
+        actionId: KiriViewApplication.GoPreviousImageAction
         application: root.application
         bindEnabled: true
         proxyEnabled: root.canOpenPreviousImage && !root.helpDialogOpen
@@ -154,7 +154,7 @@ Item {
         id: nextImageManagedAction
 
         actionEnabled: root.canUseReadyActions
-        actionName: "go_next_image"
+        actionId: KiriViewApplication.GoNextImageAction
         application: root.application
         bindEnabled: true
         proxyEnabled: root.canOpenNextImage && !root.helpDialogOpen
@@ -166,7 +166,7 @@ Item {
         id: firstImageManagedAction
 
         actionEnabled: root.canUsePageActions
-        actionName: "go_first_image"
+        actionId: KiriViewApplication.GoFirstImageAction
         application: root.application
         bindEnabled: true
         proxyEnabled: root.canUsePageActions
@@ -178,7 +178,7 @@ Item {
         id: lastImageManagedAction
 
         actionEnabled: root.canUsePageActions
-        actionName: "go_last_image"
+        actionId: KiriViewApplication.GoLastImageAction
         application: root.application
         bindEnabled: true
         proxyEnabled: root.canUsePageActions
@@ -190,7 +190,7 @@ Item {
         id: fitManagedAction
 
         actionEnabled: root.canUseReadyActions
-        actionName: "view_fit"
+        actionId: KiriViewApplication.ViewFitAction
         application: root.application
         bindEnabled: true
         proxyCheckable: true
@@ -203,7 +203,7 @@ Item {
         id: fitHeightManagedAction
 
         actionEnabled: root.canUseReadyActions
-        actionName: "view_fit_height"
+        actionId: KiriViewApplication.ViewFitHeightAction
         application: root.application
         bindEnabled: true
         proxyCheckable: true
@@ -216,7 +216,7 @@ Item {
         id: fitWidthManagedAction
 
         actionEnabled: root.canUseReadyActions
-        actionName: "view_fit_width"
+        actionId: KiriViewApplication.ViewFitWidthAction
         application: root.application
         bindEnabled: true
         proxyCheckable: true
@@ -229,7 +229,7 @@ Item {
         id: actualSizeManagedAction
 
         actionEnabled: root.canUseReadyActions
-        actionName: "view_actual_size"
+        actionId: KiriViewApplication.ViewActualSizeAction
         application: root.application
         bindEnabled: true
 
@@ -240,7 +240,7 @@ Item {
         id: zoomInManagedAction
 
         actionEnabled: root.canUseReadyActions
-        actionName: "view_zoom_in"
+        actionId: KiriViewApplication.ViewZoomInAction
         application: root.application
         bindEnabled: true
     }
@@ -249,7 +249,7 @@ Item {
         id: zoomOutManagedAction
 
         actionEnabled: root.canUseReadyActions
-        actionName: "view_zoom_out"
+        actionId: KiriViewApplication.ViewZoomOutAction
         application: root.application
         bindEnabled: true
     }
@@ -258,7 +258,7 @@ Item {
         id: scanForwardManagedAction
 
         actionEnabled: root.canUseReadyActions
-        actionName: "view_scan_forward"
+        actionId: KiriViewApplication.ViewScanForwardAction
         application: root.application
         bindEnabled: true
     }
@@ -267,7 +267,7 @@ Item {
         id: scanBackwardManagedAction
 
         actionEnabled: root.canUseReadyActions
-        actionName: "view_scan_backward"
+        actionId: KiriViewApplication.ViewScanBackwardAction
         application: root.application
         bindEnabled: true
     }
@@ -277,7 +277,7 @@ Item {
 
         actionChecked: root.fullscreen
         actionEnabled: !root.helpDialogOpen
-        actionName: "window_fullscreen"
+        actionId: KiriViewApplication.WindowFullscreenAction
         application: root.application
         bindChecked: true
         bindEnabled: true
@@ -292,7 +292,7 @@ Item {
         id: shortcutHelpManagedAction
 
         actionEnabled: !root.helpDialogOpen
-        actionName: "help_shortcuts"
+        actionId: KiriViewApplication.HelpShortcutsAction
         application: root.application
         bindEnabled: true
         displayHint: Kirigami.DisplayHint.AlwaysHide
@@ -303,7 +303,7 @@ Item {
     ManagedAction {
         id: configureManagedAction
 
-        actionName: "options_configure"
+        actionId: KiriViewApplication.OptionsConfigureAction
         application: root.application
         displayHint: Kirigami.DisplayHint.AlwaysHide
     }
@@ -311,7 +311,7 @@ Item {
     ManagedAction {
         id: configureShortcutsManagedAction
 
-        actionName: "options_configure_keybinding"
+        actionId: KiriViewApplication.OptionsConfigureKeybindingAction
         application: root.application
         displayHint: Kirigami.DisplayHint.AlwaysHide
     }
@@ -319,7 +319,7 @@ Item {
     ManagedAction {
         id: showMenubarManagedAction
 
-        actionName: "options_show_menubar"
+        actionId: KiriViewApplication.OptionsShowMenubarAction
         application: root.application
         displayHint: Kirigami.DisplayHint.AlwaysHide
     }
@@ -327,7 +327,7 @@ Item {
     ManagedAction {
         id: quitManagedAction
 
-        actionName: "file_quit"
+        actionId: KiriViewApplication.FileQuitAction
         application: root.application
         displayHint: Kirigami.DisplayHint.AlwaysHide
     }

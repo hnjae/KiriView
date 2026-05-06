@@ -18,19 +18,83 @@ enum class ActionSpecKind {
     Standard,
 };
 
-struct ActionSpec {
-    static ActionSpec registered(
-        QString name, QString text, QString iconName, QList<QKeySequence> defaultShortcuts)
-    {
-        return ActionSpec { ActionSpecKind::Registered, KStandardActions::Open, std::move(name),
-            std::move(text), std::move(iconName), std::move(defaultShortcuts) };
+QString applicationActionName(KiriViewApplication::ActionId actionId)
+{
+    switch (actionId) {
+    case KiriViewApplication::FileOpenAction:
+        return QStringLiteral("file_open");
+    case KiriViewApplication::GoPreviousArchiveAction:
+        return QStringLiteral("go_previous_archive");
+    case KiriViewApplication::GoNextArchiveAction:
+        return QStringLiteral("go_next_archive");
+    case KiriViewApplication::GoPreviousImageAction:
+        return QStringLiteral("go_previous_image");
+    case KiriViewApplication::GoNextImageAction:
+        return QStringLiteral("go_next_image");
+    case KiriViewApplication::GoFirstImageAction:
+        return QStringLiteral("go_first_image");
+    case KiriViewApplication::GoLastImageAction:
+        return QStringLiteral("go_last_image");
+    case KiriViewApplication::ViewZoomInAction:
+        return QStringLiteral("view_zoom_in");
+    case KiriViewApplication::ViewZoomOutAction:
+        return QStringLiteral("view_zoom_out");
+    case KiriViewApplication::ViewFitAction:
+        return QStringLiteral("view_fit");
+    case KiriViewApplication::ViewFitHeightAction:
+        return QStringLiteral("view_fit_height");
+    case KiriViewApplication::ViewFitWidthAction:
+        return QStringLiteral("view_fit_width");
+    case KiriViewApplication::ViewActualSizeAction:
+        return QStringLiteral("view_actual_size");
+    case KiriViewApplication::ViewPanLeftAction:
+        return QStringLiteral("view_pan_left");
+    case KiriViewApplication::ViewPanRightAction:
+        return QStringLiteral("view_pan_right");
+    case KiriViewApplication::ViewPanUpAction:
+        return QStringLiteral("view_pan_up");
+    case KiriViewApplication::ViewPanDownAction:
+        return QStringLiteral("view_pan_down");
+    case KiriViewApplication::ViewPanTopLeftAction:
+        return QStringLiteral("view_pan_top_left");
+    case KiriViewApplication::ViewPanBottomRightAction:
+        return QStringLiteral("view_pan_bottom_right");
+    case KiriViewApplication::ViewScanForwardAction:
+        return QStringLiteral("view_scan_forward");
+    case KiriViewApplication::ViewScanBackwardAction:
+        return QStringLiteral("view_scan_backward");
+    case KiriViewApplication::WindowFullscreenAction:
+        return QStringLiteral("window_fullscreen");
+    case KiriViewApplication::HelpShortcutsAction:
+        return QStringLiteral("help_shortcuts");
+    case KiriViewApplication::OptionsConfigureAction:
+        return QStringLiteral("options_configure");
+    case KiriViewApplication::OptionsConfigureKeybindingAction:
+        return QStringLiteral("options_configure_keybinding");
+    case KiriViewApplication::OptionsShowMenubarAction:
+        return QStringLiteral("options_show_menubar");
+    case KiriViewApplication::FileQuitAction:
+        return QStringLiteral("file_quit");
     }
 
-    static ActionSpec standard(KStandardActions::StandardAction actionType, QString name,
-        QString text, QList<QKeySequence> defaultShortcuts)
+    return {};
+}
+
+struct ActionSpec {
+    static ActionSpec registered(KiriViewApplication::ActionId actionId, QString text,
+        QString iconName, QList<QKeySequence> defaultShortcuts)
     {
-        return ActionSpec { ActionSpecKind::Standard, actionType, std::move(name), std::move(text),
-            QString(), std::move(defaultShortcuts) };
+        return ActionSpec { ActionSpecKind::Registered, KStandardActions::Open,
+            applicationActionName(actionId), std::move(text), std::move(iconName),
+            std::move(defaultShortcuts) };
+    }
+
+    static ActionSpec standard(KiriViewApplication::ActionId actionId,
+        KStandardActions::StandardAction actionType, QString text,
+        QList<QKeySequence> defaultShortcuts)
+    {
+        return ActionSpec { ActionSpecKind::Standard, actionType, applicationActionName(actionId),
+            std::move(text), QString(), std::move(defaultShortcuts) };
     }
 
     ActionSpecKind kind;
@@ -119,57 +183,61 @@ KiriViewApplication::MenuPresentation toMenuPresentation(int value)
 
 ActionSpec openActionSpec()
 {
-    return ActionSpec::standard(KStandardActions::Open, QStringLiteral("file_open"),
+    return ActionSpec::standard(KiriViewApplication::FileOpenAction, KStandardActions::Open,
         QStringLiteral("Open"), standardShortcuts(QKeySequence::Open));
 }
 
 std::vector<ActionSpec> actionSpecs()
 {
     return {
-        ActionSpec::registered(QStringLiteral("go_previous_archive"),
+        ActionSpec::registered(KiriViewApplication::GoPreviousArchiveAction,
             QStringLiteral("Previous Archive"), QStringLiteral("go-previous-symbolic"),
             shortcutList({ "[" })),
-        ActionSpec::registered(QStringLiteral("go_next_archive"), QStringLiteral("Next Archive"),
-            QStringLiteral("go-next-symbolic"), shortcutList({ "]" })),
-        ActionSpec::registered(QStringLiteral("go_previous_image"), QStringLiteral("Previous"),
-            QStringLiteral("go-up-symbolic"), standardShortcuts(QKeySequence::MoveToPreviousPage)),
-        ActionSpec::registered(QStringLiteral("go_next_image"), QStringLiteral("Next"),
+        ActionSpec::registered(KiriViewApplication::GoNextArchiveAction,
+            QStringLiteral("Next Archive"), QStringLiteral("go-next-symbolic"),
+            shortcutList({ "]" })),
+        ActionSpec::registered(KiriViewApplication::GoPreviousImageAction,
+            QStringLiteral("Previous"), QStringLiteral("go-up-symbolic"),
+            standardShortcuts(QKeySequence::MoveToPreviousPage)),
+        ActionSpec::registered(KiriViewApplication::GoNextImageAction, QStringLiteral("Next"),
             QStringLiteral("go-down-symbolic"), standardShortcuts(QKeySequence::MoveToNextPage)),
-        ActionSpec::registered(QStringLiteral("go_first_image"), QStringLiteral("First Image"),
-            QStringLiteral("go-first-symbolic"), shortcutList({ "Ctrl+Home", "Home" })),
-        ActionSpec::registered(QStringLiteral("go_last_image"), QStringLiteral("Last Image"),
+        ActionSpec::registered(KiriViewApplication::GoFirstImageAction,
+            QStringLiteral("First Image"), QStringLiteral("go-first-symbolic"),
+            shortcutList({ "Ctrl+Home", "Home" })),
+        ActionSpec::registered(KiriViewApplication::GoLastImageAction, QStringLiteral("Last Image"),
             QStringLiteral("go-last-symbolic"), shortcutList({ "Ctrl+End", "End" })),
-        ActionSpec::standard(KStandardActions::ZoomIn, QStringLiteral("view_zoom_in"),
+        ActionSpec::standard(KiriViewApplication::ViewZoomInAction, KStandardActions::ZoomIn,
             QStringLiteral("Zoom In"), shortcutList({ "Ctrl+=", "Ctrl++", "=", "+" })),
-        ActionSpec::standard(KStandardActions::ZoomOut, QStringLiteral("view_zoom_out"),
+        ActionSpec::standard(KiriViewApplication::ViewZoomOutAction, KStandardActions::ZoomOut,
             QStringLiteral("Zoom Out"), shortcutList({ "-", "Ctrl+-" })),
-        ActionSpec::standard(KStandardActions::FitToPage, QStringLiteral("view_fit"),
+        ActionSpec::standard(KiriViewApplication::ViewFitAction, KStandardActions::FitToPage,
             QStringLiteral("Fit"), shortcutList({ "1" })),
-        ActionSpec::standard(KStandardActions::FitToHeight, QStringLiteral("view_fit_height"),
-            QStringLiteral("Fit Height"), shortcutList({ "2" })),
-        ActionSpec::standard(KStandardActions::FitToWidth, QStringLiteral("view_fit_width"),
+        ActionSpec::standard(KiriViewApplication::ViewFitHeightAction,
+            KStandardActions::FitToHeight, QStringLiteral("Fit Height"), shortcutList({ "2" })),
+        ActionSpec::standard(KiriViewApplication::ViewFitWidthAction, KStandardActions::FitToWidth,
             QStringLiteral("Fit Width"), shortcutList({ "3" })),
-        ActionSpec::standard(KStandardActions::ActualSize, QStringLiteral("view_actual_size"),
-            QStringLiteral("Actual Size"), shortcutList({ "0" })),
-        ActionSpec::registered(QStringLiteral("view_pan_left"), QStringLiteral("Pan Left"),
+        ActionSpec::standard(KiriViewApplication::ViewActualSizeAction,
+            KStandardActions::ActualSize, QStringLiteral("Actual Size"), shortcutList({ "0" })),
+        ActionSpec::registered(KiriViewApplication::ViewPanLeftAction, QStringLiteral("Pan Left"),
             QString(), shortcutList({ "Left" })),
-        ActionSpec::registered(QStringLiteral("view_pan_right"), QStringLiteral("Pan Right"),
+        ActionSpec::registered(KiriViewApplication::ViewPanRightAction, QStringLiteral("Pan Right"),
             QString(), shortcutList({ "Right" })),
-        ActionSpec::registered(QStringLiteral("view_pan_up"), QStringLiteral("Pan Up"), QString(),
-            shortcutList({ "Up" })),
-        ActionSpec::registered(QStringLiteral("view_pan_down"), QStringLiteral("Pan Down"),
+        ActionSpec::registered(KiriViewApplication::ViewPanUpAction, QStringLiteral("Pan Up"),
+            QString(), shortcutList({ "Up" })),
+        ActionSpec::registered(KiriViewApplication::ViewPanDownAction, QStringLiteral("Pan Down"),
             QString(), shortcutList({ "Down" })),
-        ActionSpec::registered(QStringLiteral("view_pan_top_left"), QStringLiteral("Top Left"),
-            QString(), shortcutList({ "<" })),
-        ActionSpec::registered(QStringLiteral("view_pan_bottom_right"),
+        ActionSpec::registered(KiriViewApplication::ViewPanTopLeftAction,
+            QStringLiteral("Top Left"), QString(), shortcutList({ "<" })),
+        ActionSpec::registered(KiriViewApplication::ViewPanBottomRightAction,
             QStringLiteral("Bottom Right"), QString(), shortcutList({ ">" })),
-        ActionSpec::registered(QStringLiteral("view_scan_forward"), QStringLiteral("Scan Forward"),
-            QString(), shortcutList({ "." })),
-        ActionSpec::registered(QStringLiteral("view_scan_backward"),
+        ActionSpec::registered(KiriViewApplication::ViewScanForwardAction,
+            QStringLiteral("Scan Forward"), QString(), shortcutList({ "." })),
+        ActionSpec::registered(KiriViewApplication::ViewScanBackwardAction,
             QStringLiteral("Scan Backward"), QString(), shortcutList({ "," })),
-        ActionSpec::standard(KStandardActions::FullScreen, QStringLiteral("window_fullscreen"),
-            QStringLiteral("Fullscreen"), shortcutList({ "F", "F11" })),
-        ActionSpec::registered(QStringLiteral("help_shortcuts"),
+        ActionSpec::standard(KiriViewApplication::WindowFullscreenAction,
+            KStandardActions::FullScreen, QStringLiteral("Fullscreen"),
+            shortcutList({ "F", "F11" })),
+        ActionSpec::registered(KiriViewApplication::HelpShortcutsAction,
             QStringLiteral("Keyboard Shortcuts"),
             QStringLiteral("help-keyboard-shortcuts-symbolic"), shortcutList({ "?", "F1" })),
     };
@@ -208,6 +276,21 @@ QAction *KiriViewApplication::action(const QString &actionName)
     return AbstractKirigamiApplication::action(actionName);
 }
 
+QAction *KiriViewApplication::actionForId(ActionId actionId)
+{
+    const QString name = actionName(actionId);
+    if (name.isEmpty()) {
+        return nullptr;
+    }
+
+    return action(name);
+}
+
+QString KiriViewApplication::actionName(ActionId actionId) const
+{
+    return applicationActionName(actionId);
+}
+
 QList<QKeySequence> KiriViewApplication::shortcuts(const QString &actionName) const
 {
     const QAction *registeredAction = const_cast<KiriViewApplication *>(this)->action(actionName);
@@ -218,10 +301,25 @@ QList<QKeySequence> KiriViewApplication::shortcuts(const QString &actionName) co
     return registeredAction->shortcuts();
 }
 
+QList<QKeySequence> KiriViewApplication::shortcutsForId(ActionId actionId) const
+{
+    const QString name = actionName(actionId);
+    if (name.isEmpty()) {
+        return {};
+    }
+
+    return shortcuts(name);
+}
+
 QList<QKeySequence> KiriViewApplication::shortcutsWithCommandModifier(
     const QString &actionName) const
 {
     return filterShortcutsByCommandModifier(shortcuts(actionName), true);
+}
+
+QList<QKeySequence> KiriViewApplication::shortcutsWithCommandModifierForId(ActionId actionId) const
+{
+    return filterShortcutsByCommandModifier(shortcutsForId(actionId), true);
 }
 
 QList<QKeySequence> KiriViewApplication::shortcutsWithoutCommandModifier(
@@ -230,9 +328,20 @@ QList<QKeySequence> KiriViewApplication::shortcutsWithoutCommandModifier(
     return filterShortcutsByCommandModifier(shortcuts(actionName), false);
 }
 
+QList<QKeySequence> KiriViewApplication::shortcutsWithoutCommandModifierForId(
+    ActionId actionId) const
+{
+    return filterShortcutsByCommandModifier(shortcutsForId(actionId), false);
+}
+
 QString KiriViewApplication::shortcutText(const QString &actionName) const
 {
     return shortcutListText(shortcuts(actionName));
+}
+
+QString KiriViewApplication::shortcutTextForId(ActionId actionId) const
+{
+    return shortcutListText(shortcutsForId(actionId));
 }
 
 void KiriViewApplication::setupActions()
@@ -250,7 +359,7 @@ void KiriViewApplication::setupActions()
 
     addAction(openActionSpec());
 
-    if (QAction *quitAction = action(QStringLiteral("file_quit"))) {
+    if (QAction *quitAction = actionForId(FileQuitAction)) {
         finishRegisteredAction(quitAction, quitAction->text(), shortcutList({ "Q", "Ctrl+Q" }));
     }
 
@@ -259,7 +368,7 @@ void KiriViewApplication::setupActions()
     }
 
     m_showMenuBarAction
-        = addStandardAction(KStandardActions::ShowMenubar, QStringLiteral("options_show_menubar"),
+        = addStandardAction(KStandardActions::ShowMenubar, actionName(OptionsShowMenubarAction),
             QStringLiteral("Show Menubar"), QList<QKeySequence> {});
     m_showMenuBarAction->setCheckable(true);
     connect(m_showMenuBarAction, &QAction::triggered, this,

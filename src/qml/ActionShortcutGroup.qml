@@ -8,18 +8,18 @@ import QtQuick
 Item {
     id: root
 
-    required property var actionNames
+    required property var actionIds
     required property var application
     property int shortcutFilter: ConfiguredActionShortcut.AllShortcuts
     property bool shortcutsEnabled: true
 
     Repeater {
-        model: root.actionNames
+        model: root.actionIds
 
         ConfiguredActionShortcut {
-            required property string modelData
+            required property int modelData
 
-            actionName: modelData
+            actionId: modelData
             application: root.application
             shortcutFilter: root.shortcutFilter
             shortcutsEnabled: root.shortcutsEnabled

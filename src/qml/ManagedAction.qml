@@ -9,7 +9,7 @@ Item {
     id: root
 
     required property KiriViewApplication application
-    required property string actionName
+    required property int actionId
     property bool bindEnabled: false
     property bool bindChecked: false
     property bool actionEnabled: sourceAction !== null && sourceAction !== undefined && sourceAction.enabled
@@ -18,7 +18,7 @@ Item {
     property bool proxyCheckable: sourceAction !== null && sourceAction !== undefined && sourceAction.checkable
     property bool proxyChecked: sourceAction !== null && sourceAction !== undefined && sourceAction.checked
     property int displayHint: 0
-    readonly property var sourceAction: application.action(actionName)
+    readonly property var sourceAction: application.actionForId(actionId)
     readonly property ActionProxy proxy: ActionProxy {
         checkableOverride: root.proxyCheckable
         checkedOverride: root.proxyChecked

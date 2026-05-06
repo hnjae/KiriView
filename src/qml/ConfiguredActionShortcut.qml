@@ -13,22 +13,22 @@ Item {
     }
 
     required property var application
-    required property string actionName
+    required property int actionId
     property int shortcutFilter: ConfiguredActionShortcut.AllShortcuts
     property bool shortcutsEnabled: true
     readonly property int shortcutRevision: application.shortcutRevision
-    readonly property var action: application.action(actionName)
+    readonly property var action: application.actionForId(actionId)
 
     function actionShortcuts() {
         root.shortcutRevision;
         switch (root.shortcutFilter) {
         case ConfiguredActionShortcut.WithCommandModifier:
-            return root.application.shortcutsWithCommandModifier(root.actionName);
+            return root.application.shortcutsWithCommandModifierForId(root.actionId);
         case ConfiguredActionShortcut.WithoutCommandModifier:
-            return root.application.shortcutsWithoutCommandModifier(root.actionName);
+            return root.application.shortcutsWithoutCommandModifierForId(root.actionId);
         case ConfiguredActionShortcut.AllShortcuts:
         default:
-            return root.application.shortcuts(root.actionName);
+            return root.application.shortcutsForId(root.actionId);
         }
     }
 
