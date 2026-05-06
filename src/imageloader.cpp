@@ -100,8 +100,8 @@ void ImageLoader::startImageLoad(ImageLoadSession session)
         return;
     }
 
-    m_decodeJob.start(ImageDecodeRequest { session.id, session.location.imageUrl(),
-        session.location.archiveDocument(), m_firstDisplayContext });
+    m_decodeJob.start(
+        ImageDecodeRequest::fromLocation(session.id, session.location, m_firstDisplayContext));
 }
 
 void ImageLoader::startArchiveLoad(ImageLoadSession session)
@@ -147,8 +147,8 @@ void ImageLoader::cancel()
 std::optional<ImageLoadSession> ImageLoader::currentLoadSessionForDecodeRequest(
     const ImageDecodeRequest &request) const
 {
-    if (!m_loadSession.has_value() || m_loadSession->id != request.id
-        || !sameNormalizedUrl(m_loadSession->location.imageUrl(), request.imageUrl)) {
+    if (!m_loadSession.has_value() || m_loadSession->id != request.id()
+        || !sameNormalizedUrl(m_loadSession->location.imageUrl(), request.imageUrl())) {
         return std::nullopt;
     }
 

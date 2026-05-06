@@ -116,8 +116,8 @@ void ImagePredecodeCoordinator::startPredecodeImageLoad(
     const QUrl normalizedUrl = normalizedImageUrl(url);
     m_activePredecodeUrl = normalizedUrl;
     m_activePredecodeArchiveDocument = archiveDocument;
-    m_decodeJob.start(
-        ImageDecodeRequest { generation, url, archiveDocument, m_firstDisplayContext });
+    m_decodeJob.start(ImageDecodeRequest::fromLocation(
+        generation, DisplayedImageLocation::fromUrl(url, archiveDocument), m_firstDisplayContext));
 }
 
 void ImagePredecodeCoordinator::finishPredecodeImageLoadError(const ImageDecodeRequest &request)
@@ -126,7 +126,7 @@ void ImagePredecodeCoordinator::finishPredecodeImageLoadError(const ImageDecodeR
         return;
     }
 
-    startNextPredecodeImageLoad(request.id);
+    startNextPredecodeImageLoad(request.id());
 }
 
 void ImagePredecodeCoordinator::finishPredecodeImageDecode(
@@ -140,10 +140,10 @@ void ImagePredecodeCoordinator::finishPredecodeImageDecode(
 
     const auto *staticImage = std::get_if<StaticDecodedImage>(&result);
     if (staticImage != nullptr) {
-        m_cache.cacheImage(request.imageUrl, *archiveDocument, staticImage->staticImage);
+        m_cache.cacheImage(request.imageUrl(), *archiveDocument, staticImage->staticImage);
     }
 
-    startNextPredecodeImageLoad(request.id);
+    startNextPredecodeImageLoad(request.id());
 }
 
 std::optional<ArchiveDocumentLocation>
@@ -160,8 +160,8 @@ ImagePredecodeCoordinator::takeActivePredecodeArchiveDocument(const ImageDecodeR
 
 bool ImagePredecodeCoordinator::predecodeRequestIsActive(const ImageDecodeRequest &request) const
 {
-    return m_generation.accepts(request.id)
-        && normalizedImageUrl(request.imageUrl) == m_activePredecodeUrl;
+    return m_generation.accepts(request.id())
+        && normalizedImageUrl(request.imageUrl()) == m_activePredecodeUrl;
 }
 
 void ImagePredecodeCoordinator::clearActivePredecodeRequest()

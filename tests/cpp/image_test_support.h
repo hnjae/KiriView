@@ -43,9 +43,9 @@ public:
     {
         auto load = std::make_shared<ManualImageDataLoad>();
         load->object = new QObject(receiver);
-        load->url = std::move(request.imageUrl);
-        load->archiveDocument = std::move(request.archiveDocument);
-        load->firstDisplay = request.firstDisplay;
+        load->url = request.imageUrl();
+        load->archiveDocument = request.archiveDocument();
+        load->firstDisplay = request.firstDisplay();
         load->dataCallback = std::move(callback);
         load->errorCallback = std::move(errorCallback);
         loads.push_back(load);

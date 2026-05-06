@@ -47,7 +47,7 @@ void TestImageDecodeJob::cancelSuppressesPendingLoad()
         decodeJobCallbacks([&decodedCount](KiriView::ImageDecodeRequest,
                                KiriView::DecodedImageResult) { ++decodedCount; }));
 
-    decodeJob.start(KiriView::ImageDecodeRequest { 1, indexedImageUrl(1) });
+    decodeJob.start(KiriView::ImageDecodeRequest::fromUrl(1, indexedImageUrl(1)));
     QCOMPARE(dataLoader.loads.size(), std::size_t(1));
     decodeJob.cancel();
 
@@ -69,8 +69,8 @@ void TestImageDecodeJob::staleLoadResultIsIgnored()
                 decodedRequests.push_back(request);
             }));
 
-    decodeJob.start(KiriView::ImageDecodeRequest { 1, indexedImageUrl(1) });
-    decodeJob.start(KiriView::ImageDecodeRequest { 2, indexedImageUrl(2) });
+    decodeJob.start(KiriView::ImageDecodeRequest::fromUrl(1, indexedImageUrl(1)));
+    decodeJob.start(KiriView::ImageDecodeRequest::fromUrl(2, indexedImageUrl(2)));
     QCOMPARE(dataLoader.loads.size(), std::size_t(2));
     QVERIFY(dataLoader.loads.front()->canceled);
 
@@ -78,8 +78,8 @@ void TestImageDecodeJob::staleLoadResultIsIgnored()
     dataLoader.loads.back()->dataCallback(QByteArrayLiteral("ok"));
 
     QTRY_COMPARE(decodedRequests.size(), std::size_t(1));
-    QCOMPARE(decodedRequests.front().id, quint64(2));
-    QCOMPARE(decodedRequests.front().imageUrl, indexedImageUrl(2));
+    QCOMPARE(decodedRequests.front().id(), quint64(2));
+    QCOMPARE(decodedRequests.front().imageUrl(), indexedImageUrl(2));
 }
 
 void TestImageDecodeJob::loadErrorsAreDeliveredForCurrentRequest()
@@ -96,11 +96,11 @@ void TestImageDecodeJob::loadErrorsAreDeliveredForCurrentRequest()
                 errorString = error;
             }));
 
-    decodeJob.start(KiriView::ImageDecodeRequest { 3, indexedImageUrl(3) });
+    decodeJob.start(KiriView::ImageDecodeRequest::fromUrl(3, indexedImageUrl(3)));
     dataLoader.loads.front()->errorCallback(QStringLiteral("missing"));
 
     QCOMPARE(errorRequests.size(), std::size_t(1));
-    QCOMPARE(errorRequests.front().id, quint64(3));
+    QCOMPARE(errorRequests.front().id(), quint64(3));
     QCOMPARE(errorString, QStringLiteral("missing"));
     QVERIFY(!decodeJob.hasActiveRequest());
 }
@@ -116,7 +116,7 @@ void TestImageDecodeJob::decodeErrorsAreDeliveredAsResults()
                 decodedResult = std::move(result);
             }));
 
-    decodeJob.start(KiriView::ImageDecodeRequest { 4, indexedImageUrl(4) });
+    decodeJob.start(KiriView::ImageDecodeRequest::fromUrl(4, indexedImageUrl(4)));
     dataLoader.loads.front()->dataCallback(QByteArrayLiteral("bad"));
 
     QTRY_VERIFY(decodedResult.has_value());
@@ -139,14 +139,13 @@ void TestImageDecodeJob::decodeRequestIsPassedToDecoder()
             }),
         decodeJobCallbacks([](KiriView::ImageDecodeRequest, KiriView::DecodedImageResult) {}));
 
-    decodeJob.start(KiriView::ImageDecodeRequest { 5, indexedImageUrl(5),
-        KiriView::ArchiveDocumentLocation::none(),
-        KiriView::ImageFirstDisplayDecodeContext { QSize(320, 200) } });
+    decodeJob.start(KiriView::ImageDecodeRequest::fromUrl(
+        5, indexedImageUrl(5), KiriView::ImageFirstDisplayDecodeContext { QSize(320, 200) }));
     dataLoader.loads.front()->dataCallback(QByteArrayLiteral("ok"));
 
     QTRY_VERIFY(decoderRequest.has_value());
-    QCOMPARE(decoderRequest->id, quint64(5));
-    QCOMPARE(decoderRequest->firstDisplay.physicalViewportSize, QSize(320, 200));
+    QCOMPARE(decoderRequest->id(), quint64(5));
+    QCOMPARE(decoderRequest->firstDisplay().physicalViewportSize, QSize(320, 200));
 }
 
 QTEST_GUILESS_MAIN(TestImageDecodeJob)

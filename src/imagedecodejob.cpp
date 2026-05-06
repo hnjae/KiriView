@@ -27,7 +27,7 @@ ImageDecodeJob::ImageDecodeJob(
 void ImageDecodeJob::start(ImageDecodeRequest request)
 {
     cancel();
-    if (request.imageUrl.isEmpty() || !m_dataLoader || !m_dataDecoder) {
+    if (request.isEmpty() || !m_dataLoader || !m_dataDecoder) {
         return;
     }
 
@@ -77,8 +77,8 @@ void ImageDecodeJob::startDecode(QByteArray data, ImageDecodeRequest request)
 
 bool ImageDecodeJob::isCurrentRequest(const ImageDecodeRequest &request) const
 {
-    return m_request.has_value() && m_request->id == request.id
-        && sameNormalizedUrl(m_request->imageUrl, request.imageUrl);
+    return m_request.has_value() && m_request->id() == request.id()
+        && sameNormalizedUrl(m_request->imageUrl(), request.imageUrl());
 }
 
 void ImageDecodeJob::clearRequest(const ImageDecodeRequest &request)

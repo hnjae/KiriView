@@ -39,7 +39,7 @@ KiriView::DecodedImageResult openedStaticImageResult(
     }
 
     return KiriView::staticDecodedImageResult(
-        std::move(source), request.firstDisplay, &errorString);
+        std::move(source), request.firstDisplay(), &errorString);
 }
 }
 

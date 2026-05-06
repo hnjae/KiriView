@@ -202,11 +202,11 @@ ImageIoJob startArchiveImageCandidateList(QObject *receiver,
 ImageIoJob startStoredImageDataLoad(QObject *receiver, ImageDecodeRequest request,
     ImageDataCallback callback, ErrorCallback errorCallback)
 {
-    if (archiveDocumentContainsUrl(request.archiveDocument, request.imageUrl)) {
+    if (archiveDocumentContainsUrl(request.archiveDocument(), request.imageUrl())) {
         return startArchiveWorkerJob(
             receiver,
             [request = std::move(request)]() {
-                return loadArchiveDocumentImageData(request.archiveDocument, request.imageUrl);
+                return loadArchiveDocumentImageData(request.archiveDocument(), request.imageUrl());
             },
             [callback = std::move(callback), errorCallback = std::move(errorCallback)](
                 ArchiveImageDataResult result) mutable {
@@ -218,7 +218,7 @@ ImageIoJob startStoredImageDataLoad(QObject *receiver, ImageDecodeRequest reques
             });
     }
 
-    auto *job = KIO::storedGet(request.imageUrl, KIO::NoReload, KIO::HideProgressInfo);
+    auto *job = KIO::storedGet(request.imageUrl(), KIO::NoReload, KIO::HideProgressInfo);
     ImageIoJob ioJob(job, cancelKJob);
     auto jobState = ioJob.state();
 

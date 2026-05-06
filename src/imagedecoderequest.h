@@ -9,13 +9,45 @@
 
 #include <QUrl>
 #include <QtGlobal>
+#include <utility>
 
 namespace KiriView {
-struct ImageDecodeRequest {
-    quint64 id = 0;
-    QUrl imageUrl;
-    ArchiveDocumentLocation archiveDocument;
-    ImageFirstDisplayDecodeContext firstDisplay;
+class ImageDecodeRequest
+{
+public:
+    ImageDecodeRequest() = default;
+
+    static ImageDecodeRequest fromUrl(
+        quint64 id, QUrl imageUrl, ImageFirstDisplayDecodeContext firstDisplay = {})
+    {
+        return fromLocation(id, DisplayedImageLocation::fromUrl(std::move(imageUrl)), firstDisplay);
+    }
+
+    static ImageDecodeRequest fromLocation(quint64 id, DisplayedImageLocation location,
+        ImageFirstDisplayDecodeContext firstDisplay = {})
+    {
+        return ImageDecodeRequest(id, std::move(location), firstDisplay);
+    }
+
+    quint64 id() const { return m_id; }
+    const DisplayedImageLocation &location() const { return m_location; }
+    const QUrl &imageUrl() const { return m_location.imageUrl(); }
+    const ArchiveDocumentLocation &archiveDocument() const { return m_location.archiveDocument(); }
+    const ImageFirstDisplayDecodeContext &firstDisplay() const { return m_firstDisplay; }
+    bool isEmpty() const { return m_location.isEmpty(); }
+
+private:
+    ImageDecodeRequest(
+        quint64 id, DisplayedImageLocation location, ImageFirstDisplayDecodeContext firstDisplay)
+        : m_id(id)
+        , m_location(std::move(location))
+        , m_firstDisplay(firstDisplay)
+    {
+    }
+
+    quint64 m_id = 0;
+    DisplayedImageLocation m_location;
+    ImageFirstDisplayDecodeContext m_firstDisplay;
 };
 }
 
