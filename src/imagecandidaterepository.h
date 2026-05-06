@@ -99,6 +99,12 @@ private:
     ImageIoJob loadImagesInContainer(QObject *receiver,
         const ContainerNavigationCandidate &container, ImageCandidatesCallback callback,
         CandidateRepositoryErrorCallback errorCallback) const;
+    ImageIoJob loadDirectoryImagesInContainer(QObject *receiver,
+        const ContainerNavigationCandidate &container, ImageCandidatesCallback callback,
+        CandidateRepositoryErrorCallback errorCallback) const;
+    ImageIoJob loadComicBookArchiveImagesInContainer(QObject *receiver,
+        const ContainerNavigationCandidate &container, ImageCandidatesCallback callback,
+        CandidateRepositoryErrorCallback errorCallback) const;
 
     ImageNavigationCandidateProvider m_provider;
 };

@@ -53,6 +53,16 @@ void reportCandidateRepositoryError(const QUrl &containerUrl,
     KiriView::invokeIfSet(errorCallback, containerUrl, error, errorString);
 }
 
+KiriView::ErrorCallback containerLoadErrorCallback(
+    QUrl containerUrl, KiriView::CandidateRepositoryErrorCallback errorCallback)
+{
+    return [containerUrl = std::move(containerUrl), errorCallback = std::move(errorCallback)](
+               const QString &errorString) {
+        reportCandidateRepositoryError(containerUrl,
+            KiriView::ImageCandidateRepositoryError::Generic, errorString, errorCallback);
+    };
+}
+
 struct FirstContainerImageSelector {
     QUrl containerUrl;
     KiriView::ContainerImageCallback imageCallback;
@@ -204,26 +214,41 @@ ImageIoJob ImageCandidateRepository::loadImagesInContainer(QObject *receiver,
     const ContainerNavigationCandidate &container, ImageCandidatesCallback callback,
     CandidateRepositoryErrorCallback errorCallback) const
 {
-    if (container.type == ContainerNavigationCandidateType::ComicBookArchive) {
-        const std::optional<ArchiveDocumentLocation> archiveDocument
-            = archiveDocumentLocationForLocalArchiveUrl(container.url);
-        if (!archiveDocument.has_value() || !archiveDocument->isComicBook()) {
-            reportCandidateRepositoryError(container.url,
-                ImageCandidateRepositoryError::InvalidComicBookArchive, QString(), errorCallback);
-            return ImageIoJob();
-        }
-
-        return loadArchiveImages(receiver, *archiveDocument, std::move(callback),
-            [containerUrl = container.url, errorCallback](const QString &errorString) {
-                reportCandidateRepositoryError(containerUrl, ImageCandidateRepositoryError::Generic,
-                    errorString, errorCallback);
-            });
+    switch (container.type) {
+    case ContainerNavigationCandidateType::Directory:
+        return loadDirectoryImagesInContainer(
+            receiver, container, std::move(callback), std::move(errorCallback));
+    case ContainerNavigationCandidateType::ComicBookArchive:
+        return loadComicBookArchiveImagesInContainer(
+            receiver, container, std::move(callback), std::move(errorCallback));
     }
 
+    reportCandidateRepositoryError(
+        container.url, ImageCandidateRepositoryError::Generic, QString(), errorCallback);
+    return ImageIoJob();
+}
+
+ImageIoJob ImageCandidateRepository::loadDirectoryImagesInContainer(QObject *receiver,
+    const ContainerNavigationCandidate &container, ImageCandidatesCallback callback,
+    CandidateRepositoryErrorCallback errorCallback) const
+{
     return loadDirectoryImages(receiver, container.url, std::move(callback),
-        [containerUrl = container.url, errorCallback](const QString &errorString) {
-            reportCandidateRepositoryError(
-                containerUrl, ImageCandidateRepositoryError::Generic, errorString, errorCallback);
-        });
+        containerLoadErrorCallback(container.url, std::move(errorCallback)));
+}
+
+ImageIoJob ImageCandidateRepository::loadComicBookArchiveImagesInContainer(QObject *receiver,
+    const ContainerNavigationCandidate &container, ImageCandidatesCallback callback,
+    CandidateRepositoryErrorCallback errorCallback) const
+{
+    const std::optional<ArchiveDocumentLocation> archiveDocument
+        = archiveDocumentLocationForLocalArchiveUrl(container.url);
+    if (!archiveDocument.has_value() || !archiveDocument->isComicBook()) {
+        reportCandidateRepositoryError(container.url,
+            ImageCandidateRepositoryError::InvalidComicBookArchive, QString(), errorCallback);
+        return ImageIoJob();
+    }
+
+    return loadArchiveImages(receiver, *archiveDocument, std::move(callback),
+        containerLoadErrorCallback(container.url, std::move(errorCallback)));
 }
 }
