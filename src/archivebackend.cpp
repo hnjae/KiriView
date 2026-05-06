@@ -3,126 +3,52 @@
 
 #include "archivebackend.h"
 
+#include "archivebackend_p.h"
 #include "archiveformat.h"
 #include "archivepath.h"
 #include "imageformatregistry.h"
-#include "imagenavigationmodel.h"
 
-#include <K7Zip>
-#include <KArchive>
-#include <KArchiveDirectory>
-#include <KArchiveFile>
-#include <KTar>
-#include <KZip>
-#include <QFile>
-#include <QIODevice>
-#include <archive.h>
-#include <archive_entry.h>
-#include <cstddef>
-#include <memory>
 #include <optional>
 #include <utility>
 
 namespace {
-using KiriView::ArchiveDocumentLocation;
-using KiriView::archiveEntryPathForUrl;
-using KiriView::archiveEntryUrl;
-using KiriView::ArchiveError;
-using KiriView::ArchiveImageCandidates;
-using KiriView::ArchiveImageCandidatesResult;
-using KiriView::ArchiveImageData;
-using KiriView::ArchiveImageDataResult;
-using KiriView::ArchiveStorageBackend;
-using KiriView::ImageNavigationCandidate;
-using KiriView::normalizedArchiveEntryPath;
-using LibArchiveReader = std::unique_ptr<archive, int (*)(archive *)>;
+namespace Backend = KiriView::ArchiveBackendDetail;
 
-class ScopedKArchive final
+std::optional<QString> archiveImageEntryPathForRead(
+    const KiriView::ArchiveDocumentLocation &archiveDocument, const QUrl &imageUrl)
 {
-public:
-    ScopedKArchive() = default;
-
-    explicit ScopedKArchive(std::unique_ptr<KArchive> archive)
-        : m_archive(std::move(archive))
-    {
+    const QString entryPath = KiriView::archiveEntryPathForUrl(archiveDocument, imageUrl);
+    if (archiveDocument.isEmpty() || entryPath.isEmpty()) {
+        return std::nullopt;
     }
 
-    ~ScopedKArchive() { close(); }
+    return entryPath;
+}
 
-    ScopedKArchive(const ScopedKArchive &) = delete;
-    ScopedKArchive &operator=(const ScopedKArchive &) = delete;
-    ScopedKArchive(ScopedKArchive &&) noexcept = default;
-    ScopedKArchive &operator=(ScopedKArchive &&other) noexcept
-    {
-        if (this == &other) {
-            return *this;
-        }
-
-        close();
-        m_archive = std::move(other.m_archive);
-        return *this;
-    }
-
-    const KArchiveDirectory *directory() const
-    {
-        return m_archive == nullptr ? nullptr : m_archive->directory();
-    }
-
-    explicit operator bool() const { return m_archive != nullptr; }
-
-private:
-    void close()
-    {
-        if (m_archive != nullptr) {
-            m_archive->close();
-        }
-    }
-
-    std::unique_ptr<KArchive> m_archive;
-};
-
-struct OpenKArchiveResult {
-    ScopedKArchive archive;
-    QString errorString;
-};
-
-using ArchiveImageCandidatesLoader
-    = ArchiveImageCandidatesResult (*)(const ArchiveDocumentLocation &);
-using ArchiveImageDataLoader
-    = ArchiveImageDataResult (*)(const ArchiveDocumentLocation &, const QString &);
-
-struct ArchiveBackendOperations {
-    ArchiveImageCandidatesLoader loadImageCandidates;
-    ArchiveImageDataLoader loadImageData;
-};
-
-std::unique_ptr<KArchive> createArchive(const KiriView::ArchiveDocumentLocation &archiveDocument)
+const Backend::ArchiveBackendOperations *archiveBackendOperationsForDocument(
+    const KiriView::ArchiveDocumentLocation &archiveDocument)
 {
-    const QString filePath = archiveDocument.fileUrl().toLocalFile();
-    if (filePath.isEmpty()) {
-        return nullptr;
-    }
-
     switch (KiriView::archiveStorageBackendForRootScheme(archiveDocument.rootUrl().scheme())) {
-    case ArchiveStorageBackend::KZip:
-        return std::make_unique<KZip>(filePath);
-    case ArchiveStorageBackend::KTar:
-        return std::make_unique<KTar>(filePath);
-    case ArchiveStorageBackend::K7Zip:
-        return std::make_unique<K7Zip>(filePath);
-    case ArchiveStorageBackend::LibArchive:
-    case ArchiveStorageBackend::None:
+    case KiriView::ArchiveStorageBackend::KZip:
+    case KiriView::ArchiveStorageBackend::KTar:
+    case KiriView::ArchiveStorageBackend::K7Zip:
+        return Backend::kArchiveBackendOperations();
+    case KiriView::ArchiveStorageBackend::LibArchive:
+        return Backend::libArchiveBackendOperations();
+    case KiriView::ArchiveStorageBackend::None:
         return nullptr;
     }
 
     return nullptr;
 }
+}
 
-std::optional<KiriView::ImageNavigationCandidate> archiveImageCandidate(
-    const KiriView::ArchiveDocumentLocation &archiveDocument, const QString &entryPath)
+namespace KiriView::ArchiveBackendDetail {
+std::optional<ImageNavigationCandidate> archiveImageCandidate(
+    const ArchiveDocumentLocation &archiveDocument, const QString &entryPath)
 {
     const QString candidateName = normalizedArchiveEntryPath(entryPath);
-    if (candidateName.isEmpty() || !KiriView::isSupportedImageFileName(candidateName)) {
+    if (candidateName.isEmpty() || !isSupportedImageFileName(candidateName)) {
         return std::nullopt;
     }
 
@@ -131,46 +57,10 @@ std::optional<KiriView::ImageNavigationCandidate> archiveImageCandidate(
         return std::nullopt;
     }
 
-    return KiriView::ImageNavigationCandidate { url, candidateName };
+    return ImageNavigationCandidate { url, candidateName };
 }
 
-void appendArchiveDirectoryImageCandidates(
-    std::vector<KiriView::ImageNavigationCandidate> *candidates, const KArchiveDirectory *directory,
-    const KiriView::ArchiveDocumentLocation &archiveDocument, const QString &prefix)
-{
-    if (directory == nullptr) {
-        return;
-    }
-
-    const QStringList entries = directory->entries();
-    candidates->reserve(candidates->size() + static_cast<std::size_t>(entries.size()));
-    for (const QString &entryName : entries) {
-        const QString entryPath
-            = prefix.isEmpty() ? entryName : prefix + QLatin1Char('/') + entryName;
-        const KArchiveEntry *entry = directory->entry(entryName);
-        if (entry == nullptr) {
-            continue;
-        }
-
-        if (entry->isDirectory()) {
-            appendArchiveDirectoryImageCandidates(candidates,
-                static_cast<const KArchiveDirectory *>(entry), archiveDocument, entryPath);
-            continue;
-        }
-
-        if (!entry->isFile()) {
-            continue;
-        }
-
-        std::optional<KiriView::ImageNavigationCandidate> candidate
-            = archiveImageCandidate(archiveDocument, entryPath);
-        if (candidate.has_value()) {
-            candidates->push_back(std::move(*candidate));
-        }
-    }
-}
-
-QString fallbackArchiveOpenError(const KiriView::ArchiveDocumentLocation &archiveDocument)
+QString fallbackArchiveOpenError(const ArchiveDocumentLocation &archiveDocument)
 {
     const QString fileName = archiveDocument.fileUrl().fileName();
     if (fileName.isEmpty()) {
@@ -190,13 +80,8 @@ QString archiveImageReadError()
     return QStringLiteral("Could not read the selected archive image.");
 }
 
-template <typename Result> Result archiveErrorResult(QString errorString)
-{
-    return Result { ArchiveError { std::move(errorString) } };
-}
-
 ArchiveImageCandidatesResult archiveImageCandidatesResult(
-    std::vector<KiriView::ImageNavigationCandidate> candidates)
+    std::vector<ImageNavigationCandidate> candidates)
 {
     return ArchiveImageCandidates { std::move(candidates) };
 }
@@ -205,300 +90,6 @@ ArchiveImageDataResult archiveImageDataResult(QByteArray data)
 {
     return ArchiveImageData { std::move(data) };
 }
-
-std::optional<QString> archiveImageEntryPathForRead(
-    const ArchiveDocumentLocation &archiveDocument, const QUrl &imageUrl)
-{
-    const QString entryPath = archiveEntryPathForUrl(archiveDocument, imageUrl);
-    if (archiveDocument.isEmpty() || entryPath.isEmpty()) {
-        return std::nullopt;
-    }
-
-    return entryPath;
-}
-
-OpenKArchiveResult openKArchiveDocument(const KiriView::ArchiveDocumentLocation &archiveDocument)
-{
-    std::unique_ptr<KArchive> archive = createArchive(archiveDocument);
-    if (archive == nullptr) {
-        return OpenKArchiveResult { {}, fallbackArchiveOpenError(archiveDocument) };
-    }
-
-    if (!archive->open(QIODevice::ReadOnly)) {
-        const QString errorString = archive->errorString().isEmpty()
-            ? fallbackArchiveOpenError(archiveDocument)
-            : archive->errorString();
-        return OpenKArchiveResult { {}, errorString };
-    }
-
-    return OpenKArchiveResult { ScopedKArchive(std::move(archive)), QString() };
-}
-
-QString libArchiveErrorString(archive *reader, const QString &fallback)
-{
-    const char *message = reader == nullptr ? nullptr : archive_error_string(reader);
-    if (message == nullptr || message[0] == '\0') {
-        return fallback;
-    }
-
-    return QString::fromLocal8Bit(message);
-}
-
-LibArchiveReader makeLibArchiveReader()
-{
-    return LibArchiveReader(archive_read_new(), archive_read_free);
-}
-
-LibArchiveReader openLibArchiveReader(
-    const KiriView::ArchiveDocumentLocation &archiveDocument, QString *errorString)
-{
-    const QString filePath = archiveDocument.fileUrl().toLocalFile();
-    if (filePath.isEmpty()) {
-        *errorString = fallbackArchiveOpenError(archiveDocument);
-        return LibArchiveReader(nullptr, archive_read_free);
-    }
-
-    LibArchiveReader reader = makeLibArchiveReader();
-    if (reader == nullptr) {
-        *errorString = fallbackArchiveOpenError(archiveDocument);
-        return reader;
-    }
-
-    if (archive_read_support_filter_all(reader.get()) != ARCHIVE_OK
-        || archive_read_support_format_rar(reader.get()) != ARCHIVE_OK
-        || archive_read_support_format_rar5(reader.get()) != ARCHIVE_OK) {
-        *errorString
-            = libArchiveErrorString(reader.get(), fallbackArchiveOpenError(archiveDocument));
-        return LibArchiveReader(nullptr, archive_read_free);
-    }
-
-    const QByteArray encodedFilePath = QFile::encodeName(filePath);
-    if (archive_read_open_filename(reader.get(), encodedFilePath.constData(), 10240)
-        != ARCHIVE_OK) {
-        *errorString
-            = libArchiveErrorString(reader.get(), fallbackArchiveOpenError(archiveDocument));
-        return LibArchiveReader(nullptr, archive_read_free);
-    }
-
-    return reader;
-}
-
-QString libArchiveEntryPath(archive_entry *entry)
-{
-    const char *utf8Path = archive_entry_pathname_utf8(entry);
-    if (utf8Path != nullptr) {
-        return QString::fromUtf8(utf8Path);
-    }
-
-    const char *path = archive_entry_pathname(entry);
-    if (path == nullptr) {
-        return {};
-    }
-
-    return QFile::decodeName(path);
-}
-
-bool skipLibArchiveEntry(archive *reader, QString *errorString)
-{
-    if (archive_read_data_skip(reader) == ARCHIVE_OK) {
-        return true;
-    }
-
-    *errorString = libArchiveErrorString(reader, archiveImageReadError());
-    return false;
-}
-
-enum class LibArchiveEntryAction {
-    Continue,
-    Stop,
-};
-
-template <typename EntryHandler>
-bool visitLibArchiveEntries(archive *reader, const ArchiveDocumentLocation &archiveDocument,
-    QString *errorString, EntryHandler handleEntry)
-{
-    archive_entry *entry = nullptr;
-    while (true) {
-        const int status = archive_read_next_header(reader, &entry);
-        if (status == ARCHIVE_EOF) {
-            return true;
-        }
-        if (status != ARCHIVE_OK) {
-            *errorString = libArchiveErrorString(reader, fallbackArchiveOpenError(archiveDocument));
-            return false;
-        }
-
-        if (handleEntry(reader, entry) == LibArchiveEntryAction::Stop) {
-            return true;
-        }
-
-        if (!skipLibArchiveEntry(reader, errorString)) {
-            return false;
-        }
-    }
-}
-
-ArchiveImageCandidatesResult loadLibArchiveDocumentImageCandidates(
-    const ArchiveDocumentLocation &archiveDocument)
-{
-    QString errorString;
-    LibArchiveReader reader = openLibArchiveReader(archiveDocument, &errorString);
-    if (reader == nullptr) {
-        return archiveErrorResult<ArchiveImageCandidatesResult>(errorString);
-    }
-
-    std::vector<ImageNavigationCandidate> candidates;
-    const bool visitedEntries = visitLibArchiveEntries(
-        reader.get(), archiveDocument, &errorString, [&](archive *, archive_entry *entry) {
-            if (archive_entry_filetype(entry) == AE_IFREG) {
-                std::optional<ImageNavigationCandidate> candidate
-                    = archiveImageCandidate(archiveDocument, libArchiveEntryPath(entry));
-                if (candidate.has_value()) {
-                    candidates.push_back(std::move(*candidate));
-                }
-            }
-
-            return LibArchiveEntryAction::Continue;
-        });
-    if (!visitedEntries) {
-        return archiveErrorResult<ArchiveImageCandidatesResult>(errorString);
-    }
-
-    KiriView::sortImageNavigationCandidates(&candidates);
-    return archiveImageCandidatesResult(std::move(candidates));
-}
-
-ArchiveImageDataResult readLibArchiveEntryData(archive *reader, archive_entry *entry)
-{
-    QByteArray data;
-    char buffer[64 * 1024];
-    while (true) {
-        const la_ssize_t bytesRead = archive_read_data(reader, buffer, sizeof(buffer));
-        if (bytesRead == 0) {
-            break;
-        }
-        if (bytesRead < 0) {
-            return archiveErrorResult<ArchiveImageDataResult>(
-                libArchiveErrorString(reader, archiveImageReadError()));
-        }
-
-        data.append(buffer, static_cast<qsizetype>(bytesRead));
-    }
-
-    if (archive_entry_size_is_set(entry)) {
-        const la_int64_t expectedSize = archive_entry_size(entry);
-        if (expectedSize >= 0 && static_cast<qint64>(data.size()) != expectedSize) {
-            return archiveErrorResult<ArchiveImageDataResult>(archiveImageReadError());
-        }
-    }
-
-    return archiveImageDataResult(std::move(data));
-}
-
-ArchiveImageDataResult loadLibArchiveDocumentImageData(
-    const ArchiveDocumentLocation &archiveDocument, const QString &entryPath)
-{
-    QString errorString;
-    LibArchiveReader reader = openLibArchiveReader(archiveDocument, &errorString);
-    if (reader == nullptr) {
-        return archiveErrorResult<ArchiveImageDataResult>(errorString);
-    }
-
-    std::optional<ArchiveImageDataResult> result;
-    const bool visitedEntries = visitLibArchiveEntries(
-        reader.get(), archiveDocument, &errorString, [&](archive *reader, archive_entry *entry) {
-            const QString currentPath = normalizedArchiveEntryPath(libArchiveEntryPath(entry));
-            if (archive_entry_filetype(entry) == AE_IFREG && currentPath == entryPath) {
-                result = readLibArchiveEntryData(reader, entry);
-                return LibArchiveEntryAction::Stop;
-            }
-
-            return LibArchiveEntryAction::Continue;
-        });
-    if (!visitedEntries) {
-        return archiveErrorResult<ArchiveImageDataResult>(errorString);
-    }
-
-    if (result.has_value()) {
-        return std::move(*result);
-    }
-
-    return archiveErrorResult<ArchiveImageDataResult>(archiveImageNotFoundError());
-}
-
-ArchiveImageCandidatesResult loadKArchiveDocumentImageCandidates(
-    const ArchiveDocumentLocation &archiveDocument)
-{
-    OpenKArchiveResult opened = openKArchiveDocument(archiveDocument);
-    if (!opened.archive) {
-        return archiveErrorResult<ArchiveImageCandidatesResult>(opened.errorString);
-    }
-
-    std::vector<ImageNavigationCandidate> candidates;
-    appendArchiveDirectoryImageCandidates(
-        &candidates, opened.archive.directory(), archiveDocument, QString());
-    KiriView::sortImageNavigationCandidates(&candidates);
-    return archiveImageCandidatesResult(std::move(candidates));
-}
-
-ArchiveImageDataResult readKArchiveFileData(const KArchiveFile &file)
-{
-    std::unique_ptr<QIODevice> device(file.createDevice());
-    if (device == nullptr) {
-        return archiveErrorResult<ArchiveImageDataResult>(archiveImageReadError());
-    }
-
-    QByteArray data = device->readAll();
-    const qint64 expectedSize = file.size();
-    if (expectedSize >= 0 && data.size() != expectedSize) {
-        return archiveErrorResult<ArchiveImageDataResult>(archiveImageReadError());
-    }
-
-    return archiveImageDataResult(std::move(data));
-}
-
-ArchiveImageDataResult loadKArchiveDocumentImageData(
-    const ArchiveDocumentLocation &archiveDocument, const QString &entryPath)
-{
-    OpenKArchiveResult opened = openKArchiveDocument(archiveDocument);
-    if (!opened.archive) {
-        return archiveErrorResult<ArchiveImageDataResult>(opened.errorString);
-    }
-
-    const KArchiveDirectory *directory = opened.archive.directory();
-    const KArchiveFile *file = directory == nullptr ? nullptr : directory->file(entryPath);
-    if (file == nullptr) {
-        return archiveErrorResult<ArchiveImageDataResult>(archiveImageNotFoundError());
-    }
-
-    return readKArchiveFileData(*file);
-}
-
-const ArchiveBackendOperations *archiveBackendOperationsForDocument(
-    const ArchiveDocumentLocation &archiveDocument)
-{
-    static const ArchiveBackendOperations kArchiveOperations {
-        loadKArchiveDocumentImageCandidates,
-        loadKArchiveDocumentImageData,
-    };
-    static const ArchiveBackendOperations libArchiveOperations {
-        loadLibArchiveDocumentImageCandidates,
-        loadLibArchiveDocumentImageData,
-    };
-
-    switch (KiriView::archiveStorageBackendForRootScheme(archiveDocument.rootUrl().scheme())) {
-    case ArchiveStorageBackend::KZip:
-    case ArchiveStorageBackend::KTar:
-    case ArchiveStorageBackend::K7Zip:
-        return &kArchiveOperations;
-    case ArchiveStorageBackend::LibArchive:
-        return &libArchiveOperations;
-    case ArchiveStorageBackend::None:
-        return nullptr;
-    }
-
-    return nullptr;
-}
 }
 
 namespace KiriView {
@@ -506,14 +97,15 @@ ArchiveImageCandidatesResult loadArchiveDocumentImageCandidates(
     const ArchiveDocumentLocation &archiveDocument)
 {
     if (archiveDocument.isEmpty()) {
-        return archiveErrorResult<ArchiveImageCandidatesResult>(
+        return Backend::archiveErrorResult<ArchiveImageCandidatesResult>(
             QStringLiteral("Could not open the selected archive."));
     }
 
-    const ArchiveBackendOperations *backend = archiveBackendOperationsForDocument(archiveDocument);
+    const Backend::ArchiveBackendOperations *backend
+        = archiveBackendOperationsForDocument(archiveDocument);
     if (backend == nullptr) {
-        return archiveErrorResult<ArchiveImageCandidatesResult>(
-            fallbackArchiveOpenError(archiveDocument));
+        return Backend::archiveErrorResult<ArchiveImageCandidatesResult>(
+            Backend::fallbackArchiveOpenError(archiveDocument));
     }
 
     return backend->loadImageCandidates(archiveDocument);
@@ -525,13 +117,15 @@ ArchiveImageDataResult loadArchiveDocumentImageData(
     const std::optional<QString> entryPath
         = archiveImageEntryPathForRead(archiveDocument, imageUrl);
     if (!entryPath.has_value()) {
-        return archiveErrorResult<ArchiveImageDataResult>(archiveImageNotFoundError());
+        return Backend::archiveErrorResult<ArchiveImageDataResult>(
+            Backend::archiveImageNotFoundError());
     }
 
-    const ArchiveBackendOperations *backend = archiveBackendOperationsForDocument(archiveDocument);
+    const Backend::ArchiveBackendOperations *backend
+        = archiveBackendOperationsForDocument(archiveDocument);
     if (backend == nullptr) {
-        return archiveErrorResult<ArchiveImageDataResult>(
-            fallbackArchiveOpenError(archiveDocument));
+        return Backend::archiveErrorResult<ArchiveImageDataResult>(
+            Backend::fallbackArchiveOpenError(archiveDocument));
     }
 
     return backend->loadImageData(archiveDocument, *entryPath);

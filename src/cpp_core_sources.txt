@@ -3,6 +3,8 @@
 
 src/decodedimageresult.cpp
 src/archivebackend.cpp
+src/archivebackend_karchive.cpp
+src/archivebackend_libarchive.cpp
 src/archiveformat.cpp
 src/archivepath.cpp
 src/bufferedimagereader.cpp
