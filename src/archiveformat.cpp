@@ -24,9 +24,9 @@ struct ArchiveFormat {
     KiriView::ArchiveStorageBackend backend;
 };
 
-enum class ArchiveOpenMode {
-    ComicBook,
-    DirectArchive,
+enum class ArchiveProfileSet {
+    ComicBookOnly,
+    DirectlyOpenable,
 };
 
 template <std::size_t Size>
@@ -83,27 +83,30 @@ QString extensionForFileName(const QString &fileName)
 }
 
 template <typename Predicate>
-bool acceptedProfileMatches(const ArchiveFormat &format, ArchiveOpenMode mode, Predicate predicate)
+bool acceptedProfileMatches(
+    const ArchiveFormat &format, ArchiveProfileSet profileSet, Predicate predicate)
 {
     if (predicate(format.comicBook)) {
         return true;
     }
 
-    return mode == ArchiveOpenMode::DirectArchive && predicate(format.directArchive);
+    return profileSet == ArchiveProfileSet::DirectlyOpenable && predicate(format.directArchive);
 }
 
 bool archiveFormatAcceptsExtension(
-    const ArchiveFormat &format, const QString &extension, ArchiveOpenMode mode)
+    const ArchiveFormat &format, const QString &extension, ArchiveProfileSet profileSet)
 {
-    return acceptedProfileMatches(format, mode, [&extension](const ArchiveOpenProfile &profile) {
-        return extension == QString::fromLatin1(profile.extension);
-    });
+    return acceptedProfileMatches(
+        format, profileSet, [&extension](const ArchiveOpenProfile &profile) {
+            return extension == QString::fromLatin1(profile.extension);
+        });
 }
 
-const ArchiveFormat *archiveFormatForExtension(const QString &extension, ArchiveOpenMode mode)
+const ArchiveFormat *archiveFormatForExtension(
+    const QString &extension, ArchiveProfileSet profileSet)
 {
     for (const ArchiveFormat &format : archiveFormats) {
-        if (archiveFormatAcceptsExtension(format, extension, mode)) {
+        if (archiveFormatAcceptsExtension(format, extension, profileSet)) {
             return &format;
         }
     }
@@ -123,17 +126,19 @@ bool mimeTypesContain(const ArchiveMimeTypes &mimeTypes, const QString &mimeType
 }
 
 bool archiveFormatAcceptsMimeTypeName(
-    const ArchiveFormat &format, const QString &mimeTypeName, ArchiveOpenMode mode)
+    const ArchiveFormat &format, const QString &mimeTypeName, ArchiveProfileSet profileSet)
 {
-    return acceptedProfileMatches(format, mode, [&mimeTypeName](const ArchiveOpenProfile &profile) {
-        return mimeTypesContain(profile.mimeTypes, mimeTypeName);
-    });
+    return acceptedProfileMatches(
+        format, profileSet, [&mimeTypeName](const ArchiveOpenProfile &profile) {
+            return mimeTypesContain(profile.mimeTypes, mimeTypeName);
+        });
 }
 
-const ArchiveFormat *archiveFormatForMimeTypeName(const QString &mimeTypeName, ArchiveOpenMode mode)
+const ArchiveFormat *archiveFormatForMimeTypeName(
+    const QString &mimeTypeName, ArchiveProfileSet profileSet)
 {
     for (const ArchiveFormat &format : archiveFormats) {
-        if (archiveFormatAcceptsMimeTypeName(format, mimeTypeName, mode)) {
+        if (archiveFormatAcceptsMimeTypeName(format, mimeTypeName, profileSet)) {
             return &format;
         }
     }
@@ -216,24 +221,26 @@ QStringList supportedComicBookArchiveMimeTypes()
 
 QString comicBookArchiveKioSchemeForFileName(const QString &fileName)
 {
-    return schemeString(
-        archiveFormatForExtension(extensionForFileName(fileName), ArchiveOpenMode::ComicBook));
+    return schemeString(archiveFormatForExtension(
+        extensionForFileName(fileName), ArchiveProfileSet::ComicBookOnly));
 }
 
 QString directArchiveOpenKioSchemeForFileName(const QString &fileName)
 {
-    return schemeString(
-        archiveFormatForExtension(extensionForFileName(fileName), ArchiveOpenMode::DirectArchive));
+    return schemeString(archiveFormatForExtension(
+        extensionForFileName(fileName), ArchiveProfileSet::DirectlyOpenable));
 }
 
 QString comicBookArchiveKioSchemeForMimeTypeName(const QString &mimeTypeName)
 {
-    return schemeString(archiveFormatForMimeTypeName(mimeTypeName, ArchiveOpenMode::ComicBook));
+    return schemeString(
+        archiveFormatForMimeTypeName(mimeTypeName, ArchiveProfileSet::ComicBookOnly));
 }
 
 QString directArchiveOpenKioSchemeForMimeTypeName(const QString &mimeTypeName)
 {
-    return schemeString(archiveFormatForMimeTypeName(mimeTypeName, ArchiveOpenMode::DirectArchive));
+    return schemeString(
+        archiveFormatForMimeTypeName(mimeTypeName, ArchiveProfileSet::DirectlyOpenable));
 }
 
 QString comicBookArchiveMarkerForRootScheme(const QString &scheme)
