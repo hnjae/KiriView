@@ -84,8 +84,8 @@ StatefulApp.StatefulWindow {
         fullscreenToolBarHideTimer.restart();
     }
 
-    minimumWidth: Kirigami.Units.gridUnit * 16
-    minimumHeight: Kirigami.Units.gridUnit * 10
+    minimumWidth: Kirigami.Units.gridUnit * 14
+    minimumHeight: Kirigami.Units.gridUnit * 12
     width: Kirigami.Units.gridUnit * 24
     height: Kirigami.Units.gridUnit * 20
 

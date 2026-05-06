@@ -34,7 +34,7 @@ window.
 If the first startup argument is a local file path or file URL and that file
 does not exist, KiriView prints a clear error message naming the path and reason
 to standard error, does not open the main window, and exits with code 2.
-KiriView permits compact window sizes down to 16 by 10 Kirigami grid units. When
+KiriView permits compact window sizes down to 14 by 12 Kirigami grid units. When
 no saved window geometry overrides the launch size, KiriView opens at 24 by 20
 Kirigami grid units.
 
