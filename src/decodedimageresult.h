@@ -5,7 +5,7 @@
 #define KIRIVIEW_DECODEDIMAGERESULT_H
 
 #include "animationframe.h"
-#include "imagesurface.h"
+#include "staticimage.h"
 
 #include <QByteArray>
 #include <QImage>

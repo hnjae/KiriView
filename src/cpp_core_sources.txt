@@ -43,4 +43,5 @@ src/imageviewtext.cpp
 src/imagezoomstate.cpp
 src/predecodecache.cpp
 src/qimagereadertilesource.cpp
+src/staticimage.cpp
 src/svgtilesource.cpp

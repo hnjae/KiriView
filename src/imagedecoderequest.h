@@ -5,7 +5,7 @@
 #define KIRIVIEW_IMAGEDECODEREQUEST_H
 
 #include "imagelocation.h"
-#include "imagesurface.h"
+#include "staticimage.h"
 
 #include <QUrl>
 #include <QtGlobal>

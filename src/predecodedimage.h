@@ -5,7 +5,7 @@
 #define KIRIVIEW_PREDECODEDIMAGE_H
 
 #include "imagelocation.h"
-#include "imagesurface.h"
+#include "staticimage.h"
 
 namespace KiriView {
 struct PredecodedImage {

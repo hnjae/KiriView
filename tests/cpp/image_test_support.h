@@ -7,7 +7,7 @@
 #include "imageasyncdependencies.h"
 #include "imagecandidaterepository.h"
 #include "imageiojob.h"
-#include "imagesurface.h"
+#include "staticimage.h"
 
 #include <QByteArray>
 #include <QImage>

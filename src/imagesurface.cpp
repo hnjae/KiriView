@@ -9,27 +9,6 @@
 #include <utility>
 
 namespace KiriView {
-bool StaticImagePayload::isValid() const { return source != nullptr && !preview.isNull(); }
-
-qsizetype StaticImagePayload::byteCost() const
-{
-    if (!isValid()) {
-        return 0;
-    }
-
-    return source->byteCost() + imageByteCost(preview);
-}
-
-std::optional<qsizetype> StaticImagePayload::byteCostWithinBudget(qsizetype byteBudget) const
-{
-    const qsizetype cost = byteCost();
-    if (cost <= 0 || cost > byteBudget) {
-        return std::nullopt;
-    }
-
-    return cost;
-}
-
 StaticTileSurface::StaticTileSurface(StaticImagePayload image)
     : m_image(std::move(image))
     , m_pyramid(m_image.source == nullptr ? QSize() : m_image.source->imageSize())

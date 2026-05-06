@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGETILESOURCE_H
 #define KIRIVIEW_IMAGETILESOURCE_H
 
-#include "imagesurface.h"
+#include "staticimage.h"
 
 #include <QByteArray>
 #include <QImage>
