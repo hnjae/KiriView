@@ -42,6 +42,19 @@ const Backend::ArchiveBackendOperations *archiveBackendOperationsForDocument(
 
     return nullptr;
 }
+
+template <typename Result, typename Load>
+Result loadWithArchiveBackend(const KiriView::ArchiveDocumentLocation &archiveDocument, Load load)
+{
+    const Backend::ArchiveBackendOperations *backend
+        = archiveBackendOperationsForDocument(archiveDocument);
+    if (backend == nullptr) {
+        return Backend::archiveErrorResult<Result>(
+            Backend::fallbackArchiveOpenError(archiveDocument));
+    }
+
+    return load(*backend);
+}
 }
 
 namespace KiriView::ArchiveBackendDetail {
@@ -103,14 +116,10 @@ ArchiveImageCandidatesResult loadArchiveDocumentImageCandidates(
             QStringLiteral("Could not open the selected archive."));
     }
 
-    const Backend::ArchiveBackendOperations *backend
-        = archiveBackendOperationsForDocument(archiveDocument);
-    if (backend == nullptr) {
-        return Backend::archiveErrorResult<ArchiveImageCandidatesResult>(
-            Backend::fallbackArchiveOpenError(archiveDocument));
-    }
-
-    return backend->loadImageCandidates(archiveDocument);
+    return loadWithArchiveBackend<ArchiveImageCandidatesResult>(
+        archiveDocument, [&archiveDocument](const Backend::ArchiveBackendOperations &backend) {
+            return backend.loadImageCandidates(archiveDocument);
+        });
 }
 
 ArchiveImageDataResult loadArchiveDocumentImageData(
@@ -123,13 +132,9 @@ ArchiveImageDataResult loadArchiveDocumentImageData(
             Backend::archiveImageNotFoundError());
     }
 
-    const Backend::ArchiveBackendOperations *backend
-        = archiveBackendOperationsForDocument(archiveDocument);
-    if (backend == nullptr) {
-        return Backend::archiveErrorResult<ArchiveImageDataResult>(
-            Backend::fallbackArchiveOpenError(archiveDocument));
-    }
-
-    return backend->loadImageData(archiveDocument, *entryPath);
+    return loadWithArchiveBackend<ArchiveImageDataResult>(archiveDocument,
+        [&archiveDocument, &entryPath](const Backend::ArchiveBackendOperations &backend) {
+            return backend.loadImageData(archiveDocument, *entryPath);
+        });
 }
 }

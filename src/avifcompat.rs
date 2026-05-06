@@ -116,17 +116,19 @@ fn aux_c_contains_alpha(data: &[u8], aux_c_box: BoxHeader) -> bool {
         })
 }
 
-fn has_alpha_auxiliary_property(data: &[u8], meta_box: &MetaBox) -> bool {
-    for box_header in &meta_box.child_boxes {
-        if !box_header.is_type(b"iprp") {
-            continue;
-        }
-
-        let Some(iprp_children) =
+fn iprp_child_box_groups(data: &[u8], meta_box: &MetaBox) -> Vec<Vec<BoxHeader>> {
+    meta_box
+        .child_boxes
+        .iter()
+        .filter(|box_header| box_header.is_type(b"iprp"))
+        .filter_map(|box_header| {
             child_boxes(data, box_header.body_offset(), box_header.end_offset())
-        else {
-            continue;
-        };
+        })
+        .collect()
+}
+
+fn has_alpha_auxiliary_property(data: &[u8], meta_box: &MetaBox) -> bool {
+    for iprp_children in iprp_child_box_groups(data, meta_box) {
         for iprp_child in iprp_children {
             if !iprp_child.is_type(b"ipco") {
                 continue;
@@ -373,17 +375,8 @@ fn patch_adjacent_duplicate_ipma_boxes(data: &mut [u8], first: &IpmaBox, second:
 fn patch_duplicate_ipma_boxes(data: &mut [u8], meta_box: &MetaBox) -> bool {
     let mut changed = false;
 
-    for box_header in &meta_box.child_boxes {
-        if !box_header.is_type(b"iprp") {
-            continue;
-        }
-
+    for iprp_children in iprp_child_box_groups(data, meta_box) {
         let mut previous_ipma = None;
-        let Some(iprp_children) =
-            child_boxes(data, box_header.body_offset(), box_header.end_offset())
-        else {
-            continue;
-        };
         for iprp_child in iprp_children {
             let Some(ipma) = read_ipma_box(data, iprp_child) else {
                 previous_ipma = None;
