@@ -32,6 +32,7 @@ using KiriView::ArchiveImageCandidates;
 using KiriView::ArchiveImageCandidatesResult;
 using KiriView::ArchiveImageData;
 using KiriView::ArchiveImageDataResult;
+using KiriView::ArchiveStorageBackend;
 using KiriView::ImageNavigationCandidate;
 using KiriView::normalizedArchiveEntryPath;
 using LibArchiveReader = std::unique_ptr<archive, int (*)(archive *)>;
@@ -85,6 +86,16 @@ struct OpenKArchiveResult {
     QString errorString;
 };
 
+using ArchiveImageCandidatesLoader
+    = ArchiveImageCandidatesResult (*)(const ArchiveDocumentLocation &);
+using ArchiveImageDataLoader
+    = ArchiveImageDataResult (*)(const ArchiveDocumentLocation &, const QString &);
+
+struct ArchiveBackendOperations {
+    ArchiveImageCandidatesLoader loadImageCandidates;
+    ArchiveImageDataLoader loadImageData;
+};
+
 std::unique_ptr<KArchive> createArchive(const KiriView::ArchiveDocumentLocation &archiveDocument)
 {
     const QString filePath = archiveDocument.fileUrl().toLocalFile();
@@ -93,24 +104,18 @@ std::unique_ptr<KArchive> createArchive(const KiriView::ArchiveDocumentLocation 
     }
 
     switch (KiriView::archiveStorageBackendForRootScheme(archiveDocument.rootUrl().scheme())) {
-    case KiriView::ArchiveStorageBackend::KZip:
+    case ArchiveStorageBackend::KZip:
         return std::make_unique<KZip>(filePath);
-    case KiriView::ArchiveStorageBackend::KTar:
+    case ArchiveStorageBackend::KTar:
         return std::make_unique<KTar>(filePath);
-    case KiriView::ArchiveStorageBackend::K7Zip:
+    case ArchiveStorageBackend::K7Zip:
         return std::make_unique<K7Zip>(filePath);
-    case KiriView::ArchiveStorageBackend::LibArchive:
-    case KiriView::ArchiveStorageBackend::None:
+    case ArchiveStorageBackend::LibArchive:
+    case ArchiveStorageBackend::None:
         return nullptr;
     }
 
     return nullptr;
-}
-
-bool isLibArchiveDocument(const KiriView::ArchiveDocumentLocation &archiveDocument)
-{
-    return KiriView::archiveStorageBackendForRootScheme(archiveDocument.rootUrl().scheme())
-        == KiriView::ArchiveStorageBackend::LibArchive;
 }
 
 std::optional<KiriView::ImageNavigationCandidate> archiveImageCandidate(
@@ -468,6 +473,32 @@ ArchiveImageDataResult loadKArchiveDocumentImageData(
 
     return readKArchiveFileData(*file);
 }
+
+const ArchiveBackendOperations *archiveBackendOperationsForDocument(
+    const ArchiveDocumentLocation &archiveDocument)
+{
+    static const ArchiveBackendOperations kArchiveOperations {
+        loadKArchiveDocumentImageCandidates,
+        loadKArchiveDocumentImageData,
+    };
+    static const ArchiveBackendOperations libArchiveOperations {
+        loadLibArchiveDocumentImageCandidates,
+        loadLibArchiveDocumentImageData,
+    };
+
+    switch (KiriView::archiveStorageBackendForRootScheme(archiveDocument.rootUrl().scheme())) {
+    case ArchiveStorageBackend::KZip:
+    case ArchiveStorageBackend::KTar:
+    case ArchiveStorageBackend::K7Zip:
+        return &kArchiveOperations;
+    case ArchiveStorageBackend::LibArchive:
+        return &libArchiveOperations;
+    case ArchiveStorageBackend::None:
+        return nullptr;
+    }
+
+    return nullptr;
+}
 }
 
 namespace KiriView {
@@ -479,11 +510,13 @@ ArchiveImageCandidatesResult loadArchiveDocumentImageCandidates(
             QStringLiteral("Could not open the selected archive."));
     }
 
-    if (isLibArchiveDocument(archiveDocument)) {
-        return loadLibArchiveDocumentImageCandidates(archiveDocument);
+    const ArchiveBackendOperations *backend = archiveBackendOperationsForDocument(archiveDocument);
+    if (backend == nullptr) {
+        return archiveErrorResult<ArchiveImageCandidatesResult>(
+            fallbackArchiveOpenError(archiveDocument));
     }
 
-    return loadKArchiveDocumentImageCandidates(archiveDocument);
+    return backend->loadImageCandidates(archiveDocument);
 }
 
 ArchiveImageDataResult loadArchiveDocumentImageData(
@@ -495,10 +528,12 @@ ArchiveImageDataResult loadArchiveDocumentImageData(
         return archiveErrorResult<ArchiveImageDataResult>(archiveImageNotFoundError());
     }
 
-    if (isLibArchiveDocument(archiveDocument)) {
-        return loadLibArchiveDocumentImageData(archiveDocument, *entryPath);
+    const ArchiveBackendOperations *backend = archiveBackendOperationsForDocument(archiveDocument);
+    if (backend == nullptr) {
+        return archiveErrorResult<ArchiveImageDataResult>(
+            fallbackArchiveOpenError(archiveDocument));
     }
 
-    return loadKArchiveDocumentImageData(archiveDocument, *entryPath);
+    return backend->loadImageData(archiveDocument, *entryPath);
 }
 }
