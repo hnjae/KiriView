@@ -24,6 +24,13 @@ contains application actions such as Open, archive navigation, Full Screen,
 settings, shortcut configuration, shortcut help, and Quit. In menubar mode,
 those application actions are available from the menubar, and the toolbar
 overflow menu appears only when toolbar controls do not fit.
+The Interface settings page follows the KDE and Kirigami settings page style
+and lets users choose between Hamburger Menu and Menubar presentation. Selecting
+an option applies it immediately and the selected option reflects the current
+saved application menu presentation.
+The Keyboard Shortcuts help is shown as read-only supporting content over the
+main window. It lists the current configured shortcut text for KiriView actions
+and can be dismissed with Escape or the close button.
 When KiriView is launched with one or more file path or URL arguments, including
 from a file manager's Open With action, it processes only the first argument in
 the supplied order and opens it at startup. Activating the open action shows the
