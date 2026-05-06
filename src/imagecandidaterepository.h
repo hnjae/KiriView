@@ -23,37 +23,59 @@ enum class ImageCandidateRepositoryError {
     InvalidComicBookArchive,
 };
 
-class ImageCandidateListContext
+class ImageCandidateListSource
 {
 public:
-    struct DirectoryContext {
-        QUrl currentUrl;
+    struct Directory {
         QUrl directoryUrl;
     };
 
-    struct ArchiveDocumentContext {
-        QUrl currentUrl;
+    struct ArchiveDocument {
         ArchiveDocumentLocation archiveDocument;
     };
+
+    static ImageCandidateListSource forDirectory(QUrl directoryUrl);
+    static ImageCandidateListSource forArchiveDocument(ArchiveDocumentLocation archiveDocument);
+
+    ArchiveDocumentLocation archiveDocument() const;
+
+    template <typename Visitor> decltype(auto) visit(Visitor &&visitor) const
+    {
+        return std::visit(std::forward<Visitor>(visitor), m_source);
+    }
+
+private:
+    using Payload = std::variant<Directory, ArchiveDocument>;
+
+    explicit ImageCandidateListSource(Payload source);
+
+    Payload m_source;
+};
+
+class ImageCandidateListContext
+{
+public:
+    using DirectoryContext = ImageCandidateListSource::Directory;
+    using ArchiveDocumentContext = ImageCandidateListSource::ArchiveDocument;
 
     static ImageCandidateListContext forDirectory(QUrl currentUrl, QUrl directoryUrl);
     static ImageCandidateListContext forArchiveDocument(
         QUrl currentUrl, ArchiveDocumentLocation archiveDocument);
 
     const QUrl &currentUrl() const;
+    const ImageCandidateListSource &source() const;
     ArchiveDocumentLocation archiveDocument() const;
 
     template <typename Visitor> decltype(auto) visit(Visitor &&visitor) const
     {
-        return std::visit(std::forward<Visitor>(visitor), m_context);
+        return m_source.visit(std::forward<Visitor>(visitor));
     }
 
 private:
-    using Context = std::variant<DirectoryContext, ArchiveDocumentContext>;
+    explicit ImageCandidateListContext(QUrl currentUrl, ImageCandidateListSource source);
 
-    explicit ImageCandidateListContext(Context context);
-
-    Context m_context;
+    QUrl m_currentUrl;
+    ImageCandidateListSource m_source;
 };
 
 struct ImageNavigationCandidateProvider {
@@ -83,6 +105,8 @@ public:
     ImageCandidateRepository();
     explicit ImageCandidateRepository(ImageNavigationCandidateProvider provider);
 
+    ImageIoJob loadImages(QObject *receiver, const ImageCandidateListSource &source,
+        ImageCandidatesCallback callback, ErrorCallback errorCallback) const;
     ImageIoJob loadImages(QObject *receiver, const ImageCandidateListContext &context,
         ImageCandidatesCallback callback, ErrorCallback errorCallback) const;
     ImageIoJob loadDirectoryImages(QObject *receiver, const QUrl &directoryUrl,
@@ -97,12 +121,6 @@ public:
 
 private:
     ImageIoJob loadImagesInContainer(QObject *receiver,
-        const ContainerNavigationCandidate &container, ImageCandidatesCallback callback,
-        CandidateRepositoryErrorCallback errorCallback) const;
-    ImageIoJob loadDirectoryImagesInContainer(QObject *receiver,
-        const ContainerNavigationCandidate &container, ImageCandidatesCallback callback,
-        CandidateRepositoryErrorCallback errorCallback) const;
-    ImageIoJob loadComicBookArchiveImagesInContainer(QObject *receiver,
         const ContainerNavigationCandidate &container, ImageCandidatesCallback callback,
         CandidateRepositoryErrorCallback errorCallback) const;
 

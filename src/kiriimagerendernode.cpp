@@ -323,18 +323,36 @@ bool KiriImageRenderNode::ensureVertexBuffer(QRhiResourceUpdateBatch *&resourceU
 
 bool KiriImageRenderNode::ensureTextures(QRhiResourceUpdateBatch *&resourceUpdates)
 {
-    if (!m_texturesDirty && m_uploadedSurfaceRevision == m_surfaceRevision) {
-        if (m_drawGeometryDirty && !syncDrawTextureEntries()) {
-            m_texturesDirty = true;
-        } else {
-            return true;
-        }
-    }
-
-    if (!m_texturesDirty && m_uploadedSurfaceRevision == m_surfaceRevision) {
+    if (tryReuseUploadedTextures()) {
         return true;
     }
 
+    return rebuildDrawTextures(resourceUpdates);
+}
+
+bool KiriImageRenderNode::uploadedTexturesAreCurrent() const
+{
+    return !m_texturesDirty && m_uploadedSurfaceRevision == m_surfaceRevision;
+}
+
+bool KiriImageRenderNode::tryReuseUploadedTextures()
+{
+    if (!uploadedTexturesAreCurrent()) {
+        return false;
+    }
+    if (!m_drawGeometryDirty) {
+        return true;
+    }
+    if (syncDrawTextureEntries()) {
+        return true;
+    }
+
+    m_texturesDirty = true;
+    return false;
+}
+
+bool KiriImageRenderNode::rebuildDrawTextures(QRhiResourceUpdateBatch *&resourceUpdates)
+{
     m_pipeline.reset();
     m_drawTextures.clear();
     const std::vector<ImageSurfaceDrawEntry> entries

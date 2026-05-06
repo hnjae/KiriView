@@ -22,18 +22,35 @@ find_package(PkgConfig REQUIRED)
 pkg_check_modules(LibArchive REQUIRED IMPORTED_TARGET libarchive)
 pkg_check_modules(LibHeif REQUIRED IMPORTED_TARGET libheif)
 
+function(kiriview_latest_path output)
+    set(latest_path "")
+    set(latest_timestamp "")
+    foreach(candidate IN LISTS ARGN)
+        if(NOT EXISTS "${candidate}")
+            continue()
+        endif()
+
+        file(TIMESTAMP "${candidate}" candidate_timestamp "%Y%m%d%H%M%S" UTC)
+        if(NOT latest_path OR candidate_timestamp STRGREATER latest_timestamp)
+            set(latest_path "${candidate}")
+            set(latest_timestamp "${candidate_timestamp}")
+        endif()
+    endforeach()
+
+    set("${output}" "${latest_path}" PARENT_SCOPE)
+endfunction()
+
 set(KIRIVIEW_CARGO_TARGET_DIR "${CMAKE_SOURCE_DIR}/../../target/flatpak/debug")
-file(GLOB KIRIVIEW_RUST_STATICLIBS
+file(GLOB KIRIVIEW_RUST_STATICLIB_CANDIDATES
     "${KIRIVIEW_CARGO_TARGET_DIR}/deps/libkiriview-*.a"
 )
-list(SORT KIRIVIEW_RUST_STATICLIBS)
-list(POP_BACK KIRIVIEW_RUST_STATICLIBS KIRIVIEW_RUST_STATICLIB)
-file(GLOB KIRIVIEW_CXXQT_INCLUDE_DIRS
+kiriview_latest_path(KIRIVIEW_RUST_STATICLIB ${KIRIVIEW_RUST_STATICLIB_CANDIDATES})
+file(GLOB KIRIVIEW_CXXQT_INCLUDE_DIR_CANDIDATES
     "${KIRIVIEW_CARGO_TARGET_DIR}/build/kiriview-*/out/cxxqtbuild/include"
 )
-list(SORT KIRIVIEW_CXXQT_INCLUDE_DIRS)
-list(POP_BACK KIRIVIEW_CXXQT_INCLUDE_DIRS KIRIVIEW_CXXQT_INCLUDE_DIR)
-if(NOT KIRIVIEW_CXXQT_INCLUDE_DIR OR NOT EXISTS "${KIRIVIEW_RUST_STATICLIB}")
+kiriview_latest_path(KIRIVIEW_CXXQT_INCLUDE_DIR ${KIRIVIEW_CXXQT_INCLUDE_DIR_CANDIDATES})
+if(NOT KIRIVIEW_RUST_STATICLIB OR NOT EXISTS "${KIRIVIEW_RUST_STATICLIB}"
+    OR NOT KIRIVIEW_CXXQT_INCLUDE_DIR OR NOT EXISTS "${KIRIVIEW_CXXQT_INCLUDE_DIR}")
     message(FATAL_ERROR "Rust bridge artifacts are missing. Run the Cargo test/build step first.")
 endif()
 

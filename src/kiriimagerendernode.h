@@ -45,6 +45,9 @@ private:
         QRhiResourceUpdateBatch *&resourceUpdates, const ImageSurfaceDrawEntry &entry);
     bool ensureVertexBuffer(QRhiResourceUpdateBatch *&resourceUpdates);
     bool ensureTextures(QRhiResourceUpdateBatch *&resourceUpdates);
+    bool uploadedTexturesAreCurrent() const;
+    bool tryReuseUploadedTextures();
+    bool rebuildDrawTextures(QRhiResourceUpdateBatch *&resourceUpdates);
     bool syncDrawTextureEntries();
     bool ensureSampler();
     bool ensurePipeline(QRhiRenderTarget *renderTarget);

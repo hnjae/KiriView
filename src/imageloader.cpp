@@ -105,11 +105,10 @@ void ImageLoader::startImageLoad(ImageLoadSession session)
 
 void ImageLoader::startArchiveLoad(ImageLoadSession session)
 {
-    const ImageCandidateListContext candidateContext
-        = ImageCandidateListContext::forArchiveDocument(
-            session.location.imageUrl(), session.location.archiveDocument());
+    const ImageCandidateListSource candidateSource
+        = ImageCandidateListSource::forArchiveDocument(session.location.archiveDocument());
     m_archiveListJob = m_candidateRepository.loadImages(
-        this, candidateContext,
+        this, candidateSource,
         [this, session](std::vector<ImageNavigationCandidate> candidates) mutable {
             if (!isCurrentLoadSession(session)) {
                 return;

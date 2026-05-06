@@ -49,6 +49,7 @@ private Q_SLOTS:
     void archiveContainerOpensFirstImage();
     void emptyContainerReportsError();
     void listingErrorIsForwarded();
+    void invalidComicBookArchiveReportsError();
     void unsupportedContainerTypeReportsError();
 };
 
@@ -210,6 +211,30 @@ void TestImageCandidateRepository::listingErrorIsForwarded()
     QCOMPARE(errorContainerUrl, containerUrl);
     QCOMPARE(error, ImageCandidateRepositoryError::Generic);
     QCOMPARE(errorString, QStringLiteral("No access"));
+}
+
+void TestImageCandidateRepository::invalidComicBookArchiveReportsError()
+{
+    FakeCandidateProvider fakeProvider;
+    const QUrl containerUrl = localUrl(QStringLiteral("/books/not-an-archive.png"));
+
+    KiriView::ImageCandidateRepository repository(fakeProvider.provider());
+    bool openedImage = false;
+    QUrl errorContainerUrl;
+    ImageCandidateRepositoryError error = ImageCandidateRepositoryError::Generic;
+    repository.loadFirstImageInContainer(
+        nullptr,
+        containerCandidate(containerUrl, ContainerNavigationCandidateType::ComicBookArchive),
+        [&openedImage](const QUrl &, const QUrl &) { openedImage = true; },
+        [&errorContainerUrl, &error](
+            const QUrl &container, ImageCandidateRepositoryError type, const QString &) {
+            errorContainerUrl = container;
+            error = type;
+        });
+
+    QVERIFY(!openedImage);
+    QCOMPARE(errorContainerUrl, containerUrl);
+    QCOMPARE(error, ImageCandidateRepositoryError::InvalidComicBookArchive);
 }
 
 void TestImageCandidateRepository::unsupportedContainerTypeReportsError()
