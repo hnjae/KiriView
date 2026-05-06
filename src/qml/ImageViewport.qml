@@ -16,6 +16,7 @@ Item {
     property bool pendingFinalScanStart: false
     property bool displayedImageUsesFinalScanStart: false
     property url initialSourceUrl
+    property real lastZoomDragTranslationY: 0
     readonly property int minimumManualZoomPercent: imageDocument.minimumManualZoomPercent
     readonly property int maximumManualZoomPercent: imageDocument.maximumManualZoomPercent
     readonly property int zoomStepPercent: imageDocument.zoomStepPercent
@@ -183,26 +184,62 @@ Item {
         }
     }
 
-    MouseArea {
-        id: zoomDragArea
+    HoverHandler {
+        id: imageHoverHandler
 
-        anchors.fill: imageFlickable
-        acceptedButtons: Qt.LeftButton
-        cursorShape: root.imagePannable ? (dragCursorActive ? Qt.ClosedHandCursor : Qt.OpenHandCursor) : Qt.ArrowCursor
+        cursorShape: {
+            if (!root.imagePannable) {
+                return Qt.ArrowCursor;
+            }
+
+            if (imageFlickable.draggingHorizontally || imageFlickable.draggingVertically || zoomDragHandler.active) {
+                return Qt.ClosedHandCursor;
+            }
+
+            return Qt.OpenHandCursor;
+        }
         enabled: root.imageReady
-        preventStealing: zoomDragActive
+    }
 
-        property bool dragCursorActive: imageFlickable.draggingHorizontally || imageFlickable.draggingVertically || zoomDragActive
-        property real lastY: 0
-        property bool zoomDragActive: false
+    DragHandler {
+        id: zoomDragHandler
 
-        onCanceled: zoomDragActive = false
-        onWheel: wheel => {
-            if (!(wheel.modifiers & Qt.ShiftModifier) || !root.imageHorizontallyPannable) {
-                wheel.accepted = false;
+        acceptedButtons: Qt.LeftButton
+        acceptedModifiers: Qt.ControlModifier
+        enabled: root.imageReady && (active || (imageHoverHandler.hovered && root.viewportPointInsideImage(imageHoverHandler.point.position.x, imageHoverHandler.point.position.y)))
+        grabPermissions: PointerHandler.CanTakeOverFromItems | PointerHandler.ApprovesTakeOverByAnything
+        target: null
+
+        onActiveChanged: {
+            if (active) {
+                root.lastZoomDragTranslationY = activeTranslation.y;
                 return;
             }
 
+            root.lastZoomDragTranslationY = 0;
+        }
+        onTranslationChanged: delta => {
+            if (!active) {
+                return;
+            }
+
+            const deltaY = activeTranslation.y - root.lastZoomDragTranslationY;
+            if (deltaY !== 0) {
+                root.zoomBy(-deltaY * root.dragZoomPercentPerPixel, centroid.position.x, centroid.position.y);
+                root.lastZoomDragTranslationY = activeTranslation.y;
+            }
+        }
+    }
+
+    WheelHandler {
+        id: horizontalPanWheelHandler
+
+        acceptedModifiers: Qt.ShiftModifier
+        blocking: true
+        enabled: root.imageReady && root.imageHorizontallyPannable
+        target: null
+
+        onWheel: wheel => {
             const verticalDelta = wheel.pixelDelta.y !== 0 ? wheel.pixelDelta.y : wheel.angleDelta.y;
             if (verticalDelta === 0) {
                 wheel.accepted = false;
@@ -211,34 +248,6 @@ Item {
 
             root.panBy(-verticalDelta, 0);
             wheel.accepted = true;
-        }
-        onPositionChanged: mouse => {
-            if (!zoomDragActive) {
-                mouse.accepted = false;
-                return;
-            }
-
-            const deltaY = mouse.y - lastY;
-            if (deltaY !== 0) {
-                root.zoomBy(-deltaY * root.dragZoomPercentPerPixel, mouse.x, mouse.y);
-                lastY = mouse.y;
-            }
-            mouse.accepted = true;
-        }
-        onPressed: mouse => {
-            if ((mouse.modifiers & Qt.ControlModifier) && root.viewportPointInsideImage(mouse.x, mouse.y)) {
-                zoomDragActive = true;
-                lastY = mouse.y;
-                mouse.accepted = true;
-                return;
-            }
-
-            zoomDragActive = false;
-            mouse.accepted = false;
-        }
-        onReleased: mouse => {
-            zoomDragActive = false;
-            mouse.accepted = true;
         }
     }
 }
