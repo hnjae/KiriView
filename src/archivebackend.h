@@ -25,8 +25,9 @@ struct ArchiveImageData {
     QByteArray data;
 };
 
-using ArchiveImageCandidatesResult = std::variant<ArchiveImageCandidates, ArchiveError>;
-using ArchiveImageDataResult = std::variant<ArchiveImageData, ArchiveError>;
+template <typename Value> using ArchiveResult = std::variant<Value, ArchiveError>;
+using ArchiveImageCandidatesResult = ArchiveResult<ArchiveImageCandidates>;
+using ArchiveImageDataResult = ArchiveResult<ArchiveImageData>;
 
 ArchiveImageCandidatesResult loadArchiveDocumentImageCandidates(
     const ArchiveDocumentLocation &archiveDocument);
