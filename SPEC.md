@@ -6,15 +6,23 @@ KiriView opens one user-selected image file or supported archive, displays it in
 the main window, and can navigate to adjacent images or pages in the same
 location.
 
-The main window toolbar shows image controls without a page title. The compact
-toolbar always provides open, page navigation, fit, and zoom controls in fixed
-positions. Outside fullscreen, the toolbar uses normal application header
-placement and reserves layout space above the image viewing area. Controls that
-require a ready image are disabled until an image is ready.
-KiriView shows its application menu as a hamburger menu by default. Users can
-switch the application menu presentation between the hamburger menu and a
-conventional menubar, and KiriView remembers the selected presentation across
-launches.
+The main window toolbar shows image controls without a page title. It uses an
+action toolbar that displays as many controls as fit and moves the rest into an
+overflow menu. The normal toolbar order is Previous Image, the current page
+number, `of`, the total image count, Next Image, zoom percentage, Fit, and the
+hamburger overflow menu. When the toolbar runs out of horizontal space, KiriView
+keeps the zoom percentage visible the longest, then Fit, then page navigation.
+Outside fullscreen, the toolbar uses normal application header placement and
+reserves layout space above the image viewing area. Controls that require a
+ready image are disabled until an image is ready.
+KiriView shows its application menu through the toolbar hamburger overflow menu
+by default. Users can switch the application menu presentation between the
+hamburger overflow menu and a conventional menubar, and KiriView remembers the
+selected presentation across launches. In hamburger mode, the overflow menu
+contains application actions such as Open, archive navigation, Full Screen,
+settings, shortcut configuration, shortcut help, and Quit. In menubar mode,
+those application actions are available from the menubar, and the toolbar
+overflow menu appears only when toolbar controls do not fit.
 When KiriView is launched with one or more file path or URL arguments, including
 from a file manager's Open With action, it processes only the first argument in
 the supplied order and opens it at startup. Activating the open action shows the
@@ -33,10 +41,8 @@ archive file name, a spaced em dash, and `KiriView`. KiriView does not show file
 paths in the window title. When no image or archive page is displayed, the
 window title is `KiriView`.
 
-The toolbar also provides icon-only Previous Archive and Next Archive buttons
-next to the open action. When archive navigation is available, these buttons
-navigate between sibling comic book archives and are labeled only by their
-tooltips.
+Open, Previous Archive, and Next Archive are provided by the application menu
+and shortcuts rather than fixed toolbar buttons.
 
 ## File Access
 
