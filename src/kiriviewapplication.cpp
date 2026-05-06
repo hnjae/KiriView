@@ -8,6 +8,8 @@
 #include <KirigamiActionCollection>
 #include <QIcon>
 #include <QSignalBlocker>
+#include <array>
+#include <cstddef>
 #include <initializer_list>
 #include <utility>
 #include <vector>
@@ -18,66 +20,71 @@ enum class ActionSpecKind {
     Standard,
 };
 
-QString applicationActionName(KiriViewApplication::ActionId actionId)
+struct ActionNameSpec {
+    KiriViewApplication::ActionId actionId;
+    const char *name;
+};
+
+constexpr std::array actionNameSpecs {
+    ActionNameSpec { KiriViewApplication::FileOpenAction, "file_open" },
+    ActionNameSpec { KiriViewApplication::GoPreviousArchiveAction, "go_previous_archive" },
+    ActionNameSpec { KiriViewApplication::GoNextArchiveAction, "go_next_archive" },
+    ActionNameSpec { KiriViewApplication::GoPreviousImageAction, "go_previous_image" },
+    ActionNameSpec { KiriViewApplication::GoNextImageAction, "go_next_image" },
+    ActionNameSpec { KiriViewApplication::GoFirstImageAction, "go_first_image" },
+    ActionNameSpec { KiriViewApplication::GoLastImageAction, "go_last_image" },
+    ActionNameSpec { KiriViewApplication::ViewZoomInAction, "view_zoom_in" },
+    ActionNameSpec { KiriViewApplication::ViewZoomOutAction, "view_zoom_out" },
+    ActionNameSpec { KiriViewApplication::ViewFitAction, "view_fit" },
+    ActionNameSpec { KiriViewApplication::ViewFitHeightAction, "view_fit_height" },
+    ActionNameSpec { KiriViewApplication::ViewFitWidthAction, "view_fit_width" },
+    ActionNameSpec { KiriViewApplication::ViewActualSizeAction, "view_actual_size" },
+    ActionNameSpec { KiriViewApplication::ViewPanLeftAction, "view_pan_left" },
+    ActionNameSpec { KiriViewApplication::ViewPanRightAction, "view_pan_right" },
+    ActionNameSpec { KiriViewApplication::ViewPanUpAction, "view_pan_up" },
+    ActionNameSpec { KiriViewApplication::ViewPanDownAction, "view_pan_down" },
+    ActionNameSpec { KiriViewApplication::ViewPanTopLeftAction, "view_pan_top_left" },
+    ActionNameSpec { KiriViewApplication::ViewPanBottomRightAction, "view_pan_bottom_right" },
+    ActionNameSpec { KiriViewApplication::ViewScanForwardAction, "view_scan_forward" },
+    ActionNameSpec { KiriViewApplication::ViewScanBackwardAction, "view_scan_backward" },
+    ActionNameSpec { KiriViewApplication::WindowFullscreenAction, "window_fullscreen" },
+    ActionNameSpec { KiriViewApplication::HelpShortcutsAction, "help_shortcuts" },
+    ActionNameSpec { KiriViewApplication::OptionsConfigureAction, "options_configure" },
+    ActionNameSpec {
+        KiriViewApplication::OptionsConfigureKeybindingAction, "options_configure_keybinding" },
+    ActionNameSpec { KiriViewApplication::OptionsShowMenubarAction, "options_show_menubar" },
+    ActionNameSpec { KiriViewApplication::FileQuitAction, "file_quit" },
+};
+
+static_assert(
+    actionNameSpecs.size() == static_cast<std::size_t>(KiriViewApplication::FileQuitAction) + 1);
+
+constexpr bool actionNameSpecsMatchActionIds()
 {
-    switch (actionId) {
-    case KiriViewApplication::FileOpenAction:
-        return QStringLiteral("file_open");
-    case KiriViewApplication::GoPreviousArchiveAction:
-        return QStringLiteral("go_previous_archive");
-    case KiriViewApplication::GoNextArchiveAction:
-        return QStringLiteral("go_next_archive");
-    case KiriViewApplication::GoPreviousImageAction:
-        return QStringLiteral("go_previous_image");
-    case KiriViewApplication::GoNextImageAction:
-        return QStringLiteral("go_next_image");
-    case KiriViewApplication::GoFirstImageAction:
-        return QStringLiteral("go_first_image");
-    case KiriViewApplication::GoLastImageAction:
-        return QStringLiteral("go_last_image");
-    case KiriViewApplication::ViewZoomInAction:
-        return QStringLiteral("view_zoom_in");
-    case KiriViewApplication::ViewZoomOutAction:
-        return QStringLiteral("view_zoom_out");
-    case KiriViewApplication::ViewFitAction:
-        return QStringLiteral("view_fit");
-    case KiriViewApplication::ViewFitHeightAction:
-        return QStringLiteral("view_fit_height");
-    case KiriViewApplication::ViewFitWidthAction:
-        return QStringLiteral("view_fit_width");
-    case KiriViewApplication::ViewActualSizeAction:
-        return QStringLiteral("view_actual_size");
-    case KiriViewApplication::ViewPanLeftAction:
-        return QStringLiteral("view_pan_left");
-    case KiriViewApplication::ViewPanRightAction:
-        return QStringLiteral("view_pan_right");
-    case KiriViewApplication::ViewPanUpAction:
-        return QStringLiteral("view_pan_up");
-    case KiriViewApplication::ViewPanDownAction:
-        return QStringLiteral("view_pan_down");
-    case KiriViewApplication::ViewPanTopLeftAction:
-        return QStringLiteral("view_pan_top_left");
-    case KiriViewApplication::ViewPanBottomRightAction:
-        return QStringLiteral("view_pan_bottom_right");
-    case KiriViewApplication::ViewScanForwardAction:
-        return QStringLiteral("view_scan_forward");
-    case KiriViewApplication::ViewScanBackwardAction:
-        return QStringLiteral("view_scan_backward");
-    case KiriViewApplication::WindowFullscreenAction:
-        return QStringLiteral("window_fullscreen");
-    case KiriViewApplication::HelpShortcutsAction:
-        return QStringLiteral("help_shortcuts");
-    case KiriViewApplication::OptionsConfigureAction:
-        return QStringLiteral("options_configure");
-    case KiriViewApplication::OptionsConfigureKeybindingAction:
-        return QStringLiteral("options_configure_keybinding");
-    case KiriViewApplication::OptionsShowMenubarAction:
-        return QStringLiteral("options_show_menubar");
-    case KiriViewApplication::FileQuitAction:
-        return QStringLiteral("file_quit");
+    for (std::size_t index = 0; index < actionNameSpecs.size(); ++index) {
+        if (static_cast<std::size_t>(actionNameSpecs[index].actionId) != index) {
+            return false;
+        }
     }
 
-    return {};
+    return true;
+}
+
+static_assert(actionNameSpecsMatchActionIds());
+
+QString applicationActionName(KiriViewApplication::ActionId actionId)
+{
+    const int actionIndex = static_cast<int>(actionId);
+    if (actionIndex < 0 || actionIndex >= static_cast<int>(actionNameSpecs.size())) {
+        return {};
+    }
+
+    const ActionNameSpec &spec = actionNameSpecs[static_cast<std::size_t>(actionIndex)];
+    if (spec.actionId != actionId) {
+        return {};
+    }
+
+    return QString::fromLatin1(spec.name);
 }
 
 struct ActionSpec {
@@ -392,13 +399,6 @@ QAction *KiriViewApplication::addRegisteredAction(const QString &name, const QSt
     KirigamiActionCollection::setDefaultShortcuts(registeredAction, defaultShortcuts);
     connect(registeredAction, &QAction::changed, this, &KiriViewApplication::handleActionChanged);
     return registeredAction;
-}
-
-QAction *KiriViewApplication::addStandardAction(
-    KStandardActions::StandardAction actionType, const QString &name, const QString &text)
-{
-    QAction *registeredAction = mainCollection()->addAction(actionType, name, this, [](bool) { });
-    return finishRegisteredAction(registeredAction, text, registeredAction->shortcuts());
 }
 
 QAction *KiriViewApplication::addStandardAction(KStandardActions::StandardAction actionType,

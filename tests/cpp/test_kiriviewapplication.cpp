@@ -223,6 +223,12 @@ void TestKiriViewApplication::actionIdsResolveActionNamesAndShortcuts()
     QCOMPARE(application.actionForId(invalidActionId), nullptr);
     QCOMPARE(application.shortcutsForId(invalidActionId), QList<QKeySequence>());
     QVERIFY(application.shortcutTextForId(invalidActionId).isEmpty());
+
+    const auto outOfRangeActionId = static_cast<KiriViewApplication::ActionId>(999);
+    QVERIFY(application.actionName(outOfRangeActionId).isEmpty());
+    QCOMPARE(application.actionForId(outOfRangeActionId), nullptr);
+    QCOMPARE(application.shortcutsForId(outOfRangeActionId), QList<QKeySequence>());
+    QVERIFY(application.shortcutTextForId(outOfRangeActionId).isEmpty());
 }
 
 void TestKiriViewApplication::shortcutsApiReturnsCurrentShortcuts()

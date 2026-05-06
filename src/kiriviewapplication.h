@@ -92,8 +92,6 @@ protected:
 private:
     QAction *addRegisteredAction(const QString &name, const QString &text, const QString &iconName,
         const QList<QKeySequence> &defaultShortcuts = {});
-    QAction *addStandardAction(
-        KStandardActions::StandardAction actionType, const QString &name, const QString &text);
     QAction *addStandardAction(KStandardActions::StandardAction actionType, const QString &name,
         const QString &text, const QList<QKeySequence> &defaultShortcuts);
     QAction *finishRegisteredAction(QAction *registeredAction, const QString &text,
