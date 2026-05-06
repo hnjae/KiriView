@@ -8,6 +8,7 @@
 
 #include <QColorSpace>
 #include <algorithm>
+#include <cstddef>
 #include <cstring>
 #include <limits>
 #include <mutex>
@@ -33,16 +34,18 @@ QString heifErrorString(const char *action, const heif_error &error)
         + QStringLiteral(": ") + message;
 }
 
-std::optional<QString> initializeHeifLibrary()
-{
-    static std::once_flag initFlag;
-    static heif_error initError {};
-    std::call_once(initFlag, [] { initError = heif_init(nullptr); });
+namespace {
+    std::optional<QString> initializeHeifLibrary()
+    {
+        static std::once_flag initFlag;
+        static heif_error initError {};
+        std::call_once(initFlag, [] { initError = heif_init(nullptr); });
 
-    if (initError.code != heif_error_Ok) {
-        return heifErrorString("initializing libheif", initError);
+        if (initError.code != heif_error_Ok) {
+            return heifErrorString("initializing libheif", initError);
+        }
+        return std::nullopt;
     }
-    return std::nullopt;
 }
 
 HeifContext::HeifContext()
@@ -50,19 +53,7 @@ HeifContext::HeifContext()
 {
 }
 
-HeifContext::~HeifContext() = default;
-
-HeifContext::HeifContext(HeifContext &&other) noexcept = default;
-
-HeifContext &HeifContext::operator=(HeifContext &&other) noexcept = default;
-
 heif_context *HeifContext::get() const { return m_context.get(); }
-
-HeifImageHandle::~HeifImageHandle() = default;
-
-HeifImageHandle::HeifImageHandle(HeifImageHandle &&other) noexcept = default;
-
-HeifImageHandle &HeifImageHandle::operator=(HeifImageHandle &&other) noexcept = default;
 
 heif_image_handle **HeifImageHandle::out() { return m_handle.out(); }
 
@@ -73,19 +64,7 @@ HeifTrack::HeifTrack(heif_track *track)
 {
 }
 
-HeifTrack::~HeifTrack() = default;
-
-HeifTrack::HeifTrack(HeifTrack &&other) noexcept = default;
-
-HeifTrack &HeifTrack::operator=(HeifTrack &&other) noexcept = default;
-
 heif_track *HeifTrack::get() const { return m_track.get(); }
-
-HeifImage::~HeifImage() = default;
-
-HeifImage::HeifImage(HeifImage &&other) noexcept = default;
-
-HeifImage &HeifImage::operator=(HeifImage &&other) noexcept = default;
 
 heif_image **HeifImage::out() { return m_image.out(); }
 
@@ -99,15 +78,9 @@ HeifDecodingOptions::HeifDecodingOptions()
     }
 }
 
-HeifDecodingOptions::~HeifDecodingOptions() = default;
-
-HeifDecodingOptions::HeifDecodingOptions(HeifDecodingOptions &&other) noexcept = default;
-
-HeifDecodingOptions &HeifDecodingOptions::operator=(HeifDecodingOptions &&other) noexcept = default;
-
 const heif_decoding_options *HeifDecodingOptions::get() const { return m_options.get(); }
 
-std::optional<HeifPrimaryImage> openHeifPrimaryImage(const QByteArray &data, QString *errorString)
+std::optional<HeifContext> openHeifContext(const QByteArray &data, QString *errorString)
 {
     if (std::optional<QString> initError = initializeHeifLibrary()) {
         setHeifSupportError(errorString, *initError);
@@ -129,14 +102,24 @@ std::optional<HeifPrimaryImage> openHeifPrimaryImage(const QByteArray &data, QSt
         return std::nullopt;
     }
 
+    return std::optional<HeifContext>(std::move(context));
+}
+
+std::optional<HeifPrimaryImage> openHeifPrimaryImage(const QByteArray &data, QString *errorString)
+{
+    std::optional<HeifContext> context = openHeifContext(data, errorString);
+    if (!context.has_value()) {
+        return std::nullopt;
+    }
+
     HeifImageHandle handle;
-    error = heif_context_get_primary_image_handle(context.get(), handle.out());
+    const heif_error error = heif_context_get_primary_image_handle(context->get(), handle.out());
     if (error.code != heif_error_Ok) {
         setHeifSupportError(errorString, heifErrorString("reading the primary image", error));
         return std::nullopt;
     }
 
-    return HeifPrimaryImage { std::move(context), std::move(handle) };
+    return HeifPrimaryImage { std::move(*context), std::move(handle) };
 }
 
 std::optional<QImage> qImageFromHeifImage(const heif_image *heifImage, QString *errorString)

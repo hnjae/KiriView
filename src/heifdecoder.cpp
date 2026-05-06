@@ -143,24 +143,12 @@ HeifSequenceOpenResult HeifSequenceReader::open(QByteArray data)
         return { HeifSequenceOpenStatus::NotHeif, {} };
     }
 
-    if (std::optional<QString> initError = initializeHeifLibrary()) {
-        return { HeifSequenceOpenStatus::Error, *initError };
-    }
-
-    d->context.emplace();
-    if (d->context->get() == nullptr) {
-        const QString message = imageViewText(
-            "Could not decode the selected HEIF image: libheif could not allocate a context.");
-        return { HeifSequenceOpenStatus::Error, message };
-    }
-
     d->data = std::move(data);
-    heif_error error = heif_context_read_from_memory_without_copy(
-        d->context->get(), d->data.constData(), static_cast<size_t>(d->data.size()), nullptr);
-    if (error.code != heif_error_Ok) {
-        const QString message = heifErrorString("reading the HEIF container", error);
+    QString errorString;
+    d->context = openHeifContext(d->data, &errorString);
+    if (!d->context.has_value()) {
         close();
-        return { HeifSequenceOpenStatus::Error, message };
+        return { HeifSequenceOpenStatus::Error, errorString };
     }
 
     if (!heif_context_has_sequence(d->context->get())) {

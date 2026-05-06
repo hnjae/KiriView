@@ -16,7 +16,6 @@
 
 namespace KiriView {
 QString heifErrorString(const char *action, const heif_error &error);
-std::optional<QString> initializeHeifLibrary();
 
 namespace Detail {
     template <typename Resource, auto Release> class HeifResource final
@@ -74,12 +73,12 @@ class HeifContext final
 {
 public:
     HeifContext();
-    ~HeifContext();
+    ~HeifContext() = default;
 
     HeifContext(const HeifContext &) = delete;
     HeifContext &operator=(const HeifContext &) = delete;
-    HeifContext(HeifContext &&other) noexcept;
-    HeifContext &operator=(HeifContext &&other) noexcept;
+    HeifContext(HeifContext &&other) noexcept = default;
+    HeifContext &operator=(HeifContext &&other) noexcept = default;
 
     heif_context *get() const;
 
@@ -91,12 +90,12 @@ class HeifImageHandle final
 {
 public:
     HeifImageHandle() = default;
-    ~HeifImageHandle();
+    ~HeifImageHandle() = default;
 
     HeifImageHandle(const HeifImageHandle &) = delete;
     HeifImageHandle &operator=(const HeifImageHandle &) = delete;
-    HeifImageHandle(HeifImageHandle &&other) noexcept;
-    HeifImageHandle &operator=(HeifImageHandle &&other) noexcept;
+    HeifImageHandle(HeifImageHandle &&other) noexcept = default;
+    HeifImageHandle &operator=(HeifImageHandle &&other) noexcept = default;
 
     heif_image_handle **out();
     const heif_image_handle *get() const;
@@ -110,12 +109,12 @@ class HeifTrack final
 public:
     HeifTrack() = default;
     explicit HeifTrack(heif_track *track);
-    ~HeifTrack();
+    ~HeifTrack() = default;
 
     HeifTrack(const HeifTrack &) = delete;
     HeifTrack &operator=(const HeifTrack &) = delete;
-    HeifTrack(HeifTrack &&other) noexcept;
-    HeifTrack &operator=(HeifTrack &&other) noexcept;
+    HeifTrack(HeifTrack &&other) noexcept = default;
+    HeifTrack &operator=(HeifTrack &&other) noexcept = default;
 
     heif_track *get() const;
 
@@ -127,12 +126,12 @@ class HeifImage final
 {
 public:
     HeifImage() = default;
-    ~HeifImage();
+    ~HeifImage() = default;
 
     HeifImage(const HeifImage &) = delete;
     HeifImage &operator=(const HeifImage &) = delete;
-    HeifImage(HeifImage &&other) noexcept;
-    HeifImage &operator=(HeifImage &&other) noexcept;
+    HeifImage(HeifImage &&other) noexcept = default;
+    HeifImage &operator=(HeifImage &&other) noexcept = default;
 
     heif_image **out();
     const heif_image *get() const;
@@ -145,18 +144,21 @@ class HeifDecodingOptions final
 {
 public:
     HeifDecodingOptions();
-    ~HeifDecodingOptions();
+    ~HeifDecodingOptions() = default;
 
     HeifDecodingOptions(const HeifDecodingOptions &) = delete;
     HeifDecodingOptions &operator=(const HeifDecodingOptions &) = delete;
-    HeifDecodingOptions(HeifDecodingOptions &&other) noexcept;
-    HeifDecodingOptions &operator=(HeifDecodingOptions &&other) noexcept;
+    HeifDecodingOptions(HeifDecodingOptions &&other) noexcept = default;
+    HeifDecodingOptions &operator=(HeifDecodingOptions &&other) noexcept = default;
 
     const heif_decoding_options *get() const;
 
 private:
     Detail::HeifResource<heif_decoding_options, heif_decoding_options_free> m_options;
 };
+
+// The input data must outlive the returned context because libheif reads it without copying.
+std::optional<HeifContext> openHeifContext(const QByteArray &data, QString *errorString);
 
 struct HeifPrimaryImage {
     HeifContext context;
