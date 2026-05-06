@@ -77,14 +77,19 @@ QAction *KiriViewApplication::action(const QString &actionName)
     return AbstractKirigamiApplication::action(actionName);
 }
 
-QString KiriViewApplication::shortcutText(const QString &actionName) const
+QList<QKeySequence> KiriViewApplication::shortcuts(const QString &actionName) const
 {
     const QAction *registeredAction = const_cast<KiriViewApplication *>(this)->action(actionName);
     if (!registeredAction) {
-        return QString();
+        return {};
     }
 
-    return shortcutListText(registeredAction->shortcuts());
+    return registeredAction->shortcuts();
+}
+
+QString KiriViewApplication::shortcutText(const QString &actionName) const
+{
+    return shortcutListText(shortcuts(actionName));
 }
 
 void KiriViewApplication::setupActions()

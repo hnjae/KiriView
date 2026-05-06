@@ -36,6 +36,7 @@ public:
     int shortcutRevision() const;
 
     Q_INVOKABLE QAction *action(const QString &actionName);
+    Q_INVOKABLE QList<QKeySequence> shortcuts(const QString &actionName) const;
     Q_INVOKABLE QString shortcutText(const QString &actionName) const;
 
 Q_SIGNALS:

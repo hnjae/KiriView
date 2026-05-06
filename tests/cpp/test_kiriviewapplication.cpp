@@ -54,6 +54,7 @@ private Q_SLOTS:
     void init();
     void cleanup();
     void actionsAreRegisteredWithDefaultShortcuts();
+    void shortcutsApiReturnsCurrentShortcuts();
     void menuPresentationDefaultsToHamburgerMenu();
     void menuPresentationPersists();
     void showMenubarActionTogglesMenuPresentation();
@@ -157,6 +158,28 @@ void TestKiriViewApplication::actionsAreRegisteredWithDefaultShortcuts()
         { shortcut(QStringLiteral("F")), shortcut(QStringLiteral("F11")) });
     expectDefaultShortcuts(application, QStringLiteral("help_shortcuts"),
         { shortcut(QStringLiteral("?")), shortcut(QStringLiteral("F1")) });
+}
+
+void TestKiriViewApplication::shortcutsApiReturnsCurrentShortcuts()
+{
+    KiriViewApplication application;
+
+    QCOMPARE(application.shortcuts(QStringLiteral("view_zoom_in")),
+        QList<QKeySequence>(
+            { shortcut(QStringLiteral("Ctrl+=")), shortcut(QStringLiteral("Ctrl++")),
+                shortcut(QStringLiteral("=")), shortcut(QStringLiteral("+")) }));
+    QCOMPARE(application.shortcuts(QStringLiteral("missing_action")), QList<QKeySequence>());
+
+    QAction *openAction = application.action(QStringLiteral("file_open"));
+    QVERIFY(openAction != nullptr);
+    const QList<QKeySequence> customShortcuts = {
+        shortcut(QStringLiteral("Alt+O")),
+        shortcut(QStringLiteral("Ctrl+Shift+O")),
+    };
+
+    openAction->setShortcuts(customShortcuts);
+
+    QCOMPARE(application.shortcuts(QStringLiteral("file_open")), customShortcuts);
 }
 
 void TestKiriViewApplication::menuPresentationDefaultsToHamburgerMenu()
