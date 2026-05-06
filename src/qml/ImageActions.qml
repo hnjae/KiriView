@@ -43,12 +43,15 @@ Item {
     readonly property var quitQAction: root.application.action("file_quit")
 
     readonly property ActionProxy openAction: ActionProxy {
+        displayHint: Kirigami.DisplayHint.AlwaysHide
         sourceAction: root.openQAction
     }
     readonly property ActionProxy previousContainerAction: ActionProxy {
+        displayHint: Kirigami.DisplayHint.AlwaysHide
         sourceAction: root.previousContainerQAction
     }
     readonly property ActionProxy nextContainerAction: ActionProxy {
+        displayHint: Kirigami.DisplayHint.AlwaysHide
         sourceAction: root.nextContainerQAction
     }
     readonly property ActionProxy previousImageAction: ActionProxy {
@@ -68,12 +71,18 @@ Item {
         sourceAction: root.lastImageQAction
     }
     readonly property ActionProxy fitAction: ActionProxy {
+        checkableOverride: true
+        checkedOverride: root.imageDocument.zoomMode === KiriImageDocument.Fit
         sourceAction: root.fitQAction
     }
     readonly property ActionProxy fitHeightAction: ActionProxy {
+        checkableOverride: true
+        checkedOverride: root.imageDocument.zoomMode === KiriImageDocument.FitHeight
         sourceAction: root.fitHeightQAction
     }
     readonly property ActionProxy fitWidthAction: ActionProxy {
+        checkableOverride: true
+        checkedOverride: root.imageDocument.zoomMode === KiriImageDocument.FitWidth
         sourceAction: root.fitWidthQAction
     }
     readonly property ActionProxy actualSizeAction: ActionProxy {
@@ -92,25 +101,33 @@ Item {
         sourceAction: root.scanBackwardQAction
     }
     readonly property ActionProxy fullscreenAction: ActionProxy {
+        checkableOverride: true
+        checkedOverride: root.fullscreen
+        displayHint: Kirigami.DisplayHint.AlwaysHide
         sourceAction: root.fullscreenQAction
     }
     readonly property ActionProxy shortcutHelpAction: ActionProxy {
+        displayHint: Kirigami.DisplayHint.AlwaysHide
         sourceAction: root.shortcutHelpQAction
     }
     readonly property ActionProxy configureAction: ActionProxy {
+        displayHint: Kirigami.DisplayHint.AlwaysHide
         sourceAction: root.configureQAction
     }
     readonly property ActionProxy configureShortcutsAction: ActionProxy {
+        displayHint: Kirigami.DisplayHint.AlwaysHide
         sourceAction: root.configureShortcutsQAction
     }
     readonly property ActionProxy showMenubarAction: ActionProxy {
+        displayHint: Kirigami.DisplayHint.AlwaysHide
         sourceAction: root.showMenubarQAction
     }
     readonly property ActionProxy quitAction: ActionProxy {
+        displayHint: Kirigami.DisplayHint.AlwaysHide
         sourceAction: root.quitQAction
     }
 
-    readonly property list<Kirigami.Action> hamburgerActions: [openAction, previousContainerAction, nextContainerAction, previousImageAction, nextImageAction, firstImageAction, lastImageAction, fitAction, fitHeightAction, fitWidthAction, actualSizeAction, zoomInAction, zoomOutAction, fullscreenAction, showMenubarSeparator, showMenubarAction, configureAction, configureShortcutsAction, shortcutHelpAction]
+    readonly property var applicationMenuActions: [openAction, applicationMenuFileSeparator, previousContainerAction, nextContainerAction, applicationMenuViewSeparator, fullscreenAction, applicationMenuSettingsSeparator, showMenubarAction, configureAction, configureShortcutsAction, applicationMenuHelpSeparator, shortcutHelpAction, applicationMenuQuitSeparator, quitAction]
 
     signal openDialogRequested
     signal imageBoundaryReached(string message)
@@ -147,7 +164,28 @@ Item {
         root.imageDocument.openPreviousImage();
     }
 
-    property Kirigami.Action showMenubarSeparator: Kirigami.Action {
+    property Kirigami.Action applicationMenuFileSeparator: Kirigami.Action {
+        displayHint: Kirigami.DisplayHint.AlwaysHide
+        separator: true
+    }
+
+    property Kirigami.Action applicationMenuViewSeparator: Kirigami.Action {
+        displayHint: Kirigami.DisplayHint.AlwaysHide
+        separator: true
+    }
+
+    property Kirigami.Action applicationMenuSettingsSeparator: Kirigami.Action {
+        displayHint: Kirigami.DisplayHint.AlwaysHide
+        separator: true
+    }
+
+    property Kirigami.Action applicationMenuHelpSeparator: Kirigami.Action {
+        displayHint: Kirigami.DisplayHint.AlwaysHide
+        separator: true
+    }
+
+    property Kirigami.Action applicationMenuQuitSeparator: Kirigami.Action {
+        displayHint: Kirigami.DisplayHint.AlwaysHide
         separator: true
     }
 

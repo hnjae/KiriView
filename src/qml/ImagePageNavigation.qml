@@ -15,6 +15,7 @@ RowLayout {
     required property var actions
     property bool compact: false
     readonly property int controlSpacing: compact ? Math.max(1, Math.round(Kirigami.Units.smallSpacing / 2)) : Kirigami.Units.smallSpacing
+    readonly property bool textInputActive: pageNumberField.activeFocus
 
     enabled: imageReady
     spacing: controlSpacing

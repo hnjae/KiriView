@@ -15,10 +15,9 @@ RowLayout {
     required property int minimumManualZoomPercent
     required property int maximumManualZoomPercent
     required property int zoomStepPercent
-    required property var actions
     property bool compact: false
     readonly property int controlSpacing: compact ? Math.max(1, Math.round(Kirigami.Units.smallSpacing / 2)) : Kirigami.Units.smallSpacing
-    readonly property bool menuOpen: fitMenu.opened
+    readonly property bool textInputActive: textInputFocused()
 
     spacing: controlSpacing
 
@@ -28,44 +27,6 @@ RowLayout {
 
     function textInputFocused() {
         return zoomSpinBox.activeFocus || (zoomSpinBox.contentItem !== null && zoomSpinBox.contentItem.activeFocus);
-    }
-
-    Controls.ToolButton {
-        id: fitMenuButton
-
-        enabled: root.actions.fitAction.enabled
-        display: Controls.AbstractButton.IconOnly
-        icon.name: "zoom-fit-best-symbolic"
-        text: "Fit"
-
-        onClicked: fitMenu.open()
-
-        Controls.ToolTip.text: text
-        Controls.ToolTip.visible: hovered
-
-        Controls.Menu {
-            id: fitMenu
-
-            y: fitMenuButton.height
-
-            Controls.MenuItem {
-                action: root.actions.fitAction
-                checkable: true
-                checked: root.imageDocument.zoomMode === KiriImageDocument.Fit
-            }
-
-            Controls.MenuItem {
-                action: root.actions.fitHeightAction
-                checkable: true
-                checked: root.imageDocument.zoomMode === KiriImageDocument.FitHeight
-            }
-
-            Controls.MenuItem {
-                action: root.actions.fitWidthAction
-                checkable: true
-                checked: root.imageDocument.zoomMode === KiriImageDocument.FitWidth
-            }
-        }
     }
 
     Controls.SpinBox {

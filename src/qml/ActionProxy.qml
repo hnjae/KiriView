@@ -9,13 +9,16 @@ Kirigami.Action {
     id: root
 
     required property var sourceAction
+    property bool checkableOverride: sourceAction ? sourceAction.checkable : false
+    property bool checkedOverride: sourceAction ? sourceAction.checked : false
     property bool enabledOverride: sourceAction && sourceAction.enabled
 
-    checkable: sourceAction ? sourceAction.checkable : false
-    checked: sourceAction ? sourceAction.checked : false
+    checkable: checkableOverride
+    checked: checkable && checkedOverride
     enabled: sourceAction && enabledOverride
     icon.name: sourceAction ? KirigamiPrivate.ActionHelper.iconName(sourceAction.icon) : ""
     text: sourceAction ? sourceAction.text : ""
+    tooltip: text
 
     onTriggered: {
         if (sourceAction) {
