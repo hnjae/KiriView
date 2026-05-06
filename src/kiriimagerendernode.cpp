@@ -16,12 +16,32 @@
 #include <utility>
 
 namespace {
-constexpr quint32 uniformBufferSize = 112;
-
 struct Vertex {
     float position[2];
     float texCoord[2];
 };
+
+struct UniformVec4 {
+    float x = 0.0F;
+    float y = 0.0F;
+    float z = 0.0F;
+    float w = 0.0F;
+};
+
+struct alignas(16) ImageUniformBlock {
+    std::array<float, 16> matrix {};
+    UniformVec4 targetRect;
+    UniformVec4 opacity;
+    UniformVec4 textureRect;
+};
+
+constexpr std::size_t imageUniformBlockVec4Count = 7;
+
+static_assert(sizeof(UniformVec4) == 16);
+static_assert(alignof(ImageUniformBlock) == 16);
+static_assert(sizeof(ImageUniformBlock) == imageUniformBlockVec4Count * sizeof(UniformVec4));
+
+constexpr quint32 uniformBufferSize = static_cast<quint32>(sizeof(ImageUniformBlock));
 
 constexpr std::array<Vertex, 6> quadVertices = { {
     { { 0.0F, 0.0F }, { 0.0F, 0.0F } },
@@ -50,6 +70,28 @@ const QShader &imageFragmentShader()
     static const QShader shader = shaderFromData(
         KiriView::kiriImageViewFragmentShader, KiriView::kiriImageViewFragmentShaderSize);
     return shader;
+}
+
+UniformVec4 rectUniform(const QRectF &rect)
+{
+    return UniformVec4 {
+        static_cast<float>(rect.x()),
+        static_cast<float>(rect.y()),
+        static_cast<float>(rect.width()),
+        static_cast<float>(rect.height()),
+    };
+}
+
+ImageUniformBlock imageUniformBlock(
+    const QMatrix4x4 &matrix, float opacity, const QRectF &targetRect, const QRectF &textureRect)
+{
+    ImageUniformBlock uniformBlock;
+    std::copy(matrix.constData(), matrix.constData() + uniformBlock.matrix.size(),
+        uniformBlock.matrix.begin());
+    uniformBlock.targetRect = rectUniform(targetRect);
+    uniformBlock.opacity.x = opacity;
+    uniformBlock.textureRect = rectUniform(textureRect);
+    return uniformBlock;
 }
 
 class PendingResourceUpdates final
@@ -413,18 +455,8 @@ void KiriImageRenderNode::updateUniformBuffer(QRhiBuffer *uniformBuffer, const R
     }
 
     const float opacity = static_cast<float>(inheritedOpacity());
-    std::array<float, uniformBufferSize / sizeof(float)> uniformData {};
-    std::copy(matrix.constData(), matrix.constData() + 16, uniformData.begin());
-    uniformData[16] = static_cast<float>(targetRect.x());
-    uniformData[17] = static_cast<float>(targetRect.y());
-    uniformData[18] = static_cast<float>(targetRect.width());
-    uniformData[19] = static_cast<float>(targetRect.height());
-    uniformData[20] = opacity;
-    uniformData[24] = static_cast<float>(textureRect.x());
-    uniformData[25] = static_cast<float>(textureRect.y());
-    uniformData[26] = static_cast<float>(textureRect.width());
-    uniformData[27] = static_cast<float>(textureRect.height());
-
-    uniformBuffer->fullDynamicBufferUpdateForCurrentFrame(uniformData.data(), uniformBufferSize);
+    const ImageUniformBlock uniformData
+        = imageUniformBlock(matrix, opacity, targetRect, textureRect);
+    uniformBuffer->fullDynamicBufferUpdateForCurrentFrame(&uniformData, uniformBufferSize);
 }
 }
