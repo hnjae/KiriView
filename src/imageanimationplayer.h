@@ -64,7 +64,10 @@ private:
     bool resetReader(ReaderPlayback &playback, QString *errorString);
     bool resetHeifSequence(
         HeifSequencePlayback &playback, int *firstFrameDelay, QString *errorString);
+    bool advanceLoopOrStop();
     bool hasRemainingLoops() const;
+    void scheduleNextFrame(int delay);
+    void scheduleNextFrameOrStop(bool shouldContinue, int delay);
     void clearPlaybackState();
     void finishWithError(const QString &errorString);
 

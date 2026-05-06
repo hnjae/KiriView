@@ -67,7 +67,7 @@ void ImageAnimationPlayer::start(
     const bool hasMoreFrames = playback.reader->canRead();
     m_playback = std::move(playback);
     if (hasMoreFrames) {
-        m_timer.start(normalizedAnimationFrameDelay(firstFrameDelay));
+        scheduleNextFrame(firstFrameDelay);
     }
 }
 
@@ -79,12 +79,11 @@ void ImageAnimationPlayer::startDecoded(std::vector<AnimationFrame> frames, int 
     DecodedPlayback playback;
     playback.frames = std::move(frames);
     const bool hasMoreFrames = playback.frames.size() > 1;
-    const int nextFrameDelay
-        = hasMoreFrames ? normalizedAnimationFrameDelay(playback.frames.front().delay) : 0;
+    const int nextFrameDelay = hasMoreFrames ? playback.frames.front().delay : 0;
 
     m_playback = std::move(playback);
     if (hasMoreFrames) {
-        m_timer.start(nextFrameDelay);
+        scheduleNextFrame(nextFrameDelay);
     }
 }
 
@@ -102,7 +101,7 @@ void ImageAnimationPlayer::startHeifSequence(const QByteArray &data)
     }
 
     m_playback = std::move(playback);
-    m_timer.start(normalizedAnimationFrameDelay(firstFrameDelay));
+    scheduleNextFrame(firstFrameDelay);
 }
 
 void ImageAnimationPlayer::stop() { clearPlaybackState(); }
@@ -131,12 +130,9 @@ void ImageAnimationPlayer::advanceReaderFrame(ReaderPlayback &playback)
     }
 
     if (!playback.reader->canRead()) {
-        if (!hasRemainingLoops()) {
-            stop();
+        if (!advanceLoopOrStop()) {
             return;
         }
-
-        ++m_completedLoops;
 
         QString errorString;
         if (!resetReader(playback, &errorString)) {
@@ -151,14 +147,10 @@ void ImageAnimationPlayer::advanceReaderFrame(ReaderPlayback &playback)
         return;
     }
 
-    const int delay = normalizedAnimationFrameDelay(playback.reader->nextImageDelay());
+    const int delay = playback.reader->nextImageDelay();
     invokeIfSet(m_frameReady, frame);
 
-    if (playback.reader->canRead() || hasRemainingLoops()) {
-        m_timer.start(delay);
-    } else {
-        stop();
-    }
+    scheduleNextFrameOrStop(playback.reader->canRead() || hasRemainingLoops(), delay);
 }
 
 void ImageAnimationPlayer::advanceDecodedFrame(DecodedPlayback &playback)
@@ -168,12 +160,10 @@ void ImageAnimationPlayer::advanceDecodedFrame(DecodedPlayback &playback)
     }
 
     if (playback.frameIndex + 1 >= playback.frames.size()) {
-        if (!hasRemainingLoops()) {
-            stop();
+        if (!advanceLoopOrStop()) {
             return;
         }
 
-        ++m_completedLoops;
         playback.frameIndex = 0;
     } else {
         ++playback.frameIndex;
@@ -182,11 +172,8 @@ void ImageAnimationPlayer::advanceDecodedFrame(DecodedPlayback &playback)
     const AnimationFrame &frame = playback.frames.at(playback.frameIndex);
     invokeIfSet(m_frameReady, frame.image);
 
-    if (playback.frameIndex + 1 < playback.frames.size() || hasRemainingLoops()) {
-        m_timer.start(normalizedAnimationFrameDelay(frame.delay));
-    } else {
-        stop();
-    }
+    scheduleNextFrameOrStop(
+        playback.frameIndex + 1 < playback.frames.size() || hasRemainingLoops(), frame.delay);
 }
 
 void ImageAnimationPlayer::advanceHeifSequenceFrame(HeifSequencePlayback &playback)
@@ -207,7 +194,7 @@ void ImageAnimationPlayer::advanceHeifSequenceFrame(HeifSequencePlayback &playba
     }
 
     invokeIfSet(m_frameReady, frame->image);
-    m_timer.start(normalizedAnimationFrameDelay(frame->delay));
+    scheduleNextFrame(frame->delay);
 }
 
 bool ImageAnimationPlayer::resetReader(ReaderPlayback &playback, QString *errorString)
@@ -255,9 +242,35 @@ bool ImageAnimationPlayer::resetHeifSequence(
     return true;
 }
 
+bool ImageAnimationPlayer::advanceLoopOrStop()
+{
+    if (!hasRemainingLoops()) {
+        stop();
+        return false;
+    }
+
+    ++m_completedLoops;
+    return true;
+}
+
 bool ImageAnimationPlayer::hasRemainingLoops() const
 {
     return m_loopCount < 0 || m_completedLoops < m_loopCount;
+}
+
+void ImageAnimationPlayer::scheduleNextFrame(int delay)
+{
+    m_timer.start(normalizedAnimationFrameDelay(delay));
+}
+
+void ImageAnimationPlayer::scheduleNextFrameOrStop(bool shouldContinue, int delay)
+{
+    if (shouldContinue) {
+        scheduleNextFrame(delay);
+        return;
+    }
+
+    stop();
 }
 
 void ImageAnimationPlayer::clearPlaybackState()

@@ -212,6 +212,7 @@ void ImageOpenController::finishLoadSuccessfully(
     const ImageLoadSession &session, const QImage &image, bool predecodeCacheable)
 {
     beginSuccessfulImagePresentation(session, predecodeCacheable);
+    m_presentationController.stopAnimation();
     m_presentationController.setImage(image);
     finishSuccessfulImagePresentation(session);
 }
@@ -219,7 +220,6 @@ void ImageOpenController::finishLoadSuccessfully(
 void ImageOpenController::beginSuccessfulImagePresentation(
     const ImageLoadSession &session, bool predecodeCacheable)
 {
-    m_presentationController.stopAnimation();
     const QUrl loadedZoomScopeUrl = zoomScopeUrlForLocation(session.location);
     m_presentationController.prepareImageContainer(loadedZoomScopeUrl);
     m_presentationController.setPredecodeCacheable(predecodeCacheable);
