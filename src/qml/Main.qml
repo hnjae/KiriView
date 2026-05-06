@@ -181,7 +181,8 @@ StatefulApp.StatefulWindow {
             height: root.fullscreen ? 0 : implicitHeight
             imageDocument: page.imageDocument
             imageReady: page.imageReady
-            showApplicationMenuActions: !root.menuBarMode
+            applicationMenuActions: applicationMenuDrawer.actions
+            showApplicationMenuActions: !root.menuBarMode && !root.fullscreen
             visible: !root.fullscreen
         }
 
@@ -240,7 +241,8 @@ StatefulApp.StatefulWindow {
             height: implicitHeight
             imageDocument: page.imageDocument
             imageReady: page.imageReady
-            showApplicationMenuActions: !root.menuBarMode
+            applicationMenuActions: applicationMenuDrawer.actions
+            showApplicationMenuActions: !root.menuBarMode && !root.fullscreen
             transientOverlay: true
             visible: root.fullscreen && root.fullscreenToolBarRevealed
             z: 20
@@ -258,6 +260,14 @@ StatefulApp.StatefulWindow {
                 root.scheduleFullscreenToolBarHide();
             }
         }
+    }
+
+    globalDrawer: Kirigami.GlobalDrawer {
+        id: applicationMenuDrawer
+
+        actions: imageActions.applicationMenuActions
+        enabled: !root.menuBarMode && !root.fullscreen
+        isMenu: true
     }
 
     menuBar: Controls.MenuBar {

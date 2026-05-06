@@ -21,6 +21,7 @@ Controls.ToolBar {
     property bool compact: false
     property bool floating: false
     property bool transientOverlay: false
+    property var applicationMenuActions: []
     property bool showApplicationMenuActions: false
     property bool pageNavigationInputFocused: false
     property bool zoomInputFocused: false
@@ -29,7 +30,7 @@ Controls.ToolBar {
     readonly property bool interactionActive: toolbarHoverHandler.hovered || textInputFocused()
     readonly property int toolbarVerticalPadding: controlSpacing
     readonly property var toolbarControls: [zoomLevelAction, fitMenuAction]
-    readonly property var toolbarActions: showApplicationMenuActions ? toolbarControls.concat(actions.applicationMenuActions) : toolbarControls
+    readonly property var toolbarActions: showApplicationMenuActions ? toolbarControls.concat([applicationMenuAction]) : toolbarControls
 
     signal pageNumberResetRequested
 
@@ -109,6 +110,15 @@ Controls.ToolBar {
         tooltip: text
     }
 
+    readonly property Kirigami.Action applicationMenuAction: Kirigami.Action {
+        children: root.applicationMenuActions
+        displayHint: Kirigami.DisplayHint.KeepVisible
+        enabled: root.applicationMenuActions.length > 0
+        icon.name: "open-menu-symbolic"
+        text: "Application Menu"
+        tooltip: "Open menu"
+    }
+
     contentItem: RowLayout {
         spacing: root.controlSpacing
 
@@ -148,7 +158,6 @@ Controls.ToolBar {
             actions: root.toolbarActions
             alignment: Qt.AlignRight
             display: Controls.AbstractButton.IconOnly
-            overflowIconName: "application-menu-symbolic"
         }
     }
 }
