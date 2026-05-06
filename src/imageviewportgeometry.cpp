@@ -4,104 +4,82 @@
 #include "imageviewportgeometry.h"
 
 #include "kiriview/src/imageviewportgeometry.cxx.h"
-
-namespace {
-KiriView::RustSize rustSize(const QSize &size)
-{
-    return KiriView::RustSize { size.width(), size.height() };
-}
-
-KiriView::RustSizeF rustSizeF(const QSizeF &size)
-{
-    return KiriView::RustSizeF { size.width(), size.height() };
-}
-
-KiriView::RustPointF rustPointF(const QPointF &point)
-{
-    return KiriView::RustPointF { point.x(), point.y() };
-}
-
-KiriView::RustRectF rustRectF(const QRectF &rect)
-{
-    return KiriView::RustRectF { rect.x(), rect.y(), rect.width(), rect.height() };
-}
-
-QSizeF qtSizeF(const KiriView::RustSizeF &size) { return QSizeF(size.width, size.height); }
-
-QPointF qtPointF(const KiriView::RustPointF &point) { return QPointF(point.x, point.y); }
-
-QRectF qtRectF(const KiriView::RustRectF &rect)
-{
-    return QRectF(rect.x, rect.y, rect.width, rect.height);
-}
-}
+#include "qtgeometryconversion.h"
 
 namespace KiriView {
 QRectF imageViewportImageRect(const QSizeF &viewportSize, const QSizeF &displaySize)
 {
-    return qtRectF(rustImageViewportImageRect(rustSizeF(viewportSize), rustSizeF(displaySize)));
+    return Bridge::qtRectF(rustImageViewportImageRect(
+        Bridge::rustSizeF<RustSizeF>(viewportSize), Bridge::rustSizeF<RustSizeF>(displaySize)));
 }
 
 QPointF imageViewportMaximumContentPosition(const QSizeF &viewportSize, const QRectF &imageRect)
 {
-    return qtPointF(
-        rustImageViewportMaximumContentPosition(rustSizeF(viewportSize), rustRectF(imageRect)));
+    return Bridge::qtPointF(rustImageViewportMaximumContentPosition(
+        Bridge::rustSizeF<RustSizeF>(viewportSize), Bridge::rustRectF<RustRectF>(imageRect)));
 }
 
 QPointF imageViewportClampedContentPosition(
     const QSizeF &viewportSize, const QRectF &imageRect, const QPointF &contentPosition)
 {
-    return qtPointF(rustImageViewportClampedContentPosition(
-        rustSizeF(viewportSize), rustRectF(imageRect), rustPointF(contentPosition)));
+    return Bridge::qtPointF(rustImageViewportClampedContentPosition(
+        Bridge::rustSizeF<RustSizeF>(viewportSize), Bridge::rustRectF<RustRectF>(imageRect),
+        Bridge::rustPointF<RustPointF>(contentPosition)));
 }
 
 QPointF imageViewportPanPosition(const QSizeF &viewportSize, const QRectF &imageRect,
     const QPointF &contentPosition, const QPointF &delta)
 {
-    return qtPointF(rustImageViewportPanPosition(rustSizeF(viewportSize), rustRectF(imageRect),
-        rustPointF(contentPosition), rustPointF(delta)));
+    return Bridge::qtPointF(rustImageViewportPanPosition(Bridge::rustSizeF<RustSizeF>(viewportSize),
+        Bridge::rustRectF<RustRectF>(imageRect), Bridge::rustPointF<RustPointF>(contentPosition),
+        Bridge::rustPointF<RustPointF>(delta)));
 }
 
 QPointF imageViewportNextZScanPosition(
     const QSizeF &viewportSize, const QRectF &imageRect, const QPointF &contentPosition)
 {
-    return qtPointF(rustImageViewportNextZScanPosition(
-        rustSizeF(viewportSize), rustRectF(imageRect), rustPointF(contentPosition)));
+    return Bridge::qtPointF(rustImageViewportNextZScanPosition(
+        Bridge::rustSizeF<RustSizeF>(viewportSize), Bridge::rustRectF<RustRectF>(imageRect),
+        Bridge::rustPointF<RustPointF>(contentPosition)));
 }
 
 QPointF imageViewportPreviousZScanPosition(
     const QSizeF &viewportSize, const QRectF &imageRect, const QPointF &contentPosition)
 {
-    return qtPointF(rustImageViewportPreviousZScanPosition(
-        rustSizeF(viewportSize), rustRectF(imageRect), rustPointF(contentPosition)));
+    return Bridge::qtPointF(rustImageViewportPreviousZScanPosition(
+        Bridge::rustSizeF<RustSizeF>(viewportSize), Bridge::rustRectF<RustRectF>(imageRect),
+        Bridge::rustPointF<RustPointF>(contentPosition)));
 }
 
 QPointF imageViewportFinalZScanPosition(const QSizeF &viewportSize, const QRectF &imageRect)
 {
-    return qtPointF(
-        rustImageViewportFinalZScanPosition(rustSizeF(viewportSize), rustRectF(imageRect)));
+    return Bridge::qtPointF(rustImageViewportFinalZScanPosition(
+        Bridge::rustSizeF<RustSizeF>(viewportSize), Bridge::rustRectF<RustRectF>(imageRect)));
 }
 
 bool imageViewportPointInsideImage(
     const QPointF &contentPosition, const QPointF &viewportPoint, const QRectF &imageRect)
 {
-    return rustImageViewportPointInsideImage(
-        rustPointF(contentPosition), rustPointF(viewportPoint), rustRectF(imageRect));
+    return rustImageViewportPointInsideImage(Bridge::rustPointF<RustPointF>(contentPosition),
+        Bridge::rustPointF<RustPointF>(viewportPoint), Bridge::rustRectF<RustRectF>(imageRect));
 }
 
 QPointF imageViewportContentPositionForZoom(const QSizeF &viewportSize,
     const QSizeF &currentDisplaySize, const QSizeF &nextDisplaySize, const QPointF &contentPosition,
     const QPointF &viewportAnchorPoint)
 {
-    return qtPointF(rustImageViewportContentPositionForZoom(rustSizeF(viewportSize),
-        rustSizeF(currentDisplaySize), rustSizeF(nextDisplaySize), rustPointF(contentPosition),
-        rustPointF(viewportAnchorPoint)));
+    return Bridge::qtPointF(
+        rustImageViewportContentPositionForZoom(Bridge::rustSizeF<RustSizeF>(viewportSize),
+            Bridge::rustSizeF<RustSizeF>(currentDisplaySize),
+            Bridge::rustSizeF<RustSizeF>(nextDisplaySize),
+            Bridge::rustPointF<RustPointF>(contentPosition),
+            Bridge::rustPointF<RustPointF>(viewportAnchorPoint)));
 }
 
 QSizeF imageViewportDisplaySizeForZoom(
     const QSize &imageSize, qreal zoomPercent, qreal devicePixelRatio)
 {
-    return qtSizeF(
-        rustImageViewportDisplaySizeForZoom(rustSize(imageSize), zoomPercent, devicePixelRatio));
+    return Bridge::qtSizeF(rustImageViewportDisplaySizeForZoom(
+        Bridge::rustSize<RustSize>(imageSize), zoomPercent, devicePixelRatio));
 }
 }
