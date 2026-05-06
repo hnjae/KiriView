@@ -69,88 +69,96 @@ constexpr DefaultShortcutSpec portableShortcutSpec(Sequences... sequences)
     };
 }
 
+constexpr ActionDefinition existingAction(
+    KiriViewApplication::ActionId actionId, const char *name, DefaultShortcutSpec defaultShortcuts)
+{
+    return ActionDefinition { actionId, name, ActionRegistrationKind::Existing,
+        KStandardActions::Open, nullptr, nullptr, defaultShortcuts };
+}
+
+constexpr ActionDefinition inheritedAction(KiriViewApplication::ActionId actionId, const char *name)
+{
+    return ActionDefinition { actionId, name, ActionRegistrationKind::Inherited,
+        KStandardActions::Open, nullptr, nullptr, noDefaultShortcuts() };
+}
+
+constexpr ActionDefinition registeredAction(KiriViewApplication::ActionId actionId,
+    const char *name, const char *text, const char *iconName, DefaultShortcutSpec defaultShortcuts)
+{
+    return ActionDefinition { actionId, name, ActionRegistrationKind::Registered,
+        KStandardActions::Open, text, iconName, defaultShortcuts };
+}
+
+constexpr ActionDefinition standardAction(KiriViewApplication::ActionId actionId, const char *name,
+    KStandardActions::StandardAction actionType, const char *text,
+    DefaultShortcutSpec defaultShortcuts)
+{
+    return ActionDefinition { actionId, name, ActionRegistrationKind::Standard, actionType, text,
+        nullptr, defaultShortcuts };
+}
+
+constexpr ActionDefinition showMenubarAction(KiriViewApplication::ActionId actionId,
+    const char *name, KStandardActions::StandardAction actionType, const char *text,
+    DefaultShortcutSpec defaultShortcuts)
+{
+    return ActionDefinition { actionId, name, ActionRegistrationKind::ShowMenubar, actionType, text,
+        nullptr, defaultShortcuts };
+}
+
 constexpr std::array actionDefinitions {
-    ActionDefinition { KiriViewApplication::FileOpenAction, "file_open",
-        ActionRegistrationKind::Standard, KStandardActions::Open, "Open", nullptr,
-        standardShortcutSpec(QKeySequence::Open) },
-    ActionDefinition { KiriViewApplication::FileQuitAction, "file_quit",
-        ActionRegistrationKind::Existing, KStandardActions::Open, nullptr, nullptr,
-        portableShortcutSpec("Q", "Ctrl+Q") },
-    ActionDefinition { KiriViewApplication::GoPreviousArchiveAction, "go_previous_archive",
-        ActionRegistrationKind::Registered, KStandardActions::Open, "Previous Archive",
-        "go-previous-symbolic", portableShortcutSpec("[") },
-    ActionDefinition { KiriViewApplication::GoNextArchiveAction, "go_next_archive",
-        ActionRegistrationKind::Registered, KStandardActions::Open, "Next Archive",
-        "go-next-symbolic", portableShortcutSpec("]") },
-    ActionDefinition { KiriViewApplication::GoPreviousImageAction, "go_previous_image",
-        ActionRegistrationKind::Registered, KStandardActions::Open, "Previous", "go-up-symbolic",
-        standardShortcutSpec(QKeySequence::MoveToPreviousPage) },
-    ActionDefinition { KiriViewApplication::GoNextImageAction, "go_next_image",
-        ActionRegistrationKind::Registered, KStandardActions::Open, "Next", "go-down-symbolic",
-        standardShortcutSpec(QKeySequence::MoveToNextPage) },
-    ActionDefinition { KiriViewApplication::GoFirstImageAction, "go_first_image",
-        ActionRegistrationKind::Registered, KStandardActions::Open, "First Image",
-        "go-first-symbolic", portableShortcutSpec("Ctrl+Home", "Home") },
-    ActionDefinition { KiriViewApplication::GoLastImageAction, "go_last_image",
-        ActionRegistrationKind::Registered, KStandardActions::Open, "Last Image",
-        "go-last-symbolic", portableShortcutSpec("Ctrl+End", "End") },
-    ActionDefinition { KiriViewApplication::ViewZoomInAction, "view_zoom_in",
-        ActionRegistrationKind::Standard, KStandardActions::ZoomIn, "Zoom In", nullptr,
-        portableShortcutSpec("Ctrl+=", "Ctrl++", "=", "+") },
-    ActionDefinition { KiriViewApplication::ViewZoomOutAction, "view_zoom_out",
-        ActionRegistrationKind::Standard, KStandardActions::ZoomOut, "Zoom Out", nullptr,
-        portableShortcutSpec("-", "Ctrl+-") },
-    ActionDefinition { KiriViewApplication::ViewFitAction, "view_fit",
-        ActionRegistrationKind::Standard, KStandardActions::FitToPage, "Fit", nullptr,
-        portableShortcutSpec("1") },
-    ActionDefinition { KiriViewApplication::ViewFitHeightAction, "view_fit_height",
-        ActionRegistrationKind::Standard, KStandardActions::FitToHeight, "Fit Height", nullptr,
-        portableShortcutSpec("2") },
-    ActionDefinition { KiriViewApplication::ViewFitWidthAction, "view_fit_width",
-        ActionRegistrationKind::Standard, KStandardActions::FitToWidth, "Fit Width", nullptr,
-        portableShortcutSpec("3") },
-    ActionDefinition { KiriViewApplication::ViewActualSizeAction, "view_actual_size",
-        ActionRegistrationKind::Standard, KStandardActions::ActualSize, "Actual Size", nullptr,
-        portableShortcutSpec("0") },
-    ActionDefinition { KiriViewApplication::ViewPanLeftAction, "view_pan_left",
-        ActionRegistrationKind::Registered, KStandardActions::Open, "Pan Left", nullptr,
-        portableShortcutSpec("Left") },
-    ActionDefinition { KiriViewApplication::ViewPanRightAction, "view_pan_right",
-        ActionRegistrationKind::Registered, KStandardActions::Open, "Pan Right", nullptr,
-        portableShortcutSpec("Right") },
-    ActionDefinition { KiriViewApplication::ViewPanUpAction, "view_pan_up",
-        ActionRegistrationKind::Registered, KStandardActions::Open, "Pan Up", nullptr,
-        portableShortcutSpec("Up") },
-    ActionDefinition { KiriViewApplication::ViewPanDownAction, "view_pan_down",
-        ActionRegistrationKind::Registered, KStandardActions::Open, "Pan Down", nullptr,
-        portableShortcutSpec("Down") },
-    ActionDefinition { KiriViewApplication::ViewPanTopLeftAction, "view_pan_top_left",
-        ActionRegistrationKind::Registered, KStandardActions::Open, "Top Left", nullptr,
-        portableShortcutSpec("<") },
-    ActionDefinition { KiriViewApplication::ViewPanBottomRightAction, "view_pan_bottom_right",
-        ActionRegistrationKind::Registered, KStandardActions::Open, "Bottom Right", nullptr,
-        portableShortcutSpec(">") },
-    ActionDefinition { KiriViewApplication::ViewScanForwardAction, "view_scan_forward",
-        ActionRegistrationKind::Registered, KStandardActions::Open, "Scan Forward", nullptr,
-        portableShortcutSpec(".") },
-    ActionDefinition { KiriViewApplication::ViewScanBackwardAction, "view_scan_backward",
-        ActionRegistrationKind::Registered, KStandardActions::Open, "Scan Backward", nullptr,
-        portableShortcutSpec(",") },
-    ActionDefinition { KiriViewApplication::WindowFullscreenAction, "window_fullscreen",
-        ActionRegistrationKind::Standard, KStandardActions::FullScreen, "Fullscreen", nullptr,
-        portableShortcutSpec("F", "F11") },
-    ActionDefinition { KiriViewApplication::HelpShortcutsAction, "help_shortcuts",
-        ActionRegistrationKind::Registered, KStandardActions::Open, "Keyboard Shortcuts",
-        "help-keyboard-shortcuts-symbolic", portableShortcutSpec("?", "F1") },
-    ActionDefinition { KiriViewApplication::OptionsConfigureAction, "options_configure",
-        ActionRegistrationKind::Inherited, KStandardActions::Open, nullptr, nullptr,
-        noDefaultShortcuts() },
-    ActionDefinition { KiriViewApplication::OptionsConfigureKeybindingAction,
-        "options_configure_keybinding", ActionRegistrationKind::Inherited, KStandardActions::Open,
-        nullptr, nullptr, noDefaultShortcuts() },
-    ActionDefinition { KiriViewApplication::OptionsShowMenubarAction, "options_show_menubar",
-        ActionRegistrationKind::ShowMenubar, KStandardActions::ShowMenubar, "Show Menubar", nullptr,
-        noDefaultShortcuts() },
+    standardAction(KiriViewApplication::FileOpenAction, "file_open", KStandardActions::Open, "Open",
+        standardShortcutSpec(QKeySequence::Open)),
+    existingAction(
+        KiriViewApplication::FileQuitAction, "file_quit", portableShortcutSpec("Q", "Ctrl+Q")),
+    registeredAction(KiriViewApplication::GoPreviousArchiveAction, "go_previous_archive",
+        "Previous Archive", "go-previous-symbolic", portableShortcutSpec("[")),
+    registeredAction(KiriViewApplication::GoNextArchiveAction, "go_next_archive", "Next Archive",
+        "go-next-symbolic", portableShortcutSpec("]")),
+    registeredAction(KiriViewApplication::GoPreviousImageAction, "go_previous_image", "Previous",
+        "go-up-symbolic", standardShortcutSpec(QKeySequence::MoveToPreviousPage)),
+    registeredAction(KiriViewApplication::GoNextImageAction, "go_next_image", "Next",
+        "go-down-symbolic", standardShortcutSpec(QKeySequence::MoveToNextPage)),
+    registeredAction(KiriViewApplication::GoFirstImageAction, "go_first_image", "First Image",
+        "go-first-symbolic", portableShortcutSpec("Ctrl+Home", "Home")),
+    registeredAction(KiriViewApplication::GoLastImageAction, "go_last_image", "Last Image",
+        "go-last-symbolic", portableShortcutSpec("Ctrl+End", "End")),
+    standardAction(KiriViewApplication::ViewZoomInAction, "view_zoom_in", KStandardActions::ZoomIn,
+        "Zoom In", portableShortcutSpec("Ctrl+=", "Ctrl++", "=", "+")),
+    standardAction(KiriViewApplication::ViewZoomOutAction, "view_zoom_out",
+        KStandardActions::ZoomOut, "Zoom Out", portableShortcutSpec("-", "Ctrl+-")),
+    standardAction(KiriViewApplication::ViewFitAction, "view_fit", KStandardActions::FitToPage,
+        "Fit", portableShortcutSpec("1")),
+    standardAction(KiriViewApplication::ViewFitHeightAction, "view_fit_height",
+        KStandardActions::FitToHeight, "Fit Height", portableShortcutSpec("2")),
+    standardAction(KiriViewApplication::ViewFitWidthAction, "view_fit_width",
+        KStandardActions::FitToWidth, "Fit Width", portableShortcutSpec("3")),
+    standardAction(KiriViewApplication::ViewActualSizeAction, "view_actual_size",
+        KStandardActions::ActualSize, "Actual Size", portableShortcutSpec("0")),
+    registeredAction(KiriViewApplication::ViewPanLeftAction, "view_pan_left", "Pan Left", nullptr,
+        portableShortcutSpec("Left")),
+    registeredAction(KiriViewApplication::ViewPanRightAction, "view_pan_right", "Pan Right",
+        nullptr, portableShortcutSpec("Right")),
+    registeredAction(KiriViewApplication::ViewPanUpAction, "view_pan_up", "Pan Up", nullptr,
+        portableShortcutSpec("Up")),
+    registeredAction(KiriViewApplication::ViewPanDownAction, "view_pan_down", "Pan Down", nullptr,
+        portableShortcutSpec("Down")),
+    registeredAction(KiriViewApplication::ViewPanTopLeftAction, "view_pan_top_left", "Top Left",
+        nullptr, portableShortcutSpec("<")),
+    registeredAction(KiriViewApplication::ViewPanBottomRightAction, "view_pan_bottom_right",
+        "Bottom Right", nullptr, portableShortcutSpec(">")),
+    registeredAction(KiriViewApplication::ViewScanForwardAction, "view_scan_forward",
+        "Scan Forward", nullptr, portableShortcutSpec(".")),
+    registeredAction(KiriViewApplication::ViewScanBackwardAction, "view_scan_backward",
+        "Scan Backward", nullptr, portableShortcutSpec(",")),
+    standardAction(KiriViewApplication::WindowFullscreenAction, "window_fullscreen",
+        KStandardActions::FullScreen, "Fullscreen", portableShortcutSpec("F", "F11")),
+    registeredAction(KiriViewApplication::HelpShortcutsAction, "help_shortcuts",
+        "Keyboard Shortcuts", "help-keyboard-shortcuts-symbolic", portableShortcutSpec("?", "F1")),
+    inheritedAction(KiriViewApplication::OptionsConfigureAction, "options_configure"),
+    inheritedAction(
+        KiriViewApplication::OptionsConfigureKeybindingAction, "options_configure_keybinding"),
+    showMenubarAction(KiriViewApplication::OptionsShowMenubarAction, "options_show_menubar",
+        KStandardActions::ShowMenubar, "Show Menubar", noDefaultShortcuts()),
 };
 
 static_assert(
