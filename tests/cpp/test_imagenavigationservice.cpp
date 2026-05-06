@@ -21,6 +21,18 @@ using KiriView::TestSupport::imageCandidate;
 using KiriView::TestSupport::localUrl;
 
 using FakeCandidateProvider = KiriView::TestSupport::FakeImageNavigationCandidateProvider;
+
+KiriView::ImageNavigationService::Callbacks navigationCallbacks(
+    KiriView::ImageNavigationService::OpenUrlCallback openUrl = {},
+    KiriView::ImageNavigationService::OpenContainerImageCallback openContainerImage = {},
+    KiriView::ImageNavigationService::ContainerNavigationErrorCallback containerNavigationError
+    = {},
+    KiriView::ImageNavigationService::PageNavigationChangedCallback pageNavigationChanged = {})
+{
+    return KiriView::ImageNavigationService::Callbacks { std::move(openUrl),
+        std::move(openContainerImage), std::move(containerNavigationError),
+        std::move(pageNavigationChanged) };
+}
 }
 
 class TestImageNavigationService : public QObject
@@ -51,9 +63,9 @@ void TestImageNavigationService::directoryAdjacentImageUsesInjectedProvider()
             imageCandidate(nextUrl),
         });
 
-    KiriView::ImageNavigationService service(nullptr, fakeProvider.provider());
     QUrl openedUrl;
-    service.setOpenUrlCallback([&openedUrl](const QUrl &url) { openedUrl = url; });
+    KiriView::ImageNavigationService service(nullptr, fakeProvider.provider(),
+        navigationCallbacks([&openedUrl](const QUrl &url) { openedUrl = url; }));
     service.openAdjacentImage(
         KiriView::ImageNavigationService::DisplayContext {
             true,
@@ -79,9 +91,9 @@ void TestImageNavigationService::comicBookAdjacentImageUsesInjectedProvider()
             imageCandidate(nextUrl),
         });
 
-    KiriView::ImageNavigationService service(nullptr, fakeProvider.provider());
     QUrl openedUrl;
-    service.setOpenUrlCallback([&openedUrl](const QUrl &url) { openedUrl = url; });
+    KiriView::ImageNavigationService service(nullptr, fakeProvider.provider(),
+        navigationCallbacks([&openedUrl](const QUrl &url) { openedUrl = url; }));
     service.openAdjacentImage(
         KiriView::ImageNavigationService::DisplayContext {
             true,
@@ -107,9 +119,9 @@ void TestImageNavigationService::directArchiveAdjacentImageUsesInjectedProvider(
             imageCandidate(nextUrl),
         });
 
-    KiriView::ImageNavigationService service(nullptr, fakeProvider.provider());
     QUrl openedUrl;
-    service.setOpenUrlCallback([&openedUrl](const QUrl &url) { openedUrl = url; });
+    KiriView::ImageNavigationService service(nullptr, fakeProvider.provider(),
+        navigationCallbacks([&openedUrl](const QUrl &url) { openedUrl = url; }));
     service.openAdjacentImage(
         KiriView::ImageNavigationService::DisplayContext {
             true,
@@ -134,11 +146,13 @@ void TestImageNavigationService::pageNavigationKeepsKnownListWhileRefreshingCurr
             imageCandidate(thirdUrl),
         });
 
-    KiriView::ImageNavigationService service(nullptr, fakeProvider.provider());
     std::vector<std::pair<int, int>> observedStates;
-    service.setPageNavigationChangedCallback([&service, &observedStates]() {
-        observedStates.push_back({ service.currentPageNumber(), service.imageCount() });
-    });
+    KiriView::ImageNavigationService *servicePtr = nullptr;
+    KiriView::ImageNavigationService service(nullptr, fakeProvider.provider(),
+        navigationCallbacks({}, {}, {}, [&servicePtr, &observedStates]() {
+            observedStates.push_back({ servicePtr->currentPageNumber(), servicePtr->imageCount() });
+        }));
+    servicePtr = &service;
 
     service.updatePageNavigation(KiriView::ImageNavigationService::DisplayContext {
         true,
@@ -183,14 +197,14 @@ void TestImageNavigationService::directoryContainerNavigationOpensFirstImage()
             imageCandidate(targetImageUrl),
         });
 
-    KiriView::ImageNavigationService service(nullptr, fakeProvider.provider());
     QUrl openedImageUrl;
     QUrl openedContainerUrl;
-    service.setOpenContainerImageCallback(
-        [&openedImageUrl, &openedContainerUrl](const QUrl &imageUrl, const QUrl &containerUrl) {
-            openedImageUrl = imageUrl;
-            openedContainerUrl = containerUrl;
-        });
+    KiriView::ImageNavigationService service(nullptr, fakeProvider.provider(),
+        navigationCallbacks({},
+            [&openedImageUrl, &openedContainerUrl](const QUrl &imageUrl, const QUrl &containerUrl) {
+                openedImageUrl = imageUrl;
+                openedContainerUrl = containerUrl;
+            }));
     service.openAdjacentContainer(currentContainerUrl, NavigationDirection::Next);
 
     QCOMPARE(openedImageUrl, targetImageUrl);
@@ -215,16 +229,16 @@ void TestImageNavigationService::emptyContainerReportsNavigationError()
         });
     fakeProvider.setArchiveImages(targetArchiveDocument->rootUrl(), {});
 
-    KiriView::ImageNavigationService service(nullptr, fakeProvider.provider());
     QUrl errorContainerUrl;
     KiriView::ContainerNavigationError navigationError
         = KiriView::ContainerNavigationError::Generic;
-    service.setContainerNavigationErrorCallback(
-        [&errorContainerUrl, &navigationError](
-            const QUrl &containerUrl, KiriView::ContainerNavigationError error, const QString &) {
-            errorContainerUrl = containerUrl;
-            navigationError = error;
-        });
+    KiriView::ImageNavigationService service(nullptr, fakeProvider.provider(),
+        navigationCallbacks({}, {},
+            [&errorContainerUrl, &navigationError](const QUrl &containerUrl,
+                KiriView::ContainerNavigationError error, const QString &) {
+                errorContainerUrl = containerUrl;
+                navigationError = error;
+            }));
     service.openAdjacentContainer(currentContainerUrl, NavigationDirection::Next);
 
     QCOMPARE(errorContainerUrl, targetContainerUrl);
@@ -245,16 +259,16 @@ void TestImageNavigationService::invalidArchiveContainerReportsNavigationError()
                 targetContainerUrl, ContainerNavigationCandidateType::ComicBookArchive),
         });
 
-    KiriView::ImageNavigationService service(nullptr, fakeProvider.provider());
     QUrl errorContainerUrl;
     KiriView::ContainerNavigationError navigationError
         = KiriView::ContainerNavigationError::Generic;
-    service.setContainerNavigationErrorCallback(
-        [&errorContainerUrl, &navigationError](
-            const QUrl &containerUrl, KiriView::ContainerNavigationError error, const QString &) {
-            errorContainerUrl = containerUrl;
-            navigationError = error;
-        });
+    KiriView::ImageNavigationService service(nullptr, fakeProvider.provider(),
+        navigationCallbacks({}, {},
+            [&errorContainerUrl, &navigationError](const QUrl &containerUrl,
+                KiriView::ContainerNavigationError error, const QString &) {
+                errorContainerUrl = containerUrl;
+                navigationError = error;
+            }));
     service.openAdjacentContainer(currentContainerUrl, NavigationDirection::Next);
 
     QCOMPARE(errorContainerUrl, targetContainerUrl);
@@ -284,14 +298,14 @@ void TestImageNavigationService::archiveContainerNavigationOpensFirstImage()
             imageCandidate(targetImageUrl),
         });
 
-    KiriView::ImageNavigationService service(nullptr, fakeProvider.provider());
     QUrl openedImageUrl;
     QUrl openedContainerUrl;
-    service.setOpenContainerImageCallback(
-        [&openedImageUrl, &openedContainerUrl](const QUrl &imageUrl, const QUrl &containerUrl) {
-            openedImageUrl = imageUrl;
-            openedContainerUrl = containerUrl;
-        });
+    KiriView::ImageNavigationService service(nullptr, fakeProvider.provider(),
+        navigationCallbacks({},
+            [&openedImageUrl, &openedContainerUrl](const QUrl &imageUrl, const QUrl &containerUrl) {
+                openedImageUrl = imageUrl;
+                openedContainerUrl = containerUrl;
+            }));
     service.openAdjacentContainer(currentContainerUrl, NavigationDirection::Next);
 
     QCOMPARE(openedImageUrl, targetImageUrl);

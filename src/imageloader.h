@@ -47,6 +47,8 @@ public:
     void cancel();
 
 private:
+    void finishDecodeResult(ImageDecodeRequest request, DecodedImageResult result);
+    void finishImageLoadError(const ImageDecodeRequest &request, const QString &errorString);
     void startImageLoad(ImageLoadSession session);
     void startArchiveLoad(ImageLoadSession session);
     std::optional<ImageLoadSession> currentLoadSessionForDecodeRequest(

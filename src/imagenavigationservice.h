@@ -32,13 +32,18 @@ public:
         = std::function<void(const QUrl &, ContainerNavigationError, const QString &)>;
     using PageNavigationChangedCallback = std::function<void()>;
 
-    explicit ImageNavigationService(QObject *parent = nullptr);
-    ImageNavigationService(QObject *parent, ImageNavigationCandidateProvider candidateProvider);
+    struct Callbacks {
+        OpenUrlCallback openUrl;
+        OpenContainerImageCallback openContainerImage;
+        ContainerNavigationErrorCallback containerNavigationError;
+        PageNavigationChangedCallback pageNavigationChanged;
+    };
 
-    void setOpenUrlCallback(OpenUrlCallback callback);
-    void setOpenContainerImageCallback(OpenContainerImageCallback callback);
-    void setContainerNavigationErrorCallback(ContainerNavigationErrorCallback callback);
-    void setPageNavigationChangedCallback(PageNavigationChangedCallback callback);
+    explicit ImageNavigationService(QObject *parent = nullptr);
+    ImageNavigationService(QObject *parent, Callbacks callbacks);
+    ImageNavigationService(QObject *parent, ImageNavigationCandidateProvider candidateProvider);
+    ImageNavigationService(
+        QObject *parent, ImageNavigationCandidateProvider candidateProvider, Callbacks callbacks);
 
     int currentPageNumber() const;
     int imageCount() const;
@@ -68,10 +73,7 @@ private:
     void setFallbackPageNavigationUrl(const QUrl &currentUrl);
     bool setKnownPageNavigationCurrentUrl(const QUrl &currentUrl);
 
-    OpenUrlCallback m_openUrl;
-    OpenContainerImageCallback m_openContainerImage;
-    ContainerNavigationErrorCallback m_containerNavigationError;
-    PageNavigationChangedCallback m_pageNavigationChanged;
+    Callbacks m_callbacks;
     ImageCandidateRepository m_candidateRepository;
     ImageIoJob m_navigationListerJob;
     ImageIoJob m_containerNavigationListerJob;

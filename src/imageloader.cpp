@@ -27,37 +27,49 @@ ImageLoader::ImageLoader(
     QObject *parent, const ImageAsyncDependencies &dependencies, Callbacks callbacks)
     : QObject(parent)
     , m_callbacks(std::move(callbacks))
-    , m_decodeJob(this, dependencies.imageDataLoader, dependencies.imageDataDecoder)
+    , m_decodeJob(this, dependencies.imageDataLoader, dependencies.imageDataDecoder,
+          ImageDecodeJob::Callbacks {
+              [this](ImageDecodeRequest request, DecodedImageResult result) {
+                  finishDecodeResult(std::move(request), std::move(result));
+              },
+              [this](const ImageDecodeRequest &request, const QString &errorString) {
+                  finishImageLoadError(request, errorString);
+              },
+          })
     , m_candidateRepository(dependencies.candidateProvider)
 {
-    m_decodeJob.setDecodedCallback([this](ImageDecodeRequest request, DecodedImageResult result) {
-        std::optional<ImageLoadSession> session = currentLoadSessionForDecodeRequest(request);
-        if (!session.has_value()) {
-            return;
-        }
+}
 
-        if (const auto *failure = decodedImageResultFailure(result)) {
-            finishLoadWithError(*session, ImageLoadError::Generic, failure->errorString);
-            return;
-        }
+void ImageLoader::finishDecodeResult(ImageDecodeRequest request, DecodedImageResult result)
+{
+    std::optional<ImageLoadSession> session = currentLoadSessionForDecodeRequest(request);
+    if (!session.has_value()) {
+        return;
+    }
 
-        std::optional<DecodedImage> decodedImage = decodedImageFromResult(std::move(result));
-        if (!decodedImage.has_value()) {
-            finishLoadWithError(*session, ImageLoadError::Generic, QString());
-            return;
-        }
+    if (const auto *failure = decodedImageResultFailure(result)) {
+        finishLoadWithError(*session, ImageLoadError::Generic, failure->errorString);
+        return;
+    }
 
-        finishDecodedImage(*session, std::move(*decodedImage));
-    });
-    m_decodeJob.setLoadErrorCallback(
-        [this](const ImageDecodeRequest &request, const QString &errorString) {
-            std::optional<ImageLoadSession> session = currentLoadSessionForDecodeRequest(request);
-            if (!session.has_value()) {
-                return;
-            }
+    std::optional<DecodedImage> decodedImage = decodedImageFromResult(std::move(result));
+    if (!decodedImage.has_value()) {
+        finishLoadWithError(*session, ImageLoadError::Generic, QString());
+        return;
+    }
 
-            finishLoadWithError(*session, ImageLoadError::Generic, errorString);
-        });
+    finishDecodedImage(*session, std::move(*decodedImage));
+}
+
+void ImageLoader::finishImageLoadError(
+    const ImageDecodeRequest &request, const QString &errorString)
+{
+    std::optional<ImageLoadSession> session = currentLoadSessionForDecodeRequest(request);
+    if (!session.has_value()) {
+        return;
+    }
+
+    finishLoadWithError(*session, ImageLoadError::Generic, errorString);
 }
 
 void ImageLoader::start(

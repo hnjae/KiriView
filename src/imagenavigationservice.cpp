@@ -40,38 +40,29 @@ bool samePageNavigationState(
 
 namespace KiriView {
 ImageNavigationService::ImageNavigationService(QObject *parent)
+    : ImageNavigationService(parent, Callbacks {})
+{
+}
+
+ImageNavigationService::ImageNavigationService(QObject *parent, Callbacks callbacks)
     : QObject(parent)
+    , m_callbacks(std::move(callbacks))
     , m_candidateRepository()
 {
 }
 
 ImageNavigationService::ImageNavigationService(
     QObject *parent, ImageNavigationCandidateProvider candidateProvider)
+    : ImageNavigationService(parent, std::move(candidateProvider), Callbacks {})
+{
+}
+
+ImageNavigationService::ImageNavigationService(
+    QObject *parent, ImageNavigationCandidateProvider candidateProvider, Callbacks callbacks)
     : QObject(parent)
+    , m_callbacks(std::move(callbacks))
     , m_candidateRepository(std::move(candidateProvider))
 {
-}
-
-void ImageNavigationService::setOpenUrlCallback(OpenUrlCallback callback)
-{
-    m_openUrl = std::move(callback);
-}
-
-void ImageNavigationService::setOpenContainerImageCallback(OpenContainerImageCallback callback)
-{
-    m_openContainerImage = std::move(callback);
-}
-
-void ImageNavigationService::setContainerNavigationErrorCallback(
-    ContainerNavigationErrorCallback callback)
-{
-    m_containerNavigationError = std::move(callback);
-}
-
-void ImageNavigationService::setPageNavigationChangedCallback(
-    PageNavigationChangedCallback callback)
-{
-    m_pageNavigationChanged = std::move(callback);
 }
 
 int ImageNavigationService::currentPageNumber() const
@@ -135,7 +126,7 @@ void ImageNavigationService::finishNavigation(std::vector<ImageNavigationCandida
         return;
     }
 
-    invokeIfSet(m_openUrl, *targetUrl);
+    invokeIfSet(m_callbacks.openUrl, *targetUrl);
 }
 
 void ImageNavigationService::openAdjacentContainer(
@@ -192,13 +183,13 @@ void ImageNavigationService::finishContainerNavigation(
 void ImageNavigationService::openImageFromContainerNavigation(
     const QUrl &imageUrl, const QUrl &containerUrl)
 {
-    invokeIfSet(m_openContainerImage, imageUrl, containerUrl);
+    invokeIfSet(m_callbacks.openContainerImage, imageUrl, containerUrl);
 }
 
 void ImageNavigationService::finishContainerNavigationLoadWithError(
     const QUrl &containerUrl, ContainerNavigationError error, const QString &errorString)
 {
-    invokeIfSet(m_containerNavigationError, containerUrl, error, errorString);
+    invokeIfSet(m_callbacks.containerNavigationError, containerUrl, error, errorString);
 }
 
 void ImageNavigationService::updatePageNavigation(const DisplayContext &context)
@@ -239,7 +230,7 @@ void ImageNavigationService::setPageNavigationState(PageNavigationState state)
     }
 
     m_pageNavigation = std::move(state);
-    invokeIfSet(m_pageNavigationChanged);
+    invokeIfSet(m_callbacks.pageNavigationChanged);
 }
 
 void ImageNavigationService::setFallbackPageNavigationUrl(const QUrl &currentUrl)

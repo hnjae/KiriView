@@ -20,14 +20,9 @@ ImageDocumentNavigationController::ImageDocumentNavigationController(QObject *pa
     , m_presentationController(presentationController)
     , m_callbacks(std::move(callbacks))
 {
-    m_navigationService
-        = std::make_unique<ImageNavigationService>(parent, std::move(candidateProvider));
-    m_navigationService->setOpenUrlCallback(
-        [this](const QUrl &url) { report(ImageDocumentEffect::openUrl(url)); });
     auto openContainerImage = [this](const QUrl &imageUrl, const QUrl &containerUrl) {
         report(ImageDocumentEffect::containerImageSelected(imageUrl, containerUrl));
     };
-    m_navigationService->setOpenContainerImageCallback(std::move(openContainerImage));
     auto handleError = [this](const auto &url, auto error, const auto &message) {
         if (error == ContainerNavigationError::EmptyContainer) {
             report(ImageDocumentEffect::emptyContainerSelected(url));
@@ -42,9 +37,14 @@ ImageDocumentNavigationController::ImageDocumentNavigationController(QObject *pa
 
         report(ImageDocumentEffect::containerNavigationFailed(url, message));
     };
-    m_navigationService->setContainerNavigationErrorCallback(std::move(handleError));
-    m_navigationService->setPageNavigationChangedCallback(
-        [this]() { notify(ImageDocumentChange::PageNavigation); });
+    m_navigationService
+        = std::make_unique<ImageNavigationService>(parent, std::move(candidateProvider),
+            ImageNavigationService::Callbacks {
+                [this](const QUrl &url) { report(ImageDocumentEffect::openUrl(url)); },
+                std::move(openContainerImage),
+                std::move(handleError),
+                [this]() { notify(ImageDocumentChange::PageNavigation); },
+            });
 }
 
 ImageDocumentNavigationController::~ImageDocumentNavigationController() = default;

@@ -9,7 +9,13 @@
 
 namespace KiriView {
 ImageDecodeJob::ImageDecodeJob(QObject *parent)
+    : ImageDecodeJob(parent, Callbacks {})
+{
+}
+
+ImageDecodeJob::ImageDecodeJob(QObject *parent, Callbacks callbacks)
     : QObject(parent)
+    , m_callbacks(std::move(callbacks))
 {
     ImageAsyncDependencies dependencies = defaultImageAsyncDependencies();
     m_dataLoader = std::move(dependencies.imageDataLoader);

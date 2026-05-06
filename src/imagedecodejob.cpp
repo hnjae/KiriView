@@ -4,6 +4,7 @@
 #include "imagedecodejob.h"
 
 #include "imageasyncworker.h"
+#include "imagecallback.h"
 #include "imageurl.h"
 
 #include <utility>
@@ -11,20 +12,17 @@
 namespace KiriView {
 ImageDecodeJob::ImageDecodeJob(
     QObject *parent, ImageDataLoader dataLoader, ImageDataDecoder dataDecoder)
+    : ImageDecodeJob(parent, std::move(dataLoader), std::move(dataDecoder), Callbacks {})
+{
+}
+
+ImageDecodeJob::ImageDecodeJob(
+    QObject *parent, ImageDataLoader dataLoader, ImageDataDecoder dataDecoder, Callbacks callbacks)
     : QObject(parent)
     , m_dataLoader(std::move(dataLoader))
     , m_dataDecoder(std::move(dataDecoder))
+    , m_callbacks(std::move(callbacks))
 {
-}
-
-void ImageDecodeJob::setDecodedCallback(DecodedCallback callback)
-{
-    m_decoded = std::move(callback);
-}
-
-void ImageDecodeJob::setLoadErrorCallback(LoadErrorCallback callback)
-{
-    m_loadError = std::move(callback);
 }
 
 void ImageDecodeJob::start(ImageDecodeRequest request)
@@ -50,9 +48,7 @@ void ImageDecodeJob::start(ImageDecodeRequest request)
             }
 
             clearRequest(request);
-            if (m_loadError) {
-                m_loadError(request, errorString);
-            }
+            invokeIfSet(m_callbacks.loadError, request, errorString);
         });
 }
 
@@ -76,9 +72,7 @@ void ImageDecodeJob::startDecode(QByteArray data, ImageDecodeRequest request)
             }
 
             clearRequest(request);
-            if (m_decoded) {
-                m_decoded(request, std::move(result));
-            }
+            invokeIfSet(m_callbacks.decoded, request, std::move(result));
         });
 }
 

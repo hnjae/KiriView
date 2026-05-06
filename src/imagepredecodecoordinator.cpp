@@ -23,15 +23,17 @@ namespace KiriView {
 ImagePredecodeCoordinator::ImagePredecodeCoordinator(
     QObject *parent, const ImageAsyncDependencies &dependencies)
     : QObject(parent)
-    , m_decodeJob(this, dependencies.imageDataLoader, dependencies.imageDataDecoder)
+    , m_decodeJob(this, dependencies.imageDataLoader, dependencies.imageDataDecoder,
+          ImageDecodeJob::Callbacks {
+              [this](ImageDecodeRequest request, DecodedImageResult result) {
+                  finishPredecodeImageDecode(request, result);
+              },
+              [this](const ImageDecodeRequest &request, const QString &) {
+                  finishPredecodeImageLoadError(request);
+              },
+          })
     , m_candidateRepository(dependencies.candidateProvider)
 {
-    m_decodeJob.setDecodedCallback([this](ImageDecodeRequest request, DecodedImageResult result) {
-        finishPredecodeImageDecode(request, result);
-    });
-    m_decodeJob.setLoadErrorCallback([this](const ImageDecodeRequest &request, const QString &) {
-        finishPredecodeImageLoadError(request);
-    });
 }
 
 void ImagePredecodeCoordinator::schedule(Context context)

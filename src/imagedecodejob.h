@@ -22,11 +22,16 @@ public:
     using DecodedCallback = std::function<void(ImageDecodeRequest, DecodedImageResult)>;
     using LoadErrorCallback = std::function<void(const ImageDecodeRequest &, const QString &)>;
 
-    explicit ImageDecodeJob(QObject *parent = nullptr);
-    ImageDecodeJob(QObject *parent, ImageDataLoader dataLoader, ImageDataDecoder dataDecoder);
+    struct Callbacks {
+        DecodedCallback decoded;
+        LoadErrorCallback loadError;
+    };
 
-    void setDecodedCallback(DecodedCallback callback);
-    void setLoadErrorCallback(LoadErrorCallback callback);
+    explicit ImageDecodeJob(QObject *parent = nullptr);
+    ImageDecodeJob(QObject *parent, Callbacks callbacks);
+    ImageDecodeJob(QObject *parent, ImageDataLoader dataLoader, ImageDataDecoder dataDecoder);
+    ImageDecodeJob(QObject *parent, ImageDataLoader dataLoader, ImageDataDecoder dataDecoder,
+        Callbacks callbacks);
 
     void start(ImageDecodeRequest request);
     void cancel();
@@ -39,8 +44,7 @@ private:
 
     ImageDataLoader m_dataLoader;
     ImageDataDecoder m_dataDecoder;
-    DecodedCallback m_decoded;
-    LoadErrorCallback m_loadError;
+    Callbacks m_callbacks;
     ImageIoJob m_dataLoadJob;
     std::optional<ImageDecodeRequest> m_request;
 };
