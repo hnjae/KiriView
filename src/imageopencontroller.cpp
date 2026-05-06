@@ -16,7 +16,7 @@
 #include <variant>
 
 namespace {
-using KiriView::imageContainerUrlForLocation;
+using KiriView::zoomScopeUrlForLocation;
 
 QString emptyArchiveErrorMessage()
 {
@@ -219,8 +219,8 @@ void ImageOpenController::beginSuccessfulImagePresentation(
     const ImageLoadSession &session, bool predecodeCacheable)
 {
     m_presentationController.stopAnimation();
-    const QUrl loadedContainerUrl = imageContainerUrlForLocation(session.location);
-    m_presentationController.prepareImageContainer(loadedContainerUrl);
+    const QUrl loadedZoomScopeUrl = zoomScopeUrlForLocation(session.location);
+    m_presentationController.prepareImageContainer(loadedZoomScopeUrl);
     m_presentationController.setPredecodeCacheable(predecodeCacheable);
 }
 

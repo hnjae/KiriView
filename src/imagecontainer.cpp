@@ -14,21 +14,6 @@
 #include <cstddef>
 
 namespace {
-std::optional<QUrl> archiveFileUrl(const QUrl &archiveRootUrl)
-{
-    if (!KiriView::isSupportedArchiveRootScheme(archiveRootUrl.scheme())) {
-        return std::nullopt;
-    }
-
-    QString archivePath = KiriView::normalizedArchiveRootPath(archiveRootUrl);
-    archivePath.chop(1);
-    if (archivePath.isEmpty()) {
-        return std::nullopt;
-    }
-
-    return KiriView::normalizedFileContainerUrl(QUrl::fromLocalFile(archivePath));
-}
-
 std::optional<QUrl> archiveRootUrlForLocalArchive(const QUrl &url, const QString &archiveScheme)
 {
     if (!url.isLocalFile()) {
@@ -206,37 +191,13 @@ void appendArchiveImageNavigationCandidates(std::vector<ImageNavigationCandidate
     }
 }
 
-QUrl imageContainerUrlForImage(const QUrl &imageUrl, const QUrl &archiveRootUrl)
-{
-    if (imageUrl.isEmpty()) {
-        return {};
-    }
-
-    if (isUrlInsideArchiveRoot(imageUrl, archiveRootUrl)) {
-        const std::optional<QUrl> archiveUrl = archiveFileUrl(archiveRootUrl);
-        if (!archiveUrl.has_value()) {
-            return {};
-        }
-
-        return normalizedFileContainerUrl(navigationSourceUrl(*archiveUrl));
-    }
-
-    const QUrl currentUrl = navigationSourceUrl(imageUrl);
-    const QUrl parentUrl = currentUrl.adjusted(QUrl::RemoveFilename | QUrl::NormalizePathSegments);
-    if (!parentUrl.isValid() || parentUrl.isEmpty()) {
-        return {};
-    }
-
-    return normalizedDirectoryContainerUrl(parentUrl);
-}
-
-QUrl imageContainerUrlForLocation(const DisplayedImageLocation &location)
+QUrl zoomScopeUrlForLocation(const DisplayedImageLocation &location)
 {
     if (displayedLocationIsInsideArchiveDocument(location)) {
         return normalizedFileContainerUrl(navigationSourceUrl(location.archiveDocumentFileUrl()));
     }
 
-    return imageContainerUrlForImage(location.imageUrl(), QUrl());
+    return {};
 }
 
 QUrl containerNavigationUrlForLocation(const DisplayedImageLocation &location)

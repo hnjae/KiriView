@@ -27,8 +27,7 @@ QString windowTitleFileNameForDisplayedLocation(const DisplayedImageLocation &lo
 std::vector<ContainerNavigationCandidate> containerNavigationCandidates(const KFileItemList &items);
 void appendArchiveImageNavigationCandidates(std::vector<ImageNavigationCandidate> *candidates,
     const KIO::UDSEntryList &entries, const QUrl &directoryUrl, const QUrl &archiveRootUrl);
-QUrl imageContainerUrlForImage(const QUrl &imageUrl, const QUrl &archiveRootUrl);
-QUrl imageContainerUrlForLocation(const DisplayedImageLocation &location);
+QUrl zoomScopeUrlForLocation(const DisplayedImageLocation &location);
 QUrl containerNavigationUrlForLocation(const DisplayedImageLocation &location);
 }
 

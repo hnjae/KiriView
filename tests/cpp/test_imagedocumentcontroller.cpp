@@ -105,6 +105,9 @@ class TestImageDocumentController : public QObject
 private Q_SLOTS:
     void initialLoadSuccessUpdatesDocumentState();
     void imageLoadsUsePhysicalViewportForFirstDisplayDecode();
+    void directoryImageNavigationResetsManualZoom();
+    void archiveDocumentPageNavigationPreservesManualZoom();
+    void siblingArchiveNavigationResetsManualZoom();
     void smallStaticImageUsesFullImageSurface();
     void largeStaticImageUsesTiledSurface();
     void tiledStaticImageRefinesNewVisibleTilesAfterPan();
@@ -169,6 +172,130 @@ void TestImageDocumentController::imageLoadsUsePhysicalViewportForFirstDisplayDe
     QTRY_COMPARE(dataLoader.loads.size(), std::size_t(2));
     QCOMPARE(dataLoader.loads.back()->url, nextImageUrl);
     QCOMPARE(dataLoader.loads.back()->firstDisplay.physicalViewportSize, QSize(800, 600));
+}
+
+void TestImageDocumentController::directoryImageNavigationResetsManualZoom()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    const QUrl firstImageUrl = localUrl(QStringLiteral("/images/01.png"));
+    const QUrl secondImageUrl = localUrl(QStringLiteral("/images/02.png"));
+    candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
+        {
+            imageCandidate(firstImageUrl),
+            imageCandidate(secondImageUrl),
+        });
+
+    std::unique_ptr<KiriView::ImageDocumentController> controller
+        = createController(this, candidateProvider, dataLoader);
+    controller->setViewportSize(QSizeF(400.0, 300.0));
+    controller->setSourceUrl(firstImageUrl);
+    finishLoad(dataLoader);
+
+    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
+    controller->setZoomPercent(150.0);
+    QCOMPARE(controller->zoomMode(), KiriView::ImageZoomMode::Manual);
+
+    const std::size_t loadCountBeforeNavigation = dataLoader.loads.size();
+    controller->openNextImage();
+
+    QTRY_COMPARE(dataLoader.loads.size(), loadCountBeforeNavigation + std::size_t(1));
+    QCOMPARE(dataLoader.loads.back()->url, secondImageUrl);
+    finishLoad(dataLoader);
+
+    QTRY_COMPARE(controller->displayedUrl(), secondImageUrl);
+    QCOMPARE(controller->zoomMode(), KiriView::ImageZoomMode::Fit);
+}
+
+void TestImageDocumentController::archiveDocumentPageNavigationPreservesManualZoom()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
+    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveDocument.has_value());
+    const QUrl firstPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
+    const QUrl secondPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("02.png"));
+    candidateProvider.setArchiveImages(archiveDocument->rootUrl(),
+        {
+            imageCandidate(firstPageUrl),
+            imageCandidate(secondPageUrl),
+        });
+
+    std::unique_ptr<KiriView::ImageDocumentController> controller
+        = createController(this, candidateProvider, dataLoader);
+    controller->setViewportSize(QSizeF(400.0, 300.0));
+    controller->setSourceUrl(archiveUrl);
+    finishLoad(dataLoader);
+
+    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
+    QCOMPARE(controller->displayedUrl(), firstPageUrl);
+    controller->setZoomPercent(150.0);
+    QCOMPARE(controller->zoomMode(), KiriView::ImageZoomMode::Manual);
+
+    const std::size_t loadCountBeforeNavigation = dataLoader.loads.size();
+    controller->openNextImage();
+
+    QTRY_COMPARE(dataLoader.loads.size(), loadCountBeforeNavigation + std::size_t(1));
+    QCOMPARE(dataLoader.loads.back()->url, secondPageUrl);
+    finishLoad(dataLoader);
+
+    QTRY_COMPARE(controller->displayedUrl(), secondPageUrl);
+    QCOMPARE(controller->zoomMode(), KiriView::ImageZoomMode::Manual);
+    QVERIFY(KiriView::imageZoomApproximatelyEqual(controller->zoomPercent(), 150.0));
+}
+
+void TestImageDocumentController::siblingArchiveNavigationResetsManualZoom()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    const QUrl firstArchiveUrl = localUrl(QStringLiteral("/books/a.cbz"));
+    const QUrl secondArchiveUrl = localUrl(QStringLiteral("/books/b.cbz"));
+    const std::optional<KiriView::ArchiveDocumentLocation> firstArchiveDocument
+        = KiriView::archiveDocumentLocationForLocalArchiveUrl(firstArchiveUrl);
+    const std::optional<KiriView::ArchiveDocumentLocation> secondArchiveDocument
+        = KiriView::archiveDocumentLocationForLocalArchiveUrl(secondArchiveUrl);
+    QVERIFY(firstArchiveDocument.has_value());
+    QVERIFY(secondArchiveDocument.has_value());
+    const QUrl firstPageUrl
+        = archivePageUrl(firstArchiveDocument->rootUrl(), QStringLiteral("01.png"));
+    const QUrl secondPageUrl
+        = archivePageUrl(secondArchiveDocument->rootUrl(), QStringLiteral("01.png"));
+    candidateProvider.setArchiveImages(firstArchiveDocument->rootUrl(),
+        {
+            imageCandidate(firstPageUrl),
+        });
+    candidateProvider.setArchiveImages(secondArchiveDocument->rootUrl(),
+        {
+            imageCandidate(secondPageUrl),
+        });
+    candidateProvider.setContainerCandidates(localUrl(QStringLiteral("/books/")),
+        {
+            comicBookContainerCandidate(firstArchiveUrl),
+            comicBookContainerCandidate(secondArchiveUrl),
+        });
+
+    std::unique_ptr<KiriView::ImageDocumentController> controller
+        = createController(this, candidateProvider, dataLoader);
+    controller->setViewportSize(QSizeF(400.0, 300.0));
+    controller->setSourceUrl(firstArchiveUrl);
+    finishLoad(dataLoader);
+
+    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
+    QCOMPARE(controller->displayedUrl(), firstPageUrl);
+    controller->setZoomPercent(150.0);
+    QCOMPARE(controller->zoomMode(), KiriView::ImageZoomMode::Manual);
+
+    const std::size_t loadCountBeforeNavigation = dataLoader.loads.size();
+    controller->openNextContainer();
+
+    QTRY_COMPARE(dataLoader.loads.size(), loadCountBeforeNavigation + std::size_t(1));
+    QCOMPARE(dataLoader.loads.back()->url, secondPageUrl);
+    finishLoad(dataLoader);
+
+    QTRY_COMPARE(controller->displayedUrl(), secondPageUrl);
+    QCOMPARE(controller->zoomMode(), KiriView::ImageZoomMode::Fit);
 }
 
 void TestImageDocumentController::smallStaticImageUsesFullImageSurface()
