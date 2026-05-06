@@ -13,6 +13,7 @@
 #include <cstddef>
 #include <rhi/qrhi.h>
 #include <rhi/qshader.h>
+#include <utility>
 
 namespace {
 constexpr quint32 uniformBufferSize = 112;
@@ -50,6 +51,27 @@ const QShader &imageFragmentShader()
         KiriView::kiriImageViewFragmentShader, KiriView::kiriImageViewFragmentShaderSize);
     return shader;
 }
+
+class PendingResourceUpdates final
+{
+public:
+    PendingResourceUpdates() = default;
+    ~PendingResourceUpdates()
+    {
+        if (m_updates != nullptr) {
+            m_updates->release();
+        }
+    }
+
+    PendingResourceUpdates(const PendingResourceUpdates &) = delete;
+    PendingResourceUpdates &operator=(const PendingResourceUpdates &) = delete;
+
+    QRhiResourceUpdateBatch *&ref() { return m_updates; }
+    QRhiResourceUpdateBatch *take() { return std::exchange(m_updates, nullptr); }
+
+private:
+    QRhiResourceUpdateBatch *m_updates = nullptr;
+};
 
 }
 
@@ -116,27 +138,23 @@ void KiriImageRenderNode::prepare()
         return;
     }
 
-    QRhiResourceUpdateBatch *resourceUpdates = nullptr;
+    PendingResourceUpdates resourceUpdates;
 
-    if (!ensureVertexBuffer(resourceUpdates)) {
-        releasePendingResourceUpdates(resourceUpdates);
+    if (!ensureVertexBuffer(resourceUpdates.ref())) {
         return;
     }
     if (!ensureSampler()) {
-        releasePendingResourceUpdates(resourceUpdates);
         return;
     }
-    if (!ensureTextures(resourceUpdates)) {
-        releasePendingResourceUpdates(resourceUpdates);
+    if (!ensureTextures(resourceUpdates.ref())) {
         return;
     }
     if (!ensurePipeline(rt)) {
-        releasePendingResourceUpdates(resourceUpdates);
         return;
     }
 
-    if (resourceUpdates != nullptr) {
-        cb->resourceUpdate(resourceUpdates);
+    if (QRhiResourceUpdateBatch *updates = resourceUpdates.take()) {
+        cb->resourceUpdate(updates);
     }
 }
 
@@ -190,13 +208,6 @@ void KiriImageRenderNode::releaseResources()
     m_texturesDirty = true;
     m_drawGeometryDirty = true;
     m_renderPassDescriptor = nullptr;
-}
-
-void KiriImageRenderNode::releasePendingResourceUpdates(QRhiResourceUpdateBatch *resourceUpdates)
-{
-    if (resourceUpdates != nullptr) {
-        resourceUpdates->release();
-    }
 }
 
 QRhiResourceUpdateBatch *KiriImageRenderNode::ensureResourceUpdates(

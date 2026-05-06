@@ -40,8 +40,6 @@ public:
     void releaseResources() override;
 
 private:
-    static void releasePendingResourceUpdates(QRhiResourceUpdateBatch *resourceUpdates);
-
     QRhiResourceUpdateBatch *ensureResourceUpdates(QRhiResourceUpdateBatch *&resourceUpdates);
     bool addDrawTexture(
         QRhiResourceUpdateBatch *&resourceUpdates, const ImageSurfaceDrawEntry &entry);
