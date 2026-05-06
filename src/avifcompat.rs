@@ -73,9 +73,10 @@ fn has_avif_brand(data: &[u8], ftyp_box: BoxHeader) -> bool {
     false
 }
 
-fn is_avif_file(data: &[u8]) -> bool {
-    top_level_boxes(data)
-        .into_iter()
+fn boxes_contain_avif_brand(data: &[u8], boxes: &[BoxHeader]) -> bool {
+    boxes
+        .iter()
+        .copied()
         .any(|box_header| has_avif_brand(data, box_header))
 }
 
@@ -83,7 +84,7 @@ fn read_meta_box(data: &[u8], meta_box: BoxHeader) -> Option<MetaBox> {
     let full_box = read_full_box(data, meta_box, b"meta", 0)?;
 
     Some(MetaBox {
-        child_boxes: child_boxes(data, full_box.payload_offset(), full_box.end_offset()),
+        child_boxes: child_boxes(data, full_box.payload_offset(), full_box.end_offset())?,
     })
 }
 
@@ -121,13 +122,22 @@ fn has_alpha_auxiliary_property(data: &[u8], meta_box: &MetaBox) -> bool {
             continue;
         }
 
-        for iprp_child in child_boxes(data, box_header.body_offset(), box_header.end_offset()) {
+        let Some(iprp_children) =
+            child_boxes(data, box_header.body_offset(), box_header.end_offset())
+        else {
+            continue;
+        };
+        for iprp_child in iprp_children {
             if !iprp_child.is_type(b"ipco") {
                 continue;
             }
 
-            for property_box in child_boxes(data, iprp_child.body_offset(), iprp_child.end_offset())
-            {
+            let Some(property_boxes) =
+                child_boxes(data, iprp_child.body_offset(), iprp_child.end_offset())
+            else {
+                continue;
+            };
+            for property_box in property_boxes {
                 if property_box.is_type(b"auxC") && aux_c_contains_alpha(data, property_box) {
                     return true;
                 }
@@ -369,7 +379,12 @@ fn patch_duplicate_ipma_boxes(data: &mut [u8], meta_box: &MetaBox) -> bool {
         }
 
         let mut previous_ipma = None;
-        for iprp_child in child_boxes(data, box_header.body_offset(), box_header.end_offset()) {
+        let Some(iprp_children) =
+            child_boxes(data, box_header.body_offset(), box_header.end_offset())
+        else {
+            continue;
+        };
+        for iprp_child in iprp_children {
             let Some(ipma) = read_ipma_box(data, iprp_child) else {
                 previous_ipma = None;
                 continue;
@@ -391,14 +406,15 @@ fn patch_duplicate_ipma_boxes(data: &mut [u8], meta_box: &MetaBox) -> bool {
 }
 
 fn fixed_avif_data(data: &[u8]) -> Option<Vec<u8>> {
-    if !is_avif_file(data) {
+    let top_level_boxes = top_level_boxes(data)?;
+    if !boxes_contain_avif_brand(data, &top_level_boxes) {
         return None;
     }
 
     let mut fixed_data = None;
     let mut changed = false;
 
-    for box_header in top_level_boxes(data) {
+    for box_header in top_level_boxes {
         if !box_header.is_type(b"meta") {
             continue;
         }

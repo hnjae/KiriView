@@ -124,22 +124,26 @@ pub(crate) fn read_full_box(
     })
 }
 
-pub(crate) fn child_boxes(data: &[u8], mut offset: usize, end_offset: usize) -> Vec<BoxHeader> {
+pub(crate) fn child_boxes(
+    data: &[u8],
+    mut offset: usize,
+    end_offset: usize,
+) -> Option<Vec<BoxHeader>> {
     let mut boxes = Vec::new();
 
     while offset < end_offset {
         let Some(box_header) = read_box(data, offset, end_offset) else {
-            return Vec::new();
+            return None;
         };
 
         boxes.push(box_header);
         offset = box_header.end_offset();
     }
 
-    boxes
+    Some(boxes)
 }
 
-pub(crate) fn top_level_boxes(data: &[u8]) -> Vec<BoxHeader> {
+pub(crate) fn top_level_boxes(data: &[u8]) -> Option<Vec<BoxHeader>> {
     child_boxes(data, 0, data.len())
 }
 
@@ -283,7 +287,18 @@ mod tests {
         data.extend_from_slice(&[0, 0, 0]);
 
         assert!(read_box(&data[..3], 0, 3).is_none());
-        assert!(child_boxes(&data, 0, data.len()).is_empty());
+        assert!(child_boxes(&data, 0, data.len()).is_none());
+    }
+
+    #[test]
+    fn child_boxes_accepts_valid_empty_ranges() {
+        let data = make_box(b"free", &[]);
+        let header = read_box(&data, 0, data.len()).expect("box should parse");
+
+        let children = child_boxes(&data, header.body_offset(), header.end_offset())
+            .expect("empty child range should parse");
+
+        assert!(children.is_empty());
     }
 
     #[test]
