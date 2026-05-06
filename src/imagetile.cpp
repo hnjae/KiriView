@@ -4,6 +4,7 @@
 #include "imagetile.h"
 
 #include "imagebytecost.h"
+#include "imagerectmapping.h"
 
 #include <algorithm>
 #include <cmath>
@@ -14,11 +15,6 @@ namespace {
 QSize halfSize(const QSize &size)
 {
     return QSize(std::max(1, (size.width() + 1) / 2), std::max(1, (size.height() + 1) / 2));
-}
-
-QRect boundedRect(const QRect &rect, const QSize &size)
-{
-    return rect.intersected(QRect(QPoint(0, 0), size));
 }
 }
 
@@ -98,7 +94,7 @@ QRect TilePyramid::levelTileRect(const TileKey &key) const
     }
 
     const QRect tileRect(key.x * m_tileSize, key.y * m_tileSize, m_tileSize, m_tileSize);
-    return boundedRect(tileRect, levelSize(key.level));
+    return boundedIntegerRect(tileRect, levelSize(key.level));
 }
 
 QRect TilePyramid::levelTileTextureRect(const TileKey &key) const
@@ -112,7 +108,8 @@ QRect TilePyramid::levelTileTextureRect(const TileKey &key) const
         std::max(1,
             static_cast<int>(
                 std::ceil(m_apronSourcePixels * levelPixelsPerSourcePixel(key.level)))));
-    return boundedRect(tileRect.adjusted(-apron, -apron, apron, apron), levelSize(key.level));
+    return boundedIntegerRect(
+        tileRect.adjusted(-apron, -apron, apron, apron), levelSize(key.level));
 }
 
 QRect TilePyramid::sourceRectForLevelRect(int level, const QRect &levelRect) const
@@ -122,20 +119,7 @@ QRect TilePyramid::sourceRectForLevelRect(int level, const QRect &levelRect) con
         return {};
     }
 
-    const QRect boundedLevelRect = boundedRect(levelRect, levelSize);
-    const qreal xScale = static_cast<qreal>(m_imageSize.width()) / levelSize.width();
-    const qreal yScale = static_cast<qreal>(m_imageSize.height()) / levelSize.height();
-    const int left = std::clamp(
-        static_cast<int>(std::floor(boundedLevelRect.left() * xScale)), 0, m_imageSize.width());
-    const int top = std::clamp(
-        static_cast<int>(std::floor(boundedLevelRect.top() * yScale)), 0, m_imageSize.height());
-    const int right
-        = std::clamp(static_cast<int>(std::ceil((boundedLevelRect.right() + 1) * xScale)), left,
-            m_imageSize.width());
-    const int bottom
-        = std::clamp(static_cast<int>(std::ceil((boundedLevelRect.bottom() + 1) * yScale)), top,
-            m_imageSize.height());
-    return QRect(left, top, right - left, bottom - top);
+    return scaledIntegerRect(QRectF(levelRect), QSizeF(levelSize), m_imageSize);
 }
 
 TileRequest TilePyramid::requestForTile(const TileKey &key) const
@@ -161,7 +145,7 @@ std::vector<TileKey> TilePyramid::tilesIntersectingLevelRect(
         return keys;
     }
 
-    const QRect bounded = boundedRect(levelRect, size);
+    const QRect bounded = boundedIntegerRect(levelRect, size);
     if (bounded.isEmpty()) {
         return keys;
     }

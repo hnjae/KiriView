@@ -3,6 +3,8 @@
 
 #include "imagetilevisibility.h"
 
+#include "imagerectmapping.h"
+
 #include <QPointF>
 #include <algorithm>
 #include <cmath>
@@ -27,27 +29,12 @@ QRect tileLevelRectForItemRect(
         return {};
     }
 
-    const QRectF bounded = itemRect.intersected(QRectF(QPointF(0.0, 0.0), displaySize));
-    if (bounded.isEmpty()) {
-        return {};
-    }
-
     const QSize levelSize = pyramid.levelSize(level);
     if (levelSize.isEmpty()) {
         return {};
     }
 
-    const qreal xScale = static_cast<qreal>(levelSize.width()) / displaySize.width();
-    const qreal yScale = static_cast<qreal>(levelSize.height()) / displaySize.height();
-    const int left
-        = std::clamp(static_cast<int>(std::floor(bounded.left() * xScale)), 0, levelSize.width());
-    const int top
-        = std::clamp(static_cast<int>(std::floor(bounded.top() * yScale)), 0, levelSize.height());
-    const int right = std::clamp(
-        static_cast<int>(std::ceil(bounded.right() * xScale)), left, levelSize.width());
-    const int bottom = std::clamp(
-        static_cast<int>(std::ceil(bounded.bottom() * yScale)), top, levelSize.height());
-    return QRect(left, top, right - left, bottom - top);
+    return scaledIntegerRect(itemRect, displaySize, levelSize);
 }
 
 std::vector<TileKey> visibleTileKeys(
