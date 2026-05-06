@@ -24,6 +24,7 @@ using KiriView::TestSupport::localUrl;
 using KiriView::TestSupport::ManualImageDataLoader;
 using KiriView::TestSupport::staticImageDataDecoder;
 using KiriView::TestSupport::staticImageDataDecoderRejectingBadData;
+using KiriView::TestSupport::staticTestImagePayload;
 using KiriView::TestSupport::testImage;
 using KiriView::TestSupport::testImageDecodeFailureString;
 
@@ -33,11 +34,7 @@ KiriView::DecodedImageResult staticDecodedImageWithPreview(const QSize &sourceSi
     const QSize &previewSize, KiriView::StaticImageDisplayHints displayHints = {})
 {
     return KiriView::successfulDecodedImageResult(KiriView::StaticDecodedImage {
-        KiriView::StaticImagePayload {
-            std::make_shared<KiriView::TestSupport::TestImageTileSource>(testImage(sourceSize)),
-            testImage(previewSize),
-            displayHints,
-        },
+        staticTestImagePayload(testImage(sourceSize), testImage(previewSize), displayHints),
     });
 }
 

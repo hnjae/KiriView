@@ -13,10 +13,8 @@
 #include <vector>
 
 namespace {
-QUrl imageUrl(int index)
-{
-    return QUrl(QStringLiteral("file:///images/%1.png").arg(index, 2, 10, QLatin1Char('0')));
-}
+using KiriView::TestSupport::indexedImageUrl;
+using KiriView::TestSupport::staticTestImagePayload;
 
 QImage cacheImage()
 {
@@ -30,17 +28,6 @@ QImage tooLargeImage()
     QImage image(30, 1, QImage::Format_RGBA8888_Premultiplied);
     image.fill(Qt::transparent);
     return image;
-}
-
-std::shared_ptr<KiriView::ImageTileSource> tileSourceFor(const QImage &image)
-{
-    return std::make_shared<KiriView::TestSupport::TestImageTileSource>(image);
-}
-
-KiriView::StaticImagePayload staticImageFor(
-    const QImage &image, KiriView::StaticImageDisplayHints displayHints = {})
-{
-    return KiriView::StaticImagePayload { tileSourceFor(image), image, displayHints };
 }
 
 KiriView::ArchiveDocumentLocation comicBookArchiveDocument()
@@ -67,18 +54,18 @@ private Q_SLOTS:
 void TestPredecodeCache::queueContainsOnlyMissingWindowImages()
 {
     KiriView::PredecodeCache cache;
-    const QUrl displayedUrl = imageUrl(0);
-    const QUrl firstQueuedUrl = imageUrl(1);
-    const QUrl secondQueuedUrl = imageUrl(2);
+    const QUrl displayedUrl = indexedImageUrl(0);
+    const QUrl firstQueuedUrl = indexedImageUrl(1);
+    const QUrl secondQueuedUrl = indexedImageUrl(2);
 
     cache.setWindowUrls({ displayedUrl, firstQueuedUrl, firstQueuedUrl, QUrl(), secondQueuedUrl });
     const KiriView::ArchiveDocumentLocation archiveDocument = comicBookArchiveDocument();
     const QImage firstImage = cacheImage();
-    cache.cacheImage(firstQueuedUrl, archiveDocument, staticImageFor(firstImage));
+    cache.cacheImage(firstQueuedUrl, archiveDocument, staticTestImagePayload(firstImage));
     cache.enqueueMissingWindowLoads(displayedUrl, archiveDocument, QUrl());
 
     QVERIFY(cache.isInFlight(secondQueuedUrl, QUrl()));
-    QVERIFY(!cache.takeNextRequest(imageUrl(9)).has_value());
+    QVERIFY(!cache.takeNextRequest(indexedImageUrl(9)).has_value());
 
     const std::optional<KiriView::PredecodeRequest> request = cache.takeNextRequest(QUrl());
     QVERIFY(request.has_value());
@@ -102,7 +89,7 @@ void TestPredecodeCache::byteBudgetUsesPreferredLimitAndSystemMemoryCap()
 
 void TestPredecodeCache::cacheEligibilityUsesByteBudgetPolicy()
 {
-    const KiriView::StaticImagePayload image = staticImageFor(cacheImage());
+    const KiriView::StaticImagePayload image = staticTestImagePayload(cacheImage());
     const qsizetype byteCost = image.byteCost();
 
     QVERIFY(KiriView::PredecodeCache::canCacheImage(image));
@@ -115,13 +102,13 @@ void TestPredecodeCache::cacheEligibilityUsesByteBudgetPolicy()
 void TestPredecodeCache::cacheStoresAndFindsWindowImages()
 {
     KiriView::PredecodeCache cache(80);
-    const QUrl url = imageUrl(0);
+    const QUrl url = indexedImageUrl(0);
     const KiriView::ArchiveDocumentLocation archiveDocument = comicBookArchiveDocument();
     const QImage image = cacheImage();
 
     cache.setWindowUrls({ url });
-    cache.cacheImage(
-        url, archiveDocument, staticImageFor(image, KiriView::StaticImageDisplayHints { 0.5 }));
+    cache.cacheImage(url, archiveDocument,
+        staticTestImagePayload(image, KiriView::StaticImageDisplayHints { 0.5 }));
 
     const std::optional<KiriView::PredecodedImage> found = cache.findImage(url);
     QVERIFY(found.has_value());
@@ -134,39 +121,39 @@ void TestPredecodeCache::cacheStoresAndFindsWindowImages()
 void TestPredecodeCache::cacheRejectsUncacheableAndOversizedImages()
 {
     KiriView::PredecodeCache cache(160);
-    const QUrl url = imageUrl(0);
-    const QUrl outsideWindowUrl = imageUrl(9);
+    const QUrl url = indexedImageUrl(0);
+    const QUrl outsideWindowUrl = indexedImageUrl(9);
     const KiriView::ArchiveDocumentLocation archiveDocument = comicBookArchiveDocument();
 
     cache.setWindowUrls({ url });
     const QImage image = cacheImage();
-    cache.cacheDisplayedImage(false, url, archiveDocument, staticImageFor(image));
+    cache.cacheDisplayedImage(false, url, archiveDocument, staticTestImagePayload(image));
     QVERIFY(!cache.hasImage(url));
 
     cache.cacheDisplayedImage(true, url, archiveDocument, KiriView::StaticImagePayload {});
     QVERIFY(!cache.hasImage(url));
 
-    cache.cacheImage(outsideWindowUrl, archiveDocument, staticImageFor(image));
+    cache.cacheImage(outsideWindowUrl, archiveDocument, staticTestImagePayload(image));
     QVERIFY(!cache.hasImage(outsideWindowUrl));
 
     const QImage largeImage = tooLargeImage();
-    cache.cacheImage(url, archiveDocument, staticImageFor(largeImage));
+    cache.cacheImage(url, archiveDocument, staticTestImagePayload(largeImage));
     QVERIFY(!cache.hasImage(url));
 }
 
 void TestPredecodeCache::cacheEvictsLowestPriorityImagesWhenBudgetIsExceeded()
 {
     KiriView::PredecodeCache cache(160);
-    const QUrl firstUrl = imageUrl(0);
-    const QUrl secondUrl = imageUrl(1);
-    const QUrl thirdUrl = imageUrl(2);
+    const QUrl firstUrl = indexedImageUrl(0);
+    const QUrl secondUrl = indexedImageUrl(1);
+    const QUrl thirdUrl = indexedImageUrl(2);
     const KiriView::ArchiveDocumentLocation archiveDocument = comicBookArchiveDocument();
 
     cache.setWindowUrls({ firstUrl, secondUrl, thirdUrl });
     const QImage image = cacheImage();
-    cache.cacheImage(thirdUrl, archiveDocument, staticImageFor(image));
-    cache.cacheImage(firstUrl, archiveDocument, staticImageFor(image));
-    cache.cacheImage(secondUrl, archiveDocument, staticImageFor(image));
+    cache.cacheImage(thirdUrl, archiveDocument, staticTestImagePayload(image));
+    cache.cacheImage(firstUrl, archiveDocument, staticTestImagePayload(image));
+    cache.cacheImage(secondUrl, archiveDocument, staticTestImagePayload(image));
 
     QVERIFY(cache.hasImage(firstUrl));
     QVERIFY(cache.hasImage(secondUrl));

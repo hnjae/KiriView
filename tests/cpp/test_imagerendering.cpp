@@ -8,7 +8,6 @@
 #include <QObject>
 #include <QRectF>
 #include <QTest>
-#include <memory>
 #include <utility>
 #include <vector>
 
@@ -23,12 +22,8 @@ private Q_SLOTS:
 void TestImageRendering::staticSurfaceDrawEntriesKeepPreviewAndTileRectsSeparate()
 {
     const QImage sourceImage = KiriView::TestSupport::testImage(1024, 1024);
-    auto source = std::make_shared<KiriView::TestSupport::TestImageTileSource>(sourceImage);
-    KiriView::StaticTileSurface surface(KiriView::StaticImagePayload {
-        source,
-        KiriView::TestSupport::testImage(256, 256),
-        {},
-    });
+    KiriView::StaticTileSurface surface(KiriView::TestSupport::staticTestImagePayload(
+        sourceImage, KiriView::TestSupport::testImage(256, 256)));
     QVERIFY(surface.insertTile(KiriView::DecodedTile {
         KiriView::TileKey { 0, 0, 0 },
         QSize(1024, 1024),

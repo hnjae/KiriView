@@ -92,6 +92,18 @@ inline QString keyForUrl(const QUrl &url)
 
 inline QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
 
+inline QString indexedImageFileName(int index)
+{
+    return QStringLiteral("%1.png").arg(index, 2, 10, QLatin1Char('0'));
+}
+
+inline QUrl indexedImageUrl(int index)
+{
+    return localUrl(QStringLiteral("/images/") + indexedImageFileName(index));
+}
+
+inline QUrl imagesDirectoryUrl() { return localUrl(QStringLiteral("/images/")); }
+
 inline QUrl archivePageUrl(const QUrl &archiveRootUrl, const QString &pageName)
 {
     QUrl pageUrl = archiveRootUrl;
@@ -296,11 +308,25 @@ private:
     QImage m_image;
 };
 
+inline StaticImagePayload staticTestImagePayload(
+    const QImage &sourceImage, const QImage &preview, StaticImageDisplayHints displayHints = {})
+{
+    return StaticImagePayload {
+        std::make_shared<TestImageTileSource>(sourceImage),
+        preview,
+        displayHints,
+    };
+}
+
+inline StaticImagePayload staticTestImagePayload(
+    const QImage &image = testImage(), StaticImageDisplayHints displayHints = {})
+{
+    return staticTestImagePayload(image, image, displayHints);
+}
+
 inline StaticDecodedImage staticDecodedTestImage(const QImage &image = testImage())
 {
-    return StaticDecodedImage {
-        StaticImagePayload { std::make_shared<TestImageTileSource>(image), image, {} },
-    };
+    return StaticDecodedImage { staticTestImagePayload(image) };
 }
 
 inline QString testImageDecodeFailureString() { return QStringLiteral("decode failed"); }

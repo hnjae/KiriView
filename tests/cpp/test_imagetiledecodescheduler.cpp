@@ -14,17 +14,15 @@
 #include <utility>
 
 namespace {
+using KiriView::TestSupport::staticTestImagePayload;
 using KiriView::TestSupport::testImage;
 
 std::shared_ptr<KiriView::DisplayedImageSurface> testSurface(
     const QSize &imageSize, KiriView::StaticImageDisplayHints displayHints = {})
 {
     const QImage image = testImage(imageSize);
-    KiriView::StaticImagePayload payload {
-        std::make_shared<KiriView::TestSupport::TestImageTileSource>(image),
-        testImage(QSize(512, 512)),
-        displayHints,
-    };
+    KiriView::StaticImagePayload payload
+        = staticTestImagePayload(image, testImage(QSize(512, 512)), displayHints);
     return std::make_shared<KiriView::DisplayedImageSurface>(
         KiriView::StaticTileSurface { std::move(payload) });
 }

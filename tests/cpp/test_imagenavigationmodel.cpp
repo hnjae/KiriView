@@ -3,6 +3,8 @@
 
 #include "imagenavigationmodel.h"
 
+#include "image_test_support.h"
+
 #include <QObject>
 #include <QTest>
 #include <QUrl>
@@ -15,19 +17,16 @@ using KiriView::ContainerNavigationCandidateType;
 using KiriView::ImageNavigationCandidate;
 using KiriView::NavigationDirection;
 using KiriView::PageNavigationState;
-
-QUrl imageUrl(int index)
-{
-    return QUrl(QStringLiteral("file:///images/%1.png").arg(index, 2, 10, QLatin1Char('0')));
-}
+using KiriView::TestSupport::indexedImageFileName;
+using KiriView::TestSupport::indexedImageUrl;
 
 std::vector<ImageNavigationCandidate> imageCandidates(int count)
 {
     std::vector<ImageNavigationCandidate> candidates;
     candidates.reserve(static_cast<std::size_t>(count));
     for (int index = 0; index < count; ++index) {
-        candidates.push_back(ImageNavigationCandidate {
-            imageUrl(index), QStringLiteral("%1.png").arg(index, 2, 10, QLatin1Char('0')) });
+        candidates.push_back(
+            ImageNavigationCandidate { indexedImageUrl(index), indexedImageFileName(index) });
     }
     return candidates;
 }
@@ -57,23 +56,23 @@ void TestImageNavigationModel::adjacentImageNavigationDoesNotWrap()
     const std::vector<ImageNavigationCandidate> candidates = imageCandidates(3);
 
     const std::optional<QUrl> previous = KiriView::adjacentImageNavigationUrl(
-        candidates, imageUrl(1), NavigationDirection::Previous);
+        candidates, indexedImageUrl(1), NavigationDirection::Previous);
     QVERIFY(previous.has_value());
-    QCOMPARE(*previous, imageUrl(0));
+    QCOMPARE(*previous, indexedImageUrl(0));
 
-    const std::optional<QUrl> next
-        = KiriView::adjacentImageNavigationUrl(candidates, imageUrl(1), NavigationDirection::Next);
+    const std::optional<QUrl> next = KiriView::adjacentImageNavigationUrl(
+        candidates, indexedImageUrl(1), NavigationDirection::Next);
     QVERIFY(next.has_value());
-    QCOMPARE(*next, imageUrl(2));
+    QCOMPARE(*next, indexedImageUrl(2));
 
     QVERIFY(!KiriView::adjacentImageNavigationUrl(
-        candidates, imageUrl(0), NavigationDirection::Previous)
+        candidates, indexedImageUrl(0), NavigationDirection::Previous)
             .has_value());
-    QVERIFY(
-        !KiriView::adjacentImageNavigationUrl(candidates, imageUrl(2), NavigationDirection::Next)
+    QVERIFY(!KiriView::adjacentImageNavigationUrl(
+        candidates, indexedImageUrl(2), NavigationDirection::Next)
             .has_value());
-    QVERIFY(
-        !KiriView::adjacentImageNavigationUrl(candidates, imageUrl(9), NavigationDirection::Next)
+    QVERIFY(!KiriView::adjacentImageNavigationUrl(
+        candidates, indexedImageUrl(9), NavigationDirection::Next)
             .has_value());
 }
 
@@ -111,24 +110,25 @@ void TestImageNavigationModel::adjacentContainerNavigationUsesTheSameRules()
 
 void TestImageNavigationModel::pageNavigationInsertsFallbackCurrentUrl()
 {
-    PageNavigationState state
-        = KiriView::pageNavigationStateForUrls({ imageUrl(0), imageUrl(1) }, imageUrl(1));
+    PageNavigationState state = KiriView::pageNavigationStateForUrls(
+        { indexedImageUrl(0), indexedImageUrl(1) }, indexedImageUrl(1));
     QCOMPARE(state.currentIndex, 1);
-    compareUrls(state.urls, { imageUrl(0), imageUrl(1) });
+    compareUrls(state.urls, { indexedImageUrl(0), indexedImageUrl(1) });
 
-    state = KiriView::pageNavigationStateForUrls({ imageUrl(0), imageUrl(1) }, imageUrl(9));
+    state = KiriView::pageNavigationStateForUrls(
+        { indexedImageUrl(0), indexedImageUrl(1) }, indexedImageUrl(9));
     QCOMPARE(state.currentIndex, 0);
-    compareUrls(state.urls, { imageUrl(9), imageUrl(0), imageUrl(1) });
+    compareUrls(state.urls, { indexedImageUrl(9), indexedImageUrl(0), indexedImageUrl(1) });
 }
 
 void TestImageNavigationModel::predecodeWindowKeepsTwoPreviousAndFourNextPages()
 {
     const std::vector<QUrl> urls
-        = KiriView::predecodeWindowImageUrls(imageCandidates(15), imageUrl(5));
+        = KiriView::predecodeWindowImageUrls(imageCandidates(15), indexedImageUrl(5));
 
     compareUrls(urls,
-        { imageUrl(5), imageUrl(6), imageUrl(4), imageUrl(7), imageUrl(3), imageUrl(8),
-            imageUrl(9) });
+        { indexedImageUrl(5), indexedImageUrl(6), indexedImageUrl(4), indexedImageUrl(7),
+            indexedImageUrl(3), indexedImageUrl(8), indexedImageUrl(9) });
 }
 
 QTEST_GUILESS_MAIN(TestImageNavigationModel)

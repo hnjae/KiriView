@@ -419,40 +419,9 @@ fn fixed_avif_data(data: &[u8]) -> Option<Vec<u8>> {
 
 #[cfg(test)]
 mod tests {
+    use crate::bmff::test_support::{make_box, make_full_box, make_large_full_box};
+
     use super::*;
-
-    fn make_box(kind: &[u8; 4], body: &[u8]) -> Vec<u8> {
-        let size = BOX_HEADER_SIZE + body.len();
-        let mut data = Vec::with_capacity(size);
-        data.extend_from_slice(&(size as u32).to_be_bytes());
-        data.extend_from_slice(kind);
-        data.extend_from_slice(body);
-        data
-    }
-
-    fn make_large_box(kind: &[u8; 4], body: &[u8]) -> Vec<u8> {
-        let size = BOX_HEADER_SIZE + 8 + body.len();
-        let mut data = Vec::with_capacity(size);
-        data.extend_from_slice(&1_u32.to_be_bytes());
-        data.extend_from_slice(kind);
-        data.extend_from_slice(&(size as u64).to_be_bytes());
-        data.extend_from_slice(body);
-        data
-    }
-
-    fn make_full_box(kind: &[u8; 4], version_and_flags: [u8; 4], body: &[u8]) -> Vec<u8> {
-        let mut full_body = Vec::with_capacity(FULL_BOX_VERSION_AND_FLAGS_SIZE + body.len());
-        full_body.extend_from_slice(&version_and_flags);
-        full_body.extend_from_slice(body);
-        make_box(kind, &full_body)
-    }
-
-    fn make_large_full_box(kind: &[u8; 4], version_and_flags: [u8; 4], body: &[u8]) -> Vec<u8> {
-        let mut full_body = Vec::with_capacity(FULL_BOX_VERSION_AND_FLAGS_SIZE + body.len());
-        full_body.extend_from_slice(&version_and_flags);
-        full_body.extend_from_slice(body);
-        make_large_box(kind, &full_body)
-    }
 
     fn make_ftyp(brand: &[u8; 4]) -> Vec<u8> {
         let mut body = Vec::new();

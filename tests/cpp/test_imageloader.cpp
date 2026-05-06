@@ -9,7 +9,6 @@
 #include <QSize>
 #include <QTest>
 #include <QUrl>
-#include <memory>
 #include <optional>
 #include <utility>
 
@@ -20,6 +19,7 @@ using KiriView::TestSupport::imageCandidate;
 using KiriView::TestSupport::localUrl;
 using KiriView::TestSupport::ManualImageDataLoader;
 using KiriView::TestSupport::staticImageDataDecoderRejectingBadData;
+using KiriView::TestSupport::staticTestImagePayload;
 using KiriView::TestSupport::testImage;
 using KiriView::TestSupport::testImageDecodeFailureString;
 
@@ -133,8 +133,7 @@ void TestImageLoader::predecodedImageBypassesDataLoad()
 
         const QImage image = testImage();
         return std::optional<KiriView::PredecodedImage>(KiriView::PredecodedImage {
-            KiriView::StaticImagePayload {
-                std::make_shared<KiriView::TestSupport::TestImageTileSource>(image), image, {} },
+            staticTestImagePayload(image),
             KiriView::DisplayedImageLocation::fromArchiveDocument(imageUrl, *archiveDocument) });
     };
     callbacks.predecodedImage = [&predecodedSession, &imageSize](KiriView::ImageLoadSession session,

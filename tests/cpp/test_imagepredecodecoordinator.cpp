@@ -12,19 +12,14 @@
 namespace {
 using KiriView::TestSupport::dataLoaderFor;
 using KiriView::TestSupport::imageCandidate;
+using KiriView::TestSupport::imagesDirectoryUrl;
+using KiriView::TestSupport::indexedImageUrl;
 using KiriView::TestSupport::ManualImageDataLoader;
 using KiriView::TestSupport::staticImageDataDecoder;
+using KiriView::TestSupport::staticTestImagePayload;
 using KiriView::TestSupport::testImage;
-using KiriView::TestSupport::TestImageTileSource;
 
 using FakeCandidateProvider = KiriView::TestSupport::FakeImageNavigationCandidateProvider;
-
-QUrl imageUrl(int index)
-{
-    return QUrl(QStringLiteral("file:///images/%1.png").arg(index, 2, 10, QLatin1Char('0')));
-}
-
-QUrl parentUrl() { return QUrl(QStringLiteral("file:///images/")); }
 
 KiriView::ImagePredecodeCoordinator createCoordinator(
     QObject *parent, FakeCandidateProvider &candidateProvider, ManualImageDataLoader &dataLoader)
@@ -54,10 +49,10 @@ void TestImagePredecodeCoordinator::scheduleCachesDisplayedImageAndPredecodesWin
     KiriView::ImagePredecodeCoordinator coordinator
         = createCoordinator(this, candidateProvider, dataLoader);
 
-    const QUrl previousUrl = imageUrl(0);
-    const QUrl displayedUrl = imageUrl(1);
-    const QUrl nextUrl = imageUrl(2);
-    candidateProvider.setDirectoryImages(parentUrl(),
+    const QUrl previousUrl = indexedImageUrl(0);
+    const QUrl displayedUrl = indexedImageUrl(1);
+    const QUrl nextUrl = indexedImageUrl(2);
+    candidateProvider.setDirectoryImages(imagesDirectoryUrl(),
         {
             imageCandidate(previousUrl),
             imageCandidate(displayedUrl),
@@ -68,8 +63,7 @@ void TestImagePredecodeCoordinator::scheduleCachesDisplayedImageAndPredecodesWin
     coordinator.schedule(KiriView::ImagePredecodeCoordinator::Context {
         KiriView::DisplayedImageLocation::fromUrl(displayedUrl),
         true,
-        KiriView::StaticImagePayload { std::make_shared<TestImageTileSource>(displayedImage),
-            displayedImage, KiriView::StaticImageDisplayHints { 0.5 } },
+        staticTestImagePayload(displayedImage, KiriView::StaticImageDisplayHints { 0.5 }),
         KiriView::ImageFirstDisplayDecodeContext { QSize(640, 480) },
     });
 
@@ -95,9 +89,9 @@ void TestImagePredecodeCoordinator::cancelSuppressesPendingDecode()
     KiriView::ImagePredecodeCoordinator coordinator
         = createCoordinator(this, candidateProvider, dataLoader);
 
-    const QUrl displayedUrl = imageUrl(1);
-    const QUrl nextUrl = imageUrl(2);
-    candidateProvider.setDirectoryImages(parentUrl(),
+    const QUrl displayedUrl = indexedImageUrl(1);
+    const QUrl nextUrl = indexedImageUrl(2);
+    candidateProvider.setDirectoryImages(imagesDirectoryUrl(),
         {
             imageCandidate(displayedUrl),
             imageCandidate(nextUrl),
@@ -107,8 +101,7 @@ void TestImagePredecodeCoordinator::cancelSuppressesPendingDecode()
     coordinator.schedule(KiriView::ImagePredecodeCoordinator::Context {
         KiriView::DisplayedImageLocation::fromUrl(displayedUrl),
         false,
-        KiriView::StaticImagePayload {
-            std::make_shared<TestImageTileSource>(displayedImage), displayedImage, {} },
+        staticTestImagePayload(displayedImage),
     });
 
     QCOMPARE(dataLoader.loads.size(), std::size_t(1));

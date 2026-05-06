@@ -144,10 +144,10 @@ pub(crate) fn top_level_boxes(data: &[u8]) -> Vec<BoxHeader> {
 }
 
 #[cfg(test)]
-mod tests {
+pub(crate) mod test_support {
     use super::*;
 
-    fn make_box(kind: &BoxKind, body: &[u8]) -> Vec<u8> {
+    pub(crate) fn make_box(kind: &BoxKind, body: &[u8]) -> Vec<u8> {
         let size = BOX_HEADER_SIZE + body.len();
         let mut data = Vec::with_capacity(size);
         data.extend_from_slice(&(size as u32).to_be_bytes());
@@ -156,7 +156,7 @@ mod tests {
         data
     }
 
-    fn make_large_box(kind: &BoxKind, body: &[u8]) -> Vec<u8> {
+    pub(crate) fn make_large_box(kind: &BoxKind, body: &[u8]) -> Vec<u8> {
         let size = BOX_HEADER_SIZE + LARGE_BOX_EXTRA_SIZE + body.len();
         let mut data = Vec::with_capacity(size);
         data.extend_from_slice(&1_u32.to_be_bytes());
@@ -166,19 +166,33 @@ mod tests {
         data
     }
 
-    fn make_full_box(kind: &BoxKind, version_and_flags: [u8; 4], body: &[u8]) -> Vec<u8> {
+    pub(crate) fn make_full_box(
+        kind: &BoxKind,
+        version_and_flags: [u8; 4],
+        body: &[u8],
+    ) -> Vec<u8> {
         let mut full_body = Vec::with_capacity(FULL_BOX_VERSION_AND_FLAGS_SIZE + body.len());
         full_body.extend_from_slice(&version_and_flags);
         full_body.extend_from_slice(body);
         make_box(kind, &full_body)
     }
 
-    fn make_large_full_box(kind: &BoxKind, version_and_flags: [u8; 4], body: &[u8]) -> Vec<u8> {
+    pub(crate) fn make_large_full_box(
+        kind: &BoxKind,
+        version_and_flags: [u8; 4],
+        body: &[u8],
+    ) -> Vec<u8> {
         let mut full_body = Vec::with_capacity(FULL_BOX_VERSION_AND_FLAGS_SIZE + body.len());
         full_body.extend_from_slice(&version_and_flags);
         full_body.extend_from_slice(body);
         make_large_box(kind, &full_body)
     }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::test_support::{make_box, make_full_box, make_large_box, make_large_full_box};
+    use super::*;
 
     #[test]
     fn reads_standard_box_header() {
