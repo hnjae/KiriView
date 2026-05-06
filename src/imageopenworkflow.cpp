@@ -6,80 +6,113 @@
 #include "imagecontainer.h"
 #include "imagedocumentstate.h"
 
+#include <utility>
+
 namespace {
-void finishTrackedLoad(KiriView::ImageDocumentState &state)
+class ImageOpenTransition final
 {
-    state.clearLoadingContainerNavigationUrl();
-    state.setLoading(false);
-}
+public:
+    explicit ImageOpenTransition(KiriView::ImageDocumentState &state)
+        : m_state(state)
+        , m_batch(m_state.beginChangeBatch())
+    {
+    }
 
-void finishSuccessfulTrackedLoad(KiriView::ImageDocumentState &state)
-{
-    state.setErrorString(QString());
-    finishTrackedLoad(state);
-    state.setStatus(KiriView::ImageDocumentStatus::Ready);
-}
+    void clearImage() { add(KiriView::ImageDocumentEffect::clearImage()); }
 
-void finishWithError(KiriView::ImageDocumentState &state, const QString &errorString,
-    KiriView::ImageDocumentStatus status)
-{
-    state.setErrorString(errorString);
-    state.setStatus(status);
-}
+    void resetZoom() { add(KiriView::ImageDocumentEffect::resetZoom()); }
 
-template <typename BeforeError>
-void finishTrackedLoadWithError(KiriView::ImageDocumentState &state, const QString &errorString,
-    KiriView::ImageDocumentStatus status, BeforeError beforeError)
-{
-    finishTrackedLoad(state);
-    beforeError();
-    finishWithError(state, errorString, status);
-}
+    void updatePageNavigation() { add(KiriView::ImageDocumentEffect::updatePageNavigation()); }
 
-void finishTrackedLoadWithError(KiriView::ImageDocumentState &state, const QString &errorString,
-    KiriView::ImageDocumentStatus status)
-{
-    finishTrackedLoadWithError(state, errorString, status, []() { });
-}
+    void scheduleAdjacentImagePredecode()
+    {
+        add(KiriView::ImageDocumentEffect::scheduleAdjacentImagePredecode());
+    }
+
+    void prepareFailedContainer(const QUrl &containerUrl)
+    {
+        add(KiriView::ImageDocumentEffect::prepareFailedContainer(containerUrl));
+    }
+
+    void finishTrackedLoad()
+    {
+        m_state.clearLoadingContainerNavigationUrl();
+        m_state.setLoading(false);
+    }
+
+    void finishSuccessfulTrackedLoad()
+    {
+        m_state.setErrorString(QString());
+        finishTrackedLoad();
+        m_state.setStatus(KiriView::ImageDocumentStatus::Ready);
+    }
+
+    template <typename BeforeError>
+    void finishTrackedLoadWithError(
+        const QString &errorString, KiriView::ImageDocumentStatus status, BeforeError beforeError)
+    {
+        finishTrackedLoad();
+        beforeError();
+        finishWithError(errorString, status);
+    }
+
+    void finishTrackedLoadWithError(
+        const QString &errorString, KiriView::ImageDocumentStatus status)
+    {
+        finishTrackedLoadWithError(errorString, status, []() { });
+    }
+
+    KiriView::ImageDocumentEffects takeEffects() { return std::move(m_effects); }
+
+private:
+    void add(KiriView::ImageDocumentEffect effect) { m_effects.add(std::move(effect)); }
+
+    void finishWithError(const QString &errorString, KiriView::ImageDocumentStatus status)
+    {
+        m_state.setErrorString(errorString);
+        m_state.setStatus(status);
+    }
+
+    KiriView::ImageDocumentState &m_state;
+    KiriView::ImageDocumentState::ChangeBatch m_batch;
+    KiriView::ImageDocumentEffects m_effects;
+};
 }
 
 namespace KiriView {
 ImageDocumentEffects ImageOpenWorkflow::beginSourceLoad(ImageDocumentState &state, bool hasImage)
 {
-    [[maybe_unused]] auto batch = state.beginChangeBatch();
-    ImageDocumentEffects effects;
+    ImageOpenTransition transition(state);
     if (!hasImage && state.loadingContainerNavigationUrl().isEmpty()) {
         state.setContainerNavigationUrl(QUrl());
     }
 
     state.setLoading(true);
     if (!hasImage) {
-        effects.add(ImageDocumentEffect::clearImage());
-        effects.add(ImageDocumentEffect::resetZoom());
+        transition.clearImage();
+        transition.resetZoom();
         state.setStatus(ImageDocumentStatus::Loading);
     } else {
         state.setStatus(ImageDocumentStatus::Ready);
     }
-    return effects;
+    return transition.takeEffects();
 }
 
 ImageDocumentEffects ImageOpenWorkflow::finishEmptySourceLoad(ImageDocumentState &state)
 {
-    [[maybe_unused]] auto batch = state.beginChangeBatch();
-    ImageDocumentEffects effects;
-    effects.add(ImageDocumentEffect::clearImage());
-    effects.add(ImageDocumentEffect::resetZoom());
-    finishTrackedLoad(state);
+    ImageOpenTransition transition(state);
+    transition.clearImage();
+    transition.resetZoom();
+    transition.finishTrackedLoad();
     state.setContainerNavigationUrl(QUrl());
     state.setStatus(ImageDocumentStatus::Null);
-    return effects;
+    return transition.takeEffects();
 }
 
 ImageDocumentEffects ImageOpenWorkflow::finishSuccessfulImageLoad(
     ImageDocumentState &state, const ImageLoadSession &session)
 {
-    [[maybe_unused]] auto batch = state.beginChangeBatch();
-    ImageDocumentEffects effects;
+    ImageOpenTransition transition(state);
     state.setSourceUrl(session.location.imageUrl());
     state.setDisplayedImageLocation(session.location);
     if (!session.request.containerNavigationUrl().isEmpty()) {
@@ -87,61 +120,57 @@ ImageDocumentEffects ImageOpenWorkflow::finishSuccessfulImageLoad(
     } else {
         state.setContainerNavigationUrl(containerNavigationUrlForLocation(session.location));
     }
-    finishSuccessfulTrackedLoad(state);
-    effects.add(ImageDocumentEffect::updatePageNavigation());
-    return effects;
+    transition.finishSuccessfulTrackedLoad();
+    transition.updatePageNavigation();
+    return transition.takeEffects();
 }
 
 ImageDocumentEffects ImageOpenWorkflow::finishContainerNavigationLoadWithError(
     ImageDocumentState &state, const QUrl &containerUrl, const QString &errorString)
 {
-    [[maybe_unused]] auto batch = state.beginChangeBatch();
-    ImageDocumentEffects effects;
-    effects.add(ImageDocumentEffect::clearImage());
-    effects.add(ImageDocumentEffect::prepareFailedContainer(containerUrl));
-    finishTrackedLoadWithError(state, errorString, ImageDocumentStatus::Error, [&]() {
+    ImageOpenTransition transition(state);
+    transition.clearImage();
+    transition.prepareFailedContainer(containerUrl);
+    transition.finishTrackedLoadWithError(errorString, ImageDocumentStatus::Error, [&]() {
         state.setContainerNavigationUrl(containerUrl);
         state.setSourceUrl(containerUrl);
     });
-    return effects;
+    return transition.takeEffects();
 }
 
 ImageDocumentEffects ImageOpenWorkflow::finishReplacementLoadWithError(
     ImageDocumentState &state, const QString &errorString)
 {
-    [[maybe_unused]] auto batch = state.beginChangeBatch();
-    ImageDocumentEffects effects;
-    finishTrackedLoadWithError(state, errorString, ImageDocumentStatus::Ready);
+    ImageOpenTransition transition(state);
+    transition.finishTrackedLoadWithError(errorString, ImageDocumentStatus::Ready);
 
     if (!state.displayedUrl().isEmpty()) {
         state.setSourceUrl(state.displayedUrl());
     }
 
-    effects.add(ImageDocumentEffect::updatePageNavigation());
-    effects.add(ImageDocumentEffect::scheduleAdjacentImagePredecode());
-    return effects;
+    transition.updatePageNavigation();
+    transition.scheduleAdjacentImagePredecode();
+    return transition.takeEffects();
 }
 
 ImageDocumentEffects ImageOpenWorkflow::finishInitialLoadWithError(
     ImageDocumentState &state, const QString &errorString)
 {
-    [[maybe_unused]] auto batch = state.beginChangeBatch();
-    ImageDocumentEffects effects;
-    effects.add(ImageDocumentEffect::clearImage());
-    finishTrackedLoadWithError(state, errorString, ImageDocumentStatus::Error,
+    ImageOpenTransition transition(state);
+    transition.clearImage();
+    transition.finishTrackedLoadWithError(errorString, ImageDocumentStatus::Error,
         [&]() { state.setContainerNavigationUrl(QUrl()); });
-    return effects;
+    return transition.takeEffects();
 }
 
 ImageDocumentEffects ImageOpenWorkflow::finishAnimationLoadWithError(
     ImageDocumentState &state, const QString &errorString)
 {
-    [[maybe_unused]] auto batch = state.beginChangeBatch();
-    ImageDocumentEffects effects;
-    effects.add(ImageDocumentEffect::clearImage());
-    effects.add(ImageDocumentEffect::resetZoom());
-    finishTrackedLoadWithError(state, errorString, ImageDocumentStatus::Error,
+    ImageOpenTransition transition(state);
+    transition.clearImage();
+    transition.resetZoom();
+    transition.finishTrackedLoadWithError(errorString, ImageDocumentStatus::Error,
         [&]() { state.setContainerNavigationUrl(QUrl()); });
-    return effects;
+    return transition.takeEffects();
 }
 }
