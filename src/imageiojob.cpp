@@ -26,16 +26,6 @@ bool ImageIoJobState::claim(QObject *object)
     return true;
 }
 
-void ImageIoJobState::clear(QObject *object)
-{
-    if (object != m_object.data()) {
-        return;
-    }
-
-    m_object.clear();
-    m_cancelCallback = {};
-}
-
 void ImageIoJobState::cancel()
 {
     if (m_object.isNull()) {
@@ -78,18 +68,7 @@ void ImageIoJob::cancel()
     m_state->cancel();
 }
 
-bool ImageIoJob::claim(QObject *object) { return m_state != nullptr && m_state->claim(object); }
-
-void ImageIoJob::clear(QObject *object)
-{
-    if (m_state != nullptr) {
-        m_state->clear(object);
-    }
-}
-
 bool ImageIoJob::isActive() const { return m_state != nullptr && m_state->isActive(); }
-
-ImageIoJob::operator bool() const { return isActive(); }
 
 std::shared_ptr<ImageIoJobState> ImageIoJob::state() const { return m_state; }
 }

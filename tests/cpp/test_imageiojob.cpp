@@ -15,7 +15,6 @@ class TestImageIoJob : public QObject
 private Q_SLOTS:
     void cancelInvokesCallbackOnce();
     void claimCompletesJobWithoutCanceling();
-    void clearForgetsDestroyedObject();
     void destroyedObjectDeactivatesJobWithoutCanceling();
     void moveAssignmentCancelsReplacedJob();
 };
@@ -37,7 +36,7 @@ void TestImageIoJob::cancelInvokesCallbackOnce()
     QCOMPARE(cancelCount, 1);
     QCOMPARE(canceledObject, &object);
     QVERIFY(!job.isActive());
-    QVERIFY(!job.claim(&object));
+    QVERIFY(!job.state()->claim(&object));
 }
 
 void TestImageIoJob::claimCompletesJobWithoutCanceling()
@@ -45,21 +44,9 @@ void TestImageIoJob::claimCompletesJobWithoutCanceling()
     QObject object;
     int cancelCount = 0;
     KiriView::ImageIoJob job(&object, [&cancelCount](QObject *) { ++cancelCount; });
+    const std::shared_ptr<KiriView::ImageIoJobState> jobState = job.state();
 
-    QVERIFY(job.claim(&object));
-    QVERIFY(!job.isActive());
-    job.cancel();
-
-    QCOMPARE(cancelCount, 0);
-}
-
-void TestImageIoJob::clearForgetsDestroyedObject()
-{
-    QObject object;
-    int cancelCount = 0;
-    KiriView::ImageIoJob job(&object, [&cancelCount](QObject *) { ++cancelCount; });
-
-    job.clear(&object);
+    QVERIFY(jobState->claim(&object));
     QVERIFY(!job.isActive());
     job.cancel();
 

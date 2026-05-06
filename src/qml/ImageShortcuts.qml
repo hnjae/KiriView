@@ -171,83 +171,53 @@ Item {
         shortcutsEnabled: root.helpShortcutsEnabled
     }
 
-    Connections {
-        target: root.zoomInQAction
-
-        function onTriggered() {
-            root.zoomByAtCenter(root.zoomStepPercent);
-        }
+    ActionTrigger {
+        action: root.zoomInQAction
+        handler: () => root.zoomByAtCenter(root.zoomStepPercent)
     }
 
-    Connections {
-        target: root.zoomOutQAction
-
-        function onTriggered() {
-            root.zoomByAtCenter(-root.zoomStepPercent);
-        }
+    ActionTrigger {
+        action: root.zoomOutQAction
+        handler: () => root.zoomByAtCenter(-root.zoomStepPercent)
     }
 
-    Connections {
-        target: root.panLeftQAction
-
-        function onTriggered() {
-            root.panBy(-root.keyboardPanDistance, 0);
-        }
+    ActionTrigger {
+        action: root.panLeftQAction
+        handler: () => root.panBy(-root.keyboardPanDistance, 0)
     }
 
-    Connections {
-        target: root.panRightQAction
-
-        function onTriggered() {
-            root.panBy(root.keyboardPanDistance, 0);
-        }
+    ActionTrigger {
+        action: root.panRightQAction
+        handler: () => root.panBy(root.keyboardPanDistance, 0)
     }
 
-    Connections {
-        target: root.panUpQAction
-
-        function onTriggered() {
-            root.panBy(0, -root.keyboardPanDistance);
-        }
+    ActionTrigger {
+        action: root.panUpQAction
+        handler: () => root.panBy(0, -root.keyboardPanDistance)
     }
 
-    Connections {
-        target: root.panDownQAction
-
-        function onTriggered() {
-            root.panBy(0, root.keyboardPanDistance);
-        }
+    ActionTrigger {
+        action: root.panDownQAction
+        handler: () => root.panBy(0, root.keyboardPanDistance)
     }
 
-    Connections {
-        target: root.panTopLeftQAction
-
-        function onTriggered() {
-            root.panToTopLeft();
-        }
+    ActionTrigger {
+        action: root.panTopLeftQAction
+        handler: () => root.panToTopLeft()
     }
 
-    Connections {
-        target: root.panBottomRightQAction
-
-        function onTriggered() {
-            root.panToBottomRight();
-        }
+    ActionTrigger {
+        action: root.panBottomRightQAction
+        handler: () => root.panToBottomRight()
     }
 
-    Connections {
-        target: root.scanForwardQAction
-
-        function onTriggered() {
-            root.scanForward();
-        }
+    ActionTrigger {
+        action: root.scanForwardQAction
+        handler: () => root.scanForward()
     }
 
-    Connections {
-        target: root.scanBackwardQAction
-
-        function onTriggered() {
-            root.scanBackward();
-        }
+    ActionTrigger {
+        action: root.scanBackwardQAction
+        handler: () => root.scanBackward()
     }
 }

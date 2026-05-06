@@ -19,7 +19,6 @@ public:
     ImageIoJobState(QObject *object, CancelCallback cancelCallback);
 
     bool claim(QObject *object);
-    void clear(QObject *object);
     void cancel();
     bool isActive() const;
 
@@ -43,10 +42,7 @@ public:
     ImageIoJob &operator=(ImageIoJob &&other) noexcept;
 
     void cancel();
-    bool claim(QObject *object);
-    void clear(QObject *object);
     bool isActive() const;
-    explicit operator bool() const;
     std::shared_ptr<ImageIoJobState> state() const;
 
 private:
