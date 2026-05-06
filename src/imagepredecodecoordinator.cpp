@@ -113,9 +113,10 @@ void ImagePredecodeCoordinator::startPredecodeImageLoad(
     }
 
     const QUrl normalizedUrl = normalizedImageUrl(url);
-    m_activePredecodeRequest = ActivePredecodeRequest { normalizedUrl, archiveDocument };
-    m_decodeJob.start(ImageDecodeRequest::fromLocation(
-        generation, DisplayedImageLocation::fromUrl(url, archiveDocument), m_firstDisplayContext));
+    ImageDecodeRequest request = ImageDecodeRequest::fromLocation(
+        generation, DisplayedImageLocation::fromUrl(url, archiveDocument), m_firstDisplayContext);
+    m_activePredecodeRequest = ActivePredecodeRequest { request, normalizedUrl };
+    m_decodeJob.start(std::move(request));
 }
 
 void ImagePredecodeCoordinator::finishPredecodeImageLoadError(const ImageDecodeRequest &request)
@@ -138,7 +139,7 @@ void ImagePredecodeCoordinator::finishPredecodeImageDecode(
     const auto *staticImage = decodedImageResultImageAs<StaticDecodedImage>(result);
     if (staticImage != nullptr) {
         m_cache.cacheImage(
-            request.imageUrl(), activeRequest->archiveDocument, staticImage->staticImage);
+            request.imageUrl(), activeRequest->request.archiveDocument(), staticImage->staticImage);
     }
 
     startNextPredecodeImageLoad(request.id());
@@ -146,7 +147,7 @@ void ImagePredecodeCoordinator::finishPredecodeImageDecode(
 
 QUrl ImagePredecodeCoordinator::activePredecodeUrl() const
 {
-    return m_activePredecodeRequest.has_value() ? m_activePredecodeRequest->url : QUrl();
+    return m_activePredecodeRequest.has_value() ? m_activePredecodeRequest->normalizedUrl : QUrl();
 }
 
 bool ImagePredecodeCoordinator::hasActivePredecodeRequest() const
@@ -168,8 +169,8 @@ ImagePredecodeCoordinator::takeActivePredecodeRequest(const ImageDecodeRequest &
 
 bool ImagePredecodeCoordinator::predecodeRequestIsActive(const ImageDecodeRequest &request) const
 {
-    return m_activePredecodeRequest.has_value() && m_generation.accepts(request.id())
-        && normalizedImageUrl(request.imageUrl()) == m_activePredecodeRequest->url;
+    return m_activePredecodeRequest.has_value()
+        && m_activePredecodeRequest->request.matches(request);
 }
 
 void ImagePredecodeCoordinator::clearActivePredecodeRequest() { m_activePredecodeRequest.reset(); }

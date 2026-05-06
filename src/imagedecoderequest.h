@@ -5,6 +5,7 @@
 #define KIRIVIEW_IMAGEDECODEREQUEST_H
 
 #include "imagelocation.h"
+#include "imageurl.h"
 #include "staticimage.h"
 
 #include <QUrl>
@@ -35,6 +36,14 @@ public:
     const ArchiveDocumentLocation &archiveDocument() const { return m_location.archiveDocument(); }
     const ImageFirstDisplayDecodeContext &firstDisplay() const { return m_firstDisplay; }
     bool isEmpty() const { return m_location.isEmpty(); }
+    bool matches(quint64 id, const QUrl &imageUrl) const
+    {
+        return m_id == id && sameNormalizedUrl(m_location.imageUrl(), imageUrl);
+    }
+    bool matches(const ImageDecodeRequest &request) const
+    {
+        return matches(request.id(), request.imageUrl());
+    }
 
 private:
     ImageDecodeRequest(

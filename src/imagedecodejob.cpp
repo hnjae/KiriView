@@ -5,7 +5,6 @@
 
 #include "imageasyncworker.h"
 #include "imagecallback.h"
-#include "imageurl.h"
 
 #include <utility>
 
@@ -77,8 +76,7 @@ void ImageDecodeJob::startDecode(QByteArray data, ImageDecodeRequest request)
 
 bool ImageDecodeJob::isCurrentRequest(const ImageDecodeRequest &request) const
 {
-    return m_request.has_value() && m_request->id() == request.id()
-        && sameNormalizedUrl(m_request->imageUrl(), request.imageUrl());
+    return m_request.has_value() && m_request->matches(request);
 }
 
 void ImageDecodeJob::clearRequest(const ImageDecodeRequest &request)

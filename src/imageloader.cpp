@@ -6,7 +6,6 @@
 #include "decodedimageresult.h"
 #include "imagecallback.h"
 #include "imageloadplan.h"
-#include "imageurl.h"
 
 #include <optional>
 #include <utility>
@@ -145,8 +144,8 @@ void ImageLoader::cancel()
 std::optional<ImageLoadSession> ImageLoader::currentLoadSessionForDecodeRequest(
     const ImageDecodeRequest &request) const
 {
-    if (!m_loadSession.has_value() || m_loadSession->id != request.id()
-        || !sameNormalizedUrl(m_loadSession->location.imageUrl(), request.imageUrl())) {
+    if (!m_loadSession.has_value()
+        || !request.matches(m_loadSession->id, m_loadSession->location.imageUrl())) {
         return std::nullopt;
     }
 

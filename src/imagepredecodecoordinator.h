@@ -42,8 +42,8 @@ public:
 
 private:
     struct ActivePredecodeRequest {
-        QUrl url;
-        ArchiveDocumentLocation archiveDocument;
+        ImageDecodeRequest request;
+        QUrl normalizedUrl;
     };
 
     void scheduleAdjacentImagePredecode(const Context &context, quint64 generation);
