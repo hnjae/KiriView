@@ -7,12 +7,10 @@ import QtQuick.Layouts
 import io.github.hnjae.kiriview
 import org.kde.kirigami as Kirigami
 
-Controls.Dialog {
+Kirigami.OverlaySheet {
     id: root
 
     required property KiriViewApplication application
-    required property real windowWidth
-    required property real windowHeight
 
     readonly property int shortcutRevision: application.shortcutRevision
     readonly property var helpEntries: [
@@ -90,13 +88,8 @@ Controls.Dialog {
         }
     ]
 
-    closePolicy: Controls.Popup.CloseOnEscape
-    modal: true
-    standardButtons: Controls.Dialog.Close
+    showCloseButton: true
     title: "Keyboard Shortcuts"
-    width: Math.min(windowWidth - Kirigami.Units.largeSpacing * 2, Kirigami.Units.gridUnit * 28)
-    x: Math.round((windowWidth - width) / 2)
-    y: Math.round((windowHeight - height) / 2)
 
     function shortcutText(actionName) {
         root.shortcutRevision;
@@ -108,7 +101,8 @@ Controls.Dialog {
         return actionNames.map(actionName => root.application.shortcutText(actionName)).filter(text => text.length > 0).join(" / ");
     }
 
-    contentItem: ColumnLayout {
+    ColumnLayout {
+        Layout.preferredWidth: Kirigami.Units.gridUnit * 28
         spacing: Kirigami.Units.smallSpacing
 
         Repeater {

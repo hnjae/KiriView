@@ -411,8 +411,6 @@ StatefulApp.StatefulWindow {
         id: shortcutHelpDialog
 
         application: kiriApplication
-        windowHeight: root.height
-        windowWidth: root.width
 
         onClosed: root.helpDialogOpen = false
         onOpened: root.helpDialogOpen = true
