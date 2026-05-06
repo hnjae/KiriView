@@ -12,7 +12,6 @@
 #include <QString>
 #include <QtGlobal>
 #include <memory>
-#include <optional>
 #include <utility>
 #include <variant>
 #include <vector>
@@ -47,19 +46,18 @@ struct HeifSequenceAnimationImage {
 
 using DecodedImage = std::variant<StaticDecodedImage, DecodedAnimationImage, ReaderAnimationImage,
     HeifSequenceAnimationImage>;
-using DecodedImageResult = std::variant<DecodedImageFailure, DecodedImage>;
+using DecodedImageResult = std::variant<DecodedImageFailure, StaticDecodedImage,
+    DecodedAnimationImage, ReaderAnimationImage, HeifSequenceAnimationImage>;
 
 DecodedImageResult failedDecodedImageResult(QString errorString);
 DecodedImageResult successfulDecodedImageResult(DecodedImage image);
 template <typename Image> DecodedImageResult successfulDecodedImageResult(Image image)
 {
-    return successfulDecodedImageResult(DecodedImage { std::move(image) });
+    return DecodedImageResult { std::move(image) };
 }
 DecodedImageResult staticDecodedImageResult(std::shared_ptr<ImageTileSource> source,
     const ImageFirstDisplayDecodeContext &firstDisplay, QString *errorString);
 const DecodedImageFailure *decodedImageResultFailure(const DecodedImageResult &result);
-const DecodedImage *decodedImageResultImage(const DecodedImageResult &result);
-std::optional<DecodedImage> decodedImageFromResult(DecodedImageResult result);
 }
 
 #endif

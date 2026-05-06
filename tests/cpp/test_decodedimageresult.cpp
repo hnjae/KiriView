@@ -70,8 +70,7 @@ private:
 
 const KiriView::StaticDecodedImage *staticDecodedImage(const KiriView::DecodedImageResult &result)
 {
-    const KiriView::DecodedImage *image = KiriView::decodedImageResultImage(result);
-    return image == nullptr ? nullptr : std::get_if<KiriView::StaticDecodedImage>(image);
+    return std::get_if<KiriView::StaticDecodedImage>(&result);
 }
 }
 

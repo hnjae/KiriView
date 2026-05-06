@@ -4,6 +4,7 @@
 #include "decodedimageresult.h"
 
 #include <utility>
+#include <variant>
 
 namespace {
 QString errorStringValue(QString *errorString)
@@ -20,7 +21,11 @@ DecodedImageResult failedDecodedImageResult(QString errorString)
 
 DecodedImageResult successfulDecodedImageResult(DecodedImage image)
 {
-    return DecodedImageResult { std::move(image) };
+    return std::visit(
+        [](auto &&decoded) -> DecodedImageResult {
+            return DecodedImageResult { std::forward<decltype(decoded)>(decoded) };
+        },
+        std::move(image));
 }
 
 DecodedImageResult staticDecodedImageResult(std::shared_ptr<ImageTileSource> source,
@@ -60,20 +65,5 @@ DecodedImageResult staticDecodedImageResult(std::shared_ptr<ImageTileSource> sou
 const DecodedImageFailure *decodedImageResultFailure(const DecodedImageResult &result)
 {
     return std::get_if<DecodedImageFailure>(&result);
-}
-
-const DecodedImage *decodedImageResultImage(const DecodedImageResult &result)
-{
-    return std::get_if<DecodedImage>(&result);
-}
-
-std::optional<DecodedImage> decodedImageFromResult(DecodedImageResult result)
-{
-    auto *decoded = std::get_if<DecodedImage>(&result);
-    if (decoded == nullptr) {
-        return std::nullopt;
-    }
-
-    return std::move(*decoded);
 }
 }

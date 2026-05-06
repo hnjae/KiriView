@@ -21,6 +21,7 @@
 #include <limits>
 #include <memory>
 #include <optional>
+#include <variant>
 
 namespace {
 using KiriView::TestSupport::heifFtypBox;
@@ -177,8 +178,7 @@ std::optional<QByteArray> createJpegCompressedHeifData(QString *errorText)
 
 template <typename Image> const Image *decodedImage(const KiriView::DecodedImageResult &result)
 {
-    const KiriView::DecodedImage *image = KiriView::decodedImageResultImage(result);
-    return image == nullptr ? nullptr : std::get_if<Image>(image);
+    return std::get_if<Image>(&result);
 }
 }
 

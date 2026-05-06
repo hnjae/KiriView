@@ -9,11 +9,11 @@
 
 #include <optional>
 #include <utility>
+#include <variant>
 #include <vector>
 
 namespace {
 using KiriView::DecodedImageResult;
-using KiriView::decodedImageResultImage;
 using KiriView::ImageCandidateListContext;
 using KiriView::normalizedImageUrl;
 using KiriView::predecodeWindowImageUrls;
@@ -138,9 +138,7 @@ void ImagePredecodeCoordinator::finishPredecodeImageDecode(
         return;
     }
 
-    const DecodedImage *decodedImage = decodedImageResultImage(result);
-    const auto *staticImage
-        = decodedImage == nullptr ? nullptr : std::get_if<StaticDecodedImage>(decodedImage);
+    const auto *staticImage = std::get_if<StaticDecodedImage>(&result);
     if (staticImage != nullptr) {
         m_cache.cacheImage(request.imageUrl, *archiveDocument, staticImage->staticImage);
     }
