@@ -6,15 +6,16 @@ KiriView opens one user-selected image file or supported archive, displays it in
 the main window, and can navigate to adjacent images or pages in the same
 location.
 
-The main window toolbar shows image controls without a page title. It uses an
-action toolbar that displays as many controls as fit and moves the rest into an
-overflow menu. The normal toolbar order is Previous Image, the current page
-number, `of`, the total image count, Next Image, zoom percentage, Fit, and the
-hamburger overflow menu. When the toolbar runs out of horizontal space, KiriView
-keeps the zoom percentage visible the longest, then Fit, then page navigation.
-Outside fullscreen, the toolbar uses normal application header placement and
-reserves layout space above the image viewing area. Controls that require a
-ready image are disabled until an image is ready.
+The main window toolbar shows image controls without a page title. It places
+the page navigation group at the leading side of the toolbar, containing
+Previous Image, the current page number, `of`, the total image count, and Next
+Image. It places zoom, Fit, and the hamburger overflow menu in a trailing action
+toolbar that displays as many trailing controls as fit and moves the rest into
+an overflow menu. When the trailing action toolbar runs out of horizontal space,
+KiriView keeps the zoom percentage visible the longest, then Fit. Outside
+fullscreen, the toolbar uses normal application header placement and reserves
+layout space above the image viewing area. Controls that require a ready image
+are disabled until an image is ready.
 KiriView shows its application menu through the toolbar hamburger overflow menu
 by default. Users can switch the application menu presentation between the
 hamburger overflow menu and a conventional menubar, and KiriView remembers the
@@ -33,6 +34,9 @@ window.
 If the first startup argument is a local file path or file URL and that file
 does not exist, KiriView prints a clear error message naming the path and reason
 to standard error, does not open the main window, and exits with code 2.
+KiriView permits compact window sizes down to 16 by 10 Kirigami grid units. When
+no saved window geometry overrides the launch size, KiriView opens at 24 by 20
+Kirigami grid units.
 
 When an image file is displayed, the main window title is the displayed image
 file name, a spaced em dash, and `KiriView`. When a CBZ, CBT, CB7, CBR, ZIP,
