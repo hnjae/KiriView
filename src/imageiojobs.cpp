@@ -5,6 +5,7 @@
 
 #include "archivebackend.h"
 #include "imageasyncworker.h"
+#include "imagecallback.h"
 #include "imagecontainer.h"
 #include "imagenavigationmodel.h"
 
@@ -41,11 +42,8 @@ void finishArchiveWorkerResult(
     Result result, ErrorCallback errorCallback, SuccessCallback successCallback)
 {
     auto resultHandler = ArchiveResultHandler {
-        [&errorCallback](const ArchiveError &error) {
-            if (errorCallback) {
-                errorCallback(error.errorString);
-            }
-        },
+        [&errorCallback](
+            const ArchiveError &error) { KiriView::invokeIfSet(errorCallback, error.errorString); },
         [&successCallback](Success &success) mutable { successCallback(std::move(success)); },
     };
     std::visit(resultHandler, result);
@@ -100,9 +98,7 @@ void finishDirectoryCandidateListWithError(std::shared_ptr<KiriView::ImageIoJobS
     }
 
     lister->deleteLater();
-    if (errorCallback) {
-        errorCallback(errorString);
-    }
+    KiriView::invokeIfSet(errorCallback, errorString);
 }
 
 template <typename Candidates, typename CandidateCallback, typename CandidateFactory>
@@ -122,7 +118,7 @@ KiriView::ImageIoJob startDirectoryCandidateList(QObject *receiver, const QUrl &
 
             Candidates candidates = candidateFactory(lister);
             lister->deleteLater();
-            callback(std::move(candidates));
+            KiriView::invokeIfSet(callback, std::move(candidates));
         });
     QObject::connect(lister, &KCoreDirLister::jobError, receiver,
         [jobState, lister, errorCallback](KIO::Job *job) {
@@ -202,9 +198,7 @@ ImageIoJob startArchiveImageCandidateList(QObject *receiver,
             finishArchiveWorkerResult<ArchiveImageCandidates>(std::move(result),
                 std::move(errorCallback),
                 [callback = std::move(callback)](ArchiveImageCandidates candidates) mutable {
-                    if (callback) {
-                        callback(std::move(candidates.candidates));
-                    }
+                    KiriView::invokeIfSet(callback, std::move(candidates.candidates));
                 });
         });
 }
@@ -223,9 +217,7 @@ ImageIoJob startStoredImageDataLoad(QObject *receiver, ImageDecodeRequest reques
                 finishArchiveWorkerResult<ArchiveImageData>(std::move(result),
                     std::move(errorCallback),
                     [callback = std::move(callback)](ArchiveImageData data) mutable {
-                        if (callback) {
-                            callback(std::move(data.data));
-                        }
+                        KiriView::invokeIfSet(callback, std::move(data.data));
                     });
             });
     }
@@ -242,13 +234,11 @@ ImageIoJob startStoredImageDataLoad(QObject *receiver, ImageDecodeRequest reques
             }
 
             if (finishedJob->error() != KJob::NoError) {
-                if (errorCallback) {
-                    errorCallback(finishedJob->errorString());
-                }
+                KiriView::invokeIfSet(errorCallback, finishedJob->errorString());
                 return;
             }
 
-            callback(job->data());
+            KiriView::invokeIfSet(callback, job->data());
         });
 
     QObject::connect(

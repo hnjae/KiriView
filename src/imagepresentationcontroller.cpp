@@ -4,6 +4,7 @@
 #include "imagepresentationcontroller.h"
 
 #include "displayedimagestate.h"
+#include "imagecallback.h"
 #include "imagerendering.h"
 #include "imagetiledecodescheduler.h"
 
@@ -23,11 +24,8 @@ ImagePresentationController::ImagePresentationController(QObject *context,
             setImageSize(imageSize);
             notify(ImageDocumentChange::Repaint);
         },
-        [this](const QString &errorString) {
-            if (m_callbacks.animationError) {
-                m_callbacks.animationError(errorString);
-            }
-        });
+        [this](
+            const QString &errorString) { invokeIfSet(m_callbacks.animationError, errorString); });
     m_tileDecodeScheduler
         = std::make_unique<ImageTileDecodeScheduler>(context, [this](DecodedTile tile) {
               if (m_displayedImageState->insertTile(std::move(tile))) {
@@ -279,8 +277,6 @@ ImageDocumentRenderContext ImagePresentationController::renderContext() const
 
 void ImagePresentationController::notify(ImageDocumentChange change)
 {
-    if (m_callbacks.change) {
-        m_callbacks.change(change);
-    }
+    invokeIfSet(m_callbacks.change, change);
 }
 }

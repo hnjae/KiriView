@@ -5,6 +5,7 @@
 
 #include "bufferedimagereader.h"
 #include "heifdecoder.h"
+#include "imagecallback.h"
 #include "imageviewtext.h"
 
 #include <QObject>
@@ -179,7 +180,7 @@ void ImageAnimationPlayer::advanceReaderFrame(ReaderPlayback &playback)
     }
 
     const int delay = normalizedAnimationFrameDelay(playback.reader->nextImageDelay());
-    m_frameReady(frame);
+    invokeIfSet(m_frameReady, frame);
 
     if (playback.reader->canRead() || hasRemainingLoops()) {
         m_timer.start(delay);
@@ -207,7 +208,7 @@ void ImageAnimationPlayer::advanceDecodedFrame(DecodedPlayback &playback)
     }
 
     const AnimationFrame &frame = playback.frames.at(playback.frameIndex);
-    m_frameReady(frame.image);
+    invokeIfSet(m_frameReady, frame.image);
 
     if (playback.frameIndex + 1 < playback.frames.size() || hasRemainingLoops()) {
         m_timer.start(normalizedAnimationFrameDelay(frame.delay));
@@ -233,7 +234,7 @@ void ImageAnimationPlayer::advanceHeifSequenceFrame(HeifSequencePlayback &playba
         return;
     }
 
-    m_frameReady(frame->image);
+    invokeIfSet(m_frameReady, frame->image);
     m_timer.start(normalizedAnimationFrameDelay(frame->delay));
 }
 
@@ -297,6 +298,6 @@ void ImageAnimationPlayer::clearPlaybackState()
 
 void ImageAnimationPlayer::finishWithError(const QString &errorString)
 {
-    m_animationError(errorString);
+    invokeIfSet(m_animationError, errorString);
 }
 }

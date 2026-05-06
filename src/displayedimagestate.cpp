@@ -4,6 +4,7 @@
 #include "displayedimagestate.h"
 
 #include "imageanimationplayer.h"
+#include "imagecallback.h"
 #include "imagerendering.h"
 
 #include <QObject>
@@ -18,7 +19,7 @@ DisplayedImageState::DisplayedImageState(
 {
     auto frameReady = [this](const QImage &image) { setImage(image); };
     auto animationErrorCallback
-        = [this](const QString &errorString) { m_animationError(errorString); };
+        = [this](const QString &errorString) { invokeIfSet(m_animationError, errorString); };
     m_animationPlayer = std::make_unique<ImageAnimationPlayer>(
         context, std::move(frameReady), std::move(animationErrorCallback));
 }
@@ -138,10 +139,5 @@ void DisplayedImageState::startHeifSequenceAnimation(const QByteArray &data)
 
 void DisplayedImageState::stopAnimation() { m_animationPlayer->stop(); }
 
-void DisplayedImageState::notifyImageChanged()
-{
-    if (m_imageChanged) {
-        m_imageChanged(imageSize());
-    }
-}
+void DisplayedImageState::notifyImageChanged() { invokeIfSet(m_imageChanged, imageSize()); }
 }

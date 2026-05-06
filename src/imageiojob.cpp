@@ -3,6 +3,8 @@
 
 #include "imageiojob.h"
 
+#include "imagecallback.h"
+
 #include <QObject>
 #include <utility>
 
@@ -43,9 +45,7 @@ void ImageIoJobState::cancel()
     QObject *object = m_object;
     CancelCallback cancelCallback = std::move(m_cancelCallback);
     m_object = nullptr;
-    if (cancelCallback) {
-        cancelCallback(object);
-    }
+    invokeIfSet(cancelCallback, object);
 }
 
 bool ImageIoJobState::isActive() const { return m_object != nullptr; }

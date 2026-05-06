@@ -3,6 +3,7 @@
 
 #include "imagenavigationservice.h"
 
+#include "imagecallback.h"
 #include "imagenavigationmodel.h"
 #include "imageurl.h"
 
@@ -118,9 +119,7 @@ void ImageNavigationService::finishNavigation(std::vector<ImageNavigationCandida
         return;
     }
 
-    if (m_openUrl) {
-        m_openUrl(*targetUrl);
-    }
+    invokeIfSet(m_openUrl, *targetUrl);
 }
 
 void ImageNavigationService::openAdjacentContainer(
@@ -177,17 +176,13 @@ void ImageNavigationService::finishContainerNavigation(
 void ImageNavigationService::openImageFromContainerNavigation(
     const QUrl &imageUrl, const QUrl &containerUrl)
 {
-    if (m_openContainerImage) {
-        m_openContainerImage(imageUrl, containerUrl);
-    }
+    invokeIfSet(m_openContainerImage, imageUrl, containerUrl);
 }
 
 void ImageNavigationService::finishContainerNavigationLoadWithError(
     const QUrl &containerUrl, ContainerNavigationError error, const QString &errorString)
 {
-    if (m_containerNavigationError) {
-        m_containerNavigationError(containerUrl, error, errorString);
-    }
+    invokeIfSet(m_containerNavigationError, containerUrl, error, errorString);
 }
 
 void ImageNavigationService::updatePageNavigation(const DisplayContext &context)
@@ -233,9 +228,7 @@ void ImageNavigationService::setPageNavigationState(PageNavigationState state)
     }
 
     m_pageNavigation = std::move(state);
-    if (m_pageNavigationChanged) {
-        m_pageNavigationChanged();
-    }
+    invokeIfSet(m_pageNavigationChanged);
 }
 
 void ImageNavigationService::setFallbackPageNavigationUrl(const QUrl &currentUrl)

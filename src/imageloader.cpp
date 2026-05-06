@@ -4,6 +4,7 @@
 #include "imageloader.h"
 
 #include "decodedimageresult.h"
+#include "imagecallback.h"
 #include "imageloadplan.h"
 #include "imageurl.h"
 
@@ -110,9 +111,7 @@ void ImageLoader::startArchiveLoad(ImageLoadSession session)
 
             session.location.setImageUrl(candidates.front().url);
             m_loadSession = session;
-            if (m_callbacks.sourceResolved) {
-                m_callbacks.sourceResolved(session.location.imageUrl());
-            }
+            invokeIfSet(m_callbacks.sourceResolved, session.location.imageUrl());
             startImageLoad(session);
         },
         [this, session](const QString &errorString) {
@@ -200,10 +199,10 @@ void ImageLoader::finishCurrentLoadSession(
     const ImageLoadSession &session, Callback &callback, Args &&...args)
 {
     std::optional<ImageLoadSession> currentSession = takeCurrentLoadSession(session);
-    if (!currentSession.has_value() || !callback) {
+    if (!currentSession.has_value()) {
         return;
     }
 
-    callback(std::move(*currentSession), std::forward<Args>(args)...);
+    invokeIfSet(callback, std::move(*currentSession), std::forward<Args>(args)...);
 }
 }

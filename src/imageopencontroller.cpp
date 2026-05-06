@@ -3,6 +3,7 @@
 
 #include "imageopencontroller.h"
 
+#include "imagecallback.h"
 #include "imagecontainer.h"
 #include "imagedocumentstate.h"
 #include "imageloader.h"
@@ -244,8 +245,6 @@ void ImageOpenController::reportEffects(const ImageDocumentEffects &effects)
 
 void ImageOpenController::report(ImageDocumentEffect effect)
 {
-    if (m_callbacks.effect) {
-        m_callbacks.effect(std::move(effect));
-    }
+    invokeIfSet(m_callbacks.effect, std::move(effect));
 }
 }

@@ -3,6 +3,7 @@
 
 #include "imagedocumentnavigationcontroller.h"
 
+#include "imagecallback.h"
 #include "imagedocumentstate.h"
 #include "imagepresentationcontroller.h"
 #include "imageviewtext.h"
@@ -131,15 +132,11 @@ void ImageDocumentNavigationController::openAdjacentContainer(NavigationDirectio
 
 void ImageDocumentNavigationController::report(ImageDocumentEffect effect)
 {
-    if (m_callbacks.effect) {
-        m_callbacks.effect(std::move(effect));
-    }
+    invokeIfSet(m_callbacks.effect, std::move(effect));
 }
 
 void ImageDocumentNavigationController::notify(ImageDocumentChange change)
 {
-    if (m_callbacks.change) {
-        m_callbacks.change(change);
-    }
+    invokeIfSet(m_callbacks.change, change);
 }
 }

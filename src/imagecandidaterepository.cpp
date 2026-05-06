@@ -3,6 +3,7 @@
 
 #include "imagecandidaterepository.h"
 
+#include "imagecallback.h"
 #include "imagecontainer.h"
 #include "imageiojobs.h"
 #include "imageurl.h"
@@ -14,9 +15,7 @@
 namespace {
 void reportLoadProviderMissing(const KiriView::ErrorCallback &errorCallback)
 {
-    if (errorCallback) {
-        errorCallback(QString());
-    }
+    KiriView::invokeIfSet(errorCallback, QString());
 }
 
 template <typename Provider, typename... Args>
@@ -51,9 +50,7 @@ void reportCandidateRepositoryError(const QUrl &containerUrl,
     KiriView::ImageCandidateRepositoryError error, const QString &errorString,
     const KiriView::CandidateRepositoryErrorCallback &errorCallback)
 {
-    if (errorCallback) {
-        errorCallback(containerUrl, error, errorString);
-    }
+    KiriView::invokeIfSet(errorCallback, containerUrl, error, errorString);
 }
 
 struct FirstContainerImageSelector {
@@ -69,9 +66,7 @@ struct FirstContainerImageSelector {
             return;
         }
 
-        if (imageCallback) {
-            imageCallback(candidates.front().url, containerUrl);
-        }
+        KiriView::invokeIfSet(imageCallback, candidates.front().url, containerUrl);
     }
 };
 }

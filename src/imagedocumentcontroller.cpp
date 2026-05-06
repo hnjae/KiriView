@@ -3,6 +3,7 @@
 
 #include "imagedocumentcontroller.h"
 
+#include "imagecallback.h"
 #include "imagedocumentnavigationcontroller.h"
 #include "imageopencontroller.h"
 #include "imageopenworkflow.h"
@@ -294,9 +295,7 @@ void ImageDocumentController::finishWithAnimationError(const QString &errorStrin
 
 void ImageDocumentController::notify(ImageDocumentChange change)
 {
-    if (m_changeCallback) {
-        m_changeCallback(change);
-    }
+    invokeIfSet(m_changeCallback, change);
 }
 
 void ImageDocumentController::clearImage()

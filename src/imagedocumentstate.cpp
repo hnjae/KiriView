@@ -3,6 +3,7 @@
 
 #include "imagedocumentstate.h"
 
+#include "imagecallback.h"
 #include "imagecontainer.h"
 
 #include <algorithm>
@@ -192,8 +193,6 @@ void ImageDocumentState::notify(ImageDocumentChange change)
 
 void ImageDocumentState::emitChange(ImageDocumentChange change)
 {
-    if (m_changeCallback) {
-        m_changeCallback(change);
-    }
+    invokeIfSet(m_changeCallback, change);
 }
 }
