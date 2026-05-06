@@ -355,6 +355,17 @@ inline ImageDataDecoder staticImageDataDecoderRejectingBadData(QImage image = te
     };
 }
 
+inline ImageAsyncDependencies imageAsyncDependenciesFor(
+    FakeImageNavigationCandidateProvider &candidateProvider, ManualImageDataLoader &dataLoader,
+    ImageDataDecoder dataDecoder)
+{
+    return ImageAsyncDependencies {
+        candidateProvider.provider(),
+        dataLoaderFor(dataLoader),
+        std::move(dataDecoder),
+    };
+}
+
 }
 
 #endif

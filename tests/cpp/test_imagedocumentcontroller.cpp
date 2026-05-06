@@ -18,7 +18,7 @@
 namespace {
 using KiriView::TestSupport::archivePageUrl;
 using KiriView::TestSupport::comicBookContainerCandidate;
-using KiriView::TestSupport::dataLoaderFor;
+using KiriView::TestSupport::imageAsyncDependenciesFor;
 using KiriView::TestSupport::imageCandidate;
 using KiriView::TestSupport::localUrl;
 using KiriView::TestSupport::ManualImageDataLoader;
@@ -38,17 +38,6 @@ KiriView::DecodedImageResult staticDecodedImageWithPreview(const QSize &sourceSi
     });
 }
 
-KiriView::ImageAsyncDependencies dependenciesFor(FakeCandidateProvider &candidateProvider,
-    ManualImageDataLoader &dataLoader,
-    KiriView::ImageDataDecoder dataDecoder = staticImageDataDecoder(testImage(2)))
-{
-    return KiriView::ImageAsyncDependencies {
-        candidateProvider.provider(),
-        dataLoaderFor(dataLoader),
-        std::move(dataDecoder),
-    };
-}
-
 std::unique_ptr<KiriView::ImageDocumentController> createController(QObject *parent,
     FakeCandidateProvider &candidateProvider, ManualImageDataLoader &dataLoader,
     KiriView::ImageDataDecoder dataDecoder = staticImageDataDecoder(testImage(2)),
@@ -63,7 +52,7 @@ std::unique_ptr<KiriView::ImageDocumentController> createController(QObject *par
             };
         },
         KiriView::ImageDocumentController::ChangeCallback {},
-        dependenciesFor(candidateProvider, dataLoader, std::move(dataDecoder)));
+        imageAsyncDependenciesFor(candidateProvider, dataLoader, std::move(dataDecoder)));
 }
 
 void finishLoad(ManualImageDataLoader &dataLoader)

@@ -15,6 +15,22 @@
 #include <vector>
 
 namespace {
+bool displayContextHasNavigationSource(
+    const KiriView::ImageNavigationService::DisplayContext &context)
+{
+    return context.hasDisplayedImage && !context.location.imageUrl().isEmpty();
+}
+
+std::optional<KiriView::ImageCandidateListContext> imageCandidateContextForDisplayContext(
+    const KiriView::ImageNavigationService::DisplayContext &context)
+{
+    if (!displayContextHasNavigationSource(context)) {
+        return std::nullopt;
+    }
+
+    return KiriView::imageCandidateListContextForDisplayedImage(context.location);
+}
+
 bool samePageNavigationState(
     const KiriView::PageNavigationState &left, const KiriView::PageNavigationState &right)
 {
@@ -85,14 +101,14 @@ std::optional<QUrl> ImageNavigationService::urlAtPage(int pageNumber) const
 void ImageNavigationService::openAdjacentImage(
     const DisplayContext &context, NavigationDirection direction)
 {
-    if (!context.hasDisplayedImage || context.location.imageUrl().isEmpty()) {
+    if (!displayContextHasNavigationSource(context)) {
         return;
     }
 
     cancelContainerNavigation();
 
     const std::optional<ImageCandidateListContext> candidateContext
-        = imageCandidateListContextForDisplayedImage(context.location);
+        = imageCandidateContextForDisplayContext(context);
     if (!candidateContext.has_value()) {
         return;
     }
@@ -189,13 +205,8 @@ void ImageNavigationService::updatePageNavigation(const DisplayContext &context)
 {
     cancelPageNavigationUpdate();
 
-    if (!context.hasDisplayedImage || context.location.imageUrl().isEmpty()) {
-        clearPageNavigation();
-        return;
-    }
-
     const std::optional<ImageCandidateListContext> candidateContext
-        = imageCandidateListContextForDisplayedImage(context.location);
+        = imageCandidateContextForDisplayContext(context);
     if (!candidateContext.has_value()) {
         clearPageNavigation();
         return;

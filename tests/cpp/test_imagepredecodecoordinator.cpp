@@ -10,7 +10,7 @@
 #include <QUrl>
 
 namespace {
-using KiriView::TestSupport::dataLoaderFor;
+using KiriView::TestSupport::imageAsyncDependenciesFor;
 using KiriView::TestSupport::imageCandidate;
 using KiriView::TestSupport::imagesDirectoryUrl;
 using KiriView::TestSupport::indexedImageUrl;
@@ -24,12 +24,8 @@ using FakeCandidateProvider = KiriView::TestSupport::FakeImageNavigationCandidat
 KiriView::ImagePredecodeCoordinator createCoordinator(
     QObject *parent, FakeCandidateProvider &candidateProvider, ManualImageDataLoader &dataLoader)
 {
-    return KiriView::ImagePredecodeCoordinator(parent,
-        KiriView::ImageAsyncDependencies {
-            candidateProvider.provider(),
-            dataLoaderFor(dataLoader),
-            staticImageDataDecoder(),
-        });
+    return KiriView::ImagePredecodeCoordinator(
+        parent, imageAsyncDependenciesFor(candidateProvider, dataLoader, staticImageDataDecoder()));
 }
 }
 
