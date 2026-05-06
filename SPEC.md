@@ -9,21 +9,25 @@ location.
 The main window toolbar shows image controls without a page title. It places
 the page navigation group at the leading side of the toolbar, containing
 Previous Image, the current page number, `of`, the total image count, and Next
-Image. It places zoom, Fit, and a toolbar application menu button in a trailing
-action toolbar that displays as many trailing controls as fit and moves the rest
-into an overflow menu. When the trailing action toolbar runs out of horizontal
-space, KiriView keeps the zoom percentage visible the longest, then Fit. Outside
+Image. It places zoom, Fit, and, when Hamburger Menu presentation is active
+outside fullscreen, a toolbar application menu button in a trailing action
+toolbar that displays as many trailing controls as fit and moves the rest into
+an overflow menu. When the trailing action toolbar runs out of horizontal space,
+KiriView keeps the zoom percentage visible the longest, then Fit. Outside
 fullscreen, the toolbar uses normal application header placement and reserves
 layout space above the image viewing area. Controls that require a ready image
 are disabled until an image is ready.
 KiriView shows its application menu through a toolbar application menu button by
-default. Users can switch the application menu presentation between Hamburger
-Menu and a conventional menubar, and KiriView remembers the selected
-presentation across launches. In Hamburger Menu mode, the toolbar application
-menu contains application actions such as Open, archive navigation, Full Screen,
-settings, shortcut configuration, shortcut help, and Quit. In menubar mode,
-those application actions are available from the menubar, and any toolbar
-overflow menu appears only when toolbar controls do not fit.
+default outside fullscreen. Users can switch the application menu presentation
+between Hamburger Menu and a conventional menubar, and KiriView remembers the
+selected presentation across launches. In Hamburger Menu mode outside
+fullscreen, the toolbar application menu contains application actions such as
+Open, archive navigation, Full Screen, settings, shortcut configuration,
+shortcut help, and Quit. In menubar mode outside fullscreen, those application
+actions are available from the menubar, and any toolbar overflow menu appears
+only when toolbar controls do not fit. In fullscreen, KiriView hides both the
+menubar and toolbar application menu button; actions with configured shortcuts
+remain available through those shortcuts.
 The Interface settings page follows the KDE and Kirigami settings page style
 and lets users choose between Hamburger Menu and Menubar presentation. Selecting
 an option applies it immediately and the selected option reflects the current
@@ -73,6 +77,12 @@ KiriView owns that archive as the current archive document and displays the
 first supported image inside that archive. These general archives are not
 advertised through the desktop file's file associations, the open dialog's
 default image and comic book filter, or sibling archive navigation.
+
+KiriView's desktop file advertises file-manager Open With handling for the image
+and comic book archive MIME types corresponding to its default open dialog
+filter, and also advertises TIFF (`image/tiff`). TIFF is not part of the default
+open dialog image and comic book filter or adjacent image navigation candidate
+list.
 
 When an image is opened from a KDE-supported archive URL such as `zip://`,
 `tar://`, or `sevenz://`, KiriView treats it as a single image URL supplied by
@@ -291,13 +301,13 @@ and shows the app toolbar as a top-attached overlay toolbar above the image
 viewing area without reserving layout space. The fullscreen overlay toolbar uses
 the normal toolbar background and padding, attaches to the top, left, and right
 window edges, and does not use an outer margin, rounded floating-card
-background, or shadow. The fullscreen overlay toolbar is shown when entering
-fullscreen and when the pointer moves over the window. It hides after 1.0
-seconds of inactivity unless the pointer is over the toolbar, a toolbar input is
-focused, or a toolbar menu is open. Leaving fullscreen restores the window's
-previous windowed, maximized, or minimized state and restores the normal header
-toolbar. The `f` shortcut is inactive while the page number or zoom input is
-focused.
+background, or shadow. The fullscreen overlay toolbar contains image controls
+without the toolbar application menu button. The fullscreen overlay toolbar is
+shown when entering fullscreen and when the pointer moves over the window. It
+hides after 1.0 seconds of inactivity unless the pointer is over the toolbar or
+a toolbar input is focused. Leaving fullscreen restores the window's previous
+windowed, maximized, or minimized state and restores the normal header toolbar.
+The `f` shortcut is inactive while the page number or zoom input is focused.
 
 The `?` key and F1 open a modal shortcut help dialog listing KiriView's keyboard
 and mouse shortcuts. The `?` shortcut is inactive while the page number or zoom
