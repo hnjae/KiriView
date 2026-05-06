@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-import QtQml
 import QtQuick
 import org.kde.kirigami as Kirigami
 import io.github.hnjae.kiriview
@@ -20,113 +19,27 @@ Item {
     readonly property bool canUsePageActions: root.imageReady && root.imageDocument.imageCount > 0 && !root.helpDialogOpen
     readonly property bool canUseReadyActions: root.imageReady && !root.helpDialogOpen
 
-    readonly property var openQAction: root.application.action("file_open")
-    readonly property var previousContainerQAction: root.application.action("go_previous_archive")
-    readonly property var nextContainerQAction: root.application.action("go_next_archive")
-    readonly property var previousImageQAction: root.application.action("go_previous_image")
-    readonly property var nextImageQAction: root.application.action("go_next_image")
-    readonly property var firstImageQAction: root.application.action("go_first_image")
-    readonly property var lastImageQAction: root.application.action("go_last_image")
-    readonly property var fitQAction: root.application.action("view_fit")
-    readonly property var fitHeightQAction: root.application.action("view_fit_height")
-    readonly property var fitWidthQAction: root.application.action("view_fit_width")
-    readonly property var actualSizeQAction: root.application.action("view_actual_size")
-    readonly property var zoomInQAction: root.application.action("view_zoom_in")
-    readonly property var zoomOutQAction: root.application.action("view_zoom_out")
-    readonly property var scanForwardQAction: root.application.action("view_scan_forward")
-    readonly property var scanBackwardQAction: root.application.action("view_scan_backward")
-    readonly property var fullscreenQAction: root.application.action("window_fullscreen")
-    readonly property var shortcutHelpQAction: root.application.action("help_shortcuts")
-    readonly property var configureQAction: root.application.action("options_configure")
-    readonly property var configureShortcutsQAction: root.application.action("options_configure_keybinding")
-    readonly property var showMenubarQAction: root.application.action("options_show_menubar")
-    readonly property var quitQAction: root.application.action("file_quit")
-
-    readonly property ActionProxy openAction: ActionProxy {
-        displayHint: Kirigami.DisplayHint.AlwaysHide
-        sourceAction: root.openQAction
-    }
-    readonly property ActionProxy previousContainerAction: ActionProxy {
-        displayHint: Kirigami.DisplayHint.AlwaysHide
-        sourceAction: root.previousContainerQAction
-    }
-    readonly property ActionProxy nextContainerAction: ActionProxy {
-        displayHint: Kirigami.DisplayHint.AlwaysHide
-        sourceAction: root.nextContainerQAction
-    }
-    readonly property ActionProxy previousImageAction: ActionProxy {
-        enabledOverride: root.canOpenPreviousImage && !root.helpDialogOpen
-        sourceAction: root.previousImageQAction
-    }
-    readonly property ActionProxy nextImageAction: ActionProxy {
-        enabledOverride: root.canOpenNextImage && !root.helpDialogOpen
-        sourceAction: root.nextImageQAction
-    }
-    readonly property ActionProxy firstImageAction: ActionProxy {
-        enabledOverride: root.canUsePageActions
-        sourceAction: root.firstImageQAction
-    }
-    readonly property ActionProxy lastImageAction: ActionProxy {
-        enabledOverride: root.canUsePageActions
-        sourceAction: root.lastImageQAction
-    }
-    readonly property ActionProxy fitAction: ActionProxy {
-        checkableOverride: true
-        checkedOverride: root.imageDocument.zoomMode === KiriImageDocument.Fit
-        sourceAction: root.fitQAction
-    }
-    readonly property ActionProxy fitHeightAction: ActionProxy {
-        checkableOverride: true
-        checkedOverride: root.imageDocument.zoomMode === KiriImageDocument.FitHeight
-        sourceAction: root.fitHeightQAction
-    }
-    readonly property ActionProxy fitWidthAction: ActionProxy {
-        checkableOverride: true
-        checkedOverride: root.imageDocument.zoomMode === KiriImageDocument.FitWidth
-        sourceAction: root.fitWidthQAction
-    }
-    readonly property ActionProxy actualSizeAction: ActionProxy {
-        sourceAction: root.actualSizeQAction
-    }
-    readonly property ActionProxy zoomInAction: ActionProxy {
-        sourceAction: root.zoomInQAction
-    }
-    readonly property ActionProxy zoomOutAction: ActionProxy {
-        sourceAction: root.zoomOutQAction
-    }
-    readonly property ActionProxy scanForwardAction: ActionProxy {
-        sourceAction: root.scanForwardQAction
-    }
-    readonly property ActionProxy scanBackwardAction: ActionProxy {
-        sourceAction: root.scanBackwardQAction
-    }
-    readonly property ActionProxy fullscreenAction: ActionProxy {
-        checkableOverride: true
-        checkedOverride: root.fullscreen
-        displayHint: Kirigami.DisplayHint.AlwaysHide
-        sourceAction: root.fullscreenQAction
-    }
-    readonly property ActionProxy shortcutHelpAction: ActionProxy {
-        displayHint: Kirigami.DisplayHint.AlwaysHide
-        sourceAction: root.shortcutHelpQAction
-    }
-    readonly property ActionProxy configureAction: ActionProxy {
-        displayHint: Kirigami.DisplayHint.AlwaysHide
-        sourceAction: root.configureQAction
-    }
-    readonly property ActionProxy configureShortcutsAction: ActionProxy {
-        displayHint: Kirigami.DisplayHint.AlwaysHide
-        sourceAction: root.configureShortcutsQAction
-    }
-    readonly property ActionProxy showMenubarAction: ActionProxy {
-        displayHint: Kirigami.DisplayHint.AlwaysHide
-        sourceAction: root.showMenubarQAction
-    }
-    readonly property ActionProxy quitAction: ActionProxy {
-        displayHint: Kirigami.DisplayHint.AlwaysHide
-        sourceAction: root.quitQAction
-    }
-
+    readonly property var openAction: openManagedAction.proxy
+    readonly property var previousContainerAction: previousContainerManagedAction.proxy
+    readonly property var nextContainerAction: nextContainerManagedAction.proxy
+    readonly property var previousImageAction: previousImageManagedAction.proxy
+    readonly property var nextImageAction: nextImageManagedAction.proxy
+    readonly property var firstImageAction: firstImageManagedAction.proxy
+    readonly property var lastImageAction: lastImageManagedAction.proxy
+    readonly property var fitAction: fitManagedAction.proxy
+    readonly property var fitHeightAction: fitHeightManagedAction.proxy
+    readonly property var fitWidthAction: fitWidthManagedAction.proxy
+    readonly property var actualSizeAction: actualSizeManagedAction.proxy
+    readonly property var zoomInAction: zoomInManagedAction.proxy
+    readonly property var zoomOutAction: zoomOutManagedAction.proxy
+    readonly property var scanForwardAction: scanForwardManagedAction.proxy
+    readonly property var scanBackwardAction: scanBackwardManagedAction.proxy
+    readonly property var fullscreenAction: fullscreenManagedAction.proxy
+    readonly property var shortcutHelpAction: shortcutHelpManagedAction.proxy
+    readonly property var configureAction: configureManagedAction.proxy
+    readonly property var configureShortcutsAction: configureShortcutsManagedAction.proxy
+    readonly property var showMenubarAction: showMenubarManagedAction.proxy
+    readonly property var quitAction: quitManagedAction.proxy
     readonly property var applicationMenuActions: [openAction, applicationMenuFileSeparator, previousContainerAction, nextContainerAction, applicationMenuViewSeparator, fullscreenAction, applicationMenuSettingsSeparator, showMenubarAction, configureAction, configureShortcutsAction, applicationMenuHelpSeparator, shortcutHelpAction, applicationMenuQuitSeparator, quitAction]
 
     signal openDialogRequested
@@ -189,233 +102,233 @@ Item {
         separator: true
     }
 
-    Binding {
-        property: "enabled"
-        target: root.openQAction
-        value: !root.helpDialogOpen
-        when: root.openQAction !== null
+    ManagedAction {
+        id: openManagedAction
+
+        actionEnabled: !root.helpDialogOpen
+        actionName: "file_open"
+        application: root.application
+        bindEnabled: true
+        displayHint: Kirigami.DisplayHint.AlwaysHide
+
+        onTriggered: root.openDialogRequested()
     }
 
-    Binding {
-        property: "enabled"
-        target: root.previousContainerQAction
-        value: root.imageDocument.containerNavigationAvailable && !root.helpDialogOpen
-        when: root.previousContainerQAction !== null
+    ManagedAction {
+        id: previousContainerManagedAction
+
+        actionEnabled: root.imageDocument.containerNavigationAvailable && !root.helpDialogOpen
+        actionName: "go_previous_archive"
+        application: root.application
+        bindEnabled: true
+        displayHint: Kirigami.DisplayHint.AlwaysHide
+
+        onTriggered: root.imageDocument.openPreviousContainer()
     }
 
-    Binding {
-        property: "enabled"
-        target: root.nextContainerQAction
-        value: root.imageDocument.containerNavigationAvailable && !root.helpDialogOpen
-        when: root.nextContainerQAction !== null
+    ManagedAction {
+        id: nextContainerManagedAction
+
+        actionEnabled: root.imageDocument.containerNavigationAvailable && !root.helpDialogOpen
+        actionName: "go_next_archive"
+        application: root.application
+        bindEnabled: true
+        displayHint: Kirigami.DisplayHint.AlwaysHide
+
+        onTriggered: root.imageDocument.openNextContainer()
     }
 
-    Binding {
-        property: "enabled"
-        target: root.previousImageQAction
-        value: root.canUseReadyActions
-        when: root.previousImageQAction !== null
+    ManagedAction {
+        id: previousImageManagedAction
+
+        actionEnabled: root.canUseReadyActions
+        actionName: "go_previous_image"
+        application: root.application
+        bindEnabled: true
+        proxyEnabled: root.canOpenPreviousImage && !root.helpDialogOpen
+
+        onTriggered: root.openPreviousImage()
     }
 
-    Binding {
-        property: "enabled"
-        target: root.nextImageQAction
-        value: root.canUseReadyActions
-        when: root.nextImageQAction !== null
+    ManagedAction {
+        id: nextImageManagedAction
+
+        actionEnabled: root.canUseReadyActions
+        actionName: "go_next_image"
+        application: root.application
+        bindEnabled: true
+        proxyEnabled: root.canOpenNextImage && !root.helpDialogOpen
+
+        onTriggered: root.openNextImage()
     }
 
-    Binding {
-        property: "enabled"
-        target: root.firstImageQAction
-        value: root.canUsePageActions
-        when: root.firstImageQAction !== null
+    ManagedAction {
+        id: firstImageManagedAction
+
+        actionEnabled: root.canUsePageActions
+        actionName: "go_first_image"
+        application: root.application
+        bindEnabled: true
+        proxyEnabled: root.canUsePageActions
+
+        onTriggered: root.openFirstImage()
     }
 
-    Binding {
-        property: "enabled"
-        target: root.lastImageQAction
-        value: root.canUsePageActions
-        when: root.lastImageQAction !== null
+    ManagedAction {
+        id: lastImageManagedAction
+
+        actionEnabled: root.canUsePageActions
+        actionName: "go_last_image"
+        application: root.application
+        bindEnabled: true
+        proxyEnabled: root.canUsePageActions
+
+        onTriggered: root.openLastImage()
     }
 
-    Binding {
-        property: "enabled"
-        target: root.fitQAction
-        value: root.canUseReadyActions
-        when: root.fitQAction !== null
+    ManagedAction {
+        id: fitManagedAction
+
+        actionEnabled: root.canUseReadyActions
+        actionName: "view_fit"
+        application: root.application
+        bindEnabled: true
+        proxyCheckable: true
+        proxyChecked: root.imageDocument.zoomMode === KiriImageDocument.Fit
+
+        onTriggered: root.imageDocument.resetZoom()
     }
 
-    Binding {
-        property: "enabled"
-        target: root.fitHeightQAction
-        value: root.canUseReadyActions
-        when: root.fitHeightQAction !== null
+    ManagedAction {
+        id: fitHeightManagedAction
+
+        actionEnabled: root.canUseReadyActions
+        actionName: "view_fit_height"
+        application: root.application
+        bindEnabled: true
+        proxyCheckable: true
+        proxyChecked: root.imageDocument.zoomMode === KiriImageDocument.FitHeight
+
+        onTriggered: root.imageDocument.setFitMode(KiriImageDocument.FitHeight)
     }
 
-    Binding {
-        property: "enabled"
-        target: root.fitWidthQAction
-        value: root.canUseReadyActions
-        when: root.fitWidthQAction !== null
+    ManagedAction {
+        id: fitWidthManagedAction
+
+        actionEnabled: root.canUseReadyActions
+        actionName: "view_fit_width"
+        application: root.application
+        bindEnabled: true
+        proxyCheckable: true
+        proxyChecked: root.imageDocument.zoomMode === KiriImageDocument.FitWidth
+
+        onTriggered: root.imageDocument.setFitMode(KiriImageDocument.FitWidth)
     }
 
-    Binding {
-        property: "enabled"
-        target: root.actualSizeQAction
-        value: root.canUseReadyActions
-        when: root.actualSizeQAction !== null
+    ManagedAction {
+        id: actualSizeManagedAction
+
+        actionEnabled: root.canUseReadyActions
+        actionName: "view_actual_size"
+        application: root.application
+        bindEnabled: true
+
+        onTriggered: root.imageDocument.zoomPercent = 100
     }
 
-    Binding {
-        property: "enabled"
-        target: root.zoomInQAction
-        value: root.canUseReadyActions
-        when: root.zoomInQAction !== null
+    ManagedAction {
+        id: zoomInManagedAction
+
+        actionEnabled: root.canUseReadyActions
+        actionName: "view_zoom_in"
+        application: root.application
+        bindEnabled: true
     }
 
-    Binding {
-        property: "enabled"
-        target: root.zoomOutQAction
-        value: root.canUseReadyActions
-        when: root.zoomOutQAction !== null
+    ManagedAction {
+        id: zoomOutManagedAction
+
+        actionEnabled: root.canUseReadyActions
+        actionName: "view_zoom_out"
+        application: root.application
+        bindEnabled: true
     }
 
-    Binding {
-        property: "enabled"
-        target: root.scanForwardQAction
-        value: root.canUseReadyActions
-        when: root.scanForwardQAction !== null
+    ManagedAction {
+        id: scanForwardManagedAction
+
+        actionEnabled: root.canUseReadyActions
+        actionName: "view_scan_forward"
+        application: root.application
+        bindEnabled: true
     }
 
-    Binding {
-        property: "enabled"
-        target: root.scanBackwardQAction
-        value: root.canUseReadyActions
-        when: root.scanBackwardQAction !== null
+    ManagedAction {
+        id: scanBackwardManagedAction
+
+        actionEnabled: root.canUseReadyActions
+        actionName: "view_scan_backward"
+        application: root.application
+        bindEnabled: true
     }
 
-    Binding {
-        property: "enabled"
-        target: root.fullscreenQAction
-        value: !root.helpDialogOpen
-        when: root.fullscreenQAction !== null
+    ManagedAction {
+        id: fullscreenManagedAction
+
+        actionChecked: root.fullscreen
+        actionEnabled: !root.helpDialogOpen
+        actionName: "window_fullscreen"
+        application: root.application
+        bindChecked: true
+        bindEnabled: true
+        displayHint: Kirigami.DisplayHint.AlwaysHide
+        proxyCheckable: true
+        proxyChecked: root.fullscreen
+
+        onTriggered: root.toggleFullScreenRequested()
     }
 
-    Binding {
-        property: "checked"
-        target: root.fullscreenQAction
-        value: root.fullscreen
-        when: root.fullscreenQAction !== null
+    ManagedAction {
+        id: shortcutHelpManagedAction
+
+        actionEnabled: !root.helpDialogOpen
+        actionName: "help_shortcuts"
+        application: root.application
+        bindEnabled: true
+        displayHint: Kirigami.DisplayHint.AlwaysHide
+
+        onTriggered: root.shortcutHelpRequested()
     }
 
-    Binding {
-        property: "enabled"
-        target: root.shortcutHelpQAction
-        value: !root.helpDialogOpen
-        when: root.shortcutHelpQAction !== null
+    ManagedAction {
+        id: configureManagedAction
+
+        actionName: "options_configure"
+        application: root.application
+        displayHint: Kirigami.DisplayHint.AlwaysHide
     }
 
-    Connections {
-        target: root.openQAction
+    ManagedAction {
+        id: configureShortcutsManagedAction
 
-        function onTriggered() {
-            root.openDialogRequested();
-        }
+        actionName: "options_configure_keybinding"
+        application: root.application
+        displayHint: Kirigami.DisplayHint.AlwaysHide
     }
 
-    Connections {
-        target: root.previousContainerQAction
+    ManagedAction {
+        id: showMenubarManagedAction
 
-        function onTriggered() {
-            root.imageDocument.openPreviousContainer();
-        }
+        actionName: "options_show_menubar"
+        application: root.application
+        displayHint: Kirigami.DisplayHint.AlwaysHide
     }
 
-    Connections {
-        target: root.nextContainerQAction
+    ManagedAction {
+        id: quitManagedAction
 
-        function onTriggered() {
-            root.imageDocument.openNextContainer();
-        }
-    }
-
-    Connections {
-        target: root.previousImageQAction
-
-        function onTriggered() {
-            root.openPreviousImage();
-        }
-    }
-
-    Connections {
-        target: root.nextImageQAction
-
-        function onTriggered() {
-            root.openNextImage();
-        }
-    }
-
-    Connections {
-        target: root.firstImageQAction
-
-        function onTriggered() {
-            root.openFirstImage();
-        }
-    }
-
-    Connections {
-        target: root.lastImageQAction
-
-        function onTriggered() {
-            root.openLastImage();
-        }
-    }
-
-    Connections {
-        target: root.fitQAction
-
-        function onTriggered() {
-            root.imageDocument.resetZoom();
-        }
-    }
-
-    Connections {
-        target: root.fitHeightQAction
-
-        function onTriggered() {
-            root.imageDocument.setFitMode(KiriImageDocument.FitHeight);
-        }
-    }
-
-    Connections {
-        target: root.fitWidthQAction
-
-        function onTriggered() {
-            root.imageDocument.setFitMode(KiriImageDocument.FitWidth);
-        }
-    }
-
-    Connections {
-        target: root.actualSizeQAction
-
-        function onTriggered() {
-            root.imageDocument.zoomPercent = 100;
-        }
-    }
-
-    Connections {
-        target: root.fullscreenQAction
-
-        function onTriggered() {
-            root.toggleFullScreenRequested();
-        }
-    }
-
-    Connections {
-        target: root.shortcutHelpQAction
-
-        function onTriggered() {
-            root.shortcutHelpRequested();
-        }
+        actionName: "file_quit"
+        application: root.application
+        displayHint: Kirigami.DisplayHint.AlwaysHide
     }
 }
