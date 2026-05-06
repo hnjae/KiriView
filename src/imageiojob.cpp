@@ -17,38 +17,39 @@ ImageIoJobState::ImageIoJobState(QObject *object, CancelCallback cancelCallback)
 
 bool ImageIoJobState::claim(QObject *object)
 {
-    if (m_object == nullptr || object != m_object) {
+    if (m_object.isNull() || object != m_object.data()) {
         return false;
     }
 
-    m_object = nullptr;
+    m_object.clear();
     m_cancelCallback = {};
     return true;
 }
 
 void ImageIoJobState::clear(QObject *object)
 {
-    if (object != m_object) {
+    if (object != m_object.data()) {
         return;
     }
 
-    m_object = nullptr;
+    m_object.clear();
     m_cancelCallback = {};
 }
 
 void ImageIoJobState::cancel()
 {
-    if (m_object == nullptr) {
+    if (m_object.isNull()) {
+        m_cancelCallback = {};
         return;
     }
 
-    QObject *object = m_object;
+    QObject *object = m_object.data();
     CancelCallback cancelCallback = std::move(m_cancelCallback);
-    m_object = nullptr;
+    m_object.clear();
     invokeIfSet(cancelCallback, object);
 }
 
-bool ImageIoJobState::isActive() const { return m_object != nullptr; }
+bool ImageIoJobState::isActive() const { return !m_object.isNull(); }
 
 ImageIoJob::ImageIoJob(QObject *object, CancelCallback cancelCallback)
     : m_state(std::make_shared<ImageIoJobState>(object, std::move(cancelCallback)))

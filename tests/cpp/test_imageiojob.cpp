@@ -5,6 +5,7 @@
 
 #include <QObject>
 #include <QTest>
+#include <memory>
 #include <utility>
 
 class TestImageIoJob : public QObject
@@ -15,6 +16,7 @@ private Q_SLOTS:
     void cancelInvokesCallbackOnce();
     void claimCompletesJobWithoutCanceling();
     void clearForgetsDestroyedObject();
+    void destroyedObjectDeactivatesJobWithoutCanceling();
     void moveAssignmentCancelsReplacedJob();
 };
 
@@ -58,6 +60,23 @@ void TestImageIoJob::clearForgetsDestroyedObject()
     KiriView::ImageIoJob job(&object, [&cancelCount](QObject *) { ++cancelCount; });
 
     job.clear(&object);
+    QVERIFY(!job.isActive());
+    job.cancel();
+
+    QCOMPARE(cancelCount, 0);
+}
+
+void TestImageIoJob::destroyedObjectDeactivatesJobWithoutCanceling()
+{
+    int cancelCount = 0;
+    KiriView::ImageIoJob job;
+
+    {
+        auto object = std::make_unique<QObject>();
+        job = KiriView::ImageIoJob(object.get(), [&cancelCount](QObject *) { ++cancelCount; });
+        QVERIFY(job.isActive());
+    }
+
     QVERIFY(!job.isActive());
     job.cancel();
 

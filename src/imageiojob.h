@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_IMAGEIOJOB_H
 #define KIRIVIEW_IMAGEIOJOB_H
 
+#include <QPointer>
 #include <functional>
 #include <memory>
 
@@ -23,7 +24,7 @@ public:
     bool isActive() const;
 
 private:
-    QObject *m_object = nullptr;
+    QPointer<QObject> m_object;
     CancelCallback m_cancelCallback;
 };
 

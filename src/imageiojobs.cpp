@@ -125,8 +125,6 @@ KiriView::ImageIoJob startDirectoryCandidateList(QObject *receiver, const QUrl &
             const QString errorString = job == nullptr ? QString() : job->errorString();
             finishDirectoryCandidateListWithError(jobState, lister, errorString, errorCallback);
         });
-    QObject::connect(
-        lister, &QObject::destroyed, receiver, [jobState, lister]() { jobState->clear(lister); });
 
     if (!lister->openUrl(directoryUrl, KCoreDirLister::Reload)) {
         finishDirectoryCandidateListWithError(jobState, lister, QString(), errorCallback);
@@ -153,8 +151,6 @@ KiriView::ImageIoJob startArchiveWorkerJob(QObject *receiver, Work work, Finish 
     auto *token = new QObject(receiver);
     KiriView::ImageIoJob ioJob(token, cancelArchiveWorkerToken);
     auto jobState = ioJob.state();
-    QObject::connect(
-        token, &QObject::destroyed, receiver, [jobState, token]() { jobState->clear(token); });
 
     KiriView::runAsyncWorker(receiver, std::move(work),
         [token, jobState, finish = std::move(finish)](auto result) mutable {
@@ -240,9 +236,6 @@ ImageIoJob startStoredImageDataLoad(QObject *receiver, ImageDecodeRequest reques
 
             KiriView::invokeIfSet(callback, job->data());
         });
-
-    QObject::connect(
-        job, &QObject::destroyed, receiver, [jobState, job]() { jobState->clear(job); });
     return ioJob;
 }
 }
