@@ -3,7 +3,6 @@
 
 import QtQuick
 import QtQuick.Controls as Controls
-import QtQuick.Layouts
 import io.github.hnjae.kiriview
 import org.kde.kirigami as Kirigami
 
@@ -14,10 +13,10 @@ Item {
     required property bool imageReady
     required property var openAction
 
-    Controls.BusyIndicator {
+    Kirigami.LoadingPlaceholder {
         anchors.centerIn: parent
-        running: visible
         visible: root.imageDocument.status === KiriImageDocument.Loading
+        width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, Kirigami.Units.gridUnit * 18)
     }
 
     Rectangle {
@@ -47,67 +46,22 @@ Item {
         visible: root.imageReady && !root.imageDocument.loading && root.imageDocument.errorString.length > 0
     }
 
-    ColumnLayout {
+    Kirigami.PlaceholderMessage {
         anchors.centerIn: parent
-        spacing: Kirigami.Units.largeSpacing
+        helpfulAction: root.openAction
+        icon.name: "image-x-generic-symbolic"
+        text: "No image selected"
         visible: root.imageDocument.status === KiriImageDocument.Null
         width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, Kirigami.Units.gridUnit * 18)
-
-        Kirigami.Icon {
-            Layout.alignment: Qt.AlignHCenter
-            implicitHeight: Kirigami.Units.iconSizes.huge
-            implicitWidth: Kirigami.Units.iconSizes.huge
-            source: "image-x-generic-symbolic"
-        }
-
-        Controls.Label {
-            Layout.fillWidth: true
-            horizontalAlignment: Text.AlignHCenter
-            text: "No image selected"
-            textFormat: Text.PlainText
-            wrapMode: Text.Wrap
-        }
-
-        Controls.Button {
-            Layout.alignment: Qt.AlignHCenter
-            action: root.openAction
-        }
     }
 
-    ColumnLayout {
+    Kirigami.PlaceholderMessage {
         anchors.centerIn: parent
-        spacing: Kirigami.Units.largeSpacing
+        explanation: root.imageDocument.errorString
+        helpfulAction: root.openAction
+        icon.name: "dialog-error-symbolic"
+        text: "Unable to open image"
         visible: root.imageDocument.status === KiriImageDocument.Error
         width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, Kirigami.Units.gridUnit * 24)
-
-        Kirigami.Icon {
-            Layout.alignment: Qt.AlignHCenter
-            implicitHeight: Kirigami.Units.iconSizes.huge
-            implicitWidth: Kirigami.Units.iconSizes.huge
-            source: "dialog-error-symbolic"
-        }
-
-        Controls.Label {
-            Layout.fillWidth: true
-            horizontalAlignment: Text.AlignHCenter
-            text: "Unable to open image"
-            textFormat: Text.PlainText
-            wrapMode: Text.Wrap
-        }
-
-        Controls.Label {
-            Layout.fillWidth: true
-            color: Kirigami.Theme.disabledTextColor
-            horizontalAlignment: Text.AlignHCenter
-            text: root.imageDocument.errorString
-            textFormat: Text.PlainText
-            visible: text.length > 0
-            wrapMode: Text.Wrap
-        }
-
-        Controls.Button {
-            Layout.alignment: Qt.AlignHCenter
-            action: root.openAction
-        }
     }
 }
