@@ -16,7 +16,9 @@
 
 namespace {
 enum class ActionSpecKind {
+    Existing,
     Registered,
+    ShowMenubar,
     Standard,
 };
 
@@ -88,6 +90,13 @@ QString applicationActionName(KiriViewApplication::ActionId actionId)
 }
 
 struct ActionSpec {
+    static ActionSpec existing(
+        KiriViewApplication::ActionId actionId, QList<QKeySequence> defaultShortcuts)
+    {
+        return ActionSpec { ActionSpecKind::Existing, KStandardActions::Open,
+            applicationActionName(actionId), QString(), QString(), std::move(defaultShortcuts) };
+    }
+
     static ActionSpec registered(KiriViewApplication::ActionId actionId, QString text,
         QString iconName, QList<QKeySequence> defaultShortcuts)
     {
@@ -102,6 +111,13 @@ struct ActionSpec {
     {
         return ActionSpec { ActionSpecKind::Standard, actionType, applicationActionName(actionId),
             std::move(text), QString(), std::move(defaultShortcuts) };
+    }
+
+    static ActionSpec showMenubar(KiriViewApplication::ActionId actionId)
+    {
+        return ActionSpec { ActionSpecKind::ShowMenubar, KStandardActions::ShowMenubar,
+            applicationActionName(actionId), QStringLiteral("Show Menubar"), QString(),
+            QList<QKeySequence> {} };
     }
 
     ActionSpecKind kind;
@@ -188,15 +204,12 @@ KiriViewApplication::MenuPresentation toMenuPresentation(int value)
     }
 }
 
-ActionSpec openActionSpec()
-{
-    return ActionSpec::standard(KiriViewApplication::FileOpenAction, KStandardActions::Open,
-        QStringLiteral("Open"), standardShortcuts(QKeySequence::Open));
-}
-
 std::vector<ActionSpec> actionSpecs()
 {
     return {
+        ActionSpec::standard(KiriViewApplication::FileOpenAction, KStandardActions::Open,
+            QStringLiteral("Open"), standardShortcuts(QKeySequence::Open)),
+        ActionSpec::existing(KiriViewApplication::FileQuitAction, shortcutList({ "Q", "Ctrl+Q" })),
         ActionSpec::registered(KiriViewApplication::GoPreviousArchiveAction,
             QStringLiteral("Previous Archive"), QStringLiteral("go-previous-symbolic"),
             shortcutList({ "[" })),
@@ -247,6 +260,7 @@ std::vector<ActionSpec> actionSpecs()
         ActionSpec::registered(KiriViewApplication::HelpShortcutsAction,
             QStringLiteral("Keyboard Shortcuts"),
             QStringLiteral("help-keyboard-shortcuts-symbolic"), shortcutList({ "?", "F1" })),
+        ActionSpec::showMenubar(KiriViewApplication::OptionsShowMenubarAction),
     };
 }
 }
@@ -357,29 +371,32 @@ void KiriViewApplication::setupActions()
     mainCollection()->setComponentDisplayName(QStringLiteral("KiriView"));
 
     const auto addAction = [this](const ActionSpec &spec) {
-        if (spec.kind == ActionSpecKind::Standard) {
-            addStandardAction(spec.actionType, spec.name, spec.text, spec.defaultShortcuts);
-        } else {
+        switch (spec.kind) {
+        case ActionSpecKind::Existing:
+            if (QAction *registeredAction = action(spec.name)) {
+                finishRegisteredAction(
+                    registeredAction, registeredAction->text(), spec.defaultShortcuts);
+            }
+            return;
+        case ActionSpecKind::Registered:
             addRegisteredAction(spec.name, spec.text, spec.iconName, spec.defaultShortcuts);
+            return;
+        case ActionSpecKind::ShowMenubar:
+            m_showMenuBarAction
+                = addStandardAction(spec.actionType, spec.name, spec.text, spec.defaultShortcuts);
+            m_showMenuBarAction->setCheckable(true);
+            connect(m_showMenuBarAction, &QAction::triggered, this,
+                [this](bool checked) { setMenuPresentation(checked ? MenuBar : HamburgerMenu); });
+            return;
+        case ActionSpecKind::Standard:
+            addStandardAction(spec.actionType, spec.name, spec.text, spec.defaultShortcuts);
+            return;
         }
     };
-
-    addAction(openActionSpec());
-
-    if (QAction *quitAction = actionForId(FileQuitAction)) {
-        finishRegisteredAction(quitAction, quitAction->text(), shortcutList({ "Q", "Ctrl+Q" }));
-    }
 
     for (const ActionSpec &spec : actionSpecs()) {
         addAction(spec);
     }
-
-    m_showMenuBarAction
-        = addStandardAction(KStandardActions::ShowMenubar, actionName(OptionsShowMenubarAction),
-            QStringLiteral("Show Menubar"), QList<QKeySequence> {});
-    m_showMenuBarAction->setCheckable(true);
-    connect(m_showMenuBarAction, &QAction::triggered, this,
-        [this](bool checked) { setMenuPresentation(checked ? MenuBar : HamburgerMenu); });
 
     readSettings();
     updateShowMenuBarAction();
