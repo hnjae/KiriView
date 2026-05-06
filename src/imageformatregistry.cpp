@@ -12,6 +12,8 @@
 #include <cstddef>
 
 namespace {
+using ArchiveSchemeResolver = QString (*)(const QString &);
+
 rust::Str rustStringView(const QByteArray &bytes)
 {
     return rust::Str(bytes.constData(), static_cast<std::size_t>(bytes.size()));
@@ -37,6 +39,22 @@ bool rustBoolForQString(const QString &value, bool (*rustFunction)(rust::Str val
 {
     const QByteArray bytes = value.toUtf8();
     return rustFunction(rustStringView(bytes));
+}
+
+QString archiveKioSchemeForUrl(const QUrl &url, QMimeDatabase::MatchMode mimeMatchMode,
+    ArchiveSchemeResolver schemeForFileName, ArchiveSchemeResolver schemeForMimeTypeName)
+{
+    if (!url.isLocalFile()) {
+        return {};
+    }
+
+    const QString extensionScheme = schemeForFileName(url.fileName());
+    if (!extensionScheme.isEmpty()) {
+        return extensionScheme;
+    }
+
+    const QMimeType mimeType = QMimeDatabase().mimeTypeForFile(url.toLocalFile(), mimeMatchMode);
+    return schemeForMimeTypeName(mimeType.name());
 }
 }
 
@@ -71,33 +89,16 @@ bool isComicBookArchiveUrl(const QUrl &url)
 
 QString comicBookArchiveKioSchemeForUrl(const QUrl &url)
 {
-    if (!url.isLocalFile()) {
-        return {};
-    }
-
-    const QString extensionScheme = KiriView::comicBookArchiveKioSchemeForFileName(url.fileName());
-    if (!extensionScheme.isEmpty()) {
-        return extensionScheme;
-    }
-
-    const QMimeType mimeType
-        = QMimeDatabase().mimeTypeForFile(url.toLocalFile(), QMimeDatabase::MatchExtension);
-    return KiriView::comicBookArchiveKioSchemeForMimeTypeName(mimeType.name());
+    return archiveKioSchemeForUrl(url, QMimeDatabase::MatchExtension,
+        KiriView::comicBookArchiveKioSchemeForFileName,
+        KiriView::comicBookArchiveKioSchemeForMimeTypeName);
 }
 
 QString directArchiveOpenKioSchemeForUrl(const QUrl &url)
 {
-    if (!url.isLocalFile()) {
-        return {};
-    }
-
-    const QString extensionScheme = KiriView::directArchiveOpenKioSchemeForFileName(url.fileName());
-    if (!extensionScheme.isEmpty()) {
-        return extensionScheme;
-    }
-
-    const QMimeType mimeType = QMimeDatabase().mimeTypeForFile(url.toLocalFile());
-    return directArchiveOpenKioSchemeForMimeTypeName(mimeType.name());
+    return archiveKioSchemeForUrl(url, QMimeDatabase::MatchDefault,
+        KiriView::directArchiveOpenKioSchemeForFileName,
+        KiriView::directArchiveOpenKioSchemeForMimeTypeName);
 }
 
 QStringList openDialogNameFilters()
