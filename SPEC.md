@@ -272,14 +272,17 @@ to move to neighboring archives.
 
 The `f` key and F11 toggle the main window between normal windowed display and
 system fullscreen. Fullscreen hides the system titlebar and window decorations
-and shows the app toolbar as a compact, translucent overlay above the image
-viewing area without reserving layout space. The fullscreen overlay toolbar is
-shown when entering fullscreen and when the pointer moves over the window. It
-hides after 1.0 seconds of inactivity unless the pointer is over the toolbar, a
-toolbar input is focused, or a toolbar menu is open. Leaving fullscreen restores
-the window's previous windowed, maximized, or minimized state and restores the
-normal header toolbar. The `f` shortcut is inactive while the page number or
-zoom input is focused.
+and shows the app toolbar as a top-attached overlay toolbar above the image
+viewing area without reserving layout space. The fullscreen overlay toolbar uses
+the normal toolbar background and padding, attaches to the top, left, and right
+window edges, and does not use an outer margin, rounded floating-card
+background, or shadow. The fullscreen overlay toolbar is shown when entering
+fullscreen and when the pointer moves over the window. It hides after 1.0
+seconds of inactivity unless the pointer is over the toolbar, a toolbar input is
+focused, or a toolbar menu is open. Leaving fullscreen restores the window's
+previous windowed, maximized, or minimized state and restores the normal header
+toolbar. The `f` shortcut is inactive while the page number or zoom input is
+focused.
 
 The `?` key and F1 open a modal shortcut help dialog listing KiriView's keyboard
 and mouse shortcuts. The `?` shortcut is inactive while the page number or zoom
