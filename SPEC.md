@@ -9,20 +9,20 @@ location.
 The main window toolbar shows image controls without a page title. It places
 the page navigation group at the leading side of the toolbar, containing
 Previous Image, the current page number, `of`, the total image count, and Next
-Image. It places zoom, Fit, and the hamburger overflow menu in a trailing action
-toolbar that displays as many trailing controls as fit and moves the rest into
-an overflow menu. When the trailing action toolbar runs out of horizontal space,
-KiriView keeps the zoom percentage visible the longest, then Fit. Outside
+Image. It places zoom, Fit, and a toolbar application menu button in a trailing
+action toolbar that displays as many trailing controls as fit and moves the rest
+into an overflow menu. When the trailing action toolbar runs out of horizontal
+space, KiriView keeps the zoom percentage visible the longest, then Fit. Outside
 fullscreen, the toolbar uses normal application header placement and reserves
 layout space above the image viewing area. Controls that require a ready image
 are disabled until an image is ready.
-KiriView shows its application menu through the toolbar hamburger overflow menu
-by default. Users can switch the application menu presentation between the
-hamburger overflow menu and a conventional menubar, and KiriView remembers the
-selected presentation across launches. In hamburger mode, the overflow menu
-contains application actions such as Open, archive navigation, Full Screen,
+KiriView shows its application menu through a toolbar application menu button by
+default. Users can switch the application menu presentation between Hamburger
+Menu and a conventional menubar, and KiriView remembers the selected
+presentation across launches. In Hamburger Menu mode, the toolbar application
+menu contains application actions such as Open, archive navigation, Full Screen,
 settings, shortcut configuration, shortcut help, and Quit. In menubar mode,
-those application actions are available from the menubar, and the toolbar
+those application actions are available from the menubar, and any toolbar
 overflow menu appears only when toolbar controls do not fit.
 The Interface settings page follows the KDE and Kirigami settings page style
 and lets users choose between Hamburger Menu and Menubar presentation. Selecting
@@ -85,11 +85,15 @@ paths remain available only when explicitly provided by the XDG portal.
 ## Image Display
 
 The UI remains responsive while a selected image is being opened. If no image
-is currently displayed, the UI shows a loading state. If an image is already
-displayed, that image remains visible until the newly selected image is ready to
-replace it, with a compact loading indicator shown at the top-left of the image
-viewing area. If another file is selected before the previous load finishes,
-only the most recent selection is displayed.
+is currently displayed, the UI shows a loading state. If no image is selected,
+the empty state says that no image is selected and offers Open. If the selected
+image cannot be opened while no image is displayed, the error state explains
+that the image could not be opened, shows the underlying error when available,
+and offers Open. If an image is already displayed, that image remains visible
+until the newly selected image is ready to replace it, with a compact loading
+indicator shown at the top-left of the image viewing area. If another file is
+selected before the previous load finishes, only the most recent selection is
+displayed.
 
 Opened images are displayed centered in the available page area while preserving
 their aspect ratio. Image zoom is expressed in physical display pixels: 100%
