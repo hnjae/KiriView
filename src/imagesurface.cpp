@@ -6,7 +6,6 @@
 #include "imagebytecost.h"
 
 #include <optional>
-#include <type_traits>
 #include <utility>
 
 namespace KiriView {
@@ -95,31 +94,64 @@ bool staticImageFitsFullImageSurface(const StaticImagePayload &image, int maximu
     return imageSize.width() <= maximumTextureSize && imageSize.height() <= maximumTextureSize;
 }
 
-QSize displayedImageSurfaceSize(const DisplayedImageSurface &surface)
+DisplayedImageSurface::DisplayedImageSurface(LegacyFrameSurface surface)
+    : m_payload(std::move(surface))
 {
-    return std::visit(
-        [](const auto &payload) -> QSize {
-            using Payload = std::decay_t<decltype(payload)>;
-            if constexpr (std::is_same_v<Payload, LegacyFrameSurface>) {
-                return payload.image.size();
-            } else {
-                return payload.imageSize();
-            }
-        },
-        surface);
 }
 
-bool displayedImageSurfaceIsNull(const DisplayedImageSurface &surface)
+DisplayedImageSurface::DisplayedImageSurface(StaticTileSurface surface)
+    : m_payload(std::move(surface))
 {
-    return std::visit(
-        [](const auto &payload) {
-            using Payload = std::decay_t<decltype(payload)>;
-            if constexpr (std::is_same_v<Payload, LegacyFrameSurface>) {
-                return payload.image.isNull();
-            } else {
-                return !payload.isValid();
-            }
-        },
-        surface);
 }
+
+QSize DisplayedImageSurface::imageSize() const
+{
+    if (const auto *surface = legacyFrameSurface()) {
+        return surface->image.size();
+    }
+    if (const auto *surface = staticTileSurface()) {
+        return surface->imageSize();
+    }
+
+    return {};
+}
+
+bool DisplayedImageSurface::isNull() const
+{
+    if (const auto *surface = legacyFrameSurface()) {
+        return surface->image.isNull();
+    }
+    if (const auto *surface = staticTileSurface()) {
+        return !surface->isValid();
+    }
+
+    return true;
+}
+
+LegacyFrameSurface *DisplayedImageSurface::legacyFrameSurface()
+{
+    return std::get_if<LegacyFrameSurface>(&m_payload);
+}
+
+const LegacyFrameSurface *DisplayedImageSurface::legacyFrameSurface() const
+{
+    return std::get_if<LegacyFrameSurface>(&m_payload);
+}
+
+StaticTileSurface *DisplayedImageSurface::staticTileSurface()
+{
+    return std::get_if<StaticTileSurface>(&m_payload);
+}
+
+const StaticTileSurface *DisplayedImageSurface::staticTileSurface() const
+{
+    return std::get_if<StaticTileSurface>(&m_payload);
+}
+
+QSize displayedImageSurfaceSize(const DisplayedImageSurface &surface)
+{
+    return surface.imageSize();
+}
+
+bool displayedImageSurfaceIsNull(const DisplayedImageSurface &surface) { return surface.isNull(); }
 }

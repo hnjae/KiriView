@@ -14,7 +14,6 @@
 #include <memory>
 #include <optional>
 #include <utility>
-#include <variant>
 
 namespace {
 using KiriView::TestSupport::archivePageUrl;
@@ -78,8 +77,7 @@ void finishLoad(ManualImageDataLoader &dataLoader)
 std::size_t staticTileCount(const KiriView::ImageDocumentController &controller)
 {
     std::shared_ptr<KiriView::DisplayedImageSurface> surface = controller.imageSurface();
-    auto *staticSurface
-        = surface == nullptr ? nullptr : std::get_if<KiriView::StaticTileSurface>(surface.get());
+    auto *staticSurface = surface == nullptr ? nullptr : surface->staticTileSurface();
     return staticSurface == nullptr ? 0 : staticSurface->tiles().size();
 }
 }
@@ -308,7 +306,7 @@ void TestImageDocumentController::smallStaticImageUsesFullImageSurface()
     QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
     std::shared_ptr<KiriView::DisplayedImageSurface> surface = controller->imageSurface();
     QVERIFY(surface != nullptr);
-    QVERIFY(std::holds_alternative<KiriView::LegacyFrameSurface>(*surface));
+    QVERIFY(surface->legacyFrameSurface() != nullptr);
     QCOMPARE(controller->imageSize(), QSize(1024, 1));
 }
 
@@ -337,7 +335,7 @@ void TestImageDocumentController::largeStaticImageUsesTiledSurface()
     QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
     std::shared_ptr<KiriView::DisplayedImageSurface> surface = controller->imageSurface();
     QVERIFY(surface != nullptr);
-    auto *staticSurface = std::get_if<KiriView::StaticTileSurface>(surface.get());
+    auto *staticSurface = surface->staticTileSurface();
     QVERIFY(staticSurface != nullptr);
     QCOMPARE(staticSurface->imageSize(), QSize(KiriView::imageBlockingDisplayLongEdgeMax + 1, 1));
     QCOMPARE(staticSurface->preview().size(), QSize(KiriView::imageBlockingDisplayLongEdgeMax, 1));
@@ -432,7 +430,7 @@ void TestImageDocumentController::smallFullImageSurfaceStillSchedulesAdjacentPre
     QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
     std::shared_ptr<KiriView::DisplayedImageSurface> surface = controller->imageSurface();
     QVERIFY(surface != nullptr);
-    QVERIFY(std::holds_alternative<KiriView::LegacyFrameSurface>(*surface));
+    QVERIFY(surface->legacyFrameSurface() != nullptr);
     QTRY_COMPARE(dataLoader.loads.size(), std::size_t(2));
     QCOMPARE(dataLoader.loads.back()->url, nextImageUrl);
 }

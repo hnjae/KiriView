@@ -97,7 +97,25 @@ struct LegacyFrameSurface {
     QImage image;
 };
 
-using DisplayedImageSurface = std::variant<LegacyFrameSurface, StaticTileSurface>;
+class DisplayedImageSurface
+{
+public:
+    DisplayedImageSurface() = default;
+    explicit DisplayedImageSurface(LegacyFrameSurface surface);
+    explicit DisplayedImageSurface(StaticTileSurface surface);
+
+    QSize imageSize() const;
+    bool isNull() const;
+    LegacyFrameSurface *legacyFrameSurface();
+    const LegacyFrameSurface *legacyFrameSurface() const;
+    StaticTileSurface *staticTileSurface();
+    const StaticTileSurface *staticTileSurface() const;
+
+private:
+    using Payload = std::variant<LegacyFrameSurface, StaticTileSurface>;
+
+    Payload m_payload;
+};
 
 bool staticImageFitsFullImageSurface(const StaticImagePayload &image, int maximumTextureSize);
 QSize displayedImageSurfaceSize(const DisplayedImageSurface &surface);

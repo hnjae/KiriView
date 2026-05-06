@@ -9,6 +9,7 @@
 #include <QRectF>
 #include <QTest>
 #include <memory>
+#include <utility>
 #include <vector>
 
 class TestImageRendering : public QObject
@@ -36,7 +37,7 @@ void TestImageRendering::staticSurfaceDrawEntriesKeepPreviewAndTileRectsSeparate
         KiriView::TestSupport::testImage(513, 513),
     }));
 
-    const KiriView::DisplayedImageSurface displayedSurface = surface;
+    const KiriView::DisplayedImageSurface displayedSurface(std::move(surface));
     const QRectF targetRect(10.0, 20.0, 1000.0, 500.0);
     const std::vector<KiriView::ImageSurfaceDrawEntry> entries
         = KiriView::imageSurfaceDrawEntries(displayedSurface, targetRect);

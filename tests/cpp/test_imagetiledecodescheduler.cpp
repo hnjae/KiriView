@@ -12,7 +12,6 @@
 #include <cstddef>
 #include <memory>
 #include <utility>
-#include <variant>
 
 namespace {
 using KiriView::TestSupport::testImage;
@@ -32,15 +31,14 @@ std::shared_ptr<KiriView::DisplayedImageSurface> testSurface(
 
 std::size_t tileCount(const std::shared_ptr<KiriView::DisplayedImageSurface> &surface)
 {
-    auto *staticSurface
-        = surface == nullptr ? nullptr : std::get_if<KiriView::StaticTileSurface>(surface.get());
+    auto *staticSurface = surface == nullptr ? nullptr : surface->staticTileSurface();
     return staticSurface == nullptr ? 0 : staticSurface->tiles().size();
 }
 
 void insertTile(
     const std::shared_ptr<KiriView::DisplayedImageSurface> &surface, KiriView::DecodedTile tile)
 {
-    auto *staticSurface = std::get_if<KiriView::StaticTileSurface>(surface.get());
+    auto *staticSurface = surface->staticTileSurface();
     QVERIFY(staticSurface != nullptr);
     QVERIFY(staticSurface->insertTile(std::move(tile)));
 }

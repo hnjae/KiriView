@@ -93,7 +93,7 @@ bool DisplayedImageState::insertTile(DecodedTile tile)
     if (m_surface == nullptr) {
         return false;
     }
-    auto *surface = std::get_if<StaticTileSurface>(m_surface.get());
+    auto *surface = m_surface->staticTileSurface();
     if (surface == nullptr) {
         return false;
     }

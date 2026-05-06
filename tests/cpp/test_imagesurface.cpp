@@ -7,6 +7,7 @@
 #include <QObject>
 #include <QTest>
 #include <optional>
+#include <utility>
 
 class TestImageSurface : public QObject
 {
@@ -14,6 +15,7 @@ class TestImageSurface : public QObject
 
 private Q_SLOTS:
     void staticImagePayloadReportsByteCostWithinBudget();
+    void displayedImageSurfaceExposesOnlyActivePayload();
 };
 
 void TestImageSurface::staticImagePayloadReportsByteCostWithinBudget()
@@ -29,6 +31,31 @@ void TestImageSurface::staticImagePayloadReportsByteCostWithinBudget()
     QVERIFY(!image.byteCostWithinBudget(byteCost - 1).has_value());
     QVERIFY(!image.byteCostWithinBudget(0).has_value());
     QVERIFY(!KiriView::StaticImagePayload().byteCostWithinBudget(byteCost).has_value());
+}
+
+void TestImageSurface::displayedImageSurfaceExposesOnlyActivePayload()
+{
+    const QImage legacyImage = KiriView::TestSupport::testImage(2, 1);
+    const KiriView::DisplayedImageSurface legacySurface(
+        KiriView::LegacyFrameSurface { legacyImage });
+
+    QVERIFY(!legacySurface.isNull());
+    QCOMPARE(legacySurface.imageSize(), QSize(2, 1));
+    QCOMPARE(KiriView::displayedImageSurfaceSize(legacySurface), QSize(2, 1));
+    QVERIFY(!KiriView::displayedImageSurfaceIsNull(legacySurface));
+    QVERIFY(legacySurface.legacyFrameSurface() != nullptr);
+    QVERIFY(legacySurface.staticTileSurface() == nullptr);
+
+    KiriView::StaticImagePayload staticImage
+        = KiriView::TestSupport::staticDecodedTestImage(KiriView::TestSupport::testImage(3, 2))
+              .staticImage;
+    const KiriView::DisplayedImageSurface staticSurface(
+        KiriView::StaticTileSurface { std::move(staticImage) });
+
+    QVERIFY(!staticSurface.isNull());
+    QCOMPARE(staticSurface.imageSize(), QSize(3, 2));
+    QVERIFY(staticSurface.legacyFrameSurface() == nullptr);
+    QVERIFY(staticSurface.staticTileSurface() != nullptr);
 }
 
 QTEST_GUILESS_MAIN(TestImageSurface)

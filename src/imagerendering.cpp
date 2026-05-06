@@ -9,8 +9,6 @@
 #include <Qt>
 #include <algorithm>
 #include <cmath>
-#include <type_traits>
-#include <variant>
 
 namespace KiriView {
 QRectF imageTargetRect(const QSize &imageSize, const QSizeF &boundsSize)
@@ -89,16 +87,11 @@ std::vector<ImageSurfaceDrawEntry> imageSurfaceDrawEntries(
         }
     };
 
-    std::visit(
-        [&](const auto &payload) {
-            using Payload = std::decay_t<decltype(payload)>;
-            if constexpr (std::is_same_v<Payload, LegacyFrameSurface>) {
-                addLegacy(payload);
-            } else {
-                addStatic(payload);
-            }
-        },
-        surface);
+    if (const auto *legacySurface = surface.legacyFrameSurface()) {
+        addLegacy(*legacySurface);
+    } else if (const auto *staticSurface = surface.staticTileSurface()) {
+        addStatic(*staticSurface);
+    }
     return entries;
 }
 

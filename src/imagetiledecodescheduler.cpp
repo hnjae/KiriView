@@ -11,7 +11,6 @@
 #include <memory>
 #include <optional>
 #include <utility>
-#include <variant>
 
 namespace KiriView {
 struct ImageTileDecodeScheduler::DecodeLifetime {
@@ -42,7 +41,7 @@ void ImageTileDecodeScheduler::schedule(
         return;
     }
 
-    auto *surface = std::get_if<StaticTileSurface>(displayedSurface.get());
+    auto *surface = displayedSurface->staticTileSurface();
     if (surface == nullptr || !surface->isValid()) {
         return;
     }
