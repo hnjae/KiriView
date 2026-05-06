@@ -33,6 +33,37 @@ QString shortcutListText(const QList<QKeySequence> &shortcuts)
     return texts.join(QStringLiteral(" / "));
 }
 
+bool shortcutHasCommandModifier(const QKeySequence &shortcut)
+{
+    const Qt::KeyboardModifiers commandModifiers
+        = Qt::ControlModifier | Qt::AltModifier | Qt::MetaModifier;
+
+    for (int index = 0; index < shortcut.count(); ++index) {
+        const Qt::KeyboardModifiers shortcutModifiers
+            = shortcut[static_cast<uint>(index)].keyboardModifiers();
+        if ((shortcutModifiers & commandModifiers) != Qt::NoModifier) {
+            return true;
+        }
+    }
+
+    return false;
+}
+
+QList<QKeySequence> filterShortcutsByCommandModifier(
+    const QList<QKeySequence> &shortcuts, bool requireCommandModifier)
+{
+    QList<QKeySequence> filteredShortcuts;
+    filteredShortcuts.reserve(shortcuts.size());
+
+    for (const QKeySequence &shortcut : shortcuts) {
+        if (!shortcut.isEmpty() && shortcutHasCommandModifier(shortcut) == requireCommandModifier) {
+            filteredShortcuts.push_back(shortcut);
+        }
+    }
+
+    return filteredShortcuts;
+}
+
 KiriViewApplication::MenuPresentation toMenuPresentation(int value)
 {
     switch (value) {
@@ -87,6 +118,18 @@ QList<QKeySequence> KiriViewApplication::shortcuts(const QString &actionName) co
     return registeredAction->shortcuts();
 }
 
+QList<QKeySequence> KiriViewApplication::shortcutsWithCommandModifier(
+    const QString &actionName) const
+{
+    return filterShortcutsByCommandModifier(shortcuts(actionName), true);
+}
+
+QList<QKeySequence> KiriViewApplication::shortcutsWithoutCommandModifier(
+    const QString &actionName) const
+{
+    return filterShortcutsByCommandModifier(shortcuts(actionName), false);
+}
+
 QString KiriViewApplication::shortcutText(const QString &actionName) const
 {
     return shortcutListText(shortcuts(actionName));
@@ -99,6 +142,10 @@ void KiriViewApplication::setupActions()
 
     addStandardAction(KStandardActions::Open, QStringLiteral("file_open"), QStringLiteral("Open"),
         standardShortcuts(QKeySequence::Open));
+    if (QAction *quitAction = action(QStringLiteral("file_quit"))) {
+        finishRegisteredAction(quitAction, quitAction->text(),
+            { shortcut(QStringLiteral("Q")), shortcut(QStringLiteral("Ctrl+Q")) });
+    }
 
     addRegisteredAction(QStringLiteral("go_previous_archive"), QStringLiteral("Previous Archive"),
         QStringLiteral("go-previous-symbolic"), { shortcut(QStringLiteral("[")) });

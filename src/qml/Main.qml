@@ -101,10 +101,10 @@ StatefulApp.StatefulWindow {
 
     Shortcut {
         context: Qt.WindowShortcut
-        enabled: !root.helpDialogOpen
+        enabled: root.fullscreen && !root.helpDialogOpen
         sequence: "Esc"
 
-        onActivated: root.close()
+        onActivated: root.toggleFullScreen()
     }
 
     Timer {

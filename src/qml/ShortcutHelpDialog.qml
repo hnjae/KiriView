@@ -20,7 +20,11 @@ Kirigami.OverlaySheet {
         },
         {
             "keyText": "Esc",
-            "description": "Close dialog or KiriView"
+            "description": "Close dialog or leave fullscreen"
+        },
+        {
+            "keyText": root.shortcutText("file_quit"),
+            "description": "Quit KiriView"
         },
         {
             "keyText": root.shortcutTexts(["go_previous_image", "go_next_image"]),

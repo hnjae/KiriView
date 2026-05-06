@@ -55,6 +55,7 @@ private Q_SLOTS:
     void cleanup();
     void actionsAreRegisteredWithDefaultShortcuts();
     void shortcutsApiReturnsCurrentShortcuts();
+    void shortcutModifierPartitionsTextInputShortcuts();
     void menuPresentationDefaultsToHamburgerMenu();
     void menuPresentationPersists();
     void showMenubarActionTogglesMenuPresentation();
@@ -158,6 +159,8 @@ void TestKiriViewApplication::actionsAreRegisteredWithDefaultShortcuts()
         { shortcut(QStringLiteral("F")), shortcut(QStringLiteral("F11")) });
     expectDefaultShortcuts(application, QStringLiteral("help_shortcuts"),
         { shortcut(QStringLiteral("?")), shortcut(QStringLiteral("F1")) });
+    expectDefaultShortcuts(application, QStringLiteral("file_quit"),
+        { shortcut(QStringLiteral("Q")), shortcut(QStringLiteral("Ctrl+Q")) });
 }
 
 void TestKiriViewApplication::shortcutsApiReturnsCurrentShortcuts()
@@ -180,6 +183,33 @@ void TestKiriViewApplication::shortcutsApiReturnsCurrentShortcuts()
     openAction->setShortcuts(customShortcuts);
 
     QCOMPARE(application.shortcuts(QStringLiteral("file_open")), customShortcuts);
+}
+
+void TestKiriViewApplication::shortcutModifierPartitionsTextInputShortcuts()
+{
+    KiriViewApplication application;
+
+    QCOMPARE(application.shortcutsWithoutCommandModifier(QStringLiteral("file_quit")),
+        QList<QKeySequence>({ shortcut(QStringLiteral("Q")) }));
+    QCOMPARE(application.shortcutsWithCommandModifier(QStringLiteral("file_quit")),
+        QList<QKeySequence>({ shortcut(QStringLiteral("Ctrl+Q")) }));
+    QCOMPARE(application.shortcutsWithCommandModifier(QStringLiteral("missing_action")),
+        QList<QKeySequence>());
+    QCOMPARE(application.shortcutsWithoutCommandModifier(QStringLiteral("missing_action")),
+        QList<QKeySequence>());
+
+    QAction *quitAction = application.action(QStringLiteral("file_quit"));
+    QVERIFY(quitAction != nullptr);
+    quitAction->setShortcuts({ shortcut(QStringLiteral("Alt+Q")),
+        shortcut(QStringLiteral("Shift+Q")), shortcut(QStringLiteral("Meta+Q")),
+        shortcut(QStringLiteral("Ctrl+Shift+Q")), shortcut(QStringLiteral("Q")) });
+
+    QCOMPARE(application.shortcutsWithCommandModifier(QStringLiteral("file_quit")),
+        QList<QKeySequence>({ shortcut(QStringLiteral("Alt+Q")), shortcut(QStringLiteral("Meta+Q")),
+            shortcut(QStringLiteral("Ctrl+Shift+Q")) }));
+    QCOMPARE(application.shortcutsWithoutCommandModifier(QStringLiteral("file_quit")),
+        QList<QKeySequence>(
+            { shortcut(QStringLiteral("Shift+Q")), shortcut(QStringLiteral("Q")) }));
 }
 
 void TestKiriViewApplication::menuPresentationDefaultsToHamburgerMenu()

@@ -54,6 +54,7 @@ Item {
     readonly property var configureQAction: root.application.action("options_configure")
     readonly property var configureShortcutsQAction: root.application.action("options_configure_keybinding")
     readonly property var showMenubarQAction: root.application.action("options_show_menubar")
+    readonly property var quitQAction: root.application.action("file_quit")
 
     signal imageBoundaryReached(string message)
 
@@ -111,6 +112,16 @@ Item {
         return root.application.shortcuts(actionName);
     }
 
+    function actionShortcutsWithCommandModifier(actionName) {
+        root.shortcutRevision;
+        return root.application.shortcutsWithCommandModifier(actionName);
+    }
+
+    function actionShortcutsWithoutCommandModifier(actionName) {
+        root.shortcutRevision;
+        return root.application.shortcutsWithoutCommandModifier(actionName);
+    }
+
     function actionShortcutsEnabled(shortcutsEnabled, action) {
         return shortcutsEnabled && action !== null && action !== undefined && action.enabled;
     }
@@ -138,6 +149,20 @@ Item {
         shortcutsEnabled: root.actionShortcutsEnabled(root.helpShortcutsEnabled, root.openQAction)
 
         onActivated: root.triggerAction(root.openQAction)
+    }
+
+    ImageActionShortcut {
+        sequences: root.actionShortcutsWithoutCommandModifier("file_quit")
+        shortcutsEnabled: root.actionShortcutsEnabled(root.commandShortcutsEnabled, root.quitQAction)
+
+        onActivated: root.triggerAction(root.quitQAction)
+    }
+
+    ImageActionShortcut {
+        sequences: root.actionShortcutsWithCommandModifier("file_quit")
+        shortcutsEnabled: root.actionShortcutsEnabled(root.helpShortcutsEnabled, root.quitQAction)
+
+        onActivated: root.triggerAction(root.quitQAction)
     }
 
     ImageActionShortcut {

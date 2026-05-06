@@ -38,6 +38,9 @@ public:
 
     Q_INVOKABLE QAction *action(const QString &actionName);
     Q_INVOKABLE QList<QKeySequence> shortcuts(const QString &actionName) const;
+    Q_INVOKABLE QList<QKeySequence> shortcutsWithCommandModifier(const QString &actionName) const;
+    Q_INVOKABLE QList<QKeySequence> shortcutsWithoutCommandModifier(
+        const QString &actionName) const;
     Q_INVOKABLE QString shortcutText(const QString &actionName) const;
 
 Q_SIGNALS:
