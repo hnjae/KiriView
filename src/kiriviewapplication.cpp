@@ -8,11 +8,53 @@
 #include <KirigamiActionCollection>
 #include <QIcon>
 #include <QSignalBlocker>
+#include <initializer_list>
+#include <utility>
+#include <vector>
 
 namespace {
+enum class ActionSpecKind {
+    Registered,
+    Standard,
+};
+
+struct ActionSpec {
+    static ActionSpec registered(
+        QString name, QString text, QString iconName, QList<QKeySequence> defaultShortcuts)
+    {
+        return ActionSpec { ActionSpecKind::Registered, KStandardActions::Open, std::move(name),
+            std::move(text), std::move(iconName), std::move(defaultShortcuts) };
+    }
+
+    static ActionSpec standard(KStandardActions::StandardAction actionType, QString name,
+        QString text, QList<QKeySequence> defaultShortcuts)
+    {
+        return ActionSpec { ActionSpecKind::Standard, actionType, std::move(name), std::move(text),
+            QString(), std::move(defaultShortcuts) };
+    }
+
+    ActionSpecKind kind;
+    KStandardActions::StandardAction actionType;
+    QString name;
+    QString text;
+    QString iconName;
+    QList<QKeySequence> defaultShortcuts;
+};
+
 QKeySequence shortcut(const QString &sequence)
 {
     return QKeySequence::fromString(sequence, QKeySequence::PortableText);
+}
+
+QList<QKeySequence> shortcutList(std::initializer_list<const char *> sequences)
+{
+    QList<QKeySequence> shortcutList;
+    shortcutList.reserve(static_cast<qsizetype>(sequences.size()));
+    for (const char *sequence : sequences) {
+        shortcutList.push_back(shortcut(QString::fromLatin1(sequence)));
+    }
+
+    return shortcutList;
 }
 
 QList<QKeySequence> standardShortcuts(QKeySequence::StandardKey key)
@@ -73,6 +115,64 @@ KiriViewApplication::MenuPresentation toMenuPresentation(int value)
     default:
         return KiriViewApplication::HamburgerMenu;
     }
+}
+
+ActionSpec openActionSpec()
+{
+    return ActionSpec::standard(KStandardActions::Open, QStringLiteral("file_open"),
+        QStringLiteral("Open"), standardShortcuts(QKeySequence::Open));
+}
+
+std::vector<ActionSpec> actionSpecs()
+{
+    return {
+        ActionSpec::registered(QStringLiteral("go_previous_archive"),
+            QStringLiteral("Previous Archive"), QStringLiteral("go-previous-symbolic"),
+            shortcutList({ "[" })),
+        ActionSpec::registered(QStringLiteral("go_next_archive"), QStringLiteral("Next Archive"),
+            QStringLiteral("go-next-symbolic"), shortcutList({ "]" })),
+        ActionSpec::registered(QStringLiteral("go_previous_image"), QStringLiteral("Previous"),
+            QStringLiteral("go-up-symbolic"), standardShortcuts(QKeySequence::MoveToPreviousPage)),
+        ActionSpec::registered(QStringLiteral("go_next_image"), QStringLiteral("Next"),
+            QStringLiteral("go-down-symbolic"), standardShortcuts(QKeySequence::MoveToNextPage)),
+        ActionSpec::registered(QStringLiteral("go_first_image"), QStringLiteral("First Image"),
+            QStringLiteral("go-first-symbolic"), shortcutList({ "Ctrl+Home", "Home" })),
+        ActionSpec::registered(QStringLiteral("go_last_image"), QStringLiteral("Last Image"),
+            QStringLiteral("go-last-symbolic"), shortcutList({ "Ctrl+End", "End" })),
+        ActionSpec::standard(KStandardActions::ZoomIn, QStringLiteral("view_zoom_in"),
+            QStringLiteral("Zoom In"), shortcutList({ "Ctrl+=", "Ctrl++", "=", "+" })),
+        ActionSpec::standard(KStandardActions::ZoomOut, QStringLiteral("view_zoom_out"),
+            QStringLiteral("Zoom Out"), shortcutList({ "-", "Ctrl+-" })),
+        ActionSpec::standard(KStandardActions::FitToPage, QStringLiteral("view_fit"),
+            QStringLiteral("Fit"), shortcutList({ "1" })),
+        ActionSpec::standard(KStandardActions::FitToHeight, QStringLiteral("view_fit_height"),
+            QStringLiteral("Fit Height"), shortcutList({ "2" })),
+        ActionSpec::standard(KStandardActions::FitToWidth, QStringLiteral("view_fit_width"),
+            QStringLiteral("Fit Width"), shortcutList({ "3" })),
+        ActionSpec::standard(KStandardActions::ActualSize, QStringLiteral("view_actual_size"),
+            QStringLiteral("Actual Size"), shortcutList({ "0" })),
+        ActionSpec::registered(QStringLiteral("view_pan_left"), QStringLiteral("Pan Left"),
+            QString(), shortcutList({ "Left" })),
+        ActionSpec::registered(QStringLiteral("view_pan_right"), QStringLiteral("Pan Right"),
+            QString(), shortcutList({ "Right" })),
+        ActionSpec::registered(QStringLiteral("view_pan_up"), QStringLiteral("Pan Up"), QString(),
+            shortcutList({ "Up" })),
+        ActionSpec::registered(QStringLiteral("view_pan_down"), QStringLiteral("Pan Down"),
+            QString(), shortcutList({ "Down" })),
+        ActionSpec::registered(QStringLiteral("view_pan_top_left"), QStringLiteral("Top Left"),
+            QString(), shortcutList({ "<" })),
+        ActionSpec::registered(QStringLiteral("view_pan_bottom_right"),
+            QStringLiteral("Bottom Right"), QString(), shortcutList({ ">" })),
+        ActionSpec::registered(QStringLiteral("view_scan_forward"), QStringLiteral("Scan Forward"),
+            QString(), shortcutList({ "." })),
+        ActionSpec::registered(QStringLiteral("view_scan_backward"),
+            QStringLiteral("Scan Backward"), QString(), shortcutList({ "," })),
+        ActionSpec::standard(KStandardActions::FullScreen, QStringLiteral("window_fullscreen"),
+            QStringLiteral("Fullscreen"), shortcutList({ "F", "F11" })),
+        ActionSpec::registered(QStringLiteral("help_shortcuts"),
+            QStringLiteral("Keyboard Shortcuts"),
+            QStringLiteral("help-keyboard-shortcuts-symbolic"), shortcutList({ "?", "F1" })),
+    };
 }
 }
 
@@ -140,66 +240,23 @@ void KiriViewApplication::setupActions()
     AbstractKirigamiApplication::setupActions();
     mainCollection()->setComponentDisplayName(QStringLiteral("KiriView"));
 
-    addStandardAction(KStandardActions::Open, QStringLiteral("file_open"), QStringLiteral("Open"),
-        standardShortcuts(QKeySequence::Open));
+    const auto addAction = [this](const ActionSpec &spec) {
+        if (spec.kind == ActionSpecKind::Standard) {
+            addStandardAction(spec.actionType, spec.name, spec.text, spec.defaultShortcuts);
+        } else {
+            addRegisteredAction(spec.name, spec.text, spec.iconName, spec.defaultShortcuts);
+        }
+    };
+
+    addAction(openActionSpec());
+
     if (QAction *quitAction = action(QStringLiteral("file_quit"))) {
-        finishRegisteredAction(quitAction, quitAction->text(),
-            { shortcut(QStringLiteral("Q")), shortcut(QStringLiteral("Ctrl+Q")) });
+        finishRegisteredAction(quitAction, quitAction->text(), shortcutList({ "Q", "Ctrl+Q" }));
     }
 
-    addRegisteredAction(QStringLiteral("go_previous_archive"), QStringLiteral("Previous Archive"),
-        QStringLiteral("go-previous-symbolic"), { shortcut(QStringLiteral("[")) });
-    addRegisteredAction(QStringLiteral("go_next_archive"), QStringLiteral("Next Archive"),
-        QStringLiteral("go-next-symbolic"), { shortcut(QStringLiteral("]")) });
-    addRegisteredAction(QStringLiteral("go_previous_image"), QStringLiteral("Previous"),
-        QStringLiteral("go-up-symbolic"), standardShortcuts(QKeySequence::MoveToPreviousPage));
-    addRegisteredAction(QStringLiteral("go_next_image"), QStringLiteral("Next"),
-        QStringLiteral("go-down-symbolic"), standardShortcuts(QKeySequence::MoveToNextPage));
-    addRegisteredAction(QStringLiteral("go_first_image"), QStringLiteral("First Image"),
-        QStringLiteral("go-first-symbolic"),
-        { shortcut(QStringLiteral("Ctrl+Home")), shortcut(QStringLiteral("Home")) });
-    addRegisteredAction(QStringLiteral("go_last_image"), QStringLiteral("Last Image"),
-        QStringLiteral("go-last-symbolic"),
-        { shortcut(QStringLiteral("Ctrl+End")), shortcut(QStringLiteral("End")) });
-
-    addStandardAction(KStandardActions::ZoomIn, QStringLiteral("view_zoom_in"),
-        QStringLiteral("Zoom In"),
-        { shortcut(QStringLiteral("Ctrl+=")), shortcut(QStringLiteral("Ctrl++")),
-            shortcut(QStringLiteral("=")), shortcut(QStringLiteral("+")) });
-    addStandardAction(KStandardActions::ZoomOut, QStringLiteral("view_zoom_out"),
-        QStringLiteral("Zoom Out"),
-        { shortcut(QStringLiteral("-")), shortcut(QStringLiteral("Ctrl+-")) });
-    addStandardAction(KStandardActions::FitToPage, QStringLiteral("view_fit"),
-        QStringLiteral("Fit"), { shortcut(QStringLiteral("1")) });
-    addStandardAction(KStandardActions::FitToHeight, QStringLiteral("view_fit_height"),
-        QStringLiteral("Fit Height"), { shortcut(QStringLiteral("2")) });
-    addStandardAction(KStandardActions::FitToWidth, QStringLiteral("view_fit_width"),
-        QStringLiteral("Fit Width"), { shortcut(QStringLiteral("3")) });
-    addStandardAction(KStandardActions::ActualSize, QStringLiteral("view_actual_size"),
-        QStringLiteral("Actual Size"), { shortcut(QStringLiteral("0")) });
-    addRegisteredAction(QStringLiteral("view_pan_left"), QStringLiteral("Pan Left"), QString(),
-        { shortcut(QStringLiteral("Left")) });
-    addRegisteredAction(QStringLiteral("view_pan_right"), QStringLiteral("Pan Right"), QString(),
-        { shortcut(QStringLiteral("Right")) });
-    addRegisteredAction(QStringLiteral("view_pan_up"), QStringLiteral("Pan Up"), QString(),
-        { shortcut(QStringLiteral("Up")) });
-    addRegisteredAction(QStringLiteral("view_pan_down"), QStringLiteral("Pan Down"), QString(),
-        { shortcut(QStringLiteral("Down")) });
-    addRegisteredAction(QStringLiteral("view_pan_top_left"), QStringLiteral("Top Left"), QString(),
-        { shortcut(QStringLiteral("<")) });
-    addRegisteredAction(QStringLiteral("view_pan_bottom_right"), QStringLiteral("Bottom Right"),
-        QString(), { shortcut(QStringLiteral(">")) });
-    addRegisteredAction(QStringLiteral("view_scan_forward"), QStringLiteral("Scan Forward"),
-        QString(), { shortcut(QStringLiteral(".")) });
-    addRegisteredAction(QStringLiteral("view_scan_backward"), QStringLiteral("Scan Backward"),
-        QString(), { shortcut(QStringLiteral(",")) });
-
-    addStandardAction(KStandardActions::FullScreen, QStringLiteral("window_fullscreen"),
-        QStringLiteral("Fullscreen"),
-        { shortcut(QStringLiteral("F")), shortcut(QStringLiteral("F11")) });
-    addRegisteredAction(QStringLiteral("help_shortcuts"), QStringLiteral("Keyboard Shortcuts"),
-        QStringLiteral("help-keyboard-shortcuts-symbolic"),
-        { shortcut(QStringLiteral("?")), shortcut(QStringLiteral("F1")) });
+    for (const ActionSpec &spec : actionSpecs()) {
+        addAction(spec);
+    }
 
     m_showMenuBarAction
         = addStandardAction(KStandardActions::ShowMenubar, QStringLiteral("options_show_menubar"),
