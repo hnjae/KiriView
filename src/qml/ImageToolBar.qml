@@ -19,6 +19,7 @@ Controls.ToolBar {
     required property var actions
     property bool compact: false
     property bool floating: false
+    property bool transientOverlay: false
     property bool showApplicationMenuActions: false
     property bool pageNavigationInputFocused: false
     property bool zoomInputFocused: false
@@ -53,7 +54,7 @@ Controls.ToolBar {
     HoverHandler {
         id: toolbarHoverHandler
 
-        enabled: root.floating
+        enabled: root.floating || root.transientOverlay
     }
 
     Component {

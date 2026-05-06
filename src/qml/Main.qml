@@ -238,17 +238,14 @@ StatefulApp.StatefulWindow {
 
             actions: imageActions
             anchors.left: parent.left
-            anchors.leftMargin: Kirigami.Units.smallSpacing
             anchors.right: parent.right
-            anchors.rightMargin: Kirigami.Units.smallSpacing
             anchors.top: parent.top
-            anchors.topMargin: Kirigami.Units.smallSpacing
             enabled: visible
-            floating: true
             height: implicitHeight
             imageDocument: page.imageDocument
             imageReady: page.imageReady
             showApplicationMenuActions: !root.menuBarMode
+            transientOverlay: true
             visible: root.fullscreen && root.fullscreenToolBarRevealed
             z: 20
 
