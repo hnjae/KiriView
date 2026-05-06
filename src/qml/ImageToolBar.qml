@@ -5,6 +5,7 @@ pragma ComponentBehavior: Bound
 
 import QtQuick
 import QtQuick.Controls as Controls
+import QtQuick.Layouts
 import io.github.hnjae.kiriview
 import org.kde.kirigami as Kirigami
 
@@ -27,7 +28,7 @@ Controls.ToolBar {
     readonly property int edgeMargin: controlSpacing
     readonly property bool interactionActive: toolbarHoverHandler.hovered || textInputFocused()
     readonly property int toolbarVerticalPadding: controlSpacing
-    readonly property var toolbarControls: [pageNavigationAction, zoomLevelAction, fitMenuAction]
+    readonly property var toolbarControls: [zoomLevelAction, fitMenuAction]
     readonly property var toolbarActions: showApplicationMenuActions ? toolbarControls.concat(actions.applicationMenuActions) : toolbarControls
 
     signal pageNumberResetRequested
@@ -75,35 +76,6 @@ Controls.ToolBar {
         }
     }
 
-    readonly property Kirigami.Action pageNavigationAction: Kirigami.Action {
-        displayComponent: ImagePageNavigation {
-            id: pageNavigation
-
-            actions: root.actions
-            compact: root.compact
-            imageDocument: root.imageDocument
-            imageReady: root.imageReady
-
-            Component.onDestruction: {
-                if (textInputActive) {
-                    root.pageNavigationInputFocused = false;
-                }
-            }
-            onTextInputActiveChanged: root.pageNavigationInputFocused = textInputActive
-
-            Connections {
-                target: root
-
-                function onPageNumberResetRequested() {
-                    pageNavigation.resetPageNumberText();
-                }
-            }
-        }
-        icon.name: "view-list-symbolic"
-        text: "Page"
-        tooltip: text
-    }
-
     readonly property Kirigami.Action zoomLevelAction: Kirigami.Action {
         displayComponent: ImageZoomControls {
             id: zoomControls
@@ -137,12 +109,46 @@ Controls.ToolBar {
         tooltip: text
     }
 
-    contentItem: Kirigami.ActionToolBar {
-        id: actionToolBar
+    contentItem: RowLayout {
+        spacing: root.controlSpacing
 
-        actions: root.toolbarActions
-        alignment: Qt.AlignRight
-        display: Controls.AbstractButton.IconOnly
-        overflowIconName: "application-menu-symbolic"
+        ImagePageNavigation {
+            id: pageNavigation
+
+            Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
+
+            actions: root.actions
+            compact: root.compact
+            imageDocument: root.imageDocument
+            imageReady: root.imageReady
+
+            Component.onDestruction: {
+                if (textInputActive) {
+                    root.pageNavigationInputFocused = false;
+                }
+            }
+            onTextInputActiveChanged: root.pageNavigationInputFocused = textInputActive
+
+            Connections {
+                target: root
+
+                function onPageNumberResetRequested() {
+                    pageNavigation.resetPageNumberText();
+                }
+            }
+        }
+
+        Kirigami.ActionToolBar {
+            id: actionToolBar
+
+            Layout.alignment: Qt.AlignRight | Qt.AlignVCenter
+            Layout.fillWidth: true
+            Layout.minimumWidth: Kirigami.Units.gridUnit * 2
+
+            actions: root.toolbarActions
+            alignment: Qt.AlignRight
+            display: Controls.AbstractButton.IconOnly
+            overflowIconName: "application-menu-symbolic"
+        }
     }
 }
