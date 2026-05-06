@@ -97,8 +97,8 @@ void KiriViewApplication::setupActions()
     AbstractKirigamiApplication::setupActions();
     mainCollection()->setComponentDisplayName(QStringLiteral("KiriView"));
 
-    addRegisteredAction(QStringLiteral("file_open"), QStringLiteral("Open"),
-        QStringLiteral("document-open-symbolic"), standardShortcuts(QKeySequence::Open));
+    addStandardAction(KStandardActions::Open, QStringLiteral("file_open"), QStringLiteral("Open"),
+        standardShortcuts(QKeySequence::Open));
 
     addRegisteredAction(QStringLiteral("go_previous_archive"), QStringLiteral("Previous Archive"),
         QStringLiteral("go-previous-symbolic"), { shortcut(QStringLiteral("[")) });
@@ -115,21 +115,21 @@ void KiriViewApplication::setupActions()
         QStringLiteral("go-last-symbolic"),
         { shortcut(QStringLiteral("Ctrl+End")), shortcut(QStringLiteral("End")) });
 
-    addRegisteredAction(QStringLiteral("view_zoom_in"), QStringLiteral("Zoom In"),
-        QStringLiteral("zoom-in-symbolic"),
+    addStandardAction(KStandardActions::ZoomIn, QStringLiteral("view_zoom_in"),
+        QStringLiteral("Zoom In"),
         { shortcut(QStringLiteral("Ctrl+=")), shortcut(QStringLiteral("Ctrl++")),
             shortcut(QStringLiteral("=")), shortcut(QStringLiteral("+")) });
-    addRegisteredAction(QStringLiteral("view_zoom_out"), QStringLiteral("Zoom Out"),
-        QStringLiteral("zoom-out-symbolic"),
+    addStandardAction(KStandardActions::ZoomOut, QStringLiteral("view_zoom_out"),
+        QStringLiteral("Zoom Out"),
         { shortcut(QStringLiteral("-")), shortcut(QStringLiteral("Ctrl+-")) });
-    addRegisteredAction(QStringLiteral("view_fit"), QStringLiteral("Fit"),
-        QStringLiteral("zoom-fit-best-symbolic"), { shortcut(QStringLiteral("1")) });
-    addRegisteredAction(QStringLiteral("view_fit_height"), QStringLiteral("Fit Height"), QString(),
-        { shortcut(QStringLiteral("2")) });
-    addRegisteredAction(QStringLiteral("view_fit_width"), QStringLiteral("Fit Width"), QString(),
-        { shortcut(QStringLiteral("3")) });
-    addRegisteredAction(QStringLiteral("view_actual_size"), QStringLiteral("Actual Size"),
-        QStringLiteral("zoom-original-symbolic"), { shortcut(QStringLiteral("0")) });
+    addStandardAction(KStandardActions::FitToPage, QStringLiteral("view_fit"),
+        QStringLiteral("Fit"), { shortcut(QStringLiteral("1")) });
+    addStandardAction(KStandardActions::FitToHeight, QStringLiteral("view_fit_height"),
+        QStringLiteral("Fit Height"), { shortcut(QStringLiteral("2")) });
+    addStandardAction(KStandardActions::FitToWidth, QStringLiteral("view_fit_width"),
+        QStringLiteral("Fit Width"), { shortcut(QStringLiteral("3")) });
+    addStandardAction(KStandardActions::ActualSize, QStringLiteral("view_actual_size"),
+        QStringLiteral("Actual Size"), { shortcut(QStringLiteral("0")) });
     addRegisteredAction(QStringLiteral("view_pan_left"), QStringLiteral("Pan Left"), QString(),
         { shortcut(QStringLiteral("Left")) });
     addRegisteredAction(QStringLiteral("view_pan_right"), QStringLiteral("Pan Right"), QString(),
@@ -147,15 +147,16 @@ void KiriViewApplication::setupActions()
     addRegisteredAction(QStringLiteral("view_scan_backward"), QStringLiteral("Scan Backward"),
         QString(), { shortcut(QStringLiteral(",")) });
 
-    addRegisteredAction(QStringLiteral("window_fullscreen"), QStringLiteral("Fullscreen"),
-        QStringLiteral("view-fullscreen-symbolic"),
+    addStandardAction(KStandardActions::FullScreen, QStringLiteral("window_fullscreen"),
+        QStringLiteral("Fullscreen"),
         { shortcut(QStringLiteral("F")), shortcut(QStringLiteral("F11")) });
     addRegisteredAction(QStringLiteral("help_shortcuts"), QStringLiteral("Keyboard Shortcuts"),
         QStringLiteral("help-keyboard-shortcuts-symbolic"),
         { shortcut(QStringLiteral("?")), shortcut(QStringLiteral("F1")) });
 
-    m_showMenuBarAction = addRegisteredAction(QStringLiteral("options_show_menubar"),
-        QStringLiteral("Show Menubar"), QStringLiteral("show-menu-symbolic"));
+    m_showMenuBarAction
+        = addStandardAction(KStandardActions::ShowMenubar, QStringLiteral("options_show_menubar"),
+            QStringLiteral("Show Menubar"), QList<QKeySequence> {});
     m_showMenuBarAction->setCheckable(true);
     connect(m_showMenuBarAction, &QAction::triggered, this,
         [this](bool checked) { setMenuPresentation(checked ? MenuBar : HamburgerMenu); });
@@ -175,6 +176,29 @@ QAction *KiriViewApplication::addRegisteredAction(const QString &name, const QSt
     }
 
     mainCollection()->addAction(name, registeredAction);
+    KirigamiActionCollection::setDefaultShortcuts(registeredAction, defaultShortcuts);
+    connect(registeredAction, &QAction::changed, this, &KiriViewApplication::handleActionChanged);
+    return registeredAction;
+}
+
+QAction *KiriViewApplication::addStandardAction(
+    KStandardActions::StandardAction actionType, const QString &name, const QString &text)
+{
+    QAction *registeredAction = mainCollection()->addAction(actionType, name, this, [](bool) { });
+    return finishRegisteredAction(registeredAction, text, registeredAction->shortcuts());
+}
+
+QAction *KiriViewApplication::addStandardAction(KStandardActions::StandardAction actionType,
+    const QString &name, const QString &text, const QList<QKeySequence> &defaultShortcuts)
+{
+    QAction *registeredAction = mainCollection()->addAction(actionType, name, this, [](bool) { });
+    return finishRegisteredAction(registeredAction, text, defaultShortcuts);
+}
+
+QAction *KiriViewApplication::finishRegisteredAction(
+    QAction *registeredAction, const QString &text, const QList<QKeySequence> &defaultShortcuts)
+{
+    registeredAction->setText(text);
     KirigamiActionCollection::setDefaultShortcuts(registeredAction, defaultShortcuts);
     connect(registeredAction, &QAction::changed, this, &KiriViewApplication::handleActionChanged);
     return registeredAction;
