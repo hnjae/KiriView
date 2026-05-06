@@ -31,22 +31,6 @@ int normalizedAnimationFrameDelay(int delay)
 }
 
 namespace KiriView {
-struct ImageAnimationPlayer::ReaderPlayback final {
-    QByteArray data;
-    QByteArray format;
-    std::unique_ptr<BufferedImageReader> reader;
-};
-
-struct ImageAnimationPlayer::DecodedPlayback final {
-    std::vector<AnimationFrame> frames;
-    std::size_t frameIndex = 0;
-};
-
-struct ImageAnimationPlayer::HeifSequencePlayback final {
-    QByteArray data;
-    std::unique_ptr<HeifSequenceReader> reader;
-};
-
 ImageAnimationPlayer::ImageAnimationPlayer(
     QObject *context, FrameReadyCallback frameReady, ErrorCallback animationError)
     : m_frameReady(std::move(frameReady))
@@ -64,23 +48,23 @@ void ImageAnimationPlayer::start(
     clearPlaybackState();
     m_loopCount = loopCount;
 
-    auto playback = std::make_unique<ReaderPlayback>();
-    playback->data = data;
-    playback->format = format;
+    ReaderPlayback playback;
+    playback.data = data;
+    playback.format = format;
 
     QString errorString;
-    if (!resetReader(*playback, &errorString)) {
+    if (!resetReader(playback, &errorString)) {
         finishWithError(errorString);
         return;
     }
 
-    const QImage firstFrame = playback->reader->read();
+    const QImage firstFrame = playback.reader->read();
     if (firstFrame.isNull()) {
-        finishWithError(playback->reader->errorString());
+        finishWithError(playback.reader->errorString());
         return;
     }
 
-    const bool hasMoreFrames = playback->reader->canRead();
+    const bool hasMoreFrames = playback.reader->canRead();
     m_playback = std::move(playback);
     if (hasMoreFrames) {
         m_timer.start(normalizedAnimationFrameDelay(firstFrameDelay));
@@ -92,11 +76,11 @@ void ImageAnimationPlayer::startDecoded(std::vector<AnimationFrame> frames, int 
     clearPlaybackState();
     m_loopCount = loopCount;
 
-    auto playback = std::make_unique<DecodedPlayback>();
-    playback->frames = std::move(frames);
-    const bool hasMoreFrames = playback->frames.size() > 1;
+    DecodedPlayback playback;
+    playback.frames = std::move(frames);
+    const bool hasMoreFrames = playback.frames.size() > 1;
     const int nextFrameDelay
-        = hasMoreFrames ? normalizedAnimationFrameDelay(playback->frames.front().delay) : 0;
+        = hasMoreFrames ? normalizedAnimationFrameDelay(playback.frames.front().delay) : 0;
 
     m_playback = std::move(playback);
     if (hasMoreFrames) {
@@ -107,12 +91,12 @@ void ImageAnimationPlayer::startDecoded(std::vector<AnimationFrame> frames, int 
 void ImageAnimationPlayer::startHeifSequence(const QByteArray &data)
 {
     clearPlaybackState();
-    auto playback = std::make_unique<HeifSequencePlayback>();
-    playback->data = data;
+    HeifSequencePlayback playback;
+    playback.data = data;
 
     QString errorString;
     int firstFrameDelay = 0;
-    if (!resetHeifSequence(*playback, &firstFrameDelay, &errorString)) {
+    if (!resetHeifSequence(playback, &firstFrameDelay, &errorString)) {
         finishWithError(errorString);
         return;
     }
@@ -129,23 +113,11 @@ void ImageAnimationPlayer::advanceFrame()
         ImageAnimationPlayer *player = nullptr;
 
         void operator()(std::monostate &) const { }
-        void operator()(std::unique_ptr<ReaderPlayback> &playback) const
+        void operator()(ReaderPlayback &playback) const { player->advanceReaderFrame(playback); }
+        void operator()(DecodedPlayback &playback) const { player->advanceDecodedFrame(playback); }
+        void operator()(HeifSequencePlayback &playback) const
         {
-            if (playback != nullptr) {
-                player->advanceReaderFrame(*playback);
-            }
-        }
-        void operator()(std::unique_ptr<DecodedPlayback> &playback) const
-        {
-            if (playback != nullptr) {
-                player->advanceDecodedFrame(*playback);
-            }
-        }
-        void operator()(std::unique_ptr<HeifSequencePlayback> &playback) const
-        {
-            if (playback != nullptr) {
-                player->advanceHeifSequenceFrame(*playback);
-            }
+            player->advanceHeifSequenceFrame(playback);
         }
     };
 

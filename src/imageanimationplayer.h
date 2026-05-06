@@ -9,6 +9,7 @@
 #include <QByteArray>
 #include <QImage>
 #include <QTimer>
+#include <cstddef>
 #include <functional>
 #include <memory>
 #include <variant>
@@ -37,11 +38,24 @@ public:
     void stop();
 
 private:
-    struct ReaderPlayback;
-    struct DecodedPlayback;
-    struct HeifSequencePlayback;
-    using Playback = std::variant<std::monostate, std::unique_ptr<ReaderPlayback>,
-        std::unique_ptr<DecodedPlayback>, std::unique_ptr<HeifSequencePlayback>>;
+    struct ReaderPlayback {
+        QByteArray data;
+        QByteArray format;
+        std::unique_ptr<BufferedImageReader> reader;
+    };
+
+    struct DecodedPlayback {
+        std::vector<AnimationFrame> frames;
+        std::size_t frameIndex = 0;
+    };
+
+    struct HeifSequencePlayback {
+        QByteArray data;
+        std::unique_ptr<HeifSequenceReader> reader;
+    };
+
+    using Playback
+        = std::variant<std::monostate, ReaderPlayback, DecodedPlayback, HeifSequencePlayback>;
 
     void advanceFrame();
     void advanceReaderFrame(ReaderPlayback &playback);

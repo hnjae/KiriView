@@ -160,40 +160,84 @@ inline ContainerNavigationCandidate comicBookContainerCandidate(const QUrl &url)
     return containerCandidate(url, ContainerNavigationCandidateType::ComicBookArchive);
 }
 
+template <typename Candidates> class FakeCandidateListing
+{
+public:
+    void setItems(const QUrl &url, Candidates candidates)
+    {
+        m_itemsByUrl[keyForUrl(url)] = std::move(candidates);
+    }
+
+    void setError(const QUrl &url, QString errorString)
+    {
+        m_errorsByUrl[keyForUrl(url)] = std::move(errorString);
+    }
+
+    template <typename Callback>
+    void load(QUrl url, Callback callback, ErrorCallback errorCallback) const
+    {
+        const QString key = keyForUrl(url);
+        const auto error = m_errorsByUrl.find(key);
+        if (error != m_errorsByUrl.cend()) {
+            if (errorCallback) {
+                errorCallback(error->second);
+            }
+            return;
+        }
+
+        const auto items = m_itemsByUrl.find(key);
+        if (items == m_itemsByUrl.cend()) {
+            if (errorCallback) {
+                errorCallback(
+                    QStringLiteral("missing fake candidate listing for %1").arg(url.toString()));
+            }
+            return;
+        }
+
+        if (callback) {
+            callback(items->second);
+        }
+    }
+
+private:
+    std::map<QString, Candidates> m_itemsByUrl;
+    std::map<QString, QString> m_errorsByUrl;
+};
+
 class FakeImageNavigationCandidateProvider
 {
 public:
     void setDirectoryImages(
         const QUrl &directoryUrl, std::vector<ImageNavigationCandidate> candidates)
     {
-        m_directoryImagesByUrl[keyForUrl(directoryUrl)] = std::move(candidates);
+        m_directoryImages.setItems(directoryUrl, std::move(candidates));
     }
 
     void setArchiveImages(
         const QUrl &archiveRootUrl, std::vector<ImageNavigationCandidate> candidates)
     {
-        m_archiveImagesByUrl[keyForUrl(archiveRootUrl)] = std::move(candidates);
+        m_archiveImages.setItems(archiveRootUrl, std::move(candidates));
     }
 
     void setContainerCandidates(
         const QUrl &directoryUrl, std::vector<ContainerNavigationCandidate> candidates)
     {
-        m_containerCandidatesByUrl[keyForUrl(directoryUrl)] = std::move(candidates);
+        m_containerCandidates.setItems(directoryUrl, std::move(candidates));
     }
 
     void setDirectoryImageError(const QUrl &directoryUrl, QString errorString)
     {
-        m_directoryImageErrorsByUrl[keyForUrl(directoryUrl)] = std::move(errorString);
+        m_directoryImages.setError(directoryUrl, std::move(errorString));
     }
 
     void setArchiveImageError(const QUrl &archiveRootUrl, QString errorString)
     {
-        m_archiveImageErrorsByUrl[keyForUrl(archiveRootUrl)] = std::move(errorString);
+        m_archiveImages.setError(archiveRootUrl, std::move(errorString));
     }
 
     void setContainerError(const QUrl &directoryUrl, QString errorString)
     {
-        m_containerErrorsByUrl[keyForUrl(directoryUrl)] = std::move(errorString);
+        m_containerCandidates.setError(directoryUrl, std::move(errorString));
     }
 
     ImageNavigationCandidateProvider provider()
@@ -201,19 +245,19 @@ public:
         return ImageNavigationCandidateProvider {
             [this](QObject *, QUrl directoryUrl, ImageCandidatesCallback callback,
                 ErrorCallback errorCallback) {
-                loadImages(m_directoryImagesByUrl, m_directoryImageErrorsByUrl,
+                m_directoryImages.load(
                     std::move(directoryUrl), std::move(callback), std::move(errorCallback));
                 return ImageIoJob();
             },
             [this](QObject *, QUrl directoryUrl, ContainerCandidatesCallback callback,
                 ErrorCallback errorCallback) {
-                loadContainers(
+                m_containerCandidates.load(
                     std::move(directoryUrl), std::move(callback), std::move(errorCallback));
                 return ImageIoJob();
             },
             [this](QObject *, ArchiveDocumentLocation archiveDocument,
                 ImageCandidatesCallback callback, ErrorCallback errorCallback) {
-                loadImages(m_archiveImagesByUrl, m_archiveImageErrorsByUrl,
+                m_archiveImages.load(
                     archiveDocument.rootUrl(), std::move(callback), std::move(errorCallback));
                 return ImageIoJob();
             },
@@ -221,47 +265,9 @@ public:
     }
 
 private:
-    void loadImages(std::map<QString, std::vector<ImageNavigationCandidate>> &imagesByUrl,
-        const std::map<QString, QString> &errorsByUrl, QUrl url, ImageCandidatesCallback callback,
-        ErrorCallback errorCallback)
-    {
-        const QString key = keyForUrl(url);
-        const auto error = errorsByUrl.find(key);
-        if (error != errorsByUrl.cend()) {
-            if (errorCallback) {
-                errorCallback(error->second);
-            }
-            return;
-        }
-
-        if (callback) {
-            callback(imagesByUrl[key]);
-        }
-    }
-
-    void loadContainers(
-        QUrl directoryUrl, ContainerCandidatesCallback callback, ErrorCallback errorCallback)
-    {
-        const QString key = keyForUrl(directoryUrl);
-        const auto error = m_containerErrorsByUrl.find(key);
-        if (error != m_containerErrorsByUrl.cend()) {
-            if (errorCallback) {
-                errorCallback(error->second);
-            }
-            return;
-        }
-
-        if (callback) {
-            callback(m_containerCandidatesByUrl[key]);
-        }
-    }
-
-    std::map<QString, std::vector<ImageNavigationCandidate>> m_directoryImagesByUrl;
-    std::map<QString, std::vector<ImageNavigationCandidate>> m_archiveImagesByUrl;
-    std::map<QString, std::vector<ContainerNavigationCandidate>> m_containerCandidatesByUrl;
-    std::map<QString, QString> m_directoryImageErrorsByUrl;
-    std::map<QString, QString> m_archiveImageErrorsByUrl;
-    std::map<QString, QString> m_containerErrorsByUrl;
+    FakeCandidateListing<std::vector<ImageNavigationCandidate>> m_directoryImages;
+    FakeCandidateListing<std::vector<ImageNavigationCandidate>> m_archiveImages;
+    FakeCandidateListing<std::vector<ContainerNavigationCandidate>> m_containerCandidates;
 };
 
 inline QImage testImage(const QSize &size = QSize(1, 1))
