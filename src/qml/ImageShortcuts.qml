@@ -103,172 +103,70 @@ Item {
         return root.zoomBy(deltaPercent, root.imageViewport.viewportWidth / 2, root.imageViewport.viewportHeight / 2);
     }
 
-    ConfiguredActionShortcut {
-        actionName: "file_open"
+    ActionShortcutGroup {
+        actionNames: ["file_open"]
         application: root.application
         shortcutsEnabled: root.helpShortcutsEnabled
     }
 
-    ConfiguredActionShortcut {
-        actionName: "file_quit"
+    ActionShortcutGroup {
+        actionNames: ["file_quit"]
         application: root.application
         shortcutFilter: ConfiguredActionShortcut.WithoutCommandModifier
         shortcutsEnabled: root.commandShortcutsEnabled
     }
 
-    ConfiguredActionShortcut {
-        actionName: "file_quit"
+    ActionShortcutGroup {
+        actionNames: ["file_quit"]
         application: root.application
         shortcutFilter: ConfiguredActionShortcut.WithCommandModifier
         shortcutsEnabled: root.helpShortcutsEnabled
     }
 
-    ConfiguredActionShortcut {
-        actionName: "view_zoom_in"
+    ActionShortcutGroup {
+        actionNames: ["view_zoom_in", "view_zoom_out", "view_fit", "view_fit_height", "view_fit_width", "view_actual_size"]
         application: root.application
         shortcutsEnabled: root.readyCommandShortcutsEnabled
     }
 
-    ConfiguredActionShortcut {
-        actionName: "view_zoom_out"
-        application: root.application
-        shortcutsEnabled: root.readyCommandShortcutsEnabled
-    }
-
-    ConfiguredActionShortcut {
-        actionName: "view_fit"
-        application: root.application
-        shortcutsEnabled: root.readyCommandShortcutsEnabled
-    }
-
-    ConfiguredActionShortcut {
-        actionName: "view_fit_height"
-        application: root.application
-        shortcutsEnabled: root.readyCommandShortcutsEnabled
-    }
-
-    ConfiguredActionShortcut {
-        actionName: "view_fit_width"
-        application: root.application
-        shortcutsEnabled: root.readyCommandShortcutsEnabled
-    }
-
-    ConfiguredActionShortcut {
-        actionName: "view_actual_size"
-        application: root.application
-        shortcutsEnabled: root.readyCommandShortcutsEnabled
-    }
-
-    ConfiguredActionShortcut {
-        actionName: "view_pan_left"
+    ActionShortcutGroup {
+        actionNames: ["view_pan_left", "view_pan_right", "view_pan_up", "view_pan_down", "view_pan_top_left", "view_pan_bottom_right"]
         application: root.application
         shortcutsEnabled: root.pannableCommandShortcutsEnabled
     }
 
-    ConfiguredActionShortcut {
-        actionName: "view_pan_right"
-        application: root.application
-        shortcutsEnabled: root.pannableCommandShortcutsEnabled
-    }
-
-    ConfiguredActionShortcut {
-        actionName: "view_pan_up"
-        application: root.application
-        shortcutsEnabled: root.pannableCommandShortcutsEnabled
-    }
-
-    ConfiguredActionShortcut {
-        actionName: "view_pan_down"
-        application: root.application
-        shortcutsEnabled: root.pannableCommandShortcutsEnabled
-    }
-
-    ConfiguredActionShortcut {
-        actionName: "view_pan_top_left"
-        application: root.application
-        shortcutsEnabled: root.pannableCommandShortcutsEnabled
-    }
-
-    ConfiguredActionShortcut {
-        actionName: "view_pan_bottom_right"
-        application: root.application
-        shortcutsEnabled: root.pannableCommandShortcutsEnabled
-    }
-
-    ConfiguredActionShortcut {
-        actionName: "view_scan_forward"
+    ActionShortcutGroup {
+        actionNames: ["view_scan_forward", "view_scan_backward"]
         application: root.application
         shortcutsEnabled: root.readyCommandShortcutsEnabled
     }
 
-    ConfiguredActionShortcut {
-        actionName: "view_scan_backward"
-        application: root.application
-        shortcutsEnabled: root.readyCommandShortcutsEnabled
-    }
-
-    ConfiguredActionShortcut {
-        actionName: "go_previous_image"
+    ActionShortcutGroup {
+        actionNames: ["go_previous_image", "go_next_image"]
         application: root.application
         shortcutsEnabled: root.readyShortcutsEnabled
     }
 
-    ConfiguredActionShortcut {
-        actionName: "go_next_image"
-        application: root.application
-        shortcutsEnabled: root.readyShortcutsEnabled
-    }
-
-    ConfiguredActionShortcut {
-        actionName: "go_first_image"
+    ActionShortcutGroup {
+        actionNames: ["go_first_image", "go_last_image"]
         application: root.application
         shortcutsEnabled: root.pageCommandShortcutsEnabled
     }
 
-    ConfiguredActionShortcut {
-        actionName: "go_last_image"
-        application: root.application
-        shortcutsEnabled: root.pageCommandShortcutsEnabled
-    }
-
-    ConfiguredActionShortcut {
-        actionName: "go_previous_archive"
+    ActionShortcutGroup {
+        actionNames: ["go_previous_archive", "go_next_archive"]
         application: root.application
         shortcutsEnabled: root.containerCommandShortcutsEnabled
     }
 
-    ConfiguredActionShortcut {
-        actionName: "go_next_archive"
-        application: root.application
-        shortcutsEnabled: root.containerCommandShortcutsEnabled
-    }
-
-    ConfiguredActionShortcut {
-        actionName: "window_fullscreen"
+    ActionShortcutGroup {
+        actionNames: ["window_fullscreen", "help_shortcuts"]
         application: root.application
         shortcutsEnabled: root.commandShortcutsEnabled
     }
 
-    ConfiguredActionShortcut {
-        actionName: "help_shortcuts"
-        application: root.application
-        shortcutsEnabled: root.commandShortcutsEnabled
-    }
-
-    ConfiguredActionShortcut {
-        actionName: "options_configure"
-        application: root.application
-        shortcutsEnabled: root.helpShortcutsEnabled
-    }
-
-    ConfiguredActionShortcut {
-        actionName: "options_configure_keybinding"
-        application: root.application
-        shortcutsEnabled: root.helpShortcutsEnabled
-    }
-
-    ConfiguredActionShortcut {
-        actionName: "options_show_menubar"
+    ActionShortcutGroup {
+        actionNames: ["options_configure", "options_configure_keybinding", "options_show_menubar"]
         application: root.application
         shortcutsEnabled: root.helpShortcutsEnabled
     }
