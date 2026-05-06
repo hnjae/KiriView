@@ -4,7 +4,6 @@
 #include "archivebackend_p.h"
 
 #include "archivepath.h"
-#include "imagenavigationmodel.h"
 
 #include <QFile>
 #include <archive.h>
@@ -150,7 +149,6 @@ KiriView::ArchiveImageCandidatesResult loadLibArchiveDocumentImageCandidates(
         return Backend::archiveErrorResult<KiriView::ArchiveImageCandidatesResult>(errorString);
     }
 
-    KiriView::sortImageNavigationCandidates(&candidates);
     return Backend::archiveImageCandidatesResult(std::move(candidates));
 }
 

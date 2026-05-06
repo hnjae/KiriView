@@ -74,12 +74,6 @@ std::optional<QUrl> containingArchiveRootUrl(const QUrl &url, const QStringList 
     return archiveRootUrl;
 }
 
-QString archiveRelativeImageName(const QUrl &archiveRootUrl, const QUrl &imageUrl)
-{
-    const QString relativePath = KiriView::archiveRelativePathForUrl(archiveRootUrl, imageUrl);
-    return relativePath.isEmpty() ? imageUrl.fileName() : relativePath;
-}
-
 }
 
 namespace KiriView {
@@ -171,24 +165,6 @@ std::vector<ContainerNavigationCandidate> containerNavigationCandidates(const KF
 
     sortContainerNavigationCandidates(&candidates);
     return candidates;
-}
-
-void appendArchiveImageNavigationCandidates(std::vector<ImageNavigationCandidate> *candidates,
-    const KIO::UDSEntryList &entries, const QUrl &directoryUrl, const QUrl &archiveRootUrl)
-{
-    candidates->reserve(candidates->size() + static_cast<std::size_t>(entries.size()));
-
-    for (const KIO::UDSEntry &entry : entries) {
-        const KFileItem item(entry, directoryUrl, true, true);
-        const QString name = item.name();
-        if (!item.isFile() || !KiriView::isSupportedImageFileName(name)) {
-            continue;
-        }
-
-        const QUrl imageUrl = KiriView::normalizedImageUrl(item.url());
-        candidates->push_back(ImageNavigationCandidate {
-            imageUrl, archiveRelativeImageName(archiveRootUrl, imageUrl) });
-    }
 }
 
 QUrl zoomScopeUrlForLocation(const DisplayedImageLocation &location)

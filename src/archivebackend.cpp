@@ -7,6 +7,7 @@
 #include "archiveformat.h"
 #include "archivepath.h"
 #include "imageformatregistry.h"
+#include "imagenavigationmodel.h"
 
 #include <optional>
 #include <utility>
@@ -83,6 +84,7 @@ QString archiveImageReadError()
 ArchiveImageCandidatesResult archiveImageCandidatesResult(
     std::vector<ImageNavigationCandidate> candidates)
 {
+    sortImageNavigationCandidates(&candidates);
     return ArchiveImageCandidates { std::move(candidates) };
 }
 

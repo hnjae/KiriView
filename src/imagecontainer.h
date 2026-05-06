@@ -8,7 +8,6 @@
 #include "imagenavigationtypes.h"
 
 #include <KFileItem>
-#include <KIO/UDSEntry>
 #include <QString>
 #include <QUrl>
 #include <optional>
@@ -25,8 +24,6 @@ std::optional<QUrl> containingComicBookArchiveRootUrl(const QUrl &url);
 std::optional<QUrl> containingDirectArchiveOpenRootUrl(const QUrl &url);
 QString windowTitleFileNameForDisplayedLocation(const DisplayedImageLocation &location);
 std::vector<ContainerNavigationCandidate> containerNavigationCandidates(const KFileItemList &items);
-void appendArchiveImageNavigationCandidates(std::vector<ImageNavigationCandidate> *candidates,
-    const KIO::UDSEntryList &entries, const QUrl &directoryUrl, const QUrl &archiveRootUrl);
 QUrl zoomScopeUrlForLocation(const DisplayedImageLocation &location);
 QUrl containerNavigationUrlForLocation(const DisplayedImageLocation &location);
 }

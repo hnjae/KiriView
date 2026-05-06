@@ -4,7 +4,6 @@
 #include "archivebackend_p.h"
 
 #include "archiveformat.h"
-#include "imagenavigationmodel.h"
 
 #include <K7Zip>
 #include <KArchive>
@@ -158,7 +157,6 @@ KiriView::ArchiveImageCandidatesResult loadKArchiveDocumentImageCandidates(
     std::vector<KiriView::ImageNavigationCandidate> candidates;
     appendArchiveDirectoryImageCandidates(
         &candidates, opened.archive.directory(), archiveDocument, QString());
-    KiriView::sortImageNavigationCandidates(&candidates);
     return Backend::archiveImageCandidatesResult(std::move(candidates));
 }
 
