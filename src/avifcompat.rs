@@ -9,17 +9,17 @@
 
 use crate::{
     bmff::{
-        BOX_HEADER_SIZE, BOX_KIND_OFFSET, BOX_KIND_SIZE, BoxHeader, child_boxes, read_box,
-        top_level_boxes,
+        BOX_HEADER_SIZE, BOX_KIND_OFFSET, BOX_KIND_SIZE, BoxHeader,
+        FULL_BOX_VERSION_AND_FLAGS_SIZE, child_boxes, read_box, read_full_box, top_level_boxes,
     },
     byteio::{read_be_u16, read_be_u32, write_be_u16, write_be_u32},
 };
 use cxx_qt_lib::QByteArray;
 
-const FULL_BOX_HEADER_SIZE: usize = 4;
 const IPMA_ENTRY_COUNT_SIZE: usize = 4;
 const IPMA_VERSION_AND_FLAGS_OFFSET: usize = BOX_HEADER_SIZE;
-const IPMA_ENTRY_COUNT_OFFSET: usize = IPMA_VERSION_AND_FLAGS_OFFSET + FULL_BOX_HEADER_SIZE;
+const IPMA_ENTRY_COUNT_OFFSET: usize =
+    IPMA_VERSION_AND_FLAGS_OFFSET + FULL_BOX_VERSION_AND_FLAGS_SIZE;
 const IPMA_ENTRIES_OFFSET: usize = IPMA_ENTRY_COUNT_OFFSET + IPMA_ENTRY_COUNT_SIZE;
 const EMPTY_IPMA_BOX_SIZE: usize = IPMA_ENTRIES_OFFSET;
 
@@ -40,7 +40,7 @@ mod ffi {
 
 struct IpmaBox {
     box_header: BoxHeader,
-    version_and_flags: [u8; FULL_BOX_HEADER_SIZE],
+    version_and_flags: [u8; FULL_BOX_VERSION_AND_FLAGS_SIZE],
     entry_count: u32,
     entries: Vec<u8>,
 }
@@ -76,31 +76,26 @@ fn is_avif_file(data: &[u8]) -> bool {
 }
 
 fn meta_child_boxes(data: &[u8], meta_box: BoxHeader) -> Vec<BoxHeader> {
-    if !meta_box.is_type(b"meta") || meta_box.size < meta_box.header_size + FULL_BOX_HEADER_SIZE {
+    let Some(full_box) = read_full_box(data, meta_box, b"meta", 0) else {
         return Vec::new();
-    }
+    };
 
-    child_boxes(
-        data,
-        meta_box.body_offset() + FULL_BOX_HEADER_SIZE,
-        meta_box.end_offset(),
-    )
+    child_boxes(data, full_box.payload_offset(), full_box.end_offset())
 }
 
 fn primary_item_id(data: &[u8], meta_box: BoxHeader) -> Option<u32> {
     for box_header in meta_child_boxes(data, meta_box) {
-        if !box_header.is_type(b"pitm")
-            || box_header.size < box_header.header_size + FULL_BOX_HEADER_SIZE + 2
-        {
+        let Some(full_box) = read_full_box(data, box_header, b"pitm", 0) else {
             continue;
-        }
+        };
 
-        let version_offset = box_header.body_offset();
-        let version = *data.get(version_offset)?;
-        let item_id_size = primary_item_id_size(version)?;
-        let item_id_offset = version_offset + FULL_BOX_HEADER_SIZE;
+        let item_id_size = primary_item_id_size(full_box.version())?;
+        let item_id_offset = full_box.payload_offset();
 
-        if item_id_offset + item_id_size <= box_header.end_offset() {
+        if item_id_offset
+            .checked_add(item_id_size)
+            .is_some_and(|end| end <= full_box.end_offset())
+        {
             return read_item_id(data, item_id_offset, item_id_size);
         }
     }
@@ -170,16 +165,13 @@ fn write_item_id(data: &mut [u8], offset: usize, id_size: usize, item_id: u32) -
 }
 
 fn patch_item_reference(data: &mut [u8], iref_box: BoxHeader, item_id: u32) -> bool {
-    if iref_box.size < iref_box.header_size + FULL_BOX_HEADER_SIZE {
-        return false;
-    }
-
-    let mut changed = false;
-    let Some(version) = data.get(iref_box.body_offset()).copied() else {
+    let Some(full_box) = read_full_box(data, iref_box, b"iref", 0) else {
         return false;
     };
-    let id_size = item_reference_id_size(version);
-    let mut offset = iref_box.body_offset() + FULL_BOX_HEADER_SIZE;
+
+    let mut changed = false;
+    let id_size = item_reference_id_size(full_box.version());
+    let mut offset = full_box.payload_offset();
 
     while offset < iref_box.end_offset() {
         let Some(reference_box) = read_box(data, offset, iref_box.end_offset()) else {
@@ -242,25 +234,21 @@ fn patch_zero_auxl_references(data: &mut [u8], meta_box: BoxHeader) -> bool {
 }
 
 fn read_ipma_box(data: &[u8], box_header: BoxHeader) -> Option<IpmaBox> {
-    if !box_header.is_type(b"ipma")
-        || box_header.size < box_header.header_size + FULL_BOX_HEADER_SIZE + IPMA_ENTRY_COUNT_SIZE
-    {
+    let full_box = read_full_box(data, box_header, b"ipma", IPMA_ENTRY_COUNT_SIZE)?;
+    if full_box.box_header.header_size != BOX_HEADER_SIZE {
+        // The in-place IPMA merger emits standard 32-bit box headers.
         return None;
     }
 
-    let box_offset = box_header.offset;
-    let version_and_flags = data
-        .get(box_offset + IPMA_VERSION_AND_FLAGS_OFFSET..box_offset + IPMA_ENTRY_COUNT_OFFSET)?
-        .try_into()
-        .ok()?;
-    let entry_count = read_be_u32(data, box_offset + IPMA_ENTRY_COUNT_OFFSET)?;
-    let entries = data
-        .get(box_offset + IPMA_ENTRIES_OFFSET..box_header.end_offset())?
-        .to_vec();
+    let entry_count = read_be_u32(data, full_box.payload_offset())?;
+    let entries_offset = full_box
+        .payload_offset()
+        .checked_add(IPMA_ENTRY_COUNT_SIZE)?;
+    let entries = data.get(entries_offset..full_box.end_offset())?.to_vec();
 
     Some(IpmaBox {
         box_header,
-        version_and_flags,
+        version_and_flags: full_box.version_and_flags,
         entry_count,
         entries,
     })
@@ -284,7 +272,7 @@ fn write_box_header(data: &mut [u8], kind: &[u8; BOX_KIND_SIZE], size: usize) ->
 
 fn write_ipma_box(
     data: &mut [u8],
-    version_and_flags: [u8; FULL_BOX_HEADER_SIZE],
+    version_and_flags: [u8; FULL_BOX_VERSION_AND_FLAGS_SIZE],
     entry_count: u32,
     entries: &[u8],
 ) -> bool {
@@ -304,7 +292,9 @@ fn write_ipma_box(
     true
 }
 
-fn empty_ipma_box_with_alternate_version(version_and_flags: [u8; FULL_BOX_HEADER_SIZE]) -> Vec<u8> {
+fn empty_ipma_box_with_alternate_version(
+    version_and_flags: [u8; FULL_BOX_VERSION_AND_FLAGS_SIZE],
+) -> Vec<u8> {
     let mut box_data = vec![0; EMPTY_IPMA_BOX_SIZE];
     let mut alternate_version_and_flags = version_and_flags;
     alternate_version_and_flags[0] = if version_and_flags[0] == 0 { 1 } else { 0 };
@@ -430,11 +420,28 @@ mod tests {
         data
     }
 
+    fn make_large_box(kind: &[u8; 4], body: &[u8]) -> Vec<u8> {
+        let size = BOX_HEADER_SIZE + 8 + body.len();
+        let mut data = Vec::with_capacity(size);
+        data.extend_from_slice(&1_u32.to_be_bytes());
+        data.extend_from_slice(kind);
+        data.extend_from_slice(&(size as u64).to_be_bytes());
+        data.extend_from_slice(body);
+        data
+    }
+
     fn make_full_box(kind: &[u8; 4], version_and_flags: [u8; 4], body: &[u8]) -> Vec<u8> {
-        let mut full_body = Vec::with_capacity(FULL_BOX_HEADER_SIZE + body.len());
+        let mut full_body = Vec::with_capacity(FULL_BOX_VERSION_AND_FLAGS_SIZE + body.len());
         full_body.extend_from_slice(&version_and_flags);
         full_body.extend_from_slice(body);
         make_box(kind, &full_body)
+    }
+
+    fn make_large_full_box(kind: &[u8; 4], version_and_flags: [u8; 4], body: &[u8]) -> Vec<u8> {
+        let mut full_body = Vec::with_capacity(FULL_BOX_VERSION_AND_FLAGS_SIZE + body.len());
+        full_body.extend_from_slice(&version_and_flags);
+        full_body.extend_from_slice(body);
+        make_large_box(kind, &full_body)
     }
 
     fn make_ftyp(brand: &[u8; 4]) -> Vec<u8> {
@@ -446,7 +453,8 @@ mod tests {
     }
 
     fn make_meta(children: &[Vec<u8>]) -> Vec<u8> {
-        let body_size = FULL_BOX_HEADER_SIZE + children.iter().map(Vec::len).sum::<usize>();
+        let body_size =
+            FULL_BOX_VERSION_AND_FLAGS_SIZE + children.iter().map(Vec::len).sum::<usize>();
         let mut body = Vec::with_capacity(body_size);
         body.extend_from_slice(&[0, 0, 0, 0]);
         for child in children {
@@ -527,5 +535,15 @@ mod tests {
         ];
         assert_eq!(fixed.len(), data.len());
         assert!(find_bytes(&fixed, &expected).is_some());
+    }
+
+    #[test]
+    fn leaves_large_duplicate_ipma_boxes_unmodified() {
+        let first_ipma = make_large_full_box(b"ipma", [0, 0, 0, 0], &[0, 0, 0, 1, 1, 2, 3]);
+        let second_ipma = make_large_full_box(b"ipma", [0, 0, 0, 0], &[0, 0, 0, 1, 4, 5]);
+        let iprp = make_alpha_iprp(vec![first_ipma, second_ipma]);
+        let data = make_avif_with_meta_children(&[iprp]);
+
+        assert!(fixed_avif_data(&data).is_none());
     }
 }
