@@ -11,6 +11,10 @@ toolbar always provides open, page navigation, fit, and zoom controls in fixed
 positions. Outside fullscreen, the toolbar uses normal application header
 placement and reserves layout space above the image viewing area. Controls that
 require a ready image are disabled until an image is ready.
+KiriView shows its application menu as a hamburger menu by default. Users can
+switch the application menu presentation between the hamburger menu and a
+conventional menubar, and KiriView remembers the selected presentation across
+launches.
 When KiriView is launched with one or more file path or URL arguments, including
 from a file manager's Open With action, it processes only the first argument in
 the supplied order and opens it at startup. Activating the open action shows the
@@ -275,6 +279,11 @@ The `?` key and F1 open a modal shortcut help dialog listing KiriView's keyboard
 and mouse shortcuts. The `?` shortcut is inactive while the page number or zoom
 input is focused. While the shortcut help dialog is open, Escape closes the
 dialog instead of closing the main window.
+
+Users can open Settings to configure KiriView's interface and keyboard
+shortcuts. Changing a shortcut updates the toolbar, application menu, menubar,
+shortcut help, and active keyboard handling consistently. Shortcut changes apply
+immediately and persist across launches.
 
 Out of scope for the current version: editing, metadata panels, and file
 management actions.
