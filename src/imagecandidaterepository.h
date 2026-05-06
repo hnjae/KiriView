@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGECANDIDATEREPOSITORY_H
 #define KIRIVIEW_IMAGECANDIDATEREPOSITORY_H
 
-#include "imageiojobs.h"
+#include "imageasyncdependencies.h"
 #include "imagelocation.h"
 #include "imagenavigationtypes.h"
 
@@ -76,19 +76,6 @@ private:
 
     QUrl m_currentUrl;
     ImageCandidateListSource m_source;
-};
-
-struct ImageNavigationCandidateProvider {
-    using ImageCandidateLoader
-        = std::function<ImageIoJob(QObject *, QUrl, ImageCandidatesCallback, ErrorCallback)>;
-    using ArchiveImageCandidateLoader = std::function<ImageIoJob(
-        QObject *, ArchiveDocumentLocation, ImageCandidatesCallback, ErrorCallback)>;
-    using ContainerCandidateLoader
-        = std::function<ImageIoJob(QObject *, QUrl, ContainerCandidatesCallback, ErrorCallback)>;
-
-    ImageCandidateLoader directoryImages;
-    ContainerCandidateLoader directoryContainers;
-    ArchiveImageCandidateLoader archiveImages;
 };
 
 using ContainerImageCallback = std::function<void(const QUrl &, const QUrl &)>;

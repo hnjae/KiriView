@@ -5,7 +5,6 @@
 #define KIRIVIEW_TESTS_IMAGE_TEST_SUPPORT_H
 
 #include "imageasyncdependencies.h"
-#include "imagecandidaterepository.h"
 #include "imageiojob.h"
 #include "staticimage.h"
 

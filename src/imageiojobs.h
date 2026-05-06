@@ -4,25 +4,17 @@
 #ifndef KIRIVIEW_IMAGEIOJOBS_H
 #define KIRIVIEW_IMAGEIOJOBS_H
 
+#include "imageasyncdependencies.h"
 #include "imagedecoderequest.h"
 #include "imageiojob.h"
 #include "imagelocation.h"
 #include "imagenavigationtypes.h"
 
-#include <QByteArray>
-#include <QString>
 #include <QUrl>
-#include <functional>
-#include <vector>
 
 class QObject;
 
 namespace KiriView {
-using ImageCandidatesCallback = std::function<void(std::vector<ImageNavigationCandidate>)>;
-using ContainerCandidatesCallback = std::function<void(std::vector<ContainerNavigationCandidate>)>;
-using ImageDataCallback = std::function<void(QByteArray)>;
-using ErrorCallback = std::function<void(const QString &)>;
-
 ImageIoJob startDirectoryImageCandidateList(QObject *receiver, QUrl directoryUrl,
     ImageCandidatesCallback callback, ErrorCallback errorCallback);
 ImageIoJob startDirectoryContainerCandidateList(QObject *receiver, QUrl directoryUrl,

@@ -7,6 +7,7 @@
 #include "decodedimageresult.h"
 #include "imageasyncdependencies.h"
 #include "imageasyncticket.h"
+#include "imagecandidaterepository.h"
 #include "imagedecodejob.h"
 #include "imageiojob.h"
 #include "imageloadtypes.h"
