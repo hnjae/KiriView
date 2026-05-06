@@ -240,12 +240,12 @@ archive. The current archive can be the comic book archive whose image is
 displayed, or an empty sibling comic book archive reached through archive
 navigation. When the current image is inside a local comic book archive opened
 directly by KiriView, its archive is that archive file. The Previous Archive and
-Next Archive toolbar actions open the previous or next sibling comic book
-archive beside the current archive.
+Next Archive actions open the previous or next sibling comic book archive beside
+the current archive.
 
 When the current image is a normal image file, inside a KDE-supported archive
 URL, or inside a directly opened ZIP, TAR, 7Z, or RAR archive document, the
-Previous Archive and Next Archive toolbar actions are disabled.
+Previous Archive and Next Archive actions are disabled.
 
 Sibling archive candidates are local `.cbz`, `.cbt`, `.cb7`, or `.cbr` files in
 the current archive's parent directory. Candidates are sorted with the same user
