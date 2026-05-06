@@ -9,6 +9,7 @@
 
 #include <QObject>
 #include <memory>
+#include <optional>
 #include <utility>
 
 namespace KiriView {
@@ -67,25 +68,26 @@ void DisplayedImageState::setPredecodeCacheable(bool cacheable)
 
 void DisplayedImageState::setImage(const QImage &image)
 {
-    m_image = displayReadyImage(image);
-    m_staticImage.reset();
-    m_surface = std::make_shared<DisplayedImageSurface>(LegacyFrameSurface { m_image });
-    ++m_imageRevision;
-    notifyImageChanged();
+    QImage displayImage = displayReadyImage(image);
+    replaceDisplayedImage(displayImage,
+        std::make_shared<DisplayedImageSurface>(LegacyFrameSurface { displayImage }), std::nullopt);
 }
 
 void DisplayedImageState::setStaticImage(StaticImagePayload staticImage, bool useFullImageSurface)
 {
-    m_image = displayReadyImage(staticImage.preview);
-    staticImage.preview = m_image;
-    m_staticImage = std::move(staticImage);
+    QImage displayImage = displayReadyImage(staticImage.preview);
+    staticImage.preview = displayImage;
+
+    std::optional<StaticImagePayload> storedStaticImage(std::move(staticImage));
+    std::shared_ptr<DisplayedImageSurface> surface;
     if (useFullImageSurface) {
-        m_surface = std::make_shared<DisplayedImageSurface>(LegacyFrameSurface { m_image });
+        surface = std::make_shared<DisplayedImageSurface>(LegacyFrameSurface { displayImage });
     } else {
-        m_surface = std::make_shared<DisplayedImageSurface>(StaticTileSurface { *m_staticImage });
+        surface = std::make_shared<DisplayedImageSurface>(StaticTileSurface { *storedStaticImage });
     }
-    ++m_imageRevision;
-    notifyImageChanged();
+
+    replaceDisplayedImage(
+        std::move(displayImage), std::move(surface), std::move(storedStaticImage));
 }
 
 bool DisplayedImageState::insertTile(DecodedTile tile)
@@ -102,8 +104,7 @@ bool DisplayedImageState::insertTile(DecodedTile tile)
         return false;
     }
 
-    ++m_imageRevision;
-    notifyImageChanged();
+    finishImageChange();
     return true;
 }
 
@@ -113,11 +114,7 @@ void DisplayedImageState::clear()
     m_imageIsPredecodeCacheable = false;
 
     if (m_surface != nullptr || !m_image.isNull()) {
-        m_surface.reset();
-        m_image = QImage();
-        m_staticImage.reset();
-        ++m_imageRevision;
-        notifyImageChanged();
+        replaceDisplayedImage(QImage(), nullptr, std::nullopt);
     }
 }
 
@@ -138,6 +135,21 @@ void DisplayedImageState::startHeifSequenceAnimation(const QByteArray &data)
 }
 
 void DisplayedImageState::stopAnimation() { m_animationPlayer->stop(); }
+
+void DisplayedImageState::replaceDisplayedImage(QImage image,
+    std::shared_ptr<DisplayedImageSurface> surface, std::optional<StaticImagePayload> staticImage)
+{
+    m_image = std::move(image);
+    m_surface = std::move(surface);
+    m_staticImage = std::move(staticImage);
+    finishImageChange();
+}
+
+void DisplayedImageState::finishImageChange()
+{
+    ++m_imageRevision;
+    notifyImageChanged();
+}
 
 void DisplayedImageState::notifyImageChanged() { invokeIfSet(m_imageChanged, imageSize()); }
 }

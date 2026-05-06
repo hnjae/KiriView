@@ -53,6 +53,9 @@ public:
     void stopAnimation();
 
 private:
+    void replaceDisplayedImage(QImage image, std::shared_ptr<DisplayedImageSurface> surface,
+        std::optional<StaticImagePayload> staticImage);
+    void finishImageChange();
     void notifyImageChanged();
 
     ImageChangedCallback m_imageChanged;
