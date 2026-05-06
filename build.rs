@@ -15,6 +15,32 @@ const KCONFIG_COMPILER_FILE: &str = "src/kiriviewsettings.kcfgc";
 const QML_SOURCE_DIR: &str = "src/qml";
 const DEFAULT_INCLUDE_ROOTS: &[&str] = &["/usr/include"];
 const DEFAULT_LIBRARY_DIRS: &[&str] = &["/usr/lib/x86_64-linux-gnu", "/usr/lib"];
+const CXX_QT_HEADER_SOURCES: &[&str] = &[
+    "src/kiriimagedocument.h",
+    "src/kiriimageview.h",
+    "src/kiriviewapplication.h",
+];
+const RUST_BRIDGE_SOURCES: &[&str] = &[
+    "src/apngdecoder.rs",
+    "src/avifcompat.rs",
+    "src/imageformatregistry.rs",
+    "src/imagenavigationmodel.rs",
+    "src/imageviewportgeometry.rs",
+    "src/imagezoomstate.rs",
+];
+const CXX_QT_CPP_SOURCES: &[&str] = &[
+    "src/imagedocumentcontrollerdefaults.cpp",
+    "src/imagedecodejobdefaults.cpp",
+    "src/imageloaderdefaults.cpp",
+    "src/imagepredecodecoordinatordefaults.cpp",
+    "src/apngdecoder.cpp",
+    "src/kiriimagedocument.cpp",
+    "src/kiriimagedecoder.cpp",
+    "src/kiriimagerendernode.cpp",
+    "src/kiriimageview.cpp",
+    "src/kiriviewapplication.cpp",
+];
+const QT_MODULES: &[&str] = &["Gui", "Qml", "Quick", "Svg", "Network", "DBus"];
 const NATIVE_LIBRARIES: &[NativeLibrary] = &[
     NativeLibrary {
         link_name: "KF6Archive",
@@ -86,37 +112,14 @@ fn main() {
     let mut builder = CxxQtBuilder::new_qml_module(qml_module)
         // Do not export the whole crate root as C++ headers. That makes Cargo watch
         // build artifacts such as build-dir/, including symlinks into /run.
-        .crate_include_root(None)
-        .cpp_file(CppFile::from("src/kiriimagedocument.h"))
-        .cpp_file(CppFile::from("src/kiriimageview.h"))
-        .cpp_file(CppFile::from("src/kiriviewapplication.h"))
-        .cpp_file(CppFile::from(generated_settings_source.as_str()))
-        .file("src/apngdecoder.rs")
-        .file("src/avifcompat.rs")
-        .file("src/imageformatregistry.rs")
-        .file("src/imagenavigationmodel.rs")
-        .file("src/imageviewportgeometry.rs")
-        .file("src/imagezoomstate.rs")
-        .cpp_file("src/imagedocumentcontrollerdefaults.cpp")
-        .cpp_file("src/imagedecodejobdefaults.cpp")
-        .cpp_file("src/imageloaderdefaults.cpp")
-        .cpp_file("src/imagepredecodecoordinatordefaults.cpp")
-        .cpp_file("src/apngdecoder.cpp")
-        .cpp_file("src/kiriimagedocument.cpp")
-        .cpp_file("src/kiriimagedecoder.cpp")
-        .cpp_file("src/kiriimagerendernode.cpp")
-        .cpp_file("src/kiriimageview.cpp")
-        .cpp_file("src/kiriviewapplication.cpp")
-        .qt_module("Gui")
-        .qt_module("Qml")
-        .qt_module("Quick")
-        .qt_module("Svg")
-        .qt_module("Network")
-        .qt_module("DBus");
+        .crate_include_root(None);
 
-    for source in cpp_core_sources {
-        builder = builder.cpp_file(CppFile::from(source.as_str()));
-    }
+    builder = add_cpp_files(builder, CXX_QT_HEADER_SOURCES);
+    builder = builder.cpp_file(CppFile::from(generated_settings_source.as_str()));
+    builder = add_rust_files(builder, RUST_BRIDGE_SOURCES);
+    builder = add_cpp_files(builder, CXX_QT_CPP_SOURCES);
+    builder = add_cpp_file_strings(builder, cpp_core_sources);
+    builder = add_qt_modules(builder, QT_MODULES);
 
     unsafe {
         builder = builder.cc_builder(move |cc| {
@@ -140,6 +143,34 @@ fn main() {
     }
 
     builder.build();
+}
+
+fn add_cpp_files(mut builder: CxxQtBuilder, files: &[&str]) -> CxxQtBuilder {
+    for file in files {
+        builder = builder.cpp_file(CppFile::from(*file));
+    }
+    builder
+}
+
+fn add_cpp_file_strings(mut builder: CxxQtBuilder, files: Vec<String>) -> CxxQtBuilder {
+    for file in files {
+        builder = builder.cpp_file(CppFile::from(file.as_str()));
+    }
+    builder
+}
+
+fn add_rust_files(mut builder: CxxQtBuilder, files: &[&str]) -> CxxQtBuilder {
+    for file in files {
+        builder = builder.file(*file);
+    }
+    builder
+}
+
+fn add_qt_modules(mut builder: CxxQtBuilder, modules: &[&str]) -> CxxQtBuilder {
+    for module in modules {
+        builder = builder.qt_module(module);
+    }
+    builder
 }
 
 fn qml_module() -> QmlModule {

@@ -139,17 +139,33 @@ mod tests {
         url.to_local_file().map(String::from)
     }
 
-    fn test_dir(name: &str) -> PathBuf {
-        let unique_suffix = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .expect("system time should be after Unix epoch")
-            .as_nanos();
-        let path = env::temp_dir().join(format!(
-            "kiriview-{name}-{}-{unique_suffix}",
-            std::process::id()
-        ));
-        fs::create_dir(&path).expect("test directory should be created");
-        path
+    struct TestDirectory {
+        path: PathBuf,
+    }
+
+    impl TestDirectory {
+        fn new(name: &str) -> Self {
+            let unique_suffix = SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .expect("system time should be after Unix epoch")
+                .as_nanos();
+            let path = env::temp_dir().join(format!(
+                "kiriview-{name}-{}-{unique_suffix}",
+                std::process::id()
+            ));
+            fs::create_dir(&path).expect("test directory should be created");
+            Self { path }
+        }
+
+        fn path(&self) -> &Path {
+            &self.path
+        }
+    }
+
+    impl Drop for TestDirectory {
+        fn drop(&mut self) {
+            let _ = fs::remove_dir_all(&self.path);
+        }
     }
 
     fn existing_test_file(working_directory: &Path, name: &str) -> PathBuf {
@@ -160,12 +176,12 @@ mod tests {
 
     #[test]
     fn relative_startup_path_becomes_local_file_url() {
-        let working_directory = test_dir("relative-startup-path");
-        let expected_path = existing_test_file(&working_directory, "archive-zip.cbt");
+        let working_directory = TestDirectory::new("relative-startup-path");
+        let expected_path = existing_test_file(working_directory.path(), "archive-zip.cbt");
 
         let url = initial_source_url_from_args(
             startup_args(&["archive-zip.cbt"]),
-            Some(&working_directory),
+            Some(working_directory.path()),
         )
         .expect("relative startup path should be accepted")
         .expect("relative startup path should produce a URL");
@@ -174,18 +190,16 @@ mod tests {
             local_file_path(&url).map(PathBuf::from).as_deref(),
             Some(expected_path.as_path())
         );
-
-        fs::remove_dir_all(working_directory).expect("test directory should be removed");
     }
 
     #[test]
     fn startup_path_after_separator_becomes_local_file_url() {
-        let working_directory = test_dir("startup-path-after-separator");
-        let expected_path = existing_test_file(&working_directory, "archive-zip.cbt");
+        let working_directory = TestDirectory::new("startup-path-after-separator");
+        let expected_path = existing_test_file(working_directory.path(), "archive-zip.cbt");
 
         let url = initial_source_url_from_args(
             startup_args(&["--", "archive-zip.cbt"]),
-            Some(&working_directory),
+            Some(working_directory.path()),
         )
         .expect("startup path after -- should be accepted")
         .expect("startup path after -- should produce a URL");
@@ -194,31 +208,27 @@ mod tests {
             local_file_path(&url).map(PathBuf::from).as_deref(),
             Some(expected_path.as_path())
         );
-
-        fs::remove_dir_all(working_directory).expect("test directory should be removed");
     }
 
     #[test]
     fn missing_relative_startup_path_reports_argument_error() {
-        let working_directory = test_dir("missing-relative-startup-path");
-        let expected_path = working_directory.join("non-exit-file");
+        let working_directory = TestDirectory::new("missing-relative-startup-path");
+        let expected_path = working_directory.path().join("non-exit-file");
 
         let error = initial_source_url_from_args(
             startup_args(&["non-exit-file"]),
-            Some(&working_directory),
+            Some(working_directory.path()),
         )
         .expect_err("missing startup path should report an argument error");
 
         assert_eq!(error.path(), expected_path.as_path());
         assert_eq!(error.reason(), MISSING_LOCAL_FILE_REASON);
-
-        fs::remove_dir_all(working_directory).expect("test directory should be removed");
     }
 
     #[test]
     fn missing_file_url_startup_argument_reports_argument_error() {
-        let working_directory = test_dir("missing-file-url-startup-argument");
-        let expected_path = working_directory.join("non-exit-file");
+        let working_directory = TestDirectory::new("missing-file-url-startup-argument");
+        let expected_path = working_directory.path().join("non-exit-file");
         let file_url =
             QUrl::from_local_file(&QString::from(expected_path.to_string_lossy().as_ref()));
         let args = vec![
@@ -226,13 +236,11 @@ mod tests {
             OsString::from(String::from(file_url.to_qstring())),
         ];
 
-        let error = initial_source_url_from_args(args, Some(&working_directory))
+        let error = initial_source_url_from_args(args, Some(working_directory.path()))
             .expect_err("missing startup file URL should report an argument error");
 
         assert_eq!(error.path(), expected_path.as_path());
         assert_eq!(error.reason(), MISSING_LOCAL_FILE_REASON);
-
-        fs::remove_dir_all(working_directory).expect("test directory should be removed");
     }
 
     #[test]
