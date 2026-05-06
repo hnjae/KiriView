@@ -40,8 +40,7 @@ from a file manager's Open With action, it processes only the first argument in
 the supplied order and opens it at startup. Activating the open action shows the
 XDG portal file chooser, which accepts a single selection only. Dropping one or
 more file or URL items onto the running main window opens only the first item in
-the order supplied by the desktop environment. Pressing Escape closes the main
-window.
+the order supplied by the desktop environment.
 If the first startup argument is a local file path or file URL and that file
 does not exist, KiriView prints a clear error message naming the path and reason
 to standard error, does not open the main window, and exits with code 2.
@@ -313,7 +312,13 @@ The `f` shortcut is inactive while the page number or zoom input is focused.
 The `?` key and F1 open a modal shortcut help dialog listing KiriView's keyboard
 and mouse shortcuts. The `?` shortcut is inactive while the page number or zoom
 input is focused. While the shortcut help dialog is open, Escape closes the
-dialog instead of closing the main window.
+dialog before any fullscreen handling.
+
+Escape leaves fullscreen when the main window is fullscreen. Outside fullscreen,
+Escape does not close the main window. The `q` and Ctrl+Q shortcuts close the
+main window. Unmodified quit shortcuts such as `q` are inactive while the page
+number or zoom input is focused; quit shortcuts using Ctrl, Alt, or Meta remain
+active while those inputs are focused.
 
 Users can open Settings to configure KiriView's interface and keyboard
 shortcuts. Changing a shortcut updates the toolbar, application menu, menubar,
