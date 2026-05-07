@@ -6,7 +6,7 @@ SPDX-License-Identifier: AGPL-3.0-or-later
 <kcfg xmlns="http://www.kde.org/standards/kcfg/1.0"
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:schemaLocation="http://www.kde.org/standards/kcfg/1.0 https://www.kde.org/standards/kcfg/1.0/kcfg.xsd">
-    <kcfgfile name="kiriviewrc"/>
+    <kcfgfile name="kiriviewstaterc" stateConfig="true"/>
     <group name="Interface">
         <entry name="menuPresentation" type="Enum">
             <choices>

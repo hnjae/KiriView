@@ -10,8 +10,8 @@ use std::{
 };
 
 const CPP_CORE_SOURCES_FILE: &str = "src/cpp_core_sources.txt";
-const KCONFIG_SCHEMA_FILE: &str = "src/kiriviewsettings.kcfg";
-const KCONFIG_COMPILER_FILE: &str = "src/kiriviewsettings.kcfgc";
+const KCONFIG_SCHEMA_FILE: &str = "src/kiriviewstate.kcfg";
+const KCONFIG_COMPILER_FILE: &str = "src/kiriviewstate.kcfgc";
 const QML_SOURCE_DIR: &str = "src/qml";
 const DEFAULT_INCLUDE_ROOTS: &[&str] = &["/usr/include"];
 const DEFAULT_LIBRARY_DIRS: &[&str] = &["/usr/lib/x86_64-linux-gnu", "/usr/lib"];
@@ -92,7 +92,7 @@ struct NativeLibrary {
     pkg_config_package: Option<&'static str>,
 }
 
-struct GeneratedSettings {
+struct GeneratedState {
     include_dir: PathBuf,
     source: PathBuf,
 }
@@ -104,8 +104,8 @@ fn main() {
     let qt_rhi_include_dirs = qt_rhi_include_dirs();
     let shader_source = bake_shaders();
     let cpp_core_sources = cpp_core_sources();
-    let generated_settings = generate_kconfig_settings();
-    let generated_settings_source = generated_settings.source.to_string_lossy().into_owned();
+    let generated_state = generate_kconfig_state();
+    let generated_state_source = generated_state.source.to_string_lossy().into_owned();
     let qml_module = qml_module();
     link_native_libraries();
 
@@ -115,7 +115,7 @@ fn main() {
         .crate_include_root(None);
 
     builder = add_cpp_files(builder, CXX_QT_HEADER_SOURCES);
-    builder = builder.cpp_file(CppFile::from(generated_settings_source.as_str()));
+    builder = builder.cpp_file(CppFile::from(generated_state_source.as_str()));
     builder = add_rust_files(builder, RUST_BRIDGE_SOURCES);
     builder = add_cpp_files(builder, CXX_QT_CPP_SOURCES);
     builder = add_cpp_file_strings(builder, cpp_core_sources);
@@ -126,7 +126,7 @@ fn main() {
             cc.flag_if_supported("-Wno-attributes");
             cc.file(&shader_source);
             cc.include("src");
-            cc.include(&generated_settings.include_dir);
+            cc.include(&generated_state.include_dir);
             for dir in &kio_include_dirs {
                 cc.include(dir);
             }
@@ -183,7 +183,7 @@ fn qml_module() -> QmlModule {
     module
 }
 
-fn generate_kconfig_settings() -> GeneratedSettings {
+fn generate_kconfig_state() -> GeneratedState {
     println!("cargo::rerun-if-changed={KCONFIG_SCHEMA_FILE}");
     println!("cargo::rerun-if-changed={KCONFIG_COMPILER_FILE}");
 
@@ -203,9 +203,9 @@ fn generate_kconfig_settings() -> GeneratedSettings {
         panic!("kconfig_compiler_kf6 failed for {KCONFIG_SCHEMA_FILE}");
     }
 
-    GeneratedSettings {
+    GeneratedState {
         include_dir: include_dir.clone(),
-        source: include_dir.join("kiriviewsettings.cpp"),
+        source: include_dir.join("kiriviewstate.cpp"),
     }
 }
 

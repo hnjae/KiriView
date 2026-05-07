@@ -70,7 +70,7 @@ target_include_directories(kiriview_test_core PUBLIC
     "${CMAKE_CURRENT_BINARY_DIR}"
     "${KIRIVIEW_CXXQT_INCLUDE_DIR}"
 )
-kconfig_add_kcfg_files(kiriview_test_core ../../src/kiriviewsettings.kcfgc)
+kconfig_add_kcfg_files(kiriview_test_core ../../src/kiriviewstate.kcfgc)
 target_link_libraries(kiriview_test_core PUBLIC
     "${KIRIVIEW_RUST_STATICLIB}"
     Qt6::Core

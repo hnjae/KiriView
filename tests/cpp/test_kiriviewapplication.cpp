@@ -2,32 +2,42 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 #include "kiriviewapplication.h"
-#include "kiriviewsettings.h"
+#include "kiriviewstate.h"
 
-#include <KConfig>
+#include <KConfigGroup>
 #include <KSharedConfig>
 #include <KirigamiActionCollection>
 #include <QAction>
 #include <QApplication>
 #include <QByteArray>
+#include <QFileInfo>
 #include <QObject>
 #include <QSignalSpy>
 #include <QStandardPaths>
 #include <QTest>
 
 namespace {
+constexpr const char *interfaceConfigGroup = "Interface";
+constexpr const char *menuPresentationConfigKey = "menuPresentation";
+constexpr const char *stateConfigFileName = "kiriviewstaterc";
+
 QKeySequence shortcut(const QString &sequence)
 {
     return QKeySequence::fromString(sequence, QKeySequence::PortableText);
 }
 
+KConfigGroup stateInterfaceGroup()
+{
+    return KConfigGroup(KiriViewState::self()->config(), QLatin1String(interfaceConfigGroup));
+}
+
 void resetConfig()
 {
-    KiriViewSettings *settings = KiriViewSettings::self();
-    settings->config()->deleteGroup(QStringLiteral("Interface"));
-    settings->config()->sync();
-    settings->config()->reparseConfiguration();
-    settings->read();
+    KiriViewState *state = KiriViewState::self();
+    state->config()->deleteGroup(QStringLiteral("Interface"));
+    state->config()->sync();
+    state->config()->reparseConfiguration();
+    state->read();
 
     KSharedConfig::Ptr appConfig = KSharedConfig::openConfig();
     appConfig->deleteGroup(QStringLiteral("Shortcuts"));
@@ -59,6 +69,7 @@ private Q_SLOTS:
     void shortcutModifierPartitionsTextInputShortcuts();
     void menuPresentationDefaultsToHamburgerMenu();
     void menuPresentationPersists();
+    void menuPresentationStateUsesGenericStateLocation();
     void showMenubarActionTogglesMenuPresentation();
 };
 
@@ -289,11 +300,12 @@ void TestKiriViewApplication::menuPresentationDefaultsToHamburgerMenu()
 {
     KiriViewApplication application;
 
-    QCOMPARE(KiriViewSettings::defaultMenuPresentationValue(),
-        static_cast<int>(KiriViewSettings::EnumMenuPresentation::HamburgerMenu));
+    QCOMPARE(KiriViewState::defaultMenuPresentationValue(),
+        static_cast<int>(KiriViewState::EnumMenuPresentation::HamburgerMenu));
     QCOMPARE(application.menuPresentation(), KiriViewApplication::HamburgerMenu);
-    QCOMPARE(KiriViewSettings::menuPresentation(),
-        static_cast<int>(KiriViewSettings::EnumMenuPresentation::HamburgerMenu));
+    QCOMPARE(KiriViewState::menuPresentation(),
+        static_cast<int>(KiriViewState::EnumMenuPresentation::HamburgerMenu));
+    QVERIFY(!stateInterfaceGroup().hasKey(QLatin1String(menuPresentationConfigKey)));
 }
 
 void TestKiriViewApplication::menuPresentationPersists()
@@ -305,14 +317,28 @@ void TestKiriViewApplication::menuPresentationPersists()
 
     QCOMPARE(changedSpy.count(), 1);
     QCOMPARE(application.menuPresentation(), KiriViewApplication::MenuBar);
-    QCOMPARE(KiriViewSettings::menuPresentation(),
-        static_cast<int>(KiriViewSettings::EnumMenuPresentation::MenuBar));
+    QCOMPARE(KiriViewState::menuPresentation(),
+        static_cast<int>(KiriViewState::EnumMenuPresentation::MenuBar));
+    QCOMPARE(stateInterfaceGroup().readEntry(QLatin1String(menuPresentationConfigKey), QString()),
+        QStringLiteral("MenuBar"));
 
-    KiriViewSettings::setMenuPresentation(KiriViewSettings::EnumMenuPresentation::HamburgerMenu);
+    KiriViewState::setMenuPresentation(KiriViewState::EnumMenuPresentation::HamburgerMenu);
     QCOMPARE(application.menuPresentation(), KiriViewApplication::HamburgerMenu);
 
-    KiriViewSettings::self()->read();
+    KiriViewState::self()->read();
     QCOMPARE(application.menuPresentation(), KiriViewApplication::MenuBar);
+}
+
+void TestKiriViewApplication::menuPresentationStateUsesGenericStateLocation()
+{
+    KiriViewState::setMenuPresentation(KiriViewState::EnumMenuPresentation::MenuBar);
+    KiriViewState::self()->save();
+
+    const QString statePath = QStandardPaths::locate(
+        QStandardPaths::GenericStateLocation, QLatin1String(stateConfigFileName));
+    QVERIFY(!statePath.isEmpty());
+    QCOMPARE(QFileInfo(statePath).absolutePath(),
+        QStandardPaths::writableLocation(QStandardPaths::GenericStateLocation));
 }
 
 void TestKiriViewApplication::showMenubarActionTogglesMenuPresentation()

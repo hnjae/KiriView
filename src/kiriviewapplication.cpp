@@ -3,7 +3,7 @@
 
 #include "kiriviewapplication.h"
 
-#include "kiriviewsettings.h"
+#include "kiriviewstate.h"
 
 #include <KirigamiActionCollection>
 #include <QIcon>
@@ -296,6 +296,7 @@ KiriViewApplication::MenuPresentation toMenuPresentation(int value)
         return KiriViewApplication::HamburgerMenu;
     }
 }
+
 }
 
 KiriViewApplication::KiriViewApplication(QObject *parent)
@@ -308,7 +309,7 @@ KiriViewApplication::~KiriViewApplication() = default;
 
 KiriViewApplication::MenuPresentation KiriViewApplication::menuPresentation() const
 {
-    return toMenuPresentation(KiriViewSettings::menuPresentation());
+    return toMenuPresentation(KiriViewState::menuPresentation());
 }
 
 void KiriViewApplication::setMenuPresentation(MenuPresentation presentation)
@@ -317,8 +318,8 @@ void KiriViewApplication::setMenuPresentation(MenuPresentation presentation)
         return;
     }
 
-    KiriViewSettings::setMenuPresentation(static_cast<int>(presentation));
-    KiriViewSettings::self()->save();
+    KiriViewState::setMenuPresentation(static_cast<int>(presentation));
+    KiriViewState::self()->save();
     updateShowMenuBarAction();
     Q_EMIT menuPresentationChanged();
 }
