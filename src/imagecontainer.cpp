@@ -74,6 +74,12 @@ std::optional<QUrl> containingArchiveRootUrl(const QUrl &url, const QStringList 
     return archiveRootUrl;
 }
 
+QUrl archiveDocumentFileNavigationUrl(const KiriView::DisplayedImageLocation &location)
+{
+    return KiriView::normalizedFileContainerUrl(
+        KiriView::navigationSourceUrl(location.archiveDocumentFileUrl()));
+}
+
 }
 
 namespace KiriView {
@@ -170,7 +176,7 @@ std::vector<ContainerNavigationCandidate> containerNavigationCandidates(const KF
 QUrl zoomScopeUrlForLocation(const DisplayedImageLocation &location)
 {
     if (displayedLocationIsInsideArchiveDocument(location)) {
-        return normalizedFileContainerUrl(navigationSourceUrl(location.archiveDocumentFileUrl()));
+        return archiveDocumentFileNavigationUrl(location);
     }
 
     return {};
@@ -183,6 +189,6 @@ QUrl containerNavigationUrlForLocation(const DisplayedImageLocation &location)
         return {};
     }
 
-    return normalizedFileContainerUrl(navigationSourceUrl(location.archiveDocumentFileUrl()));
+    return archiveDocumentFileNavigationUrl(location);
 }
 }

@@ -222,9 +222,8 @@ bool ImageAnimationPlayer::resetHeifSequence(
     playback.reader = std::make_unique<HeifSequenceReader>();
     const HeifSequenceOpenResult openResult = playback.reader->open(playback.data);
     if (openResult.status != HeifSequenceOpenStatus::Success) {
-        *errorString = openResult.errorString.isEmpty()
-            ? imageViewText("Could not decode the selected HEIF image sequence.")
-            : openResult.errorString;
+        *errorString = openResult.errorString.isEmpty() ? heifSequenceDecodeErrorString()
+                                                        : openResult.errorString;
         playback.reader.reset();
         return false;
     }
@@ -232,7 +231,7 @@ bool ImageAnimationPlayer::resetHeifSequence(
     std::optional<AnimationFrame> firstFrame = playback.reader->readNextFrame(errorString);
     if (!firstFrame.has_value()) {
         if (errorString->isEmpty()) {
-            *errorString = imageViewText("Could not decode the selected HEIF image sequence.");
+            *errorString = heifSequenceDecodeErrorString();
         }
         playback.reader.reset();
         return false;

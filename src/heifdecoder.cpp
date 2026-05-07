@@ -63,8 +63,7 @@ std::optional<KiriView::DecodedImageResult> decodeHeifSequenceImageDataForInfo(
     std::optional<KiriView::AnimationFrame> firstFrame = reader.readNextFrame(&errorString);
     if (!firstFrame.has_value()) {
         if (errorString.isEmpty()) {
-            errorString
-                = KiriView::imageViewText("Could not decode the selected HEIF image sequence.");
+            errorString = KiriView::heifSequenceDecodeErrorString();
         }
         return KiriView::failedDecodedImageResult(errorString);
     }
@@ -81,6 +80,11 @@ namespace KiriView {
 std::optional<DecodedImageResult> decodeHeifStillImageData(const QByteArray &data)
 {
     return decodeHeifStillImageDataForInfo(data, heifContainerInfo(data));
+}
+
+QString heifSequenceDecodeErrorString()
+{
+    return imageViewText("Could not decode the selected HEIF image sequence.");
 }
 
 std::optional<DecodedImageResult> decodeHeifSequenceImageData(const QByteArray &data)

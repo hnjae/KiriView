@@ -48,6 +48,7 @@ private:
 std::optional<DecodedImageResult> decodeHeifStillImageData(const QByteArray &data);
 std::optional<DecodedImageResult> decodeHeifSequenceImageData(const QByteArray &data);
 std::optional<DecodedImageResult> decodeHeifImageData(const QByteArray &data);
+QString heifSequenceDecodeErrorString();
 }
 
 #endif
