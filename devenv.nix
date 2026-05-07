@@ -60,9 +60,6 @@ let
   cxxCompiler = pkgs.stdenv.cc.cc;
   cxxStandardLibraryVersion = lib.getVersion cxxCompiler;
   cxxTarget = pkgs.stdenv.hostPlatform.config;
-  cargoVendorDir = "${config.devenv.root}/.cargo-vendor/vendor";
-  cargoVendorSourceConfig = "source.vendored-sources.directory=\"${cargoVendorDir}\"";
-  cargoCratesIoReplaceConfig = "source.crates-io.replace-with=\"vendored-sources\"";
   karchiveDev = pkgs.kdePackages.karchive.dev or pkgs.kdePackages.karchive;
   kconfigDev = pkgs.kdePackages.kconfig.dev or pkgs.kdePackages.kconfig;
   kcoreaddonsDev = pkgs.kdePackages.kcoreaddons.dev or pkgs.kdePackages.kcoreaddons;
@@ -264,23 +261,14 @@ in
 
   scripts = {
     "test-rust-host" = {
-      description = "Run host Rust library tests with vendored dependencies";
+      description = "Run host Rust library tests";
       exec = ''
         set -euo pipefail
 
         cd ${lib.escapeShellArg config.devenv.root}
 
-        if [[ ! -d ${lib.escapeShellArg cargoVendorDir} ]]; then
-            echo ".cargo-vendor/vendor was not found; run 'just test' to vendor dependencies" >&2
-            exit 1
-        fi
-
         CARGO_TARGET_DIR=${lib.escapeShellArg "${config.devenv.root}/target"} \
-            cargo \
-                --config ${lib.escapeShellArg cargoVendorSourceConfig} \
-                --config ${lib.escapeShellArg cargoCratesIoReplaceConfig} \
-                --offline \
-                test --lib --all-features
+            cargo test --locked --lib --all-features
       '';
     };
     "test-cpp-host" = {
@@ -314,22 +302,13 @@ in
       '';
     };
     "lint-clippy" = {
-      description = "Run Rust clippy with vendored dependencies";
+      description = "Run Rust clippy";
       exec = ''
         set -euo pipefail
 
         cd ${lib.escapeShellArg config.devenv.root}
 
-        if [[ ! -d ${lib.escapeShellArg cargoVendorDir} ]]; then
-            echo ".cargo-vendor/vendor was not found; run 'just lint' to vendor dependencies" >&2
-            exit 1
-        fi
-
-        cargo \
-            --config ${lib.escapeShellArg cargoVendorSourceConfig} \
-            --config ${lib.escapeShellArg cargoCratesIoReplaceConfig} \
-            --offline \
-            clippy --all-targets --all-features -- -D warnings
+        cargo clippy --locked --all-targets --all-features -- -D warnings
       '';
     };
     "lint-qmllint" = {
@@ -341,17 +320,11 @@ in
         ${lib.getExe' pkgs.kdePackages.qtdeclarative "qmllint"} ${qmlLintImportArgs} --ignore-settings --max-warnings 0 src/qml/*.qml
       '';
     };
-    "lint-clang-tidy" = {
-      description = "Run clang-tidy against C++ sources";
+    "lint-cpp" = {
+      description = "Run C++ linters";
       exec = ''
         ${cppLintPrelude}
         ${lib.getExe' pkgs.clang-tools "clang-tidy"} --quiet -p . ${cppSourcesShellArgs}
-      '';
-    };
-    "lint-clazy" = {
-      description = "Run clazy against C++ sources";
-      exec = ''
-        ${cppLintPrelude}
         ${lib.getExe' pkgs.clazy "clazy-standalone"} --checks="''${CLAZY_CHECKS:-level0}" -p . ${cppSourcesShellArgs}
       '';
     };

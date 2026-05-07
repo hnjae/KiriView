@@ -20,7 +20,6 @@ path = [
   "Cargo.lock",
   "Cargo.toml",
   "cargo-sources.json",
-  "cargo/config",
   "devenv.lock",
   "devenv.yaml",
   "io.github.hnjae.KiriView.desktop",

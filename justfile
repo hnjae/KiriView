@@ -5,28 +5,19 @@ set lazy
 
 export DEVENV_TUI := "false"
 
-cargo_vendor_root := justfile_directory() + "/.cargo-vendor"
-cargo_vendor_dir := cargo_vendor_root + "/vendor"
-
 _:
     @just --list
 
-[no-cd]
-[private]
-_cargo-vendor-sources:
-    devenv shell -- cargo vendor --locked --versioned-dirs --quiet '{{ cargo_vendor_dir }}'
-
 [group('ci')]
-lint: _cargo-vendor-sources
+lint:
     devenv shell -- lint-clippy
     devenv shell -- lint-qmllint
-    devenv shell -- lint-clang-tidy
-    devenv shell -- lint-clazy
+    devenv shell -- lint-cpp
 
 alias test-host := test
 
 [group('ci')]
-test: _cargo-vendor-sources
+test:
     devenv shell -- test-host
 
 [group('ci')]
