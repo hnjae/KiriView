@@ -203,7 +203,8 @@ std::optional<AnimationFrame> HeifSequenceReader::readNextFrame(QString *errorSt
     }
     if (error.code != heif_error_Ok) {
         if (errorString != nullptr) {
-            *errorString = heifErrorString("decoding the HEIF image sequence", error);
+            *errorString
+                = heifErrorString(imageViewText("decoding the HEIF image sequence"), error);
         }
         return std::nullopt;
     }

@@ -4,6 +4,7 @@
 import QtQuick
 import QtQuick.Dialogs as Dialogs
 import io.github.hnjae.kiriview
+import org.kde.ki18n
 import org.kde.kirigami as Kirigami
 import org.kde.kirigamiaddons.settings as KirigamiSettings
 import org.kde.kirigamiaddons.statefulapp as StatefulApp
@@ -16,7 +17,7 @@ StatefulApp.StatefulWindow {
 
         configurationView: settingsView
     }
-    title: page.imageDocument.windowTitleFileName.length > 0 ? page.imageDocument.windowTitleFileName + " — KiriView" : "KiriView"
+    title: page.imageDocument.windowTitleFileName.length > 0 ? KI18n.i18nc("@title:window", "%1 — KiriView", page.imageDocument.windowTitleFileName) : "KiriView"
     visible: true
     windowName: "Main"
 
@@ -284,7 +285,7 @@ StatefulApp.StatefulWindow {
         modules: [
             KirigamiSettings.ConfigurationModule {
                 moduleId: "interface"
-                text: "Interface"
+                text: KI18n.i18nc("@title:settings module", "Interface")
                 icon.name: "preferences-desktop-symbolic"
                 page: () => Qt.createComponent("io.github.hnjae.kiriview", "InterfaceSettingsPage")
                 initialProperties: () => {
@@ -313,7 +314,7 @@ StatefulApp.StatefulWindow {
 
         fileMode: Dialogs.FileDialog.OpenFile
         nameFilters: page.imageDocument.openDialogNameFilters
-        title: "Open Image or Comic Book"
+        title: KI18n.i18nc("@title:window", "Open Image or Comic Book")
 
         onAccepted: page.imageDocument.sourceUrl = selectedFile
     }

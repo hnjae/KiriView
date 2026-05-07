@@ -8,6 +8,7 @@
 
 #include "apngdecoder.h"
 
+#include "imageviewtext.h"
 #include "kiriview/src/apngdecoder.cxx.h"
 
 #include <QString>
@@ -26,12 +27,13 @@ KiriView::ApngDecodeResult apngError(KiriView::RustApngErrorKind errorKind)
 
     switch (errorKind) {
     case KiriView::RustApngErrorKind::Png:
-        result.errorString = QStringLiteral("Could not decode the selected PNG image.");
+        result.errorString = KiriView::imageViewText("Could not decode the selected PNG image.");
         break;
     case KiriView::RustApngErrorKind::FrameData:
     case KiriView::RustApngErrorKind::Apng:
     case KiriView::RustApngErrorKind::NoError:
-        result.errorString = QStringLiteral("Could not decode the selected APNG animation.");
+        result.errorString
+            = KiriView::imageViewText("Could not decode the selected APNG animation.");
         break;
     }
 

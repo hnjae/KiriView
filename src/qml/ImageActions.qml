@@ -2,8 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 import QtQuick
-import org.kde.kirigami as Kirigami
 import io.github.hnjae.kiriview
+import org.kde.ki18n
+import org.kde.kirigami as Kirigami
 
 Item {
     id: root
@@ -61,7 +62,7 @@ Item {
 
     function openNextImage() {
         if (root.imageReady && root.imageDocument.currentPageNumber === root.imageDocument.imageCount) {
-            root.imageBoundaryReached("Last image");
+            root.imageBoundaryReached(KI18n.i18nc("@info:status", "Last image"));
             return;
         }
 
@@ -70,7 +71,7 @@ Item {
 
     function openPreviousImage() {
         if (root.imageReady && root.imageDocument.currentPageNumber === 1 && root.imageDocument.imageCount > 0) {
-            root.imageBoundaryReached("First image");
+            root.imageBoundaryReached(KI18n.i18nc("@info:status", "First image"));
             return;
         }
 

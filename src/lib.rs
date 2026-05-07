@@ -10,6 +10,7 @@ mod imagemath;
 mod imagenavigationmodel;
 mod imageviewportgeometry;
 mod imagezoomstate;
+mod localization;
 mod startup_arguments;
 
 pub use startup_arguments::{
@@ -19,3 +20,5 @@ pub use startup_arguments::{
 pub fn initialize_rust_modules() {
     let _ = core::mem::size_of::<cxx_qt_lib_extras::QApplication>();
 }
+
+pub use localization::{initialize_localization, setup_localized_context};

@@ -5,6 +5,7 @@ import QtQuick
 import QtQuick.Controls as Controls
 import QtQuick.Layouts
 import io.github.hnjae.kiriview
+import org.kde.ki18n
 import org.kde.kirigami as Kirigami
 
 RowLayout {
@@ -86,7 +87,7 @@ RowLayout {
     }
 
     Controls.Label {
-        text: "of"
+        text: KI18n.i18nc("@label:page count", "of")
         textFormat: Text.PlainText
     }
 

@@ -5,6 +5,7 @@
 
 #include "kiriviewstate.h"
 
+#include <KLazyLocalizedString>
 #include <KirigamiActionCollection>
 #include <QIcon>
 #include <QSignalBlocker>
@@ -40,7 +41,7 @@ struct ActionDefinition {
     const char *name;
     ActionRegistrationKind kind;
     KStandardActions::StandardAction actionType;
-    const char *text;
+    KLazyLocalizedString text;
     const char *iconName;
     DefaultShortcutSpec defaultShortcuts;
 };
@@ -73,24 +74,25 @@ constexpr ActionDefinition existingAction(
     KiriViewApplication::ActionId actionId, const char *name, DefaultShortcutSpec defaultShortcuts)
 {
     return ActionDefinition { actionId, name, ActionRegistrationKind::Existing,
-        KStandardActions::Open, nullptr, nullptr, defaultShortcuts };
+        KStandardActions::Open, {}, nullptr, defaultShortcuts };
 }
 
 constexpr ActionDefinition inheritedAction(KiriViewApplication::ActionId actionId, const char *name)
 {
     return ActionDefinition { actionId, name, ActionRegistrationKind::Inherited,
-        KStandardActions::Open, nullptr, nullptr, noDefaultShortcuts() };
+        KStandardActions::Open, {}, nullptr, noDefaultShortcuts() };
 }
 
 constexpr ActionDefinition registeredAction(KiriViewApplication::ActionId actionId,
-    const char *name, const char *text, const char *iconName, DefaultShortcutSpec defaultShortcuts)
+    const char *name, KLazyLocalizedString text, const char *iconName,
+    DefaultShortcutSpec defaultShortcuts)
 {
     return ActionDefinition { actionId, name, ActionRegistrationKind::Registered,
         KStandardActions::Open, text, iconName, defaultShortcuts };
 }
 
 constexpr ActionDefinition standardAction(KiriViewApplication::ActionId actionId, const char *name,
-    KStandardActions::StandardAction actionType, const char *text,
+    KStandardActions::StandardAction actionType, KLazyLocalizedString text,
     DefaultShortcutSpec defaultShortcuts)
 {
     return ActionDefinition { actionId, name, ActionRegistrationKind::Standard, actionType, text,
@@ -98,7 +100,7 @@ constexpr ActionDefinition standardAction(KiriViewApplication::ActionId actionId
 }
 
 constexpr ActionDefinition showMenubarAction(KiriViewApplication::ActionId actionId,
-    const char *name, KStandardActions::StandardAction actionType, const char *text,
+    const char *name, KStandardActions::StandardAction actionType, KLazyLocalizedString text,
     DefaultShortcutSpec defaultShortcuts)
 {
     return ActionDefinition { actionId, name, ActionRegistrationKind::ShowMenubar, actionType, text,
@@ -109,57 +111,64 @@ constexpr std::size_t actionDefinitionCount
     = static_cast<std::size_t>(KiriViewApplication::ActionCount);
 
 constexpr std::array actionDefinitions {
-    standardAction(KiriViewApplication::FileOpenAction, "file_open", KStandardActions::Open, "Open",
-        standardShortcutSpec(QKeySequence::Open)),
+    standardAction(KiriViewApplication::FileOpenAction, "file_open", KStandardActions::Open,
+        kli18n("Open"), standardShortcutSpec(QKeySequence::Open)),
     registeredAction(KiriViewApplication::GoPreviousArchiveAction, "go_previous_archive",
-        "Previous Archive", "go-previous-symbolic", portableShortcutSpec("[")),
-    registeredAction(KiriViewApplication::GoNextArchiveAction, "go_next_archive", "Next Archive",
-        "go-next-symbolic", portableShortcutSpec("]")),
-    registeredAction(KiriViewApplication::GoPreviousImageAction, "go_previous_image", "Previous",
-        "go-up-symbolic", standardShortcutSpec(QKeySequence::MoveToPreviousPage)),
-    registeredAction(KiriViewApplication::GoNextImageAction, "go_next_image", "Next",
-        "go-down-symbolic", standardShortcutSpec(QKeySequence::MoveToNextPage)),
-    registeredAction(KiriViewApplication::GoFirstImageAction, "go_first_image", "First Image",
-        "go-first-symbolic", portableShortcutSpec("Ctrl+Home", "Home")),
-    registeredAction(KiriViewApplication::GoLastImageAction, "go_last_image", "Last Image",
-        "go-last-symbolic", portableShortcutSpec("Ctrl+End", "End")),
+        kli18nc("@action", "Previous Archive"), "go-previous-symbolic", portableShortcutSpec("[")),
+    registeredAction(KiriViewApplication::GoNextArchiveAction, "go_next_archive",
+        kli18nc("@action", "Next Archive"), "go-next-symbolic", portableShortcutSpec("]")),
+    registeredAction(KiriViewApplication::GoPreviousImageAction, "go_previous_image",
+        kli18nc("@action", "Previous"), "go-up-symbolic",
+        standardShortcutSpec(QKeySequence::MoveToPreviousPage)),
+    registeredAction(KiriViewApplication::GoNextImageAction, "go_next_image",
+        kli18nc("@action", "Next"), "go-down-symbolic",
+        standardShortcutSpec(QKeySequence::MoveToNextPage)),
+    registeredAction(KiriViewApplication::GoFirstImageAction, "go_first_image",
+        kli18nc("@action", "First Image"), "go-first-symbolic",
+        portableShortcutSpec("Ctrl+Home", "Home")),
+    registeredAction(KiriViewApplication::GoLastImageAction, "go_last_image",
+        kli18nc("@action", "Last Image"), "go-last-symbolic",
+        portableShortcutSpec("Ctrl+End", "End")),
     standardAction(KiriViewApplication::ViewZoomInAction, "view_zoom_in", KStandardActions::ZoomIn,
-        "Zoom In", portableShortcutSpec("Ctrl+=", "Ctrl++", "=", "+")),
+        kli18nc("@action", "Zoom In"), portableShortcutSpec("Ctrl+=", "Ctrl++", "=", "+")),
     standardAction(KiriViewApplication::ViewZoomOutAction, "view_zoom_out",
-        KStandardActions::ZoomOut, "Zoom Out", portableShortcutSpec("-", "Ctrl+-")),
+        KStandardActions::ZoomOut, kli18nc("@action", "Zoom Out"),
+        portableShortcutSpec("-", "Ctrl+-")),
     standardAction(KiriViewApplication::ViewFitAction, "view_fit", KStandardActions::FitToPage,
-        "Fit", portableShortcutSpec("1")),
+        kli18nc("@action", "Fit"), portableShortcutSpec("1")),
     standardAction(KiriViewApplication::ViewFitHeightAction, "view_fit_height",
-        KStandardActions::FitToHeight, "Fit Height", portableShortcutSpec("2")),
+        KStandardActions::FitToHeight, kli18nc("@action", "Fit Height"), portableShortcutSpec("2")),
     standardAction(KiriViewApplication::ViewFitWidthAction, "view_fit_width",
-        KStandardActions::FitToWidth, "Fit Width", portableShortcutSpec("3")),
+        KStandardActions::FitToWidth, kli18nc("@action", "Fit Width"), portableShortcutSpec("3")),
     standardAction(KiriViewApplication::ViewActualSizeAction, "view_actual_size",
-        KStandardActions::ActualSize, "Actual Size", portableShortcutSpec("0")),
-    registeredAction(KiriViewApplication::ViewPanLeftAction, "view_pan_left", "Pan Left", nullptr,
-        portableShortcutSpec("Left")),
-    registeredAction(KiriViewApplication::ViewPanRightAction, "view_pan_right", "Pan Right",
-        nullptr, portableShortcutSpec("Right")),
-    registeredAction(KiriViewApplication::ViewPanUpAction, "view_pan_up", "Pan Up", nullptr,
-        portableShortcutSpec("Up")),
-    registeredAction(KiriViewApplication::ViewPanDownAction, "view_pan_down", "Pan Down", nullptr,
-        portableShortcutSpec("Down")),
-    registeredAction(KiriViewApplication::ViewPanTopLeftAction, "view_pan_top_left", "Top Left",
-        nullptr, portableShortcutSpec("<")),
+        KStandardActions::ActualSize, kli18nc("@action", "Actual Size"), portableShortcutSpec("0")),
+    registeredAction(KiriViewApplication::ViewPanLeftAction, "view_pan_left",
+        kli18nc("@action", "Pan Left"), nullptr, portableShortcutSpec("Left")),
+    registeredAction(KiriViewApplication::ViewPanRightAction, "view_pan_right",
+        kli18nc("@action", "Pan Right"), nullptr, portableShortcutSpec("Right")),
+    registeredAction(KiriViewApplication::ViewPanUpAction, "view_pan_up",
+        kli18nc("@action", "Pan Up"), nullptr, portableShortcutSpec("Up")),
+    registeredAction(KiriViewApplication::ViewPanDownAction, "view_pan_down",
+        kli18nc("@action", "Pan Down"), nullptr, portableShortcutSpec("Down")),
+    registeredAction(KiriViewApplication::ViewPanTopLeftAction, "view_pan_top_left",
+        kli18nc("@action", "Top Left"), nullptr, portableShortcutSpec("<")),
     registeredAction(KiriViewApplication::ViewPanBottomRightAction, "view_pan_bottom_right",
-        "Bottom Right", nullptr, portableShortcutSpec(">")),
+        kli18nc("@action", "Bottom Right"), nullptr, portableShortcutSpec(">")),
     registeredAction(KiriViewApplication::ViewScanForwardAction, "view_scan_forward",
-        "Scan Forward", nullptr, portableShortcutSpec(".")),
+        kli18nc("@action", "Scan Forward"), nullptr, portableShortcutSpec(".")),
     registeredAction(KiriViewApplication::ViewScanBackwardAction, "view_scan_backward",
-        "Scan Backward", nullptr, portableShortcutSpec(",")),
+        kli18nc("@action", "Scan Backward"), nullptr, portableShortcutSpec(",")),
     standardAction(KiriViewApplication::WindowFullscreenAction, "window_fullscreen",
-        KStandardActions::FullScreen, "Fullscreen", portableShortcutSpec("F", "F11")),
+        KStandardActions::FullScreen, kli18nc("@action", "Fullscreen"),
+        portableShortcutSpec("F", "F11")),
     registeredAction(KiriViewApplication::HelpShortcutsAction, "help_shortcuts",
-        "Keyboard Shortcuts", "help-keyboard-shortcuts-symbolic", portableShortcutSpec("?", "F1")),
+        kli18nc("@action", "Keyboard Shortcuts"), "help-keyboard-shortcuts-symbolic",
+        portableShortcutSpec("?", "F1")),
     inheritedAction(KiriViewApplication::OptionsConfigureAction, "options_configure"),
     inheritedAction(
         KiriViewApplication::OptionsConfigureKeybindingAction, "options_configure_keybinding"),
     showMenubarAction(KiriViewApplication::OptionsShowMenubarAction, "options_show_menubar",
-        KStandardActions::ShowMenubar, "Show Menubar", noDefaultShortcuts()),
+        KStandardActions::ShowMenubar, kli18nc("@action", "Show Menubar"), noDefaultShortcuts()),
     existingAction(
         KiriViewApplication::FileQuitAction, "file_quit", portableShortcutSpec("Q", "Ctrl+Q")),
 };
@@ -198,6 +207,11 @@ const ActionDefinition *actionDefinitionForId(KiriViewApplication::ActionId acti
 QString latin1String(const char *text)
 {
     return text == nullptr ? QString() : QString::fromLatin1(text);
+}
+
+QString localizedString(const KLazyLocalizedString &text)
+{
+    return text.isEmpty() ? QString() : text.toString();
 }
 
 QString applicationActionName(KiriViewApplication::ActionId actionId)
@@ -417,19 +431,19 @@ void KiriViewApplication::setupActions()
         case ActionRegistrationKind::Inherited:
             return;
         case ActionRegistrationKind::Registered:
-            addRegisteredAction(
-                name, latin1String(definition.text), latin1String(definition.iconName), shortcuts);
+            addRegisteredAction(name, localizedString(definition.text),
+                latin1String(definition.iconName), shortcuts);
             return;
         case ActionRegistrationKind::ShowMenubar:
             m_showMenuBarAction = addStandardAction(
-                definition.actionType, name, latin1String(definition.text), shortcuts);
+                definition.actionType, name, localizedString(definition.text), shortcuts);
             m_showMenuBarAction->setCheckable(true);
             connect(m_showMenuBarAction, &QAction::triggered, this,
                 [this](bool checked) { setMenuPresentation(checked ? MenuBar : HamburgerMenu); });
             return;
         case ActionRegistrationKind::Standard:
             addStandardAction(
-                definition.actionType, name, latin1String(definition.text), shortcuts);
+                definition.actionType, name, localizedString(definition.text), shortcuts);
             return;
         }
     };

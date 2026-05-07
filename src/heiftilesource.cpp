@@ -103,8 +103,9 @@ private:
         heif_error error = heif_decode_image(opened->handle.get(), heifImage.out(),
             heif_colorspace_RGB, heif_chroma_interleaved_RGBA, options.get());
         if (error.code != heif_error_Ok) {
-            KiriView::setTileSourceError(
-                errorString, KiriView::heifErrorString("decoding the primary image", error));
+            KiriView::setTileSourceError(errorString,
+                KiriView::heifErrorString(
+                    KiriView::imageViewText("decoding the primary image"), error));
             return {};
         }
 
@@ -151,8 +152,9 @@ private:
                         heif_colorspace_RGB, heif_chroma_interleaved_RGBA, options.get(),
                         static_cast<std::uint32_t>(tileX), static_cast<std::uint32_t>(tileY));
                 if (error.code != heif_error_Ok) {
-                    KiriView::setTileSourceError(
-                        errorString, KiriView::heifErrorString("decoding a HEIF grid tile", error));
+                    KiriView::setTileSourceError(errorString,
+                        KiriView::heifErrorString(
+                            KiriView::imageViewText("decoding a HEIF grid tile"), error));
                     return {};
                 }
 

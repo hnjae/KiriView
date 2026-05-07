@@ -25,6 +25,7 @@ fn main() {
     kiriview::initialize_rust_modules();
 
     let mut app = QApplication::new();
+    kiriview::initialize_localization();
 
     QGuiApplication::set_desktop_file_name(&QString::from("io.github.hnjae.KiriView"));
 
@@ -34,6 +35,8 @@ fn main() {
 
     let mut engine = QQmlApplicationEngine::new();
     if let Some(mut engine) = engine.as_mut() {
+        kiriview::setup_localized_context(engine.as_mut());
+
         if let Some(url) = initial_source_url.as_ref() {
             let mut initial_properties = QMap::<QMapPair_QString_QVariant>::default();
             initial_properties

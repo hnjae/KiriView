@@ -3,6 +3,7 @@
 
 import QtQuick.Controls as Controls
 import io.github.hnjae.kiriview
+import org.kde.ki18n
 
 Controls.MenuBar {
     id: root
@@ -12,7 +13,7 @@ Controls.MenuBar {
     required property bool fullscreen
 
     Controls.Menu {
-        title: "File"
+        title: KI18n.i18nc("@title:menu", "File")
 
         Controls.MenuItem {
             action: root.actions.openAction
@@ -26,7 +27,7 @@ Controls.MenuBar {
     }
 
     Controls.Menu {
-        title: "Go"
+        title: KI18n.i18nc("@title:menu", "Go")
 
         Controls.MenuItem {
             action: root.actions.previousImageAction
@@ -58,7 +59,7 @@ Controls.MenuBar {
     }
 
     Controls.Menu {
-        title: "View"
+        title: KI18n.i18nc("@title:menu", "View")
 
         Controls.MenuItem {
             action: root.actions.zoomInAction
@@ -71,7 +72,7 @@ Controls.MenuBar {
         Controls.MenuSeparator {}
 
         Controls.Menu {
-            title: "Fit"
+            title: KI18n.i18nc("@title:menu", "Fit")
 
             Controls.MenuItem {
                 action: root.actions.fitAction
@@ -106,7 +107,7 @@ Controls.MenuBar {
     }
 
     Controls.Menu {
-        title: "Settings"
+        title: KI18n.i18nc("@title:menu", "Settings")
 
         Controls.MenuItem {
             action: root.actions.showMenubarAction
@@ -124,7 +125,7 @@ Controls.MenuBar {
     }
 
     Controls.Menu {
-        title: "Help"
+        title: KI18n.i18nc("@title:menu", "Help")
 
         Controls.MenuItem {
             action: root.actions.shortcutHelpAction

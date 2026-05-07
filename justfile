@@ -75,6 +75,14 @@ format:
 format-check:
     cargo fmt --all --check
 
+[group('ci')]
+i18n-check:
+    devenv shell -- scripts/update-translations.sh --check
+
+[group('build')]
+i18n-update:
+    devenv shell -- scripts/update-translations.sh
+
 [group('build')]
 build:
     devenv shell -- flatpak-builder \

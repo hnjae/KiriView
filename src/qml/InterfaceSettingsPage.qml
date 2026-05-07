@@ -3,6 +3,7 @@
 
 import QtQuick
 import io.github.hnjae.kiriview
+import org.kde.ki18n
 import org.kde.kirigamiaddons.formcard as FormCard
 
 FormCard.FormCardPage {
@@ -10,10 +11,10 @@ FormCard.FormCardPage {
 
     required property KiriViewApplication application
 
-    title: "Interface"
+    title: KI18n.i18nc("@title:window", "Interface")
 
     FormCard.FormHeader {
-        title: "Application Menu"
+        title: KI18n.i18nc("@title:group", "Application Menu")
     }
 
     FormCard.FormCard {
@@ -21,7 +22,7 @@ FormCard.FormCardPage {
             id: hamburgerMenuDelegate
 
             checked: root.application.menuPresentation === KiriViewApplication.HamburgerMenu
-            text: "Hamburger Menu"
+            text: KI18n.i18nc("@option:radio", "Hamburger Menu")
 
             onClicked: root.application.menuPresentation = KiriViewApplication.HamburgerMenu
         }
@@ -35,7 +36,7 @@ FormCard.FormCardPage {
             id: menubarDelegate
 
             checked: root.application.menuPresentation === KiriViewApplication.MenuBar
-            text: "Menubar"
+            text: KI18n.i18nc("@option:radio", "Menubar")
 
             onClicked: root.application.menuPresentation = KiriViewApplication.MenuBar
         }

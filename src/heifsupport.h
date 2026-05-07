@@ -15,7 +15,7 @@
 #include <utility>
 
 namespace KiriView {
-QString heifErrorString(const char *action, const heif_error &error);
+QString heifErrorString(const QString &action, const heif_error &error);
 
 namespace Detail {
     template <typename Resource, auto Release> class HeifResource final

@@ -7,6 +7,7 @@ import QtQuick
 import QtQuick.Controls as Controls
 import QtQuick.Layouts
 import io.github.hnjae.kiriview
+import org.kde.ki18n
 import org.kde.kirigami as Kirigami
 
 Controls.ToolBar {
@@ -97,7 +98,7 @@ Controls.ToolBar {
         }
         displayHint: Kirigami.DisplayHint.KeepVisible
         icon.name: "zoom-original-symbolic"
-        text: "Zoom"
+        text: KI18n.i18nc("@action", "Zoom")
         tooltip: text
     }
 
@@ -115,8 +116,8 @@ Controls.ToolBar {
         displayHint: Kirigami.DisplayHint.KeepVisible
         enabled: root.applicationMenuActions.length > 0
         icon.name: "open-menu-symbolic"
-        text: "Application Menu"
-        tooltip: "Open menu"
+        text: KI18n.i18nc("@action", "Application Menu")
+        tooltip: KI18n.i18nc("@info:tooltip", "Open menu")
     }
 
     contentItem: RowLayout {

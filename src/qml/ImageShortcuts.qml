@@ -3,6 +3,7 @@
 
 import QtQuick
 import io.github.hnjae.kiriview
+import org.kde.ki18n
 
 Item {
     id: root
@@ -78,7 +79,7 @@ Item {
         }
 
         if (root.atFirstImage) {
-            root.imageBoundaryReached("First image");
+            root.imageBoundaryReached(KI18n.i18nc("@info:status", "First image"));
             return;
         }
 

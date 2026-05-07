@@ -6,6 +6,7 @@
 #include "archiveformat.h"
 #include "kiriview/src/imageformatregistry.cxx.h"
 
+#include <KLocalizedString>
 #include <QByteArray>
 #include <QMimeDatabase>
 #include <QMimeType>
@@ -110,8 +111,10 @@ QStringList openDialogNameFilters()
 {
     const QString extensionFilter = QStringLiteral("*.") + supportedOpenExtensions().join(" *.");
     return {
-        QStringLiteral("Image and comic book files (%1)").arg(extensionFilter),
-        QStringLiteral("All files (*)"),
+        ki18nc("@item:inlistbox", "Image and comic book files (%1)")
+            .subs(extensionFilter)
+            .toString(),
+        i18nc("@item:inlistbox", "All files (*)"),
     };
 }
 }

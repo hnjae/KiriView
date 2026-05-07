@@ -13,6 +13,7 @@ let
       karchive
       kconfig
       kimageformats
+      ki18n
       kirigami-addons
       qtbase
       qtdeclarative
@@ -65,16 +66,19 @@ let
   karchiveDev = pkgs.kdePackages.karchive.dev or pkgs.kdePackages.karchive;
   kconfigDev = pkgs.kdePackages.kconfig.dev or pkgs.kdePackages.kconfig;
   kcoreaddonsDev = pkgs.kdePackages.kcoreaddons.dev or pkgs.kdePackages.kcoreaddons;
+  ki18nDev = pkgs.kdePackages.ki18n.dev or pkgs.kdePackages.ki18n;
   kirigamiAddonsDev = pkgs.kdePackages.kirigami-addons.dev or pkgs.kdePackages.kirigami-addons;
   appQmlRoot = "${config.devenv.root}/target/cxxqt/qml_modules";
   qtQmlRoot = "${config.devenv.root}/.devenv/profile/lib/qt-6/qml";
   kconfigQmlRoot = "${pkgs.kdePackages.kconfig}/lib/qt-6/qml";
+  ki18nQmlRoot = "${pkgs.kdePackages.ki18n}/lib/qt-6/qml";
   kirigamiQmlRoot = "${pkgs.kdePackages.kirigami.unwrapped}/lib/qt-6/qml";
   kirigamiAddonsQmlRoot = "${pkgs.kdePackages.kirigami-addons}/lib/qt-6/qml";
   qmlImportPaths = [
     appQmlRoot
     qtQmlRoot
     kconfigQmlRoot
+    ki18nQmlRoot
     kirigamiQmlRoot
     kirigamiAddonsQmlRoot
   ];
@@ -95,6 +99,7 @@ let
     "-DQT_QML_LIB"
     "-DQT_QUICK_LIB"
     "-DQT_SVG_LIB"
+    "-DTRANSLATION_DOMAIN=\"kiriview\""
   ];
   qtIncludeModules = [
     "QtCore"
@@ -117,6 +122,8 @@ let
     ".devenv/profile/include/KF6/KConfig"
     ".devenv/profile/include/KF6/KConfigCore"
     ".devenv/profile/include/KF6/KConfigGui"
+    ".devenv/profile/include/KF6/KI18n"
+    ".devenv/profile/include/KF6/KI18nQml"
     ".devenv/profile/include/KF6/KIO"
     ".devenv/profile/include/KF6/KIOCore"
     ".devenv/profile/include/KirigamiAddonsStatefulApp"
@@ -127,6 +134,8 @@ let
     "${kconfigDev}/include/KF6/KConfigCore"
     "${kconfigDev}/include/KF6/KConfigGui"
     "${kcoreaddonsDev}/include/KF6/KCoreAddons"
+    "${ki18nDev}/include/KF6/KI18n"
+    "${ki18nDev}/include/KF6/KI18nQml"
     "${kirigamiAddonsDev}/include/KirigamiAddonsStatefulApp"
   ]
   ++ cxxStandardLibraryIncludeDirs
@@ -312,6 +321,7 @@ in
     kdePackages.karchive
     kdePackages.kconfig
     kdePackages.kimageformats
+    kdePackages.ki18n
     kdePackages.kirigami
     kdePackages.kirigami-addons
     kdePackages.kio

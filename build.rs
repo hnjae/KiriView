@@ -27,6 +27,7 @@ const RUST_BRIDGE_SOURCES: &[&str] = &[
     "src/imagenavigationmodel.rs",
     "src/imageviewportgeometry.rs",
     "src/imagezoomstate.rs",
+    "src/localization.rs",
 ];
 const CXX_QT_CPP_SOURCES: &[&str] = &[
     "src/imagedocumentcontrollerdefaults.cpp",
@@ -68,6 +69,16 @@ const NATIVE_LIBRARIES: &[NativeLibrary] = &[
         pkg_config_package: None,
     },
     NativeLibrary {
+        link_name: "KF6I18n",
+        file_name: "libKF6I18n.so",
+        pkg_config_package: None,
+    },
+    NativeLibrary {
+        link_name: "KF6I18nQml",
+        file_name: "libKF6I18nQml.so",
+        pkg_config_package: None,
+    },
+    NativeLibrary {
         link_name: "KirigamiAddonsStatefulApp",
         file_name: "libKirigamiAddonsStatefulApp.so",
         pkg_config_package: None,
@@ -102,6 +113,7 @@ fn main() {
     let libarchive_include_dirs = libarchive_include_dirs();
     let libheif_include_dirs = libheif_include_dirs();
     let qt_rhi_include_dirs = qt_rhi_include_dirs();
+    let qt_qml_integration_include_dirs = qt_qml_integration_include_dirs();
     let shader_source = bake_shaders();
     let cpp_core_sources = cpp_core_sources();
     let generated_state = generate_kconfig_state();
@@ -124,6 +136,7 @@ fn main() {
     unsafe {
         builder = builder.cc_builder(move |cc| {
             cc.flag_if_supported("-Wno-attributes");
+            cc.define("TRANSLATION_DOMAIN", "\"kiriview\"");
             cc.file(&shader_source);
             cc.include("src");
             cc.include(&generated_state.include_dir);
@@ -137,6 +150,9 @@ fn main() {
                 cc.include(dir);
             }
             for dir in &qt_rhi_include_dirs {
+                cc.include(dir);
+            }
+            for dir in &qt_qml_integration_include_dirs {
                 cc.include(dir);
             }
         });
@@ -325,6 +341,13 @@ fn qt_rhi_include_dirs() -> Vec<PathBuf> {
     include_dirs(&[add_qt_rhi_include_dirs], &["Qt6Gui"])
 }
 
+fn qt_qml_integration_include_dirs() -> Vec<PathBuf> {
+    include_dirs(
+        &[add_qt_qml_integration_include_dirs],
+        &["Qt6QmlIntegration"],
+    )
+}
+
 fn libarchive_include_dirs() -> Vec<PathBuf> {
     include_dirs(&[add_libarchive_include_dir], &["libarchive"])
 }
@@ -390,6 +413,19 @@ fn add_qt_rhi_include_dirs(dirs: &mut BTreeSet<PathBuf>, include_root: &Path) {
     }
 }
 
+fn add_qt_qml_integration_include_dirs(dirs: &mut BTreeSet<PathBuf>, include_root: &Path) {
+    for candidate in [
+        include_root.to_path_buf(),
+        include_root.join("QtQmlIntegration"),
+    ] {
+        if candidate.join("QtQmlIntegration").exists()
+            && candidate.join("qqmlintegration.h").exists()
+        {
+            dirs.insert(candidate);
+        }
+    }
+}
+
 fn versioned_qt_gui_dirs(include_root: &Path) -> Vec<PathBuf> {
     let mut dirs = Vec::new();
     for qt_gui_root in [include_root.to_path_buf(), include_root.join("QtGui")] {
@@ -445,6 +481,8 @@ fn add_kf6_include_dirs(dirs: &mut BTreeSet<PathBuf>, include_root: &Path) {
         "KF6/KConfig",
         "KF6/KConfigCore",
         "KF6/KConfigGui",
+        "KF6/KI18n",
+        "KF6/KI18nQml",
         "KirigamiAddonsStatefulApp",
     ] {
         let dir = include_root.join(suffix);

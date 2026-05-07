@@ -6,6 +6,7 @@
 #include "imagerendering.h"
 #include "imageviewtext.h"
 
+#include <KLocalizedString>
 #include <QColorSpace>
 #include <algorithm>
 #include <cstddef>
@@ -24,14 +25,16 @@ void setHeifSupportError(QString *errorString, const QString &message)
 }
 
 namespace KiriView {
-QString heifErrorString(const char *action, const heif_error &error)
+QString heifErrorString(const QString &action, const heif_error &error)
 {
     QString message = imageViewText("Unknown libheif error.");
     if (error.message != nullptr) {
         message = QString::fromUtf8(error.message);
     }
-    return imageViewText("Could not decode the selected HEIF image: ") + QString::fromUtf8(action)
-        + QStringLiteral(": ") + message;
+    return ki18nc("@info:status", "Could not decode the selected HEIF image: %1: %2")
+        .subs(action)
+        .subs(message)
+        .toString();
 }
 
 namespace {
@@ -42,7 +45,7 @@ namespace {
         std::call_once(initFlag, [] { initError = heif_init(nullptr); });
 
         if (initError.code != heif_error_Ok) {
-            return heifErrorString("initializing libheif", initError);
+            return heifErrorString(imageViewText("initializing libheif"), initError);
         }
         return std::nullopt;
     }
@@ -98,7 +101,8 @@ std::optional<HeifContext> openHeifContext(const QByteArray &data, QString *erro
     heif_error error = heif_context_read_from_memory_without_copy(
         context.get(), data.constData(), static_cast<size_t>(data.size()), nullptr);
     if (error.code != heif_error_Ok) {
-        setHeifSupportError(errorString, heifErrorString("reading the HEIF container", error));
+        setHeifSupportError(
+            errorString, heifErrorString(imageViewText("reading the HEIF container"), error));
         return std::nullopt;
     }
 
@@ -115,7 +119,8 @@ std::optional<HeifPrimaryImage> openHeifPrimaryImage(const QByteArray &data, QSt
     HeifImageHandle handle;
     const heif_error error = heif_context_get_primary_image_handle(context->get(), handle.out());
     if (error.code != heif_error_Ok) {
-        setHeifSupportError(errorString, heifErrorString("reading the primary image", error));
+        setHeifSupportError(
+            errorString, heifErrorString(imageViewText("reading the primary image"), error));
         return std::nullopt;
     }
 

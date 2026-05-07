@@ -16,11 +16,14 @@ find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2 Svg Test 
 find_package(KF6Archive CONFIG REQUIRED)
 find_package(KF6Config CONFIG REQUIRED)
 find_package(KF6CoreAddons CONFIG REQUIRED)
+find_package(KF6I18n CONFIG REQUIRED)
 find_package(KF6KirigamiAddons CONFIG REQUIRED)
 find_package(KF6KIO CONFIG REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(LibArchive REQUIRED IMPORTED_TARGET libarchive)
 pkg_check_modules(LibHeif REQUIRED IMPORTED_TARGET libheif)
+find_program(MSGFMT_EXECUTABLE msgfmt REQUIRED)
+find_program(DESKTOP_FILE_VALIDATE_EXECUTABLE desktop-file-validate REQUIRED)
 
 function(kiriview_latest_path output)
     set(latest_path "")
@@ -70,6 +73,9 @@ target_include_directories(kiriview_test_core PUBLIC
     "${CMAKE_CURRENT_BINARY_DIR}"
     "${KIRIVIEW_CXXQT_INCLUDE_DIR}"
 )
+target_compile_definitions(kiriview_test_core PUBLIC
+    TRANSLATION_DOMAIN="kiriview"
+)
 kconfig_add_kcfg_files(kiriview_test_core ../../src/kiriviewstate.kcfgc)
 target_link_libraries(kiriview_test_core PUBLIC
     "${KIRIVIEW_RUST_STATICLIB}"
@@ -84,10 +90,51 @@ target_link_libraries(kiriview_test_core PUBLIC
     KF6::ConfigCore
     KF6::ConfigGui
     KF6::CoreAddons
+    KF6::I18n
+    KF6::I18nQml
     KF6::KIOCore
     KirigamiAddonsStatefulApp
     PkgConfig::LibArchive
     PkgConfig::LibHeif
+)
+
+set(KIRIVIEW_TEST_LOCALE_DIR "${CMAKE_CURRENT_BINARY_DIR}/locale")
+set(KIRIVIEW_TEST_KO_PO "${CMAKE_SOURCE_DIR}/../../po/ko/kiriview.po")
+set(KIRIVIEW_TEST_KO_MO "${KIRIVIEW_TEST_LOCALE_DIR}/ko/LC_MESSAGES/kiriview.mo")
+set(KIRIVIEW_TEST_DESKTOP_FILE
+    "${CMAKE_CURRENT_BINARY_DIR}/io.github.hnjae.KiriView.desktop"
+)
+
+add_custom_command(
+    OUTPUT "${KIRIVIEW_TEST_KO_MO}"
+    COMMAND "${CMAKE_COMMAND}" -E make_directory
+        "${KIRIVIEW_TEST_LOCALE_DIR}/ko/LC_MESSAGES"
+    COMMAND "${MSGFMT_EXECUTABLE}" --output-file "${KIRIVIEW_TEST_KO_MO}"
+        "${KIRIVIEW_TEST_KO_PO}"
+    DEPENDS "${KIRIVIEW_TEST_KO_PO}"
+    VERBATIM
+)
+
+add_custom_command(
+    OUTPUT "${KIRIVIEW_TEST_DESKTOP_FILE}"
+    COMMAND "${MSGFMT_EXECUTABLE}"
+        --desktop
+        --locale=ko
+        --keyword=Name
+        --keyword=GenericName
+        --template "${CMAKE_SOURCE_DIR}/../../io.github.hnjae.KiriView.desktop"
+        --output-file "${KIRIVIEW_TEST_DESKTOP_FILE}"
+        "${KIRIVIEW_TEST_KO_PO}"
+    DEPENDS
+        "${KIRIVIEW_TEST_KO_PO}"
+        "${CMAKE_SOURCE_DIR}/../../io.github.hnjae.KiriView.desktop"
+    VERBATIM
+)
+
+add_custom_target(kiriview_test_i18n ALL
+    DEPENDS
+        "${KIRIVIEW_TEST_KO_MO}"
+        "${KIRIVIEW_TEST_DESKTOP_FILE}"
 )
 
 function(add_kiriview_cpp_test target source)
@@ -108,3 +155,19 @@ foreach(test_source IN LISTS KIRIVIEW_CPP_TEST_SOURCES)
     get_filename_component(test_target "${test_source}" NAME_WE)
     add_kiriview_cpp_test("${test_target}" "${test_source}")
 endforeach()
+
+if(TARGET test_localization)
+    add_dependencies(test_localization kiriview_test_i18n)
+    target_compile_definitions(test_localization PRIVATE
+        KIRIVIEW_TEST_DESKTOP_FILE="${KIRIVIEW_TEST_DESKTOP_FILE}"
+        KIRIVIEW_TEST_LOCALE_DIR="${KIRIVIEW_TEST_LOCALE_DIR}"
+    )
+    set_tests_properties(test_localization PROPERTIES
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+    )
+endif()
+
+add_test(
+    NAME test_desktop_file_validate
+    COMMAND "${DESKTOP_FILE_VALIDATE_EXECUTABLE}" "${KIRIVIEW_TEST_DESKTOP_FILE}"
+)

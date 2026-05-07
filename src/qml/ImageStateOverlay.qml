@@ -4,6 +4,7 @@
 import QtQuick
 import QtQuick.Controls as Controls
 import io.github.hnjae.kiriview
+import org.kde.ki18n
 import org.kde.kirigami as Kirigami
 
 Item {
@@ -50,7 +51,7 @@ Item {
         anchors.centerIn: parent
         helpfulAction: root.openAction
         icon.name: "image-x-generic-symbolic"
-        text: "No image selected"
+        text: KI18n.i18nc("@info:placeholder", "No image selected")
         visible: root.imageDocument.status === KiriImageDocument.Null
         width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, Kirigami.Units.gridUnit * 18)
     }
@@ -60,7 +61,7 @@ Item {
         explanation: root.imageDocument.errorString
         helpfulAction: root.openAction
         icon.name: "dialog-error-symbolic"
-        text: "Unable to open image"
+        text: KI18n.i18nc("@info:placeholder", "Unable to open image")
         visible: root.imageDocument.status === KiriImageDocument.Error
         width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, Kirigami.Units.gridUnit * 24)
     }

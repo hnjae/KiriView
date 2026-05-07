@@ -3,11 +3,8 @@
 
 #include "imageviewtext.h"
 
-#include <QCoreApplication>
+#include <KLocalizedString>
 
 namespace KiriView {
-QString imageViewText(const char *sourceText)
-{
-    return QCoreApplication::translate("KiriImageView", sourceText);
-}
+QString imageViewText(const char *sourceText) { return i18n(sourceText); }
 }

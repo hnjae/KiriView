@@ -9,6 +9,7 @@
 #include "imageformatregistry.h"
 #include "imagenavigationmodel.h"
 
+#include <KLocalizedString>
 #include <optional>
 #include <utility>
 
@@ -78,20 +79,20 @@ QString fallbackArchiveOpenError(const ArchiveDocumentLocation &archiveDocument)
 {
     const QString fileName = archiveDocument.fileUrl().fileName();
     if (fileName.isEmpty()) {
-        return QStringLiteral("Could not open the selected archive.");
+        return i18nc("@info:status", "Could not open the selected archive.");
     }
 
-    return QStringLiteral("Could not open %1.").arg(fileName);
+    return ki18nc("@info:status", "Could not open %1.").subs(fileName).toString();
 }
 
 QString archiveImageNotFoundError()
 {
-    return QStringLiteral("Could not find the selected image in the archive.");
+    return i18nc("@info:status", "Could not find the selected image in the archive.");
 }
 
 QString archiveImageReadError()
 {
-    return QStringLiteral("Could not read the selected archive image.");
+    return i18nc("@info:status", "Could not read the selected archive image.");
 }
 
 ArchiveImageCandidatesResult archiveImageCandidatesResult(
@@ -113,7 +114,7 @@ ArchiveImageCandidatesResult loadArchiveDocumentImageCandidates(
 {
     if (archiveDocument.isEmpty()) {
         return Backend::archiveErrorResult<ArchiveImageCandidatesResult>(
-            QStringLiteral("Could not open the selected archive."));
+            i18nc("@info:status", "Could not open the selected archive."));
     }
 
     return loadWithArchiveBackend<ArchiveImageCandidatesResult>(
