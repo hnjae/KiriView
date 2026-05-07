@@ -301,6 +301,16 @@ in
         test-cpp-host
       '';
     };
+    "lint" = {
+      description = "Run linters";
+      exec = ''
+        set -euo pipefail
+
+        lint-clippy
+        lint-qmllint
+        lint-cpp
+      '';
+    };
     "lint-clippy" = {
       description = "Run Rust clippy";
       exec = ''

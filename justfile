@@ -10,9 +10,7 @@ _:
 
 [group('ci')]
 lint:
-    devenv shell -- lint-clippy
-    devenv shell -- lint-qmllint
-    devenv shell -- lint-cpp
+    devenv shell -- lint
 
 alias test-host := test
 
