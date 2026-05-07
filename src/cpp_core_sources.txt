@@ -45,6 +45,7 @@ src/imageurl.cpp
 src/imageviewportgeometry.cpp
 src/imageviewtext.cpp
 src/imagezoomstate.cpp
+src/kiriviewapplicationactions.cpp
 src/predecodecache.cpp
 src/qimagereadertilesource.cpp
 src/staticimage.cpp

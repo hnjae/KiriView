@@ -3,302 +3,15 @@
 
 #include "kiriviewapplication.h"
 
+#include "kiriviewapplicationactions.h"
 #include "kiriviewstate.h"
 
-#include <KLazyLocalizedString>
 #include <KirigamiActionCollection>
 #include <QIcon>
 #include <QSignalBlocker>
-#include <array>
-#include <cstddef>
 
 namespace {
-enum class ActionRegistrationKind {
-    Existing,
-    Inherited,
-    Registered,
-    ShowMenubar,
-    Standard,
-};
-
-enum class ShortcutSpecKind {
-    None,
-    PortableText,
-    StandardKey,
-};
-
-constexpr std::size_t maxPortableShortcutCount = 4;
-
-struct DefaultShortcutSpec {
-    ShortcutSpecKind kind = ShortcutSpecKind::None;
-    QKeySequence::StandardKey standardKey = QKeySequence::UnknownKey;
-    std::array<const char *, maxPortableShortcutCount> portableText {};
-    std::size_t portableTextCount = 0;
-};
-
-struct ActionDefinition {
-    KiriViewApplication::ActionId actionId;
-    const char *name;
-    ActionRegistrationKind kind;
-    KStandardActions::StandardAction actionType;
-    KLazyLocalizedString text;
-    const char *iconName;
-    DefaultShortcutSpec defaultShortcuts;
-};
-
-constexpr DefaultShortcutSpec noDefaultShortcuts() { return {}; }
-
-constexpr DefaultShortcutSpec standardShortcutSpec(QKeySequence::StandardKey key)
-{
-    return DefaultShortcutSpec {
-        ShortcutSpecKind::StandardKey,
-        key,
-        {},
-        0,
-    };
-}
-
-template <typename... Sequences>
-constexpr DefaultShortcutSpec portableShortcutSpec(Sequences... sequences)
-{
-    static_assert(sizeof...(Sequences) <= maxPortableShortcutCount);
-    return DefaultShortcutSpec {
-        ShortcutSpecKind::PortableText,
-        QKeySequence::UnknownKey,
-        { sequences... },
-        sizeof...(Sequences),
-    };
-}
-
-constexpr ActionDefinition existingAction(
-    KiriViewApplication::ActionId actionId, const char *name, DefaultShortcutSpec defaultShortcuts)
-{
-    return ActionDefinition { actionId, name, ActionRegistrationKind::Existing,
-        KStandardActions::Open, {}, nullptr, defaultShortcuts };
-}
-
-constexpr ActionDefinition inheritedAction(KiriViewApplication::ActionId actionId, const char *name)
-{
-    return ActionDefinition { actionId, name, ActionRegistrationKind::Inherited,
-        KStandardActions::Open, {}, nullptr, noDefaultShortcuts() };
-}
-
-constexpr ActionDefinition registeredAction(KiriViewApplication::ActionId actionId,
-    const char *name, KLazyLocalizedString text, const char *iconName,
-    DefaultShortcutSpec defaultShortcuts)
-{
-    return ActionDefinition { actionId, name, ActionRegistrationKind::Registered,
-        KStandardActions::Open, text, iconName, defaultShortcuts };
-}
-
-constexpr ActionDefinition standardAction(KiriViewApplication::ActionId actionId, const char *name,
-    KStandardActions::StandardAction actionType, KLazyLocalizedString text,
-    DefaultShortcutSpec defaultShortcuts)
-{
-    return ActionDefinition { actionId, name, ActionRegistrationKind::Standard, actionType, text,
-        nullptr, defaultShortcuts };
-}
-
-constexpr ActionDefinition showMenubarAction(KiriViewApplication::ActionId actionId,
-    const char *name, KStandardActions::StandardAction actionType, KLazyLocalizedString text,
-    DefaultShortcutSpec defaultShortcuts)
-{
-    return ActionDefinition { actionId, name, ActionRegistrationKind::ShowMenubar, actionType, text,
-        nullptr, defaultShortcuts };
-}
-
-constexpr std::size_t actionDefinitionCount
-    = static_cast<std::size_t>(KiriViewApplication::ActionCount);
-
-constexpr std::array actionDefinitions {
-    standardAction(KiriViewApplication::FileOpenAction, "file_open", KStandardActions::Open,
-        kli18n("Open"), standardShortcutSpec(QKeySequence::Open)),
-    registeredAction(KiriViewApplication::GoPreviousArchiveAction, "go_previous_archive",
-        kli18nc("@action", "Previous Archive"), "go-previous-symbolic", portableShortcutSpec("[")),
-    registeredAction(KiriViewApplication::GoNextArchiveAction, "go_next_archive",
-        kli18nc("@action", "Next Archive"), "go-next-symbolic", portableShortcutSpec("]")),
-    registeredAction(KiriViewApplication::GoPreviousImageAction, "go_previous_image",
-        kli18nc("@action", "Previous"), "go-up-symbolic",
-        standardShortcutSpec(QKeySequence::MoveToPreviousPage)),
-    registeredAction(KiriViewApplication::GoNextImageAction, "go_next_image",
-        kli18nc("@action", "Next"), "go-down-symbolic",
-        standardShortcutSpec(QKeySequence::MoveToNextPage)),
-    registeredAction(KiriViewApplication::GoFirstImageAction, "go_first_image",
-        kli18nc("@action", "First Image"), "go-first-symbolic",
-        portableShortcutSpec("Ctrl+Home", "Home")),
-    registeredAction(KiriViewApplication::GoLastImageAction, "go_last_image",
-        kli18nc("@action", "Last Image"), "go-last-symbolic",
-        portableShortcutSpec("Ctrl+End", "End")),
-    standardAction(KiriViewApplication::ViewZoomInAction, "view_zoom_in", KStandardActions::ZoomIn,
-        kli18nc("@action", "Zoom In"), portableShortcutSpec("Ctrl+=", "Ctrl++", "=", "+")),
-    standardAction(KiriViewApplication::ViewZoomOutAction, "view_zoom_out",
-        KStandardActions::ZoomOut, kli18nc("@action", "Zoom Out"),
-        portableShortcutSpec("-", "Ctrl+-")),
-    standardAction(KiriViewApplication::ViewFitAction, "view_fit", KStandardActions::FitToPage,
-        kli18nc("@action", "Fit"), portableShortcutSpec("1")),
-    standardAction(KiriViewApplication::ViewFitHeightAction, "view_fit_height",
-        KStandardActions::FitToHeight, kli18nc("@action", "Fit Height"), portableShortcutSpec("2")),
-    standardAction(KiriViewApplication::ViewFitWidthAction, "view_fit_width",
-        KStandardActions::FitToWidth, kli18nc("@action", "Fit Width"), portableShortcutSpec("3")),
-    standardAction(KiriViewApplication::ViewActualSizeAction, "view_actual_size",
-        KStandardActions::ActualSize, kli18nc("@action", "Actual Size"), portableShortcutSpec("0")),
-    registeredAction(KiriViewApplication::ViewPanLeftAction, "view_pan_left",
-        kli18nc("@action", "Pan Left"), nullptr, portableShortcutSpec("Left")),
-    registeredAction(KiriViewApplication::ViewPanRightAction, "view_pan_right",
-        kli18nc("@action", "Pan Right"), nullptr, portableShortcutSpec("Right")),
-    registeredAction(KiriViewApplication::ViewPanUpAction, "view_pan_up",
-        kli18nc("@action", "Pan Up"), nullptr, portableShortcutSpec("Up")),
-    registeredAction(KiriViewApplication::ViewPanDownAction, "view_pan_down",
-        kli18nc("@action", "Pan Down"), nullptr, portableShortcutSpec("Down")),
-    registeredAction(KiriViewApplication::ViewPanTopLeftAction, "view_pan_top_left",
-        kli18nc("@action", "Top Left"), nullptr, portableShortcutSpec("<")),
-    registeredAction(KiriViewApplication::ViewPanBottomRightAction, "view_pan_bottom_right",
-        kli18nc("@action", "Bottom Right"), nullptr, portableShortcutSpec(">")),
-    registeredAction(KiriViewApplication::ViewScanForwardAction, "view_scan_forward",
-        kli18nc("@action", "Scan Forward"), nullptr, portableShortcutSpec(".")),
-    registeredAction(KiriViewApplication::ViewScanBackwardAction, "view_scan_backward",
-        kli18nc("@action", "Scan Backward"), nullptr, portableShortcutSpec(",")),
-    standardAction(KiriViewApplication::WindowFullscreenAction, "window_fullscreen",
-        KStandardActions::FullScreen, kli18nc("@action", "Fullscreen"),
-        portableShortcutSpec("F", "F11")),
-    registeredAction(KiriViewApplication::HelpShortcutsAction, "help_shortcuts",
-        kli18nc("@action", "Keyboard Shortcuts"), "help-keyboard-shortcuts-symbolic",
-        portableShortcutSpec("?", "F1")),
-    inheritedAction(KiriViewApplication::OptionsConfigureAction, "options_configure"),
-    inheritedAction(
-        KiriViewApplication::OptionsConfigureKeybindingAction, "options_configure_keybinding"),
-    showMenubarAction(KiriViewApplication::OptionsShowMenubarAction, "options_show_menubar",
-        KStandardActions::ShowMenubar, kli18nc("@action", "Show Menubar"), noDefaultShortcuts()),
-    existingAction(
-        KiriViewApplication::FileQuitAction, "file_quit", portableShortcutSpec("Q", "Ctrl+Q")),
-};
-
-static_assert(actionDefinitions.size() == actionDefinitionCount);
-
-constexpr bool actionDefinitionsFollowActionIdOrder()
-{
-    for (std::size_t index = 0; index < actionDefinitions.size(); ++index) {
-        if (actionDefinitions[index].actionId
-            != static_cast<KiriViewApplication::ActionId>(index)) {
-            return false;
-        }
-    }
-
-    return true;
-}
-
-static_assert(actionDefinitionsFollowActionIdOrder());
-
-bool actionIdInRange(KiriViewApplication::ActionId actionId)
-{
-    const int index = static_cast<int>(actionId);
-    return index >= 0 && index < static_cast<int>(actionDefinitionCount);
-}
-
-const ActionDefinition *actionDefinitionForId(KiriViewApplication::ActionId actionId)
-{
-    if (!actionIdInRange(actionId)) {
-        return nullptr;
-    }
-
-    return &actionDefinitions[static_cast<std::size_t>(actionId)];
-}
-
-QString latin1String(const char *text)
-{
-    return text == nullptr ? QString() : QString::fromLatin1(text);
-}
-
-QString localizedString(const KLazyLocalizedString &text)
-{
-    return text.isEmpty() ? QString() : text.toString();
-}
-
-QString applicationActionName(KiriViewApplication::ActionId actionId)
-{
-    const ActionDefinition *definition = actionDefinitionForId(actionId);
-    return definition == nullptr ? QString() : QString::fromLatin1(definition->name);
-}
-
-QKeySequence shortcut(const char *sequence)
-{
-    return QKeySequence::fromString(QString::fromLatin1(sequence), QKeySequence::PortableText);
-}
-
-QList<QKeySequence> portableShortcutList(
-    const std::array<const char *, maxPortableShortcutCount> &sequences, std::size_t count)
-{
-    QList<QKeySequence> shortcutList;
-    shortcutList.reserve(static_cast<qsizetype>(count));
-    for (std::size_t index = 0; index < count; ++index) {
-        shortcutList.push_back(shortcut(sequences[index]));
-    }
-
-    return shortcutList;
-}
-
-QList<QKeySequence> standardShortcuts(QKeySequence::StandardKey key)
-{
-    return QKeySequence::keyBindings(key);
-}
-
-QList<QKeySequence> defaultShortcuts(const DefaultShortcutSpec &spec)
-{
-    switch (spec.kind) {
-    case ShortcutSpecKind::None:
-        return {};
-    case ShortcutSpecKind::PortableText:
-        return portableShortcutList(spec.portableText, spec.portableTextCount);
-    case ShortcutSpecKind::StandardKey:
-        return standardShortcuts(spec.standardKey);
-    }
-
-    return {};
-}
-
-QString shortcutListText(const QList<QKeySequence> &shortcuts)
-{
-    QStringList texts;
-    texts.reserve(shortcuts.size());
-    for (const QKeySequence &shortcut : shortcuts) {
-        if (!shortcut.isEmpty()) {
-            texts.push_back(shortcut.toString(QKeySequence::NativeText));
-        }
-    }
-
-    return texts.join(QStringLiteral(" / "));
-}
-
-bool shortcutHasCommandModifier(const QKeySequence &shortcut)
-{
-    const Qt::KeyboardModifiers commandModifiers
-        = Qt::ControlModifier | Qt::AltModifier | Qt::MetaModifier;
-
-    for (int index = 0; index < shortcut.count(); ++index) {
-        const Qt::KeyboardModifiers shortcutModifiers
-            = shortcut[static_cast<uint>(index)].keyboardModifiers();
-        if ((shortcutModifiers & commandModifiers) != Qt::NoModifier) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-QList<QKeySequence> filterShortcutsByCommandModifier(
-    const QList<QKeySequence> &shortcuts, bool requireCommandModifier)
-{
-    QList<QKeySequence> filteredShortcuts;
-    filteredShortcuts.reserve(shortcuts.size());
-
-    for (const QKeySequence &shortcut : shortcuts) {
-        if (!shortcut.isEmpty() && shortcutHasCommandModifier(shortcut) == requireCommandModifier) {
-            filteredShortcuts.push_back(shortcut);
-        }
-    }
-
-    return filteredShortcuts;
-}
+namespace Actions = KiriView::ApplicationActions;
 
 KiriViewApplication::MenuPresentation toMenuPresentation(int value)
 {
@@ -357,7 +70,7 @@ QAction *KiriViewApplication::actionForId(ActionId actionId)
 
 QString KiriViewApplication::actionName(ActionId actionId) const
 {
-    return applicationActionName(actionId);
+    return Actions::actionName(actionId);
 }
 
 QList<QKeySequence> KiriViewApplication::shortcuts(const QString &actionName) const
@@ -383,34 +96,34 @@ QList<QKeySequence> KiriViewApplication::shortcutsForId(ActionId actionId) const
 QList<QKeySequence> KiriViewApplication::shortcutsWithCommandModifier(
     const QString &actionName) const
 {
-    return filterShortcutsByCommandModifier(shortcuts(actionName), true);
+    return Actions::filterShortcutsByCommandModifier(shortcuts(actionName), true);
 }
 
 QList<QKeySequence> KiriViewApplication::shortcutsWithCommandModifierForId(ActionId actionId) const
 {
-    return filterShortcutsByCommandModifier(shortcutsForId(actionId), true);
+    return Actions::filterShortcutsByCommandModifier(shortcutsForId(actionId), true);
 }
 
 QList<QKeySequence> KiriViewApplication::shortcutsWithoutCommandModifier(
     const QString &actionName) const
 {
-    return filterShortcutsByCommandModifier(shortcuts(actionName), false);
+    return Actions::filterShortcutsByCommandModifier(shortcuts(actionName), false);
 }
 
 QList<QKeySequence> KiriViewApplication::shortcutsWithoutCommandModifierForId(
     ActionId actionId) const
 {
-    return filterShortcutsByCommandModifier(shortcutsForId(actionId), false);
+    return Actions::filterShortcutsByCommandModifier(shortcutsForId(actionId), false);
 }
 
 QString KiriViewApplication::shortcutText(const QString &actionName) const
 {
-    return shortcutListText(shortcuts(actionName));
+    return Actions::shortcutListText(shortcuts(actionName));
 }
 
 QString KiriViewApplication::shortcutTextForId(ActionId actionId) const
 {
-    return shortcutListText(shortcutsForId(actionId));
+    return Actions::shortcutListText(shortcutsForId(actionId));
 }
 
 void KiriViewApplication::setupActions()
@@ -418,37 +131,38 @@ void KiriViewApplication::setupActions()
     AbstractKirigamiApplication::setupActions();
     mainCollection()->setComponentDisplayName(QStringLiteral("KiriView"));
 
-    const auto addAction = [this](const ActionDefinition &definition) {
+    const auto addAction = [this](const Actions::ActionDefinition &definition) {
         const QString name = QString::fromLatin1(definition.name);
-        const QList<QKeySequence> shortcuts = defaultShortcuts(definition.defaultShortcuts);
+        const QList<QKeySequence> shortcuts
+            = Actions::defaultShortcuts(definition.defaultShortcuts);
 
         switch (definition.kind) {
-        case ActionRegistrationKind::Existing:
+        case Actions::RegistrationKind::Existing:
             if (QAction *registeredAction = action(name)) {
                 finishRegisteredAction(registeredAction, registeredAction->text(), shortcuts);
             }
             return;
-        case ActionRegistrationKind::Inherited:
+        case Actions::RegistrationKind::Inherited:
             return;
-        case ActionRegistrationKind::Registered:
-            addRegisteredAction(name, localizedString(definition.text),
-                latin1String(definition.iconName), shortcuts);
+        case Actions::RegistrationKind::Registered:
+            addRegisteredAction(name, Actions::localizedString(definition.text),
+                Actions::latin1String(definition.iconName), shortcuts);
             return;
-        case ActionRegistrationKind::ShowMenubar:
+        case Actions::RegistrationKind::ShowMenubar:
             m_showMenuBarAction = addStandardAction(
-                definition.actionType, name, localizedString(definition.text), shortcuts);
+                definition.actionType, name, Actions::localizedString(definition.text), shortcuts);
             m_showMenuBarAction->setCheckable(true);
             connect(m_showMenuBarAction, &QAction::triggered, this,
                 [this](bool checked) { setMenuPresentation(checked ? MenuBar : HamburgerMenu); });
             return;
-        case ActionRegistrationKind::Standard:
+        case Actions::RegistrationKind::Standard:
             addStandardAction(
-                definition.actionType, name, localizedString(definition.text), shortcuts);
+                definition.actionType, name, Actions::localizedString(definition.text), shortcuts);
             return;
         }
     };
 
-    for (const ActionDefinition &definition : actionDefinitions) {
+    for (const Actions::ActionDefinition &definition : Actions::definitions()) {
         addAction(definition);
     }
 
