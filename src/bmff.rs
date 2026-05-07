@@ -132,10 +132,7 @@ pub(crate) fn child_boxes(
     let mut boxes = Vec::new();
 
     while offset < end_offset {
-        let Some(box_header) = read_box(data, offset, end_offset) else {
-            return None;
-        };
-
+        let box_header = read_box(data, offset, end_offset)?;
         boxes.push(box_header);
         offset = box_header.end_offset();
     }
