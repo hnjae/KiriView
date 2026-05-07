@@ -32,6 +32,7 @@ struct ManualImageDataLoad {
     ImageFirstDisplayDecodeContext firstDisplay;
     ImageDataCallback dataCallback;
     ErrorCallback errorCallback;
+    std::shared_ptr<ImageIoJobState> state;
     bool canceled = false;
 };
 
@@ -48,14 +49,20 @@ public:
         load->firstDisplay = request.firstDisplay();
         load->dataCallback = std::move(callback);
         load->errorCallback = std::move(errorCallback);
-        m_loads.push_back(load);
 
-        return ImageIoJob(load->object, [load](QObject *object) {
-            load->canceled = true;
+        std::weak_ptr<ManualImageDataLoad> weakLoad = load;
+        ImageIoJob job(load->object, [weakLoad](QObject *object) {
+            if (std::shared_ptr<ManualImageDataLoad> load = weakLoad.lock()) {
+                load->canceled = true;
+                load->object = nullptr;
+            }
             if (object != nullptr) {
                 object->deleteLater();
             }
         });
+        load->state = job.state();
+        m_loads.push_back(load);
+        return job;
     }
 
     std::size_t loadCount() const { return m_loads.size(); }
@@ -70,15 +77,64 @@ public:
 
     const ManualImageDataLoad &backLoad() const { return *m_loads.back(); }
 
-    void finishFrontLoad(QByteArray data) { frontLoad().dataCallback(std::move(data)); }
+    void finishFrontLoad(QByteArray data) { finishDataLoad(m_loads.front(), std::move(data)); }
 
-    void finishBackLoad(QByteArray data) { backLoad().dataCallback(std::move(data)); }
+    void finishBackLoad(QByteArray data) { finishDataLoad(m_loads.back(), std::move(data)); }
 
-    void failFrontLoad(const QString &errorString) { frontLoad().errorCallback(errorString); }
+    void failFrontLoad(const QString &errorString)
+    {
+        finishLoadError(m_loads.front(), errorString);
+    }
 
-    void failBackLoad(const QString &errorString) { backLoad().errorCallback(errorString); }
+    void failBackLoad(const QString &errorString) { finishLoadError(m_loads.back(), errorString); }
+
+    void deliverFrontLoadDataIgnoringCancellation(QByteArray data)
+    {
+        deliverData(*m_loads.front(), std::move(data));
+    }
 
 private:
+    template <typename Delivery>
+    static void finishLoad(const std::shared_ptr<ManualImageDataLoad> &load, Delivery &&delivery)
+    {
+        if (load == nullptr || load->state == nullptr) {
+            return;
+        }
+
+        QObject *object = load->object;
+        load->state->claimAndRun(object, [&]() mutable {
+            load->object = nullptr;
+            std::forward<Delivery>(delivery)(*load);
+            if (object != nullptr) {
+                object->deleteLater();
+            }
+        });
+    }
+
+    static void finishDataLoad(const std::shared_ptr<ManualImageDataLoad> &load, QByteArray data)
+    {
+        finishLoad(load, [data = std::move(data)](ManualImageDataLoad &load) mutable {
+            deliverData(load, std::move(data));
+        });
+    }
+
+    static void finishLoadError(
+        const std::shared_ptr<ManualImageDataLoad> &load, const QString &errorString)
+    {
+        finishLoad(load, [&errorString](ManualImageDataLoad &load) {
+            if (load.errorCallback) {
+                load.errorCallback(errorString);
+            }
+        });
+    }
+
+    static void deliverData(ManualImageDataLoad &load, QByteArray data)
+    {
+        if (load.dataCallback) {
+            load.dataCallback(std::move(data));
+        }
+    }
+
     std::vector<std::shared_ptr<ManualImageDataLoad>> m_loads;
 };
 

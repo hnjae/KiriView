@@ -74,7 +74,7 @@ void TestImageDecodeJob::staleLoadResultIsIgnored()
     QCOMPARE(dataLoader.loadCount(), std::size_t(2));
     QVERIFY(dataLoader.frontLoad().canceled);
 
-    dataLoader.finishFrontLoad(QByteArrayLiteral("ok"));
+    dataLoader.deliverFrontLoadDataIgnoringCancellation(QByteArrayLiteral("ok"));
     dataLoader.finishBackLoad(QByteArrayLiteral("ok"));
 
     QTRY_COMPARE(decodedRequests.size(), std::size_t(1));
