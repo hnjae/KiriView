@@ -1,8 +1,10 @@
 # Repository Guidelines
 
-## Project Structure & Module Organization
+## Project Overview
 
-KiriView is a Rust 2024 desktop app using CXX-Qt and KDE Kirigami.
+KiriView is a desktop app using Rust, CXX-Qt and KDE Kirigami.
+Key paths: `src/` app code, `tests/cpp/` C++ tests, `po/` translations,
+`flatpak/` packaging patches, and `nix/` devenv support.
 
 ## Compatibility Policy
 
@@ -13,24 +15,21 @@ or internal formats unless explicitly requested.
 ## Spec-Driven Development
 
 Follow spec-driven development for product behavior and user-facing implementation
-changes. Before implementing a product behavior change, update `SPEC.md` to
-describe the intended behavior from the user's perspective, commit that
-specification update, and then carry out the work according to the committed spec.
-Do not update `SPEC.md` for implementation-dependent changes that do not affect
-user-visible behavior. This includes development-only or verification-only
-changes, such as build tooling, formatter/linter/test configuration, CI wiring,
-dependency metadata, or repository maintenance.
+changes. Before implementing a product behavior change, update `SPEC.md` with the
+intended user-visible behavior, commit that spec update, then implement against
+the committed spec. Development-only or repository-maintenance changes do not
+require `SPEC.md` updates.
 
 ## Build, Test, and Development Commands
 
-- `devenv shell`: enter the development environment with Rust, Qt, Flatpak, and formatters.
-- `just build`: build the Flatpak app into `build-dir/` with tests disabled.
-- `just build-with-tests`: run the full Flatpak build plus manifest test commands, including offline `cargo test --all-targets --all-features` and all C++ tests.
-- `just run`: launch `kiriview` from the Flatpak build directory.
-- `just lint`: run host/devenv Rust and C++ linters using the normal host Cargo target directory.
-- `just test`: run fast host/devenv Rust library tests and the host C++ test subset.
-- `just format`: run the configured pre-commit formatters and checks for all files.
-- `just format-check`: verify Rust formatting with `cargo fmt --all --check`.
+- `devenv shell`: development environment.
+- `just build`: Flatpak build in `build-dir/`, tests disabled.
+- `just build-with-tests`: full Flatpak build with manifest tests.
+- `just run`: launch from `build-dir/`.
+- `just lint`: host/devenv Rust, QML, and C++ linters.
+- `just test`: fast host Rust library tests and host C++ subset.
+- `just format`: pre-commit formatters and checks.
+- `just format-check`: `cargo fmt --all --check`.
 
 ## Coding Style & Naming Conventions
 
@@ -43,9 +42,8 @@ requested repository change, create a commit before ending the task unless the
 user explicitly asks not to commit or asks to pause. If the work naturally
 requires multiple independent steps, commit after each step is complete,
 keeping the `SPEC.md` update as the first commit for product behavior changes.
-Do not include unrelated user changes in these commits. Pull requests should
-describe the change, list the commands run, link related issues when applicable,
-and include screenshots or notes for visible QML/UI changes.
+Check `git status` before committing and stage paths explicitly. Do not include
+unrelated user changes in these commits.
 
 ## Licensing & Configuration
 
