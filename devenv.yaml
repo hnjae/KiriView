@@ -1,7 +1,5 @@
 # yaml-language-server: $schema=https://devenv.sh/devenv.schema.json
 ---
-imports:
-  - ./nix/devenv/git-hooks.nix
 inputs:
   git-hooks:
     url: github:cachix/git-hooks.nix

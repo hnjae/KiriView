@@ -12,6 +12,7 @@ in
 {
   imports = [
     ./nix/devenv/check-tasks.nix
+    ./nix/devenv/git-hooks.nix
   ];
 
   # Cargo debug builds compile the C++ bridge sources without optimization,
