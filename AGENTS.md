@@ -22,7 +22,8 @@ dependency metadata, or repository maintenance.
 - `just build-with-tests`: run the full Flatpak build plus manifest test commands.
 - `just run`: launch `kiriview` from the Flatpak build directory.
 - `just lint`: run host/devenv Rust and C++ linters using the normal host Cargo target directory.
-- `just test`: run offline `cargo test --all-targets --all-features` inside the Flatpak build environment with an isolated `target/flatpak` Cargo target directory.
+- `just test`: run fast host/devenv Rust library tests and the host C++ test subset.
+- `just test-flatpak`: run the full Flatpak test path with offline `cargo test --all-targets --all-features` and all C++ tests.
 - `just format`: run the configured pre-commit formatters and checks for all files.
 - `just format-check`: verify Rust formatting with `cargo fmt --all --check`.
 

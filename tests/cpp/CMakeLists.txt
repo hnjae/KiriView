@@ -43,7 +43,9 @@ function(kiriview_latest_path output)
     set("${output}" "${latest_path}" PARENT_SCOPE)
 endfunction()
 
-set(KIRIVIEW_CARGO_TARGET_DIR "${CMAKE_SOURCE_DIR}/../../target/flatpak/debug")
+set(KIRIVIEW_CARGO_TARGET_DIR "${CMAKE_SOURCE_DIR}/../../target/flatpak/debug"
+    CACHE PATH "Cargo target debug artifacts directory"
+)
 file(GLOB KIRIVIEW_RUST_STATICLIB_CANDIDATES
     "${KIRIVIEW_CARGO_TARGET_DIR}/deps/libkiriview-*.a"
 )

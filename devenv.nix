@@ -263,6 +263,56 @@ in
   };
 
   scripts = {
+    "test-rust-host" = {
+      description = "Run host Rust library tests with vendored dependencies";
+      exec = ''
+        set -euo pipefail
+
+        cd ${lib.escapeShellArg config.devenv.root}
+
+        if [[ ! -d ${lib.escapeShellArg cargoVendorDir} ]]; then
+            echo ".cargo-vendor/vendor was not found; run 'just test' to vendor dependencies" >&2
+            exit 1
+        fi
+
+        CARGO_TARGET_DIR=${lib.escapeShellArg "${config.devenv.root}/target"} \
+            cargo \
+                --config ${lib.escapeShellArg cargoVendorSourceConfig} \
+                --config ${lib.escapeShellArg cargoCratesIoReplaceConfig} \
+                --offline \
+                test --lib --all-features
+      '';
+    };
+    "test-cpp-host" = {
+      description = "Run host C++ tests against host Rust artifacts";
+      exec = ''
+        set -euo pipefail
+
+        cd ${lib.escapeShellArg config.devenv.root}
+
+        cmake \
+            -S tests/cpp \
+            -B target/devenv/cpp-tests \
+            -DCMAKE_BUILD_TYPE=Debug \
+            -DKIRIVIEW_CARGO_TARGET_DIR=${lib.escapeShellArg "${config.devenv.root}/target/debug"}
+        cmake --build target/devenv/cpp-tests
+        # GNU gettext ignores LANGUAGE under C/POSIX locales; devenv defaults to C.UTF-8.
+        LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 \
+            ctest \
+                --test-dir target/devenv/cpp-tests \
+                --output-on-failure \
+                -E '^test_kiriimagedecoder$'
+      '';
+    };
+    "test-host" = {
+      description = "Run host Rust and C++ tests";
+      exec = ''
+        set -euo pipefail
+
+        test-rust-host
+        test-cpp-host
+      '';
+    };
     "lint-clippy" = {
       description = "Run Rust clippy with vendored dependencies";
       exec = ''

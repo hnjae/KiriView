@@ -72,4 +72,4 @@ flatpak uninstall --user io.github.hnjae.KiriView
 
 The Flatpak manifest intentionally builds libheif as an application module instead of relying on the Freedesktop or KDE runtime copy. The runtime libheif and codec plugins have historically lagged the HEIF still-image and image sequence support KiriView needs, including JPEG, JPEG 2000, AVC/H.264, HEVC/H.265, and VVC/H.266 HEIF variants.
 
-When updating the Flatpak runtime, SDK, SDK extensions, or codec plugin assumptions, re-check whether the bundled libheif module is still required before removing or changing it. At minimum, verify the current runtime libheif version, HEIF sequence decoding, alpha handling, and `just test`.
+When updating the Flatpak runtime, SDK, SDK extensions, or codec plugin assumptions, re-check whether the bundled libheif module is still required before removing or changing it. At minimum, verify the current runtime libheif version, HEIF sequence decoding, alpha handling, and `just test-flatpak`.

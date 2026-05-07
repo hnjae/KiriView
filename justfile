@@ -60,8 +60,14 @@ lint: _cargo-vendor-sources
     devenv shell -- lint-clang-tidy
     devenv shell -- lint-clazy
 
+alias test-host := test
+
 [group('ci')]
-test:
+test: _cargo-vendor-sources
+    devenv shell -- test-host
+
+[group('ci')]
+test-flatpak:
     just _module 'cargo --offline test --all-targets --all-features'
     just _module 'cmake -S tests/cpp -B target/flatpak/cpp-tests -DCMAKE_BUILD_TYPE=Debug'
     just _module 'cmake --build target/flatpak/cpp-tests'
