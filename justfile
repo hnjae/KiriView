@@ -19,40 +19,6 @@ _cargo-vendor-sources:
     install -Dm644 '{{ justfile_directory() }}/cargo/config' '{{ cargo_vendor_config_dir }}/config.toml'
     devenv shell -- cargo vendor --locked --versioned-dirs --quiet '{{ cargo_vendor_dir }}'
 
-[private]
-_flatpak-build-dir:
-    if ! test -f '{{ justfile_directory() }}/build-dir/metadata'; then \
-        just build; \
-    fi
-
-[private]
-_module command: _cargo-vendor-sources _flatpak-build-dir
-    flatpak build \
-        '--bind-mount=/run/build/kiriview={{ justfile_directory() }}' \
-        '--bind-mount=/run/build/kiriview/.cargo={{ cargo_vendor_config_dir }}' \
-        '--bind-mount=/run/build/kiriview/cargo/vendor={{ cargo_vendor_dir }}' \
-        --build-dir=/run/build/kiriview \
-        --env=CARGO_TARGET_DIR=/run/build/kiriview/target/flatpak \
-        --env=LIBHEIF_PLUGIN_PATH=/app/lib/libheif \
-        --env=PATH=/usr/lib/sdk/rust-stable/bin:/app/bin:/usr/bin \
-        build-dir \
-        {{ command }}
-
-[private]
-_module-llvm command: _cargo-vendor-sources _flatpak-build-dir
-    llvm_sdk="$(flatpak info --show-location org.freedesktop.Sdk.Extension.llvm21//25.08)/files" && \
-    flatpak build \
-        "--bind-mount=/usr/lib/sdk/llvm21=$llvm_sdk" \
-        '--bind-mount=/run/build/kiriview={{ justfile_directory() }}' \
-        '--bind-mount=/run/build/kiriview/.cargo={{ cargo_vendor_config_dir }}' \
-        '--bind-mount=/run/build/kiriview/cargo/vendor={{ cargo_vendor_dir }}' \
-        --build-dir=/run/build/kiriview \
-        --env=CARGO_TARGET_DIR=/run/build/kiriview/target/flatpak \
-        --env=LIBHEIF_PLUGIN_PATH=/app/lib/libheif \
-        --env=PATH=/usr/lib/sdk/rust-stable/bin:/usr/lib/sdk/llvm21/bin:/app/bin:/usr/bin \
-        build-dir \
-        {{ command }}
-
 [group('ci')]
 lint: _cargo-vendor-sources
     devenv shell -- lint-clippy
@@ -65,13 +31,6 @@ alias test-host := test
 [group('ci')]
 test: _cargo-vendor-sources
     devenv shell -- test-host
-
-[group('ci')]
-test-flatpak:
-    just _module 'cargo --offline test --all-targets --all-features'
-    just _module 'cmake -S tests/cpp -B target/flatpak/cpp-tests -DCMAKE_BUILD_TYPE=Debug'
-    just _module 'cmake --build target/flatpak/cpp-tests'
-    just _module 'ctest --test-dir target/flatpak/cpp-tests --output-on-failure'
 
 [group('ci')]
 format:
