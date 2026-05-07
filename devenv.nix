@@ -7,12 +7,12 @@
   ...
 }:
 let
-  qtCxxqt = import ./nix/devenv/qt-cxxqt.nix { inherit config pkgs lib; };
+  qtCxxqt = import ./nix/devenv/internal/qt-cxxqt.nix { inherit config pkgs lib; };
 in
 {
   imports = [
-    ./nix/devenv/check-tasks.nix
-    ./nix/devenv/git-hooks.nix
+    ./nix/devenv/modules/check-tasks.nix
+    ./nix/devenv/modules/git-hooks.nix
   ];
 
   # Cargo debug builds compile the C++ bridge sources without optimization,

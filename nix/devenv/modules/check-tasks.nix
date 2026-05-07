@@ -7,7 +7,7 @@
   ...
 }:
 let
-  qtCxxqt = import ./qt-cxxqt.nix { inherit config pkgs lib; };
+  qtCxxqt = import ../internal/qt-cxxqt.nix { inherit config pkgs lib; };
   repoRoot = lib.escapeShellArg config.devenv.root;
   hostTaskPrelude = ''
     set -euo pipefail
