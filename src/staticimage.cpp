@@ -6,6 +6,14 @@
 #include "imagebytecost.h"
 
 namespace KiriView {
+FirstDisplayImageDecodeResult ImageTileSource::decodeFirstDisplayImage(
+    const ImageFirstDisplayDecodeContext &context, QString *errorString) const
+{
+    Q_UNUSED(context);
+    Q_UNUSED(errorString);
+    return {};
+}
+
 bool StaticImagePayload::isValid() const { return source != nullptr && !preview.isNull(); }
 
 qsizetype StaticImagePayload::byteCost() const

@@ -49,8 +49,7 @@ public:
         const TileRequest &request, QString *errorString) const
         = 0;
     virtual FirstDisplayImageDecodeResult decodeFirstDisplayImage(
-        const ImageFirstDisplayDecodeContext &context, QString *errorString) const
-        = 0;
+        const ImageFirstDisplayDecodeContext &context, QString *errorString) const;
     virtual QImage decodeBlockingDisplayImage(int maximumLongEdge, QString *errorString) const = 0;
     virtual qsizetype byteCost() const = 0;
 };

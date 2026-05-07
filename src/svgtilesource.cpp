@@ -68,15 +68,6 @@ std::optional<DecodedTile> SvgTileSource::decodeTile(
     return decodedTileFromImage(request, std::move(image));
 }
 
-FirstDisplayImageDecodeResult SvgTileSource::decodeFirstDisplayImage(
-    const ImageFirstDisplayDecodeContext &context, QString *errorString) const
-{
-    Q_UNUSED(context);
-    Q_UNUSED(errorString);
-    // TODO: Add an SVG-specific first-display strategy if rendering cost becomes visible.
-    return {};
-}
-
 QImage SvgTileSource::decodeBlockingDisplayImage(int maximumLongEdge, QString *errorString) const
 {
     const QSize previewSize = boundedPreviewSize(m_imageSize, maximumLongEdge);

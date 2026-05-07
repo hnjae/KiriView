@@ -311,12 +311,6 @@ public:
     QSize imageSize() const override { return m_image.size(); }
     qsizetype byteCost() const override { return m_image.sizeInBytes(); }
 
-    FirstDisplayImageDecodeResult decodeFirstDisplayImage(
-        const ImageFirstDisplayDecodeContext &, QString *) const override
-    {
-        return {};
-    }
-
     QImage decodeBlockingDisplayImage(int, QString *) const override { return m_image; }
 
     std::optional<DecodedTile> decodeTile(const TileRequest &request, QString *) const override

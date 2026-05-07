@@ -33,16 +33,6 @@ public:
     QSize imageSize() const override { return m_imageSize; }
     qsizetype byteCost() const override { return m_data.size(); }
 
-    KiriView::FirstDisplayImageDecodeResult decodeFirstDisplayImage(
-        const KiriView::ImageFirstDisplayDecodeContext &context,
-        QString *errorString) const override
-    {
-        Q_UNUSED(context);
-        Q_UNUSED(errorString);
-        // TODO: Add a HEIF-family first-display path that can avoid full fallback decode.
-        return {};
-    }
-
     QImage decodeBlockingDisplayImage(int maximumLongEdge, QString *errorString) const override
     {
         return decodeFullOrScaled(
