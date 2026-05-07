@@ -28,8 +28,8 @@ require `SPEC.md` updates.
 - `just run`: launch from `build-dir/`.
 - `just lint`: host/devenv Rust, QML, and C++ linters.
 - `just test`: fast host Rust library tests and host C++ subset.
-- `just format`: pre-commit formatters and checks.
-- `just format-check`: `cargo fmt --all --check`.
+- `just format`: run treefmt formatters.
+- `just format-check`: check treefmt formatting in CI mode.
 
 ## Coding Style & Naming Conventions
 

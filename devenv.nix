@@ -13,6 +13,7 @@ in
   imports = [
     ./nix/devenv/modules/check-tasks.nix
     ./nix/devenv/modules/git-hooks.nix
+    ./nix/devenv/modules/treefmt.nix
   ];
 
   # Cargo debug builds compile the C++ bridge sources without optimization,

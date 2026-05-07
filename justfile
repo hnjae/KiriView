@@ -20,11 +20,11 @@ test:
 
 [group('ci')]
 format:
-    devenv shell -- prek run --hook-stage pre-commit --all-files
+    devenv shell -- treefmt
 
 [group('ci')]
 format-check:
-    cargo fmt --all --check
+    devenv shell -- treefmt --ci
 
 [group('ci')]
 i18n-check:
