@@ -93,12 +93,10 @@ std::vector<ContainerNavigationCandidate> containerCandidatesFromLister(KCoreDir
 void finishDirectoryCandidateListWithError(std::shared_ptr<KiriView::ImageIoJobState> jobState,
     KCoreDirLister *lister, const QString &errorString, const ErrorCallback &errorCallback)
 {
-    if (!jobState->claim(lister)) {
-        return;
-    }
-
-    lister->deleteLater();
-    KiriView::invokeIfSet(errorCallback, errorString);
+    jobState->claimAndRun(lister, [&]() {
+        lister->deleteLater();
+        KiriView::invokeIfSet(errorCallback, errorString);
+    });
 }
 
 template <typename Candidates, typename CandidateCallback, typename CandidateFactory>
@@ -112,13 +110,11 @@ KiriView::ImageIoJob startDirectoryCandidateList(QObject *receiver, const QUrl &
     QObject::connect(lister, &KCoreDirLister::completed, receiver,
         [jobState, lister, callback = std::move(callback),
             candidateFactory = std::move(candidateFactory)]() mutable {
-            if (!jobState->claim(lister)) {
-                return;
-            }
-
-            Candidates candidates = candidateFactory(lister);
-            lister->deleteLater();
-            KiriView::invokeIfSet(callback, std::move(candidates));
+            jobState->claimAndRun(lister, [&]() {
+                Candidates candidates = candidateFactory(lister);
+                lister->deleteLater();
+                KiriView::invokeIfSet(callback, std::move(candidates));
+            });
         });
     QObject::connect(lister, &KCoreDirLister::jobError, receiver,
         [jobState, lister, errorCallback](KIO::Job *job) {
@@ -154,12 +150,10 @@ KiriView::ImageIoJob startArchiveWorkerJob(QObject *receiver, Work work, Finish 
 
     KiriView::runAsyncWorker(receiver, std::move(work),
         [token, jobState, finish = std::move(finish)](auto result) mutable {
-            if (!jobState->claim(token)) {
-                return;
-            }
-
-            token->deleteLater();
-            finish(std::move(result));
+            jobState->claimAndRun(token, [&]() mutable {
+                token->deleteLater();
+                finish(std::move(result));
+            });
         });
     return ioJob;
 }
@@ -225,16 +219,14 @@ ImageIoJob startStoredImageDataLoad(QObject *receiver, ImageDecodeRequest reques
     QObject::connect(job, &KJob::result, receiver,
         [jobState, job, callback = std::move(callback), errorCallback = std::move(errorCallback)](
             KJob *finishedJob) mutable {
-            if (!jobState->claim(job)) {
-                return;
-            }
+            jobState->claimAndRun(job, [&]() {
+                if (finishedJob->error() != KJob::NoError) {
+                    KiriView::invokeIfSet(errorCallback, finishedJob->errorString());
+                    return;
+                }
 
-            if (finishedJob->error() != KJob::NoError) {
-                KiriView::invokeIfSet(errorCallback, finishedJob->errorString());
-                return;
-            }
-
-            KiriView::invokeIfSet(callback, job->data());
+                KiriView::invokeIfSet(callback, job->data());
+            });
         });
     return ioJob;
 }

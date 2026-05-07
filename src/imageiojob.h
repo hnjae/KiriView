@@ -7,6 +7,7 @@
 #include <QPointer>
 #include <functional>
 #include <memory>
+#include <utility>
 
 class QObject;
 
@@ -19,6 +20,15 @@ public:
     ImageIoJobState(QObject *object, CancelCallback cancelCallback);
 
     bool claim(QObject *object);
+    template <typename Finish> bool claimAndRun(QObject *object, Finish &&finish)
+    {
+        if (!claim(object)) {
+            return false;
+        }
+
+        std::forward<Finish>(finish)();
+        return true;
+    }
     void cancel();
     bool isActive() const;
 
