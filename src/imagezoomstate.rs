@@ -162,6 +162,78 @@ use ffi::{
     RustZoomSize, RustZoomSizeF,
 };
 
+impl RustImageZoomState {
+    fn image_size(self) -> RustZoomSize {
+        RustZoomSize {
+            width: self.image_width,
+            height: self.image_height,
+        }
+    }
+
+    fn viewport_size(self) -> RustZoomSizeF {
+        RustZoomSizeF {
+            width: self.viewport_width,
+            height: self.viewport_height,
+        }
+    }
+
+    fn with_display_size_for_zoom(
+        mut self,
+        image_size: RustZoomSize,
+        zoom_percent: f64,
+        device_pixel_ratio: f64,
+    ) -> RustImageZoomState {
+        let display_size = zoom_display_size(image_size, zoom_percent, device_pixel_ratio);
+        self.display_width = display_size.width;
+        self.display_height = display_size.height;
+        self
+    }
+
+    fn with_current_display_size(self, device_pixel_ratio: f64) -> RustImageZoomState {
+        self.with_display_size_for_zoom(self.image_size(), self.zoom_percent, device_pixel_ratio)
+    }
+
+    fn updated(mut self, device_pixel_ratio: f64) -> RustImageZoomState {
+        if self.zoom_mode != RustImageZoomMode::Manual {
+            self.zoom_percent =
+                rust_image_zoom_fit_zoom_percent(self, self.zoom_mode, device_pixel_ratio);
+        }
+
+        self.with_current_display_size(device_pixel_ratio)
+    }
+}
+
+impl RustImageZoomStateChange {
+    fn unchanged(state: RustImageZoomState) -> RustImageZoomStateChange {
+        RustImageZoomStateChange {
+            changed: false,
+            state,
+        }
+    }
+
+    fn changed(state: RustImageZoomState) -> RustImageZoomStateChange {
+        RustImageZoomStateChange {
+            changed: true,
+            state,
+        }
+    }
+
+    fn changed_and_updated(
+        state: RustImageZoomState,
+        device_pixel_ratio: f64,
+    ) -> RustImageZoomStateChange {
+        Self::changed(state.updated(device_pixel_ratio))
+    }
+}
+
+fn zoom_display_size(
+    image_size: RustZoomSize,
+    zoom_percent: f64,
+    device_pixel_ratio: f64,
+) -> RustZoomSizeF {
+    rust_image_zoom_display_size_for_zoom_percent(image_size, zoom_percent, device_pixel_ratio)
+}
+
 fn rust_image_zoom_approximately_equal(left: f64, right: f64) -> bool {
     (left - right).abs() < ZOOM_EPSILON
 }
@@ -192,25 +264,13 @@ fn rust_image_zoom_set_viewport_size(
         width: 0.0_f64.max(viewport_size.width),
         height: 0.0_f64.max(viewport_size.height),
     };
-    if rust_image_zoom_size_approximately_equal(
-        RustZoomSizeF {
-            width: state.viewport_width,
-            height: state.viewport_height,
-        },
-        normalized_viewport_size,
-    ) {
-        return RustImageZoomStateChange {
-            changed: false,
-            state,
-        };
+    if rust_image_zoom_size_approximately_equal(state.viewport_size(), normalized_viewport_size) {
+        return RustImageZoomStateChange::unchanged(state);
     }
 
     state.viewport_width = normalized_viewport_size.width;
     state.viewport_height = normalized_viewport_size.height;
-    RustImageZoomStateChange {
-        changed: true,
-        state: rust_image_zoom_update(state, device_pixel_ratio),
-    }
+    RustImageZoomStateChange::changed_and_updated(state, device_pixel_ratio)
 }
 
 fn rust_image_zoom_set_image_size(
@@ -219,18 +279,12 @@ fn rust_image_zoom_set_image_size(
     device_pixel_ratio: f64,
 ) -> RustImageZoomStateChange {
     if state.image_width == image_size.width && state.image_height == image_size.height {
-        return RustImageZoomStateChange {
-            changed: false,
-            state,
-        };
+        return RustImageZoomStateChange::unchanged(state);
     }
 
     state.image_width = image_size.width;
     state.image_height = image_size.height;
-    RustImageZoomStateChange {
-        changed: true,
-        state: rust_image_zoom_update(state, device_pixel_ratio),
-    }
+    RustImageZoomStateChange::changed_and_updated(state, device_pixel_ratio)
 }
 
 fn rust_image_zoom_set_manual_zoom_percent(
@@ -239,10 +293,7 @@ fn rust_image_zoom_set_manual_zoom_percent(
     device_pixel_ratio: f64,
 ) -> RustImageZoomStateChange {
     if !zoom_percent.is_finite() {
-        return RustImageZoomStateChange {
-            changed: false,
-            state,
-        };
+        return RustImageZoomStateChange::unchanged(state);
     }
 
     let clamped_zoom_percent =
@@ -252,28 +303,12 @@ fn rust_image_zoom_set_manual_zoom_percent(
     let mode_changed = state.zoom_mode != RustImageZoomMode::Manual;
 
     if !zoom_changed && !mode_changed {
-        return RustImageZoomStateChange {
-            changed: false,
-            state,
-        };
+        return RustImageZoomStateChange::unchanged(state);
     }
 
     state.zoom_mode = RustImageZoomMode::Manual;
     state.zoom_percent = clamped_zoom_percent;
-    let display_size = rust_image_zoom_display_size_for_zoom_percent(
-        RustZoomSize {
-            width: state.image_width,
-            height: state.image_height,
-        },
-        state.zoom_percent,
-        device_pixel_ratio,
-    );
-    state.display_width = display_size.width;
-    state.display_height = display_size.height;
-    RustImageZoomStateChange {
-        changed: true,
-        state,
-    }
+    RustImageZoomStateChange::changed(state.with_current_display_size(device_pixel_ratio))
 }
 
 fn rust_image_zoom_set_fit_mode(
@@ -282,17 +317,11 @@ fn rust_image_zoom_set_fit_mode(
     device_pixel_ratio: f64,
 ) -> RustImageZoomStateChange {
     if zoom_mode == RustImageZoomMode::Manual || state.zoom_mode == zoom_mode {
-        return RustImageZoomStateChange {
-            changed: false,
-            state,
-        };
+        return RustImageZoomStateChange::unchanged(state);
     }
 
     state.zoom_mode = zoom_mode;
-    RustImageZoomStateChange {
-        changed: true,
-        state: rust_image_zoom_update(state, device_pixel_ratio),
-    }
+    RustImageZoomStateChange::changed_and_updated(state, device_pixel_ratio)
 }
 
 fn rust_image_zoom_reset_zoom(
@@ -300,7 +329,7 @@ fn rust_image_zoom_reset_zoom(
     device_pixel_ratio: f64,
 ) -> RustImageZoomState {
     state.zoom_mode = RustImageZoomMode::Fit;
-    rust_image_zoom_update(state, device_pixel_ratio)
+    state.updated(device_pixel_ratio)
 }
 
 fn rust_image_zoom_prepare_image_container(
@@ -334,11 +363,7 @@ fn rust_image_zoom_loaded_image_zoom(
             device_pixel_ratio,
         )
     };
-    let display_size = rust_image_zoom_display_size_for_zoom_percent(
-        image_size,
-        loaded_zoom_percent,
-        device_pixel_ratio,
-    );
+    let display_size = zoom_display_size(image_size, loaded_zoom_percent, device_pixel_ratio);
 
     RustLoadedImageZoom {
         zoom_mode: loaded_zoom_mode,
@@ -360,25 +385,10 @@ fn rust_image_zoom_set_loaded_svg_zoom(
 }
 
 fn rust_image_zoom_update(
-    mut state: RustImageZoomState,
+    state: RustImageZoomState,
     device_pixel_ratio: f64,
 ) -> RustImageZoomState {
-    if state.zoom_mode != RustImageZoomMode::Manual {
-        state.zoom_percent =
-            rust_image_zoom_fit_zoom_percent(state, state.zoom_mode, device_pixel_ratio);
-    }
-
-    let display_size = rust_image_zoom_display_size_for_zoom_percent(
-        RustZoomSize {
-            width: state.image_width,
-            height: state.image_height,
-        },
-        state.zoom_percent,
-        device_pixel_ratio,
-    );
-    state.display_width = display_size.width;
-    state.display_height = display_size.height;
-    state
+    state.updated(device_pixel_ratio)
 }
 
 fn rust_image_zoom_fit_zoom_percent(
@@ -389,10 +399,7 @@ fn rust_image_zoom_fit_zoom_percent(
     rust_image_zoom_fit_zoom_percent_for_image_size(
         state,
         zoom_mode,
-        RustZoomSize {
-            width: state.image_width,
-            height: state.image_height,
-        },
+        state.image_size(),
         device_pixel_ratio,
     )
 }
