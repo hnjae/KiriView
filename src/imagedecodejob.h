@@ -39,7 +39,7 @@ public:
 private:
     void startDecode(QByteArray data, ImageDecodeRequest request);
     bool isCurrentRequest(const ImageDecodeRequest &request) const;
-    void clearRequest(const ImageDecodeRequest &request);
+    std::optional<ImageDecodeRequest> takeCurrentRequest(const ImageDecodeRequest &request);
 
     ImageDataLoader m_dataLoader;
     ImageDataDecoder m_dataDecoder;

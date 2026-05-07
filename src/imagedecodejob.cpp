@@ -6,6 +6,7 @@
 #include "imageasyncworker.h"
 #include "imagecallback.h"
 
+#include <optional>
 #include <utility>
 
 namespace KiriView {
@@ -41,12 +42,12 @@ void ImageDecodeJob::start(ImageDecodeRequest request)
             startDecode(std::move(data), request);
         },
         [this, request](const QString &errorString) {
-            if (!isCurrentRequest(request)) {
+            std::optional<ImageDecodeRequest> currentRequest = takeCurrentRequest(request);
+            if (!currentRequest.has_value()) {
                 return;
             }
 
-            clearRequest(request);
-            invokeIfSet(m_callbacks.loadError, request, errorString);
+            invokeIfSet(m_callbacks.loadError, *currentRequest, errorString);
         });
 }
 
@@ -65,12 +66,12 @@ void ImageDecodeJob::startDecode(QByteArray data, ImageDecodeRequest request)
         this,
         [decoder, data = std::move(data), request]() mutable { return decoder(data, request); },
         [this, request](DecodedImageResult result) mutable {
-            if (!isCurrentRequest(request)) {
+            std::optional<ImageDecodeRequest> currentRequest = takeCurrentRequest(request);
+            if (!currentRequest.has_value()) {
                 return;
             }
 
-            clearRequest(request);
-            invokeIfSet(m_callbacks.decoded, request, std::move(result));
+            invokeIfSet(m_callbacks.decoded, std::move(*currentRequest), std::move(result));
         });
 }
 
@@ -79,10 +80,15 @@ bool ImageDecodeJob::isCurrentRequest(const ImageDecodeRequest &request) const
     return m_request.has_value() && m_request->matches(request);
 }
 
-void ImageDecodeJob::clearRequest(const ImageDecodeRequest &request)
+std::optional<ImageDecodeRequest> ImageDecodeJob::takeCurrentRequest(
+    const ImageDecodeRequest &request)
 {
-    if (isCurrentRequest(request)) {
-        m_request.reset();
+    if (!isCurrentRequest(request)) {
+        return std::nullopt;
     }
+
+    std::optional<ImageDecodeRequest> currentRequest = std::move(m_request);
+    m_request.reset();
+    return currentRequest;
 }
 }
