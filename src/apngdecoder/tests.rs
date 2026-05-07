@@ -263,6 +263,20 @@ fn validates_animation_chunk_ordering() {
         decode_apng(&fctl_before_actl),
         DecodeOutcome::Error(RustApngErrorKind::Apng)
     ));
+
+    let mut split_idat = Vec::new();
+    split_idat.extend_from_slice(&PNG_SIGNATURE);
+    append_test_chunk(&mut split_idat, b"IHDR", &extract_ihdr(&base_png));
+    append_test_chunk(&mut split_idat, b"acTL", &[0, 0, 0, 1, 0, 0, 0, 0]);
+    append_test_chunk(&mut split_idat, b"fcTL", &frame_control_payload(0, &frame));
+    append_test_chunk(&mut split_idat, b"IDAT", &extract_image_data(&base_png));
+    append_test_chunk(&mut split_idat, b"tEXt", b"separator");
+    append_test_chunk(&mut split_idat, b"IDAT", &extract_image_data(&base_png));
+    append_test_chunk(&mut split_idat, b"IEND", &[]);
+    assert!(matches!(
+        decode_apng(&split_idat),
+        DecodeOutcome::Error(RustApngErrorKind::Png)
+    ));
 }
 
 #[test]

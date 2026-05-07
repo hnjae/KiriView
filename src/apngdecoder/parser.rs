@@ -62,13 +62,52 @@ pub(super) struct ParsedApng {
     pub(super) frames: Vec<RawFrame>,
 }
 
-struct ApngParseState {
-    seen_ihdr: bool,
-    seen_actl: bool,
-    seen_idat: bool,
-    idat_chunks_open: bool,
-    seen_iend: bool,
+#[derive(Clone, Copy, Eq, PartialEq)]
+enum PngChunkPhase {
+    BeforeIhdr,
+    BeforeIdat,
+    ReadingIdat,
+    AfterIdat,
+    CompleteBeforeIdat,
+    CompleteAfterIdat,
+}
+
+impl PngChunkPhase {
+    fn has_ihdr(self) -> bool {
+        self != Self::BeforeIhdr
+    }
+
+    fn has_idat(self) -> bool {
+        matches!(
+            self,
+            Self::ReadingIdat | Self::AfterIdat | Self::CompleteAfterIdat
+        )
+    }
+
+    fn idat_chunks_open(self) -> bool {
+        self == Self::ReadingIdat
+    }
+
+    fn complete(self) -> Self {
+        if self.has_idat() {
+            Self::CompleteAfterIdat
+        } else {
+            Self::CompleteBeforeIdat
+        }
+    }
+
+    fn is_complete(self) -> bool {
+        matches!(self, Self::CompleteBeforeIdat | Self::CompleteAfterIdat)
+    }
+}
+
+struct AnimationControl {
     expected_frame_count: u32,
+}
+
+struct ApngParseState {
+    phase: PngChunkPhase,
+    animation_control: Option<AnimationControl>,
     expected_sequence_number: u32,
     parsed: ParsedApng,
     current_frame: Option<RawFrame>,
@@ -77,12 +116,8 @@ struct ApngParseState {
 impl ApngParseState {
     fn new() -> Self {
         Self {
-            seen_ihdr: false,
-            seen_actl: false,
-            seen_idat: false,
-            idat_chunks_open: false,
-            seen_iend: false,
-            expected_frame_count: 0,
+            phase: PngChunkPhase::BeforeIhdr,
+            animation_control: None,
             expected_sequence_number: 0,
             parsed: ParsedApng {
                 canvas_width: 0,
@@ -97,14 +132,14 @@ impl ApngParseState {
     }
 
     fn is_complete(&self) -> bool {
-        self.seen_iend
+        self.phase.is_complete()
     }
 
     fn handle_chunk(&mut self, chunk: PngChunkView<'_>) -> Result<(), RustApngErrorKind> {
         let kind = chunk.kind;
         let chunk_data = chunk.data;
 
-        if !self.seen_ihdr && kind != *b"IHDR" {
+        if !self.phase.has_ihdr() && kind != *b"IHDR" {
             return Err(RustApngErrorKind::Png);
         }
 
@@ -123,14 +158,15 @@ impl ApngParseState {
     }
 
     fn finish(self) -> Result<Option<ParsedApng>, RustApngErrorKind> {
-        if !self.seen_ihdr || !self.seen_iend {
+        if !self.phase.has_ihdr() || !self.phase.is_complete() {
             return Err(RustApngErrorKind::Png);
         }
-        if !self.seen_actl {
+        let Some(animation_control) = self.animation_control else {
             return Ok(None);
-        }
-        if !self.seen_idat
-            || usize::try_from(self.expected_frame_count).ok() != Some(self.parsed.frames.len())
+        };
+        if !self.phase.has_idat()
+            || usize::try_from(animation_control.expected_frame_count).ok()
+                != Some(self.parsed.frames.len())
         {
             return Err(RustApngErrorKind::Apng);
         }
@@ -139,10 +175,10 @@ impl ApngParseState {
     }
 
     fn handle_ihdr(&mut self, chunk_data: &[u8]) -> Result<(), RustApngErrorKind> {
-        if self.seen_ihdr || !self.parsed.ihdr_data.is_empty() || chunk_data.len() != 13 {
+        if self.phase.has_ihdr() || !self.parsed.ihdr_data.is_empty() || chunk_data.len() != 13 {
             return Err(RustApngErrorKind::Png);
         }
-        self.seen_ihdr = true;
+        self.phase = PngChunkPhase::BeforeIdat;
         self.parsed.ihdr_data = chunk_data.to_vec();
         self.parsed.canvas_width = read_be_u32(chunk_data, 0).ok_or(RustApngErrorKind::Png)?;
         self.parsed.canvas_height = read_be_u32(chunk_data, 4).ok_or(RustApngErrorKind::Png)?;
@@ -154,20 +190,26 @@ impl ApngParseState {
     }
 
     fn handle_actl(&mut self, chunk_data: &[u8]) -> Result<(), RustApngErrorKind> {
-        if !self.seen_ihdr || self.seen_actl || self.seen_idat || chunk_data.len() != 8 {
+        if !self.phase.has_ihdr()
+            || self.animation_control.is_some()
+            || self.phase.has_idat()
+            || chunk_data.len() != 8
+        {
             return Err(RustApngErrorKind::Apng);
         }
-        self.seen_actl = true;
-        self.expected_frame_count = read_be_u32(chunk_data, 0).ok_or(RustApngErrorKind::Apng)?;
+        let expected_frame_count = read_be_u32(chunk_data, 0).ok_or(RustApngErrorKind::Apng)?;
         self.parsed.play_count = read_be_u32(chunk_data, 4).ok_or(RustApngErrorKind::Apng)?;
-        if self.expected_frame_count == 0 {
+        if expected_frame_count == 0 {
             return Err(RustApngErrorKind::Apng);
         }
+        self.animation_control = Some(AnimationControl {
+            expected_frame_count,
+        });
         Ok(())
     }
 
     fn handle_fctl(&mut self, chunk_data: &[u8]) -> Result<(), RustApngErrorKind> {
-        if !self.seen_actl {
+        if self.animation_control.is_none() {
             return Err(RustApngErrorKind::Apng);
         }
         self.finish_current_frame()?;
@@ -184,17 +226,17 @@ impl ApngParseState {
         self.current_frame = Some(RawFrame {
             control,
             image_data: Vec::new(),
-            uses_default_image_data: !self.seen_idat,
+            uses_default_image_data: !self.phase.has_idat(),
         });
-        self.idat_chunks_open = false;
+        self.close_idat_chunks();
         Ok(())
     }
 
     fn handle_idat(&mut self, chunk_data: &[u8]) -> Result<(), RustApngErrorKind> {
-        if !self.seen_ihdr {
+        if !self.phase.has_ihdr() {
             return Err(RustApngErrorKind::Png);
         }
-        if self.seen_idat && !self.idat_chunks_open {
+        if self.phase.has_idat() && !self.phase.idat_chunks_open() {
             return Err(RustApngErrorKind::Png);
         }
         if self
@@ -205,8 +247,7 @@ impl ApngParseState {
             return Err(RustApngErrorKind::Apng);
         }
 
-        self.seen_idat = true;
-        self.idat_chunks_open = true;
+        self.phase = PngChunkPhase::ReadingIdat;
         if let Some(frame) = self.current_frame.as_mut()
             && frame.uses_default_image_data
         {
@@ -216,7 +257,7 @@ impl ApngParseState {
     }
 
     fn handle_fdat(&mut self, chunk_data: &[u8]) -> Result<(), RustApngErrorKind> {
-        if !self.seen_actl || !self.seen_idat || chunk_data.len() < 4 {
+        if self.animation_control.is_none() || !self.phase.has_idat() || chunk_data.len() < 4 {
             return Err(RustApngErrorKind::Apng);
         }
         let sequence_number = read_be_u32(chunk_data, 0).ok_or(RustApngErrorKind::Apng)?;
@@ -229,24 +270,24 @@ impl ApngParseState {
             return Err(RustApngErrorKind::Apng);
         }
         frame.image_data.extend_from_slice(&chunk_data[4..]);
-        self.idat_chunks_open = false;
+        self.close_idat_chunks();
         Ok(())
     }
 
     fn handle_iend(&mut self) -> Result<(), RustApngErrorKind> {
         self.finish_current_frame()?;
-        self.seen_iend = true;
+        self.phase = self.phase.complete();
         Ok(())
     }
 
     fn handle_other_chunk(&mut self, kind: [u8; 4], chunk_data: &[u8]) {
-        if !self.seen_idat {
+        if !self.phase.has_idat() {
             self.parsed.header_chunks.push(PngChunk {
                 kind,
                 data: chunk_data.to_vec(),
             });
         } else {
-            self.idat_chunks_open = false;
+            self.close_idat_chunks();
         }
     }
 
@@ -267,6 +308,12 @@ impl ApngParseState {
             .checked_add(1)
             .ok_or(RustApngErrorKind::Apng)?;
         Ok(())
+    }
+
+    fn close_idat_chunks(&mut self) {
+        if self.phase == PngChunkPhase::ReadingIdat {
+            self.phase = PngChunkPhase::AfterIdat;
+        }
     }
 }
 
