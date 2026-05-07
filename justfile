@@ -6,7 +6,6 @@ set lazy
 export DEVENV_TUI := "false"
 
 cargo_vendor_root := justfile_directory() + "/.cargo-vendor"
-cargo_vendor_config_dir := cargo_vendor_root + "/.cargo"
 cargo_vendor_dir := cargo_vendor_root + "/vendor"
 
 _:
@@ -15,8 +14,6 @@ _:
 [no-cd]
 [private]
 _cargo-vendor-sources:
-    # Shared crate source cache only; host and Flatpak builds still use separate target dirs.
-    install -Dm644 '{{ justfile_directory() }}/cargo/config' '{{ cargo_vendor_config_dir }}/config.toml'
     devenv shell -- cargo vendor --locked --versioned-dirs --quiet '{{ cargo_vendor_dir }}'
 
 [group('ci')]
