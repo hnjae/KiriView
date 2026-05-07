@@ -10,13 +10,13 @@ _:
 
 [group('ci')]
 lint:
-    devenv shell -- lint
+    devenv tasks run --mode before kiriview:lint
 
 alias test-host := test
 
 [group('ci')]
 test:
-    devenv shell -- test-host
+    devenv tasks run --mode before kiriview:test:host
 
 [group('ci')]
 format:
