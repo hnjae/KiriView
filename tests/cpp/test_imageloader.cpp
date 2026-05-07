@@ -68,10 +68,10 @@ void TestImageLoader::imageLoadDeliversDecodedResult()
     const QUrl imageUrl = localUrl(QStringLiteral("/images/01.png"));
     loader.start(KiriView::ImageLoadRequest::fromUrl(imageUrl),
         KiriView::ImageFirstDisplayDecodeContext { QSize(320, 240) });
-    QCOMPARE(dataLoader.loads.size(), std::size_t(1));
-    QCOMPARE(dataLoader.loads.front()->url, imageUrl);
-    QCOMPARE(dataLoader.loads.front()->firstDisplay.physicalViewportSize, QSize(320, 240));
-    dataLoader.loads.front()->dataCallback(QByteArrayLiteral("ok"));
+    QCOMPARE(dataLoader.loadCount(), std::size_t(1));
+    QCOMPARE(dataLoader.frontLoad().url, imageUrl);
+    QCOMPARE(dataLoader.frontLoad().firstDisplay.physicalViewportSize, QSize(320, 240));
+    dataLoader.finishFrontLoad(QByteArrayLiteral("ok"));
 
     QTRY_VERIFY(decodedResult.has_value());
     QVERIFY(decodedSession.has_value());
@@ -100,8 +100,8 @@ void TestImageLoader::decodeFailureUsesErrorCallback()
 
     const QUrl imageUrl = localUrl(QStringLiteral("/images/bad.png"));
     loader.start(KiriView::ImageLoadRequest::fromUrl(imageUrl));
-    QCOMPARE(dataLoader.loads.size(), std::size_t(1));
-    dataLoader.loads.front()->dataCallback(QByteArrayLiteral("bad"));
+    QCOMPARE(dataLoader.loadCount(), std::size_t(1));
+    dataLoader.finishFrontLoad(QByteArrayLiteral("bad"));
 
     QTRY_VERIFY(errorSession.has_value());
     QCOMPARE(errorSession->location.imageUrl(), imageUrl);
@@ -146,7 +146,7 @@ void TestImageLoader::predecodedImageBypassesDataLoad()
     QCOMPARE(predecodedSession->location.imageUrl(), imageUrl);
     QCOMPARE(predecodedSession->location.archiveDocumentRootUrl(), archiveDocument->rootUrl());
     QCOMPARE(imageSize, QSize(1, 1));
-    QVERIFY(dataLoader.loads.empty());
+    QVERIFY(dataLoader.empty());
 }
 
 void TestImageLoader::comicBookArchiveResolvesFirstImage()
@@ -172,8 +172,8 @@ void TestImageLoader::comicBookArchiveResolvesFirstImage()
     loader.start(KiriView::ImageLoadRequest::fromUrl(archiveUrl));
 
     QCOMPARE(resolvedUrl, firstImageUrl);
-    QCOMPARE(dataLoader.loads.size(), std::size_t(1));
-    QCOMPARE(dataLoader.loads.front()->url, firstImageUrl);
+    QCOMPARE(dataLoader.loadCount(), std::size_t(1));
+    QCOMPARE(dataLoader.frontLoad().url, firstImageUrl);
 }
 
 void TestImageLoader::directArchiveResolvesFirstImage()
@@ -203,9 +203,9 @@ void TestImageLoader::directArchiveResolvesFirstImage()
     loader.start(KiriView::ImageLoadRequest::fromUrl(archiveUrl));
 
     QCOMPARE(resolvedUrl, firstImageUrl);
-    QCOMPARE(dataLoader.loads.size(), std::size_t(1));
-    QCOMPARE(dataLoader.loads.front()->url, firstImageUrl);
-    dataLoader.loads.front()->dataCallback(QByteArrayLiteral("ok"));
+    QCOMPARE(dataLoader.loadCount(), std::size_t(1));
+    QCOMPARE(dataLoader.frontLoad().url, firstImageUrl);
+    dataLoader.finishFrontLoad(QByteArrayLiteral("ok"));
 
     QTRY_VERIFY(decodedSession.has_value());
     QCOMPARE(decodedSession->location.imageUrl(), firstImageUrl);
@@ -229,10 +229,10 @@ void TestImageLoader::explicitKioArchiveImageStaysImageUrlMode()
     const QUrl imageUrl(QStringLiteral("zip:///books/book.cbz/02.png"));
     loader.start(KiriView::ImageLoadRequest::fromUrl(imageUrl));
 
-    QCOMPARE(dataLoader.loads.size(), std::size_t(1));
-    QCOMPARE(dataLoader.loads.front()->url, imageUrl);
-    QVERIFY(dataLoader.loads.front()->archiveDocument.isEmpty());
-    dataLoader.loads.front()->dataCallback(QByteArrayLiteral("ok"));
+    QCOMPARE(dataLoader.loadCount(), std::size_t(1));
+    QCOMPARE(dataLoader.frontLoad().url, imageUrl);
+    QVERIFY(dataLoader.frontLoad().archiveDocument.isEmpty());
+    dataLoader.finishFrontLoad(QByteArrayLiteral("ok"));
 
     QTRY_VERIFY(decodedSession.has_value());
     QCOMPARE(decodedSession->location.imageUrl(), imageUrl);
@@ -261,9 +261,9 @@ void TestImageLoader::archiveInteriorImageKeepsComicBookRoot()
     QVERIFY(archiveDocument.has_value());
     loader.start(KiriView::ImageLoadRequest::fromLocation(imageUrl, *archiveDocument));
 
-    QCOMPARE(dataLoader.loads.size(), std::size_t(1));
-    QCOMPARE(dataLoader.loads.front()->url, imageUrl);
-    dataLoader.loads.front()->dataCallback(QByteArrayLiteral("ok"));
+    QCOMPARE(dataLoader.loadCount(), std::size_t(1));
+    QCOMPARE(dataLoader.frontLoad().url, imageUrl);
+    dataLoader.finishFrontLoad(QByteArrayLiteral("ok"));
 
     QTRY_VERIFY(decodedSession.has_value());
     QCOMPARE(decodedSession->location.imageUrl(), imageUrl);
@@ -287,10 +287,10 @@ void TestImageLoader::staleLoadResultIsIgnored()
     loader.start(KiriView::ImageLoadRequest::fromUrl(firstUrl));
     loader.start(KiriView::ImageLoadRequest::fromUrl(secondUrl));
 
-    QCOMPARE(dataLoader.loads.size(), std::size_t(2));
-    QVERIFY(dataLoader.loads.front()->canceled);
-    dataLoader.loads.front()->dataCallback(QByteArrayLiteral("ok"));
-    dataLoader.loads.back()->dataCallback(QByteArrayLiteral("ok"));
+    QCOMPARE(dataLoader.loadCount(), std::size_t(2));
+    QVERIFY(dataLoader.frontLoad().canceled);
+    dataLoader.finishFrontLoad(QByteArrayLiteral("ok"));
+    dataLoader.finishBackLoad(QByteArrayLiteral("ok"));
 
     QTRY_COMPARE(decodedUrls.size(), std::size_t(1));
     QCOMPARE(decodedUrls.front(), secondUrl);

@@ -57,7 +57,7 @@ std::unique_ptr<KiriView::ImageDocumentController> createController(QObject *par
 
 void finishLoad(ManualImageDataLoader &dataLoader)
 {
-    dataLoader.loads.back()->dataCallback(QByteArrayLiteral("ok"));
+    dataLoader.finishBackLoad(QByteArrayLiteral("ok"));
 }
 
 std::size_t staticTileCount(const KiriView::ImageDocumentController &controller)
@@ -104,7 +104,7 @@ void TestImageDocumentController::initialLoadSuccessUpdatesDocumentState()
     controller->setSourceUrl(imageUrl);
 
     QCOMPARE(controller->status(), KiriView::ImageDocumentStatus::Loading);
-    QCOMPARE(dataLoader.loads.size(), std::size_t(1));
+    QCOMPARE(dataLoader.loadCount(), std::size_t(1));
     finishLoad(dataLoader);
 
     QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
@@ -135,14 +135,14 @@ void TestImageDocumentController::imageLoadsUsePhysicalViewportForFirstDisplayDe
     controller->setViewportSize(QSizeF(400.0, 300.0));
     controller->setSourceUrl(imageUrl);
 
-    QCOMPARE(dataLoader.loads.size(), std::size_t(1));
-    QCOMPARE(dataLoader.loads.front()->firstDisplay.physicalViewportSize, QSize(800, 600));
+    QCOMPARE(dataLoader.loadCount(), std::size_t(1));
+    QCOMPARE(dataLoader.frontLoad().firstDisplay.physicalViewportSize, QSize(800, 600));
     finishLoad(dataLoader);
 
     QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
-    QTRY_COMPARE(dataLoader.loads.size(), std::size_t(2));
-    QCOMPARE(dataLoader.loads.back()->url, nextImageUrl);
-    QCOMPARE(dataLoader.loads.back()->firstDisplay.physicalViewportSize, QSize(800, 600));
+    QTRY_COMPARE(dataLoader.loadCount(), std::size_t(2));
+    QCOMPARE(dataLoader.backLoad().url, nextImageUrl);
+    QCOMPARE(dataLoader.backLoad().firstDisplay.physicalViewportSize, QSize(800, 600));
 }
 
 void TestImageDocumentController::directoryImageNavigationResetsManualZoom()
@@ -167,11 +167,11 @@ void TestImageDocumentController::directoryImageNavigationResetsManualZoom()
     controller->setZoomPercent(150.0);
     QCOMPARE(controller->zoomMode(), KiriView::ImageZoomMode::Manual);
 
-    const std::size_t loadCountBeforeNavigation = dataLoader.loads.size();
+    const std::size_t loadCountBeforeNavigation = dataLoader.loadCount();
     controller->openNextImage();
 
-    QTRY_COMPARE(dataLoader.loads.size(), loadCountBeforeNavigation + std::size_t(1));
-    QCOMPARE(dataLoader.loads.back()->url, secondImageUrl);
+    QTRY_COMPARE(dataLoader.loadCount(), loadCountBeforeNavigation + std::size_t(1));
+    QCOMPARE(dataLoader.backLoad().url, secondImageUrl);
     finishLoad(dataLoader);
 
     QTRY_COMPARE(controller->displayedUrl(), secondImageUrl);
@@ -205,11 +205,11 @@ void TestImageDocumentController::archiveDocumentPageNavigationPreservesManualZo
     controller->setZoomPercent(150.0);
     QCOMPARE(controller->zoomMode(), KiriView::ImageZoomMode::Manual);
 
-    const std::size_t loadCountBeforeNavigation = dataLoader.loads.size();
+    const std::size_t loadCountBeforeNavigation = dataLoader.loadCount();
     controller->openNextImage();
 
-    QTRY_COMPARE(dataLoader.loads.size(), loadCountBeforeNavigation + std::size_t(1));
-    QCOMPARE(dataLoader.loads.back()->url, secondPageUrl);
+    QTRY_COMPARE(dataLoader.loadCount(), loadCountBeforeNavigation + std::size_t(1));
+    QCOMPARE(dataLoader.backLoad().url, secondPageUrl);
     finishLoad(dataLoader);
 
     QTRY_COMPARE(controller->displayedUrl(), secondPageUrl);
@@ -258,11 +258,11 @@ void TestImageDocumentController::siblingArchiveNavigationResetsManualZoom()
     controller->setZoomPercent(150.0);
     QCOMPARE(controller->zoomMode(), KiriView::ImageZoomMode::Manual);
 
-    const std::size_t loadCountBeforeNavigation = dataLoader.loads.size();
+    const std::size_t loadCountBeforeNavigation = dataLoader.loadCount();
     controller->openNextContainer();
 
-    QTRY_COMPARE(dataLoader.loads.size(), loadCountBeforeNavigation + std::size_t(1));
-    QCOMPARE(dataLoader.loads.back()->url, secondPageUrl);
+    QTRY_COMPARE(dataLoader.loadCount(), loadCountBeforeNavigation + std::size_t(1));
+    QCOMPARE(dataLoader.backLoad().url, secondPageUrl);
     finishLoad(dataLoader);
 
     QTRY_COMPARE(controller->displayedUrl(), secondPageUrl);
@@ -417,8 +417,8 @@ void TestImageDocumentController::smallFullImageSurfaceStillSchedulesAdjacentPre
     std::shared_ptr<KiriView::DisplayedImageSurface> surface = controller->imageSurface();
     QVERIFY(surface != nullptr);
     QVERIFY(surface->legacyFrameSurface() != nullptr);
-    QTRY_COMPARE(dataLoader.loads.size(), std::size_t(2));
-    QCOMPARE(dataLoader.loads.back()->url, nextImageUrl);
+    QTRY_COMPARE(dataLoader.loadCount(), std::size_t(2));
+    QCOMPARE(dataLoader.backLoad().url, nextImageUrl);
 }
 
 void TestImageDocumentController::replacementLoadFailureKeepsDisplayedImage()
@@ -440,12 +440,12 @@ void TestImageDocumentController::replacementLoadFailureKeepsDisplayedImage()
     finishLoad(dataLoader);
     QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
     const quint64 displayedRevision = controller->imageRevision();
-    const std::size_t loadCountBeforeReplacement = dataLoader.loads.size();
+    const std::size_t loadCountBeforeReplacement = dataLoader.loadCount();
 
     controller->setSourceUrl(missingUrl);
-    QCOMPARE(dataLoader.loads.size(), loadCountBeforeReplacement + 1);
-    QCOMPARE(dataLoader.loads.back()->url, missingUrl);
-    dataLoader.loads.back()->errorCallback(QStringLiteral("missing"));
+    QCOMPARE(dataLoader.loadCount(), loadCountBeforeReplacement + 1);
+    QCOMPARE(dataLoader.backLoad().url, missingUrl);
+    dataLoader.failBackLoad(QStringLiteral("missing"));
 
     QCOMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
     QCOMPARE(controller->sourceUrl(), imageUrl);
@@ -475,20 +475,20 @@ void TestImageDocumentController::decodedReplacementFailureSchedulesRecoveryPred
     finishLoad(dataLoader);
 
     QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
-    QTRY_COMPARE(dataLoader.loads.size(), std::size_t(2));
-    QCOMPARE(dataLoader.loads.back()->url, badUrl);
-    const std::size_t loadCountBeforeReplacement = dataLoader.loads.size();
+    QTRY_COMPARE(dataLoader.loadCount(), std::size_t(2));
+    QCOMPARE(dataLoader.backLoad().url, badUrl);
+    const std::size_t loadCountBeforeReplacement = dataLoader.loadCount();
 
     controller->setSourceUrl(badUrl);
-    QCOMPARE(dataLoader.loads.size(), loadCountBeforeReplacement + 1);
-    QCOMPARE(dataLoader.loads.back()->url, badUrl);
-    dataLoader.loads.back()->dataCallback(QByteArrayLiteral("bad"));
+    QCOMPARE(dataLoader.loadCount(), loadCountBeforeReplacement + 1);
+    QCOMPARE(dataLoader.backLoad().url, badUrl);
+    dataLoader.finishBackLoad(QByteArrayLiteral("bad"));
 
     QTRY_COMPARE(controller->errorString(), testImageDecodeFailureString());
     QCOMPARE(controller->sourceUrl(), imageUrl);
     QCOMPARE(controller->displayedUrl(), imageUrl);
-    QCOMPARE(dataLoader.loads.size(), loadCountBeforeReplacement + 2);
-    QCOMPARE(dataLoader.loads.back()->url, badUrl);
+    QCOMPARE(dataLoader.loadCount(), loadCountBeforeReplacement + 2);
+    QCOMPARE(dataLoader.backLoad().url, badUrl);
 }
 
 void TestImageDocumentController::emptyContainerNavigationClearsImageAndSelectsContainer()

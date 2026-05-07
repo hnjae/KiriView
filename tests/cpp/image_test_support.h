@@ -15,6 +15,7 @@
 #include <QString>
 #include <QUrl>
 #include <QtGlobal>
+#include <cstddef>
 #include <initializer_list>
 #include <map>
 #include <memory>
@@ -47,7 +48,7 @@ public:
         load->firstDisplay = request.firstDisplay();
         load->dataCallback = std::move(callback);
         load->errorCallback = std::move(errorCallback);
-        loads.push_back(load);
+        m_loads.push_back(load);
 
         return ImageIoJob(load->object, [load](QObject *object) {
             load->canceled = true;
@@ -57,7 +58,28 @@ public:
         });
     }
 
-    std::vector<std::shared_ptr<ManualImageDataLoad>> loads;
+    std::size_t loadCount() const { return m_loads.size(); }
+
+    bool empty() const { return m_loads.empty(); }
+
+    ManualImageDataLoad &frontLoad() { return *m_loads.front(); }
+
+    const ManualImageDataLoad &frontLoad() const { return *m_loads.front(); }
+
+    ManualImageDataLoad &backLoad() { return *m_loads.back(); }
+
+    const ManualImageDataLoad &backLoad() const { return *m_loads.back(); }
+
+    void finishFrontLoad(QByteArray data) { frontLoad().dataCallback(std::move(data)); }
+
+    void finishBackLoad(QByteArray data) { backLoad().dataCallback(std::move(data)); }
+
+    void failFrontLoad(const QString &errorString) { frontLoad().errorCallback(errorString); }
+
+    void failBackLoad(const QString &errorString) { backLoad().errorCallback(errorString); }
+
+private:
+    std::vector<std::shared_ptr<ManualImageDataLoad>> m_loads;
 };
 
 class ManualImageDataLoaderAdapter

@@ -48,11 +48,11 @@ void TestImageDecodeJob::cancelSuppressesPendingLoad()
                                KiriView::DecodedImageResult) { ++decodedCount; }));
 
     decodeJob.start(KiriView::ImageDecodeRequest::fromUrl(1, indexedImageUrl(1)));
-    QCOMPARE(dataLoader.loads.size(), std::size_t(1));
+    QCOMPARE(dataLoader.loadCount(), std::size_t(1));
     decodeJob.cancel();
 
-    QVERIFY(dataLoader.loads.front()->canceled);
-    dataLoader.loads.front()->dataCallback(QByteArrayLiteral("ok"));
+    QVERIFY(dataLoader.frontLoad().canceled);
+    dataLoader.finishFrontLoad(QByteArrayLiteral("ok"));
 
     QTest::qWait(50);
     QCOMPARE(decodedCount, 0);
@@ -71,11 +71,11 @@ void TestImageDecodeJob::staleLoadResultIsIgnored()
 
     decodeJob.start(KiriView::ImageDecodeRequest::fromUrl(1, indexedImageUrl(1)));
     decodeJob.start(KiriView::ImageDecodeRequest::fromUrl(2, indexedImageUrl(2)));
-    QCOMPARE(dataLoader.loads.size(), std::size_t(2));
-    QVERIFY(dataLoader.loads.front()->canceled);
+    QCOMPARE(dataLoader.loadCount(), std::size_t(2));
+    QVERIFY(dataLoader.frontLoad().canceled);
 
-    dataLoader.loads.front()->dataCallback(QByteArrayLiteral("ok"));
-    dataLoader.loads.back()->dataCallback(QByteArrayLiteral("ok"));
+    dataLoader.finishFrontLoad(QByteArrayLiteral("ok"));
+    dataLoader.finishBackLoad(QByteArrayLiteral("ok"));
 
     QTRY_COMPARE(decodedRequests.size(), std::size_t(1));
     QCOMPARE(decodedRequests.front().id(), quint64(2));
@@ -97,7 +97,7 @@ void TestImageDecodeJob::loadErrorsAreDeliveredForCurrentRequest()
             }));
 
     decodeJob.start(KiriView::ImageDecodeRequest::fromUrl(3, indexedImageUrl(3)));
-    dataLoader.loads.front()->errorCallback(QStringLiteral("missing"));
+    dataLoader.failFrontLoad(QStringLiteral("missing"));
 
     QCOMPARE(errorRequests.size(), std::size_t(1));
     QCOMPARE(errorRequests.front().id(), quint64(3));
@@ -117,7 +117,7 @@ void TestImageDecodeJob::decodeErrorsAreDeliveredAsResults()
             }));
 
     decodeJob.start(KiriView::ImageDecodeRequest::fromUrl(4, indexedImageUrl(4)));
-    dataLoader.loads.front()->dataCallback(QByteArrayLiteral("bad"));
+    dataLoader.finishFrontLoad(QByteArrayLiteral("bad"));
 
     QTRY_VERIFY(decodedResult.has_value());
     const auto *failure = KiriView::decodedImageResultFailure(*decodedResult);
@@ -141,7 +141,7 @@ void TestImageDecodeJob::decodeRequestIsPassedToDecoder()
 
     decodeJob.start(KiriView::ImageDecodeRequest::fromUrl(
         5, indexedImageUrl(5), KiriView::ImageFirstDisplayDecodeContext { QSize(320, 200) }));
-    dataLoader.loads.front()->dataCallback(QByteArrayLiteral("ok"));
+    dataLoader.finishFrontLoad(QByteArrayLiteral("ok"));
 
     QTRY_VERIFY(decoderRequest.has_value());
     QCOMPARE(decoderRequest->id(), quint64(5));
