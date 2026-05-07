@@ -23,10 +23,10 @@ private Q_SLOTS:
     void initTestCase();
     void init();
     void cleanup();
-    void actionsUseKoreanCatalog();
-    void statusMessagesUseKoreanCatalog();
-    void qmlContextUsesKoreanCatalog();
-    void desktopFileIncludesKoreanGenericName();
+    void actionsUseTestCatalog();
+    void statusMessagesUseTestCatalog();
+    void qmlContextUsesTestCatalog();
+    void desktopFileIncludesTranslatedGenericName();
 };
 
 void TestLocalization::initTestCase()
@@ -41,26 +41,26 @@ void TestLocalization::init() { KLocalizedString::setLanguages({ QStringLiteral(
 
 void TestLocalization::cleanup() { KLocalizedString::clearLanguages(); }
 
-void TestLocalization::actionsUseKoreanCatalog()
+void TestLocalization::actionsUseTestCatalog()
 {
     KiriViewApplication application;
 
     QAction *openAction = application.action(QStringLiteral("file_open"));
     QVERIFY(openAction != nullptr);
-    QCOMPARE(openAction->text(), QStringLiteral("열기"));
+    QCOMPARE(openAction->text(), QStringLiteral("__kiriview_test_open__"));
 
     QAction *previousArchiveAction = application.action(QStringLiteral("go_previous_archive"));
     QVERIFY(previousArchiveAction != nullptr);
-    QCOMPARE(previousArchiveAction->text(), QStringLiteral("이전 압축파일"));
+    QCOMPARE(previousArchiveAction->text(), QStringLiteral("__kiriview_test_previous_archive__"));
 }
 
-void TestLocalization::statusMessagesUseKoreanCatalog()
+void TestLocalization::statusMessagesUseTestCatalog()
 {
     QCOMPARE(KiriView::imageViewText("Could not read the selected image data."),
-        QStringLiteral("선택한 이미지 데이터를 읽을 수 없습니다."));
+        QStringLiteral("__kiriview_test_status_read_image_data__"));
 }
 
-void TestLocalization::qmlContextUsesKoreanCatalog()
+void TestLocalization::qmlContextUsesTestCatalog()
 {
     QQmlApplicationEngine engine;
     KiriView::setupLocalizedContext(engine);
@@ -83,16 +83,16 @@ void TestLocalization::qmlContextUsesKoreanCatalog()
 
     QScopedPointer<QObject> object(component.create());
     QVERIFY2(!object.isNull(), qPrintable(component.errorString()));
-    QCOMPARE(object->property("openText").toString(), QStringLiteral("열기"));
+    QCOMPARE(object->property("openText").toString(), QStringLiteral("__kiriview_test_open__"));
 }
 
-void TestLocalization::desktopFileIncludesKoreanGenericName()
+void TestLocalization::desktopFileIncludesTranslatedGenericName()
 {
     QFile desktopFile(QStringLiteral(KIRIVIEW_TEST_DESKTOP_FILE));
     QVERIFY(desktopFile.open(QIODevice::ReadOnly));
 
     const QString desktopText = QString::fromUtf8(desktopFile.readAll());
-    QVERIFY(desktopText.contains(QStringLiteral("GenericName[ko]=이미지 뷰어")));
+    QVERIFY(desktopText.contains(QStringLiteral("GenericName[ko]=__kiriview_test_generic_name__")));
 }
 
 QTEST_MAIN(TestLocalization)

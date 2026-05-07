@@ -99,7 +99,7 @@ target_link_libraries(kiriview_test_core PUBLIC
 )
 
 set(KIRIVIEW_TEST_LOCALE_DIR "${CMAKE_CURRENT_BINARY_DIR}/locale")
-set(KIRIVIEW_TEST_KO_PO "${CMAKE_SOURCE_DIR}/../../po/ko/kiriview.po")
+set(KIRIVIEW_TEST_KO_PO "${CMAKE_SOURCE_DIR}/../fixtures/i18n/ko/kiriview.po")
 set(KIRIVIEW_TEST_KO_MO "${KIRIVIEW_TEST_LOCALE_DIR}/ko/LC_MESSAGES/kiriview.mo")
 set(KIRIVIEW_TEST_DESKTOP_FILE
     "${CMAKE_CURRENT_BINARY_DIR}/io.github.hnjae.KiriView.desktop"

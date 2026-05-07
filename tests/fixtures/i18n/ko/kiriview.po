@@ -1,0 +1,35 @@
+# SPDX-FileCopyrightText: 2026 KIM Hyunjae
+# SPDX-License-Identifier: AGPL-3.0-or-later
+# Korean gettext fixture for KiriView localization tests.
+#
+msgid ""
+msgstr ""
+"Project-Id-Version: KiriView test fixture\n"
+"Report-Msgid-Bugs-To: https://github.com/hnjae/kiriview/issues\n"
+"POT-Creation-Date: 2026-01-01 00:00+0000\n"
+"PO-Revision-Date: 2026-01-01 00:00+0000\n"
+"Last-Translator: KIM Hyunjae\n"
+"Language-Team: Korean\n"
+"Language: ko\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+
+#: src/kiriviewapplication.cpp
+msgid "Open"
+msgstr "__kiriview_test_open__"
+
+#: src/kiriviewapplication.cpp
+msgctxt "@action"
+msgid "Previous Archive"
+msgstr "__kiriview_test_previous_archive__"
+
+#: src/imageanimationplayer.cpp src/kiriimagedecoder.cpp
+#: src/qimagereadertilesource.cpp
+msgid "Could not read the selected image data."
+msgstr "__kiriview_test_status_read_image_data__"
+
+#: io.github.hnjae.KiriView.desktop
+msgid "Image Viewer"
+msgstr "__kiriview_test_generic_name__"
