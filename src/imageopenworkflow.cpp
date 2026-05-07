@@ -9,6 +9,11 @@
 #include <utility>
 
 namespace {
+enum class FatalLoadZoomPolicy {
+    PreserveZoom,
+    ResetZoom,
+};
+
 class ImageOpenTransition final
 {
 public:
@@ -77,6 +82,19 @@ private:
     KiriView::ImageDocumentState::ChangeBatch m_batch;
     KiriView::ImageDocumentEffects m_effects;
 };
+
+KiriView::ImageDocumentEffects finishClearedLoadWithError(
+    KiriView::ImageDocumentState &state, const QString &errorString, FatalLoadZoomPolicy zoomPolicy)
+{
+    ImageOpenTransition transition(state);
+    transition.clearImage();
+    if (zoomPolicy == FatalLoadZoomPolicy::ResetZoom) {
+        transition.resetZoom();
+    }
+    transition.finishTrackedLoadWithError(errorString, KiriView::ImageDocumentStatus::Error,
+        [&]() { state.setContainerNavigationUrl(QUrl()); });
+    return transition.takeEffects();
+}
 }
 
 namespace KiriView {
@@ -156,21 +174,12 @@ ImageDocumentEffects ImageOpenWorkflow::finishReplacementLoadWithError(
 ImageDocumentEffects ImageOpenWorkflow::finishInitialLoadWithError(
     ImageDocumentState &state, const QString &errorString)
 {
-    ImageOpenTransition transition(state);
-    transition.clearImage();
-    transition.finishTrackedLoadWithError(errorString, ImageDocumentStatus::Error,
-        [&]() { state.setContainerNavigationUrl(QUrl()); });
-    return transition.takeEffects();
+    return finishClearedLoadWithError(state, errorString, FatalLoadZoomPolicy::PreserveZoom);
 }
 
 ImageDocumentEffects ImageOpenWorkflow::finishAnimationLoadWithError(
     ImageDocumentState &state, const QString &errorString)
 {
-    ImageOpenTransition transition(state);
-    transition.clearImage();
-    transition.resetZoom();
-    transition.finishTrackedLoadWithError(errorString, ImageDocumentStatus::Error,
-        [&]() { state.setContainerNavigationUrl(QUrl()); });
-    return transition.takeEffects();
+    return finishClearedLoadWithError(state, errorString, FatalLoadZoomPolicy::ResetZoom);
 }
 }
