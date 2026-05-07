@@ -154,6 +154,7 @@ let
     ++ [ source ];
   }) cppSources;
   cppSourcesShellArgs = lib.escapeShellArgs cppSources;
+  clazyIgnoreDirsRegex = "(^|/)(\\.devenv|target)(/|$)|^/nix/store/";
   qmlLintImportArgs = lib.escapeShellArgs (
     lib.concatMap (path: [
       "-I"
@@ -335,7 +336,7 @@ in
       exec = ''
         ${cppLintPrelude}
         ${lib.getExe' pkgs.clang-tools "clang-tidy"} --quiet -p . ${cppSourcesShellArgs}
-        ${lib.getExe' pkgs.clazy "clazy-standalone"} --checks="''${CLAZY_CHECKS:-level0}" -p . ${cppSourcesShellArgs}
+        ${lib.getExe' pkgs.clazy "clazy-standalone"} --checks="''${CLAZY_CHECKS:-level0}" --ignore-dirs=${lib.escapeShellArg clazyIgnoreDirsRegex} -p . ${cppSourcesShellArgs}
       '';
     };
   };
