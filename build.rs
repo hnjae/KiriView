@@ -9,6 +9,13 @@ use std::{
     process::Command,
 };
 
+type IncludeDirCollector = fn(&mut BTreeSet<PathBuf>, &Path);
+
+struct IncludeSearch {
+    collectors: &'static [IncludeDirCollector],
+    pkg_config_packages: &'static [&'static str],
+}
+
 const CPP_CORE_SOURCES_FILE: &str = "src/cpp_core_sources.txt";
 const KCONFIG_SCHEMA_FILE: &str = "src/kiriviewstate.kcfg";
 const KCONFIG_COMPILER_FILE: &str = "src/kiriviewstate.kcfgc";
@@ -94,8 +101,36 @@ const NATIVE_LIBRARIES: &[NativeLibrary] = &[
         pkg_config_package: Some("libheif"),
     },
 ];
-
-type IncludeDirCollector = fn(&mut BTreeSet<PathBuf>, &Path);
+const NO_PKG_CONFIG_PACKAGES: &[&str] = &[];
+const KIO_INCLUDE_COLLECTORS: &[IncludeDirCollector] =
+    &[add_kf6_include_dirs, add_qt_mkspec_include_dirs];
+const QT_RHI_INCLUDE_COLLECTORS: &[IncludeDirCollector] = &[add_qt_rhi_include_dirs];
+const QT_QML_INTEGRATION_INCLUDE_COLLECTORS: &[IncludeDirCollector] =
+    &[add_qt_qml_integration_include_dirs];
+const LIBARCHIVE_INCLUDE_COLLECTORS: &[IncludeDirCollector] = &[add_libarchive_include_dir];
+const LIBHEIF_INCLUDE_COLLECTORS: &[IncludeDirCollector] = &[add_libheif_include_dir];
+const NATIVE_INCLUDE_SEARCHES: &[IncludeSearch] = &[
+    IncludeSearch {
+        collectors: KIO_INCLUDE_COLLECTORS,
+        pkg_config_packages: NO_PKG_CONFIG_PACKAGES,
+    },
+    IncludeSearch {
+        collectors: LIBARCHIVE_INCLUDE_COLLECTORS,
+        pkg_config_packages: &["libarchive"],
+    },
+    IncludeSearch {
+        collectors: LIBHEIF_INCLUDE_COLLECTORS,
+        pkg_config_packages: &["libheif"],
+    },
+    IncludeSearch {
+        collectors: QT_RHI_INCLUDE_COLLECTORS,
+        pkg_config_packages: &["Qt6Gui"],
+    },
+    IncludeSearch {
+        collectors: QT_QML_INTEGRATION_INCLUDE_COLLECTORS,
+        pkg_config_packages: &["Qt6QmlIntegration"],
+    },
+];
 
 struct NativeLibrary {
     link_name: &'static str,
@@ -109,11 +144,7 @@ struct GeneratedState {
 }
 
 fn main() {
-    let kio_include_dirs = kio_include_dirs();
-    let libarchive_include_dirs = libarchive_include_dirs();
-    let libheif_include_dirs = libheif_include_dirs();
-    let qt_rhi_include_dirs = qt_rhi_include_dirs();
-    let qt_qml_integration_include_dirs = qt_qml_integration_include_dirs();
+    let native_include_dirs = native_include_dirs();
     let shader_source = bake_shaders();
     let cpp_core_sources = cpp_core_sources();
     let generated_state = generate_kconfig_state();
@@ -140,19 +171,7 @@ fn main() {
             cc.file(&shader_source);
             cc.include("src");
             cc.include(&generated_state.include_dir);
-            for dir in &kio_include_dirs {
-                cc.include(dir);
-            }
-            for dir in &libarchive_include_dirs {
-                cc.include(dir);
-            }
-            for dir in &libheif_include_dirs {
-                cc.include(dir);
-            }
-            for dir in &qt_rhi_include_dirs {
-                cc.include(dir);
-            }
-            for dir in &qt_qml_integration_include_dirs {
+            for dir in &native_include_dirs {
                 cc.include(dir);
             }
         });
@@ -333,27 +352,12 @@ fn link_native_libraries() {
     }
 }
 
-fn kio_include_dirs() -> Vec<PathBuf> {
-    include_dirs(&[add_kf6_include_dirs, add_qt_mkspec_include_dirs], &[])
-}
-
-fn qt_rhi_include_dirs() -> Vec<PathBuf> {
-    include_dirs(&[add_qt_rhi_include_dirs], &["Qt6Gui"])
-}
-
-fn qt_qml_integration_include_dirs() -> Vec<PathBuf> {
-    include_dirs(
-        &[add_qt_qml_integration_include_dirs],
-        &["Qt6QmlIntegration"],
-    )
-}
-
-fn libarchive_include_dirs() -> Vec<PathBuf> {
-    include_dirs(&[add_libarchive_include_dir], &["libarchive"])
-}
-
-fn libheif_include_dirs() -> Vec<PathBuf> {
-    include_dirs(&[add_libheif_include_dir], &["libheif"])
+fn native_include_dirs() -> Vec<PathBuf> {
+    let mut dirs = BTreeSet::new();
+    for search in NATIVE_INCLUDE_SEARCHES {
+        dirs.extend(include_dirs(search.collectors, search.pkg_config_packages));
+    }
+    dirs.into_iter().collect()
 }
 
 fn include_dirs(collectors: &[IncludeDirCollector], pkg_config_packages: &[&str]) -> Vec<PathBuf> {
