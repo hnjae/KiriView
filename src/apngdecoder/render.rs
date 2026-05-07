@@ -125,6 +125,59 @@ impl RgbaRegion {
     }
 }
 
+fn visit_canvas_rows<F>(
+    canvas: &[u8],
+    canvas_width: usize,
+    rect: Rect,
+    mut visit: F,
+) -> Result<(), RustApngErrorKind>
+where
+    F: FnMut(&[u8]),
+{
+    let region = RgbaRegion::new(rect)?;
+    for row in 0..region.height() {
+        visit(region.canvas_row(canvas, canvas_width, row)?);
+    }
+    Ok(())
+}
+
+fn visit_canvas_rows_mut<F>(
+    canvas: &mut [u8],
+    canvas_width: usize,
+    rect: Rect,
+    mut visit: F,
+) -> Result<(), RustApngErrorKind>
+where
+    F: FnMut(&mut [u8]),
+{
+    let region = RgbaRegion::new(rect)?;
+    for row in 0..region.height() {
+        visit(region.canvas_row_mut(canvas, canvas_width, row)?);
+    }
+    Ok(())
+}
+
+fn visit_canvas_data_rows_mut<F>(
+    canvas: &mut [u8],
+    canvas_width: usize,
+    rect: Rect,
+    data: &[u8],
+    mut visit: F,
+) -> Result<(), RustApngErrorKind>
+where
+    F: FnMut(&mut [u8], &[u8]),
+{
+    let region = RgbaRegion::new(rect)?;
+    region.validate_data_len(data)?;
+
+    for row in 0..region.height() {
+        let canvas_row = region.canvas_row_mut(canvas, canvas_width, row)?;
+        let data_row = region.data_row(data, row)?;
+        visit(canvas_row, data_row);
+    }
+    Ok(())
+}
+
 pub(super) fn render_frames(
     parsed: &ParsedApng,
 ) -> Result<Vec<DecodedApngFrame>, RustApngErrorKind> {
@@ -292,14 +345,12 @@ pub(super) fn blend_frame(
     source: &[u8],
     blend_op: BlendOp,
 ) -> Result<(), RustApngErrorKind> {
-    let region = RgbaRegion::new(rect)?;
-    region.validate_data_len(source)?;
-
-    for row in 0..region.height() {
-        let dst_row = region.canvas_row_mut(canvas, canvas_width, row)?;
-        let src_row = region.data_row(source, row)?;
-
-        match blend_op {
+    visit_canvas_data_rows_mut(
+        canvas,
+        canvas_width,
+        rect,
+        source,
+        |dst_row, src_row| match blend_op {
             BlendOp::Source => dst_row.copy_from_slice(src_row),
             BlendOp::Over => {
                 for (dst_pixel, src_pixel) in
@@ -308,10 +359,8 @@ pub(super) fn blend_frame(
                     blend_pixel_over(dst_pixel, src_pixel);
                 }
             }
-        }
-    }
-
-    Ok(())
+        },
+    )
 }
 
 fn blend_pixel_over(dst: &mut [u8], src: &[u8]) {
@@ -347,9 +396,9 @@ pub(super) fn copy_region(
 ) -> Result<Vec<u8>, RustApngErrorKind> {
     let region = RgbaRegion::new(rect)?;
     let mut data = Vec::with_capacity(region.byte_len());
-    for row in 0..region.height() {
-        data.extend_from_slice(region.canvas_row(canvas, canvas_width, row)?);
-    }
+    visit_canvas_rows(canvas, canvas_width, rect, |row| {
+        data.extend_from_slice(row)
+    })?;
     Ok(data)
 }
 
@@ -359,15 +408,9 @@ pub(super) fn restore_region(
     rect: Rect,
     region: &[u8],
 ) -> Result<(), RustApngErrorKind> {
-    let area = RgbaRegion::new(rect)?;
-    area.validate_data_len(region)?;
-
-    for row in 0..area.height() {
-        let dst_row = area.canvas_row_mut(canvas, canvas_width, row)?;
-        let src_row = area.data_row(region, row)?;
+    visit_canvas_data_rows_mut(canvas, canvas_width, rect, region, |dst_row, src_row| {
         dst_row.copy_from_slice(src_row);
-    }
-    Ok(())
+    })
 }
 
 pub(super) fn clear_region(
@@ -375,11 +418,7 @@ pub(super) fn clear_region(
     canvas_width: usize,
     rect: Rect,
 ) -> Result<(), RustApngErrorKind> {
-    let region = RgbaRegion::new(rect)?;
-    for row in 0..region.height() {
-        region.canvas_row_mut(canvas, canvas_width, row)?.fill(0);
-    }
-    Ok(())
+    visit_canvas_rows_mut(canvas, canvas_width, rect, |row| row.fill(0))
 }
 
 fn canvas_offset(canvas_width: usize, x: usize, y: usize) -> Result<usize, RustApngErrorKind> {
