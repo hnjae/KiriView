@@ -4,6 +4,12 @@
 
 KiriView is a Rust 2024 desktop app using CXX-Qt and KDE Kirigami.
 
+## Compatibility Policy
+
+KiriView is still pre-release. Do not spend effort preserving backward
+compatibility or writing migrations for existing user data, configuration, APIs,
+or internal formats unless explicitly requested.
+
 ## Spec-Driven Development
 
 Follow spec-driven development for product behavior and user-facing implementation
