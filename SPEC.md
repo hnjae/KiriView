@@ -20,14 +20,14 @@ are disabled until an image is ready.
 KiriView shows its application menu through a toolbar application menu button by
 default outside fullscreen. Users can switch the application menu presentation
 between Hamburger Menu and a conventional menubar, and KiriView remembers the
-selected presentation across launches. In Hamburger Menu mode outside
-fullscreen, the toolbar application menu contains application actions such as
-Open, archive navigation, Full Screen, settings, shortcut configuration,
-shortcut help, and Quit. In menubar mode outside fullscreen, those application
-actions are available from the menubar, and any toolbar overflow menu appears
-only when toolbar controls do not fit. In fullscreen, KiriView hides both the
-menubar and toolbar application menu button; actions with configured shortcuts
-remain available through those shortcuts.
+selected presentation as application state across launches. In Hamburger Menu
+mode outside fullscreen, the toolbar application menu contains application
+actions such as Open, archive navigation, Full Screen, settings, shortcut
+configuration, shortcut help, and Quit. In menubar mode outside fullscreen,
+those application actions are available from the menubar, and any toolbar
+overflow menu appears only when toolbar controls do not fit. In fullscreen,
+KiriView hides both the menubar and toolbar application menu button; actions
+with configured shortcuts remain available through those shortcuts.
 The Interface settings page follows the KDE and Kirigami settings page style
 and lets users choose between Hamburger Menu and Menubar presentation. Selecting
 an option applies it immediately and the selected option reflects the current
