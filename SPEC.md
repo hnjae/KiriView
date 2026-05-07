@@ -6,6 +6,10 @@ KiriView opens one user-selected image file or supported archive, displays it in
 the main window, and can navigate to adjacent images or pages in the same
 location.
 
+When an installed `kiriview` translation catalog is available, KiriView's UI
+text and desktop metadata follow the user's KDE and Qt language settings. When
+no matching translation is available, KiriView shows the original English text.
+
 The main window toolbar shows image controls without a page title. It places
 the page navigation group at the leading side of the toolbar, containing
 Previous Image, the current page number, `of`, the total image count, and Next
