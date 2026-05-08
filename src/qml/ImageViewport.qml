@@ -4,7 +4,6 @@
 import QtQuick
 import QtQuick.Controls as Controls
 import io.github.hnjae.kiriview
-import org.kde.kirigami as Kirigami
 
 Item {
     id: root
@@ -16,11 +15,10 @@ Item {
     property bool pendingFinalScanStart: false
     property bool displayedImageUsesFinalScanStart: false
     property url initialSourceUrl
-    property real lastZoomDragTranslationY: 0
     readonly property int minimumManualZoomPercent: imageDocument.minimumManualZoomPercent
     readonly property int maximumManualZoomPercent: imageDocument.maximumManualZoomPercent
     readonly property int zoomStepPercent: imageDocument.zoomStepPercent
-    readonly property real dragZoomPercentPerPixel: zoomStepPercent / Math.max(1, Kirigami.Units.gridUnit * 2)
+    readonly property int wheelAngleDeltaPerStep: 120
     readonly property bool imageHorizontallyPannable: imageFlickable.contentWidth > imageFlickable.width
     readonly property bool imagePannable: imageFlickable.contentWidth > imageFlickable.width || imageFlickable.contentHeight > imageFlickable.height
     readonly property real viewportWidth: imageFlickable.width
@@ -131,6 +129,11 @@ Item {
         return true;
     }
 
+    function wheelZoomDeltaPercent(wheel) {
+        const verticalDelta = wheel.pixelDelta.y !== 0 ? wheel.pixelDelta.y : wheel.angleDelta.y;
+        return verticalDelta / wheelAngleDeltaPerStep * zoomStepPercent;
+    }
+
     KiriImageDocument {
         id: imageDocument
 
@@ -192,7 +195,7 @@ Item {
                 return Qt.ArrowCursor;
             }
 
-            if (imageFlickable.draggingHorizontally || imageFlickable.draggingVertically || zoomDragHandler.active) {
+            if (imageFlickable.draggingHorizontally || imageFlickable.draggingVertically) {
                 return Qt.ClosedHandCursor;
             }
 
@@ -201,33 +204,24 @@ Item {
         enabled: root.imageReady
     }
 
-    DragHandler {
-        id: zoomDragHandler
+    WheelHandler {
+        id: zoomWheelHandler
 
-        acceptedButtons: Qt.LeftButton
+        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
         acceptedModifiers: Qt.ControlModifier
-        enabled: root.imageReady && (active || (imageHoverHandler.hovered && root.viewportPointInsideImage(imageHoverHandler.point.position.x, imageHoverHandler.point.position.y)))
-        grabPermissions: PointerHandler.CanTakeOverFromItems | PointerHandler.ApprovesTakeOverByAnything
+        blocking: true
+        enabled: root.imageReady
         target: null
 
-        onActiveChanged: {
-            if (active) {
-                root.lastZoomDragTranslationY = activeTranslation.y;
+        onWheel: wheel => {
+            const deltaPercent = root.wheelZoomDeltaPercent(wheel);
+            if (deltaPercent === 0 || !root.viewportPointInsideImage(wheel.x, wheel.y)) {
+                wheel.accepted = false;
                 return;
             }
 
-            root.lastZoomDragTranslationY = 0;
-        }
-        onTranslationChanged: delta => {
-            if (!active) {
-                return;
-            }
-
-            const deltaY = activeTranslation.y - root.lastZoomDragTranslationY;
-            if (deltaY !== 0) {
-                root.zoomBy(-deltaY * root.dragZoomPercentPerPixel, centroid.position.x, centroid.position.y);
-                root.lastZoomDragTranslationY = activeTranslation.y;
-            }
+            root.zoomBy(deltaPercent, wheel.x, wheel.y);
+            wheel.accepted = true;
         }
     }
 

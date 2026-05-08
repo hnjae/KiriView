@@ -502,8 +502,8 @@ msgstr "100% 확대/축소로 설정"
 
 #: src/qml/ShortcutHelpDialog.qml
 msgctxt "@info:keyboard shortcut"
-msgid "Ctrl+drag up/down"
-msgstr "Ctrl+위/아래로 드래그"
+msgid "Ctrl+wheel up/down"
+msgstr "Ctrl+휠 위/아래"
 
 #: src/qml/ShortcutHelpDialog.qml
 msgctxt "@info:whatsthis"

@@ -60,7 +60,7 @@ Kirigami.OverlaySheet {
             "description": KI18n.i18nc("@info:whatsthis", "Set 100% zoom")
         },
         {
-            "keyText": KI18n.i18nc("@info:keyboard shortcut", "Ctrl+drag up/down"),
+            "keyText": KI18n.i18nc("@info:keyboard shortcut", "Ctrl+wheel up/down"),
             "description": KI18n.i18nc("@info:whatsthis", "Zoom around the cursor")
         },
         {

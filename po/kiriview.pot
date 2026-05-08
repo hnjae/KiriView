@@ -491,7 +491,7 @@ msgstr ""
 
 #: src/qml/ShortcutHelpDialog.qml
 msgctxt "@info:keyboard shortcut"
-msgid "Ctrl+drag up/down"
+msgid "Ctrl+wheel up/down"
 msgstr ""
 
 #: src/qml/ShortcutHelpDialog.qml
