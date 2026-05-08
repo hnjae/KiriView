@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 #include "kiriviewapplication.h"
+#include "kiriviewapplicationactions.h"
 #include "kiriviewstate.h"
 
 #include <KConfigGroup>
@@ -17,6 +18,8 @@
 #include <QTest>
 
 namespace {
+namespace Actions = KiriView::ApplicationActions;
+
 constexpr const char *interfaceConfigGroup = "Interface";
 constexpr const char *menuPresentationConfigKey = "menuPresentation";
 constexpr const char *stateConfigFileName = "kiriviewstaterc";
@@ -24,6 +27,21 @@ constexpr const char *stateConfigFileName = "kiriviewstaterc";
 QKeySequence shortcut(const QString &sequence)
 {
     return QKeySequence::fromString(sequence, QKeySequence::PortableText);
+}
+
+QString definitionActionName(const Actions::ActionDefinition &definition)
+{
+    return QString::fromLatin1(definition.name);
+}
+
+bool actionNeedsConfigurationView(const Actions::ActionDefinition &definition)
+{
+    return definition.actionId == KiriViewApplication::OptionsConfigureAction;
+}
+
+bool actionDefaultShortcutsAreManagedByKiriView(const Actions::ActionDefinition &definition)
+{
+    return definition.kind != Actions::RegistrationKind::Inherited;
 }
 
 KConfigGroup stateInterfaceGroup()
@@ -87,154 +105,44 @@ void TestKiriViewApplication::actionsAreRegisteredWithDefaultShortcuts()
 {
     KiriViewApplication application;
 
-    const QStringList registeredActionNames = {
-        QStringLiteral("file_open"),
-        QStringLiteral("movetotrash"),
-        QStringLiteral("deletefile"),
-        QStringLiteral("go_previous_archive"),
-        QStringLiteral("go_next_archive"),
-        QStringLiteral("go_previous_image"),
-        QStringLiteral("go_next_image"),
-        QStringLiteral("go_first_image"),
-        QStringLiteral("go_last_image"),
-        QStringLiteral("view_zoom_in"),
-        QStringLiteral("view_zoom_out"),
-        QStringLiteral("view_fit"),
-        QStringLiteral("view_fit_height"),
-        QStringLiteral("view_fit_width"),
-        QStringLiteral("view_actual_size"),
-        QStringLiteral("view_pan_left"),
-        QStringLiteral("view_pan_right"),
-        QStringLiteral("view_pan_up"),
-        QStringLiteral("view_pan_down"),
-        QStringLiteral("view_pan_top_left"),
-        QStringLiteral("view_pan_bottom_right"),
-        QStringLiteral("view_scan_forward"),
-        QStringLiteral("view_scan_backward"),
-        QStringLiteral("window_fullscreen"),
-        QStringLiteral("help_shortcuts"),
-        QStringLiteral("options_show_menubar"),
-        QStringLiteral("options_configure_keybinding"),
-        QStringLiteral("file_quit"),
-    };
-    for (const QString &actionName : registeredActionNames) {
+    for (const Actions::ActionDefinition &definition : Actions::definitions()) {
+        if (actionNeedsConfigurationView(definition)) {
+            continue;
+        }
+
+        const QString actionName = definitionActionName(definition);
         QVERIFY2(application.action(actionName) != nullptr,
             qPrintable(QStringLiteral("Missing action %1").arg(actionName)));
+        if (actionDefaultShortcutsAreManagedByKiriView(definition)) {
+            expectDefaultShortcuts(
+                application, actionName, Actions::defaultShortcuts(definition.defaultShortcuts));
+        }
     }
 
     QObject configurationView;
     application.setConfigurationView(&configurationView);
-    QVERIFY(application.action(QStringLiteral("options_configure")) != nullptr);
-
-    expectDefaultShortcuts(
-        application, QStringLiteral("file_open"), QKeySequence::keyBindings(QKeySequence::Open));
-    expectDefaultShortcuts(
-        application, QStringLiteral("movetotrash"), { shortcut(QStringLiteral("Delete")) });
-    expectDefaultShortcuts(
-        application, QStringLiteral("deletefile"), { shortcut(QStringLiteral("Shift+Delete")) });
-    expectDefaultShortcuts(
-        application, QStringLiteral("go_previous_archive"), { shortcut(QStringLiteral("[")) });
-    expectDefaultShortcuts(
-        application, QStringLiteral("go_next_archive"), { shortcut(QStringLiteral("]")) });
-    expectDefaultShortcuts(application, QStringLiteral("go_previous_image"),
-        QKeySequence::keyBindings(QKeySequence::MoveToPreviousPage));
-    expectDefaultShortcuts(application, QStringLiteral("go_next_image"),
-        QKeySequence::keyBindings(QKeySequence::MoveToNextPage));
-    expectDefaultShortcuts(application, QStringLiteral("go_first_image"),
-        { shortcut(QStringLiteral("Ctrl+Home")), shortcut(QStringLiteral("Home")) });
-    expectDefaultShortcuts(application, QStringLiteral("go_last_image"),
-        { shortcut(QStringLiteral("Ctrl+End")), shortcut(QStringLiteral("End")) });
-    expectDefaultShortcuts(application, QStringLiteral("view_zoom_in"),
-        { shortcut(QStringLiteral("Ctrl+=")), shortcut(QStringLiteral("Ctrl++")),
-            shortcut(QStringLiteral("=")), shortcut(QStringLiteral("+")) });
-    expectDefaultShortcuts(application, QStringLiteral("view_zoom_out"),
-        { shortcut(QStringLiteral("-")), shortcut(QStringLiteral("Ctrl+-")) });
-    expectDefaultShortcuts(
-        application, QStringLiteral("view_fit"), { shortcut(QStringLiteral("1")) });
-    expectDefaultShortcuts(
-        application, QStringLiteral("view_fit_height"), { shortcut(QStringLiteral("2")) });
-    expectDefaultShortcuts(
-        application, QStringLiteral("view_fit_width"), { shortcut(QStringLiteral("3")) });
-    expectDefaultShortcuts(
-        application, QStringLiteral("view_actual_size"), { shortcut(QStringLiteral("0")) });
-    expectDefaultShortcuts(
-        application, QStringLiteral("view_pan_left"), { shortcut(QStringLiteral("Left")) });
-    expectDefaultShortcuts(
-        application, QStringLiteral("view_pan_right"), { shortcut(QStringLiteral("Right")) });
-    expectDefaultShortcuts(
-        application, QStringLiteral("view_pan_up"), { shortcut(QStringLiteral("Up")) });
-    expectDefaultShortcuts(
-        application, QStringLiteral("view_pan_down"), { shortcut(QStringLiteral("Down")) });
-    expectDefaultShortcuts(
-        application, QStringLiteral("view_pan_top_left"), { shortcut(QStringLiteral("<")) });
-    expectDefaultShortcuts(
-        application, QStringLiteral("view_pan_bottom_right"), { shortcut(QStringLiteral(">")) });
-    expectDefaultShortcuts(
-        application, QStringLiteral("view_scan_forward"), { shortcut(QStringLiteral(".")) });
-    expectDefaultShortcuts(
-        application, QStringLiteral("view_scan_backward"), { shortcut(QStringLiteral(",")) });
-    expectDefaultShortcuts(application, QStringLiteral("window_fullscreen"),
-        { shortcut(QStringLiteral("F")), shortcut(QStringLiteral("F11")) });
-    expectDefaultShortcuts(application, QStringLiteral("help_shortcuts"),
-        { shortcut(QStringLiteral("?")), shortcut(QStringLiteral("F1")) });
-    expectDefaultShortcuts(application, QStringLiteral("file_quit"),
-        { shortcut(QStringLiteral("Q")), shortcut(QStringLiteral("Ctrl+Q")) });
+    QVERIFY(application.action(Actions::actionName(KiriViewApplication::OptionsConfigureAction))
+        != nullptr);
 }
 
 void TestKiriViewApplication::actionIdsResolveActionNamesAndShortcuts()
 {
-    struct ExpectedActionId {
-        KiriViewApplication::ActionId actionId;
-        const char *actionName;
-    };
-
-    const ExpectedActionId expectedActionIds[] = {
-        { KiriViewApplication::FileOpenAction, "file_open" },
-        { KiriViewApplication::FileMoveToTrashAction, "movetotrash" },
-        { KiriViewApplication::FileDeleteAction, "deletefile" },
-        { KiriViewApplication::GoPreviousArchiveAction, "go_previous_archive" },
-        { KiriViewApplication::GoNextArchiveAction, "go_next_archive" },
-        { KiriViewApplication::GoPreviousImageAction, "go_previous_image" },
-        { KiriViewApplication::GoNextImageAction, "go_next_image" },
-        { KiriViewApplication::GoFirstImageAction, "go_first_image" },
-        { KiriViewApplication::GoLastImageAction, "go_last_image" },
-        { KiriViewApplication::ViewZoomInAction, "view_zoom_in" },
-        { KiriViewApplication::ViewZoomOutAction, "view_zoom_out" },
-        { KiriViewApplication::ViewFitAction, "view_fit" },
-        { KiriViewApplication::ViewFitHeightAction, "view_fit_height" },
-        { KiriViewApplication::ViewFitWidthAction, "view_fit_width" },
-        { KiriViewApplication::ViewActualSizeAction, "view_actual_size" },
-        { KiriViewApplication::ViewPanLeftAction, "view_pan_left" },
-        { KiriViewApplication::ViewPanRightAction, "view_pan_right" },
-        { KiriViewApplication::ViewPanUpAction, "view_pan_up" },
-        { KiriViewApplication::ViewPanDownAction, "view_pan_down" },
-        { KiriViewApplication::ViewPanTopLeftAction, "view_pan_top_left" },
-        { KiriViewApplication::ViewPanBottomRightAction, "view_pan_bottom_right" },
-        { KiriViewApplication::ViewScanForwardAction, "view_scan_forward" },
-        { KiriViewApplication::ViewScanBackwardAction, "view_scan_backward" },
-        { KiriViewApplication::WindowFullscreenAction, "window_fullscreen" },
-        { KiriViewApplication::HelpShortcutsAction, "help_shortcuts" },
-        { KiriViewApplication::OptionsConfigureAction, "options_configure" },
-        { KiriViewApplication::OptionsConfigureKeybindingAction, "options_configure_keybinding" },
-        { KiriViewApplication::OptionsShowMenubarAction, "options_show_menubar" },
-        { KiriViewApplication::FileQuitAction, "file_quit" },
-    };
-
     KiriViewApplication application;
     QObject configurationView;
     application.setConfigurationView(&configurationView);
 
-    for (const ExpectedActionId &expected : expectedActionIds) {
-        const QString actionName = QString::fromLatin1(expected.actionName);
-        QCOMPARE(application.actionName(expected.actionId), actionName);
-        QCOMPARE(application.actionForId(expected.actionId), application.action(actionName));
-        QCOMPARE(application.shortcutsForId(expected.actionId), application.shortcuts(actionName));
-        QCOMPARE(application.shortcutsWithCommandModifierForId(expected.actionId),
-            application.shortcutsWithCommandModifier(actionName));
-        QCOMPARE(application.shortcutsWithoutCommandModifierForId(expected.actionId),
-            application.shortcutsWithoutCommandModifier(actionName));
+    for (const Actions::ActionDefinition &definition : Actions::definitions()) {
+        const QString actionName = definitionActionName(definition);
+        QCOMPARE(application.actionName(definition.actionId), actionName);
+        QCOMPARE(application.actionForId(definition.actionId), application.action(actionName));
         QCOMPARE(
-            application.shortcutTextForId(expected.actionId), application.shortcutText(actionName));
+            application.shortcutsForId(definition.actionId), application.shortcuts(actionName));
+        QCOMPARE(application.shortcutsWithCommandModifierForId(definition.actionId),
+            application.shortcutsWithCommandModifier(actionName));
+        QCOMPARE(application.shortcutsWithoutCommandModifierForId(definition.actionId),
+            application.shortcutsWithoutCommandModifier(actionName));
+        QCOMPARE(application.shortcutTextForId(definition.actionId),
+            application.shortcutText(actionName));
     }
 
     const auto invalidActionId = static_cast<KiriViewApplication::ActionId>(-1);
