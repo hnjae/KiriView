@@ -5,6 +5,7 @@ mod apngdecoder;
 mod avifcompat;
 mod bmff;
 mod byteio;
+mod heifcontainer;
 mod imageformatregistry;
 mod imagemath;
 mod imagenavigationmodel;

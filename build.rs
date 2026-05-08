@@ -30,6 +30,7 @@ const CXX_QT_HEADER_SOURCES: &[&str] = &[
 const RUST_BRIDGE_SOURCES: &[&str] = &[
     "src/apngdecoder.rs",
     "src/avifcompat.rs",
+    "src/heifcontainer.rs",
     "src/imageformatregistry.rs",
     "src/imagenavigationmodel.rs",
     "src/imageviewportgeometry.rs",
