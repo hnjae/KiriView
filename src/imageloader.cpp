@@ -38,6 +38,12 @@ ImageLoader::ImageLoader(QObject *parent, ImageAsyncDependencies dependencies, C
 {
 }
 
+quint64 ImageLoader::nextLoadSessionId()
+{
+    ++m_nextLoadSessionId;
+    return m_nextLoadSessionId;
+}
+
 void ImageLoader::finishDecodeResult(ImageDecodeRequest request, DecodedImageResult result)
 {
     std::optional<ImageLoadSession> session = currentLoadSessionForDecodeRequest(request);
@@ -75,7 +81,7 @@ void ImageLoader::start(
     cancel();
     m_firstDisplayContext = firstDisplayContext;
 
-    ImageLoadPlan plan = imageLoadPlan(m_loadTickets.next(), std::move(request));
+    ImageLoadPlan plan = imageLoadPlan(nextLoadSessionId(), std::move(request));
     const ImageLoadSession session = std::move(plan.session);
     if (plan.requiresArchiveListing) {
         m_loadSession = session;
@@ -133,7 +139,6 @@ void ImageLoader::startArchiveLoad(ImageLoadSession session)
 
 void ImageLoader::cancel()
 {
-    m_loadTickets.invalidate();
     m_loadSession.reset();
     m_firstDisplayContext = {};
     m_decodeJob.cancel();
@@ -153,8 +158,7 @@ std::optional<ImageLoadSession> ImageLoader::currentLoadSessionForDecodeRequest(
 
 bool ImageLoader::isCurrentLoadSession(const ImageLoadSession &session) const
 {
-    return m_loadTickets.accepts(session.id) && m_loadSession.has_value()
-        && m_loadSession->id == session.id;
+    return m_loadSession.has_value() && m_loadSession->id == session.id;
 }
 
 std::optional<ImageLoadSession> ImageLoader::takeCurrentLoadSession(const ImageLoadSession &session)
