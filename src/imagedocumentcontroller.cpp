@@ -264,10 +264,10 @@ void ImageDocumentController::dispatchEffectPayload(const AnimationFailedEffect 
     finishWithAnimationError(payload.errorString);
 }
 
-void ImageDocumentController::dispatchEffects(const ImageDocumentEffects &effects)
+void ImageDocumentController::dispatchEffects(ImageDocumentEffects effects)
 {
-    for (const ImageDocumentEffect &effect : effects) {
-        dispatchEffect(effect);
+    for (ImageDocumentEffect &effect : effects) {
+        dispatchEffect(std::move(effect));
     }
 }
 
@@ -342,9 +342,9 @@ void ImageDocumentController::finishWithAnimationError(const QString &errorStrin
     const QString message = errorString.isEmpty()
         ? imageViewText("Could not decode the selected image animation.")
         : errorString;
-    const ImageDocumentEffects effects
+    ImageDocumentEffects effects
         = ImageOpenWorkflow::finishAnimationLoadWithError(m_state, message);
-    dispatchEffects(effects);
+    dispatchEffects(std::move(effects));
 }
 
 void ImageDocumentController::notify(ImageDocumentChange change)

@@ -236,10 +236,10 @@ void ImageOpenController::finishSuccessfulImageLoad(const ImageLoadSession &sess
     reportEffects(ImageOpenWorkflow::finishSuccessfulImageLoad(m_state, session));
 }
 
-void ImageOpenController::reportEffects(const ImageDocumentEffects &effects)
+void ImageOpenController::reportEffects(ImageDocumentEffects effects)
 {
-    for (const ImageDocumentEffect &effect : effects) {
-        report(effect);
+    for (ImageDocumentEffect &effect : effects) {
+        report(std::move(effect));
     }
 }
 

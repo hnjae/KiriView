@@ -93,7 +93,7 @@ private:
     void dispatchEffectPayload(const ContainerNavigationFailedEffect &payload);
     void dispatchEffectPayload(const PrepareFailedContainerEffect &payload);
     void dispatchEffectPayload(const AnimationFailedEffect &payload);
-    void dispatchEffects(const ImageDocumentEffects &effects);
+    void dispatchEffects(ImageDocumentEffects effects);
     void setSourceUrlForLoad(const QUrl &sourceUrl, const QUrl &containerNavigationUrl);
     void clearAfterSuccessfulFileDeletion();
     void scheduleAdjacentImagePredecode();

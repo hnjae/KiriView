@@ -68,7 +68,7 @@ private:
     void beginSuccessfulImagePresentation(const ImageLoadSession &session, bool predecodeCacheable);
     void finishSuccessfulImagePresentation(const ImageLoadSession &session);
     void finishSuccessfulImageLoad(const ImageLoadSession &session);
-    void reportEffects(const ImageDocumentEffects &effects);
+    void reportEffects(ImageDocumentEffects effects);
     void report(ImageDocumentEffect effect);
 
     ImageDocumentState &m_state;
