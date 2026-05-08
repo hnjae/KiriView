@@ -16,6 +16,7 @@ Item {
 
     readonly property bool imageReady: imageDocument.status === KiriImageDocument.Ready
     readonly property bool imagePannable: imageViewport.imagePannable
+    readonly property bool imageHorizontallyPannable: imageViewport.imageHorizontallyPannable
     readonly property bool atFirstImage: imageReady && imageDocument.currentPageNumber === 1 && imageDocument.imageCount > 0
     readonly property bool atLastImage: imageReady && imageDocument.currentPageNumber > 0 && imageDocument.currentPageNumber === imageDocument.imageCount
     readonly property int keyboardPanDistance: 64
@@ -53,6 +54,24 @@ Item {
 
     function panToTopLeft() {
         return imageViewport.panToTopLeft();
+    }
+
+    function panLeftOrOpenPreviousImage() {
+        if (root.imageHorizontallyPannable) {
+            root.panBy(-root.keyboardPanDistance, 0);
+            return;
+        }
+
+        root.previousImageQAction.trigger();
+    }
+
+    function panRightOrOpenNextImage() {
+        if (root.imageHorizontallyPannable) {
+            root.panBy(root.keyboardPanDistance, 0);
+            return;
+        }
+
+        root.nextImageQAction.trigger();
     }
 
     function scanForward() {
@@ -137,7 +156,13 @@ Item {
     }
 
     ActionShortcutGroup {
-        actionIds: [KiriViewApplication.ViewPanLeftAction, KiriViewApplication.ViewPanRightAction, KiriViewApplication.ViewPanUpAction, KiriViewApplication.ViewPanDownAction, KiriViewApplication.ViewPanTopLeftAction, KiriViewApplication.ViewPanBottomRightAction]
+        actionIds: [KiriViewApplication.ViewPanLeftAction, KiriViewApplication.ViewPanRightAction]
+        application: root.application
+        shortcutsEnabled: root.readyCommandShortcutsEnabled
+    }
+
+    ActionShortcutGroup {
+        actionIds: [KiriViewApplication.ViewPanUpAction, KiriViewApplication.ViewPanDownAction, KiriViewApplication.ViewPanTopLeftAction, KiriViewApplication.ViewPanBottomRightAction]
         application: root.application
         shortcutsEnabled: root.pannableCommandShortcutsEnabled
     }
@@ -190,12 +215,12 @@ Item {
 
     ActionTrigger {
         action: root.panLeftQAction
-        handler: () => root.panBy(-root.keyboardPanDistance, 0)
+        handler: () => root.panLeftOrOpenPreviousImage()
     }
 
     ActionTrigger {
         action: root.panRightQAction
-        handler: () => root.panBy(root.keyboardPanDistance, 0)
+        handler: () => root.panRightOrOpenNextImage()
     }
 
     ActionTrigger {

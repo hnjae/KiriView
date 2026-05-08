@@ -64,7 +64,11 @@ Kirigami.OverlaySheet {
             "description": KI18n.i18nc("@info:whatsthis", "Zoom around the cursor")
         },
         {
-            "keyText": KI18n.i18nc("@info:keyboard shortcut", "Drag / %1", root.shortcutTexts([KiriViewApplication.ViewPanLeftAction, KiriViewApplication.ViewPanRightAction, KiriViewApplication.ViewPanUpAction, KiriViewApplication.ViewPanDownAction])),
+            "keyText": root.shortcutTexts([KiriViewApplication.ViewPanLeftAction, KiriViewApplication.ViewPanRightAction]),
+            "description": KI18n.i18nc("@info:whatsthis", "Pan horizontally or go previous/next image")
+        },
+        {
+            "keyText": KI18n.i18nc("@info:keyboard shortcut", "Drag / %1", root.shortcutTexts([KiriViewApplication.ViewPanUpAction, KiriViewApplication.ViewPanDownAction])),
             "description": KI18n.i18nc("@info:whatsthis", "Pan the zoomed image")
         },
         {

@@ -51,7 +51,7 @@ msgctxt "@info:status"
 msgid "Could not read the selected archive image."
 msgstr ""
 
-#: src/heifdecoder.cpp src/imageanimationplayer.cpp
+#: src/heifdecoder.cpp
 msgid "Could not decode the selected HEIF image sequence."
 msgstr ""
 
@@ -139,6 +139,10 @@ msgstr ""
 msgid "Could not read the selected image data."
 msgstr ""
 
+#: src/imagedeletioncontroller.cpp
+msgid "Could not delete the selected file."
+msgstr ""
+
 #: src/imagedocumentcontroller.cpp src/imageopencontroller.cpp
 msgid "Could not decode the selected image animation."
 msgstr ""
@@ -167,121 +171,131 @@ msgstr ""
 msgid "Could not open the selected archive."
 msgstr ""
 
-#: src/kiriviewapplication.cpp
+#: src/kiriviewapplicationactions.cpp
 msgid "Open"
 msgstr ""
 
-#: src/kiriviewapplication.cpp
+#: src/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Move to Trash"
+msgstr ""
+
+#: src/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Delete Permanently"
+msgstr ""
+
+#: src/kiriviewapplicationactions.cpp
 msgctxt "@action"
 msgid "Previous Archive"
 msgstr ""
 
-#: src/kiriviewapplication.cpp
+#: src/kiriviewapplicationactions.cpp
 msgctxt "@action"
 msgid "Next Archive"
 msgstr ""
 
-#: src/kiriviewapplication.cpp
+#: src/kiriviewapplicationactions.cpp
 msgctxt "@action"
 msgid "Previous"
 msgstr ""
 
-#: src/kiriviewapplication.cpp
+#: src/kiriviewapplicationactions.cpp
 msgctxt "@action"
 msgid "Next"
 msgstr ""
 
-#: src/kiriviewapplication.cpp
+#: src/kiriviewapplicationactions.cpp
 msgctxt "@action"
 msgid "First Image"
 msgstr ""
 
-#: src/kiriviewapplication.cpp
+#: src/kiriviewapplicationactions.cpp
 msgctxt "@action"
 msgid "Last Image"
 msgstr ""
 
-#: src/kiriviewapplication.cpp
+#: src/kiriviewapplicationactions.cpp
 msgctxt "@action"
 msgid "Zoom In"
 msgstr ""
 
-#: src/kiriviewapplication.cpp
+#: src/kiriviewapplicationactions.cpp
 msgctxt "@action"
 msgid "Zoom Out"
 msgstr ""
 
-#: src/kiriviewapplication.cpp
+#: src/kiriviewapplicationactions.cpp
 msgctxt "@action"
 msgid "Fit"
 msgstr ""
 
-#: src/kiriviewapplication.cpp
+#: src/kiriviewapplicationactions.cpp
 msgctxt "@action"
 msgid "Fit Height"
 msgstr ""
 
-#: src/kiriviewapplication.cpp
+#: src/kiriviewapplicationactions.cpp
 msgctxt "@action"
 msgid "Fit Width"
 msgstr ""
 
-#: src/kiriviewapplication.cpp
+#: src/kiriviewapplicationactions.cpp
 msgctxt "@action"
 msgid "Actual Size"
 msgstr ""
 
-#: src/kiriviewapplication.cpp
+#: src/kiriviewapplicationactions.cpp
 msgctxt "@action"
 msgid "Pan Left"
 msgstr ""
 
-#: src/kiriviewapplication.cpp
+#: src/kiriviewapplicationactions.cpp
 msgctxt "@action"
 msgid "Pan Right"
 msgstr ""
 
-#: src/kiriviewapplication.cpp
+#: src/kiriviewapplicationactions.cpp
 msgctxt "@action"
 msgid "Pan Up"
 msgstr ""
 
-#: src/kiriviewapplication.cpp
+#: src/kiriviewapplicationactions.cpp
 msgctxt "@action"
 msgid "Pan Down"
 msgstr ""
 
-#: src/kiriviewapplication.cpp
+#: src/kiriviewapplicationactions.cpp
 msgctxt "@action"
 msgid "Top Left"
 msgstr ""
 
-#: src/kiriviewapplication.cpp
+#: src/kiriviewapplicationactions.cpp
 msgctxt "@action"
 msgid "Bottom Right"
 msgstr ""
 
-#: src/kiriviewapplication.cpp
+#: src/kiriviewapplicationactions.cpp
 msgctxt "@action"
 msgid "Scan Forward"
 msgstr ""
 
-#: src/kiriviewapplication.cpp
+#: src/kiriviewapplicationactions.cpp
 msgctxt "@action"
 msgid "Scan Backward"
 msgstr ""
 
-#: src/kiriviewapplication.cpp
+#: src/kiriviewapplicationactions.cpp
 msgctxt "@action"
 msgid "Fullscreen"
 msgstr ""
 
-#: src/kiriviewapplication.cpp
+#: src/kiriviewapplicationactions.cpp
 msgctxt "@action"
 msgid "Keyboard Shortcuts"
 msgstr ""
 
-#: src/kiriviewapplication.cpp
+#: src/kiriviewapplicationactions.cpp
 msgctxt "@action"
 msgid "Show Menubar"
 msgstr ""
@@ -483,6 +497,11 @@ msgstr ""
 #: src/qml/ShortcutHelpDialog.qml
 msgctxt "@info:whatsthis"
 msgid "Zoom around the cursor"
+msgstr ""
+
+#: src/qml/ShortcutHelpDialog.qml
+msgctxt "@info:whatsthis"
+msgid "Pan horizontally or go previous/next image"
 msgstr ""
 
 #: src/qml/ShortcutHelpDialog.qml
