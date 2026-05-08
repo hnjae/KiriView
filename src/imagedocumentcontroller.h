@@ -97,6 +97,7 @@ private:
     void setSourceUrlForLoad(const QUrl &sourceUrl, const QUrl &containerNavigationUrl);
     void clearAfterSuccessfulFileDeletion();
     void scheduleAdjacentImagePredecode();
+    void cancelNavigationAndPredecode();
     void cancelPredecode();
     std::optional<PredecodedImage> takePredecodedImage(const QUrl &url) const;
     void finishWithAnimationError(const QString &errorString);

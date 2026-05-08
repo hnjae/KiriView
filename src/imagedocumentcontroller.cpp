@@ -282,9 +282,7 @@ void ImageDocumentController::setSourceUrlForLoad(
         return;
     }
 
-    m_navigationController->cancelNavigation();
-    m_navigationController->cancelContainerNavigation();
-    cancelPredecode();
+    cancelNavigationAndPredecode();
     m_state.setLoadingContainerNavigationUrl(containerNavigationUrl);
     m_state.setSourceUrl(sourceUrl);
     m_openController->open();
@@ -292,9 +290,7 @@ void ImageDocumentController::setSourceUrlForLoad(
 
 void ImageDocumentController::clearAfterSuccessfulFileDeletion()
 {
-    m_navigationController->cancelNavigation();
-    m_navigationController->cancelContainerNavigation();
-    cancelPredecode();
+    cancelNavigationAndPredecode();
     m_openController->cancel();
     m_state.setSourceUrl(QUrl());
     m_state.setErrorString(QString());
@@ -317,6 +313,13 @@ void ImageDocumentController::scheduleAdjacentImagePredecode()
     m_predecodeCoordinator->schedule(ImagePredecodeCoordinator::Context {
         m_state.displayedImageLocation(), m_presentationController->isPredecodeCacheable(),
         std::move(*staticImage), m_presentationController->firstDisplayDecodeContext() });
+}
+
+void ImageDocumentController::cancelNavigationAndPredecode()
+{
+    m_navigationController->cancelNavigation();
+    m_navigationController->cancelContainerNavigation();
+    cancelPredecode();
 }
 
 void ImageDocumentController::cancelPredecode()
