@@ -64,6 +64,7 @@ let
   kcoreaddonsDev = pkgs.kdePackages.kcoreaddons.dev or pkgs.kdePackages.kcoreaddons;
   ki18nDev = pkgs.kdePackages.ki18n.dev or pkgs.kdePackages.ki18n;
   kirigamiAddonsDev = pkgs.kdePackages.kirigami-addons.dev or pkgs.kdePackages.kirigami-addons;
+  kioDev = pkgs.kdePackages.kio.dev or pkgs.kdePackages.kio;
   appQmlRoot = "${config.devenv.root}/target/cxxqt/qml_modules";
   qtQmlRoot = "${config.devenv.root}/.devenv/profile/lib/qt-6/qml";
   kconfigQmlRoot = "${pkgs.kdePackages.kconfig}/lib/qt-6/qml";
@@ -79,7 +80,7 @@ let
     kirigamiAddonsQmlRoot
   ];
   qtVersion = lib.getVersion pkgs.kdePackages.qtbase;
-  srcEntries = builtins.readDir ../../src;
+  srcEntries = builtins.readDir ../../../src;
   cppSources = map (source: "src/${source}") (
     lib.sort builtins.lessThan (
       lib.filter (source: srcEntries.${source} == "regular" && lib.hasSuffix ".cpp" source) (
@@ -122,6 +123,7 @@ let
     ".devenv/profile/include/KF6/KI18nQml"
     ".devenv/profile/include/KF6/KIO"
     ".devenv/profile/include/KF6/KIOCore"
+    ".devenv/profile/include/KF6/KIOWidgets"
     ".devenv/profile/include/KirigamiAddonsStatefulApp"
     ".devenv/profile/include/QtGui/${qtVersion}/QtGui"
     ".devenv/profile/mkspecs/linux-g++"
@@ -133,6 +135,9 @@ let
     "${ki18nDev}/include/KF6/KI18n"
     "${ki18nDev}/include/KF6/KI18nQml"
     "${kirigamiAddonsDev}/include/KirigamiAddonsStatefulApp"
+    "${kioDev}/include/KF6/KIO"
+    "${kioDev}/include/KF6/KIOCore"
+    "${kioDev}/include/KF6/KIOWidgets"
   ]
   ++ cxxStandardLibraryIncludeDirs
   ++ map (module: ".devenv/profile/include/${module}") qtIncludeModules;
