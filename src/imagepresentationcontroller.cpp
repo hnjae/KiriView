@@ -18,6 +18,7 @@ ImagePresentationController::ImagePresentationController(QObject *context,
     : m_renderContextProvider(std::move(renderContextProvider))
     , m_callbacks(std::move(callbacks))
 {
+    m_renderContext = renderContext();
     m_displayedImageState = std::make_unique<DisplayedImageState>(
         context,
         [this](const QSize &imageSize) {
@@ -72,6 +73,16 @@ void ImagePresentationController::setZoomPercent(qreal zoomPercent)
 }
 
 ImageZoomMode ImagePresentationController::zoomMode() const { return m_zoomState.zoomMode(); }
+
+qreal ImagePresentationController::maximumManualZoomPercent() const
+{
+    return m_zoomState.maximumManualZoomPercent(renderContext().devicePixelRatio);
+}
+
+qreal ImagePresentationController::clampedManualZoomPercent(qreal zoomPercent) const
+{
+    return m_zoomState.clampedManualZoomPercent(zoomPercent, renderContext().devicePixelRatio);
+}
 
 std::shared_ptr<DisplayedImageSurface> ImagePresentationController::imageSurface() const
 {
@@ -225,15 +236,18 @@ void ImagePresentationController::scheduleVisibleTileDecode(
 void ImagePresentationController::mutateZoomState(
     const ZoomStateMutation &mutation, TileRefresh tileRefresh)
 {
+    const ImageDocumentRenderContext previousContext = m_renderContext;
     const ImageDocumentRenderContext context = renderContext();
     const ImageZoomSnapshot previous = m_zoomState.snapshot();
     mutation(m_zoomState, context.devicePixelRatio);
 
-    applyZoomStateChanges(previous, context, tileRefresh);
+    applyZoomStateChanges(previous, previousContext, context, tileRefresh);
+    m_renderContext = context;
 }
 
 void ImagePresentationController::applyZoomStateChanges(const ImageZoomSnapshot &previous,
-    const ImageDocumentRenderContext &context, TileRefresh tileRefresh)
+    const ImageDocumentRenderContext &previousContext, const ImageDocumentRenderContext &context,
+    TileRefresh tileRefresh)
 {
     const ImageZoomSnapshot current = m_zoomState.snapshot();
     bool changed = false;
@@ -257,6 +271,15 @@ void ImagePresentationController::applyZoomStateChanges(const ImageZoomSnapshot 
     if (!imageZoomApproximatelyEqual(previous.displaySize, current.displaySize)) {
         notify(ImageDocumentChange::DisplaySize);
         notify(ImageDocumentChange::Repaint);
+        changed = true;
+    }
+    const qreal previousMaximumManualZoomPercent
+        = ImageZoomState::maximumManualZoomPercent(previous, previousContext.devicePixelRatio);
+    const qreal currentMaximumManualZoomPercent
+        = ImageZoomState::maximumManualZoomPercent(current, context.devicePixelRatio);
+    if (!imageZoomApproximatelyEqual(
+            previousMaximumManualZoomPercent, currentMaximumManualZoomPercent)) {
+        notify(ImageDocumentChange::MaximumManualZoomPercent);
         changed = true;
     }
 

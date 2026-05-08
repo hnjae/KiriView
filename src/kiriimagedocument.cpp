@@ -10,6 +10,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
 #include <memory>
 #include <utility>
 
@@ -76,6 +77,17 @@ KiriImageDocument::Status fromImageDocumentStatus(ImageDocumentStatus status)
     }
 
     return KiriImageDocument::Status::Null;
+}
+
+int manualZoomPercentPropertyValue(qreal zoomPercent)
+{
+    if (!std::isfinite(zoomPercent)) {
+        return static_cast<int>(KiriView::ImageZoomState::minimumManualZoomPercent());
+    }
+
+    const qreal boundedZoomPercent = std::clamp(
+        std::ceil(zoomPercent), 0.0, static_cast<qreal>(std::numeric_limits<int>::max()));
+    return static_cast<int>(boundedZoomPercent);
 }
 }
 
@@ -154,7 +166,7 @@ int KiriImageDocument::minimumManualZoomPercent() const
 
 int KiriImageDocument::maximumManualZoomPercent() const
 {
-    return static_cast<int>(KiriView::ImageZoomState::maximumManualZoomPercent());
+    return manualZoomPercentPropertyValue(m_documentController->maximumManualZoomPercent());
 }
 
 int KiriImageDocument::zoomStepPercent() const
@@ -228,12 +240,7 @@ void KiriImageDocument::setFitMode(ZoomMode zoomMode)
 
 double KiriImageDocument::clampedManualZoomPercent(double zoomPercent) const
 {
-    if (!std::isfinite(zoomPercent)) {
-        return zoomPercent;
-    }
-
-    return std::clamp(zoomPercent, KiriView::ImageZoomState::minimumManualZoomPercent(),
-        KiriView::ImageZoomState::maximumManualZoomPercent());
+    return m_documentController->clampedManualZoomPercent(zoomPercent);
 }
 
 void KiriImageDocument::updateRenderContext() { m_documentController->updateRenderContext(); }
@@ -276,6 +283,9 @@ void KiriImageDocument::handleDocumentChange(ImageDocumentChange change)
         return;
     case ImageDocumentChange::ZoomMode:
         Q_EMIT zoomModeChanged();
+        return;
+    case ImageDocumentChange::MaximumManualZoomPercent:
+        Q_EMIT maximumManualZoomPercentChanged();
         return;
     case ImageDocumentChange::PageNavigation:
         Q_EMIT pageNavigationChanged();

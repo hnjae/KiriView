@@ -27,6 +27,7 @@ enum class ImageDocumentChange {
     DisplaySize,
     ZoomPercent,
     ZoomMode,
+    MaximumManualZoomPercent,
     PageNavigation,
     ContainerNavigation,
     FileDeletionInProgress,

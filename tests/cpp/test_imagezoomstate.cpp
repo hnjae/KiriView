@@ -8,6 +8,7 @@
 #include <QSizeF>
 #include <QTest>
 #include <QUrl>
+#include <algorithm>
 #include <limits>
 
 namespace {
@@ -17,6 +18,8 @@ using KiriView::ImageZoomState;
 using KiriView::LoadedImageZoom;
 
 QUrl containerUrl(const QString &path) { return QUrl::fromLocalFile(path); }
+
+qreal longEdge(const QSizeF &size) { return std::max(size.width(), size.height()); }
 }
 
 class TestImageZoomState : public QObject
@@ -25,10 +28,14 @@ class TestImageZoomState : public QObject
 
 private Q_SLOTS:
     void fitModesUsePhysicalPixels();
-    void manualZoomIsClampedAndRejectsInvalidValues();
+    void manualZoomIsClampedByDynamicMaximumAndRejectsInvalidValues();
+    void smallImagesCanZoomPastLegacyFixedMaximum();
+    void largeImagesClampToLogicalDisplayLongEdge();
+    void viewportGrowthIncreasesManualMaximum();
+    void higherDevicePixelRatioPreservesLogicalDisplayCap();
     void zoomIsPreservedWithinAContainer();
     void displaySizeForZoomRejectsInvalidInputs();
-    void manualZoomConstantsAreUsable();
+    void manualZoomLimitsAreUsable();
 };
 
 void TestImageZoomState::fitModesUsePhysicalPixels()
@@ -55,14 +62,14 @@ void TestImageZoomState::fitModesUsePhysicalPixels()
     QVERIFY(imageZoomApproximatelyEqual(state.displaySize(), QSizeF(400.0, 200.0)));
 }
 
-void TestImageZoomState::manualZoomIsClampedAndRejectsInvalidValues()
+void TestImageZoomState::manualZoomIsClampedByDynamicMaximumAndRejectsInvalidValues()
 {
     ImageZoomState state;
     state.setViewportSize(QSizeF(400.0, 300.0), 1.0);
     state.setImageSize(QSize(200, 100), 1.0);
 
     const qreal minimumZoomPercent = ImageZoomState::minimumManualZoomPercent();
-    const qreal maximumZoomPercent = ImageZoomState::maximumManualZoomPercent();
+    const qreal maximumZoomPercent = state.maximumManualZoomPercent(1.0);
 
     QVERIFY(state.setManualZoomPercent(minimumZoomPercent - 5.0, 1.0));
     QCOMPARE(state.zoomMode(), ImageZoomMode::Manual);
@@ -79,6 +86,68 @@ void TestImageZoomState::manualZoomIsClampedAndRejectsInvalidValues()
     QVERIFY(!state.setManualZoomPercent(std::numeric_limits<qreal>::quiet_NaN(), 1.0));
     QVERIFY(imageZoomApproximatelyEqual(state.zoomPercent(), previous.zoomPercent));
     QVERIFY(imageZoomApproximatelyEqual(state.displaySize(), previous.displaySize));
+}
+
+void TestImageZoomState::smallImagesCanZoomPastLegacyFixedMaximum()
+{
+    ImageZoomState state;
+    state.setViewportSize(QSizeF(1000.0, 750.0), 1.0);
+    state.setImageSize(QSize(1, 1), 1.0);
+
+    const qreal fitZoomPercent = state.fitZoomPercent(ImageZoomMode::Fit, 1.0);
+    const qreal maximumZoomPercent = state.maximumManualZoomPercent(1.0);
+
+    QVERIFY(maximumZoomPercent > 800.0);
+    QVERIFY(maximumZoomPercent >= fitZoomPercent);
+    QVERIFY(state.setManualZoomPercent(fitZoomPercent, 1.0));
+    QVERIFY(imageZoomApproximatelyEqual(state.zoomPercent(), fitZoomPercent));
+    QVERIFY(longEdge(state.displaySize()) >= 750.0);
+}
+
+void TestImageZoomState::largeImagesClampToLogicalDisplayLongEdge()
+{
+    ImageZoomState state;
+    state.setViewportSize(QSizeF(400.0, 300.0), 1.0);
+    state.setImageSize(QSize(200000, 100000), 1.0);
+
+    const qreal maximumZoomPercent = state.maximumManualZoomPercent(1.0);
+    QVERIFY(maximumZoomPercent < 800.0);
+    QVERIFY(imageZoomApproximatelyEqual(maximumZoomPercent, 65536.0 * 100.0 / 200000.0));
+
+    QVERIFY(state.setManualZoomPercent(800.0, 1.0));
+    QVERIFY(imageZoomApproximatelyEqual(state.zoomPercent(), maximumZoomPercent));
+    QVERIFY(imageZoomApproximatelyEqual(longEdge(state.displaySize()), 65536.0));
+}
+
+void TestImageZoomState::viewportGrowthIncreasesManualMaximum()
+{
+    ImageZoomState state;
+    state.setImageSize(QSize(1000, 1000), 1.0);
+    state.setViewportSize(QSizeF(7000.0, 100.0), 1.0);
+
+    const qreal smallerViewportMaximum = state.maximumManualZoomPercent(1.0);
+    QVERIFY(imageZoomApproximatelyEqual(smallerViewportMaximum, 65536.0 * 100.0 / 1000.0));
+
+    QVERIFY(state.setViewportSize(QSizeF(9000.0, 100.0), 1.0));
+    const qreal largerViewportMaximum = state.maximumManualZoomPercent(1.0);
+    QVERIFY(largerViewportMaximum > smallerViewportMaximum);
+    QVERIFY(imageZoomApproximatelyEqual(largerViewportMaximum, 9000.0 * 8.0 * 100.0 / 1000.0));
+}
+
+void TestImageZoomState::higherDevicePixelRatioPreservesLogicalDisplayCap()
+{
+    ImageZoomState state;
+    state.setViewportSize(QSizeF(9000.0, 100.0), 1.0);
+    state.setImageSize(QSize(1000, 1000), 1.0);
+
+    const qreal oneXMaximum = state.maximumManualZoomPercent(1.0);
+    const qreal twoXMaximum = state.maximumManualZoomPercent(2.0);
+    QVERIFY(imageZoomApproximatelyEqual(twoXMaximum, oneXMaximum * 2.0));
+
+    const QSizeF oneXDisplaySize = state.displaySizeForZoomPercent(oneXMaximum, 1.0);
+    const QSizeF twoXDisplaySize = state.displaySizeForZoomPercent(twoXMaximum, 2.0);
+    QVERIFY(imageZoomApproximatelyEqual(longEdge(oneXDisplaySize), 72000.0));
+    QVERIFY(imageZoomApproximatelyEqual(longEdge(twoXDisplaySize), longEdge(oneXDisplaySize)));
 }
 
 void TestImageZoomState::zoomIsPreservedWithinAContainer()
@@ -121,11 +190,14 @@ void TestImageZoomState::displaySizeForZoomRejectsInvalidInputs()
     QVERIFY(state.displaySizeForZoomPercent(100.0, QSize(), 1.0).isEmpty());
 }
 
-void TestImageZoomState::manualZoomConstantsAreUsable()
+void TestImageZoomState::manualZoomLimitsAreUsable()
 {
+    ImageZoomState state;
+    state.setViewportSize(QSizeF(400.0, 300.0), 1.0);
+    state.setImageSize(QSize(200, 100), 1.0);
+
     QVERIFY(ImageZoomState::minimumManualZoomPercent() > 0.0);
-    QVERIFY(
-        ImageZoomState::maximumManualZoomPercent() > ImageZoomState::minimumManualZoomPercent());
+    QVERIFY(state.maximumManualZoomPercent(1.0) > ImageZoomState::minimumManualZoomPercent());
     QVERIFY(ImageZoomState::manualZoomStepPercent() > 0);
 }
 

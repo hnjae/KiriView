@@ -52,6 +52,8 @@ public:
     qreal zoomPercent() const;
     void setZoomPercent(qreal zoomPercent);
     ImageZoomMode zoomMode() const;
+    qreal maximumManualZoomPercent() const;
+    qreal clampedManualZoomPercent(qreal zoomPercent) const;
     std::shared_ptr<DisplayedImageSurface> imageSurface() const;
     const QImage &image() const;
     quint64 imageRevision() const;
@@ -90,6 +92,7 @@ private:
     void mutateZoomState(const ZoomStateMutation &mutation,
         TileRefresh tileRefresh = TileRefresh::WhenZoomStateChanges);
     void applyZoomStateChanges(const ImageZoomSnapshot &previous,
+        const ImageDocumentRenderContext &previousContext,
         const ImageDocumentRenderContext &context, TileRefresh tileRefresh);
     ImageDocumentRenderContext renderContext() const;
     void notify(ImageDocumentChange change);
@@ -97,6 +100,7 @@ private:
     RenderContextProvider m_renderContextProvider;
     Callbacks m_callbacks;
     ImageZoomState m_zoomState;
+    ImageDocumentRenderContext m_renderContext;
     std::unique_ptr<DisplayedImageState> m_displayedImageState;
     std::unique_ptr<ImageTileDecodeScheduler> m_tileDecodeScheduler;
     QRectF m_visibleItemRect;

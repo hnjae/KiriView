@@ -174,6 +174,16 @@ ImageZoomMode ImageDocumentController::zoomMode() const
     return m_presentationController->zoomMode();
 }
 
+qreal ImageDocumentController::maximumManualZoomPercent() const
+{
+    return m_presentationController->maximumManualZoomPercent();
+}
+
+qreal ImageDocumentController::clampedManualZoomPercent(qreal zoomPercent) const
+{
+    return m_presentationController->clampedManualZoomPercent(zoomPercent);
+}
+
 int ImageDocumentController::currentPageNumber() const
 {
     return m_navigationController->currentPageNumber();

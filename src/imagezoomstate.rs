@@ -2,7 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 const MINIMUM_MANUAL_ZOOM_PERCENT: f64 = 10.0;
-const MAXIMUM_MANUAL_ZOOM_PERCENT: f64 = 800.0;
+const MANUAL_ZOOM_LOGICAL_LONG_EDGE_LIMIT: f64 = 65_536.0;
+const MANUAL_ZOOM_VIEWPORT_LONG_EDGE_MULTIPLIER: f64 = 8.0;
 const MANUAL_ZOOM_STEP_PERCENT: i32 = 10;
 const ZOOM_EPSILON: f64 = 0.001;
 
@@ -68,7 +69,17 @@ mod ffi {
         fn rust_image_zoom_minimum_manual_zoom_percent() -> f64;
 
         #[cxx_name = "rustImageZoomMaximumManualZoomPercent"]
-        fn rust_image_zoom_maximum_manual_zoom_percent() -> f64;
+        fn rust_image_zoom_maximum_manual_zoom_percent(
+            state: RustImageZoomState,
+            device_pixel_ratio: f64,
+        ) -> f64;
+
+        #[cxx_name = "rustImageZoomClampedManualZoomPercent"]
+        fn rust_image_zoom_clamped_manual_zoom_percent(
+            state: RustImageZoomState,
+            zoom_percent: f64,
+            device_pixel_ratio: f64,
+        ) -> f64;
 
         #[cxx_name = "rustImageZoomManualZoomStepPercent"]
         fn rust_image_zoom_manual_zoom_step_percent() -> i32;
@@ -194,7 +205,13 @@ impl RustImageZoomState {
     }
 
     fn updated(mut self, device_pixel_ratio: f64) -> RustImageZoomState {
-        if self.zoom_mode != RustImageZoomMode::Manual {
+        if self.zoom_mode == RustImageZoomMode::Manual {
+            self.zoom_percent = rust_image_zoom_clamped_manual_zoom_percent(
+                self,
+                self.zoom_percent,
+                device_pixel_ratio,
+            );
+        } else {
             self.zoom_percent =
                 rust_image_zoom_fit_zoom_percent(self, self.zoom_mode, device_pixel_ratio);
         }
@@ -247,8 +264,24 @@ fn rust_image_zoom_minimum_manual_zoom_percent() -> f64 {
     MINIMUM_MANUAL_ZOOM_PERCENT
 }
 
-fn rust_image_zoom_maximum_manual_zoom_percent() -> f64 {
-    MAXIMUM_MANUAL_ZOOM_PERCENT
+fn rust_image_zoom_maximum_manual_zoom_percent(
+    state: RustImageZoomState,
+    device_pixel_ratio: f64,
+) -> f64 {
+    maximum_manual_zoom_percent_for_image_size(state, state.image_size(), device_pixel_ratio)
+}
+
+fn rust_image_zoom_clamped_manual_zoom_percent(
+    state: RustImageZoomState,
+    zoom_percent: f64,
+    device_pixel_ratio: f64,
+) -> f64 {
+    clamped_manual_zoom_percent_for_image_size(
+        state,
+        zoom_percent,
+        state.image_size(),
+        device_pixel_ratio,
+    )
 }
 
 fn rust_image_zoom_manual_zoom_step_percent() -> i32 {
@@ -297,7 +330,7 @@ fn rust_image_zoom_set_manual_zoom_percent(
     }
 
     let clamped_zoom_percent =
-        zoom_percent.clamp(MINIMUM_MANUAL_ZOOM_PERCENT, MAXIMUM_MANUAL_ZOOM_PERCENT);
+        rust_image_zoom_clamped_manual_zoom_percent(state, zoom_percent, device_pixel_ratio);
     let zoom_changed =
         !rust_image_zoom_approximately_equal(state.zoom_percent, clamped_zoom_percent);
     let mode_changed = state.zoom_mode != RustImageZoomMode::Manual;
@@ -354,7 +387,12 @@ fn rust_image_zoom_loaded_image_zoom(
         RustImageZoomMode::Fit
     };
     let loaded_zoom_percent = if loaded_zoom_mode == RustImageZoomMode::Manual {
-        state.zoom_percent
+        clamped_manual_zoom_percent_for_image_size(
+            state,
+            state.zoom_percent,
+            image_size,
+            device_pixel_ratio,
+        )
     } else {
         rust_image_zoom_fit_zoom_percent_for_image_size(
             state,
@@ -401,6 +439,85 @@ fn rust_image_zoom_fit_zoom_percent(
         zoom_mode,
         state.image_size(),
         device_pixel_ratio,
+    )
+}
+
+fn normalized_device_pixel_ratio(device_pixel_ratio: f64) -> Option<f64> {
+    if device_pixel_ratio.is_finite() && device_pixel_ratio > 0.0 {
+        Some(device_pixel_ratio)
+    } else {
+        None
+    }
+}
+
+fn safe_minimum_zoom_cap(fit_zoom_percent: f64) -> f64 {
+    if fit_zoom_percent.is_finite() && fit_zoom_percent > MINIMUM_MANUAL_ZOOM_PERCENT {
+        fit_zoom_percent
+    } else {
+        MINIMUM_MANUAL_ZOOM_PERCENT
+    }
+}
+
+fn viewport_long_edge(viewport_size: RustZoomSizeF) -> f64 {
+    let width = if viewport_size.width.is_finite() {
+        0.0_f64.max(viewport_size.width)
+    } else {
+        0.0
+    };
+    let height = if viewport_size.height.is_finite() {
+        0.0_f64.max(viewport_size.height)
+    } else {
+        0.0
+    };
+
+    width.max(height)
+}
+
+fn maximum_manual_zoom_percent_for_image_size(
+    state: RustImageZoomState,
+    image_size: RustZoomSize,
+    device_pixel_ratio: f64,
+) -> f64 {
+    let fit_zoom_percent = rust_image_zoom_fit_zoom_percent_for_image_size(
+        state,
+        RustImageZoomMode::Fit,
+        image_size,
+        device_pixel_ratio,
+    );
+    let minimum_cap = safe_minimum_zoom_cap(fit_zoom_percent);
+    let Some(device_pixel_ratio) = normalized_device_pixel_ratio(device_pixel_ratio) else {
+        return minimum_cap;
+    };
+
+    let image_long_edge = image_size.width.max(image_size.height);
+    if image_long_edge <= 0 {
+        return minimum_cap;
+    }
+
+    let max_display_long_edge = MANUAL_ZOOM_LOGICAL_LONG_EDGE_LIMIT
+        .max(viewport_long_edge(state.viewport_size()) * MANUAL_ZOOM_VIEWPORT_LONG_EDGE_MULTIPLIER);
+    let calculated_cap =
+        max_display_long_edge * device_pixel_ratio * 100.0 / f64::from(image_long_edge);
+    if calculated_cap.is_finite() && calculated_cap > minimum_cap {
+        calculated_cap
+    } else {
+        minimum_cap
+    }
+}
+
+fn clamped_manual_zoom_percent_for_image_size(
+    state: RustImageZoomState,
+    zoom_percent: f64,
+    image_size: RustZoomSize,
+    device_pixel_ratio: f64,
+) -> f64 {
+    if !zoom_percent.is_finite() {
+        return zoom_percent;
+    }
+
+    zoom_percent.clamp(
+        MINIMUM_MANUAL_ZOOM_PERCENT,
+        maximum_manual_zoom_percent_for_image_size(state, image_size, device_pixel_ratio),
     )
 }
 

@@ -62,6 +62,8 @@ public:
     qreal zoomPercent() const;
     void setZoomPercent(qreal zoomPercent);
     ImageZoomMode zoomMode() const;
+    qreal maximumManualZoomPercent() const;
+    qreal clampedManualZoomPercent(qreal zoomPercent) const;
     int currentPageNumber() const;
     int imageCount() const;
     bool containerNavigationAvailable() const;

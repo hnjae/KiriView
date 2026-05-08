@@ -44,7 +44,8 @@ class KiriImageDocument : public QObject
     Q_PROPERTY(double zoomPercent READ zoomPercent WRITE setZoomPercent NOTIFY zoomPercentChanged)
     Q_PROPERTY(ZoomMode zoomMode READ zoomMode NOTIFY zoomModeChanged)
     Q_PROPERTY(int minimumManualZoomPercent READ minimumManualZoomPercent CONSTANT)
-    Q_PROPERTY(int maximumManualZoomPercent READ maximumManualZoomPercent CONSTANT)
+    Q_PROPERTY(int maximumManualZoomPercent READ maximumManualZoomPercent NOTIFY
+            maximumManualZoomPercentChanged)
     Q_PROPERTY(int zoomStepPercent READ zoomStepPercent CONSTANT)
     Q_PROPERTY(QStringList openDialogNameFilters READ openDialogNameFilters CONSTANT)
     Q_PROPERTY(int currentPageNumber READ currentPageNumber NOTIFY pageNavigationChanged)
@@ -138,6 +139,7 @@ Q_SIGNALS:
     void displaySizeChanged();
     void zoomPercentChanged();
     void zoomModeChanged();
+    void maximumManualZoomPercentChanged();
     void pageNavigationChanged();
     void containerNavigationChanged();
     void fileDeletionInProgressChanged();

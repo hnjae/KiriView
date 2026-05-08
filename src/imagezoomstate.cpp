@@ -39,6 +39,13 @@ KiriView::ImageZoomMode qtZoomMode(KiriView::RustImageZoomMode zoomMode)
 
     return KiriView::ImageZoomMode::Fit;
 }
+
+KiriView::RustImageZoomState rustZoomState(const KiriView::ImageZoomSnapshot &snapshot)
+{
+    return KiriView::RustImageZoomState { snapshot.imageSize.width(), snapshot.imageSize.height(),
+        snapshot.viewportSize.width(), snapshot.viewportSize.height(), snapshot.displaySize.width(),
+        snapshot.displaySize.height(), snapshot.zoomPercent, rustZoomMode(snapshot.zoomMode) };
+}
 }
 
 namespace KiriView {
@@ -55,9 +62,13 @@ bool imageZoomApproximatelyEqual(const QSizeF &left, const QSizeF &right)
 
 qreal ImageZoomState::minimumManualZoomPercent() { return rustImageZoomMinimumManualZoomPercent(); }
 
-qreal ImageZoomState::maximumManualZoomPercent() { return rustImageZoomMaximumManualZoomPercent(); }
-
 int ImageZoomState::manualZoomStepPercent() { return rustImageZoomManualZoomStepPercent(); }
+
+qreal ImageZoomState::maximumManualZoomPercent(
+    const ImageZoomSnapshot &snapshot, qreal devicePixelRatio)
+{
+    return rustImageZoomMaximumManualZoomPercent(rustZoomState(snapshot), devicePixelRatio);
+}
 
 const QSize &ImageZoomState::imageSize() const { return m_imageSize; }
 
@@ -77,12 +88,7 @@ ImageZoomSnapshot ImageZoomState::snapshot() const
         m_zoomMode, m_containerUrl };
 }
 
-RustImageZoomState ImageZoomState::rustState() const
-{
-    return RustImageZoomState { m_imageSize.width(), m_imageSize.height(), m_viewportSize.width(),
-        m_viewportSize.height(), m_displaySize.width(), m_displaySize.height(), m_zoomPercent,
-        rustZoomMode(m_zoomMode) };
-}
+RustImageZoomState ImageZoomState::rustState() const { return rustZoomState(snapshot()); }
 
 void ImageZoomState::applyRustState(const RustImageZoomState &state)
 {
@@ -158,6 +164,16 @@ void ImageZoomState::clearContainer() { m_containerUrl = QUrl(); }
 void ImageZoomState::update(qreal devicePixelRatio)
 {
     applyRustState(rustImageZoomUpdate(rustState(), devicePixelRatio));
+}
+
+qreal ImageZoomState::maximumManualZoomPercent(qreal devicePixelRatio) const
+{
+    return maximumManualZoomPercent(snapshot(), devicePixelRatio);
+}
+
+qreal ImageZoomState::clampedManualZoomPercent(qreal zoomPercent, qreal devicePixelRatio) const
+{
+    return rustImageZoomClampedManualZoomPercent(rustState(), zoomPercent, devicePixelRatio);
 }
 
 qreal ImageZoomState::fitZoomPercent(ImageZoomMode zoomMode, qreal devicePixelRatio) const

@@ -10,10 +10,12 @@
 #include <QObject>
 #include <QTest>
 #include <QUrl>
+#include <algorithm>
 #include <cstddef>
 #include <memory>
 #include <optional>
 #include <utility>
+#include <vector>
 
 namespace {
 using KiriView::TestSupport::archivePageUrl;
@@ -72,6 +74,12 @@ std::size_t staticTileCount(const KiriView::ImageDocumentController &controller)
     auto *staticSurface = surface == nullptr ? nullptr : surface->staticTileSurface();
     return staticSurface == nullptr ? 0 : staticSurface->tiles().size();
 }
+
+bool containsChange(
+    const std::vector<KiriView::ImageDocumentChange> &changes, KiriView::ImageDocumentChange change)
+{
+    return std::find(changes.begin(), changes.end(), change) != changes.end();
+}
 }
 
 class TestImageDocumentController : public QObject
@@ -81,6 +89,7 @@ class TestImageDocumentController : public QObject
 private Q_SLOTS:
     void initialLoadSuccessUpdatesDocumentState();
     void imageLoadsUsePhysicalViewportForFirstDisplayDecode();
+    void maximumManualZoomChangesAfterViewportImageAndRenderContextUpdates();
     void directoryImageNavigationResetsManualZoom();
     void archiveDocumentPageNavigationPreservesManualZoom();
     void siblingArchiveNavigationResetsManualZoom();
@@ -155,6 +164,65 @@ void TestImageDocumentController::imageLoadsUsePhysicalViewportForFirstDisplayDe
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(2));
     QCOMPARE(dataLoader.backLoad().url, nextImageUrl);
     QCOMPARE(dataLoader.backLoad().firstDisplay.physicalViewportSize, QSize(800, 600));
+}
+
+void TestImageDocumentController::
+    maximumManualZoomChangesAfterViewportImageAndRenderContextUpdates()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    std::vector<KiriView::ImageDocumentChange> changes;
+    qreal devicePixelRatio = 1.0;
+    const QUrl firstImageUrl = localUrl(QStringLiteral("/images/regular.png"));
+    const QUrl secondImageUrl = localUrl(QStringLiteral("/images/wide.png"));
+
+    auto dataDecoder = [](const QByteArray &, const KiriView::ImageDecodeRequest &request) {
+        const QSize sourceSize = request.imageUrl().fileName() == QStringLiteral("wide.png")
+            ? QSize(2000, 1000)
+            : QSize(1000, 500);
+        return staticDecodedImageWithPreview(sourceSize, sourceSize);
+    };
+    std::unique_ptr<KiriView::ImageDocumentController> controller
+        = std::make_unique<KiriView::ImageDocumentController>(
+            this,
+            [&devicePixelRatio]() {
+                return KiriView::ImageDocumentRenderContext {
+                    devicePixelRatio,
+                    KiriView::fallbackTextureSizeMax,
+                };
+            },
+            [&changes](KiriView::ImageDocumentChange change) { changes.push_back(change); },
+            imageAsyncDependenciesFor(candidateProvider, dataLoader, std::move(dataDecoder)));
+
+    controller->setViewportSize(QSizeF(7000.0, 100.0));
+    controller->setSourceUrl(firstImageUrl);
+    finishLoad(dataLoader);
+
+    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
+    QVERIFY(KiriView::imageZoomApproximatelyEqual(
+        controller->maximumManualZoomPercent(), 65536.0 * 100.0 / 1000.0));
+
+    changes.clear();
+    controller->setViewportSize(QSizeF(9000.0, 100.0));
+    QVERIFY(containsChange(changes, KiriView::ImageDocumentChange::MaximumManualZoomPercent));
+    QVERIFY(KiriView::imageZoomApproximatelyEqual(
+        controller->maximumManualZoomPercent(), 9000.0 * 8.0 * 100.0 / 1000.0));
+
+    changes.clear();
+    controller->setSourceUrl(secondImageUrl);
+    finishLoad(dataLoader);
+
+    QTRY_COMPARE(controller->displayedUrl(), secondImageUrl);
+    QVERIFY(containsChange(changes, KiriView::ImageDocumentChange::MaximumManualZoomPercent));
+    QVERIFY(KiriView::imageZoomApproximatelyEqual(
+        controller->maximumManualZoomPercent(), 9000.0 * 8.0 * 100.0 / 2000.0));
+
+    changes.clear();
+    devicePixelRatio = 2.0;
+    controller->updateRenderContext();
+    QVERIFY(containsChange(changes, KiriView::ImageDocumentChange::MaximumManualZoomPercent));
+    QVERIFY(KiriView::imageZoomApproximatelyEqual(
+        controller->maximumManualZoomPercent(), 9000.0 * 8.0 * 2.0 * 100.0 / 2000.0));
 }
 
 void TestImageDocumentController::directoryImageNavigationResetsManualZoom()

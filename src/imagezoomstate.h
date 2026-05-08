@@ -38,8 +38,9 @@ class ImageZoomState
 {
 public:
     static qreal minimumManualZoomPercent();
-    static qreal maximumManualZoomPercent();
     static int manualZoomStepPercent();
+    static qreal maximumManualZoomPercent(
+        const ImageZoomSnapshot &snapshot, qreal devicePixelRatio);
 
     const QSize &imageSize() const;
     const QSizeF &viewportSize() const;
@@ -61,6 +62,8 @@ public:
     void clearContainer();
     void update(qreal devicePixelRatio);
 
+    qreal maximumManualZoomPercent(qreal devicePixelRatio) const;
+    qreal clampedManualZoomPercent(qreal zoomPercent, qreal devicePixelRatio) const;
     qreal fitZoomPercent(ImageZoomMode zoomMode, qreal devicePixelRatio) const;
     qreal fitZoomPercentForImageSize(
         ImageZoomMode zoomMode, const QSize &imageSize, qreal devicePixelRatio) const;

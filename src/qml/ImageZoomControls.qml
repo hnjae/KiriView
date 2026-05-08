@@ -21,10 +21,6 @@ RowLayout {
 
     spacing: controlSpacing
 
-    function clampValue(value, minimum, maximum) {
-        return Math.max(minimum, Math.min(maximum, value));
-    }
-
     function textInputFocused() {
         return zoomSpinBox.activeFocus || (zoomSpinBox.contentItem !== null && zoomSpinBox.contentItem.activeFocus);
     }
@@ -55,6 +51,6 @@ RowLayout {
             top: zoomSpinBox.to
         }
 
-        onValueModified: root.imageDocument.zoomPercent = root.clampValue(value, root.minimumManualZoomPercent, root.maximumManualZoomPercent)
+        onValueModified: root.imageDocument.zoomPercent = root.imageDocument.clampedManualZoomPercent(value)
     }
 }
