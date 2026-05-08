@@ -6,6 +6,7 @@
 
 #include <QString>
 #include <QStringList>
+#include <optional>
 
 namespace KiriView {
 enum class ArchiveStorageBackend {
@@ -16,11 +17,25 @@ enum class ArchiveStorageBackend {
     LibArchive,
 };
 
+enum class ArchiveOpenMatchKind {
+    ComicBook,
+    GeneralArchive,
+};
+
+struct ArchiveOpenMatch {
+    QString scheme;
+    ArchiveOpenMatchKind kind = ArchiveOpenMatchKind::GeneralArchive;
+};
+
 bool isSupportedArchiveRootScheme(const QString &scheme);
 ArchiveStorageBackend archiveStorageBackendForRootScheme(const QString &scheme);
 bool archiveRootSchemeUsesKioFuse(const QString &scheme);
 QStringList supportedComicBookArchiveExtensions();
 QStringList supportedComicBookArchiveMimeTypes();
+std::optional<ArchiveOpenMatch> comicBookArchiveMatchForFileName(const QString &fileName);
+std::optional<ArchiveOpenMatch> directArchiveOpenMatchForFileName(const QString &fileName);
+std::optional<ArchiveOpenMatch> comicBookArchiveMatchForMimeTypeName(const QString &mimeTypeName);
+std::optional<ArchiveOpenMatch> directArchiveOpenMatchForMimeTypeName(const QString &mimeTypeName);
 QString comicBookArchiveKioSchemeForFileName(const QString &fileName);
 QString directArchiveOpenKioSchemeForFileName(const QString &fileName);
 QString comicBookArchiveKioSchemeForMimeTypeName(const QString &mimeTypeName);

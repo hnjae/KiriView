@@ -5,6 +5,7 @@
 
 #include <cstddef>
 #include <iterator>
+#include <optional>
 
 namespace {
 struct ArchiveMimeTypes {
@@ -83,35 +84,43 @@ QString extensionForFileName(const QString &fileName)
 }
 
 template <typename Predicate>
-bool acceptedProfileMatches(
+std::optional<KiriView::ArchiveOpenMatch> acceptedProfileMatch(
     const ArchiveFormat &format, ArchiveProfileSet profileSet, Predicate predicate)
 {
     if (predicate(format.comicBook)) {
-        return true;
+        return KiriView::ArchiveOpenMatch { QString::fromLatin1(format.scheme),
+            KiriView::ArchiveOpenMatchKind::ComicBook };
     }
 
-    return profileSet == ArchiveProfileSet::DirectlyOpenable && predicate(format.directArchive);
+    if (profileSet == ArchiveProfileSet::DirectlyOpenable && predicate(format.directArchive)) {
+        return KiriView::ArchiveOpenMatch { QString::fromLatin1(format.scheme),
+            KiriView::ArchiveOpenMatchKind::GeneralArchive };
+    }
+
+    return std::nullopt;
 }
 
-bool archiveFormatAcceptsExtension(
+std::optional<KiriView::ArchiveOpenMatch> archiveFormatMatchForExtension(
     const ArchiveFormat &format, const QString &extension, ArchiveProfileSet profileSet)
 {
-    return acceptedProfileMatches(
+    return acceptedProfileMatch(
         format, profileSet, [&extension](const ArchiveOpenProfile &profile) {
             return extension == QString::fromLatin1(profile.extension);
         });
 }
 
-const ArchiveFormat *archiveFormatForExtension(
+std::optional<KiriView::ArchiveOpenMatch> archiveMatchForExtension(
     const QString &extension, ArchiveProfileSet profileSet)
 {
     for (const ArchiveFormat &format : archiveFormats) {
-        if (archiveFormatAcceptsExtension(format, extension, profileSet)) {
-            return &format;
+        std::optional<KiriView::ArchiveOpenMatch> match
+            = archiveFormatMatchForExtension(format, extension, profileSet);
+        if (match.has_value()) {
+            return match;
         }
     }
 
-    return nullptr;
+    return std::nullopt;
 }
 
 bool mimeTypesContain(const ArchiveMimeTypes &mimeTypes, const QString &mimeTypeName)
@@ -125,25 +134,27 @@ bool mimeTypesContain(const ArchiveMimeTypes &mimeTypes, const QString &mimeType
     return false;
 }
 
-bool archiveFormatAcceptsMimeTypeName(
+std::optional<KiriView::ArchiveOpenMatch> archiveFormatMatchForMimeTypeName(
     const ArchiveFormat &format, const QString &mimeTypeName, ArchiveProfileSet profileSet)
 {
-    return acceptedProfileMatches(
+    return acceptedProfileMatch(
         format, profileSet, [&mimeTypeName](const ArchiveOpenProfile &profile) {
             return mimeTypesContain(profile.mimeTypes, mimeTypeName);
         });
 }
 
-const ArchiveFormat *archiveFormatForMimeTypeName(
+std::optional<KiriView::ArchiveOpenMatch> archiveMatchForMimeTypeName(
     const QString &mimeTypeName, ArchiveProfileSet profileSet)
 {
     for (const ArchiveFormat &format : archiveFormats) {
-        if (archiveFormatAcceptsMimeTypeName(format, mimeTypeName, profileSet)) {
-            return &format;
+        std::optional<KiriView::ArchiveOpenMatch> match
+            = archiveFormatMatchForMimeTypeName(format, mimeTypeName, profileSet);
+        if (match.has_value()) {
+            return match;
         }
     }
 
-    return nullptr;
+    return std::nullopt;
 }
 
 bool storageBackendUsesKioFuse(KiriView::ArchiveStorageBackend backend)
@@ -161,9 +172,9 @@ bool storageBackendUsesKioFuse(KiriView::ArchiveStorageBackend backend)
     return false;
 }
 
-QString schemeString(const ArchiveFormat *format)
+QString schemeString(const std::optional<KiriView::ArchiveOpenMatch> &match)
 {
-    return format == nullptr ? QString() : QString::fromLatin1(format->scheme);
+    return match.has_value() ? match->scheme : QString();
 }
 
 QString markerString(const ArchiveOpenProfile &profile)
@@ -219,28 +230,46 @@ QStringList supportedComicBookArchiveMimeTypes()
     return mimeTypes;
 }
 
+std::optional<ArchiveOpenMatch> comicBookArchiveMatchForFileName(const QString &fileName)
+{
+    return archiveMatchForExtension(
+        extensionForFileName(fileName), ArchiveProfileSet::ComicBookOnly);
+}
+
+std::optional<ArchiveOpenMatch> directArchiveOpenMatchForFileName(const QString &fileName)
+{
+    return archiveMatchForExtension(
+        extensionForFileName(fileName), ArchiveProfileSet::DirectlyOpenable);
+}
+
+std::optional<ArchiveOpenMatch> comicBookArchiveMatchForMimeTypeName(const QString &mimeTypeName)
+{
+    return archiveMatchForMimeTypeName(mimeTypeName, ArchiveProfileSet::ComicBookOnly);
+}
+
+std::optional<ArchiveOpenMatch> directArchiveOpenMatchForMimeTypeName(const QString &mimeTypeName)
+{
+    return archiveMatchForMimeTypeName(mimeTypeName, ArchiveProfileSet::DirectlyOpenable);
+}
+
 QString comicBookArchiveKioSchemeForFileName(const QString &fileName)
 {
-    return schemeString(archiveFormatForExtension(
-        extensionForFileName(fileName), ArchiveProfileSet::ComicBookOnly));
+    return schemeString(comicBookArchiveMatchForFileName(fileName));
 }
 
 QString directArchiveOpenKioSchemeForFileName(const QString &fileName)
 {
-    return schemeString(archiveFormatForExtension(
-        extensionForFileName(fileName), ArchiveProfileSet::DirectlyOpenable));
+    return schemeString(directArchiveOpenMatchForFileName(fileName));
 }
 
 QString comicBookArchiveKioSchemeForMimeTypeName(const QString &mimeTypeName)
 {
-    return schemeString(
-        archiveFormatForMimeTypeName(mimeTypeName, ArchiveProfileSet::ComicBookOnly));
+    return schemeString(comicBookArchiveMatchForMimeTypeName(mimeTypeName));
 }
 
 QString directArchiveOpenKioSchemeForMimeTypeName(const QString &mimeTypeName)
 {
-    return schemeString(
-        archiveFormatForMimeTypeName(mimeTypeName, ArchiveProfileSet::DirectlyOpenable));
+    return schemeString(directArchiveOpenMatchForMimeTypeName(mimeTypeName));
 }
 
 QString comicBookArchiveMarkerForRootScheme(const QString &scheme)

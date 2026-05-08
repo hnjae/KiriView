@@ -12,8 +12,14 @@
 #include <QDir>
 #include <QStringList>
 #include <cstddef>
+#include <optional>
 
 namespace {
+struct ArchiveDocumentRoot {
+    QUrl rootUrl;
+    KiriView::ArchiveDocumentKind kind = KiriView::ArchiveDocumentKind::General;
+};
+
 std::optional<QUrl> archiveRootUrlForLocalArchive(const QUrl &url, const QString &archiveScheme)
 {
     if (!url.isLocalFile()) {
@@ -37,6 +43,34 @@ std::optional<QUrl> archiveRootUrlForLocalArchive(const QUrl &url, const QString
     }
 
     return archiveRootUrl;
+}
+
+KiriView::ArchiveDocumentKind archiveDocumentKindForMatch(const KiriView::ArchiveOpenMatch &match)
+{
+    switch (match.kind) {
+    case KiriView::ArchiveOpenMatchKind::ComicBook:
+        return KiriView::ArchiveDocumentKind::ComicBook;
+    case KiriView::ArchiveOpenMatchKind::GeneralArchive:
+        return KiriView::ArchiveDocumentKind::General;
+    }
+
+    return KiriView::ArchiveDocumentKind::General;
+}
+
+std::optional<ArchiveDocumentRoot> archiveDocumentRootForLocalArchive(const QUrl &url)
+{
+    const std::optional<KiriView::ArchiveOpenMatch> match
+        = KiriView::directArchiveOpenMatchForUrl(url);
+    if (!match.has_value()) {
+        return std::nullopt;
+    }
+
+    const std::optional<QUrl> rootUrl = archiveRootUrlForLocalArchive(url, match->scheme);
+    if (!rootUrl.has_value()) {
+        return std::nullopt;
+    }
+
+    return ArchiveDocumentRoot { *rootUrl, archiveDocumentKindForMatch(*match) };
 }
 
 std::optional<QUrl> containingArchiveRootUrl(const QUrl &url, const QStringList &archiveMarkers)
@@ -91,8 +125,12 @@ std::optional<QUrl> comicBookArchiveRootUrl(const QUrl &url)
 
 std::optional<QUrl> directArchiveOpenRootUrl(const QUrl &url)
 {
-    const QString archiveScheme = KiriView::directArchiveOpenKioSchemeForUrl(url);
-    return archiveRootUrlForLocalArchive(url, archiveScheme);
+    const std::optional<ArchiveDocumentRoot> root = archiveDocumentRootForLocalArchive(url);
+    if (!root.has_value()) {
+        return std::nullopt;
+    }
+
+    return root->rootUrl;
 }
 
 std::optional<ArchiveDocumentLocation> archiveDocumentLocationForLocalArchiveUrl(const QUrl &url)
@@ -101,14 +139,13 @@ std::optional<ArchiveDocumentLocation> archiveDocumentLocationForLocalArchiveUrl
         return std::nullopt;
     }
 
-    const std::optional<QUrl> rootUrl = directArchiveOpenRootUrl(url);
-    if (!rootUrl.has_value()) {
+    const std::optional<ArchiveDocumentRoot> root = archiveDocumentRootForLocalArchive(url);
+    if (!root.has_value()) {
         return std::nullopt;
     }
 
-    const ArchiveDocumentKind kind = isComicBookArchiveUrl(url) ? ArchiveDocumentKind::ComicBook
-                                                                : ArchiveDocumentKind::General;
-    return ArchiveDocumentLocation::fromUrls(normalizedFileContainerUrl(url), *rootUrl, kind);
+    return ArchiveDocumentLocation::fromUrls(
+        normalizedFileContainerUrl(url), root->rootUrl, root->kind);
 }
 
 bool isUrlInsideArchiveRoot(const QUrl &url, const QUrl &archiveRootUrl)
