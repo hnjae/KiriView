@@ -187,16 +187,19 @@ and vertical scrollbars allow panning across the image. When the image is
 smaller than the viewport, it remains centered.
 
 The toolbar provides a zoom percentage input. When an image is ready, users can
-enter manual zoom values from 10% through 800%. Editing the zoom input switches
-to manual zoom. A fit menu provides Fit, Fit Height, and Fit Width actions and
-shows the selected fit mode. The fit action returns the image to Fit mode.
+enter manual zoom values from 10% through the maximum percentage that keeps the
+long edge of the displayed image within the larger of 65,536 logical pixels or
+eight times the viewport long edge. The maximum manual zoom is never lower than
+the normal Fit zoom percentage. Editing the zoom input switches to manual zoom.
+A fit menu provides Fit, Fit Height, and Fit Width actions and shows the
+selected fit mode. The fit action returns the image to Fit mode.
 
 When an image is ready, Ctrl+=, Ctrl++, `=`, or `+` zooms in by 10 percentage
 points and Ctrl+- or `-` zooms out by 10 percentage points. Keyboard zoom uses
-the same 10% through 800% manual zoom range as the toolbar zoom input. Holding
-Ctrl and dragging vertically on the image zooms around the cursor: dragging up
-zooms in and dragging down zooms out. The unmodified `-`, `=`, and `+`
-shortcuts are inactive while the page number or zoom input is focused.
+the same dynamic manual zoom range as the toolbar zoom input. Holding Ctrl and
+dragging vertically on the image zooms around the cursor: dragging up zooms in
+and dragging down zooms out. The unmodified `-`, `=`, and `+` shortcuts are
+inactive while the page number or zoom input is focused.
 
 When an image is ready, the `1` key selects Fit mode, `2` selects Fit Height
 mode, `3` selects Fit Width mode, and `0` switches to 100% manual zoom. These
