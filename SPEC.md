@@ -197,8 +197,8 @@ selected fit mode. The fit action returns the image to Fit mode.
 When an image is ready, Ctrl+=, Ctrl++, `=`, or `+` zooms in by 10 percentage
 points and Ctrl+- or `-` zooms out by 10 percentage points. Keyboard zoom uses
 the same dynamic manual zoom range as the toolbar zoom input. Holding Ctrl and
-dragging vertically on the image zooms around the cursor: dragging up zooms in
-and dragging down zooms out. The unmodified `-`, `=`, and `+` shortcuts are
+using the mouse wheel over the image zooms around the cursor: wheel up zooms in
+and wheel down zooms out. The unmodified `-`, `=`, and `+` shortcuts are
 inactive while the page number or zoom input is focused.
 
 When an image is ready, the `1` key selects Fit mode, `2` selects Fit Height
