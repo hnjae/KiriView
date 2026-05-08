@@ -34,6 +34,7 @@ const RUST_BRIDGE_SOURCES: &[&str] = &[
     "src/heifcontainer.rs",
     "src/imagecontainer.rs",
     "src/imageformatregistry.rs",
+    "src/imagetilegeometry.rs",
     "src/imagenavigationmodel.rs",
     "src/imageviewportgeometry.rs",
     "src/imagezoomstate.rs",

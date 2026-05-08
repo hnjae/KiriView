@@ -4,17 +4,48 @@
 #include "imagetile.h"
 
 #include "imagebytecost.h"
-#include "imagerectmapping.h"
+#include "kiriview/src/imagetilegeometry.cxx.h"
 
 #include <algorithm>
-#include <cmath>
-#include <limits>
 #include <utility>
 
 namespace {
-QSize halfSize(const QSize &size)
+KiriView::RustTileSize rustTileSize(const QSize &size)
 {
-    return QSize(std::max(1, (size.width() + 1) / 2), std::max(1, (size.height() + 1) / 2));
+    return KiriView::RustTileSize { size.width(), size.height() };
+}
+
+KiriView::RustTileRect rustTileRect(const QRect &rect)
+{
+    return KiriView::RustTileRect { rect.x(), rect.y(), rect.width(), rect.height() };
+}
+
+KiriView::RustTileKey rustTileKey(const KiriView::TileKey &key)
+{
+    return KiriView::RustTileKey { key.level, key.x, key.y };
+}
+
+QSize qtSize(const KiriView::RustTileSize &size) { return QSize(size.width, size.height); }
+
+QRect qtRect(const KiriView::RustTileRect &rect)
+{
+    return QRect(rect.x, rect.y, rect.width, rect.height);
+}
+
+KiriView::TileKey tileKeyFromRust(const KiriView::RustTileKey &key)
+{
+    return KiriView::TileKey { key.level, key.x, key.y };
+}
+
+KiriView::TileRequest tileRequestFromRust(const KiriView::RustTileRequest &request)
+{
+    return KiriView::TileRequest {
+        tileKeyFromRust(request.key),
+        qtSize(request.level_size),
+        qtRect(request.level_rect),
+        qtRect(request.texture_level_rect),
+        qtRect(request.source_rect),
+    };
 }
 }
 
@@ -50,115 +81,58 @@ QSize TilePyramid::levelSize(int level) const
 
 QSize TilePyramid::tileGridSize(int level) const
 {
-    const QSize size = levelSize(level);
-    if (size.isEmpty()) {
-        return {};
-    }
-
-    return QSize((size.width() + m_tileSize - 1) / m_tileSize,
-        (size.height() + m_tileSize - 1) / m_tileSize);
+    return qtSize(rustTilePyramidTileGridSize(rustTileSize(m_imageSize), m_tileSize, level));
 }
 
-bool TilePyramid::containsLevel(int level) const { return level >= 0 && level < levelCount(); }
+bool TilePyramid::containsLevel(int level) const
+{
+    return rustTilePyramidContainsLevel(levelCount(), level);
+}
 
 bool TilePyramid::containsTile(const TileKey &key) const
 {
-    const QSize grid = tileGridSize(key.level);
-    return !grid.isEmpty() && key.x >= 0 && key.y >= 0 && key.x < grid.width()
-        && key.y < grid.height();
+    return rustTilePyramidContainsTile(rustTileSize(m_imageSize), m_tileSize, rustTileKey(key));
 }
 
 int TilePyramid::selectLevelForDisplayScale(qreal displayPixelsPerSourcePixel) const
 {
-    if (m_levels.empty()) {
-        return 0;
-    }
-    if (!std::isfinite(displayPixelsPerSourcePixel) || displayPixelsPerSourcePixel <= 0.0) {
-        return static_cast<int>(m_levels.size()) - 1;
-    }
-
-    int selectedLevel = 0;
-    for (int level = 0; level < levelCount(); ++level) {
-        if (levelPixelsPerSourcePixel(level) + std::numeric_limits<qreal>::epsilon()
-            >= displayPixelsPerSourcePixel) {
-            selectedLevel = level;
-        }
-    }
-    return selectedLevel;
+    return rustTilePyramidSelectLevelForDisplayScale(
+        rustTileSize(m_imageSize), displayPixelsPerSourcePixel);
 }
 
 QRect TilePyramid::levelTileRect(const TileKey &key) const
 {
-    if (!containsTile(key)) {
-        return {};
-    }
-
-    const QRect tileRect(key.x * m_tileSize, key.y * m_tileSize, m_tileSize, m_tileSize);
-    return boundedIntegerRect(tileRect, levelSize(key.level));
+    return qtRect(
+        rustTilePyramidLevelTileRect(rustTileSize(m_imageSize), m_tileSize, rustTileKey(key)));
 }
 
 QRect TilePyramid::levelTileTextureRect(const TileKey &key) const
 {
-    const QRect tileRect = levelTileRect(key);
-    if (tileRect.isEmpty()) {
-        return {};
-    }
-
-    const int apron = std::min(m_tileSize,
-        std::max(1,
-            static_cast<int>(
-                std::ceil(m_apronSourcePixels * levelPixelsPerSourcePixel(key.level)))));
-    return boundedIntegerRect(
-        tileRect.adjusted(-apron, -apron, apron, apron), levelSize(key.level));
+    return qtRect(rustTilePyramidLevelTileTextureRect(
+        rustTileSize(m_imageSize), m_tileSize, m_apronSourcePixels, rustTileKey(key)));
 }
 
 QRect TilePyramid::sourceRectForLevelRect(int level, const QRect &levelRect) const
 {
-    const QSize levelSize = this->levelSize(level);
-    if (m_imageSize.isEmpty() || levelSize.isEmpty() || levelRect.isEmpty()) {
-        return {};
-    }
-
-    return scaledIntegerRect(QRectF(levelRect), QSizeF(levelSize), m_imageSize);
+    return qtRect(rustTilePyramidSourceRectForLevelRect(
+        rustTileSize(m_imageSize), level, rustTileRect(levelRect)));
 }
 
 TileRequest TilePyramid::requestForTile(const TileKey &key) const
 {
-    const QRect levelRect = levelTileRect(key);
-    const QRect textureLevelRect = levelTileTextureRect(key);
-    return TileRequest {
-        key,
-        levelSize(key.level),
-        levelRect,
-        textureLevelRect,
-        sourceRectForLevelRect(key.level, textureLevelRect),
-    };
+    return tileRequestFromRust(rustTilePyramidRequestForTile(
+        rustTileSize(m_imageSize), m_tileSize, m_apronSourcePixels, rustTileKey(key)));
 }
 
 std::vector<TileKey> TilePyramid::tilesIntersectingLevelRect(
     int level, const QRect &levelRect) const
 {
     std::vector<TileKey> keys;
-    const QSize grid = tileGridSize(level);
-    const QSize size = levelSize(level);
-    if (grid.isEmpty() || size.isEmpty() || levelRect.isEmpty()) {
-        return keys;
-    }
-
-    const QRect bounded = boundedIntegerRect(levelRect, size);
-    if (bounded.isEmpty()) {
-        return keys;
-    }
-
-    const int left = bounded.left() / m_tileSize;
-    const int top = bounded.top() / m_tileSize;
-    const int right = bounded.right() / m_tileSize;
-    const int bottom = bounded.bottom() / m_tileSize;
-    keys.reserve(static_cast<std::size_t>((right - left + 1) * (bottom - top + 1)));
-    for (int y = top; y <= bottom; ++y) {
-        for (int x = left; x <= right; ++x) {
-            keys.push_back(TileKey { level, x, y });
-        }
+    const rust::Vec<RustTileKey> rustKeys = rustTilePyramidTilesIntersectingLevelRect(
+        rustTileSize(m_imageSize), m_tileSize, level, rustTileRect(levelRect));
+    keys.reserve(rustKeys.size());
+    for (const RustTileKey &key : rustKeys) {
+        keys.push_back(tileKeyFromRust(key));
     }
     return keys;
 }
@@ -166,31 +140,16 @@ std::vector<TileKey> TilePyramid::tilesIntersectingLevelRect(
 void TilePyramid::rebuildLevels()
 {
     m_levels.clear();
-    if (m_imageSize.isEmpty()) {
-        return;
-    }
-
-    QSize size = m_imageSize;
-    int level = 0;
-    while (true) {
-        m_levels.push_back(TileLevel { level, size });
-        if (size.width() == 1 && size.height() == 1) {
-            break;
-        }
-        size = halfSize(size);
-        ++level;
+    const rust::Vec<RustTileLevel> rustLevels = rustTilePyramidLevels(rustTileSize(m_imageSize));
+    m_levels.reserve(rustLevels.size());
+    for (const RustTileLevel &level : rustLevels) {
+        m_levels.push_back(TileLevel { level.index, qtSize(level.size) });
     }
 }
 
 qreal TilePyramid::levelPixelsPerSourcePixel(int level) const
 {
-    const QSize size = levelSize(level);
-    if (m_imageSize.isEmpty() || size.isEmpty()) {
-        return 0.0;
-    }
-
-    return std::min(static_cast<qreal>(size.width()) / m_imageSize.width(),
-        static_cast<qreal>(size.height()) / m_imageSize.height());
+    return rustTilePyramidLevelPixelsPerSourcePixel(rustTileSize(m_imageSize), level);
 }
 
 DecodedTileCache::DecodedTileCache(qsizetype byteBudget)

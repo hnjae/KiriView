@@ -3,65 +3,60 @@
 
 #include "imagetilevisibility.h"
 
-#include "imagerectmapping.h"
+#include "kiriview/src/imagetilegeometry.cxx.h"
 
-#include <QPointF>
-#include <algorithm>
-#include <cmath>
+namespace {
+KiriView::RustTileSize rustTileSize(const QSize &size)
+{
+    return KiriView::RustTileSize { size.width(), size.height() };
+}
+
+KiriView::RustTileSizeF rustTileSizeF(const QSizeF &size)
+{
+    return KiriView::RustTileSizeF { size.width(), size.height() };
+}
+
+KiriView::RustTileRectF rustTileRectF(const QRectF &rect)
+{
+    return KiriView::RustTileRectF { rect.x(), rect.y(), rect.width(), rect.height() };
+}
+
+QRect qtRect(const KiriView::RustTileRect &rect)
+{
+    return QRect(rect.x, rect.y, rect.width, rect.height);
+}
+
+KiriView::TileKey tileKeyFromRust(const KiriView::RustTileKey &key)
+{
+    return KiriView::TileKey { key.level, key.x, key.y };
+}
+}
 
 namespace KiriView {
 qreal tileDisplayPixelsPerSourcePixel(
     const TilePyramid &pyramid, const QSizeF &displaySize, qreal devicePixelRatio)
 {
-    if (pyramid.imageSize().isEmpty() || displaySize.isEmpty() || !std::isfinite(devicePixelRatio)
-        || devicePixelRatio <= 0.0) {
-        return 0.0;
-    }
-
-    return std::min((displaySize.width() * devicePixelRatio) / pyramid.imageSize().width(),
-        (displaySize.height() * devicePixelRatio) / pyramid.imageSize().height());
+    return rustTileDisplayPixelsPerSourcePixel(
+        rustTileSize(pyramid.imageSize()), rustTileSizeF(displaySize), devicePixelRatio);
 }
 
 QRect tileLevelRectForItemRect(
     const TilePyramid &pyramid, int level, const QSizeF &displaySize, const QRectF &itemRect)
 {
-    if (itemRect.isEmpty() || displaySize.isEmpty() || pyramid.imageSize().isEmpty()) {
-        return {};
-    }
-
-    const QSize levelSize = pyramid.levelSize(level);
-    if (levelSize.isEmpty()) {
-        return {};
-    }
-
-    return scaledIntegerRect(itemRect, displaySize, levelSize);
+    return qtRect(rustTileLevelRectForItemRect(rustTileSize(pyramid.imageSize()), level,
+        rustTileSizeF(displaySize), rustTileRectF(itemRect)));
 }
 
 std::vector<TileKey> visibleTileKeys(
     const TilePyramid &pyramid, const TileVisibilityContext &context)
 {
     std::vector<TileKey> keys;
-    if (pyramid.imageSize().isEmpty() || context.displaySize.isEmpty()
-        || context.visibleItemRect.isEmpty()) {
-        return keys;
-    }
-
-    const int level = pyramid.selectLevelForDisplayScale(
-        tileDisplayPixelsPerSourcePixel(pyramid, context.displaySize, context.devicePixelRatio));
-    const QRect currentLevelRect
-        = tileLevelRectForItemRect(pyramid, level, context.displaySize, context.visibleItemRect);
-    keys = pyramid.tilesIntersectingLevelRect(level, currentLevelRect);
-
-    QRectF prefetchItemRect = context.visibleItemRect.adjusted(-context.visibleItemRect.width(),
-        -context.visibleItemRect.height(), context.visibleItemRect.width(),
-        context.visibleItemRect.height());
-    prefetchItemRect = prefetchItemRect.intersected(QRectF(QPointF(0.0, 0.0), context.displaySize));
-    const QRect prefetchLevelRect
-        = tileLevelRectForItemRect(pyramid, level, context.displaySize, prefetchItemRect);
-    for (const TileKey &key : pyramid.tilesIntersectingLevelRect(level, prefetchLevelRect)) {
-        if (std::find(keys.cbegin(), keys.cend(), key) == keys.cend()) {
-            keys.push_back(key);
-        }
+    const rust::Vec<RustTileKey> rustKeys = rustVisibleTileKeys(rustTileSize(pyramid.imageSize()),
+        pyramid.tileSize(), rustTileSizeF(context.displaySize),
+        rustTileRectF(context.visibleItemRect), context.devicePixelRatio);
+    keys.reserve(rustKeys.size());
+    for (const RustTileKey &key : rustKeys) {
+        keys.push_back(tileKeyFromRust(key));
     }
 
     return keys;
