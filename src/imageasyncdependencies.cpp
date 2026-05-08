@@ -26,6 +26,23 @@ KiriView::DecodedImageResult decodeImageDataWithDefaults(
 }
 
 namespace KiriView {
+ImageNavigationCandidateProvider imageNavigationCandidateProviderWithDefaults(
+    ImageNavigationCandidateProvider provider)
+{
+    ImageNavigationCandidateProvider defaults = defaultImageNavigationCandidateProvider();
+    if (!provider.directoryImages) {
+        provider.directoryImages = std::move(defaults.directoryImages);
+    }
+    if (!provider.directoryContainers) {
+        provider.directoryContainers = std::move(defaults.directoryContainers);
+    }
+    if (!provider.archiveImages) {
+        provider.archiveImages = std::move(defaults.archiveImages);
+    }
+
+    return provider;
+}
+
 ImageDecodeDependencies defaultImageDecodeDependencies()
 {
     return ImageDecodeDependencies {
@@ -34,12 +51,37 @@ ImageDecodeDependencies defaultImageDecodeDependencies()
     };
 }
 
+ImageDecodeDependencies imageDecodeDependenciesWithDefaults(ImageDecodeDependencies dependencies)
+{
+    ImageDecodeDependencies defaults = defaultImageDecodeDependencies();
+    if (!dependencies.dataLoader) {
+        dependencies.dataLoader = std::move(defaults.dataLoader);
+    }
+    if (!dependencies.dataDecoder) {
+        dependencies.dataDecoder = std::move(defaults.dataDecoder);
+    }
+
+    return dependencies;
+}
+
+FileOperationProvider fileOperationProviderWithDefault(FileOperationProvider provider)
+{
+    return provider ? std::move(provider) : defaultFileOperationProvider();
+}
+
 ImageAsyncDependencies defaultImageAsyncDependencies()
 {
-    return ImageAsyncDependencies {
-        defaultImageNavigationCandidateProvider(),
-        defaultImageDecodeDependencies(),
-        defaultFileOperationProvider(),
-    };
+    return imageAsyncDependenciesWithDefaults({});
+}
+
+ImageAsyncDependencies imageAsyncDependenciesWithDefaults(ImageAsyncDependencies dependencies)
+{
+    dependencies.candidateProvider
+        = imageNavigationCandidateProviderWithDefaults(std::move(dependencies.candidateProvider));
+    dependencies.imageDecode
+        = imageDecodeDependenciesWithDefaults(std::move(dependencies.imageDecode));
+    dependencies.fileOperations
+        = fileOperationProviderWithDefault(std::move(dependencies.fileOperations));
+    return dependencies;
 }
 }

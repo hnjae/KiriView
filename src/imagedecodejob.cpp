@@ -18,8 +18,7 @@ ImageDecodeJob::ImageDecodeJob(QObject *parent, ImageDecodeDependencies dependen
 ImageDecodeJob::ImageDecodeJob(
     QObject *parent, ImageDecodeDependencies dependencies, Callbacks callbacks)
     : QObject(parent)
-    , m_dataLoader(std::move(dependencies.dataLoader))
-    , m_dataDecoder(std::move(dependencies.dataDecoder))
+    , m_dependencies(imageDecodeDependenciesWithDefaults(std::move(dependencies)))
     , m_callbacks(std::move(callbacks))
 {
 }
@@ -27,12 +26,12 @@ ImageDecodeJob::ImageDecodeJob(
 void ImageDecodeJob::start(ImageDecodeRequest request)
 {
     cancel();
-    if (request.isEmpty() || !m_dataLoader || !m_dataDecoder) {
+    if (request.isEmpty() || !m_dependencies.dataLoader || !m_dependencies.dataDecoder) {
         return;
     }
 
     m_request = request;
-    m_dataLoadJob = m_dataLoader(
+    m_dataLoadJob = m_dependencies.dataLoader(
         this, request,
         [this, request](QByteArray data) {
             if (!isCurrentRequest(request)) {
@@ -61,7 +60,7 @@ bool ImageDecodeJob::hasActiveRequest() const { return m_request.has_value(); }
 
 void ImageDecodeJob::startDecode(QByteArray data, ImageDecodeRequest request)
 {
-    const ImageDataDecoder decoder = m_dataDecoder;
+    const ImageDataDecoder decoder = m_dependencies.dataDecoder;
     runAsyncWorker(
         this,
         [decoder, data = std::move(data), request]() mutable { return decoder(data, request); },

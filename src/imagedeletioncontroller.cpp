@@ -25,8 +25,7 @@ ImageDeletionController::ImageDeletionController(QObject *parent,
     : QObject(parent)
     , m_callbacks(std::move(callbacks))
     , m_candidateRepository(std::move(candidateProvider))
-    , m_fileOperationProvider(
-          fileOperationProvider ? std::move(fileOperationProvider) : defaultFileOperationProvider())
+    , m_fileOperationProvider(fileOperationProviderWithDefault(std::move(fileOperationProvider)))
 {
 }
 

@@ -10,7 +10,7 @@ namespace KiriView {
 ImageDocumentController::ImageDocumentController(
     QObject *parent, RenderContextProvider renderContextProvider, ChangeCallback changeCallback)
     : ImageDocumentController(parent, std::move(renderContextProvider), std::move(changeCallback),
-        defaultImageAsyncDependencies())
+        ImageAsyncDependencies {})
 {
 }
 // clang-format on

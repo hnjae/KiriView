@@ -41,8 +41,8 @@ public:
 
     explicit ImageLoader(QObject *parent = nullptr);
     ImageLoader(QObject *parent, Callbacks callbacks);
-    ImageLoader(QObject *parent, const ImageAsyncDependencies &dependencies);
-    ImageLoader(QObject *parent, const ImageAsyncDependencies &dependencies, Callbacks callbacks);
+    ImageLoader(QObject *parent, ImageAsyncDependencies dependencies);
+    ImageLoader(QObject *parent, ImageAsyncDependencies dependencies, Callbacks callbacks);
 
     void start(ImageLoadRequest request, ImageFirstDisplayDecodeContext firstDisplayContext = {});
     void cancel();

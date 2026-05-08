@@ -54,8 +54,14 @@ struct ImageAsyncDependencies {
     FileOperationProvider fileOperations;
 };
 
+ImageNavigationCandidateProvider defaultImageNavigationCandidateProvider();
+ImageNavigationCandidateProvider imageNavigationCandidateProviderWithDefaults(
+    ImageNavigationCandidateProvider provider);
 ImageDecodeDependencies defaultImageDecodeDependencies();
+ImageDecodeDependencies imageDecodeDependenciesWithDefaults(ImageDecodeDependencies dependencies);
+FileOperationProvider fileOperationProviderWithDefault(FileOperationProvider provider);
 ImageAsyncDependencies defaultImageAsyncDependencies();
+ImageAsyncDependencies imageAsyncDependenciesWithDefaults(ImageAsyncDependencies dependencies);
 }
 
 #endif

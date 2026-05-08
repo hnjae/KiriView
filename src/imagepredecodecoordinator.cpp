@@ -20,9 +20,9 @@ using KiriView::predecodeWindowImageUrls;
 
 namespace KiriView {
 ImagePredecodeCoordinator::ImagePredecodeCoordinator(
-    QObject *parent, const ImageAsyncDependencies &dependencies)
+    QObject *parent, ImageAsyncDependencies dependencies)
     : QObject(parent)
-    , m_decodeJob(this, dependencies.imageDecode,
+    , m_decodeJob(this, imageDecodeDependenciesWithDefaults(std::move(dependencies.imageDecode)),
           ImageDecodeJob::Callbacks {
               [this](ImageDecodeRequest request, DecodedImageResult result) {
                   finishPredecodeImageDecode(request, result);
@@ -31,7 +31,7 @@ ImagePredecodeCoordinator::ImagePredecodeCoordinator(
                   finishPredecodeImageLoadError(request);
               },
           })
-    , m_candidateRepository(dependencies.candidateProvider)
+    , m_candidateRepository(std::move(dependencies.candidateProvider))
 {
 }
 

@@ -7,7 +7,7 @@
 
 namespace KiriView {
 ImagePredecodeCoordinator::ImagePredecodeCoordinator(QObject *parent)
-    : ImagePredecodeCoordinator(parent, defaultImageAsyncDependencies())
+    : ImagePredecodeCoordinator(parent, ImageAsyncDependencies {})
 {
 }
 }

@@ -207,12 +207,12 @@ std::optional<ImageCandidateListContext> imageCandidateListContextForDisplayedIm
 }
 
 ImageCandidateRepository::ImageCandidateRepository()
-    : m_provider(defaultImageNavigationCandidateProvider())
+    : ImageCandidateRepository(ImageNavigationCandidateProvider {})
 {
 }
 
 ImageCandidateRepository::ImageCandidateRepository(ImageNavigationCandidateProvider provider)
-    : m_provider(std::move(provider))
+    : m_provider(imageNavigationCandidateProviderWithDefaults(std::move(provider)))
 {
 }
 

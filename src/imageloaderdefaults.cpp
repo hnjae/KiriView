@@ -7,7 +7,7 @@
 
 namespace KiriView {
 ImageLoader::ImageLoader(QObject *parent)
-    : ImageLoader(parent, defaultImageAsyncDependencies())
+    : ImageLoader(parent, ImageAsyncDependencies {})
 {
 }
 }

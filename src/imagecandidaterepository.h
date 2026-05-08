@@ -82,7 +82,6 @@ using ContainerImageCallback = std::function<void(const QUrl &, const QUrl &)>;
 using CandidateRepositoryErrorCallback
     = std::function<void(const QUrl &, ImageCandidateRepositoryError, const QString &)>;
 
-ImageNavigationCandidateProvider defaultImageNavigationCandidateProvider();
 std::optional<ImageCandidateListContext> imageCandidateListContextForDisplayedImage(
     const DisplayedImageLocation &location);
 

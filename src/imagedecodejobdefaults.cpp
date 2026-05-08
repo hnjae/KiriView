@@ -14,7 +14,7 @@ ImageDecodeJob::ImageDecodeJob(QObject *parent)
 }
 
 ImageDecodeJob::ImageDecodeJob(QObject *parent, Callbacks callbacks)
-    : ImageDecodeJob(parent, defaultImageDecodeDependencies(), std::move(callbacks))
+    : ImageDecodeJob(parent, {}, std::move(callbacks))
 {
 }
 }

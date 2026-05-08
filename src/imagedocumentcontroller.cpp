@@ -26,11 +26,9 @@ ImageDocumentController::ImageDocumentController(QObject *parent,
     , m_changeCallback(std::move(changeCallback))
     , m_state([this](ImageDocumentChange change) { notify(change); })
 {
-    FileOperationProvider fileOperationProvider = dependencies.fileOperations
-        ? std::move(dependencies.fileOperations)
-        : defaultFileOperationProvider();
+    dependencies = imageAsyncDependenciesWithDefaults(std::move(dependencies));
     m_deletionController = std::make_unique<ImageDeletionController>(this,
-        dependencies.candidateProvider, std::move(fileOperationProvider),
+        dependencies.candidateProvider, std::move(dependencies.fileOperations),
         ImageDeletionController::Callbacks {
             [this]() { notify(ImageDocumentChange::FileDeletionInProgress); },
             [this]() { clearAfterSuccessfulFileDeletion(); },

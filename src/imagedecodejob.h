@@ -41,8 +41,7 @@ private:
     bool isCurrentRequest(const ImageDecodeRequest &request) const;
     std::optional<ImageDecodeRequest> takeCurrentRequest(const ImageDecodeRequest &request);
 
-    ImageDataLoader m_dataLoader;
-    ImageDataDecoder m_dataDecoder;
+    ImageDecodeDependencies m_dependencies;
     Callbacks m_callbacks;
     ImageIoJob m_dataLoadJob;
     std::optional<ImageDecodeRequest> m_request;
