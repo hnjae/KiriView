@@ -205,11 +205,16 @@ When an image is ready, the `1` key selects Fit mode, `2` selects Fit Height
 mode, `3` selects Fit Width mode, and `0` switches to 100% manual zoom. These
 shortcuts are inactive while the page number or zoom input is focused.
 
-When an image is zoomed large enough to pan, the arrow keys pan the image within
-the available scroll bounds, `<` moves the pan position to the top-left, `>`
-moves the pan position to the bottom-right, Shift+mouse wheel pans horizontally,
-and the mouse cursor shows that the image can be dragged to pan. Keyboard
-panning is inactive while the page number or zoom input is focused.
+When an image is horizontally pannable at the current zoom, Left and Right pan
+the image within the available horizontal scroll bounds. When the current image
+is not horizontally pannable, Left opens the previous image and Right opens the
+next image with the same boundary behavior as the Previous and Next actions.
+When an image is zoomed large enough to pan in any direction, Up and Down pan
+the image vertically within the available scroll bounds, `<` moves the pan
+position to the top-left, `>` moves the pan position to the bottom-right,
+Shift+mouse wheel pans horizontally, and the mouse cursor shows that the image
+can be dragged to pan. Keyboard panning and Left/Right image navigation are
+inactive while the page number or zoom input is focused.
 
 When an image is zoomed large enough to pan, the `.` key scans forward through
 the image from left to right and then top to bottom. Each scan step moves
