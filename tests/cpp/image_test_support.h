@@ -26,6 +26,44 @@
 #include <vector>
 
 namespace KiriView::TestSupport {
+namespace Detail {
+    template <typename Operation>
+    ImageIoJob startManualIoJob(QObject *receiver, const std::shared_ptr<Operation> &operation)
+    {
+        operation->object = new QObject(receiver);
+
+        std::weak_ptr<Operation> weakOperation = operation;
+        ImageIoJob job(operation->object, [weakOperation](QObject *object) {
+            if (std::shared_ptr<Operation> operation = weakOperation.lock()) {
+                operation->canceled = true;
+                operation->object = nullptr;
+            }
+            if (object != nullptr) {
+                object->deleteLater();
+            }
+        });
+        operation->state = job.state();
+        return job;
+    }
+
+    template <typename Operation, typename Delivery>
+    void finishManualIoJob(const std::shared_ptr<Operation> &operation, Delivery &&delivery)
+    {
+        if (operation == nullptr || operation->state == nullptr) {
+            return;
+        }
+
+        QObject *object = operation->object;
+        operation->state->claimAndRun(object, [&]() mutable {
+            operation->object = nullptr;
+            std::forward<Delivery>(delivery)(*operation);
+            if (object != nullptr) {
+                object->deleteLater();
+            }
+        });
+    }
+}
+
 struct ManualImageDataLoad {
     QObject *object = nullptr;
     QUrl url;
@@ -44,24 +82,13 @@ public:
         ErrorCallback errorCallback)
     {
         auto load = std::make_shared<ManualImageDataLoad>();
-        load->object = new QObject(receiver);
         load->url = request.imageUrl();
         load->archiveDocument = request.archiveDocument();
         load->firstDisplay = request.firstDisplay();
         load->dataCallback = std::move(callback);
         load->errorCallback = std::move(errorCallback);
 
-        std::weak_ptr<ManualImageDataLoad> weakLoad = load;
-        ImageIoJob job(load->object, [weakLoad](QObject *object) {
-            if (std::shared_ptr<ManualImageDataLoad> load = weakLoad.lock()) {
-                load->canceled = true;
-                load->object = nullptr;
-            }
-            if (object != nullptr) {
-                object->deleteLater();
-            }
-        });
-        load->state = job.state();
+        ImageIoJob job = Detail::startManualIoJob(receiver, load);
         m_loads.push_back(load);
         return job;
     }
@@ -98,18 +125,7 @@ private:
     template <typename Delivery>
     static void finishLoad(const std::shared_ptr<ManualImageDataLoad> &load, Delivery &&delivery)
     {
-        if (load == nullptr || load->state == nullptr) {
-            return;
-        }
-
-        QObject *object = load->object;
-        load->state->claimAndRun(object, [&]() mutable {
-            load->object = nullptr;
-            std::forward<Delivery>(delivery)(*load);
-            if (object != nullptr) {
-                object->deleteLater();
-            }
-        });
+        Detail::finishManualIoJob(load, std::forward<Delivery>(delivery));
     }
 
     static void finishDataLoad(const std::shared_ptr<ManualImageDataLoad> &load, QByteArray data)
@@ -177,21 +193,10 @@ public:
     ImageIoJob start(QObject *receiver, FileDeletionRequest request, FileDeletionCallback callback)
     {
         auto operation = std::make_shared<ManualFileOperation>();
-        operation->object = new QObject(receiver);
         operation->request = std::move(request);
         operation->callback = std::move(callback);
 
-        std::weak_ptr<ManualFileOperation> weakOperation = operation;
-        ImageIoJob job(operation->object, [weakOperation](QObject *object) {
-            if (std::shared_ptr<ManualFileOperation> operation = weakOperation.lock()) {
-                operation->canceled = true;
-                operation->object = nullptr;
-            }
-            if (object != nullptr) {
-                object->deleteLater();
-            }
-        });
-        operation->state = job.state();
+        ImageIoJob job = Detail::startManualIoJob(receiver, operation);
         m_operations.push_back(operation);
         return job;
     }
@@ -211,18 +216,9 @@ private:
     static void finishOperation(const std::shared_ptr<ManualFileOperation> &operation,
         FileDeletionResult result, const QString &errorString)
     {
-        if (operation == nullptr || operation->state == nullptr) {
-            return;
-        }
-
-        QObject *object = operation->object;
-        operation->state->claimAndRun(object, [&]() {
-            operation->object = nullptr;
-            if (operation->callback) {
-                operation->callback(result, errorString);
-            }
-            if (object != nullptr) {
-                object->deleteLater();
+        Detail::finishManualIoJob(operation, [&](ManualFileOperation &operation) {
+            if (operation.callback) {
+                operation.callback(result, errorString);
             }
         });
     }
