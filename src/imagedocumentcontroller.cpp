@@ -52,7 +52,7 @@ ImageDocumentController::ImageDocumentController(QObject *parent,
                 [this](const QUrl &url) { return takePredecodedImage(url); },
                 [this](ImageDocumentEffect effect) { dispatchEffect(std::move(effect)); },
             },
-            dependencies);
+            dependencies.candidateProvider, dependencies.imageDecode);
     m_navigationController = std::make_unique<ImageDocumentNavigationController>(this, m_state,
         *m_presentationController,
         ImageDocumentNavigationController::Callbacks {
@@ -60,7 +60,8 @@ ImageDocumentController::ImageDocumentController(QObject *parent,
             [this](ImageDocumentEffect effect) { dispatchEffect(std::move(effect)); },
         },
         dependencies.candidateProvider);
-    m_predecodeCoordinator = std::make_unique<ImagePredecodeCoordinator>(this, dependencies);
+    m_predecodeCoordinator = std::make_unique<ImagePredecodeCoordinator>(
+        this, dependencies.candidateProvider, dependencies.imageDecode);
 }
 
 ImageDocumentController::~ImageDocumentController()

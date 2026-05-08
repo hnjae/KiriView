@@ -12,8 +12,8 @@
 
 namespace {
 using KiriView::TestSupport::archivePageUrl;
-using KiriView::TestSupport::imageAsyncDependenciesFor;
 using KiriView::TestSupport::imageCandidate;
+using KiriView::TestSupport::imageDecodeDependenciesFor;
 using KiriView::TestSupport::imagesDirectoryUrl;
 using KiriView::TestSupport::indexedImageUrl;
 using KiriView::TestSupport::localUrl;
@@ -27,8 +27,8 @@ using FakeCandidateProvider = KiriView::TestSupport::FakeImageNavigationCandidat
 KiriView::ImagePredecodeCoordinator createCoordinator(
     QObject *parent, FakeCandidateProvider &candidateProvider, ManualImageDataLoader &dataLoader)
 {
-    return KiriView::ImagePredecodeCoordinator(
-        parent, imageAsyncDependenciesFor(candidateProvider, dataLoader, staticImageDataDecoder()));
+    return KiriView::ImagePredecodeCoordinator(parent, candidateProvider.provider(),
+        imageDecodeDependenciesFor(dataLoader, staticImageDataDecoder()));
 }
 }
 

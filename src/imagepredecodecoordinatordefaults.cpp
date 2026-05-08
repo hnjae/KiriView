@@ -3,11 +3,10 @@
 
 #include "imagepredecodecoordinator.h"
 
-#include "imageasyncdependencies.h"
-
 namespace KiriView {
 ImagePredecodeCoordinator::ImagePredecodeCoordinator(QObject *parent)
-    : ImagePredecodeCoordinator(parent, ImageAsyncDependencies {})
+    : ImagePredecodeCoordinator(
+          parent, ImageNavigationCandidateProvider {}, ImageDecodeDependencies {})
 {
 }
 }

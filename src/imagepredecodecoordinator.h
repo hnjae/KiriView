@@ -33,7 +33,8 @@ public:
     };
 
     explicit ImagePredecodeCoordinator(QObject *parent = nullptr);
-    ImagePredecodeCoordinator(QObject *parent, ImageAsyncDependencies dependencies);
+    ImagePredecodeCoordinator(QObject *parent, ImageNavigationCandidateProvider candidateProvider,
+        ImageDecodeDependencies decodeDependencies);
 
     void schedule(Context context);
     void cancel();

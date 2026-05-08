@@ -38,7 +38,8 @@ public:
 
     ImageOpenController(QObject *parent, ImageDocumentState &state,
         ImagePresentationController &presentationController, Callbacks callbacks,
-        const ImageAsyncDependencies &dependencies);
+        ImageNavigationCandidateProvider candidateProvider,
+        ImageDecodeDependencies decodeDependencies);
     ~ImageOpenController();
 
     void open();

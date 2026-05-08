@@ -13,19 +13,22 @@
 
 namespace KiriView {
 ImageLoader::ImageLoader(QObject *parent, Callbacks callbacks)
-    : ImageLoader(parent, {}, std::move(callbacks))
+    : ImageLoader(parent, ImageNavigationCandidateProvider {}, ImageDecodeDependencies {},
+          std::move(callbacks))
 {
 }
 
-ImageLoader::ImageLoader(QObject *parent, ImageAsyncDependencies dependencies)
-    : ImageLoader(parent, std::move(dependencies), {})
+ImageLoader::ImageLoader(QObject *parent, ImageNavigationCandidateProvider candidateProvider,
+    ImageDecodeDependencies decodeDependencies)
+    : ImageLoader(parent, std::move(candidateProvider), std::move(decodeDependencies), {})
 {
 }
 
-ImageLoader::ImageLoader(QObject *parent, ImageAsyncDependencies dependencies, Callbacks callbacks)
+ImageLoader::ImageLoader(QObject *parent, ImageNavigationCandidateProvider candidateProvider,
+    ImageDecodeDependencies decodeDependencies, Callbacks callbacks)
     : QObject(parent)
     , m_callbacks(std::move(callbacks))
-    , m_decodeJob(this, imageDecodeDependenciesWithDefaults(std::move(dependencies.imageDecode)),
+    , m_decodeJob(this, std::move(decodeDependencies),
           ImageDecodeJob::Callbacks {
               [this](ImageDecodeRequest request, DecodedImageResult result) {
                   finishDecodeResult(std::move(request), std::move(result));
@@ -34,7 +37,7 @@ ImageLoader::ImageLoader(QObject *parent, ImageAsyncDependencies dependencies, C
                   finishImageLoadError(request, errorString);
               },
           })
-    , m_candidateRepository(std::move(dependencies.candidateProvider))
+    , m_candidateRepository(std::move(candidateProvider))
 {
 }
 

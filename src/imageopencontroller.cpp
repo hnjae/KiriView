@@ -40,12 +40,13 @@ QString loadErrorMessage(KiriView::ImageLoadError error, const QString &errorStr
 namespace KiriView {
 ImageOpenController::ImageOpenController(QObject *parent, ImageDocumentState &state,
     ImagePresentationController &presentationController, ImageOpenController::Callbacks callbacks,
-    const ImageAsyncDependencies &dependencies)
+    ImageNavigationCandidateProvider candidateProvider, ImageDecodeDependencies decodeDependencies)
     : m_state(state)
     , m_presentationController(presentationController)
     , m_callbacks(std::move(callbacks))
 {
-    m_imageLoader = std::make_unique<ImageLoader>(parent, dependencies,
+    m_imageLoader = std::make_unique<ImageLoader>(parent, std::move(candidateProvider),
+        std::move(decodeDependencies),
         ImageLoader::Callbacks {
             [this](const QUrl &sourceUrl) { setSourceUrlFromResolvedLoad(sourceUrl); },
             [this](const ImageLoadSession &session, ImageLoadError error,

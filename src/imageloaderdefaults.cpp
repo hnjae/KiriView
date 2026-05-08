@@ -3,11 +3,9 @@
 
 #include "imageloader.h"
 
-#include "imageasyncdependencies.h"
-
 namespace KiriView {
 ImageLoader::ImageLoader(QObject *parent)
-    : ImageLoader(parent, ImageAsyncDependencies {})
+    : ImageLoader(parent, ImageNavigationCandidateProvider {}, ImageDecodeDependencies {})
 {
 }
 }

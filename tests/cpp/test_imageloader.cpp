@@ -14,8 +14,8 @@
 
 namespace {
 using KiriView::TestSupport::archivePageUrl;
-using KiriView::TestSupport::imageAsyncDependenciesFor;
 using KiriView::TestSupport::imageCandidate;
+using KiriView::TestSupport::imageDecodeDependenciesFor;
 using KiriView::TestSupport::localUrl;
 using KiriView::TestSupport::ManualImageDataLoader;
 using KiriView::TestSupport::staticImageDataDecoderRejectingBadData;
@@ -29,9 +29,8 @@ KiriView::ImageLoader createLoader(QObject *parent, FakeCandidateProvider &candi
     ManualImageDataLoader &dataLoader, KiriView::ImageLoader::Callbacks callbacks = {},
     KiriView::ImageDataDecoder dataDecoder = staticImageDataDecoderRejectingBadData())
 {
-    return KiriView::ImageLoader(parent,
-        imageAsyncDependenciesFor(candidateProvider, dataLoader, std::move(dataDecoder)),
-        std::move(callbacks));
+    return KiriView::ImageLoader(parent, candidateProvider.provider(),
+        imageDecodeDependenciesFor(dataLoader, std::move(dataDecoder)), std::move(callbacks));
 }
 }
 
