@@ -20,6 +20,7 @@ src/imageasyncdependencies.cpp
 src/imagebytecost.cpp
 src/imagecontainer.cpp
 src/imagerendering.cpp
+src/imagedeletioncontroller.cpp
 src/imagedocumentcontroller.cpp
 src/imagedocumentnavigationcontroller.cpp
 src/imagedecodejob.cpp
