@@ -280,11 +280,19 @@ fn rust_direct_archive_open_match_for_mime_type_name(mime_type_name: &str) -> Ru
 }
 
 fn rust_comic_book_archive_marker_for_root_scheme(scheme: &str) -> String {
+    comic_book_archive_marker_for_root_scheme(scheme)
+}
+
+fn rust_direct_archive_open_markers_for_root_scheme(scheme: &str) -> Vec<String> {
+    direct_archive_open_markers_for_root_scheme(scheme)
+}
+
+pub(crate) fn comic_book_archive_marker_for_root_scheme(scheme: &str) -> String {
     archive_format_for_scheme(scheme)
         .map_or_else(String::new, |format| marker_string(&format.comic_book))
 }
 
-fn rust_direct_archive_open_markers_for_root_scheme(scheme: &str) -> Vec<String> {
+pub(crate) fn direct_archive_open_markers_for_root_scheme(scheme: &str) -> Vec<String> {
     archive_format_for_scheme(scheme).map_or_else(Vec::new, |format| {
         vec![
             marker_string(&format.comic_book),

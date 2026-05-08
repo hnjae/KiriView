@@ -2,10 +2,12 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 mod apngdecoder;
+mod archivepath;
 mod avifcompat;
 mod bmff;
 mod byteio;
 mod heifcontainer;
+mod imagecontainer;
 mod imageformatregistry;
 mod imagemath;
 mod imagenavigationmodel;

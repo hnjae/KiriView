@@ -4,13 +4,12 @@
 #include "imagecontainer.h"
 
 #include "archiveformat.h"
-#include "archivepath.h"
 #include "imageformatregistry.h"
 #include "imagenavigationmodel.h"
 #include "imageurl.h"
+#include "kiriview/src/imagecontainer.cxx.h"
 
-#include <QDir>
-#include <QStringList>
+#include <QByteArray>
 #include <cstddef>
 #include <optional>
 
@@ -20,24 +19,40 @@ struct ArchiveDocumentRoot {
     KiriView::ArchiveDocumentKind kind = KiriView::ArchiveDocumentKind::General;
 };
 
+struct UrlParts {
+    QByteArray scheme;
+    QByteArray path;
+    bool empty = true;
+};
+
+rust::Str rustStringView(const QByteArray &bytes)
+{
+    return rust::Str(bytes.constData(), static_cast<std::size_t>(bytes.size()));
+}
+
+QString rustStringToQString(const rust::String &value)
+{
+    return QString::fromUtf8(value.data(), static_cast<qsizetype>(value.size()));
+}
+
+UrlParts urlParts(const QUrl &url)
+{
+    return UrlParts { url.scheme().toUtf8(), url.path().toUtf8(), url.isEmpty() };
+}
+
 std::optional<QUrl> archiveRootUrlForLocalArchive(const QUrl &url, const QString &archiveScheme)
 {
-    if (!url.isLocalFile()) {
-        return std::nullopt;
-    }
-
-    if (archiveScheme.isEmpty()) {
-        return std::nullopt;
-    }
-
-    const QString localPath = QDir::cleanPath(url.toLocalFile());
-    if (localPath.isEmpty()) {
+    const QByteArray archiveSchemeBytes = archiveScheme.toUtf8();
+    const QByteArray localPathBytes = url.toLocalFile().toUtf8();
+    const KiriView::RustArchiveRootPath rootPath = KiriView::rustArchiveRootPathForLocalArchive(
+        url.isLocalFile(), rustStringView(archiveSchemeBytes), rustStringView(localPathBytes));
+    if (!rootPath.found) {
         return std::nullopt;
     }
 
     QUrl archiveRootUrl;
     archiveRootUrl.setScheme(archiveScheme);
-    archiveRootUrl.setPath(localPath + QLatin1Char('/'));
+    archiveRootUrl.setPath(rustStringToQString(rootPath.path));
     if (!archiveRootUrl.isValid() || archiveRootUrl.path().isEmpty()) {
         return std::nullopt;
     }
@@ -73,32 +88,19 @@ std::optional<ArchiveDocumentRoot> archiveDocumentRootForLocalArchive(const QUrl
     return ArchiveDocumentRoot { *rootUrl, archiveDocumentKindForMatch(*match) };
 }
 
-std::optional<QUrl> containingArchiveRootUrl(const QUrl &url, const QStringList &archiveMarkers)
+std::optional<QUrl> containingArchiveRootUrl(
+    const QUrl &url, KiriView::RustArchiveRootPath (*rustFunction)(rust::Str, rust::Str))
 {
-    if (archiveMarkers.isEmpty()) {
-        return std::nullopt;
-    }
-
-    const QString path = QDir::cleanPath(url.path());
-    const QString foldedPath = path.toCaseFolded();
-    qsizetype markerIndex = -1;
-    qsizetype markerSize = 0;
-    for (const QString &marker : archiveMarkers) {
-        const qsizetype candidateIndex = foldedPath.indexOf(marker);
-        if (candidateIndex < 0 || (markerIndex >= 0 && candidateIndex >= markerIndex)) {
-            continue;
-        }
-
-        markerIndex = candidateIndex;
-        markerSize = marker.size();
-    }
-
-    if (markerIndex < 0) {
+    const QByteArray scheme = url.scheme().toUtf8();
+    const QByteArray path = url.path().toUtf8();
+    const KiriView::RustArchiveRootPath rootPath
+        = rustFunction(rustStringView(scheme), rustStringView(path));
+    if (!rootPath.found) {
         return std::nullopt;
     }
 
     QUrl archiveRootUrl = url;
-    archiveRootUrl.setPath(path.left(markerIndex + markerSize - 1) + QLatin1Char('/'));
+    archiveRootUrl.setPath(rustStringToQString(rootPath.path));
     archiveRootUrl.setQuery(QString());
     archiveRootUrl.setFragment(QString());
     if (!archiveRootUrl.isValid() || archiveRootUrl.path().isEmpty()) {
@@ -114,6 +116,25 @@ QUrl archiveDocumentFileNavigationUrl(const KiriView::DisplayedImageLocation &lo
         KiriView::navigationSourceUrl(location.archiveDocumentFileUrl()));
 }
 
+bool archiveDocumentContainsUrlInRust(
+    const KiriView::ArchiveDocumentLocation &archiveDocument, const QUrl &url)
+{
+    const UrlParts root = urlParts(archiveDocument.rootUrl());
+    const UrlParts candidate = urlParts(url);
+    return KiriView::rustArchiveDocumentContainsUrl(archiveDocument.isEmpty(), root.empty,
+        rustStringView(root.scheme), rustStringView(root.path), candidate.empty,
+        rustStringView(candidate.scheme), rustStringView(candidate.path));
+}
+
+bool scopeUsesArchiveDocumentFileUrlInRust(const KiriView::DisplayedImageLocation &location,
+    bool (*rustFunction)(bool, bool, rust::Str, rust::Str, bool, rust::Str, rust::Str))
+{
+    const UrlParts root = urlParts(location.archiveDocumentRootUrl());
+    const UrlParts image = urlParts(location.imageUrl());
+    return rustFunction(location.archiveDocument().isEmpty(), root.empty,
+        rustStringView(root.scheme), rustStringView(root.path), image.empty,
+        rustStringView(image.scheme), rustStringView(image.path));
+}
 }
 
 namespace KiriView {
@@ -150,12 +171,16 @@ std::optional<ArchiveDocumentLocation> archiveDocumentLocationForLocalArchiveUrl
 
 bool isUrlInsideArchiveRoot(const QUrl &url, const QUrl &archiveRootUrl)
 {
-    return !archiveRelativePathForUrl(archiveRootUrl, url).isEmpty();
+    const UrlParts root = urlParts(archiveRootUrl);
+    const UrlParts candidate = urlParts(url);
+    return rustArchiveDocumentContainsUrl(false, root.empty, rustStringView(root.scheme),
+        rustStringView(root.path), candidate.empty, rustStringView(candidate.scheme),
+        rustStringView(candidate.path));
 }
 
 bool archiveDocumentContainsUrl(const ArchiveDocumentLocation &archiveDocument, const QUrl &url)
 {
-    return !archiveDocument.isEmpty() && isUrlInsideArchiveRoot(url, archiveDocument.rootUrl());
+    return archiveDocumentContainsUrlInRust(archiveDocument, url);
 }
 
 bool displayedLocationIsInsideArchiveDocument(const DisplayedImageLocation &location)
@@ -165,30 +190,24 @@ bool displayedLocationIsInsideArchiveDocument(const DisplayedImageLocation &loca
 
 std::optional<QUrl> containingComicBookArchiveRootUrl(const QUrl &url)
 {
-    const QString marker = KiriView::comicBookArchiveMarkerForRootScheme(url.scheme());
-    return containingArchiveRootUrl(url, marker.isEmpty() ? QStringList() : QStringList { marker });
+    return containingArchiveRootUrl(url, rustContainingComicBookArchiveRootPath);
 }
 
 std::optional<QUrl> containingDirectArchiveOpenRootUrl(const QUrl &url)
 {
-    return containingArchiveRootUrl(
-        url, KiriView::directArchiveOpenMarkersForRootScheme(url.scheme()));
+    return containingArchiveRootUrl(url, rustContainingDirectArchiveOpenRootPath);
 }
 
 QString windowTitleFileNameForDisplayedLocation(const DisplayedImageLocation &location)
 {
-    if (location.imageUrl().isEmpty()) {
-        return {};
-    }
-
-    if (displayedLocationIsInsideArchiveDocument(location)) {
-        const QString archiveName = location.archiveDocumentFileUrl().fileName();
-        if (!archiveName.isEmpty()) {
-            return archiveName;
-        }
-    }
-
-    return location.imageUrl().fileName();
+    const UrlParts image = urlParts(location.imageUrl());
+    const UrlParts root = urlParts(location.archiveDocumentRootUrl());
+    const QByteArray imageFileName = location.imageUrl().fileName().toUtf8();
+    const QByteArray archiveFileName = location.archiveDocumentFileUrl().fileName().toUtf8();
+    return rustStringToQString(rustWindowTitleFileNameForDisplayedLocation(image.empty,
+        rustStringView(image.scheme), rustStringView(image.path), rustStringView(imageFileName),
+        location.archiveDocument().isEmpty(), root.empty, rustStringView(root.scheme),
+        rustStringView(root.path), rustStringView(archiveFileName)));
 }
 
 std::vector<ContainerNavigationCandidate> containerNavigationCandidates(const KFileItemList &items)
@@ -212,7 +231,7 @@ std::vector<ContainerNavigationCandidate> containerNavigationCandidates(const KF
 
 QUrl zoomScopeUrlForLocation(const DisplayedImageLocation &location)
 {
-    if (displayedLocationIsInsideArchiveDocument(location)) {
+    if (scopeUsesArchiveDocumentFileUrlInRust(location, rustZoomScopeUsesArchiveDocumentFileUrl)) {
         return archiveDocumentFileNavigationUrl(location);
     }
 
@@ -221,8 +240,12 @@ QUrl zoomScopeUrlForLocation(const DisplayedImageLocation &location)
 
 QUrl containerNavigationUrlForLocation(const DisplayedImageLocation &location)
 {
-    if (!location.archiveDocument().isComicBook()
-        || !displayedLocationIsInsideArchiveDocument(location)) {
+    const UrlParts root = urlParts(location.archiveDocumentRootUrl());
+    const UrlParts image = urlParts(location.imageUrl());
+    if (!rustContainerNavigationUsesArchiveDocumentFileUrl(location.archiveDocument().isComicBook(),
+            location.archiveDocument().isEmpty(), root.empty, rustStringView(root.scheme),
+            rustStringView(root.path), image.empty, rustStringView(image.scheme),
+            rustStringView(image.path))) {
         return {};
     }
 

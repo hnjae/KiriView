@@ -4,53 +4,49 @@
 #include "archivepath.h"
 
 #include "imagelocation.h"
+#include "kiriview/src/archivepath.cxx.h"
 
-#include <QDir>
+#include <QByteArray>
+#include <cstddef>
 
 namespace {
-QString archiveRootPathWithTrailingSlash(QString path)
+rust::Str rustStringView(const QByteArray &bytes)
 {
-    if (!path.endsWith(QLatin1Char('/'))) {
-        path += QLatin1Char('/');
-    }
+    return rust::Str(bytes.constData(), static_cast<std::size_t>(bytes.size()));
+}
 
-    return path;
+QString rustStringToQString(const rust::String &value)
+{
+    return QString::fromUtf8(value.data(), static_cast<qsizetype>(value.size()));
+}
+
+QString rustStringForQString(const QString &value, rust::String (*rustFunction)(rust::Str))
+{
+    const QByteArray bytes = value.toUtf8();
+    return rustStringToQString(rustFunction(rustStringView(bytes)));
 }
 }
 
 namespace KiriView {
 QString normalizedArchiveRootPath(const QUrl &archiveRootUrl)
 {
-    return archiveRootPathWithTrailingSlash(QDir::cleanPath(archiveRootUrl.path()));
+    return rustStringForQString(archiveRootUrl.path(), rustNormalizedArchiveRootPath);
 }
 
 QString normalizedArchiveEntryPath(const QString &entryPath)
 {
-    QString cleanPath = QDir::cleanPath(entryPath);
-    while (cleanPath.startsWith(QStringLiteral("./"))) {
-        cleanPath.remove(0, 2);
-    }
-    if (cleanPath == QStringLiteral(".") || cleanPath == QStringLiteral("..")
-        || cleanPath.startsWith(QStringLiteral("../")) || cleanPath.startsWith(QLatin1Char('/'))) {
-        return {};
-    }
-
-    return cleanPath;
+    return rustStringForQString(entryPath, rustNormalizedArchiveEntryPath);
 }
 
 QString archiveRelativePathForUrl(const QUrl &archiveRootUrl, const QUrl &url)
 {
-    if (url.isEmpty() || archiveRootUrl.isEmpty() || url.scheme() != archiveRootUrl.scheme()) {
-        return {};
-    }
-
-    const QString rootPath = normalizedArchiveRootPath(archiveRootUrl);
-    const QString path = QDir::cleanPath(url.path());
-    if (path.size() <= rootPath.size() || !path.startsWith(rootPath)) {
-        return {};
-    }
-
-    return path.mid(rootPath.size());
+    const QByteArray archiveRootScheme = archiveRootUrl.scheme().toUtf8();
+    const QByteArray archiveRootPath = archiveRootUrl.path().toUtf8();
+    const QByteArray urlScheme = url.scheme().toUtf8();
+    const QByteArray urlPath = url.path().toUtf8();
+    return rustStringToQString(rustArchiveRelativePathForUrl(archiveRootUrl.isEmpty(),
+        rustStringView(archiveRootScheme), rustStringView(archiveRootPath), url.isEmpty(),
+        rustStringView(urlScheme), rustStringView(urlPath)));
 }
 
 QString archiveEntryPathForUrl(const ArchiveDocumentLocation &archiveDocument, const QUrl &imageUrl)
