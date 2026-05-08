@@ -92,6 +92,31 @@ KIO rather than owning the whole archive as an archive document.
 In Flatpak, adjacent image navigation can list neighboring files under `home`,
 `/media`, `/mnt`, `/run/media`, and `$XDG_RUNTIME_DIR/gvfs`. Files outside those
 paths remain available only when explicitly provided by the XDG portal.
+In Flatpak, KiriView can also request write access to those same locations for
+file deletion.
+
+When an image is ready, Delete requests moving the displayed file to trash and
+Shift+Delete requests permanent deletion. The actions are available from the
+application menu or menubar File menu and through their shortcuts, but not from
+the toolbar. KiriView delegates user confirmation and the actual file operation
+to KDE's file operation handling. If the operation is canceled, the current
+image remains open and no notification is shown. If it fails, the current image
+remains open and the file operation error is shown as a passive notification.
+
+The deletion target is the displayed image URL for ordinary images, remote
+URLs, and images opened directly from KDE-supported archive URLs such as
+`zip://`. When the displayed image is inside a local CBZ, CBT, CB7, CBR, ZIP,
+TAR, 7Z, or RAR archive document opened directly by KiriView, the deletion
+target is the archive file itself rather than the currently displayed internal
+image entry.
+
+After deletion succeeds, KiriView immediately clears the deleted image. It then
+opens the next supported image in the current image scope when possible, falls
+back to the previous supported image when no next image exists, and otherwise
+shows the empty state. After deleting a directly opened comic book archive,
+KiriView opens the first image in the next sibling comic book archive when
+possible, falls back to the first image in the previous sibling comic book
+archive, and otherwise shows the empty state.
 
 ## Image Display
 
@@ -329,5 +354,4 @@ shortcuts. Changing a shortcut updates the toolbar, application menu, menubar,
 shortcut help, and active keyboard handling consistently. Shortcut changes apply
 immediately and persist across launches.
 
-Out of scope for the current version: editing, metadata panels, and file
-management actions.
+Out of scope for the current version: editing and metadata panels.
