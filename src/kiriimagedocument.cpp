@@ -3,6 +3,8 @@
 
 #include "kiriimagedocument.h"
 
+#include "filedeletion.h"
+#include "imageasyncdependencies.h"
 #include "imagedocumentcontroller.h"
 #include "imageformatregistry.h"
 
@@ -48,6 +50,18 @@ KiriImageDocument::ZoomMode fromImageZoomMode(ImageZoomMode zoomMode)
     return KiriImageDocument::ZoomMode::Fit;
 }
 
+KiriView::FileDeletionMode toFileDeletionMode(KiriImageDocument::DeletionMode deletionMode)
+{
+    switch (deletionMode) {
+    case KiriImageDocument::DeletionMode::MoveToTrash:
+        return KiriView::FileDeletionMode::MoveToTrash;
+    case KiriImageDocument::DeletionMode::DeletePermanently:
+        return KiriView::FileDeletionMode::DeletePermanently;
+    }
+
+    return KiriView::FileDeletionMode::MoveToTrash;
+}
+
 KiriImageDocument::Status fromImageDocumentStatus(ImageDocumentStatus status)
 {
     switch (status) {
@@ -70,7 +84,9 @@ KiriImageDocument::KiriImageDocument(QObject *parent)
 {
     m_documentController = std::make_unique<KiriView::ImageDocumentController>(
         this, [this]() { return renderContext(); },
-        [this](ImageDocumentChange change) { handleDocumentChange(change); });
+        [this](ImageDocumentChange change) { handleDocumentChange(change); },
+        KiriView::defaultImageAsyncDependencies(),
+        [this](const QString &errorString) { Q_EMIT fileDeletionFailed(errorString); });
 }
 
 KiriImageDocument::~KiriImageDocument() = default;
@@ -163,6 +179,11 @@ bool KiriImageDocument::containerNavigationAvailable() const
     return m_documentController->containerNavigationAvailable();
 }
 
+bool KiriImageDocument::fileDeletionInProgress() const
+{
+    return m_documentController->fileDeletionInProgress();
+}
+
 std::shared_ptr<KiriView::DisplayedImageSurface> KiriImageDocument::imageSurface() const
 {
     return m_documentController->imageSurface();
@@ -187,6 +208,11 @@ void KiriImageDocument::openNextImage() { m_documentController->openNextImage();
 void KiriImageDocument::openPreviousContainer() { m_documentController->openPreviousContainer(); }
 
 void KiriImageDocument::openNextContainer() { m_documentController->openNextContainer(); }
+
+void KiriImageDocument::deleteDisplayedFile(DeletionMode mode)
+{
+    m_documentController->deleteDisplayedFile(toFileDeletionMode(mode));
+}
 
 void KiriImageDocument::openImageAtPage(int pageNumber)
 {
@@ -256,6 +282,9 @@ void KiriImageDocument::handleDocumentChange(ImageDocumentChange change)
         return;
     case ImageDocumentChange::ContainerNavigation:
         Q_EMIT containerNavigationChanged();
+        return;
+    case ImageDocumentChange::FileDeletionInProgress:
+        Q_EMIT fileDeletionInProgressChanged();
         return;
     case ImageDocumentChange::Repaint:
         Q_EMIT repaintRequested();

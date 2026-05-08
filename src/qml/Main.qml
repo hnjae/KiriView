@@ -211,6 +211,14 @@ StatefulApp.StatefulWindow {
             initialSourceUrl: root.initialSourceUrl
         }
 
+        Connections {
+            target: page.imageDocument
+
+            function onFileDeletionFailed(errorString) {
+                root.showPassiveNotification(errorString);
+            }
+        }
+
         ImageShortcuts {
             application: kiriApplication
             helpDialogOpen: root.helpDialogOpen

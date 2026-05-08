@@ -48,7 +48,7 @@ const CXX_QT_CPP_SOURCES: &[&str] = &[
     "src/kiriimageview.cpp",
     "src/kiriviewapplication.cpp",
 ];
-const QT_MODULES: &[&str] = &["Gui", "Qml", "Quick", "Svg", "Network", "DBus"];
+const QT_MODULES: &[&str] = &["Gui", "Qml", "Quick", "Svg", "Network", "DBus", "Widgets"];
 const NATIVE_LIBRARIES: &[NativeLibrary] = &[
     NativeLibrary {
         link_name: "KF6Archive",
@@ -58,6 +58,11 @@ const NATIVE_LIBRARIES: &[NativeLibrary] = &[
     NativeLibrary {
         link_name: "KF6KIOCore",
         file_name: "libKF6KIOCore.so",
+        pkg_config_package: None,
+    },
+    NativeLibrary {
+        link_name: "KF6KIOWidgets",
+        file_name: "libKF6KIOWidgets.so",
         pkg_config_package: None,
     },
     NativeLibrary {
@@ -480,6 +485,7 @@ fn add_kf6_include_dirs(dirs: &mut BTreeSet<PathBuf>, include_root: &Path) {
     for suffix in [
         "KF6/KArchive",
         "KF6/KIOCore",
+        "KF6/KIOWidgets",
         "KF6/KIO",
         "KF6/KCoreAddons",
         "KF6/KConfig",

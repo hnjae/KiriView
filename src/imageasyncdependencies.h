@@ -5,6 +5,7 @@
 #define KIRIVIEW_IMAGEASYNCDEPENDENCIES_H
 
 #include "decodedimageresult.h"
+#include "filedeletion.h"
 #include "imagedecoderequest.h"
 #include "imageiojob.h"
 #include "imagelocation.h"
@@ -50,6 +51,7 @@ struct ImageDecodeDependencies {
 struct ImageAsyncDependencies {
     ImageNavigationCandidateProvider candidateProvider;
     ImageDecodeDependencies imageDecode;
+    FileOperationProvider fileOperations;
 };
 
 ImageDecodeDependencies defaultImageDecodeDependencies();

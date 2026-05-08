@@ -89,6 +89,8 @@ void TestKiriViewApplication::actionsAreRegisteredWithDefaultShortcuts()
 
     const QStringList registeredActionNames = {
         QStringLiteral("file_open"),
+        QStringLiteral("movetotrash"),
+        QStringLiteral("deletefile"),
         QStringLiteral("go_previous_archive"),
         QStringLiteral("go_next_archive"),
         QStringLiteral("go_previous_image"),
@@ -126,6 +128,10 @@ void TestKiriViewApplication::actionsAreRegisteredWithDefaultShortcuts()
 
     expectDefaultShortcuts(
         application, QStringLiteral("file_open"), QKeySequence::keyBindings(QKeySequence::Open));
+    expectDefaultShortcuts(
+        application, QStringLiteral("movetotrash"), { shortcut(QStringLiteral("Delete")) });
+    expectDefaultShortcuts(
+        application, QStringLiteral("deletefile"), { shortcut(QStringLiteral("Shift+Delete")) });
     expectDefaultShortcuts(
         application, QStringLiteral("go_previous_archive"), { shortcut(QStringLiteral("[")) });
     expectDefaultShortcuts(
@@ -184,6 +190,8 @@ void TestKiriViewApplication::actionIdsResolveActionNamesAndShortcuts()
 
     const ExpectedActionId expectedActionIds[] = {
         { KiriViewApplication::FileOpenAction, "file_open" },
+        { KiriViewApplication::FileMoveToTrashAction, "movetotrash" },
+        { KiriViewApplication::FileDeleteAction, "deletefile" },
         { KiriViewApplication::GoPreviousArchiveAction, "go_previous_archive" },
         { KiriViewApplication::GoNextArchiveAction, "go_next_archive" },
         { KiriViewApplication::GoPreviousImageAction, "go_previous_image" },

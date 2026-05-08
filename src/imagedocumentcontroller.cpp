@@ -3,26 +3,77 @@
 
 #include "imagedocumentcontroller.h"
 
+#include "filedeletion.h"
 #include "imagecallback.h"
+#include "imagecandidaterepository.h"
+#include "imagecontainer.h"
 #include "imagedocumentnavigationcontroller.h"
+#include "imagenavigationmodel.h"
 #include "imageopencontroller.h"
 #include "imageopenworkflow.h"
 #include "imagepredecodecoordinator.h"
 #include "imagepresentationcontroller.h"
+#include "imageurl.h"
 #include "imageviewtext.h"
 
+#include <QString>
 #include <memory>
 #include <optional>
 #include <utility>
 #include <variant>
+#include <vector>
+
+namespace {
+enum class DeletionFallbackKind {
+    None,
+    Image,
+    ComicBookArchive,
+};
+
+std::optional<QUrl> adjacentImageUrlAfterDeletion(
+    std::vector<KiriView::ImageNavigationCandidate> candidates, const QUrl &currentUrl,
+    const QString &currentName, KiriView::NavigationDirection direction)
+{
+    candidates.push_back(KiriView::ImageNavigationCandidate { currentUrl, currentName });
+    KiriView::sortImageNavigationCandidates(&candidates);
+    return KiriView::adjacentImageNavigationUrl(candidates, currentUrl, direction);
+}
+
+std::optional<KiriView::ContainerNavigationCandidate> adjacentContainerAfterDeletion(
+    std::vector<KiriView::ContainerNavigationCandidate> candidates, const QUrl &currentUrl,
+    const QString &currentName, KiriView::NavigationDirection direction)
+{
+    candidates.push_back(KiriView::ContainerNavigationCandidate {
+        currentUrl, currentName, KiriView::ContainerNavigationCandidateType::ComicBookArchive });
+    KiriView::sortContainerNavigationCandidates(&candidates);
+    return KiriView::adjacentContainerNavigationCandidate(candidates, currentUrl, direction);
+}
+
+QString genericFileDeletionErrorMessage()
+{
+    return KiriView::imageViewText("Could not delete the selected file.");
+}
+}
 
 namespace KiriView {
+struct ImageDocumentController::DeletionFallbackPlan {
+    DeletionFallbackKind kind = DeletionFallbackKind::None;
+    std::optional<ImageCandidateListContext> imageContext;
+    QUrl currentUrl;
+    QString currentName;
+    QUrl currentContainerUrl;
+};
+
 ImageDocumentController::ImageDocumentController(QObject *parent,
     RenderContextProvider renderContextProvider, ChangeCallback changeCallback,
-    ImageAsyncDependencies dependencies)
+    ImageAsyncDependencies dependencies, FileDeletionFailedCallback fileDeletionFailedCallback)
     : QObject(parent)
     , m_changeCallback(std::move(changeCallback))
+    , m_fileDeletionFailedCallback(std::move(fileDeletionFailedCallback))
     , m_state([this](ImageDocumentChange change) { notify(change); })
+    , m_deletionCandidateRepository(dependencies.candidateProvider)
+    , m_fileOperationProvider(dependencies.fileOperations ? std::move(dependencies.fileOperations)
+                                                          : defaultFileOperationProvider())
 {
     m_presentationController
         = std::make_unique<ImagePresentationController>(this, std::move(renderContextProvider),
@@ -51,6 +102,8 @@ ImageDocumentController::ImageDocumentController(QObject *parent,
 
 ImageDocumentController::~ImageDocumentController()
 {
+    cancelFileDeletion();
+    cancelFileDeletionFallback();
     m_presentationController->stopAnimation();
     cancelPredecode();
     m_navigationController->cancelPageNavigationUpdate();
@@ -133,6 +186,8 @@ bool ImageDocumentController::containerNavigationAvailable() const
     return m_state.containerNavigationAvailable();
 }
 
+bool ImageDocumentController::fileDeletionInProgress() const { return m_fileDeletionInProgress; }
+
 std::shared_ptr<DisplayedImageSurface> ImageDocumentController::imageSurface() const
 {
     return m_presentationController->imageSurface();
@@ -155,6 +210,43 @@ void ImageDocumentController::openPreviousContainer()
 }
 
 void ImageDocumentController::openNextContainer() { m_navigationController->openNextContainer(); }
+
+void ImageDocumentController::deleteDisplayedFile(FileDeletionMode mode)
+{
+    if (m_fileDeletionInProgress || !m_presentationController->hasImage()) {
+        return;
+    }
+
+    const DisplayedImageLocation location = m_state.displayedImageLocation();
+    const QUrl targetUrl = deletionTargetUrlForDisplayedLocation(location);
+    if (targetUrl.isEmpty()) {
+        return;
+    }
+
+    DeletionFallbackPlan fallbackPlan;
+    if (displayedLocationIsInsideArchiveDocument(location)) {
+        if (location.archiveDocument().isComicBook()) {
+            fallbackPlan.kind = DeletionFallbackKind::ComicBookArchive;
+            fallbackPlan.currentContainerUrl = containerNavigationUrlForLocation(location);
+            fallbackPlan.currentName = fallbackPlan.currentContainerUrl.fileName();
+        }
+    } else {
+        const std::optional<ImageCandidateListContext> imageContext
+            = imageCandidateListContextForDisplayedImage(location);
+        if (imageContext.has_value()) {
+            fallbackPlan.kind = DeletionFallbackKind::Image;
+            fallbackPlan.imageContext = *imageContext;
+            fallbackPlan.currentUrl = imageContext->currentUrl();
+            fallbackPlan.currentName = fallbackPlan.currentUrl.fileName();
+        }
+    }
+
+    setFileDeletionInProgress(true);
+    m_fileDeletionJob = m_fileOperationProvider(this, FileDeletionRequest { targetUrl, mode },
+        [this, fallbackPlan](FileDeletionResult result, const QString &errorString) {
+            finishFileDeletion(fallbackPlan, result, errorString);
+        });
+}
 
 void ImageDocumentController::openImageAtPage(int pageNumber)
 {
@@ -233,6 +325,9 @@ void ImageDocumentController::dispatchEffects(const ImageDocumentEffects &effect
 void ImageDocumentController::setSourceUrlForLoad(
     const QUrl &sourceUrl, const QUrl &containerNavigationUrl)
 {
+    cancelFileDeletion();
+    cancelFileDeletionFallback();
+
     if (m_state.sourceUrl() == sourceUrl) {
         m_state.clearLoadingContainerNavigationUrl();
         if (!containerNavigationUrl.isEmpty()) {
@@ -247,6 +342,147 @@ void ImageDocumentController::setSourceUrlForLoad(
     m_state.setLoadingContainerNavigationUrl(containerNavigationUrl);
     m_state.setSourceUrl(sourceUrl);
     m_openController->open();
+}
+
+void ImageDocumentController::clearAfterSuccessfulFileDeletion()
+{
+    m_navigationController->cancelNavigation();
+    m_navigationController->cancelContainerNavigation();
+    cancelPredecode();
+    m_openController->cancel();
+    m_state.setSourceUrl(QUrl());
+    m_state.setErrorString(QString());
+    dispatchEffects(ImageOpenWorkflow::finishEmptySourceLoad(m_state));
+}
+
+void ImageDocumentController::finishFileDeletion(
+    const DeletionFallbackPlan &fallbackPlan, FileDeletionResult result, const QString &errorString)
+{
+    setFileDeletionInProgress(false);
+
+    switch (result) {
+    case FileDeletionResult::Succeeded:
+        clearAfterSuccessfulFileDeletion();
+        openDeletionFallback(fallbackPlan);
+        return;
+    case FileDeletionResult::Canceled:
+        return;
+    case FileDeletionResult::Failed:
+        reportFileDeletionFailure(errorString);
+        return;
+    }
+}
+
+void ImageDocumentController::openDeletionFallback(const DeletionFallbackPlan &fallbackPlan)
+{
+    switch (fallbackPlan.kind) {
+    case DeletionFallbackKind::Image:
+        openImageDeletionFallback(fallbackPlan);
+        return;
+    case DeletionFallbackKind::ComicBookArchive:
+        openComicBookDeletionFallback(fallbackPlan);
+        return;
+    case DeletionFallbackKind::None:
+        return;
+    }
+}
+
+void ImageDocumentController::openImageDeletionFallback(const DeletionFallbackPlan &fallbackPlan)
+{
+    if (!fallbackPlan.imageContext.has_value()) {
+        return;
+    }
+
+    m_fileDeletionFallbackJob = m_deletionCandidateRepository.loadImages(
+        this, *fallbackPlan.imageContext,
+        [this, fallbackPlan](std::vector<ImageNavigationCandidate> candidates) {
+            const std::optional<QUrl> nextUrl = adjacentImageUrlAfterDeletion(candidates,
+                fallbackPlan.currentUrl, fallbackPlan.currentName, NavigationDirection::Next);
+            if (nextUrl.has_value()) {
+                setSourceUrl(*nextUrl);
+                return;
+            }
+
+            const std::optional<QUrl> previousUrl
+                = adjacentImageUrlAfterDeletion(std::move(candidates), fallbackPlan.currentUrl,
+                    fallbackPlan.currentName, NavigationDirection::Previous);
+            if (previousUrl.has_value()) {
+                setSourceUrl(*previousUrl);
+            }
+        },
+        [](const QString &) {});
+}
+
+void ImageDocumentController::openComicBookDeletionFallback(
+    const DeletionFallbackPlan &fallbackPlan)
+{
+    if (fallbackPlan.currentContainerUrl.isEmpty()) {
+        return;
+    }
+
+    const QUrl parentUrl = parentUrlForContainerNavigation(fallbackPlan.currentContainerUrl);
+    if (!parentUrl.isValid() || parentUrl.isEmpty()) {
+        return;
+    }
+
+    m_fileDeletionFallbackJob = m_deletionCandidateRepository.loadContainers(
+        this, parentUrl,
+        [this, fallbackPlan](std::vector<ContainerNavigationCandidate> candidates) {
+            const std::optional<ContainerNavigationCandidate> nextCandidate
+                = adjacentContainerAfterDeletion(candidates, fallbackPlan.currentContainerUrl,
+                    fallbackPlan.currentName, NavigationDirection::Next);
+            const std::optional<ContainerNavigationCandidate> previousCandidate
+                = adjacentContainerAfterDeletion(std::move(candidates),
+                    fallbackPlan.currentContainerUrl, fallbackPlan.currentName,
+                    NavigationDirection::Previous);
+            openComicBookDeletionFallbackCandidate(nextCandidate, previousCandidate);
+        },
+        [](const QString &) {});
+}
+
+void ImageDocumentController::openComicBookDeletionFallbackCandidate(
+    const std::optional<ContainerNavigationCandidate> &candidate,
+    const std::optional<ContainerNavigationCandidate> &fallbackCandidate)
+{
+    if (!candidate.has_value()) {
+        if (fallbackCandidate.has_value()) {
+            openComicBookDeletionFallbackCandidate(fallbackCandidate, std::nullopt);
+        }
+        return;
+    }
+
+    m_fileDeletionFallbackJob = m_deletionCandidateRepository.loadFirstImageInContainer(
+        this, *candidate,
+        [this](const QUrl &imageUrl, const QUrl &containerUrl) {
+            setSourceUrlForLoad(imageUrl, containerUrl);
+        },
+        [this, fallbackCandidate](const QUrl &, ImageCandidateRepositoryError, const QString &) {
+            openComicBookDeletionFallbackCandidate(fallbackCandidate, std::nullopt);
+        });
+}
+
+void ImageDocumentController::setFileDeletionInProgress(bool inProgress)
+{
+    if (m_fileDeletionInProgress == inProgress) {
+        return;
+    }
+
+    m_fileDeletionInProgress = inProgress;
+    notify(ImageDocumentChange::FileDeletionInProgress);
+}
+
+void ImageDocumentController::cancelFileDeletion()
+{
+    m_fileDeletionJob.cancel();
+    setFileDeletionInProgress(false);
+}
+
+void ImageDocumentController::cancelFileDeletionFallback() { m_fileDeletionFallbackJob.cancel(); }
+
+void ImageDocumentController::reportFileDeletionFailure(const QString &errorString)
+{
+    const QString message = errorString.isEmpty() ? genericFileDeletionErrorMessage() : errorString;
+    invokeIfSet(m_fileDeletionFailedCallback, message);
 }
 
 void ImageDocumentController::scheduleAdjacentImagePredecode()

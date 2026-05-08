@@ -9,6 +9,7 @@ src/archiveformat.cpp
 src/archivepath.cpp
 src/bufferedimagereader.cpp
 src/displayedimagestate.cpp
+src/filedeletion.cpp
 src/heifcontainer.cpp
 src/heifdecoder.cpp
 src/heifsupport.cpp

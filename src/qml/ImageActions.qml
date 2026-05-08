@@ -17,10 +17,12 @@ Item {
 
     readonly property bool canOpenNextImage: root.imageReady && root.imageDocument.currentPageNumber > 0 && root.imageDocument.currentPageNumber < root.imageDocument.imageCount
     readonly property bool canOpenPreviousImage: root.imageReady && root.imageDocument.currentPageNumber > 1
-    readonly property bool canUsePageActions: root.imageReady && root.imageDocument.imageCount > 0 && !root.helpDialogOpen
-    readonly property bool canUseReadyActions: root.imageReady && !root.helpDialogOpen
+    readonly property bool canUsePageActions: root.imageReady && root.imageDocument.imageCount > 0 && !root.imageDocument.fileDeletionInProgress && !root.helpDialogOpen
+    readonly property bool canUseReadyActions: root.imageReady && !root.imageDocument.fileDeletionInProgress && !root.helpDialogOpen
 
     readonly property var openAction: openManagedAction.proxy
+    readonly property var moveToTrashAction: moveToTrashManagedAction.proxy
+    readonly property var deleteFileAction: deleteFileManagedAction.proxy
     readonly property var previousContainerAction: previousContainerManagedAction.proxy
     readonly property var nextContainerAction: nextContainerManagedAction.proxy
     readonly property var previousImageAction: previousImageManagedAction.proxy
@@ -41,7 +43,7 @@ Item {
     readonly property var configureShortcutsAction: configureShortcutsManagedAction.proxy
     readonly property var showMenubarAction: showMenubarManagedAction.proxy
     readonly property var quitAction: quitManagedAction.proxy
-    readonly property var applicationMenuActions: [openAction, applicationMenuFileSeparator, previousContainerAction, nextContainerAction, applicationMenuViewSeparator, fullscreenAction, applicationMenuSettingsSeparator, showMenubarAction, configureAction, configureShortcutsAction, applicationMenuHelpSeparator, shortcutHelpAction, applicationMenuQuitSeparator, quitAction]
+    readonly property var applicationMenuActions: [openAction, applicationMenuFileSeparator, moveToTrashAction, deleteFileAction, applicationMenuNavigationSeparator, previousContainerAction, nextContainerAction, applicationMenuViewSeparator, fullscreenAction, applicationMenuSettingsSeparator, showMenubarAction, configureAction, configureShortcutsAction, applicationMenuHelpSeparator, shortcutHelpAction, applicationMenuQuitSeparator, quitAction]
 
     signal openDialogRequested
     signal imageBoundaryReached(string message)
@@ -88,6 +90,11 @@ Item {
         separator: true
     }
 
+    property Kirigami.Action applicationMenuNavigationSeparator: Kirigami.Action {
+        displayHint: Kirigami.DisplayHint.AlwaysHide
+        separator: true
+    }
+
     property Kirigami.Action applicationMenuSettingsSeparator: Kirigami.Action {
         displayHint: Kirigami.DisplayHint.AlwaysHide
         separator: true
@@ -116,9 +123,33 @@ Item {
     }
 
     ManagedAction {
+        id: moveToTrashManagedAction
+
+        actionEnabled: root.canUseReadyActions
+        actionId: KiriViewApplication.FileMoveToTrashAction
+        application: root.application
+        bindEnabled: true
+        displayHint: Kirigami.DisplayHint.AlwaysHide
+
+        onTriggered: root.imageDocument.deleteDisplayedFile(KiriImageDocument.MoveToTrash)
+    }
+
+    ManagedAction {
+        id: deleteFileManagedAction
+
+        actionEnabled: root.canUseReadyActions
+        actionId: KiriViewApplication.FileDeleteAction
+        application: root.application
+        bindEnabled: true
+        displayHint: Kirigami.DisplayHint.AlwaysHide
+
+        onTriggered: root.imageDocument.deleteDisplayedFile(KiriImageDocument.DeletePermanently)
+    }
+
+    ManagedAction {
         id: previousContainerManagedAction
 
-        actionEnabled: root.imageDocument.containerNavigationAvailable && !root.helpDialogOpen
+        actionEnabled: root.imageDocument.containerNavigationAvailable && !root.imageDocument.fileDeletionInProgress && !root.helpDialogOpen
         actionId: KiriViewApplication.GoPreviousArchiveAction
         application: root.application
         bindEnabled: true
@@ -130,7 +161,7 @@ Item {
     ManagedAction {
         id: nextContainerManagedAction
 
-        actionEnabled: root.imageDocument.containerNavigationAvailable && !root.helpDialogOpen
+        actionEnabled: root.imageDocument.containerNavigationAvailable && !root.imageDocument.fileDeletionInProgress && !root.helpDialogOpen
         actionId: KiriViewApplication.GoNextArchiveAction
         application: root.application
         bindEnabled: true

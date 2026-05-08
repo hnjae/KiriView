@@ -29,6 +29,7 @@ enum class ImageDocumentChange {
     ZoomMode,
     PageNavigation,
     ContainerNavigation,
+    FileDeletionInProgress,
     Repaint,
 };
 

@@ -21,11 +21,11 @@ Item {
     readonly property int keyboardPanDistance: 64
     readonly property bool commandShortcutsEnabled: !root.textInputFocused() && !root.helpDialogOpen
     readonly property bool helpShortcutsEnabled: !root.helpDialogOpen
-    readonly property bool readyShortcutsEnabled: root.imageReady && root.helpShortcutsEnabled
-    readonly property bool readyCommandShortcutsEnabled: root.imageReady && root.commandShortcutsEnabled
+    readonly property bool readyShortcutsEnabled: root.imageReady && !root.imageDocument.fileDeletionInProgress && root.helpShortcutsEnabled
+    readonly property bool readyCommandShortcutsEnabled: root.imageReady && !root.imageDocument.fileDeletionInProgress && root.commandShortcutsEnabled
     readonly property bool pageCommandShortcutsEnabled: readyCommandShortcutsEnabled && root.imageDocument.imageCount > 0
-    readonly property bool pannableCommandShortcutsEnabled: root.imagePannable && root.commandShortcutsEnabled
-    readonly property bool containerCommandShortcutsEnabled: root.imageDocument.containerNavigationAvailable && root.commandShortcutsEnabled
+    readonly property bool pannableCommandShortcutsEnabled: root.imagePannable && !root.imageDocument.fileDeletionInProgress && root.commandShortcutsEnabled
+    readonly property bool containerCommandShortcutsEnabled: root.imageDocument.containerNavigationAvailable && !root.imageDocument.fileDeletionInProgress && root.commandShortcutsEnabled
     readonly property int zoomStepPercent: imageDocument.zoomStepPercent
 
     readonly property var previousImageQAction: root.application.actionForId(KiriViewApplication.GoPreviousImageAction)
@@ -122,6 +122,12 @@ Item {
         application: root.application
         shortcutFilter: ConfiguredActionShortcut.WithCommandModifier
         shortcutsEnabled: root.helpShortcutsEnabled
+    }
+
+    ActionShortcutGroup {
+        actionIds: [KiriViewApplication.FileMoveToTrashAction, KiriViewApplication.FileDeleteAction]
+        application: root.application
+        shortcutsEnabled: root.readyCommandShortcutsEnabled
     }
 
     ActionShortcutGroup {

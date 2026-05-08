@@ -51,6 +51,8 @@ class KiriImageDocument : public QObject
     Q_PROPERTY(int imageCount READ imageCount NOTIFY pageNavigationChanged)
     Q_PROPERTY(bool containerNavigationAvailable READ containerNavigationAvailable NOTIFY
             containerNavigationChanged)
+    Q_PROPERTY(bool fileDeletionInProgress READ fileDeletionInProgress NOTIFY
+            fileDeletionInProgressChanged)
 
 public:
     using RenderContextProvider = std::function<KiriView::ImageDocumentRenderContext()>;
@@ -70,6 +72,12 @@ public:
         Manual,
     };
     Q_ENUM(ZoomMode)
+
+    enum class DeletionMode {
+        MoveToTrash,
+        DeletePermanently,
+    };
+    Q_ENUM(DeletionMode)
 
     explicit KiriImageDocument(QObject *parent = nullptr);
     ~KiriImageDocument() override;
@@ -98,6 +106,7 @@ public:
     int currentPageNumber() const;
     int imageCount() const;
     bool containerNavigationAvailable() const;
+    bool fileDeletionInProgress() const;
     std::shared_ptr<KiriView::DisplayedImageSurface> imageSurface() const;
     const QImage &image() const;
     quint64 imageRevision() const;
@@ -110,6 +119,7 @@ public:
     Q_INVOKABLE void openImageAtPage(int pageNumber);
     Q_INVOKABLE void openPreviousContainer();
     Q_INVOKABLE void openNextContainer();
+    Q_INVOKABLE void deleteDisplayedFile(KiriImageDocument::DeletionMode mode);
     Q_INVOKABLE void resetZoom();
     Q_INVOKABLE void setFitMode(KiriImageDocument::ZoomMode zoomMode);
     Q_INVOKABLE double clampedManualZoomPercent(double zoomPercent) const;
@@ -130,6 +140,8 @@ Q_SIGNALS:
     void zoomModeChanged();
     void pageNavigationChanged();
     void containerNavigationChanged();
+    void fileDeletionInProgressChanged();
+    void fileDeletionFailed(const QString &errorString);
     void repaintRequested();
 
 private:

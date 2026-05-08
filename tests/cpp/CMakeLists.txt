@@ -95,6 +95,7 @@ target_link_libraries(kiriview_test_core PUBLIC
     KF6::I18n
     KF6::I18nQml
     KF6::KIOCore
+    KF6::KIOWidgets
     KirigamiAddonsStatefulApp
     PkgConfig::LibArchive
     PkgConfig::LibHeif

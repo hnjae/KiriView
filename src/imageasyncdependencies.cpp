@@ -3,6 +3,7 @@
 
 #include "imageasyncdependencies.h"
 
+#include "filedeletion.h"
 #include "imagecandidaterepository.h"
 #include "imageiojobs.h"
 #include "kiriimagedecoder.h"
@@ -38,6 +39,7 @@ ImageAsyncDependencies defaultImageAsyncDependencies()
     return ImageAsyncDependencies {
         defaultImageNavigationCandidateProvider(),
         defaultImageDecodeDependencies(),
+        defaultFileOperationProvider(),
     };
 }
 }

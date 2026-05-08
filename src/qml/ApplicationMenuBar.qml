@@ -22,6 +22,16 @@ Controls.MenuBar {
         Controls.MenuSeparator {}
 
         Controls.MenuItem {
+            action: root.actions.moveToTrashAction
+        }
+
+        Controls.MenuItem {
+            action: root.actions.deleteFileAction
+        }
+
+        Controls.MenuSeparator {}
+
+        Controls.MenuItem {
             action: root.actions.quitAction
         }
     }

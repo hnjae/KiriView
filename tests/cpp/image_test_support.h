@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_TESTS_IMAGE_TEST_SUPPORT_H
 #define KIRIVIEW_TESTS_IMAGE_TEST_SUPPORT_H
 
+#include "filedeletion.h"
 #include "imageasyncdependencies.h"
 #include "imageiojob.h"
 #include "staticimage.h"
@@ -160,6 +161,96 @@ private:
 inline ImageDataLoader dataLoaderFor(ManualImageDataLoader &dataLoader)
 {
     return ManualImageDataLoaderAdapter(dataLoader);
+}
+
+struct ManualFileOperation {
+    QObject *object = nullptr;
+    FileDeletionRequest request;
+    FileDeletionCallback callback;
+    std::shared_ptr<ImageIoJobState> state;
+    bool canceled = false;
+};
+
+class ManualFileOperationProvider
+{
+public:
+    ImageIoJob start(QObject *receiver, FileDeletionRequest request, FileDeletionCallback callback)
+    {
+        auto operation = std::make_shared<ManualFileOperation>();
+        operation->object = new QObject(receiver);
+        operation->request = std::move(request);
+        operation->callback = std::move(callback);
+
+        std::weak_ptr<ManualFileOperation> weakOperation = operation;
+        ImageIoJob job(operation->object, [weakOperation](QObject *object) {
+            if (std::shared_ptr<ManualFileOperation> operation = weakOperation.lock()) {
+                operation->canceled = true;
+                operation->object = nullptr;
+            }
+            if (object != nullptr) {
+                object->deleteLater();
+            }
+        });
+        operation->state = job.state();
+        m_operations.push_back(operation);
+        return job;
+    }
+
+    std::size_t operationCount() const { return m_operations.size(); }
+
+    ManualFileOperation &backOperation() { return *m_operations.back(); }
+
+    const ManualFileOperation &backOperation() const { return *m_operations.back(); }
+
+    void finishBackOperation(FileDeletionResult result, const QString &errorString = QString())
+    {
+        finishOperation(m_operations.back(), result, errorString);
+    }
+
+private:
+    static void finishOperation(const std::shared_ptr<ManualFileOperation> &operation,
+        FileDeletionResult result, const QString &errorString)
+    {
+        if (operation == nullptr || operation->state == nullptr) {
+            return;
+        }
+
+        QObject *object = operation->object;
+        operation->state->claimAndRun(object, [&]() {
+            operation->object = nullptr;
+            if (operation->callback) {
+                operation->callback(result, errorString);
+            }
+            if (object != nullptr) {
+                object->deleteLater();
+            }
+        });
+    }
+
+    std::vector<std::shared_ptr<ManualFileOperation>> m_operations;
+};
+
+class ManualFileOperationProviderAdapter
+{
+public:
+    explicit ManualFileOperationProviderAdapter(ManualFileOperationProvider &provider)
+        : m_provider(&provider)
+    {
+    }
+
+    ImageIoJob operator()(
+        QObject *receiver, FileDeletionRequest request, FileDeletionCallback callback) const
+    {
+        return m_provider->start(receiver, std::move(request), std::move(callback));
+    }
+
+private:
+    ManualFileOperationProvider *m_provider = nullptr;
+};
+
+inline FileOperationProvider fileOperationProviderFor(ManualFileOperationProvider &provider)
+{
+    return ManualFileOperationProviderAdapter(provider);
 }
 
 inline QString keyForUrl(const QUrl &url)
@@ -443,11 +534,12 @@ inline ImageDecodeDependencies imageDecodeDependenciesFor(
 
 inline ImageAsyncDependencies imageAsyncDependenciesFor(
     FakeImageNavigationCandidateProvider &candidateProvider, ManualImageDataLoader &dataLoader,
-    ImageDataDecoder dataDecoder)
+    ImageDataDecoder dataDecoder, FileOperationProvider fileOperations = {})
 {
     return ImageAsyncDependencies {
         candidateProvider.provider(),
         imageDecodeDependenciesFor(dataLoader, std::move(dataDecoder)),
+        std::move(fileOperations),
     };
 }
 

@@ -73,6 +73,12 @@ constexpr Actions::ActionDefinition showMenubarAction(KiriViewApplication::Actio
 constexpr std::array actionDefinitions {
     standardAction(KiriViewApplication::FileOpenAction, "file_open", KStandardActions::Open,
         kli18n("Open"), standardShortcutSpec(QKeySequence::Open)),
+    standardAction(KiriViewApplication::FileMoveToTrashAction, "movetotrash",
+        KStandardActions::MoveToTrash, kli18nc("@action", "Move to Trash"),
+        portableShortcutSpec("Delete")),
+    standardAction(KiriViewApplication::FileDeleteAction, "deletefile",
+        KStandardActions::DeleteFile, kli18nc("@action", "Delete Permanently"),
+        portableShortcutSpec("Shift+Delete")),
     registeredAction(KiriViewApplication::GoPreviousArchiveAction, "go_previous_archive",
         kli18nc("@action", "Previous Archive"), "go-previous-symbolic", portableShortcutSpec("[")),
     registeredAction(KiriViewApplication::GoNextArchiveAction, "go_next_archive",
