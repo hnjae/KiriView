@@ -100,21 +100,13 @@ std::optional<KiriView::ArchiveOpenMatch> acceptedProfileMatch(
     return std::nullopt;
 }
 
-std::optional<KiriView::ArchiveOpenMatch> archiveFormatMatchForExtension(
-    const ArchiveFormat &format, const QString &extension, ArchiveProfileSet profileSet)
-{
-    return acceptedProfileMatch(
-        format, profileSet, [&extension](const ArchiveOpenProfile &profile) {
-            return extension == QString::fromLatin1(profile.extension);
-        });
-}
-
-std::optional<KiriView::ArchiveOpenMatch> archiveMatchForExtension(
-    const QString &extension, ArchiveProfileSet profileSet)
+template <typename Predicate>
+std::optional<KiriView::ArchiveOpenMatch> archiveMatch(
+    ArchiveProfileSet profileSet, Predicate predicate)
 {
     for (const ArchiveFormat &format : archiveFormats) {
         std::optional<KiriView::ArchiveOpenMatch> match
-            = archiveFormatMatchForExtension(format, extension, profileSet);
+            = acceptedProfileMatch(format, profileSet, predicate);
         if (match.has_value()) {
             return match;
         }
@@ -134,27 +126,20 @@ bool mimeTypesContain(const ArchiveMimeTypes &mimeTypes, const QString &mimeType
     return false;
 }
 
-std::optional<KiriView::ArchiveOpenMatch> archiveFormatMatchForMimeTypeName(
-    const ArchiveFormat &format, const QString &mimeTypeName, ArchiveProfileSet profileSet)
+std::optional<KiriView::ArchiveOpenMatch> archiveMatchForExtension(
+    const QString &extension, ArchiveProfileSet profileSet)
 {
-    return acceptedProfileMatch(
-        format, profileSet, [&mimeTypeName](const ArchiveOpenProfile &profile) {
-            return mimeTypesContain(profile.mimeTypes, mimeTypeName);
-        });
+    return archiveMatch(profileSet, [&extension](const ArchiveOpenProfile &profile) {
+        return extension == QString::fromLatin1(profile.extension);
+    });
 }
 
 std::optional<KiriView::ArchiveOpenMatch> archiveMatchForMimeTypeName(
     const QString &mimeTypeName, ArchiveProfileSet profileSet)
 {
-    for (const ArchiveFormat &format : archiveFormats) {
-        std::optional<KiriView::ArchiveOpenMatch> match
-            = archiveFormatMatchForMimeTypeName(format, mimeTypeName, profileSet);
-        if (match.has_value()) {
-            return match;
-        }
-    }
-
-    return std::nullopt;
+    return archiveMatch(profileSet, [&mimeTypeName](const ArchiveOpenProfile &profile) {
+        return mimeTypesContain(profile.mimeTypes, mimeTypeName);
+    });
 }
 
 bool storageBackendUsesKioFuse(KiriView::ArchiveStorageBackend backend)

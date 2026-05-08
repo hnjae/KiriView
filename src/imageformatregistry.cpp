@@ -71,6 +71,13 @@ QString archiveKioSchemeForUrl(const QUrl &url, QMimeDatabase::MatchMode mimeMat
     return schemeForArchiveMatch(
         archiveMatchForUrl(url, mimeMatchMode, matchForFileName, matchForMimeTypeName));
 }
+
+std::optional<KiriView::ArchiveOpenMatch> directArchiveOpenMatchForLocalUrl(const QUrl &url)
+{
+    return archiveMatchForUrl(url, QMimeDatabase::MatchDefault,
+        KiriView::directArchiveOpenMatchForFileName,
+        KiriView::directArchiveOpenMatchForMimeTypeName);
+}
 }
 
 namespace KiriView {
@@ -115,22 +122,12 @@ QString comicBookArchiveKioSchemeForUrl(const QUrl &url)
 
 std::optional<ArchiveOpenMatch> directArchiveOpenMatchForUrl(const QUrl &url)
 {
-    const QString scheme = directArchiveOpenKioSchemeForUrl(url);
-    if (scheme.isEmpty()) {
-        return std::nullopt;
-    }
-
-    const ArchiveOpenMatchKind kind = isComicBookArchiveUrl(url)
-        ? ArchiveOpenMatchKind::ComicBook
-        : ArchiveOpenMatchKind::GeneralArchive;
-    return ArchiveOpenMatch { scheme, kind };
+    return directArchiveOpenMatchForLocalUrl(url);
 }
 
 QString directArchiveOpenKioSchemeForUrl(const QUrl &url)
 {
-    return archiveKioSchemeForUrl(url, QMimeDatabase::MatchDefault,
-        KiriView::directArchiveOpenMatchForFileName,
-        KiriView::directArchiveOpenMatchForMimeTypeName);
+    return schemeForArchiveMatch(directArchiveOpenMatchForLocalUrl(url));
 }
 
 QStringList openDialogNameFilters()

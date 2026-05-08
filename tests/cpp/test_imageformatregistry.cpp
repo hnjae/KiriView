@@ -177,6 +177,13 @@ void TestImageFormatRegistry::directArchiveOpenMatchesExposeArchiveKind()
     QVERIFY(cbzUrlMatch.has_value());
     QCOMPARE(cbzUrlMatch->scheme, QStringLiteral("zip"));
     QVERIFY(cbzUrlMatch->kind == KiriView::ArchiveOpenMatchKind::ComicBook);
+
+    const std::optional<KiriView::ArchiveOpenMatch> rarUrlMatch
+        = KiriView::directArchiveOpenMatchForUrl(
+            QUrl::fromLocalFile(QStringLiteral("/books/book.rar")));
+    QVERIFY(rarUrlMatch.has_value());
+    QCOMPARE(rarUrlMatch->scheme, QStringLiteral("rar"));
+    QVERIFY(rarUrlMatch->kind == KiriView::ArchiveOpenMatchKind::GeneralArchive);
 }
 
 void TestImageFormatRegistry::directArchiveOpenMimeTypesMapGeneralArchivesToKioSchemes()
