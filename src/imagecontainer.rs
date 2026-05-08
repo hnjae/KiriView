@@ -51,37 +51,20 @@ mod ffi {
         #[cxx_name = "rustWindowTitleFileNameForDisplayedLocation"]
         fn rust_window_title_file_name_for_displayed_location(
             image_url_empty: bool,
-            image_scheme: &str,
-            image_path: &str,
             image_file_name: &str,
-            archive_document_empty: bool,
-            archive_root_url_empty: bool,
-            archive_root_scheme: &str,
-            archive_root_path: &str,
+            displayed_location_inside_archive_document: bool,
             archive_file_name: &str,
         ) -> String;
 
         #[cxx_name = "rustZoomScopeUsesArchiveDocumentFileUrl"]
         fn rust_zoom_scope_uses_archive_document_file_url(
-            archive_document_empty: bool,
-            archive_root_url_empty: bool,
-            archive_root_scheme: &str,
-            archive_root_path: &str,
-            image_url_empty: bool,
-            image_scheme: &str,
-            image_path: &str,
+            displayed_location_inside_archive_document: bool,
         ) -> bool;
 
         #[cxx_name = "rustContainerNavigationUsesArchiveDocumentFileUrl"]
         fn rust_container_navigation_uses_archive_document_file_url(
             archive_document_is_comic_book: bool,
-            archive_document_empty: bool,
-            archive_root_url_empty: bool,
-            archive_root_scheme: &str,
-            archive_root_path: &str,
-            image_url_empty: bool,
-            image_scheme: &str,
-            image_path: &str,
+            displayed_location_inside_archive_document: bool,
         ) -> bool;
     }
 }
@@ -142,29 +125,15 @@ fn rust_archive_document_contains_url(
 
 fn rust_window_title_file_name_for_displayed_location(
     image_url_empty: bool,
-    image_scheme: &str,
-    image_path: &str,
     image_file_name: &str,
-    archive_document_empty: bool,
-    archive_root_url_empty: bool,
-    archive_root_scheme: &str,
-    archive_root_path: &str,
+    displayed_location_inside_archive_document: bool,
     archive_file_name: &str,
 ) -> String {
     if image_url_empty {
         return String::new();
     }
 
-    if rust_archive_document_contains_url(
-        archive_document_empty,
-        archive_root_url_empty,
-        archive_root_scheme,
-        archive_root_path,
-        image_url_empty,
-        image_scheme,
-        image_path,
-    ) && !archive_file_name.is_empty()
-    {
+    if displayed_location_inside_archive_document && !archive_file_name.is_empty() {
         return archive_file_name.to_owned();
     }
 
@@ -172,45 +141,16 @@ fn rust_window_title_file_name_for_displayed_location(
 }
 
 fn rust_zoom_scope_uses_archive_document_file_url(
-    archive_document_empty: bool,
-    archive_root_url_empty: bool,
-    archive_root_scheme: &str,
-    archive_root_path: &str,
-    image_url_empty: bool,
-    image_scheme: &str,
-    image_path: &str,
+    displayed_location_inside_archive_document: bool,
 ) -> bool {
-    rust_archive_document_contains_url(
-        archive_document_empty,
-        archive_root_url_empty,
-        archive_root_scheme,
-        archive_root_path,
-        image_url_empty,
-        image_scheme,
-        image_path,
-    )
+    displayed_location_inside_archive_document
 }
 
 fn rust_container_navigation_uses_archive_document_file_url(
     archive_document_is_comic_book: bool,
-    archive_document_empty: bool,
-    archive_root_url_empty: bool,
-    archive_root_scheme: &str,
-    archive_root_path: &str,
-    image_url_empty: bool,
-    image_scheme: &str,
-    image_path: &str,
+    displayed_location_inside_archive_document: bool,
 ) -> bool {
-    archive_document_is_comic_book
-        && rust_archive_document_contains_url(
-            archive_document_empty,
-            archive_root_url_empty,
-            archive_root_scheme,
-            archive_root_path,
-            image_url_empty,
-            image_scheme,
-            image_path,
-        )
+    archive_document_is_comic_book && displayed_location_inside_archive_document
 }
 
 fn containing_archive_root_path(path: &str, markers: &[String]) -> RustArchiveRootPath {
@@ -318,34 +258,12 @@ mod tests {
             "tar",
             "/books/book.cbz/chapter/page001.png"
         ));
-        assert!(rust_zoom_scope_uses_archive_document_file_url(
-            false,
-            false,
-            "zip",
-            "/books/book.zip/",
-            false,
-            "zip",
-            "/books/book.zip/page001.png"
-        ));
+        assert!(rust_zoom_scope_uses_archive_document_file_url(true));
         assert!(rust_container_navigation_uses_archive_document_file_url(
-            true,
-            false,
-            false,
-            "zip",
-            "/books/book.cbz/",
-            false,
-            "zip",
-            "/books/book.cbz/page001.png"
+            true, true
         ));
         assert!(!rust_container_navigation_uses_archive_document_file_url(
-            false,
-            false,
-            false,
-            "zip",
-            "/books/book.zip/",
-            false,
-            "zip",
-            "/books/book.zip/page001.png"
+            false, true
         ));
     }
 
@@ -354,29 +272,14 @@ mod tests {
         assert_eq!(
             rust_window_title_file_name_for_displayed_location(
                 false,
-                "zip",
-                "/books/book.cbz/page001.png",
                 "page001.png",
-                false,
-                false,
-                "zip",
-                "/books/book.cbz/",
+                true,
                 "book.cbz",
             ),
             "book.cbz"
         );
         assert_eq!(
-            rust_window_title_file_name_for_displayed_location(
-                false,
-                "file",
-                "/images/page001.png",
-                "page001.png",
-                true,
-                true,
-                "",
-                "",
-                "",
-            ),
+            rust_window_title_file_name_for_displayed_location(false, "page001.png", false, "",),
             "page001.png"
         );
     }

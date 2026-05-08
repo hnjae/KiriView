@@ -126,15 +126,6 @@ bool archiveDocumentContainsUrlInRust(
         rustStringView(candidate.scheme), rustStringView(candidate.path));
 }
 
-bool scopeUsesArchiveDocumentFileUrlInRust(const KiriView::DisplayedImageLocation &location,
-    bool (*rustFunction)(bool, bool, rust::Str, rust::Str, bool, rust::Str, rust::Str))
-{
-    const UrlParts root = urlParts(location.archiveDocumentRootUrl());
-    const UrlParts image = urlParts(location.imageUrl());
-    return rustFunction(location.archiveDocument().isEmpty(), root.empty,
-        rustStringView(root.scheme), rustStringView(root.path), image.empty,
-        rustStringView(image.scheme), rustStringView(image.path));
-}
 }
 
 namespace KiriView {
@@ -200,14 +191,11 @@ std::optional<QUrl> containingDirectArchiveOpenRootUrl(const QUrl &url)
 
 QString windowTitleFileNameForDisplayedLocation(const DisplayedImageLocation &location)
 {
-    const UrlParts image = urlParts(location.imageUrl());
-    const UrlParts root = urlParts(location.archiveDocumentRootUrl());
     const QByteArray imageFileName = location.imageUrl().fileName().toUtf8();
     const QByteArray archiveFileName = location.archiveDocumentFileUrl().fileName().toUtf8();
-    return rustStringToQString(rustWindowTitleFileNameForDisplayedLocation(image.empty,
-        rustStringView(image.scheme), rustStringView(image.path), rustStringView(imageFileName),
-        location.archiveDocument().isEmpty(), root.empty, rustStringView(root.scheme),
-        rustStringView(root.path), rustStringView(archiveFileName)));
+    return rustStringToQString(rustWindowTitleFileNameForDisplayedLocation(
+        location.imageUrl().isEmpty(), rustStringView(imageFileName),
+        displayedLocationIsInsideArchiveDocument(location), rustStringView(archiveFileName)));
 }
 
 std::vector<ContainerNavigationCandidate> containerNavigationCandidates(const KFileItemList &items)
@@ -231,7 +219,8 @@ std::vector<ContainerNavigationCandidate> containerNavigationCandidates(const KF
 
 QUrl zoomScopeUrlForLocation(const DisplayedImageLocation &location)
 {
-    if (scopeUsesArchiveDocumentFileUrlInRust(location, rustZoomScopeUsesArchiveDocumentFileUrl)) {
+    if (rustZoomScopeUsesArchiveDocumentFileUrl(
+            displayedLocationIsInsideArchiveDocument(location))) {
         return archiveDocumentFileNavigationUrl(location);
     }
 
@@ -240,12 +229,8 @@ QUrl zoomScopeUrlForLocation(const DisplayedImageLocation &location)
 
 QUrl containerNavigationUrlForLocation(const DisplayedImageLocation &location)
 {
-    const UrlParts root = urlParts(location.archiveDocumentRootUrl());
-    const UrlParts image = urlParts(location.imageUrl());
     if (!rustContainerNavigationUsesArchiveDocumentFileUrl(location.archiveDocument().isComicBook(),
-            location.archiveDocument().isEmpty(), root.empty, rustStringView(root.scheme),
-            rustStringView(root.path), image.empty, rustStringView(image.scheme),
-            rustStringView(image.path))) {
+            displayedLocationIsInsideArchiveDocument(location))) {
         return {};
     }
 
