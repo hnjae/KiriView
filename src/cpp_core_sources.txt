@@ -10,6 +10,7 @@ src/archivepath.cpp
 src/bufferedimagereader.cpp
 src/displayedimagestate.cpp
 src/filedeletion.cpp
+src/filedeletionfallback.cpp
 src/heifcontainer.cpp
 src/heifdecoder.cpp
 src/heifsupport.cpp

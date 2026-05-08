@@ -27,6 +27,7 @@
 #include <optional>
 
 namespace KiriView {
+struct DeletionFallbackPlan;
 class ImageDocumentNavigationController;
 class ImageOpenController;
 class ImagePresentationController;
@@ -83,8 +84,6 @@ public:
     void updateRenderContext();
 
 private:
-    struct DeletionFallbackPlan;
-
     void dispatchEffect(ImageDocumentEffect effect);
     void dispatchEffectPayload(const ClearImageEffect &);
     void dispatchEffectPayload(const ResetZoomEffect &);
