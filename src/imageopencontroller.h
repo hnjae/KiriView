@@ -57,6 +57,8 @@ private:
     bool finishDecodedImageResult(ImageLoadSession &session, DecodedAnimationImage &decoded);
     bool finishDecodedImageResult(ImageLoadSession &session, ReaderAnimationImage &decoded);
     bool finishDecodedImageResult(ImageLoadSession &session, HeifSequenceAnimationImage &decoded);
+    bool finishAnimationImageLoad(
+        const ImageLoadSession &session, const QImage &firstFrame, std::function<void()> start);
     void finishLoadWithError(
         const ImageLoadSession &session, ImageLoadError error, const QString &errorString);
     void finishReplacementLoadWithError(const QString &errorString);

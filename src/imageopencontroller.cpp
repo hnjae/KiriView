@@ -150,25 +150,33 @@ bool ImageOpenController::finishDecodedImageResult(
         return false;
     }
 
-    finishLoadSuccessfully(session, decoded.frames.front().image, false);
-    m_presentationController.startDecodedAnimation(std::move(decoded.frames), decoded.loopCount);
-    return true;
+    return finishAnimationImageLoad(session, decoded.frames.front().image, [this, &decoded]() {
+        m_presentationController.startDecodedAnimation(
+            std::move(decoded.frames), decoded.loopCount);
+    });
 }
 
 bool ImageOpenController::finishDecodedImageResult(
     ImageLoadSession &session, ReaderAnimationImage &decoded)
 {
-    finishLoadSuccessfully(session, decoded.firstFrame, false);
-    m_presentationController.startAnimation(
-        decoded.data, decoded.format, decoded.loopCount, decoded.firstFrameDelay);
-    return true;
+    return finishAnimationImageLoad(session, decoded.firstFrame, [this, &decoded]() {
+        m_presentationController.startAnimation(
+            decoded.data, decoded.format, decoded.loopCount, decoded.firstFrameDelay);
+    });
 }
 
 bool ImageOpenController::finishDecodedImageResult(
     ImageLoadSession &session, HeifSequenceAnimationImage &decoded)
 {
-    finishLoadSuccessfully(session, decoded.firstFrame, false);
-    m_presentationController.startHeifSequenceAnimation(decoded.data);
+    return finishAnimationImageLoad(session, decoded.firstFrame,
+        [this, &decoded]() { m_presentationController.startHeifSequenceAnimation(decoded.data); });
+}
+
+bool ImageOpenController::finishAnimationImageLoad(
+    const ImageLoadSession &session, const QImage &firstFrame, std::function<void()> start)
+{
+    finishLoadSuccessfully(session, firstFrame, false);
+    start();
     return true;
 }
 
