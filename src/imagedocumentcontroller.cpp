@@ -19,6 +19,13 @@
 #include <variant>
 
 namespace KiriView {
+ImageDocumentController::ImageDocumentController(
+    QObject *parent, RenderContextProvider renderContextProvider, ChangeCallback changeCallback)
+    : ImageDocumentController(parent, std::move(renderContextProvider), std::move(changeCallback),
+          ImageAsyncDependencies {})
+{
+}
+
 ImageDocumentController::ImageDocumentController(QObject *parent,
     RenderContextProvider renderContextProvider, ChangeCallback changeCallback,
     ImageAsyncDependencies dependencies, FileDeletionFailedCallback fileDeletionFailedCallback)

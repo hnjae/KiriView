@@ -10,6 +10,16 @@
 #include <utility>
 
 namespace KiriView {
+ImageDecodeJob::ImageDecodeJob(QObject *parent)
+    : ImageDecodeJob(parent, Callbacks {})
+{
+}
+
+ImageDecodeJob::ImageDecodeJob(QObject *parent, Callbacks callbacks)
+    : ImageDecodeJob(parent, {}, std::move(callbacks))
+{
+}
+
 ImageDecodeJob::ImageDecodeJob(QObject *parent, ImageDecodeDependencies dependencies)
     : ImageDecodeJob(parent, std::move(dependencies), Callbacks {})
 {

@@ -37,10 +37,6 @@ const RUST_BRIDGE_SOURCES: &[&str] = &[
     "src/localization.rs",
 ];
 const CXX_QT_CPP_SOURCES: &[&str] = &[
-    "src/imagedocumentcontrollerdefaults.cpp",
-    "src/imagedecodejobdefaults.cpp",
-    "src/imageloaderdefaults.cpp",
-    "src/imagepredecodecoordinatordefaults.cpp",
     "src/apngdecoder.cpp",
     "src/kiriimagedocument.cpp",
     "src/kiriimagedecoder.cpp",

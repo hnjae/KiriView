@@ -19,6 +19,12 @@ using KiriView::predecodeWindowImageUrls;
 }
 
 namespace KiriView {
+ImagePredecodeCoordinator::ImagePredecodeCoordinator(QObject *parent)
+    : ImagePredecodeCoordinator(
+          parent, ImageNavigationCandidateProvider {}, ImageDecodeDependencies {})
+{
+}
+
 ImagePredecodeCoordinator::ImagePredecodeCoordinator(QObject *parent,
     ImageNavigationCandidateProvider candidateProvider, ImageDecodeDependencies decodeDependencies)
     : QObject(parent)

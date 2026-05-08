@@ -12,6 +12,11 @@
 #include <vector>
 
 namespace KiriView {
+ImageLoader::ImageLoader(QObject *parent)
+    : ImageLoader(parent, ImageNavigationCandidateProvider {}, ImageDecodeDependencies {})
+{
+}
+
 ImageLoader::ImageLoader(QObject *parent, Callbacks callbacks)
     : ImageLoader(parent, ImageNavigationCandidateProvider {}, ImageDecodeDependencies {},
           std::move(callbacks))
