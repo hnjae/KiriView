@@ -171,6 +171,12 @@ void TestKiriViewApplication::shortcutsApiReturnsCurrentShortcuts()
         QList<QKeySequence>(
             { shortcut(QStringLiteral("Ctrl+=")), shortcut(QStringLiteral("Ctrl++")),
                 shortcut(QStringLiteral("=")), shortcut(QStringLiteral("+")) }));
+    QCOMPARE(application.shortcuts(QStringLiteral("view_toggle_two_page_mode")),
+        QList<QKeySequence>({ shortcut(QStringLiteral("D")) }));
+    QCOMPARE(application.shortcuts(QStringLiteral("go_previous_single_page")),
+        QList<QKeySequence>({ shortcut(QStringLiteral("P")) }));
+    QCOMPARE(application.shortcuts(QStringLiteral("go_next_single_page")),
+        QList<QKeySequence>({ shortcut(QStringLiteral("N")) }));
     QCOMPARE(application.shortcuts(QStringLiteral("missing_action")), QList<QKeySequence>());
 
     QAction *openAction = application.action(QStringLiteral("file_open"));

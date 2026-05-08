@@ -59,6 +59,11 @@ int ImageDocumentNavigationController::imageCount() const
     return m_navigationService->imageCount();
 }
 
+std::optional<QUrl> ImageDocumentNavigationController::urlAtPage(int pageNumber) const
+{
+    return m_navigationService->urlAtPage(pageNumber);
+}
+
 void ImageDocumentNavigationController::openPreviousImage()
 {
     openAdjacentImage(NavigationDirection::Previous);

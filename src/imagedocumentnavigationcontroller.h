@@ -12,6 +12,7 @@
 #include <QUrl>
 #include <functional>
 #include <memory>
+#include <optional>
 
 class QObject;
 
@@ -37,6 +38,7 @@ public:
 
     int currentPageNumber() const;
     int imageCount() const;
+    std::optional<QUrl> urlAtPage(int pageNumber) const;
 
     void openPreviousImage();
     void openNextImage();

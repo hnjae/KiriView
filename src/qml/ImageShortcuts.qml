@@ -25,6 +25,7 @@ Item {
     readonly property bool readyShortcutsEnabled: root.imageReady && !root.imageDocument.fileDeletionInProgress && root.helpShortcutsEnabled
     readonly property bool readyCommandShortcutsEnabled: root.imageReady && !root.imageDocument.fileDeletionInProgress && root.commandShortcutsEnabled
     readonly property bool pageCommandShortcutsEnabled: readyCommandShortcutsEnabled && root.imageDocument.imageCount > 0
+    readonly property bool twoPageCommandShortcutsEnabled: readyCommandShortcutsEnabled && root.imageDocument.twoPageModeAvailable && root.imageDocument.twoPageModeEnabled
     readonly property bool pannableCommandShortcutsEnabled: root.imagePannable && !root.imageDocument.fileDeletionInProgress && root.commandShortcutsEnabled
     readonly property bool containerCommandShortcutsEnabled: root.imageDocument.containerNavigationAvailable && !root.imageDocument.fileDeletionInProgress && root.commandShortcutsEnabled
     readonly property int zoomStepPercent: imageDocument.zoomStepPercent
@@ -150,7 +151,7 @@ Item {
     }
 
     ActionShortcutGroup {
-        actionIds: [KiriViewApplication.ViewZoomInAction, KiriViewApplication.ViewZoomOutAction, KiriViewApplication.ViewFitAction, KiriViewApplication.ViewFitHeightAction, KiriViewApplication.ViewFitWidthAction, KiriViewApplication.ViewActualSizeAction]
+        actionIds: [KiriViewApplication.ViewZoomInAction, KiriViewApplication.ViewZoomOutAction, KiriViewApplication.ViewFitAction, KiriViewApplication.ViewFitHeightAction, KiriViewApplication.ViewFitWidthAction, KiriViewApplication.ViewActualSizeAction, KiriViewApplication.ViewToggleTwoPageModeAction]
         application: root.application
         shortcutsEnabled: root.readyCommandShortcutsEnabled
     }
@@ -183,6 +184,12 @@ Item {
         actionIds: [KiriViewApplication.GoFirstImageAction, KiriViewApplication.GoLastImageAction]
         application: root.application
         shortcutsEnabled: root.pageCommandShortcutsEnabled
+    }
+
+    ActionShortcutGroup {
+        actionIds: [KiriViewApplication.GoPreviousSinglePageAction, KiriViewApplication.GoNextSinglePageAction]
+        application: root.application
+        shortcutsEnabled: root.twoPageCommandShortcutsEnabled
     }
 
     ActionShortcutGroup {

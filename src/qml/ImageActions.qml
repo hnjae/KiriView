@@ -15,10 +15,11 @@ Item {
     required property bool helpDialogOpen
     required property bool fullscreen
 
-    readonly property bool canOpenNextImage: root.imageReady && root.imageDocument.currentPageNumber > 0 && root.imageDocument.currentPageNumber < root.imageDocument.imageCount
+    readonly property bool canOpenNextImage: root.imageReady && root.imageDocument.currentPageNumber > 0 && root.imageDocument.currentLastPageNumber < root.imageDocument.imageCount
     readonly property bool canOpenPreviousImage: root.imageReady && root.imageDocument.currentPageNumber > 1
     readonly property bool canUsePageActions: root.imageReady && root.imageDocument.imageCount > 0 && !root.imageDocument.fileDeletionInProgress && !root.helpDialogOpen
     readonly property bool canUseReadyActions: root.imageReady && !root.imageDocument.fileDeletionInProgress && !root.helpDialogOpen
+    readonly property bool canUseTwoPageActions: root.canUseReadyActions && root.imageDocument.twoPageModeAvailable && root.imageDocument.twoPageModeEnabled
 
     readonly property var openAction: openManagedAction.proxy
     readonly property var moveToTrashAction: moveToTrashManagedAction.proxy
@@ -27,12 +28,15 @@ Item {
     readonly property var nextContainerAction: nextContainerManagedAction.proxy
     readonly property var previousImageAction: previousImageManagedAction.proxy
     readonly property var nextImageAction: nextImageManagedAction.proxy
+    readonly property var previousSinglePageAction: previousSinglePageManagedAction.proxy
+    readonly property var nextSinglePageAction: nextSinglePageManagedAction.proxy
     readonly property var firstImageAction: firstImageManagedAction.proxy
     readonly property var lastImageAction: lastImageManagedAction.proxy
     readonly property var fitAction: fitManagedAction.proxy
     readonly property var fitHeightAction: fitHeightManagedAction.proxy
     readonly property var fitWidthAction: fitWidthManagedAction.proxy
     readonly property var actualSizeAction: actualSizeManagedAction.proxy
+    readonly property var twoPageModeAction: twoPageModeManagedAction.proxy
     readonly property var zoomInAction: zoomInManagedAction.proxy
     readonly property var zoomOutAction: zoomOutManagedAction.proxy
     readonly property var scanForwardAction: scanForwardManagedAction.proxy
@@ -43,7 +47,7 @@ Item {
     readonly property var configureShortcutsAction: configureShortcutsManagedAction.proxy
     readonly property var showMenubarAction: showMenubarManagedAction.proxy
     readonly property var quitAction: quitManagedAction.proxy
-    readonly property var applicationMenuActions: [openAction, applicationMenuFileSeparator, moveToTrashAction, deleteFileAction, applicationMenuNavigationSeparator, previousContainerAction, nextContainerAction, applicationMenuViewSeparator, fullscreenAction, applicationMenuSettingsSeparator, showMenubarAction, configureAction, configureShortcutsAction, applicationMenuHelpSeparator, shortcutHelpAction, applicationMenuQuitSeparator, quitAction]
+    readonly property var applicationMenuActions: [openAction, applicationMenuFileSeparator, moveToTrashAction, deleteFileAction, applicationMenuNavigationSeparator, previousContainerAction, nextContainerAction, applicationMenuViewSeparator, twoPageModeAction, fullscreenAction, applicationMenuSettingsSeparator, showMenubarAction, configureAction, configureShortcutsAction, applicationMenuHelpSeparator, shortcutHelpAction, applicationMenuQuitSeparator, quitAction]
 
     signal openDialogRequested
     signal imageBoundaryReached(string message)
@@ -63,7 +67,7 @@ Item {
     }
 
     function openNextImage() {
-        if (root.imageReady && root.imageDocument.currentPageNumber === root.imageDocument.imageCount) {
+        if (root.imageReady && root.imageDocument.currentLastPageNumber >= root.imageDocument.imageCount) {
             root.imageBoundaryReached(KI18n.i18nc("@info:status", "Last image"));
             return;
         }
@@ -195,6 +199,30 @@ Item {
     }
 
     ManagedAction {
+        id: previousSinglePageManagedAction
+
+        actionEnabled: root.canUseTwoPageActions
+        actionId: KiriViewApplication.GoPreviousSinglePageAction
+        application: root.application
+        bindEnabled: true
+        proxyEnabled: root.canOpenPreviousImage && !root.helpDialogOpen
+
+        onTriggered: root.imageDocument.openPreviousSinglePage()
+    }
+
+    ManagedAction {
+        id: nextSinglePageManagedAction
+
+        actionEnabled: root.canUseTwoPageActions
+        actionId: KiriViewApplication.GoNextSinglePageAction
+        application: root.application
+        bindEnabled: true
+        proxyEnabled: root.imageReady && root.imageDocument.currentPageNumber > 0 && root.imageDocument.currentPageNumber < root.imageDocument.imageCount && !root.helpDialogOpen
+
+        onTriggered: root.imageDocument.openNextSinglePage()
+    }
+
+    ManagedAction {
         id: firstImageManagedAction
 
         actionEnabled: root.canUsePageActions
@@ -266,6 +294,22 @@ Item {
         bindEnabled: true
 
         onTriggered: root.imageDocument.zoomPercent = 100
+    }
+
+    ManagedAction {
+        id: twoPageModeManagedAction
+
+        actionChecked: root.imageDocument.twoPageModeEnabled && root.imageDocument.twoPageModeAvailable
+        actionEnabled: root.canUseReadyActions && root.imageDocument.twoPageModeAvailable
+        actionId: KiriViewApplication.ViewToggleTwoPageModeAction
+        application: root.application
+        bindChecked: true
+        bindEnabled: true
+        displayHint: Kirigami.DisplayHint.KeepVisible
+        proxyCheckable: true
+        proxyChecked: root.imageDocument.twoPageModeEnabled && root.imageDocument.twoPageModeAvailable
+
+        onTriggered: root.imageDocument.twoPageModeEnabled = !root.imageDocument.twoPageModeEnabled
     }
 
     ManagedAction {

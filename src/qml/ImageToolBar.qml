@@ -30,7 +30,7 @@ Controls.ToolBar {
     readonly property int edgeMargin: controlSpacing
     readonly property bool interactionActive: toolbarHoverHandler.hovered || textInputFocused()
     readonly property int toolbarVerticalPadding: controlSpacing
-    readonly property var toolbarControls: [zoomLevelAction, fitMenuAction]
+    readonly property var toolbarControls: [root.actions.twoPageModeAction, zoomLevelAction, fitMenuAction]
     readonly property var toolbarActions: showApplicationMenuActions ? toolbarControls.concat([applicationMenuAction]) : toolbarControls
 
     signal pageNumberResetRequested

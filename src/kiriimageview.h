@@ -21,6 +21,8 @@ class KiriImageView : public QQuickItem
     QML_ELEMENT
 
     Q_PROPERTY(KiriImageDocument *document READ document WRITE setDocument NOTIFY documentChanged)
+    Q_PROPERTY(
+        bool secondaryPage READ secondaryPage WRITE setSecondaryPage NOTIFY secondaryPageChanged)
 
 public:
     explicit KiriImageView(QQuickItem *parent = nullptr);
@@ -28,6 +30,8 @@ public:
 
     KiriImageDocument *document() const;
     void setDocument(KiriImageDocument *document);
+    bool secondaryPage() const;
+    void setSecondaryPage(bool secondaryPage);
 
     Q_INVOKABLE QPointF panContentPosition(
         const QPointF &contentPosition, const QPointF &delta) const;
@@ -44,9 +48,11 @@ public:
 
 Q_SIGNALS:
     void documentChanged();
+    void secondaryPageChanged();
 
 private:
     QSize imageSize() const;
+    QSize renderImageSize() const;
     QSizeF viewportSize() const;
     QSizeF displaySize() const;
     QRectF viewportImageRect() const;
@@ -57,6 +63,7 @@ private:
     int maximumTextureSize() const;
 
     KiriImageDocument *m_document = nullptr;
+    bool m_secondaryPage = false;
     QMetaObject::Connection m_repaintConnection;
     QMetaObject::Connection m_documentDestroyedConnection;
 };

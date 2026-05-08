@@ -128,6 +128,16 @@ QUrl KiriImageDocument::displayedUrl() const { return m_documentController->disp
 
 QSize KiriImageDocument::imageSize() const { return m_documentController->imageSize(); }
 
+QSize KiriImageDocument::primaryImageSize() const
+{
+    return m_documentController->primaryImageSize();
+}
+
+QSize KiriImageDocument::secondaryImageSize() const
+{
+    return m_documentController->secondaryImageSize();
+}
+
 QSizeF KiriImageDocument::viewportSize() const { return m_documentController->viewportSize(); }
 
 void KiriImageDocument::setViewportSize(const QSizeF &viewportSize)
@@ -146,6 +156,16 @@ void KiriImageDocument::setVisibleItemRect(const QRectF &visibleItemRect)
 }
 
 QSizeF KiriImageDocument::displaySize() const { return m_documentController->displaySize(); }
+
+QSizeF KiriImageDocument::primaryDisplaySize() const
+{
+    return m_documentController->primaryDisplaySize();
+}
+
+QSizeF KiriImageDocument::secondaryDisplaySize() const
+{
+    return m_documentController->secondaryDisplaySize();
+}
 
 double KiriImageDocument::zoomPercent() const { return m_documentController->zoomPercent(); }
 
@@ -184,6 +204,11 @@ int KiriImageDocument::currentPageNumber() const
     return m_documentController->currentPageNumber();
 }
 
+int KiriImageDocument::currentLastPageNumber() const
+{
+    return m_documentController->currentLastPageNumber();
+}
+
 int KiriImageDocument::imageCount() const { return m_documentController->imageCount(); }
 
 bool KiriImageDocument::containerNavigationAvailable() const
@@ -196,16 +221,49 @@ bool KiriImageDocument::fileDeletionInProgress() const
     return m_documentController->fileDeletionInProgress();
 }
 
-std::shared_ptr<KiriView::DisplayedImageSurface> KiriImageDocument::imageSurface() const
+bool KiriImageDocument::twoPageModeEnabled() const
 {
-    return m_documentController->imageSurface();
+    return m_documentController->twoPageModeEnabled();
+}
+
+void KiriImageDocument::setTwoPageModeEnabled(bool enabled)
+{
+    m_documentController->setTwoPageModeEnabled(enabled);
+}
+
+bool KiriImageDocument::twoPageModeAvailable() const
+{
+    return m_documentController->twoPageModeAvailable();
+}
+
+bool KiriImageDocument::secondaryPageVisible() const
+{
+    return m_documentController->secondaryPageVisible();
+}
+
+std::shared_ptr<KiriView::DisplayedImageSurface> KiriImageDocument::imageSurface(
+    KiriView::DisplayedPageRole role) const
+{
+    return m_documentController->imageSurface(role);
 }
 
 const QImage &KiriImageDocument::image() const { return m_documentController->image(); }
 
-quint64 KiriImageDocument::imageRevision() const { return m_documentController->imageRevision(); }
+quint64 KiriImageDocument::imageRevision(KiriView::DisplayedPageRole role) const
+{
+    return m_documentController->imageRevision(role);
+}
 
-quint64 KiriImageDocument::renderRevision() const { return imageRevision(); }
+quint64 KiriImageDocument::renderRevision(KiriView::DisplayedPageRole role) const
+{
+    return imageRevision(role);
+}
+
+QSize KiriImageDocument::renderImageSize(KiriView::DisplayedPageRole role) const
+{
+    return role == KiriView::DisplayedPageRole::Secondary ? secondaryImageSize()
+                                                          : primaryImageSize();
+}
 
 void KiriImageDocument::setRenderContextProvider(RenderContextProvider provider)
 {
@@ -216,6 +274,10 @@ void KiriImageDocument::setRenderContextProvider(RenderContextProvider provider)
 void KiriImageDocument::openPreviousImage() { m_documentController->openPreviousImage(); }
 
 void KiriImageDocument::openNextImage() { m_documentController->openNextImage(); }
+
+void KiriImageDocument::openPreviousSinglePage() { m_documentController->openPreviousSinglePage(); }
+
+void KiriImageDocument::openNextSinglePage() { m_documentController->openNextSinglePage(); }
 
 void KiriImageDocument::openPreviousContainer() { m_documentController->openPreviousContainer(); }
 
@@ -295,6 +357,10 @@ void KiriImageDocument::handleDocumentChange(ImageDocumentChange change)
         return;
     case ImageDocumentChange::FileDeletionInProgress:
         Q_EMIT fileDeletionInProgressChanged();
+        return;
+    case ImageDocumentChange::TwoPageMode:
+        Q_EMIT twoPageModeChanged();
+        Q_EMIT pageNavigationChanged();
         return;
     case ImageDocumentChange::Repaint:
         Q_EMIT repaintRequested();

@@ -36,6 +36,14 @@ Kirigami.OverlaySheet {
             "description": KI18n.i18nc("@info:whatsthis", "First or last image")
         },
         {
+            "keyText": root.shortcutText(KiriViewApplication.ViewToggleTwoPageModeAction),
+            "description": KI18n.i18nc("@info:whatsthis", "Toggle two-page mode")
+        },
+        {
+            "keyText": root.shortcutTexts([KiriViewApplication.GoPreviousSinglePageAction, KiriViewApplication.GoNextSinglePageAction]),
+            "description": KI18n.i18nc("@info:whatsthis", "Adjust two-page mode by one page")
+        },
+        {
             "keyText": root.shortcutText(KiriViewApplication.ViewZoomInAction),
             "description": KI18n.i18nc("@info:whatsthis", "Zoom in")
         },

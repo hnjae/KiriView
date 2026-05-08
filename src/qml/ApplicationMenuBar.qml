@@ -47,6 +47,14 @@ Controls.MenuBar {
             action: root.actions.nextImageAction
         }
 
+        Controls.MenuItem {
+            action: root.actions.previousSinglePageAction
+        }
+
+        Controls.MenuItem {
+            action: root.actions.nextSinglePageAction
+        }
+
         Controls.MenuSeparator {}
 
         Controls.MenuItem {
@@ -105,6 +113,14 @@ Controls.MenuBar {
 
         Controls.MenuItem {
             action: root.actions.actualSizeAction
+        }
+
+        Controls.MenuSeparator {}
+
+        Controls.MenuItem {
+            action: root.actions.twoPageModeAction
+            checkable: true
+            checked: root.imageDocument.twoPageModeEnabled && root.imageDocument.twoPageModeAvailable
         }
 
         Controls.MenuSeparator {}

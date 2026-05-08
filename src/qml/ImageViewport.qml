@@ -9,7 +9,7 @@ Item {
     id: root
 
     property alias imageDocument: imageDocument
-    property alias imageView: imageView
+    property alias imageView: primaryImageView
     property alias flickable: imageFlickable
     property bool imageReady: imageDocument.status === KiriImageDocument.Ready
     property bool pendingFinalScanStart: false
@@ -137,7 +137,7 @@ Item {
     KiriImageDocument {
         id: imageDocument
 
-        visibleItemRect: Qt.rect(imageFlickable.contentX - imageView.x, imageFlickable.contentY - imageView.y, imageFlickable.width, imageFlickable.height)
+        visibleItemRect: Qt.rect(imageFlickable.contentX - spreadItem.x, imageFlickable.contentY - spreadItem.y, imageFlickable.width, imageFlickable.height)
         viewportSize: Qt.size(imageFlickable.width, imageFlickable.height)
 
         onDisplayedUrlChanged: {
@@ -164,8 +164,8 @@ Item {
         anchors.fill: parent
         boundsBehavior: Flickable.StopAtBounds
         clip: true
-        contentHeight: Math.max(height, imageView.y + imageView.height)
-        contentWidth: Math.max(width, imageView.x + imageView.width)
+        contentHeight: Math.max(height, spreadItem.y + spreadItem.height)
+        contentWidth: Math.max(width, spreadItem.x + spreadItem.width)
         interactive: imageDocument.status === KiriImageDocument.Ready && (contentWidth > width || contentHeight > height)
 
         Controls.ScrollBar.horizontal: Controls.ScrollBar {
@@ -176,14 +176,35 @@ Item {
             policy: imageFlickable.contentHeight > imageFlickable.height ? Controls.ScrollBar.AsNeeded : Controls.ScrollBar.AlwaysOff
         }
 
-        KiriImageView {
-            id: imageView
+        Item {
+            id: spreadItem
 
-            document: imageDocument
             height: imageDocument.displaySize.height
             width: imageDocument.displaySize.width
             x: Math.max(0, (imageFlickable.width - width) / 2)
             y: Math.max(0, (imageFlickable.height - height) / 2)
+
+            KiriImageView {
+                id: primaryImageView
+
+                document: imageDocument
+                height: imageDocument.primaryDisplaySize.height
+                width: imageDocument.primaryDisplaySize.width
+                x: 0
+                y: Math.max(0, (spreadItem.height - height) / 2)
+            }
+
+            KiriImageView {
+                id: secondaryImageView
+
+                document: imageDocument
+                height: imageDocument.secondaryDisplaySize.height
+                secondaryPage: true
+                visible: imageDocument.secondaryPageVisible
+                width: imageDocument.secondaryDisplaySize.width
+                x: primaryImageView.width
+                y: Math.max(0, (spreadItem.height - height) / 2)
+            }
         }
     }
 

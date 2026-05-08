@@ -36,6 +36,19 @@ void KiriImageView::setDocument(KiriImageDocument *document)
     update();
 }
 
+bool KiriImageView::secondaryPage() const { return m_secondaryPage; }
+
+void KiriImageView::setSecondaryPage(bool secondaryPage)
+{
+    if (m_secondaryPage == secondaryPage) {
+        return;
+    }
+
+    m_secondaryPage = secondaryPage;
+    Q_EMIT secondaryPageChanged();
+    update();
+}
+
 QPointF KiriImageView::panContentPosition(
     const QPointF &contentPosition, const QPointF &delta) const
 {
@@ -83,7 +96,10 @@ QSGNode *KiriImageView::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *)
         return nullptr;
     }
 
-    std::shared_ptr<KiriView::DisplayedImageSurface> surface = m_document->imageSurface();
+    const KiriView::DisplayedPageRole role = m_secondaryPage
+        ? KiriView::DisplayedPageRole::Secondary
+        : KiriView::DisplayedPageRole::Primary;
+    std::shared_ptr<KiriView::DisplayedImageSurface> surface = m_document->imageSurface(role);
     if (surface == nullptr || KiriView::displayedImageSurfaceIsNull(*surface)) {
         delete oldNode;
         return nullptr;
@@ -101,8 +117,8 @@ QSGNode *KiriImageView::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *)
     }
 
     node->setRhi(window() == nullptr ? nullptr : window()->rhi());
-    node->setSurface(std::move(surface), m_document->renderRevision());
-    node->setTargetRect(KiriView::imageTargetRect(m_document->imageSize(), boundsSize));
+    node->setSurface(std::move(surface), m_document->renderRevision(role));
+    node->setTargetRect(KiriView::imageTargetRect(renderImageSize(), boundsSize));
     node->markDirty(QSGNode::DirtyGeometry | QSGNode::DirtyMaterial);
     return node;
 }
@@ -120,6 +136,16 @@ void KiriImageView::itemChange(ItemChange change, const ItemChangeData &value)
 QSize KiriImageView::imageSize() const
 {
     return m_document == nullptr ? QSize() : m_document->imageSize();
+}
+
+QSize KiriImageView::renderImageSize() const
+{
+    if (m_document == nullptr) {
+        return {};
+    }
+
+    return m_document->renderImageSize(m_secondaryPage ? KiriView::DisplayedPageRole::Secondary
+                                                       : KiriView::DisplayedPageRole::Primary);
 }
 
 QSizeF KiriImageView::viewportSize() const

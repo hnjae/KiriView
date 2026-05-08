@@ -14,6 +14,11 @@ enum class ImageDocumentStatus {
     Error,
 };
 
+enum class DisplayedPageRole {
+    Primary,
+    Secondary,
+};
+
 enum class ImageDocumentChange {
     SourceUrl,
     Status,
@@ -31,6 +36,7 @@ enum class ImageDocumentChange {
     PageNavigation,
     ContainerNavigation,
     FileDeletionInProgress,
+    TwoPageMode,
     Repaint,
 };
 

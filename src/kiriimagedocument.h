@@ -36,11 +36,15 @@ class KiriImageDocument : public QObject
         QString windowTitleFileName READ windowTitleFileName NOTIFY windowTitleFileNameChanged)
     Q_PROPERTY(QUrl displayedUrl READ displayedUrl NOTIFY displayedUrlChanged)
     Q_PROPERTY(QSize imageSize READ imageSize NOTIFY imageSizeChanged)
+    Q_PROPERTY(QSize primaryImageSize READ primaryImageSize NOTIFY imageSizeChanged)
+    Q_PROPERTY(QSize secondaryImageSize READ secondaryImageSize NOTIFY twoPageModeChanged)
     Q_PROPERTY(
         QSizeF viewportSize READ viewportSize WRITE setViewportSize NOTIFY viewportSizeChanged)
     Q_PROPERTY(QRectF visibleItemRect READ visibleItemRect WRITE setVisibleItemRect NOTIFY
             visibleItemRectChanged)
     Q_PROPERTY(QSizeF displaySize READ displaySize NOTIFY displaySizeChanged)
+    Q_PROPERTY(QSizeF primaryDisplaySize READ primaryDisplaySize NOTIFY displaySizeChanged)
+    Q_PROPERTY(QSizeF secondaryDisplaySize READ secondaryDisplaySize NOTIFY twoPageModeChanged)
     Q_PROPERTY(double zoomPercent READ zoomPercent WRITE setZoomPercent NOTIFY zoomPercentChanged)
     Q_PROPERTY(ZoomMode zoomMode READ zoomMode NOTIFY zoomModeChanged)
     Q_PROPERTY(int minimumManualZoomPercent READ minimumManualZoomPercent CONSTANT)
@@ -49,11 +53,16 @@ class KiriImageDocument : public QObject
     Q_PROPERTY(int zoomStepPercent READ zoomStepPercent CONSTANT)
     Q_PROPERTY(QStringList openDialogNameFilters READ openDialogNameFilters CONSTANT)
     Q_PROPERTY(int currentPageNumber READ currentPageNumber NOTIFY pageNavigationChanged)
+    Q_PROPERTY(int currentLastPageNumber READ currentLastPageNumber NOTIFY pageNavigationChanged)
     Q_PROPERTY(int imageCount READ imageCount NOTIFY pageNavigationChanged)
     Q_PROPERTY(bool containerNavigationAvailable READ containerNavigationAvailable NOTIFY
             containerNavigationChanged)
     Q_PROPERTY(bool fileDeletionInProgress READ fileDeletionInProgress NOTIFY
             fileDeletionInProgressChanged)
+    Q_PROPERTY(bool twoPageModeEnabled READ twoPageModeEnabled WRITE setTwoPageModeEnabled NOTIFY
+            twoPageModeChanged)
+    Q_PROPERTY(bool twoPageModeAvailable READ twoPageModeAvailable NOTIFY twoPageModeChanged)
+    Q_PROPERTY(bool secondaryPageVisible READ secondaryPageVisible NOTIFY twoPageModeChanged)
 
 public:
     using RenderContextProvider = std::function<KiriView::ImageDocumentRenderContext()>;
@@ -92,11 +101,15 @@ public:
     QString windowTitleFileName() const;
     QUrl displayedUrl() const;
     QSize imageSize() const;
+    QSize primaryImageSize() const;
+    QSize secondaryImageSize() const;
     QSizeF viewportSize() const;
     void setViewportSize(const QSizeF &viewportSize);
     QRectF visibleItemRect() const;
     void setVisibleItemRect(const QRectF &visibleItemRect);
     QSizeF displaySize() const;
+    QSizeF primaryDisplaySize() const;
+    QSizeF secondaryDisplaySize() const;
     double zoomPercent() const;
     void setZoomPercent(double zoomPercent);
     ZoomMode zoomMode() const;
@@ -105,18 +118,29 @@ public:
     int zoomStepPercent() const;
     QStringList openDialogNameFilters() const;
     int currentPageNumber() const;
+    int currentLastPageNumber() const;
     int imageCount() const;
     bool containerNavigationAvailable() const;
     bool fileDeletionInProgress() const;
-    std::shared_ptr<KiriView::DisplayedImageSurface> imageSurface() const;
+    bool twoPageModeEnabled() const;
+    void setTwoPageModeEnabled(bool enabled);
+    bool twoPageModeAvailable() const;
+    bool secondaryPageVisible() const;
+    std::shared_ptr<KiriView::DisplayedImageSurface> imageSurface(
+        KiriView::DisplayedPageRole role = KiriView::DisplayedPageRole::Primary) const;
     const QImage &image() const;
-    quint64 imageRevision() const;
-    quint64 renderRevision() const;
+    quint64 imageRevision(
+        KiriView::DisplayedPageRole role = KiriView::DisplayedPageRole::Primary) const;
+    quint64 renderRevision(
+        KiriView::DisplayedPageRole role = KiriView::DisplayedPageRole::Primary) const;
+    QSize renderImageSize(KiriView::DisplayedPageRole role) const;
 
     void setRenderContextProvider(RenderContextProvider provider);
 
     Q_INVOKABLE void openPreviousImage();
     Q_INVOKABLE void openNextImage();
+    Q_INVOKABLE void openPreviousSinglePage();
+    Q_INVOKABLE void openNextSinglePage();
     Q_INVOKABLE void openImageAtPage(int pageNumber);
     Q_INVOKABLE void openPreviousContainer();
     Q_INVOKABLE void openNextContainer();
@@ -143,6 +167,7 @@ Q_SIGNALS:
     void pageNavigationChanged();
     void containerNavigationChanged();
     void fileDeletionInProgressChanged();
+    void twoPageModeChanged();
     void fileDeletionFailed(const QString &errorString);
     void repaintRequested();
 
