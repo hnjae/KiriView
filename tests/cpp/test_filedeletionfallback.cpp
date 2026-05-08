@@ -10,6 +10,7 @@
 #include <QTest>
 #include <QUrl>
 #include <optional>
+#include <variant>
 #include <vector>
 
 namespace {
@@ -37,12 +38,12 @@ void TestFileDeletionFallback::regularImagePlanUsesSiblingImageContext()
 
     const KiriView::DeletionFallbackPlan plan = KiriView::deletionFallbackPlanForDisplayedLocation(
         KiriView::DisplayedImageLocation::fromUrl(imageUrl));
+    const auto *imagePlan = std::get_if<KiriView::ImageDeletionFallbackPlan>(&plan);
 
-    QCOMPARE(plan.kind, KiriView::DeletionFallbackKind::Image);
-    QVERIFY(plan.imageContext.has_value());
-    QCOMPARE(plan.currentUrl, imageUrl);
-    QCOMPARE(plan.currentName, QStringLiteral("02.png"));
-    QCOMPARE(plan.imageContext->currentUrl(), imageUrl);
+    QVERIFY(imagePlan != nullptr);
+    QCOMPARE(imagePlan->currentUrl, imageUrl);
+    QCOMPARE(imagePlan->currentName, QStringLiteral("02.png"));
+    QCOMPARE(imagePlan->imageContext.currentUrl(), imageUrl);
 }
 
 void TestFileDeletionFallback::comicBookPagePlanUsesArchiveContainer()
@@ -55,19 +56,22 @@ void TestFileDeletionFallback::comicBookPagePlanUsesArchiveContainer()
 
     const KiriView::DeletionFallbackPlan plan = KiriView::deletionFallbackPlanForDisplayedLocation(
         KiriView::DisplayedImageLocation::fromArchiveDocument(pageUrl, *archiveDocument));
+    const auto *comicBookPlan = std::get_if<KiriView::ComicBookDeletionFallbackPlan>(&plan);
 
-    QCOMPARE(plan.kind, KiriView::DeletionFallbackKind::ComicBookArchive);
-    QVERIFY(!plan.imageContext.has_value());
-    QCOMPARE(plan.currentContainerUrl, archiveUrl);
-    QCOMPARE(plan.currentName, QStringLiteral("book.cbz"));
+    QVERIFY(comicBookPlan != nullptr);
+    QCOMPARE(comicBookPlan->currentContainerUrl, archiveUrl);
+    QCOMPARE(comicBookPlan->currentName, QStringLiteral("book.cbz"));
 }
 
 void TestFileDeletionFallback::imageFallbackPrefersNextImage()
 {
-    KiriView::DeletionFallbackPlan plan;
-    plan.kind = KiriView::DeletionFallbackKind::Image;
-    plan.currentUrl = localUrl(QStringLiteral("/images/02.png"));
-    plan.currentName = QStringLiteral("02.png");
+    const QUrl currentUrl = localUrl(QStringLiteral("/images/02.png"));
+    const KiriView::ImageDeletionFallbackPlan plan {
+        KiriView::ImageCandidateListContext::forDirectory(
+            currentUrl, localUrl(QStringLiteral("/images/"))),
+        currentUrl,
+        QStringLiteral("02.png"),
+    };
 
     const std::optional<QUrl> fallbackUrl = KiriView::imageDeletionFallbackUrl(
         {
@@ -82,10 +86,13 @@ void TestFileDeletionFallback::imageFallbackPrefersNextImage()
 
 void TestFileDeletionFallback::imageFallbackFallsBackToPreviousImage()
 {
-    KiriView::DeletionFallbackPlan plan;
-    plan.kind = KiriView::DeletionFallbackKind::Image;
-    plan.currentUrl = localUrl(QStringLiteral("/images/03.png"));
-    plan.currentName = QStringLiteral("03.png");
+    const QUrl currentUrl = localUrl(QStringLiteral("/images/03.png"));
+    const KiriView::ImageDeletionFallbackPlan plan {
+        KiriView::ImageCandidateListContext::forDirectory(
+            currentUrl, localUrl(QStringLiteral("/images/"))),
+        currentUrl,
+        QStringLiteral("03.png"),
+    };
 
     const std::optional<QUrl> fallbackUrl = KiriView::imageDeletionFallbackUrl(
         {
@@ -100,10 +107,10 @@ void TestFileDeletionFallback::imageFallbackFallsBackToPreviousImage()
 
 void TestFileDeletionFallback::comicBookFallbackKeepsNextAndPreviousCandidates()
 {
-    KiriView::DeletionFallbackPlan plan;
-    plan.kind = KiriView::DeletionFallbackKind::ComicBookArchive;
-    plan.currentContainerUrl = localUrl(QStringLiteral("/books/b.cbz"));
-    plan.currentName = QStringLiteral("b.cbz");
+    const KiriView::ComicBookDeletionFallbackPlan plan {
+        localUrl(QStringLiteral("/books/b.cbz")),
+        QStringLiteral("b.cbz"),
+    };
 
     const KiriView::ComicBookDeletionFallbackCandidates candidates
         = KiriView::comicBookDeletionFallbackCandidates(

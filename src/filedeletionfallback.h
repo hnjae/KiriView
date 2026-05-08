@@ -11,22 +11,26 @@
 #include <QString>
 #include <QUrl>
 #include <optional>
+#include <variant>
 #include <vector>
 
 namespace KiriView {
-enum class DeletionFallbackKind {
-    None,
-    Image,
-    ComicBookArchive,
+struct NoDeletionFallbackPlan {
 };
 
-struct DeletionFallbackPlan {
-    DeletionFallbackKind kind = DeletionFallbackKind::None;
-    std::optional<ImageCandidateListContext> imageContext;
+struct ImageDeletionFallbackPlan {
+    ImageCandidateListContext imageContext;
     QUrl currentUrl;
     QString currentName;
-    QUrl currentContainerUrl;
 };
+
+struct ComicBookDeletionFallbackPlan {
+    QUrl currentContainerUrl;
+    QString currentName;
+};
+
+using DeletionFallbackPlan = std::variant<NoDeletionFallbackPlan, ImageDeletionFallbackPlan,
+    ComicBookDeletionFallbackPlan>;
 
 struct ComicBookDeletionFallbackCandidates {
     std::optional<ContainerNavigationCandidate> preferred;
@@ -36,9 +40,10 @@ struct ComicBookDeletionFallbackCandidates {
 DeletionFallbackPlan deletionFallbackPlanForDisplayedLocation(
     const DisplayedImageLocation &location);
 std::optional<QUrl> imageDeletionFallbackUrl(
-    std::vector<ImageNavigationCandidate> candidates, const DeletionFallbackPlan &plan);
+    std::vector<ImageNavigationCandidate> candidates, const ImageDeletionFallbackPlan &plan);
 ComicBookDeletionFallbackCandidates comicBookDeletionFallbackCandidates(
-    std::vector<ContainerNavigationCandidate> candidates, const DeletionFallbackPlan &plan);
+    std::vector<ContainerNavigationCandidate> candidates,
+    const ComicBookDeletionFallbackPlan &plan);
 }
 
 #endif

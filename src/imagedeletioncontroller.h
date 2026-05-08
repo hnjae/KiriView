@@ -5,6 +5,7 @@
 #define KIRIVIEW_IMAGEDELETIONCONTROLLER_H
 
 #include "filedeletion.h"
+#include "filedeletionfallback.h"
 #include "imagecandidaterepository.h"
 #include "imageiojob.h"
 #include "imagelocation.h"
@@ -17,8 +18,6 @@
 #include <optional>
 
 namespace KiriView {
-struct DeletionFallbackPlan;
-
 class ImageDeletionController final : public QObject
 {
 public:
@@ -48,8 +47,9 @@ private:
     void finishFileDeletion(const DeletionFallbackPlan &fallbackPlan, FileDeletionResult result,
         const QString &errorString);
     void openDeletionFallback(const DeletionFallbackPlan &fallbackPlan);
-    void openImageDeletionFallback(const DeletionFallbackPlan &fallbackPlan);
-    void openComicBookDeletionFallback(const DeletionFallbackPlan &fallbackPlan);
+    void openDeletionFallbackPlan(const NoDeletionFallbackPlan &fallbackPlan);
+    void openDeletionFallbackPlan(const ImageDeletionFallbackPlan &fallbackPlan);
+    void openDeletionFallbackPlan(const ComicBookDeletionFallbackPlan &fallbackPlan);
     void openComicBookDeletionFallbackCandidate(
         const std::optional<ContainerNavigationCandidate> &candidate,
         const std::optional<ContainerNavigationCandidate> &fallbackCandidate);

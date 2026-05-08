@@ -35,33 +35,29 @@ namespace KiriView {
 DeletionFallbackPlan deletionFallbackPlanForDisplayedLocation(
     const DisplayedImageLocation &location)
 {
-    DeletionFallbackPlan plan;
     if (displayedLocationIsInsideArchiveDocument(location)) {
         if (location.archiveDocument().isComicBook()) {
-            plan.kind = DeletionFallbackKind::ComicBookArchive;
-            plan.currentContainerUrl = containerNavigationUrlForLocation(location);
-            plan.currentName = plan.currentContainerUrl.fileName();
+            const QUrl currentContainerUrl = containerNavigationUrlForLocation(location);
+            return ComicBookDeletionFallbackPlan { currentContainerUrl,
+                currentContainerUrl.fileName() };
         }
-        return plan;
+        return NoDeletionFallbackPlan {};
     }
 
     const std::optional<ImageCandidateListContext> imageContext
         = imageCandidateListContextForDisplayedImage(location);
     if (!imageContext.has_value()) {
-        return plan;
+        return NoDeletionFallbackPlan {};
     }
 
-    plan.kind = DeletionFallbackKind::Image;
-    plan.imageContext = *imageContext;
-    plan.currentUrl = imageContext->currentUrl();
-    plan.currentName = plan.currentUrl.fileName();
-    return plan;
+    const QUrl currentUrl = imageContext->currentUrl();
+    return ImageDeletionFallbackPlan { *imageContext, currentUrl, currentUrl.fileName() };
 }
 
 std::optional<QUrl> imageDeletionFallbackUrl(
-    std::vector<ImageNavigationCandidate> candidates, const DeletionFallbackPlan &plan)
+    std::vector<ImageNavigationCandidate> candidates, const ImageDeletionFallbackPlan &plan)
 {
-    if (plan.kind != DeletionFallbackKind::Image || plan.currentUrl.isEmpty()) {
+    if (plan.currentUrl.isEmpty()) {
         return std::nullopt;
     }
 
@@ -76,9 +72,9 @@ std::optional<QUrl> imageDeletionFallbackUrl(
 }
 
 ComicBookDeletionFallbackCandidates comicBookDeletionFallbackCandidates(
-    std::vector<ContainerNavigationCandidate> candidates, const DeletionFallbackPlan &plan)
+    std::vector<ContainerNavigationCandidate> candidates, const ComicBookDeletionFallbackPlan &plan)
 {
-    if (plan.kind != DeletionFallbackKind::ComicBookArchive || plan.currentContainerUrl.isEmpty()) {
+    if (plan.currentContainerUrl.isEmpty()) {
         return {};
     }
 

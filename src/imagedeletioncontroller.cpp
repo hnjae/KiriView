@@ -9,6 +9,7 @@
 #include "imageviewtext.h"
 
 #include <utility>
+#include <variant>
 #include <vector>
 
 namespace {
@@ -74,26 +75,16 @@ void ImageDeletionController::finishFileDeletion(
 
 void ImageDeletionController::openDeletionFallback(const DeletionFallbackPlan &fallbackPlan)
 {
-    switch (fallbackPlan.kind) {
-    case DeletionFallbackKind::Image:
-        openImageDeletionFallback(fallbackPlan);
-        return;
-    case DeletionFallbackKind::ComicBookArchive:
-        openComicBookDeletionFallback(fallbackPlan);
-        return;
-    case DeletionFallbackKind::None:
-        return;
-    }
+    std::visit([this](const auto &plan) { openDeletionFallbackPlan(plan); }, fallbackPlan);
 }
 
-void ImageDeletionController::openImageDeletionFallback(const DeletionFallbackPlan &fallbackPlan)
-{
-    if (!fallbackPlan.imageContext.has_value()) {
-        return;
-    }
+void ImageDeletionController::openDeletionFallbackPlan(const NoDeletionFallbackPlan &) { }
 
+void ImageDeletionController::openDeletionFallbackPlan(
+    const ImageDeletionFallbackPlan &fallbackPlan)
+{
     m_fallbackJob = m_candidateRepository.loadImages(
-        this, *fallbackPlan.imageContext,
+        this, fallbackPlan.imageContext,
         [this, fallbackPlan](std::vector<ImageNavigationCandidate> candidates) {
             const std::optional<QUrl> fallbackUrl
                 = imageDeletionFallbackUrl(std::move(candidates), fallbackPlan);
@@ -104,8 +95,8 @@ void ImageDeletionController::openImageDeletionFallback(const DeletionFallbackPl
         [](const QString &) {});
 }
 
-void ImageDeletionController::openComicBookDeletionFallback(
-    const DeletionFallbackPlan &fallbackPlan)
+void ImageDeletionController::openDeletionFallbackPlan(
+    const ComicBookDeletionFallbackPlan &fallbackPlan)
 {
     if (fallbackPlan.currentContainerUrl.isEmpty()) {
         return;
