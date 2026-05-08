@@ -80,14 +80,18 @@ let
     kirigamiAddonsQmlRoot
   ];
   qtVersion = lib.getVersion pkgs.kdePackages.qtbase;
-  srcEntries = builtins.readDir ../../../src;
-  cppSources = map (source: "src/${source}") (
-    lib.sort builtins.lessThan (
-      lib.filter (source: srcEntries.${source} == "regular" && lib.hasSuffix ".cpp" source) (
-        builtins.attrNames srcEntries
-      )
-    )
+  cppCoreSources = lib.filter (source: source != "" && !(lib.hasPrefix "#" source)) (
+    lib.splitString "\n" (builtins.readFile ../../../src/cpp_core_sources.txt)
   );
+  cxxQtCppSources = [
+    "src/apngdecoder.cpp"
+    "src/kiriimagedocument.cpp"
+    "src/kiriimagedecoder.cpp"
+    "src/kiriimagerendernode.cpp"
+    "src/kiriimageview.cpp"
+    "src/kiriviewapplication.cpp"
+  ];
+  cppSources = lib.sort builtins.lessThan (cxxQtCppSources ++ cppCoreSources);
   qtCompileDefines = [
     "-DQT_CORE_LIB"
     "-DQT_DBUS_LIB"
