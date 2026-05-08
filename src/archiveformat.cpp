@@ -3,238 +3,142 @@
 
 #include "archiveformat.h"
 
-#include <cstddef>
-#include <iterator>
+#include "kiriview/src/imageformatregistry.cxx.h"
+
+#include <QByteArray>
 #include <optional>
 
 namespace {
-struct ArchiveMimeTypes {
-    const char *const *values = nullptr;
-    std::size_t size = 0;
-};
-
-struct ArchiveOpenProfile {
-    const char *extension;
-    ArchiveMimeTypes mimeTypes;
-};
-
-struct ArchiveFormat {
-    const char *scheme;
-    ArchiveOpenProfile comicBook;
-    ArchiveOpenProfile directArchive;
-    KiriView::ArchiveStorageBackend backend;
-};
-
-enum class ArchiveProfileSet {
-    ComicBookOnly,
-    DirectlyOpenable,
-};
-
-template <std::size_t Size>
-constexpr ArchiveMimeTypes archiveMimeTypes(const char *const (&values)[Size])
+rust::Str rustStringView(const QByteArray &bytes)
 {
-    return ArchiveMimeTypes { values, Size };
+    return rust::Str(bytes.constData(), static_cast<std::size_t>(bytes.size()));
 }
 
-const char *const zipComicBookMimeTypes[] = { "application/vnd.comicbook+zip" };
-const char *const zipDirectArchiveMimeTypes[] = { "application/zip" };
-const char *const tarComicBookMimeTypes[] = { "application/x-cbt" };
-const char *const tarDirectArchiveMimeTypes[] = { "application/x-tar" };
-const char *const sevenZipComicBookMimeTypes[] = { "application/x-cb7" };
-const char *const sevenZipDirectArchiveMimeTypes[] = { "application/x-7z-compressed" };
-const char *const rarComicBookMimeTypes[]
-    = { "application/vnd.comicbook-rar", "application/x-cbr" };
-const char *const rarDirectArchiveMimeTypes[]
-    = { "application/vnd.rar", "application/x-rar", "application/x-rar-compressed" };
-
-const ArchiveFormat archiveFormats[] = {
-    { "zip", { "cbz", archiveMimeTypes(zipComicBookMimeTypes) },
-        { "zip", archiveMimeTypes(zipDirectArchiveMimeTypes) },
-        KiriView::ArchiveStorageBackend::KZip },
-    { "tar", { "cbt", archiveMimeTypes(tarComicBookMimeTypes) },
-        { "tar", archiveMimeTypes(tarDirectArchiveMimeTypes) },
-        KiriView::ArchiveStorageBackend::KTar },
-    { "sevenz", { "cb7", archiveMimeTypes(sevenZipComicBookMimeTypes) },
-        { "7z", archiveMimeTypes(sevenZipDirectArchiveMimeTypes) },
-        KiriView::ArchiveStorageBackend::K7Zip },
-    { "rar", { "cbr", archiveMimeTypes(rarComicBookMimeTypes) },
-        { "rar", archiveMimeTypes(rarDirectArchiveMimeTypes) },
-        KiriView::ArchiveStorageBackend::LibArchive },
-};
-
-const ArchiveFormat *archiveFormatForScheme(const QString &scheme)
+QString rustStringToQString(const rust::String &value)
 {
-    for (const ArchiveFormat &format : archiveFormats) {
-        if (scheme == QString::fromLatin1(format.scheme)) {
-            return &format;
-        }
+    return QString::fromUtf8(value.data(), static_cast<qsizetype>(value.size()));
+}
+
+QStringList rustStringsToQStringList(const rust::Vec<rust::String> &values)
+{
+    QStringList list;
+    list.reserve(static_cast<qsizetype>(values.size()));
+    for (const rust::String &value : values) {
+        list.append(rustStringToQString(value));
     }
 
-    return nullptr;
+    return list;
 }
 
-QString extensionForFileName(const QString &fileName)
+template <typename Result, typename Function>
+Result rustResultForQString(const QString &value, Function rustFunction)
 {
-    const qsizetype dotIndex = fileName.lastIndexOf(QLatin1Char('.'));
-    if (dotIndex <= 0 || dotIndex == fileName.size() - 1) {
-        return {};
-    }
-
-    return fileName.mid(dotIndex + 1).toCaseFolded();
+    const QByteArray bytes = value.toUtf8();
+    return rustFunction(rustStringView(bytes));
 }
 
-template <typename Predicate>
-std::optional<KiriView::ArchiveOpenMatch> acceptedProfileMatch(
-    const ArchiveFormat &format, ArchiveProfileSet profileSet, Predicate predicate)
-{
-    if (predicate(format.comicBook)) {
-        return KiriView::ArchiveOpenMatch { QString::fromLatin1(format.scheme),
-            KiriView::ArchiveOpenMatchKind::ComicBook };
-    }
-
-    if (profileSet == ArchiveProfileSet::DirectlyOpenable && predicate(format.directArchive)) {
-        return KiriView::ArchiveOpenMatch { QString::fromLatin1(format.scheme),
-            KiriView::ArchiveOpenMatchKind::GeneralArchive };
-    }
-
-    return std::nullopt;
-}
-
-template <typename Predicate>
-std::optional<KiriView::ArchiveOpenMatch> archiveMatch(
-    ArchiveProfileSet profileSet, Predicate predicate)
-{
-    for (const ArchiveFormat &format : archiveFormats) {
-        std::optional<KiriView::ArchiveOpenMatch> match
-            = acceptedProfileMatch(format, profileSet, predicate);
-        if (match.has_value()) {
-            return match;
-        }
-    }
-
-    return std::nullopt;
-}
-
-bool mimeTypesContain(const ArchiveMimeTypes &mimeTypes, const QString &mimeTypeName)
-{
-    for (std::size_t index = 0; index < mimeTypes.size; ++index) {
-        if (mimeTypeName == QString::fromLatin1(mimeTypes.values[index])) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-std::optional<KiriView::ArchiveOpenMatch> archiveMatchForExtension(
-    const QString &extension, ArchiveProfileSet profileSet)
-{
-    return archiveMatch(profileSet, [&extension](const ArchiveOpenProfile &profile) {
-        return extension == QString::fromLatin1(profile.extension);
-    });
-}
-
-std::optional<KiriView::ArchiveOpenMatch> archiveMatchForMimeTypeName(
-    const QString &mimeTypeName, ArchiveProfileSet profileSet)
-{
-    return archiveMatch(profileSet, [&mimeTypeName](const ArchiveOpenProfile &profile) {
-        return mimeTypesContain(profile.mimeTypes, mimeTypeName);
-    });
-}
-
-bool storageBackendUsesKioFuse(KiriView::ArchiveStorageBackend backend)
+KiriView::ArchiveStorageBackend archiveStorageBackendFromRust(
+    KiriView::RustArchiveStorageBackend backend)
 {
     switch (backend) {
-    case KiriView::ArchiveStorageBackend::KZip:
-    case KiriView::ArchiveStorageBackend::KTar:
-    case KiriView::ArchiveStorageBackend::K7Zip:
-        return true;
-    case KiriView::ArchiveStorageBackend::LibArchive:
-    case KiriView::ArchiveStorageBackend::None:
-        return false;
+    case KiriView::RustArchiveStorageBackend::KZip:
+        return KiriView::ArchiveStorageBackend::KZip;
+    case KiriView::RustArchiveStorageBackend::KTar:
+        return KiriView::ArchiveStorageBackend::KTar;
+    case KiriView::RustArchiveStorageBackend::K7Zip:
+        return KiriView::ArchiveStorageBackend::K7Zip;
+    case KiriView::RustArchiveStorageBackend::LibArchive:
+        return KiriView::ArchiveStorageBackend::LibArchive;
+    case KiriView::RustArchiveStorageBackend::None:
+        return KiriView::ArchiveStorageBackend::None;
     }
 
-    return false;
+    return KiriView::ArchiveStorageBackend::None;
+}
+
+KiriView::ArchiveOpenMatchKind archiveOpenMatchKindFromRust(KiriView::RustArchiveOpenMatchKind kind)
+{
+    switch (kind) {
+    case KiriView::RustArchiveOpenMatchKind::ComicBook:
+        return KiriView::ArchiveOpenMatchKind::ComicBook;
+    case KiriView::RustArchiveOpenMatchKind::GeneralArchive:
+        return KiriView::ArchiveOpenMatchKind::GeneralArchive;
+    }
+
+    return KiriView::ArchiveOpenMatchKind::GeneralArchive;
+}
+
+std::optional<KiriView::ArchiveOpenMatch> archiveOpenMatchFromRust(
+    const KiriView::RustArchiveOpenMatch &match)
+{
+    if (!match.found) {
+        return std::nullopt;
+    }
+
+    return KiriView::ArchiveOpenMatch {
+        rustStringToQString(match.scheme),
+        archiveOpenMatchKindFromRust(match.kind),
+    };
+}
+
+std::optional<KiriView::ArchiveOpenMatch> archiveMatchForQString(
+    const QString &value, KiriView::RustArchiveOpenMatch (*rustFunction)(rust::Str))
+{
+    return archiveOpenMatchFromRust(
+        rustResultForQString<KiriView::RustArchiveOpenMatch>(value, rustFunction));
 }
 
 QString schemeString(const std::optional<KiriView::ArchiveOpenMatch> &match)
 {
     return match.has_value() ? match->scheme : QString();
 }
-
-QString markerString(const ArchiveOpenProfile &profile)
-{
-    return QStringLiteral(".") + QString::fromLatin1(profile.extension) + QLatin1Char('/');
-}
-
-void appendMimeTypes(QStringList *mimeTypeNames, const ArchiveMimeTypes &mimeTypes)
-{
-    for (std::size_t index = 0; index < mimeTypes.size; ++index) {
-        mimeTypeNames->append(QString::fromLatin1(mimeTypes.values[index]));
-    }
-}
 }
 
 namespace KiriView {
 bool isSupportedArchiveRootScheme(const QString &scheme)
 {
-    return archiveFormatForScheme(scheme) != nullptr;
+    return rustResultForQString<bool>(scheme, rustIsSupportedArchiveRootScheme);
 }
 
 ArchiveStorageBackend archiveStorageBackendForRootScheme(const QString &scheme)
 {
-    const ArchiveFormat *format = archiveFormatForScheme(scheme);
-    return format == nullptr ? ArchiveStorageBackend::None : format->backend;
+    return archiveStorageBackendFromRust(rustResultForQString<RustArchiveStorageBackend>(
+        scheme, rustArchiveStorageBackendForRootScheme));
 }
 
 bool archiveRootSchemeUsesKioFuse(const QString &scheme)
 {
-    return storageBackendUsesKioFuse(archiveStorageBackendForRootScheme(scheme));
+    return rustResultForQString<bool>(scheme, rustArchiveRootSchemeUsesKioFuse);
 }
 
 QStringList supportedComicBookArchiveExtensions()
 {
-    QStringList extensions;
-    extensions.reserve(static_cast<qsizetype>(std::size(archiveFormats)));
-    for (const ArchiveFormat &format : archiveFormats) {
-        extensions.append(QString::fromLatin1(format.comicBook.extension));
-    }
-
-    return extensions;
+    return rustStringsToQStringList(rustSupportedComicBookArchiveExtensions());
 }
 
 QStringList supportedComicBookArchiveMimeTypes()
 {
-    QStringList mimeTypes;
-    for (const ArchiveFormat &format : archiveFormats) {
-        appendMimeTypes(&mimeTypes, format.comicBook.mimeTypes);
-    }
-
-    mimeTypes.sort();
-    mimeTypes.removeDuplicates();
-    return mimeTypes;
+    return rustStringsToQStringList(rustSupportedComicBookArchiveMimeTypes());
 }
 
 std::optional<ArchiveOpenMatch> comicBookArchiveMatchForFileName(const QString &fileName)
 {
-    return archiveMatchForExtension(
-        extensionForFileName(fileName), ArchiveProfileSet::ComicBookOnly);
+    return archiveMatchForQString(fileName, rustComicBookArchiveMatchForFileName);
 }
 
 std::optional<ArchiveOpenMatch> directArchiveOpenMatchForFileName(const QString &fileName)
 {
-    return archiveMatchForExtension(
-        extensionForFileName(fileName), ArchiveProfileSet::DirectlyOpenable);
+    return archiveMatchForQString(fileName, rustDirectArchiveOpenMatchForFileName);
 }
 
 std::optional<ArchiveOpenMatch> comicBookArchiveMatchForMimeTypeName(const QString &mimeTypeName)
 {
-    return archiveMatchForMimeTypeName(mimeTypeName, ArchiveProfileSet::ComicBookOnly);
+    return archiveMatchForQString(mimeTypeName, rustComicBookArchiveMatchForMimeTypeName);
 }
 
 std::optional<ArchiveOpenMatch> directArchiveOpenMatchForMimeTypeName(const QString &mimeTypeName)
 {
-    return archiveMatchForMimeTypeName(mimeTypeName, ArchiveProfileSet::DirectlyOpenable);
+    return archiveMatchForQString(mimeTypeName, rustDirectArchiveOpenMatchForMimeTypeName);
 }
 
 QString comicBookArchiveKioSchemeForFileName(const QString &fileName)
@@ -259,20 +163,13 @@ QString directArchiveOpenKioSchemeForMimeTypeName(const QString &mimeTypeName)
 
 QString comicBookArchiveMarkerForRootScheme(const QString &scheme)
 {
-    const ArchiveFormat *format = archiveFormatForScheme(scheme);
-    return format == nullptr ? QString() : markerString(format->comicBook);
+    return rustStringToQString(
+        rustResultForQString<rust::String>(scheme, rustComicBookArchiveMarkerForRootScheme));
 }
 
 QStringList directArchiveOpenMarkersForRootScheme(const QString &scheme)
 {
-    const ArchiveFormat *format = archiveFormatForScheme(scheme);
-    if (format == nullptr) {
-        return {};
-    }
-
-    return {
-        markerString(format->comicBook),
-        markerString(format->directArchive),
-    };
+    return rustStringsToQStringList(rustResultForQString<rust::Vec<rust::String>>(
+        scheme, rustDirectArchiveOpenMarkersForRootScheme));
 }
 }
