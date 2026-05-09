@@ -882,9 +882,7 @@ void ImageDocumentController::finishTwoPageSpreadTransition()
 
 void ImageDocumentController::notifyTwoPageSpreadTransitionChanged()
 {
-    notify(ImageDocumentChange::Status);
-    notify(ImageDocumentChange::Loading);
-    notify(ImageDocumentChange::Repaint);
+    notifyChanges(imageDocumentSpreadTransitionNotifications());
 }
 
 void ImageDocumentController::updateSpreadZoomState()
@@ -1001,31 +999,23 @@ void ImageDocumentController::openImageAtRelativePageOffset(int offset)
 
 void ImageDocumentController::notifyTwoPageModeChanged()
 {
-    notify(ImageDocumentChange::TwoPageMode);
-    notify(ImageDocumentChange::ImageSize);
-    notify(ImageDocumentChange::DisplaySize);
-    notify(ImageDocumentChange::ZoomPercent);
-    notify(ImageDocumentChange::ZoomMode);
-    notify(ImageDocumentChange::MaximumManualZoomPercent);
-    notify(ImageDocumentChange::Repaint);
+    notifyChanges(imageDocumentTwoPageModeNotifications());
 }
 
 void ImageDocumentController::notifySpreadZoomChanged()
 {
-    notify(ImageDocumentChange::ZoomMode);
-    notify(ImageDocumentChange::ZoomPercent);
-    notify(ImageDocumentChange::DisplaySize);
-    notify(ImageDocumentChange::MaximumManualZoomPercent);
-    notify(ImageDocumentChange::Repaint);
-    notify(ImageDocumentChange::TwoPageMode);
+    notifyChanges(imageDocumentSpreadZoomNotifications());
 }
 
 void ImageDocumentController::notifyRightToLeftReadingChanged()
 {
-    notify(ImageDocumentChange::RightToLeftReading);
-    notify(ImageDocumentChange::Repaint);
-    if (secondaryPageVisible()) {
-        notify(ImageDocumentChange::TwoPageMode);
+    notifyChanges(imageDocumentRightToLeftReadingNotifications(secondaryPageVisible()));
+}
+
+void ImageDocumentController::notifyChanges(const std::vector<ImageDocumentChange> &changes)
+{
+    for (ImageDocumentChange change : changes) {
+        notify(change);
     }
 }
 

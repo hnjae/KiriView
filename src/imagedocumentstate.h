@@ -77,6 +77,12 @@ private:
     QUrl m_containerNavigationUrl;
     QUrl m_loadingContainerNavigationUrl;
 };
+
+std::vector<ImageDocumentChange> imageDocumentSpreadTransitionNotifications();
+std::vector<ImageDocumentChange> imageDocumentTwoPageModeNotifications();
+std::vector<ImageDocumentChange> imageDocumentSpreadZoomNotifications();
+std::vector<ImageDocumentChange> imageDocumentRightToLeftReadingNotifications(
+    bool secondaryPageVisible);
 }
 
 #endif

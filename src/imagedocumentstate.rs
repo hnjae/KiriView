@@ -12,6 +12,20 @@ mod ffi {
     }
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    enum RustImageDocumentNotificationChange {
+        Status = 0,
+        Loading = 1,
+        ImageSize = 2,
+        DisplaySize = 3,
+        ZoomPercent = 4,
+        ZoomMode = 5,
+        MaximumManualZoomPercent = 6,
+        TwoPageMode = 7,
+        RightToLeftReading = 8,
+        Repaint = 9,
+    }
+
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     struct RustImageDocumentStateSnapshot {
         status: RustImageDocumentStatus,
         loading: bool,
@@ -41,10 +55,30 @@ mod ffi {
             snapshot: RustImageDocumentStateSnapshot,
             loading: bool,
         ) -> RustImageDocumentStateChange;
+
+        #[cxx_name = "rustImageDocumentSpreadTransitionNotifications"]
+        fn rust_image_document_spread_transition_notifications()
+        -> Vec<RustImageDocumentNotificationChange>;
+
+        #[cxx_name = "rustImageDocumentTwoPageModeNotifications"]
+        fn rust_image_document_two_page_mode_notifications()
+        -> Vec<RustImageDocumentNotificationChange>;
+
+        #[cxx_name = "rustImageDocumentSpreadZoomNotifications"]
+        fn rust_image_document_spread_zoom_notifications()
+        -> Vec<RustImageDocumentNotificationChange>;
+
+        #[cxx_name = "rustImageDocumentRightToLeftReadingNotifications"]
+        fn rust_image_document_right_to_left_reading_notifications(
+            secondary_page_visible: bool,
+        ) -> Vec<RustImageDocumentNotificationChange>;
     }
 }
 
-use ffi::{RustImageDocumentStateChange, RustImageDocumentStateSnapshot, RustImageDocumentStatus};
+use ffi::{
+    RustImageDocumentNotificationChange, RustImageDocumentStateChange,
+    RustImageDocumentStateSnapshot, RustImageDocumentStatus,
+};
 
 fn rust_image_document_state_snapshot(
     status: RustImageDocumentStatus,
@@ -79,6 +113,51 @@ fn state_change(
         changed: current != next,
         snapshot: next,
     }
+}
+
+fn rust_image_document_spread_transition_notifications() -> Vec<RustImageDocumentNotificationChange>
+{
+    vec![
+        RustImageDocumentNotificationChange::Status,
+        RustImageDocumentNotificationChange::Loading,
+        RustImageDocumentNotificationChange::Repaint,
+    ]
+}
+
+fn rust_image_document_two_page_mode_notifications() -> Vec<RustImageDocumentNotificationChange> {
+    vec![
+        RustImageDocumentNotificationChange::TwoPageMode,
+        RustImageDocumentNotificationChange::ImageSize,
+        RustImageDocumentNotificationChange::DisplaySize,
+        RustImageDocumentNotificationChange::ZoomPercent,
+        RustImageDocumentNotificationChange::ZoomMode,
+        RustImageDocumentNotificationChange::MaximumManualZoomPercent,
+        RustImageDocumentNotificationChange::Repaint,
+    ]
+}
+
+fn rust_image_document_spread_zoom_notifications() -> Vec<RustImageDocumentNotificationChange> {
+    vec![
+        RustImageDocumentNotificationChange::ZoomMode,
+        RustImageDocumentNotificationChange::ZoomPercent,
+        RustImageDocumentNotificationChange::DisplaySize,
+        RustImageDocumentNotificationChange::MaximumManualZoomPercent,
+        RustImageDocumentNotificationChange::Repaint,
+        RustImageDocumentNotificationChange::TwoPageMode,
+    ]
+}
+
+fn rust_image_document_right_to_left_reading_notifications(
+    secondary_page_visible: bool,
+) -> Vec<RustImageDocumentNotificationChange> {
+    let mut changes = vec![
+        RustImageDocumentNotificationChange::RightToLeftReading,
+        RustImageDocumentNotificationChange::Repaint,
+    ];
+    if secondary_page_visible {
+        changes.push(RustImageDocumentNotificationChange::TwoPageMode);
+    }
+    changes
 }
 
 #[cfg(test)]
@@ -119,5 +198,59 @@ mod tests {
         let unchanged = rust_image_document_set_loading(snapshot, false);
         assert!(!unchanged.changed);
         assert_eq!(unchanged.snapshot, snapshot);
+    }
+
+    #[test]
+    fn document_notification_plans_preserve_existing_emission_order() {
+        assert_eq!(
+            rust_image_document_spread_transition_notifications(),
+            vec![
+                RustImageDocumentNotificationChange::Status,
+                RustImageDocumentNotificationChange::Loading,
+                RustImageDocumentNotificationChange::Repaint,
+            ]
+        );
+        assert_eq!(
+            rust_image_document_two_page_mode_notifications(),
+            vec![
+                RustImageDocumentNotificationChange::TwoPageMode,
+                RustImageDocumentNotificationChange::ImageSize,
+                RustImageDocumentNotificationChange::DisplaySize,
+                RustImageDocumentNotificationChange::ZoomPercent,
+                RustImageDocumentNotificationChange::ZoomMode,
+                RustImageDocumentNotificationChange::MaximumManualZoomPercent,
+                RustImageDocumentNotificationChange::Repaint,
+            ]
+        );
+        assert_eq!(
+            rust_image_document_spread_zoom_notifications(),
+            vec![
+                RustImageDocumentNotificationChange::ZoomMode,
+                RustImageDocumentNotificationChange::ZoomPercent,
+                RustImageDocumentNotificationChange::DisplaySize,
+                RustImageDocumentNotificationChange::MaximumManualZoomPercent,
+                RustImageDocumentNotificationChange::Repaint,
+                RustImageDocumentNotificationChange::TwoPageMode,
+            ]
+        );
+    }
+
+    #[test]
+    fn right_to_left_reading_notifications_include_two_page_mode_only_when_visible() {
+        assert_eq!(
+            rust_image_document_right_to_left_reading_notifications(false),
+            vec![
+                RustImageDocumentNotificationChange::RightToLeftReading,
+                RustImageDocumentNotificationChange::Repaint,
+            ]
+        );
+        assert_eq!(
+            rust_image_document_right_to_left_reading_notifications(true),
+            vec![
+                RustImageDocumentNotificationChange::RightToLeftReading,
+                RustImageDocumentNotificationChange::Repaint,
+                RustImageDocumentNotificationChange::TwoPageMode,
+            ]
+        );
     }
 }

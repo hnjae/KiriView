@@ -25,6 +25,7 @@ private Q_SLOTS:
     void containerNavigationAvailabilityFollowsContainerUrl();
     void statusAndLoadingReducersOnlyNotifyWhenChanged();
     void changeBatchQueuesUniqueChangesUntilDestroyed();
+    void notificationPlansReturnChangesInEmissionOrder();
 };
 
 void TestImageDocumentState::displayedUrlAndWindowTitleFollowDisplayedImageLocation()
@@ -140,6 +141,38 @@ void TestImageDocumentState::changeBatchQueuesUniqueChangesUntilDestroyed()
     QCOMPARE(changes.at(0), KiriView::ImageDocumentChange::Loading);
     QCOMPARE(changes.at(1), KiriView::ImageDocumentChange::ErrorString);
     QCOMPARE(changes.at(2), KiriView::ImageDocumentChange::Status);
+}
+
+void TestImageDocumentState::notificationPlansReturnChangesInEmissionOrder()
+{
+    auto compareChanges = [](const std::vector<KiriView::ImageDocumentChange> &actual,
+                              const std::vector<KiriView::ImageDocumentChange> &expected) {
+        QCOMPARE(actual.size(), expected.size());
+        for (std::size_t index = 0; index < expected.size(); ++index) {
+            QCOMPARE(actual.at(index), expected.at(index));
+        }
+    };
+
+    compareChanges(KiriView::imageDocumentSpreadTransitionNotifications(),
+        { KiriView::ImageDocumentChange::Status, KiriView::ImageDocumentChange::Loading,
+            KiriView::ImageDocumentChange::Repaint });
+    compareChanges(KiriView::imageDocumentTwoPageModeNotifications(),
+        { KiriView::ImageDocumentChange::TwoPageMode, KiriView::ImageDocumentChange::ImageSize,
+            KiriView::ImageDocumentChange::DisplaySize, KiriView::ImageDocumentChange::ZoomPercent,
+            KiriView::ImageDocumentChange::ZoomMode,
+            KiriView::ImageDocumentChange::MaximumManualZoomPercent,
+            KiriView::ImageDocumentChange::Repaint });
+    compareChanges(KiriView::imageDocumentSpreadZoomNotifications(),
+        { KiriView::ImageDocumentChange::ZoomMode, KiriView::ImageDocumentChange::ZoomPercent,
+            KiriView::ImageDocumentChange::DisplaySize,
+            KiriView::ImageDocumentChange::MaximumManualZoomPercent,
+            KiriView::ImageDocumentChange::Repaint, KiriView::ImageDocumentChange::TwoPageMode });
+    compareChanges(KiriView::imageDocumentRightToLeftReadingNotifications(false),
+        { KiriView::ImageDocumentChange::RightToLeftReading,
+            KiriView::ImageDocumentChange::Repaint });
+    compareChanges(KiriView::imageDocumentRightToLeftReadingNotifications(true),
+        { KiriView::ImageDocumentChange::RightToLeftReading, KiriView::ImageDocumentChange::Repaint,
+            KiriView::ImageDocumentChange::TwoPageMode });
 }
 
 QTEST_GUILESS_MAIN(TestImageDocumentState)

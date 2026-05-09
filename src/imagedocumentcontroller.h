@@ -25,6 +25,7 @@
 #include <functional>
 #include <memory>
 #include <optional>
+#include <vector>
 
 namespace KiriView {
 class ImageDeletionController;
@@ -166,6 +167,7 @@ private:
     void notifyTwoPageModeChanged();
     void notifySpreadZoomChanged();
     void notifyRightToLeftReadingChanged();
+    void notifyChanges(const std::vector<ImageDocumentChange> &changes);
     ImageDocumentRenderContext renderContext() const;
     qreal spreadDevicePixelRatio() const;
 

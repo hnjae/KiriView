@@ -52,6 +52,46 @@ KiriView::ImageDocumentStatus imageDocumentStatus(KiriView::RustImageDocumentSta
 
     return KiriView::ImageDocumentStatus::Null;
 }
+
+KiriView::ImageDocumentChange imageDocumentChange(
+    KiriView::RustImageDocumentNotificationChange change)
+{
+    switch (change) {
+    case KiriView::RustImageDocumentNotificationChange::Status:
+        return KiriView::ImageDocumentChange::Status;
+    case KiriView::RustImageDocumentNotificationChange::Loading:
+        return KiriView::ImageDocumentChange::Loading;
+    case KiriView::RustImageDocumentNotificationChange::ImageSize:
+        return KiriView::ImageDocumentChange::ImageSize;
+    case KiriView::RustImageDocumentNotificationChange::DisplaySize:
+        return KiriView::ImageDocumentChange::DisplaySize;
+    case KiriView::RustImageDocumentNotificationChange::ZoomPercent:
+        return KiriView::ImageDocumentChange::ZoomPercent;
+    case KiriView::RustImageDocumentNotificationChange::ZoomMode:
+        return KiriView::ImageDocumentChange::ZoomMode;
+    case KiriView::RustImageDocumentNotificationChange::MaximumManualZoomPercent:
+        return KiriView::ImageDocumentChange::MaximumManualZoomPercent;
+    case KiriView::RustImageDocumentNotificationChange::TwoPageMode:
+        return KiriView::ImageDocumentChange::TwoPageMode;
+    case KiriView::RustImageDocumentNotificationChange::RightToLeftReading:
+        return KiriView::ImageDocumentChange::RightToLeftReading;
+    case KiriView::RustImageDocumentNotificationChange::Repaint:
+        return KiriView::ImageDocumentChange::Repaint;
+    }
+
+    return KiriView::ImageDocumentChange::Repaint;
+}
+
+std::vector<KiriView::ImageDocumentChange> imageDocumentChanges(
+    rust::Vec<KiriView::RustImageDocumentNotificationChange> rustChanges)
+{
+    std::vector<KiriView::ImageDocumentChange> changes;
+    changes.reserve(rustChanges.size());
+    for (KiriView::RustImageDocumentNotificationChange change : rustChanges) {
+        changes.push_back(imageDocumentChange(change));
+    }
+    return changes;
+}
 }
 
 namespace KiriView {
@@ -238,5 +278,27 @@ void ImageDocumentState::notify(ImageDocumentChange change)
 void ImageDocumentState::emitChange(ImageDocumentChange change)
 {
     invokeIfSet(m_changeCallback, change);
+}
+
+std::vector<ImageDocumentChange> imageDocumentSpreadTransitionNotifications()
+{
+    return imageDocumentChanges(rustImageDocumentSpreadTransitionNotifications());
+}
+
+std::vector<ImageDocumentChange> imageDocumentTwoPageModeNotifications()
+{
+    return imageDocumentChanges(rustImageDocumentTwoPageModeNotifications());
+}
+
+std::vector<ImageDocumentChange> imageDocumentSpreadZoomNotifications()
+{
+    return imageDocumentChanges(rustImageDocumentSpreadZoomNotifications());
+}
+
+std::vector<ImageDocumentChange> imageDocumentRightToLeftReadingNotifications(
+    bool secondaryPageVisible)
+{
+    return imageDocumentChanges(
+        rustImageDocumentRightToLeftReadingNotifications(secondaryPageVisible));
 }
 }
