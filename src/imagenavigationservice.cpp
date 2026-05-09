@@ -77,16 +77,13 @@ int ImageNavigationService::imageCount() const
 
 std::optional<QUrl> ImageNavigationService::urlAtPage(int pageNumber) const
 {
-    if (pageNumber <= 0 || pageNumber > imageCount()) {
+    const std::optional<std::size_t> pageIndex
+        = pageNavigationTargetIndex(m_pageNavigation, pageNumber);
+    if (!pageIndex.has_value()) {
         return std::nullopt;
     }
 
-    const int pageIndex = pageNumber - 1;
-    if (pageIndex == m_pageNavigation.currentIndex) {
-        return std::nullopt;
-    }
-
-    return m_pageNavigation.urls.at(static_cast<std::size_t>(pageIndex));
+    return m_pageNavigation.urls.at(*pageIndex);
 }
 
 void ImageNavigationService::openAdjacentImage(

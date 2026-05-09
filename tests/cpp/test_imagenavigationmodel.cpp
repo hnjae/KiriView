@@ -47,6 +47,7 @@ class TestImageNavigationModel : public QObject
 private Q_SLOTS:
     void adjacentImageNavigationDoesNotWrap();
     void adjacentContainerNavigationUsesTheSameRules();
+    void pageNavigationTargetSkipsInvalidCurrentAndOutOfRangePages();
     void pageNavigationInsertsFallbackCurrentUrl();
     void predecodeWindowKeepsTwoPreviousAndFourNextPages();
 };
@@ -106,6 +107,24 @@ void TestImageNavigationModel::adjacentContainerNavigationUsesTheSameRules()
     QVERIFY(!KiriView::adjacentContainerNavigationCandidate(
         candidates, third, NavigationDirection::Next)
             .has_value());
+}
+
+void TestImageNavigationModel::pageNavigationTargetSkipsInvalidCurrentAndOutOfRangePages()
+{
+    PageNavigationState state { { indexedImageUrl(0), indexedImageUrl(1), indexedImageUrl(2) }, 1 };
+
+    std::optional<std::size_t> target = KiriView::pageNavigationTargetIndex(state, 1);
+    QVERIFY(target.has_value());
+    QCOMPARE(*target, std::size_t(0));
+
+    target = KiriView::pageNavigationTargetIndex(state, 2);
+    QVERIFY(!target.has_value());
+
+    target = KiriView::pageNavigationTargetIndex(state, 0);
+    QVERIFY(!target.has_value());
+
+    target = KiriView::pageNavigationTargetIndex(state, 4);
+    QVERIFY(!target.has_value());
 }
 
 void TestImageNavigationModel::pageNavigationInsertsFallbackCurrentUrl()

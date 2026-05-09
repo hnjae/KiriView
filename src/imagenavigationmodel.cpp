@@ -130,6 +130,18 @@ std::optional<ContainerNavigationCandidate> adjacentContainerNavigationCandidate
     return candidates.at(targetIndex.index);
 }
 
+std::optional<std::size_t> pageNavigationTargetIndex(
+    const PageNavigationState &state, int pageNumber)
+{
+    const RustNavigationIndex targetIndex
+        = rustPageNavigationTargetIndex(state.urls.size(), state.currentIndex, pageNumber);
+    if (!targetIndex.found) {
+        return std::nullopt;
+    }
+
+    return targetIndex.index;
+}
+
 PageNavigationState pageNavigationStateForUrls(std::vector<QUrl> urls, const QUrl &currentUrl)
 {
     PageNavigationState state { std::move(urls), -1 };

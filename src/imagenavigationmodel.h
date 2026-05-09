@@ -22,6 +22,8 @@ std::optional<QUrl> adjacentImageNavigationUrl(
 std::optional<ContainerNavigationCandidate> adjacentContainerNavigationCandidate(
     const std::vector<ContainerNavigationCandidate> &candidates, const QUrl &currentContainerUrl,
     NavigationDirection direction);
+std::optional<std::size_t> pageNavigationTargetIndex(
+    const PageNavigationState &state, int pageNumber);
 PageNavigationState pageNavigationStateForUrls(std::vector<QUrl> urls, const QUrl &currentUrl);
 void sortImageNavigationCandidates(std::vector<ImageNavigationCandidate> *candidates);
 void sortContainerNavigationCandidates(std::vector<ContainerNavigationCandidate> *candidates);
