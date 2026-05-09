@@ -24,12 +24,28 @@ mod ffi {
     }
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    enum RustImageCandidateListContextTarget {
+        None = 0,
+        Directory = 1,
+        ArchiveDocument = 2,
+    }
+
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     struct RustContainerImageSourcePlan {
         target: RustContainerImageSourceTarget,
         error: RustContainerImageSourceError,
     }
 
     extern "Rust" {
+        #[cxx_name = "rustImageCandidateListContextTarget"]
+        fn rust_image_candidate_list_context_target(
+            displayed_url_empty: bool,
+            displayed_location_inside_archive_document: bool,
+            archive_current_url_valid: bool,
+            directory_current_url_valid: bool,
+            directory_parent_url_valid: bool,
+        ) -> RustImageCandidateListContextTarget;
+
         #[cxx_name = "rustContainerImageSourcePlan"]
         fn rust_container_image_source_plan(
             candidate_type: RustContainerNavigationCandidateType,
@@ -41,8 +57,32 @@ mod ffi {
 
 use ffi::{
     RustContainerImageSourceError, RustContainerImageSourcePlan, RustContainerImageSourceTarget,
-    RustContainerNavigationCandidateType,
+    RustContainerNavigationCandidateType, RustImageCandidateListContextTarget,
 };
+
+fn rust_image_candidate_list_context_target(
+    displayed_url_empty: bool,
+    displayed_location_inside_archive_document: bool,
+    archive_current_url_valid: bool,
+    directory_current_url_valid: bool,
+    directory_parent_url_valid: bool,
+) -> RustImageCandidateListContextTarget {
+    if displayed_url_empty {
+        return RustImageCandidateListContextTarget::None;
+    }
+
+    if displayed_location_inside_archive_document {
+        if archive_current_url_valid {
+            RustImageCandidateListContextTarget::ArchiveDocument
+        } else {
+            RustImageCandidateListContextTarget::None
+        }
+    } else if directory_current_url_valid && directory_parent_url_valid {
+        RustImageCandidateListContextTarget::Directory
+    } else {
+        RustImageCandidateListContextTarget::None
+    }
+}
 
 fn rust_container_image_source_plan(
     candidate_type: RustContainerNavigationCandidateType,
@@ -84,6 +124,30 @@ fn container_image_source_plan(
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn displayed_image_context_target_selects_archive_directory_or_none() {
+        assert_eq!(
+            rust_image_candidate_list_context_target(false, true, true, false, false),
+            RustImageCandidateListContextTarget::ArchiveDocument
+        );
+        assert_eq!(
+            rust_image_candidate_list_context_target(false, true, false, false, false),
+            RustImageCandidateListContextTarget::None
+        );
+        assert_eq!(
+            rust_image_candidate_list_context_target(false, false, false, true, true),
+            RustImageCandidateListContextTarget::Directory
+        );
+        assert_eq!(
+            rust_image_candidate_list_context_target(false, false, false, true, false),
+            RustImageCandidateListContextTarget::None
+        );
+        assert_eq!(
+            rust_image_candidate_list_context_target(true, false, false, true, true),
+            RustImageCandidateListContextTarget::None
+        );
+    }
 
     #[test]
     fn directory_containers_load_directory_images() {

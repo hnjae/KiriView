@@ -217,28 +217,35 @@ std::optional<ImageCandidateListContext> imageCandidateListContextForDisplayedIm
     const DisplayedImageLocation &location)
 {
     const QUrl &displayedUrl = location.imageUrl();
-    if (displayedUrl.isEmpty()) {
-        return std::nullopt;
+    const bool insideArchiveDocument = displayedLocationIsInsideArchiveDocument(location);
+    QUrl currentUrl;
+    QUrl parentUrl;
+    bool archiveCurrentUrlValid = false;
+    bool directoryCurrentUrlValid = false;
+    bool directoryParentUrlValid = false;
+
+    if (insideArchiveDocument) {
+        currentUrl = normalizedImageUrl(displayedUrl);
+        archiveCurrentUrlValid = currentUrl.isValid();
+    } else {
+        currentUrl = navigationSourceUrl(displayedUrl);
+        parentUrl = currentUrl.adjusted(QUrl::RemoveFilename | QUrl::NormalizePathSegments);
+        directoryCurrentUrlValid = currentUrl.isValid() && !currentUrl.isEmpty();
+        directoryParentUrlValid = parentUrl.isValid() && !parentUrl.isEmpty();
     }
 
-    if (displayedLocationIsInsideArchiveDocument(location)) {
-        const QUrl currentUrl = normalizedImageUrl(displayedUrl);
-        if (!currentUrl.isValid()) {
-            return std::nullopt;
-        }
-
+    switch (rustImageCandidateListContextTarget(displayedUrl.isEmpty(), insideArchiveDocument,
+        archiveCurrentUrlValid, directoryCurrentUrlValid, directoryParentUrlValid)) {
+    case RustImageCandidateListContextTarget::ArchiveDocument:
         return ImageCandidateListContext::forArchiveDocument(
             currentUrl, location.archiveDocument());
-    }
-
-    const QUrl currentUrl = navigationSourceUrl(displayedUrl);
-    const QUrl parentUrl = currentUrl.adjusted(QUrl::RemoveFilename | QUrl::NormalizePathSegments);
-    if (!currentUrl.isValid() || currentUrl.isEmpty() || !parentUrl.isValid()
-        || parentUrl.isEmpty()) {
+    case RustImageCandidateListContextTarget::Directory:
+        return ImageCandidateListContext::forDirectory(currentUrl, parentUrl);
+    case RustImageCandidateListContextTarget::None:
         return std::nullopt;
     }
 
-    return ImageCandidateListContext::forDirectory(currentUrl, parentUrl);
+    return std::nullopt;
 }
 
 ImageCandidateRepository::ImageCandidateRepository()
