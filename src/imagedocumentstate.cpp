@@ -80,6 +80,10 @@ KiriView::ImageDocumentChange imageDocumentChange(
         return KiriView::ImageDocumentChange::RightToLeftReading;
     case KiriView::RustImageDocumentNotificationChange::Repaint:
         return KiriView::ImageDocumentChange::Repaint;
+    case KiriView::RustImageDocumentNotificationChange::DisplayedUrl:
+        return KiriView::ImageDocumentChange::DisplayedUrl;
+    case KiriView::RustImageDocumentNotificationChange::WindowTitleFileName:
+        return KiriView::ImageDocumentChange::WindowTitleFileName;
     }
 
     return KiriView::ImageDocumentChange::Repaint;
@@ -194,11 +198,10 @@ void ImageDocumentState::replaceDisplayedImageLocation(DisplayedImageLocation lo
     const QString previousWindowTitle = windowTitleFileName();
     const QUrl previousDisplayedUrl = displayedUrl();
     m_displayedImageLocation = std::move(location);
-    if (previousDisplayedUrl != displayedUrl()) {
-        notify(ImageDocumentChange::DisplayedUrl);
-    }
-    if (previousWindowTitle != windowTitleFileName()) {
-        notify(ImageDocumentChange::WindowTitleFileName);
+    for (ImageDocumentChange change :
+        imageDocumentDisplayedLocationNotifications(
+            previousDisplayedUrl != displayedUrl(), previousWindowTitle != windowTitleFileName())) {
+        notify(change);
     }
 }
 
@@ -294,6 +297,13 @@ void ImageDocumentState::emitChange(ImageDocumentChange change)
 std::vector<ImageDocumentChange> imageDocumentSpreadTransitionNotifications()
 {
     return imageDocumentChanges(rustImageDocumentSpreadTransitionNotifications());
+}
+
+std::vector<ImageDocumentChange> imageDocumentDisplayedLocationNotifications(
+    bool displayedUrlChanged, bool windowTitleFileNameChanged)
+{
+    return imageDocumentChanges(rustImageDocumentDisplayedLocationNotifications(
+        displayedUrlChanged, windowTitleFileNameChanged));
 }
 
 std::vector<ImageDocumentChange> imageDocumentTwoPageModeNotifications()

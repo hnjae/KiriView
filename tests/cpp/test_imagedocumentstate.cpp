@@ -157,6 +157,15 @@ void TestImageDocumentState::notificationPlansReturnChangesInEmissionOrder()
     compareChanges(KiriView::imageDocumentSpreadTransitionNotifications(),
         { KiriView::ImageDocumentChange::Status, KiriView::ImageDocumentChange::Loading,
             KiriView::ImageDocumentChange::Repaint });
+    compareChanges(KiriView::imageDocumentDisplayedLocationNotifications(true, true),
+        { KiriView::ImageDocumentChange::DisplayedUrl,
+            KiriView::ImageDocumentChange::WindowTitleFileName });
+    compareChanges(KiriView::imageDocumentDisplayedLocationNotifications(true, false),
+        { KiriView::ImageDocumentChange::DisplayedUrl });
+    compareChanges(KiriView::imageDocumentDisplayedLocationNotifications(false, true),
+        { KiriView::ImageDocumentChange::WindowTitleFileName });
+    compareChanges(KiriView::imageDocumentDisplayedLocationNotifications(false, false),
+        std::vector<KiriView::ImageDocumentChange> {});
     compareChanges(KiriView::imageDocumentTwoPageModeNotifications(),
         { KiriView::ImageDocumentChange::TwoPageMode, KiriView::ImageDocumentChange::ImageSize,
             KiriView::ImageDocumentChange::DisplaySize, KiriView::ImageDocumentChange::ZoomPercent,

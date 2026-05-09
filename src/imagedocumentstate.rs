@@ -24,6 +24,8 @@ mod ffi {
         RightToLeftReading = 8,
         Repaint = 9,
         ViewportSize = 10,
+        DisplayedUrl = 11,
+        WindowTitleFileName = 12,
     }
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -70,6 +72,12 @@ mod ffi {
         #[cxx_name = "rustImageDocumentSpreadTransitionNotifications"]
         fn rust_image_document_spread_transition_notifications()
         -> Vec<RustImageDocumentNotificationChange>;
+
+        #[cxx_name = "rustImageDocumentDisplayedLocationNotifications"]
+        fn rust_image_document_displayed_location_notifications(
+            displayed_url_changed: bool,
+            window_title_file_name_changed: bool,
+        ) -> Vec<RustImageDocumentNotificationChange>;
 
         #[cxx_name = "rustImageDocumentTwoPageModeNotifications"]
         fn rust_image_document_two_page_mode_notifications()
@@ -138,6 +146,20 @@ fn rust_image_document_spread_transition_notifications() -> Vec<RustImageDocumen
         RustImageDocumentNotificationChange::Loading,
         RustImageDocumentNotificationChange::Repaint,
     ]
+}
+
+fn rust_image_document_displayed_location_notifications(
+    displayed_url_changed: bool,
+    window_title_file_name_changed: bool,
+) -> Vec<RustImageDocumentNotificationChange> {
+    let mut changes = Vec::new();
+    if displayed_url_changed {
+        changes.push(RustImageDocumentNotificationChange::DisplayedUrl);
+    }
+    if window_title_file_name_changed {
+        changes.push(RustImageDocumentNotificationChange::WindowTitleFileName);
+    }
+    changes
 }
 
 fn rust_image_document_two_page_mode_notifications() -> Vec<RustImageDocumentNotificationChange> {
@@ -286,6 +308,26 @@ mod tests {
                 RustImageDocumentNotificationChange::TwoPageMode,
             ]
         );
+    }
+
+    #[test]
+    fn displayed_location_notifications_follow_displayed_url_then_title_order() {
+        assert_eq!(
+            rust_image_document_displayed_location_notifications(true, true),
+            vec![
+                RustImageDocumentNotificationChange::DisplayedUrl,
+                RustImageDocumentNotificationChange::WindowTitleFileName,
+            ]
+        );
+        assert_eq!(
+            rust_image_document_displayed_location_notifications(true, false),
+            vec![RustImageDocumentNotificationChange::DisplayedUrl]
+        );
+        assert_eq!(
+            rust_image_document_displayed_location_notifications(false, true),
+            vec![RustImageDocumentNotificationChange::WindowTitleFileName]
+        );
+        assert!(rust_image_document_displayed_location_notifications(false, false).is_empty());
     }
 
     #[test]
