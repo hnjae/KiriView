@@ -176,6 +176,7 @@ fn rust_image_open_finish_successful_image_load(
     transition.error_string = RustImageOpenErrorStringTarget::Clear;
     transition.status = RustImageOpenStatusTarget::Ready;
     transition.effects.update_page_navigation = true;
+    transition.effects.schedule_adjacent_image_predecode = true;
     transition
 }
 
@@ -329,6 +330,7 @@ mod tests {
         assert_eq!(transition.status, RustImageOpenStatusTarget::Ready);
         assert!(transition.clear_loading_container_navigation_url);
         assert!(transition.effects.update_page_navigation);
+        assert!(transition.effects.schedule_adjacent_image_predecode);
     }
 
     #[test]

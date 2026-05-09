@@ -122,17 +122,13 @@ void ImageOpenController::setSourceUrlFromResolvedLoad(const QUrl &sourceUrl)
 void ImageOpenController::finishPredecodedImageLoad(ImageLoadSession session, PredecodedImage image)
 {
     finishStaticImageLoad(session, std::move(image.staticImage), true);
-    report(ImageDocumentEffect::scheduleAdjacentImagePredecode());
 }
 
 void ImageOpenController::finishDecodedImageLoad(ImageLoadSession session, DecodedImage image)
 {
     auto handleDecoded
         = [this, &session](auto &decoded) { return finishDecodedImageResult(session, decoded); };
-    const bool displayedImage = std::visit(handleDecoded, image);
-    if (displayedImage) {
-        report(ImageDocumentEffect::scheduleAdjacentImagePredecode());
-    }
+    std::visit(handleDecoded, image);
 }
 
 bool ImageOpenController::finishDecodedImageResult(
