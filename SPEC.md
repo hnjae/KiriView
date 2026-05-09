@@ -202,6 +202,12 @@ scrollbars, drag panning, wheel zoom, keyboard panning, and scan shortcuts use
 the full spread bounds. The spread has no added page gap. The page number,
 window title, deletion target, and archive navigation position continue to refer
 to the left/current page.
+When navigation in Two-Page mode targets another eligible two-page spread,
+KiriView shows the loading state instead of leaving the previous spread visible
+or showing only the left target page. The target spread appears only after both
+pages are ready. If the target page is the cover, wide, last page, or cannot be
+paired with an eligible next page, KiriView displays the target page alone once
+that page is ready.
 
 The toolbar provides a zoom percentage input. When an image is ready, users can
 enter manual zoom values from 10% through the maximum percentage that keeps the
