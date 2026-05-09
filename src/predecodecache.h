@@ -24,7 +24,7 @@ struct PredecodeRequest {
 class PredecodeCache
 {
 public:
-    static constexpr qsizetype preferredByteBudget() { return 1024 * 1024 * 1024; }
+    static qsizetype preferredByteBudget();
     static qsizetype defaultByteBudget();
     static qsizetype byteBudget() { return defaultByteBudget(); }
     static qsizetype byteBudgetForSystemMemory(qsizetype systemMemoryByteSize);

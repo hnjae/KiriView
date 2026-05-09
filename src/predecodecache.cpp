@@ -5,9 +5,11 @@
 
 #include "imagebytecost.h"
 #include "imageurl.h"
+#include "kiriview/src/predecodecachepolicy.cxx.h"
 
 #include <algorithm>
 #include <cstddef>
+#include <cstdint>
 #include <iterator>
 
 namespace {
@@ -20,17 +22,26 @@ std::optional<QUrl> normalizedValidImageUrl(const QUrl &url)
 
     return normalizedUrl;
 }
+
+qsizetype qtByteSize(std::int64_t byteSize) { return static_cast<qsizetype>(byteSize); }
+
+std::int64_t rustByteSize(qsizetype byteSize) { return static_cast<std::int64_t>(byteSize); }
 }
 
 namespace KiriView {
+qsizetype PredecodeCache::preferredByteBudget()
+{
+    return qtByteSize(rustPredecodePreferredByteBudget());
+}
+
 qsizetype PredecodeCache::defaultByteBudget()
 {
-    return defaultSystemMemoryCappedByteBudget(preferredByteBudget(), 8);
+    return byteBudgetForSystemMemory(systemMemoryByteSize().value_or(0));
 }
 
 qsizetype PredecodeCache::byteBudgetForSystemMemory(qsizetype systemMemoryByteSize)
 {
-    return systemMemoryCappedByteBudget(preferredByteBudget(), systemMemoryByteSize, 8);
+    return qtByteSize(rustPredecodeByteBudgetForSystemMemory(rustByteSize(systemMemoryByteSize)));
 }
 
 bool PredecodeCache::canCacheImage(const StaticImagePayload &staticImage)
@@ -197,7 +208,13 @@ bool PredecodeCache::containsUrl(const std::vector<QUrl> &urls, const QUrl &url)
 std::optional<qsizetype> PredecodeCache::cacheableByteCost(
     const StaticImagePayload &staticImage, qsizetype byteBudget)
 {
-    return staticImage.byteCostWithinBudget(byteBudget);
+    const RustPredecodeCacheableByteCost byteCost = rustPredecodeCacheableByteCost(
+        rustByteSize(staticImage.byteCost()), rustByteSize(byteBudget));
+    if (!byteCost.cacheable) {
+        return std::nullopt;
+    }
+
+    return qtByteSize(byteCost.byte_cost);
 }
 
 PredecodeCache::CachedImageIterator PredecodeCache::findCachedImage(const QUrl &normalizedUrl)

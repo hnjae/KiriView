@@ -16,6 +16,7 @@ mod imagetilegeometry;
 mod imageviewportgeometry;
 mod imagezoomstate;
 mod localization;
+mod predecodecachepolicy;
 mod startup_arguments;
 
 pub use startup_arguments::{
