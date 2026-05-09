@@ -329,4 +329,17 @@ std::vector<ImageDocumentChange> imageDocumentPresentationZoomNotifications(
     return imageDocumentChanges(
         rustImageDocumentPresentationZoomNotifications(rustImageDocumentZoomChangeSet(changes)));
 }
+
+ImageDocumentChangeDispatchPlan imageDocumentChangeDispatchPlan(
+    ImageDocumentChange change, bool errorStringEmpty)
+{
+    const RustImageDocumentChangeDispatchPlan plan
+        = rustImageDocumentChangeDispatchPlan(change == ImageDocumentChange::ErrorString,
+            errorStringEmpty, change == ImageDocumentChange::PageNavigation);
+    return ImageDocumentChangeDispatchPlan {
+        plan.finish_spread_transition,
+        plan.refresh_secondary_page,
+        plan.notify_right_to_left_reading,
+    };
+}
 }

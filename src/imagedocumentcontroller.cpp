@@ -1029,12 +1029,17 @@ qreal ImageDocumentController::spreadDevicePixelRatio() const
 
 void ImageDocumentController::notify(ImageDocumentChange change)
 {
-    if (change == ImageDocumentChange::ErrorString && !m_state.errorString().isEmpty()) {
+    const ImageDocumentChangeDispatchPlan plan
+        = imageDocumentChangeDispatchPlan(change, m_state.errorString().isEmpty());
+
+    if (plan.finishSpreadTransition) {
         finishTwoPageSpreadTransition();
     }
 
-    if (change == ImageDocumentChange::PageNavigation) {
+    if (plan.refreshSecondaryPage) {
         refreshSecondaryPage();
+    }
+    if (plan.notifyRightToLeftReading) {
         notifyRightToLeftReadingChanged();
     }
 

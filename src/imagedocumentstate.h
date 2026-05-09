@@ -15,6 +15,12 @@
 namespace KiriView {
 struct ImageZoomChangeSet;
 
+struct ImageDocumentChangeDispatchPlan {
+    bool finishSpreadTransition = false;
+    bool refreshSecondaryPage = false;
+    bool notifyRightToLeftReading = false;
+};
+
 class ImageDocumentState
 {
 public:
@@ -89,6 +95,8 @@ std::vector<ImageDocumentChange> imageDocumentRightToLeftReadingNotifications(
     bool secondaryPageVisible);
 std::vector<ImageDocumentChange> imageDocumentPresentationZoomNotifications(
     const ImageZoomChangeSet &changes);
+ImageDocumentChangeDispatchPlan imageDocumentChangeDispatchPlan(
+    ImageDocumentChange change, bool errorStringEmpty);
 }
 
 #endif

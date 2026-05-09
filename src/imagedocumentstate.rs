@@ -50,6 +50,13 @@ mod ffi {
         snapshot: RustImageDocumentStateSnapshot,
     }
 
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    struct RustImageDocumentChangeDispatchPlan {
+        finish_spread_transition: bool,
+        refresh_secondary_page: bool,
+        notify_right_to_left_reading: bool,
+    }
+
     extern "Rust" {
         #[cxx_name = "rustImageDocumentStateSnapshot"]
         fn rust_image_document_state_snapshot(
@@ -96,12 +103,20 @@ mod ffi {
         fn rust_image_document_presentation_zoom_notifications(
             changes: RustImageDocumentZoomChangeSet,
         ) -> Vec<RustImageDocumentNotificationChange>;
+
+        #[cxx_name = "rustImageDocumentChangeDispatchPlan"]
+        fn rust_image_document_change_dispatch_plan(
+            error_string_changed: bool,
+            error_string_empty: bool,
+            page_navigation_changed: bool,
+        ) -> RustImageDocumentChangeDispatchPlan;
     }
 }
 
 use ffi::{
-    RustImageDocumentNotificationChange, RustImageDocumentStateChange,
-    RustImageDocumentStateSnapshot, RustImageDocumentStatus, RustImageDocumentZoomChangeSet,
+    RustImageDocumentChangeDispatchPlan, RustImageDocumentNotificationChange,
+    RustImageDocumentStateChange, RustImageDocumentStateSnapshot, RustImageDocumentStatus,
+    RustImageDocumentZoomChangeSet,
 };
 
 fn rust_image_document_state_snapshot(
@@ -222,6 +237,18 @@ fn rust_image_document_presentation_zoom_notifications(
         notifications.push(RustImageDocumentNotificationChange::MaximumManualZoomPercent);
     }
     notifications
+}
+
+fn rust_image_document_change_dispatch_plan(
+    error_string_changed: bool,
+    error_string_empty: bool,
+    page_navigation_changed: bool,
+) -> RustImageDocumentChangeDispatchPlan {
+    RustImageDocumentChangeDispatchPlan {
+        finish_spread_transition: error_string_changed && !error_string_empty,
+        refresh_secondary_page: page_navigation_changed,
+        notify_right_to_left_reading: page_navigation_changed,
+    }
 }
 
 #[cfg(test)]
@@ -378,5 +405,41 @@ mod tests {
     #[test]
     fn presentation_zoom_notifications_do_not_emit_without_notification_changes() {
         assert!(rust_image_document_presentation_zoom_notifications(zoom_change_set()).is_empty());
+    }
+
+    #[test]
+    fn change_dispatch_plan_routes_controller_side_effects() {
+        assert_eq!(
+            rust_image_document_change_dispatch_plan(true, false, false),
+            RustImageDocumentChangeDispatchPlan {
+                finish_spread_transition: true,
+                refresh_secondary_page: false,
+                notify_right_to_left_reading: false,
+            }
+        );
+        assert_eq!(
+            rust_image_document_change_dispatch_plan(true, true, false),
+            RustImageDocumentChangeDispatchPlan {
+                finish_spread_transition: false,
+                refresh_secondary_page: false,
+                notify_right_to_left_reading: false,
+            }
+        );
+        assert_eq!(
+            rust_image_document_change_dispatch_plan(false, true, true),
+            RustImageDocumentChangeDispatchPlan {
+                finish_spread_transition: false,
+                refresh_secondary_page: true,
+                notify_right_to_left_reading: true,
+            }
+        );
+        assert_eq!(
+            rust_image_document_change_dispatch_plan(false, false, false),
+            RustImageDocumentChangeDispatchPlan {
+                finish_spread_transition: false,
+                refresh_secondary_page: false,
+                notify_right_to_left_reading: false,
+            }
+        );
     }
 }
