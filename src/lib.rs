@@ -12,6 +12,7 @@ mod imagebytecost;
 mod imagecontainer;
 mod imagedocumentstate;
 mod imageformatregistry;
+mod imageloadplan;
 mod imagemath;
 mod imagenavigationmodel;
 mod imageopenworkflow;
