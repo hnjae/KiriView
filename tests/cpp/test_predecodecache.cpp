@@ -44,6 +44,7 @@ class TestPredecodeCache : public QObject
 
 private Q_SLOTS:
     void queueContainsOnlyMissingWindowImages();
+    void takeNextRequestDiscardsSkippedQueuePrefix();
     void byteBudgetUsesPreferredLimitAndSystemMemoryCap();
     void cacheEligibilityUsesByteBudgetPolicy();
     void cacheStoresAndFindsWindowImages();
@@ -71,6 +72,28 @@ void TestPredecodeCache::queueContainsOnlyMissingWindowImages()
     QVERIFY(request.has_value());
     QCOMPARE(request->url, secondQueuedUrl);
     QCOMPARE(request->archiveDocument.rootUrl(), archiveDocument.rootUrl());
+    QVERIFY(!cache.takeNextRequest(QUrl()).has_value());
+}
+
+void TestPredecodeCache::takeNextRequestDiscardsSkippedQueuePrefix()
+{
+    KiriView::PredecodeCache cache;
+    const QUrl cachedQueuedUrl = indexedImageUrl(0);
+    const QUrl firstRequestUrl = indexedImageUrl(1);
+    const QUrl secondRequestUrl = indexedImageUrl(2);
+    const KiriView::ArchiveDocumentLocation archiveDocument = comicBookArchiveDocument();
+
+    cache.setWindowUrls({ cachedQueuedUrl, firstRequestUrl, secondRequestUrl });
+    cache.enqueueMissingWindowLoads(indexedImageUrl(9), archiveDocument, QUrl());
+    cache.cacheImage(cachedQueuedUrl, archiveDocument, staticTestImagePayload(cacheImage()));
+
+    const std::optional<KiriView::PredecodeRequest> firstRequest = cache.takeNextRequest(QUrl());
+    QVERIFY(firstRequest.has_value());
+    QCOMPARE(firstRequest->url, firstRequestUrl);
+
+    const std::optional<KiriView::PredecodeRequest> secondRequest = cache.takeNextRequest(QUrl());
+    QVERIFY(secondRequest.has_value());
+    QCOMPARE(secondRequest->url, secondRequestUrl);
     QVERIFY(!cache.takeNextRequest(QUrl()).has_value());
 }
 

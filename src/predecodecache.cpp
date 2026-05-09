@@ -136,17 +136,21 @@ std::optional<PredecodeRequest> PredecodeCache::takeNextRequest(const QUrl &acti
         cached.push_back(rustFlag(hasImage(request.url)));
     }
 
-    const RustPredecodeQueuedLoadIndex requestIndex = rustPredecodeNextQueuedLoadIndex(
-        std::move(valid), std::move(inWindow), std::move(cached));
-    if (!requestIndex.found || requestIndex.index >= m_queue.size()) {
-        m_queue.clear();
+    const RustPredecodeQueuedLoadPlan plan
+        = rustPredecodeNextQueuedLoadPlan(std::move(valid), std::move(inWindow), std::move(cached));
+    if (!plan.found || plan.index >= m_queue.size()) {
+        const auto discardEnd = m_queue.begin()
+            + static_cast<std::ptrdiff_t>(std::min(plan.discard_count, m_queue.size()));
+        m_queue.erase(m_queue.begin(), discardEnd);
         return std::nullopt;
     }
 
     auto requestEntry = m_queue.begin();
-    std::advance(requestEntry, static_cast<std::ptrdiff_t>(requestIndex.index));
+    std::advance(requestEntry, static_cast<std::ptrdiff_t>(plan.index));
     PredecodeRequest request = std::move(*requestEntry);
-    m_queue.erase(m_queue.begin(), std::next(requestEntry));
+    const std::size_t discardCount
+        = std::min(plan.discard_count, static_cast<std::size_t>(m_queue.size()));
+    m_queue.erase(m_queue.begin(), m_queue.begin() + static_cast<std::ptrdiff_t>(discardCount));
     return request;
 }
 
