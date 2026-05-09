@@ -237,4 +237,10 @@ bool shouldResetRightToLeftReadingForLoad(bool rightToLeftReadingEnabled,
         containerNavigationUrl.isEmpty(), displayedArchiveDocument.isComicBook(),
         archiveDocumentContainsUrlInRust(displayedArchiveDocument, sourceUrl));
 }
+
+bool comicArchiveReadingControlsAvailable(bool hasImage, const DisplayedImageLocation &location)
+{
+    return rustComicArchiveReadingControlsAvailable(
+        hasImage, location.imageUrl().isEmpty(), location.archiveDocument().isComicBook());
+}
 }

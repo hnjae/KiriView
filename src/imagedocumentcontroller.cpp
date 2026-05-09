@@ -337,8 +337,8 @@ void ImageDocumentController::setTwoPageModeEnabled(bool enabled)
 
 bool ImageDocumentController::twoPageModeAvailable() const
 {
-    return m_presentationController->hasImage() && !m_state.displayedUrl().isEmpty()
-        && m_state.displayedArchiveDocument().isComicBook();
+    return comicArchiveReadingControlsAvailable(
+        m_presentationController->hasImage(), m_state.displayedImageLocation());
 }
 
 bool ImageDocumentController::rightToLeftReadingEnabled() const
@@ -361,8 +361,8 @@ void ImageDocumentController::setRightToLeftReadingEnabled(bool enabled)
 
 bool ImageDocumentController::rightToLeftReadingAvailable() const
 {
-    return m_presentationController->hasImage() && !m_state.displayedUrl().isEmpty()
-        && m_state.displayedArchiveDocument().isComicBook();
+    return comicArchiveReadingControlsAvailable(
+        m_presentationController->hasImage(), m_state.displayedImageLocation());
 }
 
 bool ImageDocumentController::secondaryPageVisible() const

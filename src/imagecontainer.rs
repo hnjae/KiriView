@@ -74,6 +74,13 @@ mod ffi {
             displayed_archive_document_is_comic_book: bool,
             source_url_inside_displayed_archive_document: bool,
         ) -> bool;
+
+        #[cxx_name = "rustComicArchiveReadingControlsAvailable"]
+        fn rust_comic_archive_reading_controls_available(
+            has_image: bool,
+            displayed_url_empty: bool,
+            displayed_archive_document_is_comic_book: bool,
+        ) -> bool;
     }
 }
 
@@ -171,6 +178,14 @@ fn rust_should_reset_right_to_left_reading_for_load(
         && container_navigation_url_empty
         && (!displayed_archive_document_is_comic_book
             || !source_url_inside_displayed_archive_document)
+}
+
+fn rust_comic_archive_reading_controls_available(
+    has_image: bool,
+    displayed_url_empty: bool,
+    displayed_archive_document_is_comic_book: bool,
+) -> bool {
+    has_image && !displayed_url_empty && displayed_archive_document_is_comic_book
 }
 
 fn containing_archive_root_path(path: &str, markers: &[String]) -> RustArchiveRootPath {
@@ -303,6 +318,22 @@ mod tests {
         ));
         assert!(rust_should_reset_right_to_left_reading_for_load(
             true, true, false, false,
+        ));
+    }
+
+    #[test]
+    fn comic_archive_reading_controls_require_displayed_comic_archive_image() {
+        assert!(rust_comic_archive_reading_controls_available(
+            true, false, true,
+        ));
+        assert!(!rust_comic_archive_reading_controls_available(
+            false, false, true,
+        ));
+        assert!(!rust_comic_archive_reading_controls_available(
+            true, true, true,
+        ));
+        assert!(!rust_comic_archive_reading_controls_available(
+            true, false, false,
         ));
     }
 

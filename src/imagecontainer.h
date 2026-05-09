@@ -29,6 +29,7 @@ QUrl containerNavigationUrlForLocation(const DisplayedImageLocation &location);
 bool shouldResetRightToLeftReadingForLoad(bool rightToLeftReadingEnabled,
     const ArchiveDocumentLocation &displayedArchiveDocument, const QUrl &sourceUrl,
     const QUrl &containerNavigationUrl);
+bool comicArchiveReadingControlsAvailable(bool hasImage, const DisplayedImageLocation &location);
 }
 
 #endif
