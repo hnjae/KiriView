@@ -3,6 +3,7 @@
 
 #include "imagedocumentcontroller.h"
 
+#include "decodedimagepresentation.h"
 #include "imagecallback.h"
 #include "imagecontainer.h"
 #include "imagedeletioncontroller.h"
@@ -760,34 +761,48 @@ void ImageDocumentController::finishSecondaryDecodedImageLoad(
 bool ImageDocumentController::finishSecondaryDecodedImageResult(
     const ImageLoadSession &session, StaticDecodedImage &decoded)
 {
-    const bool predecodeCacheable = PredecodeCache::canCacheImage(decoded.staticImage);
-    finishSecondaryStaticImageLoad(session, std::move(decoded.staticImage), predecodeCacheable);
+    const DecodedImagePresentationPlan plan = decodedImagePresentationPlan(decoded);
+    finishSecondaryStaticImageLoad(
+        session, std::move(decoded.staticImage), plan.predecodeCacheable);
     return true;
 }
 
 bool ImageDocumentController::finishSecondaryDecodedImageResult(
     const ImageLoadSession &session, DecodedAnimationImage &decoded)
 {
-    if (decoded.frames.empty()) {
+    const DecodedImagePresentationPlan plan = decodedImagePresentationPlan(decoded);
+    if (plan.target == DecodedImagePresentationTarget::DecodeError) {
         finishSecondaryLoadWithError(session);
         return false;
     }
 
-    finishSecondaryImageLoad(session, decoded.frames.front().image, false);
+    finishSecondaryImageLoad(session, decoded.frames.front().image, plan.predecodeCacheable);
     return true;
 }
 
 bool ImageDocumentController::finishSecondaryDecodedImageResult(
     const ImageLoadSession &session, ReaderAnimationImage &decoded)
 {
-    finishSecondaryImageLoad(session, decoded.firstFrame, false);
+    const DecodedImagePresentationPlan plan = decodedImagePresentationPlan(decoded);
+    if (plan.target == DecodedImagePresentationTarget::DecodeError) {
+        finishSecondaryLoadWithError(session);
+        return false;
+    }
+
+    finishSecondaryImageLoad(session, decoded.firstFrame, plan.predecodeCacheable);
     return true;
 }
 
 bool ImageDocumentController::finishSecondaryDecodedImageResult(
     const ImageLoadSession &session, HeifSequenceAnimationImage &decoded)
 {
-    finishSecondaryImageLoad(session, decoded.firstFrame, false);
+    const DecodedImagePresentationPlan plan = decodedImagePresentationPlan(decoded);
+    if (plan.target == DecodedImagePresentationTarget::DecodeError) {
+        finishSecondaryLoadWithError(session);
+        return false;
+    }
+
+    finishSecondaryImageLoad(session, decoded.firstFrame, plan.predecodeCacheable);
     return true;
 }
 

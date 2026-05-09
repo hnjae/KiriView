@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 src/decodedimageresult.cpp
+src/decodedimagepresentation.cpp
 src/archivebackend.cpp
 src/archivebackend_karchive.cpp
 src/archivebackend_libarchive.cpp

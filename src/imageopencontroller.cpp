@@ -3,6 +3,7 @@
 
 #include "imageopencontroller.h"
 
+#include "decodedimagepresentation.h"
 #include "imagecallback.h"
 #include "imagecontainer.h"
 #include "imagedocumentstate.h"
@@ -10,7 +11,6 @@
 #include "imageopenworkflow.h"
 #include "imagepresentationcontroller.h"
 #include "imageviewtext.h"
-#include "predecodecache.h"
 
 #include <memory>
 #include <utility>
@@ -134,15 +134,16 @@ void ImageOpenController::finishDecodedImageLoad(ImageLoadSession session, Decod
 bool ImageOpenController::finishDecodedImageResult(
     ImageLoadSession &session, StaticDecodedImage &decoded)
 {
-    const bool predecodeCacheable = PredecodeCache::canCacheImage(decoded.staticImage);
-    finishStaticImageLoad(session, std::move(decoded.staticImage), predecodeCacheable);
+    const DecodedImagePresentationPlan plan = decodedImagePresentationPlan(decoded);
+    finishStaticImageLoad(session, std::move(decoded.staticImage), plan.predecodeCacheable);
     return true;
 }
 
 bool ImageOpenController::finishDecodedImageResult(
     ImageLoadSession &session, DecodedAnimationImage &decoded)
 {
-    if (decoded.frames.empty()) {
+    const DecodedImagePresentationPlan plan = decodedImagePresentationPlan(decoded);
+    if (plan.target == DecodedImagePresentationTarget::DecodeError) {
         finishLoadWithError(session, ImageLoadError::Generic,
             imageViewText("Could not decode the selected image animation."));
         return false;
@@ -157,6 +158,13 @@ bool ImageOpenController::finishDecodedImageResult(
 bool ImageOpenController::finishDecodedImageResult(
     ImageLoadSession &session, ReaderAnimationImage &decoded)
 {
+    const DecodedImagePresentationPlan plan = decodedImagePresentationPlan(decoded);
+    if (plan.target == DecodedImagePresentationTarget::DecodeError) {
+        finishLoadWithError(session, ImageLoadError::Generic,
+            imageViewText("Could not decode the selected image animation."));
+        return false;
+    }
+
     return finishAnimationImageLoad(session, decoded.firstFrame, [this, &decoded]() {
         m_presentationController.startAnimation(
             decoded.data, decoded.format, decoded.loopCount, decoded.firstFrameDelay);
@@ -166,6 +174,13 @@ bool ImageOpenController::finishDecodedImageResult(
 bool ImageOpenController::finishDecodedImageResult(
     ImageLoadSession &session, HeifSequenceAnimationImage &decoded)
 {
+    const DecodedImagePresentationPlan plan = decodedImagePresentationPlan(decoded);
+    if (plan.target == DecodedImagePresentationTarget::DecodeError) {
+        finishLoadWithError(session, ImageLoadError::Generic,
+            imageViewText("Could not decode the selected image animation."));
+        return false;
+    }
+
     return finishAnimationImageLoad(session, decoded.firstFrame,
         [this, &decoded]() { m_presentationController.startHeifSequenceAnimation(decoded.data); });
 }
