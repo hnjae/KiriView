@@ -35,6 +35,13 @@ require `SPEC.md` updates.
 
 Rust, QML, C++, and headers use 4-space indentation. Keep app IDs as `io.github.hnjae.KiriView`.
 
+## Translation Policy
+
+Do not personally author translations for individual language files such as
+`po/*.po`. Only update translation templates or existing translation files when
+the strings are supplied by a translator, upstream tooling, or an explicit user
+request.
+
 ## Commit & Pull Request Guidelines
 
 Use Conventional Commit style, such as `feat: init project`. After completing a
