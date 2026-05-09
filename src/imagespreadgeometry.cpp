@@ -6,6 +6,23 @@
 #include "kiriview/src/imagespreadgeometry.cxx.h"
 #include "qtgeometryconversion.h"
 
+namespace {
+KiriView::ImageSpreadSecondaryPageDecision imageSpreadSecondaryPageDecision(
+    KiriView::RustImageSpreadSecondaryPageDecision decision)
+{
+    switch (decision) {
+    case KiriView::RustImageSpreadSecondaryPageDecision::PrimaryOnly:
+        return KiriView::ImageSpreadSecondaryPageDecision::PrimaryOnly;
+    case KiriView::RustImageSpreadSecondaryPageDecision::LoadNext:
+        return KiriView::ImageSpreadSecondaryPageDecision::LoadNext;
+    case KiriView::RustImageSpreadSecondaryPageDecision::KeepCurrentSecondary:
+        return KiriView::ImageSpreadSecondaryPageDecision::KeepCurrentSecondary;
+    }
+
+    return KiriView::ImageSpreadSecondaryPageDecision::PrimaryOnly;
+}
+}
+
 namespace KiriView {
 QSize imageSpreadImageSize(const QSize &primarySize, const QSize &secondarySize)
 {
@@ -44,5 +61,33 @@ QRectF imageSpreadSecondaryPageRect(const QSizeF &primaryDisplaySize,
 bool imageSpreadPageIsWide(const QSize &imageSize)
 {
     return rustImageSpreadPageIsWide(Bridge::rustSize<RustImageSpreadSize>(imageSize));
+}
+
+int imageSpreadPreviousPageTarget(
+    int currentPageNumber, bool secondaryPageVisible, bool previousPageIsWide)
+{
+    return rustImageSpreadPreviousPageTarget(
+        currentPageNumber, secondaryPageVisible, previousPageIsWide);
+}
+
+int imageSpreadNextPageTarget(int currentLastPageNumber, int imageCount)
+{
+    return rustImageSpreadNextPageTarget(currentLastPageNumber, imageCount);
+}
+
+bool imageSpreadShouldBeginTransition(
+    bool twoPageModeActive, int currentPageNumber, int targetPageNumber, int imageCount)
+{
+    return rustImageSpreadShouldBeginTransition(
+        twoPageModeActive, currentPageNumber, targetPageNumber, imageCount);
+}
+
+ImageSpreadSecondaryPageDecision imageSpreadSecondaryPageDecision(bool twoPageModeActive,
+    int currentPageNumber, int imageCount, bool primaryPageIsWide, bool nextPageAvailable,
+    bool nextPageIsWide, bool currentSecondaryMatchesNext)
+{
+    return ::imageSpreadSecondaryPageDecision(
+        rustImageSpreadSecondaryPageDecision(twoPageModeActive, currentPageNumber, imageCount,
+            primaryPageIsWide, nextPageAvailable, nextPageIsWide, currentSecondaryMatchesNext));
 }
 }

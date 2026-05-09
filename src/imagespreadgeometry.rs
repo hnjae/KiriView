@@ -23,6 +23,13 @@ mod ffi {
         height: f64,
     }
 
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    enum RustImageSpreadSecondaryPageDecision {
+        PrimaryOnly = 0,
+        LoadNext = 1,
+        KeepCurrentSecondary = 2,
+    }
+
     extern "Rust" {
         #[cxx_name = "rustImageSpreadImageSize"]
         fn rust_image_spread_image_size(
@@ -55,10 +62,45 @@ mod ffi {
 
         #[cxx_name = "rustImageSpreadPageIsWide"]
         fn rust_image_spread_page_is_wide(image_size: RustImageSpreadSize) -> bool;
+
+        #[cxx_name = "rustImageSpreadPreviousPageTarget"]
+        fn rust_image_spread_previous_page_target(
+            current_page_number: i32,
+            secondary_page_visible: bool,
+            previous_page_is_wide: bool,
+        ) -> i32;
+
+        #[cxx_name = "rustImageSpreadNextPageTarget"]
+        fn rust_image_spread_next_page_target(
+            current_last_page_number: i32,
+            image_count: i32,
+        ) -> i32;
+
+        #[cxx_name = "rustImageSpreadShouldBeginTransition"]
+        fn rust_image_spread_should_begin_transition(
+            two_page_mode_active: bool,
+            current_page_number: i32,
+            target_page_number: i32,
+            image_count: i32,
+        ) -> bool;
+
+        #[cxx_name = "rustImageSpreadSecondaryPageDecision"]
+        fn rust_image_spread_secondary_page_decision(
+            two_page_mode_active: bool,
+            current_page_number: i32,
+            image_count: i32,
+            primary_page_is_wide: bool,
+            next_page_available: bool,
+            next_page_is_wide: bool,
+            current_secondary_matches_next: bool,
+        ) -> RustImageSpreadSecondaryPageDecision;
     }
 }
 
-use ffi::{RustImageSpreadRectF, RustImageSpreadSize, RustImageSpreadSizeF};
+use ffi::{
+    RustImageSpreadRectF, RustImageSpreadSecondaryPageDecision, RustImageSpreadSize,
+    RustImageSpreadSizeF,
+};
 
 fn rust_image_spread_image_size(
     primary_size: RustImageSpreadSize,
@@ -120,6 +162,77 @@ fn rust_image_spread_secondary_page_rect(
 
 fn rust_image_spread_page_is_wide(image_size: RustImageSpreadSize) -> bool {
     !size_empty(image_size) && image_size.width > image_size.height
+}
+
+fn rust_image_spread_previous_page_target(
+    current_page_number: i32,
+    secondary_page_visible: bool,
+    previous_page_is_wide: bool,
+) -> i32 {
+    if current_page_number <= 0 {
+        return 0;
+    }
+
+    if current_page_number <= 2 {
+        return 1;
+    }
+
+    let offset = if secondary_page_visible && !previous_page_is_wide {
+        -2
+    } else {
+        -1
+    };
+    current_page_number + offset
+}
+
+fn rust_image_spread_next_page_target(current_last_page_number: i32, image_count: i32) -> i32 {
+    let target_page_number = current_last_page_number + 1;
+    if target_page_number > image_count {
+        return 0;
+    }
+
+    target_page_number
+}
+
+fn rust_image_spread_should_begin_transition(
+    two_page_mode_active: bool,
+    current_page_number: i32,
+    target_page_number: i32,
+    image_count: i32,
+) -> bool {
+    two_page_mode_active
+        && current_page_number > 0
+        && target_page_number > 0
+        && target_page_number <= image_count
+        && target_page_number != current_page_number
+}
+
+fn rust_image_spread_secondary_page_decision(
+    two_page_mode_active: bool,
+    current_page_number: i32,
+    image_count: i32,
+    primary_page_is_wide: bool,
+    next_page_available: bool,
+    next_page_is_wide: bool,
+    current_secondary_matches_next: bool,
+) -> RustImageSpreadSecondaryPageDecision {
+    let next_page_number = current_page_number + 1;
+    if !two_page_mode_active
+        || current_page_number == 1
+        || primary_page_is_wide
+        || next_page_number <= 1
+        || next_page_number > image_count
+        || !next_page_available
+        || next_page_is_wide
+    {
+        return RustImageSpreadSecondaryPageDecision::PrimaryOnly;
+    }
+
+    if current_secondary_matches_next {
+        RustImageSpreadSecondaryPageDecision::KeepCurrentSecondary
+    } else {
+        RustImageSpreadSecondaryPageDecision::LoadNext
+    }
 }
 
 fn size_empty(size: RustImageSpreadSize) -> bool {
@@ -247,5 +360,53 @@ mod tests {
         assert!(rust_image_spread_page_is_wide(size(1200, 800)));
         assert!(!rust_image_spread_page_is_wide(size(800, 800)));
         assert!(!rust_image_spread_page_is_wide(size(-1, -1)));
+    }
+
+    #[test]
+    fn previous_page_target_keeps_cover_and_steps_by_spread() {
+        assert_eq!(rust_image_spread_previous_page_target(0, false, false), 0);
+        assert_eq!(rust_image_spread_previous_page_target(1, false, false), 1);
+        assert_eq!(rust_image_spread_previous_page_target(2, false, false), 1);
+        assert_eq!(rust_image_spread_previous_page_target(5, true, false), 3);
+        assert_eq!(rust_image_spread_previous_page_target(5, true, true), 4);
+        assert_eq!(rust_image_spread_previous_page_target(5, false, false), 4);
+    }
+
+    #[test]
+    fn next_page_target_stops_after_last_page() {
+        assert_eq!(rust_image_spread_next_page_target(2, 5), 3);
+        assert_eq!(rust_image_spread_next_page_target(5, 5), 0);
+    }
+
+    #[test]
+    fn transition_policy_requires_active_valid_different_target() {
+        assert!(rust_image_spread_should_begin_transition(true, 2, 4, 6));
+        assert!(!rust_image_spread_should_begin_transition(false, 2, 4, 6));
+        assert!(!rust_image_spread_should_begin_transition(true, 2, 2, 6));
+        assert!(!rust_image_spread_should_begin_transition(true, 2, 7, 6));
+    }
+
+    #[test]
+    fn secondary_page_decision_selects_primary_keep_or_load() {
+        assert_eq!(
+            rust_image_spread_secondary_page_decision(true, 1, 4, false, true, false, false),
+            RustImageSpreadSecondaryPageDecision::PrimaryOnly
+        );
+        assert_eq!(
+            rust_image_spread_secondary_page_decision(true, 2, 4, true, true, false, false),
+            RustImageSpreadSecondaryPageDecision::PrimaryOnly
+        );
+        assert_eq!(
+            rust_image_spread_secondary_page_decision(true, 2, 4, false, true, true, false),
+            RustImageSpreadSecondaryPageDecision::PrimaryOnly
+        );
+        assert_eq!(
+            rust_image_spread_secondary_page_decision(true, 2, 4, false, true, false, true),
+            RustImageSpreadSecondaryPageDecision::KeepCurrentSecondary
+        );
+        assert_eq!(
+            rust_image_spread_secondary_page_decision(true, 2, 4, false, true, false, false),
+            RustImageSpreadSecondaryPageDecision::LoadNext
+        );
     }
 }

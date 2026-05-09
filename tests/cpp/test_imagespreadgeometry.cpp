@@ -18,6 +18,10 @@ private Q_SLOTS:
     void scaledPageDisplaySizeUsesSpreadWidthRatio();
     void pageRectsRespectReadingDirectionAndVerticalCentering();
     void widePagePolicyRequiresLandscapeImage();
+    void previousPageTargetUsesSpreadPolicy();
+    void nextPageTargetStopsAtEnd();
+    void transitionPolicyRequiresActiveValidDifferentTarget();
+    void secondaryPageDecisionSelectsPrimaryKeepOrLoad();
 };
 
 void TestImageSpreadGeometry::spreadSizeCombinesPagesWhenBothAreAvailable()
@@ -58,6 +62,46 @@ void TestImageSpreadGeometry::widePagePolicyRequiresLandscapeImage()
     QVERIFY(KiriView::imageSpreadPageIsWide(QSize(1200, 800)));
     QVERIFY(!KiriView::imageSpreadPageIsWide(QSize(800, 800)));
     QVERIFY(!KiriView::imageSpreadPageIsWide(QSize()));
+}
+
+void TestImageSpreadGeometry::previousPageTargetUsesSpreadPolicy()
+{
+    QCOMPARE(KiriView::imageSpreadPreviousPageTarget(0, false, false), 0);
+    QCOMPARE(KiriView::imageSpreadPreviousPageTarget(1, false, false), 1);
+    QCOMPARE(KiriView::imageSpreadPreviousPageTarget(2, false, false), 1);
+    QCOMPARE(KiriView::imageSpreadPreviousPageTarget(5, true, false), 3);
+    QCOMPARE(KiriView::imageSpreadPreviousPageTarget(5, true, true), 4);
+    QCOMPARE(KiriView::imageSpreadPreviousPageTarget(5, false, false), 4);
+}
+
+void TestImageSpreadGeometry::nextPageTargetStopsAtEnd()
+{
+    QCOMPARE(KiriView::imageSpreadNextPageTarget(2, 5), 3);
+    QCOMPARE(KiriView::imageSpreadNextPageTarget(5, 5), 0);
+}
+
+void TestImageSpreadGeometry::transitionPolicyRequiresActiveValidDifferentTarget()
+{
+    QVERIFY(KiriView::imageSpreadShouldBeginTransition(true, 2, 4, 6));
+    QVERIFY(!KiriView::imageSpreadShouldBeginTransition(false, 2, 4, 6));
+    QVERIFY(!KiriView::imageSpreadShouldBeginTransition(true, 2, 2, 6));
+    QVERIFY(!KiriView::imageSpreadShouldBeginTransition(true, 2, 7, 6));
+}
+
+void TestImageSpreadGeometry::secondaryPageDecisionSelectsPrimaryKeepOrLoad()
+{
+    using KiriView::ImageSpreadSecondaryPageDecision;
+
+    QCOMPARE(KiriView::imageSpreadSecondaryPageDecision(true, 1, 4, false, true, false, false),
+        ImageSpreadSecondaryPageDecision::PrimaryOnly);
+    QCOMPARE(KiriView::imageSpreadSecondaryPageDecision(true, 2, 4, true, true, false, false),
+        ImageSpreadSecondaryPageDecision::PrimaryOnly);
+    QCOMPARE(KiriView::imageSpreadSecondaryPageDecision(true, 2, 4, false, true, true, false),
+        ImageSpreadSecondaryPageDecision::PrimaryOnly);
+    QCOMPARE(KiriView::imageSpreadSecondaryPageDecision(true, 2, 4, false, true, false, true),
+        ImageSpreadSecondaryPageDecision::KeepCurrentSecondary);
+    QCOMPARE(KiriView::imageSpreadSecondaryPageDecision(true, 2, 4, false, true, false, false),
+        ImageSpreadSecondaryPageDecision::LoadNext);
 }
 
 QTEST_GUILESS_MAIN(TestImageSpreadGeometry)

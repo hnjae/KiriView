@@ -418,20 +418,16 @@ void ImageDocumentController::openPreviousImage()
         return;
     }
 
-    if (currentPageNumber() <= 2) {
-        openImageAtPage(1);
-        return;
-    }
-
-    int offset = secondaryPageVisible() ? -2 : -1;
-    if (secondaryPageVisible()) {
+    bool previousPageIsWide = false;
+    if (secondaryPageVisible() && currentPageNumber() > 2) {
         const std::optional<QUrl> previousUrl
             = m_navigationController->urlAtPage(currentPageNumber() - 1);
-        if (previousUrl.has_value() && cachedPageIsWide(*previousUrl).value_or(false)) {
-            offset = -1;
+        if (previousUrl.has_value()) {
+            previousPageIsWide = cachedPageIsWide(*previousUrl).value_or(false);
         }
     }
-    openImageAtRelativePageOffset(offset);
+    openImageAtPage(imageSpreadPreviousPageTarget(
+        currentPageNumber(), secondaryPageVisible(), previousPageIsWide));
 }
 
 void ImageDocumentController::openNextImage()
@@ -441,8 +437,8 @@ void ImageDocumentController::openNextImage()
         return;
     }
 
-    const int nextPage = currentLastPageNumber() + 1;
-    if (nextPage > imageCount()) {
+    const int nextPage = imageSpreadNextPageTarget(currentLastPageNumber(), imageCount());
+    if (nextPage <= 0) {
         return;
     }
 
@@ -728,29 +724,19 @@ void ImageDocumentController::refreshSecondaryPage()
         finishTwoPageSpreadTransition();
     };
 
-    if (!twoPageModeActive() || currentPageIsCover() || primaryPageIsWide()) {
-        finishWithPrimaryPage();
-        return;
-    }
-
     const int nextPageNumber = currentPageNumber() + 1;
-    if (nextPageNumber <= 1 || nextPageNumber > imageCount()) {
-        finishWithPrimaryPage();
-        return;
-    }
-
     const std::optional<QUrl> nextUrl = m_navigationController->urlAtPage(nextPageNumber);
-    if (!nextUrl.has_value()) {
+    const bool nextPageIsWide = nextUrl.has_value() && cachedPageIsWide(*nextUrl).value_or(false);
+    const bool currentSecondaryMatchesNext = nextUrl.has_value() && secondaryPageVisible()
+        && m_secondaryDisplayedImageLocation.imageUrl() == *nextUrl;
+    const ImageSpreadSecondaryPageDecision decision
+        = imageSpreadSecondaryPageDecision(twoPageModeActive(), currentPageNumber(), imageCount(),
+            primaryPageIsWide(), nextUrl.has_value(), nextPageIsWide, currentSecondaryMatchesNext);
+    if (decision == ImageSpreadSecondaryPageDecision::PrimaryOnly) {
         finishWithPrimaryPage();
         return;
     }
-
-    if (cachedPageIsWide(*nextUrl).value_or(false)) {
-        finishWithPrimaryPage();
-        return;
-    }
-
-    if (secondaryPageVisible() && m_secondaryDisplayedImageLocation.imageUrl() == *nextUrl) {
+    if (decision == ImageSpreadSecondaryPageDecision::KeepCurrentSecondary) {
         return;
     }
 
@@ -871,8 +857,8 @@ void ImageDocumentController::finishSecondaryLoadWithError(const ImageLoadSessio
 
 bool ImageDocumentController::shouldBeginTwoPageSpreadTransition(int targetPageNumber) const
 {
-    return twoPageModeActive() && currentPageNumber() > 0 && targetPageNumber > 0
-        && targetPageNumber <= imageCount() && targetPageNumber != currentPageNumber();
+    return imageSpreadShouldBeginTransition(
+        twoPageModeActive(), currentPageNumber(), targetPageNumber, imageCount());
 }
 
 void ImageDocumentController::beginTwoPageSpreadTransition()
@@ -1000,8 +986,6 @@ bool ImageDocumentController::shouldResetRightToLeftReadingForLoad(
     return !archiveDocument.isComicBook()
         || !archiveDocumentContainsUrl(archiveDocument, sourceUrl);
 }
-
-bool ImageDocumentController::currentPageIsCover() const { return currentPageNumber() == 1; }
 
 bool ImageDocumentController::primaryPageIsWide() const
 {
