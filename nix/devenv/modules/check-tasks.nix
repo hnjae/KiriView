@@ -16,6 +16,195 @@ let
   '';
 in
 {
+  scripts."run-clazy-parallel" = {
+    description = "Run clazy-standalone in parallel with ordered output";
+    packages = [ pkgs.coreutils ];
+    exec = ''
+      set -euo pipefail
+
+      usage() {
+          cat >&2 <<'EOF'
+      Usage: run-clazy-parallel [options] -- <source>...
+
+      Options:
+        --jobs <count>          Number of clazy-standalone jobs to run in parallel.
+        --clazy-binary <path>   clazy-standalone binary to execute.
+        --checks <checks>       clazy checks to run.
+        --ignore-dirs <regex>   Directories for clazy to ignore.
+        -p, --compile-db <dir>  Compilation database directory.
+      EOF
+      }
+
+      jobs="''${CLAZY_JOBS:-}"
+      clazy_binary="''${CLAZY_BINARY:-clazy-standalone}"
+      checks="''${CLAZY_CHECKS:-level0}"
+      ignore_dirs=""
+      compile_db="."
+
+      while (($# > 0)); do
+          case "$1" in
+          --jobs)
+              if (($# < 2)); then
+                  usage
+                  exit 2
+              fi
+              jobs="$2"
+              shift 2
+              ;;
+          --jobs=*)
+              jobs="''${1#--jobs=}"
+              shift
+              ;;
+          --clazy-binary)
+              if (($# < 2)); then
+                  usage
+                  exit 2
+              fi
+              clazy_binary="$2"
+              shift 2
+              ;;
+          --clazy-binary=*)
+              clazy_binary="''${1#--clazy-binary=}"
+              shift
+              ;;
+          --checks)
+              if (($# < 2)); then
+                  usage
+                  exit 2
+              fi
+              checks="$2"
+              shift 2
+              ;;
+          --checks=*)
+              checks="''${1#--checks=}"
+              shift
+              ;;
+          --ignore-dirs)
+              if (($# < 2)); then
+                  usage
+                  exit 2
+              fi
+              ignore_dirs="$2"
+              shift 2
+              ;;
+          --ignore-dirs=*)
+              ignore_dirs="''${1#--ignore-dirs=}"
+              shift
+              ;;
+          -p | --compile-db)
+              if (($# < 2)); then
+                  usage
+                  exit 2
+              fi
+              compile_db="$2"
+              shift 2
+              ;;
+          --compile-db=*)
+              compile_db="''${1#--compile-db=}"
+              shift
+              ;;
+          --help)
+              usage
+              exit 0
+              ;;
+          --)
+              shift
+              break
+              ;;
+          *)
+              usage
+              exit 2
+              ;;
+          esac
+      done
+
+      if [[ -z $jobs ]]; then
+          jobs="$(nproc)"
+      fi
+      if ! [[ $jobs =~ ^[0-9]+$ ]] || ((jobs < 1)); then
+          printf 'Invalid --jobs value: %s\n' "$jobs" >&2
+          exit 2
+      fi
+
+      sources=("$@")
+      source_count="$#"
+      if ((source_count == 0)); then
+          exit 0
+      fi
+
+      tmp_dir="$(mktemp -d)"
+      trap 'rm -rf "$tmp_dir"' EXIT
+
+      run_clazy_for_source() {
+          local index="$1"
+          local source="$2"
+          local output_file="$tmp_dir/$index.out"
+          local status_file="$tmp_dir/$index.status"
+          local status
+
+          set +e
+          {
+              printf '[%d/%d] Processing file %s.\n' "$((index + 1))" "$source_count" "$source"
+              if [[ -n $ignore_dirs ]]; then
+                  "$clazy_binary" \
+                      --checks="$checks" \
+                      --ignore-dirs="$ignore_dirs" \
+                      -p "$compile_db" \
+                      "$source"
+              else
+                  "$clazy_binary" \
+                      --checks="$checks" \
+                      -p "$compile_db" \
+                      "$source"
+              fi
+          } >"$output_file" 2>&1
+          status="$?"
+          printf '%s\n' "$status" >"$status_file"
+          exit 0
+      }
+
+      printf 'Running clazy-standalone for %d files with %d jobs...\n' "$source_count" "$jobs"
+
+      running_jobs=0
+      for ((index = 0; index < source_count; index++)); do
+          run_clazy_for_source "$index" "''${sources[$index]}" &
+          running_jobs=$((running_jobs + 1))
+          if ((running_jobs >= jobs)); then
+              wait -n
+              running_jobs=$((running_jobs - 1))
+          fi
+      done
+
+      while ((running_jobs > 0)); do
+          wait -n
+          running_jobs=$((running_jobs - 1))
+      done
+
+      exit_status=0
+      for ((index = 0; index < source_count; index++)); do
+          output_file="$tmp_dir/$index.out"
+          status_file="$tmp_dir/$index.status"
+
+          if [[ -f $output_file ]]; then
+              cat "$output_file"
+          fi
+
+          if [[ ! -f $status_file ]]; then
+              printf 'clazy-standalone did not report a status for %s.\n' "''${sources[$index]}" >&2
+              exit_status=1
+              continue
+          fi
+
+          read -r source_status <"$status_file"
+          if ((source_status != 0)); then
+              exit_status=1
+          fi
+      done
+
+      exit "$exit_status"
+    '';
+  };
+
   tasks = {
     "kiriview:test:rust-host" = {
       description = "Run host Rust library tests";
@@ -80,8 +269,21 @@ in
       after = [ "kiriview:lint:clippy" ];
       exec = ''
         ${qtCxxqt.cppLintPrelude}
-        ${lib.getExe' pkgs.clang-tools "clang-tidy"} --quiet -p . ${qtCxxqt.cppSourcesShellArgs}
-        ${lib.getExe' pkgs.clazy "clazy-standalone"} --checks="''${CLAZY_CHECKS:-level0}" --ignore-dirs=${lib.escapeShellArg qtCxxqt.clazyIgnoreDirsRegex} -p . ${qtCxxqt.cppSourcesShellArgs}
+        lint_jobs="$(nproc)"
+        ${lib.getExe' pkgs.llvmPackages.clang-unwrapped "run-clang-tidy"} \
+            -clang-tidy-binary ${lib.getExe' pkgs.clang-tools "clang-tidy"} \
+            -p . \
+            -j "$lint_jobs" \
+            -quiet \
+            ${qtCxxqt.cppSourcesShellArgs}
+        run-clazy-parallel \
+            --jobs "$lint_jobs" \
+            --clazy-binary ${lib.getExe' pkgs.clazy "clazy-standalone"} \
+            --checks "''${CLAZY_CHECKS:-level0}" \
+            --ignore-dirs=${lib.escapeShellArg qtCxxqt.clazyIgnoreDirsRegex} \
+            -p . \
+            -- \
+            ${qtCxxqt.cppSourcesShellArgs}
       '';
     };
 
