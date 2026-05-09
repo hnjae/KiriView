@@ -36,7 +36,7 @@ development build. This is not a stable release build.
 1. Add Flathub if it is not already configured:
 
    ```sh
-   flatpak remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
+   flatpak --user remote-add --if-not-exists flathub https://flathub.org/repo/flathub.flatpakrepo
    ```
 
 1. Build and install KiriView into your user Flatpak installation:
@@ -65,7 +65,7 @@ rerun the build and install command above.
 To remove the local development build:
 
 ```sh
-flatpak uninstall --user io.github.hnjae.KiriView
+flatpak --user uninstall io.github.hnjae.KiriView
 ```
 
 ## Flatpak Packaging Notes
