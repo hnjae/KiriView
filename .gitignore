@@ -40,6 +40,7 @@ install_manifest.txt
 .vscode/
 .codex
 .rumdl_cache/
+.sisyphus/
 
 # Logs and temporary files
 *.log

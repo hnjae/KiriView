@@ -1,0 +1,43 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "formatter": {
+    "treefmt": {
+      "command": ["treefmt", "$FILE"],
+      "extensions": [
+        ".bash",
+        ".c",
+        ".cc",
+        ".cpp",
+        ".css",
+        ".cts",
+        ".cxx",
+        ".h",
+        ".hh",
+        ".hpp",
+        ".hxx",
+        ".js",
+        ".json",
+        ".jsonc",
+        ".jsx",
+        ".mjs",
+        ".mts",
+        ".nix",
+        ".qml",
+        ".rs",
+        ".sh",
+        ".toml",
+        ".ts",
+        ".tsx",
+        ".yaml",
+        ".yml"
+      ]
+    },
+    "biome": { "disabled": true },
+    "cargofmt": { "disabled": true },
+    "clang-format": { "disabled": true },
+    "nixfmt": { "disabled": true },
+    "prettier": { "disabled": true },
+    "rustfmt": { "disabled": true },
+    "shfmt": { "disabled": true }
+  }
+}
