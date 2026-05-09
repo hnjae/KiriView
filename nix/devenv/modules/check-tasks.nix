@@ -300,11 +300,19 @@ in
       '';
     };
 
-    "kiriview:lint:cpp" = {
-      description = "Run C++ linters";
+    "kiriview:lint:cpp-prepare" = {
+      description = "Prepare C++ lint inputs";
       after = [ "kiriview:lint:clippy" ];
       exec = ''
         ${qtCxxqt.cppLintPrelude}
+      '';
+    };
+
+    "kiriview:lint:cpp-clang-tidy" = {
+      description = "Run clang-tidy against C++ sources";
+      after = [ "kiriview:lint:cpp-prepare" ];
+      exec = ''
+        ${hostTaskPrelude}
         ${lintJobsPrelude}
 
         ${lib.getExe' pkgs.llvmPackages.clang-unwrapped "run-clang-tidy"} \
@@ -313,6 +321,16 @@ in
             -j "$lint_jobs" \
             -quiet \
             ${qtCxxqt.cppSourcesShellArgs}
+      '';
+    };
+
+    "kiriview:lint:cpp-clazy" = {
+      description = "Run clazy against C++ sources";
+      after = [ "kiriview:lint:cpp-prepare" ];
+      exec = ''
+        ${hostTaskPrelude}
+        ${lintJobsPrelude}
+
         run-clazy-parallel \
             --jobs "$lint_jobs" \
             --clazy-binary ${lib.getExe' pkgs.clazy "clazy-standalone"} \
@@ -322,6 +340,15 @@ in
             -- \
             ${qtCxxqt.cppSourcesShellArgs}
       '';
+    };
+
+    "kiriview:lint:cpp" = {
+      description = "Run C++ linters";
+      after = [
+        "kiriview:lint:cpp-clang-tidy"
+        "kiriview:lint:cpp-clazy"
+      ];
+      exec = "true";
     };
 
     "kiriview:lint" = {
