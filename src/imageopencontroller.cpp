@@ -17,8 +17,6 @@
 #include <variant>
 
 namespace {
-using KiriView::zoomScopeUrlForLocation;
-
 QString emptyArchiveErrorMessage()
 {
     return KiriView::imageViewText("The selected archive does not contain any supported images.");
@@ -186,13 +184,17 @@ void ImageOpenController::finishLoadWithError(
 {
     const QUrl containerNavigationUrl = session.request.containerNavigationUrl();
     const QString message = loadErrorMessage(error, errorString);
-    if (!containerNavigationUrl.isEmpty()) {
+
+    switch (ImageOpenWorkflow::failureTargetForLoadError(
+        session, m_presentationController.hasImage())) {
+    case ImageOpenFailureTarget::ContainerNavigation:
         finishContainerNavigationLoadWithError(containerNavigationUrl, message);
         return;
-    }
-
-    if (m_presentationController.hasImage()) {
+    case ImageOpenFailureTarget::Replacement:
         finishReplacementLoadWithError(message);
+        return;
+    case ImageOpenFailureTarget::Initial:
+        finishInitialLoadWithError(message);
         return;
     }
 

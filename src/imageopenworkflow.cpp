@@ -35,6 +35,20 @@ KiriView::ImageDocumentStatus documentStatus(KiriView::RustImageOpenStatusTarget
     return KiriView::ImageDocumentStatus::Null;
 }
 
+KiriView::ImageOpenFailureTarget imageOpenFailureTarget(KiriView::RustImageOpenFailureTarget target)
+{
+    switch (target) {
+    case KiriView::RustImageOpenFailureTarget::ContainerNavigation:
+        return KiriView::ImageOpenFailureTarget::ContainerNavigation;
+    case KiriView::RustImageOpenFailureTarget::Replacement:
+        return KiriView::ImageOpenFailureTarget::Replacement;
+    case KiriView::RustImageOpenFailureTarget::Initial:
+        return KiriView::ImageOpenFailureTarget::Initial;
+    }
+
+    return KiriView::ImageOpenFailureTarget::Initial;
+}
+
 QUrl urlForTarget(
     KiriView::RustImageOpenUrlTarget target, const ImageOpenTransitionContext &context)
 {
@@ -223,6 +237,13 @@ private:
 }
 
 namespace KiriView {
+ImageOpenFailureTarget ImageOpenWorkflow::failureTargetForLoadError(
+    const ImageLoadSession &session, bool hasImage)
+{
+    return imageOpenFailureTarget(
+        rustImageOpenFailureTarget(session.request.containerNavigationUrl().isEmpty(), hasImage));
+}
+
 ImageDocumentEffects ImageOpenWorkflow::beginSourceLoad(ImageDocumentState &state, bool hasImage)
 {
     ImageOpenTransition transition(state);

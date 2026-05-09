@@ -44,6 +44,13 @@ mod ffi {
     }
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    enum RustImageOpenFailureTarget {
+        ContainerNavigation = 0,
+        Replacement = 1,
+        Initial = 2,
+    }
+
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     struct RustImageOpenEffects {
         clear_image: bool,
         reset_zoom: bool,
@@ -92,13 +99,19 @@ mod ffi {
 
         #[cxx_name = "rustImageOpenFinishAnimationLoadWithError"]
         fn rust_image_open_finish_animation_load_with_error() -> RustImageOpenTransition;
+
+        #[cxx_name = "rustImageOpenFailureTarget"]
+        fn rust_image_open_failure_target(
+            container_navigation_url_empty: bool,
+            has_image: bool,
+        ) -> RustImageOpenFailureTarget;
     }
 }
 
 use ffi::{
     RustImageOpenBoolTarget, RustImageOpenDisplayedLocationTarget, RustImageOpenEffects,
-    RustImageOpenErrorStringTarget, RustImageOpenStatusTarget, RustImageOpenTransition,
-    RustImageOpenUrlTarget,
+    RustImageOpenErrorStringTarget, RustImageOpenFailureTarget, RustImageOpenStatusTarget,
+    RustImageOpenTransition, RustImageOpenUrlTarget,
 };
 
 fn rust_image_open_begin_source_load(
@@ -177,6 +190,20 @@ fn rust_image_open_finish_initial_load_with_error() -> RustImageOpenTransition {
 
 fn rust_image_open_finish_animation_load_with_error() -> RustImageOpenTransition {
     cleared_load_error_transition(true)
+}
+
+fn rust_image_open_failure_target(
+    container_navigation_url_empty: bool,
+    has_image: bool,
+) -> RustImageOpenFailureTarget {
+    if !container_navigation_url_empty {
+        return RustImageOpenFailureTarget::ContainerNavigation;
+    }
+    if has_image {
+        return RustImageOpenFailureTarget::Replacement;
+    }
+
+    RustImageOpenFailureTarget::Initial
 }
 
 fn cleared_load_error_transition(reset_zoom: bool) -> RustImageOpenTransition {
@@ -310,5 +337,25 @@ mod tests {
             RustImageOpenUrlTarget::Empty
         );
         assert_eq!(animation.status, RustImageOpenStatusTarget::Error);
+    }
+
+    #[test]
+    fn load_failure_target_prefers_container_navigation_then_replacement_then_initial() {
+        assert_eq!(
+            rust_image_open_failure_target(false, true),
+            RustImageOpenFailureTarget::ContainerNavigation
+        );
+        assert_eq!(
+            rust_image_open_failure_target(false, false),
+            RustImageOpenFailureTarget::ContainerNavigation
+        );
+        assert_eq!(
+            rust_image_open_failure_target(true, true),
+            RustImageOpenFailureTarget::Replacement
+        );
+        assert_eq!(
+            rust_image_open_failure_target(true, false),
+            RustImageOpenFailureTarget::Initial
+        );
     }
 }

@@ -13,9 +13,17 @@
 namespace KiriView {
 class ImageDocumentState;
 
+enum class ImageOpenFailureTarget {
+    ContainerNavigation,
+    Replacement,
+    Initial,
+};
+
 class ImageOpenWorkflow
 {
 public:
+    static ImageOpenFailureTarget failureTargetForLoadError(
+        const ImageLoadSession &session, bool hasImage);
     static ImageDocumentEffects beginSourceLoad(ImageDocumentState &state, bool hasImage);
     static ImageDocumentEffects finishEmptySourceLoad(ImageDocumentState &state);
     static ImageDocumentEffects finishSuccessfulImageLoad(
