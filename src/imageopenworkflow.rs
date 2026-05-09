@@ -57,6 +57,19 @@ mod ffi {
     }
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    struct RustImageOpenSourceLoadPlan {
+        finish_spread_transition: bool,
+        reset_right_to_left_reading: bool,
+        clear_loading_container_navigation_url: bool,
+        update_container_navigation_url: bool,
+        cancel_navigation_and_predecode: bool,
+        clear_secondary_page: bool,
+        set_loading_container_navigation_url: bool,
+        set_source_url: bool,
+        begin_open: bool,
+    }
+
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     struct RustImageOpenEffects {
         clear_image: bool,
         reset_zoom: bool,
@@ -80,6 +93,14 @@ mod ffi {
     extern "Rust" {
         #[cxx_name = "rustImageOpenSourceTarget"]
         fn rust_image_open_source_target(source_url_empty: bool) -> RustImageOpenSourceTarget;
+
+        #[cxx_name = "rustImageOpenSourceLoadPlan"]
+        fn rust_image_open_source_load_plan(
+            source_url_changed: bool,
+            preserve_two_page_spread_transition: bool,
+            reset_right_to_left_reading: bool,
+            container_navigation_url_empty: bool,
+        ) -> RustImageOpenSourceLoadPlan;
 
         #[cxx_name = "rustImageOpenBeginSourceLoad"]
         fn rust_image_open_begin_source_load(
@@ -119,8 +140,9 @@ mod ffi {
 
 use ffi::{
     RustImageOpenBoolTarget, RustImageOpenDisplayedLocationTarget, RustImageOpenEffects,
-    RustImageOpenErrorStringTarget, RustImageOpenFailureTarget, RustImageOpenSourceTarget,
-    RustImageOpenStatusTarget, RustImageOpenTransition, RustImageOpenUrlTarget,
+    RustImageOpenErrorStringTarget, RustImageOpenFailureTarget, RustImageOpenSourceLoadPlan,
+    RustImageOpenSourceTarget, RustImageOpenStatusTarget, RustImageOpenTransition,
+    RustImageOpenUrlTarget,
 };
 
 fn rust_image_open_source_target(source_url_empty: bool) -> RustImageOpenSourceTarget {
@@ -129,6 +151,30 @@ fn rust_image_open_source_target(source_url_empty: bool) -> RustImageOpenSourceT
     } else {
         RustImageOpenSourceTarget::LoadSource
     }
+}
+
+fn rust_image_open_source_load_plan(
+    source_url_changed: bool,
+    preserve_two_page_spread_transition: bool,
+    reset_right_to_left_reading: bool,
+    container_navigation_url_empty: bool,
+) -> RustImageOpenSourceLoadPlan {
+    let mut plan = empty_source_load_plan();
+    plan.finish_spread_transition = !preserve_two_page_spread_transition;
+    plan.reset_right_to_left_reading = reset_right_to_left_reading;
+
+    if !source_url_changed {
+        plan.clear_loading_container_navigation_url = true;
+        plan.update_container_navigation_url = !container_navigation_url_empty;
+        return plan;
+    }
+
+    plan.cancel_navigation_and_predecode = true;
+    plan.clear_secondary_page = true;
+    plan.set_loading_container_navigation_url = true;
+    plan.set_source_url = true;
+    plan.begin_open = true;
+    plan
 }
 
 fn rust_image_open_begin_source_load(
@@ -246,6 +292,20 @@ fn tracked_load_error_transition() -> RustImageOpenTransition {
     transition
 }
 
+fn empty_source_load_plan() -> RustImageOpenSourceLoadPlan {
+    RustImageOpenSourceLoadPlan {
+        finish_spread_transition: false,
+        reset_right_to_left_reading: false,
+        clear_loading_container_navigation_url: false,
+        update_container_navigation_url: false,
+        cancel_navigation_and_predecode: false,
+        clear_secondary_page: false,
+        set_loading_container_navigation_url: false,
+        set_source_url: false,
+        begin_open: false,
+    }
+}
+
 fn empty_transition() -> RustImageOpenTransition {
     RustImageOpenTransition {
         source_url: RustImageOpenUrlTarget::Unchanged,
@@ -293,6 +353,45 @@ mod tests {
             rust_image_open_source_target(false),
             RustImageOpenSourceTarget::LoadSource
         );
+    }
+
+    #[test]
+    fn unchanged_source_load_clears_loading_and_optionally_updates_container() {
+        let plan = rust_image_open_source_load_plan(false, false, true, false);
+
+        assert!(plan.finish_spread_transition);
+        assert!(plan.reset_right_to_left_reading);
+        assert!(plan.clear_loading_container_navigation_url);
+        assert!(plan.update_container_navigation_url);
+        assert!(!plan.cancel_navigation_and_predecode);
+        assert!(!plan.clear_secondary_page);
+        assert!(!plan.set_loading_container_navigation_url);
+        assert!(!plan.set_source_url);
+        assert!(!plan.begin_open);
+    }
+
+    #[test]
+    fn changed_source_load_starts_new_load_without_container_navigation_update() {
+        let plan = rust_image_open_source_load_plan(true, false, false, false);
+
+        assert!(plan.finish_spread_transition);
+        assert!(!plan.reset_right_to_left_reading);
+        assert!(!plan.clear_loading_container_navigation_url);
+        assert!(!plan.update_container_navigation_url);
+        assert!(plan.cancel_navigation_and_predecode);
+        assert!(plan.clear_secondary_page);
+        assert!(plan.set_loading_container_navigation_url);
+        assert!(plan.set_source_url);
+        assert!(plan.begin_open);
+    }
+
+    #[test]
+    fn source_load_plan_can_preserve_active_spread_transition() {
+        let plan = rust_image_open_source_load_plan(true, true, true, true);
+
+        assert!(!plan.finish_spread_transition);
+        assert!(plan.reset_right_to_left_reading);
+        assert!(plan.begin_open);
     }
 
     #[test]

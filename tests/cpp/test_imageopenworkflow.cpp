@@ -53,6 +53,7 @@ class TestImageOpenWorkflow : public QObject
 
 private Q_SLOTS:
     void sourceTargetRoutesEmptyAndLoadableSources();
+    void sourceLoadPlanRoutesUnchangedAndReplacementLoads();
     void firstImageLoadSuccessTransitionsToReady();
     void directArchiveImageLoadSuccessDisablesContainerNavigation();
     void replacementLoadFailureKeepsDisplayedImage();
@@ -71,6 +72,33 @@ void TestImageOpenWorkflow::sourceTargetRoutesEmptyAndLoadableSources()
     state.setSourceUrl(localUrl(QStringLiteral("/images/page.png")));
     QCOMPARE(static_cast<int>(KiriView::ImageOpenWorkflow::sourceTargetForOpen(state)),
         static_cast<int>(KiriView::ImageOpenSourceTarget::LoadSource));
+}
+
+void TestImageOpenWorkflow::sourceLoadPlanRoutesUnchangedAndReplacementLoads()
+{
+    const KiriView::ImageOpenSourceLoadPlan unchanged
+        = KiriView::ImageOpenWorkflow::sourceLoadPlan(false, false, true, false);
+    QVERIFY(unchanged.finishSpreadTransition);
+    QVERIFY(unchanged.resetRightToLeftReading);
+    QVERIFY(unchanged.clearLoadingContainerNavigationUrl);
+    QVERIFY(unchanged.updateContainerNavigationUrl);
+    QVERIFY(!unchanged.cancelNavigationAndPredecode);
+    QVERIFY(!unchanged.clearSecondaryPage);
+    QVERIFY(!unchanged.setLoadingContainerNavigationUrl);
+    QVERIFY(!unchanged.setSourceUrl);
+    QVERIFY(!unchanged.beginOpen);
+
+    const KiriView::ImageOpenSourceLoadPlan replacement
+        = KiriView::ImageOpenWorkflow::sourceLoadPlan(true, true, false, true);
+    QVERIFY(!replacement.finishSpreadTransition);
+    QVERIFY(!replacement.resetRightToLeftReading);
+    QVERIFY(!replacement.clearLoadingContainerNavigationUrl);
+    QVERIFY(!replacement.updateContainerNavigationUrl);
+    QVERIFY(replacement.cancelNavigationAndPredecode);
+    QVERIFY(replacement.clearSecondaryPage);
+    QVERIFY(replacement.setLoadingContainerNavigationUrl);
+    QVERIFY(replacement.setSourceUrl);
+    QVERIFY(replacement.beginOpen);
 }
 
 void TestImageOpenWorkflow::firstImageLoadSuccessTransitionsToReady()

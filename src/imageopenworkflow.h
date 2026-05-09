@@ -24,10 +24,25 @@ enum class ImageOpenSourceTarget {
     LoadSource,
 };
 
+struct ImageOpenSourceLoadPlan {
+    bool finishSpreadTransition = false;
+    bool resetRightToLeftReading = false;
+    bool clearLoadingContainerNavigationUrl = false;
+    bool updateContainerNavigationUrl = false;
+    bool cancelNavigationAndPredecode = false;
+    bool clearSecondaryPage = false;
+    bool setLoadingContainerNavigationUrl = false;
+    bool setSourceUrl = false;
+    bool beginOpen = false;
+};
+
 class ImageOpenWorkflow
 {
 public:
     static ImageOpenSourceTarget sourceTargetForOpen(const ImageDocumentState &state);
+    static ImageOpenSourceLoadPlan sourceLoadPlan(bool sourceUrlChanged,
+        bool preserveTwoPageSpreadTransition, bool resetRightToLeftReading,
+        bool containerNavigationUrlEmpty);
     static ImageOpenFailureTarget failureTargetForLoadError(
         const ImageLoadSession &session, bool hasImage);
     static ImageDocumentEffects beginSourceLoad(ImageDocumentState &state, bool hasImage);

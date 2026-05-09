@@ -61,6 +61,16 @@ KiriView::ImageOpenSourceTarget imageOpenSourceTarget(KiriView::RustImageOpenSou
     return KiriView::ImageOpenSourceTarget::EmptySource;
 }
 
+KiriView::ImageOpenSourceLoadPlan imageOpenSourceLoadPlan(
+    KiriView::RustImageOpenSourceLoadPlan plan)
+{
+    return KiriView::ImageOpenSourceLoadPlan { plan.finish_spread_transition,
+        plan.reset_right_to_left_reading, plan.clear_loading_container_navigation_url,
+        plan.update_container_navigation_url, plan.cancel_navigation_and_predecode,
+        plan.clear_secondary_page, plan.set_loading_container_navigation_url, plan.set_source_url,
+        plan.begin_open };
+}
+
 QUrl urlForTarget(
     KiriView::RustImageOpenUrlTarget target, const ImageOpenTransitionContext &context)
 {
@@ -252,6 +262,14 @@ namespace KiriView {
 ImageOpenSourceTarget ImageOpenWorkflow::sourceTargetForOpen(const ImageDocumentState &state)
 {
     return imageOpenSourceTarget(rustImageOpenSourceTarget(state.sourceUrl().isEmpty()));
+}
+
+ImageOpenSourceLoadPlan ImageOpenWorkflow::sourceLoadPlan(bool sourceUrlChanged,
+    bool preserveTwoPageSpreadTransition, bool resetRightToLeftReading,
+    bool containerNavigationUrlEmpty)
+{
+    return imageOpenSourceLoadPlan(rustImageOpenSourceLoadPlan(sourceUrlChanged,
+        preserveTwoPageSpreadTransition, resetRightToLeftReading, containerNavigationUrlEmpty));
 }
 
 ImageOpenFailureTarget ImageOpenWorkflow::failureTargetForLoadError(

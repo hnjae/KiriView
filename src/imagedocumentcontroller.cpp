@@ -579,36 +579,46 @@ void ImageDocumentController::setSourceUrlForLoad(
 {
     m_deletionController->cancel();
 
+    const bool sourceUrlChanged = m_state.sourceUrl() != sourceUrl;
     const bool resetRightToLeftReading
         = KiriView::shouldResetRightToLeftReadingForLoad(m_rightToLeftReadingEnabled,
             m_state.displayedArchiveDocument(), sourceUrl, containerNavigationUrl);
-    if (m_state.sourceUrl() == sourceUrl) {
-        if (!preserveTwoPageSpreadTransition) {
-            finishTwoPageSpreadTransition();
-        }
-        if (resetRightToLeftReading && m_rightToLeftReadingEnabled) {
-            m_rightToLeftReadingEnabled = false;
-            notifyRightToLeftReadingChanged();
-        }
-        m_state.clearLoadingContainerNavigationUrl();
-        if (!containerNavigationUrl.isEmpty()) {
-            m_state.setContainerNavigationUrl(containerNavigationUrl);
-        }
-        return;
+    const ImageOpenSourceLoadPlan plan = ImageOpenWorkflow::sourceLoadPlan(sourceUrlChanged,
+        preserveTwoPageSpreadTransition, resetRightToLeftReading, containerNavigationUrl.isEmpty());
+    if (plan.cancelNavigationAndPredecode) {
+        cancelNavigationAndPredecode();
     }
-
-    cancelNavigationAndPredecode();
-    if (!preserveTwoPageSpreadTransition) {
+    if (plan.finishSpreadTransition) {
         finishTwoPageSpreadTransition();
     }
-    if (resetRightToLeftReading) {
+
+    const bool notifyRightToLeftReading
+        = plan.resetRightToLeftReading && m_rightToLeftReadingEnabled;
+    if (plan.resetRightToLeftReading) {
         m_rightToLeftReadingEnabled = false;
     }
-    clearSecondaryPage();
-    m_state.setLoadingContainerNavigationUrl(containerNavigationUrl);
-    m_state.setSourceUrl(sourceUrl);
-    m_openController->open();
-    if (resetRightToLeftReading) {
+    if (!sourceUrlChanged && notifyRightToLeftReading) {
+        notifyRightToLeftReadingChanged();
+    }
+    if (plan.clearSecondaryPage) {
+        clearSecondaryPage();
+    }
+    if (plan.clearLoadingContainerNavigationUrl) {
+        m_state.clearLoadingContainerNavigationUrl();
+    }
+    if (plan.updateContainerNavigationUrl) {
+        m_state.setContainerNavigationUrl(containerNavigationUrl);
+    }
+    if (plan.setLoadingContainerNavigationUrl) {
+        m_state.setLoadingContainerNavigationUrl(containerNavigationUrl);
+    }
+    if (plan.setSourceUrl) {
+        m_state.setSourceUrl(sourceUrl);
+    }
+    if (plan.beginOpen) {
+        m_openController->open();
+    }
+    if (sourceUrlChanged && notifyRightToLeftReading) {
         notifyRightToLeftReadingChanged();
     }
 }
