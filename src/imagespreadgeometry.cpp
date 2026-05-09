@@ -70,6 +70,16 @@ int imageSpreadPreviousPageTarget(
         currentPageNumber, secondaryPageVisible, previousPageIsWide);
 }
 
+int imageSpreadCurrentLastPageNumber(int currentPageNumber, bool secondaryPageVisible)
+{
+    return rustImageSpreadCurrentLastPageNumber(currentPageNumber, secondaryPageVisible);
+}
+
+int imageSpreadRelativePageTarget(int currentPageNumber, int imageCount, int offset)
+{
+    return rustImageSpreadRelativePageTarget(currentPageNumber, imageCount, offset);
+}
+
 int imageSpreadNextPageTarget(int currentLastPageNumber, int imageCount)
 {
     return rustImageSpreadNextPageTarget(currentLastPageNumber, imageCount);

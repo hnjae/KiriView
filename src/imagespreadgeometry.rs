@@ -70,6 +70,19 @@ mod ffi {
             previous_page_is_wide: bool,
         ) -> i32;
 
+        #[cxx_name = "rustImageSpreadCurrentLastPageNumber"]
+        fn rust_image_spread_current_last_page_number(
+            current_page_number: i32,
+            secondary_page_visible: bool,
+        ) -> i32;
+
+        #[cxx_name = "rustImageSpreadRelativePageTarget"]
+        fn rust_image_spread_relative_page_target(
+            current_page_number: i32,
+            image_count: i32,
+            offset: i32,
+        ) -> i32;
+
         #[cxx_name = "rustImageSpreadNextPageTarget"]
         fn rust_image_spread_next_page_target(
             current_last_page_number: i32,
@@ -183,6 +196,36 @@ fn rust_image_spread_previous_page_target(
         -1
     };
     current_page_number + offset
+}
+
+fn rust_image_spread_current_last_page_number(
+    current_page_number: i32,
+    secondary_page_visible: bool,
+) -> i32 {
+    if current_page_number <= 0 {
+        return 0;
+    }
+
+    if secondary_page_visible {
+        current_page_number.saturating_add(1)
+    } else {
+        current_page_number
+    }
+}
+
+fn rust_image_spread_relative_page_target(
+    current_page_number: i32,
+    image_count: i32,
+    offset: i32,
+) -> i32 {
+    let Some(target_page) = current_page_number.checked_add(offset) else {
+        return 0;
+    };
+    if target_page < 1 || target_page > image_count {
+        return 0;
+    }
+
+    target_page
 }
 
 fn rust_image_spread_next_page_target(current_last_page_number: i32, image_count: i32) -> i32 {
@@ -376,6 +419,21 @@ mod tests {
     fn next_page_target_stops_after_last_page() {
         assert_eq!(rust_image_spread_next_page_target(2, 5), 3);
         assert_eq!(rust_image_spread_next_page_target(5, 5), 0);
+    }
+
+    #[test]
+    fn current_last_page_tracks_secondary_page_visibility() {
+        assert_eq!(rust_image_spread_current_last_page_number(0, false), 0);
+        assert_eq!(rust_image_spread_current_last_page_number(2, false), 2);
+        assert_eq!(rust_image_spread_current_last_page_number(2, true), 3);
+    }
+
+    #[test]
+    fn relative_page_target_rejects_out_of_range_pages() {
+        assert_eq!(rust_image_spread_relative_page_target(3, 5, -1), 2);
+        assert_eq!(rust_image_spread_relative_page_target(3, 5, 1), 4);
+        assert_eq!(rust_image_spread_relative_page_target(1, 5, -1), 0);
+        assert_eq!(rust_image_spread_relative_page_target(5, 5, 1), 0);
     }
 
     #[test]

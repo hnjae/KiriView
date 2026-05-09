@@ -294,12 +294,7 @@ int ImageDocumentController::currentPageNumber() const
 
 int ImageDocumentController::currentLastPageNumber() const
 {
-    const int current = currentPageNumber();
-    if (current <= 0) {
-        return 0;
-    }
-
-    return secondaryPageVisible() ? current + 1 : current;
+    return imageSpreadCurrentLastPageNumber(currentPageNumber(), secondaryPageVisible());
 }
 
 int ImageDocumentController::imageCount() const { return m_navigationController->imageCount(); }
@@ -1012,8 +1007,8 @@ QString ImageDocumentController::pageCacheKey(const QUrl &url)
 
 void ImageDocumentController::openImageAtRelativePageOffset(int offset)
 {
-    const int targetPage = currentPageNumber() + offset;
-    if (targetPage < 1 || targetPage > imageCount()) {
+    const int targetPage = imageSpreadRelativePageTarget(currentPageNumber(), imageCount(), offset);
+    if (targetPage <= 0) {
         return;
     }
 
