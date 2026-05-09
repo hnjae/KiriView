@@ -59,18 +59,25 @@ QPointF KiriImageView::panContentPosition(
 QPointF KiriImageView::nextScanContentPosition(const QPointF &contentPosition) const
 {
     return KiriView::imageViewportNextZScanPosition(
-        viewportSize(), viewportImageRect(), contentPosition);
+        viewportSize(), viewportImageRect(), contentPosition, rightToLeftReadingActive());
 }
 
 QPointF KiriImageView::previousScanContentPosition(const QPointF &contentPosition) const
 {
     return KiriView::imageViewportPreviousZScanPosition(
-        viewportSize(), viewportImageRect(), contentPosition);
+        viewportSize(), viewportImageRect(), contentPosition, rightToLeftReadingActive());
+}
+
+QPointF KiriImageView::initialScanContentPosition() const
+{
+    return KiriView::imageViewportInitialZScanPosition(
+        viewportSize(), viewportImageRect(), rightToLeftReadingActive());
 }
 
 QPointF KiriImageView::finalScanContentPosition() const
 {
-    return KiriView::imageViewportFinalZScanPosition(viewportSize(), viewportImageRect());
+    return KiriView::imageViewportFinalZScanPosition(
+        viewportSize(), viewportImageRect(), rightToLeftReadingActive());
 }
 
 bool KiriImageView::viewportPointInsideImage(
@@ -161,6 +168,12 @@ QSizeF KiriImageView::displaySize() const
 QRectF KiriImageView::viewportImageRect() const
 {
     return KiriView::imageViewportImageRect(viewportSize(), displaySize());
+}
+
+bool KiriImageView::rightToLeftReadingActive() const
+{
+    return m_document != nullptr && m_document->rightToLeftReadingEnabled()
+        && m_document->rightToLeftReadingAvailable();
 }
 
 void KiriImageView::connectDocument()

@@ -43,8 +43,8 @@ Item {
         return moved;
     }
 
-    function resetContentPositionToTopLeft() {
-        setContentPosition(Qt.point(0, 0));
+    function resetContentPositionToScanStart() {
+        setContentPosition(imageView.initialScanContentPosition());
     }
 
     function setNextDisplayedImageStartToFinalScanPosition() {
@@ -58,7 +58,7 @@ Item {
             return;
         }
 
-        resetContentPositionToTopLeft();
+        resetContentPositionToScanStart();
     }
 
     function panBy(deltaX, deltaY) {
@@ -84,7 +84,7 @@ Item {
             return false;
         }
 
-        return moveContentPosition(Qt.point(0, 0));
+        return moveContentPosition(imageView.initialScanContentPosition());
     }
 
     function scanForward() {
@@ -190,7 +190,7 @@ Item {
                 document: imageDocument
                 height: imageDocument.primaryDisplaySize.height
                 width: imageDocument.primaryDisplaySize.width
-                x: 0
+                x: imageDocument.secondaryPageVisible && imageDocument.rightToLeftReadingEnabled && imageDocument.rightToLeftReadingAvailable ? secondaryImageView.width : 0
                 y: Math.max(0, (spreadItem.height - height) / 2)
             }
 
@@ -202,7 +202,7 @@ Item {
                 secondaryPage: true
                 visible: imageDocument.secondaryPageVisible
                 width: imageDocument.secondaryDisplaySize.width
-                x: primaryImageView.width
+                x: imageDocument.rightToLeftReadingEnabled && imageDocument.rightToLeftReadingAvailable ? 0 : primaryImageView.width
                 y: Math.max(0, (spreadItem.height - height) / 2)
             }
         }

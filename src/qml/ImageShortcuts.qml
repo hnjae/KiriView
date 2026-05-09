@@ -26,6 +26,7 @@ Item {
     readonly property bool readyCommandShortcutsEnabled: root.imageReady && !root.imageDocument.fileDeletionInProgress && root.commandShortcutsEnabled
     readonly property bool pageCommandShortcutsEnabled: readyCommandShortcutsEnabled && root.imageDocument.imageCount > 0
     readonly property bool twoPageCommandShortcutsEnabled: readyCommandShortcutsEnabled && root.imageDocument.twoPageModeAvailable && root.imageDocument.twoPageModeEnabled
+    readonly property bool rightToLeftReadingCommandShortcutsEnabled: readyCommandShortcutsEnabled && root.imageDocument.rightToLeftReadingAvailable
     readonly property bool pannableCommandShortcutsEnabled: root.imagePannable && !root.imageDocument.fileDeletionInProgress && root.commandShortcutsEnabled
     readonly property bool containerCommandShortcutsEnabled: root.imageDocument.containerNavigationAvailable && !root.imageDocument.fileDeletionInProgress && root.commandShortcutsEnabled
     readonly property int zoomStepPercent: imageDocument.zoomStepPercent
@@ -57,13 +58,31 @@ Item {
         return imageViewport.panToTopLeft();
     }
 
+    function openLeftFallbackImage() {
+        if (root.imageDocument.rightToLeftReadingEnabled && root.imageDocument.rightToLeftReadingAvailable) {
+            root.nextImageQAction.trigger();
+            return;
+        }
+
+        root.previousImageQAction.trigger();
+    }
+
+    function openRightFallbackImage() {
+        if (root.imageDocument.rightToLeftReadingEnabled && root.imageDocument.rightToLeftReadingAvailable) {
+            root.previousImageQAction.trigger();
+            return;
+        }
+
+        root.nextImageQAction.trigger();
+    }
+
     function panLeftOrOpenPreviousImage() {
         if (root.imageHorizontallyPannable) {
             root.panBy(-root.keyboardPanDistance, 0);
             return;
         }
 
-        root.previousImageQAction.trigger();
+        root.openLeftFallbackImage();
     }
 
     function panRightOrOpenNextImage() {
@@ -72,7 +91,7 @@ Item {
             return;
         }
 
-        root.nextImageQAction.trigger();
+        root.openRightFallbackImage();
     }
 
     function scanForward() {
@@ -154,6 +173,12 @@ Item {
         actionIds: [KiriViewApplication.ViewZoomInAction, KiriViewApplication.ViewZoomOutAction, KiriViewApplication.ViewFitAction, KiriViewApplication.ViewFitHeightAction, KiriViewApplication.ViewFitWidthAction, KiriViewApplication.ViewActualSizeAction, KiriViewApplication.ViewToggleTwoPageModeAction]
         application: root.application
         shortcutsEnabled: root.readyCommandShortcutsEnabled
+    }
+
+    ActionShortcutGroup {
+        actionIds: [KiriViewApplication.ViewToggleRightToLeftReadingAction]
+        application: root.application
+        shortcutsEnabled: root.rightToLeftReadingCommandShortcutsEnabled
     }
 
     ActionShortcutGroup {

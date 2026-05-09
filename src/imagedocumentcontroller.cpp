@@ -354,6 +354,30 @@ bool ImageDocumentController::twoPageModeAvailable() const
         && m_state.displayedArchiveDocument().isComicBook();
 }
 
+bool ImageDocumentController::rightToLeftReadingEnabled() const
+{
+    return m_rightToLeftReadingEnabled;
+}
+
+void ImageDocumentController::setRightToLeftReadingEnabled(bool enabled)
+{
+    if (m_rightToLeftReadingEnabled == enabled) {
+        return;
+    }
+
+    m_rightToLeftReadingEnabled = enabled;
+    if (secondaryPageVisible()) {
+        applySpreadVisibleItemRects();
+    }
+    notifyRightToLeftReadingChanged();
+}
+
+bool ImageDocumentController::rightToLeftReadingAvailable() const
+{
+    return m_presentationController->hasImage() && !m_state.displayedUrl().isEmpty()
+        && m_state.displayedArchiveDocument().isComicBook();
+}
+
 bool ImageDocumentController::secondaryPageVisible() const
 {
     return twoPageModeActive() && m_secondaryPageVisible;
@@ -578,9 +602,15 @@ void ImageDocumentController::setSourceUrlForLoad(
 {
     m_deletionController->cancel();
 
+    const bool resetRightToLeftReading
+        = shouldResetRightToLeftReadingForLoad(sourceUrl, containerNavigationUrl);
     if (m_state.sourceUrl() == sourceUrl) {
         if (!preserveTwoPageSpreadTransition) {
             finishTwoPageSpreadTransition();
+        }
+        if (resetRightToLeftReading && m_rightToLeftReadingEnabled) {
+            m_rightToLeftReadingEnabled = false;
+            notifyRightToLeftReadingChanged();
         }
         m_state.clearLoadingContainerNavigationUrl();
         if (!containerNavigationUrl.isEmpty()) {
@@ -593,10 +623,16 @@ void ImageDocumentController::setSourceUrlForLoad(
     if (!preserveTwoPageSpreadTransition) {
         finishTwoPageSpreadTransition();
     }
+    if (resetRightToLeftReading) {
+        m_rightToLeftReadingEnabled = false;
+    }
     clearSecondaryPage();
     m_state.setLoadingContainerNavigationUrl(containerNavigationUrl);
     m_state.setSourceUrl(sourceUrl);
     m_openController->open();
+    if (resetRightToLeftReading) {
+        notifyRightToLeftReadingChanged();
+    }
 }
 
 void ImageDocumentController::clearAfterSuccessfulFileDeletion()
@@ -928,9 +964,11 @@ void ImageDocumentController::applySpreadVisibleItemRects()
 
 QRectF ImageDocumentController::primarySpreadPageRect() const
 {
+    const QSizeF secondarySize = secondaryDisplaySize();
     const QSizeF pageSize = primaryDisplaySize();
     const QSizeF spreadSize = displaySize();
-    return QRectF(0.0, std::max<qreal>(0.0, (spreadSize.height() - pageSize.height()) / 2.0),
+    const qreal x = rightToLeftReadingActive() ? secondarySize.width() : 0.0;
+    return QRectF(x, std::max<qreal>(0.0, (spreadSize.height() - pageSize.height()) / 2.0),
         pageSize.width(), pageSize.height());
 }
 
@@ -939,8 +977,8 @@ QRectF ImageDocumentController::secondarySpreadPageRect() const
     const QSizeF primarySize = primaryDisplaySize();
     const QSizeF secondarySize = secondaryDisplaySize();
     const QSizeF spreadSize = displaySize();
-    return QRectF(primarySize.width(),
-        std::max<qreal>(0.0, (spreadSize.height() - secondarySize.height()) / 2.0),
+    const qreal x = rightToLeftReadingActive() ? 0.0 : primarySize.width();
+    return QRectF(x, std::max<qreal>(0.0, (spreadSize.height() - secondarySize.height()) / 2.0),
         secondarySize.width(), secondarySize.height());
 }
 
@@ -959,6 +997,23 @@ QSize ImageDocumentController::spreadImageSize() const
 bool ImageDocumentController::twoPageModeActive() const
 {
     return m_twoPageModeEnabled && twoPageModeAvailable();
+}
+
+bool ImageDocumentController::rightToLeftReadingActive() const
+{
+    return m_rightToLeftReadingEnabled && rightToLeftReadingAvailable();
+}
+
+bool ImageDocumentController::shouldResetRightToLeftReadingForLoad(
+    const QUrl &sourceUrl, const QUrl &containerNavigationUrl) const
+{
+    if (!m_rightToLeftReadingEnabled || !containerNavigationUrl.isEmpty()) {
+        return false;
+    }
+
+    const ArchiveDocumentLocation &archiveDocument = m_state.displayedArchiveDocument();
+    return !archiveDocument.isComicBook()
+        || !archiveDocumentContainsUrl(archiveDocument, sourceUrl);
 }
 
 bool ImageDocumentController::currentPageIsCover() const { return currentPageNumber() == 1; }
@@ -1024,6 +1079,15 @@ void ImageDocumentController::notifyTwoPageModeChanged()
     notify(ImageDocumentChange::Repaint);
 }
 
+void ImageDocumentController::notifyRightToLeftReadingChanged()
+{
+    notify(ImageDocumentChange::RightToLeftReading);
+    notify(ImageDocumentChange::Repaint);
+    if (secondaryPageVisible()) {
+        notify(ImageDocumentChange::TwoPageMode);
+    }
+}
+
 ImageDocumentRenderContext ImageDocumentController::renderContext() const
 {
     ImageDocumentRenderContext context
@@ -1050,6 +1114,7 @@ void ImageDocumentController::notify(ImageDocumentChange change)
 
     if (change == ImageDocumentChange::PageNavigation) {
         refreshSecondaryPage();
+        notifyRightToLeftReadingChanged();
     }
 
     invokeIfSet(m_changeCallback, change);
@@ -1066,5 +1131,6 @@ void ImageDocumentController::clearImage()
     m_state.clearDisplayedImageUrls();
     m_presentationController->clearImage();
     m_navigationController->clearPageNavigation();
+    notifyRightToLeftReadingChanged();
 }
 }

@@ -37,6 +37,7 @@ enum class ImageDocumentChange {
     ContainerNavigation,
     FileDeletionInProgress,
     TwoPageMode,
+    RightToLeftReading,
     Repaint,
 };
 

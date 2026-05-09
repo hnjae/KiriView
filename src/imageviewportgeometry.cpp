@@ -35,26 +35,36 @@ QPointF imageViewportPanPosition(const QSizeF &viewportSize, const QRectF &image
         Bridge::rustPointF<RustPointF>(delta)));
 }
 
-QPointF imageViewportNextZScanPosition(
-    const QSizeF &viewportSize, const QRectF &imageRect, const QPointF &contentPosition)
+QPointF imageViewportNextZScanPosition(const QSizeF &viewportSize, const QRectF &imageRect,
+    const QPointF &contentPosition, bool rightToLeftReading)
 {
     return Bridge::qtPointF(rustImageViewportNextZScanPosition(
         Bridge::rustSizeF<RustSizeF>(viewportSize), Bridge::rustRectF<RustRectF>(imageRect),
-        Bridge::rustPointF<RustPointF>(contentPosition)));
+        Bridge::rustPointF<RustPointF>(contentPosition), rightToLeftReading));
 }
 
-QPointF imageViewportPreviousZScanPosition(
-    const QSizeF &viewportSize, const QRectF &imageRect, const QPointF &contentPosition)
+QPointF imageViewportPreviousZScanPosition(const QSizeF &viewportSize, const QRectF &imageRect,
+    const QPointF &contentPosition, bool rightToLeftReading)
 {
     return Bridge::qtPointF(rustImageViewportPreviousZScanPosition(
         Bridge::rustSizeF<RustSizeF>(viewportSize), Bridge::rustRectF<RustRectF>(imageRect),
-        Bridge::rustPointF<RustPointF>(contentPosition)));
+        Bridge::rustPointF<RustPointF>(contentPosition), rightToLeftReading));
 }
 
-QPointF imageViewportFinalZScanPosition(const QSizeF &viewportSize, const QRectF &imageRect)
+QPointF imageViewportInitialZScanPosition(
+    const QSizeF &viewportSize, const QRectF &imageRect, bool rightToLeftReading)
 {
-    return Bridge::qtPointF(rustImageViewportFinalZScanPosition(
-        Bridge::rustSizeF<RustSizeF>(viewportSize), Bridge::rustRectF<RustRectF>(imageRect)));
+    return Bridge::qtPointF(
+        rustImageViewportInitialZScanPosition(Bridge::rustSizeF<RustSizeF>(viewportSize),
+            Bridge::rustRectF<RustRectF>(imageRect), rightToLeftReading));
+}
+
+QPointF imageViewportFinalZScanPosition(
+    const QSizeF &viewportSize, const QRectF &imageRect, bool rightToLeftReading)
+{
+    return Bridge::qtPointF(
+        rustImageViewportFinalZScanPosition(Bridge::rustSizeF<RustSizeF>(viewportSize),
+            Bridge::rustRectF<RustRectF>(imageRect), rightToLeftReading));
 }
 
 bool imageViewportPointInsideImage(

@@ -257,6 +257,16 @@ msgstr "실제 크기"
 
 #: src/kiriviewapplicationactions.cpp
 msgctxt "@action"
+msgid "Two-Page Mode"
+msgstr ""
+
+#: src/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Right-to-Left Reading"
+msgstr ""
+
+#: src/kiriviewapplicationactions.cpp
+msgctxt "@action"
 msgid "Pan Left"
 msgstr "왼쪽으로 이동"
 
@@ -294,6 +304,18 @@ msgstr "앞으로 훑기"
 msgctxt "@action"
 msgid "Scan Backward"
 msgstr "뒤로 훑기"
+
+#: src/kiriviewapplicationactions.cpp
+#, fuzzy
+msgctxt "@action"
+msgid "Previous Page"
+msgstr "이전"
+
+#: src/kiriviewapplicationactions.cpp
+#, fuzzy
+msgctxt "@action"
+msgid "Next Page"
+msgstr "다음"
 
 #: src/kiriviewapplicationactions.cpp
 msgctxt "@action"
@@ -469,6 +491,21 @@ msgstr "이전 또는 다음 이미지"
 msgctxt "@info:whatsthis"
 msgid "First or last image"
 msgstr "첫 번째 또는 마지막 이미지"
+
+#: src/qml/ShortcutHelpDialog.qml
+msgctxt "@info:whatsthis"
+msgid "Toggle two-page mode"
+msgstr ""
+
+#: src/qml/ShortcutHelpDialog.qml
+msgctxt "@info:whatsthis"
+msgid "Toggle right-to-left reading"
+msgstr ""
+
+#: src/qml/ShortcutHelpDialog.qml
+msgctxt "@info:whatsthis"
+msgid "Adjust two-page mode by one page"
+msgstr ""
 
 #: src/qml/ShortcutHelpDialog.qml
 msgctxt "@info:whatsthis"

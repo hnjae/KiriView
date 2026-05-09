@@ -46,6 +46,7 @@ public:
         ViewFitWidthAction,
         ViewActualSizeAction,
         ViewToggleTwoPageModeAction,
+        ViewToggleRightToLeftReadingAction,
         ViewPanLeftAction,
         ViewPanRightAction,
         ViewPanUpAction,

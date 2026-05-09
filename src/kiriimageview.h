@@ -37,6 +37,7 @@ public:
         const QPointF &contentPosition, const QPointF &delta) const;
     Q_INVOKABLE QPointF nextScanContentPosition(const QPointF &contentPosition) const;
     Q_INVOKABLE QPointF previousScanContentPosition(const QPointF &contentPosition) const;
+    Q_INVOKABLE QPointF initialScanContentPosition() const;
     Q_INVOKABLE QPointF finalScanContentPosition() const;
     Q_INVOKABLE bool viewportPointInsideImage(
         const QPointF &contentPosition, const QPointF &viewportPoint) const;
@@ -56,6 +57,7 @@ private:
     QSizeF viewportSize() const;
     QSizeF displaySize() const;
     QRectF viewportImageRect() const;
+    bool rightToLeftReadingActive() const;
     void connectDocument();
     void disconnectDocument();
     KiriView::ImageDocumentRenderContext renderContext() const;

@@ -76,9 +76,15 @@ void finishLoad(ManualImageDataLoader &dataLoader)
     dataLoader.finishBackLoad(QByteArrayLiteral("ok"));
 }
 
-std::size_t staticTileCount(const KiriView::ImageDocumentController &controller)
+bool finishOldestActiveLoadForUrl(ManualImageDataLoader &dataLoader, const QUrl &url)
 {
-    std::shared_ptr<KiriView::DisplayedImageSurface> surface = controller.imageSurface();
+    return dataLoader.finishOldestActiveLoadForUrl(url, QByteArrayLiteral("ok"));
+}
+
+std::size_t staticTileCount(const KiriView::ImageDocumentController &controller,
+    KiriView::DisplayedPageRole role = KiriView::DisplayedPageRole::Primary)
+{
+    std::shared_ptr<KiriView::DisplayedImageSurface> surface = controller.imageSurface(role);
     auto *staticSurface = surface == nullptr ? nullptr : surface->staticTileSurface();
     return staticSurface == nullptr ? 0 : staticSurface->tiles().size();
 }
@@ -115,7 +121,11 @@ private Q_SLOTS:
     void successfulFileDeletionOpensPreviousImageFallback();
     void successfulFileDeletionWithoutFallbackClearsDocument();
     void successfulComicBookDeletionOpensNextSiblingArchive();
+    void rightToLeftReadingIsOnlyAvailableForComicArchives();
+    void rightToLeftReadingPersistsAcrossSiblingArchiveNavigation();
     void twoPageModeDisplaysCurrentAndNextComicArchivePages();
+    void twoPageModeUsesRightToLeftPageOrder();
+    void twoPageModeRightToLeftKeepsSinglePageNavigationSemantic();
     void twoPageModeWaitsForTargetSpreadBeforeRenderingNavigation();
     void twoPageModeKeepsCoverAndWidePagesSingle();
 };
@@ -849,6 +859,104 @@ void TestImageDocumentController::successfulComicBookDeletionOpensNextSiblingArc
     QVERIFY(controller->containerNavigationAvailable());
 }
 
+void TestImageDocumentController::rightToLeftReadingIsOnlyAvailableForComicArchives()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    const QUrl imageUrl = localUrl(QStringLiteral("/images/01.png"));
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
+    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveDocument.has_value());
+    const QUrl archivePageUrl = KiriView::TestSupport::archivePageUrl(
+        archiveDocument->rootUrl(), QStringLiteral("01.png"));
+    candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
+        {
+            imageCandidate(imageUrl),
+        });
+    candidateProvider.setArchiveImages(archiveDocument->rootUrl(),
+        {
+            imageCandidate(archivePageUrl),
+        });
+
+    std::unique_ptr<KiriView::ImageDocumentController> controller
+        = createController(this, candidateProvider, dataLoader);
+    controller->setViewportSize(QSizeF(400.0, 300.0));
+    controller->setSourceUrl(imageUrl);
+    finishLoad(dataLoader);
+
+    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
+    QVERIFY(!controller->rightToLeftReadingEnabled());
+    QVERIFY(!controller->rightToLeftReadingAvailable());
+
+    controller->setSourceUrl(archiveUrl);
+    finishLoad(dataLoader);
+
+    QTRY_COMPARE(controller->displayedUrl(), archivePageUrl);
+    QVERIFY(controller->rightToLeftReadingAvailable());
+    QVERIFY(!controller->rightToLeftReadingEnabled());
+}
+
+void TestImageDocumentController::rightToLeftReadingPersistsAcrossSiblingArchiveNavigation()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    const QUrl firstArchiveUrl = localUrl(QStringLiteral("/books/a.cbz"));
+    const QUrl secondArchiveUrl = localUrl(QStringLiteral("/books/b.cbz"));
+    const QUrl ordinaryImageUrl = localUrl(QStringLiteral("/images/01.png"));
+    const std::optional<KiriView::ArchiveDocumentLocation> firstArchiveDocument
+        = KiriView::archiveDocumentLocationForLocalArchiveUrl(firstArchiveUrl);
+    const std::optional<KiriView::ArchiveDocumentLocation> secondArchiveDocument
+        = KiriView::archiveDocumentLocationForLocalArchiveUrl(secondArchiveUrl);
+    QVERIFY(firstArchiveDocument.has_value());
+    QVERIFY(secondArchiveDocument.has_value());
+    const QUrl firstPageUrl
+        = archivePageUrl(firstArchiveDocument->rootUrl(), QStringLiteral("01.png"));
+    const QUrl secondPageUrl
+        = archivePageUrl(secondArchiveDocument->rootUrl(), QStringLiteral("01.png"));
+    candidateProvider.setArchiveImages(firstArchiveDocument->rootUrl(),
+        {
+            imageCandidate(firstPageUrl),
+        });
+    candidateProvider.setArchiveImages(secondArchiveDocument->rootUrl(),
+        {
+            imageCandidate(secondPageUrl),
+        });
+    candidateProvider.setContainerCandidates(localUrl(QStringLiteral("/books/")),
+        {
+            comicBookContainerCandidate(firstArchiveUrl),
+            comicBookContainerCandidate(secondArchiveUrl),
+        });
+    candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
+        {
+            imageCandidate(ordinaryImageUrl),
+        });
+
+    std::unique_ptr<KiriView::ImageDocumentController> controller
+        = createController(this, candidateProvider, dataLoader);
+    controller->setViewportSize(QSizeF(400.0, 300.0));
+    controller->setSourceUrl(firstArchiveUrl);
+    finishLoad(dataLoader);
+
+    QTRY_COMPARE(controller->displayedUrl(), firstPageUrl);
+    controller->setRightToLeftReadingEnabled(true);
+    QVERIFY(controller->rightToLeftReadingEnabled());
+
+    controller->openNextContainer();
+    finishLoad(dataLoader);
+
+    QTRY_COMPARE(controller->displayedUrl(), secondPageUrl);
+    QVERIFY(controller->rightToLeftReadingAvailable());
+    QVERIFY(controller->rightToLeftReadingEnabled());
+
+    controller->setSourceUrl(ordinaryImageUrl);
+    finishLoad(dataLoader);
+
+    QTRY_COMPARE(controller->displayedUrl(), ordinaryImageUrl);
+    QVERIFY(!controller->rightToLeftReadingAvailable());
+    QVERIFY(!controller->rightToLeftReadingEnabled());
+}
+
 void TestImageDocumentController::twoPageModeDisplaysCurrentAndNextComicArchivePages()
 {
     FakeCandidateProvider candidateProvider;
@@ -898,6 +1006,117 @@ void TestImageDocumentController::twoPageModeDisplaysCurrentAndNextComicArchiveP
     QCOMPARE(controller->primaryImageSize(), QSize(100, 200));
     QCOMPARE(controller->secondaryImageSize(), QSize(100, 200));
     QCOMPARE(controller->imageSize(), QSize(200, 200));
+}
+
+void TestImageDocumentController::twoPageModeUsesRightToLeftPageOrder()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
+    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveDocument.has_value());
+    const QUrl firstPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
+    const QUrl secondPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("02.png"));
+    const QUrl thirdPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("03.png"));
+    candidateProvider.setArchiveImages(archiveDocument->rootUrl(),
+        {
+            imageCandidate(firstPageUrl),
+            imageCandidate(secondPageUrl),
+            imageCandidate(thirdPageUrl),
+        });
+
+    auto decoder = [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
+        return staticDecodedImageWithPreview(QSize(100, 200), QSize(100, 200));
+    };
+    std::unique_ptr<KiriView::ImageDocumentController> controller
+        = createController(this, candidateProvider, dataLoader, std::move(decoder), 64);
+    controller->setViewportSize(QSizeF(100.0, 200.0));
+    controller->setSourceUrl(archiveUrl);
+    finishLoad(dataLoader);
+
+    QTRY_COMPARE(controller->displayedUrl(), firstPageUrl);
+    controller->setTwoPageModeEnabled(true);
+    controller->setRightToLeftReadingEnabled(true);
+    controller->openNextImage();
+    QTRY_COMPARE(dataLoader.backLoad().url, secondPageUrl);
+    finishLoad(dataLoader);
+    QTRY_COMPARE(dataLoader.backLoad().url, thirdPageUrl);
+    QVERIFY(finishOldestActiveLoadForUrl(dataLoader, thirdPageUrl));
+
+    QTRY_VERIFY(controller->secondaryPageVisible());
+    QCOMPARE(controller->currentPageNumber(), 2);
+    QCOMPARE(controller->currentLastPageNumber(), 3);
+    controller->setZoomPercent(100.0);
+    controller->setVisibleItemRect(QRectF(0.0, 0.0, 100.0, 200.0));
+
+    QTRY_VERIFY(staticTileCount(*controller, KiriView::DisplayedPageRole::Secondary) > 0);
+    QCOMPARE(staticTileCount(*controller, KiriView::DisplayedPageRole::Primary), std::size_t(0));
+}
+
+void TestImageDocumentController::twoPageModeRightToLeftKeepsSinglePageNavigationSemantic()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
+    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveDocument.has_value());
+    const QUrl firstPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
+    const QUrl secondPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("02.png"));
+    const QUrl thirdPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("03.png"));
+    const QUrl fourthPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("04.png"));
+    candidateProvider.setArchiveImages(archiveDocument->rootUrl(),
+        {
+            imageCandidate(firstPageUrl),
+            imageCandidate(secondPageUrl),
+            imageCandidate(thirdPageUrl),
+            imageCandidate(fourthPageUrl),
+        });
+
+    auto decoder = [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
+        return singleFrameDecodedImage(QSize(100, 200));
+    };
+    std::unique_ptr<KiriView::ImageDocumentController> controller
+        = createController(this, candidateProvider, dataLoader, std::move(decoder));
+    controller->setViewportSize(QSizeF(400.0, 300.0));
+    controller->setSourceUrl(archiveUrl);
+    finishLoad(dataLoader);
+
+    QTRY_COMPARE(controller->displayedUrl(), firstPageUrl);
+    controller->setTwoPageModeEnabled(true);
+    controller->setRightToLeftReadingEnabled(true);
+    controller->openNextImage();
+    QTRY_COMPARE(dataLoader.backLoad().url, secondPageUrl);
+    finishLoad(dataLoader);
+    QTRY_COMPARE(dataLoader.backLoad().url, thirdPageUrl);
+    QVERIFY(finishOldestActiveLoadForUrl(dataLoader, thirdPageUrl));
+    QTRY_COMPARE(controller->currentPageNumber(), 2);
+    QTRY_COMPARE(controller->currentLastPageNumber(), 3);
+
+    std::size_t loadCountBeforeNavigation = dataLoader.loadCount();
+    controller->openNextSinglePage();
+    QTRY_COMPARE(dataLoader.loadCount(), loadCountBeforeNavigation + std::size_t(1));
+    QTRY_COMPARE(dataLoader.backLoad().url, thirdPageUrl);
+    finishLoad(dataLoader);
+    QTRY_COMPARE(controller->displayedUrl(), thirdPageUrl);
+    QTRY_COMPARE(dataLoader.loadCount(), loadCountBeforeNavigation + std::size_t(2));
+    QTRY_COMPARE(dataLoader.backLoad().url, fourthPageUrl);
+    QVERIFY(finishOldestActiveLoadForUrl(dataLoader, fourthPageUrl));
+    QTRY_COMPARE(controller->currentPageNumber(), 3);
+    QTRY_COMPARE(controller->currentLastPageNumber(), 4);
+
+    loadCountBeforeNavigation = dataLoader.loadCount();
+    controller->openPreviousSinglePage();
+    QTRY_COMPARE(dataLoader.loadCount(), loadCountBeforeNavigation + std::size_t(1));
+    QTRY_COMPARE(dataLoader.backLoad().url, secondPageUrl);
+    finishLoad(dataLoader);
+    QTRY_COMPARE(controller->displayedUrl(), secondPageUrl);
+    QTRY_COMPARE(dataLoader.loadCount(), loadCountBeforeNavigation + std::size_t(2));
+    QTRY_COMPARE(dataLoader.backLoad().url, thirdPageUrl);
+    QVERIFY(finishOldestActiveLoadForUrl(dataLoader, thirdPageUrl));
+    QTRY_COMPARE(controller->currentPageNumber(), 2);
+    QTRY_COMPARE(controller->currentLastPageNumber(), 3);
 }
 
 void TestImageDocumentController::twoPageModeWaitsForTargetSpreadBeforeRenderingNavigation()

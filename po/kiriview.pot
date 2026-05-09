@@ -247,6 +247,16 @@ msgstr ""
 
 #: src/kiriviewapplicationactions.cpp
 msgctxt "@action"
+msgid "Two-Page Mode"
+msgstr ""
+
+#: src/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Right-to-Left Reading"
+msgstr ""
+
+#: src/kiriviewapplicationactions.cpp
+msgctxt "@action"
 msgid "Pan Left"
 msgstr ""
 
@@ -283,6 +293,16 @@ msgstr ""
 #: src/kiriviewapplicationactions.cpp
 msgctxt "@action"
 msgid "Scan Backward"
+msgstr ""
+
+#: src/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Previous Page"
+msgstr ""
+
+#: src/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Next Page"
 msgstr ""
 
 #: src/kiriviewapplicationactions.cpp
@@ -457,6 +477,21 @@ msgstr ""
 #: src/qml/ShortcutHelpDialog.qml
 msgctxt "@info:whatsthis"
 msgid "First or last image"
+msgstr ""
+
+#: src/qml/ShortcutHelpDialog.qml
+msgctxt "@info:whatsthis"
+msgid "Toggle two-page mode"
+msgstr ""
+
+#: src/qml/ShortcutHelpDialog.qml
+msgctxt "@info:whatsthis"
+msgid "Toggle right-to-left reading"
+msgstr ""
+
+#: src/qml/ShortcutHelpDialog.qml
+msgctxt "@info:whatsthis"
+msgid "Adjust two-page mode by one page"
 msgstr ""
 
 #: src/qml/ShortcutHelpDialog.qml

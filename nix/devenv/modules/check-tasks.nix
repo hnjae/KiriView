@@ -24,6 +24,8 @@ in
 
         CARGO_TARGET_DIR=${lib.escapeShellArg "${config.devenv.root}/target"} \
             cargo test --locked --lib --all-features
+        CARGO_TARGET_DIR=${lib.escapeShellArg "${config.devenv.root}/target"} \
+            cargo build --locked --lib --all-features
       '';
     };
 

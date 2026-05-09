@@ -109,6 +109,18 @@ public:
 
     void finishBackLoad(QByteArray data) { finishDataLoad(m_loads.back(), std::move(data)); }
 
+    bool finishOldestActiveLoadForUrl(const QUrl &url, QByteArray data)
+    {
+        for (const std::shared_ptr<ManualImageDataLoad> &load : m_loads) {
+            if (load != nullptr && load->object != nullptr && load->url == url) {
+                finishDataLoad(load, std::move(data));
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     void failFrontLoad(const QString &errorString)
     {
         finishLoadError(m_loads.front(), errorString);

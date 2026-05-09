@@ -123,6 +123,12 @@ Controls.MenuBar {
             checked: root.imageDocument.twoPageModeEnabled && root.imageDocument.twoPageModeAvailable
         }
 
+        Controls.MenuItem {
+            action: root.actions.rightToLeftReadingAction
+            checkable: true
+            checked: root.imageDocument.rightToLeftReadingEnabled && root.imageDocument.rightToLeftReadingAvailable
+        }
+
         Controls.MenuSeparator {}
 
         Controls.MenuItem {

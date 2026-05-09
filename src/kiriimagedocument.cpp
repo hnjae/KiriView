@@ -236,6 +236,21 @@ bool KiriImageDocument::twoPageModeAvailable() const
     return m_documentController->twoPageModeAvailable();
 }
 
+bool KiriImageDocument::rightToLeftReadingEnabled() const
+{
+    return m_documentController->rightToLeftReadingEnabled();
+}
+
+void KiriImageDocument::setRightToLeftReadingEnabled(bool enabled)
+{
+    m_documentController->setRightToLeftReadingEnabled(enabled);
+}
+
+bool KiriImageDocument::rightToLeftReadingAvailable() const
+{
+    return m_documentController->rightToLeftReadingAvailable();
+}
+
 bool KiriImageDocument::secondaryPageVisible() const
 {
     return m_documentController->secondaryPageVisible();
@@ -361,6 +376,9 @@ void KiriImageDocument::handleDocumentChange(ImageDocumentChange change)
     case ImageDocumentChange::TwoPageMode:
         Q_EMIT twoPageModeChanged();
         Q_EMIT pageNavigationChanged();
+        return;
+    case ImageDocumentChange::RightToLeftReading:
+        Q_EMIT rightToLeftReadingChanged();
         return;
     case ImageDocumentChange::Repaint:
         Q_EMIT repaintRequested();

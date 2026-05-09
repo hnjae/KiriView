@@ -71,6 +71,7 @@ mod ffi {
             viewport_size: RustSizeF,
             image_rect: RustRectF,
             content_position: RustPointF,
+            right_to_left_reading: bool,
         ) -> RustPointF;
 
         #[cxx_name = "rustImageViewportPreviousZScanPosition"]
@@ -78,12 +79,21 @@ mod ffi {
             viewport_size: RustSizeF,
             image_rect: RustRectF,
             content_position: RustPointF,
+            right_to_left_reading: bool,
+        ) -> RustPointF;
+
+        #[cxx_name = "rustImageViewportInitialZScanPosition"]
+        fn rust_image_viewport_initial_z_scan_position(
+            viewport_size: RustSizeF,
+            image_rect: RustRectF,
+            right_to_left_reading: bool,
         ) -> RustPointF;
 
         #[cxx_name = "rustImageViewportFinalZScanPosition"]
         fn rust_image_viewport_final_z_scan_position(
             viewport_size: RustSizeF,
             image_rect: RustRectF,
+            right_to_left_reading: bool,
         ) -> RustPointF;
 
         #[cxx_name = "rustImageViewportPointInsideImage"]
@@ -236,12 +246,14 @@ fn rust_image_viewport_next_z_scan_position(
     viewport_size: RustSizeF,
     image_rect: RustRectF,
     content_position: RustPointF,
+    right_to_left_reading: bool,
 ) -> RustPointF {
     rust_image_viewport_z_scan_position(
         viewport_size,
         image_rect,
         content_position,
         ZScanDirection::Next,
+        right_to_left_reading,
     )
 }
 
@@ -249,12 +261,14 @@ fn rust_image_viewport_previous_z_scan_position(
     viewport_size: RustSizeF,
     image_rect: RustRectF,
     content_position: RustPointF,
+    right_to_left_reading: bool,
 ) -> RustPointF {
     rust_image_viewport_z_scan_position(
         viewport_size,
         image_rect,
         content_position,
         ZScanDirection::Previous,
+        right_to_left_reading,
     )
 }
 
@@ -263,6 +277,7 @@ fn rust_image_viewport_z_scan_position(
     image_rect: RustRectF,
     content_position: RustPointF,
     direction: ZScanDirection,
+    right_to_left_reading: bool,
 ) -> RustPointF {
     let viewport = normalized_size(viewport_size);
     let maximum = rust_image_viewport_maximum_content_position(viewport, image_rect);
@@ -274,7 +289,7 @@ fn rust_image_viewport_z_scan_position(
             current.x,
             scan_step_length(viewport.width),
             maximum.x,
-            direction,
+            horizontal_scan_direction(direction, right_to_left_reading),
         );
         if scanned_x != current.x {
             return RustPointF {
@@ -293,7 +308,7 @@ fn rust_image_viewport_z_scan_position(
         );
         if scanned_y != current.y {
             return RustPointF {
-                x: z_scan_row_start_x(current.x, maximum.x, direction),
+                x: z_scan_row_start_x(current.x, maximum.x, direction, right_to_left_reading),
                 y: scanned_y,
             };
         }
@@ -302,22 +317,66 @@ fn rust_image_viewport_z_scan_position(
     current
 }
 
-fn z_scan_row_start_x(current_x: f64, maximum_x: f64, direction: ZScanDirection) -> f64 {
+fn horizontal_scan_direction(
+    direction: ZScanDirection,
+    right_to_left_reading: bool,
+) -> ZScanDirection {
+    if !right_to_left_reading {
+        return direction;
+    }
+
+    match direction {
+        ZScanDirection::Next => ZScanDirection::Previous,
+        ZScanDirection::Previous => ZScanDirection::Next,
+    }
+}
+
+fn z_scan_row_start_x(
+    current_x: f64,
+    maximum_x: f64,
+    direction: ZScanDirection,
+    right_to_left_reading: bool,
+) -> f64 {
     if !axis_pannable(maximum_x) {
         return current_x;
     }
 
-    match direction {
-        ZScanDirection::Next => 0.0,
-        ZScanDirection::Previous => maximum_x,
+    match (direction, right_to_left_reading) {
+        (ZScanDirection::Next, false) | (ZScanDirection::Previous, true) => 0.0,
+        (ZScanDirection::Previous, false) | (ZScanDirection::Next, true) => maximum_x,
+    }
+}
+
+fn rust_image_viewport_initial_z_scan_position(
+    viewport_size: RustSizeF,
+    image_rect: RustRectF,
+    right_to_left_reading: bool,
+) -> RustPointF {
+    let maximum = rust_image_viewport_maximum_content_position(viewport_size, image_rect);
+    RustPointF {
+        x: if right_to_left_reading {
+            maximum.x
+        } else {
+            0.0
+        },
+        y: 0.0,
     }
 }
 
 fn rust_image_viewport_final_z_scan_position(
     viewport_size: RustSizeF,
     image_rect: RustRectF,
+    right_to_left_reading: bool,
 ) -> RustPointF {
-    rust_image_viewport_maximum_content_position(viewport_size, image_rect)
+    let maximum = rust_image_viewport_maximum_content_position(viewport_size, image_rect);
+    RustPointF {
+        x: if right_to_left_reading {
+            0.0
+        } else {
+            maximum.x
+        },
+        y: maximum.y,
+    }
 }
 
 fn rust_image_viewport_point_inside_image(

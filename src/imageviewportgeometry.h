@@ -16,11 +16,14 @@ QPointF imageViewportClampedContentPosition(
     const QSizeF &viewportSize, const QRectF &imageRect, const QPointF &contentPosition);
 QPointF imageViewportPanPosition(const QSizeF &viewportSize, const QRectF &imageRect,
     const QPointF &contentPosition, const QPointF &delta);
-QPointF imageViewportNextZScanPosition(
-    const QSizeF &viewportSize, const QRectF &imageRect, const QPointF &contentPosition);
-QPointF imageViewportPreviousZScanPosition(
-    const QSizeF &viewportSize, const QRectF &imageRect, const QPointF &contentPosition);
-QPointF imageViewportFinalZScanPosition(const QSizeF &viewportSize, const QRectF &imageRect);
+QPointF imageViewportNextZScanPosition(const QSizeF &viewportSize, const QRectF &imageRect,
+    const QPointF &contentPosition, bool rightToLeftReading = false);
+QPointF imageViewportPreviousZScanPosition(const QSizeF &viewportSize, const QRectF &imageRect,
+    const QPointF &contentPosition, bool rightToLeftReading = false);
+QPointF imageViewportInitialZScanPosition(
+    const QSizeF &viewportSize, const QRectF &imageRect, bool rightToLeftReading = false);
+QPointF imageViewportFinalZScanPosition(
+    const QSizeF &viewportSize, const QRectF &imageRect, bool rightToLeftReading = false);
 bool imageViewportPointInsideImage(
     const QPointF &contentPosition, const QPointF &viewportPoint, const QRectF &imageRect);
 QPointF imageViewportContentPositionForZoom(const QSizeF &viewportSize,

@@ -40,6 +40,10 @@ Kirigami.OverlaySheet {
             "description": KI18n.i18nc("@info:whatsthis", "Toggle two-page mode")
         },
         {
+            "keyText": root.shortcutText(KiriViewApplication.ViewToggleRightToLeftReadingAction),
+            "description": KI18n.i18nc("@info:whatsthis", "Toggle right-to-left reading")
+        },
+        {
             "keyText": root.shortcutTexts([KiriViewApplication.GoPreviousSinglePageAction, KiriViewApplication.GoNextSinglePageAction]),
             "description": KI18n.i18nc("@info:whatsthis", "Adjust two-page mode by one page")
         },

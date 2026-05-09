@@ -20,6 +20,7 @@ Item {
     readonly property bool canUsePageActions: root.imageReady && root.imageDocument.imageCount > 0 && !root.imageDocument.fileDeletionInProgress && !root.helpDialogOpen
     readonly property bool canUseReadyActions: root.imageReady && !root.imageDocument.fileDeletionInProgress && !root.helpDialogOpen
     readonly property bool canUseTwoPageActions: root.canUseReadyActions && root.imageDocument.twoPageModeAvailable && root.imageDocument.twoPageModeEnabled
+    readonly property bool canUseRightToLeftReadingActions: root.canUseReadyActions && root.imageDocument.rightToLeftReadingAvailable
 
     readonly property var openAction: openManagedAction.proxy
     readonly property var moveToTrashAction: moveToTrashManagedAction.proxy
@@ -37,6 +38,7 @@ Item {
     readonly property var fitWidthAction: fitWidthManagedAction.proxy
     readonly property var actualSizeAction: actualSizeManagedAction.proxy
     readonly property var twoPageModeAction: twoPageModeManagedAction.proxy
+    readonly property var rightToLeftReadingAction: rightToLeftReadingManagedAction.proxy
     readonly property var zoomInAction: zoomInManagedAction.proxy
     readonly property var zoomOutAction: zoomOutManagedAction.proxy
     readonly property var scanForwardAction: scanForwardManagedAction.proxy
@@ -47,7 +49,7 @@ Item {
     readonly property var configureShortcutsAction: configureShortcutsManagedAction.proxy
     readonly property var showMenubarAction: showMenubarManagedAction.proxy
     readonly property var quitAction: quitManagedAction.proxy
-    readonly property var applicationMenuActions: [openAction, applicationMenuFileSeparator, moveToTrashAction, deleteFileAction, applicationMenuNavigationSeparator, previousContainerAction, nextContainerAction, applicationMenuViewSeparator, twoPageModeAction, fullscreenAction, applicationMenuSettingsSeparator, showMenubarAction, configureAction, configureShortcutsAction, applicationMenuHelpSeparator, shortcutHelpAction, applicationMenuQuitSeparator, quitAction]
+    readonly property var applicationMenuActions: [openAction, applicationMenuFileSeparator, moveToTrashAction, deleteFileAction, applicationMenuNavigationSeparator, previousContainerAction, nextContainerAction, applicationMenuViewSeparator, twoPageModeAction, rightToLeftReadingAction, fullscreenAction, applicationMenuSettingsSeparator, showMenubarAction, configureAction, configureShortcutsAction, applicationMenuHelpSeparator, shortcutHelpAction, applicationMenuQuitSeparator, quitAction]
 
     signal openDialogRequested
     signal imageBoundaryReached(string message)
@@ -310,6 +312,22 @@ Item {
         proxyChecked: root.imageDocument.twoPageModeEnabled && root.imageDocument.twoPageModeAvailable
 
         onTriggered: root.imageDocument.twoPageModeEnabled = !root.imageDocument.twoPageModeEnabled
+    }
+
+    ManagedAction {
+        id: rightToLeftReadingManagedAction
+
+        actionChecked: root.imageDocument.rightToLeftReadingEnabled && root.imageDocument.rightToLeftReadingAvailable
+        actionEnabled: root.canUseRightToLeftReadingActions
+        actionId: KiriViewApplication.ViewToggleRightToLeftReadingAction
+        application: root.application
+        bindChecked: true
+        bindEnabled: true
+        displayHint: Kirigami.DisplayHint.KeepVisible
+        proxyCheckable: true
+        proxyChecked: root.imageDocument.rightToLeftReadingEnabled && root.imageDocument.rightToLeftReadingAvailable
+
+        onTriggered: root.imageDocument.rightToLeftReadingEnabled = !root.imageDocument.rightToLeftReadingEnabled
     }
 
     ManagedAction {

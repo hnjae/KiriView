@@ -62,6 +62,10 @@ class KiriImageDocument : public QObject
     Q_PROPERTY(bool twoPageModeEnabled READ twoPageModeEnabled WRITE setTwoPageModeEnabled NOTIFY
             twoPageModeChanged)
     Q_PROPERTY(bool twoPageModeAvailable READ twoPageModeAvailable NOTIFY twoPageModeChanged)
+    Q_PROPERTY(bool rightToLeftReadingEnabled READ rightToLeftReadingEnabled WRITE
+            setRightToLeftReadingEnabled NOTIFY rightToLeftReadingChanged)
+    Q_PROPERTY(bool rightToLeftReadingAvailable READ rightToLeftReadingAvailable NOTIFY
+            rightToLeftReadingChanged)
     Q_PROPERTY(bool secondaryPageVisible READ secondaryPageVisible NOTIFY twoPageModeChanged)
 
 public:
@@ -125,6 +129,9 @@ public:
     bool twoPageModeEnabled() const;
     void setTwoPageModeEnabled(bool enabled);
     bool twoPageModeAvailable() const;
+    bool rightToLeftReadingEnabled() const;
+    void setRightToLeftReadingEnabled(bool enabled);
+    bool rightToLeftReadingAvailable() const;
     bool secondaryPageVisible() const;
     std::shared_ptr<KiriView::DisplayedImageSurface> imageSurface(
         KiriView::DisplayedPageRole role = KiriView::DisplayedPageRole::Primary) const;
@@ -168,6 +175,7 @@ Q_SIGNALS:
     void containerNavigationChanged();
     void fileDeletionInProgressChanged();
     void twoPageModeChanged();
+    void rightToLeftReadingChanged();
     void fileDeletionFailed(const QString &errorString);
     void repaintRequested();
 

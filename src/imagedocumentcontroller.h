@@ -78,6 +78,9 @@ public:
     bool twoPageModeEnabled() const;
     void setTwoPageModeEnabled(bool enabled);
     bool twoPageModeAvailable() const;
+    bool rightToLeftReadingEnabled() const;
+    void setRightToLeftReadingEnabled(bool enabled);
+    bool rightToLeftReadingAvailable() const;
     bool secondaryPageVisible() const;
     std::shared_ptr<DisplayedImageSurface> imageSurface(
         DisplayedPageRole role = DisplayedPageRole::Primary) const;
@@ -149,6 +152,9 @@ private:
     QRectF secondarySpreadPageRect() const;
     QSize spreadImageSize() const;
     bool twoPageModeActive() const;
+    bool rightToLeftReadingActive() const;
+    bool shouldResetRightToLeftReadingForLoad(
+        const QUrl &sourceUrl, const QUrl &containerNavigationUrl) const;
     bool currentPageIsCover() const;
     bool primaryPageIsWide() const;
     static bool pageIsWide(const QSize &imageSize);
@@ -157,6 +163,7 @@ private:
     static QString pageCacheKey(const QUrl &url);
     void openImageAtRelativePageOffset(int offset);
     void notifyTwoPageModeChanged();
+    void notifyRightToLeftReadingChanged();
     ImageDocumentRenderContext renderContext() const;
     qreal spreadDevicePixelRatio() const;
 
@@ -175,6 +182,7 @@ private:
     QRectF m_visibleItemRect;
     std::map<QString, bool> m_widePageByUrl;
     bool m_twoPageModeEnabled = false;
+    bool m_rightToLeftReadingEnabled = false;
     bool m_secondaryPageVisible = false;
     bool m_twoPageSpreadTransitionInProgress = false;
 };
