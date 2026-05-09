@@ -5,25 +5,14 @@
 
 #include "imagelocation.h"
 #include "kiriview/src/archivepath.cxx.h"
+#include "rustqtconversion.h"
 
 #include <QByteArray>
-#include <cstddef>
 
 namespace {
-rust::Str rustStringView(const QByteArray &bytes)
-{
-    return rust::Str(bytes.constData(), static_cast<std::size_t>(bytes.size()));
-}
-
-QString rustStringToQString(const rust::String &value)
-{
-    return QString::fromUtf8(value.data(), static_cast<qsizetype>(value.size()));
-}
-
 QString rustStringForQString(const QString &value, rust::String (*rustFunction)(rust::Str))
 {
-    const QByteArray bytes = value.toUtf8();
-    return rustStringToQString(rustFunction(rustStringView(bytes)));
+    return KiriView::Bridge::qtString(KiriView::Bridge::rustResultForQString(value, rustFunction));
 }
 }
 
@@ -44,9 +33,9 @@ QString archiveRelativePathForUrl(const QUrl &archiveRootUrl, const QUrl &url)
     const QByteArray archiveRootPath = archiveRootUrl.path().toUtf8();
     const QByteArray urlScheme = url.scheme().toUtf8();
     const QByteArray urlPath = url.path().toUtf8();
-    return rustStringToQString(rustArchiveRelativePathForUrl(archiveRootUrl.isEmpty(),
-        rustStringView(archiveRootScheme), rustStringView(archiveRootPath), url.isEmpty(),
-        rustStringView(urlScheme), rustStringView(urlPath)));
+    return Bridge::qtString(rustArchiveRelativePathForUrl(archiveRootUrl.isEmpty(),
+        Bridge::rustStr(archiveRootScheme), Bridge::rustStr(archiveRootPath), url.isEmpty(),
+        Bridge::rustStr(urlScheme), Bridge::rustStr(urlPath)));
 }
 
 QString archiveEntryPathForUrl(const ArchiveDocumentLocation &archiveDocument, const QUrl &imageUrl)

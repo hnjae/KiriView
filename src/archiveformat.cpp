@@ -4,39 +4,11 @@
 #include "archiveformat.h"
 
 #include "kiriview/src/imageformatregistry.cxx.h"
+#include "rustqtconversion.h"
 
-#include <QByteArray>
 #include <optional>
 
 namespace {
-rust::Str rustStringView(const QByteArray &bytes)
-{
-    return rust::Str(bytes.constData(), static_cast<std::size_t>(bytes.size()));
-}
-
-QString rustStringToQString(const rust::String &value)
-{
-    return QString::fromUtf8(value.data(), static_cast<qsizetype>(value.size()));
-}
-
-QStringList rustStringsToQStringList(const rust::Vec<rust::String> &values)
-{
-    QStringList list;
-    list.reserve(static_cast<qsizetype>(values.size()));
-    for (const rust::String &value : values) {
-        list.append(rustStringToQString(value));
-    }
-
-    return list;
-}
-
-template <typename Result, typename Function>
-Result rustResultForQString(const QString &value, Function rustFunction)
-{
-    const QByteArray bytes = value.toUtf8();
-    return rustFunction(rustStringView(bytes));
-}
-
 KiriView::ArchiveStorageBackend archiveStorageBackendFromRust(
     KiriView::RustArchiveStorageBackend backend)
 {
@@ -76,7 +48,7 @@ std::optional<KiriView::ArchiveOpenMatch> archiveOpenMatchFromRust(
     }
 
     return KiriView::ArchiveOpenMatch {
-        rustStringToQString(match.scheme),
+        KiriView::Bridge::qtString(match.scheme),
         archiveOpenMatchKindFromRust(match.kind),
     };
 }
@@ -84,8 +56,7 @@ std::optional<KiriView::ArchiveOpenMatch> archiveOpenMatchFromRust(
 std::optional<KiriView::ArchiveOpenMatch> archiveMatchForQString(
     const QString &value, KiriView::RustArchiveOpenMatch (*rustFunction)(rust::Str))
 {
-    return archiveOpenMatchFromRust(
-        rustResultForQString<KiriView::RustArchiveOpenMatch>(value, rustFunction));
+    return archiveOpenMatchFromRust(KiriView::Bridge::rustResultForQString(value, rustFunction));
 }
 
 QString schemeString(const std::optional<KiriView::ArchiveOpenMatch> &match)
@@ -97,28 +68,28 @@ QString schemeString(const std::optional<KiriView::ArchiveOpenMatch> &match)
 namespace KiriView {
 bool isSupportedArchiveRootScheme(const QString &scheme)
 {
-    return rustResultForQString<bool>(scheme, rustIsSupportedArchiveRootScheme);
+    return Bridge::rustResultForQString(scheme, rustIsSupportedArchiveRootScheme);
 }
 
 ArchiveStorageBackend archiveStorageBackendForRootScheme(const QString &scheme)
 {
-    return archiveStorageBackendFromRust(rustResultForQString<RustArchiveStorageBackend>(
-        scheme, rustArchiveStorageBackendForRootScheme));
+    return archiveStorageBackendFromRust(
+        Bridge::rustResultForQString(scheme, rustArchiveStorageBackendForRootScheme));
 }
 
 bool archiveRootSchemeUsesKioFuse(const QString &scheme)
 {
-    return rustResultForQString<bool>(scheme, rustArchiveRootSchemeUsesKioFuse);
+    return Bridge::rustResultForQString(scheme, rustArchiveRootSchemeUsesKioFuse);
 }
 
 QStringList supportedComicBookArchiveExtensions()
 {
-    return rustStringsToQStringList(rustSupportedComicBookArchiveExtensions());
+    return Bridge::qtStringList(rustSupportedComicBookArchiveExtensions());
 }
 
 QStringList supportedComicBookArchiveMimeTypes()
 {
-    return rustStringsToQStringList(rustSupportedComicBookArchiveMimeTypes());
+    return Bridge::qtStringList(rustSupportedComicBookArchiveMimeTypes());
 }
 
 std::optional<ArchiveOpenMatch> comicBookArchiveMatchForFileName(const QString &fileName)
@@ -163,13 +134,13 @@ QString directArchiveOpenKioSchemeForMimeTypeName(const QString &mimeTypeName)
 
 QString comicBookArchiveMarkerForRootScheme(const QString &scheme)
 {
-    return rustStringToQString(
-        rustResultForQString<rust::String>(scheme, rustComicBookArchiveMarkerForRootScheme));
+    return Bridge::qtString(
+        Bridge::rustResultForQString(scheme, rustComicBookArchiveMarkerForRootScheme));
 }
 
 QStringList directArchiveOpenMarkersForRootScheme(const QString &scheme)
 {
-    return rustStringsToQStringList(rustResultForQString<rust::Vec<rust::String>>(
-        scheme, rustDirectArchiveOpenMarkersForRootScheme));
+    return Bridge::qtStringList(
+        Bridge::rustResultForQString(scheme, rustDirectArchiveOpenMarkersForRootScheme));
 }
 }

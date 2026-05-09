@@ -8,9 +8,9 @@
 #include "imagenavigationmodel.h"
 #include "imageurl.h"
 #include "kiriview/src/imagecontainer.cxx.h"
+#include "rustqtconversion.h"
 
 #include <QByteArray>
-#include <cstddef>
 #include <optional>
 
 namespace {
@@ -25,16 +25,6 @@ struct UrlParts {
     bool empty = true;
 };
 
-rust::Str rustStringView(const QByteArray &bytes)
-{
-    return rust::Str(bytes.constData(), static_cast<std::size_t>(bytes.size()));
-}
-
-QString rustStringToQString(const rust::String &value)
-{
-    return QString::fromUtf8(value.data(), static_cast<qsizetype>(value.size()));
-}
-
 UrlParts urlParts(const QUrl &url)
 {
     return UrlParts { url.scheme().toUtf8(), url.path().toUtf8(), url.isEmpty() };
@@ -45,14 +35,15 @@ std::optional<QUrl> archiveRootUrlForLocalArchive(const QUrl &url, const QString
     const QByteArray archiveSchemeBytes = archiveScheme.toUtf8();
     const QByteArray localPathBytes = url.toLocalFile().toUtf8();
     const KiriView::RustArchiveRootPath rootPath = KiriView::rustArchiveRootPathForLocalArchive(
-        url.isLocalFile(), rustStringView(archiveSchemeBytes), rustStringView(localPathBytes));
+        url.isLocalFile(), KiriView::Bridge::rustStr(archiveSchemeBytes),
+        KiriView::Bridge::rustStr(localPathBytes));
     if (!rootPath.found) {
         return std::nullopt;
     }
 
     QUrl archiveRootUrl;
     archiveRootUrl.setScheme(archiveScheme);
-    archiveRootUrl.setPath(rustStringToQString(rootPath.path));
+    archiveRootUrl.setPath(KiriView::Bridge::qtString(rootPath.path));
     if (!archiveRootUrl.isValid() || archiveRootUrl.path().isEmpty()) {
         return std::nullopt;
     }
@@ -94,13 +85,13 @@ std::optional<QUrl> containingArchiveRootUrl(
     const QByteArray scheme = url.scheme().toUtf8();
     const QByteArray path = url.path().toUtf8();
     const KiriView::RustArchiveRootPath rootPath
-        = rustFunction(rustStringView(scheme), rustStringView(path));
+        = rustFunction(KiriView::Bridge::rustStr(scheme), KiriView::Bridge::rustStr(path));
     if (!rootPath.found) {
         return std::nullopt;
     }
 
     QUrl archiveRootUrl = url;
-    archiveRootUrl.setPath(rustStringToQString(rootPath.path));
+    archiveRootUrl.setPath(KiriView::Bridge::qtString(rootPath.path));
     archiveRootUrl.setQuery(QString());
     archiveRootUrl.setFragment(QString());
     if (!archiveRootUrl.isValid() || archiveRootUrl.path().isEmpty()) {
@@ -122,8 +113,9 @@ bool archiveDocumentContainsUrlInRust(
     const UrlParts root = urlParts(archiveDocument.rootUrl());
     const UrlParts candidate = urlParts(url);
     return KiriView::rustArchiveDocumentContainsUrl(archiveDocument.isEmpty(), root.empty,
-        rustStringView(root.scheme), rustStringView(root.path), candidate.empty,
-        rustStringView(candidate.scheme), rustStringView(candidate.path));
+        KiriView::Bridge::rustStr(root.scheme), KiriView::Bridge::rustStr(root.path),
+        candidate.empty, KiriView::Bridge::rustStr(candidate.scheme),
+        KiriView::Bridge::rustStr(candidate.path));
 }
 
 }
@@ -164,9 +156,9 @@ bool isUrlInsideArchiveRoot(const QUrl &url, const QUrl &archiveRootUrl)
 {
     const UrlParts root = urlParts(archiveRootUrl);
     const UrlParts candidate = urlParts(url);
-    return rustArchiveDocumentContainsUrl(false, root.empty, rustStringView(root.scheme),
-        rustStringView(root.path), candidate.empty, rustStringView(candidate.scheme),
-        rustStringView(candidate.path));
+    return rustArchiveDocumentContainsUrl(false, root.empty, Bridge::rustStr(root.scheme),
+        Bridge::rustStr(root.path), candidate.empty, Bridge::rustStr(candidate.scheme),
+        Bridge::rustStr(candidate.path));
 }
 
 bool archiveDocumentContainsUrl(const ArchiveDocumentLocation &archiveDocument, const QUrl &url)
@@ -193,9 +185,9 @@ QString windowTitleFileNameForDisplayedLocation(const DisplayedImageLocation &lo
 {
     const QByteArray imageFileName = location.imageUrl().fileName().toUtf8();
     const QByteArray archiveFileName = location.archiveDocumentFileUrl().fileName().toUtf8();
-    return rustStringToQString(rustWindowTitleFileNameForDisplayedLocation(
-        location.imageUrl().isEmpty(), rustStringView(imageFileName),
-        displayedLocationIsInsideArchiveDocument(location), rustStringView(archiveFileName)));
+    return Bridge::qtString(rustWindowTitleFileNameForDisplayedLocation(
+        location.imageUrl().isEmpty(), Bridge::rustStr(imageFileName),
+        displayedLocationIsInsideArchiveDocument(location), Bridge::rustStr(archiveFileName)));
 }
 
 std::vector<ContainerNavigationCandidate> containerNavigationCandidates(const KFileItemList &items)

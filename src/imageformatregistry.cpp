@@ -5,43 +5,15 @@
 
 #include "archiveformat.h"
 #include "kiriview/src/imageformatregistry.cxx.h"
+#include "rustqtconversion.h"
 
 #include <KLocalizedString>
-#include <QByteArray>
 #include <QMimeDatabase>
 #include <QMimeType>
-#include <cstddef>
 #include <optional>
 
 namespace {
 using ArchiveMatchResolver = std::optional<KiriView::ArchiveOpenMatch> (*)(const QString &);
-
-rust::Str rustStringView(const QByteArray &bytes)
-{
-    return rust::Str(bytes.constData(), static_cast<std::size_t>(bytes.size()));
-}
-
-QString rustStringToQString(const rust::String &value)
-{
-    return QString::fromUtf8(value.data(), static_cast<qsizetype>(value.size()));
-}
-
-QStringList rustStringsToQStringList(const rust::Vec<rust::String> &values)
-{
-    QStringList list;
-    list.reserve(static_cast<qsizetype>(values.size()));
-    for (const rust::String &value : values) {
-        list.append(rustStringToQString(value));
-    }
-
-    return list;
-}
-
-bool rustBoolForQString(const QString &value, bool (*rustFunction)(rust::Str value))
-{
-    const QByteArray bytes = value.toUtf8();
-    return rustFunction(rustStringView(bytes));
-}
 
 QString schemeForArchiveMatch(const std::optional<KiriView::ArchiveOpenMatch> &match)
 {
@@ -83,22 +55,22 @@ std::optional<KiriView::ArchiveOpenMatch> directArchiveOpenMatchForLocalUrl(cons
 namespace KiriView {
 QStringList supportedImageExtensions()
 {
-    return rustStringsToQStringList(rustSupportedImageExtensions());
+    return Bridge::qtStringList(rustSupportedImageExtensions());
 }
 
 QStringList supportedImageMimeTypes()
 {
-    return rustStringsToQStringList(rustSupportedImageMimeTypes());
+    return Bridge::qtStringList(rustSupportedImageMimeTypes());
 }
 
 QStringList supportedOpenExtensions()
 {
-    return rustStringsToQStringList(rustSupportedOpenExtensions());
+    return Bridge::qtStringList(rustSupportedOpenExtensions());
 }
 
 bool isSupportedImageFileName(const QString &name)
 {
-    return rustBoolForQString(name, rustIsSupportedImageFileName);
+    return Bridge::rustResultForQString(name, rustIsSupportedImageFileName);
 }
 
 bool isComicBookArchiveFileName(const QString &name)

@@ -4,13 +4,13 @@
 #include "imageurl.h"
 
 #include "kiriview/src/imageurl.cxx.h"
+#include "rustqtconversion.h"
 
 #include <QByteArray>
 #include <QDir>
 #include <QFile>
 #include <QString>
 #include <QtGlobal>
-#include <cstddef>
 #include <optional>
 #include <sys/types.h>
 #include <sys/xattr.h>
@@ -18,30 +18,20 @@
 namespace {
 constexpr const char *documentPortalHostPathAttribute = "user.document-portal.host-path";
 
-rust::Str rustStringView(const QByteArray &bytes)
-{
-    return rust::Str(bytes.constData(), static_cast<std::size_t>(bytes.size()));
-}
-
-QString rustStringToQString(const rust::String &value)
-{
-    return QString::fromUtf8(value.data(), static_cast<qsizetype>(value.size()));
-}
-
 std::optional<QUrl> kioFuseArchiveUrl(const QString &localPath)
 {
     const QString runtimeDir = QFile::decodeName(qgetenv("XDG_RUNTIME_DIR"));
     const QByteArray localPathBytes = localPath.toUtf8();
     const QByteArray runtimeDirBytes = runtimeDir.toUtf8();
     const KiriView::RustKioFuseArchivePath archivePath = KiriView::rustKioFuseArchivePath(
-        rustStringView(localPathBytes), rustStringView(runtimeDirBytes));
+        KiriView::Bridge::rustStr(localPathBytes), KiriView::Bridge::rustStr(runtimeDirBytes));
     if (!archivePath.found) {
         return std::nullopt;
     }
 
     QUrl url;
-    url.setScheme(rustStringToQString(archivePath.scheme));
-    url.setPath(rustStringToQString(archivePath.path));
+    url.setScheme(KiriView::Bridge::qtString(archivePath.scheme));
+    url.setPath(KiriView::Bridge::qtString(archivePath.path));
     if (!url.isValid() || url.path().isEmpty()) {
         return std::nullopt;
     }
