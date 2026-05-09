@@ -8,7 +8,6 @@ path = [
   ".editorconfig",
   ".envrc",
   ".gitignore",
-  ".opencode/oh-my-openagent.jsonc",
   ".rumdl.toml",
   ".typos.toml",
   ".yamlfmt.yaml",
