@@ -126,9 +126,19 @@ void ImageDocumentController::setSourceUrl(const QUrl &sourceUrl)
     setSourceUrlForLoad(sourceUrl, QUrl());
 }
 
-ImageDocumentStatus ImageDocumentController::status() const { return m_state.status(); }
+ImageDocumentStatus ImageDocumentController::status() const
+{
+    if (m_twoPageSpreadTransitionInProgress) {
+        return ImageDocumentStatus::Loading;
+    }
 
-bool ImageDocumentController::loading() const { return m_state.loading(); }
+    return m_state.status();
+}
+
+bool ImageDocumentController::loading() const
+{
+    return m_twoPageSpreadTransitionInProgress || m_state.loading();
+}
 
 QString ImageDocumentController::errorString() const { return m_state.errorString(); }
 
@@ -322,6 +332,7 @@ void ImageDocumentController::setTwoPageModeEnabled(bool enabled)
         m_spreadZoomState = ImageZoomState {};
     }
     if (!m_twoPageModeEnabled) {
+        finishTwoPageSpreadTransition();
         clearSecondaryPage();
         if (wasSecondaryVisible) {
             if (previousZoomMode == ImageZoomMode::Manual) {
@@ -351,6 +362,10 @@ bool ImageDocumentController::secondaryPageVisible() const
 std::shared_ptr<DisplayedImageSurface> ImageDocumentController::imageSurface(
     DisplayedPageRole role) const
 {
+    if (m_twoPageSpreadTransitionInProgress) {
+        return nullptr;
+    }
+
     if (role == DisplayedPageRole::Secondary) {
         return secondaryPageVisible() ? m_secondaryPresentationController->imageSurface() : nullptr;
     }
@@ -362,6 +377,10 @@ const QImage &ImageDocumentController::image() const { return m_presentationCont
 
 quint64 ImageDocumentController::imageRevision(DisplayedPageRole role) const
 {
+    if (m_twoPageSpreadTransitionInProgress) {
+        return 0;
+    }
+
     if (role == DisplayedPageRole::Secondary) {
         return secondaryPageVisible() ? m_secondaryPresentationController->imageRevision() : 0;
     }
@@ -429,7 +448,16 @@ void ImageDocumentController::deleteDisplayedFile(FileDeletionMode mode)
 
 void ImageDocumentController::openImageAtPage(int pageNumber)
 {
-    m_navigationController->openImageAtPage(pageNumber);
+    const std::optional<QUrl> pageUrl = m_navigationController->urlAtPage(pageNumber);
+    if (!pageUrl.has_value()) {
+        return;
+    }
+
+    const bool spreadTransition = shouldBeginTwoPageSpreadTransition(pageNumber);
+    if (spreadTransition) {
+        beginTwoPageSpreadTransition();
+    }
+    setSourceUrlForLoad(*pageUrl, QUrl(), spreadTransition);
 }
 
 void ImageDocumentController::resetZoom()
@@ -546,11 +574,14 @@ void ImageDocumentController::dispatchEffects(ImageDocumentEffects effects)
 }
 
 void ImageDocumentController::setSourceUrlForLoad(
-    const QUrl &sourceUrl, const QUrl &containerNavigationUrl)
+    const QUrl &sourceUrl, const QUrl &containerNavigationUrl, bool preserveTwoPageSpreadTransition)
 {
     m_deletionController->cancel();
 
     if (m_state.sourceUrl() == sourceUrl) {
+        if (!preserveTwoPageSpreadTransition) {
+            finishTwoPageSpreadTransition();
+        }
         m_state.clearLoadingContainerNavigationUrl();
         if (!containerNavigationUrl.isEmpty()) {
             m_state.setContainerNavigationUrl(containerNavigationUrl);
@@ -559,6 +590,9 @@ void ImageDocumentController::setSourceUrlForLoad(
     }
 
     cancelNavigationAndPredecode();
+    if (!preserveTwoPageSpreadTransition) {
+        finishTwoPageSpreadTransition();
+    }
     clearSecondaryPage();
     m_state.setLoadingContainerNavigationUrl(containerNavigationUrl);
     m_state.setSourceUrl(sourceUrl);
@@ -569,6 +603,7 @@ void ImageDocumentController::clearAfterSuccessfulFileDeletion()
 {
     cancelNavigationAndPredecode();
     m_openController->cancel();
+    finishTwoPageSpreadTransition();
     clearSecondaryPage();
     m_state.setSourceUrl(QUrl());
     m_state.setErrorString(QString());
@@ -652,23 +687,31 @@ void ImageDocumentController::refreshSecondaryPage()
 {
     cacheWidePage(m_state.displayedUrl(), m_presentationController->imageSize());
 
-    if (!twoPageModeActive() || currentPageIsCover() || primaryPageIsWide()) {
+    auto finishWithPrimaryPage = [this]() {
         applyStoredSpreadZoomToPrimaryPage();
         clearSecondaryPageAndNotify();
+        finishTwoPageSpreadTransition();
+    };
+
+    if (!twoPageModeActive() || currentPageIsCover() || primaryPageIsWide()) {
+        finishWithPrimaryPage();
         return;
     }
 
     const int nextPageNumber = currentPageNumber() + 1;
     if (nextPageNumber <= 1 || nextPageNumber > imageCount()) {
-        applyStoredSpreadZoomToPrimaryPage();
-        clearSecondaryPageAndNotify();
+        finishWithPrimaryPage();
         return;
     }
 
     const std::optional<QUrl> nextUrl = m_navigationController->urlAtPage(nextPageNumber);
     if (!nextUrl.has_value()) {
-        applyStoredSpreadZoomToPrimaryPage();
-        clearSecondaryPageAndNotify();
+        finishWithPrimaryPage();
+        return;
+    }
+
+    if (cachedPageIsWide(*nextUrl).value_or(false)) {
+        finishWithPrimaryPage();
         return;
     }
 
@@ -750,11 +793,13 @@ void ImageDocumentController::finishSecondaryImageLoad(
     if (!m_secondaryPageVisible) {
         clearSecondaryPage();
         applyStoredSpreadZoomToPrimaryPage();
+        finishTwoPageSpreadTransition();
         notifyTwoPageModeChanged();
         return;
     }
 
     updateSpreadZoomState();
+    finishTwoPageSpreadTransition();
     notifyTwoPageModeChanged();
 }
 
@@ -771,17 +816,56 @@ void ImageDocumentController::finishSecondaryStaticImageLoad(
     if (!m_secondaryPageVisible) {
         clearSecondaryPage();
         applyStoredSpreadZoomToPrimaryPage();
+        finishTwoPageSpreadTransition();
         notifyTwoPageModeChanged();
         return;
     }
 
     updateSpreadZoomState();
+    finishTwoPageSpreadTransition();
     notifyTwoPageModeChanged();
 }
 
 void ImageDocumentController::finishSecondaryLoadWithError(const ImageLoadSession &)
 {
-    clearSecondaryPageAndNotify();
+    clearSecondaryPage();
+    applyStoredSpreadZoomToPrimaryPage();
+    finishTwoPageSpreadTransition();
+    notifyTwoPageModeChanged();
+}
+
+bool ImageDocumentController::shouldBeginTwoPageSpreadTransition(int targetPageNumber) const
+{
+    return twoPageModeActive() && currentPageNumber() > 0 && targetPageNumber > 0
+        && targetPageNumber <= imageCount() && targetPageNumber != currentPageNumber();
+}
+
+void ImageDocumentController::beginTwoPageSpreadTransition()
+{
+    if (m_twoPageSpreadTransitionInProgress) {
+        notifyTwoPageSpreadTransitionChanged();
+        return;
+    }
+
+    m_twoPageSpreadTransitionInProgress = true;
+    notifyTwoPageSpreadTransitionChanged();
+}
+
+void ImageDocumentController::finishTwoPageSpreadTransition()
+{
+    if (!m_twoPageSpreadTransitionInProgress) {
+        return;
+    }
+
+    m_twoPageSpreadTransitionInProgress = false;
+    notifyTwoPageSpreadTransitionChanged();
+}
+
+void ImageDocumentController::notifyTwoPageSpreadTransitionChanged()
+{
+    notify(ImageDocumentChange::Status);
+    notify(ImageDocumentChange::Loading);
+    notify(ImageDocumentChange::Repaint);
 }
 
 void ImageDocumentController::updateSpreadZoomState()
@@ -960,6 +1044,10 @@ qreal ImageDocumentController::spreadDevicePixelRatio() const
 
 void ImageDocumentController::notify(ImageDocumentChange change)
 {
+    if (change == ImageDocumentChange::ErrorString && !m_state.errorString().isEmpty()) {
+        finishTwoPageSpreadTransition();
+    }
+
     if (change == ImageDocumentChange::PageNavigation) {
         refreshSecondaryPage();
     }
@@ -972,6 +1060,7 @@ void ImageDocumentController::clearImage()
     if (m_predecodeCoordinator != nullptr) {
         m_predecodeCoordinator->clear();
     }
+    finishTwoPageSpreadTransition();
     clearSecondaryPage();
     m_navigationController->cancelPageNavigationUpdate();
     m_state.clearDisplayedImageUrls();

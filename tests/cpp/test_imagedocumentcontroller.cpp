@@ -116,6 +116,7 @@ private Q_SLOTS:
     void successfulFileDeletionWithoutFallbackClearsDocument();
     void successfulComicBookDeletionOpensNextSiblingArchive();
     void twoPageModeDisplaysCurrentAndNextComicArchivePages();
+    void twoPageModeWaitsForTargetSpreadBeforeRenderingNavigation();
     void twoPageModeKeepsCoverAndWidePagesSingle();
 };
 
@@ -897,6 +898,76 @@ void TestImageDocumentController::twoPageModeDisplaysCurrentAndNextComicArchiveP
     QCOMPARE(controller->primaryImageSize(), QSize(100, 200));
     QCOMPARE(controller->secondaryImageSize(), QSize(100, 200));
     QCOMPARE(controller->imageSize(), QSize(200, 200));
+}
+
+void TestImageDocumentController::twoPageModeWaitsForTargetSpreadBeforeRenderingNavigation()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
+    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveDocument.has_value());
+    const QUrl firstPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
+    const QUrl secondPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("02.png"));
+    const QUrl thirdPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("03.png"));
+    const QUrl fourthPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("04.png"));
+    const QUrl fifthPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("05.png"));
+    candidateProvider.setArchiveImages(archiveDocument->rootUrl(),
+        {
+            imageCandidate(firstPageUrl),
+            imageCandidate(secondPageUrl),
+            imageCandidate(thirdPageUrl),
+            imageCandidate(fourthPageUrl),
+            imageCandidate(fifthPageUrl),
+        });
+
+    auto decoder = [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
+        return singleFrameDecodedImage(QSize(100, 200));
+    };
+    std::unique_ptr<KiriView::ImageDocumentController> controller
+        = createController(this, candidateProvider, dataLoader, std::move(decoder));
+    controller->setViewportSize(QSizeF(400.0, 300.0));
+    controller->setSourceUrl(archiveUrl);
+    finishLoad(dataLoader);
+    QTRY_COMPARE(controller->displayedUrl(), firstPageUrl);
+
+    controller->setTwoPageModeEnabled(true);
+    controller->openNextImage();
+    QTRY_COMPARE(dataLoader.backLoad().url, secondPageUrl);
+    finishLoad(dataLoader);
+    QTRY_COMPARE(dataLoader.backLoad().url, thirdPageUrl);
+    finishLoad(dataLoader);
+
+    QTRY_VERIFY(controller->secondaryPageVisible());
+    QCOMPARE(controller->displayedUrl(), secondPageUrl);
+    QCOMPARE(controller->currentLastPageNumber(), 3);
+    QVERIFY(controller->imageSurface() != nullptr);
+    QVERIFY(controller->imageSurface(KiriView::DisplayedPageRole::Secondary) != nullptr);
+
+    controller->openNextImage();
+
+    QTRY_COMPARE(dataLoader.backLoad().url, fourthPageUrl);
+    QCOMPARE(controller->status(), KiriView::ImageDocumentStatus::Loading);
+    QVERIFY(controller->loading());
+    QVERIFY(controller->imageSurface() == nullptr);
+    QVERIFY(controller->imageSurface(KiriView::DisplayedPageRole::Secondary) == nullptr);
+    finishLoad(dataLoader);
+
+    QTRY_COMPARE(controller->displayedUrl(), fourthPageUrl);
+    QTRY_COMPARE(dataLoader.backLoad().url, fifthPageUrl);
+    QCOMPARE(controller->status(), KiriView::ImageDocumentStatus::Loading);
+    QVERIFY(controller->loading());
+    QVERIFY(controller->imageSurface() == nullptr);
+    QVERIFY(controller->imageSurface(KiriView::DisplayedPageRole::Secondary) == nullptr);
+    finishLoad(dataLoader);
+
+    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_VERIFY(controller->secondaryPageVisible());
+    QCOMPARE(controller->displayedUrl(), fourthPageUrl);
+    QCOMPARE(controller->currentLastPageNumber(), 5);
+    QVERIFY(controller->imageSurface() != nullptr);
+    QVERIFY(controller->imageSurface(KiriView::DisplayedPageRole::Secondary) != nullptr);
 }
 
 void TestImageDocumentController::twoPageModeKeepsCoverAndWidePagesSingle()

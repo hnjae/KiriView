@@ -109,7 +109,8 @@ private:
     void dispatchEffectPayload(const PrepareFailedContainerEffect &payload);
     void dispatchEffectPayload(const AnimationFailedEffect &payload);
     void dispatchEffects(ImageDocumentEffects effects);
-    void setSourceUrlForLoad(const QUrl &sourceUrl, const QUrl &containerNavigationUrl);
+    void setSourceUrlForLoad(const QUrl &sourceUrl, const QUrl &containerNavigationUrl,
+        bool preserveTwoPageSpreadTransition = false);
     void clearAfterSuccessfulFileDeletion();
     void scheduleAdjacentImagePredecode();
     void cancelNavigationAndPredecode();
@@ -137,6 +138,10 @@ private:
     void finishSecondaryStaticImageLoad(
         const ImageLoadSession &session, StaticImagePayload staticImage, bool predecodeCacheable);
     void finishSecondaryLoadWithError(const ImageLoadSession &session);
+    bool shouldBeginTwoPageSpreadTransition(int targetPageNumber) const;
+    void beginTwoPageSpreadTransition();
+    void finishTwoPageSpreadTransition();
+    void notifyTwoPageSpreadTransitionChanged();
     void updateSpreadZoomState();
     void applyStoredSpreadZoomToPrimaryPage();
     void applySpreadVisibleItemRects();
@@ -171,6 +176,7 @@ private:
     std::map<QString, bool> m_widePageByUrl;
     bool m_twoPageModeEnabled = false;
     bool m_secondaryPageVisible = false;
+    bool m_twoPageSpreadTransitionInProgress = false;
 };
 }
 
