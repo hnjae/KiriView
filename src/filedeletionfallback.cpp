@@ -5,42 +5,121 @@
 
 #include "imagecontainer.h"
 #include "imagenavigationmodel.h"
+#include "imageurl.h"
 #include "kiriview/src/filedeletionfallback.cxx.h"
 
+#include <algorithm>
+#include <cstddef>
+#include <iterator>
 #include <optional>
 #include <utility>
 #include <vector>
 
 namespace {
-KiriView::NavigationDirection navigationDirection(KiriView::RustDeletionFallbackDirection direction)
+KiriView::RustDeletionFallbackIndex rustDeletionFallbackIndex(std::optional<std::size_t> index)
 {
-    switch (direction) {
-    case KiriView::RustDeletionFallbackDirection::Previous:
-        return KiriView::NavigationDirection::Previous;
-    case KiriView::RustDeletionFallbackDirection::Next:
-        return KiriView::NavigationDirection::Next;
+    if (!index.has_value()) {
+        return KiriView::RustDeletionFallbackIndex { false, 0 };
     }
 
-    return KiriView::NavigationDirection::Next;
+    return KiriView::RustDeletionFallbackIndex { true, *index };
 }
 
-std::optional<QUrl> adjacentImageUrlAfterDeletion(
-    std::vector<KiriView::ImageNavigationCandidate> candidates, const QUrl &currentUrl,
-    const QString &currentName, KiriView::NavigationDirection direction)
+template <typename Candidate>
+std::optional<std::size_t> currentCandidateIndex(
+    const std::vector<Candidate> &candidates, const QUrl &currentUrl)
 {
-    candidates.push_back(KiriView::ImageNavigationCandidate { currentUrl, currentName });
-    KiriView::sortImageNavigationCandidates(&candidates);
-    return KiriView::adjacentImageNavigationUrl(candidates, currentUrl, direction);
+    const auto current = std::find_if(
+        candidates.cbegin(), candidates.cend(), [&currentUrl](const Candidate &candidate) {
+            return KiriView::sameNormalizedUrl(candidate.url, currentUrl);
+        });
+    if (current == candidates.cend()) {
+        return std::nullopt;
+    }
+
+    return static_cast<std::size_t>(std::distance(candidates.cbegin(), current));
 }
 
-std::optional<KiriView::ContainerNavigationCandidate> adjacentContainerAfterDeletion(
-    std::vector<KiriView::ContainerNavigationCandidate> candidates, const QUrl &currentUrl,
-    const QString &currentName, KiriView::NavigationDirection direction)
+void appendDeletedCandidate(std::vector<KiriView::ImageNavigationCandidate> *candidates,
+    const QUrl &currentUrl, const QString &currentName)
 {
-    candidates.push_back(KiriView::ContainerNavigationCandidate {
+    candidates->push_back(KiriView::ImageNavigationCandidate { currentUrl, currentName });
+}
+
+void appendDeletedCandidate(std::vector<KiriView::ContainerNavigationCandidate> *candidates,
+    const QUrl &currentUrl, const QString &currentName)
+{
+    candidates->push_back(KiriView::ContainerNavigationCandidate {
         currentUrl, currentName, KiriView::ContainerNavigationCandidateType::ComicBookArchive });
-    KiriView::sortContainerNavigationCandidates(&candidates);
-    return KiriView::adjacentContainerNavigationCandidate(candidates, currentUrl, direction);
+}
+
+void sortDeletionFallbackCandidates(std::vector<KiriView::ImageNavigationCandidate> *candidates)
+{
+    KiriView::sortImageNavigationCandidates(candidates);
+}
+
+void sortDeletionFallbackCandidates(std::vector<KiriView::ContainerNavigationCandidate> *candidates)
+{
+    KiriView::sortContainerNavigationCandidates(candidates);
+}
+
+template <typename Candidate> struct DeletionFallbackSelection {
+    std::vector<Candidate> candidates;
+    KiriView::RustDeletionFallbackCandidateIndices indices;
+};
+
+template <typename Candidate>
+DeletionFallbackSelection<Candidate> deletionFallbackSelection(
+    std::vector<Candidate> candidates, const QUrl &currentUrl, const QString &currentName)
+{
+    appendDeletedCandidate(&candidates, currentUrl, currentName);
+    sortDeletionFallbackCandidates(&candidates);
+
+    const KiriView::RustDeletionFallbackCandidateIndices indices
+        = KiriView::rustDeletionFallbackCandidateIndices(candidates.size(),
+            rustDeletionFallbackIndex(currentCandidateIndex(candidates, currentUrl)));
+    return { std::move(candidates), indices };
+}
+
+template <typename Candidate>
+std::optional<std::size_t> candidateIndex(
+    const std::vector<Candidate> &candidates, KiriView::RustDeletionFallbackIndex index)
+{
+    if (!index.found || index.index >= candidates.size()) {
+        return std::nullopt;
+    }
+
+    return index.index;
+}
+
+std::optional<QUrl> preferredImageFallbackUrl(
+    const DeletionFallbackSelection<KiriView::ImageNavigationCandidate> &selection)
+{
+    const std::optional<std::size_t> preferred
+        = candidateIndex(selection.candidates, selection.indices.preferred);
+    if (preferred.has_value()) {
+        return selection.candidates.at(*preferred).url;
+    }
+
+    const std::optional<std::size_t> fallback
+        = candidateIndex(selection.candidates, selection.indices.fallback);
+    if (fallback.has_value()) {
+        return selection.candidates.at(*fallback).url;
+    }
+
+    return std::nullopt;
+}
+
+std::optional<KiriView::ContainerNavigationCandidate> containerFallbackCandidate(
+    const DeletionFallbackSelection<KiriView::ContainerNavigationCandidate> &selection,
+    KiriView::RustDeletionFallbackIndex index)
+{
+    const std::optional<std::size_t> candidate = candidateIndex(selection.candidates, index);
+    if (!candidate.has_value()) {
+        return std::nullopt;
+    }
+
+    return selection.candidates.at(*candidate);
 }
 }
 
@@ -74,15 +153,8 @@ std::optional<QUrl> imageDeletionFallbackUrl(
         return std::nullopt;
     }
 
-    const RustDeletionFallbackDirections directions = rustDeletionFallbackDirections();
-    const std::optional<QUrl> nextUrl = adjacentImageUrlAfterDeletion(
-        candidates, plan.currentUrl, plan.currentName, navigationDirection(directions.preferred));
-    if (nextUrl.has_value()) {
-        return nextUrl;
-    }
-
-    return adjacentImageUrlAfterDeletion(std::move(candidates), plan.currentUrl, plan.currentName,
-        navigationDirection(directions.fallback));
+    return preferredImageFallbackUrl(
+        deletionFallbackSelection(std::move(candidates), plan.currentUrl, plan.currentName));
 }
 
 ComicBookDeletionFallbackCandidates comicBookDeletionFallbackCandidates(
@@ -92,12 +164,12 @@ ComicBookDeletionFallbackCandidates comicBookDeletionFallbackCandidates(
         return {};
     }
 
-    const RustDeletionFallbackDirections directions = rustDeletionFallbackDirections();
+    const DeletionFallbackSelection<ContainerNavigationCandidate> selection
+        = deletionFallbackSelection(
+            std::move(candidates), plan.currentContainerUrl, plan.currentName);
     return {
-        adjacentContainerAfterDeletion(candidates, plan.currentContainerUrl, plan.currentName,
-            navigationDirection(directions.preferred)),
-        adjacentContainerAfterDeletion(std::move(candidates), plan.currentContainerUrl,
-            plan.currentName, navigationDirection(directions.fallback)),
+        containerFallbackCandidate(selection, selection.indices.preferred),
+        containerFallbackCandidate(selection, selection.indices.fallback),
     };
 }
 }
