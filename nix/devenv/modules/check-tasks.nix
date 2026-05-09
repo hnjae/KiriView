@@ -14,6 +14,20 @@ let
 
     cd ${repoRoot}
   '';
+  testJobsPrelude = ''
+    test_jobs="''${KIRIVIEW_TEST_JOBS:-$(nproc)}"
+    if ! [[ $test_jobs =~ ^[0-9]+$ ]] || ((test_jobs < 1)); then
+        printf 'Invalid KIRIVIEW_TEST_JOBS value: %s\n' "$test_jobs" >&2
+        exit 2
+    fi
+  '';
+  lintJobsPrelude = ''
+    lint_jobs="''${KIRIVIEW_LINT_JOBS:-$(nproc)}"
+    if ! [[ $lint_jobs =~ ^[0-9]+$ ]] || ((lint_jobs < 1)); then
+        printf 'Invalid KIRIVIEW_LINT_JOBS value: %s\n' "$lint_jobs" >&2
+        exit 2
+    fi
+  '';
 in
 {
   scripts."run-clazy-parallel" = {
@@ -210,11 +224,23 @@ in
       description = "Run host Rust library tests";
       exec = ''
         ${hostTaskPrelude}
+        ${testJobsPrelude}
 
+        printf 'Running host Rust tests with %d jobs...\n' "$test_jobs"
         CARGO_TARGET_DIR=${lib.escapeShellArg "${config.devenv.root}/target"} \
-            cargo test --locked --lib --all-features
+            cargo test \
+                --locked \
+                --lib \
+                --all-features \
+                --jobs "$test_jobs" \
+                -- \
+                --test-threads "$test_jobs"
         CARGO_TARGET_DIR=${lib.escapeShellArg "${config.devenv.root}/target"} \
-            cargo build --locked --lib --all-features
+            cargo build \
+                --locked \
+                --lib \
+                --all-features \
+                --jobs "$test_jobs"
       '';
     };
 
@@ -223,18 +249,21 @@ in
       after = [ "kiriview:test:rust-host" ];
       exec = ''
         ${hostTaskPrelude}
+        ${testJobsPrelude}
 
         cmake \
             -S tests/cpp \
             -B target/devenv/cpp-tests \
             -DCMAKE_BUILD_TYPE=Debug \
             -DKIRIVIEW_CARGO_TARGET_DIR=${lib.escapeShellArg "${config.devenv.root}/target/debug"}
-        cmake --build target/devenv/cpp-tests
+        printf 'Building and running host C++ tests with %d jobs...\n' "$test_jobs"
+        cmake --build target/devenv/cpp-tests --parallel "$test_jobs"
         # GNU gettext ignores LANGUAGE under C/POSIX locales; devenv defaults to C.UTF-8.
         LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 \
             ctest \
                 --test-dir target/devenv/cpp-tests \
                 --output-on-failure \
+                --parallel "$test_jobs" \
                 -E '^test_kiriimagedecoder$'
       '';
     };
@@ -249,8 +278,15 @@ in
       description = "Run Rust clippy";
       exec = ''
         ${hostTaskPrelude}
+        ${lintJobsPrelude}
 
-        cargo clippy --locked --all-targets --all-features -- -D warnings
+        cargo clippy \
+            --locked \
+            --all-targets \
+            --all-features \
+            --jobs "$lint_jobs" \
+            -- \
+            -D warnings
       '';
     };
 
@@ -269,7 +305,8 @@ in
       after = [ "kiriview:lint:clippy" ];
       exec = ''
         ${qtCxxqt.cppLintPrelude}
-        lint_jobs="$(nproc)"
+        ${lintJobsPrelude}
+
         ${lib.getExe' pkgs.llvmPackages.clang-unwrapped "run-clang-tidy"} \
             -clang-tidy-binary ${lib.getExe' pkgs.clang-tools "clang-tidy"} \
             -p . \
