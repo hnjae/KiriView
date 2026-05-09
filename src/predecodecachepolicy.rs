@@ -14,6 +14,12 @@ mod ffi {
         byte_cost: i64,
     }
 
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    struct RustPredecodeQueuedLoadIndex {
+        found: bool,
+        index: usize,
+    }
+
     extern "Rust" {
         #[cxx_name = "rustPredecodePreferredByteBudget"]
         fn rust_predecode_preferred_byte_budget() -> i64;
@@ -34,10 +40,24 @@ mod ffi {
             window_count: usize,
             byte_budget: i64,
         ) -> Vec<usize>;
+
+        #[cxx_name = "rustPredecodeMissingWindowLoadIndices"]
+        fn rust_predecode_missing_window_load_indices(
+            displayed_matches: Vec<u8>,
+            cached: Vec<u8>,
+            in_flight: Vec<u8>,
+        ) -> Vec<usize>;
+
+        #[cxx_name = "rustPredecodeNextQueuedLoadIndex"]
+        fn rust_predecode_next_queued_load_index(
+            valid: Vec<u8>,
+            in_window: Vec<u8>,
+            cached: Vec<u8>,
+        ) -> RustPredecodeQueuedLoadIndex;
     }
 }
 
-use ffi::RustPredecodeCacheableByteCost;
+use ffi::{RustPredecodeCacheableByteCost, RustPredecodeQueuedLoadIndex};
 
 #[derive(Clone, Copy)]
 struct RetainedCachedImage {
@@ -118,6 +138,54 @@ fn rust_predecode_retained_cached_image_indices(
         .collect()
 }
 
+fn rust_predecode_missing_window_load_indices(
+    displayed_matches: Vec<u8>,
+    cached: Vec<u8>,
+    in_flight: Vec<u8>,
+) -> Vec<usize> {
+    let flag_count = displayed_matches
+        .len()
+        .min(cached.len())
+        .min(in_flight.len());
+    (0..flag_count)
+        .filter(|&index| {
+            !flag_at(&displayed_matches, index)
+                && !flag_at(&cached, index)
+                && !flag_at(&in_flight, index)
+        })
+        .collect()
+}
+
+fn rust_predecode_next_queued_load_index(
+    valid: Vec<u8>,
+    in_window: Vec<u8>,
+    cached: Vec<u8>,
+) -> RustPredecodeQueuedLoadIndex {
+    let flag_count = valid.len().min(in_window.len()).min(cached.len());
+    for index in 0..flag_count {
+        if flag_at(&valid, index) && flag_at(&in_window, index) && !flag_at(&cached, index) {
+            return queued_load_index(index);
+        }
+    }
+
+    missing_queued_load_index()
+}
+
+fn flag_at(flags: &[u8], index: usize) -> bool {
+    flags.get(index).copied().unwrap_or(0) != 0
+}
+
+fn queued_load_index(index: usize) -> RustPredecodeQueuedLoadIndex {
+    RustPredecodeQueuedLoadIndex { found: true, index }
+}
+
+fn missing_queued_load_index() -> RustPredecodeQueuedLoadIndex {
+    RustPredecodeQueuedLoadIndex {
+        found: false,
+        index: 0,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -188,6 +256,34 @@ mod tests {
         assert_eq!(
             rust_predecode_retained_cached_image_indices(vec![0, 1, 2], vec![100, 100, 1], 3, 101,),
             vec![0]
+        );
+    }
+
+    #[test]
+    fn missing_window_load_indices_skip_displayed_cached_and_in_flight_urls() {
+        assert_eq!(
+            rust_predecode_missing_window_load_indices(
+                vec![1, 0, 0, 0, 0],
+                vec![0, 1, 0, 0, 0],
+                vec![0, 0, 1, 0, 0],
+            ),
+            vec![3, 4]
+        );
+    }
+
+    #[test]
+    fn next_queued_load_index_skips_invalid_stale_and_cached_requests() {
+        assert_eq!(
+            rust_predecode_next_queued_load_index(
+                vec![0, 1, 1, 1],
+                vec![1, 0, 1, 1],
+                vec![0, 0, 1, 0],
+            ),
+            queued_load_index(3)
+        );
+        assert_eq!(
+            rust_predecode_next_queued_load_index(vec![0, 1], vec![1, 0], vec![0, 0],),
+            missing_queued_load_index()
         );
     }
 }

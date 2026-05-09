@@ -27,6 +27,8 @@ std::optional<QUrl> normalizedValidImageUrl(const QUrl &url)
 qsizetype qtByteSize(std::int64_t byteSize) { return static_cast<qsizetype>(byteSize); }
 
 std::int64_t rustByteSize(qsizetype byteSize) { return static_cast<std::int64_t>(byteSize); }
+
+std::uint8_t rustFlag(bool value) { return value ? 1 : 0; }
 }
 
 namespace KiriView {
@@ -93,12 +95,24 @@ void PredecodeCache::enqueueMissingWindowLoads(const QUrl &displayedUrl,
     const ArchiveDocumentLocation &archiveDocument, const QUrl &activePredecodeUrl)
 {
     const QUrl normalizedDisplayedUrl = normalizedImageUrl(displayedUrl);
+    rust::Vec<std::uint8_t> displayedMatches;
+    rust::Vec<std::uint8_t> cached;
+    rust::Vec<std::uint8_t> inFlight;
+    displayedMatches.reserve(m_windowUrls.size());
+    cached.reserve(m_windowUrls.size());
+    inFlight.reserve(m_windowUrls.size());
+
     for (const QUrl &url : m_windowUrls) {
-        if (url == normalizedDisplayedUrl) {
-            continue;
-        }
-        if (!hasImage(url) && !isInFlight(url, activePredecodeUrl)) {
-            m_queue.push_back(PredecodeRequest { url, archiveDocument });
+        displayedMatches.push_back(rustFlag(url == normalizedDisplayedUrl));
+        cached.push_back(rustFlag(hasImage(url)));
+        inFlight.push_back(rustFlag(isInFlight(url, activePredecodeUrl)));
+    }
+
+    const rust::Vec<std::size_t> missingIndices = rustPredecodeMissingWindowLoadIndices(
+        std::move(displayedMatches), std::move(cached), std::move(inFlight));
+    for (std::size_t index : missingIndices) {
+        if (index < m_windowUrls.size()) {
+            m_queue.push_back(PredecodeRequest { m_windowUrls.at(index), archiveDocument });
         }
     }
 }
@@ -109,19 +123,31 @@ std::optional<PredecodeRequest> PredecodeCache::takeNextRequest(const QUrl &acti
         return std::nullopt;
     }
 
-    while (!m_queue.empty()) {
-        PredecodeRequest request = std::move(m_queue.front());
-        m_queue.pop_front();
+    rust::Vec<std::uint8_t> valid;
+    rust::Vec<std::uint8_t> inWindow;
+    rust::Vec<std::uint8_t> cached;
+    valid.reserve(m_queue.size());
+    inWindow.reserve(m_queue.size());
+    cached.reserve(m_queue.size());
 
-        if (!request.url.isValid() || request.url.isEmpty() || !windowContains(request.url)
-            || hasImage(request.url)) {
-            continue;
-        }
-
-        return request;
+    for (const PredecodeRequest &request : m_queue) {
+        valid.push_back(rustFlag(request.url.isValid() && !request.url.isEmpty()));
+        inWindow.push_back(rustFlag(windowContains(request.url)));
+        cached.push_back(rustFlag(hasImage(request.url)));
     }
 
-    return std::nullopt;
+    const RustPredecodeQueuedLoadIndex requestIndex = rustPredecodeNextQueuedLoadIndex(
+        std::move(valid), std::move(inWindow), std::move(cached));
+    if (!requestIndex.found || requestIndex.index >= m_queue.size()) {
+        m_queue.clear();
+        return std::nullopt;
+    }
+
+    auto requestEntry = m_queue.begin();
+    std::advance(requestEntry, static_cast<std::ptrdiff_t>(requestIndex.index));
+    PredecodeRequest request = std::move(*requestEntry);
+    m_queue.erase(m_queue.begin(), std::next(requestEntry));
+    return request;
 }
 
 bool PredecodeCache::windowContains(const QUrl &url) const
