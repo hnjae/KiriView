@@ -34,6 +34,10 @@ i18n-check:
 i18n-pot-check:
     devenv tasks run --mode before kiriview:i18n:pot-check
 
+[group('ci')]
+ci:
+    devenv test
+
 [group('build')]
 i18n-update:
     devenv shell -- kiriview-update-translations
