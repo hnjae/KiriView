@@ -23,6 +23,12 @@ mod ffi {
         height: f64,
     }
 
+    #[derive(Clone, Copy, Debug, PartialEq)]
+    struct RustImageDocumentRenderContext {
+        device_pixel_ratio: f64,
+        maximum_texture_size: i32,
+    }
+
     extern "Rust" {
         #[cxx_name = "rustImageTargetRect"]
         fn rust_image_target_rect(
@@ -43,10 +49,24 @@ mod ffi {
             maximum_texture_size: i32,
             fallback_texture_size_max: i32,
         ) -> RustImageRenderSize;
+
+        #[cxx_name = "rustNormalizedImageDocumentRenderContext"]
+        fn rust_normalized_image_document_render_context(
+            context: RustImageDocumentRenderContext,
+            fallback_texture_size_max: i32,
+        ) -> RustImageDocumentRenderContext;
+
+        #[cxx_name = "rustFirstDisplayPhysicalViewportSize"]
+        fn rust_first_display_physical_viewport_size(
+            viewport_size: RustImageRenderSizeF,
+            device_pixel_ratio: f64,
+        ) -> RustImageRenderSize;
     }
 }
 
-use ffi::{RustImageRenderRectF, RustImageRenderSize, RustImageRenderSizeF};
+use ffi::{
+    RustImageDocumentRenderContext, RustImageRenderRectF, RustImageRenderSize, RustImageRenderSizeF,
+};
 
 fn rust_image_target_rect(
     image_size: RustImageRenderSize,
@@ -132,6 +152,44 @@ fn rust_svg_raster_size(
     )
 }
 
+fn rust_normalized_image_document_render_context(
+    context: RustImageDocumentRenderContext,
+    fallback_texture_size_max: i32,
+) -> RustImageDocumentRenderContext {
+    RustImageDocumentRenderContext {
+        device_pixel_ratio: if context.device_pixel_ratio.is_finite()
+            && context.device_pixel_ratio > 0.0
+        {
+            context.device_pixel_ratio
+        } else {
+            1.0
+        },
+        maximum_texture_size: if context.maximum_texture_size > 0 {
+            context.maximum_texture_size
+        } else {
+            fallback_texture_size_max
+        },
+    }
+}
+
+fn rust_first_display_physical_viewport_size(
+    viewport_size: RustImageRenderSizeF,
+    device_pixel_ratio: f64,
+) -> RustImageRenderSize {
+    if size_f_empty(viewport_size) || !device_pixel_ratio.is_finite() || device_pixel_ratio <= 0.0 {
+        return empty_size();
+    }
+
+    let Some(width) = ceil_positive_to_i32(viewport_size.width * device_pixel_ratio) else {
+        return empty_size();
+    };
+    let Some(height) = ceil_positive_to_i32(viewport_size.height * device_pixel_ratio) else {
+        return empty_size();
+    };
+
+    RustImageRenderSize { width, height }
+}
+
 fn min_like_cpp(left: f64, right: f64) -> f64 {
     if right < left { right } else { left }
 }
@@ -144,6 +202,21 @@ fn ceil_clamped_to_i32(value: f64, minimum: i32, maximum: i32) -> i32 {
         maximum
     } else {
         rounded as i32
+    }
+}
+
+fn ceil_positive_to_i32(value: f64) -> Option<i32> {
+    if !value.is_finite() {
+        return None;
+    }
+
+    let rounded = value.ceil();
+    if rounded <= 0.0 {
+        None
+    } else if rounded >= f64::from(i32::MAX) {
+        Some(i32::MAX)
+    } else {
+        Some(rounded as i32)
     }
 }
 
@@ -241,6 +314,52 @@ mod tests {
         );
         assert_eq!(
             rust_svg_raster_size(size_f(10.0, 20.0), 0.0, 64, 64),
+            empty_size()
+        );
+    }
+
+    #[test]
+    fn render_context_normalizes_invalid_values() {
+        assert_eq!(
+            rust_normalized_image_document_render_context(
+                RustImageDocumentRenderContext {
+                    device_pixel_ratio: 2.0,
+                    maximum_texture_size: 4096,
+                },
+                1024,
+            ),
+            RustImageDocumentRenderContext {
+                device_pixel_ratio: 2.0,
+                maximum_texture_size: 4096,
+            }
+        );
+        assert_eq!(
+            rust_normalized_image_document_render_context(
+                RustImageDocumentRenderContext {
+                    device_pixel_ratio: f64::NAN,
+                    maximum_texture_size: 0,
+                },
+                1024,
+            ),
+            RustImageDocumentRenderContext {
+                device_pixel_ratio: 1.0,
+                maximum_texture_size: 1024,
+            }
+        );
+    }
+
+    #[test]
+    fn first_display_physical_viewport_uses_ceiled_device_pixels() {
+        assert_eq!(
+            rust_first_display_physical_viewport_size(size_f(400.25, 300.0), 2.0),
+            size(801, 600)
+        );
+        assert_eq!(
+            rust_first_display_physical_viewport_size(size_f(400.0, 300.0), 0.0),
+            empty_size()
+        );
+        assert_eq!(
+            rust_first_display_physical_viewport_size(size_f(0.0, 300.0), 2.0),
             empty_size()
         );
     }

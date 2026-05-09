@@ -4,7 +4,9 @@
 #ifndef KIRIVIEW_IMAGERENDERING_H
 #define KIRIVIEW_IMAGERENDERING_H
 
+#include "imagedocumenttypes.h"
 #include "imagesurface.h"
+#include "staticimage.h"
 
 #include <QByteArray>
 #include <QImage>
@@ -29,6 +31,9 @@ std::vector<ImageSurfaceDrawEntry> imageSurfaceDrawEntries(
     const DisplayedImageSurface &surface, const QRectF &targetRect);
 QImage displayReadyImage(const QImage &image);
 QSize svgRasterSize(const QSizeF &displaySize, qreal devicePixelRatio, int maximumTextureSize);
+ImageDocumentRenderContext normalizedImageDocumentRenderContext(ImageDocumentRenderContext context);
+ImageFirstDisplayDecodeContext imageFirstDisplayDecodeContext(
+    const QSizeF &viewportSize, qreal devicePixelRatio);
 QImage renderSvgImage(const QByteArray &data, const QSize &size);
 }
 

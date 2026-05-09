@@ -8,7 +8,6 @@
 #include "imagerendering.h"
 #include "imagetiledecodescheduler.h"
 
-#include <cmath>
 #include <memory>
 #include <utility>
 
@@ -115,19 +114,8 @@ std::optional<StaticImagePayload> ImagePresentationController::staticImage() con
 
 ImageFirstDisplayDecodeContext ImagePresentationController::firstDisplayDecodeContext() const
 {
-    const QSizeF viewport = viewportSize();
     const ImageDocumentRenderContext context = renderContext();
-    if (viewport.isEmpty()) {
-        return {};
-    }
-
-    const int width = static_cast<int>(std::ceil(viewport.width() * context.devicePixelRatio));
-    const int height = static_cast<int>(std::ceil(viewport.height() * context.devicePixelRatio));
-    if (width <= 0 || height <= 0) {
-        return {};
-    }
-
-    return ImageFirstDisplayDecodeContext { QSize(width, height) };
+    return imageFirstDisplayDecodeContext(viewportSize(), context.devicePixelRatio);
 }
 
 void ImagePresentationController::resetZoom()
@@ -288,13 +276,7 @@ ImageDocumentRenderContext ImagePresentationController::renderContext() const
 {
     ImageDocumentRenderContext context
         = m_renderContextProvider ? m_renderContextProvider() : ImageDocumentRenderContext {};
-    if (!std::isfinite(context.devicePixelRatio) || context.devicePixelRatio <= 0.0) {
-        context.devicePixelRatio = 1.0;
-    }
-    if (context.maximumTextureSize <= 0) {
-        context.maximumTextureSize = fallbackTextureSizeMax;
-    }
-    return context;
+    return normalizedImageDocumentRenderContext(context);
 }
 
 void ImagePresentationController::notify(ImageDocumentChange change)

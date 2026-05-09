@@ -19,7 +19,6 @@
 
 #include <QRectF>
 #include <QString>
-#include <cmath>
 #include <memory>
 #include <optional>
 #include <utility>
@@ -1045,13 +1044,7 @@ ImageDocumentRenderContext ImageDocumentController::renderContext() const
 {
     ImageDocumentRenderContext context
         = m_renderContextProvider ? m_renderContextProvider() : ImageDocumentRenderContext {};
-    if (!std::isfinite(context.devicePixelRatio) || context.devicePixelRatio <= 0.0) {
-        context.devicePixelRatio = 1.0;
-    }
-    if (context.maximumTextureSize <= 0) {
-        context.maximumTextureSize = fallbackTextureSizeMax;
-    }
-    return context;
+    return normalizedImageDocumentRenderContext(context);
 }
 
 qreal ImageDocumentController::spreadDevicePixelRatio() const

@@ -19,6 +19,8 @@ class TestImageRendering : public QObject
 private Q_SLOTS:
     void scaledImageSizeToFitKeepsAspectRatioWithoutUpscaling();
     void scaledImageSizeToFitRejectsInvalidInput();
+    void renderContextNormalizationUsesSafeDefaults();
+    void firstDisplayDecodeContextUsesPhysicalViewport();
     void staticSurfaceDrawEntriesKeepPreviewAndTileRectsSeparate();
 };
 
@@ -38,6 +40,32 @@ void TestImageRendering::scaledImageSizeToFitRejectsInvalidInput()
     QCOMPARE(KiriView::scaledImageSizeToFit(QSizeF(), QSize(100, 100)), QSize());
     QCOMPARE(KiriView::scaledImageSizeToFit(QSizeF(100.0, 100.0), QSize()), QSize());
     QCOMPARE(KiriView::scaledImageSizeToFit(QSizeF(nan, 100.0), QSize(100, 100)), QSize());
+}
+
+void TestImageRendering::renderContextNormalizationUsesSafeDefaults()
+{
+    const qreal nan = std::numeric_limits<qreal>::quiet_NaN();
+
+    const KiriView::ImageDocumentRenderContext valid
+        = KiriView::normalizedImageDocumentRenderContext({ 2.0, 4096 });
+    QCOMPARE(valid.devicePixelRatio, 2.0);
+    QCOMPARE(valid.maximumTextureSize, 4096);
+
+    const KiriView::ImageDocumentRenderContext invalid
+        = KiriView::normalizedImageDocumentRenderContext({ nan, 0 });
+    QCOMPARE(invalid.devicePixelRatio, 1.0);
+    QCOMPARE(invalid.maximumTextureSize, KiriView::fallbackTextureSizeMax);
+}
+
+void TestImageRendering::firstDisplayDecodeContextUsesPhysicalViewport()
+{
+    const KiriView::ImageFirstDisplayDecodeContext context
+        = KiriView::imageFirstDisplayDecodeContext(QSizeF(400.25, 300.0), 2.0);
+    QCOMPARE(context.physicalViewportSize, QSize(801, 600));
+    QVERIFY(context.isValid());
+
+    QVERIFY(!KiriView::imageFirstDisplayDecodeContext(QSizeF(), 2.0).isValid());
+    QVERIFY(!KiriView::imageFirstDisplayDecodeContext(QSizeF(400.0, 300.0), 0.0).isValid());
 }
 
 void TestImageRendering::staticSurfaceDrawEntriesKeepPreviewAndTileRectsSeparate()

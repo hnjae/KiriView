@@ -136,6 +136,26 @@ QSize svgRasterSize(const QSizeF &displaySize, qreal devicePixelRatio, int maxim
         devicePixelRatio, maximumTextureSize, fallbackTextureSizeMax));
 }
 
+ImageDocumentRenderContext normalizedImageDocumentRenderContext(ImageDocumentRenderContext context)
+{
+    const RustImageDocumentRenderContext normalized = rustNormalizedImageDocumentRenderContext(
+        RustImageDocumentRenderContext { context.devicePixelRatio, context.maximumTextureSize },
+        fallbackTextureSizeMax);
+    return ImageDocumentRenderContext {
+        normalized.device_pixel_ratio,
+        normalized.maximum_texture_size,
+    };
+}
+
+ImageFirstDisplayDecodeContext imageFirstDisplayDecodeContext(
+    const QSizeF &viewportSize, qreal devicePixelRatio)
+{
+    return ImageFirstDisplayDecodeContext {
+        Bridge::qtSize(rustFirstDisplayPhysicalViewportSize(
+            Bridge::rustSizeF<RustImageRenderSizeF>(viewportSize), devicePixelRatio)),
+    };
+}
+
 QImage renderSvgImage(const QByteArray &data, const QSize &size)
 {
     if (data.isEmpty() || size.isEmpty()) {
