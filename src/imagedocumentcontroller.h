@@ -141,6 +141,11 @@ private:
         const ImageLoadSession &session, const QImage &image, bool predecodeCacheable);
     void finishSecondaryStaticImageLoad(
         const ImageLoadSession &session, StaticImagePayload staticImage, bool predecodeCacheable);
+    void prepareSecondaryImagePresentation(
+        const ImageLoadSession &session, bool predecodeCacheable);
+    void finishSecondaryImagePresentation(const ImageLoadSession &session);
+    void finishSecondaryPageAsPrimaryOnly();
+    void finishSecondaryPageVisible();
     void finishSecondaryLoadWithError(const ImageLoadSession &session);
     bool shouldBeginTwoPageSpreadTransition(int targetPageNumber) const;
     void beginTwoPageSpreadTransition();

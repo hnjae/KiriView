@@ -781,44 +781,50 @@ bool ImageDocumentController::finishSecondaryDecodedImageResult(
 void ImageDocumentController::finishSecondaryImageLoad(
     const ImageLoadSession &session, const QImage &image, bool predecodeCacheable)
 {
-    m_secondaryPresentationController->prepareImageContainer(
-        zoomScopeUrlForLocation(session.location));
-    m_secondaryPresentationController->setPredecodeCacheable(predecodeCacheable);
+    prepareSecondaryImagePresentation(session, predecodeCacheable);
     m_secondaryPresentationController->setImage(image);
-    m_secondaryDisplayedImageLocation = session.location;
-    cacheWidePage(session.location.imageUrl(), m_secondaryPresentationController->imageSize());
-    m_secondaryPageVisible = !imageSpreadPageIsWide(m_secondaryPresentationController->imageSize());
-    if (!m_secondaryPageVisible) {
-        clearSecondaryPage();
-        applyStoredSpreadZoomToPrimaryPage();
-        finishTwoPageSpreadTransition();
-        notifyTwoPageModeChanged();
-        return;
-    }
-
-    updateSpreadZoomState();
-    finishTwoPageSpreadTransition();
-    notifyTwoPageModeChanged();
+    finishSecondaryImagePresentation(session);
 }
 
 void ImageDocumentController::finishSecondaryStaticImageLoad(
     const ImageLoadSession &session, StaticImagePayload staticImage, bool predecodeCacheable)
 {
+    prepareSecondaryImagePresentation(session, predecodeCacheable);
+    m_secondaryPresentationController->setStaticImage(std::move(staticImage));
+    finishSecondaryImagePresentation(session);
+}
+
+void ImageDocumentController::prepareSecondaryImagePresentation(
+    const ImageLoadSession &session, bool predecodeCacheable)
+{
     m_secondaryPresentationController->prepareImageContainer(
         zoomScopeUrlForLocation(session.location));
     m_secondaryPresentationController->setPredecodeCacheable(predecodeCacheable);
-    m_secondaryPresentationController->setStaticImage(std::move(staticImage));
+}
+
+void ImageDocumentController::finishSecondaryImagePresentation(const ImageLoadSession &session)
+{
     m_secondaryDisplayedImageLocation = session.location;
     cacheWidePage(session.location.imageUrl(), m_secondaryPresentationController->imageSize());
-    m_secondaryPageVisible = !imageSpreadPageIsWide(m_secondaryPresentationController->imageSize());
-    if (!m_secondaryPageVisible) {
-        clearSecondaryPage();
-        applyStoredSpreadZoomToPrimaryPage();
-        finishTwoPageSpreadTransition();
-        notifyTwoPageModeChanged();
+    if (imageSpreadPageIsWide(m_secondaryPresentationController->imageSize())) {
+        finishSecondaryPageAsPrimaryOnly();
         return;
     }
 
+    m_secondaryPageVisible = true;
+    finishSecondaryPageVisible();
+}
+
+void ImageDocumentController::finishSecondaryPageAsPrimaryOnly()
+{
+    clearSecondaryPage();
+    applyStoredSpreadZoomToPrimaryPage();
+    finishTwoPageSpreadTransition();
+    notifyTwoPageModeChanged();
+}
+
+void ImageDocumentController::finishSecondaryPageVisible()
+{
     updateSpreadZoomState();
     finishTwoPageSpreadTransition();
     notifyTwoPageModeChanged();
@@ -826,10 +832,7 @@ void ImageDocumentController::finishSecondaryStaticImageLoad(
 
 void ImageDocumentController::finishSecondaryLoadWithError(const ImageLoadSession &)
 {
-    clearSecondaryPage();
-    applyStoredSpreadZoomToPrimaryPage();
-    finishTwoPageSpreadTransition();
-    notifyTwoPageModeChanged();
+    finishSecondaryPageAsPrimaryOnly();
 }
 
 bool ImageDocumentController::shouldBeginTwoPageSpreadTransition(int targetPageNumber) const
