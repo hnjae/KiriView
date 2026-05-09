@@ -8,6 +8,7 @@ mod bmff;
 mod byteio;
 mod filedeletionfallback;
 mod heifcontainer;
+mod imageanimationpolicy;
 mod imagebytecost;
 mod imagecontainer;
 mod imagedocumentstate;

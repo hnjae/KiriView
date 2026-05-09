@@ -5,13 +5,12 @@
 
 #include "imagerendering.h"
 #include "imageviewtext.h"
+#include "kiriview/src/imageanimationpolicy.cxx.h"
 
 #include <KLocalizedString>
 #include <QColorSpace>
-#include <algorithm>
 #include <cstddef>
 #include <cstring>
-#include <limits>
 #include <mutex>
 #include <utility>
 
@@ -179,14 +178,6 @@ std::optional<QImage> qImageFromHeifImage(const heif_image *heifImage, QString *
 
 int heifFrameDelay(std::uint32_t duration, std::uint32_t timescale)
 {
-    if (duration == 0 || timescale == 0) {
-        return 0;
-    }
-
-    const std::uint64_t delay
-        = (static_cast<std::uint64_t>(duration) * 1000 + static_cast<std::uint64_t>(timescale) - 1)
-        / static_cast<std::uint64_t>(timescale);
-    return static_cast<int>(std::min<std::uint64_t>(
-        delay, static_cast<std::uint64_t>(std::numeric_limits<int>::max())));
+    return rustHeifFrameDelay(duration, timescale);
 }
 }

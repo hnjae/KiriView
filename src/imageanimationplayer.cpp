@@ -7,28 +7,14 @@
 #include "heifdecoder.h"
 #include "imagecallback.h"
 #include "imageviewtext.h"
+#include "kiriview/src/imageanimationpolicy.cxx.h"
 
 #include <QObject>
-#include <algorithm>
 #include <cstddef>
 #include <memory>
 #include <optional>
 #include <utility>
 #include <variant>
-
-namespace {
-constexpr int defaultAnimationFrameDelay = 100;
-constexpr int minimumAnimationFrameDelay = 10;
-
-int normalizedAnimationFrameDelay(int delay)
-{
-    if (delay < 0) {
-        return defaultAnimationFrameDelay;
-    }
-
-    return std::max(delay, minimumAnimationFrameDelay);
-}
-}
 
 namespace KiriView {
 ImageAnimationPlayer::ImageAnimationPlayer(
@@ -259,7 +245,7 @@ bool ImageAnimationPlayer::hasRemainingLoops() const
 
 void ImageAnimationPlayer::scheduleNextFrame(int delay)
 {
-    m_timer.start(normalizedAnimationFrameDelay(delay));
+    m_timer.start(rustNormalizedAnimationFrameDelay(delay));
 }
 
 void ImageAnimationPlayer::scheduleNextFrameOrStop(bool shouldContinue, int delay)
