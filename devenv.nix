@@ -13,6 +13,7 @@ in
   imports = [
     ./nix/devenv/modules/check-tasks.nix
     ./nix/devenv/modules/git-hooks.nix
+    ./nix/devenv/modules/i18n.nix
     ./nix/devenv/modules/treefmt.nix
   ];
 

@@ -28,15 +28,15 @@ format-check:
 
 [group('ci')]
 i18n-check:
-    devenv shell -- scripts/update-translations.sh --check
+    devenv tasks run --mode before kiriview:i18n:check
 
 [group('ci')]
-i18n-template-check:
-    devenv shell -- scripts/update-translations.sh --template-check
+i18n-pot-check:
+    devenv tasks run --mode before kiriview:i18n:pot-check
 
 [group('build')]
 i18n-update:
-    devenv shell -- scripts/update-translations.sh
+    devenv shell -- kiriview-update-translations
 
 [group('build')]
 build:
