@@ -34,8 +34,6 @@ public:
 private:
     struct DecodeLifetime;
 
-    bool staticTileSurfaceFirstDisplayIsSufficient(const StaticTileSurface &surface,
-        const QSizeF &displaySize, const ImageDocumentRenderContext &context) const;
     bool tileRequestIsCurrent(quint64 generation, const TileKey &key) const;
     void finishTileDecode(quint64 generation, TileKey key, std::optional<DecodedTile> tile);
 

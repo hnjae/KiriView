@@ -7,7 +7,6 @@
 #include "imagetilevisibility.h"
 
 #include <QString>
-#include <cmath>
 #include <memory>
 #include <optional>
 #include <utility>
@@ -45,7 +44,8 @@ void ImageTileDecodeScheduler::schedule(
     if (surface == nullptr || !surface->isValid()) {
         return;
     }
-    if (staticTileSurfaceFirstDisplayIsSufficient(*surface, displaySize, context)) {
+    if (tileFirstDisplayIsSufficient(surface->pyramid(), displaySize, context.devicePixelRatio,
+            surface->displayHints().firstDisplayPixelsPerSourcePixel)) {
         return;
     }
 
@@ -89,27 +89,6 @@ void ImageTileDecodeScheduler::schedule(
                 finishTileDecode(generation, key, std::move(tile));
             });
     }
-}
-
-bool ImageTileDecodeScheduler::staticTileSurfaceFirstDisplayIsSufficient(
-    const StaticTileSurface &surface, const QSizeF &displaySize,
-    const ImageDocumentRenderContext &context) const
-{
-    const qreal firstDisplayPixelsPerSourcePixel
-        = surface.displayHints().firstDisplayPixelsPerSourcePixel;
-    if (!std::isfinite(firstDisplayPixelsPerSourcePixel)
-        || firstDisplayPixelsPerSourcePixel <= 0.0) {
-        return false;
-    }
-
-    const qreal currentDisplayPixelsPerSourcePixel
-        = tileDisplayPixelsPerSourcePixel(surface.pyramid(), displaySize, context.devicePixelRatio);
-    if (!std::isfinite(currentDisplayPixelsPerSourcePixel)
-        || currentDisplayPixelsPerSourcePixel <= 0.0) {
-        return false;
-    }
-
-    return currentDisplayPixelsPerSourcePixel <= firstDisplayPixelsPerSourcePixel + 0.001;
 }
 
 bool ImageTileDecodeScheduler::tileRequestIsCurrent(quint64 generation, const TileKey &key) const

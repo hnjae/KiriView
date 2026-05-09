@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+const FIRST_DISPLAY_PIXELS_PER_SOURCE_PIXEL_EPSILON: f64 = 0.001;
+
 #[cxx::bridge(namespace = "KiriView")]
 mod ffi {
     #[derive(Clone, Copy, Debug, PartialEq)]
@@ -142,6 +144,14 @@ mod ffi {
             device_pixel_ratio: f64,
         ) -> f64;
 
+        #[cxx_name = "rustTileFirstDisplayIsSufficient"]
+        fn rust_tile_first_display_is_sufficient(
+            image_size: RustTileSize,
+            display_size: RustTileSizeF,
+            device_pixel_ratio: f64,
+            first_display_pixels_per_source_pixel: f64,
+        ) -> bool;
+
         #[cxx_name = "rustTileLevelRectForItemRect"]
         fn rust_tile_level_rect_for_item_rect(
             image_size: RustTileSize,
@@ -262,6 +272,20 @@ fn rust_tile_display_pixels_per_source_pixel(
     device_pixel_ratio: f64,
 ) -> f64 {
     tile_display_pixels_per_source_pixel(image_size, display_size, device_pixel_ratio)
+}
+
+fn rust_tile_first_display_is_sufficient(
+    image_size: RustTileSize,
+    display_size: RustTileSizeF,
+    device_pixel_ratio: f64,
+    first_display_pixels_per_source_pixel: f64,
+) -> bool {
+    tile_first_display_is_sufficient(
+        image_size,
+        display_size,
+        device_pixel_ratio,
+        first_display_pixels_per_source_pixel,
+    )
 }
 
 fn rust_tile_level_rect_for_item_rect(
@@ -545,6 +569,30 @@ fn tile_display_pixels_per_source_pixel(
 
     ((display_size.width * device_pixel_ratio) / f64::from(image_size.width))
         .min((display_size.height * device_pixel_ratio) / f64::from(image_size.height))
+}
+
+fn tile_first_display_is_sufficient(
+    image_size: RustTileSize,
+    display_size: RustTileSizeF,
+    device_pixel_ratio: f64,
+    first_display_pixels_per_source_pixel: f64,
+) -> bool {
+    if !first_display_pixels_per_source_pixel.is_finite()
+        || first_display_pixels_per_source_pixel <= 0.0
+    {
+        return false;
+    }
+
+    let current_display_pixels_per_source_pixel =
+        tile_display_pixels_per_source_pixel(image_size, display_size, device_pixel_ratio);
+    if !current_display_pixels_per_source_pixel.is_finite()
+        || current_display_pixels_per_source_pixel <= 0.0
+    {
+        return false;
+    }
+
+    current_display_pixels_per_source_pixel
+        <= first_display_pixels_per_source_pixel + FIRST_DISPLAY_PIXELS_PER_SOURCE_PIXEL_EPSILON
 }
 
 fn tile_level_rect_for_item_rect(
@@ -919,5 +967,39 @@ mod tests {
             1.0,
         );
         assert_eq!(downsampled.first().map(|key| key.level), Some(2));
+    }
+
+    #[test]
+    fn first_display_sufficiency_uses_current_display_scale_with_tolerance() {
+        assert!(tile_first_display_is_sufficient(
+            size(2048, 2048),
+            sizef(512.0, 512.0),
+            1.0,
+            0.25,
+        ));
+        assert!(tile_first_display_is_sufficient(
+            size(2048, 2048),
+            sizef(514.0, 514.0),
+            1.0,
+            0.25,
+        ));
+        assert!(!tile_first_display_is_sufficient(
+            size(2048, 2048),
+            sizef(516.0, 516.0),
+            1.0,
+            0.25,
+        ));
+        assert!(!tile_first_display_is_sufficient(
+            size(2048, 2048),
+            sizef(512.0, 512.0),
+            1.0,
+            0.0,
+        ));
+        assert!(!tile_first_display_is_sufficient(
+            size(2048, 2048),
+            sizef(512.0, 512.0),
+            f64::NAN,
+            0.25,
+        ));
     }
 }

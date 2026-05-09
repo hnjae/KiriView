@@ -21,6 +21,8 @@ struct TileVisibilityContext {
 
 qreal tileDisplayPixelsPerSourcePixel(
     const TilePyramid &pyramid, const QSizeF &displaySize, qreal devicePixelRatio);
+bool tileFirstDisplayIsSufficient(const TilePyramid &pyramid, const QSizeF &displaySize,
+    qreal devicePixelRatio, qreal firstDisplayPixelsPerSourcePixel);
 QRect tileLevelRectForItemRect(
     const TilePyramid &pyramid, int level, const QSizeF &displaySize, const QRectF &itemRect);
 std::vector<TileKey> visibleTileKeys(

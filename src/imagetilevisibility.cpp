@@ -40,6 +40,13 @@ qreal tileDisplayPixelsPerSourcePixel(
         rustTileSize(pyramid.imageSize()), rustTileSizeF(displaySize), devicePixelRatio);
 }
 
+bool tileFirstDisplayIsSufficient(const TilePyramid &pyramid, const QSizeF &displaySize,
+    qreal devicePixelRatio, qreal firstDisplayPixelsPerSourcePixel)
+{
+    return rustTileFirstDisplayIsSufficient(rustTileSize(pyramid.imageSize()),
+        rustTileSizeF(displaySize), devicePixelRatio, firstDisplayPixelsPerSourcePixel);
+}
+
 QRect tileLevelRectForItemRect(
     const TilePyramid &pyramid, int level, const QSizeF &displaySize, const QRectF &itemRect)
 {

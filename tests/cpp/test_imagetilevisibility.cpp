@@ -19,6 +19,7 @@ class TestImageTileVisibility : public QObject
 
 private Q_SLOTS:
     void displayScaleUsesPhysicalPixelsPerSourcePixel();
+    void firstDisplaySufficiencyUsesCurrentDisplayScale();
     void itemRectMapsToClampedLevelRect();
     void visibleTileKeysSelectDisplayLevelAndPrefetchNeighbors();
 };
@@ -30,6 +31,17 @@ void TestImageTileVisibility::displayScaleUsesPhysicalPixelsPerSourcePixel()
     QCOMPARE(KiriView::tileDisplayPixelsPerSourcePixel(pyramid, QSizeF(500.0, 500.0), 2.0), 1.0);
     QCOMPARE(KiriView::tileDisplayPixelsPerSourcePixel(pyramid, QSizeF(), 2.0), 0.0);
     QCOMPARE(KiriView::tileDisplayPixelsPerSourcePixel(pyramid, QSizeF(500.0, 500.0), 0.0), 0.0);
+}
+
+void TestImageTileVisibility::firstDisplaySufficiencyUsesCurrentDisplayScale()
+{
+    const KiriView::TilePyramid pyramid(QSize(2048, 2048));
+
+    QVERIFY(KiriView::tileFirstDisplayIsSufficient(pyramid, QSizeF(512.0, 512.0), 1.0, 0.25));
+    QVERIFY(KiriView::tileFirstDisplayIsSufficient(pyramid, QSizeF(514.0, 514.0), 1.0, 0.25));
+    QVERIFY(!KiriView::tileFirstDisplayIsSufficient(pyramid, QSizeF(516.0, 516.0), 1.0, 0.25));
+    QVERIFY(!KiriView::tileFirstDisplayIsSufficient(pyramid, QSizeF(512.0, 512.0), 1.0, 0.0));
+    QVERIFY(!KiriView::tileFirstDisplayIsSufficient(pyramid, QSizeF(512.0, 512.0), 0.0, 0.25));
 }
 
 void TestImageTileVisibility::itemRectMapsToClampedLevelRect()
