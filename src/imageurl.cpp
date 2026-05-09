@@ -3,7 +3,7 @@
 
 #include "imageurl.h"
 
-#include "archiveformat.h"
+#include "kiriview/src/imageurl.cxx.h"
 
 #include <QByteArray>
 #include <QDir>
@@ -18,50 +18,30 @@
 namespace {
 constexpr const char *documentPortalHostPathAttribute = "user.document-portal.host-path";
 
-bool isKioFuseArchiveScheme(const QString &scheme)
+rust::Str rustStringView(const QByteArray &bytes)
 {
-    return KiriView::archiveRootSchemeUsesKioFuse(scheme);
+    return rust::Str(bytes.constData(), static_cast<std::size_t>(bytes.size()));
+}
+
+QString rustStringToQString(const rust::String &value)
+{
+    return QString::fromUtf8(value.data(), static_cast<qsizetype>(value.size()));
 }
 
 std::optional<QUrl> kioFuseArchiveUrl(const QString &localPath)
 {
-    const QString cleanPath = QDir::cleanPath(localPath);
     const QString runtimeDir = QFile::decodeName(qgetenv("XDG_RUNTIME_DIR"));
-    const QString marker = QStringLiteral("/kio-fuse-");
-    qsizetype markerIndex = -1;
-
-    if (!runtimeDir.isEmpty()) {
-        const QString prefix = QDir::cleanPath(runtimeDir) + marker;
-        if (!cleanPath.startsWith(prefix)) {
-            return std::nullopt;
-        }
-        markerIndex = prefix.size() - marker.size();
-    } else {
-        markerIndex = cleanPath.indexOf(marker);
-        if (markerIndex < 0) {
-            return std::nullopt;
-        }
-    }
-
-    const qsizetype mountEnd = cleanPath.indexOf(QLatin1Char('/'), markerIndex + marker.size());
-    if (mountEnd < 0 || mountEnd == cleanPath.size() - 1) {
-        return std::nullopt;
-    }
-
-    const QString relativePath = cleanPath.mid(mountEnd + 1);
-    const qsizetype schemeEnd = relativePath.indexOf(QLatin1Char('/'));
-    if (schemeEnd <= 0 || schemeEnd == relativePath.size() - 1) {
-        return std::nullopt;
-    }
-
-    const QString scheme = relativePath.left(schemeEnd);
-    if (!isKioFuseArchiveScheme(scheme)) {
+    const QByteArray localPathBytes = localPath.toUtf8();
+    const QByteArray runtimeDirBytes = runtimeDir.toUtf8();
+    const KiriView::RustKioFuseArchivePath archivePath = KiriView::rustKioFuseArchivePath(
+        rustStringView(localPathBytes), rustStringView(runtimeDirBytes));
+    if (!archivePath.found) {
         return std::nullopt;
     }
 
     QUrl url;
-    url.setScheme(scheme);
-    url.setPath(relativePath.mid(schemeEnd));
+    url.setScheme(rustStringToQString(archivePath.scheme));
+    url.setPath(rustStringToQString(archivePath.path));
     if (!url.isValid() || url.path().isEmpty()) {
         return std::nullopt;
     }

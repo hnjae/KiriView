@@ -38,6 +38,7 @@ const RUST_BRIDGE_SOURCES: &[&str] = &[
     "src/imagedocumentstate.rs",
     "src/imageformatregistry.rs",
     "src/imageopenworkflow.rs",
+    "src/imageurl.rs",
     "src/imagespreadgeometry.rs",
     "src/imagetilegeometry.rs",
     "src/imagenavigationmodel.rs",

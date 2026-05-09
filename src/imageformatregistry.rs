@@ -245,7 +245,7 @@ fn rust_archive_storage_backend_for_root_scheme(scheme: &str) -> RustArchiveStor
 }
 
 fn rust_archive_root_scheme_uses_kio_fuse(scheme: &str) -> bool {
-    storage_backend_uses_kio_fuse(rust_archive_storage_backend_for_root_scheme(scheme))
+    archive_root_scheme_uses_kio_fuse(scheme)
 }
 
 fn rust_supported_comic_book_archive_extensions() -> Vec<String> {
@@ -299,6 +299,10 @@ pub(crate) fn direct_archive_open_markers_for_root_scheme(scheme: &str) -> Vec<S
             marker_string(&format.direct_archive),
         ]
     })
+}
+
+pub(crate) fn archive_root_scheme_uses_kio_fuse(scheme: &str) -> bool {
+    storage_backend_uses_kio_fuse(rust_archive_storage_backend_for_root_scheme(scheme))
 }
 
 fn image_extension_is_supported(extension: &str) -> bool {

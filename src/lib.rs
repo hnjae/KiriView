@@ -17,6 +17,7 @@ mod imagenavigationmodel;
 mod imageopenworkflow;
 mod imagespreadgeometry;
 mod imagetilegeometry;
+mod imageurl;
 mod imageviewportgeometry;
 mod imagezoomstate;
 mod localization;
