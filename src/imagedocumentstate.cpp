@@ -5,6 +5,7 @@
 
 #include "imagecallback.h"
 #include "imagecontainer.h"
+#include "kiriview/src/imagedocumentstate.cxx.h"
 
 #include <algorithm>
 #include <utility>
@@ -18,6 +19,38 @@ template <typename Value> bool replaceIfChanged(Value &current, const Value &nex
 
     current = next;
     return true;
+}
+
+KiriView::RustImageDocumentStatus rustImageDocumentStatus(KiriView::ImageDocumentStatus status)
+{
+    switch (status) {
+    case KiriView::ImageDocumentStatus::Null:
+        return KiriView::RustImageDocumentStatus::Null;
+    case KiriView::ImageDocumentStatus::Loading:
+        return KiriView::RustImageDocumentStatus::Loading;
+    case KiriView::ImageDocumentStatus::Ready:
+        return KiriView::RustImageDocumentStatus::Ready;
+    case KiriView::ImageDocumentStatus::Error:
+        return KiriView::RustImageDocumentStatus::Error;
+    }
+
+    return KiriView::RustImageDocumentStatus::Null;
+}
+
+KiriView::ImageDocumentStatus imageDocumentStatus(KiriView::RustImageDocumentStatus status)
+{
+    switch (status) {
+    case KiriView::RustImageDocumentStatus::Null:
+        return KiriView::ImageDocumentStatus::Null;
+    case KiriView::RustImageDocumentStatus::Loading:
+        return KiriView::ImageDocumentStatus::Loading;
+    case KiriView::RustImageDocumentStatus::Ready:
+        return KiriView::ImageDocumentStatus::Ready;
+    case KiriView::RustImageDocumentStatus::Error:
+        return KiriView::ImageDocumentStatus::Error;
+    }
+
+    return KiriView::ImageDocumentStatus::Null;
 }
 }
 
@@ -120,14 +153,25 @@ void ImageDocumentState::replaceDisplayedImageLocation(DisplayedImageLocation lo
 
 void ImageDocumentState::setStatus(ImageDocumentStatus status)
 {
-    if (replaceIfChanged(m_status, status)) {
+    const RustImageDocumentStateSnapshot current
+        = rustImageDocumentStateSnapshot(rustImageDocumentStatus(m_status), m_loading);
+    const RustImageDocumentStateChange change
+        = rustImageDocumentSetStatus(current, rustImageDocumentStatus(status));
+    if (change.changed) {
+        m_status = imageDocumentStatus(change.snapshot.status);
+        m_loading = change.snapshot.loading;
         notify(ImageDocumentChange::Status);
     }
 }
 
 void ImageDocumentState::setLoading(bool loading)
 {
-    if (replaceIfChanged(m_loading, loading)) {
+    const RustImageDocumentStateSnapshot current
+        = rustImageDocumentStateSnapshot(rustImageDocumentStatus(m_status), m_loading);
+    const RustImageDocumentStateChange change = rustImageDocumentSetLoading(current, loading);
+    if (change.changed) {
+        m_status = imageDocumentStatus(change.snapshot.status);
+        m_loading = change.snapshot.loading;
         notify(ImageDocumentChange::Loading);
     }
 }

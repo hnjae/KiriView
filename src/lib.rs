@@ -8,6 +8,7 @@ mod bmff;
 mod byteio;
 mod heifcontainer;
 mod imagecontainer;
+mod imagedocumentstate;
 mod imageformatregistry;
 mod imagemath;
 mod imagenavigationmodel;
