@@ -148,6 +148,7 @@ private:
     void notifyTwoPageSpreadTransitionChanged();
     void updateSpreadZoomState();
     void applyStoredSpreadZoomToPrimaryPage();
+    void applySpreadZoomPercentToPages();
     void applySpreadVisibleItemRects();
     QRectF primarySpreadPageRect() const;
     QRectF secondarySpreadPageRect() const;
@@ -160,6 +161,7 @@ private:
     static QString pageCacheKey(const QUrl &url);
     void openImageAtRelativePageOffset(int offset);
     void notifyTwoPageModeChanged();
+    void notifySpreadZoomChanged();
     void notifyRightToLeftReadingChanged();
     ImageDocumentRenderContext renderContext() const;
     qreal spreadDevicePixelRatio() const;

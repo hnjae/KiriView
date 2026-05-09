@@ -236,15 +236,9 @@ void ImageDocumentController::setZoomPercent(qreal zoomPercent)
 {
     if (secondaryPageVisible()) {
         m_spreadZoomState.setManualZoomPercent(zoomPercent, spreadDevicePixelRatio());
-        m_presentationController->setZoomPercent(m_spreadZoomState.zoomPercent());
-        m_secondaryPresentationController->setZoomPercent(m_spreadZoomState.zoomPercent());
+        applySpreadZoomPercentToPages();
         applySpreadVisibleItemRects();
-        notify(ImageDocumentChange::ZoomMode);
-        notify(ImageDocumentChange::ZoomPercent);
-        notify(ImageDocumentChange::DisplaySize);
-        notify(ImageDocumentChange::MaximumManualZoomPercent);
-        notify(ImageDocumentChange::Repaint);
-        notify(ImageDocumentChange::TwoPageMode);
+        notifySpreadZoomChanged();
         return;
     }
 
@@ -477,15 +471,9 @@ void ImageDocumentController::resetZoom()
 {
     if (secondaryPageVisible()) {
         m_spreadZoomState.resetZoom(spreadDevicePixelRatio());
-        m_presentationController->setZoomPercent(m_spreadZoomState.zoomPercent());
-        m_secondaryPresentationController->setZoomPercent(m_spreadZoomState.zoomPercent());
+        applySpreadZoomPercentToPages();
         applySpreadVisibleItemRects();
-        notify(ImageDocumentChange::ZoomMode);
-        notify(ImageDocumentChange::ZoomPercent);
-        notify(ImageDocumentChange::DisplaySize);
-        notify(ImageDocumentChange::MaximumManualZoomPercent);
-        notify(ImageDocumentChange::Repaint);
-        notify(ImageDocumentChange::TwoPageMode);
+        notifySpreadZoomChanged();
         return;
     }
 
@@ -500,15 +488,9 @@ void ImageDocumentController::setFitMode(ImageZoomMode zoomMode)
         }
 
         m_spreadZoomState.setFitMode(zoomMode, spreadDevicePixelRatio());
-        m_presentationController->setZoomPercent(m_spreadZoomState.zoomPercent());
-        m_secondaryPresentationController->setZoomPercent(m_spreadZoomState.zoomPercent());
+        applySpreadZoomPercentToPages();
         applySpreadVisibleItemRects();
-        notify(ImageDocumentChange::ZoomMode);
-        notify(ImageDocumentChange::ZoomPercent);
-        notify(ImageDocumentChange::DisplaySize);
-        notify(ImageDocumentChange::MaximumManualZoomPercent);
-        notify(ImageDocumentChange::Repaint);
-        notify(ImageDocumentChange::TwoPageMode);
+        notifySpreadZoomChanged();
         return;
     }
 
@@ -907,8 +889,7 @@ void ImageDocumentController::updateSpreadZoomState()
         m_spreadZoomState.setFitMode(activeZoomMode, devicePixelRatio);
     }
 
-    m_presentationController->setZoomPercent(m_spreadZoomState.zoomPercent());
-    m_secondaryPresentationController->setZoomPercent(m_spreadZoomState.zoomPercent());
+    applySpreadZoomPercentToPages();
     applySpreadVisibleItemRects();
 }
 
@@ -925,6 +906,13 @@ void ImageDocumentController::applyStoredSpreadZoomToPrimaryPage()
     } else {
         m_presentationController->setFitMode(m_spreadZoomState.zoomMode());
     }
+}
+
+void ImageDocumentController::applySpreadZoomPercentToPages()
+{
+    const qreal zoomPercent = m_spreadZoomState.zoomPercent();
+    m_presentationController->setZoomPercent(zoomPercent);
+    m_secondaryPresentationController->setZoomPercent(zoomPercent);
 }
 
 void ImageDocumentController::applySpreadVisibleItemRects()
@@ -1024,6 +1012,16 @@ void ImageDocumentController::notifyTwoPageModeChanged()
     notify(ImageDocumentChange::ZoomMode);
     notify(ImageDocumentChange::MaximumManualZoomPercent);
     notify(ImageDocumentChange::Repaint);
+}
+
+void ImageDocumentController::notifySpreadZoomChanged()
+{
+    notify(ImageDocumentChange::ZoomMode);
+    notify(ImageDocumentChange::ZoomPercent);
+    notify(ImageDocumentChange::DisplaySize);
+    notify(ImageDocumentChange::MaximumManualZoomPercent);
+    notify(ImageDocumentChange::Repaint);
+    notify(ImageDocumentChange::TwoPageMode);
 }
 
 void ImageDocumentController::notifyRightToLeftReadingChanged()
