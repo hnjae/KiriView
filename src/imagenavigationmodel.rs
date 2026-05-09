@@ -30,6 +30,19 @@ mod ffi {
         current_index: i32,
     }
 
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    enum RustPageNavigationUrlsTarget {
+        Empty = 0,
+        Known = 1,
+        Current = 2,
+    }
+
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    struct RustPageNavigationPreviewState {
+        urls: RustPageNavigationUrlsTarget,
+        current_index: i32,
+    }
+
     extern "Rust" {
         #[cxx_name = "rustPredecodeWindowImageIndices"]
         fn rust_predecode_window_image_indices(
@@ -53,6 +66,12 @@ mod ffi {
             current_url_valid: bool,
         ) -> RustPageNavigationUpdate;
 
+        #[cxx_name = "rustPageNavigationPreviewState"]
+        fn rust_page_navigation_preview_state(
+            current: RustNavigationIndex,
+            current_url_valid: bool,
+        ) -> RustPageNavigationPreviewState;
+
         #[cxx_name = "rustPageNavigationTargetIndex"]
         fn rust_page_navigation_target_index(
             image_count: usize,
@@ -62,7 +81,10 @@ mod ffi {
     }
 }
 
-use ffi::{RustNavigationDirection, RustNavigationIndex, RustPageNavigationUpdate};
+use ffi::{
+    RustNavigationDirection, RustNavigationIndex, RustPageNavigationPreviewState,
+    RustPageNavigationUpdate, RustPageNavigationUrlsTarget,
+};
 
 fn rust_predecode_window_image_indices(
     candidate_count: usize,
@@ -140,6 +162,24 @@ fn rust_page_navigation_state_update(
     }
 }
 
+fn rust_page_navigation_preview_state(
+    current: RustNavigationIndex,
+    current_url_valid: bool,
+) -> RustPageNavigationPreviewState {
+    if current.found {
+        return page_navigation_preview_state(
+            RustPageNavigationUrlsTarget::Known,
+            i32::try_from(current.index).unwrap_or(i32::MAX),
+        );
+    }
+
+    if current_url_valid {
+        return page_navigation_preview_state(RustPageNavigationUrlsTarget::Current, 0);
+    }
+
+    page_navigation_preview_state(RustPageNavigationUrlsTarget::Empty, -1)
+}
+
 fn rust_page_navigation_target_index(
     image_count: usize,
     current_index: i32,
@@ -171,6 +211,16 @@ fn missing_index() -> RustNavigationIndex {
     RustNavigationIndex {
         found: false,
         index: 0,
+    }
+}
+
+fn page_navigation_preview_state(
+    urls: RustPageNavigationUrlsTarget,
+    current_index: i32,
+) -> RustPageNavigationPreviewState {
+    RustPageNavigationPreviewState {
+        urls,
+        current_index,
     }
 }
 
@@ -255,5 +305,25 @@ mod tests {
     fn page_navigation_target_converts_page_number_to_index() {
         assert_eq!(rust_page_navigation_target_index(3, 1, 1), found_index(0));
         assert_eq!(rust_page_navigation_target_index(3, -1, 3), found_index(2));
+    }
+
+    #[test]
+    fn page_navigation_preview_state_reuses_known_urls_for_known_current_url() {
+        assert_eq!(
+            rust_page_navigation_preview_state(found_index(2), true),
+            page_navigation_preview_state(RustPageNavigationUrlsTarget::Known, 2)
+        );
+    }
+
+    #[test]
+    fn page_navigation_preview_state_falls_back_to_current_url_or_empty_state() {
+        assert_eq!(
+            rust_page_navigation_preview_state(missing_index(), true),
+            page_navigation_preview_state(RustPageNavigationUrlsTarget::Current, 0)
+        );
+        assert_eq!(
+            rust_page_navigation_preview_state(missing_index(), false),
+            page_navigation_preview_state(RustPageNavigationUrlsTarget::Empty, -1)
+        );
     }
 }

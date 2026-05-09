@@ -70,8 +70,6 @@ private:
 
     void setPageNavigationUrls(std::vector<QUrl> urls, const QUrl &currentUrl);
     void setPageNavigationState(PageNavigationState state);
-    void setFallbackPageNavigationUrl(const QUrl &currentUrl);
-    bool setKnownPageNavigationCurrentUrl(const QUrl &currentUrl);
 
     Callbacks m_callbacks;
     ImageCandidateRepository m_candidateRepository;

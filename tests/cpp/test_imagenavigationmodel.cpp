@@ -48,6 +48,7 @@ private Q_SLOTS:
     void adjacentImageNavigationDoesNotWrap();
     void adjacentContainerNavigationUsesTheSameRules();
     void pageNavigationTargetSkipsInvalidCurrentAndOutOfRangePages();
+    void pageNavigationPreviewReusesKnownListOrFallsBack();
     void pageNavigationInsertsFallbackCurrentUrl();
     void predecodeWindowKeepsTwoPreviousAndFourNextPages();
 };
@@ -125,6 +126,27 @@ void TestImageNavigationModel::pageNavigationTargetSkipsInvalidCurrentAndOutOfRa
 
     target = KiriView::pageNavigationTargetIndex(state, 4);
     QVERIFY(!target.has_value());
+}
+
+void TestImageNavigationModel::pageNavigationPreviewReusesKnownListOrFallsBack()
+{
+    const PageNavigationState knownState {
+        { indexedImageUrl(0), indexedImageUrl(1), indexedImageUrl(2) },
+        0,
+    };
+
+    PageNavigationState state
+        = KiriView::pageNavigationStateForCurrentUrl(knownState, indexedImageUrl(2));
+    QCOMPARE(state.currentIndex, 2);
+    compareUrls(state.urls, knownState.urls);
+
+    state = KiriView::pageNavigationStateForCurrentUrl(knownState, indexedImageUrl(9));
+    QCOMPARE(state.currentIndex, 0);
+    compareUrls(state.urls, { indexedImageUrl(9) });
+
+    state = KiriView::pageNavigationStateForCurrentUrl(knownState, QUrl());
+    QCOMPARE(state.currentIndex, -1);
+    QVERIFY(state.urls.empty());
 }
 
 void TestImageNavigationModel::pageNavigationInsertsFallbackCurrentUrl()

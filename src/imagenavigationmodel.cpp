@@ -144,6 +144,25 @@ std::optional<std::size_t> pageNavigationTargetIndex(
     return targetIndex.index;
 }
 
+PageNavigationState pageNavigationStateForCurrentUrl(
+    const PageNavigationState &knownState, const QUrl &currentUrl)
+{
+    const RustPageNavigationPreviewState preview = rustPageNavigationPreviewState(
+        rustCurrentNavigationIndex(currentUrlMatches(knownState.urls, currentUrl)),
+        currentUrl.isValid() && !currentUrl.isEmpty());
+
+    switch (preview.urls) {
+    case RustPageNavigationUrlsTarget::Empty:
+        return {};
+    case RustPageNavigationUrlsTarget::Known:
+        return PageNavigationState { knownState.urls, preview.current_index };
+    case RustPageNavigationUrlsTarget::Current:
+        return PageNavigationState { { normalizedImageUrl(currentUrl) }, preview.current_index };
+    }
+
+    return {};
+}
+
 PageNavigationState pageNavigationStateForUrls(std::vector<QUrl> urls, const QUrl &currentUrl)
 {
     PageNavigationState state { std::move(urls), -1 };
