@@ -3,12 +3,32 @@
 
 #include "imagebytecost.h"
 
-#include <algorithm>
+#include "kiriview/src/imagebytecost.cxx.h"
+
+#include <cstdint>
 #include <limits>
 
 #if defined(Q_OS_LINUX)
 #include <unistd.h>
 #endif
+
+namespace {
+qsizetype qtByteSize(std::int64_t byteSize)
+{
+    constexpr qsizetype maximumByteSize = std::numeric_limits<qsizetype>::max();
+    constexpr qsizetype minimumByteSize = std::numeric_limits<qsizetype>::min();
+    if (byteSize > static_cast<std::int64_t>(maximumByteSize)) {
+        return maximumByteSize;
+    }
+    if (byteSize < static_cast<std::int64_t>(minimumByteSize)) {
+        return minimumByteSize;
+    }
+
+    return static_cast<qsizetype>(byteSize);
+}
+
+std::int64_t rustByteSize(qsizetype byteSize) { return static_cast<std::int64_t>(byteSize); }
+}
 
 namespace KiriView {
 qsizetype imageByteCost(const QImage &image)
@@ -21,19 +41,7 @@ qsizetype imageByteCost(const QImage &image)
 
 qsizetype estimatedRgbaByteCost(const QSize &size)
 {
-    if (size.isEmpty()) {
-        return 0;
-    }
-
-    constexpr qsizetype bytesPerPixel = 4;
-    const qsizetype width = static_cast<qsizetype>(size.width());
-    const qsizetype height = static_cast<qsizetype>(size.height());
-    if (width > std::numeric_limits<qsizetype>::max() / height
-        || width * height > std::numeric_limits<qsizetype>::max() / bytesPerPixel) {
-        return std::numeric_limits<qsizetype>::max();
-    }
-
-    return width * height * bytesPerPixel;
+    return qtByteSize(rustEstimatedRgbaByteCost(size.width(), size.height()));
 }
 
 std::optional<qsizetype> systemMemoryByteSize()
@@ -61,14 +69,8 @@ std::optional<qsizetype> systemMemoryByteSize()
 qsizetype systemMemoryCappedByteBudget(
     qsizetype preferredByteBudget, qsizetype systemMemoryByteSize, qsizetype memoryDivisor)
 {
-    if (preferredByteBudget <= 0) {
-        return 0;
-    }
-    if (systemMemoryByteSize <= 0 || memoryDivisor <= 0) {
-        return preferredByteBudget;
-    }
-
-    return std::min(preferredByteBudget, systemMemoryByteSize / memoryDivisor);
+    return qtByteSize(rustSystemMemoryCappedByteBudget(rustByteSize(preferredByteBudget),
+        rustByteSize(systemMemoryByteSize), rustByteSize(memoryDivisor)));
 }
 
 qsizetype defaultSystemMemoryCappedByteBudget(

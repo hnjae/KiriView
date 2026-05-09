@@ -4,6 +4,8 @@
 const PREDECODE_PREFERRED_BYTE_BUDGET: i64 = 1024 * 1024 * 1024;
 const PREDECODE_SYSTEM_MEMORY_DIVISOR: i64 = 8;
 
+use crate::imagebytecost::system_memory_capped_byte_budget;
+
 #[cxx::bridge(namespace = "KiriView")]
 mod ffi {
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -56,21 +58,6 @@ fn rust_predecode_cacheable_byte_cost(
         cacheable: true,
         byte_cost: static_image_byte_cost,
     }
-}
-
-fn system_memory_capped_byte_budget(
-    preferred_byte_budget: i64,
-    system_memory_byte_size: i64,
-    memory_divisor: i64,
-) -> i64 {
-    if preferred_byte_budget <= 0 {
-        return 0;
-    }
-    if system_memory_byte_size <= 0 || memory_divisor <= 0 {
-        return preferred_byte_budget;
-    }
-
-    preferred_byte_budget.min(system_memory_byte_size / memory_divisor)
 }
 
 #[cfg(test)]
