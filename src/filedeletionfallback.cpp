@@ -5,12 +5,25 @@
 
 #include "imagecontainer.h"
 #include "imagenavigationmodel.h"
+#include "kiriview/src/filedeletionfallback.cxx.h"
 
 #include <optional>
 #include <utility>
 #include <vector>
 
 namespace {
+KiriView::NavigationDirection navigationDirection(KiriView::RustDeletionFallbackDirection direction)
+{
+    switch (direction) {
+    case KiriView::RustDeletionFallbackDirection::Previous:
+        return KiriView::NavigationDirection::Previous;
+    case KiriView::RustDeletionFallbackDirection::Next:
+        return KiriView::NavigationDirection::Next;
+    }
+
+    return KiriView::NavigationDirection::Next;
+}
+
 std::optional<QUrl> adjacentImageUrlAfterDeletion(
     std::vector<KiriView::ImageNavigationCandidate> candidates, const QUrl &currentUrl,
     const QString &currentName, KiriView::NavigationDirection direction)
@@ -61,14 +74,15 @@ std::optional<QUrl> imageDeletionFallbackUrl(
         return std::nullopt;
     }
 
+    const RustDeletionFallbackDirections directions = rustDeletionFallbackDirections();
     const std::optional<QUrl> nextUrl = adjacentImageUrlAfterDeletion(
-        candidates, plan.currentUrl, plan.currentName, NavigationDirection::Next);
+        candidates, plan.currentUrl, plan.currentName, navigationDirection(directions.preferred));
     if (nextUrl.has_value()) {
         return nextUrl;
     }
 
-    return adjacentImageUrlAfterDeletion(
-        std::move(candidates), plan.currentUrl, plan.currentName, NavigationDirection::Previous);
+    return adjacentImageUrlAfterDeletion(std::move(candidates), plan.currentUrl, plan.currentName,
+        navigationDirection(directions.fallback));
 }
 
 ComicBookDeletionFallbackCandidates comicBookDeletionFallbackCandidates(
@@ -78,11 +92,12 @@ ComicBookDeletionFallbackCandidates comicBookDeletionFallbackCandidates(
         return {};
     }
 
+    const RustDeletionFallbackDirections directions = rustDeletionFallbackDirections();
     return {
-        adjacentContainerAfterDeletion(
-            candidates, plan.currentContainerUrl, plan.currentName, NavigationDirection::Next),
+        adjacentContainerAfterDeletion(candidates, plan.currentContainerUrl, plan.currentName,
+            navigationDirection(directions.preferred)),
         adjacentContainerAfterDeletion(std::move(candidates), plan.currentContainerUrl,
-            plan.currentName, NavigationDirection::Previous),
+            plan.currentName, navigationDirection(directions.fallback)),
     };
 }
 }
