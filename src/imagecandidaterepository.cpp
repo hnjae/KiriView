@@ -7,6 +7,7 @@
 #include "imagecontainer.h"
 #include "imageiojobs.h"
 #include "imageurl.h"
+#include "kiriview/src/imagecandidaterepository.cxx.h"
 
 #include <optional>
 #include <utility>
@@ -87,27 +88,61 @@ struct ContainerImageSourceResult {
         = KiriView::ImageCandidateRepositoryError::Generic;
 };
 
+KiriView::RustContainerNavigationCandidateType rustContainerNavigationCandidateType(
+    KiriView::ContainerNavigationCandidateType type)
+{
+    switch (type) {
+    case KiriView::ContainerNavigationCandidateType::Directory:
+        return KiriView::RustContainerNavigationCandidateType::Directory;
+    case KiriView::ContainerNavigationCandidateType::ComicBookArchive:
+        return KiriView::RustContainerNavigationCandidateType::ComicBookArchive;
+    }
+
+    return KiriView::RustContainerNavigationCandidateType::Unknown;
+}
+
+KiriView::ImageCandidateRepositoryError imageCandidateRepositoryError(
+    KiriView::RustContainerImageSourceError error)
+{
+    switch (error) {
+    case KiriView::RustContainerImageSourceError::InvalidComicBookArchive:
+        return KiriView::ImageCandidateRepositoryError::InvalidComicBookArchive;
+    case KiriView::RustContainerImageSourceError::Generic:
+        return KiriView::ImageCandidateRepositoryError::Generic;
+    }
+
+    return KiriView::ImageCandidateRepositoryError::Generic;
+}
+
 ContainerImageSourceResult containerImageSourceFor(
     const KiriView::ContainerNavigationCandidate &container)
 {
-    switch (container.type) {
-    case KiriView::ContainerNavigationCandidateType::Directory:
+    const KiriView::RustContainerNavigationCandidateType candidateType
+        = rustContainerNavigationCandidateType(container.type);
+    std::optional<KiriView::ArchiveDocumentLocation> archiveDocument;
+    if (candidateType == KiriView::RustContainerNavigationCandidateType::ComicBookArchive) {
+        archiveDocument = KiriView::archiveDocumentLocationForLocalArchiveUrl(container.url);
+    }
+
+    const KiriView::RustContainerImageSourcePlan plan
+        = KiriView::rustContainerImageSourcePlan(candidateType, archiveDocument.has_value(),
+            archiveDocument.has_value() && archiveDocument->isComicBook());
+
+    switch (plan.target) {
+    case KiriView::RustContainerImageSourceTarget::Directory:
         return { KiriView::ImageCandidateListSource::forDirectory(container.url),
             KiriView::ImageCandidateRepositoryError::Generic };
-    case KiriView::ContainerNavigationCandidateType::ComicBookArchive: {
-        const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
-            = KiriView::archiveDocumentLocationForLocalArchiveUrl(container.url);
-        if (!archiveDocument.has_value() || !archiveDocument->isComicBook()) {
-            return { std::nullopt,
-                KiriView::ImageCandidateRepositoryError::InvalidComicBookArchive };
+    case KiriView::RustContainerImageSourceTarget::ArchiveDocument:
+        if (archiveDocument.has_value()) {
+            return { KiriView::ImageCandidateListSource::forArchiveDocument(*archiveDocument),
+                KiriView::ImageCandidateRepositoryError::Generic };
         }
-
-        return { KiriView::ImageCandidateListSource::forArchiveDocument(*archiveDocument),
-            KiriView::ImageCandidateRepositoryError::Generic };
+        break;
+    case KiriView::RustContainerImageSourceTarget::None:
+        break;
     }
-    }
 
-    return { std::nullopt, KiriView::ImageCandidateRepositoryError::Generic };
+    return { std::nullopt, imageCandidateRepositoryError(plan.error) };
 }
 }
 
