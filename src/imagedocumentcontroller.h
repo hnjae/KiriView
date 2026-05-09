@@ -152,6 +152,7 @@ private:
     void finishTwoPageSpreadTransition();
     void notifyTwoPageSpreadTransitionChanged();
     void updateSpreadZoomState();
+    void applyZoomToPrimaryPage(ImageZoomMode zoomMode, qreal zoomPercent);
     void applyStoredSpreadZoomToPrimaryPage();
     void applySpreadZoomPercentToPages();
     void applySpreadVisibleItemRects();

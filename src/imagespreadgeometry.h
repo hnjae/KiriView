@@ -15,6 +15,16 @@ enum class ImageSpreadSecondaryPageDecision {
     KeepCurrentSecondary,
 };
 
+struct ImageSpreadTwoPageModeChange {
+    bool changed = false;
+    bool resetSpreadZoom = false;
+    bool finishTransition = false;
+    bool clearSecondaryPage = false;
+    bool restorePrimaryZoom = false;
+    bool refreshSecondaryPage = false;
+    bool notifyTwoPageMode = false;
+};
+
 QSize imageSpreadImageSize(const QSize &primarySize, const QSize &secondarySize);
 QSizeF imageSpreadScaledPageDisplaySize(
     const QSize &pageSize, const QSize &spreadImageSize, const QSizeF &spreadDisplaySize);
@@ -34,6 +44,8 @@ bool imageSpreadShouldBeginTransition(
 ImageSpreadSecondaryPageDecision imageSpreadSecondaryPageDecision(bool twoPageModeActive,
     int currentPageNumber, int imageCount, bool primaryPageIsWide, bool nextPageAvailable,
     bool nextPageIsWide, bool currentSecondaryMatchesNext);
+ImageSpreadTwoPageModeChange imageSpreadTwoPageModeChange(
+    bool currentEnabled, bool nextEnabled, bool secondaryPageVisible);
 }
 
 #endif

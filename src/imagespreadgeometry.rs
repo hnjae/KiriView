@@ -30,6 +30,17 @@ mod ffi {
         KeepCurrentSecondary = 2,
     }
 
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    struct RustImageSpreadTwoPageModeChange {
+        changed: bool,
+        reset_spread_zoom: bool,
+        finish_transition: bool,
+        clear_secondary_page: bool,
+        restore_primary_zoom: bool,
+        refresh_secondary_page: bool,
+        notify_two_page_mode: bool,
+    }
+
     extern "Rust" {
         #[cxx_name = "rustImageSpreadImageSize"]
         fn rust_image_spread_image_size(
@@ -113,12 +124,19 @@ mod ffi {
             next_page_is_wide: bool,
             current_secondary_matches_next: bool,
         ) -> RustImageSpreadSecondaryPageDecision;
+
+        #[cxx_name = "rustImageSpreadTwoPageModeChange"]
+        fn rust_image_spread_two_page_mode_change(
+            current_enabled: bool,
+            next_enabled: bool,
+            secondary_page_visible: bool,
+        ) -> RustImageSpreadTwoPageModeChange;
     }
 }
 
 use ffi::{
     RustImageSpreadRectF, RustImageSpreadSecondaryPageDecision, RustImageSpreadSize,
-    RustImageSpreadSizeF,
+    RustImageSpreadSizeF, RustImageSpreadTwoPageModeChange,
 };
 
 fn rust_image_spread_image_size(
@@ -295,8 +313,49 @@ fn rust_image_spread_secondary_page_decision(
     }
 }
 
+fn rust_image_spread_two_page_mode_change(
+    current_enabled: bool,
+    next_enabled: bool,
+    secondary_page_visible: bool,
+) -> RustImageSpreadTwoPageModeChange {
+    if current_enabled == next_enabled {
+        return two_page_mode_change(false, false, false, false, false, false, false);
+    }
+
+    let disabling = !next_enabled;
+    two_page_mode_change(
+        true,
+        next_enabled,
+        disabling,
+        disabling,
+        disabling && secondary_page_visible,
+        true,
+        true,
+    )
+}
+
 fn size_empty(size: RustImageSpreadSize) -> bool {
     size.width <= 0 || size.height <= 0
+}
+
+fn two_page_mode_change(
+    changed: bool,
+    reset_spread_zoom: bool,
+    finish_transition: bool,
+    clear_secondary_page: bool,
+    restore_primary_zoom: bool,
+    refresh_secondary_page: bool,
+    notify_two_page_mode: bool,
+) -> RustImageSpreadTwoPageModeChange {
+    RustImageSpreadTwoPageModeChange {
+        changed,
+        reset_spread_zoom,
+        finish_transition,
+        clear_secondary_page,
+        restore_primary_zoom,
+        refresh_secondary_page,
+        notify_two_page_mode,
+    }
 }
 
 fn invalid_size_f() -> RustImageSpreadSizeF {
@@ -570,6 +629,26 @@ mod tests {
         assert_eq!(
             rust_image_spread_secondary_page_decision(true, 2, 4, false, true, false, false),
             RustImageSpreadSecondaryPageDecision::LoadNext
+        );
+    }
+
+    #[test]
+    fn two_page_mode_change_plans_enable_disable_side_effects() {
+        assert_eq!(
+            rust_image_spread_two_page_mode_change(false, false, true),
+            two_page_mode_change(false, false, false, false, false, false, false)
+        );
+        assert_eq!(
+            rust_image_spread_two_page_mode_change(false, true, false),
+            two_page_mode_change(true, true, false, false, false, true, true)
+        );
+        assert_eq!(
+            rust_image_spread_two_page_mode_change(true, false, false),
+            two_page_mode_change(true, false, true, true, false, true, true)
+        );
+        assert_eq!(
+            rust_image_spread_two_page_mode_change(true, false, true),
+            two_page_mode_change(true, false, true, true, true, true, true)
         );
     }
 }
