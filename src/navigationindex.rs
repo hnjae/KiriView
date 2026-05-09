@@ -41,6 +41,19 @@ pub(crate) fn adjacent_navigation_index(
     }
 }
 
+pub(crate) fn navigation_index_for_matches<I>(matches: I) -> NavigationIndex
+where
+    I: IntoIterator<Item = bool>,
+{
+    for (index, matches_current) in matches.into_iter().enumerate() {
+        if matches_current {
+            return found_index(index);
+        }
+    }
+
+    missing_index()
+}
+
 pub(crate) fn found_index(index: usize) -> NavigationIndex {
     NavigationIndex { found: true, index }
 }
@@ -84,6 +97,18 @@ mod tests {
         );
         assert_eq!(
             adjacent_navigation_index(3, found_index(3), NavigationDirection::Previous),
+            missing_index()
+        );
+    }
+
+    #[test]
+    fn navigation_index_for_matches_uses_first_match() {
+        assert_eq!(
+            navigation_index_for_matches([false, true, true]),
+            found_index(1)
+        );
+        assert_eq!(
+            navigation_index_for_matches([false, false]),
             missing_index()
         );
     }

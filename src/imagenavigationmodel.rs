@@ -7,6 +7,7 @@ const PREDECODE_NEXT_IMAGE_COUNT: usize = 4;
 use crate::navigationindex::{
     NavigationDirection as CoreNavigationDirection, NavigationIndex as CoreNavigationIndex,
     adjacent_navigation_index as core_adjacent_navigation_index,
+    navigation_index_for_matches as core_navigation_index_for_matches,
 };
 
 #[cxx::bridge(namespace = "KiriView")]
@@ -42,6 +43,9 @@ mod ffi {
             current: RustNavigationIndex,
             direction: RustNavigationDirection,
         ) -> RustNavigationIndex;
+
+        #[cxx_name = "rustCurrentNavigationIndex"]
+        fn rust_current_navigation_index(matches_current: Vec<u8>) -> RustNavigationIndex;
 
         #[cxx_name = "rustPageNavigationStateUpdate"]
         fn rust_page_navigation_state_update(
@@ -103,6 +107,12 @@ fn rust_adjacent_navigation_candidate_index(
         candidate_count,
         core_navigation_index(current),
         direction,
+    ))
+}
+
+fn rust_current_navigation_index(matches_current: Vec<u8>) -> RustNavigationIndex {
+    rust_navigation_index(core_navigation_index_for_matches(
+        matches_current.into_iter().map(|flag| flag != 0),
     ))
 }
 
@@ -226,6 +236,12 @@ mod tests {
             ),
             missing_index()
         );
+    }
+
+    #[test]
+    fn current_navigation_index_uses_first_match_flag() {
+        assert_eq!(rust_current_navigation_index(vec![0, 1, 1]), found_index(1));
+        assert_eq!(rust_current_navigation_index(vec![0, 0]), missing_index());
     }
 
     #[test]

@@ -35,12 +35,18 @@ mod ffi {
             candidate_count: usize,
             current: RustDeletionFallbackIndex,
         ) -> RustDeletionFallbackCandidateIndices;
+
+        #[cxx_name = "rustDeletionFallbackCandidateIndicesForMatches"]
+        fn rust_deletion_fallback_candidate_indices_for_matches(
+            matches_current: Vec<u8>,
+        ) -> RustDeletionFallbackCandidateIndices;
     }
 }
 
 use crate::navigationindex::{
     NavigationDirection as CoreNavigationDirection, NavigationIndex as CoreNavigationIndex,
     adjacent_navigation_index as core_adjacent_navigation_index,
+    navigation_index_for_matches as core_navigation_index_for_matches,
 };
 use ffi::{
     RustDeletionFallbackCandidateIndices, RustDeletionFallbackIndex, RustDeletionFallbackPlanTarget,
@@ -69,6 +75,22 @@ fn rust_deletion_fallback_candidate_indices(
     current: RustDeletionFallbackIndex,
 ) -> RustDeletionFallbackCandidateIndices {
     let current = core_navigation_index(current);
+    deletion_fallback_candidate_indices(candidate_count, current)
+}
+
+fn rust_deletion_fallback_candidate_indices_for_matches(
+    matches_current: Vec<u8>,
+) -> RustDeletionFallbackCandidateIndices {
+    let candidate_count = matches_current.len();
+    let current =
+        core_navigation_index_for_matches(matches_current.into_iter().map(|flag| flag != 0));
+    deletion_fallback_candidate_indices(candidate_count, current)
+}
+
+fn deletion_fallback_candidate_indices(
+    candidate_count: usize,
+    current: CoreNavigationIndex,
+) -> RustDeletionFallbackCandidateIndices {
     RustDeletionFallbackCandidateIndices {
         preferred: deletion_fallback_index(core_adjacent_navigation_index(
             candidate_count,
@@ -161,5 +183,13 @@ mod tests {
             rust_deletion_fallback_candidate_indices(3, found_index(3)).fallback,
             missing_index()
         );
+    }
+
+    #[test]
+    fn deletion_fallback_candidate_indices_resolve_current_match_flags() {
+        let indices = rust_deletion_fallback_candidate_indices_for_matches(vec![0, 1, 0]);
+
+        assert_eq!(indices.preferred, found_index(2));
+        assert_eq!(indices.fallback, found_index(0));
     }
 }

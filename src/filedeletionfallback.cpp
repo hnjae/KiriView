@@ -8,36 +8,26 @@
 #include "imageurl.h"
 #include "kiriview/src/filedeletionfallback.cxx.h"
 
-#include <algorithm>
 #include <cstddef>
-#include <iterator>
+#include <cstdint>
 #include <optional>
 #include <utility>
 #include <vector>
 
 namespace {
-KiriView::RustDeletionFallbackIndex rustDeletionFallbackIndex(std::optional<std::size_t> index)
-{
-    if (!index.has_value()) {
-        return KiriView::RustDeletionFallbackIndex { false, 0 };
-    }
-
-    return KiriView::RustDeletionFallbackIndex { true, *index };
-}
+std::uint8_t rustFlag(bool value) { return value ? 1 : 0; }
 
 template <typename Candidate>
-std::optional<std::size_t> currentCandidateIndex(
+rust::Vec<std::uint8_t> currentCandidateMatches(
     const std::vector<Candidate> &candidates, const QUrl &currentUrl)
 {
-    const auto current = std::find_if(
-        candidates.cbegin(), candidates.cend(), [&currentUrl](const Candidate &candidate) {
-            return KiriView::sameNormalizedUrl(candidate.url, currentUrl);
-        });
-    if (current == candidates.cend()) {
-        return std::nullopt;
+    rust::Vec<std::uint8_t> matches;
+    matches.reserve(candidates.size());
+    for (const Candidate &candidate : candidates) {
+        matches.push_back(rustFlag(KiriView::sameNormalizedUrl(candidate.url, currentUrl)));
     }
 
-    return static_cast<std::size_t>(std::distance(candidates.cbegin(), current));
+    return matches;
 }
 
 void appendDeletedCandidate(std::vector<KiriView::ImageNavigationCandidate> *candidates,
@@ -76,8 +66,8 @@ DeletionFallbackSelection<Candidate> deletionFallbackSelection(
     sortDeletionFallbackCandidates(&candidates);
 
     const KiriView::RustDeletionFallbackCandidateIndices indices
-        = KiriView::rustDeletionFallbackCandidateIndices(candidates.size(),
-            rustDeletionFallbackIndex(currentCandidateIndex(candidates, currentUrl)));
+        = KiriView::rustDeletionFallbackCandidateIndicesForMatches(
+            currentCandidateMatches(candidates, currentUrl));
     return { std::move(candidates), indices };
 }
 
