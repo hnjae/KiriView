@@ -598,7 +598,8 @@ void ImageDocumentController::setSourceUrlForLoad(
     m_deletionController->cancel();
 
     const bool resetRightToLeftReading
-        = shouldResetRightToLeftReadingForLoad(sourceUrl, containerNavigationUrl);
+        = KiriView::shouldResetRightToLeftReadingForLoad(m_rightToLeftReadingEnabled,
+            m_state.displayedArchiveDocument(), sourceUrl, containerNavigationUrl);
     if (m_state.sourceUrl() == sourceUrl) {
         if (!preserveTwoPageSpreadTransition) {
             finishTwoPageSpreadTransition();
@@ -973,18 +974,6 @@ bool ImageDocumentController::twoPageModeActive() const
 bool ImageDocumentController::rightToLeftReadingActive() const
 {
     return m_rightToLeftReadingEnabled && rightToLeftReadingAvailable();
-}
-
-bool ImageDocumentController::shouldResetRightToLeftReadingForLoad(
-    const QUrl &sourceUrl, const QUrl &containerNavigationUrl) const
-{
-    if (!m_rightToLeftReadingEnabled || !containerNavigationUrl.isEmpty()) {
-        return false;
-    }
-
-    const ArchiveDocumentLocation &archiveDocument = m_state.displayedArchiveDocument();
-    return !archiveDocument.isComicBook()
-        || !archiveDocumentContainsUrl(archiveDocument, sourceUrl);
 }
 
 bool ImageDocumentController::primaryPageIsWide() const

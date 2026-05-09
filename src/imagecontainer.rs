@@ -66,6 +66,14 @@ mod ffi {
             archive_document_is_comic_book: bool,
             displayed_location_inside_archive_document: bool,
         ) -> bool;
+
+        #[cxx_name = "rustShouldResetRightToLeftReadingForLoad"]
+        fn rust_should_reset_right_to_left_reading_for_load(
+            right_to_left_reading_enabled: bool,
+            container_navigation_url_empty: bool,
+            displayed_archive_document_is_comic_book: bool,
+            source_url_inside_displayed_archive_document: bool,
+        ) -> bool;
     }
 }
 
@@ -151,6 +159,18 @@ fn rust_container_navigation_uses_archive_document_file_url(
     displayed_location_inside_archive_document: bool,
 ) -> bool {
     archive_document_is_comic_book && displayed_location_inside_archive_document
+}
+
+fn rust_should_reset_right_to_left_reading_for_load(
+    right_to_left_reading_enabled: bool,
+    container_navigation_url_empty: bool,
+    displayed_archive_document_is_comic_book: bool,
+    source_url_inside_displayed_archive_document: bool,
+) -> bool {
+    right_to_left_reading_enabled
+        && container_navigation_url_empty
+        && (!displayed_archive_document_is_comic_book
+            || !source_url_inside_displayed_archive_document)
 }
 
 fn containing_archive_root_path(path: &str, markers: &[String]) -> RustArchiveRootPath {
@@ -264,6 +284,25 @@ mod tests {
         ));
         assert!(!rust_container_navigation_uses_archive_document_file_url(
             false, true
+        ));
+    }
+
+    #[test]
+    fn right_to_left_reading_reset_requires_leaving_a_comic_archive_directly() {
+        assert!(!rust_should_reset_right_to_left_reading_for_load(
+            false, true, true, false,
+        ));
+        assert!(!rust_should_reset_right_to_left_reading_for_load(
+            true, false, true, false,
+        ));
+        assert!(!rust_should_reset_right_to_left_reading_for_load(
+            true, true, true, true,
+        ));
+        assert!(rust_should_reset_right_to_left_reading_for_load(
+            true, true, true, false,
+        ));
+        assert!(rust_should_reset_right_to_left_reading_for_load(
+            true, true, false, false,
         ));
     }
 

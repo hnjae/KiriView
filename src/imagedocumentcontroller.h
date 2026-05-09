@@ -154,8 +154,6 @@ private:
     QSize spreadImageSize() const;
     bool twoPageModeActive() const;
     bool rightToLeftReadingActive() const;
-    bool shouldResetRightToLeftReadingForLoad(
-        const QUrl &sourceUrl, const QUrl &containerNavigationUrl) const;
     bool primaryPageIsWide() const;
     void cacheWidePage(const QUrl &url, const QSize &imageSize);
     std::optional<bool> cachedPageIsWide(const QUrl &url) const;

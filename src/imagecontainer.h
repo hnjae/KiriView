@@ -26,6 +26,9 @@ QString windowTitleFileNameForDisplayedLocation(const DisplayedImageLocation &lo
 std::vector<ContainerNavigationCandidate> containerNavigationCandidates(const KFileItemList &items);
 QUrl zoomScopeUrlForLocation(const DisplayedImageLocation &location);
 QUrl containerNavigationUrlForLocation(const DisplayedImageLocation &location);
+bool shouldResetRightToLeftReadingForLoad(bool rightToLeftReadingEnabled,
+    const ArchiveDocumentLocation &displayedArchiveDocument, const QUrl &sourceUrl,
+    const QUrl &containerNavigationUrl);
 }
 
 #endif

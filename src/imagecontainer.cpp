@@ -236,4 +236,13 @@ QUrl containerNavigationUrlForLocation(const DisplayedImageLocation &location)
 
     return archiveDocumentFileNavigationUrl(location);
 }
+
+bool shouldResetRightToLeftReadingForLoad(bool rightToLeftReadingEnabled,
+    const ArchiveDocumentLocation &displayedArchiveDocument, const QUrl &sourceUrl,
+    const QUrl &containerNavigationUrl)
+{
+    return rustShouldResetRightToLeftReadingForLoad(rightToLeftReadingEnabled,
+        containerNavigationUrl.isEmpty(), displayedArchiveDocument.isComicBook(),
+        archiveDocumentContainsUrlInRust(displayedArchiveDocument, sourceUrl));
+}
 }

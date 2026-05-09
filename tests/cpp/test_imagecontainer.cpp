@@ -75,6 +75,7 @@ private Q_SLOTS:
     void directArchivePagesResolveToZoomScopeOnly();
     void regularImagesDoNotResolveToZoomScopes();
     void explicitKdeArchiveUrlImagesDoNotResolveToZoomScopes();
+    void rightToLeftReadingResetPolicyOnlyResetsWhenLeavingComicArchive();
     void containerCandidatesOnlyIncludeComicBookArchives();
 };
 
@@ -204,6 +205,35 @@ void TestImageContainer::explicitKdeArchiveUrlImagesDoNotResolveToZoomScopes()
 
     QVERIFY(KiriView::zoomScopeUrlForLocation(location).isEmpty());
     QVERIFY(KiriView::containerNavigationUrlForLocation(location).isEmpty());
+}
+
+void TestImageContainer::rightToLeftReadingResetPolicyOnlyResetsWhenLeavingComicArchive()
+{
+    const QUrl archiveUrl = QUrl::fromLocalFile(QStringLiteral("/books/book.cbz"));
+    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveDocument.has_value());
+
+    QUrl pageUrl = archiveDocument->rootUrl();
+    pageUrl.setPath(archiveDocument->rootUrl().path() + QStringLiteral("chapter/page001.png"));
+    const QUrl otherImageUrl = QUrl::fromLocalFile(QStringLiteral("/images/page.png"));
+    const QUrl siblingArchiveUrl = QUrl::fromLocalFile(QStringLiteral("/books/next.cbz"));
+
+    QVERIFY(!KiriView::shouldResetRightToLeftReadingForLoad(
+        false, *archiveDocument, otherImageUrl, QUrl()));
+    QVERIFY(
+        !KiriView::shouldResetRightToLeftReadingForLoad(true, *archiveDocument, pageUrl, QUrl()));
+    QVERIFY(!KiriView::shouldResetRightToLeftReadingForLoad(
+        true, *archiveDocument, otherImageUrl, siblingArchiveUrl));
+    QVERIFY(KiriView::shouldResetRightToLeftReadingForLoad(
+        true, *archiveDocument, otherImageUrl, QUrl()));
+
+    const QUrl generalArchiveUrl = QUrl::fromLocalFile(QStringLiteral("/books/book.zip"));
+    const std::optional<KiriView::ArchiveDocumentLocation> generalArchiveDocument
+        = KiriView::archiveDocumentLocationForLocalArchiveUrl(generalArchiveUrl);
+    QVERIFY(generalArchiveDocument.has_value());
+    QVERIFY(KiriView::shouldResetRightToLeftReadingForLoad(
+        true, *generalArchiveDocument, otherImageUrl, QUrl()));
 }
 
 void TestImageContainer::containerCandidatesOnlyIncludeComicBookArchives()
