@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-use cxx_qt_lib::{QString, QUrl};
 use std::{
     ffi::OsStr,
     fmt,
@@ -16,6 +15,12 @@ const MISSING_LOCAL_FILE_REASON: &str = "No such file or directory";
 pub struct StartupArgumentError {
     path: PathBuf,
     reason: String,
+}
+
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub enum StartupSource {
+    LocalFile(PathBuf),
+    Url(String),
 }
 
 impl StartupArgumentError {
@@ -39,10 +44,10 @@ impl fmt::Display for StartupArgumentError {
     }
 }
 
-pub fn initial_source_url_from_args(
+pub fn initial_source_from_args(
     args: impl IntoIterator<Item = impl AsRef<OsStr>>,
     working_directory: Option<&Path>,
-) -> Result<Option<QUrl>, StartupArgumentError> {
+) -> Result<Option<StartupSource>, StartupArgumentError> {
     let Some(argument) = args
         .into_iter()
         .skip(1)
@@ -51,22 +56,23 @@ pub fn initial_source_url_from_args(
         return Ok(None);
     };
 
-    source_url_from_argument(argument.as_ref(), working_directory)
+    source_from_argument(argument.as_ref(), working_directory)
 }
 
-fn source_url_from_argument(
+fn source_from_argument(
     argument: &OsStr,
     working_directory: Option<&Path>,
-) -> Result<Option<QUrl>, StartupArgumentError> {
+) -> Result<Option<StartupSource>, StartupArgumentError> {
     let argument = argument.to_string_lossy();
     if argument.is_empty() {
         return Ok(None);
     }
 
-    let url = QUrl::from(&QString::from(argument.as_ref()));
-    if !url.is_relative() {
-        validate_local_url(&url)?;
-        return Ok(valid_initial_source_url(url));
+    if has_url_scheme(&argument) {
+        if let Some(local_file_path) = local_file_path_from_file_url(&argument) {
+            validate_non_empty_local_file_path(&local_file_path)?;
+        }
+        return Ok(Some(StartupSource::Url(argument.into_owned())));
     }
 
     let path = PathBuf::from(argument.as_ref());
@@ -79,29 +85,90 @@ fn source_url_from_argument(
     };
     validate_local_file_path(&absolute_path)?;
 
-    let local_url = QUrl::from_local_file(&QString::from(absolute_path.to_string_lossy().as_ref()));
-    Ok(valid_initial_source_url(local_url))
+    Ok(Some(StartupSource::LocalFile(absolute_path)))
 }
 
-fn valid_initial_source_url(url: QUrl) -> Option<QUrl> {
-    if url.is_empty() || !url.is_valid() {
-        None
+fn has_url_scheme(argument: &str) -> bool {
+    let Some((scheme, _)) = argument.split_once(':') else {
+        return false;
+    };
+    let mut chars = scheme.chars();
+    let Some(first) = chars.next() else {
+        return false;
+    };
+    first.is_ascii_alphabetic()
+        && chars.all(|character| {
+            character.is_ascii_alphanumeric()
+                || character == '+'
+                || character == '-'
+                || character == '.'
+        })
+}
+
+fn local_file_path_from_file_url(url: &str) -> Option<PathBuf> {
+    let (scheme, rest) = url.split_once(':')?;
+    if !scheme.eq_ignore_ascii_case("file") {
+        return None;
+    }
+
+    let path = if let Some(authority_and_path) = rest.strip_prefix("//") {
+        let (authority, path) = authority_and_path
+            .split_once('/')
+            .map_or((authority_and_path, ""), |(authority, path)| {
+                (authority, path)
+            });
+        if authority.is_empty() || authority.eq_ignore_ascii_case("localhost") {
+            format!("/{path}")
+        } else if path.is_empty() {
+            format!("//{authority}")
+        } else {
+            format!("//{authority}/{path}")
+        }
     } else {
-        Some(url)
+        rest.to_owned()
+    };
+
+    Some(PathBuf::from(percent_decoded_path(&path)))
+}
+
+fn percent_decoded_path(path: &str) -> String {
+    let bytes = path.as_bytes();
+    let mut decoded = Vec::with_capacity(bytes.len());
+    let mut index = 0;
+    while index < bytes.len() {
+        if bytes[index] == b'%' && index + 2 < bytes.len() {
+            if let Some(byte) = hex_byte(bytes[index + 1], bytes[index + 2]) {
+                decoded.push(byte);
+                index += 3;
+                continue;
+            }
+        }
+
+        decoded.push(bytes[index]);
+        index += 1;
+    }
+
+    String::from_utf8_lossy(&decoded).into_owned()
+}
+
+fn hex_byte(high: u8, low: u8) -> Option<u8> {
+    Some(hex_value(high)? * 16 + hex_value(low)?)
+}
+
+fn hex_value(value: u8) -> Option<u8> {
+    match value {
+        b'0'..=b'9' => Some(value - b'0'),
+        b'a'..=b'f' => Some(value - b'a' + 10),
+        b'A'..=b'F' => Some(value - b'A' + 10),
+        _ => None,
     }
 }
 
-fn validate_local_url(url: &QUrl) -> Result<(), StartupArgumentError> {
-    let Some(local_file) = url.to_local_file() else {
-        return Ok(());
-    };
-
-    let path = PathBuf::from(String::from(local_file));
+fn validate_non_empty_local_file_path(path: &Path) -> Result<(), StartupArgumentError> {
     if path.as_os_str().is_empty() {
         return Ok(());
     }
-
-    validate_local_file_path(&path)
+    validate_local_file_path(path)
 }
 
 fn validate_local_file_path(path: &Path) -> Result<(), StartupArgumentError> {
@@ -133,10 +200,6 @@ mod tests {
         std::iter::once(OsString::from("kiriview"))
             .chain(arguments.iter().map(OsString::from))
             .collect()
-    }
-
-    fn local_file_path(url: &QUrl) -> Option<String> {
-        url.to_local_file().map(String::from)
     }
 
     struct TestDirectory {
@@ -175,39 +238,33 @@ mod tests {
     }
 
     #[test]
-    fn relative_startup_path_becomes_local_file_url() {
+    fn relative_startup_path_becomes_local_file_source() {
         let working_directory = TestDirectory::new("relative-startup-path");
         let expected_path = existing_test_file(working_directory.path(), "archive-zip.cbt");
 
-        let url = initial_source_url_from_args(
+        let source = initial_source_from_args(
             startup_args(&["archive-zip.cbt"]),
             Some(working_directory.path()),
         )
         .expect("relative startup path should be accepted")
-        .expect("relative startup path should produce a URL");
+        .expect("relative startup path should produce a source");
 
-        assert_eq!(
-            local_file_path(&url).map(PathBuf::from).as_deref(),
-            Some(expected_path.as_path())
-        );
+        assert_eq!(source, StartupSource::LocalFile(expected_path));
     }
 
     #[test]
-    fn startup_path_after_separator_becomes_local_file_url() {
+    fn startup_path_after_separator_becomes_local_file_source() {
         let working_directory = TestDirectory::new("startup-path-after-separator");
         let expected_path = existing_test_file(working_directory.path(), "archive-zip.cbt");
 
-        let url = initial_source_url_from_args(
+        let source = initial_source_from_args(
             startup_args(&["--", "archive-zip.cbt"]),
             Some(working_directory.path()),
         )
         .expect("startup path after -- should be accepted")
-        .expect("startup path after -- should produce a URL");
+        .expect("startup path after -- should produce a source");
 
-        assert_eq!(
-            local_file_path(&url).map(PathBuf::from).as_deref(),
-            Some(expected_path.as_path())
-        );
+        assert_eq!(source, StartupSource::LocalFile(expected_path));
     }
 
     #[test]
@@ -215,7 +272,7 @@ mod tests {
         let working_directory = TestDirectory::new("missing-relative-startup-path");
         let expected_path = working_directory.path().join("non-exit-file");
 
-        let error = initial_source_url_from_args(
+        let error = initial_source_from_args(
             startup_args(&["non-exit-file"]),
             Some(working_directory.path()),
         )
@@ -229,14 +286,10 @@ mod tests {
     fn missing_file_url_startup_argument_reports_argument_error() {
         let working_directory = TestDirectory::new("missing-file-url-startup-argument");
         let expected_path = working_directory.path().join("non-exit-file");
-        let file_url =
-            QUrl::from_local_file(&QString::from(expected_path.to_string_lossy().as_ref()));
-        let args = vec![
-            OsString::from("kiriview"),
-            OsString::from(String::from(file_url.to_qstring())),
-        ];
+        let file_url = format!("file://{}", expected_path.display());
+        let args = vec![OsString::from("kiriview"), OsString::from(file_url)];
 
-        let error = initial_source_url_from_args(args, Some(working_directory.path()))
+        let error = initial_source_from_args(args, Some(working_directory.path()))
             .expect_err("missing startup file URL should report an argument error");
 
         assert_eq!(error.path(), expected_path.as_path());
@@ -245,27 +298,44 @@ mod tests {
 
     #[test]
     fn startup_url_argument_keeps_its_scheme() {
-        let url = initial_source_url_from_args(
+        let source = initial_source_from_args(
             startup_args(&["smb://server/share/page.png"]),
             Some(Path::new("/home/user/books")),
         )
         .expect("startup URL should be accepted")
-        .expect("startup URL should produce a URL");
+        .expect("startup URL should produce a source");
 
-        assert_eq!(String::from(url.scheme_or_default()), "smb");
-        assert_eq!(String::from(url.host_or_default()), "server");
-        assert_eq!(String::from(url.path()), "/share/page.png");
+        assert_eq!(
+            source,
+            StartupSource::Url("smb://server/share/page.png".to_owned())
+        );
     }
 
     #[test]
-    fn startup_separator_without_path_produces_no_url() {
+    fn percent_encoded_file_url_validates_decoded_local_path() {
+        let working_directory = TestDirectory::new("encoded-file-url");
+        let expected_path = existing_test_file(working_directory.path(), "archive zip.cbt");
+        let file_url = format!(
+            "file://{}",
+            expected_path.to_string_lossy().replace(' ', "%20")
+        );
+
+        let source = initial_source_from_args(
+            [OsString::from("kiriview"), OsString::from(file_url.clone())],
+            Some(working_directory.path()),
+        )
+        .expect("file URL should be accepted")
+        .expect("file URL should produce a source");
+
+        assert_eq!(source, StartupSource::Url(file_url));
+    }
+
+    #[test]
+    fn startup_separator_without_path_produces_no_source() {
         assert!(
-            initial_source_url_from_args(
-                startup_args(&["--"]),
-                Some(Path::new("/home/user/books"))
-            )
-            .expect("separator-only startup arguments should be accepted")
-            .is_none()
+            initial_source_from_args(startup_args(&["--"]), Some(Path::new("/home/user/books")))
+                .expect("separator-only startup arguments should be accepted")
+                .is_none()
         );
     }
 }

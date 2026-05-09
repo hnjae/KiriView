@@ -6,11 +6,33 @@ use cxx_qt_lib::{
     QUrl, QVariant,
 };
 use cxx_qt_lib_extras::QApplication;
-use std::{env, process};
+use std::{env, path::Path, process};
 
 fn initial_source_url() -> Result<Option<QUrl>, kiriview::StartupArgumentError> {
     let working_directory = env::current_dir().ok();
-    kiriview::initial_source_url_from_args(env::args_os(), working_directory.as_deref())
+    let source = kiriview::initial_source_from_args(env::args_os(), working_directory.as_deref())?;
+    Ok(source.and_then(startup_source_url))
+}
+
+fn startup_source_url(source: kiriview::StartupSource) -> Option<QUrl> {
+    match source {
+        kiriview::StartupSource::LocalFile(path) => valid_initial_source_url(local_file_url(&path)),
+        kiriview::StartupSource::Url(url) => {
+            valid_initial_source_url(QUrl::from(&QString::from(url.as_str())))
+        }
+    }
+}
+
+fn local_file_url(path: &Path) -> QUrl {
+    QUrl::from_local_file(&QString::from(path.to_string_lossy().as_ref()))
+}
+
+fn valid_initial_source_url(url: QUrl) -> Option<QUrl> {
+    if url.is_empty() || !url.is_valid() {
+        None
+    } else {
+        Some(url)
+    }
 }
 
 fn main() {
