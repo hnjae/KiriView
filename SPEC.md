@@ -169,12 +169,14 @@ fit mode remains selected and recalculates for each page and viewport size. If
 the user has entered a manual zoom value, that exact percentage remains active.
 When the displayed page changes inside the archive document through ordinary
 page navigation, any panning position from the previous page is cleared so the
-newly displayed page starts at its top-left at the preserved zoom level. The
+newly displayed page starts at its scan start at the preserved zoom level:
+top-left normally and top-right in Right-to-Left Reading mode. The
 scan-backward shortcut may open the previous image at its final scan position
-instead. Starting KiriView, opening a regular image, moving between regular
-directory images, opening a KDE archive URL image directly, opening a different
-archive document, or moving to a sibling archive resets zoom to Fit mode when
-the new image is displayed.
+instead: bottom-right normally and bottom-left in Right-to-Left Reading mode.
+Starting KiriView, opening a regular image, moving between regular directory
+images, opening a KDE archive URL image directly, opening a different archive
+document, or moving to a sibling archive resets zoom to Fit mode when the new
+image is displayed.
 
 The image viewing area behind empty, loading, ready, and error states uses
 `#3c3c3c` as its background color, so navigation transitions do not flash to a
@@ -196,12 +198,24 @@ wide, the current page is displayed alone and the next navigation action opens
 that wide page. Two-Page mode is unavailable for ordinary image files,
 KDE-supported archive URLs, and directly opened ZIP, TAR, 7Z, or RAR archives.
 
+When a directly opened local CBZ, CBT, CB7, or CBR comic book archive is
+displayed, the `b` key toggles Right-to-Left Reading mode. Right-to-Left
+Reading mode is off by default, is unavailable for ordinary image files,
+KDE-supported archive URLs, and directly opened ZIP, TAR, 7Z, or RAR archives,
+and is not saved as a global setting. Moving to a sibling comic book archive
+with Previous Archive or Next Archive preserves the current Right-to-Left
+Reading mode state.
+
 When Two-Page mode shows two pages, zooming and panning operate on the combined
 two-page spread as one virtual image. Fit, Fit Height, Fit Width, manual zoom,
 scrollbars, drag panning, wheel zoom, keyboard panning, and scan shortcuts use
 the full spread bounds. The spread has no added page gap. The page number,
 window title, deletion target, and archive navigation position continue to refer
 to the left/current page.
+In Right-to-Left Reading mode, the current page is rendered on the right and the
+next page is rendered on the left. The page number, window title, deletion
+target, archive navigation position, and `n`/`p` single-page navigation
+continue to refer to the current page.
 When navigation in Two-Page mode targets another eligible two-page spread,
 KiriView shows the loading state instead of leaving the previous spread visible
 or showing only the left target page. The target spread appears only after both
@@ -232,6 +246,10 @@ When an image is horizontally pannable at the current zoom, Left and Right pan
 the image within the available horizontal scroll bounds. When the current image
 is not horizontally pannable, Left opens the previous image and Right opens the
 next image with the same boundary behavior as the Previous and Next actions.
+In Right-to-Left Reading mode, Left and Right keep physical horizontal panning
+while the image can pan horizontally, but their non-pannable image navigation
+fallback is reversed: Left opens the next image and Right opens the previous
+image.
 When an image is zoomed large enough to pan in any direction, Up and Down pan
 the image vertically within the available scroll bounds, `<` moves the pan
 position to the top-left, `>` moves the pan position to the bottom-right,
@@ -249,6 +267,10 @@ scan position, it opens the previous image, starting that image at its final
 scan position. When the current image is not zoomed large enough to pan, `.`
 opens the next image and `,` opens the previous image. These shortcuts are
 inactive while the page number or zoom input is focused.
+In Right-to-Left Reading mode, scan order starts at the top-right and proceeds
+toward the bottom-left: `.` still scans forward or opens the next image, `,`
+still scans backward or opens the previous image, `<` jumps to scan start, and
+`>` jumps to scan end.
 
 The toolbar provides page navigation with Previous and Next actions, the current
 page number, the total number of supported images in the current directory or
