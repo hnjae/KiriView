@@ -44,6 +44,7 @@ src/imageopencontroller.cpp
 src/imageopenworkflow.cpp
 src/imagepredecodecoordinator.cpp
 src/imagepresentationcontroller.cpp
+src/imagespreadgeometry.cpp
 src/imageurl.cpp
 src/imageviewportgeometry.cpp
 src/imageviewtext.cpp

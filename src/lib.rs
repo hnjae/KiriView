@@ -14,6 +14,7 @@ mod imageformatregistry;
 mod imagemath;
 mod imagenavigationmodel;
 mod imageopenworkflow;
+mod imagespreadgeometry;
 mod imagetilegeometry;
 mod imageviewportgeometry;
 mod imagezoomstate;
