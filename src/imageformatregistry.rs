@@ -170,6 +170,9 @@ mod ffi {
         #[cxx_name = "rustSupportedImageMimeTypes"]
         fn rust_supported_image_mime_types() -> Vec<String>;
 
+        #[cxx_name = "rustSupportedOpenExtensions"]
+        fn rust_supported_open_extensions() -> Vec<String>;
+
         #[cxx_name = "rustIsSupportedImageFileName"]
         fn rust_is_supported_image_file_name(name: &str) -> bool;
 
@@ -228,6 +231,13 @@ fn rust_supported_image_mime_types() -> Vec<String> {
             .iter()
             .flat_map(|format| format.mime_types.iter().copied()),
     )
+}
+
+fn rust_supported_open_extensions() -> Vec<String> {
+    let mut extensions = rust_supported_image_extensions();
+    extensions.extend(rust_supported_comic_book_archive_extensions());
+    extensions.sort();
+    extensions
 }
 
 fn rust_is_supported_image_file_name(name: &str) -> bool {
@@ -440,6 +450,21 @@ mod tests {
                 "application/x-cbt",
             ]
         );
+    }
+
+    #[test]
+    fn supported_open_extensions_include_images_and_comic_books_only() {
+        let extensions = rust_supported_open_extensions();
+
+        assert_eq!(extensions, {
+            let mut sorted = extensions.clone();
+            sorted.sort();
+            sorted
+        });
+        assert!(extensions.contains(&"png".to_owned()));
+        assert!(extensions.contains(&"cbz".to_owned()));
+        assert!(!extensions.contains(&"zip".to_owned()));
+        assert!(!extensions.contains(&"rar".to_owned()));
     }
 
     #[test]

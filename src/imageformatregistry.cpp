@@ -93,10 +93,7 @@ QStringList supportedImageMimeTypes()
 
 QStringList supportedOpenExtensions()
 {
-    QStringList extensions = supportedImageExtensions();
-    extensions.append(supportedComicBookArchiveExtensions());
-    extensions.sort();
-    return extensions;
+    return rustStringsToQStringList(rustSupportedOpenExtensions());
 }
 
 bool isSupportedImageFileName(const QString &name)
