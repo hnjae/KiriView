@@ -4,9 +4,18 @@
 #include "imagesurface.h"
 
 #include "imagebytecost.h"
+#include "kiriview/src/imagerendergeometry.cxx.h"
+#include "qtgeometryconversion.h"
 
 #include <optional>
 #include <utility>
+
+namespace {
+KiriView::RustImageRenderSize rustImageRenderSize(const QSize &size)
+{
+    return KiriView::Bridge::rustSize<KiriView::RustImageRenderSize>(size);
+}
+}
 
 namespace KiriView {
 StaticTileSurface::StaticTileSurface(StaticImagePayload image)
@@ -61,16 +70,9 @@ qsizetype StaticTileSurface::tileCacheByteBudgetForSystemMemory(qsizetype system
 
 bool staticImageFitsFullImageSurface(const StaticImagePayload &image, int maximumTextureSize)
 {
-    if (!image.isValid()) {
-        return false;
-    }
-
-    const QSize imageSize = image.source->imageSize();
-    if (imageSize.isEmpty() || image.preview.size() != imageSize || maximumTextureSize <= 0) {
-        return false;
-    }
-
-    return imageSize.width() <= maximumTextureSize && imageSize.height() <= maximumTextureSize;
+    const QSize imageSize = image.source == nullptr ? QSize() : image.source->imageSize();
+    return rustStaticImageFitsFullImageSurface(image.isValid(), rustImageRenderSize(imageSize),
+        rustImageRenderSize(image.preview.size()), maximumTextureSize);
 }
 
 DisplayedImageSurface::DisplayedImageSurface(LegacyFrameSurface surface)

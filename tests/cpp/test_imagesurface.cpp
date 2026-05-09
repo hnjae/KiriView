@@ -15,6 +15,7 @@ class TestImageSurface : public QObject
 
 private Q_SLOTS:
     void staticImagePayloadReportsByteCostWithinBudget();
+    void fullImageSurfacePolicyRequiresMatchingPreviewWithinTextureLimit();
     void displayedImageSurfaceExposesOnlyActivePayload();
 };
 
@@ -31,6 +32,21 @@ void TestImageSurface::staticImagePayloadReportsByteCostWithinBudget()
     QVERIFY(!image.byteCostWithinBudget(byteCost - 1).has_value());
     QVERIFY(!image.byteCostWithinBudget(0).has_value());
     QVERIFY(!KiriView::StaticImagePayload().byteCostWithinBudget(byteCost).has_value());
+}
+
+void TestImageSurface::fullImageSurfacePolicyRequiresMatchingPreviewWithinTextureLimit()
+{
+    const QImage sourceImage = KiriView::TestSupport::testImage(512, 256);
+    const QImage matchingPreview = KiriView::TestSupport::testImage(512, 256);
+    const QImage scaledPreview = KiriView::TestSupport::testImage(256, 128);
+
+    QVERIFY(KiriView::staticImageFitsFullImageSurface(
+        KiriView::TestSupport::staticTestImagePayload(sourceImage, matchingPreview), 512));
+    QVERIFY(!KiriView::staticImageFitsFullImageSurface(
+        KiriView::TestSupport::staticTestImagePayload(sourceImage, scaledPreview), 512));
+    QVERIFY(!KiriView::staticImageFitsFullImageSurface(
+        KiriView::TestSupport::staticTestImagePayload(sourceImage, matchingPreview), 511));
+    QVERIFY(!KiriView::staticImageFitsFullImageSurface(KiriView::StaticImagePayload {}, 512));
 }
 
 void TestImageSurface::displayedImageSurfaceExposesOnlyActivePayload()

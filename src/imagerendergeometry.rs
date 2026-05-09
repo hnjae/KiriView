@@ -94,6 +94,14 @@ mod ffi {
             level_rect: RustImageRenderRect,
             texture_level_rect: RustImageRenderRect,
         ) -> RustImageRenderRectF;
+
+        #[cxx_name = "rustStaticImageFitsFullImageSurface"]
+        fn rust_static_image_fits_full_image_surface(
+            static_image_valid: bool,
+            image_size: RustImageRenderSize,
+            preview_size: RustImageRenderSize,
+            maximum_texture_size: i32,
+        ) -> bool;
     }
 }
 
@@ -300,6 +308,20 @@ fn rust_image_tile_texture_rect(
         width: f64::from(level_rect.width) / texture_width,
         height: f64::from(level_rect.height) / texture_height,
     }
+}
+
+fn rust_static_image_fits_full_image_surface(
+    static_image_valid: bool,
+    image_size: RustImageRenderSize,
+    preview_size: RustImageRenderSize,
+    maximum_texture_size: i32,
+) -> bool {
+    static_image_valid
+        && !size_empty(image_size)
+        && image_size == preview_size
+        && maximum_texture_size > 0
+        && image_size.width <= maximum_texture_size
+        && image_size.height <= maximum_texture_size
 }
 
 fn min_like_cpp(left: f64, right: f64) -> f64 {
@@ -567,5 +589,39 @@ mod tests {
             rust_image_tile_texture_rect(rect(0, 0, 512, 512), rect(0, 0, 0, 512)),
             empty_rect_f()
         );
+    }
+
+    #[test]
+    fn static_image_full_surface_policy_requires_valid_matching_sizes_within_texture_limit() {
+        assert!(rust_static_image_fits_full_image_surface(
+            true,
+            size(512, 256),
+            size(512, 256),
+            512,
+        ));
+        assert!(!rust_static_image_fits_full_image_surface(
+            false,
+            size(512, 256),
+            size(512, 256),
+            512,
+        ));
+        assert!(!rust_static_image_fits_full_image_surface(
+            true,
+            size(512, 256),
+            size(256, 128),
+            512,
+        ));
+        assert!(!rust_static_image_fits_full_image_surface(
+            true,
+            size(513, 256),
+            size(513, 256),
+            512,
+        ));
+        assert!(!rust_static_image_fits_full_image_surface(
+            true,
+            size(512, 256),
+            size(512, 256),
+            0,
+        ));
     }
 }
