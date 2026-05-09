@@ -17,7 +17,6 @@ Item {
     property url initialSourceUrl
     readonly property int minimumManualZoomPercent: imageDocument.minimumManualZoomPercent
     readonly property int maximumManualZoomPercent: imageDocument.maximumManualZoomPercent
-    readonly property int zoomStepPercent: imageDocument.zoomStepPercent
     readonly property int wheelAngleDeltaPerStep: 120
     readonly property bool imageHorizontallyPannable: imageFlickable.contentWidth > imageFlickable.width
     readonly property bool imagePannable: imageFlickable.contentWidth > imageFlickable.width || imageFlickable.contentHeight > imageFlickable.height
@@ -113,12 +112,12 @@ Item {
         return imageView.viewportPointInsideImage(currentContentPosition(), Qt.point(viewportX, viewportY));
     }
 
-    function zoomBy(deltaPercent, viewportX, viewportY) {
+    function zoomByStep(stepCount, viewportX, viewportY) {
         if (!imageReady) {
             return false;
         }
 
-        const nextZoomPercent = imageDocument.clampedManualZoomPercent(imageDocument.zoomPercent + deltaPercent);
+        const nextZoomPercent = imageDocument.steppedManualZoomPercent(stepCount);
         if (Math.abs(nextZoomPercent - imageDocument.zoomPercent) < 0.001) {
             return false;
         }
@@ -129,9 +128,9 @@ Item {
         return true;
     }
 
-    function wheelZoomDeltaPercent(wheel) {
+    function wheelZoomStepCount(wheel) {
         const verticalDelta = wheel.pixelDelta.y !== 0 ? wheel.pixelDelta.y : wheel.angleDelta.y;
-        return verticalDelta / wheelAngleDeltaPerStep * zoomStepPercent;
+        return verticalDelta / wheelAngleDeltaPerStep;
     }
 
     KiriImageDocument {
@@ -235,13 +234,13 @@ Item {
         target: null
 
         onWheel: wheel => {
-            const deltaPercent = root.wheelZoomDeltaPercent(wheel);
-            if (deltaPercent === 0 || !root.viewportPointInsideImage(wheel.x, wheel.y)) {
+            const stepCount = root.wheelZoomStepCount(wheel);
+            if (stepCount === 0 || !root.viewportPointInsideImage(wheel.x, wheel.y)) {
                 wheel.accepted = false;
                 return;
             }
 
-            root.zoomBy(deltaPercent, wheel.x, wheel.y);
+            root.zoomByStep(stepCount, wheel.x, wheel.y);
             wheel.accepted = true;
         }
     }

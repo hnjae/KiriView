@@ -70,6 +70,7 @@ public:
     ImageZoomMode zoomMode() const;
     qreal maximumManualZoomPercent() const;
     qreal clampedManualZoomPercent(qreal zoomPercent) const;
+    qreal steppedManualZoomPercent(qreal stepCount) const;
     int currentPageNumber() const;
     int currentLastPageNumber() const;
     int imageCount() const;

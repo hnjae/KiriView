@@ -9,6 +9,7 @@
 #include <QTest>
 #include <QUrl>
 #include <algorithm>
+#include <cmath>
 #include <limits>
 
 namespace {
@@ -35,6 +36,7 @@ private Q_SLOTS:
     void higherDevicePixelRatioPreservesLogicalDisplayCap();
     void zoomIsPreservedWithinAContainer();
     void displaySizeForZoomRejectsInvalidInputs();
+    void manualZoomStepsUseMultiplicativeFactor();
     void manualZoomLimitsAreUsable();
 };
 
@@ -190,6 +192,34 @@ void TestImageZoomState::displaySizeForZoomRejectsInvalidInputs()
     QVERIFY(state.displaySizeForZoomPercent(100.0, QSize(), 1.0).isEmpty());
 }
 
+void TestImageZoomState::manualZoomStepsUseMultiplicativeFactor()
+{
+    ImageZoomState state;
+    state.setViewportSize(QSizeF(400.0, 300.0), 1.0);
+    state.setImageSize(QSize(200, 100), 1.0);
+
+    QVERIFY(imageZoomApproximatelyEqual(ImageZoomState::manualZoomStepFactor(), 1.1));
+
+    QVERIFY(state.setManualZoomPercent(100.0, 1.0));
+    QVERIFY(imageZoomApproximatelyEqual(state.steppedManualZoomPercent(1.0, 1.0), 110.0));
+    QVERIFY(imageZoomApproximatelyEqual(state.steppedManualZoomPercent(2.0, 1.0), 121.0));
+    QVERIFY(imageZoomApproximatelyEqual(
+        state.steppedManualZoomPercent(0.5, 1.0), 100.0 * std::sqrt(1.1)));
+
+    QVERIFY(state.setManualZoomPercent(110.0, 1.0));
+    QVERIFY(imageZoomApproximatelyEqual(state.steppedManualZoomPercent(-1.0, 1.0), 100.0));
+
+    const qreal minimumZoomPercent = ImageZoomState::minimumManualZoomPercent();
+    QVERIFY(state.setManualZoomPercent(minimumZoomPercent, 1.0));
+    QVERIFY(
+        imageZoomApproximatelyEqual(state.steppedManualZoomPercent(-1.0, 1.0), minimumZoomPercent));
+
+    const qreal maximumZoomPercent = state.maximumManualZoomPercent(1.0);
+    QVERIFY(state.setManualZoomPercent(maximumZoomPercent, 1.0));
+    QVERIFY(
+        imageZoomApproximatelyEqual(state.steppedManualZoomPercent(1.0, 1.0), maximumZoomPercent));
+}
+
 void TestImageZoomState::manualZoomLimitsAreUsable()
 {
     ImageZoomState state;
@@ -198,7 +228,7 @@ void TestImageZoomState::manualZoomLimitsAreUsable()
 
     QVERIFY(ImageZoomState::minimumManualZoomPercent() > 0.0);
     QVERIFY(state.maximumManualZoomPercent(1.0) > ImageZoomState::minimumManualZoomPercent());
-    QVERIFY(ImageZoomState::manualZoomStepPercent() > 0);
+    QVERIFY(ImageZoomState::manualZoomStepFactor() > 1.0);
 }
 
 QTEST_GUILESS_MAIN(TestImageZoomState)

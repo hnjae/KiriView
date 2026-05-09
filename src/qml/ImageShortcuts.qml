@@ -29,7 +29,6 @@ Item {
     readonly property bool rightToLeftReadingCommandShortcutsEnabled: readyCommandShortcutsEnabled && root.imageDocument.rightToLeftReadingAvailable
     readonly property bool pannableCommandShortcutsEnabled: root.imagePannable && !root.imageDocument.fileDeletionInProgress && root.commandShortcutsEnabled
     readonly property bool containerCommandShortcutsEnabled: root.imageDocument.containerNavigationAvailable && !root.imageDocument.fileDeletionInProgress && root.commandShortcutsEnabled
-    readonly property int zoomStepPercent: imageDocument.zoomStepPercent
 
     readonly property var previousImageQAction: root.application.actionForId(KiriViewApplication.GoPreviousImageAction)
     readonly property var nextImageQAction: root.application.actionForId(KiriViewApplication.GoNextImageAction)
@@ -135,12 +134,12 @@ Item {
         return imageToolBar.textInputFocused();
     }
 
-    function zoomBy(deltaPercent, viewportX, viewportY) {
-        return imageViewport.zoomBy(deltaPercent, viewportX, viewportY);
+    function zoomByStep(stepCount, viewportX, viewportY) {
+        return imageViewport.zoomByStep(stepCount, viewportX, viewportY);
     }
 
-    function zoomByAtCenter(deltaPercent) {
-        return root.zoomBy(deltaPercent, root.imageViewport.viewportWidth / 2, root.imageViewport.viewportHeight / 2);
+    function zoomByStepAtCenter(stepCount) {
+        return root.zoomByStep(stepCount, root.imageViewport.viewportWidth / 2, root.imageViewport.viewportHeight / 2);
     }
 
     ActionShortcutGroup {
@@ -237,12 +236,12 @@ Item {
 
     ActionTrigger {
         action: root.zoomInQAction
-        handler: () => root.zoomByAtCenter(root.zoomStepPercent)
+        handler: () => root.zoomByStepAtCenter(1)
     }
 
     ActionTrigger {
         action: root.zoomOutQAction
-        handler: () => root.zoomByAtCenter(-root.zoomStepPercent)
+        handler: () => root.zoomByStepAtCenter(-1)
     }
 
     ActionTrigger {

@@ -84,6 +84,11 @@ qreal ImagePresentationController::clampedManualZoomPercent(qreal zoomPercent) c
     return m_zoomState.clampedManualZoomPercent(zoomPercent, renderContext().devicePixelRatio);
 }
 
+qreal ImagePresentationController::steppedManualZoomPercent(qreal stepCount) const
+{
+    return m_zoomState.steppedManualZoomPercent(stepCount, renderContext().devicePixelRatio);
+}
+
 std::shared_ptr<DisplayedImageSurface> ImagePresentationController::imageSurface() const
 {
     return m_displayedImageState->imageSurface();

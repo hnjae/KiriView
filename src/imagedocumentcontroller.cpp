@@ -289,6 +289,15 @@ qreal ImageDocumentController::clampedManualZoomPercent(qreal zoomPercent) const
     return m_presentationController->clampedManualZoomPercent(zoomPercent);
 }
 
+qreal ImageDocumentController::steppedManualZoomPercent(qreal stepCount) const
+{
+    if (secondaryPageVisible()) {
+        return m_spreadZoomState.steppedManualZoomPercent(stepCount, spreadDevicePixelRatio());
+    }
+
+    return m_presentationController->steppedManualZoomPercent(stepCount);
+}
+
 int ImageDocumentController::currentPageNumber() const
 {
     return m_navigationController->currentPageNumber();

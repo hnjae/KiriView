@@ -17,7 +17,7 @@ Controls.ToolBar {
     required property bool imageReady
     required property int minimumManualZoomPercent
     required property int maximumManualZoomPercent
-    required property int zoomStepPercent
+    required property real zoomStepFactor
     required property var actions
     property bool compact: false
     property bool floating: false
@@ -87,7 +87,7 @@ Controls.ToolBar {
             imageReady: root.imageReady
             maximumManualZoomPercent: root.maximumManualZoomPercent
             minimumManualZoomPercent: root.minimumManualZoomPercent
-            zoomStepPercent: root.zoomStepPercent
+            zoomStepFactor: root.zoomStepFactor
 
             Component.onDestruction: {
                 if (textInputActive) {

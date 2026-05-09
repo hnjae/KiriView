@@ -4,7 +4,7 @@
 const MINIMUM_MANUAL_ZOOM_PERCENT: f64 = 10.0;
 const MANUAL_ZOOM_LOGICAL_LONG_EDGE_LIMIT: f64 = 65_536.0;
 const MANUAL_ZOOM_VIEWPORT_LONG_EDGE_MULTIPLIER: f64 = 8.0;
-const MANUAL_ZOOM_STEP_PERCENT: i32 = 10;
+const MANUAL_ZOOM_STEP_FACTOR: f64 = 1.1;
 const ZOOM_EPSILON: f64 = 0.001;
 
 #[cxx::bridge(namespace = "KiriView")]
@@ -81,8 +81,15 @@ mod ffi {
             device_pixel_ratio: f64,
         ) -> f64;
 
-        #[cxx_name = "rustImageZoomManualZoomStepPercent"]
-        fn rust_image_zoom_manual_zoom_step_percent() -> i32;
+        #[cxx_name = "rustImageZoomManualZoomStepFactor"]
+        fn rust_image_zoom_manual_zoom_step_factor() -> f64;
+
+        #[cxx_name = "rustImageZoomSteppedManualZoomPercent"]
+        fn rust_image_zoom_stepped_manual_zoom_percent(
+            state: RustImageZoomState,
+            step_count: f64,
+            device_pixel_ratio: f64,
+        ) -> f64;
 
         #[cxx_name = "rustImageZoomSetViewportSize"]
         fn rust_image_zoom_set_viewport_size(
@@ -284,8 +291,34 @@ fn rust_image_zoom_clamped_manual_zoom_percent(
     )
 }
 
-fn rust_image_zoom_manual_zoom_step_percent() -> i32 {
-    MANUAL_ZOOM_STEP_PERCENT
+fn rust_image_zoom_manual_zoom_step_factor() -> f64 {
+    MANUAL_ZOOM_STEP_FACTOR
+}
+
+fn rust_image_zoom_stepped_manual_zoom_percent(
+    state: RustImageZoomState,
+    step_count: f64,
+    device_pixel_ratio: f64,
+) -> f64 {
+    if !state.zoom_percent.is_finite() || state.zoom_percent <= 0.0 || !step_count.is_finite() {
+        return state.zoom_percent;
+    }
+
+    let zoom_factor = MANUAL_ZOOM_STEP_FACTOR.powf(step_count);
+    let zoom_percent = state.zoom_percent * zoom_factor;
+    if zoom_factor.is_finite() && zoom_percent.is_finite() {
+        return rust_image_zoom_clamped_manual_zoom_percent(
+            state,
+            zoom_percent,
+            device_pixel_ratio,
+        );
+    }
+
+    if step_count.is_sign_positive() {
+        rust_image_zoom_maximum_manual_zoom_percent(state, device_pixel_ratio)
+    } else {
+        MINIMUM_MANUAL_ZOOM_PERCENT
+    }
 }
 
 fn rust_image_zoom_set_viewport_size(

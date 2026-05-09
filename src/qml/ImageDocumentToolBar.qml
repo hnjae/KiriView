@@ -7,5 +7,5 @@ ImageToolBar {
     compact: true
     maximumManualZoomPercent: imageDocument.maximumManualZoomPercent
     minimumManualZoomPercent: imageDocument.minimumManualZoomPercent
-    zoomStepPercent: imageDocument.zoomStepPercent
+    zoomStepFactor: imageDocument.zoomStepFactor
 }

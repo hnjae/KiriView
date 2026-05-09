@@ -62,7 +62,7 @@ bool imageZoomApproximatelyEqual(const QSizeF &left, const QSizeF &right)
 
 qreal ImageZoomState::minimumManualZoomPercent() { return rustImageZoomMinimumManualZoomPercent(); }
 
-int ImageZoomState::manualZoomStepPercent() { return rustImageZoomManualZoomStepPercent(); }
+qreal ImageZoomState::manualZoomStepFactor() { return rustImageZoomManualZoomStepFactor(); }
 
 qreal ImageZoomState::maximumManualZoomPercent(
     const ImageZoomSnapshot &snapshot, qreal devicePixelRatio)
@@ -174,6 +174,11 @@ qreal ImageZoomState::maximumManualZoomPercent(qreal devicePixelRatio) const
 qreal ImageZoomState::clampedManualZoomPercent(qreal zoomPercent, qreal devicePixelRatio) const
 {
     return rustImageZoomClampedManualZoomPercent(rustState(), zoomPercent, devicePixelRatio);
+}
+
+qreal ImageZoomState::steppedManualZoomPercent(qreal stepCount, qreal devicePixelRatio) const
+{
+    return rustImageZoomSteppedManualZoomPercent(rustState(), stepCount, devicePixelRatio);
 }
 
 qreal ImageZoomState::fitZoomPercent(ImageZoomMode zoomMode, qreal devicePixelRatio) const

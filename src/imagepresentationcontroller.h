@@ -54,6 +54,7 @@ public:
     ImageZoomMode zoomMode() const;
     qreal maximumManualZoomPercent() const;
     qreal clampedManualZoomPercent(qreal zoomPercent) const;
+    qreal steppedManualZoomPercent(qreal stepCount) const;
     std::shared_ptr<DisplayedImageSurface> imageSurface() const;
     const QImage &image() const;
     quint64 imageRevision() const;

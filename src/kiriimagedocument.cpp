@@ -189,9 +189,9 @@ int KiriImageDocument::maximumManualZoomPercent() const
     return manualZoomPercentPropertyValue(m_documentController->maximumManualZoomPercent());
 }
 
-int KiriImageDocument::zoomStepPercent() const
+double KiriImageDocument::zoomStepFactor() const
 {
-    return KiriView::ImageZoomState::manualZoomStepPercent();
+    return KiriView::ImageZoomState::manualZoomStepFactor();
 }
 
 QStringList KiriImageDocument::openDialogNameFilters() const
@@ -318,6 +318,11 @@ void KiriImageDocument::setFitMode(ZoomMode zoomMode)
 double KiriImageDocument::clampedManualZoomPercent(double zoomPercent) const
 {
     return m_documentController->clampedManualZoomPercent(zoomPercent);
+}
+
+double KiriImageDocument::steppedManualZoomPercent(double stepCount) const
+{
+    return m_documentController->steppedManualZoomPercent(stepCount);
 }
 
 void KiriImageDocument::updateRenderContext() { m_documentController->updateRenderContext(); }
