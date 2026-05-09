@@ -24,6 +24,7 @@ mod imageurl;
 mod imageviewportgeometry;
 mod imagezoomstate;
 mod localization;
+mod navigationindex;
 mod predecodecachepolicy;
 mod startup_arguments;
 

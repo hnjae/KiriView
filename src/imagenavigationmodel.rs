@@ -4,6 +4,11 @@
 const PREDECODE_PREVIOUS_IMAGE_COUNT: usize = 2;
 const PREDECODE_NEXT_IMAGE_COUNT: usize = 4;
 
+use crate::navigationindex::{
+    NavigationDirection as CoreNavigationDirection, NavigationIndex as CoreNavigationIndex,
+    adjacent_navigation_index as core_adjacent_navigation_index,
+};
+
 #[cxx::bridge(namespace = "KiriView")]
 mod ffi {
     #[derive(Clone, Copy, PartialEq, Eq)]
@@ -90,28 +95,15 @@ fn rust_adjacent_navigation_candidate_index(
     current: RustNavigationIndex,
     direction: RustNavigationDirection,
 ) -> RustNavigationIndex {
-    if !current.found || current.index >= candidate_count {
+    let Some(direction) = core_navigation_direction(direction) else {
         return missing_index();
-    }
+    };
 
-    match direction {
-        RustNavigationDirection::Previous => {
-            if current.index == 0 {
-                missing_index()
-            } else {
-                found_index(current.index - 1)
-            }
-        }
-        RustNavigationDirection::Next => {
-            let next_index = current.index + 1;
-            if next_index == candidate_count {
-                missing_index()
-            } else {
-                found_index(next_index)
-            }
-        }
-        _ => missing_index(),
-    }
+    rust_navigation_index(core_adjacent_navigation_index(
+        candidate_count,
+        core_navigation_index(current),
+        direction,
+    ))
 }
 
 fn rust_page_navigation_state_update(
@@ -172,9 +164,69 @@ fn missing_index() -> RustNavigationIndex {
     }
 }
 
+fn core_navigation_direction(
+    direction: RustNavigationDirection,
+) -> Option<CoreNavigationDirection> {
+    match direction {
+        RustNavigationDirection::Previous => Some(CoreNavigationDirection::Previous),
+        RustNavigationDirection::Next => Some(CoreNavigationDirection::Next),
+        _ => None,
+    }
+}
+
+fn core_navigation_index(index: RustNavigationIndex) -> CoreNavigationIndex {
+    CoreNavigationIndex {
+        found: index.found,
+        index: index.index,
+    }
+}
+
+fn rust_navigation_index(index: CoreNavigationIndex) -> RustNavigationIndex {
+    RustNavigationIndex {
+        found: index.found,
+        index: index.index,
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn adjacent_navigation_candidate_index_moves_without_wrapping() {
+        assert_eq!(
+            rust_adjacent_navigation_candidate_index(
+                3,
+                found_index(1),
+                RustNavigationDirection::Previous
+            ),
+            found_index(0)
+        );
+        assert_eq!(
+            rust_adjacent_navigation_candidate_index(
+                3,
+                found_index(1),
+                RustNavigationDirection::Next
+            ),
+            found_index(2)
+        );
+        assert_eq!(
+            rust_adjacent_navigation_candidate_index(
+                3,
+                found_index(0),
+                RustNavigationDirection::Previous
+            ),
+            missing_index()
+        );
+        assert_eq!(
+            rust_adjacent_navigation_candidate_index(
+                3,
+                found_index(2),
+                RustNavigationDirection::Next
+            ),
+            missing_index()
+        );
+    }
 
     #[test]
     fn page_navigation_target_rejects_invalid_current_and_out_of_range_pages() {

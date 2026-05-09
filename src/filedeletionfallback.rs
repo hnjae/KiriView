@@ -24,64 +24,51 @@ mod ffi {
     }
 }
 
+use crate::navigationindex::{
+    NavigationDirection as CoreNavigationDirection, NavigationIndex as CoreNavigationIndex,
+    adjacent_navigation_index as core_adjacent_navigation_index,
+};
 use ffi::{RustDeletionFallbackCandidateIndices, RustDeletionFallbackIndex};
-
-#[derive(Clone, Copy)]
-enum DeletionFallbackDirection {
-    Previous,
-    Next,
-}
 
 fn rust_deletion_fallback_candidate_indices(
     candidate_count: usize,
     current: RustDeletionFallbackIndex,
 ) -> RustDeletionFallbackCandidateIndices {
+    let current = core_navigation_index(current);
     RustDeletionFallbackCandidateIndices {
-        preferred: adjacent_fallback_candidate_index(
+        preferred: deletion_fallback_index(core_adjacent_navigation_index(
             candidate_count,
             current,
-            DeletionFallbackDirection::Next,
-        ),
-        fallback: adjacent_fallback_candidate_index(
+            CoreNavigationDirection::Next,
+        )),
+        fallback: deletion_fallback_index(core_adjacent_navigation_index(
             candidate_count,
             current,
-            DeletionFallbackDirection::Previous,
-        ),
+            CoreNavigationDirection::Previous,
+        )),
     }
 }
 
-fn adjacent_fallback_candidate_index(
-    candidate_count: usize,
-    current: RustDeletionFallbackIndex,
-    direction: DeletionFallbackDirection,
-) -> RustDeletionFallbackIndex {
-    if !current.found || current.index >= candidate_count {
-        return missing_index();
-    }
-
-    match direction {
-        DeletionFallbackDirection::Previous => {
-            if current.index == 0 {
-                missing_index()
-            } else {
-                found_index(current.index - 1)
-            }
-        }
-        DeletionFallbackDirection::Next => {
-            let next_index = current.index + 1;
-            if next_index == candidate_count {
-                missing_index()
-            } else {
-                found_index(next_index)
-            }
-        }
+fn core_navigation_index(index: RustDeletionFallbackIndex) -> CoreNavigationIndex {
+    CoreNavigationIndex {
+        found: index.found,
+        index: index.index,
     }
 }
 
+fn deletion_fallback_index(index: CoreNavigationIndex) -> RustDeletionFallbackIndex {
+    RustDeletionFallbackIndex {
+        found: index.found,
+        index: index.index,
+    }
+}
+
+#[cfg(test)]
 fn found_index(index: usize) -> RustDeletionFallbackIndex {
     RustDeletionFallbackIndex { found: true, index }
 }
 
+#[cfg(test)]
 fn missing_index() -> RustDeletionFallbackIndex {
     RustDeletionFallbackIndex {
         found: false,
