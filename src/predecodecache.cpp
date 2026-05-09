@@ -11,6 +11,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <iterator>
+#include <utility>
 
 namespace {
 std::optional<QUrl> normalizedValidImageUrl(const QUrl &url)
@@ -250,24 +251,28 @@ std::size_t PredecodeCache::windowPriority(const QUrl &normalizedUrl) const
 
 void PredecodeCache::trimImagesToWindow()
 {
-    const auto outsideWindow
-        = [this](const CachedImage &entry) { return !containsUrl(m_windowUrls, entry.url); };
+    rust::Vec<std::size_t> windowPriorities;
+    rust::Vec<std::int64_t> byteCosts;
+    windowPriorities.reserve(m_images.size());
+    byteCosts.reserve(m_images.size());
 
-    m_images.erase(std::remove_if(m_images.begin(), m_images.end(), outsideWindow), m_images.end());
-
-    std::stable_sort(m_images.begin(), m_images.end(),
-        [this](const CachedImage &left, const CachedImage &right) {
-            return windowPriority(left.url) < windowPriority(right.url);
-        });
-
-    qsizetype totalByteCost = 0;
     for (const CachedImage &entry : m_images) {
-        totalByteCost += entry.byteCost;
+        windowPriorities.push_back(windowPriority(entry.url));
+        byteCosts.push_back(rustByteSize(entry.byteCost));
     }
 
-    while (totalByteCost > m_byteBudget && !m_images.empty()) {
-        totalByteCost -= m_images.back().byteCost;
-        m_images.pop_back();
+    const rust::Vec<std::size_t> retainedIndices
+        = rustPredecodeRetainedCachedImageIndices(std::move(windowPriorities), std::move(byteCosts),
+            m_windowUrls.size(), rustByteSize(m_byteBudget));
+
+    std::vector<CachedImage> retainedImages;
+    retainedImages.reserve(retainedIndices.size());
+    for (std::size_t index : retainedIndices) {
+        if (index < m_images.size()) {
+            retainedImages.push_back(std::move(m_images[index]));
+        }
     }
+
+    m_images = std::move(retainedImages);
 }
 }
