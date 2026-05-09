@@ -49,18 +49,12 @@ std::optional<qsizetype> systemMemoryByteSize()
 #if defined(Q_OS_LINUX)
     const long pageCount = ::sysconf(_SC_PHYS_PAGES);
     const long pageSize = ::sysconf(_SC_PAGE_SIZE);
-    if (pageCount <= 0 || pageSize <= 0) {
+    const RustSystemMemoryByteSize byteSize = rustSystemMemoryByteSize(pageCount, pageSize);
+    if (!byteSize.found) {
         return std::nullopt;
     }
 
-    const qsizetype normalizedPageCount = static_cast<qsizetype>(pageCount);
-    const qsizetype normalizedPageSize = static_cast<qsizetype>(pageSize);
-    const qsizetype maximumByteSize = std::numeric_limits<qsizetype>::max();
-    if (normalizedPageCount > maximumByteSize / normalizedPageSize) {
-        return maximumByteSize;
-    }
-
-    return normalizedPageCount * normalizedPageSize;
+    return qtByteSize(byteSize.byte_size);
 #else
     return std::nullopt;
 #endif
