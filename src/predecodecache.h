@@ -21,6 +21,11 @@ struct PredecodeRequest {
     ArchiveDocumentLocation archiveDocument;
 };
 
+bool predecodeDisplayedImageCanSchedule(
+    bool hasImage, bool displayedUrlEmpty, bool staticImageAvailable);
+bool predecodeContextCanSchedule(bool displayedLocationEmpty, bool displayedImageValid);
+bool predecodeRequestCanStart(bool urlAvailable, bool activeRequest, bool cached, bool inWindow);
+
 class PredecodeCache
 {
 public:

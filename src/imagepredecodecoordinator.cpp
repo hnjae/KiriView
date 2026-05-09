@@ -44,7 +44,8 @@ ImagePredecodeCoordinator::ImagePredecodeCoordinator(QObject *parent,
 void ImagePredecodeCoordinator::schedule(Context context)
 {
     cancel();
-    if (context.displayedImageLocation.isEmpty() || !context.displayedImage.isValid()) {
+    if (!predecodeContextCanSchedule(
+            context.displayedImageLocation.isEmpty(), context.displayedImage.isValid())) {
         return;
     }
 
@@ -113,8 +114,10 @@ void ImagePredecodeCoordinator::startNextPredecodeImageLoad(quint64 generation)
 void ImagePredecodeCoordinator::startPredecodeImageLoad(
     const QUrl &url, const ArchiveDocumentLocation &archiveDocument, quint64 generation)
 {
-    if (!url.isValid() || url.isEmpty() || hasActivePredecodeRequest() || m_cache.hasImage(url)
-        || !m_cache.windowContains(url)) {
+    const bool urlAvailable = url.isValid() && !url.isEmpty();
+    const bool cached = urlAvailable && m_cache.hasImage(url);
+    const bool inWindow = urlAvailable && m_cache.windowContains(url);
+    if (!predecodeRequestCanStart(urlAvailable, hasActivePredecodeRequest(), cached, inWindow)) {
         return;
     }
 

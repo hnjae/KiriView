@@ -636,13 +636,9 @@ void ImageDocumentController::clearAfterSuccessfulFileDeletion()
 
 void ImageDocumentController::scheduleAdjacentImagePredecode()
 {
-    if (!m_presentationController->hasImage() || m_state.displayedUrl().isEmpty()) {
-        cancelPredecode();
-        return;
-    }
-
     std::optional<StaticImagePayload> staticImage = m_presentationController->staticImage();
-    if (!staticImage.has_value()) {
+    if (!predecodeDisplayedImageCanSchedule(m_presentationController->hasImage(),
+            m_state.displayedUrl().isEmpty(), staticImage.has_value())) {
         cancelPredecode();
         return;
     }
