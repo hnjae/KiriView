@@ -127,23 +127,32 @@ namespace KiriView {
 DeletionFallbackPlan deletionFallbackPlanForDisplayedLocation(
     const DisplayedImageLocation &location)
 {
-    if (displayedLocationIsInsideArchiveDocument(location)) {
-        if (location.archiveDocument().isComicBook()) {
-            const QUrl currentContainerUrl = containerNavigationUrlForLocation(location);
-            return ComicBookDeletionFallbackPlan { currentContainerUrl,
-                currentContainerUrl.fileName() };
+    const bool insideArchiveDocument = displayedLocationIsInsideArchiveDocument(location);
+    std::optional<ImageCandidateListContext> imageContext;
+    if (!insideArchiveDocument) {
+        imageContext = imageCandidateListContextForDisplayedImage(location);
+    }
+
+    switch (rustDeletionFallbackPlanTarget(insideArchiveDocument,
+        location.archiveDocument().isComicBook(), imageContext.has_value())) {
+    case RustDeletionFallbackPlanTarget::ComicBookArchive: {
+        const QUrl currentContainerUrl = containerNavigationUrlForLocation(location);
+        return ComicBookDeletionFallbackPlan { currentContainerUrl,
+            currentContainerUrl.fileName() };
+    }
+    case RustDeletionFallbackPlanTarget::Image: {
+        if (!imageContext.has_value()) {
+            return NoDeletionFallbackPlan {};
         }
+
+        const QUrl currentUrl = imageContext->currentUrl();
+        return ImageDeletionFallbackPlan { *imageContext, currentUrl, currentUrl.fileName() };
+    }
+    case RustDeletionFallbackPlanTarget::None:
         return NoDeletionFallbackPlan {};
     }
 
-    const std::optional<ImageCandidateListContext> imageContext
-        = imageCandidateListContextForDisplayedImage(location);
-    if (!imageContext.has_value()) {
-        return NoDeletionFallbackPlan {};
-    }
-
-    const QUrl currentUrl = imageContext->currentUrl();
-    return ImageDeletionFallbackPlan { *imageContext, currentUrl, currentUrl.fileName() };
+    return NoDeletionFallbackPlan {};
 }
 
 std::optional<QUrl> imageDeletionFallbackUrl(
