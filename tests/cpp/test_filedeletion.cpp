@@ -3,6 +3,7 @@
 
 #include "filedeletion.h"
 
+#include "filedeletionworkflow.h"
 #include "image_test_support.h"
 #include "imagecontainer.h"
 
@@ -24,6 +25,7 @@ private Q_SLOTS:
     void regularImageDeletionTargetsDisplayedUrl();
     void explicitKioArchiveImageDeletionTargetsDisplayedUrl();
     void directArchiveDocumentDeletionTargetsArchiveFile();
+    void completionActionRoutesDeletionResults();
 };
 
 void TestFileDeletion::regularImageDeletionTargetsDisplayedUrl()
@@ -57,6 +59,19 @@ void TestFileDeletion::directArchiveDocumentDeletionTargetsArchiveFile()
     QCOMPARE(KiriView::deletionTargetUrlForDisplayedLocation(
                  KiriView::DisplayedImageLocation::fromArchiveDocument(pageUrl, *archiveDocument)),
         archiveUrl);
+}
+
+void TestFileDeletion::completionActionRoutesDeletionResults()
+{
+    QCOMPARE(static_cast<int>(
+                 KiriView::fileDeletionCompletionAction(KiriView::FileDeletionResult::Succeeded)),
+        static_cast<int>(KiriView::FileDeletionCompletionAction::ClearDeletedImageAndOpenFallback));
+    QCOMPARE(static_cast<int>(
+                 KiriView::fileDeletionCompletionAction(KiriView::FileDeletionResult::Canceled)),
+        static_cast<int>(KiriView::FileDeletionCompletionAction::Ignore));
+    QCOMPARE(static_cast<int>(
+                 KiriView::fileDeletionCompletionAction(KiriView::FileDeletionResult::Failed)),
+        static_cast<int>(KiriView::FileDeletionCompletionAction::ReportFailure));
 }
 
 QTEST_GUILESS_MAIN(TestFileDeletion)

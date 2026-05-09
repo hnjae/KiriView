@@ -32,6 +32,7 @@ const RUST_BRIDGE_SOURCES: &[&str] = &[
     "src/archivepath.rs",
     "src/avifcompat.rs",
     "src/filedeletionfallback.rs",
+    "src/filedeletionworkflow.rs",
     "src/heifcontainer.rs",
     "src/imageanimationpolicy.rs",
     "src/imagebytecost.rs",

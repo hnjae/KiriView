@@ -7,6 +7,7 @@ mod avifcompat;
 mod bmff;
 mod byteio;
 mod filedeletionfallback;
+mod filedeletionworkflow;
 mod heifcontainer;
 mod imageanimationpolicy;
 mod imagebytecost;

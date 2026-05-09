@@ -4,6 +4,7 @@
 #include "imagedeletioncontroller.h"
 
 #include "filedeletionfallback.h"
+#include "filedeletionworkflow.h"
 #include "imagecallback.h"
 #include "imagecontainer.h"
 #include "imageviewtext.h"
@@ -60,14 +61,14 @@ void ImageDeletionController::finishFileDeletion(
 {
     setInProgress(false);
 
-    switch (result) {
-    case FileDeletionResult::Succeeded:
+    switch (fileDeletionCompletionAction(result)) {
+    case FileDeletionCompletionAction::ClearDeletedImageAndOpenFallback:
         invokeIfSet(m_callbacks.clearDeletedImage);
         openDeletionFallback(fallbackPlan);
         return;
-    case FileDeletionResult::Canceled:
+    case FileDeletionCompletionAction::Ignore:
         return;
-    case FileDeletionResult::Failed:
+    case FileDeletionCompletionAction::ReportFailure:
         reportFailure(errorString);
         return;
     }
