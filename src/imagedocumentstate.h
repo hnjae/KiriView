@@ -13,6 +13,8 @@
 #include <vector>
 
 namespace KiriView {
+struct ImageZoomChangeSet;
+
 class ImageDocumentState
 {
 public:
@@ -83,6 +85,8 @@ std::vector<ImageDocumentChange> imageDocumentTwoPageModeNotifications();
 std::vector<ImageDocumentChange> imageDocumentSpreadZoomNotifications();
 std::vector<ImageDocumentChange> imageDocumentRightToLeftReadingNotifications(
     bool secondaryPageVisible);
+std::vector<ImageDocumentChange> imageDocumentPresentationZoomNotifications(
+    const ImageZoomChangeSet &changes);
 }
 
 #endif

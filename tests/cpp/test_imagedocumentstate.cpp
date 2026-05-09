@@ -4,6 +4,7 @@
 #include "image_test_support.h"
 #include "imagecontainer.h"
 #include "imagedocumentstate.h"
+#include "imagezoomstate.h"
 
 #include <QObject>
 #include <QTest>
@@ -173,6 +174,24 @@ void TestImageDocumentState::notificationPlansReturnChangesInEmissionOrder()
     compareChanges(KiriView::imageDocumentRightToLeftReadingNotifications(true),
         { KiriView::ImageDocumentChange::RightToLeftReading, KiriView::ImageDocumentChange::Repaint,
             KiriView::ImageDocumentChange::TwoPageMode });
+
+    KiriView::ImageZoomChangeSet presentationZoomChanges;
+    presentationZoomChanges.imageSizeChanged = true;
+    presentationZoomChanges.viewportSizeChanged = true;
+    presentationZoomChanges.zoomModeChanged = true;
+    presentationZoomChanges.zoomPercentChanged = true;
+    presentationZoomChanges.displaySizeChanged = true;
+    presentationZoomChanges.maximumManualZoomPercentChanged = true;
+    compareChanges(KiriView::imageDocumentPresentationZoomNotifications(presentationZoomChanges),
+        { KiriView::ImageDocumentChange::ImageSize, KiriView::ImageDocumentChange::ViewportSize,
+            KiriView::ImageDocumentChange::ZoomMode, KiriView::ImageDocumentChange::ZoomPercent,
+            KiriView::ImageDocumentChange::DisplaySize, KiriView::ImageDocumentChange::Repaint,
+            KiriView::ImageDocumentChange::MaximumManualZoomPercent });
+
+    KiriView::ImageZoomChangeSet tileRefreshOnlyChanges;
+    tileRefreshOnlyChanges.scheduleVisibleTileDecode = true;
+    compareChanges(KiriView::imageDocumentPresentationZoomNotifications(tileRefreshOnlyChanges),
+        std::vector<KiriView::ImageDocumentChange> {});
 }
 
 QTEST_GUILESS_MAIN(TestImageDocumentState)

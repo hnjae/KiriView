@@ -5,6 +5,7 @@
 
 #include "imagecallback.h"
 #include "imagecontainer.h"
+#include "imagezoomstate.h"
 #include "kiriview/src/imagedocumentstate.cxx.h"
 
 #include <algorithm>
@@ -63,6 +64,8 @@ KiriView::ImageDocumentChange imageDocumentChange(
         return KiriView::ImageDocumentChange::Loading;
     case KiriView::RustImageDocumentNotificationChange::ImageSize:
         return KiriView::ImageDocumentChange::ImageSize;
+    case KiriView::RustImageDocumentNotificationChange::ViewportSize:
+        return KiriView::ImageDocumentChange::ViewportSize;
     case KiriView::RustImageDocumentNotificationChange::DisplaySize:
         return KiriView::ImageDocumentChange::DisplaySize;
     case KiriView::RustImageDocumentNotificationChange::ZoomPercent:
@@ -91,6 +94,14 @@ std::vector<KiriView::ImageDocumentChange> imageDocumentChanges(
         changes.push_back(imageDocumentChange(change));
     }
     return changes;
+}
+
+KiriView::RustImageDocumentZoomChangeSet rustImageDocumentZoomChangeSet(
+    const KiriView::ImageZoomChangeSet &changes)
+{
+    return KiriView::RustImageDocumentZoomChangeSet { changes.imageSizeChanged,
+        changes.viewportSizeChanged, changes.zoomModeChanged, changes.zoomPercentChanged,
+        changes.displaySizeChanged, changes.maximumManualZoomPercentChanged };
 }
 }
 
@@ -300,5 +311,12 @@ std::vector<ImageDocumentChange> imageDocumentRightToLeftReadingNotifications(
 {
     return imageDocumentChanges(
         rustImageDocumentRightToLeftReadingNotifications(secondaryPageVisible));
+}
+
+std::vector<ImageDocumentChange> imageDocumentPresentationZoomNotifications(
+    const ImageZoomChangeSet &changes)
+{
+    return imageDocumentChanges(
+        rustImageDocumentPresentationZoomNotifications(rustImageDocumentZoomChangeSet(changes)));
 }
 }

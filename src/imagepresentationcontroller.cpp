@@ -5,6 +5,7 @@
 
 #include "displayedimagestate.h"
 #include "imagecallback.h"
+#include "imagedocumentstate.h"
 #include "imagerendering.h"
 #include "imagetiledecodescheduler.h"
 
@@ -246,25 +247,8 @@ void ImagePresentationController::applyZoomStateChanges(const ImageZoomSnapshot 
     const ImageZoomChangeSet changes
         = ImageZoomState::changeSet(previous, previousContext.devicePixelRatio, current,
             context.devicePixelRatio, tileRefresh == TileRefresh::Always);
-    if (changes.imageSizeChanged) {
-        notify(ImageDocumentChange::ImageSize);
-    }
-    if (changes.viewportSizeChanged) {
-        notify(ImageDocumentChange::ViewportSize);
-    }
-    if (changes.zoomModeChanged) {
-        notify(ImageDocumentChange::ZoomMode);
-    }
-    if (changes.zoomPercentChanged) {
-        notify(ImageDocumentChange::ZoomPercent);
-    }
-
-    if (changes.displaySizeChanged) {
-        notify(ImageDocumentChange::DisplaySize);
-        notify(ImageDocumentChange::Repaint);
-    }
-    if (changes.maximumManualZoomPercentChanged) {
-        notify(ImageDocumentChange::MaximumManualZoomPercent);
+    for (ImageDocumentChange change : imageDocumentPresentationZoomNotifications(changes)) {
+        notify(change);
     }
 
     if (changes.scheduleVisibleTileDecode) {
