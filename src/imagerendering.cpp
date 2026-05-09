@@ -7,6 +7,7 @@
 #include "qtgeometryconversion.h"
 
 #include <QPainter>
+#include <QRect>
 #include <QRectF>
 #include <QSvgRenderer>
 #include <Qt>
@@ -24,24 +25,23 @@ KiriView::ImageSurfaceDrawEntry fullImageDrawEntry(const QImage &image, const QR
     };
 }
 
+KiriView::RustImageRenderRect rustImageRenderRect(const QRect &rect)
+{
+    return KiriView::RustImageRenderRect { rect.x(), rect.y(), rect.width(), rect.height() };
+}
+
 QRectF tileTargetRect(const QRect &sourceRect, const QSize &imageSize, const QRectF &targetRect)
 {
-    return QRectF(targetRect.x()
-            + (static_cast<qreal>(sourceRect.x()) / imageSize.width()) * targetRect.width(),
-        targetRect.y()
-            + (static_cast<qreal>(sourceRect.y()) / imageSize.height()) * targetRect.height(),
-        (static_cast<qreal>(sourceRect.width()) / imageSize.width()) * targetRect.width(),
-        (static_cast<qreal>(sourceRect.height()) / imageSize.height()) * targetRect.height());
+    return KiriView::Bridge::qtRectF(
+        KiriView::rustImageTileTargetRect(rustImageRenderRect(sourceRect),
+            KiriView::Bridge::rustSize<KiriView::RustImageRenderSize>(imageSize),
+            KiriView::Bridge::rustRectF<KiriView::RustImageRenderRectF>(targetRect)));
 }
 
 QRectF tileTextureRect(const KiriView::DecodedTile &tile)
 {
-    return QRectF(static_cast<qreal>(tile.levelRect.x() - tile.textureLevelRect.x())
-            / tile.textureLevelRect.width(),
-        static_cast<qreal>(tile.levelRect.y() - tile.textureLevelRect.y())
-            / tile.textureLevelRect.height(),
-        static_cast<qreal>(tile.levelRect.width()) / tile.textureLevelRect.width(),
-        static_cast<qreal>(tile.levelRect.height()) / tile.textureLevelRect.height());
+    return KiriView::Bridge::qtRectF(KiriView::rustImageTileTextureRect(
+        rustImageRenderRect(tile.levelRect), rustImageRenderRect(tile.textureLevelRect)));
 }
 
 std::optional<KiriView::ImageSurfaceDrawEntry> staticTileDrawEntry(

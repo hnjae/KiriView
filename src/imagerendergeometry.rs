@@ -24,6 +24,14 @@ mod ffi {
     }
 
     #[derive(Clone, Copy, Debug, PartialEq)]
+    struct RustImageRenderRect {
+        x: i32,
+        y: i32,
+        width: i32,
+        height: i32,
+    }
+
+    #[derive(Clone, Copy, Debug, PartialEq)]
     struct RustImageDocumentRenderContext {
         device_pixel_ratio: f64,
         maximum_texture_size: i32,
@@ -73,11 +81,25 @@ mod ffi {
             image_size: RustImageRenderSize,
             display_size: RustImageRenderSize,
         ) -> f64;
+
+        #[cxx_name = "rustImageTileTargetRect"]
+        fn rust_image_tile_target_rect(
+            source_rect: RustImageRenderRect,
+            image_size: RustImageRenderSize,
+            target_rect: RustImageRenderRectF,
+        ) -> RustImageRenderRectF;
+
+        #[cxx_name = "rustImageTileTextureRect"]
+        fn rust_image_tile_texture_rect(
+            level_rect: RustImageRenderRect,
+            texture_level_rect: RustImageRenderRect,
+        ) -> RustImageRenderRectF;
     }
 }
 
 use ffi::{
-    RustImageDocumentRenderContext, RustImageRenderRectF, RustImageRenderSize, RustImageRenderSizeF,
+    RustImageDocumentRenderContext, RustImageRenderRect, RustImageRenderRectF, RustImageRenderSize,
+    RustImageRenderSizeF,
 };
 
 fn rust_image_target_rect(
@@ -243,6 +265,43 @@ fn rust_image_pixels_per_source_pixel(
     }
 }
 
+fn rust_image_tile_target_rect(
+    source_rect: RustImageRenderRect,
+    image_size: RustImageRenderSize,
+    target_rect: RustImageRenderRectF,
+) -> RustImageRenderRectF {
+    if rect_empty(source_rect) || size_empty(image_size) || rect_f_empty(target_rect) {
+        return empty_rect_f();
+    }
+
+    let image_width = f64::from(image_size.width);
+    let image_height = f64::from(image_size.height);
+    RustImageRenderRectF {
+        x: target_rect.x + (f64::from(source_rect.x) / image_width) * target_rect.width,
+        y: target_rect.y + (f64::from(source_rect.y) / image_height) * target_rect.height,
+        width: (f64::from(source_rect.width) / image_width) * target_rect.width,
+        height: (f64::from(source_rect.height) / image_height) * target_rect.height,
+    }
+}
+
+fn rust_image_tile_texture_rect(
+    level_rect: RustImageRenderRect,
+    texture_level_rect: RustImageRenderRect,
+) -> RustImageRenderRectF {
+    if rect_empty(texture_level_rect) {
+        return empty_rect_f();
+    }
+
+    let texture_width = f64::from(texture_level_rect.width);
+    let texture_height = f64::from(texture_level_rect.height);
+    RustImageRenderRectF {
+        x: (f64::from(level_rect.x) - f64::from(texture_level_rect.x)) / texture_width,
+        y: (f64::from(level_rect.y) - f64::from(texture_level_rect.y)) / texture_height,
+        width: f64::from(level_rect.width) / texture_width,
+        height: f64::from(level_rect.height) / texture_height,
+    }
+}
+
 fn min_like_cpp(left: f64, right: f64) -> f64 {
     if right < left { right } else { left }
 }
@@ -281,6 +340,14 @@ fn size_f_empty(size: RustImageRenderSizeF) -> bool {
     size.width <= 0.0 || size.height <= 0.0
 }
 
+fn rect_empty(rect: RustImageRenderRect) -> bool {
+    rect.width <= 0 || rect.height <= 0
+}
+
+fn rect_f_empty(rect: RustImageRenderRectF) -> bool {
+    rect.width <= 0.0 || rect.height <= 0.0
+}
+
 fn empty_size() -> RustImageRenderSize {
     RustImageRenderSize {
         width: -1,
@@ -307,6 +374,24 @@ mod tests {
 
     fn size_f(width: f64, height: f64) -> RustImageRenderSizeF {
         RustImageRenderSizeF { width, height }
+    }
+
+    fn rect(x: i32, y: i32, width: i32, height: i32) -> RustImageRenderRect {
+        RustImageRenderRect {
+            x,
+            y,
+            width,
+            height,
+        }
+    }
+
+    fn rect_f(x: f64, y: f64, width: f64, height: f64) -> RustImageRenderRectF {
+        RustImageRenderRectF {
+            x,
+            y,
+            width,
+            height,
+        }
     }
 
     #[test]
@@ -446,6 +531,41 @@ mod tests {
         assert_eq!(
             rust_image_pixels_per_source_pixel(size(1600, 1200), size(0, 300)),
             0.0
+        );
+    }
+
+    #[test]
+    fn tile_target_rect_maps_source_rect_into_image_target() {
+        let target = rust_image_tile_target_rect(
+            rect(256, 512, 256, 256),
+            size(1024, 1024),
+            rect_f(10.0, 20.0, 1000.0, 500.0),
+        );
+
+        assert_eq!(target, rect_f(260.0, 270.0, 250.0, 125.0));
+    }
+
+    #[test]
+    fn tile_texture_rect_maps_level_rect_into_texture_coordinates() {
+        let texture =
+            rust_image_tile_texture_rect(rect(256, 128, 512, 256), rect(128, 0, 1024, 512));
+
+        assert_eq!(texture, rect_f(0.125, 0.25, 0.5, 0.5));
+    }
+
+    #[test]
+    fn tile_rects_reject_invalid_geometry() {
+        assert_eq!(
+            rust_image_tile_target_rect(
+                rect(0, 0, 0, 512),
+                size(1024, 1024),
+                rect_f(10.0, 20.0, 1000.0, 500.0)
+            ),
+            empty_rect_f()
+        );
+        assert_eq!(
+            rust_image_tile_texture_rect(rect(0, 0, 512, 512), rect(0, 0, 0, 512)),
+            empty_rect_f()
         );
     }
 }
