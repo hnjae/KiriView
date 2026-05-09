@@ -30,6 +30,10 @@ format-check:
 i18n-check:
     devenv shell -- scripts/update-translations.sh --check
 
+[group('ci')]
+i18n-template-check:
+    devenv shell -- scripts/update-translations.sh --template-check
+
 [group('build')]
 i18n-update:
     devenv shell -- scripts/update-translations.sh

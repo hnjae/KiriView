@@ -25,6 +25,7 @@ path = [
   "io.github.hnjae.KiriView.desktop",
   "io.github.hnjae.KiriView.json",
   "justfile",
+  "po/ko/kiriview.po",
   "tests/fixtures/heif-sequence-alpha.heics",
 ]
 precedence = "closest"
