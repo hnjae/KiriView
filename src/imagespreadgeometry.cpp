@@ -58,6 +58,13 @@ QRectF imageSpreadSecondaryPageRect(const QSizeF &primaryDisplaySize,
         Bridge::rustSizeF<RustImageSpreadSizeF>(spreadDisplaySize), rightToLeftReading));
 }
 
+QRectF imageSpreadVisiblePageRect(const QRectF &visibleRect, const QRectF &pageRect)
+{
+    return Bridge::qtRectF(
+        rustImageSpreadVisiblePageRect(Bridge::rustRectF<RustImageSpreadRectF>(visibleRect),
+            Bridge::rustRectF<RustImageSpreadRectF>(pageRect)));
+}
+
 bool imageSpreadPageIsWide(const QSize &imageSize)
 {
     return rustImageSpreadPageIsWide(Bridge::rustSize<RustImageSpreadSize>(imageSize));

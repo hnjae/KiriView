@@ -22,6 +22,7 @@ QRectF imageSpreadPrimaryPageRect(const QSizeF &primaryDisplaySize,
     const QSizeF &secondaryDisplaySize, const QSizeF &spreadDisplaySize, bool rightToLeftReading);
 QRectF imageSpreadSecondaryPageRect(const QSizeF &primaryDisplaySize,
     const QSizeF &secondaryDisplaySize, const QSizeF &spreadDisplaySize, bool rightToLeftReading);
+QRectF imageSpreadVisiblePageRect(const QRectF &visibleRect, const QRectF &pageRect);
 bool imageSpreadPageIsWide(const QSize &imageSize);
 int imageSpreadPreviousPageTarget(
     int currentPageNumber, bool secondaryPageVisible, bool previousPageIsWide);

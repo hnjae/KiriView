@@ -60,6 +60,12 @@ mod ffi {
             right_to_left_reading: bool,
         ) -> RustImageSpreadRectF;
 
+        #[cxx_name = "rustImageSpreadVisiblePageRect"]
+        fn rust_image_spread_visible_page_rect(
+            visible_rect: RustImageSpreadRectF,
+            page_rect: RustImageSpreadRectF,
+        ) -> RustImageSpreadRectF;
+
         #[cxx_name = "rustImageSpreadPageIsWide"]
         fn rust_image_spread_page_is_wide(image_size: RustImageSpreadSize) -> bool;
 
@@ -171,6 +177,17 @@ fn rust_image_spread_secondary_page_rect(
         primary_display_size.width
     };
     page_rect(x, secondary_display_size, spread_display_size)
+}
+
+fn rust_image_spread_visible_page_rect(
+    visible_rect: RustImageSpreadRectF,
+    page_rect: RustImageSpreadRectF,
+) -> RustImageSpreadRectF {
+    translated_rect(
+        intersect_rect_f(visible_rect, page_rect),
+        -page_rect.x,
+        -page_rect.y,
+    )
 }
 
 fn rust_image_spread_page_is_wide(image_size: RustImageSpreadSize) -> bool {
@@ -302,6 +319,52 @@ fn page_rect(
     }
 }
 
+fn intersect_rect_f(
+    left: RustImageSpreadRectF,
+    right: RustImageSpreadRectF,
+) -> RustImageSpreadRectF {
+    let x1 = left.x.max(right.x);
+    let y1 = left.y.max(right.y);
+    let x2 = rect_right(left).min(rect_right(right));
+    let y2 = rect_bottom(left).min(rect_bottom(right));
+    if x2 <= x1 || y2 <= y1 {
+        return empty_rect_f();
+    }
+
+    RustImageSpreadRectF {
+        x: x1,
+        y: y1,
+        width: x2 - x1,
+        height: y2 - y1,
+    }
+}
+
+fn translated_rect(rect: RustImageSpreadRectF, dx: f64, dy: f64) -> RustImageSpreadRectF {
+    RustImageSpreadRectF {
+        x: rect.x + dx,
+        y: rect.y + dy,
+        width: rect.width,
+        height: rect.height,
+    }
+}
+
+fn rect_right(rect: RustImageSpreadRectF) -> f64 {
+    rect.x + rect.width
+}
+
+fn rect_bottom(rect: RustImageSpreadRectF) -> f64 {
+    rect.y + rect.height
+}
+
+fn empty_rect_f() -> RustImageSpreadRectF {
+    RustImageSpreadRectF {
+        x: 0.0,
+        y: 0.0,
+        width: 0.0,
+        height: 0.0,
+    }
+}
+
 fn positive_or_zero(value: f64) -> f64 {
     if value > 0.0 { value } else { 0.0 }
 }
@@ -316,6 +379,28 @@ mod tests {
 
     fn size_f(width: f64, height: f64) -> RustImageSpreadSizeF {
         RustImageSpreadSizeF { width, height }
+    }
+
+    fn rect_f(x: f64, y: f64, width: f64, height: f64) -> RustImageSpreadRectF {
+        RustImageSpreadRectF {
+            x,
+            y,
+            width,
+            height,
+        }
+    }
+
+    fn assert_rect_eq(
+        actual: RustImageSpreadRectF,
+        expected_x: f64,
+        expected_y: f64,
+        expected_width: f64,
+        expected_height: f64,
+    ) {
+        assert_eq!(actual.x, expected_x);
+        assert_eq!(actual.y, expected_y);
+        assert_eq!(actual.width, expected_width);
+        assert_eq!(actual.height, expected_height);
     }
 
     #[test]
@@ -396,6 +481,26 @@ mod tests {
 
         assert_eq!(primary.x, 350.0);
         assert_eq!(secondary.x, 0.0);
+    }
+
+    #[test]
+    fn visible_page_rect_clips_to_page_and_uses_page_local_coordinates() {
+        let rect = rust_image_spread_visible_page_rect(
+            rect_f(200.0, 40.0, 300.0, 300.0),
+            rect_f(100.0, 50.0, 400.0, 400.0),
+        );
+
+        assert_rect_eq(rect, 100.0, 0.0, 300.0, 290.0);
+    }
+
+    #[test]
+    fn visible_page_rect_preserves_qrectf_empty_translation_behavior() {
+        let rect = rust_image_spread_visible_page_rect(
+            rect_f(0.0, 0.0, 10.0, 10.0),
+            rect_f(20.0, 20.0, 5.0, 5.0),
+        );
+
+        assert_rect_eq(rect, -20.0, -20.0, 0.0, 0.0);
     }
 
     #[test]

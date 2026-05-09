@@ -937,9 +937,9 @@ void ImageDocumentController::applySpreadVisibleItemRects()
     const QRectF primaryRect = primarySpreadPageRect();
     const QRectF secondaryRect = secondarySpreadPageRect();
     m_presentationController->setVisibleItemRect(
-        visibleRect.intersected(primaryRect).translated(-primaryRect.x(), -primaryRect.y()));
+        imageSpreadVisiblePageRect(visibleRect, primaryRect));
     m_secondaryPresentationController->setVisibleItemRect(
-        visibleRect.intersected(secondaryRect).translated(-secondaryRect.x(), -secondaryRect.y()));
+        imageSpreadVisiblePageRect(visibleRect, secondaryRect));
 }
 
 QRectF ImageDocumentController::primarySpreadPageRect() const
