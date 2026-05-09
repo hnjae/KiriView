@@ -79,6 +79,9 @@ mod ffi {
         #[cxx_name = "rustImageZoomMinimumManualZoomPercent"]
         fn rust_image_zoom_minimum_manual_zoom_percent() -> f64;
 
+        #[cxx_name = "rustImageZoomManualZoomPercentPropertyValue"]
+        fn rust_image_zoom_manual_zoom_percent_property_value(zoom_percent: f64) -> i32;
+
         #[cxx_name = "rustImageZoomMaximumManualZoomPercent"]
         fn rust_image_zoom_maximum_manual_zoom_percent(
             state: RustImageZoomState,
@@ -289,6 +292,14 @@ fn rust_image_zoom_size_approximately_equal(left: RustZoomSizeF, right: RustZoom
 
 fn rust_image_zoom_minimum_manual_zoom_percent() -> f64 {
     MINIMUM_MANUAL_ZOOM_PERCENT
+}
+
+fn rust_image_zoom_manual_zoom_percent_property_value(zoom_percent: f64) -> i32 {
+    if !zoom_percent.is_finite() {
+        return MINIMUM_MANUAL_ZOOM_PERCENT as i32;
+    }
+
+    zoom_percent.ceil().clamp(0.0, f64::from(i32::MAX)) as i32
 }
 
 fn rust_image_zoom_maximum_manual_zoom_percent(
@@ -701,6 +712,29 @@ mod tests {
             zoom_percent: 200.0,
             zoom_mode: RustImageZoomMode::Fit,
         }
+    }
+
+    #[test]
+    fn manual_zoom_percent_property_value_is_a_bounded_integer() {
+        assert_eq!(rust_image_zoom_manual_zoom_percent_property_value(10.0), 10);
+        assert_eq!(rust_image_zoom_manual_zoom_percent_property_value(10.1), 11);
+        assert_eq!(rust_image_zoom_manual_zoom_percent_property_value(-4.5), 0);
+        assert_eq!(
+            rust_image_zoom_manual_zoom_percent_property_value(f64::from(i32::MAX) + 10_000.0),
+            i32::MAX
+        );
+    }
+
+    #[test]
+    fn manual_zoom_percent_property_value_uses_minimum_for_non_finite_values() {
+        assert_eq!(
+            rust_image_zoom_manual_zoom_percent_property_value(f64::NAN),
+            MINIMUM_MANUAL_ZOOM_PERCENT as i32
+        );
+        assert_eq!(
+            rust_image_zoom_manual_zoom_percent_property_value(f64::INFINITY),
+            MINIMUM_MANUAL_ZOOM_PERCENT as i32
+        );
     }
 
     #[test]

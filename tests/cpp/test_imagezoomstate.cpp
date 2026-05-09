@@ -38,6 +38,7 @@ private Q_SLOTS:
     void displaySizeForZoomRejectsInvalidInputs();
     void manualZoomStepsUseMultiplicativeFactor();
     void manualZoomLimitsAreUsable();
+    void manualZoomPercentPropertyValueIsBoundedInteger();
 };
 
 void TestImageZoomState::fitModesUsePhysicalPixels()
@@ -229,6 +230,15 @@ void TestImageZoomState::manualZoomLimitsAreUsable()
     QVERIFY(ImageZoomState::minimumManualZoomPercent() > 0.0);
     QVERIFY(state.maximumManualZoomPercent(1.0) > ImageZoomState::minimumManualZoomPercent());
     QVERIFY(ImageZoomState::manualZoomStepFactor() > 1.0);
+}
+
+void TestImageZoomState::manualZoomPercentPropertyValueIsBoundedInteger()
+{
+    QCOMPARE(ImageZoomState::manualZoomPercentPropertyValue(10.0), 10);
+    QCOMPARE(ImageZoomState::manualZoomPercentPropertyValue(10.1), 11);
+    QCOMPARE(ImageZoomState::manualZoomPercentPropertyValue(-4.5), 0);
+    QCOMPARE(ImageZoomState::manualZoomPercentPropertyValue(std::numeric_limits<qreal>::infinity()),
+        static_cast<int>(ImageZoomState::minimumManualZoomPercent()));
 }
 
 QTEST_GUILESS_MAIN(TestImageZoomState)

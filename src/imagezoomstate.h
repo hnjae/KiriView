@@ -48,6 +48,7 @@ class ImageZoomState
 {
 public:
     static qreal minimumManualZoomPercent();
+    static int manualZoomPercentPropertyValue(qreal zoomPercent);
     static qreal manualZoomStepFactor();
     static qreal maximumManualZoomPercent(
         const ImageZoomSnapshot &snapshot, qreal devicePixelRatio);

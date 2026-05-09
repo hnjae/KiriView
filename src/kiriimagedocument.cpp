@@ -8,9 +8,6 @@
 #include "imagedocumentcontroller.h"
 #include "imageformatregistry.h"
 
-#include <algorithm>
-#include <cmath>
-#include <limits>
 #include <memory>
 #include <utility>
 
@@ -77,17 +74,6 @@ KiriImageDocument::Status fromImageDocumentStatus(ImageDocumentStatus status)
     }
 
     return KiriImageDocument::Status::Null;
-}
-
-int manualZoomPercentPropertyValue(qreal zoomPercent)
-{
-    if (!std::isfinite(zoomPercent)) {
-        return static_cast<int>(KiriView::ImageZoomState::minimumManualZoomPercent());
-    }
-
-    const qreal boundedZoomPercent = std::clamp(
-        std::ceil(zoomPercent), 0.0, static_cast<qreal>(std::numeric_limits<int>::max()));
-    return static_cast<int>(boundedZoomPercent);
 }
 }
 
@@ -186,7 +172,8 @@ int KiriImageDocument::minimumManualZoomPercent() const
 
 int KiriImageDocument::maximumManualZoomPercent() const
 {
-    return manualZoomPercentPropertyValue(m_documentController->maximumManualZoomPercent());
+    return KiriView::ImageZoomState::manualZoomPercentPropertyValue(
+        m_documentController->maximumManualZoomPercent());
 }
 
 double KiriImageDocument::zoomStepFactor() const

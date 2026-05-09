@@ -62,6 +62,11 @@ bool imageZoomApproximatelyEqual(const QSizeF &left, const QSizeF &right)
 
 qreal ImageZoomState::minimumManualZoomPercent() { return rustImageZoomMinimumManualZoomPercent(); }
 
+int ImageZoomState::manualZoomPercentPropertyValue(qreal zoomPercent)
+{
+    return rustImageZoomManualZoomPercentPropertyValue(zoomPercent);
+}
+
 qreal ImageZoomState::manualZoomStepFactor() { return rustImageZoomManualZoomStepFactor(); }
 
 qreal ImageZoomState::maximumManualZoomPercent(
