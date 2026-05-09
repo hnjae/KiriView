@@ -417,7 +417,7 @@ void ImageDocumentController::openPreviousImage()
         const std::optional<QUrl> previousUrl
             = m_navigationController->urlAtPage(currentPageNumber() - 1);
         if (previousUrl.has_value()) {
-            previousPageIsWide = cachedPageIsWide(*previousUrl).value_or(false);
+            previousPageIsWide = m_spreadPageCache.cachedPageIsWide(*previousUrl).value_or(false);
         }
     }
     openImageAtPage(imageSpreadPreviousPageTarget(
@@ -699,7 +699,7 @@ void ImageDocumentController::clearSecondaryPageAndNotify()
 
 void ImageDocumentController::refreshSecondaryPage()
 {
-    cacheWidePage(m_state.displayedUrl(), m_presentationController->imageSize());
+    m_spreadPageCache.cachePageSize(m_state.displayedUrl(), m_presentationController->imageSize());
 
     auto finishWithPrimaryPage = [this]() {
         applyStoredSpreadZoomToPrimaryPage();
@@ -709,7 +709,8 @@ void ImageDocumentController::refreshSecondaryPage()
 
     const int nextPageNumber = currentPageNumber() + 1;
     const std::optional<QUrl> nextUrl = m_navigationController->urlAtPage(nextPageNumber);
-    const bool nextPageIsWide = nextUrl.has_value() && cachedPageIsWide(*nextUrl).value_or(false);
+    const bool nextPageIsWide
+        = nextUrl.has_value() && m_spreadPageCache.cachedPageIsWide(*nextUrl).value_or(false);
     const bool currentSecondaryMatchesNext = nextUrl.has_value() && secondaryPageVisible()
         && m_secondaryDisplayedImageLocation.imageUrl() == *nextUrl;
     const ImageSpreadSecondaryPageDecision decision
@@ -811,7 +812,8 @@ void ImageDocumentController::prepareSecondaryImagePresentation(
 void ImageDocumentController::finishSecondaryImagePresentation(const ImageLoadSession &session)
 {
     m_secondaryDisplayedImageLocation = session.location;
-    cacheWidePage(session.location.imageUrl(), m_secondaryPresentationController->imageSize());
+    m_spreadPageCache.cachePageSize(
+        session.location.imageUrl(), m_secondaryPresentationController->imageSize());
     if (imageSpreadPageIsWide(m_secondaryPresentationController->imageSize())) {
         finishSecondaryPageAsPrimaryOnly();
         return;
@@ -975,36 +977,6 @@ bool ImageDocumentController::rightToLeftReadingActive() const
 bool ImageDocumentController::primaryPageIsWide() const
 {
     return imageSpreadPageIsWide(m_presentationController->imageSize());
-}
-
-void ImageDocumentController::cacheWidePage(const QUrl &url, const QSize &imageSize)
-{
-    const QString key = pageCacheKey(url);
-    if (key.isEmpty() || imageSize.isEmpty()) {
-        return;
-    }
-
-    m_widePageByUrl[key] = imageSpreadPageIsWide(imageSize);
-}
-
-std::optional<bool> ImageDocumentController::cachedPageIsWide(const QUrl &url) const
-{
-    const QString key = pageCacheKey(url);
-    if (key.isEmpty()) {
-        return std::nullopt;
-    }
-
-    const auto cached = m_widePageByUrl.find(key);
-    if (cached == m_widePageByUrl.cend()) {
-        return std::nullopt;
-    }
-
-    return cached->second;
-}
-
-QString ImageDocumentController::pageCacheKey(const QUrl &url)
-{
-    return url.adjusted(QUrl::NormalizePathSegments).toString();
 }
 
 void ImageDocumentController::openImageAtRelativePageOffset(int offset)

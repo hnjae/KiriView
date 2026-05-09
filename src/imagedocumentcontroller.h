@@ -9,6 +9,7 @@
 #include "imagedocumenteffects.h"
 #include "imagedocumentstate.h"
 #include "imageloadtypes.h"
+#include "imagespreadpagecache.h"
 #include "imagesurface.h"
 #include "imagezoomstate.h"
 #include "predecodedimage.h"
@@ -22,7 +23,6 @@
 #include <QUrl>
 #include <QtGlobal>
 #include <functional>
-#include <map>
 #include <memory>
 #include <optional>
 
@@ -162,9 +162,6 @@ private:
     bool twoPageModeActive() const;
     bool rightToLeftReadingActive() const;
     bool primaryPageIsWide() const;
-    void cacheWidePage(const QUrl &url, const QSize &imageSize);
-    std::optional<bool> cachedPageIsWide(const QUrl &url) const;
-    static QString pageCacheKey(const QUrl &url);
     void openImageAtRelativePageOffset(int offset);
     void notifyTwoPageModeChanged();
     void notifySpreadZoomChanged();
@@ -185,7 +182,7 @@ private:
     ImageZoomState m_spreadZoomState;
     DisplayedImageLocation m_secondaryDisplayedImageLocation;
     QRectF m_visibleItemRect;
-    std::map<QString, bool> m_widePageByUrl;
+    ImageSpreadPageCache m_spreadPageCache;
     bool m_twoPageModeEnabled = false;
     bool m_rightToLeftReadingEnabled = false;
     bool m_secondaryPageVisible = false;
