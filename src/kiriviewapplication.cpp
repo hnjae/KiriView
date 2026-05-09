@@ -3,6 +3,7 @@
 
 #include "kiriviewapplication.h"
 
+#include "kiriview/src/applicationstate.cxx.h"
 #include "kiriviewapplicationactions.h"
 #include "kiriviewstate.h"
 
@@ -15,13 +16,8 @@ namespace Actions = KiriView::ApplicationActions;
 
 KiriViewApplication::MenuPresentation toMenuPresentation(int value)
 {
-    switch (value) {
-    case KiriViewApplication::MenuBar:
-        return KiriViewApplication::MenuBar;
-    case KiriViewApplication::HamburgerMenu:
-    default:
-        return KiriViewApplication::HamburgerMenu;
-    }
+    return static_cast<KiriViewApplication::MenuPresentation>(
+        KiriView::rustMenuPresentationFromConfigValue(value));
 }
 
 }
@@ -41,11 +37,13 @@ KiriViewApplication::MenuPresentation KiriViewApplication::menuPresentation() co
 
 void KiriViewApplication::setMenuPresentation(MenuPresentation presentation)
 {
-    if (menuPresentation() == presentation) {
+    const KiriView::RustMenuPresentationUpdate update = KiriView::rustMenuPresentationUpdate(
+        KiriViewState::menuPresentation(), static_cast<int>(presentation));
+    if (!update.changed) {
         return;
     }
 
-    KiriViewState::setMenuPresentation(static_cast<int>(presentation));
+    KiriViewState::setMenuPresentation(update.config_value);
     KiriViewState::self()->save();
     updateShowMenuBarAction();
     Q_EMIT menuPresentationChanged();

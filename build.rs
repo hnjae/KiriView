@@ -29,6 +29,7 @@ const CXX_QT_HEADER_SOURCES: &[&str] = &[
 ];
 const RUST_BRIDGE_SOURCES: &[&str] = &[
     "src/apngdecoder.rs",
+    "src/applicationstate.rs",
     "src/archivepath.rs",
     "src/avifcompat.rs",
     "src/filedeletionfallback.rs",
