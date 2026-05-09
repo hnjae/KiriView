@@ -47,6 +47,17 @@ mod ffi {
         state: RustImageZoomState,
     }
 
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    struct RustImageZoomChangeSet {
+        image_size_changed: bool,
+        viewport_size_changed: bool,
+        zoom_mode_changed: bool,
+        zoom_percent_changed: bool,
+        display_size_changed: bool,
+        maximum_manual_zoom_percent_changed: bool,
+        schedule_visible_tile_decode: bool,
+    }
+
     #[derive(Clone, Copy)]
     struct RustLoadedImageZoom {
         zoom_mode: RustImageZoomMode,
@@ -119,6 +130,15 @@ mod ffi {
             device_pixel_ratio: f64,
         ) -> RustImageZoomStateChange;
 
+        #[cxx_name = "rustImageZoomChangeSet"]
+        fn rust_image_zoom_change_set(
+            previous: RustImageZoomState,
+            previous_device_pixel_ratio: f64,
+            current: RustImageZoomState,
+            current_device_pixel_ratio: f64,
+            force_tile_refresh: bool,
+        ) -> RustImageZoomChangeSet;
+
         #[cxx_name = "rustImageZoomResetZoom"]
         fn rust_image_zoom_reset_zoom(
             state: RustImageZoomState,
@@ -176,8 +196,8 @@ mod ffi {
 }
 
 use ffi::{
-    RustImageZoomMode, RustImageZoomState, RustImageZoomStateChange, RustLoadedImageZoom,
-    RustZoomSize, RustZoomSizeF,
+    RustImageZoomChangeSet, RustImageZoomMode, RustImageZoomState, RustImageZoomStateChange,
+    RustLoadedImageZoom, RustZoomSize, RustZoomSizeF,
 };
 
 impl RustImageZoomState {
@@ -388,6 +408,58 @@ fn rust_image_zoom_set_fit_mode(
 
     state.zoom_mode = zoom_mode;
     RustImageZoomStateChange::changed_and_updated(state, device_pixel_ratio)
+}
+
+fn rust_image_zoom_change_set(
+    previous: RustImageZoomState,
+    previous_device_pixel_ratio: f64,
+    current: RustImageZoomState,
+    current_device_pixel_ratio: f64,
+    force_tile_refresh: bool,
+) -> RustImageZoomChangeSet {
+    let image_size_changed = previous.image_width != current.image_width
+        || previous.image_height != current.image_height;
+    let viewport_size_changed = !rust_image_zoom_size_approximately_equal(
+        previous.viewport_size(),
+        current.viewport_size(),
+    );
+    let zoom_mode_changed = previous.zoom_mode != current.zoom_mode;
+    let zoom_percent_changed =
+        !rust_image_zoom_approximately_equal(previous.zoom_percent, current.zoom_percent);
+    let display_size_changed = !rust_image_zoom_size_approximately_equal(
+        RustZoomSizeF {
+            width: previous.display_width,
+            height: previous.display_height,
+        },
+        RustZoomSizeF {
+            width: current.display_width,
+            height: current.display_height,
+        },
+    );
+    let previous_maximum_manual_zoom_percent =
+        rust_image_zoom_maximum_manual_zoom_percent(previous, previous_device_pixel_ratio);
+    let current_maximum_manual_zoom_percent =
+        rust_image_zoom_maximum_manual_zoom_percent(current, current_device_pixel_ratio);
+    let maximum_manual_zoom_percent_changed = !rust_image_zoom_approximately_equal(
+        previous_maximum_manual_zoom_percent,
+        current_maximum_manual_zoom_percent,
+    );
+    let zoom_state_changed = image_size_changed
+        || viewport_size_changed
+        || zoom_mode_changed
+        || zoom_percent_changed
+        || display_size_changed
+        || maximum_manual_zoom_percent_changed;
+
+    RustImageZoomChangeSet {
+        image_size_changed,
+        viewport_size_changed,
+        zoom_mode_changed,
+        zoom_percent_changed,
+        display_size_changed,
+        maximum_manual_zoom_percent_changed,
+        schedule_visible_tile_decode: zoom_state_changed || force_tile_refresh,
+    }
 }
 
 fn rust_image_zoom_reset_zoom(
@@ -612,4 +684,75 @@ fn rust_image_zoom_display_size_for_zoom_percent(
         device_pixel_ratio,
     );
     RustZoomSizeF { width, height }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn zoom_state() -> RustImageZoomState {
+        RustImageZoomState {
+            image_width: 200,
+            image_height: 100,
+            viewport_width: 400.0,
+            viewport_height: 300.0,
+            display_width: 400.0,
+            display_height: 200.0,
+            zoom_percent: 200.0,
+            zoom_mode: RustImageZoomMode::Fit,
+        }
+    }
+
+    #[test]
+    fn change_set_reports_zoom_snapshot_differences() {
+        let previous = zoom_state();
+        let current = RustImageZoomState {
+            image_width: 300,
+            viewport_width: 500.0,
+            display_width: 500.0,
+            zoom_percent: 250.0,
+            zoom_mode: RustImageZoomMode::FitWidth,
+            ..previous
+        };
+
+        let changes = rust_image_zoom_change_set(previous, 1.0, current, 1.0, false);
+
+        assert!(changes.image_size_changed);
+        assert!(changes.viewport_size_changed);
+        assert!(changes.zoom_mode_changed);
+        assert!(changes.zoom_percent_changed);
+        assert!(changes.display_size_changed);
+        assert!(changes.maximum_manual_zoom_percent_changed);
+        assert!(changes.schedule_visible_tile_decode);
+    }
+
+    #[test]
+    fn change_set_tracks_maximum_manual_zoom_changes_from_render_context() {
+        let state = zoom_state();
+
+        let changes = rust_image_zoom_change_set(state, 1.0, state, 2.0, false);
+
+        assert!(!changes.image_size_changed);
+        assert!(!changes.viewport_size_changed);
+        assert!(!changes.zoom_mode_changed);
+        assert!(!changes.zoom_percent_changed);
+        assert!(!changes.display_size_changed);
+        assert!(changes.maximum_manual_zoom_percent_changed);
+        assert!(changes.schedule_visible_tile_decode);
+    }
+
+    #[test]
+    fn change_set_can_force_visible_tile_decode_without_zoom_changes() {
+        let state = zoom_state();
+
+        let changes = rust_image_zoom_change_set(state, 1.0, state, 1.0, true);
+
+        assert!(!changes.image_size_changed);
+        assert!(!changes.viewport_size_changed);
+        assert!(!changes.zoom_mode_changed);
+        assert!(!changes.zoom_percent_changed);
+        assert!(!changes.display_size_changed);
+        assert!(!changes.maximum_manual_zoom_percent_changed);
+        assert!(changes.schedule_visible_tile_decode);
+    }
 }

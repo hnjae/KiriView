@@ -255,40 +255,31 @@ void ImagePresentationController::applyZoomStateChanges(const ImageZoomSnapshot 
     TileRefresh tileRefresh)
 {
     const ImageZoomSnapshot current = m_zoomState.snapshot();
-    bool changed = false;
-    if (previous.imageSize != current.imageSize) {
+    const ImageZoomChangeSet changes
+        = ImageZoomState::changeSet(previous, previousContext.devicePixelRatio, current,
+            context.devicePixelRatio, tileRefresh == TileRefresh::Always);
+    if (changes.imageSizeChanged) {
         notify(ImageDocumentChange::ImageSize);
-        changed = true;
     }
-    if (!imageZoomApproximatelyEqual(previous.viewportSize, current.viewportSize)) {
+    if (changes.viewportSizeChanged) {
         notify(ImageDocumentChange::ViewportSize);
-        changed = true;
     }
-    if (previous.zoomMode != current.zoomMode) {
+    if (changes.zoomModeChanged) {
         notify(ImageDocumentChange::ZoomMode);
-        changed = true;
     }
-    if (!imageZoomApproximatelyEqual(previous.zoomPercent, current.zoomPercent)) {
+    if (changes.zoomPercentChanged) {
         notify(ImageDocumentChange::ZoomPercent);
-        changed = true;
     }
 
-    if (!imageZoomApproximatelyEqual(previous.displaySize, current.displaySize)) {
+    if (changes.displaySizeChanged) {
         notify(ImageDocumentChange::DisplaySize);
         notify(ImageDocumentChange::Repaint);
-        changed = true;
     }
-    const qreal previousMaximumManualZoomPercent
-        = ImageZoomState::maximumManualZoomPercent(previous, previousContext.devicePixelRatio);
-    const qreal currentMaximumManualZoomPercent
-        = ImageZoomState::maximumManualZoomPercent(current, context.devicePixelRatio);
-    if (!imageZoomApproximatelyEqual(
-            previousMaximumManualZoomPercent, currentMaximumManualZoomPercent)) {
+    if (changes.maximumManualZoomPercentChanged) {
         notify(ImageDocumentChange::MaximumManualZoomPercent);
-        changed = true;
     }
 
-    if (changed || tileRefresh == TileRefresh::Always) {
+    if (changes.scheduleVisibleTileDecode) {
         scheduleVisibleTileDecode(context);
     }
 }

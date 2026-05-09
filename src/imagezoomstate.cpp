@@ -70,6 +70,18 @@ qreal ImageZoomState::maximumManualZoomPercent(
     return rustImageZoomMaximumManualZoomPercent(rustZoomState(snapshot), devicePixelRatio);
 }
 
+ImageZoomChangeSet ImageZoomState::changeSet(const ImageZoomSnapshot &previous,
+    qreal previousDevicePixelRatio, const ImageZoomSnapshot &current, qreal currentDevicePixelRatio,
+    bool forceTileRefresh)
+{
+    const RustImageZoomChangeSet changes
+        = rustImageZoomChangeSet(rustZoomState(previous), previousDevicePixelRatio,
+            rustZoomState(current), currentDevicePixelRatio, forceTileRefresh);
+    return ImageZoomChangeSet { changes.image_size_changed, changes.viewport_size_changed,
+        changes.zoom_mode_changed, changes.zoom_percent_changed, changes.display_size_changed,
+        changes.maximum_manual_zoom_percent_changed, changes.schedule_visible_tile_decode };
+}
+
 const QSize &ImageZoomState::imageSize() const { return m_imageSize; }
 
 const QSizeF &ImageZoomState::viewportSize() const { return m_viewportSize; }
