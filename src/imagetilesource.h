@@ -33,7 +33,6 @@ public:
 
 private:
     bool supportsJpegScaledFirstDisplay() const;
-    QSize firstDisplayScaledSize(const QSize &physicalViewportSize) const;
     std::optional<DecodedTile> decodeReaderClipTile(
         const TileRequest &request, QString *errorString) const;
     std::optional<DecodedTile> decodeCachedOrScaledLevelTile(

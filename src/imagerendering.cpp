@@ -106,6 +106,19 @@ QSize scaledImageSizeToFit(const QSizeF &imageSize, const QSize &boundsSize)
             Bridge::rustSize<RustImageRenderSize>(boundsSize)));
 }
 
+QSize firstDisplayScaledImageSize(const QSize &imageSize, const QSize &physicalViewportSize)
+{
+    return Bridge::qtSize(
+        rustFirstDisplayScaledImageSize(Bridge::rustSize<RustImageRenderSize>(imageSize),
+            Bridge::rustSize<RustImageRenderSize>(physicalViewportSize)));
+}
+
+qreal imagePixelsPerSourcePixel(const QSize &imageSize, const QSize &displaySize)
+{
+    return rustImagePixelsPerSourcePixel(Bridge::rustSize<RustImageRenderSize>(imageSize),
+        Bridge::rustSize<RustImageRenderSize>(displaySize));
+}
+
 std::vector<ImageSurfaceDrawEntry> imageSurfaceDrawEntries(
     const DisplayedImageSurface &surface, const QRectF &targetRect)
 {

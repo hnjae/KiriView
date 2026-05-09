@@ -12,7 +12,6 @@
 #include <QImageIOHandler>
 #include <QMutexLocker>
 #include <algorithm>
-#include <cmath>
 #include <memory>
 #include <optional>
 #include <utility>
@@ -156,7 +155,7 @@ FirstDisplayImageDecodeResult QImageReaderTileSource::decodeFirstDisplayImage(
         return {};
     }
 
-    const QSize scaledSize = firstDisplayScaledSize(context.physicalViewportSize);
+    const QSize scaledSize = firstDisplayScaledImageSize(m_imageSize, context.physicalViewportSize);
     if (scaledSize.isEmpty()) {
         return {};
     }
@@ -166,10 +165,8 @@ FirstDisplayImageDecodeResult QImageReaderTileSource::decodeFirstDisplayImage(
         return { FirstDisplayImageDecodeStatus::Error, {}, 0.0 };
     }
 
-    const qreal displayPixelsPerSourcePixel
-        = std::min(static_cast<qreal>(image.width()) / m_imageSize.width(),
-            static_cast<qreal>(image.height()) / m_imageSize.height());
-    if (!std::isfinite(displayPixelsPerSourcePixel) || displayPixelsPerSourcePixel <= 0.0) {
+    const qreal displayPixelsPerSourcePixel = imagePixelsPerSourcePixel(m_imageSize, image.size());
+    if (displayPixelsPerSourcePixel <= 0.0) {
         setTileSourceError(errorString,
             imageViewText("Could not determine the selected JPEG first-display size."));
         return { FirstDisplayImageDecodeStatus::Error, {}, 0.0 };
@@ -190,16 +187,6 @@ bool QImageReaderTileSource::supportsJpegScaledFirstDisplay() const
 {
     const QByteArray format = m_format.toLower();
     return format == QByteArrayLiteral("jpg") || format == QByteArrayLiteral("jpeg");
-}
-
-QSize QImageReaderTileSource::firstDisplayScaledSize(const QSize &physicalViewportSize) const
-{
-    const QSize scaledSize = scaledImageSizeToFit(QSizeF(m_imageSize), physicalViewportSize);
-    if (scaledSize.isEmpty() || scaledSize == m_imageSize) {
-        return {};
-    }
-
-    return scaledSize;
 }
 
 QImage QImageReaderTileSource::readScaledImage(const QSize &scaledSize, QString *errorString) const

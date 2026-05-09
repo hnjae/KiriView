@@ -19,6 +19,8 @@ class TestImageRendering : public QObject
 private Q_SLOTS:
     void scaledImageSizeToFitKeepsAspectRatioWithoutUpscaling();
     void scaledImageSizeToFitRejectsInvalidInput();
+    void firstDisplayScaledImageSizeOnlyReturnsDownscaleTarget();
+    void imagePixelsPerSourcePixelUsesLimitingAxis();
     void renderContextNormalizationUsesSafeDefaults();
     void firstDisplayDecodeContextUsesPhysicalViewport();
     void staticSurfaceDrawEntriesKeepPreviewAndTileRectsSeparate();
@@ -40,6 +42,21 @@ void TestImageRendering::scaledImageSizeToFitRejectsInvalidInput()
     QCOMPARE(KiriView::scaledImageSizeToFit(QSizeF(), QSize(100, 100)), QSize());
     QCOMPARE(KiriView::scaledImageSizeToFit(QSizeF(100.0, 100.0), QSize()), QSize());
     QCOMPARE(KiriView::scaledImageSizeToFit(QSizeF(nan, 100.0), QSize(100, 100)), QSize());
+}
+
+void TestImageRendering::firstDisplayScaledImageSizeOnlyReturnsDownscaleTarget()
+{
+    QCOMPARE(
+        KiriView::firstDisplayScaledImageSize(QSize(1600, 1200), QSize(400, 300)), QSize(400, 300));
+    QCOMPARE(KiriView::firstDisplayScaledImageSize(QSize(200, 100), QSize(400, 300)), QSize());
+    QCOMPARE(KiriView::firstDisplayScaledImageSize(QSize(1600, 1200), QSize()), QSize());
+}
+
+void TestImageRendering::imagePixelsPerSourcePixelUsesLimitingAxis()
+{
+    QCOMPARE(KiriView::imagePixelsPerSourcePixel(QSize(1600, 1200), QSize(400, 300)), 0.25);
+    QCOMPARE(KiriView::imagePixelsPerSourcePixel(QSize(1600, 1200), QSize(800, 300)), 0.25);
+    QCOMPARE(KiriView::imagePixelsPerSourcePixel(QSize(1600, 1200), QSize()), 0.0);
 }
 
 void TestImageRendering::renderContextNormalizationUsesSafeDefaults()

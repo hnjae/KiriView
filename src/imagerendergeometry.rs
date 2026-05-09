@@ -61,6 +61,18 @@ mod ffi {
             viewport_size: RustImageRenderSizeF,
             device_pixel_ratio: f64,
         ) -> RustImageRenderSize;
+
+        #[cxx_name = "rustFirstDisplayScaledImageSize"]
+        fn rust_first_display_scaled_image_size(
+            image_size: RustImageRenderSize,
+            physical_viewport_size: RustImageRenderSize,
+        ) -> RustImageRenderSize;
+
+        #[cxx_name = "rustImagePixelsPerSourcePixel"]
+        fn rust_image_pixels_per_source_pixel(
+            image_size: RustImageRenderSize,
+            display_size: RustImageRenderSize,
+        ) -> f64;
     }
 }
 
@@ -188,6 +200,47 @@ fn rust_first_display_physical_viewport_size(
     };
 
     RustImageRenderSize { width, height }
+}
+
+fn rust_first_display_scaled_image_size(
+    image_size: RustImageRenderSize,
+    physical_viewport_size: RustImageRenderSize,
+) -> RustImageRenderSize {
+    if size_empty(image_size) || size_empty(physical_viewport_size) {
+        return empty_size();
+    }
+
+    let scaled_size = rust_scaled_image_size_to_fit(
+        RustImageRenderSizeF {
+            width: f64::from(image_size.width),
+            height: f64::from(image_size.height),
+        },
+        physical_viewport_size,
+    );
+    if size_empty(scaled_size) || scaled_size == image_size {
+        return empty_size();
+    }
+
+    scaled_size
+}
+
+fn rust_image_pixels_per_source_pixel(
+    image_size: RustImageRenderSize,
+    display_size: RustImageRenderSize,
+) -> f64 {
+    if size_empty(image_size) || size_empty(display_size) {
+        return 0.0;
+    }
+
+    let scale = min_like_cpp(
+        f64::from(display_size.width) / f64::from(image_size.width),
+        f64::from(display_size.height) / f64::from(image_size.height),
+    );
+    if scale.is_finite() && scale > 0.0 {
+        scale
+    } else {
+        0.0
+    }
 }
 
 fn min_like_cpp(left: f64, right: f64) -> f64 {
@@ -361,6 +414,38 @@ mod tests {
         assert_eq!(
             rust_first_display_physical_viewport_size(size_f(0.0, 300.0), 2.0),
             empty_size()
+        );
+    }
+
+    #[test]
+    fn first_display_scaled_image_size_downscales_without_full_size_decode() {
+        assert_eq!(
+            rust_first_display_scaled_image_size(size(1600, 1200), size(400, 300)),
+            size(400, 300)
+        );
+        assert_eq!(
+            rust_first_display_scaled_image_size(size(200, 100), size(400, 300)),
+            empty_size()
+        );
+        assert_eq!(
+            rust_first_display_scaled_image_size(size(1600, 1200), size(0, 300)),
+            empty_size()
+        );
+    }
+
+    #[test]
+    fn image_pixels_per_source_pixel_uses_limiting_axis() {
+        assert_eq!(
+            rust_image_pixels_per_source_pixel(size(1600, 1200), size(400, 300)),
+            0.25
+        );
+        assert_eq!(
+            rust_image_pixels_per_source_pixel(size(1600, 1200), size(800, 300)),
+            0.25
+        );
+        assert_eq!(
+            rust_image_pixels_per_source_pixel(size(1600, 1200), size(0, 300)),
+            0.0
         );
     }
 }

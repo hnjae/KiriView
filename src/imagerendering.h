@@ -27,6 +27,8 @@ struct ImageSurfaceDrawEntry {
 
 QRectF imageTargetRect(const QSize &imageSize, const QSizeF &boundsSize);
 QSize scaledImageSizeToFit(const QSizeF &imageSize, const QSize &boundsSize);
+QSize firstDisplayScaledImageSize(const QSize &imageSize, const QSize &physicalViewportSize);
+qreal imagePixelsPerSourcePixel(const QSize &imageSize, const QSize &displaySize);
 std::vector<ImageSurfaceDrawEntry> imageSurfaceDrawEntries(
     const DisplayedImageSurface &surface, const QRectF &targetRect);
 QImage displayReadyImage(const QImage &image);
