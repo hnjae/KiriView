@@ -49,7 +49,7 @@
       "buildsystem": "simple",
       "build-commands": [
         "cmake -S . -B build -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_PREFIX_PATH=/app -DCMAKE_INSTALL_PREFIX=/app -DCMAKE_INSTALL_LIBDIR=lib -DENABLE_PLUGIN_LOADING=ON -DPLUGIN_DIRECTORY=/app/lib/libheif -DPLUGIN_INSTALL_DIRECTORY=/app/lib/libheif -DWITH_GDK_PIXBUF=OFF -DWITH_EXAMPLES=OFF -DBUILD_TESTING=OFF -DBUILD_DOCUMENTATION=OFF -DWITH_FFMPEG_DECODER=ON -DWITH_FFMPEG_DECODER_PLUGIN=ON -DWITH_VVDEC=ON -DWITH_VVDEC_PLUGIN=ON -DWITH_JPEG_DECODER=ON -DWITH_JPEG_ENCODER=ON -DWITH_OpenJPEG_DECODER=ON -DWITH_OpenJPEG_ENCODER=OFF -DWITH_DAV1D=ON -DWITH_DAV1D_PLUGIN=ON -DWITH_AOM_DECODER=OFF -DWITH_AOM_ENCODER=OFF -DWITH_OpenH264_DECODER=OFF -DWITH_LIBDE265=OFF -DWITH_X265=OFF -DWITH_KVAZAAR=OFF -DWITH_UVG266=OFF -DWITH_SvtEnc=OFF -DWITH_RAV1E=OFF -DWITH_OPENJPH_ENCODER=OFF -DWITH_VVENC=OFF -DWITH_UNCOMPRESSED_CODEC=OFF -DWITH_LIBSHARPYUV=OFF -DWITH_FUZZERS=OFF",
-        "cmake --build build",
+        "cmake --build build --parallel ${FLATPAK_BUILDER_N_JOBS:-$(nproc)}",
         "cmake --install build"
       ],
       "sources": [
@@ -69,7 +69,7 @@
       "name": "kiriview",
       "buildsystem": "simple",
       "build-commands": [
-        "cargo --offline build --release",
+        "cargo --offline build --release --jobs ${FLATPAK_BUILDER_N_JOBS:-$(nproc)}",
         "install -Dm755 target/release/kiriview /app/bin/kiriview",
         "install -Dm644 data/icons/hicolor/scalable/apps/io.github.hnjae.KiriView.svg /app/share/icons/hicolor/scalable/apps/io.github.hnjae.KiriView.svg",
         "scripts/install-translations.sh /app",

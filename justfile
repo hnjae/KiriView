@@ -39,6 +39,7 @@ build:
     devenv shell -- flatpak-builder \
         --user \
         --install-deps-from=flathub \
+        --jobs="${KIRIVIEW_FLATPAK_JOBS:-$(nproc)}" \
         --ccache \
         --keep-build-dirs \
         --disable-tests \
@@ -50,6 +51,7 @@ build-with-tests:
     devenv shell -- flatpak-builder \
         --user \
         --install-deps-from=flathub \
+        --jobs="${KIRIVIEW_FLATPAK_JOBS:-$(nproc)}" \
         --ccache \
         --keep-build-dirs \
         --force-clean build-dir \
@@ -79,6 +81,7 @@ install:
         --user \
         --install \
         --install-deps-from=flathub \
+        --jobs="${KIRIVIEW_FLATPAK_JOBS:-$(nproc)}" \
         --ccache \
         --keep-build-dirs \
         --disable-tests \
