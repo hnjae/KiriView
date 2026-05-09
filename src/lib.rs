@@ -8,6 +8,7 @@ mod avifcompat;
 mod bmff;
 mod byteio;
 mod decodedimagepresentation;
+mod decodedimageresult;
 mod filedeletionfallback;
 mod filedeletionworkflow;
 mod heifcontainer;

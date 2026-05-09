@@ -3,6 +3,8 @@
 
 #include "decodedimageresult.h"
 
+#include "kiriview/src/decodedimageresult.cxx.h"
+
 #include <optional>
 #include <utility>
 #include <variant>
@@ -11,6 +13,21 @@ namespace {
 QString errorStringValue(QString *errorString)
 {
     return errorString == nullptr ? QString() : *errorString;
+}
+
+KiriView::RustFirstDisplayImageDecodeStatus rustFirstDisplayImageDecodeStatus(
+    KiriView::FirstDisplayImageDecodeStatus status)
+{
+    switch (status) {
+    case KiriView::FirstDisplayImageDecodeStatus::Ready:
+        return KiriView::RustFirstDisplayImageDecodeStatus::Ready;
+    case KiriView::FirstDisplayImageDecodeStatus::NotImplemented:
+        return KiriView::RustFirstDisplayImageDecodeStatus::NotImplemented;
+    case KiriView::FirstDisplayImageDecodeStatus::Error:
+        return KiriView::RustFirstDisplayImageDecodeStatus::Error;
+    }
+
+    return KiriView::RustFirstDisplayImageDecodeStatus::Error;
 }
 }
 
@@ -64,23 +81,24 @@ DecodedImageResult staticDecodedImageResult(std::shared_ptr<ImageTileSource> sou
 
     FirstDisplayImageDecodeResult firstDisplayResult
         = source->decodeFirstDisplayImage(firstDisplay, errorString);
-    if (firstDisplayResult.status == FirstDisplayImageDecodeStatus::Ready) {
-        if (firstDisplayResult.image.isNull()) {
-            return failedDecodedImageResult(errorStringValue(errorString));
-        }
-
+    switch (rustStaticDecodedImagePlanAfterFirstDisplay(
+        rustFirstDisplayImageDecodeStatus(firstDisplayResult.status),
+        !firstDisplayResult.image.isNull())) {
+    case RustStaticDecodedImagePlan::UseFirstDisplay:
         return successfulDecodedImageResult(StaticDecodedImage {
             StaticImagePayload { std::move(source), std::move(firstDisplayResult.image),
                 StaticImageDisplayHints { firstDisplayResult.displayPixelsPerSourcePixel } },
         });
-    }
-    if (firstDisplayResult.status == FirstDisplayImageDecodeStatus::Error) {
+    case RustStaticDecodedImagePlan::DecodeBlockingDisplay:
+        break;
+    case RustStaticDecodedImagePlan::Fail:
         return failedDecodedImageResult(errorStringValue(errorString));
     }
 
     QImage preview
         = source->decodeBlockingDisplayImage(imageBlockingDisplayLongEdgeMax, errorString);
-    if (preview.isNull()) {
+    if (rustStaticDecodedImagePlanAfterBlockingDisplay(!preview.isNull())
+        == RustStaticDecodedImagePlan::Fail) {
         return failedDecodedImageResult(errorStringValue(errorString));
     }
 
