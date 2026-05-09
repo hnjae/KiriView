@@ -3,12 +3,13 @@
 
 #include "imagerendering.h"
 
+#include "kiriview/src/imagerendergeometry.cxx.h"
+#include "qtgeometryconversion.h"
+
 #include <QPainter>
 #include <QRectF>
 #include <QSvgRenderer>
 #include <Qt>
-#include <algorithm>
-#include <cmath>
 #include <optional>
 #include <utility>
 #include <vector>
@@ -94,38 +95,15 @@ void appendStaticSurfaceDrawEntries(std::vector<KiriView::ImageSurfaceDrawEntry>
 namespace KiriView {
 QRectF imageTargetRect(const QSize &imageSize, const QSizeF &boundsSize)
 {
-    if (imageSize.isEmpty() || boundsSize.isEmpty()) {
-        return {};
-    }
-
-    const qreal scale = std::min(
-        boundsSize.width() / imageSize.width(), boundsSize.height() / imageSize.height());
-    const QSizeF targetSize(imageSize.width() * scale, imageSize.height() * scale);
-    return QRectF((boundsSize.width() - targetSize.width()) / 2.0,
-        (boundsSize.height() - targetSize.height()) / 2.0, targetSize.width(), targetSize.height());
+    return Bridge::qtRectF(rustImageTargetRect(Bridge::rustSize<RustImageRenderSize>(imageSize),
+        Bridge::rustSizeF<RustImageRenderSizeF>(boundsSize)));
 }
 
 QSize scaledImageSizeToFit(const QSizeF &imageSize, const QSize &boundsSize)
 {
-    if (imageSize.isEmpty() || boundsSize.isEmpty()) {
-        return {};
-    }
-
-    const qreal imageWidth = imageSize.width();
-    const qreal imageHeight = imageSize.height();
-    if (!std::isfinite(imageWidth) || !std::isfinite(imageHeight) || imageWidth <= 0.0
-        || imageHeight <= 0.0) {
-        return {};
-    }
-
-    const qreal scale = std::min<qreal>(
-        1.0, std::min(boundsSize.width() / imageWidth, boundsSize.height() / imageHeight));
-    if (!std::isfinite(scale) || scale <= 0.0) {
-        return {};
-    }
-
-    return QSize(std::clamp(static_cast<int>(std::ceil(imageWidth * scale)), 1, boundsSize.width()),
-        std::clamp(static_cast<int>(std::ceil(imageHeight * scale)), 1, boundsSize.height()));
+    return Bridge::qtSize(
+        rustScaledImageSizeToFit(Bridge::rustSizeF<RustImageRenderSizeF>(imageSize),
+            Bridge::rustSize<RustImageRenderSize>(boundsSize)));
 }
 
 std::vector<ImageSurfaceDrawEntry> imageSurfaceDrawEntries(
@@ -154,14 +132,8 @@ QImage displayReadyImage(const QImage &image)
 
 QSize svgRasterSize(const QSizeF &displaySize, qreal devicePixelRatio, int maximumTextureSize)
 {
-    if (displaySize.isEmpty() || !std::isfinite(devicePixelRatio) || devicePixelRatio <= 0.0) {
-        return {};
-    }
-
-    const qreal width = displaySize.width() * devicePixelRatio;
-    const qreal height = displaySize.height() * devicePixelRatio;
-    const int maximumSize = maximumTextureSize > 0 ? maximumTextureSize : fallbackTextureSizeMax;
-    return scaledImageSizeToFit(QSizeF(width, height), QSize(maximumSize, maximumSize));
+    return Bridge::qtSize(rustSvgRasterSize(Bridge::rustSizeF<RustImageRenderSizeF>(displaySize),
+        devicePixelRatio, maximumTextureSize, fallbackTextureSizeMax));
 }
 
 QImage renderSvgImage(const QByteArray &data, const QSize &size)
