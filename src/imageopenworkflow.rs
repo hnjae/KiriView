@@ -44,6 +44,12 @@ mod ffi {
     }
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    enum RustImageOpenSourceTarget {
+        EmptySource = 0,
+        LoadSource = 1,
+    }
+
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     enum RustImageOpenFailureTarget {
         ContainerNavigation = 0,
         Replacement = 1,
@@ -72,6 +78,9 @@ mod ffi {
     }
 
     extern "Rust" {
+        #[cxx_name = "rustImageOpenSourceTarget"]
+        fn rust_image_open_source_target(source_url_empty: bool) -> RustImageOpenSourceTarget;
+
         #[cxx_name = "rustImageOpenBeginSourceLoad"]
         fn rust_image_open_begin_source_load(
             has_image: bool,
@@ -110,9 +119,17 @@ mod ffi {
 
 use ffi::{
     RustImageOpenBoolTarget, RustImageOpenDisplayedLocationTarget, RustImageOpenEffects,
-    RustImageOpenErrorStringTarget, RustImageOpenFailureTarget, RustImageOpenStatusTarget,
-    RustImageOpenTransition, RustImageOpenUrlTarget,
+    RustImageOpenErrorStringTarget, RustImageOpenFailureTarget, RustImageOpenSourceTarget,
+    RustImageOpenStatusTarget, RustImageOpenTransition, RustImageOpenUrlTarget,
 };
+
+fn rust_image_open_source_target(source_url_empty: bool) -> RustImageOpenSourceTarget {
+    if source_url_empty {
+        RustImageOpenSourceTarget::EmptySource
+    } else {
+        RustImageOpenSourceTarget::LoadSource
+    }
+}
 
 fn rust_image_open_begin_source_load(
     has_image: bool,
@@ -263,6 +280,18 @@ mod tests {
         assert_eq!(transition.status, RustImageOpenStatusTarget::Loading);
         assert!(transition.effects.clear_image);
         assert!(transition.effects.reset_zoom);
+    }
+
+    #[test]
+    fn source_target_distinguishes_empty_source_from_loadable_source() {
+        assert_eq!(
+            rust_image_open_source_target(true),
+            RustImageOpenSourceTarget::EmptySource
+        );
+        assert_eq!(
+            rust_image_open_source_target(false),
+            RustImageOpenSourceTarget::LoadSource
+        );
     }
 
     #[test]

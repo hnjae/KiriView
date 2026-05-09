@@ -52,6 +52,7 @@ class TestImageOpenWorkflow : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
+    void sourceTargetRoutesEmptyAndLoadableSources();
     void firstImageLoadSuccessTransitionsToReady();
     void directArchiveImageLoadSuccessDisablesContainerNavigation();
     void replacementLoadFailureKeepsDisplayedImage();
@@ -60,6 +61,17 @@ private Q_SLOTS:
     void loadFailureTargetRoutesContainerNavigationReplacementAndInitialLoads();
     void trackedLoadCompletionsClearLoadingContainerNavigationUrl();
 };
+
+void TestImageOpenWorkflow::sourceTargetRoutesEmptyAndLoadableSources()
+{
+    KiriView::ImageDocumentState state;
+    QCOMPARE(static_cast<int>(KiriView::ImageOpenWorkflow::sourceTargetForOpen(state)),
+        static_cast<int>(KiriView::ImageOpenSourceTarget::EmptySource));
+
+    state.setSourceUrl(localUrl(QStringLiteral("/images/page.png")));
+    QCOMPARE(static_cast<int>(KiriView::ImageOpenWorkflow::sourceTargetForOpen(state)),
+        static_cast<int>(KiriView::ImageOpenSourceTarget::LoadSource));
+}
 
 void TestImageOpenWorkflow::firstImageLoadSuccessTransitionsToReady()
 {

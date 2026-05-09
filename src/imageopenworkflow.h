@@ -19,9 +19,15 @@ enum class ImageOpenFailureTarget {
     Initial,
 };
 
+enum class ImageOpenSourceTarget {
+    EmptySource,
+    LoadSource,
+};
+
 class ImageOpenWorkflow
 {
 public:
+    static ImageOpenSourceTarget sourceTargetForOpen(const ImageDocumentState &state);
     static ImageOpenFailureTarget failureTargetForLoadError(
         const ImageLoadSession &session, bool hasImage);
     static ImageDocumentEffects beginSourceLoad(ImageDocumentState &state, bool hasImage);

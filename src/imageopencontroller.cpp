@@ -72,9 +72,12 @@ void ImageOpenController::open()
     cancel();
     m_state.setErrorString(QString());
 
-    if (m_state.sourceUrl().isEmpty()) {
+    switch (ImageOpenWorkflow::sourceTargetForOpen(m_state)) {
+    case ImageOpenSourceTarget::EmptySource:
         finishEmptySourceLoad();
         return;
+    case ImageOpenSourceTarget::LoadSource:
+        break;
     }
 
     beginSourceLoad();
