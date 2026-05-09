@@ -7,6 +7,7 @@
 #include "kiriview/src/imagetilegeometry.cxx.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <utility>
 
 namespace {
@@ -47,6 +48,10 @@ KiriView::TileRequest tileRequestFromRust(const KiriView::RustTileRequest &reque
         qtRect(request.source_rect),
     };
 }
+
+std::int64_t rustTileByteCost(qsizetype byteCost) { return static_cast<std::int64_t>(byteCost); }
+
+std::uint64_t rustTileUseClock(quint64 useClock) { return static_cast<std::uint64_t>(useClock); }
 }
 
 namespace KiriView {
@@ -214,12 +219,33 @@ void DecodedTileCache::clear()
 
 void DecodedTileCache::trimToBudget()
 {
-    while (m_byteCost > m_byteBudget && !m_entries.empty()) {
-        const auto oldest = std::min_element(m_entries.begin(), m_entries.end(),
-            [](const Entry &left, const Entry &right) { return left.lastUse < right.lastUse; });
-        m_byteCost -= oldest->byteCost;
-        m_entries.erase(oldest);
+    rust::Vec<std::int64_t> byteCosts;
+    rust::Vec<std::uint64_t> lastUses;
+    byteCosts.reserve(m_entries.size());
+    lastUses.reserve(m_entries.size());
+
+    for (const Entry &entry : m_entries) {
+        byteCosts.push_back(rustTileByteCost(entry.byteCost));
+        lastUses.push_back(rustTileUseClock(entry.lastUse));
     }
+
+    const rust::Vec<std::size_t> retainedIndices = rustTileCacheRetainedIndices(
+        std::move(byteCosts), std::move(lastUses), rustTileByteCost(m_byteBudget));
+
+    std::vector<Entry> retainedEntries;
+    retainedEntries.reserve(retainedIndices.size());
+    qsizetype retainedByteCost = 0;
+    for (std::size_t index : retainedIndices) {
+        if (index >= m_entries.size()) {
+            continue;
+        }
+
+        retainedByteCost += m_entries[index].byteCost;
+        retainedEntries.push_back(std::move(m_entries[index]));
+    }
+
+    m_entries = std::move(retainedEntries);
+    m_byteCost = retainedByteCost;
 }
 
 std::vector<DecodedTileCache::Entry>::iterator DecodedTileCache::findEntry(const TileKey &key)
