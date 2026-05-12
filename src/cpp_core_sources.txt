@@ -30,6 +30,7 @@ src/imagedocumenteffectexecutor.cpp
 src/imagedocumentloadcontroller.cpp
 src/imagedocumentnavigationcontroller.cpp
 src/imagedocumentnavigator.cpp
+src/imagedocumentnotifications.cpp
 src/imagedocumentpredecodecontroller.cpp
 src/imagedecodejob.cpp
 src/imagedocumentstate.cpp

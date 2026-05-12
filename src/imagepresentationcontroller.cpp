@@ -5,7 +5,7 @@
 
 #include "displayedimagestate.h"
 #include "imagecallback.h"
-#include "imagedocumentstate.h"
+#include "imagedocumentnotifications.h"
 #include "imagerendering.h"
 #include "imagetiledecodescheduler.h"
 

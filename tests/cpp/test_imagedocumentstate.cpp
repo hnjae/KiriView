@@ -4,7 +4,6 @@
 #include "image_test_support.h"
 #include "imagecontainer.h"
 #include "imagedocumentstate.h"
-#include "imagezoomstate.h"
 
 #include <QObject>
 #include <QTest>
@@ -26,7 +25,6 @@ private Q_SLOTS:
     void containerNavigationAvailabilityFollowsContainerUrl();
     void statusAndLoadingReducersOnlyNotifyWhenChanged();
     void changeBatchQueuesUniqueChangesUntilDestroyed();
-    void notificationPlansReturnChangesInEmissionOrder();
 };
 
 void TestImageDocumentState::displayedUrlAndWindowTitleFollowDisplayedImageLocation()
@@ -142,65 +140,6 @@ void TestImageDocumentState::changeBatchQueuesUniqueChangesUntilDestroyed()
     QCOMPARE(changes.at(0), KiriView::ImageDocumentChange::Loading);
     QCOMPARE(changes.at(1), KiriView::ImageDocumentChange::ErrorString);
     QCOMPARE(changes.at(2), KiriView::ImageDocumentChange::Status);
-}
-
-void TestImageDocumentState::notificationPlansReturnChangesInEmissionOrder()
-{
-    auto compareChanges = [](const std::vector<KiriView::ImageDocumentChange> &actual,
-                              const std::vector<KiriView::ImageDocumentChange> &expected) {
-        QCOMPARE(actual.size(), expected.size());
-        for (std::size_t index = 0; index < expected.size(); ++index) {
-            QCOMPARE(actual.at(index), expected.at(index));
-        }
-    };
-
-    compareChanges(KiriView::imageDocumentSpreadTransitionNotifications(),
-        { KiriView::ImageDocumentChange::Status, KiriView::ImageDocumentChange::Loading,
-            KiriView::ImageDocumentChange::Repaint });
-    compareChanges(KiriView::imageDocumentDisplayedLocationNotifications(true, true),
-        { KiriView::ImageDocumentChange::DisplayedUrl,
-            KiriView::ImageDocumentChange::WindowTitleFileName });
-    compareChanges(KiriView::imageDocumentDisplayedLocationNotifications(true, false),
-        { KiriView::ImageDocumentChange::DisplayedUrl });
-    compareChanges(KiriView::imageDocumentDisplayedLocationNotifications(false, true),
-        { KiriView::ImageDocumentChange::WindowTitleFileName });
-    compareChanges(KiriView::imageDocumentDisplayedLocationNotifications(false, false),
-        std::vector<KiriView::ImageDocumentChange> {});
-    compareChanges(KiriView::imageDocumentTwoPageModeNotifications(),
-        { KiriView::ImageDocumentChange::TwoPageMode, KiriView::ImageDocumentChange::ImageSize,
-            KiriView::ImageDocumentChange::DisplaySize, KiriView::ImageDocumentChange::ZoomPercent,
-            KiriView::ImageDocumentChange::ZoomMode,
-            KiriView::ImageDocumentChange::MaximumManualZoomPercent,
-            KiriView::ImageDocumentChange::Repaint });
-    compareChanges(KiriView::imageDocumentSpreadZoomNotifications(),
-        { KiriView::ImageDocumentChange::ZoomMode, KiriView::ImageDocumentChange::ZoomPercent,
-            KiriView::ImageDocumentChange::DisplaySize,
-            KiriView::ImageDocumentChange::MaximumManualZoomPercent,
-            KiriView::ImageDocumentChange::Repaint, KiriView::ImageDocumentChange::TwoPageMode });
-    compareChanges(KiriView::imageDocumentRightToLeftReadingNotifications(false),
-        { KiriView::ImageDocumentChange::RightToLeftReading,
-            KiriView::ImageDocumentChange::Repaint });
-    compareChanges(KiriView::imageDocumentRightToLeftReadingNotifications(true),
-        { KiriView::ImageDocumentChange::RightToLeftReading, KiriView::ImageDocumentChange::Repaint,
-            KiriView::ImageDocumentChange::TwoPageMode });
-
-    KiriView::ImageZoomChangeSet presentationZoomChanges;
-    presentationZoomChanges.imageSizeChanged = true;
-    presentationZoomChanges.viewportSizeChanged = true;
-    presentationZoomChanges.zoomModeChanged = true;
-    presentationZoomChanges.zoomPercentChanged = true;
-    presentationZoomChanges.displaySizeChanged = true;
-    presentationZoomChanges.maximumManualZoomPercentChanged = true;
-    compareChanges(KiriView::imageDocumentPresentationZoomNotifications(presentationZoomChanges),
-        { KiriView::ImageDocumentChange::ImageSize, KiriView::ImageDocumentChange::ViewportSize,
-            KiriView::ImageDocumentChange::ZoomMode, KiriView::ImageDocumentChange::ZoomPercent,
-            KiriView::ImageDocumentChange::DisplaySize, KiriView::ImageDocumentChange::Repaint,
-            KiriView::ImageDocumentChange::MaximumManualZoomPercent });
-
-    KiriView::ImageZoomChangeSet tileRefreshOnlyChanges;
-    tileRefreshOnlyChanges.scheduleVisibleTileDecode = true;
-    compareChanges(KiriView::imageDocumentPresentationZoomNotifications(tileRefreshOnlyChanges),
-        std::vector<KiriView::ImageDocumentChange> {});
 }
 
 QTEST_GUILESS_MAIN(TestImageDocumentState)

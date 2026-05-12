@@ -13,8 +13,6 @@
 #include <vector>
 
 namespace KiriView {
-struct ImageZoomChangeSet;
-
 class ImageDocumentState
 {
 public:
@@ -79,16 +77,6 @@ private:
     QUrl m_containerNavigationUrl;
     QUrl m_loadingContainerNavigationUrl;
 };
-
-std::vector<ImageDocumentChange> imageDocumentSpreadTransitionNotifications();
-std::vector<ImageDocumentChange> imageDocumentDisplayedLocationNotifications(
-    bool displayedUrlChanged, bool windowTitleFileNameChanged);
-std::vector<ImageDocumentChange> imageDocumentTwoPageModeNotifications();
-std::vector<ImageDocumentChange> imageDocumentSpreadZoomNotifications();
-std::vector<ImageDocumentChange> imageDocumentRightToLeftReadingNotifications(
-    bool secondaryPageVisible);
-std::vector<ImageDocumentChange> imageDocumentPresentationZoomNotifications(
-    const ImageZoomChangeSet &changes);
 }
 
 #endif
