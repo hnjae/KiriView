@@ -237,15 +237,17 @@ ImageOpenSourceLoadPlan ImageOpenWorkflow::sourceLoadPlan(bool sourceUrlChanged,
     bool preserveTwoPageSpreadTransition, bool resetRightToLeftReading,
     bool containerNavigationUrlEmpty)
 {
-    return imageOpenSourceLoadPlan(rustImageOpenSourceLoadPlan(sourceUrlChanged,
-        preserveTwoPageSpreadTransition, resetRightToLeftReading, containerNavigationUrlEmpty));
+    return imageOpenSourceLoadPlan(rustImageOpenSourceLoadPlan(
+        RustImageOpenSourceLoadRequest { sourceUrlChanged, preserveTwoPageSpreadTransition,
+            resetRightToLeftReading, containerNavigationUrlEmpty }));
 }
 
 ImageDocumentEffects ImageOpenWorkflow::beginSourceLoad(ImageDocumentState &state, bool hasImage)
 {
     ImageOpenTransition transition(state);
     transition.applyBeginSourceLoad(
-        rustImageOpenBeginSourceLoad(hasImage, state.loadingContainerNavigationUrl().isEmpty()));
+        rustImageOpenBeginSourceLoad(RustImageOpenBeginSourceLoadRequest {
+            hasImage, state.loadingContainerNavigationUrl().isEmpty() }));
     return transition.takeEffects();
 }
 
@@ -261,7 +263,8 @@ ImageDocumentEffects ImageOpenWorkflow::finishSuccessfulImageLoad(
 {
     ImageOpenTransition transition(state);
     transition.applyFinishSuccessfulImageLoad(
-        rustImageOpenFinishSuccessfulImageLoad(session.request.containerNavigationUrl().isEmpty()),
+        rustImageOpenFinishSuccessfulImageLoad(RustImageOpenSuccessfulImageLoadRequest {
+            session.request.containerNavigationUrl().isEmpty() }),
         ImageOpenTransitionContext { &session });
     return transition.takeEffects();
 }
@@ -273,7 +276,8 @@ ImageDocumentEffects ImageOpenWorkflow::finishLoadWithError(ImageDocumentState &
     const QUrl containerUrl = session.request.containerNavigationUrl();
     const QUrl displayedUrl = state.displayedUrl();
     transition.applyFinishLoadWithError(
-        rustImageOpenFinishLoadWithError(containerUrl.isEmpty(), hasImage, displayedUrl.isEmpty()),
+        rustImageOpenFinishLoadWithError(RustImageOpenLoadErrorRequest {
+            containerUrl.isEmpty(), hasImage, displayedUrl.isEmpty() }),
         ImageOpenTransitionContext { &session, &containerUrl, &displayedUrl, &errorString });
     return transition.takeEffects();
 }
@@ -282,8 +286,9 @@ ImageDocumentEffects ImageOpenWorkflow::finishContainerNavigationLoadWithError(
     ImageDocumentState &state, const QUrl &containerUrl, const QString &errorString)
 {
     ImageOpenTransition transition(state);
-    transition.applyFinishLoadWithError(rustImageOpenFinishLoadWithErrorKind(
-                                            RustImageOpenLoadErrorKind::ContainerNavigation, false),
+    transition.applyFinishLoadWithError(
+        rustImageOpenFinishLoadWithErrorKind(RustImageOpenLoadErrorKindRequest {
+            RustImageOpenLoadErrorKind::ContainerNavigation, false }),
         ImageOpenTransitionContext { nullptr, &containerUrl, nullptr, &errorString });
     return transition.takeEffects();
 }
@@ -294,8 +299,8 @@ ImageDocumentEffects ImageOpenWorkflow::finishReplacementLoadWithError(
     ImageOpenTransition transition(state);
     const QUrl displayedUrl = state.displayedUrl();
     transition.applyFinishReplacementLoadWithError(
-        rustImageOpenFinishLoadWithErrorKind(
-            RustImageOpenLoadErrorKind::Replacement, displayedUrl.isEmpty()),
+        rustImageOpenFinishLoadWithErrorKind(RustImageOpenLoadErrorKindRequest {
+            RustImageOpenLoadErrorKind::Replacement, displayedUrl.isEmpty() }),
         ImageOpenTransitionContext { nullptr, nullptr, &displayedUrl, &errorString });
     return transition.takeEffects();
 }
@@ -305,7 +310,8 @@ ImageDocumentEffects ImageOpenWorkflow::finishInitialLoadWithError(
 {
     ImageOpenTransition transition(state);
     transition.applyFinishLoadWithError(
-        rustImageOpenFinishLoadWithErrorKind(RustImageOpenLoadErrorKind::Initial, true),
+        rustImageOpenFinishLoadWithErrorKind(
+            RustImageOpenLoadErrorKindRequest { RustImageOpenLoadErrorKind::Initial, true }),
         ImageOpenTransitionContext { nullptr, nullptr, nullptr, &errorString });
     return transition.takeEffects();
 }
@@ -315,7 +321,8 @@ ImageDocumentEffects ImageOpenWorkflow::finishAnimationLoadWithError(
 {
     ImageOpenTransition transition(state);
     transition.applyFinishLoadWithError(
-        rustImageOpenFinishLoadWithErrorKind(RustImageOpenLoadErrorKind::Animation, true),
+        rustImageOpenFinishLoadWithErrorKind(
+            RustImageOpenLoadErrorKindRequest { RustImageOpenLoadErrorKind::Animation, true }),
         ImageOpenTransitionContext { nullptr, nullptr, nullptr, &errorString });
     return transition.takeEffects();
 }
