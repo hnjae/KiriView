@@ -12,7 +12,6 @@ mod filedeletionfallback;
 mod filedeletionworkflow;
 mod heifcontainer;
 mod imageanimationpolicy;
-mod imagebytecost;
 mod imagecandidaterepository;
 mod imagecontainer;
 mod imageformatregistry;
