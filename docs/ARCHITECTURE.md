@@ -1,8 +1,3 @@
-<!--
-SPDX-FileCopyrightText: 2026 KIM Hyunjae
-SPDX-License-Identifier: AGPL-3.0-or-later
--->
-
 # Architecture
 
 This document records the long-term architecture direction for KiriView. It is
