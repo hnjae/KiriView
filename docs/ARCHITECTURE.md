@@ -78,6 +78,27 @@ Rust should not call back into Qt/KDE adapters directly. It should return typed
 plans, state deltas, or effect descriptions. C++ should execute those effects
 and feed completion events back into the workflow.
 
+## State Ownership
+
+For QObject-facing workflows, C++ owns the authoritative runtime state. This
+includes QML-facing properties, Qt notification ordering, `QUrl`, `QImage`,
+`QString`, async job lifetime, presentation objects, and rendering objects.
+
+Rust reducers operate on value snapshots and plain events. They return explicit
+state deltas, transition plans, and effect descriptions. Those results describe
+what C++ should apply; they are not an independent authoritative copy of the
+same workflow state.
+
+Rust-owned state is reserved for self-contained Qt-independent domains where the
+state can be represented as plain values and does not mirror authoritative C++
+state. Examples include navigation indices, cache policy, format parsing state,
+and geometry or zoom algorithms. When Rust owns such state, document that
+ownership in this file or an ADR, and expose it through value-based FFI.
+
+Avoid split-brain state. A workflow value must have one canonical owner. If both
+languages need to observe it, one side owns the value and the other side receives
+a derived snapshot, projection, delta, or completion event.
+
 ## FFI Design
 
 FFI code should be intentionally boring. A good bridge is explicit, typed, and
@@ -110,7 +131,8 @@ The preferred long-term shape for product workflows is event-driven:
 C++ receives UI/runtime event
     -> converts it into a plain workflow event
         -> Rust computes state delta and effects
-            -> C++ applies state, executes effects, and reports completions
+            -> C++ applies authoritative state,
+               executes effects, and reports completions
 ```
 
 For example, opening an image can eventually converge on:
@@ -180,7 +202,8 @@ When adding or moving logic:
 1. Start from ownership: policy in Rust, Qt/KDE execution in C++.
 1. Keep FFI value-based and explicit.
 1. Move whole policy decisions, not isolated boolean branches.
-1. Keep QObject/QML API stable inside C++ facade classes.
+1. Keep each workflow value under one canonical owner.
+1. Keep QObject/QML API changes contained inside C++ facade classes.
 1. Avoid adding compatibility layers for pre-release internal formats unless
    explicitly requested.
 1. Document meaningful architecture decisions here or in an ADR.
