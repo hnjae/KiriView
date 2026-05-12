@@ -77,6 +77,24 @@ template <typename Candidate> void sortNavigationCandidates(std::vector<Candidat
         });
     candidates->erase(duplicateStart, candidates->end());
 }
+
+std::optional<std::size_t> navigationIndexValue(KiriView::RustNavigationIndex index)
+{
+    if (!index.found) {
+        return std::nullopt;
+    }
+
+    return index.index;
+}
+
+template <typename Candidate>
+std::optional<std::size_t> adjacentCandidateIndex(const std::vector<Candidate> &candidates,
+    const QUrl &currentUrl, KiriView::NavigationDirection direction)
+{
+    return navigationIndexValue(KiriView::rustAdjacentNavigationCandidateIndex(candidates.size(),
+        KiriView::rustCurrentNavigationIndex(currentCandidateMatches(candidates, currentUrl)),
+        rustNavigationDirection(direction)));
+}
 }
 
 namespace KiriView {
@@ -108,40 +126,33 @@ std::optional<QUrl> adjacentImageNavigationUrl(
     const std::vector<ImageNavigationCandidate> &candidates, const QUrl &currentUrl,
     NavigationDirection direction)
 {
-    const RustNavigationIndex targetIndex = rustAdjacentNavigationCandidateIndex(candidates.size(),
-        rustCurrentNavigationIndex(currentCandidateMatches(candidates, currentUrl)),
-        rustNavigationDirection(direction));
-    if (!targetIndex.found) {
+    const std::optional<std::size_t> targetIndex
+        = adjacentCandidateIndex(candidates, currentUrl, direction);
+    if (!targetIndex.has_value()) {
         return std::nullopt;
     }
 
-    return candidates.at(targetIndex.index).url;
+    return candidates.at(*targetIndex).url;
 }
 
 std::optional<ContainerNavigationCandidate> adjacentContainerNavigationCandidate(
     const std::vector<ContainerNavigationCandidate> &candidates, const QUrl &currentContainerUrl,
     NavigationDirection direction)
 {
-    const RustNavigationIndex targetIndex = rustAdjacentNavigationCandidateIndex(candidates.size(),
-        rustCurrentNavigationIndex(currentCandidateMatches(candidates, currentContainerUrl)),
-        rustNavigationDirection(direction));
-    if (!targetIndex.found) {
+    const std::optional<std::size_t> targetIndex
+        = adjacentCandidateIndex(candidates, currentContainerUrl, direction);
+    if (!targetIndex.has_value()) {
         return std::nullopt;
     }
 
-    return candidates.at(targetIndex.index);
+    return candidates.at(*targetIndex);
 }
 
 std::optional<std::size_t> pageNavigationTargetIndex(
     const PageNavigationState &state, int pageNumber)
 {
-    const RustNavigationIndex targetIndex
-        = rustPageNavigationTargetIndex(state.urls.size(), state.currentIndex, pageNumber);
-    if (!targetIndex.found) {
-        return std::nullopt;
-    }
-
-    return targetIndex.index;
+    return navigationIndexValue(
+        rustPageNavigationTargetIndex(state.urls.size(), state.currentIndex, pageNumber));
 }
 
 PageNavigationState pageNavigationStateForCurrentUrl(
