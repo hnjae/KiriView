@@ -23,7 +23,6 @@
 #include <functional>
 #include <memory>
 #include <optional>
-#include <vector>
 
 namespace KiriView {
 class ImageDeletionController;
@@ -31,10 +30,7 @@ class ImageDocumentNavigationController;
 class ImageOpenController;
 class ImagePresentationController;
 class ImagePredecodeCoordinator;
-class ImageSecondaryPageController;
-class ImageSpreadModeController;
-class ImageSpreadZoomController;
-enum class ImageSecondaryPageLoadResult;
+class ImageSpreadPresentationController;
 
 class ImageDocumentController final : public QObject
 {
@@ -125,38 +121,17 @@ private:
     void finishWithAnimationError(const QString &errorString);
     void notify(ImageDocumentChange change);
     void clearImage();
-    void clearSecondaryPage();
-    void refreshSecondaryPage();
-    void startSecondaryPageLoad(const QUrl &url);
-    void handleSecondaryPageLoadFinished(ImageSecondaryPageLoadResult result,
-        const DisplayedImageLocation &location, const QSize &imageSize);
-    void finishSecondaryPageAsPrimaryOnly();
-    void finishSecondaryPageVisible();
-    bool shouldBeginTwoPageSpreadTransition(int targetPageNumber) const;
-    void beginTwoPageSpreadTransition();
-    void finishTwoPageSpreadTransition();
-    void notifyTwoPageSpreadTransitionChanged();
-    void updateSpreadZoomState();
-    QSize spreadImageSize() const;
     bool twoPageModeActive() const;
-    bool rightToLeftReadingActive() const;
-    bool primaryPageIsWide() const;
     void openImageAtRelativePageOffset(int offset);
-    void notifyTwoPageModeChanged();
-    void notifySpreadZoomChanged();
-    void notifyRightToLeftReadingChanged();
-    void notifyChanges(const std::vector<ImageDocumentChange> &changes);
 
     ChangeCallback m_changeCallback;
     ImageDocumentState m_state;
     std::unique_ptr<ImageDeletionController> m_deletionController;
     std::unique_ptr<ImagePresentationController> m_presentationController;
-    std::unique_ptr<ImageSecondaryPageController> m_secondaryPageController;
     std::unique_ptr<ImageOpenController> m_openController;
     std::unique_ptr<ImageDocumentNavigationController> m_navigationController;
     std::unique_ptr<ImagePredecodeCoordinator> m_predecodeCoordinator;
-    std::unique_ptr<ImageSpreadModeController> m_spreadModeController;
-    std::unique_ptr<ImageSpreadZoomController> m_spreadZoomController;
+    std::unique_ptr<ImageSpreadPresentationController> m_spreadController;
 };
 }
 
