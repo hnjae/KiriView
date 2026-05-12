@@ -10,6 +10,7 @@
 #include "imagespreaddocumentchange.h"
 #include "imagespreadgeometry.h"
 #include "imagespreadmodecontroller.h"
+#include "imagespreadnavigation.h"
 #include "imagespreadzoomcontroller.h"
 
 #include <utility>
@@ -184,41 +185,23 @@ qreal ImageSpreadPresentationController::steppedManualZoomPercent(qreal stepCoun
 
 int ImageSpreadPresentationController::currentLastPageNumber() const
 {
-    return imageSpreadCurrentLastPageNumber(currentPageNumber(), secondaryPageVisible());
+    return imageSpreadNavigationCurrentLastPageNumber(navigationState());
 }
 
 ImageSpreadPageNavigationTarget ImageSpreadPresentationController::imageNavigationTarget(
     NavigationDirection direction) const
 {
-    if (!twoPageModeActive() || currentPageNumber() <= 0) {
-        return {};
+    ImageSpreadNavigationState state = navigationState();
+    if (direction == NavigationDirection::Previous) {
+        state.previousPageIsWide = previousPageIsWideForNavigation();
     }
 
-    if (direction == NavigationDirection::Next) {
-        return ImageSpreadPageNavigationTarget {
-            true,
-            imageSpreadNextPageTarget(currentLastPageNumber(), imageCount()),
-        };
-    }
-
-    bool previousPageIsWide = false;
-    if (secondaryPageVisible() && currentPageNumber() > 2) {
-        const std::optional<QUrl> previousUrl = urlAtPage(currentPageNumber() - 1);
-        if (previousUrl.has_value()) {
-            previousPageIsWide = cachedPageIsWide(*previousUrl).value_or(false);
-        }
-    }
-
-    return ImageSpreadPageNavigationTarget {
-        true,
-        imageSpreadPreviousPageTarget(
-            currentPageNumber(), secondaryPageVisible(), previousPageIsWide),
-    };
+    return imageSpreadPageNavigationTarget(direction, state);
 }
 
 int ImageSpreadPresentationController::relativePageNavigationTarget(int offset) const
 {
-    return imageSpreadRelativePageTarget(currentPageNumber(), imageCount(), offset);
+    return imageSpreadRelativePageNavigationTarget(navigationState(), offset);
 }
 
 bool ImageSpreadPresentationController::twoPageModeEnabled() const
@@ -445,8 +428,7 @@ void ImageSpreadPresentationController::handleDocumentChange(ImageDocumentChange
 
 bool ImageSpreadPresentationController::shouldBeginTransition(int targetPageNumber) const
 {
-    return imageSpreadShouldBeginTransition(
-        twoPageModeActive(), currentPageNumber(), targetPageNumber, imageCount());
+    return imageSpreadShouldBeginNavigationTransition(navigationState(), targetPageNumber);
 }
 
 void ImageSpreadPresentationController::beginTransition()
@@ -558,6 +540,24 @@ QSize ImageSpreadPresentationController::spreadImageSize() const
 bool ImageSpreadPresentationController::primaryPageIsWide() const
 {
     return imageSpreadPageIsWide(m_primaryPresentation.imageSize());
+}
+
+bool ImageSpreadPresentationController::previousPageIsWideForNavigation() const
+{
+    const int pageNumber = currentPageNumber();
+    if (!secondaryPageVisible() || pageNumber <= 2) {
+        return false;
+    }
+
+    const std::optional<QUrl> previousUrl = urlAtPage(pageNumber - 1);
+    return previousUrl.has_value() ? cachedPageIsWide(*previousUrl).value_or(false) : false;
+}
+
+ImageSpreadNavigationState ImageSpreadPresentationController::navigationState(
+    bool previousPageIsWide) const
+{
+    return ImageSpreadNavigationState { twoPageModeActive(), currentPageNumber(), imageCount(),
+        secondaryPageVisible(), previousPageIsWide };
 }
 
 int ImageSpreadPresentationController::currentPageNumber() const

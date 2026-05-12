@@ -7,6 +7,7 @@
 #include "imageasyncdependencies.h"
 #include "imagedocumentstate.h"
 #include "imagenavigationtypes.h"
+#include "imagespreadnavigation.h"
 #include "imagesurface.h"
 #include "imagezoomstate.h"
 #include "predecodedimage.h"
@@ -29,11 +30,6 @@ class ImageSecondaryPageController;
 class ImageSpreadModeController;
 class ImageSpreadZoomController;
 enum class ImageSecondaryPageLoadResult;
-
-struct ImageSpreadPageNavigationTarget {
-    bool handledBySpread = false;
-    int pageNumber = 0;
-};
 
 class ImageSpreadPresentationController final
 {
@@ -122,6 +118,8 @@ private:
     void updateZoomState();
     QSize spreadImageSize() const;
     bool primaryPageIsWide() const;
+    bool previousPageIsWideForNavigation() const;
+    ImageSpreadNavigationState navigationState(bool previousPageIsWide = false) const;
     std::optional<bool> cachedPageIsWide(const QUrl &url) const;
     int currentPageNumber() const;
     int imageCount() const;

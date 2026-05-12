@@ -57,6 +57,7 @@ src/imagesecondarypagecontroller.cpp
 src/imagespreaddocumentchange.cpp
 src/imagespreadgeometry.cpp
 src/imagespreadmodecontroller.cpp
+src/imagespreadnavigation.cpp
 src/imagespreadpagecache.cpp
 src/imagespreadpresentationcontroller.cpp
 src/imagespreadzoomcontroller.cpp
