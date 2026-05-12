@@ -35,16 +35,30 @@ void ImageDocumentLoadController::loadSource(const ImageDocumentSourceLoadReques
 {
     m_deletionController.cancel();
 
+    const ImageOpenSourceLoadPlan plan
+        = ImageOpenWorkflow::sourceLoadPlan(sourceLoadWorkflowRequest(request));
+    applySourceLoadPlan(request, plan);
+}
+
+ImageOpenSourceLoadRequest ImageDocumentLoadController::sourceLoadWorkflowRequest(
+    const ImageDocumentSourceLoadRequest &request) const
+{
     const bool sourceUrlChanged = m_state.sourceUrl() != request.sourceUrl;
     const bool resetRightToLeftReading = m_spreadController.shouldResetRightToLeftReadingForLoad(
         m_state.displayedArchiveDocument(), request.sourceUrl, request.containerNavigationUrl);
+
     ImageOpenSourceLoadRequest openRequest;
     openRequest.sourceUrlChanged = sourceUrlChanged;
     openRequest.preserveTwoPageSpreadTransition = request.preserveTwoPageSpreadTransition;
     openRequest.resetRightToLeftReading = resetRightToLeftReading;
     openRequest.rightToLeftReadingEnabled = m_spreadController.rightToLeftReadingEnabled();
     openRequest.containerNavigationUrlEmpty = request.containerNavigationUrl.isEmpty();
-    const ImageOpenSourceLoadPlan plan = ImageOpenWorkflow::sourceLoadPlan(openRequest);
+    return openRequest;
+}
+
+void ImageDocumentLoadController::applySourceLoadPlan(
+    const ImageDocumentSourceLoadRequest &request, const ImageOpenSourceLoadPlan &plan)
+{
     if (plan.cancelNavigationAndPredecode) {
         cancelNavigationAndPredecode();
     }

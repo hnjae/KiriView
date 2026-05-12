@@ -14,6 +14,8 @@ class ImageDocumentNavigationController;
 class ImageDocumentPredecodeController;
 class ImageDocumentState;
 class ImageOpenController;
+struct ImageOpenSourceLoadPlan;
+struct ImageOpenSourceLoadRequest;
 class ImagePresentationController;
 class ImageSpreadPresentationController;
 
@@ -59,6 +61,10 @@ public:
     ImageDocumentEffects clearAfterSuccessfulFileDeletion();
 
 private:
+    ImageOpenSourceLoadRequest sourceLoadWorkflowRequest(
+        const ImageDocumentSourceLoadRequest &request) const;
+    void applySourceLoadPlan(
+        const ImageDocumentSourceLoadRequest &request, const ImageOpenSourceLoadPlan &plan);
     void cancelNavigationAndPredecode();
 
     ImageDocumentState &m_state;
