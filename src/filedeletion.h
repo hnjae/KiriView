@@ -25,6 +25,12 @@ enum class FileDeletionResult {
     Failed,
 };
 
+enum class FileDeletionCompletionAction {
+    ClearDeletedImageAndOpenFallback,
+    Ignore,
+    ReportFailure,
+};
+
 struct FileDeletionRequest {
     QUrl targetUrl;
     FileDeletionMode mode = FileDeletionMode::MoveToTrash;
@@ -35,6 +41,7 @@ using FileOperationProvider
     = std::function<ImageIoJob(QObject *, FileDeletionRequest, FileDeletionCallback)>;
 
 QUrl deletionTargetUrlForDisplayedLocation(const DisplayedImageLocation &location);
+FileDeletionCompletionAction fileDeletionCompletionAction(FileDeletionResult result);
 FileOperationProvider defaultFileOperationProvider();
 }
 

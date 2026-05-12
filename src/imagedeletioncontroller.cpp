@@ -4,7 +4,6 @@
 #include "imagedeletioncontroller.h"
 
 #include "filedeletionfallback.h"
-#include "filedeletionworkflow.h"
 #include "imagecallback.h"
 #include "imagecontainer.h"
 #include "imageviewtext.h"

@@ -3,7 +3,6 @@
 
 #include "filedeletion.h"
 
-#include "filedeletionworkflow.h"
 #include "image_test_support.h"
 #include "imagecontainer.h"
 
