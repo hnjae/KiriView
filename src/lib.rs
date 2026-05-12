@@ -16,7 +16,6 @@ mod imageanimationpolicy;
 mod imagebytecost;
 mod imagecandidaterepository;
 mod imagecontainer;
-mod imagedocumentnotifications;
 mod imageformatregistry;
 mod imageloadplan;
 mod imagemath;

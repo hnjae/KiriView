@@ -4,98 +4,76 @@
 #include "imagedocumentnotifications.h"
 
 #include "imagezoomstate.h"
-#include "kiriview/src/imagedocumentnotifications.cxx.h"
-
-namespace {
-KiriView::ImageDocumentChange imageDocumentChange(
-    KiriView::RustImageDocumentNotificationChange change)
-{
-    switch (change) {
-    case KiriView::RustImageDocumentNotificationChange::Status:
-        return KiriView::ImageDocumentChange::Status;
-    case KiriView::RustImageDocumentNotificationChange::Loading:
-        return KiriView::ImageDocumentChange::Loading;
-    case KiriView::RustImageDocumentNotificationChange::ImageSize:
-        return KiriView::ImageDocumentChange::ImageSize;
-    case KiriView::RustImageDocumentNotificationChange::ViewportSize:
-        return KiriView::ImageDocumentChange::ViewportSize;
-    case KiriView::RustImageDocumentNotificationChange::DisplaySize:
-        return KiriView::ImageDocumentChange::DisplaySize;
-    case KiriView::RustImageDocumentNotificationChange::ZoomPercent:
-        return KiriView::ImageDocumentChange::ZoomPercent;
-    case KiriView::RustImageDocumentNotificationChange::ZoomMode:
-        return KiriView::ImageDocumentChange::ZoomMode;
-    case KiriView::RustImageDocumentNotificationChange::MaximumManualZoomPercent:
-        return KiriView::ImageDocumentChange::MaximumManualZoomPercent;
-    case KiriView::RustImageDocumentNotificationChange::TwoPageMode:
-        return KiriView::ImageDocumentChange::TwoPageMode;
-    case KiriView::RustImageDocumentNotificationChange::RightToLeftReading:
-        return KiriView::ImageDocumentChange::RightToLeftReading;
-    case KiriView::RustImageDocumentNotificationChange::Repaint:
-        return KiriView::ImageDocumentChange::Repaint;
-    case KiriView::RustImageDocumentNotificationChange::DisplayedUrl:
-        return KiriView::ImageDocumentChange::DisplayedUrl;
-    case KiriView::RustImageDocumentNotificationChange::WindowTitleFileName:
-        return KiriView::ImageDocumentChange::WindowTitleFileName;
-    }
-
-    return KiriView::ImageDocumentChange::Repaint;
-}
-
-std::vector<KiriView::ImageDocumentChange> imageDocumentChanges(
-    rust::Vec<KiriView::RustImageDocumentNotificationChange> rustChanges)
-{
-    std::vector<KiriView::ImageDocumentChange> changes;
-    changes.reserve(rustChanges.size());
-    for (KiriView::RustImageDocumentNotificationChange change : rustChanges) {
-        changes.push_back(imageDocumentChange(change));
-    }
-    return changes;
-}
-
-KiriView::RustImageDocumentZoomChangeSet rustImageDocumentZoomChangeSet(
-    const KiriView::ImageZoomChangeSet &changes)
-{
-    return KiriView::RustImageDocumentZoomChangeSet { changes.imageSizeChanged,
-        changes.viewportSizeChanged, changes.zoomModeChanged, changes.zoomPercentChanged,
-        changes.displaySizeChanged, changes.maximumManualZoomPercentChanged };
-}
-}
 
 namespace KiriView {
 std::vector<ImageDocumentChange> imageDocumentSpreadTransitionNotifications()
 {
-    return imageDocumentChanges(rustImageDocumentSpreadTransitionNotifications());
+    return { ImageDocumentChange::Status, ImageDocumentChange::Loading,
+        ImageDocumentChange::Repaint };
 }
 
 std::vector<ImageDocumentChange> imageDocumentDisplayedLocationNotifications(
     bool displayedUrlChanged, bool windowTitleFileNameChanged)
 {
-    return imageDocumentChanges(rustImageDocumentDisplayedLocationNotifications(
-        displayedUrlChanged, windowTitleFileNameChanged));
+    std::vector<ImageDocumentChange> changes;
+    if (displayedUrlChanged) {
+        changes.push_back(ImageDocumentChange::DisplayedUrl);
+    }
+    if (windowTitleFileNameChanged) {
+        changes.push_back(ImageDocumentChange::WindowTitleFileName);
+    }
+    return changes;
 }
 
 std::vector<ImageDocumentChange> imageDocumentTwoPageModeNotifications()
 {
-    return imageDocumentChanges(rustImageDocumentTwoPageModeNotifications());
+    return { ImageDocumentChange::TwoPageMode, ImageDocumentChange::ImageSize,
+        ImageDocumentChange::DisplaySize, ImageDocumentChange::ZoomPercent,
+        ImageDocumentChange::ZoomMode, ImageDocumentChange::MaximumManualZoomPercent,
+        ImageDocumentChange::Repaint };
 }
 
 std::vector<ImageDocumentChange> imageDocumentSpreadZoomNotifications()
 {
-    return imageDocumentChanges(rustImageDocumentSpreadZoomNotifications());
+    return { ImageDocumentChange::ZoomMode, ImageDocumentChange::ZoomPercent,
+        ImageDocumentChange::DisplaySize, ImageDocumentChange::MaximumManualZoomPercent,
+        ImageDocumentChange::Repaint, ImageDocumentChange::TwoPageMode };
 }
 
 std::vector<ImageDocumentChange> imageDocumentRightToLeftReadingNotifications(
     bool secondaryPageVisible)
 {
-    return imageDocumentChanges(
-        rustImageDocumentRightToLeftReadingNotifications(secondaryPageVisible));
+    std::vector<ImageDocumentChange> changes { ImageDocumentChange::RightToLeftReading,
+        ImageDocumentChange::Repaint };
+    if (secondaryPageVisible) {
+        changes.push_back(ImageDocumentChange::TwoPageMode);
+    }
+    return changes;
 }
 
 std::vector<ImageDocumentChange> imageDocumentPresentationZoomNotifications(
     const ImageZoomChangeSet &changes)
 {
-    return imageDocumentChanges(
-        rustImageDocumentPresentationZoomNotifications(rustImageDocumentZoomChangeSet(changes)));
+    std::vector<ImageDocumentChange> notifications;
+    if (changes.imageSizeChanged) {
+        notifications.push_back(ImageDocumentChange::ImageSize);
+    }
+    if (changes.viewportSizeChanged) {
+        notifications.push_back(ImageDocumentChange::ViewportSize);
+    }
+    if (changes.zoomModeChanged) {
+        notifications.push_back(ImageDocumentChange::ZoomMode);
+    }
+    if (changes.zoomPercentChanged) {
+        notifications.push_back(ImageDocumentChange::ZoomPercent);
+    }
+    if (changes.displaySizeChanged) {
+        notifications.push_back(ImageDocumentChange::DisplaySize);
+        notifications.push_back(ImageDocumentChange::Repaint);
+    }
+    if (changes.maximumManualZoomPercentChanged) {
+        notifications.push_back(ImageDocumentChange::MaximumManualZoomPercent);
+    }
+    return notifications;
 }
 }
