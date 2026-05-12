@@ -8,7 +8,6 @@ mod bmff;
 mod byteio;
 mod filedeletionfallback;
 mod heifcontainer;
-mod imagecandidaterepository;
 mod imagecontainer;
 mod imageformatregistry;
 mod imagemath;

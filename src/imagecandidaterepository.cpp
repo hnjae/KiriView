@@ -7,7 +7,6 @@
 #include "imagecontainer.h"
 #include "imageiojobs.h"
 #include "imageurl.h"
-#include "kiriview/src/imagecandidaterepository.cxx.h"
 
 #include <optional>
 #include <utility>
@@ -88,61 +87,26 @@ struct ContainerImageSourceResult {
         = KiriView::ImageCandidateRepositoryError::Generic;
 };
 
-KiriView::RustContainerNavigationCandidateType rustContainerNavigationCandidateType(
-    KiriView::ContainerNavigationCandidateType type)
-{
-    switch (type) {
-    case KiriView::ContainerNavigationCandidateType::Directory:
-        return KiriView::RustContainerNavigationCandidateType::Directory;
-    case KiriView::ContainerNavigationCandidateType::ComicBookArchive:
-        return KiriView::RustContainerNavigationCandidateType::ComicBookArchive;
-    }
-
-    return KiriView::RustContainerNavigationCandidateType::Unknown;
-}
-
-KiriView::ImageCandidateRepositoryError imageCandidateRepositoryError(
-    KiriView::RustContainerImageSourceError error)
-{
-    switch (error) {
-    case KiriView::RustContainerImageSourceError::InvalidComicBookArchive:
-        return KiriView::ImageCandidateRepositoryError::InvalidComicBookArchive;
-    case KiriView::RustContainerImageSourceError::Generic:
-        return KiriView::ImageCandidateRepositoryError::Generic;
-    }
-
-    return KiriView::ImageCandidateRepositoryError::Generic;
-}
-
 ContainerImageSourceResult containerImageSourceFor(
     const KiriView::ContainerNavigationCandidate &container)
 {
-    const KiriView::RustContainerNavigationCandidateType candidateType
-        = rustContainerNavigationCandidateType(container.type);
-    std::optional<KiriView::ArchiveDocumentLocation> archiveDocument;
-    if (candidateType == KiriView::RustContainerNavigationCandidateType::ComicBookArchive) {
-        archiveDocument = KiriView::archiveDocumentLocationForLocalArchiveUrl(container.url);
-    }
-
-    const KiriView::RustContainerImageSourcePlan plan
-        = KiriView::rustContainerImageSourcePlan(candidateType, archiveDocument.has_value(),
-            archiveDocument.has_value() && archiveDocument->isComicBook());
-
-    switch (plan.target) {
-    case KiriView::RustContainerImageSourceTarget::Directory:
+    switch (container.type) {
+    case KiriView::ContainerNavigationCandidateType::Directory:
         return { KiriView::ImageCandidateListSource::forDirectory(container.url),
             KiriView::ImageCandidateRepositoryError::Generic };
-    case KiriView::RustContainerImageSourceTarget::ArchiveDocument:
-        if (archiveDocument.has_value()) {
+    case KiriView::ContainerNavigationCandidateType::ComicBookArchive: {
+        const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+            = KiriView::archiveDocumentLocationForLocalArchiveUrl(container.url);
+        if (archiveDocument.has_value() && archiveDocument->isComicBook()) {
             return { KiriView::ImageCandidateListSource::forArchiveDocument(*archiveDocument),
                 KiriView::ImageCandidateRepositoryError::Generic };
         }
-        break;
-    case KiriView::RustContainerImageSourceTarget::None:
-        break;
+
+        return { std::nullopt, KiriView::ImageCandidateRepositoryError::InvalidComicBookArchive };
+    }
     }
 
-    return { std::nullopt, imageCandidateRepositoryError(plan.error) };
+    return { std::nullopt, KiriView::ImageCandidateRepositoryError::Generic };
 }
 }
 
@@ -217,35 +181,28 @@ std::optional<ImageCandidateListContext> imageCandidateListContextForDisplayedIm
     const DisplayedImageLocation &location)
 {
     const QUrl &displayedUrl = location.imageUrl();
-    const bool insideArchiveDocument = displayedLocationIsInsideArchiveDocument(location);
-    QUrl currentUrl;
-    QUrl parentUrl;
-    bool archiveCurrentUrlValid = false;
-    bool directoryCurrentUrlValid = false;
-    bool directoryParentUrlValid = false;
-
-    if (insideArchiveDocument) {
-        currentUrl = normalizedImageUrl(displayedUrl);
-        archiveCurrentUrlValid = currentUrl.isValid();
-    } else {
-        currentUrl = navigationSourceUrl(displayedUrl);
-        parentUrl = currentUrl.adjusted(QUrl::RemoveFilename | QUrl::NormalizePathSegments);
-        directoryCurrentUrlValid = currentUrl.isValid() && !currentUrl.isEmpty();
-        directoryParentUrlValid = parentUrl.isValid() && !parentUrl.isEmpty();
-    }
-
-    switch (rustImageCandidateListContextTarget(displayedUrl.isEmpty(), insideArchiveDocument,
-        archiveCurrentUrlValid, directoryCurrentUrlValid, directoryParentUrlValid)) {
-    case RustImageCandidateListContextTarget::ArchiveDocument:
-        return ImageCandidateListContext::forArchiveDocument(
-            currentUrl, location.archiveDocument());
-    case RustImageCandidateListContextTarget::Directory:
-        return ImageCandidateListContext::forDirectory(currentUrl, parentUrl);
-    case RustImageCandidateListContextTarget::None:
+    if (displayedUrl.isEmpty()) {
         return std::nullopt;
     }
 
-    return std::nullopt;
+    if (displayedLocationIsInsideArchiveDocument(location)) {
+        const QUrl currentUrl = normalizedImageUrl(displayedUrl);
+        if (!currentUrl.isValid()) {
+            return std::nullopt;
+        }
+
+        return ImageCandidateListContext::forArchiveDocument(
+            currentUrl, location.archiveDocument());
+    }
+
+    const QUrl currentUrl = navigationSourceUrl(displayedUrl);
+    const QUrl parentUrl = currentUrl.adjusted(QUrl::RemoveFilename | QUrl::NormalizePathSegments);
+    if (!currentUrl.isValid() || currentUrl.isEmpty() || !parentUrl.isValid()
+        || parentUrl.isEmpty()) {
+        return std::nullopt;
+    }
+
+    return ImageCandidateListContext::forDirectory(currentUrl, parentUrl);
 }
 
 ImageCandidateRepository::ImageCandidateRepository()
