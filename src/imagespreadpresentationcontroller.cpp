@@ -301,6 +301,33 @@ bool ImageSpreadPresentationController::secondaryPageVisible() const
     return twoPageModeActive() && m_secondaryPageController->visible();
 }
 
+std::shared_ptr<DisplayedImageSurface> ImageSpreadPresentationController::imageSurface(
+    DisplayedPageRole role) const
+{
+    if (transitionInProgress()) {
+        return nullptr;
+    }
+
+    if (role == DisplayedPageRole::Secondary) {
+        return secondaryImageSurface();
+    }
+
+    return m_primaryPresentation.imageSurface();
+}
+
+quint64 ImageSpreadPresentationController::imageRevision(DisplayedPageRole role) const
+{
+    if (transitionInProgress()) {
+        return 0;
+    }
+
+    if (role == DisplayedPageRole::Secondary) {
+        return secondaryImageRevision();
+    }
+
+    return m_primaryPresentation.imageRevision();
+}
+
 std::shared_ptr<DisplayedImageSurface>
 ImageSpreadPresentationController::secondaryImageSurface() const
 {

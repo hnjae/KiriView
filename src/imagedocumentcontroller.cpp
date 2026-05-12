@@ -255,30 +255,14 @@ bool ImageDocumentController::secondaryPageVisible() const
 std::shared_ptr<DisplayedImageSurface> ImageDocumentController::imageSurface(
     DisplayedPageRole role) const
 {
-    if (m_spreadController->transitionInProgress()) {
-        return nullptr;
-    }
-
-    if (role == DisplayedPageRole::Secondary) {
-        return m_spreadController->secondaryImageSurface();
-    }
-
-    return m_presentationController->imageSurface();
+    return m_spreadController->imageSurface(role);
 }
 
 const QImage &ImageDocumentController::image() const { return m_presentationController->image(); }
 
 quint64 ImageDocumentController::imageRevision(DisplayedPageRole role) const
 {
-    if (m_spreadController->transitionInProgress()) {
-        return 0;
-    }
-
-    if (role == DisplayedPageRole::Secondary) {
-        return m_spreadController->secondaryImageRevision();
-    }
-
-    return m_presentationController->imageRevision();
+    return m_spreadController->imageRevision(role);
 }
 
 void ImageDocumentController::openPreviousImage() { m_pageNavigator->openPreviousImage(); }

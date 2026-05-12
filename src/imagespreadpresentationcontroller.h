@@ -89,8 +89,8 @@ public:
     bool rightToLeftReadingAvailable() const;
     bool rightToLeftReadingActive() const;
     bool secondaryPageVisible() const;
-    std::shared_ptr<DisplayedImageSurface> secondaryImageSurface() const;
-    quint64 secondaryImageRevision() const;
+    std::shared_ptr<DisplayedImageSurface> imageSurface(DisplayedPageRole role) const;
+    quint64 imageRevision(DisplayedPageRole role) const;
 
     void setViewportSize(const QSizeF &viewportSize);
     void resetZoom();
@@ -115,6 +115,8 @@ private:
         const DisplayedImageLocation &location, const QSize &imageSize);
     void finishSecondaryPageAsPrimaryOnly();
     void finishSecondaryPageVisible();
+    std::shared_ptr<DisplayedImageSurface> secondaryImageSurface() const;
+    quint64 secondaryImageRevision() const;
     void notifyTransitionChanged();
     void updateZoomState();
     QSize spreadImageSize() const;
