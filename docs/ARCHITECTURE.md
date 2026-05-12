@@ -136,23 +136,32 @@ This does not require every existing controller to be rewritten at once. Move
 logic when a workflow is already being changed and when the new boundary reduces
 complexity.
 
-## Current Guidance
+## Target Direction
 
-The current codebase already follows part of this direction:
+KiriView should evolve toward coherent Rust policy units rather than many small
+FFI helpers. A Rust module should represent a meaningful workflow or algorithmic
+domain, such as opening, navigation, deletion, zoom, spread layout, tile
+selection, parsing, or cache policy.
 
-- `KiriImageDocument`, `KiriImageView`, and `KiriViewApplication` are QML-facing
-  C++ facade classes.
-- `ImageDocumentController`, `ImageOpenController`, loaders, presentation
-  controllers, KIO jobs, and render nodes are C++ runtime orchestration.
-- Rust modules such as `imagezoomstate.rs`, `imagetilegeometry.rs`,
-  `imagespreadgeometry.rs`, `imagenavigationmodel.rs`, and
-  `filedeletionworkflow.rs` contain Qt-independent policy or calculation.
+Small local branches should stay in C++ unless they are part of a larger
+Qt-independent policy decision. Moving a branch to Rust is useful when it
+clarifies ownership, strengthens tests, or lets multiple C++ runtime paths share
+one policy result. It is not useful when the bridge types and conversions become
+larger than the decision being moved.
 
-Small policy modules should be reviewed case by case. For example,
-`decodedimagepresentation.rs` is currently a transitional module: its policy is
-small, and much of its C++ wrapper is bridge conversion. It may move back to C++
-unless decoded-image presentation becomes part of a larger Rust open-workflow
-reducer.
+The preferred direction is fewer, larger policy boundaries:
+
+- Workflow reducers that accept plain events and return state deltas plus
+  effects.
+- Geometry and rendering policy modules that compute values without owning
+  renderer objects.
+- Parsing modules that inspect bytes and return plain metadata or decoded
+  domain values.
+- Cache and navigation policies that can be tested without Qt event loops.
+
+C++ should remain the place where those plans are executed through Qt/KDE APIs.
+This keeps the application adaptable while the pre-release codebase continues to
+change.
 
 ## Testing Strategy
 
