@@ -6,6 +6,13 @@ KiriView is a desktop app using Rust, CXX-Qt and KDE Kirigami.
 Key paths: `src/` app code, `tests/cpp/` C++ tests, `po/` translations,
 `flatpak/` packaging patches, and `nix/` devenv support.
 
+## Architecture Guidance
+
+For language-boundary, module ownership, FFI design, workflow structure, and
+other long-term maintainability decisions, follow `docs/ARCHITECTURE.md`.
+Keep architecture rules in that document or ADRs instead of duplicating them
+here.
+
 ## Compatibility Policy
 
 KiriView is still pre-release. Do not spend effort preserving backward
