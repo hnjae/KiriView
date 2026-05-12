@@ -31,6 +31,7 @@ src/imagedocumentnavigationcontroller.cpp
 src/imagedocumentnavigator.cpp
 src/imagedocumentnotifications.cpp
 src/imagedocumentpredecodecontroller.cpp
+src/imagedocumentruntime.cpp
 src/imagedecodejob.cpp
 src/imagedocumentstate.cpp
 src/imagesurface.cpp
