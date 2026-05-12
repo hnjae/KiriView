@@ -106,7 +106,6 @@ private:
     void clearAfterSuccessfulFileDeletion();
     void cancelNavigationAndPredecode();
     void notify(ImageDocumentChange change);
-    void clearImage();
 
     ChangeCallback m_changeCallback;
     ImageDocumentState m_state;

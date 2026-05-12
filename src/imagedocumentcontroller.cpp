@@ -82,10 +82,10 @@ ImageDocumentController::ImageDocumentController(QObject *parent,
             [this](int pageNumber) { return m_navigationController->urlAtPage(pageNumber); },
         },
         dependencies.candidateProvider, dependencies.imageDecode);
-    m_effectExecutor = std::make_unique<ImageDocumentEffectExecutor>(*m_navigationController,
-        *m_predecodeController, *m_openController, *m_presentationController, *m_spreadController,
+    m_effectExecutor = std::make_unique<ImageDocumentEffectExecutor>(m_state,
+        *m_navigationController, *m_predecodeController, *m_openController,
+        *m_presentationController, *m_spreadController,
         ImageDocumentEffectExecutor::Callbacks {
-            [this]() { clearImage(); },
             [this](const QUrl &url) { setSourceUrl(url); },
             [this](const QUrl &imageUrl, const QUrl &containerUrl) {
                 setSourceUrlForLoad(imageUrl, containerUrl);
@@ -403,15 +403,4 @@ void ImageDocumentController::notify(ImageDocumentChange change)
     invokeIfSet(m_changeCallback, change);
 }
 
-void ImageDocumentController::clearImage()
-{
-    m_predecodeController->clear();
-    m_spreadController->finishTransition();
-    m_spreadController->clearSecondaryPage();
-    m_navigationController->cancelPageNavigationUpdate();
-    m_state.clearDisplayedImageUrls();
-    m_presentationController->clearImage();
-    m_navigationController->clearPageNavigation();
-    m_spreadController->notifyRightToLeftReadingChanged();
-}
 }

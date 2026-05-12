@@ -12,6 +12,7 @@
 namespace KiriView {
 class ImageDocumentNavigationController;
 class ImageDocumentPredecodeController;
+class ImageDocumentState;
 class ImageOpenController;
 class ImagePresentationController;
 class ImageSpreadPresentationController;
@@ -19,17 +20,16 @@ class ImageSpreadPresentationController;
 class ImageDocumentEffectExecutor final
 {
 public:
-    using ClearImageCallback = std::function<void()>;
     using OpenUrlCallback = std::function<void(const QUrl &)>;
     using OpenContainerImageCallback = std::function<void(const QUrl &, const QUrl &)>;
 
     struct Callbacks {
-        ClearImageCallback clearImage;
         OpenUrlCallback openUrl;
         OpenContainerImageCallback openContainerImage;
     };
 
-    ImageDocumentEffectExecutor(ImageDocumentNavigationController &navigationController,
+    ImageDocumentEffectExecutor(ImageDocumentState &state,
+        ImageDocumentNavigationController &navigationController,
         ImageDocumentPredecodeController &predecodeController, ImageOpenController &openController,
         ImagePresentationController &presentationController,
         ImageSpreadPresentationController &spreadController, Callbacks callbacks);
@@ -48,6 +48,7 @@ private:
     void dispatchPayload(const ContainerNavigationFailedEffect &payload);
     void dispatchPayload(const PrepareFailedContainerEffect &payload);
 
+    ImageDocumentState &m_state;
     ImageDocumentNavigationController &m_navigationController;
     ImageDocumentPredecodeController &m_predecodeController;
     ImageOpenController &m_openController;
