@@ -20,6 +20,7 @@ private Q_SLOTS:
     void timescaleFrameDelayClampsToTimerRange();
     void loopPolicyTracksFiniteAndInfiniteRemainingLoops();
     void loopAdvanceIncrementsOnlyWhenMoreLoopsAreAvailable();
+    void loopAdvanceSaturatesCompletedLoopCount();
     void decodedAnimationAdvanceStepsToNextFrame();
     void decodedAnimationAdvanceLoopsAfterLastFrameWhenAvailable();
     void decodedAnimationAdvanceStopsAfterLastFrameWithoutRemainingLoops();
@@ -84,6 +85,15 @@ void TestImageAnimationPolicy::loopAdvanceIncrementsOnlyWhenMoreLoopsAreAvailabl
     const KiriView::AnimationLoopAdvance stop = KiriView::advanceAnimationLoop(loopState(2, 2));
     QVERIFY(!stop.shouldContinue);
     QCOMPARE(stop.completedLoops, 2);
+}
+
+void TestImageAnimationPolicy::loopAdvanceSaturatesCompletedLoopCount()
+{
+    const KiriView::AnimationLoopAdvance advance
+        = KiriView::advanceAnimationLoop(loopState(-1, std::numeric_limits<int>::max()));
+
+    QVERIFY(advance.shouldContinue);
+    QCOMPARE(advance.completedLoops, std::numeric_limits<int>::max());
 }
 
 void TestImageAnimationPolicy::decodedAnimationAdvanceStepsToNextFrame()

@@ -9,7 +9,6 @@ mod bmff;
 mod byteio;
 mod cachebudget;
 mod heifcontainer;
-mod imageanimationpolicy;
 mod imagecontainer;
 mod imageformatregistry;
 mod imagemath;
