@@ -7,7 +7,6 @@
 #include "imagedocumentnotifications.h"
 #include "imagepresentationcontroller.h"
 #include "imagesecondarypagecontroller.h"
-#include "imagespreaddocumentchange.h"
 #include "imagespreadgeometry.h"
 #include "imagespreadmodecontroller.h"
 #include "imagespreadnavigation.h"
@@ -412,16 +411,12 @@ void ImageSpreadPresentationController::refreshSecondaryPage()
 
 void ImageSpreadPresentationController::handleDocumentChange(ImageDocumentChange change)
 {
-    const ImageSpreadDocumentChangePlan plan
-        = imageSpreadDocumentChangePlan(change, m_state.errorString().isEmpty());
-
-    if (plan.finishTransition) {
+    if (change == ImageDocumentChange::ErrorString && !m_state.errorString().isEmpty()) {
         finishTransition();
     }
-    if (plan.refreshSecondaryPage) {
+
+    if (change == ImageDocumentChange::PageNavigation) {
         refreshSecondaryPage();
-    }
-    if (plan.notifyRightToLeftReading) {
         notifyRightToLeftReadingChanged();
     }
 }
