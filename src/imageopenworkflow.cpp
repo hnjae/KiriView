@@ -282,7 +282,8 @@ ImageDocumentEffects ImageOpenWorkflow::finishContainerNavigationLoadWithError(
     ImageDocumentState &state, const QUrl &containerUrl, const QString &errorString)
 {
     ImageOpenTransition transition(state);
-    transition.applyFinishLoadWithError(rustImageOpenFinishContainerNavigationLoadWithError(),
+    transition.applyFinishLoadWithError(rustImageOpenFinishLoadWithErrorKind(
+                                            RustImageOpenLoadErrorKind::ContainerNavigation, false),
         ImageOpenTransitionContext { nullptr, &containerUrl, nullptr, &errorString });
     return transition.takeEffects();
 }
@@ -293,7 +294,8 @@ ImageDocumentEffects ImageOpenWorkflow::finishReplacementLoadWithError(
     ImageOpenTransition transition(state);
     const QUrl displayedUrl = state.displayedUrl();
     transition.applyFinishReplacementLoadWithError(
-        rustImageOpenFinishReplacementLoadWithError(displayedUrl.isEmpty()),
+        rustImageOpenFinishLoadWithErrorKind(
+            RustImageOpenLoadErrorKind::Replacement, displayedUrl.isEmpty()),
         ImageOpenTransitionContext { nullptr, nullptr, &displayedUrl, &errorString });
     return transition.takeEffects();
 }
@@ -302,7 +304,8 @@ ImageDocumentEffects ImageOpenWorkflow::finishInitialLoadWithError(
     ImageDocumentState &state, const QString &errorString)
 {
     ImageOpenTransition transition(state);
-    transition.applyFinishLoadWithError(rustImageOpenFinishInitialLoadWithError(),
+    transition.applyFinishLoadWithError(
+        rustImageOpenFinishLoadWithErrorKind(RustImageOpenLoadErrorKind::Initial, true),
         ImageOpenTransitionContext { nullptr, nullptr, nullptr, &errorString });
     return transition.takeEffects();
 }
@@ -311,7 +314,8 @@ ImageDocumentEffects ImageOpenWorkflow::finishAnimationLoadWithError(
     ImageDocumentState &state, const QString &errorString)
 {
     ImageOpenTransition transition(state);
-    transition.applyFinishLoadWithError(rustImageOpenFinishAnimationLoadWithError(),
+    transition.applyFinishLoadWithError(
+        rustImageOpenFinishLoadWithErrorKind(RustImageOpenLoadErrorKind::Animation, true),
         ImageOpenTransitionContext { nullptr, nullptr, nullptr, &errorString });
     return transition.takeEffects();
 }
