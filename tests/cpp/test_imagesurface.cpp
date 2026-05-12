@@ -15,6 +15,7 @@ class TestImageSurface : public QObject
 
 private Q_SLOTS:
     void staticImagePayloadReportsByteCostWithinBudget();
+    void tileCacheByteBudgetUsesFullDecodeLimitAndSystemMemoryCap();
     void fullImageSurfacePolicyRequiresMatchingPreviewWithinTextureLimit();
     void displayedImageSurfaceExposesOnlyActivePayload();
 };
@@ -32,6 +33,21 @@ void TestImageSurface::staticImagePayloadReportsByteCostWithinBudget()
     QVERIFY(!image.byteCostWithinBudget(byteCost - 1).has_value());
     QVERIFY(!image.byteCostWithinBudget(0).has_value());
     QVERIFY(!KiriView::StaticImagePayload().byteCostWithinBudget(byteCost).has_value());
+}
+
+void TestImageSurface::tileCacheByteBudgetUsesFullDecodeLimitAndSystemMemoryCap()
+{
+    constexpr qsizetype preferredByteBudget = KiriView::imageFullDecodeFallbackByteLimit;
+
+    QCOMPARE(
+        KiriView::StaticTileSurface::tileCacheByteBudgetForSystemMemory(0), preferredByteBudget);
+    QCOMPARE(KiriView::StaticTileSurface::tileCacheByteBudgetForSystemMemory(preferredByteBudget),
+        preferredByteBudget / 16);
+    QCOMPARE(
+        KiriView::StaticTileSurface::tileCacheByteBudgetForSystemMemory(preferredByteBudget * 32),
+        preferredByteBudget);
+    QVERIFY(KiriView::StaticTileSurface::defaultTileCacheByteBudget() > 0);
+    QVERIFY(KiriView::StaticTileSurface::defaultTileCacheByteBudget() <= preferredByteBudget);
 }
 
 void TestImageSurface::fullImageSurfacePolicyRequiresMatchingPreviewWithinTextureLimit()

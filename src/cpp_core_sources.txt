@@ -68,4 +68,5 @@ src/kiriviewapplicationactions.cpp
 src/predecodecache.cpp
 src/qimagereadertilesource.cpp
 src/staticimage.cpp
+src/systemmemory.cpp
 src/svgtilesource.cpp

@@ -6,6 +6,7 @@ mod archivepath;
 mod avifcompat;
 mod bmff;
 mod byteio;
+mod cachebudget;
 mod heifcontainer;
 mod imageanimationpolicy;
 mod imagecontainer;

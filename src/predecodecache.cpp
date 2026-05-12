@@ -3,14 +3,16 @@
 
 #include "predecodecache.h"
 
-#include "imagebytecost.h"
 #include "imageurl.h"
 #include "kiriview/src/predecodecachepolicy.cxx.h"
+#include "systemmemory.h"
 
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
 #include <iterator>
+#include <limits>
+#include <optional>
 #include <utility>
 
 namespace {
@@ -24,7 +26,19 @@ std::optional<QUrl> normalizedValidImageUrl(const QUrl &url)
     return normalizedUrl;
 }
 
-qsizetype qtByteSize(std::int64_t byteSize) { return static_cast<qsizetype>(byteSize); }
+qsizetype qtByteSize(std::int64_t byteSize)
+{
+    constexpr qsizetype maximumByteSize = std::numeric_limits<qsizetype>::max();
+    constexpr qsizetype minimumByteSize = std::numeric_limits<qsizetype>::min();
+    if (byteSize > static_cast<std::int64_t>(maximumByteSize)) {
+        return maximumByteSize;
+    }
+    if (byteSize < static_cast<std::int64_t>(minimumByteSize)) {
+        return minimumByteSize;
+    }
+
+    return static_cast<qsizetype>(byteSize);
+}
 
 std::int64_t rustByteSize(qsizetype byteSize) { return static_cast<std::int64_t>(byteSize); }
 }
@@ -37,7 +51,7 @@ qsizetype PredecodeCache::preferredByteBudget()
 
 qsizetype PredecodeCache::defaultByteBudget()
 {
-    return byteBudgetForSystemMemory(systemMemoryByteSize().value_or(0));
+    return byteBudgetForSystemMemory(physicalSystemMemoryByteSize().value_or(0));
 }
 
 qsizetype PredecodeCache::byteBudgetForSystemMemory(qsizetype systemMemoryByteSize)

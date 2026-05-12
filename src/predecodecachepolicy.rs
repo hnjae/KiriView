@@ -88,26 +88,11 @@ fn rust_predecode_preferred_byte_budget() -> i64 {
 }
 
 fn rust_predecode_byte_budget_for_system_memory(system_memory_byte_size: i64) -> i64 {
-    system_memory_capped_byte_budget(
+    crate::cachebudget::system_memory_capped_byte_budget(
         PREDECODE_PREFERRED_BYTE_BUDGET,
         system_memory_byte_size,
         PREDECODE_SYSTEM_MEMORY_DIVISOR,
     )
-}
-
-fn system_memory_capped_byte_budget(
-    preferred_byte_budget: i64,
-    system_memory_byte_size: i64,
-    memory_divisor: i64,
-) -> i64 {
-    if preferred_byte_budget <= 0 {
-        return 0;
-    }
-    if system_memory_byte_size <= 0 || memory_divisor <= 0 {
-        return preferred_byte_budget;
-    }
-
-    preferred_byte_budget.min(system_memory_byte_size / memory_divisor)
 }
 
 fn rust_predecode_cacheable_byte_cost(

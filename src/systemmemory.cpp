@@ -1,14 +1,16 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "imagebytecost.h"
+#include "systemmemory.h"
 
 #include <cstdint>
 #include <limits>
 
-namespace {
-constexpr std::int64_t rgbaBytesPerPixel = 4;
+#if defined(Q_OS_LINUX)
+#include <unistd.h>
+#endif
 
+namespace {
 qsizetype qtByteSize(std::int64_t byteSize)
 {
     constexpr qsizetype maximumByteSize = std::numeric_limits<qsizetype>::max();
@@ -37,17 +39,18 @@ std::int64_t saturatedByteProduct(std::int64_t left, std::int64_t right)
 }
 
 namespace KiriView {
-qsizetype imageByteCost(const QImage &image)
+std::optional<qsizetype> physicalSystemMemoryByteSize()
 {
-    if (image.isNull()) {
-        return 0;
+#if defined(Q_OS_LINUX)
+    const long pageCount = ::sysconf(_SC_PHYS_PAGES);
+    const long pageSize = ::sysconf(_SC_PAGE_SIZE);
+    if (pageCount <= 0 || pageSize <= 0) {
+        return std::nullopt;
     }
-    return image.sizeInBytes();
-}
 
-qsizetype estimatedRgbaByteCost(const QSize &size)
-{
-    const std::int64_t pixelCount = saturatedByteProduct(size.width(), size.height());
-    return qtByteSize(saturatedByteProduct(pixelCount, rgbaBytesPerPixel));
+    return qtByteSize(saturatedByteProduct(pageCount, pageSize));
+#else
+    return std::nullopt;
+#endif
 }
 }
