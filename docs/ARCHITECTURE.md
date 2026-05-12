@@ -99,6 +99,21 @@ Avoid split-brain state. A workflow value must have one canonical owner. If both
 languages need to observe it, one side owns the value and the other side receives
 a derived snapshot, projection, delta, or completion event.
 
+### Derived Public State
+
+QML-facing values may be derived from multiple C++ runtime states. For example,
+a public loading or status property may combine document state with an active
+presentation transition. The derived value must not become a second mutable
+source of truth. Keep the canonical owners explicit, and make notification
+dependencies follow the derived value.
+
+When a public value has mode-specific ownership, only the active mode owns that
+value. Inactive mode state is a cache, projection, or restoration point, not a
+competing owner. Transition code must synchronize the next active owner before
+exposing the mode change. For example, single-page and two-page presentation may
+use different zoom state owners, but the public zoom value must have exactly one
+active owner at a time.
+
 ## FFI Design
 
 FFI code should be intentionally boring. A good bridge is explicit, typed, and
