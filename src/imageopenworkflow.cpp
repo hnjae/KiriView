@@ -134,7 +134,7 @@ public:
     KiriView::ImageDocumentEffects takeEffects() { return std::move(m_effects); }
 
 private:
-    void add(KiriView::ImageDocumentEffect effect) { m_effects.add(std::move(effect)); }
+    void add(KiriView::ImageDocumentEffect effect) { m_effects.push_back(std::move(effect)); }
 
     void applyTrackedLoadCompletion(const KiriView::RustImageOpenTransition &transition)
     {
