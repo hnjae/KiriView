@@ -82,6 +82,7 @@ private Q_SLOTS:
     void staticResultFallsBackToBlockingPreview();
     void staticResultReportsFirstDisplayErrors();
     void staticResultReportsMissingReadyFirstDisplayImage();
+    void staticResultReportsMissingBlockingPreview();
 };
 
 void TestDecodedImageResult::staticResultUsesReadyFirstDisplayImage()
@@ -158,6 +159,22 @@ void TestDecodedImageResult::staticResultReportsMissingReadyFirstDisplayImage()
     QVERIFY(KiriView::decodedImageResultFailure(result) != nullptr);
     QCOMPARE(source->firstDisplayDecodeCount, 1);
     QCOMPARE(source->blockingDisplayDecodeCount, 0);
+}
+
+void TestDecodedImageResult::staticResultReportsMissingBlockingPreview()
+{
+    auto source = std::make_shared<ResultTileSource>();
+    source->blockingDisplayError = QStringLiteral("blocking display failed");
+
+    QString errorString;
+    const KiriView::DecodedImageResult result = KiriView::staticDecodedImageResult(
+        source, KiriView::ImageFirstDisplayDecodeContext { QSize(400, 300) }, &errorString);
+
+    const KiriView::DecodedImageFailure *failure = KiriView::decodedImageResultFailure(result);
+    QVERIFY(failure != nullptr);
+    QCOMPARE(failure->errorString, QStringLiteral("blocking display failed"));
+    QCOMPARE(source->firstDisplayDecodeCount, 1);
+    QCOMPARE(source->blockingDisplayDecodeCount, 1);
 }
 
 QTEST_GUILESS_MAIN(TestDecodedImageResult)
