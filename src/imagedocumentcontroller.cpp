@@ -5,6 +5,7 @@
 
 #include "imagecallback.h"
 #include "imagedeletioncontroller.h"
+#include "imagedocumentdeletioncontroller.h"
 #include "imagedocumenteffectexecutor.h"
 #include "imagedocumentloadcontroller.h"
 #include "imagedocumentnavigationcontroller.h"
@@ -56,6 +57,8 @@ ImageDocumentController::ImageDocumentController(QObject *parent,
                 m_openController->finishAnimationLoadWithError(errorString);
             },
         });
+    m_documentDeletionController = std::make_unique<ImageDocumentDeletionController>(
+        m_state, *m_presentationController, *m_deletionController);
     m_openController
         = std::make_unique<ImageOpenController>(this, m_state, *m_presentationController,
             ImageOpenController::Callbacks {
@@ -102,7 +105,7 @@ ImageDocumentController::ImageDocumentController(QObject *parent,
 
 ImageDocumentController::~ImageDocumentController()
 {
-    m_deletionController->cancel();
+    m_documentDeletionController->cancel();
     m_presentationController->stopAnimation();
     m_spreadController->shutdown();
     m_predecodeController->cancel();
@@ -225,7 +228,7 @@ bool ImageDocumentController::containerNavigationAvailable() const
 
 bool ImageDocumentController::fileDeletionInProgress() const
 {
-    return m_deletionController->inProgress();
+    return m_documentDeletionController->inProgress();
 }
 
 bool ImageDocumentController::twoPageModeEnabled() const
@@ -290,11 +293,7 @@ void ImageDocumentController::openNextContainer() { m_navigator->openNextContain
 
 void ImageDocumentController::deleteDisplayedFile(FileDeletionMode mode)
 {
-    if (!m_presentationController->hasImage()) {
-        return;
-    }
-
-    m_deletionController->deleteDisplayedFile(m_state.displayedImageLocation(), mode);
+    m_documentDeletionController->deleteDisplayedFile(mode);
 }
 
 void ImageDocumentController::openImageAtPage(int pageNumber)

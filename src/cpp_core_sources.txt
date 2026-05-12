@@ -24,6 +24,7 @@ src/imagecontainer.cpp
 src/imagerendering.cpp
 src/imagedeletioncontroller.cpp
 src/imagedocumentcontroller.cpp
+src/imagedocumentdeletioncontroller.cpp
 src/imagedocumenteffectexecutor.cpp
 src/imagedocumentloadcontroller.cpp
 src/imagedocumentnavigationcontroller.cpp

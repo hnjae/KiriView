@@ -115,6 +115,7 @@ private Q_SLOTS:
     void replacementLoadFailureKeepsDisplayedImage();
     void decodedReplacementFailureSchedulesRecoveryPredecodeOnce();
     void emptyContainerNavigationClearsImageAndSelectsContainer();
+    void deletingWithoutDisplayedImageDoesNotStartFileOperation();
     void fileDeletionFailureKeepsDisplayedImageAndReportsError();
     void fileDeletionCancelKeepsDisplayedImageWithoutError();
     void successfulFileDeletionOpensNextImageFallback();
@@ -633,6 +634,22 @@ void TestImageDocumentController::emptyContainerNavigationClearsImageAndSelectsC
     QVERIFY(controller->image().isNull());
     QCOMPARE(controller->imageSize(), QSize());
     QVERIFY(!controller->errorString().isEmpty());
+}
+
+void TestImageDocumentController::deletingWithoutDisplayedImageDoesNotStartFileOperation()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    ManualFileOperationProvider fileOperations;
+
+    std::unique_ptr<KiriView::ImageDocumentController> controller = createController(this,
+        candidateProvider, dataLoader, staticImageDataDecoder(testImage(2)),
+        KiriView::fallbackTextureSizeMax, 1.0, fileOperationProviderFor(fileOperations));
+
+    controller->deleteDisplayedFile(KiriView::FileDeletionMode::MoveToTrash);
+
+    QCOMPARE(fileOperations.operationCount(), std::size_t(0));
+    QVERIFY(!controller->fileDeletionInProgress());
 }
 
 void TestImageDocumentController::fileDeletionFailureKeepsDisplayedImageAndReportsError()

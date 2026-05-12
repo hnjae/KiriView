@@ -24,6 +24,7 @@
 
 namespace KiriView {
 class ImageDeletionController;
+class ImageDocumentDeletionController;
 class ImageDocumentEffectExecutor;
 class ImageDocumentLoadController;
 class ImageDocumentNavigationController;
@@ -106,6 +107,7 @@ private:
     ChangeCallback m_changeCallback;
     ImageDocumentState m_state;
     std::unique_ptr<ImageDeletionController> m_deletionController;
+    std::unique_ptr<ImageDocumentDeletionController> m_documentDeletionController;
     std::unique_ptr<ImagePresentationController> m_presentationController;
     std::unique_ptr<ImageOpenController> m_openController;
     std::unique_ptr<ImageDocumentNavigationController> m_navigationController;
