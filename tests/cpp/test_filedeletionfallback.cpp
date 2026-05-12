@@ -27,6 +27,7 @@ class TestFileDeletionFallback : public QObject
 private Q_SLOTS:
     void regularImagePlanUsesSiblingImageContext();
     void comicBookPagePlanUsesArchiveContainer();
+    void generalArchivePageHasNoFallbackPlan();
     void imageFallbackPrefersNextImage();
     void imageFallbackFallsBackToPreviousImage();
     void comicBookFallbackKeepsNextAndPreviousCandidates();
@@ -61,6 +62,20 @@ void TestFileDeletionFallback::comicBookPagePlanUsesArchiveContainer()
     QVERIFY(comicBookPlan != nullptr);
     QCOMPARE(comicBookPlan->currentContainerUrl, archiveUrl);
     QCOMPARE(comicBookPlan->currentName, QStringLiteral("book.cbz"));
+}
+
+void TestFileDeletionFallback::generalArchivePageHasNoFallbackPlan()
+{
+    const QUrl archiveUrl = localUrl(QStringLiteral("/archives/document.zip"));
+    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveDocument.has_value());
+    const QUrl pageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("page.png"));
+
+    const KiriView::DeletionFallbackPlan plan = KiriView::deletionFallbackPlanForDisplayedLocation(
+        KiriView::DisplayedImageLocation::fromArchiveDocument(pageUrl, *archiveDocument));
+
+    QVERIFY(std::holds_alternative<KiriView::NoDeletionFallbackPlan>(plan));
 }
 
 void TestFileDeletionFallback::imageFallbackPrefersNextImage()

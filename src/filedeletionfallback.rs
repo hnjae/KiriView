@@ -15,21 +15,7 @@ mod ffi {
         fallback: RustDeletionFallbackIndex,
     }
 
-    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-    enum RustDeletionFallbackPlanTarget {
-        None = 0,
-        Image = 1,
-        ComicBookArchive = 2,
-    }
-
     extern "Rust" {
-        #[cxx_name = "rustDeletionFallbackPlanTarget"]
-        fn rust_deletion_fallback_plan_target(
-            displayed_location_inside_archive_document: bool,
-            archive_document_is_comic_book: bool,
-            image_candidate_context_available: bool,
-        ) -> RustDeletionFallbackPlanTarget;
-
         #[cxx_name = "rustDeletionFallbackCandidateIndices"]
         fn rust_deletion_fallback_candidate_indices(
             candidate_count: usize,
@@ -48,27 +34,7 @@ use crate::navigationindex::{
     adjacent_navigation_index as core_adjacent_navigation_index,
     navigation_index_for_matches as core_navigation_index_for_matches,
 };
-use ffi::{
-    RustDeletionFallbackCandidateIndices, RustDeletionFallbackIndex, RustDeletionFallbackPlanTarget,
-};
-
-fn rust_deletion_fallback_plan_target(
-    displayed_location_inside_archive_document: bool,
-    archive_document_is_comic_book: bool,
-    image_candidate_context_available: bool,
-) -> RustDeletionFallbackPlanTarget {
-    if displayed_location_inside_archive_document {
-        if archive_document_is_comic_book {
-            RustDeletionFallbackPlanTarget::ComicBookArchive
-        } else {
-            RustDeletionFallbackPlanTarget::None
-        }
-    } else if image_candidate_context_available {
-        RustDeletionFallbackPlanTarget::Image
-    } else {
-        RustDeletionFallbackPlanTarget::None
-    }
-}
+use ffi::{RustDeletionFallbackCandidateIndices, RustDeletionFallbackIndex};
 
 fn rust_deletion_fallback_candidate_indices(
     candidate_count: usize,
@@ -135,26 +101,6 @@ fn missing_index() -> RustDeletionFallbackIndex {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    #[test]
-    fn deletion_fallback_plan_targets_image_or_comic_book_fallbacks() {
-        assert_eq!(
-            rust_deletion_fallback_plan_target(false, false, true),
-            RustDeletionFallbackPlanTarget::Image
-        );
-        assert_eq!(
-            rust_deletion_fallback_plan_target(false, false, false),
-            RustDeletionFallbackPlanTarget::None
-        );
-        assert_eq!(
-            rust_deletion_fallback_plan_target(true, true, true),
-            RustDeletionFallbackPlanTarget::ComicBookArchive
-        );
-        assert_eq!(
-            rust_deletion_fallback_plan_target(true, false, true),
-            RustDeletionFallbackPlanTarget::None
-        );
-    }
 
     #[test]
     fn deletion_fallback_prefers_next_then_previous_candidate() {

@@ -118,31 +118,24 @@ DeletionFallbackPlan deletionFallbackPlanForDisplayedLocation(
     const DisplayedImageLocation &location)
 {
     const bool insideArchiveDocument = displayedLocationIsInsideArchiveDocument(location);
-    std::optional<ImageCandidateListContext> imageContext;
-    if (!insideArchiveDocument) {
-        imageContext = imageCandidateListContextForDisplayedImage(location);
-    }
+    if (insideArchiveDocument) {
+        if (!location.archiveDocument().isComicBook()) {
+            return NoDeletionFallbackPlan {};
+        }
 
-    switch (rustDeletionFallbackPlanTarget(insideArchiveDocument,
-        location.archiveDocument().isComicBook(), imageContext.has_value())) {
-    case RustDeletionFallbackPlanTarget::ComicBookArchive: {
         const QUrl currentContainerUrl = containerNavigationUrlForLocation(location);
         return ComicBookDeletionFallbackPlan { currentContainerUrl,
             currentContainerUrl.fileName() };
     }
-    case RustDeletionFallbackPlanTarget::Image: {
-        if (!imageContext.has_value()) {
-            return NoDeletionFallbackPlan {};
-        }
 
-        const QUrl currentUrl = imageContext->currentUrl();
-        return ImageDeletionFallbackPlan { *imageContext, currentUrl, currentUrl.fileName() };
-    }
-    case RustDeletionFallbackPlanTarget::None:
+    const std::optional<ImageCandidateListContext> imageContext
+        = imageCandidateListContextForDisplayedImage(location);
+    if (!imageContext.has_value()) {
         return NoDeletionFallbackPlan {};
     }
 
-    return NoDeletionFallbackPlan {};
+    const QUrl currentUrl = imageContext->currentUrl();
+    return ImageDeletionFallbackPlan { *imageContext, currentUrl, currentUrl.fileName() };
 }
 
 std::optional<QUrl> imageDeletionFallbackUrl(
