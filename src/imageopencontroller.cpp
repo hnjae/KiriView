@@ -33,6 +33,13 @@ QString loadErrorMessage(KiriView::ImageLoadError error, const QString &errorStr
     return error == KiriView::ImageLoadError::EmptyArchive ? emptyArchiveErrorMessage()
                                                            : errorString;
 }
+
+QString animationLoadErrorMessage(const QString &errorString)
+{
+    return errorString.isEmpty()
+        ? KiriView::imageViewText("Could not decode the selected image animation.")
+        : errorString;
+}
 }
 
 namespace KiriView {
@@ -88,6 +95,12 @@ void ImageOpenController::open()
 }
 
 void ImageOpenController::cancel() { m_imageLoader->cancel(); }
+
+void ImageOpenController::finishAnimationLoadWithError(const QString &errorString)
+{
+    const QString message = animationLoadErrorMessage(errorString);
+    reportEffects(ImageOpenWorkflow::finishAnimationLoadWithError(m_state, message));
+}
 
 void ImageOpenController::finishEmptySourceLoad()
 {

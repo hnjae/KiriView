@@ -44,6 +44,7 @@ public:
 
     void open();
     void cancel();
+    void finishAnimationLoadWithError(const QString &errorString);
     void finishContainerNavigationWithEmptyContainer(const QUrl &containerUrl);
     void finishContainerNavigationLoadWithError(
         const QUrl &containerUrl, const QString &errorString);

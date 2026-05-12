@@ -45,15 +45,11 @@ struct PrepareFailedContainerEffect {
     QUrl containerUrl;
 };
 
-struct AnimationFailedEffect {
-    QString errorString;
-};
-
 struct ImageDocumentEffect {
     using Payload = std::variant<ClearImageEffect, ResetZoomEffect, UpdatePageNavigationEffect,
         ScheduleAdjacentImagePredecodeEffect, OpenUrlEffect, ContainerImageSelectedEffect,
-        EmptyContainerSelectedEffect, ContainerNavigationFailedEffect, PrepareFailedContainerEffect,
-        AnimationFailedEffect>;
+        EmptyContainerSelectedEffect, ContainerNavigationFailedEffect,
+        PrepareFailedContainerEffect>;
 
     static ImageDocumentEffect clearImage() { return ImageDocumentEffect(ClearImageEffect {}); }
 
@@ -94,11 +90,6 @@ struct ImageDocumentEffect {
     static ImageDocumentEffect prepareFailedContainer(const QUrl &containerUrl)
     {
         return ImageDocumentEffect(PrepareFailedContainerEffect { containerUrl });
-    }
-
-    static ImageDocumentEffect animationFailed(const QString &errorString)
-    {
-        return ImageDocumentEffect(AnimationFailedEffect { errorString });
     }
 
     explicit ImageDocumentEffect(Payload effectPayload)

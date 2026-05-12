@@ -109,7 +109,6 @@ private:
     void dispatchEffectPayload(const EmptyContainerSelectedEffect &payload);
     void dispatchEffectPayload(const ContainerNavigationFailedEffect &payload);
     void dispatchEffectPayload(const PrepareFailedContainerEffect &payload);
-    void dispatchEffectPayload(const AnimationFailedEffect &payload);
     void dispatchEffects(ImageDocumentEffects effects);
     void setSourceUrlForLoad(const QUrl &sourceUrl, const QUrl &containerNavigationUrl,
         bool preserveTwoPageSpreadTransition = false);
@@ -118,7 +117,6 @@ private:
     void cancelNavigationAndPredecode();
     void cancelPredecode();
     std::optional<PredecodedImage> takePredecodedImage(const QUrl &url) const;
-    void finishWithAnimationError(const QString &errorString);
     void notify(ImageDocumentChange change);
     void clearImage();
     void openImageAtRelativePageOffset(int offset);

@@ -11,7 +11,6 @@
 #include "imagepredecodecoordinator.h"
 #include "imagepresentationcontroller.h"
 #include "imagespreadpresentationcontroller.h"
-#include "imageviewtext.h"
 
 #include <QRectF>
 #include <QString>
@@ -54,7 +53,7 @@ ImageDocumentController::ImageDocumentController(QObject *parent,
         ImagePresentationController::Callbacks {
             [this](ImageDocumentChange change) { notify(change); },
             [this](const QString &errorString) {
-                dispatchEffect(ImageDocumentEffect::animationFailed(errorString));
+                m_openController->finishAnimationLoadWithError(errorString);
             },
         });
     m_openController
@@ -397,11 +396,6 @@ void ImageDocumentController::dispatchEffectPayload(const PrepareFailedContainer
     m_presentationController->prepareFailedContainer(payload.containerUrl);
 }
 
-void ImageDocumentController::dispatchEffectPayload(const AnimationFailedEffect &payload)
-{
-    finishWithAnimationError(payload.errorString);
-}
-
 void ImageDocumentController::dispatchEffects(ImageDocumentEffects effects)
 {
     for (ImageDocumentEffect &effect : effects) {
@@ -495,16 +489,6 @@ std::optional<PredecodedImage> ImageDocumentController::takePredecodedImage(cons
     }
 
     return m_predecodeCoordinator->tryTake(url);
-}
-
-void ImageDocumentController::finishWithAnimationError(const QString &errorString)
-{
-    const QString message = errorString.isEmpty()
-        ? imageViewText("Could not decode the selected image animation.")
-        : errorString;
-    ImageDocumentEffects effects
-        = ImageOpenWorkflow::finishAnimationLoadWithError(m_state, message);
-    dispatchEffects(std::move(effects));
 }
 
 void ImageDocumentController::openImageAtRelativePageOffset(int offset)
