@@ -6,11 +6,11 @@
 #include "imagecallback.h"
 #include "imagedeletioncontroller.h"
 #include "imagedocumenteffectexecutor.h"
+#include "imagedocumentloadcontroller.h"
 #include "imagedocumentnavigationcontroller.h"
 #include "imagedocumentnavigator.h"
 #include "imagedocumentpredecodecontroller.h"
 #include "imageopencontroller.h"
-#include "imageopenworkflow.h"
 #include "imagepresentationcontroller.h"
 #include "imagespreadpresentationcontroller.h"
 
@@ -41,10 +41,10 @@ ImageDocumentController::ImageDocumentController(QObject *parent,
         dependencies.candidateProvider, std::move(dependencies.fileOperations),
         ImageDeletionController::Callbacks {
             [this]() { notify(ImageDocumentChange::FileDeletionInProgress); },
-            [this]() { clearAfterSuccessfulFileDeletion(); },
-            [this](const QUrl &url) { setSourceUrl(url); },
+            [this]() { m_loadController->clearAfterSuccessfulFileDeletion(); },
+            [this](const QUrl &url) { m_loadController->setSourceUrl(url); },
             [this](const QUrl &imageUrl, const QUrl &containerUrl) {
-                setSourceUrlForLoad(imageUrl, containerUrl);
+                m_loadController->setSourceUrl(imageUrl, containerUrl);
             },
             std::move(fileDeletionFailedCallback),
         });
@@ -86,14 +86,17 @@ ImageDocumentController::ImageDocumentController(QObject *parent,
         *m_navigationController, *m_predecodeController, *m_openController,
         *m_presentationController, *m_spreadController,
         ImageDocumentEffectExecutor::Callbacks {
-            [this](const QUrl &url) { setSourceUrl(url); },
+            [this](const QUrl &url) { m_loadController->setSourceUrl(url); },
             [this](const QUrl &imageUrl, const QUrl &containerUrl) {
-                setSourceUrlForLoad(imageUrl, containerUrl);
+                m_loadController->setSourceUrl(imageUrl, containerUrl);
             },
         });
+    m_loadController = std::make_unique<ImageDocumentLoadController>(m_state, *m_deletionController,
+        *m_navigationController, *m_predecodeController, *m_openController, *m_spreadController,
+        *m_effectExecutor);
     m_navigator = std::make_unique<ImageDocumentNavigator>(*m_navigationController,
         *m_spreadController, [this](const QUrl &url, bool preserveTwoPageSpreadTransition) {
-            setSourceUrlForLoad(url, QUrl(), preserveTwoPageSpreadTransition);
+            m_loadController->setSourceUrl(url, QUrl(), preserveTwoPageSpreadTransition);
         });
 }
 
@@ -113,7 +116,7 @@ QUrl ImageDocumentController::sourceUrl() const { return m_state.sourceUrl(); }
 
 void ImageDocumentController::setSourceUrl(const QUrl &sourceUrl)
 {
-    setSourceUrlForLoad(sourceUrl, QUrl());
+    m_loadController->setSourceUrl(sourceUrl);
 }
 
 ImageDocumentStatus ImageDocumentController::status() const
@@ -311,77 +314,6 @@ void ImageDocumentController::updateRenderContext() { m_spreadController->update
 void ImageDocumentController::dispatchEffect(ImageDocumentEffect effect)
 {
     m_effectExecutor->dispatch(std::move(effect));
-}
-
-void ImageDocumentController::dispatchEffects(ImageDocumentEffects effects)
-{
-    m_effectExecutor->dispatchAll(std::move(effects));
-}
-
-void ImageDocumentController::setSourceUrlForLoad(
-    const QUrl &sourceUrl, const QUrl &containerNavigationUrl, bool preserveTwoPageSpreadTransition)
-{
-    m_deletionController->cancel();
-
-    const bool sourceUrlChanged = m_state.sourceUrl() != sourceUrl;
-    const bool resetRightToLeftReading = m_spreadController->shouldResetRightToLeftReadingForLoad(
-        m_state.displayedArchiveDocument(), sourceUrl, containerNavigationUrl);
-    const ImageOpenSourceLoadPlan plan = ImageOpenWorkflow::sourceLoadPlan(sourceUrlChanged,
-        preserveTwoPageSpreadTransition, resetRightToLeftReading, containerNavigationUrl.isEmpty());
-    if (plan.cancelNavigationAndPredecode) {
-        cancelNavigationAndPredecode();
-    }
-    if (plan.finishSpreadTransition) {
-        m_spreadController->finishTransition();
-    }
-
-    const bool notifyRightToLeftReading
-        = plan.resetRightToLeftReading && m_spreadController->rightToLeftReadingEnabled();
-    if (plan.resetRightToLeftReading) {
-        m_spreadController->resetRightToLeftReading();
-    }
-    if (!sourceUrlChanged && notifyRightToLeftReading) {
-        m_spreadController->notifyRightToLeftReadingChanged();
-    }
-    if (plan.clearSecondaryPage) {
-        m_spreadController->clearSecondaryPage();
-    }
-    if (plan.clearLoadingContainerNavigationUrl) {
-        m_state.clearLoadingContainerNavigationUrl();
-    }
-    if (plan.updateContainerNavigationUrl) {
-        m_state.setContainerNavigationUrl(containerNavigationUrl);
-    }
-    if (plan.setLoadingContainerNavigationUrl) {
-        m_state.setLoadingContainerNavigationUrl(containerNavigationUrl);
-    }
-    if (plan.setSourceUrl) {
-        m_state.setSourceUrl(sourceUrl);
-    }
-    if (plan.beginOpen) {
-        m_openController->open();
-    }
-    if (sourceUrlChanged && notifyRightToLeftReading) {
-        m_spreadController->notifyRightToLeftReadingChanged();
-    }
-}
-
-void ImageDocumentController::clearAfterSuccessfulFileDeletion()
-{
-    cancelNavigationAndPredecode();
-    m_openController->cancel();
-    m_spreadController->finishTransition();
-    m_spreadController->clearSecondaryPage();
-    m_state.setSourceUrl(QUrl());
-    m_state.setErrorString(QString());
-    dispatchEffects(ImageOpenWorkflow::finishEmptySourceLoad(m_state));
-}
-
-void ImageDocumentController::cancelNavigationAndPredecode()
-{
-    m_navigationController->cancelNavigation();
-    m_navigationController->cancelContainerNavigation();
-    m_predecodeController->cancel();
 }
 
 void ImageDocumentController::notify(ImageDocumentChange change)
