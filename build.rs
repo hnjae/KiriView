@@ -42,7 +42,6 @@ const RUST_BRIDGE_SOURCES: &[&str] = &[
     "src/imagecandidaterepository.rs",
     "src/imagecontainer.rs",
     "src/imageformatregistry.rs",
-    "src/imageloadplan.rs",
     "src/imageopenworkflow.rs",
     "src/imagerendergeometry.rs",
     "src/imageurl.rs",

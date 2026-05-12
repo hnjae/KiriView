@@ -17,7 +17,6 @@ mod imagebytecost;
 mod imagecandidaterepository;
 mod imagecontainer;
 mod imageformatregistry;
-mod imageloadplan;
 mod imagemath;
 mod imagenavigationmodel;
 mod imageopenworkflow;
