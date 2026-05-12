@@ -3,20 +3,21 @@
 
 #include "imagedocumentnavigator.h"
 
-#include "imagecallback.h"
+#include "imagedocumentloadcontroller.h"
 #include "imagedocumentnavigationcontroller.h"
+#include "imagedocumentsourceloadrequest.h"
 #include "imagespreadpresentationcontroller.h"
 
 #include <optional>
-#include <utility>
 
 namespace KiriView {
 ImageDocumentNavigator::ImageDocumentNavigator(
     ImageDocumentNavigationController &navigationController,
-    ImageSpreadPresentationController &spreadController, OpenPageCallback openPage)
+    ImageSpreadPresentationController &spreadController,
+    ImageDocumentLoadController &loadController)
     : m_navigationController(navigationController)
     , m_spreadController(spreadController)
-    , m_openPage(std::move(openPage))
+    , m_loadController(loadController)
 {
 }
 
@@ -53,7 +54,8 @@ void ImageDocumentNavigator::openImageAtPage(int pageNumber)
         m_spreadController.beginTransition();
     }
 
-    invokeIfSet(m_openPage, *pageUrl, spreadTransition);
+    m_loadController.loadSource(
+        ImageDocumentSourceLoadRequest::fromPageNavigation(*pageUrl, spreadTransition));
 }
 
 void ImageDocumentNavigator::openAdjacentImage(NavigationDirection direction)

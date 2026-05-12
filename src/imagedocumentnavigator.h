@@ -6,21 +6,17 @@
 
 #include "imagenavigationtypes.h"
 
-#include <QUrl>
-#include <functional>
-
 namespace KiriView {
+class ImageDocumentLoadController;
 class ImageDocumentNavigationController;
 class ImageSpreadPresentationController;
 
 class ImageDocumentNavigator final
 {
 public:
-    using OpenPageCallback
-        = std::function<void(const QUrl &url, bool preserveTwoPageSpreadTransition)>;
-
     ImageDocumentNavigator(ImageDocumentNavigationController &navigationController,
-        ImageSpreadPresentationController &spreadController, OpenPageCallback openPage);
+        ImageSpreadPresentationController &spreadController,
+        ImageDocumentLoadController &loadController);
 
     void openPreviousImage();
     void openNextImage();
@@ -37,7 +33,7 @@ private:
 
     ImageDocumentNavigationController &m_navigationController;
     ImageSpreadPresentationController &m_spreadController;
-    OpenPageCallback m_openPage;
+    ImageDocumentLoadController &m_loadController;
 };
 }
 
