@@ -74,7 +74,8 @@ KiriView::ImageOpenSourceLoadPlan imageOpenSourceLoadPlan(
     KiriView::RustImageOpenSourceLoadPlan plan)
 {
     return KiriView::ImageOpenSourceLoadPlan { plan.finish_spread_transition,
-        plan.reset_right_to_left_reading, plan.clear_loading_container_navigation_url,
+        plan.reset_right_to_left_reading, plan.notify_right_to_left_reading_before_open,
+        plan.notify_right_to_left_reading_after_open, plan.clear_loading_container_navigation_url,
         plan.update_container_navigation_url, plan.cancel_navigation_and_predecode,
         plan.clear_secondary_page, plan.set_loading_container_navigation_url, plan.set_source_url,
         plan.begin_open };
@@ -260,9 +261,10 @@ private:
 namespace KiriView {
 ImageOpenSourceLoadPlan ImageOpenWorkflow::sourceLoadPlan(const ImageOpenSourceLoadRequest &request)
 {
-    return imageOpenSourceLoadPlan(rustImageOpenSourceLoadPlan(RustImageOpenSourceLoadRequest {
-        request.sourceUrlChanged, request.preserveTwoPageSpreadTransition,
-        request.resetRightToLeftReading, request.containerNavigationUrlEmpty }));
+    return imageOpenSourceLoadPlan(
+        rustImageOpenSourceLoadPlan(RustImageOpenSourceLoadRequest { request.sourceUrlChanged,
+            request.preserveTwoPageSpreadTransition, request.resetRightToLeftReading,
+            request.rightToLeftReadingEnabled, request.containerNavigationUrlEmpty }));
 }
 
 ImageDocumentEffects ImageOpenWorkflow::beginSourceLoad(ImageDocumentState &state, bool hasImage)

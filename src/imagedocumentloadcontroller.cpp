@@ -42,6 +42,7 @@ void ImageDocumentLoadController::loadSource(const ImageDocumentSourceLoadReques
     openRequest.sourceUrlChanged = sourceUrlChanged;
     openRequest.preserveTwoPageSpreadTransition = request.preserveTwoPageSpreadTransition;
     openRequest.resetRightToLeftReading = resetRightToLeftReading;
+    openRequest.rightToLeftReadingEnabled = m_spreadController.rightToLeftReadingEnabled();
     openRequest.containerNavigationUrlEmpty = request.containerNavigationUrl.isEmpty();
     const ImageOpenSourceLoadPlan plan = ImageOpenWorkflow::sourceLoadPlan(openRequest);
     if (plan.cancelNavigationAndPredecode) {
@@ -51,12 +52,10 @@ void ImageDocumentLoadController::loadSource(const ImageDocumentSourceLoadReques
         m_spreadController.finishTransition();
     }
 
-    const bool notifyRightToLeftReading
-        = plan.resetRightToLeftReading && m_spreadController.rightToLeftReadingEnabled();
     if (plan.resetRightToLeftReading) {
         m_spreadController.resetRightToLeftReading();
     }
-    if (!sourceUrlChanged && notifyRightToLeftReading) {
+    if (plan.notifyRightToLeftReadingBeforeOpen) {
         m_spreadController.notifyRightToLeftReadingChanged();
     }
     if (plan.clearSecondaryPage) {
@@ -77,7 +76,7 @@ void ImageDocumentLoadController::loadSource(const ImageDocumentSourceLoadReques
     if (plan.beginOpen) {
         m_openController.open();
     }
-    if (sourceUrlChanged && notifyRightToLeftReading) {
+    if (plan.notifyRightToLeftReadingAfterOpen) {
         m_spreadController.notifyRightToLeftReadingChanged();
     }
 }

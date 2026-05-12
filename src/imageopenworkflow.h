@@ -16,6 +16,8 @@ class ImageDocumentState;
 struct ImageOpenSourceLoadPlan {
     bool finishSpreadTransition = false;
     bool resetRightToLeftReading = false;
+    bool notifyRightToLeftReadingBeforeOpen = false;
+    bool notifyRightToLeftReadingAfterOpen = false;
     bool clearLoadingContainerNavigationUrl = false;
     bool updateContainerNavigationUrl = false;
     bool cancelNavigationAndPredecode = false;
@@ -29,6 +31,7 @@ struct ImageOpenSourceLoadRequest {
     bool sourceUrlChanged = false;
     bool preserveTwoPageSpreadTransition = false;
     bool resetRightToLeftReading = false;
+    bool rightToLeftReadingEnabled = false;
     bool containerNavigationUrlEmpty = false;
 };
 
