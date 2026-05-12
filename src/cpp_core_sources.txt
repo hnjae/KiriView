@@ -46,6 +46,7 @@ src/imageopencontroller.cpp
 src/imageopenworkflow.cpp
 src/imagepredecodecoordinator.cpp
 src/imagepresentationcontroller.cpp
+src/imagesecondarypagecontroller.cpp
 src/imagespreadgeometry.cpp
 src/imagespreadpagecache.cpp
 src/imagespreadzoomcontroller.cpp

@@ -3,16 +3,15 @@
 
 #include "imagedocumentcontroller.h"
 
-#include "decodedimagepresentation.h"
 #include "imagecallback.h"
 #include "imagecontainer.h"
 #include "imagedeletioncontroller.h"
 #include "imagedocumentnavigationcontroller.h"
-#include "imageloader.h"
 #include "imageopencontroller.h"
 #include "imageopenworkflow.h"
 #include "imagepredecodecoordinator.h"
 #include "imagepresentationcontroller.h"
+#include "imagesecondarypagecontroller.h"
 #include "imagespreadgeometry.h"
 #include "imagespreadzoomcontroller.h"
 #include "imageviewtext.h"
@@ -63,19 +62,21 @@ ImageDocumentController::ImageDocumentController(QObject *parent,
                 dispatchEffect(ImageDocumentEffect::animationFailed(errorString));
             },
         });
-    m_secondaryPresentationController = std::make_unique<ImagePresentationController>(this,
+    m_secondaryPageController = std::make_unique<ImageSecondaryPageController>(this,
         std::move(secondaryRenderContextProvider),
-        ImagePresentationController::Callbacks {
-            [this](ImageDocumentChange change) {
-                if (change == ImageDocumentChange::Repaint) {
-                    notify(change);
-                }
+        ImageSecondaryPageController::Callbacks {
+            [this](ImageDocumentChange change) { notify(change); },
+            [this](ImageSecondaryPageLoadResult result, const DisplayedImageLocation &location,
+                const QSize &imageSize) {
+                handleSecondaryPageLoadFinished(result, location, imageSize);
             },
-            [this](const QString &) { clearSecondaryPageAndNotify(); },
-        });
+            [this]() { notifyTwoPageModeChanged(); },
+            [this](const QUrl &url) { return takePredecodedImage(url); },
+        },
+        dependencies.candidateProvider, dependencies.imageDecode);
     m_spreadZoomController
         = std::make_unique<ImageSpreadZoomController>(std::move(spreadRenderContextProvider),
-            *m_presentationController, *m_secondaryPresentationController);
+            *m_presentationController, m_secondaryPageController->presentationController());
     m_openController
         = std::make_unique<ImageOpenController>(this, m_state, *m_presentationController,
             ImageOpenController::Callbacks {
@@ -83,21 +84,6 @@ ImageDocumentController::ImageDocumentController(QObject *parent,
                 [this](ImageDocumentEffect effect) { dispatchEffect(std::move(effect)); },
             },
             dependencies.candidateProvider, dependencies.imageDecode);
-    m_secondaryImageLoader = std::make_unique<ImageLoader>(this, dependencies.candidateProvider,
-        dependencies.imageDecode,
-        ImageLoader::Callbacks {
-            {},
-            [this](ImageLoadSession session, ImageLoadError, const QString &) {
-                finishSecondaryLoadWithError(session);
-            },
-            [this](ImageLoadSession session, DecodedImage image) {
-                finishSecondaryDecodedImageLoad(std::move(session), std::move(image));
-            },
-            [this](ImageLoadSession session, PredecodedImage image) {
-                finishSecondaryPredecodedImageLoad(std::move(session), std::move(image));
-            },
-            [this](const QUrl &url) { return takePredecodedImage(url); },
-        });
     m_navigationController = std::make_unique<ImageDocumentNavigationController>(this, m_state,
         *m_presentationController,
         ImageDocumentNavigationController::Callbacks {
@@ -113,9 +99,9 @@ ImageDocumentController::~ImageDocumentController()
 {
     m_deletionController->cancel();
     m_presentationController->stopAnimation();
-    m_secondaryPresentationController->stopAnimation();
+    m_secondaryPageController->stopAnimation();
     cancelPredecode();
-    m_secondaryImageLoader->cancel();
+    m_secondaryPageController->cancel();
     m_navigationController->cancelPageNavigationUpdate();
     m_navigationController->cancelContainerNavigation();
     m_navigationController->cancelNavigation();
@@ -164,7 +150,7 @@ QSize ImageDocumentController::primaryImageSize() const
 
 QSize ImageDocumentController::secondaryImageSize() const
 {
-    return secondaryPageVisible() ? m_secondaryPresentationController->imageSize() : QSize();
+    return secondaryPageVisible() ? m_secondaryPageController->imageSize() : QSize();
 }
 
 QSizeF ImageDocumentController::viewportSize() const
@@ -175,7 +161,7 @@ QSizeF ImageDocumentController::viewportSize() const
 void ImageDocumentController::setViewportSize(const QSizeF &viewportSize)
 {
     m_presentationController->setViewportSize(viewportSize);
-    m_secondaryPresentationController->setViewportSize(viewportSize);
+    m_secondaryPageController->setViewportSize(viewportSize);
     if (secondaryPageVisible()) {
         updateSpreadZoomState();
     }
@@ -374,7 +360,7 @@ bool ImageDocumentController::rightToLeftReadingAvailable() const
 
 bool ImageDocumentController::secondaryPageVisible() const
 {
-    return twoPageModeActive() && m_secondaryPageVisible;
+    return twoPageModeActive() && m_secondaryPageController->visible();
 }
 
 std::shared_ptr<DisplayedImageSurface> ImageDocumentController::imageSurface(
@@ -385,7 +371,7 @@ std::shared_ptr<DisplayedImageSurface> ImageDocumentController::imageSurface(
     }
 
     if (role == DisplayedPageRole::Secondary) {
-        return secondaryPageVisible() ? m_secondaryPresentationController->imageSurface() : nullptr;
+        return secondaryPageVisible() ? m_secondaryPageController->imageSurface() : nullptr;
     }
 
     return m_presentationController->imageSurface();
@@ -400,7 +386,7 @@ quint64 ImageDocumentController::imageRevision(DisplayedPageRole role) const
     }
 
     if (role == DisplayedPageRole::Secondary) {
-        return secondaryPageVisible() ? m_secondaryPresentationController->imageRevision() : 0;
+        return secondaryPageVisible() ? m_secondaryPageController->imageRevision() : 0;
     }
 
     return m_presentationController->imageRevision();
@@ -501,7 +487,7 @@ void ImageDocumentController::setFitMode(ImageZoomMode zoomMode)
 void ImageDocumentController::updateRenderContext()
 {
     m_presentationController->updateRenderContext();
-    m_secondaryPresentationController->updateRenderContext();
+    m_secondaryPageController->updateRenderContext();
     if (secondaryPageVisible()) {
         m_spreadZoomController->updateRenderContext(rightToLeftReadingActive());
         notify(ImageDocumentChange::DisplaySize);
@@ -675,35 +661,19 @@ void ImageDocumentController::finishWithAnimationError(const QString &errorStrin
     dispatchEffects(std::move(effects));
 }
 
-void ImageDocumentController::clearSecondaryPage()
-{
-    if (m_secondaryImageLoader != nullptr) {
-        m_secondaryImageLoader->cancel();
-    }
-    if (m_secondaryPresentationController != nullptr) {
-        m_secondaryPresentationController->stopAnimation();
-        m_secondaryPresentationController->clearImage();
-    }
-    m_secondaryDisplayedImageLocation = DisplayedImageLocation {};
-    m_secondaryPageVisible = false;
-}
-
-void ImageDocumentController::clearSecondaryPageAndNotify()
-{
-    const bool wasVisible = secondaryPageVisible();
-    clearSecondaryPage();
-    if (wasVisible) {
-        notifyTwoPageModeChanged();
-    }
-}
+void ImageDocumentController::clearSecondaryPage() { m_secondaryPageController->clear(); }
 
 void ImageDocumentController::refreshSecondaryPage()
 {
     m_spreadPageCache.cachePageSize(m_state.displayedUrl(), m_presentationController->imageSize());
 
     auto finishWithPrimaryPage = [this]() {
+        const bool wasVisible = secondaryPageVisible();
         m_spreadZoomController->applyStoredZoomToPrimaryPage();
-        clearSecondaryPageAndNotify();
+        clearSecondaryPage();
+        if (wasVisible) {
+            notifyTwoPageModeChanged();
+        }
         finishTwoPageSpreadTransition();
     };
 
@@ -712,7 +682,7 @@ void ImageDocumentController::refreshSecondaryPage()
     const bool nextPageIsWide
         = nextUrl.has_value() && m_spreadPageCache.cachedPageIsWide(*nextUrl).value_or(false);
     const bool currentSecondaryMatchesNext = nextUrl.has_value() && secondaryPageVisible()
-        && m_secondaryDisplayedImageLocation.imageUrl() == *nextUrl;
+        && m_secondaryPageController->displayedImageLocation().imageUrl() == *nextUrl;
     const ImageSpreadSecondaryPageDecision decision
         = imageSpreadSecondaryPageDecision(twoPageModeActive(), currentPageNumber(), imageCount(),
             primaryPageIsWide(), nextUrl.has_value(), nextPageIsWide, currentSecondaryMatchesNext);
@@ -729,112 +699,24 @@ void ImageDocumentController::refreshSecondaryPage()
 
 void ImageDocumentController::startSecondaryPageLoad(const QUrl &url)
 {
-    clearSecondaryPage();
-    m_secondaryImageLoader->start(
-        ImageLoadRequest::fromLocation(url, m_state.displayedArchiveDocument()),
+    m_secondaryPageController->startLoad(url, m_state.displayedArchiveDocument(),
         m_presentationController->firstDisplayDecodeContext());
     notifyTwoPageModeChanged();
 }
 
-void ImageDocumentController::finishSecondaryPredecodedImageLoad(
-    ImageLoadSession session, PredecodedImage image)
+void ImageDocumentController::handleSecondaryPageLoadFinished(ImageSecondaryPageLoadResult result,
+    const DisplayedImageLocation &location, const QSize &imageSize)
 {
-    finishSecondaryStaticImageLoad(session, std::move(image.staticImage), true);
-}
-
-void ImageDocumentController::finishSecondaryDecodedImageLoad(
-    ImageLoadSession session, DecodedImage image)
-{
-    auto handleDecoded = [this, &session](auto &decoded) {
-        return finishSecondaryDecodedImageResult(session, decoded);
-    };
-    std::visit(handleDecoded, image);
-}
-
-bool ImageDocumentController::finishSecondaryDecodedImageResult(
-    const ImageLoadSession &session, StaticDecodedImage &decoded)
-{
-    const DecodedImagePresentationPlan plan = decodedImagePresentationPlan(decoded);
-    finishSecondaryStaticImageLoad(
-        session, std::move(decoded.staticImage), plan.predecodeCacheable);
-    return true;
-}
-
-bool ImageDocumentController::finishSecondaryDecodedImageResult(
-    const ImageLoadSession &session, DecodedAnimationImage &decoded)
-{
-    const DecodedImagePresentationPlan plan = decodedImagePresentationPlan(decoded);
-    if (plan.target == DecodedImagePresentationTarget::DecodeError) {
-        finishSecondaryLoadWithError(session);
-        return false;
+    if (result != ImageSecondaryPageLoadResult::Failed) {
+        m_spreadPageCache.cachePageSize(location.imageUrl(), imageSize);
     }
 
-    finishSecondaryImageLoad(session, decoded.frames.front().image, plan.predecodeCacheable);
-    return true;
-}
-
-bool ImageDocumentController::finishSecondaryDecodedImageResult(
-    const ImageLoadSession &session, ReaderAnimationImage &decoded)
-{
-    const DecodedImagePresentationPlan plan = decodedImagePresentationPlan(decoded);
-    if (plan.target == DecodedImagePresentationTarget::DecodeError) {
-        finishSecondaryLoadWithError(session);
-        return false;
-    }
-
-    finishSecondaryImageLoad(session, decoded.firstFrame, plan.predecodeCacheable);
-    return true;
-}
-
-bool ImageDocumentController::finishSecondaryDecodedImageResult(
-    const ImageLoadSession &session, HeifSequenceAnimationImage &decoded)
-{
-    const DecodedImagePresentationPlan plan = decodedImagePresentationPlan(decoded);
-    if (plan.target == DecodedImagePresentationTarget::DecodeError) {
-        finishSecondaryLoadWithError(session);
-        return false;
-    }
-
-    finishSecondaryImageLoad(session, decoded.firstFrame, plan.predecodeCacheable);
-    return true;
-}
-
-void ImageDocumentController::finishSecondaryImageLoad(
-    const ImageLoadSession &session, const QImage &image, bool predecodeCacheable)
-{
-    prepareSecondaryImagePresentation(session, predecodeCacheable);
-    m_secondaryPresentationController->setImage(image);
-    finishSecondaryImagePresentation(session);
-}
-
-void ImageDocumentController::finishSecondaryStaticImageLoad(
-    const ImageLoadSession &session, StaticImagePayload staticImage, bool predecodeCacheable)
-{
-    prepareSecondaryImagePresentation(session, predecodeCacheable);
-    m_secondaryPresentationController->setStaticImage(std::move(staticImage));
-    finishSecondaryImagePresentation(session);
-}
-
-void ImageDocumentController::prepareSecondaryImagePresentation(
-    const ImageLoadSession &session, bool predecodeCacheable)
-{
-    m_secondaryPresentationController->prepareImageContainer(
-        zoomScopeUrlForLocation(session.location));
-    m_secondaryPresentationController->setPredecodeCacheable(predecodeCacheable);
-}
-
-void ImageDocumentController::finishSecondaryImagePresentation(const ImageLoadSession &session)
-{
-    m_secondaryDisplayedImageLocation = session.location;
-    m_spreadPageCache.cachePageSize(
-        session.location.imageUrl(), m_secondaryPresentationController->imageSize());
-    if (imageSpreadPageIsWide(m_secondaryPresentationController->imageSize())) {
-        finishSecondaryPageAsPrimaryOnly();
+    if (result == ImageSecondaryPageLoadResult::Visible) {
+        finishSecondaryPageVisible();
         return;
     }
 
-    m_secondaryPageVisible = true;
-    finishSecondaryPageVisible();
+    finishSecondaryPageAsPrimaryOnly();
 }
 
 void ImageDocumentController::finishSecondaryPageAsPrimaryOnly()
@@ -850,11 +732,6 @@ void ImageDocumentController::finishSecondaryPageVisible()
     updateSpreadZoomState();
     finishTwoPageSpreadTransition();
     notifyTwoPageModeChanged();
-}
-
-void ImageDocumentController::finishSecondaryLoadWithError(const ImageLoadSession &)
-{
-    finishSecondaryPageAsPrimaryOnly();
 }
 
 bool ImageDocumentController::shouldBeginTwoPageSpreadTransition(int targetPageNumber) const

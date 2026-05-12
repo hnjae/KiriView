@@ -8,7 +8,6 @@
 #include "imageasyncdependencies.h"
 #include "imagedocumenteffects.h"
 #include "imagedocumentstate.h"
-#include "imageloadtypes.h"
 #include "imagespreadpagecache.h"
 #include "imagesurface.h"
 #include "imagezoomstate.h"
@@ -30,11 +29,12 @@
 namespace KiriView {
 class ImageDeletionController;
 class ImageDocumentNavigationController;
-class ImageLoader;
 class ImageOpenController;
 class ImagePresentationController;
 class ImagePredecodeCoordinator;
+class ImageSecondaryPageController;
 class ImageSpreadZoomController;
+enum class ImageSecondaryPageLoadResult;
 
 class ImageDocumentController final : public QObject
 {
@@ -126,29 +126,12 @@ private:
     void notify(ImageDocumentChange change);
     void clearImage();
     void clearSecondaryPage();
-    void clearSecondaryPageAndNotify();
     void refreshSecondaryPage();
     void startSecondaryPageLoad(const QUrl &url);
-    void finishSecondaryPredecodedImageLoad(ImageLoadSession session, PredecodedImage image);
-    void finishSecondaryDecodedImageLoad(ImageLoadSession session, DecodedImage image);
-    bool finishSecondaryDecodedImageResult(
-        const ImageLoadSession &session, StaticDecodedImage &decoded);
-    bool finishSecondaryDecodedImageResult(
-        const ImageLoadSession &session, DecodedAnimationImage &decoded);
-    bool finishSecondaryDecodedImageResult(
-        const ImageLoadSession &session, ReaderAnimationImage &decoded);
-    bool finishSecondaryDecodedImageResult(
-        const ImageLoadSession &session, HeifSequenceAnimationImage &decoded);
-    void finishSecondaryImageLoad(
-        const ImageLoadSession &session, const QImage &image, bool predecodeCacheable);
-    void finishSecondaryStaticImageLoad(
-        const ImageLoadSession &session, StaticImagePayload staticImage, bool predecodeCacheable);
-    void prepareSecondaryImagePresentation(
-        const ImageLoadSession &session, bool predecodeCacheable);
-    void finishSecondaryImagePresentation(const ImageLoadSession &session);
+    void handleSecondaryPageLoadFinished(ImageSecondaryPageLoadResult result,
+        const DisplayedImageLocation &location, const QSize &imageSize);
     void finishSecondaryPageAsPrimaryOnly();
     void finishSecondaryPageVisible();
-    void finishSecondaryLoadWithError(const ImageLoadSession &session);
     bool shouldBeginTwoPageSpreadTransition(int targetPageNumber) const;
     void beginTwoPageSpreadTransition();
     void finishTwoPageSpreadTransition();
@@ -168,17 +151,14 @@ private:
     ImageDocumentState m_state;
     std::unique_ptr<ImageDeletionController> m_deletionController;
     std::unique_ptr<ImagePresentationController> m_presentationController;
-    std::unique_ptr<ImagePresentationController> m_secondaryPresentationController;
+    std::unique_ptr<ImageSecondaryPageController> m_secondaryPageController;
     std::unique_ptr<ImageOpenController> m_openController;
-    std::unique_ptr<ImageLoader> m_secondaryImageLoader;
     std::unique_ptr<ImageDocumentNavigationController> m_navigationController;
     std::unique_ptr<ImagePredecodeCoordinator> m_predecodeCoordinator;
     std::unique_ptr<ImageSpreadZoomController> m_spreadZoomController;
-    DisplayedImageLocation m_secondaryDisplayedImageLocation;
     ImageSpreadPageCache m_spreadPageCache;
     bool m_twoPageModeEnabled = false;
     bool m_rightToLeftReadingEnabled = false;
-    bool m_secondaryPageVisible = false;
     bool m_twoPageSpreadTransitionInProgress = false;
 };
 }
