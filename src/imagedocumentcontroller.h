@@ -24,6 +24,7 @@
 
 namespace KiriView {
 class ImageDeletionController;
+class ImageDocumentEffectExecutor;
 class ImageDocumentNavigationController;
 class ImageDocumentNavigator;
 class ImageDocumentPredecodeController;
@@ -99,15 +100,6 @@ public:
 
 private:
     void dispatchEffect(ImageDocumentEffect effect);
-    void dispatchEffectPayload(const ClearImageEffect &);
-    void dispatchEffectPayload(const ResetZoomEffect &);
-    void dispatchEffectPayload(const UpdatePageNavigationEffect &);
-    void dispatchEffectPayload(const ScheduleAdjacentImagePredecodeEffect &);
-    void dispatchEffectPayload(const OpenUrlEffect &payload);
-    void dispatchEffectPayload(const ContainerImageSelectedEffect &payload);
-    void dispatchEffectPayload(const EmptyContainerSelectedEffect &payload);
-    void dispatchEffectPayload(const ContainerNavigationFailedEffect &payload);
-    void dispatchEffectPayload(const PrepareFailedContainerEffect &payload);
     void dispatchEffects(ImageDocumentEffects effects);
     void setSourceUrlForLoad(const QUrl &sourceUrl, const QUrl &containerNavigationUrl,
         bool preserveTwoPageSpreadTransition = false);
@@ -124,6 +116,7 @@ private:
     std::unique_ptr<ImageDocumentNavigationController> m_navigationController;
     std::unique_ptr<ImageDocumentPredecodeController> m_predecodeController;
     std::unique_ptr<ImageSpreadPresentationController> m_spreadController;
+    std::unique_ptr<ImageDocumentEffectExecutor> m_effectExecutor;
     std::unique_ptr<ImageDocumentNavigator> m_navigator;
 };
 }

@@ -5,6 +5,7 @@
 
 #include "imagecallback.h"
 #include "imagedeletioncontroller.h"
+#include "imagedocumenteffectexecutor.h"
 #include "imagedocumentnavigationcontroller.h"
 #include "imagedocumentnavigator.h"
 #include "imagedocumentpredecodecontroller.h"
@@ -17,7 +18,6 @@
 #include <QString>
 #include <memory>
 #include <utility>
-#include <variant>
 
 namespace KiriView {
 ImageDocumentController::ImageDocumentController(
@@ -82,6 +82,15 @@ ImageDocumentController::ImageDocumentController(QObject *parent,
             [this](int pageNumber) { return m_navigationController->urlAtPage(pageNumber); },
         },
         dependencies.candidateProvider, dependencies.imageDecode);
+    m_effectExecutor = std::make_unique<ImageDocumentEffectExecutor>(*m_navigationController,
+        *m_predecodeController, *m_openController, *m_presentationController, *m_spreadController,
+        ImageDocumentEffectExecutor::Callbacks {
+            [this]() { clearImage(); },
+            [this](const QUrl &url) { setSourceUrl(url); },
+            [this](const QUrl &imageUrl, const QUrl &containerUrl) {
+                setSourceUrlForLoad(imageUrl, containerUrl);
+            },
+        });
     m_navigator = std::make_unique<ImageDocumentNavigator>(*m_navigationController,
         *m_spreadController, [this](const QUrl &url, bool preserveTwoPageSpreadTransition) {
             setSourceUrlForLoad(url, QUrl(), preserveTwoPageSpreadTransition);
@@ -301,54 +310,12 @@ void ImageDocumentController::updateRenderContext() { m_spreadController->update
 
 void ImageDocumentController::dispatchEffect(ImageDocumentEffect effect)
 {
-    std::visit([this](const auto &payload) { dispatchEffectPayload(payload); }, effect.payload);
-}
-
-void ImageDocumentController::dispatchEffectPayload(const ClearImageEffect &) { clearImage(); }
-
-void ImageDocumentController::dispatchEffectPayload(const ResetZoomEffect &) { resetZoom(); }
-
-void ImageDocumentController::dispatchEffectPayload(const UpdatePageNavigationEffect &)
-{
-    m_navigationController->updatePageNavigation();
-}
-
-void ImageDocumentController::dispatchEffectPayload(const ScheduleAdjacentImagePredecodeEffect &)
-{
-    m_predecodeController->scheduleAdjacentImagePredecode();
-}
-
-void ImageDocumentController::dispatchEffectPayload(const OpenUrlEffect &payload)
-{
-    setSourceUrl(payload.url);
-}
-
-void ImageDocumentController::dispatchEffectPayload(const ContainerImageSelectedEffect &payload)
-{
-    setSourceUrlForLoad(payload.imageUrl, payload.containerUrl);
-}
-
-void ImageDocumentController::dispatchEffectPayload(const EmptyContainerSelectedEffect &payload)
-{
-    m_openController->finishContainerNavigationWithEmptyContainer(payload.containerUrl);
-}
-
-void ImageDocumentController::dispatchEffectPayload(const ContainerNavigationFailedEffect &payload)
-{
-    m_openController->finishContainerNavigationLoadWithError(
-        payload.containerUrl, payload.errorString);
-}
-
-void ImageDocumentController::dispatchEffectPayload(const PrepareFailedContainerEffect &payload)
-{
-    m_presentationController->prepareFailedContainer(payload.containerUrl);
+    m_effectExecutor->dispatch(std::move(effect));
 }
 
 void ImageDocumentController::dispatchEffects(ImageDocumentEffects effects)
 {
-    for (ImageDocumentEffect &effect : effects) {
-        dispatchEffect(std::move(effect));
-    }
+    m_effectExecutor->dispatchAll(std::move(effects));
 }
 
 void ImageDocumentController::setSourceUrlForLoad(
