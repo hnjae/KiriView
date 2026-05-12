@@ -6,7 +6,7 @@
 #include "imagecallback.h"
 #include "imagedeletioncontroller.h"
 #include "imagedocumentnavigationcontroller.h"
-#include "imagedocumentpagenavigator.h"
+#include "imagedocumentnavigator.h"
 #include "imageopencontroller.h"
 #include "imageopenworkflow.h"
 #include "imagepredecodecoordinator.h"
@@ -83,7 +83,7 @@ ImageDocumentController::ImageDocumentController(QObject *parent,
             [this](int pageNumber) { return m_navigationController->urlAtPage(pageNumber); },
         },
         dependencies.candidateProvider, dependencies.imageDecode);
-    m_pageNavigator = std::make_unique<ImageDocumentPageNavigator>(*m_navigationController,
+    m_navigator = std::make_unique<ImageDocumentNavigator>(*m_navigationController,
         *m_spreadController, [this](const QUrl &url, bool preserveTwoPageSpreadTransition) {
             setSourceUrlForLoad(url, QUrl(), preserveTwoPageSpreadTransition);
         });
@@ -265,23 +265,17 @@ quint64 ImageDocumentController::imageRevision(DisplayedPageRole role) const
     return m_spreadController->imageRevision(role);
 }
 
-void ImageDocumentController::openPreviousImage() { m_pageNavigator->openPreviousImage(); }
+void ImageDocumentController::openPreviousImage() { m_navigator->openPreviousImage(); }
 
-void ImageDocumentController::openNextImage() { m_pageNavigator->openNextImage(); }
+void ImageDocumentController::openNextImage() { m_navigator->openNextImage(); }
 
-void ImageDocumentController::openPreviousSinglePage()
-{
-    m_pageNavigator->openPreviousSinglePage();
-}
+void ImageDocumentController::openPreviousSinglePage() { m_navigator->openPreviousSinglePage(); }
 
-void ImageDocumentController::openNextSinglePage() { m_pageNavigator->openNextSinglePage(); }
+void ImageDocumentController::openNextSinglePage() { m_navigator->openNextSinglePage(); }
 
-void ImageDocumentController::openPreviousContainer()
-{
-    m_navigationController->openPreviousContainer();
-}
+void ImageDocumentController::openPreviousContainer() { m_navigator->openPreviousContainer(); }
 
-void ImageDocumentController::openNextContainer() { m_navigationController->openNextContainer(); }
+void ImageDocumentController::openNextContainer() { m_navigator->openNextContainer(); }
 
 void ImageDocumentController::deleteDisplayedFile(FileDeletionMode mode)
 {
@@ -294,7 +288,7 @@ void ImageDocumentController::deleteDisplayedFile(FileDeletionMode mode)
 
 void ImageDocumentController::openImageAtPage(int pageNumber)
 {
-    m_pageNavigator->openImageAtPage(pageNumber);
+    m_navigator->openImageAtPage(pageNumber);
 }
 
 void ImageDocumentController::resetZoom() { m_spreadController->resetZoom(); }

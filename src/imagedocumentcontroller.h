@@ -27,7 +27,7 @@
 namespace KiriView {
 class ImageDeletionController;
 class ImageDocumentNavigationController;
-class ImageDocumentPageNavigator;
+class ImageDocumentNavigator;
 class ImageOpenController;
 class ImagePresentationController;
 class ImagePredecodeCoordinator;
@@ -129,7 +129,7 @@ private:
     std::unique_ptr<ImageDocumentNavigationController> m_navigationController;
     std::unique_ptr<ImagePredecodeCoordinator> m_predecodeCoordinator;
     std::unique_ptr<ImageSpreadPresentationController> m_spreadController;
-    std::unique_ptr<ImageDocumentPageNavigator> m_pageNavigator;
+    std::unique_ptr<ImageDocumentNavigator> m_navigator;
 };
 }
 

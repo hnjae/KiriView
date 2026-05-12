@@ -74,16 +74,6 @@ void ImageDocumentNavigationController::openNextImage()
     openAdjacentImage(NavigationDirection::Next);
 }
 
-void ImageDocumentNavigationController::openImageAtPage(int pageNumber)
-{
-    const std::optional<QUrl> pageUrl = m_navigationService->urlAtPage(pageNumber);
-    if (!pageUrl.has_value()) {
-        return;
-    }
-
-    report(ImageDocumentEffect::openUrl(*pageUrl));
-}
-
 void ImageDocumentNavigationController::openPreviousContainer()
 {
     openAdjacentContainer(NavigationDirection::Previous);

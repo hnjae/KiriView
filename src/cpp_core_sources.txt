@@ -25,7 +25,7 @@ src/imagerendering.cpp
 src/imagedeletioncontroller.cpp
 src/imagedocumentcontroller.cpp
 src/imagedocumentnavigationcontroller.cpp
-src/imagedocumentpagenavigator.cpp
+src/imagedocumentnavigator.cpp
 src/imagedecodejob.cpp
 src/imagedocumentstate.cpp
 src/imagesurface.cpp

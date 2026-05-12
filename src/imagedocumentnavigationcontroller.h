@@ -42,7 +42,6 @@ public:
 
     void openPreviousImage();
     void openNextImage();
-    void openImageAtPage(int pageNumber);
     void openPreviousContainer();
     void openNextContainer();
 

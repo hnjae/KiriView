@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "imagedocumentpagenavigator.h"
+#include "imagedocumentnavigator.h"
 
 #include "imagecallback.h"
 #include "imagedocumentnavigationcontroller.h"
@@ -11,7 +11,7 @@
 #include <utility>
 
 namespace KiriView {
-ImageDocumentPageNavigator::ImageDocumentPageNavigator(
+ImageDocumentNavigator::ImageDocumentNavigator(
     ImageDocumentNavigationController &navigationController,
     ImageSpreadPresentationController &spreadController, OpenPageCallback openPage)
     : m_navigationController(navigationController)
@@ -20,18 +20,18 @@ ImageDocumentPageNavigator::ImageDocumentPageNavigator(
 {
 }
 
-void ImageDocumentPageNavigator::openPreviousImage()
+void ImageDocumentNavigator::openPreviousImage()
 {
     openAdjacentImage(NavigationDirection::Previous);
 }
 
-void ImageDocumentPageNavigator::openNextImage() { openAdjacentImage(NavigationDirection::Next); }
+void ImageDocumentNavigator::openNextImage() { openAdjacentImage(NavigationDirection::Next); }
 
-void ImageDocumentPageNavigator::openPreviousSinglePage() { openImageAtRelativePageOffset(-1); }
+void ImageDocumentNavigator::openPreviousSinglePage() { openImageAtRelativePageOffset(-1); }
 
-void ImageDocumentPageNavigator::openNextSinglePage() { openImageAtRelativePageOffset(1); }
+void ImageDocumentNavigator::openNextSinglePage() { openImageAtRelativePageOffset(1); }
 
-void ImageDocumentPageNavigator::openImageAtPage(int pageNumber)
+void ImageDocumentNavigator::openImageAtPage(int pageNumber)
 {
     const std::optional<QUrl> pageUrl = m_navigationController.urlAtPage(pageNumber);
     if (!pageUrl.has_value()) {
@@ -46,7 +46,14 @@ void ImageDocumentPageNavigator::openImageAtPage(int pageNumber)
     invokeIfSet(m_openPage, *pageUrl, spreadTransition);
 }
 
-void ImageDocumentPageNavigator::openAdjacentImage(NavigationDirection direction)
+void ImageDocumentNavigator::openPreviousContainer()
+{
+    m_navigationController.openPreviousContainer();
+}
+
+void ImageDocumentNavigator::openNextContainer() { m_navigationController.openNextContainer(); }
+
+void ImageDocumentNavigator::openAdjacentImage(NavigationDirection direction)
 {
     const ImageSpreadPageNavigationTarget target
         = m_spreadController.imageNavigationTarget(direction);
@@ -67,7 +74,7 @@ void ImageDocumentPageNavigator::openAdjacentImage(NavigationDirection direction
     openImageAtPage(target.pageNumber);
 }
 
-void ImageDocumentPageNavigator::openImageAtRelativePageOffset(int offset)
+void ImageDocumentNavigator::openImageAtRelativePageOffset(int offset)
 {
     const int targetPage = m_spreadController.relativePageNavigationTarget(offset);
     if (targetPage <= 0) {
