@@ -3,8 +3,8 @@
 
 #include "imagedocumentcontroller.h"
 
-#include "imagecallback.h"
 #include "imagedeletioncontroller.h"
+#include "imagedocumentchangedispatcher.h"
 #include "imagedocumentdeletioncontroller.h"
 #include "imagedocumenteffectexecutor.h"
 #include "imagedocumentloadcontroller.h"
@@ -32,7 +32,6 @@ ImageDocumentController::ImageDocumentController(QObject *parent,
     RenderContextProvider renderContextProvider, ChangeCallback changeCallback,
     ImageAsyncDependencies dependencies, FileDeletionFailedCallback fileDeletionFailedCallback)
     : QObject(parent)
-    , m_changeCallback(std::move(changeCallback))
     , m_state([this](ImageDocumentChange change) { notify(change); })
 {
     dependencies = imageAsyncDependenciesWithDefaults(std::move(dependencies));
@@ -85,6 +84,8 @@ ImageDocumentController::ImageDocumentController(QObject *parent,
             [this](int pageNumber) { return m_navigationController->urlAtPage(pageNumber); },
         },
         dependencies.candidateProvider, dependencies.imageDecode);
+    m_changeDispatcher = std::make_unique<ImageDocumentChangeDispatcher>(
+        m_state, *m_spreadController, std::move(changeCallback));
     m_effectExecutor = std::make_unique<ImageDocumentEffectExecutor>(m_state,
         *m_navigationController, *m_predecodeController, *m_openController,
         *m_presentationController, *m_spreadController,
@@ -317,21 +318,7 @@ void ImageDocumentController::dispatchEffect(ImageDocumentEffect effect)
 
 void ImageDocumentController::notify(ImageDocumentChange change)
 {
-    const ImageDocumentChangeDispatchPlan plan
-        = imageDocumentChangeDispatchPlan(change, m_state.errorString().isEmpty());
-
-    if (plan.finishSpreadTransition) {
-        m_spreadController->finishTransition();
-    }
-
-    if (plan.refreshSecondaryPage) {
-        m_spreadController->refreshSecondaryPage();
-    }
-    if (plan.notifyRightToLeftReading) {
-        m_spreadController->notifyRightToLeftReadingChanged();
-    }
-
-    invokeIfSet(m_changeCallback, change);
+    m_changeDispatcher->dispatch(change);
 }
 
 }

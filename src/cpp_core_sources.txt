@@ -23,6 +23,7 @@ src/imagebytecost.cpp
 src/imagecontainer.cpp
 src/imagerendering.cpp
 src/imagedeletioncontroller.cpp
+src/imagedocumentchangedispatcher.cpp
 src/imagedocumentcontroller.cpp
 src/imagedocumentdeletioncontroller.cpp
 src/imagedocumenteffectexecutor.cpp
