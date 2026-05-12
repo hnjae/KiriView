@@ -55,12 +55,19 @@ private:
         StaticImagePayload staticImage;
         qsizetype byteCost = 0;
     };
+    struct QueuedLoadSelection {
+        std::optional<std::size_t> index;
+        std::size_t discardCount = 0;
+    };
     using CachedImageIterator = std::vector<CachedImage>::iterator;
     using ConstCachedImageIterator = std::vector<CachedImage>::const_iterator;
 
     static bool containsUrl(const std::vector<QUrl> &urls, const QUrl &url);
     static std::optional<qsizetype> cacheableByteCost(
         const StaticImagePayload &staticImage, qsizetype byteBudget);
+    QueuedLoadSelection queuedLoadSelection() const;
+    std::optional<PredecodeRequest> takeQueuedRequest(const QueuedLoadSelection &selection);
+    void discardQueuedLoads(std::size_t count);
     CachedImageIterator findCachedImage(const QUrl &normalizedUrl);
     ConstCachedImageIterator findCachedImage(const QUrl &normalizedUrl) const;
     void removeCachedImage(const QUrl &normalizedUrl);

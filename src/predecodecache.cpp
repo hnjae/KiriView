@@ -133,32 +133,7 @@ std::optional<PredecodeRequest> PredecodeCache::takeNextRequest(const QUrl &acti
         return std::nullopt;
     }
 
-    rust::Vec<RustPredecodeQueuedLoadState> states;
-    states.reserve(m_queue.size());
-
-    for (const PredecodeRequest &request : m_queue) {
-        states.push_back(RustPredecodeQueuedLoadState {
-            request.url.isValid() && !request.url.isEmpty(),
-            windowContains(request.url),
-            hasImage(request.url),
-        });
-    }
-
-    const RustPredecodeQueuedLoadPlan plan = rustPredecodeNextQueuedLoadPlan(std::move(states));
-    if (!plan.found || plan.index >= m_queue.size()) {
-        const auto discardEnd = m_queue.begin()
-            + static_cast<std::ptrdiff_t>(std::min(plan.discard_count, m_queue.size()));
-        m_queue.erase(m_queue.begin(), discardEnd);
-        return std::nullopt;
-    }
-
-    auto requestEntry = m_queue.begin();
-    std::advance(requestEntry, static_cast<std::ptrdiff_t>(plan.index));
-    PredecodeRequest request = std::move(*requestEntry);
-    const std::size_t discardCount
-        = std::min(plan.discard_count, static_cast<std::size_t>(m_queue.size()));
-    m_queue.erase(m_queue.begin(), m_queue.begin() + static_cast<std::ptrdiff_t>(discardCount));
-    return request;
+    return takeQueuedRequest(queuedLoadSelection());
 }
 
 bool PredecodeCache::windowContains(const QUrl &url) const
@@ -253,6 +228,55 @@ std::optional<qsizetype> PredecodeCache::cacheableByteCost(
     }
 
     return qtByteSize(byteCost.byte_cost);
+}
+
+PredecodeCache::QueuedLoadSelection PredecodeCache::queuedLoadSelection() const
+{
+    rust::Vec<RustPredecodeQueuedLoadState> states;
+    states.reserve(m_queue.size());
+
+    for (const PredecodeRequest &request : m_queue) {
+        states.push_back(RustPredecodeQueuedLoadState {
+            request.url.isValid() && !request.url.isEmpty(),
+            windowContains(request.url),
+            hasImage(request.url),
+        });
+    }
+
+    const RustPredecodeQueuedLoadPlan plan = rustPredecodeNextQueuedLoadPlan(std::move(states));
+    if (!plan.found || plan.index >= m_queue.size()) {
+        return QueuedLoadSelection {
+            std::nullopt,
+            std::min(plan.discard_count, static_cast<std::size_t>(m_queue.size())),
+        };
+    }
+
+    return QueuedLoadSelection {
+        plan.index,
+        std::min(plan.discard_count, static_cast<std::size_t>(m_queue.size())),
+    };
+}
+
+std::optional<PredecodeRequest> PredecodeCache::takeQueuedRequest(
+    const QueuedLoadSelection &selection)
+{
+    if (!selection.index.has_value() || *selection.index >= m_queue.size()) {
+        discardQueuedLoads(selection.discardCount);
+        return std::nullopt;
+    }
+
+    auto requestEntry = m_queue.begin();
+    std::advance(requestEntry, static_cast<std::ptrdiff_t>(*selection.index));
+    PredecodeRequest request = std::move(*requestEntry);
+    discardQueuedLoads(selection.discardCount);
+    return request;
+}
+
+void PredecodeCache::discardQueuedLoads(std::size_t count)
+{
+    const auto discardEnd = m_queue.begin()
+        + static_cast<std::ptrdiff_t>(std::min(count, static_cast<std::size_t>(m_queue.size())));
+    m_queue.erase(m_queue.begin(), discardEnd);
 }
 
 PredecodeCache::CachedImageIterator PredecodeCache::findCachedImage(const QUrl &normalizedUrl)
