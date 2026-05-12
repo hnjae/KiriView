@@ -16,12 +16,6 @@ mod ffi {
     }
 
     extern "Rust" {
-        #[cxx_name = "rustDeletionFallbackCandidateIndices"]
-        fn rust_deletion_fallback_candidate_indices(
-            candidate_count: usize,
-            current: RustDeletionFallbackIndex,
-        ) -> RustDeletionFallbackCandidateIndices;
-
         #[cxx_name = "rustDeletionFallbackCandidateIndicesForMatches"]
         fn rust_deletion_fallback_candidate_indices_for_matches(
             matches_current: Vec<u8>,
@@ -35,14 +29,6 @@ use crate::navigationindex::{
     navigation_index_for_matches as core_navigation_index_for_matches,
 };
 use ffi::{RustDeletionFallbackCandidateIndices, RustDeletionFallbackIndex};
-
-fn rust_deletion_fallback_candidate_indices(
-    candidate_count: usize,
-    current: RustDeletionFallbackIndex,
-) -> RustDeletionFallbackCandidateIndices {
-    let current = core_navigation_index(current);
-    deletion_fallback_candidate_indices(candidate_count, current)
-}
 
 fn rust_deletion_fallback_candidate_indices_for_matches(
     matches_current: Vec<u8>,
@@ -68,13 +54,6 @@ fn deletion_fallback_candidate_indices(
             current,
             CoreNavigationDirection::Previous,
         )),
-    }
-}
-
-fn core_navigation_index(index: RustDeletionFallbackIndex) -> CoreNavigationIndex {
-    CoreNavigationIndex {
-        found: index.found,
-        index: index.index,
     }
 }
 
@@ -104,7 +83,7 @@ mod tests {
 
     #[test]
     fn deletion_fallback_prefers_next_then_previous_candidate() {
-        let indices = rust_deletion_fallback_candidate_indices(3, found_index(1));
+        let indices = deletion_fallback_candidate_indices(3, core_found_index(1));
 
         assert_eq!(indices.preferred, found_index(2));
         assert_eq!(indices.fallback, found_index(0));
@@ -112,7 +91,7 @@ mod tests {
 
     #[test]
     fn deletion_fallback_uses_previous_when_current_is_last() {
-        let indices = rust_deletion_fallback_candidate_indices(3, found_index(2));
+        let indices = deletion_fallback_candidate_indices(3, core_found_index(2));
 
         assert_eq!(indices.preferred, missing_index());
         assert_eq!(indices.fallback, found_index(1));
@@ -121,12 +100,12 @@ mod tests {
     #[test]
     fn deletion_fallback_rejects_missing_or_out_of_range_current() {
         assert_eq!(
-            rust_deletion_fallback_candidate_indices(3, missing_index()).preferred,
+            deletion_fallback_candidate_indices(3, core_missing_index()).preferred,
             missing_index()
         );
 
         assert_eq!(
-            rust_deletion_fallback_candidate_indices(3, found_index(3)).fallback,
+            deletion_fallback_candidate_indices(3, core_found_index(3)).fallback,
             missing_index()
         );
     }
@@ -137,5 +116,16 @@ mod tests {
 
         assert_eq!(indices.preferred, found_index(2));
         assert_eq!(indices.fallback, found_index(0));
+    }
+
+    fn core_found_index(index: usize) -> CoreNavigationIndex {
+        CoreNavigationIndex { found: true, index }
+    }
+
+    fn core_missing_index() -> CoreNavigationIndex {
+        CoreNavigationIndex {
+            found: false,
+            index: 0,
+        }
     }
 }
