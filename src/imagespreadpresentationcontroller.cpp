@@ -7,6 +7,7 @@
 #include "imagedocumentnotifications.h"
 #include "imagepresentationcontroller.h"
 #include "imagesecondarypagecontroller.h"
+#include "imagespreaddocumentchange.h"
 #include "imagespreadgeometry.h"
 #include "imagespreadmodecontroller.h"
 #include "imagespreadzoomcontroller.h"
@@ -14,16 +15,6 @@
 #include <utility>
 
 namespace KiriView {
-ImageSpreadDocumentChangePlan imageSpreadDocumentChangePlan(
-    ImageDocumentChange change, bool errorStringEmpty)
-{
-    return ImageSpreadDocumentChangePlan {
-        change == ImageDocumentChange::ErrorString && !errorStringEmpty,
-        change == ImageDocumentChange::PageNavigation,
-        change == ImageDocumentChange::PageNavigation,
-    };
-}
-
 ImageSpreadPresentationController::ImageSpreadPresentationController(QObject *parent,
     RenderContextProvider renderContextProvider, ImageDocumentState &state,
     ImagePresentationController &primaryPresentation,

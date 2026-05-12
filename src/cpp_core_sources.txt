@@ -54,6 +54,7 @@ src/imageopenworkflow.cpp
 src/imagepredecodecoordinator.cpp
 src/imagepresentationcontroller.cpp
 src/imagesecondarypagecontroller.cpp
+src/imagespreaddocumentchange.cpp
 src/imagespreadgeometry.cpp
 src/imagespreadmodecontroller.cpp
 src/imagespreadpagecache.cpp
