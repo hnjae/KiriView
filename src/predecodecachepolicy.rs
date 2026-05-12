@@ -19,6 +19,20 @@ mod ffi {
         discard_count: usize,
     }
 
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    struct RustPredecodeWindowLoadState {
+        displayed: bool,
+        cached: bool,
+        in_flight: bool,
+    }
+
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    struct RustPredecodeQueuedLoadState {
+        valid: bool,
+        in_window: bool,
+        cached: bool,
+    }
+
     extern "Rust" {
         #[cxx_name = "rustPredecodePreferredByteBudget"]
         fn rust_predecode_preferred_byte_budget() -> i64;
@@ -42,21 +56,20 @@ mod ffi {
 
         #[cxx_name = "rustPredecodeMissingWindowLoadIndices"]
         fn rust_predecode_missing_window_load_indices(
-            displayed_matches: Vec<u8>,
-            cached: Vec<u8>,
-            in_flight: Vec<u8>,
+            states: Vec<RustPredecodeWindowLoadState>,
         ) -> Vec<usize>;
 
         #[cxx_name = "rustPredecodeNextQueuedLoadPlan"]
         fn rust_predecode_next_queued_load_plan(
-            valid: Vec<u8>,
-            in_window: Vec<u8>,
-            cached: Vec<u8>,
+            states: Vec<RustPredecodeQueuedLoadState>,
         ) -> RustPredecodeQueuedLoadPlan;
     }
 }
 
-use ffi::{RustPredecodeCacheableByteCost, RustPredecodeQueuedLoadPlan};
+use ffi::{
+    RustPredecodeCacheableByteCost, RustPredecodeQueuedLoadPlan, RustPredecodeQueuedLoadState,
+    RustPredecodeWindowLoadState,
+};
 
 #[derive(Clone, Copy)]
 struct RetainedCachedImage {
@@ -153,40 +166,32 @@ fn rust_predecode_retained_cached_image_indices(
 }
 
 fn rust_predecode_missing_window_load_indices(
-    displayed_matches: Vec<u8>,
-    cached: Vec<u8>,
-    in_flight: Vec<u8>,
+    states: Vec<RustPredecodeWindowLoadState>,
 ) -> Vec<usize> {
-    let flag_count = displayed_matches
-        .len()
-        .min(cached.len())
-        .min(in_flight.len());
-    (0..flag_count)
-        .filter(|&index| {
-            !flag_at(&displayed_matches, index)
-                && !flag_at(&cached, index)
-                && !flag_at(&in_flight, index)
+    states
+        .into_iter()
+        .enumerate()
+        .filter_map(|(index, state)| {
+            if state.displayed || state.cached || state.in_flight {
+                return None;
+            }
+
+            Some(index)
         })
         .collect()
 }
 
 fn rust_predecode_next_queued_load_plan(
-    valid: Vec<u8>,
-    in_window: Vec<u8>,
-    cached: Vec<u8>,
+    states: Vec<RustPredecodeQueuedLoadState>,
 ) -> RustPredecodeQueuedLoadPlan {
-    let flag_count = valid.len().min(in_window.len()).min(cached.len());
-    for index in 0..flag_count {
-        if flag_at(&valid, index) && flag_at(&in_window, index) && !flag_at(&cached, index) {
+    let state_count = states.len();
+    for (index, state) in states.into_iter().enumerate() {
+        if state.valid && state.in_window && !state.cached {
             return queued_load_plan(index);
         }
     }
 
-    missing_queued_load_plan(flag_count)
-}
-
-fn flag_at(flags: &[u8], index: usize) -> bool {
-    flags.get(index).copied().unwrap_or(0) != 0
+    missing_queued_load_plan(state_count)
 }
 
 fn queued_load_plan(index: usize) -> RustPredecodeQueuedLoadPlan {
@@ -281,11 +286,13 @@ mod tests {
     #[test]
     fn missing_window_load_indices_skip_displayed_cached_and_in_flight_urls() {
         assert_eq!(
-            rust_predecode_missing_window_load_indices(
-                vec![1, 0, 0, 0, 0],
-                vec![0, 1, 0, 0, 0],
-                vec![0, 0, 1, 0, 0],
-            ),
+            rust_predecode_missing_window_load_indices(vec![
+                window_load_state(true, false, false),
+                window_load_state(false, true, false),
+                window_load_state(false, false, true),
+                window_load_state(false, false, false),
+                window_load_state(false, false, false),
+            ]),
             vec![3, 4]
         );
     }
@@ -293,16 +300,44 @@ mod tests {
     #[test]
     fn next_queued_load_plan_skips_invalid_stale_and_cached_requests() {
         assert_eq!(
-            rust_predecode_next_queued_load_plan(
-                vec![0, 1, 1, 1],
-                vec![1, 0, 1, 1],
-                vec![0, 0, 1, 0],
-            ),
+            rust_predecode_next_queued_load_plan(vec![
+                queued_load_state(false, true, false),
+                queued_load_state(true, false, false),
+                queued_load_state(true, true, true),
+                queued_load_state(true, true, false),
+            ]),
             queued_load_plan(3)
         );
         assert_eq!(
-            rust_predecode_next_queued_load_plan(vec![0, 1], vec![1, 0], vec![0, 0],),
+            rust_predecode_next_queued_load_plan(vec![
+                queued_load_state(false, true, false),
+                queued_load_state(true, false, false),
+            ]),
             missing_queued_load_plan(2)
         );
+    }
+
+    fn window_load_state(
+        displayed: bool,
+        cached: bool,
+        in_flight: bool,
+    ) -> RustPredecodeWindowLoadState {
+        RustPredecodeWindowLoadState {
+            displayed,
+            cached,
+            in_flight,
+        }
+    }
+
+    fn queued_load_state(
+        valid: bool,
+        in_window: bool,
+        cached: bool,
+    ) -> RustPredecodeQueuedLoadState {
+        RustPredecodeQueuedLoadState {
+            valid,
+            in_window,
+            cached,
+        }
     }
 }
