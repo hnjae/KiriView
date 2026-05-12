@@ -6,8 +6,7 @@
 
 #include "filedeletion.h"
 #include "imageasyncdependencies.h"
-#include "imagedocumenteffects.h"
-#include "imagedocumentstate.h"
+#include "imagedocumenttypes.h"
 #include "imagesurface.h"
 #include "imagezoomstate.h"
 
@@ -23,15 +22,7 @@
 #include <memory>
 
 namespace KiriView {
-class ImageDocumentDeletionController;
-class ImageDocumentEffectExecutor;
-class ImageDocumentLoadController;
-class ImageDocumentNavigationController;
-class ImageDocumentNavigator;
-class ImageDocumentPredecodeController;
-class ImageOpenController;
-class ImagePresentationController;
-class ImageSpreadPresentationController;
+struct ImageDocumentRuntime;
 
 class ImageDocumentController final : public QObject
 {
@@ -100,20 +91,7 @@ public:
     void updateRenderContext();
 
 private:
-    void dispatchEffect(ImageDocumentEffect effect);
-    void notify(ImageDocumentChange change);
-
-    ImageDocumentState m_state;
-    ChangeCallback m_changeCallback;
-    std::unique_ptr<ImageDocumentDeletionController> m_documentDeletionController;
-    std::unique_ptr<ImagePresentationController> m_presentationController;
-    std::unique_ptr<ImageOpenController> m_openController;
-    std::unique_ptr<ImageDocumentNavigationController> m_navigationController;
-    std::unique_ptr<ImageDocumentPredecodeController> m_predecodeController;
-    std::unique_ptr<ImageSpreadPresentationController> m_spreadController;
-    std::unique_ptr<ImageDocumentLoadController> m_loadController;
-    std::unique_ptr<ImageDocumentEffectExecutor> m_effectExecutor;
-    std::unique_ptr<ImageDocumentNavigator> m_navigator;
+    std::unique_ptr<ImageDocumentRuntime> m_runtime;
 };
 }
 
