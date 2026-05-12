@@ -38,6 +38,7 @@ struct ImageDocumentRuntime final {
 
     void dispatchEffect(ImageDocumentEffect effect);
     void notify(ImageDocumentChange change);
+    void shutdown();
 
     ImageDocumentState state;
     ChangeCallback changeCallback;

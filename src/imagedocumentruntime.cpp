@@ -82,12 +82,7 @@ ImageDocumentRuntime::ImageDocumentRuntime(QObject *documentObject,
         *navigationController, *spreadController, *loadController);
 }
 
-ImageDocumentRuntime::~ImageDocumentRuntime()
-{
-    if (loadController != nullptr) {
-        loadController->shutdown();
-    }
-}
+ImageDocumentRuntime::~ImageDocumentRuntime() { shutdown(); }
 
 void ImageDocumentRuntime::dispatchEffect(ImageDocumentEffect effect)
 {
@@ -98,5 +93,17 @@ void ImageDocumentRuntime::notify(ImageDocumentChange change)
 {
     spreadController->handleDocumentChange(change);
     invokeIfSet(changeCallback, change);
+}
+
+void ImageDocumentRuntime::shutdown()
+{
+    documentDeletionController->cancel();
+    presentationController->stopAnimation();
+    spreadController->shutdown();
+    predecodeController->cancel();
+    navigationController->cancelPageNavigationUpdate();
+    navigationController->cancelContainerNavigation();
+    navigationController->cancelNavigation();
+    openController->cancel();
 }
 }
