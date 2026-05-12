@@ -7,6 +7,7 @@ mod avifcompat;
 mod bmff;
 mod byteio;
 mod heifcontainer;
+mod imageanimationpolicy;
 mod imagecontainer;
 mod imageformatregistry;
 mod imagemath;
