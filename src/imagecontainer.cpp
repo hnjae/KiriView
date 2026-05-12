@@ -183,11 +183,16 @@ std::optional<QUrl> containingDirectArchiveOpenRootUrl(const QUrl &url)
 
 QString windowTitleFileNameForDisplayedLocation(const DisplayedImageLocation &location)
 {
-    const QByteArray imageFileName = location.imageUrl().fileName().toUtf8();
-    const QByteArray archiveFileName = location.archiveDocumentFileUrl().fileName().toUtf8();
-    return Bridge::qtString(rustWindowTitleFileNameForDisplayedLocation(
-        location.imageUrl().isEmpty(), Bridge::rustStr(imageFileName),
-        displayedLocationIsInsideArchiveDocument(location), Bridge::rustStr(archiveFileName)));
+    if (location.imageUrl().isEmpty()) {
+        return QString();
+    }
+
+    if (displayedLocationIsInsideArchiveDocument(location)
+        && !location.archiveDocumentFileUrl().fileName().isEmpty()) {
+        return location.archiveDocumentFileUrl().fileName();
+    }
+
+    return location.imageUrl().fileName();
 }
 
 std::vector<ContainerNavigationCandidate> containerNavigationCandidates(const KFileItemList &items)
@@ -211,8 +216,7 @@ std::vector<ContainerNavigationCandidate> containerNavigationCandidates(const KF
 
 QUrl zoomScopeUrlForLocation(const DisplayedImageLocation &location)
 {
-    if (rustZoomScopeUsesArchiveDocumentFileUrl(
-            displayedLocationIsInsideArchiveDocument(location))) {
+    if (displayedLocationIsInsideArchiveDocument(location)) {
         return archiveDocumentFileNavigationUrl(location);
     }
 
@@ -221,8 +225,8 @@ QUrl zoomScopeUrlForLocation(const DisplayedImageLocation &location)
 
 QUrl containerNavigationUrlForLocation(const DisplayedImageLocation &location)
 {
-    if (!rustContainerNavigationUsesArchiveDocumentFileUrl(location.archiveDocument().isComicBook(),
-            displayedLocationIsInsideArchiveDocument(location))) {
+    if (!location.archiveDocument().isComicBook()
+        || !displayedLocationIsInsideArchiveDocument(location)) {
         return {};
     }
 
@@ -233,14 +237,13 @@ bool shouldResetRightToLeftReadingForLoad(bool rightToLeftReadingEnabled,
     const ArchiveDocumentLocation &displayedArchiveDocument, const QUrl &sourceUrl,
     const QUrl &containerNavigationUrl)
 {
-    return rustShouldResetRightToLeftReadingForLoad(rightToLeftReadingEnabled,
-        containerNavigationUrl.isEmpty(), displayedArchiveDocument.isComicBook(),
-        archiveDocumentContainsUrlInRust(displayedArchiveDocument, sourceUrl));
+    return rightToLeftReadingEnabled && containerNavigationUrl.isEmpty()
+        && (!displayedArchiveDocument.isComicBook()
+            || !archiveDocumentContainsUrlInRust(displayedArchiveDocument, sourceUrl));
 }
 
 bool comicArchiveReadingControlsAvailable(bool hasImage, const DisplayedImageLocation &location)
 {
-    return rustComicArchiveReadingControlsAvailable(
-        hasImage, location.imageUrl().isEmpty(), location.archiveDocument().isComicBook());
+    return hasImage && !location.imageUrl().isEmpty() && location.archiveDocument().isComicBook();
 }
 }

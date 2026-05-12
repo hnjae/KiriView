@@ -48,39 +48,6 @@ mod ffi {
             url_path: &str,
         ) -> bool;
 
-        #[cxx_name = "rustWindowTitleFileNameForDisplayedLocation"]
-        fn rust_window_title_file_name_for_displayed_location(
-            image_url_empty: bool,
-            image_file_name: &str,
-            displayed_location_inside_archive_document: bool,
-            archive_file_name: &str,
-        ) -> String;
-
-        #[cxx_name = "rustZoomScopeUsesArchiveDocumentFileUrl"]
-        fn rust_zoom_scope_uses_archive_document_file_url(
-            displayed_location_inside_archive_document: bool,
-        ) -> bool;
-
-        #[cxx_name = "rustContainerNavigationUsesArchiveDocumentFileUrl"]
-        fn rust_container_navigation_uses_archive_document_file_url(
-            archive_document_is_comic_book: bool,
-            displayed_location_inside_archive_document: bool,
-        ) -> bool;
-
-        #[cxx_name = "rustShouldResetRightToLeftReadingForLoad"]
-        fn rust_should_reset_right_to_left_reading_for_load(
-            right_to_left_reading_enabled: bool,
-            container_navigation_url_empty: bool,
-            displayed_archive_document_is_comic_book: bool,
-            source_url_inside_displayed_archive_document: bool,
-        ) -> bool;
-
-        #[cxx_name = "rustComicArchiveReadingControlsAvailable"]
-        fn rust_comic_archive_reading_controls_available(
-            has_image: bool,
-            displayed_url_empty: bool,
-            displayed_archive_document_is_comic_book: bool,
-        ) -> bool;
     }
 }
 
@@ -136,56 +103,6 @@ fn rust_archive_document_contains_url(
             url_path,
         )
         .is_empty()
-}
-
-fn rust_window_title_file_name_for_displayed_location(
-    image_url_empty: bool,
-    image_file_name: &str,
-    displayed_location_inside_archive_document: bool,
-    archive_file_name: &str,
-) -> String {
-    if image_url_empty {
-        return String::new();
-    }
-
-    if displayed_location_inside_archive_document && !archive_file_name.is_empty() {
-        return archive_file_name.to_owned();
-    }
-
-    image_file_name.to_owned()
-}
-
-fn rust_zoom_scope_uses_archive_document_file_url(
-    displayed_location_inside_archive_document: bool,
-) -> bool {
-    displayed_location_inside_archive_document
-}
-
-fn rust_container_navigation_uses_archive_document_file_url(
-    archive_document_is_comic_book: bool,
-    displayed_location_inside_archive_document: bool,
-) -> bool {
-    archive_document_is_comic_book && displayed_location_inside_archive_document
-}
-
-fn rust_should_reset_right_to_left_reading_for_load(
-    right_to_left_reading_enabled: bool,
-    container_navigation_url_empty: bool,
-    displayed_archive_document_is_comic_book: bool,
-    source_url_inside_displayed_archive_document: bool,
-) -> bool {
-    right_to_left_reading_enabled
-        && container_navigation_url_empty
-        && (!displayed_archive_document_is_comic_book
-            || !source_url_inside_displayed_archive_document)
-}
-
-fn rust_comic_archive_reading_controls_available(
-    has_image: bool,
-    displayed_url_empty: bool,
-    displayed_archive_document_is_comic_book: bool,
-) -> bool {
-    has_image && !displayed_url_empty && displayed_archive_document_is_comic_book
 }
 
 fn containing_archive_root_path(path: &str, markers: &[String]) -> RustArchiveRootPath {
@@ -274,7 +191,7 @@ mod tests {
     }
 
     #[test]
-    fn archive_scope_decisions_require_archive_containment() {
+    fn archive_containment_requires_matching_archive_scope() {
         assert!(rust_archive_document_contains_url(
             false,
             false,
@@ -293,64 +210,5 @@ mod tests {
             "tar",
             "/books/book.cbz/chapter/page001.png"
         ));
-        assert!(rust_zoom_scope_uses_archive_document_file_url(true));
-        assert!(rust_container_navigation_uses_archive_document_file_url(
-            true, true
-        ));
-        assert!(!rust_container_navigation_uses_archive_document_file_url(
-            false, true
-        ));
-    }
-
-    #[test]
-    fn right_to_left_reading_reset_requires_leaving_a_comic_archive_directly() {
-        assert!(!rust_should_reset_right_to_left_reading_for_load(
-            false, true, true, false,
-        ));
-        assert!(!rust_should_reset_right_to_left_reading_for_load(
-            true, false, true, false,
-        ));
-        assert!(!rust_should_reset_right_to_left_reading_for_load(
-            true, true, true, true,
-        ));
-        assert!(rust_should_reset_right_to_left_reading_for_load(
-            true, true, true, false,
-        ));
-        assert!(rust_should_reset_right_to_left_reading_for_load(
-            true, true, false, false,
-        ));
-    }
-
-    #[test]
-    fn comic_archive_reading_controls_require_displayed_comic_archive_image() {
-        assert!(rust_comic_archive_reading_controls_available(
-            true, false, true,
-        ));
-        assert!(!rust_comic_archive_reading_controls_available(
-            false, false, true,
-        ));
-        assert!(!rust_comic_archive_reading_controls_available(
-            true, true, true,
-        ));
-        assert!(!rust_comic_archive_reading_controls_available(
-            true, false, false,
-        ));
-    }
-
-    #[test]
-    fn chooses_archive_name_for_archive_window_titles() {
-        assert_eq!(
-            rust_window_title_file_name_for_displayed_location(
-                false,
-                "page001.png",
-                true,
-                "book.cbz",
-            ),
-            "book.cbz"
-        );
-        assert_eq!(
-            rust_window_title_file_name_for_displayed_location(false, "page001.png", false, "",),
-            "page001.png"
-        );
     }
 }
