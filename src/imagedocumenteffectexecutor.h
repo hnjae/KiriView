@@ -6,10 +6,8 @@
 
 #include "imagedocumenteffects.h"
 
-#include <QUrl>
-#include <functional>
-
 namespace KiriView {
+class ImageDocumentLoadController;
 class ImageDocumentNavigationController;
 class ImageDocumentPredecodeController;
 class ImageDocumentState;
@@ -20,19 +18,12 @@ class ImageSpreadPresentationController;
 class ImageDocumentEffectExecutor final
 {
 public:
-    using OpenUrlCallback = std::function<void(const QUrl &)>;
-    using OpenContainerImageCallback = std::function<void(const QUrl &, const QUrl &)>;
-
-    struct Callbacks {
-        OpenUrlCallback openUrl;
-        OpenContainerImageCallback openContainerImage;
-    };
-
     ImageDocumentEffectExecutor(ImageDocumentState &state,
         ImageDocumentNavigationController &navigationController,
         ImageDocumentPredecodeController &predecodeController, ImageOpenController &openController,
         ImagePresentationController &presentationController,
-        ImageSpreadPresentationController &spreadController, Callbacks callbacks);
+        ImageSpreadPresentationController &spreadController,
+        ImageDocumentLoadController &loadController);
 
     void dispatch(ImageDocumentEffect effect);
     void dispatchAll(ImageDocumentEffects effects);
@@ -54,7 +45,7 @@ private:
     ImageOpenController &m_openController;
     ImagePresentationController &m_presentationController;
     ImageSpreadPresentationController &m_spreadController;
-    Callbacks m_callbacks;
+    ImageDocumentLoadController &m_loadController;
 };
 }
 

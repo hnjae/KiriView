@@ -114,8 +114,8 @@ private:
     std::unique_ptr<ImageDocumentNavigationController> m_navigationController;
     std::unique_ptr<ImageDocumentPredecodeController> m_predecodeController;
     std::unique_ptr<ImageSpreadPresentationController> m_spreadController;
-    std::unique_ptr<ImageDocumentEffectExecutor> m_effectExecutor;
     std::unique_ptr<ImageDocumentLoadController> m_loadController;
+    std::unique_ptr<ImageDocumentEffectExecutor> m_effectExecutor;
     std::unique_ptr<ImageDocumentNavigator> m_navigator;
 };
 }

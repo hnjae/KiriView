@@ -4,11 +4,12 @@
 #ifndef KIRIVIEW_IMAGEDOCUMENTLOADCONTROLLER_H
 #define KIRIVIEW_IMAGEDOCUMENTLOADCONTROLLER_H
 
+#include "imagedocumenteffects.h"
+
 #include <QUrl>
 
 namespace KiriView {
 class ImageDeletionController;
-class ImageDocumentEffectExecutor;
 class ImageDocumentNavigationController;
 class ImageDocumentPredecodeController;
 class ImageDocumentState;
@@ -22,12 +23,11 @@ public:
         ImageDeletionController &deletionController,
         ImageDocumentNavigationController &navigationController,
         ImageDocumentPredecodeController &predecodeController, ImageOpenController &openController,
-        ImageSpreadPresentationController &spreadController,
-        ImageDocumentEffectExecutor &effectExecutor);
+        ImageSpreadPresentationController &spreadController);
 
     void setSourceUrl(const QUrl &sourceUrl, const QUrl &containerNavigationUrl = QUrl(),
         bool preserveTwoPageSpreadTransition = false);
-    void clearAfterSuccessfulFileDeletion();
+    ImageDocumentEffects clearAfterSuccessfulFileDeletion();
 
 private:
     void cancelNavigationAndPredecode();
@@ -38,7 +38,6 @@ private:
     ImageDocumentPredecodeController &m_predecodeController;
     ImageOpenController &m_openController;
     ImageSpreadPresentationController &m_spreadController;
-    ImageDocumentEffectExecutor &m_effectExecutor;
 };
 }
 

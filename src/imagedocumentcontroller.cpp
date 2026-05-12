@@ -41,7 +41,9 @@ ImageDocumentController::ImageDocumentController(QObject *parent,
         dependencies.candidateProvider, std::move(dependencies.fileOperations),
         ImageDeletionController::Callbacks {
             [this]() { notify(ImageDocumentChange::FileDeletionInProgress); },
-            [this]() { m_loadController->clearAfterSuccessfulFileDeletion(); },
+            [this]() {
+                m_effectExecutor->dispatchAll(m_loadController->clearAfterSuccessfulFileDeletion());
+            },
             [this](const QUrl &url) { m_loadController->setSourceUrl(url); },
             [this](const QUrl &imageUrl, const QUrl &containerUrl) {
                 m_loadController->setSourceUrl(imageUrl, containerUrl);
@@ -86,18 +88,11 @@ ImageDocumentController::ImageDocumentController(QObject *parent,
         dependencies.candidateProvider, dependencies.imageDecode);
     m_changeDispatcher = std::make_unique<ImageDocumentChangeDispatcher>(
         m_state, *m_spreadController, std::move(changeCallback));
+    m_loadController = std::make_unique<ImageDocumentLoadController>(m_state, *m_deletionController,
+        *m_navigationController, *m_predecodeController, *m_openController, *m_spreadController);
     m_effectExecutor = std::make_unique<ImageDocumentEffectExecutor>(m_state,
         *m_navigationController, *m_predecodeController, *m_openController,
-        *m_presentationController, *m_spreadController,
-        ImageDocumentEffectExecutor::Callbacks {
-            [this](const QUrl &url) { m_loadController->setSourceUrl(url); },
-            [this](const QUrl &imageUrl, const QUrl &containerUrl) {
-                m_loadController->setSourceUrl(imageUrl, containerUrl);
-            },
-        });
-    m_loadController = std::make_unique<ImageDocumentLoadController>(m_state, *m_deletionController,
-        *m_navigationController, *m_predecodeController, *m_openController, *m_spreadController,
-        *m_effectExecutor);
+        *m_presentationController, *m_spreadController, *m_loadController);
     m_navigator = std::make_unique<ImageDocumentNavigator>(*m_navigationController,
         *m_spreadController, [this](const QUrl &url, bool preserveTwoPageSpreadTransition) {
             m_loadController->setSourceUrl(url, QUrl(), preserveTwoPageSpreadTransition);

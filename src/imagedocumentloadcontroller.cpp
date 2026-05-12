@@ -4,7 +4,6 @@
 #include "imagedocumentloadcontroller.h"
 
 #include "imagedeletioncontroller.h"
-#include "imagedocumenteffectexecutor.h"
 #include "imagedocumentnavigationcontroller.h"
 #include "imagedocumentpredecodecontroller.h"
 #include "imagedocumentstate.h"
@@ -19,15 +18,13 @@ ImageDocumentLoadController::ImageDocumentLoadController(ImageDocumentState &sta
     ImageDeletionController &deletionController,
     ImageDocumentNavigationController &navigationController,
     ImageDocumentPredecodeController &predecodeController, ImageOpenController &openController,
-    ImageSpreadPresentationController &spreadController,
-    ImageDocumentEffectExecutor &effectExecutor)
+    ImageSpreadPresentationController &spreadController)
     : m_state(state)
     , m_deletionController(deletionController)
     , m_navigationController(navigationController)
     , m_predecodeController(predecodeController)
     , m_openController(openController)
     , m_spreadController(spreadController)
-    , m_effectExecutor(effectExecutor)
 {
 }
 
@@ -79,7 +76,7 @@ void ImageDocumentLoadController::setSourceUrl(
     }
 }
 
-void ImageDocumentLoadController::clearAfterSuccessfulFileDeletion()
+ImageDocumentEffects ImageDocumentLoadController::clearAfterSuccessfulFileDeletion()
 {
     cancelNavigationAndPredecode();
     m_openController.cancel();
@@ -87,7 +84,7 @@ void ImageDocumentLoadController::clearAfterSuccessfulFileDeletion()
     m_spreadController.clearSecondaryPage();
     m_state.setSourceUrl(QUrl());
     m_state.setErrorString(QString());
-    m_effectExecutor.dispatchAll(ImageOpenWorkflow::finishEmptySourceLoad(m_state));
+    return ImageOpenWorkflow::finishEmptySourceLoad(m_state);
 }
 
 void ImageDocumentLoadController::cancelNavigationAndPredecode()

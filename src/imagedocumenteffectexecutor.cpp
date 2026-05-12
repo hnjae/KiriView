@@ -3,7 +3,7 @@
 
 #include "imagedocumenteffectexecutor.h"
 
-#include "imagecallback.h"
+#include "imagedocumentloadcontroller.h"
 #include "imagedocumentnavigationcontroller.h"
 #include "imagedocumentpredecodecontroller.h"
 #include "imagedocumentstate.h"
@@ -11,7 +11,6 @@
 #include "imagepresentationcontroller.h"
 #include "imagespreadpresentationcontroller.h"
 
-#include <utility>
 #include <variant>
 
 namespace KiriView {
@@ -20,14 +19,14 @@ ImageDocumentEffectExecutor::ImageDocumentEffectExecutor(ImageDocumentState &sta
     ImageDocumentPredecodeController &predecodeController, ImageOpenController &openController,
     ImagePresentationController &presentationController,
     ImageSpreadPresentationController &spreadController,
-    ImageDocumentEffectExecutor::Callbacks callbacks)
+    ImageDocumentLoadController &loadController)
     : m_state(state)
     , m_navigationController(navigationController)
     , m_predecodeController(predecodeController)
     , m_openController(openController)
     , m_presentationController(presentationController)
     , m_spreadController(spreadController)
-    , m_callbacks(std::move(callbacks))
+    , m_loadController(loadController)
 {
 }
 
@@ -72,12 +71,12 @@ void ImageDocumentEffectExecutor::dispatchPayload(const ScheduleAdjacentImagePre
 
 void ImageDocumentEffectExecutor::dispatchPayload(const OpenUrlEffect &payload)
 {
-    invokeIfSet(m_callbacks.openUrl, payload.url);
+    m_loadController.setSourceUrl(payload.url);
 }
 
 void ImageDocumentEffectExecutor::dispatchPayload(const ContainerImageSelectedEffect &payload)
 {
-    invokeIfSet(m_callbacks.openContainerImage, payload.imageUrl, payload.containerUrl);
+    m_loadController.setSourceUrl(payload.imageUrl, payload.containerUrl);
 }
 
 void ImageDocumentEffectExecutor::dispatchPayload(const EmptyContainerSelectedEffect &payload)
