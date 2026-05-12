@@ -9,6 +9,7 @@
 #include "imagedocumenttypes.h"
 #include "imageloadtypes.h"
 #include "imagelocation.h"
+#include "imagespreadpagecache.h"
 #include "imagesurface.h"
 #include "predecodedimage.h"
 
@@ -62,6 +63,8 @@ public:
     QSize imageSize() const;
     std::shared_ptr<DisplayedImageSurface> imageSurface() const;
     quint64 imageRevision() const;
+    void cachePageSize(const QUrl &url, const QSize &imageSize);
+    std::optional<bool> cachedPageIsWide(const QUrl &url) const;
 
     void setViewportSize(const QSizeF &viewportSize);
     void updateRenderContext();
@@ -93,6 +96,7 @@ private:
     Callbacks m_callbacks;
     std::unique_ptr<ImagePresentationController> m_presentationController;
     std::unique_ptr<ImageLoader> m_imageLoader;
+    ImageSpreadPageCache m_pageCache;
     DisplayedImageLocation m_displayedImageLocation;
     bool m_visible = false;
 };

@@ -8,7 +8,6 @@
 #include "imageasyncdependencies.h"
 #include "imagedocumenteffects.h"
 #include "imagedocumentstate.h"
-#include "imagespreadpagecache.h"
 #include "imagesurface.h"
 #include "imagezoomstate.h"
 #include "predecodedimage.h"
@@ -158,7 +157,6 @@ private:
     std::unique_ptr<ImagePredecodeCoordinator> m_predecodeCoordinator;
     std::unique_ptr<ImageSpreadModeController> m_spreadModeController;
     std::unique_ptr<ImageSpreadZoomController> m_spreadZoomController;
-    ImageSpreadPageCache m_spreadPageCache;
 };
 }
 

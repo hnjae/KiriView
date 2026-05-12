@@ -406,7 +406,8 @@ void ImageDocumentController::openPreviousImage()
         const std::optional<QUrl> previousUrl
             = m_navigationController->urlAtPage(currentPageNumber() - 1);
         if (previousUrl.has_value()) {
-            previousPageIsWide = m_spreadPageCache.cachedPageIsWide(*previousUrl).value_or(false);
+            previousPageIsWide
+                = m_secondaryPageController->cachedPageIsWide(*previousUrl).value_or(false);
         }
     }
     openImageAtPage(imageSpreadPreviousPageTarget(
@@ -659,7 +660,8 @@ void ImageDocumentController::clearSecondaryPage() { m_secondaryPageController->
 
 void ImageDocumentController::refreshSecondaryPage()
 {
-    m_spreadPageCache.cachePageSize(m_state.displayedUrl(), m_presentationController->imageSize());
+    m_secondaryPageController->cachePageSize(
+        m_state.displayedUrl(), m_presentationController->imageSize());
 
     auto finishWithPrimaryPage = [this]() {
         const bool wasVisible = secondaryPageVisible();
@@ -673,8 +675,8 @@ void ImageDocumentController::refreshSecondaryPage()
 
     const int nextPageNumber = currentPageNumber() + 1;
     const std::optional<QUrl> nextUrl = m_navigationController->urlAtPage(nextPageNumber);
-    const bool nextPageIsWide
-        = nextUrl.has_value() && m_spreadPageCache.cachedPageIsWide(*nextUrl).value_or(false);
+    const bool nextPageIsWide = nextUrl.has_value()
+        && m_secondaryPageController->cachedPageIsWide(*nextUrl).value_or(false);
     const bool currentSecondaryMatchesNext = nextUrl.has_value() && secondaryPageVisible()
         && m_secondaryPageController->displayedImageLocation().imageUrl() == *nextUrl;
     const ImageSpreadSecondaryPageDecision decision
@@ -702,7 +704,7 @@ void ImageDocumentController::handleSecondaryPageLoadFinished(ImageSecondaryPage
     const DisplayedImageLocation &location, const QSize &imageSize)
 {
     if (result != ImageSecondaryPageLoadResult::Failed) {
-        m_spreadPageCache.cachePageSize(location.imageUrl(), imageSize);
+        m_secondaryPageController->cachePageSize(location.imageUrl(), imageSize);
     }
 
     if (result == ImageSecondaryPageLoadResult::Visible) {
