@@ -102,6 +102,18 @@ ImageDocumentEffects ImageDocumentLoadController::clearAfterSuccessfulFileDeleti
     return ImageOpenWorkflow::finishEmptySourceLoad(m_state);
 }
 
+void ImageDocumentLoadController::shutdown()
+{
+    m_deletionController.cancel();
+    m_presentationController.stopAnimation();
+    m_spreadController.shutdown();
+    m_predecodeController.cancel();
+    m_navigationController.cancelPageNavigationUpdate();
+    m_navigationController.cancelContainerNavigation();
+    m_navigationController.cancelNavigation();
+    m_openController.cancel();
+}
+
 void ImageDocumentLoadController::cancelNavigationAndPredecode()
 {
     m_navigationController.cancelNavigation();

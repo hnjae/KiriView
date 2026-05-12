@@ -29,6 +29,7 @@ public:
     void loadSource(const ImageDocumentSourceLoadRequest &request);
     void clearImage();
     ImageDocumentEffects clearAfterSuccessfulFileDeletion();
+    void shutdown();
 
 private:
     void cancelNavigationAndPredecode();

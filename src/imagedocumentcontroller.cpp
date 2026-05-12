@@ -102,17 +102,7 @@ ImageDocumentController::ImageDocumentController(QObject *parent,
         });
 }
 
-ImageDocumentController::~ImageDocumentController()
-{
-    m_documentDeletionController->cancel();
-    m_presentationController->stopAnimation();
-    m_spreadController->shutdown();
-    m_predecodeController->cancel();
-    m_navigationController->cancelPageNavigationUpdate();
-    m_navigationController->cancelContainerNavigation();
-    m_navigationController->cancelNavigation();
-    m_openController->cancel();
-}
+ImageDocumentController::~ImageDocumentController() { m_loadController->shutdown(); }
 
 QUrl ImageDocumentController::sourceUrl() const { return m_state.sourceUrl(); }
 
