@@ -25,12 +25,17 @@ struct ImageOpenSourceLoadPlan {
     bool beginOpen = false;
 };
 
+struct ImageOpenSourceLoadRequest {
+    bool sourceUrlChanged = false;
+    bool preserveTwoPageSpreadTransition = false;
+    bool resetRightToLeftReading = false;
+    bool containerNavigationUrlEmpty = false;
+};
+
 class ImageOpenWorkflow
 {
 public:
-    static ImageOpenSourceLoadPlan sourceLoadPlan(bool sourceUrlChanged,
-        bool preserveTwoPageSpreadTransition, bool resetRightToLeftReading,
-        bool containerNavigationUrlEmpty);
+    static ImageOpenSourceLoadPlan sourceLoadPlan(const ImageOpenSourceLoadRequest &request);
     static ImageDocumentEffects beginSourceLoad(ImageDocumentState &state, bool hasImage);
     static ImageDocumentEffects finishEmptySourceLoad(ImageDocumentState &state);
     static ImageDocumentEffects finishSuccessfulImageLoad(

@@ -233,13 +233,11 @@ private:
 }
 
 namespace KiriView {
-ImageOpenSourceLoadPlan ImageOpenWorkflow::sourceLoadPlan(bool sourceUrlChanged,
-    bool preserveTwoPageSpreadTransition, bool resetRightToLeftReading,
-    bool containerNavigationUrlEmpty)
+ImageOpenSourceLoadPlan ImageOpenWorkflow::sourceLoadPlan(const ImageOpenSourceLoadRequest &request)
 {
-    return imageOpenSourceLoadPlan(rustImageOpenSourceLoadPlan(
-        RustImageOpenSourceLoadRequest { sourceUrlChanged, preserveTwoPageSpreadTransition,
-            resetRightToLeftReading, containerNavigationUrlEmpty }));
+    return imageOpenSourceLoadPlan(rustImageOpenSourceLoadPlan(RustImageOpenSourceLoadRequest {
+        request.sourceUrlChanged, request.preserveTwoPageSpreadTransition,
+        request.resetRightToLeftReading, request.containerNavigationUrlEmpty }));
 }
 
 ImageDocumentEffects ImageOpenWorkflow::beginSourceLoad(ImageDocumentState &state, bool hasImage)

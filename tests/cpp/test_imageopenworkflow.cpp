@@ -64,8 +64,13 @@ private Q_SLOTS:
 
 void TestImageOpenWorkflow::sourceLoadPlanRoutesUnchangedAndReplacementLoads()
 {
+    KiriView::ImageOpenSourceLoadRequest unchangedRequest;
+    unchangedRequest.sourceUrlChanged = false;
+    unchangedRequest.preserveTwoPageSpreadTransition = false;
+    unchangedRequest.resetRightToLeftReading = true;
+    unchangedRequest.containerNavigationUrlEmpty = false;
     const KiriView::ImageOpenSourceLoadPlan unchanged
-        = KiriView::ImageOpenWorkflow::sourceLoadPlan(false, false, true, false);
+        = KiriView::ImageOpenWorkflow::sourceLoadPlan(unchangedRequest);
     QVERIFY(unchanged.finishSpreadTransition);
     QVERIFY(unchanged.resetRightToLeftReading);
     QVERIFY(unchanged.clearLoadingContainerNavigationUrl);
@@ -76,8 +81,13 @@ void TestImageOpenWorkflow::sourceLoadPlanRoutesUnchangedAndReplacementLoads()
     QVERIFY(!unchanged.setSourceUrl);
     QVERIFY(!unchanged.beginOpen);
 
+    KiriView::ImageOpenSourceLoadRequest replacementRequest;
+    replacementRequest.sourceUrlChanged = true;
+    replacementRequest.preserveTwoPageSpreadTransition = true;
+    replacementRequest.resetRightToLeftReading = false;
+    replacementRequest.containerNavigationUrlEmpty = true;
     const KiriView::ImageOpenSourceLoadPlan replacement
-        = KiriView::ImageOpenWorkflow::sourceLoadPlan(true, true, false, true);
+        = KiriView::ImageOpenWorkflow::sourceLoadPlan(replacementRequest);
     QVERIFY(!replacement.finishSpreadTransition);
     QVERIFY(!replacement.resetRightToLeftReading);
     QVERIFY(!replacement.clearLoadingContainerNavigationUrl);

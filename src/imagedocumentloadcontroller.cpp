@@ -38,9 +38,12 @@ void ImageDocumentLoadController::loadSource(const ImageDocumentSourceLoadReques
     const bool sourceUrlChanged = m_state.sourceUrl() != request.sourceUrl;
     const bool resetRightToLeftReading = m_spreadController.shouldResetRightToLeftReadingForLoad(
         m_state.displayedArchiveDocument(), request.sourceUrl, request.containerNavigationUrl);
-    const ImageOpenSourceLoadPlan plan = ImageOpenWorkflow::sourceLoadPlan(sourceUrlChanged,
-        request.preserveTwoPageSpreadTransition, resetRightToLeftReading,
-        request.containerNavigationUrl.isEmpty());
+    ImageOpenSourceLoadRequest openRequest;
+    openRequest.sourceUrlChanged = sourceUrlChanged;
+    openRequest.preserveTwoPageSpreadTransition = request.preserveTwoPageSpreadTransition;
+    openRequest.resetRightToLeftReading = resetRightToLeftReading;
+    openRequest.containerNavigationUrlEmpty = request.containerNavigationUrl.isEmpty();
+    const ImageOpenSourceLoadPlan plan = ImageOpenWorkflow::sourceLoadPlan(openRequest);
     if (plan.cancelNavigationAndPredecode) {
         cancelNavigationAndPredecode();
     }
