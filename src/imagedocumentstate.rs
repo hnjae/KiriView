@@ -4,14 +4,6 @@
 #[cxx::bridge(namespace = "KiriView")]
 mod ffi {
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-    enum RustImageDocumentStatus {
-        Null = 0,
-        Loading = 1,
-        Ready = 2,
-        Error = 3,
-    }
-
-    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     enum RustImageDocumentNotificationChange {
         Status = 0,
         Loading = 1,
@@ -29,12 +21,6 @@ mod ffi {
     }
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-    struct RustImageDocumentStateSnapshot {
-        status: RustImageDocumentStatus,
-        loading: bool,
-    }
-
-    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     struct RustImageDocumentZoomChangeSet {
         image_size_changed: bool,
         viewport_size_changed: bool,
@@ -44,38 +30,7 @@ mod ffi {
         maximum_manual_zoom_percent_changed: bool,
     }
 
-    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-    struct RustImageDocumentStateChange {
-        changed: bool,
-        snapshot: RustImageDocumentStateSnapshot,
-    }
-
-    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-    struct RustImageDocumentChangeDispatchPlan {
-        finish_spread_transition: bool,
-        refresh_secondary_page: bool,
-        notify_right_to_left_reading: bool,
-    }
-
     extern "Rust" {
-        #[cxx_name = "rustImageDocumentStateSnapshot"]
-        fn rust_image_document_state_snapshot(
-            status: RustImageDocumentStatus,
-            loading: bool,
-        ) -> RustImageDocumentStateSnapshot;
-
-        #[cxx_name = "rustImageDocumentSetStatus"]
-        fn rust_image_document_set_status(
-            snapshot: RustImageDocumentStateSnapshot,
-            status: RustImageDocumentStatus,
-        ) -> RustImageDocumentStateChange;
-
-        #[cxx_name = "rustImageDocumentSetLoading"]
-        fn rust_image_document_set_loading(
-            snapshot: RustImageDocumentStateSnapshot,
-            loading: bool,
-        ) -> RustImageDocumentStateChange;
-
         #[cxx_name = "rustImageDocumentSpreadTransitionNotifications"]
         fn rust_image_document_spread_transition_notifications()
         -> Vec<RustImageDocumentNotificationChange>;
@@ -103,56 +58,10 @@ mod ffi {
         fn rust_image_document_presentation_zoom_notifications(
             changes: RustImageDocumentZoomChangeSet,
         ) -> Vec<RustImageDocumentNotificationChange>;
-
-        #[cxx_name = "rustImageDocumentChangeDispatchPlan"]
-        fn rust_image_document_change_dispatch_plan(
-            error_string_changed: bool,
-            error_string_empty: bool,
-            page_navigation_changed: bool,
-        ) -> RustImageDocumentChangeDispatchPlan;
     }
 }
 
-use ffi::{
-    RustImageDocumentChangeDispatchPlan, RustImageDocumentNotificationChange,
-    RustImageDocumentStateChange, RustImageDocumentStateSnapshot, RustImageDocumentStatus,
-    RustImageDocumentZoomChangeSet,
-};
-
-fn rust_image_document_state_snapshot(
-    status: RustImageDocumentStatus,
-    loading: bool,
-) -> RustImageDocumentStateSnapshot {
-    RustImageDocumentStateSnapshot { status, loading }
-}
-
-fn rust_image_document_set_status(
-    snapshot: RustImageDocumentStateSnapshot,
-    status: RustImageDocumentStatus,
-) -> RustImageDocumentStateChange {
-    let mut next = snapshot;
-    next.status = status;
-    state_change(snapshot, next)
-}
-
-fn rust_image_document_set_loading(
-    snapshot: RustImageDocumentStateSnapshot,
-    loading: bool,
-) -> RustImageDocumentStateChange {
-    let mut next = snapshot;
-    next.loading = loading;
-    state_change(snapshot, next)
-}
-
-fn state_change(
-    current: RustImageDocumentStateSnapshot,
-    next: RustImageDocumentStateSnapshot,
-) -> RustImageDocumentStateChange {
-    RustImageDocumentStateChange {
-        changed: current != next,
-        snapshot: next,
-    }
-}
+use ffi::{RustImageDocumentNotificationChange, RustImageDocumentZoomChangeSet};
 
 fn rust_image_document_spread_transition_notifications() -> Vec<RustImageDocumentNotificationChange>
 {
@@ -239,18 +148,6 @@ fn rust_image_document_presentation_zoom_notifications(
     notifications
 }
 
-fn rust_image_document_change_dispatch_plan(
-    error_string_changed: bool,
-    error_string_empty: bool,
-    page_navigation_changed: bool,
-) -> RustImageDocumentChangeDispatchPlan {
-    RustImageDocumentChangeDispatchPlan {
-        finish_spread_transition: error_string_changed && !error_string_empty,
-        refresh_secondary_page: page_navigation_changed,
-        notify_right_to_left_reading: page_navigation_changed,
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -264,42 +161,6 @@ mod tests {
             display_size_changed: false,
             maximum_manual_zoom_percent_changed: false,
         }
-    }
-
-    #[test]
-    fn snapshot_preserves_status_and_loading() {
-        let snapshot = rust_image_document_state_snapshot(RustImageDocumentStatus::Ready, true);
-
-        assert_eq!(snapshot.status, RustImageDocumentStatus::Ready);
-        assert!(snapshot.loading);
-    }
-
-    #[test]
-    fn status_reducer_reports_changed_and_unchanged_states() {
-        let snapshot = rust_image_document_state_snapshot(RustImageDocumentStatus::Null, false);
-
-        let changed = rust_image_document_set_status(snapshot, RustImageDocumentStatus::Loading);
-        assert!(changed.changed);
-        assert_eq!(changed.snapshot.status, RustImageDocumentStatus::Loading);
-        assert!(!changed.snapshot.loading);
-
-        let unchanged = rust_image_document_set_status(snapshot, RustImageDocumentStatus::Null);
-        assert!(!unchanged.changed);
-        assert_eq!(unchanged.snapshot, snapshot);
-    }
-
-    #[test]
-    fn loading_reducer_reports_changed_and_unchanged_states() {
-        let snapshot = rust_image_document_state_snapshot(RustImageDocumentStatus::Ready, false);
-
-        let changed = rust_image_document_set_loading(snapshot, true);
-        assert!(changed.changed);
-        assert_eq!(changed.snapshot.status, RustImageDocumentStatus::Ready);
-        assert!(changed.snapshot.loading);
-
-        let unchanged = rust_image_document_set_loading(snapshot, false);
-        assert!(!unchanged.changed);
-        assert_eq!(unchanged.snapshot, snapshot);
     }
 
     #[test]
@@ -405,41 +266,5 @@ mod tests {
     #[test]
     fn presentation_zoom_notifications_do_not_emit_without_notification_changes() {
         assert!(rust_image_document_presentation_zoom_notifications(zoom_change_set()).is_empty());
-    }
-
-    #[test]
-    fn change_dispatch_plan_routes_controller_side_effects() {
-        assert_eq!(
-            rust_image_document_change_dispatch_plan(true, false, false),
-            RustImageDocumentChangeDispatchPlan {
-                finish_spread_transition: true,
-                refresh_secondary_page: false,
-                notify_right_to_left_reading: false,
-            }
-        );
-        assert_eq!(
-            rust_image_document_change_dispatch_plan(true, true, false),
-            RustImageDocumentChangeDispatchPlan {
-                finish_spread_transition: false,
-                refresh_secondary_page: false,
-                notify_right_to_left_reading: false,
-            }
-        );
-        assert_eq!(
-            rust_image_document_change_dispatch_plan(false, true, true),
-            RustImageDocumentChangeDispatchPlan {
-                finish_spread_transition: false,
-                refresh_secondary_page: true,
-                notify_right_to_left_reading: true,
-            }
-        );
-        assert_eq!(
-            rust_image_document_change_dispatch_plan(false, false, false),
-            RustImageDocumentChangeDispatchPlan {
-                finish_spread_transition: false,
-                refresh_secondary_page: false,
-                notify_right_to_left_reading: false,
-            }
-        );
     }
 }

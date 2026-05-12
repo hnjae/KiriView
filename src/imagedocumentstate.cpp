@@ -22,38 +22,6 @@ template <typename Value> bool replaceIfChanged(Value &current, const Value &nex
     return true;
 }
 
-KiriView::RustImageDocumentStatus rustImageDocumentStatus(KiriView::ImageDocumentStatus status)
-{
-    switch (status) {
-    case KiriView::ImageDocumentStatus::Null:
-        return KiriView::RustImageDocumentStatus::Null;
-    case KiriView::ImageDocumentStatus::Loading:
-        return KiriView::RustImageDocumentStatus::Loading;
-    case KiriView::ImageDocumentStatus::Ready:
-        return KiriView::RustImageDocumentStatus::Ready;
-    case KiriView::ImageDocumentStatus::Error:
-        return KiriView::RustImageDocumentStatus::Error;
-    }
-
-    return KiriView::RustImageDocumentStatus::Null;
-}
-
-KiriView::ImageDocumentStatus imageDocumentStatus(KiriView::RustImageDocumentStatus status)
-{
-    switch (status) {
-    case KiriView::RustImageDocumentStatus::Null:
-        return KiriView::ImageDocumentStatus::Null;
-    case KiriView::RustImageDocumentStatus::Loading:
-        return KiriView::ImageDocumentStatus::Loading;
-    case KiriView::RustImageDocumentStatus::Ready:
-        return KiriView::ImageDocumentStatus::Ready;
-    case KiriView::RustImageDocumentStatus::Error:
-        return KiriView::ImageDocumentStatus::Error;
-    }
-
-    return KiriView::ImageDocumentStatus::Null;
-}
-
 KiriView::ImageDocumentChange imageDocumentChange(
     KiriView::RustImageDocumentNotificationChange change)
 {
@@ -207,25 +175,14 @@ void ImageDocumentState::replaceDisplayedImageLocation(DisplayedImageLocation lo
 
 void ImageDocumentState::setStatus(ImageDocumentStatus status)
 {
-    const RustImageDocumentStateSnapshot current
-        = rustImageDocumentStateSnapshot(rustImageDocumentStatus(m_status), m_loading);
-    const RustImageDocumentStateChange change
-        = rustImageDocumentSetStatus(current, rustImageDocumentStatus(status));
-    if (change.changed) {
-        m_status = imageDocumentStatus(change.snapshot.status);
-        m_loading = change.snapshot.loading;
+    if (replaceIfChanged(m_status, status)) {
         notify(ImageDocumentChange::Status);
     }
 }
 
 void ImageDocumentState::setLoading(bool loading)
 {
-    const RustImageDocumentStateSnapshot current
-        = rustImageDocumentStateSnapshot(rustImageDocumentStatus(m_status), m_loading);
-    const RustImageDocumentStateChange change = rustImageDocumentSetLoading(current, loading);
-    if (change.changed) {
-        m_status = imageDocumentStatus(change.snapshot.status);
-        m_loading = change.snapshot.loading;
+    if (replaceIfChanged(m_loading, loading)) {
         notify(ImageDocumentChange::Loading);
     }
 }
@@ -333,13 +290,10 @@ std::vector<ImageDocumentChange> imageDocumentPresentationZoomNotifications(
 ImageDocumentChangeDispatchPlan imageDocumentChangeDispatchPlan(
     ImageDocumentChange change, bool errorStringEmpty)
 {
-    const RustImageDocumentChangeDispatchPlan plan
-        = rustImageDocumentChangeDispatchPlan(change == ImageDocumentChange::ErrorString,
-            errorStringEmpty, change == ImageDocumentChange::PageNavigation);
     return ImageDocumentChangeDispatchPlan {
-        plan.finish_spread_transition,
-        plan.refresh_secondary_page,
-        plan.notify_right_to_left_reading,
+        change == ImageDocumentChange::ErrorString && !errorStringEmpty,
+        change == ImageDocumentChange::PageNavigation,
+        change == ImageDocumentChange::PageNavigation,
     };
 }
 }
