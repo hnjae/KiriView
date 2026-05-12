@@ -35,6 +35,15 @@ struct ImageSpreadPageNavigationTarget {
     int pageNumber = 0;
 };
 
+struct ImageSpreadDocumentChangePlan {
+    bool finishTransition = false;
+    bool refreshSecondaryPage = false;
+    bool notifyRightToLeftReading = false;
+};
+
+ImageSpreadDocumentChangePlan imageSpreadDocumentChangePlan(
+    ImageDocumentChange change, bool errorStringEmpty);
+
 class ImageSpreadPresentationController final
 {
 public:
@@ -97,6 +106,7 @@ public:
     void setFitMode(ImageZoomMode zoomMode);
     void updateRenderContext();
     void refreshSecondaryPage();
+    void handleDocumentChange(ImageDocumentChange change);
     bool shouldBeginTransition(int targetPageNumber) const;
     void beginTransition();
     void finishTransition();

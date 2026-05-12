@@ -14,6 +14,16 @@
 #include <utility>
 
 namespace KiriView {
+ImageSpreadDocumentChangePlan imageSpreadDocumentChangePlan(
+    ImageDocumentChange change, bool errorStringEmpty)
+{
+    return ImageSpreadDocumentChangePlan {
+        change == ImageDocumentChange::ErrorString && !errorStringEmpty,
+        change == ImageDocumentChange::PageNavigation,
+        change == ImageDocumentChange::PageNavigation,
+    };
+}
+
 ImageSpreadPresentationController::ImageSpreadPresentationController(QObject *parent,
     RenderContextProvider renderContextProvider, ImageDocumentState &state,
     ImagePresentationController &primaryPresentation,
@@ -424,6 +434,22 @@ void ImageSpreadPresentationController::refreshSecondaryPage()
     }
 
     startSecondaryPageLoad(*nextUrl);
+}
+
+void ImageSpreadPresentationController::handleDocumentChange(ImageDocumentChange change)
+{
+    const ImageSpreadDocumentChangePlan plan
+        = imageSpreadDocumentChangePlan(change, m_state.errorString().isEmpty());
+
+    if (plan.finishTransition) {
+        finishTransition();
+    }
+    if (plan.refreshSecondaryPage) {
+        refreshSecondaryPage();
+    }
+    if (plan.notifyRightToLeftReading) {
+        notifyRightToLeftReadingChanged();
+    }
 }
 
 bool ImageSpreadPresentationController::shouldBeginTransition(int targetPageNumber) const

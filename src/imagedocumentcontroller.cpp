@@ -3,7 +3,7 @@
 
 #include "imagedocumentcontroller.h"
 
-#include "imagedocumentchangedispatcher.h"
+#include "imagecallback.h"
 #include "imagedocumentdeletioncontroller.h"
 #include "imagedocumenteffectexecutor.h"
 #include "imagedocumentloadcontroller.h"
@@ -32,6 +32,7 @@ ImageDocumentController::ImageDocumentController(QObject *parent,
     ImageAsyncDependencies dependencies, FileDeletionFailedCallback fileDeletionFailedCallback)
     : QObject(parent)
     , m_state([this](ImageDocumentChange change) { notify(change); })
+    , m_changeCallback(std::move(changeCallback))
 {
     dependencies = imageAsyncDependenciesWithDefaults(std::move(dependencies));
     RenderContextProvider primaryRenderContextProvider = renderContextProvider;
@@ -81,8 +82,6 @@ ImageDocumentController::ImageDocumentController(QObject *parent,
             [this](int pageNumber) { return m_navigationController->urlAtPage(pageNumber); },
         },
         dependencies.candidateProvider, dependencies.imageDecode);
-    m_changeDispatcher = std::make_unique<ImageDocumentChangeDispatcher>(
-        m_state, *m_spreadController, std::move(changeCallback));
     m_loadController = std::make_unique<ImageDocumentLoadController>(m_state,
         *m_documentDeletionController, *m_navigationController, *m_predecodeController,
         *m_openController, *m_presentationController, *m_spreadController);
@@ -297,7 +296,8 @@ void ImageDocumentController::dispatchEffect(ImageDocumentEffect effect)
 
 void ImageDocumentController::notify(ImageDocumentChange change)
 {
-    m_changeDispatcher->dispatch(change);
+    m_spreadController->handleDocumentChange(change);
+    invokeIfSet(m_changeCallback, change);
 }
 
 }
