@@ -5,6 +5,14 @@
 #define KIRIVIEW_IMAGEDOCUMENTDELETIONCONTROLLER_H
 
 #include "filedeletion.h"
+#include "imagecandidaterepository.h"
+
+#include <QString>
+#include <QUrl>
+#include <functional>
+#include <memory>
+
+class QObject;
 
 namespace KiriView {
 class ImageDeletionController;
@@ -14,9 +22,25 @@ class ImagePresentationController;
 class ImageDocumentDeletionController final
 {
 public:
-    ImageDocumentDeletionController(ImageDocumentState &state,
+    using InProgressChangedCallback = std::function<void()>;
+    using ClearDeletedImageCallback = std::function<void()>;
+    using OpenUrlCallback = std::function<void(const QUrl &)>;
+    using OpenContainerImageCallback = std::function<void(const QUrl &, const QUrl &)>;
+    using FailedCallback = std::function<void(const QString &)>;
+
+    struct Callbacks {
+        InProgressChangedCallback inProgressChanged;
+        ClearDeletedImageCallback clearDeletedImage;
+        OpenUrlCallback openUrl;
+        OpenContainerImageCallback openContainerImage;
+        FailedCallback failed;
+    };
+
+    ImageDocumentDeletionController(QObject *parent, ImageDocumentState &state,
         ImagePresentationController &presentationController,
-        ImageDeletionController &deletionController);
+        ImageNavigationCandidateProvider candidateProvider,
+        FileOperationProvider fileOperationProvider, Callbacks callbacks);
+    ~ImageDocumentDeletionController();
 
     bool inProgress() const;
     void deleteDisplayedFile(FileDeletionMode mode);
@@ -25,7 +49,8 @@ public:
 private:
     ImageDocumentState &m_state;
     ImagePresentationController &m_presentationController;
-    ImageDeletionController &m_deletionController;
+    Callbacks m_callbacks;
+    std::unique_ptr<ImageDeletionController> m_deletionController;
 };
 }
 

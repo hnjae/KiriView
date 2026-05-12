@@ -3,23 +3,40 @@
 
 #include "imagedocumentdeletioncontroller.h"
 
+#include "imagecallback.h"
 #include "imagedeletioncontroller.h"
 #include "imagedocumentstate.h"
 #include "imagepresentationcontroller.h"
 
+#include <utility>
+
 namespace KiriView {
-ImageDocumentDeletionController::ImageDocumentDeletionController(ImageDocumentState &state,
-    ImagePresentationController &presentationController,
-    ImageDeletionController &deletionController)
+ImageDocumentDeletionController::ImageDocumentDeletionController(QObject *parent,
+    ImageDocumentState &state, ImagePresentationController &presentationController,
+    ImageNavigationCandidateProvider candidateProvider, FileOperationProvider fileOperationProvider,
+    Callbacks callbacks)
     : m_state(state)
     , m_presentationController(presentationController)
-    , m_deletionController(deletionController)
+    , m_callbacks(std::move(callbacks))
 {
+    m_deletionController = std::make_unique<ImageDeletionController>(parent,
+        std::move(candidateProvider), std::move(fileOperationProvider),
+        ImageDeletionController::Callbacks {
+            [this]() { invokeIfSet(m_callbacks.inProgressChanged); },
+            [this]() { invokeIfSet(m_callbacks.clearDeletedImage); },
+            [this](const QUrl &url) { invokeIfSet(m_callbacks.openUrl, url); },
+            [this](const QUrl &imageUrl, const QUrl &containerUrl) {
+                invokeIfSet(m_callbacks.openContainerImage, imageUrl, containerUrl);
+            },
+            [this](const QString &errorString) { invokeIfSet(m_callbacks.failed, errorString); },
+        });
 }
+
+ImageDocumentDeletionController::~ImageDocumentDeletionController() = default;
 
 bool ImageDocumentDeletionController::inProgress() const
 {
-    return m_deletionController.inProgress();
+    return m_deletionController->inProgress();
 }
 
 void ImageDocumentDeletionController::deleteDisplayedFile(FileDeletionMode mode)
@@ -28,8 +45,8 @@ void ImageDocumentDeletionController::deleteDisplayedFile(FileDeletionMode mode)
         return;
     }
 
-    m_deletionController.deleteDisplayedFile(m_state.displayedImageLocation(), mode);
+    m_deletionController->deleteDisplayedFile(m_state.displayedImageLocation(), mode);
 }
 
-void ImageDocumentDeletionController::cancel() { m_deletionController.cancel(); }
+void ImageDocumentDeletionController::cancel() { m_deletionController->cancel(); }
 }

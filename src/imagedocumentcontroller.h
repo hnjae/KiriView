@@ -23,7 +23,6 @@
 #include <memory>
 
 namespace KiriView {
-class ImageDeletionController;
 class ImageDocumentChangeDispatcher;
 class ImageDocumentDeletionController;
 class ImageDocumentEffectExecutor;
@@ -107,7 +106,6 @@ private:
 
     ImageDocumentState m_state;
     std::unique_ptr<ImageDocumentChangeDispatcher> m_changeDispatcher;
-    std::unique_ptr<ImageDeletionController> m_deletionController;
     std::unique_ptr<ImageDocumentDeletionController> m_documentDeletionController;
     std::unique_ptr<ImagePresentationController> m_presentationController;
     std::unique_ptr<ImageOpenController> m_openController;

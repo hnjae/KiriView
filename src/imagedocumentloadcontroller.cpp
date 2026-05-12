@@ -3,7 +3,7 @@
 
 #include "imagedocumentloadcontroller.h"
 
-#include "imagedeletioncontroller.h"
+#include "imagedocumentdeletioncontroller.h"
 #include "imagedocumentnavigationcontroller.h"
 #include "imagedocumentpredecodecontroller.h"
 #include "imagedocumentstate.h"
@@ -15,7 +15,7 @@
 
 namespace KiriView {
 ImageDocumentLoadController::ImageDocumentLoadController(ImageDocumentState &state,
-    ImageDeletionController &deletionController,
+    ImageDocumentDeletionController &deletionController,
     ImageDocumentNavigationController &navigationController,
     ImageDocumentPredecodeController &predecodeController, ImageOpenController &openController,
     ImageSpreadPresentationController &spreadController)
