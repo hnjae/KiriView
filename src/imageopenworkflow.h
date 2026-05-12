@@ -44,10 +44,6 @@ public:
         const ImageLoadSession &session, bool hasImage, const QString &errorString);
     static ImageDocumentEffects finishContainerNavigationLoadWithError(
         ImageDocumentState &state, const QUrl &containerUrl, const QString &errorString);
-    static ImageDocumentEffects finishReplacementLoadWithError(
-        ImageDocumentState &state, const QString &errorString);
-    static ImageDocumentEffects finishInitialLoadWithError(
-        ImageDocumentState &state, const QString &errorString);
     static ImageDocumentEffects finishAnimationLoadWithError(
         ImageDocumentState &state, const QString &errorString);
 };

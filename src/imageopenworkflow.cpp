@@ -121,16 +121,6 @@ public:
         applyStatusTarget(transition.status);
     }
 
-    void applyFinishReplacementLoadWithError(const KiriView::RustImageOpenTransition &transition,
-        const ImageOpenTransitionContext &context)
-    {
-        applyTrackedLoadCompletion(transition);
-        applyErrorStringTarget(transition.error_string, context);
-        applyStatusTarget(transition.status);
-        applySourceUrlTarget(transition.source_url, context);
-        applyEffects(transition.effects, context);
-    }
-
     KiriView::ImageDocumentEffects takeEffects() { return std::move(m_effects); }
 
 private:
@@ -284,33 +274,8 @@ ImageDocumentEffects ImageOpenWorkflow::finishContainerNavigationLoadWithError(
     ImageDocumentState &state, const QUrl &containerUrl, const QString &errorString)
 {
     ImageOpenTransition transition(state);
-    transition.applyFinishLoadWithError(
-        rustImageOpenFinishLoadWithErrorKind(RustImageOpenLoadErrorKindRequest {
-            RustImageOpenLoadErrorKind::ContainerNavigation, false }),
+    transition.applyFinishLoadWithError(rustImageOpenFinishContainerNavigationLoadWithError(),
         ImageOpenTransitionContext { nullptr, &containerUrl, nullptr, &errorString });
-    return transition.takeEffects();
-}
-
-ImageDocumentEffects ImageOpenWorkflow::finishReplacementLoadWithError(
-    ImageDocumentState &state, const QString &errorString)
-{
-    ImageOpenTransition transition(state);
-    const QUrl displayedUrl = state.displayedUrl();
-    transition.applyFinishReplacementLoadWithError(
-        rustImageOpenFinishLoadWithErrorKind(RustImageOpenLoadErrorKindRequest {
-            RustImageOpenLoadErrorKind::Replacement, displayedUrl.isEmpty() }),
-        ImageOpenTransitionContext { nullptr, nullptr, &displayedUrl, &errorString });
-    return transition.takeEffects();
-}
-
-ImageDocumentEffects ImageOpenWorkflow::finishInitialLoadWithError(
-    ImageDocumentState &state, const QString &errorString)
-{
-    ImageOpenTransition transition(state);
-    transition.applyFinishLoadWithError(
-        rustImageOpenFinishLoadWithErrorKind(
-            RustImageOpenLoadErrorKindRequest { RustImageOpenLoadErrorKind::Initial, true }),
-        ImageOpenTransitionContext { nullptr, nullptr, nullptr, &errorString });
     return transition.takeEffects();
 }
 
@@ -318,9 +283,7 @@ ImageDocumentEffects ImageOpenWorkflow::finishAnimationLoadWithError(
     ImageDocumentState &state, const QString &errorString)
 {
     ImageOpenTransition transition(state);
-    transition.applyFinishLoadWithError(
-        rustImageOpenFinishLoadWithErrorKind(
-            RustImageOpenLoadErrorKindRequest { RustImageOpenLoadErrorKind::Animation, true }),
+    transition.applyFinishLoadWithError(rustImageOpenFinishAnimationLoadWithError(),
         ImageOpenTransitionContext { nullptr, nullptr, nullptr, &errorString });
     return transition.takeEffects();
 }

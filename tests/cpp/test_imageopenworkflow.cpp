@@ -158,9 +158,8 @@ void TestImageOpenWorkflow::replacementLoadFailureKeepsDisplayedImage()
     state.setLoading(true);
     state.setStatus(KiriView::ImageDocumentStatus::Ready);
 
-    const KiriView::ImageDocumentEffects effects
-        = KiriView::ImageOpenWorkflow::finishReplacementLoadWithError(
-            state, QStringLiteral("missing"));
+    const KiriView::ImageDocumentEffects effects = KiriView::ImageOpenWorkflow::finishLoadWithError(
+        state, loadSession(replacementUrl, replacementUrl), true, QStringLiteral("missing"));
     QVERIFY(!hasEffect<KiriView::ClearImageEffect>(effects));
     QVERIFY(hasEffect<KiriView::UpdatePageNavigationEffect>(effects));
     QVERIFY(hasEffect<KiriView::ScheduleAdjacentImagePredecodeEffect>(effects));
@@ -295,8 +294,8 @@ void TestImageOpenWorkflow::trackedLoadCompletionsClearLoadingContainerNavigatio
         state.setLoading(true);
         state.setLoadingContainerNavigationUrl(loadingContainerUrl);
 
-        KiriView::ImageOpenWorkflow::finishReplacementLoadWithError(
-            state, QStringLiteral("missing"));
+        KiriView::ImageOpenWorkflow::finishLoadWithError(
+            state, loadSession(imageUrl, imageUrl), true, QStringLiteral("missing"));
 
         QVERIFY(state.loadingContainerNavigationUrl().isEmpty());
     }
@@ -306,7 +305,8 @@ void TestImageOpenWorkflow::trackedLoadCompletionsClearLoadingContainerNavigatio
         state.setLoading(true);
         state.setLoadingContainerNavigationUrl(loadingContainerUrl);
 
-        KiriView::ImageOpenWorkflow::finishInitialLoadWithError(state, QStringLiteral("missing"));
+        KiriView::ImageOpenWorkflow::finishLoadWithError(
+            state, loadSession(imageUrl, imageUrl), false, QStringLiteral("missing"));
 
         QVERIFY(state.loadingContainerNavigationUrl().isEmpty());
     }
