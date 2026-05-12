@@ -274,19 +274,18 @@ std::size_t PredecodeCache::windowPriority(const QUrl &normalizedUrl) const
 
 void PredecodeCache::trimImagesToWindow()
 {
-    rust::Vec<std::size_t> windowPriorities;
-    rust::Vec<std::int64_t> byteCosts;
-    windowPriorities.reserve(m_images.size());
-    byteCosts.reserve(m_images.size());
+    rust::Vec<RustPredecodeCachedImageState> states;
+    states.reserve(m_images.size());
 
     for (const CachedImage &entry : m_images) {
-        windowPriorities.push_back(windowPriority(entry.url));
-        byteCosts.push_back(rustByteSize(entry.byteCost));
+        states.push_back(RustPredecodeCachedImageState {
+            windowPriority(entry.url),
+            rustByteSize(entry.byteCost),
+        });
     }
 
-    const rust::Vec<std::size_t> retainedIndices
-        = rustPredecodeRetainedCachedImageIndices(std::move(windowPriorities), std::move(byteCosts),
-            m_windowUrls.size(), rustByteSize(m_byteBudget));
+    const rust::Vec<std::size_t> retainedIndices = rustPredecodeRetainedCachedImageIndices(
+        std::move(states), m_windowUrls.size(), rustByteSize(m_byteBudget));
 
     std::vector<CachedImage> retainedImages;
     retainedImages.reserve(retainedIndices.size());
