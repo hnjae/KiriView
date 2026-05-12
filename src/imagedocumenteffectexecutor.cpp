@@ -6,7 +6,6 @@
 #include "imagedocumentloadcontroller.h"
 #include "imagedocumentnavigationcontroller.h"
 #include "imagedocumentpredecodecontroller.h"
-#include "imagedocumentstate.h"
 #include "imageopencontroller.h"
 #include "imagepresentationcontroller.h"
 #include "imagespreadpresentationcontroller.h"
@@ -14,14 +13,13 @@
 #include <variant>
 
 namespace KiriView {
-ImageDocumentEffectExecutor::ImageDocumentEffectExecutor(ImageDocumentState &state,
+ImageDocumentEffectExecutor::ImageDocumentEffectExecutor(
     ImageDocumentNavigationController &navigationController,
     ImageDocumentPredecodeController &predecodeController, ImageOpenController &openController,
     ImagePresentationController &presentationController,
     ImageSpreadPresentationController &spreadController,
     ImageDocumentLoadController &loadController)
-    : m_state(state)
-    , m_navigationController(navigationController)
+    : m_navigationController(navigationController)
     , m_predecodeController(predecodeController)
     , m_openController(openController)
     , m_presentationController(presentationController)
@@ -44,14 +42,7 @@ void ImageDocumentEffectExecutor::dispatchAll(ImageDocumentEffects effects)
 
 void ImageDocumentEffectExecutor::dispatchPayload(const ClearImageEffect &)
 {
-    m_predecodeController.clear();
-    m_spreadController.finishTransition();
-    m_spreadController.clearSecondaryPage();
-    m_navigationController.cancelPageNavigationUpdate();
-    m_state.clearDisplayedImageUrls();
-    m_presentationController.clearImage();
-    m_navigationController.clearPageNavigation();
-    m_spreadController.notifyRightToLeftReadingChanged();
+    m_loadController.clearImage();
 }
 
 void ImageDocumentEffectExecutor::dispatchPayload(const ResetZoomEffect &)

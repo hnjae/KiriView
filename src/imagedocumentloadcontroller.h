@@ -13,6 +13,7 @@ class ImageDocumentNavigationController;
 class ImageDocumentPredecodeController;
 class ImageDocumentState;
 class ImageOpenController;
+class ImagePresentationController;
 class ImageSpreadPresentationController;
 
 class ImageDocumentLoadController final
@@ -22,9 +23,11 @@ public:
         ImageDocumentDeletionController &deletionController,
         ImageDocumentNavigationController &navigationController,
         ImageDocumentPredecodeController &predecodeController, ImageOpenController &openController,
+        ImagePresentationController &presentationController,
         ImageSpreadPresentationController &spreadController);
 
     void loadSource(const ImageDocumentSourceLoadRequest &request);
+    void clearImage();
     ImageDocumentEffects clearAfterSuccessfulFileDeletion();
 
 private:
@@ -35,6 +38,7 @@ private:
     ImageDocumentNavigationController &m_navigationController;
     ImageDocumentPredecodeController &m_predecodeController;
     ImageOpenController &m_openController;
+    ImagePresentationController &m_presentationController;
     ImageSpreadPresentationController &m_spreadController;
 };
 }

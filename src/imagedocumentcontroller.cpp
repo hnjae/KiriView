@@ -91,10 +91,10 @@ ImageDocumentController::ImageDocumentController(QObject *parent,
         m_state, *m_spreadController, std::move(changeCallback));
     m_loadController = std::make_unique<ImageDocumentLoadController>(m_state,
         *m_documentDeletionController, *m_navigationController, *m_predecodeController,
-        *m_openController, *m_spreadController);
-    m_effectExecutor = std::make_unique<ImageDocumentEffectExecutor>(m_state,
-        *m_navigationController, *m_predecodeController, *m_openController,
-        *m_presentationController, *m_spreadController, *m_loadController);
+        *m_openController, *m_presentationController, *m_spreadController);
+    m_effectExecutor = std::make_unique<ImageDocumentEffectExecutor>(*m_navigationController,
+        *m_predecodeController, *m_openController, *m_presentationController, *m_spreadController,
+        *m_loadController);
     m_navigator = std::make_unique<ImageDocumentNavigator>(*m_navigationController,
         *m_spreadController, [this](const QUrl &url, bool preserveTwoPageSpreadTransition) {
             m_loadController->loadSource(ImageDocumentSourceLoadRequest::fromPageNavigation(
