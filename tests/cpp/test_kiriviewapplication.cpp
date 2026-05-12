@@ -86,6 +86,7 @@ private Q_SLOTS:
     void shortcutsApiReturnsCurrentShortcuts();
     void shortcutModifierPartitionsTextInputShortcuts();
     void menuPresentationDefaultsToHamburgerMenu();
+    void invalidStoredMenuPresentationFallsBackToHamburgerMenu();
     void menuPresentationPersists();
     void menuPresentationStateUsesGenericStateLocation();
     void showMenubarActionTogglesMenuPresentation();
@@ -230,6 +231,15 @@ void TestKiriViewApplication::menuPresentationDefaultsToHamburgerMenu()
     QCOMPARE(KiriViewState::menuPresentation(),
         static_cast<int>(KiriViewState::EnumMenuPresentation::HamburgerMenu));
     QVERIFY(!stateInterfaceGroup().hasKey(QLatin1String(menuPresentationConfigKey)));
+}
+
+void TestKiriViewApplication::invalidStoredMenuPresentationFallsBackToHamburgerMenu()
+{
+    KiriViewState::setMenuPresentation(99);
+
+    KiriViewApplication application;
+
+    QCOMPARE(application.menuPresentation(), KiriViewApplication::HamburgerMenu);
 }
 
 void TestKiriViewApplication::menuPresentationPersists()
