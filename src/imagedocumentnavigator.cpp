@@ -31,6 +31,16 @@ void ImageDocumentNavigator::openPreviousSinglePage() { openImageAtRelativePageO
 
 void ImageDocumentNavigator::openNextSinglePage() { openImageAtRelativePageOffset(1); }
 
+void ImageDocumentNavigator::openPreviousContainer()
+{
+    openAdjacentContainer(NavigationDirection::Previous);
+}
+
+void ImageDocumentNavigator::openNextContainer()
+{
+    openAdjacentContainer(NavigationDirection::Next);
+}
+
 void ImageDocumentNavigator::openImageAtPage(int pageNumber)
 {
     const std::optional<QUrl> pageUrl = m_navigationController.urlAtPage(pageNumber);
@@ -65,6 +75,16 @@ void ImageDocumentNavigator::openAdjacentImage(NavigationDirection direction)
     }
 
     openImageAtPage(target.pageNumber);
+}
+
+void ImageDocumentNavigator::openAdjacentContainer(NavigationDirection direction)
+{
+    if (direction == NavigationDirection::Previous) {
+        m_navigationController.openPreviousContainer();
+        return;
+    }
+
+    m_navigationController.openNextContainer();
 }
 
 void ImageDocumentNavigator::openImageAtRelativePageOffset(int offset)
