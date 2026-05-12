@@ -27,6 +27,7 @@
 namespace KiriView {
 class ImageDeletionController;
 class ImageDocumentNavigationController;
+class ImageDocumentPageNavigator;
 class ImageOpenController;
 class ImagePresentationController;
 class ImagePredecodeCoordinator;
@@ -119,7 +120,6 @@ private:
     std::optional<PredecodedImage> takePredecodedImage(const QUrl &url) const;
     void notify(ImageDocumentChange change);
     void clearImage();
-    void openImageAtRelativePageOffset(int offset);
 
     ChangeCallback m_changeCallback;
     ImageDocumentState m_state;
@@ -129,6 +129,7 @@ private:
     std::unique_ptr<ImageDocumentNavigationController> m_navigationController;
     std::unique_ptr<ImagePredecodeCoordinator> m_predecodeCoordinator;
     std::unique_ptr<ImageSpreadPresentationController> m_spreadController;
+    std::unique_ptr<ImageDocumentPageNavigator> m_pageNavigator;
 };
 }
 

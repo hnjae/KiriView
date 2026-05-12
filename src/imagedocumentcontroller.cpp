@@ -6,6 +6,7 @@
 #include "imagecallback.h"
 #include "imagedeletioncontroller.h"
 #include "imagedocumentnavigationcontroller.h"
+#include "imagedocumentpagenavigator.h"
 #include "imageopencontroller.h"
 #include "imageopenworkflow.h"
 #include "imagepredecodecoordinator.h"
@@ -82,6 +83,10 @@ ImageDocumentController::ImageDocumentController(QObject *parent,
             [this](int pageNumber) { return m_navigationController->urlAtPage(pageNumber); },
         },
         dependencies.candidateProvider, dependencies.imageDecode);
+    m_pageNavigator = std::make_unique<ImageDocumentPageNavigator>(*m_navigationController,
+        *m_spreadController, [this](const QUrl &url, bool preserveTwoPageSpreadTransition) {
+            setSourceUrlForLoad(url, QUrl(), preserveTwoPageSpreadTransition);
+        });
 }
 
 ImageDocumentController::~ImageDocumentController()
@@ -276,41 +281,16 @@ quint64 ImageDocumentController::imageRevision(DisplayedPageRole role) const
     return m_presentationController->imageRevision();
 }
 
-void ImageDocumentController::openPreviousImage()
+void ImageDocumentController::openPreviousImage() { m_pageNavigator->openPreviousImage(); }
+
+void ImageDocumentController::openNextImage() { m_pageNavigator->openNextImage(); }
+
+void ImageDocumentController::openPreviousSinglePage()
 {
-    const ImageSpreadPageNavigationTarget target
-        = m_spreadController->imageNavigationTarget(NavigationDirection::Previous);
-    if (!target.handledBySpread) {
-        m_navigationController->openPreviousImage();
-        return;
-    }
-
-    if (target.pageNumber <= 0) {
-        return;
-    }
-
-    openImageAtPage(target.pageNumber);
+    m_pageNavigator->openPreviousSinglePage();
 }
 
-void ImageDocumentController::openNextImage()
-{
-    const ImageSpreadPageNavigationTarget target
-        = m_spreadController->imageNavigationTarget(NavigationDirection::Next);
-    if (!target.handledBySpread) {
-        m_navigationController->openNextImage();
-        return;
-    }
-
-    if (target.pageNumber <= 0) {
-        return;
-    }
-
-    openImageAtPage(target.pageNumber);
-}
-
-void ImageDocumentController::openPreviousSinglePage() { openImageAtRelativePageOffset(-1); }
-
-void ImageDocumentController::openNextSinglePage() { openImageAtRelativePageOffset(1); }
+void ImageDocumentController::openNextSinglePage() { m_pageNavigator->openNextSinglePage(); }
 
 void ImageDocumentController::openPreviousContainer()
 {
@@ -330,16 +310,7 @@ void ImageDocumentController::deleteDisplayedFile(FileDeletionMode mode)
 
 void ImageDocumentController::openImageAtPage(int pageNumber)
 {
-    const std::optional<QUrl> pageUrl = m_navigationController->urlAtPage(pageNumber);
-    if (!pageUrl.has_value()) {
-        return;
-    }
-
-    const bool spreadTransition = m_spreadController->shouldBeginTransition(pageNumber);
-    if (spreadTransition) {
-        m_spreadController->beginTransition();
-    }
-    setSourceUrlForLoad(*pageUrl, QUrl(), spreadTransition);
+    m_pageNavigator->openImageAtPage(pageNumber);
 }
 
 void ImageDocumentController::resetZoom() { m_spreadController->resetZoom(); }
@@ -489,16 +460,6 @@ std::optional<PredecodedImage> ImageDocumentController::takePredecodedImage(cons
     }
 
     return m_predecodeCoordinator->tryTake(url);
-}
-
-void ImageDocumentController::openImageAtRelativePageOffset(int offset)
-{
-    const int targetPage = m_spreadController->relativePageNavigationTarget(offset);
-    if (targetPage <= 0) {
-        return;
-    }
-
-    openImageAtPage(targetPage);
 }
 
 void ImageDocumentController::notify(ImageDocumentChange change)
