@@ -311,7 +311,8 @@ ImageDocumentEffects ImageOpenWorkflow::finishContainerNavigationLoadWithError(
     ImageDocumentState &state, const QUrl &containerUrl, const QString &errorString)
 {
     ImageOpenTransition transition(state);
-    transition.applyFinishLoadWithError(rustImageOpenFinishContainerNavigationLoadWithError(),
+    transition.applyFinishLoadWithError(rustImageOpenFinishLoadWithErrorKind(
+                                            RustImageOpenLoadErrorKind::ContainerNavigation, false),
         transitionContextForContainerNavigationError(containerUrl, errorString));
     return transition.takeEffects();
 }
@@ -320,7 +321,8 @@ ImageDocumentEffects ImageOpenWorkflow::finishAnimationLoadWithError(
     ImageDocumentState &state, const QString &errorString)
 {
     ImageOpenTransition transition(state);
-    transition.applyFinishLoadWithError(rustImageOpenFinishAnimationLoadWithError(),
+    transition.applyFinishLoadWithError(
+        rustImageOpenFinishLoadWithErrorKind(RustImageOpenLoadErrorKind::Animation, true),
         transitionContextForAnimationError(errorString));
     return transition.takeEffects();
 }
