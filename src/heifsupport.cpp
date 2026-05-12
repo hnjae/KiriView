@@ -3,9 +3,9 @@
 
 #include "heifsupport.h"
 
+#include "imageanimationpolicy.h"
 #include "imagerendering.h"
 #include "imageviewtext.h"
-#include "kiriview/src/imageanimationpolicy.cxx.h"
 
 #include <KLocalizedString>
 #include <QColorSpace>
@@ -178,6 +178,6 @@ std::optional<QImage> qImageFromHeifImage(const heif_image *heifImage, QString *
 
 int heifFrameDelay(std::uint32_t duration, std::uint32_t timescale)
 {
-    return rustHeifFrameDelay(duration, timescale);
+    return animationFrameDelayFromTimescale(duration, timescale);
 }
 }

@@ -9,7 +9,6 @@ mod byteio;
 mod decodedimageresult;
 mod filedeletionfallback;
 mod heifcontainer;
-mod imageanimationpolicy;
 mod imagecandidaterepository;
 mod imagecontainer;
 mod imageformatregistry;

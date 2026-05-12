@@ -17,6 +17,7 @@ src/heifcontainer.cpp
 src/heifdecoder.cpp
 src/heifsupport.cpp
 src/heiftilesource.cpp
+src/imageanimationpolicy.cpp
 src/imageanimationplayer.cpp
 src/imageasyncdependencies.cpp
 src/imagebytecost.cpp
