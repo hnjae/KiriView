@@ -4,9 +4,12 @@
 #include "image_test_support.h"
 #include "imagecontainer.h"
 #include "imagepredecodecoordinator.h"
+#include "imagepresentationcontroller.h"
+#include "imagerendering.h"
 
 #include <QObject>
 #include <QSize>
+#include <QSizeF>
 #include <QTest>
 #include <QUrl>
 
@@ -38,6 +41,7 @@ class TestImagePredecodeCoordinator : public QObject
 
 private Q_SLOTS:
     void scheduleCachesDisplayedImageAndPredecodesWindow();
+    void scheduleDisplayedImageUsesPresentationSnapshot();
     void archivePredecodeKeepsArchiveDocumentContext();
     void cancelSuppressesPendingDecode();
 };
@@ -80,6 +84,46 @@ void TestImagePredecodeCoordinator::scheduleCachesDisplayedImageAndPredecodesWin
     QTRY_VERIFY(coordinator.tryTake(nextUrl).has_value());
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(2));
     QCOMPARE(dataLoader.backLoad().url, previousUrl);
+}
+
+void TestImagePredecodeCoordinator::scheduleDisplayedImageUsesPresentationSnapshot()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    KiriView::ImagePredecodeCoordinator coordinator
+        = createCoordinator(this, candidateProvider, dataLoader);
+    KiriView::ImagePresentationController presentation(this,
+        []() {
+            return KiriView::ImageDocumentRenderContext {
+                2.0,
+                KiriView::fallbackTextureSizeMax,
+            };
+        },
+        {});
+
+    const QUrl displayedUrl = indexedImageUrl(1);
+    const QUrl nextUrl = indexedImageUrl(2);
+    candidateProvider.setDirectoryImages(imagesDirectoryUrl(),
+        {
+            imageCandidate(displayedUrl),
+            imageCandidate(nextUrl),
+        });
+
+    presentation.setViewportSize(QSizeF(320.0, 240.0));
+    presentation.setPredecodeCacheable(true);
+    presentation.setStaticImage(
+        staticTestImagePayload(testImage(QSize(10, 8)), KiriView::StaticImageDisplayHints { 0.5 }));
+
+    coordinator.scheduleDisplayedImage(
+        KiriView::DisplayedImageLocation::fromUrl(displayedUrl), presentation);
+
+    const std::optional<KiriView::PredecodedImage> displayed = coordinator.tryTake(displayedUrl);
+    QVERIFY(displayed.has_value());
+    QCOMPARE(displayed->staticImage.displayHints.firstDisplayPixelsPerSourcePixel, 0.5);
+
+    QCOMPARE(dataLoader.loadCount(), std::size_t(1));
+    QCOMPARE(dataLoader.frontLoad().url, nextUrl);
+    QCOMPARE(dataLoader.frontLoad().firstDisplay.physicalViewportSize, QSize(640, 480));
 }
 
 void TestImagePredecodeCoordinator::archivePredecodeKeepsArchiveDocumentContext()

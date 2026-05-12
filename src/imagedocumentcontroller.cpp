@@ -15,7 +15,6 @@
 #include "imagespreadmodecontroller.h"
 #include "imagespreadzoomcontroller.h"
 #include "imageviewtext.h"
-#include "predecodecache.h"
 
 #include <QRectF>
 #include <QString>
@@ -619,16 +618,8 @@ void ImageDocumentController::clearAfterSuccessfulFileDeletion()
 
 void ImageDocumentController::scheduleAdjacentImagePredecode()
 {
-    std::optional<StaticImagePayload> staticImage = m_presentationController->staticImage();
-    if (!predecodeDisplayedImageCanSchedule(m_presentationController->hasImage(),
-            m_state.displayedUrl().isEmpty(), staticImage.has_value())) {
-        cancelPredecode();
-        return;
-    }
-
-    m_predecodeCoordinator->schedule(ImagePredecodeCoordinator::Context {
-        m_state.displayedImageLocation(), m_presentationController->isPredecodeCacheable(),
-        std::move(*staticImage), m_presentationController->firstDisplayDecodeContext() });
+    m_predecodeCoordinator->scheduleDisplayedImage(
+        m_state.displayedImageLocation(), *m_presentationController);
 }
 
 void ImageDocumentController::cancelNavigationAndPredecode()

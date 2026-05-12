@@ -22,6 +22,8 @@
 #include <vector>
 
 namespace KiriView {
+class ImagePresentationController;
+
 class ImagePredecodeCoordinator final : public QObject
 {
 public:
@@ -37,6 +39,8 @@ public:
         ImageDecodeDependencies decodeDependencies);
 
     void schedule(Context context);
+    void scheduleDisplayedImage(const DisplayedImageLocation &displayedImageLocation,
+        const ImagePresentationController &presentationController);
     void cancel();
     void clear();
     std::optional<PredecodedImage> tryTake(const QUrl &url) const;
