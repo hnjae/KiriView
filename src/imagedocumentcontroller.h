@@ -34,6 +34,7 @@ class ImageLoader;
 class ImageOpenController;
 class ImagePresentationController;
 class ImagePredecodeCoordinator;
+class ImageSpreadZoomController;
 
 class ImageDocumentController final : public QObject
 {
@@ -153,12 +154,6 @@ private:
     void finishTwoPageSpreadTransition();
     void notifyTwoPageSpreadTransitionChanged();
     void updateSpreadZoomState();
-    void applyZoomToPrimaryPage(ImageZoomMode zoomMode, qreal zoomPercent);
-    void applyStoredSpreadZoomToPrimaryPage();
-    void applySpreadZoomPercentToPages();
-    void applySpreadVisibleItemRects();
-    QRectF primarySpreadPageRect() const;
-    QRectF secondarySpreadPageRect() const;
     QSize spreadImageSize() const;
     bool twoPageModeActive() const;
     bool rightToLeftReadingActive() const;
@@ -168,11 +163,8 @@ private:
     void notifySpreadZoomChanged();
     void notifyRightToLeftReadingChanged();
     void notifyChanges(const std::vector<ImageDocumentChange> &changes);
-    ImageDocumentRenderContext renderContext() const;
-    qreal spreadDevicePixelRatio() const;
 
     ChangeCallback m_changeCallback;
-    RenderContextProvider m_renderContextProvider;
     ImageDocumentState m_state;
     std::unique_ptr<ImageDeletionController> m_deletionController;
     std::unique_ptr<ImagePresentationController> m_presentationController;
@@ -181,9 +173,8 @@ private:
     std::unique_ptr<ImageLoader> m_secondaryImageLoader;
     std::unique_ptr<ImageDocumentNavigationController> m_navigationController;
     std::unique_ptr<ImagePredecodeCoordinator> m_predecodeCoordinator;
-    ImageZoomState m_spreadZoomState;
+    std::unique_ptr<ImageSpreadZoomController> m_spreadZoomController;
     DisplayedImageLocation m_secondaryDisplayedImageLocation;
-    QRectF m_visibleItemRect;
     ImageSpreadPageCache m_spreadPageCache;
     bool m_twoPageModeEnabled = false;
     bool m_rightToLeftReadingEnabled = false;
