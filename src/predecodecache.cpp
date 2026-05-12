@@ -60,18 +60,17 @@ bool PredecodeCache::canCacheImage(const StaticImagePayload &staticImage, qsizet
 bool predecodeDisplayedImageCanSchedule(
     bool hasImage, bool displayedUrlEmpty, bool staticImageAvailable)
 {
-    return rustPredecodeDisplayedImageCanSchedule(
-        hasImage, displayedUrlEmpty, staticImageAvailable);
+    return hasImage && !displayedUrlEmpty && staticImageAvailable;
 }
 
 bool predecodeContextCanSchedule(bool displayedLocationEmpty, bool displayedImageValid)
 {
-    return rustPredecodeContextCanSchedule(displayedLocationEmpty, displayedImageValid);
+    return !displayedLocationEmpty && displayedImageValid;
 }
 
 bool predecodeRequestCanStart(bool urlAvailable, bool activeRequest, bool cached, bool inWindow)
 {
-    return rustPredecodeRequestCanStart(urlAvailable, activeRequest, cached, inWindow);
+    return urlAvailable && !activeRequest && !cached && inWindow;
 }
 
 PredecodeCache::PredecodeCache(qsizetype byteBudget)

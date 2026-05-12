@@ -32,27 +32,6 @@ mod ffi {
             byte_budget: i64,
         ) -> RustPredecodeCacheableByteCost;
 
-        #[cxx_name = "rustPredecodeDisplayedImageCanSchedule"]
-        fn rust_predecode_displayed_image_can_schedule(
-            has_image: bool,
-            displayed_url_empty: bool,
-            static_image_available: bool,
-        ) -> bool;
-
-        #[cxx_name = "rustPredecodeContextCanSchedule"]
-        fn rust_predecode_context_can_schedule(
-            displayed_location_empty: bool,
-            displayed_image_valid: bool,
-        ) -> bool;
-
-        #[cxx_name = "rustPredecodeRequestCanStart"]
-        fn rust_predecode_request_can_start(
-            url_available: bool,
-            active_request: bool,
-            cached: bool,
-            in_window: bool,
-        ) -> bool;
-
         #[cxx_name = "rustPredecodeRetainedCachedImageIndices"]
         fn rust_predecode_retained_cached_image_indices(
             window_priorities: Vec<usize>,
@@ -128,30 +107,6 @@ fn rust_predecode_cacheable_byte_cost(
         cacheable: true,
         byte_cost: static_image_byte_cost,
     }
-}
-
-fn rust_predecode_displayed_image_can_schedule(
-    has_image: bool,
-    displayed_url_empty: bool,
-    static_image_available: bool,
-) -> bool {
-    has_image && !displayed_url_empty && static_image_available
-}
-
-fn rust_predecode_context_can_schedule(
-    displayed_location_empty: bool,
-    displayed_image_valid: bool,
-) -> bool {
-    !displayed_location_empty && displayed_image_valid
-}
-
-fn rust_predecode_request_can_start(
-    url_available: bool,
-    active_request: bool,
-    cached: bool,
-    in_window: bool,
-) -> bool {
-    url_available && !active_request && !cached && in_window
 }
 
 fn rust_predecode_retained_cached_image_indices(
@@ -292,38 +247,6 @@ mod tests {
                 byte_cost: 0,
             }
         );
-    }
-
-    #[test]
-    fn displayed_image_predecode_requires_loaded_static_image_with_url() {
-        assert!(rust_predecode_displayed_image_can_schedule(
-            true, false, true
-        ));
-        assert!(!rust_predecode_displayed_image_can_schedule(
-            false, false, true
-        ));
-        assert!(!rust_predecode_displayed_image_can_schedule(
-            true, true, true
-        ));
-        assert!(!rust_predecode_displayed_image_can_schedule(
-            true, false, false
-        ));
-    }
-
-    #[test]
-    fn predecode_context_requires_location_and_valid_displayed_image() {
-        assert!(rust_predecode_context_can_schedule(false, true));
-        assert!(!rust_predecode_context_can_schedule(true, true));
-        assert!(!rust_predecode_context_can_schedule(false, false));
-    }
-
-    #[test]
-    fn predecode_request_start_requires_available_uncached_window_url_without_active_request() {
-        assert!(rust_predecode_request_can_start(true, false, false, true));
-        assert!(!rust_predecode_request_can_start(false, false, false, true));
-        assert!(!rust_predecode_request_can_start(true, true, false, true));
-        assert!(!rust_predecode_request_can_start(true, false, true, true));
-        assert!(!rust_predecode_request_can_start(true, false, false, false));
     }
 
     #[test]
