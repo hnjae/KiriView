@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-use crate::{archivepath::clean_path, imageformatregistry::archive_root_scheme_uses_kio_fuse};
+use crate::{archiveformat::archive_root_scheme_uses_kio_fuse, archivepath::clean_path};
 
 const KIO_FUSE_MARKER: &str = "/kio-fuse-";
 

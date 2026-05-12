@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 use crate::{
+    archiveformat::{
+        comic_book_archive_marker_for_root_scheme, direct_archive_open_markers_for_root_scheme,
+    },
     archivepath::{
         archive_relative_path_for_url_parts, clean_path, normalized_archive_root_path_for_path,
-    },
-    imageformatregistry::{
-        comic_book_archive_marker_for_root_scheme, direct_archive_open_markers_for_root_scheme,
     },
 };
 
