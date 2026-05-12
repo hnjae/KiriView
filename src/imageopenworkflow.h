@@ -13,17 +13,6 @@
 namespace KiriView {
 class ImageDocumentState;
 
-enum class ImageOpenFailureTarget {
-    ContainerNavigation,
-    Replacement,
-    Initial,
-};
-
-enum class ImageOpenSourceTarget {
-    EmptySource,
-    LoadSource,
-};
-
 struct ImageOpenSourceLoadPlan {
     bool finishSpreadTransition = false;
     bool resetRightToLeftReading = false;
@@ -39,16 +28,15 @@ struct ImageOpenSourceLoadPlan {
 class ImageOpenWorkflow
 {
 public:
-    static ImageOpenSourceTarget sourceTargetForOpen(const ImageDocumentState &state);
     static ImageOpenSourceLoadPlan sourceLoadPlan(bool sourceUrlChanged,
         bool preserveTwoPageSpreadTransition, bool resetRightToLeftReading,
         bool containerNavigationUrlEmpty);
-    static ImageOpenFailureTarget failureTargetForLoadError(
-        const ImageLoadSession &session, bool hasImage);
     static ImageDocumentEffects beginSourceLoad(ImageDocumentState &state, bool hasImage);
     static ImageDocumentEffects finishEmptySourceLoad(ImageDocumentState &state);
     static ImageDocumentEffects finishSuccessfulImageLoad(
         ImageDocumentState &state, const ImageLoadSession &session);
+    static ImageDocumentEffects finishLoadWithError(ImageDocumentState &state,
+        const ImageLoadSession &session, bool hasImage, const QString &errorString);
     static ImageDocumentEffects finishContainerNavigationLoadWithError(
         ImageDocumentState &state, const QUrl &containerUrl, const QString &errorString);
     static ImageDocumentEffects finishReplacementLoadWithError(

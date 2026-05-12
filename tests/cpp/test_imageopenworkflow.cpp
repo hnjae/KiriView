@@ -52,27 +52,15 @@ class TestImageOpenWorkflow : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
-    void sourceTargetRoutesEmptyAndLoadableSources();
     void sourceLoadPlanRoutesUnchangedAndReplacementLoads();
     void firstImageLoadSuccessTransitionsToReady();
     void directArchiveImageLoadSuccessDisablesContainerNavigation();
     void replacementLoadFailureKeepsDisplayedImage();
     void emptyContainerFailureSelectsFailedContainer();
     void animationFailureClearsImageAndResetsZoom();
-    void loadFailureTargetRoutesContainerNavigationReplacementAndInitialLoads();
+    void routedLoadFailureAppliesErrorTransitions();
     void trackedLoadCompletionsClearLoadingContainerNavigationUrl();
 };
-
-void TestImageOpenWorkflow::sourceTargetRoutesEmptyAndLoadableSources()
-{
-    KiriView::ImageDocumentState state;
-    QCOMPARE(static_cast<int>(KiriView::ImageOpenWorkflow::sourceTargetForOpen(state)),
-        static_cast<int>(KiriView::ImageOpenSourceTarget::EmptySource));
-
-    state.setSourceUrl(localUrl(QStringLiteral("/images/page.png")));
-    QCOMPARE(static_cast<int>(KiriView::ImageOpenWorkflow::sourceTargetForOpen(state)),
-        static_cast<int>(KiriView::ImageOpenSourceTarget::LoadSource));
-}
 
 void TestImageOpenWorkflow::sourceLoadPlanRoutesUnchangedAndReplacementLoads()
 {
@@ -216,7 +204,7 @@ void TestImageOpenWorkflow::animationFailureClearsImageAndResetsZoom()
     QCOMPARE(state.status(), KiriView::ImageDocumentStatus::Error);
 }
 
-void TestImageOpenWorkflow::loadFailureTargetRoutesContainerNavigationReplacementAndInitialLoads()
+void TestImageOpenWorkflow::routedLoadFailureAppliesErrorTransitions()
 {
     const QUrl imageUrl = localUrl(QStringLiteral("/images/page.png"));
     const QUrl containerUrl = localUrl(QStringLiteral("/books/book.cbz"));
@@ -224,18 +212,45 @@ void TestImageOpenWorkflow::loadFailureTargetRoutesContainerNavigationReplacemen
         containerUrl, imageUrl, KiriView::ArchiveDocumentLocation::none(), containerUrl);
     const KiriView::ImageLoadSession imageSession = loadSession(imageUrl, imageUrl);
 
-    QCOMPARE(static_cast<int>(KiriView::ImageOpenWorkflow::failureTargetForLoadError(
-                 containerNavigationSession, true)),
-        static_cast<int>(KiriView::ImageOpenFailureTarget::ContainerNavigation));
-    QCOMPARE(static_cast<int>(KiriView::ImageOpenWorkflow::failureTargetForLoadError(
-                 containerNavigationSession, false)),
-        static_cast<int>(KiriView::ImageOpenFailureTarget::ContainerNavigation));
-    QCOMPARE(static_cast<int>(
-                 KiriView::ImageOpenWorkflow::failureTargetForLoadError(imageSession, true)),
-        static_cast<int>(KiriView::ImageOpenFailureTarget::Replacement));
-    QCOMPARE(static_cast<int>(
-                 KiriView::ImageOpenWorkflow::failureTargetForLoadError(imageSession, false)),
-        static_cast<int>(KiriView::ImageOpenFailureTarget::Initial));
+    {
+        KiriView::ImageDocumentState state;
+        state.setLoading(true);
+        const KiriView::ImageDocumentEffects effects
+            = KiriView::ImageOpenWorkflow::finishLoadWithError(
+                state, containerNavigationSession, true, QStringLiteral("empty"));
+        QVERIFY(hasEffect<KiriView::ClearImageEffect>(effects));
+        QVERIFY(hasEffect<KiriView::PrepareFailedContainerEffect>(effects));
+        QCOMPARE(state.sourceUrl(), containerUrl);
+        QCOMPARE(state.containerNavigationUrl(), containerUrl);
+        QCOMPARE(state.status(), KiriView::ImageDocumentStatus::Error);
+    }
+
+    {
+        KiriView::ImageDocumentState state;
+        state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromUrl(imageUrl));
+        state.setSourceUrl(localUrl(QStringLiteral("/images/missing.png")));
+        state.setLoading(true);
+        state.setStatus(KiriView::ImageDocumentStatus::Ready);
+        const KiriView::ImageDocumentEffects effects
+            = KiriView::ImageOpenWorkflow::finishLoadWithError(
+                state, imageSession, true, QStringLiteral("missing"));
+        QVERIFY(!hasEffect<KiriView::ClearImageEffect>(effects));
+        QVERIFY(hasEffect<KiriView::UpdatePageNavigationEffect>(effects));
+        QCOMPARE(state.sourceUrl(), imageUrl);
+        QCOMPARE(state.status(), KiriView::ImageDocumentStatus::Ready);
+    }
+
+    {
+        KiriView::ImageDocumentState state;
+        state.setLoading(true);
+        const KiriView::ImageDocumentEffects effects
+            = KiriView::ImageOpenWorkflow::finishLoadWithError(
+                state, imageSession, false, QStringLiteral("missing"));
+        QVERIFY(hasEffect<KiriView::ClearImageEffect>(effects));
+        QCOMPARE(state.sourceUrl(), QUrl());
+        QCOMPARE(state.containerNavigationUrl(), QUrl());
+        QCOMPARE(state.status(), KiriView::ImageDocumentStatus::Error);
+    }
 }
 
 void TestImageOpenWorkflow::trackedLoadCompletionsClearLoadingContainerNavigationUrl()

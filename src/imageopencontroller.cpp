@@ -79,12 +79,9 @@ void ImageOpenController::open()
     cancel();
     m_state.setErrorString(QString());
 
-    switch (ImageOpenWorkflow::sourceTargetForOpen(m_state)) {
-    case ImageOpenSourceTarget::EmptySource:
+    if (m_state.sourceUrl().isEmpty()) {
         finishEmptySourceLoad();
         return;
-    case ImageOpenSourceTarget::LoadSource:
-        break;
     }
 
     beginSourceLoad();
@@ -209,33 +206,9 @@ bool ImageOpenController::finishAnimationImageLoad(
 void ImageOpenController::finishLoadWithError(
     const ImageLoadSession &session, ImageLoadError error, const QString &errorString)
 {
-    const QUrl containerNavigationUrl = session.request.containerNavigationUrl();
     const QString message = loadErrorMessage(error, errorString);
-
-    switch (ImageOpenWorkflow::failureTargetForLoadError(
-        session, m_presentationController.hasImage())) {
-    case ImageOpenFailureTarget::ContainerNavigation:
-        finishContainerNavigationLoadWithError(containerNavigationUrl, message);
-        return;
-    case ImageOpenFailureTarget::Replacement:
-        finishReplacementLoadWithError(message);
-        return;
-    case ImageOpenFailureTarget::Initial:
-        finishInitialLoadWithError(message);
-        return;
-    }
-
-    finishInitialLoadWithError(message);
-}
-
-void ImageOpenController::finishReplacementLoadWithError(const QString &errorString)
-{
-    reportEffects(ImageOpenWorkflow::finishReplacementLoadWithError(m_state, errorString));
-}
-
-void ImageOpenController::finishInitialLoadWithError(const QString &errorString)
-{
-    reportEffects(ImageOpenWorkflow::finishInitialLoadWithError(m_state, errorString));
+    reportEffects(ImageOpenWorkflow::finishLoadWithError(
+        m_state, session, m_presentationController.hasImage(), message));
 }
 
 void ImageOpenController::finishStaticImageLoad(

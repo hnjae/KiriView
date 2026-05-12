@@ -63,8 +63,6 @@ private:
         const ImageLoadSession &session, const QImage &firstFrame, std::function<void()> start);
     void finishLoadWithError(
         const ImageLoadSession &session, ImageLoadError error, const QString &errorString);
-    void finishReplacementLoadWithError(const QString &errorString);
-    void finishInitialLoadWithError(const QString &errorString);
     void finishStaticImageLoad(
         const ImageLoadSession &session, StaticImagePayload staticImage, bool predecodeCacheable);
     void finishLoadSuccessfully(

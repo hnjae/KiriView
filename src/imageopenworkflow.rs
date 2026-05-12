@@ -44,19 +44,6 @@ mod ffi {
     }
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-    enum RustImageOpenSourceTarget {
-        EmptySource = 0,
-        LoadSource = 1,
-    }
-
-    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-    enum RustImageOpenFailureTarget {
-        ContainerNavigation = 0,
-        Replacement = 1,
-        Initial = 2,
-    }
-
-    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     struct RustImageOpenSourceLoadPlan {
         finish_spread_transition: bool,
         reset_right_to_left_reading: bool,
@@ -91,9 +78,6 @@ mod ffi {
     }
 
     extern "Rust" {
-        #[cxx_name = "rustImageOpenSourceTarget"]
-        fn rust_image_open_source_target(source_url_empty: bool) -> RustImageOpenSourceTarget;
-
         #[cxx_name = "rustImageOpenSourceLoadPlan"]
         fn rust_image_open_source_load_plan(
             source_url_changed: bool,
@@ -130,28 +114,20 @@ mod ffi {
         #[cxx_name = "rustImageOpenFinishAnimationLoadWithError"]
         fn rust_image_open_finish_animation_load_with_error() -> RustImageOpenTransition;
 
-        #[cxx_name = "rustImageOpenFailureTarget"]
-        fn rust_image_open_failure_target(
+        #[cxx_name = "rustImageOpenFinishLoadWithError"]
+        fn rust_image_open_finish_load_with_error(
             container_navigation_url_empty: bool,
             has_image: bool,
-        ) -> RustImageOpenFailureTarget;
+            displayed_url_empty: bool,
+        ) -> RustImageOpenTransition;
     }
 }
 
 use ffi::{
     RustImageOpenBoolTarget, RustImageOpenDisplayedLocationTarget, RustImageOpenEffects,
-    RustImageOpenErrorStringTarget, RustImageOpenFailureTarget, RustImageOpenSourceLoadPlan,
-    RustImageOpenSourceTarget, RustImageOpenStatusTarget, RustImageOpenTransition,
-    RustImageOpenUrlTarget,
+    RustImageOpenErrorStringTarget, RustImageOpenSourceLoadPlan, RustImageOpenStatusTarget,
+    RustImageOpenTransition, RustImageOpenUrlTarget,
 };
-
-fn rust_image_open_source_target(source_url_empty: bool) -> RustImageOpenSourceTarget {
-    if source_url_empty {
-        RustImageOpenSourceTarget::EmptySource
-    } else {
-        RustImageOpenSourceTarget::LoadSource
-    }
-}
 
 fn rust_image_open_source_load_plan(
     source_url_changed: bool,
@@ -256,18 +232,19 @@ fn rust_image_open_finish_animation_load_with_error() -> RustImageOpenTransition
     cleared_load_error_transition(true)
 }
 
-fn rust_image_open_failure_target(
+fn rust_image_open_finish_load_with_error(
     container_navigation_url_empty: bool,
     has_image: bool,
-) -> RustImageOpenFailureTarget {
+    displayed_url_empty: bool,
+) -> RustImageOpenTransition {
     if !container_navigation_url_empty {
-        return RustImageOpenFailureTarget::ContainerNavigation;
+        return rust_image_open_finish_container_navigation_load_with_error();
     }
     if has_image {
-        return RustImageOpenFailureTarget::Replacement;
+        return rust_image_open_finish_replacement_load_with_error(displayed_url_empty);
     }
 
-    RustImageOpenFailureTarget::Initial
+    rust_image_open_finish_initial_load_with_error()
 }
 
 fn cleared_load_error_transition(reset_zoom: bool) -> RustImageOpenTransition {
@@ -341,18 +318,6 @@ mod tests {
         assert_eq!(transition.status, RustImageOpenStatusTarget::Loading);
         assert!(transition.effects.clear_image);
         assert!(transition.effects.reset_zoom);
-    }
-
-    #[test]
-    fn source_target_distinguishes_empty_source_from_loadable_source() {
-        assert_eq!(
-            rust_image_open_source_target(true),
-            RustImageOpenSourceTarget::EmptySource
-        );
-        assert_eq!(
-            rust_image_open_source_target(false),
-            RustImageOpenSourceTarget::LoadSource
-        );
     }
 
     #[test]
@@ -470,22 +435,26 @@ mod tests {
     }
 
     #[test]
-    fn load_failure_target_prefers_container_navigation_then_replacement_then_initial() {
+    fn routed_load_failure_returns_the_selected_error_transition() {
+        let container = rust_image_open_finish_load_with_error(false, true, false);
+        assert_eq!(container.source_url, RustImageOpenUrlTarget::Container);
+        assert!(container.effects.clear_image);
+        assert!(container.effects.prepare_failed_container);
+        assert_eq!(container.status, RustImageOpenStatusTarget::Error);
+
+        let replacement = rust_image_open_finish_load_with_error(true, true, false);
+        assert_eq!(replacement.source_url, RustImageOpenUrlTarget::Displayed);
+        assert!(replacement.effects.update_page_navigation);
+        assert!(replacement.effects.schedule_adjacent_image_predecode);
+        assert_eq!(replacement.status, RustImageOpenStatusTarget::Ready);
+
+        let initial = rust_image_open_finish_load_with_error(true, false, true);
+        assert_eq!(initial.source_url, RustImageOpenUrlTarget::Unchanged);
+        assert!(initial.effects.clear_image);
         assert_eq!(
-            rust_image_open_failure_target(false, true),
-            RustImageOpenFailureTarget::ContainerNavigation
+            initial.container_navigation_url,
+            RustImageOpenUrlTarget::Empty
         );
-        assert_eq!(
-            rust_image_open_failure_target(false, false),
-            RustImageOpenFailureTarget::ContainerNavigation
-        );
-        assert_eq!(
-            rust_image_open_failure_target(true, true),
-            RustImageOpenFailureTarget::Replacement
-        );
-        assert_eq!(
-            rust_image_open_failure_target(true, false),
-            RustImageOpenFailureTarget::Initial
-        );
+        assert_eq!(initial.status, RustImageOpenStatusTarget::Error);
     }
 }
