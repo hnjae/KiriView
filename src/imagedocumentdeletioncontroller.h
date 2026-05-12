@@ -6,9 +6,9 @@
 
 #include "filedeletion.h"
 #include "imagecandidaterepository.h"
+#include "imagedocumenteffects.h"
 
 #include <QString>
-#include <QUrl>
 #include <functional>
 #include <memory>
 
@@ -24,15 +24,13 @@ class ImageDocumentDeletionController final
 public:
     using InProgressChangedCallback = std::function<void()>;
     using ClearDeletedImageCallback = std::function<void()>;
-    using OpenUrlCallback = std::function<void(const QUrl &)>;
-    using OpenContainerImageCallback = std::function<void(const QUrl &, const QUrl &)>;
+    using EffectCallback = std::function<void(ImageDocumentEffect)>;
     using FailedCallback = std::function<void(const QString &)>;
 
     struct Callbacks {
         InProgressChangedCallback inProgressChanged;
         ClearDeletedImageCallback clearDeletedImage;
-        OpenUrlCallback openUrl;
-        OpenContainerImageCallback openContainerImage;
+        EffectCallback effect;
         FailedCallback failed;
     };
 
@@ -47,6 +45,8 @@ public:
     void cancel();
 
 private:
+    void report(ImageDocumentEffect effect);
+
     ImageDocumentState &m_state;
     ImagePresentationController &m_presentationController;
     Callbacks m_callbacks;

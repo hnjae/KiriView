@@ -52,13 +52,7 @@ ImageDocumentController::ImageDocumentController(QObject *parent,
             [this]() {
                 m_effectExecutor->dispatchAll(m_loadController->clearAfterSuccessfulFileDeletion());
             },
-            [this](const QUrl &url) {
-                m_loadController->loadSource(ImageDocumentSourceLoadRequest::fromUrl(url));
-            },
-            [this](const QUrl &imageUrl, const QUrl &containerUrl) {
-                m_loadController->loadSource(
-                    ImageDocumentSourceLoadRequest::fromContainerImage(imageUrl, containerUrl));
-            },
+            [this](ImageDocumentEffect effect) { dispatchEffect(std::move(effect)); },
             std::move(fileDeletionFailedCallback),
         });
     m_openController

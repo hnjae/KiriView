@@ -24,9 +24,9 @@ ImageDocumentDeletionController::ImageDocumentDeletionController(QObject *parent
         ImageDeletionController::Callbacks {
             [this]() { invokeIfSet(m_callbacks.inProgressChanged); },
             [this]() { invokeIfSet(m_callbacks.clearDeletedImage); },
-            [this](const QUrl &url) { invokeIfSet(m_callbacks.openUrl, url); },
+            [this](const QUrl &url) { report(ImageDocumentEffect::openUrl(url)); },
             [this](const QUrl &imageUrl, const QUrl &containerUrl) {
-                invokeIfSet(m_callbacks.openContainerImage, imageUrl, containerUrl);
+                report(ImageDocumentEffect::containerImageSelected(imageUrl, containerUrl));
             },
             [this](const QString &errorString) { invokeIfSet(m_callbacks.failed, errorString); },
         });
@@ -49,4 +49,9 @@ void ImageDocumentDeletionController::deleteDisplayedFile(FileDeletionMode mode)
 }
 
 void ImageDocumentDeletionController::cancel() { m_deletionController->cancel(); }
+
+void ImageDocumentDeletionController::report(ImageDocumentEffect effect)
+{
+    invokeIfSet(m_callbacks.effect, std::move(effect));
+}
 }
