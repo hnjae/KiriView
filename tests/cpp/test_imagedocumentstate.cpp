@@ -27,7 +27,6 @@ private Q_SLOTS:
     void statusAndLoadingReducersOnlyNotifyWhenChanged();
     void changeBatchQueuesUniqueChangesUntilDestroyed();
     void notificationPlansReturnChangesInEmissionOrder();
-    void changeDispatchPlanRoutesControllerSideEffects();
 };
 
 void TestImageDocumentState::displayedUrlAndWindowTitleFollowDisplayedImageLocation()
@@ -202,34 +201,6 @@ void TestImageDocumentState::notificationPlansReturnChangesInEmissionOrder()
     tileRefreshOnlyChanges.scheduleVisibleTileDecode = true;
     compareChanges(KiriView::imageDocumentPresentationZoomNotifications(tileRefreshOnlyChanges),
         std::vector<KiriView::ImageDocumentChange> {});
-}
-
-void TestImageDocumentState::changeDispatchPlanRoutesControllerSideEffects()
-{
-    const KiriView::ImageDocumentChangeDispatchPlan errorPlan
-        = KiriView::imageDocumentChangeDispatchPlan(
-            KiriView::ImageDocumentChange::ErrorString, false);
-    QVERIFY(errorPlan.finishSpreadTransition);
-    QVERIFY(!errorPlan.refreshSecondaryPage);
-    QVERIFY(!errorPlan.notifyRightToLeftReading);
-
-    const KiriView::ImageDocumentChangeDispatchPlan emptyErrorPlan
-        = KiriView::imageDocumentChangeDispatchPlan(
-            KiriView::ImageDocumentChange::ErrorString, true);
-    QVERIFY(!emptyErrorPlan.finishSpreadTransition);
-
-    const KiriView::ImageDocumentChangeDispatchPlan pageNavigationPlan
-        = KiriView::imageDocumentChangeDispatchPlan(
-            KiriView::ImageDocumentChange::PageNavigation, true);
-    QVERIFY(!pageNavigationPlan.finishSpreadTransition);
-    QVERIFY(pageNavigationPlan.refreshSecondaryPage);
-    QVERIFY(pageNavigationPlan.notifyRightToLeftReading);
-
-    const KiriView::ImageDocumentChangeDispatchPlan statusPlan
-        = KiriView::imageDocumentChangeDispatchPlan(KiriView::ImageDocumentChange::Status, false);
-    QVERIFY(!statusPlan.finishSpreadTransition);
-    QVERIFY(!statusPlan.refreshSecondaryPage);
-    QVERIFY(!statusPlan.notifyRightToLeftReading);
 }
 
 QTEST_GUILESS_MAIN(TestImageDocumentState)

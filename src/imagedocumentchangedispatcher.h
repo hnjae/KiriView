@@ -12,6 +12,12 @@ namespace KiriView {
 class ImageDocumentState;
 class ImageSpreadPresentationController;
 
+struct ImageDocumentChangeDispatchPlan {
+    bool finishSpreadTransition = false;
+    bool refreshSecondaryPage = false;
+    bool notifyRightToLeftReading = false;
+};
+
 class ImageDocumentChangeDispatcher final
 {
 public:
@@ -27,6 +33,9 @@ private:
     ImageSpreadPresentationController &m_spreadController;
     ChangeCallback m_changeCallback;
 };
+
+ImageDocumentChangeDispatchPlan imageDocumentChangeDispatchPlan(
+    ImageDocumentChange change, bool errorStringEmpty);
 }
 
 #endif

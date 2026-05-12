@@ -10,6 +10,16 @@
 #include <utility>
 
 namespace KiriView {
+ImageDocumentChangeDispatchPlan imageDocumentChangeDispatchPlan(
+    ImageDocumentChange change, bool errorStringEmpty)
+{
+    return ImageDocumentChangeDispatchPlan {
+        change == ImageDocumentChange::ErrorString && !errorStringEmpty,
+        change == ImageDocumentChange::PageNavigation,
+        change == ImageDocumentChange::PageNavigation,
+    };
+}
+
 ImageDocumentChangeDispatcher::ImageDocumentChangeDispatcher(ImageDocumentState &state,
     ImageSpreadPresentationController &spreadController,
     ImageDocumentChangeDispatcher::ChangeCallback changeCallback)
