@@ -33,6 +33,7 @@ class ImageOpenController;
 class ImagePresentationController;
 class ImagePredecodeCoordinator;
 class ImageSecondaryPageController;
+class ImageSpreadModeController;
 class ImageSpreadZoomController;
 enum class ImageSecondaryPageLoadResult;
 
@@ -155,11 +156,9 @@ private:
     std::unique_ptr<ImageOpenController> m_openController;
     std::unique_ptr<ImageDocumentNavigationController> m_navigationController;
     std::unique_ptr<ImagePredecodeCoordinator> m_predecodeCoordinator;
+    std::unique_ptr<ImageSpreadModeController> m_spreadModeController;
     std::unique_ptr<ImageSpreadZoomController> m_spreadZoomController;
     ImageSpreadPageCache m_spreadPageCache;
-    bool m_twoPageModeEnabled = false;
-    bool m_rightToLeftReadingEnabled = false;
-    bool m_twoPageSpreadTransitionInProgress = false;
 };
 }
 

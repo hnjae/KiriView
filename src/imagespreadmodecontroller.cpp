@@ -1,0 +1,106 @@
+// SPDX-FileCopyrightText: 2026 KIM Hyunjae
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+#include "imagespreadmodecontroller.h"
+
+#include <utility>
+
+namespace KiriView {
+ImageSpreadModeController::ImageSpreadModeController(AvailabilityProvider availabilityProvider)
+    : m_availabilityProvider(std::move(availabilityProvider))
+{
+}
+
+bool ImageSpreadModeController::twoPageModeEnabled() const { return m_twoPageModeEnabled; }
+
+ImageSpreadTwoPageModeChange ImageSpreadModeController::setTwoPageModeEnabled(
+    bool enabled, bool secondaryPageVisible)
+{
+    ImageSpreadTwoPageModeChange change
+        = imageSpreadTwoPageModeChange(m_twoPageModeEnabled, enabled, secondaryPageVisible);
+    if (change.changed) {
+        m_twoPageModeEnabled = enabled;
+    }
+
+    return change;
+}
+
+bool ImageSpreadModeController::twoPageModeAvailable() const
+{
+    const ImageSpreadModeAvailability currentAvailability = availability();
+    return comicArchiveReadingControlsAvailable(
+        currentAvailability.hasImage, currentAvailability.displayedImageLocation);
+}
+
+bool ImageSpreadModeController::twoPageModeActive() const
+{
+    return m_twoPageModeEnabled && twoPageModeAvailable();
+}
+
+bool ImageSpreadModeController::rightToLeftReadingEnabled() const
+{
+    return m_rightToLeftReadingEnabled;
+}
+
+bool ImageSpreadModeController::setRightToLeftReadingEnabled(bool enabled)
+{
+    if (m_rightToLeftReadingEnabled == enabled) {
+        return false;
+    }
+
+    m_rightToLeftReadingEnabled = enabled;
+    return true;
+}
+
+bool ImageSpreadModeController::rightToLeftReadingAvailable() const
+{
+    const ImageSpreadModeAvailability currentAvailability = availability();
+    return comicArchiveReadingControlsAvailable(
+        currentAvailability.hasImage, currentAvailability.displayedImageLocation);
+}
+
+bool ImageSpreadModeController::rightToLeftReadingActive() const
+{
+    return m_rightToLeftReadingEnabled && rightToLeftReadingAvailable();
+}
+
+bool ImageSpreadModeController::shouldResetRightToLeftReadingForLoad(
+    const ArchiveDocumentLocation &displayedArchiveDocument, const QUrl &sourceUrl,
+    const QUrl &containerNavigationUrl) const
+{
+    return KiriView::shouldResetRightToLeftReadingForLoad(
+        m_rightToLeftReadingEnabled, displayedArchiveDocument, sourceUrl, containerNavigationUrl);
+}
+
+void ImageSpreadModeController::resetRightToLeftReading() { m_rightToLeftReadingEnabled = false; }
+
+bool ImageSpreadModeController::spreadTransitionInProgress() const
+{
+    return m_spreadTransitionInProgress;
+}
+
+bool ImageSpreadModeController::beginSpreadTransition()
+{
+    if (m_spreadTransitionInProgress) {
+        return false;
+    }
+
+    m_spreadTransitionInProgress = true;
+    return true;
+}
+
+bool ImageSpreadModeController::finishSpreadTransition()
+{
+    if (!m_spreadTransitionInProgress) {
+        return false;
+    }
+
+    m_spreadTransitionInProgress = false;
+    return true;
+}
+
+ImageSpreadModeAvailability ImageSpreadModeController::availability() const
+{
+    return m_availabilityProvider ? m_availabilityProvider() : ImageSpreadModeAvailability {};
+}
+}

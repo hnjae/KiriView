@@ -4,7 +4,6 @@
 #include "imagedocumentcontroller.h"
 
 #include "imagecallback.h"
-#include "imagecontainer.h"
 #include "imagedeletioncontroller.h"
 #include "imagedocumentnavigationcontroller.h"
 #include "imageopencontroller.h"
@@ -13,6 +12,7 @@
 #include "imagepresentationcontroller.h"
 #include "imagesecondarypagecontroller.h"
 #include "imagespreadgeometry.h"
+#include "imagespreadmodecontroller.h"
 #include "imagespreadzoomcontroller.h"
 #include "imageviewtext.h"
 #include "predecodecache.h"
@@ -74,6 +74,10 @@ ImageDocumentController::ImageDocumentController(QObject *parent,
             [this](const QUrl &url) { return takePredecodedImage(url); },
         },
         dependencies.candidateProvider, dependencies.imageDecode);
+    m_spreadModeController = std::make_unique<ImageSpreadModeController>([this]() {
+        return ImageSpreadModeAvailability { m_presentationController->hasImage(),
+            m_state.displayedImageLocation() };
+    });
     m_spreadZoomController
         = std::make_unique<ImageSpreadZoomController>(std::move(spreadRenderContextProvider),
             *m_presentationController, m_secondaryPageController->presentationController());
@@ -117,7 +121,7 @@ void ImageDocumentController::setSourceUrl(const QUrl &sourceUrl)
 
 ImageDocumentStatus ImageDocumentController::status() const
 {
-    if (m_twoPageSpreadTransitionInProgress) {
+    if (m_spreadModeController->spreadTransitionInProgress()) {
         return ImageDocumentStatus::Loading;
     }
 
@@ -126,7 +130,7 @@ ImageDocumentStatus ImageDocumentController::status() const
 
 bool ImageDocumentController::loading() const
 {
-    return m_twoPageSpreadTransitionInProgress || m_state.loading();
+    return m_spreadModeController->spreadTransitionInProgress() || m_state.loading();
 }
 
 QString ImageDocumentController::errorString() const { return m_state.errorString(); }
@@ -290,12 +294,15 @@ bool ImageDocumentController::fileDeletionInProgress() const
     return m_deletionController->inProgress();
 }
 
-bool ImageDocumentController::twoPageModeEnabled() const { return m_twoPageModeEnabled; }
+bool ImageDocumentController::twoPageModeEnabled() const
+{
+    return m_spreadModeController->twoPageModeEnabled();
+}
 
 void ImageDocumentController::setTwoPageModeEnabled(bool enabled)
 {
     const ImageSpreadTwoPageModeChange change
-        = imageSpreadTwoPageModeChange(m_twoPageModeEnabled, enabled, secondaryPageVisible());
+        = m_spreadModeController->setTwoPageModeEnabled(enabled, secondaryPageVisible());
     if (!change.changed) {
         return;
     }
@@ -307,7 +314,6 @@ void ImageDocumentController::setTwoPageModeEnabled(bool enabled)
         previousZoomPercent = zoomPercent();
     }
 
-    m_twoPageModeEnabled = enabled;
     if (change.resetSpreadZoom) {
         m_spreadZoomController->clearZoomState();
     }
@@ -330,22 +336,20 @@ void ImageDocumentController::setTwoPageModeEnabled(bool enabled)
 
 bool ImageDocumentController::twoPageModeAvailable() const
 {
-    return comicArchiveReadingControlsAvailable(
-        m_presentationController->hasImage(), m_state.displayedImageLocation());
+    return m_spreadModeController->twoPageModeAvailable();
 }
 
 bool ImageDocumentController::rightToLeftReadingEnabled() const
 {
-    return m_rightToLeftReadingEnabled;
+    return m_spreadModeController->rightToLeftReadingEnabled();
 }
 
 void ImageDocumentController::setRightToLeftReadingEnabled(bool enabled)
 {
-    if (m_rightToLeftReadingEnabled == enabled) {
+    if (!m_spreadModeController->setRightToLeftReadingEnabled(enabled)) {
         return;
     }
 
-    m_rightToLeftReadingEnabled = enabled;
     if (secondaryPageVisible()) {
         m_spreadZoomController->applyVisibleItemRects(rightToLeftReadingActive());
     }
@@ -354,8 +358,7 @@ void ImageDocumentController::setRightToLeftReadingEnabled(bool enabled)
 
 bool ImageDocumentController::rightToLeftReadingAvailable() const
 {
-    return comicArchiveReadingControlsAvailable(
-        m_presentationController->hasImage(), m_state.displayedImageLocation());
+    return m_spreadModeController->rightToLeftReadingAvailable();
 }
 
 bool ImageDocumentController::secondaryPageVisible() const
@@ -366,7 +369,7 @@ bool ImageDocumentController::secondaryPageVisible() const
 std::shared_ptr<DisplayedImageSurface> ImageDocumentController::imageSurface(
     DisplayedPageRole role) const
 {
-    if (m_twoPageSpreadTransitionInProgress) {
+    if (m_spreadModeController->spreadTransitionInProgress()) {
         return nullptr;
     }
 
@@ -381,7 +384,7 @@ const QImage &ImageDocumentController::image() const { return m_presentationCont
 
 quint64 ImageDocumentController::imageRevision(DisplayedPageRole role) const
 {
-    if (m_twoPageSpreadTransitionInProgress) {
+    if (m_spreadModeController->spreadTransitionInProgress()) {
         return 0;
     }
 
@@ -561,7 +564,7 @@ void ImageDocumentController::setSourceUrlForLoad(
 
     const bool sourceUrlChanged = m_state.sourceUrl() != sourceUrl;
     const bool resetRightToLeftReading
-        = KiriView::shouldResetRightToLeftReadingForLoad(m_rightToLeftReadingEnabled,
+        = m_spreadModeController->shouldResetRightToLeftReadingForLoad(
             m_state.displayedArchiveDocument(), sourceUrl, containerNavigationUrl);
     const ImageOpenSourceLoadPlan plan = ImageOpenWorkflow::sourceLoadPlan(sourceUrlChanged,
         preserveTwoPageSpreadTransition, resetRightToLeftReading, containerNavigationUrl.isEmpty());
@@ -573,9 +576,9 @@ void ImageDocumentController::setSourceUrlForLoad(
     }
 
     const bool notifyRightToLeftReading
-        = plan.resetRightToLeftReading && m_rightToLeftReadingEnabled;
+        = plan.resetRightToLeftReading && m_spreadModeController->rightToLeftReadingEnabled();
     if (plan.resetRightToLeftReading) {
-        m_rightToLeftReadingEnabled = false;
+        m_spreadModeController->resetRightToLeftReading();
     }
     if (!sourceUrlChanged && notifyRightToLeftReading) {
         notifyRightToLeftReadingChanged();
@@ -742,22 +745,20 @@ bool ImageDocumentController::shouldBeginTwoPageSpreadTransition(int targetPageN
 
 void ImageDocumentController::beginTwoPageSpreadTransition()
 {
-    if (m_twoPageSpreadTransitionInProgress) {
+    if (!m_spreadModeController->beginSpreadTransition()) {
         notifyTwoPageSpreadTransitionChanged();
         return;
     }
 
-    m_twoPageSpreadTransitionInProgress = true;
     notifyTwoPageSpreadTransitionChanged();
 }
 
 void ImageDocumentController::finishTwoPageSpreadTransition()
 {
-    if (!m_twoPageSpreadTransitionInProgress) {
+    if (!m_spreadModeController->finishSpreadTransition()) {
         return;
     }
 
-    m_twoPageSpreadTransitionInProgress = false;
     notifyTwoPageSpreadTransitionChanged();
 }
 
@@ -782,12 +783,12 @@ QSize ImageDocumentController::spreadImageSize() const
 
 bool ImageDocumentController::twoPageModeActive() const
 {
-    return m_twoPageModeEnabled && twoPageModeAvailable();
+    return m_spreadModeController->twoPageModeActive();
 }
 
 bool ImageDocumentController::rightToLeftReadingActive() const
 {
-    return m_rightToLeftReadingEnabled && rightToLeftReadingAvailable();
+    return m_spreadModeController->rightToLeftReadingActive();
 }
 
 bool ImageDocumentController::primaryPageIsWide() const
