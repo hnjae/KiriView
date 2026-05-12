@@ -5,7 +5,6 @@
 
 #include "imagedocumentloadcontroller.h"
 #include "imagedocumentnavigationcontroller.h"
-#include "imagedocumentsourceloadrequest.h"
 #include "imagespreadpresentationcontroller.h"
 
 #include <optional>
