@@ -17,6 +17,41 @@ struct ImageOpenTransitionContext {
     const QString *errorString = nullptr;
 };
 
+ImageOpenTransitionContext transitionContextForSuccessfulImageLoad(
+    const KiriView::ImageLoadSession &session)
+{
+    ImageOpenTransitionContext context;
+    context.session = &session;
+    return context;
+}
+
+ImageOpenTransitionContext transitionContextForLoadError(const KiriView::ImageLoadSession &session,
+    const QUrl &containerUrl, const QUrl &displayedUrl, const QString &errorString)
+{
+    ImageOpenTransitionContext context;
+    context.session = &session;
+    context.containerUrl = &containerUrl;
+    context.displayedUrl = &displayedUrl;
+    context.errorString = &errorString;
+    return context;
+}
+
+ImageOpenTransitionContext transitionContextForContainerNavigationError(
+    const QUrl &containerUrl, const QString &errorString)
+{
+    ImageOpenTransitionContext context;
+    context.containerUrl = &containerUrl;
+    context.errorString = &errorString;
+    return context;
+}
+
+ImageOpenTransitionContext transitionContextForAnimationError(const QString &errorString)
+{
+    ImageOpenTransitionContext context;
+    context.errorString = &errorString;
+    return context;
+}
+
 KiriView::ImageDocumentStatus documentStatus(KiriView::RustImageOpenStatusTarget status)
 {
     switch (status) {
@@ -253,7 +288,7 @@ ImageDocumentEffects ImageOpenWorkflow::finishSuccessfulImageLoad(
     transition.applyFinishSuccessfulImageLoad(
         rustImageOpenFinishSuccessfulImageLoad(RustImageOpenSuccessfulImageLoadRequest {
             session.request.containerNavigationUrl().isEmpty() }),
-        ImageOpenTransitionContext { &session });
+        transitionContextForSuccessfulImageLoad(session));
     return transition.takeEffects();
 }
 
@@ -266,7 +301,7 @@ ImageDocumentEffects ImageOpenWorkflow::finishLoadWithError(ImageDocumentState &
     transition.applyFinishLoadWithError(
         rustImageOpenFinishLoadWithError(RustImageOpenLoadErrorRequest {
             containerUrl.isEmpty(), hasImage, displayedUrl.isEmpty() }),
-        ImageOpenTransitionContext { &session, &containerUrl, &displayedUrl, &errorString });
+        transitionContextForLoadError(session, containerUrl, displayedUrl, errorString));
     return transition.takeEffects();
 }
 
@@ -275,7 +310,7 @@ ImageDocumentEffects ImageOpenWorkflow::finishContainerNavigationLoadWithError(
 {
     ImageOpenTransition transition(state);
     transition.applyFinishLoadWithError(rustImageOpenFinishContainerNavigationLoadWithError(),
-        ImageOpenTransitionContext { nullptr, &containerUrl, nullptr, &errorString });
+        transitionContextForContainerNavigationError(containerUrl, errorString));
     return transition.takeEffects();
 }
 
@@ -284,7 +319,7 @@ ImageDocumentEffects ImageOpenWorkflow::finishAnimationLoadWithError(
 {
     ImageOpenTransition transition(state);
     transition.applyFinishLoadWithError(rustImageOpenFinishAnimationLoadWithError(),
-        ImageOpenTransitionContext { nullptr, nullptr, nullptr, &errorString });
+        transitionContextForAnimationError(errorString));
     return transition.takeEffects();
 }
 }
