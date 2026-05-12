@@ -42,6 +42,8 @@ class TestImagePredecodeCoordinator : public QObject
 private Q_SLOTS:
     void scheduleCachesDisplayedImageAndPredecodesWindow();
     void scheduleDisplayedImageUsesPresentationSnapshot();
+    void scheduleRejectsInvalidDisplayedContext();
+    void scheduleDisplayedImageWithoutSnapshotCancelsActivePredecode();
     void archivePredecodeKeepsArchiveDocumentContext();
     void cancelSuppressesPendingDecode();
 };
@@ -124,6 +126,56 @@ void TestImagePredecodeCoordinator::scheduleDisplayedImageUsesPresentationSnapsh
     QCOMPARE(dataLoader.loadCount(), std::size_t(1));
     QCOMPARE(dataLoader.frontLoad().url, nextUrl);
     QCOMPARE(dataLoader.frontLoad().firstDisplay.physicalViewportSize, QSize(640, 480));
+}
+
+void TestImagePredecodeCoordinator::scheduleRejectsInvalidDisplayedContext()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    KiriView::ImagePredecodeCoordinator coordinator
+        = createCoordinator(this, candidateProvider, dataLoader);
+
+    coordinator.schedule(KiriView::ImagePredecodeCoordinator::Context {});
+
+    QCOMPARE(dataLoader.loadCount(), std::size_t(0));
+}
+
+void TestImagePredecodeCoordinator::scheduleDisplayedImageWithoutSnapshotCancelsActivePredecode()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    KiriView::ImagePredecodeCoordinator coordinator
+        = createCoordinator(this, candidateProvider, dataLoader);
+    KiriView::ImagePresentationController presentation(this,
+        []() {
+            return KiriView::ImageDocumentRenderContext {
+                2.0,
+                KiriView::fallbackTextureSizeMax,
+            };
+        },
+        {});
+
+    const QUrl displayedUrl = indexedImageUrl(1);
+    const QUrl nextUrl = indexedImageUrl(2);
+    candidateProvider.setDirectoryImages(imagesDirectoryUrl(),
+        {
+            imageCandidate(displayedUrl),
+            imageCandidate(nextUrl),
+        });
+
+    coordinator.schedule(KiriView::ImagePredecodeCoordinator::Context {
+        KiriView::DisplayedImageLocation::fromUrl(displayedUrl),
+        false,
+        staticTestImagePayload(testImage()),
+    });
+    QCOMPARE(dataLoader.loadCount(), std::size_t(1));
+
+    coordinator.scheduleDisplayedImage(
+        KiriView::DisplayedImageLocation::fromUrl(displayedUrl), presentation);
+
+    QVERIFY(dataLoader.frontLoad().canceled);
+    QCOMPARE(dataLoader.loadCount(), std::size_t(1));
+    QVERIFY(!coordinator.tryTake(nextUrl).has_value());
 }
 
 void TestImagePredecodeCoordinator::archivePredecodeKeepsArchiveDocumentContext()

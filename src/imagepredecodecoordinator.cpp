@@ -45,8 +45,7 @@ ImagePredecodeCoordinator::ImagePredecodeCoordinator(QObject *parent,
 void ImagePredecodeCoordinator::schedule(Context context)
 {
     cancel();
-    if (!predecodeContextCanSchedule(
-            context.displayedImageLocation.isEmpty(), context.displayedImage.isValid())) {
+    if (context.displayedImageLocation.isEmpty() || !context.displayedImage.isValid()) {
         return;
     }
 
@@ -60,8 +59,8 @@ void ImagePredecodeCoordinator::scheduleDisplayedImage(
     const ImagePresentationController &presentationController)
 {
     std::optional<StaticImagePayload> staticImage = presentationController.staticImage();
-    if (!predecodeDisplayedImageCanSchedule(presentationController.hasImage(),
-            displayedImageLocation.imageUrl().isEmpty(), staticImage.has_value())) {
+    if (!presentationController.hasImage() || displayedImageLocation.imageUrl().isEmpty()
+        || !staticImage.has_value()) {
         cancel();
         return;
     }
@@ -133,7 +132,7 @@ void ImagePredecodeCoordinator::startPredecodeImageLoad(
     const bool urlAvailable = url.isValid() && !url.isEmpty();
     const bool cached = urlAvailable && m_cache.hasImage(url);
     const bool inWindow = urlAvailable && m_cache.windowContains(url);
-    if (!predecodeRequestCanStart(urlAvailable, hasActivePredecodeRequest(), cached, inWindow)) {
+    if (!urlAvailable || hasActivePredecodeRequest() || cached || !inWindow) {
         return;
     }
 

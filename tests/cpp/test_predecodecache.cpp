@@ -45,7 +45,6 @@ class TestPredecodeCache : public QObject
 private Q_SLOTS:
     void queueContainsOnlyMissingWindowImages();
     void takeNextRequestDiscardsSkippedQueuePrefix();
-    void schedulingPredicatesGatePredecodeWork();
     void byteBudgetUsesPreferredLimitAndSystemMemoryCap();
     void cacheEligibilityUsesByteBudgetPolicy();
     void cacheStoresAndFindsWindowImages();
@@ -96,24 +95,6 @@ void TestPredecodeCache::takeNextRequestDiscardsSkippedQueuePrefix()
     QVERIFY(secondRequest.has_value());
     QCOMPARE(secondRequest->url, secondRequestUrl);
     QVERIFY(!cache.takeNextRequest(QUrl()).has_value());
-}
-
-void TestPredecodeCache::schedulingPredicatesGatePredecodeWork()
-{
-    QVERIFY(KiriView::predecodeDisplayedImageCanSchedule(true, false, true));
-    QVERIFY(!KiriView::predecodeDisplayedImageCanSchedule(false, false, true));
-    QVERIFY(!KiriView::predecodeDisplayedImageCanSchedule(true, true, true));
-    QVERIFY(!KiriView::predecodeDisplayedImageCanSchedule(true, false, false));
-
-    QVERIFY(KiriView::predecodeContextCanSchedule(false, true));
-    QVERIFY(!KiriView::predecodeContextCanSchedule(true, true));
-    QVERIFY(!KiriView::predecodeContextCanSchedule(false, false));
-
-    QVERIFY(KiriView::predecodeRequestCanStart(true, false, false, true));
-    QVERIFY(!KiriView::predecodeRequestCanStart(false, false, false, true));
-    QVERIFY(!KiriView::predecodeRequestCanStart(true, true, false, true));
-    QVERIFY(!KiriView::predecodeRequestCanStart(true, false, true, true));
-    QVERIFY(!KiriView::predecodeRequestCanStart(true, false, false, false));
 }
 
 void TestPredecodeCache::byteBudgetUsesPreferredLimitAndSystemMemoryCap()
