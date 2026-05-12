@@ -10,7 +10,6 @@
 #include "imageopenworkflow.h"
 #include "imagepredecodecoordinator.h"
 #include "imagepresentationcontroller.h"
-#include "imagespreadgeometry.h"
 #include "imagespreadpresentationcontroller.h"
 #include "imageviewtext.h"
 
@@ -199,7 +198,7 @@ int ImageDocumentController::currentPageNumber() const
 
 int ImageDocumentController::currentLastPageNumber() const
 {
-    return imageSpreadCurrentLastPageNumber(currentPageNumber(), secondaryPageVisible());
+    return m_spreadController->currentLastPageNumber();
 }
 
 int ImageDocumentController::imageCount() const { return m_navigationController->imageCount(); }
@@ -280,36 +279,34 @@ quint64 ImageDocumentController::imageRevision(DisplayedPageRole role) const
 
 void ImageDocumentController::openPreviousImage()
 {
-    if (!twoPageModeActive() || currentPageNumber() <= 0) {
+    const ImageSpreadPageNavigationTarget target
+        = m_spreadController->imageNavigationTarget(NavigationDirection::Previous);
+    if (!target.handledBySpread) {
         m_navigationController->openPreviousImage();
         return;
     }
 
-    bool previousPageIsWide = false;
-    if (secondaryPageVisible() && currentPageNumber() > 2) {
-        const std::optional<QUrl> previousUrl
-            = m_navigationController->urlAtPage(currentPageNumber() - 1);
-        if (previousUrl.has_value()) {
-            previousPageIsWide = m_spreadController->cachedPageIsWide(*previousUrl).value_or(false);
-        }
+    if (target.pageNumber <= 0) {
+        return;
     }
-    openImageAtPage(imageSpreadPreviousPageTarget(
-        currentPageNumber(), secondaryPageVisible(), previousPageIsWide));
+
+    openImageAtPage(target.pageNumber);
 }
 
 void ImageDocumentController::openNextImage()
 {
-    if (!twoPageModeActive() || currentPageNumber() <= 0) {
+    const ImageSpreadPageNavigationTarget target
+        = m_spreadController->imageNavigationTarget(NavigationDirection::Next);
+    if (!target.handledBySpread) {
         m_navigationController->openNextImage();
         return;
     }
 
-    const int nextPage = imageSpreadNextPageTarget(currentLastPageNumber(), imageCount());
-    if (nextPage <= 0) {
+    if (target.pageNumber <= 0) {
         return;
     }
 
-    openImageAtPage(nextPage);
+    openImageAtPage(target.pageNumber);
 }
 
 void ImageDocumentController::openPreviousSinglePage() { openImageAtRelativePageOffset(-1); }
@@ -510,14 +507,9 @@ void ImageDocumentController::finishWithAnimationError(const QString &errorStrin
     dispatchEffects(std::move(effects));
 }
 
-bool ImageDocumentController::twoPageModeActive() const
-{
-    return m_spreadController->twoPageModeActive();
-}
-
 void ImageDocumentController::openImageAtRelativePageOffset(int offset)
 {
-    const int targetPage = imageSpreadRelativePageTarget(currentPageNumber(), imageCount(), offset);
+    const int targetPage = m_spreadController->relativePageNavigationTarget(offset);
     if (targetPage <= 0) {
         return;
     }

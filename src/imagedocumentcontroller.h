@@ -121,7 +121,6 @@ private:
     void finishWithAnimationError(const QString &errorString);
     void notify(ImageDocumentChange change);
     void clearImage();
-    bool twoPageModeActive() const;
     void openImageAtRelativePageOffset(int offset);
 
     ChangeCallback m_changeCallback;

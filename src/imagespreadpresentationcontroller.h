@@ -6,6 +6,7 @@
 
 #include "imageasyncdependencies.h"
 #include "imagedocumentstate.h"
+#include "imagenavigationtypes.h"
 #include "imagesurface.h"
 #include "imagezoomstate.h"
 #include "predecodedimage.h"
@@ -28,6 +29,11 @@ class ImageSecondaryPageController;
 class ImageSpreadModeController;
 class ImageSpreadZoomController;
 enum class ImageSecondaryPageLoadResult;
+
+struct ImageSpreadPageNavigationTarget {
+    bool handledBySpread = false;
+    int pageNumber = 0;
+};
 
 class ImageSpreadPresentationController final
 {
@@ -70,6 +76,9 @@ public:
     qreal maximumManualZoomPercent() const;
     qreal clampedManualZoomPercent(qreal zoomPercent) const;
     qreal steppedManualZoomPercent(qreal stepCount) const;
+    int currentLastPageNumber() const;
+    ImageSpreadPageNavigationTarget imageNavigationTarget(NavigationDirection direction) const;
+    int relativePageNavigationTarget(int offset) const;
 
     bool twoPageModeEnabled() const;
     void setTwoPageModeEnabled(bool enabled);
@@ -82,7 +91,6 @@ public:
     bool secondaryPageVisible() const;
     std::shared_ptr<DisplayedImageSurface> secondaryImageSurface() const;
     quint64 secondaryImageRevision() const;
-    std::optional<bool> cachedPageIsWide(const QUrl &url) const;
 
     void setViewportSize(const QSizeF &viewportSize);
     void resetZoom();
@@ -111,6 +119,7 @@ private:
     void updateZoomState();
     QSize spreadImageSize() const;
     bool primaryPageIsWide() const;
+    std::optional<bool> cachedPageIsWide(const QUrl &url) const;
     int currentPageNumber() const;
     int imageCount() const;
     std::optional<QUrl> urlAtPage(int pageNumber) const;

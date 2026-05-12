@@ -180,6 +180,45 @@ qreal ImageSpreadPresentationController::steppedManualZoomPercent(qreal stepCoun
     return m_primaryPresentation.steppedManualZoomPercent(stepCount);
 }
 
+int ImageSpreadPresentationController::currentLastPageNumber() const
+{
+    return imageSpreadCurrentLastPageNumber(currentPageNumber(), secondaryPageVisible());
+}
+
+ImageSpreadPageNavigationTarget ImageSpreadPresentationController::imageNavigationTarget(
+    NavigationDirection direction) const
+{
+    if (!twoPageModeActive() || currentPageNumber() <= 0) {
+        return {};
+    }
+
+    if (direction == NavigationDirection::Next) {
+        return ImageSpreadPageNavigationTarget {
+            true,
+            imageSpreadNextPageTarget(currentLastPageNumber(), imageCount()),
+        };
+    }
+
+    bool previousPageIsWide = false;
+    if (secondaryPageVisible() && currentPageNumber() > 2) {
+        const std::optional<QUrl> previousUrl = urlAtPage(currentPageNumber() - 1);
+        if (previousUrl.has_value()) {
+            previousPageIsWide = cachedPageIsWide(*previousUrl).value_or(false);
+        }
+    }
+
+    return ImageSpreadPageNavigationTarget {
+        true,
+        imageSpreadPreviousPageTarget(
+            currentPageNumber(), secondaryPageVisible(), previousPageIsWide),
+    };
+}
+
+int ImageSpreadPresentationController::relativePageNavigationTarget(int offset) const
+{
+    return imageSpreadRelativePageTarget(currentPageNumber(), imageCount(), offset);
+}
+
 bool ImageSpreadPresentationController::twoPageModeEnabled() const
 {
     return m_modeController->twoPageModeEnabled();
