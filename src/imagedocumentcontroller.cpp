@@ -7,16 +7,15 @@
 #include "imagedeletioncontroller.h"
 #include "imagedocumentnavigationcontroller.h"
 #include "imagedocumentnavigator.h"
+#include "imagedocumentpredecodecontroller.h"
 #include "imageopencontroller.h"
 #include "imageopenworkflow.h"
-#include "imagepredecodecoordinator.h"
 #include "imagepresentationcontroller.h"
 #include "imagespreadpresentationcontroller.h"
 
 #include <QRectF>
 #include <QString>
 #include <memory>
-#include <optional>
 #include <utility>
 #include <variant>
 
@@ -60,7 +59,7 @@ ImageDocumentController::ImageDocumentController(QObject *parent,
     m_openController
         = std::make_unique<ImageOpenController>(this, m_state, *m_presentationController,
             ImageOpenController::Callbacks {
-                [this](const QUrl &url) { return takePredecodedImage(url); },
+                [this](const QUrl &url) { return m_predecodeController->tryTake(url); },
                 [this](ImageDocumentEffect effect) { dispatchEffect(std::move(effect)); },
             },
             dependencies.candidateProvider, dependencies.imageDecode);
@@ -71,13 +70,13 @@ ImageDocumentController::ImageDocumentController(QObject *parent,
             [this](ImageDocumentEffect effect) { dispatchEffect(std::move(effect)); },
         },
         dependencies.candidateProvider);
-    m_predecodeCoordinator = std::make_unique<ImagePredecodeCoordinator>(
-        this, dependencies.candidateProvider, dependencies.imageDecode);
+    m_predecodeController = std::make_unique<ImageDocumentPredecodeController>(this, m_state,
+        *m_presentationController, dependencies.candidateProvider, dependencies.imageDecode);
     m_spreadController = std::make_unique<ImageSpreadPresentationController>(this,
         std::move(spreadRenderContextProvider), m_state, *m_presentationController,
         ImageSpreadPresentationController::Callbacks {
             [this](ImageDocumentChange change) { notify(change); },
-            [this](const QUrl &url) { return takePredecodedImage(url); },
+            [this](const QUrl &url) { return m_predecodeController->tryTake(url); },
             [this]() { return currentPageNumber(); },
             [this]() { return imageCount(); },
             [this](int pageNumber) { return m_navigationController->urlAtPage(pageNumber); },
@@ -94,7 +93,7 @@ ImageDocumentController::~ImageDocumentController()
     m_deletionController->cancel();
     m_presentationController->stopAnimation();
     m_spreadController->shutdown();
-    cancelPredecode();
+    m_predecodeController->cancel();
     m_navigationController->cancelPageNavigationUpdate();
     m_navigationController->cancelContainerNavigation();
     m_navigationController->cancelNavigation();
@@ -316,7 +315,7 @@ void ImageDocumentController::dispatchEffectPayload(const UpdatePageNavigationEf
 
 void ImageDocumentController::dispatchEffectPayload(const ScheduleAdjacentImagePredecodeEffect &)
 {
-    scheduleAdjacentImagePredecode();
+    m_predecodeController->scheduleAdjacentImagePredecode();
 }
 
 void ImageDocumentController::dispatchEffectPayload(const OpenUrlEffect &payload)
@@ -411,33 +410,11 @@ void ImageDocumentController::clearAfterSuccessfulFileDeletion()
     dispatchEffects(ImageOpenWorkflow::finishEmptySourceLoad(m_state));
 }
 
-void ImageDocumentController::scheduleAdjacentImagePredecode()
-{
-    m_predecodeCoordinator->scheduleDisplayedImage(
-        m_state.displayedImageLocation(), *m_presentationController);
-}
-
 void ImageDocumentController::cancelNavigationAndPredecode()
 {
     m_navigationController->cancelNavigation();
     m_navigationController->cancelContainerNavigation();
-    cancelPredecode();
-}
-
-void ImageDocumentController::cancelPredecode()
-{
-    if (m_predecodeCoordinator != nullptr) {
-        m_predecodeCoordinator->cancel();
-    }
-}
-
-std::optional<PredecodedImage> ImageDocumentController::takePredecodedImage(const QUrl &url) const
-{
-    if (m_predecodeCoordinator == nullptr) {
-        return std::nullopt;
-    }
-
-    return m_predecodeCoordinator->tryTake(url);
+    m_predecodeController->cancel();
 }
 
 void ImageDocumentController::notify(ImageDocumentChange change)
@@ -461,9 +438,7 @@ void ImageDocumentController::notify(ImageDocumentChange change)
 
 void ImageDocumentController::clearImage()
 {
-    if (m_predecodeCoordinator != nullptr) {
-        m_predecodeCoordinator->clear();
-    }
+    m_predecodeController->clear();
     m_spreadController->finishTransition();
     m_spreadController->clearSecondaryPage();
     m_navigationController->cancelPageNavigationUpdate();

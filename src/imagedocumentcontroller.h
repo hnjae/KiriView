@@ -10,7 +10,6 @@
 #include "imagedocumentstate.h"
 #include "imagesurface.h"
 #include "imagezoomstate.h"
-#include "predecodedimage.h"
 
 #include <QImage>
 #include <QObject>
@@ -22,15 +21,14 @@
 #include <QtGlobal>
 #include <functional>
 #include <memory>
-#include <optional>
 
 namespace KiriView {
 class ImageDeletionController;
 class ImageDocumentNavigationController;
 class ImageDocumentNavigator;
+class ImageDocumentPredecodeController;
 class ImageOpenController;
 class ImagePresentationController;
-class ImagePredecodeCoordinator;
 class ImageSpreadPresentationController;
 
 class ImageDocumentController final : public QObject
@@ -114,10 +112,7 @@ private:
     void setSourceUrlForLoad(const QUrl &sourceUrl, const QUrl &containerNavigationUrl,
         bool preserveTwoPageSpreadTransition = false);
     void clearAfterSuccessfulFileDeletion();
-    void scheduleAdjacentImagePredecode();
     void cancelNavigationAndPredecode();
-    void cancelPredecode();
-    std::optional<PredecodedImage> takePredecodedImage(const QUrl &url) const;
     void notify(ImageDocumentChange change);
     void clearImage();
 
@@ -127,7 +122,7 @@ private:
     std::unique_ptr<ImagePresentationController> m_presentationController;
     std::unique_ptr<ImageOpenController> m_openController;
     std::unique_ptr<ImageDocumentNavigationController> m_navigationController;
-    std::unique_ptr<ImagePredecodeCoordinator> m_predecodeCoordinator;
+    std::unique_ptr<ImageDocumentPredecodeController> m_predecodeController;
     std::unique_ptr<ImageSpreadPresentationController> m_spreadController;
     std::unique_ptr<ImageDocumentNavigator> m_navigator;
 };
