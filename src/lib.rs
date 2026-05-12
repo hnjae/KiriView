@@ -6,7 +6,6 @@ mod archivepath;
 mod avifcompat;
 mod bmff;
 mod byteio;
-mod decodedimagepresentation;
 mod decodedimageresult;
 mod filedeletionfallback;
 mod heifcontainer;

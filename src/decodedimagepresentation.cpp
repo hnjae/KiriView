@@ -3,67 +3,38 @@
 
 #include "decodedimagepresentation.h"
 
-#include "kiriview/src/decodedimagepresentation.cxx.h"
 #include "predecodecache.h"
 
-#include <cstddef>
-
 namespace {
-KiriView::DecodedImagePresentationTarget decodedImagePresentationTarget(
-    KiriView::RustDecodedImagePresentationTarget target)
+KiriView::DecodedImagePresentationPlan presentationPlan(
+    KiriView::DecodedImagePresentationTarget target, bool predecodeCacheable)
 {
-    switch (target) {
-    case KiriView::RustDecodedImagePresentationTarget::StaticImage:
-        return KiriView::DecodedImagePresentationTarget::StaticImage;
-    case KiriView::RustDecodedImagePresentationTarget::DecodedAnimation:
-        return KiriView::DecodedImagePresentationTarget::DecodedAnimation;
-    case KiriView::RustDecodedImagePresentationTarget::ReaderAnimation:
-        return KiriView::DecodedImagePresentationTarget::ReaderAnimation;
-    case KiriView::RustDecodedImagePresentationTarget::HeifSequenceAnimation:
-        return KiriView::DecodedImagePresentationTarget::HeifSequenceAnimation;
-    case KiriView::RustDecodedImagePresentationTarget::DecodeError:
-        return KiriView::DecodedImagePresentationTarget::DecodeError;
-    }
-
-    return KiriView::DecodedImagePresentationTarget::DecodeError;
-}
-
-KiriView::DecodedImagePresentationPlan decodedImagePresentationPlan(
-    KiriView::RustDecodedImagePresentationKind kind, std::size_t decodedAnimationFrameCount,
-    bool staticImageCacheable)
-{
-    const KiriView::RustDecodedImagePresentationPlan plan
-        = KiriView::rustDecodedImagePresentationPlan(
-            kind, decodedAnimationFrameCount, staticImageCacheable);
-    return KiriView::DecodedImagePresentationPlan {
-        decodedImagePresentationTarget(plan.target),
-        plan.predecode_cacheable,
-    };
+    return KiriView::DecodedImagePresentationPlan { target, predecodeCacheable };
 }
 }
 
 namespace KiriView {
 DecodedImagePresentationPlan decodedImagePresentationPlan(const StaticDecodedImage &decoded)
 {
-    return ::decodedImagePresentationPlan(RustDecodedImagePresentationKind::StaticImage, 0,
+    return presentationPlan(DecodedImagePresentationTarget::StaticImage,
         PredecodeCache::canCacheImage(decoded.staticImage));
 }
 
 DecodedImagePresentationPlan decodedImagePresentationPlan(const DecodedAnimationImage &decoded)
 {
-    return ::decodedImagePresentationPlan(
-        RustDecodedImagePresentationKind::DecodedAnimation, decoded.frames.size(), false);
+    const DecodedImagePresentationTarget target = decoded.frames.empty()
+        ? DecodedImagePresentationTarget::DecodeError
+        : DecodedImagePresentationTarget::DecodedAnimation;
+    return presentationPlan(target, false);
 }
 
 DecodedImagePresentationPlan decodedImagePresentationPlan(const ReaderAnimationImage &)
 {
-    return ::decodedImagePresentationPlan(
-        RustDecodedImagePresentationKind::ReaderAnimation, 0, false);
+    return presentationPlan(DecodedImagePresentationTarget::ReaderAnimation, false);
 }
 
 DecodedImagePresentationPlan decodedImagePresentationPlan(const HeifSequenceAnimationImage &)
 {
-    return ::decodedImagePresentationPlan(
-        RustDecodedImagePresentationKind::HeifSequenceAnimation, 0, false);
+    return presentationPlan(DecodedImagePresentationTarget::HeifSequenceAnimation, false);
 }
 }
