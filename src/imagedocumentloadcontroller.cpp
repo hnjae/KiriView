@@ -28,16 +28,16 @@ ImageDocumentLoadController::ImageDocumentLoadController(ImageDocumentState &sta
 {
 }
 
-void ImageDocumentLoadController::setSourceUrl(
-    const QUrl &sourceUrl, const QUrl &containerNavigationUrl, bool preserveTwoPageSpreadTransition)
+void ImageDocumentLoadController::loadSource(const ImageDocumentSourceLoadRequest &request)
 {
     m_deletionController.cancel();
 
-    const bool sourceUrlChanged = m_state.sourceUrl() != sourceUrl;
+    const bool sourceUrlChanged = m_state.sourceUrl() != request.sourceUrl;
     const bool resetRightToLeftReading = m_spreadController.shouldResetRightToLeftReadingForLoad(
-        m_state.displayedArchiveDocument(), sourceUrl, containerNavigationUrl);
+        m_state.displayedArchiveDocument(), request.sourceUrl, request.containerNavigationUrl);
     const ImageOpenSourceLoadPlan plan = ImageOpenWorkflow::sourceLoadPlan(sourceUrlChanged,
-        preserveTwoPageSpreadTransition, resetRightToLeftReading, containerNavigationUrl.isEmpty());
+        request.preserveTwoPageSpreadTransition, resetRightToLeftReading,
+        request.containerNavigationUrl.isEmpty());
     if (plan.cancelNavigationAndPredecode) {
         cancelNavigationAndPredecode();
     }
@@ -60,13 +60,13 @@ void ImageDocumentLoadController::setSourceUrl(
         m_state.clearLoadingContainerNavigationUrl();
     }
     if (plan.updateContainerNavigationUrl) {
-        m_state.setContainerNavigationUrl(containerNavigationUrl);
+        m_state.setContainerNavigationUrl(request.containerNavigationUrl);
     }
     if (plan.setLoadingContainerNavigationUrl) {
-        m_state.setLoadingContainerNavigationUrl(containerNavigationUrl);
+        m_state.setLoadingContainerNavigationUrl(request.containerNavigationUrl);
     }
     if (plan.setSourceUrl) {
-        m_state.setSourceUrl(sourceUrl);
+        m_state.setSourceUrl(request.sourceUrl);
     }
     if (plan.beginOpen) {
         m_openController.open();

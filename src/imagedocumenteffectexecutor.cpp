@@ -71,12 +71,13 @@ void ImageDocumentEffectExecutor::dispatchPayload(const ScheduleAdjacentImagePre
 
 void ImageDocumentEffectExecutor::dispatchPayload(const OpenUrlEffect &payload)
 {
-    m_loadController.setSourceUrl(payload.url);
+    m_loadController.loadSource(ImageDocumentSourceLoadRequest::fromUrl(payload.url));
 }
 
 void ImageDocumentEffectExecutor::dispatchPayload(const ContainerImageSelectedEffect &payload)
 {
-    m_loadController.setSourceUrl(payload.imageUrl, payload.containerUrl);
+    m_loadController.loadSource(
+        ImageDocumentSourceLoadRequest::fromContainerImage(payload.imageUrl, payload.containerUrl));
 }
 
 void ImageDocumentEffectExecutor::dispatchPayload(const EmptyContainerSelectedEffect &payload)

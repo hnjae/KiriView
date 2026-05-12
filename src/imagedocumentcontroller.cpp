@@ -52,9 +52,12 @@ ImageDocumentController::ImageDocumentController(QObject *parent,
             [this]() {
                 m_effectExecutor->dispatchAll(m_loadController->clearAfterSuccessfulFileDeletion());
             },
-            [this](const QUrl &url) { m_loadController->setSourceUrl(url); },
+            [this](const QUrl &url) {
+                m_loadController->loadSource(ImageDocumentSourceLoadRequest::fromUrl(url));
+            },
             [this](const QUrl &imageUrl, const QUrl &containerUrl) {
-                m_loadController->setSourceUrl(imageUrl, containerUrl);
+                m_loadController->loadSource(
+                    ImageDocumentSourceLoadRequest::fromContainerImage(imageUrl, containerUrl));
             },
             std::move(fileDeletionFailedCallback),
         });
@@ -94,7 +97,8 @@ ImageDocumentController::ImageDocumentController(QObject *parent,
         *m_presentationController, *m_spreadController, *m_loadController);
     m_navigator = std::make_unique<ImageDocumentNavigator>(*m_navigationController,
         *m_spreadController, [this](const QUrl &url, bool preserveTwoPageSpreadTransition) {
-            m_loadController->setSourceUrl(url, QUrl(), preserveTwoPageSpreadTransition);
+            m_loadController->loadSource(ImageDocumentSourceLoadRequest::fromPageNavigation(
+                url, preserveTwoPageSpreadTransition));
         });
 }
 
@@ -114,7 +118,7 @@ QUrl ImageDocumentController::sourceUrl() const { return m_state.sourceUrl(); }
 
 void ImageDocumentController::setSourceUrl(const QUrl &sourceUrl)
 {
-    m_loadController->setSourceUrl(sourceUrl);
+    m_loadController->loadSource(ImageDocumentSourceLoadRequest::fromUrl(sourceUrl));
 }
 
 ImageDocumentStatus ImageDocumentController::status() const

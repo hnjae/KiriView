@@ -5,8 +5,7 @@
 #define KIRIVIEW_IMAGEDOCUMENTLOADCONTROLLER_H
 
 #include "imagedocumenteffects.h"
-
-#include <QUrl>
+#include "imagedocumentsourceloadrequest.h"
 
 namespace KiriView {
 class ImageDocumentDeletionController;
@@ -25,8 +24,7 @@ public:
         ImageDocumentPredecodeController &predecodeController, ImageOpenController &openController,
         ImageSpreadPresentationController &spreadController);
 
-    void setSourceUrl(const QUrl &sourceUrl, const QUrl &containerNavigationUrl = QUrl(),
-        bool preserveTwoPageSpreadTransition = false);
+    void loadSource(const ImageDocumentSourceLoadRequest &request);
     ImageDocumentEffects clearAfterSuccessfulFileDeletion();
 
 private:
