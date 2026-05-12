@@ -286,9 +286,12 @@ void ImageDocumentController::openPreviousSinglePage() { m_navigator->openPrevio
 
 void ImageDocumentController::openNextSinglePage() { m_navigator->openNextSinglePage(); }
 
-void ImageDocumentController::openPreviousContainer() { m_navigator->openPreviousContainer(); }
+void ImageDocumentController::openPreviousContainer()
+{
+    m_navigationController->openPreviousContainer();
+}
 
-void ImageDocumentController::openNextContainer() { m_navigator->openNextContainer(); }
+void ImageDocumentController::openNextContainer() { m_navigationController->openNextContainer(); }
 
 void ImageDocumentController::deleteDisplayedFile(FileDeletionMode mode)
 {

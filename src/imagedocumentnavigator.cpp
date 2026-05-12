@@ -46,13 +46,6 @@ void ImageDocumentNavigator::openImageAtPage(int pageNumber)
     invokeIfSet(m_openPage, *pageUrl, spreadTransition);
 }
 
-void ImageDocumentNavigator::openPreviousContainer()
-{
-    m_navigationController.openPreviousContainer();
-}
-
-void ImageDocumentNavigator::openNextContainer() { m_navigationController.openNextContainer(); }
-
 void ImageDocumentNavigator::openAdjacentImage(NavigationDirection direction)
 {
     const ImageSpreadPageNavigationTarget target

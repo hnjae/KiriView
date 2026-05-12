@@ -27,8 +27,6 @@ public:
     void openPreviousSinglePage();
     void openNextSinglePage();
     void openImageAtPage(int pageNumber);
-    void openPreviousContainer();
-    void openNextContainer();
 
 private:
     void openAdjacentImage(NavigationDirection direction);
