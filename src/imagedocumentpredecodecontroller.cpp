@@ -7,6 +7,7 @@
 #include "imagepredecodecoordinator.h"
 #include "imagepresentationcontroller.h"
 
+#include <optional>
 #include <utility>
 
 namespace KiriView {
@@ -24,8 +25,19 @@ ImageDocumentPredecodeController::~ImageDocumentPredecodeController() = default;
 
 void ImageDocumentPredecodeController::scheduleAdjacentImagePredecode()
 {
-    m_coordinator->scheduleDisplayedImage(
-        m_state.displayedImageLocation(), m_presentationController);
+    std::optional<StaticImagePayload> staticImage = m_presentationController.staticImage();
+    if (!m_presentationController.hasImage() || m_state.displayedUrl().isEmpty()
+        || !staticImage.has_value()) {
+        m_coordinator->cancel();
+        return;
+    }
+
+    m_coordinator->schedule(ImagePredecodeCoordinator::Context {
+        m_state.displayedImageLocation(),
+        m_presentationController.isPredecodeCacheable(),
+        std::move(*staticImage),
+        m_presentationController.firstDisplayDecodeContext(),
+    });
 }
 
 void ImageDocumentPredecodeController::cancel() { m_coordinator->cancel(); }

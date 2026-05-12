@@ -5,7 +5,6 @@
 
 #include "decodedimageresult.h"
 #include "imagenavigationmodel.h"
-#include "imagepresentationcontroller.h"
 #include "imageurl.h"
 
 #include <optional>
@@ -52,21 +51,6 @@ void ImagePredecodeCoordinator::schedule(Context context)
     const quint64 generation = m_generation.next();
     m_firstDisplayContext = context.firstDisplayContext;
     scheduleAdjacentImagePredecode(context, generation);
-}
-
-void ImagePredecodeCoordinator::scheduleDisplayedImage(
-    const DisplayedImageLocation &displayedImageLocation,
-    const ImagePresentationController &presentationController)
-{
-    std::optional<StaticImagePayload> staticImage = presentationController.staticImage();
-    if (!presentationController.hasImage() || displayedImageLocation.imageUrl().isEmpty()
-        || !staticImage.has_value()) {
-        cancel();
-        return;
-    }
-
-    schedule(Context { displayedImageLocation, presentationController.isPredecodeCacheable(),
-        std::move(*staticImage), presentationController.firstDisplayDecodeContext() });
 }
 
 void ImagePredecodeCoordinator::scheduleAdjacentImagePredecode(
