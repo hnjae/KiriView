@@ -67,12 +67,10 @@
         };
 
         qmlformat = {
-          command = lib.getExe (
-            pkgs.runCommandLocal "qmlformat" { } ''
-              mkdir -p "$out/bin"
-              ln -s "${lib.getExe' pkgs.kdePackages.qtdeclarative "qmlformat"}" "$out/bin/qmlformat"
-            ''
-          );
+          command = lib.getExe' (pkgs.runCommandLocal "qmlformat" { } ''
+            mkdir -p "$out/bin"
+            ln -s "${lib.getExe' pkgs.kdePackages.qtdeclarative "qmlformat"}" "$out/bin/qmlformat"
+          '') "qmlformat";
           options = [ "-i" ];
           includes = [ "*.qml" ];
         };
