@@ -2,17 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 use crate::byteio::read_be_u32;
-use cxx_qt_lib::QByteArray;
 
 #[cxx::bridge(namespace = "KiriView")]
 mod ffi {
-    unsafe extern "C++" {
-        include!("cxx-qt-lib/qbytearray.h");
-
-        #[namespace = ""]
-        type QByteArray = cxx_qt_lib::QByteArray;
-    }
-
     enum RustHeifBrandKind {
         Unknown = 0,
         StillImage = 1,
@@ -29,7 +21,7 @@ mod ffi {
         fn rust_heif_brand_kind(brand: &[u8]) -> RustHeifBrandKind;
 
         #[cxx_name = "rustHeifContainerInfo"]
-        fn rust_heif_container_info(data: &QByteArray) -> RustHeifContainerInfo;
+        fn rust_heif_container_info(data: &[u8]) -> RustHeifContainerInfo;
     }
 }
 
@@ -44,8 +36,8 @@ fn rust_heif_brand_kind(brand: &[u8]) -> RustHeifBrandKind {
     heif_brand_kind(brand)
 }
 
-fn rust_heif_container_info(data: &QByteArray) -> RustHeifContainerInfo {
-    scan_heif_brands(data.as_slice())
+fn rust_heif_container_info(data: &[u8]) -> RustHeifContainerInfo {
+    scan_heif_brands(data)
 }
 
 fn heif_brand_kind(brand: &[u8]) -> RustHeifBrandKind {

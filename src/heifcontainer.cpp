@@ -5,6 +5,7 @@
 
 #include "kiriview/src/heifcontainer.cxx.h"
 
+#include <cstddef>
 #include <cstdint>
 
 namespace {
@@ -12,6 +13,12 @@ rust::Slice<const std::uint8_t> rustBrandBytes(std::string_view brand)
 {
     return rust::Slice<const std::uint8_t>(
         reinterpret_cast<const std::uint8_t *>(brand.data()), brand.size());
+}
+
+rust::Slice<const std::uint8_t> rustByteArrayBytes(const QByteArray &data)
+{
+    return rust::Slice<const std::uint8_t>(reinterpret_cast<const std::uint8_t *>(data.constData()),
+        static_cast<std::size_t>(data.size()));
 }
 
 KiriView::HeifBrandKind heifBrandKindFromRust(KiriView::RustHeifBrandKind brandKind)
@@ -48,7 +55,7 @@ bool isLikelyHeifSequenceContainer(const QByteArray &data)
 
 HeifContainerInfo heifContainerInfo(const QByteArray &data)
 {
-    const RustHeifContainerInfo rustInfo = rustHeifContainerInfo(data);
+    const RustHeifContainerInfo rustInfo = rustHeifContainerInfo(rustByteArrayBytes(data));
     return HeifContainerInfo {
         rustInfo.still_image,
         rustInfo.image_sequence,
