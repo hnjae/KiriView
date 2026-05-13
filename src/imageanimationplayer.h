@@ -5,6 +5,7 @@
 #define KIRIVIEW_IMAGEANIMATIONPLAYER_H
 
 #include "animationframe.h"
+#include "imageanimationpolicy.h"
 
 #include <QByteArray>
 #include <QImage>
@@ -73,8 +74,7 @@ private:
     ErrorCallback m_animationError;
     Playback m_playback;
     QTimer m_timer;
-    int m_loopCount = 0;
-    int m_completedLoops = 0;
+    AnimationLoopState m_loopState;
 };
 }
 

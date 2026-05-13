@@ -5,7 +5,6 @@
 
 #include "bufferedimagereader.h"
 #include "heifdecoder.h"
-#include "imageanimationpolicy.h"
 #include "imagecallback.h"
 #include "imageviewtext.h"
 
@@ -32,7 +31,7 @@ void ImageAnimationPlayer::start(
     const QByteArray &data, const QByteArray &format, int loopCount, int firstFrameDelay)
 {
     clearPlaybackState();
-    m_loopCount = loopCount;
+    m_loopState.loopCount = loopCount;
 
     ReaderPlayback playback;
     playback.data = data;
@@ -60,7 +59,7 @@ void ImageAnimationPlayer::start(
 void ImageAnimationPlayer::startDecoded(std::vector<AnimationFrame> frames, int loopCount)
 {
     clearPlaybackState();
-    m_loopCount = loopCount;
+    m_loopState.loopCount = loopCount;
 
     DecodedPlayback playback;
     playback.frames = std::move(frames);
@@ -116,9 +115,8 @@ void ImageAnimationPlayer::advanceReaderFrame(ReaderPlayback &playback)
     }
 
     if (!playback.reader->canRead()) {
-        const AnimationLoopAdvance loopAdvance
-            = advanceAnimationLoop(AnimationLoopState { m_loopCount, m_completedLoops });
-        m_completedLoops = loopAdvance.completedLoops;
+        const AnimationLoopAdvance loopAdvance = advanceAnimationLoop(m_loopState);
+        m_loopState.completedLoops = loopAdvance.completedLoops;
         if (!loopAdvance.shouldContinue) {
             stop();
             return;
@@ -140,16 +138,15 @@ void ImageAnimationPlayer::advanceReaderFrame(ReaderPlayback &playback)
     const int delay = playback.reader->nextImageDelay();
     invokeIfSet(m_frameReady, frame);
 
-    scheduleNextFrameOrStop(playback.reader->canRead()
-            || animationHasRemainingLoops(AnimationLoopState { m_loopCount, m_completedLoops }),
-        delay);
+    scheduleNextFrameOrStop(
+        playback.reader->canRead() || animationHasRemainingLoops(m_loopState), delay);
 }
 
 void ImageAnimationPlayer::advanceDecodedFrame(DecodedPlayback &playback)
 {
-    const DecodedAnimationAdvance advance = advanceDecodedAnimation(playback.frames.size(),
-        playback.frameIndex, AnimationLoopState { m_loopCount, m_completedLoops });
-    m_completedLoops = advance.completedLoops;
+    const DecodedAnimationAdvance advance
+        = advanceDecodedAnimation(playback.frames.size(), playback.frameIndex, m_loopState);
+    m_loopState.completedLoops = advance.completedLoops;
     if (!advance.frameAvailable) {
         stop();
         return;
@@ -247,8 +244,7 @@ void ImageAnimationPlayer::clearPlaybackState()
 {
     m_timer.stop();
     m_playback = std::monostate();
-    m_loopCount = 0;
-    m_completedLoops = 0;
+    m_loopState = {};
 }
 
 void ImageAnimationPlayer::finishWithError(const QString &errorString)
