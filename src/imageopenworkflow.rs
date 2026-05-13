@@ -51,6 +51,13 @@ mod ffi {
     }
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    enum RustImageOpenRightToLeftReadingNotification {
+        None = 0,
+        BeforeOpen = 1,
+        AfterOpen = 2,
+    }
+
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     struct RustImageOpenSourceLoadRequest {
         source_url_changed: bool,
         preserve_two_page_spread_transition: bool,
@@ -82,8 +89,7 @@ mod ffi {
     struct RustImageOpenSourceLoadPlan {
         finish_spread_transition: bool,
         reset_right_to_left_reading: bool,
-        notify_right_to_left_reading_before_open: bool,
-        notify_right_to_left_reading_after_open: bool,
+        right_to_left_reading_notification: RustImageOpenRightToLeftReadingNotification,
         clear_loading_container_navigation_url: bool,
         update_container_navigation_url: bool,
         cancel_navigation_and_predecode: bool,
@@ -143,7 +149,8 @@ mod ffi {
 use ffi::{
     RustImageOpenBeginSourceLoadRequest, RustImageOpenBoolTarget,
     RustImageOpenDisplayedLocationTarget, RustImageOpenEffects, RustImageOpenErrorStringTarget,
-    RustImageOpenLoadErrorKind, RustImageOpenLoadErrorRequest, RustImageOpenSourceLoadPlan,
+    RustImageOpenLoadErrorKind, RustImageOpenLoadErrorRequest,
+    RustImageOpenRightToLeftReadingNotification, RustImageOpenSourceLoadPlan,
     RustImageOpenSourceLoadRequest, RustImageOpenStatusTarget,
     RustImageOpenSuccessfulImageLoadRequest, RustImageOpenTransition, RustImageOpenUrlTarget,
 };
@@ -156,10 +163,13 @@ fn rust_image_open_source_load_plan(
     plan.reset_right_to_left_reading = request.reset_right_to_left_reading;
     let notify_right_to_left_reading =
         request.reset_right_to_left_reading && request.right_to_left_reading_enabled;
-    plan.notify_right_to_left_reading_before_open =
-        notify_right_to_left_reading && !request.source_url_changed;
-    plan.notify_right_to_left_reading_after_open =
-        notify_right_to_left_reading && request.source_url_changed;
+    plan.right_to_left_reading_notification = if !notify_right_to_left_reading {
+        RustImageOpenRightToLeftReadingNotification::None
+    } else if request.source_url_changed {
+        RustImageOpenRightToLeftReadingNotification::AfterOpen
+    } else {
+        RustImageOpenRightToLeftReadingNotification::BeforeOpen
+    };
 
     if !request.source_url_changed {
         plan.clear_loading_container_navigation_url = true;
@@ -301,8 +311,7 @@ fn empty_source_load_plan() -> RustImageOpenSourceLoadPlan {
     RustImageOpenSourceLoadPlan {
         finish_spread_transition: false,
         reset_right_to_left_reading: false,
-        notify_right_to_left_reading_before_open: false,
-        notify_right_to_left_reading_after_open: false,
+        right_to_left_reading_notification: RustImageOpenRightToLeftReadingNotification::None,
         clear_loading_container_navigation_url: false,
         update_container_navigation_url: false,
         cancel_navigation_and_predecode: false,
@@ -413,8 +422,10 @@ mod tests {
 
         assert!(plan.finish_spread_transition);
         assert!(plan.reset_right_to_left_reading);
-        assert!(plan.notify_right_to_left_reading_before_open);
-        assert!(!plan.notify_right_to_left_reading_after_open);
+        assert_eq!(
+            plan.right_to_left_reading_notification,
+            RustImageOpenRightToLeftReadingNotification::BeforeOpen
+        );
         assert!(plan.clear_loading_container_navigation_url);
         assert!(plan.update_container_navigation_url);
         assert!(!plan.cancel_navigation_and_predecode);
@@ -431,8 +442,10 @@ mod tests {
 
         assert!(plan.finish_spread_transition);
         assert!(!plan.reset_right_to_left_reading);
-        assert!(!plan.notify_right_to_left_reading_before_open);
-        assert!(!plan.notify_right_to_left_reading_after_open);
+        assert_eq!(
+            plan.right_to_left_reading_notification,
+            RustImageOpenRightToLeftReadingNotification::None
+        );
         assert!(!plan.clear_loading_container_navigation_url);
         assert!(!plan.update_container_navigation_url);
         assert!(plan.cancel_navigation_and_predecode);
@@ -449,8 +462,10 @@ mod tests {
 
         assert!(!plan.finish_spread_transition);
         assert!(plan.reset_right_to_left_reading);
-        assert!(!plan.notify_right_to_left_reading_before_open);
-        assert!(plan.notify_right_to_left_reading_after_open);
+        assert_eq!(
+            plan.right_to_left_reading_notification,
+            RustImageOpenRightToLeftReadingNotification::AfterOpen
+        );
         assert!(plan.begin_open);
     }
 
@@ -460,8 +475,10 @@ mod tests {
             rust_image_open_source_load_plan(source_load_request(false, false, true, false, false));
 
         assert!(plan.reset_right_to_left_reading);
-        assert!(!plan.notify_right_to_left_reading_before_open);
-        assert!(!plan.notify_right_to_left_reading_after_open);
+        assert_eq!(
+            plan.right_to_left_reading_notification,
+            RustImageOpenRightToLeftReadingNotification::None
+        );
     }
 
     #[test]

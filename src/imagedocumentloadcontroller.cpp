@@ -69,7 +69,8 @@ void ImageDocumentLoadController::applySourceLoadPlan(
     if (plan.resetRightToLeftReading) {
         m_spreadController.resetRightToLeftReading();
     }
-    if (plan.notifyRightToLeftReadingBeforeOpen) {
+    if (plan.rightToLeftReadingNotification
+        == ImageOpenRightToLeftReadingNotification::BeforeOpen) {
         m_spreadController.notifyRightToLeftReadingChanged();
     }
     if (plan.clearSecondaryPage) {
@@ -90,7 +91,7 @@ void ImageDocumentLoadController::applySourceLoadPlan(
     if (plan.beginOpen) {
         m_openController.open();
     }
-    if (plan.notifyRightToLeftReadingAfterOpen) {
+    if (plan.rightToLeftReadingNotification == ImageOpenRightToLeftReadingNotification::AfterOpen) {
         m_spreadController.notifyRightToLeftReadingChanged();
     }
 }

@@ -13,11 +13,17 @@
 namespace KiriView {
 class ImageDocumentState;
 
+enum class ImageOpenRightToLeftReadingNotification {
+    None,
+    BeforeOpen,
+    AfterOpen,
+};
+
 struct ImageOpenSourceLoadPlan {
     bool finishSpreadTransition = false;
     bool resetRightToLeftReading = false;
-    bool notifyRightToLeftReadingBeforeOpen = false;
-    bool notifyRightToLeftReadingAfterOpen = false;
+    ImageOpenRightToLeftReadingNotification rightToLeftReadingNotification
+        = ImageOpenRightToLeftReadingNotification::None;
     bool clearLoadingContainerNavigationUrl = false;
     bool updateContainerNavigationUrl = false;
     bool cancelNavigationAndPredecode = false;

@@ -74,8 +74,8 @@ void TestImageOpenWorkflow::sourceLoadPlanRoutesUnchangedAndReplacementLoads()
         = KiriView::ImageOpenWorkflow::sourceLoadPlan(unchangedRequest);
     QVERIFY(unchanged.finishSpreadTransition);
     QVERIFY(unchanged.resetRightToLeftReading);
-    QVERIFY(unchanged.notifyRightToLeftReadingBeforeOpen);
-    QVERIFY(!unchanged.notifyRightToLeftReadingAfterOpen);
+    QCOMPARE(unchanged.rightToLeftReadingNotification,
+        KiriView::ImageOpenRightToLeftReadingNotification::BeforeOpen);
     QVERIFY(unchanged.clearLoadingContainerNavigationUrl);
     QVERIFY(unchanged.updateContainerNavigationUrl);
     QVERIFY(!unchanged.cancelNavigationAndPredecode);
@@ -94,8 +94,8 @@ void TestImageOpenWorkflow::sourceLoadPlanRoutesUnchangedAndReplacementLoads()
         = KiriView::ImageOpenWorkflow::sourceLoadPlan(replacementRequest);
     QVERIFY(!replacement.finishSpreadTransition);
     QVERIFY(!replacement.resetRightToLeftReading);
-    QVERIFY(!replacement.notifyRightToLeftReadingBeforeOpen);
-    QVERIFY(!replacement.notifyRightToLeftReadingAfterOpen);
+    QCOMPARE(replacement.rightToLeftReadingNotification,
+        KiriView::ImageOpenRightToLeftReadingNotification::None);
     QVERIFY(!replacement.clearLoadingContainerNavigationUrl);
     QVERIFY(!replacement.updateContainerNavigationUrl);
     QVERIFY(replacement.cancelNavigationAndPredecode);
@@ -107,8 +107,8 @@ void TestImageOpenWorkflow::sourceLoadPlanRoutesUnchangedAndReplacementLoads()
     replacementRequest.resetRightToLeftReading = true;
     const KiriView::ImageOpenSourceLoadPlan resettingReplacement
         = KiriView::ImageOpenWorkflow::sourceLoadPlan(replacementRequest);
-    QVERIFY(!resettingReplacement.notifyRightToLeftReadingBeforeOpen);
-    QVERIFY(resettingReplacement.notifyRightToLeftReadingAfterOpen);
+    QCOMPARE(resettingReplacement.rightToLeftReadingNotification,
+        KiriView::ImageOpenRightToLeftReadingNotification::AfterOpen);
 }
 
 void TestImageOpenWorkflow::firstImageLoadSuccessTransitionsToReady()

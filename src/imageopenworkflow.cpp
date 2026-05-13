@@ -91,15 +91,30 @@ KiriView::ImageDocumentStatus documentStatus(KiriView::RustImageOpenStatusTarget
     return KiriView::ImageDocumentStatus::Null;
 }
 
+KiriView::ImageOpenRightToLeftReadingNotification imageOpenRightToLeftReadingNotification(
+    KiriView::RustImageOpenRightToLeftReadingNotification notification)
+{
+    switch (notification) {
+    case KiriView::RustImageOpenRightToLeftReadingNotification::BeforeOpen:
+        return KiriView::ImageOpenRightToLeftReadingNotification::BeforeOpen;
+    case KiriView::RustImageOpenRightToLeftReadingNotification::AfterOpen:
+        return KiriView::ImageOpenRightToLeftReadingNotification::AfterOpen;
+    case KiriView::RustImageOpenRightToLeftReadingNotification::None:
+        break;
+    }
+
+    return KiriView::ImageOpenRightToLeftReadingNotification::None;
+}
+
 KiriView::ImageOpenSourceLoadPlan imageOpenSourceLoadPlan(
     KiriView::RustImageOpenSourceLoadPlan plan)
 {
     return KiriView::ImageOpenSourceLoadPlan { plan.finish_spread_transition,
-        plan.reset_right_to_left_reading, plan.notify_right_to_left_reading_before_open,
-        plan.notify_right_to_left_reading_after_open, plan.clear_loading_container_navigation_url,
-        plan.update_container_navigation_url, plan.cancel_navigation_and_predecode,
-        plan.clear_secondary_page, plan.set_loading_container_navigation_url, plan.set_source_url,
-        plan.begin_open };
+        plan.reset_right_to_left_reading,
+        imageOpenRightToLeftReadingNotification(plan.right_to_left_reading_notification),
+        plan.clear_loading_container_navigation_url, plan.update_container_navigation_url,
+        plan.cancel_navigation_and_predecode, plan.clear_secondary_page,
+        plan.set_loading_container_navigation_url, plan.set_source_url, plan.begin_open };
 }
 
 QUrl urlForTarget(
