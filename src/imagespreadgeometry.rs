@@ -31,6 +31,12 @@ mod ffi {
     }
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    enum RustImageSpreadNavigationDirection {
+        Previous = 0,
+        Next = 1,
+    }
+
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     struct RustImageSpreadTwoPageModeChange {
         changed: bool,
         reset_spread_zoom: bool,
@@ -39,6 +45,21 @@ mod ffi {
         restore_primary_zoom: bool,
         refresh_secondary_page: bool,
         notify_two_page_mode: bool,
+    }
+
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    struct RustImageSpreadNavigationState {
+        two_page_mode_active: bool,
+        current_page_number: i32,
+        image_count: i32,
+        secondary_page_visible: bool,
+        previous_page_is_wide: bool,
+    }
+
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    struct RustImageSpreadPageNavigationTarget {
+        handled_by_spread: bool,
+        page_number: i32,
     }
 
     extern "Rust" {
@@ -131,12 +152,37 @@ mod ffi {
             next_enabled: bool,
             secondary_page_visible: bool,
         ) -> RustImageSpreadTwoPageModeChange;
+
+        #[cxx_name = "rustImageSpreadNavigationCurrentLastPageNumber"]
+        fn rust_image_spread_navigation_current_last_page_number(
+            state: RustImageSpreadNavigationState,
+        ) -> i32;
+
+        #[cxx_name = "rustImageSpreadPageNavigationTarget"]
+        fn rust_image_spread_page_navigation_target(
+            direction: RustImageSpreadNavigationDirection,
+            state: RustImageSpreadNavigationState,
+        ) -> RustImageSpreadPageNavigationTarget;
+
+        #[cxx_name = "rustImageSpreadRelativePageNavigationTarget"]
+        fn rust_image_spread_relative_page_navigation_target(
+            state: RustImageSpreadNavigationState,
+            offset: i32,
+        ) -> i32;
+
+        #[cxx_name = "rustImageSpreadShouldBeginNavigationTransition"]
+        fn rust_image_spread_should_begin_navigation_transition(
+            state: RustImageSpreadNavigationState,
+            target_page_number: i32,
+        ) -> bool;
     }
 }
 
 use ffi::{
-    RustImageSpreadRectF, RustImageSpreadSecondaryPageDecision, RustImageSpreadSize,
-    RustImageSpreadSizeF, RustImageSpreadTwoPageModeChange,
+    RustImageSpreadNavigationDirection, RustImageSpreadNavigationState,
+    RustImageSpreadPageNavigationTarget, RustImageSpreadRectF,
+    RustImageSpreadSecondaryPageDecision, RustImageSpreadSize, RustImageSpreadSizeF,
+    RustImageSpreadTwoPageModeChange,
 };
 
 fn rust_image_spread_image_size(
@@ -334,6 +380,58 @@ fn rust_image_spread_two_page_mode_change(
     )
 }
 
+fn rust_image_spread_navigation_current_last_page_number(
+    state: RustImageSpreadNavigationState,
+) -> i32 {
+    rust_image_spread_current_last_page_number(
+        state.current_page_number,
+        state.secondary_page_visible,
+    )
+}
+
+fn rust_image_spread_page_navigation_target(
+    direction: RustImageSpreadNavigationDirection,
+    state: RustImageSpreadNavigationState,
+) -> RustImageSpreadPageNavigationTarget {
+    if !state.two_page_mode_active || state.current_page_number <= 0 {
+        return page_navigation_target(false, 0);
+    }
+
+    let page_number = match direction {
+        RustImageSpreadNavigationDirection::Next => rust_image_spread_next_page_target(
+            rust_image_spread_navigation_current_last_page_number(state),
+            state.image_count,
+        ),
+        RustImageSpreadNavigationDirection::Previous => rust_image_spread_previous_page_target(
+            state.current_page_number,
+            state.secondary_page_visible,
+            state.previous_page_is_wide,
+        ),
+        _ => 0,
+    };
+
+    page_navigation_target(true, page_number)
+}
+
+fn rust_image_spread_relative_page_navigation_target(
+    state: RustImageSpreadNavigationState,
+    offset: i32,
+) -> i32 {
+    rust_image_spread_relative_page_target(state.current_page_number, state.image_count, offset)
+}
+
+fn rust_image_spread_should_begin_navigation_transition(
+    state: RustImageSpreadNavigationState,
+    target_page_number: i32,
+) -> bool {
+    rust_image_spread_should_begin_transition(
+        state.two_page_mode_active,
+        state.current_page_number,
+        target_page_number,
+        state.image_count,
+    )
+}
+
 fn size_empty(size: RustImageSpreadSize) -> bool {
     size.width <= 0 || size.height <= 0
 }
@@ -355,6 +453,16 @@ fn two_page_mode_change(
         restore_primary_zoom,
         refresh_secondary_page,
         notify_two_page_mode,
+    }
+}
+
+fn page_navigation_target(
+    handled_by_spread: bool,
+    page_number: i32,
+) -> RustImageSpreadPageNavigationTarget {
+    RustImageSpreadPageNavigationTarget {
+        handled_by_spread,
+        page_number,
     }
 }
 
@@ -446,6 +554,22 @@ mod tests {
             y,
             width,
             height,
+        }
+    }
+
+    fn navigation_state(
+        two_page_mode_active: bool,
+        current_page_number: i32,
+        image_count: i32,
+        secondary_page_visible: bool,
+        previous_page_is_wide: bool,
+    ) -> RustImageSpreadNavigationState {
+        RustImageSpreadNavigationState {
+            two_page_mode_active,
+            current_page_number,
+            image_count,
+            secondary_page_visible,
+            previous_page_is_wide,
         }
     }
 
@@ -650,5 +774,79 @@ mod tests {
             rust_image_spread_two_page_mode_change(true, false, true),
             two_page_mode_change(true, false, true, true, true, true, true)
         );
+    }
+
+    #[test]
+    fn adjacent_navigation_falls_back_when_spread_is_inactive() {
+        let target = rust_image_spread_page_navigation_target(
+            RustImageSpreadNavigationDirection::Next,
+            navigation_state(false, 3, 6, true, false),
+        );
+
+        assert_eq!(target, page_navigation_target(false, 0));
+    }
+
+    #[test]
+    fn adjacent_navigation_uses_visible_spread_edges() {
+        let state = navigation_state(true, 2, 6, true, false);
+
+        assert_eq!(
+            rust_image_spread_page_navigation_target(
+                RustImageSpreadNavigationDirection::Next,
+                state
+            ),
+            page_navigation_target(true, 4)
+        );
+        assert_eq!(
+            rust_image_spread_page_navigation_target(
+                RustImageSpreadNavigationDirection::Previous,
+                state
+            ),
+            page_navigation_target(true, 1)
+        );
+        assert_eq!(
+            rust_image_spread_navigation_current_last_page_number(state),
+            3
+        );
+    }
+
+    #[test]
+    fn previous_navigation_accounts_for_wide_previous_page() {
+        assert_eq!(
+            rust_image_spread_page_navigation_target(
+                RustImageSpreadNavigationDirection::Previous,
+                navigation_state(true, 5, 8, true, false)
+            )
+            .page_number,
+            3
+        );
+        assert_eq!(
+            rust_image_spread_page_navigation_target(
+                RustImageSpreadNavigationDirection::Previous,
+                navigation_state(true, 5, 8, true, true)
+            )
+            .page_number,
+            4
+        );
+    }
+
+    #[test]
+    fn relative_navigation_and_transitions_use_spread_state() {
+        let state = navigation_state(true, 3, 5, false, false);
+
+        assert_eq!(
+            rust_image_spread_relative_page_navigation_target(state, -1),
+            2
+        );
+        assert_eq!(
+            rust_image_spread_relative_page_navigation_target(state, 1),
+            4
+        );
+        assert!(rust_image_spread_should_begin_navigation_transition(
+            state, 4
+        ));
+        assert!(!rust_image_spread_should_begin_navigation_transition(
+            state, 6
+        ));
     }
 }

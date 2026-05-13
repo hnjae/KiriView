@@ -3,41 +3,60 @@
 
 #include "imagespreadnavigation.h"
 
-#include "imagespreadgeometry.h"
+#include "kiriview/src/imagespreadgeometry.cxx.h"
+
+namespace {
+KiriView::RustImageSpreadNavigationDirection rustNavigationDirection(
+    KiriView::NavigationDirection direction)
+{
+    switch (direction) {
+    case KiriView::NavigationDirection::Previous:
+        return KiriView::RustImageSpreadNavigationDirection::Previous;
+    case KiriView::NavigationDirection::Next:
+        return KiriView::RustImageSpreadNavigationDirection::Next;
+    }
+
+    return KiriView::RustImageSpreadNavigationDirection::Next;
+}
+
+KiriView::RustImageSpreadNavigationState rustNavigationState(
+    const KiriView::ImageSpreadNavigationState &state)
+{
+    return KiriView::RustImageSpreadNavigationState { state.twoPageModeActive,
+        state.currentPageNumber, state.imageCount, state.secondaryPageVisible,
+        state.previousPageIsWide };
+}
+
+KiriView::ImageSpreadPageNavigationTarget imageSpreadPageNavigationTargetFromRust(
+    KiriView::RustImageSpreadPageNavigationTarget target)
+{
+    return KiriView::ImageSpreadPageNavigationTarget { target.handled_by_spread,
+        target.page_number };
+}
+}
 
 namespace KiriView {
 int imageSpreadNavigationCurrentLastPageNumber(const ImageSpreadNavigationState &state)
 {
-    return imageSpreadCurrentLastPageNumber(state.currentPageNumber, state.secondaryPageVisible);
+    return rustImageSpreadNavigationCurrentLastPageNumber(rustNavigationState(state));
 }
 
 ImageSpreadPageNavigationTarget imageSpreadPageNavigationTarget(
     NavigationDirection direction, const ImageSpreadNavigationState &state)
 {
-    if (!state.twoPageModeActive || state.currentPageNumber <= 0) {
-        return {};
-    }
-
-    if (direction == NavigationDirection::Next) {
-        return ImageSpreadPageNavigationTarget { true,
-            imageSpreadNextPageTarget(
-                imageSpreadNavigationCurrentLastPageNumber(state), state.imageCount) };
-    }
-
-    return ImageSpreadPageNavigationTarget { true,
-        imageSpreadPreviousPageTarget(
-            state.currentPageNumber, state.secondaryPageVisible, state.previousPageIsWide) };
+    return imageSpreadPageNavigationTargetFromRust(rustImageSpreadPageNavigationTarget(
+        rustNavigationDirection(direction), rustNavigationState(state)));
 }
 
 int imageSpreadRelativePageNavigationTarget(const ImageSpreadNavigationState &state, int offset)
 {
-    return imageSpreadRelativePageTarget(state.currentPageNumber, state.imageCount, offset);
+    return rustImageSpreadRelativePageNavigationTarget(rustNavigationState(state), offset);
 }
 
 bool imageSpreadShouldBeginNavigationTransition(
     const ImageSpreadNavigationState &state, int targetPageNumber)
 {
-    return imageSpreadShouldBeginTransition(
-        state.twoPageModeActive, state.currentPageNumber, targetPageNumber, state.imageCount);
+    return rustImageSpreadShouldBeginNavigationTransition(
+        rustNavigationState(state), targetPageNumber);
 }
 }
