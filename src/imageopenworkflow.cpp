@@ -294,8 +294,8 @@ private:
 };
 }
 
-namespace KiriView {
-ImageOpenSourceLoadPlan ImageOpenWorkflow::sourceLoadPlan(const ImageOpenSourceLoadRequest &request)
+namespace KiriView::ImageOpenWorkflow {
+ImageOpenSourceLoadPlan sourceLoadPlan(const ImageOpenSourceLoadRequest &request)
 {
     return imageOpenSourceLoadPlan(
         rustImageOpenSourceLoadPlan(RustImageOpenSourceLoadRequest { request.sourceUrlChanged,
@@ -303,7 +303,7 @@ ImageOpenSourceLoadPlan ImageOpenWorkflow::sourceLoadPlan(const ImageOpenSourceL
             request.rightToLeftReadingEnabled, request.containerNavigationUrlEmpty }));
 }
 
-ImageDocumentEffects ImageOpenWorkflow::beginSourceLoad(ImageDocumentState &state, bool hasImage)
+ImageDocumentEffects beginSourceLoad(ImageDocumentState &state, bool hasImage)
 {
     ImageOpenTransition transition(state);
     transition.applyBeginSourceLoad(
@@ -312,14 +312,14 @@ ImageDocumentEffects ImageOpenWorkflow::beginSourceLoad(ImageDocumentState &stat
     return transition.takeEffects();
 }
 
-ImageDocumentEffects ImageOpenWorkflow::finishEmptySourceLoad(ImageDocumentState &state)
+ImageDocumentEffects finishEmptySourceLoad(ImageDocumentState &state)
 {
     ImageOpenTransition transition(state);
     transition.applyFinishEmptySourceLoad(rustImageOpenFinishEmptySourceLoad());
     return transition.takeEffects();
 }
 
-ImageDocumentEffects ImageOpenWorkflow::finishSuccessfulImageLoad(
+ImageDocumentEffects finishSuccessfulImageLoad(
     ImageDocumentState &state, const ImageLoadSession &session)
 {
     ImageOpenTransition transition(state);
@@ -330,8 +330,8 @@ ImageDocumentEffects ImageOpenWorkflow::finishSuccessfulImageLoad(
     return transition.takeEffects();
 }
 
-ImageDocumentEffects ImageOpenWorkflow::finishLoadWithError(ImageDocumentState &state,
-    const ImageLoadSession &session, bool hasImage, const QString &errorString)
+ImageDocumentEffects finishLoadWithError(ImageDocumentState &state, const ImageLoadSession &session,
+    bool hasImage, const QString &errorString)
 {
     ImageOpenTransition transition(state);
     const QUrl containerUrl = session.request.containerNavigationUrl();
@@ -343,7 +343,7 @@ ImageDocumentEffects ImageOpenWorkflow::finishLoadWithError(ImageDocumentState &
     return transition.takeEffects();
 }
 
-ImageDocumentEffects ImageOpenWorkflow::finishContainerNavigationLoadWithError(
+ImageDocumentEffects finishContainerNavigationLoadWithError(
     ImageDocumentState &state, const QUrl &containerUrl, const QString &errorString)
 {
     ImageOpenTransition transition(state);
@@ -353,7 +353,7 @@ ImageDocumentEffects ImageOpenWorkflow::finishContainerNavigationLoadWithError(
     return transition.takeEffects();
 }
 
-ImageDocumentEffects ImageOpenWorkflow::finishAnimationLoadWithError(
+ImageDocumentEffects finishAnimationLoadWithError(
     ImageDocumentState &state, const QString &errorString)
 {
     ImageOpenTransition transition(state);

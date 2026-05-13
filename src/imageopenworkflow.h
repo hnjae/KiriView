@@ -41,21 +41,19 @@ struct ImageOpenSourceLoadRequest {
     bool containerNavigationUrlEmpty = false;
 };
 
-class ImageOpenWorkflow
-{
-public:
-    static ImageOpenSourceLoadPlan sourceLoadPlan(const ImageOpenSourceLoadRequest &request);
-    static ImageDocumentEffects beginSourceLoad(ImageDocumentState &state, bool hasImage);
-    static ImageDocumentEffects finishEmptySourceLoad(ImageDocumentState &state);
-    static ImageDocumentEffects finishSuccessfulImageLoad(
+namespace ImageOpenWorkflow {
+    ImageOpenSourceLoadPlan sourceLoadPlan(const ImageOpenSourceLoadRequest &request);
+    ImageDocumentEffects beginSourceLoad(ImageDocumentState &state, bool hasImage);
+    ImageDocumentEffects finishEmptySourceLoad(ImageDocumentState &state);
+    ImageDocumentEffects finishSuccessfulImageLoad(
         ImageDocumentState &state, const ImageLoadSession &session);
-    static ImageDocumentEffects finishLoadWithError(ImageDocumentState &state,
+    ImageDocumentEffects finishLoadWithError(ImageDocumentState &state,
         const ImageLoadSession &session, bool hasImage, const QString &errorString);
-    static ImageDocumentEffects finishContainerNavigationLoadWithError(
+    ImageDocumentEffects finishContainerNavigationLoadWithError(
         ImageDocumentState &state, const QUrl &containerUrl, const QString &errorString);
-    static ImageDocumentEffects finishAnimationLoadWithError(
+    ImageDocumentEffects finishAnimationLoadWithError(
         ImageDocumentState &state, const QString &errorString);
-};
+}
 }
 
 #endif
