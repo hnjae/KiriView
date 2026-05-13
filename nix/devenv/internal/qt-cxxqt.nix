@@ -187,13 +187,16 @@ let
       link_generated_include_dir() {
           local generated_include_dir="$1"
           local generated_include
+          local link_target
 
           if [[ ! -d "$generated_include_dir" ]]; then
               return
           fi
 
           while IFS= read -r -d "" generated_include; do
-              ln -sfn "$generated_include" "$cxxqt_clangd_include/''${generated_include##*/}"
+              link_target="$cxxqt_clangd_include/''${generated_include##*/}"
+              rm -rf "$link_target"
+              ln -s "$generated_include" "$link_target"
           done < <(find "$generated_include_dir" -mindepth 1 -maxdepth 1 -print0)
       }
 

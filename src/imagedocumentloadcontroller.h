@@ -26,7 +26,7 @@ struct ImageDocumentSourceLoadRequest {
 
     static ImageDocumentSourceLoadRequest fromUrl(const QUrl &sourceUrl)
     {
-        return ImageDocumentSourceLoadRequest { sourceUrl };
+        return ImageDocumentSourceLoadRequest { sourceUrl, QUrl(), false };
     }
 
     static ImageDocumentSourceLoadRequest fromContainerImage(

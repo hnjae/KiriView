@@ -136,12 +136,13 @@ fn percent_decoded_path(path: &str) -> String {
     let mut decoded = Vec::with_capacity(bytes.len());
     let mut index = 0;
     while index < bytes.len() {
-        if bytes[index] == b'%' && index + 2 < bytes.len() {
-            if let Some(byte) = hex_byte(bytes[index + 1], bytes[index + 2]) {
-                decoded.push(byte);
-                index += 3;
-                continue;
-            }
+        if bytes[index] == b'%'
+            && index + 2 < bytes.len()
+            && let Some(byte) = hex_byte(bytes[index + 1], bytes[index + 2])
+        {
+            decoded.push(byte);
+            index += 3;
+            continue;
         }
 
         decoded.push(bytes[index]);
