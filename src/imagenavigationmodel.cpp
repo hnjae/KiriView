@@ -111,17 +111,6 @@ std::vector<QUrl> predecodeWindowImageUrls(
     return urls;
 }
 
-std::vector<QUrl> imageNavigationCandidateUrls(
-    const std::vector<ImageNavigationCandidate> &candidates)
-{
-    std::vector<QUrl> urls;
-    urls.reserve(candidates.size());
-    for (const ImageNavigationCandidate &candidate : candidates) {
-        urls.push_back(candidate.url);
-    }
-    return urls;
-}
-
 std::optional<QUrl> adjacentImageNavigationUrl(
     const std::vector<ImageNavigationCandidate> &candidates, const QUrl &currentUrl,
     NavigationDirection direction)

@@ -34,6 +34,17 @@ bool samePageNavigationState(
 {
     return left.urls == right.urls && left.currentIndex == right.currentIndex;
 }
+
+std::vector<QUrl> imageNavigationCandidateUrls(
+    const std::vector<KiriView::ImageNavigationCandidate> &candidates)
+{
+    std::vector<QUrl> urls;
+    urls.reserve(candidates.size());
+    for (const KiriView::ImageNavigationCandidate &candidate : candidates) {
+        urls.push_back(candidate.url);
+    }
+    return urls;
+}
 }
 
 namespace KiriView {
