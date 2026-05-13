@@ -23,13 +23,11 @@ class ImageDocumentDeletionController final
 {
 public:
     using InProgressChangedCallback = std::function<void()>;
-    using ClearDeletedImageCallback = std::function<void()>;
     using EffectCallback = std::function<void(ImageDocumentEffect)>;
     using FailedCallback = std::function<void(const QString &)>;
 
     struct Callbacks {
         InProgressChangedCallback inProgressChanged;
-        ClearDeletedImageCallback clearDeletedImage;
         EffectCallback effect;
         FailedCallback failed;
     };

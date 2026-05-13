@@ -40,9 +40,6 @@ ImageDocumentRuntime::ImageDocumentRuntime(QObject *documentObject,
         std::move(dependencies.fileOperations),
         ImageDocumentDeletionController::Callbacks {
             [this]() { notify(ImageDocumentChange::FileDeletionInProgress); },
-            [this]() {
-                effectExecutor->dispatchAll(loadController->clearAfterSuccessfulFileDeletion());
-            },
             [this](ImageDocumentEffect effect) { dispatchEffect(std::move(effect)); },
             std::move(fileDeletionFailedCallback),
         });

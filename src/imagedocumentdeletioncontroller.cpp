@@ -23,7 +23,7 @@ ImageDocumentDeletionController::ImageDocumentDeletionController(QObject *parent
         std::move(candidateProvider), std::move(fileOperationProvider),
         ImageDeletionController::Callbacks {
             [this]() { invokeIfSet(m_callbacks.inProgressChanged); },
-            [this]() { invokeIfSet(m_callbacks.clearDeletedImage); },
+            [this]() { report(ImageDocumentEffect::clearDeletedImage()); },
             [this](const QUrl &url) { report(ImageDocumentEffect::openUrl(url)); },
             [this](const QUrl &imageUrl, const QUrl &containerUrl) {
                 report(ImageDocumentEffect::containerImageSelected(imageUrl, containerUrl));

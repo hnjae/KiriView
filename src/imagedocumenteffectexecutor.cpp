@@ -45,6 +45,11 @@ void ImageDocumentEffectExecutor::dispatchPayload(const ClearImageEffect &)
     m_loadController.clearImage();
 }
 
+void ImageDocumentEffectExecutor::dispatchPayload(const ClearDeletedImageEffect &)
+{
+    dispatchAll(m_loadController.clearAfterSuccessfulFileDeletion());
+}
+
 void ImageDocumentEffectExecutor::dispatchPayload(const ResetZoomEffect &)
 {
     m_spreadController.resetZoom();

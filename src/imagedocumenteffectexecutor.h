@@ -28,6 +28,7 @@ public:
 
 private:
     void dispatchPayload(const ClearImageEffect &);
+    void dispatchPayload(const ClearDeletedImageEffect &);
     void dispatchPayload(const ResetZoomEffect &);
     void dispatchPayload(const UpdatePageNavigationEffect &);
     void dispatchPayload(const ScheduleAdjacentImagePredecodeEffect &);

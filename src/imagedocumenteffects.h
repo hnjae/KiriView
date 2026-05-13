@@ -14,6 +14,9 @@ namespace KiriView {
 struct ClearImageEffect {
 };
 
+struct ClearDeletedImageEffect {
+};
+
 struct ResetZoomEffect {
 };
 
@@ -46,12 +49,17 @@ struct PrepareFailedContainerEffect {
 };
 
 struct ImageDocumentEffect {
-    using Payload = std::variant<ClearImageEffect, ResetZoomEffect, UpdatePageNavigationEffect,
-        ScheduleAdjacentImagePredecodeEffect, OpenUrlEffect, ContainerImageSelectedEffect,
-        EmptyContainerSelectedEffect, ContainerNavigationFailedEffect,
+    using Payload = std::variant<ClearImageEffect, ClearDeletedImageEffect, ResetZoomEffect,
+        UpdatePageNavigationEffect, ScheduleAdjacentImagePredecodeEffect, OpenUrlEffect,
+        ContainerImageSelectedEffect, EmptyContainerSelectedEffect, ContainerNavigationFailedEffect,
         PrepareFailedContainerEffect>;
 
     static ImageDocumentEffect clearImage() { return ImageDocumentEffect(ClearImageEffect {}); }
+
+    static ImageDocumentEffect clearDeletedImage()
+    {
+        return ImageDocumentEffect(ClearDeletedImageEffect {});
+    }
 
     static ImageDocumentEffect resetZoom() { return ImageDocumentEffect(ResetZoomEffect {}); }
 
