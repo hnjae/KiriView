@@ -88,7 +88,6 @@ std::optional<ImageCandidateListContext> imageCandidateListContextForDisplayedIm
 class ImageCandidateRepository
 {
 public:
-    ImageCandidateRepository();
     explicit ImageCandidateRepository(ImageNavigationCandidateProvider provider);
 
     ImageIoJob loadImages(QObject *receiver, const ImageCandidateListSource &source,

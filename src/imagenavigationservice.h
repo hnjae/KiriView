@@ -39,9 +39,6 @@ public:
         PageNavigationChangedCallback pageNavigationChanged;
     };
 
-    explicit ImageNavigationService(QObject *parent = nullptr);
-    ImageNavigationService(QObject *parent, Callbacks callbacks);
-    ImageNavigationService(QObject *parent, ImageNavigationCandidateProvider candidateProvider);
     ImageNavigationService(
         QObject *parent, ImageNavigationCandidateProvider candidateProvider, Callbacks callbacks);
 

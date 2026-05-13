@@ -205,11 +205,6 @@ std::optional<ImageCandidateListContext> imageCandidateListContextForDisplayedIm
     return ImageCandidateListContext::forDirectory(currentUrl, parentUrl);
 }
 
-ImageCandidateRepository::ImageCandidateRepository()
-    : ImageCandidateRepository(ImageNavigationCandidateProvider {})
-{
-}
-
 ImageCandidateRepository::ImageCandidateRepository(ImageNavigationCandidateProvider provider)
     : m_provider(imageNavigationCandidateProviderWithDefaults(std::move(provider)))
 {

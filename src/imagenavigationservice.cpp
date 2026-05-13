@@ -48,24 +48,6 @@ std::vector<QUrl> imageNavigationCandidateUrls(
 }
 
 namespace KiriView {
-ImageNavigationService::ImageNavigationService(QObject *parent)
-    : ImageNavigationService(parent, Callbacks {})
-{
-}
-
-ImageNavigationService::ImageNavigationService(QObject *parent, Callbacks callbacks)
-    : QObject(parent)
-    , m_callbacks(std::move(callbacks))
-    , m_candidateRepository()
-{
-}
-
-ImageNavigationService::ImageNavigationService(
-    QObject *parent, ImageNavigationCandidateProvider candidateProvider)
-    : ImageNavigationService(parent, std::move(candidateProvider), Callbacks {})
-{
-}
-
 ImageNavigationService::ImageNavigationService(
     QObject *parent, ImageNavigationCandidateProvider candidateProvider, Callbacks callbacks)
     : QObject(parent)

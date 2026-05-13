@@ -6,9 +6,8 @@
 
 #include "imagedocumenteffects.h"
 #include "imagedocumenttypes.h"
-#include "imagenavigationservice.h"
+#include "imagenavigationtypes.h"
 
-#include <QString>
 #include <QUrl>
 #include <functional>
 #include <memory>
@@ -18,7 +17,9 @@ class QObject;
 
 namespace KiriView {
 class ImageDocumentState;
+class ImageNavigationService;
 class ImagePresentationController;
+struct ImageNavigationCandidateProvider;
 
 class ImageDocumentNavigationController final
 {
@@ -52,7 +53,6 @@ public:
     void clearPageNavigation();
 
 private:
-    ImageNavigationService::DisplayContext displayContext() const;
     void openAdjacentImage(NavigationDirection direction);
     void openAdjacentContainer(NavigationDirection direction);
     void report(ImageDocumentEffect effect);

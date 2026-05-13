@@ -5,11 +5,22 @@
 
 #include "imagecallback.h"
 #include "imagedocumentstate.h"
+#include "imagenavigationservice.h"
 #include "imagepresentationcontroller.h"
 #include "imageviewtext.h"
 
 #include <optional>
 #include <utility>
+
+namespace {
+KiriView::ImageNavigationService::DisplayContext displayContext(
+    const KiriView::ImageDocumentState &state,
+    const KiriView::ImagePresentationController &presentationController)
+{
+    return KiriView::ImageNavigationService::DisplayContext { presentationController.hasImage(),
+        state.displayedImageLocation() };
+}
+}
 
 namespace KiriView {
 ImageDocumentNavigationController::ImageDocumentNavigationController(QObject *parent,
@@ -86,7 +97,7 @@ void ImageDocumentNavigationController::openNextContainer()
 
 void ImageDocumentNavigationController::updatePageNavigation()
 {
-    m_navigationService->updatePageNavigation(displayContext());
+    m_navigationService->updatePageNavigation(displayContext(m_state, m_presentationController));
 }
 
 void ImageDocumentNavigationController::cancelNavigation()
@@ -109,15 +120,10 @@ void ImageDocumentNavigationController::clearPageNavigation()
     m_navigationService->clearPageNavigation();
 }
 
-ImageNavigationService::DisplayContext ImageDocumentNavigationController::displayContext() const
-{
-    return ImageNavigationService::DisplayContext { m_presentationController.hasImage(),
-        m_state.displayedImageLocation() };
-}
-
 void ImageDocumentNavigationController::openAdjacentImage(NavigationDirection direction)
 {
-    m_navigationService->openAdjacentImage(displayContext(), direction);
+    m_navigationService->openAdjacentImage(
+        displayContext(m_state, m_presentationController), direction);
 }
 
 void ImageDocumentNavigationController::openAdjacentContainer(NavigationDirection direction)
