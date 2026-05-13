@@ -10,6 +10,7 @@
 #include <QObject>
 #include <QTest>
 #include <QUrl>
+#include <cstddef>
 #include <optional>
 #include <variant>
 
@@ -44,6 +45,16 @@ template <typename Effect> const Effect *findEffect(const KiriView::ImageDocumen
 template <typename Effect> bool hasEffect(const KiriView::ImageDocumentEffects &effects)
 {
     return findEffect<Effect>(effects) != nullptr;
+}
+
+template <typename Effect>
+bool effectAt(const KiriView::ImageDocumentEffects &effects, std::size_t index)
+{
+    if (index >= effects.size()) {
+        return false;
+    }
+
+    return std::holds_alternative<Effect>(effects.at(index).payload);
 }
 }
 
@@ -121,6 +132,9 @@ void TestImageOpenWorkflow::firstImageLoadSuccessTransitionsToReady()
         = KiriView::ImageOpenWorkflow::beginSourceLoad(state, false);
     QVERIFY(hasEffect<KiriView::ClearImageEffect>(beginEffects));
     QVERIFY(hasEffect<KiriView::ResetZoomEffect>(beginEffects));
+    QCOMPARE(beginEffects.size(), 2);
+    QVERIFY(effectAt<KiriView::ClearImageEffect>(beginEffects, 0));
+    QVERIFY(effectAt<KiriView::ResetZoomEffect>(beginEffects, 1));
     QVERIFY(state.loading());
     QCOMPARE(state.status(), KiriView::ImageDocumentStatus::Loading);
 
@@ -128,6 +142,9 @@ void TestImageOpenWorkflow::firstImageLoadSuccessTransitionsToReady()
         = KiriView::ImageOpenWorkflow::finishSuccessfulImageLoad(
             state, loadSession(imageUrl, imageUrl));
     QVERIFY(hasEffect<KiriView::UpdatePageNavigationEffect>(successEffects));
+    QCOMPARE(successEffects.size(), 2);
+    QVERIFY(effectAt<KiriView::UpdatePageNavigationEffect>(successEffects, 0));
+    QVERIFY(effectAt<KiriView::ScheduleAdjacentImagePredecodeEffect>(successEffects, 1));
     QCOMPARE(state.sourceUrl(), imageUrl);
     QCOMPARE(state.displayedUrl(), imageUrl);
     QVERIFY(state.containerNavigationUrl().isEmpty());

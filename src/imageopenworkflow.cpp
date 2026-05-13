@@ -268,23 +268,35 @@ private:
         }
     }
 
-    void applyEffects(
-        const KiriView::RustImageOpenEffects &effects, const ImageOpenTransitionContext &context)
+    void applyEffects(const rust::Vec<KiriView::RustImageOpenEffect> &effects,
+        const ImageOpenTransitionContext &context)
     {
-        if (effects.clear_image) {
+        for (KiriView::RustImageOpenEffect effect : effects) {
+            applyEffect(effect, context);
+        }
+    }
+
+    void applyEffect(
+        KiriView::RustImageOpenEffect effect, const ImageOpenTransitionContext &context)
+    {
+        switch (effect) {
+        case KiriView::RustImageOpenEffect::ClearImage:
             add(KiriView::ImageDocumentEffect::clearImage());
-        }
-        if (effects.reset_zoom) {
+            return;
+        case KiriView::RustImageOpenEffect::ResetZoom:
             add(KiriView::ImageDocumentEffect::resetZoom());
-        }
-        if (effects.update_page_navigation) {
+            return;
+        case KiriView::RustImageOpenEffect::UpdatePageNavigation:
             add(KiriView::ImageDocumentEffect::updatePageNavigation());
-        }
-        if (effects.schedule_adjacent_image_predecode) {
+            return;
+        case KiriView::RustImageOpenEffect::ScheduleAdjacentImagePredecode:
             add(KiriView::ImageDocumentEffect::scheduleAdjacentImagePredecode());
-        }
-        if (effects.prepare_failed_container && context.containerUrl != nullptr) {
-            add(KiriView::ImageDocumentEffect::prepareFailedContainer(*context.containerUrl));
+            return;
+        case KiriView::RustImageOpenEffect::PrepareFailedContainer:
+            if (context.containerUrl != nullptr) {
+                add(KiriView::ImageDocumentEffect::prepareFailedContainer(*context.containerUrl));
+            }
+            return;
         }
     }
 
