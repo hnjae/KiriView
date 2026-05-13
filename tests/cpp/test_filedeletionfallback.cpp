@@ -61,6 +61,7 @@ void TestFileDeletionFallback::comicBookPagePlanUsesArchiveContainer()
 
     QVERIFY(comicBookPlan != nullptr);
     QCOMPARE(comicBookPlan->currentContainerUrl, archiveUrl);
+    QCOMPARE(comicBookPlan->candidateDirectoryUrl, localUrl(QStringLiteral("/books/")));
     QCOMPARE(comicBookPlan->currentName, QStringLiteral("book.cbz"));
 }
 
@@ -124,6 +125,7 @@ void TestFileDeletionFallback::comicBookFallbackKeepsNextAndPreviousCandidates()
 {
     const KiriView::ComicBookDeletionFallbackPlan plan {
         localUrl(QStringLiteral("/books/b.cbz")),
+        localUrl(QStringLiteral("/books/")),
         QStringLiteral("b.cbz"),
     };
 

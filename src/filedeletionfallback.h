@@ -26,6 +26,7 @@ struct ImageDeletionFallbackPlan {
 
 struct ComicBookDeletionFallbackPlan {
     QUrl currentContainerUrl;
+    QUrl candidateDirectoryUrl;
     QString currentName;
 };
 

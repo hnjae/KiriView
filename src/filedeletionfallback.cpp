@@ -70,7 +70,7 @@ DeletionFallbackPlan deletionFallbackPlanForDisplayedLocation(
 
         const QUrl currentContainerUrl = containerNavigationUrlForLocation(location);
         return ComicBookDeletionFallbackPlan { currentContainerUrl,
-            currentContainerUrl.fileName() };
+            parentUrlForContainerNavigation(currentContainerUrl), currentContainerUrl.fileName() };
     }
 
     const std::optional<ImageCandidateListContext> imageContext

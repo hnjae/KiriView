@@ -98,17 +98,13 @@ void ImageDeletionController::openDeletionFallbackPlan(
 void ImageDeletionController::openDeletionFallbackPlan(
     const ComicBookDeletionFallbackPlan &fallbackPlan)
 {
-    if (fallbackPlan.currentContainerUrl.isEmpty()) {
-        return;
-    }
-
-    const QUrl parentUrl = parentUrlForContainerNavigation(fallbackPlan.currentContainerUrl);
-    if (!parentUrl.isValid() || parentUrl.isEmpty()) {
+    if (!fallbackPlan.candidateDirectoryUrl.isValid()
+        || fallbackPlan.candidateDirectoryUrl.isEmpty()) {
         return;
     }
 
     m_fallbackJob = m_candidateRepository.loadContainers(
-        this, parentUrl,
+        this, fallbackPlan.candidateDirectoryUrl,
         [this, fallbackPlan](std::vector<ContainerNavigationCandidate> candidates) {
             const ComicBookDeletionFallbackCandidates fallbackCandidates
                 = comicBookDeletionFallbackCandidates(std::move(candidates), fallbackPlan);
