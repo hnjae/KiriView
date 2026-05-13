@@ -52,6 +52,27 @@ ImageOpenTransitionContext transitionContextForAnimationError(const QString &err
     return context;
 }
 
+KiriView::RustImageOpenLoadErrorRequest sourceLoadErrorRequest(
+    bool containerNavigationUrlEmpty, bool hasImage, bool displayedUrlEmpty)
+{
+    return KiriView::RustImageOpenLoadErrorRequest {
+        KiriView::RustImageOpenLoadErrorKind::SourceLoad,
+        containerNavigationUrlEmpty,
+        hasImage,
+        displayedUrlEmpty,
+    };
+}
+
+KiriView::RustImageOpenLoadErrorRequest loadErrorRequest(KiriView::RustImageOpenLoadErrorKind kind)
+{
+    return KiriView::RustImageOpenLoadErrorRequest {
+        kind,
+        true,
+        false,
+        true,
+    };
+}
+
 KiriView::ImageDocumentStatus documentStatus(KiriView::RustImageOpenStatusTarget status)
 {
     switch (status) {
@@ -301,8 +322,8 @@ ImageDocumentEffects ImageOpenWorkflow::finishLoadWithError(ImageDocumentState &
     const QUrl containerUrl = session.request.containerNavigationUrl();
     const QUrl displayedUrl = state.displayedUrl();
     transition.applyFinishLoadWithError(
-        rustImageOpenFinishLoadWithError(RustImageOpenLoadErrorRequest {
-            containerUrl.isEmpty(), hasImage, displayedUrl.isEmpty() }),
+        rustImageOpenFinishLoadWithError(
+            sourceLoadErrorRequest(containerUrl.isEmpty(), hasImage, displayedUrl.isEmpty())),
         transitionContextForLoadError(session, containerUrl, displayedUrl, errorString));
     return transition.takeEffects();
 }
@@ -311,7 +332,8 @@ ImageDocumentEffects ImageOpenWorkflow::finishContainerNavigationLoadWithError(
     ImageDocumentState &state, const QUrl &containerUrl, const QString &errorString)
 {
     ImageOpenTransition transition(state);
-    transition.applyFinishLoadWithError(rustImageOpenFinishContainerNavigationLoadWithError(),
+    transition.applyFinishLoadWithError(rustImageOpenFinishLoadWithError(loadErrorRequest(
+                                            RustImageOpenLoadErrorKind::ContainerNavigation)),
         transitionContextForContainerNavigationError(containerUrl, errorString));
     return transition.takeEffects();
 }
@@ -320,7 +342,8 @@ ImageDocumentEffects ImageOpenWorkflow::finishAnimationLoadWithError(
     ImageDocumentState &state, const QString &errorString)
 {
     ImageOpenTransition transition(state);
-    transition.applyFinishLoadWithError(rustImageOpenFinishAnimationLoadWithError(),
+    transition.applyFinishLoadWithError(
+        rustImageOpenFinishLoadWithError(loadErrorRequest(RustImageOpenLoadErrorKind::Animation)),
         transitionContextForAnimationError(errorString));
     return transition.takeEffects();
 }
