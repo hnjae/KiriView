@@ -25,23 +25,19 @@ KiriView::ImageSurfaceDrawEntry fullImageDrawEntry(const QImage &image, const QR
     };
 }
 
-KiriView::RustImageRenderRect rustImageRenderRect(const QRect &rect)
-{
-    return KiriView::RustImageRenderRect { rect.x(), rect.y(), rect.width(), rect.height() };
-}
-
 QRectF tileTargetRect(const QRect &sourceRect, const QSize &imageSize, const QRectF &targetRect)
 {
-    return KiriView::Bridge::qtRectF(
-        KiriView::rustImageTileTargetRect(rustImageRenderRect(sourceRect),
-            KiriView::Bridge::rustSize<KiriView::RustImageRenderSize>(imageSize),
-            KiriView::Bridge::rustRectF<KiriView::RustImageRenderRectF>(targetRect)));
+    return KiriView::Bridge::qtRectF(KiriView::rustImageTileTargetRect(
+        KiriView::Bridge::rustRect<KiriView::RustImageRenderRect>(sourceRect),
+        KiriView::Bridge::rustSize<KiriView::RustImageRenderSize>(imageSize),
+        KiriView::Bridge::rustRectF<KiriView::RustImageRenderRectF>(targetRect)));
 }
 
 QRectF tileTextureRect(const KiriView::DecodedTile &tile)
 {
     return KiriView::Bridge::qtRectF(KiriView::rustImageTileTextureRect(
-        rustImageRenderRect(tile.levelRect), rustImageRenderRect(tile.textureLevelRect)));
+        KiriView::Bridge::rustRect<KiriView::RustImageRenderRect>(tile.levelRect),
+        KiriView::Bridge::rustRect<KiriView::RustImageRenderRect>(tile.textureLevelRect)));
 }
 
 std::optional<KiriView::ImageSurfaceDrawEntry> staticTileDrawEntry(

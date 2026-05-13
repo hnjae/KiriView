@@ -5,6 +5,7 @@
 #define KIRIVIEW_QTGEOMETRYCONVERSION_H
 
 #include <QPointF>
+#include <QRect>
 #include <QRectF>
 #include <QSize>
 #include <QSizeF>
@@ -24,6 +25,11 @@ template <typename RustSizeF> RustSizeF rustSizeF(const QSizeF &size)
 template <typename RustPointF> RustPointF rustPointF(const QPointF &point)
 {
     return RustPointF { point.x(), point.y() };
+}
+
+template <typename RustRect> RustRect rustRect(const QRect &rect)
+{
+    return RustRect { rect.x(), rect.y(), rect.width(), rect.height() };
 }
 
 template <typename RustRectF> RustRectF rustRectF(const QRectF &rect)
@@ -46,6 +52,11 @@ inline QSizeF qtSizeF(qreal width, qreal height) { return QSizeF(width, height);
 template <typename RustPointF> QPointF qtPointF(const RustPointF &point)
 {
     return QPointF(point.x, point.y);
+}
+
+template <typename RustRect> QRect qtRect(const RustRect &rect)
+{
+    return QRect(rect.x, rect.y, rect.width, rect.height);
 }
 
 template <typename RustRectF> QRectF qtRectF(const RustRectF &rect)

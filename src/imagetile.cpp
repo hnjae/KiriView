@@ -5,6 +5,7 @@
 
 #include "imagebytecost.h"
 #include "kiriview/src/imagetilegeometry.cxx.h"
+#include "qtgeometryconversion.h"
 
 #include <algorithm>
 #include <cstdint>
@@ -13,24 +14,17 @@
 namespace {
 KiriView::RustTileSize rustTileSize(const QSize &size)
 {
-    return KiriView::RustTileSize { size.width(), size.height() };
+    return KiriView::Bridge::rustSize<KiriView::RustTileSize>(size);
 }
 
 KiriView::RustTileRect rustTileRect(const QRect &rect)
 {
-    return KiriView::RustTileRect { rect.x(), rect.y(), rect.width(), rect.height() };
+    return KiriView::Bridge::rustRect<KiriView::RustTileRect>(rect);
 }
 
 KiriView::RustTileKey rustTileKey(const KiriView::TileKey &key)
 {
     return KiriView::RustTileKey { key.level, key.x, key.y };
-}
-
-QSize qtSize(const KiriView::RustTileSize &size) { return QSize(size.width, size.height); }
-
-QRect qtRect(const KiriView::RustTileRect &rect)
-{
-    return QRect(rect.x, rect.y, rect.width, rect.height);
 }
 
 KiriView::TileKey tileKeyFromRust(const KiriView::RustTileKey &key)
@@ -42,10 +36,10 @@ KiriView::TileRequest tileRequestFromRust(const KiriView::RustTileRequest &reque
 {
     return KiriView::TileRequest {
         tileKeyFromRust(request.key),
-        qtSize(request.level_size),
-        qtRect(request.level_rect),
-        qtRect(request.texture_level_rect),
-        qtRect(request.source_rect),
+        KiriView::Bridge::qtSize(request.level_size),
+        KiriView::Bridge::qtRect(request.level_rect),
+        KiriView::Bridge::qtRect(request.texture_level_rect),
+        KiriView::Bridge::qtRect(request.source_rect),
     };
 }
 
@@ -86,7 +80,8 @@ QSize TilePyramid::levelSize(int level) const
 
 QSize TilePyramid::tileGridSize(int level) const
 {
-    return qtSize(rustTilePyramidTileGridSize(rustTileSize(m_imageSize), m_tileSize, level));
+    return Bridge::qtSize(
+        rustTilePyramidTileGridSize(rustTileSize(m_imageSize), m_tileSize, level));
 }
 
 bool TilePyramid::containsLevel(int level) const
@@ -107,19 +102,19 @@ int TilePyramid::selectLevelForDisplayScale(qreal displayPixelsPerSourcePixel) c
 
 QRect TilePyramid::levelTileRect(const TileKey &key) const
 {
-    return qtRect(
+    return Bridge::qtRect(
         rustTilePyramidLevelTileRect(rustTileSize(m_imageSize), m_tileSize, rustTileKey(key)));
 }
 
 QRect TilePyramid::levelTileTextureRect(const TileKey &key) const
 {
-    return qtRect(rustTilePyramidLevelTileTextureRect(
+    return Bridge::qtRect(rustTilePyramidLevelTileTextureRect(
         rustTileSize(m_imageSize), m_tileSize, m_apronSourcePixels, rustTileKey(key)));
 }
 
 QRect TilePyramid::sourceRectForLevelRect(int level, const QRect &levelRect) const
 {
-    return qtRect(rustTilePyramidSourceRectForLevelRect(
+    return Bridge::qtRect(rustTilePyramidSourceRectForLevelRect(
         rustTileSize(m_imageSize), level, rustTileRect(levelRect)));
 }
 
@@ -148,7 +143,7 @@ void TilePyramid::rebuildLevels()
     const rust::Vec<RustTileLevel> rustLevels = rustTilePyramidLevels(rustTileSize(m_imageSize));
     m_levels.reserve(rustLevels.size());
     for (const RustTileLevel &level : rustLevels) {
-        m_levels.push_back(TileLevel { level.index, qtSize(level.size) });
+        m_levels.push_back(TileLevel { level.index, Bridge::qtSize(level.size) });
     }
 }
 

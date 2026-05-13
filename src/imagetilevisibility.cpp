@@ -4,26 +4,22 @@
 #include "imagetilevisibility.h"
 
 #include "kiriview/src/imagetilegeometry.cxx.h"
+#include "qtgeometryconversion.h"
 
 namespace {
 KiriView::RustTileSize rustTileSize(const QSize &size)
 {
-    return KiriView::RustTileSize { size.width(), size.height() };
+    return KiriView::Bridge::rustSize<KiriView::RustTileSize>(size);
 }
 
 KiriView::RustTileSizeF rustTileSizeF(const QSizeF &size)
 {
-    return KiriView::RustTileSizeF { size.width(), size.height() };
+    return KiriView::Bridge::rustSizeF<KiriView::RustTileSizeF>(size);
 }
 
 KiriView::RustTileRectF rustTileRectF(const QRectF &rect)
 {
-    return KiriView::RustTileRectF { rect.x(), rect.y(), rect.width(), rect.height() };
-}
-
-QRect qtRect(const KiriView::RustTileRect &rect)
-{
-    return QRect(rect.x, rect.y, rect.width, rect.height);
+    return KiriView::Bridge::rustRectF<KiriView::RustTileRectF>(rect);
 }
 
 KiriView::TileKey tileKeyFromRust(const KiriView::RustTileKey &key)
@@ -50,7 +46,7 @@ bool tileFirstDisplayIsSufficient(const TilePyramid &pyramid, const QSizeF &disp
 QRect tileLevelRectForItemRect(
     const TilePyramid &pyramid, int level, const QSizeF &displaySize, const QRectF &itemRect)
 {
-    return qtRect(rustTileLevelRectForItemRect(rustTileSize(pyramid.imageSize()), level,
+    return Bridge::qtRect(rustTileLevelRectForItemRect(rustTileSize(pyramid.imageSize()), level,
         rustTileSizeF(displaySize), rustTileRectF(itemRect)));
 }
 
