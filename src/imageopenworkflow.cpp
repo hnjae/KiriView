@@ -185,6 +185,41 @@ KiriView::ImageOpenSourceLoadPlan imageOpenSourceLoadPlan(
     return plan;
 }
 
+std::optional<KiriView::ImageDocumentEffect> imageOpenEffect(
+    KiriView::RustImageOpenEffect effect, const ImageOpenTransitionContext &context)
+{
+    switch (effect) {
+    case KiriView::RustImageOpenEffect::ClearImage:
+        return KiriView::ImageDocumentEffect::clearImage();
+    case KiriView::RustImageOpenEffect::ResetZoom:
+        return KiriView::ImageDocumentEffect::resetZoom();
+    case KiriView::RustImageOpenEffect::UpdatePageNavigation:
+        return KiriView::ImageDocumentEffect::updatePageNavigation();
+    case KiriView::RustImageOpenEffect::ScheduleAdjacentImagePredecode:
+        return KiriView::ImageDocumentEffect::scheduleAdjacentImagePredecode();
+    case KiriView::RustImageOpenEffect::PrepareFailedContainer:
+        if (context.containerUrl.has_value()) {
+            return KiriView::ImageDocumentEffect::prepareFailedContainer(*context.containerUrl);
+        }
+        return std::nullopt;
+    }
+
+    return std::nullopt;
+}
+
+void appendImageOpenEffects(KiriView::ImageDocumentEffects *documentEffects,
+    const rust::Vec<KiriView::RustImageOpenEffect> &effects,
+    const ImageOpenTransitionContext &context)
+{
+    for (KiriView::RustImageOpenEffect effect : effects) {
+        std::optional<KiriView::ImageDocumentEffect> documentEffect
+            = imageOpenEffect(effect, context);
+        if (documentEffect.has_value()) {
+            documentEffects->push_back(std::move(*documentEffect));
+        }
+    }
+}
+
 class ImageOpenTransitionApplier final
 {
 public:
@@ -238,8 +273,6 @@ public:
     KiriView::ImageDocumentEffects takeEffects() { return std::move(m_effects); }
 
 private:
-    void add(KiriView::ImageDocumentEffect effect) { m_effects.push_back(std::move(effect)); }
-
     void applyTrackedLoadCompletion(const KiriView::RustImageOpenTransition &transition)
     {
         if (transition.clear_loading_container_navigation_url) {
@@ -313,33 +346,7 @@ private:
     void applyEffects(const rust::Vec<KiriView::RustImageOpenEffect> &effects,
         const ImageOpenTransitionContext &context)
     {
-        for (KiriView::RustImageOpenEffect effect : effects) {
-            applyEffect(effect, context);
-        }
-    }
-
-    void applyEffect(
-        KiriView::RustImageOpenEffect effect, const ImageOpenTransitionContext &context)
-    {
-        switch (effect) {
-        case KiriView::RustImageOpenEffect::ClearImage:
-            add(KiriView::ImageDocumentEffect::clearImage());
-            return;
-        case KiriView::RustImageOpenEffect::ResetZoom:
-            add(KiriView::ImageDocumentEffect::resetZoom());
-            return;
-        case KiriView::RustImageOpenEffect::UpdatePageNavigation:
-            add(KiriView::ImageDocumentEffect::updatePageNavigation());
-            return;
-        case KiriView::RustImageOpenEffect::ScheduleAdjacentImagePredecode:
-            add(KiriView::ImageDocumentEffect::scheduleAdjacentImagePredecode());
-            return;
-        case KiriView::RustImageOpenEffect::PrepareFailedContainer:
-            if (context.containerUrl.has_value()) {
-                add(KiriView::ImageDocumentEffect::prepareFailedContainer(*context.containerUrl));
-            }
-            return;
-        }
+        appendImageOpenEffects(&m_effects, effects, context);
     }
 
     KiriView::ImageDocumentState &m_state;
