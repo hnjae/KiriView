@@ -170,6 +170,12 @@ if(TARGET test_localization)
     )
 endif()
 
+if(TARGET test_boundarynotification)
+    set_tests_properties(test_boundarynotification PROPERTIES
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+    )
+endif()
+
 add_test(
     NAME test_desktop_file_validate
     COMMAND "${DESKTOP_FILE_VALIDATE_EXECUTABLE}" "${KIRIVIEW_TEST_DESKTOP_FILE}"
