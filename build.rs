@@ -40,6 +40,7 @@ const RUST_BRIDGE_SOURCES: &[&str] = &[
     "src/imagerendergeometry.rs",
     "src/imageurl.rs",
     "src/imagespreadgeometry.rs",
+    "src/imagespreadnavigation.rs",
     "src/imagetilegeometry.rs",
     "src/imagenavigationmodel.rs",
     "src/imageviewportgeometry.rs",

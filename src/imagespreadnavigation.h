@@ -20,6 +20,13 @@ struct ImageSpreadPageNavigationTarget {
     int pageNumber = 0;
 };
 
+int imageSpreadPreviousPageTarget(
+    int currentPageNumber, bool secondaryPageVisible, bool previousPageIsWide);
+int imageSpreadCurrentLastPageNumber(int currentPageNumber, bool secondaryPageVisible);
+int imageSpreadRelativePageTarget(int currentPageNumber, int imageCount, int offset);
+int imageSpreadNextPageTarget(int currentLastPageNumber, int imageCount);
+bool imageSpreadShouldBeginTransition(
+    bool twoPageModeActive, int currentPageNumber, int targetPageNumber, int imageCount);
 int imageSpreadNavigationCurrentLastPageNumber(const ImageSpreadNavigationState &state);
 ImageSpreadPageNavigationTarget imageSpreadPageNavigationTarget(
     NavigationDirection direction, const ImageSpreadNavigationState &state);

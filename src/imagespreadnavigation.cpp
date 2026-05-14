@@ -3,7 +3,7 @@
 
 #include "imagespreadnavigation.h"
 
-#include "kiriview/src/imagespreadgeometry.cxx.h"
+#include "kiriview/src/imagespreadnavigation.cxx.h"
 
 namespace {
 KiriView::RustImageSpreadNavigationDirection rustNavigationDirection(
@@ -36,6 +36,35 @@ KiriView::ImageSpreadPageNavigationTarget imageSpreadPageNavigationTargetFromRus
 }
 
 namespace KiriView {
+int imageSpreadPreviousPageTarget(
+    int currentPageNumber, bool secondaryPageVisible, bool previousPageIsWide)
+{
+    return rustImageSpreadPreviousPageTarget(
+        currentPageNumber, secondaryPageVisible, previousPageIsWide);
+}
+
+int imageSpreadCurrentLastPageNumber(int currentPageNumber, bool secondaryPageVisible)
+{
+    return rustImageSpreadCurrentLastPageNumber(currentPageNumber, secondaryPageVisible);
+}
+
+int imageSpreadRelativePageTarget(int currentPageNumber, int imageCount, int offset)
+{
+    return rustImageSpreadRelativePageTarget(currentPageNumber, imageCount, offset);
+}
+
+int imageSpreadNextPageTarget(int currentLastPageNumber, int imageCount)
+{
+    return rustImageSpreadNextPageTarget(currentLastPageNumber, imageCount);
+}
+
+bool imageSpreadShouldBeginTransition(
+    bool twoPageModeActive, int currentPageNumber, int targetPageNumber, int imageCount)
+{
+    return rustImageSpreadShouldBeginTransition(
+        twoPageModeActive, currentPageNumber, targetPageNumber, imageCount);
+}
+
 int imageSpreadNavigationCurrentLastPageNumber(const ImageSpreadNavigationState &state)
 {
     return rustImageSpreadNavigationCurrentLastPageNumber(rustNavigationState(state));

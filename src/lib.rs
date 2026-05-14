@@ -17,6 +17,7 @@ mod imagenavigationmodel;
 mod imageopenworkflow;
 mod imagerendergeometry;
 mod imagespreadgeometry;
+mod imagespreadnavigation;
 mod imagetilegeometry;
 mod imageurl;
 mod imageviewportgeometry;

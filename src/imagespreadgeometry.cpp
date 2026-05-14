@@ -70,35 +70,6 @@ bool imageSpreadPageIsWide(const QSize &imageSize)
     return rustImageSpreadPageIsWide(Bridge::rustSize<RustImageSpreadSize>(imageSize));
 }
 
-int imageSpreadPreviousPageTarget(
-    int currentPageNumber, bool secondaryPageVisible, bool previousPageIsWide)
-{
-    return rustImageSpreadPreviousPageTarget(
-        currentPageNumber, secondaryPageVisible, previousPageIsWide);
-}
-
-int imageSpreadCurrentLastPageNumber(int currentPageNumber, bool secondaryPageVisible)
-{
-    return rustImageSpreadCurrentLastPageNumber(currentPageNumber, secondaryPageVisible);
-}
-
-int imageSpreadRelativePageTarget(int currentPageNumber, int imageCount, int offset)
-{
-    return rustImageSpreadRelativePageTarget(currentPageNumber, imageCount, offset);
-}
-
-int imageSpreadNextPageTarget(int currentLastPageNumber, int imageCount)
-{
-    return rustImageSpreadNextPageTarget(currentLastPageNumber, imageCount);
-}
-
-bool imageSpreadShouldBeginTransition(
-    bool twoPageModeActive, int currentPageNumber, int targetPageNumber, int imageCount)
-{
-    return rustImageSpreadShouldBeginTransition(
-        twoPageModeActive, currentPageNumber, targetPageNumber, imageCount);
-}
-
 ImageSpreadSecondaryPageDecision imageSpreadSecondaryPageDecision(bool twoPageModeActive,
     int currentPageNumber, int imageCount, bool primaryPageIsWide, bool nextPageAvailable,
     bool nextPageIsWide, bool currentSecondaryMatchesNext)
