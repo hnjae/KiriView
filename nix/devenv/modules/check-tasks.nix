@@ -9,10 +9,42 @@
 let
   qtCxxqt = import ../internal/qt-cxxqt.nix { inherit config pkgs lib; };
   repoRoot = lib.escapeShellArg config.devenv.root;
+  hostRuntimeLibraryPath = lib.concatStringsSep ":" [
+    "${config.devenv.root}/.devenv/profile/lib"
+    (lib.makeLibraryPath [ (lib.getLib pkgs.stdenv.cc.cc) ])
+  ];
   hostTaskPrelude = ''
     set -euo pipefail
 
     cd ${repoRoot}
+
+    host_runtime_library_path=${lib.escapeShellArg hostRuntimeLibraryPath}
+    nix_runtime_library_path=""
+    nix_ldflags=( ''${NIX_LDFLAGS:-} )
+    for ((i = 0; i < ''${#nix_ldflags[@]}; i++)); do
+        case "''${nix_ldflags[$i]}" in
+        -L)
+            ((i += 1))
+            library_path="''${nix_ldflags[$i]:-}"
+            ;;
+        -L*)
+            library_path="''${nix_ldflags[$i]#-L}"
+            ;;
+        *)
+            continue
+            ;;
+        esac
+
+        if [[ -d $library_path ]]; then
+            nix_runtime_library_path="''${nix_runtime_library_path:+$nix_runtime_library_path:}$library_path"
+        fi
+    done
+    export LD_LIBRARY_PATH="$host_runtime_library_path''${nix_runtime_library_path:+:$nix_runtime_library_path}''${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+  '';
+  rustHostLinkerPrelude = ''
+    # rustc warns when the host toolchain links through deprecated GNU gold.
+    # Force LLD while preserving any caller-provided Rust flags.
+    export RUSTFLAGS="''${RUSTFLAGS:+$RUSTFLAGS }-C link-arg=-fuse-ld=lld"
   '';
   testJobsPrelude = ''
     test_jobs="''${KIRIVIEW_TEST_JOBS:-$(nproc)}"
@@ -224,6 +256,7 @@ in
       description = "Run host Rust library tests";
       exec = ''
         ${hostTaskPrelude}
+        ${rustHostLinkerPrelude}
         ${testJobsPrelude}
 
         printf 'Running host Rust tests with %d jobs...\n' "$test_jobs"
@@ -278,6 +311,7 @@ in
       description = "Run Rust clippy";
       exec = ''
         ${hostTaskPrelude}
+        ${rustHostLinkerPrelude}
         ${lintJobsPrelude}
 
         cargo clippy \
