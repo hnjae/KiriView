@@ -275,9 +275,13 @@ still scans backward or opens the previous image, `<` jumps to scan start, and
 
 The toolbar provides page navigation with Previous and Next actions, the current
 page number, the total number of supported images in the current directory or
-archive scope, and editable page number entry. The Previous action is disabled
-on the first image, and the Next action is disabled on the last image. Page
-numbers are shown to users starting at 1. Entering a valid page number opens
+archive scope after that scope's candidate list has been confirmed, and editable
+page number entry. The Previous action is disabled on the first image, and the
+Next action is disabled on the last image. Page numbers are shown to users
+starting at 1. When a new directory or archive scope is being listed and
+KiriView has no confirmed candidate list for that same scope yet, the current
+page number and total image count are unknown, and KiriView does not treat the
+current image as the first or last image. Entering a valid page number opens
 that image; entering an invalid number leaves the current image open and
 restores the displayed page number.
 When moving between images in the current directory or archive scope, the
@@ -322,7 +326,9 @@ that archive URL.
 When an image is displayed from a local CBZ, CBT, CB7, CBR, ZIP, TAR, 7Z, or
 RAR archive document opened directly by KiriView, navigation moves between all
 supported image files inside that archive document, including images in
-subdirectories.
+subdirectories. After the archive document has been listed, page navigation uses
+all supported image files inside that archive document as its navigation target
+set.
 
 The previous and next files are determined by sorting candidate names with the
 user's locale-aware file name order. For ordinary directory navigation, the
@@ -330,7 +336,9 @@ candidate name is the file name. For archive documents opened directly by
 KiriView, candidate names are archive-relative paths such as `foo/a.jpg` and
 `bar/a.jpg`. Navigation does not wrap; pressing Page Up on the first candidate
 or Page Down on the last candidate keeps the current image open and notifies the
-user that it is the first or last image.
+user that it is the first or last image. KiriView shows those first-image and
+last-image notifications only when the current candidate list is known and the
+current image is at a known boundary.
 
 If the parent URL cannot be listed, the current image is not found, or no
 adjacent supported image exists, the current image remains open and the app
