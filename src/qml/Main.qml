@@ -215,11 +215,11 @@ StatefulApp.StatefulWindow {
             target: page.imageDocument
 
             function onDisplayedUrlChanged() {
-                boundaryNotification.dismiss();
+                toastNotification.dismissIfScope("image-boundary");
             }
 
             function onFileDeletionFailed(errorString) {
-                root.showPassiveNotification(errorString);
+                toastNotification.show(errorString, "general");
             }
         }
 
@@ -231,7 +231,7 @@ StatefulApp.StatefulWindow {
             imageViewport: imageViewport
 
             onImageBoundaryReached: function (message) {
-                boundaryNotification.show(message);
+                toastNotification.show(message, "image-boundary");
             }
         }
 
@@ -242,8 +242,8 @@ StatefulApp.StatefulWindow {
             openAction: imageActions.openAction
         }
 
-        BoundaryNotification {
-            id: boundaryNotification
+        ToastNotification {
+            id: toastNotification
 
             anchors.bottom: parent.bottom
             anchors.horizontalCenter: parent.horizontalCenter
