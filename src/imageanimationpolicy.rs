@@ -65,7 +65,7 @@ fn rust_animation_frame_delay_from_timescale(duration: u32, timescale: u32) -> i
     }
 
     let scale = u64::from(timescale);
-    let delay_ms = (u64::from(duration) * MILLISECONDS_PER_SECOND + scale - 1) / scale;
+    let delay_ms = (u64::from(duration) * MILLISECONDS_PER_SECOND).div_ceil(scale);
     delay_ms.min(i32::MAX as u64) as i32
 }
 
