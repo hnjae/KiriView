@@ -48,7 +48,7 @@ private Q_SLOTS:
     void adjacentImageNavigationDoesNotWrap();
     void adjacentContainerNavigationUsesTheSameRules();
     void pageNavigationTargetSkipsInvalidCurrentAndOutOfRangePages();
-    void pageNavigationPreviewReusesKnownListOrFallsBack();
+    void pageNavigationPreviewReusesKnownList();
     void pageNavigationPreviewKeepsKnownListWhenCurrentTemporarilyMissing();
     void pageNavigationInsertsFallbackCurrentUrl();
     void pageNavigationUpdateKeepsCandidateListWhenCurrentMissing();
@@ -130,7 +130,7 @@ void TestImageNavigationModel::pageNavigationTargetSkipsInvalidCurrentAndOutOfRa
     QVERIFY(!target.has_value());
 }
 
-void TestImageNavigationModel::pageNavigationPreviewReusesKnownListOrFallsBack()
+void TestImageNavigationModel::pageNavigationPreviewReusesKnownList()
 {
     const PageNavigationState knownState {
         { indexedImageUrl(0), indexedImageUrl(1), indexedImageUrl(2) },
@@ -149,6 +149,10 @@ void TestImageNavigationModel::pageNavigationPreviewReusesKnownListOrFallsBack()
     state = KiriView::pageNavigationStateForCurrentUrl(knownState, QUrl());
     QCOMPARE(state.currentIndex, -1);
     QVERIFY(state.urls.empty());
+
+    state = KiriView::pageNavigationStateForCurrentUrl(PageNavigationState {}, indexedImageUrl(9));
+    QCOMPARE(state.currentIndex, -1);
+    QVERIFY(state.urls.empty());
 }
 
 void TestImageNavigationModel::pageNavigationPreviewKeepsKnownListWhenCurrentTemporarilyMissing()
@@ -164,10 +168,10 @@ void TestImageNavigationModel::pageNavigationPreviewKeepsKnownListWhenCurrentTem
     compareUrls(state.urls, knownState.urls);
 
     PageNavigationState emptyState {};
-    const PageNavigationState singletonState
+    const PageNavigationState unknownState
         = KiriView::pageNavigationStateForCurrentUrl(emptyState, indexedImageUrl(9));
-    QCOMPARE(singletonState.currentIndex, 0);
-    compareUrls(singletonState.urls, { indexedImageUrl(9) });
+    QCOMPARE(unknownState.currentIndex, -1);
+    QVERIFY(unknownState.urls.empty());
 }
 
 void TestImageNavigationModel::pageNavigationInsertsFallbackCurrentUrl()

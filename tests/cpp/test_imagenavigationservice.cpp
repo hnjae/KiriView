@@ -8,12 +8,14 @@
 #include <QObject>
 #include <QTest>
 #include <QUrl>
+#include <memory>
 #include <optional>
 #include <utility>
 #include <vector>
 
 namespace {
 using KiriView::ContainerNavigationCandidateType;
+using KiriView::ImageNavigationCandidate;
 using KiriView::NavigationDirection;
 using KiriView::TestSupport::archivePageUrl;
 using KiriView::TestSupport::containerCandidate;
@@ -33,6 +35,74 @@ KiriView::ImageNavigationService::Callbacks navigationCallbacks(
         std::move(openContainerImage), std::move(containerNavigationError),
         std::move(pageNavigationChanged) };
 }
+
+struct ManualImageCandidateList {
+    QObject *object = nullptr;
+    KiriView::ArchiveDocumentLocation archiveDocument;
+    KiriView::ImageCandidatesCallback callback;
+    KiriView::ErrorCallback errorCallback;
+    std::shared_ptr<KiriView::ImageIoJobState> state;
+    bool canceled = false;
+};
+
+class ManualArchiveImageCandidateProvider
+{
+public:
+    KiriView::ImageIoJob start(QObject *receiver, KiriView::ArchiveDocumentLocation archiveDocument,
+        KiriView::ImageCandidatesCallback callback, KiriView::ErrorCallback errorCallback)
+    {
+        auto load = std::make_shared<ManualImageCandidateList>();
+        load->archiveDocument = std::move(archiveDocument);
+        load->callback = std::move(callback);
+        load->errorCallback = std::move(errorCallback);
+
+        KiriView::ImageIoJob job = KiriView::TestSupport::Detail::startManualIoJob(receiver, load);
+        m_loads.push_back(load);
+        return job;
+    }
+
+    std::size_t loadCount() const { return m_loads.size(); }
+
+    ManualImageCandidateList &backLoad() { return *m_loads.back(); }
+
+    void finishBackLoad(std::vector<ImageNavigationCandidate> candidates)
+    {
+        KiriView::TestSupport::Detail::finishManualIoJob(m_loads.back(),
+            [candidates = std::move(candidates)](ManualImageCandidateList &load) mutable {
+                if (load.callback) {
+                    load.callback(std::move(candidates));
+                }
+            });
+    }
+
+    KiriView::ImageNavigationCandidateProvider provider()
+    {
+        return KiriView::ImageNavigationCandidateProvider {
+            [](QObject *, QUrl, KiriView::ImageCandidatesCallback,
+                KiriView::ErrorCallback errorCallback) {
+                if (errorCallback) {
+                    errorCallback(QStringLiteral("unexpected directory image listing"));
+                }
+                return KiriView::ImageIoJob();
+            },
+            [](QObject *, QUrl, KiriView::ContainerCandidatesCallback,
+                KiriView::ErrorCallback errorCallback) {
+                if (errorCallback) {
+                    errorCallback(QStringLiteral("unexpected container listing"));
+                }
+                return KiriView::ImageIoJob();
+            },
+            [this](QObject *receiver, KiriView::ArchiveDocumentLocation archiveDocument,
+                KiriView::ImageCandidatesCallback callback, KiriView::ErrorCallback errorCallback) {
+                return start(receiver, std::move(archiveDocument), std::move(callback),
+                    std::move(errorCallback));
+            },
+        };
+    }
+
+private:
+    std::vector<std::shared_ptr<ManualImageCandidateList>> m_loads;
+};
 }
 
 class TestImageNavigationService : public QObject
@@ -44,6 +114,7 @@ private Q_SLOTS:
     void comicBookAdjacentImageUsesInjectedProvider();
     void directArchiveAdjacentImageUsesInjectedProvider();
     void pageNavigationKeepsKnownListWhileRefreshingCurrentImage();
+    void pageNavigationStaysUnknownUntilArchiveListCompletes();
     void pageNavigationDoesNotPublishSyntheticBoundaryWhenCurrentMissing();
     void directoryContainerNavigationOpensFirstImage();
     void emptyContainerReportsNavigationError();
@@ -173,6 +244,49 @@ void TestImageNavigationService::pageNavigationKeepsKnownListWhileRefreshingCurr
     QCOMPARE(static_cast<int>(observedStates.size()), 1);
     QCOMPARE(observedStates.front().first, 2);
     QCOMPARE(observedStates.front().second, 3);
+}
+
+void TestImageNavigationService::pageNavigationStaysUnknownUntilArchiveListCompletes()
+{
+    ManualArchiveImageCandidateProvider candidateProvider;
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
+    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveDocument.has_value());
+    const QUrl firstUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
+    const QUrl secondUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("02.png"));
+    const QUrl thirdUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("03.png"));
+
+    std::vector<std::pair<int, int>> observedStates;
+    KiriView::ImageNavigationService *servicePtr = nullptr;
+    KiriView::ImageNavigationService service(nullptr, candidateProvider.provider(),
+        navigationCallbacks({}, {}, {}, [&servicePtr, &observedStates]() {
+            observedStates.push_back({ servicePtr->currentPageNumber(), servicePtr->imageCount() });
+        }));
+    servicePtr = &service;
+
+    service.updatePageNavigation(KiriView::ImageNavigationService::DisplayContext {
+        true,
+        KiriView::DisplayedImageLocation::fromArchiveDocument(firstUrl, *archiveDocument),
+    });
+
+    QCOMPARE(candidateProvider.loadCount(), std::size_t(1));
+    QCOMPARE(candidateProvider.backLoad().archiveDocument.rootUrl(), archiveDocument->rootUrl());
+    QCOMPARE(service.currentPageNumber(), 0);
+    QCOMPARE(service.imageCount(), 0);
+    QVERIFY(observedStates.empty());
+
+    candidateProvider.finishBackLoad({
+        imageCandidate(firstUrl),
+        imageCandidate(secondUrl),
+        imageCandidate(thirdUrl),
+    });
+
+    QCOMPARE(service.currentPageNumber(), 1);
+    QCOMPARE(service.imageCount(), 3);
+    QCOMPARE(static_cast<int>(observedStates.size()), 1);
+    QCOMPARE(observedStates.back().first, 1);
+    QCOMPARE(observedStates.back().second, 3);
 }
 
 void TestImageNavigationService::pageNavigationDoesNotPublishSyntheticBoundaryWhenCurrentMissing()
