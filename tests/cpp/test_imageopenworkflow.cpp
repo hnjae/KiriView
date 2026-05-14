@@ -13,6 +13,7 @@
 #include <cstddef>
 #include <optional>
 #include <variant>
+#include <vector>
 
 namespace {
 using KiriView::TestSupport::archivePageUrl;
@@ -75,6 +76,8 @@ private Q_SLOTS:
 
 void TestImageOpenWorkflow::sourceLoadPlanRoutesUnchangedAndReplacementLoads()
 {
+    using Action = KiriView::ImageOpenSourceLoadAction;
+
     KiriView::ImageOpenSourceLoadRequest unchangedRequest;
     unchangedRequest.sourceUrlChanged = false;
     unchangedRequest.preserveTwoPageSpreadTransition = false;
@@ -83,17 +86,14 @@ void TestImageOpenWorkflow::sourceLoadPlanRoutesUnchangedAndReplacementLoads()
     unchangedRequest.containerNavigationUrlEmpty = false;
     const KiriView::ImageOpenSourceLoadPlan unchanged
         = KiriView::ImageOpenWorkflow::sourceLoadPlan(unchangedRequest);
-    QVERIFY(unchanged.finishSpreadTransition);
-    QVERIFY(unchanged.resetRightToLeftReading);
-    QCOMPARE(unchanged.rightToLeftReadingNotification,
-        KiriView::ImageOpenRightToLeftReadingNotification::BeforeOpen);
-    QVERIFY(unchanged.clearLoadingContainerNavigationUrl);
-    QVERIFY(unchanged.updateContainerNavigationUrl);
-    QVERIFY(!unchanged.cancelNavigationAndPredecode);
-    QVERIFY(!unchanged.clearSecondaryPage);
-    QVERIFY(!unchanged.setLoadingContainerNavigationUrl);
-    QVERIFY(!unchanged.setSourceUrl);
-    QVERIFY(!unchanged.beginOpen);
+    const std::vector<Action> unchangedActions {
+        Action::FinishSpreadTransition,
+        Action::ResetRightToLeftReading,
+        Action::NotifyRightToLeftReadingBeforeOpen,
+        Action::ClearLoadingContainerNavigationUrl,
+        Action::UpdateContainerNavigationUrl,
+    };
+    QVERIFY(unchanged.actions == unchangedActions);
 
     KiriView::ImageOpenSourceLoadRequest replacementRequest;
     replacementRequest.sourceUrlChanged = true;
@@ -103,23 +103,28 @@ void TestImageOpenWorkflow::sourceLoadPlanRoutesUnchangedAndReplacementLoads()
     replacementRequest.containerNavigationUrlEmpty = true;
     const KiriView::ImageOpenSourceLoadPlan replacement
         = KiriView::ImageOpenWorkflow::sourceLoadPlan(replacementRequest);
-    QVERIFY(!replacement.finishSpreadTransition);
-    QVERIFY(!replacement.resetRightToLeftReading);
-    QCOMPARE(replacement.rightToLeftReadingNotification,
-        KiriView::ImageOpenRightToLeftReadingNotification::None);
-    QVERIFY(!replacement.clearLoadingContainerNavigationUrl);
-    QVERIFY(!replacement.updateContainerNavigationUrl);
-    QVERIFY(replacement.cancelNavigationAndPredecode);
-    QVERIFY(replacement.clearSecondaryPage);
-    QVERIFY(replacement.setLoadingContainerNavigationUrl);
-    QVERIFY(replacement.setSourceUrl);
-    QVERIFY(replacement.beginOpen);
+    const std::vector<Action> replacementActions {
+        Action::CancelNavigationAndPredecode,
+        Action::ClearSecondaryPage,
+        Action::SetLoadingContainerNavigationUrl,
+        Action::SetSourceUrl,
+        Action::BeginOpen,
+    };
+    QVERIFY(replacement.actions == replacementActions);
 
     replacementRequest.resetRightToLeftReading = true;
     const KiriView::ImageOpenSourceLoadPlan resettingReplacement
         = KiriView::ImageOpenWorkflow::sourceLoadPlan(replacementRequest);
-    QCOMPARE(resettingReplacement.rightToLeftReadingNotification,
-        KiriView::ImageOpenRightToLeftReadingNotification::AfterOpen);
+    const std::vector<Action> resettingReplacementActions {
+        Action::CancelNavigationAndPredecode,
+        Action::ResetRightToLeftReading,
+        Action::ClearSecondaryPage,
+        Action::SetLoadingContainerNavigationUrl,
+        Action::SetSourceUrl,
+        Action::BeginOpen,
+        Action::NotifyRightToLeftReadingAfterOpen,
+    };
+    QVERIFY(resettingReplacement.actions == resettingReplacementActions);
 }
 
 void TestImageOpenWorkflow::firstImageLoadSuccessTransitionsToReady()

@@ -59,40 +59,46 @@ ImageOpenSourceLoadRequest ImageDocumentLoadController::sourceLoadWorkflowReques
 void ImageDocumentLoadController::applySourceLoadPlan(
     const ImageDocumentSourceLoadRequest &request, const ImageOpenSourceLoadPlan &plan)
 {
-    if (plan.cancelNavigationAndPredecode) {
-        cancelNavigationAndPredecode();
+    for (ImageOpenSourceLoadAction action : plan.actions) {
+        applySourceLoadAction(request, action);
     }
-    if (plan.finishSpreadTransition) {
-        m_spreadController.finishTransition();
-    }
+}
 
-    if (plan.resetRightToLeftReading) {
+void ImageDocumentLoadController::applySourceLoadAction(
+    const ImageDocumentSourceLoadRequest &request, ImageOpenSourceLoadAction action)
+{
+    switch (action) {
+    case ImageOpenSourceLoadAction::CancelNavigationAndPredecode:
+        cancelNavigationAndPredecode();
+        return;
+    case ImageOpenSourceLoadAction::FinishSpreadTransition:
+        m_spreadController.finishTransition();
+        return;
+    case ImageOpenSourceLoadAction::ResetRightToLeftReading:
         m_spreadController.resetRightToLeftReading();
-    }
-    if (plan.rightToLeftReadingNotification
-        == ImageOpenRightToLeftReadingNotification::BeforeOpen) {
+        return;
+    case ImageOpenSourceLoadAction::NotifyRightToLeftReadingBeforeOpen:
+    case ImageOpenSourceLoadAction::NotifyRightToLeftReadingAfterOpen:
         m_spreadController.notifyRightToLeftReadingChanged();
-    }
-    if (plan.clearSecondaryPage) {
+        return;
+    case ImageOpenSourceLoadAction::ClearSecondaryPage:
         m_spreadController.clearSecondaryPage();
-    }
-    if (plan.clearLoadingContainerNavigationUrl) {
+        return;
+    case ImageOpenSourceLoadAction::ClearLoadingContainerNavigationUrl:
         m_state.clearLoadingContainerNavigationUrl();
-    }
-    if (plan.updateContainerNavigationUrl) {
+        return;
+    case ImageOpenSourceLoadAction::UpdateContainerNavigationUrl:
         m_state.setContainerNavigationUrl(request.containerNavigationUrl);
-    }
-    if (plan.setLoadingContainerNavigationUrl) {
+        return;
+    case ImageOpenSourceLoadAction::SetLoadingContainerNavigationUrl:
         m_state.setLoadingContainerNavigationUrl(request.containerNavigationUrl);
-    }
-    if (plan.setSourceUrl) {
+        return;
+    case ImageOpenSourceLoadAction::SetSourceUrl:
         m_state.setSourceUrl(request.sourceUrl);
-    }
-    if (plan.beginOpen) {
+        return;
+    case ImageOpenSourceLoadAction::BeginOpen:
         m_openController.open();
-    }
-    if (plan.rightToLeftReadingNotification == ImageOpenRightToLeftReadingNotification::AfterOpen) {
-        m_spreadController.notifyRightToLeftReadingChanged();
+        return;
     }
 }
 

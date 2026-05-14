@@ -14,6 +14,7 @@ class ImageDocumentNavigationController;
 class ImageDocumentPredecodeController;
 class ImageDocumentState;
 class ImageOpenController;
+enum class ImageOpenSourceLoadAction;
 struct ImageOpenSourceLoadPlan;
 struct ImageOpenSourceLoadRequest;
 class ImagePresentationController;
@@ -65,6 +66,8 @@ private:
         const ImageDocumentSourceLoadRequest &request) const;
     void applySourceLoadPlan(
         const ImageDocumentSourceLoadRequest &request, const ImageOpenSourceLoadPlan &plan);
+    void applySourceLoadAction(
+        const ImageDocumentSourceLoadRequest &request, ImageOpenSourceLoadAction action);
     void cancelNavigationAndPredecode();
 
     ImageDocumentState &m_state;

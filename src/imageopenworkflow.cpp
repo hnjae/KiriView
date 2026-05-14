@@ -7,6 +7,7 @@
 #include "imagedocumentstate.h"
 #include "kiriview/src/imageopenworkflow.cxx.h"
 
+#include <QtGlobal>
 #include <optional>
 #include <utility>
 
@@ -152,36 +153,45 @@ KiriView::ImageDocumentStatus documentStatus(KiriView::RustImageOpenStatusTarget
     return KiriView::ImageDocumentStatus::Null;
 }
 
-KiriView::ImageOpenRightToLeftReadingNotification imageOpenRightToLeftReadingNotification(
-    KiriView::RustImageOpenRightToLeftReadingNotification notification)
+KiriView::ImageOpenSourceLoadAction imageOpenSourceLoadAction(
+    KiriView::RustImageOpenSourceLoadAction action)
 {
-    switch (notification) {
-    case KiriView::RustImageOpenRightToLeftReadingNotification::BeforeOpen:
-        return KiriView::ImageOpenRightToLeftReadingNotification::BeforeOpen;
-    case KiriView::RustImageOpenRightToLeftReadingNotification::AfterOpen:
-        return KiriView::ImageOpenRightToLeftReadingNotification::AfterOpen;
-    case KiriView::RustImageOpenRightToLeftReadingNotification::None:
-        break;
+    switch (action) {
+    case KiriView::RustImageOpenSourceLoadAction::CancelNavigationAndPredecode:
+        return KiriView::ImageOpenSourceLoadAction::CancelNavigationAndPredecode;
+    case KiriView::RustImageOpenSourceLoadAction::FinishSpreadTransition:
+        return KiriView::ImageOpenSourceLoadAction::FinishSpreadTransition;
+    case KiriView::RustImageOpenSourceLoadAction::ResetRightToLeftReading:
+        return KiriView::ImageOpenSourceLoadAction::ResetRightToLeftReading;
+    case KiriView::RustImageOpenSourceLoadAction::NotifyRightToLeftReadingBeforeOpen:
+        return KiriView::ImageOpenSourceLoadAction::NotifyRightToLeftReadingBeforeOpen;
+    case KiriView::RustImageOpenSourceLoadAction::ClearSecondaryPage:
+        return KiriView::ImageOpenSourceLoadAction::ClearSecondaryPage;
+    case KiriView::RustImageOpenSourceLoadAction::ClearLoadingContainerNavigationUrl:
+        return KiriView::ImageOpenSourceLoadAction::ClearLoadingContainerNavigationUrl;
+    case KiriView::RustImageOpenSourceLoadAction::UpdateContainerNavigationUrl:
+        return KiriView::ImageOpenSourceLoadAction::UpdateContainerNavigationUrl;
+    case KiriView::RustImageOpenSourceLoadAction::SetLoadingContainerNavigationUrl:
+        return KiriView::ImageOpenSourceLoadAction::SetLoadingContainerNavigationUrl;
+    case KiriView::RustImageOpenSourceLoadAction::SetSourceUrl:
+        return KiriView::ImageOpenSourceLoadAction::SetSourceUrl;
+    case KiriView::RustImageOpenSourceLoadAction::BeginOpen:
+        return KiriView::ImageOpenSourceLoadAction::BeginOpen;
+    case KiriView::RustImageOpenSourceLoadAction::NotifyRightToLeftReadingAfterOpen:
+        return KiriView::ImageOpenSourceLoadAction::NotifyRightToLeftReadingAfterOpen;
     }
 
-    return KiriView::ImageOpenRightToLeftReadingNotification::None;
+    Q_UNREACHABLE_RETURN(KiriView::ImageOpenSourceLoadAction::BeginOpen);
 }
 
 KiriView::ImageOpenSourceLoadPlan imageOpenSourceLoadPlan(
     KiriView::RustImageOpenSourceLoadPlan rustPlan)
 {
     KiriView::ImageOpenSourceLoadPlan plan;
-    plan.finishSpreadTransition = rustPlan.finish_spread_transition;
-    plan.resetRightToLeftReading = rustPlan.reset_right_to_left_reading;
-    plan.rightToLeftReadingNotification
-        = imageOpenRightToLeftReadingNotification(rustPlan.right_to_left_reading_notification);
-    plan.clearLoadingContainerNavigationUrl = rustPlan.clear_loading_container_navigation_url;
-    plan.updateContainerNavigationUrl = rustPlan.update_container_navigation_url;
-    plan.cancelNavigationAndPredecode = rustPlan.cancel_navigation_and_predecode;
-    plan.clearSecondaryPage = rustPlan.clear_secondary_page;
-    plan.setLoadingContainerNavigationUrl = rustPlan.set_loading_container_navigation_url;
-    plan.setSourceUrl = rustPlan.set_source_url;
-    plan.beginOpen = rustPlan.begin_open;
+    plan.actions.reserve(rustPlan.actions.size());
+    for (KiriView::RustImageOpenSourceLoadAction action : rustPlan.actions) {
+        plan.actions.push_back(imageOpenSourceLoadAction(action));
+    }
     return plan;
 }
 
