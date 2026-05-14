@@ -338,7 +338,13 @@ KiriView, candidate names are archive-relative paths such as `foo/a.jpg` and
 or Page Down on the last candidate keeps the current image open and notifies the
 user that it is the first or last image. KiriView shows those first-image and
 last-image notifications only when the current candidate list is known and the
-current image is at a known boundary.
+current image is at a known boundary. A first-image or last-image notification
+belongs only to the currently displayed image's known boundary. When the
+displayed image changes or is cleared, KiriView removes that boundary
+notification immediately instead of waiting for the notification timeout. When
+the same boundary notification is shown again while a boundary notification is
+already visible, KiriView replaces the existing boundary notification so only
+one boundary notification is visible.
 
 If the parent URL cannot be listed, the current image is not found, or no
 adjacent supported image exists, the current image remains open and the app
