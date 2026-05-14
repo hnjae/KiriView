@@ -4,7 +4,6 @@
 #ifndef KIRIVIEW_IMAGESPREADMODECONTROLLER_H
 #define KIRIVIEW_IMAGESPREADMODECONTROLLER_H
 
-#include "imagecontainer.h"
 #include "imagelocation.h"
 #include "imagespreadgeometry.h"
 

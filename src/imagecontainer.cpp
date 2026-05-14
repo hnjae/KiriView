@@ -233,17 +233,4 @@ QUrl containerNavigationUrlForLocation(const DisplayedImageLocation &location)
     return archiveDocumentFileNavigationUrl(location);
 }
 
-bool shouldResetRightToLeftReadingForLoad(bool rightToLeftReadingEnabled,
-    const ArchiveDocumentLocation &displayedArchiveDocument, const QUrl &sourceUrl,
-    const QUrl &containerNavigationUrl)
-{
-    return rightToLeftReadingEnabled && containerNavigationUrl.isEmpty()
-        && (!displayedArchiveDocument.isComicBook()
-            || !archiveDocumentContainsUrlInRust(displayedArchiveDocument, sourceUrl));
-}
-
-bool comicArchiveReadingControlsAvailable(bool hasImage, const DisplayedImageLocation &location)
-{
-    return hasImage && !location.imageUrl().isEmpty() && location.archiveDocument().isComicBook();
-}
 }

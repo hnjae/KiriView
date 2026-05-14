@@ -3,7 +3,17 @@
 
 #include "imagespreadmodecontroller.h"
 
+#include "imagecontainer.h"
+
 #include <utility>
+
+namespace {
+bool comicArchiveReadingControlsAvailable(
+    bool hasImage, const KiriView::DisplayedImageLocation &location)
+{
+    return hasImage && !location.imageUrl().isEmpty() && location.archiveDocument().isComicBook();
+}
+}
 
 namespace KiriView {
 ImageSpreadModeController::ImageSpreadModeController(AvailabilityProvider availabilityProvider)
@@ -68,8 +78,9 @@ bool ImageSpreadModeController::shouldResetRightToLeftReadingForLoad(
     const ArchiveDocumentLocation &displayedArchiveDocument, const QUrl &sourceUrl,
     const QUrl &containerNavigationUrl) const
 {
-    return KiriView::shouldResetRightToLeftReadingForLoad(
-        m_rightToLeftReadingEnabled, displayedArchiveDocument, sourceUrl, containerNavigationUrl);
+    return m_rightToLeftReadingEnabled && containerNavigationUrl.isEmpty()
+        && (!displayedArchiveDocument.isComicBook()
+            || !archiveDocumentContainsUrl(displayedArchiveDocument, sourceUrl));
 }
 
 void ImageSpreadModeController::resetRightToLeftReading() { m_rightToLeftReadingEnabled = false; }
