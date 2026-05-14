@@ -163,8 +163,8 @@ KiriView::ImageOpenSourceLoadAction imageOpenSourceLoadAction(
         return KiriView::ImageOpenSourceLoadAction::FinishSpreadTransition;
     case KiriView::RustImageOpenSourceLoadAction::ResetRightToLeftReading:
         return KiriView::ImageOpenSourceLoadAction::ResetRightToLeftReading;
-    case KiriView::RustImageOpenSourceLoadAction::NotifyRightToLeftReadingBeforeOpen:
-        return KiriView::ImageOpenSourceLoadAction::NotifyRightToLeftReadingBeforeOpen;
+    case KiriView::RustImageOpenSourceLoadAction::NotifyRightToLeftReading:
+        return KiriView::ImageOpenSourceLoadAction::NotifyRightToLeftReading;
     case KiriView::RustImageOpenSourceLoadAction::ClearSecondaryPage:
         return KiriView::ImageOpenSourceLoadAction::ClearSecondaryPage;
     case KiriView::RustImageOpenSourceLoadAction::ClearLoadingContainerNavigationUrl:
@@ -177,8 +177,6 @@ KiriView::ImageOpenSourceLoadAction imageOpenSourceLoadAction(
         return KiriView::ImageOpenSourceLoadAction::SetSourceUrl;
     case KiriView::RustImageOpenSourceLoadAction::BeginOpen:
         return KiriView::ImageOpenSourceLoadAction::BeginOpen;
-    case KiriView::RustImageOpenSourceLoadAction::NotifyRightToLeftReadingAfterOpen:
-        return KiriView::ImageOpenSourceLoadAction::NotifyRightToLeftReadingAfterOpen;
     }
 
     Q_UNREACHABLE_RETURN(KiriView::ImageOpenSourceLoadAction::BeginOpen);

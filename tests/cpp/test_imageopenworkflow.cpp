@@ -89,7 +89,7 @@ void TestImageOpenWorkflow::sourceLoadPlanRoutesUnchangedAndReplacementLoads()
     const std::vector<Action> unchangedActions {
         Action::FinishSpreadTransition,
         Action::ResetRightToLeftReading,
-        Action::NotifyRightToLeftReadingBeforeOpen,
+        Action::NotifyRightToLeftReading,
         Action::ClearLoadingContainerNavigationUrl,
         Action::UpdateContainerNavigationUrl,
     };
@@ -122,7 +122,7 @@ void TestImageOpenWorkflow::sourceLoadPlanRoutesUnchangedAndReplacementLoads()
         Action::SetLoadingContainerNavigationUrl,
         Action::SetSourceUrl,
         Action::BeginOpen,
-        Action::NotifyRightToLeftReadingAfterOpen,
+        Action::NotifyRightToLeftReading,
     };
     QVERIFY(resettingReplacement.actions == resettingReplacementActions);
 }

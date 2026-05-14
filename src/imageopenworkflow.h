@@ -18,14 +18,13 @@ enum class ImageOpenSourceLoadAction {
     CancelNavigationAndPredecode,
     FinishSpreadTransition,
     ResetRightToLeftReading,
-    NotifyRightToLeftReadingBeforeOpen,
+    NotifyRightToLeftReading,
     ClearSecondaryPage,
     ClearLoadingContainerNavigationUrl,
     UpdateContainerNavigationUrl,
     SetLoadingContainerNavigationUrl,
     SetSourceUrl,
     BeginOpen,
-    NotifyRightToLeftReadingAfterOpen,
 };
 
 struct ImageOpenSourceLoadPlan {

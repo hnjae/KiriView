@@ -64,14 +64,13 @@ mod ffi {
         CancelNavigationAndPredecode = 0,
         FinishSpreadTransition = 1,
         ResetRightToLeftReading = 2,
-        NotifyRightToLeftReadingBeforeOpen = 3,
+        NotifyRightToLeftReading = 3,
         ClearSecondaryPage = 4,
         ClearLoadingContainerNavigationUrl = 5,
         UpdateContainerNavigationUrl = 6,
         SetLoadingContainerNavigationUrl = 7,
         SetSourceUrl = 8,
         BeginOpen = 9,
-        NotifyRightToLeftReadingAfterOpen = 10,
     }
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -176,7 +175,7 @@ fn rust_image_open_source_load_plan(
     if !request.source_url_changed {
         if notify_right_to_left_reading {
             plan.actions
-                .push(RustImageOpenSourceLoadAction::NotifyRightToLeftReadingBeforeOpen);
+                .push(RustImageOpenSourceLoadAction::NotifyRightToLeftReading);
         }
         plan.actions
             .push(RustImageOpenSourceLoadAction::ClearLoadingContainerNavigationUrl);
@@ -196,7 +195,7 @@ fn rust_image_open_source_load_plan(
     plan.actions.push(RustImageOpenSourceLoadAction::BeginOpen);
     if notify_right_to_left_reading {
         plan.actions
-            .push(RustImageOpenSourceLoadAction::NotifyRightToLeftReadingAfterOpen);
+            .push(RustImageOpenSourceLoadAction::NotifyRightToLeftReading);
     }
     plan
 }
@@ -447,7 +446,7 @@ mod tests {
             vec![
                 RustImageOpenSourceLoadAction::FinishSpreadTransition,
                 RustImageOpenSourceLoadAction::ResetRightToLeftReading,
-                RustImageOpenSourceLoadAction::NotifyRightToLeftReadingBeforeOpen,
+                RustImageOpenSourceLoadAction::NotifyRightToLeftReading,
                 RustImageOpenSourceLoadAction::ClearLoadingContainerNavigationUrl,
                 RustImageOpenSourceLoadAction::UpdateContainerNavigationUrl,
             ]
@@ -486,7 +485,7 @@ mod tests {
                 RustImageOpenSourceLoadAction::SetLoadingContainerNavigationUrl,
                 RustImageOpenSourceLoadAction::SetSourceUrl,
                 RustImageOpenSourceLoadAction::BeginOpen,
-                RustImageOpenSourceLoadAction::NotifyRightToLeftReadingAfterOpen,
+                RustImageOpenSourceLoadAction::NotifyRightToLeftReading,
             ]
         );
     }

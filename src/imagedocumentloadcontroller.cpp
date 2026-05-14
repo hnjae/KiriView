@@ -77,8 +77,7 @@ void ImageDocumentLoadController::applySourceLoadAction(
     case ImageOpenSourceLoadAction::ResetRightToLeftReading:
         m_spreadController.resetRightToLeftReading();
         return;
-    case ImageOpenSourceLoadAction::NotifyRightToLeftReadingBeforeOpen:
-    case ImageOpenSourceLoadAction::NotifyRightToLeftReadingAfterOpen:
+    case ImageOpenSourceLoadAction::NotifyRightToLeftReading:
         m_spreadController.notifyRightToLeftReadingChanged();
         return;
     case ImageOpenSourceLoadAction::ClearSecondaryPage:
