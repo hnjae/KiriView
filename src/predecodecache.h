@@ -59,8 +59,6 @@ private:
     using ConstCachedImageIterator = std::vector<CachedImage>::const_iterator;
 
     static bool containsUrl(const std::vector<QUrl> &urls, const QUrl &url);
-    static std::optional<qsizetype> cacheableByteCost(
-        const StaticImagePayload &staticImage, qsizetype byteBudget);
     CachedImageIterator findCachedImage(const QUrl &normalizedUrl);
     ConstCachedImageIterator findCachedImage(const QUrl &normalizedUrl) const;
     void removeCachedImage(const QUrl &normalizedUrl);

@@ -7,12 +7,6 @@ const PREDECODE_SYSTEM_MEMORY_DIVISOR: i64 = 8;
 #[cxx::bridge(namespace = "KiriView")]
 mod ffi {
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-    struct RustPredecodeCacheableByteCost {
-        cacheable: bool,
-        byte_cost: i64,
-    }
-
-    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     struct RustPredecodeQueuedLoadPlan {
         found: bool,
         index: usize,
@@ -46,12 +40,6 @@ mod ffi {
         #[cxx_name = "rustPredecodeByteBudgetForSystemMemory"]
         fn rust_predecode_byte_budget_for_system_memory(system_memory_byte_size: i64) -> i64;
 
-        #[cxx_name = "rustPredecodeCacheableByteCost"]
-        fn rust_predecode_cacheable_byte_cost(
-            static_image_byte_cost: i64,
-            byte_budget: i64,
-        ) -> RustPredecodeCacheableByteCost;
-
         #[cxx_name = "rustPredecodeRetainedCachedImageIndices"]
         fn rust_predecode_retained_cached_image_indices(
             states: Vec<RustPredecodeCachedImageState>,
@@ -72,8 +60,8 @@ mod ffi {
 }
 
 use ffi::{
-    RustPredecodeCacheableByteCost, RustPredecodeCachedImageState, RustPredecodeQueuedLoadPlan,
-    RustPredecodeQueuedLoadState, RustPredecodeWindowLoadState,
+    RustPredecodeCachedImageState, RustPredecodeQueuedLoadPlan, RustPredecodeQueuedLoadState,
+    RustPredecodeWindowLoadState,
 };
 
 #[derive(Clone, Copy)]
@@ -93,23 +81,6 @@ fn rust_predecode_byte_budget_for_system_memory(system_memory_byte_size: i64) ->
         system_memory_byte_size,
         PREDECODE_SYSTEM_MEMORY_DIVISOR,
     )
-}
-
-fn rust_predecode_cacheable_byte_cost(
-    static_image_byte_cost: i64,
-    byte_budget: i64,
-) -> RustPredecodeCacheableByteCost {
-    if static_image_byte_cost <= 0 || static_image_byte_cost > byte_budget {
-        return RustPredecodeCacheableByteCost {
-            cacheable: false,
-            byte_cost: 0,
-        };
-    }
-
-    RustPredecodeCacheableByteCost {
-        cacheable: true,
-        byte_cost: static_image_byte_cost,
-    }
 }
 
 fn rust_predecode_retained_cached_image_indices(
@@ -214,31 +185,6 @@ mod tests {
         assert_eq!(
             rust_predecode_byte_budget_for_system_memory(preferred * 16),
             preferred
-        );
-    }
-
-    #[test]
-    fn cacheable_byte_cost_rejects_invalid_or_oversized_images() {
-        assert_eq!(
-            rust_predecode_cacheable_byte_cost(10, 10),
-            RustPredecodeCacheableByteCost {
-                cacheable: true,
-                byte_cost: 10,
-            }
-        );
-        assert_eq!(
-            rust_predecode_cacheable_byte_cost(0, 10),
-            RustPredecodeCacheableByteCost {
-                cacheable: false,
-                byte_cost: 0,
-            }
-        );
-        assert_eq!(
-            rust_predecode_cacheable_byte_cost(11, 10),
-            RustPredecodeCacheableByteCost {
-                cacheable: false,
-                byte_cost: 0,
-            }
         );
     }
 
