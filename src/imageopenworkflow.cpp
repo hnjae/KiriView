@@ -51,24 +51,24 @@ struct ImageOpenTransitionContext {
         return context;
     }
 
-    QUrl urlForTarget(KiriView::RustImageOpenUrlTarget target) const
+    QUrl urlForTarget(KiriView::ImageOpenUrlTarget target) const
     {
         switch (target) {
-        case KiriView::RustImageOpenUrlTarget::Empty:
+        case KiriView::ImageOpenUrlTarget::Empty:
             return QUrl();
-        case KiriView::RustImageOpenUrlTarget::SessionImage:
+        case KiriView::ImageOpenUrlTarget::SessionImage:
             return session != nullptr ? session->location.imageUrl() : QUrl();
-        case KiriView::RustImageOpenUrlTarget::SessionContainerNavigation:
+        case KiriView::ImageOpenUrlTarget::SessionContainerNavigation:
             return session != nullptr ? session->request.containerNavigationUrl() : QUrl();
-        case KiriView::RustImageOpenUrlTarget::DerivedContainerNavigation:
+        case KiriView::ImageOpenUrlTarget::DerivedContainerNavigation:
             return session != nullptr
                 ? KiriView::containerNavigationUrlForLocation(session->location)
                 : QUrl();
-        case KiriView::RustImageOpenUrlTarget::Container:
+        case KiriView::ImageOpenUrlTarget::Container:
             return containerUrl.value_or(QUrl());
-        case KiriView::RustImageOpenUrlTarget::Displayed:
+        case KiriView::ImageOpenUrlTarget::Displayed:
             return displayedUrl.value_or(QUrl());
-        case KiriView::RustImageOpenUrlTarget::Unchanged:
+        case KiriView::ImageOpenUrlTarget::Unchanged:
             break;
         }
 
@@ -83,20 +83,20 @@ struct ImageOpenTransitionContext {
     QString providedErrorString() const { return errorString.value_or(QString()); }
 };
 
-KiriView::RustImageOpenLoadErrorRequest sourceLoadErrorRequest(
+KiriView::ImageOpenLoadErrorRequest sourceLoadErrorRequest(
     bool containerNavigationUrlEmpty, bool hasImage, bool displayedUrlEmpty)
 {
-    KiriView::RustImageOpenLoadErrorRequest request {};
-    request.kind = KiriView::RustImageOpenLoadErrorKind::SourceLoad;
+    KiriView::ImageOpenLoadErrorRequest request {};
+    request.kind = KiriView::ImageOpenLoadErrorKind::SourceLoad;
     request.container_navigation_url_empty = containerNavigationUrlEmpty;
     request.has_image = hasImage;
     request.displayed_url_empty = displayedUrlEmpty;
     return request;
 }
 
-KiriView::RustImageOpenLoadErrorRequest loadErrorRequest(KiriView::RustImageOpenLoadErrorKind kind)
+KiriView::ImageOpenLoadErrorRequest loadErrorRequest(KiriView::ImageOpenLoadErrorKind kind)
 {
-    KiriView::RustImageOpenLoadErrorRequest request {};
+    KiriView::ImageOpenLoadErrorRequest request {};
     request.kind = kind;
     request.container_navigation_url_empty = true;
     request.has_image = false;
@@ -104,36 +104,36 @@ KiriView::RustImageOpenLoadErrorRequest loadErrorRequest(KiriView::RustImageOpen
     return request;
 }
 
-KiriView::RustImageOpenBeginSourceLoadRequest rustImageOpenBeginSourceLoadRequest(
+KiriView::ImageOpenBeginSourceLoadRequest beginSourceLoadRequest(
     bool hasImage, bool loadingContainerNavigationUrlEmpty)
 {
-    KiriView::RustImageOpenBeginSourceLoadRequest request {};
+    KiriView::ImageOpenBeginSourceLoadRequest request {};
     request.has_image = hasImage;
     request.loading_container_navigation_url_empty = loadingContainerNavigationUrlEmpty;
     return request;
 }
 
-KiriView::RustImageOpenSuccessfulImageLoadRequest rustImageOpenSuccessfulImageLoadRequest(
+KiriView::ImageOpenSuccessfulImageLoadRequest successfulImageLoadRequest(
     const KiriView::ImageLoadSession &session)
 {
-    KiriView::RustImageOpenSuccessfulImageLoadRequest request {};
+    KiriView::ImageOpenSuccessfulImageLoadRequest request {};
     request.request_container_navigation_url_empty
         = session.request.containerNavigationUrl().isEmpty();
     return request;
 }
 
-KiriView::ImageDocumentStatus documentStatus(KiriView::RustImageOpenStatusTarget status)
+KiriView::ImageDocumentStatus documentStatus(KiriView::ImageOpenStatusTarget status)
 {
     switch (status) {
-    case KiriView::RustImageOpenStatusTarget::Null:
+    case KiriView::ImageOpenStatusTarget::Null:
         return KiriView::ImageDocumentStatus::Null;
-    case KiriView::RustImageOpenStatusTarget::Loading:
+    case KiriView::ImageOpenStatusTarget::Loading:
         return KiriView::ImageDocumentStatus::Loading;
-    case KiriView::RustImageOpenStatusTarget::Ready:
+    case KiriView::ImageOpenStatusTarget::Ready:
         return KiriView::ImageDocumentStatus::Ready;
-    case KiriView::RustImageOpenStatusTarget::Error:
+    case KiriView::ImageOpenStatusTarget::Error:
         return KiriView::ImageDocumentStatus::Error;
-    case KiriView::RustImageOpenStatusTarget::Unchanged:
+    case KiriView::ImageOpenStatusTarget::Unchanged:
         break;
     }
 
@@ -141,18 +141,18 @@ KiriView::ImageDocumentStatus documentStatus(KiriView::RustImageOpenStatusTarget
 }
 
 std::optional<KiriView::ImageDocumentEffect> imageOpenEffect(
-    KiriView::RustImageOpenEffect effect, const ImageOpenTransitionContext &context)
+    KiriView::ImageOpenEffect effect, const ImageOpenTransitionContext &context)
 {
     switch (effect) {
-    case KiriView::RustImageOpenEffect::ClearImage:
+    case KiriView::ImageOpenEffect::ClearImage:
         return KiriView::ImageDocumentEffect::clearImage();
-    case KiriView::RustImageOpenEffect::ResetZoom:
+    case KiriView::ImageOpenEffect::ResetZoom:
         return KiriView::ImageDocumentEffect::resetZoom();
-    case KiriView::RustImageOpenEffect::UpdatePageNavigation:
+    case KiriView::ImageOpenEffect::UpdatePageNavigation:
         return KiriView::ImageDocumentEffect::updatePageNavigation();
-    case KiriView::RustImageOpenEffect::ScheduleAdjacentImagePredecode:
+    case KiriView::ImageOpenEffect::ScheduleAdjacentImagePredecode:
         return KiriView::ImageDocumentEffect::scheduleAdjacentImagePredecode();
-    case KiriView::RustImageOpenEffect::PrepareFailedContainer:
+    case KiriView::ImageOpenEffect::PrepareFailedContainer:
         if (context.containerUrl.has_value()) {
             return KiriView::ImageDocumentEffect::prepareFailedContainer(*context.containerUrl);
         }
@@ -163,10 +163,9 @@ std::optional<KiriView::ImageDocumentEffect> imageOpenEffect(
 }
 
 void appendImageOpenEffects(KiriView::ImageDocumentEffects *documentEffects,
-    const rust::Vec<KiriView::RustImageOpenEffect> &effects,
-    const ImageOpenTransitionContext &context)
+    const rust::Vec<KiriView::ImageOpenEffect> &effects, const ImageOpenTransitionContext &context)
 {
-    for (KiriView::RustImageOpenEffect effect : effects) {
+    for (KiriView::ImageOpenEffect effect : effects) {
         std::optional<KiriView::ImageDocumentEffect> documentEffect
             = imageOpenEffect(effect, context);
         if (documentEffect.has_value()) {
@@ -184,7 +183,7 @@ public:
     {
     }
 
-    void applyBeginSourceLoad(const KiriView::RustImageOpenTransition &transition)
+    void applyBeginSourceLoad(const KiriView::ImageOpenTransition &transition)
     {
         const ImageOpenTransitionContext context;
         applyContainerNavigationUrlTarget(transition.container_navigation_url, context);
@@ -193,7 +192,7 @@ public:
         applyStatusTarget(transition.status);
     }
 
-    void applyFinishEmptySourceLoad(const KiriView::RustImageOpenTransition &transition)
+    void applyFinishEmptySourceLoad(const KiriView::ImageOpenTransition &transition)
     {
         const ImageOpenTransitionContext context;
         applyEffects(transition.effects, context);
@@ -202,8 +201,8 @@ public:
         applyStatusTarget(transition.status);
     }
 
-    void applyFinishSuccessfulImageLoad(const KiriView::RustImageOpenTransition &transition,
-        const ImageOpenTransitionContext &context)
+    void applyFinishSuccessfulImageLoad(
+        const KiriView::ImageOpenTransition &transition, const ImageOpenTransitionContext &context)
     {
         applySourceUrlTarget(transition.source_url, context);
         applyDisplayedLocationTarget(transition.set_displayed_location_from_session, context);
@@ -214,8 +213,8 @@ public:
         applyEffects(transition.effects, context);
     }
 
-    void applyFinishLoadWithError(const KiriView::RustImageOpenTransition &transition,
-        const ImageOpenTransitionContext &context)
+    void applyFinishLoadWithError(
+        const KiriView::ImageOpenTransition &transition, const ImageOpenTransitionContext &context)
     {
         applyEffects(transition.effects, context);
         applyTrackedLoadCompletion(transition);
@@ -228,7 +227,7 @@ public:
     KiriView::ImageDocumentEffects takeEffects() { return std::move(m_effects); }
 
 private:
-    void applyTrackedLoadCompletion(const KiriView::RustImageOpenTransition &transition)
+    void applyTrackedLoadCompletion(const KiriView::ImageOpenTransition &transition)
     {
         if (transition.clear_loading_container_navigation_url) {
             m_state.clearLoadingContainerNavigationUrl();
@@ -237,9 +236,9 @@ private:
     }
 
     void applySourceUrlTarget(
-        KiriView::RustImageOpenUrlTarget target, const ImageOpenTransitionContext &context)
+        KiriView::ImageOpenUrlTarget target, const ImageOpenTransitionContext &context)
     {
-        if (target != KiriView::RustImageOpenUrlTarget::Unchanged) {
+        if (target != KiriView::ImageOpenUrlTarget::Unchanged) {
             m_state.setSourceUrl(context.urlForTarget(target));
         }
     }
@@ -254,50 +253,50 @@ private:
     }
 
     void applyContainerNavigationUrlTarget(
-        KiriView::RustImageOpenUrlTarget target, const ImageOpenTransitionContext &context)
+        KiriView::ImageOpenUrlTarget target, const ImageOpenTransitionContext &context)
     {
-        if (target != KiriView::RustImageOpenUrlTarget::Unchanged) {
+        if (target != KiriView::ImageOpenUrlTarget::Unchanged) {
             m_state.setContainerNavigationUrl(context.urlForTarget(target));
         }
     }
 
-    void applyLoadingTarget(KiriView::RustImageOpenBoolTarget target)
+    void applyLoadingTarget(KiriView::ImageOpenBoolTarget target)
     {
         switch (target) {
-        case KiriView::RustImageOpenBoolTarget::False:
+        case KiriView::ImageOpenBoolTarget::False:
             m_state.setLoading(false);
             return;
-        case KiriView::RustImageOpenBoolTarget::True:
+        case KiriView::ImageOpenBoolTarget::True:
             m_state.setLoading(true);
             return;
-        case KiriView::RustImageOpenBoolTarget::Unchanged:
+        case KiriView::ImageOpenBoolTarget::Unchanged:
             return;
         }
     }
 
-    void applyStatusTarget(KiriView::RustImageOpenStatusTarget target)
+    void applyStatusTarget(KiriView::ImageOpenStatusTarget target)
     {
-        if (target != KiriView::RustImageOpenStatusTarget::Unchanged) {
+        if (target != KiriView::ImageOpenStatusTarget::Unchanged) {
             m_state.setStatus(documentStatus(target));
         }
     }
 
     void applyErrorStringTarget(
-        KiriView::RustImageOpenErrorStringTarget target, const ImageOpenTransitionContext &context)
+        KiriView::ImageOpenErrorStringTarget target, const ImageOpenTransitionContext &context)
     {
         switch (target) {
-        case KiriView::RustImageOpenErrorStringTarget::Clear:
+        case KiriView::ImageOpenErrorStringTarget::Clear:
             m_state.setErrorString(QString());
             return;
-        case KiriView::RustImageOpenErrorStringTarget::Provided:
+        case KiriView::ImageOpenErrorStringTarget::Provided:
             m_state.setErrorString(context.providedErrorString());
             return;
-        case KiriView::RustImageOpenErrorStringTarget::Unchanged:
+        case KiriView::ImageOpenErrorStringTarget::Unchanged:
             return;
         }
     }
 
-    void applyEffects(const rust::Vec<KiriView::RustImageOpenEffect> &effects,
+    void applyEffects(const rust::Vec<KiriView::ImageOpenEffect> &effects,
         const ImageOpenTransitionContext &context)
     {
         appendImageOpenEffects(&m_effects, effects, context);
@@ -313,9 +312,8 @@ namespace KiriView::ImageOpenWorkflow {
 ImageDocumentEffects beginSourceLoad(ImageDocumentState &state, bool hasImage)
 {
     ImageOpenTransitionApplier transition(state);
-    transition.applyBeginSourceLoad(
-        rustImageOpenBeginSourceLoad(rustImageOpenBeginSourceLoadRequest(
-            hasImage, state.loadingContainerNavigationUrl().isEmpty())));
+    transition.applyBeginSourceLoad(rustImageOpenBeginSourceLoad(
+        beginSourceLoadRequest(hasImage, state.loadingContainerNavigationUrl().isEmpty())));
     return transition.takeEffects();
 }
 
@@ -331,7 +329,7 @@ ImageDocumentEffects finishSuccessfulImageLoad(
 {
     ImageOpenTransitionApplier transition(state);
     transition.applyFinishSuccessfulImageLoad(
-        rustImageOpenFinishSuccessfulImageLoad(rustImageOpenSuccessfulImageLoadRequest(session)),
+        rustImageOpenFinishSuccessfulImageLoad(successfulImageLoadRequest(session)),
         ImageOpenTransitionContext::successfulImageLoad(session));
     return transition.takeEffects();
 }
@@ -354,7 +352,7 @@ ImageDocumentEffects finishContainerNavigationLoadWithError(
 {
     ImageOpenTransitionApplier transition(state);
     transition.applyFinishLoadWithError(rustImageOpenFinishLoadWithError(loadErrorRequest(
-                                            RustImageOpenLoadErrorKind::ContainerNavigation)),
+                                            ImageOpenLoadErrorKind::ContainerNavigation)),
         ImageOpenTransitionContext::containerNavigationError(containerUrl, errorString));
     return transition.takeEffects();
 }
@@ -364,7 +362,7 @@ ImageDocumentEffects finishAnimationLoadWithError(
 {
     ImageOpenTransitionApplier transition(state);
     transition.applyFinishLoadWithError(
-        rustImageOpenFinishLoadWithError(loadErrorRequest(RustImageOpenLoadErrorKind::Animation)),
+        rustImageOpenFinishLoadWithError(loadErrorRequest(ImageOpenLoadErrorKind::Animation)),
         ImageOpenTransitionContext::animationError(errorString));
     return transition.takeEffects();
 }
