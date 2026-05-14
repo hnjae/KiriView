@@ -7,14 +7,6 @@
 
 #include <utility>
 
-namespace {
-bool comicArchiveReadingControlsAvailable(
-    bool hasImage, const KiriView::DisplayedImageLocation &location)
-{
-    return hasImage && !location.imageUrl().isEmpty() && location.archiveDocument().isComicBook();
-}
-}
-
 namespace KiriView {
 ImageSpreadModeController::ImageSpreadModeController(AvailabilityProvider availabilityProvider)
     : m_availabilityProvider(std::move(availabilityProvider))
@@ -35,12 +27,7 @@ ImageSpreadTwoPageModeChange ImageSpreadModeController::setTwoPageModeEnabled(
     return change;
 }
 
-bool ImageSpreadModeController::twoPageModeAvailable() const
-{
-    const ImageSpreadModeAvailability currentAvailability = availability();
-    return comicArchiveReadingControlsAvailable(
-        currentAvailability.hasImage, currentAvailability.displayedImageLocation);
-}
+bool ImageSpreadModeController::twoPageModeAvailable() const { return readingControlsAvailable(); }
 
 bool ImageSpreadModeController::twoPageModeActive() const
 {
@@ -64,9 +51,7 @@ bool ImageSpreadModeController::setRightToLeftReadingEnabled(bool enabled)
 
 bool ImageSpreadModeController::rightToLeftReadingAvailable() const
 {
-    const ImageSpreadModeAvailability currentAvailability = availability();
-    return comicArchiveReadingControlsAvailable(
-        currentAvailability.hasImage, currentAvailability.displayedImageLocation);
+    return readingControlsAvailable();
 }
 
 bool ImageSpreadModeController::rightToLeftReadingActive() const
@@ -113,5 +98,13 @@ bool ImageSpreadModeController::finishSpreadTransition()
 ImageSpreadModeAvailability ImageSpreadModeController::availability() const
 {
     return m_availabilityProvider ? m_availabilityProvider() : ImageSpreadModeAvailability {};
+}
+
+bool ImageSpreadModeController::readingControlsAvailable() const
+{
+    const ImageSpreadModeAvailability currentAvailability = availability();
+    const DisplayedImageLocation &location = currentAvailability.displayedImageLocation;
+    return currentAvailability.hasImage && !location.imageUrl().isEmpty()
+        && location.archiveDocument().isComicBook();
 }
 }

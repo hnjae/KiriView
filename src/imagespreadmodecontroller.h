@@ -43,6 +43,7 @@ public:
 
 private:
     ImageSpreadModeAvailability availability() const;
+    bool readingControlsAvailable() const;
 
     AvailabilityProvider m_availabilityProvider;
     bool m_twoPageModeEnabled = false;
