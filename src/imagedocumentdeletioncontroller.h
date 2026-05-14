@@ -6,6 +6,7 @@
 
 #include "filedeletion.h"
 #include "imagecandidaterepository.h"
+#include "imagedeletioneffects.h"
 #include "imagedocumenteffects.h"
 
 #include <QString>
@@ -15,11 +16,6 @@
 class QObject;
 
 namespace KiriView {
-struct ClearDeletedImageAfterDeletionEffect;
-struct ImageDeletionEffect;
-struct OpenContainerImageDeletionFallbackEffect;
-struct OpenImageDeletionFallbackEffect;
-struct ReportImageDeletionFailureEffect;
 class ImageDeletionController;
 class ImageDocumentState;
 class ImagePresentationController;

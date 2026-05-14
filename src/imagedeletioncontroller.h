@@ -7,70 +7,16 @@
 #include "filedeletion.h"
 #include "filedeletionfallback.h"
 #include "imagecandidaterepository.h"
+#include "imagedeletioneffects.h"
 #include "imageiojob.h"
 #include "imagelocation.h"
 #include "imagenavigationtypes.h"
 
 #include <QObject>
-#include <QString>
-#include <QUrl>
 #include <functional>
 #include <optional>
-#include <utility>
-#include <variant>
 
 namespace KiriView {
-struct ClearDeletedImageAfterDeletionEffect {
-};
-
-struct OpenImageDeletionFallbackEffect {
-    QUrl url;
-};
-
-struct OpenContainerImageDeletionFallbackEffect {
-    QUrl imageUrl;
-    QUrl containerUrl;
-};
-
-struct ReportImageDeletionFailureEffect {
-    QString errorString;
-};
-
-struct ImageDeletionEffect {
-    using Payload
-        = std::variant<ClearDeletedImageAfterDeletionEffect, OpenImageDeletionFallbackEffect,
-            OpenContainerImageDeletionFallbackEffect, ReportImageDeletionFailureEffect>;
-
-    static ImageDeletionEffect clearDeletedImage()
-    {
-        return ImageDeletionEffect(ClearDeletedImageAfterDeletionEffect {});
-    }
-
-    static ImageDeletionEffect openImageFallback(const QUrl &url)
-    {
-        return ImageDeletionEffect(OpenImageDeletionFallbackEffect { url });
-    }
-
-    static ImageDeletionEffect openContainerImageFallback(
-        const QUrl &imageUrl, const QUrl &containerUrl)
-    {
-        return ImageDeletionEffect(
-            OpenContainerImageDeletionFallbackEffect { imageUrl, containerUrl });
-    }
-
-    static ImageDeletionEffect reportFailure(const QString &errorString)
-    {
-        return ImageDeletionEffect(ReportImageDeletionFailureEffect { errorString });
-    }
-
-    explicit ImageDeletionEffect(Payload effectPayload)
-        : payload(std::move(effectPayload))
-    {
-    }
-
-    Payload payload;
-};
-
 class ImageDeletionController final : public QObject
 {
 public:
