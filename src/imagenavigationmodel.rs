@@ -24,7 +24,7 @@ mod ffi {
         index: usize,
     }
 
-    #[derive(Clone, Copy)]
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     struct RustPageNavigationUpdate {
         insert_current_url: bool,
         current_index: i32,
@@ -64,12 +64,14 @@ mod ffi {
         fn rust_page_navigation_state_update(
             current: RustNavigationIndex,
             current_url_valid: bool,
+            candidate_url_count: usize,
         ) -> RustPageNavigationUpdate;
 
         #[cxx_name = "rustPageNavigationPreviewState"]
         fn rust_page_navigation_preview_state(
             current: RustNavigationIndex,
             current_url_valid: bool,
+            known_url_count: usize,
         ) -> RustPageNavigationPreviewState;
 
         #[cxx_name = "rustPageNavigationTargetIndex"]
@@ -141,6 +143,7 @@ fn rust_current_navigation_index(matches_current: Vec<u8>) -> RustNavigationInde
 fn rust_page_navigation_state_update(
     current: RustNavigationIndex,
     current_url_valid: bool,
+    candidate_url_count: usize,
 ) -> RustPageNavigationUpdate {
     if current.found {
         return RustPageNavigationUpdate {
@@ -149,7 +152,7 @@ fn rust_page_navigation_state_update(
         };
     }
 
-    if current_url_valid {
+    if current_url_valid && candidate_url_count == 0 {
         return RustPageNavigationUpdate {
             insert_current_url: true,
             current_index: 0,
@@ -165,6 +168,7 @@ fn rust_page_navigation_state_update(
 fn rust_page_navigation_preview_state(
     current: RustNavigationIndex,
     current_url_valid: bool,
+    known_url_count: usize,
 ) -> RustPageNavigationPreviewState {
     if current.found {
         return page_navigation_preview_state(
@@ -173,8 +177,12 @@ fn rust_page_navigation_preview_state(
         );
     }
 
-    if current_url_valid {
+    if current_url_valid && known_url_count == 0 {
         return page_navigation_preview_state(RustPageNavigationUrlsTarget::Current, 0);
+    }
+
+    if current_url_valid {
+        return page_navigation_preview_state(RustPageNavigationUrlsTarget::Known, -1);
     }
 
     page_navigation_preview_state(RustPageNavigationUrlsTarget::Empty, -1)
@@ -310,20 +318,64 @@ mod tests {
     #[test]
     fn page_navigation_preview_state_reuses_known_urls_for_known_current_url() {
         assert_eq!(
-            rust_page_navigation_preview_state(found_index(2), true),
+            rust_page_navigation_preview_state(found_index(2), true, 3),
             page_navigation_preview_state(RustPageNavigationUrlsTarget::Known, 2)
         );
     }
 
     #[test]
-    fn page_navigation_preview_state_falls_back_to_current_url_or_empty_state() {
+    fn page_navigation_preview_state_uses_current_url_singleton_only_for_empty_known_list() {
         assert_eq!(
-            rust_page_navigation_preview_state(missing_index(), true),
+            rust_page_navigation_preview_state(missing_index(), true, 0),
             page_navigation_preview_state(RustPageNavigationUrlsTarget::Current, 0)
         );
         assert_eq!(
-            rust_page_navigation_preview_state(missing_index(), false),
+            rust_page_navigation_preview_state(missing_index(), false, 3),
             page_navigation_preview_state(RustPageNavigationUrlsTarget::Empty, -1)
+        );
+    }
+
+    #[test]
+    fn page_navigation_preview_state_keeps_known_urls_for_temporarily_missing_current_url() {
+        assert_eq!(
+            rust_page_navigation_preview_state(missing_index(), true, 3),
+            page_navigation_preview_state(RustPageNavigationUrlsTarget::Known, -1)
+        );
+    }
+
+    #[test]
+    fn page_navigation_state_update_keeps_candidate_url_index_or_inserts_singleton() {
+        assert_eq!(
+            rust_page_navigation_state_update(found_index(2), true, 3),
+            RustPageNavigationUpdate {
+                insert_current_url: false,
+                current_index: 2,
+            }
+        );
+        assert_eq!(
+            rust_page_navigation_state_update(missing_index(), true, 0),
+            RustPageNavigationUpdate {
+                insert_current_url: true,
+                current_index: 0,
+            }
+        );
+        assert_eq!(
+            rust_page_navigation_state_update(missing_index(), true, 3),
+            RustPageNavigationUpdate {
+                insert_current_url: false,
+                current_index: -1,
+            }
+        );
+    }
+
+    #[test]
+    fn page_navigation_state_update_marks_empty_for_invalid_current_url() {
+        assert_eq!(
+            rust_page_navigation_state_update(missing_index(), false, 3),
+            RustPageNavigationUpdate {
+                insert_current_url: false,
+                current_index: -1,
+            }
         );
     }
 }

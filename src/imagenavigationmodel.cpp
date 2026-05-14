@@ -149,7 +149,7 @@ PageNavigationState pageNavigationStateForCurrentUrl(
 {
     const RustPageNavigationPreviewState preview = rustPageNavigationPreviewState(
         rustCurrentNavigationIndex(currentUrlMatches(knownState.urls, currentUrl)),
-        currentUrl.isValid() && !currentUrl.isEmpty());
+        currentUrl.isValid() && !currentUrl.isEmpty(), knownState.urls.size());
 
     switch (preview.urls) {
     case RustPageNavigationUrlsTarget::Empty:
@@ -168,7 +168,7 @@ PageNavigationState pageNavigationStateForUrls(std::vector<QUrl> urls, const QUr
     PageNavigationState state { std::move(urls), -1 };
     const RustPageNavigationUpdate update = rustPageNavigationStateUpdate(
         rustCurrentNavigationIndex(currentUrlMatches(state.urls, currentUrl)),
-        currentUrl.isValid() && !currentUrl.isEmpty());
+        currentUrl.isValid() && !currentUrl.isEmpty(), state.urls.size());
     if (update.insert_current_url) {
         state.urls.insert(state.urls.begin(), normalizedImageUrl(currentUrl));
     }

@@ -49,7 +49,9 @@ private Q_SLOTS:
     void adjacentContainerNavigationUsesTheSameRules();
     void pageNavigationTargetSkipsInvalidCurrentAndOutOfRangePages();
     void pageNavigationPreviewReusesKnownListOrFallsBack();
+    void pageNavigationPreviewKeepsKnownListWhenCurrentTemporarilyMissing();
     void pageNavigationInsertsFallbackCurrentUrl();
+    void pageNavigationUpdateKeepsCandidateListWhenCurrentMissing();
     void predecodeWindowKeepsTwoPreviousAndFourNextPages();
 };
 
@@ -141,12 +143,31 @@ void TestImageNavigationModel::pageNavigationPreviewReusesKnownListOrFallsBack()
     compareUrls(state.urls, knownState.urls);
 
     state = KiriView::pageNavigationStateForCurrentUrl(knownState, indexedImageUrl(9));
-    QCOMPARE(state.currentIndex, 0);
-    compareUrls(state.urls, { indexedImageUrl(9) });
+    QCOMPARE(state.currentIndex, -1);
+    compareUrls(state.urls, knownState.urls);
 
     state = KiriView::pageNavigationStateForCurrentUrl(knownState, QUrl());
     QCOMPARE(state.currentIndex, -1);
     QVERIFY(state.urls.empty());
+}
+
+void TestImageNavigationModel::pageNavigationPreviewKeepsKnownListWhenCurrentTemporarilyMissing()
+{
+    const PageNavigationState knownState {
+        { indexedImageUrl(0), indexedImageUrl(1), indexedImageUrl(2) },
+        0,
+    };
+
+    const PageNavigationState state
+        = KiriView::pageNavigationStateForCurrentUrl(knownState, indexedImageUrl(9));
+    QCOMPARE(state.currentIndex, -1);
+    compareUrls(state.urls, knownState.urls);
+
+    PageNavigationState emptyState {};
+    const PageNavigationState singletonState
+        = KiriView::pageNavigationStateForCurrentUrl(emptyState, indexedImageUrl(9));
+    QCOMPARE(singletonState.currentIndex, 0);
+    compareUrls(singletonState.urls, { indexedImageUrl(9) });
 }
 
 void TestImageNavigationModel::pageNavigationInsertsFallbackCurrentUrl()
@@ -158,8 +179,20 @@ void TestImageNavigationModel::pageNavigationInsertsFallbackCurrentUrl()
 
     state = KiriView::pageNavigationStateForUrls(
         { indexedImageUrl(0), indexedImageUrl(1) }, indexedImageUrl(9));
+    QCOMPARE(state.currentIndex, -1);
+    compareUrls(state.urls, { indexedImageUrl(0), indexedImageUrl(1) });
+}
+
+void TestImageNavigationModel::pageNavigationUpdateKeepsCandidateListWhenCurrentMissing()
+{
+    PageNavigationState state = KiriView::pageNavigationStateForUrls(
+        { indexedImageUrl(0), indexedImageUrl(1) }, indexedImageUrl(9));
+    QCOMPARE(state.currentIndex, -1);
+    compareUrls(state.urls, { indexedImageUrl(0), indexedImageUrl(1) });
+
+    state = KiriView::pageNavigationStateForUrls({}, indexedImageUrl(9));
     QCOMPARE(state.currentIndex, 0);
-    compareUrls(state.urls, { indexedImageUrl(9), indexedImageUrl(0), indexedImageUrl(1) });
+    compareUrls(state.urls, { indexedImageUrl(9) });
 }
 
 void TestImageNavigationModel::predecodeWindowKeepsTwoPreviousAndFourNextPages()
