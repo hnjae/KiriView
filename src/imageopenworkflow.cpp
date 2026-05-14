@@ -206,7 +206,7 @@ public:
         const ImageOpenTransitionContext &context)
     {
         applySourceUrlTarget(transition.source_url, context);
-        applyDisplayedLocationTarget(transition.displayed_location, context);
+        applyDisplayedLocationTarget(transition.set_displayed_location_from_session, context);
         applyContainerNavigationUrlTarget(transition.container_navigation_url, context);
         applyErrorStringTarget(transition.error_string, context);
         applyTrackedLoadCompletion(transition);
@@ -244,12 +244,11 @@ private:
         }
     }
 
-    void applyDisplayedLocationTarget(KiriView::RustImageOpenDisplayedLocationTarget target,
-        const ImageOpenTransitionContext &context)
+    void applyDisplayedLocationTarget(
+        bool setDisplayedLocationFromSession, const ImageOpenTransitionContext &context)
     {
         const KiriView::DisplayedImageLocation *location = context.sessionLocation();
-        if (target == KiriView::RustImageOpenDisplayedLocationTarget::SessionLocation
-            && location != nullptr) {
+        if (setDisplayedLocationFromSession && location != nullptr) {
             m_state.setDisplayedImageLocation(*location);
         }
     }

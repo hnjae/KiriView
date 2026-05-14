@@ -38,12 +38,6 @@ mod ffi {
     }
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-    enum RustImageOpenDisplayedLocationTarget {
-        Unchanged = 0,
-        SessionLocation = 1,
-    }
-
-    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     enum RustImageOpenLoadErrorKind {
         SourceLoad = 0,
         ContainerNavigation = 1,
@@ -81,7 +75,7 @@ mod ffi {
     #[derive(Debug, PartialEq, Eq)]
     struct RustImageOpenTransition {
         source_url: RustImageOpenUrlTarget,
-        displayed_location: RustImageOpenDisplayedLocationTarget,
+        set_displayed_location_from_session: bool,
         container_navigation_url: RustImageOpenUrlTarget,
         loading: RustImageOpenBoolTarget,
         status: RustImageOpenStatusTarget,
@@ -112,10 +106,10 @@ mod ffi {
 }
 
 use ffi::{
-    RustImageOpenBeginSourceLoadRequest, RustImageOpenBoolTarget,
-    RustImageOpenDisplayedLocationTarget, RustImageOpenEffect, RustImageOpenErrorStringTarget,
-    RustImageOpenLoadErrorKind, RustImageOpenLoadErrorRequest, RustImageOpenStatusTarget,
-    RustImageOpenSuccessfulImageLoadRequest, RustImageOpenTransition, RustImageOpenUrlTarget,
+    RustImageOpenBeginSourceLoadRequest, RustImageOpenBoolTarget, RustImageOpenEffect,
+    RustImageOpenErrorStringTarget, RustImageOpenLoadErrorKind, RustImageOpenLoadErrorRequest,
+    RustImageOpenStatusTarget, RustImageOpenSuccessfulImageLoadRequest, RustImageOpenTransition,
+    RustImageOpenUrlTarget,
 };
 
 fn rust_image_open_begin_source_load(
@@ -153,7 +147,7 @@ fn rust_image_open_finish_successful_image_load(
 ) -> RustImageOpenTransition {
     let mut transition = tracked_load_finished_transition();
     transition.source_url = RustImageOpenUrlTarget::SessionImage;
-    transition.displayed_location = RustImageOpenDisplayedLocationTarget::SessionLocation;
+    transition.set_displayed_location_from_session = true;
     transition.container_navigation_url = if request.request_container_navigation_url_empty {
         RustImageOpenUrlTarget::DerivedContainerNavigation
     } else {
@@ -255,7 +249,7 @@ fn tracked_load_error_transition() -> RustImageOpenTransition {
 fn empty_transition() -> RustImageOpenTransition {
     RustImageOpenTransition {
         source_url: RustImageOpenUrlTarget::Unchanged,
-        displayed_location: RustImageOpenDisplayedLocationTarget::Unchanged,
+        set_displayed_location_from_session: false,
         container_navigation_url: RustImageOpenUrlTarget::Unchanged,
         loading: RustImageOpenBoolTarget::Unchanged,
         status: RustImageOpenStatusTarget::Unchanged,
@@ -352,10 +346,7 @@ mod tests {
             rust_image_open_finish_successful_image_load(successful_image_load_request(false));
 
         assert_eq!(transition.source_url, RustImageOpenUrlTarget::SessionImage);
-        assert_eq!(
-            transition.displayed_location,
-            RustImageOpenDisplayedLocationTarget::SessionLocation
-        );
+        assert!(transition.set_displayed_location_from_session);
         assert_eq!(
             transition.container_navigation_url,
             RustImageOpenUrlTarget::SessionContainerNavigation
