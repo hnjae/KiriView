@@ -86,22 +86,52 @@ struct ImageOpenTransitionContext {
 KiriView::RustImageOpenLoadErrorRequest sourceLoadErrorRequest(
     bool containerNavigationUrlEmpty, bool hasImage, bool displayedUrlEmpty)
 {
-    return KiriView::RustImageOpenLoadErrorRequest {
-        KiriView::RustImageOpenLoadErrorKind::SourceLoad,
-        containerNavigationUrlEmpty,
-        hasImage,
-        displayedUrlEmpty,
-    };
+    KiriView::RustImageOpenLoadErrorRequest request {};
+    request.kind = KiriView::RustImageOpenLoadErrorKind::SourceLoad;
+    request.container_navigation_url_empty = containerNavigationUrlEmpty;
+    request.has_image = hasImage;
+    request.displayed_url_empty = displayedUrlEmpty;
+    return request;
 }
 
 KiriView::RustImageOpenLoadErrorRequest loadErrorRequest(KiriView::RustImageOpenLoadErrorKind kind)
 {
-    return KiriView::RustImageOpenLoadErrorRequest {
-        kind,
-        true,
-        false,
-        true,
-    };
+    KiriView::RustImageOpenLoadErrorRequest request {};
+    request.kind = kind;
+    request.container_navigation_url_empty = true;
+    request.has_image = false;
+    request.displayed_url_empty = true;
+    return request;
+}
+
+KiriView::RustImageOpenSourceLoadRequest rustImageOpenSourceLoadRequest(
+    const KiriView::ImageOpenSourceLoadRequest &request)
+{
+    KiriView::RustImageOpenSourceLoadRequest rustRequest {};
+    rustRequest.source_url_changed = request.sourceUrlChanged;
+    rustRequest.preserve_two_page_spread_transition = request.preserveTwoPageSpreadTransition;
+    rustRequest.reset_right_to_left_reading = request.resetRightToLeftReading;
+    rustRequest.right_to_left_reading_enabled = request.rightToLeftReadingEnabled;
+    rustRequest.container_navigation_url_empty = request.containerNavigationUrlEmpty;
+    return rustRequest;
+}
+
+KiriView::RustImageOpenBeginSourceLoadRequest rustImageOpenBeginSourceLoadRequest(
+    bool hasImage, bool loadingContainerNavigationUrlEmpty)
+{
+    KiriView::RustImageOpenBeginSourceLoadRequest request {};
+    request.has_image = hasImage;
+    request.loading_container_navigation_url_empty = loadingContainerNavigationUrlEmpty;
+    return request;
+}
+
+KiriView::RustImageOpenSuccessfulImageLoadRequest rustImageOpenSuccessfulImageLoadRequest(
+    const KiriView::ImageLoadSession &session)
+{
+    KiriView::RustImageOpenSuccessfulImageLoadRequest request {};
+    request.request_container_navigation_url_empty
+        = session.request.containerNavigationUrl().isEmpty();
+    return request;
 }
 
 KiriView::ImageDocumentStatus documentStatus(KiriView::RustImageOpenStatusTarget status)
@@ -138,14 +168,21 @@ KiriView::ImageOpenRightToLeftReadingNotification imageOpenRightToLeftReadingNot
 }
 
 KiriView::ImageOpenSourceLoadPlan imageOpenSourceLoadPlan(
-    KiriView::RustImageOpenSourceLoadPlan plan)
+    KiriView::RustImageOpenSourceLoadPlan rustPlan)
 {
-    return KiriView::ImageOpenSourceLoadPlan { plan.finish_spread_transition,
-        plan.reset_right_to_left_reading,
-        imageOpenRightToLeftReadingNotification(plan.right_to_left_reading_notification),
-        plan.clear_loading_container_navigation_url, plan.update_container_navigation_url,
-        plan.cancel_navigation_and_predecode, plan.clear_secondary_page,
-        plan.set_loading_container_navigation_url, plan.set_source_url, plan.begin_open };
+    KiriView::ImageOpenSourceLoadPlan plan;
+    plan.finishSpreadTransition = rustPlan.finish_spread_transition;
+    plan.resetRightToLeftReading = rustPlan.reset_right_to_left_reading;
+    plan.rightToLeftReadingNotification
+        = imageOpenRightToLeftReadingNotification(rustPlan.right_to_left_reading_notification);
+    plan.clearLoadingContainerNavigationUrl = rustPlan.clear_loading_container_navigation_url;
+    plan.updateContainerNavigationUrl = rustPlan.update_container_navigation_url;
+    plan.cancelNavigationAndPredecode = rustPlan.cancel_navigation_and_predecode;
+    plan.clearSecondaryPage = rustPlan.clear_secondary_page;
+    plan.setLoadingContainerNavigationUrl = rustPlan.set_loading_container_navigation_url;
+    plan.setSourceUrl = rustPlan.set_source_url;
+    plan.beginOpen = rustPlan.begin_open;
+    return plan;
 }
 
 class ImageOpenTransitionApplier final
@@ -315,17 +352,15 @@ namespace KiriView::ImageOpenWorkflow {
 ImageOpenSourceLoadPlan sourceLoadPlan(const ImageOpenSourceLoadRequest &request)
 {
     return imageOpenSourceLoadPlan(
-        rustImageOpenSourceLoadPlan(RustImageOpenSourceLoadRequest { request.sourceUrlChanged,
-            request.preserveTwoPageSpreadTransition, request.resetRightToLeftReading,
-            request.rightToLeftReadingEnabled, request.containerNavigationUrlEmpty }));
+        rustImageOpenSourceLoadPlan(rustImageOpenSourceLoadRequest(request)));
 }
 
 ImageDocumentEffects beginSourceLoad(ImageDocumentState &state, bool hasImage)
 {
     ImageOpenTransitionApplier transition(state);
     transition.applyBeginSourceLoad(
-        rustImageOpenBeginSourceLoad(RustImageOpenBeginSourceLoadRequest {
-            hasImage, state.loadingContainerNavigationUrl().isEmpty() }));
+        rustImageOpenBeginSourceLoad(rustImageOpenBeginSourceLoadRequest(
+            hasImage, state.loadingContainerNavigationUrl().isEmpty())));
     return transition.takeEffects();
 }
 
@@ -341,8 +376,7 @@ ImageDocumentEffects finishSuccessfulImageLoad(
 {
     ImageOpenTransitionApplier transition(state);
     transition.applyFinishSuccessfulImageLoad(
-        rustImageOpenFinishSuccessfulImageLoad(RustImageOpenSuccessfulImageLoadRequest {
-            session.request.containerNavigationUrl().isEmpty() }),
+        rustImageOpenFinishSuccessfulImageLoad(rustImageOpenSuccessfulImageLoadRequest(session)),
         ImageOpenTransitionContext::successfulImageLoad(session));
     return transition.takeEffects();
 }
