@@ -15,6 +15,11 @@
 class QObject;
 
 namespace KiriView {
+struct ClearDeletedImageAfterDeletionEffect;
+struct ImageDeletionEffect;
+struct OpenContainerImageDeletionFallbackEffect;
+struct OpenImageDeletionFallbackEffect;
+struct ReportImageDeletionFailureEffect;
 class ImageDeletionController;
 class ImageDocumentState;
 class ImagePresentationController;
@@ -43,7 +48,12 @@ public:
     void cancel();
 
 private:
-    void report(ImageDocumentEffect effect);
+    void dispatch(ImageDeletionEffect effect);
+    void dispatchPayload(const ClearDeletedImageAfterDeletionEffect &);
+    void dispatchPayload(const OpenImageDeletionFallbackEffect &payload);
+    void dispatchPayload(const OpenContainerImageDeletionFallbackEffect &payload);
+    void dispatchPayload(const ReportImageDeletionFailureEffect &payload);
+    void reportDocumentEffect(ImageDocumentEffect effect);
 
     ImageDocumentState &m_state;
     ImagePresentationController &m_presentationController;

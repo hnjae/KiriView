@@ -9,6 +9,7 @@
 #include "imagepresentationcontroller.h"
 
 #include <utility>
+#include <variant>
 
 namespace KiriView {
 ImageDocumentDeletionController::ImageDocumentDeletionController(QObject *parent,
@@ -23,12 +24,7 @@ ImageDocumentDeletionController::ImageDocumentDeletionController(QObject *parent
         std::move(candidateProvider), std::move(fileOperationProvider),
         ImageDeletionController::Callbacks {
             [this]() { invokeIfSet(m_callbacks.inProgressChanged); },
-            [this]() { report(ImageDocumentEffect::clearDeletedImage()); },
-            [this](const QUrl &url) { report(ImageDocumentEffect::openUrl(url)); },
-            [this](const QUrl &imageUrl, const QUrl &containerUrl) {
-                report(ImageDocumentEffect::containerImageSelected(imageUrl, containerUrl));
-            },
-            [this](const QString &errorString) { invokeIfSet(m_callbacks.failed, errorString); },
+            [this](ImageDeletionEffect effect) { dispatch(std::move(effect)); },
         });
 }
 
@@ -50,7 +46,36 @@ void ImageDocumentDeletionController::deleteDisplayedFile(FileDeletionMode mode)
 
 void ImageDocumentDeletionController::cancel() { m_deletionController->cancel(); }
 
-void ImageDocumentDeletionController::report(ImageDocumentEffect effect)
+void ImageDocumentDeletionController::dispatch(ImageDeletionEffect effect)
+{
+    std::visit([this](const auto &payload) { dispatchPayload(payload); }, effect.payload);
+}
+
+void ImageDocumentDeletionController::dispatchPayload(const ClearDeletedImageAfterDeletionEffect &)
+{
+    reportDocumentEffect(ImageDocumentEffect::clearDeletedImage());
+}
+
+void ImageDocumentDeletionController::dispatchPayload(
+    const OpenImageDeletionFallbackEffect &payload)
+{
+    reportDocumentEffect(ImageDocumentEffect::openUrl(payload.url));
+}
+
+void ImageDocumentDeletionController::dispatchPayload(
+    const OpenContainerImageDeletionFallbackEffect &payload)
+{
+    reportDocumentEffect(
+        ImageDocumentEffect::containerImageSelected(payload.imageUrl, payload.containerUrl));
+}
+
+void ImageDocumentDeletionController::dispatchPayload(
+    const ReportImageDeletionFailureEffect &payload)
+{
+    invokeIfSet(m_callbacks.failed, payload.errorString);
+}
+
+void ImageDocumentDeletionController::reportDocumentEffect(ImageDocumentEffect effect)
 {
     invokeIfSet(m_callbacks.effect, std::move(effect));
 }

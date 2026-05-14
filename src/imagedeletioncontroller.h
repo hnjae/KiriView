@@ -16,23 +16,70 @@
 #include <QUrl>
 #include <functional>
 #include <optional>
+#include <utility>
+#include <variant>
 
 namespace KiriView {
+struct ClearDeletedImageAfterDeletionEffect {
+};
+
+struct OpenImageDeletionFallbackEffect {
+    QUrl url;
+};
+
+struct OpenContainerImageDeletionFallbackEffect {
+    QUrl imageUrl;
+    QUrl containerUrl;
+};
+
+struct ReportImageDeletionFailureEffect {
+    QString errorString;
+};
+
+struct ImageDeletionEffect {
+    using Payload
+        = std::variant<ClearDeletedImageAfterDeletionEffect, OpenImageDeletionFallbackEffect,
+            OpenContainerImageDeletionFallbackEffect, ReportImageDeletionFailureEffect>;
+
+    static ImageDeletionEffect clearDeletedImage()
+    {
+        return ImageDeletionEffect(ClearDeletedImageAfterDeletionEffect {});
+    }
+
+    static ImageDeletionEffect openImageFallback(const QUrl &url)
+    {
+        return ImageDeletionEffect(OpenImageDeletionFallbackEffect { url });
+    }
+
+    static ImageDeletionEffect openContainerImageFallback(
+        const QUrl &imageUrl, const QUrl &containerUrl)
+    {
+        return ImageDeletionEffect(
+            OpenContainerImageDeletionFallbackEffect { imageUrl, containerUrl });
+    }
+
+    static ImageDeletionEffect reportFailure(const QString &errorString)
+    {
+        return ImageDeletionEffect(ReportImageDeletionFailureEffect { errorString });
+    }
+
+    explicit ImageDeletionEffect(Payload effectPayload)
+        : payload(std::move(effectPayload))
+    {
+    }
+
+    Payload payload;
+};
+
 class ImageDeletionController final : public QObject
 {
 public:
     using InProgressChangedCallback = std::function<void()>;
-    using ClearDeletedImageCallback = std::function<void()>;
-    using OpenUrlCallback = std::function<void(const QUrl &)>;
-    using OpenContainerImageCallback = std::function<void(const QUrl &, const QUrl &)>;
-    using FailedCallback = std::function<void(const QString &)>;
+    using EffectCallback = std::function<void(ImageDeletionEffect)>;
 
     struct Callbacks {
         InProgressChangedCallback inProgressChanged;
-        ClearDeletedImageCallback clearDeletedImage;
-        OpenUrlCallback openUrl;
-        OpenContainerImageCallback openContainerImage;
-        FailedCallback failed;
+        EffectCallback effect;
     };
 
     ImageDeletionController(QObject *parent, ImageNavigationCandidateProvider candidateProvider,
@@ -56,6 +103,7 @@ private:
     void setInProgress(bool inProgress);
     void cancelFileDeletion();
     void cancelFallback();
+    void report(ImageDeletionEffect effect);
     void reportFailure(const QString &errorString);
 
     Callbacks m_callbacks;

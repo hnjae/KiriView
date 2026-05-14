@@ -62,7 +62,7 @@ void ImageDeletionController::finishFileDeletion(
 
     switch (fileDeletionCompletionAction(result)) {
     case FileDeletionCompletionAction::ClearDeletedImageAndOpenFallback:
-        invokeIfSet(m_callbacks.clearDeletedImage);
+        report(ImageDeletionEffect::clearDeletedImage());
         openDeletionFallback(fallbackPlan);
         return;
     case FileDeletionCompletionAction::Ignore:
@@ -89,7 +89,7 @@ void ImageDeletionController::openDeletionFallbackPlan(
             const std::optional<QUrl> fallbackUrl
                 = imageDeletionFallbackUrl(std::move(candidates), fallbackPlan);
             if (fallbackUrl.has_value()) {
-                invokeIfSet(m_callbacks.openUrl, *fallbackUrl);
+                report(ImageDeletionEffect::openImageFallback(*fallbackUrl));
             }
         },
         [](const QString &) {});
@@ -128,7 +128,7 @@ void ImageDeletionController::openComicBookDeletionFallbackCandidate(
     m_fallbackJob = m_candidateRepository.loadFirstImageInContainer(
         this, *candidate,
         [this](const QUrl &imageUrl, const QUrl &containerUrl) {
-            invokeIfSet(m_callbacks.openContainerImage, imageUrl, containerUrl);
+            report(ImageDeletionEffect::openContainerImageFallback(imageUrl, containerUrl));
         },
         [this, fallbackCandidate](const QUrl &, ImageCandidateRepositoryError, const QString &) {
             openComicBookDeletionFallbackCandidate(fallbackCandidate, std::nullopt);
@@ -159,9 +159,14 @@ void ImageDeletionController::cancelFileDeletion()
 
 void ImageDeletionController::cancelFallback() { m_fallbackJob.cancel(); }
 
+void ImageDeletionController::report(ImageDeletionEffect effect)
+{
+    invokeIfSet(m_callbacks.effect, std::move(effect));
+}
+
 void ImageDeletionController::reportFailure(const QString &errorString)
 {
     const QString message = errorString.isEmpty() ? genericFileDeletionErrorMessage() : errorString;
-    invokeIfSet(m_callbacks.failed, message);
+    report(ImageDeletionEffect::reportFailure(message));
 }
 }
