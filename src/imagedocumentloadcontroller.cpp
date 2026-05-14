@@ -22,12 +22,12 @@ KiriView::ImageSourceLoadPolicyInput sourceLoadPolicyInput(
 {
     const bool sourceUrlChanged = state.sourceUrl() != request.sourceUrl;
     KiriView::ImageSourceLoadPolicyInput input;
-    input.source_url_changed = sourceUrlChanged;
-    input.preserve_two_page_spread_transition = request.preserveTwoPageSpreadTransition;
-    input.reset_right_to_left_reading = spreadController.shouldResetRightToLeftReadingForLoad(
+    input.sourceUrlChanged = sourceUrlChanged;
+    input.preserveTwoPageSpreadTransition = request.preserveTwoPageSpreadTransition;
+    input.resetRightToLeftReading = spreadController.shouldResetRightToLeftReadingForLoad(
         state.displayedArchiveDocument(), request.sourceUrl, request.containerNavigationUrl);
-    input.right_to_left_reading_enabled = spreadController.rightToLeftReadingEnabled();
-    input.container_navigation_url_empty = request.containerNavigationUrl.isEmpty();
+    input.rightToLeftReadingEnabled = spreadController.rightToLeftReadingEnabled();
+    input.containerNavigationUrlEmpty = request.containerNavigationUrl.isEmpty();
     return input;
 }
 

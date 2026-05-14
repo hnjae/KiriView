@@ -5,11 +5,62 @@
 
 #include "imagecontainer.h"
 #include "imagedocumentstate.h"
+#include "kiriview/src/imageopenworkflow.cxx.h"
 
 #include <optional>
 #include <utility>
 
 namespace {
+KiriView::RustImageSourceLoadPolicyInput rustSourceLoadPolicyInput(
+    const KiriView::ImageSourceLoadPolicyInput &input)
+{
+    KiriView::RustImageSourceLoadPolicyInput rustInput {};
+    rustInput.source_url_changed = input.sourceUrlChanged;
+    rustInput.preserve_two_page_spread_transition = input.preserveTwoPageSpreadTransition;
+    rustInput.reset_right_to_left_reading = input.resetRightToLeftReading;
+    rustInput.right_to_left_reading_enabled = input.rightToLeftReadingEnabled;
+    rustInput.container_navigation_url_empty = input.containerNavigationUrlEmpty;
+    return rustInput;
+}
+
+KiriView::ImageSourceLoadAction imageSourceLoadAction(KiriView::RustImageSourceLoadAction action)
+{
+    switch (action) {
+    case KiriView::RustImageSourceLoadAction::CancelNavigationAndPredecode:
+        return KiriView::ImageSourceLoadAction::CancelNavigationAndPredecode;
+    case KiriView::RustImageSourceLoadAction::FinishSpreadTransition:
+        return KiriView::ImageSourceLoadAction::FinishSpreadTransition;
+    case KiriView::RustImageSourceLoadAction::ResetRightToLeftReading:
+        return KiriView::ImageSourceLoadAction::ResetRightToLeftReading;
+    case KiriView::RustImageSourceLoadAction::NotifyRightToLeftReading:
+        return KiriView::ImageSourceLoadAction::NotifyRightToLeftReading;
+    case KiriView::RustImageSourceLoadAction::ClearSecondaryPage:
+        return KiriView::ImageSourceLoadAction::ClearSecondaryPage;
+    case KiriView::RustImageSourceLoadAction::ClearLoadingContainerNavigationUrl:
+        return KiriView::ImageSourceLoadAction::ClearLoadingContainerNavigationUrl;
+    case KiriView::RustImageSourceLoadAction::UpdateContainerNavigationUrl:
+        return KiriView::ImageSourceLoadAction::UpdateContainerNavigationUrl;
+    case KiriView::RustImageSourceLoadAction::SetLoadingContainerNavigationUrl:
+        return KiriView::ImageSourceLoadAction::SetLoadingContainerNavigationUrl;
+    case KiriView::RustImageSourceLoadAction::SetSourceUrl:
+        return KiriView::ImageSourceLoadAction::SetSourceUrl;
+    case KiriView::RustImageSourceLoadAction::BeginOpen:
+        return KiriView::ImageSourceLoadAction::BeginOpen;
+    }
+
+    return KiriView::ImageSourceLoadAction::BeginOpen;
+}
+
+KiriView::ImageSourceLoadPlan imageSourceLoadPlan(const KiriView::RustImageSourceLoadPlan &rustPlan)
+{
+    KiriView::ImageSourceLoadPlan plan;
+    plan.actions.reserve(rustPlan.actions.size());
+    for (KiriView::RustImageSourceLoadAction action : rustPlan.actions) {
+        plan.actions.push_back(imageSourceLoadAction(action));
+    }
+    return plan;
+}
+
 struct ImageOpenTransitionContext {
     const KiriView::ImageLoadSession *session = nullptr;
     std::optional<QUrl> containerUrl;
@@ -310,7 +361,7 @@ private:
 namespace KiriView::ImageOpenWorkflow {
 ImageSourceLoadPlan sourceLoadPlan(const ImageSourceLoadPolicyInput &input)
 {
-    return rustImageSourceLoadPlan(input);
+    return imageSourceLoadPlan(rustImageSourceLoadPlan(rustSourceLoadPolicyInput(input)));
 }
 
 ImageDocumentEffects beginSourceLoad(ImageDocumentState &state, bool hasImage)

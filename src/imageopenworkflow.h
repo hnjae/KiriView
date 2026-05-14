@@ -6,13 +6,38 @@
 
 #include "imagedocumenteffects.h"
 #include "imageloadtypes.h"
-#include "kiriview/src/imageopenworkflow.cxx.h"
 
 #include <QString>
 #include <QUrl>
+#include <vector>
 
 namespace KiriView {
 class ImageDocumentState;
+
+enum class ImageSourceLoadAction {
+    CancelNavigationAndPredecode,
+    FinishSpreadTransition,
+    ResetRightToLeftReading,
+    NotifyRightToLeftReading,
+    ClearSecondaryPage,
+    ClearLoadingContainerNavigationUrl,
+    UpdateContainerNavigationUrl,
+    SetLoadingContainerNavigationUrl,
+    SetSourceUrl,
+    BeginOpen,
+};
+
+struct ImageSourceLoadPolicyInput {
+    bool sourceUrlChanged = false;
+    bool preserveTwoPageSpreadTransition = false;
+    bool resetRightToLeftReading = false;
+    bool rightToLeftReadingEnabled = false;
+    bool containerNavigationUrlEmpty = false;
+};
+
+struct ImageSourceLoadPlan {
+    std::vector<ImageSourceLoadAction> actions;
+};
 
 namespace ImageOpenWorkflow {
     ImageSourceLoadPlan sourceLoadPlan(const ImageSourceLoadPolicyInput &input);
