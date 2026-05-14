@@ -108,7 +108,7 @@ void ImageDocumentLoadController::clearImage()
     m_spreadController.finishTransition();
     m_spreadController.clearSecondaryPage();
     m_navigationController.cancelPageNavigationUpdate();
-    m_state.clearDisplayedImageUrls();
+    m_state.clearDisplayedImageLocation();
     m_presentationController.clearImage();
     m_navigationController.clearPageNavigation();
     m_spreadController.notifyRightToLeftReadingChanged();

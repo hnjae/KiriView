@@ -51,7 +51,7 @@ public:
 
     void setSourceUrl(const QUrl &sourceUrl);
     void setDisplayedImageLocation(const DisplayedImageLocation &location);
-    void clearDisplayedImageUrls();
+    void clearDisplayedImageLocation();
     void setStatus(ImageDocumentStatus status);
     void setLoading(bool loading);
     void setErrorString(const QString &errorString);

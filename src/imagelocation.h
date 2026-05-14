@@ -22,6 +22,15 @@ public:
     const QUrl &url() const { return m_url; }
     bool isEmpty() const { return m_url.isEmpty(); }
 
+    friend bool operator==(const ImageLocation &left, const ImageLocation &right)
+    {
+        return left.m_url == right.m_url;
+    }
+    friend bool operator!=(const ImageLocation &left, const ImageLocation &right)
+    {
+        return !(left == right);
+    }
+
 private:
     QUrl m_url;
 };
@@ -40,6 +49,15 @@ public:
 
     const QUrl &url() const { return m_url; }
     bool isEmpty() const { return m_url.isEmpty(); }
+
+    friend bool operator==(const ContainerLocation &left, const ContainerLocation &right)
+    {
+        return left.m_url == right.m_url;
+    }
+    friend bool operator!=(const ContainerLocation &left, const ContainerLocation &right)
+    {
+        return !(left == right);
+    }
 
 private:
     QUrl m_url;
@@ -72,6 +90,18 @@ public:
     ArchiveDocumentKind kind() const { return m_kind; }
     bool isEmpty() const { return m_fileUrl.isEmpty() || m_rootUrl.isEmpty(); }
     bool isComicBook() const { return !isEmpty() && m_kind == ArchiveDocumentKind::ComicBook; }
+
+    friend bool operator==(
+        const ArchiveDocumentLocation &left, const ArchiveDocumentLocation &right)
+    {
+        return left.m_fileUrl == right.m_fileUrl && left.m_rootUrl == right.m_rootUrl
+            && left.m_kind == right.m_kind;
+    }
+    friend bool operator!=(
+        const ArchiveDocumentLocation &left, const ArchiveDocumentLocation &right)
+    {
+        return !(left == right);
+    }
 
 private:
     QUrl m_fileUrl;
@@ -118,6 +148,15 @@ public:
         m_archiveDocument = std::move(archiveDocument);
     }
     void clearArchiveDocument() { m_archiveDocument = ArchiveDocumentLocation::none(); }
+
+    friend bool operator==(const DisplayedImageLocation &left, const DisplayedImageLocation &right)
+    {
+        return left.m_image == right.m_image && left.m_archiveDocument == right.m_archiveDocument;
+    }
+    friend bool operator!=(const DisplayedImageLocation &left, const DisplayedImageLocation &right)
+    {
+        return !(left == right);
+    }
 
 private:
     ImageLocation m_image;

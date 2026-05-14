@@ -101,7 +101,7 @@ void ImageDocumentState::setDisplayedImageLocation(const DisplayedImageLocation 
     replaceDisplayedImageLocation(location);
 }
 
-void ImageDocumentState::clearDisplayedImageUrls()
+void ImageDocumentState::clearDisplayedImageLocation()
 {
     replaceDisplayedImageLocation(DisplayedImageLocation {});
 }
@@ -110,7 +110,10 @@ void ImageDocumentState::replaceDisplayedImageLocation(DisplayedImageLocation lo
 {
     const QString previousWindowTitle = windowTitleFileName();
     const QUrl previousDisplayedUrl = displayedUrl();
-    m_displayedImageLocation = std::move(location);
+    if (!replaceIfChanged(m_displayedImageLocation, location)) {
+        return;
+    }
+
     for (ImageDocumentChange change :
         imageDocumentDisplayedLocationNotifications(
             previousDisplayedUrl != displayedUrl(), previousWindowTitle != windowTitleFileName())) {
