@@ -60,7 +60,7 @@ public:
     ImageDocumentEffects clearAfterSuccessfulFileDeletion();
 
 private:
-    ImageSourceLoadRequest sourceLoadWorkflowRequest(
+    ImageSourceLoadPolicyInput sourceLoadPolicyInput(
         const ImageDocumentSourceLoadRequest &request) const;
     void applySourceLoadPlan(
         const ImageDocumentSourceLoadRequest &request, const ImageSourceLoadPlan &plan);

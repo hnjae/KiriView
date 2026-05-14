@@ -35,25 +35,22 @@ void ImageDocumentLoadController::loadSource(const ImageDocumentSourceLoadReques
 {
     m_deletionController.cancel();
 
-    const ImageSourceLoadPlan plan
-        = ImageSourceLoadWorkflow::plan(sourceLoadWorkflowRequest(request));
+    const ImageSourceLoadPlan plan = ImageSourceLoadWorkflow::plan(sourceLoadPolicyInput(request));
     applySourceLoadPlan(request, plan);
 }
 
-ImageSourceLoadRequest ImageDocumentLoadController::sourceLoadWorkflowRequest(
+ImageSourceLoadPolicyInput ImageDocumentLoadController::sourceLoadPolicyInput(
     const ImageDocumentSourceLoadRequest &request) const
 {
     const bool sourceUrlChanged = m_state.sourceUrl() != request.sourceUrl;
-    ImageSourceLoadRequest sourceLoadRequest;
-    sourceLoadRequest.source_url_changed = sourceUrlChanged;
-    sourceLoadRequest.preserve_two_page_spread_transition = request.preserveTwoPageSpreadTransition;
-    sourceLoadRequest.reset_right_to_left_reading
-        = m_spreadController.shouldResetRightToLeftReadingForLoad(
-            m_state.displayedArchiveDocument(), request.sourceUrl, request.containerNavigationUrl);
-    sourceLoadRequest.right_to_left_reading_enabled
-        = m_spreadController.rightToLeftReadingEnabled();
-    sourceLoadRequest.container_navigation_url_empty = request.containerNavigationUrl.isEmpty();
-    return sourceLoadRequest;
+    ImageSourceLoadPolicyInput input;
+    input.source_url_changed = sourceUrlChanged;
+    input.preserve_two_page_spread_transition = request.preserveTwoPageSpreadTransition;
+    input.reset_right_to_left_reading = m_spreadController.shouldResetRightToLeftReadingForLoad(
+        m_state.displayedArchiveDocument(), request.sourceUrl, request.containerNavigationUrl);
+    input.right_to_left_reading_enabled = m_spreadController.rightToLeftReadingEnabled();
+    input.container_navigation_url_empty = request.containerNavigationUrl.isEmpty();
+    return input;
 }
 
 void ImageDocumentLoadController::applySourceLoadPlan(

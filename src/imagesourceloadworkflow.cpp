@@ -4,8 +4,8 @@
 #include "imagesourceloadworkflow.h"
 
 namespace KiriView::ImageSourceLoadWorkflow {
-ImageSourceLoadPlan plan(const ImageSourceLoadRequest &request)
+ImageSourceLoadPlan plan(const ImageSourceLoadPolicyInput &input)
 {
-    return rustImageSourceLoadPlan(request);
+    return rustImageSourceLoadPlan(input);
 }
 }

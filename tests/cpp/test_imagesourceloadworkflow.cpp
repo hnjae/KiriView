@@ -31,36 +31,36 @@ void TestImageSourceLoadWorkflow::derivesRightToLeftReadingActionsFromRuntimeSna
 {
     using Action = KiriView::ImageSourceLoadAction;
 
-    KiriView::ImageSourceLoadRequest request;
-    request.source_url_changed = false;
-    request.preserve_two_page_spread_transition = true;
-    request.container_navigation_url_empty = true;
+    KiriView::ImageSourceLoadPolicyInput input;
+    input.source_url_changed = false;
+    input.preserve_two_page_spread_transition = true;
+    input.container_navigation_url_empty = true;
 
-    request.reset_right_to_left_reading = false;
-    request.right_to_left_reading_enabled = false;
-    compareActions(KiriView::ImageSourceLoadWorkflow::plan(request).actions,
+    input.reset_right_to_left_reading = false;
+    input.right_to_left_reading_enabled = false;
+    compareActions(KiriView::ImageSourceLoadWorkflow::plan(input).actions,
         {
             Action::ClearLoadingContainerNavigationUrl,
         });
 
-    request.reset_right_to_left_reading = false;
-    request.right_to_left_reading_enabled = true;
-    compareActions(KiriView::ImageSourceLoadWorkflow::plan(request).actions,
+    input.reset_right_to_left_reading = false;
+    input.right_to_left_reading_enabled = true;
+    compareActions(KiriView::ImageSourceLoadWorkflow::plan(input).actions,
         {
             Action::ClearLoadingContainerNavigationUrl,
         });
 
-    request.reset_right_to_left_reading = true;
-    request.right_to_left_reading_enabled = false;
-    compareActions(KiriView::ImageSourceLoadWorkflow::plan(request).actions,
+    input.reset_right_to_left_reading = true;
+    input.right_to_left_reading_enabled = false;
+    compareActions(KiriView::ImageSourceLoadWorkflow::plan(input).actions,
         {
             Action::ResetRightToLeftReading,
             Action::ClearLoadingContainerNavigationUrl,
         });
 
-    request.reset_right_to_left_reading = true;
-    request.right_to_left_reading_enabled = true;
-    compareActions(KiriView::ImageSourceLoadWorkflow::plan(request).actions,
+    input.reset_right_to_left_reading = true;
+    input.right_to_left_reading_enabled = true;
+    compareActions(KiriView::ImageSourceLoadWorkflow::plan(input).actions,
         {
             Action::ResetRightToLeftReading,
             Action::NotifyRightToLeftReading,
@@ -72,14 +72,14 @@ void TestImageSourceLoadWorkflow::routesUnchangedAndReplacementLoads()
 {
     using Action = KiriView::ImageSourceLoadAction;
 
-    KiriView::ImageSourceLoadRequest unchangedRequest;
-    unchangedRequest.source_url_changed = false;
-    unchangedRequest.preserve_two_page_spread_transition = false;
-    unchangedRequest.reset_right_to_left_reading = true;
-    unchangedRequest.right_to_left_reading_enabled = true;
-    unchangedRequest.container_navigation_url_empty = false;
+    KiriView::ImageSourceLoadPolicyInput unchangedInput;
+    unchangedInput.source_url_changed = false;
+    unchangedInput.preserve_two_page_spread_transition = false;
+    unchangedInput.reset_right_to_left_reading = true;
+    unchangedInput.right_to_left_reading_enabled = true;
+    unchangedInput.container_navigation_url_empty = false;
     const KiriView::ImageSourceLoadPlan unchanged
-        = KiriView::ImageSourceLoadWorkflow::plan(unchangedRequest);
+        = KiriView::ImageSourceLoadWorkflow::plan(unchangedInput);
     const std::vector<Action> unchangedActions {
         Action::FinishSpreadTransition,
         Action::ResetRightToLeftReading,
@@ -89,14 +89,14 @@ void TestImageSourceLoadWorkflow::routesUnchangedAndReplacementLoads()
     };
     compareActions(unchanged.actions, unchangedActions);
 
-    KiriView::ImageSourceLoadRequest replacementRequest;
-    replacementRequest.source_url_changed = true;
-    replacementRequest.preserve_two_page_spread_transition = true;
-    replacementRequest.reset_right_to_left_reading = false;
-    replacementRequest.right_to_left_reading_enabled = true;
-    replacementRequest.container_navigation_url_empty = true;
+    KiriView::ImageSourceLoadPolicyInput replacementInput;
+    replacementInput.source_url_changed = true;
+    replacementInput.preserve_two_page_spread_transition = true;
+    replacementInput.reset_right_to_left_reading = false;
+    replacementInput.right_to_left_reading_enabled = true;
+    replacementInput.container_navigation_url_empty = true;
     const KiriView::ImageSourceLoadPlan replacement
-        = KiriView::ImageSourceLoadWorkflow::plan(replacementRequest);
+        = KiriView::ImageSourceLoadWorkflow::plan(replacementInput);
     const std::vector<Action> replacementActions {
         Action::CancelNavigationAndPredecode,
         Action::ClearSecondaryPage,
@@ -106,10 +106,10 @@ void TestImageSourceLoadWorkflow::routesUnchangedAndReplacementLoads()
     };
     compareActions(replacement.actions, replacementActions);
 
-    replacementRequest.reset_right_to_left_reading = true;
-    replacementRequest.right_to_left_reading_enabled = false;
+    replacementInput.reset_right_to_left_reading = true;
+    replacementInput.right_to_left_reading_enabled = false;
     const KiriView::ImageSourceLoadPlan inactiveResetReplacement
-        = KiriView::ImageSourceLoadWorkflow::plan(replacementRequest);
+        = KiriView::ImageSourceLoadWorkflow::plan(replacementInput);
     const std::vector<Action> inactiveResetReplacementActions {
         Action::CancelNavigationAndPredecode,
         Action::ResetRightToLeftReading,
@@ -120,10 +120,10 @@ void TestImageSourceLoadWorkflow::routesUnchangedAndReplacementLoads()
     };
     compareActions(inactiveResetReplacement.actions, inactiveResetReplacementActions);
 
-    replacementRequest.reset_right_to_left_reading = true;
-    replacementRequest.right_to_left_reading_enabled = true;
+    replacementInput.reset_right_to_left_reading = true;
+    replacementInput.right_to_left_reading_enabled = true;
     const KiriView::ImageSourceLoadPlan resettingReplacement
-        = KiriView::ImageSourceLoadWorkflow::plan(replacementRequest);
+        = KiriView::ImageSourceLoadWorkflow::plan(replacementInput);
     const std::vector<Action> resettingReplacementActions {
         Action::CancelNavigationAndPredecode,
         Action::ResetRightToLeftReading,

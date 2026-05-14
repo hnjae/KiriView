@@ -8,7 +8,7 @@
 
 namespace KiriView {
 namespace ImageSourceLoadWorkflow {
-    ImageSourceLoadPlan plan(const ImageSourceLoadRequest &request);
+    ImageSourceLoadPlan plan(const ImageSourceLoadPolicyInput &input);
 }
 }
 
