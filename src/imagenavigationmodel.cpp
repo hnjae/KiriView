@@ -151,16 +151,11 @@ PageNavigationState pageNavigationStateForCurrentUrl(
         rustCurrentNavigationIndex(currentUrlMatches(knownState.urls, currentUrl)),
         currentUrl.isValid() && !currentUrl.isEmpty(), knownState.urls.size());
 
-    switch (preview.urls) {
-    case RustPageNavigationUrlsTarget::Empty:
+    if (!preview.keep_known_urls) {
         return {};
-    case RustPageNavigationUrlsTarget::Known:
-        return PageNavigationState { knownState.urls, preview.current_index };
-    case RustPageNavigationUrlsTarget::Current:
-        return PageNavigationState { { normalizedImageUrl(currentUrl) }, preview.current_index };
     }
 
-    return {};
+    return PageNavigationState { knownState.urls, preview.current_index };
 }
 
 PageNavigationState pageNavigationStateForUrls(std::vector<QUrl> urls, const QUrl &currentUrl)

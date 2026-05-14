@@ -31,15 +31,8 @@ mod ffi {
     }
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-    enum RustPageNavigationUrlsTarget {
-        Empty = 0,
-        Known = 1,
-        Current = 2,
-    }
-
-    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     struct RustPageNavigationPreviewState {
-        urls: RustPageNavigationUrlsTarget,
+        keep_known_urls: bool,
         current_index: i32,
     }
 
@@ -85,7 +78,7 @@ mod ffi {
 
 use ffi::{
     RustNavigationDirection, RustNavigationIndex, RustPageNavigationPreviewState,
-    RustPageNavigationUpdate, RustPageNavigationUrlsTarget,
+    RustPageNavigationUpdate,
 };
 
 fn rust_predecode_window_image_indices(
@@ -172,16 +165,16 @@ fn rust_page_navigation_preview_state(
 ) -> RustPageNavigationPreviewState {
     if current.found {
         return page_navigation_preview_state(
-            RustPageNavigationUrlsTarget::Known,
+            true,
             i32::try_from(current.index).unwrap_or(i32::MAX),
         );
     }
 
     if current_url_valid && known_url_count > 0 {
-        return page_navigation_preview_state(RustPageNavigationUrlsTarget::Known, -1);
+        return page_navigation_preview_state(true, -1);
     }
 
-    page_navigation_preview_state(RustPageNavigationUrlsTarget::Empty, -1)
+    page_navigation_preview_state(false, -1)
 }
 
 fn rust_page_navigation_target_index(
@@ -219,11 +212,11 @@ fn missing_index() -> RustNavigationIndex {
 }
 
 fn page_navigation_preview_state(
-    urls: RustPageNavigationUrlsTarget,
+    keep_known_urls: bool,
     current_index: i32,
 ) -> RustPageNavigationPreviewState {
     RustPageNavigationPreviewState {
-        urls,
+        keep_known_urls,
         current_index,
     }
 }
@@ -315,7 +308,7 @@ mod tests {
     fn page_navigation_preview_state_reuses_known_urls_for_known_current_url() {
         assert_eq!(
             rust_page_navigation_preview_state(found_index(2), true, 3),
-            page_navigation_preview_state(RustPageNavigationUrlsTarget::Known, 2)
+            page_navigation_preview_state(true, 2)
         );
     }
 
@@ -323,11 +316,11 @@ mod tests {
     fn page_navigation_preview_state_keeps_pending_empty_known_list_unknown() {
         assert_eq!(
             rust_page_navigation_preview_state(missing_index(), true, 0),
-            page_navigation_preview_state(RustPageNavigationUrlsTarget::Empty, -1)
+            page_navigation_preview_state(false, -1)
         );
         assert_eq!(
             rust_page_navigation_preview_state(missing_index(), false, 3),
-            page_navigation_preview_state(RustPageNavigationUrlsTarget::Empty, -1)
+            page_navigation_preview_state(false, -1)
         );
     }
 
@@ -335,7 +328,7 @@ mod tests {
     fn page_navigation_preview_state_keeps_known_urls_for_temporarily_missing_current_url() {
         assert_eq!(
             rust_page_navigation_preview_state(missing_index(), true, 3),
-            page_navigation_preview_state(RustPageNavigationUrlsTarget::Known, -1)
+            page_navigation_preview_state(true, -1)
         );
     }
 
