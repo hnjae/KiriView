@@ -47,12 +47,11 @@ ImageSourceLoadRequest ImageDocumentLoadController::sourceLoadWorkflowRequest(
     ImageSourceLoadRequest sourceLoadRequest;
     sourceLoadRequest.source_url_changed = sourceUrlChanged;
     sourceLoadRequest.preserve_two_page_spread_transition = request.preserveTwoPageSpreadTransition;
-    sourceLoadRequest.right_to_left_reading_change
-        = ImageSourceLoadWorkflow::rightToLeftReadingChangeForLoad(
-            m_spreadController.shouldResetRightToLeftReadingForLoad(
-                m_state.displayedArchiveDocument(), request.sourceUrl,
-                request.containerNavigationUrl),
-            m_spreadController.rightToLeftReadingEnabled());
+    sourceLoadRequest.reset_right_to_left_reading
+        = m_spreadController.shouldResetRightToLeftReadingForLoad(
+            m_state.displayedArchiveDocument(), request.sourceUrl, request.containerNavigationUrl);
+    sourceLoadRequest.right_to_left_reading_enabled
+        = m_spreadController.rightToLeftReadingEnabled();
     sourceLoadRequest.container_navigation_url_empty = request.containerNavigationUrl.isEmpty();
     return sourceLoadRequest;
 }

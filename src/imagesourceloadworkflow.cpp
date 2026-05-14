@@ -4,13 +4,6 @@
 #include "imagesourceloadworkflow.h"
 
 namespace KiriView::ImageSourceLoadWorkflow {
-ImageSourceLoadRightToLeftReadingChange rightToLeftReadingChangeForLoad(
-    bool resetRightToLeftReading, bool rightToLeftReadingEnabled)
-{
-    return rustImageSourceLoadRightToLeftReadingChangeForLoad(
-        resetRightToLeftReading, rightToLeftReadingEnabled);
-}
-
 ImageSourceLoadPlan plan(const ImageSourceLoadRequest &request)
 {
     return rustImageSourceLoadPlan(request);

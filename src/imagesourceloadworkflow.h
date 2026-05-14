@@ -8,8 +8,6 @@
 
 namespace KiriView {
 namespace ImageSourceLoadWorkflow {
-    ImageSourceLoadRightToLeftReadingChange rightToLeftReadingChangeForLoad(
-        bool resetRightToLeftReading, bool rightToLeftReadingEnabled);
     ImageSourceLoadPlan plan(const ImageSourceLoadRequest &request);
 }
 }

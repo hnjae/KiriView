@@ -23,33 +23,60 @@ class TestImageSourceLoadWorkflow : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
-    void derivesRightToLeftReadingChangeFromRuntimeSnapshot();
+    void derivesRightToLeftReadingActionsFromRuntimeSnapshot();
     void routesUnchangedAndReplacementLoads();
 };
 
-void TestImageSourceLoadWorkflow::derivesRightToLeftReadingChangeFromRuntimeSnapshot()
+void TestImageSourceLoadWorkflow::derivesRightToLeftReadingActionsFromRuntimeSnapshot()
 {
-    using RightToLeftReadingChange = KiriView::ImageSourceLoadRightToLeftReadingChange;
+    using Action = KiriView::ImageSourceLoadAction;
 
-    QCOMPARE(KiriView::ImageSourceLoadWorkflow::rightToLeftReadingChangeForLoad(false, false),
-        RightToLeftReadingChange::None);
-    QCOMPARE(KiriView::ImageSourceLoadWorkflow::rightToLeftReadingChangeForLoad(false, true),
-        RightToLeftReadingChange::None);
-    QCOMPARE(KiriView::ImageSourceLoadWorkflow::rightToLeftReadingChangeForLoad(true, false),
-        RightToLeftReadingChange::Reset);
-    QCOMPARE(KiriView::ImageSourceLoadWorkflow::rightToLeftReadingChangeForLoad(true, true),
-        RightToLeftReadingChange::ResetAndNotify);
+    KiriView::ImageSourceLoadRequest request;
+    request.source_url_changed = false;
+    request.preserve_two_page_spread_transition = true;
+    request.container_navigation_url_empty = true;
+
+    request.reset_right_to_left_reading = false;
+    request.right_to_left_reading_enabled = false;
+    compareActions(KiriView::ImageSourceLoadWorkflow::plan(request).actions,
+        {
+            Action::ClearLoadingContainerNavigationUrl,
+        });
+
+    request.reset_right_to_left_reading = false;
+    request.right_to_left_reading_enabled = true;
+    compareActions(KiriView::ImageSourceLoadWorkflow::plan(request).actions,
+        {
+            Action::ClearLoadingContainerNavigationUrl,
+        });
+
+    request.reset_right_to_left_reading = true;
+    request.right_to_left_reading_enabled = false;
+    compareActions(KiriView::ImageSourceLoadWorkflow::plan(request).actions,
+        {
+            Action::ResetRightToLeftReading,
+            Action::ClearLoadingContainerNavigationUrl,
+        });
+
+    request.reset_right_to_left_reading = true;
+    request.right_to_left_reading_enabled = true;
+    compareActions(KiriView::ImageSourceLoadWorkflow::plan(request).actions,
+        {
+            Action::ResetRightToLeftReading,
+            Action::NotifyRightToLeftReading,
+            Action::ClearLoadingContainerNavigationUrl,
+        });
 }
 
 void TestImageSourceLoadWorkflow::routesUnchangedAndReplacementLoads()
 {
     using Action = KiriView::ImageSourceLoadAction;
-    using RightToLeftReadingChange = KiriView::ImageSourceLoadRightToLeftReadingChange;
 
     KiriView::ImageSourceLoadRequest unchangedRequest;
     unchangedRequest.source_url_changed = false;
     unchangedRequest.preserve_two_page_spread_transition = false;
-    unchangedRequest.right_to_left_reading_change = RightToLeftReadingChange::ResetAndNotify;
+    unchangedRequest.reset_right_to_left_reading = true;
+    unchangedRequest.right_to_left_reading_enabled = true;
     unchangedRequest.container_navigation_url_empty = false;
     const KiriView::ImageSourceLoadPlan unchanged
         = KiriView::ImageSourceLoadWorkflow::plan(unchangedRequest);
@@ -65,7 +92,8 @@ void TestImageSourceLoadWorkflow::routesUnchangedAndReplacementLoads()
     KiriView::ImageSourceLoadRequest replacementRequest;
     replacementRequest.source_url_changed = true;
     replacementRequest.preserve_two_page_spread_transition = true;
-    replacementRequest.right_to_left_reading_change = RightToLeftReadingChange::None;
+    replacementRequest.reset_right_to_left_reading = false;
+    replacementRequest.right_to_left_reading_enabled = true;
     replacementRequest.container_navigation_url_empty = true;
     const KiriView::ImageSourceLoadPlan replacement
         = KiriView::ImageSourceLoadWorkflow::plan(replacementRequest);
@@ -78,7 +106,8 @@ void TestImageSourceLoadWorkflow::routesUnchangedAndReplacementLoads()
     };
     compareActions(replacement.actions, replacementActions);
 
-    replacementRequest.right_to_left_reading_change = RightToLeftReadingChange::Reset;
+    replacementRequest.reset_right_to_left_reading = true;
+    replacementRequest.right_to_left_reading_enabled = false;
     const KiriView::ImageSourceLoadPlan inactiveResetReplacement
         = KiriView::ImageSourceLoadWorkflow::plan(replacementRequest);
     const std::vector<Action> inactiveResetReplacementActions {
@@ -91,7 +120,8 @@ void TestImageSourceLoadWorkflow::routesUnchangedAndReplacementLoads()
     };
     compareActions(inactiveResetReplacement.actions, inactiveResetReplacementActions);
 
-    replacementRequest.right_to_left_reading_change = RightToLeftReadingChange::ResetAndNotify;
+    replacementRequest.reset_right_to_left_reading = true;
+    replacementRequest.right_to_left_reading_enabled = true;
     const KiriView::ImageSourceLoadPlan resettingReplacement
         = KiriView::ImageSourceLoadWorkflow::plan(replacementRequest);
     const std::vector<Action> resettingReplacementActions {

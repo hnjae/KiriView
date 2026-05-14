@@ -18,17 +18,11 @@ mod ffi {
     }
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-    enum ImageSourceLoadRightToLeftReadingChange {
-        None = 0,
-        Reset = 1,
-        ResetAndNotify = 2,
-    }
-
-    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     struct ImageSourceLoadRequest {
         source_url_changed: bool,
         preserve_two_page_spread_transition: bool,
-        right_to_left_reading_change: ImageSourceLoadRightToLeftReadingChange,
+        reset_right_to_left_reading: bool,
+        right_to_left_reading_enabled: bool,
         container_navigation_url_empty: bool,
     }
 
@@ -38,35 +32,12 @@ mod ffi {
     }
 
     extern "Rust" {
-        #[cxx_name = "rustImageSourceLoadRightToLeftReadingChangeForLoad"]
-        fn rust_image_source_load_right_to_left_reading_change_for_load(
-            reset_right_to_left_reading: bool,
-            right_to_left_reading_enabled: bool,
-        ) -> ImageSourceLoadRightToLeftReadingChange;
-
         #[cxx_name = "rustImageSourceLoadPlan"]
         fn rust_image_source_load_plan(request: ImageSourceLoadRequest) -> ImageSourceLoadPlan;
     }
 }
 
-use ffi::{
-    ImageSourceLoadAction, ImageSourceLoadPlan, ImageSourceLoadRequest,
-    ImageSourceLoadRightToLeftReadingChange,
-};
-
-fn rust_image_source_load_right_to_left_reading_change_for_load(
-    reset_right_to_left_reading: bool,
-    right_to_left_reading_enabled: bool,
-) -> ImageSourceLoadRightToLeftReadingChange {
-    if !reset_right_to_left_reading {
-        return ImageSourceLoadRightToLeftReadingChange::None;
-    }
-    if right_to_left_reading_enabled {
-        return ImageSourceLoadRightToLeftReadingChange::ResetAndNotify;
-    }
-
-    ImageSourceLoadRightToLeftReadingChange::Reset
-}
+use ffi::{ImageSourceLoadAction, ImageSourceLoadPlan, ImageSourceLoadRequest};
 
 fn rust_image_source_load_plan(request: ImageSourceLoadRequest) -> ImageSourceLoadPlan {
     let mut plan = ImageSourceLoadPlan {
@@ -84,11 +55,11 @@ fn rust_image_source_load_plan(request: ImageSourceLoadRequest) -> ImageSourceLo
 }
 
 fn resets_right_to_left_reading(request: ImageSourceLoadRequest) -> bool {
-    request.right_to_left_reading_change != ImageSourceLoadRightToLeftReadingChange::None
+    request.reset_right_to_left_reading
 }
 
 fn notifies_right_to_left_reading(request: ImageSourceLoadRequest) -> bool {
-    request.right_to_left_reading_change == ImageSourceLoadRightToLeftReadingChange::ResetAndNotify
+    request.reset_right_to_left_reading && request.right_to_left_reading_enabled
 }
 
 fn append_initial_load_actions(plan: &mut ImageSourceLoadPlan, request: ImageSourceLoadRequest) {
@@ -141,45 +112,22 @@ mod tests {
     fn request(
         source_url_changed: bool,
         preserve_two_page_spread_transition: bool,
-        right_to_left_reading_change: ImageSourceLoadRightToLeftReadingChange,
+        reset_right_to_left_reading: bool,
+        right_to_left_reading_enabled: bool,
         container_navigation_url_empty: bool,
     ) -> ImageSourceLoadRequest {
         ImageSourceLoadRequest {
             source_url_changed,
             preserve_two_page_spread_transition,
-            right_to_left_reading_change,
+            reset_right_to_left_reading,
+            right_to_left_reading_enabled,
             container_navigation_url_empty,
         }
     }
 
     #[test]
-    fn derives_right_to_left_reading_change_from_runtime_snapshot() {
-        assert_eq!(
-            rust_image_source_load_right_to_left_reading_change_for_load(false, false),
-            ImageSourceLoadRightToLeftReadingChange::None
-        );
-        assert_eq!(
-            rust_image_source_load_right_to_left_reading_change_for_load(false, true),
-            ImageSourceLoadRightToLeftReadingChange::None
-        );
-        assert_eq!(
-            rust_image_source_load_right_to_left_reading_change_for_load(true, false),
-            ImageSourceLoadRightToLeftReadingChange::Reset
-        );
-        assert_eq!(
-            rust_image_source_load_right_to_left_reading_change_for_load(true, true),
-            ImageSourceLoadRightToLeftReadingChange::ResetAndNotify
-        );
-    }
-
-    #[test]
     fn routes_unchanged_and_replacement_loads() {
-        let unchanged = rust_image_source_load_plan(request(
-            false,
-            false,
-            ImageSourceLoadRightToLeftReadingChange::ResetAndNotify,
-            false,
-        ));
+        let unchanged = rust_image_source_load_plan(request(false, false, true, true, false));
         assert_eq!(
             unchanged.actions,
             vec![
@@ -191,12 +139,7 @@ mod tests {
             ]
         );
 
-        let replacement = rust_image_source_load_plan(request(
-            true,
-            true,
-            ImageSourceLoadRightToLeftReadingChange::None,
-            true,
-        ));
+        let replacement = rust_image_source_load_plan(request(true, true, false, true, true));
         assert_eq!(
             replacement.actions,
             vec![
@@ -208,12 +151,8 @@ mod tests {
             ]
         );
 
-        let inactive_reset_replacement = rust_image_source_load_plan(request(
-            true,
-            true,
-            ImageSourceLoadRightToLeftReadingChange::Reset,
-            true,
-        ));
+        let inactive_reset_replacement =
+            rust_image_source_load_plan(request(true, true, true, false, true));
         assert_eq!(
             inactive_reset_replacement.actions,
             vec![
@@ -226,12 +165,8 @@ mod tests {
             ]
         );
 
-        let resetting_replacement = rust_image_source_load_plan(request(
-            true,
-            true,
-            ImageSourceLoadRightToLeftReadingChange::ResetAndNotify,
-            true,
-        ));
+        let resetting_replacement =
+            rust_image_source_load_plan(request(true, true, true, true, true));
         assert_eq!(
             resetting_replacement.actions,
             vec![
