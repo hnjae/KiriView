@@ -17,6 +17,8 @@ Item {
 
     readonly property bool canOpenNextImage: root.imageReady && root.imageDocument.currentPageNumber > 0 && root.imageDocument.currentLastPageNumber < root.imageDocument.imageCount
     readonly property bool canOpenPreviousImage: root.imageReady && root.imageDocument.currentPageNumber > 1
+    readonly property bool atKnownFirstImage: root.imageReady && root.imageDocument.imageCount > 0 && root.imageDocument.currentPageNumber === 1
+    readonly property bool atKnownLastImage: root.imageReady && root.imageDocument.imageCount > 0 && root.imageDocument.currentPageNumber > 0 && root.imageDocument.currentLastPageNumber > 0 && root.imageDocument.currentLastPageNumber >= root.imageDocument.imageCount
     readonly property bool canUsePageActions: root.imageReady && root.imageDocument.imageCount > 0 && !root.imageDocument.fileDeletionInProgress && !root.helpDialogOpen
     readonly property bool canUseReadyActions: root.imageReady && !root.imageDocument.fileDeletionInProgress && !root.helpDialogOpen
     readonly property bool canUseTwoPageActions: root.canUseReadyActions && root.imageDocument.twoPageModeAvailable && root.imageDocument.twoPageModeEnabled
@@ -69,7 +71,7 @@ Item {
     }
 
     function openNextImage() {
-        if (root.imageReady && root.imageDocument.currentLastPageNumber >= root.imageDocument.imageCount) {
+        if (root.atKnownLastImage) {
             root.imageBoundaryReached(KI18n.i18nc("@info:status", "Last image"));
             return;
         }
@@ -78,7 +80,7 @@ Item {
     }
 
     function openPreviousImage() {
-        if (root.imageReady && root.imageDocument.currentPageNumber === 1 && root.imageDocument.imageCount > 0) {
+        if (root.atKnownFirstImage) {
             root.imageBoundaryReached(KI18n.i18nc("@info:status", "First image"));
             return;
         }
