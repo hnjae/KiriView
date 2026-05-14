@@ -170,8 +170,8 @@ if(TARGET test_localization)
     )
 endif()
 
-if(TARGET test_boundarynotification)
-    set_tests_properties(test_boundarynotification PROPERTIES
+if(TARGET test_toastnotification)
+    set_tests_properties(test_toastnotification PROPERTIES
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
     )
 endif()
