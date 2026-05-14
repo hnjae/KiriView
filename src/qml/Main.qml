@@ -166,7 +166,7 @@ StatefulApp.StatefulWindow {
             imageReady: page.imageReady
 
             onImageBoundaryReached: function (message) {
-                boundaryNotification.show(message);
+                toastNotification.show(message, "image-boundary");
             }
             onOpenDialogRequested: fileDialog.open()
             onShortcutHelpRequested: shortcutHelpDialog.open()
