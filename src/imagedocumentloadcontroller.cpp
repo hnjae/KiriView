@@ -45,14 +45,15 @@ ImageSourceLoadRequest ImageDocumentLoadController::sourceLoadWorkflowRequest(
     const ImageDocumentSourceLoadRequest &request) const
 {
     const bool sourceUrlChanged = m_state.sourceUrl() != request.sourceUrl;
-    const bool resetRightToLeftReading = m_spreadController.shouldResetRightToLeftReadingForLoad(
-        m_state.displayedArchiveDocument(), request.sourceUrl, request.containerNavigationUrl);
-
     ImageSourceLoadRequest sourceLoadRequest;
     sourceLoadRequest.sourceUrlChanged = sourceUrlChanged;
     sourceLoadRequest.preserveTwoPageSpreadTransition = request.preserveTwoPageSpreadTransition;
-    sourceLoadRequest.resetRightToLeftReading = resetRightToLeftReading;
-    sourceLoadRequest.rightToLeftReadingEnabled = m_spreadController.rightToLeftReadingEnabled();
+    sourceLoadRequest.rightToLeftReadingChange
+        = ImageSourceLoadWorkflow::rightToLeftReadingChangeForLoad(
+            m_spreadController.shouldResetRightToLeftReadingForLoad(
+                m_state.displayedArchiveDocument(), request.sourceUrl,
+                request.containerNavigationUrl),
+            m_spreadController.rightToLeftReadingEnabled());
     sourceLoadRequest.containerNavigationUrlEmpty = request.containerNavigationUrl.isEmpty();
     return sourceLoadRequest;
 }

@@ -4,6 +4,18 @@
 #include "imagesourceloadworkflow.h"
 
 namespace {
+bool resetsRightToLeftReading(const KiriView::ImageSourceLoadRequest &request)
+{
+    return request.rightToLeftReadingChange
+        != KiriView::ImageSourceLoadRightToLeftReadingChange::None;
+}
+
+bool notifiesRightToLeftReading(const KiriView::ImageSourceLoadRequest &request)
+{
+    return request.rightToLeftReadingChange
+        == KiriView::ImageSourceLoadRightToLeftReadingChange::ResetAndNotify;
+}
+
 void appendInitialLoadActions(
     KiriView::ImageSourceLoadPlan *plan, const KiriView::ImageSourceLoadRequest &request)
 {
@@ -13,7 +25,7 @@ void appendInitialLoadActions(
     if (!request.preserveTwoPageSpreadTransition) {
         plan->actions.push_back(KiriView::ImageSourceLoadAction::FinishSpreadTransition);
     }
-    if (request.resetRightToLeftReading) {
+    if (resetsRightToLeftReading(request)) {
         plan->actions.push_back(KiriView::ImageSourceLoadAction::ResetRightToLeftReading);
     }
 }
@@ -21,7 +33,7 @@ void appendInitialLoadActions(
 void appendUnchangedSourceActions(
     KiriView::ImageSourceLoadPlan *plan, const KiriView::ImageSourceLoadRequest &request)
 {
-    if (request.resetRightToLeftReading && request.rightToLeftReadingEnabled) {
+    if (notifiesRightToLeftReading(request)) {
         plan->actions.push_back(KiriView::ImageSourceLoadAction::NotifyRightToLeftReading);
     }
     plan->actions.push_back(KiriView::ImageSourceLoadAction::ClearLoadingContainerNavigationUrl);
@@ -37,13 +49,26 @@ void appendChangedSourceActions(
     plan->actions.push_back(KiriView::ImageSourceLoadAction::SetLoadingContainerNavigationUrl);
     plan->actions.push_back(KiriView::ImageSourceLoadAction::SetSourceUrl);
     plan->actions.push_back(KiriView::ImageSourceLoadAction::BeginOpen);
-    if (request.resetRightToLeftReading && request.rightToLeftReadingEnabled) {
+    if (notifiesRightToLeftReading(request)) {
         plan->actions.push_back(KiriView::ImageSourceLoadAction::NotifyRightToLeftReading);
     }
 }
 }
 
 namespace KiriView::ImageSourceLoadWorkflow {
+ImageSourceLoadRightToLeftReadingChange rightToLeftReadingChangeForLoad(
+    bool resetRightToLeftReading, bool rightToLeftReadingEnabled)
+{
+    if (!resetRightToLeftReading) {
+        return ImageSourceLoadRightToLeftReadingChange::None;
+    }
+    if (rightToLeftReadingEnabled) {
+        return ImageSourceLoadRightToLeftReadingChange::ResetAndNotify;
+    }
+
+    return ImageSourceLoadRightToLeftReadingChange::Reset;
+}
+
 ImageSourceLoadPlan plan(const ImageSourceLoadRequest &request)
 {
     ImageSourceLoadPlan plan;

@@ -20,6 +20,12 @@ enum class ImageSourceLoadAction {
     BeginOpen,
 };
 
+enum class ImageSourceLoadRightToLeftReadingChange {
+    None,
+    Reset,
+    ResetAndNotify,
+};
+
 struct ImageSourceLoadPlan {
     std::vector<ImageSourceLoadAction> actions;
 };
@@ -27,12 +33,14 @@ struct ImageSourceLoadPlan {
 struct ImageSourceLoadRequest {
     bool sourceUrlChanged = false;
     bool preserveTwoPageSpreadTransition = false;
-    bool resetRightToLeftReading = false;
-    bool rightToLeftReadingEnabled = false;
+    ImageSourceLoadRightToLeftReadingChange rightToLeftReadingChange
+        = ImageSourceLoadRightToLeftReadingChange::None;
     bool containerNavigationUrlEmpty = false;
 };
 
 namespace ImageSourceLoadWorkflow {
+    ImageSourceLoadRightToLeftReadingChange rightToLeftReadingChangeForLoad(
+        bool resetRightToLeftReading, bool rightToLeftReadingEnabled);
     ImageSourceLoadPlan plan(const ImageSourceLoadRequest &request);
 }
 }
