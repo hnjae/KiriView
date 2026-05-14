@@ -5,7 +5,6 @@
 
 #include "imagecontainer.h"
 #include "imagedocumentstate.h"
-#include "kiriview/src/imageopenworkflow.cxx.h"
 
 #include <optional>
 #include <utility>
@@ -309,6 +308,11 @@ private:
 }
 
 namespace KiriView::ImageOpenWorkflow {
+ImageSourceLoadPlan sourceLoadPlan(const ImageSourceLoadPolicyInput &input)
+{
+    return rustImageSourceLoadPlan(input);
+}
+
 ImageDocumentEffects beginSourceLoad(ImageDocumentState &state, bool hasImage)
 {
     ImageOpenTransitionApplier transition(state);

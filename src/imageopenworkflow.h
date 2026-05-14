@@ -6,6 +6,7 @@
 
 #include "imagedocumenteffects.h"
 #include "imageloadtypes.h"
+#include "kiriview/src/imageopenworkflow.cxx.h"
 
 #include <QString>
 #include <QUrl>
@@ -14,6 +15,7 @@ namespace KiriView {
 class ImageDocumentState;
 
 namespace ImageOpenWorkflow {
+    ImageSourceLoadPlan sourceLoadPlan(const ImageSourceLoadPolicyInput &input);
     ImageDocumentEffects beginSourceLoad(ImageDocumentState &state, bool hasImage);
     ImageDocumentEffects finishEmptySourceLoad(ImageDocumentState &state);
     ImageDocumentEffects finishSuccessfulImageLoad(

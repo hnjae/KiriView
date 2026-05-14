@@ -5,7 +5,7 @@
 #define KIRIVIEW_IMAGEDOCUMENTLOADCONTROLLER_H
 
 #include "imagedocumenteffects.h"
-#include "imagesourceloadworkflow.h"
+#include "imageopenworkflow.h"
 
 #include <QUrl>
 

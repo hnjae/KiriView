@@ -35,7 +35,8 @@ void ImageDocumentLoadController::loadSource(const ImageDocumentSourceLoadReques
 {
     m_deletionController.cancel();
 
-    const ImageSourceLoadPlan plan = ImageSourceLoadWorkflow::plan(sourceLoadPolicyInput(request));
+    const ImageSourceLoadPlan plan
+        = ImageOpenWorkflow::sourceLoadPlan(sourceLoadPolicyInput(request));
     applySourceLoadPlan(request, plan);
 }
 
