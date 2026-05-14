@@ -65,7 +65,8 @@ private:
     void finishContainerNavigationLoadWithError(
         const QUrl &containerUrl, ContainerNavigationError error, const QString &errorString);
 
-    void setPageNavigationUrls(std::vector<QUrl> urls, const QUrl &currentUrl);
+    void setPageNavigationUrls(
+        std::vector<QUrl> urls, const QUrl &currentUrl, ImageCandidateListSource source);
     void setPageNavigationState(PageNavigationState state);
 
     Callbacks m_callbacks;
@@ -75,6 +76,7 @@ private:
     ImageIoJob m_containerNavigationListJob;
     ImageIoJob m_pageNavigationListerJob;
     PageNavigationState m_pageNavigation;
+    std::optional<ImageCandidateListSource> m_pageNavigationSource;
 };
 }
 

@@ -45,6 +45,43 @@ std::vector<QUrl> imageNavigationCandidateUrls(
     }
     return urls;
 }
+
+bool sameArchiveDocumentLocation(
+    const KiriView::ArchiveDocumentLocation &left, const KiriView::ArchiveDocumentLocation &right)
+{
+    return KiriView::sameNormalizedUrl(left.fileUrl(), right.fileUrl())
+        && KiriView::sameNormalizedUrl(left.rootUrl(), right.rootUrl())
+        && left.kind() == right.kind();
+}
+
+bool sameImageCandidateListSourcePayload(const KiriView::ImageCandidateListSource::Directory &left,
+    const KiriView::ImageCandidateListSource::Directory &right)
+{
+    return KiriView::sameNormalizedUrl(left.directoryUrl, right.directoryUrl);
+}
+
+bool sameImageCandidateListSourcePayload(
+    const KiriView::ImageCandidateListSource::ArchiveDocument &left,
+    const KiriView::ImageCandidateListSource::ArchiveDocument &right)
+{
+    return sameArchiveDocumentLocation(left.archiveDocument, right.archiveDocument);
+}
+
+template <typename Left, typename Right>
+bool sameImageCandidateListSourcePayload(const Left &, const Right &)
+{
+    return false;
+}
+
+bool sameImageCandidateListSource(
+    const KiriView::ImageCandidateListSource &left, const KiriView::ImageCandidateListSource &right)
+{
+    return left.visit([&right](const auto &leftSource) {
+        return right.visit([&leftSource](const auto &rightSource) {
+            return sameImageCandidateListSourcePayload(leftSource, rightSource);
+        });
+    });
+}
 }
 
 namespace KiriView {
@@ -191,22 +228,33 @@ void ImageNavigationService::updatePageNavigation(const DisplayContext &context)
         return;
     }
 
-    setPageNavigationState(
-        pageNavigationStateForCurrentUrl(m_pageNavigation, candidateContext->currentUrl()));
+    const ImageCandidateListSource candidateSource = candidateContext->source();
+    const bool canReuseKnownState = m_pageNavigationSource.has_value()
+        && sameImageCandidateListSource(*m_pageNavigationSource, candidateSource)
+        && !m_pageNavigation.urls.empty();
+    if (canReuseKnownState) {
+        setPageNavigationState(
+            pageNavigationStateForCurrentUrl(m_pageNavigation, candidateContext->currentUrl()));
+    } else {
+        clearPageNavigation();
+    }
 
     m_pageNavigationListerJob = m_candidateRepository.loadImages(
         this, *candidateContext,
-        [this, currentUrl = candidateContext->currentUrl()](
+        [this, currentUrl = candidateContext->currentUrl(), candidateSource](
             std::vector<ImageNavigationCandidate> candidates) {
-            setPageNavigationUrls(imageNavigationCandidateUrls(candidates), currentUrl);
+            setPageNavigationUrls(
+                imageNavigationCandidateUrls(candidates), currentUrl, candidateSource);
         },
         [](const QString &) {});
 }
 
 void ImageNavigationService::cancelPageNavigationUpdate() { m_pageNavigationListerJob.cancel(); }
 
-void ImageNavigationService::setPageNavigationUrls(std::vector<QUrl> urls, const QUrl &currentUrl)
+void ImageNavigationService::setPageNavigationUrls(
+    std::vector<QUrl> urls, const QUrl &currentUrl, ImageCandidateListSource source)
 {
+    m_pageNavigationSource = std::move(source);
     setPageNavigationState(pageNavigationStateForUrls(std::move(urls), currentUrl));
 }
 
@@ -222,6 +270,7 @@ void ImageNavigationService::setPageNavigationState(PageNavigationState state)
 
 void ImageNavigationService::clearPageNavigation()
 {
+    m_pageNavigationSource = std::nullopt;
     setPageNavigationState(PageNavigationState {});
 }
 }

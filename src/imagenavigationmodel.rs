@@ -177,11 +177,7 @@ fn rust_page_navigation_preview_state(
         );
     }
 
-    if current_url_valid && known_url_count == 0 {
-        return page_navigation_preview_state(RustPageNavigationUrlsTarget::Current, 0);
-    }
-
-    if current_url_valid {
+    if current_url_valid && known_url_count > 0 {
         return page_navigation_preview_state(RustPageNavigationUrlsTarget::Known, -1);
     }
 
