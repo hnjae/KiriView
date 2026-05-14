@@ -166,7 +166,7 @@ StatefulApp.StatefulWindow {
             imageReady: page.imageReady
 
             onImageBoundaryReached: function (message) {
-                root.showPassiveNotification(message);
+                boundaryNotification.show(message);
             }
             onOpenDialogRequested: fileDialog.open()
             onShortcutHelpRequested: shortcutHelpDialog.open()
@@ -214,6 +214,10 @@ StatefulApp.StatefulWindow {
         Connections {
             target: page.imageDocument
 
+            function onDisplayedUrlChanged() {
+                boundaryNotification.dismiss();
+            }
+
             function onFileDeletionFailed(errorString) {
                 root.showPassiveNotification(errorString);
             }
@@ -227,7 +231,7 @@ StatefulApp.StatefulWindow {
             imageViewport: imageViewport
 
             onImageBoundaryReached: function (message) {
-                root.showPassiveNotification(message);
+                boundaryNotification.show(message);
             }
         }
 
@@ -236,6 +240,14 @@ StatefulApp.StatefulWindow {
             imageDocument: page.imageDocument
             imageReady: page.imageReady
             openAction: imageActions.openAction
+        }
+
+        BoundaryNotification {
+            id: boundaryNotification
+
+            anchors.bottom: parent.bottom
+            anchors.horizontalCenter: parent.horizontalCenter
+            z: 999
         }
 
         ImageDocumentToolBar {
