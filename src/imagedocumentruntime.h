@@ -20,7 +20,7 @@ class ImageDocumentDeletionController;
 class ImageDocumentEffectExecutor;
 class ImageDocumentLoadController;
 class ImageDocumentNavigationController;
-class ImageDocumentNavigator;
+class ImageDocumentNavigationCoordinator;
 class ImageDocumentPredecodeController;
 class ImageOpenController;
 class ImagePresentationController;
@@ -50,7 +50,7 @@ struct ImageDocumentRuntime final {
     std::unique_ptr<ImageSpreadPresentationController> spreadController;
     std::unique_ptr<ImageDocumentLoadController> loadController;
     std::unique_ptr<ImageDocumentEffectExecutor> effectExecutor;
-    std::unique_ptr<ImageDocumentNavigator> navigator;
+    std::unique_ptr<ImageDocumentNavigationCoordinator> navigationCoordinator;
 };
 }
 

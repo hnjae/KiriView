@@ -6,7 +6,7 @@
 #include "imagedocumentdeletioncontroller.h"
 #include "imagedocumentloadcontroller.h"
 #include "imagedocumentnavigationcontroller.h"
-#include "imagedocumentnavigator.h"
+#include "imagedocumentnavigationcoordinator.h"
 #include "imagedocumentruntime.h"
 #include "imagepresentationcontroller.h"
 #include "imagespreadpresentationcontroller.h"
@@ -217,23 +217,32 @@ quint64 ImageDocumentController::imageRevision(DisplayedPageRole role) const
     return m_runtime->spreadController->imageRevision(role);
 }
 
-void ImageDocumentController::openPreviousImage() { m_runtime->navigator->openPreviousImage(); }
+void ImageDocumentController::openPreviousImage()
+{
+    m_runtime->navigationCoordinator->openPreviousImage();
+}
 
-void ImageDocumentController::openNextImage() { m_runtime->navigator->openNextImage(); }
+void ImageDocumentController::openNextImage() { m_runtime->navigationCoordinator->openNextImage(); }
 
 void ImageDocumentController::openPreviousSinglePage()
 {
-    m_runtime->navigator->openPreviousSinglePage();
+    m_runtime->navigationCoordinator->openPreviousSinglePage();
 }
 
-void ImageDocumentController::openNextSinglePage() { m_runtime->navigator->openNextSinglePage(); }
+void ImageDocumentController::openNextSinglePage()
+{
+    m_runtime->navigationCoordinator->openNextSinglePage();
+}
 
 void ImageDocumentController::openPreviousContainer()
 {
-    m_runtime->navigator->openPreviousContainer();
+    m_runtime->navigationCoordinator->openPreviousContainer();
 }
 
-void ImageDocumentController::openNextContainer() { m_runtime->navigator->openNextContainer(); }
+void ImageDocumentController::openNextContainer()
+{
+    m_runtime->navigationCoordinator->openNextContainer();
+}
 
 void ImageDocumentController::deleteDisplayedFile(FileDeletionMode mode)
 {
@@ -242,7 +251,7 @@ void ImageDocumentController::deleteDisplayedFile(FileDeletionMode mode)
 
 void ImageDocumentController::openImageAtPage(int pageNumber)
 {
-    m_runtime->navigator->openImageAtPage(pageNumber);
+    m_runtime->navigationCoordinator->openImageAtPage(pageNumber);
 }
 
 void ImageDocumentController::resetZoom() { m_runtime->spreadController->resetZoom(); }

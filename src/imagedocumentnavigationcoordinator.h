@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#ifndef KIRIVIEW_IMAGEDOCUMENTNAVIGATOR_H
-#define KIRIVIEW_IMAGEDOCUMENTNAVIGATOR_H
+#ifndef KIRIVIEW_IMAGEDOCUMENTNAVIGATIONCOORDINATOR_H
+#define KIRIVIEW_IMAGEDOCUMENTNAVIGATIONCOORDINATOR_H
 
 #include "imagenavigationtypes.h"
 
@@ -11,10 +11,13 @@ class ImageDocumentLoadController;
 class ImageDocumentNavigationController;
 class ImageSpreadPresentationController;
 
-class ImageDocumentNavigator final
+// Coordinates public document navigation requests across spread state, page navigation,
+// and source loading. The underlying navigation service remains owned by
+// ImageDocumentNavigationController.
+class ImageDocumentNavigationCoordinator final
 {
 public:
-    ImageDocumentNavigator(ImageDocumentNavigationController &navigationController,
+    ImageDocumentNavigationCoordinator(ImageDocumentNavigationController &navigationController,
         ImageSpreadPresentationController &spreadController,
         ImageDocumentLoadController &loadController);
 

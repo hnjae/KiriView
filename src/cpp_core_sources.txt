@@ -28,7 +28,7 @@ src/imagedocumentdeletioncontroller.cpp
 src/imagedocumenteffectexecutor.cpp
 src/imagedocumentloadcontroller.cpp
 src/imagedocumentnavigationcontroller.cpp
-src/imagedocumentnavigator.cpp
+src/imagedocumentnavigationcoordinator.cpp
 src/imagedocumentnotifications.cpp
 src/imagedocumentpredecodecontroller.cpp
 src/imagedocumentruntime.cpp

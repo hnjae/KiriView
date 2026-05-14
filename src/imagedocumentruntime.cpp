@@ -8,7 +8,7 @@
 #include "imagedocumenteffectexecutor.h"
 #include "imagedocumentloadcontroller.h"
 #include "imagedocumentnavigationcontroller.h"
-#include "imagedocumentnavigator.h"
+#include "imagedocumentnavigationcoordinator.h"
 #include "imagedocumentpredecodecontroller.h"
 #include "imageopencontroller.h"
 #include "imagepresentationcontroller.h"
@@ -75,7 +75,7 @@ ImageDocumentRuntime::ImageDocumentRuntime(QObject *documentObject,
     effectExecutor
         = std::make_unique<ImageDocumentEffectExecutor>(*navigationController, *predecodeController,
             *openController, *presentationController, *spreadController, *loadController);
-    navigator = std::make_unique<ImageDocumentNavigator>(
+    navigationCoordinator = std::make_unique<ImageDocumentNavigationCoordinator>(
         *navigationController, *spreadController, *loadController);
 }
 
