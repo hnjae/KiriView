@@ -5,6 +5,7 @@
 #define KIRIVIEW_IMAGEDOCUMENTLOADCONTROLLER_H
 
 #include "imagedocumenteffects.h"
+#include "imagesourceloadworkflow.h"
 
 #include <QUrl>
 
@@ -14,9 +15,6 @@ class ImageDocumentNavigationController;
 class ImageDocumentPredecodeController;
 class ImageDocumentState;
 class ImageOpenController;
-enum class ImageSourceLoadAction;
-struct ImageSourceLoadPlan;
-struct ImageSourceLoadRequest;
 class ImagePresentationController;
 class ImageSpreadPresentationController;
 

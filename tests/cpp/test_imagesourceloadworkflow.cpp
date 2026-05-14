@@ -7,6 +7,17 @@
 #include <QTest>
 #include <vector>
 
+namespace {
+void compareActions(const rust::Vec<KiriView::ImageSourceLoadAction> &actual,
+    const std::vector<KiriView::ImageSourceLoadAction> &expected)
+{
+    QCOMPARE(actual.size(), expected.size());
+    for (std::size_t index = 0; index < expected.size(); ++index) {
+        QCOMPARE(actual.at(index), expected.at(index));
+    }
+}
+}
+
 class TestImageSourceLoadWorkflow : public QObject
 {
     Q_OBJECT
@@ -36,10 +47,10 @@ void TestImageSourceLoadWorkflow::routesUnchangedAndReplacementLoads()
     using RightToLeftReadingChange = KiriView::ImageSourceLoadRightToLeftReadingChange;
 
     KiriView::ImageSourceLoadRequest unchangedRequest;
-    unchangedRequest.sourceUrlChanged = false;
-    unchangedRequest.preserveTwoPageSpreadTransition = false;
-    unchangedRequest.rightToLeftReadingChange = RightToLeftReadingChange::ResetAndNotify;
-    unchangedRequest.containerNavigationUrlEmpty = false;
+    unchangedRequest.source_url_changed = false;
+    unchangedRequest.preserve_two_page_spread_transition = false;
+    unchangedRequest.right_to_left_reading_change = RightToLeftReadingChange::ResetAndNotify;
+    unchangedRequest.container_navigation_url_empty = false;
     const KiriView::ImageSourceLoadPlan unchanged
         = KiriView::ImageSourceLoadWorkflow::plan(unchangedRequest);
     const std::vector<Action> unchangedActions {
@@ -49,13 +60,13 @@ void TestImageSourceLoadWorkflow::routesUnchangedAndReplacementLoads()
         Action::ClearLoadingContainerNavigationUrl,
         Action::UpdateContainerNavigationUrl,
     };
-    QVERIFY(unchanged.actions == unchangedActions);
+    compareActions(unchanged.actions, unchangedActions);
 
     KiriView::ImageSourceLoadRequest replacementRequest;
-    replacementRequest.sourceUrlChanged = true;
-    replacementRequest.preserveTwoPageSpreadTransition = true;
-    replacementRequest.rightToLeftReadingChange = RightToLeftReadingChange::None;
-    replacementRequest.containerNavigationUrlEmpty = true;
+    replacementRequest.source_url_changed = true;
+    replacementRequest.preserve_two_page_spread_transition = true;
+    replacementRequest.right_to_left_reading_change = RightToLeftReadingChange::None;
+    replacementRequest.container_navigation_url_empty = true;
     const KiriView::ImageSourceLoadPlan replacement
         = KiriView::ImageSourceLoadWorkflow::plan(replacementRequest);
     const std::vector<Action> replacementActions {
@@ -65,9 +76,9 @@ void TestImageSourceLoadWorkflow::routesUnchangedAndReplacementLoads()
         Action::SetSourceUrl,
         Action::BeginOpen,
     };
-    QVERIFY(replacement.actions == replacementActions);
+    compareActions(replacement.actions, replacementActions);
 
-    replacementRequest.rightToLeftReadingChange = RightToLeftReadingChange::Reset;
+    replacementRequest.right_to_left_reading_change = RightToLeftReadingChange::Reset;
     const KiriView::ImageSourceLoadPlan inactiveResetReplacement
         = KiriView::ImageSourceLoadWorkflow::plan(replacementRequest);
     const std::vector<Action> inactiveResetReplacementActions {
@@ -78,9 +89,9 @@ void TestImageSourceLoadWorkflow::routesUnchangedAndReplacementLoads()
         Action::SetSourceUrl,
         Action::BeginOpen,
     };
-    QVERIFY(inactiveResetReplacement.actions == inactiveResetReplacementActions);
+    compareActions(inactiveResetReplacement.actions, inactiveResetReplacementActions);
 
-    replacementRequest.rightToLeftReadingChange = RightToLeftReadingChange::ResetAndNotify;
+    replacementRequest.right_to_left_reading_change = RightToLeftReadingChange::ResetAndNotify;
     const KiriView::ImageSourceLoadPlan resettingReplacement
         = KiriView::ImageSourceLoadWorkflow::plan(replacementRequest);
     const std::vector<Action> resettingReplacementActions {
@@ -92,7 +103,7 @@ void TestImageSourceLoadWorkflow::routesUnchangedAndReplacementLoads()
         Action::BeginOpen,
         Action::NotifyRightToLeftReading,
     };
-    QVERIFY(resettingReplacement.actions == resettingReplacementActions);
+    compareActions(resettingReplacement.actions, resettingReplacementActions);
 }
 
 QTEST_GUILESS_MAIN(TestImageSourceLoadWorkflow)
