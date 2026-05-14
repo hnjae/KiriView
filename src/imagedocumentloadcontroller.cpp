@@ -10,6 +10,7 @@
 #include "imageopencontroller.h"
 #include "imageopenworkflow.h"
 #include "imagepresentationcontroller.h"
+#include "imagesourceloadworkflow.h"
 #include "imagespreadpresentationcontroller.h"
 
 #include <QString>
@@ -35,67 +36,67 @@ void ImageDocumentLoadController::loadSource(const ImageDocumentSourceLoadReques
 {
     m_deletionController.cancel();
 
-    const ImageOpenSourceLoadPlan plan
-        = ImageOpenWorkflow::sourceLoadPlan(sourceLoadWorkflowRequest(request));
+    const ImageSourceLoadPlan plan
+        = ImageSourceLoadWorkflow::plan(sourceLoadWorkflowRequest(request));
     applySourceLoadPlan(request, plan);
 }
 
-ImageOpenSourceLoadRequest ImageDocumentLoadController::sourceLoadWorkflowRequest(
+ImageSourceLoadRequest ImageDocumentLoadController::sourceLoadWorkflowRequest(
     const ImageDocumentSourceLoadRequest &request) const
 {
     const bool sourceUrlChanged = m_state.sourceUrl() != request.sourceUrl;
     const bool resetRightToLeftReading = m_spreadController.shouldResetRightToLeftReadingForLoad(
         m_state.displayedArchiveDocument(), request.sourceUrl, request.containerNavigationUrl);
 
-    ImageOpenSourceLoadRequest openRequest;
-    openRequest.sourceUrlChanged = sourceUrlChanged;
-    openRequest.preserveTwoPageSpreadTransition = request.preserveTwoPageSpreadTransition;
-    openRequest.resetRightToLeftReading = resetRightToLeftReading;
-    openRequest.rightToLeftReadingEnabled = m_spreadController.rightToLeftReadingEnabled();
-    openRequest.containerNavigationUrlEmpty = request.containerNavigationUrl.isEmpty();
-    return openRequest;
+    ImageSourceLoadRequest sourceLoadRequest;
+    sourceLoadRequest.sourceUrlChanged = sourceUrlChanged;
+    sourceLoadRequest.preserveTwoPageSpreadTransition = request.preserveTwoPageSpreadTransition;
+    sourceLoadRequest.resetRightToLeftReading = resetRightToLeftReading;
+    sourceLoadRequest.rightToLeftReadingEnabled = m_spreadController.rightToLeftReadingEnabled();
+    sourceLoadRequest.containerNavigationUrlEmpty = request.containerNavigationUrl.isEmpty();
+    return sourceLoadRequest;
 }
 
 void ImageDocumentLoadController::applySourceLoadPlan(
-    const ImageDocumentSourceLoadRequest &request, const ImageOpenSourceLoadPlan &plan)
+    const ImageDocumentSourceLoadRequest &request, const ImageSourceLoadPlan &plan)
 {
-    for (ImageOpenSourceLoadAction action : plan.actions) {
+    for (ImageSourceLoadAction action : plan.actions) {
         applySourceLoadAction(request, action);
     }
 }
 
 void ImageDocumentLoadController::applySourceLoadAction(
-    const ImageDocumentSourceLoadRequest &request, ImageOpenSourceLoadAction action)
+    const ImageDocumentSourceLoadRequest &request, ImageSourceLoadAction action)
 {
     switch (action) {
-    case ImageOpenSourceLoadAction::CancelNavigationAndPredecode:
+    case ImageSourceLoadAction::CancelNavigationAndPredecode:
         cancelNavigationAndPredecode();
         return;
-    case ImageOpenSourceLoadAction::FinishSpreadTransition:
+    case ImageSourceLoadAction::FinishSpreadTransition:
         m_spreadController.finishTransition();
         return;
-    case ImageOpenSourceLoadAction::ResetRightToLeftReading:
+    case ImageSourceLoadAction::ResetRightToLeftReading:
         m_spreadController.resetRightToLeftReading();
         return;
-    case ImageOpenSourceLoadAction::NotifyRightToLeftReading:
+    case ImageSourceLoadAction::NotifyRightToLeftReading:
         m_spreadController.notifyRightToLeftReadingChanged();
         return;
-    case ImageOpenSourceLoadAction::ClearSecondaryPage:
+    case ImageSourceLoadAction::ClearSecondaryPage:
         m_spreadController.clearSecondaryPage();
         return;
-    case ImageOpenSourceLoadAction::ClearLoadingContainerNavigationUrl:
+    case ImageSourceLoadAction::ClearLoadingContainerNavigationUrl:
         m_state.clearLoadingContainerNavigationUrl();
         return;
-    case ImageOpenSourceLoadAction::UpdateContainerNavigationUrl:
+    case ImageSourceLoadAction::UpdateContainerNavigationUrl:
         m_state.setContainerNavigationUrl(request.containerNavigationUrl);
         return;
-    case ImageOpenSourceLoadAction::SetLoadingContainerNavigationUrl:
+    case ImageSourceLoadAction::SetLoadingContainerNavigationUrl:
         m_state.setLoadingContainerNavigationUrl(request.containerNavigationUrl);
         return;
-    case ImageOpenSourceLoadAction::SetSourceUrl:
+    case ImageSourceLoadAction::SetSourceUrl:
         m_state.setSourceUrl(request.sourceUrl);
         return;
-    case ImageOpenSourceLoadAction::BeginOpen:
+    case ImageSourceLoadAction::BeginOpen:
         m_openController.open();
         return;
     }

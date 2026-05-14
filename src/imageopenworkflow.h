@@ -9,38 +9,11 @@
 
 #include <QString>
 #include <QUrl>
-#include <vector>
 
 namespace KiriView {
 class ImageDocumentState;
 
-enum class ImageOpenSourceLoadAction {
-    CancelNavigationAndPredecode,
-    FinishSpreadTransition,
-    ResetRightToLeftReading,
-    NotifyRightToLeftReading,
-    ClearSecondaryPage,
-    ClearLoadingContainerNavigationUrl,
-    UpdateContainerNavigationUrl,
-    SetLoadingContainerNavigationUrl,
-    SetSourceUrl,
-    BeginOpen,
-};
-
-struct ImageOpenSourceLoadPlan {
-    std::vector<ImageOpenSourceLoadAction> actions;
-};
-
-struct ImageOpenSourceLoadRequest {
-    bool sourceUrlChanged = false;
-    bool preserveTwoPageSpreadTransition = false;
-    bool resetRightToLeftReading = false;
-    bool rightToLeftReadingEnabled = false;
-    bool containerNavigationUrlEmpty = false;
-};
-
 namespace ImageOpenWorkflow {
-    ImageOpenSourceLoadPlan sourceLoadPlan(const ImageOpenSourceLoadRequest &request);
     ImageDocumentEffects beginSourceLoad(ImageDocumentState &state, bool hasImage);
     ImageDocumentEffects finishEmptySourceLoad(ImageDocumentState &state);
     ImageDocumentEffects finishSuccessfulImageLoad(

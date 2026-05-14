@@ -60,29 +60,6 @@ mod ffi {
     }
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-    enum RustImageOpenSourceLoadAction {
-        CancelNavigationAndPredecode = 0,
-        FinishSpreadTransition = 1,
-        ResetRightToLeftReading = 2,
-        NotifyRightToLeftReading = 3,
-        ClearSecondaryPage = 4,
-        ClearLoadingContainerNavigationUrl = 5,
-        UpdateContainerNavigationUrl = 6,
-        SetLoadingContainerNavigationUrl = 7,
-        SetSourceUrl = 8,
-        BeginOpen = 9,
-    }
-
-    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-    struct RustImageOpenSourceLoadRequest {
-        source_url_changed: bool,
-        preserve_two_page_spread_transition: bool,
-        reset_right_to_left_reading: bool,
-        right_to_left_reading_enabled: bool,
-        container_navigation_url_empty: bool,
-    }
-
-    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     struct RustImageOpenBeginSourceLoadRequest {
         has_image: bool,
         loading_container_navigation_url_empty: bool,
@@ -102,11 +79,6 @@ mod ffi {
     }
 
     #[derive(Debug, PartialEq, Eq)]
-    struct RustImageOpenSourceLoadPlan {
-        actions: Vec<RustImageOpenSourceLoadAction>,
-    }
-
-    #[derive(Debug, PartialEq, Eq)]
     struct RustImageOpenTransition {
         source_url: RustImageOpenUrlTarget,
         displayed_location: RustImageOpenDisplayedLocationTarget,
@@ -119,11 +91,6 @@ mod ffi {
     }
 
     extern "Rust" {
-        #[cxx_name = "rustImageOpenSourceLoadPlan"]
-        fn rust_image_open_source_load_plan(
-            request: RustImageOpenSourceLoadRequest,
-        ) -> RustImageOpenSourceLoadPlan;
-
         #[cxx_name = "rustImageOpenBeginSourceLoad"]
         fn rust_image_open_begin_source_load(
             request: RustImageOpenBeginSourceLoadRequest,
@@ -147,58 +114,9 @@ mod ffi {
 use ffi::{
     RustImageOpenBeginSourceLoadRequest, RustImageOpenBoolTarget,
     RustImageOpenDisplayedLocationTarget, RustImageOpenEffect, RustImageOpenErrorStringTarget,
-    RustImageOpenLoadErrorKind, RustImageOpenLoadErrorRequest, RustImageOpenSourceLoadAction,
-    RustImageOpenSourceLoadPlan, RustImageOpenSourceLoadRequest, RustImageOpenStatusTarget,
+    RustImageOpenLoadErrorKind, RustImageOpenLoadErrorRequest, RustImageOpenStatusTarget,
     RustImageOpenSuccessfulImageLoadRequest, RustImageOpenTransition, RustImageOpenUrlTarget,
 };
-
-fn rust_image_open_source_load_plan(
-    request: RustImageOpenSourceLoadRequest,
-) -> RustImageOpenSourceLoadPlan {
-    let mut plan = empty_source_load_plan();
-    if request.source_url_changed {
-        plan.actions
-            .push(RustImageOpenSourceLoadAction::CancelNavigationAndPredecode);
-    }
-    if !request.preserve_two_page_spread_transition {
-        plan.actions
-            .push(RustImageOpenSourceLoadAction::FinishSpreadTransition);
-    }
-    if request.reset_right_to_left_reading {
-        plan.actions
-            .push(RustImageOpenSourceLoadAction::ResetRightToLeftReading);
-    }
-
-    let notify_right_to_left_reading =
-        request.reset_right_to_left_reading && request.right_to_left_reading_enabled;
-
-    if !request.source_url_changed {
-        if notify_right_to_left_reading {
-            plan.actions
-                .push(RustImageOpenSourceLoadAction::NotifyRightToLeftReading);
-        }
-        plan.actions
-            .push(RustImageOpenSourceLoadAction::ClearLoadingContainerNavigationUrl);
-        if !request.container_navigation_url_empty {
-            plan.actions
-                .push(RustImageOpenSourceLoadAction::UpdateContainerNavigationUrl);
-        }
-        return plan;
-    }
-
-    plan.actions
-        .push(RustImageOpenSourceLoadAction::ClearSecondaryPage);
-    plan.actions
-        .push(RustImageOpenSourceLoadAction::SetLoadingContainerNavigationUrl);
-    plan.actions
-        .push(RustImageOpenSourceLoadAction::SetSourceUrl);
-    plan.actions.push(RustImageOpenSourceLoadAction::BeginOpen);
-    if notify_right_to_left_reading {
-        plan.actions
-            .push(RustImageOpenSourceLoadAction::NotifyRightToLeftReading);
-    }
-    plan
-}
 
 fn rust_image_open_begin_source_load(
     request: RustImageOpenBeginSourceLoadRequest,
@@ -334,12 +252,6 @@ fn tracked_load_error_transition() -> RustImageOpenTransition {
     transition
 }
 
-fn empty_source_load_plan() -> RustImageOpenSourceLoadPlan {
-    RustImageOpenSourceLoadPlan {
-        actions: Vec::new(),
-    }
-}
-
 fn empty_transition() -> RustImageOpenTransition {
     RustImageOpenTransition {
         source_url: RustImageOpenUrlTarget::Unchanged,
@@ -359,22 +271,6 @@ mod tests {
 
     fn has_effect(transition: &RustImageOpenTransition, effect: RustImageOpenEffect) -> bool {
         transition.effects.contains(&effect)
-    }
-
-    fn source_load_request(
-        source_url_changed: bool,
-        preserve_two_page_spread_transition: bool,
-        reset_right_to_left_reading: bool,
-        right_to_left_reading_enabled: bool,
-        container_navigation_url_empty: bool,
-    ) -> RustImageOpenSourceLoadRequest {
-        RustImageOpenSourceLoadRequest {
-            source_url_changed,
-            preserve_two_page_spread_transition,
-            reset_right_to_left_reading,
-            right_to_left_reading_enabled,
-            container_navigation_url_empty,
-        }
     }
 
     fn begin_source_load_request(
@@ -432,76 +328,6 @@ mod tests {
             vec![
                 RustImageOpenEffect::ClearImage,
                 RustImageOpenEffect::ResetZoom
-            ]
-        );
-    }
-
-    #[test]
-    fn unchanged_source_load_clears_loading_and_optionally_updates_container() {
-        let plan =
-            rust_image_open_source_load_plan(source_load_request(false, false, true, true, false));
-
-        assert_eq!(
-            plan.actions,
-            vec![
-                RustImageOpenSourceLoadAction::FinishSpreadTransition,
-                RustImageOpenSourceLoadAction::ResetRightToLeftReading,
-                RustImageOpenSourceLoadAction::NotifyRightToLeftReading,
-                RustImageOpenSourceLoadAction::ClearLoadingContainerNavigationUrl,
-                RustImageOpenSourceLoadAction::UpdateContainerNavigationUrl,
-            ]
-        );
-    }
-
-    #[test]
-    fn changed_source_load_starts_new_load_without_container_navigation_update() {
-        let plan =
-            rust_image_open_source_load_plan(source_load_request(true, false, false, true, false));
-
-        assert_eq!(
-            plan.actions,
-            vec![
-                RustImageOpenSourceLoadAction::CancelNavigationAndPredecode,
-                RustImageOpenSourceLoadAction::FinishSpreadTransition,
-                RustImageOpenSourceLoadAction::ClearSecondaryPage,
-                RustImageOpenSourceLoadAction::SetLoadingContainerNavigationUrl,
-                RustImageOpenSourceLoadAction::SetSourceUrl,
-                RustImageOpenSourceLoadAction::BeginOpen,
-            ]
-        );
-    }
-
-    #[test]
-    fn source_load_plan_can_preserve_active_spread_transition() {
-        let plan =
-            rust_image_open_source_load_plan(source_load_request(true, true, true, true, true));
-
-        assert_eq!(
-            plan.actions,
-            vec![
-                RustImageOpenSourceLoadAction::CancelNavigationAndPredecode,
-                RustImageOpenSourceLoadAction::ResetRightToLeftReading,
-                RustImageOpenSourceLoadAction::ClearSecondaryPage,
-                RustImageOpenSourceLoadAction::SetLoadingContainerNavigationUrl,
-                RustImageOpenSourceLoadAction::SetSourceUrl,
-                RustImageOpenSourceLoadAction::BeginOpen,
-                RustImageOpenSourceLoadAction::NotifyRightToLeftReading,
-            ]
-        );
-    }
-
-    #[test]
-    fn source_load_plan_notifies_only_when_right_to_left_reading_was_enabled() {
-        let plan =
-            rust_image_open_source_load_plan(source_load_request(false, false, true, false, false));
-
-        assert_eq!(
-            plan.actions,
-            vec![
-                RustImageOpenSourceLoadAction::FinishSpreadTransition,
-                RustImageOpenSourceLoadAction::ResetRightToLeftReading,
-                RustImageOpenSourceLoadAction::ClearLoadingContainerNavigationUrl,
-                RustImageOpenSourceLoadAction::UpdateContainerNavigationUrl,
             ]
         );
     }
