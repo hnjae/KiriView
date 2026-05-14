@@ -5,7 +5,6 @@
 #define KIRIVIEW_IMAGEDOCUMENTLOADCONTROLLER_H
 
 #include "imagedocumenteffects.h"
-#include "imageopenworkflow.h"
 
 #include <QUrl>
 
@@ -60,14 +59,6 @@ public:
     ImageDocumentEffects clearAfterSuccessfulFileDeletion();
 
 private:
-    ImageSourceLoadPolicyInput sourceLoadPolicyInput(
-        const ImageDocumentSourceLoadRequest &request) const;
-    void applySourceLoadPlan(
-        const ImageDocumentSourceLoadRequest &request, const ImageSourceLoadPlan &plan);
-    void applySourceLoadAction(
-        const ImageDocumentSourceLoadRequest &request, ImageSourceLoadAction action);
-    void cancelNavigationAndPredecode();
-
     ImageDocumentState &m_state;
     ImageDocumentDeletionController &m_deletionController;
     ImageDocumentNavigationController &m_navigationController;
