@@ -69,12 +69,12 @@ ImageDocumentRuntime::ImageDocumentRuntime(QObject *documentObject,
             [this](int pageNumber) { return navigationController->urlAtPage(pageNumber); },
         },
         dependencies.candidateProvider, dependencies.imageDecode);
-    loadController = std::make_unique<ImageDocumentLoadController>(state,
-        *documentDeletionController, *navigationController, *predecodeController, *openController,
-        *presentationController, *spreadController);
-    effectExecutor
-        = std::make_unique<ImageDocumentEffectExecutor>(*navigationController, *predecodeController,
-            *openController, *presentationController, *spreadController, *loadController);
+    loadController
+        = std::make_unique<ImageDocumentLoadController>(state, *documentDeletionController,
+            *navigationController, *predecodeController, *openController, *spreadController);
+    effectExecutor = std::make_unique<ImageDocumentEffectExecutor>(state, *navigationController,
+        *predecodeController, *openController, *presentationController, *spreadController,
+        *loadController);
     navigationCoordinator = std::make_unique<ImageDocumentNavigationCoordinator>(
         *navigationController, *spreadController, *loadController);
 }

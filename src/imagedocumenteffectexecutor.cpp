@@ -7,20 +7,26 @@
 #include "imagedocumentnavigationcontroller.h"
 #include "imagedocumentpredecodecontroller.h"
 #include "imagedocumentsourceloadrequest.h"
+#include "imagedocumentstate.h"
 #include "imageopencontroller.h"
+#include "imageopenworkflow.h"
 #include "imagepresentationcontroller.h"
 #include "imagespreadpresentationcontroller.h"
 
+#include <QString>
+#include <QUrl>
+#include <utility>
 #include <variant>
 
 namespace KiriView {
-ImageDocumentEffectExecutor::ImageDocumentEffectExecutor(
+ImageDocumentEffectExecutor::ImageDocumentEffectExecutor(ImageDocumentState &state,
     ImageDocumentNavigationController &navigationController,
     ImageDocumentPredecodeController &predecodeController, ImageOpenController &openController,
     ImagePresentationController &presentationController,
     ImageSpreadPresentationController &spreadController,
     ImageDocumentLoadController &loadController)
-    : m_navigationController(navigationController)
+    : m_state(state)
+    , m_navigationController(navigationController)
     , m_predecodeController(predecodeController)
     , m_openController(openController)
     , m_presentationController(presentationController)
@@ -41,14 +47,36 @@ void ImageDocumentEffectExecutor::dispatchGeneratedEffects(ImageDocumentEffects 
     }
 }
 
-void ImageDocumentEffectExecutor::dispatchPayload(const ClearImageEffect &)
+void ImageDocumentEffectExecutor::clearImage()
 {
-    m_loadController.clearImage();
+    m_predecodeController.clear();
+    m_spreadController.finishTransition();
+    m_spreadController.clearSecondaryPage();
+    m_navigationController.cancelPageNavigationUpdate();
+    m_state.clearDisplayedImageLocation();
+    m_presentationController.clearImage();
+    m_navigationController.clearPageNavigation();
+    m_spreadController.notifyRightToLeftReadingChanged();
 }
+
+ImageDocumentEffects ImageDocumentEffectExecutor::clearAfterSuccessfulFileDeletion()
+{
+    m_navigationController.cancelNavigation();
+    m_navigationController.cancelContainerNavigation();
+    m_predecodeController.cancel();
+    m_openController.cancel();
+    m_spreadController.finishTransition();
+    m_spreadController.clearSecondaryPage();
+    m_state.setSourceUrl(QUrl());
+    m_state.setErrorString(QString());
+    return ImageOpenWorkflow::finishEmptySourceLoad(m_state);
+}
+
+void ImageDocumentEffectExecutor::dispatchPayload(const ClearImageEffect &) { clearImage(); }
 
 void ImageDocumentEffectExecutor::dispatchPayload(const ClearDeletedImageEffect &)
 {
-    dispatchGeneratedEffects(m_loadController.clearAfterSuccessfulFileDeletion());
+    dispatchGeneratedEffects(clearAfterSuccessfulFileDeletion());
 }
 
 void ImageDocumentEffectExecutor::dispatchPayload(const ResetZoomEffect &)

@@ -4,7 +4,6 @@
 #ifndef KIRIVIEW_IMAGEDOCUMENTLOADCONTROLLER_H
 #define KIRIVIEW_IMAGEDOCUMENTLOADCONTROLLER_H
 
-#include "imagedocumenteffects.h"
 #include "imagedocumentsourceloadrequest.h"
 
 namespace KiriView {
@@ -13,7 +12,6 @@ class ImageDocumentNavigationController;
 class ImageDocumentPredecodeController;
 class ImageDocumentState;
 class ImageOpenController;
-class ImagePresentationController;
 class ImageSpreadPresentationController;
 enum class ImageDocumentSourceLoadAction;
 struct ImageDocumentSourceLoadPlan;
@@ -25,12 +23,9 @@ public:
         ImageDocumentDeletionController &deletionController,
         ImageDocumentNavigationController &navigationController,
         ImageDocumentPredecodeController &predecodeController, ImageOpenController &openController,
-        ImagePresentationController &presentationController,
         ImageSpreadPresentationController &spreadController);
 
     void loadSource(const ImageDocumentSourceLoadRequest &request);
-    void clearImage();
-    ImageDocumentEffects clearAfterSuccessfulFileDeletion();
 
 private:
     void applySourceLoadPlan(
@@ -43,7 +38,6 @@ private:
     ImageDocumentNavigationController &m_navigationController;
     ImageDocumentPredecodeController &m_predecodeController;
     ImageOpenController &m_openController;
-    ImagePresentationController &m_presentationController;
     ImageSpreadPresentationController &m_spreadController;
 };
 }

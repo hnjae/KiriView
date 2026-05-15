@@ -10,6 +10,7 @@ namespace KiriView {
 class ImageDocumentLoadController;
 class ImageDocumentNavigationController;
 class ImageDocumentPredecodeController;
+class ImageDocumentState;
 class ImageOpenController;
 class ImagePresentationController;
 class ImageSpreadPresentationController;
@@ -17,7 +18,8 @@ class ImageSpreadPresentationController;
 class ImageDocumentEffectExecutor final
 {
 public:
-    ImageDocumentEffectExecutor(ImageDocumentNavigationController &navigationController,
+    ImageDocumentEffectExecutor(ImageDocumentState &state,
+        ImageDocumentNavigationController &navigationController,
         ImageDocumentPredecodeController &predecodeController, ImageOpenController &openController,
         ImagePresentationController &presentationController,
         ImageSpreadPresentationController &spreadController,
@@ -27,6 +29,8 @@ public:
 
 private:
     void dispatchGeneratedEffects(ImageDocumentEffects effects);
+    void clearImage();
+    ImageDocumentEffects clearAfterSuccessfulFileDeletion();
     void dispatchPayload(const ClearImageEffect &);
     void dispatchPayload(const ClearDeletedImageEffect &);
     void dispatchPayload(const ResetZoomEffect &);
@@ -38,6 +42,7 @@ private:
     void dispatchPayload(const ContainerNavigationFailedEffect &payload);
     void dispatchPayload(const PrepareFailedContainerEffect &payload);
 
+    ImageDocumentState &m_state;
     ImageDocumentNavigationController &m_navigationController;
     ImageDocumentPredecodeController &m_predecodeController;
     ImageOpenController &m_openController;
