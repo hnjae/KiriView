@@ -7,16 +7,8 @@
 #include "decodedimageresult.h"
 
 namespace KiriView {
-enum class DecodedImagePresentationTarget {
-    StaticImage,
-    DecodedAnimation,
-    ReaderAnimation,
-    HeifSequenceAnimation,
-    DecodeError,
-};
-
 struct DecodedImagePresentationPlan {
-    DecodedImagePresentationTarget target = DecodedImagePresentationTarget::DecodeError;
+    bool presentable = false;
     bool predecodeCacheable = false;
 };
 

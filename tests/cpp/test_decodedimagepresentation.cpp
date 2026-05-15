@@ -23,7 +23,7 @@ class TestDecodedImagePresentation : public QObject
 private Q_SLOTS:
     void staticImagesCarryCacheability();
     void decodedAnimationsRequireFrames();
-    void streamedAnimationsUseFirstFrameTargets();
+    void streamedAnimationsUseFirstFrames();
 };
 
 void TestDecodedImagePresentation::staticImagesCarryCacheability()
@@ -33,14 +33,12 @@ void TestDecodedImagePresentation::staticImagesCarryCacheability()
     };
 
     KiriView::DecodedImagePresentationPlan plan = KiriView::decodedImagePresentationPlan(decoded);
-    QCOMPARE(static_cast<int>(plan.target),
-        static_cast<int>(KiriView::DecodedImagePresentationTarget::StaticImage));
+    QVERIFY(plan.presentable);
     QVERIFY(plan.predecodeCacheable);
 
     decoded.staticImage = KiriView::StaticImagePayload {};
     plan = KiriView::decodedImagePresentationPlan(decoded);
-    QCOMPARE(static_cast<int>(plan.target),
-        static_cast<int>(KiriView::DecodedImagePresentationTarget::StaticImage));
+    QVERIFY(plan.presentable);
     QVERIFY(!plan.predecodeCacheable);
 }
 
@@ -50,29 +48,25 @@ void TestDecodedImagePresentation::decodedAnimationsRequireFrames()
 
     KiriView::DecodedImagePresentationPlan plan
         = KiriView::decodedImagePresentationPlan(decodedAnimation);
-    QCOMPARE(static_cast<int>(plan.target),
-        static_cast<int>(KiriView::DecodedImagePresentationTarget::DecodeError));
+    QVERIFY(!plan.presentable);
 
     decodedAnimation.frames.push_back(frame());
     plan = KiriView::decodedImagePresentationPlan(decodedAnimation);
-    QCOMPARE(static_cast<int>(plan.target),
-        static_cast<int>(KiriView::DecodedImagePresentationTarget::DecodedAnimation));
+    QVERIFY(plan.presentable);
     QVERIFY(!plan.predecodeCacheable);
 }
 
-void TestDecodedImagePresentation::streamedAnimationsUseFirstFrameTargets()
+void TestDecodedImagePresentation::streamedAnimationsUseFirstFrames()
 {
     const KiriView::ReaderAnimationImage readerAnimation { KiriView::TestSupport::testImage() };
     KiriView::DecodedImagePresentationPlan plan
         = KiriView::decodedImagePresentationPlan(readerAnimation);
-    QCOMPARE(static_cast<int>(plan.target),
-        static_cast<int>(KiriView::DecodedImagePresentationTarget::ReaderAnimation));
+    QVERIFY(plan.presentable);
     QVERIFY(!plan.predecodeCacheable);
 
     const KiriView::HeifSequenceAnimationImage heifSequence { KiriView::TestSupport::testImage() };
     plan = KiriView::decodedImagePresentationPlan(heifSequence);
-    QCOMPARE(static_cast<int>(plan.target),
-        static_cast<int>(KiriView::DecodedImagePresentationTarget::HeifSequenceAnimation));
+    QVERIFY(plan.presentable);
     QVERIFY(!plan.predecodeCacheable);
 }
 

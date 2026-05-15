@@ -6,35 +6,30 @@
 #include "predecodecache.h"
 
 namespace {
-KiriView::DecodedImagePresentationPlan presentationPlan(
-    KiriView::DecodedImagePresentationTarget target, bool predecodeCacheable)
+KiriView::DecodedImagePresentationPlan presentationPlan(bool presentable, bool predecodeCacheable)
 {
-    return KiriView::DecodedImagePresentationPlan { target, predecodeCacheable };
+    return KiriView::DecodedImagePresentationPlan { presentable, predecodeCacheable };
 }
 }
 
 namespace KiriView {
 DecodedImagePresentationPlan decodedImagePresentationPlan(const StaticDecodedImage &decoded)
 {
-    return presentationPlan(DecodedImagePresentationTarget::StaticImage,
-        PredecodeCache::canCacheImage(decoded.staticImage));
+    return presentationPlan(true, PredecodeCache::canCacheImage(decoded.staticImage));
 }
 
 DecodedImagePresentationPlan decodedImagePresentationPlan(const DecodedAnimationImage &decoded)
 {
-    const DecodedImagePresentationTarget target = decoded.frames.empty()
-        ? DecodedImagePresentationTarget::DecodeError
-        : DecodedImagePresentationTarget::DecodedAnimation;
-    return presentationPlan(target, false);
+    return presentationPlan(!decoded.frames.empty(), false);
 }
 
 DecodedImagePresentationPlan decodedImagePresentationPlan(const ReaderAnimationImage &)
 {
-    return presentationPlan(DecodedImagePresentationTarget::ReaderAnimation, false);
+    return presentationPlan(true, false);
 }
 
 DecodedImagePresentationPlan decodedImagePresentationPlan(const HeifSequenceAnimationImage &)
 {
-    return presentationPlan(DecodedImagePresentationTarget::HeifSequenceAnimation, false);
+    return presentationPlan(true, false);
 }
 }

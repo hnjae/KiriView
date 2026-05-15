@@ -174,7 +174,7 @@ bool ImageSecondaryPageController::finishDecodedImageResult(
     const ImageLoadSession &session, DecodedAnimationImage &decoded)
 {
     const DecodedImagePresentationPlan plan = decodedImagePresentationPlan(decoded);
-    if (plan.target == DecodedImagePresentationTarget::DecodeError) {
+    if (!plan.presentable) {
         finishLoadWithError(session);
         return false;
     }
@@ -187,7 +187,7 @@ bool ImageSecondaryPageController::finishDecodedImageResult(
     const ImageLoadSession &session, ReaderAnimationImage &decoded)
 {
     const DecodedImagePresentationPlan plan = decodedImagePresentationPlan(decoded);
-    if (plan.target == DecodedImagePresentationTarget::DecodeError) {
+    if (!plan.presentable) {
         finishLoadWithError(session);
         return false;
     }
@@ -200,7 +200,7 @@ bool ImageSecondaryPageController::finishDecodedImageResult(
     const ImageLoadSession &session, HeifSequenceAnimationImage &decoded)
 {
     const DecodedImagePresentationPlan plan = decodedImagePresentationPlan(decoded);
-    if (plan.target == DecodedImagePresentationTarget::DecodeError) {
+    if (!plan.presentable) {
         finishLoadWithError(session);
         return false;
     }

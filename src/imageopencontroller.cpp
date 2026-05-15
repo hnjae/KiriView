@@ -153,7 +153,7 @@ bool ImageOpenController::finishDecodedImageResult(
     ImageLoadSession &session, DecodedAnimationImage &decoded)
 {
     const DecodedImagePresentationPlan plan = decodedImagePresentationPlan(decoded);
-    if (plan.target == DecodedImagePresentationTarget::DecodeError) {
+    if (!plan.presentable) {
         finishLoadWithError(session, ImageLoadError::Generic,
             imageViewText("Could not decode the selected image animation."));
         return false;
@@ -169,7 +169,7 @@ bool ImageOpenController::finishDecodedImageResult(
     ImageLoadSession &session, ReaderAnimationImage &decoded)
 {
     const DecodedImagePresentationPlan plan = decodedImagePresentationPlan(decoded);
-    if (plan.target == DecodedImagePresentationTarget::DecodeError) {
+    if (!plan.presentable) {
         finishLoadWithError(session, ImageLoadError::Generic,
             imageViewText("Could not decode the selected image animation."));
         return false;
@@ -185,7 +185,7 @@ bool ImageOpenController::finishDecodedImageResult(
     ImageLoadSession &session, HeifSequenceAnimationImage &decoded)
 {
     const DecodedImagePresentationPlan plan = decodedImagePresentationPlan(decoded);
-    if (plan.target == DecodedImagePresentationTarget::DecodeError) {
+    if (!plan.presentable) {
         finishLoadWithError(session, ImageLoadError::Generic,
             imageViewText("Could not decode the selected image animation."));
         return false;
