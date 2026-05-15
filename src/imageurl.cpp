@@ -3,7 +3,7 @@
 
 #include "imageurl.h"
 
-#include "kiriview/src/imageurl.cxx.h"
+#include "kiriview/src/archivepath.cxx.h"
 #include "rustqtconversion.h"
 
 #include <QByteArray>
