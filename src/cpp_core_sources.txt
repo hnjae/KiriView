@@ -23,6 +23,7 @@ src/imageasyncdependencies.cpp
 src/imagebytecost.cpp
 src/imagecontainer.cpp
 src/imagerendering.cpp
+src/imagedeletionfallbackexecutor.cpp
 src/imagedeletioncontroller.cpp
 src/imagedocumentcontroller.cpp
 src/imagedocumentdeletioncontroller.cpp

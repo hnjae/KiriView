@@ -5,13 +5,10 @@
 
 #include "filedeletionfallback.h"
 #include "imagecallback.h"
-#include "imagecontainer.h"
+#include "imagedeletionfallbackexecutor.h"
 #include "imageviewtext.h"
 
-#include <optional>
 #include <utility>
-#include <variant>
-#include <vector>
 
 namespace {
 QString genericFileDeletionErrorMessage()
@@ -21,87 +18,6 @@ QString genericFileDeletionErrorMessage()
 }
 
 namespace KiriView {
-class ImageDeletionFallbackExecutor final
-{
-public:
-    using EffectCallback = std::function<void(ImageDeletionEffect)>;
-
-    ImageDeletionFallbackExecutor(QObject *receiver,
-        ImageNavigationCandidateProvider candidateProvider, EffectCallback effectCallback)
-        : m_receiver(receiver)
-        , m_candidateRepository(std::move(candidateProvider))
-        , m_effectCallback(std::move(effectCallback))
-    {
-    }
-
-    void open(const DeletionFallbackPlan &fallbackPlan)
-    {
-        std::visit([this](const auto &plan) { openPlan(plan); }, fallbackPlan);
-    }
-
-    void cancel() { m_job.cancel(); }
-
-private:
-    void openPlan(const NoDeletionFallbackPlan &) { }
-
-    void openPlan(const ImageDeletionFallbackPlan &fallbackPlan)
-    {
-        m_job = m_candidateRepository.loadImages(
-            m_receiver, fallbackPlan.imageContext,
-            [this, fallbackPlan](std::vector<ImageNavigationCandidate> candidates) {
-                const std::optional<QUrl> fallbackUrl
-                    = imageDeletionFallbackUrl(std::move(candidates), fallbackPlan);
-                if (fallbackUrl.has_value()) {
-                    report(ImageDeletionEffect::openImageFallback(*fallbackUrl));
-                }
-            },
-            [](const QString &) {});
-    }
-
-    void openPlan(const ComicBookDeletionFallbackPlan &fallbackPlan)
-    {
-        if (!fallbackPlan.candidateDirectoryUrl.isValid()
-            || fallbackPlan.candidateDirectoryUrl.isEmpty()) {
-            return;
-        }
-
-        m_job = m_candidateRepository.loadContainers(
-            m_receiver, fallbackPlan.candidateDirectoryUrl,
-            [this, fallbackPlan](std::vector<ContainerNavigationCandidate> candidates) {
-                const ComicBookDeletionFallbackCandidates fallbackCandidates
-                    = comicBookDeletionFallbackCandidates(std::move(candidates), fallbackPlan);
-                openComicBookCandidate(fallbackCandidates.preferred, fallbackCandidates.fallback);
-            },
-            [](const QString &) {});
-    }
-
-    void openComicBookCandidate(const std::optional<ContainerNavigationCandidate> &candidate,
-        const std::optional<ContainerNavigationCandidate> &fallbackCandidate)
-    {
-        if (!candidate.has_value()) {
-            if (fallbackCandidate.has_value()) {
-                openComicBookCandidate(fallbackCandidate, std::nullopt);
-            }
-            return;
-        }
-
-        m_job = m_candidateRepository.loadFirstImageInContainer(
-            m_receiver, *candidate,
-            [this](const QUrl &imageUrl, const QUrl &containerUrl) {
-                report(ImageDeletionEffect::openContainerImageFallback(imageUrl, containerUrl));
-            },
-            [this, fallbackCandidate](const QUrl &, ImageCandidateRepositoryError,
-                const QString &) { openComicBookCandidate(fallbackCandidate, std::nullopt); });
-    }
-
-    void report(ImageDeletionEffect effect) { invokeIfSet(m_effectCallback, std::move(effect)); }
-
-    QObject *m_receiver = nullptr;
-    ImageCandidateRepository m_candidateRepository;
-    EffectCallback m_effectCallback;
-    ImageIoJob m_job;
-};
-
 ImageDeletionController::ImageDeletionController(QObject *parent,
     ImageNavigationCandidateProvider candidateProvider, FileOperationProvider fileOperationProvider,
     Callbacks callbacks)
