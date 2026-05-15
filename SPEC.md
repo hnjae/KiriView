@@ -424,6 +424,10 @@ and mouse shortcuts. The `?` shortcut is inactive while the page number or zoom
 input is focused. While the shortcut help dialog is open, Escape closes the
 dialog before any fullscreen handling.
 
+Ctrl+M toggles the application menu presentation between Hamburger Menu and
+Menubar. This shortcut is fixed, is not user-configurable, and is not listed in
+keyboard shortcut configuration or shortcut help.
+
 Escape leaves fullscreen when the main window is fullscreen. Outside fullscreen,
 Escape does not close the main window. The `q` and Ctrl+Q shortcuts close the
 main window. Unmodified quit shortcuts such as `q` are inactive while the page
