@@ -35,4 +35,4 @@ pub fn initialize_rust_modules() {
     let _ = core::mem::size_of::<cxx_qt_lib_extras::QApplication>();
 }
 
-pub use applicationruntime::{initialize_application_runtime, setup_localized_context};
+pub use applicationruntime::{initialize_application_runtime, load_application_main_qml};

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-use cxx_qt_lib::{QMap, QMapPair_QString_QVariant, QQmlApplicationEngine, QString, QUrl, QVariant};
+use cxx_qt_lib::{QQmlApplicationEngine, QString, QUrl};
 use cxx_qt_lib_extras::QApplication;
 use std::{env, path::Path, process};
 
@@ -48,18 +48,8 @@ fn main() {
 
     let mut engine = QQmlApplicationEngine::new();
     if let Some(mut engine) = engine.as_mut() {
-        kiriview::setup_localized_context(engine.as_mut());
-
-        if let Some(url) = initial_source_url.as_ref() {
-            let mut initial_properties = QMap::<QMapPair_QString_QVariant>::default();
-            initial_properties
-                .insert_clone(&QString::from("initialSourceUrl"), &QVariant::from(url));
-            engine.as_mut().set_initial_properties(&initial_properties);
-        }
-
-        engine.as_mut().load(&QUrl::from(
-            "qrc:/qt/qml/io/github/hnjae/kiriview/src/qml/Main.qml",
-        ));
+        let initial_source_url = initial_source_url.unwrap_or_default();
+        kiriview::load_application_main_qml(engine.as_mut(), &initial_source_url);
     }
 
     if let Some(app) = app.as_mut() {
