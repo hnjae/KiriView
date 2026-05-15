@@ -3,32 +3,23 @@
 
 use cxx_qt_lib::{QQmlApplicationEngine, QString, QUrl};
 use cxx_qt_lib_extras::QApplication;
-use std::{env, path::Path, process};
+use std::{env, process};
 
-fn initial_source_url() -> Result<Option<QUrl>, kiriview::StartupArgumentError> {
+fn initial_source_url() -> Result<QUrl, kiriview::StartupArgumentError> {
     let working_directory = env::current_dir().ok();
     let source = kiriview::initial_source_from_args(env::args_os(), working_directory.as_deref())?;
-    Ok(source.and_then(startup_source_url))
+    Ok(source.map(startup_source_url).unwrap_or_default())
 }
 
-fn startup_source_url(source: kiriview::StartupSource) -> Option<QUrl> {
+fn startup_source_url(source: kiriview::StartupSource) -> QUrl {
     match source {
-        kiriview::StartupSource::LocalFile(path) => valid_initial_source_url(local_file_url(&path)),
-        kiriview::StartupSource::Url(url) => {
-            valid_initial_source_url(QUrl::from(&QString::from(url.as_str())))
+        kiriview::StartupSource::LocalFile(path) => {
+            let path = QString::from(path.to_string_lossy().as_ref());
+            kiriview::initial_source_url_from_local_file_path(&path)
         }
-    }
-}
-
-fn local_file_url(path: &Path) -> QUrl {
-    QUrl::from_local_file(&QString::from(path.to_string_lossy().as_ref()))
-}
-
-fn valid_initial_source_url(url: QUrl) -> Option<QUrl> {
-    if url.is_empty() || !url.is_valid() {
-        None
-    } else {
-        Some(url)
+        kiriview::StartupSource::Url(url) => {
+            kiriview::initial_source_url_from_url_text(&QString::from(url.as_str()))
+        }
     }
 }
 
@@ -48,7 +39,6 @@ fn main() {
 
     let mut engine = QQmlApplicationEngine::new();
     if let Some(mut engine) = engine.as_mut() {
-        let initial_source_url = initial_source_url.unwrap_or_default();
         kiriview::load_application_main_qml(engine.as_mut(), &initial_source_url);
     }
 

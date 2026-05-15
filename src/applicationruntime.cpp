@@ -25,6 +25,15 @@ void setupDefaultQuickStyle()
         QQuickStyle::setStyle(QStringLiteral("org.kde.desktop"));
     }
 }
+
+QUrl validInitialSourceUrl(const QUrl &url)
+{
+    if (url.isEmpty() || !url.isValid()) {
+        return QUrl();
+    }
+
+    return url;
+}
 }
 
 namespace KiriView {
@@ -33,6 +42,16 @@ void initializeApplicationRuntime()
     initializeLocalization();
     setupApplicationIdentity();
     setupDefaultQuickStyle();
+}
+
+QUrl initialSourceUrlFromLocalFilePath(const QString &path)
+{
+    return validInitialSourceUrl(QUrl::fromLocalFile(path));
+}
+
+QUrl initialSourceUrlFromUrlText(const QString &urlText)
+{
+    return validInitialSourceUrl(QUrl(urlText));
 }
 
 void loadApplicationMainQml(QQmlApplicationEngine &engine, const QUrl &initialSourceUrl)
