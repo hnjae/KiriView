@@ -24,8 +24,8 @@ struct ImageSourceLoadPolicyInput {
     bool sourceUrlChanged = false;
     bool preserveTwoPageSpreadTransition = false;
     bool resetRightToLeftReading = false;
-    bool rightToLeftReadingEnabled = false;
-    bool containerNavigationUrlEmpty = false;
+    bool rightToLeftReadingWasEnabled = false;
+    bool requestedContainerNavigationUrlEmpty = false;
 };
 
 struct ImageSourceLoadPlan {

@@ -13,8 +13,8 @@ KiriView::RustImageSourceLoadPolicyInput rustSourceLoadPolicyInput(
     rustInput.source_url_changed = input.sourceUrlChanged;
     rustInput.preserve_two_page_spread_transition = input.preserveTwoPageSpreadTransition;
     rustInput.reset_right_to_left_reading = input.resetRightToLeftReading;
-    rustInput.right_to_left_reading_enabled = input.rightToLeftReadingEnabled;
-    rustInput.container_navigation_url_empty = input.containerNavigationUrlEmpty;
+    rustInput.right_to_left_reading_was_enabled = input.rightToLeftReadingWasEnabled;
+    rustInput.requested_container_navigation_url_empty = input.requestedContainerNavigationUrlEmpty;
     return rustInput;
 }
 

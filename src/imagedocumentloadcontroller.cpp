@@ -27,8 +27,8 @@ KiriView::ImageSourceLoadPolicyInput sourceLoadPolicyInput(
     input.preserveTwoPageSpreadTransition = request.preserveTwoPageSpreadTransition;
     input.resetRightToLeftReading = spreadController.shouldResetRightToLeftReadingForLoad(
         state.displayedArchiveDocument(), request.sourceUrl, request.containerNavigationUrl);
-    input.rightToLeftReadingEnabled = spreadController.rightToLeftReadingEnabled();
-    input.containerNavigationUrlEmpty = request.containerNavigationUrl.isEmpty();
+    input.rightToLeftReadingWasEnabled = spreadController.rightToLeftReadingEnabled();
+    input.requestedContainerNavigationUrlEmpty = request.containerNavigationUrl.isEmpty();
     return input;
 }
 

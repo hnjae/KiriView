@@ -22,8 +22,8 @@ mod ffi {
         source_url_changed: bool,
         preserve_two_page_spread_transition: bool,
         reset_right_to_left_reading: bool,
-        right_to_left_reading_enabled: bool,
-        container_navigation_url_empty: bool,
+        right_to_left_reading_was_enabled: bool,
+        requested_container_navigation_url_empty: bool,
     }
 
     #[derive(Debug, PartialEq, Eq)]
@@ -61,7 +61,7 @@ fn resets_right_to_left_reading(input: RustImageSourceLoadPolicyInput) -> bool {
 }
 
 fn notifies_right_to_left_reading(input: RustImageSourceLoadPolicyInput) -> bool {
-    input.reset_right_to_left_reading && input.right_to_left_reading_enabled
+    input.reset_right_to_left_reading && input.right_to_left_reading_was_enabled
 }
 
 fn append_initial_source_load_actions(
@@ -92,7 +92,7 @@ fn append_unchanged_source_load_actions(
     }
     plan.actions
         .push(RustImageSourceLoadAction::ClearLoadingContainerNavigationUrl);
-    if !input.container_navigation_url_empty {
+    if !input.requested_container_navigation_url_empty {
         plan.actions
             .push(RustImageSourceLoadAction::UpdateContainerNavigationUrl);
     }
@@ -122,15 +122,15 @@ mod tests {
         source_url_changed: bool,
         preserve_two_page_spread_transition: bool,
         reset_right_to_left_reading: bool,
-        right_to_left_reading_enabled: bool,
-        container_navigation_url_empty: bool,
+        right_to_left_reading_was_enabled: bool,
+        requested_container_navigation_url_empty: bool,
     ) -> RustImageSourceLoadPolicyInput {
         RustImageSourceLoadPolicyInput {
             source_url_changed,
             preserve_two_page_spread_transition,
             reset_right_to_left_reading,
-            right_to_left_reading_enabled,
-            container_navigation_url_empty,
+            right_to_left_reading_was_enabled,
+            requested_container_navigation_url_empty,
         }
     }
 

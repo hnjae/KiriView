@@ -35,24 +35,24 @@ void TestImageDocumentSourceLoadPolicy::derivesRightToLeftReadingActionsFromRunt
     KiriView::ImageSourceLoadPolicyInput input;
     input.sourceUrlChanged = false;
     input.preserveTwoPageSpreadTransition = true;
-    input.containerNavigationUrlEmpty = true;
+    input.requestedContainerNavigationUrlEmpty = true;
 
     input.resetRightToLeftReading = false;
-    input.rightToLeftReadingEnabled = false;
+    input.rightToLeftReadingWasEnabled = false;
     compareSourceLoadActions(KiriView::ImageDocumentSourceLoadPolicy::sourceLoadPlan(input).actions,
         {
             Action::ClearLoadingContainerNavigationUrl,
         });
 
     input.resetRightToLeftReading = false;
-    input.rightToLeftReadingEnabled = true;
+    input.rightToLeftReadingWasEnabled = true;
     compareSourceLoadActions(KiriView::ImageDocumentSourceLoadPolicy::sourceLoadPlan(input).actions,
         {
             Action::ClearLoadingContainerNavigationUrl,
         });
 
     input.resetRightToLeftReading = true;
-    input.rightToLeftReadingEnabled = false;
+    input.rightToLeftReadingWasEnabled = false;
     compareSourceLoadActions(KiriView::ImageDocumentSourceLoadPolicy::sourceLoadPlan(input).actions,
         {
             Action::ResetRightToLeftReading,
@@ -60,7 +60,7 @@ void TestImageDocumentSourceLoadPolicy::derivesRightToLeftReadingActionsFromRunt
         });
 
     input.resetRightToLeftReading = true;
-    input.rightToLeftReadingEnabled = true;
+    input.rightToLeftReadingWasEnabled = true;
     compareSourceLoadActions(KiriView::ImageDocumentSourceLoadPolicy::sourceLoadPlan(input).actions,
         {
             Action::ResetRightToLeftReading,
@@ -77,8 +77,8 @@ void TestImageDocumentSourceLoadPolicy::routesUnchangedAndReplacementSourceLoads
     unchangedInput.sourceUrlChanged = false;
     unchangedInput.preserveTwoPageSpreadTransition = false;
     unchangedInput.resetRightToLeftReading = true;
-    unchangedInput.rightToLeftReadingEnabled = true;
-    unchangedInput.containerNavigationUrlEmpty = false;
+    unchangedInput.rightToLeftReadingWasEnabled = true;
+    unchangedInput.requestedContainerNavigationUrlEmpty = false;
     const KiriView::ImageSourceLoadPlan unchanged
         = KiriView::ImageDocumentSourceLoadPolicy::sourceLoadPlan(unchangedInput);
     const std::vector<Action> unchangedActions {
@@ -94,8 +94,8 @@ void TestImageDocumentSourceLoadPolicy::routesUnchangedAndReplacementSourceLoads
     replacementInput.sourceUrlChanged = true;
     replacementInput.preserveTwoPageSpreadTransition = true;
     replacementInput.resetRightToLeftReading = false;
-    replacementInput.rightToLeftReadingEnabled = true;
-    replacementInput.containerNavigationUrlEmpty = true;
+    replacementInput.rightToLeftReadingWasEnabled = true;
+    replacementInput.requestedContainerNavigationUrlEmpty = true;
     const KiriView::ImageSourceLoadPlan replacement
         = KiriView::ImageDocumentSourceLoadPolicy::sourceLoadPlan(replacementInput);
     const std::vector<Action> replacementActions {
@@ -108,7 +108,7 @@ void TestImageDocumentSourceLoadPolicy::routesUnchangedAndReplacementSourceLoads
     compareSourceLoadActions(replacement.actions, replacementActions);
 
     replacementInput.resetRightToLeftReading = true;
-    replacementInput.rightToLeftReadingEnabled = false;
+    replacementInput.rightToLeftReadingWasEnabled = false;
     const KiriView::ImageSourceLoadPlan inactiveResetReplacement
         = KiriView::ImageDocumentSourceLoadPolicy::sourceLoadPlan(replacementInput);
     const std::vector<Action> inactiveResetReplacementActions {
@@ -122,7 +122,7 @@ void TestImageDocumentSourceLoadPolicy::routesUnchangedAndReplacementSourceLoads
     compareSourceLoadActions(inactiveResetReplacement.actions, inactiveResetReplacementActions);
 
     replacementInput.resetRightToLeftReading = true;
-    replacementInput.rightToLeftReadingEnabled = true;
+    replacementInput.rightToLeftReadingWasEnabled = true;
     const KiriView::ImageSourceLoadPlan resettingReplacement
         = KiriView::ImageDocumentSourceLoadPolicy::sourceLoadPlan(replacementInput);
     const std::vector<Action> resettingReplacementActions {
