@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+#include "applicationruntime.h"
 #include "imageviewtext.h"
 #include "kiriviewapplication.h"
 #include "localization.h"
@@ -8,6 +9,7 @@
 #include <KLocalizedString>
 #include <QAction>
 #include <QFile>
+#include <QGuiApplication>
 #include <QObject>
 #include <QQmlApplicationEngine>
 #include <QQmlComponent>
@@ -25,6 +27,7 @@ private Q_SLOTS:
     void cleanup();
     void actionsUseTestCatalog();
     void statusMessagesUseTestCatalog();
+    void applicationRuntimeSetsDesktopFileName();
     void qmlContextUsesTestCatalog();
     void desktopFileIncludesTranslatedGenericName();
 };
@@ -58,6 +61,13 @@ void TestLocalization::statusMessagesUseTestCatalog()
 {
     QCOMPARE(KiriView::imageViewText("Could not read the selected image data."),
         QStringLiteral("__kiriview_test_status_read_image_data__"));
+}
+
+void TestLocalization::applicationRuntimeSetsDesktopFileName()
+{
+    KiriView::initializeApplicationRuntime();
+
+    QCOMPARE(QGuiApplication::desktopFileName(), QStringLiteral("io.github.hnjae.KiriView"));
 }
 
 void TestLocalization::qmlContextUsesTestCatalog()

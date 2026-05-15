@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 mod apngdecoder;
+mod applicationruntime;
 mod archiveformat;
 mod archivepath;
 mod avifcompat;
@@ -22,7 +23,6 @@ mod imagetilegeometry;
 mod imageurl;
 mod imageviewportgeometry;
 mod imagezoomstate;
-mod localization;
 mod navigationindex;
 mod predecodecachepolicy;
 mod startup_arguments;
@@ -35,4 +35,4 @@ pub fn initialize_rust_modules() {
     let _ = core::mem::size_of::<cxx_qt_lib_extras::QApplication>();
 }
 
-pub use localization::{initialize_localization, setup_localized_context};
+pub use applicationruntime::{initialize_application_runtime, setup_localized_context};

@@ -3,6 +3,7 @@
 
 src/decodedimageresult.cpp
 src/decodedimagepresentation.cpp
+src/applicationruntime.cpp
 src/archivebackend.cpp
 src/archivebackend_karchive.cpp
 src/archivebackend_libarchive.cpp

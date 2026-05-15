@@ -1,10 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-use cxx_qt_lib::{
-    QGuiApplication, QMap, QMapPair_QString_QVariant, QQmlApplicationEngine, QQuickStyle, QString,
-    QUrl, QVariant,
-};
+use cxx_qt_lib::{QMap, QMapPair_QString_QVariant, QQmlApplicationEngine, QString, QUrl, QVariant};
 use cxx_qt_lib_extras::QApplication;
 use std::{env, path::Path, process};
 
@@ -47,13 +44,7 @@ fn main() {
     kiriview::initialize_rust_modules();
 
     let mut app = QApplication::new();
-    kiriview::initialize_localization();
-
-    QGuiApplication::set_desktop_file_name(&QString::from("io.github.hnjae.KiriView"));
-
-    if env::var("QT_QUICK_CONTROLS_STYLE").is_err() {
-        QQuickStyle::set_style(&QString::from("org.kde.desktop"));
-    }
+    kiriview::initialize_application_runtime();
 
     let mut engine = QQmlApplicationEngine::new();
     if let Some(mut engine) = engine.as_mut() {

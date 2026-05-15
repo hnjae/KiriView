@@ -11,18 +11,19 @@ mod ffi {
         #[namespace = ""]
         type QQmlApplicationEngine = cxx_qt_lib::QQmlApplicationEngine;
 
+        include!("applicationruntime.h");
         include!("localization.h");
 
-        #[cxx_name = "initializeLocalization"]
-        fn initialize_localization();
+        #[cxx_name = "initializeApplicationRuntime"]
+        fn initialize_application_runtime();
 
         #[cxx_name = "setupLocalizedContext"]
         fn setup_localized_context(engine: Pin<&mut QQmlApplicationEngine>);
     }
 }
 
-pub fn initialize_localization() {
-    ffi::initialize_localization();
+pub fn initialize_application_runtime() {
+    ffi::initialize_application_runtime();
 }
 
 pub fn setup_localized_context(engine: Pin<&mut QQmlApplicationEngine>) {

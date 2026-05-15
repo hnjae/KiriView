@@ -29,6 +29,7 @@ const CXX_QT_HEADER_SOURCES: &[&str] = &[
 ];
 const RUST_BRIDGE_SOURCES: &[&str] = &[
     "src/apngdecoder.rs",
+    "src/applicationruntime.rs",
     "src/archiveformat.rs",
     "src/archivepath.rs",
     "src/avifcompat.rs",
@@ -45,7 +46,6 @@ const RUST_BRIDGE_SOURCES: &[&str] = &[
     "src/imagenavigationmodel.rs",
     "src/imageviewportgeometry.rs",
     "src/imagezoomstate.rs",
-    "src/localization.rs",
     "src/predecodecachepolicy.rs",
 ];
 const CXX_QT_CPP_SOURCES: &[&str] = &[
@@ -56,7 +56,16 @@ const CXX_QT_CPP_SOURCES: &[&str] = &[
     "src/kiriimageview.cpp",
     "src/kiriviewapplication.cpp",
 ];
-const QT_MODULES: &[&str] = &["Gui", "Qml", "Quick", "Svg", "Network", "DBus", "Widgets"];
+const QT_MODULES: &[&str] = &[
+    "Gui",
+    "Qml",
+    "Quick",
+    "QuickControls2",
+    "Svg",
+    "Network",
+    "DBus",
+    "Widgets",
+];
 const NATIVE_LIBRARIES: &[NativeLibrary] = &[
     NativeLibrary {
         link_name: "KF6Archive",
