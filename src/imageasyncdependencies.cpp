@@ -23,12 +23,20 @@ KiriView::DecodedImageResult decodeImageDataWithDefaults(
 {
     return KiriView::decodeImageData(data, request);
 }
+
+KiriView::ImageIoJob noOpImageCandidateChanges(
+    QObject *, QUrl, KiriView::ImageCandidatesCallback, KiriView::ErrorCallback)
+{
+    return KiriView::ImageIoJob();
+}
 }
 
 namespace KiriView {
 ImageNavigationCandidateProvider imageNavigationCandidateProviderWithDefaults(
     ImageNavigationCandidateProvider provider)
 {
+    const bool providerIsEmpty = !provider.directoryImages && !provider.directoryContainers
+        && !provider.archiveImages && !provider.directoryImageChanges;
     ImageNavigationCandidateProvider defaults = defaultImageNavigationCandidateProvider();
     if (!provider.directoryImages) {
         provider.directoryImages = std::move(defaults.directoryImages);
@@ -40,7 +48,8 @@ ImageNavigationCandidateProvider imageNavigationCandidateProviderWithDefaults(
         provider.archiveImages = std::move(defaults.archiveImages);
     }
     if (!provider.directoryImageChanges) {
-        provider.directoryImageChanges = std::move(defaults.directoryImageChanges);
+        provider.directoryImageChanges = providerIsEmpty ? std::move(defaults.directoryImageChanges)
+                                                         : noOpImageCandidateChanges;
     }
 
     return provider;

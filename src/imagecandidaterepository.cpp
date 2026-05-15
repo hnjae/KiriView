@@ -4,10 +4,12 @@
 #include "imagecandidaterepository.h"
 
 #include "imagecallback.h"
+#include "imagecandidatestore.h"
 #include "imagecontainer.h"
 #include "imageiojobs.h"
 #include "imageurl.h"
 
+#include <memory>
 #include <optional>
 #include <utility>
 #include <variant>
@@ -17,12 +19,6 @@ namespace {
 void reportLoadProviderMissing(const KiriView::ErrorCallback &errorCallback)
 {
     KiriView::invokeIfSet(errorCallback, QString());
-}
-
-KiriView::ImageIoJob noOpImageCandidateChanges(
-    QObject *, QUrl, KiriView::ImageCandidatesCallback, KiriView::ErrorCallback)
-{
-    return KiriView::ImageIoJob();
 }
 
 template <typename Provider, typename... Args>
@@ -134,11 +130,20 @@ ContainerImageSourceResult containerImageSourceFor(
 namespace KiriView {
 ImageNavigationCandidateProvider defaultImageNavigationCandidateProvider()
 {
+    auto candidateStore = std::make_shared<ImageCandidateStore>();
     return ImageNavigationCandidateProvider {
-        startDirectoryImageCandidateList,
+        [candidateStore](QObject *receiver, QUrl directoryUrl, ImageCandidatesCallback callback,
+            ErrorCallback errorCallback) {
+            return candidateStore->loadDirectoryImages(
+                receiver, std::move(directoryUrl), std::move(callback), std::move(errorCallback));
+        },
         startDirectoryContainerCandidateList,
         startArchiveImageCandidateList,
-        noOpImageCandidateChanges,
+        [candidateStore](QObject *receiver, QUrl directoryUrl, ImageCandidatesCallback callback,
+            ErrorCallback errorCallback) {
+            return candidateStore->watchDirectoryImages(
+                receiver, std::move(directoryUrl), std::move(callback), std::move(errorCallback));
+        },
     };
 }
 
