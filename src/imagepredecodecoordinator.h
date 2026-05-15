@@ -26,9 +26,8 @@ class ImagePredecodeCoordinator final : public QObject
 {
 public:
     struct Context {
-        DisplayedImageLocation displayedImageLocation;
-        bool displayedImageIsCacheable = false;
-        StaticImagePayload displayedImage;
+        DisplayedPredecodeImage primaryImage;
+        std::optional<DisplayedPredecodeImage> secondaryImage;
         ImageFirstDisplayDecodeContext firstDisplayContext;
     };
 

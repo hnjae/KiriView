@@ -44,10 +44,12 @@ class TestPredecodeCache : public QObject
 
 private Q_SLOTS:
     void queueContainsOnlyMissingWindowImages();
+    void queueSkipsAllDisplayedWindowImages();
     void takeNextRequestDiscardsSkippedQueuePrefix();
     void byteBudgetUsesPreferredLimitAndSystemMemoryCap();
     void cacheEligibilityUsesByteBudgetPolicy();
     void cacheStoresAndFindsWindowImages();
+    void cacheRetainsDisplayedImagesBeforeAdjacentImages();
     void cacheRejectsUncacheableAndOversizedImages();
     void cacheEvictsLowestPriorityImagesWhenBudgetIsExceeded();
 };
@@ -72,6 +74,24 @@ void TestPredecodeCache::queueContainsOnlyMissingWindowImages()
     QVERIFY(request.has_value());
     QCOMPARE(request->url, secondQueuedUrl);
     QCOMPARE(request->archiveDocument.rootUrl(), archiveDocument.rootUrl());
+    QVERIFY(!cache.takeNextRequest(QUrl()).has_value());
+}
+
+void TestPredecodeCache::queueSkipsAllDisplayedWindowImages()
+{
+    KiriView::PredecodeCache cache;
+    const QUrl primaryDisplayedUrl = indexedImageUrl(0);
+    const QUrl secondaryDisplayedUrl = indexedImageUrl(1);
+    const QUrl queuedUrl = indexedImageUrl(2);
+    const KiriView::ArchiveDocumentLocation archiveDocument = comicBookArchiveDocument();
+
+    cache.setDisplayedUrls({ primaryDisplayedUrl, secondaryDisplayedUrl });
+    cache.setWindowUrls({ primaryDisplayedUrl, secondaryDisplayedUrl, queuedUrl });
+    cache.enqueueMissingWindowLoads(primaryDisplayedUrl, archiveDocument, QUrl());
+
+    const std::optional<KiriView::PredecodeRequest> request = cache.takeNextRequest(QUrl());
+    QVERIFY(request.has_value());
+    QCOMPARE(request->url, queuedUrl);
     QVERIFY(!cache.takeNextRequest(QUrl()).has_value());
 }
 
@@ -139,6 +159,28 @@ void TestPredecodeCache::cacheStoresAndFindsWindowImages()
     QCOMPARE(found->location.imageUrl(), url);
     QCOMPARE(found->location.archiveDocumentRootUrl(), archiveDocument.rootUrl());
     QCOMPARE(found->staticImage.displayHints.firstDisplayPixelsPerSourcePixel, 0.5);
+}
+
+void TestPredecodeCache::cacheRetainsDisplayedImagesBeforeAdjacentImages()
+{
+    KiriView::PredecodeCache cache(160);
+    const QUrl primaryDisplayedUrl = indexedImageUrl(0);
+    const QUrl secondaryDisplayedUrl = indexedImageUrl(1);
+    const QUrl adjacentUrl = indexedImageUrl(2);
+    const KiriView::ArchiveDocumentLocation archiveDocument = comicBookArchiveDocument();
+    const QImage image = cacheImage();
+
+    cache.setDisplayedUrls({ primaryDisplayedUrl, secondaryDisplayedUrl });
+    cache.setWindowUrls({ primaryDisplayedUrl, secondaryDisplayedUrl, adjacentUrl });
+    cache.cacheDisplayedImage(
+        true, secondaryDisplayedUrl, archiveDocument, staticTestImagePayload(image));
+    cache.cacheImage(adjacentUrl, archiveDocument, staticTestImagePayload(image));
+    cache.cacheDisplayedImage(
+        true, primaryDisplayedUrl, archiveDocument, staticTestImagePayload(image));
+
+    QVERIFY(cache.hasImage(primaryDisplayedUrl));
+    QVERIFY(cache.hasImage(secondaryDisplayedUrl));
+    QVERIFY(!cache.hasImage(adjacentUrl));
 }
 
 void TestPredecodeCache::cacheRejectsUncacheableAndOversizedImages()

@@ -27,7 +27,8 @@ public:
         ImageDecodeDependencies decodeDependencies);
     ~ImageDocumentPredecodeController();
 
-    void scheduleAdjacentImagePredecode();
+    void scheduleAdjacentImagePredecode(
+        std::optional<DisplayedPredecodeImage> secondaryImage = std::nullopt);
     void cancel();
     void clear();
     std::optional<PredecodedImage> tryTake(const QUrl &url) const;

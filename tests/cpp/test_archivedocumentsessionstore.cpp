@@ -294,9 +294,11 @@ void TestArchiveDocumentSessionStore::predecodeLoadsAdjacentArchiveImagesThrough
         }));
 
     coordinator.schedule(KiriView::ImagePredecodeCoordinator::Context {
-        KiriView::DisplayedImageLocation::fromArchiveDocument(displayedUrl, *archiveDocument),
-        true,
-        staticTestImagePayload(testImage()),
+        KiriView::DisplayedPredecodeImage {
+            KiriView::DisplayedImageLocation::fromArchiveDocument(displayedUrl, *archiveDocument),
+            true,
+            staticTestImagePayload(testImage()),
+        },
     });
 
     QTRY_VERIFY(coordinator.tryTake(thirdUrl).has_value());

@@ -44,6 +44,40 @@ std::vector<QUrl> predecodeWindowImageUrls(
     }
     return urls;
 }
+
+std::vector<QUrl> displayedPredecodeImageUrls(
+    const KiriView::ImagePredecodeCoordinator::Context &context)
+{
+    std::vector<QUrl> urls;
+    if (context.primaryImage.hasLocation()) {
+        urls.push_back(context.primaryImage.location.imageUrl());
+    }
+    if (context.secondaryImage.has_value() && context.secondaryImage->hasLocation()) {
+        urls.push_back(context.secondaryImage->location.imageUrl());
+    }
+
+    return urls;
+}
+
+void cacheDisplayedPredecodeImage(
+    KiriView::PredecodeCache &cache, const KiriView::DisplayedPredecodeImage &image)
+{
+    if (!image.isCacheable()) {
+        return;
+    }
+
+    cache.cacheDisplayedImage(
+        true, image.location.imageUrl(), image.location.archiveDocument(), *image.staticImage);
+}
+
+void cacheDisplayedPredecodeImages(
+    KiriView::PredecodeCache &cache, const KiriView::ImagePredecodeCoordinator::Context &context)
+{
+    cacheDisplayedPredecodeImage(cache, context.primaryImage);
+    if (context.secondaryImage.has_value()) {
+        cacheDisplayedPredecodeImage(cache, *context.secondaryImage);
+    }
+}
 }
 
 namespace KiriView {
@@ -72,7 +106,7 @@ ImagePredecodeCoordinator::ImagePredecodeCoordinator(QObject *parent,
 void ImagePredecodeCoordinator::schedule(Context context)
 {
     cancel();
-    if (context.displayedImageLocation.isEmpty() || !context.displayedImage.isValid()) {
+    if (!context.primaryImage.hasLocation() || !context.primaryImage.hasStaticImage()) {
         return;
     }
 
@@ -85,10 +119,10 @@ void ImagePredecodeCoordinator::scheduleAdjacentImagePredecode(
     const Context &context, quint64 generation)
 {
     const std::optional<ImageCandidateListContext> candidateContext
-        = imageCandidateListContextForDisplayedImage(context.displayedImageLocation);
+        = imageCandidateListContextForDisplayedImage(context.primaryImage.location);
     if (!candidateContext.has_value()) {
         startPredecodeImageLoads(
-            {}, context.displayedImageLocation.archiveDocument(), context, generation);
+            {}, context.primaryImage.location.archiveDocument(), context, generation);
         return;
     }
 
@@ -113,12 +147,11 @@ void ImagePredecodeCoordinator::startPredecodeImageLoads(const std::vector<QUrl>
         return;
     }
 
+    m_cache.setDisplayedUrls(displayedPredecodeImageUrls(context));
     m_cache.setWindowUrls(urls);
-    m_cache.cacheDisplayedImage(context.displayedImageIsCacheable,
-        context.displayedImageLocation.imageUrl(), context.displayedImageLocation.archiveDocument(),
-        context.displayedImage);
+    cacheDisplayedPredecodeImages(m_cache, context);
     m_cache.enqueueMissingWindowLoads(
-        context.displayedImageLocation.imageUrl(), archiveDocument, activePredecodeUrl());
+        context.primaryImage.location.imageUrl(), archiveDocument, activePredecodeUrl());
 
     startNextPredecodeImageLoad(generation);
 }

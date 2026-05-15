@@ -99,7 +99,8 @@ void ImageDocumentEffectExecutor::dispatchPayload(const UpdatePageNavigationEffe
 
 void ImageDocumentEffectExecutor::dispatchPayload(const ScheduleAdjacentImagePredecodeEffect &)
 {
-    m_predecodeController.scheduleAdjacentImagePredecode();
+    m_predecodeController.scheduleAdjacentImagePredecode(
+        m_spreadController.secondaryDisplayedPredecodeImage());
 }
 
 void ImageDocumentEffectExecutor::dispatchPayload(const OpenUrlEffect &payload)

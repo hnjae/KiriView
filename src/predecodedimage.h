@@ -7,10 +7,24 @@
 #include "imagelocation.h"
 #include "staticimage.h"
 
+#include <optional>
+
 namespace KiriView {
 struct PredecodedImage {
     StaticImagePayload staticImage;
     DisplayedImageLocation location;
+};
+
+struct DisplayedPredecodeImage {
+    DisplayedImageLocation location;
+    bool cacheable = false;
+    std::optional<StaticImagePayload> staticImage;
+
+    bool hasLocation() const { return !location.isEmpty(); }
+
+    bool hasStaticImage() const { return staticImage.has_value() && staticImage->isValid(); }
+
+    bool isCacheable() const { return cacheable && hasStaticImage(); }
 };
 }
 

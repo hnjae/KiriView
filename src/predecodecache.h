@@ -36,6 +36,7 @@ public:
     void clear();
     void clearQueuedLoads();
     void setWindowUrls(const std::vector<QUrl> &urls);
+    void setDisplayedUrls(const std::vector<QUrl> &urls);
     void enqueueMissingWindowLoads(const QUrl &displayedUrl,
         const ArchiveDocumentLocation &archiveDocument, const QUrl &activePredecodeUrl);
     std::optional<PredecodeRequest> takeNextRequest(const QUrl &activePredecodeUrl);
@@ -59,6 +60,7 @@ private:
     using ConstCachedImageIterator = std::vector<CachedImage>::const_iterator;
 
     static bool containsUrl(const std::vector<QUrl> &urls, const QUrl &url);
+    bool displayedContains(const QUrl &url) const;
     CachedImageIterator findCachedImage(const QUrl &normalizedUrl);
     ConstCachedImageIterator findCachedImage(const QUrl &normalizedUrl) const;
     void removeCachedImage(const QUrl &normalizedUrl);
@@ -66,6 +68,7 @@ private:
     void trimImagesToWindow();
 
     std::vector<QUrl> m_windowUrls;
+    std::vector<QUrl> m_displayedUrls;
     std::deque<PredecodeRequest> m_queue;
     std::vector<CachedImage> m_images;
     qsizetype m_byteBudget = defaultByteBudget();

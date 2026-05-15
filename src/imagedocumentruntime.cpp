@@ -79,6 +79,7 @@ ImageDocumentRuntime::ImageDocumentRuntime(QObject *documentObject,
             [this]() { return navigationController->currentPageNumber(); },
             [this]() { return navigationController->imageCount(); },
             [this](int pageNumber) { return navigationController->urlAtPage(pageNumber); },
+            [this]() { dispatchEffect(ImageDocumentEffect::scheduleAdjacentImagePredecode()); },
         },
         dependencies.candidateProvider, dependencies.imageDecode);
     loadController = std::make_unique<ImageDocumentLoadController>(state,

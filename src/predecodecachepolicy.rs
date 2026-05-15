@@ -17,6 +17,7 @@ mod ffi {
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     struct RustPredecodeCachedImageState {
+        displayed: bool,
         window_priority: usize,
         byte_cost: i64,
     }
@@ -72,6 +73,7 @@ use ffi::{
 #[derive(Clone, Copy)]
 struct RetainedCachedImage {
     original_index: usize,
+    displayed: bool,
     window_priority: usize,
     byte_cost: i64,
 }
@@ -93,7 +95,7 @@ fn rust_predecode_retained_cached_image_indices(
     window_count: usize,
     byte_budget: i64,
 ) -> Vec<usize> {
-    if window_count == 0 || byte_budget <= 0 {
+    if byte_budget <= 0 {
         return Vec::new();
     }
 
@@ -101,29 +103,53 @@ fn rust_predecode_retained_cached_image_indices(
         .into_iter()
         .enumerate()
         .filter_map(|(original_index, state)| {
-            if state.window_priority >= window_count || state.byte_cost <= 0 {
+            if (!state.displayed && state.window_priority >= window_count) || state.byte_cost <= 0 {
                 return None;
             }
 
             Some(RetainedCachedImage {
                 original_index,
+                displayed: state.displayed,
                 window_priority: state.window_priority,
                 byte_cost: state.byte_cost,
             })
         })
         .collect();
-    images.sort_by(|left, right| left.window_priority.cmp(&right.window_priority));
+
+    let mut displayed_images: Vec<RetainedCachedImage> = images
+        .iter()
+        .copied()
+        .filter(|image| image.displayed)
+        .collect();
+    displayed_images.sort_by(|left, right| {
+        left.window_priority
+            .cmp(&right.window_priority)
+            .then(left.original_index.cmp(&right.original_index))
+    });
+
+    let displayed_byte_cost = displayed_images
+        .iter()
+        .fold(0_i64, |total, image| total.saturating_add(image.byte_cost));
+    let adjacent_byte_budget = byte_budget.saturating_sub(displayed_byte_cost);
+
+    images.retain(|image| !image.displayed);
+    images.sort_by(|left, right| {
+        left.window_priority
+            .cmp(&right.window_priority)
+            .then(left.original_index.cmp(&right.original_index))
+    });
 
     let mut total_byte_cost = images
         .iter()
         .fold(0_i64, |total, image| total.saturating_add(image.byte_cost));
-    while total_byte_cost > byte_budget && !images.is_empty() {
+    while total_byte_cost > adjacent_byte_budget && !images.is_empty() {
         if let Some(image) = images.pop() {
             total_byte_cost = total_byte_cost.saturating_sub(image.byte_cost);
         }
     }
 
-    images
+    displayed_images.extend(images);
+    displayed_images
         .into_iter()
         .map(|image| image.original_index)
         .collect()
@@ -271,6 +297,38 @@ mod tests {
     }
 
     #[test]
+    fn retained_cached_image_indices_keep_displayed_images_before_adjacent_budget() {
+        assert_eq!(
+            rust_predecode_retained_cached_image_indices(
+                vec![
+                    cached_image_state(0, 60),
+                    displayed_cached_image_state(1, 90),
+                    cached_image_state(2, 60),
+                    displayed_cached_image_state(3, 90),
+                ],
+                4,
+                160,
+            ),
+            vec![1, 3]
+        );
+    }
+
+    #[test]
+    fn retained_cached_image_indices_keep_displayed_images_without_window() {
+        assert_eq!(
+            rust_predecode_retained_cached_image_indices(
+                vec![
+                    displayed_cached_image_state(usize::MAX, 90),
+                    cached_image_state(0, 10),
+                ],
+                0,
+                80,
+            ),
+            vec![0]
+        );
+    }
+
+    #[test]
     fn missing_window_load_indices_skip_displayed_cached_and_in_flight_urls() {
         assert_eq!(
             rust_predecode_missing_window_load_indices(vec![
@@ -338,6 +396,18 @@ mod tests {
 
     fn cached_image_state(window_priority: usize, byte_cost: i64) -> RustPredecodeCachedImageState {
         RustPredecodeCachedImageState {
+            displayed: false,
+            window_priority,
+            byte_cost,
+        }
+    }
+
+    fn displayed_cached_image_state(
+        window_priority: usize,
+        byte_cost: i64,
+    ) -> RustPredecodeCachedImageState {
+        RustPredecodeCachedImageState {
+            displayed: true,
             window_priority,
             byte_cost,
         }

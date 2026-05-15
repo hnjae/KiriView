@@ -23,7 +23,8 @@ ImageDocumentPredecodeController::ImageDocumentPredecodeController(QObject *pare
 
 ImageDocumentPredecodeController::~ImageDocumentPredecodeController() = default;
 
-void ImageDocumentPredecodeController::scheduleAdjacentImagePredecode()
+void ImageDocumentPredecodeController::scheduleAdjacentImagePredecode(
+    std::optional<DisplayedPredecodeImage> secondaryImage)
 {
     std::optional<StaticImagePayload> staticImage = m_presentationController.staticImage();
     if (!m_presentationController.hasImage() || m_state.displayedUrl().isEmpty()
@@ -33,9 +34,12 @@ void ImageDocumentPredecodeController::scheduleAdjacentImagePredecode()
     }
 
     m_coordinator->schedule(ImagePredecodeCoordinator::Context {
-        m_state.displayedImageLocation(),
-        m_presentationController.isPredecodeCacheable(),
-        std::move(*staticImage),
+        DisplayedPredecodeImage {
+            m_state.displayedImageLocation(),
+            m_presentationController.isPredecodeCacheable(),
+            std::move(staticImage),
+        },
+        std::move(secondaryImage),
         m_presentationController.firstDisplayDecodeContext(),
     });
 }

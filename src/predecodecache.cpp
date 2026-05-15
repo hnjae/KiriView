@@ -62,6 +62,7 @@ PredecodeCache::PredecodeCache(qsizetype byteBudget)
 void PredecodeCache::clear()
 {
     m_windowUrls.clear();
+    m_displayedUrls.clear();
     m_queue.clear();
     m_images.clear();
 }
@@ -88,6 +89,25 @@ void PredecodeCache::setWindowUrls(const std::vector<QUrl> &urls)
     trimImagesToWindow();
 }
 
+void PredecodeCache::setDisplayedUrls(const std::vector<QUrl> &urls)
+{
+    m_displayedUrls.clear();
+
+    for (const QUrl &url : urls) {
+        const std::optional<QUrl> normalizedUrl = normalizedValidImageUrl(url);
+        if (!normalizedUrl.has_value()) {
+            continue;
+        }
+        if (containsUrl(m_displayedUrls, *normalizedUrl)) {
+            continue;
+        }
+
+        m_displayedUrls.push_back(*normalizedUrl);
+    }
+
+    trimImagesToWindow();
+}
+
 void PredecodeCache::enqueueMissingWindowLoads(const QUrl &displayedUrl,
     const ArchiveDocumentLocation &archiveDocument, const QUrl &activePredecodeUrl)
 {
@@ -97,7 +117,7 @@ void PredecodeCache::enqueueMissingWindowLoads(const QUrl &displayedUrl,
 
     for (const QUrl &url : m_windowUrls) {
         states.push_back(RustPredecodeWindowLoadState {
-            url == normalizedDisplayedUrl,
+            displayedContains(url) || url == normalizedDisplayedUrl,
             hasImage(url),
             isInFlight(url, activePredecodeUrl),
         });
@@ -199,7 +219,8 @@ void PredecodeCache::cacheImage(
     }
 
     const std::optional<QUrl> normalizedUrl = normalizedValidImageUrl(url);
-    if (!normalizedUrl.has_value() || !containsUrl(m_windowUrls, *normalizedUrl)) {
+    if (!normalizedUrl.has_value()
+        || (!containsUrl(m_windowUrls, *normalizedUrl) && !displayedContains(*normalizedUrl))) {
         return;
     }
 
@@ -223,6 +244,11 @@ void PredecodeCache::cacheDisplayedImage(bool cacheable, const QUrl &url,
 bool PredecodeCache::containsUrl(const std::vector<QUrl> &urls, const QUrl &url)
 {
     return std::find(urls.cbegin(), urls.cend(), url) != urls.cend();
+}
+
+bool PredecodeCache::displayedContains(const QUrl &url) const
+{
+    return containsUrl(m_displayedUrls, url);
 }
 
 PredecodeCache::CachedImageIterator PredecodeCache::findCachedImage(const QUrl &normalizedUrl)
@@ -263,6 +289,7 @@ void PredecodeCache::trimImagesToWindow()
 
     for (const CachedImage &entry : m_images) {
         states.push_back(RustPredecodeCachedImageState {
+            displayedContains(entry.url),
             windowPriority(entry.url),
             Bridge::rustByteSize(entry.byteCost),
         });

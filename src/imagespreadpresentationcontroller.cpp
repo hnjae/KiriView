@@ -285,6 +285,22 @@ bool ImageSpreadPresentationController::secondaryPageVisible() const
     return twoPageModeActive() && m_secondaryPageController->visible();
 }
 
+std::optional<DisplayedPredecodeImage>
+ImageSpreadPresentationController::secondaryDisplayedPredecodeImage() const
+{
+    if (!secondaryPageVisible()) {
+        return std::nullopt;
+    }
+
+    const ImagePresentationController &presentation
+        = m_secondaryPageController->presentationController();
+    return DisplayedPredecodeImage {
+        m_secondaryPageController->displayedImageLocation(),
+        presentation.isPredecodeCacheable(),
+        presentation.staticImage(),
+    };
+}
+
 std::shared_ptr<DisplayedImageSurface> ImageSpreadPresentationController::imageSurface(
     DisplayedPageRole role) const
 {
@@ -385,6 +401,7 @@ void ImageSpreadPresentationController::refreshSecondaryPage()
         clearSecondaryPage();
         if (wasVisible) {
             notifyTwoPageModeChanged();
+            scheduleAdjacentPredecode();
         }
         finishTransition();
     };
@@ -504,6 +521,7 @@ void ImageSpreadPresentationController::finishSecondaryPageAsPrimaryOnly()
     m_zoomController->applyStoredZoomToPrimaryPage();
     finishTransition();
     notifyTwoPageModeChanged();
+    scheduleAdjacentPredecode();
 }
 
 void ImageSpreadPresentationController::finishSecondaryPageVisible()
@@ -511,6 +529,7 @@ void ImageSpreadPresentationController::finishSecondaryPageVisible()
     updateZoomState();
     finishTransition();
     notifyTwoPageModeChanged();
+    scheduleAdjacentPredecode();
 }
 
 void ImageSpreadPresentationController::notifyTransitionChanged()
@@ -546,6 +565,11 @@ bool ImageSpreadPresentationController::previousPageIsWideForNavigation() const
 
     const std::optional<QUrl> previousUrl = urlAtPage(pageNumber - 1);
     return previousUrl.has_value() ? cachedPageIsWide(*previousUrl).value_or(false) : false;
+}
+
+void ImageSpreadPresentationController::scheduleAdjacentPredecode()
+{
+    invokeIfSet(m_callbacks.scheduleAdjacentPredecode);
 }
 
 ImageSpreadNavigationState ImageSpreadPresentationController::navigationState(

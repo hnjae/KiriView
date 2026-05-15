@@ -40,6 +40,7 @@ public:
     using CurrentPageNumberProvider = std::function<int()>;
     using ImageCountProvider = std::function<int()>;
     using PageUrlProvider = std::function<std::optional<QUrl>(int)>;
+    using ScheduleAdjacentPredecodeCallback = std::function<void()>;
 
     struct Callbacks {
         ChangeCallback change;
@@ -47,6 +48,7 @@ public:
         CurrentPageNumberProvider currentPageNumber;
         ImageCountProvider imageCount;
         PageUrlProvider urlAtPage;
+        ScheduleAdjacentPredecodeCallback scheduleAdjacentPredecode;
     };
 
     ImageSpreadPresentationController(QObject *parent, RenderContextProvider renderContextProvider,
@@ -85,6 +87,7 @@ public:
     bool rightToLeftReadingAvailable() const;
     bool rightToLeftReadingActive() const;
     bool secondaryPageVisible() const;
+    std::optional<DisplayedPredecodeImage> secondaryDisplayedPredecodeImage() const;
     std::shared_ptr<DisplayedImageSurface> imageSurface(DisplayedPageRole role) const;
     quint64 imageRevision(DisplayedPageRole role) const;
 
@@ -121,6 +124,7 @@ private:
     bool previousPageIsWideForNavigation() const;
     ImageSpreadNavigationState navigationState(bool previousPageIsWide = false) const;
     std::optional<bool> cachedPageIsWide(const QUrl &url) const;
+    void scheduleAdjacentPredecode();
     int currentPageNumber() const;
     int imageCount() const;
     std::optional<QUrl> urlAtPage(int pageNumber) const;
