@@ -16,6 +16,7 @@
 #include <QString>
 #include <QUrl>
 #include <QtGlobal>
+#include <algorithm>
 #include <cstddef>
 #include <initializer_list>
 #include <map>
@@ -382,6 +383,8 @@ private:
 
 class FakeImageNavigationCandidateProvider
 {
+    struct FakeCandidateChangeSubscription;
+
 public:
     void setDirectoryImages(
         const QUrl &directoryUrl, std::vector<ImageNavigationCandidate> candidates)
@@ -416,6 +419,41 @@ public:
         m_containerCandidates.setError(directoryUrl, std::move(errorString));
     }
 
+    void emitDirectoryImageChanges(
+        const QUrl &directoryUrl, std::vector<ImageNavigationCandidate> candidates)
+    {
+        const QString key = keyForUrl(directoryUrl);
+        for (const std::shared_ptr<FakeCandidateChangeSubscription> &subscription :
+            m_directoryImageChangeSubscriptions) {
+            if (subscription == nullptr || subscription->canceled || subscription->key != key
+                || !subscription->callback) {
+                continue;
+            }
+
+            subscription->callback(candidates);
+        }
+    }
+
+    int directoryImageChangeSubscriptionCount(const QUrl &directoryUrl) const
+    {
+        const QString key = keyForUrl(directoryUrl);
+        return static_cast<int>(std::count_if(m_directoryImageChangeSubscriptions.cbegin(),
+            m_directoryImageChangeSubscriptions.cend(),
+            [&key](const std::shared_ptr<FakeCandidateChangeSubscription> &subscription) {
+                return subscription != nullptr && !subscription->canceled
+                    && subscription->key == key;
+            }));
+    }
+
+    int directoryImageChangeSubscriptionCount() const
+    {
+        return static_cast<int>(std::count_if(m_directoryImageChangeSubscriptions.cbegin(),
+            m_directoryImageChangeSubscriptions.cend(),
+            [](const std::shared_ptr<FakeCandidateChangeSubscription> &subscription) {
+                return subscription != nullptr && !subscription->canceled;
+            }));
+    }
+
     ImageNavigationCandidateProvider provider()
     {
         return ImageNavigationCandidateProvider {
@@ -437,13 +475,50 @@ public:
                     archiveDocument.rootUrl(), std::move(callback), std::move(errorCallback));
                 return ImageIoJob();
             },
+            [this](QObject *receiver, QUrl directoryUrl, ImageCandidatesCallback callback,
+                ErrorCallback) {
+                return subscribeToDirectoryImageChanges(
+                    receiver, std::move(directoryUrl), std::move(callback));
+            },
         };
     }
 
 private:
+    struct FakeCandidateChangeSubscription {
+        QObject *object = nullptr;
+        QString key;
+        ImageCandidatesCallback callback;
+        bool canceled = false;
+    };
+
+    ImageIoJob subscribeToDirectoryImageChanges(
+        QObject *receiver, QUrl directoryUrl, ImageCandidatesCallback callback)
+    {
+        auto subscription = std::make_shared<FakeCandidateChangeSubscription>();
+        subscription->object = new QObject(receiver);
+        subscription->key = keyForUrl(directoryUrl);
+        subscription->callback = std::move(callback);
+
+        std::weak_ptr<FakeCandidateChangeSubscription> weakSubscription = subscription;
+        ImageIoJob job(subscription->object, [weakSubscription](QObject *object) {
+            if (std::shared_ptr<FakeCandidateChangeSubscription> subscription
+                = weakSubscription.lock()) {
+                subscription->canceled = true;
+                subscription->object = nullptr;
+            }
+            if (object != nullptr) {
+                object->deleteLater();
+            }
+        });
+        m_directoryImageChangeSubscriptions.push_back(std::move(subscription));
+        return job;
+    }
+
     FakeCandidateListing<std::vector<ImageNavigationCandidate>> m_directoryImages;
     FakeCandidateListing<std::vector<ImageNavigationCandidate>> m_archiveImages;
     FakeCandidateListing<std::vector<ContainerNavigationCandidate>> m_containerCandidates;
+    std::vector<std::shared_ptr<FakeCandidateChangeSubscription>>
+        m_directoryImageChangeSubscriptions;
 };
 
 inline QImage testImage(const QSize &size = QSize(1, 1))

@@ -305,16 +305,20 @@ void ImageCandidateStore::finishPendingLoadErrors(Entry &entry)
 void ImageCandidateStore::notifySubscribers(Entry &entry)
 {
     pruneInactiveItems(&entry.subscribers);
-    for (ImageCandidateSubscriber &subscriber : entry.subscribers) {
-        invokeIfSet(subscriber.callback, entry.candidates);
+    const std::vector<ImageCandidateSubscriber> subscribers = entry.subscribers;
+    const std::vector<ImageNavigationCandidate> candidates = entry.candidates;
+    for (const ImageCandidateSubscriber &subscriber : subscribers) {
+        invokeIfSet(subscriber.callback, candidates);
     }
 }
 
 void ImageCandidateStore::notifySubscriberErrors(Entry &entry)
 {
     pruneInactiveItems(&entry.subscribers);
-    for (ImageCandidateSubscriber &subscriber : entry.subscribers) {
-        invokeIfSet(subscriber.errorCallback, entry.errorString);
+    const std::vector<ImageCandidateSubscriber> subscribers = entry.subscribers;
+    const QString errorString = entry.errorString;
+    for (const ImageCandidateSubscriber &subscriber : subscribers) {
+        invokeIfSet(subscriber.errorCallback, errorString);
     }
 }
 

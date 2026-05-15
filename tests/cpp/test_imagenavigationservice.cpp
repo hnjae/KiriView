@@ -29,11 +29,14 @@ KiriView::ImageNavigationService::Callbacks navigationCallbacks(
     KiriView::ImageNavigationService::OpenContainerImageCallback openContainerImage = {},
     KiriView::ImageNavigationService::ContainerNavigationErrorCallback containerNavigationError
     = {},
-    KiriView::ImageNavigationService::PageNavigationChangedCallback pageNavigationChanged = {})
+    KiriView::ImageNavigationService::PageNavigationChangedCallback pageNavigationChanged = {},
+    KiriView::ImageNavigationService::ClearCurrentImageCallback clearCurrentImage = {},
+    KiriView::ImageNavigationService::DeletionInProgressCallback deletionInProgress = {})
 {
     return KiriView::ImageNavigationService::Callbacks { std::move(openUrl),
         std::move(openContainerImage), std::move(containerNavigationError),
-        std::move(pageNavigationChanged) };
+        std::move(pageNavigationChanged), std::move(clearCurrentImage),
+        std::move(deletionInProgress) };
 }
 
 struct ManualImageCandidateList {
@@ -116,6 +119,12 @@ private Q_SLOTS:
     void pageNavigationKeepsKnownListWhileRefreshingCurrentImage();
     void pageNavigationStaysUnknownUntilArchiveListCompletes();
     void pageNavigationDoesNotPublishSyntheticBoundaryWhenCurrentMissing();
+    void pageNavigationUpdatesWhenDirectoryCandidatesChange();
+    void externalCurrentImageRemovalOpensNextFallback();
+    void externalCurrentImageRemovalOpensPreviousFallback();
+    void externalCurrentImageRemovalClearsWithoutFallback();
+    void internalDeletionCandidateChangeDoesNotOpenExternalFallback();
+    void archivePageNavigationDoesNotSubscribeToDirectoryChanges();
     void directoryContainerNavigationOpensFirstImage();
     void emptyContainerReportsNavigationError();
     void invalidArchiveContainerReportsNavigationError();
@@ -365,6 +374,201 @@ void TestImageNavigationService::pageNavigationDoesNotPublishSyntheticBoundaryWh
     QVERIFY(!observedStates.empty());
     QCOMPARE(observedStates.back().first, 0);
     QCOMPARE(observedStates.back().second, 2);
+}
+
+void TestImageNavigationService::pageNavigationUpdatesWhenDirectoryCandidatesChange()
+{
+    FakeCandidateProvider fakeProvider;
+    const QUrl parentUrl = localUrl(QStringLiteral("/images/"));
+    const QUrl firstUrl = localUrl(QStringLiteral("/images/01.png"));
+    const QUrl secondUrl = localUrl(QStringLiteral("/images/02.png"));
+    const QUrl thirdUrl = localUrl(QStringLiteral("/images/03.png"));
+    fakeProvider.setDirectoryImages(parentUrl,
+        {
+            imageCandidate(firstUrl),
+            imageCandidate(secondUrl),
+        });
+
+    int pageNavigationChangeCount = 0;
+    KiriView::ImageNavigationService service(nullptr, fakeProvider.provider(),
+        navigationCallbacks(
+            {}, {}, {}, [&pageNavigationChangeCount]() { ++pageNavigationChangeCount; }));
+    service.updatePageNavigation(KiriView::ImageNavigationService::DisplayContext {
+        true,
+        KiriView::DisplayedImageLocation::fromUrl(firstUrl),
+    });
+    QCOMPARE(service.currentPageNumber(), 1);
+    QCOMPARE(service.imageCount(), 2);
+    QCOMPARE(fakeProvider.directoryImageChangeSubscriptionCount(parentUrl), 1);
+
+    pageNavigationChangeCount = 0;
+    fakeProvider.emitDirectoryImageChanges(parentUrl,
+        {
+            imageCandidate(firstUrl),
+            imageCandidate(secondUrl),
+            imageCandidate(thirdUrl),
+        });
+
+    QCOMPARE(service.currentPageNumber(), 1);
+    QCOMPARE(service.imageCount(), 3);
+    QCOMPARE(pageNavigationChangeCount, 1);
+}
+
+void TestImageNavigationService::externalCurrentImageRemovalOpensNextFallback()
+{
+    FakeCandidateProvider fakeProvider;
+    const QUrl parentUrl = localUrl(QStringLiteral("/images/"));
+    const QUrl firstUrl = localUrl(QStringLiteral("/images/01.png"));
+    const QUrl secondUrl = localUrl(QStringLiteral("/images/02.png"));
+    const QUrl thirdUrl = localUrl(QStringLiteral("/images/03.png"));
+    fakeProvider.setDirectoryImages(parentUrl,
+        {
+            imageCandidate(firstUrl),
+            imageCandidate(secondUrl),
+            imageCandidate(thirdUrl),
+        });
+
+    QUrl openedUrl;
+    int clearCount = 0;
+    KiriView::ImageNavigationService service(nullptr, fakeProvider.provider(),
+        navigationCallbacks([&openedUrl](const QUrl &url) { openedUrl = url; }, {}, {}, {},
+            [&clearCount]() { ++clearCount; }));
+    service.updatePageNavigation(KiriView::ImageNavigationService::DisplayContext {
+        true,
+        KiriView::DisplayedImageLocation::fromUrl(secondUrl),
+    });
+
+    fakeProvider.emitDirectoryImageChanges(parentUrl,
+        {
+            imageCandidate(firstUrl),
+            imageCandidate(thirdUrl),
+        });
+
+    QCOMPARE(clearCount, 1);
+    QCOMPARE(openedUrl, thirdUrl);
+}
+
+void TestImageNavigationService::externalCurrentImageRemovalOpensPreviousFallback()
+{
+    FakeCandidateProvider fakeProvider;
+    const QUrl parentUrl = localUrl(QStringLiteral("/images/"));
+    const QUrl firstUrl = localUrl(QStringLiteral("/images/01.png"));
+    const QUrl secondUrl = localUrl(QStringLiteral("/images/02.png"));
+    const QUrl thirdUrl = localUrl(QStringLiteral("/images/03.png"));
+    fakeProvider.setDirectoryImages(parentUrl,
+        {
+            imageCandidate(firstUrl),
+            imageCandidate(secondUrl),
+            imageCandidate(thirdUrl),
+        });
+
+    QUrl openedUrl;
+    int clearCount = 0;
+    KiriView::ImageNavigationService service(nullptr, fakeProvider.provider(),
+        navigationCallbacks([&openedUrl](const QUrl &url) { openedUrl = url; }, {}, {}, {},
+            [&clearCount]() { ++clearCount; }));
+    service.updatePageNavigation(KiriView::ImageNavigationService::DisplayContext {
+        true,
+        KiriView::DisplayedImageLocation::fromUrl(thirdUrl),
+    });
+
+    fakeProvider.emitDirectoryImageChanges(parentUrl,
+        {
+            imageCandidate(firstUrl),
+            imageCandidate(secondUrl),
+        });
+
+    QCOMPARE(clearCount, 1);
+    QCOMPARE(openedUrl, secondUrl);
+}
+
+void TestImageNavigationService::externalCurrentImageRemovalClearsWithoutFallback()
+{
+    FakeCandidateProvider fakeProvider;
+    const QUrl parentUrl = localUrl(QStringLiteral("/images/"));
+    const QUrl currentUrl = localUrl(QStringLiteral("/images/01.png"));
+    fakeProvider.setDirectoryImages(parentUrl,
+        {
+            imageCandidate(currentUrl),
+        });
+
+    QUrl openedUrl;
+    int clearCount = 0;
+    KiriView::ImageNavigationService service(nullptr, fakeProvider.provider(),
+        navigationCallbacks([&openedUrl](const QUrl &url) { openedUrl = url; }, {}, {}, {},
+            [&clearCount]() { ++clearCount; }));
+    service.updatePageNavigation(KiriView::ImageNavigationService::DisplayContext {
+        true,
+        KiriView::DisplayedImageLocation::fromUrl(currentUrl),
+    });
+
+    fakeProvider.emitDirectoryImageChanges(parentUrl, {});
+
+    QCOMPARE(clearCount, 1);
+    QVERIFY(openedUrl.isEmpty());
+}
+
+void TestImageNavigationService::internalDeletionCandidateChangeDoesNotOpenExternalFallback()
+{
+    FakeCandidateProvider fakeProvider;
+    const QUrl parentUrl = localUrl(QStringLiteral("/images/"));
+    const QUrl firstUrl = localUrl(QStringLiteral("/images/01.png"));
+    const QUrl secondUrl = localUrl(QStringLiteral("/images/02.png"));
+    const QUrl thirdUrl = localUrl(QStringLiteral("/images/03.png"));
+    fakeProvider.setDirectoryImages(parentUrl,
+        {
+            imageCandidate(firstUrl),
+            imageCandidate(secondUrl),
+            imageCandidate(thirdUrl),
+        });
+
+    QUrl openedUrl;
+    int clearCount = 0;
+    bool deletionInProgress = true;
+    KiriView::ImageNavigationService service(nullptr, fakeProvider.provider(),
+        navigationCallbacks([&openedUrl](const QUrl &url) { openedUrl = url; }, {}, {}, {},
+            [&clearCount]() { ++clearCount; },
+            [&deletionInProgress]() { return deletionInProgress; }));
+    service.updatePageNavigation(KiriView::ImageNavigationService::DisplayContext {
+        true,
+        KiriView::DisplayedImageLocation::fromUrl(secondUrl),
+    });
+
+    fakeProvider.emitDirectoryImageChanges(parentUrl,
+        {
+            imageCandidate(firstUrl),
+            imageCandidate(thirdUrl),
+        });
+
+    QCOMPARE(clearCount, 0);
+    QVERIFY(openedUrl.isEmpty());
+    QCOMPARE(service.currentPageNumber(), 0);
+    QCOMPARE(service.imageCount(), 2);
+}
+
+void TestImageNavigationService::archivePageNavigationDoesNotSubscribeToDirectoryChanges()
+{
+    FakeCandidateProvider fakeProvider;
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
+    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveDocument.has_value());
+    const QUrl firstUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
+    fakeProvider.setArchiveImages(archiveDocument->rootUrl(),
+        {
+            imageCandidate(firstUrl),
+        });
+
+    KiriView::ImageNavigationService service(
+        nullptr, fakeProvider.provider(), navigationCallbacks());
+    service.updatePageNavigation(KiriView::ImageNavigationService::DisplayContext {
+        true,
+        KiriView::DisplayedImageLocation::fromArchiveDocument(firstUrl, *archiveDocument),
+    });
+
+    QCOMPARE(service.currentPageNumber(), 1);
+    QCOMPARE(service.imageCount(), 1);
+    QCOMPARE(fakeProvider.directoryImageChangeSubscriptionCount(), 0);
 }
 
 void TestImageNavigationService::directoryContainerNavigationOpensFirstImage()

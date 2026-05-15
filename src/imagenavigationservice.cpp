@@ -3,11 +3,13 @@
 
 #include "imagenavigationservice.h"
 
+#include "filedeletionfallback.h"
 #include "imagecallback.h"
 #include "imagenavigationmodel.h"
 #include "imageurl.h"
 
 #include <QString>
+#include <algorithm>
 #include <optional>
 #include <utility>
 #include <vector>
@@ -44,6 +46,15 @@ std::vector<QUrl> imageNavigationCandidateUrls(
         urls.push_back(candidate.url);
     }
     return urls;
+}
+
+bool imageNavigationCandidatesContainUrl(
+    const std::vector<KiriView::ImageNavigationCandidate> &candidates, const QUrl &url)
+{
+    return std::any_of(candidates.cbegin(), candidates.cend(),
+        [&url](const KiriView::ImageNavigationCandidate &candidate) {
+            return KiriView::sameNormalizedUrl(candidate.url, url);
+        });
 }
 
 bool sameArchiveDocumentLocation(
@@ -301,8 +312,32 @@ void ImageNavigationService::updatePageNavigationFromChangedCandidates(
         return;
     }
 
-    setPageNavigationUrls(
-        imageNavigationCandidateUrls(candidates), m_pageNavigationContext->currentUrl(), source);
+    ImageCandidateListContext context = *m_pageNavigationContext;
+    const bool currentImageRemoved
+        = !imageNavigationCandidatesContainUrl(candidates, context.currentUrl());
+    setPageNavigationUrls(imageNavigationCandidateUrls(candidates), context.currentUrl(), source);
+
+    if (currentImageRemoved && !deletionInProgress()) {
+        handleCurrentImageRemoved(std::move(candidates), std::move(context));
+    }
+}
+
+void ImageNavigationService::handleCurrentImageRemoved(
+    std::vector<ImageNavigationCandidate> candidates, ImageCandidateListContext context)
+{
+    const ImageDeletionFallbackPlan fallbackPlan = ImageDeletionFallbackPlan { context,
+        context.currentUrl(), context.currentUrl().fileName() };
+    const std::optional<QUrl> fallbackUrl
+        = imageDeletionFallbackUrl(std::move(candidates), fallbackPlan);
+    invokeIfSet(m_callbacks.clearCurrentImage);
+    if (fallbackUrl.has_value()) {
+        invokeIfSet(m_callbacks.openUrl, *fallbackUrl);
+    }
+}
+
+bool ImageNavigationService::deletionInProgress() const
+{
+    return m_callbacks.deletionInProgress && m_callbacks.deletionInProgress();
 }
 
 void ImageNavigationService::clearPageNavigation()

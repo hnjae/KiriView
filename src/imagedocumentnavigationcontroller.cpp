@@ -48,14 +48,18 @@ ImageDocumentNavigationController::ImageDocumentNavigationController(QObject *pa
 
         report(ImageDocumentEffect::containerNavigationFailed(url, message));
     };
-    m_navigationService
-        = std::make_unique<ImageNavigationService>(parent, std::move(candidateProvider),
-            ImageNavigationService::Callbacks {
-                [this](const QUrl &url) { report(ImageDocumentEffect::openUrl(url)); },
-                std::move(openContainerImage),
-                std::move(handleError),
-                [this]() { notify(ImageDocumentChange::PageNavigation); },
-            });
+    m_navigationService = std::make_unique<ImageNavigationService>(parent,
+        std::move(candidateProvider),
+        ImageNavigationService::Callbacks {
+            [this](const QUrl &url) { report(ImageDocumentEffect::openUrl(url)); },
+            std::move(openContainerImage),
+            std::move(handleError),
+            [this]() { notify(ImageDocumentChange::PageNavigation); },
+            [this]() { report(ImageDocumentEffect::clearDeletedImage()); },
+            [this]() {
+                return m_callbacks.fileDeletionInProgress && m_callbacks.fileDeletionInProgress();
+            },
+        });
 }
 
 ImageDocumentNavigationController::~ImageDocumentNavigationController() = default;

@@ -55,6 +55,7 @@ ImageDocumentRuntime::ImageDocumentRuntime(QObject *documentObject,
         ImageDocumentNavigationController::Callbacks {
             [this](ImageDocumentChange change) { notify(change); },
             [this](ImageDocumentEffect effect) { dispatchEffect(std::move(effect)); },
+            [this]() { return documentDeletionController->inProgress(); },
         },
         dependencies.candidateProvider);
     predecodeController = std::make_unique<ImageDocumentPredecodeController>(documentObject, state,

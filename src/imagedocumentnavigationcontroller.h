@@ -26,10 +26,12 @@ class ImageDocumentNavigationController final
 public:
     using ChangeCallback = std::function<void(ImageDocumentChange)>;
     using EffectCallback = std::function<void(ImageDocumentEffect)>;
+    using FileDeletionInProgressCallback = std::function<bool()>;
 
     struct Callbacks {
         ChangeCallback change;
         EffectCallback effect;
+        FileDeletionInProgressCallback fileDeletionInProgress;
     };
 
     ImageDocumentNavigationController(QObject *parent, ImageDocumentState &state,

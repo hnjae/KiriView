@@ -31,12 +31,16 @@ public:
     using ContainerNavigationErrorCallback
         = std::function<void(const QUrl &, ContainerNavigationError, const QString &)>;
     using PageNavigationChangedCallback = std::function<void()>;
+    using ClearCurrentImageCallback = std::function<void()>;
+    using DeletionInProgressCallback = std::function<bool()>;
 
     struct Callbacks {
         OpenUrlCallback openUrl;
         OpenContainerImageCallback openContainerImage;
         ContainerNavigationErrorCallback containerNavigationError;
         PageNavigationChangedCallback pageNavigationChanged;
+        ClearCurrentImageCallback clearCurrentImage;
+        DeletionInProgressCallback deletionInProgress;
     };
 
     ImageNavigationService(
@@ -71,6 +75,9 @@ private:
     void watchPageNavigationChanges(const ImageCandidateListContext &context);
     void updatePageNavigationFromChangedCandidates(
         std::vector<ImageNavigationCandidate> candidates, ImageCandidateListSource source);
+    void handleCurrentImageRemoved(
+        std::vector<ImageNavigationCandidate> candidates, ImageCandidateListContext context);
+    bool deletionInProgress() const;
 
     Callbacks m_callbacks;
     ImageCandidateRepository m_candidateRepository;
