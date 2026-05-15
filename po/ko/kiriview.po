@@ -1,3 +1,722 @@
+msgid ""
+msgstr ""
+"Project-Id-Version: KiriView 0.1.0\n"
+"Report-Msgid-Bugs-To: https://github.com/hnjae/kiriview/issues\n"
+"POT-Creation-Date: 2026-01-01 00:00+0000\n"
+"PO-Revision-Date: 2026-01-01 00:00+0000\n"
+"Last-Translator: KiriView contributors\n"
+"Language-Team: \n"
+"Language: ko\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+
+#: src/apngdecoder.cpp
+msgid "Could not decode the selected PNG image."
+msgstr ""
+
+#: src/apngdecoder.cpp src/kiriimagedecoder.cpp
+msgid "Could not decode the selected APNG animation."
+msgstr ""
+
+#: src/archivebackend.cpp
+#, kde-format
+msgctxt "@info:status"
+msgid "Could not open the selected archive."
+msgstr ""
+
+#: src/archivebackend.cpp
+#, kde-format
+msgctxt "@info:status"
+msgid "Could not open %1."
+msgstr ""
+
+#: src/archivebackend.cpp
+#, kde-format
+msgctxt "@info:status"
+msgid "Could not find the selected image in the archive."
+msgstr ""
+
+#: src/archivebackend.cpp
+#, kde-format
+msgctxt "@info:status"
+msgid "Could not read the selected archive image."
+msgstr ""
+
+#: src/heifdecoder.cpp
+msgid "Could not decode the selected HEIF image sequence."
+msgstr ""
+
+#: src/heifdecoder.cpp
+msgid "Could not decode the selected HEIF image: sequence track is missing."
+msgstr ""
+
+#: src/heifdecoder.cpp
+msgid "decoding the HEIF image sequence"
+msgstr ""
+
+#: src/heifsupport.cpp
+msgid "Unknown libheif error."
+msgstr ""
+
+#: src/heifsupport.cpp
+#, kde-format
+msgctxt "@info:status"
+msgid "Could not decode the selected HEIF image: %1: %2"
+msgstr ""
+
+#: src/heifsupport.cpp
+msgid "initializing libheif"
+msgstr ""
+
+#: src/heifsupport.cpp
+msgid ""
+"Could not decode the selected HEIF image: libheif could not allocate a "
+"context."
+msgstr ""
+
+#: src/heifsupport.cpp
+msgid "reading the HEIF container"
+msgstr ""
+
+#: src/heifsupport.cpp
+msgid "reading the primary image"
+msgstr ""
+
+#: src/heifsupport.cpp
+msgid "Could not decode the selected HEIF image: decoded image is invalid."
+msgstr ""
+
+#: src/heifsupport.cpp
+msgid ""
+"Could not decode the selected HEIF image: decoded image size is invalid."
+msgstr ""
+
+#: src/heifsupport.cpp
+msgid ""
+"Could not decode the selected HEIF image: decoded pixel data is invalid."
+msgstr ""
+
+#: src/heifsupport.cpp
+msgid ""
+"Could not decode the selected HEIF image: decoded image allocation failed."
+msgstr ""
+
+#: src/heiftilesource.cpp
+msgid "Could not render the selected tile."
+msgstr ""
+
+#: src/heiftilesource.cpp
+msgid "The selected HEIF image is too large for fallback full-image decoding."
+msgstr ""
+
+#: src/heiftilesource.cpp
+msgid "decoding the primary image"
+msgstr ""
+
+#: src/heiftilesource.cpp
+msgid "Could not allocate the selected tile."
+msgstr ""
+
+#: src/heiftilesource.cpp
+msgid "decoding a HEIF grid tile"
+msgstr ""
+
+#: src/heiftilesource.cpp
+msgid "Could not decode the selected HEIF image: image size is invalid."
+msgstr ""
+
+#: src/imageanimationplayer.cpp src/kiriimagedecoder.cpp
+#: src/qimagereadertilesource.cpp
+msgid "Could not read the selected image data."
+msgstr ""
+
+#: src/imagedeletioncontroller.cpp
+msgid "Could not delete the selected file."
+msgstr ""
+
+#: src/imagedocumentnavigationcontroller.cpp
+msgid "Could not open the selected comic book archive."
+msgstr ""
+
+#: src/imageformatregistry.cpp
+#, kde-format
+msgctxt "@item:inlistbox"
+msgid "Image and comic book files (%1)"
+msgstr ""
+
+#: src/imageformatregistry.cpp
+#, kde-format
+msgctxt "@item:inlistbox"
+msgid "All files (*)"
+msgstr ""
+
+#: src/imageopencontroller.cpp
+msgid "The selected archive does not contain any supported images."
+msgstr ""
+
+#: src/imageopencontroller.cpp
+msgid "Could not open the selected archive."
+msgstr ""
+
+#: src/imageopencontroller.cpp
+msgid "Could not decode the selected image animation."
+msgstr ""
+
 #: src/kiriviewapplicationactions.cpp
 msgid "Open"
 msgstr "열기"
+
+#: src/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Move to Trash"
+msgstr ""
+
+#: src/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Delete Permanently"
+msgstr ""
+
+#: src/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Previous Archive"
+msgstr ""
+
+#: src/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Next Archive"
+msgstr ""
+
+#: src/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Previous"
+msgstr ""
+
+#: src/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Next"
+msgstr ""
+
+#: src/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "First Image"
+msgstr ""
+
+#: src/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Last Image"
+msgstr ""
+
+#: src/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Zoom In"
+msgstr ""
+
+#: src/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Zoom Out"
+msgstr ""
+
+#: src/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Fit"
+msgstr ""
+
+#: src/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Fit Height"
+msgstr ""
+
+#: src/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Fit Width"
+msgstr ""
+
+#: src/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Actual Size"
+msgstr ""
+
+#: src/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Two-Page Mode"
+msgstr ""
+
+#: src/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Right-to-Left Reading"
+msgstr ""
+
+#: src/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Pan Left"
+msgstr ""
+
+#: src/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Pan Right"
+msgstr ""
+
+#: src/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Pan Up"
+msgstr ""
+
+#: src/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Pan Down"
+msgstr ""
+
+#: src/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Top Left"
+msgstr ""
+
+#: src/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Bottom Right"
+msgstr ""
+
+#: src/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Scan Forward"
+msgstr ""
+
+#: src/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Scan Backward"
+msgstr ""
+
+#: src/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Previous Page"
+msgstr ""
+
+#: src/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Next Page"
+msgstr ""
+
+#: src/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Fullscreen"
+msgstr ""
+
+#: src/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Keyboard Shortcuts"
+msgstr ""
+
+#: src/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Show Menubar"
+msgstr ""
+
+#: src/qimagereadertilesource.cpp
+msgid "Could not determine the selected JPEG first-display size."
+msgstr ""
+
+#: src/qimagereadertilesource.cpp
+msgid "The selected image is too large for fallback full-image decoding."
+msgstr ""
+
+#: src/svgtilesource.cpp
+msgid "Could not determine the selected SVG image size."
+msgstr ""
+
+#: src/svgtilesource.cpp
+msgid "Could not decode the selected SVG image."
+msgstr ""
+
+#: src/svgtilesource.cpp
+msgid "Could not render the selected SVG tile."
+msgstr ""
+
+#: src/svgtilesource.cpp
+msgid "Could not render the selected SVG image."
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@title:menu"
+msgid "&File"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml src/qml/ImageActions.qml
+#, fuzzy
+msgctxt "@action:inmenu"
+msgid "&Open"
+msgstr "열기"
+
+#: src/qml/ApplicationMenuBar.qml src/qml/ImageActions.qml
+msgctxt "@action:inmenu"
+msgid "Move to &Trash"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@action:inmenu"
+msgid "Delete &Permanently"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml src/qml/ImageActions.qml
+msgctxt "@action:inmenu"
+msgid "&Quit"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@title:menu"
+msgid "&Go"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@action:inmenu"
+msgid "&Previous"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@action:inmenu"
+msgid "&Next"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@action:inmenu"
+msgid "Previous P&age"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@action:inmenu"
+msgid "Ne&xt Page"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@action:inmenu"
+msgid "&First Image"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@action:inmenu"
+msgid "&Last Image"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@action:inmenu"
+msgid "Previous A&rchive"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@action:inmenu"
+msgid "Nex&t Archive"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@title:menu"
+msgid "&View"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@action:inmenu"
+msgid "&Zoom In"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@action:inmenu"
+msgid "Zoom &Out"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@title:menu"
+msgid "&Fit"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@action:inmenu"
+msgid "&Fit"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@action:inmenu"
+msgid "Fit &Height"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@action:inmenu"
+msgid "Fit &Width"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@action:inmenu"
+msgid "&Actual Size"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@action:inmenu"
+msgid "&Two-Page Mode"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml src/qml/ImageActions.qml
+msgctxt "@action:inmenu"
+msgid "&Right-to-Left Reading"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@action:inmenu"
+msgid "Full&screen"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@title:menu"
+msgid "&Settings"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@action:inmenu"
+msgid "Show &Menubar"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@action:inmenu"
+msgid "Configure &Shortcuts..."
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@title:menu"
+msgid "&Help"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml src/qml/ImageActions.qml
+msgctxt "@action:inmenu"
+msgid "&Keyboard Shortcuts"
+msgstr ""
+
+#: src/qml/ImageActions.qml
+msgctxt "@info:status"
+msgid "Last image"
+msgstr ""
+
+#: src/qml/ImageActions.qml src/qml/ImageShortcuts.qml
+msgctxt "@info:status"
+msgid "First image"
+msgstr ""
+
+#: src/qml/ImageActions.qml
+msgctxt "@action:inmenu"
+msgid "&Delete Permanently"
+msgstr ""
+
+#: src/qml/ImageActions.qml
+msgctxt "@action:inmenu"
+msgid "&Previous Archive"
+msgstr ""
+
+#: src/qml/ImageActions.qml
+msgctxt "@action:inmenu"
+msgid "&Next Archive"
+msgstr ""
+
+#: src/qml/ImageActions.qml
+msgctxt "@action:inmenu"
+msgid "Two-Page &Mode"
+msgstr ""
+
+#: src/qml/ImageActions.qml
+msgctxt "@action:inmenu"
+msgid "&Fullscreen"
+msgstr ""
+
+#: src/qml/ImageActions.qml
+msgctxt "@action:inmenu"
+msgid "&Configure Shortcuts..."
+msgstr ""
+
+#: src/qml/ImageActions.qml
+msgctxt "@action:inmenu"
+msgid "&Show Menubar"
+msgstr ""
+
+#: src/qml/ImagePageNavigation.qml
+msgctxt "@label:page count"
+msgid "of"
+msgstr ""
+
+#: src/qml/ImageStateOverlay.qml
+msgctxt "@info:placeholder"
+msgid "No image selected"
+msgstr ""
+
+#: src/qml/ImageStateOverlay.qml
+msgctxt "@info:placeholder"
+msgid "Unable to open image"
+msgstr ""
+
+#: src/qml/ImageToolBar.qml
+msgctxt "@action"
+msgid "Zoom"
+msgstr ""
+
+#: src/qml/ImageToolBar.qml
+msgctxt "@action"
+msgid "Application Menu"
+msgstr ""
+
+#: src/qml/ImageToolBar.qml
+#, fuzzy
+msgctxt "@info:tooltip"
+msgid "Open menu"
+msgstr "열기"
+
+#: src/qml/Main.qml
+msgctxt "@title:window"
+msgid "%1 — KiriView"
+msgstr ""
+
+#: src/qml/Main.qml
+msgctxt "@title:window"
+msgid "Open Image or Comic Book"
+msgstr ""
+
+#: src/qml/ShortcutHelpDialog.qml
+msgctxt "@info:whatsthis"
+msgid "Open an image or comic book"
+msgstr ""
+
+#: src/qml/ShortcutHelpDialog.qml
+msgctxt "@info:keyboard shortcut"
+msgid "Esc"
+msgstr ""
+
+#: src/qml/ShortcutHelpDialog.qml
+msgctxt "@info:whatsthis"
+msgid "Close dialog or leave fullscreen"
+msgstr ""
+
+#: src/qml/ShortcutHelpDialog.qml
+msgctxt "@info:whatsthis"
+msgid "Quit KiriView"
+msgstr ""
+
+#: src/qml/ShortcutHelpDialog.qml
+msgctxt "@info:whatsthis"
+msgid "Previous or next image"
+msgstr ""
+
+#: src/qml/ShortcutHelpDialog.qml
+msgctxt "@info:whatsthis"
+msgid "First or last image"
+msgstr ""
+
+#: src/qml/ShortcutHelpDialog.qml
+msgctxt "@info:whatsthis"
+msgid "Toggle two-page mode"
+msgstr ""
+
+#: src/qml/ShortcutHelpDialog.qml
+msgctxt "@info:whatsthis"
+msgid "Toggle right-to-left reading"
+msgstr ""
+
+#: src/qml/ShortcutHelpDialog.qml
+msgctxt "@info:whatsthis"
+msgid "Adjust two-page mode by one page"
+msgstr ""
+
+#: src/qml/ShortcutHelpDialog.qml
+msgctxt "@info:whatsthis"
+msgid "Zoom in"
+msgstr ""
+
+#: src/qml/ShortcutHelpDialog.qml
+msgctxt "@info:whatsthis"
+msgid "Zoom out"
+msgstr ""
+
+#: src/qml/ShortcutHelpDialog.qml
+msgctxt "@info:whatsthis"
+msgid "Fit image"
+msgstr ""
+
+#: src/qml/ShortcutHelpDialog.qml
+msgctxt "@info:whatsthis"
+msgid "Fit image height"
+msgstr ""
+
+#: src/qml/ShortcutHelpDialog.qml
+msgctxt "@info:whatsthis"
+msgid "Fit image width"
+msgstr ""
+
+#: src/qml/ShortcutHelpDialog.qml
+msgctxt "@info:whatsthis"
+msgid "Set 100% zoom"
+msgstr ""
+
+#: src/qml/ShortcutHelpDialog.qml
+msgctxt "@info:keyboard shortcut"
+msgid "Ctrl+wheel up/down"
+msgstr ""
+
+#: src/qml/ShortcutHelpDialog.qml
+msgctxt "@info:whatsthis"
+msgid "Zoom around the cursor"
+msgstr ""
+
+#: src/qml/ShortcutHelpDialog.qml
+msgctxt "@info:whatsthis"
+msgid "Pan horizontally or go previous/next image"
+msgstr ""
+
+#: src/qml/ShortcutHelpDialog.qml
+msgctxt "@info:keyboard shortcut"
+msgid "Drag / %1"
+msgstr ""
+
+#: src/qml/ShortcutHelpDialog.qml
+msgctxt "@info:whatsthis"
+msgid "Pan the zoomed image"
+msgstr ""
+
+#: src/qml/ShortcutHelpDialog.qml
+msgctxt "@info:whatsthis"
+msgid "Jump to image pan boundary"
+msgstr ""
+
+#: src/qml/ShortcutHelpDialog.qml
+msgctxt "@info:keyboard shortcut"
+msgid "Shift+wheel"
+msgstr ""
+
+#: src/qml/ShortcutHelpDialog.qml
+msgctxt "@info:whatsthis"
+msgid "Pan the zoomed image horizontally"
+msgstr ""
+
+#: src/qml/ShortcutHelpDialog.qml
+msgctxt "@info:whatsthis"
+msgid "Scan image or go previous/next"
+msgstr ""
+
+#: src/qml/ShortcutHelpDialog.qml
+msgctxt "@info:whatsthis"
+msgid "Previous or next archive"
+msgstr ""
+
+#: src/qml/ShortcutHelpDialog.qml
+msgctxt "@info:whatsthis"
+msgid "Toggle fullscreen"
+msgstr ""
+
+#: src/qml/ShortcutHelpDialog.qml
+msgctxt "@info:whatsthis"
+msgid "Show this shortcut help"
+msgstr ""
+
+#: src/qml/ShortcutHelpDialog.qml
+msgctxt "@title:window"
+msgid "Keyboard Shortcuts"
+msgstr ""
+
+#: io.github.hnjae.KiriView.desktop
+msgid "KiriView"
+msgstr ""
+
+#: io.github.hnjae.KiriView.desktop
+msgid "Image Viewer"
+msgstr ""

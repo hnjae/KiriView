@@ -346,32 +346,152 @@ msgstr ""
 
 #: src/qml/ApplicationMenuBar.qml
 msgctxt "@title:menu"
-msgid "File"
+msgid "&File"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml src/qml/ImageActions.qml
+msgctxt "@action:inmenu"
+msgid "&Open"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml src/qml/ImageActions.qml
+msgctxt "@action:inmenu"
+msgid "Move to &Trash"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@action:inmenu"
+msgid "Delete &Permanently"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml src/qml/ImageActions.qml
+msgctxt "@action:inmenu"
+msgid "&Quit"
 msgstr ""
 
 #: src/qml/ApplicationMenuBar.qml
 msgctxt "@title:menu"
-msgid "Go"
+msgid "&Go"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@action:inmenu"
+msgid "&Previous"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@action:inmenu"
+msgid "&Next"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@action:inmenu"
+msgid "Previous P&age"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@action:inmenu"
+msgid "Ne&xt Page"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@action:inmenu"
+msgid "&First Image"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@action:inmenu"
+msgid "&Last Image"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@action:inmenu"
+msgid "Previous A&rchive"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@action:inmenu"
+msgid "Nex&t Archive"
 msgstr ""
 
 #: src/qml/ApplicationMenuBar.qml
 msgctxt "@title:menu"
-msgid "View"
+msgid "&View"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@action:inmenu"
+msgid "&Zoom In"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@action:inmenu"
+msgid "Zoom &Out"
 msgstr ""
 
 #: src/qml/ApplicationMenuBar.qml
 msgctxt "@title:menu"
-msgid "Fit"
+msgid "&Fit"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@action:inmenu"
+msgid "&Fit"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@action:inmenu"
+msgid "Fit &Height"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@action:inmenu"
+msgid "Fit &Width"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@action:inmenu"
+msgid "&Actual Size"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@action:inmenu"
+msgid "&Two-Page Mode"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml src/qml/ImageActions.qml
+msgctxt "@action:inmenu"
+msgid "&Right-to-Left Reading"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@action:inmenu"
+msgid "Full&screen"
 msgstr ""
 
 #: src/qml/ApplicationMenuBar.qml
 msgctxt "@title:menu"
-msgid "Settings"
+msgid "&Settings"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@action:inmenu"
+msgid "Show &Menubar"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@action:inmenu"
+msgid "Configure &Shortcuts..."
 msgstr ""
 
 #: src/qml/ApplicationMenuBar.qml
 msgctxt "@title:menu"
-msgid "Help"
+msgid "&Help"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml src/qml/ImageActions.qml
+msgctxt "@action:inmenu"
+msgid "&Keyboard Shortcuts"
 msgstr ""
 
 #: src/qml/ImageActions.qml
@@ -382,6 +502,41 @@ msgstr ""
 #: src/qml/ImageActions.qml src/qml/ImageShortcuts.qml
 msgctxt "@info:status"
 msgid "First image"
+msgstr ""
+
+#: src/qml/ImageActions.qml
+msgctxt "@action:inmenu"
+msgid "&Delete Permanently"
+msgstr ""
+
+#: src/qml/ImageActions.qml
+msgctxt "@action:inmenu"
+msgid "&Previous Archive"
+msgstr ""
+
+#: src/qml/ImageActions.qml
+msgctxt "@action:inmenu"
+msgid "&Next Archive"
+msgstr ""
+
+#: src/qml/ImageActions.qml
+msgctxt "@action:inmenu"
+msgid "Two-Page &Mode"
+msgstr ""
+
+#: src/qml/ImageActions.qml
+msgctxt "@action:inmenu"
+msgid "&Fullscreen"
+msgstr ""
+
+#: src/qml/ImageActions.qml
+msgctxt "@action:inmenu"
+msgid "&Configure Shortcuts..."
+msgstr ""
+
+#: src/qml/ImageActions.qml
+msgctxt "@action:inmenu"
+msgid "&Show Menubar"
 msgstr ""
 
 #: src/qml/ImagePageNavigation.qml

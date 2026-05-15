@@ -50,7 +50,7 @@ Item {
     readonly property var configureShortcutsAction: configureShortcutsManagedAction.proxy
     readonly property var showMenubarAction: showMenubarManagedAction.proxy
     readonly property var quitAction: quitManagedAction.proxy
-    readonly property var applicationMenuActions: [openAction, applicationMenuFileSeparator, moveToTrashAction, deleteFileAction, applicationMenuNavigationSeparator, previousContainerAction, nextContainerAction, applicationMenuViewSeparator, twoPageModeAction, rightToLeftReadingAction, fullscreenAction, applicationMenuSettingsSeparator, showMenubarAction, configureShortcutsAction, applicationMenuHelpSeparator, shortcutHelpAction, applicationMenuQuitSeparator, quitAction]
+    readonly property var applicationMenuActions: [openManagedAction.menuProxy, applicationMenuFileSeparator, moveToTrashManagedAction.menuProxy, deleteFileManagedAction.menuProxy, applicationMenuNavigationSeparator, previousContainerManagedAction.menuProxy, nextContainerManagedAction.menuProxy, applicationMenuViewSeparator, twoPageModeManagedAction.menuProxy, rightToLeftReadingManagedAction.menuProxy, fullscreenManagedAction.menuProxy, applicationMenuSettingsSeparator, showMenubarManagedAction.menuProxy, configureShortcutsManagedAction.menuProxy, applicationMenuHelpSeparator, shortcutHelpManagedAction.menuProxy, applicationMenuQuitSeparator, quitManagedAction.menuProxy]
 
     signal openDialogRequested
     signal imageBoundaryReached(string message)
@@ -125,6 +125,7 @@ Item {
         application: root.application
         bindEnabled: true
         displayHint: Kirigami.DisplayHint.AlwaysHide
+        menuText: KI18n.i18nc("@action:inmenu", "&Open")
 
         onTriggered: root.openDialogRequested()
     }
@@ -137,6 +138,7 @@ Item {
         application: root.application
         bindEnabled: true
         displayHint: Kirigami.DisplayHint.AlwaysHide
+        menuText: KI18n.i18nc("@action:inmenu", "Move to &Trash")
 
         onTriggered: root.imageDocument.deleteDisplayedFile(KiriImageDocument.MoveToTrash)
     }
@@ -149,6 +151,7 @@ Item {
         application: root.application
         bindEnabled: true
         displayHint: Kirigami.DisplayHint.AlwaysHide
+        menuText: KI18n.i18nc("@action:inmenu", "&Delete Permanently")
 
         onTriggered: root.imageDocument.deleteDisplayedFile(KiriImageDocument.DeletePermanently)
     }
@@ -161,6 +164,7 @@ Item {
         application: root.application
         bindEnabled: true
         displayHint: Kirigami.DisplayHint.AlwaysHide
+        menuText: KI18n.i18nc("@action:inmenu", "&Previous Archive")
 
         onTriggered: root.imageDocument.openPreviousContainer()
     }
@@ -173,6 +177,7 @@ Item {
         application: root.application
         bindEnabled: true
         displayHint: Kirigami.DisplayHint.AlwaysHide
+        menuText: KI18n.i18nc("@action:inmenu", "&Next Archive")
 
         onTriggered: root.imageDocument.openNextContainer()
     }
@@ -309,6 +314,7 @@ Item {
         bindChecked: true
         bindEnabled: true
         displayHint: Kirigami.DisplayHint.KeepVisible
+        menuText: KI18n.i18nc("@action:inmenu", "Two-Page &Mode")
         proxyCheckable: true
         proxyChecked: root.imageDocument.twoPageModeEnabled && root.imageDocument.twoPageModeAvailable
 
@@ -325,6 +331,7 @@ Item {
         bindChecked: true
         bindEnabled: true
         displayHint: Kirigami.DisplayHint.KeepVisible
+        menuText: KI18n.i18nc("@action:inmenu", "&Right-to-Left Reading")
         proxyCheckable: true
         proxyChecked: root.imageDocument.rightToLeftReadingEnabled && root.imageDocument.rightToLeftReadingAvailable
 
@@ -377,6 +384,7 @@ Item {
         bindChecked: true
         bindEnabled: true
         displayHint: Kirigami.DisplayHint.AlwaysHide
+        menuText: KI18n.i18nc("@action:inmenu", "&Fullscreen")
         proxyCheckable: true
         proxyChecked: root.fullscreen
 
@@ -391,6 +399,7 @@ Item {
         application: root.application
         bindEnabled: true
         displayHint: Kirigami.DisplayHint.AlwaysHide
+        menuText: KI18n.i18nc("@action:inmenu", "&Keyboard Shortcuts")
 
         onTriggered: root.shortcutHelpRequested()
     }
@@ -401,6 +410,7 @@ Item {
         actionId: KiriViewApplication.OptionsConfigureKeybindingAction
         application: root.application
         displayHint: Kirigami.DisplayHint.AlwaysHide
+        menuText: KI18n.i18nc("@action:inmenu", "&Configure Shortcuts...")
     }
 
     ManagedAction {
@@ -409,6 +419,7 @@ Item {
         actionId: KiriViewApplication.OptionsShowMenubarAction
         application: root.application
         displayHint: Kirigami.DisplayHint.AlwaysHide
+        menuText: KI18n.i18nc("@action:inmenu", "&Show Menubar")
     }
 
     ManagedAction {
@@ -417,5 +428,6 @@ Item {
         actionId: KiriViewApplication.FileQuitAction
         application: root.application
         displayHint: Kirigami.DisplayHint.AlwaysHide
+        menuText: KI18n.i18nc("@action:inmenu", "&Quit")
     }
 }

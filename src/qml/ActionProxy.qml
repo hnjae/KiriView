@@ -11,13 +11,16 @@ Kirigami.Action {
     property bool checkableOverride: sourceAction ? sourceAction.checkable : false
     property bool checkedOverride: sourceAction ? sourceAction.checked : false
     property bool enabledOverride: sourceAction && sourceAction.enabled
+    property string textOverride: ""
+    property var tooltipOverride
 
     checkable: checkableOverride
     checked: checkable && checkedOverride
     enabled: sourceAction && enabledOverride
     fromQAction: sourceAction
     shortcut: ""
-    tooltip: text
+    text: textOverride.length > 0 ? textOverride : sourceAction?.text ?? ""
+    tooltip: tooltipOverride === undefined ? text : tooltipOverride
 
     alternateShortcut.enabled: false
 }

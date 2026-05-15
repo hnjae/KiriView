@@ -18,6 +18,7 @@ Item {
     property bool proxyCheckable: sourceAction !== null && sourceAction !== undefined && sourceAction.checkable
     property bool proxyChecked: sourceAction !== null && sourceAction !== undefined && sourceAction.checked
     property int displayHint: 0
+    property string menuText: ""
     readonly property var sourceAction: application.actionForId(actionId)
     readonly property ActionProxy proxy: ActionProxy {
         checkableOverride: root.proxyCheckable
@@ -25,6 +26,15 @@ Item {
         displayHint: root.displayHint
         enabledOverride: root.proxyEnabled
         sourceAction: root.sourceAction
+    }
+    readonly property ActionProxy menuProxy: ActionProxy {
+        checkableOverride: root.proxyCheckable
+        checkedOverride: root.proxyChecked
+        displayHint: root.displayHint
+        enabledOverride: root.proxyEnabled
+        sourceAction: root.sourceAction
+        textOverride: root.menuText
+        tooltipOverride: ""
     }
 
     signal triggered
