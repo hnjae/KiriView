@@ -313,6 +313,16 @@ page number and total image count are unknown, and KiriView does not treat the
 current image as the first or last image. Entering a valid page number opens
 that image; entering an invalid number leaves the current image open and
 restores the displayed page number.
+When KiriView has a confirmed candidate list for the current image scope,
+Previous, Next, First, Last, and page number entry remain available while a
+selected image is still loading. During that loading interval, the page number
+shown in the UI is the most recent valid page selection requested by the user,
+not necessarily the image that remains visible until replacement succeeds. The
+displayed image URL continues to mean the image actually being shown. If users
+make multiple page selections before loading finishes, only the most recent
+selection is displayed. If that replacement load fails, the previously displayed
+image remains visible, KiriView reports the error, and page navigation returns
+to the still-displayed image.
 When moving between images in the current directory or archive scope, the
 page navigation controls keep their layout stable. The current page number
 updates to the newly displayed image, and the known total image count remains
@@ -392,6 +402,11 @@ the previous eligible spread, falling back to the immediately previous page when
 that page is the cover or a wide page. The `n` and `p` shortcuts move forward or
 backward by exactly one page and are available while an image is ready and the
 page number and zoom inputs are not focused.
+When a Two-Page mode navigation target is loading and the candidate list is
+known, additional Previous, Next, `n`, or `p` navigation is calculated from the
+pending primary page selection. KiriView moves by one primary page selection at
+a time while loading; the final single-page or two-page spread pairing is
+decided after the selected primary page has loaded.
 
 After an image is displayed, KiriView may make adjacent images available for
 quicker Previous or Next navigation, so the switch can happen without showing a
