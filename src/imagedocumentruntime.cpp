@@ -3,6 +3,7 @@
 
 #include "imagedocumentruntime.h"
 
+#include "archivedocumentsessionstore.h"
 #include "imagecallback.h"
 #include "imagedocumentdeletioncontroller.h"
 #include "imagedocumenteffectexecutor.h"
@@ -24,7 +25,17 @@ ImageDocumentRuntime::ImageDocumentRuntime(QObject *documentObject,
     : state([this](ImageDocumentChange change) { notify(change); })
     , changeCallback(std::move(changeCallback))
 {
+    const bool shouldUseArchiveSessionStore = dependencies.archiveDocumentSessions
+        || (!dependencies.candidateProvider.archiveImages && !dependencies.imageDecode.dataLoader);
+    ArchiveDocumentSessionFactory archiveDocumentSessions
+        = std::move(dependencies.archiveDocumentSessions);
+    dependencies.archiveDocumentSessions = {};
     dependencies = imageAsyncDependenciesWithDefaults(std::move(dependencies));
+    if (shouldUseArchiveSessionStore) {
+        archiveSessionStore = std::make_unique<ArchiveDocumentSessionStore>(
+            std::move(archiveDocumentSessions), documentObject);
+        dependencies = archiveSessionStore->wrapDependencies(std::move(dependencies));
+    }
     RenderContextProvider primaryRenderContextProvider = renderContextProvider;
     RenderContextProvider spreadRenderContextProvider = std::move(renderContextProvider);
     presentationController = std::make_unique<ImagePresentationController>(documentObject,
@@ -70,12 +81,12 @@ ImageDocumentRuntime::ImageDocumentRuntime(QObject *documentObject,
             [this](int pageNumber) { return navigationController->urlAtPage(pageNumber); },
         },
         dependencies.candidateProvider, dependencies.imageDecode);
-    loadController
-        = std::make_unique<ImageDocumentLoadController>(state, *documentDeletionController,
-            *navigationController, *predecodeController, *openController, *spreadController);
+    loadController = std::make_unique<ImageDocumentLoadController>(state,
+        *documentDeletionController, *navigationController, *predecodeController, *openController,
+        *spreadController, archiveSessionStore.get());
     effectExecutor = std::make_unique<ImageDocumentEffectExecutor>(state, *navigationController,
         *predecodeController, *openController, *presentationController, *spreadController,
-        *loadController);
+        *loadController, archiveSessionStore.get());
     navigationCoordinator = std::make_unique<ImageDocumentNavigationCoordinator>(
         *navigationController, *spreadController, *loadController);
 }
@@ -103,5 +114,8 @@ void ImageDocumentRuntime::shutdown()
     navigationController->cancelContainerNavigation();
     navigationController->cancelNavigation();
     openController->cancel();
+    if (archiveSessionStore != nullptr) {
+        archiveSessionStore->clear();
+    }
 }
 }

@@ -3,6 +3,7 @@
 
 #include "imagedocumenteffectexecutor.h"
 
+#include "archivedocumentsessionstore.h"
 #include "imagedocumentloadcontroller.h"
 #include "imagedocumentnavigationcontroller.h"
 #include "imagedocumentpredecodecontroller.h"
@@ -24,7 +25,7 @@ ImageDocumentEffectExecutor::ImageDocumentEffectExecutor(ImageDocumentState &sta
     ImageDocumentPredecodeController &predecodeController, ImageOpenController &openController,
     ImagePresentationController &presentationController,
     ImageSpreadPresentationController &spreadController,
-    ImageDocumentLoadController &loadController)
+    ImageDocumentLoadController &loadController, ArchiveDocumentSessionStore *archiveSessionStore)
     : m_state(state)
     , m_navigationController(navigationController)
     , m_predecodeController(predecodeController)
@@ -32,6 +33,7 @@ ImageDocumentEffectExecutor::ImageDocumentEffectExecutor(ImageDocumentState &sta
     , m_presentationController(presentationController)
     , m_spreadController(spreadController)
     , m_loadController(loadController)
+    , m_archiveSessionStore(archiveSessionStore)
 {
 }
 
@@ -49,6 +51,9 @@ void ImageDocumentEffectExecutor::dispatchGeneratedEffects(ImageDocumentEffects 
 
 void ImageDocumentEffectExecutor::clearImage()
 {
+    if (m_archiveSessionStore != nullptr) {
+        m_archiveSessionStore->clear();
+    }
     m_predecodeController.clear();
     m_spreadController.finishTransition();
     m_spreadController.clearSecondaryPage();
@@ -61,6 +66,9 @@ void ImageDocumentEffectExecutor::clearImage()
 
 ImageDocumentEffects ImageDocumentEffectExecutor::clearAfterSuccessfulFileDeletion()
 {
+    if (m_archiveSessionStore != nullptr) {
+        m_archiveSessionStore->clear();
+    }
     m_navigationController.cancelNavigation();
     m_navigationController.cancelContainerNavigation();
     m_predecodeController.cancel();

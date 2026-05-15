@@ -7,6 +7,7 @@
 #include "imagedocumentsourceloadrequest.h"
 
 namespace KiriView {
+class ArchiveDocumentSessionStore;
 class ImageDocumentDeletionController;
 class ImageDocumentNavigationController;
 class ImageDocumentPredecodeController;
@@ -23,7 +24,8 @@ public:
         ImageDocumentDeletionController &deletionController,
         ImageDocumentNavigationController &navigationController,
         ImageDocumentPredecodeController &predecodeController, ImageOpenController &openController,
-        ImageSpreadPresentationController &spreadController);
+        ImageSpreadPresentationController &spreadController,
+        ArchiveDocumentSessionStore *archiveSessionStore = nullptr);
 
     void loadSource(const ImageDocumentSourceLoadRequest &request);
 
@@ -39,6 +41,7 @@ private:
     ImageDocumentPredecodeController &m_predecodeController;
     ImageOpenController &m_openController;
     ImageSpreadPresentationController &m_spreadController;
+    ArchiveDocumentSessionStore *m_archiveSessionStore = nullptr;
 };
 }
 

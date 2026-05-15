@@ -101,6 +101,9 @@ private Q_SLOTS:
     void rarListingUsesLibArchive();
     void readingArchiveEntryReturnsOriginalBytes();
     void readingRarEntryReturnsOriginalBytes();
+    void archiveSessionListsAndReadsKArchiveEntries();
+    void libArchiveSessionScansOnceAndServesRandomReads();
+    void libArchiveSessionReadsFromHeldFileDescriptorAfterPathRemoval();
     void readingUrlOutsideArchiveReturnsNotFound();
     void missingEmptyAndInvalidArchivesReportExpectedResults();
 };
@@ -220,6 +223,128 @@ void TestArchiveBackend::readingRarEntryReturnsOriginalBytes()
 
     QVERIFY(success != nullptr);
     QCOMPARE(success->data, QByteArrayLiteral("two"));
+}
+
+void TestArchiveBackend::archiveSessionListsAndReadsKArchiveEntries()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString archivePath = dir.filePath(QStringLiteral("book.zip"));
+    writeZipArchive(archivePath,
+        {
+            { QStringLiteral("pages/02.jpg"), QByteArrayLiteral("two") },
+            { QStringLiteral("pages/01.png"), QByteArrayLiteral("one") },
+        });
+
+    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+        = archiveDocumentForPath(archivePath);
+    QVERIFY(archiveDocument.has_value());
+    KiriView::ArchiveDocumentSessionOpenResult opened
+        = KiriView::openArchiveDocumentSession(*archiveDocument);
+    auto *session = std::get_if<KiriView::ArchiveDocumentSessionPtr>(&opened);
+    QVERIFY(session != nullptr);
+    QVERIFY(*session != nullptr);
+
+    const KiriView::ArchiveImageCandidatesResult candidatesResult
+        = (*session)->loadImageCandidates();
+    const KiriView::ArchiveImageCandidates *candidates = archiveImageCandidates(candidatesResult);
+    QVERIFY(candidates != nullptr);
+    QCOMPARE(candidates->candidates.size(), std::size_t(2));
+    QCOMPARE(candidates->candidates.at(0).name, QStringLiteral("pages/01.png"));
+
+    const KiriView::ArchiveImageDataResult secondDataResult = (*session)->loadImageData(
+        archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("pages/02.jpg")));
+    const KiriView::ArchiveImageData *secondData = archiveImageData(secondDataResult);
+    QVERIFY(secondData != nullptr);
+    QCOMPARE(secondData->data, QByteArrayLiteral("two"));
+
+    const KiriView::ArchiveImageDataResult firstDataResult = (*session)->loadImageData(
+        archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("pages/01.png")));
+    const KiriView::ArchiveImageData *firstData = archiveImageData(firstDataResult);
+    QVERIFY(firstData != nullptr);
+    QCOMPARE(firstData->data, QByteArrayLiteral("one"));
+}
+
+void TestArchiveBackend::libArchiveSessionScansOnceAndServesRandomReads()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString archivePath = dir.filePath(QStringLiteral("book.rar"));
+    writeRarArchive(archivePath);
+
+    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+        = archiveDocumentForPath(archivePath);
+    QVERIFY(archiveDocument.has_value());
+    KiriView::ArchiveDocumentSessionOpenResult opened
+        = KiriView::openArchiveDocumentSession(*archiveDocument);
+    auto *session = std::get_if<KiriView::ArchiveDocumentSessionPtr>(&opened);
+    QVERIFY(session != nullptr);
+    QVERIFY(*session != nullptr);
+
+    const KiriView::ArchiveImageCandidatesResult candidatesResult
+        = (*session)->loadImageCandidates();
+    const KiriView::ArchiveImageCandidates *candidates = archiveImageCandidates(candidatesResult);
+    QVERIFY(candidates != nullptr);
+    QCOMPARE(candidates->candidates.size(), std::size_t(2));
+    QCOMPARE(candidates->candidates.at(0).name, QStringLiteral("chapter/01.png"));
+    QCOMPARE(candidates->candidates.at(1).name, QStringLiteral("chapter/02.jpg"));
+
+    // The fixture stores 02.jpg before 01.png, so this read order exercises replay.
+    const KiriView::ArchiveImageDataResult firstDataResult = (*session)->loadImageData(
+        archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("chapter/01.png")));
+    const KiriView::ArchiveImageData *firstData = archiveImageData(firstDataResult);
+    QVERIFY(firstData != nullptr);
+    QCOMPARE(firstData->data, QByteArrayLiteral("one"));
+
+    const KiriView::ArchiveImageDataResult secondDataResult = (*session)->loadImageData(
+        archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("chapter/02.jpg")));
+    const KiriView::ArchiveImageData *secondData = archiveImageData(secondDataResult);
+    QVERIFY(secondData != nullptr);
+    QCOMPARE(secondData->data, QByteArrayLiteral("two"));
+}
+
+void TestArchiveBackend::libArchiveSessionReadsFromHeldFileDescriptorAfterPathRemoval()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString archivePath = dir.filePath(QStringLiteral("book.rar"));
+    writeRarArchive(archivePath);
+
+    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+        = archiveDocumentForPath(archivePath);
+    QVERIFY(archiveDocument.has_value());
+    KiriView::ArchiveDocumentSessionOpenResult opened
+        = KiriView::openArchiveDocumentSession(*archiveDocument);
+    auto *session = std::get_if<KiriView::ArchiveDocumentSessionPtr>(&opened);
+    QVERIFY(session != nullptr);
+    QVERIFY(*session != nullptr);
+
+    const KiriView::ArchiveImageCandidatesResult candidatesResult
+        = (*session)->loadImageCandidates();
+    const KiriView::ArchiveImageCandidates *candidates = archiveImageCandidates(candidatesResult);
+    QVERIFY(candidates != nullptr);
+    QCOMPARE(candidates->candidates.size(), std::size_t(2));
+
+    QVERIFY(QFile::remove(archivePath));
+
+    const KiriView::ArchiveImageDataResult firstDataResult = (*session)->loadImageData(
+        archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("chapter/01.png")));
+    const KiriView::ArchiveImageData *firstData = archiveImageData(firstDataResult);
+    QVERIFY(firstData != nullptr);
+    QCOMPARE(firstData->data, QByteArrayLiteral("one"));
+
+    const KiriView::ArchiveImageDataResult secondDataResult = (*session)->loadImageData(
+        archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("chapter/02.jpg")));
+    const KiriView::ArchiveImageData *secondData = archiveImageData(secondDataResult);
+    QVERIFY(secondData != nullptr);
+    QCOMPARE(secondData->data, QByteArrayLiteral("two"));
+
+    const KiriView::ArchiveImageDataResult standaloneResult
+        = KiriView::loadArchiveDocumentImageData(*archiveDocument,
+            archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("chapter/01.png")));
+    const KiriView::ArchiveError *standaloneError = archiveDataError(standaloneResult);
+    QVERIFY(standaloneError != nullptr);
+    QVERIFY(!standaloneError->errorString.isEmpty());
 }
 
 void TestArchiveBackend::readingUrlOutsideArchiveReturnsNotFound()

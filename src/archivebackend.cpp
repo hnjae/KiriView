@@ -16,17 +16,6 @@
 namespace {
 namespace Backend = KiriView::ArchiveBackendDetail;
 
-std::optional<QString> archiveImageEntryPathForRead(
-    const KiriView::ArchiveDocumentLocation &archiveDocument, const QUrl &imageUrl)
-{
-    const QString entryPath = KiriView::archiveEntryPathForUrl(archiveDocument, imageUrl);
-    if (archiveDocument.isEmpty() || entryPath.isEmpty()) {
-        return std::nullopt;
-    }
-
-    return entryPath;
-}
-
 const Backend::ArchiveBackendOperations *archiveBackendOperationsForDocument(
     const KiriView::ArchiveDocumentLocation &archiveDocument)
 {
@@ -73,6 +62,17 @@ std::optional<ImageNavigationCandidate> archiveImageCandidate(
     }
 
     return ImageNavigationCandidate { url, candidateName };
+}
+
+std::optional<QString> archiveImageEntryPathForRead(
+    const ArchiveDocumentLocation &archiveDocument, const QUrl &imageUrl)
+{
+    const QString entryPath = archiveEntryPathForUrl(archiveDocument, imageUrl);
+    if (archiveDocument.isEmpty() || entryPath.isEmpty()) {
+        return std::nullopt;
+    }
+
+    return entryPath;
 }
 
 QString fallbackArchiveOpenError(const ArchiveDocumentLocation &archiveDocument)
@@ -127,7 +127,7 @@ ArchiveImageDataResult loadArchiveDocumentImageData(
     const ArchiveDocumentLocation &archiveDocument, const QUrl &imageUrl)
 {
     const std::optional<QString> entryPath
-        = archiveImageEntryPathForRead(archiveDocument, imageUrl);
+        = Backend::archiveImageEntryPathForRead(archiveDocument, imageUrl);
     if (!entryPath.has_value()) {
         return Backend::archiveErrorResult<ArchiveImageDataResult>(
             Backend::archiveImageNotFoundError());
@@ -136,6 +136,20 @@ ArchiveImageDataResult loadArchiveDocumentImageData(
     return loadWithArchiveBackend<ArchiveImageDataResult>(archiveDocument,
         [&archiveDocument, &entryPath](const Backend::ArchiveBackendOperations &backend) {
             return backend.loadImageData(archiveDocument, *entryPath);
+        });
+}
+
+ArchiveDocumentSessionOpenResult openArchiveDocumentSession(
+    const ArchiveDocumentLocation &archiveDocument)
+{
+    if (archiveDocument.isEmpty()) {
+        return Backend::archiveErrorResult<ArchiveDocumentSessionOpenResult>(
+            i18nc("@info:status", "Could not open the selected archive."));
+    }
+
+    return loadWithArchiveBackend<ArchiveDocumentSessionOpenResult>(
+        archiveDocument, [&archiveDocument](const Backend::ArchiveBackendOperations &backend) {
+            return backend.openSession(archiveDocument);
         });
 }
 }

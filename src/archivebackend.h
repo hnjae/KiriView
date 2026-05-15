@@ -9,6 +9,8 @@
 
 #include <QByteArray>
 #include <QString>
+#include <functional>
+#include <memory>
 #include <variant>
 #include <vector>
 
@@ -29,10 +31,26 @@ template <typename Value> using ArchiveResult = std::variant<Value, ArchiveError
 using ArchiveImageCandidatesResult = ArchiveResult<ArchiveImageCandidates>;
 using ArchiveImageDataResult = ArchiveResult<ArchiveImageData>;
 
+class ArchiveDocumentSession
+{
+public:
+    virtual ~ArchiveDocumentSession() = default;
+
+    virtual ArchiveImageCandidatesResult loadImageCandidates() = 0;
+    virtual ArchiveImageDataResult loadImageData(const QUrl &imageUrl) = 0;
+};
+
+using ArchiveDocumentSessionPtr = std::shared_ptr<ArchiveDocumentSession>;
+using ArchiveDocumentSessionOpenResult = ArchiveResult<ArchiveDocumentSessionPtr>;
+using ArchiveDocumentSessionFactory
+    = std::function<ArchiveDocumentSessionOpenResult(const ArchiveDocumentLocation &)>;
+
 ArchiveImageCandidatesResult loadArchiveDocumentImageCandidates(
     const ArchiveDocumentLocation &archiveDocument);
 ArchiveImageDataResult loadArchiveDocumentImageData(
     const ArchiveDocumentLocation &archiveDocument, const QUrl &imageUrl);
+ArchiveDocumentSessionOpenResult openArchiveDocumentSession(
+    const ArchiveDocumentLocation &archiveDocument);
 }
 
 #endif

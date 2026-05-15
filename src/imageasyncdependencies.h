@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_IMAGEASYNCDEPENDENCIES_H
 #define KIRIVIEW_IMAGEASYNCDEPENDENCIES_H
 
+#include "archivebackend.h"
 #include "decodedimageresult.h"
 #include "filedeletion.h"
 #include "imagedecoderequest.h"
@@ -55,6 +56,7 @@ struct ImageAsyncDependencies {
     ImageNavigationCandidateProvider candidateProvider;
     ImageDecodeDependencies imageDecode;
     FileOperationProvider fileOperations;
+    ArchiveDocumentSessionFactory archiveDocumentSessions;
 };
 
 ImageNavigationCandidateProvider defaultImageNavigationCandidateProvider();

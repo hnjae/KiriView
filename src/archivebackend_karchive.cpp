@@ -178,6 +178,61 @@ KiriView::ArchiveImageDataResult readKArchiveFileData(const KArchiveFile &file)
     return Backend::archiveImageDataResult(std::move(data));
 }
 
+class KArchiveDocumentSession final : public KiriView::ArchiveDocumentSession
+{
+public:
+    KArchiveDocumentSession(
+        KiriView::ArchiveDocumentLocation archiveDocument, ScopedKArchive archive)
+        : m_archiveDocument(std::move(archiveDocument))
+        , m_archive(std::move(archive))
+    {
+    }
+
+    KiriView::ArchiveImageCandidatesResult loadImageCandidates() override
+    {
+        std::vector<KiriView::ImageNavigationCandidate> candidates;
+        appendArchiveDirectoryImageCandidates(
+            &candidates, m_archive.directory(), m_archiveDocument, QString());
+        return Backend::archiveImageCandidatesResult(std::move(candidates));
+    }
+
+    KiriView::ArchiveImageDataResult loadImageData(const QUrl &imageUrl) override
+    {
+        const std::optional<QString> entryPath
+            = Backend::archiveImageEntryPathForRead(m_archiveDocument, imageUrl);
+        if (!entryPath.has_value()) {
+            return Backend::archiveErrorResult<KiriView::ArchiveImageDataResult>(
+                Backend::archiveImageNotFoundError());
+        }
+
+        const KArchiveDirectory *directory = m_archive.directory();
+        const KArchiveFile *file = directory == nullptr ? nullptr : directory->file(*entryPath);
+        if (file == nullptr) {
+            return Backend::archiveErrorResult<KiriView::ArchiveImageDataResult>(
+                Backend::archiveImageNotFoundError());
+        }
+
+        return readKArchiveFileData(*file);
+    }
+
+private:
+    KiriView::ArchiveDocumentLocation m_archiveDocument;
+    ScopedKArchive m_archive;
+};
+
+KiriView::ArchiveDocumentSessionOpenResult openKArchiveDocumentSession(
+    const KiriView::ArchiveDocumentLocation &archiveDocument)
+{
+    OpenKArchiveResult opened = openKArchiveDocument(archiveDocument);
+    if (!opened.archive) {
+        return Backend::archiveErrorResult<KiriView::ArchiveDocumentSessionOpenResult>(
+            opened.errorString);
+    }
+
+    return KiriView::ArchiveDocumentSessionPtr(
+        std::make_shared<KArchiveDocumentSession>(archiveDocument, std::move(opened.archive)));
+}
+
 KiriView::ArchiveImageDataResult loadKArchiveDocumentImageData(
     const KiriView::ArchiveDocumentLocation &archiveDocument, const QString &entryPath)
 {
@@ -203,6 +258,7 @@ const ArchiveBackendOperations *kArchiveBackendOperations()
     static const ArchiveBackendOperations operations {
         loadKArchiveDocumentImageCandidates,
         loadKArchiveDocumentImageData,
+        openKArchiveDocumentSession,
     };
     return &operations;
 }

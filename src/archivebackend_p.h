@@ -19,14 +19,19 @@ using ArchiveImageCandidatesLoader
     = ArchiveImageCandidatesResult (*)(const ArchiveDocumentLocation &);
 using ArchiveImageDataLoader
     = ArchiveImageDataResult (*)(const ArchiveDocumentLocation &, const QString &);
+using ArchiveDocumentSessionOpener
+    = ArchiveDocumentSessionOpenResult (*)(const ArchiveDocumentLocation &);
 
 struct ArchiveBackendOperations {
     ArchiveImageCandidatesLoader loadImageCandidates;
     ArchiveImageDataLoader loadImageData;
+    ArchiveDocumentSessionOpener openSession;
 };
 
 std::optional<ImageNavigationCandidate> archiveImageCandidate(
     const ArchiveDocumentLocation &archiveDocument, const QString &entryPath);
+std::optional<QString> archiveImageEntryPathForRead(
+    const ArchiveDocumentLocation &archiveDocument, const QUrl &imageUrl);
 QString fallbackArchiveOpenError(const ArchiveDocumentLocation &archiveDocument);
 QString archiveImageNotFoundError();
 QString archiveImageReadError();

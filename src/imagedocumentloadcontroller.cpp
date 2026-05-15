@@ -3,6 +3,7 @@
 
 #include "imagedocumentloadcontroller.h"
 
+#include "archivedocumentsessionstore.h"
 #include "imagedocumentdeletioncontroller.h"
 #include "imagedocumentloadpolicy.h"
 #include "imagedocumentnavigationcontroller.h"
@@ -26,13 +27,15 @@ ImageDocumentLoadController::ImageDocumentLoadController(ImageDocumentState &sta
     ImageDocumentDeletionController &deletionController,
     ImageDocumentNavigationController &navigationController,
     ImageDocumentPredecodeController &predecodeController, ImageOpenController &openController,
-    ImageSpreadPresentationController &spreadController)
+    ImageSpreadPresentationController &spreadController,
+    ArchiveDocumentSessionStore *archiveSessionStore)
     : m_state(state)
     , m_deletionController(deletionController)
     , m_navigationController(navigationController)
     , m_predecodeController(predecodeController)
     , m_openController(openController)
     , m_spreadController(spreadController)
+    , m_archiveSessionStore(archiveSessionStore)
 {
 }
 
@@ -82,6 +85,10 @@ void ImageDocumentLoadController::applySourceLoadAction(
         m_state.setLoadingContainerNavigationUrl(request.containerNavigationUrl);
         return;
     case ImageDocumentSourceLoadAction::SetSourceUrl:
+        if (m_archiveSessionStore != nullptr) {
+            m_archiveSessionStore->prepareForSourceLoad(
+                request, m_state.displayedArchiveDocument());
+        }
         m_state.setSourceUrl(request.sourceUrl);
         return;
     case ImageDocumentSourceLoadAction::BeginOpen:

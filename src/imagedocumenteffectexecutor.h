@@ -7,6 +7,7 @@
 #include "imagedocumenteffects.h"
 
 namespace KiriView {
+class ArchiveDocumentSessionStore;
 class ImageDocumentLoadController;
 class ImageDocumentNavigationController;
 class ImageDocumentPredecodeController;
@@ -23,7 +24,8 @@ public:
         ImageDocumentPredecodeController &predecodeController, ImageOpenController &openController,
         ImagePresentationController &presentationController,
         ImageSpreadPresentationController &spreadController,
-        ImageDocumentLoadController &loadController);
+        ImageDocumentLoadController &loadController,
+        ArchiveDocumentSessionStore *archiveSessionStore = nullptr);
 
     void dispatch(ImageDocumentEffect effect);
 
@@ -49,6 +51,7 @@ private:
     ImagePresentationController &m_presentationController;
     ImageSpreadPresentationController &m_spreadController;
     ImageDocumentLoadController &m_loadController;
+    ArchiveDocumentSessionStore *m_archiveSessionStore = nullptr;
 };
 }
 
