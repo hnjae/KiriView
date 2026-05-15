@@ -33,9 +33,9 @@ void TestImageDocumentLoadPolicy::sourceLoadPlanUsesRightToLeftReadingSnapshot()
     using Action = KiriView::ImageDocumentSourceLoadAction;
 
     KiriView::ImageDocumentSourceLoadPolicyInput input;
-    input.sourceUrlChanged = false;
+    input.replaceSource = false;
     input.preserveTwoPageSpreadTransition = true;
-    input.requestedContainerNavigationUrlEmpty = true;
+    input.hasRequestedContainerNavigationUrl = false;
 
     input.resetRightToLeftReading = false;
     input.rightToLeftReadingWasEnabled = false;
@@ -74,11 +74,11 @@ void TestImageDocumentLoadPolicy::sourceLoadPlanRoutesUnchangedAndReplacementSou
     using Action = KiriView::ImageDocumentSourceLoadAction;
 
     KiriView::ImageDocumentSourceLoadPolicyInput unchangedInput;
-    unchangedInput.sourceUrlChanged = false;
+    unchangedInput.replaceSource = false;
     unchangedInput.preserveTwoPageSpreadTransition = false;
     unchangedInput.resetRightToLeftReading = true;
     unchangedInput.rightToLeftReadingWasEnabled = true;
-    unchangedInput.requestedContainerNavigationUrlEmpty = false;
+    unchangedInput.hasRequestedContainerNavigationUrl = true;
     const KiriView::ImageDocumentSourceLoadPlan unchanged
         = KiriView::ImageDocumentLoadPolicy::sourceLoadPlan(unchangedInput);
     const std::vector<Action> unchangedActions {
@@ -91,11 +91,11 @@ void TestImageDocumentLoadPolicy::sourceLoadPlanRoutesUnchangedAndReplacementSou
     compareSourceLoadActions(unchanged.actions, unchangedActions);
 
     KiriView::ImageDocumentSourceLoadPolicyInput replacementInput;
-    replacementInput.sourceUrlChanged = true;
+    replacementInput.replaceSource = true;
     replacementInput.preserveTwoPageSpreadTransition = true;
     replacementInput.resetRightToLeftReading = false;
     replacementInput.rightToLeftReadingWasEnabled = true;
-    replacementInput.requestedContainerNavigationUrlEmpty = true;
+    replacementInput.hasRequestedContainerNavigationUrl = false;
     const KiriView::ImageDocumentSourceLoadPlan replacement
         = KiriView::ImageDocumentLoadPolicy::sourceLoadPlan(replacementInput);
     const std::vector<Action> replacementActions {

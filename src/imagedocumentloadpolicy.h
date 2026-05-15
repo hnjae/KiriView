@@ -21,11 +21,11 @@ enum class ImageDocumentSourceLoadAction {
 };
 
 struct ImageDocumentSourceLoadPolicyInput {
-    bool sourceUrlChanged = false;
+    bool replaceSource = false;
     bool preserveTwoPageSpreadTransition = false;
     bool resetRightToLeftReading = false;
     bool rightToLeftReadingWasEnabled = false;
-    bool requestedContainerNavigationUrlEmpty = false;
+    bool hasRequestedContainerNavigationUrl = false;
 };
 
 struct ImageDocumentSourceLoadPlan {
