@@ -38,13 +38,6 @@ mod ffi {
     }
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-    enum ImageOpenLoadErrorKind {
-        SourceLoad = 0,
-        ContainerNavigation = 1,
-        Animation = 2,
-    }
-
-    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     enum ImageOpenEffect {
         ClearImage = 0,
         ResetZoom = 1,
@@ -79,8 +72,7 @@ mod ffi {
     }
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-    struct ImageOpenLoadErrorRequest {
-        kind: ImageOpenLoadErrorKind,
+    struct ImageOpenSourceLoadErrorRequest {
         container_navigation_url_empty: bool,
         has_image: bool,
         displayed_url_empty: bool,
@@ -131,19 +123,24 @@ mod ffi {
             request: ImageOpenSuccessfulImageLoadRequest,
         ) -> ImageOpenTransition;
 
-        #[cxx_name = "rustImageOpenFinishLoadWithError"]
-        fn rust_image_open_finish_load_with_error(
-            request: ImageOpenLoadErrorRequest,
+        #[cxx_name = "rustImageOpenFinishSourceLoadWithError"]
+        fn rust_image_open_finish_source_load_with_error(
+            request: ImageOpenSourceLoadErrorRequest,
         ) -> ImageOpenTransition;
+
+        #[cxx_name = "rustImageOpenFinishContainerNavigationLoadWithError"]
+        fn rust_image_open_finish_container_navigation_load_with_error() -> ImageOpenTransition;
+
+        #[cxx_name = "rustImageOpenFinishAnimationLoadWithError"]
+        fn rust_image_open_finish_animation_load_with_error() -> ImageOpenTransition;
     }
 }
 
 use ffi::{
     ImageOpenBeginSourceLoadRequest, ImageOpenBoolTarget, ImageOpenEffect,
-    ImageOpenErrorStringTarget, ImageOpenLoadErrorKind, ImageOpenLoadErrorRequest,
-    ImageOpenStatusTarget, ImageOpenSuccessfulImageLoadRequest, ImageOpenTransition,
-    ImageOpenUrlTarget, RustImageSourceLoadAction, RustImageSourceLoadPlan,
-    RustImageSourceLoadPolicyInput,
+    ImageOpenErrorStringTarget, ImageOpenSourceLoadErrorRequest, ImageOpenStatusTarget,
+    ImageOpenSuccessfulImageLoadRequest, ImageOpenTransition, ImageOpenUrlTarget,
+    RustImageSourceLoadAction, RustImageSourceLoadPlan, RustImageSourceLoadPolicyInput,
 };
 
 fn rust_image_source_load_plan(input: RustImageSourceLoadPolicyInput) -> RustImageSourceLoadPlan {
@@ -305,20 +302,9 @@ fn animation_load_error_transition() -> ImageOpenTransition {
     cleared_load_error_transition(true)
 }
 
-fn rust_image_open_finish_load_with_error(
-    request: ImageOpenLoadErrorRequest,
+fn rust_image_open_finish_source_load_with_error(
+    request: ImageOpenSourceLoadErrorRequest,
 ) -> ImageOpenTransition {
-    match request.kind {
-        ImageOpenLoadErrorKind::ContainerNavigation => {
-            return container_navigation_load_error_transition();
-        }
-        ImageOpenLoadErrorKind::Animation => {
-            return animation_load_error_transition();
-        }
-        ImageOpenLoadErrorKind::SourceLoad => {}
-        _ => {}
-    }
-
     if !request.container_navigation_url_empty {
         return container_navigation_load_error_transition();
     }
@@ -327,6 +313,14 @@ fn rust_image_open_finish_load_with_error(
     }
 
     initial_load_error_transition()
+}
+
+fn rust_image_open_finish_container_navigation_load_with_error() -> ImageOpenTransition {
+    container_navigation_load_error_transition()
+}
+
+fn rust_image_open_finish_animation_load_with_error() -> ImageOpenTransition {
+    animation_load_error_transition()
 }
 
 fn cleared_load_error_transition(reset_zoom: bool) -> ImageOpenTransition {
@@ -392,25 +386,15 @@ mod tests {
         }
     }
 
-    fn load_error_request(
+    fn source_load_error_request(
         container_navigation_url_empty: bool,
         has_image: bool,
         displayed_url_empty: bool,
-    ) -> ImageOpenLoadErrorRequest {
-        ImageOpenLoadErrorRequest {
-            kind: ImageOpenLoadErrorKind::SourceLoad,
+    ) -> ImageOpenSourceLoadErrorRequest {
+        ImageOpenSourceLoadErrorRequest {
             container_navigation_url_empty,
             has_image,
             displayed_url_empty,
-        }
-    }
-
-    fn load_error_kind_request(kind: ImageOpenLoadErrorKind) -> ImageOpenLoadErrorRequest {
-        ImageOpenLoadErrorRequest {
-            kind,
-            container_navigation_url_empty: true,
-            has_image: false,
-            displayed_url_empty: true,
         }
     }
 
@@ -565,10 +549,10 @@ mod tests {
 
     #[test]
     fn initial_and_animation_errors_share_clear_policy_but_only_animation_resets_zoom() {
-        let initial = rust_image_open_finish_load_with_error(load_error_request(true, false, true));
-        let animation = rust_image_open_finish_load_with_error(load_error_kind_request(
-            ImageOpenLoadErrorKind::Animation,
+        let initial = rust_image_open_finish_source_load_with_error(source_load_error_request(
+            true, false, true,
         ));
+        let animation = rust_image_open_finish_animation_load_with_error();
 
         assert!(has_effect(&initial, ImageOpenEffect::ClearImage));
         assert!(!has_effect(&initial, ImageOpenEffect::ResetZoom));
@@ -588,8 +572,9 @@ mod tests {
 
     #[test]
     fn routed_load_failure_returns_the_selected_error_transition() {
-        let container =
-            rust_image_open_finish_load_with_error(load_error_request(false, true, false));
+        let container = rust_image_open_finish_source_load_with_error(source_load_error_request(
+            false, true, false,
+        ));
         assert_eq!(container.source_url, ImageOpenUrlTarget::Container);
         assert!(has_effect(&container, ImageOpenEffect::ClearImage));
         assert!(has_effect(
@@ -598,8 +583,9 @@ mod tests {
         ));
         assert_eq!(container.status, ImageOpenStatusTarget::Error);
 
-        let replacement =
-            rust_image_open_finish_load_with_error(load_error_request(true, true, false));
+        let replacement = rust_image_open_finish_source_load_with_error(source_load_error_request(
+            true, true, false,
+        ));
         assert_eq!(replacement.source_url, ImageOpenUrlTarget::Displayed);
         assert!(has_effect(
             &replacement,
@@ -611,15 +597,15 @@ mod tests {
         ));
         assert_eq!(replacement.status, ImageOpenStatusTarget::Ready);
 
-        let initial = rust_image_open_finish_load_with_error(load_error_request(true, false, true));
+        let initial = rust_image_open_finish_source_load_with_error(source_load_error_request(
+            true, false, true,
+        ));
         assert_eq!(initial.source_url, ImageOpenUrlTarget::Unchanged);
         assert!(has_effect(&initial, ImageOpenEffect::ClearImage));
         assert_eq!(initial.container_navigation_url, ImageOpenUrlTarget::Empty);
         assert_eq!(initial.status, ImageOpenStatusTarget::Error);
 
-        let explicit_container = rust_image_open_finish_load_with_error(load_error_kind_request(
-            ImageOpenLoadErrorKind::ContainerNavigation,
-        ));
+        let explicit_container = rust_image_open_finish_container_navigation_load_with_error();
         assert_eq!(explicit_container.source_url, ImageOpenUrlTarget::Container);
         assert!(has_effect(
             &explicit_container,
