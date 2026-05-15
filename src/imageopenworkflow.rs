@@ -38,6 +38,12 @@ mod ffi {
     }
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    enum ImageOpenDisplayedLocationTarget {
+        Unchanged = 0,
+        Session = 1,
+    }
+
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     enum ImageOpenEffect {
         ClearImage = 0,
         ResetZoom = 1,
@@ -67,7 +73,7 @@ mod ffi {
     #[derive(Debug, PartialEq, Eq)]
     struct ImageOpenTransition {
         source_url: ImageOpenUrlTarget,
-        set_displayed_location_from_session: bool,
+        displayed_location: ImageOpenDisplayedLocationTarget,
         container_navigation_url: ImageOpenUrlTarget,
         loading: ImageOpenBoolTarget,
         status: ImageOpenStatusTarget,
@@ -104,9 +110,10 @@ mod ffi {
 }
 
 use ffi::{
-    ImageOpenBeginSourceLoadRequest, ImageOpenBoolTarget, ImageOpenEffect,
-    ImageOpenErrorStringTarget, ImageOpenSourceLoadErrorRequest, ImageOpenStatusTarget,
-    ImageOpenSuccessfulImageLoadRequest, ImageOpenTransition, ImageOpenUrlTarget,
+    ImageOpenBeginSourceLoadRequest, ImageOpenBoolTarget, ImageOpenDisplayedLocationTarget,
+    ImageOpenEffect, ImageOpenErrorStringTarget, ImageOpenSourceLoadErrorRequest,
+    ImageOpenStatusTarget, ImageOpenSuccessfulImageLoadRequest, ImageOpenTransition,
+    ImageOpenUrlTarget,
 };
 
 fn rust_image_open_begin_source_load(
@@ -144,7 +151,7 @@ fn rust_image_open_finish_successful_image_load(
 ) -> ImageOpenTransition {
     let mut transition = tracked_load_finished_transition();
     transition.source_url = ImageOpenUrlTarget::SessionImage;
-    transition.set_displayed_location_from_session = true;
+    transition.displayed_location = ImageOpenDisplayedLocationTarget::Session;
     transition.container_navigation_url = if request.request_container_navigation_url_empty {
         ImageOpenUrlTarget::DerivedContainerNavigation
     } else {
@@ -243,7 +250,7 @@ fn tracked_load_error_transition() -> ImageOpenTransition {
 fn empty_transition() -> ImageOpenTransition {
     ImageOpenTransition {
         source_url: ImageOpenUrlTarget::Unchanged,
-        set_displayed_location_from_session: false,
+        displayed_location: ImageOpenDisplayedLocationTarget::Unchanged,
         container_navigation_url: ImageOpenUrlTarget::Unchanged,
         loading: ImageOpenBoolTarget::Unchanged,
         status: ImageOpenStatusTarget::Unchanged,
@@ -327,7 +334,10 @@ mod tests {
             rust_image_open_finish_successful_image_load(successful_image_load_request(false));
 
         assert_eq!(transition.source_url, ImageOpenUrlTarget::SessionImage);
-        assert!(transition.set_displayed_location_from_session);
+        assert_eq!(
+            transition.displayed_location,
+            ImageOpenDisplayedLocationTarget::Session
+        );
         assert_eq!(
             transition.container_navigation_url,
             ImageOpenUrlTarget::SessionContainerNavigation
