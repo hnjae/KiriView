@@ -25,11 +25,17 @@ enum class ImageDocumentSourceLoadKind {
     ReplacementSource,
 };
 
+enum class ImageDocumentRightToLeftReadingReset {
+    Keep,
+    ResetInactive,
+    ResetActive,
+};
+
 struct ImageDocumentSourceLoadPolicyInput {
     ImageDocumentSourceLoadKind loadKind = ImageDocumentSourceLoadKind::CurrentSource;
     bool preserveTwoPageSpreadTransition = false;
-    bool resetRightToLeftReading = false;
-    bool rightToLeftReadingWasEnabled = false;
+    ImageDocumentRightToLeftReadingReset rightToLeftReadingReset
+        = ImageDocumentRightToLeftReadingReset::Keep;
     bool hasRequestedContainerNavigationUrl = false;
 };
 

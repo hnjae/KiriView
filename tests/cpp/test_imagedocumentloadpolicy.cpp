@@ -37,30 +37,20 @@ void TestImageDocumentLoadPolicy::sourceLoadPlanUsesRightToLeftReadingSnapshot()
     input.preserveTwoPageSpreadTransition = true;
     input.hasRequestedContainerNavigationUrl = false;
 
-    input.resetRightToLeftReading = false;
-    input.rightToLeftReadingWasEnabled = false;
+    input.rightToLeftReadingReset = KiriView::ImageDocumentRightToLeftReadingReset::Keep;
     compareSourceLoadActions(KiriView::ImageDocumentLoadPolicy::sourceLoadPlan(input).actions,
         {
             Action::ClearLoadingContainerNavigationUrl,
         });
 
-    input.resetRightToLeftReading = false;
-    input.rightToLeftReadingWasEnabled = true;
-    compareSourceLoadActions(KiriView::ImageDocumentLoadPolicy::sourceLoadPlan(input).actions,
-        {
-            Action::ClearLoadingContainerNavigationUrl,
-        });
-
-    input.resetRightToLeftReading = true;
-    input.rightToLeftReadingWasEnabled = false;
+    input.rightToLeftReadingReset = KiriView::ImageDocumentRightToLeftReadingReset::ResetInactive;
     compareSourceLoadActions(KiriView::ImageDocumentLoadPolicy::sourceLoadPlan(input).actions,
         {
             Action::ResetRightToLeftReading,
             Action::ClearLoadingContainerNavigationUrl,
         });
 
-    input.resetRightToLeftReading = true;
-    input.rightToLeftReadingWasEnabled = true;
+    input.rightToLeftReadingReset = KiriView::ImageDocumentRightToLeftReadingReset::ResetActive;
     compareSourceLoadActions(KiriView::ImageDocumentLoadPolicy::sourceLoadPlan(input).actions,
         {
             Action::ResetRightToLeftReading,
@@ -76,8 +66,8 @@ void TestImageDocumentLoadPolicy::sourceLoadPlanRoutesUnchangedAndReplacementSou
     KiriView::ImageDocumentSourceLoadPolicyInput unchangedInput;
     unchangedInput.loadKind = KiriView::ImageDocumentSourceLoadKind::CurrentSource;
     unchangedInput.preserveTwoPageSpreadTransition = false;
-    unchangedInput.resetRightToLeftReading = true;
-    unchangedInput.rightToLeftReadingWasEnabled = true;
+    unchangedInput.rightToLeftReadingReset
+        = KiriView::ImageDocumentRightToLeftReadingReset::ResetActive;
     unchangedInput.hasRequestedContainerNavigationUrl = true;
     const KiriView::ImageDocumentSourceLoadPlan unchanged
         = KiriView::ImageDocumentLoadPolicy::sourceLoadPlan(unchangedInput);
@@ -93,8 +83,7 @@ void TestImageDocumentLoadPolicy::sourceLoadPlanRoutesUnchangedAndReplacementSou
     KiriView::ImageDocumentSourceLoadPolicyInput replacementInput;
     replacementInput.loadKind = KiriView::ImageDocumentSourceLoadKind::ReplacementSource;
     replacementInput.preserveTwoPageSpreadTransition = true;
-    replacementInput.resetRightToLeftReading = false;
-    replacementInput.rightToLeftReadingWasEnabled = true;
+    replacementInput.rightToLeftReadingReset = KiriView::ImageDocumentRightToLeftReadingReset::Keep;
     replacementInput.hasRequestedContainerNavigationUrl = false;
     const KiriView::ImageDocumentSourceLoadPlan replacement
         = KiriView::ImageDocumentLoadPolicy::sourceLoadPlan(replacementInput);
@@ -107,8 +96,8 @@ void TestImageDocumentLoadPolicy::sourceLoadPlanRoutesUnchangedAndReplacementSou
     };
     compareSourceLoadActions(replacement.actions, replacementActions);
 
-    replacementInput.resetRightToLeftReading = true;
-    replacementInput.rightToLeftReadingWasEnabled = false;
+    replacementInput.rightToLeftReadingReset
+        = KiriView::ImageDocumentRightToLeftReadingReset::ResetInactive;
     const KiriView::ImageDocumentSourceLoadPlan inactiveResetReplacement
         = KiriView::ImageDocumentLoadPolicy::sourceLoadPlan(replacementInput);
     const std::vector<Action> inactiveResetReplacementActions {
@@ -121,8 +110,8 @@ void TestImageDocumentLoadPolicy::sourceLoadPlanRoutesUnchangedAndReplacementSou
     };
     compareSourceLoadActions(inactiveResetReplacement.actions, inactiveResetReplacementActions);
 
-    replacementInput.resetRightToLeftReading = true;
-    replacementInput.rightToLeftReadingWasEnabled = true;
+    replacementInput.rightToLeftReadingReset
+        = KiriView::ImageDocumentRightToLeftReadingReset::ResetActive;
     const KiriView::ImageDocumentSourceLoadPlan resettingReplacement
         = KiriView::ImageDocumentLoadPolicy::sourceLoadPlan(replacementInput);
     const std::vector<Action> resettingReplacementActions {

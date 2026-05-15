@@ -24,11 +24,17 @@ mod ffi {
     }
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    enum RustImageDocumentRightToLeftReadingReset {
+        Keep = 0,
+        ResetInactive = 1,
+        ResetActive = 2,
+    }
+
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     struct RustImageDocumentSourceLoadPolicyInput {
         load_kind: RustImageDocumentSourceLoadKind,
         preserve_two_page_spread_transition: bool,
-        reset_right_to_left_reading: bool,
-        right_to_left_reading_was_enabled: bool,
+        right_to_left_reading_reset: RustImageDocumentRightToLeftReadingReset,
         has_requested_container_navigation_url: bool,
     }
 
@@ -46,8 +52,9 @@ mod ffi {
 }
 
 use ffi::{
-    RustImageDocumentSourceLoadAction, RustImageDocumentSourceLoadKind,
-    RustImageDocumentSourceLoadPlan, RustImageDocumentSourceLoadPolicyInput,
+    RustImageDocumentRightToLeftReadingReset, RustImageDocumentSourceLoadAction,
+    RustImageDocumentSourceLoadKind, RustImageDocumentSourceLoadPlan,
+    RustImageDocumentSourceLoadPolicyInput,
 };
 
 fn rust_image_document_source_load_plan(
@@ -72,11 +79,11 @@ fn replaces_source(input: RustImageDocumentSourceLoadPolicyInput) -> bool {
 }
 
 fn resets_right_to_left_reading(input: RustImageDocumentSourceLoadPolicyInput) -> bool {
-    input.reset_right_to_left_reading
+    input.right_to_left_reading_reset != RustImageDocumentRightToLeftReadingReset::Keep
 }
 
 fn notifies_right_to_left_reading(input: RustImageDocumentSourceLoadPolicyInput) -> bool {
-    input.reset_right_to_left_reading && input.right_to_left_reading_was_enabled
+    input.right_to_left_reading_reset == RustImageDocumentRightToLeftReadingReset::ResetActive
 }
 
 fn append_initial_source_load_actions(
@@ -138,15 +145,13 @@ mod tests {
     fn source_load_input(
         load_kind: RustImageDocumentSourceLoadKind,
         preserve_two_page_spread_transition: bool,
-        reset_right_to_left_reading: bool,
-        right_to_left_reading_was_enabled: bool,
+        right_to_left_reading_reset: RustImageDocumentRightToLeftReadingReset,
         has_requested_container_navigation_url: bool,
     ) -> RustImageDocumentSourceLoadPolicyInput {
         RustImageDocumentSourceLoadPolicyInput {
             load_kind,
             preserve_two_page_spread_transition,
-            reset_right_to_left_reading,
-            right_to_left_reading_was_enabled,
+            right_to_left_reading_reset,
             has_requested_container_navigation_url,
         }
     }
@@ -156,8 +161,7 @@ mod tests {
         let unchanged = rust_image_document_source_load_plan(source_load_input(
             RustImageDocumentSourceLoadKind::CurrentSource,
             false,
-            true,
-            true,
+            RustImageDocumentRightToLeftReadingReset::ResetActive,
             true,
         ));
         assert_eq!(
@@ -174,8 +178,7 @@ mod tests {
         let replacement = rust_image_document_source_load_plan(source_load_input(
             RustImageDocumentSourceLoadKind::ReplacementSource,
             true,
-            false,
-            true,
+            RustImageDocumentRightToLeftReadingReset::Keep,
             false,
         ));
         assert_eq!(
@@ -192,8 +195,7 @@ mod tests {
         let inactive_reset_replacement = rust_image_document_source_load_plan(source_load_input(
             RustImageDocumentSourceLoadKind::ReplacementSource,
             true,
-            true,
-            false,
+            RustImageDocumentRightToLeftReadingReset::ResetInactive,
             false,
         ));
         assert_eq!(
@@ -211,8 +213,7 @@ mod tests {
         let resetting_replacement = rust_image_document_source_load_plan(source_load_input(
             RustImageDocumentSourceLoadKind::ReplacementSource,
             true,
-            true,
-            true,
+            RustImageDocumentRightToLeftReadingReset::ResetActive,
             false,
         ));
         assert_eq!(

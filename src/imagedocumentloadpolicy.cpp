@@ -19,14 +19,29 @@ KiriView::RustImageDocumentSourceLoadKind rustSourceLoadKind(
     return KiriView::RustImageDocumentSourceLoadKind::CurrentSource;
 }
 
+KiriView::RustImageDocumentRightToLeftReadingReset rustRightToLeftReadingReset(
+    KiriView::ImageDocumentRightToLeftReadingReset reset)
+{
+    switch (reset) {
+    case KiriView::ImageDocumentRightToLeftReadingReset::Keep:
+        return KiriView::RustImageDocumentRightToLeftReadingReset::Keep;
+    case KiriView::ImageDocumentRightToLeftReadingReset::ResetInactive:
+        return KiriView::RustImageDocumentRightToLeftReadingReset::ResetInactive;
+    case KiriView::ImageDocumentRightToLeftReadingReset::ResetActive:
+        return KiriView::RustImageDocumentRightToLeftReadingReset::ResetActive;
+    }
+
+    return KiriView::RustImageDocumentRightToLeftReadingReset::Keep;
+}
+
 KiriView::RustImageDocumentSourceLoadPolicyInput rustSourceLoadPolicyInput(
     const KiriView::ImageDocumentSourceLoadPolicyInput &input)
 {
     KiriView::RustImageDocumentSourceLoadPolicyInput rustInput {};
     rustInput.load_kind = rustSourceLoadKind(input.loadKind);
     rustInput.preserve_two_page_spread_transition = input.preserveTwoPageSpreadTransition;
-    rustInput.reset_right_to_left_reading = input.resetRightToLeftReading;
-    rustInput.right_to_left_reading_was_enabled = input.rightToLeftReadingWasEnabled;
+    rustInput.right_to_left_reading_reset
+        = rustRightToLeftReadingReset(input.rightToLeftReadingReset);
     rustInput.has_requested_container_navigation_url = input.hasRequestedContainerNavigationUrl;
     return rustInput;
 }

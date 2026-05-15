@@ -22,6 +22,21 @@ KiriView::ImageDocumentSourceLoadKind sourceLoadKind(const KiriView::ImageDocume
     return KiriView::ImageDocumentSourceLoadKind::ReplacementSource;
 }
 
+KiriView::ImageDocumentRightToLeftReadingReset rightToLeftReadingReset(
+    const KiriView::ImageDocumentState &state,
+    const KiriView::ImageSpreadPresentationController &spreadController,
+    const KiriView::ImageDocumentSourceLoadRequest &request)
+{
+    if (!spreadController.shouldResetRightToLeftReadingForLoad(
+            state.displayedArchiveDocument(), request.sourceUrl, request.containerNavigationUrl)) {
+        return KiriView::ImageDocumentRightToLeftReadingReset::Keep;
+    }
+
+    return spreadController.rightToLeftReadingEnabled()
+        ? KiriView::ImageDocumentRightToLeftReadingReset::ResetActive
+        : KiriView::ImageDocumentRightToLeftReadingReset::ResetInactive;
+}
+
 KiriView::ImageDocumentSourceLoadPolicyInput sourceLoadPolicyInput(
     const KiriView::ImageDocumentState &state,
     const KiriView::ImageSpreadPresentationController &spreadController,
@@ -30,9 +45,7 @@ KiriView::ImageDocumentSourceLoadPolicyInput sourceLoadPolicyInput(
     KiriView::ImageDocumentSourceLoadPolicyInput input;
     input.loadKind = sourceLoadKind(state, request);
     input.preserveTwoPageSpreadTransition = request.preserveTwoPageSpreadTransition;
-    input.resetRightToLeftReading = spreadController.shouldResetRightToLeftReadingForLoad(
-        state.displayedArchiveDocument(), request.sourceUrl, request.containerNavigationUrl);
-    input.rightToLeftReadingWasEnabled = spreadController.rightToLeftReadingEnabled();
+    input.rightToLeftReadingReset = rightToLeftReadingReset(state, spreadController, request);
     input.hasRequestedContainerNavigationUrl = !request.containerNavigationUrl.isEmpty();
     return input;
 }
