@@ -2,9 +2,9 @@
 
 ## Current Scope
 
-KiriView opens one user-selected image file or supported archive, displays it in
-the main window, and can navigate to adjacent images or pages in the same
-location.
+KiriView opens one user-selected image file, supported archive, or directly
+provided local directory, displays it in the main window, and can navigate to
+adjacent images or pages in the same location.
 
 When an installed `kiriview` translation catalog is available, KiriView's UI
 text and desktop metadata follow the user's KDE and Qt language settings. When
@@ -55,9 +55,11 @@ Kirigami grid units.
 When an image file is displayed, the main window title is the displayed image
 file name, a spaced em dash, and `KiriView`. When a CBZ, CBT, CB7, CBR, ZIP,
 TAR, 7Z, or RAR archive opened by KiriView is displayed, the title is the
-archive file name, a spaced em dash, and `KiriView`. KiriView does not show file
-paths in the window title. When no image or archive page is displayed, the
-window title is `KiriView`.
+archive file name, a spaced em dash, and `KiriView`. When a directly opened
+local directory is displayed, the title is the directory name, a spaced em dash,
+and `KiriView`. KiriView does not show file paths in the window title. When no
+image, archive page, or directory page is displayed, the window title is
+`KiriView`.
 
 Open, Previous Archive, and Next Archive are provided by the application menu
 and shortcuts rather than fixed toolbar buttons.
@@ -80,6 +82,16 @@ KiriView owns that archive as the current archive document and displays the
 first supported image inside that archive. These general archives are not
 advertised through the desktop file's file associations, the open dialog's
 default image and comic book filter, or sibling archive navigation.
+
+KiriView opens local directories only when they are directly provided, such as
+through a startup argument, file URL, or drop. When a local directory is opened
+directly, KiriView owns that directory as the current directory document and
+displays the first supported image inside that directory tree. Directory
+documents use the same recursive supported-image page ordering as archive
+documents, with page names based on directory-relative paths such as
+`chapter/page001.png`. Directly opened directories are not advertised through
+the desktop file's file associations, the open dialog's default image and comic
+book filter, or sibling archive navigation.
 
 KiriView's desktop file advertises file-manager Open With handling for the image
 and comic book archive MIME types corresponding to its default open dialog
@@ -109,7 +121,9 @@ URLs, and images opened directly from KDE-supported archive URLs such as
 `zip://`. When the displayed image is inside a local CBZ, CBT, CB7, CBR, ZIP,
 TAR, 7Z, or RAR archive document opened directly by KiriView, the deletion
 target is the archive file itself rather than the currently displayed internal
-image entry.
+image entry. When the displayed image is inside a local directory document
+opened directly by KiriView, the deletion target is the directory itself rather
+than the currently displayed image file.
 
 After deletion succeeds, KiriView immediately clears the deleted image. It then
 opens the next supported image in the current image scope when possible, falls
@@ -117,7 +131,8 @@ back to the previous supported image when no next image exists, and otherwise
 shows the empty state. After deleting a directly opened comic book archive,
 KiriView opens the first image in the next sibling comic book archive when
 possible, falls back to the first image in the previous sibling comic book
-archive, and otherwise shows the empty state.
+archive, and otherwise shows the empty state. After deleting a directly opened
+directory document, KiriView shows the empty state.
 
 When the displayed image belongs to a local `file://` directory, KiriView keeps
 that directory's supported-image candidate list live while the directory remains
@@ -127,8 +142,9 @@ displayed local image is removed outside KiriView, KiriView immediately clears
 that image, opens the next supported image in the same sorted directory order
 when possible, falls back to the previous supported image when no next image
 exists, and otherwise shows the empty state. Candidate lists for non-local KIO
-URLs, explicit archive URLs such as `zip://`, and directly opened archive
-documents are snapshots and do not guarantee live external update handling.
+URLs, explicit archive URLs such as `zip://`, directly opened archive
+documents, and directly opened directory documents are snapshots and do not
+guarantee live external update handling.
 
 ## Image Display
 
@@ -187,8 +203,8 @@ scan-backward shortcut may open the previous image at its final scan position
 instead: bottom-right normally and bottom-left in Right-to-Left Reading mode.
 Starting KiriView, opening a regular image, moving between regular directory
 images, opening a KDE archive URL image directly, opening a different archive
-document, or moving to a sibling archive resets zoom to Fit mode when the new
-image is displayed.
+or directory document, or moving to a sibling archive resets zoom to Fit mode
+when the new image is displayed.
 
 The image viewing area behind empty, loading, ready, and error states uses
 `#3c3c3c` as its background color, so navigation transitions do not flash to a
@@ -208,15 +224,16 @@ alone. Any page whose pixel width is greater than its pixel height is treated as
 a wide page and is displayed alone. If the next page after the current page is
 wide, the current page is displayed alone and the next navigation action opens
 that wide page. Two-Page mode is unavailable for ordinary image files,
-KDE-supported archive URLs, and directly opened ZIP, TAR, 7Z, or RAR archives.
+KDE-supported archive URLs, directly opened ZIP, TAR, 7Z, or RAR archives, and
+directly opened directories.
 
 When a directly opened local CBZ, CBT, CB7, or CBR comic book archive is
 displayed, the `b` key toggles Right-to-Left Reading mode. Right-to-Left
 Reading mode is off by default, is unavailable for ordinary image files,
-KDE-supported archive URLs, and directly opened ZIP, TAR, 7Z, or RAR archives,
-and is not saved as a global setting. Moving to a sibling comic book archive
-with Previous Archive or Next Archive preserves the current Right-to-Left
-Reading mode state.
+KDE-supported archive URLs, directly opened ZIP, TAR, 7Z, or RAR archives, and
+directly opened directories, and is not saved as a global setting. Moving to a
+sibling comic book archive with Previous Archive or Next Archive preserves the
+current Right-to-Left Reading mode state.
 
 When Two-Page mode shows two pages, zooming and panning operate on the combined
 two-page spread as one virtual image. Fit, Fit Height, Fit Width, manual zoom,
@@ -338,19 +355,21 @@ that archive URL.
 When an image is displayed from a local CBZ, CBT, CB7, CBR, ZIP, TAR, 7Z, or
 RAR archive document opened directly by KiriView, navigation moves between all
 supported image files inside that archive document, including images in
-subdirectories. After the archive document has been listed, page navigation uses
-all supported image files inside that archive document as its navigation target
-set.
+subdirectories. When an image is displayed from a local directory document
+opened directly by KiriView, navigation moves between all supported image files
+inside that directory tree, including images in subdirectories. After the
+archive or directory document has been listed, page navigation uses all
+supported image files inside that document as its navigation target set.
 
 The previous and next files are determined by sorting candidate names with the
 user's locale-aware file name order. For ordinary directory navigation, the
-candidate name is the file name. For archive documents opened directly by
-KiriView, candidate names are archive-relative paths such as `foo/a.jpg` and
-`bar/a.jpg`. Navigation does not wrap; pressing Page Up on the first candidate
-or Page Down on the last candidate keeps the current image open and notifies the
-user that it is the first or last image. KiriView shows those first-image and
-last-image notifications only when the current candidate list is known and the
-current image is at a known boundary.
+candidate name is the file name. For archive and directory documents opened
+directly by KiriView, candidate names are document-relative paths such as
+`foo/a.jpg` and `bar/a.jpg`. Navigation does not wrap; pressing Page Up on the
+first candidate or Page Down on the last candidate keeps the current image open
+and notifies the user that it is the first or last image. KiriView shows those
+first-image and last-image notifications only when the current candidate list
+is known and the current image is at a known boundary.
 
 KiriView has one visible in-app toast notification slot. New toast requests
 replace the current toast and replay the entrance animation, including when the
@@ -392,6 +411,7 @@ the current archive.
 When the current image is a normal image file, inside a KDE-supported archive
 URL, or inside a directly opened ZIP, TAR, 7Z, or RAR archive document, the
 Previous Archive and Next Archive actions are disabled.
+They are also disabled inside directly opened directory documents.
 
 Sibling archive candidates are local `.cbz`, `.cbt`, `.cb7`, or `.cbr` files in
 the current archive's parent directory. Candidates are sorted with the same user
