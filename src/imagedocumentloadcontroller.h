@@ -16,6 +16,8 @@ class ImageDocumentState;
 class ImageOpenController;
 class ImagePresentationController;
 class ImageSpreadPresentationController;
+enum class ImageSourceLoadAction;
+struct ImageSourceLoadPlan;
 
 struct ImageDocumentSourceLoadRequest {
     QUrl sourceUrl;
@@ -59,6 +61,11 @@ public:
     ImageDocumentEffects clearAfterSuccessfulFileDeletion();
 
 private:
+    void applySourceLoadPlan(
+        const ImageDocumentSourceLoadRequest &request, const ImageSourceLoadPlan &plan);
+    void applySourceLoadAction(
+        const ImageDocumentSourceLoadRequest &request, ImageSourceLoadAction action);
+
     ImageDocumentState &m_state;
     ImageDocumentDeletionController &m_deletionController;
     ImageDocumentNavigationController &m_navigationController;

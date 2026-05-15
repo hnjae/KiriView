@@ -38,75 +38,6 @@ void cancelNavigationAndPredecode(KiriView::ImageDocumentNavigationController &n
     navigationController.cancelContainerNavigation();
     predecodeController.cancel();
 }
-
-class ImageSourceLoadPlanApplier final
-{
-public:
-    ImageSourceLoadPlanApplier(KiriView::ImageDocumentState &state,
-        KiriView::ImageDocumentNavigationController &navigationController,
-        KiriView::ImageDocumentPredecodeController &predecodeController,
-        KiriView::ImageOpenController &openController,
-        KiriView::ImageSpreadPresentationController &spreadController)
-        : m_state(state)
-        , m_navigationController(navigationController)
-        , m_predecodeController(predecodeController)
-        , m_openController(openController)
-        , m_spreadController(spreadController)
-    {
-    }
-
-    void apply(const KiriView::ImageDocumentSourceLoadRequest &request,
-        const KiriView::ImageSourceLoadPlan &plan)
-    {
-        for (KiriView::ImageSourceLoadAction action : plan.actions) {
-            applyAction(request, action);
-        }
-    }
-
-private:
-    void applyAction(const KiriView::ImageDocumentSourceLoadRequest &request,
-        KiriView::ImageSourceLoadAction action)
-    {
-        switch (action) {
-        case KiriView::ImageSourceLoadAction::CancelNavigationAndPredecode:
-            ::cancelNavigationAndPredecode(m_navigationController, m_predecodeController);
-            return;
-        case KiriView::ImageSourceLoadAction::FinishSpreadTransition:
-            m_spreadController.finishTransition();
-            return;
-        case KiriView::ImageSourceLoadAction::ResetRightToLeftReading:
-            m_spreadController.resetRightToLeftReading();
-            return;
-        case KiriView::ImageSourceLoadAction::NotifyRightToLeftReading:
-            m_spreadController.notifyRightToLeftReadingChanged();
-            return;
-        case KiriView::ImageSourceLoadAction::ClearSecondaryPage:
-            m_spreadController.clearSecondaryPage();
-            return;
-        case KiriView::ImageSourceLoadAction::ClearLoadingContainerNavigationUrl:
-            m_state.clearLoadingContainerNavigationUrl();
-            return;
-        case KiriView::ImageSourceLoadAction::UpdateContainerNavigationUrl:
-            m_state.setContainerNavigationUrl(request.containerNavigationUrl);
-            return;
-        case KiriView::ImageSourceLoadAction::SetLoadingContainerNavigationUrl:
-            m_state.setLoadingContainerNavigationUrl(request.containerNavigationUrl);
-            return;
-        case KiriView::ImageSourceLoadAction::SetSourceUrl:
-            m_state.setSourceUrl(request.sourceUrl);
-            return;
-        case KiriView::ImageSourceLoadAction::BeginOpen:
-            m_openController.open();
-            return;
-        }
-    }
-
-    KiriView::ImageDocumentState &m_state;
-    KiriView::ImageDocumentNavigationController &m_navigationController;
-    KiriView::ImageDocumentPredecodeController &m_predecodeController;
-    KiriView::ImageOpenController &m_openController;
-    KiriView::ImageSpreadPresentationController &m_spreadController;
-};
 }
 
 namespace KiriView {
@@ -132,9 +63,52 @@ void ImageDocumentLoadController::loadSource(const ImageDocumentSourceLoadReques
 
     const ImageSourceLoadPlan plan = ImageOpenWorkflow::sourceLoadPlan(
         ::sourceLoadPolicyInput(m_state, m_spreadController, request));
-    ImageSourceLoadPlanApplier(m_state, m_navigationController, m_predecodeController,
-        m_openController, m_spreadController)
-        .apply(request, plan);
+    applySourceLoadPlan(request, plan);
+}
+
+void ImageDocumentLoadController::applySourceLoadPlan(
+    const ImageDocumentSourceLoadRequest &request, const ImageSourceLoadPlan &plan)
+{
+    for (ImageSourceLoadAction action : plan.actions) {
+        applySourceLoadAction(request, action);
+    }
+}
+
+void ImageDocumentLoadController::applySourceLoadAction(
+    const ImageDocumentSourceLoadRequest &request, ImageSourceLoadAction action)
+{
+    switch (action) {
+    case ImageSourceLoadAction::CancelNavigationAndPredecode:
+        ::cancelNavigationAndPredecode(m_navigationController, m_predecodeController);
+        return;
+    case ImageSourceLoadAction::FinishSpreadTransition:
+        m_spreadController.finishTransition();
+        return;
+    case ImageSourceLoadAction::ResetRightToLeftReading:
+        m_spreadController.resetRightToLeftReading();
+        return;
+    case ImageSourceLoadAction::NotifyRightToLeftReading:
+        m_spreadController.notifyRightToLeftReadingChanged();
+        return;
+    case ImageSourceLoadAction::ClearSecondaryPage:
+        m_spreadController.clearSecondaryPage();
+        return;
+    case ImageSourceLoadAction::ClearLoadingContainerNavigationUrl:
+        m_state.clearLoadingContainerNavigationUrl();
+        return;
+    case ImageSourceLoadAction::UpdateContainerNavigationUrl:
+        m_state.setContainerNavigationUrl(request.containerNavigationUrl);
+        return;
+    case ImageSourceLoadAction::SetLoadingContainerNavigationUrl:
+        m_state.setLoadingContainerNavigationUrl(request.containerNavigationUrl);
+        return;
+    case ImageSourceLoadAction::SetSourceUrl:
+        m_state.setSourceUrl(request.sourceUrl);
+        return;
+    case ImageSourceLoadAction::BeginOpen:
+        m_openController.open();
+        return;
+    }
 }
 
 void ImageDocumentLoadController::clearImage()
