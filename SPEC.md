@@ -32,6 +32,9 @@ those application actions are available from the menubar, and any toolbar
 overflow menu appears only when toolbar controls do not fit. In fullscreen,
 KiriView hides both the menubar and toolbar application menu button; actions
 with configured shortcuts remain available through those shortcuts.
+When the menubar or toolbar application menu is open, underlined menu access
+keys are activatable with the keyboard so users can choose menu entries through
+the displayed mnemonic letters.
 KiriView does not expose a general Settings page in the current scope.
 The Keyboard Shortcuts help is shown as read-only supporting content over the
 main window. It lists the current configured shortcut text for KiriView actions
