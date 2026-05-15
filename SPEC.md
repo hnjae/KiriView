@@ -119,6 +119,17 @@ KiriView opens the first image in the next sibling comic book archive when
 possible, falls back to the first image in the previous sibling comic book
 archive, and otherwise shows the empty state.
 
+When the displayed image belongs to a local `file://` directory, KiriView keeps
+that directory's supported-image candidate list live while the directory remains
+the current navigation scope. External additions and removals update the page
+number, total image count, and first/last boundary state. If the currently
+displayed local image is removed outside KiriView, KiriView immediately clears
+that image, opens the next supported image in the same sorted directory order
+when possible, falls back to the previous supported image when no next image
+exists, and otherwise shows the empty state. Candidate lists for non-local KIO
+URLs, explicit archive URLs such as `zip://`, and directly opened archive
+documents are snapshots and do not guarantee live external update handling.
+
 ## Image Display
 
 The UI remains responsive while a selected image is being opened. If no image
