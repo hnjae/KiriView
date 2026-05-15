@@ -24,9 +24,9 @@ public:
         ImageDocumentLoadController &loadController);
 
     void dispatch(ImageDocumentEffect effect);
-    void dispatchAll(ImageDocumentEffects effects);
 
 private:
+    void dispatchGeneratedEffects(ImageDocumentEffects effects);
     void dispatchPayload(const ClearImageEffect &);
     void dispatchPayload(const ClearDeletedImageEffect &);
     void dispatchPayload(const ResetZoomEffect &);

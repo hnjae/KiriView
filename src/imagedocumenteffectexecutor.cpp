@@ -34,7 +34,7 @@ void ImageDocumentEffectExecutor::dispatch(ImageDocumentEffect effect)
     std::visit([this](const auto &payload) { dispatchPayload(payload); }, effect.payload);
 }
 
-void ImageDocumentEffectExecutor::dispatchAll(ImageDocumentEffects effects)
+void ImageDocumentEffectExecutor::dispatchGeneratedEffects(ImageDocumentEffects effects)
 {
     for (ImageDocumentEffect &effect : effects) {
         dispatch(std::move(effect));
@@ -48,7 +48,7 @@ void ImageDocumentEffectExecutor::dispatchPayload(const ClearImageEffect &)
 
 void ImageDocumentEffectExecutor::dispatchPayload(const ClearDeletedImageEffect &)
 {
-    dispatchAll(m_loadController.clearAfterSuccessfulFileDeletion());
+    dispatchGeneratedEffects(m_loadController.clearAfterSuccessfulFileDeletion());
 }
 
 void ImageDocumentEffectExecutor::dispatchPayload(const ResetZoomEffect &)
