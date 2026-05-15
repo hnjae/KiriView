@@ -99,6 +99,7 @@ let
     "-DQT_NETWORK_LIB"
     "-DQT_QML_LIB"
     "-DQT_QUICK_LIB"
+    "-DQT_QUICKCONTROLS2_LIB"
     "-DQT_SVG_LIB"
     "-DTRANSLATION_DOMAIN=\"kiriview\""
   ];
@@ -110,6 +111,7 @@ let
     "QtQml"
     "QtQmlIntegration"
     "QtQuick"
+    "QtQuickControls2"
     "QtSvg"
   ];
   cxxStandardLibraryIncludeDirs = [
