@@ -6,7 +6,6 @@
 #include "imagedocumentdeletioncontroller.h"
 #include "imagedocumentnavigationcontroller.h"
 #include "imagedocumentpredecodecontroller.h"
-#include "imagedocumentsourceloadpolicy.h"
 #include "imagedocumentstate.h"
 #include "imageopencontroller.h"
 #include "imageopenworkflow.h"
@@ -62,7 +61,7 @@ void ImageDocumentLoadController::loadSource(const ImageDocumentSourceLoadReques
 {
     m_deletionController.cancel();
 
-    const ImageSourceLoadPlan plan = ImageDocumentSourceLoadPolicy::sourceLoadPlan(
+    const ImageSourceLoadPlan plan = ImageOpenWorkflow::sourceLoadPlan(
         ::sourceLoadPolicyInput(m_state, m_spreadController, request));
     applySourceLoadPlan(request, plan);
 }
