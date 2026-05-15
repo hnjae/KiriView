@@ -5,13 +5,12 @@
 
 #include "imageurl.h"
 #include "kiriview/src/predecodecachepolicy.cxx.h"
+#include "rustqtconversion.h"
 #include "systemmemory.h"
 
 #include <algorithm>
 #include <cstddef>
-#include <cstdint>
 #include <iterator>
-#include <limits>
 #include <optional>
 #include <utility>
 
@@ -26,27 +25,12 @@ std::optional<QUrl> normalizedValidImageUrl(const QUrl &url)
     return normalizedUrl;
 }
 
-qsizetype qtByteSize(std::int64_t byteSize)
-{
-    constexpr qsizetype maximumByteSize = std::numeric_limits<qsizetype>::max();
-    constexpr qsizetype minimumByteSize = std::numeric_limits<qsizetype>::min();
-    if (byteSize > static_cast<std::int64_t>(maximumByteSize)) {
-        return maximumByteSize;
-    }
-    if (byteSize < static_cast<std::int64_t>(minimumByteSize)) {
-        return minimumByteSize;
-    }
-
-    return static_cast<qsizetype>(byteSize);
-}
-
-std::int64_t rustByteSize(qsizetype byteSize) { return static_cast<std::int64_t>(byteSize); }
 }
 
 namespace KiriView {
 qsizetype PredecodeCache::preferredByteBudget()
 {
-    return qtByteSize(rustPredecodePreferredByteBudget());
+    return Bridge::qtByteSize(rustPredecodePreferredByteBudget());
 }
 
 qsizetype PredecodeCache::defaultByteBudget()
@@ -56,7 +40,8 @@ qsizetype PredecodeCache::defaultByteBudget()
 
 qsizetype PredecodeCache::byteBudgetForSystemMemory(qsizetype systemMemoryByteSize)
 {
-    return qtByteSize(rustPredecodeByteBudgetForSystemMemory(rustByteSize(systemMemoryByteSize)));
+    return Bridge::qtByteSize(
+        rustPredecodeByteBudgetForSystemMemory(Bridge::rustByteSize(systemMemoryByteSize)));
 }
 
 bool PredecodeCache::canCacheImage(const StaticImagePayload &staticImage)
@@ -279,12 +264,12 @@ void PredecodeCache::trimImagesToWindow()
     for (const CachedImage &entry : m_images) {
         states.push_back(RustPredecodeCachedImageState {
             windowPriority(entry.url),
-            rustByteSize(entry.byteCost),
+            Bridge::rustByteSize(entry.byteCost),
         });
     }
 
     const rust::Vec<std::size_t> retainedIndices = rustPredecodeRetainedCachedImageIndices(
-        std::move(states), m_windowUrls.size(), rustByteSize(m_byteBudget));
+        std::move(states), m_windowUrls.size(), Bridge::rustByteSize(m_byteBudget));
 
     std::vector<CachedImage> retainedImages;
     retainedImages.reserve(retainedIndices.size());

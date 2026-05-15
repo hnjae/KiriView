@@ -5,10 +5,9 @@
 
 #include "kiriview/src/imagerendergeometry.cxx.h"
 #include "qtgeometryconversion.h"
+#include "rustqtconversion.h"
 #include "systemmemory.h"
 
-#include <cstdint>
-#include <limits>
 #include <optional>
 #include <utility>
 
@@ -18,21 +17,6 @@ KiriView::RustImageRenderSize rustImageRenderSize(const QSize &size)
     return KiriView::Bridge::rustSize<KiriView::RustImageRenderSize>(size);
 }
 
-qsizetype qtByteSize(std::int64_t byteSize)
-{
-    constexpr qsizetype maximumByteSize = std::numeric_limits<qsizetype>::max();
-    constexpr qsizetype minimumByteSize = std::numeric_limits<qsizetype>::min();
-    if (byteSize > static_cast<std::int64_t>(maximumByteSize)) {
-        return maximumByteSize;
-    }
-    if (byteSize < static_cast<std::int64_t>(minimumByteSize)) {
-        return minimumByteSize;
-    }
-
-    return static_cast<qsizetype>(byteSize);
-}
-
-std::int64_t rustByteSize(qsizetype byteSize) { return static_cast<std::int64_t>(byteSize); }
 }
 
 namespace KiriView {
@@ -83,8 +67,9 @@ qsizetype StaticTileSurface::defaultTileCacheByteBudget()
 
 qsizetype StaticTileSurface::tileCacheByteBudgetForSystemMemory(qsizetype systemMemoryByteSize)
 {
-    return qtByteSize(rustStaticTileCacheByteBudgetForSystemMemory(
-        rustByteSize(systemMemoryByteSize), rustByteSize(imageFullDecodeFallbackByteLimit)));
+    return Bridge::qtByteSize(
+        rustStaticTileCacheByteBudgetForSystemMemory(Bridge::rustByteSize(systemMemoryByteSize),
+            Bridge::rustByteSize(imageFullDecodeFallbackByteLimit)));
 }
 
 bool staticImageFitsFullImageSurface(const StaticImagePayload &image, int maximumTextureSize)
