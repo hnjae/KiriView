@@ -397,6 +397,10 @@ After an image is displayed, KiriView may make adjacent images available for
 quicker Previous or Next navigation, so the switch can happen without showing a
 full-page loading state. This preparation must not change what is displayed
 until the user opens an adjacent image.
+When Two-Page mode shows two pages, both the current primary page and the
+visible secondary page are treated as displayed images for this preparation, so
+KiriView does not prepare either visible page again or discard either visible
+page as a non-displayed adjacent image.
 
 ## Archive Navigation
 
