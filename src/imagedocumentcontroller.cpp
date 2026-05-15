@@ -8,6 +8,7 @@
 #include "imagedocumentnavigationcontroller.h"
 #include "imagedocumentnavigationcoordinator.h"
 #include "imagedocumentruntime.h"
+#include "imagedocumentsourceloadrequest.h"
 #include "imagepresentationcontroller.h"
 #include "imagespreadpresentationcontroller.h"
 
