@@ -12,8 +12,6 @@
 #include <vector>
 
 namespace KiriView {
-std::vector<QUrl> predecodeWindowImageUrls(
-    const std::vector<ImageNavigationCandidate> &candidates, const QUrl &currentUrl);
 std::optional<QUrl> adjacentImageNavigationUrl(
     const std::vector<ImageNavigationCandidate> &candidates, const QUrl &currentUrl,
     NavigationDirection direction);

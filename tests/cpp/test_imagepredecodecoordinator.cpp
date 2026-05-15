@@ -9,7 +9,9 @@
 #include <QSize>
 #include <QTest>
 #include <QUrl>
+#include <cstddef>
 #include <optional>
+#include <vector>
 
 namespace {
 using KiriView::TestSupport::archivePageUrl;
@@ -31,6 +33,16 @@ KiriView::ImagePredecodeCoordinator createCoordinator(
     return KiriView::ImagePredecodeCoordinator(parent, candidateProvider.provider(),
         imageDecodeDependenciesFor(dataLoader, staticImageDataDecoder()));
 }
+
+std::vector<KiriView::ImageNavigationCandidate> imageCandidates(int count)
+{
+    std::vector<KiriView::ImageNavigationCandidate> candidates;
+    candidates.reserve(static_cast<std::size_t>(count));
+    for (int index = 0; index < count; ++index) {
+        candidates.push_back(imageCandidate(indexedImageUrl(index)));
+    }
+    return candidates;
+}
 }
 
 class TestImagePredecodeCoordinator : public QObject
@@ -41,6 +53,7 @@ private Q_SLOTS:
     void scheduleCachesDisplayedImageAndPredecodesWindow();
     void scheduleRejectsInvalidDisplayedContext();
     void archivePredecodeKeepsArchiveDocumentContext();
+    void predecodeWindowKeepsTwoPreviousAndFourNextPages();
     void cancelSuppressesPendingDecode();
 };
 
@@ -130,6 +143,40 @@ void TestImagePredecodeCoordinator::archivePredecodeKeepsArchiveDocumentContext(
     const std::optional<KiriView::PredecodedImage> predecoded = coordinator.tryTake(nextUrl);
     QVERIFY(predecoded.has_value());
     QCOMPARE(predecoded->location.archiveDocumentRootUrl(), archiveDocument->rootUrl());
+}
+
+void TestImagePredecodeCoordinator::predecodeWindowKeepsTwoPreviousAndFourNextPages()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    KiriView::ImagePredecodeCoordinator coordinator
+        = createCoordinator(this, candidateProvider, dataLoader);
+
+    const QUrl displayedUrl = indexedImageUrl(5);
+    candidateProvider.setDirectoryImages(imagesDirectoryUrl(), imageCandidates(15));
+
+    coordinator.schedule(KiriView::ImagePredecodeCoordinator::Context {
+        KiriView::DisplayedImageLocation::fromUrl(displayedUrl),
+        false,
+        staticTestImagePayload(testImage()),
+    });
+
+    const std::vector<QUrl> expectedLoadOrder {
+        indexedImageUrl(6),
+        indexedImageUrl(4),
+        indexedImageUrl(7),
+        indexedImageUrl(3),
+        indexedImageUrl(8),
+        indexedImageUrl(9),
+    };
+    for (const QUrl &expectedUrl : expectedLoadOrder) {
+        QTRY_COMPARE(dataLoader.backLoad().url, expectedUrl);
+        QVERIFY(dataLoader.finishOldestActiveLoadForUrl(expectedUrl, QByteArrayLiteral("image")));
+    }
+
+    QTRY_COMPARE(dataLoader.loadCount(), expectedLoadOrder.size());
+    QVERIFY(
+        !dataLoader.finishOldestActiveLoadForUrl(indexedImageUrl(10), QByteArrayLiteral("image")));
 }
 
 void TestImagePredecodeCoordinator::cancelSuppressesPendingDecode()

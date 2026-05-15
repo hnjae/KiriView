@@ -4,9 +4,11 @@
 #include "imagepredecodecoordinator.h"
 
 #include "decodedimageresult.h"
-#include "imagenavigationmodel.h"
 #include "imageurl.h"
+#include "kiriview/src/predecodecachepolicy.cxx.h"
 
+#include <cstddef>
+#include <cstdint>
 #include <optional>
 #include <utility>
 #include <vector>
@@ -15,7 +17,33 @@ namespace {
 using KiriView::DecodedImageResult;
 using KiriView::ImageCandidateListContext;
 using KiriView::normalizedImageUrl;
-using KiriView::predecodeWindowImageUrls;
+
+std::uint8_t rustFlag(bool value) { return value ? 1 : 0; }
+
+rust::Vec<std::uint8_t> currentCandidateMatches(
+    const std::vector<KiriView::ImageNavigationCandidate> &candidates, const QUrl &currentUrl)
+{
+    rust::Vec<std::uint8_t> matches;
+    matches.reserve(candidates.size());
+    for (const KiriView::ImageNavigationCandidate &candidate : candidates) {
+        matches.push_back(rustFlag(KiriView::sameNormalizedUrl(candidate.url, currentUrl)));
+    }
+
+    return matches;
+}
+
+std::vector<QUrl> predecodeWindowImageUrls(
+    const std::vector<KiriView::ImageNavigationCandidate> &candidates, const QUrl &currentUrl)
+{
+    std::vector<QUrl> urls;
+    const rust::Vec<std::size_t> indices = KiriView::rustPredecodeWindowImageIndices(
+        currentCandidateMatches(candidates, currentUrl));
+    urls.reserve(indices.size());
+    for (std::size_t index : indices) {
+        urls.push_back(candidates.at(index).url);
+    }
+    return urls;
+}
 }
 
 namespace KiriView {

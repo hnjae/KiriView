@@ -1,9 +1,6 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-const PREDECODE_PREVIOUS_IMAGE_COUNT: usize = 2;
-const PREDECODE_NEXT_IMAGE_COUNT: usize = 4;
-
 use crate::navigationindex::{
     NavigationDirection as CoreNavigationDirection, NavigationIndex as CoreNavigationIndex,
     adjacent_navigation_index as core_adjacent_navigation_index,
@@ -37,12 +34,6 @@ mod ffi {
     }
 
     extern "Rust" {
-        #[cxx_name = "rustPredecodeWindowImageIndices"]
-        fn rust_predecode_window_image_indices(
-            candidate_count: usize,
-            current: RustNavigationIndex,
-        ) -> Vec<usize>;
-
         #[cxx_name = "rustAdjacentNavigationCandidateIndex"]
         fn rust_adjacent_navigation_candidate_index(
             candidate_count: usize,
@@ -80,36 +71,6 @@ use ffi::{
     RustNavigationDirection, RustNavigationIndex, RustPageNavigationPreviewState,
     RustPageNavigationUpdate,
 };
-
-fn rust_predecode_window_image_indices(
-    candidate_count: usize,
-    current: RustNavigationIndex,
-) -> Vec<usize> {
-    let mut indices = Vec::new();
-    if !current.found || current.index >= candidate_count {
-        return indices;
-    }
-
-    let append_offset = |indices: &mut Vec<usize>, offset: isize| {
-        let Some(target_index) = current.index.checked_add_signed(offset) else {
-            return;
-        };
-        if target_index >= candidate_count {
-            return;
-        }
-
-        indices.push(target_index);
-    };
-
-    append_offset(&mut indices, 0);
-    for offset in 1..=PREDECODE_NEXT_IMAGE_COUNT {
-        append_offset(&mut indices, offset as isize);
-        if offset <= PREDECODE_PREVIOUS_IMAGE_COUNT {
-            append_offset(&mut indices, -(offset as isize));
-        }
-    }
-    indices
-}
 
 fn rust_adjacent_navigation_candidate_index(
     candidate_count: usize,

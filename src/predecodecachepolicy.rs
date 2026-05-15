@@ -3,6 +3,8 @@
 
 const PREDECODE_PREFERRED_BYTE_BUDGET: i64 = 1024 * 1024 * 1024;
 const PREDECODE_SYSTEM_MEMORY_DIVISOR: i64 = 8;
+const PREDECODE_PREVIOUS_IMAGE_COUNT: usize = 2;
+const PREDECODE_NEXT_IMAGE_COUNT: usize = 4;
 
 #[cxx::bridge(namespace = "KiriView")]
 mod ffi {
@@ -51,6 +53,9 @@ mod ffi {
         fn rust_predecode_missing_window_load_indices(
             states: Vec<RustPredecodeWindowLoadState>,
         ) -> Vec<usize>;
+
+        #[cxx_name = "rustPredecodeWindowImageIndices"]
+        fn rust_predecode_window_image_indices(matches_current: Vec<u8>) -> Vec<usize>;
 
         #[cxx_name = "rustPredecodeNextQueuedLoadPlan"]
         fn rust_predecode_next_queued_load_plan(
@@ -138,6 +143,34 @@ fn rust_predecode_missing_window_load_indices(
             Some(index)
         })
         .collect()
+}
+
+fn rust_predecode_window_image_indices(matches_current: Vec<u8>) -> Vec<usize> {
+    let mut indices = Vec::new();
+    let candidate_count = matches_current.len();
+    let Some(current_index) = matches_current.iter().position(|flag| *flag != 0) else {
+        return indices;
+    };
+
+    let append_offset = |indices: &mut Vec<usize>, offset: isize| {
+        let Some(target_index) = current_index.checked_add_signed(offset) else {
+            return;
+        };
+        if target_index >= candidate_count {
+            return;
+        }
+
+        indices.push(target_index);
+    };
+
+    append_offset(&mut indices, 0);
+    for offset in 1..=PREDECODE_NEXT_IMAGE_COUNT {
+        append_offset(&mut indices, offset as isize);
+        if offset <= PREDECODE_PREVIOUS_IMAGE_COUNT {
+            append_offset(&mut indices, -(offset as isize));
+        }
+    }
+    indices
 }
 
 fn rust_predecode_next_queued_load_plan(
@@ -248,6 +281,26 @@ mod tests {
                 window_load_state(false, false, false),
             ]),
             vec![3, 4]
+        );
+    }
+
+    #[test]
+    fn window_image_indices_prioritize_current_then_adjacent_pages() {
+        assert_eq!(
+            rust_predecode_window_image_indices(vec![0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
+            vec![5, 6, 4, 7, 3, 8, 9]
+        );
+    }
+
+    #[test]
+    fn window_image_indices_ignore_missing_current() {
+        assert_eq!(
+            rust_predecode_window_image_indices(vec![]),
+            Vec::<usize>::new()
+        );
+        assert_eq!(
+            rust_predecode_window_image_indices(vec![0, 0, 0]),
+            Vec::<usize>::new()
         );
     }
 

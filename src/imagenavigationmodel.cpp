@@ -98,19 +98,6 @@ std::optional<std::size_t> adjacentCandidateIndex(const std::vector<Candidate> &
 }
 
 namespace KiriView {
-std::vector<QUrl> predecodeWindowImageUrls(
-    const std::vector<ImageNavigationCandidate> &candidates, const QUrl &currentUrl)
-{
-    std::vector<QUrl> urls;
-    const rust::Vec<std::size_t> indices = rustPredecodeWindowImageIndices(candidates.size(),
-        rustCurrentNavigationIndex(currentCandidateMatches(candidates, currentUrl)));
-    urls.reserve(indices.size());
-    for (std::size_t index : indices) {
-        urls.push_back(candidates.at(index).url);
-    }
-    return urls;
-}
-
 std::optional<QUrl> adjacentImageNavigationUrl(
     const std::vector<ImageNavigationCandidate> &candidates, const QUrl &currentUrl,
     NavigationDirection direction)
