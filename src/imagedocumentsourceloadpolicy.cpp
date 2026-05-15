@@ -3,7 +3,7 @@
 
 #include "imagedocumentsourceloadpolicy.h"
 
-#include "kiriview/src/imagedocumentsourceloadpolicy.cxx.h"
+#include "kiriview/src/imageopenworkflow.cxx.h"
 
 namespace {
 KiriView::RustImageSourceLoadPolicyInput rustSourceLoadPolicyInput(
