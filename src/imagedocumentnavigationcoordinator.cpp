@@ -50,12 +50,12 @@ void ImageDocumentNavigationCoordinator::openNextContainer()
 
 void ImageDocumentNavigationCoordinator::openImageAtPage(int pageNumber)
 {
-    const std::optional<QUrl> pageUrl = m_navigationController.urlAtPage(pageNumber);
+    const bool spreadTransition = m_spreadController.shouldBeginTransition(pageNumber);
+    const std::optional<QUrl> pageUrl = m_navigationController.selectPage(pageNumber);
     if (!pageUrl.has_value()) {
         return;
     }
 
-    const bool spreadTransition = m_spreadController.shouldBeginTransition(pageNumber);
     if (spreadTransition) {
         m_spreadController.beginTransition();
     }

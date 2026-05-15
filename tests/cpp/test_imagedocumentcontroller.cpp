@@ -106,6 +106,9 @@ private Q_SLOTS:
     void maximumManualZoomChangesAfterViewportImageAndRenderContextUpdates();
     void directoryImageNavigationResetsManualZoom();
     void archiveDocumentPageNavigationPreservesManualZoom();
+    void pendingAdjacentNavigationSkipsIntermediateLoad();
+    void pendingPageSelectionSupersedesEarlierLoad();
+    void pendingLoadFailureRestoresDisplayedPageNavigation();
     void siblingArchiveNavigationResetsManualZoom();
     void smallStaticImageUsesFullImageSurface();
     void largeStaticImageUsesTiledSurface();
@@ -128,6 +131,7 @@ private Q_SLOTS:
     void twoPageModeUsesRightToLeftPageOrder();
     void twoPageModeRightToLeftKeepsSinglePageNavigationSemantic();
     void twoPageModeWaitsForTargetSpreadBeforeRenderingNavigation();
+    void twoPageModeLoadingNavigationUsesPendingPrimaryPage();
     void twoPageModeKeepsCoverAndWidePagesSingle();
 };
 
@@ -317,6 +321,115 @@ void TestImageDocumentController::archiveDocumentPageNavigationPreservesManualZo
     QTRY_COMPARE(controller->displayedUrl(), secondPageUrl);
     QCOMPARE(controller->zoomMode(), KiriView::ImageZoomMode::Manual);
     QVERIFY(KiriView::imageZoomApproximatelyEqual(controller->zoomPercent(), 150.0));
+}
+
+void TestImageDocumentController::pendingAdjacentNavigationSkipsIntermediateLoad()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    const QUrl firstImageUrl = localUrl(QStringLiteral("/images/01.png"));
+    const QUrl secondImageUrl = localUrl(QStringLiteral("/images/02.png"));
+    const QUrl thirdImageUrl = localUrl(QStringLiteral("/images/03.png"));
+    candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
+        {
+            imageCandidate(firstImageUrl),
+            imageCandidate(secondImageUrl),
+            imageCandidate(thirdImageUrl),
+        });
+
+    std::unique_ptr<KiriView::ImageDocumentController> controller
+        = createController(this, candidateProvider, dataLoader);
+    controller->setViewportSize(QSizeF(400.0, 300.0));
+    controller->setSourceUrl(firstImageUrl);
+    finishLoad(dataLoader);
+    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
+
+    controller->openNextImage();
+    QTRY_COMPARE(dataLoader.backLoad().url, secondImageUrl);
+    QCOMPARE(controller->currentPageNumber(), 2);
+
+    controller->openNextImage();
+    QTRY_COMPARE(dataLoader.backLoad().url, thirdImageUrl);
+    QCOMPARE(controller->currentPageNumber(), 3);
+    QVERIFY(!finishOldestActiveLoadForUrl(dataLoader, secondImageUrl));
+
+    finishLoad(dataLoader);
+
+    QTRY_COMPARE(controller->displayedUrl(), thirdImageUrl);
+    QCOMPARE(controller->sourceUrl(), thirdImageUrl);
+    QCOMPARE(controller->currentPageNumber(), 3);
+}
+
+void TestImageDocumentController::pendingPageSelectionSupersedesEarlierLoad()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    const QUrl firstImageUrl = localUrl(QStringLiteral("/images/01.png"));
+    const QUrl secondImageUrl = localUrl(QStringLiteral("/images/02.png"));
+    const QUrl thirdImageUrl = localUrl(QStringLiteral("/images/03.png"));
+    candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
+        {
+            imageCandidate(firstImageUrl),
+            imageCandidate(secondImageUrl),
+            imageCandidate(thirdImageUrl),
+        });
+
+    std::unique_ptr<KiriView::ImageDocumentController> controller
+        = createController(this, candidateProvider, dataLoader);
+    controller->setViewportSize(QSizeF(400.0, 300.0));
+    controller->setSourceUrl(firstImageUrl);
+    finishLoad(dataLoader);
+    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
+
+    controller->openNextImage();
+    QTRY_COMPARE(dataLoader.backLoad().url, secondImageUrl);
+    QCOMPARE(controller->currentPageNumber(), 2);
+
+    controller->openImageAtPage(3);
+    QTRY_COMPARE(dataLoader.backLoad().url, thirdImageUrl);
+    QCOMPARE(controller->displayedUrl(), firstImageUrl);
+    QCOMPARE(controller->currentPageNumber(), 3);
+    QVERIFY(!finishOldestActiveLoadForUrl(dataLoader, secondImageUrl));
+
+    finishLoad(dataLoader);
+
+    QTRY_COMPARE(controller->displayedUrl(), thirdImageUrl);
+    QCOMPARE(controller->sourceUrl(), thirdImageUrl);
+    QCOMPARE(controller->currentPageNumber(), 3);
+}
+
+void TestImageDocumentController::pendingLoadFailureRestoresDisplayedPageNavigation()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    const QUrl firstImageUrl = localUrl(QStringLiteral("/images/01.png"));
+    const QUrl secondImageUrl = localUrl(QStringLiteral("/images/02.png"));
+    candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
+        {
+            imageCandidate(firstImageUrl),
+            imageCandidate(secondImageUrl),
+        });
+
+    std::unique_ptr<KiriView::ImageDocumentController> controller
+        = createController(this, candidateProvider, dataLoader);
+    controller->setViewportSize(QSizeF(400.0, 300.0));
+    controller->setSourceUrl(firstImageUrl);
+    finishLoad(dataLoader);
+    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
+
+    controller->openNextImage();
+    QTRY_COMPARE(dataLoader.backLoad().url, secondImageUrl);
+    QCOMPARE(controller->sourceUrl(), secondImageUrl);
+    QCOMPARE(controller->displayedUrl(), firstImageUrl);
+    QCOMPARE(controller->currentPageNumber(), 2);
+
+    dataLoader.failBackLoad(QStringLiteral("missing"));
+
+    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
+    QCOMPARE(controller->sourceUrl(), firstImageUrl);
+    QCOMPARE(controller->displayedUrl(), firstImageUrl);
+    QCOMPARE(controller->currentPageNumber(), 1);
+    QCOMPARE(controller->errorString(), QStringLiteral("missing"));
 }
 
 void TestImageDocumentController::siblingArchiveNavigationResetsManualZoom()
@@ -1204,6 +1317,64 @@ void TestImageDocumentController::twoPageModeWaitsForTargetSpreadBeforeRendering
     QCOMPARE(controller->currentLastPageNumber(), 5);
     QVERIFY(controller->imageSurface() != nullptr);
     QVERIFY(controller->imageSurface(KiriView::DisplayedPageRole::Secondary) != nullptr);
+}
+
+void TestImageDocumentController::twoPageModeLoadingNavigationUsesPendingPrimaryPage()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
+    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveDocument.has_value());
+    const QUrl firstPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
+    const QUrl secondPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("02.png"));
+    const QUrl thirdPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("03.png"));
+    const QUrl fourthPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("04.png"));
+    const QUrl fifthPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("05.png"));
+    candidateProvider.setArchiveImages(archiveDocument->rootUrl(),
+        {
+            imageCandidate(firstPageUrl),
+            imageCandidate(secondPageUrl),
+            imageCandidate(thirdPageUrl),
+            imageCandidate(fourthPageUrl),
+            imageCandidate(fifthPageUrl),
+        });
+
+    auto decoder = [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
+        return singleFrameDecodedImage(QSize(100, 200));
+    };
+    std::unique_ptr<KiriView::ImageDocumentController> controller
+        = createController(this, candidateProvider, dataLoader, std::move(decoder));
+    controller->setViewportSize(QSizeF(400.0, 300.0));
+    controller->setSourceUrl(archiveUrl);
+    finishLoad(dataLoader);
+    QTRY_COMPARE(controller->displayedUrl(), firstPageUrl);
+
+    controller->setTwoPageModeEnabled(true);
+    controller->openNextImage();
+    QTRY_COMPARE(dataLoader.backLoad().url, secondPageUrl);
+    finishLoad(dataLoader);
+    QTRY_COMPARE(dataLoader.backLoad().url, thirdPageUrl);
+    finishLoad(dataLoader);
+    QTRY_COMPARE(controller->currentPageNumber(), 2);
+    QTRY_COMPARE(controller->currentLastPageNumber(), 3);
+    QVERIFY(controller->secondaryPageVisible());
+
+    controller->openNextImage();
+    QTRY_COMPARE(dataLoader.backLoad().url, fourthPageUrl);
+    QCOMPARE(controller->currentPageNumber(), 4);
+
+    controller->openNextImage();
+    QTRY_COMPARE(dataLoader.backLoad().url, fifthPageUrl);
+    QCOMPARE(controller->currentPageNumber(), 5);
+    QVERIFY(!finishOldestActiveLoadForUrl(dataLoader, fourthPageUrl));
+
+    finishLoad(dataLoader);
+
+    QTRY_COMPARE(controller->displayedUrl(), fifthPageUrl);
+    QCOMPARE(controller->currentPageNumber(), 5);
+    QVERIFY(!controller->secondaryPageVisible());
 }
 
 void TestImageDocumentController::twoPageModeKeepsCoverAndWidePagesSingle()

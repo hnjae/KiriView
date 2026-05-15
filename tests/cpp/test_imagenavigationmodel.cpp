@@ -48,6 +48,7 @@ private Q_SLOTS:
     void adjacentImageNavigationDoesNotWrap();
     void adjacentContainerNavigationUsesTheSameRules();
     void pageNavigationTargetSkipsInvalidCurrentAndOutOfRangePages();
+    void pageNavigationAdjacentTargetUsesKnownCurrentIndex();
     void pageNavigationPreviewReusesKnownList();
     void pageNavigationPreviewKeepsKnownListWhenCurrentTemporarilyMissing();
     void pageNavigationInsertsFallbackCurrentUrl();
@@ -126,6 +127,41 @@ void TestImageNavigationModel::pageNavigationTargetSkipsInvalidCurrentAndOutOfRa
     QVERIFY(!target.has_value());
 
     target = KiriView::pageNavigationTargetIndex(state, 4);
+    QVERIFY(!target.has_value());
+}
+
+void TestImageNavigationModel::pageNavigationAdjacentTargetUsesKnownCurrentIndex()
+{
+    PageNavigationState state { { indexedImageUrl(0), indexedImageUrl(1), indexedImageUrl(2) }, 1 };
+
+    std::optional<std::size_t> target
+        = KiriView::pageNavigationAdjacentTargetIndex(state, NavigationDirection::Previous);
+    QVERIFY(target.has_value());
+    QCOMPARE(*target, std::size_t(0));
+
+    target = KiriView::pageNavigationAdjacentTargetIndex(state, NavigationDirection::Next);
+    QVERIFY(target.has_value());
+    QCOMPARE(*target, std::size_t(2));
+
+    state.currentIndex = 0;
+    target = KiriView::pageNavigationAdjacentTargetIndex(state, NavigationDirection::Previous);
+    QVERIFY(!target.has_value());
+
+    state.currentIndex = 2;
+    target = KiriView::pageNavigationAdjacentTargetIndex(state, NavigationDirection::Next);
+    QVERIFY(!target.has_value());
+
+    state.currentIndex = -1;
+    target = KiriView::pageNavigationAdjacentTargetIndex(state, NavigationDirection::Next);
+    QVERIFY(!target.has_value());
+
+    state.currentIndex = 9;
+    target = KiriView::pageNavigationAdjacentTargetIndex(state, NavigationDirection::Next);
+    QVERIFY(!target.has_value());
+
+    state.urls.clear();
+    state.currentIndex = 0;
+    target = KiriView::pageNavigationAdjacentTargetIndex(state, NavigationDirection::Next);
     QVERIFY(!target.has_value());
 }
 

@@ -11,6 +11,7 @@
 #include "imagespreadmodecontroller.h"
 #include "imagespreadnavigation.h"
 #include "imagespreadzoomcontroller.h"
+#include "imageurl.h"
 
 #include <utility>
 
@@ -433,7 +434,9 @@ void ImageSpreadPresentationController::handleDocumentChange(ImageDocumentChange
     }
 
     if (change == ImageDocumentChange::PageNavigation) {
-        refreshSecondaryPage();
+        if (primarySelectionMatchesDisplayed()) {
+            refreshSecondaryPage();
+        }
         notifyRightToLeftReadingChanged();
     }
 }
@@ -565,6 +568,21 @@ bool ImageSpreadPresentationController::previousPageIsWideForNavigation() const
 
     const std::optional<QUrl> previousUrl = urlAtPage(pageNumber - 1);
     return previousUrl.has_value() ? cachedPageIsWide(*previousUrl).value_or(false) : false;
+}
+
+bool ImageSpreadPresentationController::primarySelectionMatchesDisplayed() const
+{
+    const int pageNumber = currentPageNumber();
+    if (pageNumber <= 0) {
+        return true;
+    }
+
+    const std::optional<QUrl> pageUrl = urlAtPage(pageNumber);
+    if (!pageUrl.has_value()) {
+        return true;
+    }
+
+    return sameNormalizedUrl(*pageUrl, m_state.displayedUrl());
 }
 
 void ImageSpreadPresentationController::scheduleAdjacentPredecode()

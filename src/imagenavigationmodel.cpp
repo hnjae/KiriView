@@ -131,6 +131,13 @@ std::optional<std::size_t> pageNavigationTargetIndex(
         rustPageNavigationTargetIndex(state.urls.size(), state.currentIndex, pageNumber));
 }
 
+std::optional<std::size_t> pageNavigationAdjacentTargetIndex(
+    const PageNavigationState &state, NavigationDirection direction)
+{
+    return navigationIndexValue(rustPageNavigationAdjacentTargetIndex(
+        state.urls.size(), state.currentIndex, rustNavigationDirection(direction)));
+}
+
 PageNavigationState pageNavigationStateForCurrentUrl(
     const PageNavigationState &knownState, const QUrl &currentUrl)
 {

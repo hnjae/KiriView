@@ -122,6 +122,7 @@ private:
     QSize spreadImageSize() const;
     bool primaryPageIsWide() const;
     bool previousPageIsWideForNavigation() const;
+    bool primarySelectionMatchesDisplayed() const;
     ImageSpreadNavigationState navigationState(bool previousPageIsWide = false) const;
     std::optional<bool> cachedPageIsWide(const QUrl &url) const;
     void scheduleAdjacentPredecode();

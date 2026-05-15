@@ -49,6 +49,7 @@ public:
     int currentPageNumber() const;
     int imageCount() const;
     std::optional<QUrl> urlAtPage(int pageNumber) const;
+    std::optional<QUrl> selectPage(int pageNumber);
 
     void openAdjacentImage(const DisplayContext &context, NavigationDirection direction);
     void openAdjacentContainer(const QUrl &currentContainerUrl, NavigationDirection direction);
@@ -60,8 +61,12 @@ public:
     void clearPageNavigation();
 
 private:
+    std::optional<QUrl> selectPageTarget(std::optional<std::size_t> targetIndex);
+    bool hasKnownPageNavigationSelection() const;
+
     void finishNavigation(std::vector<ImageNavigationCandidate> candidates,
-        NavigationDirection direction, const QUrl &currentUrl);
+        NavigationDirection direction, const QUrl &currentUrl,
+        ImageCandidateListSource candidateSource);
 
     void finishContainerNavigation(std::vector<ContainerNavigationCandidate> candidates,
         NavigationDirection direction, const QUrl &currentContainerUrl);
@@ -71,7 +76,7 @@ private:
 
     void setPageNavigationUrls(
         std::vector<QUrl> urls, const QUrl &currentUrl, ImageCandidateListSource source);
-    void setPageNavigationState(PageNavigationState state);
+    void setPageNavigationState(PageNavigationState state, bool forceNotify = false);
     void watchPageNavigationChanges(const ImageCandidateListContext &context);
     void updatePageNavigationFromChangedCandidates(
         std::vector<ImageNavigationCandidate> candidates, ImageCandidateListSource source);

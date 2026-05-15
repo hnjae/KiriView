@@ -116,23 +116,63 @@ int ImageNavigationService::imageCount() const
 
 std::optional<QUrl> ImageNavigationService::urlAtPage(int pageNumber) const
 {
-    const std::optional<std::size_t> pageIndex
-        = pageNavigationTargetIndex(m_pageNavigation, pageNumber);
-    if (!pageIndex.has_value()) {
+    if (pageNumber < 1) {
         return std::nullopt;
     }
 
-    return m_pageNavigation.urls.at(*pageIndex);
+    const std::size_t pageIndex = static_cast<std::size_t>(pageNumber - 1);
+    if (pageIndex >= m_pageNavigation.urls.size()) {
+        return std::nullopt;
+    }
+
+    return m_pageNavigation.urls.at(pageIndex);
+}
+
+std::optional<QUrl> ImageNavigationService::selectPage(int pageNumber)
+{
+    return selectPageTarget(pageNavigationTargetIndex(m_pageNavigation, pageNumber));
+}
+
+std::optional<QUrl> ImageNavigationService::selectPageTarget(std::optional<std::size_t> targetIndex)
+{
+    if (!targetIndex.has_value()) {
+        return std::nullopt;
+    }
+
+    PageNavigationState state = m_pageNavigation;
+    state.currentIndex = static_cast<int>(*targetIndex);
+    const QUrl targetUrl = state.urls.at(*targetIndex);
+    setPageNavigationState(std::move(state));
+    return targetUrl;
+}
+
+bool ImageNavigationService::hasKnownPageNavigationSelection() const
+{
+    if (m_pageNavigation.currentIndex < 0) {
+        return false;
+    }
+
+    return static_cast<std::size_t>(m_pageNavigation.currentIndex) < m_pageNavigation.urls.size();
 }
 
 void ImageNavigationService::openAdjacentImage(
     const DisplayContext &context, NavigationDirection direction)
 {
-    if (!displayContextHasNavigationSource(context)) {
+    cancelContainerNavigation();
+    cancelNavigation();
+
+    if (hasKnownPageNavigationSelection()) {
+        const std::optional<QUrl> targetUrl
+            = selectPageTarget(pageNavigationAdjacentTargetIndex(m_pageNavigation, direction));
+        if (targetUrl.has_value()) {
+            invokeIfSet(m_callbacks.openUrl, *targetUrl);
+        }
         return;
     }
 
-    cancelContainerNavigation();
+    if (!displayContextHasNavigationSource(context)) {
+        return;
+    }
 
     const std::optional<ImageCandidateListContext> candidateContext
         = imageCandidateContextForDisplayContext(context);
@@ -140,13 +180,13 @@ void ImageNavigationService::openAdjacentImage(
         return;
     }
 
-    cancelNavigation();
-
     m_navigationListerJob = m_candidateRepository.loadImages(
         this, *candidateContext,
-        [this, direction, currentUrl = candidateContext->currentUrl()](
-            std::vector<ImageNavigationCandidate> candidates) {
-            finishNavigation(std::move(candidates), direction, currentUrl);
+        [this, direction, currentUrl = candidateContext->currentUrl(),
+            candidateSource = candidateContext->source()](
+            std::vector<ImageNavigationCandidate> candidates) mutable {
+            finishNavigation(
+                std::move(candidates), direction, currentUrl, std::move(candidateSource));
         },
         [](const QString &) {});
 }
@@ -154,7 +194,7 @@ void ImageNavigationService::openAdjacentImage(
 void ImageNavigationService::cancelNavigation() { m_navigationListerJob.cancel(); }
 
 void ImageNavigationService::finishNavigation(std::vector<ImageNavigationCandidate> candidates,
-    NavigationDirection direction, const QUrl &currentUrl)
+    NavigationDirection direction, const QUrl &currentUrl, ImageCandidateListSource candidateSource)
 {
     const std::optional<QUrl> targetUrl
         = adjacentImageNavigationUrl(candidates, currentUrl, direction);
@@ -162,6 +202,8 @@ void ImageNavigationService::finishNavigation(std::vector<ImageNavigationCandida
         return;
     }
 
+    setPageNavigationUrls(
+        imageNavigationCandidateUrls(candidates), *targetUrl, std::move(candidateSource));
     invokeIfSet(m_callbacks.openUrl, *targetUrl);
 }
 
@@ -245,7 +287,8 @@ void ImageNavigationService::updatePageNavigation(const DisplayContext &context)
         && !m_pageNavigation.urls.empty();
     if (canReuseKnownState) {
         setPageNavigationState(
-            pageNavigationStateForCurrentUrl(m_pageNavigation, candidateContext->currentUrl()));
+            pageNavigationStateForCurrentUrl(m_pageNavigation, candidateContext->currentUrl()),
+            true);
     } else {
         clearPageNavigation();
     }
@@ -276,9 +319,9 @@ void ImageNavigationService::setPageNavigationUrls(
     setPageNavigationState(pageNavigationStateForUrls(std::move(urls), currentUrl));
 }
 
-void ImageNavigationService::setPageNavigationState(PageNavigationState state)
+void ImageNavigationService::setPageNavigationState(PageNavigationState state, bool forceNotify)
 {
-    if (samePageNavigationState(m_pageNavigation, state)) {
+    if (!forceNotify && samePageNavigationState(m_pageNavigation, state)) {
         return;
     }
 

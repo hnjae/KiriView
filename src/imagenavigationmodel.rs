@@ -64,6 +64,13 @@ mod ffi {
             current_index: i32,
             page_number: i32,
         ) -> RustNavigationIndex;
+
+        #[cxx_name = "rustPageNavigationAdjacentTargetIndex"]
+        fn rust_page_navigation_adjacent_target_index(
+            image_count: usize,
+            current_index: i32,
+            direction: RustNavigationDirection,
+        ) -> RustNavigationIndex;
     }
 }
 
@@ -159,6 +166,28 @@ fn rust_page_navigation_target_index(
     }
 
     found_index(page_index)
+}
+
+fn rust_page_navigation_adjacent_target_index(
+    image_count: usize,
+    current_index: i32,
+    direction: RustNavigationDirection,
+) -> RustNavigationIndex {
+    let Some(direction) = core_navigation_direction(direction) else {
+        return missing_index();
+    };
+    let Ok(index) = usize::try_from(current_index) else {
+        return missing_index();
+    };
+    if index >= image_count {
+        return missing_index();
+    }
+
+    rust_navigation_index(core_adjacent_navigation_index(
+        image_count,
+        core_navigation_index(found_index(index)),
+        direction,
+    ))
 }
 
 fn found_index(index: usize) -> RustNavigationIndex {
@@ -263,6 +292,34 @@ mod tests {
     fn page_navigation_target_converts_page_number_to_index() {
         assert_eq!(rust_page_navigation_target_index(3, 1, 1), found_index(0));
         assert_eq!(rust_page_navigation_target_index(3, -1, 3), found_index(2));
+    }
+
+    #[test]
+    fn page_navigation_adjacent_target_uses_pending_current_index() {
+        assert_eq!(
+            rust_page_navigation_adjacent_target_index(3, 1, RustNavigationDirection::Previous),
+            found_index(0)
+        );
+        assert_eq!(
+            rust_page_navigation_adjacent_target_index(3, 1, RustNavigationDirection::Next),
+            found_index(2)
+        );
+        assert_eq!(
+            rust_page_navigation_adjacent_target_index(3, 0, RustNavigationDirection::Previous),
+            missing_index()
+        );
+        assert_eq!(
+            rust_page_navigation_adjacent_target_index(3, 2, RustNavigationDirection::Next),
+            missing_index()
+        );
+        assert_eq!(
+            rust_page_navigation_adjacent_target_index(0, -1, RustNavigationDirection::Next),
+            missing_index()
+        );
+        assert_eq!(
+            rust_page_navigation_adjacent_target_index(3, 9, RustNavigationDirection::Next),
+            missing_index()
+        );
     }
 
     #[test]

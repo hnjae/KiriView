@@ -42,6 +42,7 @@ public:
     int currentPageNumber() const;
     int imageCount() const;
     std::optional<QUrl> urlAtPage(int pageNumber) const;
+    std::optional<QUrl> selectPage(int pageNumber);
 
     void openPreviousImage();
     void openNextImage();

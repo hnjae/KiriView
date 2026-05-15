@@ -17,15 +17,17 @@ Item {
     readonly property bool imageReady: imageDocument.status === KiriImageDocument.Ready
     readonly property bool imagePannable: imageViewport.imagePannable
     readonly property bool imageHorizontallyPannable: imageViewport.imageHorizontallyPannable
-    readonly property bool atFirstImage: imageReady && imageDocument.currentPageNumber === 1 && imageDocument.imageCount > 0
-    readonly property bool atLastImage: imageReady && imageDocument.currentPageNumber > 0 && imageDocument.currentPageNumber === imageDocument.imageCount
+    readonly property bool atFirstImage: imageDocument.currentPageNumber === 1 && imageDocument.imageCount > 0
+    readonly property bool atLastImage: imageDocument.currentPageNumber > 0 && imageDocument.currentPageNumber === imageDocument.imageCount
     readonly property int keyboardPanDistance: 64
     readonly property bool commandShortcutsEnabled: !root.textInputFocused() && !root.helpDialogOpen
     readonly property bool helpShortcutsEnabled: !root.helpDialogOpen
     readonly property bool readyShortcutsEnabled: root.imageReady && !root.imageDocument.fileDeletionInProgress && root.helpShortcutsEnabled
     readonly property bool readyCommandShortcutsEnabled: root.imageReady && !root.imageDocument.fileDeletionInProgress && root.commandShortcutsEnabled
-    readonly property bool pageCommandShortcutsEnabled: readyCommandShortcutsEnabled && root.imageDocument.imageCount > 0
-    readonly property bool twoPageCommandShortcutsEnabled: readyCommandShortcutsEnabled && root.imageDocument.twoPageModeAvailable && root.imageDocument.twoPageModeEnabled
+    readonly property bool imageSelectionShortcutsEnabled: root.imageDocument.imageCount > 0 && root.imageDocument.currentPageNumber > 0 && !root.imageDocument.fileDeletionInProgress && root.helpShortcutsEnabled
+    readonly property bool imageSelectionCommandShortcutsEnabled: root.imageDocument.imageCount > 0 && root.imageDocument.currentPageNumber > 0 && !root.imageDocument.fileDeletionInProgress && root.commandShortcutsEnabled
+    readonly property bool pageCommandShortcutsEnabled: imageSelectionCommandShortcutsEnabled
+    readonly property bool twoPageCommandShortcutsEnabled: imageSelectionCommandShortcutsEnabled && root.imageDocument.twoPageModeAvailable && root.imageDocument.twoPageModeEnabled
     readonly property bool rightToLeftReadingCommandShortcutsEnabled: readyCommandShortcutsEnabled && root.imageDocument.rightToLeftReadingAvailable
     readonly property bool pannableCommandShortcutsEnabled: root.imagePannable && !root.imageDocument.fileDeletionInProgress && root.commandShortcutsEnabled
     readonly property bool containerCommandShortcutsEnabled: root.imageDocument.containerNavigationAvailable && !root.imageDocument.fileDeletionInProgress && root.commandShortcutsEnabled
@@ -210,7 +212,7 @@ Item {
     ActionShortcutGroup {
         actionIds: [KiriViewApplication.GoPreviousImageAction, KiriViewApplication.GoNextImageAction]
         application: root.application
-        shortcutsEnabled: root.readyShortcutsEnabled
+        shortcutsEnabled: root.imageSelectionShortcutsEnabled
     }
 
     ActionShortcutGroup {

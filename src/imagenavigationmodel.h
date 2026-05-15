@@ -20,6 +20,8 @@ std::optional<ContainerNavigationCandidate> adjacentContainerNavigationCandidate
     NavigationDirection direction);
 std::optional<std::size_t> pageNavigationTargetIndex(
     const PageNavigationState &state, int pageNumber);
+std::optional<std::size_t> pageNavigationAdjacentTargetIndex(
+    const PageNavigationState &state, NavigationDirection direction);
 PageNavigationState pageNavigationStateForCurrentUrl(
     const PageNavigationState &knownState, const QUrl &currentUrl);
 PageNavigationState pageNavigationStateForUrls(std::vector<QUrl> urls, const QUrl &currentUrl);

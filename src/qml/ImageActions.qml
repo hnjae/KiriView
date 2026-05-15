@@ -15,13 +15,13 @@ Item {
     required property bool helpDialogOpen
     required property bool fullscreen
 
-    readonly property bool canOpenNextImage: root.imageReady && root.imageDocument.currentPageNumber > 0 && root.imageDocument.currentLastPageNumber < root.imageDocument.imageCount
-    readonly property bool canOpenPreviousImage: root.imageReady && root.imageDocument.currentPageNumber > 1
-    readonly property bool atKnownFirstImage: root.imageReady && root.imageDocument.imageCount > 0 && root.imageDocument.currentPageNumber === 1
-    readonly property bool atKnownLastImage: root.imageReady && root.imageDocument.imageCount > 0 && root.imageDocument.currentPageNumber > 0 && root.imageDocument.currentLastPageNumber > 0 && root.imageDocument.currentLastPageNumber >= root.imageDocument.imageCount
-    readonly property bool canUsePageActions: root.imageReady && root.imageDocument.imageCount > 0 && !root.imageDocument.fileDeletionInProgress && !root.helpDialogOpen
+    readonly property bool canOpenNextImage: root.imageDocument.currentPageNumber > 0 && root.imageDocument.currentLastPageNumber < root.imageDocument.imageCount
+    readonly property bool canOpenPreviousImage: root.imageDocument.currentPageNumber > 1
+    readonly property bool atKnownFirstImage: root.imageDocument.imageCount > 0 && root.imageDocument.currentPageNumber === 1
+    readonly property bool atKnownLastImage: root.imageDocument.imageCount > 0 && root.imageDocument.currentPageNumber > 0 && root.imageDocument.currentLastPageNumber > 0 && root.imageDocument.currentLastPageNumber >= root.imageDocument.imageCount
+    readonly property bool canUsePageActions: root.imageDocument.imageCount > 0 && root.imageDocument.currentPageNumber > 0 && !root.imageDocument.fileDeletionInProgress && !root.helpDialogOpen
     readonly property bool canUseReadyActions: root.imageReady && !root.imageDocument.fileDeletionInProgress && !root.helpDialogOpen
-    readonly property bool canUseTwoPageActions: root.canUseReadyActions && root.imageDocument.twoPageModeAvailable && root.imageDocument.twoPageModeEnabled
+    readonly property bool canUseTwoPageActions: root.canUsePageActions && root.imageDocument.twoPageModeAvailable && root.imageDocument.twoPageModeEnabled
     readonly property bool canUseRightToLeftReadingActions: root.canUseReadyActions && root.imageDocument.rightToLeftReadingAvailable
 
     readonly property var openAction: openManagedAction.proxy
@@ -185,11 +185,11 @@ Item {
     ManagedAction {
         id: previousImageManagedAction
 
-        actionEnabled: root.canUseReadyActions
+        actionEnabled: root.canUsePageActions
         actionId: KiriViewApplication.GoPreviousImageAction
         application: root.application
         bindEnabled: true
-        proxyEnabled: root.canOpenPreviousImage && !root.helpDialogOpen
+        proxyEnabled: root.canUsePageActions && root.canOpenPreviousImage
 
         onTriggered: root.openPreviousImage()
     }
@@ -197,11 +197,11 @@ Item {
     ManagedAction {
         id: nextImageManagedAction
 
-        actionEnabled: root.canUseReadyActions
+        actionEnabled: root.canUsePageActions
         actionId: KiriViewApplication.GoNextImageAction
         application: root.application
         bindEnabled: true
-        proxyEnabled: root.canOpenNextImage && !root.helpDialogOpen
+        proxyEnabled: root.canUsePageActions && root.canOpenNextImage
 
         onTriggered: root.openNextImage()
     }
@@ -213,7 +213,7 @@ Item {
         actionId: KiriViewApplication.GoPreviousSinglePageAction
         application: root.application
         bindEnabled: true
-        proxyEnabled: root.canOpenPreviousImage && !root.helpDialogOpen
+        proxyEnabled: root.canUseTwoPageActions && root.canOpenPreviousImage
 
         onTriggered: root.imageDocument.openPreviousSinglePage()
     }
@@ -225,7 +225,7 @@ Item {
         actionId: KiriViewApplication.GoNextSinglePageAction
         application: root.application
         bindEnabled: true
-        proxyEnabled: root.imageReady && root.imageDocument.currentPageNumber > 0 && root.imageDocument.currentPageNumber < root.imageDocument.imageCount && !root.helpDialogOpen
+        proxyEnabled: root.canUseTwoPageActions && root.imageDocument.currentPageNumber < root.imageDocument.imageCount
 
         onTriggered: root.imageDocument.openNextSinglePage()
     }

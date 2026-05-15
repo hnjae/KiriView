@@ -79,6 +79,11 @@ std::optional<QUrl> ImageDocumentNavigationController::urlAtPage(int pageNumber)
     return m_navigationService->urlAtPage(pageNumber);
 }
 
+std::optional<QUrl> ImageDocumentNavigationController::selectPage(int pageNumber)
+{
+    return m_navigationService->selectPage(pageNumber);
+}
+
 void ImageDocumentNavigationController::openPreviousImage()
 {
     openAdjacentImage(NavigationDirection::Previous);
