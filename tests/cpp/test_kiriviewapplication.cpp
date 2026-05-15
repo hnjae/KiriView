@@ -85,6 +85,7 @@ private Q_SLOTS:
     void actionIdsResolveActionNamesAndShortcuts();
     void shortcutsApiReturnsCurrentShortcuts();
     void shortcutModifierPartitionsTextInputShortcuts();
+    void showMenubarActionHasNoConfigurableShortcuts();
     void menuPresentationDefaultsToHamburgerMenu();
     void invalidStoredMenuPresentationFallsBackToHamburgerMenu();
     void menuPresentationPersists();
@@ -219,6 +220,17 @@ void TestKiriViewApplication::shortcutModifierPartitionsTextInputShortcuts()
     QCOMPARE(application.shortcutsWithoutCommandModifier(QStringLiteral("file_quit")),
         QList<QKeySequence>(
             { shortcut(QStringLiteral("Shift+Q")), shortcut(QStringLiteral("Q")) }));
+}
+
+void TestKiriViewApplication::showMenubarActionHasNoConfigurableShortcuts()
+{
+    KiriViewApplication application;
+
+    QAction *showMenubarAction = application.action(QStringLiteral("options_show_menubar"));
+    QVERIFY(showMenubarAction != nullptr);
+    QCOMPARE(KirigamiActionCollection::defaultShortcuts(showMenubarAction), QList<QKeySequence>());
+    QCOMPARE(showMenubarAction->shortcuts(), QList<QKeySequence>());
+    QVERIFY(!KirigamiActionCollection::isShortcutsConfigurable(showMenubarAction));
 }
 
 void TestKiriViewApplication::menuPresentationDefaultsToHamburgerMenu()

@@ -134,6 +134,15 @@ Item {
         return imageToolBar.textInputFocused();
     }
 
+    function toggleMenuPresentation() {
+        if (root.application.menuPresentation === KiriViewApplication.MenuBar) {
+            root.application.menuPresentation = KiriViewApplication.HamburgerMenu;
+            return;
+        }
+
+        root.application.menuPresentation = KiriViewApplication.MenuBar;
+    }
+
     function zoomByStep(stepCount, viewportX, viewportY) {
         return imageViewport.zoomByStep(stepCount, viewportX, viewportY);
     }
@@ -232,6 +241,14 @@ Item {
         actionIds: [KiriViewApplication.OptionsConfigureAction, KiriViewApplication.OptionsConfigureKeybindingAction, KiriViewApplication.OptionsShowMenubarAction]
         application: root.application
         shortcutsEnabled: root.helpShortcutsEnabled
+    }
+
+    Shortcut {
+        context: Qt.WindowShortcut
+        enabled: root.helpShortcutsEnabled
+        sequence: "Ctrl+M"
+
+        onActivated: root.toggleMenuPresentation()
     }
 
     ActionTrigger {

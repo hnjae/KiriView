@@ -149,6 +149,7 @@ void KiriViewApplication::setupActions()
         case Actions::RegistrationKind::ShowMenubar:
             m_showMenuBarAction = addStandardAction(
                 definition.actionType, name, Actions::localizedString(definition.text), shortcuts);
+            KirigamiActionCollection::setShortcutsConfigurable(m_showMenuBarAction, false);
             m_showMenuBarAction->setCheckable(true);
             connect(m_showMenuBarAction, &QAction::triggered, this,
                 [this](bool checked) { setMenuPresentation(checked ? MenuBar : HamburgerMenu); });
