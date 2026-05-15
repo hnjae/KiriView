@@ -12,6 +12,7 @@ mod cachebudget;
 mod heifcontainer;
 mod imageanimationpolicy;
 mod imagecontainer;
+mod imagedocumentloadpolicy;
 mod imageformatregistry;
 mod imagemath;
 mod imagenavigationmodel;

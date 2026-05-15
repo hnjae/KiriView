@@ -4,6 +4,7 @@
 #include "imagedocumentloadcontroller.h"
 
 #include "imagedocumentdeletioncontroller.h"
+#include "imagedocumentloadpolicy.h"
 #include "imagedocumentnavigationcontroller.h"
 #include "imagedocumentpredecodecontroller.h"
 #include "imagedocumentstate.h"
@@ -15,13 +16,13 @@
 #include <QString>
 
 namespace {
-KiriView::ImageSourceLoadPolicyInput sourceLoadPolicyInput(
+KiriView::ImageDocumentSourceLoadPolicyInput sourceLoadPolicyInput(
     const KiriView::ImageDocumentState &state,
     const KiriView::ImageSpreadPresentationController &spreadController,
     const KiriView::ImageDocumentSourceLoadRequest &request)
 {
     const bool sourceUrlChanged = state.sourceUrl() != request.sourceUrl;
-    KiriView::ImageSourceLoadPolicyInput input;
+    KiriView::ImageDocumentSourceLoadPolicyInput input;
     input.sourceUrlChanged = sourceUrlChanged;
     input.preserveTwoPageSpreadTransition = request.preserveTwoPageSpreadTransition;
     input.resetRightToLeftReading = spreadController.shouldResetRightToLeftReadingForLoad(
@@ -61,51 +62,51 @@ void ImageDocumentLoadController::loadSource(const ImageDocumentSourceLoadReques
 {
     m_deletionController.cancel();
 
-    const ImageSourceLoadPlan plan = ImageOpenWorkflow::sourceLoadPlan(
+    const ImageDocumentSourceLoadPlan plan = ImageDocumentLoadPolicy::sourceLoadPlan(
         ::sourceLoadPolicyInput(m_state, m_spreadController, request));
     applySourceLoadPlan(request, plan);
 }
 
 void ImageDocumentLoadController::applySourceLoadPlan(
-    const ImageDocumentSourceLoadRequest &request, const ImageSourceLoadPlan &plan)
+    const ImageDocumentSourceLoadRequest &request, const ImageDocumentSourceLoadPlan &plan)
 {
-    for (ImageSourceLoadAction action : plan.actions) {
+    for (ImageDocumentSourceLoadAction action : plan.actions) {
         applySourceLoadAction(request, action);
     }
 }
 
 void ImageDocumentLoadController::applySourceLoadAction(
-    const ImageDocumentSourceLoadRequest &request, ImageSourceLoadAction action)
+    const ImageDocumentSourceLoadRequest &request, ImageDocumentSourceLoadAction action)
 {
     switch (action) {
-    case ImageSourceLoadAction::CancelNavigationAndPredecode:
+    case ImageDocumentSourceLoadAction::CancelNavigationAndPredecode:
         ::cancelNavigationAndPredecode(m_navigationController, m_predecodeController);
         return;
-    case ImageSourceLoadAction::FinishSpreadTransition:
+    case ImageDocumentSourceLoadAction::FinishSpreadTransition:
         m_spreadController.finishTransition();
         return;
-    case ImageSourceLoadAction::ResetRightToLeftReading:
+    case ImageDocumentSourceLoadAction::ResetRightToLeftReading:
         m_spreadController.resetRightToLeftReading();
         return;
-    case ImageSourceLoadAction::NotifyRightToLeftReading:
+    case ImageDocumentSourceLoadAction::NotifyRightToLeftReading:
         m_spreadController.notifyRightToLeftReadingChanged();
         return;
-    case ImageSourceLoadAction::ClearSecondaryPage:
+    case ImageDocumentSourceLoadAction::ClearSecondaryPage:
         m_spreadController.clearSecondaryPage();
         return;
-    case ImageSourceLoadAction::ClearLoadingContainerNavigationUrl:
+    case ImageDocumentSourceLoadAction::ClearLoadingContainerNavigationUrl:
         m_state.clearLoadingContainerNavigationUrl();
         return;
-    case ImageSourceLoadAction::UpdateContainerNavigationUrl:
+    case ImageDocumentSourceLoadAction::UpdateContainerNavigationUrl:
         m_state.setContainerNavigationUrl(request.containerNavigationUrl);
         return;
-    case ImageSourceLoadAction::SetLoadingContainerNavigationUrl:
+    case ImageDocumentSourceLoadAction::SetLoadingContainerNavigationUrl:
         m_state.setLoadingContainerNavigationUrl(request.containerNavigationUrl);
         return;
-    case ImageSourceLoadAction::SetSourceUrl:
+    case ImageDocumentSourceLoadAction::SetSourceUrl:
         m_state.setSourceUrl(request.sourceUrl);
         return;
-    case ImageSourceLoadAction::BeginOpen:
+    case ImageDocumentSourceLoadAction::BeginOpen:
         m_openController.open();
         return;
     }

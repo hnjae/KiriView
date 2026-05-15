@@ -15,8 +15,8 @@ class ImageDocumentState;
 class ImageOpenController;
 class ImagePresentationController;
 class ImageSpreadPresentationController;
-enum class ImageSourceLoadAction;
-struct ImageSourceLoadPlan;
+enum class ImageDocumentSourceLoadAction;
+struct ImageDocumentSourceLoadPlan;
 
 class ImageDocumentLoadController final
 {
@@ -34,9 +34,9 @@ public:
 
 private:
     void applySourceLoadPlan(
-        const ImageDocumentSourceLoadRequest &request, const ImageSourceLoadPlan &plan);
+        const ImageDocumentSourceLoadRequest &request, const ImageDocumentSourceLoadPlan &plan);
     void applySourceLoadAction(
-        const ImageDocumentSourceLoadRequest &request, ImageSourceLoadAction action);
+        const ImageDocumentSourceLoadRequest &request, ImageDocumentSourceLoadAction action);
 
     ImageDocumentState &m_state;
     ImageDocumentDeletionController &m_deletionController;
