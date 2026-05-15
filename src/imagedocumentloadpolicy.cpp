@@ -6,11 +6,24 @@
 #include "kiriview/src/imagedocumentloadpolicy.cxx.h"
 
 namespace {
+KiriView::RustImageDocumentSourceLoadKind rustSourceLoadKind(
+    KiriView::ImageDocumentSourceLoadKind loadKind)
+{
+    switch (loadKind) {
+    case KiriView::ImageDocumentSourceLoadKind::CurrentSource:
+        return KiriView::RustImageDocumentSourceLoadKind::CurrentSource;
+    case KiriView::ImageDocumentSourceLoadKind::ReplacementSource:
+        return KiriView::RustImageDocumentSourceLoadKind::ReplacementSource;
+    }
+
+    return KiriView::RustImageDocumentSourceLoadKind::CurrentSource;
+}
+
 KiriView::RustImageDocumentSourceLoadPolicyInput rustSourceLoadPolicyInput(
     const KiriView::ImageDocumentSourceLoadPolicyInput &input)
 {
     KiriView::RustImageDocumentSourceLoadPolicyInput rustInput {};
-    rustInput.replace_source = input.replaceSource;
+    rustInput.load_kind = rustSourceLoadKind(input.loadKind);
     rustInput.preserve_two_page_spread_transition = input.preserveTwoPageSpreadTransition;
     rustInput.reset_right_to_left_reading = input.resetRightToLeftReading;
     rustInput.right_to_left_reading_was_enabled = input.rightToLeftReadingWasEnabled;

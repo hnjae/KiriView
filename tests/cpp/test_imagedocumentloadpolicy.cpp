@@ -33,7 +33,7 @@ void TestImageDocumentLoadPolicy::sourceLoadPlanUsesRightToLeftReadingSnapshot()
     using Action = KiriView::ImageDocumentSourceLoadAction;
 
     KiriView::ImageDocumentSourceLoadPolicyInput input;
-    input.replaceSource = false;
+    input.loadKind = KiriView::ImageDocumentSourceLoadKind::CurrentSource;
     input.preserveTwoPageSpreadTransition = true;
     input.hasRequestedContainerNavigationUrl = false;
 
@@ -74,7 +74,7 @@ void TestImageDocumentLoadPolicy::sourceLoadPlanRoutesUnchangedAndReplacementSou
     using Action = KiriView::ImageDocumentSourceLoadAction;
 
     KiriView::ImageDocumentSourceLoadPolicyInput unchangedInput;
-    unchangedInput.replaceSource = false;
+    unchangedInput.loadKind = KiriView::ImageDocumentSourceLoadKind::CurrentSource;
     unchangedInput.preserveTwoPageSpreadTransition = false;
     unchangedInput.resetRightToLeftReading = true;
     unchangedInput.rightToLeftReadingWasEnabled = true;
@@ -91,7 +91,7 @@ void TestImageDocumentLoadPolicy::sourceLoadPlanRoutesUnchangedAndReplacementSou
     compareSourceLoadActions(unchanged.actions, unchangedActions);
 
     KiriView::ImageDocumentSourceLoadPolicyInput replacementInput;
-    replacementInput.replaceSource = true;
+    replacementInput.loadKind = KiriView::ImageDocumentSourceLoadKind::ReplacementSource;
     replacementInput.preserveTwoPageSpreadTransition = true;
     replacementInput.resetRightToLeftReading = false;
     replacementInput.rightToLeftReadingWasEnabled = true;
