@@ -27,10 +27,7 @@ DisplayedImageState::DisplayedImageState(
 
 DisplayedImageState::~DisplayedImageState() = default;
 
-bool DisplayedImageState::hasImage() const
-{
-    return m_surface != nullptr && !displayedImageSurfaceIsNull(*m_surface);
-}
+bool DisplayedImageState::hasImage() const { return m_surface != nullptr && !m_surface->isNull(); }
 
 std::shared_ptr<DisplayedImageSurface> DisplayedImageState::imageSurface() const
 {
@@ -42,7 +39,7 @@ const QImage &DisplayedImageState::image() const { return m_image; }
 QSize DisplayedImageState::imageSize() const
 {
     if (m_surface != nullptr) {
-        return displayedImageSurfaceSize(*m_surface);
+        return m_surface->imageSize();
     }
 
     return {};

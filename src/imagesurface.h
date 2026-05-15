@@ -68,8 +68,6 @@ private:
 };
 
 bool staticImageFitsFullImageSurface(const StaticImagePayload &image, int maximumTextureSize);
-QSize displayedImageSurfaceSize(const DisplayedImageSurface &surface);
-bool displayedImageSurfaceIsNull(const DisplayedImageSurface &surface);
 }
 
 #endif

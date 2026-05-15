@@ -73,8 +73,6 @@ void TestImageSurface::displayedImageSurfaceExposesOnlyActivePayload()
 
     QVERIFY(!legacySurface.isNull());
     QCOMPARE(legacySurface.imageSize(), QSize(2, 1));
-    QCOMPARE(KiriView::displayedImageSurfaceSize(legacySurface), QSize(2, 1));
-    QVERIFY(!KiriView::displayedImageSurfaceIsNull(legacySurface));
     QVERIFY(legacySurface.legacyFrameSurface() != nullptr);
     QVERIFY(legacySurface.staticTileSurface() == nullptr);
 

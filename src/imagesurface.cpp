@@ -148,10 +148,4 @@ const StaticTileSurface *DisplayedImageSurface::staticTileSurface() const
     return std::get_if<StaticTileSurface>(&m_payload);
 }
 
-QSize displayedImageSurfaceSize(const DisplayedImageSurface &surface)
-{
-    return surface.imageSize();
-}
-
-bool displayedImageSurfaceIsNull(const DisplayedImageSurface &surface) { return surface.isNull(); }
 }

@@ -107,7 +107,7 @@ QSGNode *KiriImageView::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *)
         ? KiriView::DisplayedPageRole::Secondary
         : KiriView::DisplayedPageRole::Primary;
     std::shared_ptr<KiriView::DisplayedImageSurface> surface = m_document->imageSurface(role);
-    if (surface == nullptr || KiriView::displayedImageSurfaceIsNull(*surface)) {
+    if (surface == nullptr || surface->isNull()) {
         delete oldNode;
         return nullptr;
     }

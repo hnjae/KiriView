@@ -170,7 +170,7 @@ QRectF KiriImageRenderNode::rect() const { return m_targetRect; }
 
 void KiriImageRenderNode::prepare()
 {
-    if (m_rhi == nullptr || m_surface == nullptr || displayedImageSurfaceIsNull(*m_surface)) {
+    if (m_rhi == nullptr || m_surface == nullptr || m_surface->isNull()) {
         return;
     }
 
