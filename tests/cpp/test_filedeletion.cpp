@@ -7,6 +7,7 @@
 #include "imagecontainer.h"
 
 #include <QObject>
+#include <QTemporaryDir>
 #include <QTest>
 #include <QUrl>
 #include <optional>
@@ -24,6 +25,7 @@ private Q_SLOTS:
     void regularImageDeletionTargetsDisplayedUrl();
     void explicitKioArchiveImageDeletionTargetsDisplayedUrl();
     void directArchiveDocumentDeletionTargetsArchiveFile();
+    void directDirectoryDocumentDeletionTargetsDirectory();
     void completionActionRoutesDeletionResults();
 };
 
@@ -58,6 +60,24 @@ void TestFileDeletion::directArchiveDocumentDeletionTargetsArchiveFile()
     QCOMPARE(KiriView::deletionTargetUrlForDisplayedLocation(
                  KiriView::DisplayedImageLocation::fromArchiveDocument(pageUrl, *archiveDocument)),
         archiveUrl);
+}
+
+void TestFileDeletion::directDirectoryDocumentDeletionTargetsDirectory()
+{
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+
+    const QUrl directoryUrl = QUrl::fromLocalFile(directory.path());
+    const std::optional<KiriView::ArchiveDocumentLocation> directoryDocument
+        = KiriView::directOpenDocumentLocationForLocalUrl(directoryUrl);
+    QVERIFY(directoryDocument.has_value());
+    QUrl pageUrl = directoryDocument->rootUrl();
+    pageUrl.setPath(directoryDocument->rootUrl().path() + QStringLiteral("page.png"));
+
+    QCOMPARE(
+        KiriView::deletionTargetUrlForDisplayedLocation(
+            KiriView::DisplayedImageLocation::fromArchiveDocument(pageUrl, *directoryDocument)),
+        directoryUrl);
 }
 
 void TestFileDeletion::completionActionRoutesDeletionResults()

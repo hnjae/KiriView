@@ -54,7 +54,7 @@ std::optional<KiriView::ArchiveDocumentLocation> archiveDocumentForSourceLoad(
     const KiriView::ArchiveDocumentLocation &displayedArchiveDocument)
 {
     const std::optional<KiriView::ArchiveDocumentLocation> sourceArchiveDocument
-        = KiriView::archiveDocumentLocationForLocalArchiveUrl(request.sourceUrl);
+        = KiriView::directOpenDocumentLocationForLocalUrl(request.sourceUrl);
     if (sourceArchiveDocument.has_value()) {
         return sourceArchiveDocument;
     }

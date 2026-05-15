@@ -238,6 +238,12 @@ mod tests {
         path
     }
 
+    fn existing_test_directory(working_directory: &Path, name: &str) -> PathBuf {
+        let path = working_directory.join(name);
+        fs::create_dir(&path).expect("test directory should be created");
+        path
+    }
+
     #[test]
     fn relative_startup_path_becomes_local_file_source() {
         let working_directory = TestDirectory::new("relative-startup-path");
@@ -264,6 +270,19 @@ mod tests {
         )
         .expect("startup path after -- should be accepted")
         .expect("startup path after -- should produce a source");
+
+        assert_eq!(source, StartupSource::LocalFile(expected_path));
+    }
+
+    #[test]
+    fn relative_startup_directory_becomes_local_file_source() {
+        let working_directory = TestDirectory::new("relative-startup-directory");
+        let expected_path = existing_test_directory(working_directory.path(), "book");
+
+        let source =
+            initial_source_from_args(startup_args(&["book"]), Some(working_directory.path()))
+                .expect("relative startup directory should be accepted")
+                .expect("relative startup directory should produce a source");
 
         assert_eq!(source, StartupSource::LocalFile(expected_path));
     }

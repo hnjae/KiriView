@@ -11,6 +11,7 @@
 #include "rustqtconversion.h"
 
 #include <QByteArray>
+#include <QFileInfo>
 #include <optional>
 
 namespace {
@@ -77,6 +78,24 @@ std::optional<ArchiveDocumentRoot> archiveDocumentRootForLocalArchive(const QUrl
     }
 
     return ArchiveDocumentRoot { *rootUrl, archiveDocumentKindForMatch(*match) };
+}
+
+std::optional<KiriView::ArchiveDocumentLocation> directoryDocumentLocationForLocalUrl(
+    const QUrl &url)
+{
+    if (!url.isLocalFile()) {
+        return std::nullopt;
+    }
+
+    const QUrl fileUrl = KiriView::normalizedFileContainerUrl(url);
+    const QString localPath = fileUrl.toLocalFile();
+    if (localPath.isEmpty() || !QFileInfo(localPath).isDir()) {
+        return std::nullopt;
+    }
+
+    return KiriView::ArchiveDocumentLocation::fromUrls(fileUrl,
+        KiriView::normalizedDirectoryContainerUrl(fileUrl),
+        KiriView::ArchiveDocumentKind::Directory);
 }
 
 std::optional<QUrl> containingArchiveRootUrl(
@@ -150,6 +169,23 @@ std::optional<ArchiveDocumentLocation> archiveDocumentLocationForLocalArchiveUrl
 
     return ArchiveDocumentLocation::fromUrls(
         normalizedFileContainerUrl(url), root->rootUrl, root->kind);
+}
+
+std::optional<ArchiveDocumentLocation> directOpenDocumentLocationForLocalUrl(const QUrl &url)
+{
+    const std::optional<ArchiveDocumentLocation> directoryDocument
+        = directoryDocumentLocationForLocalUrl(url);
+    if (directoryDocument.has_value()) {
+        return directoryDocument;
+    }
+
+    const std::optional<ArchiveDocumentLocation> archiveDocument
+        = archiveDocumentLocationForLocalArchiveUrl(url);
+    if (archiveDocument.has_value()) {
+        return archiveDocument;
+    }
+
+    return std::nullopt;
 }
 
 bool isUrlInsideArchiveRoot(const QUrl &url, const QUrl &archiveRootUrl)

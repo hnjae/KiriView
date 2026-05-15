@@ -8,6 +8,7 @@
 
 #include <KTar>
 #include <KZip>
+#include <QDir>
 #include <QFile>
 #include <QObject>
 #include <QTemporaryDir>
@@ -64,6 +65,14 @@ void writeRarArchive(const QString &path)
     archive.close();
 }
 
+void writeFile(const QString &path, const QByteArray &data)
+{
+    QFile file(path);
+    QVERIFY(file.open(QIODevice::WriteOnly));
+    QCOMPARE(file.write(data), static_cast<qint64>(data.size()));
+    file.close();
+}
+
 std::optional<KiriView::ArchiveDocumentLocation> archiveDocumentForPath(const QString &path)
 {
     return KiriView::archiveDocumentLocationForLocalArchiveUrl(localUrl(path));
@@ -97,11 +106,14 @@ class TestArchiveBackend : public QObject
 
 private Q_SLOTS:
     void zipListingIncludesNestedSupportedImages();
+    void directoryListingIncludesNestedSupportedImages();
     void tarListingUsesSameOrdering();
     void rarListingUsesLibArchive();
     void readingArchiveEntryReturnsOriginalBytes();
+    void readingDirectoryEntryReturnsOriginalBytes();
     void readingRarEntryReturnsOriginalBytes();
     void archiveSessionListsAndReadsKArchiveEntries();
+    void directorySessionListsAndReadsEntries();
     void libArchiveSessionScansOnceAndServesRandomReads();
     void libArchiveSessionReadsFromHeldFileDescriptorAfterPathRemoval();
     void readingUrlOutsideArchiveReturnsNotFound();
@@ -132,6 +144,32 @@ void TestArchiveBackend::zipListingIncludesNestedSupportedImages()
     QCOMPARE(success->candidates.at(0).name, QStringLiteral("chapter/01.png"));
     QCOMPARE(success->candidates.at(0).url,
         archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("chapter/01.png")));
+    QCOMPARE(success->candidates.at(1).name, QStringLiteral("chapter/02.jpg"));
+}
+
+void TestArchiveBackend::directoryListingIncludesNestedSupportedImages()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    QDir root(dir.path());
+    QVERIFY(root.mkpath(QStringLiteral("chapter")));
+    writeFile(dir.filePath(QStringLiteral("chapter/02.jpg")), QByteArrayLiteral("two"));
+    writeFile(dir.filePath(QStringLiteral("notes.txt")), QByteArrayLiteral("skip"));
+    writeFile(dir.filePath(QStringLiteral("chapter/01.png")), QByteArrayLiteral("one"));
+
+    const std::optional<KiriView::ArchiveDocumentLocation> directoryDocument
+        = KiriView::directOpenDocumentLocationForLocalUrl(localUrl(dir.path()));
+    QVERIFY(directoryDocument.has_value());
+    QCOMPARE(directoryDocument->kind(), KiriView::ArchiveDocumentKind::Directory);
+    const KiriView::ArchiveImageCandidatesResult result
+        = KiriView::loadArchiveDocumentImageCandidates(*directoryDocument);
+    const KiriView::ArchiveImageCandidates *success = archiveImageCandidates(result);
+
+    QVERIFY(success != nullptr);
+    QCOMPARE(success->candidates.size(), std::size_t(2));
+    QCOMPARE(success->candidates.at(0).name, QStringLiteral("chapter/01.png"));
+    QCOMPARE(success->candidates.at(0).url,
+        archivePageUrl(directoryDocument->rootUrl(), QStringLiteral("chapter/01.png")));
     QCOMPARE(success->candidates.at(1).name, QStringLiteral("chapter/02.jpg"));
 }
 
@@ -205,6 +243,27 @@ void TestArchiveBackend::readingArchiveEntryReturnsOriginalBytes()
     QCOMPARE(success->data, expected);
 }
 
+void TestArchiveBackend::readingDirectoryEntryReturnsOriginalBytes()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    QDir root(dir.path());
+    QVERIFY(root.mkpath(QStringLiteral("pages")));
+    const QByteArray expected = QByteArrayLiteral("image-bytes");
+    writeFile(dir.filePath(QStringLiteral("pages/page.png")), expected);
+
+    const std::optional<KiriView::ArchiveDocumentLocation> directoryDocument
+        = KiriView::directOpenDocumentLocationForLocalUrl(localUrl(dir.path()));
+    QVERIFY(directoryDocument.has_value());
+    const KiriView::ArchiveImageDataResult result
+        = KiriView::loadArchiveDocumentImageData(*directoryDocument,
+            archivePageUrl(directoryDocument->rootUrl(), QStringLiteral("pages/page.png")));
+    const KiriView::ArchiveImageData *success = archiveImageData(result);
+
+    QVERIFY(success != nullptr);
+    QCOMPARE(success->data, expected);
+}
+
 void TestArchiveBackend::readingRarEntryReturnsOriginalBytes()
 {
     QTemporaryDir dir;
@@ -263,6 +322,38 @@ void TestArchiveBackend::archiveSessionListsAndReadsKArchiveEntries()
     const KiriView::ArchiveImageData *firstData = archiveImageData(firstDataResult);
     QVERIFY(firstData != nullptr);
     QCOMPARE(firstData->data, QByteArrayLiteral("one"));
+}
+
+void TestArchiveBackend::directorySessionListsAndReadsEntries()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    QDir root(dir.path());
+    QVERIFY(root.mkpath(QStringLiteral("pages")));
+    writeFile(dir.filePath(QStringLiteral("pages/02.jpg")), QByteArrayLiteral("two"));
+    writeFile(dir.filePath(QStringLiteral("pages/01.png")), QByteArrayLiteral("one"));
+
+    const std::optional<KiriView::ArchiveDocumentLocation> directoryDocument
+        = KiriView::directOpenDocumentLocationForLocalUrl(localUrl(dir.path()));
+    QVERIFY(directoryDocument.has_value());
+    KiriView::ArchiveDocumentSessionOpenResult opened
+        = KiriView::openArchiveDocumentSession(*directoryDocument);
+    auto *session = std::get_if<KiriView::ArchiveDocumentSessionPtr>(&opened);
+    QVERIFY(session != nullptr);
+    QVERIFY(*session != nullptr);
+
+    const KiriView::ArchiveImageCandidatesResult candidatesResult
+        = (*session)->loadImageCandidates();
+    const KiriView::ArchiveImageCandidates *candidates = archiveImageCandidates(candidatesResult);
+    QVERIFY(candidates != nullptr);
+    QCOMPARE(candidates->candidates.size(), std::size_t(2));
+    QCOMPARE(candidates->candidates.at(0).name, QStringLiteral("pages/01.png"));
+
+    const KiriView::ArchiveImageDataResult secondDataResult = (*session)->loadImageData(
+        archivePageUrl(directoryDocument->rootUrl(), QStringLiteral("pages/02.jpg")));
+    const KiriView::ArchiveImageData *secondData = archiveImageData(secondDataResult);
+    QVERIFY(secondData != nullptr);
+    QCOMPARE(secondData->data, QByteArrayLiteral("two"));
 }
 
 void TestArchiveBackend::libArchiveSessionScansOnceAndServesRandomReads()

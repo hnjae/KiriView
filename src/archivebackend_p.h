@@ -47,6 +47,7 @@ ArchiveImageDataResult archiveImageDataResult(QByteArray data);
 
 const ArchiveBackendOperations *kArchiveBackendOperations();
 const ArchiveBackendOperations *libArchiveBackendOperations();
+const ArchiveBackendOperations *directoryBackendOperations();
 }
 
 #endif

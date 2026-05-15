@@ -19,6 +19,10 @@ namespace Backend = KiriView::ArchiveBackendDetail;
 const Backend::ArchiveBackendOperations *archiveBackendOperationsForDocument(
     const KiriView::ArchiveDocumentLocation &archiveDocument)
 {
+    if (archiveDocument.isDirectory()) {
+        return Backend::directoryBackendOperations();
+    }
+
     switch (KiriView::archiveStorageBackendForRootScheme(archiveDocument.rootUrl().scheme())) {
     case KiriView::ArchiveStorageBackend::KZip:
     case KiriView::ArchiveStorageBackend::KTar:

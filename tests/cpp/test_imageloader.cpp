@@ -7,6 +7,7 @@
 
 #include <QObject>
 #include <QSize>
+#include <QTemporaryDir>
 #include <QTest>
 #include <QUrl>
 #include <optional>
@@ -44,6 +45,7 @@ private Q_SLOTS:
     void predecodedImageBypassesDataLoad();
     void comicBookArchiveResolvesFirstImage();
     void directArchiveResolvesFirstImage();
+    void directDirectoryResolvesFirstImage();
     void explicitKioArchiveImageStaysImageUrlMode();
     void archiveInteriorImageKeepsComicBookRoot();
     void staleLoadResultIsIgnored();
@@ -211,6 +213,48 @@ void TestImageLoader::directArchiveResolvesFirstImage()
     QCOMPARE(decodedSession->location.archiveDocumentRootUrl(), *archiveRootUrl);
     QCOMPARE(
         decodedSession->location.archiveDocument().kind(), KiriView::ArchiveDocumentKind::General);
+}
+
+void TestImageLoader::directDirectoryResolvesFirstImage()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+
+    const QUrl directoryUrl = localUrl(directory.path());
+    const std::optional<KiriView::ArchiveDocumentLocation> directoryDocument
+        = KiriView::directOpenDocumentLocationForLocalUrl(directoryUrl);
+    QVERIFY(directoryDocument.has_value());
+    const QUrl firstImageUrl
+        = archivePageUrl(directoryDocument->rootUrl(), QStringLiteral("01.png"));
+    candidateProvider.setArchiveImages(directoryDocument->rootUrl(),
+        {
+            imageCandidate(firstImageUrl),
+        });
+
+    QUrl resolvedUrl;
+    std::optional<KiriView::ImageLoadSession> decodedSession;
+    KiriView::ImageLoader::Callbacks callbacks;
+    callbacks.sourceResolved = [&resolvedUrl](const QUrl &url) { resolvedUrl = url; };
+    callbacks.decodedImage = [&decodedSession](KiriView::ImageLoadSession session, auto) {
+        decodedSession = std::move(session);
+    };
+    KiriView::ImageLoader loader
+        = createLoader(this, candidateProvider, dataLoader, std::move(callbacks));
+
+    loader.start(KiriView::ImageLoadRequest::fromUrl(directoryUrl));
+
+    QCOMPARE(resolvedUrl, firstImageUrl);
+    QCOMPARE(dataLoader.loadCount(), std::size_t(1));
+    QCOMPARE(dataLoader.frontLoad().url, firstImageUrl);
+    dataLoader.finishFrontLoad(QByteArrayLiteral("ok"));
+
+    QTRY_VERIFY(decodedSession.has_value());
+    QCOMPARE(decodedSession->location.imageUrl(), firstImageUrl);
+    QCOMPARE(decodedSession->location.archiveDocumentRootUrl(), directoryDocument->rootUrl());
+    QCOMPARE(decodedSession->location.archiveDocument().kind(),
+        KiriView::ArchiveDocumentKind::Directory);
 }
 
 void TestImageLoader::explicitKioArchiveImageStaysImageUrlMode()

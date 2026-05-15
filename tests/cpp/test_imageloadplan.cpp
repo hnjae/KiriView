@@ -6,6 +6,7 @@
 #include "imageloadplan.h"
 
 #include <QObject>
+#include <QTemporaryDir>
 #include <QTest>
 #include <QUrl>
 #include <QtGlobal>
@@ -23,6 +24,7 @@ class TestImageLoadPlan : public QObject
 private Q_SLOTS:
     void localFilePlansDirectImageLoad();
     void localComicBookArchivePlansArchiveListing();
+    void localDirectoryPlansDocumentListing();
     void containerNavigationRestoresArchiveDocumentForInteriorImage();
     void displayedArchiveContextIsKeptForInteriorImage();
     void explicitKioArchiveImagePlansDirectLoad();
@@ -57,6 +59,28 @@ void TestImageLoadPlan::localComicBookArchivePlansArchiveListing()
     QCOMPARE(plan.session.location.archiveDocumentRootUrl(), archiveDocument->rootUrl());
     QCOMPARE(
         plan.session.location.archiveDocument().kind(), KiriView::ArchiveDocumentKind::ComicBook);
+}
+
+void TestImageLoadPlan::localDirectoryPlansDocumentListing()
+{
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+
+    const QUrl directoryUrl = localUrl(directory.path());
+    const std::optional<KiriView::ArchiveDocumentLocation> directoryDocument
+        = KiriView::directOpenDocumentLocationForLocalUrl(directoryUrl);
+    QVERIFY(directoryDocument.has_value());
+
+    const KiriView::ImageLoadPlan plan
+        = KiriView::imageLoadPlan(12, KiriView::ImageLoadRequest::fromUrl(directoryUrl));
+
+    QCOMPARE(plan.session.id, quint64(12));
+    QVERIFY(plan.requiresArchiveListing);
+    QCOMPARE(plan.session.location.imageUrl(), directoryUrl);
+    QCOMPARE(plan.session.location.archiveDocumentFileUrl(), directoryDocument->fileUrl());
+    QCOMPARE(plan.session.location.archiveDocumentRootUrl(), directoryDocument->rootUrl());
+    QCOMPARE(
+        plan.session.location.archiveDocument().kind(), KiriView::ArchiveDocumentKind::Directory);
 }
 
 void TestImageLoadPlan::containerNavigationRestoresArchiveDocumentForInteriorImage()

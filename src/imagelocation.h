@@ -66,6 +66,7 @@ private:
 enum class ArchiveDocumentKind {
     ComicBook,
     General,
+    Directory,
 };
 
 class ArchiveDocumentLocation
@@ -90,6 +91,7 @@ public:
     ArchiveDocumentKind kind() const { return m_kind; }
     bool isEmpty() const { return m_fileUrl.isEmpty() || m_rootUrl.isEmpty(); }
     bool isComicBook() const { return !isEmpty() && m_kind == ArchiveDocumentKind::ComicBook; }
+    bool isDirectory() const { return !isEmpty() && m_kind == ArchiveDocumentKind::Directory; }
 
     friend bool operator==(
         const ArchiveDocumentLocation &left, const ArchiveDocumentLocation &right)

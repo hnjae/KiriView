@@ -13,6 +13,7 @@ namespace {
 using KiriView::archiveDocumentContainsUrl;
 using KiriView::ArchiveDocumentLocation;
 using KiriView::archiveDocumentLocationForLocalArchiveUrl;
+using KiriView::directOpenDocumentLocationForLocalUrl;
 
 struct ArchiveDocumentLoadPlan {
     ArchiveDocumentLocation archiveDocument;
@@ -40,7 +41,7 @@ ArchiveDocumentLoadPlan archiveDocumentLoadPlanForImageLoadRequest(
     const KiriView::ImageLoadRequest &request)
 {
     const std::optional<ArchiveDocumentLocation> sourceArchiveDocument
-        = archiveDocumentLocationForLocalArchiveUrl(request.sourceUrl());
+        = directOpenDocumentLocationForLocalUrl(request.sourceUrl());
     if (sourceArchiveDocument.has_value()) {
         return { *sourceArchiveDocument, true };
     }

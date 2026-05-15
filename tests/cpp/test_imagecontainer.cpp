@@ -4,6 +4,7 @@
 #include "imagecontainer.h"
 
 #include <QObject>
+#include <QTemporaryDir>
 #include <QTest>
 #include <QUrl>
 #include <optional>
@@ -73,6 +74,7 @@ private Q_SLOTS:
     void archiveInteriorUrlsResolveToTheirRootAndTitle();
     void archiveDocumentPagesResolveToArchiveZoomScope();
     void directArchivePagesResolveToZoomScopeOnly();
+    void directDirectoryPagesResolveToDirectoryDocumentScope();
     void regularImagesDoNotResolveToZoomScopes();
     void explicitKdeArchiveUrlImagesDoNotResolveToZoomScopes();
     void containerCandidatesOnlyIncludeComicBookArchives();
@@ -185,6 +187,30 @@ void TestImageContainer::directArchivePagesResolveToZoomScopeOnly()
 
     QVERIFY(KiriView::containerNavigationUrlForLocation(location).isEmpty());
     QCOMPARE(KiriView::zoomScopeUrlForLocation(location), archiveUrl);
+}
+
+void TestImageContainer::directDirectoryPagesResolveToDirectoryDocumentScope()
+{
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+
+    const QUrl directoryUrl = QUrl::fromLocalFile(directory.path());
+    const std::optional<KiriView::ArchiveDocumentLocation> directoryDocument
+        = KiriView::directOpenDocumentLocationForLocalUrl(directoryUrl);
+    QVERIFY(directoryDocument.has_value());
+    QCOMPARE(directoryDocument->kind(), KiriView::ArchiveDocumentKind::Directory);
+    QCOMPARE(directoryDocument->fileUrl(), directoryUrl);
+    QCOMPARE(directoryDocument->rootUrl().scheme(), QStringLiteral("file"));
+    QVERIFY(directoryDocument->rootUrl().path().endsWith(QLatin1Char('/')));
+
+    QUrl pageUrl = directoryDocument->rootUrl();
+    pageUrl.setPath(directoryDocument->rootUrl().path() + QStringLiteral("chapter/page001.png"));
+    const KiriView::DisplayedImageLocation location
+        = KiriView::DisplayedImageLocation::fromArchiveDocument(pageUrl, *directoryDocument);
+
+    QVERIFY(KiriView::containerNavigationUrlForLocation(location).isEmpty());
+    QCOMPARE(KiriView::zoomScopeUrlForLocation(location), directoryUrl);
+    QCOMPARE(KiriView::windowTitleFileNameForDisplayedLocation(location), directoryUrl.fileName());
 }
 
 void TestImageContainer::regularImagesDoNotResolveToZoomScopes()
