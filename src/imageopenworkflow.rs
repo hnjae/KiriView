@@ -53,6 +53,18 @@ mod ffi {
     }
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    enum ImageOpenApplicationStep {
+        Effects = 0,
+        TrackedLoadCompletion = 1,
+        SourceUrl = 2,
+        DisplayedLocation = 3,
+        ContainerNavigationUrl = 4,
+        Loading = 5,
+        Status = 6,
+        ErrorString = 7,
+    }
+
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     struct ImageOpenBeginSourceLoadRequest {
         has_image: bool,
         loading_container_navigation_url_empty: bool,
@@ -80,6 +92,7 @@ mod ffi {
         error_string: ImageOpenErrorStringTarget,
         clear_loading_container_navigation_url: bool,
         effects: Vec<ImageOpenEffect>,
+        steps: Vec<ImageOpenApplicationStep>,
     }
 
     extern "Rust" {
@@ -110,10 +123,10 @@ mod ffi {
 }
 
 use ffi::{
-    ImageOpenBeginSourceLoadRequest, ImageOpenBoolTarget, ImageOpenDisplayedLocationTarget,
-    ImageOpenEffect, ImageOpenErrorStringTarget, ImageOpenSourceLoadErrorRequest,
-    ImageOpenStatusTarget, ImageOpenSuccessfulImageLoadRequest, ImageOpenTransition,
-    ImageOpenUrlTarget,
+    ImageOpenApplicationStep, ImageOpenBeginSourceLoadRequest, ImageOpenBoolTarget,
+    ImageOpenDisplayedLocationTarget, ImageOpenEffect, ImageOpenErrorStringTarget,
+    ImageOpenSourceLoadErrorRequest, ImageOpenStatusTarget, ImageOpenSuccessfulImageLoadRequest,
+    ImageOpenTransition, ImageOpenUrlTarget,
 };
 
 fn rust_image_open_begin_source_load(
@@ -133,6 +146,12 @@ fn rust_image_open_begin_source_load(
         transition.effects.push(ImageOpenEffect::ResetZoom);
         transition.status = ImageOpenStatusTarget::Loading;
     }
+    transition.steps = vec![
+        ImageOpenApplicationStep::ContainerNavigationUrl,
+        ImageOpenApplicationStep::Loading,
+        ImageOpenApplicationStep::Effects,
+        ImageOpenApplicationStep::Status,
+    ];
 
     transition
 }
@@ -143,6 +162,7 @@ fn rust_image_open_finish_empty_source_load() -> ImageOpenTransition {
     transition.effects.push(ImageOpenEffect::ResetZoom);
     transition.container_navigation_url = ImageOpenUrlTarget::Empty;
     transition.status = ImageOpenStatusTarget::Null;
+    transition.steps = empty_source_load_steps();
     transition
 }
 
@@ -165,6 +185,7 @@ fn rust_image_open_finish_successful_image_load(
     transition
         .effects
         .push(ImageOpenEffect::ScheduleAdjacentImagePredecode);
+    transition.steps = successful_image_load_steps();
     transition
 }
 
@@ -176,6 +197,7 @@ fn container_navigation_load_error_transition() -> ImageOpenTransition {
     transition
         .effects
         .push(ImageOpenEffect::PrepareFailedContainer);
+    transition.steps = load_error_steps();
     transition
 }
 
@@ -191,6 +213,7 @@ fn replacement_load_error_transition(displayed_url_empty: bool) -> ImageOpenTran
     transition
         .effects
         .push(ImageOpenEffect::ScheduleAdjacentImagePredecode);
+    transition.steps = load_error_steps();
     transition
 }
 
@@ -230,6 +253,7 @@ fn cleared_load_error_transition(reset_zoom: bool) -> ImageOpenTransition {
         transition.effects.push(ImageOpenEffect::ResetZoom);
     }
     transition.container_navigation_url = ImageOpenUrlTarget::Empty;
+    transition.steps = load_error_steps();
     transition
 }
 
@@ -257,7 +281,40 @@ fn empty_transition() -> ImageOpenTransition {
         error_string: ImageOpenErrorStringTarget::Unchanged,
         clear_loading_container_navigation_url: false,
         effects: Vec::new(),
+        steps: Vec::new(),
     }
+}
+
+fn empty_source_load_steps() -> Vec<ImageOpenApplicationStep> {
+    vec![
+        ImageOpenApplicationStep::Effects,
+        ImageOpenApplicationStep::TrackedLoadCompletion,
+        ImageOpenApplicationStep::ContainerNavigationUrl,
+        ImageOpenApplicationStep::Status,
+    ]
+}
+
+fn successful_image_load_steps() -> Vec<ImageOpenApplicationStep> {
+    vec![
+        ImageOpenApplicationStep::SourceUrl,
+        ImageOpenApplicationStep::DisplayedLocation,
+        ImageOpenApplicationStep::ContainerNavigationUrl,
+        ImageOpenApplicationStep::ErrorString,
+        ImageOpenApplicationStep::TrackedLoadCompletion,
+        ImageOpenApplicationStep::Status,
+        ImageOpenApplicationStep::Effects,
+    ]
+}
+
+fn load_error_steps() -> Vec<ImageOpenApplicationStep> {
+    vec![
+        ImageOpenApplicationStep::Effects,
+        ImageOpenApplicationStep::TrackedLoadCompletion,
+        ImageOpenApplicationStep::ContainerNavigationUrl,
+        ImageOpenApplicationStep::SourceUrl,
+        ImageOpenApplicationStep::ErrorString,
+        ImageOpenApplicationStep::Status,
+    ]
 }
 
 #[cfg(test)]
@@ -312,6 +369,15 @@ mod tests {
             transition.effects,
             vec![ImageOpenEffect::ClearImage, ImageOpenEffect::ResetZoom]
         );
+        assert_eq!(
+            transition.steps,
+            vec![
+                ImageOpenApplicationStep::ContainerNavigationUrl,
+                ImageOpenApplicationStep::Loading,
+                ImageOpenApplicationStep::Effects,
+                ImageOpenApplicationStep::Status,
+            ]
+        );
     }
 
     #[test]
@@ -353,6 +419,7 @@ mod tests {
                 ImageOpenEffect::ScheduleAdjacentImagePredecode
             ]
         );
+        assert_eq!(transition.steps, successful_image_load_steps());
     }
 
     #[test]
@@ -374,6 +441,7 @@ mod tests {
             &transition,
             ImageOpenEffect::ScheduleAdjacentImagePredecode
         ));
+        assert_eq!(transition.steps, load_error_steps());
     }
 
     #[test]
@@ -397,6 +465,8 @@ mod tests {
             ImageOpenUrlTarget::Empty
         );
         assert_eq!(animation.status, ImageOpenStatusTarget::Error);
+        assert_eq!(initial.steps, load_error_steps());
+        assert_eq!(animation.steps, load_error_steps());
     }
 
     #[test]

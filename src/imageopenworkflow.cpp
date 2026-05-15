@@ -172,50 +172,48 @@ public:
     {
     }
 
-    void applyBeginSourceLoad(const KiriView::ImageOpenTransition &transition)
-    {
-        const ImageOpenTransitionContext context;
-        applyContainerNavigationUrlTarget(transition.container_navigation_url, context);
-        applyLoadingTarget(transition.loading);
-        applyEffects(transition.effects, context);
-        applyStatusTarget(transition.status);
-    }
-
-    void applyFinishEmptySourceLoad(const KiriView::ImageOpenTransition &transition)
-    {
-        const ImageOpenTransitionContext context;
-        applyEffects(transition.effects, context);
-        applyTrackedLoadCompletion(transition);
-        applyContainerNavigationUrlTarget(transition.container_navigation_url, context);
-        applyStatusTarget(transition.status);
-    }
-
-    void applyFinishSuccessfulImageLoad(
+    void apply(
         const KiriView::ImageOpenTransition &transition, const ImageOpenTransitionContext &context)
     {
-        applySourceUrlTarget(transition.source_url, context);
-        applyDisplayedLocationTarget(transition.displayed_location, context);
-        applyContainerNavigationUrlTarget(transition.container_navigation_url, context);
-        applyErrorStringTarget(transition.error_string, context);
-        applyTrackedLoadCompletion(transition);
-        applyStatusTarget(transition.status);
-        applyEffects(transition.effects, context);
-    }
-
-    void applyFinishLoadWithError(
-        const KiriView::ImageOpenTransition &transition, const ImageOpenTransitionContext &context)
-    {
-        applyEffects(transition.effects, context);
-        applyTrackedLoadCompletion(transition);
-        applyContainerNavigationUrlTarget(transition.container_navigation_url, context);
-        applySourceUrlTarget(transition.source_url, context);
-        applyErrorStringTarget(transition.error_string, context);
-        applyStatusTarget(transition.status);
+        for (KiriView::ImageOpenApplicationStep step : transition.steps) {
+            applyStep(step, transition, context);
+        }
     }
 
     KiriView::ImageDocumentEffects takeEffects() { return std::move(m_effects); }
 
 private:
+    void applyStep(KiriView::ImageOpenApplicationStep step,
+        const KiriView::ImageOpenTransition &transition, const ImageOpenTransitionContext &context)
+    {
+        switch (step) {
+        case KiriView::ImageOpenApplicationStep::Effects:
+            applyEffects(transition.effects, context);
+            return;
+        case KiriView::ImageOpenApplicationStep::TrackedLoadCompletion:
+            applyTrackedLoadCompletion(transition);
+            return;
+        case KiriView::ImageOpenApplicationStep::SourceUrl:
+            applySourceUrlTarget(transition.source_url, context);
+            return;
+        case KiriView::ImageOpenApplicationStep::DisplayedLocation:
+            applyDisplayedLocationTarget(transition.displayed_location, context);
+            return;
+        case KiriView::ImageOpenApplicationStep::ContainerNavigationUrl:
+            applyContainerNavigationUrlTarget(transition.container_navigation_url, context);
+            return;
+        case KiriView::ImageOpenApplicationStep::Loading:
+            applyLoadingTarget(transition.loading);
+            return;
+        case KiriView::ImageOpenApplicationStep::Status:
+            applyStatusTarget(transition.status);
+            return;
+        case KiriView::ImageOpenApplicationStep::ErrorString:
+            applyErrorStringTarget(transition.error_string, context);
+            return;
+        }
+    }
+
     void applyTrackedLoadCompletion(const KiriView::ImageOpenTransition &transition)
     {
         if (transition.clear_loading_container_navigation_url) {
@@ -306,15 +304,16 @@ namespace KiriView::ImageOpenWorkflow {
 ImageDocumentEffects beginSourceLoad(ImageDocumentState &state, bool hasImage)
 {
     ImageOpenTransitionApplier transition(state);
-    transition.applyBeginSourceLoad(rustImageOpenBeginSourceLoad(
-        beginSourceLoadRequest(hasImage, state.loadingContainerNavigationUrl().isEmpty())));
+    transition.apply(rustImageOpenBeginSourceLoad(beginSourceLoadRequest(
+                         hasImage, state.loadingContainerNavigationUrl().isEmpty())),
+        ImageOpenTransitionContext());
     return transition.takeEffects();
 }
 
 ImageDocumentEffects finishEmptySourceLoad(ImageDocumentState &state)
 {
     ImageOpenTransitionApplier transition(state);
-    transition.applyFinishEmptySourceLoad(rustImageOpenFinishEmptySourceLoad());
+    transition.apply(rustImageOpenFinishEmptySourceLoad(), ImageOpenTransitionContext());
     return transition.takeEffects();
 }
 
@@ -322,8 +321,7 @@ ImageDocumentEffects finishSuccessfulImageLoad(
     ImageDocumentState &state, const ImageLoadSession &session)
 {
     ImageOpenTransitionApplier transition(state);
-    transition.applyFinishSuccessfulImageLoad(
-        rustImageOpenFinishSuccessfulImageLoad(successfulImageLoadRequest(session)),
+    transition.apply(rustImageOpenFinishSuccessfulImageLoad(successfulImageLoadRequest(session)),
         ImageOpenTransitionContext::successfulImageLoad(session));
     return transition.takeEffects();
 }
@@ -334,9 +332,8 @@ ImageDocumentEffects finishLoadWithError(ImageDocumentState &state, const ImageL
     ImageOpenTransitionApplier transition(state);
     const QUrl containerUrl = session.request.containerNavigationUrl();
     const QUrl displayedUrl = state.displayedUrl();
-    transition.applyFinishLoadWithError(
-        rustImageOpenFinishSourceLoadWithError(
-            sourceLoadErrorRequest(containerUrl.isEmpty(), hasImage, displayedUrl.isEmpty())),
+    transition.apply(rustImageOpenFinishSourceLoadWithError(sourceLoadErrorRequest(
+                         containerUrl.isEmpty(), hasImage, displayedUrl.isEmpty())),
         ImageOpenTransitionContext::sourceLoadError(session, displayedUrl, errorString));
     return transition.takeEffects();
 }
@@ -345,7 +342,7 @@ ImageDocumentEffects finishContainerNavigationLoadWithError(
     ImageDocumentState &state, const QUrl &containerUrl, const QString &errorString)
 {
     ImageOpenTransitionApplier transition(state);
-    transition.applyFinishLoadWithError(rustImageOpenFinishContainerNavigationLoadWithError(),
+    transition.apply(rustImageOpenFinishContainerNavigationLoadWithError(),
         ImageOpenTransitionContext::containerNavigationError(containerUrl, errorString));
     return transition.takeEffects();
 }
@@ -354,7 +351,7 @@ ImageDocumentEffects finishAnimationLoadWithError(
     ImageDocumentState &state, const QString &errorString)
 {
     ImageOpenTransitionApplier transition(state);
-    transition.applyFinishLoadWithError(rustImageOpenFinishAnimationLoadWithError(),
+    transition.apply(rustImageOpenFinishAnimationLoadWithError(),
         ImageOpenTransitionContext::animationError(errorString));
     return transition.takeEffects();
 }
