@@ -7,6 +7,10 @@
 #include <vector>
 
 namespace KiriView {
+class ImageDocumentState;
+class ImageSpreadPresentationController;
+struct ImageDocumentSourceLoadRequest;
+
 enum class ImageDocumentSourceLoadAction {
     CancelNavigationAndPredecode,
     FinishSpreadTransition,
@@ -45,6 +49,9 @@ struct ImageDocumentSourceLoadPlan {
 
 namespace ImageDocumentLoadPolicy {
     ImageDocumentSourceLoadPlan sourceLoadPlan(const ImageDocumentSourceLoadPolicyInput &input);
+    ImageDocumentSourceLoadPlan sourceLoadPlan(const ImageDocumentState &state,
+        const ImageSpreadPresentationController &spreadController,
+        const ImageDocumentSourceLoadRequest &request);
 }
 }
 

@@ -3,6 +3,9 @@
 
 #include "imagedocumentloadpolicy.h"
 
+#include "imagedocumentsourceloadrequest.h"
+#include "imagedocumentstate.h"
+#include "imagespreadpresentationcontroller.h"
 #include "kiriview/src/imagedocumentloadpolicy.cxx.h"
 
 namespace {
@@ -85,6 +88,44 @@ KiriView::ImageDocumentSourceLoadPlan imageDocumentSourceLoadPlan(
     }
     return plan;
 }
+
+KiriView::ImageDocumentSourceLoadKind sourceLoadKind(const KiriView::ImageDocumentState &state,
+    const KiriView::ImageDocumentSourceLoadRequest &request)
+{
+    if (state.sourceUrl() == request.sourceUrl) {
+        return KiriView::ImageDocumentSourceLoadKind::CurrentSource;
+    }
+
+    return KiriView::ImageDocumentSourceLoadKind::ReplacementSource;
+}
+
+KiriView::ImageDocumentRightToLeftReadingReset rightToLeftReadingReset(
+    const KiriView::ImageDocumentState &state,
+    const KiriView::ImageSpreadPresentationController &spreadController,
+    const KiriView::ImageDocumentSourceLoadRequest &request)
+{
+    if (!spreadController.shouldResetRightToLeftReadingForLoad(
+            state.displayedArchiveDocument(), request.sourceUrl, request.containerNavigationUrl)) {
+        return KiriView::ImageDocumentRightToLeftReadingReset::Keep;
+    }
+
+    return spreadController.rightToLeftReadingEnabled()
+        ? KiriView::ImageDocumentRightToLeftReadingReset::ResetActive
+        : KiriView::ImageDocumentRightToLeftReadingReset::ResetInactive;
+}
+
+KiriView::ImageDocumentSourceLoadPolicyInput sourceLoadPolicyInput(
+    const KiriView::ImageDocumentState &state,
+    const KiriView::ImageSpreadPresentationController &spreadController,
+    const KiriView::ImageDocumentSourceLoadRequest &request)
+{
+    KiriView::ImageDocumentSourceLoadPolicyInput input;
+    input.loadKind = sourceLoadKind(state, request);
+    input.preserveTwoPageSpreadTransition = request.preserveTwoPageSpreadTransition;
+    input.rightToLeftReadingReset = rightToLeftReadingReset(state, spreadController, request);
+    input.hasRequestedContainerNavigationUrl = !request.containerNavigationUrl.isEmpty();
+    return input;
+}
 }
 
 namespace KiriView::ImageDocumentLoadPolicy {
@@ -92,5 +133,12 @@ ImageDocumentSourceLoadPlan sourceLoadPlan(const ImageDocumentSourceLoadPolicyIn
 {
     return imageDocumentSourceLoadPlan(
         rustImageDocumentSourceLoadPlan(rustSourceLoadPolicyInput(input)));
+}
+
+ImageDocumentSourceLoadPlan sourceLoadPlan(const ImageDocumentState &state,
+    const ImageSpreadPresentationController &spreadController,
+    const ImageDocumentSourceLoadRequest &request)
+{
+    return sourceLoadPlan(::sourceLoadPolicyInput(state, spreadController, request));
 }
 }
