@@ -26,16 +26,13 @@ default outside fullscreen. Users can switch the application menu presentation
 between Hamburger Menu and a conventional menubar, and KiriView remembers the
 selected presentation as application state across launches. In Hamburger Menu
 mode outside fullscreen, the toolbar application menu contains application
-actions such as Open, archive navigation, Full Screen, settings, shortcut
+actions such as Open, archive navigation, Full Screen, shortcut
 configuration, shortcut help, and Quit. In menubar mode outside fullscreen,
 those application actions are available from the menubar, and any toolbar
 overflow menu appears only when toolbar controls do not fit. In fullscreen,
 KiriView hides both the menubar and toolbar application menu button; actions
 with configured shortcuts remain available through those shortcuts.
-The Interface settings page follows the KDE and Kirigami settings page style
-and lets users choose between Hamburger Menu and Menubar presentation. Selecting
-an option applies it immediately and the selected option reflects the current
-saved application menu presentation.
+KiriView does not expose a general Settings page in the current scope.
 The Keyboard Shortcuts help is shown as read-only supporting content over the
 main window. It lists the current configured shortcut text for KiriView actions
 and can be dismissed with Escape or the close button.
@@ -434,7 +431,7 @@ main window. Unmodified quit shortcuts such as `q` are inactive while the page
 number or zoom input is focused; quit shortcuts using Ctrl, Alt, or Meta remain
 active while those inputs are focused.
 
-Users can open Settings to configure KiriView's interface and keyboard
+Users can open Keyboard Shortcuts configuration to configure KiriView's keyboard
 shortcuts. Changing a shortcut updates the toolbar, application menu, menubar,
 shortcut help, and active keyboard handling consistently. Shortcut changes apply
 immediately and persist across launches.
