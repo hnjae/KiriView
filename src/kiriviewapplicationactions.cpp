@@ -140,7 +140,6 @@ constexpr std::array actionDefinitions {
     registeredAction(KiriViewApplication::HelpShortcutsAction, "help_shortcuts",
         kli18nc("@action", "Keyboard Shortcuts"), "help-keyboard-shortcuts-symbolic",
         portableShortcutSpec("?", "F1")),
-    inheritedAction(KiriViewApplication::OptionsConfigureAction, "options_configure"),
     inheritedAction(
         KiriViewApplication::OptionsConfigureKeybindingAction, "options_configure_keybinding"),
     showMenubarAction(KiriViewApplication::OptionsShowMenubarAction, "options_show_menubar",

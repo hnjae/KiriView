@@ -238,7 +238,7 @@ Item {
     }
 
     ActionShortcutGroup {
-        actionIds: [KiriViewApplication.OptionsConfigureAction, KiriViewApplication.OptionsConfigureKeybindingAction, KiriViewApplication.OptionsShowMenubarAction]
+        actionIds: [KiriViewApplication.OptionsConfigureKeybindingAction, KiriViewApplication.OptionsShowMenubarAction]
         application: root.application
         shortcutsEnabled: root.helpShortcutsEnabled
     }

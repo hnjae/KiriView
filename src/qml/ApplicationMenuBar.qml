@@ -148,10 +148,6 @@ Controls.MenuBar {
         Controls.MenuSeparator {}
 
         Controls.MenuItem {
-            action: root.actions.configureAction
-        }
-
-        Controls.MenuItem {
             action: root.actions.configureShortcutsAction
         }
     }

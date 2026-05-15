@@ -34,11 +34,6 @@ QString definitionActionName(const Actions::ActionDefinition &definition)
     return QString::fromLatin1(definition.name);
 }
 
-bool actionNeedsConfigurationView(const Actions::ActionDefinition &definition)
-{
-    return definition.actionId == KiriViewApplication::OptionsConfigureAction;
-}
-
 bool actionDefaultShortcutsAreManagedByKiriView(const Actions::ActionDefinition &definition)
 {
     return definition.kind != Actions::RegistrationKind::Inherited;
@@ -82,6 +77,7 @@ private Q_SLOTS:
     void init();
     void cleanup();
     void actionsAreRegisteredWithDefaultShortcuts();
+    void generalSettingsActionIsNotRegistered();
     void actionIdsResolveActionNamesAndShortcuts();
     void shortcutsApiReturnsCurrentShortcuts();
     void shortcutModifierPartitionsTextInputShortcuts();
@@ -108,10 +104,6 @@ void TestKiriViewApplication::actionsAreRegisteredWithDefaultShortcuts()
     KiriViewApplication application;
 
     for (const Actions::ActionDefinition &definition : Actions::definitions()) {
-        if (actionNeedsConfigurationView(definition)) {
-            continue;
-        }
-
         const QString actionName = definitionActionName(definition);
         QVERIFY2(application.action(actionName) != nullptr,
             qPrintable(QStringLiteral("Missing action %1").arg(actionName)));
@@ -120,18 +112,19 @@ void TestKiriViewApplication::actionsAreRegisteredWithDefaultShortcuts()
                 application, actionName, Actions::defaultShortcuts(definition.defaultShortcuts));
         }
     }
+}
 
-    QObject configurationView;
-    application.setConfigurationView(&configurationView);
-    QVERIFY(application.action(Actions::actionName(KiriViewApplication::OptionsConfigureAction))
-        != nullptr);
+void TestKiriViewApplication::generalSettingsActionIsNotRegistered()
+{
+    KiriViewApplication application;
+
+    QCOMPARE(application.action(QStringLiteral("options_configure")), nullptr);
+    QCOMPARE(application.shortcuts(QStringLiteral("options_configure")), QList<QKeySequence>());
 }
 
 void TestKiriViewApplication::actionIdsResolveActionNamesAndShortcuts()
 {
     KiriViewApplication application;
-    QObject configurationView;
-    application.setConfigurationView(&configurationView);
 
     for (const Actions::ActionDefinition &definition : Actions::definitions()) {
         const QString actionName = definitionActionName(definition);

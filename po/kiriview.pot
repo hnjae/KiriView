@@ -143,10 +143,6 @@ msgstr ""
 msgid "Could not delete the selected file."
 msgstr ""
 
-#: src/imagedocumentcontroller.cpp src/imageopencontroller.cpp
-msgid "Could not decode the selected image animation."
-msgstr ""
-
 #: src/imagedocumentnavigationcontroller.cpp
 msgid "Could not open the selected comic book archive."
 msgstr ""
@@ -169,6 +165,10 @@ msgstr ""
 
 #: src/imageopencontroller.cpp
 msgid "Could not open the selected archive."
+msgstr ""
+
+#: src/imageopencontroller.cpp
+msgid "Could not decode the selected image animation."
 msgstr ""
 
 #: src/kiriviewapplicationactions.cpp
@@ -414,34 +414,9 @@ msgctxt "@info:tooltip"
 msgid "Open menu"
 msgstr ""
 
-#: src/qml/InterfaceSettingsPage.qml
-msgctxt "@title:window"
-msgid "Interface"
-msgstr ""
-
-#: src/qml/InterfaceSettingsPage.qml
-msgctxt "@title:group"
-msgid "Application Menu"
-msgstr ""
-
-#: src/qml/InterfaceSettingsPage.qml
-msgctxt "@option:radio"
-msgid "Hamburger Menu"
-msgstr ""
-
-#: src/qml/InterfaceSettingsPage.qml
-msgctxt "@option:radio"
-msgid "Menubar"
-msgstr ""
-
 #: src/qml/Main.qml
 msgctxt "@title:window"
 msgid "%1 — KiriView"
-msgstr ""
-
-#: src/qml/Main.qml
-msgctxt "@title:settings module"
-msgid "Interface"
 msgstr ""
 
 #: src/qml/Main.qml

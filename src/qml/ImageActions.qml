@@ -47,11 +47,10 @@ Item {
     readonly property var scanBackwardAction: scanBackwardManagedAction.proxy
     readonly property var fullscreenAction: fullscreenManagedAction.proxy
     readonly property var shortcutHelpAction: shortcutHelpManagedAction.proxy
-    readonly property var configureAction: configureManagedAction.proxy
     readonly property var configureShortcutsAction: configureShortcutsManagedAction.proxy
     readonly property var showMenubarAction: showMenubarManagedAction.proxy
     readonly property var quitAction: quitManagedAction.proxy
-    readonly property var applicationMenuActions: [openAction, applicationMenuFileSeparator, moveToTrashAction, deleteFileAction, applicationMenuNavigationSeparator, previousContainerAction, nextContainerAction, applicationMenuViewSeparator, twoPageModeAction, rightToLeftReadingAction, fullscreenAction, applicationMenuSettingsSeparator, showMenubarAction, configureAction, configureShortcutsAction, applicationMenuHelpSeparator, shortcutHelpAction, applicationMenuQuitSeparator, quitAction]
+    readonly property var applicationMenuActions: [openAction, applicationMenuFileSeparator, moveToTrashAction, deleteFileAction, applicationMenuNavigationSeparator, previousContainerAction, nextContainerAction, applicationMenuViewSeparator, twoPageModeAction, rightToLeftReadingAction, fullscreenAction, applicationMenuSettingsSeparator, showMenubarAction, configureShortcutsAction, applicationMenuHelpSeparator, shortcutHelpAction, applicationMenuQuitSeparator, quitAction]
 
     signal openDialogRequested
     signal imageBoundaryReached(string message)
@@ -394,14 +393,6 @@ Item {
         displayHint: Kirigami.DisplayHint.AlwaysHide
 
         onTriggered: root.shortcutHelpRequested()
-    }
-
-    ManagedAction {
-        id: configureManagedAction
-
-        actionId: KiriViewApplication.OptionsConfigureAction
-        application: root.application
-        displayHint: Kirigami.DisplayHint.AlwaysHide
     }
 
     ManagedAction {

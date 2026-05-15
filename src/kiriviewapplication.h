@@ -59,7 +59,6 @@ public:
         GoNextSinglePageAction,
         WindowFullscreenAction,
         HelpShortcutsAction,
-        OptionsConfigureAction,
         OptionsConfigureKeybindingAction,
         OptionsShowMenubarAction,
         FileQuitAction,

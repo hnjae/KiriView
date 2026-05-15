@@ -6,7 +6,6 @@ import QtQuick.Dialogs as Dialogs
 import io.github.hnjae.kiriview
 import org.kde.ki18n
 import org.kde.kirigami as Kirigami
-import org.kde.kirigamiaddons.settings as KirigamiSettings
 import org.kde.kirigamiaddons.statefulapp as StatefulApp
 
 StatefulApp.StatefulWindow {
@@ -14,8 +13,6 @@ StatefulApp.StatefulWindow {
 
     application: KiriViewApplication {
         id: kiriApplication
-
-        configurationView: settingsView
     }
     title: page.imageDocument.windowTitleFileName.length > 0 ? KI18n.i18nc("@title:window", "%1 — KiriView", page.imageDocument.windowTitleFileName) : "KiriView"
     visible: true
@@ -295,29 +292,6 @@ StatefulApp.StatefulWindow {
         fullscreen: root.fullscreen
         imageDocument: page.imageDocument
         visible: root.menuBarMode && !root.fullscreen
-    }
-
-    KirigamiSettings.ConfigurationView {
-        id: settingsView
-
-        window: root
-
-        modules: [
-            KirigamiSettings.ConfigurationModule {
-                moduleId: "interface"
-                text: KI18n.i18nc("@title:settings module", "Interface")
-                icon.name: "preferences-desktop-symbolic"
-                page: () => Qt.createComponent("io.github.hnjae.kiriview", "InterfaceSettingsPage")
-                initialProperties: () => {
-                    return {
-                        "application": kiriApplication
-                    };
-                }
-            },
-            KirigamiSettings.ShortcutsConfigurationModule {
-                application: root.application
-            }
-        ]
     }
 
     ShortcutHelpDialog {
