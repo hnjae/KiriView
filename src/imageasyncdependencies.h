@@ -32,10 +32,13 @@ struct ImageNavigationCandidateProvider {
         QObject *, ArchiveDocumentLocation, ImageCandidatesCallback, ErrorCallback)>;
     using ContainerCandidateLoader
         = std::function<ImageIoJob(QObject *, QUrl, ContainerCandidatesCallback, ErrorCallback)>;
+    using ImageCandidateChangeSubscriber
+        = std::function<ImageIoJob(QObject *, QUrl, ImageCandidatesCallback, ErrorCallback)>;
 
     ImageCandidateLoader directoryImages;
     ContainerCandidateLoader directoryContainers;
     ArchiveImageCandidateLoader archiveImages;
+    ImageCandidateChangeSubscriber directoryImageChanges;
 };
 
 using ImageDataLoader

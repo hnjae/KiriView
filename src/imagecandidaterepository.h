@@ -100,6 +100,12 @@ public:
         ImageCandidatesCallback callback, ErrorCallback errorCallback) const;
     ImageIoJob loadContainers(QObject *receiver, const QUrl &directoryUrl,
         ContainerCandidatesCallback callback, ErrorCallback errorCallback) const;
+    ImageIoJob watchCandidateChanges(QObject *receiver, const ImageCandidateListSource &source,
+        ImageCandidatesCallback callback, ErrorCallback errorCallback) const;
+    ImageIoJob watchCandidateChanges(QObject *receiver, const ImageCandidateListContext &context,
+        ImageCandidatesCallback callback, ErrorCallback errorCallback) const;
+    ImageIoJob watchDirectoryImageChanges(QObject *receiver, const QUrl &directoryUrl,
+        ImageCandidatesCallback callback, ErrorCallback errorCallback) const;
     ImageIoJob loadFirstImageInContainer(QObject *receiver,
         const ContainerNavigationCandidate &container, ContainerImageCallback callback,
         CandidateRepositoryErrorCallback errorCallback) const;

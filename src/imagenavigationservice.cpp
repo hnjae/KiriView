@@ -239,6 +239,9 @@ void ImageNavigationService::updatePageNavigation(const DisplayContext &context)
         clearPageNavigation();
     }
 
+    m_pageNavigationContext = *candidateContext;
+    watchPageNavigationChanges(*candidateContext);
+
     m_pageNavigationListerJob = m_candidateRepository.loadImages(
         this, *candidateContext,
         [this, currentUrl = candidateContext->currentUrl(), candidateSource](
@@ -249,7 +252,11 @@ void ImageNavigationService::updatePageNavigation(const DisplayContext &context)
         [](const QString &) {});
 }
 
-void ImageNavigationService::cancelPageNavigationUpdate() { m_pageNavigationListerJob.cancel(); }
+void ImageNavigationService::cancelPageNavigationUpdate()
+{
+    m_pageNavigationListerJob.cancel();
+    m_pageNavigationChangesJob.cancel();
+}
 
 void ImageNavigationService::setPageNavigationUrls(
     std::vector<QUrl> urls, const QUrl &currentUrl, ImageCandidateListSource source)
@@ -268,8 +275,40 @@ void ImageNavigationService::setPageNavigationState(PageNavigationState state)
     invokeIfSet(m_callbacks.pageNavigationChanged);
 }
 
+void ImageNavigationService::watchPageNavigationChanges(const ImageCandidateListContext &context)
+{
+    if (m_pageNavigationSource.has_value()
+        && sameImageCandidateListSource(*m_pageNavigationSource, context.source())
+        && m_pageNavigationChangesJob.isActive()) {
+        return;
+    }
+
+    m_pageNavigationChangesJob.cancel();
+    const ImageCandidateListSource source = context.source();
+    m_pageNavigationChangesJob = m_candidateRepository.watchCandidateChanges(
+        this, context,
+        [this, source](std::vector<ImageNavigationCandidate> candidates) {
+            updatePageNavigationFromChangedCandidates(std::move(candidates), source);
+        },
+        [](const QString &) {});
+}
+
+void ImageNavigationService::updatePageNavigationFromChangedCandidates(
+    std::vector<ImageNavigationCandidate> candidates, ImageCandidateListSource source)
+{
+    if (!m_pageNavigationContext.has_value()
+        || !sameImageCandidateListSource(m_pageNavigationContext->source(), source)) {
+        return;
+    }
+
+    setPageNavigationUrls(
+        imageNavigationCandidateUrls(candidates), m_pageNavigationContext->currentUrl(), source);
+}
+
 void ImageNavigationService::clearPageNavigation()
 {
+    m_pageNavigationChangesJob.cancel();
+    m_pageNavigationContext = std::nullopt;
     m_pageNavigationSource = std::nullopt;
     setPageNavigationState(PageNavigationState {});
 }

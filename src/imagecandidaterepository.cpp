@@ -19,6 +19,12 @@ void reportLoadProviderMissing(const KiriView::ErrorCallback &errorCallback)
     KiriView::invokeIfSet(errorCallback, QString());
 }
 
+KiriView::ImageIoJob noOpImageCandidateChanges(
+    QObject *, QUrl, KiriView::ImageCandidatesCallback, KiriView::ErrorCallback)
+{
+    return KiriView::ImageIoJob();
+}
+
 template <typename Provider, typename... Args>
 KiriView::ImageIoJob loadWithProvider(
     const Provider &provider, KiriView::ErrorCallback errorCallback, Args &&...args)
@@ -45,6 +51,21 @@ KiriView::ImageIoJob loadImagesForSource(const KiriView::ImageCandidateRepositor
 {
     return repository.loadArchiveImages(
         receiver, source.archiveDocument, std::move(callback), std::move(errorCallback));
+}
+
+KiriView::ImageIoJob watchChangesForSource(const KiriView::ImageCandidateRepository &repository,
+    QObject *receiver, const KiriView::ImageCandidateListSource::Directory &source,
+    KiriView::ImageCandidatesCallback callback, KiriView::ErrorCallback errorCallback)
+{
+    return repository.watchDirectoryImageChanges(
+        receiver, source.directoryUrl, std::move(callback), std::move(errorCallback));
+}
+
+KiriView::ImageIoJob watchChangesForSource(const KiriView::ImageCandidateRepository &, QObject *,
+    const KiriView::ImageCandidateListSource::ArchiveDocument &, KiriView::ImageCandidatesCallback,
+    KiriView::ErrorCallback)
+{
+    return KiriView::ImageIoJob();
 }
 
 void reportCandidateRepositoryError(const QUrl &containerUrl,
@@ -117,6 +138,7 @@ ImageNavigationCandidateProvider defaultImageNavigationCandidateProvider()
         startDirectoryImageCandidateList,
         startDirectoryContainerCandidateList,
         startArchiveImageCandidateList,
+        noOpImageCandidateChanges,
     };
 }
 
@@ -248,6 +270,33 @@ ImageIoJob ImageCandidateRepository::loadContainers(QObject *receiver, const QUr
     ContainerCandidatesCallback callback, ErrorCallback errorCallback) const
 {
     return loadWithProvider(m_provider.directoryContainers, std::move(errorCallback), receiver,
+        directoryUrl, std::move(callback));
+}
+
+ImageIoJob ImageCandidateRepository::watchCandidateChanges(QObject *receiver,
+    const ImageCandidateListSource &source, ImageCandidatesCallback callback,
+    ErrorCallback errorCallback) const
+{
+    return source.visit(
+        [this, receiver, callback = std::move(callback), errorCallback = std::move(errorCallback)](
+            const auto &typedSource) mutable {
+            return watchChangesForSource(
+                *this, receiver, typedSource, std::move(callback), std::move(errorCallback));
+        });
+}
+
+ImageIoJob ImageCandidateRepository::watchCandidateChanges(QObject *receiver,
+    const ImageCandidateListContext &context, ImageCandidatesCallback callback,
+    ErrorCallback errorCallback) const
+{
+    return watchCandidateChanges(
+        receiver, context.source(), std::move(callback), std::move(errorCallback));
+}
+
+ImageIoJob ImageCandidateRepository::watchDirectoryImageChanges(QObject *receiver,
+    const QUrl &directoryUrl, ImageCandidatesCallback callback, ErrorCallback errorCallback) const
+{
+    return loadWithProvider(m_provider.directoryImageChanges, std::move(errorCallback), receiver,
         directoryUrl, std::move(callback));
 }
 

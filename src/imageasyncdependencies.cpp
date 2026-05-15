@@ -39,6 +39,9 @@ ImageNavigationCandidateProvider imageNavigationCandidateProviderWithDefaults(
     if (!provider.archiveImages) {
         provider.archiveImages = std::move(defaults.archiveImages);
     }
+    if (!provider.directoryImageChanges) {
+        provider.directoryImageChanges = std::move(defaults.directoryImageChanges);
+    }
 
     return provider;
 }

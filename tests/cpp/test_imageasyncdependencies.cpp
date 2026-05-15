@@ -23,12 +23,19 @@ private Q_SLOTS:
 void TestImageAsyncDependencies::candidateProviderDefaultsFillMissingLoadersAndPreserveOverrides()
 {
     int directoryLoadCount = 0;
+    int directoryChangeSubscriptionCount = 0;
     KiriView::ImageNavigationCandidateProvider provider;
     provider.directoryImages = [&directoryLoadCount](QObject *, QUrl,
                                    KiriView::ImageCandidatesCallback, KiriView::ErrorCallback) {
         ++directoryLoadCount;
         return KiriView::ImageIoJob();
     };
+    provider.directoryImageChanges
+        = [&directoryChangeSubscriptionCount](
+              QObject *, QUrl, KiriView::ImageCandidatesCallback, KiriView::ErrorCallback) {
+              ++directoryChangeSubscriptionCount;
+              return KiriView::ImageIoJob();
+          };
 
     KiriView::ImageNavigationCandidateProvider resolved
         = KiriView::imageNavigationCandidateProviderWithDefaults(std::move(provider));
@@ -36,9 +43,12 @@ void TestImageAsyncDependencies::candidateProviderDefaultsFillMissingLoadersAndP
     QVERIFY(resolved.directoryImages);
     QVERIFY(resolved.directoryContainers);
     QVERIFY(resolved.archiveImages);
+    QVERIFY(resolved.directoryImageChanges);
 
     resolved.directoryImages(nullptr, QUrl(), {}, {});
+    resolved.directoryImageChanges(nullptr, QUrl(), {}, {});
     QCOMPARE(directoryLoadCount, 1);
+    QCOMPARE(directoryChangeSubscriptionCount, 1);
 }
 
 void TestImageAsyncDependencies::decodeDependencyDefaultsFillMissingFunctionsAndPreserveOverrides()
@@ -80,6 +90,7 @@ void TestImageAsyncDependencies::asyncDependencyDefaultsFillAggregateAndPreserve
     QVERIFY(resolved.candidateProvider.directoryImages);
     QVERIFY(resolved.candidateProvider.directoryContainers);
     QVERIFY(resolved.candidateProvider.archiveImages);
+    QVERIFY(resolved.candidateProvider.directoryImageChanges);
     QVERIFY(resolved.imageDecode.dataLoader);
     QVERIFY(resolved.imageDecode.dataDecoder);
     QVERIFY(resolved.fileOperations);

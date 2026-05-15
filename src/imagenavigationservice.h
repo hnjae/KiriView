@@ -68,6 +68,9 @@ private:
     void setPageNavigationUrls(
         std::vector<QUrl> urls, const QUrl &currentUrl, ImageCandidateListSource source);
     void setPageNavigationState(PageNavigationState state);
+    void watchPageNavigationChanges(const ImageCandidateListContext &context);
+    void updatePageNavigationFromChangedCandidates(
+        std::vector<ImageNavigationCandidate> candidates, ImageCandidateListSource source);
 
     Callbacks m_callbacks;
     ImageCandidateRepository m_candidateRepository;
@@ -75,8 +78,10 @@ private:
     ImageIoJob m_containerNavigationListerJob;
     ImageIoJob m_containerNavigationListJob;
     ImageIoJob m_pageNavigationListerJob;
+    ImageIoJob m_pageNavigationChangesJob;
     PageNavigationState m_pageNavigation;
     std::optional<ImageCandidateListSource> m_pageNavigationSource;
+    std::optional<ImageCandidateListContext> m_pageNavigationContext;
 };
 }
 
