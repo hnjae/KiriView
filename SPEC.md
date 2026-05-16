@@ -538,6 +538,9 @@ help dialog is open, Escape closes the dialog before any fullscreen handling.
 Ctrl+M toggles the application menu presentation between Hamburger Menu and
 Menubar. This shortcut is fixed, is not user-configurable, and is not listed in
 keyboard shortcut configuration or shortcut help.
+When Hamburger Menu presentation is active outside fullscreen, F10 opens the
+toolbar application menu. This shortcut is fixed, is not user-configurable, and
+is not listed in keyboard shortcut configuration or shortcut help.
 
 Escape first cancels an active page number or zoom input edit. When no toolbar
 input is focused, Escape leaves fullscreen if the main window is fullscreen.
