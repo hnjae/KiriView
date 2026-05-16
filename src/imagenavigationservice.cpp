@@ -3,9 +3,9 @@
 
 #include "imagenavigationservice.h"
 
-#include "filedeletionfallback.h"
 #include "imagecallback.h"
 #include "imagenavigationmodel.h"
+#include "imageremovalfallback.h"
 #include "imageurl.h"
 
 #include <QString>
@@ -368,10 +368,9 @@ void ImageNavigationService::updatePageNavigationFromChangedCandidates(
 void ImageNavigationService::handleCurrentImageRemoved(
     std::vector<ImageNavigationCandidate> candidates, ImageCandidateListContext context)
 {
-    const ImageDeletionFallbackPlan fallbackPlan = ImageDeletionFallbackPlan { context,
-        context.currentUrl(), context.currentUrl().fileName() };
+    const ImageRemovalFallback fallback = imageRemovalFallbackForImageContext(context);
     const std::optional<QUrl> fallbackUrl
-        = imageDeletionFallbackUrl(std::move(candidates), fallbackPlan);
+        = imageRemovalFallbackUrl(std::move(candidates), fallback);
     invokeIfSet(m_callbacks.clearCurrentImage);
     if (fallbackUrl.has_value()) {
         invokeIfSet(m_callbacks.openUrl, *fallbackUrl);

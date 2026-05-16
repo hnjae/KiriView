@@ -17,6 +17,7 @@ mod imageformatregistry;
 mod imagemath;
 mod imagenavigationmodel;
 mod imageopenworkflow;
+mod imageremovalfallback;
 mod imagerendergeometry;
 mod imagespreadgeometry;
 mod imagespreadnavigation;

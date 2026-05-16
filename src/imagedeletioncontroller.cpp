@@ -3,9 +3,9 @@
 
 #include "imagedeletioncontroller.h"
 
-#include "filedeletionfallback.h"
 #include "imagecallback.h"
-#include "imagedeletionfallbackexecutor.h"
+#include "imageremovalfallback.h"
+#include "imageremovalfallbackexecutor.h"
 #include "imageviewtext.h"
 
 #include <utility>
@@ -24,7 +24,7 @@ ImageDeletionController::ImageDeletionController(QObject *parent,
     : QObject(parent)
     , m_callbacks(std::move(callbacks))
     , m_fallbackExecutor(
-          std::make_unique<ImageDeletionFallbackExecutor>(this, std::move(candidateProvider),
+          std::make_unique<ImageRemovalFallbackExecutor>(this, std::move(candidateProvider),
               [this](ImageDeletionEffect effect) { report(std::move(effect)); }))
     , m_fileOperationProvider(fileOperationProviderWithDefault(std::move(fileOperationProvider)))
 {
@@ -46,7 +46,8 @@ void ImageDeletionController::deleteDisplayedFile(
         return;
     }
 
-    const DeletionFallbackPlan fallbackPlan = deletionFallbackPlanForDisplayedLocation(location);
+    const ImageRemovalFallbackPlan fallbackPlan
+        = imageRemovalFallbackPlanForDisplayedLocation(location);
 
     setInProgress(true);
     m_fileDeletionJob = m_fileOperationProvider(this, FileDeletionRequest { targetUrl, mode },
@@ -55,15 +56,15 @@ void ImageDeletionController::deleteDisplayedFile(
         });
 }
 
-void ImageDeletionController::finishFileDeletion(
-    const DeletionFallbackPlan &fallbackPlan, FileDeletionResult result, const QString &errorString)
+void ImageDeletionController::finishFileDeletion(const ImageRemovalFallbackPlan &fallbackPlan,
+    FileDeletionResult result, const QString &errorString)
 {
     setInProgress(false);
 
     switch (fileDeletionCompletionAction(result)) {
     case FileDeletionCompletionAction::ClearDeletedImageAndOpenFallback:
         report(ImageDeletionEffect::clearDeletedImage());
-        openDeletionFallback(fallbackPlan);
+        openRemovalFallback(fallbackPlan);
         return;
     case FileDeletionCompletionAction::Ignore:
         return;
@@ -73,7 +74,7 @@ void ImageDeletionController::finishFileDeletion(
     }
 }
 
-void ImageDeletionController::openDeletionFallback(const DeletionFallbackPlan &fallbackPlan)
+void ImageDeletionController::openRemovalFallback(const ImageRemovalFallbackPlan &fallbackPlan)
 {
     m_fallbackExecutor->open(fallbackPlan);
 }

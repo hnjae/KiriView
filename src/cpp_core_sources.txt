@@ -14,7 +14,7 @@ src/archivepath.cpp
 src/bufferedimagereader.cpp
 src/displayedimagestate.cpp
 src/filedeletion.cpp
-src/filedeletionfallback.cpp
+src/imageremovalfallback.cpp
 src/heifcontainer.cpp
 src/heifdecoder.cpp
 src/heifsupport.cpp
@@ -26,7 +26,7 @@ src/imagebytecost.cpp
 src/imagecontainer.cpp
 src/imagerendering.cpp
 src/imagerotation.cpp
-src/imagedeletionfallbackexecutor.cpp
+src/imageremovalfallbackexecutor.cpp
 src/imagedeletioncontroller.cpp
 src/imagedocumentcontroller.cpp
 src/imagedocumentdeletioncontroller.cpp

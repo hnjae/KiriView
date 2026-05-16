@@ -5,19 +5,19 @@
 #define KIRIVIEW_IMAGEDELETIONCONTROLLER_H
 
 #include "filedeletion.h"
-#include "filedeletionfallback.h"
 #include "imagecandidaterepository.h"
 #include "imagedeletioneffects.h"
 #include "imageiojob.h"
 #include "imagelocation.h"
 #include "imagenavigationtypes.h"
+#include "imageremovalfallback.h"
 
 #include <QObject>
 #include <functional>
 #include <memory>
 
 namespace KiriView {
-class ImageDeletionFallbackExecutor;
+class ImageRemovalFallbackExecutor;
 
 class ImageDeletionController final : public QObject
 {
@@ -39,9 +39,9 @@ public:
     void cancel();
 
 private:
-    void finishFileDeletion(const DeletionFallbackPlan &fallbackPlan, FileDeletionResult result,
+    void finishFileDeletion(const ImageRemovalFallbackPlan &fallbackPlan, FileDeletionResult result,
         const QString &errorString);
-    void openDeletionFallback(const DeletionFallbackPlan &fallbackPlan);
+    void openRemovalFallback(const ImageRemovalFallbackPlan &fallbackPlan);
     void setInProgress(bool inProgress);
     void cancelFileDeletion();
     void cancelFallback();
@@ -49,7 +49,7 @@ private:
     void reportFailure(const QString &errorString);
 
     Callbacks m_callbacks;
-    std::unique_ptr<ImageDeletionFallbackExecutor> m_fallbackExecutor;
+    std::unique_ptr<ImageRemovalFallbackExecutor> m_fallbackExecutor;
     FileOperationProvider m_fileOperationProvider;
     ImageIoJob m_fileDeletionJob;
     bool m_inProgress = false;
