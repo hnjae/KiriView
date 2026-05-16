@@ -87,7 +87,7 @@ private Q_SLOTS:
     void animationFailureClearsImageAndResetsZoom();
     void routedLoadFailureAppliesErrorTransitions();
     void trackedLoadCompletionsClearLoadingContainerNavigationUrl();
-    void stateChangesFollowCppApplicationOrder();
+    void stateChangesFollowRustOperationOrder();
 };
 
 void TestImageOpenWorkflow::sourceLoadPlanUsesRightToLeftReadingSnapshot()
@@ -408,7 +408,7 @@ void TestImageOpenWorkflow::trackedLoadCompletionsClearLoadingContainerNavigatio
     }
 }
 
-void TestImageOpenWorkflow::stateChangesFollowCppApplicationOrder()
+void TestImageOpenWorkflow::stateChangesFollowRustOperationOrder()
 {
     const QUrl imageUrl = localUrl(QStringLiteral("/images/page.png"));
 
