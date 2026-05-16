@@ -14,11 +14,9 @@
 
 #include <QObject>
 #include <functional>
-#include <memory>
+#include <optional>
 
 namespace KiriView {
-class ImageRemovalFallbackExecutor;
-
 class ImageDeletionController final : public QObject
 {
 public:
@@ -42,6 +40,12 @@ private:
     void finishFileDeletion(const ImageRemovalFallbackPlan &fallbackPlan, FileDeletionResult result,
         const QString &errorString);
     void openRemovalFallback(const ImageRemovalFallbackPlan &fallbackPlan);
+    void openFallbackPlan(const NoImageRemovalFallback &);
+    void openFallbackPlan(const ImageRemovalFallback &fallback);
+    void openFallbackPlan(const ComicBookRemovalFallback &fallback);
+    void openComicBookFallbackCandidate(
+        const std::optional<ContainerNavigationCandidate> &candidate,
+        const std::optional<ContainerNavigationCandidate> &fallbackCandidate);
     void setInProgress(bool inProgress);
     void cancelFileDeletion();
     void cancelFallback();
@@ -49,9 +53,10 @@ private:
     void reportFailure(const QString &errorString);
 
     Callbacks m_callbacks;
-    std::unique_ptr<ImageRemovalFallbackExecutor> m_fallbackExecutor;
+    ImageCandidateRepository m_candidateRepository;
     FileOperationProvider m_fileOperationProvider;
     ImageIoJob m_fileDeletionJob;
+    ImageIoJob m_fallbackJob;
     bool m_inProgress = false;
 };
 }
