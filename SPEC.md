@@ -416,6 +416,14 @@ When Two-Page mode shows two pages, both the current primary page and the
 visible secondary page are treated as displayed images for this preparation, so
 KiriView does not prepare either visible page again or discard either visible
 page as a non-displayed adjacent image.
+When users move quickly through pages, KiriView may briefly postpone background
+preparation and then prepare pages around the page where navigation settles,
+rather than preparing every skipped page. Directly opened archive and directory
+documents may prepare more pages in the current reading direction than ordinary
+image navigation. When the desktop Power Saver mode is enabled, KiriView stops
+background adjacent-page preparation and keeps only already displayed pages in
+the preparation cache. Foreground image loading and visible image-detail
+decoding continue to work while Power Saver mode is enabled.
 
 ## Archive Navigation
 
