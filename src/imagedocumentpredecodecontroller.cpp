@@ -14,13 +14,21 @@ namespace KiriView {
 ImageDocumentPredecodeController::ImageDocumentPredecodeController(QObject *parent,
     ImageDocumentState &state, ImagePresentationController &presentationController,
     ImageNavigationCandidateProvider candidateProvider, ImageDecodeDependencies decodeDependencies,
-    CurrentPageNumberCallback currentPageNumber)
+    CurrentPageNumberCallback currentPageNumber, PowerSaverProvider powerSaverProvider)
     : m_state(state)
     , m_presentationController(presentationController)
     , m_coordinator(std::make_unique<ImagePredecodeCoordinator>(
           parent, std::move(candidateProvider), std::move(decodeDependencies)))
     , m_currentPageNumber(std::move(currentPageNumber))
 {
+    powerSaverProvider = powerSaverProviderWithDefault(std::move(powerSaverProvider));
+    if (powerSaverProvider.monitor) {
+        m_powerSaverMonitor = powerSaverProvider.monitor(
+            parent, [this](bool enabled) { m_coordinator->setPowerSaverEnabled(enabled); });
+    }
+    if (m_powerSaverMonitor != nullptr) {
+        m_coordinator->setPowerSaverEnabled(m_powerSaverMonitor->powerSaverEnabled());
+    }
 }
 
 ImageDocumentPredecodeController::~ImageDocumentPredecodeController() = default;

@@ -48,6 +48,8 @@ public:
         ImageDecodeDependencies decodeDependencies);
 
     void schedule(Context context);
+    void setPowerSaverEnabled(bool enabled);
+    bool powerSaverEnabled() const;
     void cancel();
     void clear();
     std::optional<PredecodedImage> tryTake(const QUrl &url) const;
@@ -93,6 +95,7 @@ private:
     ImageCandidateRepository m_candidateRepository;
     PredecodeCache m_cache;
     std::vector<ActivePredecodeRequest> m_activePredecodeRequests;
+    std::optional<Context> m_displayedContext;
     std::optional<Context> m_pendingContext;
     ImageFirstDisplayDecodeContext m_firstDisplayContext;
     ImageAsyncTicket m_generation;
@@ -106,6 +109,7 @@ private:
     int m_sameDirectionMoveCount = 0;
     MomentumDirection m_lastMomentumDirection = MomentumDirection::None;
     MomentumMode m_momentumMode = MomentumMode::Neutral;
+    bool m_powerSaverEnabled = false;
 };
 }
 

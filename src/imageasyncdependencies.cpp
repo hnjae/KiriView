@@ -7,6 +7,7 @@
 #include "imagecandidaterepository.h"
 #include "imageiojobs.h"
 #include "kiriimagedecoder.h"
+#include "powerprofilemonitor.h"
 
 #include <utility>
 
@@ -76,6 +77,24 @@ ImageDecodeDependencies imageDecodeDependenciesWithDefaults(ImageDecodeDependenc
     return dependencies;
 }
 
+PowerSaverProvider defaultPowerSaverProvider()
+{
+    return PowerSaverProvider {
+        [](QObject *parent, PowerSaverChangedCallback callback) {
+            return std::make_unique<PowerProfileMonitor>(parent, std::move(callback));
+        },
+    };
+}
+
+PowerSaverProvider powerSaverProviderWithDefault(PowerSaverProvider provider)
+{
+    if (!provider.monitor) {
+        provider = defaultPowerSaverProvider();
+    }
+
+    return provider;
+}
+
 FileOperationProvider fileOperationProviderWithDefault(FileOperationProvider provider)
 {
     return provider ? std::move(provider) : defaultFileOperationProvider();
@@ -94,6 +113,7 @@ ImageAsyncDependencies imageAsyncDependenciesWithDefaults(ImageAsyncDependencies
         = imageDecodeDependenciesWithDefaults(std::move(dependencies.imageDecode));
     dependencies.fileOperations
         = fileOperationProviderWithDefault(std::move(dependencies.fileOperations));
+    dependencies.powerSaver = powerSaverProviderWithDefault(std::move(dependencies.powerSaver));
     return dependencies;
 }
 }

@@ -12,7 +12,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-find_package(Qt6 REQUIRED COMPONENTS Core Gui Qml Quick QuickControls2 Svg Test Widgets)
+find_package(Qt6 REQUIRED COMPONENTS Core DBus Gui Qml Quick QuickControls2 Svg Test Widgets)
 find_package(KF6Archive CONFIG REQUIRED)
 find_package(KF6Config CONFIG REQUIRED)
 find_package(KF6CoreAddons CONFIG REQUIRED)
@@ -82,6 +82,7 @@ kconfig_add_kcfg_files(kiriview_test_core ../../src/kiriviewstate.kcfgc)
 target_link_libraries(kiriview_test_core PUBLIC
     "${KIRIVIEW_RUST_STATICLIB}"
     Qt6::Core
+    Qt6::DBus
     Qt6::Gui
     Qt6::Qml
     Qt6::Quick

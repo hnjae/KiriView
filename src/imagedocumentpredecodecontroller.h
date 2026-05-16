@@ -28,7 +28,8 @@ public:
         ImagePresentationController &presentationController,
         ImageNavigationCandidateProvider candidateProvider,
         ImageDecodeDependencies decodeDependencies,
-        CurrentPageNumberCallback currentPageNumber = {});
+        CurrentPageNumberCallback currentPageNumber = {},
+        PowerSaverProvider powerSaverProvider = {});
     ~ImageDocumentPredecodeController();
 
     void scheduleAdjacentImagePredecode(
@@ -41,6 +42,7 @@ private:
     ImageDocumentState &m_state;
     ImagePresentationController &m_presentationController;
     std::unique_ptr<ImagePredecodeCoordinator> m_coordinator;
+    std::unique_ptr<PowerSaverStateMonitor> m_powerSaverMonitor;
     CurrentPageNumberCallback m_currentPageNumber;
 };
 }

@@ -188,11 +188,37 @@ void ImagePredecodeCoordinator::schedule(Context context)
     updateNavigationMomentum(context.pageIndex, currentMonotonicMsec());
     m_firstDisplayContext = context.firstDisplayContext;
     cacheDisplayedImages(context);
+    m_displayedContext = context;
+    if (m_powerSaverEnabled) {
+        m_cache.setWindowUrls({});
+        return;
+    }
+
     m_pendingContext = std::move(context);
     m_pendingGeneration = generation;
     m_debounceTimer.start();
     m_neutralTimer.start();
 }
+
+void ImagePredecodeCoordinator::setPowerSaverEnabled(bool enabled)
+{
+    if (m_powerSaverEnabled == enabled) {
+        return;
+    }
+
+    m_powerSaverEnabled = enabled;
+    if (enabled) {
+        cancelBackgroundWork();
+        m_cache.setWindowUrls({});
+        return;
+    }
+
+    if (m_displayedContext.has_value()) {
+        schedule(*m_displayedContext);
+    }
+}
+
+bool ImagePredecodeCoordinator::powerSaverEnabled() const { return m_powerSaverEnabled; }
 
 void ImagePredecodeCoordinator::cacheDisplayedImages(const Context &context)
 {
@@ -231,8 +257,14 @@ void ImagePredecodeCoordinator::scheduleAdjacentImagePredecode(
     const Context &context, quint64 generation)
 {
     const RustPredecodePolicyInput policyInput = rustPredecodePolicyInput(
-        context.primaryImage.location.archiveDocument(), m_momentumMode, false);
+        context.primaryImage.location.archiveDocument(), m_momentumMode, m_powerSaverEnabled);
     const std::size_t parallelLimit = rustPredecodeParallelLimit(policyInput);
+    if (parallelLimit == 0) {
+        startPredecodeImageLoads({}, context.primaryImage.location.archiveDocument(), context,
+            generation, parallelLimit);
+        return;
+    }
+
     const std::optional<ImageCandidateListContext> candidateContext
         = imageCandidateListContextForDisplayedImage(context.primaryImage.location);
     if (!candidateContext.has_value()) {
@@ -470,6 +502,7 @@ qint64 ImagePredecodeCoordinator::currentMonotonicMsec() const
 void ImagePredecodeCoordinator::cancel()
 {
     cancelBackgroundWork();
+    m_displayedContext.reset();
     resetNavigationMomentum();
 }
 

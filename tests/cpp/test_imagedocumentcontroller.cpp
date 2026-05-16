@@ -702,7 +702,7 @@ void TestImageDocumentController::decodedReplacementFailureSchedulesRecoveryPred
     QTRY_COMPARE(controller->errorString(), testImageDecodeFailureString());
     QCOMPARE(controller->sourceUrl(), imageUrl);
     QCOMPARE(controller->displayedUrl(), imageUrl);
-    QCOMPARE(dataLoader.loadCount(), loadCountBeforeReplacement + 2);
+    QTRY_COMPARE(dataLoader.loadCount(), loadCountBeforeReplacement + 2);
     QCOMPARE(dataLoader.backLoad().url, badUrl);
 }
 

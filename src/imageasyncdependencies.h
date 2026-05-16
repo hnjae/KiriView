@@ -16,6 +16,7 @@
 #include <QString>
 #include <QUrl>
 #include <functional>
+#include <memory>
 #include <vector>
 
 class QObject;
@@ -52,11 +53,27 @@ struct ImageDecodeDependencies {
     ImageDataDecoder dataDecoder;
 };
 
+class PowerSaverStateMonitor
+{
+public:
+    virtual ~PowerSaverStateMonitor() = default;
+    virtual bool powerSaverEnabled() const = 0;
+};
+
+using PowerSaverChangedCallback = std::function<void(bool)>;
+using PowerSaverMonitorFactory
+    = std::function<std::unique_ptr<PowerSaverStateMonitor>(QObject *, PowerSaverChangedCallback)>;
+
+struct PowerSaverProvider {
+    PowerSaverMonitorFactory monitor;
+};
+
 struct ImageAsyncDependencies {
     ImageNavigationCandidateProvider candidateProvider;
     ImageDecodeDependencies imageDecode;
     FileOperationProvider fileOperations;
     ArchiveDocumentSessionFactory archiveDocumentSessions;
+    PowerSaverProvider powerSaver;
 };
 
 ImageNavigationCandidateProvider defaultImageNavigationCandidateProvider();
@@ -64,6 +81,8 @@ ImageNavigationCandidateProvider imageNavigationCandidateProviderWithDefaults(
     ImageNavigationCandidateProvider provider);
 ImageDecodeDependencies defaultImageDecodeDependencies();
 ImageDecodeDependencies imageDecodeDependenciesWithDefaults(ImageDecodeDependencies dependencies);
+PowerSaverProvider defaultPowerSaverProvider();
+PowerSaverProvider powerSaverProviderWithDefault(PowerSaverProvider provider);
 FileOperationProvider fileOperationProviderWithDefault(FileOperationProvider provider);
 ImageAsyncDependencies defaultImageAsyncDependencies();
 ImageAsyncDependencies imageAsyncDependenciesWithDefaults(ImageAsyncDependencies dependencies);
