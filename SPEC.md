@@ -33,12 +33,16 @@ overflow menu appears only when toolbar controls do not fit. In fullscreen,
 KiriView hides both the menubar and toolbar application menu button; actions
 with configured shortcuts remain available through those shortcuts.
 The menubar and toolbar application menu display a representative shortcut for
-actions with configured shortcuts. The representative shortcut is the first
-non-empty entry in the action's current shortcut list. Actions without a
-representative shortcut do not show shortcut text in menus. In the menubar,
-representative shortcut text is visually deemphasized from the menu item label
-when the item is not pressed. In the toolbar application menu, representative
-shortcut text is displayed separately on the trailing side of the menu item.
+actions with configured shortcuts through the menu action's shortcut column. The
+representative shortcut is the first entry in the action's current configured
+shortcut list that is safe to display in menus. Delete shortcuts, arrow and
+navigation-key shortcuts, and unmodified printable shortcuts are not menu-display
+safe because they can affect focused text input. Actions without a
+menu-display-safe representative shortcut do not show shortcut text in menus. In
+the menubar, representative shortcut text is visually deemphasized from the menu
+item label when the item is not pressed. In the toolbar application menu,
+representative shortcut text is displayed separately on the trailing side of the
+menu item. Runtime-only Ctrl-less viewer aliases are never displayed in menus.
 When the menubar or toolbar application menu is open, underlined menu access
 keys are activatable with either the displayed mnemonic letter alone or Alt plus
 that mnemonic letter, so users can choose menu entries through the displayed
@@ -47,8 +51,9 @@ application menu is open keeps the menu open so users can complete Alt plus
 mnemonic key access.
 KiriView does not expose a general Settings page in the current scope.
 The Keyboard Shortcuts help is shown as read-only supporting content over the
-main window. It lists the current configured shortcut text for KiriView actions
-and can be dismissed with Escape or the close button.
+main window. It lists the current configured shortcut text for KiriView actions,
+not runtime-only Ctrl-less viewer aliases, and can be dismissed with Escape or
+the close button.
 When KiriView is launched with one or more file path or URL arguments, including
 from a file manager's Open With action, it processes only the first argument in
 the supplied order and opens it at startup. Activating the open action shows the
@@ -229,23 +234,26 @@ and vertical scrollbars allow panning across the image. When the image is
 smaller than the viewport, it remains centered.
 
 When a directly opened local CBZ, CBT, CB7, or CBR comic book archive is
-displayed, the `s` key toggles Two-Page Spread. Two-Page Spread displays the
-current page on the left and the next page on the right when both pages are
-eligible. The first archive page is treated as a cover and is always displayed
-alone. Any page whose pixel width is greater than its pixel height is treated as
-a wide page and is displayed alone. If the next page after the current page is
-wide, the current page is displayed alone and the next navigation action opens
-that wide page. Two-Page Spread is unavailable for ordinary image files,
-KDE-supported archive URLs, directly opened ZIP, TAR, 7Z, or RAR archives, and
-directly opened directories.
+displayed, Ctrl+S toggles Two-Page Spread. While the page number or zoom input
+is not focused, KiriView also accepts the runtime-only alias `s` for Two-Page
+Spread. Two-Page Spread displays the current page on the left and the next page
+on the right when both pages are eligible. The first archive page is treated as
+a cover and is always displayed alone. Any page whose pixel width is greater
+than its pixel height is treated as a wide page and is displayed alone. If the
+next page after the current page is wide, the current page is displayed alone
+and the next navigation action opens that wide page. Two-Page Spread is
+unavailable for ordinary image files, KDE-supported archive URLs, directly
+opened ZIP, TAR, 7Z, or RAR archives, and directly opened directories.
 
 When a directly opened local CBZ, CBT, CB7, or CBR comic book archive is
-displayed, the `b` key toggles Right-to-Left Reading mode. Right-to-Left
-Reading mode is off by default, is unavailable for ordinary image files,
-KDE-supported archive URLs, directly opened ZIP, TAR, 7Z, or RAR archives, and
-directly opened directories, and is not saved as a global setting. Moving to a
-sibling comic book archive with Previous Archive or Next Archive preserves the
-current Right-to-Left Reading mode state.
+displayed, Ctrl+B toggles Right-to-Left Reading mode. While the page number or
+zoom input is not focused, KiriView also accepts the runtime-only alias `b` for
+Right-to-Left Reading mode. Right-to-Left Reading mode is off by default, is
+unavailable for ordinary image files, KDE-supported archive URLs, directly
+opened ZIP, TAR, 7Z, or RAR archives, and directly opened directories, and is
+not saved as a global setting. Moving to a sibling comic book archive with
+Previous Archive or Next Archive preserves the current Right-to-Left Reading
+mode state.
 
 When Two-Page Spread shows two pages, zooming and panning operate on the combined
 two-page spread as one virtual image. Fit, Fit Height, Fit Width, manual zoom,
@@ -255,7 +263,7 @@ window title, deletion target, and archive navigation position continue to refer
 to the left/current page.
 In Right-to-Left Reading mode, the current page is rendered on the right and the
 next page is rendered on the left. The page number, window title, deletion
-target, archive navigation position, and `n`/`p` single-page navigation
+target, archive navigation position, and Ctrl+N/Ctrl+P single-page navigation
 continue to refer to the current page.
 When navigation in Two-Page Spread targets another eligible two-page spread,
 KiriView shows the loading state instead of leaving the previous spread visible
@@ -270,12 +278,13 @@ it by 90 degrees counterclockwise. Rotation is display-only: it does not modify
 image files, metadata, archive contents, remote URLs, cached source data, or any
 saved file state. Fit, Fit Height, Fit Width, manual zoom, scrollbars, drag
 panning, wheel zoom, keyboard panning, and scan shortcuts use the rotated
-logical image bounds. The `r` and Ctrl+R shortcuts rotate clockwise, and Shift+R
-and Ctrl+Shift+R rotate counterclockwise. These shortcuts are inactive while the
-page number or zoom input is focused. Rotation resets to 0 degrees whenever a
-different image or page is displayed, and it also resets when the displayed
-image is cleared. Rotation is unavailable while Two-Page Spread is enabled;
-enabling Two-Page Spread resets rotation to 0 degrees.
+logical image bounds. Ctrl+R rotates clockwise, and Ctrl+Shift+R rotates
+counterclockwise. While the page number or zoom input is not focused, KiriView
+also accepts the runtime-only aliases `r` and Shift+R for those rotation
+actions. Rotation resets to 0 degrees whenever a different image or page is
+displayed, and it also resets when the displayed image is cleared. Rotation is
+unavailable while Two-Page Spread is enabled; enabling Two-Page Spread resets
+rotation to 0 degrees.
 
 The toolbar provides a zoom percentage input. When an image is ready, users can
 enter manual zoom values from 10% through the maximum percentage that keeps the
@@ -291,17 +300,19 @@ manual zoom.
 A fit menu provides Fit, Fit Height, and Fit Width actions and shows the
 selected fit mode. The fit action returns the image to Fit mode.
 
-When an image is ready, Ctrl+=, Ctrl++, `=`, or `+` zooms in by multiplying the
-current zoom by 1.1, and Ctrl+- or `-` zooms out by multiplying the current zoom
-by 1/1.1. Keyboard zoom uses the same dynamic manual zoom range as the toolbar
-zoom input. Holding Ctrl and using the mouse wheel over the image zooms around
-the cursor: wheel up zooms in by the same multiplicative step and wheel down
-zooms out by its reciprocal. The unmodified `-`, `=`, and `+` shortcuts are
-inactive while the page number or zoom input is focused.
+When an image is ready, Ctrl+= or Ctrl++ zooms in by multiplying the current
+zoom by 1.1, and Ctrl+- zooms out by multiplying the current zoom by 1/1.1.
+Keyboard zoom uses the same dynamic manual zoom range as the toolbar zoom input.
+While the page number or zoom input is not focused, KiriView also accepts the
+runtime-only aliases `=`, `+`, and `-` for those zoom actions. Holding Ctrl and
+using the mouse wheel over the image zooms around the cursor: wheel up zooms in
+by the same multiplicative step and wheel down zooms out by its reciprocal.
 
-When an image is ready, the `1` key selects Fit mode, `2` selects Fit Height
-mode, `3` selects Fit Width mode, and `0` switches to 100% manual zoom. These
-shortcuts are inactive while the page number or zoom input is focused.
+When an image is ready, Ctrl+1 selects Fit mode, Ctrl+2 selects Fit Height mode,
+Ctrl+3 selects Fit Width mode, and Ctrl+0 switches to 100% manual zoom. While
+the page number or zoom input is not focused, KiriView also accepts the
+runtime-only aliases `1`, `2`, `3`, and `0` for those fit and actual-size
+actions.
 
 When an image is horizontally pannable at the current zoom, Left and Right pan
 the image within the available horizontal scroll bounds. When the current image
@@ -312,26 +323,29 @@ while the image can pan horizontally, but their non-pannable image navigation
 fallback is reversed: Left opens the next image and Right opens the previous
 image.
 When an image is zoomed large enough to pan in any direction, Up and Down pan
-the image vertically within the available scroll bounds, `<` moves the pan
-position to the top-left, `>` moves the pan position to the bottom-right,
+the image vertically within the available scroll bounds, Ctrl+< moves the pan
+position to the top-left, Ctrl+> moves the pan position to the bottom-right,
 Shift+mouse wheel pans horizontally, and the mouse cursor shows that the image
-can be dragged to pan. Keyboard panning and Left/Right image navigation are
-inactive while the page number or zoom input is focused.
+can be dragged to pan. While the page number or zoom input is not focused,
+KiriView also accepts the runtime-only aliases `<` and `>` for pan-boundary
+movement. Keyboard panning and Left/Right image navigation are inactive while
+the page number or zoom input is focused.
 
-When an image is zoomed large enough to pan, the `.` key scans forward through
-the image from left to right and then top to bottom. Each scan step moves
+When an image is zoomed large enough to pan, Ctrl+. scans forward through the
+image from left to right and then top to bottom. Each scan step moves
 horizontally or vertically by at most three quarters of the visible viewport,
 except that moving from the right edge of one row to the next row jumps directly
-to the left edge of the next row. At the final scan position, `.` opens the next
-image. The `,` key scans backward through the same positions; at the initial
+to the left edge of the next row. At the final scan position, Ctrl+. opens the
+next image. Ctrl+, scans backward through the same positions; at the initial
 scan position, it opens the previous image, starting that image at its final
-scan position. When the current image is not zoomed large enough to pan, `.`
-opens the next image and `,` opens the previous image. These shortcuts are
-inactive while the page number or zoom input is focused.
+scan position. When the current image is not zoomed large enough to pan, Ctrl+.
+opens the next image and Ctrl+, opens the previous image. While the page number
+or zoom input is not focused, KiriView also accepts the runtime-only aliases `.`
+and `,` for scan actions.
 In Right-to-Left Reading mode, scan order starts at the top-right and proceeds
-toward the bottom-left: `.` still scans forward or opens the next image, `,`
-still scans backward or opens the previous image, `<` jumps to scan start, and
-`>` jumps to scan end.
+toward the bottom-left: Ctrl+. still scans forward or opens the next image,
+Ctrl+, still scans backward or opens the previous image, Ctrl+< jumps to scan
+start, and Ctrl+> jumps to scan end.
 
 The toolbar provides page navigation with Previous and Next actions, the current
 page number, the total number of supported images in the current directory or
@@ -429,19 +443,20 @@ If the parent URL cannot be listed, the current image is not found, or no
 adjacent supported image exists, the current image remains open and the app
 remains ready for another open action.
 
-When Two-Page Spread is enabled for a directly opened comic book archive, ordinary
-Previous and Next image navigation move by the currently displayed spread rather
-than always by one page. If two pages are visible, Next opens the page after the
-right page; if only one page is visible, Next opens the next page. Previous opens
-the previous eligible spread, falling back to the immediately previous page when
-that page is the cover or a wide page. The `n` and `p` shortcuts move forward or
-backward by exactly one page and are available while an image is ready and the
-page number and zoom inputs are not focused.
+When Two-Page Spread is enabled for a directly opened comic book archive,
+ordinary Previous and Next image navigation move by the currently displayed
+spread rather than always by one page. If two pages are visible, Next opens the
+page after the right page; if only one page is visible, Next opens the next
+page. Previous opens the previous eligible spread, falling back to the
+immediately previous page when that page is the cover or a wide page. Ctrl+N and
+Ctrl+P move forward or backward by exactly one page and are available while an
+image is ready. While the page number or zoom input is not focused, KiriView
+also accepts the runtime-only aliases `n` and `p` for single-page navigation.
 When a Two-Page Spread navigation target is loading and the candidate list is
-known, additional Previous, Next, `n`, or `p` navigation is calculated from the
-pending primary page selection. KiriView moves by one primary page selection at
-a time while loading; the final single-page or two-page spread pairing is
-decided after the selected primary page has loaded.
+known, additional Previous, Next, Ctrl+N, or Ctrl+P navigation is calculated
+from the pending primary page selection. KiriView moves by one primary page
+selection at a time while loading; the final single-page or two-page spread
+pairing is decided after the selected primary page has loaded.
 
 After an image is displayed, KiriView may make adjacent images available for
 quicker Previous or Next navigation, so the switch can happen without showing a
@@ -481,11 +496,13 @@ locale-aware file name order used for image navigation. Navigation does not
 wrap; pressing Previous Archive on the first candidate or Next Archive on the
 last candidate keeps the current view unchanged.
 
-The `[` key opens the previous sibling archive and the `]` key opens the next
-sibling archive when archive navigation is available. Home and Ctrl+Home open
-the first image in the current archive, and End and Ctrl+End open the last image
-in the current archive. These shortcuts are inactive while the page number or
-zoom input is focused.
+Ctrl+[ opens the previous sibling archive and Ctrl+] opens the next sibling
+archive when archive navigation is available. While the page number or zoom
+input is not focused, KiriView also accepts the runtime-only aliases `[` and
+`]` for those archive navigation actions. Home and Ctrl+Home open the first
+image in the current archive, and End and Ctrl+End open the last image in the
+current archive. Home and End are inactive while the page number or zoom input
+is focused.
 
 Opening a comic book archive displays the first supported image in that archive
 using the same archive image ordering as page navigation.
@@ -498,24 +515,25 @@ to move to neighboring archives.
 
 ## Window Shortcuts
 
-The `f` key and F11 toggle the main window between normal windowed display and
-system fullscreen. Fullscreen hides the system titlebar and window decorations
-and shows the app toolbar as a top-attached overlay toolbar above the image
-viewing area without reserving layout space. The fullscreen overlay toolbar uses
-the normal toolbar background and padding, attaches to the top, left, and right
-window edges, and does not use an outer margin, rounded floating-card
-background, or shadow. The fullscreen overlay toolbar contains image controls
-without the toolbar application menu button. The fullscreen overlay toolbar is
-shown when entering fullscreen and when the pointer moves over the window. It
-hides after 1.0 seconds of inactivity unless the pointer is over the toolbar or
-a toolbar input is focused. Leaving fullscreen restores the window's previous
-windowed, maximized, or minimized state and restores the normal header toolbar.
-The `f` shortcut is inactive while the page number or zoom input is focused.
+Ctrl+F and F11 toggle the main window between normal windowed display and system
+fullscreen. While the page number or zoom input is not focused, KiriView also
+accepts the runtime-only alias `f` for fullscreen. Fullscreen hides the system
+titlebar and window decorations and shows the app toolbar as a top-attached
+overlay toolbar above the image viewing area without reserving layout space. The
+fullscreen overlay toolbar uses the normal toolbar background and padding,
+attaches to the top, left, and right window edges, and does not use an outer
+margin, rounded floating-card background, or shadow. The fullscreen overlay
+toolbar contains image controls without the toolbar application menu button. The
+fullscreen overlay toolbar is shown when entering fullscreen and when the
+pointer moves over the window. It hides after 1.0 seconds of inactivity unless
+the pointer is over the toolbar or a toolbar input is focused. Leaving
+fullscreen restores the window's previous windowed, maximized, or minimized
+state and restores the normal header toolbar.
 
-The `?` key and F1 open a modal shortcut help dialog listing KiriView's keyboard
-and mouse shortcuts. The `?` shortcut is inactive while the page number or zoom
-input is focused. While the shortcut help dialog is open, Escape closes the
-dialog before any fullscreen handling.
+Ctrl+? and F1 open a modal shortcut help dialog listing KiriView's keyboard and
+mouse shortcuts. While the page number or zoom input is not focused, KiriView
+also accepts the runtime-only alias `?` for shortcut help. While the shortcut
+help dialog is open, Escape closes the dialog before any fullscreen handling.
 
 Ctrl+M toggles the application menu presentation between Hamburger Menu and
 Menubar. This shortcut is fixed, is not user-configurable, and is not listed in
@@ -523,14 +541,21 @@ keyboard shortcut configuration or shortcut help.
 
 Escape first cancels an active page number or zoom input edit. When no toolbar
 input is focused, Escape leaves fullscreen if the main window is fullscreen.
-Outside fullscreen, Escape does not close the main window. The `q` and Ctrl+Q
-shortcuts close the main window. Unmodified quit shortcuts such as `q` are
-inactive while the page number or zoom input is focused; quit shortcuts using
-Ctrl, Alt, or Meta remain active while those inputs are focused.
+Outside fullscreen, Escape does not close the main window. Ctrl+Q closes the
+main window. While the page number or zoom input is not focused, KiriView also
+accepts the runtime-only alias `q` for Quit. Quit shortcuts using Ctrl, Alt, or
+Meta remain active while those inputs are focused.
 
 Users can open Keyboard Shortcuts configuration to configure KiriView's keyboard
 shortcuts. Changing a shortcut updates the toolbar, application menu, menubar,
 shortcut help, and active keyboard handling consistently. Shortcut changes apply
-immediately and persist across launches.
+immediately and persist across launches. Configured shortcuts are the canonical
+shortcut list. When a configured shortcut uses Ctrl or Ctrl+Shift with a
+printable key, KiriView derives a matching runtime-only viewer alias without
+Ctrl, such as Ctrl+L to `l` or Ctrl+Shift+R to Shift+R. Derived aliases are not
+stored, are inactive while the page number or zoom input is focused, and are not
+listed as separate shortcuts in menus, Keyboard Shortcuts configuration, or the
+Keyboard Shortcuts help. Directly configured unmodified ASCII printable
+shortcuts are removed from the canonical shortcut list.
 
 Out of scope for the current version: editing and metadata panels.
