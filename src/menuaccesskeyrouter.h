@@ -51,12 +51,10 @@ private:
     static QObject *menuItemForMnemonic(QObject *menu, const QKeyEvent &event);
     static bool itemMatchesMnemonic(QObject *item, const QKeyEvent &event);
     static bool clickMenuItem(QObject *item);
-    static void dismissMenu(QObject *menu);
 
     QPointer<QObject> m_rootObject;
     bool m_enabled = true;
     bool m_altPressedInOpenMenu = false;
-    bool m_altPressWasStandalone = false;
 };
 
 #endif

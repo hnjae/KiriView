@@ -26,8 +26,8 @@ private Q_SLOTS:
     void altMnemonicTriggersItem();
     void plainMnemonicStillTriggersItem_data();
     void plainMnemonicStillTriggersItem();
-    void altPressReleaseDismissesMenu_data();
-    void altPressReleaseDismissesMenu();
+    void altPressReleaseKeepsMenuOpen_data();
+    void altPressReleaseKeepsMenuOpen();
 };
 
 namespace {
@@ -290,9 +290,9 @@ void TestMenuAccessKeyRouter::plainMnemonicStillTriggersItem()
     QTRY_COMPARE(fixture.root->property("triggerCount").toInt(), 1);
 }
 
-void TestMenuAccessKeyRouter::altPressReleaseDismissesMenu_data() { addFixtureRows(); }
+void TestMenuAccessKeyRouter::altPressReleaseKeepsMenuOpen_data() { addFixtureRows(); }
 
-void TestMenuAccessKeyRouter::altPressReleaseDismissesMenu()
+void TestMenuAccessKeyRouter::altPressReleaseKeepsMenuOpen()
 {
     QFETCH(int, fixtureKind);
     MenuFixture fixture = createMenuFixture(static_cast<FixtureKind>(fixtureKind));
@@ -308,7 +308,7 @@ void TestMenuAccessKeyRouter::altPressReleaseDismissesMenu()
     QVERIFY(isMenuOpen(fixture.menu));
     sendKey(fixture.menu, QEvent::KeyRelease, Qt::Key_Alt, Qt::NoModifier);
 
-    QTRY_VERIFY(!isMenuOpen(fixture.menu));
+    QVERIFY(isMenuOpen(fixture.menu));
 }
 
 QTEST_MAIN(TestMenuAccessKeyRouter)

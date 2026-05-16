@@ -80,12 +80,7 @@ bool MenuAccessKeyRouter::handleKeyPress(QKeyEvent *event)
 
     if (event->key() == Qt::Key_Alt) {
         m_altPressedInOpenMenu = true;
-        m_altPressWasStandalone = true;
         return true;
-    }
-
-    if (m_altPressedInOpenMenu) {
-        m_altPressWasStandalone = false;
     }
 
     if (!isAltMnemonicKeyPress(*event)) {
@@ -121,11 +116,7 @@ bool MenuAccessKeyRouter::handleKeyRelease(QKeyEvent *event)
         return false;
     }
 
-    const bool dismiss = m_altPressWasStandalone;
     resetAltTracking();
-    if (dismiss) {
-        dismissMenu(menu);
-    }
     return true;
 }
 
@@ -138,11 +129,7 @@ QObject *MenuAccessKeyRouter::openMenu() const
     return openMenuInSubtree(m_rootObject);
 }
 
-void MenuAccessKeyRouter::resetAltTracking()
-{
-    m_altPressedInOpenMenu = false;
-    m_altPressWasStandalone = false;
-}
+void MenuAccessKeyRouter::resetAltTracking() { m_altPressedInOpenMenu = false; }
 
 QObject *MenuAccessKeyRouter::openMenuInSubtree(QObject *object)
 {
@@ -253,11 +240,4 @@ bool MenuAccessKeyRouter::itemMatchesMnemonic(QObject *item, const QKeyEvent &ev
 bool MenuAccessKeyRouter::clickMenuItem(QObject *item)
 {
     return QMetaObject::invokeMethod(item, "click", Qt::DirectConnection);
-}
-
-void MenuAccessKeyRouter::dismissMenu(QObject *menu)
-{
-    if (!QMetaObject::invokeMethod(menu, "dismiss", Qt::DirectConnection)) {
-        QMetaObject::invokeMethod(menu, "close", Qt::DirectConnection);
-    }
 }
