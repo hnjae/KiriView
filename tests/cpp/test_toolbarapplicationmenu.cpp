@@ -42,6 +42,7 @@ private Q_SLOTS:
     void toolbarActionOrderKeepsReadingDirectionBesideSpread();
     void pageNavigationButtonsUseSemanticActionsForReadingDirection();
     void menubarGoMenuOrderFollowsReadingDirection();
+    void menubarGoMenuIconsFollowReadingDirection();
     void imageActionsApplicationMenuArchiveOrderFollowsReadingDirection();
 };
 
@@ -362,6 +363,22 @@ Item {
         return menuActionTexts(menuBar.menuAt(1));
     }
 
+    function menuActionIconNames(menu) {
+        const iconNames = [];
+        for (let index = 0; index < menu.count; ++index) {
+            const item = menu.itemAt(index);
+            const text = item && typeof item.text === "string" ? item.text : "";
+            if (text.length > 0) {
+                iconNames.push(item.icon.name);
+            }
+        }
+        return iconNames;
+    }
+
+    function goMenuActionIconNames() {
+        return menuActionIconNames(menuBar.menuAt(1));
+    }
+
     KiriImageDocument {
         id: imageDocument
     }
@@ -370,12 +387,12 @@ Item {
     Kirigami.Action { id: stubMoveToTrashMenuAction; text: "Move to Trash" }
     Kirigami.Action { id: stubDeleteFileMenuAction; text: "Delete Permanently" }
     Kirigami.Action { id: stubQuitMenuAction; text: "Quit" }
-    Kirigami.Action { id: stubPreviousImageMenuAction; text: "Previous" }
-    Kirigami.Action { id: stubNextImageMenuAction; text: "Next" }
-    Kirigami.Action { id: stubFirstImageMenuAction; text: "First Image" }
-    Kirigami.Action { id: stubLastImageMenuAction; text: "Last Image" }
-    Kirigami.Action { id: stubPreviousContainerMenuAction; text: "Previous Archive" }
-    Kirigami.Action { id: stubNextContainerMenuAction; text: "Next Archive" }
+    Kirigami.Action { id: stubPreviousImageMenuAction; icon.name: "go-previous"; text: "Previous" }
+    Kirigami.Action { id: stubNextImageMenuAction; icon.name: "go-next"; text: "Next" }
+    Kirigami.Action { id: stubFirstImageMenuAction; icon.name: "go-first-symbolic"; text: "First Image" }
+    Kirigami.Action { id: stubLastImageMenuAction; icon.name: "go-last-symbolic"; text: "Last Image" }
+    Kirigami.Action { id: stubPreviousContainerMenuAction; icon.name: "go-previous-use"; text: "Previous Archive" }
+    Kirigami.Action { id: stubNextContainerMenuAction; icon.name: "go-next-use"; text: "Next Archive" }
     Kirigami.Action { id: stubZoomInMenuAction; text: "Zoom In" }
     Kirigami.Action { id: stubZoomOutMenuAction; text: "Zoom Out" }
     Kirigami.Action { id: stubFitMenuAction; text: "Fit" }
@@ -827,6 +844,38 @@ void TestToolBarApplicationMenu::menubarGoMenuOrderFollowsReadingDirection()
     QCoreApplication::processEvents();
 
     QTRY_COMPARE(invokeStringList(fixture.root, "goMenuActionTexts"), rightToLeftOrder);
+}
+
+void TestToolBarApplicationMenu::menubarGoMenuIconsFollowReadingDirection()
+{
+    ToolBarMenuFixture fixture = createMenuBarFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+
+    const QStringList leftToRightIcons({
+        QStringLiteral("go-previous"),
+        QStringLiteral("go-next"),
+        QStringLiteral("go-first-symbolic"),
+        QStringLiteral("go-last-symbolic"),
+        QStringLiteral("go-previous-use"),
+        QStringLiteral("go-next-use"),
+    });
+    const QStringList rightToLeftIcons({
+        QStringLiteral("go-previous"),
+        QStringLiteral("go-next"),
+        QStringLiteral("go-last-symbolic"),
+        QStringLiteral("go-first-symbolic"),
+        QStringLiteral("go-previous-use"),
+        QStringLiteral("go-next-use"),
+    });
+
+    bool ok = false;
+    QCOMPARE(invokeStringList(fixture.root, "goMenuActionIconNames", &ok), leftToRightIcons);
+    QVERIFY(ok);
+
+    fixture.root->setProperty("rightToLeftReadingActive", true);
+    QCoreApplication::processEvents();
+
+    QTRY_COMPARE(invokeStringList(fixture.root, "goMenuActionIconNames"), rightToLeftIcons);
 }
 
 void TestToolBarApplicationMenu::imageActionsApplicationMenuArchiveOrderFollowsReadingDirection()

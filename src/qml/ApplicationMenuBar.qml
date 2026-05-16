@@ -21,6 +21,12 @@ Controls.MenuBar {
     readonly property string trailingArchiveMenuText: root.rightToLeftReadingActive ? KI18n.i18nc("@action:inmenu", "Previous A&rchive") : KI18n.i18nc("@action:inmenu", "Nex&t Archive")
     readonly property var trailingImageMenuAction: root.rightToLeftReadingActive ? root.actions.previousImageMenuAction : root.actions.nextImageMenuAction
     readonly property string trailingImageMenuText: root.rightToLeftReadingActive ? KI18n.i18nc("@action:inmenu", "&Previous") : KI18n.i18nc("@action:inmenu", "&Next")
+    readonly property string leadingArchiveMenuIconName: root.actions.previousContainerMenuAction?.icon.name ?? ""
+    readonly property string leadingImageMenuIconName: root.actions.previousImageMenuAction?.icon.name ?? ""
+    readonly property string firstImageMenuIconName: root.rightToLeftReadingActive ? (root.actions.lastImageMenuAction?.icon.name ?? "") : (root.actions.firstImageMenuAction?.icon.name ?? "")
+    readonly property string lastImageMenuIconName: root.rightToLeftReadingActive ? (root.actions.firstImageMenuAction?.icon.name ?? "") : (root.actions.lastImageMenuAction?.icon.name ?? "")
+    readonly property string trailingArchiveMenuIconName: root.actions.nextContainerMenuAction?.icon.name ?? ""
+    readonly property string trailingImageMenuIconName: root.actions.nextImageMenuAction?.icon.name ?? ""
 
     Controls.Menu {
         id: fileMenu
@@ -67,21 +73,25 @@ Controls.MenuBar {
 
         MenuActionItem {
             action: root.leadingImageMenuAction
+            icon.name: root.leadingImageMenuIconName
             text: root.leadingImageMenuText
         }
 
         MenuActionItem {
             action: root.trailingImageMenuAction
+            icon.name: root.trailingImageMenuIconName
             text: root.trailingImageMenuText
         }
 
         MenuActionItem {
             action: root.actions.firstImageMenuAction
+            icon.name: root.firstImageMenuIconName
             text: KI18n.i18nc("@action:inmenu", "&First Image")
         }
 
         MenuActionItem {
             action: root.actions.lastImageMenuAction
+            icon.name: root.lastImageMenuIconName
             text: KI18n.i18nc("@action:inmenu", "&Last Image")
         }
 
@@ -89,11 +99,13 @@ Controls.MenuBar {
 
         MenuActionItem {
             action: root.leadingArchiveMenuAction
+            icon.name: root.leadingArchiveMenuIconName
             text: root.leadingArchiveMenuText
         }
 
         MenuActionItem {
             action: root.trailingArchiveMenuAction
+            icon.name: root.trailingArchiveMenuIconName
             text: root.trailingArchiveMenuText
         }
     }
