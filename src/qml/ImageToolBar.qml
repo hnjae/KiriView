@@ -6,6 +6,7 @@ pragma ComponentBehavior: Bound
 import QtQuick
 import QtQuick.Controls as Controls
 import QtQuick.Layouts
+import QtQml.Models
 import io.github.hnjae.kiriview
 import org.kde.ki18n
 import org.kde.kirigami as Kirigami
@@ -26,6 +27,9 @@ Controls.ToolBar {
     property bool showApplicationMenuActions: false
     property bool pageNavigationInputFocused: false
     property bool zoomInputFocused: false
+    property Item applicationMenuButtonAnchor: null
+    // Popup.Window may close before the same button click reaches the toolbar.
+    property double applicationMenuClosedTimestamp: 0
     readonly property int controlSpacing: compact ? Math.max(1, Math.round(Kirigami.Units.smallSpacing / 2)) : Kirigami.Units.smallSpacing
     readonly property int edgeMargin: controlSpacing
     readonly property bool interactionActive: toolbarHoverHandler.hovered || textInputFocused()
@@ -56,27 +60,31 @@ Controls.ToolBar {
         return true;
     }
 
-    function findActionButton(item, action) {
-        if (!item || !("children" in item)) {
-            return null;
-        }
-
-        for (const child of item.children) {
-            if ("action" in child && child.action === action && child.visible) {
-                return child;
-            }
-
-            const nestedButton = findActionButton(child, action);
-            if (nestedButton) {
-                return nestedButton;
-            }
-        }
-
-        return null;
-    }
-
     function applicationMenuOpen() {
         return applicationMenuPopup.visible || applicationMenuPopup.opened;
+    }
+
+    function applicationMenuButtonUsable(button) {
+        if (!button || !button.visible || button.width <= 0 || button.height <= 0 || !actionToolBar.visible) {
+            return false;
+        }
+
+        try {
+            const center = button.mapToItem(actionToolBar, button.width / 2, button.height / 2);
+            return center.x >= 0 && center.x <= actionToolBar.width && center.y >= 0 && center.y <= actionToolBar.height;
+        } catch (error) {
+            return false;
+        }
+    }
+
+    function updateApplicationMenuButtonAnchor(button) {
+        if (applicationMenuButtonUsable(button)) {
+            if (applicationMenuButtonAnchor === button || !applicationMenuButtonUsable(applicationMenuButtonAnchor)) {
+                applicationMenuButtonAnchor = button;
+            }
+        } else if (applicationMenuButtonAnchor === button) {
+            applicationMenuButtonAnchor = null;
+        }
     }
 
     function popupApplicationMenu() {
@@ -84,9 +92,12 @@ Controls.ToolBar {
             return false;
         }
 
-        const menuButton = findActionButton(actionToolBar, applicationMenuAction);
-        if (menuButton) {
-            applicationMenuPopup.popup(menuButton, 0, menuButton.height);
+        const menuButton = applicationMenuButtonAnchor;
+        if (applicationMenuButtonUsable(menuButton)) {
+            const popupPosition = menuButton.mapToItem(root, 0, menuButton.height);
+            applicationMenuPopupAnchor.x = popupPosition.x;
+            applicationMenuPopupAnchor.y = popupPosition.y;
+            applicationMenuPopup.popup(applicationMenuPopupAnchor, 0, 0);
             return true;
         }
 
@@ -206,6 +217,56 @@ Controls.ToolBar {
     }
 
     readonly property Kirigami.Action applicationMenuAction: Kirigami.Action {
+        displayComponent: Controls.ToolButton {
+            id: applicationMenuButton
+
+            objectName: "toolbarApplicationMenuButton"
+
+            Accessible.name: root.applicationMenuAction.text
+            Accessible.role: Accessible.ButtonMenu
+            Accessible.ignored: !visible
+
+            property bool skipNextClick: false
+
+            display: Controls.AbstractButton.IconOnly
+            enabled: root.applicationMenuAction.enabled
+            icon.name: root.applicationMenuAction.icon.name
+            text: root.applicationMenuAction.text
+
+            Controls.ToolTip.text: root.applicationMenuAction.tooltip
+            Controls.ToolTip.visible: hovered && Controls.ToolTip.text.length > 0 && !applicationMenuPopup.visible && !pressed && !Kirigami.Settings.hasTransientTouchInput
+
+            Component.onCompleted: root.updateApplicationMenuButtonAnchor(applicationMenuButton)
+            Component.onDestruction: {
+                if (root.applicationMenuButtonAnchor === applicationMenuButton) {
+                    root.applicationMenuButtonAnchor = null;
+                }
+            }
+            onHeightChanged: root.updateApplicationMenuButtonAnchor(applicationMenuButton)
+            onParentChanged: root.updateApplicationMenuButtonAnchor(applicationMenuButton)
+            onVisibleChanged: root.updateApplicationMenuButtonAnchor(applicationMenuButton)
+            onWidthChanged: root.updateApplicationMenuButtonAnchor(applicationMenuButton)
+            onXChanged: root.updateApplicationMenuButtonAnchor(applicationMenuButton)
+            onYChanged: root.updateApplicationMenuButtonAnchor(applicationMenuButton)
+
+            onClicked: {
+                if (skipNextClick) {
+                    skipNextClick = false;
+                    return;
+                }
+                if (Date.now() - root.applicationMenuClosedTimestamp < 250) {
+                    return;
+                }
+
+                root.toggleApplicationMenu();
+            }
+            onPressed: {
+                if (root.applicationMenuOpen()) {
+                    skipNextClick = true;
+                    applicationMenuPopup.dismiss();
+                }
+            }
+        }
         displayHint: Kirigami.DisplayHint.KeepVisible
         enabled: root.applicationMenuActions.length > 0
         icon.name: "open-menu-symbolic"
@@ -215,10 +276,21 @@ Controls.ToolBar {
         onTriggered: root.toggleApplicationMenu()
     }
 
+    Item {
+        id: applicationMenuPopupAnchor
+
+        enabled: false
+        height: 1
+        width: 1
+    }
+
     Controls.Menu {
         id: applicationMenuPopup
 
         closePolicy: Controls.Popup.CloseOnEscape | Controls.Popup.CloseOnPressOutsideParent
+        popupType: Controls.Popup.Window
+
+        onAboutToHide: root.applicationMenuClosedTimestamp = Date.now()
 
         MenuAccessKeyRouter {
             enabled: root.showApplicationMenuActions
@@ -228,37 +300,29 @@ Controls.ToolBar {
         Instantiator {
             model: root.applicationMenuActions
 
-            delegate: QtObject {
-                required property var modelData
+            delegate: DelegateChooser {
+                role: "separator"
 
-                property var item: null
+                DelegateChoice {
+                    roleValue: true
 
-                Component.onCompleted: {
-                    const action = modelData;
-                    item = action.separator ? applicationMenuSeparatorComponent.createObject(applicationMenuPopup) : applicationMenuItemComponent.createObject(applicationMenuPopup, {
-                        "action": action
-                    });
-                    applicationMenuPopup.addItem(item);
+                    Controls.MenuSeparator {}
                 }
 
-                Component.onDestruction: {
-                    applicationMenuPopup.removeItem(item);
-                    item.destroy();
+                DelegateChoice {
+                    roleValue: false
+
+                    MenuActionItem {
+                        required property var modelData
+
+                        action: modelData
+                    }
                 }
             }
+
+            onObjectAdded: (index, object) => applicationMenuPopup.insertItem(index, object)
+            onObjectRemoved: (index, object) => applicationMenuPopup.removeItem(object)
         }
-    }
-
-    Component {
-        id: applicationMenuItemComponent
-
-        MenuActionItem {}
-    }
-
-    Component {
-        id: applicationMenuSeparatorComponent
-
-        Controls.MenuSeparator {}
     }
 
     contentItem: RowLayout {

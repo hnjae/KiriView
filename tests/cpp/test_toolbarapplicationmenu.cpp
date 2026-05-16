@@ -14,6 +14,7 @@
 #include <QQmlComponent>
 #include <QQmlEngine>
 #include <QQuickView>
+#include <QRegularExpression>
 #include <QString>
 #include <QTest>
 #include <QUrl>
@@ -26,6 +27,7 @@ class TestToolBarApplicationMenu : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
+    void init();
     void buttonClickTogglesMenu();
     void outsideClickClosesMenu();
     void openApplicationMenuOnlyOpens();
@@ -86,7 +88,7 @@ Item {
     property int openTriggerCount: 0
 
     function applicationMenuButton() {
-        return toolbar.findActionButton(toolbar, toolbar.applicationMenuAction);
+        return toolbar.applicationMenuButtonAnchor;
     }
 
     function applicationMenuButtonCenter() {
@@ -324,16 +326,26 @@ void clickOutsideMenuParent(const ToolBarMenuFixture &fixture)
 }
 }
 
+void TestToolBarApplicationMenu::init()
+{
+    QTest::failOnWarning(QRegularExpression(
+        QStringLiteral(".*Created graphical object was not placed in the graphics scene.*")));
+}
+
 void TestToolBarApplicationMenu::buttonClickTogglesMenu()
 {
     ToolBarMenuFixture fixture = createFixture();
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
     QTRY_VERIFY(invokeBool(fixture.root, "hasApplicationMenuButton"));
 
-    clickApplicationMenuButton(fixture);
+    bool ok = false;
+    const QPoint buttonPoint = invokePoint(fixture.root, "applicationMenuButtonCenter", &ok);
+    QVERIFY(ok);
+
+    clickAt(fixture.view.get(), buttonPoint);
     QTRY_VERIFY(applicationMenuOpen(fixture.root));
 
-    clickApplicationMenuButton(fixture);
+    clickAt(fixture.view.get(), buttonPoint);
     QTRY_VERIFY(!applicationMenuOpen(fixture.root));
     QTest::qWait(50);
     QVERIFY(!applicationMenuOpen(fixture.root));
