@@ -49,7 +49,12 @@ actions in reading progression order. When Right-to-Left Reading is active, the
 adjacent page navigation pair is displayed as Next before Previous, and the
 adjacent archive navigation pair is displayed as Next Archive before Previous
 Archive. First Image and Last Image keep their normal order because their
-page-index meaning does not change with reading direction.
+page-index meaning does not change with reading direction. The menubar Go menu
+projects directional navigation icons to match the displayed reading
+progression meaning without changing the underlying QAction identity: when
+Right-to-Left Reading is active, Next uses the previous-direction icon,
+Previous uses the next-direction icon, First Image uses the last-boundary icon,
+and Last Image uses the first-boundary icon.
 The toolbar application menu is a single popup menu surface: activating the
 toolbar application menu button and pressing F10 open the same menu instance
 with the same width, actions, access keys, and shortcut column. Activating the
