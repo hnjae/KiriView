@@ -53,9 +53,11 @@ menu item. Runtime-only Ctrl-less viewer aliases are never displayed in menus.
 When the menubar or toolbar application menu is open, underlined menu access
 keys are activatable with either the displayed mnemonic letter alone or Alt plus
 that mnemonic letter, so users can choose menu entries through the displayed
-mnemonic letters. Pressing and releasing Alt alone while the toolbar
-application menu is open keeps the menu open so users can complete Alt plus
-mnemonic key access.
+mnemonic letters. When an access key opens a submenu, the parent menu remains
+open and the opened menu chain continues to accept access keys for the deepest
+open submenu. Pressing and releasing Alt alone while the menubar or toolbar
+application menu is open keeps the menu open, and releasing Alt after an
+access-key interaction is not treated as a request to toggle or close the menu.
 KiriView does not expose a general Settings page in the current scope.
 The Keyboard Shortcuts help is shown as read-only supporting content over the
 main window. It lists the current configured shortcut text for KiriView actions,
