@@ -269,6 +269,15 @@ When a ready image is larger than the viewport at the current zoom, horizontal
 and vertical scrollbars allow panning across the image. When the image is
 smaller than the viewport, it remains centered.
 
+While the page number or zoom input is not focused, the plain arrow keys are
+fixed viewer-only shortcuts for keyboard panning and physical adjacent
+navigation. They are not user-configurable actions and are not listed in
+Keyboard Shortcuts configuration, shortcut help, or menus. Left and Right pan
+horizontally when possible; otherwise, Left opens the previous image in
+Left-to-Right Reading mode and the next image in Right-to-Left Reading mode,
+while Right does the opposite. Up and Down pan vertically when the image is
+pannable and have no image-navigation fallback.
+
 When a directly opened local CBZ, CBT, CB7, or CBR comic book archive is
 displayed, Ctrl+S toggles Two-Page Spread. While the page number or zoom input
 is not focused, KiriView also accepts the runtime-only alias `s` for Two-Page
