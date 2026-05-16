@@ -9,7 +9,8 @@ Item {
     enum ShortcutFilter {
         AllShortcuts,
         WithCommandModifier,
-        WithoutCommandModifier
+        WithoutCommandModifier,
+        ShortcutAliases
     }
 
     required property var application
@@ -26,6 +27,8 @@ Item {
             return root.application.shortcutsWithCommandModifierForId(root.actionId);
         case ConfiguredActionShortcut.WithoutCommandModifier:
             return root.application.shortcutsWithoutCommandModifierForId(root.actionId);
+        case ConfiguredActionShortcut.ShortcutAliases:
+            return root.application.shortcutAliasesForId(root.actionId);
         case ConfiguredActionShortcut.AllShortcuts:
         default:
             return root.application.shortcutsForId(root.actionId);

@@ -80,9 +80,9 @@ constexpr std::array actionDefinitions {
         KStandardActions::DeleteFile, kli18nc("@action", "Delete Permanently"),
         portableShortcutSpec("Shift+Delete")),
     registeredAction(KiriViewApplication::GoPreviousArchiveAction, "go_previous_archive",
-        kli18nc("@action", "Previous Archive"), "go-previous-use", portableShortcutSpec("[")),
+        kli18nc("@action", "Previous Archive"), "go-previous-use", portableShortcutSpec("Ctrl+[")),
     registeredAction(KiriViewApplication::GoNextArchiveAction, "go_next_archive",
-        kli18nc("@action", "Next Archive"), "go-next-use", portableShortcutSpec("]")),
+        kli18nc("@action", "Next Archive"), "go-next-use", portableShortcutSpec("Ctrl+]")),
     registeredAction(KiriViewApplication::GoPreviousImageAction, "go_previous_image",
         kli18nc("@action", "Previous"), "go-previous",
         standardShortcutSpec(QKeySequence::MoveToPreviousPage)),
@@ -95,30 +95,32 @@ constexpr std::array actionDefinitions {
         kli18nc("@action", "Last Image"), "go-last-symbolic",
         portableShortcutSpec("Ctrl+End", "End")),
     standardAction(KiriViewApplication::ViewZoomInAction, "view_zoom_in", KStandardActions::ZoomIn,
-        kli18nc("@action", "Zoom In"), portableShortcutSpec("Ctrl+=", "Ctrl++", "=", "+")),
+        kli18nc("@action", "Zoom In"), portableShortcutSpec("Ctrl+=", "Ctrl++")),
     standardAction(KiriViewApplication::ViewZoomOutAction, "view_zoom_out",
-        KStandardActions::ZoomOut, kli18nc("@action", "Zoom Out"),
-        portableShortcutSpec("-", "Ctrl+-")),
+        KStandardActions::ZoomOut, kli18nc("@action", "Zoom Out"), portableShortcutSpec("Ctrl+-")),
     standardAction(KiriViewApplication::ViewFitAction, "view_fit", KStandardActions::FitToPage,
-        kli18nc("@action", "Fit"), portableShortcutSpec("1")),
+        kli18nc("@action", "Fit"), portableShortcutSpec("Ctrl+1")),
     standardAction(KiriViewApplication::ViewFitHeightAction, "view_fit_height",
-        KStandardActions::FitToHeight, kli18nc("@action", "Fit Height"), portableShortcutSpec("2")),
+        KStandardActions::FitToHeight, kli18nc("@action", "Fit Height"),
+        portableShortcutSpec("Ctrl+2")),
     standardAction(KiriViewApplication::ViewFitWidthAction, "view_fit_width",
-        KStandardActions::FitToWidth, kli18nc("@action", "Fit Width"), portableShortcutSpec("3")),
+        KStandardActions::FitToWidth, kli18nc("@action", "Fit Width"),
+        portableShortcutSpec("Ctrl+3")),
     standardAction(KiriViewApplication::ViewActualSizeAction, "view_actual_size",
-        KStandardActions::ActualSize, kli18nc("@action", "Actual Size"), portableShortcutSpec("0")),
+        KStandardActions::ActualSize, kli18nc("@action", "Actual Size"),
+        portableShortcutSpec("Ctrl+0")),
     registeredAction(KiriViewApplication::ViewRotateClockwiseAction, "view_rotate_clockwise",
         kli18nc("@action", "Rotate Clockwise"), "object-rotate-right-symbolic",
-        portableShortcutSpec("R", "Ctrl+R")),
+        portableShortcutSpec("Ctrl+R")),
     registeredAction(KiriViewApplication::ViewRotateCounterclockwiseAction,
         "view_rotate_counterclockwise", kli18nc("@action", "Rotate Counterclockwise"),
-        "object-rotate-left-symbolic", portableShortcutSpec("Shift+R", "Ctrl+Shift+R")),
+        "object-rotate-left-symbolic", portableShortcutSpec("Ctrl+Shift+R")),
     registeredAction(KiriViewApplication::ViewToggleTwoPageModeAction, "view_toggle_two_page_mode",
         kli18nc("@action", "Two-Page Spread"), "view-split-left-right-symbolic",
-        portableShortcutSpec("S")),
+        portableShortcutSpec("Ctrl+S")),
     registeredAction(KiriViewApplication::ViewToggleRightToLeftReadingAction,
         "view_toggle_right_to_left_reading", kli18nc("@action", "Right-to-Left Reading"),
-        "format-text-direction-rtl-symbolic", portableShortcutSpec("B")),
+        "format-text-direction-rtl-symbolic", portableShortcutSpec("Ctrl+B")),
     registeredAction(KiriViewApplication::ViewPanLeftAction, "view_pan_left",
         kli18nc("@action", "Pan Left"), nullptr, portableShortcutSpec("Left")),
     registeredAction(KiriViewApplication::ViewPanRightAction, "view_pan_right",
@@ -128,29 +130,30 @@ constexpr std::array actionDefinitions {
     registeredAction(KiriViewApplication::ViewPanDownAction, "view_pan_down",
         kli18nc("@action", "Pan Down"), nullptr, portableShortcutSpec("Down")),
     registeredAction(KiriViewApplication::ViewPanTopLeftAction, "view_pan_top_left",
-        kli18nc("@action", "Top Left"), nullptr, portableShortcutSpec("<")),
+        kli18nc("@action", "Top Left"), nullptr, portableShortcutSpec("Ctrl+<")),
     registeredAction(KiriViewApplication::ViewPanBottomRightAction, "view_pan_bottom_right",
-        kli18nc("@action", "Bottom Right"), nullptr, portableShortcutSpec(">")),
+        kli18nc("@action", "Bottom Right"), nullptr, portableShortcutSpec("Ctrl+>")),
     registeredAction(KiriViewApplication::ViewScanForwardAction, "view_scan_forward",
-        kli18nc("@action", "Scan Forward"), nullptr, portableShortcutSpec(".")),
+        kli18nc("@action", "Scan Forward"), nullptr, portableShortcutSpec("Ctrl+.")),
     registeredAction(KiriViewApplication::ViewScanBackwardAction, "view_scan_backward",
-        kli18nc("@action", "Scan Backward"), nullptr, portableShortcutSpec(",")),
+        kli18nc("@action", "Scan Backward"), nullptr, portableShortcutSpec("Ctrl+,")),
     registeredAction(KiriViewApplication::GoPreviousSinglePageAction, "go_previous_single_page",
-        kli18nc("@action", "Previous Page"), "go-previous-symbolic", portableShortcutSpec("P")),
+        kli18nc("@action", "Previous Page"), "go-previous-symbolic",
+        portableShortcutSpec("Ctrl+P")),
     registeredAction(KiriViewApplication::GoNextSinglePageAction, "go_next_single_page",
-        kli18nc("@action", "Next Page"), "go-next-symbolic", portableShortcutSpec("N")),
+        kli18nc("@action", "Next Page"), "go-next-symbolic", portableShortcutSpec("Ctrl+N")),
     standardAction(KiriViewApplication::WindowFullscreenAction, "window_fullscreen",
         KStandardActions::FullScreen, kli18nc("@action", "Fullscreen"),
-        portableShortcutSpec("F", "F11")),
+        portableShortcutSpec("Ctrl+F", "F11")),
     registeredAction(KiriViewApplication::HelpShortcutsAction, "help_shortcuts",
         kli18nc("@action", "Keyboard Shortcuts"), "help-keyboard-shortcuts-symbolic",
-        portableShortcutSpec("?", "F1")),
+        portableShortcutSpec("Ctrl+?", "F1")),
     inheritedAction(
         KiriViewApplication::OptionsConfigureKeybindingAction, "options_configure_keybinding"),
     showMenubarAction(KiriViewApplication::OptionsShowMenubarAction, "options_show_menubar",
         KStandardActions::ShowMenubar, kli18nc("@action", "Show Menubar"), noDefaultShortcuts()),
     existingAction(
-        KiriViewApplication::FileQuitAction, "file_quit", portableShortcutSpec("Q", "Ctrl+Q")),
+        KiriViewApplication::FileQuitAction, "file_quit", portableShortcutSpec("Ctrl+Q")),
 };
 
 static_assert(actionDefinitions.size() == Actions::actionDefinitionCount);
@@ -221,6 +224,88 @@ bool shortcutHasCommandModifier(const QKeySequence &shortcut)
 
     return false;
 }
+
+bool isAsciiPrintableKey(Qt::Key key) { return key >= Qt::Key_Space && key <= Qt::Key_AsciiTilde; }
+
+bool isDeletionOrNavigationKey(Qt::Key key)
+{
+    switch (key) {
+    case Qt::Key_Backspace:
+    case Qt::Key_Delete:
+    case Qt::Key_Left:
+    case Qt::Key_Right:
+    case Qt::Key_Up:
+    case Qt::Key_Down:
+    case Qt::Key_Home:
+    case Qt::Key_End:
+    case Qt::Key_PageUp:
+    case Qt::Key_PageDown:
+        return true;
+    default:
+        return false;
+    }
+}
+
+bool shortcutCombinationIsMenuDisplaySafe(QKeyCombination combination)
+{
+    const Qt::Key key = combination.key();
+    if (isDeletionOrNavigationKey(key)) {
+        return false;
+    }
+
+    const Qt::KeyboardModifiers commandModifiers
+        = Qt::ControlModifier | Qt::AltModifier | Qt::MetaModifier;
+    if ((combination.keyboardModifiers() & commandModifiers) == Qt::NoModifier
+        && isAsciiPrintableKey(key)) {
+        return false;
+    }
+
+    return key != Qt::Key_unknown;
+}
+
+bool shortcutIsMenuDisplaySafe(const QKeySequence &shortcut)
+{
+    if (shortcut.isEmpty()) {
+        return false;
+    }
+
+    for (int index = 0; index < shortcut.count(); ++index) {
+        if (!shortcutCombinationIsMenuDisplaySafe(shortcut[static_cast<uint>(index)])) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool shortcutCombinationIsUnmodifiedAsciiPrintable(QKeyCombination combination)
+{
+    return combination.keyboardModifiers() == Qt::NoModifier
+        && isAsciiPrintableKey(combination.key());
+}
+
+bool shortcutIsUnmodifiedAsciiPrintable(const QKeySequence &shortcut)
+{
+    return shortcut.count() == 1 && shortcutCombinationIsUnmodifiedAsciiPrintable(shortcut[0]);
+}
+
+QKeySequence shortcutAlias(const QKeySequence &shortcut)
+{
+    if (shortcut.count() != 1) {
+        return {};
+    }
+
+    const QKeyCombination combination = shortcut[0];
+    const Qt::KeyboardModifiers modifiers = combination.keyboardModifiers();
+    const Qt::KeyboardModifiers allowedModifiers = Qt::ControlModifier | Qt::ShiftModifier;
+    if ((modifiers & Qt::ControlModifier) == Qt::NoModifier
+        || (modifiers & ~allowedModifiers) != Qt::NoModifier
+        || !isAsciiPrintableKey(combination.key())) {
+        return {};
+    }
+
+    return QKeySequence(QKeyCombination(modifiers & ~Qt::ControlModifier, combination.key()));
+}
 }
 
 namespace KiriView::ApplicationActions {
@@ -274,6 +359,32 @@ QList<QKeySequence> filterShortcutsByCommandModifier(
     return filteredShortcuts;
 }
 
+QKeySequence menuShortcut(const QList<QKeySequence> &shortcuts)
+{
+    for (const QKeySequence &shortcut : shortcuts) {
+        if (shortcutIsMenuDisplaySafe(shortcut)) {
+            return shortcut;
+        }
+    }
+
+    return {};
+}
+
+QList<QKeySequence> shortcutAliases(const QList<QKeySequence> &shortcuts)
+{
+    QList<QKeySequence> aliases;
+    aliases.reserve(shortcuts.size());
+
+    for (const QKeySequence &shortcut : shortcuts) {
+        const QKeySequence alias = shortcutAlias(shortcut);
+        if (!alias.isEmpty() && !aliases.contains(alias)) {
+            aliases.push_back(alias);
+        }
+    }
+
+    return aliases;
+}
+
 QString shortcutListText(const QList<QKeySequence> &shortcuts)
 {
     QStringList texts;
@@ -285,5 +396,19 @@ QString shortcutListText(const QList<QKeySequence> &shortcuts)
     }
 
     return texts.join(QStringLiteral(" / "));
+}
+
+QList<QKeySequence> sanitizeShortcuts(const QList<QKeySequence> &shortcuts)
+{
+    QList<QKeySequence> sanitizedShortcuts;
+    sanitizedShortcuts.reserve(shortcuts.size());
+
+    for (const QKeySequence &shortcut : shortcuts) {
+        if (!shortcutIsUnmodifiedAsciiPrintable(shortcut)) {
+            sanitizedShortcuts.push_back(shortcut);
+        }
+    }
+
+    return sanitizedShortcuts;
 }
 }

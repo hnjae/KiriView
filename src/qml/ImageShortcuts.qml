@@ -20,18 +20,24 @@ Item {
     readonly property bool atFirstImage: imageDocument.currentPageNumber === 1 && imageDocument.imageCount > 0
     readonly property bool atLastImage: imageDocument.currentPageNumber > 0 && imageDocument.currentPageNumber === imageDocument.imageCount
     readonly property int keyboardPanDistance: 64
-    readonly property bool commandShortcutsEnabled: !root.textInputFocused() && !root.helpDialogOpen
     readonly property bool helpShortcutsEnabled: !root.helpDialogOpen
+    readonly property bool viewerShortcutsEnabled: !root.textInputFocused() && root.helpShortcutsEnabled
     readonly property bool readyShortcutsEnabled: root.imageReady && !root.imageDocument.fileDeletionInProgress && root.helpShortcutsEnabled
-    readonly property bool readyCommandShortcutsEnabled: root.imageReady && !root.imageDocument.fileDeletionInProgress && root.commandShortcutsEnabled
+    readonly property bool readyViewerShortcutsEnabled: root.imageReady && !root.imageDocument.fileDeletionInProgress && root.viewerShortcutsEnabled
     readonly property bool imageSelectionShortcutsEnabled: root.imageDocument.imageCount > 0 && root.imageDocument.currentPageNumber > 0 && !root.imageDocument.fileDeletionInProgress && root.helpShortcutsEnabled
-    readonly property bool imageSelectionCommandShortcutsEnabled: root.imageDocument.imageCount > 0 && root.imageDocument.currentPageNumber > 0 && !root.imageDocument.fileDeletionInProgress && root.commandShortcutsEnabled
-    readonly property bool pageCommandShortcutsEnabled: imageSelectionCommandShortcutsEnabled
-    readonly property bool twoPageCommandShortcutsEnabled: imageSelectionCommandShortcutsEnabled && root.imageDocument.twoPageModeAvailable && root.imageDocument.twoPageModeEnabled
-    readonly property bool rightToLeftReadingCommandShortcutsEnabled: readyCommandShortcutsEnabled && root.imageDocument.rightToLeftReadingAvailable
-    readonly property bool rotateCommandShortcutsEnabled: readyCommandShortcutsEnabled && !(root.imageDocument.twoPageModeEnabled && root.imageDocument.twoPageModeAvailable)
-    readonly property bool pannableCommandShortcutsEnabled: root.imagePannable && !root.imageDocument.fileDeletionInProgress && root.commandShortcutsEnabled
-    readonly property bool containerCommandShortcutsEnabled: root.imageDocument.containerNavigationAvailable && !root.imageDocument.fileDeletionInProgress && root.commandShortcutsEnabled
+    readonly property bool imageSelectionViewerShortcutsEnabled: root.imageDocument.imageCount > 0 && root.imageDocument.currentPageNumber > 0 && !root.imageDocument.fileDeletionInProgress && root.viewerShortcutsEnabled
+    readonly property bool pageShortcutsEnabled: root.imageSelectionShortcutsEnabled
+    readonly property bool pageViewerShortcutsEnabled: root.imageSelectionViewerShortcutsEnabled
+    readonly property bool twoPageShortcutsEnabled: root.imageSelectionShortcutsEnabled && root.imageDocument.twoPageModeAvailable && root.imageDocument.twoPageModeEnabled
+    readonly property bool twoPageViewerShortcutsEnabled: root.imageSelectionViewerShortcutsEnabled && root.imageDocument.twoPageModeAvailable && root.imageDocument.twoPageModeEnabled
+    readonly property bool rightToLeftReadingShortcutsEnabled: root.readyShortcutsEnabled && root.imageDocument.rightToLeftReadingAvailable
+    readonly property bool rightToLeftReadingViewerShortcutsEnabled: root.readyViewerShortcutsEnabled && root.imageDocument.rightToLeftReadingAvailable
+    readonly property bool rotateShortcutsEnabled: root.readyShortcutsEnabled && !(root.imageDocument.twoPageModeEnabled && root.imageDocument.twoPageModeAvailable)
+    readonly property bool rotateViewerShortcutsEnabled: root.readyViewerShortcutsEnabled && !(root.imageDocument.twoPageModeEnabled && root.imageDocument.twoPageModeAvailable)
+    readonly property bool pannableShortcutsEnabled: root.imagePannable && !root.imageDocument.fileDeletionInProgress && root.helpShortcutsEnabled
+    readonly property bool pannableViewerShortcutsEnabled: root.imagePannable && !root.imageDocument.fileDeletionInProgress && root.viewerShortcutsEnabled
+    readonly property bool containerShortcutsEnabled: root.imageDocument.containerNavigationAvailable && !root.imageDocument.fileDeletionInProgress && root.helpShortcutsEnabled
+    readonly property bool containerViewerShortcutsEnabled: root.imageDocument.containerNavigationAvailable && !root.imageDocument.fileDeletionInProgress && root.viewerShortcutsEnabled
 
     readonly property var previousImageQAction: root.application.actionForId(KiriViewApplication.GoPreviousImageAction)
     readonly property var nextImageQAction: root.application.actionForId(KiriViewApplication.GoNextImageAction)
@@ -157,14 +163,15 @@ Item {
     ActionShortcutGroup {
         actionIds: [KiriViewApplication.FileOpenAction]
         application: root.application
+        shortcutFilter: ConfiguredActionShortcut.WithCommandModifier
         shortcutsEnabled: root.helpShortcutsEnabled
     }
 
     ActionShortcutGroup {
-        actionIds: [KiriViewApplication.FileQuitAction]
+        actionIds: [KiriViewApplication.FileOpenAction]
         application: root.application
         shortcutFilter: ConfiguredActionShortcut.WithoutCommandModifier
-        shortcutsEnabled: root.commandShortcutsEnabled
+        shortcutsEnabled: root.viewerShortcutsEnabled
     }
 
     ActionShortcutGroup {
@@ -175,75 +182,254 @@ Item {
     }
 
     ActionShortcutGroup {
+        actionIds: [KiriViewApplication.FileQuitAction]
+        application: root.application
+        shortcutFilter: ConfiguredActionShortcut.WithoutCommandModifier
+        shortcutsEnabled: root.viewerShortcutsEnabled
+    }
+
+    ActionShortcutGroup {
+        actionIds: [KiriViewApplication.FileQuitAction]
+        application: root.application
+        shortcutFilter: ConfiguredActionShortcut.ShortcutAliases
+        shortcutsEnabled: root.viewerShortcutsEnabled
+    }
+
+    ActionShortcutGroup {
         actionIds: [KiriViewApplication.FileMoveToTrashAction, KiriViewApplication.FileDeleteAction]
         application: root.application
-        shortcutsEnabled: root.readyCommandShortcutsEnabled
+        shortcutsEnabled: root.readyViewerShortcutsEnabled
     }
 
     ActionShortcutGroup {
         actionIds: [KiriViewApplication.ViewZoomInAction, KiriViewApplication.ViewZoomOutAction, KiriViewApplication.ViewFitAction, KiriViewApplication.ViewFitHeightAction, KiriViewApplication.ViewFitWidthAction, KiriViewApplication.ViewActualSizeAction, KiriViewApplication.ViewToggleTwoPageModeAction]
         application: root.application
-        shortcutsEnabled: root.readyCommandShortcutsEnabled
+        shortcutFilter: ConfiguredActionShortcut.WithCommandModifier
+        shortcutsEnabled: root.readyShortcutsEnabled
+    }
+
+    ActionShortcutGroup {
+        actionIds: [KiriViewApplication.ViewZoomInAction, KiriViewApplication.ViewZoomOutAction, KiriViewApplication.ViewFitAction, KiriViewApplication.ViewFitHeightAction, KiriViewApplication.ViewFitWidthAction, KiriViewApplication.ViewActualSizeAction, KiriViewApplication.ViewToggleTwoPageModeAction]
+        application: root.application
+        shortcutFilter: ConfiguredActionShortcut.WithoutCommandModifier
+        shortcutsEnabled: root.readyViewerShortcutsEnabled
+    }
+
+    ActionShortcutGroup {
+        actionIds: [KiriViewApplication.ViewZoomInAction, KiriViewApplication.ViewZoomOutAction, KiriViewApplication.ViewFitAction, KiriViewApplication.ViewFitHeightAction, KiriViewApplication.ViewFitWidthAction, KiriViewApplication.ViewActualSizeAction, KiriViewApplication.ViewToggleTwoPageModeAction]
+        application: root.application
+        shortcutFilter: ConfiguredActionShortcut.ShortcutAliases
+        shortcutsEnabled: root.readyViewerShortcutsEnabled
     }
 
     ActionShortcutGroup {
         actionIds: [KiriViewApplication.ViewRotateClockwiseAction, KiriViewApplication.ViewRotateCounterclockwiseAction]
         application: root.application
-        shortcutsEnabled: root.rotateCommandShortcutsEnabled
+        shortcutFilter: ConfiguredActionShortcut.WithCommandModifier
+        shortcutsEnabled: root.rotateShortcutsEnabled
+    }
+
+    ActionShortcutGroup {
+        actionIds: [KiriViewApplication.ViewRotateClockwiseAction, KiriViewApplication.ViewRotateCounterclockwiseAction]
+        application: root.application
+        shortcutFilter: ConfiguredActionShortcut.WithoutCommandModifier
+        shortcutsEnabled: root.rotateViewerShortcutsEnabled
+    }
+
+    ActionShortcutGroup {
+        actionIds: [KiriViewApplication.ViewRotateClockwiseAction, KiriViewApplication.ViewRotateCounterclockwiseAction]
+        application: root.application
+        shortcutFilter: ConfiguredActionShortcut.ShortcutAliases
+        shortcutsEnabled: root.rotateViewerShortcutsEnabled
     }
 
     ActionShortcutGroup {
         actionIds: [KiriViewApplication.ViewToggleRightToLeftReadingAction]
         application: root.application
-        shortcutsEnabled: root.rightToLeftReadingCommandShortcutsEnabled
+        shortcutFilter: ConfiguredActionShortcut.WithCommandModifier
+        shortcutsEnabled: root.rightToLeftReadingShortcutsEnabled
+    }
+
+    ActionShortcutGroup {
+        actionIds: [KiriViewApplication.ViewToggleRightToLeftReadingAction]
+        application: root.application
+        shortcutFilter: ConfiguredActionShortcut.WithoutCommandModifier
+        shortcutsEnabled: root.rightToLeftReadingViewerShortcutsEnabled
+    }
+
+    ActionShortcutGroup {
+        actionIds: [KiriViewApplication.ViewToggleRightToLeftReadingAction]
+        application: root.application
+        shortcutFilter: ConfiguredActionShortcut.ShortcutAliases
+        shortcutsEnabled: root.rightToLeftReadingViewerShortcutsEnabled
     }
 
     ActionShortcutGroup {
         actionIds: [KiriViewApplication.ViewPanLeftAction, KiriViewApplication.ViewPanRightAction]
         application: root.application
-        shortcutsEnabled: root.readyCommandShortcutsEnabled
+        shortcutFilter: ConfiguredActionShortcut.WithCommandModifier
+        shortcutsEnabled: root.readyShortcutsEnabled
+    }
+
+    ActionShortcutGroup {
+        actionIds: [KiriViewApplication.ViewPanLeftAction, KiriViewApplication.ViewPanRightAction]
+        application: root.application
+        shortcutFilter: ConfiguredActionShortcut.WithoutCommandModifier
+        shortcutsEnabled: root.readyViewerShortcutsEnabled
+    }
+
+    ActionShortcutGroup {
+        actionIds: [KiriViewApplication.ViewPanLeftAction, KiriViewApplication.ViewPanRightAction]
+        application: root.application
+        shortcutFilter: ConfiguredActionShortcut.ShortcutAliases
+        shortcutsEnabled: root.readyViewerShortcutsEnabled
     }
 
     ActionShortcutGroup {
         actionIds: [KiriViewApplication.ViewPanUpAction, KiriViewApplication.ViewPanDownAction, KiriViewApplication.ViewPanTopLeftAction, KiriViewApplication.ViewPanBottomRightAction]
         application: root.application
-        shortcutsEnabled: root.pannableCommandShortcutsEnabled
+        shortcutFilter: ConfiguredActionShortcut.WithCommandModifier
+        shortcutsEnabled: root.pannableShortcutsEnabled
+    }
+
+    ActionShortcutGroup {
+        actionIds: [KiriViewApplication.ViewPanUpAction, KiriViewApplication.ViewPanDownAction, KiriViewApplication.ViewPanTopLeftAction, KiriViewApplication.ViewPanBottomRightAction]
+        application: root.application
+        shortcutFilter: ConfiguredActionShortcut.WithoutCommandModifier
+        shortcutsEnabled: root.pannableViewerShortcutsEnabled
+    }
+
+    ActionShortcutGroup {
+        actionIds: [KiriViewApplication.ViewPanUpAction, KiriViewApplication.ViewPanDownAction, KiriViewApplication.ViewPanTopLeftAction, KiriViewApplication.ViewPanBottomRightAction]
+        application: root.application
+        shortcutFilter: ConfiguredActionShortcut.ShortcutAliases
+        shortcutsEnabled: root.pannableViewerShortcutsEnabled
     }
 
     ActionShortcutGroup {
         actionIds: [KiriViewApplication.ViewScanForwardAction, KiriViewApplication.ViewScanBackwardAction]
         application: root.application
-        shortcutsEnabled: root.readyCommandShortcutsEnabled
+        shortcutFilter: ConfiguredActionShortcut.WithCommandModifier
+        shortcutsEnabled: root.readyShortcutsEnabled
+    }
+
+    ActionShortcutGroup {
+        actionIds: [KiriViewApplication.ViewScanForwardAction, KiriViewApplication.ViewScanBackwardAction]
+        application: root.application
+        shortcutFilter: ConfiguredActionShortcut.WithoutCommandModifier
+        shortcutsEnabled: root.readyViewerShortcutsEnabled
+    }
+
+    ActionShortcutGroup {
+        actionIds: [KiriViewApplication.ViewScanForwardAction, KiriViewApplication.ViewScanBackwardAction]
+        application: root.application
+        shortcutFilter: ConfiguredActionShortcut.ShortcutAliases
+        shortcutsEnabled: root.readyViewerShortcutsEnabled
     }
 
     ActionShortcutGroup {
         actionIds: [KiriViewApplication.GoPreviousImageAction, KiriViewApplication.GoNextImageAction]
         application: root.application
+        shortcutFilter: ConfiguredActionShortcut.WithCommandModifier
         shortcutsEnabled: root.imageSelectionShortcutsEnabled
+    }
+
+    ActionShortcutGroup {
+        actionIds: [KiriViewApplication.GoPreviousImageAction, KiriViewApplication.GoNextImageAction]
+        application: root.application
+        shortcutFilter: ConfiguredActionShortcut.WithoutCommandModifier
+        shortcutsEnabled: root.imageSelectionViewerShortcutsEnabled
+    }
+
+    ActionShortcutGroup {
+        actionIds: [KiriViewApplication.GoPreviousImageAction, KiriViewApplication.GoNextImageAction]
+        application: root.application
+        shortcutFilter: ConfiguredActionShortcut.ShortcutAliases
+        shortcutsEnabled: root.imageSelectionViewerShortcutsEnabled
     }
 
     ActionShortcutGroup {
         actionIds: [KiriViewApplication.GoFirstImageAction, KiriViewApplication.GoLastImageAction]
         application: root.application
-        shortcutsEnabled: root.pageCommandShortcutsEnabled
+        shortcutFilter: ConfiguredActionShortcut.WithCommandModifier
+        shortcutsEnabled: root.pageShortcutsEnabled
+    }
+
+    ActionShortcutGroup {
+        actionIds: [KiriViewApplication.GoFirstImageAction, KiriViewApplication.GoLastImageAction]
+        application: root.application
+        shortcutFilter: ConfiguredActionShortcut.WithoutCommandModifier
+        shortcutsEnabled: root.pageViewerShortcutsEnabled
+    }
+
+    ActionShortcutGroup {
+        actionIds: [KiriViewApplication.GoFirstImageAction, KiriViewApplication.GoLastImageAction]
+        application: root.application
+        shortcutFilter: ConfiguredActionShortcut.ShortcutAliases
+        shortcutsEnabled: root.pageViewerShortcutsEnabled
     }
 
     ActionShortcutGroup {
         actionIds: [KiriViewApplication.GoPreviousSinglePageAction, KiriViewApplication.GoNextSinglePageAction]
         application: root.application
-        shortcutsEnabled: root.twoPageCommandShortcutsEnabled
+        shortcutFilter: ConfiguredActionShortcut.WithCommandModifier
+        shortcutsEnabled: root.twoPageShortcutsEnabled
+    }
+
+    ActionShortcutGroup {
+        actionIds: [KiriViewApplication.GoPreviousSinglePageAction, KiriViewApplication.GoNextSinglePageAction]
+        application: root.application
+        shortcutFilter: ConfiguredActionShortcut.WithoutCommandModifier
+        shortcutsEnabled: root.twoPageViewerShortcutsEnabled
+    }
+
+    ActionShortcutGroup {
+        actionIds: [KiriViewApplication.GoPreviousSinglePageAction, KiriViewApplication.GoNextSinglePageAction]
+        application: root.application
+        shortcutFilter: ConfiguredActionShortcut.ShortcutAliases
+        shortcutsEnabled: root.twoPageViewerShortcutsEnabled
     }
 
     ActionShortcutGroup {
         actionIds: [KiriViewApplication.GoPreviousArchiveAction, KiriViewApplication.GoNextArchiveAction]
         application: root.application
-        shortcutsEnabled: root.containerCommandShortcutsEnabled
+        shortcutFilter: ConfiguredActionShortcut.WithCommandModifier
+        shortcutsEnabled: root.containerShortcutsEnabled
+    }
+
+    ActionShortcutGroup {
+        actionIds: [KiriViewApplication.GoPreviousArchiveAction, KiriViewApplication.GoNextArchiveAction]
+        application: root.application
+        shortcutFilter: ConfiguredActionShortcut.WithoutCommandModifier
+        shortcutsEnabled: root.containerViewerShortcutsEnabled
+    }
+
+    ActionShortcutGroup {
+        actionIds: [KiriViewApplication.GoPreviousArchiveAction, KiriViewApplication.GoNextArchiveAction]
+        application: root.application
+        shortcutFilter: ConfiguredActionShortcut.ShortcutAliases
+        shortcutsEnabled: root.containerViewerShortcutsEnabled
     }
 
     ActionShortcutGroup {
         actionIds: [KiriViewApplication.WindowFullscreenAction, KiriViewApplication.HelpShortcutsAction]
         application: root.application
-        shortcutsEnabled: root.commandShortcutsEnabled
+        shortcutFilter: ConfiguredActionShortcut.WithCommandModifier
+        shortcutsEnabled: root.helpShortcutsEnabled
+    }
+
+    ActionShortcutGroup {
+        actionIds: [KiriViewApplication.WindowFullscreenAction, KiriViewApplication.HelpShortcutsAction]
+        application: root.application
+        shortcutFilter: ConfiguredActionShortcut.WithoutCommandModifier
+        shortcutsEnabled: root.helpShortcutsEnabled
+    }
+
+    ActionShortcutGroup {
+        actionIds: [KiriViewApplication.WindowFullscreenAction, KiriViewApplication.HelpShortcutsAction]
+        application: root.application
+        shortcutFilter: ConfiguredActionShortcut.ShortcutAliases
+        shortcutsEnabled: root.viewerShortcutsEnabled
     }
 
     ActionShortcutGroup {

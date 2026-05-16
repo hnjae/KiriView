@@ -87,8 +87,13 @@ public:
         const QString &actionName) const;
     Q_INVOKABLE QList<QKeySequence> shortcutsWithoutCommandModifierForId(
         KiriViewApplication::ActionId actionId) const;
+    Q_INVOKABLE QList<QKeySequence> shortcutAliases(const QString &actionName) const;
+    Q_INVOKABLE QList<QKeySequence> shortcutAliasesForId(
+        KiriViewApplication::ActionId actionId) const;
     Q_INVOKABLE QString shortcutText(const QString &actionName) const;
     Q_INVOKABLE QString shortcutTextForId(KiriViewApplication::ActionId actionId) const;
+    Q_INVOKABLE QKeySequence menuShortcut(const QString &actionName) const;
+    Q_INVOKABLE QKeySequence menuShortcutForId(KiriViewApplication::ActionId actionId) const;
     Q_INVOKABLE QString menuShortcutText(const QString &actionName) const;
     Q_INVOKABLE QString menuShortcutTextForId(KiriViewApplication::ActionId actionId) const;
 
@@ -107,10 +112,13 @@ private:
     QAction *finishRegisteredAction(QAction *registeredAction, const QString &text,
         const QList<QKeySequence> &defaultShortcuts);
     void handleActionChanged();
+    void sanitizeActionShortcuts();
+    void sanitizeActionShortcuts(QAction *action);
     void updateShowMenuBarAction();
 
     QAction *m_showMenuBarAction = nullptr;
     int m_shortcutRevision = 0;
+    bool m_sanitizingShortcuts = false;
 };
 
 #endif

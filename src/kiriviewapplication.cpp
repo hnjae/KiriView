@@ -114,6 +114,16 @@ QList<QKeySequence> KiriViewApplication::shortcutsWithoutCommandModifierForId(
     return Actions::filterShortcutsByCommandModifier(shortcutsForId(actionId), false);
 }
 
+QList<QKeySequence> KiriViewApplication::shortcutAliases(const QString &actionName) const
+{
+    return Actions::shortcutAliases(shortcuts(actionName));
+}
+
+QList<QKeySequence> KiriViewApplication::shortcutAliasesForId(ActionId actionId) const
+{
+    return Actions::shortcutAliases(shortcutsForId(actionId));
+}
+
 QString KiriViewApplication::shortcutText(const QString &actionName) const
 {
     return Actions::shortcutListText(shortcuts(actionName));
@@ -124,26 +134,24 @@ QString KiriViewApplication::shortcutTextForId(ActionId actionId) const
     return Actions::shortcutListText(shortcutsForId(actionId));
 }
 
+QKeySequence KiriViewApplication::menuShortcut(const QString &actionName) const
+{
+    return Actions::menuShortcut(shortcuts(actionName));
+}
+
+QKeySequence KiriViewApplication::menuShortcutForId(ActionId actionId) const
+{
+    return Actions::menuShortcut(shortcutsForId(actionId));
+}
+
 QString KiriViewApplication::menuShortcutText(const QString &actionName) const
 {
-    for (const QKeySequence &shortcut : shortcuts(actionName)) {
-        if (!shortcut.isEmpty()) {
-            return shortcut.toString(QKeySequence::NativeText);
-        }
-    }
-
-    return {};
+    return menuShortcut(actionName).toString(QKeySequence::NativeText);
 }
 
 QString KiriViewApplication::menuShortcutTextForId(ActionId actionId) const
 {
-    for (const QKeySequence &shortcut : shortcutsForId(actionId)) {
-        if (!shortcut.isEmpty()) {
-            return shortcut.toString(QKeySequence::NativeText);
-        }
-    }
-
-    return {};
+    return menuShortcutForId(actionId).toString(QKeySequence::NativeText);
 }
 
 void KiriViewApplication::setupActions()
@@ -188,6 +196,7 @@ void KiriViewApplication::setupActions()
     }
 
     readSettings();
+    sanitizeActionShortcuts();
     updateShowMenuBarAction();
 }
 
@@ -225,8 +234,41 @@ QAction *KiriViewApplication::finishRegisteredAction(
 
 void KiriViewApplication::handleActionChanged()
 {
+    if (m_sanitizingShortcuts) {
+        return;
+    }
+
+    if (auto *changedAction = qobject_cast<QAction *>(sender())) {
+        sanitizeActionShortcuts(changedAction);
+    }
+
     ++m_shortcutRevision;
     Q_EMIT shortcutRevisionChanged();
+}
+
+void KiriViewApplication::sanitizeActionShortcuts()
+{
+    for (QAction *registeredAction : mainCollection()->actions()) {
+        sanitizeActionShortcuts(registeredAction);
+    }
+}
+
+void KiriViewApplication::sanitizeActionShortcuts(QAction *action)
+{
+    if (!action) {
+        return;
+    }
+
+    const QList<QKeySequence> shortcuts = action->shortcuts();
+    const QList<QKeySequence> sanitizedShortcuts = Actions::sanitizeShortcuts(shortcuts);
+    if (sanitizedShortcuts == shortcuts) {
+        return;
+    }
+
+    m_sanitizingShortcuts = true;
+    action->setShortcuts(sanitizedShortcuts);
+    mainCollection()->writeSettings(nullptr, false, action);
+    m_sanitizingShortcuts = false;
 }
 
 void KiriViewApplication::updateShowMenuBarAction()
