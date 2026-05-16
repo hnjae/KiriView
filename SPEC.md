@@ -32,6 +32,10 @@ those application actions are available from the menubar, and any toolbar
 overflow menu appears only when toolbar controls do not fit. In fullscreen,
 KiriView hides both the menubar and toolbar application menu button; actions
 with configured shortcuts remain available through those shortcuts.
+The menubar and toolbar application menu display a representative shortcut for
+actions with configured shortcuts. The representative shortcut is the first
+non-empty entry in the action's current shortcut list. Actions without a
+representative shortcut do not show shortcut text in menus.
 When the menubar or toolbar application menu is open, underlined menu access
 keys are activatable with either the displayed mnemonic letter alone or Alt plus
 that mnemonic letter, so users can choose menu entries through the displayed
