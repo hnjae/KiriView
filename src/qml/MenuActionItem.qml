@@ -62,7 +62,7 @@ Controls.MenuItem {
 
         Controls.Label {
             Layout.alignment: Qt.AlignVCenter
-            color: label.color
+            color: root.pressed ? Kirigami.Theme.highlightedTextColor : Qt.alpha(Kirigami.Theme.textColor, 0.64)
             font: root.font
             horizontalAlignment: Text.AlignRight
             text: root.menuShortcutText
