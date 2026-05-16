@@ -13,11 +13,15 @@ no matching translation is available, KiriView shows the original English text.
 The main window toolbar shows image controls without a page title. It places
 the page navigation group at the leading side of the toolbar, containing
 Previous Image, the current page number, `of`, the total image count, and Next
-Image. It places zoom, Fit, and, when Hamburger Menu presentation is active
-outside fullscreen, a toolbar application menu button in a trailing action
-toolbar that displays as many trailing controls as fit and moves the rest into
-an overflow menu. When the trailing action toolbar runs out of horizontal space,
-KiriView keeps the zoom percentage visible the longest, then Fit. Outside
+Image. It places Right-to-Left Reading, Two-Page Spread, zoom, Fit, and, when
+Hamburger Menu presentation is active outside fullscreen, a toolbar application
+menu button in a trailing action toolbar that displays as many trailing controls
+as fit and moves the rest into an overflow menu. The Right-to-Left Reading
+toolbar control is immediately to the left of the Two-Page Spread control and
+toggles archive binding between left-to-right and right-to-left reading when
+that reading-direction option is available. When the trailing action toolbar
+runs out of horizontal space, KiriView keeps the zoom percentage visible the
+longest, then Fit. Outside
 fullscreen, the toolbar uses normal application header placement and reserves
 layout space above the image viewing area. Controls that require a ready image
 are disabled until an image is ready.
