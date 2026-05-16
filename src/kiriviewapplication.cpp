@@ -124,6 +124,28 @@ QString KiriViewApplication::shortcutTextForId(ActionId actionId) const
     return Actions::shortcutListText(shortcutsForId(actionId));
 }
 
+QString KiriViewApplication::menuShortcutText(const QString &actionName) const
+{
+    for (const QKeySequence &shortcut : shortcuts(actionName)) {
+        if (!shortcut.isEmpty()) {
+            return shortcut.toString(QKeySequence::NativeText);
+        }
+    }
+
+    return {};
+}
+
+QString KiriViewApplication::menuShortcutTextForId(ActionId actionId) const
+{
+    for (const QKeySequence &shortcut : shortcutsForId(actionId)) {
+        if (!shortcut.isEmpty()) {
+            return shortcut.toString(QKeySequence::NativeText);
+        }
+    }
+
+    return {};
+}
+
 void KiriViewApplication::setupActions()
 {
     AbstractKirigamiApplication::setupActions();

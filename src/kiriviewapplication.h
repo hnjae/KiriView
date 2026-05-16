@@ -89,6 +89,8 @@ public:
         KiriViewApplication::ActionId actionId) const;
     Q_INVOKABLE QString shortcutText(const QString &actionName) const;
     Q_INVOKABLE QString shortcutTextForId(KiriViewApplication::ActionId actionId) const;
+    Q_INVOKABLE QString menuShortcutText(const QString &actionName) const;
+    Q_INVOKABLE QString menuShortcutTextForId(KiriViewApplication::ActionId actionId) const;
 
 Q_SIGNALS:
     void menuPresentationChanged();
