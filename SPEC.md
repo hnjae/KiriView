@@ -218,13 +218,13 @@ and vertical scrollbars allow panning across the image. When the image is
 smaller than the viewport, it remains centered.
 
 When a directly opened local CBZ, CBT, CB7, or CBR comic book archive is
-displayed, the `d` key toggles Two-Page mode. Two-Page mode displays the
+displayed, the `s` key toggles Two-Page Spread. Two-Page Spread displays the
 current page on the left and the next page on the right when both pages are
 eligible. The first archive page is treated as a cover and is always displayed
 alone. Any page whose pixel width is greater than its pixel height is treated as
 a wide page and is displayed alone. If the next page after the current page is
 wide, the current page is displayed alone and the next navigation action opens
-that wide page. Two-Page mode is unavailable for ordinary image files,
+that wide page. Two-Page Spread is unavailable for ordinary image files,
 KDE-supported archive URLs, directly opened ZIP, TAR, 7Z, or RAR archives, and
 directly opened directories.
 
@@ -236,7 +236,7 @@ directly opened directories, and is not saved as a global setting. Moving to a
 sibling comic book archive with Previous Archive or Next Archive preserves the
 current Right-to-Left Reading mode state.
 
-When Two-Page mode shows two pages, zooming and panning operate on the combined
+When Two-Page Spread shows two pages, zooming and panning operate on the combined
 two-page spread as one virtual image. Fit, Fit Height, Fit Width, manual zoom,
 scrollbars, drag panning, wheel zoom, keyboard panning, and scan shortcuts use
 the full spread bounds. The spread has no added page gap. The page number,
@@ -246,7 +246,7 @@ In Right-to-Left Reading mode, the current page is rendered on the right and the
 next page is rendered on the left. The page number, window title, deletion
 target, archive navigation position, and `n`/`p` single-page navigation
 continue to refer to the current page.
-When navigation in Two-Page mode targets another eligible two-page spread,
+When navigation in Two-Page Spread targets another eligible two-page spread,
 KiriView shows the loading state instead of leaving the previous spread visible
 or showing only the left target page. The target spread appears only after both
 pages are ready. If the target page is the cover, wide, last page, or cannot be
@@ -405,7 +405,7 @@ If the parent URL cannot be listed, the current image is not found, or no
 adjacent supported image exists, the current image remains open and the app
 remains ready for another open action.
 
-When Two-Page mode is enabled for a directly opened comic book archive, ordinary
+When Two-Page Spread is enabled for a directly opened comic book archive, ordinary
 Previous and Next image navigation move by the currently displayed spread rather
 than always by one page. If two pages are visible, Next opens the page after the
 right page; if only one page is visible, Next opens the next page. Previous opens
@@ -413,7 +413,7 @@ the previous eligible spread, falling back to the immediately previous page when
 that page is the cover or a wide page. The `n` and `p` shortcuts move forward or
 backward by exactly one page and are available while an image is ready and the
 page number and zoom inputs are not focused.
-When a Two-Page mode navigation target is loading and the candidate list is
+When a Two-Page Spread navigation target is loading and the candidate list is
 known, additional Previous, Next, `n`, or `p` navigation is calculated from the
 pending primary page selection. KiriView moves by one primary page selection at
 a time while loading; the final single-page or two-page spread pairing is
@@ -423,7 +423,7 @@ After an image is displayed, KiriView may make adjacent images available for
 quicker Previous or Next navigation, so the switch can happen without showing a
 full-page loading state. This preparation must not change what is displayed
 until the user opens an adjacent image.
-When Two-Page mode shows two pages, both the current primary page and the
+When Two-Page Spread shows two pages, both the current primary page and the
 visible secondary page are treated as displayed images for this preparation, so
 KiriView does not prepare either visible page again or discard either visible
 page as a non-displayed adjacent image.
