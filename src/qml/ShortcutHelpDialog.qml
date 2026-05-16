@@ -8,7 +8,7 @@ import io.github.hnjae.kiriview
 import org.kde.ki18n
 import org.kde.kirigami as Kirigami
 
-Kirigami.OverlaySheet {
+Kirigami.Dialog {
     id: root
 
     required property KiriViewApplication application
@@ -113,7 +113,11 @@ Kirigami.OverlaySheet {
         }
     ]
 
+    closePolicy: Controls.Popup.CloseOnEscape | Controls.Popup.CloseOnReleaseOutside
+    focus: true
+    preferredWidth: Kirigami.Units.gridUnit * 28
     showCloseButton: true
+    standardButtons: Kirigami.Dialog.Ok
     title: KI18n.i18nc("@title:window", "Keyboard Shortcuts")
 
     function shortcutText(actionId) {
@@ -126,8 +130,23 @@ Kirigami.OverlaySheet {
         return actionIds.map(actionId => root.application.shortcutTextForId(actionId)).filter(text => text.length > 0).join(" / ");
     }
 
+    onOpened: {
+        const okButton = root.standardButton(Kirigami.Dialog.Ok);
+        if (okButton) {
+            okButton.forceActiveFocus();
+        }
+    }
+
+    Shortcut {
+        context: Qt.WindowShortcut
+        enabled: root.opened
+        sequences: ["Return", "Enter"]
+
+        onActivated: root.accept()
+    }
+
     ColumnLayout {
-        Layout.preferredWidth: Kirigami.Units.gridUnit * 28
+        implicitWidth: Kirigami.Units.gridUnit * 28
         spacing: Kirigami.Units.smallSpacing
 
         Repeater {
