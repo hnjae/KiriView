@@ -15,26 +15,26 @@ Controls.MenuBar {
     Controls.Menu {
         title: KI18n.i18nc("@title:menu", "&File")
 
-        Controls.MenuItem {
+        MenuActionItem {
             action: root.actions.openAction
             text: KI18n.i18nc("@action:inmenu", "&Open")
         }
 
         Controls.MenuSeparator {}
 
-        Controls.MenuItem {
+        MenuActionItem {
             action: root.actions.moveToTrashAction
             text: KI18n.i18nc("@action:inmenu", "Move to &Trash")
         }
 
-        Controls.MenuItem {
+        MenuActionItem {
             action: root.actions.deleteFileAction
             text: KI18n.i18nc("@action:inmenu", "Delete &Permanently")
         }
 
         Controls.MenuSeparator {}
 
-        Controls.MenuItem {
+        MenuActionItem {
             action: root.actions.quitAction
             text: KI18n.i18nc("@action:inmenu", "&Quit")
         }
@@ -43,46 +43,46 @@ Controls.MenuBar {
     Controls.Menu {
         title: KI18n.i18nc("@title:menu", "&Go")
 
-        Controls.MenuItem {
+        MenuActionItem {
             action: root.actions.previousImageAction
             text: KI18n.i18nc("@action:inmenu", "&Previous")
         }
 
-        Controls.MenuItem {
+        MenuActionItem {
             action: root.actions.nextImageAction
             text: KI18n.i18nc("@action:inmenu", "&Next")
         }
 
-        Controls.MenuItem {
+        MenuActionItem {
             action: root.actions.previousSinglePageAction
             text: KI18n.i18nc("@action:inmenu", "Previous P&age")
         }
 
-        Controls.MenuItem {
+        MenuActionItem {
             action: root.actions.nextSinglePageAction
             text: KI18n.i18nc("@action:inmenu", "Ne&xt Page")
         }
 
         Controls.MenuSeparator {}
 
-        Controls.MenuItem {
+        MenuActionItem {
             action: root.actions.firstImageAction
             text: KI18n.i18nc("@action:inmenu", "&First Image")
         }
 
-        Controls.MenuItem {
+        MenuActionItem {
             action: root.actions.lastImageAction
             text: KI18n.i18nc("@action:inmenu", "&Last Image")
         }
 
         Controls.MenuSeparator {}
 
-        Controls.MenuItem {
+        MenuActionItem {
             action: root.actions.previousContainerAction
             text: KI18n.i18nc("@action:inmenu", "Previous A&rchive")
         }
 
-        Controls.MenuItem {
+        MenuActionItem {
             action: root.actions.nextContainerAction
             text: KI18n.i18nc("@action:inmenu", "Nex&t Archive")
         }
@@ -91,12 +91,12 @@ Controls.MenuBar {
     Controls.Menu {
         title: KI18n.i18nc("@title:menu", "&View")
 
-        Controls.MenuItem {
+        MenuActionItem {
             action: root.actions.zoomInAction
             text: KI18n.i18nc("@action:inmenu", "&Zoom In")
         }
 
-        Controls.MenuItem {
+        MenuActionItem {
             action: root.actions.zoomOutAction
             text: KI18n.i18nc("@action:inmenu", "Zoom &Out")
         }
@@ -106,21 +106,21 @@ Controls.MenuBar {
         Controls.Menu {
             title: KI18n.i18nc("@title:menu", "&Fit")
 
-            Controls.MenuItem {
+            MenuActionItem {
                 action: root.actions.fitAction
                 checkable: true
                 checked: root.imageDocument.zoomMode === KiriImageDocument.Fit
                 text: KI18n.i18nc("@action:inmenu", "&Fit")
             }
 
-            Controls.MenuItem {
+            MenuActionItem {
                 action: root.actions.fitHeightAction
                 checkable: true
                 checked: root.imageDocument.zoomMode === KiriImageDocument.FitHeight
                 text: KI18n.i18nc("@action:inmenu", "Fit &Height")
             }
 
-            Controls.MenuItem {
+            MenuActionItem {
                 action: root.actions.fitWidthAction
                 checkable: true
                 checked: root.imageDocument.zoomMode === KiriImageDocument.FitWidth
@@ -128,33 +128,33 @@ Controls.MenuBar {
             }
         }
 
-        Controls.MenuItem {
+        MenuActionItem {
             action: root.actions.actualSizeAction
             text: KI18n.i18nc("@action:inmenu", "&Actual Size")
         }
 
         Controls.MenuSeparator {}
 
-        Controls.MenuItem {
+        MenuActionItem {
             action: root.actions.rotateClockwiseAction
             text: KI18n.i18nc("@action:inmenu", "Rotate &Clockwise")
         }
 
-        Controls.MenuItem {
+        MenuActionItem {
             action: root.actions.rotateCounterclockwiseAction
             text: KI18n.i18nc("@action:inmenu", "Rotate C&ounterclockwise")
         }
 
         Controls.MenuSeparator {}
 
-        Controls.MenuItem {
+        MenuActionItem {
             action: root.actions.twoPageModeAction
             checkable: true
             checked: root.imageDocument.twoPageModeEnabled && root.imageDocument.twoPageModeAvailable
             text: KI18n.i18nc("@action:inmenu", "Two-Page &Spread")
         }
 
-        Controls.MenuItem {
+        MenuActionItem {
             action: root.actions.rightToLeftReadingAction
             checkable: true
             checked: root.imageDocument.rightToLeftReadingEnabled && root.imageDocument.rightToLeftReadingAvailable
@@ -163,7 +163,7 @@ Controls.MenuBar {
 
         Controls.MenuSeparator {}
 
-        Controls.MenuItem {
+        MenuActionItem {
             action: root.actions.fullscreenAction
             checkable: true
             checked: root.fullscreen
@@ -174,14 +174,14 @@ Controls.MenuBar {
     Controls.Menu {
         title: KI18n.i18nc("@title:menu", "&Settings")
 
-        Controls.MenuItem {
+        MenuActionItem {
             action: root.actions.showMenubarAction
             text: KI18n.i18nc("@action:inmenu", "Show &Menubar")
         }
 
         Controls.MenuSeparator {}
 
-        Controls.MenuItem {
+        MenuActionItem {
             action: root.actions.configureShortcutsAction
             text: KI18n.i18nc("@action:inmenu", "Configure &Shortcuts...")
         }
@@ -190,7 +190,7 @@ Controls.MenuBar {
     Controls.Menu {
         title: KI18n.i18nc("@title:menu", "&Help")
 
-        Controls.MenuItem {
+        MenuActionItem {
             action: root.actions.shortcutHelpAction
             text: KI18n.i18nc("@action:inmenu", "&Keyboard Shortcuts")
         }

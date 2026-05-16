@@ -19,12 +19,26 @@ Item {
     property bool proxyChecked: sourceAction !== null && sourceAction !== undefined && sourceAction.checked
     property int displayHint: 0
     property string menuText: ""
+    readonly property int shortcutRevision: application.shortcutRevision
+    readonly property string menuShortcutText: {
+        root.shortcutRevision;
+        return root.application.menuShortcutTextForId(root.actionId);
+    }
+    readonly property string menuDisplayText: {
+        const text = root.menuText.length > 0 ? root.menuText : root.sourceAction?.text ?? "";
+        if (text.length === 0 || root.menuShortcutText.length === 0) {
+            return text;
+        }
+
+        return text + "\t" + root.menuShortcutText;
+    }
     readonly property var sourceAction: application.actionForId(actionId)
     readonly property ActionProxy proxy: ActionProxy {
         checkableOverride: root.proxyCheckable
         checkedOverride: root.proxyChecked
         displayHint: root.displayHint
         enabledOverride: root.proxyEnabled
+        menuShortcutText: root.menuShortcutText
         sourceAction: root.sourceAction
     }
     readonly property ActionProxy menuProxy: ActionProxy {
@@ -32,8 +46,9 @@ Item {
         checkedOverride: root.proxyChecked
         displayHint: root.displayHint
         enabledOverride: root.proxyEnabled
+        menuShortcutText: root.menuShortcutText
         sourceAction: root.sourceAction
-        textOverride: root.menuText
+        textOverride: root.menuDisplayText
         tooltipOverride: ""
     }
 

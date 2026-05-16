@@ -11,6 +11,7 @@ Kirigami.Action {
     property bool checkableOverride: sourceAction ? sourceAction.checkable : false
     property bool checkedOverride: sourceAction ? sourceAction.checked : false
     property bool enabledOverride: sourceAction && sourceAction.enabled
+    property string menuShortcutText: ""
     property string textOverride: ""
     property var tooltipOverride
 
