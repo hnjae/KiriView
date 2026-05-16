@@ -61,10 +61,11 @@ open submenu. Pressing and releasing Alt alone while the menubar or toolbar
 application menu is open keeps the menu open, and releasing Alt after an
 access-key interaction is not treated as a request to toggle or close the menu.
 KiriView does not expose a general Settings page in the current scope.
-The Keyboard Shortcuts help is shown as read-only supporting content over the
-main window. It lists the current configured shortcut text for KiriView actions,
-not fixed shortcuts or runtime-only Ctrl-less viewer aliases, and can be
-dismissed with Escape or the close button.
+The Keyboard Shortcuts help is shown as a modal dialog over the main window. It
+lists the current configured shortcut text for KiriView actions, not fixed
+shortcuts or runtime-only Ctrl-less viewer aliases, and can be dismissed with
+standard dialog dismissal actions such as Enter/OK, Escape, the close button,
+or clicking outside the dialog.
 When KiriView is launched with one or more file path or URL arguments, including
 from a file manager's Open With action, it processes only the first argument in
 the supplied order and opens it at startup. Activating the open action shows the
@@ -544,7 +545,8 @@ state and restores the normal header toolbar.
 Ctrl+? and F1 open a modal shortcut help dialog listing KiriView's keyboard and
 mouse shortcuts. While the page number or zoom input is not focused, KiriView
 also accepts the runtime-only alias `?` for shortcut help. While the shortcut
-help dialog is open, Escape closes the dialog before any fullscreen handling.
+help dialog is open, standard dialog dismissal actions close the dialog before
+any fullscreen handling.
 
 Ctrl+M toggles the application menu presentation between Hamburger Menu and
 Menubar. This shortcut is fixed, is not user-configurable, and is not listed in
