@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_MENUACCESSKEYROUTER_H
 #define KIRIVIEW_MENUACCESSKEYROUTER_H
 
+#include <QMetaObject>
 #include <QObject>
 #include <QPointer>
 #include <QtQml/qqmlregistration.h>
@@ -36,6 +37,9 @@ Q_SIGNALS:
 protected:
     bool eventFilter(QObject *watched, QEvent *event) override;
 
+private Q_SLOTS:
+    void clearMenuAccessKeys();
+
 private:
     bool handleKeyPress(QKeyEvent *event);
     bool handleKeyRelease(QKeyEvent *event);
@@ -59,6 +63,7 @@ private:
     static bool clickMenuItem(QObject *item);
 
     QPointer<QObject> m_menu;
+    QMetaObject::Connection m_menuClosedConnection;
     bool m_enabled = true;
     bool m_altPressedInOpenMenu = false;
 };

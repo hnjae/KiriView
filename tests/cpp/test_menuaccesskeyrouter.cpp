@@ -36,6 +36,9 @@ private Q_SLOTS:
     void nestedSubmenuMnemonicTriggersLeaf_data();
     void nestedSubmenuMnemonicTriggersLeaf();
     void menubarAltMnemonicOpensNestedSubmenu();
+    void menubarNestedSubmenuMnemonicTriggersLeaf_data();
+    void menubarNestedSubmenuMnemonicTriggersLeaf();
+    void menubarHeldAltMnemonicOpensNestedSubmenu();
 };
 
 namespace {
@@ -359,6 +362,27 @@ void sendKey(QObject *target, QEvent::Type type, Qt::Key key, Qt::KeyboardModifi
     QCoreApplication::processEvents();
 }
 
+void keyClick(QQuickView *view, Qt::Key key,
+    Qt::KeyboardModifiers modifiers = Qt::KeyboardModifiers(Qt::NoModifier))
+{
+    QTest::keyClick(view, key, modifiers);
+    QCoreApplication::processEvents();
+}
+
+void keyPress(QQuickView *view, Qt::Key key,
+    Qt::KeyboardModifiers modifiers = Qt::KeyboardModifiers(Qt::NoModifier))
+{
+    QTest::keyPress(view, key, modifiers);
+    QCoreApplication::processEvents();
+}
+
+void keyRelease(QQuickView *view, Qt::Key key,
+    Qt::KeyboardModifiers modifiers = Qt::KeyboardModifiers(Qt::NoModifier))
+{
+    QTest::keyRelease(view, key, modifiers);
+    QCoreApplication::processEvents();
+}
+
 void openTargetMenu(QObject *root)
 {
     QVERIFY(QMetaObject::invokeMethod(root, "openTargetMenu", Qt::DirectConnection));
@@ -385,9 +409,9 @@ void TestMenuAccessKeyRouter::altPressReleaseKeepsPopupOpen()
     openTargetMenu(fixture.root);
     QTRY_VERIFY(isMenuOpen(fixture.menu));
 
-    sendKey(fixture.menu, QEvent::KeyPress, Qt::Key_Alt, Qt::AltModifier);
+    keyPress(fixture.view.get(), Qt::Key_Alt, Qt::AltModifier);
     QVERIFY(isMenuOpen(fixture.menu));
-    sendKey(fixture.menu, QEvent::KeyRelease, Qt::Key_Alt, Qt::NoModifier);
+    keyRelease(fixture.view.get(), Qt::Key_Alt);
 
     QVERIFY(isMenuOpen(fixture.menu));
 }
@@ -407,12 +431,13 @@ void TestMenuAccessKeyRouter::altPressShowsMnemonicUnderline()
     QVERIFY2(label != nullptr, "menu action item text label was not created");
     const QString initialText = label->property("text").toString();
 
-    sendKey(fixture.menu, QEvent::KeyPress, Qt::Key_Alt, Qt::AltModifier);
+    keyPress(fixture.view.get(), Qt::Key_Alt, Qt::AltModifier);
     QTRY_VERIFY(label->property("text").toString() != initialText);
     QVERIFY(label->property("text").toString().contains(QStringLiteral("<u>")));
 
-    sendKey(fixture.menu, QEvent::KeyRelease, Qt::Key_Alt, Qt::NoModifier);
+    keyRelease(fixture.view.get(), Qt::Key_Alt);
     QVERIFY(isMenuOpen(fixture.menu));
+    QTRY_COMPARE(label->property("text").toString(), initialText);
 }
 
 void TestMenuAccessKeyRouter::altMnemonicTriggersEnabledItem_data() { addPopupFixtureRows(); }
@@ -430,9 +455,11 @@ void TestMenuAccessKeyRouter::altMnemonicTriggersEnabledItem()
     openTargetMenu(fixture.root);
     QTRY_VERIFY(isMenuOpen(fixture.menu));
 
-    sendKey(fixture.menu, QEvent::KeyPress, Qt::Key_O, Qt::AltModifier);
+    keyClick(fixture.view.get(), Qt::Key_O, Qt::AltModifier);
 
     QTRY_COMPARE(fixture.root->property("triggerCount").toInt(), 1);
+    QTest::qWait(50);
+    QCOMPARE(fixture.root->property("triggerCount").toInt(), 1);
 }
 
 void TestMenuAccessKeyRouter::plainMnemonicTriggersEnabledItem_data() { addPopupFixtureRows(); }
@@ -450,8 +477,7 @@ void TestMenuAccessKeyRouter::plainMnemonicTriggersEnabledItem()
     openTargetMenu(fixture.root);
     QTRY_VERIFY(isMenuOpen(fixture.menu));
 
-    QTest::keyClick(fixture.view.get(), Qt::Key_O);
-    QCoreApplication::processEvents();
+    keyClick(fixture.view.get(), Qt::Key_O);
 
     QTRY_COMPARE(fixture.root->property("triggerCount").toInt(), 1);
 }
@@ -531,14 +557,63 @@ void TestMenuAccessKeyRouter::menubarAltMnemonicOpensNestedSubmenu()
     MenuAccessKeyRouter router;
     router.setMenu(fixture.menu);
 
-    QTest::keyClick(fixture.view.get(), Qt::Key_V, Qt::AltModifier);
-    QCoreApplication::processEvents();
+    keyClick(fixture.view.get(), Qt::Key_V, Qt::AltModifier);
     QTRY_VERIFY(isMenuOpen(fixture.menu));
 
-    sendKey(fixture.menu, QEvent::KeyPress, Qt::Key_I, Qt::AltModifier);
+    keyClick(fixture.view.get(), Qt::Key_I, Qt::AltModifier);
 
     QTRY_VERIFY(isMenuOpen(fixture.menu));
     QTRY_VERIFY(isMenuOpen(fixture.subMenu));
+}
+
+void TestMenuAccessKeyRouter::menubarNestedSubmenuMnemonicTriggersLeaf_data()
+{
+    QTest::addColumn<Qt::KeyboardModifiers>("modifiers");
+
+    QTest::newRow("alt-mnemonic") << Qt::KeyboardModifiers(Qt::AltModifier);
+    QTest::newRow("plain-mnemonic") << Qt::KeyboardModifiers(Qt::NoModifier);
+}
+
+void TestMenuAccessKeyRouter::menubarNestedSubmenuMnemonicTriggersLeaf()
+{
+    QFETCH(Qt::KeyboardModifiers, modifiers);
+    MenuFixture fixture = createMenubarFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+
+    MenuAccessKeyRouter router;
+    router.setMenu(fixture.menu);
+
+    keyClick(fixture.view.get(), Qt::Key_V, Qt::AltModifier);
+    QTRY_VERIFY(isMenuOpen(fixture.menu));
+
+    keyClick(fixture.view.get(), Qt::Key_I, Qt::AltModifier);
+    QTRY_VERIFY(isMenuOpen(fixture.subMenu));
+
+    keyClick(fixture.view.get(), Qt::Key_H, modifiers);
+
+    QTRY_COMPARE(fixture.root->property("fitHeightTriggerCount").toInt(), 1);
+}
+
+void TestMenuAccessKeyRouter::menubarHeldAltMnemonicOpensNestedSubmenu()
+{
+    MenuFixture fixture = createMenubarFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+
+    MenuAccessKeyRouter router;
+    router.setMenu(fixture.menu);
+
+    keyPress(fixture.view.get(), Qt::Key_Alt, Qt::AltModifier);
+    keyClick(fixture.view.get(), Qt::Key_V, Qt::AltModifier);
+    QTRY_VERIFY(isMenuOpen(fixture.menu));
+
+    keyClick(fixture.view.get(), Qt::Key_I, Qt::AltModifier);
+    QTRY_VERIFY(isMenuOpen(fixture.menu));
+    QTRY_VERIFY(isMenuOpen(fixture.subMenu));
+
+    keyRelease(fixture.view.get(), Qt::Key_Alt);
+
+    QVERIFY(isMenuOpen(fixture.menu));
+    QVERIFY(isMenuOpen(fixture.subMenu));
 }
 
 void TestMenuAccessKeyRouter::missingMnemonicItemIgnored_data() { addPopupFixtureRows(); }
@@ -557,7 +632,7 @@ void TestMenuAccessKeyRouter::missingMnemonicItemIgnored()
     openTargetMenu(fixture.root);
     QTRY_VERIFY(isMenuOpen(fixture.menu));
 
-    sendKey(fixture.menu, QEvent::KeyPress, Qt::Key_X, Qt::AltModifier);
+    keyClick(fixture.view.get(), Qt::Key_X, Qt::AltModifier);
 
     QCOMPARE(fixture.root->property("triggerCount").toInt(), 0);
     QVERIFY(isMenuOpen(fixture.menu));

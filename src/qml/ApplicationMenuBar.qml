@@ -126,10 +126,6 @@ Controls.MenuBar {
 
             title: KI18n.i18nc("@title:menu", "&Fit")
 
-            MenuAccessKeyRouter {
-                menu: fitMenu
-            }
-
             MenuActionItem {
                 action: root.actions.fitMenuAction
                 checkable: true
