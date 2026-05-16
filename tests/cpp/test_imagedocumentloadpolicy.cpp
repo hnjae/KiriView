@@ -5,17 +5,19 @@
 
 #include <QObject>
 #include <QTest>
-#include <cstddef>
-#include <vector>
 
 namespace {
-void compareSourceLoadActions(const std::vector<KiriView::ImageDocumentSourceLoadAction> &actual,
-    const std::vector<KiriView::ImageDocumentSourceLoadAction> &expected)
+void compareSourceLoadPlans(const KiriView::ImageDocumentSourceLoadPlan &actual,
+    const KiriView::ImageDocumentSourceLoadPlan &expected)
 {
-    QCOMPARE(actual.size(), expected.size());
-    for (std::size_t index = 0; index < expected.size(); ++index) {
-        QCOMPARE(actual.at(index), expected.at(index));
-    }
+    QCOMPARE(actual.cancelNavigationAndPredecode, expected.cancelNavigationAndPredecode);
+    QCOMPARE(actual.finishSpreadTransition, expected.finishSpreadTransition);
+    QCOMPARE(actual.rightToLeftReadingTransition, expected.rightToLeftReadingTransition);
+    QCOMPARE(actual.clearSecondaryPage, expected.clearSecondaryPage);
+    QCOMPARE(actual.loadingContainerNavigationUrl, expected.loadingContainerNavigationUrl);
+    QCOMPARE(actual.containerNavigationUrl, expected.containerNavigationUrl);
+    QCOMPARE(actual.sourceUrl, expected.sourceUrl);
+    QCOMPARE(actual.beginOpen, expected.beginOpen);
 }
 }
 
@@ -30,7 +32,8 @@ private Q_SLOTS:
 
 void TestImageDocumentLoadPolicy::sourceLoadPlanUsesRightToLeftReadingSnapshot()
 {
-    using Action = KiriView::ImageDocumentSourceLoadAction;
+    using ReadingTransition = KiriView::ImageDocumentRightToLeftReadingTransition;
+    using UrlTarget = KiriView::ImageDocumentSourceLoadUrlTarget;
 
     KiriView::ImageDocumentSourceLoadPolicyInput input;
     input.loadKind = KiriView::ImageDocumentSourceLoadKind::CurrentSource;
@@ -38,30 +41,26 @@ void TestImageDocumentLoadPolicy::sourceLoadPlanUsesRightToLeftReadingSnapshot()
     input.hasRequestedContainerNavigationUrl = false;
 
     input.rightToLeftReadingReset = KiriView::ImageDocumentRightToLeftReadingReset::Keep;
-    compareSourceLoadActions(KiriView::ImageDocumentLoadPolicy::sourceLoadPlan(input).actions,
-        {
-            Action::ClearLoadingContainerNavigationUrl,
-        });
+    compareSourceLoadPlans(KiriView::ImageDocumentLoadPolicy::sourceLoadPlan(input),
+        KiriView::ImageDocumentSourceLoadPlan { false, false, ReadingTransition::Keep, false,
+            UrlTarget::Empty, UrlTarget::Unchanged, UrlTarget::Unchanged, false });
 
     input.rightToLeftReadingReset = KiriView::ImageDocumentRightToLeftReadingReset::ResetInactive;
-    compareSourceLoadActions(KiriView::ImageDocumentLoadPolicy::sourceLoadPlan(input).actions,
-        {
-            Action::ResetRightToLeftReading,
-            Action::ClearLoadingContainerNavigationUrl,
-        });
+    compareSourceLoadPlans(KiriView::ImageDocumentLoadPolicy::sourceLoadPlan(input),
+        KiriView::ImageDocumentSourceLoadPlan { false, false, ReadingTransition::Reset, false,
+            UrlTarget::Empty, UrlTarget::Unchanged, UrlTarget::Unchanged, false });
 
     input.rightToLeftReadingReset = KiriView::ImageDocumentRightToLeftReadingReset::ResetActive;
-    compareSourceLoadActions(KiriView::ImageDocumentLoadPolicy::sourceLoadPlan(input).actions,
-        {
-            Action::ResetRightToLeftReading,
-            Action::NotifyRightToLeftReading,
-            Action::ClearLoadingContainerNavigationUrl,
-        });
+    compareSourceLoadPlans(KiriView::ImageDocumentLoadPolicy::sourceLoadPlan(input),
+        KiriView::ImageDocumentSourceLoadPlan { false, false,
+            ReadingTransition::ResetAndNotifyBeforeSourceState, false, UrlTarget::Empty,
+            UrlTarget::Unchanged, UrlTarget::Unchanged, false });
 }
 
 void TestImageDocumentLoadPolicy::sourceLoadPlanRoutesUnchangedAndReplacementSourceLoads()
 {
-    using Action = KiriView::ImageDocumentSourceLoadAction;
+    using ReadingTransition = KiriView::ImageDocumentRightToLeftReadingTransition;
+    using UrlTarget = KiriView::ImageDocumentSourceLoadUrlTarget;
 
     KiriView::ImageDocumentSourceLoadPolicyInput unchangedInput;
     unchangedInput.loadKind = KiriView::ImageDocumentSourceLoadKind::CurrentSource;
@@ -71,14 +70,10 @@ void TestImageDocumentLoadPolicy::sourceLoadPlanRoutesUnchangedAndReplacementSou
     unchangedInput.hasRequestedContainerNavigationUrl = true;
     const KiriView::ImageDocumentSourceLoadPlan unchanged
         = KiriView::ImageDocumentLoadPolicy::sourceLoadPlan(unchangedInput);
-    const std::vector<Action> unchangedActions {
-        Action::FinishSpreadTransition,
-        Action::ResetRightToLeftReading,
-        Action::NotifyRightToLeftReading,
-        Action::ClearLoadingContainerNavigationUrl,
-        Action::UpdateContainerNavigationUrl,
-    };
-    compareSourceLoadActions(unchanged.actions, unchangedActions);
+    compareSourceLoadPlans(unchanged,
+        KiriView::ImageDocumentSourceLoadPlan { false, true,
+            ReadingTransition::ResetAndNotifyBeforeSourceState, false, UrlTarget::Empty,
+            UrlTarget::RequestedContainerNavigation, UrlTarget::Unchanged, false });
 
     KiriView::ImageDocumentSourceLoadPolicyInput replacementInput;
     replacementInput.loadKind = KiriView::ImageDocumentSourceLoadKind::ReplacementSource;
@@ -87,43 +82,29 @@ void TestImageDocumentLoadPolicy::sourceLoadPlanRoutesUnchangedAndReplacementSou
     replacementInput.hasRequestedContainerNavigationUrl = false;
     const KiriView::ImageDocumentSourceLoadPlan replacement
         = KiriView::ImageDocumentLoadPolicy::sourceLoadPlan(replacementInput);
-    const std::vector<Action> replacementActions {
-        Action::CancelNavigationAndPredecode,
-        Action::ClearSecondaryPage,
-        Action::SetLoadingContainerNavigationUrl,
-        Action::SetSourceUrl,
-        Action::BeginOpen,
-    };
-    compareSourceLoadActions(replacement.actions, replacementActions);
+    compareSourceLoadPlans(replacement,
+        KiriView::ImageDocumentSourceLoadPlan { true, false, ReadingTransition::Keep, true,
+            UrlTarget::RequestedContainerNavigation, UrlTarget::Unchanged,
+            UrlTarget::RequestedSource, true });
 
     replacementInput.rightToLeftReadingReset
         = KiriView::ImageDocumentRightToLeftReadingReset::ResetInactive;
     const KiriView::ImageDocumentSourceLoadPlan inactiveResetReplacement
         = KiriView::ImageDocumentLoadPolicy::sourceLoadPlan(replacementInput);
-    const std::vector<Action> inactiveResetReplacementActions {
-        Action::CancelNavigationAndPredecode,
-        Action::ResetRightToLeftReading,
-        Action::ClearSecondaryPage,
-        Action::SetLoadingContainerNavigationUrl,
-        Action::SetSourceUrl,
-        Action::BeginOpen,
-    };
-    compareSourceLoadActions(inactiveResetReplacement.actions, inactiveResetReplacementActions);
+    compareSourceLoadPlans(inactiveResetReplacement,
+        KiriView::ImageDocumentSourceLoadPlan { true, false, ReadingTransition::Reset, true,
+            UrlTarget::RequestedContainerNavigation, UrlTarget::Unchanged,
+            UrlTarget::RequestedSource, true });
 
     replacementInput.rightToLeftReadingReset
         = KiriView::ImageDocumentRightToLeftReadingReset::ResetActive;
     const KiriView::ImageDocumentSourceLoadPlan resettingReplacement
         = KiriView::ImageDocumentLoadPolicy::sourceLoadPlan(replacementInput);
-    const std::vector<Action> resettingReplacementActions {
-        Action::CancelNavigationAndPredecode,
-        Action::ResetRightToLeftReading,
-        Action::ClearSecondaryPage,
-        Action::SetLoadingContainerNavigationUrl,
-        Action::SetSourceUrl,
-        Action::BeginOpen,
-        Action::NotifyRightToLeftReading,
-    };
-    compareSourceLoadActions(resettingReplacement.actions, resettingReplacementActions);
+    compareSourceLoadPlans(resettingReplacement,
+        KiriView::ImageDocumentSourceLoadPlan { true, false,
+            ReadingTransition::ResetAndNotifyAfterOpen, true,
+            UrlTarget::RequestedContainerNavigation, UrlTarget::Unchanged,
+            UrlTarget::RequestedSource, true });
 }
 
 QTEST_GUILESS_MAIN(TestImageDocumentLoadPolicy)

@@ -14,7 +14,8 @@ class ImageDocumentPredecodeController;
 class ImageDocumentState;
 class ImageOpenController;
 class ImageSpreadPresentationController;
-enum class ImageDocumentSourceLoadAction;
+enum class ImageDocumentRightToLeftReadingTransition;
+enum class ImageDocumentSourceLoadUrlTarget;
 struct ImageDocumentSourceLoadPlan;
 
 class ImageDocumentLoadController final
@@ -32,8 +33,14 @@ public:
 private:
     void applySourceLoadPlan(
         const ImageDocumentSourceLoadRequest &request, const ImageDocumentSourceLoadPlan &plan);
-    void applySourceLoadAction(
-        const ImageDocumentSourceLoadRequest &request, ImageDocumentSourceLoadAction action);
+    void applyRightToLeftReadingTransition(ImageDocumentRightToLeftReadingTransition transition,
+        bool notifyBeforeSourceState, bool notifyAfterOpen);
+    void applySourceLoadUrlTarget(
+        ImageDocumentSourceLoadUrlTarget target, const ImageDocumentSourceLoadRequest &request);
+    void applyContainerNavigationUrlTarget(
+        ImageDocumentSourceLoadUrlTarget target, const ImageDocumentSourceLoadRequest &request);
+    void applyLoadingContainerNavigationUrlTarget(
+        ImageDocumentSourceLoadUrlTarget target, const ImageDocumentSourceLoadRequest &request);
 
     ImageDocumentState &m_state;
     ImageDocumentDeletionController &m_deletionController;

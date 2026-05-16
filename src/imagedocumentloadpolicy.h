@@ -4,25 +4,10 @@
 #ifndef KIRIVIEW_IMAGEDOCUMENTLOADPOLICY_H
 #define KIRIVIEW_IMAGEDOCUMENTLOADPOLICY_H
 
-#include <vector>
-
 namespace KiriView {
 class ImageDocumentState;
 class ImageSpreadPresentationController;
 struct ImageDocumentSourceLoadRequest;
-
-enum class ImageDocumentSourceLoadAction {
-    CancelNavigationAndPredecode,
-    FinishSpreadTransition,
-    ResetRightToLeftReading,
-    NotifyRightToLeftReading,
-    ClearSecondaryPage,
-    ClearLoadingContainerNavigationUrl,
-    UpdateContainerNavigationUrl,
-    SetLoadingContainerNavigationUrl,
-    SetSourceUrl,
-    BeginOpen,
-};
 
 enum class ImageDocumentSourceLoadKind {
     CurrentSource,
@@ -35,6 +20,20 @@ enum class ImageDocumentRightToLeftReadingReset {
     ResetActive,
 };
 
+enum class ImageDocumentRightToLeftReadingTransition {
+    Keep,
+    Reset,
+    ResetAndNotifyBeforeSourceState,
+    ResetAndNotifyAfterOpen,
+};
+
+enum class ImageDocumentSourceLoadUrlTarget {
+    Unchanged,
+    Empty,
+    RequestedContainerNavigation,
+    RequestedSource,
+};
+
 struct ImageDocumentSourceLoadPolicyInput {
     ImageDocumentSourceLoadKind loadKind = ImageDocumentSourceLoadKind::CurrentSource;
     bool preserveTwoPageSpreadTransition = false;
@@ -44,7 +43,17 @@ struct ImageDocumentSourceLoadPolicyInput {
 };
 
 struct ImageDocumentSourceLoadPlan {
-    std::vector<ImageDocumentSourceLoadAction> actions;
+    bool cancelNavigationAndPredecode = false;
+    bool finishSpreadTransition = false;
+    ImageDocumentRightToLeftReadingTransition rightToLeftReadingTransition
+        = ImageDocumentRightToLeftReadingTransition::Keep;
+    bool clearSecondaryPage = false;
+    ImageDocumentSourceLoadUrlTarget loadingContainerNavigationUrl
+        = ImageDocumentSourceLoadUrlTarget::Unchanged;
+    ImageDocumentSourceLoadUrlTarget containerNavigationUrl
+        = ImageDocumentSourceLoadUrlTarget::Unchanged;
+    ImageDocumentSourceLoadUrlTarget sourceUrl = ImageDocumentSourceLoadUrlTarget::Unchanged;
+    bool beginOpen = false;
 };
 
 namespace ImageDocumentLoadPolicy {
