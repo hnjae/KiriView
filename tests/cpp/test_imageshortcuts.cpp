@@ -12,6 +12,7 @@
 #include <QAction>
 #include <QCoreApplication>
 #include <QDir>
+#include <QImage>
 #include <QObject>
 #include <QQmlComponent>
 #include <QQmlEngine>
@@ -19,6 +20,7 @@
 #include <QSignalSpy>
 #include <QStandardPaths>
 #include <QString>
+#include <QTemporaryDir>
 #include <QTest>
 #include <QUrl>
 #include <QVariant>
@@ -33,6 +35,9 @@ private Q_SLOTS:
     void initTestCase();
     void init();
     void cleanup();
+    void arrowKeysPanAsFixedViewerShortcuts();
+    void leftAndRightArrowKeysUseNavigationFallback();
+    void arrowKeysAreIgnoredWhileViewerShortcutsAreSuppressed();
     void ctrlMTogglesMenubarThroughAction();
     void ctrlMIgnoredWhileHelpDialogOpen();
 };
@@ -40,6 +45,7 @@ private Q_SLOTS:
 namespace {
 struct ImageShortcutsFixture {
     std::unique_ptr<QQuickView> view;
+    std::unique_ptr<QTemporaryDir> temporaryDirectory;
     QObject *root = nullptr;
     KiriViewApplication *application = nullptr;
     QString errorString;
@@ -88,7 +94,32 @@ QString qmlSourceImport()
     return QUrl::fromLocalFile(qmlPath).toString();
 }
 
-QString fixtureQml()
+bool writeTestPng(const QString &path)
+{
+    QImage image(QSize(2, 2), QImage::Format_RGBA8888);
+    image.fill(Qt::red);
+    return image.save(path, "PNG");
+}
+
+std::unique_ptr<QTemporaryDir> createImageDirectory(QString *sourcePath, QString *errorString)
+{
+    auto directory = std::make_unique<QTemporaryDir>();
+    if (!directory->isValid()) {
+        *errorString = QStringLiteral("temporary image directory was not created");
+        return nullptr;
+    }
+
+    const QString imagePath = directory->filePath(QStringLiteral("image.png"));
+    if (!writeTestPng(imagePath)) {
+        *errorString = QStringLiteral("failed to write test image");
+        return nullptr;
+    }
+
+    *sourcePath = imagePath;
+    return directory;
+}
+
+QString fixtureQml(const QString &sourceUrl = QString())
 {
     return QStringLiteral(R"(
 import QtQuick
@@ -103,9 +134,25 @@ Item {
     height: 240
 
     property bool helpDialogOpen: false
+    property bool imageHorizontallyPannable: false
+    property bool imagePannable: false
+    property bool toolbarTextInputFocused: false
+    property int panCount: 0
+    property real lastPanX: 0
+    property real lastPanY: 0
 
     function menuPresentation() {
         return application.menuPresentation;
+    }
+
+    function documentReady() {
+        return imageDocument.status === KiriImageDocument.Ready;
+    }
+
+    function resetPanLog() {
+        panCount = 0;
+        lastPanX = 0;
+        lastPanY = 0;
     }
 
     Component.onCompleted: forceActiveFocus()
@@ -118,18 +165,23 @@ Item {
 
     KiriImageDocument {
         id: imageDocument
+
+        sourceUrl: "%2"
     }
 
     QtObject {
         id: imageViewport
 
-        property bool imageHorizontallyPannable: false
-        property bool imagePannable: false
+        property bool imageHorizontallyPannable: root.imageHorizontallyPannable
+        property bool imagePannable: root.imagePannable
         property real viewportHeight: 100
         property real viewportWidth: 100
 
         function panBy(deltaX, deltaY) {
-            return false;
+            root.panCount += 1;
+            root.lastPanX = deltaX;
+            root.lastPanY = deltaY;
+            return true;
         }
 
         function panToBottomRight() {
@@ -160,7 +212,7 @@ Item {
         id: imageToolBar
 
         function textInputFocused() {
-            return false;
+            return root.toolbarTextInputFocused;
         }
     }
 
@@ -173,10 +225,10 @@ Item {
     }
 }
 )")
-        .arg(qmlSourceImport());
+        .arg(qmlSourceImport(), sourceUrl);
 }
 
-ImageShortcutsFixture createFixture()
+ImageShortcutsFixture createFixture(const QString &sourceUrl = QString())
 {
     ImageShortcutsFixture fixture;
     registerKiriViewQmlTypes();
@@ -188,7 +240,7 @@ ImageShortcutsFixture createFixture()
 
     QQmlComponent component(fixture.view->engine());
     component.setData(
-        fixtureQml().toUtf8(), QUrl(QStringLiteral("memory:test_imageshortcuts.qml")));
+        fixtureQml(sourceUrl).toUtf8(), QUrl(QStringLiteral("memory:test_imageshortcuts.qml")));
     for (int attempt = 0; component.isLoading() && attempt < 100; ++attempt) {
         QCoreApplication::processEvents();
         QTest::qWait(10);
@@ -224,6 +276,22 @@ ImageShortcutsFixture createFixture()
     return fixture;
 }
 
+ImageShortcutsFixture createReadyFixture()
+{
+    QString sourcePath;
+    QString errorString;
+    std::unique_ptr<QTemporaryDir> directory = createImageDirectory(&sourcePath, &errorString);
+    if (directory == nullptr) {
+        ImageShortcutsFixture fixture;
+        fixture.errorString = errorString;
+        return fixture;
+    }
+
+    ImageShortcutsFixture fixture = createFixture(QUrl::fromLocalFile(sourcePath).toString());
+    fixture.temporaryDirectory = std::move(directory);
+    return fixture;
+}
+
 int menuPresentation(QObject *root)
 {
     QVariant result;
@@ -232,9 +300,23 @@ int menuPresentation(QObject *root)
     return invoked ? result.toInt() : -1;
 }
 
+bool documentReady(QObject *root)
+{
+    QVariant result;
+    const bool invoked = QMetaObject::invokeMethod(
+        root, "documentReady", Qt::DirectConnection, Q_RETURN_ARG(QVariant, result));
+    return invoked && result.toBool();
+}
+
 void pressCtrlM(QQuickView *view)
 {
     QTest::keyClick(view, Qt::Key_M, Qt::ControlModifier);
+    QCoreApplication::processEvents();
+}
+
+void pressKey(QQuickView *view, Qt::Key key)
+{
+    QTest::keyClick(view, key);
     QCoreApplication::processEvents();
 }
 }
@@ -249,6 +331,77 @@ void TestImageShortcuts::initTestCase()
 void TestImageShortcuts::init() { resetConfig(); }
 
 void TestImageShortcuts::cleanup() { resetConfig(); }
+
+void TestImageShortcuts::arrowKeysPanAsFixedViewerShortcuts()
+{
+    ImageShortcutsFixture fixture = createReadyFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    QTRY_VERIFY(documentReady(fixture.root));
+
+    fixture.root->setProperty("imageHorizontallyPannable", true);
+    pressKey(fixture.view.get(), Qt::Key_Left);
+    QCOMPARE(fixture.root->property("panCount").toInt(), 1);
+    QCOMPARE(fixture.root->property("lastPanX").toReal(), -64.0);
+    QCOMPARE(fixture.root->property("lastPanY").toReal(), 0.0);
+
+    pressKey(fixture.view.get(), Qt::Key_Right);
+    QCOMPARE(fixture.root->property("panCount").toInt(), 2);
+    QCOMPARE(fixture.root->property("lastPanX").toReal(), 64.0);
+    QCOMPARE(fixture.root->property("lastPanY").toReal(), 0.0);
+
+    fixture.root->setProperty("imagePannable", true);
+    pressKey(fixture.view.get(), Qt::Key_Up);
+    QCOMPARE(fixture.root->property("panCount").toInt(), 3);
+    QCOMPARE(fixture.root->property("lastPanX").toReal(), 0.0);
+    QCOMPARE(fixture.root->property("lastPanY").toReal(), -64.0);
+
+    pressKey(fixture.view.get(), Qt::Key_Down);
+    QCOMPARE(fixture.root->property("panCount").toInt(), 4);
+    QCOMPARE(fixture.root->property("lastPanX").toReal(), 0.0);
+    QCOMPARE(fixture.root->property("lastPanY").toReal(), 64.0);
+}
+
+void TestImageShortcuts::leftAndRightArrowKeysUseNavigationFallback()
+{
+    ImageShortcutsFixture fixture = createReadyFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    QTRY_VERIFY(documentReady(fixture.root));
+
+    QAction *previousAction = fixture.application->action(QStringLiteral("go_previous_image"));
+    QAction *nextAction = fixture.application->action(QStringLiteral("go_next_image"));
+    QVERIFY(previousAction != nullptr);
+    QVERIFY(nextAction != nullptr);
+    QSignalSpy previousSpy(previousAction, &QAction::triggered);
+    QSignalSpy nextSpy(nextAction, &QAction::triggered);
+
+    pressKey(fixture.view.get(), Qt::Key_Left);
+    QCOMPARE(previousSpy.count(), 1);
+    QCOMPARE(nextSpy.count(), 0);
+
+    pressKey(fixture.view.get(), Qt::Key_Right);
+    QCOMPARE(previousSpy.count(), 1);
+    QCOMPARE(nextSpy.count(), 1);
+}
+
+void TestImageShortcuts::arrowKeysAreIgnoredWhileViewerShortcutsAreSuppressed()
+{
+    ImageShortcutsFixture fixture = createReadyFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    QTRY_VERIFY(documentReady(fixture.root));
+    fixture.root->setProperty("imageHorizontallyPannable", true);
+    fixture.root->setProperty("imagePannable", true);
+
+    fixture.root->setProperty("toolbarTextInputFocused", true);
+    pressKey(fixture.view.get(), Qt::Key_Left);
+    pressKey(fixture.view.get(), Qt::Key_Up);
+    QCOMPARE(fixture.root->property("panCount").toInt(), 0);
+
+    fixture.root->setProperty("toolbarTextInputFocused", false);
+    fixture.root->setProperty("helpDialogOpen", true);
+    pressKey(fixture.view.get(), Qt::Key_Right);
+    pressKey(fixture.view.get(), Qt::Key_Down);
+    QCOMPARE(fixture.root->property("panCount").toInt(), 0);
+}
 
 void TestImageShortcuts::ctrlMTogglesMenubarThroughAction()
 {

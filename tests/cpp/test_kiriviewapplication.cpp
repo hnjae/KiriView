@@ -225,6 +225,8 @@ void TestKiriViewApplication::shortcutsApiReturnsCurrentShortcuts()
         QList<QKeySequence>({ shortcut(QStringLiteral("Ctrl+P")) }));
     QCOMPARE(application.shortcuts(QStringLiteral("go_next_single_page")),
         QList<QKeySequence>({ shortcut(QStringLiteral("Ctrl+N")) }));
+    QVERIFY(application.action(QStringLiteral("view_pan_left")) == nullptr);
+    QCOMPARE(application.shortcuts(QStringLiteral("view_pan_left")), QList<QKeySequence>());
     QCOMPARE(application.shortcuts(QStringLiteral("missing_action")), QList<QKeySequence>());
 
     QAction *openAction = application.action(QStringLiteral("file_open"));
@@ -294,7 +296,6 @@ void TestKiriViewApplication::shortcutAliasesDeriveFromCtrlShortcuts()
     QCOMPARE(application.shortcutAliases(QStringLiteral("view_zoom_in")),
         QList<QKeySequence>({ shortcut(QStringLiteral("=")), shortcut(QStringLiteral("+")) }));
     QCOMPARE(application.shortcutAliases(QStringLiteral("movetotrash")), QList<QKeySequence>());
-    QCOMPARE(application.shortcutAliases(QStringLiteral("view_pan_left")), QList<QKeySequence>());
     QCOMPARE(
         application.shortcutAliases(QStringLiteral("options_show_menubar")), QList<QKeySequence>());
     QCOMPARE(application.shortcutAliases(QStringLiteral("missing_action")), QList<QKeySequence>());

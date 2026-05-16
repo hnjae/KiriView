@@ -43,10 +43,6 @@ Item {
     readonly property var nextImageQAction: root.application.actionForId(KiriViewApplication.GoNextImageAction)
     readonly property var zoomInQAction: root.application.actionForId(KiriViewApplication.ViewZoomInAction)
     readonly property var zoomOutQAction: root.application.actionForId(KiriViewApplication.ViewZoomOutAction)
-    readonly property var panLeftQAction: root.application.actionForId(KiriViewApplication.ViewPanLeftAction)
-    readonly property var panRightQAction: root.application.actionForId(KiriViewApplication.ViewPanRightAction)
-    readonly property var panUpQAction: root.application.actionForId(KiriViewApplication.ViewPanUpAction)
-    readonly property var panDownQAction: root.application.actionForId(KiriViewApplication.ViewPanDownAction)
     readonly property var panTopLeftQAction: root.application.actionForId(KiriViewApplication.ViewPanTopLeftAction)
     readonly property var panBottomRightQAction: root.application.actionForId(KiriViewApplication.ViewPanBottomRightAction)
     readonly property var scanForwardQAction: root.application.actionForId(KiriViewApplication.ViewScanForwardAction)
@@ -257,42 +253,21 @@ Item {
     }
 
     ActionShortcutGroup {
-        actionIds: [KiriViewApplication.ViewPanLeftAction, KiriViewApplication.ViewPanRightAction]
-        application: root.application
-        shortcutFilter: ConfiguredActionShortcut.WithCommandModifier
-        shortcutsEnabled: root.readyShortcutsEnabled
-    }
-
-    ActionShortcutGroup {
-        actionIds: [KiriViewApplication.ViewPanLeftAction, KiriViewApplication.ViewPanRightAction]
-        application: root.application
-        shortcutFilter: ConfiguredActionShortcut.WithoutCommandModifier
-        shortcutsEnabled: root.readyViewerShortcutsEnabled
-    }
-
-    ActionShortcutGroup {
-        actionIds: [KiriViewApplication.ViewPanLeftAction, KiriViewApplication.ViewPanRightAction]
-        application: root.application
-        shortcutFilter: ConfiguredActionShortcut.ShortcutAliases
-        shortcutsEnabled: root.readyViewerShortcutsEnabled
-    }
-
-    ActionShortcutGroup {
-        actionIds: [KiriViewApplication.ViewPanUpAction, KiriViewApplication.ViewPanDownAction, KiriViewApplication.ViewPanTopLeftAction, KiriViewApplication.ViewPanBottomRightAction]
+        actionIds: [KiriViewApplication.ViewPanTopLeftAction, KiriViewApplication.ViewPanBottomRightAction]
         application: root.application
         shortcutFilter: ConfiguredActionShortcut.WithCommandModifier
         shortcutsEnabled: root.pannableShortcutsEnabled
     }
 
     ActionShortcutGroup {
-        actionIds: [KiriViewApplication.ViewPanUpAction, KiriViewApplication.ViewPanDownAction, KiriViewApplication.ViewPanTopLeftAction, KiriViewApplication.ViewPanBottomRightAction]
+        actionIds: [KiriViewApplication.ViewPanTopLeftAction, KiriViewApplication.ViewPanBottomRightAction]
         application: root.application
         shortcutFilter: ConfiguredActionShortcut.WithoutCommandModifier
         shortcutsEnabled: root.pannableViewerShortcutsEnabled
     }
 
     ActionShortcutGroup {
-        actionIds: [KiriViewApplication.ViewPanUpAction, KiriViewApplication.ViewPanDownAction, KiriViewApplication.ViewPanTopLeftAction, KiriViewApplication.ViewPanBottomRightAction]
+        actionIds: [KiriViewApplication.ViewPanTopLeftAction, KiriViewApplication.ViewPanBottomRightAction]
         application: root.application
         shortcutFilter: ConfiguredActionShortcut.ShortcutAliases
         shortcutsEnabled: root.pannableViewerShortcutsEnabled
@@ -438,6 +413,38 @@ Item {
         onActivated: root.showMenubarQAction.trigger()
     }
 
+    Shortcut {
+        context: Qt.WindowShortcut
+        enabled: root.readyViewerShortcutsEnabled
+        sequence: "Left"
+
+        onActivated: root.panLeftOrOpenPreviousImage()
+    }
+
+    Shortcut {
+        context: Qt.WindowShortcut
+        enabled: root.readyViewerShortcutsEnabled
+        sequence: "Right"
+
+        onActivated: root.panRightOrOpenNextImage()
+    }
+
+    Shortcut {
+        context: Qt.WindowShortcut
+        enabled: root.pannableViewerShortcutsEnabled
+        sequence: "Up"
+
+        onActivated: root.panBy(0, -root.keyboardPanDistance)
+    }
+
+    Shortcut {
+        context: Qt.WindowShortcut
+        enabled: root.pannableViewerShortcutsEnabled
+        sequence: "Down"
+
+        onActivated: root.panBy(0, root.keyboardPanDistance)
+    }
+
     ActionTrigger {
         action: root.zoomInQAction
         handler: () => root.zoomByStepAtCenter(1)
@@ -446,26 +453,6 @@ Item {
     ActionTrigger {
         action: root.zoomOutQAction
         handler: () => root.zoomByStepAtCenter(-1)
-    }
-
-    ActionTrigger {
-        action: root.panLeftQAction
-        handler: () => root.panLeftOrOpenPreviousImage()
-    }
-
-    ActionTrigger {
-        action: root.panRightQAction
-        handler: () => root.panRightOrOpenNextImage()
-    }
-
-    ActionTrigger {
-        action: root.panUpQAction
-        handler: () => root.panBy(0, -root.keyboardPanDistance)
-    }
-
-    ActionTrigger {
-        action: root.panDownQAction
-        handler: () => root.panBy(0, root.keyboardPanDistance)
     }
 
     ActionTrigger {
