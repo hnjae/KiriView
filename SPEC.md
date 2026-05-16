@@ -62,10 +62,11 @@ application menu is open keeps the menu open, and releasing Alt after an
 access-key interaction is not treated as a request to toggle or close the menu.
 KiriView does not expose a general Settings page in the current scope.
 The Keyboard Shortcuts help is shown as a modal dialog over the main window. It
-lists the current configured shortcut text for KiriView actions, not fixed
-shortcuts or runtime-only Ctrl-less viewer aliases, and can be dismissed with
-standard dialog dismissal actions such as Enter/OK, Escape, the close button,
-or clicking outside the dialog.
+lists user-configurable KiriView actions and their current configured shortcut
+text, not fixed shortcuts, mouse gestures, mouse-wheel gestures, or runtime-only
+Ctrl-less viewer aliases, and can be dismissed with standard dialog dismissal
+actions such as Enter/OK, Escape, the close button, or clicking outside the
+dialog.
 When KiriView is launched with one or more file path or URL arguments, including
 from a file manager's Open With action, it processes only the first argument in
 the supplied order and opens it at startup. Activating the open action shows the
@@ -100,21 +101,21 @@ KDE-supported remote URLs such as `smb://`, and KDE-supported archive URLs
 such as `zip://`, `tar://`, and `sevenz://`.
 
 KiriView also opens local `.cbz`, `.cbt`, `.cb7`, and `.cbr` comic book archives.
-When a local comic book archive is opened directly, KiriView owns that archive
+When a local comic book archive is opened directly, KiriView uses that archive
 as the current archive document and displays the first supported image inside
 that archive.
 
 KiriView opens local `.zip`, `.tar`, `.7z`, and `.rar` archives only when they are
 directly provided, such as through a startup argument or the open dialog's
 `All files (*)` filter. When a local general archive is opened directly,
-KiriView owns that archive as the current archive document and displays the
+KiriView uses that archive as the current archive document and displays the
 first supported image inside that archive. These general archives are not
 advertised through the desktop file's file associations, the open dialog's
 default image and comic book filter, or sibling archive navigation.
 
 KiriView opens local directories only when they are directly provided, such as
 through a startup argument, file URL, or drop. When a local directory is opened
-directly, KiriView owns that directory as the current directory document and
+directly, KiriView uses that directory as the current directory document and
 displays the first supported image inside that directory tree. Directory
 documents use the same recursive supported-image page ordering as archive
 documents, with page names based on directory-relative paths such as
@@ -128,7 +129,7 @@ filter.
 
 When an image is opened from a KDE-supported archive URL such as `zip://`,
 `tar://`, or `sevenz://`, KiriView treats it as a single image URL supplied by
-KIO rather than owning the whole archive as an archive document.
+KIO rather than opening the whole archive as an archive document.
 
 In Flatpak, adjacent image navigation can list neighboring files under `home`,
 `/media`, `/mnt`, `/run/media`, and `$XDG_RUNTIME_DIR/gvfs`. Files outside those
@@ -136,14 +137,15 @@ paths remain available only when explicitly provided by the XDG portal.
 In Flatpak, KiriView can also request write access to those same locations for
 file deletion.
 
-When an image is ready, Delete requests moving the displayed file to trash and
-Shift+Delete requests permanent deletion. The actions are available from the
-application menu or menubar File menu and through their shortcuts, but not from
-the toolbar. KiriView delegates user confirmation and the actual file operation
-to KDE's file operation handling. If the operation is canceled, the current
-image remains open and no notification is shown. If it fails, the current image
-remains open and the file operation error is shown as an in-app toast
-notification.
+When an image is ready, Delete requests moving the current deletion target to
+trash and Shift+Delete requests permanently deleting that target. The actions
+are available from the application menu or menubar File menu and through their
+shortcuts, but not from the toolbar. KiriView delegates user confirmation and
+the actual file operation to KDE's file operation handling, so users see and can
+cancel the target KDE is about to delete. If the operation is canceled, the
+current image remains open and no notification is shown. If it fails, the
+current image remains open and the file operation error is shown as an in-app
+toast notification.
 
 The deletion target is the displayed image URL for ordinary images, remote
 URLs, and images opened directly from KDE-supported archive URLs such as
@@ -152,7 +154,8 @@ TAR, 7Z, or RAR archive document opened directly by KiriView, the deletion
 target is the archive file itself rather than the currently displayed internal
 image entry. When the displayed image is inside a local directory document
 opened directly by KiriView, the deletion target is the directory itself rather
-than the currently displayed image file.
+than the currently displayed image file; confirming the deletion deletes the
+entire directly opened directory as handled by KDE.
 
 After deletion succeeds, KiriView immediately clears the deleted image. It then
 opens the next supported image in the current image scope when possible, falls
@@ -163,17 +166,17 @@ possible, falls back to the first image in the previous sibling comic book
 archive, and otherwise shows the empty state. After deleting a directly opened
 directory document, KiriView shows the empty state.
 
-When the displayed image belongs to a local `file://` directory, KiriView keeps
-that directory's supported-image candidate list live while the directory remains
-the current navigation scope. External additions and removals update the page
-number, total image count, and first/last boundary state. If the currently
-displayed local image is removed outside KiriView, KiriView immediately clears
-that image, opens the next supported image in the same sorted directory order
-when possible, falls back to the previous supported image when no next image
-exists, and otherwise shows the empty state. Candidate lists for non-local KIO
-URLs, explicit archive URLs such as `zip://`, directly opened archive
-documents, and directly opened directory documents are snapshots and do not
-guarantee live external update handling.
+When the current navigation scope is the local `file://` parent directory of an
+ordinary opened image file, KiriView keeps that directory's supported-image list
+live. External additions and removals update the page number, total image count,
+and first/last boundary state. If the currently displayed local image is removed
+outside KiriView, KiriView immediately clears that image, opens the next
+supported image in the same sorted directory order when possible, falls back to
+the previous supported image when no next image exists, and otherwise shows the
+empty state. Non-local KIO URL scopes, explicit archive URL scopes such as
+`zip://`, directly opened archive documents, and directly opened recursive
+directory documents are snapshots and do not guarantee live external update
+handling.
 
 ## Image Display
 
@@ -271,12 +274,12 @@ When Two-Page Spread shows two pages, zooming and panning operate on the combine
 two-page spread as one virtual image. Fit, Fit Height, Fit Width, manual zoom,
 scrollbars, drag panning, wheel zoom, keyboard panning, and scan shortcuts use
 the full spread bounds. The spread has no added page gap. The page number,
-window title, deletion target, and archive navigation position continue to refer
-to the left/current page.
-In Right-to-Left Reading mode, the current page is rendered on the right and the
-next page is rendered on the left. The page number, window title, deletion
-target, archive navigation position, and Ctrl+N/Ctrl+P single-page navigation
-continue to refer to the current page.
+window title, deletion target, archive navigation position, and Ctrl+N/Ctrl+P
+single-page navigation continue to refer to the primary/current page. In
+Left-to-Right Reading mode, the primary/current page is rendered on the left and
+the next page is rendered on the right. In Right-to-Left Reading mode, the
+primary/current page is rendered on the right and the next page is rendered on
+the left.
 When navigation in Two-Page Spread targets another eligible two-page spread,
 KiriView shows the loading state instead of leaving the previous spread visible
 or showing only the left target page. The target spread appears only after both
@@ -361,20 +364,22 @@ start, and Ctrl+> jumps to scan end.
 
 The toolbar provides page navigation with Previous and Next actions, the current
 page number, the total number of supported images in the current directory or
-archive scope after that scope's candidate list has been confirmed, and editable
-page number entry. The Previous action is disabled on the first image, and the
-Next action is disabled on the last image. Page numbers are shown to users
-starting at 1. When a new directory or archive scope is being listed and
-KiriView has no confirmed candidate list for that same scope yet, the current
-page number and total image count are unknown, and KiriView does not treat the
-current image as the first or last image. Entering a page number and pressing
-Enter or clicking the image viewing area opens the nearest valid page, returns
-focus to the image viewing area, and restores viewer keyboard shortcuts. If the
-entered text cannot be parsed as a number, KiriView leaves the current image
-open and restores the displayed page number. Pressing Escape while editing the
-page number cancels the edit, restores the displayed page number, returns focus
-to the image viewing area, and does not leave fullscreen.
-When KiriView has a confirmed candidate list for the current image scope,
+archive scope after that scope's supported image list has been confirmed, and
+editable page number entry. First and Last are page navigation actions available
+through their configured shortcuts and menus; they open the first or last known
+page in the current image scope. The Previous action is disabled on the first
+image, and the Next action is disabled on the last image. Page numbers are shown
+to users starting at 1. When a new directory or archive scope is being listed
+and KiriView has no confirmed supported image list for that same scope yet, the
+current page number and total image count are unknown, and KiriView does not
+treat the current image as the first or last image. Entering a page number and
+pressing Enter or clicking the image viewing area opens the nearest valid page,
+returns focus to the image viewing area, and restores viewer keyboard shortcuts.
+If the entered text cannot be parsed as a number, KiriView leaves the current
+image open and restores the displayed page number. Pressing Escape while editing
+the page number cancels the edit, restores the displayed page number, returns
+focus to the image viewing area, and does not leave fullscreen.
+When KiriView has a confirmed supported image list for the current image scope,
 Previous, Next, First, Last, and page number entry remain available while a
 selected image is still loading. During that loading interval, the page number
 shown in the UI is the most recent valid page selection requested by the user,
@@ -439,8 +444,8 @@ directly by KiriView, candidate names are document-relative paths such as
 `foo/a.jpg` and `bar/a.jpg`. Navigation does not wrap; pressing Page Up on the
 first candidate or Page Down on the last candidate keeps the current image open
 and notifies the user that it is the first or last image. KiriView shows those
-first-image and last-image notifications only when the current candidate list
-is known and the current image is at a known boundary.
+first-image and last-image notifications only when the current supported image
+list is known and the current image is at a known boundary.
 
 KiriView has one visible in-app toast notification slot. New toast requests
 replace the current toast and replay the entrance animation, including when the
@@ -464,8 +469,8 @@ immediately previous page when that page is the cover or a wide page. Ctrl+N and
 Ctrl+P move forward or backward by exactly one page and are available while an
 image is ready. While the page number or zoom input is not focused, KiriView
 also accepts the runtime-only aliases `n` and `p` for single-page navigation.
-When a Two-Page Spread navigation target is loading and the candidate list is
-known, additional Previous, Next, Ctrl+N, or Ctrl+P navigation is calculated
+When a Two-Page Spread navigation target is loading and the supported image list
+is known, additional Previous, Next, Ctrl+N, or Ctrl+P navigation is calculated
 from the pending primary page selection. KiriView moves by one primary page
 selection at a time while loading; the final single-page or two-page spread
 pairing is decided after the selected primary page has loaded.
@@ -483,9 +488,9 @@ preparation and then prepare pages around the page where navigation settles,
 rather than preparing every skipped page. Directly opened archive and directory
 documents may prepare more pages in the current reading direction than ordinary
 image navigation. When the desktop Power Saver mode is enabled, KiriView stops
-background adjacent-page preparation and keeps only already displayed pages in
-the preparation cache. Foreground image loading and visible image-detail
-decoding continue to work while Power Saver mode is enabled.
+background adjacent-page preparation and keeps only the pages needed for the
+current display. Foreground image loading and visible image-detail decoding
+continue to work while Power Saver mode is enabled.
 
 ## Archive Navigation
 
@@ -542,11 +547,10 @@ the pointer is over the toolbar or a toolbar input is focused. Leaving
 fullscreen restores the window's previous windowed, maximized, or minimized
 state and restores the normal header toolbar.
 
-Ctrl+? and F1 open a modal shortcut help dialog listing KiriView's keyboard and
-mouse shortcuts. While the page number or zoom input is not focused, KiriView
-also accepts the runtime-only alias `?` for shortcut help. While the shortcut
-help dialog is open, standard dialog dismissal actions close the dialog before
-any fullscreen handling.
+Ctrl+? and F1 open the modal Keyboard Shortcuts help dialog. While the page
+number or zoom input is not focused, KiriView also accepts the runtime-only
+alias `?` for shortcut help. While the shortcut help dialog is open, standard
+dialog dismissal actions close the dialog before any fullscreen handling.
 
 Ctrl+M toggles the application menu presentation between Hamburger Menu and
 Menubar. This shortcut is fixed, is not user-configurable, and is not listed in

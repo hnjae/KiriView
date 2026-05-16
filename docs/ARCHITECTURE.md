@@ -22,7 +22,8 @@ how to make it happen in Qt and KDE.
 
 QML and Kirigami own declarative UI composition:
 
-- Page structure, actions, menus, toolbars, overlays, and shortcuts.
+- Page structure, menus, toolbars, overlays, and shortcut attachment points.
+- Visual placement of action objects supplied by the C++ facade.
 - Bindings to documented QObject properties and invokable methods.
 - UI-only state that does not affect application behavior.
 
@@ -37,6 +38,8 @@ C++ Qt/KDE runtime code owns platform integration and side effects:
 - `QObject` lifetime, signal delivery, thread affinity, and cancellation.
 - `QUrl`, `QImage`, `QAction`, `QQuickItem`, `QSGRenderNode`, and other Qt
   objects.
+- `QAction` identity, KDE action collections, configured shortcut state, and
+  shortcut persistence.
 - KIO jobs, KDE settings, dialogs, notifications, file operations, and runtime
   integration.
 - Image presentation, rendering, and async job orchestration.
@@ -44,7 +47,8 @@ C++ Qt/KDE runtime code owns platform integration and side effects:
 Rust owns Qt-independent policy and algorithms:
 
 - State transitions, workflow plans, and reducer-like decisions.
-- Zoom, viewport, tile, spread, navigation, deletion, and cache policy.
+- Zoom, viewport, tile, spread, navigation, deletion-target, follow-up, and cache
+  decisions when they are computed from plain value snapshots.
 - Parsing and byte-level format inspection that is independent of Qt objects.
 - Pure calculations where the same input should produce the same output.
 
@@ -91,13 +95,48 @@ same workflow state.
 
 Rust-owned state is reserved for self-contained Qt-independent domains where the
 state can be represented as plain values and does not mirror authoritative C++
-state. Examples include navigation indices, cache policy, format parsing state,
-and geometry or zoom algorithms. When Rust owns such state, document that
-ownership in this file or an ADR, and expose it through value-based FFI.
+state. Examples include format parsing state and geometry or zoom algorithms.
+Navigation indices, cache policy state, or other workflow state may move to Rust
+only when that ownership is documented in this file or an ADR and exposed
+through value-based FFI.
 
 Avoid split-brain state. A workflow value must have one canonical owner. If both
 languages need to observe it, one side owns the value and the other side receives
 a derived snapshot, projection, delta, or completion event.
+
+### Current Cross-Language Ownership
+
+These defaults apply until this document or an ADR explicitly changes the owner.
+Moving policy into Rust does not move the authoritative runtime state unless the
+same decision also names the new state owner.
+
+- Actions and shortcuts: C++ owns action identity, KDE action collections, the
+  canonical configured shortcut list, shortcut persistence, and the active
+  shortcut handling installed in Qt. QML presents and invokes C++ actions. Rust
+  may compute stateless shortcut projections, such as menu-safe representatives
+  or derived viewer aliases, but it must not store shortcut state.
+- Document and image loading: C++ owns the current document kind, displayed URL
+  or document page, pending load identity, active jobs, decoded image objects,
+  and user-visible load/error state. Rust may compute transition plans from a
+  snapshot, but it must not keep a second displayed-image or pending-selection
+  state.
+- Supported image lists and page position: C++ owns the confirmed supported
+  image list, current index, boundary state, and pending page selection for a
+  runtime scope unless an ADR gives that scope a different owner. Rust navigation
+  policy may return target indices or follow-up effects from those snapshots.
+- Zoom, pan, rotation, and spread presentation: the active C++ presentation
+  controller owns the public presentation state exposed to QML. Rust geometry or
+  spread policy may calculate next values from snapshots. If a presentation mode
+  needs its own state owner, the mode transition must still expose exactly one
+  active public owner.
+- Deletion: Rust policy may choose the deletion target and post-delete follow-up
+  target from plain document/navigation snapshots. C++ owns KDE confirmation,
+  the file operation, cancellation and failure handling, notifications, and
+  applying the follow-up plan.
+- Preparation and cache: C++ owns prepared image objects, decoder jobs, memory
+  pressure handling, and cache lifetime. Rust may compute preparation priority
+  or eviction policy from plain metadata, but cached runtime objects remain in
+  C++.
 
 ### Derived Public State
 
@@ -153,16 +192,23 @@ C++ receives UI/runtime event
 For example, opening an image can eventually converge on:
 
 ```text
-OpenRequested(url)
-ImageDataLoaded(bytes)
-ImageDecoded(result_summary)
-ImageLoadFailed(error)
-PresentationFinished
+OpenRequested(request_id, target)
+ImageDataLoaded(request_id, bytes)
+ImageDecoded(request_id, result_summary)
+ImageLoadFailed(request_id, error)
+PresentationFinished(request_id)
 ```
 
 Rust can decide loading status, error recovery, navigation updates, cache
 policy, and follow-up effects. C++ keeps the actual KIO job, decoder job,
 presentation controller, image object, and render update mechanics.
+
+Async workflow events that can complete out of order must carry enough identity
+for the owner to ignore stale completions. For image opening and page
+navigation, this includes distinguishing the displayed image from the pending
+selection. For two-page spread transitions, the workflow must also distinguish
+the primary target page from any secondary page and avoid exposing the new spread
+until the required visible pages are ready.
 
 This does not require every existing controller to be rewritten at once. Move
 logic when a workflow is already being changed and when the new boundary reduces
@@ -189,7 +235,8 @@ The preferred direction is fewer, larger policy boundaries:
   renderer objects.
 - Parsing modules that inspect bytes and return plain metadata or decoded
   domain values.
-- Cache and navigation policies that can be tested without Qt event loops.
+- Cache prioritization and navigation policies that can be tested without Qt
+  event loops and do not own Qt runtime objects.
 
 C++ should remain the place where those plans are executed through Qt/KDE APIs.
 This keeps the application adaptable while the pre-release codebase continues to
@@ -235,3 +282,9 @@ overview but important enough to preserve. Keep ADRs short:
 Examples of ADR-worthy decisions include changing the Rust/C++ ownership model
 for image opening, replacing a Qt image path with a Rust decoder path, or moving
 workflow state ownership across the FFI boundary.
+
+Existing ADRs:
+
+- `docs/adr/0001-single-open-archive-document-session.md`: directly opened
+  archive document sessions are owned by the C++ document runtime, including the
+  archive location, sorted candidate list, and serialized archive image reads.
