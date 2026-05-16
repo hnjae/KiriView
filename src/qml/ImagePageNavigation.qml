@@ -19,8 +19,22 @@ RowLayout {
     readonly property bool textInputActive: pageNumberField.activeFocus
     readonly property bool pageNavigationAvailable: imageDocument.imageCount > 0 && !imageDocument.fileDeletionInProgress
 
+    signal editingCompleted(bool returnViewerFocus)
+
     enabled: pageNavigationAvailable
     spacing: controlSpacing
+
+    function cancelEditing(returnViewerFocus) {
+        if (pageNumberField.activeFocus) {
+            pageNumberField.cancelEditing(returnViewerFocus);
+        }
+    }
+
+    function commitEditing(returnViewerFocus) {
+        if (pageNumberField.activeFocus) {
+            pageNumberField.commitEditing(returnViewerFocus);
+        }
+    }
 
     function pageNumberText() {
         return imageDocument.currentPageNumber > 0 ? imageDocument.currentPageNumber.toString() : "0";
@@ -45,6 +59,8 @@ RowLayout {
     Controls.TextField {
         id: pageNumberField
 
+        property bool completingEdit: false
+
         Layout.preferredWidth: Math.max(Kirigami.Units.gridUnit * 3, pageNumberMetrics.advanceWidth + leftPadding + rightPadding + root.controlSpacing * 2)
         enabled: root.pageNavigationAvailable
         horizontalAlignment: Text.AlignHCenter
@@ -55,15 +71,53 @@ RowLayout {
             top: Math.max(1, root.imageDocument.imageCount)
         }
 
+        function cancelEditing(returnViewerFocus) {
+            if (completingEdit) {
+                return;
+            }
+
+            completingEdit = true;
+            resetPageNumberText();
+            focus = false;
+            completingEdit = false;
+            if (returnViewerFocus === true) {
+                root.editingCompleted(true);
+            }
+        }
+
+        function clampedPageNumber(pageNumber) {
+            return Math.max(1, Math.min(root.imageDocument.imageCount, Math.round(pageNumber)));
+        }
+
+        function commitEditing(returnViewerFocus) {
+            if (completingEdit) {
+                return;
+            }
+
+            completingEdit = true;
+            commitPageNumber();
+            focus = false;
+            completingEdit = false;
+            if (returnViewerFocus === true) {
+                root.editingCompleted(true);
+            }
+        }
+
         function commitPageNumber() {
             if (!enabled) {
                 resetPageNumberText();
                 return;
             }
 
-            const pageNumber = Number(text.trim());
-            if (Number.isInteger(pageNumber) && pageNumber >= 1 && pageNumber <= root.imageDocument.imageCount) {
-                root.imageDocument.openImageAtPage(pageNumber);
+            const trimmedText = text.trim();
+            if (trimmedText.length === 0) {
+                resetPageNumberText();
+                return;
+            }
+
+            const pageNumber = Number(trimmedText);
+            if (Number.isFinite(pageNumber)) {
+                root.imageDocument.openImageAtPage(clampedPageNumber(pageNumber));
             }
             resetPageNumberText();
         }
@@ -73,11 +127,24 @@ RowLayout {
         }
 
         Component.onCompleted: resetPageNumberText()
-        onAccepted: {
-            commitPageNumber();
-            focus = false;
-        }
-        onEditingFinished: commitPageNumber()
+        onAccepted: commitEditing(true)
+        onEditingFinished: commitEditing(false)
+    }
+
+    Shortcut {
+        context: Qt.WindowShortcut
+        enabled: root.textInputActive
+        sequence: "Return"
+
+        onActivated: root.commitEditing(true)
+    }
+
+    Shortcut {
+        context: Qt.WindowShortcut
+        enabled: root.textInputActive
+        sequence: "Enter"
+
+        onActivated: root.commitEditing(true)
     }
 
     TextMetrics {

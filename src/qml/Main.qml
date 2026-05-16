@@ -81,6 +81,18 @@ StatefulApp.StatefulWindow {
         fullscreenToolBarHideTimer.restart();
     }
 
+    function activeImageToolBar() {
+        return root.fullscreen ? fullscreenImageToolBar : headerImageToolBar;
+    }
+
+    function focusImageViewport() {
+        imageViewport.forceActiveFocus();
+    }
+
+    function toolbarTextInputFocused() {
+        return activeImageToolBar().textInputFocused();
+    }
+
     minimumWidth: Kirigami.Units.gridUnit * 14
     minimumHeight: Kirigami.Units.gridUnit * 12
     width: Kirigami.Units.gridUnit * 24
@@ -98,7 +110,15 @@ StatefulApp.StatefulWindow {
 
     Shortcut {
         context: Qt.WindowShortcut
-        enabled: root.fullscreen && !root.helpDialogOpen
+        enabled: root.toolbarTextInputFocused() && !root.helpDialogOpen
+        sequence: "Esc"
+
+        onActivated: root.activeImageToolBar().cancelTextInputEditing(true)
+    }
+
+    Shortcut {
+        context: Qt.WindowShortcut
+        enabled: root.fullscreen && !root.helpDialogOpen && !root.toolbarTextInputFocused()
         sequence: "Esc"
 
         onActivated: root.toggleFullScreen()
@@ -181,6 +201,8 @@ StatefulApp.StatefulWindow {
             applicationMenuActions: applicationMenuDrawer.actions
             showApplicationMenuActions: !root.menuBarMode && !root.fullscreen
             visible: !root.fullscreen
+
+            onTextInputFocusReturnRequested: root.focusImageViewport()
         }
 
         onFullscreenPointerPositionChanged: {
@@ -206,6 +228,14 @@ StatefulApp.StatefulWindow {
 
             anchors.fill: parent
             initialSourceUrl: root.initialSourceUrl
+
+            onViewerClicked: {
+                if (root.activeImageToolBar().commitTextInputEditing(true)) {
+                    return;
+                }
+
+                root.focusImageViewport();
+            }
         }
 
         Connections {
@@ -263,6 +293,8 @@ StatefulApp.StatefulWindow {
             transientOverlay: true
             visible: root.fullscreen && root.fullscreenToolBarRevealed
             z: 20
+
+            onTextInputFocusReturnRequested: root.focusImageViewport()
 
             onInteractionActiveChanged: {
                 if (!root.fullscreen) {

@@ -34,6 +34,27 @@ Controls.ToolBar {
     readonly property var toolbarActions: showApplicationMenuActions ? toolbarControls.concat([applicationMenuAction]) : toolbarControls
 
     signal pageNumberResetRequested
+    signal textInputCancelRequested(bool returnViewerFocus)
+    signal textInputCommitRequested(bool returnViewerFocus)
+    signal textInputFocusReturnRequested
+
+    function cancelTextInputEditing(returnViewerFocus) {
+        if (!textInputFocused()) {
+            return false;
+        }
+
+        textInputCancelRequested(returnViewerFocus === undefined ? true : returnViewerFocus);
+        return true;
+    }
+
+    function commitTextInputEditing(returnViewerFocus) {
+        if (!textInputFocused()) {
+            return false;
+        }
+
+        textInputCommitRequested(returnViewerFocus === undefined ? true : returnViewerFocus);
+        return true;
+    }
 
     function resetPageNumberText() {
         pageNumberResetRequested();
@@ -95,6 +116,24 @@ Controls.ToolBar {
                 }
             }
             onTextInputActiveChanged: root.zoomInputFocused = textInputActive
+
+            onEditingCompleted: function (returnViewerFocus) {
+                if (returnViewerFocus) {
+                    root.textInputFocusReturnRequested();
+                }
+            }
+
+            Connections {
+                target: root
+
+                function onTextInputCancelRequested(returnViewerFocus) {
+                    zoomControls.cancelEditing(returnViewerFocus);
+                }
+
+                function onTextInputCommitRequested(returnViewerFocus) {
+                    zoomControls.commitEditing(returnViewerFocus);
+                }
+            }
         }
         displayHint: Kirigami.DisplayHint.KeepVisible
         icon.name: "zoom-original-symbolic"
@@ -140,11 +179,25 @@ Controls.ToolBar {
             }
             onTextInputActiveChanged: root.pageNavigationInputFocused = textInputActive
 
+            onEditingCompleted: function (returnViewerFocus) {
+                if (returnViewerFocus) {
+                    root.textInputFocusReturnRequested();
+                }
+            }
+
             Connections {
                 target: root
 
                 function onPageNumberResetRequested() {
                     pageNavigation.resetPageNumberText();
+                }
+
+                function onTextInputCancelRequested(returnViewerFocus) {
+                    pageNavigation.cancelEditing(returnViewerFocus);
+                }
+
+                function onTextInputCommitRequested(returnViewerFocus) {
+                    pageNavigation.commitEditing(returnViewerFocus);
                 }
             }
         }

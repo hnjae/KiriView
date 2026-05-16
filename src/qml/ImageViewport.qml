@@ -23,6 +23,8 @@ Item {
     readonly property real viewportWidth: imageFlickable.width
     readonly property real viewportHeight: imageFlickable.height
 
+    signal viewerClicked
+
     function currentContentPosition() {
         return Qt.point(imageFlickable.contentX, imageFlickable.contentY);
     }
@@ -205,6 +207,12 @@ Item {
                 y: Math.max(0, (spreadItem.height - height) / 2)
             }
         }
+    }
+
+    TapHandler {
+        acceptedButtons: Qt.LeftButton
+
+        onTapped: root.viewerClicked()
     }
 
     HoverHandler {
