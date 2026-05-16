@@ -58,6 +58,7 @@ src/localization.cpp
 src/menuaccesskeyrouter.cpp
 src/imageopencontroller.cpp
 src/imageopenworkflow.cpp
+src/imagepagenavigationmodel.cpp
 src/imagepredecodecoordinator.cpp
 src/imagepresentationcontroller.cpp
 src/imagesecondarypagecontroller.cpp

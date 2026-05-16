@@ -7,6 +7,7 @@
 #include "imagecandidaterepository.h"
 #include "imagelocation.h"
 #include "imagenavigationtypes.h"
+#include "imagepagenavigationmodel.h"
 
 #include <QObject>
 #include <QString>
@@ -61,9 +62,6 @@ public:
     void clearPageNavigation();
 
 private:
-    std::optional<QUrl> selectPageTarget(std::optional<std::size_t> targetIndex);
-    bool hasKnownPageNavigationSelection() const;
-
     void finishNavigation(std::vector<ImageNavigationCandidate> candidates,
         NavigationDirection direction, const QUrl &currentUrl,
         ImageCandidateListSource candidateSource);
@@ -74,9 +72,7 @@ private:
     void finishContainerNavigationLoadWithError(
         const QUrl &containerUrl, ContainerNavigationError error, const QString &errorString);
 
-    void setPageNavigationUrls(
-        std::vector<QUrl> urls, const QUrl &currentUrl, ImageCandidateListSource source);
-    void setPageNavigationState(PageNavigationState state, bool forceNotify = false);
+    void notifyPageNavigationChanged();
     void watchPageNavigationChanges(const ImageCandidateListContext &context);
     void updatePageNavigationFromChangedCandidates(
         std::vector<ImageNavigationCandidate> candidates, ImageCandidateListSource source);
@@ -91,9 +87,7 @@ private:
     ImageIoJob m_containerNavigationListJob;
     ImageIoJob m_pageNavigationListerJob;
     ImageIoJob m_pageNavigationChangesJob;
-    PageNavigationState m_pageNavigation;
-    std::optional<ImageCandidateListSource> m_pageNavigationSource;
-    std::optional<ImageCandidateListContext> m_pageNavigationContext;
+    ImagePageNavigationModel m_pageNavigation;
 };
 }
 

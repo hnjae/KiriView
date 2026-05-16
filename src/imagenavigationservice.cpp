@@ -31,12 +31,6 @@ std::optional<KiriView::ImageCandidateListContext> imageCandidateContextForDispl
     return KiriView::imageCandidateListContextForDisplayedImage(context.location);
 }
 
-bool samePageNavigationState(
-    const KiriView::PageNavigationState &left, const KiriView::PageNavigationState &right)
-{
-    return left.urls == right.urls && left.currentIndex == right.currentIndex;
-}
-
 std::vector<QUrl> imageNavigationCandidateUrls(
     const std::vector<KiriView::ImageNavigationCandidate> &candidates)
 {
@@ -57,42 +51,6 @@ bool imageNavigationCandidatesContainUrl(
         });
 }
 
-bool sameArchiveDocumentLocation(
-    const KiriView::ArchiveDocumentLocation &left, const KiriView::ArchiveDocumentLocation &right)
-{
-    return KiriView::sameNormalizedUrl(left.fileUrl(), right.fileUrl())
-        && KiriView::sameNormalizedUrl(left.rootUrl(), right.rootUrl())
-        && left.kind() == right.kind();
-}
-
-bool sameImageCandidateListSourcePayload(const KiriView::ImageCandidateListSource::Directory &left,
-    const KiriView::ImageCandidateListSource::Directory &right)
-{
-    return KiriView::sameNormalizedUrl(left.directoryUrl, right.directoryUrl);
-}
-
-bool sameImageCandidateListSourcePayload(
-    const KiriView::ImageCandidateListSource::ArchiveDocument &left,
-    const KiriView::ImageCandidateListSource::ArchiveDocument &right)
-{
-    return sameArchiveDocumentLocation(left.archiveDocument, right.archiveDocument);
-}
-
-template <typename Left, typename Right>
-bool sameImageCandidateListSourcePayload(const Left &, const Right &)
-{
-    return false;
-}
-
-bool sameImageCandidateListSource(
-    const KiriView::ImageCandidateListSource &left, const KiriView::ImageCandidateListSource &right)
-{
-    return left.visit([&right](const auto &leftSource) {
-        return right.visit([&leftSource](const auto &rightSource) {
-            return sameImageCandidateListSourcePayload(leftSource, rightSource);
-        });
-    });
-}
 }
 
 namespace KiriView {
@@ -106,53 +64,23 @@ ImageNavigationService::ImageNavigationService(
 
 int ImageNavigationService::currentPageNumber() const
 {
-    return m_pageNavigation.currentIndex < 0 ? 0 : m_pageNavigation.currentIndex + 1;
+    return m_pageNavigation.currentPageNumber();
 }
 
-int ImageNavigationService::imageCount() const
-{
-    return static_cast<int>(m_pageNavigation.urls.size());
-}
+int ImageNavigationService::imageCount() const { return m_pageNavigation.imageCount(); }
 
 std::optional<QUrl> ImageNavigationService::urlAtPage(int pageNumber) const
 {
-    if (pageNumber < 1) {
-        return std::nullopt;
-    }
-
-    const std::size_t pageIndex = static_cast<std::size_t>(pageNumber - 1);
-    if (pageIndex >= m_pageNavigation.urls.size()) {
-        return std::nullopt;
-    }
-
-    return m_pageNavigation.urls.at(pageIndex);
+    return m_pageNavigation.urlAtPage(pageNumber);
 }
 
 std::optional<QUrl> ImageNavigationService::selectPage(int pageNumber)
 {
-    return selectPageTarget(pageNavigationTargetIndex(m_pageNavigation, pageNumber));
-}
-
-std::optional<QUrl> ImageNavigationService::selectPageTarget(std::optional<std::size_t> targetIndex)
-{
-    if (!targetIndex.has_value()) {
-        return std::nullopt;
+    const std::optional<QUrl> targetUrl = m_pageNavigation.selectPage(pageNumber);
+    if (targetUrl.has_value()) {
+        notifyPageNavigationChanged();
     }
-
-    PageNavigationState state = m_pageNavigation;
-    state.currentIndex = static_cast<int>(*targetIndex);
-    const QUrl targetUrl = state.urls.at(*targetIndex);
-    setPageNavigationState(std::move(state));
     return targetUrl;
-}
-
-bool ImageNavigationService::hasKnownPageNavigationSelection() const
-{
-    if (m_pageNavigation.currentIndex < 0) {
-        return false;
-    }
-
-    return static_cast<std::size_t>(m_pageNavigation.currentIndex) < m_pageNavigation.urls.size();
 }
 
 void ImageNavigationService::openAdjacentImage(
@@ -161,10 +89,10 @@ void ImageNavigationService::openAdjacentImage(
     cancelContainerNavigation();
     cancelNavigation();
 
-    if (hasKnownPageNavigationSelection()) {
-        const std::optional<QUrl> targetUrl
-            = selectPageTarget(pageNavigationAdjacentTargetIndex(m_pageNavigation, direction));
+    if (m_pageNavigation.hasKnownSelection()) {
+        const std::optional<QUrl> targetUrl = m_pageNavigation.selectAdjacentPage(direction);
         if (targetUrl.has_value()) {
+            notifyPageNavigationChanged();
             invokeIfSet(m_callbacks.openUrl, *targetUrl);
         }
         return;
@@ -202,8 +130,10 @@ void ImageNavigationService::finishNavigation(std::vector<ImageNavigationCandida
         return;
     }
 
-    setPageNavigationUrls(
-        imageNavigationCandidateUrls(candidates), *targetUrl, std::move(candidateSource));
+    if (m_pageNavigation.completeRefresh(
+            imageNavigationCandidateUrls(candidates), *targetUrl, std::move(candidateSource))) {
+        notifyPageNavigationChanged();
+    }
     invokeIfSet(m_callbacks.openUrl, *targetUrl);
 }
 
@@ -281,27 +211,21 @@ void ImageNavigationService::updatePageNavigation(const DisplayContext &context)
         return;
     }
 
-    const ImageCandidateListSource candidateSource = candidateContext->source();
-    const bool canReuseKnownState = m_pageNavigationSource.has_value()
-        && sameImageCandidateListSource(*m_pageNavigationSource, candidateSource)
-        && !m_pageNavigation.urls.empty();
-    if (canReuseKnownState) {
-        setPageNavigationState(
-            pageNavigationStateForCurrentUrl(m_pageNavigation, candidateContext->currentUrl()),
-            true);
-    } else {
-        clearPageNavigation();
+    if (m_pageNavigation.previewRefresh(*candidateContext)) {
+        notifyPageNavigationChanged();
     }
 
-    m_pageNavigationContext = *candidateContext;
     watchPageNavigationChanges(*candidateContext);
 
     m_pageNavigationListerJob = m_candidateRepository.loadImages(
         this, *candidateContext,
-        [this, currentUrl = candidateContext->currentUrl(), candidateSource](
+        [this, currentUrl = candidateContext->currentUrl(),
+            candidateSource = candidateContext->source()](
             std::vector<ImageNavigationCandidate> candidates) {
-            setPageNavigationUrls(
-                imageNavigationCandidateUrls(candidates), currentUrl, candidateSource);
+            if (m_pageNavigation.completeRefresh(
+                    imageNavigationCandidateUrls(candidates), currentUrl, candidateSource)) {
+                notifyPageNavigationChanged();
+            }
         },
         [](const QString &) {});
 }
@@ -312,27 +236,14 @@ void ImageNavigationService::cancelPageNavigationUpdate()
     m_pageNavigationChangesJob.cancel();
 }
 
-void ImageNavigationService::setPageNavigationUrls(
-    std::vector<QUrl> urls, const QUrl &currentUrl, ImageCandidateListSource source)
+void ImageNavigationService::notifyPageNavigationChanged()
 {
-    m_pageNavigationSource = std::move(source);
-    setPageNavigationState(pageNavigationStateForUrls(std::move(urls), currentUrl));
-}
-
-void ImageNavigationService::setPageNavigationState(PageNavigationState state, bool forceNotify)
-{
-    if (!forceNotify && samePageNavigationState(m_pageNavigation, state)) {
-        return;
-    }
-
-    m_pageNavigation = std::move(state);
     invokeIfSet(m_callbacks.pageNavigationChanged);
 }
 
 void ImageNavigationService::watchPageNavigationChanges(const ImageCandidateListContext &context)
 {
-    if (m_pageNavigationSource.has_value()
-        && sameImageCandidateListSource(*m_pageNavigationSource, context.source())
+    if (m_pageNavigation.shouldKeepExistingWatcherFor(context)
         && m_pageNavigationChangesJob.isActive()) {
         return;
     }
@@ -350,15 +261,23 @@ void ImageNavigationService::watchPageNavigationChanges(const ImageCandidateList
 void ImageNavigationService::updatePageNavigationFromChangedCandidates(
     std::vector<ImageNavigationCandidate> candidates, ImageCandidateListSource source)
 {
-    if (!m_pageNavigationContext.has_value()
-        || !sameImageCandidateListSource(m_pageNavigationContext->source(), source)) {
+    if (!m_pageNavigation.isCurrentRefreshSource(source)) {
         return;
     }
 
-    ImageCandidateListContext context = *m_pageNavigationContext;
+    const std::optional<ImageCandidateListContext> refreshContext
+        = m_pageNavigation.refreshContext();
+    if (!refreshContext.has_value()) {
+        return;
+    }
+
+    ImageCandidateListContext context = *refreshContext;
     const bool currentImageRemoved
         = !imageNavigationCandidatesContainUrl(candidates, context.currentUrl());
-    setPageNavigationUrls(imageNavigationCandidateUrls(candidates), context.currentUrl(), source);
+    if (m_pageNavigation.completeRefresh(
+            imageNavigationCandidateUrls(candidates), context.currentUrl(), source)) {
+        notifyPageNavigationChanged();
+    }
 
     if (currentImageRemoved && !deletionInProgress()) {
         handleCurrentImageRemoved(std::move(candidates), std::move(context));
@@ -385,8 +304,8 @@ bool ImageNavigationService::deletionInProgress() const
 void ImageNavigationService::clearPageNavigation()
 {
     m_pageNavigationChangesJob.cancel();
-    m_pageNavigationContext = std::nullopt;
-    m_pageNavigationSource = std::nullopt;
-    setPageNavigationState(PageNavigationState {});
+    if (m_pageNavigation.clear()) {
+        notifyPageNavigationChanged();
+    }
 }
 }
