@@ -189,6 +189,12 @@ if(TARGET test_menuactionitem)
     )
 endif()
 
+if(TARGET test_toolbarapplicationmenu)
+    set_tests_properties(test_toolbarapplicationmenu PROPERTIES
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+    )
+endif()
+
 add_test(
     NAME test_desktop_file_validate
     COMMAND "${DESKTOP_FILE_VALIDATE_EXECUTABLE}" "${KIRIVIEW_TEST_DESKTOP_FILE}"

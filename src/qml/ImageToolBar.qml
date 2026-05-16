@@ -75,7 +75,11 @@ Controls.ToolBar {
         return null;
     }
 
-    function openApplicationMenu() {
+    function applicationMenuOpen() {
+        return applicationMenuPopup.visible || applicationMenuPopup.opened;
+    }
+
+    function popupApplicationMenu() {
         if (!showApplicationMenuActions || applicationMenuActions.length <= 0) {
             return false;
         }
@@ -88,6 +92,23 @@ Controls.ToolBar {
 
         applicationMenuPopup.popup(actionToolBar, Math.max(0, actionToolBar.width - applicationMenuPopup.implicitWidth), actionToolBar.height);
         return true;
+    }
+
+    function openApplicationMenu() {
+        if (applicationMenuOpen()) {
+            return true;
+        }
+
+        return popupApplicationMenu();
+    }
+
+    function toggleApplicationMenu() {
+        if (applicationMenuOpen()) {
+            applicationMenuPopup.dismiss();
+            return true;
+        }
+
+        return popupApplicationMenu();
     }
 
     function resetPageNumberText() {
@@ -191,11 +212,13 @@ Controls.ToolBar {
         text: KI18n.i18nc("@action", "Application Menu")
         tooltip: KI18n.i18nc("@info:tooltip", "Open menu") + " (F10)"
 
-        onTriggered: root.openApplicationMenu()
+        onTriggered: root.toggleApplicationMenu()
     }
 
     Controls.Menu {
         id: applicationMenuPopup
+
+        closePolicy: Controls.Popup.CloseOnEscape | Controls.Popup.CloseOnPressOutsideParent
 
         MenuAccessKeyRouter {
             enabled: root.showApplicationMenuActions
