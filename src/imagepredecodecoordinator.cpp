@@ -20,10 +20,6 @@ using KiriView::DecodedImageResult;
 using KiriView::ImageCandidateListContext;
 using KiriView::normalizedImageUrl;
 
-constexpr int predecodeDebounceMsec = 120;
-constexpr int predecodeNeutralRefreshMsec = 800;
-constexpr int predecodeBiasedNavigationMsec = 450;
-
 std::uint8_t rustFlag(bool value) { return value ? 1 : 0; }
 
 KiriView::RustPredecodeDocumentKind rustDocumentKind(
@@ -167,9 +163,9 @@ ImagePredecodeCoordinator::ImagePredecodeCoordinator(QObject *parent,
 {
     m_monotonicClock.start();
     m_debounceTimer.setSingleShot(true);
-    m_debounceTimer.setInterval(predecodeDebounceMsec);
+    m_debounceTimer.setInterval(rustPredecodeDebounceMsec());
     m_neutralTimer.setSingleShot(true);
-    m_neutralTimer.setInterval(predecodeNeutralRefreshMsec);
+    m_neutralTimer.setInterval(rustPredecodeNeutralRefreshMsec());
 
     QObject::connect(
         &m_debounceTimer, &QTimer::timeout, this, [this]() { startDebouncedPredecode(); });
@@ -461,37 +457,46 @@ void ImagePredecodeCoordinator::resetNavigationMomentum()
 
 void ImagePredecodeCoordinator::updateNavigationMomentum(int pageIndex, qint64 monotonicMsec)
 {
-    m_momentumMode = MomentumMode::Neutral;
-    if (pageIndex < 0) {
-        return;
-    }
-    if (m_lastPageIndex < 0 || m_lastNavigationMsec < 0) {
-        m_lastPageIndex = pageIndex;
-        m_lastNavigationMsec = monotonicMsec;
-        return;
-    }
-    if (pageIndex == m_lastPageIndex) {
-        return;
-    }
+    const auto rustDirection = [this]() {
+        switch (m_lastMomentumDirection) {
+        case MomentumDirection::None:
+            return RustPredecodeMomentumDirection::None;
+        case MomentumDirection::Previous:
+            return RustPredecodeMomentumDirection::Previous;
+        case MomentumDirection::Next:
+            return RustPredecodeMomentumDirection::Next;
+        }
 
-    const qint64 elapsedMsec = monotonicMsec - m_lastNavigationMsec;
-    const MomentumDirection direction
-        = pageIndex > m_lastPageIndex ? MomentumDirection::Next : MomentumDirection::Previous;
-    if (direction == m_lastMomentumDirection && elapsedMsec <= predecodeBiasedNavigationMsec) {
-        ++m_sameDirectionMoveCount;
-    } else {
-        m_sameDirectionMoveCount = 1;
-    }
+        return RustPredecodeMomentumDirection::None;
+    };
+    const RustPredecodeMomentumState updated
+        = rustPredecodeUpdatedMomentumState(RustPredecodeMomentumUpdateInput {
+            RustPredecodeMomentumState {
+                m_lastPageIndex,
+                m_lastNavigationMsec,
+                m_sameDirectionMoveCount,
+                rustDirection(),
+                rustMomentumMode(m_momentumMode),
+            },
+            pageIndex,
+            monotonicMsec,
+        });
 
-    m_momentumMode = momentumMode(rustPredecodeMomentumMode(RustPredecodeMomentumInput {
-        m_lastPageIndex,
-        pageIndex,
-        elapsedMsec,
-        m_sameDirectionMoveCount,
-    }));
-    m_lastMomentumDirection = direction;
-    m_lastPageIndex = pageIndex;
-    m_lastNavigationMsec = monotonicMsec;
+    m_lastPageIndex = updated.last_page_index;
+    m_lastNavigationMsec = updated.last_navigation_msec;
+    m_sameDirectionMoveCount = updated.same_direction_move_count;
+    switch (updated.last_direction) {
+    case RustPredecodeMomentumDirection::None:
+        m_lastMomentumDirection = MomentumDirection::None;
+        break;
+    case RustPredecodeMomentumDirection::Previous:
+        m_lastMomentumDirection = MomentumDirection::Previous;
+        break;
+    case RustPredecodeMomentumDirection::Next:
+        m_lastMomentumDirection = MomentumDirection::Next;
+        break;
+    }
+    m_momentumMode = momentumMode(updated.mode);
 }
 
 qint64 ImagePredecodeCoordinator::currentMonotonicMsec() const

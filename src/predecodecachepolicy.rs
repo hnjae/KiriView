@@ -34,6 +34,13 @@ mod ffi {
     }
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    enum RustPredecodeMomentumDirection {
+        None = 0,
+        Previous = 1,
+        Next = 2,
+    }
+
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     struct RustPredecodePolicyInput {
         document_kind: RustPredecodeDocumentKind,
         momentum_mode: RustPredecodeMomentumMode,
@@ -42,11 +49,19 @@ mod ffi {
     }
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-    struct RustPredecodeMomentumInput {
-        previous_page_index: i32,
-        current_page_index: i32,
-        elapsed_msec: i64,
+    struct RustPredecodeMomentumState {
+        last_page_index: i32,
+        last_navigation_msec: i64,
         same_direction_move_count: i32,
+        last_direction: RustPredecodeMomentumDirection,
+        mode: RustPredecodeMomentumMode,
+    }
+
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    struct RustPredecodeMomentumUpdateInput {
+        state: RustPredecodeMomentumState,
+        page_index: i32,
+        monotonic_msec: i64,
     }
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -85,6 +100,12 @@ mod ffi {
         #[cxx_name = "rustPredecodePreferredByteBudget"]
         fn rust_predecode_preferred_byte_budget() -> i64;
 
+        #[cxx_name = "rustPredecodeDebounceMsec"]
+        fn rust_predecode_debounce_msec() -> i32;
+
+        #[cxx_name = "rustPredecodeNeutralRefreshMsec"]
+        fn rust_predecode_neutral_refresh_msec() -> i32;
+
         #[cxx_name = "rustPredecodeByteBudgetForSystemMemory"]
         fn rust_predecode_byte_budget_for_system_memory(system_memory_byte_size: i64) -> i64;
 
@@ -112,10 +133,10 @@ mod ffi {
         #[cxx_name = "rustPredecodeParallelLimit"]
         fn rust_predecode_parallel_limit(input: RustPredecodePolicyInput) -> usize;
 
-        #[cxx_name = "rustPredecodeMomentumMode"]
-        fn rust_predecode_momentum_mode(
-            input: RustPredecodeMomentumInput,
-        ) -> RustPredecodeMomentumMode;
+        #[cxx_name = "rustPredecodeUpdatedMomentumState"]
+        fn rust_predecode_updated_momentum_state(
+            input: RustPredecodeMomentumUpdateInput,
+        ) -> RustPredecodeMomentumState;
 
         #[cxx_name = "rustPredecodeNextQueuedLoadPlan"]
         fn rust_predecode_next_queued_load_plan(
@@ -125,9 +146,10 @@ mod ffi {
 }
 
 use ffi::{
-    RustPredecodeCachedImageState, RustPredecodeDocumentKind, RustPredecodeMomentumInput,
-    RustPredecodeMomentumMode, RustPredecodePolicyInput, RustPredecodeQueuedLoadPlan,
-    RustPredecodeQueuedLoadState, RustPredecodeWindowLoadState,
+    RustPredecodeCachedImageState, RustPredecodeDocumentKind, RustPredecodeMomentumDirection,
+    RustPredecodeMomentumMode, RustPredecodeMomentumState, RustPredecodeMomentumUpdateInput,
+    RustPredecodePolicyInput, RustPredecodeQueuedLoadPlan, RustPredecodeQueuedLoadState,
+    RustPredecodeWindowLoadState,
 };
 
 #[derive(Clone, Copy)]
@@ -141,8 +163,28 @@ struct RetainedCachedImage {
     byte_cost: i64,
 }
 
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+struct PredecodeMomentumInput {
+    previous_page_index: i32,
+    current_page_index: i32,
+    elapsed_msec: i64,
+    same_direction_move_count: i32,
+}
+
 fn rust_predecode_preferred_byte_budget() -> i64 {
     PREDECODE_PREFERRED_BYTE_BUDGET
+}
+
+fn rust_predecode_debounce_msec() -> i32 {
+    PREDECODE_SCRUBBING_NAVIGATION_MSEC
+        .try_into()
+        .unwrap_or(i32::MAX)
+}
+
+fn rust_predecode_neutral_refresh_msec() -> i32 {
+    PREDECODE_NEUTRAL_NAVIGATION_MSEC
+        .try_into()
+        .unwrap_or(i32::MAX)
 }
 
 fn rust_predecode_byte_budget_for_system_memory(system_memory_byte_size: i64) -> i64 {
@@ -396,7 +438,7 @@ fn default_predecode_policy_input() -> RustPredecodePolicyInput {
     }
 }
 
-fn rust_predecode_momentum_mode(input: RustPredecodeMomentumInput) -> RustPredecodeMomentumMode {
+fn predecode_momentum_mode(input: PredecodeMomentumInput) -> RustPredecodeMomentumMode {
     if input.previous_page_index < 0
         || input.current_page_index < 0
         || input.previous_page_index == input.current_page_index
@@ -433,6 +475,52 @@ fn rust_predecode_momentum_mode(input: RustPredecodeMomentumInput) -> RustPredec
     }
 
     RustPredecodeMomentumMode::Neutral
+}
+
+fn rust_predecode_updated_momentum_state(
+    input: RustPredecodeMomentumUpdateInput,
+) -> RustPredecodeMomentumState {
+    let mut state = input.state;
+    state.mode = RustPredecodeMomentumMode::Neutral;
+
+    if input.page_index < 0 {
+        return state;
+    }
+
+    if state.last_page_index < 0 || state.last_navigation_msec < 0 {
+        state.last_page_index = input.page_index;
+        state.last_navigation_msec = input.monotonic_msec;
+        return state;
+    }
+
+    if input.page_index == state.last_page_index {
+        return state;
+    }
+
+    let elapsed_msec = input
+        .monotonic_msec
+        .saturating_sub(state.last_navigation_msec);
+    let direction = if input.page_index > state.last_page_index {
+        RustPredecodeMomentumDirection::Next
+    } else {
+        RustPredecodeMomentumDirection::Previous
+    };
+    if direction == state.last_direction && elapsed_msec <= PREDECODE_BIASED_NAVIGATION_MSEC {
+        state.same_direction_move_count = state.same_direction_move_count.saturating_add(1);
+    } else {
+        state.same_direction_move_count = 1;
+    }
+
+    state.mode = predecode_momentum_mode(PredecodeMomentumInput {
+        previous_page_index: state.last_page_index,
+        current_page_index: input.page_index,
+        elapsed_msec,
+        same_direction_move_count: state.same_direction_move_count,
+    });
+    state.last_direction = direction;
+    state.last_page_index = input.page_index;
+    state.last_navigation_msec = input.monotonic_msec;
+    state
 }
 
 fn rust_predecode_next_queued_load_plan(
@@ -747,39 +835,96 @@ mod tests {
     #[test]
     fn momentum_mode_classifies_fast_repeated_and_large_page_moves() {
         assert_eq!(
-            rust_predecode_momentum_mode(momentum_input(4, 5, 300, 1)),
+            predecode_momentum_mode(momentum_input(4, 5, 300, 1)),
             RustPredecodeMomentumMode::Neutral
         );
         assert_eq!(
-            rust_predecode_momentum_mode(momentum_input(4, 5, 300, 2)),
+            predecode_momentum_mode(momentum_input(4, 5, 300, 2)),
             RustPredecodeMomentumMode::NextBiased
         );
         assert_eq!(
-            rust_predecode_momentum_mode(momentum_input(5, 4, 300, 2)),
+            predecode_momentum_mode(momentum_input(5, 4, 300, 2)),
             RustPredecodeMomentumMode::PrevBiased
         );
         assert_eq!(
-            rust_predecode_momentum_mode(momentum_input(4, 5, 120, 2)),
+            predecode_momentum_mode(momentum_input(4, 5, 120, 2)),
             RustPredecodeMomentumMode::ScrubbingNext
         );
         assert_eq!(
-            rust_predecode_momentum_mode(momentum_input(10, 6, 300, 1)),
+            predecode_momentum_mode(momentum_input(10, 6, 300, 1)),
             RustPredecodeMomentumMode::ScrubbingPrev
         );
     }
 
     #[test]
+    fn updated_momentum_state_tracks_repeated_direction_in_rust() {
+        let state = rust_predecode_updated_momentum_state(momentum_update_input(
+            initial_momentum_state(),
+            4,
+            1000,
+        ));
+        assert_eq!(state.last_page_index, 4);
+        assert_eq!(state.last_navigation_msec, 1000);
+        assert_eq!(state.same_direction_move_count, 0);
+        assert_eq!(state.last_direction, RustPredecodeMomentumDirection::None);
+        assert_eq!(state.mode, RustPredecodeMomentumMode::Neutral);
+
+        let state = rust_predecode_updated_momentum_state(momentum_update_input(state, 5, 1300));
+        assert_eq!(state.same_direction_move_count, 1);
+        assert_eq!(state.last_direction, RustPredecodeMomentumDirection::Next);
+        assert_eq!(state.mode, RustPredecodeMomentumMode::Neutral);
+
+        let state = rust_predecode_updated_momentum_state(momentum_update_input(state, 6, 1600));
+        assert_eq!(state.same_direction_move_count, 2);
+        assert_eq!(state.last_direction, RustPredecodeMomentumDirection::Next);
+        assert_eq!(state.mode, RustPredecodeMomentumMode::NextBiased);
+    }
+
+    #[test]
+    fn updated_momentum_state_resets_for_direction_changes_settling_and_invalid_pages() {
+        let state = RustPredecodeMomentumState {
+            last_page_index: 6,
+            last_navigation_msec: 1000,
+            same_direction_move_count: 2,
+            last_direction: RustPredecodeMomentumDirection::Next,
+            mode: RustPredecodeMomentumMode::NextBiased,
+        };
+
+        let state = rust_predecode_updated_momentum_state(momentum_update_input(state, 5, 1200));
+        assert_eq!(state.same_direction_move_count, 1);
+        assert_eq!(
+            state.last_direction,
+            RustPredecodeMomentumDirection::Previous
+        );
+        assert_eq!(state.mode, RustPredecodeMomentumMode::Neutral);
+
+        let state = rust_predecode_updated_momentum_state(momentum_update_input(state, 4, 2100));
+        assert_eq!(state.same_direction_move_count, 1);
+        assert_eq!(state.mode, RustPredecodeMomentumMode::Neutral);
+
+        let state = rust_predecode_updated_momentum_state(momentum_update_input(state, -1, 2200));
+        assert_eq!(state.last_page_index, 4);
+        assert_eq!(state.last_navigation_msec, 2100);
+        assert_eq!(state.same_direction_move_count, 1);
+        assert_eq!(
+            state.last_direction,
+            RustPredecodeMomentumDirection::Previous
+        );
+        assert_eq!(state.mode, RustPredecodeMomentumMode::Neutral);
+    }
+
+    #[test]
     fn momentum_mode_returns_neutral_for_invalid_or_settled_navigation() {
         assert_eq!(
-            rust_predecode_momentum_mode(momentum_input(-1, 3, 100, 2)),
+            predecode_momentum_mode(momentum_input(-1, 3, 100, 2)),
             RustPredecodeMomentumMode::Neutral
         );
         assert_eq!(
-            rust_predecode_momentum_mode(momentum_input(3, 3, 100, 2)),
+            predecode_momentum_mode(momentum_input(3, 3, 100, 2)),
             RustPredecodeMomentumMode::Neutral
         );
         assert_eq!(
-            rust_predecode_momentum_mode(momentum_input(3, 4, 800, 2)),
+            predecode_momentum_mode(momentum_input(3, 4, 800, 2)),
             RustPredecodeMomentumMode::Neutral
         );
     }
@@ -919,12 +1064,34 @@ mod tests {
         current_page_index: i32,
         elapsed_msec: i64,
         same_direction_move_count: i32,
-    ) -> RustPredecodeMomentumInput {
-        RustPredecodeMomentumInput {
+    ) -> PredecodeMomentumInput {
+        PredecodeMomentumInput {
             previous_page_index,
             current_page_index,
             elapsed_msec,
             same_direction_move_count,
+        }
+    }
+
+    fn initial_momentum_state() -> RustPredecodeMomentumState {
+        RustPredecodeMomentumState {
+            last_page_index: -1,
+            last_navigation_msec: -1,
+            same_direction_move_count: 0,
+            last_direction: RustPredecodeMomentumDirection::None,
+            mode: RustPredecodeMomentumMode::Neutral,
+        }
+    }
+
+    fn momentum_update_input(
+        state: RustPredecodeMomentumState,
+        page_index: i32,
+        monotonic_msec: i64,
+    ) -> RustPredecodeMomentumUpdateInput {
+        RustPredecodeMomentumUpdateInput {
+            state,
+            page_index,
+            monotonic_msec,
         }
     }
 }
