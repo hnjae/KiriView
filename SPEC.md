@@ -32,6 +32,9 @@ those application actions are available from the menubar, and any toolbar
 overflow menu appears only when toolbar controls do not fit. In fullscreen,
 KiriView hides both the menubar and toolbar application menu button; actions
 with configured shortcuts remain available through those shortcuts.
+The toolbar application menu is a single popup menu surface: activating the
+toolbar application menu button and pressing F10 open the same menu instance
+with the same width, actions, access keys, and shortcut column.
 The menubar and toolbar application menu display a representative configurable
 shortcut for actions with configured shortcuts through the menu action's
 shortcut column. This column is supplied only from the canonical configurable
