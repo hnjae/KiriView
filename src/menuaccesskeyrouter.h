@@ -13,6 +13,10 @@ class QEvent;
 class QKeyEvent;
 class QQuickItem;
 
+// Qt Quick Controls does not give KiriView's toolbar popup menu and menubar the
+// same post-open access-key behavior out of the box. This shim keeps that
+// behavior local: Alt/plain mnemonics route through the canonical Controls.Menu
+// instances while MenuActionItem owns the visible underline state.
 class MenuAccessKeyRouter : public QObject
 {
     Q_OBJECT

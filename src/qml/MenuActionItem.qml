@@ -6,6 +6,10 @@ import QtQuick.Controls as Controls
 import QtQuick.Layouts
 import org.kde.kirigami as Kirigami
 
+// This wraps Controls.MenuItem because standard menu items cannot render the
+// canonical shortcut column without also registering those shortcuts. The
+// accessKeysActive hook is paired with MenuAccessKeyRouter so toolbar and
+// menubar menus expose the same mnemonic underline behavior.
 Controls.MenuItem {
     id: root
 
