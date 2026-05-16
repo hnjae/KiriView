@@ -25,6 +25,7 @@ Controls.ToolBar {
     property bool transientOverlay: false
     property var applicationMenuActions: []
     property bool showApplicationMenuActions: false
+    property bool rightToLeftReadingActive: false
     property bool pageNavigationInputFocused: false
     property bool zoomInputFocused: false
     property Item applicationMenuButtonAnchor: null
@@ -337,6 +338,7 @@ Controls.ToolBar {
             compact: root.compact
             imageDocument: root.imageDocument
             imageReady: root.imageReady
+            rightToLeftReadingActive: root.rightToLeftReadingActive
 
             Component.onDestruction: {
                 if (textInputActive) {

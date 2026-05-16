@@ -223,6 +223,7 @@ StatefulApp.StatefulWindow {
             imageDocument: page.imageDocument
             imageReady: page.imageReady
             applicationMenuActions: imageActions.applicationMenuActions
+            rightToLeftReadingActive: imageActions.rightToLeftReadingActive
             showApplicationMenuActions: !root.menuBarMode && !root.fullscreen
             visible: !root.fullscreen
 
@@ -313,6 +314,7 @@ StatefulApp.StatefulWindow {
             imageDocument: page.imageDocument
             imageReady: page.imageReady
             applicationMenuActions: imageActions.applicationMenuActions
+            rightToLeftReadingActive: imageActions.rightToLeftReadingActive
             showApplicationMenuActions: !root.menuBarMode && !root.fullscreen
             transientOverlay: true
             visible: root.fullscreen && root.fullscreenToolBarRevealed
@@ -339,6 +341,7 @@ StatefulApp.StatefulWindow {
         actions: imageActions
         fullscreen: root.fullscreen
         imageDocument: page.imageDocument
+        rightToLeftReadingActive: imageActions.rightToLeftReadingActive
         visible: root.menuBarMode && !root.fullscreen
     }
 

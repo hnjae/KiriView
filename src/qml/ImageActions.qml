@@ -24,6 +24,7 @@ Item {
     readonly property bool canUseRotateActions: root.canUseReadyActions && !(root.imageDocument.twoPageModeEnabled && root.imageDocument.twoPageModeAvailable)
     readonly property bool canUseTwoPageActions: root.canUsePageActions && root.imageDocument.twoPageModeAvailable && root.imageDocument.twoPageModeEnabled
     readonly property bool canUseRightToLeftReadingActions: root.canUseReadyActions && root.imageDocument.rightToLeftReadingAvailable
+    readonly property bool rightToLeftReadingActive: root.imageDocument.rightToLeftReadingEnabled && root.imageDocument.rightToLeftReadingAvailable
 
     readonly property var openAction: openManagedAction.proxy
     readonly property var moveToTrashAction: moveToTrashManagedAction.proxy
@@ -79,7 +80,8 @@ Item {
     readonly property var configureShortcutsMenuAction: configureShortcutsManagedAction.menuProxy
     readonly property var showMenubarMenuAction: showMenubarManagedAction.menuProxy
     readonly property var quitMenuAction: quitManagedAction.menuProxy
-    readonly property var applicationMenuActions: [openManagedAction.menuProxy, applicationMenuFileSeparator, moveToTrashManagedAction.menuProxy, deleteFileManagedAction.menuProxy, applicationMenuNavigationSeparator, previousContainerManagedAction.menuProxy, nextContainerManagedAction.menuProxy, applicationMenuViewSeparator, rotateClockwiseManagedAction.menuProxy, rotateCounterclockwiseManagedAction.menuProxy, twoPageModeManagedAction.menuProxy, rightToLeftReadingManagedAction.menuProxy, fullscreenManagedAction.menuProxy, applicationMenuSettingsSeparator, showMenubarManagedAction.menuProxy, configureShortcutsManagedAction.menuProxy, applicationMenuHelpSeparator, shortcutHelpManagedAction.menuProxy, applicationMenuQuitSeparator, quitManagedAction.menuProxy]
+    readonly property var applicationMenuNavigationActions: root.rightToLeftReadingActive ? [nextContainerManagedAction.menuProxy, previousContainerManagedAction.menuProxy] : [previousContainerManagedAction.menuProxy, nextContainerManagedAction.menuProxy]
+    readonly property var applicationMenuActions: [openManagedAction.menuProxy, applicationMenuFileSeparator, moveToTrashManagedAction.menuProxy, deleteFileManagedAction.menuProxy, applicationMenuNavigationSeparator].concat(root.applicationMenuNavigationActions, [applicationMenuViewSeparator, rotateClockwiseManagedAction.menuProxy, rotateCounterclockwiseManagedAction.menuProxy, twoPageModeManagedAction.menuProxy, rightToLeftReadingManagedAction.menuProxy, fullscreenManagedAction.menuProxy, applicationMenuSettingsSeparator, showMenubarManagedAction.menuProxy, configureShortcutsManagedAction.menuProxy, applicationMenuHelpSeparator, shortcutHelpManagedAction.menuProxy, applicationMenuQuitSeparator, quitManagedAction.menuProxy])
 
     signal openDialogRequested
     signal imageBoundaryReached(string message)

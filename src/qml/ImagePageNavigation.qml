@@ -16,6 +16,9 @@ RowLayout {
     required property var actions
     property bool compact: false
     readonly property int controlSpacing: compact ? Math.max(1, Math.round(Kirigami.Units.smallSpacing / 2)) : Kirigami.Units.smallSpacing
+    property bool rightToLeftReadingActive: false
+    readonly property var leftNavigationAction: root.rightToLeftReadingActive ? root.actions.nextImageAction : root.actions.previousImageAction
+    readonly property var rightNavigationAction: root.rightToLeftReadingActive ? root.actions.previousImageAction : root.actions.nextImageAction
     readonly property bool textInputActive: pageNumberField.activeFocus
     readonly property bool pageNavigationAvailable: imageDocument.imageCount > 0 && !imageDocument.fileDeletionInProgress
 
@@ -44,16 +47,36 @@ RowLayout {
         pageNumberField.resetPageNumberText();
     }
 
+    function triggerNavigationAction(action) {
+        if (action !== null && action !== undefined && action.enabled) {
+            action.trigger();
+        }
+    }
+
     function textInputFocused() {
         return pageNumberField.activeFocus;
     }
 
     Controls.ToolButton {
-        action: root.actions.previousImageAction
-        display: Controls.AbstractButton.IconOnly
+        id: leftNavigationButton
 
-        Controls.ToolTip.text: action.text
-        Controls.ToolTip.visible: hovered
+        objectName: "leftPageNavigationButton"
+
+        property var navigationAction: root.leftNavigationAction
+        readonly property string navigationText: navigationAction?.text ?? ""
+        readonly property string toolTipText: navigationText
+
+        Accessible.name: text
+        Accessible.role: Accessible.Button
+        display: Controls.AbstractButton.IconOnly
+        enabled: navigationAction !== null && navigationAction !== undefined && navigationAction.enabled
+        icon.name: root.actions.previousImageAction?.icon.name ?? ""
+        text: navigationText
+
+        Controls.ToolTip.text: toolTipText
+        Controls.ToolTip.visible: hovered && Controls.ToolTip.text.length > 0
+
+        onClicked: root.triggerNavigationAction(navigationAction)
     }
 
     Controls.TextField {
@@ -165,11 +188,25 @@ RowLayout {
     }
 
     Controls.ToolButton {
-        action: root.actions.nextImageAction
-        display: Controls.AbstractButton.IconOnly
+        id: rightNavigationButton
 
-        Controls.ToolTip.text: action.text
-        Controls.ToolTip.visible: hovered
+        objectName: "rightPageNavigationButton"
+
+        property var navigationAction: root.rightNavigationAction
+        readonly property string navigationText: navigationAction?.text ?? ""
+        readonly property string toolTipText: navigationText
+
+        Accessible.name: text
+        Accessible.role: Accessible.Button
+        display: Controls.AbstractButton.IconOnly
+        enabled: navigationAction !== null && navigationAction !== undefined && navigationAction.enabled
+        icon.name: root.actions.nextImageAction?.icon.name ?? ""
+        text: navigationText
+
+        Controls.ToolTip.text: toolTipText
+        Controls.ToolTip.visible: hovered && Controls.ToolTip.text.length > 0
+
+        onClicked: root.triggerNavigationAction(navigationAction)
     }
 
     Connections {
