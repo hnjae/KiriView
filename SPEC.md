@@ -240,11 +240,13 @@ images, opening a KDE archive URL image directly, opening a different archive
 or directory document, or moving to a sibling archive resets zoom to Fit mode
 when the new image is displayed.
 
-The image viewing area behind empty, loading, ready, and error states uses
-`#3c3c3c` as its background color, so navigation transitions do not flash to a
-different page color. The toolbar keeps its normal application styling. When an
-image is ready, the image viewing viewport does not add page padding around the
-image area.
+The image viewing area behind empty, loading, ready, and error states uses a
+dark background color derived from the KDE/Kirigami View color scheme. Dark
+color schemes use the View background color; light color schemes use the View
+text color so the image viewing area remains dark. Navigation transitions do
+not flash to a different page color. The toolbar keeps its normal application
+styling. When an image is ready, the image viewing viewport does not add page
+padding around the image area.
 
 When a ready image is larger than the viewport at the current zoom, horizontal
 and vertical scrollbars allow panning across the image. When the image is
