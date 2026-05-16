@@ -253,6 +253,19 @@ pages are ready. If the target page is the cover, wide, last page, or cannot be
 paired with an eligible next page, KiriView displays the target page alone once
 that page is ready.
 
+When an image is ready and Two-Page Spread is disabled, Rotate Clockwise turns
+the current image view by 90 degrees clockwise and Rotate Counterclockwise turns
+it by 90 degrees counterclockwise. Rotation is display-only: it does not modify
+image files, metadata, archive contents, remote URLs, cached source data, or any
+saved file state. Fit, Fit Height, Fit Width, manual zoom, scrollbars, drag
+panning, wheel zoom, keyboard panning, and scan shortcuts use the rotated
+logical image bounds. The `r` and Ctrl+R shortcuts rotate clockwise, and Shift+R
+and Ctrl+Shift+R rotate counterclockwise. These shortcuts are inactive while the
+page number or zoom input is focused. Rotation resets to 0 degrees whenever a
+different image or page is displayed, and it also resets when the displayed
+image is cleared. Rotation is unavailable while Two-Page Spread is enabled;
+enabling Two-Page Spread resets rotation to 0 degrees.
+
 The toolbar provides a zoom percentage input. When an image is ready, users can
 enter manual zoom values from 10% through the maximum percentage that keeps the
 long edge of the displayed image within the larger of 65,536 logical pixels or
