@@ -56,6 +56,7 @@ private:
     struct ActivePredecodeRequest {
         ImageDecodeRequest request;
         QUrl normalizedUrl;
+        ImageDecodeJob *decodeJob = nullptr;
     };
 
     enum class MomentumDirection {
@@ -71,27 +72,27 @@ private:
     void startPredecodeImageLoads(const std::vector<QUrl> &urls,
         const ArchiveDocumentLocation &archiveDocument, const Context &context, quint64 generation,
         std::size_t parallelLimit);
-    void startNextPredecodeImageLoad(quint64 generation);
-    void startPredecodeImageLoad(
+    void startNextPredecodeImageLoads(quint64 generation);
+    bool startPredecodeImageLoad(
         const QUrl &url, const ArchiveDocumentLocation &archiveDocument, quint64 generation);
     void finishPredecodeImageLoadError(const ImageDecodeRequest &request);
     void finishPredecodeImageDecode(ImageDecodeRequest request, const DecodedImageResult &result);
-    QUrl activePredecodeUrl() const;
-    bool hasActivePredecodeRequest() const;
+    std::vector<QUrl> activePredecodeUrls() const;
+    bool hasActivePredecodeRequest(const QUrl &normalizedUrl) const;
     std::optional<ActivePredecodeRequest> takeActivePredecodeRequest(
         const ImageDecodeRequest &request);
     bool predecodeRequestIsActive(const ImageDecodeRequest &request) const;
-    void clearActivePredecodeRequest();
+    void cancelActivePredecodeRequests();
     void cancelBackgroundWork();
     void resetNavigationMomentum();
     void updateNavigationMomentum(int pageIndex, qint64 monotonicMsec);
     qint64 currentMonotonicMsec() const;
 
     ImageIoJob m_listerJob;
-    ImageDecodeJob m_decodeJob;
+    ImageDecodeDependencies m_decodeDependencies;
     ImageCandidateRepository m_candidateRepository;
     PredecodeCache m_cache;
-    std::optional<ActivePredecodeRequest> m_activePredecodeRequest;
+    std::vector<ActivePredecodeRequest> m_activePredecodeRequests;
     std::optional<Context> m_pendingContext;
     ImageFirstDisplayDecodeContext m_firstDisplayContext;
     ImageAsyncTicket m_generation;

@@ -38,11 +38,12 @@ public:
     void setWindowUrls(const std::vector<QUrl> &urls);
     void setDisplayedUrls(const std::vector<QUrl> &urls);
     void enqueueMissingWindowLoads(const QUrl &displayedUrl,
-        const ArchiveDocumentLocation &archiveDocument, const QUrl &activePredecodeUrl);
-    std::optional<PredecodeRequest> takeNextRequest(const QUrl &activePredecodeUrl);
+        const ArchiveDocumentLocation &archiveDocument,
+        const std::vector<QUrl> &activePredecodeUrls);
+    std::optional<PredecodeRequest> takeNextRequest(const std::vector<QUrl> &activePredecodeUrls);
     bool windowContains(const QUrl &url) const;
     bool hasImage(const QUrl &url) const;
-    bool isInFlight(const QUrl &url, const QUrl &activePredecodeUrl) const;
+    bool isInFlight(const QUrl &url, const std::vector<QUrl> &activePredecodeUrls) const;
     std::optional<PredecodedImage> findImage(const QUrl &url) const;
     void cacheImage(const QUrl &url, const ArchiveDocumentLocation &archiveDocument,
         StaticImagePayload staticImage);
@@ -60,7 +61,12 @@ private:
     using ConstCachedImageIterator = std::vector<CachedImage>::const_iterator;
 
     static bool containsUrl(const std::vector<QUrl> &urls, const QUrl &url);
-    bool displayedContains(const QUrl &url) const;
+    static void removeUrl(std::vector<QUrl> &urls, const QUrl &url);
+    bool currentDisplayedContains(const QUrl &url) const;
+    bool recentDisplayedContains(const QUrl &url) const;
+    bool retainedDisplayedContains(const QUrl &url) const;
+    std::size_t currentDisplayedPriority(const QUrl &normalizedUrl) const;
+    std::size_t recentDisplayedPriority(const QUrl &normalizedUrl) const;
     CachedImageIterator findCachedImage(const QUrl &normalizedUrl);
     ConstCachedImageIterator findCachedImage(const QUrl &normalizedUrl) const;
     void removeCachedImage(const QUrl &normalizedUrl);
@@ -68,7 +74,8 @@ private:
     void trimImagesToWindow();
 
     std::vector<QUrl> m_windowUrls;
-    std::vector<QUrl> m_displayedUrls;
+    std::vector<QUrl> m_currentDisplayedUrls;
+    std::vector<QUrl> m_recentDisplayedUrls;
     std::deque<PredecodeRequest> m_queue;
     std::vector<CachedImage> m_images;
     qsizetype m_byteBudget = defaultByteBudget();

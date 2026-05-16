@@ -55,6 +55,8 @@ private Q_SLOTS:
     void scheduleRejectsInvalidDisplayedContext();
     void archivePredecodeKeepsArchiveDocumentContext();
     void regularPredecodeWindowKeepsOnePreviousAndTwoNextPages();
+    void directoryDocumentStartsTwoBackgroundDecodes();
+    void staleGenerationDecodeIsIgnored();
     void rapidNavigationDebouncesSkippedPagePredecode();
     void cancelSuppressesPendingDecode();
 };
@@ -228,6 +230,64 @@ void TestImagePredecodeCoordinator::regularPredecodeWindowKeepsOnePreviousAndTwo
     QTRY_COMPARE(dataLoader.loadCount(), expectedLoadOrder.size());
     QVERIFY(
         !dataLoader.finishOldestActiveLoadForUrl(indexedImageUrl(8), QByteArrayLiteral("image")));
+}
+
+void TestImagePredecodeCoordinator::directoryDocumentStartsTwoBackgroundDecodes()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    KiriView::ImagePredecodeCoordinator coordinator
+        = createCoordinator(this, candidateProvider, dataLoader);
+
+    const KiriView::ArchiveDocumentLocation directoryDocument
+        = KiriView::ArchiveDocumentLocation::fromUrls(
+            imagesDirectoryUrl(), imagesDirectoryUrl(), KiriView::ArchiveDocumentKind::Directory);
+    const QUrl displayedUrl = indexedImageUrl(5);
+    candidateProvider.setArchiveImages(directoryDocument.rootUrl(), imageCandidates(15));
+
+    coordinator.schedule(KiriView::ImagePredecodeCoordinator::Context {
+        KiriView::DisplayedPredecodeImage {
+            KiriView::DisplayedImageLocation::fromArchiveDocument(displayedUrl, directoryDocument),
+            false,
+            staticTestImagePayload(testImage()),
+        },
+    });
+
+    QTRY_COMPARE(dataLoader.loadCount(), std::size_t(2));
+    QCOMPARE(dataLoader.frontLoad().url, indexedImageUrl(6));
+    QCOMPARE(dataLoader.backLoad().url, indexedImageUrl(4));
+}
+
+void TestImagePredecodeCoordinator::staleGenerationDecodeIsIgnored()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    KiriView::ImagePredecodeCoordinator coordinator
+        = createCoordinator(this, candidateProvider, dataLoader);
+
+    candidateProvider.setDirectoryImages(imagesDirectoryUrl(), imageCandidates(5));
+
+    coordinator.schedule(KiriView::ImagePredecodeCoordinator::Context {
+        KiriView::DisplayedPredecodeImage {
+            KiriView::DisplayedImageLocation::fromUrl(indexedImageUrl(0)),
+            false,
+            staticTestImagePayload(testImage()),
+        },
+    });
+    QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
+    QCOMPARE(dataLoader.frontLoad().url, indexedImageUrl(1));
+
+    coordinator.schedule(KiriView::ImagePredecodeCoordinator::Context {
+        KiriView::DisplayedPredecodeImage {
+            KiriView::DisplayedImageLocation::fromUrl(indexedImageUrl(2)),
+            false,
+            staticTestImagePayload(testImage()),
+        },
+    });
+
+    dataLoader.deliverFrontLoadDataIgnoringCancellation(QByteArrayLiteral("stale"));
+    QTest::qWait(50);
+    QVERIFY(!coordinator.tryTake(indexedImageUrl(1)).has_value());
 }
 
 void TestImagePredecodeCoordinator::rapidNavigationDebouncesSkippedPagePredecode()
