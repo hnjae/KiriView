@@ -32,13 +32,17 @@ those application actions are available from the menubar, and any toolbar
 overflow menu appears only when toolbar controls do not fit. In fullscreen,
 KiriView hides both the menubar and toolbar application menu button; actions
 with configured shortcuts remain available through those shortcuts.
-The menubar and toolbar application menu display a representative shortcut for
-actions with configured shortcuts through the menu action's shortcut column. The
-representative shortcut is the first entry in the action's current configured
-shortcut list that is safe to display in menus. Delete shortcuts, arrow and
-navigation-key shortcuts, and unmodified printable shortcuts are not menu-display
-safe because they can affect focused text input. Actions without a
-menu-display-safe representative shortcut do not show shortcut text in menus. In
+The menubar and toolbar application menu display a representative configurable
+shortcut for actions with configured shortcuts through the menu action's
+shortcut column. This column is supplied only from the canonical configurable
+shortcut list. The representative shortcut is the first entry in the action's
+current configured shortcut list that is safe to display in menus. Delete
+shortcuts, arrow and navigation-key shortcuts, and unmodified printable
+shortcuts are not menu-display safe because they can affect focused text input.
+Actions without a menu-display-safe representative shortcut do not show
+canonical shortcut text in menus. Fixed shortcuts that are not part of the
+configurable shortcut list may be shown only as display-only menu or tooltip
+text for the control they activate; they are not canonical action shortcuts. In
 the menubar, representative shortcut text is visually deemphasized from the menu
 item label when the item is not pressed. In the toolbar application menu,
 representative shortcut text is displayed separately on the trailing side of the
@@ -52,8 +56,8 @@ mnemonic key access.
 KiriView does not expose a general Settings page in the current scope.
 The Keyboard Shortcuts help is shown as read-only supporting content over the
 main window. It lists the current configured shortcut text for KiriView actions,
-not runtime-only Ctrl-less viewer aliases, and can be dismissed with Escape or
-the close button.
+not fixed shortcuts or runtime-only Ctrl-less viewer aliases, and can be
+dismissed with Escape or the close button.
 When KiriView is launched with one or more file path or URL arguments, including
 from a file manager's Open With action, it processes only the first argument in
 the supplied order and opens it at startup. Activating the open action shows the
@@ -537,10 +541,13 @@ help dialog is open, Escape closes the dialog before any fullscreen handling.
 
 Ctrl+M toggles the application menu presentation between Hamburger Menu and
 Menubar. This shortcut is fixed, is not user-configurable, and is not listed in
-keyboard shortcut configuration or shortcut help.
+keyboard shortcut configuration or shortcut help. KiriView may show Ctrl+M as
+display-only shortcut text on the Show Menubar menu item or tooltip.
 When Hamburger Menu presentation is active outside fullscreen, F10 opens the
 toolbar application menu. This shortcut is fixed, is not user-configurable, and
-is not listed in keyboard shortcut configuration or shortcut help.
+is not listed in keyboard shortcut configuration or shortcut help. KiriView may
+show F10 as display-only shortcut text on the toolbar application menu button
+tooltip.
 
 Escape first cancels an active page number or zoom input edit. When no toolbar
 input is focused, Escape leaves fullscreen if the main window is fullscreen.
