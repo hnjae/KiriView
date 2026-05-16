@@ -25,6 +25,11 @@ longest, then Fit. Outside
 fullscreen, the toolbar uses normal application header placement and reserves
 layout space above the image viewing area. Controls that require a ready image
 are disabled until an image is ready.
+The toolbar page navigation arrow buttons keep their physical affordance:
+the left arrow button triggers Previous in Left-to-Right Reading mode and Next
+in Right-to-Left Reading mode, while the right arrow button triggers Next in
+Left-to-Right Reading mode and Previous in Right-to-Left Reading mode. The
+button tooltip and accessible text follow the action that button triggers.
 KiriView shows its application menu through a toolbar application menu button by
 default outside fullscreen. Users can switch the application menu presentation
 between Hamburger Menu and a conventional menubar, and KiriView remembers the
@@ -38,6 +43,14 @@ menubar is the in-window Qt Quick Controls menubar; native or global menubar
 integration is outside the current scope. In fullscreen,
 KiriView hides both the menubar and toolbar application menu button; actions
 with configured shortcuts remain available through those shortcuts.
+The menubar and toolbar application menu keep each QAction's identity, text,
+shortcut, and enabled state unchanged while projecting adjacent navigation
+actions in reading progression order. When Right-to-Left Reading is active, the
+adjacent page navigation pair is displayed as Next before Previous, the adjacent
+single-page navigation pair is displayed as Next Page before Previous Page, and
+the adjacent archive navigation pair is displayed as Next Archive before
+Previous Archive. First Image and Last Image keep their normal order because
+their page-index meaning does not change with reading direction.
 The toolbar application menu is a single popup menu surface: activating the
 toolbar application menu button and pressing F10 open the same menu instance
 with the same width, actions, access keys, and shortcut column. Activating the
