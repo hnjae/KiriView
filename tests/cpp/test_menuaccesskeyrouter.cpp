@@ -21,66 +21,34 @@ class TestMenuAccessKeyRouter : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
-    void altMnemonicOpensMenuBarMenu_data();
-    void altMnemonicOpensMenuBarMenu();
-    void altPressDoesNotImmediatelyCloseMenu_data();
-    void altPressDoesNotImmediatelyCloseMenu();
-    void altMnemonicTriggersItem_data();
-    void altMnemonicTriggersItem();
-    void altModifiedKeyClickTriggersItem_data();
-    void altModifiedKeyClickTriggersItem();
-    void altMnemonicOpensSubMenu_data();
-    void altMnemonicOpensSubMenu();
-    void plainMnemonicStillTriggersItem_data();
-    void plainMnemonicStillTriggersItem();
-    void altPressReleaseKeepsMenuOpen_data();
-    void altPressReleaseKeepsMenuOpen();
+    void altPressReleaseKeepsPopupOpen_data();
+    void altPressReleaseKeepsPopupOpen();
+    void altMnemonicTriggersEnabledItem_data();
+    void altMnemonicTriggersEnabledItem();
+    void disabledMnemonicItemIgnored_data();
+    void disabledMnemonicItemIgnored();
+    void missingMnemonicItemIgnored_data();
+    void missingMnemonicItemIgnored();
 };
 
 namespace {
-enum class FixtureKind {
-    MenuBar,
-    PopupMenu,
-};
-
 struct MenuFixture {
     std::unique_ptr<QQuickView> view;
     QObject *root = nullptr;
     QObject *menu = nullptr;
-    QObject *subMenu = nullptr;
     QString errorString;
 
     bool isValid() const { return view != nullptr && root != nullptr && menu != nullptr; }
 };
 
-void addFixtureRows()
-{
-    QTest::addColumn<int>("fixtureKind");
-    QTest::addColumn<bool>("actionHasShortcut");
-    QTest::addColumn<bool>("customMenuItem");
-    QTest::newRow("menubar") << static_cast<int>(FixtureKind::MenuBar) << false << false;
-    QTest::newRow("menubar-action-shortcut")
-        << static_cast<int>(FixtureKind::MenuBar) << true << false;
-    QTest::newRow("menubar-custom-item") << static_cast<int>(FixtureKind::MenuBar) << false << true;
-    QTest::newRow("menubar-custom-item-action-shortcut")
-        << static_cast<int>(FixtureKind::MenuBar) << true << true;
-    QTest::newRow("popup-menu") << static_cast<int>(FixtureKind::PopupMenu) << false << false;
-    QTest::newRow("popup-menu-action-shortcut")
-        << static_cast<int>(FixtureKind::PopupMenu) << true << false;
-    QTest::newRow("popup-menu-custom-item")
-        << static_cast<int>(FixtureKind::PopupMenu) << false << true;
-    QTest::newRow("popup-menu-custom-item-action-shortcut")
-        << static_cast<int>(FixtureKind::PopupMenu) << true << true;
-}
-
-void addMenuBarFixtureRows()
+void addPopupFixtureRows()
 {
     QTest::addColumn<bool>("actionHasShortcut");
     QTest::addColumn<bool>("customMenuItem");
-    QTest::newRow("menubar") << false << false;
-    QTest::newRow("menubar-action-shortcut") << true << false;
-    QTest::newRow("menubar-custom-item") << false << true;
-    QTest::newRow("menubar-custom-item-action-shortcut") << true << true;
+    QTest::newRow("popup-menu") << false << false;
+    QTest::newRow("popup-menu-action-shortcut") << true << false;
+    QTest::newRow("popup-menu-custom-item") << false << true;
+    QTest::newRow("popup-menu-custom-item-action-shortcut") << true << true;
 }
 
 void addEnvironmentImportPaths(QQmlEngine &engine)
@@ -104,57 +72,10 @@ QString menuItemType(bool customMenuItem)
                           : QStringLiteral("Controls.MenuItem");
 }
 
-QString menuBarFixtureQml(bool actionHasShortcut, bool customMenuItem)
-{
-    return QStringLiteral(R"(
-import QtQuick
-import QtQuick.Controls as Controls
-import "%1" as KiriViewQml
-import org.kde.kirigami as Kirigami
+QString boolLiteral(bool value) { return value ? QStringLiteral("true") : QStringLiteral("false"); }
 
-Item {
-    id: root
-
-    width: 320
-    height: 240
-
-    property int triggerCount: 0
-
-    function openTargetMenu() {
-        targetMenu.popup(menuBar);
-    }
-
-    Kirigami.Action {
-        id: openAction
-
-        shortcut: "%2"
-        text: "&Open"
-
-        onTriggered: root.triggerCount += 1
-    }
-
-    Controls.MenuBar {
-        id: menuBar
-
-        Controls.Menu {
-            id: targetMenu
-
-            objectName: "targetMenu"
-            title: "&File"
-
-            %3 {
-                action: openAction
-                text: openAction.text
-            }
-        }
-    }
-}
-)")
-        .arg(qmlSourceImport(), actionHasShortcut ? QStringLiteral("Ctrl+O") : QString(),
-            menuItemType(customMenuItem));
-}
-
-QString popupMenuFixtureQml(bool actionHasShortcut, bool customMenuItem)
+QString popupMenuFixtureQml(
+    bool actionHasShortcut, bool customMenuItem, bool actionEnabled, const QString &actionText)
 {
     return QStringLiteral(R"(
 import QtQuick
@@ -177,8 +98,9 @@ Item {
     Kirigami.Action {
         id: openAction
 
-        shortcut: "%2"
-        text: "&Open"
+        enabled: %2
+        shortcut: "%3"
+        text: "%4"
 
         onTriggered: root.triggerCount += 1
     }
@@ -194,112 +116,20 @@ Item {
 
         objectName: "targetMenu"
 
-        %3 {
+        %5 {
             action: openAction
             text: openAction.text
         }
     }
 }
 )")
-        .arg(qmlSourceImport(), actionHasShortcut ? QStringLiteral("Ctrl+O") : QString(),
+        .arg(qmlSourceImport(), boolLiteral(actionEnabled),
+            actionHasShortcut ? QStringLiteral("Ctrl+O") : QString(), actionText,
             menuItemType(customMenuItem));
 }
 
-QString subMenuFixtureQml(FixtureKind kind, bool actionHasShortcut, bool customMenuItem)
-{
-    const QString anchorItem
-        = kind == FixtureKind::MenuBar ? QStringLiteral("menuBar") : QStringLiteral("menuButton");
-    const QString button = kind == FixtureKind::MenuBar ? QString() : QStringLiteral(R"(
-    Controls.Button {
-        id: menuButton
-
-        text: "Application Menu"
-    }
-)");
-    const QString menuContainerStart = kind == FixtureKind::MenuBar ? QStringLiteral(R"(
-    Controls.MenuBar {
-        id: menuBar
-
-)")
-                                                                    : QString();
-    const QString menuContainerEnd = kind == FixtureKind::MenuBar ? QStringLiteral(R"(
-    }
-)")
-                                                                  : QString();
-
-    return QStringLiteral(R"(
-import QtQuick
-import QtQuick.Controls as Controls
-import "%1" as KiriViewQml
-import org.kde.kirigami as Kirigami
-
-Item {
-    id: root
-
-    width: 320
-    height: 240
-
-    property int triggerCount: 0
-
-    function openTargetMenu() {
-        targetMenu.popup(%2);
-    }
-
-    Kirigami.Action {
-        id: openAction
-
-        shortcut: "%3"
-        text: "&Open"
-
-        onTriggered: root.triggerCount += 1
-    }
-
-%4
-%5
-    Controls.Menu {
-        id: targetMenu
-
-        objectName: "targetMenu"
-        title: "&View"
-
-        %6 {
-            action: openAction
-            text: openAction.text
-        }
-
-        Controls.Menu {
-            id: subMenu
-
-            objectName: "subMenu"
-            title: "&Fit"
-
-            Controls.MenuItem {
-                text: "&Width"
-            }
-        }
-    }
-%7
-}
-)")
-        .arg(qmlSourceImport(), anchorItem,
-            actionHasShortcut ? QStringLiteral("Ctrl+O") : QString(), button, menuContainerStart,
-            menuItemType(customMenuItem), menuContainerEnd);
-}
-
-QString fixtureQml(FixtureKind kind, bool actionHasShortcut, bool customMenuItem)
-{
-    switch (kind) {
-    case FixtureKind::MenuBar:
-        return menuBarFixtureQml(actionHasShortcut, customMenuItem);
-    case FixtureKind::PopupMenu:
-        return popupMenuFixtureQml(actionHasShortcut, customMenuItem);
-    }
-
-    return {};
-}
-
-MenuFixture createMenuFixture(
-    FixtureKind kind, bool actionHasShortcut, bool customMenuItem, bool includeSubMenu = false)
+MenuFixture createPopupMenuFixture(bool actionHasShortcut, bool customMenuItem,
+    bool actionEnabled = true, const QString &actionText = QStringLiteral("&Open"))
 {
     MenuFixture fixture;
     fixture.view = std::make_unique<QQuickView>();
@@ -308,9 +138,8 @@ MenuFixture createMenuFixture(
     addEnvironmentImportPaths(*fixture.view->engine());
 
     QQmlComponent component(fixture.view->engine());
-    component.setData((includeSubMenu ? subMenuFixtureQml(kind, actionHasShortcut, customMenuItem)
-                                      : fixtureQml(kind, actionHasShortcut, customMenuItem))
-                          .toUtf8(),
+    component.setData(
+        popupMenuFixtureQml(actionHasShortcut, customMenuItem, actionEnabled, actionText).toUtf8(),
         QUrl(QStringLiteral("memory:test_menuaccesskeyrouter.qml")));
     for (int attempt = 0; component.isLoading() && attempt < 100; ++attempt) {
         QCoreApplication::processEvents();
@@ -345,8 +174,6 @@ MenuFixture createMenuFixture(
     if (fixture.menu == nullptr) {
         fixture.errorString = QStringLiteral("target menu was not created");
     }
-    fixture.subMenu
-        = root->findChild<QObject *>(QStringLiteral("subMenu"), Qt::FindChildrenRecursively);
 
     return fixture;
 }
@@ -371,82 +198,39 @@ void openTargetMenu(QObject *root)
 }
 }
 
-void TestMenuAccessKeyRouter::altMnemonicOpensMenuBarMenu_data() { addMenuBarFixtureRows(); }
+void TestMenuAccessKeyRouter::altPressReleaseKeepsPopupOpen_data() { addPopupFixtureRows(); }
 
-void TestMenuAccessKeyRouter::altMnemonicOpensMenuBarMenu()
+void TestMenuAccessKeyRouter::altPressReleaseKeepsPopupOpen()
 {
     QFETCH(bool, actionHasShortcut);
     QFETCH(bool, customMenuItem);
-    MenuFixture fixture
-        = createMenuFixture(FixtureKind::MenuBar, actionHasShortcut, customMenuItem);
+    MenuFixture fixture = createPopupMenuFixture(actionHasShortcut, customMenuItem);
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
 
     MenuAccessKeyRouter router;
-    router.setRootObject(fixture.root);
-
-    QTest::keyClick(fixture.view.get(), Qt::Key_F, Qt::AltModifier);
-
-    QTRY_VERIFY(isMenuOpen(fixture.menu));
-}
-
-void TestMenuAccessKeyRouter::altPressDoesNotImmediatelyCloseMenu_data() { addFixtureRows(); }
-
-void TestMenuAccessKeyRouter::altPressDoesNotImmediatelyCloseMenu()
-{
-    QFETCH(int, fixtureKind);
-    QFETCH(bool, actionHasShortcut);
-    QFETCH(bool, customMenuItem);
-    MenuFixture fixture = createMenuFixture(
-        static_cast<FixtureKind>(fixtureKind), actionHasShortcut, customMenuItem);
-    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
-
-    MenuAccessKeyRouter router;
-    router.setRootObject(fixture.root);
+    router.setMenu(fixture.menu);
 
     openTargetMenu(fixture.root);
     QTRY_VERIFY(isMenuOpen(fixture.menu));
 
     sendKey(fixture.menu, QEvent::KeyPress, Qt::Key_Alt, Qt::AltModifier);
+    QVERIFY(isMenuOpen(fixture.menu));
+    sendKey(fixture.menu, QEvent::KeyRelease, Qt::Key_Alt, Qt::NoModifier);
 
     QVERIFY(isMenuOpen(fixture.menu));
 }
 
-void TestMenuAccessKeyRouter::altMnemonicTriggersItem_data() { addFixtureRows(); }
+void TestMenuAccessKeyRouter::altMnemonicTriggersEnabledItem_data() { addPopupFixtureRows(); }
 
-void TestMenuAccessKeyRouter::altMnemonicTriggersItem()
+void TestMenuAccessKeyRouter::altMnemonicTriggersEnabledItem()
 {
-    QFETCH(int, fixtureKind);
     QFETCH(bool, actionHasShortcut);
     QFETCH(bool, customMenuItem);
-    MenuFixture fixture = createMenuFixture(
-        static_cast<FixtureKind>(fixtureKind), actionHasShortcut, customMenuItem);
+    MenuFixture fixture = createPopupMenuFixture(actionHasShortcut, customMenuItem);
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
 
     MenuAccessKeyRouter router;
-    router.setRootObject(fixture.root);
-
-    openTargetMenu(fixture.root);
-    QTRY_VERIFY(isMenuOpen(fixture.menu));
-
-    sendKey(fixture.menu, QEvent::KeyPress, Qt::Key_Alt, Qt::AltModifier);
-    sendKey(fixture.menu, QEvent::KeyPress, Qt::Key_O, Qt::AltModifier, QStringLiteral("o"));
-
-    QTRY_COMPARE(fixture.root->property("triggerCount").toInt(), 1);
-}
-
-void TestMenuAccessKeyRouter::altModifiedKeyClickTriggersItem_data() { addFixtureRows(); }
-
-void TestMenuAccessKeyRouter::altModifiedKeyClickTriggersItem()
-{
-    QFETCH(int, fixtureKind);
-    QFETCH(bool, actionHasShortcut);
-    QFETCH(bool, customMenuItem);
-    MenuFixture fixture = createMenuFixture(
-        static_cast<FixtureKind>(fixtureKind), actionHasShortcut, customMenuItem);
-    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
-
-    MenuAccessKeyRouter router;
-    router.setRootObject(fixture.root);
+    router.setMenu(fixture.menu);
 
     openTargetMenu(fixture.root);
     QTRY_VERIFY(isMenuOpen(fixture.menu));
@@ -457,74 +241,49 @@ void TestMenuAccessKeyRouter::altModifiedKeyClickTriggersItem()
     QTRY_COMPARE(fixture.root->property("triggerCount").toInt(), 1);
 }
 
-void TestMenuAccessKeyRouter::altMnemonicOpensSubMenu_data() { addFixtureRows(); }
+void TestMenuAccessKeyRouter::disabledMnemonicItemIgnored_data() { addPopupFixtureRows(); }
 
-void TestMenuAccessKeyRouter::altMnemonicOpensSubMenu()
+void TestMenuAccessKeyRouter::disabledMnemonicItemIgnored()
 {
-    QFETCH(int, fixtureKind);
     QFETCH(bool, actionHasShortcut);
     QFETCH(bool, customMenuItem);
-    MenuFixture fixture = createMenuFixture(
-        static_cast<FixtureKind>(fixtureKind), actionHasShortcut, customMenuItem, true);
+    MenuFixture fixture
+        = createPopupMenuFixture(actionHasShortcut, customMenuItem, false, QStringLiteral("&Open"));
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
-    QVERIFY(fixture.subMenu != nullptr);
 
     MenuAccessKeyRouter router;
-    router.setRootObject(fixture.root);
+    router.setMenu(fixture.menu);
 
     openTargetMenu(fixture.root);
     QTRY_VERIFY(isMenuOpen(fixture.menu));
 
-    sendKey(fixture.menu, QEvent::KeyPress, Qt::Key_Alt, Qt::AltModifier);
-    sendKey(fixture.menu, QEvent::KeyPress, Qt::Key_F, Qt::AltModifier, QStringLiteral("f"));
-
-    QTRY_VERIFY(isMenuOpen(fixture.subMenu));
-}
-
-void TestMenuAccessKeyRouter::plainMnemonicStillTriggersItem_data() { addFixtureRows(); }
-
-void TestMenuAccessKeyRouter::plainMnemonicStillTriggersItem()
-{
-    QFETCH(int, fixtureKind);
-    QFETCH(bool, actionHasShortcut);
-    QFETCH(bool, customMenuItem);
-    MenuFixture fixture = createMenuFixture(
-        static_cast<FixtureKind>(fixtureKind), actionHasShortcut, customMenuItem);
-    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
-
-    MenuAccessKeyRouter router;
-    router.setRootObject(fixture.root);
-
-    openTargetMenu(fixture.root);
-    QTRY_VERIFY(isMenuOpen(fixture.menu));
-
-    QTest::keyClick(fixture.view.get(), Qt::Key_O, Qt::NoModifier);
+    QTest::keyClick(fixture.view.get(), Qt::Key_O, Qt::AltModifier);
     QCoreApplication::processEvents();
 
-    QTRY_COMPARE(fixture.root->property("triggerCount").toInt(), 1);
+    QCOMPARE(fixture.root->property("triggerCount").toInt(), 0);
+    QVERIFY(isMenuOpen(fixture.menu));
 }
 
-void TestMenuAccessKeyRouter::altPressReleaseKeepsMenuOpen_data() { addFixtureRows(); }
+void TestMenuAccessKeyRouter::missingMnemonicItemIgnored_data() { addPopupFixtureRows(); }
 
-void TestMenuAccessKeyRouter::altPressReleaseKeepsMenuOpen()
+void TestMenuAccessKeyRouter::missingMnemonicItemIgnored()
 {
-    QFETCH(int, fixtureKind);
     QFETCH(bool, actionHasShortcut);
     QFETCH(bool, customMenuItem);
-    MenuFixture fixture = createMenuFixture(
-        static_cast<FixtureKind>(fixtureKind), actionHasShortcut, customMenuItem);
+    MenuFixture fixture
+        = createPopupMenuFixture(actionHasShortcut, customMenuItem, true, QStringLiteral("&Open"));
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
 
     MenuAccessKeyRouter router;
-    router.setRootObject(fixture.root);
+    router.setMenu(fixture.menu);
 
     openTargetMenu(fixture.root);
     QTRY_VERIFY(isMenuOpen(fixture.menu));
 
-    sendKey(fixture.menu, QEvent::KeyPress, Qt::Key_Alt, Qt::AltModifier);
-    QVERIFY(isMenuOpen(fixture.menu));
-    sendKey(fixture.menu, QEvent::KeyRelease, Qt::Key_Alt, Qt::NoModifier);
+    QTest::keyClick(fixture.view.get(), Qt::Key_X, Qt::AltModifier);
+    QCoreApplication::processEvents();
 
+    QCOMPARE(fixture.root->property("triggerCount").toInt(), 0);
     QVERIFY(isMenuOpen(fixture.menu));
 }
 

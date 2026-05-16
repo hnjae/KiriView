@@ -196,6 +196,11 @@ Controls.ToolBar {
     Controls.Menu {
         id: applicationMenuPopup
 
+        MenuAccessKeyRouter {
+            enabled: root.showApplicationMenuActions
+            menu: applicationMenuPopup
+        }
+
         Instantiator {
             model: root.applicationMenuActions
 

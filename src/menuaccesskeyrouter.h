@@ -17,20 +17,20 @@ class MenuAccessKeyRouter : public QObject
     Q_OBJECT
     QML_ELEMENT
 
-    Q_PROPERTY(QObject *rootObject READ rootObject WRITE setRootObject NOTIFY rootObjectChanged)
+    Q_PROPERTY(QObject *menu READ menu WRITE setMenu NOTIFY menuChanged)
     Q_PROPERTY(bool enabled READ isEnabled WRITE setEnabled NOTIFY enabledChanged)
 
 public:
     explicit MenuAccessKeyRouter(QObject *parent = nullptr);
     ~MenuAccessKeyRouter() override;
 
-    QObject *rootObject() const;
-    void setRootObject(QObject *rootObject);
+    QObject *menu() const;
+    void setMenu(QObject *menu);
     bool isEnabled() const;
     void setEnabled(bool enabled);
 
 Q_SIGNALS:
-    void rootObjectChanged();
+    void menuChanged();
     void enabledChanged();
 
 protected:
@@ -42,7 +42,6 @@ private:
     QObject *openMenu() const;
     void resetAltTracking();
 
-    static QObject *openMenuInSubtree(QObject *object);
     static bool isMenu(QObject *object);
     static bool isOpenMenu(QObject *object);
     static bool isEnabledMenuItem(QObject *object);
@@ -52,7 +51,7 @@ private:
     static bool itemMatchesMnemonic(QObject *item, const QKeyEvent &event);
     static bool clickMenuItem(QObject *item);
 
-    QPointer<QObject> m_rootObject;
+    QPointer<QObject> m_menu;
     bool m_enabled = true;
     bool m_altPressedInOpenMenu = false;
 };

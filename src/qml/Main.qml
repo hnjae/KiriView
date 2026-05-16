@@ -149,11 +149,6 @@ StatefulApp.StatefulWindow {
         }
     }
 
-    MenuAccessKeyRouter {
-        enabled: true
-        rootObject: root
-    }
-
     DropArea {
         anchors.fill: parent
         enabled: !root.helpDialogOpen

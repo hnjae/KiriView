@@ -48,6 +48,8 @@ Controls.MenuItem {
         Controls.Label {
             id: label
 
+            objectName: "menuActionItemTextLabel"
+
             Layout.alignment: Qt.AlignVCenter
             Layout.fillWidth: true
             color: root.pressed ? Kirigami.Theme.highlightedTextColor : Kirigami.Theme.textColor
@@ -61,6 +63,8 @@ Controls.MenuItem {
         }
 
         Controls.Label {
+            objectName: "menuActionItemShortcutLabel"
+
             Layout.alignment: Qt.AlignVCenter
             color: root.pressed ? Kirigami.Theme.highlightedTextColor : Qt.alpha(Kirigami.Theme.textColor, 0.64)
             font: root.font

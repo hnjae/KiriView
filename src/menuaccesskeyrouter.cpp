@@ -26,17 +26,17 @@ MenuAccessKeyRouter::~MenuAccessKeyRouter()
     }
 }
 
-QObject *MenuAccessKeyRouter::rootObject() const { return m_rootObject; }
+QObject *MenuAccessKeyRouter::menu() const { return m_menu; }
 
-void MenuAccessKeyRouter::setRootObject(QObject *rootObject)
+void MenuAccessKeyRouter::setMenu(QObject *menu)
 {
-    if (m_rootObject == rootObject) {
+    if (m_menu == menu) {
         return;
     }
 
-    m_rootObject = rootObject;
+    m_menu = menu;
     resetAltTracking();
-    Q_EMIT rootObjectChanged();
+    Q_EMIT menuChanged();
 }
 
 bool MenuAccessKeyRouter::isEnabled() const { return m_enabled; }
@@ -56,7 +56,7 @@ bool MenuAccessKeyRouter::eventFilter(QObject *watched, QEvent *event)
 {
     Q_UNUSED(watched)
 
-    if (!m_enabled || m_rootObject.isNull()) {
+    if (!m_enabled || m_menu.isNull()) {
         return false;
     }
 
@@ -122,31 +122,14 @@ bool MenuAccessKeyRouter::handleKeyRelease(QKeyEvent *event)
 
 QObject *MenuAccessKeyRouter::openMenu() const
 {
-    if (m_rootObject.isNull()) {
+    if (m_menu.isNull() || !isOpenMenu(m_menu)) {
         return nullptr;
     }
 
-    return openMenuInSubtree(m_rootObject);
+    return m_menu;
 }
 
 void MenuAccessKeyRouter::resetAltTracking() { m_altPressedInOpenMenu = false; }
-
-QObject *MenuAccessKeyRouter::openMenuInSubtree(QObject *object)
-{
-    if (object == nullptr) {
-        return nullptr;
-    }
-
-    QObject *openMenu = isOpenMenu(object) ? object : nullptr;
-    const auto children = object->children();
-    for (QObject *child : children) {
-        if (QObject *childOpenMenu = openMenuInSubtree(child); childOpenMenu != nullptr) {
-            openMenu = childOpenMenu;
-        }
-    }
-
-    return openMenu;
-}
 
 bool MenuAccessKeyRouter::isMenu(QObject *object)
 {

@@ -183,6 +183,12 @@ if(TARGET test_menuaccesskeyrouter)
     )
 endif()
 
+if(TARGET test_menuactionitem)
+    set_tests_properties(test_menuactionitem PROPERTIES
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+    )
+endif()
+
 add_test(
     NAME test_desktop_file_validate
     COMMAND "${DESKTOP_FILE_VALIDATE_EXECUTABLE}" "${KIRIVIEW_TEST_DESKTOP_FILE}"
