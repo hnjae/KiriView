@@ -11,10 +11,23 @@ Kirigami.Action {
     property bool checkableOverride: sourceAction ? sourceAction.checkable : false
     property bool checkedOverride: sourceAction ? sourceAction.checked : false
     property bool enabledOverride: sourceAction && sourceAction.enabled
+    property string displayShortcutText: ""
     property string menuShortcutText: ""
     property var shortcutOverride: ""
     property string textOverride: ""
     property var tooltipOverride
+
+    function tooltipText() {
+        if (root.displayShortcutText.length <= 0) {
+            return root.text;
+        }
+
+        if (root.text.length <= 0) {
+            return root.displayShortcutText;
+        }
+
+        return root.text + " (" + root.displayShortcutText + ")";
+    }
 
     checkable: checkableOverride
     checked: checkable && checkedOverride
@@ -22,7 +35,7 @@ Kirigami.Action {
     fromQAction: sourceAction
     shortcut: shortcutOverride
     text: textOverride.length > 0 ? textOverride : sourceAction?.text ?? ""
-    tooltip: tooltipOverride === undefined ? text : tooltipOverride
+    tooltip: tooltipOverride === undefined ? tooltipText() : tooltipOverride
 
     alternateShortcut.enabled: false
 }

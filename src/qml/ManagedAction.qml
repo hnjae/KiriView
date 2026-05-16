@@ -18,6 +18,7 @@ Item {
     property bool proxyCheckable: sourceAction !== null && sourceAction !== undefined && sourceAction.checkable
     property bool proxyChecked: sourceAction !== null && sourceAction !== undefined && sourceAction.checked
     property int displayHint: 0
+    property string fixedShortcutText: ""
     property string menuText: ""
     readonly property int shortcutRevision: application.shortcutRevision
     readonly property var menuShortcut: {
@@ -31,11 +32,15 @@ Item {
     readonly property string menuDisplayText: {
         return root.menuText.length > 0 ? root.menuText : root.sourceAction?.text ?? "";
     }
+    readonly property string menuDisplayShortcutText: {
+        return root.fixedShortcutText.length > 0 ? root.fixedShortcutText : root.menuShortcutText;
+    }
     readonly property var sourceAction: application.actionForId(actionId)
     readonly property ActionProxy proxy: ActionProxy {
         checkableOverride: root.proxyCheckable
         checkedOverride: root.proxyChecked
         displayHint: root.displayHint
+        displayShortcutText: root.fixedShortcutText
         enabledOverride: root.proxyEnabled
         sourceAction: root.sourceAction
     }
@@ -44,7 +49,7 @@ Item {
         checkedOverride: root.proxyChecked
         displayHint: root.displayHint
         enabledOverride: root.proxyEnabled
-        menuShortcutText: root.menuShortcutText
+        menuShortcutText: root.menuDisplayShortcutText
         shortcutOverride: root.menuShortcut
         sourceAction: root.sourceAction
         textOverride: root.menuDisplayText
