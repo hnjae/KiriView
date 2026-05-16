@@ -29,7 +29,9 @@ mode outside fullscreen, the toolbar application menu contains application
 actions such as Open, archive navigation, Full Screen, shortcut
 configuration, shortcut help, and Quit. In menubar mode outside fullscreen,
 those application actions are available from the menubar, and any toolbar
-overflow menu appears only when toolbar controls do not fit. In fullscreen,
+overflow menu appears only when toolbar controls do not fit. The conventional
+menubar is the in-window Qt Quick Controls menubar; native or global menubar
+integration is outside the current scope. In fullscreen,
 KiriView hides both the menubar and toolbar application menu button; actions
 with configured shortcuts remain available through those shortcuts.
 The toolbar application menu is a single popup menu surface: activating the
