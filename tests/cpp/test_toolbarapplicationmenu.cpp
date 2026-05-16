@@ -16,6 +16,7 @@
 #include <QQuickView>
 #include <QRegularExpression>
 #include <QString>
+#include <QStringList>
 #include <QTest>
 #include <QUrl>
 #include <QVariant>
@@ -32,6 +33,7 @@ private Q_SLOTS:
     void outsideClickClosesMenu();
     void openApplicationMenuOnlyOpens();
     void mnemonicRoutingStillTriggersMenuAction();
+    void toolbarActionOrderKeepsReadingDirectionBesideSpread();
 };
 
 namespace {
@@ -116,6 +118,10 @@ Item {
         return Qt.point(root.width / 2, root.height - 12);
     }
 
+    function toolbarControlTexts() {
+        return toolbar.toolbarControls.map(action => action.text);
+    }
+
     KiriImageDocument {
         id: imageDocument
     }
@@ -142,6 +148,14 @@ Item {
         enabled: false
         icon.name: "view-split-left-right-symbolic"
         text: "Two-Page Spread"
+    }
+
+    Kirigami.Action {
+        id: rightToLeftReadingKirigamiAction
+
+        enabled: false
+        icon.name: "format-text-direction-rtl-symbolic"
+        text: "Right-to-Left Reading"
     }
 
     Kirigami.Action {
@@ -191,6 +205,7 @@ Item {
 
         readonly property var previousImageAction: previousImageKirigamiAction
         readonly property var nextImageAction: nextImageKirigamiAction
+        readonly property var rightToLeftReadingAction: rightToLeftReadingKirigamiAction
         readonly property var twoPageModeAction: twoPageModeKirigamiAction
         readonly property var fitAction: fitKirigamiAction
         readonly property var fitHeightAction: fitHeightKirigamiAction
@@ -284,6 +299,29 @@ bool invokeBool(QObject *root, const char *method, bool *invoked = nullptr)
 }
 
 bool applicationMenuOpen(QObject *root) { return invokeBool(root, "applicationMenuOpen"); }
+
+QStringList invokeStringList(QObject *root, const char *method, bool *ok = nullptr)
+{
+    bool invoked = false;
+    const QVariant result = invokeVariant(root, method, &invoked);
+    QStringList strings;
+    if (result.canConvert<QStringList>()) {
+        strings = result.toStringList();
+        if (ok != nullptr) {
+            *ok = invoked;
+        }
+        return strings;
+    }
+
+    const QVariantList values = result.toList();
+    for (const QVariant &value : values) {
+        strings.append(value.toString());
+    }
+    if (ok != nullptr) {
+        *ok = invoked;
+    }
+    return strings;
+}
 
 QPoint invokePoint(QObject *root, const char *method, bool *ok = nullptr)
 {
@@ -393,6 +431,19 @@ void TestToolBarApplicationMenu::mnemonicRoutingStillTriggersMenuAction()
     QCoreApplication::processEvents();
 
     QTRY_COMPARE(fixture.root->property("openTriggerCount").toInt(), 1);
+}
+
+void TestToolBarApplicationMenu::toolbarActionOrderKeepsReadingDirectionBesideSpread()
+{
+    ToolBarMenuFixture fixture = createFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+
+    bool ok = false;
+    const QStringList texts = invokeStringList(fixture.root, "toolbarControlTexts", &ok);
+    QVERIFY(ok);
+    QCOMPARE(texts,
+        QStringList({ QStringLiteral("Right-to-Left Reading"), QStringLiteral("Two-Page Spread"),
+            QStringLiteral("Zoom"), QStringLiteral("Fit") }));
 }
 
 QTEST_MAIN(TestToolBarApplicationMenu)
