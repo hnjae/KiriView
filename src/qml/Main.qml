@@ -215,7 +215,7 @@ StatefulApp.StatefulWindow {
             height: root.fullscreen ? 0 : implicitHeight
             imageDocument: page.imageDocument
             imageReady: page.imageReady
-            applicationMenuActions: applicationMenuDrawer.actions
+            applicationMenuActions: imageActions.applicationMenuActions
             showApplicationMenuActions: !root.menuBarMode && !root.fullscreen
             visible: !root.fullscreen
 
@@ -305,7 +305,7 @@ StatefulApp.StatefulWindow {
             height: implicitHeight
             imageDocument: page.imageDocument
             imageReady: page.imageReady
-            applicationMenuActions: applicationMenuDrawer.actions
+            applicationMenuActions: imageActions.applicationMenuActions
             showApplicationMenuActions: !root.menuBarMode && !root.fullscreen
             transientOverlay: true
             visible: root.fullscreen && root.fullscreenToolBarRevealed
