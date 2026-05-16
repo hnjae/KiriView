@@ -26,6 +26,7 @@ const CXX_QT_HEADER_SOURCES: &[&str] = &[
     "src/kiriimagedocument.h",
     "src/kiriimageview.h",
     "src/kiriviewapplication.h",
+    "src/menuaccesskeyrouter.h",
     "src/powerprofilemonitor.h",
 ];
 const RUST_BRIDGE_SOURCES: &[&str] = &[
