@@ -301,41 +301,41 @@ public:
     void apply(
         const KiriView::ImageOpenTransition &transition, const ImageOpenTransitionContext &context)
     {
-        for (const KiriView::ImageOpenTransitionOperation &operation : transition.operations) {
-            applyOperation(operation, context);
+        for (const KiriView::ImageOpenStateChange &change : transition.state_changes) {
+            applyStateChange(change, context);
+        }
+        for (KiriView::ImageOpenEffect effect : transition.effects) {
+            applyEffect(effect, context);
         }
     }
 
     KiriView::ImageDocumentEffects takeEffects() { return std::move(m_effects); }
 
 private:
-    void applyOperation(const KiriView::ImageOpenTransitionOperation &operation,
-        const ImageOpenTransitionContext &context)
+    void applyStateChange(
+        const KiriView::ImageOpenStateChange &change, const ImageOpenTransitionContext &context)
     {
-        switch (operation.kind) {
-        case KiriView::ImageOpenTransitionOperationKind::SourceUrl:
-            applySourceUrlTarget(operation.url_target, context);
+        switch (change.kind) {
+        case KiriView::ImageOpenStateChangeKind::SourceUrl:
+            applySourceUrlTarget(change.url_target, context);
             return;
-        case KiriView::ImageOpenTransitionOperationKind::DisplayedLocation:
-            applyDisplayedLocationTarget(operation.displayed_location_target, context);
+        case KiriView::ImageOpenStateChangeKind::DisplayedLocation:
+            applyDisplayedLocationTarget(change.displayed_location_target, context);
             return;
-        case KiriView::ImageOpenTransitionOperationKind::ContainerNavigationUrl:
-            applyContainerNavigationUrlTarget(operation.url_target, context);
+        case KiriView::ImageOpenStateChangeKind::ContainerNavigationUrl:
+            applyContainerNavigationUrlTarget(change.url_target, context);
             return;
-        case KiriView::ImageOpenTransitionOperationKind::Loading:
-            applyLoadingTarget(operation.bool_target);
+        case KiriView::ImageOpenStateChangeKind::Loading:
+            applyLoadingTarget(change.bool_target);
             return;
-        case KiriView::ImageOpenTransitionOperationKind::Status:
-            applyStatusTarget(operation.status_target);
+        case KiriView::ImageOpenStateChangeKind::Status:
+            applyStatusTarget(change.status_target);
             return;
-        case KiriView::ImageOpenTransitionOperationKind::ErrorString:
-            applyErrorStringTarget(operation.error_string_target, context);
+        case KiriView::ImageOpenStateChangeKind::ErrorString:
+            applyErrorStringTarget(change.error_string_target, context);
             return;
-        case KiriView::ImageOpenTransitionOperationKind::ClearLoadingContainerNavigationUrl:
+        case KiriView::ImageOpenStateChangeKind::ClearLoadingContainerNavigationUrl:
             m_state.clearLoadingContainerNavigationUrl();
-            return;
-        case KiriView::ImageOpenTransitionOperationKind::Effect:
-            applyEffect(operation.effect, context);
             return;
         }
     }
