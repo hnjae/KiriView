@@ -98,12 +98,10 @@ rust::Vec<std::uint8_t> currentCandidateMatches(
 }
 
 std::vector<QUrl> predecodeWindowImageUrls(
-    const std::vector<KiriView::ImageNavigationCandidate> &candidates, const QUrl &currentUrl,
-    KiriView::RustPredecodePolicyInput policyInput)
+    const std::vector<KiriView::ImageNavigationCandidate> &candidates,
+    const rust::Vec<std::size_t> &indices)
 {
     std::vector<QUrl> urls;
-    const rust::Vec<std::size_t> indices = KiriView::rustPredecodeTargetImageIndices(
-        currentCandidateMatches(candidates, currentUrl), policyInput);
     urls.reserve(indices.size());
     for (std::size_t index : indices) {
         if (index < candidates.size()) {
@@ -254,7 +252,9 @@ void ImagePredecodeCoordinator::scheduleAdjacentImagePredecode(
 {
     const RustPredecodePolicyInput policyInput = rustPredecodePolicyInput(
         context.primaryImage.location.archiveDocument(), m_momentumMode, m_powerSaverEnabled);
-    const std::size_t parallelLimit = rustPredecodeParallelLimit(policyInput);
+    const RustPredecodeSchedulePlan initialPlan
+        = rustPredecodeSchedulePlan(rust::Vec<std::uint8_t>(), policyInput);
+    const std::size_t parallelLimit = initialPlan.parallel_limit;
     if (parallelLimit == 0) {
         startPredecodeImageLoads({}, context.primaryImage.location.archiveDocument(), context,
             generation, parallelLimit);
@@ -273,10 +273,12 @@ void ImagePredecodeCoordinator::scheduleAdjacentImagePredecode(
     const ArchiveDocumentLocation archiveDocument = candidateContext->archiveDocument();
     m_listerJob = m_candidateRepository.loadImages(
         this, *candidateContext,
-        [this, context, generation, currentUrl, archiveDocument, policyInput, parallelLimit](
+        [this, context, generation, currentUrl, archiveDocument, policyInput](
             std::vector<ImageNavigationCandidate> candidates) {
-            startPredecodeImageLoads(predecodeWindowImageUrls(candidates, currentUrl, policyInput),
-                archiveDocument, context, generation, parallelLimit);
+            const RustPredecodeSchedulePlan plan = rustPredecodeSchedulePlan(
+                currentCandidateMatches(candidates, currentUrl), policyInput);
+            startPredecodeImageLoads(predecodeWindowImageUrls(candidates, plan.target_indices),
+                archiveDocument, context, generation, plan.parallel_limit);
         },
         [this, context, generation, archiveDocument, parallelLimit](const QString &) {
             startPredecodeImageLoads({}, archiveDocument, context, generation, parallelLimit);

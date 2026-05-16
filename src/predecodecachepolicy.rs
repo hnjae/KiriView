@@ -48,6 +48,12 @@ mod ffi {
         ideal_thread_count: i32,
     }
 
+    #[derive(Debug, PartialEq, Eq)]
+    struct RustPredecodeSchedulePlan {
+        parallel_limit: usize,
+        target_indices: Vec<usize>,
+    }
+
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     struct RustPredecodeMomentumState {
         last_page_index: i32,
@@ -121,17 +127,11 @@ mod ffi {
             states: Vec<RustPredecodeWindowLoadState>,
         ) -> Vec<usize>;
 
-        #[cxx_name = "rustPredecodeWindowImageIndices"]
-        fn rust_predecode_window_image_indices(matches_current: Vec<u8>) -> Vec<usize>;
-
-        #[cxx_name = "rustPredecodeTargetImageIndices"]
-        fn rust_predecode_target_image_indices(
+        #[cxx_name = "rustPredecodeSchedulePlan"]
+        fn rust_predecode_schedule_plan(
             matches_current: Vec<u8>,
             input: RustPredecodePolicyInput,
-        ) -> Vec<usize>;
-
-        #[cxx_name = "rustPredecodeParallelLimit"]
-        fn rust_predecode_parallel_limit(input: RustPredecodePolicyInput) -> usize;
+        ) -> RustPredecodeSchedulePlan;
 
         #[cxx_name = "rustPredecodeUpdatedMomentumState"]
         fn rust_predecode_updated_momentum_state(
@@ -149,7 +149,7 @@ use ffi::{
     RustPredecodeCachedImageState, RustPredecodeDocumentKind, RustPredecodeMomentumDirection,
     RustPredecodeMomentumMode, RustPredecodeMomentumState, RustPredecodeMomentumUpdateInput,
     RustPredecodePolicyInput, RustPredecodeQueuedLoadPlan, RustPredecodeQueuedLoadState,
-    RustPredecodeWindowLoadState,
+    RustPredecodeSchedulePlan, RustPredecodeWindowLoadState,
 };
 
 #[derive(Clone, Copy)]
@@ -286,11 +286,24 @@ fn rust_predecode_missing_window_load_indices(
         .collect()
 }
 
-fn rust_predecode_window_image_indices(matches_current: Vec<u8>) -> Vec<usize> {
-    rust_predecode_target_image_indices(matches_current, default_predecode_policy_input())
+fn rust_predecode_schedule_plan(
+    matches_current: Vec<u8>,
+    input: RustPredecodePolicyInput,
+) -> RustPredecodeSchedulePlan {
+    let parallel_limit = predecode_parallel_limit(input);
+    let target_indices = if parallel_limit == 0 {
+        Vec::new()
+    } else {
+        predecode_target_image_indices(matches_current, input)
+    };
+
+    RustPredecodeSchedulePlan {
+        parallel_limit,
+        target_indices,
+    }
 }
 
-fn rust_predecode_target_image_indices(
+fn predecode_target_image_indices(
     matches_current: Vec<u8>,
     input: RustPredecodePolicyInput,
 ) -> Vec<usize> {
@@ -301,10 +314,6 @@ fn rust_predecode_target_image_indices(
     };
 
     indices.push(current_index);
-    if input.power_saver_enabled || scrubbing(input.momentum_mode) {
-        return indices;
-    }
-
     let profile = predecode_window_profile(input);
     append_directional_indices(
         &mut indices,
@@ -316,7 +325,7 @@ fn rust_predecode_target_image_indices(
     indices
 }
 
-fn rust_predecode_parallel_limit(input: RustPredecodePolicyInput) -> usize {
+fn predecode_parallel_limit(input: RustPredecodePolicyInput) -> usize {
     if input.power_saver_enabled || scrubbing(input.momentum_mode) {
         return 0;
     }
@@ -427,15 +436,6 @@ fn scrubbing(mode: RustPredecodeMomentumMode) -> bool {
         mode,
         RustPredecodeMomentumMode::ScrubbingNext | RustPredecodeMomentumMode::ScrubbingPrev
     )
-}
-
-fn default_predecode_policy_input() -> RustPredecodePolicyInput {
-    RustPredecodePolicyInput {
-        document_kind: RustPredecodeDocumentKind::Regular,
-        momentum_mode: RustPredecodeMomentumMode::Neutral,
-        power_saver_enabled: false,
-        ideal_thread_count: 1,
-    }
 }
 
 fn predecode_momentum_mode(input: PredecodeMomentumInput) -> RustPredecodeMomentumMode {
@@ -695,17 +695,25 @@ mod tests {
     }
 
     #[test]
-    fn target_image_indices_use_regular_neutral_profile() {
+    fn schedule_plan_uses_regular_neutral_profile() {
         assert_eq!(
-            rust_predecode_window_image_indices(vec![0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]),
-            vec![5, 6, 4, 7]
+            rust_predecode_schedule_plan(
+                vec![0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+                policy_input(
+                    RustPredecodeDocumentKind::Regular,
+                    RustPredecodeMomentumMode::Neutral,
+                    false,
+                    8,
+                ),
+            ),
+            schedule_plan(1, vec![5, 6, 4, 7])
         );
     }
 
     #[test]
-    fn target_image_indices_use_document_neutral_profile() {
+    fn schedule_plan_uses_document_neutral_profile() {
         assert_eq!(
-            rust_predecode_target_image_indices(
+            rust_predecode_schedule_plan(
                 vec![0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                 policy_input(
                     RustPredecodeDocumentKind::ArchiveDocument,
@@ -714,14 +722,14 @@ mod tests {
                     8,
                 ),
             ),
-            vec![5, 6, 4, 7, 3, 8, 9]
+            schedule_plan(4, vec![5, 6, 4, 7, 3, 8, 9])
         );
     }
 
     #[test]
-    fn target_image_indices_bias_paged_documents_in_navigation_direction() {
+    fn schedule_plan_biases_paged_documents_in_navigation_direction() {
         assert_eq!(
-            rust_predecode_target_image_indices(
+            rust_predecode_schedule_plan(
                 vec![0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
                 policy_input(
                     RustPredecodeDocumentKind::ArchiveDocument,
@@ -730,10 +738,10 @@ mod tests {
                     8,
                 ),
             ),
-            vec![5, 6, 4, 7, 8, 9, 10, 11, 12, 13]
+            schedule_plan(4, vec![5, 6, 4, 7, 8, 9, 10, 11, 12, 13])
         );
         assert_eq!(
-            rust_predecode_target_image_indices(
+            rust_predecode_schedule_plan(
                 vec![0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
                 policy_input(
                     RustPredecodeDocumentKind::DirectoryDocument,
@@ -742,14 +750,14 @@ mod tests {
                     8,
                 ),
             ),
-            vec![8, 9, 7, 6, 5, 4, 3, 2]
+            schedule_plan(2, vec![8, 9, 7, 6, 5, 4, 3, 2])
         );
     }
 
     #[test]
-    fn target_image_indices_keep_only_current_while_scrubbing_or_power_saver() {
+    fn schedule_plan_suppresses_background_work_while_scrubbing_or_power_saver() {
         assert_eq!(
-            rust_predecode_target_image_indices(
+            rust_predecode_schedule_plan(
                 vec![0, 0, 0, 1, 0, 0, 0],
                 policy_input(
                     RustPredecodeDocumentKind::ArchiveDocument,
@@ -758,10 +766,10 @@ mod tests {
                     8,
                 ),
             ),
-            vec![3]
+            schedule_plan(0, vec![])
         );
         assert_eq!(
-            rust_predecode_target_image_indices(
+            rust_predecode_schedule_plan(
                 vec![0, 0, 0, 1, 0, 0, 0],
                 policy_input(
                     RustPredecodeDocumentKind::ArchiveDocument,
@@ -770,65 +778,89 @@ mod tests {
                     8,
                 ),
             ),
-            vec![3]
+            schedule_plan(0, vec![])
         );
     }
 
     #[test]
     fn parallel_limit_uses_document_kind_and_runtime_state() {
         assert_eq!(
-            rust_predecode_parallel_limit(policy_input(
-                RustPredecodeDocumentKind::Regular,
-                RustPredecodeMomentumMode::Neutral,
-                false,
-                8,
-            )),
-            1
+            rust_predecode_schedule_plan(
+                vec![],
+                policy_input(
+                    RustPredecodeDocumentKind::Regular,
+                    RustPredecodeMomentumMode::Neutral,
+                    false,
+                    8,
+                ),
+            )
+            .parallel_limit,
+            1,
         );
         assert_eq!(
-            rust_predecode_parallel_limit(policy_input(
-                RustPredecodeDocumentKind::DirectoryDocument,
-                RustPredecodeMomentumMode::Neutral,
-                false,
-                8,
-            )),
-            2
+            rust_predecode_schedule_plan(
+                vec![],
+                policy_input(
+                    RustPredecodeDocumentKind::DirectoryDocument,
+                    RustPredecodeMomentumMode::Neutral,
+                    false,
+                    8,
+                ),
+            )
+            .parallel_limit,
+            2,
         );
         assert_eq!(
-            rust_predecode_parallel_limit(policy_input(
-                RustPredecodeDocumentKind::ArchiveDocument,
-                RustPredecodeMomentumMode::Neutral,
-                false,
-                16,
-            )),
-            4
+            rust_predecode_schedule_plan(
+                vec![],
+                policy_input(
+                    RustPredecodeDocumentKind::ArchiveDocument,
+                    RustPredecodeMomentumMode::Neutral,
+                    false,
+                    16,
+                ),
+            )
+            .parallel_limit,
+            4,
         );
         assert_eq!(
-            rust_predecode_parallel_limit(policy_input(
-                RustPredecodeDocumentKind::ArchiveDocument,
-                RustPredecodeMomentumMode::Neutral,
-                false,
-                1,
-            )),
-            1
+            rust_predecode_schedule_plan(
+                vec![],
+                policy_input(
+                    RustPredecodeDocumentKind::ArchiveDocument,
+                    RustPredecodeMomentumMode::Neutral,
+                    false,
+                    1,
+                ),
+            )
+            .parallel_limit,
+            1,
         );
         assert_eq!(
-            rust_predecode_parallel_limit(policy_input(
-                RustPredecodeDocumentKind::ArchiveDocument,
-                RustPredecodeMomentumMode::ScrubbingPrev,
-                false,
-                16,
-            )),
-            0
+            rust_predecode_schedule_plan(
+                vec![],
+                policy_input(
+                    RustPredecodeDocumentKind::ArchiveDocument,
+                    RustPredecodeMomentumMode::ScrubbingPrev,
+                    false,
+                    16,
+                ),
+            )
+            .parallel_limit,
+            0,
         );
         assert_eq!(
-            rust_predecode_parallel_limit(policy_input(
-                RustPredecodeDocumentKind::ArchiveDocument,
-                RustPredecodeMomentumMode::Neutral,
-                true,
-                16,
-            )),
-            0
+            rust_predecode_schedule_plan(
+                vec![],
+                policy_input(
+                    RustPredecodeDocumentKind::ArchiveDocument,
+                    RustPredecodeMomentumMode::Neutral,
+                    true,
+                    16,
+                ),
+            )
+            .parallel_limit,
+            0,
         );
     }
 
@@ -930,14 +962,14 @@ mod tests {
     }
 
     #[test]
-    fn window_image_indices_ignore_missing_current() {
+    fn schedule_plan_ignores_missing_current() {
         assert_eq!(
-            rust_predecode_window_image_indices(vec![]),
-            Vec::<usize>::new()
+            rust_predecode_schedule_plan(vec![], regular_policy_input()),
+            schedule_plan(1, vec![])
         );
         assert_eq!(
-            rust_predecode_window_image_indices(vec![0, 0, 0]),
-            Vec::<usize>::new()
+            rust_predecode_schedule_plan(vec![0, 0, 0], regular_policy_input()),
+            schedule_plan(1, vec![])
         );
     }
 
@@ -1056,6 +1088,25 @@ mod tests {
             momentum_mode,
             power_saver_enabled,
             ideal_thread_count,
+        }
+    }
+
+    fn regular_policy_input() -> RustPredecodePolicyInput {
+        policy_input(
+            RustPredecodeDocumentKind::Regular,
+            RustPredecodeMomentumMode::Neutral,
+            false,
+            1,
+        )
+    }
+
+    fn schedule_plan(
+        parallel_limit: usize,
+        target_indices: Vec<usize>,
+    ) -> RustPredecodeSchedulePlan {
+        RustPredecodeSchedulePlan {
+            parallel_limit,
+            target_indices,
         }
     }
 
