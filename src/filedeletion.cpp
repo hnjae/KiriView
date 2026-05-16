@@ -5,6 +5,7 @@
 
 #include "imagecallback.h"
 #include "imagecontainer.h"
+#include "kiriview/src/imagedeletionpolicy.cxx.h"
 
 #include <KIO/AskUserActionInterface>
 #include <KIO/DeleteOrTrashJob>
@@ -78,30 +79,64 @@ KiriView::ImageIoJob startKioFileDeletion(QObject *receiver, KiriView::FileDelet
     job->start();
     return ioJob;
 }
+
+KiriView::RustImageDeletionTargetInput rustImageDeletionTargetInput(
+    const KiriView::DisplayedImageLocation &location)
+{
+    return KiriView::RustImageDeletionTargetInput { location.imageUrl().isEmpty(),
+        location.archiveDocument().isEmpty(),
+        KiriView::displayedLocationIsInsideArchiveDocument(location) };
+}
+
+KiriView::RustFileDeletionResult rustFileDeletionResult(KiriView::FileDeletionResult result)
+{
+    switch (result) {
+    case KiriView::FileDeletionResult::Succeeded:
+        return KiriView::RustFileDeletionResult::Succeeded;
+    case KiriView::FileDeletionResult::Canceled:
+        return KiriView::RustFileDeletionResult::Canceled;
+    case KiriView::FileDeletionResult::Failed:
+        return KiriView::RustFileDeletionResult::Failed;
+    }
+
+    return KiriView::RustFileDeletionResult::Failed;
+}
+
+KiriView::FileDeletionCompletionAction fileDeletionCompletionAction(
+    KiriView::RustFileDeletionCompletionAction action)
+{
+    switch (action) {
+    case KiriView::RustFileDeletionCompletionAction::ClearDeletedImageAndOpenFallback:
+        return KiriView::FileDeletionCompletionAction::ClearDeletedImageAndOpenFallback;
+    case KiriView::RustFileDeletionCompletionAction::Ignore:
+        return KiriView::FileDeletionCompletionAction::Ignore;
+    case KiriView::RustFileDeletionCompletionAction::ReportFailure:
+        return KiriView::FileDeletionCompletionAction::ReportFailure;
+    }
+
+    return KiriView::FileDeletionCompletionAction::ReportFailure;
+}
 }
 
 namespace KiriView {
 QUrl deletionTargetUrlForDisplayedLocation(const DisplayedImageLocation &location)
 {
-    if (displayedLocationIsInsideArchiveDocument(location)) {
+    switch (rustImageDeletionTarget(rustImageDeletionTargetInput(location))) {
+    case RustImageDeletionTarget::ArchiveDocument:
         return location.archiveDocumentFileUrl();
+    case RustImageDeletionTarget::DisplayedImage:
+        return location.imageUrl();
+    case RustImageDeletionTarget::NoDeletionTarget:
+        return {};
     }
 
-    return location.imageUrl();
+    return {};
 }
 
 FileDeletionCompletionAction fileDeletionCompletionAction(FileDeletionResult result)
 {
-    switch (result) {
-    case FileDeletionResult::Succeeded:
-        return FileDeletionCompletionAction::ClearDeletedImageAndOpenFallback;
-    case FileDeletionResult::Canceled:
-        return FileDeletionCompletionAction::Ignore;
-    case FileDeletionResult::Failed:
-        return FileDeletionCompletionAction::ReportFailure;
-    }
-
-    return FileDeletionCompletionAction::ReportFailure;
+    return ::fileDeletionCompletionAction(
+        rustFileDeletionCompletionAction(rustFileDeletionResult(result)));
 }
 
 FileOperationProvider defaultFileOperationProvider()

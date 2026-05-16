@@ -22,12 +22,19 @@ class TestFileDeletion : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
+    void emptyLocationHasNoDeletionTarget();
     void regularImageDeletionTargetsDisplayedUrl();
     void explicitKioArchiveImageDeletionTargetsDisplayedUrl();
     void directArchiveDocumentDeletionTargetsArchiveFile();
     void directDirectoryDocumentDeletionTargetsDirectory();
     void completionActionRoutesDeletionResults();
 };
+
+void TestFileDeletion::emptyLocationHasNoDeletionTarget()
+{
+    QVERIFY(KiriView::deletionTargetUrlForDisplayedLocation(KiriView::DisplayedImageLocation())
+            .isEmpty());
+}
 
 void TestFileDeletion::regularImageDeletionTargetsDisplayedUrl()
 {

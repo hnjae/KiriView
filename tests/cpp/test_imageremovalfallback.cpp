@@ -28,6 +28,7 @@ private Q_SLOTS:
     void regularImagePlanUsesSiblingImageContext();
     void comicBookPagePlanUsesArchiveContainer();
     void generalArchivePageHasNoFallbackPlan();
+    void directoryDocumentPageHasNoFallbackPlan();
     void imageFallbackPrefersNextImage();
     void imageFallbackFallsBackToPreviousImage();
     void comicBookFallbackKeepsNextAndPreviousCandidates();
@@ -78,6 +79,20 @@ void TestImageRemovalFallback::generalArchivePageHasNoFallbackPlan()
     const KiriView::ImageRemovalFallbackPlan plan
         = KiriView::imageRemovalFallbackPlanForDisplayedLocation(
             KiriView::DisplayedImageLocation::fromArchiveDocument(pageUrl, *archiveDocument));
+
+    QVERIFY(std::holds_alternative<KiriView::NoImageRemovalFallback>(plan));
+}
+
+void TestImageRemovalFallback::directoryDocumentPageHasNoFallbackPlan()
+{
+    const KiriView::ArchiveDocumentLocation directoryDocument
+        = KiriView::ArchiveDocumentLocation::fromUrls(localUrl(QStringLiteral("/books/")),
+            localUrl(QStringLiteral("/books/")), KiriView::ArchiveDocumentKind::Directory);
+    const QUrl pageUrl = localUrl(QStringLiteral("/books/page.png"));
+
+    const KiriView::ImageRemovalFallbackPlan plan
+        = KiriView::imageRemovalFallbackPlanForDisplayedLocation(
+            KiriView::DisplayedImageLocation::fromArchiveDocument(pageUrl, directoryDocument));
 
     QVERIFY(std::holds_alternative<KiriView::NoImageRemovalFallback>(plan));
 }

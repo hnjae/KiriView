@@ -6,7 +6,7 @@
 #include "imagecontainer.h"
 #include "imagenavigationmodel.h"
 #include "imageurl.h"
-#include "kiriview/src/imageremovalfallback.cxx.h"
+#include "kiriview/src/imagedeletionpolicy.cxx.h"
 
 #include <cstdint>
 #include <optional>
@@ -48,6 +48,36 @@ std::vector<Candidate> removalFallbackCandidates(
 }
 
 std::uint8_t rustFlag(bool value) { return value ? 1 : 0; }
+
+KiriView::RustArchiveDocumentKind rustArchiveDocumentKind(
+    const KiriView::ArchiveDocumentLocation &archiveDocument)
+{
+    if (archiveDocument.isEmpty()) {
+        return KiriView::RustArchiveDocumentKind::Empty;
+    }
+
+    switch (archiveDocument.kind()) {
+    case KiriView::ArchiveDocumentKind::ComicBook:
+        return KiriView::RustArchiveDocumentKind::ComicBook;
+    case KiriView::ArchiveDocumentKind::General:
+        return KiriView::RustArchiveDocumentKind::General;
+    case KiriView::ArchiveDocumentKind::Directory:
+        return KiriView::RustArchiveDocumentKind::Directory;
+    }
+
+    return KiriView::RustArchiveDocumentKind::Empty;
+}
+
+KiriView::RustImageRemovalFallbackPlanInput rustImageRemovalFallbackPlanInput(
+    const KiriView::DisplayedImageLocation &location,
+    const std::optional<KiriView::ImageCandidateListContext> &imageContext)
+{
+    return KiriView::RustImageRemovalFallbackPlanInput {
+        rustArchiveDocumentKind(location.archiveDocument()),
+        KiriView::displayedLocationIsInsideArchiveDocument(location),
+        imageContext.has_value(),
+    };
+}
 
 template <typename Candidate>
 rust::Vec<std::uint8_t> currentCandidateMatches(
@@ -96,24 +126,26 @@ namespace KiriView {
 ImageRemovalFallbackPlan imageRemovalFallbackPlanForDisplayedLocation(
     const DisplayedImageLocation &location)
 {
-    const bool insideArchiveDocument = displayedLocationIsInsideArchiveDocument(location);
-    if (insideArchiveDocument) {
-        if (!location.archiveDocument().isComicBook()) {
-            return NoImageRemovalFallback {};
-        }
+    const std::optional<ImageCandidateListContext> imageContext
+        = imageCandidateListContextForDisplayedImage(location);
 
+    switch (rustImageRemovalFallbackPlanKind(
+        rustImageRemovalFallbackPlanInput(location, imageContext))) {
+    case RustImageRemovalFallbackPlanKind::ComicBook: {
         const QUrl currentContainerUrl = containerNavigationUrlForLocation(location);
         return ComicBookRemovalFallback { currentContainerUrl,
             parentUrlForContainerNavigation(currentContainerUrl), currentContainerUrl.fileName() };
     }
-
-    const std::optional<ImageCandidateListContext> imageContext
-        = imageCandidateListContextForDisplayedImage(location);
-    if (!imageContext.has_value()) {
+    case RustImageRemovalFallbackPlanKind::Image:
+        if (imageContext.has_value()) {
+            return imageRemovalFallbackForImageContext(*imageContext);
+        }
+        return NoImageRemovalFallback {};
+    case RustImageRemovalFallbackPlanKind::NoFallback:
         return NoImageRemovalFallback {};
     }
 
-    return imageRemovalFallbackForImageContext(*imageContext);
+    return NoImageRemovalFallback {};
 }
 
 ImageRemovalFallback imageRemovalFallbackForImageContext(const ImageCandidateListContext &context)
