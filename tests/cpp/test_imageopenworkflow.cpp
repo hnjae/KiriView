@@ -13,6 +13,7 @@
 #include <cstddef>
 #include <optional>
 #include <variant>
+#include <vector>
 
 namespace {
 using KiriView::TestSupport::archivePageUrl;
@@ -71,6 +72,7 @@ private Q_SLOTS:
     void animationFailureClearsImageAndResetsZoom();
     void routedLoadFailureAppliesErrorTransitions();
     void trackedLoadCompletionsClearLoadingContainerNavigationUrl();
+    void stateChangesFollowCppApplicationOrder();
 };
 
 void TestImageOpenWorkflow::firstImageLoadSuccessTransitionsToReady()
@@ -311,6 +313,59 @@ void TestImageOpenWorkflow::trackedLoadCompletionsClearLoadingContainerNavigatio
             state, QStringLiteral("animation failed"));
 
         QVERIFY(state.loadingContainerNavigationUrl().isEmpty());
+    }
+}
+
+void TestImageOpenWorkflow::stateChangesFollowCppApplicationOrder()
+{
+    const QUrl imageUrl = localUrl(QStringLiteral("/images/page.png"));
+
+    {
+        std::vector<KiriView::ImageDocumentChange> changes;
+        KiriView::ImageDocumentState state(
+            [&changes](KiriView::ImageDocumentChange change) { changes.push_back(change); });
+
+        KiriView::ImageOpenWorkflow::beginSourceLoad(state, false);
+
+        QCOMPARE(changes.size(), std::size_t(2));
+        QCOMPARE(changes.at(0), KiriView::ImageDocumentChange::Loading);
+        QCOMPARE(changes.at(1), KiriView::ImageDocumentChange::Status);
+    }
+
+    {
+        std::vector<KiriView::ImageDocumentChange> changes;
+        KiriView::ImageDocumentState state(
+            [&changes](KiriView::ImageDocumentChange change) { changes.push_back(change); });
+
+        KiriView::ImageOpenWorkflow::finishSuccessfulImageLoad(
+            state, loadSession(imageUrl, imageUrl));
+
+        QCOMPARE(changes.size(), std::size_t(4));
+        QCOMPARE(changes.at(0), KiriView::ImageDocumentChange::SourceUrl);
+        QCOMPARE(changes.at(1), KiriView::ImageDocumentChange::DisplayedUrl);
+        QCOMPARE(changes.at(2), KiriView::ImageDocumentChange::WindowTitleFileName);
+        QCOMPARE(changes.at(3), KiriView::ImageDocumentChange::Status);
+    }
+
+    {
+        std::vector<KiriView::ImageDocumentChange> changes;
+        KiriView::ImageDocumentState state(
+            [&changes](KiriView::ImageDocumentChange change) { changes.push_back(change); });
+        const QUrl displayedUrl = localUrl(QStringLiteral("/images/current.png"));
+        const QUrl replacementUrl = localUrl(QStringLiteral("/images/missing.png"));
+        state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromUrl(displayedUrl));
+        state.setSourceUrl(replacementUrl);
+        state.setLoading(true);
+        state.setStatus(KiriView::ImageDocumentStatus::Ready);
+        changes.clear();
+
+        KiriView::ImageOpenWorkflow::finishLoadWithError(
+            state, loadSession(replacementUrl, replacementUrl), true, QStringLiteral("missing"));
+
+        QCOMPARE(changes.size(), std::size_t(3));
+        QCOMPARE(changes.at(0), KiriView::ImageDocumentChange::Loading);
+        QCOMPARE(changes.at(1), KiriView::ImageDocumentChange::SourceUrl);
+        QCOMPARE(changes.at(2), KiriView::ImageDocumentChange::ErrorString);
     }
 }
 
