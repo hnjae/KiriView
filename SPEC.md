@@ -63,7 +63,9 @@ image, archive page, or directory page is displayed, the window title is
 `KiriView`.
 
 Open, Previous Archive, and Next Archive are provided by the application menu
-and shortcuts rather than fixed toolbar buttons.
+and shortcuts rather than fixed toolbar buttons. Previous Archive and Next
+Archive use visually distinct previous/next-use icons so they are not confused
+with page Previous and Next navigation.
 
 ## File Access
 
