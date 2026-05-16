@@ -47,6 +47,7 @@ class KiriImageDocument : public QObject
     Q_PROPERTY(QSizeF secondaryDisplaySize READ secondaryDisplaySize NOTIFY twoPageModeChanged)
     Q_PROPERTY(double zoomPercent READ zoomPercent WRITE setZoomPercent NOTIFY zoomPercentChanged)
     Q_PROPERTY(ZoomMode zoomMode READ zoomMode NOTIFY zoomModeChanged)
+    Q_PROPERTY(int rotationDegrees READ rotationDegrees NOTIFY rotationDegreesChanged)
     Q_PROPERTY(int minimumManualZoomPercent READ minimumManualZoomPercent CONSTANT)
     Q_PROPERTY(int maximumManualZoomPercent READ maximumManualZoomPercent NOTIFY
             maximumManualZoomPercentChanged)
@@ -117,6 +118,7 @@ public:
     double zoomPercent() const;
     void setZoomPercent(double zoomPercent);
     ZoomMode zoomMode() const;
+    int rotationDegrees() const;
     int minimumManualZoomPercent() const;
     int maximumManualZoomPercent() const;
     double zoomStepFactor() const;
@@ -141,6 +143,7 @@ public:
     quint64 renderRevision(
         KiriView::DisplayedPageRole role = KiriView::DisplayedPageRole::Primary) const;
     QSize renderImageSize(KiriView::DisplayedPageRole role) const;
+    int renderRotationDegrees(KiriView::DisplayedPageRole role) const;
 
     void setRenderContextProvider(RenderContextProvider provider);
 
@@ -154,6 +157,8 @@ public:
     Q_INVOKABLE void deleteDisplayedFile(KiriImageDocument::DeletionMode mode);
     Q_INVOKABLE void resetZoom();
     Q_INVOKABLE void setFitMode(KiriImageDocument::ZoomMode zoomMode);
+    Q_INVOKABLE void rotateClockwise();
+    Q_INVOKABLE void rotateCounterclockwise();
     Q_INVOKABLE double clampedManualZoomPercent(double zoomPercent) const;
     Q_INVOKABLE double steppedManualZoomPercent(double stepCount) const;
     Q_INVOKABLE void updateRenderContext();
@@ -171,6 +176,7 @@ Q_SIGNALS:
     void displaySizeChanged();
     void zoomPercentChanged();
     void zoomModeChanged();
+    void rotationDegreesChanged();
     void maximumManualZoomPercentChanged();
     void pageNavigationChanged();
     void containerNavigationChanged();

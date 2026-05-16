@@ -17,6 +17,7 @@ struct TileVisibilityContext {
     QSizeF displaySize;
     QRectF visibleItemRect;
     qreal devicePixelRatio = 1.0;
+    int rotationDegrees = 0;
 };
 
 qreal tileDisplayPixelsPerSourcePixel(

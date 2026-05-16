@@ -21,6 +21,7 @@ Item {
     readonly property bool atKnownLastImage: root.imageDocument.imageCount > 0 && root.imageDocument.currentPageNumber > 0 && root.imageDocument.currentLastPageNumber > 0 && root.imageDocument.currentLastPageNumber >= root.imageDocument.imageCount
     readonly property bool canUsePageActions: root.imageDocument.imageCount > 0 && root.imageDocument.currentPageNumber > 0 && !root.imageDocument.fileDeletionInProgress && !root.helpDialogOpen
     readonly property bool canUseReadyActions: root.imageReady && !root.imageDocument.fileDeletionInProgress && !root.helpDialogOpen
+    readonly property bool canUseRotateActions: root.canUseReadyActions && !(root.imageDocument.twoPageModeEnabled && root.imageDocument.twoPageModeAvailable)
     readonly property bool canUseTwoPageActions: root.canUsePageActions && root.imageDocument.twoPageModeAvailable && root.imageDocument.twoPageModeEnabled
     readonly property bool canUseRightToLeftReadingActions: root.canUseReadyActions && root.imageDocument.rightToLeftReadingAvailable
 
@@ -39,6 +40,8 @@ Item {
     readonly property var fitHeightAction: fitHeightManagedAction.proxy
     readonly property var fitWidthAction: fitWidthManagedAction.proxy
     readonly property var actualSizeAction: actualSizeManagedAction.proxy
+    readonly property var rotateClockwiseAction: rotateClockwiseManagedAction.proxy
+    readonly property var rotateCounterclockwiseAction: rotateCounterclockwiseManagedAction.proxy
     readonly property var twoPageModeAction: twoPageModeManagedAction.proxy
     readonly property var rightToLeftReadingAction: rightToLeftReadingManagedAction.proxy
     readonly property var zoomInAction: zoomInManagedAction.proxy
@@ -50,7 +53,7 @@ Item {
     readonly property var configureShortcutsAction: configureShortcutsManagedAction.proxy
     readonly property var showMenubarAction: showMenubarManagedAction.proxy
     readonly property var quitAction: quitManagedAction.proxy
-    readonly property var applicationMenuActions: [openManagedAction.menuProxy, applicationMenuFileSeparator, moveToTrashManagedAction.menuProxy, deleteFileManagedAction.menuProxy, applicationMenuNavigationSeparator, previousContainerManagedAction.menuProxy, nextContainerManagedAction.menuProxy, applicationMenuViewSeparator, twoPageModeManagedAction.menuProxy, rightToLeftReadingManagedAction.menuProxy, fullscreenManagedAction.menuProxy, applicationMenuSettingsSeparator, showMenubarManagedAction.menuProxy, configureShortcutsManagedAction.menuProxy, applicationMenuHelpSeparator, shortcutHelpManagedAction.menuProxy, applicationMenuQuitSeparator, quitManagedAction.menuProxy]
+    readonly property var applicationMenuActions: [openManagedAction.menuProxy, applicationMenuFileSeparator, moveToTrashManagedAction.menuProxy, deleteFileManagedAction.menuProxy, applicationMenuNavigationSeparator, previousContainerManagedAction.menuProxy, nextContainerManagedAction.menuProxy, applicationMenuViewSeparator, rotateClockwiseManagedAction.menuProxy, rotateCounterclockwiseManagedAction.menuProxy, twoPageModeManagedAction.menuProxy, rightToLeftReadingManagedAction.menuProxy, fullscreenManagedAction.menuProxy, applicationMenuSettingsSeparator, showMenubarManagedAction.menuProxy, configureShortcutsManagedAction.menuProxy, applicationMenuHelpSeparator, shortcutHelpManagedAction.menuProxy, applicationMenuQuitSeparator, quitManagedAction.menuProxy]
 
     signal openDialogRequested
     signal imageBoundaryReached(string message)
@@ -302,6 +305,32 @@ Item {
         bindEnabled: true
 
         onTriggered: root.imageDocument.zoomPercent = 100
+    }
+
+    ManagedAction {
+        id: rotateClockwiseManagedAction
+
+        actionEnabled: root.canUseRotateActions
+        actionId: KiriViewApplication.ViewRotateClockwiseAction
+        application: root.application
+        bindEnabled: true
+        displayHint: Kirigami.DisplayHint.AlwaysHide
+        menuText: KI18n.i18nc("@action:inmenu", "Rotate &Clockwise")
+
+        onTriggered: root.imageDocument.rotateClockwise()
+    }
+
+    ManagedAction {
+        id: rotateCounterclockwiseManagedAction
+
+        actionEnabled: root.canUseRotateActions
+        actionId: KiriViewApplication.ViewRotateCounterclockwiseAction
+        application: root.application
+        bindEnabled: true
+        displayHint: Kirigami.DisplayHint.AlwaysHide
+        menuText: KI18n.i18nc("@action:inmenu", "Rotate C&ounterclockwise")
+
+        onTriggered: root.imageDocument.rotateCounterclockwise()
     }
 
     ManagedAction {

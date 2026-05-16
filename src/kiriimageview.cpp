@@ -126,6 +126,7 @@ QSGNode *KiriImageView::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *)
     node->setRhi(window() == nullptr ? nullptr : window()->rhi());
     node->setSurface(std::move(surface), m_document->renderRevision(role));
     node->setTargetRect(KiriView::imageTargetRect(renderImageSize(), boundsSize));
+    node->setRotationDegrees(m_document->renderRotationDegrees(role));
     node->markDirty(QSGNode::DirtyGeometry | QSGNode::DirtyMaterial);
     return node;
 }

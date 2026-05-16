@@ -72,6 +72,10 @@ Kirigami.OverlaySheet {
             "description": KI18n.i18nc("@info:whatsthis", "Set 100% zoom")
         },
         {
+            "keyText": root.shortcutTexts([KiriViewApplication.ViewRotateClockwiseAction, KiriViewApplication.ViewRotateCounterclockwiseAction]),
+            "description": KI18n.i18nc("@info:whatsthis", "Rotate the image view")
+        },
+        {
             "keyText": KI18n.i18nc("@info:keyboard shortcut", "Ctrl+wheel up/down"),
             "description": KI18n.i18nc("@info:whatsthis", "Zoom around the cursor")
         },

@@ -170,6 +170,11 @@ void TestKiriViewApplication::shortcutsApiReturnsCurrentShortcuts()
         QList<QKeySequence>({ shortcut(QStringLiteral("S")) }));
     QCOMPARE(application.shortcuts(QStringLiteral("view_toggle_right_to_left_reading")),
         QList<QKeySequence>({ shortcut(QStringLiteral("B")) }));
+    QCOMPARE(application.shortcuts(QStringLiteral("view_rotate_clockwise")),
+        QList<QKeySequence>({ shortcut(QStringLiteral("R")), shortcut(QStringLiteral("Ctrl+R")) }));
+    QCOMPARE(application.shortcuts(QStringLiteral("view_rotate_counterclockwise")),
+        QList<QKeySequence>(
+            { shortcut(QStringLiteral("Shift+R")), shortcut(QStringLiteral("Ctrl+Shift+R")) }));
     QCOMPARE(application.shortcuts(QStringLiteral("go_previous_single_page")),
         QList<QKeySequence>({ shortcut(QStringLiteral("P")) }));
     QCOMPARE(application.shortcuts(QStringLiteral("go_next_single_page")),
@@ -196,6 +201,16 @@ void TestKiriViewApplication::shortcutModifierPartitionsTextInputShortcuts()
         QList<QKeySequence>({ shortcut(QStringLiteral("Q")) }));
     QCOMPARE(application.shortcutsWithCommandModifier(QStringLiteral("file_quit")),
         QList<QKeySequence>({ shortcut(QStringLiteral("Ctrl+Q")) }));
+    QCOMPARE(application.shortcutsWithoutCommandModifier(QStringLiteral("view_rotate_clockwise")),
+        QList<QKeySequence>({ shortcut(QStringLiteral("R")) }));
+    QCOMPARE(application.shortcutsWithCommandModifier(QStringLiteral("view_rotate_clockwise")),
+        QList<QKeySequence>({ shortcut(QStringLiteral("Ctrl+R")) }));
+    QCOMPARE(
+        application.shortcutsWithoutCommandModifier(QStringLiteral("view_rotate_counterclockwise")),
+        QList<QKeySequence>({ shortcut(QStringLiteral("Shift+R")) }));
+    QCOMPARE(
+        application.shortcutsWithCommandModifier(QStringLiteral("view_rotate_counterclockwise")),
+        QList<QKeySequence>({ shortcut(QStringLiteral("Ctrl+Shift+R")) }));
     QCOMPARE(application.shortcutsWithCommandModifier(QStringLiteral("missing_action")),
         QList<QKeySequence>());
     QCOMPARE(application.shortcutsWithoutCommandModifier(QStringLiteral("missing_action")),

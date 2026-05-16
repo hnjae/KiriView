@@ -61,6 +61,7 @@ public:
     qreal maximumManualZoomPercent() const;
     qreal clampedManualZoomPercent(qreal zoomPercent) const;
     qreal steppedManualZoomPercent(qreal stepCount) const;
+    int rotationDegrees() const;
     int currentPageNumber() const;
     int currentLastPageNumber() const;
     int imageCount() const;
@@ -88,6 +89,8 @@ public:
     void deleteDisplayedFile(FileDeletionMode mode);
     void resetZoom();
     void setFitMode(ImageZoomMode zoomMode);
+    void rotateClockwise();
+    void rotateCounterclockwise();
     void updateRenderContext();
 
 private:

@@ -106,6 +106,10 @@ private Q_SLOTS:
     void maximumManualZoomChangesAfterViewportImageAndRenderContextUpdates();
     void directoryImageNavigationResetsManualZoom();
     void archiveDocumentPageNavigationPreservesManualZoom();
+    void rotationChangesLogicalSizeAndPreservesManualZoom();
+    void rotationRecomputesFitZoomForRotatedBounds();
+    void rotationResetsOnImageNavigation();
+    void rotationResetsAndStopsWhileTwoPageModeIsEnabled();
     void pendingAdjacentNavigationSkipsIntermediateLoad();
     void pendingPageSelectionSupersedesEarlierLoad();
     void pendingLoadFailureRestoresDisplayedPageNavigation();
@@ -321,6 +325,166 @@ void TestImageDocumentController::archiveDocumentPageNavigationPreservesManualZo
     QTRY_COMPARE(controller->displayedUrl(), secondPageUrl);
     QCOMPARE(controller->zoomMode(), KiriView::ImageZoomMode::Manual);
     QVERIFY(KiriView::imageZoomApproximatelyEqual(controller->zoomPercent(), 150.0));
+}
+
+void TestImageDocumentController::rotationChangesLogicalSizeAndPreservesManualZoom()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    std::vector<KiriView::ImageDocumentChange> changes;
+    const QUrl imageUrl = localUrl(QStringLiteral("/images/portrait.png"));
+    candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
+        {
+            imageCandidate(imageUrl),
+        });
+
+    std::unique_ptr<KiriView::ImageDocumentController> controller
+        = std::make_unique<KiriView::ImageDocumentController>(
+            this,
+            []() {
+                return KiriView::ImageDocumentRenderContext {
+                    1.0,
+                    KiriView::fallbackTextureSizeMax,
+                };
+            },
+            [&changes](KiriView::ImageDocumentChange change) { changes.push_back(change); },
+            imageAsyncDependenciesFor(candidateProvider, dataLoader,
+                [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
+                    return staticDecodedImageWithPreview(QSize(100, 200), QSize(100, 200));
+                }));
+    controller->setViewportSize(QSizeF(500.0, 500.0));
+    controller->setSourceUrl(imageUrl);
+    finishLoad(dataLoader);
+
+    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
+    controller->setZoomPercent(100.0);
+    changes.clear();
+
+    controller->rotateClockwise();
+
+    QCOMPARE(controller->rotationDegrees(), 90);
+    QCOMPARE(controller->imageSize(), QSize(200, 100));
+    QCOMPARE(controller->primaryImageSize(), QSize(200, 100));
+    QCOMPARE(controller->displaySize(), QSizeF(200.0, 100.0));
+    QCOMPARE(controller->zoomMode(), KiriView::ImageZoomMode::Manual);
+    QVERIFY(KiriView::imageZoomApproximatelyEqual(controller->zoomPercent(), 100.0));
+    QVERIFY(containsChange(changes, KiriView::ImageDocumentChange::Rotation));
+    QVERIFY(containsChange(changes, KiriView::ImageDocumentChange::ImageSize));
+    QVERIFY(containsChange(changes, KiriView::ImageDocumentChange::DisplaySize));
+    QVERIFY(containsChange(changes, KiriView::ImageDocumentChange::Repaint));
+
+    controller->rotateCounterclockwise();
+
+    QCOMPARE(controller->rotationDegrees(), 0);
+    QCOMPARE(controller->imageSize(), QSize(100, 200));
+    QCOMPARE(controller->displaySize(), QSizeF(100.0, 200.0));
+}
+
+void TestImageDocumentController::rotationRecomputesFitZoomForRotatedBounds()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    const QUrl imageUrl = localUrl(QStringLiteral("/images/portrait.png"));
+    candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
+        {
+            imageCandidate(imageUrl),
+        });
+
+    std::unique_ptr<KiriView::ImageDocumentController> controller
+        = createController(this, candidateProvider, dataLoader,
+            [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
+                return staticDecodedImageWithPreview(QSize(100, 200), QSize(100, 200));
+            });
+    controller->setViewportSize(QSizeF(400.0, 300.0));
+    controller->setSourceUrl(imageUrl);
+    finishLoad(dataLoader);
+
+    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
+    QCOMPARE(controller->zoomMode(), KiriView::ImageZoomMode::Fit);
+    QVERIFY(KiriView::imageZoomApproximatelyEqual(controller->zoomPercent(), 150.0));
+    QCOMPARE(controller->displaySize(), QSizeF(150.0, 300.0));
+
+    controller->rotateClockwise();
+
+    QCOMPARE(controller->rotationDegrees(), 90);
+    QCOMPARE(controller->zoomMode(), KiriView::ImageZoomMode::Fit);
+    QVERIFY(KiriView::imageZoomApproximatelyEqual(controller->zoomPercent(), 200.0));
+    QCOMPARE(controller->displaySize(), QSizeF(400.0, 200.0));
+}
+
+void TestImageDocumentController::rotationResetsOnImageNavigation()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    const QUrl firstImageUrl = localUrl(QStringLiteral("/images/01.png"));
+    const QUrl secondImageUrl = localUrl(QStringLiteral("/images/02.png"));
+    candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
+        {
+            imageCandidate(firstImageUrl),
+            imageCandidate(secondImageUrl),
+        });
+
+    std::unique_ptr<KiriView::ImageDocumentController> controller
+        = createController(this, candidateProvider, dataLoader,
+            [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
+                return staticDecodedImageWithPreview(QSize(100, 200), QSize(100, 200));
+            });
+    controller->setViewportSize(QSizeF(400.0, 300.0));
+    controller->setSourceUrl(firstImageUrl);
+    finishLoad(dataLoader);
+
+    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
+    controller->rotateClockwise();
+    QCOMPARE(controller->rotationDegrees(), 90);
+    QCOMPARE(controller->imageSize(), QSize(200, 100));
+
+    const std::size_t loadCountBeforeNavigation = dataLoader.loadCount();
+    controller->openNextImage();
+    QTRY_COMPARE(dataLoader.loadCount(), loadCountBeforeNavigation + std::size_t(1));
+    QCOMPARE(dataLoader.backLoad().url, secondImageUrl);
+    finishLoad(dataLoader);
+
+    QTRY_COMPARE(controller->displayedUrl(), secondImageUrl);
+    QCOMPARE(controller->rotationDegrees(), 0);
+    QCOMPARE(controller->imageSize(), QSize(100, 200));
+}
+
+void TestImageDocumentController::rotationResetsAndStopsWhileTwoPageModeIsEnabled()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
+    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveDocument.has_value());
+    const QUrl firstPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
+    const QUrl secondPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("02.png"));
+    candidateProvider.setArchiveImages(archiveDocument->rootUrl(),
+        {
+            imageCandidate(firstPageUrl),
+            imageCandidate(secondPageUrl),
+        });
+
+    std::unique_ptr<KiriView::ImageDocumentController> controller
+        = createController(this, candidateProvider, dataLoader,
+            [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
+                return staticDecodedImageWithPreview(QSize(100, 200), QSize(100, 200));
+            });
+    controller->setViewportSize(QSizeF(400.0, 300.0));
+    controller->setSourceUrl(archiveUrl);
+    finishLoad(dataLoader);
+
+    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
+    controller->rotateClockwise();
+    QCOMPARE(controller->rotationDegrees(), 90);
+
+    controller->setTwoPageModeEnabled(true);
+
+    QCOMPARE(controller->rotationDegrees(), 0);
+    QVERIFY(controller->twoPageModeEnabled());
+    QVERIFY(controller->twoPageModeAvailable());
+    controller->rotateClockwise();
+    QCOMPARE(controller->rotationDegrees(), 0);
 }
 
 void TestImageDocumentController::pendingAdjacentNavigationSkipsIntermediateLoad()

@@ -3,6 +3,7 @@
 
 #include "kiriimagerendernode.h"
 
+#include "imagerotation.h"
 #include "shaders/kiriimageview_shaders.h"
 
 #include <QByteArray>
@@ -32,10 +33,12 @@ struct alignas(16) ImageUniformBlock {
     std::array<float, 16> matrix {};
     UniformVec4 targetRect;
     UniformVec4 opacity;
-    UniformVec4 textureRect;
+    UniformVec4 textureOrigin;
+    UniformVec4 textureXAxis;
+    UniformVec4 textureYAxis;
 };
 
-constexpr std::size_t imageUniformBlockVec4Count = 7;
+constexpr std::size_t imageUniformBlockVec4Count = 9;
 
 static_assert(sizeof(UniformVec4) == 16);
 static_assert(alignof(ImageUniformBlock) == 16);
@@ -82,15 +85,27 @@ UniformVec4 rectUniform(const QRectF &rect)
     };
 }
 
-ImageUniformBlock imageUniformBlock(
-    const QMatrix4x4 &matrix, float opacity, const QRectF &targetRect, const QRectF &textureRect)
+UniformVec4 pointUniform(const QPointF &point)
+{
+    return UniformVec4 {
+        static_cast<float>(point.x()),
+        static_cast<float>(point.y()),
+        0.0F,
+        0.0F,
+    };
+}
+
+ImageUniformBlock imageUniformBlock(const QMatrix4x4 &matrix, float opacity,
+    const QRectF &targetRect, const KiriView::ImageTextureCoordinateTransform &textureTransform)
 {
     ImageUniformBlock uniformBlock;
     std::copy(matrix.constData(), matrix.constData() + uniformBlock.matrix.size(),
         uniformBlock.matrix.begin());
     uniformBlock.targetRect = rectUniform(targetRect);
     uniformBlock.opacity.x = opacity;
-    uniformBlock.textureRect = rectUniform(textureRect);
+    uniformBlock.textureOrigin = pointUniform(textureTransform.origin);
+    uniformBlock.textureXAxis = pointUniform(textureTransform.xAxis);
+    uniformBlock.textureYAxis = pointUniform(textureTransform.yAxis);
     return uniformBlock;
 }
 
@@ -153,6 +168,17 @@ void KiriImageRenderNode::setTargetRect(const QRectF &targetRect)
     }
 
     m_targetRect = targetRect;
+    m_drawGeometryDirty = true;
+}
+
+void KiriImageRenderNode::setRotationDegrees(int rotationDegrees)
+{
+    const int normalized = normalizedImageRotationDegrees(rotationDegrees);
+    if (m_rotationDegrees == normalized) {
+        return;
+    }
+
+    m_rotationDegrees = normalized;
     m_drawGeometryDirty = true;
 }
 
@@ -233,7 +259,7 @@ void KiriImageRenderNode::render(const RenderState *state)
         }
 
         updateUniformBuffer(drawTexture.uniformBuffer.get(), state, drawTexture.targetRect,
-            drawTexture.textureRect);
+            drawTexture.textureTransform);
         cb->setShaderResources(drawTexture.srb.get());
         cb->setVertexInput(0, 1, &vertexBinding);
         cb->draw(static_cast<quint32>(quadVertices.size()));
@@ -271,6 +297,7 @@ bool KiriImageRenderNode::addDrawTexture(
     DrawTexture drawTexture;
     drawTexture.targetRect = entry.targetRect;
     drawTexture.textureRect = entry.textureRect;
+    drawTexture.textureTransform = entry.textureTransform;
     drawTexture.uniformBuffer.reset(
         m_rhi->newBuffer(QRhiBuffer::Dynamic, QRhiBuffer::UniformBuffer, uniformBufferSize));
     if (drawTexture.uniformBuffer == nullptr || !drawTexture.uniformBuffer->create()) {
@@ -356,7 +383,7 @@ bool KiriImageRenderNode::rebuildDrawTextures(QRhiResourceUpdateBatch *&resource
     m_pipeline.reset();
     m_drawTextures.clear();
     const std::vector<ImageSurfaceDrawEntry> entries
-        = imageSurfaceDrawEntries(*m_surface, m_targetRect);
+        = imageSurfaceDrawEntries(*m_surface, m_targetRect, m_rotationDegrees);
     for (const ImageSurfaceDrawEntry &entry : entries) {
         if (!addDrawTexture(resourceUpdates, entry)) {
             m_drawTextures.clear();
@@ -377,7 +404,7 @@ bool KiriImageRenderNode::syncDrawTextureEntries()
     }
 
     const std::vector<ImageSurfaceDrawEntry> entries
-        = imageSurfaceDrawEntries(*m_surface, m_targetRect);
+        = imageSurfaceDrawEntries(*m_surface, m_targetRect, m_rotationDegrees);
     if (entries.size() != m_drawTextures.size()) {
         return false;
     }
@@ -385,6 +412,7 @@ bool KiriImageRenderNode::syncDrawTextureEntries()
     for (std::size_t index = 0; index < entries.size(); ++index) {
         m_drawTextures[index].targetRect = entries[index].targetRect;
         m_drawTextures[index].textureRect = entries[index].textureRect;
+        m_drawTextures[index].textureTransform = entries[index].textureTransform;
     }
     m_drawGeometryDirty = false;
     return true;
@@ -462,7 +490,7 @@ bool KiriImageRenderNode::ensurePipeline(QRhiRenderTarget *renderTarget)
 }
 
 void KiriImageRenderNode::updateUniformBuffer(QRhiBuffer *uniformBuffer, const RenderState *state,
-    const QRectF &targetRect, const QRectF &textureRect)
+    const QRectF &targetRect, const ImageTextureCoordinateTransform &textureTransform)
 {
     QMatrix4x4 matrix;
     if (state != nullptr && state->projectionMatrix() != nullptr) {
@@ -474,7 +502,7 @@ void KiriImageRenderNode::updateUniformBuffer(QRhiBuffer *uniformBuffer, const R
 
     const float opacity = static_cast<float>(inheritedOpacity());
     const ImageUniformBlock uniformData
-        = imageUniformBlock(matrix, opacity, targetRect, textureRect);
+        = imageUniformBlock(matrix, opacity, targetRect, textureTransform);
     uniformBuffer->fullDynamicBufferUpdateForCurrentFrame(&uniformData, uniformBufferSize);
 }
 }

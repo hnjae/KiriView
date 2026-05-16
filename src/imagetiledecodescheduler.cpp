@@ -4,6 +4,7 @@
 #include "imagetiledecodescheduler.h"
 
 #include "imageasyncworker.h"
+#include "imagerotation.h"
 #include "imagetilevisibility.h"
 
 #include <QString>
@@ -34,7 +35,7 @@ void ImageTileDecodeScheduler::invalidate()
 
 void ImageTileDecodeScheduler::schedule(
     const std::shared_ptr<DisplayedImageSurface> &displayedSurface, const QSizeF &displaySize,
-    const QRectF &visibleItemRect, const ImageDocumentRenderContext &context)
+    const QRectF &visibleItemRect, const ImageDocumentRenderContext &context, int rotationDegrees)
 {
     if (displayedSurface == nullptr) {
         return;
@@ -44,8 +45,9 @@ void ImageTileDecodeScheduler::schedule(
     if (surface == nullptr || !surface->isValid()) {
         return;
     }
-    if (tileFirstDisplayIsSufficient(surface->pyramid(), displaySize, context.devicePixelRatio,
-            surface->displayHints().firstDisplayPixelsPerSourcePixel)) {
+    const QSizeF sourceDisplaySize = rotatedImageSize(displaySize, rotationDegrees);
+    if (tileFirstDisplayIsSufficient(surface->pyramid(), sourceDisplaySize,
+            context.devicePixelRatio, surface->displayHints().firstDisplayPixelsPerSourcePixel)) {
         return;
     }
 
@@ -59,6 +61,7 @@ void ImageTileDecodeScheduler::schedule(
         displaySize,
         visibleItemRect,
         context.devicePixelRatio,
+        rotationDegrees,
     };
     for (const TileKey &key : visibleTileKeys(surface->pyramid(), visibilityContext)) {
         if (surface->containsTile(key) || m_pendingTileKeys.contains(key)

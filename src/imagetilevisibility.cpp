@@ -3,6 +3,7 @@
 
 #include "imagetilevisibility.h"
 
+#include "imagerotation.h"
 #include "kiriview/src/imagetilegeometry.cxx.h"
 #include "qtgeometryconversion.h"
 
@@ -54,9 +55,12 @@ std::vector<TileKey> visibleTileKeys(
     const TilePyramid &pyramid, const TileVisibilityContext &context)
 {
     std::vector<TileKey> keys;
+    const QSizeF sourceDisplaySize = rotatedImageSize(context.displaySize, context.rotationDegrees);
+    const QRectF sourceVisibleItemRect = unrotatedVisibleRectForRotation(
+        sourceDisplaySize, context.visibleItemRect, context.rotationDegrees);
     const rust::Vec<RustTileKey> rustKeys = rustVisibleTileKeys(rustTileSize(pyramid.imageSize()),
-        pyramid.tileSize(), rustTileSizeF(context.displaySize),
-        rustTileRectF(context.visibleItemRect), context.devicePixelRatio);
+        pyramid.tileSize(), rustTileSizeF(sourceDisplaySize), rustTileRectF(sourceVisibleItemRect),
+        context.devicePixelRatio);
     keys.reserve(rustKeys.size());
     for (const RustTileKey &key : rustKeys) {
         keys.push_back(tileKeyFromRust(key));

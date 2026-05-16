@@ -29,6 +29,7 @@ Item {
     readonly property bool pageCommandShortcutsEnabled: imageSelectionCommandShortcutsEnabled
     readonly property bool twoPageCommandShortcutsEnabled: imageSelectionCommandShortcutsEnabled && root.imageDocument.twoPageModeAvailable && root.imageDocument.twoPageModeEnabled
     readonly property bool rightToLeftReadingCommandShortcutsEnabled: readyCommandShortcutsEnabled && root.imageDocument.rightToLeftReadingAvailable
+    readonly property bool rotateCommandShortcutsEnabled: readyCommandShortcutsEnabled && !(root.imageDocument.twoPageModeEnabled && root.imageDocument.twoPageModeAvailable)
     readonly property bool pannableCommandShortcutsEnabled: root.imagePannable && !root.imageDocument.fileDeletionInProgress && root.commandShortcutsEnabled
     readonly property bool containerCommandShortcutsEnabled: root.imageDocument.containerNavigationAvailable && !root.imageDocument.fileDeletionInProgress && root.commandShortcutsEnabled
 
@@ -183,6 +184,12 @@ Item {
         actionIds: [KiriViewApplication.ViewZoomInAction, KiriViewApplication.ViewZoomOutAction, KiriViewApplication.ViewFitAction, KiriViewApplication.ViewFitHeightAction, KiriViewApplication.ViewFitWidthAction, KiriViewApplication.ViewActualSizeAction, KiriViewApplication.ViewToggleTwoPageModeAction]
         application: root.application
         shortcutsEnabled: root.readyCommandShortcutsEnabled
+    }
+
+    ActionShortcutGroup {
+        actionIds: [KiriViewApplication.ViewRotateClockwiseAction, KiriViewApplication.ViewRotateCounterclockwiseAction]
+        application: root.application
+        shortcutsEnabled: root.rotateCommandShortcutsEnabled
     }
 
     ActionShortcutGroup {

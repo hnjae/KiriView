@@ -136,6 +136,18 @@ Controls.MenuBar {
         Controls.MenuSeparator {}
 
         Controls.MenuItem {
+            action: root.actions.rotateClockwiseAction
+            text: KI18n.i18nc("@action:inmenu", "Rotate &Clockwise")
+        }
+
+        Controls.MenuItem {
+            action: root.actions.rotateCounterclockwiseAction
+            text: KI18n.i18nc("@action:inmenu", "Rotate C&ounterclockwise")
+        }
+
+        Controls.MenuSeparator {}
+
+        Controls.MenuItem {
             action: root.actions.twoPageModeAction
             checkable: true
             checked: root.imageDocument.twoPageModeEnabled && root.imageDocument.twoPageModeAvailable

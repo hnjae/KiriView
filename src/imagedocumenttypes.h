@@ -38,6 +38,7 @@ enum class ImageDocumentChange {
     FileDeletionInProgress,
     TwoPageMode,
     RightToLeftReading,
+    Rotation,
     Repaint,
 };
 

@@ -7,6 +7,7 @@
 #include "imagecallback.h"
 #include "imagedocumentnotifications.h"
 #include "imagerendering.h"
+#include "imagerotation.h"
 #include "imagetiledecodescheduler.h"
 
 #include <memory>
@@ -89,6 +90,8 @@ qreal ImagePresentationController::steppedManualZoomPercent(qreal stepCount) con
     return m_zoomState.steppedManualZoomPercent(stepCount, renderContext().devicePixelRatio);
 }
 
+int ImagePresentationController::rotationDegrees() const { return m_rotationDegrees; }
+
 std::shared_ptr<DisplayedImageSurface> ImagePresentationController::imageSurface() const
 {
     return m_displayedImageState->imageSurface();
@@ -137,6 +140,34 @@ void ImagePresentationController::setFitMode(ImageZoomMode zoomMode)
     });
 }
 
+void ImagePresentationController::rotateClockwise()
+{
+    if (!hasImage()) {
+        return;
+    }
+
+    setRotationDegrees(imageRotationClockwise(m_rotationDegrees));
+}
+
+void ImagePresentationController::rotateCounterclockwise()
+{
+    if (!hasImage()) {
+        return;
+    }
+
+    setRotationDegrees(imageRotationCounterclockwise(m_rotationDegrees));
+}
+
+bool ImagePresentationController::resetRotation()
+{
+    if (m_rotationDegrees == 0) {
+        return false;
+    }
+
+    setRotationDegrees(0);
+    return true;
+}
+
 void ImagePresentationController::updateRenderContext()
 {
     mutateZoomState([](ImageZoomState &zoomState,
@@ -167,6 +198,7 @@ void ImagePresentationController::setPredecodeCacheable(bool cacheable)
 
 void ImagePresentationController::setImage(const QImage &image)
 {
+    resetRotationForNewImage();
     invalidateTiles();
     m_displayedImageState->setImage(image);
 }
@@ -175,6 +207,7 @@ void ImagePresentationController::setStaticImage(StaticImagePayload staticImage)
 {
     const ImageDocumentRenderContext context = renderContext();
     stopAnimation();
+    resetRotationForNewImage();
     invalidateTiles();
     const bool useFullImageSurface
         = staticImageFitsFullImageSurface(staticImage, context.maximumTextureSize);
@@ -186,6 +219,7 @@ void ImagePresentationController::setStaticImage(StaticImagePayload staticImage)
 
 void ImagePresentationController::clearImage()
 {
+    resetRotationForNewImage();
     invalidateTiles();
     m_zoomState.clearContainer();
     m_displayedImageState->clear();
@@ -213,9 +247,39 @@ void ImagePresentationController::stopAnimation() { m_displayedImageState->stopA
 
 void ImagePresentationController::setImageSize(const QSize &imageSize)
 {
-    mutateZoomState([&imageSize](ImageZoomState &zoomState, qreal devicePixelRatio) {
-        zoomState.setImageSize(imageSize, devicePixelRatio);
+    m_sourceImageSize = imageSize;
+    const QSize logicalImageSize = rotatedImageSize(m_sourceImageSize, m_rotationDegrees);
+    mutateZoomState([&logicalImageSize](ImageZoomState &zoomState, qreal devicePixelRatio) {
+        zoomState.setImageSize(logicalImageSize, devicePixelRatio);
     });
+}
+
+void ImagePresentationController::setRotationDegrees(int rotationDegrees)
+{
+    const int normalizedRotationDegrees = normalizedImageRotationDegrees(rotationDegrees);
+    if (m_rotationDegrees == normalizedRotationDegrees) {
+        return;
+    }
+
+    m_rotationDegrees = normalizedRotationDegrees;
+    const QSize logicalImageSize = rotatedImageSize(m_sourceImageSize, m_rotationDegrees);
+    mutateZoomState(
+        [&logicalImageSize](ImageZoomState &zoomState, qreal devicePixelRatio) {
+            zoomState.setImageSize(logicalImageSize, devicePixelRatio);
+        },
+        TileRefresh::Always);
+    notify(ImageDocumentChange::Rotation);
+    notify(ImageDocumentChange::Repaint);
+}
+
+void ImagePresentationController::resetRotationForNewImage()
+{
+    if (m_rotationDegrees == 0) {
+        return;
+    }
+
+    m_rotationDegrees = 0;
+    notify(ImageDocumentChange::Rotation);
 }
 
 void ImagePresentationController::invalidateTiles() { m_tileDecodeScheduler->invalidate(); }
@@ -224,7 +288,7 @@ void ImagePresentationController::scheduleVisibleTileDecode(
     const ImageDocumentRenderContext &context)
 {
     m_tileDecodeScheduler->schedule(m_displayedImageState->imageSurface(),
-        m_zoomState.displaySize(), m_visibleItemRect, context);
+        m_zoomState.displaySize(), m_visibleItemRect, context, m_rotationDegrees);
 }
 
 void ImagePresentationController::mutateZoomState(

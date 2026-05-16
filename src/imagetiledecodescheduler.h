@@ -29,7 +29,7 @@ public:
     void invalidate();
     void schedule(const std::shared_ptr<DisplayedImageSurface> &displayedSurface,
         const QSizeF &displaySize, const QRectF &visibleItemRect,
-        const ImageDocumentRenderContext &context);
+        const ImageDocumentRenderContext &context, int rotationDegrees = 0);
 
 private:
     struct DecodeLifetime;

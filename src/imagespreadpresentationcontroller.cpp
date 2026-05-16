@@ -183,6 +183,11 @@ qreal ImageSpreadPresentationController::steppedManualZoomPercent(qreal stepCoun
     return m_primaryPresentation.steppedManualZoomPercent(stepCount);
 }
 
+int ImageSpreadPresentationController::rotationDegrees() const
+{
+    return secondaryPageVisible() ? 0 : m_primaryPresentation.rotationDegrees();
+}
+
 int ImageSpreadPresentationController::currentLastPageNumber() const
 {
     return imageSpreadNavigationCurrentLastPageNumber(navigationState());
@@ -226,6 +231,9 @@ void ImageSpreadPresentationController::setTwoPageModeEnabled(bool enabled)
 
     if (change.resetSpreadZoom) {
         m_zoomController->clearZoomState();
+    }
+    if (enabled) {
+        m_primaryPresentation.resetRotation();
     }
     if (change.finishTransition) {
         finishTransition();
@@ -376,6 +384,24 @@ void ImageSpreadPresentationController::setFitMode(ImageZoomMode zoomMode)
     }
 
     m_primaryPresentation.setFitMode(zoomMode);
+}
+
+void ImageSpreadPresentationController::rotateClockwise()
+{
+    if (twoPageModeActive()) {
+        return;
+    }
+
+    m_primaryPresentation.rotateClockwise();
+}
+
+void ImageSpreadPresentationController::rotateCounterclockwise()
+{
+    if (twoPageModeActive()) {
+        return;
+    }
+
+    m_primaryPresentation.rotateCounterclockwise();
 }
 
 void ImageSpreadPresentationController::updateRenderContext()

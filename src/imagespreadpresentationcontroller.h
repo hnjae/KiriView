@@ -74,6 +74,7 @@ public:
     qreal maximumManualZoomPercent() const;
     qreal clampedManualZoomPercent(qreal zoomPercent) const;
     qreal steppedManualZoomPercent(qreal stepCount) const;
+    int rotationDegrees() const;
     int currentLastPageNumber() const;
     ImageSpreadPageNavigationTarget imageNavigationTarget(NavigationDirection direction) const;
     int relativePageNavigationTarget(int offset) const;
@@ -94,6 +95,8 @@ public:
     void setViewportSize(const QSizeF &viewportSize);
     void resetZoom();
     void setFitMode(ImageZoomMode zoomMode);
+    void rotateClockwise();
+    void rotateCounterclockwise();
     void updateRenderContext();
     void refreshSecondaryPage();
     void handleDocumentChange(ImageDocumentChange change);

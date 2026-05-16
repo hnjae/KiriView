@@ -5,6 +5,7 @@
 #define KIRIVIEW_IMAGERENDERING_H
 
 #include "imagedocumenttypes.h"
+#include "imagerotation.h"
 #include "imagesurface.h"
 #include "staticimage.h"
 
@@ -23,6 +24,7 @@ struct ImageSurfaceDrawEntry {
     QImage image;
     QRectF targetRect;
     QRectF textureRect;
+    ImageTextureCoordinateTransform textureTransform;
 };
 
 QRectF imageTargetRect(const QSize &imageSize, const QSizeF &boundsSize);
@@ -30,7 +32,7 @@ QSize scaledImageSizeToFit(const QSizeF &imageSize, const QSize &boundsSize);
 QSize firstDisplayScaledImageSize(const QSize &imageSize, const QSize &physicalViewportSize);
 qreal imagePixelsPerSourcePixel(const QSize &imageSize, const QSize &displaySize);
 std::vector<ImageSurfaceDrawEntry> imageSurfaceDrawEntries(
-    const DisplayedImageSurface &surface, const QRectF &targetRect);
+    const DisplayedImageSurface &surface, const QRectF &targetRect, int rotationDegrees = 0);
 QImage displayReadyImage(const QImage &image);
 QSize svgRasterSize(const QSizeF &displaySize, qreal devicePixelRatio, int maximumTextureSize);
 ImageDocumentRenderContext normalizedImageDocumentRenderContext(ImageDocumentRenderContext context);

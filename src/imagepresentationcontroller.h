@@ -55,6 +55,7 @@ public:
     qreal maximumManualZoomPercent() const;
     qreal clampedManualZoomPercent(qreal zoomPercent) const;
     qreal steppedManualZoomPercent(qreal stepCount) const;
+    int rotationDegrees() const;
     std::shared_ptr<DisplayedImageSurface> imageSurface() const;
     const QImage &image() const;
     quint64 imageRevision() const;
@@ -65,6 +66,9 @@ public:
 
     void resetZoom();
     void setFitMode(ImageZoomMode zoomMode);
+    void rotateClockwise();
+    void rotateCounterclockwise();
+    bool resetRotation();
     void updateRenderContext();
     void prepareImageContainer(const QUrl &containerUrl);
     void prepareFailedContainer(const QUrl &containerUrl);
@@ -88,6 +92,8 @@ private:
     using ZoomStateMutation = std::function<void(ImageZoomState &, qreal devicePixelRatio)>;
 
     void setImageSize(const QSize &imageSize);
+    void setRotationDegrees(int rotationDegrees);
+    void resetRotationForNewImage();
     void invalidateTiles();
     void scheduleVisibleTileDecode(const ImageDocumentRenderContext &context);
     void mutateZoomState(const ZoomStateMutation &mutation,
@@ -104,6 +110,8 @@ private:
     ImageDocumentRenderContext m_renderContext;
     std::unique_ptr<DisplayedImageState> m_displayedImageState;
     std::unique_ptr<ImageTileDecodeScheduler> m_tileDecodeScheduler;
+    QSize m_sourceImageSize;
+    int m_rotationDegrees = 0;
     QRectF m_visibleItemRect;
 };
 }

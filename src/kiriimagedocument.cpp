@@ -165,6 +165,8 @@ KiriImageDocument::ZoomMode KiriImageDocument::zoomMode() const
     return fromImageZoomMode(m_documentController->zoomMode());
 }
 
+int KiriImageDocument::rotationDegrees() const { return m_documentController->rotationDegrees(); }
+
 int KiriImageDocument::minimumManualZoomPercent() const
 {
     return static_cast<int>(KiriView::ImageZoomState::minimumManualZoomPercent());
@@ -267,6 +269,11 @@ QSize KiriImageDocument::renderImageSize(KiriView::DisplayedPageRole role) const
                                                           : primaryImageSize();
 }
 
+int KiriImageDocument::renderRotationDegrees(KiriView::DisplayedPageRole role) const
+{
+    return role == KiriView::DisplayedPageRole::Secondary ? 0 : rotationDegrees();
+}
+
 void KiriImageDocument::setRenderContextProvider(RenderContextProvider provider)
 {
     m_renderContextProvider = std::move(provider);
@@ -301,6 +308,10 @@ void KiriImageDocument::setFitMode(ZoomMode zoomMode)
 {
     m_documentController->setFitMode(toImageZoomMode(zoomMode));
 }
+
+void KiriImageDocument::rotateClockwise() { m_documentController->rotateClockwise(); }
+
+void KiriImageDocument::rotateCounterclockwise() { m_documentController->rotateCounterclockwise(); }
 
 double KiriImageDocument::clampedManualZoomPercent(double zoomPercent) const
 {
@@ -371,6 +382,9 @@ void KiriImageDocument::handleDocumentChange(ImageDocumentChange change)
         return;
     case ImageDocumentChange::RightToLeftReading:
         Q_EMIT rightToLeftReadingChanged();
+        return;
+    case ImageDocumentChange::Rotation:
+        Q_EMIT rotationDegreesChanged();
         return;
     case ImageDocumentChange::Repaint:
         Q_EMIT repaintRequested();

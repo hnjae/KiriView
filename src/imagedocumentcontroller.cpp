@@ -142,6 +142,11 @@ qreal ImageDocumentController::steppedManualZoomPercent(qreal stepCount) const
     return m_runtime->spreadController->steppedManualZoomPercent(stepCount);
 }
 
+int ImageDocumentController::rotationDegrees() const
+{
+    return m_runtime->spreadController->rotationDegrees();
+}
+
 int ImageDocumentController::currentPageNumber() const
 {
     return m_runtime->navigationController->currentPageNumber();
@@ -260,6 +265,13 @@ void ImageDocumentController::resetZoom() { m_runtime->spreadController->resetZo
 void ImageDocumentController::setFitMode(ImageZoomMode zoomMode)
 {
     m_runtime->spreadController->setFitMode(zoomMode);
+}
+
+void ImageDocumentController::rotateClockwise() { m_runtime->spreadController->rotateClockwise(); }
+
+void ImageDocumentController::rotateCounterclockwise()
+{
+    m_runtime->spreadController->rotateCounterclockwise();
 }
 
 void ImageDocumentController::updateRenderContext()

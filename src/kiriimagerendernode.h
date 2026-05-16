@@ -31,6 +31,7 @@ public:
     void setRhi(QRhi *rhi);
     void setSurface(std::shared_ptr<DisplayedImageSurface> surface, quint64 revision);
     void setTargetRect(const QRectF &targetRect);
+    void setRotationDegrees(int rotationDegrees);
 
     StateFlags changedStates() const override;
     RenderingFlags flags() const override;
@@ -52,13 +53,14 @@ private:
     bool ensureSampler();
     bool ensurePipeline(QRhiRenderTarget *renderTarget);
     void updateUniformBuffer(QRhiBuffer *uniformBuffer, const RenderState *state,
-        const QRectF &targetRect, const QRectF &textureRect);
+        const QRectF &targetRect, const ImageTextureCoordinateTransform &textureTransform);
 
     QRhi *m_rhi = nullptr;
     std::shared_ptr<DisplayedImageSurface> m_surface;
     quint64 m_surfaceRevision = 0;
     quint64 m_uploadedSurfaceRevision = 0;
     QRectF m_targetRect;
+    int m_rotationDegrees = 0;
     bool m_texturesDirty = true;
     bool m_drawGeometryDirty = true;
     QRhiRenderPassDescriptor *m_renderPassDescriptor = nullptr;
@@ -69,6 +71,7 @@ private:
     struct DrawTexture {
         QRectF targetRect;
         QRectF textureRect;
+        ImageTextureCoordinateTransform textureTransform;
         std::unique_ptr<QRhiBuffer> uniformBuffer;
         std::unique_ptr<QRhiTexture> texture;
         std::unique_ptr<QRhiShaderResourceBindings> srb;

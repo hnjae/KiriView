@@ -45,6 +45,8 @@ public:
         ViewFitHeightAction,
         ViewFitWidthAction,
         ViewActualSizeAction,
+        ViewRotateClockwiseAction,
+        ViewRotateCounterclockwiseAction,
         ViewToggleTwoPageModeAction,
         ViewToggleRightToLeftReadingAction,
         ViewPanLeftAction,

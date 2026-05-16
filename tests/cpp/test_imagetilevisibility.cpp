@@ -22,6 +22,7 @@ private Q_SLOTS:
     void firstDisplaySufficiencyUsesCurrentDisplayScale();
     void itemRectMapsToClampedLevelRect();
     void visibleTileKeysSelectDisplayLevelAndPrefetchNeighbors();
+    void visibleTileKeysMapRotatedViewToSourceTiles();
 };
 
 void TestImageTileVisibility::displayScaleUsesPhysicalPixelsPerSourcePixel()
@@ -82,6 +83,41 @@ void TestImageTileVisibility::visibleTileKeysSelectDisplayLevelAndPrefetchNeighb
         });
     QVERIFY(!downsampledTiles.empty());
     QCOMPARE(downsampledTiles.front().level, 2);
+}
+
+void TestImageTileVisibility::visibleTileKeysMapRotatedViewToSourceTiles()
+{
+    const KiriView::TilePyramid pyramid(QSize(2048, 1024));
+
+    const std::vector<KiriView::TileKey> clockwiseTiles = KiriView::visibleTileKeys(pyramid,
+        KiriView::TileVisibilityContext {
+            QSizeF(1024.0, 2048.0),
+            QRectF(0.0, 512.0, 512.0, 512.0),
+            1.0,
+            90,
+        });
+    QVERIFY(!clockwiseTiles.empty());
+    QCOMPARE(clockwiseTiles.front(), (KiriView::TileKey { 0, 1, 1 }));
+
+    const std::vector<KiriView::TileKey> upsideDownTiles = KiriView::visibleTileKeys(pyramid,
+        KiriView::TileVisibilityContext {
+            QSizeF(2048.0, 1024.0),
+            QRectF(1024.0, 512.0, 512.0, 512.0),
+            1.0,
+            180,
+        });
+    QVERIFY(!upsideDownTiles.empty());
+    QCOMPARE(upsideDownTiles.front(), (KiriView::TileKey { 0, 1, 0 }));
+
+    const std::vector<KiriView::TileKey> counterclockwiseTiles = KiriView::visibleTileKeys(pyramid,
+        KiriView::TileVisibilityContext {
+            QSizeF(1024.0, 2048.0),
+            QRectF(512.0, 0.0, 512.0, 512.0),
+            1.0,
+            270,
+        });
+    QVERIFY(!counterclockwiseTiles.empty());
+    QCOMPARE(counterclockwiseTiles.front(), (KiriView::TileKey { 0, 3, 1 }));
 }
 
 QTEST_GUILESS_MAIN(TestImageTileVisibility)

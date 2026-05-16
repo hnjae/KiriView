@@ -3,6 +3,7 @@
 
 #include "imagerendering.h"
 
+#include "imagerotation.h"
 #include "kiriview/src/imagerendergeometry.cxx.h"
 #include "qtgeometryconversion.h"
 
@@ -16,17 +17,31 @@
 #include <vector>
 
 namespace {
-KiriView::ImageSurfaceDrawEntry fullImageDrawEntry(const QImage &image, const QRectF &targetRect)
+KiriView::ImageSurfaceDrawEntry drawEntry(
+    const QImage &image, const QRectF &targetRect, const QRectF &textureRect, int rotationDegrees)
 {
     return KiriView::ImageSurfaceDrawEntry {
         image,
         targetRect,
-        QRectF(0.0, 0.0, 1.0, 1.0),
+        textureRect,
+        KiriView::imageTextureCoordinateTransform(textureRect, rotationDegrees),
     };
 }
 
-QRectF tileTargetRect(const QRect &sourceRect, const QSize &imageSize, const QRectF &targetRect)
+KiriView::ImageSurfaceDrawEntry fullImageDrawEntry(
+    const QImage &image, const QRectF &targetRect, int rotationDegrees)
 {
+    return drawEntry(image, targetRect, QRectF(0.0, 0.0, 1.0, 1.0), rotationDegrees);
+}
+
+QRectF tileTargetRect(
+    const QRect &sourceRect, const QSize &imageSize, const QRectF &targetRect, int rotationDegrees)
+{
+    if (KiriView::normalizedImageRotationDegrees(rotationDegrees) != 0) {
+        return KiriView::rotatedSourceRectInTarget(
+            QRectF(sourceRect), QSizeF(imageSize), targetRect, rotationDegrees);
+    }
+
     return KiriView::Bridge::qtRectF(KiriView::rustImageTileTargetRect(
         KiriView::Bridge::rustRect<KiriView::RustImageRenderRect>(sourceRect),
         KiriView::Bridge::rustSize<KiriView::RustImageRenderSize>(imageSize),
@@ -42,7 +57,7 @@ QRectF tileTextureRect(const KiriView::DecodedTile &tile)
 
 std::optional<KiriView::ImageSurfaceDrawEntry> staticTileDrawEntry(
     const KiriView::StaticTileSurface &surface, const KiriView::DecodedTile &tile,
-    const QRectF &targetRect)
+    const QRectF &targetRect, int rotationDegrees)
 {
     const QSize imageSize = surface.imageSize();
     if (imageSize.isEmpty() || tile.textureLevelRect.isEmpty() || tile.image.isNull()) {
@@ -55,32 +70,30 @@ std::optional<KiriView::ImageSurfaceDrawEntry> staticTileDrawEntry(
         return std::nullopt;
     }
 
-    return KiriView::ImageSurfaceDrawEntry {
-        tile.image,
-        tileTargetRect(sourceRect, imageSize, targetRect),
-        tileTextureRect(tile),
-    };
+    const QRectF textureRect = tileTextureRect(tile);
+    return drawEntry(tile.image, tileTargetRect(sourceRect, imageSize, targetRect, rotationDegrees),
+        textureRect, rotationDegrees);
 }
 
 void appendLegacySurfaceDrawEntries(std::vector<KiriView::ImageSurfaceDrawEntry> *entries,
-    const KiriView::LegacyFrameSurface &surface, const QRectF &targetRect)
+    const KiriView::LegacyFrameSurface &surface, const QRectF &targetRect, int rotationDegrees)
 {
     if (!surface.image.isNull()) {
-        entries->push_back(fullImageDrawEntry(surface.image, targetRect));
+        entries->push_back(fullImageDrawEntry(surface.image, targetRect, rotationDegrees));
     }
 }
 
 void appendStaticSurfaceDrawEntries(std::vector<KiriView::ImageSurfaceDrawEntry> *entries,
-    const KiriView::StaticTileSurface &surface, const QRectF &targetRect)
+    const KiriView::StaticTileSurface &surface, const QRectF &targetRect, int rotationDegrees)
 {
     if (!surface.isValid()) {
         return;
     }
 
-    entries->push_back(fullImageDrawEntry(surface.preview(), targetRect));
+    entries->push_back(fullImageDrawEntry(surface.preview(), targetRect, rotationDegrees));
     for (const KiriView::DecodedTile &tile : surface.tiles()) {
         std::optional<KiriView::ImageSurfaceDrawEntry> entry
-            = staticTileDrawEntry(surface, tile, targetRect);
+            = staticTileDrawEntry(surface, tile, targetRect, rotationDegrees);
         if (entry.has_value()) {
             entries->push_back(std::move(*entry));
         }
@@ -116,7 +129,7 @@ qreal imagePixelsPerSourcePixel(const QSize &imageSize, const QSize &displaySize
 }
 
 std::vector<ImageSurfaceDrawEntry> imageSurfaceDrawEntries(
-    const DisplayedImageSurface &surface, const QRectF &targetRect)
+    const DisplayedImageSurface &surface, const QRectF &targetRect, int rotationDegrees)
 {
     std::vector<ImageSurfaceDrawEntry> entries;
     if (targetRect.isEmpty()) {
@@ -124,9 +137,9 @@ std::vector<ImageSurfaceDrawEntry> imageSurfaceDrawEntries(
     }
 
     if (const auto *legacySurface = surface.legacyFrameSurface()) {
-        appendLegacySurfaceDrawEntries(&entries, *legacySurface, targetRect);
+        appendLegacySurfaceDrawEntries(&entries, *legacySurface, targetRect, rotationDegrees);
     } else if (const auto *staticSurface = surface.staticTileSurface()) {
-        appendStaticSurfaceDrawEntries(&entries, *staticSurface, targetRect);
+        appendStaticSurfaceDrawEntries(&entries, *staticSurface, targetRect, rotationDegrees);
     }
     return entries;
 }

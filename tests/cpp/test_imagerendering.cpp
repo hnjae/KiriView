@@ -6,6 +6,7 @@
 #include "image_test_support.h"
 
 #include <QObject>
+#include <QPointF>
 #include <QRectF>
 #include <QTest>
 #include <limits>
@@ -24,6 +25,8 @@ private Q_SLOTS:
     void renderContextNormalizationUsesSafeDefaults();
     void firstDisplayDecodeContextUsesPhysicalViewport();
     void staticSurfaceDrawEntriesKeepPreviewAndTileRectsSeparate();
+    void rotatedFullImageDrawEntriesRotateTextureCoordinates();
+    void rotatedStaticTileDrawEntriesMapSourceRects();
 };
 
 void TestImageRendering::scaledImageSizeToFitKeepsAspectRatioWithoutUpscaling()
@@ -113,6 +116,71 @@ void TestImageRendering::staticSurfaceDrawEntriesKeepPreviewAndTileRectsSeparate
     QCOMPARE(entries[1].textureRect.y(), 0.0);
     QVERIFY(qFuzzyCompare(entries[1].textureRect.width(), 512.0 / 513.0));
     QVERIFY(qFuzzyCompare(entries[1].textureRect.height(), 512.0 / 513.0));
+}
+
+void TestImageRendering::rotatedFullImageDrawEntriesRotateTextureCoordinates()
+{
+    const KiriView::DisplayedImageSurface surface(
+        KiriView::LegacyFrameSurface { KiriView::TestSupport::testImage(100, 200) });
+    const QRectF targetRect(10.0, 20.0, 200.0, 100.0);
+
+    const std::vector<KiriView::ImageSurfaceDrawEntry> clockwiseEntries
+        = KiriView::imageSurfaceDrawEntries(surface, targetRect, 90);
+    QCOMPARE(clockwiseEntries.size(), std::size_t(1));
+    QCOMPARE(clockwiseEntries[0].targetRect, targetRect);
+    QCOMPARE(clockwiseEntries[0].textureTransform.origin, QPointF(0.0, 1.0));
+    QCOMPARE(clockwiseEntries[0].textureTransform.xAxis, QPointF(0.0, -1.0));
+    QCOMPARE(clockwiseEntries[0].textureTransform.yAxis, QPointF(1.0, 0.0));
+
+    const std::vector<KiriView::ImageSurfaceDrawEntry> upsideDownEntries
+        = KiriView::imageSurfaceDrawEntries(surface, targetRect, 180);
+    QCOMPARE(upsideDownEntries[0].textureTransform.origin, QPointF(1.0, 1.0));
+    QCOMPARE(upsideDownEntries[0].textureTransform.xAxis, QPointF(-1.0, 0.0));
+    QCOMPARE(upsideDownEntries[0].textureTransform.yAxis, QPointF(0.0, -1.0));
+
+    const std::vector<KiriView::ImageSurfaceDrawEntry> counterclockwiseEntries
+        = KiriView::imageSurfaceDrawEntries(surface, targetRect, 270);
+    QCOMPARE(counterclockwiseEntries[0].textureTransform.origin, QPointF(1.0, 0.0));
+    QCOMPARE(counterclockwiseEntries[0].textureTransform.xAxis, QPointF(0.0, 1.0));
+    QCOMPARE(counterclockwiseEntries[0].textureTransform.yAxis, QPointF(-1.0, 0.0));
+}
+
+void TestImageRendering::rotatedStaticTileDrawEntriesMapSourceRects()
+{
+    const QImage sourceImage = KiriView::TestSupport::testImage(1000, 500);
+    KiriView::StaticTileSurface surface(KiriView::TestSupport::staticTestImagePayload(
+        sourceImage, KiriView::TestSupport::testImage(250, 125)));
+    QVERIFY(surface.insertTile(KiriView::DecodedTile {
+        KiriView::TileKey { 0, 0, 0 },
+        QSize(1000, 500),
+        QRect(250, 100, 500, 200),
+        QRect(249, 99, 502, 202),
+        KiriView::TestSupport::testImage(502, 202),
+    }));
+
+    const KiriView::DisplayedImageSurface displayedSurface(std::move(surface));
+
+    const std::vector<KiriView::ImageSurfaceDrawEntry> clockwiseEntries
+        = KiriView::imageSurfaceDrawEntries(
+            displayedSurface, QRectF(10.0, 20.0, 500.0, 1000.0), 90);
+    QCOMPARE(clockwiseEntries.size(), std::size_t(2));
+    QCOMPARE(clockwiseEntries[1].targetRect, QRectF(210.0, 270.0, 200.0, 500.0));
+    QVERIFY(clockwiseEntries[1].textureTransform.xAxis.y() < 0.0);
+    QVERIFY(clockwiseEntries[1].textureTransform.yAxis.x() > 0.0);
+
+    const std::vector<KiriView::ImageSurfaceDrawEntry> upsideDownEntries
+        = KiriView::imageSurfaceDrawEntries(
+            displayedSurface, QRectF(10.0, 20.0, 1000.0, 500.0), 180);
+    QCOMPARE(upsideDownEntries[1].targetRect, QRectF(260.0, 220.0, 500.0, 200.0));
+    QVERIFY(upsideDownEntries[1].textureTransform.xAxis.x() < 0.0);
+    QVERIFY(upsideDownEntries[1].textureTransform.yAxis.y() < 0.0);
+
+    const std::vector<KiriView::ImageSurfaceDrawEntry> counterclockwiseEntries
+        = KiriView::imageSurfaceDrawEntries(
+            displayedSurface, QRectF(10.0, 20.0, 500.0, 1000.0), 270);
+    QCOMPARE(counterclockwiseEntries[1].targetRect, QRectF(110.0, 270.0, 200.0, 500.0));
+    QVERIFY(counterclockwiseEntries[1].textureTransform.xAxis.y() > 0.0);
+    QVERIFY(counterclockwiseEntries[1].textureTransform.yAxis.x() < 0.0);
 }
 
 QTEST_GUILESS_MAIN(TestImageRendering)
