@@ -89,6 +89,10 @@ StatefulApp.StatefulWindow {
         imageViewport.forceActiveFocus();
     }
 
+    function openApplicationMenu() {
+        return root.activeImageToolBar().openApplicationMenu();
+    }
+
     function toolbarTextInputFocused() {
         return activeImageToolBar().textInputFocused();
     }
@@ -122,6 +126,14 @@ StatefulApp.StatefulWindow {
         sequence: "Esc"
 
         onActivated: root.toggleFullScreen()
+    }
+
+    Shortcut {
+        context: Qt.WindowShortcut
+        enabled: !root.menuBarMode && !root.fullscreen && !root.helpDialogOpen
+        sequence: "F10"
+
+        onActivated: root.openApplicationMenu()
     }
 
     Timer {

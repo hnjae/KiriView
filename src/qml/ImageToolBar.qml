@@ -56,6 +56,40 @@ Controls.ToolBar {
         return true;
     }
 
+    function findActionButton(item, action) {
+        if (!item || !("children" in item)) {
+            return null;
+        }
+
+        for (const child of item.children) {
+            if ("action" in child && child.action === action && child.visible) {
+                return child;
+            }
+
+            const nestedButton = findActionButton(child, action);
+            if (nestedButton) {
+                return nestedButton;
+            }
+        }
+
+        return null;
+    }
+
+    function openApplicationMenu() {
+        if (!showApplicationMenuActions || applicationMenuActions.length <= 0) {
+            return false;
+        }
+
+        const menuButton = findActionButton(actionToolBar, applicationMenuAction);
+        if (menuButton) {
+            applicationMenuPopup.popup(menuButton, 0, menuButton.height);
+            return true;
+        }
+
+        applicationMenuPopup.popup(actionToolBar, Math.max(0, actionToolBar.width - applicationMenuPopup.implicitWidth), actionToolBar.height);
+        return true;
+    }
+
     function resetPageNumberText() {
         pageNumberResetRequested();
     }
@@ -157,6 +191,45 @@ Controls.ToolBar {
         icon.name: "open-menu-symbolic"
         text: KI18n.i18nc("@action", "Application Menu")
         tooltip: KI18n.i18nc("@info:tooltip", "Open menu")
+    }
+
+    Controls.Menu {
+        id: applicationMenuPopup
+
+        Instantiator {
+            model: root.applicationMenuActions
+
+            delegate: QtObject {
+                required property var modelData
+
+                property var item: null
+
+                Component.onCompleted: {
+                    const action = modelData;
+                    item = action.separator ? applicationMenuSeparatorComponent.createObject(applicationMenuPopup) : applicationMenuItemComponent.createObject(applicationMenuPopup, {
+                        "action": action
+                    });
+                    applicationMenuPopup.addItem(item);
+                }
+
+                Component.onDestruction: {
+                    applicationMenuPopup.removeItem(item);
+                    item.destroy();
+                }
+            }
+        }
+    }
+
+    Component {
+        id: applicationMenuItemComponent
+
+        MenuActionItem {}
+    }
+
+    Component {
+        id: applicationMenuSeparatorComponent
+
+        Controls.MenuSeparator {}
     }
 
     contentItem: RowLayout {
