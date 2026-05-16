@@ -489,10 +489,11 @@ When users move quickly through pages, KiriView may briefly postpone background
 preparation and then prepare pages around the page where navigation settles,
 rather than preparing every skipped page. Directly opened archive and directory
 documents may prepare more pages in the current reading direction than ordinary
-image navigation. When the desktop Power Saver mode is enabled, KiriView stops
-background adjacent-page preparation and keeps only the pages needed for the
-current display. Foreground image loading and visible image-detail decoding
-continue to work while Power Saver mode is enabled.
+image navigation. When the desktop Power Saver mode is enabled, KiriView does
+not newly schedule or run background adjacent-page preparation. Power Saver mode
+does not prevent recently displayed decoded images from staying available when
+the cache policy retains them. Foreground image loading and visible image-detail
+decoding continue to work while Power Saver mode is enabled.
 
 ## Archive Navigation
 
