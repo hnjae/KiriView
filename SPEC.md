@@ -46,11 +46,10 @@ with configured shortcuts remain available through those shortcuts.
 The menubar and toolbar application menu keep each QAction's identity, text,
 shortcut, and enabled state unchanged while projecting adjacent navigation
 actions in reading progression order. When Right-to-Left Reading is active, the
-adjacent page navigation pair is displayed as Next before Previous, the adjacent
-single-page navigation pair is displayed as Next Page before Previous Page, and
-the adjacent archive navigation pair is displayed as Next Archive before
-Previous Archive. First Image and Last Image keep their normal order because
-their page-index meaning does not change with reading direction.
+adjacent page navigation pair is displayed as Next before Previous, and the
+adjacent archive navigation pair is displayed as Next Archive before Previous
+Archive. First Image and Last Image keep their normal order because their
+page-index meaning does not change with reading direction.
 The toolbar application menu is a single popup menu surface: activating the
 toolbar application menu button and pressing F10 open the same menu instance
 with the same width, actions, access keys, and shortcut column. Activating the
@@ -304,12 +303,11 @@ When Two-Page Spread shows two pages, zooming and panning operate on the combine
 two-page spread as one virtual image. Fit, Fit Height, Fit Width, manual zoom,
 scrollbars, drag panning, wheel zoom, keyboard panning, and scan shortcuts use
 the full spread bounds. The spread has no added page gap. The page number,
-window title, deletion target, archive navigation position, and Ctrl+N/Ctrl+P
-single-page navigation continue to refer to the primary/current page. In
-Left-to-Right Reading mode, the primary/current page is rendered on the left and
-the next page is rendered on the right. In Right-to-Left Reading mode, the
-primary/current page is rendered on the right and the next page is rendered on
-the left.
+window title, deletion target, archive navigation position, and one-page
+movement start from the primary/current page. In Left-to-Right Reading mode,
+the primary/current page is rendered on the left and the next page is rendered
+on the right. In Right-to-Left Reading mode, the primary/current page is
+rendered on the right and the next page is rendered on the left.
 When navigation in Two-Page Spread targets another eligible two-page spread,
 KiriView shows the loading state instead of leaving the previous spread visible
 or showing only the left target page. The target spread appears only after both
@@ -495,15 +493,19 @@ ordinary Previous and Next image navigation move by the currently displayed
 spread rather than always by one page. If two pages are visible, Next opens the
 page after the right page; if only one page is visible, Next opens the next
 page. Previous opens the previous eligible spread, falling back to the
-immediately previous page when that page is the cover or a wide page. Ctrl+N and
-Ctrl+P move forward or backward by exactly one page and are available while an
-image is ready. While the page number or zoom input is not focused, KiriView
-also accepts the runtime-only aliases `n` and `p` for single-page navigation.
-When a Two-Page Spread navigation target is loading and the supported image list
-is known, additional Previous, Next, Ctrl+N, or Ctrl+P navigation is calculated
-from the pending primary page selection. KiriView moves by one primary page
-selection at a time while loading; the final single-page or two-page spread
-pairing is decided after the selected primary page has loaded.
+immediately previous page when that page is the cover or a wide page. Shift+Left
+and Shift+Right are fixed viewer-only shortcuts for moving by exactly one page
+while an image is ready. Their direction is physical: in Left-to-Right Reading
+mode, Shift+Left opens the previous page and Shift+Right opens the next page; in
+Right-to-Left Reading mode, Shift+Left opens the next page and Shift+Right opens
+the previous page. These fixed shortcuts are inactive while the page number or
+zoom input is focused or Keyboard Shortcuts help is open, and are not
+user-configurable actions. When a Two-Page Spread navigation target is loading
+and the supported image list is known, additional Previous, Next, Shift+Left, or
+Shift+Right navigation is calculated from the pending primary page selection.
+KiriView moves by one primary page selection at a time while loading; the final
+single-page or two-page spread pairing is decided after the selected primary page
+has loaded.
 
 After an image is displayed, KiriView may make adjacent images available for
 quicker Previous or Next navigation, so the switch can happen without showing a
