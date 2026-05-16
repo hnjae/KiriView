@@ -8,6 +8,7 @@
 #include <KConfigGroup>
 #include <KSharedConfig>
 #include <KirigamiActionCollection>
+#include <QAbstractItemModel>
 #include <QAction>
 #include <QApplication>
 #include <QByteArray>
@@ -23,6 +24,10 @@ namespace Actions = KiriView::ApplicationActions;
 constexpr const char *interfaceConfigGroup = "Interface";
 constexpr const char *menuPresentationConfigKey = "menuPresentation";
 constexpr const char *stateConfigFileName = "kiriviewstaterc";
+constexpr int shortcutHelpActionIdRole = Qt::UserRole + 1;
+constexpr int shortcutHelpActionNameRole = Qt::UserRole + 2;
+constexpr int shortcutHelpActionTextRole = Qt::UserRole + 3;
+constexpr int shortcutHelpShortcutTextRole = Qt::UserRole + 4;
 
 QKeySequence shortcut(const QString &sequence)
 {
@@ -71,6 +76,22 @@ void expectDefaultShortcuts(KiriViewApplication &application, const QString &act
     QCOMPARE(KirigamiActionCollection::defaultShortcuts(action), shortcuts);
     QCOMPARE(action->shortcuts(), shortcuts);
 }
+
+QModelIndex shortcutHelpIndexForAction(QAbstractItemModel *model, const QString &actionName)
+{
+    if (model == nullptr) {
+        return {};
+    }
+
+    for (int row = 0; row < model->rowCount(); ++row) {
+        const QModelIndex index = model->index(row, 0);
+        if (model->data(index, shortcutHelpActionNameRole).toString() == actionName) {
+            return index;
+        }
+    }
+
+    return {};
+}
 }
 
 class TestKiriViewApplication : public QObject
@@ -89,6 +110,8 @@ private Q_SLOTS:
     void shortcutAliasesDeriveFromCtrlShortcuts();
     void menuShortcutTextReturnsFirstDisplaySafeShortcut();
     void showMenubarActionHasNoConfigurableShortcuts();
+    void shortcutHelpModelListsConfigurableActions();
+    void shortcutHelpModelUpdatesShortcutText();
     void menuPresentationDefaultsToHamburgerMenu();
     void invalidStoredMenuPresentationFallsBackToHamburgerMenu();
     void menuPresentationPersists();
@@ -346,6 +369,54 @@ void TestKiriViewApplication::showMenubarActionHasNoConfigurableShortcuts()
     QCOMPARE(KirigamiActionCollection::defaultShortcuts(showMenubarAction), QList<QKeySequence>());
     QCOMPARE(showMenubarAction->shortcuts(), QList<QKeySequence>());
     QVERIFY(!KirigamiActionCollection::isShortcutsConfigurable(showMenubarAction));
+}
+
+void TestKiriViewApplication::shortcutHelpModelListsConfigurableActions()
+{
+    KiriViewApplication application;
+
+    QAbstractItemModel *model = application.shortcutHelpModel();
+    QVERIFY(model != nullptr);
+
+    const QModelIndex moveToTrashIndex
+        = shortcutHelpIndexForAction(model, QStringLiteral("movetotrash"));
+    QVERIFY(moveToTrashIndex.isValid());
+    QCOMPARE(model->data(moveToTrashIndex, shortcutHelpActionIdRole).toInt(),
+        static_cast<int>(KiriViewApplication::FileMoveToTrashAction));
+    QCOMPARE(model->data(moveToTrashIndex, shortcutHelpActionTextRole).toString(),
+        QStringLiteral("Move to Trash"));
+    QCOMPARE(model->data(moveToTrashIndex, shortcutHelpShortcutTextRole).toString(),
+        nativeText(shortcut(QStringLiteral("Delete"))));
+
+    const QModelIndex deleteIndex = shortcutHelpIndexForAction(model, QStringLiteral("deletefile"));
+    QVERIFY(deleteIndex.isValid());
+    QCOMPARE(model->data(deleteIndex, shortcutHelpActionTextRole).toString(),
+        QStringLiteral("Delete Permanently"));
+
+    QVERIFY(!shortcutHelpIndexForAction(model, QStringLiteral("options_show_menubar")).isValid());
+}
+
+void TestKiriViewApplication::shortcutHelpModelUpdatesShortcutText()
+{
+    KiriViewApplication application;
+
+    QAbstractItemModel *model = application.shortcutHelpModel();
+    QVERIFY(model != nullptr);
+    const QModelIndex rotateIndex
+        = shortcutHelpIndexForAction(model, QStringLiteral("view_rotate_clockwise"));
+    QVERIFY(rotateIndex.isValid());
+    QCOMPARE(model->data(rotateIndex, shortcutHelpShortcutTextRole).toString(),
+        nativeText(shortcut(QStringLiteral("Ctrl+R"))));
+
+    QSignalSpy dataChangedSpy(model, &QAbstractItemModel::dataChanged);
+    QAction *rotateAction = application.action(QStringLiteral("view_rotate_clockwise"));
+    QVERIFY(rotateAction != nullptr);
+
+    rotateAction->setShortcuts({ shortcut(QStringLiteral("Alt+R")) });
+
+    QTRY_VERIFY(!dataChangedSpy.isEmpty());
+    QCOMPARE(model->data(rotateIndex, shortcutHelpShortcutTextRole).toString(),
+        nativeText(shortcut(QStringLiteral("Alt+R"))));
 }
 
 void TestKiriViewApplication::menuPresentationDefaultsToHamburgerMenu()

@@ -12,9 +12,11 @@
 #include <QPoint>
 #include <QQmlComponent>
 #include <QQmlEngine>
+#include <QQuickItem>
 #include <QQuickView>
 #include <QStandardPaths>
 #include <QString>
+#include <QStringList>
 #include <QTest>
 #include <QUrl>
 #include <QVariant>
@@ -32,6 +34,7 @@ private Q_SLOTS:
     void escapeClosesDialog();
     void enterAcceptsAndClosesDialog();
     void outsideClickClosesDialog();
+    void listsConfigurableActionShortcuts();
 };
 
 namespace {
@@ -183,6 +186,28 @@ void openDialog(ShortcutHelpDialogFixture &fixture)
     QVERIFY(invokeRoot(fixture.root, "openDialog"));
     QTRY_VERIFY(dialogOpened(fixture.root));
 }
+
+void collectChildTexts(QQuickItem *root, const QString &objectName, QStringList &texts)
+{
+    if (root == nullptr) {
+        return;
+    }
+
+    if (root->objectName() == objectName) {
+        texts.push_back(root->property("text").toString());
+    }
+
+    for (QQuickItem *child : root->childItems()) {
+        collectChildTexts(child, objectName, texts);
+    }
+}
+
+QStringList childTexts(QQuickItem *root, const QString &objectName)
+{
+    QStringList texts;
+    collectChildTexts(root, objectName, texts);
+    return texts;
+}
 }
 
 void TestShortcutHelpDialog::initTestCase()
@@ -234,6 +259,28 @@ void TestShortcutHelpDialog::outsideClickClosesDialog()
 
     QTRY_VERIFY(!dialogOpened(fixture.root));
     QTRY_COMPARE(intProperty(fixture.root, "closedCount"), 1);
+}
+
+void TestShortcutHelpDialog::listsConfigurableActionShortcuts()
+{
+    ShortcutHelpDialogFixture fixture = createFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    openDialog(fixture);
+
+    const QStringList shortcutTexts
+        = childTexts(fixture.view->contentItem(), QStringLiteral("shortcutTextLabel"));
+    const QStringList actionTexts
+        = childTexts(fixture.view->contentItem(), QStringLiteral("shortcutActionLabel"));
+    const QString actionTextDebug = actionTexts.join(QLatin1String(" | "));
+    QVERIFY2(actionTexts.contains(QStringLiteral("Move to Trash")), qPrintable(actionTextDebug));
+    QVERIFY2(
+        actionTexts.contains(QStringLiteral("Delete Permanently")), qPrintable(actionTextDebug));
+
+    const QString allRowText = (shortcutTexts + actionTexts).join(QLatin1Char('\n'));
+    QVERIFY(!allRowText.contains(QStringLiteral("Ctrl+wheel")));
+    QVERIFY(!allRowText.contains(QStringLiteral("Shift+wheel")));
+    QVERIFY(!allRowText.contains(QStringLiteral("Drag")));
+    QVERIFY(!allRowText.contains(QStringLiteral("Esc")));
 }
 
 QTEST_MAIN(TestShortcutHelpDialog)

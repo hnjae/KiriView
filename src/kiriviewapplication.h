@@ -7,6 +7,7 @@
 #include <AbstractKirigamiApplication>
 #include <KStandardActions>
 
+#include <QAbstractListModel>
 #include <QAction>
 #include <QKeySequence>
 #include <QList>
@@ -21,6 +22,7 @@ class KiriViewApplication : public AbstractKirigamiApplication
     Q_PROPERTY(MenuPresentation menuPresentation READ menuPresentation WRITE setMenuPresentation
             NOTIFY menuPresentationChanged)
     Q_PROPERTY(int shortcutRevision READ shortcutRevision NOTIFY shortcutRevisionChanged)
+    Q_PROPERTY(QAbstractListModel *shortcutHelpModel READ shortcutHelpModel CONSTANT)
 
 public:
     enum MenuPresentation {
@@ -74,6 +76,7 @@ public:
     MenuPresentation menuPresentation() const;
     void setMenuPresentation(MenuPresentation presentation);
     int shortcutRevision() const;
+    QAbstractListModel *shortcutHelpModel() const;
 
     Q_INVOKABLE QAction *action(const QString &actionName);
     Q_INVOKABLE QAction *actionForId(KiriViewApplication::ActionId actionId);
@@ -117,6 +120,7 @@ private:
     void updateShowMenuBarAction();
 
     QAction *m_showMenuBarAction = nullptr;
+    QAbstractListModel *m_shortcutHelpModel = nullptr;
     int m_shortcutRevision = 0;
     bool m_sanitizingShortcuts = false;
 };
