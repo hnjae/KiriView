@@ -12,8 +12,61 @@
 
 namespace KiriView {
 class ImageDocumentState;
+class ImageSpreadPresentationController;
+struct ImageDocumentSourceLoadRequest;
+
+enum class ImageDocumentSourceLoadKind {
+    CurrentSource,
+    ReplacementSource,
+};
+
+enum class ImageDocumentRightToLeftReadingReset {
+    Keep,
+    ResetInactive,
+    ResetActive,
+};
+
+enum class ImageDocumentRightToLeftReadingTransition {
+    Keep,
+    Reset,
+    ResetAndNotifyBeforeSourceState,
+    ResetAndNotifyAfterOpen,
+};
+
+enum class ImageDocumentSourceLoadUrlTarget {
+    Unchanged,
+    Empty,
+    RequestedContainerNavigation,
+    RequestedSource,
+};
+
+struct ImageDocumentSourceLoadPolicyInput {
+    ImageDocumentSourceLoadKind loadKind = ImageDocumentSourceLoadKind::CurrentSource;
+    bool preserveTwoPageSpreadTransition = false;
+    ImageDocumentRightToLeftReadingReset rightToLeftReadingReset
+        = ImageDocumentRightToLeftReadingReset::Keep;
+    bool hasRequestedContainerNavigationUrl = false;
+};
+
+struct ImageDocumentSourceLoadPlan {
+    bool cancelNavigationAndPredecode = false;
+    bool finishSpreadTransition = false;
+    ImageDocumentRightToLeftReadingTransition rightToLeftReadingTransition
+        = ImageDocumentRightToLeftReadingTransition::Keep;
+    bool clearSecondaryPage = false;
+    ImageDocumentSourceLoadUrlTarget loadingContainerNavigationUrl
+        = ImageDocumentSourceLoadUrlTarget::Unchanged;
+    ImageDocumentSourceLoadUrlTarget containerNavigationUrl
+        = ImageDocumentSourceLoadUrlTarget::Unchanged;
+    ImageDocumentSourceLoadUrlTarget sourceUrl = ImageDocumentSourceLoadUrlTarget::Unchanged;
+    bool beginOpen = false;
+};
 
 namespace ImageOpenWorkflow {
+    ImageDocumentSourceLoadPlan sourceLoadPlan(const ImageDocumentSourceLoadPolicyInput &input);
+    ImageDocumentSourceLoadPlan sourceLoadPlan(const ImageDocumentState &state,
+        const ImageSpreadPresentationController &spreadController,
+        const ImageDocumentSourceLoadRequest &request);
     ImageDocumentEffects beginSourceLoad(ImageDocumentState &state, bool hasImage);
     ImageDocumentEffects finishEmptySourceLoad(ImageDocumentState &state);
     ImageDocumentEffects finishSuccessfulImageLoad(

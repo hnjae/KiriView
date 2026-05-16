@@ -5,11 +5,11 @@
 
 #include "archivedocumentsessionstore.h"
 #include "imagedocumentdeletioncontroller.h"
-#include "imagedocumentloadpolicy.h"
 #include "imagedocumentnavigationcontroller.h"
 #include "imagedocumentpredecodecontroller.h"
 #include "imagedocumentstate.h"
 #include "imageopencontroller.h"
+#include "imageopenworkflow.h"
 #include "imagespreadpresentationcontroller.h"
 
 namespace {
@@ -44,7 +44,7 @@ void ImageDocumentLoadController::loadSource(const ImageDocumentSourceLoadReques
     m_deletionController.cancel();
 
     const ImageDocumentSourceLoadPlan plan
-        = ImageDocumentLoadPolicy::sourceLoadPlan(m_state, m_spreadController, request);
+        = ImageOpenWorkflow::sourceLoadPlan(m_state, m_spreadController, request);
     applySourceLoadPlan(request, plan);
 }
 
