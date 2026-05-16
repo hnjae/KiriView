@@ -13,7 +13,6 @@ Kirigami.Action {
     property bool enabledOverride: sourceAction && sourceAction.enabled
     property string displayShortcutText: ""
     property string menuShortcutText: ""
-    property var shortcutOverride: ""
     property string textOverride: ""
     property var tooltipOverride
 
@@ -33,7 +32,7 @@ Kirigami.Action {
     checked: checkable && checkedOverride
     enabled: sourceAction && enabledOverride
     fromQAction: sourceAction
-    shortcut: shortcutOverride
+    shortcut: ""
     text: textOverride.length > 0 ? textOverride : sourceAction?.text ?? ""
     tooltip: tooltipOverride === undefined ? tooltipText() : tooltipOverride
 

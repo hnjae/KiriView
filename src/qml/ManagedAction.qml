@@ -21,10 +21,6 @@ Item {
     property string fixedShortcutText: ""
     property string menuText: ""
     readonly property int shortcutRevision: application.shortcutRevision
-    readonly property var menuShortcut: {
-        root.shortcutRevision;
-        return root.application.menuShortcutForId(root.actionId);
-    }
     readonly property string menuShortcutText: {
         root.shortcutRevision;
         return root.application.menuShortcutTextForId(root.actionId);
@@ -50,7 +46,6 @@ Item {
         displayHint: root.displayHint
         enabledOverride: root.proxyEnabled
         menuShortcutText: root.menuDisplayShortcutText
-        shortcutOverride: root.menuShortcut
         sourceAction: root.sourceAction
         textOverride: root.menuDisplayText
         tooltipOverride: ""
