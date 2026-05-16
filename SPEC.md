@@ -256,7 +256,13 @@ The toolbar provides a zoom percentage input. When an image is ready, users can
 enter manual zoom values from 10% through the maximum percentage that keeps the
 long edge of the displayed image within the larger of 65,536 logical pixels or
 eight times the viewport long edge. The maximum manual zoom is never lower than
-the normal Fit zoom percentage. Editing the zoom input switches to manual zoom.
+the normal Fit zoom percentage. Pressing Enter or clicking the image viewing
+area while editing the zoom input applies the nearest valid manual zoom value,
+returns focus to the image viewing area, and restores viewer keyboard shortcuts.
+Pressing Escape while editing the zoom input cancels the edit, restores the
+currently applied zoom percentage in the toolbar, returns focus to the image
+viewing area, and does not leave fullscreen. Editing the zoom input switches to
+manual zoom.
 A fit menu provides Fit, Fit Height, and Fit Width actions and shows the
 selected fit mode. The fit action returns the image to Fit mode.
 
@@ -310,9 +316,13 @@ Next action is disabled on the last image. Page numbers are shown to users
 starting at 1. When a new directory or archive scope is being listed and
 KiriView has no confirmed candidate list for that same scope yet, the current
 page number and total image count are unknown, and KiriView does not treat the
-current image as the first or last image. Entering a valid page number opens
-that image; entering an invalid number leaves the current image open and
-restores the displayed page number.
+current image as the first or last image. Entering a page number and pressing
+Enter or clicking the image viewing area opens the nearest valid page, returns
+focus to the image viewing area, and restores viewer keyboard shortcuts. If the
+entered text cannot be parsed as a number, KiriView leaves the current image
+open and restores the displayed page number. Pressing Escape while editing the
+page number cancels the edit, restores the displayed page number, returns focus
+to the image viewing area, and does not leave fullscreen.
 When KiriView has a confirmed candidate list for the current image scope,
 Previous, Next, First, Last, and page number entry remain available while a
 selected image is still loading. During that loading interval, the page number
@@ -486,11 +496,12 @@ Ctrl+M toggles the application menu presentation between Hamburger Menu and
 Menubar. This shortcut is fixed, is not user-configurable, and is not listed in
 keyboard shortcut configuration or shortcut help.
 
-Escape leaves fullscreen when the main window is fullscreen. Outside fullscreen,
-Escape does not close the main window. The `q` and Ctrl+Q shortcuts close the
-main window. Unmodified quit shortcuts such as `q` are inactive while the page
-number or zoom input is focused; quit shortcuts using Ctrl, Alt, or Meta remain
-active while those inputs are focused.
+Escape first cancels an active page number or zoom input edit. When no toolbar
+input is focused, Escape leaves fullscreen if the main window is fullscreen.
+Outside fullscreen, Escape does not close the main window. The `q` and Ctrl+Q
+shortcuts close the main window. Unmodified quit shortcuts such as `q` are
+inactive while the page number or zoom input is focused; quit shortcuts using
+Ctrl, Alt, or Meta remain active while those inputs are focused.
 
 Users can open Keyboard Shortcuts configuration to configure KiriView's keyboard
 shortcuts. Changing a shortcut updates the toolbar, application menu, menubar,
