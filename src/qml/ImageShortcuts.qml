@@ -51,6 +51,7 @@ Item {
     readonly property var panBottomRightQAction: root.application.actionForId(KiriViewApplication.ViewPanBottomRightAction)
     readonly property var scanForwardQAction: root.application.actionForId(KiriViewApplication.ViewScanForwardAction)
     readonly property var scanBackwardQAction: root.application.actionForId(KiriViewApplication.ViewScanBackwardAction)
+    readonly property var showMenubarQAction: root.application.actionForId(KiriViewApplication.OptionsShowMenubarAction)
 
     signal imageBoundaryReached(string message)
 
@@ -141,15 +142,6 @@ Item {
 
     function textInputFocused() {
         return imageToolBar.textInputFocused();
-    }
-
-    function toggleMenuPresentation() {
-        if (root.application.menuPresentation === KiriViewApplication.MenuBar) {
-            root.application.menuPresentation = KiriViewApplication.HamburgerMenu;
-            return;
-        }
-
-        root.application.menuPresentation = KiriViewApplication.MenuBar;
     }
 
     function zoomByStep(stepCount, viewportX, viewportY) {
@@ -443,7 +435,7 @@ Item {
         enabled: root.helpShortcutsEnabled
         sequence: "Ctrl+M"
 
-        onActivated: root.toggleMenuPresentation()
+        onActivated: root.showMenubarQAction.trigger()
     }
 
     ActionTrigger {
