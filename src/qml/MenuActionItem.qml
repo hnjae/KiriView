@@ -9,10 +9,12 @@ import org.kde.kirigami as Kirigami
 Controls.MenuItem {
     id: root
 
+    property bool accessKeysActive: false
     readonly property bool menuHasCheckables: root.boolProperty(root.ListView.view, "hasCheckables")
     readonly property bool menuHasIcons: root.boolProperty(root.ListView.view, "hasIcons")
     readonly property string menuShortcutText: root.stringProperty(root.action, "menuShortcutText")
 
+    Kirigami.MnemonicData.active: root.accessKeysActive
     Kirigami.MnemonicData.controlType: Kirigami.MnemonicData.MenuItem
     Kirigami.MnemonicData.enabled: root.enabled && root.visible
     Kirigami.MnemonicData.label: root.text
@@ -28,6 +30,31 @@ Controls.MenuItem {
 
         const value = object[name];
         return typeof value === "string" ? value : "";
+    }
+
+    function escapedRichText(value) {
+        return String(value).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    }
+
+    function richMnemonicText(value, active) {
+        let result = "";
+        for (let index = 0; index < value.length; ++index) {
+            const character = value[index];
+            if (character !== "&" || index + 1 >= value.length) {
+                result += root.escapedRichText(character);
+                continue;
+            }
+
+            const mnemonic = value[index + 1];
+            if (mnemonic === "&") {
+                result += "&amp;";
+            } else {
+                const escapedMnemonic = root.escapedRichText(mnemonic);
+                result += active ? "<u>" + escapedMnemonic + "</u>" : escapedMnemonic;
+            }
+            ++index;
+        }
+        return result;
     }
 
     contentItem: RowLayout {
@@ -56,7 +83,7 @@ Controls.MenuItem {
             elide: Text.ElideRight
             font: root.font
             horizontalAlignment: Text.AlignLeft
-            text: root.Kirigami.MnemonicData.richTextLabel
+            text: root.richMnemonicText(root.text, root.accessKeysActive)
             textFormat: Text.RichText
             verticalAlignment: Text.AlignVCenter
             visible: root.text.length > 0

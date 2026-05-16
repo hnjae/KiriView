@@ -185,12 +185,13 @@ Controls.ToolBar {
     }
 
     readonly property Kirigami.Action applicationMenuAction: Kirigami.Action {
-        children: root.applicationMenuActions
         displayHint: Kirigami.DisplayHint.KeepVisible
         enabled: root.applicationMenuActions.length > 0
         icon.name: "open-menu-symbolic"
         text: KI18n.i18nc("@action", "Application Menu")
         tooltip: KI18n.i18nc("@info:tooltip", "Open menu") + " (F10)"
+
+        onTriggered: root.openApplicationMenu()
     }
 
     Controls.Menu {

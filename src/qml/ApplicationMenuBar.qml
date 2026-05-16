@@ -13,7 +13,13 @@ Controls.MenuBar {
     required property bool fullscreen
 
     Controls.Menu {
+        id: fileMenu
+
         title: KI18n.i18nc("@title:menu", "&File")
+
+        MenuAccessKeyRouter {
+            menu: fileMenu
+        }
 
         MenuActionItem {
             action: root.actions.openMenuAction
@@ -41,7 +47,13 @@ Controls.MenuBar {
     }
 
     Controls.Menu {
+        id: goMenu
+
         title: KI18n.i18nc("@title:menu", "&Go")
+
+        MenuAccessKeyRouter {
+            menu: goMenu
+        }
 
         MenuActionItem {
             action: root.actions.previousImageMenuAction
@@ -89,7 +101,13 @@ Controls.MenuBar {
     }
 
     Controls.Menu {
+        id: viewMenu
+
         title: KI18n.i18nc("@title:menu", "&View")
+
+        MenuAccessKeyRouter {
+            menu: viewMenu
+        }
 
         MenuActionItem {
             action: root.actions.zoomInMenuAction
@@ -104,7 +122,13 @@ Controls.MenuBar {
         Controls.MenuSeparator {}
 
         Controls.Menu {
+            id: fitMenu
+
             title: KI18n.i18nc("@title:menu", "&Fit")
+
+            MenuAccessKeyRouter {
+                menu: fitMenu
+            }
 
             MenuActionItem {
                 action: root.actions.fitMenuAction
@@ -172,7 +196,13 @@ Controls.MenuBar {
     }
 
     Controls.Menu {
+        id: settingsMenu
+
         title: KI18n.i18nc("@title:menu", "&Settings")
+
+        MenuAccessKeyRouter {
+            menu: settingsMenu
+        }
 
         MenuActionItem {
             action: root.actions.showMenubarMenuAction
@@ -188,7 +218,13 @@ Controls.MenuBar {
     }
 
     Controls.Menu {
+        id: helpMenu
+
         title: KI18n.i18nc("@title:menu", "&Help")
+
+        MenuAccessKeyRouter {
+            menu: helpMenu
+        }
 
         MenuActionItem {
             action: root.actions.shortcutHelpMenuAction

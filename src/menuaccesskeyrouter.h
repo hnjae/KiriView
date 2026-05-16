@@ -39,16 +39,23 @@ protected:
 private:
     bool handleKeyPress(QKeyEvent *event);
     bool handleKeyRelease(QKeyEvent *event);
+    bool handleShortcutOverride(QKeyEvent *event);
+    bool triggerMnemonic(QKeyEvent *event, QObject *menu);
     QObject *openMenu() const;
     void resetAltTracking();
 
     static bool isMenu(QObject *object);
     static bool isOpenMenu(QObject *object);
     static bool isEnabledMenuItem(QObject *object);
+    static bool isMnemonicKeyPress(const QKeyEvent &event);
     static bool isAltMnemonicKeyPress(const QKeyEvent &event);
     static QQuickItem *itemAt(QObject *menu, int index);
+    static QObject *subMenuForItem(QObject *item);
+    static QObject *deepestOpenMenu(QObject *menu);
     static QObject *menuItemForMnemonic(QObject *menu, const QKeyEvent &event);
     static bool itemMatchesMnemonic(QObject *item, const QKeyEvent &event);
+    static bool openSubMenu(QObject *subMenu, QObject *item);
+    static void setMenuAccessKeysActive(QObject *menu, bool active);
     static bool clickMenuItem(QObject *item);
 
     QPointer<QObject> m_menu;

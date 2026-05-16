@@ -323,14 +323,6 @@ StatefulApp.StatefulWindow {
         }
     }
 
-    globalDrawer: Kirigami.GlobalDrawer {
-        id: applicationMenuDrawer
-
-        actions: imageActions.applicationMenuActions
-        enabled: !root.menuBarMode && !root.fullscreen
-        isMenu: true
-    }
-
     menuBar: ApplicationMenuBar {
         actions: imageActions
         fullscreen: root.fullscreen
