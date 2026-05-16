@@ -35,7 +35,9 @@ with configured shortcuts remain available through those shortcuts.
 The menubar and toolbar application menu display a representative shortcut for
 actions with configured shortcuts. The representative shortcut is the first
 non-empty entry in the action's current shortcut list. Actions without a
-representative shortcut do not show shortcut text in menus.
+representative shortcut do not show shortcut text in menus. In the menubar,
+representative shortcut text is visually deemphasized from the menu item label
+when the item is not pressed.
 When the menubar or toolbar application menu is open, underlined menu access
 keys are activatable with either the displayed mnemonic letter alone or Alt plus
 that mnemonic letter, so users can choose menu entries through the displayed
