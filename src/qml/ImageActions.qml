@@ -53,6 +53,32 @@ Item {
     readonly property var configureShortcutsAction: configureShortcutsManagedAction.proxy
     readonly property var showMenubarAction: showMenubarManagedAction.proxy
     readonly property var quitAction: quitManagedAction.proxy
+    readonly property var openMenuAction: openManagedAction.menuProxy
+    readonly property var moveToTrashMenuAction: moveToTrashManagedAction.menuProxy
+    readonly property var deleteFileMenuAction: deleteFileManagedAction.menuProxy
+    readonly property var previousContainerMenuAction: previousContainerManagedAction.menuProxy
+    readonly property var nextContainerMenuAction: nextContainerManagedAction.menuProxy
+    readonly property var previousImageMenuAction: previousImageManagedAction.menuProxy
+    readonly property var nextImageMenuAction: nextImageManagedAction.menuProxy
+    readonly property var previousSinglePageMenuAction: previousSinglePageManagedAction.menuProxy
+    readonly property var nextSinglePageMenuAction: nextSinglePageManagedAction.menuProxy
+    readonly property var firstImageMenuAction: firstImageManagedAction.menuProxy
+    readonly property var lastImageMenuAction: lastImageManagedAction.menuProxy
+    readonly property var fitMenuAction: fitManagedAction.menuProxy
+    readonly property var fitHeightMenuAction: fitHeightManagedAction.menuProxy
+    readonly property var fitWidthMenuAction: fitWidthManagedAction.menuProxy
+    readonly property var actualSizeMenuAction: actualSizeManagedAction.menuProxy
+    readonly property var rotateClockwiseMenuAction: rotateClockwiseManagedAction.menuProxy
+    readonly property var rotateCounterclockwiseMenuAction: rotateCounterclockwiseManagedAction.menuProxy
+    readonly property var twoPageModeMenuAction: twoPageModeManagedAction.menuProxy
+    readonly property var rightToLeftReadingMenuAction: rightToLeftReadingManagedAction.menuProxy
+    readonly property var zoomInMenuAction: zoomInManagedAction.menuProxy
+    readonly property var zoomOutMenuAction: zoomOutManagedAction.menuProxy
+    readonly property var fullscreenMenuAction: fullscreenManagedAction.menuProxy
+    readonly property var shortcutHelpMenuAction: shortcutHelpManagedAction.menuProxy
+    readonly property var configureShortcutsMenuAction: configureShortcutsManagedAction.menuProxy
+    readonly property var showMenubarMenuAction: showMenubarManagedAction.menuProxy
+    readonly property var quitMenuAction: quitManagedAction.menuProxy
     readonly property var applicationMenuActions: [openManagedAction.menuProxy, applicationMenuFileSeparator, moveToTrashManagedAction.menuProxy, deleteFileManagedAction.menuProxy, applicationMenuNavigationSeparator, previousContainerManagedAction.menuProxy, nextContainerManagedAction.menuProxy, applicationMenuViewSeparator, rotateClockwiseManagedAction.menuProxy, rotateCounterclockwiseManagedAction.menuProxy, twoPageModeManagedAction.menuProxy, rightToLeftReadingManagedAction.menuProxy, fullscreenManagedAction.menuProxy, applicationMenuSettingsSeparator, showMenubarManagedAction.menuProxy, configureShortcutsManagedAction.menuProxy, applicationMenuHelpSeparator, shortcutHelpManagedAction.menuProxy, applicationMenuQuitSeparator, quitManagedAction.menuProxy]
 
     signal openDialogRequested
