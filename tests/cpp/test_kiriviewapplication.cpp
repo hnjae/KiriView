@@ -167,7 +167,7 @@ void TestKiriViewApplication::shortcutsApiReturnsCurrentShortcuts()
             { shortcut(QStringLiteral("Ctrl+=")), shortcut(QStringLiteral("Ctrl++")),
                 shortcut(QStringLiteral("=")), shortcut(QStringLiteral("+")) }));
     QCOMPARE(application.shortcuts(QStringLiteral("view_toggle_two_page_mode")),
-        QList<QKeySequence>({ shortcut(QStringLiteral("D")) }));
+        QList<QKeySequence>({ shortcut(QStringLiteral("S")) }));
     QCOMPARE(application.shortcuts(QStringLiteral("view_toggle_right_to_left_reading")),
         QList<QKeySequence>({ shortcut(QStringLiteral("B")) }));
     QCOMPARE(application.shortcuts(QStringLiteral("go_previous_single_page")),

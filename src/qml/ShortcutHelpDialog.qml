@@ -37,7 +37,7 @@ Kirigami.OverlaySheet {
         },
         {
             "keyText": root.shortcutText(KiriViewApplication.ViewToggleTwoPageModeAction),
-            "description": KI18n.i18nc("@info:whatsthis", "Toggle two-page mode")
+            "description": KI18n.i18nc("@info:whatsthis", "Toggle two-page spread")
         },
         {
             "keyText": root.shortcutText(KiriViewApplication.ViewToggleRightToLeftReadingAction),
@@ -45,7 +45,7 @@ Kirigami.OverlaySheet {
         },
         {
             "keyText": root.shortcutTexts([KiriViewApplication.GoPreviousSinglePageAction, KiriViewApplication.GoNextSinglePageAction]),
-            "description": KI18n.i18nc("@info:whatsthis", "Adjust two-page mode by one page")
+            "description": KI18n.i18nc("@info:whatsthis", "Adjust two-page spread by one page")
         },
         {
             "keyText": root.shortcutText(KiriViewApplication.ViewZoomInAction),

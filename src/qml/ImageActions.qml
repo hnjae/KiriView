@@ -314,7 +314,7 @@ Item {
         bindChecked: true
         bindEnabled: true
         displayHint: Kirigami.DisplayHint.KeepVisible
-        menuText: KI18n.i18nc("@action:inmenu", "Two-Page &Mode")
+        menuText: KI18n.i18nc("@action:inmenu", "Two-Page &Spread")
         proxyCheckable: true
         proxyChecked: root.imageDocument.twoPageModeEnabled && root.imageDocument.twoPageModeAvailable
 

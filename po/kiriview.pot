@@ -247,7 +247,7 @@ msgstr ""
 
 #: src/kiriviewapplicationactions.cpp
 msgctxt "@action"
-msgid "Two-Page Mode"
+msgid "Two-Page Spread"
 msgstr ""
 
 #: src/kiriviewapplicationactions.cpp
@@ -454,9 +454,9 @@ msgctxt "@action:inmenu"
 msgid "&Actual Size"
 msgstr ""
 
-#: src/qml/ApplicationMenuBar.qml
+#: src/qml/ApplicationMenuBar.qml src/qml/ImageActions.qml
 msgctxt "@action:inmenu"
-msgid "&Two-Page Mode"
+msgid "Two-Page &Spread"
 msgstr ""
 
 #: src/qml/ApplicationMenuBar.qml src/qml/ImageActions.qml
@@ -517,11 +517,6 @@ msgstr ""
 #: src/qml/ImageActions.qml
 msgctxt "@action:inmenu"
 msgid "&Next Archive"
-msgstr ""
-
-#: src/qml/ImageActions.qml
-msgctxt "@action:inmenu"
-msgid "Two-Page &Mode"
 msgstr ""
 
 #: src/qml/ImageActions.qml
@@ -611,7 +606,7 @@ msgstr ""
 
 #: src/qml/ShortcutHelpDialog.qml
 msgctxt "@info:whatsthis"
-msgid "Toggle two-page mode"
+msgid "Toggle two-page spread"
 msgstr ""
 
 #: src/qml/ShortcutHelpDialog.qml
@@ -621,7 +616,7 @@ msgstr ""
 
 #: src/qml/ShortcutHelpDialog.qml
 msgctxt "@info:whatsthis"
-msgid "Adjust two-page mode by one page"
+msgid "Adjust two-page spread by one page"
 msgstr ""
 
 #: src/qml/ShortcutHelpDialog.qml

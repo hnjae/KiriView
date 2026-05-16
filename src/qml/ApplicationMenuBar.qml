@@ -139,7 +139,7 @@ Controls.MenuBar {
             action: root.actions.twoPageModeAction
             checkable: true
             checked: root.imageDocument.twoPageModeEnabled && root.imageDocument.twoPageModeAvailable
-            text: KI18n.i18nc("@action:inmenu", "&Two-Page Mode")
+            text: KI18n.i18nc("@action:inmenu", "Two-Page &Spread")
         }
 
         Controls.MenuItem {
