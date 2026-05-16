@@ -13,11 +13,13 @@
 namespace KiriView {
 ImageDocumentPredecodeController::ImageDocumentPredecodeController(QObject *parent,
     ImageDocumentState &state, ImagePresentationController &presentationController,
-    ImageNavigationCandidateProvider candidateProvider, ImageDecodeDependencies decodeDependencies)
+    ImageNavigationCandidateProvider candidateProvider, ImageDecodeDependencies decodeDependencies,
+    CurrentPageNumberCallback currentPageNumber)
     : m_state(state)
     , m_presentationController(presentationController)
     , m_coordinator(std::make_unique<ImagePredecodeCoordinator>(
           parent, std::move(candidateProvider), std::move(decodeDependencies)))
+    , m_currentPageNumber(std::move(currentPageNumber))
 {
 }
 
@@ -41,6 +43,7 @@ void ImageDocumentPredecodeController::scheduleAdjacentImagePredecode(
         },
         std::move(secondaryImage),
         m_presentationController.firstDisplayDecodeContext(),
+        m_currentPageNumber ? m_currentPageNumber() - 1 : -1,
     });
 }
 

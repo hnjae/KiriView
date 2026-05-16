@@ -7,6 +7,7 @@
 #include "imageurl.h"
 #include "kiriview/src/predecodecachepolicy.cxx.h"
 
+#include <QThread>
 #include <cstddef>
 #include <cstdint>
 #include <optional>
@@ -18,7 +19,74 @@ using KiriView::DecodedImageResult;
 using KiriView::ImageCandidateListContext;
 using KiriView::normalizedImageUrl;
 
+constexpr int predecodeDebounceMsec = 120;
+constexpr int predecodeNeutralRefreshMsec = 800;
+constexpr int predecodeBiasedNavigationMsec = 450;
+
 std::uint8_t rustFlag(bool value) { return value ? 1 : 0; }
+
+KiriView::RustPredecodeDocumentKind rustDocumentKind(
+    const KiriView::ArchiveDocumentLocation &archiveDocument)
+{
+    if (archiveDocument.isEmpty()) {
+        return KiriView::RustPredecodeDocumentKind::Regular;
+    }
+    if (archiveDocument.isDirectory()) {
+        return KiriView::RustPredecodeDocumentKind::DirectoryDocument;
+    }
+
+    return KiriView::RustPredecodeDocumentKind::ArchiveDocument;
+}
+
+KiriView::RustPredecodeMomentumMode rustMomentumMode(
+    KiriView::ImagePredecodeCoordinator::MomentumMode mode)
+{
+    switch (mode) {
+    case KiriView::ImagePredecodeCoordinator::MomentumMode::Neutral:
+        return KiriView::RustPredecodeMomentumMode::Neutral;
+    case KiriView::ImagePredecodeCoordinator::MomentumMode::NextBiased:
+        return KiriView::RustPredecodeMomentumMode::NextBiased;
+    case KiriView::ImagePredecodeCoordinator::MomentumMode::PrevBiased:
+        return KiriView::RustPredecodeMomentumMode::PrevBiased;
+    case KiriView::ImagePredecodeCoordinator::MomentumMode::ScrubbingNext:
+        return KiriView::RustPredecodeMomentumMode::ScrubbingNext;
+    case KiriView::ImagePredecodeCoordinator::MomentumMode::ScrubbingPrev:
+        return KiriView::RustPredecodeMomentumMode::ScrubbingPrev;
+    }
+
+    return KiriView::RustPredecodeMomentumMode::Neutral;
+}
+
+KiriView::ImagePredecodeCoordinator::MomentumMode momentumMode(
+    KiriView::RustPredecodeMomentumMode mode)
+{
+    switch (mode) {
+    case KiriView::RustPredecodeMomentumMode::Neutral:
+        return KiriView::ImagePredecodeCoordinator::MomentumMode::Neutral;
+    case KiriView::RustPredecodeMomentumMode::NextBiased:
+        return KiriView::ImagePredecodeCoordinator::MomentumMode::NextBiased;
+    case KiriView::RustPredecodeMomentumMode::PrevBiased:
+        return KiriView::ImagePredecodeCoordinator::MomentumMode::PrevBiased;
+    case KiriView::RustPredecodeMomentumMode::ScrubbingNext:
+        return KiriView::ImagePredecodeCoordinator::MomentumMode::ScrubbingNext;
+    case KiriView::RustPredecodeMomentumMode::ScrubbingPrev:
+        return KiriView::ImagePredecodeCoordinator::MomentumMode::ScrubbingPrev;
+    }
+
+    return KiriView::ImagePredecodeCoordinator::MomentumMode::Neutral;
+}
+
+KiriView::RustPredecodePolicyInput rustPredecodePolicyInput(
+    const KiriView::ArchiveDocumentLocation &archiveDocument,
+    KiriView::ImagePredecodeCoordinator::MomentumMode momentumMode, bool powerSaverEnabled)
+{
+    KiriView::RustPredecodePolicyInput input {};
+    input.document_kind = rustDocumentKind(archiveDocument);
+    input.momentum_mode = rustMomentumMode(momentumMode);
+    input.power_saver_enabled = powerSaverEnabled;
+    input.ideal_thread_count = QThread::idealThreadCount();
+    return input;
+}
 
 rust::Vec<std::uint8_t> currentCandidateMatches(
     const std::vector<KiriView::ImageNavigationCandidate> &candidates, const QUrl &currentUrl)
@@ -33,14 +101,17 @@ rust::Vec<std::uint8_t> currentCandidateMatches(
 }
 
 std::vector<QUrl> predecodeWindowImageUrls(
-    const std::vector<KiriView::ImageNavigationCandidate> &candidates, const QUrl &currentUrl)
+    const std::vector<KiriView::ImageNavigationCandidate> &candidates, const QUrl &currentUrl,
+    KiriView::RustPredecodePolicyInput policyInput)
 {
     std::vector<QUrl> urls;
-    const rust::Vec<std::size_t> indices = KiriView::rustPredecodeWindowImageIndices(
-        currentCandidateMatches(candidates, currentUrl));
+    const rust::Vec<std::size_t> indices = KiriView::rustPredecodeTargetImageIndices(
+        currentCandidateMatches(candidates, currentUrl), policyInput);
     urls.reserve(indices.size());
     for (std::size_t index : indices) {
-        urls.push_back(candidates.at(index).url);
+        if (index < candidates.size()) {
+            urls.push_back(candidates.at(index).url);
+        }
     }
     return urls;
 }
@@ -101,28 +172,80 @@ ImagePredecodeCoordinator::ImagePredecodeCoordinator(QObject *parent,
           })
     , m_candidateRepository(std::move(candidateProvider))
 {
+    m_monotonicClock.start();
+    m_debounceTimer.setSingleShot(true);
+    m_debounceTimer.setInterval(predecodeDebounceMsec);
+    m_neutralTimer.setSingleShot(true);
+    m_neutralTimer.setInterval(predecodeNeutralRefreshMsec);
+
+    QObject::connect(
+        &m_debounceTimer, &QTimer::timeout, this, [this]() { startDebouncedPredecode(); });
+    QObject::connect(
+        &m_neutralTimer, &QTimer::timeout, this, [this]() { scheduleSettledNeutralPredecode(); });
 }
 
 void ImagePredecodeCoordinator::schedule(Context context)
 {
-    cancel();
+    cancelBackgroundWork();
     if (!context.primaryImage.hasLocation() || !context.primaryImage.hasStaticImage()) {
         return;
     }
 
     const quint64 generation = m_generation.next();
+    updateNavigationMomentum(context.pageIndex, currentMonotonicMsec());
     m_firstDisplayContext = context.firstDisplayContext;
-    scheduleAdjacentImagePredecode(context, generation);
+    cacheDisplayedImages(context);
+    m_pendingContext = std::move(context);
+    m_pendingGeneration = generation;
+    m_debounceTimer.start();
+    m_neutralTimer.start();
+}
+
+void ImagePredecodeCoordinator::cacheDisplayedImages(const Context &context)
+{
+    m_cache.setDisplayedUrls(displayedPredecodeImageUrls(context));
+    cacheDisplayedPredecodeImages(m_cache, context);
+}
+
+void ImagePredecodeCoordinator::startDebouncedPredecode()
+{
+    if (!m_pendingContext.has_value() || !m_generation.accepts(m_pendingGeneration)) {
+        return;
+    }
+
+    scheduleAdjacentImagePredecode(*m_pendingContext, m_pendingGeneration);
+}
+
+void ImagePredecodeCoordinator::scheduleSettledNeutralPredecode()
+{
+    if (!m_pendingContext.has_value() || m_momentumMode == MomentumMode::Neutral) {
+        return;
+    }
+
+    const Context context = *m_pendingContext;
+    m_debounceTimer.stop();
+    m_listerJob.cancel();
+    m_decodeJob.cancel();
+    clearActivePredecodeRequest();
+    m_cache.clearQueuedLoads();
+    m_momentumMode = MomentumMode::Neutral;
+    m_firstDisplayContext = context.firstDisplayContext;
+    m_pendingGeneration = m_generation.next();
+    m_pendingContext = context;
+    scheduleAdjacentImagePredecode(context, m_pendingGeneration);
 }
 
 void ImagePredecodeCoordinator::scheduleAdjacentImagePredecode(
     const Context &context, quint64 generation)
 {
+    const RustPredecodePolicyInput policyInput = rustPredecodePolicyInput(
+        context.primaryImage.location.archiveDocument(), m_momentumMode, false);
+    const std::size_t parallelLimit = rustPredecodeParallelLimit(policyInput);
     const std::optional<ImageCandidateListContext> candidateContext
         = imageCandidateListContextForDisplayedImage(context.primaryImage.location);
     if (!candidateContext.has_value()) {
-        startPredecodeImageLoads(
-            {}, context.primaryImage.location.archiveDocument(), context, generation);
+        startPredecodeImageLoads({}, context.primaryImage.location.archiveDocument(), context,
+            generation, parallelLimit);
         return;
     }
 
@@ -130,23 +253,25 @@ void ImagePredecodeCoordinator::scheduleAdjacentImagePredecode(
     const ArchiveDocumentLocation archiveDocument = candidateContext->archiveDocument();
     m_listerJob = m_candidateRepository.loadImages(
         this, *candidateContext,
-        [this, context, generation, currentUrl, archiveDocument](
+        [this, context, generation, currentUrl, archiveDocument, policyInput, parallelLimit](
             std::vector<ImageNavigationCandidate> candidates) {
-            startPredecodeImageLoads(predecodeWindowImageUrls(candidates, currentUrl),
-                archiveDocument, context, generation);
+            startPredecodeImageLoads(predecodeWindowImageUrls(candidates, currentUrl, policyInput),
+                archiveDocument, context, generation, parallelLimit);
         },
-        [this, context, generation, archiveDocument](const QString &) {
-            startPredecodeImageLoads({}, archiveDocument, context, generation);
+        [this, context, generation, archiveDocument, parallelLimit](const QString &) {
+            startPredecodeImageLoads({}, archiveDocument, context, generation, parallelLimit);
         });
 }
 
 void ImagePredecodeCoordinator::startPredecodeImageLoads(const std::vector<QUrl> &urls,
-    const ArchiveDocumentLocation &archiveDocument, const Context &context, quint64 generation)
+    const ArchiveDocumentLocation &archiveDocument, const Context &context, quint64 generation,
+    std::size_t parallelLimit)
 {
     if (!m_generation.accepts(generation)) {
         return;
     }
 
+    m_parallelLimit = parallelLimit;
     m_cache.setDisplayedUrls(displayedPredecodeImageUrls(context));
     m_cache.setWindowUrls(urls);
     cacheDisplayedPredecodeImages(m_cache, context);
@@ -158,7 +283,7 @@ void ImagePredecodeCoordinator::startPredecodeImageLoads(const std::vector<QUrl>
 
 void ImagePredecodeCoordinator::startNextPredecodeImageLoad(quint64 generation)
 {
-    if (!m_generation.accepts(generation)) {
+    if (!m_generation.accepts(generation) || m_parallelLimit == 0) {
         return;
     }
 
@@ -244,14 +369,74 @@ bool ImagePredecodeCoordinator::predecodeRequestIsActive(const ImageDecodeReques
 
 void ImagePredecodeCoordinator::clearActivePredecodeRequest() { m_activePredecodeRequest.reset(); }
 
-void ImagePredecodeCoordinator::cancel()
+void ImagePredecodeCoordinator::cancelBackgroundWork()
 {
     m_generation.invalidate();
+    m_debounceTimer.stop();
+    m_neutralTimer.stop();
     m_listerJob.cancel();
     m_decodeJob.cancel();
     clearActivePredecodeRequest();
+    m_pendingContext.reset();
+    m_pendingGeneration = 0;
+    m_parallelLimit = 1;
     m_firstDisplayContext = {};
     m_cache.clearQueuedLoads();
+}
+
+void ImagePredecodeCoordinator::resetNavigationMomentum()
+{
+    m_lastPageIndex = -1;
+    m_lastNavigationMsec = -1;
+    m_sameDirectionMoveCount = 0;
+    m_lastMomentumDirection = MomentumDirection::None;
+    m_momentumMode = MomentumMode::Neutral;
+}
+
+void ImagePredecodeCoordinator::updateNavigationMomentum(int pageIndex, qint64 monotonicMsec)
+{
+    m_momentumMode = MomentumMode::Neutral;
+    if (pageIndex < 0) {
+        return;
+    }
+    if (m_lastPageIndex < 0 || m_lastNavigationMsec < 0) {
+        m_lastPageIndex = pageIndex;
+        m_lastNavigationMsec = monotonicMsec;
+        return;
+    }
+    if (pageIndex == m_lastPageIndex) {
+        return;
+    }
+
+    const qint64 elapsedMsec = monotonicMsec - m_lastNavigationMsec;
+    const MomentumDirection direction
+        = pageIndex > m_lastPageIndex ? MomentumDirection::Next : MomentumDirection::Previous;
+    if (direction == m_lastMomentumDirection && elapsedMsec <= predecodeBiasedNavigationMsec) {
+        ++m_sameDirectionMoveCount;
+    } else {
+        m_sameDirectionMoveCount = 1;
+    }
+
+    m_momentumMode = momentumMode(rustPredecodeMomentumMode(RustPredecodeMomentumInput {
+        m_lastPageIndex,
+        pageIndex,
+        elapsedMsec,
+        m_sameDirectionMoveCount,
+    }));
+    m_lastMomentumDirection = direction;
+    m_lastPageIndex = pageIndex;
+    m_lastNavigationMsec = monotonicMsec;
+}
+
+qint64 ImagePredecodeCoordinator::currentMonotonicMsec() const
+{
+    return m_monotonicClock.isValid() ? m_monotonicClock.elapsed() : 0;
+}
+
+void ImagePredecodeCoordinator::cancel()
+{
+    cancelBackgroundWork();
+    resetNavigationMomentum();
 }
 
 void ImagePredecodeCoordinator::clear()

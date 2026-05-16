@@ -54,7 +54,8 @@ private Q_SLOTS:
     void scheduleCachesVisibleSpreadPagesAndSkipsSecondaryPredecode();
     void scheduleRejectsInvalidDisplayedContext();
     void archivePredecodeKeepsArchiveDocumentContext();
-    void predecodeWindowKeepsTwoPreviousAndFourNextPages();
+    void regularPredecodeWindowKeepsOnePreviousAndTwoNextPages();
+    void rapidNavigationDebouncesSkippedPagePredecode();
     void cancelSuppressesPendingDecode();
 };
 
@@ -91,7 +92,7 @@ void TestImagePredecodeCoordinator::scheduleCachesDisplayedImageAndPredecodesWin
     QCOMPARE(displayed->location.imageUrl(), displayedUrl);
     QCOMPARE(displayed->staticImage.displayHints.firstDisplayPixelsPerSourcePixel, 0.5);
 
-    QCOMPARE(dataLoader.loadCount(), std::size_t(1));
+    QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
     QCOMPARE(dataLoader.frontLoad().url, nextUrl);
     QCOMPARE(dataLoader.frontLoad().firstDisplay.physicalViewportSize, QSize(640, 480));
     dataLoader.finishFrontLoad(QByteArrayLiteral("next"));
@@ -139,7 +140,7 @@ void TestImagePredecodeCoordinator::scheduleCachesVisibleSpreadPagesAndSkipsSeco
     QVERIFY(secondary.has_value());
     QCOMPARE(secondary->staticImage.displayHints.firstDisplayPixelsPerSourcePixel, 0.75);
 
-    QCOMPARE(dataLoader.loadCount(), std::size_t(1));
+    QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
     QCOMPARE(dataLoader.frontLoad().url, nextUrl);
 }
 
@@ -182,7 +183,7 @@ void TestImagePredecodeCoordinator::archivePredecodeKeepsArchiveDocumentContext(
         },
     });
 
-    QCOMPARE(dataLoader.loadCount(), std::size_t(1));
+    QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
     QCOMPARE(dataLoader.frontLoad().url, nextUrl);
     QCOMPARE(dataLoader.frontLoad().archiveDocument.rootUrl(), archiveDocument->rootUrl());
     dataLoader.finishFrontLoad(QByteArrayLiteral("next"));
@@ -193,7 +194,7 @@ void TestImagePredecodeCoordinator::archivePredecodeKeepsArchiveDocumentContext(
     QCOMPARE(predecoded->location.archiveDocumentRootUrl(), archiveDocument->rootUrl());
 }
 
-void TestImagePredecodeCoordinator::predecodeWindowKeepsTwoPreviousAndFourNextPages()
+void TestImagePredecodeCoordinator::regularPredecodeWindowKeepsOnePreviousAndTwoNextPages()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -215,18 +216,53 @@ void TestImagePredecodeCoordinator::predecodeWindowKeepsTwoPreviousAndFourNextPa
         indexedImageUrl(6),
         indexedImageUrl(4),
         indexedImageUrl(7),
-        indexedImageUrl(3),
-        indexedImageUrl(8),
-        indexedImageUrl(9),
     };
+    std::size_t expectedLoadCount = 0;
     for (const QUrl &expectedUrl : expectedLoadOrder) {
-        QTRY_COMPARE(dataLoader.backLoad().url, expectedUrl);
+        ++expectedLoadCount;
+        QTRY_VERIFY(dataLoader.loadCount() >= expectedLoadCount);
+        QCOMPARE(dataLoader.backLoad().url, expectedUrl);
         QVERIFY(dataLoader.finishOldestActiveLoadForUrl(expectedUrl, QByteArrayLiteral("image")));
     }
 
     QTRY_COMPARE(dataLoader.loadCount(), expectedLoadOrder.size());
     QVERIFY(
-        !dataLoader.finishOldestActiveLoadForUrl(indexedImageUrl(10), QByteArrayLiteral("image")));
+        !dataLoader.finishOldestActiveLoadForUrl(indexedImageUrl(8), QByteArrayLiteral("image")));
+}
+
+void TestImagePredecodeCoordinator::rapidNavigationDebouncesSkippedPagePredecode()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    KiriView::ImagePredecodeCoordinator coordinator
+        = createCoordinator(this, candidateProvider, dataLoader);
+
+    candidateProvider.setDirectoryImages(imagesDirectoryUrl(), imageCandidates(10));
+
+    const auto schedulePage = [&coordinator](int pageIndex) {
+        coordinator.schedule(KiriView::ImagePredecodeCoordinator::Context {
+            KiriView::DisplayedPredecodeImage {
+                KiriView::DisplayedImageLocation::fromUrl(indexedImageUrl(pageIndex)),
+                false,
+                staticTestImagePayload(testImage()),
+            },
+            std::nullopt,
+            {},
+            pageIndex,
+        });
+    };
+
+    schedulePage(0);
+    schedulePage(1);
+    schedulePage(2);
+
+    QTest::qWait(250);
+    QCOMPARE(dataLoader.loadCount(), std::size_t(0));
+
+    QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
+    QCOMPARE(dataLoader.backLoad().url, indexedImageUrl(3));
+    QVERIFY(
+        !dataLoader.finishOldestActiveLoadForUrl(indexedImageUrl(1), QByteArrayLiteral("image")));
 }
 
 void TestImagePredecodeCoordinator::cancelSuppressesPendingDecode()
@@ -253,7 +289,7 @@ void TestImagePredecodeCoordinator::cancelSuppressesPendingDecode()
         },
     });
 
-    QCOMPARE(dataLoader.loadCount(), std::size_t(1));
+    QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
     coordinator.cancel();
     QVERIFY(dataLoader.frontLoad().canceled);
 

@@ -8,6 +8,7 @@
 #include "predecodedimage.h"
 
 #include <QUrl>
+#include <functional>
 #include <memory>
 #include <optional>
 
@@ -21,10 +22,13 @@ class ImagePresentationController;
 class ImageDocumentPredecodeController final
 {
 public:
+    using CurrentPageNumberCallback = std::function<int()>;
+
     ImageDocumentPredecodeController(QObject *parent, ImageDocumentState &state,
         ImagePresentationController &presentationController,
         ImageNavigationCandidateProvider candidateProvider,
-        ImageDecodeDependencies decodeDependencies);
+        ImageDecodeDependencies decodeDependencies,
+        CurrentPageNumberCallback currentPageNumber = {});
     ~ImageDocumentPredecodeController();
 
     void scheduleAdjacentImagePredecode(
@@ -37,6 +41,7 @@ private:
     ImageDocumentState &m_state;
     ImagePresentationController &m_presentationController;
     std::unique_ptr<ImagePredecodeCoordinator> m_coordinator;
+    CurrentPageNumberCallback m_currentPageNumber;
 };
 }
 

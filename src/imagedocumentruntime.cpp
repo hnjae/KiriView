@@ -70,7 +70,8 @@ ImageDocumentRuntime::ImageDocumentRuntime(QObject *documentObject,
         },
         dependencies.candidateProvider);
     predecodeController = std::make_unique<ImageDocumentPredecodeController>(documentObject, state,
-        *presentationController, dependencies.candidateProvider, dependencies.imageDecode);
+        *presentationController, dependencies.candidateProvider, dependencies.imageDecode,
+        [this]() { return navigationController->currentPageNumber(); });
     spreadController = std::make_unique<ImageSpreadPresentationController>(documentObject,
         std::move(spreadRenderContextProvider), state, *presentationController,
         ImageSpreadPresentationController::Callbacks {

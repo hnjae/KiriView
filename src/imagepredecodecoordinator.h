@@ -15,9 +15,12 @@
 #include "staticimage.h"
 
 #include <QByteArray>
+#include <QElapsedTimer>
 #include <QImage>
 #include <QObject>
+#include <QTimer>
 #include <QUrl>
+#include <cstddef>
 #include <optional>
 #include <vector>
 
@@ -29,6 +32,15 @@ public:
         DisplayedPredecodeImage primaryImage;
         std::optional<DisplayedPredecodeImage> secondaryImage;
         ImageFirstDisplayDecodeContext firstDisplayContext;
+        int pageIndex = -1;
+    };
+
+    enum class MomentumMode {
+        Neutral,
+        NextBiased,
+        PrevBiased,
+        ScrubbingNext,
+        ScrubbingPrev,
     };
 
     explicit ImagePredecodeCoordinator(QObject *parent = nullptr);
@@ -46,9 +58,19 @@ private:
         QUrl normalizedUrl;
     };
 
+    enum class MomentumDirection {
+        None,
+        Previous,
+        Next,
+    };
+
+    void cacheDisplayedImages(const Context &context);
+    void startDebouncedPredecode();
+    void scheduleSettledNeutralPredecode();
     void scheduleAdjacentImagePredecode(const Context &context, quint64 generation);
     void startPredecodeImageLoads(const std::vector<QUrl> &urls,
-        const ArchiveDocumentLocation &archiveDocument, const Context &context, quint64 generation);
+        const ArchiveDocumentLocation &archiveDocument, const Context &context, quint64 generation,
+        std::size_t parallelLimit);
     void startNextPredecodeImageLoad(quint64 generation);
     void startPredecodeImageLoad(
         const QUrl &url, const ArchiveDocumentLocation &archiveDocument, quint64 generation);
@@ -60,14 +82,29 @@ private:
         const ImageDecodeRequest &request);
     bool predecodeRequestIsActive(const ImageDecodeRequest &request) const;
     void clearActivePredecodeRequest();
+    void cancelBackgroundWork();
+    void resetNavigationMomentum();
+    void updateNavigationMomentum(int pageIndex, qint64 monotonicMsec);
+    qint64 currentMonotonicMsec() const;
 
     ImageIoJob m_listerJob;
     ImageDecodeJob m_decodeJob;
     ImageCandidateRepository m_candidateRepository;
     PredecodeCache m_cache;
     std::optional<ActivePredecodeRequest> m_activePredecodeRequest;
+    std::optional<Context> m_pendingContext;
     ImageFirstDisplayDecodeContext m_firstDisplayContext;
     ImageAsyncTicket m_generation;
+    QTimer m_debounceTimer;
+    QTimer m_neutralTimer;
+    QElapsedTimer m_monotonicClock;
+    quint64 m_pendingGeneration = 0;
+    std::size_t m_parallelLimit = 1;
+    int m_lastPageIndex = -1;
+    qint64 m_lastNavigationMsec = -1;
+    int m_sameDirectionMoveCount = 0;
+    MomentumDirection m_lastMomentumDirection = MomentumDirection::None;
+    MomentumMode m_momentumMode = MomentumMode::Neutral;
 };
 }
 
