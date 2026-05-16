@@ -55,8 +55,6 @@ public:
         ViewPanBottomRightAction,
         ViewScanForwardAction,
         ViewScanBackwardAction,
-        GoPreviousSinglePageAction,
-        GoNextSinglePageAction,
         WindowFullscreenAction,
         HelpShortcutsAction,
         OptionsConfigureKeybindingAction,

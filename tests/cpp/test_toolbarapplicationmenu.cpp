@@ -372,8 +372,6 @@ Item {
     Kirigami.Action { id: stubQuitMenuAction; text: "Quit" }
     Kirigami.Action { id: stubPreviousImageMenuAction; text: "Previous" }
     Kirigami.Action { id: stubNextImageMenuAction; text: "Next" }
-    Kirigami.Action { id: stubPreviousSinglePageMenuAction; text: "Previous Page" }
-    Kirigami.Action { id: stubNextSinglePageMenuAction; text: "Next Page" }
     Kirigami.Action { id: stubFirstImageMenuAction; text: "First Image" }
     Kirigami.Action { id: stubLastImageMenuAction; text: "Last Image" }
     Kirigami.Action { id: stubPreviousContainerMenuAction; text: "Previous Archive" }
@@ -402,8 +400,6 @@ Item {
         readonly property var quitMenuAction: stubQuitMenuAction
         readonly property var previousImageMenuAction: stubPreviousImageMenuAction
         readonly property var nextImageMenuAction: stubNextImageMenuAction
-        readonly property var previousSinglePageMenuAction: stubPreviousSinglePageMenuAction
-        readonly property var nextSinglePageMenuAction: stubNextSinglePageMenuAction
         readonly property var firstImageMenuAction: stubFirstImageMenuAction
         readonly property var lastImageMenuAction: stubLastImageMenuAction
         readonly property var previousContainerMenuAction: stubPreviousContainerMenuAction
@@ -809,8 +805,6 @@ void TestToolBarApplicationMenu::menubarGoMenuOrderFollowsReadingDirection()
     const QStringList leftToRightOrder({
         QStringLiteral("Previous"),
         QStringLiteral("Next"),
-        QStringLiteral("Previous Page"),
-        QStringLiteral("Next Page"),
         QStringLiteral("First Image"),
         QStringLiteral("Last Image"),
         QStringLiteral("Previous Archive"),
@@ -819,8 +813,6 @@ void TestToolBarApplicationMenu::menubarGoMenuOrderFollowsReadingDirection()
     const QStringList rightToLeftOrder({
         QStringLiteral("Next"),
         QStringLiteral("Previous"),
-        QStringLiteral("Next Page"),
-        QStringLiteral("Previous Page"),
         QStringLiteral("First Image"),
         QStringLiteral("Last Image"),
         QStringLiteral("Next Archive"),

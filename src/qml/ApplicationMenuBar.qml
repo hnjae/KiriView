@@ -17,14 +17,10 @@ Controls.MenuBar {
     readonly property string leadingArchiveMenuText: root.rightToLeftReadingActive ? KI18n.i18nc("@action:inmenu", "Nex&t Archive") : KI18n.i18nc("@action:inmenu", "Previous A&rchive")
     readonly property var leadingImageMenuAction: root.rightToLeftReadingActive ? root.actions.nextImageMenuAction : root.actions.previousImageMenuAction
     readonly property string leadingImageMenuText: root.rightToLeftReadingActive ? KI18n.i18nc("@action:inmenu", "&Next") : KI18n.i18nc("@action:inmenu", "&Previous")
-    readonly property var leadingSinglePageMenuAction: root.rightToLeftReadingActive ? root.actions.nextSinglePageMenuAction : root.actions.previousSinglePageMenuAction
-    readonly property string leadingSinglePageMenuText: root.rightToLeftReadingActive ? KI18n.i18nc("@action:inmenu", "Ne&xt Page") : KI18n.i18nc("@action:inmenu", "Previous P&age")
     readonly property var trailingArchiveMenuAction: root.rightToLeftReadingActive ? root.actions.previousContainerMenuAction : root.actions.nextContainerMenuAction
     readonly property string trailingArchiveMenuText: root.rightToLeftReadingActive ? KI18n.i18nc("@action:inmenu", "Previous A&rchive") : KI18n.i18nc("@action:inmenu", "Nex&t Archive")
     readonly property var trailingImageMenuAction: root.rightToLeftReadingActive ? root.actions.previousImageMenuAction : root.actions.nextImageMenuAction
     readonly property string trailingImageMenuText: root.rightToLeftReadingActive ? KI18n.i18nc("@action:inmenu", "&Previous") : KI18n.i18nc("@action:inmenu", "&Next")
-    readonly property var trailingSinglePageMenuAction: root.rightToLeftReadingActive ? root.actions.previousSinglePageMenuAction : root.actions.nextSinglePageMenuAction
-    readonly property string trailingSinglePageMenuText: root.rightToLeftReadingActive ? KI18n.i18nc("@action:inmenu", "Previous P&age") : KI18n.i18nc("@action:inmenu", "Ne&xt Page")
 
     Controls.Menu {
         id: fileMenu
@@ -78,18 +74,6 @@ Controls.MenuBar {
             action: root.trailingImageMenuAction
             text: root.trailingImageMenuText
         }
-
-        MenuActionItem {
-            action: root.leadingSinglePageMenuAction
-            text: root.leadingSinglePageMenuText
-        }
-
-        MenuActionItem {
-            action: root.trailingSinglePageMenuAction
-            text: root.trailingSinglePageMenuText
-        }
-
-        Controls.MenuSeparator {}
 
         MenuActionItem {
             action: root.actions.firstImageMenuAction

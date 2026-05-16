@@ -22,7 +22,6 @@ Item {
     readonly property bool canUsePageActions: root.imageDocument.imageCount > 0 && root.imageDocument.currentPageNumber > 0 && !root.imageDocument.fileDeletionInProgress && !root.helpDialogOpen
     readonly property bool canUseReadyActions: root.imageReady && !root.imageDocument.fileDeletionInProgress && !root.helpDialogOpen
     readonly property bool canUseRotateActions: root.canUseReadyActions && !(root.imageDocument.twoPageModeEnabled && root.imageDocument.twoPageModeAvailable)
-    readonly property bool canUseTwoPageActions: root.canUsePageActions && root.imageDocument.twoPageModeAvailable && root.imageDocument.twoPageModeEnabled
     readonly property bool canUseRightToLeftReadingActions: root.canUseReadyActions && root.imageDocument.rightToLeftReadingAvailable
     readonly property bool rightToLeftReadingActive: root.imageDocument.rightToLeftReadingEnabled && root.imageDocument.rightToLeftReadingAvailable
 
@@ -33,8 +32,6 @@ Item {
     readonly property var nextContainerAction: nextContainerManagedAction.proxy
     readonly property var previousImageAction: previousImageManagedAction.proxy
     readonly property var nextImageAction: nextImageManagedAction.proxy
-    readonly property var previousSinglePageAction: previousSinglePageManagedAction.proxy
-    readonly property var nextSinglePageAction: nextSinglePageManagedAction.proxy
     readonly property var firstImageAction: firstImageManagedAction.proxy
     readonly property var lastImageAction: lastImageManagedAction.proxy
     readonly property var fitAction: fitManagedAction.proxy
@@ -61,8 +58,6 @@ Item {
     readonly property var nextContainerMenuAction: nextContainerManagedAction.menuProxy
     readonly property var previousImageMenuAction: previousImageManagedAction.menuProxy
     readonly property var nextImageMenuAction: nextImageManagedAction.menuProxy
-    readonly property var previousSinglePageMenuAction: previousSinglePageManagedAction.menuProxy
-    readonly property var nextSinglePageMenuAction: nextSinglePageManagedAction.menuProxy
     readonly property var firstImageMenuAction: firstImageManagedAction.menuProxy
     readonly property var lastImageMenuAction: lastImageManagedAction.menuProxy
     readonly property var fitMenuAction: fitManagedAction.menuProxy
@@ -235,30 +230,6 @@ Item {
         proxyEnabled: root.canUsePageActions && root.canOpenNextImage
 
         onTriggered: root.openNextImage()
-    }
-
-    ManagedAction {
-        id: previousSinglePageManagedAction
-
-        actionEnabled: root.canUseTwoPageActions
-        actionId: KiriViewApplication.GoPreviousSinglePageAction
-        application: root.application
-        bindEnabled: true
-        proxyEnabled: root.canUseTwoPageActions && root.canOpenPreviousImage
-
-        onTriggered: root.imageDocument.openPreviousSinglePage()
-    }
-
-    ManagedAction {
-        id: nextSinglePageManagedAction
-
-        actionEnabled: root.canUseTwoPageActions
-        actionId: KiriViewApplication.GoNextSinglePageAction
-        application: root.application
-        bindEnabled: true
-        proxyEnabled: root.canUseTwoPageActions && root.imageDocument.currentPageNumber < root.imageDocument.imageCount
-
-        onTriggered: root.imageDocument.openNextSinglePage()
     }
 
     ManagedAction {

@@ -9,7 +9,9 @@
 #include <KConfigGroup>
 #include <KLocalizedQmlContext>
 #include <KSharedConfig>
+#include <KZip>
 #include <QAction>
+#include <QBuffer>
 #include <QCoreApplication>
 #include <QDir>
 #include <QImage>
@@ -38,6 +40,9 @@ private Q_SLOTS:
     void arrowKeysPanAsFixedViewerShortcuts();
     void leftAndRightArrowKeysUseNavigationFallback();
     void arrowKeysAreIgnoredWhileViewerShortcutsAreSuppressed();
+    void shiftArrowsMoveOnePageInTwoPageModeLeftToRight();
+    void shiftArrowsMoveOnePageInTwoPageModeRightToLeft();
+    void shiftArrowsAreIgnoredWhileViewerShortcutsAreSuppressed();
     void ctrlMTogglesMenubarThroughAction();
     void ctrlMIgnoredWhileHelpDialogOpen();
 };
@@ -119,6 +124,44 @@ std::unique_ptr<QTemporaryDir> createImageDirectory(QString *sourcePath, QString
     return directory;
 }
 
+std::unique_ptr<QTemporaryDir> createComicBookArchive(QString *sourcePath, QString *errorString)
+{
+    auto directory = std::make_unique<QTemporaryDir>();
+    if (!directory->isValid()) {
+        *errorString = QStringLiteral("temporary archive directory was not created");
+        return nullptr;
+    }
+
+    QImage image(QSize(2, 4), QImage::Format_RGBA8888);
+    image.fill(Qt::blue);
+    QByteArray imageData;
+    QBuffer imageBuffer(&imageData);
+    if (!imageBuffer.open(QIODevice::WriteOnly) || !image.save(&imageBuffer, "PNG")) {
+        *errorString = QStringLiteral("failed to encode test archive image");
+        return nullptr;
+    }
+
+    const QString archivePath = directory->filePath(QStringLiteral("book.cbz"));
+    KZip archive(archivePath);
+    if (!archive.open(QIODevice::WriteOnly)) {
+        *errorString = QStringLiteral("failed to open test archive for writing");
+        return nullptr;
+    }
+
+    for (int index = 1; index <= 4; ++index) {
+        const QString entryName = QStringLiteral("%1.png").arg(index, 2, 10, QLatin1Char('0'));
+        if (!archive.writeFile(entryName, imageData)) {
+            *errorString = QStringLiteral("failed to write test archive entry %1").arg(entryName);
+            archive.close();
+            return nullptr;
+        }
+    }
+    archive.close();
+
+    *sourcePath = archivePath;
+    return directory;
+}
+
 QString fixtureQml(const QString &sourceUrl = QString())
 {
     return QStringLiteral(R"(
@@ -140,9 +183,21 @@ Item {
     property int panCount: 0
     property real lastPanX: 0
     property real lastPanY: 0
+    property alias currentPageNumber: imageDocument.currentPageNumber
+    property alias currentLastPageNumber: imageDocument.currentLastPageNumber
+    property alias imageCount: imageDocument.imageCount
+    property alias rightToLeftReadingAvailable: imageDocument.rightToLeftReadingAvailable
+    property alias rightToLeftReadingEnabled: imageDocument.rightToLeftReadingEnabled
+    property alias secondaryPageVisible: imageDocument.secondaryPageVisible
+    property alias twoPageModeAvailable: imageDocument.twoPageModeAvailable
+    property alias twoPageModeEnabled: imageDocument.twoPageModeEnabled
 
     function menuPresentation() {
         return application.menuPresentation;
+    }
+
+    function openImageAtPage(pageNumber) {
+        imageDocument.openImageAtPage(pageNumber);
     }
 
     function documentReady() {
@@ -292,6 +347,22 @@ ImageShortcutsFixture createReadyFixture()
     return fixture;
 }
 
+ImageShortcutsFixture createComicBookFixture()
+{
+    QString sourcePath;
+    QString errorString;
+    std::unique_ptr<QTemporaryDir> directory = createComicBookArchive(&sourcePath, &errorString);
+    if (directory == nullptr) {
+        ImageShortcutsFixture fixture;
+        fixture.errorString = errorString;
+        return fixture;
+    }
+
+    ImageShortcutsFixture fixture = createFixture(QUrl::fromLocalFile(sourcePath).toString());
+    fixture.temporaryDirectory = std::move(directory);
+    return fixture;
+}
+
 int menuPresentation(QObject *root)
 {
     QVariant result;
@@ -318,6 +389,32 @@ void pressKey(QQuickView *view, Qt::Key key)
 {
     QTest::keyClick(view, key);
     QCoreApplication::processEvents();
+}
+
+void pressKey(QQuickView *view, Qt::Key key, Qt::KeyboardModifiers modifiers)
+{
+    QTest::keyClick(view, key, modifiers);
+    QCoreApplication::processEvents();
+}
+
+bool openImageAtPage(QObject *root, int pageNumber)
+{
+    return QMetaObject::invokeMethod(
+        root, "openImageAtPage", Qt::DirectConnection, Q_ARG(QVariant, QVariant(pageNumber)));
+}
+
+void prepareTwoPageSpread(ImageShortcutsFixture &fixture)
+{
+    QVERIFY(fixture.isValid());
+    QTRY_VERIFY(documentReady(fixture.root));
+    QTRY_COMPARE(fixture.root->property("imageCount").toInt(), 4);
+    QTRY_VERIFY(fixture.root->property("twoPageModeAvailable").toBool());
+    QTRY_VERIFY(fixture.root->property("rightToLeftReadingAvailable").toBool());
+    QVERIFY(fixture.root->setProperty("twoPageModeEnabled", true));
+    QVERIFY(openImageAtPage(fixture.root, 2));
+    QTRY_COMPARE(fixture.root->property("currentPageNumber").toInt(), 2);
+    QTRY_COMPARE(fixture.root->property("currentLastPageNumber").toInt(), 3);
+    QTRY_VERIFY(fixture.root->property("secondaryPageVisible").toBool());
 }
 }
 
@@ -401,6 +498,53 @@ void TestImageShortcuts::arrowKeysAreIgnoredWhileViewerShortcutsAreSuppressed()
     pressKey(fixture.view.get(), Qt::Key_Right);
     pressKey(fixture.view.get(), Qt::Key_Down);
     QCOMPARE(fixture.root->property("panCount").toInt(), 0);
+}
+
+void TestImageShortcuts::shiftArrowsMoveOnePageInTwoPageModeLeftToRight()
+{
+    ImageShortcutsFixture fixture = createComicBookFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    prepareTwoPageSpread(fixture);
+
+    pressKey(fixture.view.get(), Qt::Key_Right, Qt::ShiftModifier);
+    QTRY_COMPARE(fixture.root->property("currentPageNumber").toInt(), 3);
+    QTRY_COMPARE(fixture.root->property("currentLastPageNumber").toInt(), 4);
+
+    pressKey(fixture.view.get(), Qt::Key_Left, Qt::ShiftModifier);
+    QTRY_COMPARE(fixture.root->property("currentPageNumber").toInt(), 2);
+    QTRY_COMPARE(fixture.root->property("currentLastPageNumber").toInt(), 3);
+}
+
+void TestImageShortcuts::shiftArrowsMoveOnePageInTwoPageModeRightToLeft()
+{
+    ImageShortcutsFixture fixture = createComicBookFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    prepareTwoPageSpread(fixture);
+    QVERIFY(fixture.root->setProperty("rightToLeftReadingEnabled", true));
+
+    pressKey(fixture.view.get(), Qt::Key_Left, Qt::ShiftModifier);
+    QTRY_COMPARE(fixture.root->property("currentPageNumber").toInt(), 3);
+    QTRY_COMPARE(fixture.root->property("currentLastPageNumber").toInt(), 4);
+
+    pressKey(fixture.view.get(), Qt::Key_Right, Qt::ShiftModifier);
+    QTRY_COMPARE(fixture.root->property("currentPageNumber").toInt(), 2);
+    QTRY_COMPARE(fixture.root->property("currentLastPageNumber").toInt(), 3);
+}
+
+void TestImageShortcuts::shiftArrowsAreIgnoredWhileViewerShortcutsAreSuppressed()
+{
+    ImageShortcutsFixture fixture = createComicBookFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    prepareTwoPageSpread(fixture);
+
+    fixture.root->setProperty("toolbarTextInputFocused", true);
+    pressKey(fixture.view.get(), Qt::Key_Right, Qt::ShiftModifier);
+    QCOMPARE(fixture.root->property("currentPageNumber").toInt(), 2);
+
+    fixture.root->setProperty("toolbarTextInputFocused", false);
+    fixture.root->setProperty("helpDialogOpen", true);
+    pressKey(fixture.view.get(), Qt::Key_Right, Qt::ShiftModifier);
+    QCOMPARE(fixture.root->property("currentPageNumber").toInt(), 2);
 }
 
 void TestImageShortcuts::ctrlMTogglesMenubarThroughAction()

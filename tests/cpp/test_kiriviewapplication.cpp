@@ -221,10 +221,11 @@ void TestKiriViewApplication::shortcutsApiReturnsCurrentShortcuts()
         QList<QKeySequence>({ shortcut(QStringLiteral("Ctrl+R")) }));
     QCOMPARE(application.shortcuts(QStringLiteral("view_rotate_counterclockwise")),
         QList<QKeySequence>({ shortcut(QStringLiteral("Ctrl+Shift+R")) }));
-    QCOMPARE(application.shortcuts(QStringLiteral("go_previous_single_page")),
-        QList<QKeySequence>({ shortcut(QStringLiteral("Ctrl+P")) }));
-    QCOMPARE(application.shortcuts(QStringLiteral("go_next_single_page")),
-        QList<QKeySequence>({ shortcut(QStringLiteral("Ctrl+N")) }));
+    QVERIFY(application.action(QStringLiteral("go_previous_single_page")) == nullptr);
+    QCOMPARE(
+        application.shortcuts(QStringLiteral("go_previous_single_page")), QList<QKeySequence>());
+    QVERIFY(application.action(QStringLiteral("go_next_single_page")) == nullptr);
+    QCOMPARE(application.shortcuts(QStringLiteral("go_next_single_page")), QList<QKeySequence>());
     QVERIFY(application.action(QStringLiteral("view_pan_left")) == nullptr);
     QCOMPARE(application.shortcuts(QStringLiteral("view_pan_left")), QList<QKeySequence>());
     QCOMPARE(application.shortcuts(QStringLiteral("missing_action")), QList<QKeySequence>());
@@ -394,6 +395,9 @@ void TestKiriViewApplication::shortcutHelpModelListsConfigurableActions()
     QCOMPARE(model->data(deleteIndex, shortcutHelpActionTextRole).toString(),
         QStringLiteral("Delete Permanently"));
 
+    QVERIFY(
+        !shortcutHelpIndexForAction(model, QStringLiteral("go_previous_single_page")).isValid());
+    QVERIFY(!shortcutHelpIndexForAction(model, QStringLiteral("go_next_single_page")).isValid());
     QVERIFY(!shortcutHelpIndexForAction(model, QStringLiteral("options_show_menubar")).isValid());
 }
 

@@ -28,7 +28,6 @@ Item {
     readonly property bool imageSelectionViewerShortcutsEnabled: root.imageDocument.imageCount > 0 && root.imageDocument.currentPageNumber > 0 && !root.imageDocument.fileDeletionInProgress && root.viewerShortcutsEnabled
     readonly property bool pageShortcutsEnabled: root.imageSelectionShortcutsEnabled
     readonly property bool pageViewerShortcutsEnabled: root.imageSelectionViewerShortcutsEnabled
-    readonly property bool twoPageShortcutsEnabled: root.imageSelectionShortcutsEnabled && root.imageDocument.twoPageModeAvailable && root.imageDocument.twoPageModeEnabled
     readonly property bool twoPageViewerShortcutsEnabled: root.imageSelectionViewerShortcutsEnabled && root.imageDocument.twoPageModeAvailable && root.imageDocument.twoPageModeEnabled
     readonly property bool rightToLeftReadingShortcutsEnabled: root.readyShortcutsEnabled && root.imageDocument.rightToLeftReadingAvailable
     readonly property bool rightToLeftReadingViewerShortcutsEnabled: root.readyViewerShortcutsEnabled && root.imageDocument.rightToLeftReadingAvailable
@@ -79,6 +78,24 @@ Item {
         }
 
         root.nextImageQAction.trigger();
+    }
+
+    function openLeftSinglePage() {
+        if (root.imageDocument.rightToLeftReadingEnabled && root.imageDocument.rightToLeftReadingAvailable) {
+            root.imageDocument.openNextSinglePage();
+            return;
+        }
+
+        root.imageDocument.openPreviousSinglePage();
+    }
+
+    function openRightSinglePage() {
+        if (root.imageDocument.rightToLeftReadingEnabled && root.imageDocument.rightToLeftReadingAvailable) {
+            root.imageDocument.openPreviousSinglePage();
+            return;
+        }
+
+        root.imageDocument.openNextSinglePage();
     }
 
     function panLeftOrOpenPreviousImage() {
@@ -337,27 +354,6 @@ Item {
     }
 
     ActionShortcutGroup {
-        actionIds: [KiriViewApplication.GoPreviousSinglePageAction, KiriViewApplication.GoNextSinglePageAction]
-        application: root.application
-        shortcutFilter: ConfiguredActionShortcut.WithCommandModifier
-        shortcutsEnabled: root.twoPageShortcutsEnabled
-    }
-
-    ActionShortcutGroup {
-        actionIds: [KiriViewApplication.GoPreviousSinglePageAction, KiriViewApplication.GoNextSinglePageAction]
-        application: root.application
-        shortcutFilter: ConfiguredActionShortcut.WithoutCommandModifier
-        shortcutsEnabled: root.twoPageViewerShortcutsEnabled
-    }
-
-    ActionShortcutGroup {
-        actionIds: [KiriViewApplication.GoPreviousSinglePageAction, KiriViewApplication.GoNextSinglePageAction]
-        application: root.application
-        shortcutFilter: ConfiguredActionShortcut.ShortcutAliases
-        shortcutsEnabled: root.twoPageViewerShortcutsEnabled
-    }
-
-    ActionShortcutGroup {
         actionIds: [KiriViewApplication.GoPreviousArchiveAction, KiriViewApplication.GoNextArchiveAction]
         application: root.application
         shortcutFilter: ConfiguredActionShortcut.WithCommandModifier
@@ -427,6 +423,22 @@ Item {
         sequence: "Right"
 
         onActivated: root.panRightOrOpenNextImage()
+    }
+
+    Shortcut {
+        context: Qt.WindowShortcut
+        enabled: root.twoPageViewerShortcutsEnabled
+        sequence: "Shift+Left"
+
+        onActivated: root.openLeftSinglePage()
+    }
+
+    Shortcut {
+        context: Qt.WindowShortcut
+        enabled: root.twoPageViewerShortcutsEnabled
+        sequence: "Shift+Right"
+
+        onActivated: root.openRightSinglePage()
     }
 
     Shortcut {
