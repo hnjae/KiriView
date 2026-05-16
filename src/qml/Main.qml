@@ -179,11 +179,23 @@ StatefulApp.StatefulWindow {
         readonly property point fullscreenPointerPosition: fullscreenRevealHandler.point.position
 
         background: Rectangle {
-            color: "#3c3c3c"
+            color: imageViewTheme.darkBackgroundColor
         }
 
         padding: 0
         globalToolBarStyle: Kirigami.ApplicationHeaderStyle.None
+
+        Item {
+            id: imageViewTheme
+
+            Kirigami.Theme.colorSet: Kirigami.Theme.View
+            Kirigami.Theme.inherit: false
+
+            readonly property color viewBackgroundColor: Kirigami.Theme.backgroundColor
+            readonly property color viewTextColor: Kirigami.Theme.textColor
+            readonly property bool lightColorScheme: viewBackgroundColor.hslLightness > viewTextColor.hslLightness
+            readonly property color darkBackgroundColor: lightColorScheme ? viewTextColor : viewBackgroundColor
+        }
 
         ImageActions {
             id: imageActions
