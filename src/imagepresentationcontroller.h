@@ -23,7 +23,7 @@ class QObject;
 
 namespace KiriView {
 class DisplayedImageState;
-class ImageTileDecodeScheduler;
+class ImagePresentationViewportController;
 
 class ImagePresentationController final
 {
@@ -81,34 +81,12 @@ public:
     void stopAnimation();
 
 private:
-    enum class TileRefresh {
-        WhenZoomStateChanges,
-        Always,
-    };
-
-    using ZoomStateMutation = std::function<void(ImageZoomState &, qreal devicePixelRatio)>;
-
-    void applyDisplayedImageSize(const QSize &imageSize);
-    void setRotationDegrees(int rotationDegrees);
     void resetRotationForNewImage();
-    void invalidateTiles();
-    void scheduleVisibleTileDecode(const ImageDocumentRenderContext &context);
-    void mutateZoomState(const ZoomStateMutation &mutation,
-        TileRefresh tileRefresh = TileRefresh::WhenZoomStateChanges);
-    void applyZoomStateChanges(const ImageZoomSnapshot &previous,
-        const ImageDocumentRenderContext &previousContext,
-        const ImageDocumentRenderContext &context, TileRefresh tileRefresh);
-    ImageDocumentRenderContext renderContext() const;
     void notify(ImageDocumentChange change);
 
-    RenderContextProvider m_renderContextProvider;
     Callbacks m_callbacks;
-    ImageZoomState m_zoomState;
-    ImageDocumentRenderContext m_renderContext;
     std::unique_ptr<DisplayedImageState> m_displayedImageState;
-    std::unique_ptr<ImageTileDecodeScheduler> m_tileDecodeScheduler;
-    int m_rotationDegrees = 0;
-    QRectF m_visibleItemRect;
+    std::unique_ptr<ImagePresentationViewportController> m_viewportController;
 };
 }
 
