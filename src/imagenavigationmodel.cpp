@@ -28,30 +28,30 @@ KiriView::RustNavigationDirection rustNavigationDirection(KiriView::NavigationDi
     return KiriView::RustNavigationDirection::Next;
 }
 
-std::uint8_t rustFlag(bool value) { return value ? 1 : 0; }
-
 template <typename Candidate>
-rust::Vec<std::uint8_t> currentCandidateMatches(
+std::optional<std::size_t> currentCandidateIndex(
     const std::vector<Candidate> &candidates, const QUrl &currentUrl)
 {
-    rust::Vec<std::uint8_t> matches;
-    matches.reserve(candidates.size());
-    for (const Candidate &candidate : candidates) {
-        matches.push_back(rustFlag(KiriView::sameNormalizedUrl(candidate.url, currentUrl)));
+    const auto currentCandidate = std::find_if(
+        candidates.cbegin(), candidates.cend(), [&currentUrl](const Candidate &candidate) {
+            return KiriView::sameNormalizedUrl(candidate.url, currentUrl);
+        });
+    if (currentCandidate == candidates.cend()) {
+        return std::nullopt;
     }
 
-    return matches;
+    return static_cast<std::size_t>(std::distance(candidates.cbegin(), currentCandidate));
 }
 
-rust::Vec<std::uint8_t> currentUrlMatches(const std::vector<QUrl> &urls, const QUrl &currentUrl)
+std::optional<std::size_t> currentUrlIndex(const std::vector<QUrl> &urls, const QUrl &currentUrl)
 {
-    rust::Vec<std::uint8_t> matches;
-    matches.reserve(urls.size());
-    for (const QUrl &url : urls) {
-        matches.push_back(rustFlag(KiriView::sameNormalizedUrl(url, currentUrl)));
+    const auto current = std::find_if(urls.cbegin(), urls.cend(),
+        [&currentUrl](const QUrl &url) { return KiriView::sameNormalizedUrl(url, currentUrl); });
+    if (current == urls.cend()) {
+        return std::nullopt;
     }
 
-    return matches;
+    return static_cast<std::size_t>(std::distance(urls.cbegin(), current));
 }
 
 template <typename Candidate> void sortNavigationCandidates(std::vector<Candidate> *candidates)
@@ -87,12 +87,17 @@ std::optional<std::size_t> navigationIndexValue(KiriView::RustNavigationIndex in
     return index.index;
 }
 
+KiriView::RustNavigationIndex rustNavigationIndex(std::optional<std::size_t> index)
+{
+    return KiriView::RustNavigationIndex { index.has_value(), index.value_or(0) };
+}
+
 template <typename Candidate>
 std::optional<std::size_t> adjacentCandidateIndex(const std::vector<Candidate> &candidates,
     const QUrl &currentUrl, KiriView::NavigationDirection direction)
 {
     return navigationIndexValue(KiriView::rustAdjacentNavigationCandidateIndex(candidates.size(),
-        KiriView::rustCurrentNavigationIndex(currentCandidateMatches(candidates, currentUrl)),
+        rustNavigationIndex(currentCandidateIndex(candidates, currentUrl)),
         rustNavigationDirection(direction)));
 }
 }
@@ -142,7 +147,7 @@ PageNavigationState pageNavigationStateForCurrentUrl(
     const PageNavigationState &knownState, const QUrl &currentUrl)
 {
     const RustPageNavigationPreviewState preview = rustPageNavigationPreviewState(
-        rustCurrentNavigationIndex(currentUrlMatches(knownState.urls, currentUrl)),
+        rustNavigationIndex(currentUrlIndex(knownState.urls, currentUrl)),
         currentUrl.isValid() && !currentUrl.isEmpty(), knownState.urls.size());
 
     if (!preview.keep_known_urls) {
@@ -156,7 +161,7 @@ PageNavigationState pageNavigationStateForUrls(std::vector<QUrl> urls, const QUr
 {
     PageNavigationState state { std::move(urls), -1 };
     const RustPageNavigationUpdate update = rustPageNavigationStateUpdate(
-        rustCurrentNavigationIndex(currentUrlMatches(state.urls, currentUrl)),
+        rustNavigationIndex(currentUrlIndex(state.urls, currentUrl)),
         currentUrl.isValid() && !currentUrl.isEmpty(), state.urls.size());
     if (update.insert_current_url) {
         state.urls.insert(state.urls.begin(), normalizedImageUrl(currentUrl));

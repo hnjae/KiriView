@@ -11,8 +11,6 @@
 #include <utility>
 
 namespace {
-std::uint8_t rustFlag(bool value) { return value ? 1 : 0; }
-
 KiriView::RustPredecodeDocumentKind rustDocumentKind(KiriView::PredecodeDocumentKind kind)
 {
     switch (kind) {
@@ -103,16 +101,6 @@ KiriView::RustPredecodePolicyInput rustPolicyInput(KiriView::PredecodePolicyInpu
     return rustInput;
 }
 
-rust::Vec<std::uint8_t> rustCurrentMatchFlags(
-    std::size_t candidateCount, std::optional<std::size_t> currentIndex)
-{
-    rust::Vec<std::uint8_t> flags;
-    flags.reserve(candidateCount);
-    for (std::size_t index = 0; index < candidateCount; ++index) {
-        flags.push_back(rustFlag(currentIndex.has_value() && index == *currentIndex));
-    }
-    return flags;
-}
 }
 
 namespace KiriView {
@@ -190,7 +178,7 @@ PredecodeSchedulePlan predecodeSchedulePlan(
     std::size_t candidateCount, std::optional<std::size_t> currentIndex, PredecodePolicyInput input)
 {
     const RustPredecodeSchedulePlan rustPlan = rustPredecodeSchedulePlan(
-        rustCurrentMatchFlags(candidateCount, currentIndex), rustPolicyInput(input));
+        candidateCount, currentIndex.has_value(), currentIndex.value_or(0), rustPolicyInput(input));
     return PredecodeSchedulePlan {
         rustPlan.parallel_limit,
         std::vector<std::size_t>(rustPlan.target_indices.begin(), rustPlan.target_indices.end()),

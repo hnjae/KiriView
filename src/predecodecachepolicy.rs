@@ -129,7 +129,9 @@ mod ffi {
 
         #[cxx_name = "rustPredecodeSchedulePlan"]
         fn rust_predecode_schedule_plan(
-            matches_current: Vec<u8>,
+            candidate_count: usize,
+            current_index_found: bool,
+            current_index: usize,
             input: RustPredecodePolicyInput,
         ) -> RustPredecodeSchedulePlan;
 
@@ -287,14 +289,16 @@ fn rust_predecode_missing_window_load_indices(
 }
 
 fn rust_predecode_schedule_plan(
-    matches_current: Vec<u8>,
+    candidate_count: usize,
+    current_index_found: bool,
+    current_index: usize,
     input: RustPredecodePolicyInput,
 ) -> RustPredecodeSchedulePlan {
     let parallel_limit = predecode_parallel_limit(input);
     let target_indices = if parallel_limit == 0 {
         Vec::new()
     } else {
-        predecode_target_image_indices(matches_current, input)
+        predecode_target_image_indices(candidate_count, current_index_found, current_index, input)
     };
 
     RustPredecodeSchedulePlan {
@@ -304,14 +308,15 @@ fn rust_predecode_schedule_plan(
 }
 
 fn predecode_target_image_indices(
-    matches_current: Vec<u8>,
+    candidate_count: usize,
+    current_index_found: bool,
+    current_index: usize,
     input: RustPredecodePolicyInput,
 ) -> Vec<usize> {
     let mut indices = Vec::new();
-    let candidate_count = matches_current.len();
-    let Some(current_index) = matches_current.iter().position(|flag| *flag != 0) else {
+    if !current_index_found || current_index >= candidate_count {
         return indices;
-    };
+    }
 
     indices.push(current_index);
     let profile = predecode_window_profile(input);
@@ -697,8 +702,9 @@ mod tests {
     #[test]
     fn schedule_plan_uses_regular_neutral_profile() {
         assert_eq!(
-            rust_predecode_schedule_plan(
-                vec![0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            schedule_plan_for_current(
+                15,
+                5,
                 policy_input(
                     RustPredecodeDocumentKind::Regular,
                     RustPredecodeMomentumMode::Neutral,
@@ -713,8 +719,9 @@ mod tests {
     #[test]
     fn schedule_plan_uses_document_neutral_profile() {
         assert_eq!(
-            rust_predecode_schedule_plan(
-                vec![0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            schedule_plan_for_current(
+                15,
+                5,
                 policy_input(
                     RustPredecodeDocumentKind::ArchiveDocument,
                     RustPredecodeMomentumMode::Neutral,
@@ -729,8 +736,9 @@ mod tests {
     #[test]
     fn schedule_plan_biases_paged_documents_in_navigation_direction() {
         assert_eq!(
-            rust_predecode_schedule_plan(
-                vec![0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0],
+            schedule_plan_for_current(
+                15,
+                5,
                 policy_input(
                     RustPredecodeDocumentKind::ArchiveDocument,
                     RustPredecodeMomentumMode::NextBiased,
@@ -741,8 +749,9 @@ mod tests {
             schedule_plan(4, vec![5, 6, 4, 7, 8, 9, 10, 11, 12, 13])
         );
         assert_eq!(
-            rust_predecode_schedule_plan(
-                vec![0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0],
+            schedule_plan_for_current(
+                15,
+                8,
                 policy_input(
                     RustPredecodeDocumentKind::DirectoryDocument,
                     RustPredecodeMomentumMode::PrevBiased,
@@ -757,8 +766,9 @@ mod tests {
     #[test]
     fn schedule_plan_suppresses_background_work_while_scrubbing_or_power_saver() {
         assert_eq!(
-            rust_predecode_schedule_plan(
-                vec![0, 0, 0, 1, 0, 0, 0],
+            schedule_plan_for_current(
+                7,
+                3,
                 policy_input(
                     RustPredecodeDocumentKind::ArchiveDocument,
                     RustPredecodeMomentumMode::ScrubbingNext,
@@ -769,8 +779,9 @@ mod tests {
             schedule_plan(0, vec![])
         );
         assert_eq!(
-            rust_predecode_schedule_plan(
-                vec![0, 0, 0, 1, 0, 0, 0],
+            schedule_plan_for_current(
+                7,
+                3,
                 policy_input(
                     RustPredecodeDocumentKind::ArchiveDocument,
                     RustPredecodeMomentumMode::NextBiased,
@@ -785,8 +796,8 @@ mod tests {
     #[test]
     fn parallel_limit_uses_document_kind_and_runtime_state() {
         assert_eq!(
-            rust_predecode_schedule_plan(
-                vec![],
+            schedule_plan_without_current(
+                0,
                 policy_input(
                     RustPredecodeDocumentKind::Regular,
                     RustPredecodeMomentumMode::Neutral,
@@ -798,8 +809,8 @@ mod tests {
             1,
         );
         assert_eq!(
-            rust_predecode_schedule_plan(
-                vec![],
+            schedule_plan_without_current(
+                0,
                 policy_input(
                     RustPredecodeDocumentKind::DirectoryDocument,
                     RustPredecodeMomentumMode::Neutral,
@@ -811,8 +822,8 @@ mod tests {
             2,
         );
         assert_eq!(
-            rust_predecode_schedule_plan(
-                vec![],
+            schedule_plan_without_current(
+                0,
                 policy_input(
                     RustPredecodeDocumentKind::ArchiveDocument,
                     RustPredecodeMomentumMode::Neutral,
@@ -824,8 +835,8 @@ mod tests {
             4,
         );
         assert_eq!(
-            rust_predecode_schedule_plan(
-                vec![],
+            schedule_plan_without_current(
+                0,
                 policy_input(
                     RustPredecodeDocumentKind::ArchiveDocument,
                     RustPredecodeMomentumMode::Neutral,
@@ -837,8 +848,8 @@ mod tests {
             1,
         );
         assert_eq!(
-            rust_predecode_schedule_plan(
-                vec![],
+            schedule_plan_without_current(
+                0,
                 policy_input(
                     RustPredecodeDocumentKind::ArchiveDocument,
                     RustPredecodeMomentumMode::ScrubbingPrev,
@@ -850,8 +861,8 @@ mod tests {
             0,
         );
         assert_eq!(
-            rust_predecode_schedule_plan(
-                vec![],
+            schedule_plan_without_current(
+                0,
                 policy_input(
                     RustPredecodeDocumentKind::ArchiveDocument,
                     RustPredecodeMomentumMode::Neutral,
@@ -964,11 +975,15 @@ mod tests {
     #[test]
     fn schedule_plan_ignores_missing_current() {
         assert_eq!(
-            rust_predecode_schedule_plan(vec![], regular_policy_input()),
+            schedule_plan_without_current(0, regular_policy_input()),
             schedule_plan(1, vec![])
         );
         assert_eq!(
-            rust_predecode_schedule_plan(vec![0, 0, 0], regular_policy_input()),
+            schedule_plan_without_current(3, regular_policy_input()),
+            schedule_plan(1, vec![])
+        );
+        assert_eq!(
+            schedule_plan_for_current(3, 3, regular_policy_input()),
             schedule_plan(1, vec![])
         );
     }
@@ -1098,6 +1113,21 @@ mod tests {
             false,
             1,
         )
+    }
+
+    fn schedule_plan_for_current(
+        candidate_count: usize,
+        current_index: usize,
+        input: RustPredecodePolicyInput,
+    ) -> RustPredecodeSchedulePlan {
+        rust_predecode_schedule_plan(candidate_count, true, current_index, input)
+    }
+
+    fn schedule_plan_without_current(
+        candidate_count: usize,
+        input: RustPredecodePolicyInput,
+    ) -> RustPredecodeSchedulePlan {
+        rust_predecode_schedule_plan(candidate_count, false, 0, input)
     }
 
     fn schedule_plan(
