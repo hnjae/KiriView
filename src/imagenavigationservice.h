@@ -49,6 +49,7 @@ public:
 
     int currentPageNumber() const;
     int imageCount() const;
+    ImagePageNavigationSnapshot pageNavigationSnapshot() const;
     std::optional<QUrl> urlAtPage(int pageNumber) const;
     std::optional<QUrl> selectPage(int pageNumber);
 

@@ -103,6 +103,27 @@ std::optional<std::size_t> adjacentCandidateIndex(const std::vector<Candidate> &
 }
 
 namespace KiriView {
+int ImagePageNavigationSnapshot::currentPageNumber() const
+{
+    return state.currentIndex < 0 ? 0 : state.currentIndex + 1;
+}
+
+int ImagePageNavigationSnapshot::imageCount() const { return static_cast<int>(state.urls.size()); }
+
+std::optional<QUrl> ImagePageNavigationSnapshot::urlAtPage(int pageNumber) const
+{
+    if (pageNumber < 1) {
+        return std::nullopt;
+    }
+
+    const std::size_t pageIndex = static_cast<std::size_t>(pageNumber - 1);
+    if (pageIndex >= state.urls.size()) {
+        return std::nullopt;
+    }
+
+    return state.urls.at(pageIndex);
+}
+
 std::optional<QUrl> adjacentImageNavigationUrl(
     const std::vector<ImageNavigationCandidate> &candidates, const QUrl &currentUrl,
     NavigationDirection direction)

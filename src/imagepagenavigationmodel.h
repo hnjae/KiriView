@@ -24,6 +24,7 @@ class ImagePageNavigationModel
 public:
     int currentPageNumber() const;
     int imageCount() const;
+    ImagePageNavigationSnapshot snapshot() const;
     bool hasKnownSelection() const;
     std::optional<QUrl> urlAtPage(int pageNumber) const;
     std::optional<QUrl> selectPage(int pageNumber);

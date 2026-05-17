@@ -38,6 +38,7 @@ private Q_SLOTS:
     void selectionUpdatesCurrentPageWithoutChangingKnownUrls();
     void refreshSourceGuardsStaleWatcherUpdates();
     void changedCandidateRefreshReportsCurrentImageRemoval();
+    void snapshotIsStableProjection();
 };
 
 void TestImagePageNavigationModel::refreshCompletionPublishesCanonicalPageState()
@@ -185,6 +186,31 @@ void TestImagePageNavigationModel::changedCandidateRefreshReportsCurrentImageRem
     QVERIFY(refresh.context.has_value());
     QCOMPARE(refresh.context->currentUrl(), first);
     comparePage(model, 0, 1);
+}
+
+void TestImagePageNavigationModel::snapshotIsStableProjection()
+{
+    ImagePageNavigationModel model;
+    const QUrl first = indexedImageUrl(0);
+    const QUrl second = indexedImageUrl(1);
+    const QUrl third = indexedImageUrl(2);
+    QVERIFY(model.completeRefresh(
+        { imageCandidate(first), imageCandidate(second), imageCandidate(third) }, second,
+        ImageCandidateListSource::forDirectory(localUrl(QStringLiteral("/images/")))));
+
+    const KiriView::ImagePageNavigationSnapshot snapshot = model.snapshot();
+    QCOMPARE(snapshot.currentPageNumber(), 2);
+    QCOMPARE(snapshot.imageCount(), 3);
+    QVERIFY(snapshot.urlAtPage(1).has_value());
+    QCOMPARE(*snapshot.urlAtPage(1), first);
+    QVERIFY(snapshot.urlAtPage(3).has_value());
+    QCOMPARE(*snapshot.urlAtPage(3), third);
+    QVERIFY(!snapshot.urlAtPage(0).has_value());
+    QVERIFY(!snapshot.urlAtPage(4).has_value());
+
+    QVERIFY(model.selectPage(3).has_value());
+    QCOMPARE(model.currentPageNumber(), 3);
+    QCOMPARE(snapshot.currentPageNumber(), 2);
 }
 
 QTEST_GUILESS_MAIN(TestImagePageNavigationModel)

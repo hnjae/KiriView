@@ -45,6 +45,11 @@ int ImagePageNavigationModel::currentPageNumber() const
 
 int ImagePageNavigationModel::imageCount() const { return static_cast<int>(m_state.urls.size()); }
 
+ImagePageNavigationSnapshot ImagePageNavigationModel::snapshot() const
+{
+    return ImagePageNavigationSnapshot { m_state };
+}
+
 bool ImagePageNavigationModel::hasKnownSelection() const
 {
     if (m_state.currentIndex < 0) {

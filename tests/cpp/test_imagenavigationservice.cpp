@@ -120,6 +120,7 @@ private Q_SLOTS:
     void pageNavigationStaysUnknownUntilArchiveListCompletes();
     void pageNavigationDoesNotPublishSyntheticBoundaryWhenCurrentMissing();
     void selectPageUpdatesCurrentPageImmediately();
+    void snapshotFollowsCanonicalPageNavigation();
     void knownAdjacentNavigationUsesPendingCurrentPage();
     void fallbackAdjacentNavigationPublishesTargetBeforeOpening();
     void pageNavigationUpdatesWhenDirectoryCandidatesChange();
@@ -420,6 +421,37 @@ void TestImageNavigationService::selectPageUpdatesCurrentPageImmediately()
     QVERIFY(!invalidUrl.has_value());
     QCOMPARE(service.currentPageNumber(), 3);
     QCOMPARE(pageNavigationChangeCount, 1);
+}
+
+void TestImageNavigationService::snapshotFollowsCanonicalPageNavigation()
+{
+    FakeCandidateProvider fakeProvider;
+    const QUrl parentUrl = localUrl(QStringLiteral("/images/"));
+    const QUrl firstUrl = localUrl(QStringLiteral("/images/01.png"));
+    const QUrl secondUrl = localUrl(QStringLiteral("/images/02.png"));
+    fakeProvider.setDirectoryImages(parentUrl,
+        {
+            imageCandidate(firstUrl),
+            imageCandidate(secondUrl),
+        });
+
+    KiriView::ImageNavigationService service(
+        nullptr, fakeProvider.provider(), navigationCallbacks());
+    service.updatePageNavigation(KiriView::ImageNavigationService::DisplayContext {
+        true,
+        KiriView::DisplayedImageLocation::fromUrl(firstUrl),
+    });
+
+    const KiriView::ImagePageNavigationSnapshot firstSnapshot = service.pageNavigationSnapshot();
+    QCOMPARE(firstSnapshot.currentPageNumber(), 1);
+    QCOMPARE(firstSnapshot.imageCount(), 2);
+    QVERIFY(firstSnapshot.urlAtPage(2).has_value());
+    QCOMPARE(*firstSnapshot.urlAtPage(2), secondUrl);
+
+    QVERIFY(service.selectPage(2).has_value());
+    const KiriView::ImagePageNavigationSnapshot secondSnapshot = service.pageNavigationSnapshot();
+    QCOMPARE(secondSnapshot.currentPageNumber(), 2);
+    QCOMPARE(firstSnapshot.currentPageNumber(), 1);
 }
 
 void TestImageNavigationService::knownAdjacentNavigationUsesPendingCurrentPage()

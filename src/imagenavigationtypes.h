@@ -6,6 +6,7 @@
 
 #include <QString>
 #include <QUrl>
+#include <optional>
 #include <vector>
 
 namespace KiriView {
@@ -33,6 +34,14 @@ struct ContainerNavigationCandidate {
 struct PageNavigationState {
     std::vector<QUrl> urls;
     int currentIndex = -1;
+};
+
+struct ImagePageNavigationSnapshot {
+    PageNavigationState state;
+
+    int currentPageNumber() const;
+    int imageCount() const;
+    std::optional<QUrl> urlAtPage(int pageNumber) const;
 };
 }
 

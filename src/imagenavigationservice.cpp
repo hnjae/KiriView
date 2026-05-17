@@ -48,6 +48,11 @@ int ImageNavigationService::currentPageNumber() const
 
 int ImageNavigationService::imageCount() const { return m_pageNavigation.imageCount(); }
 
+ImagePageNavigationSnapshot ImageNavigationService::pageNavigationSnapshot() const
+{
+    return m_pageNavigation.snapshot();
+}
+
 std::optional<QUrl> ImageNavigationService::urlAtPage(int pageNumber) const
 {
     return m_pageNavigation.urlAtPage(pageNumber);
