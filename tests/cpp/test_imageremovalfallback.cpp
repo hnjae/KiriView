@@ -31,7 +31,9 @@ private Q_SLOTS:
     void directoryDocumentPageHasNoFallbackPlan();
     void imageFallbackPrefersNextImage();
     void imageFallbackFallsBackToPreviousImage();
+    void imageFallbackReturnsNoUrlWithoutSiblingImages();
     void comicBookFallbackKeepsNextAndPreviousCandidates();
+    void comicBookFallbackReturnsNoCandidatesWithoutSiblingContainers();
 };
 
 void TestImageRemovalFallback::regularImagePlanUsesSiblingImageContext()
@@ -139,6 +141,21 @@ void TestImageRemovalFallback::imageFallbackFallsBackToPreviousImage()
     QCOMPARE(*fallbackUrl, localUrl(QStringLiteral("/images/02.png")));
 }
 
+void TestImageRemovalFallback::imageFallbackReturnsNoUrlWithoutSiblingImages()
+{
+    const QUrl currentUrl = localUrl(QStringLiteral("/images/03.png"));
+    const KiriView::ImageRemovalFallback fallback {
+        KiriView::ImageCandidateListContext::forDirectory(
+            currentUrl, localUrl(QStringLiteral("/images/"))),
+        currentUrl,
+        QStringLiteral("03.png"),
+    };
+
+    const std::optional<QUrl> fallbackUrl = KiriView::imageRemovalFallbackUrl({}, fallback);
+
+    QVERIFY(!fallbackUrl.has_value());
+}
+
 void TestImageRemovalFallback::comicBookFallbackKeepsNextAndPreviousCandidates()
 {
     const KiriView::ComicBookRemovalFallback fallback {
@@ -159,6 +176,21 @@ void TestImageRemovalFallback::comicBookFallbackKeepsNextAndPreviousCandidates()
     QCOMPARE(candidates.preferred->url, localUrl(QStringLiteral("/books/c.cbz")));
     QVERIFY(candidates.fallback.has_value());
     QCOMPARE(candidates.fallback->url, localUrl(QStringLiteral("/books/a.cbz")));
+}
+
+void TestImageRemovalFallback::comicBookFallbackReturnsNoCandidatesWithoutSiblingContainers()
+{
+    const KiriView::ComicBookRemovalFallback fallback {
+        localUrl(QStringLiteral("/books/b.cbz")),
+        localUrl(QStringLiteral("/books/")),
+        QStringLiteral("b.cbz"),
+    };
+
+    const KiriView::ComicBookRemovalFallbackCandidates candidates
+        = KiriView::comicBookRemovalFallbackCandidates({}, fallback);
+
+    QVERIFY(!candidates.preferred.has_value());
+    QVERIFY(!candidates.fallback.has_value());
 }
 
 QTEST_GUILESS_MAIN(TestImageRemovalFallback)

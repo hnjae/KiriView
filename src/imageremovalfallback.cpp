@@ -5,10 +5,7 @@
 
 #include "imagecontainer.h"
 #include "imagenavigationmodel.h"
-#include "imageurl.h"
-#include "kiriview/src/imagedeletionpolicy.cxx.h"
 
-#include <cstdint>
 #include <optional>
 #include <utility>
 #include <vector>
@@ -47,78 +44,32 @@ std::vector<Candidate> removalFallbackCandidates(
     return candidates;
 }
 
-std::uint8_t rustFlag(bool value) { return value ? 1 : 0; }
-
-KiriView::RustArchiveDocumentKind rustArchiveDocumentKind(
-    const KiriView::ArchiveDocumentLocation &archiveDocument)
+std::optional<QUrl> nextFallbackUrl(
+    const std::vector<KiriView::ImageNavigationCandidate> &candidates, const QUrl &currentUrl)
 {
-    if (archiveDocument.isEmpty()) {
-        return KiriView::RustArchiveDocumentKind::Empty;
-    }
-
-    switch (archiveDocument.kind()) {
-    case KiriView::ArchiveDocumentKind::ComicBook:
-        return KiriView::RustArchiveDocumentKind::ComicBook;
-    case KiriView::ArchiveDocumentKind::General:
-        return KiriView::RustArchiveDocumentKind::General;
-    case KiriView::ArchiveDocumentKind::Directory:
-        return KiriView::RustArchiveDocumentKind::Directory;
-    }
-
-    return KiriView::RustArchiveDocumentKind::Empty;
+    return KiriView::adjacentImageNavigationUrl(
+        candidates, currentUrl, KiriView::NavigationDirection::Next);
 }
 
-KiriView::RustImageRemovalFallbackPlanInput rustImageRemovalFallbackPlanInput(
-    const KiriView::DisplayedImageLocation &location,
-    const std::optional<KiriView::ImageCandidateListContext> &imageContext)
+std::optional<QUrl> previousFallbackUrl(
+    const std::vector<KiriView::ImageNavigationCandidate> &candidates, const QUrl &currentUrl)
 {
-    return KiriView::RustImageRemovalFallbackPlanInput {
-        rustArchiveDocumentKind(location.archiveDocument()),
-        KiriView::displayedLocationIsInsideArchiveDocument(location),
-        imageContext.has_value(),
-    };
+    return KiriView::adjacentImageNavigationUrl(
+        candidates, currentUrl, KiriView::NavigationDirection::Previous);
 }
 
-template <typename Candidate>
-rust::Vec<std::uint8_t> currentCandidateMatches(
-    const std::vector<Candidate> &candidates, const QUrl &currentUrl)
+std::optional<KiriView::ContainerNavigationCandidate> nextFallbackCandidate(
+    const std::vector<KiriView::ContainerNavigationCandidate> &candidates, const QUrl &currentUrl)
 {
-    rust::Vec<std::uint8_t> matches;
-    matches.reserve(candidates.size());
-    for (const Candidate &candidate : candidates) {
-        matches.push_back(rustFlag(KiriView::sameNormalizedUrl(candidate.url, currentUrl)));
-    }
-
-    return matches;
+    return KiriView::adjacentContainerNavigationCandidate(
+        candidates, currentUrl, KiriView::NavigationDirection::Next);
 }
 
-std::optional<std::size_t> fallbackIndexValue(KiriView::RustImageRemovalFallbackIndex index)
+std::optional<KiriView::ContainerNavigationCandidate> previousFallbackCandidate(
+    const std::vector<KiriView::ContainerNavigationCandidate> &candidates, const QUrl &currentUrl)
 {
-    if (!index.found) {
-        return std::nullopt;
-    }
-
-    return index.index;
-}
-
-template <typename Candidate>
-KiriView::RustImageRemovalFallbackCandidateIndices removalFallbackCandidateIndices(
-    const std::vector<Candidate> &candidates, const QUrl &currentUrl)
-{
-    return KiriView::rustImageRemovalFallbackCandidateIndices(
-        currentCandidateMatches(candidates, currentUrl));
-}
-
-template <typename Candidate>
-std::optional<Candidate> candidateAt(
-    const std::vector<Candidate> &candidates, KiriView::RustImageRemovalFallbackIndex index)
-{
-    const std::optional<std::size_t> candidateIndex = fallbackIndexValue(index);
-    if (!candidateIndex.has_value() || *candidateIndex >= candidates.size()) {
-        return std::nullopt;
-    }
-
-    return candidates.at(*candidateIndex);
+    return KiriView::adjacentContainerNavigationCandidate(
+        candidates, currentUrl, KiriView::NavigationDirection::Previous);
 }
 }
 
@@ -129,20 +80,19 @@ ImageRemovalFallbackPlan imageRemovalFallbackPlanForDisplayedLocation(
     const std::optional<ImageCandidateListContext> imageContext
         = imageCandidateListContextForDisplayedImage(location);
 
-    switch (rustImageRemovalFallbackPlanKind(
-        rustImageRemovalFallbackPlanInput(location, imageContext))) {
-    case RustImageRemovalFallbackPlanKind::ComicBook: {
-        const QUrl currentContainerUrl = containerNavigationUrlForLocation(location);
-        return ComicBookRemovalFallback { currentContainerUrl,
-            parentUrlForContainerNavigation(currentContainerUrl), currentContainerUrl.fileName() };
-    }
-    case RustImageRemovalFallbackPlanKind::Image:
-        if (imageContext.has_value()) {
-            return imageRemovalFallbackForImageContext(*imageContext);
+    if (displayedLocationIsInsideArchiveDocument(location)) {
+        if (location.archiveDocument().kind() == ArchiveDocumentKind::ComicBook) {
+            const QUrl currentContainerUrl = containerNavigationUrlForLocation(location);
+            return ComicBookRemovalFallback { currentContainerUrl,
+                parentUrlForContainerNavigation(currentContainerUrl),
+                currentContainerUrl.fileName() };
         }
+
         return NoImageRemovalFallback {};
-    case RustImageRemovalFallbackPlanKind::NoFallback:
-        return NoImageRemovalFallback {};
+    }
+
+    if (imageContext.has_value()) {
+        return imageRemovalFallbackForImageContext(*imageContext);
     }
 
     return NoImageRemovalFallback {};
@@ -163,18 +113,13 @@ std::optional<QUrl> imageRemovalFallbackUrl(
 
     const std::vector<ImageNavigationCandidate> fallbackCandidates = removalFallbackCandidates(
         std::move(candidates), fallback.currentUrl, fallback.currentName);
-    const RustImageRemovalFallbackCandidateIndices selected
-        = removalFallbackCandidateIndices(fallbackCandidates, fallback.currentUrl);
 
-    const std::optional<ImageNavigationCandidate> preferred
-        = candidateAt(fallbackCandidates, selected.preferred);
+    const std::optional<QUrl> preferred = nextFallbackUrl(fallbackCandidates, fallback.currentUrl);
     if (preferred.has_value()) {
-        return preferred->url;
+        return preferred;
     }
 
-    const std::optional<ImageNavigationCandidate> previous
-        = candidateAt(fallbackCandidates, selected.fallback);
-    return previous.has_value() ? std::optional<QUrl>(previous->url) : std::nullopt;
+    return previousFallbackUrl(fallbackCandidates, fallback.currentUrl);
 }
 
 ComicBookRemovalFallbackCandidates comicBookRemovalFallbackCandidates(
@@ -186,9 +131,7 @@ ComicBookRemovalFallbackCandidates comicBookRemovalFallbackCandidates(
 
     const std::vector<ContainerNavigationCandidate> fallbackCandidates = removalFallbackCandidates(
         std::move(candidates), fallback.currentContainerUrl, fallback.currentName);
-    const RustImageRemovalFallbackCandidateIndices selected
-        = removalFallbackCandidateIndices(fallbackCandidates, fallback.currentContainerUrl);
-    return { candidateAt(fallbackCandidates, selected.preferred),
-        candidateAt(fallbackCandidates, selected.fallback) };
+    return { nextFallbackCandidate(fallbackCandidates, fallback.currentContainerUrl),
+        previousFallbackCandidate(fallbackCandidates, fallback.currentContainerUrl) };
 }
 }

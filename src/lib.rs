@@ -10,7 +10,6 @@ mod byteio;
 mod cachebudget;
 mod heifcontainer;
 mod imagecontainer;
-mod imagedeletionpolicy;
 mod imageformatregistry;
 mod imagemath;
 mod imagenavigationmodel;
