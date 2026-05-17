@@ -10,6 +10,7 @@
 #include "imagedocumentloadcontroller.h"
 #include "imagedocumentnavigationcontroller.h"
 #include "imagedocumentpredecodecontroller.h"
+#include "imagedocumentsourceloadrequest.h"
 #include "imageopencontroller.h"
 #include "imagepresentationcontroller.h"
 #include "imagespreadpresentationcontroller.h"
@@ -95,6 +96,157 @@ ImageDocumentRuntime::ImageDocumentRuntime(QObject *documentObject,
 
 ImageDocumentRuntime::~ImageDocumentRuntime() { shutdown(); }
 
+QUrl ImageDocumentRuntime::sourceUrl() const { return state.sourceUrl(); }
+
+void ImageDocumentRuntime::setSourceUrl(const QUrl &sourceUrl)
+{
+    loadController->loadSource(ImageDocumentSourceLoadRequest::fromUrl(sourceUrl));
+}
+
+ImageDocumentStatus ImageDocumentRuntime::status() const
+{
+    return spreadController->status(state.status());
+}
+
+bool ImageDocumentRuntime::loading() const { return spreadController->loading(state.loading()); }
+
+QString ImageDocumentRuntime::errorString() const { return state.errorString(); }
+
+QString ImageDocumentRuntime::windowTitleFileName() const { return state.windowTitleFileName(); }
+
+QUrl ImageDocumentRuntime::displayedUrl() const { return state.displayedUrl(); }
+
+QSize ImageDocumentRuntime::imageSize() const { return spreadController->imageSize(); }
+
+QSize ImageDocumentRuntime::primaryImageSize() const { return presentationController->imageSize(); }
+
+QSize ImageDocumentRuntime::secondaryImageSize() const
+{
+    return spreadController->secondaryImageSize();
+}
+
+QSizeF ImageDocumentRuntime::viewportSize() const { return presentationController->viewportSize(); }
+
+void ImageDocumentRuntime::setViewportSize(const QSizeF &viewportSize)
+{
+    spreadController->setViewportSize(viewportSize);
+}
+
+QRectF ImageDocumentRuntime::visibleItemRect() const { return spreadController->visibleItemRect(); }
+
+void ImageDocumentRuntime::setVisibleItemRect(const QRectF &visibleItemRect)
+{
+    spreadController->setVisibleItemRect(visibleItemRect);
+}
+
+QSizeF ImageDocumentRuntime::displaySize() const { return spreadController->displaySize(); }
+
+QSizeF ImageDocumentRuntime::primaryDisplaySize() const
+{
+    return spreadController->primaryDisplaySize();
+}
+
+QSizeF ImageDocumentRuntime::secondaryDisplaySize() const
+{
+    return spreadController->secondaryDisplaySize();
+}
+
+qreal ImageDocumentRuntime::zoomPercent() const { return spreadController->zoomPercent(); }
+
+void ImageDocumentRuntime::setZoomPercent(qreal zoomPercent)
+{
+    spreadController->setZoomPercent(zoomPercent);
+}
+
+ImageZoomMode ImageDocumentRuntime::zoomMode() const { return spreadController->zoomMode(); }
+
+qreal ImageDocumentRuntime::maximumManualZoomPercent() const
+{
+    return spreadController->maximumManualZoomPercent();
+}
+
+qreal ImageDocumentRuntime::clampedManualZoomPercent(qreal zoomPercent) const
+{
+    return spreadController->clampedManualZoomPercent(zoomPercent);
+}
+
+qreal ImageDocumentRuntime::steppedManualZoomPercent(qreal stepCount) const
+{
+    return spreadController->steppedManualZoomPercent(stepCount);
+}
+
+int ImageDocumentRuntime::rotationDegrees() const { return spreadController->rotationDegrees(); }
+
+int ImageDocumentRuntime::currentPageNumber() const
+{
+    return navigationController->currentPageNumber();
+}
+
+int ImageDocumentRuntime::currentLastPageNumber() const
+{
+    return spreadController->currentLastPageNumber();
+}
+
+int ImageDocumentRuntime::imageCount() const { return navigationController->imageCount(); }
+
+bool ImageDocumentRuntime::containerNavigationAvailable() const
+{
+    return state.containerNavigationAvailable();
+}
+
+bool ImageDocumentRuntime::fileDeletionInProgress() const
+{
+    return documentDeletionController->inProgress();
+}
+
+bool ImageDocumentRuntime::twoPageModeEnabled() const
+{
+    return spreadController->twoPageModeEnabled();
+}
+
+void ImageDocumentRuntime::setTwoPageModeEnabled(bool enabled)
+{
+    spreadController->setTwoPageModeEnabled(enabled);
+}
+
+bool ImageDocumentRuntime::twoPageModeAvailable() const
+{
+    return spreadController->twoPageModeAvailable();
+}
+
+bool ImageDocumentRuntime::rightToLeftReadingEnabled() const
+{
+    return spreadController->rightToLeftReadingEnabled();
+}
+
+void ImageDocumentRuntime::setRightToLeftReadingEnabled(bool enabled)
+{
+    spreadController->setRightToLeftReadingEnabled(enabled);
+}
+
+bool ImageDocumentRuntime::rightToLeftReadingAvailable() const
+{
+    return spreadController->rightToLeftReadingAvailable();
+}
+
+bool ImageDocumentRuntime::secondaryPageVisible() const
+{
+    return spreadController->secondaryPageVisible();
+}
+
+std::shared_ptr<DisplayedImageSurface> ImageDocumentRuntime::imageSurface(
+    DisplayedPageRole role) const
+{
+    return spreadController->imageSurface(role);
+}
+
+const QImage &ImageDocumentRuntime::image() const { return presentationController->image(); }
+
+quint64 ImageDocumentRuntime::imageRevision(DisplayedPageRole role) const
+{
+    return spreadController->imageRevision(role);
+}
+
 void ImageDocumentRuntime::dispatchEffect(ImageDocumentEffect effect)
 {
     effectExecutor->dispatch(std::move(effect));
@@ -135,6 +287,24 @@ void ImageDocumentRuntime::openPreviousContainer()
 }
 
 void ImageDocumentRuntime::openNextContainer() { openAdjacentContainer(NavigationDirection::Next); }
+
+void ImageDocumentRuntime::deleteDisplayedFile(FileDeletionMode mode)
+{
+    documentDeletionController->deleteDisplayedFile(mode);
+}
+
+void ImageDocumentRuntime::resetZoom() { spreadController->resetZoom(); }
+
+void ImageDocumentRuntime::setFitMode(ImageZoomMode zoomMode)
+{
+    spreadController->setFitMode(zoomMode);
+}
+
+void ImageDocumentRuntime::rotateClockwise() { spreadController->rotateClockwise(); }
+
+void ImageDocumentRuntime::rotateCounterclockwise() { spreadController->rotateCounterclockwise(); }
+
+void ImageDocumentRuntime::updateRenderContext() { spreadController->updateRenderContext(); }
 
 void ImageDocumentRuntime::openImageAtPage(int pageNumber)
 {

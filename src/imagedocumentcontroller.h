@@ -22,7 +22,7 @@
 #include <memory>
 
 namespace KiriView {
-struct ImageDocumentRuntime;
+class ImageDocumentRuntime;
 
 class ImageDocumentController final : public QObject
 {
