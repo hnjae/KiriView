@@ -30,36 +30,9 @@ the left arrow button triggers Previous in Left-to-Right Reading mode and Next
 in Right-to-Left Reading mode, while the right arrow button triggers Next in
 Left-to-Right Reading mode and Previous in Right-to-Left Reading mode. The
 button tooltip and accessible text follow the action that button triggers.
-KiriView shows its application menu through a toolbar application menu button by
-default outside fullscreen. Users can switch the application menu presentation
-between Hamburger Menu and a conventional menubar, and KiriView remembers the
-selected presentation as application state across launches. In Hamburger Menu
-mode outside fullscreen, the toolbar application menu contains application
-actions such as Open, archive navigation, Full Screen, shortcut
-configuration, shortcut help, and Quit. In menubar mode outside fullscreen,
-those application actions are available from the menubar, and any toolbar
-overflow menu appears only when toolbar controls do not fit. The conventional
-menubar is the in-window Qt Quick Controls menubar; native or global menubar
-integration is outside the current scope. In fullscreen,
-KiriView hides both the menubar and toolbar application menu button; actions
-with configured shortcuts remain available through those shortcuts.
-The menubar and toolbar application menu keep each QAction's identity, text,
-shortcut, and enabled state unchanged while projecting adjacent navigation
-actions in reading progression order. When Right-to-Left Reading is active, the
-adjacent page navigation pair is displayed as Next before Previous, and the
-adjacent archive navigation pair is displayed as Next Archive before Previous
-Archive. First Image and Last Image keep their normal order because their
-page-index meaning does not change with reading direction. The menubar Go menu
-projects directional navigation icons to match the displayed reading
-progression meaning without changing the underlying QAction identity: when
-Right-to-Left Reading is active, Next uses the previous-direction icon,
-Previous uses the next-direction icon, First Image uses the last-boundary icon,
-and Last Image uses the first-boundary icon.
-The toolbar application menu is a single popup menu surface: activating the
-toolbar application menu button and pressing F10 open the same menu instance
-with the same width, actions, access keys, and shortcut column. Activating the
-toolbar application menu button while that menu is open closes it. Pressing F10
-opens the toolbar application menu and leaves it open when it is already open.
+KiriView shows its application menu through a toolbar application menu button by default outside fullscreen. Users can switch the application menu presentation between Hamburger Menu and a conventional menubar, and KiriView remembers the selected presentation as application state across launches. In Hamburger Menu mode outside fullscreen, the toolbar application menu contains application actions such as Open, archive navigation, Full Screen, shortcut configuration, shortcut help, and Quit. In menubar mode outside fullscreen, those application actions are available from the menubar, and any toolbar overflow menu appears only when toolbar controls do not fit. The conventional menubar is an in-window menubar; native or global menubar integration is outside the current scope. In fullscreen, KiriView hides both the menubar and toolbar application menu button; actions with configured shortcuts remain available through those shortcuts.
+The menubar and toolbar application menu keep each action's identity, text, shortcut, and enabled state unchanged while projecting adjacent navigation actions in reading progression order. When Right-to-Left Reading is active, the adjacent page navigation pair is displayed as Next before Previous, and the adjacent archive navigation pair is displayed as Next Archive before Previous Archive. First Image and Last Image keep their normal order because their page-index meaning does not change with reading direction. The menubar Go menu projects directional navigation icons to match the displayed reading progression meaning without changing the underlying action identity: when Right-to-Left Reading is active, Next uses the previous-direction icon, Previous uses the next-direction icon, First Image uses the last-boundary icon, and Last Image uses the first-boundary icon.
+The toolbar application menu is a single popup menu surface: activating the toolbar application menu button and pressing F10 open a toolbar application menu with the same width, actions, access keys, and shortcut column. Activating the toolbar application menu button while that menu is open closes it. Pressing F10 opens the toolbar application menu and leaves it open when it is already open.
 The menubar and toolbar application menu display a representative configurable
 shortcut for actions with configured shortcuts through the menu action's
 shortcut column. This column is supplied only from the canonical configurable
@@ -150,9 +123,7 @@ KiriView's desktop file advertises file-manager Open With handling for the image
 and comic book archive MIME types corresponding to its default open dialog
 filter.
 
-When an image is opened from a KDE-supported archive URL such as `zip://`,
-`tar://`, or `sevenz://`, KiriView treats it as a single image URL supplied by
-KIO rather than opening the whole archive as an archive document.
+When an image is opened from a KDE-supported archive URL such as `zip://`, `tar://`, or `sevenz://`, KiriView treats it as a single image URL rather than opening the whole archive as an archive document.
 
 In Flatpak, adjacent image navigation can list neighboring files under `home`,
 `/media`, `/mnt`, `/run/media`, and `$XDG_RUNTIME_DIR/gvfs`. Files outside those
@@ -196,7 +167,7 @@ and first/last boundary state. If the currently displayed local image is removed
 outside KiriView, KiriView immediately clears that image, opens the next
 supported image in the same sorted directory order when possible, falls back to
 the previous supported image when no next image exists, and otherwise shows the
-empty state. Non-local KIO URL scopes, explicit archive URL scopes such as
+empty state. Non-local URL scopes, explicit archive URL scopes such as
 `zip://`, directly opened archive documents, and directly opened recursive
 directory documents are snapshots and do not guarantee live external update
 handling.
@@ -221,17 +192,7 @@ For SVG files, 100% uses the SVG's intrinsic size. SVGs remain sharp instead of
 pixelated when Fit mode, manual zoom, window resizing, or display scale changes
 the displayed size.
 
-Static image files, including bitmap images and SVG files, appear at full
-resolution when they are small enough to display directly. Larger JPEG images
-may first appear quickly at a lower level of detail, then the visible area
-becomes sharper as KiriView prepares the detail needed for the current zoom,
-pan position, viewport size, and display scale. Newly visible areas may briefly
-show less detail until sharper data is ready, but normal panning should avoid
-blank holes. If an adjacent image has already been prepared, KiriView uses that
-prepared image before starting a fresh decode, so Previous and Next navigation
-can replace the view immediately. If a very large static image cannot be opened
-because it is too large, KiriView reports a decode error without replacing the
-currently displayed image.
+Static image files, including bitmap images and SVG files, appear at full resolution when they are small enough to display directly. Larger JPEG images may first appear quickly at a lower level of detail, then the visible area becomes sharper for the current zoom, pan position, viewport size, and display scale. Newly visible areas may briefly show less detail until sharper data is ready, but normal panning should avoid blank holes. When adjacent images are already available, Previous and Next navigation can replace the view immediately. If a very large static image cannot be opened because it is too large, KiriView reports a decode error without replacing the currently displayed image.
 
 HEIF-family still images, including AVIF still images, are supported when the
 still image is encoded with AV1, HEVC, AVC/H.264, JPEG, JPEG 2000, or
@@ -323,7 +284,7 @@ that page is ready.
 When an image is ready and Two-Page Spread is disabled, Rotate Clockwise turns
 the current image view by 90 degrees clockwise and Rotate Counterclockwise turns
 it by 90 degrees counterclockwise. Rotation is display-only: it does not modify
-image files, metadata, archive contents, remote URLs, cached source data, or any
+image files, metadata, archive contents, remote URLs, or any
 saved file state. Fit, Fit Height, Fit Width, manual zoom, scrollbars, drag
 panning, wheel zoom, keyboard panning, and scan shortcuts use the rotated
 logical image bounds. Ctrl+R rotates clockwise, and Ctrl+Shift+R rotates
@@ -334,17 +295,7 @@ displayed, and it also resets when the displayed image is cleared. Rotation is
 unavailable while Two-Page Spread is enabled; enabling Two-Page Spread resets
 rotation to 0 degrees.
 
-The toolbar provides a zoom percentage input. When an image is ready, users can
-enter manual zoom values from 10% through the maximum percentage that keeps the
-long edge of the displayed image within the larger of 65,536 logical pixels or
-eight times the viewport long edge. The maximum manual zoom is never lower than
-the normal Fit zoom percentage. Pressing Enter or clicking the image viewing
-area while editing the zoom input applies the nearest valid manual zoom value,
-returns focus to the image viewing area, and restores viewer keyboard shortcuts.
-Pressing Escape while editing the zoom input cancels the edit, restores the
-currently applied zoom percentage in the toolbar, returns focus to the image
-viewing area, and does not leave fullscreen. Editing the zoom input switches to
-manual zoom.
+The toolbar provides a zoom percentage input. When an image is ready, users can enter manual zoom values from 10% through a dynamic maximum that keeps the displayed image within the application's supported display size. The maximum manual zoom is never lower than the normal Fit zoom percentage. Pressing Enter or clicking the image viewing area while editing the zoom input applies the nearest valid manual zoom value, returns focus to the image viewing area, and restores viewer keyboard shortcuts. Pressing Escape while editing the zoom input cancels the edit, restores the currently applied zoom percentage in the toolbar, returns focus to the image viewing area, and does not leave fullscreen. Editing the zoom input switches to manual zoom.
 A fit menu provides Fit, Fit Height, and Fit Width actions and shows the
 selected fit mode. The fit action returns the image to Fit mode.
 
@@ -427,15 +378,7 @@ page navigation controls keep their layout stable. The current page number
 updates to the newly displayed image, and the known total image count remains
 visible while KiriView updates the current position.
 
-Animated image files, including GIF, APNG, and HEIF-family image sequences such
-as `.heics` and `.avifs`, play when animation frames are available. The first
-frame is shown once loading succeeds; later frames use the file's frame delays
-and loop count. Infinite loops continue until another image is selected or the
-view is cleared. APNG animations show the first displayable frame before later
-frames are decoded sequentially during playback, so opening an APNG does not
-require all animation frames to be materialized before the image becomes ready.
-APNG animations and HEIF-family image sequences continue to use full-frame
-playback and play as authored.
+Animated image files, including GIF, APNG, and HEIF-family image sequences such as `.heics` and `.avifs`, play when animation frames are available. The first frame is shown once loading succeeds; later frames use the file's frame delays and loop count. Infinite loops continue until another image is selected or the view is cleared. APNG animations may show the first displayable frame before all later frames are ready, so opening an APNG does not require the complete animation to be ready before the image becomes visible. APNG animations and HEIF-family image sequences continue to use full-frame playback and play as authored.
 
 When a new image is selected while an image is already displayed, any running
 animation keeps playing until the replacement image is ready. If the selected
@@ -496,42 +439,9 @@ If the parent URL cannot be listed, the current image is not found, or no
 adjacent supported image exists, the current image remains open and the app
 remains ready for another open action.
 
-When Two-Page Spread is enabled for a directly opened comic book archive,
-ordinary Previous and Next image navigation move by the currently displayed
-spread rather than always by one page. If two pages are visible, Next opens the
-page after the right page; if only one page is visible, Next opens the next
-page. Previous opens the previous eligible spread, falling back to the
-immediately previous page when that page is the cover or a wide page. Shift+Left
-and Shift+Right are fixed viewer-only shortcuts for moving by exactly one page
-while an image is ready. Their direction is physical: in Left-to-Right Reading
-mode, Shift+Left opens the previous page and Shift+Right opens the next page; in
-Right-to-Left Reading mode, Shift+Left opens the next page and Shift+Right opens
-the previous page. These fixed shortcuts are inactive while the page number or
-zoom input is focused or Keyboard Shortcuts help is open, and are not
-user-configurable actions. When a Two-Page Spread navigation target is loading
-and the supported image list is known, additional Previous, Next, Shift+Left, or
-Shift+Right navigation is calculated from the pending primary page selection.
-KiriView moves by one primary page selection at a time while loading; the final
-single-page or two-page spread pairing is decided after the selected primary page
-has loaded.
+When Two-Page Spread is enabled for a directly opened comic book archive, ordinary Previous and Next image navigation move by the currently displayed spread rather than always by one page. If two pages are visible, Next opens the page after the right page; if only one page is visible, Next opens the next page. Previous opens the previous eligible spread, falling back to the immediately previous page when that page is the cover or a wide page. Shift+Left and Shift+Right are fixed viewer-only shortcuts for moving by exactly one page while an image is ready. Their direction is physical: in Left-to-Right Reading mode, Shift+Left opens the previous page and Shift+Right opens the next page; in Right-to-Left Reading mode, Shift+Left opens the next page and Shift+Right opens the previous page. These fixed shortcuts are inactive while the page number or zoom input is focused or Keyboard Shortcuts help is open, and are not user-configurable actions. When a Two-Page Spread navigation target is loading and the supported image list is known, additional Previous, Next, Shift+Left, or Shift+Right navigation is calculated from the most recent requested primary page. KiriView moves by one primary page selection at a time while loading; the final single-page or two-page spread pairing is decided after the selected primary page has loaded.
 
-After an image is displayed, KiriView may make adjacent images available for
-quicker Previous or Next navigation, so the switch can happen without showing a
-full-page loading state. This preparation must not change what is displayed
-until the user opens an adjacent image.
-When Two-Page Spread shows two pages, both the current primary page and the
-visible secondary page are treated as displayed images for this preparation, so
-KiriView does not prepare either visible page again or discard either visible
-page as a non-displayed adjacent image.
-When users move quickly through pages, KiriView may briefly postpone background
-preparation and then prepare pages around the page where navigation settles,
-rather than preparing every skipped page. Directly opened archive and directory
-documents may prepare more pages in the current reading direction than ordinary
-image navigation. When the desktop Power Saver mode is enabled, KiriView does
-not newly schedule or run background adjacent-page preparation. Power Saver mode
-does not prevent recently displayed decoded images from staying available when
-the cache policy retains them. Foreground image loading and visible image-detail
-decoding continue to work while Power Saver mode is enabled.
+After an image is displayed, KiriView may make adjacent images available for quicker Previous or Next navigation, so the switch can happen without showing a full-page loading state. This background work must not change what is displayed until the user opens an adjacent image. When Two-Page Spread shows two pages, both the current primary page and the visible secondary page are treated as displayed images for this background work. When users move quickly through pages, KiriView may briefly postpone this background work and then prioritize pages around the page where navigation settles, rather than every skipped page. Directly opened archive and directory documents may make more pages available in the current reading direction than ordinary image navigation. When the desktop Power Saver mode is enabled, KiriView does not newly schedule or run background work for adjacent pages. Power Saver mode does not prevent recently displayed images from staying available for quick navigation. Foreground image loading and visible image detail updates continue to work while Power Saver mode is enabled.
 
 ## Archive Navigation
 
