@@ -197,3 +197,4 @@ Existing ADRs:
 
 - `docs/adr/0001-single-open-archive-document-session.md`: directly opened archive document sessions are owned by the C++ document runtime, including the archive location, sorted candidate list, and serialized archive image reads.
 - `docs/adr/0002-libpng-apng-streaming-decoder.md`: APNG playback is owned by the C++ runtime through APNG-patched libpng so frames can be decoded sequentially instead of materializing the full animation in memory.
+- `docs/adr/0003-resvg-svg-rendering.md`: static SVG parsing and rasterization are owned by Rust through resvg, while C++ keeps Qt image objects and tile-source integration.
