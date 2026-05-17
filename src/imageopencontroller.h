@@ -4,14 +4,12 @@
 #ifndef KIRIVIEW_IMAGEOPENCONTROLLER_H
 #define KIRIVIEW_IMAGEOPENCONTROLLER_H
 
-#include "decodedimagepresentation.h"
 #include "imageasyncdependencies.h"
 #include "imagedocumenteffects.h"
 #include "imageloadtypes.h"
+#include "imagepresentationload.h"
 #include "predecodedimage.h"
-#include "staticimage.h"
 
-#include <QImage>
 #include <QString>
 #include <QUrl>
 #include <functional>
@@ -55,23 +53,10 @@ private:
     void setSourceUrlFromResolvedLoad(const QUrl &sourceUrl);
     void finishPredecodedImageLoad(ImageLoadSession session, PredecodedImage image);
     void finishDecodedImageLoad(ImageLoadSession session, DecodedImage image);
-    bool finishDecodedImagePresentation(
-        const ImageLoadSession &session, DecodedStaticImagePresentation &presentation);
-    bool finishDecodedImagePresentation(
-        const ImageLoadSession &session, DecodedAnimationImagePresentation &presentation);
-    bool finishDecodedImagePresentation(
-        const ImageLoadSession &session, const UnpresentableDecodedImage &presentation);
-    void startDecodedAnimation(const DecodedAnimationImagePresentation &presentation);
-    bool finishAnimationImageLoad(
-        const ImageLoadSession &session, const QImage &firstFrame, std::function<void()> start);
+    void finishPresentedImageLoad(
+        const ImageLoadSession &session, const ImagePresentationLoadResult &result);
     void finishLoadWithError(
         const ImageLoadSession &session, ImageLoadError error, const QString &errorString);
-    void finishStaticImageLoad(
-        const ImageLoadSession &session, StaticImagePayload staticImage, bool predecodeCacheable);
-    void finishLoadSuccessfully(
-        const ImageLoadSession &session, const QImage &image, bool predecodeCacheable);
-    void beginSuccessfulImagePresentation(const ImageLoadSession &session);
-    void finishSuccessfulImagePresentation(const ImageLoadSession &session);
     void finishSuccessfulImageLoad(const ImageLoadSession &session);
     void reportEffects(ImageDocumentEffects effects);
     void report(ImageDocumentEffect effect);

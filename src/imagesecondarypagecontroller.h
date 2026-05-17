@@ -4,16 +4,15 @@
 #ifndef KIRIVIEW_IMAGESECONDARYPAGECONTROLLER_H
 #define KIRIVIEW_IMAGESECONDARYPAGECONTROLLER_H
 
-#include "decodedimagepresentation.h"
 #include "imageasyncdependencies.h"
 #include "imagedocumenttypes.h"
 #include "imageloadtypes.h"
 #include "imagelocation.h"
+#include "imagepresentationload.h"
 #include "imagespreadpagecache.h"
 #include "imagesurface.h"
 #include "predecodedimage.h"
 
-#include <QImage>
 #include <QSize>
 #include <QSizeF>
 #include <QString>
@@ -77,18 +76,8 @@ public:
 private:
     void finishPredecodedImageLoad(ImageLoadSession session, PredecodedImage image);
     void finishDecodedImageLoad(ImageLoadSession session, DecodedImage image);
-    bool finishDecodedImagePresentation(
-        const ImageLoadSession &session, DecodedStaticImagePresentation &presentation);
-    bool finishDecodedImagePresentation(
-        const ImageLoadSession &session, const DecodedAnimationImagePresentation &presentation);
-    bool finishDecodedImagePresentation(
-        const ImageLoadSession &session, const UnpresentableDecodedImage &presentation);
-    void finishImageLoad(
-        const ImageLoadSession &session, const QImage &image, bool predecodeCacheable);
-    void finishStaticImageLoad(
-        const ImageLoadSession &session, StaticImagePayload staticImage, bool predecodeCacheable);
-    void prepareImagePresentation(const ImageLoadSession &session);
-    void finishImagePresentation(const ImageLoadSession &session);
+    void finishImagePresentation(
+        const ImageLoadSession &session, const ImagePresentationLoadResult &result);
     void finishLoadWithError(const ImageLoadSession &session);
     void notify(ImageDocumentChange change);
     void reportLoadFinished(

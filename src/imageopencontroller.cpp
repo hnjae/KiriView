@@ -3,18 +3,16 @@
 
 #include "imageopencontroller.h"
 
-#include "decodedimagepresentation.h"
 #include "imagecallback.h"
-#include "imagecontainer.h"
 #include "imagedocumentstate.h"
 #include "imageloader.h"
 #include "imageopenworkflow.h"
 #include "imagepresentationcontroller.h"
+#include "imagepresentationload.h"
 #include "imageviewtext.h"
 
 #include <memory>
 #include <utility>
-#include <variant>
 
 namespace {
 QString emptyArchiveErrorMessage()
@@ -131,67 +129,27 @@ void ImageOpenController::setSourceUrlFromResolvedLoad(const QUrl &sourceUrl)
 
 void ImageOpenController::finishPredecodedImageLoad(ImageLoadSession session, PredecodedImage image)
 {
-    finishStaticImageLoad(session, std::move(image.staticImage), true);
+    finishPresentedImageLoad(
+        session, presentPredecodedImageLoad(m_presentationController, session, std::move(image)));
 }
 
 void ImageOpenController::finishDecodedImageLoad(ImageLoadSession session, DecodedImage image)
 {
-    DecodedImagePresentation presentation = decodedImagePresentationForImage(std::move(image));
-    auto finishPresentation = [this, &session](auto &decodedPresentation) {
-        return finishDecodedImagePresentation(session, decodedPresentation);
-    };
-    std::visit(finishPresentation, presentation);
+    finishPresentedImageLoad(session,
+        presentDecodedImageLoad(m_presentationController, session, std::move(image),
+            ImagePresentationAnimationHandling::StartAnimation));
 }
 
-bool ImageOpenController::finishDecodedImagePresentation(
-    const ImageLoadSession &session, DecodedStaticImagePresentation &presentation)
+void ImageOpenController::finishPresentedImageLoad(
+    const ImageLoadSession &session, const ImagePresentationLoadResult &result)
 {
-    finishStaticImageLoad(
-        session, std::move(presentation.staticImage), presentation.predecodeCacheable);
-    return true;
-}
-
-bool ImageOpenController::finishDecodedImagePresentation(
-    const ImageLoadSession &session, DecodedAnimationImagePresentation &presentation)
-{
-    const QImage firstFrame = presentation.firstFrame;
-    DecodedAnimationImagePresentation animation = std::move(presentation);
-    return finishAnimationImageLoad(session, firstFrame,
-        [this, animation = std::move(animation)]() { startDecodedAnimation(animation); });
-}
-
-bool ImageOpenController::finishDecodedImagePresentation(
-    const ImageLoadSession &session, const UnpresentableDecodedImage &)
-{
-    finishLoadWithError(session, ImageLoadError::Generic,
-        imageViewText("Could not decode the selected image animation."));
-    return false;
-}
-
-void ImageOpenController::startDecodedAnimation(
-    const DecodedAnimationImagePresentation &presentation)
-{
-    switch (presentation.kind) {
-    case DecodedImageAnimationKind::Apng:
-        m_presentationController.startApngAnimation(
-            presentation.data, presentation.loopCount, presentation.firstFrameDelay);
-        return;
-    case DecodedImageAnimationKind::Reader:
-        m_presentationController.startAnimation(presentation.data, presentation.format,
-            presentation.loopCount, presentation.firstFrameDelay);
-        return;
-    case DecodedImageAnimationKind::HeifSequence:
-        m_presentationController.startHeifSequenceAnimation(presentation.data);
+    if (!result.presented) {
+        finishLoadWithError(session, ImageLoadError::Generic,
+            imageViewText("Could not decode the selected image animation."));
         return;
     }
-}
 
-bool ImageOpenController::finishAnimationImageLoad(
-    const ImageLoadSession &session, const QImage &firstFrame, std::function<void()> start)
-{
-    finishLoadSuccessfully(session, firstFrame, false);
-    start();
-    return true;
+    finishSuccessfulImageLoad(session);
 }
 
 void ImageOpenController::finishLoadWithError(
@@ -200,35 +158,6 @@ void ImageOpenController::finishLoadWithError(
     const QString message = loadErrorMessage(error, errorString);
     reportEffects(ImageOpenWorkflow::finishLoadWithError(
         m_state, session, m_presentationController.hasImage(), message));
-}
-
-void ImageOpenController::finishStaticImageLoad(
-    const ImageLoadSession &session, StaticImagePayload staticImage, bool predecodeCacheable)
-{
-    beginSuccessfulImagePresentation(session);
-    m_presentationController.setStaticImage(std::move(staticImage), predecodeCacheable);
-    finishSuccessfulImagePresentation(session);
-}
-
-void ImageOpenController::finishLoadSuccessfully(
-    const ImageLoadSession &session, const QImage &image, bool predecodeCacheable)
-{
-    beginSuccessfulImagePresentation(session);
-    m_presentationController.stopAnimation();
-    m_presentationController.setImage(image, predecodeCacheable);
-    finishSuccessfulImagePresentation(session);
-}
-
-void ImageOpenController::beginSuccessfulImagePresentation(const ImageLoadSession &session)
-{
-    const QUrl loadedZoomScopeUrl = zoomScopeUrlForLocation(session.location);
-    m_presentationController.prepareImageContainer(loadedZoomScopeUrl);
-}
-
-void ImageOpenController::finishSuccessfulImagePresentation(const ImageLoadSession &session)
-{
-    m_presentationController.updateRenderContext();
-    finishSuccessfulImageLoad(session);
 }
 
 void ImageOpenController::finishSuccessfulImageLoad(const ImageLoadSession &session)

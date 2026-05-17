@@ -3,15 +3,13 @@
 
 #include "imagesecondarypagecontroller.h"
 
-#include "decodedimagepresentation.h"
 #include "imagecallback.h"
-#include "imagecontainer.h"
 #include "imageloader.h"
 #include "imagepresentationcontroller.h"
+#include "imagepresentationload.h"
 #include "imagespreadgeometry.h"
 
 #include <utility>
-#include <variant>
 
 namespace KiriView {
 ImageSecondaryPageController::ImageSecondaryPageController(QObject *parent,
@@ -151,74 +149,35 @@ void ImageSecondaryPageController::stopAnimation()
 void ImageSecondaryPageController::finishPredecodedImageLoad(
     ImageLoadSession session, PredecodedImage image)
 {
-    finishStaticImageLoad(session, std::move(image.staticImage), true);
+    finishImagePresentation(
+        session, presentPredecodedImageLoad(*m_presentationController, session, std::move(image)));
 }
 
 void ImageSecondaryPageController::finishDecodedImageLoad(
     ImageLoadSession session, DecodedImage image)
 {
-    DecodedImagePresentation presentation = decodedImagePresentationForImage(std::move(image));
-    auto finishPresentation = [this, &session](auto &decodedPresentation) {
-        return finishDecodedImagePresentation(session, decodedPresentation);
-    };
-    std::visit(finishPresentation, presentation);
+    finishImagePresentation(session,
+        presentDecodedImageLoad(*m_presentationController, session, std::move(image),
+            ImagePresentationAnimationHandling::FirstFrameOnly));
 }
 
-bool ImageSecondaryPageController::finishDecodedImagePresentation(
-    const ImageLoadSession &session, DecodedStaticImagePresentation &presentation)
+void ImageSecondaryPageController::finishImagePresentation(
+    const ImageLoadSession &session, const ImagePresentationLoadResult &result)
 {
-    finishStaticImageLoad(
-        session, std::move(presentation.staticImage), presentation.predecodeCacheable);
-    return true;
-}
+    if (!result.presented) {
+        finishLoadWithError(session);
+        return;
+    }
 
-bool ImageSecondaryPageController::finishDecodedImagePresentation(
-    const ImageLoadSession &session, const DecodedAnimationImagePresentation &presentation)
-{
-    finishImageLoad(session, presentation.firstFrame, false);
-    return true;
-}
-
-bool ImageSecondaryPageController::finishDecodedImagePresentation(
-    const ImageLoadSession &session, const UnpresentableDecodedImage &)
-{
-    finishLoadWithError(session);
-    return false;
-}
-
-void ImageSecondaryPageController::finishImageLoad(
-    const ImageLoadSession &session, const QImage &image, bool predecodeCacheable)
-{
-    prepareImagePresentation(session);
-    m_presentationController->setImage(image, predecodeCacheable);
-    finishImagePresentation(session);
-}
-
-void ImageSecondaryPageController::finishStaticImageLoad(
-    const ImageLoadSession &session, StaticImagePayload staticImage, bool predecodeCacheable)
-{
-    prepareImagePresentation(session);
-    m_presentationController->setStaticImage(std::move(staticImage), predecodeCacheable);
-    finishImagePresentation(session);
-}
-
-void ImageSecondaryPageController::prepareImagePresentation(const ImageLoadSession &session)
-{
-    m_presentationController->prepareImageContainer(zoomScopeUrlForLocation(session.location));
-}
-
-void ImageSecondaryPageController::finishImagePresentation(const ImageLoadSession &session)
-{
     m_displayedImageLocation = session.location;
-    const QSize loadedImageSize = m_presentationController->imageSize();
-    if (imageSpreadPageIsWide(loadedImageSize)) {
+    if (imageSpreadPageIsWide(result.imageSize)) {
         reportLoadFinished(
-            ImageSecondaryPageLoadResult::PrimaryOnly, session.location, loadedImageSize);
+            ImageSecondaryPageLoadResult::PrimaryOnly, session.location, result.imageSize);
         return;
     }
 
     m_visible = true;
-    reportLoadFinished(ImageSecondaryPageLoadResult::Visible, session.location, loadedImageSize);
+    reportLoadFinished(ImageSecondaryPageLoadResult::Visible, session.location, result.imageSize);
 }
 
 void ImageSecondaryPageController::finishLoadWithError(const ImageLoadSession &session)
