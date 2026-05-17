@@ -19,6 +19,11 @@ KiriView relies on runtime archive libraries instead of implementing archive par
 
 As of May 2026, libarchive 3.8.5 in the current Flatpak SDK does not support RAR4 solid archives.
 
+## Controls
+
+- Alt+mouse wheel scrolls horizontally on KDE/Qt.
+- Ctrl+mouse wheel zooms around the cursor.
+
 ## Known Issues
 
 On some Plasma Wayland systems with KWin 6.4 or 6.5, rapidly opening or closing the toolbar application menu can crash KWin. KDE tracks the related compositor crash as [Bug 506916](https://bugs.kde.org/show_bug.cgi?id=506916), fixed in KWin 6.6.1. If you encounter this, update Plasma/KWin to 6.6.1 or newer.
