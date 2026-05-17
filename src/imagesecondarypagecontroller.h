@@ -87,7 +87,7 @@ private:
         const ImageLoadSession &session, const QImage &image, bool predecodeCacheable);
     void finishStaticImageLoad(
         const ImageLoadSession &session, StaticImagePayload staticImage, bool predecodeCacheable);
-    void prepareImagePresentation(const ImageLoadSession &session, bool predecodeCacheable);
+    void prepareImagePresentation(const ImageLoadSession &session);
     void finishImagePresentation(const ImageLoadSession &session);
     void finishLoadWithError(const ImageLoadSession &session);
     void notify(ImageDocumentChange change);

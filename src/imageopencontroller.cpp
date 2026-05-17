@@ -205,26 +205,24 @@ void ImageOpenController::finishLoadWithError(
 void ImageOpenController::finishStaticImageLoad(
     const ImageLoadSession &session, StaticImagePayload staticImage, bool predecodeCacheable)
 {
-    beginSuccessfulImagePresentation(session, predecodeCacheable);
-    m_presentationController.setStaticImage(std::move(staticImage));
+    beginSuccessfulImagePresentation(session);
+    m_presentationController.setStaticImage(std::move(staticImage), predecodeCacheable);
     finishSuccessfulImagePresentation(session);
 }
 
 void ImageOpenController::finishLoadSuccessfully(
     const ImageLoadSession &session, const QImage &image, bool predecodeCacheable)
 {
-    beginSuccessfulImagePresentation(session, predecodeCacheable);
+    beginSuccessfulImagePresentation(session);
     m_presentationController.stopAnimation();
-    m_presentationController.setImage(image);
+    m_presentationController.setImage(image, predecodeCacheable);
     finishSuccessfulImagePresentation(session);
 }
 
-void ImageOpenController::beginSuccessfulImagePresentation(
-    const ImageLoadSession &session, bool predecodeCacheable)
+void ImageOpenController::beginSuccessfulImagePresentation(const ImageLoadSession &session)
 {
     const QUrl loadedZoomScopeUrl = zoomScopeUrlForLocation(session.location);
     m_presentationController.prepareImageContainer(loadedZoomScopeUrl);
-    m_presentationController.setPredecodeCacheable(predecodeCacheable);
 }
 
 void ImageOpenController::finishSuccessfulImagePresentation(const ImageLoadSession &session)

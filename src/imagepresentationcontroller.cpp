@@ -23,7 +23,7 @@ ImagePresentationController::ImagePresentationController(QObject *context,
     m_displayedImageState = std::make_unique<DisplayedImageState>(
         context,
         [this](const QSize &imageSize) {
-            setImageSize(imageSize);
+            applyDisplayedImageSize(imageSize);
             notify(ImageDocumentChange::Repaint);
         },
         [this](
@@ -191,19 +191,15 @@ void ImagePresentationController::prepareFailedContainer(const QUrl &containerUr
     });
 }
 
-void ImagePresentationController::setPredecodeCacheable(bool cacheable)
-{
-    m_displayedImageState->setPredecodeCacheable(cacheable);
-}
-
-void ImagePresentationController::setImage(const QImage &image)
+void ImagePresentationController::setImage(const QImage &image, bool predecodeCacheable)
 {
     resetRotationForNewImage();
     invalidateTiles();
-    m_displayedImageState->setImage(image);
+    m_displayedImageState->setImage(image, predecodeCacheable);
 }
 
-void ImagePresentationController::setStaticImage(StaticImagePayload staticImage)
+void ImagePresentationController::setStaticImage(
+    StaticImagePayload staticImage, bool predecodeCacheable)
 {
     const ImageDocumentRenderContext context = renderContext();
     stopAnimation();
@@ -211,7 +207,8 @@ void ImagePresentationController::setStaticImage(StaticImagePayload staticImage)
     invalidateTiles();
     const bool useFullImageSurface
         = staticImageFitsFullImageSurface(staticImage, context.maximumTextureSize);
-    m_displayedImageState->setStaticImage(std::move(staticImage), useFullImageSurface);
+    m_displayedImageState->setStaticImage(
+        std::move(staticImage), useFullImageSurface, predecodeCacheable);
     if (!useFullImageSurface) {
         scheduleVisibleTileDecode(context);
     }
@@ -223,7 +220,7 @@ void ImagePresentationController::clearImage()
     invalidateTiles();
     m_zoomState.clearContainer();
     m_displayedImageState->clear();
-    setImageSize(QSize());
+    applyDisplayedImageSize(QSize());
 }
 
 void ImagePresentationController::startAnimation(
@@ -245,10 +242,9 @@ void ImagePresentationController::startHeifSequenceAnimation(const QByteArray &d
 
 void ImagePresentationController::stopAnimation() { m_displayedImageState->stopAnimation(); }
 
-void ImagePresentationController::setImageSize(const QSize &imageSize)
+void ImagePresentationController::applyDisplayedImageSize(const QSize &imageSize)
 {
-    m_sourceImageSize = imageSize;
-    const QSize logicalImageSize = rotatedImageSize(m_sourceImageSize, m_rotationDegrees);
+    const QSize logicalImageSize = rotatedImageSize(imageSize, m_rotationDegrees);
     mutateZoomState([&logicalImageSize](ImageZoomState &zoomState, qreal devicePixelRatio) {
         zoomState.setImageSize(logicalImageSize, devicePixelRatio);
     });
@@ -262,7 +258,8 @@ void ImagePresentationController::setRotationDegrees(int rotationDegrees)
     }
 
     m_rotationDegrees = normalizedRotationDegrees;
-    const QSize logicalImageSize = rotatedImageSize(m_sourceImageSize, m_rotationDegrees);
+    const QSize logicalImageSize
+        = rotatedImageSize(m_displayedImageState->imageSize(), m_rotationDegrees);
     mutateZoomState(
         [&logicalImageSize](ImageZoomState &zoomState, qreal devicePixelRatio) {
             zoomState.setImageSize(logicalImageSize, devicePixelRatio);

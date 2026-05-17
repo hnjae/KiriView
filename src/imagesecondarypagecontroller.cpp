@@ -189,24 +189,22 @@ bool ImageSecondaryPageController::finishDecodedImagePresentation(
 void ImageSecondaryPageController::finishImageLoad(
     const ImageLoadSession &session, const QImage &image, bool predecodeCacheable)
 {
-    prepareImagePresentation(session, predecodeCacheable);
-    m_presentationController->setImage(image);
+    prepareImagePresentation(session);
+    m_presentationController->setImage(image, predecodeCacheable);
     finishImagePresentation(session);
 }
 
 void ImageSecondaryPageController::finishStaticImageLoad(
     const ImageLoadSession &session, StaticImagePayload staticImage, bool predecodeCacheable)
 {
-    prepareImagePresentation(session, predecodeCacheable);
-    m_presentationController->setStaticImage(std::move(staticImage));
+    prepareImagePresentation(session);
+    m_presentationController->setStaticImage(std::move(staticImage), predecodeCacheable);
     finishImagePresentation(session);
 }
 
-void ImageSecondaryPageController::prepareImagePresentation(
-    const ImageLoadSession &session, bool predecodeCacheable)
+void ImageSecondaryPageController::prepareImagePresentation(const ImageLoadSession &session)
 {
     m_presentationController->prepareImageContainer(zoomScopeUrlForLocation(session.location));
-    m_presentationController->setPredecodeCacheable(predecodeCacheable);
 }
 
 void ImageSecondaryPageController::finishImagePresentation(const ImageLoadSession &session)

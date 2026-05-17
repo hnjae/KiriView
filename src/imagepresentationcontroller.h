@@ -70,9 +70,8 @@ public:
     void updateRenderContext();
     void prepareImageContainer(const QUrl &containerUrl);
     void prepareFailedContainer(const QUrl &containerUrl);
-    void setPredecodeCacheable(bool cacheable);
-    void setImage(const QImage &image);
-    void setStaticImage(StaticImagePayload staticImage);
+    void setImage(const QImage &image, bool predecodeCacheable);
+    void setStaticImage(StaticImagePayload staticImage, bool predecodeCacheable);
     void clearImage();
 
     void startAnimation(
@@ -89,7 +88,7 @@ private:
 
     using ZoomStateMutation = std::function<void(ImageZoomState &, qreal devicePixelRatio)>;
 
-    void setImageSize(const QSize &imageSize);
+    void applyDisplayedImageSize(const QSize &imageSize);
     void setRotationDegrees(int rotationDegrees);
     void resetRotationForNewImage();
     void invalidateTiles();
@@ -108,7 +107,6 @@ private:
     ImageDocumentRenderContext m_renderContext;
     std::unique_ptr<DisplayedImageState> m_displayedImageState;
     std::unique_ptr<ImageTileDecodeScheduler> m_tileDecodeScheduler;
-    QSize m_sourceImageSize;
     int m_rotationDegrees = 0;
     QRectF m_visibleItemRect;
 };

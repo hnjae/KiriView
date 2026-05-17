@@ -25,10 +25,11 @@ void TestDisplayedImageState::imageSurfaceChangesAdvanceRevisionAndNotify()
     KiriView::DisplayedImageState state(
         this, [&changedSizes](const QSize &size) { changedSizes.push_back(size); }, {});
 
-    state.setImage(KiriView::TestSupport::testImage(2, 1));
+    state.setImage(KiriView::TestSupport::testImage(2, 1), false);
 
     QCOMPARE(state.revision(), quint64(1));
     QCOMPARE(state.imageSize(), QSize(2, 1));
+    QVERIFY(!state.isPredecodeCacheable());
     QVERIFY(state.imageSurface()->legacyFrameSurface() != nullptr);
     QVERIFY(!state.staticImage().has_value());
     QCOMPARE(changedSizes.back(), QSize(2, 1));
@@ -36,10 +37,11 @@ void TestDisplayedImageState::imageSurfaceChangesAdvanceRevisionAndNotify()
     state.setStaticImage(
         KiriView::TestSupport::staticTestImagePayload(
             KiriView::TestSupport::testImage(3, 2), KiriView::TestSupport::testImage(2, 2)),
-        false);
+        false, true);
 
     QCOMPARE(state.revision(), quint64(2));
     QCOMPARE(state.imageSize(), QSize(3, 2));
+    QVERIFY(state.isPredecodeCacheable());
     QVERIFY(state.imageSurface()->staticTileSurface() != nullptr);
     QVERIFY(state.staticImage().has_value());
     QCOMPARE(changedSizes.back(), QSize(3, 2));
@@ -55,11 +57,17 @@ void TestDisplayedImageState::imageSurfaceChangesAdvanceRevisionAndNotify()
     QCOMPARE(state.revision(), quint64(3));
     QCOMPARE(changedSizes.back(), QSize(3, 2));
 
-    state.clear();
+    state.setImage(KiriView::TestSupport::testImage(2, 1), false);
 
     QCOMPARE(state.revision(), quint64(4));
+    QVERIFY(!state.isPredecodeCacheable());
+
+    state.clear();
+
+    QCOMPARE(state.revision(), quint64(5));
     QVERIFY(state.image().isNull());
     QCOMPARE(state.imageSize(), QSize());
+    QVERIFY(!state.isPredecodeCacheable());
     QVERIFY(!state.staticImage().has_value());
     QCOMPARE(changedSizes.back(), QSize());
 }

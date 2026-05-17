@@ -38,9 +38,9 @@ public:
     bool isPredecodeCacheable() const;
     std::optional<StaticImagePayload> staticImage() const;
 
-    void setPredecodeCacheable(bool cacheable);
-    void setImage(const QImage &image);
-    void setStaticImage(StaticImagePayload staticImage, bool useFullImageSurface);
+    void setImage(const QImage &image, bool predecodeCacheable);
+    void setStaticImage(
+        StaticImagePayload staticImage, bool useFullImageSurface, bool predecodeCacheable);
     bool insertTile(DecodedTile tile);
     void clear();
 
@@ -52,7 +52,7 @@ public:
 
 private:
     void replaceDisplayedImage(QImage image, std::shared_ptr<DisplayedImageSurface> surface,
-        std::optional<StaticImagePayload> staticImage);
+        std::optional<StaticImagePayload> staticImage, bool predecodeCacheable);
     void finishImageChange();
     void notifyImageChanged();
 

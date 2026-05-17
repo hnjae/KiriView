@@ -112,9 +112,9 @@ void TestImageDocumentPredecodeController::scheduleAdjacentImagePredecodeUsesPre
 
     state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromUrl(displayedUrl));
     presentation.setViewportSize(QSizeF(320.0, 240.0));
-    presentation.setPredecodeCacheable(true);
     presentation.setStaticImage(
-        staticTestImagePayload(testImage(QSize(10, 8)), KiriView::StaticImageDisplayHints { 0.5 }));
+        staticTestImagePayload(testImage(QSize(10, 8)), KiriView::StaticImageDisplayHints { 0.5 }),
+        true);
 
     controller.scheduleAdjacentImagePredecode();
 
@@ -147,7 +147,7 @@ void TestImageDocumentPredecodeController::
         });
 
     state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromUrl(displayedUrl));
-    presentation.setStaticImage(staticTestImagePayload(testImage()));
+    presentation.setStaticImage(staticTestImagePayload(testImage()), false);
     controller.scheduleAdjacentImagePredecode();
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
 
@@ -182,8 +182,7 @@ void TestImageDocumentPredecodeController::
         });
 
     state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromUrl(displayedUrl));
-    presentation.setPredecodeCacheable(true);
-    presentation.setStaticImage(staticTestImagePayload(testImage()));
+    presentation.setStaticImage(staticTestImagePayload(testImage()), true);
 
     controller.scheduleAdjacentImagePredecode();
 

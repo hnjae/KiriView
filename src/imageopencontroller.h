@@ -70,7 +70,7 @@ private:
         const ImageLoadSession &session, StaticImagePayload staticImage, bool predecodeCacheable);
     void finishLoadSuccessfully(
         const ImageLoadSession &session, const QImage &image, bool predecodeCacheable);
-    void beginSuccessfulImagePresentation(const ImageLoadSession &session, bool predecodeCacheable);
+    void beginSuccessfulImagePresentation(const ImageLoadSession &session);
     void finishSuccessfulImagePresentation(const ImageLoadSession &session);
     void finishSuccessfulImageLoad(const ImageLoadSession &session);
     void reportEffects(ImageDocumentEffects effects);
