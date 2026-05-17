@@ -40,8 +40,6 @@ public:
     ApngOpenResult open(QByteArray data);
     std::optional<AnimationFrame> readNextFrame(QString *errorString);
     bool hasMoreFrames() const;
-    int frameCount() const;
-    void close();
 
 private:
     class Private;

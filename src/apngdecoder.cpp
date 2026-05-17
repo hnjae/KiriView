@@ -198,6 +198,8 @@ namespace KiriView {
 class ApngAnimationReader::Private
 {
 public:
+    ~Private() { close(); }
+
     ApngOpenResult open(QByteArray inputData)
     {
         close();
@@ -304,8 +306,6 @@ public:
     }
 
     bool hasMoreFrames() const { return png != nullptr && rawFramesRead < totalFrameCount; }
-
-    int frameCount() const { return displayFrameCount(); }
 
     void close()
     {
@@ -609,8 +609,4 @@ std::optional<AnimationFrame> ApngAnimationReader::readNextFrame(QString *errorS
 }
 
 bool ApngAnimationReader::hasMoreFrames() const { return d->hasMoreFrames(); }
-
-int ApngAnimationReader::frameCount() const { return d->frameCount(); }
-
-void ApngAnimationReader::close() { d->close(); }
 }
