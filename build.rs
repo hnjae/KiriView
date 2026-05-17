@@ -49,7 +49,7 @@ const RUST_BRIDGE_SOURCES: &[&str] = &[
     "src/predecodecachepolicy.rs",
 ];
 const CXX_QT_CPP_SOURCES: &[&str] = &[
-    "src/apngdecoder.cpp",
+    "src/apnganimationreader.cpp",
     "src/kiriimagedocument.cpp",
     "src/kiriimagedecoder.cpp",
     "src/kiriimagerendernode.cpp",

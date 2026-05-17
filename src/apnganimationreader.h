@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#ifndef KIRIVIEW_APNGDECODER_H
-#define KIRIVIEW_APNGDECODER_H
+#ifndef KIRIVIEW_APNGANIMATIONREADER_H
+#define KIRIVIEW_APNGANIMATIONREADER_H
 
 #include "animationframe.h"
 

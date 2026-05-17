@@ -6,7 +6,7 @@
 // animations yet. The reader keeps libpng's sequential stream state and only
 // stores the current composed canvas instead of all frames.
 
-#include "apngdecoder.h"
+#include "apnganimationreader.h"
 
 #include "imageanimationpolicy.h"
 #include "imageviewtext.h"

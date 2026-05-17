@@ -85,7 +85,7 @@ let
     lib.splitString "\n" (builtins.readFile ../../../src/cpp_core_sources.txt)
   );
   cxxQtCppSources = [
-    "src/apngdecoder.cpp"
+    "src/apnganimationreader.cpp"
     "src/kiriimagedocument.cpp"
     "src/kiriimagedecoder.cpp"
     "src/kiriimagerendernode.cpp"

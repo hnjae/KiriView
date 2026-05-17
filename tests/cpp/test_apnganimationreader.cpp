@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "apngdecoder.h"
+#include "apnganimationreader.h"
 #include "decodedimageresult.h"
 #include "kiriimagedecoder.h"
 
@@ -207,7 +207,7 @@ template <typename Image> const Image *decodedImage(const KiriView::DecodedImage
 }
 }
 
-class TestApngDecoder : public QObject
+class TestApngAnimationReader : public QObject
 {
     Q_OBJECT
 
@@ -222,7 +222,7 @@ private Q_SLOTS:
     void imageDecoderReturnsStreamingApngImage();
 };
 
-void TestApngDecoder::nonPngAndPlainPngReturnNotApng()
+void TestApngAnimationReader::nonPngAndPlainPngReturnNotApng()
 {
     KiriView::ApngAnimationReader reader;
     KiriView::ApngOpenResult result = reader.open(QByteArrayLiteral("not png"));
@@ -233,7 +233,7 @@ void TestApngDecoder::nonPngAndPlainPngReturnNotApng()
     QCOMPARE(result.status, KiriView::ApngOpenStatus::NotApng);
 }
 
-void TestApngDecoder::readerDecodesSequentialFramesAndLoopCount()
+void TestApngAnimationReader::readerDecodesSequentialFramesAndLoopCount()
 {
     FrameSpec first = fullCanvasFrame(1, 1, pixelBytes({ { { 255, 0, 0, 255 } } }));
     FrameSpec second = fullCanvasFrame(1, 1, pixelBytes({ { { 0, 0, 255, 255 } } }));
@@ -259,7 +259,7 @@ void TestApngDecoder::readerDecodesSequentialFramesAndLoopCount()
     QVERIFY(errorString.isEmpty());
 }
 
-void TestApngDecoder::hiddenDefaultImageIsNotDisplayed()
+void TestApngAnimationReader::hiddenDefaultImageIsNotDisplayed()
 {
     FrameSpec animationFrame = fullCanvasFrame(1, 1, pixelBytes({ { { 0, 0, 255, 255 } } }));
     const QByteArray hiddenDefault = pixelBytes({ { { 255, 0, 0, 255 } } });
@@ -274,7 +274,7 @@ void TestApngDecoder::hiddenDefaultImageIsNotDisplayed()
     QVERIFY(!reader.hasMoreFrames());
 }
 
-void TestApngDecoder::blendOverComposesWithExistingCanvas()
+void TestApngAnimationReader::blendOverComposesWithExistingCanvas()
 {
     FrameSpec first = fullCanvasFrame(1, 1, pixelBytes({ { { 255, 0, 0, 255 } } }));
     FrameSpec second = fullCanvasFrame(1, 1, pixelBytes({ { { 0, 0, 255, 128 } } }));
@@ -293,7 +293,7 @@ void TestApngDecoder::blendOverComposesWithExistingCanvas()
     QVERIFY(color.blue() > 0);
 }
 
-void TestApngDecoder::disposeBackgroundClearsFrameRegion()
+void TestApngAnimationReader::disposeBackgroundClearsFrameRegion()
 {
     FrameSpec first
         = fullCanvasFrame(2, 1, pixelBytes({ { { 255, 0, 0, 255 } }, { { 255, 0, 0, 255 } } }));
@@ -314,7 +314,7 @@ void TestApngDecoder::disposeBackgroundClearsFrameRegion()
     QCOMPARE(pixel(thirdFrame->image, 1, 0), QColor(0, 255, 0, 255));
 }
 
-void TestApngDecoder::disposePreviousRestoresFrameRegion()
+void TestApngAnimationReader::disposePreviousRestoresFrameRegion()
 {
     FrameSpec first
         = fullCanvasFrame(2, 1, pixelBytes({ { { 255, 0, 0, 255 } }, { { 255, 0, 0, 255 } } }));
@@ -335,7 +335,7 @@ void TestApngDecoder::disposePreviousRestoresFrameRegion()
     QCOMPARE(pixel(thirdFrame->image, 1, 0), QColor(0, 255, 0, 255));
 }
 
-void TestApngDecoder::malformedApngReportsError()
+void TestApngAnimationReader::malformedApngReportsError()
 {
     FrameSpec frame
         = fullCanvasFrame(2, 1, pixelBytes({ { { 255, 0, 0, 255 } }, { { 255, 0, 0, 255 } } }));
@@ -347,7 +347,7 @@ void TestApngDecoder::malformedApngReportsError()
     QVERIFY(result.errorString.contains(QStringLiteral("APNG")));
 }
 
-void TestApngDecoder::imageDecoderReturnsStreamingApngImage()
+void TestApngAnimationReader::imageDecoderReturnsStreamingApngImage()
 {
     FrameSpec first = fullCanvasFrame(1, 1, pixelBytes({ { { 255, 0, 0, 255 } } }));
     FrameSpec second = fullCanvasFrame(1, 1, pixelBytes({ { { 0, 0, 255, 255 } } }));
@@ -362,6 +362,6 @@ void TestApngDecoder::imageDecoderReturnsStreamingApngImage()
     QCOMPARE(decoded->data, apng);
 }
 
-QTEST_GUILESS_MAIN(TestApngDecoder)
+QTEST_GUILESS_MAIN(TestApngAnimationReader)
 
-#include "test_apngdecoder.moc"
+#include "test_apnganimationreader.moc"

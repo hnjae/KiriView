@@ -11,11 +11,11 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/apngdecoder.cpp
+#: src/apnganimationreader.cpp
 msgid "Could not decode the selected PNG image."
 msgstr ""
 
-#: src/apngdecoder.cpp src/imageanimationplayer.cpp
+#: src/apnganimationreader.cpp src/imageanimationplayer.cpp
 msgid "Could not decode the selected APNG animation."
 msgstr ""
 

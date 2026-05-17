@@ -3,7 +3,7 @@
 
 #include "imageanimationplayer.h"
 
-#include "apngdecoder.h"
+#include "apnganimationreader.h"
 #include "bufferedimagereader.h"
 #include "heifdecoder.h"
 #include "imagecallback.h"
