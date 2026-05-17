@@ -54,17 +54,15 @@ The toolbar application menu is a single popup menu surface. Activating the tool
 
 Activating the toolbar application menu button while that menu is open closes it. Pressing F10 opens the toolbar application menu and leaves it open when it is already open.
 
-The menubar and toolbar application menu display a representative configurable shortcut for actions with configured shortcuts through the menu action's shortcut column. This column is supplied only from the canonical configurable shortcut list.
+The menubar and toolbar application menu display one representative configured shortcut for actions with user-configurable shortcuts through the menu action's shortcut column.
 
-The representative shortcut is the first entry in the action's current configured shortcut list that is safe to display in menus. Delete shortcuts, arrow and navigation-key shortcuts, and unmodified printable shortcuts are not menu-display safe because they can affect focused text input.
+The representative shortcut is the first of the action's current configured shortcuts that is safe to display in menus. Delete shortcuts, arrow and navigation-key shortcuts, and unmodified printable shortcuts are not menu-display safe because they can affect focused text input.
 
-Actions without a menu-display-safe representative shortcut do not show canonical shortcut text in menus.
+Actions without a menu-display-safe representative shortcut do not show configured shortcut text in menus.
 
-Fixed shortcuts that are not part of the configurable shortcut list may be shown only as display-only menu or tooltip text for the control they activate. They are not canonical action shortcuts.
+Fixed shortcuts that users cannot configure may be shown only as display-only menu or tooltip text for the control they activate. They are not user-configurable action shortcuts.
 
 In the menubar, representative shortcut text is visually deemphasized from the menu item label when the item is not pressed. In the toolbar application menu, representative shortcut text is displayed separately on the trailing side of the menu item.
-
-Runtime-only Ctrl-less viewer aliases are never displayed in menus.
 
 When the menubar or toolbar application menu is open, underlined menu access keys are activatable with either the displayed mnemonic letter alone or Alt plus that mnemonic letter.
 
@@ -254,15 +252,11 @@ In Right-to-Left Reading mode, Left and Right keep physical horizontal panning w
 
 When an image is zoomed large enough to pan in any direction, Up and Down pan the image vertically within the available scroll bounds and have no image-navigation fallback. Ctrl+< moves the pan position to the top-left, Ctrl+> moves the pan position to the bottom-right, Shift+mouse wheel pans horizontally, and the mouse cursor shows that the image can be dragged to pan.
 
-While the page number or zoom input is not focused, KiriView also accepts the runtime-only aliases `<` and `>` for pan-boundary movement.
-
 Keyboard panning and Left/Right image navigation are inactive while the page number or zoom input is focused.
 
 ### Two-Page Spread and Reading Direction
 
 When a directly opened local CBZ, CBT, CB7, or CBR comic book archive is displayed, Ctrl+S toggles Two-Page Spread.
-
-While the page number or zoom input is not focused, KiriView also accepts the runtime-only alias `s` for Two-Page Spread.
 
 Two-Page Spread displays the current page on the left and the next page on the right when both pages are eligible.
 
@@ -275,8 +269,6 @@ If the next page after the current page is wide, the current page is displayed a
 Two-Page Spread is unavailable for ordinary image files, KDE-supported archive URLs, directly opened ZIP, TAR, 7Z, or RAR archives, and directly opened directories.
 
 When a directly opened local CBZ, CBT, CB7, or CBR comic book archive is displayed, Ctrl+B toggles Right-to-Left Reading mode.
-
-While the page number or zoom input is not focused, KiriView also accepts the runtime-only alias `b` for Right-to-Left Reading mode.
 
 Right-to-Left Reading mode is off by default, is unavailable for ordinary image files, KDE-supported archive URLs, directly opened ZIP, TAR, 7Z, or RAR archives, and directly opened directories, and is not saved as a global setting.
 
@@ -310,8 +302,6 @@ Fit, Fit Height, Fit Width, manual zoom, scrollbars, drag panning, wheel zoom, k
 
 Ctrl+R rotates clockwise, and Ctrl+Shift+R rotates counterclockwise.
 
-While the page number or zoom input is not focused, KiriView also accepts the runtime-only aliases `r` and Shift+R for those rotation actions.
-
 Rotation resets to 0 degrees whenever a different image or page is displayed, and it also resets when the displayed image is cleared.
 
 Rotation is unavailable while Two-Page Spread is enabled. Enabling Two-Page Spread resets rotation to 0 degrees.
@@ -336,13 +326,9 @@ When an image is ready, Ctrl+= or Ctrl++ zooms in by multiplying the current zoo
 
 Keyboard zoom uses the same dynamic manual zoom range as the toolbar zoom input.
 
-While the page number or zoom input is not focused, KiriView also accepts the runtime-only aliases `=`, `+`, and `-` for those zoom actions.
-
 Holding Ctrl and using the mouse wheel over the image zooms around the cursor. Wheel up zooms in by the same multiplicative step and wheel down zooms out by its reciprocal.
 
 When an image is ready, Ctrl+1 selects Fit mode, Ctrl+2 selects Fit Height mode, Ctrl+3 selects Fit Width mode, and Ctrl+0 switches to 100% manual zoom.
-
-While the page number or zoom input is not focused, KiriView also accepts the runtime-only aliases `1`, `2`, `3`, and `0` for those fit and actual-size actions.
 
 ### Scan Shortcuts
 
@@ -355,8 +341,6 @@ At the final scan position, Ctrl+. opens the next image.
 Ctrl+, scans backward through the same positions. At the initial scan position, it opens the previous image, starting that image at its final scan position.
 
 When the current image is not zoomed large enough to pan, Ctrl+. opens the next image and Ctrl+, opens the previous image.
-
-While the page number or zoom input is not focused, KiriView also accepts the runtime-only aliases `.` and `,` for scan actions.
 
 In Right-to-Left Reading mode, scan order starts at the top-right and proceeds toward the bottom-left. Ctrl+. still scans forward or opens the next image, Ctrl+, still scans backward or opens the previous image, Ctrl+< jumps to scan start, and Ctrl+> jumps to scan end.
 
@@ -508,11 +492,7 @@ Navigation does not wrap. Pressing Previous Archive on the first candidate or Ne
 
 `Ctrl+[` opens the previous sibling archive and `Ctrl+]` opens the next sibling archive when archive navigation is available.
 
-While the page number or zoom input is not focused, KiriView also accepts the runtime-only aliases `[` and `]` for those archive navigation actions.
-
-Home and Ctrl+Home open the first image in the current archive, and End and Ctrl+End open the last image in the current archive.
-
-Home and End are inactive while the page number or zoom input is focused.
+Ctrl+Home opens the first image in the current archive, and Ctrl+End opens the last image in the current archive.
 
 Opening a comic book archive displays the first supported image in that archive using the same archive image ordering as page navigation.
 
@@ -525,8 +505,6 @@ That empty archive remains the current archive navigation position, so Previous 
 ### Fullscreen
 
 Ctrl+F and F11 toggle the main window between normal windowed display and system fullscreen.
-
-While the page number or zoom input is not focused, KiriView also accepts the runtime-only alias `f` for fullscreen.
 
 Fullscreen hides the system titlebar and window decorations and shows the app toolbar as a top-attached overlay toolbar above the image viewing area without reserving layout space.
 
@@ -544,13 +522,11 @@ Leaving fullscreen restores the window's previous windowed, maximized, or minimi
 
 Ctrl+? and F1 open the modal Keyboard Shortcuts help dialog.
 
-While the page number or zoom input is not focused, KiriView also accepts the runtime-only alias `?` for shortcut help.
-
 The Keyboard Shortcuts help is shown as a modal dialog over the main window.
 
 It lists user-configurable KiriView actions and their current configured shortcut text.
 
-It does not list fixed shortcuts, mouse gestures, mouse-wheel gestures, or runtime-only Ctrl-less viewer aliases.
+It does not list fixed shortcuts, mouse gestures, or mouse-wheel gestures.
 
 It can be dismissed with standard dialog dismissal actions such as Enter/OK, Escape, the close button, or clicking outside the dialog.
 
@@ -580,8 +556,6 @@ Outside fullscreen, Escape does not close the main window.
 
 Ctrl+Q closes the main window.
 
-While the page number or zoom input is not focused, KiriView also accepts the runtime-only alias `q` for Quit.
-
 Quit shortcuts using Ctrl, Alt, or Meta remain active while those inputs are focused.
 
 ### Configurable Shortcuts
@@ -592,13 +566,9 @@ Changing a shortcut updates the toolbar, application menu, menubar, shortcut hel
 
 Shortcut changes apply immediately and persist across launches.
 
-Configured shortcuts are the canonical shortcut list.
+When an action has a user-configurable shortcut that uses Ctrl or Ctrl+Shift and can be used safely as a viewer-only shortcut without Ctrl, KiriView derives a matching runtime-only viewer alias by dropping Ctrl from that shortcut. Examples include Ctrl+L to `l`, Ctrl+Shift+R to Shift+R, Ctrl+< to `<`, Ctrl+[ to `[`, Ctrl+Home to Home, and Ctrl+End to End. Derived aliases are not stored, are inactive while the page number or zoom input is focused, are not user-configurable shortcuts, and are not displayed as separate shortcuts in menus, Keyboard Shortcuts configuration, or the Keyboard Shortcuts help.
 
-When a configured shortcut uses Ctrl or Ctrl+Shift with a printable key, KiriView derives a matching runtime-only viewer alias without Ctrl, such as Ctrl+L to `l` or Ctrl+Shift+R to Shift+R.
-
-Derived aliases are not stored, are inactive while the page number or zoom input is focused, and are not listed as separate shortcuts in menus, Keyboard Shortcuts configuration, or the Keyboard Shortcuts help.
-
-Directly configured unmodified ASCII printable shortcuts are removed from the canonical shortcut list.
+Unmodified ASCII printable shortcuts are not kept as user-configurable action shortcuts.
 
 ## Out of Scope
 
