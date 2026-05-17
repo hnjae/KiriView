@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_IMAGEDOCUMENTLOADCONTROLLER_H
 #define KIRIVIEW_IMAGEDOCUMENTLOADCONTROLLER_H
 
+#include "imagedocumentsourceloadpolicy.h"
 #include "imagedocumentsourceloadrequest.h"
 
 namespace KiriView {
@@ -14,9 +15,6 @@ class ImageDocumentPredecodeController;
 class ImageDocumentState;
 class ImageOpenController;
 class ImageSpreadPresentationController;
-enum class ImageDocumentRightToLeftReadingTransition;
-enum class ImageDocumentSourceLoadUrlTarget;
-struct ImageDocumentSourceLoadPlan;
 
 class ImageDocumentLoadController final
 {

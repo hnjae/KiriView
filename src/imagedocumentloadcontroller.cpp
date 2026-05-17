@@ -7,12 +7,50 @@
 #include "imagedocumentdeletioncontroller.h"
 #include "imagedocumentnavigationcontroller.h"
 #include "imagedocumentpredecodecontroller.h"
+#include "imagedocumentsourceloadpolicy.h"
 #include "imagedocumentstate.h"
 #include "imageopencontroller.h"
-#include "imageopenworkflow.h"
 #include "imagespreadpresentationcontroller.h"
 
 namespace {
+KiriView::ImageDocumentSourceLoadKind sourceLoadKind(const KiriView::ImageDocumentState &state,
+    const KiriView::ImageDocumentSourceLoadRequest &request)
+{
+    if (state.sourceUrl() == request.sourceUrl) {
+        return KiriView::ImageDocumentSourceLoadKind::CurrentSource;
+    }
+
+    return KiriView::ImageDocumentSourceLoadKind::ReplacementSource;
+}
+
+KiriView::ImageDocumentRightToLeftReadingReset rightToLeftReadingReset(
+    const KiriView::ImageDocumentState &state,
+    const KiriView::ImageSpreadPresentationController &spreadController,
+    const KiriView::ImageDocumentSourceLoadRequest &request)
+{
+    if (!spreadController.shouldResetRightToLeftReadingForLoad(
+            state.displayedArchiveDocument(), request.sourceUrl, request.containerNavigationUrl)) {
+        return KiriView::ImageDocumentRightToLeftReadingReset::Keep;
+    }
+
+    return spreadController.rightToLeftReadingEnabled()
+        ? KiriView::ImageDocumentRightToLeftReadingReset::ResetActive
+        : KiriView::ImageDocumentRightToLeftReadingReset::ResetInactive;
+}
+
+KiriView::ImageDocumentSourceLoadPolicyInput sourceLoadPolicyInput(
+    const KiriView::ImageDocumentState &state,
+    const KiriView::ImageSpreadPresentationController &spreadController,
+    const KiriView::ImageDocumentSourceLoadRequest &request)
+{
+    KiriView::ImageDocumentSourceLoadPolicyInput input;
+    input.loadKind = sourceLoadKind(state, request);
+    input.preserveTwoPageSpreadTransition = request.preserveTwoPageSpreadTransition;
+    input.rightToLeftReadingReset = rightToLeftReadingReset(state, spreadController, request);
+    input.hasRequestedContainerNavigationUrl = !request.containerNavigationUrl.isEmpty();
+    return input;
+}
+
 void cancelNavigationAndPredecode(KiriView::ImageDocumentNavigationController &navigationController,
     KiriView::ImageDocumentPredecodeController &predecodeController)
 {
@@ -43,8 +81,8 @@ void ImageDocumentLoadController::loadSource(const ImageDocumentSourceLoadReques
 {
     m_deletionController.cancel();
 
-    const ImageDocumentSourceLoadPlan plan
-        = ImageOpenWorkflow::sourceLoadPlan(m_state, m_spreadController, request);
+    const ImageDocumentSourceLoadPlan plan = ImageDocumentSourceLoadPolicy::plan(
+        sourceLoadPolicyInput(m_state, m_spreadController, request));
     applySourceLoadPlan(request, plan);
 }
 
