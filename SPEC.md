@@ -431,8 +431,11 @@ Animated image files, including GIF, APNG, and HEIF-family image sequences such
 as `.heics` and `.avifs`, play when animation frames are available. The first
 frame is shown once loading succeeds; later frames use the file's frame delays
 and loop count. Infinite loops continue until another image is selected or the
-view is cleared. APNG animations and HEIF-family image sequences continue to use
-full-frame playback and play as authored.
+view is cleared. APNG animations show the first displayable frame before later
+frames are decoded sequentially during playback, so opening an APNG does not
+require all animation frames to be materialized before the image becomes ready.
+APNG animations and HEIF-family image sequences continue to use full-frame
+playback and play as authored.
 
 When a new image is selected while an image is already displayed, any running
 animation keeps playing until the replacement image is ready. If the selected
