@@ -5,6 +5,7 @@
 #define KIRIVIEW_KIRIIMAGEVIEW_H
 
 #include "imagedocumenttypes.h"
+#include "imagesurface.h"
 #include "kiriimagedocument.h"
 
 #include <QMetaObject>
@@ -52,8 +53,9 @@ Q_SIGNALS:
     void secondaryPageChanged();
 
 private:
+    KiriView::DisplayedPageRole displayedPageRole() const;
     QSize imageSize() const;
-    QSize renderImageSize() const;
+    KiriView::DisplayedImageRenderSnapshot renderSnapshot() const;
     QSizeF viewportSize() const;
     QSizeF displaySize() const;
     QRectF viewportImageRect() const;

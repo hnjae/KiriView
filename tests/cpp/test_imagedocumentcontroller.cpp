@@ -113,9 +113,16 @@ bool finishOldestActiveLoadForUrl(ManualImageDataLoader &dataLoader, const QUrl 
 std::size_t staticTileCount(const KiriView::ImageDocumentController &controller,
     KiriView::DisplayedPageRole role = KiriView::DisplayedPageRole::Primary)
 {
-    std::shared_ptr<KiriView::DisplayedImageSurface> surface = controller.imageSurface(role);
+    std::shared_ptr<KiriView::DisplayedImageSurface> surface
+        = controller.renderSnapshot(role).surface;
     auto *staticSurface = surface == nullptr ? nullptr : surface->staticTileSurface();
     return staticSurface == nullptr ? 0 : staticSurface->tiles().size();
+}
+
+bool hasRenderableSnapshot(const KiriView::ImageDocumentController &controller,
+    KiriView::DisplayedPageRole role = KiriView::DisplayedPageRole::Primary)
+{
+    return controller.renderSnapshot(role).isRenderable();
 }
 
 bool containsChange(
@@ -734,7 +741,7 @@ void TestImageDocumentController::smallStaticImageUsesFullImageSurface()
     finishLoad(dataLoader);
 
     QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
-    std::shared_ptr<KiriView::DisplayedImageSurface> surface = controller->imageSurface();
+    std::shared_ptr<KiriView::DisplayedImageSurface> surface = controller->renderSnapshot().surface;
     QVERIFY(surface != nullptr);
     QVERIFY(surface->legacyFrameSurface() != nullptr);
     QCOMPARE(controller->imageSize(), QSize(1024, 1));
@@ -763,7 +770,7 @@ void TestImageDocumentController::largeStaticImageUsesTiledSurface()
     finishLoad(dataLoader);
 
     QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
-    std::shared_ptr<KiriView::DisplayedImageSurface> surface = controller->imageSurface();
+    std::shared_ptr<KiriView::DisplayedImageSurface> surface = controller->renderSnapshot().surface;
     QVERIFY(surface != nullptr);
     auto *staticSurface = surface->staticTileSurface();
     QVERIFY(staticSurface != nullptr);
@@ -858,7 +865,7 @@ void TestImageDocumentController::smallFullImageSurfaceStillSchedulesAdjacentPre
     finishLoad(dataLoader);
 
     QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
-    std::shared_ptr<KiriView::DisplayedImageSurface> surface = controller->imageSurface();
+    std::shared_ptr<KiriView::DisplayedImageSurface> surface = controller->renderSnapshot().surface;
     QVERIFY(surface != nullptr);
     QVERIFY(surface->legacyFrameSurface() != nullptr);
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(2));
@@ -883,7 +890,7 @@ void TestImageDocumentController::replacementLoadFailureKeepsDisplayedImage()
     controller->setSourceUrl(imageUrl);
     finishLoad(dataLoader);
     QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
-    const quint64 displayedRevision = controller->imageRevision();
+    const quint64 displayedRevision = controller->renderSnapshot().revision;
     const std::size_t loadCountBeforeReplacement = dataLoader.loadCount();
 
     controller->setSourceUrl(missingUrl);
@@ -896,7 +903,7 @@ void TestImageDocumentController::replacementLoadFailureKeepsDisplayedImage()
     QCOMPARE(controller->displayedUrl(), imageUrl);
     QCOMPARE(controller->errorString(), QStringLiteral("missing"));
     QCOMPARE(controller->imageSize(), QSize(2, 1));
-    QCOMPARE(controller->imageRevision(), displayedRevision);
+    QCOMPARE(controller->renderSnapshot().revision, displayedRevision);
     QVERIFY(!controller->image().isNull());
 }
 
@@ -1347,6 +1354,13 @@ void TestImageDocumentController::twoPageModeDisplaysCurrentAndNextComicArchiveP
     QCOMPARE(controller->displayedUrl(), firstPageUrl);
     QVERIFY(controller->twoPageModeAvailable());
 
+    controller->rotateClockwise();
+    const KiriView::DisplayedImageRenderSnapshot rotatedSinglePageSnapshot
+        = controller->renderSnapshot();
+    QVERIFY(rotatedSinglePageSnapshot.isRenderable());
+    QCOMPARE(rotatedSinglePageSnapshot.imageSize, QSize(200, 100));
+    QCOMPARE(rotatedSinglePageSnapshot.rotationDegrees, 90);
+
     controller->setTwoPageModeEnabled(true);
     QVERIFY(controller->twoPageModeEnabled());
     QVERIFY(!controller->secondaryPageVisible());
@@ -1365,6 +1379,16 @@ void TestImageDocumentController::twoPageModeDisplaysCurrentAndNextComicArchiveP
     QCOMPARE(controller->primaryImageSize(), QSize(100, 200));
     QCOMPARE(controller->secondaryImageSize(), QSize(100, 200));
     QCOMPARE(controller->imageSize(), QSize(200, 200));
+
+    const KiriView::DisplayedImageRenderSnapshot primarySnapshot = controller->renderSnapshot();
+    const KiriView::DisplayedImageRenderSnapshot secondarySnapshot
+        = controller->renderSnapshot(KiriView::DisplayedPageRole::Secondary);
+    QVERIFY(primarySnapshot.isRenderable());
+    QVERIFY(secondarySnapshot.isRenderable());
+    QCOMPARE(primarySnapshot.imageSize, QSize(100, 200));
+    QCOMPARE(secondarySnapshot.imageSize, QSize(100, 200));
+    QCOMPARE(primarySnapshot.rotationDegrees, 0);
+    QCOMPARE(secondarySnapshot.rotationDegrees, 0);
 }
 
 void TestImageDocumentController::twoPageModeUsesRightToLeftPageOrder()
@@ -1520,32 +1544,32 @@ void TestImageDocumentController::twoPageModeWaitsForTargetSpreadBeforeRendering
     QTRY_VERIFY(controller->secondaryPageVisible());
     QCOMPARE(controller->displayedUrl(), secondPageUrl);
     QCOMPARE(controller->currentLastPageNumber(), 3);
-    QVERIFY(controller->imageSurface() != nullptr);
-    QVERIFY(controller->imageSurface(KiriView::DisplayedPageRole::Secondary) != nullptr);
+    QVERIFY(hasRenderableSnapshot(*controller));
+    QVERIFY(hasRenderableSnapshot(*controller, KiriView::DisplayedPageRole::Secondary));
 
     controller->openNextImage();
 
     QTRY_COMPARE(dataLoader.backLoad().url, fourthPageUrl);
     QCOMPARE(controller->status(), KiriView::ImageDocumentStatus::Loading);
     QVERIFY(controller->loading());
-    QVERIFY(controller->imageSurface() == nullptr);
-    QVERIFY(controller->imageSurface(KiriView::DisplayedPageRole::Secondary) == nullptr);
+    QVERIFY(!hasRenderableSnapshot(*controller));
+    QVERIFY(!hasRenderableSnapshot(*controller, KiriView::DisplayedPageRole::Secondary));
     finishLoad(dataLoader);
 
     QTRY_COMPARE(controller->displayedUrl(), fourthPageUrl);
     QTRY_COMPARE(dataLoader.backLoad().url, fifthPageUrl);
     QCOMPARE(controller->status(), KiriView::ImageDocumentStatus::Loading);
     QVERIFY(controller->loading());
-    QVERIFY(controller->imageSurface() == nullptr);
-    QVERIFY(controller->imageSurface(KiriView::DisplayedPageRole::Secondary) == nullptr);
+    QVERIFY(!hasRenderableSnapshot(*controller));
+    QVERIFY(!hasRenderableSnapshot(*controller, KiriView::DisplayedPageRole::Secondary));
     finishLoad(dataLoader);
 
     QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
     QTRY_VERIFY(controller->secondaryPageVisible());
     QCOMPARE(controller->displayedUrl(), fourthPageUrl);
     QCOMPARE(controller->currentLastPageNumber(), 5);
-    QVERIFY(controller->imageSurface() != nullptr);
-    QVERIFY(controller->imageSurface(KiriView::DisplayedPageRole::Secondary) != nullptr);
+    QVERIFY(hasRenderableSnapshot(*controller));
+    QVERIFY(hasRenderableSnapshot(*controller, KiriView::DisplayedPageRole::Secondary));
 }
 
 void TestImageDocumentController::twoPageModeLoadingNavigationUsesPendingPrimaryPage()

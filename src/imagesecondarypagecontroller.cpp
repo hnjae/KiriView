@@ -84,14 +84,9 @@ QSize ImageSecondaryPageController::imageSize() const
     return m_visible ? m_presentationController->imageSize() : QSize();
 }
 
-std::shared_ptr<DisplayedImageSurface> ImageSecondaryPageController::imageSurface() const
+DisplayedImageRenderSnapshot ImageSecondaryPageController::renderSnapshot() const
 {
-    return m_visible ? m_presentationController->imageSurface() : nullptr;
-}
-
-quint64 ImageSecondaryPageController::imageRevision() const
-{
-    return m_visible ? m_presentationController->imageRevision() : 0;
+    return m_visible ? m_presentationController->renderSnapshot() : DisplayedImageRenderSnapshot {};
 }
 
 void ImageSecondaryPageController::cachePageSize(const QUrl &url, const QSize &imageSize)

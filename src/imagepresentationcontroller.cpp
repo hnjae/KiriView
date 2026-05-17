@@ -104,6 +104,16 @@ std::shared_ptr<DisplayedImageSurface> ImagePresentationController::imageSurface
     return m_displayedImageState->imageSurface();
 }
 
+DisplayedImageRenderSnapshot ImagePresentationController::renderSnapshot() const
+{
+    return DisplayedImageRenderSnapshot {
+        imageSurface(),
+        imageRevision(),
+        imageSize(),
+        rotationDegrees(),
+    };
+}
+
 const QImage &ImagePresentationController::image() const { return m_displayedImageState->image(); }
 
 quint64 ImagePresentationController::imageRevision() const

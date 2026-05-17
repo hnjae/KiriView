@@ -161,18 +161,12 @@ bool ImageDocumentController::secondaryPageVisible() const
     return m_runtime->secondaryPageVisible();
 }
 
-std::shared_ptr<DisplayedImageSurface> ImageDocumentController::imageSurface(
-    DisplayedPageRole role) const
+DisplayedImageRenderSnapshot ImageDocumentController::renderSnapshot(DisplayedPageRole role) const
 {
-    return m_runtime->imageSurface(role);
+    return m_runtime->renderSnapshot(role);
 }
 
 const QImage &ImageDocumentController::image() const { return m_runtime->image(); }
-
-quint64 ImageDocumentController::imageRevision(DisplayedPageRole role) const
-{
-    return m_runtime->imageRevision(role);
-}
 
 void ImageDocumentController::openPreviousImage() { m_runtime->openPreviousImage(); }
 

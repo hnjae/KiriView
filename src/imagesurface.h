@@ -67,6 +67,15 @@ private:
     Payload m_payload;
 };
 
+struct DisplayedImageRenderSnapshot {
+    std::shared_ptr<DisplayedImageSurface> surface;
+    quint64 revision = 0;
+    QSize imageSize;
+    int rotationDegrees = 0;
+
+    bool isRenderable() const { return surface != nullptr && !surface->isNull(); }
+};
+
 bool staticImageFitsFullImageSurface(const StaticImagePayload &image, int maximumTextureSize);
 }
 

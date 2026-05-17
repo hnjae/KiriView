@@ -311,42 +311,20 @@ ImageSpreadPresentationController::secondaryDisplayedPredecodeImage() const
     };
 }
 
-std::shared_ptr<DisplayedImageSurface> ImageSpreadPresentationController::imageSurface(
+DisplayedImageRenderSnapshot ImageSpreadPresentationController::renderSnapshot(
     DisplayedPageRole role) const
 {
     if (transitionInProgress()) {
-        return nullptr;
+        return {};
     }
 
     if (role == DisplayedPageRole::Secondary) {
-        return secondaryImageSurface();
+        DisplayedImageRenderSnapshot snapshot = m_secondaryPageController->renderSnapshot();
+        snapshot.rotationDegrees = 0;
+        return snapshot;
     }
 
-    return m_primaryPresentation.imageSurface();
-}
-
-quint64 ImageSpreadPresentationController::imageRevision(DisplayedPageRole role) const
-{
-    if (transitionInProgress()) {
-        return 0;
-    }
-
-    if (role == DisplayedPageRole::Secondary) {
-        return secondaryImageRevision();
-    }
-
-    return m_primaryPresentation.imageRevision();
-}
-
-std::shared_ptr<DisplayedImageSurface>
-ImageSpreadPresentationController::secondaryImageSurface() const
-{
-    return secondaryPageVisible() ? m_secondaryPageController->imageSurface() : nullptr;
-}
-
-quint64 ImageSpreadPresentationController::secondaryImageRevision() const
-{
-    return secondaryPageVisible() ? m_secondaryPageController->imageRevision() : 0;
+    return m_primaryPresentation.renderSnapshot();
 }
 
 std::optional<bool> ImageSpreadPresentationController::cachedPageIsWide(const QUrl &url) const

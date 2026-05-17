@@ -135,15 +135,9 @@ public:
     void setRightToLeftReadingEnabled(bool enabled);
     bool rightToLeftReadingAvailable() const;
     bool secondaryPageVisible() const;
-    std::shared_ptr<KiriView::DisplayedImageSurface> imageSurface(
+    KiriView::DisplayedImageRenderSnapshot renderSnapshot(
         KiriView::DisplayedPageRole role = KiriView::DisplayedPageRole::Primary) const;
     const QImage &image() const;
-    quint64 imageRevision(
-        KiriView::DisplayedPageRole role = KiriView::DisplayedPageRole::Primary) const;
-    quint64 renderRevision(
-        KiriView::DisplayedPageRole role = KiriView::DisplayedPageRole::Primary) const;
-    QSize renderImageSize(KiriView::DisplayedPageRole role) const;
-    int renderRotationDegrees(KiriView::DisplayedPageRole role) const;
 
     void setRenderContextProvider(RenderContextProvider provider);
 

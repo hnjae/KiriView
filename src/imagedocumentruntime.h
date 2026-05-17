@@ -85,10 +85,9 @@ public:
     void setRightToLeftReadingEnabled(bool enabled);
     bool rightToLeftReadingAvailable() const;
     bool secondaryPageVisible() const;
-    std::shared_ptr<DisplayedImageSurface> imageSurface(
+    DisplayedImageRenderSnapshot renderSnapshot(
         DisplayedPageRole role = DisplayedPageRole::Primary) const;
     const QImage &image() const;
-    quint64 imageRevision(DisplayedPageRole role = DisplayedPageRole::Primary) const;
 
     void dispatchEffect(ImageDocumentEffect effect);
     void notify(ImageDocumentChange change);

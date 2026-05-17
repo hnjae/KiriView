@@ -259,18 +259,12 @@ bool ImageDocumentRuntime::secondaryPageVisible() const
     return spreadController->secondaryPageVisible();
 }
 
-std::shared_ptr<DisplayedImageSurface> ImageDocumentRuntime::imageSurface(
-    DisplayedPageRole role) const
+DisplayedImageRenderSnapshot ImageDocumentRuntime::renderSnapshot(DisplayedPageRole role) const
 {
-    return spreadController->imageSurface(role);
+    return spreadController->renderSnapshot(role);
 }
 
 const QImage &ImageDocumentRuntime::image() const { return presentationController->image(); }
-
-quint64 ImageDocumentRuntime::imageRevision(DisplayedPageRole role) const
-{
-    return spreadController->imageRevision(role);
-}
 
 void ImageDocumentRuntime::dispatchEffect(ImageDocumentEffect effect)
 {

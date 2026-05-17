@@ -245,34 +245,13 @@ bool KiriImageDocument::secondaryPageVisible() const
     return m_documentController->secondaryPageVisible();
 }
 
-std::shared_ptr<KiriView::DisplayedImageSurface> KiriImageDocument::imageSurface(
+KiriView::DisplayedImageRenderSnapshot KiriImageDocument::renderSnapshot(
     KiriView::DisplayedPageRole role) const
 {
-    return m_documentController->imageSurface(role);
+    return m_documentController->renderSnapshot(role);
 }
 
 const QImage &KiriImageDocument::image() const { return m_documentController->image(); }
-
-quint64 KiriImageDocument::imageRevision(KiriView::DisplayedPageRole role) const
-{
-    return m_documentController->imageRevision(role);
-}
-
-quint64 KiriImageDocument::renderRevision(KiriView::DisplayedPageRole role) const
-{
-    return imageRevision(role);
-}
-
-QSize KiriImageDocument::renderImageSize(KiriView::DisplayedPageRole role) const
-{
-    return role == KiriView::DisplayedPageRole::Secondary ? secondaryImageSize()
-                                                          : primaryImageSize();
-}
-
-int KiriImageDocument::renderRotationDegrees(KiriView::DisplayedPageRole role) const
-{
-    return role == KiriView::DisplayedPageRole::Secondary ? 0 : rotationDegrees();
-}
 
 void KiriImageDocument::setRenderContextProvider(RenderContextProvider provider)
 {

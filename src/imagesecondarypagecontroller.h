@@ -60,8 +60,7 @@ public:
     bool visible() const;
     const DisplayedImageLocation &displayedImageLocation() const;
     QSize imageSize() const;
-    std::shared_ptr<DisplayedImageSurface> imageSurface() const;
-    quint64 imageRevision() const;
+    DisplayedImageRenderSnapshot renderSnapshot() const;
     void cachePageSize(const QUrl &url, const QSize &imageSize);
     std::optional<bool> cachedPageIsWide(const QUrl &url) const;
 
