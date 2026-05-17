@@ -55,12 +55,6 @@ QString actionName(KiriViewApplication::ActionId actionId);
 QString latin1String(const char *text);
 QString localizedString(const KLazyLocalizedString &text);
 QList<QKeySequence> defaultShortcuts(const DefaultShortcutSpec &spec);
-QList<QKeySequence> filterShortcutsByCommandModifier(
-    const QList<QKeySequence> &shortcuts, bool requireCommandModifier);
-QKeySequence menuShortcut(const QList<QKeySequence> &shortcuts);
-QList<QKeySequence> shortcutAliases(const QList<QKeySequence> &shortcuts);
-QString shortcutListText(const QList<QKeySequence> &shortcuts);
-QList<QKeySequence> sanitizeShortcuts(const QList<QKeySequence> &shortcuts);
 }
 
 #endif

@@ -3,6 +3,7 @@
 
 #include "shortcuthelpmodel.h"
 
+#include "applicationshortcutpolicy.h"
 #include "kiriviewapplication.h"
 #include "kiriviewapplicationactions.h"
 

@@ -71,6 +71,7 @@ src/imageurl.cpp
 src/imageviewportgeometry.cpp
 src/imageviewtext.cpp
 src/imagezoomstate.cpp
+src/applicationshortcutpolicy.cpp
 src/kiriviewapplicationactions.cpp
 src/powerprofilemonitor.cpp
 src/predecodecache.cpp
