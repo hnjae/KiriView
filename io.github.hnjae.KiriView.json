@@ -29,7 +29,7 @@
       "name": "libpng-apng",
       "buildsystem": "simple",
       "build-commands": [
-        "gzip -dc libpng-1.6.58-apng.patch.gz | patch -p0",
+        "gzip -dc libpng-1.6.58-apng.patch.gz | patch --batch -p1",
         "./configure --prefix=/app --disable-static",
         "make -j ${FLATPAK_BUILDER_N_JOBS:-$(nproc)}",
         "make install"
