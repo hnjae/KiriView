@@ -278,7 +278,6 @@ void TestShortcutHelpDialog::listsConfigurableActionShortcuts()
 
     const QString allRowText = (shortcutTexts + actionTexts).join(QLatin1Char('\n'));
     QVERIFY(!allRowText.contains(QStringLiteral("Ctrl+wheel")));
-    QVERIFY(!allRowText.contains(QStringLiteral("Shift+wheel")));
     QVERIFY(!allRowText.contains(QStringLiteral("Drag")));
     QVERIFY(!allRowText.contains(QStringLiteral("Esc")));
 }

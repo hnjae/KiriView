@@ -252,24 +252,4 @@ Item {
             wheel.accepted = true;
         }
     }
-
-    WheelHandler {
-        id: horizontalPanWheelHandler
-
-        acceptedModifiers: Qt.ShiftModifier
-        blocking: true
-        enabled: root.imageReady && root.imageHorizontallyPannable
-        target: null
-
-        onWheel: wheel => {
-            const verticalDelta = wheel.pixelDelta.y !== 0 ? wheel.pixelDelta.y : wheel.angleDelta.y;
-            if (verticalDelta === 0) {
-                wheel.accepted = false;
-                return;
-            }
-
-            root.panBy(-verticalDelta, 0);
-            wheel.accepted = true;
-        }
-    }
 }
