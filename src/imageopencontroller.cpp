@@ -150,22 +150,6 @@ bool ImageOpenController::finishDecodedImageResult(
 }
 
 bool ImageOpenController::finishDecodedImageResult(
-    ImageLoadSession &session, DecodedAnimationImage &decoded)
-{
-    const DecodedImagePresentationPlan plan = decodedImagePresentationPlan(decoded);
-    if (!plan.presentable) {
-        finishLoadWithError(session, ImageLoadError::Generic,
-            imageViewText("Could not decode the selected image animation."));
-        return false;
-    }
-
-    return finishAnimationImageLoad(session, decoded.frames.front().image, [this, &decoded]() {
-        m_presentationController.startDecodedAnimation(
-            std::move(decoded.frames), decoded.loopCount);
-    });
-}
-
-bool ImageOpenController::finishDecodedImageResult(
     ImageLoadSession &session, ApngAnimationImage &decoded)
 {
     const DecodedImagePresentationPlan plan = decodedImagePresentationPlan(decoded);

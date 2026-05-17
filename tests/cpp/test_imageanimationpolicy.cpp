@@ -21,10 +21,6 @@ private Q_SLOTS:
     void loopPolicyTracksFiniteAndInfiniteRemainingLoops();
     void loopAdvanceIncrementsOnlyWhenMoreLoopsAreAvailable();
     void loopAdvanceSaturatesCompletedLoopCount();
-    void decodedAnimationAdvanceStepsToNextFrame();
-    void decodedAnimationAdvanceLoopsAfterLastFrameWhenAvailable();
-    void decodedAnimationAdvanceStopsAfterLastFrameWithoutRemainingLoops();
-    void decodedAnimationAdvanceRejectsMissingOrInvalidFrameState();
 };
 
 namespace {
@@ -94,44 +90,6 @@ void TestImageAnimationPolicy::loopAdvanceSaturatesCompletedLoopCount()
 
     QVERIFY(advance.shouldContinue);
     QCOMPARE(advance.completedLoops, std::numeric_limits<int>::max());
-}
-
-void TestImageAnimationPolicy::decodedAnimationAdvanceStepsToNextFrame()
-{
-    const KiriView::DecodedAnimationAdvance advance
-        = KiriView::advanceDecodedAnimation(3, 0, loopState(0, 0));
-
-    QVERIFY(advance.frameAvailable);
-    QCOMPARE(advance.frameIndex, std::size_t(1));
-    QCOMPARE(advance.completedLoops, 0);
-    QVERIFY(advance.scheduleNextFrame);
-}
-
-void TestImageAnimationPolicy::decodedAnimationAdvanceLoopsAfterLastFrameWhenAvailable()
-{
-    const KiriView::DecodedAnimationAdvance advance
-        = KiriView::advanceDecodedAnimation(2, 1, loopState(1, 0));
-
-    QVERIFY(advance.frameAvailable);
-    QCOMPARE(advance.frameIndex, std::size_t(0));
-    QCOMPARE(advance.completedLoops, 1);
-    QVERIFY(advance.scheduleNextFrame);
-}
-
-void TestImageAnimationPolicy::decodedAnimationAdvanceStopsAfterLastFrameWithoutRemainingLoops()
-{
-    const KiriView::DecodedAnimationAdvance advance
-        = KiriView::advanceDecodedAnimation(2, 1, loopState(0, 0));
-
-    QVERIFY(!advance.frameAvailable);
-    QCOMPARE(advance.completedLoops, 0);
-    QVERIFY(!advance.scheduleNextFrame);
-}
-
-void TestImageAnimationPolicy::decodedAnimationAdvanceRejectsMissingOrInvalidFrameState()
-{
-    QVERIFY(!KiriView::advanceDecodedAnimation(0, 0, loopState(0, 0)).frameAvailable);
-    QVERIFY(!KiriView::advanceDecodedAnimation(2, 2, loopState(0, 0)).frameAvailable);
 }
 
 QTEST_GUILESS_MAIN(TestImageAnimationPolicy)

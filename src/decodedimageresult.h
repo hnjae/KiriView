@@ -4,7 +4,6 @@
 #ifndef KIRIVIEW_DECODEDIMAGERESULT_H
 #define KIRIVIEW_DECODEDIMAGERESULT_H
 
-#include "animationframe.h"
 #include "staticimage.h"
 
 #include <QByteArray>
@@ -15,7 +14,6 @@
 #include <optional>
 #include <utility>
 #include <variant>
-#include <vector>
 
 namespace KiriView {
 struct DecodedImageFailure {
@@ -24,11 +22,6 @@ struct DecodedImageFailure {
 
 struct StaticDecodedImage {
     StaticImagePayload staticImage;
-};
-
-struct DecodedAnimationImage {
-    std::vector<AnimationFrame> frames;
-    int loopCount = 0;
 };
 
 struct ApngAnimationImage {
@@ -52,8 +45,8 @@ struct HeifSequenceAnimationImage {
     int firstFrameDelay = 0;
 };
 
-using DecodedImage = std::variant<StaticDecodedImage, DecodedAnimationImage, ApngAnimationImage,
-    ReaderAnimationImage, HeifSequenceAnimationImage>;
+using DecodedImage = std::variant<StaticDecodedImage, ApngAnimationImage, ReaderAnimationImage,
+    HeifSequenceAnimationImage>;
 
 class DecodedImageResult
 {

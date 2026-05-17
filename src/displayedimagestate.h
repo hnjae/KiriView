@@ -4,7 +4,6 @@
 #ifndef KIRIVIEW_DISPLAYEDIMAGESTATE_H
 #define KIRIVIEW_DISPLAYEDIMAGESTATE_H
 
-#include "animationframe.h"
 #include "imagesurface.h"
 
 #include <QByteArray>
@@ -15,7 +14,6 @@
 #include <functional>
 #include <memory>
 #include <optional>
-#include <vector>
 
 class QObject;
 
@@ -49,7 +47,6 @@ public:
     void startAnimation(
         const QByteArray &data, const QByteArray &format, int loopCount, int firstFrameDelay);
     void startApngAnimation(const QByteArray &data, int loopCount, int firstFrameDelay);
-    void startDecodedAnimation(std::vector<AnimationFrame> frames, int loopCount);
     void startHeifSequenceAnimation(const QByteArray &data);
     void stopAnimation();
 

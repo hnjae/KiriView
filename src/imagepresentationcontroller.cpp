@@ -238,12 +238,6 @@ void ImagePresentationController::startApngAnimation(
     m_displayedImageState->startApngAnimation(data, loopCount, firstFrameDelay);
 }
 
-void ImagePresentationController::startDecodedAnimation(
-    std::vector<AnimationFrame> frames, int loopCount)
-{
-    m_displayedImageState->startDecodedAnimation(std::move(frames), loopCount);
-}
-
 void ImagePresentationController::startHeifSequenceAnimation(const QByteArray &data)
 {
     m_displayedImageState->startHeifSequenceAnimation(data);

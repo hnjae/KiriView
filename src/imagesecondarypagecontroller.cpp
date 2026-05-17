@@ -171,19 +171,6 @@ bool ImageSecondaryPageController::finishDecodedImageResult(
 }
 
 bool ImageSecondaryPageController::finishDecodedImageResult(
-    const ImageLoadSession &session, DecodedAnimationImage &decoded)
-{
-    const DecodedImagePresentationPlan plan = decodedImagePresentationPlan(decoded);
-    if (!plan.presentable) {
-        finishLoadWithError(session);
-        return false;
-    }
-
-    finishImageLoad(session, decoded.frames.front().image, plan.predecodeCacheable);
-    return true;
-}
-
-bool ImageSecondaryPageController::finishDecodedImageResult(
     const ImageLoadSession &session, ApngAnimationImage &decoded)
 {
     const DecodedImagePresentationPlan plan = decodedImagePresentationPlan(decoded);

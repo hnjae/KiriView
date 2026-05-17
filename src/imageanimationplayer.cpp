@@ -10,7 +10,6 @@
 #include "imageviewtext.h"
 
 #include <QObject>
-#include <cstddef>
 #include <memory>
 #include <optional>
 #include <utility>
@@ -79,22 +78,6 @@ void ImageAnimationPlayer::startApng(const QByteArray &data, int loopCount, int 
     }
 }
 
-void ImageAnimationPlayer::startDecoded(std::vector<AnimationFrame> frames, int loopCount)
-{
-    clearPlaybackState();
-    m_loopState.loopCount = loopCount;
-
-    DecodedPlayback playback;
-    playback.frames = std::move(frames);
-    const bool hasMoreFrames = playback.frames.size() > 1;
-    const int nextFrameDelay = hasMoreFrames ? playback.frames.front().delay : 0;
-
-    m_playback = std::move(playback);
-    if (hasMoreFrames) {
-        scheduleNextFrame(nextFrameDelay);
-    }
-}
-
 void ImageAnimationPlayer::startHeifSequence(const QByteArray &data)
 {
     clearPlaybackState();
@@ -121,7 +104,6 @@ void ImageAnimationPlayer::advanceFrame()
 
         void operator()(std::monostate &) const { }
         void operator()(ReaderPlayback &playback) const { player->advanceReaderFrame(playback); }
-        void operator()(DecodedPlayback &playback) const { player->advanceDecodedFrame(playback); }
         void operator()(ApngPlayback &playback) const { player->advanceApngFrame(playback); }
         void operator()(HeifSequencePlayback &playback) const
         {
@@ -164,24 +146,6 @@ void ImageAnimationPlayer::advanceReaderFrame(ReaderPlayback &playback)
 
     scheduleNextFrameOrStop(
         playback.reader->canRead() || animationHasRemainingLoops(m_loopState), delay);
-}
-
-void ImageAnimationPlayer::advanceDecodedFrame(DecodedPlayback &playback)
-{
-    const DecodedAnimationAdvance advance
-        = advanceDecodedAnimation(playback.frames.size(), playback.frameIndex, m_loopState);
-    m_loopState.completedLoops = advance.completedLoops;
-    if (!advance.frameAvailable) {
-        stop();
-        return;
-    }
-
-    playback.frameIndex = advance.frameIndex;
-
-    const AnimationFrame &frame = playback.frames.at(playback.frameIndex);
-    invokeIfSet(m_frameReady, frame.image);
-
-    scheduleNextFrameOrStop(advance.scheduleNextFrame, frame.delay);
 }
 
 void ImageAnimationPlayer::advanceApngFrame(ApngPlayback &playback)

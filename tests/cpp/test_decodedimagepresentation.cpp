@@ -9,20 +9,12 @@
 #include <QTest>
 #include <Qt>
 
-namespace {
-KiriView::AnimationFrame frame()
-{
-    return KiriView::AnimationFrame { KiriView::TestSupport::testImage(), 10 };
-}
-}
-
 class TestDecodedImagePresentation : public QObject
 {
     Q_OBJECT
 
 private Q_SLOTS:
     void staticImagesCarryCacheability();
-    void decodedAnimationsRequireFrames();
     void streamedAnimationsUseFirstFrames();
 };
 
@@ -38,20 +30,6 @@ void TestDecodedImagePresentation::staticImagesCarryCacheability()
 
     decoded.staticImage = KiriView::StaticImagePayload {};
     plan = KiriView::decodedImagePresentationPlan(decoded);
-    QVERIFY(plan.presentable);
-    QVERIFY(!plan.predecodeCacheable);
-}
-
-void TestDecodedImagePresentation::decodedAnimationsRequireFrames()
-{
-    KiriView::DecodedAnimationImage decodedAnimation;
-
-    KiriView::DecodedImagePresentationPlan plan
-        = KiriView::decodedImagePresentationPlan(decodedAnimation);
-    QVERIFY(!plan.presentable);
-
-    decodedAnimation.frames.push_back(frame());
-    plan = KiriView::decodedImagePresentationPlan(decodedAnimation);
     QVERIFY(plan.presentable);
     QVERIFY(!plan.predecodeCacheable);
 }

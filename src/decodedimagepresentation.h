@@ -13,7 +13,6 @@ struct DecodedImagePresentationPlan {
 };
 
 DecodedImagePresentationPlan decodedImagePresentationPlan(const StaticDecodedImage &decoded);
-DecodedImagePresentationPlan decodedImagePresentationPlan(const DecodedAnimationImage &decoded);
 DecodedImagePresentationPlan decodedImagePresentationPlan(const ApngAnimationImage &decoded);
 DecodedImagePresentationPlan decodedImagePresentationPlan(const ReaderAnimationImage &decoded);
 DecodedImagePresentationPlan decodedImagePresentationPlan(

@@ -53,33 +53,4 @@ AnimationLoopAdvance advanceAnimationLoop(AnimationLoopState state)
     };
 }
 
-DecodedAnimationAdvance advanceDecodedAnimation(
-    std::size_t frameCount, std::size_t frameIndex, AnimationLoopState state)
-{
-    if (frameCount == 0 || frameIndex >= frameCount) {
-        return DecodedAnimationAdvance { false, 0, state.completedLoops, false };
-    }
-
-    const std::size_t nextFrameIndex = frameIndex + 1;
-    int completedLoops = state.completedLoops;
-    if (nextFrameIndex >= frameCount) {
-        const AnimationLoopAdvance loopAdvance = advanceAnimationLoop(state);
-        if (!loopAdvance.shouldContinue) {
-            return DecodedAnimationAdvance { false, 0, loopAdvance.completedLoops, false };
-        }
-
-        frameIndex = 0;
-        completedLoops = loopAdvance.completedLoops;
-    } else {
-        frameIndex = nextFrameIndex;
-    }
-
-    const AnimationLoopState nextState { state.loopCount, completedLoops };
-    return DecodedAnimationAdvance {
-        true,
-        frameIndex,
-        completedLoops,
-        frameIndex + 1 < frameCount || animationHasRemainingLoops(nextState),
-    };
-}
 }

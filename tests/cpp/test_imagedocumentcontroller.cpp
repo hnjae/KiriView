@@ -12,6 +12,7 @@
 #include <QUrl>
 #include <algorithm>
 #include <cstddef>
+#include <limits>
 #include <memory>
 #include <optional>
 #include <utility>
@@ -34,6 +35,30 @@ using KiriView::TestSupport::testImageDecodeFailureString;
 
 using FakeCandidateProvider = KiriView::TestSupport::FakeImageNavigationCandidateProvider;
 
+class NonCacheableTestImageTileSource final : public KiriView::ImageTileSource
+{
+public:
+    explicit NonCacheableTestImageTileSource(QImage image)
+        : m_image(std::move(image))
+    {
+    }
+
+    QSize imageSize() const override { return m_image.size(); }
+
+    std::optional<KiriView::DecodedTile> decodeTile(
+        const KiriView::TileRequest &, QString *) const override
+    {
+        return std::nullopt;
+    }
+
+    QImage decodeBlockingDisplayImage(int, QString *) const override { return m_image; }
+
+    qsizetype byteCost() const override { return std::numeric_limits<qsizetype>::max() / 2; }
+
+private:
+    QImage m_image;
+};
+
 KiriView::DecodedImageResult staticDecodedImageWithPreview(const QSize &sourceSize,
     const QSize &previewSize, KiriView::StaticImageDisplayHints displayHints = {})
 {
@@ -44,9 +69,13 @@ KiriView::DecodedImageResult staticDecodedImageWithPreview(const QSize &sourceSi
 
 KiriView::DecodedImageResult singleFrameDecodedImage(const QSize &size)
 {
-    return KiriView::successfulDecodedImageResult(KiriView::DecodedAnimationImage {
-        { KiriView::AnimationFrame { testImage(size), 0 } },
-        1,
+    QImage image = testImage(size);
+    return KiriView::successfulDecodedImageResult(KiriView::StaticDecodedImage {
+        KiriView::StaticImagePayload {
+            std::make_shared<NonCacheableTestImageTileSource>(image),
+            std::move(image),
+            {},
+        },
     });
 }
 

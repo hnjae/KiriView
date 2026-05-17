@@ -127,11 +127,6 @@ void DisplayedImageState::startApngAnimation(
     m_animationPlayer->startApng(data, loopCount, firstFrameDelay);
 }
 
-void DisplayedImageState::startDecodedAnimation(std::vector<AnimationFrame> frames, int loopCount)
-{
-    m_animationPlayer->startDecoded(std::move(frames), loopCount);
-}
-
 void DisplayedImageState::startHeifSequenceAnimation(const QByteArray &data)
 {
     m_animationPlayer->startHeifSequence(data);

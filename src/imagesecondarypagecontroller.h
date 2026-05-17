@@ -78,7 +78,6 @@ private:
     void finishPredecodedImageLoad(ImageLoadSession session, PredecodedImage image);
     void finishDecodedImageLoad(ImageLoadSession session, DecodedImage image);
     bool finishDecodedImageResult(const ImageLoadSession &session, StaticDecodedImage &decoded);
-    bool finishDecodedImageResult(const ImageLoadSession &session, DecodedAnimationImage &decoded);
     bool finishDecodedImageResult(const ImageLoadSession &session, ApngAnimationImage &decoded);
     bool finishDecodedImageResult(const ImageLoadSession &session, ReaderAnimationImage &decoded);
     bool finishDecodedImageResult(

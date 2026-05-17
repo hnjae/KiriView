@@ -18,11 +18,6 @@ DecodedImagePresentationPlan decodedImagePresentationPlan(const StaticDecodedIma
     return presentationPlan(true, PredecodeCache::canCacheImage(decoded.staticImage));
 }
 
-DecodedImagePresentationPlan decodedImagePresentationPlan(const DecodedAnimationImage &decoded)
-{
-    return presentationPlan(!decoded.frames.empty(), false);
-}
-
 DecodedImagePresentationPlan decodedImagePresentationPlan(const ApngAnimationImage &decoded)
 {
     return presentationPlan(!decoded.firstFrame.isNull(), false);

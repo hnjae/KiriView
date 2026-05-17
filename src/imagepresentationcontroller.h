@@ -4,7 +4,6 @@
 #ifndef KIRIVIEW_IMAGEPRESENTATIONCONTROLLER_H
 #define KIRIVIEW_IMAGEPRESENTATIONCONTROLLER_H
 
-#include "animationframe.h"
 #include "imagedocumenttypes.h"
 #include "imagesurface.h"
 #include "imagezoomstate.h"
@@ -19,7 +18,6 @@
 #include <functional>
 #include <memory>
 #include <optional>
-#include <vector>
 
 class QObject;
 
@@ -80,7 +78,6 @@ public:
     void startAnimation(
         const QByteArray &data, const QByteArray &format, int loopCount, int firstFrameDelay);
     void startApngAnimation(const QByteArray &data, int loopCount, int firstFrameDelay);
-    void startDecodedAnimation(std::vector<AnimationFrame> frames, int loopCount);
     void startHeifSequenceAnimation(const QByteArray &data);
     void stopAnimation();
 
