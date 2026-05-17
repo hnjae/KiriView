@@ -192,6 +192,8 @@ Image zoom is expressed in physical display pixels. At 100%, one image pixel map
 
 For SVG files, 100% uses the SVG's intrinsic size. SVGs remain sharp instead of pixelated when Fit mode, manual zoom, window resizing, or display scale changes the displayed size.
 
+Static SVG rendering applies ordinary static SVG features such as clip paths. SVG script execution, animation playback, and loading external network or file resources referenced from SVG content are outside the current scope.
+
 Static image files, including bitmap images and SVG files, appear at full resolution when they are small enough to display directly.
 
 Larger JPEG images may first appear quickly at a lower level of detail. The visible area then becomes sharper for the current zoom, pan position, viewport size, and display scale.
