@@ -5,12 +5,11 @@
 
 #include "decodedimageresult.h"
 #include "imageurl.h"
-#include "kiriview/src/predecodecachepolicy.cxx.h"
 
 #include <QThread>
 #include <algorithm>
 #include <cstddef>
-#include <cstdint>
+#include <iterator>
 #include <optional>
 #include <utility>
 #include <vector>
@@ -20,86 +19,31 @@ using KiriView::DecodedImageResult;
 using KiriView::ImageCandidateListContext;
 using KiriView::normalizedImageUrl;
 
-std::uint8_t rustFlag(bool value) { return value ? 1 : 0; }
-
-KiriView::RustPredecodeDocumentKind rustDocumentKind(
-    const KiriView::ArchiveDocumentLocation &archiveDocument)
-{
-    if (archiveDocument.isEmpty()) {
-        return KiriView::RustPredecodeDocumentKind::Regular;
-    }
-    if (archiveDocument.isDirectory()) {
-        return KiriView::RustPredecodeDocumentKind::DirectoryDocument;
-    }
-
-    return KiriView::RustPredecodeDocumentKind::ArchiveDocument;
-}
-
-KiriView::RustPredecodeMomentumMode rustMomentumMode(
-    KiriView::ImagePredecodeCoordinator::MomentumMode mode)
-{
-    switch (mode) {
-    case KiriView::ImagePredecodeCoordinator::MomentumMode::Neutral:
-        return KiriView::RustPredecodeMomentumMode::Neutral;
-    case KiriView::ImagePredecodeCoordinator::MomentumMode::NextBiased:
-        return KiriView::RustPredecodeMomentumMode::NextBiased;
-    case KiriView::ImagePredecodeCoordinator::MomentumMode::PrevBiased:
-        return KiriView::RustPredecodeMomentumMode::PrevBiased;
-    case KiriView::ImagePredecodeCoordinator::MomentumMode::ScrubbingNext:
-        return KiriView::RustPredecodeMomentumMode::ScrubbingNext;
-    case KiriView::ImagePredecodeCoordinator::MomentumMode::ScrubbingPrev:
-        return KiriView::RustPredecodeMomentumMode::ScrubbingPrev;
-    }
-
-    return KiriView::RustPredecodeMomentumMode::Neutral;
-}
-
-KiriView::ImagePredecodeCoordinator::MomentumMode momentumMode(
-    KiriView::RustPredecodeMomentumMode mode)
-{
-    switch (mode) {
-    case KiriView::RustPredecodeMomentumMode::Neutral:
-        return KiriView::ImagePredecodeCoordinator::MomentumMode::Neutral;
-    case KiriView::RustPredecodeMomentumMode::NextBiased:
-        return KiriView::ImagePredecodeCoordinator::MomentumMode::NextBiased;
-    case KiriView::RustPredecodeMomentumMode::PrevBiased:
-        return KiriView::ImagePredecodeCoordinator::MomentumMode::PrevBiased;
-    case KiriView::RustPredecodeMomentumMode::ScrubbingNext:
-        return KiriView::ImagePredecodeCoordinator::MomentumMode::ScrubbingNext;
-    case KiriView::RustPredecodeMomentumMode::ScrubbingPrev:
-        return KiriView::ImagePredecodeCoordinator::MomentumMode::ScrubbingPrev;
-    }
-
-    return KiriView::ImagePredecodeCoordinator::MomentumMode::Neutral;
-}
-
-KiriView::RustPredecodePolicyInput rustPredecodePolicyInput(
+KiriView::PredecodePolicyInput predecodePolicyInput(
     const KiriView::ArchiveDocumentLocation &archiveDocument,
-    KiriView::ImagePredecodeCoordinator::MomentumMode momentumMode, bool powerSaverEnabled)
+    KiriView::PredecodeMomentumMode momentumMode, bool powerSaverEnabled)
 {
-    KiriView::RustPredecodePolicyInput input {};
-    input.document_kind = rustDocumentKind(archiveDocument);
-    input.momentum_mode = rustMomentumMode(momentumMode);
-    input.power_saver_enabled = powerSaverEnabled;
-    input.ideal_thread_count = QThread::idealThreadCount();
-    return input;
+    return KiriView::predecodePolicyInputForArchiveDocument(
+        archiveDocument, momentumMode, powerSaverEnabled, QThread::idealThreadCount());
 }
 
-rust::Vec<std::uint8_t> currentCandidateMatches(
+std::optional<std::size_t> currentCandidateIndex(
     const std::vector<KiriView::ImageNavigationCandidate> &candidates, const QUrl &currentUrl)
 {
-    rust::Vec<std::uint8_t> matches;
-    matches.reserve(candidates.size());
-    for (const KiriView::ImageNavigationCandidate &candidate : candidates) {
-        matches.push_back(rustFlag(KiriView::sameNormalizedUrl(candidate.url, currentUrl)));
+    const auto currentCandidate = std::find_if(candidates.cbegin(), candidates.cend(),
+        [&currentUrl](const KiriView::ImageNavigationCandidate &candidate) {
+            return KiriView::sameNormalizedUrl(candidate.url, currentUrl);
+        });
+    if (currentCandidate == candidates.cend()) {
+        return std::nullopt;
     }
 
-    return matches;
+    return static_cast<std::size_t>(std::distance(candidates.cbegin(), currentCandidate));
 }
 
 std::vector<QUrl> predecodeWindowImageUrls(
     const std::vector<KiriView::ImageNavigationCandidate> &candidates,
-    const rust::Vec<std::size_t> &indices)
+    const std::vector<std::size_t> &indices)
 {
     std::vector<QUrl> urls;
     urls.reserve(indices.size());
@@ -161,9 +105,9 @@ ImagePredecodeCoordinator::ImagePredecodeCoordinator(QObject *parent,
 {
     m_monotonicClock.start();
     m_debounceTimer.setSingleShot(true);
-    m_debounceTimer.setInterval(rustPredecodeDebounceMsec());
+    m_debounceTimer.setInterval(predecodeDebounceMsec());
     m_neutralTimer.setSingleShot(true);
-    m_neutralTimer.setInterval(rustPredecodeNeutralRefreshMsec());
+    m_neutralTimer.setInterval(predecodeNeutralRefreshMsec());
 
     QObject::connect(
         &m_debounceTimer, &QTimer::timeout, this, [this]() { startDebouncedPredecode(); });
@@ -231,7 +175,7 @@ void ImagePredecodeCoordinator::startDebouncedPredecode()
 
 void ImagePredecodeCoordinator::scheduleSettledNeutralPredecode()
 {
-    if (!m_pendingContext.has_value() || m_momentumMode == MomentumMode::Neutral) {
+    if (!m_pendingContext.has_value() || m_momentumState.mode == PredecodeMomentumMode::Neutral) {
         return;
     }
 
@@ -240,7 +184,7 @@ void ImagePredecodeCoordinator::scheduleSettledNeutralPredecode()
     m_listerJob.cancel();
     cancelActivePredecodeRequests();
     m_cache.clearQueuedLoads();
-    m_momentumMode = MomentumMode::Neutral;
+    m_momentumState.mode = PredecodeMomentumMode::Neutral;
     m_firstDisplayContext = context.firstDisplayContext;
     m_pendingGeneration = m_generation.next();
     m_pendingContext = context;
@@ -250,11 +194,10 @@ void ImagePredecodeCoordinator::scheduleSettledNeutralPredecode()
 void ImagePredecodeCoordinator::scheduleAdjacentImagePredecode(
     const Context &context, quint64 generation)
 {
-    const RustPredecodePolicyInput policyInput = rustPredecodePolicyInput(
-        context.primaryImage.location.archiveDocument(), m_momentumMode, m_powerSaverEnabled);
-    const RustPredecodeSchedulePlan initialPlan
-        = rustPredecodeSchedulePlan(rust::Vec<std::uint8_t>(), policyInput);
-    const std::size_t parallelLimit = initialPlan.parallel_limit;
+    const PredecodePolicyInput policyInput = predecodePolicyInput(
+        context.primaryImage.location.archiveDocument(), m_momentumState.mode, m_powerSaverEnabled);
+    const PredecodeSchedulePlan initialPlan = predecodeSchedulePlan(0, std::nullopt, policyInput);
+    const std::size_t parallelLimit = initialPlan.parallelLimit;
     if (parallelLimit == 0) {
         startPredecodeImageLoads({}, context.primaryImage.location.archiveDocument(), context,
             generation, parallelLimit);
@@ -275,10 +218,10 @@ void ImagePredecodeCoordinator::scheduleAdjacentImagePredecode(
         this, *candidateContext,
         [this, context, generation, currentUrl, archiveDocument, policyInput](
             std::vector<ImageNavigationCandidate> candidates) {
-            const RustPredecodeSchedulePlan plan = rustPredecodeSchedulePlan(
-                currentCandidateMatches(candidates, currentUrl), policyInput);
-            startPredecodeImageLoads(predecodeWindowImageUrls(candidates, plan.target_indices),
-                archiveDocument, context, generation, plan.parallel_limit);
+            const PredecodeSchedulePlan plan = predecodeSchedulePlan(
+                candidates.size(), currentCandidateIndex(candidates, currentUrl), policyInput);
+            startPredecodeImageLoads(predecodeWindowImageUrls(candidates, plan.targetIndices),
+                archiveDocument, context, generation, plan.parallelLimit);
         },
         [this, context, generation, archiveDocument, parallelLimit](const QString &) {
             startPredecodeImageLoads({}, archiveDocument, context, generation, parallelLimit);
@@ -448,57 +391,11 @@ void ImagePredecodeCoordinator::cancelBackgroundWork()
     m_cache.clearQueuedLoads();
 }
 
-void ImagePredecodeCoordinator::resetNavigationMomentum()
-{
-    m_lastPageIndex = -1;
-    m_lastNavigationMsec = -1;
-    m_sameDirectionMoveCount = 0;
-    m_lastMomentumDirection = MomentumDirection::None;
-    m_momentumMode = MomentumMode::Neutral;
-}
+void ImagePredecodeCoordinator::resetNavigationMomentum() { m_momentumState = {}; }
 
 void ImagePredecodeCoordinator::updateNavigationMomentum(int pageIndex, qint64 monotonicMsec)
 {
-    const auto rustDirection = [this]() {
-        switch (m_lastMomentumDirection) {
-        case MomentumDirection::None:
-            return RustPredecodeMomentumDirection::None;
-        case MomentumDirection::Previous:
-            return RustPredecodeMomentumDirection::Previous;
-        case MomentumDirection::Next:
-            return RustPredecodeMomentumDirection::Next;
-        }
-
-        return RustPredecodeMomentumDirection::None;
-    };
-    const RustPredecodeMomentumState updated
-        = rustPredecodeUpdatedMomentumState(RustPredecodeMomentumUpdateInput {
-            RustPredecodeMomentumState {
-                m_lastPageIndex,
-                m_lastNavigationMsec,
-                m_sameDirectionMoveCount,
-                rustDirection(),
-                rustMomentumMode(m_momentumMode),
-            },
-            pageIndex,
-            monotonicMsec,
-        });
-
-    m_lastPageIndex = updated.last_page_index;
-    m_lastNavigationMsec = updated.last_navigation_msec;
-    m_sameDirectionMoveCount = updated.same_direction_move_count;
-    switch (updated.last_direction) {
-    case RustPredecodeMomentumDirection::None:
-        m_lastMomentumDirection = MomentumDirection::None;
-        break;
-    case RustPredecodeMomentumDirection::Previous:
-        m_lastMomentumDirection = MomentumDirection::Previous;
-        break;
-    case RustPredecodeMomentumDirection::Next:
-        m_lastMomentumDirection = MomentumDirection::Next;
-        break;
-    }
-    m_momentumMode = momentumMode(updated.mode);
+    m_momentumState = predecodeUpdatedMomentumState(m_momentumState, pageIndex, monotonicMsec);
 }
 
 qint64 ImagePredecodeCoordinator::currentMonotonicMsec() const

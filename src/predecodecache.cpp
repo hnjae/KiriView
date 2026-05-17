@@ -4,8 +4,7 @@
 #include "predecodecache.h"
 
 #include "imageurl.h"
-#include "kiriview/src/predecodecachepolicy.cxx.h"
-#include "rustqtconversion.h"
+#include "predecodepolicy.h"
 #include "systemmemory.h"
 
 #include <algorithm>
@@ -30,10 +29,7 @@ std::optional<QUrl> normalizedValidImageUrl(const QUrl &url)
 }
 
 namespace KiriView {
-qsizetype PredecodeCache::preferredByteBudget()
-{
-    return Bridge::qtByteSize(rustPredecodePreferredByteBudget());
-}
+qsizetype PredecodeCache::preferredByteBudget() { return predecodePreferredByteBudget(); }
 
 qsizetype PredecodeCache::defaultByteBudget()
 {
@@ -42,8 +38,7 @@ qsizetype PredecodeCache::defaultByteBudget()
 
 qsizetype PredecodeCache::byteBudgetForSystemMemory(qsizetype systemMemoryByteSize)
 {
-    return Bridge::qtByteSize(
-        rustPredecodeByteBudgetForSystemMemory(Bridge::rustByteSize(systemMemoryByteSize)));
+    return predecodeByteBudgetForSystemMemory(systemMemoryByteSize);
 }
 
 bool PredecodeCache::canCacheImage(const StaticImagePayload &staticImage)
@@ -132,19 +127,18 @@ void PredecodeCache::enqueueMissingWindowLoads(const QUrl &displayedUrl,
     const ArchiveDocumentLocation &archiveDocument, const std::vector<QUrl> &activePredecodeUrls)
 {
     const QUrl normalizedDisplayedUrl = normalizedImageUrl(displayedUrl);
-    rust::Vec<RustPredecodeWindowLoadState> states;
+    std::vector<PredecodeWindowLoadState> states;
     states.reserve(m_windowUrls.size());
 
     for (const QUrl &url : m_windowUrls) {
-        states.push_back(RustPredecodeWindowLoadState {
+        states.push_back(PredecodeWindowLoadState {
             currentDisplayedContains(url) || url == normalizedDisplayedUrl,
             hasImage(url),
             isInFlight(url, activePredecodeUrls),
         });
     }
 
-    const rust::Vec<std::size_t> missingIndices
-        = rustPredecodeMissingWindowLoadIndices(std::move(states));
+    const std::vector<std::size_t> missingIndices = predecodeMissingWindowLoadIndices(states);
     for (std::size_t index : missingIndices) {
         if (index < m_windowUrls.size()) {
             m_queue.push_back(PredecodeRequest { m_windowUrls.at(index), archiveDocument });
@@ -155,11 +149,11 @@ void PredecodeCache::enqueueMissingWindowLoads(const QUrl &displayedUrl,
 std::optional<PredecodeRequest> PredecodeCache::takeNextRequest(
     const std::vector<QUrl> &activePredecodeUrls)
 {
-    rust::Vec<RustPredecodeQueuedLoadState> states;
+    std::vector<PredecodeQueuedLoadState> states;
     states.reserve(m_queue.size());
 
     for (const PredecodeRequest &request : m_queue) {
-        states.push_back(RustPredecodeQueuedLoadState {
+        states.push_back(PredecodeQueuedLoadState {
             request.url.isValid() && !request.url.isEmpty(),
             windowContains(request.url),
             hasImage(request.url),
@@ -167,9 +161,9 @@ std::optional<PredecodeRequest> PredecodeCache::takeNextRequest(
         });
     }
 
-    const RustPredecodeQueuedLoadPlan plan = rustPredecodeNextQueuedLoadPlan(std::move(states));
+    const PredecodeQueuedLoadPlan plan = predecodeNextQueuedLoadPlan(states);
     const std::size_t discardCount
-        = std::min(plan.discard_count, static_cast<std::size_t>(m_queue.size()));
+        = std::min(plan.discardCount, static_cast<std::size_t>(m_queue.size()));
     if (!plan.found || plan.index >= m_queue.size()) {
         m_queue.erase(m_queue.begin(), m_queue.begin() + static_cast<std::ptrdiff_t>(discardCount));
         return std::nullopt;
@@ -340,22 +334,22 @@ std::size_t PredecodeCache::recentDisplayedPriority(const QUrl &normalizedUrl) c
 
 void PredecodeCache::trimImagesToWindow()
 {
-    rust::Vec<RustPredecodeCachedImageState> states;
+    std::vector<PredecodeCachedImageState> states;
     states.reserve(m_images.size());
 
     for (const CachedImage &entry : m_images) {
-        states.push_back(RustPredecodeCachedImageState {
+        states.push_back(PredecodeCachedImageState {
             currentDisplayedContains(entry.url),
             recentDisplayedContains(entry.url),
             currentDisplayedPriority(entry.url),
             recentDisplayedPriority(entry.url),
             windowPriority(entry.url),
-            Bridge::rustByteSize(entry.byteCost),
+            entry.byteCost,
         });
     }
 
-    const rust::Vec<std::size_t> retainedIndices = rustPredecodeRetainedCachedImageIndices(
-        std::move(states), m_windowUrls.size(), Bridge::rustByteSize(m_byteBudget));
+    const std::vector<std::size_t> retainedIndices
+        = predecodeRetainedCachedImageIndices(states, m_windowUrls.size(), m_byteBudget);
 
     std::vector<CachedImage> retainedImages;
     retainedImages.reserve(retainedIndices.size());

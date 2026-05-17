@@ -12,6 +12,7 @@
 #include "imagelocation.h"
 #include "predecodecache.h"
 #include "predecodedimage.h"
+#include "predecodepolicy.h"
 #include "staticimage.h"
 
 #include <QByteArray>
@@ -35,14 +36,6 @@ public:
         int pageIndex = -1;
     };
 
-    enum class MomentumMode {
-        Neutral,
-        NextBiased,
-        PrevBiased,
-        ScrubbingNext,
-        ScrubbingPrev,
-    };
-
     explicit ImagePredecodeCoordinator(QObject *parent = nullptr);
     ImagePredecodeCoordinator(QObject *parent, ImageNavigationCandidateProvider candidateProvider,
         ImageDecodeDependencies decodeDependencies);
@@ -59,12 +52,6 @@ private:
         ImageDecodeRequest request;
         QUrl normalizedUrl;
         ImageDecodeJob *decodeJob = nullptr;
-    };
-
-    enum class MomentumDirection {
-        None,
-        Previous,
-        Next,
     };
 
     void cacheDisplayedImages(const Context &context);
@@ -104,11 +91,7 @@ private:
     QElapsedTimer m_monotonicClock;
     quint64 m_pendingGeneration = 0;
     std::size_t m_parallelLimit = 1;
-    int m_lastPageIndex = -1;
-    qint64 m_lastNavigationMsec = -1;
-    int m_sameDirectionMoveCount = 0;
-    MomentumDirection m_lastMomentumDirection = MomentumDirection::None;
-    MomentumMode m_momentumMode = MomentumMode::Neutral;
+    PredecodeMomentumState m_momentumState;
     bool m_powerSaverEnabled = false;
 };
 }
