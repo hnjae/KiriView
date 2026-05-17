@@ -58,6 +58,8 @@ in
     libarchive
     libheif.dev
     libheif.lib
+    libraw.dev
+    libraw.lib
     libpng
     lld
     ninja

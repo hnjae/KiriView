@@ -123,6 +123,11 @@ const NATIVE_LIBRARIES: &[NativeLibrary] = &[
         pkg_config_package: Some("libheif"),
     },
     NativeLibrary {
+        link_name: "raw",
+        file_name: "libraw.so",
+        pkg_config_package: Some("libraw"),
+    },
+    NativeLibrary {
         link_name: "png16",
         file_name: "libpng16.so",
         pkg_config_package: Some("libpng"),
@@ -136,6 +141,7 @@ const QT_QML_INTEGRATION_INCLUDE_COLLECTORS: &[IncludeDirCollector] =
     &[add_qt_qml_integration_include_dirs];
 const LIBARCHIVE_INCLUDE_COLLECTORS: &[IncludeDirCollector] = &[add_libarchive_include_dir];
 const LIBHEIF_INCLUDE_COLLECTORS: &[IncludeDirCollector] = &[add_libheif_include_dir];
+const LIBRAW_INCLUDE_COLLECTORS: &[IncludeDirCollector] = &[add_libraw_include_dir];
 const LIBPNG_INCLUDE_COLLECTORS: &[IncludeDirCollector] = &[add_libpng_include_dir];
 const NATIVE_INCLUDE_SEARCHES: &[IncludeSearch] = &[
     IncludeSearch {
@@ -149,6 +155,10 @@ const NATIVE_INCLUDE_SEARCHES: &[IncludeSearch] = &[
     IncludeSearch {
         collectors: LIBHEIF_INCLUDE_COLLECTORS,
         pkg_config_packages: &["libheif"],
+    },
+    IncludeSearch {
+        collectors: LIBRAW_INCLUDE_COLLECTORS,
+        pkg_config_packages: &["libraw"],
     },
     IncludeSearch {
         collectors: LIBPNG_INCLUDE_COLLECTORS,
@@ -426,6 +436,12 @@ fn add_libarchive_include_dir(dirs: &mut BTreeSet<PathBuf>, include_root: &Path)
 
 fn add_libheif_include_dir(dirs: &mut BTreeSet<PathBuf>, include_root: &Path) {
     if include_root.join("libheif").join("heif.h").exists() {
+        dirs.insert(include_root.to_path_buf());
+    }
+}
+
+fn add_libraw_include_dir(dirs: &mut BTreeSet<PathBuf>, include_root: &Path) {
+    if include_root.join("libraw").join("libraw.h").exists() {
         dirs.insert(include_root.to_path_buf());
     }
 }
