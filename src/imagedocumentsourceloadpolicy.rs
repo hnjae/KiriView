@@ -155,16 +155,10 @@ mod tests {
                 RustImageDocumentRightToLeftReadingReset::Keep,
                 false,
             )),
-            source_load_plan(
-                false,
-                false,
-                RustImageDocumentRightToLeftReadingTransition::Keep,
-                false,
-                RustImageDocumentSourceLoadUrlTarget::Empty,
-                RustImageDocumentSourceLoadUrlTarget::Unchanged,
-                RustImageDocumentSourceLoadUrlTarget::Unchanged,
-                false,
-            )
+            RustImageDocumentSourceLoadPlan {
+                loading_container_navigation_url: RustImageDocumentSourceLoadUrlTarget::Empty,
+                ..empty_source_load_plan()
+            }
         );
 
         assert_eq!(
@@ -174,16 +168,15 @@ mod tests {
                 RustImageDocumentRightToLeftReadingReset::ResetActive,
                 true,
             )),
-            source_load_plan(
-                false,
-                true,
-                RustImageDocumentRightToLeftReadingTransition::ResetAndNotifyBeforeSourceState,
-                false,
-                RustImageDocumentSourceLoadUrlTarget::Empty,
-                RustImageDocumentSourceLoadUrlTarget::RequestedContainerNavigation,
-                RustImageDocumentSourceLoadUrlTarget::Unchanged,
-                false,
-            )
+            RustImageDocumentSourceLoadPlan {
+                finish_spread_transition: true,
+                right_to_left_reading_transition:
+                    RustImageDocumentRightToLeftReadingTransition::ResetAndNotifyBeforeSourceState,
+                loading_container_navigation_url: RustImageDocumentSourceLoadUrlTarget::Empty,
+                container_navigation_url:
+                    RustImageDocumentSourceLoadUrlTarget::RequestedContainerNavigation,
+                ..empty_source_load_plan()
+            }
         );
     }
 
@@ -196,16 +189,15 @@ mod tests {
                 RustImageDocumentRightToLeftReadingReset::Keep,
                 false,
             )),
-            source_load_plan(
-                true,
-                false,
-                RustImageDocumentRightToLeftReadingTransition::Keep,
-                true,
-                RustImageDocumentSourceLoadUrlTarget::RequestedContainerNavigation,
-                RustImageDocumentSourceLoadUrlTarget::Unchanged,
-                RustImageDocumentSourceLoadUrlTarget::RequestedSource,
-                true,
-            )
+            RustImageDocumentSourceLoadPlan {
+                cancel_navigation_and_predecode: true,
+                clear_secondary_page: true,
+                loading_container_navigation_url:
+                    RustImageDocumentSourceLoadUrlTarget::RequestedContainerNavigation,
+                source_url: RustImageDocumentSourceLoadUrlTarget::RequestedSource,
+                begin_open: true,
+                ..empty_source_load_plan()
+            }
         );
 
         assert_eq!(
@@ -215,16 +207,18 @@ mod tests {
                 RustImageDocumentRightToLeftReadingReset::ResetActive,
                 true,
             )),
-            source_load_plan(
-                true,
-                true,
-                RustImageDocumentRightToLeftReadingTransition::ResetAndNotifyAfterOpen,
-                true,
-                RustImageDocumentSourceLoadUrlTarget::RequestedContainerNavigation,
-                RustImageDocumentSourceLoadUrlTarget::Unchanged,
-                RustImageDocumentSourceLoadUrlTarget::RequestedSource,
-                true,
-            )
+            RustImageDocumentSourceLoadPlan {
+                cancel_navigation_and_predecode: true,
+                finish_spread_transition: true,
+                right_to_left_reading_transition:
+                    RustImageDocumentRightToLeftReadingTransition::ResetAndNotifyAfterOpen,
+                clear_secondary_page: true,
+                loading_container_navigation_url:
+                    RustImageDocumentSourceLoadUrlTarget::RequestedContainerNavigation,
+                source_url: RustImageDocumentSourceLoadUrlTarget::RequestedSource,
+                begin_open: true,
+                ..empty_source_load_plan()
+            }
         );
     }
 
@@ -239,28 +233,6 @@ mod tests {
             preserve_two_page_spread_transition,
             right_to_left_reading_reset,
             has_requested_container_navigation_url,
-        }
-    }
-
-    fn source_load_plan(
-        cancel_navigation_and_predecode: bool,
-        finish_spread_transition: bool,
-        right_to_left_reading_transition: RustImageDocumentRightToLeftReadingTransition,
-        clear_secondary_page: bool,
-        loading_container_navigation_url: RustImageDocumentSourceLoadUrlTarget,
-        container_navigation_url: RustImageDocumentSourceLoadUrlTarget,
-        source_url: RustImageDocumentSourceLoadUrlTarget,
-        begin_open: bool,
-    ) -> RustImageDocumentSourceLoadPlan {
-        RustImageDocumentSourceLoadPlan {
-            cancel_navigation_and_predecode,
-            finish_spread_transition,
-            right_to_left_reading_transition,
-            clear_secondary_page,
-            loading_container_navigation_url,
-            container_navigation_url,
-            source_url,
-            begin_open,
         }
     }
 }
