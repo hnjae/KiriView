@@ -6,6 +6,7 @@
 
 #include "archivebackend.h"
 #include "imageasyncdependencies.h"
+#include "imageasyncticket.h"
 #include "imageiojob.h"
 
 #include <QObject>
@@ -17,6 +18,7 @@ namespace KiriView {
 struct ImageDocumentSourceLoadRequest;
 class ArchiveDocumentSessionRunner;
 struct ArchiveDocumentCandidateLoad;
+struct ArchiveDocumentCandidateLoadBatch;
 
 class ArchiveDocumentSessionStore final : public QObject
 {
@@ -44,17 +46,17 @@ public:
 
 private:
     void switchToArchiveDocument(ArchiveDocumentLocation archiveDocument);
-    void startCandidateLoad();
+    void startCandidateLoad(quint64 generation);
     void finishCandidateLoad(quint64 generation, ArchiveImageCandidatesResult result);
-    void cancelPendingCandidateLoads();
+    ArchiveDocumentCandidateLoadBatch &currentCandidateLoadBatch();
+    void cancelCandidateLoadBatch();
 
     ArchiveDocumentSessionFactory m_sessionFactory;
     ArchiveDocumentLocation m_archiveDocument;
     std::shared_ptr<ArchiveDocumentSessionRunner> m_runner;
     std::optional<std::vector<ImageNavigationCandidate>> m_cachedCandidates;
-    std::vector<std::shared_ptr<ArchiveDocumentCandidateLoad>> m_pendingCandidateLoads;
-    quint64 m_generation = 0;
-    bool m_candidateLoadInProgress = false;
+    std::unique_ptr<ArchiveDocumentCandidateLoadBatch> m_candidateLoadBatch;
+    ImageAsyncTicket m_generation;
 };
 }
 

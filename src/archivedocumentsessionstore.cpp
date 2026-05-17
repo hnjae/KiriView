@@ -182,7 +182,12 @@ struct ArchiveDocumentCandidateLoad {
     std::shared_ptr<ImageIoJobState> state;
     ImageCandidatesCallback callback;
     ErrorCallback errorCallback;
+};
+
+struct ArchiveDocumentCandidateLoadBatch {
     quint64 generation = 0;
+    std::vector<std::shared_ptr<ArchiveDocumentCandidateLoad>> pendingLoads;
+    bool inProgress = false;
 };
 
 ArchiveDocumentSessionStore::ArchiveDocumentSessionStore(
@@ -253,12 +258,11 @@ void ArchiveDocumentSessionStore::prepareForSourceLoad(
 
 void ArchiveDocumentSessionStore::clear()
 {
-    cancelPendingCandidateLoads();
-    ++m_generation;
+    cancelCandidateLoadBatch();
+    m_generation.invalidate();
     m_archiveDocument = ArchiveDocumentLocation::none();
     m_runner.reset();
     m_cachedCandidates.reset();
-    m_candidateLoadInProgress = false;
 }
 
 bool ArchiveDocumentSessionStore::hasCurrentArchiveDocument() const
@@ -301,14 +305,14 @@ ImageIoJob ArchiveDocumentSessionStore::loadArchiveImages(QObject *receiver,
     load->token = new QObject(receiver);
     load->callback = std::move(callback);
     load->errorCallback = std::move(errorCallback);
-    load->generation = m_generation;
 
     ImageIoJob ioJob(load->token, cancelArchiveSessionToken);
     load->state = ioJob.state();
-    m_pendingCandidateLoads.push_back(load);
+    ArchiveDocumentCandidateLoadBatch &batch = currentCandidateLoadBatch();
+    batch.pendingLoads.push_back(load);
 
-    if (!m_candidateLoadInProgress) {
-        startCandidateLoad();
+    if (!batch.inProgress) {
+        startCandidateLoad(batch.generation);
     }
 
     return ioJob;
@@ -332,7 +336,7 @@ ImageIoJob ArchiveDocumentSessionStore::loadArchiveImageData(QObject *receiver,
     auto *token = new QObject(receiver);
     ImageIoJob ioJob(token, cancelArchiveSessionToken);
     std::shared_ptr<ImageIoJobState> jobState = ioJob.state();
-    const quint64 generation = m_generation;
+    const quint64 generation = m_generation.current();
     const QUrl imageUrl = request.imageUrl();
     std::shared_ptr<ArchiveDocumentSessionRunner> runner = m_runner;
 
@@ -342,7 +346,7 @@ ImageIoJob ArchiveDocumentSessionStore::loadArchiveImageData(QObject *receiver,
             errorCallback = std::move(errorCallback)](ArchiveImageDataResult result) mutable {
             jobState->claimAndRun(token, [&]() mutable {
                 token->deleteLater();
-                if (generation != m_generation) {
+                if (!m_generation.accepts(generation)) {
                     return;
                 }
 
@@ -364,22 +368,32 @@ void ArchiveDocumentSessionStore::switchToArchiveDocument(ArchiveDocumentLocatio
         return;
     }
 
-    cancelPendingCandidateLoads();
-    ++m_generation;
+    cancelCandidateLoadBatch();
+    m_generation.invalidate();
     m_archiveDocument = std::move(archiveDocument);
     m_runner = std::make_shared<ArchiveDocumentSessionRunner>(m_archiveDocument, m_sessionFactory);
     m_cachedCandidates.reset();
-    m_candidateLoadInProgress = false;
 }
 
-void ArchiveDocumentSessionStore::startCandidateLoad()
+ArchiveDocumentCandidateLoadBatch &ArchiveDocumentSessionStore::currentCandidateLoadBatch()
 {
-    if (m_runner == nullptr) {
+    if (m_candidateLoadBatch == nullptr
+        || !m_generation.accepts(m_candidateLoadBatch->generation)) {
+        m_candidateLoadBatch = std::make_unique<ArchiveDocumentCandidateLoadBatch>();
+        m_candidateLoadBatch->generation = m_generation.current();
+    }
+
+    return *m_candidateLoadBatch;
+}
+
+void ArchiveDocumentSessionStore::startCandidateLoad(quint64 generation)
+{
+    if (m_runner == nullptr || !m_generation.accepts(generation) || m_candidateLoadBatch == nullptr
+        || m_candidateLoadBatch->generation != generation) {
         return;
     }
 
-    m_candidateLoadInProgress = true;
-    const quint64 generation = m_generation;
+    m_candidateLoadBatch->inProgress = true;
     std::shared_ptr<ArchiveDocumentSessionRunner> runner = m_runner;
     runAsyncWorker(
         this, [runner = std::move(runner)]() { return runner->loadImageCandidates(); },
@@ -391,17 +405,18 @@ void ArchiveDocumentSessionStore::startCandidateLoad()
 void ArchiveDocumentSessionStore::finishCandidateLoad(
     quint64 generation, ArchiveImageCandidatesResult result)
 {
-    const bool active = generation == m_generation;
-    if (active) {
-        m_candidateLoadInProgress = false;
-        if (const auto *candidates = std::get_if<ArchiveImageCandidates>(&result)) {
-            m_cachedCandidates = candidates->candidates;
-        }
+    if (!m_generation.accepts(generation) || m_candidateLoadBatch == nullptr
+        || m_candidateLoadBatch->generation != generation) {
+        return;
+    }
+
+    std::unique_ptr<ArchiveDocumentCandidateLoadBatch> batch = std::move(m_candidateLoadBatch);
+    if (const auto *candidates = std::get_if<ArchiveImageCandidates>(&result)) {
+        m_cachedCandidates = candidates->candidates;
     }
 
     std::vector<std::shared_ptr<ArchiveDocumentCandidateLoad>> pendingLoads
-        = std::move(m_pendingCandidateLoads);
-    m_pendingCandidateLoads.clear();
+        = std::move(batch->pendingLoads);
 
     for (const std::shared_ptr<ArchiveDocumentCandidateLoad> &load : pendingLoads) {
         if (load == nullptr || load->state == nullptr) {
@@ -410,22 +425,23 @@ void ArchiveDocumentSessionStore::finishCandidateLoad(
 
         load->state->claimAndRun(load->token, [&]() {
             load->token->deleteLater();
-            if (!active || load->generation != generation) {
-                return;
-            }
-
             finishArchiveCandidateResult(result, load->callback, load->errorCallback);
         });
     }
 }
 
-void ArchiveDocumentSessionStore::cancelPendingCandidateLoads()
+void ArchiveDocumentSessionStore::cancelCandidateLoadBatch()
 {
-    for (const std::shared_ptr<ArchiveDocumentCandidateLoad> &load : m_pendingCandidateLoads) {
+    if (m_candidateLoadBatch == nullptr) {
+        return;
+    }
+
+    for (const std::shared_ptr<ArchiveDocumentCandidateLoad> &load :
+        m_candidateLoadBatch->pendingLoads) {
         if (load != nullptr && load->state != nullptr) {
             load->state->cancel();
         }
     }
-    m_pendingCandidateLoads.clear();
+    m_candidateLoadBatch.reset();
 }
 }
