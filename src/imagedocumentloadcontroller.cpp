@@ -5,10 +5,10 @@
 
 #include "archivedocumentsessionstore.h"
 #include "imagedocumentdeletioncontroller.h"
-#include "imagedocumentnavigationcontroller.h"
 #include "imagedocumentpredecodecontroller.h"
 #include "imagedocumentsourceloadpolicy.h"
 #include "imagedocumentstate.h"
+#include "imagenavigationservice.h"
 #include "imageopencontroller.h"
 #include "imagespreadpresentationcontroller.h"
 
@@ -51,25 +51,24 @@ KiriView::ImageDocumentSourceLoadPolicyInput sourceLoadPolicyInput(
     return input;
 }
 
-void cancelNavigationAndPredecode(KiriView::ImageDocumentNavigationController &navigationController,
+void cancelNavigationAndPredecode(KiriView::ImageNavigationService &navigationService,
     KiriView::ImageDocumentPredecodeController &predecodeController)
 {
-    navigationController.cancelNavigation();
-    navigationController.cancelContainerNavigation();
+    navigationService.cancelNavigation();
+    navigationService.cancelContainerNavigation();
     predecodeController.cancel();
 }
 }
 
 namespace KiriView {
 ImageDocumentLoadController::ImageDocumentLoadController(ImageDocumentState &state,
-    ImageDocumentDeletionController &deletionController,
-    ImageDocumentNavigationController &navigationController,
+    ImageDocumentDeletionController &deletionController, ImageNavigationService &navigationService,
     ImageDocumentPredecodeController &predecodeController, ImageOpenController &openController,
     ImageSpreadPresentationController &spreadController,
     ArchiveDocumentSessionStore *archiveSessionStore)
     : m_state(state)
     , m_deletionController(deletionController)
-    , m_navigationController(navigationController)
+    , m_navigationService(navigationService)
     , m_predecodeController(predecodeController)
     , m_openController(openController)
     , m_spreadController(spreadController)
@@ -90,7 +89,7 @@ void ImageDocumentLoadController::applySourceLoadPlan(
     const ImageDocumentSourceLoadRequest &request, const ImageDocumentSourceLoadPlan &plan)
 {
     if (plan.cancelNavigationAndPredecode) {
-        ::cancelNavigationAndPredecode(m_navigationController, m_predecodeController);
+        ::cancelNavigationAndPredecode(m_navigationService, m_predecodeController);
     }
     if (plan.finishSpreadTransition) {
         m_spreadController.finishTransition();

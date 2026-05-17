@@ -139,11 +139,11 @@ msgstr ""
 msgid "Could not read the selected image data."
 msgstr ""
 
-#: src/imagedeletioncontroller.cpp
+#: src/imagedocumentdeletioncontroller.cpp
 msgid "Could not delete the selected file."
 msgstr ""
 
-#: src/imagedocumentnavigationcontroller.cpp
+#: src/imagedocumentruntime.cpp
 msgid "Could not open the selected comic book archive."
 msgstr ""
 
@@ -169,12 +169,6 @@ msgstr ""
 
 #: src/imageopencontroller.cpp
 msgid "Could not decode the selected image animation."
-msgstr ""
-
-#: src/kiriviewapplication.cpp
-#, kde-format
-msgctxt "@info:keyboard shortcut"
-msgid "Unassigned"
 msgstr ""
 
 #: src/kiriviewapplicationactions.cpp
@@ -370,12 +364,14 @@ msgstr ""
 msgid "Could not render the selected RAW tile."
 msgstr ""
 
-#: src/svgtilesource.cpp
-msgid "Could not determine the selected SVG image size."
+#: src/shortcuthelpmodel.cpp
+#, kde-format
+msgctxt "@info:keyboard shortcut"
+msgid "Unassigned"
 msgstr ""
 
 #: src/svgtilesource.cpp
-msgid "Could not decode the selected SVG image."
+msgid "Could not determine the selected SVG image size."
 msgstr ""
 
 #: src/svgtilesource.cpp

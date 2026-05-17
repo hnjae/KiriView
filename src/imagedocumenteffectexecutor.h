@@ -11,15 +11,6 @@
 #include <functional>
 
 namespace KiriView {
-class ArchiveDocumentSessionStore;
-class ImageDocumentLoadController;
-class ImageDocumentNavigationController;
-class ImageDocumentPredecodeController;
-class ImageDocumentState;
-class ImageOpenController;
-class ImagePresentationController;
-class ImageSpreadPresentationController;
-
 struct ImageDocumentEffectOperations {
     std::function<void()> clearArchiveSession;
     std::function<void()> clearPredecode;
@@ -51,13 +42,6 @@ struct ImageDocumentEffectOperations {
 class ImageDocumentEffectExecutor final
 {
 public:
-    ImageDocumentEffectExecutor(ImageDocumentState &state,
-        ImageDocumentNavigationController &navigationController,
-        ImageDocumentPredecodeController &predecodeController, ImageOpenController &openController,
-        ImagePresentationController &presentationController,
-        ImageSpreadPresentationController &spreadController,
-        ImageDocumentLoadController &loadController,
-        ArchiveDocumentSessionStore *archiveSessionStore = nullptr);
     explicit ImageDocumentEffectExecutor(ImageDocumentEffectOperations operations);
 
     void dispatch(ImageDocumentEffect effect);

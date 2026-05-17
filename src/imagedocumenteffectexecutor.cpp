@@ -3,17 +3,6 @@
 
 #include "imagedocumenteffectexecutor.h"
 
-#include "archivedocumentsessionstore.h"
-#include "imagedocumentloadcontroller.h"
-#include "imagedocumentnavigationcontroller.h"
-#include "imagedocumentpredecodecontroller.h"
-#include "imagedocumentsourceloadrequest.h"
-#include "imagedocumentstate.h"
-#include "imageopencontroller.h"
-#include "imageopenworkflow.h"
-#include "imagepresentationcontroller.h"
-#include "imagespreadpresentationcontroller.h"
-
 #include <QString>
 #include <QUrl>
 #include <utility>
@@ -33,91 +22,6 @@ namespace {
     {
         return operation ? operation() : ImageDocumentEffects {};
     }
-
-    ImageDocumentEffectOperations effectOperations(ImageDocumentState &state,
-        ImageDocumentNavigationController &navigationController,
-        ImageDocumentPredecodeController &predecodeController, ImageOpenController &openController,
-        ImagePresentationController &presentationController,
-        ImageSpreadPresentationController &spreadController,
-        ImageDocumentLoadController &loadController,
-        ArchiveDocumentSessionStore *archiveSessionStore)
-    {
-        ImageDocumentEffectOperations operations;
-        operations.clearArchiveSession = [archiveSessionStore]() {
-            if (archiveSessionStore != nullptr) {
-                archiveSessionStore->clear();
-            }
-        };
-        operations.clearPredecode = [&predecodeController]() { predecodeController.clear(); };
-        operations.cancelPredecode = [&predecodeController]() { predecodeController.cancel(); };
-        operations.finishSpreadTransition
-            = [&spreadController]() { spreadController.finishTransition(); };
-        operations.clearSecondaryPage
-            = [&spreadController]() { spreadController.clearSecondaryPage(); };
-        operations.cancelPageNavigationUpdate
-            = [&navigationController]() { navigationController.cancelPageNavigationUpdate(); };
-        operations.cancelNavigation
-            = [&navigationController]() { navigationController.cancelNavigation(); };
-        operations.cancelContainerNavigation
-            = [&navigationController]() { navigationController.cancelContainerNavigation(); };
-        operations.cancelOpen = [&openController]() { openController.cancel(); };
-        operations.clearDisplayedImageLocation
-            = [&state]() { state.clearDisplayedImageLocation(); };
-        operations.clearPresentationImage
-            = [&presentationController]() { presentationController.clearImage(); };
-        operations.clearPageNavigation
-            = [&navigationController]() { navigationController.clearPageNavigation(); };
-        operations.notifyRightToLeftReadingChanged
-            = [&spreadController]() { spreadController.notifyRightToLeftReadingChanged(); };
-        operations.resetZoom = [&spreadController]() { spreadController.resetZoom(); };
-        operations.updatePageNavigation
-            = [&navigationController]() { navigationController.updatePageNavigation(); };
-        operations.scheduleAdjacentImagePredecode = [&predecodeController, &spreadController]() {
-            predecodeController.scheduleAdjacentImagePredecode(
-                spreadController.secondaryDisplayedPredecodeImage());
-        };
-        operations.loadUrl = [&loadController](const QUrl &url) {
-            loadController.loadSource(ImageDocumentSourceLoadRequest::fromUrl(url));
-        };
-        operations.loadContainerImage
-            = [&loadController](const QUrl &imageUrl, const QUrl &containerUrl) {
-                  loadController.loadSource(
-                      ImageDocumentSourceLoadRequest::fromContainerImage(imageUrl, containerUrl));
-              };
-        operations.finishEmptyContainerNavigation = [&openController](const QUrl &containerUrl) {
-            openController.finishContainerNavigationWithEmptyContainer(containerUrl);
-        };
-        operations.finishContainerNavigationLoadWithError
-            = [&openController](const QUrl &containerUrl, const QString &errorString) {
-                  openController.finishContainerNavigationLoadWithError(containerUrl, errorString);
-              };
-        operations.loadPageNavigationUrl
-            = [&loadController](const QUrl &url, bool preserveTwoPageSpreadTransition) {
-                  loadController.loadSource(ImageDocumentSourceLoadRequest::fromPageNavigation(
-                      url, preserveTwoPageSpreadTransition));
-              };
-        operations.prepareFailedContainer = [&presentationController](const QUrl &containerUrl) {
-            presentationController.prepareFailedContainer(containerUrl);
-        };
-        operations.setSourceUrl = [&state](const QUrl &url) { state.setSourceUrl(url); };
-        operations.setErrorString
-            = [&state](const QString &errorString) { state.setErrorString(errorString); };
-        operations.finishEmptySourceLoad
-            = [&state]() { return ImageOpenWorkflow::finishEmptySourceLoad(state); };
-        return operations;
-    }
-}
-
-ImageDocumentEffectExecutor::ImageDocumentEffectExecutor(ImageDocumentState &state,
-    ImageDocumentNavigationController &navigationController,
-    ImageDocumentPredecodeController &predecodeController, ImageOpenController &openController,
-    ImagePresentationController &presentationController,
-    ImageSpreadPresentationController &spreadController,
-    ImageDocumentLoadController &loadController, ArchiveDocumentSessionStore *archiveSessionStore)
-    : ImageDocumentEffectExecutor(
-          effectOperations(state, navigationController, predecodeController, openController,
-              presentationController, spreadController, loadController, archiveSessionStore))
-{
 }
 
 ImageDocumentEffectExecutor::ImageDocumentEffectExecutor(ImageDocumentEffectOperations operations)

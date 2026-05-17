@@ -10,18 +10,18 @@
 namespace KiriView {
 class ArchiveDocumentSessionStore;
 class ImageDocumentDeletionController;
-class ImageDocumentNavigationController;
 class ImageDocumentPredecodeController;
 class ImageDocumentState;
 class ImageOpenController;
 class ImageSpreadPresentationController;
+class ImageNavigationService;
 
 class ImageDocumentLoadController final
 {
 public:
     ImageDocumentLoadController(ImageDocumentState &state,
         ImageDocumentDeletionController &deletionController,
-        ImageDocumentNavigationController &navigationController,
+        ImageNavigationService &navigationService,
         ImageDocumentPredecodeController &predecodeController, ImageOpenController &openController,
         ImageSpreadPresentationController &spreadController,
         ArchiveDocumentSessionStore *archiveSessionStore = nullptr);
@@ -42,7 +42,7 @@ private:
 
     ImageDocumentState &m_state;
     ImageDocumentDeletionController &m_deletionController;
-    ImageDocumentNavigationController &m_navigationController;
+    ImageNavigationService &m_navigationService;
     ImageDocumentPredecodeController &m_predecodeController;
     ImageOpenController &m_openController;
     ImageSpreadPresentationController &m_spreadController;

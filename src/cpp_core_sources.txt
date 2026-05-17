@@ -30,7 +30,6 @@ src/imagedocumentcontroller.cpp
 src/imagedocumentdeletioncontroller.cpp
 src/imagedocumenteffectexecutor.cpp
 src/imagedocumentloadcontroller.cpp
-src/imagedocumentnavigationcontroller.cpp
 src/imagedocumentnotifications.cpp
 src/imagedocumentpredecodecontroller.cpp
 src/imagedocumentruntime.cpp

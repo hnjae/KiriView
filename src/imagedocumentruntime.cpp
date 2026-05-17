@@ -8,17 +8,29 @@
 #include "imagedocumentdeletioncontroller.h"
 #include "imagedocumenteffectexecutor.h"
 #include "imagedocumentloadcontroller.h"
-#include "imagedocumentnavigationcontroller.h"
 #include "imagedocumentpredecodecontroller.h"
 #include "imagedocumentsourceloadrequest.h"
+#include "imagenavigationservice.h"
 #include "imageopencontroller.h"
+#include "imageopenworkflow.h"
 #include "imagepresentationcontroller.h"
 #include "imagespreadpresentationcontroller.h"
+#include "imageviewtext.h"
 
 #include <QObject>
 #include <QUrl>
 #include <optional>
 #include <utility>
+
+namespace {
+KiriView::ImageNavigationService::DisplayContext navigationDisplayContext(
+    const KiriView::ImageDocumentState &state,
+    const KiriView::ImagePresentationController &presentationController)
+{
+    return KiriView::ImageNavigationService::DisplayContext { presentationController.hasImage(),
+        state.displayedImageLocation() };
+}
+}
 
 namespace KiriView {
 ImageDocumentRuntime::ImageDocumentRuntime(QObject *documentObject,
@@ -63,35 +75,50 @@ ImageDocumentRuntime::ImageDocumentRuntime(QObject *documentObject,
                 [this](ImageDocumentEffect effect) { dispatchEffect(std::move(effect)); },
             },
             dependencies.candidateProvider, dependencies.imageDecode);
-    navigationController = std::make_unique<ImageDocumentNavigationController>(documentObject,
-        state, *presentationController,
-        ImageDocumentNavigationController::Callbacks {
-            [this](ImageDocumentChange change) { notify(change); },
-            [this](ImageDocumentEffect effect) { dispatchEffect(std::move(effect)); },
+    navigationService = std::make_unique<ImageNavigationService>(documentObject,
+        dependencies.candidateProvider,
+        ImageNavigationService::Callbacks {
+            [this](const QUrl &url) { dispatchEffect(ImageDocumentEffect::openUrl(url)); },
+            [this](const QUrl &imageUrl, const QUrl &containerUrl) {
+                dispatchEffect(ImageDocumentEffect::containerImageSelected(imageUrl, containerUrl));
+            },
+            [this](const QUrl &url, ContainerNavigationError error, const QString &message) {
+                if (error == ContainerNavigationError::EmptyContainer) {
+                    dispatchEffect(ImageDocumentEffect::emptyContainerSelected(url));
+                    return;
+                }
+
+                if (error == ContainerNavigationError::InvalidComicBookArchive) {
+                    dispatchEffect(ImageDocumentEffect::containerNavigationFailed(
+                        url, imageViewText("Could not open the selected comic book archive.")));
+                    return;
+                }
+
+                dispatchEffect(ImageDocumentEffect::containerNavigationFailed(url, message));
+            },
+            [this]() { notify(ImageDocumentChange::PageNavigation); },
+            [this]() { dispatchEffect(ImageDocumentEffect::clearDeletedImage()); },
             [this]() { return documentDeletionController->inProgress(); },
-        },
-        dependencies.candidateProvider);
+        });
     predecodeController = std::make_unique<ImageDocumentPredecodeController>(
         documentObject, state, *presentationController, dependencies.candidateProvider,
-        dependencies.imageDecode, [this]() { return navigationController->currentPageNumber(); },
+        dependencies.imageDecode, [this]() { return navigationService->currentPageNumber(); },
         std::move(dependencies.powerSaver));
     spreadController = std::make_unique<ImageSpreadPresentationController>(documentObject,
         std::move(spreadRenderContextProvider), state, *presentationController,
         ImageSpreadPresentationController::Callbacks {
             [this](ImageDocumentChange change) { notify(change); },
             [this](const QUrl &url) { return predecodeController->tryTake(url); },
-            [this]() { return navigationController->currentPageNumber(); },
-            [this]() { return navigationController->imageCount(); },
-            [this](int pageNumber) { return navigationController->urlAtPage(pageNumber); },
+            [this]() { return navigationService->currentPageNumber(); },
+            [this]() { return navigationService->imageCount(); },
+            [this](int pageNumber) { return navigationService->urlAtPage(pageNumber); },
             [this]() { dispatchEffect(ImageDocumentEffect::scheduleAdjacentImagePredecode()); },
         },
         dependencies.candidateProvider, dependencies.imageDecode);
     loadController = std::make_unique<ImageDocumentLoadController>(state,
-        *documentDeletionController, *navigationController, *predecodeController, *openController,
+        *documentDeletionController, *navigationService, *predecodeController, *openController,
         *spreadController, archiveSessionStore.get());
-    effectExecutor = std::make_unique<ImageDocumentEffectExecutor>(state, *navigationController,
-        *predecodeController, *openController, *presentationController, *spreadController,
-        *loadController, archiveSessionStore.get());
+    effectExecutor = std::make_unique<ImageDocumentEffectExecutor>(effectOperations());
 }
 
 ImageDocumentRuntime::~ImageDocumentRuntime() { shutdown(); }
@@ -179,7 +206,7 @@ int ImageDocumentRuntime::rotationDegrees() const { return spreadController->rot
 
 int ImageDocumentRuntime::currentPageNumber() const
 {
-    return navigationController->currentPageNumber();
+    return navigationService->currentPageNumber();
 }
 
 int ImageDocumentRuntime::currentLastPageNumber() const
@@ -187,7 +214,7 @@ int ImageDocumentRuntime::currentLastPageNumber() const
     return spreadController->currentLastPageNumber();
 }
 
-int ImageDocumentRuntime::imageCount() const { return navigationController->imageCount(); }
+int ImageDocumentRuntime::imageCount() const { return navigationService->imageCount(); }
 
 bool ImageDocumentRuntime::containerNavigationAvailable() const
 {
@@ -258,15 +285,77 @@ void ImageDocumentRuntime::notify(ImageDocumentChange change)
     invokeIfSet(changeCallback, change);
 }
 
+ImageDocumentEffectOperations ImageDocumentRuntime::effectOperations()
+{
+    ImageDocumentEffectOperations operations;
+    operations.clearArchiveSession = [this]() {
+        if (archiveSessionStore != nullptr) {
+            archiveSessionStore->clear();
+        }
+    };
+    operations.clearPredecode = [this]() { predecodeController->clear(); };
+    operations.cancelPredecode = [this]() { predecodeController->cancel(); };
+    operations.finishSpreadTransition = [this]() { spreadController->finishTransition(); };
+    operations.clearSecondaryPage = [this]() { spreadController->clearSecondaryPage(); };
+    operations.cancelPageNavigationUpdate
+        = [this]() { navigationService->cancelPageNavigationUpdate(); };
+    operations.cancelNavigation = [this]() { navigationService->cancelNavigation(); };
+    operations.cancelContainerNavigation
+        = [this]() { navigationService->cancelContainerNavigation(); };
+    operations.cancelOpen = [this]() { openController->cancel(); };
+    operations.clearDisplayedImageLocation = [this]() { state.clearDisplayedImageLocation(); };
+    operations.clearPresentationImage = [this]() { presentationController->clearImage(); };
+    operations.clearPageNavigation = [this]() { navigationService->clearPageNavigation(); };
+    operations.notifyRightToLeftReadingChanged
+        = [this]() { spreadController->notifyRightToLeftReadingChanged(); };
+    operations.resetZoom = [this]() { spreadController->resetZoom(); };
+    operations.updatePageNavigation = [this]() {
+        navigationService->updatePageNavigation(
+            navigationDisplayContext(state, *presentationController));
+    };
+    operations.scheduleAdjacentImagePredecode = [this]() {
+        predecodeController->scheduleAdjacentImagePredecode(
+            spreadController->secondaryDisplayedPredecodeImage());
+    };
+    operations.loadUrl = [this](const QUrl &url) {
+        loadController->loadSource(ImageDocumentSourceLoadRequest::fromUrl(url));
+    };
+    operations.loadContainerImage = [this](const QUrl &imageUrl, const QUrl &containerUrl) {
+        loadController->loadSource(
+            ImageDocumentSourceLoadRequest::fromContainerImage(imageUrl, containerUrl));
+    };
+    operations.finishEmptyContainerNavigation = [this](const QUrl &containerUrl) {
+        openController->finishContainerNavigationWithEmptyContainer(containerUrl);
+    };
+    operations.finishContainerNavigationLoadWithError
+        = [this](const QUrl &containerUrl, const QString &errorString) {
+              openController->finishContainerNavigationLoadWithError(containerUrl, errorString);
+          };
+    operations.loadPageNavigationUrl
+        = [this](const QUrl &url, bool preserveTwoPageSpreadTransition) {
+              loadController->loadSource(ImageDocumentSourceLoadRequest::fromPageNavigation(
+                  url, preserveTwoPageSpreadTransition));
+          };
+    operations.prepareFailedContainer = [this](const QUrl &containerUrl) {
+        presentationController->prepareFailedContainer(containerUrl);
+    };
+    operations.setSourceUrl = [this](const QUrl &url) { state.setSourceUrl(url); };
+    operations.setErrorString
+        = [this](const QString &errorString) { state.setErrorString(errorString); };
+    operations.finishEmptySourceLoad
+        = [this]() { return ImageOpenWorkflow::finishEmptySourceLoad(state); };
+    return operations;
+}
+
 void ImageDocumentRuntime::shutdown()
 {
     documentDeletionController->cancel();
     presentationController->stopAnimation();
     spreadController->shutdown();
     predecodeController->cancel();
-    navigationController->cancelPageNavigationUpdate();
-    navigationController->cancelContainerNavigation();
-    navigationController->cancelNavigation();
+    navigationService->cancelPageNavigationUpdate();
+    navigationService->cancelContainerNavigation();
+    navigationService->cancelNavigation();
     openController->cancel();
     if (archiveSessionStore != nullptr) {
         archiveSessionStore->clear();
@@ -309,7 +398,7 @@ void ImageDocumentRuntime::updateRenderContext() { spreadController->updateRende
 void ImageDocumentRuntime::openImageAtPage(int pageNumber)
 {
     const bool spreadTransition = spreadController->shouldBeginTransition(pageNumber);
-    const std::optional<QUrl> pageUrl = navigationController->selectPage(pageNumber);
+    const std::optional<QUrl> pageUrl = navigationService->selectPage(pageNumber);
     if (!pageUrl.has_value()) {
         return;
     }
@@ -326,12 +415,8 @@ void ImageDocumentRuntime::openAdjacentImage(NavigationDirection direction)
     const ImageSpreadPageNavigationTarget target
         = spreadController->imageNavigationTarget(direction);
     if (!target.handledBySpread) {
-        if (direction == NavigationDirection::Previous) {
-            navigationController->openPreviousImage();
-            return;
-        }
-
-        navigationController->openNextImage();
+        navigationService->openAdjacentImage(
+            navigationDisplayContext(state, *presentationController), direction);
         return;
     }
 
@@ -344,12 +429,7 @@ void ImageDocumentRuntime::openAdjacentImage(NavigationDirection direction)
 
 void ImageDocumentRuntime::openAdjacentContainer(NavigationDirection direction)
 {
-    if (direction == NavigationDirection::Previous) {
-        navigationController->openPreviousContainer();
-        return;
-    }
-
-    navigationController->openNextContainer();
+    navigationService->openAdjacentContainer(state.containerNavigationUrl(), direction);
 }
 
 void ImageDocumentRuntime::openImageAtRelativePageOffset(int offset)
