@@ -9,7 +9,6 @@
 #include "imageurl.h"
 
 #include <QString>
-#include <algorithm>
 #include <optional>
 #include <utility>
 #include <vector>
@@ -29,26 +28,6 @@ std::optional<KiriView::ImageCandidateListContext> imageCandidateContextForDispl
     }
 
     return KiriView::imageCandidateListContextForDisplayedImage(context.location);
-}
-
-std::vector<QUrl> imageNavigationCandidateUrls(
-    const std::vector<KiriView::ImageNavigationCandidate> &candidates)
-{
-    std::vector<QUrl> urls;
-    urls.reserve(candidates.size());
-    for (const KiriView::ImageNavigationCandidate &candidate : candidates) {
-        urls.push_back(candidate.url);
-    }
-    return urls;
-}
-
-bool imageNavigationCandidatesContainUrl(
-    const std::vector<KiriView::ImageNavigationCandidate> &candidates, const QUrl &url)
-{
-    return std::any_of(candidates.cbegin(), candidates.cend(),
-        [&url](const KiriView::ImageNavigationCandidate &candidate) {
-            return KiriView::sameNormalizedUrl(candidate.url, url);
-        });
 }
 
 }
@@ -130,8 +109,7 @@ void ImageNavigationService::finishNavigation(std::vector<ImageNavigationCandida
         return;
     }
 
-    if (m_pageNavigation.completeRefresh(
-            imageNavigationCandidateUrls(candidates), *targetUrl, std::move(candidateSource))) {
+    if (m_pageNavigation.completeRefresh(candidates, *targetUrl, std::move(candidateSource))) {
         notifyPageNavigationChanged();
     }
     invokeIfSet(m_callbacks.openUrl, *targetUrl);
@@ -222,8 +200,7 @@ void ImageNavigationService::updatePageNavigation(const DisplayContext &context)
         [this, currentUrl = candidateContext->currentUrl(),
             candidateSource = candidateContext->source()](
             std::vector<ImageNavigationCandidate> candidates) {
-            if (m_pageNavigation.completeRefresh(
-                    imageNavigationCandidateUrls(candidates), currentUrl, candidateSource)) {
+            if (m_pageNavigation.completeRefresh(candidates, currentUrl, candidateSource)) {
                 notifyPageNavigationChanged();
             }
         },
@@ -261,26 +238,18 @@ void ImageNavigationService::watchPageNavigationChanges(const ImageCandidateList
 void ImageNavigationService::updatePageNavigationFromChangedCandidates(
     std::vector<ImageNavigationCandidate> candidates, ImageCandidateListSource source)
 {
-    if (!m_pageNavigation.isCurrentRefreshSource(source)) {
+    const ImagePageNavigationRefreshResult refresh
+        = m_pageNavigation.completeRefreshFromCurrentContext(candidates, std::move(source));
+    if (!refresh.accepted) {
         return;
     }
 
-    const std::optional<ImageCandidateListContext> refreshContext
-        = m_pageNavigation.refreshContext();
-    if (!refreshContext.has_value()) {
-        return;
-    }
-
-    ImageCandidateListContext context = *refreshContext;
-    const bool currentImageRemoved
-        = !imageNavigationCandidatesContainUrl(candidates, context.currentUrl());
-    if (m_pageNavigation.completeRefresh(
-            imageNavigationCandidateUrls(candidates), context.currentUrl(), source)) {
+    if (refresh.changed) {
         notifyPageNavigationChanged();
     }
 
-    if (currentImageRemoved && !deletionInProgress()) {
-        handleCurrentImageRemoved(std::move(candidates), std::move(context));
+    if (refresh.currentImageRemoved && refresh.context.has_value() && !deletionInProgress()) {
+        handleCurrentImageRemoved(std::move(candidates), *refresh.context);
     }
 }
 

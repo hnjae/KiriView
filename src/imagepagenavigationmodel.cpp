@@ -7,10 +7,31 @@
 #include "imagenavigationmodel.h"
 #include "imageurl.h"
 
+#include <algorithm>
 #include <cstddef>
 #include <utility>
 
 namespace {
+std::vector<QUrl> imageNavigationCandidateUrls(
+    const std::vector<KiriView::ImageNavigationCandidate> &candidates)
+{
+    std::vector<QUrl> urls;
+    urls.reserve(candidates.size());
+    for (const KiriView::ImageNavigationCandidate &candidate : candidates) {
+        urls.push_back(candidate.url);
+    }
+    return urls;
+}
+
+bool imageNavigationCandidatesContainUrl(
+    const std::vector<KiriView::ImageNavigationCandidate> &candidates, const QUrl &url)
+{
+    return std::any_of(candidates.cbegin(), candidates.cend(),
+        [&url](const KiriView::ImageNavigationCandidate &candidate) {
+            return KiriView::sameNormalizedUrl(candidate.url, url);
+        });
+}
+
 bool samePageNavigationState(
     const KiriView::PageNavigationState &left, const KiriView::PageNavigationState &right)
 {
@@ -121,17 +142,6 @@ bool ImagePageNavigationModel::shouldKeepExistingWatcherFor(
     return m_source.has_value() && sameImageCandidateListSource(*m_source, context.source());
 }
 
-bool ImagePageNavigationModel::isCurrentRefreshSource(const ImageCandidateListSource &source) const
-{
-    return m_refreshContext.has_value()
-        && sameImageCandidateListSource(m_refreshContext->source(), source);
-}
-
-std::optional<ImageCandidateListContext> ImagePageNavigationModel::refreshContext() const
-{
-    return m_refreshContext;
-}
-
 bool ImagePageNavigationModel::previewRefresh(const ImageCandidateListContext &context)
 {
     const ImageCandidateListSource source = context.source();
@@ -149,6 +159,29 @@ bool ImagePageNavigationModel::previewRefresh(const ImageCandidateListContext &c
 
     m_refreshContext = context;
     return changed;
+}
+
+bool ImagePageNavigationModel::completeRefresh(
+    const std::vector<ImageNavigationCandidate> &candidates, const QUrl &currentUrl,
+    ImageCandidateListSource source)
+{
+    return completeRefresh(imageNavigationCandidateUrls(candidates), currentUrl, std::move(source));
+}
+
+ImagePageNavigationRefreshResult ImagePageNavigationModel::completeRefreshFromCurrentContext(
+    const std::vector<ImageNavigationCandidate> &candidates, ImageCandidateListSource source)
+{
+    if (!m_refreshContext.has_value()
+        || !sameImageCandidateListSource(m_refreshContext->source(), source)) {
+        return {};
+    }
+
+    const ImageCandidateListContext context = *m_refreshContext;
+    const bool currentImageRemoved
+        = !imageNavigationCandidatesContainUrl(candidates, context.currentUrl());
+    const bool changed = completeRefresh(
+        imageNavigationCandidateUrls(candidates), context.currentUrl(), std::move(source));
+    return ImagePageNavigationRefreshResult { true, changed, currentImageRemoved, context };
 }
 
 bool ImagePageNavigationModel::completeRefresh(

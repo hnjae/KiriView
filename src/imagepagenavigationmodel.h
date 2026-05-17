@@ -12,6 +12,13 @@
 #include <vector>
 
 namespace KiriView {
+struct ImagePageNavigationRefreshResult {
+    bool accepted = false;
+    bool changed = false;
+    bool currentImageRemoved = false;
+    std::optional<ImageCandidateListContext> context;
+};
+
 class ImagePageNavigationModel
 {
 public:
@@ -23,14 +30,16 @@ public:
     std::optional<QUrl> selectAdjacentPage(NavigationDirection direction);
 
     bool shouldKeepExistingWatcherFor(const ImageCandidateListContext &context) const;
-    bool isCurrentRefreshSource(const ImageCandidateListSource &source) const;
-    std::optional<ImageCandidateListContext> refreshContext() const;
     bool previewRefresh(const ImageCandidateListContext &context);
-    bool completeRefresh(
-        std::vector<QUrl> urls, const QUrl &currentUrl, ImageCandidateListSource source);
+    bool completeRefresh(const std::vector<ImageNavigationCandidate> &candidates,
+        const QUrl &currentUrl, ImageCandidateListSource source);
+    ImagePageNavigationRefreshResult completeRefreshFromCurrentContext(
+        const std::vector<ImageNavigationCandidate> &candidates, ImageCandidateListSource source);
     bool clear();
 
 private:
+    bool completeRefresh(
+        std::vector<QUrl> urls, const QUrl &currentUrl, ImageCandidateListSource source);
     bool replaceState(PageNavigationState state, bool forceChanged = false);
 
     PageNavigationState m_state;
