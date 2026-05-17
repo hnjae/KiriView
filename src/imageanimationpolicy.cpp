@@ -13,6 +13,24 @@ constexpr std::uint64_t millisecondsPerSecond = 1000;
 }
 
 namespace KiriView {
+void AnimationLoopTracker::start(int loopCount) { m_state = AnimationLoopState { loopCount, 0 }; }
+
+void AnimationLoopTracker::clear() { m_state = {}; }
+
+AnimationLoopState AnimationLoopTracker::state() const { return m_state; }
+
+bool AnimationLoopTracker::shouldScheduleAfterFrame(bool sourceHasMoreFrames) const
+{
+    return sourceHasMoreFrames || animationHasRemainingLoops(m_state);
+}
+
+AnimationLoopAdvance AnimationLoopTracker::completeSequence()
+{
+    const AnimationLoopAdvance advance = advanceAnimationLoop(m_state);
+    m_state.completedLoops = advance.completedLoops;
+    return advance;
+}
+
 int normalizedAnimationFrameDelay(int delayMs)
 {
     if (delayMs < 0) {

@@ -21,6 +21,8 @@ private Q_SLOTS:
     void loopPolicyTracksFiniteAndInfiniteRemainingLoops();
     void loopAdvanceIncrementsOnlyWhenMoreLoopsAreAvailable();
     void loopAdvanceSaturatesCompletedLoopCount();
+    void loopTrackerOwnsPlaybackLoopState();
+    void loopTrackerSchedulesWhenSourceOrLoopCanContinue();
 };
 
 namespace {
@@ -90,6 +92,46 @@ void TestImageAnimationPolicy::loopAdvanceSaturatesCompletedLoopCount()
 
     QVERIFY(advance.shouldContinue);
     QCOMPARE(advance.completedLoops, std::numeric_limits<int>::max());
+}
+
+void TestImageAnimationPolicy::loopTrackerOwnsPlaybackLoopState()
+{
+    KiriView::AnimationLoopTracker tracker;
+    tracker.start(2);
+
+    QCOMPARE(tracker.state().loopCount, 2);
+    QCOMPARE(tracker.state().completedLoops, 0);
+
+    const KiriView::AnimationLoopAdvance firstRestart = tracker.completeSequence();
+    QVERIFY(firstRestart.shouldContinue);
+    QCOMPARE(tracker.state().completedLoops, 1);
+
+    const KiriView::AnimationLoopAdvance secondRestart = tracker.completeSequence();
+    QVERIFY(secondRestart.shouldContinue);
+    QCOMPARE(tracker.state().completedLoops, 2);
+
+    const KiriView::AnimationLoopAdvance stop = tracker.completeSequence();
+    QVERIFY(!stop.shouldContinue);
+    QCOMPARE(tracker.state().completedLoops, 2);
+
+    tracker.clear();
+    QCOMPARE(tracker.state().loopCount, 0);
+    QCOMPARE(tracker.state().completedLoops, 0);
+}
+
+void TestImageAnimationPolicy::loopTrackerSchedulesWhenSourceOrLoopCanContinue()
+{
+    KiriView::AnimationLoopTracker finiteTracker;
+    finiteTracker.start(1);
+
+    QVERIFY(finiteTracker.shouldScheduleAfterFrame(true));
+    QVERIFY(finiteTracker.shouldScheduleAfterFrame(false));
+    finiteTracker.completeSequence();
+    QVERIFY(!finiteTracker.shouldScheduleAfterFrame(false));
+
+    KiriView::AnimationLoopTracker infiniteTracker;
+    infiniteTracker.start(-1);
+    QVERIFY(infiniteTracker.shouldScheduleAfterFrame(false));
 }
 
 QTEST_GUILESS_MAIN(TestImageAnimationPolicy)

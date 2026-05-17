@@ -17,6 +17,19 @@ struct AnimationLoopAdvance {
     int completedLoops = 0;
 };
 
+class AnimationLoopTracker
+{
+public:
+    void start(int loopCount);
+    void clear();
+    AnimationLoopState state() const;
+    bool shouldScheduleAfterFrame(bool sourceHasMoreFrames) const;
+    AnimationLoopAdvance completeSequence();
+
+private:
+    AnimationLoopState m_state;
+};
+
 int normalizedAnimationFrameDelay(int delayMs);
 int animationFrameDelayFromTimescale(std::uint32_t duration, std::uint32_t timescale);
 bool animationHasRemainingLoops(AnimationLoopState state);

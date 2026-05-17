@@ -31,7 +31,7 @@ void ImageAnimationPlayer::start(
     const QByteArray &data, const QByteArray &format, int loopCount, int firstFrameDelay)
 {
     clearPlaybackState();
-    m_loopState.loopCount = loopCount;
+    m_loopTracker.start(loopCount);
 
     ReaderPlayback playback;
     playback.data = data;
@@ -59,7 +59,7 @@ void ImageAnimationPlayer::start(
 void ImageAnimationPlayer::startApng(const QByteArray &data, int loopCount, int firstFrameDelay)
 {
     clearPlaybackState();
-    m_loopState.loopCount = loopCount;
+    m_loopTracker.start(loopCount);
 
     ApngPlayback playback;
     playback.data = data;
@@ -121,8 +121,7 @@ void ImageAnimationPlayer::advanceReaderFrame(ReaderPlayback &playback)
     }
 
     if (!playback.reader->canRead()) {
-        const AnimationLoopAdvance loopAdvance = advanceAnimationLoop(m_loopState);
-        m_loopState.completedLoops = loopAdvance.completedLoops;
+        const AnimationLoopAdvance loopAdvance = m_loopTracker.completeSequence();
         if (!loopAdvance.shouldContinue) {
             stop();
             return;
@@ -145,7 +144,7 @@ void ImageAnimationPlayer::advanceReaderFrame(ReaderPlayback &playback)
     invokeIfSet(m_frameReady, frame);
 
     scheduleNextFrameOrStop(
-        playback.reader->canRead() || animationHasRemainingLoops(m_loopState), delay);
+        m_loopTracker.shouldScheduleAfterFrame(playback.reader->canRead()), delay);
 }
 
 void ImageAnimationPlayer::advanceApngFrame(ApngPlayback &playback)
@@ -162,8 +161,7 @@ void ImageAnimationPlayer::advanceApngFrame(ApngPlayback &playback)
             return;
         }
 
-        const AnimationLoopAdvance loopAdvance = advanceAnimationLoop(m_loopState);
-        m_loopState.completedLoops = loopAdvance.completedLoops;
+        const AnimationLoopAdvance loopAdvance = m_loopTracker.completeSequence();
         if (!loopAdvance.shouldContinue) {
             stop();
             return;
@@ -176,15 +174,14 @@ void ImageAnimationPlayer::advanceApngFrame(ApngPlayback &playback)
         }
 
         invokeIfSet(m_frameReady, openResult->firstFrame);
-        scheduleNextFrameOrStop(
-            openResult->frameCount > 1 || animationHasRemainingLoops(m_loopState),
+        scheduleNextFrameOrStop(m_loopTracker.shouldScheduleAfterFrame(openResult->frameCount > 1),
             openResult->firstFrameDelay);
         return;
     }
 
     invokeIfSet(m_frameReady, frame->image);
     scheduleNextFrameOrStop(
-        playback.reader->hasMoreFrames() || animationHasRemainingLoops(m_loopState), frame->delay);
+        m_loopTracker.shouldScheduleAfterFrame(playback.reader->hasMoreFrames()), frame->delay);
 }
 
 void ImageAnimationPlayer::advanceHeifSequenceFrame(HeifSequencePlayback &playback)
@@ -294,7 +291,7 @@ void ImageAnimationPlayer::clearPlaybackState()
 {
     m_timer.stop();
     m_playback = std::monostate();
-    m_loopState = {};
+    m_loopTracker.clear();
 }
 
 void ImageAnimationPlayer::finishWithError(const QString &errorString)

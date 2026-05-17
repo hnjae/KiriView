@@ -74,7 +74,7 @@ private:
     ErrorCallback m_animationError;
     Playback m_playback;
     QTimer m_timer;
-    AnimationLoopState m_loopState;
+    AnimationLoopTracker m_loopTracker;
 };
 }
 
