@@ -24,6 +24,7 @@ private Q_SLOTS:
     void altPressReleaseKeepsPopupOpen_data();
     void altPressReleaseKeepsPopupOpen();
     void altPressShowsMnemonicUnderline();
+    void shortcutOverrideClaimsAltMnemonicWithoutTriggeringItem();
     void altMnemonicTriggersEnabledItem_data();
     void altMnemonicTriggersEnabledItem();
     void plainMnemonicTriggersEnabledItem_data();
@@ -354,12 +355,13 @@ bool isMenuOpen(QObject *menu)
         && (menu->property("opened").toBool() || menu->property("visible").toBool());
 }
 
-void sendKey(QObject *target, QEvent::Type type, Qt::Key key, Qt::KeyboardModifiers modifiers,
+bool sendKey(QObject *target, QEvent::Type type, Qt::Key key, Qt::KeyboardModifiers modifiers,
     const QString &text = {})
 {
     QKeyEvent event(type, key, modifiers, text);
     QCoreApplication::sendEvent(target, &event);
     QCoreApplication::processEvents();
+    return event.isAccepted();
 }
 
 void keyClick(QQuickView *view, Qt::Key key,
@@ -438,6 +440,29 @@ void TestMenuAccessKeyRouter::altPressShowsMnemonicUnderline()
     keyRelease(fixture.view.get(), Qt::Key_Alt);
     QVERIFY(isMenuOpen(fixture.menu));
     QTRY_COMPARE(label->property("text").toString(), initialText);
+}
+
+void TestMenuAccessKeyRouter::shortcutOverrideClaimsAltMnemonicWithoutTriggeringItem()
+{
+    MenuFixture fixture = createPopupMenuFixture(false, true);
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+
+    MenuAccessKeyRouter router;
+    router.setMenu(fixture.menu);
+
+    openTargetMenu(fixture.root);
+    QTRY_VERIFY(isMenuOpen(fixture.menu));
+
+    QObject *label = findObject(fixture.root, QStringLiteral("menuActionItemTextLabel"));
+    QVERIFY2(label != nullptr, "menu action item text label was not created");
+
+    QVERIFY(sendKey(fixture.menu, QEvent::ShortcutOverride, Qt::Key_O, Qt::AltModifier));
+
+    QTRY_VERIFY(label->property("text").toString().contains(QStringLiteral("<u>")));
+    QCOMPARE(fixture.root->property("triggerCount").toInt(), 0);
+
+    keyRelease(fixture.view.get(), Qt::Key_Alt);
+    QTRY_VERIFY(!label->property("text").toString().contains(QStringLiteral("<u>")));
 }
 
 void TestMenuAccessKeyRouter::altMnemonicTriggersEnabledItem_data() { addPopupFixtureRows(); }

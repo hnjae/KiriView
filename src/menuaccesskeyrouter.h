@@ -45,11 +45,20 @@ private Q_SLOTS:
     void clearMenuAccessKeys();
 
 private:
+    enum class KeyRoutingMode {
+        TriggerMnemonic,
+        ClaimShortcutOverride,
+    };
+
     bool handleKeyPress(QKeyEvent *event);
     bool handleKeyRelease(QKeyEvent *event);
     bool handleShortcutOverride(QKeyEvent *event);
+    bool routeOpenMenuKey(QKeyEvent *event, KeyRoutingMode mode);
     bool triggerMnemonic(QKeyEvent *event, QObject *menu);
     QObject *openMenu() const;
+    QObject *openMenuOrClearAccessKeys();
+    void beginAccessKeySession();
+    void clearAccessKeySessionVisuals();
     void resetAltTracking();
 
     static bool isMenu(QObject *object);

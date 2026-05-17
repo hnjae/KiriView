@@ -84,32 +84,7 @@ bool MenuAccessKeyRouter::eventFilter(QObject *watched, QEvent *event)
 
 bool MenuAccessKeyRouter::handleKeyPress(QKeyEvent *event)
 {
-    QObject *menu = openMenu();
-    if (menu == nullptr) {
-        setMenuAccessKeysActive(m_menu, false);
-        if (!m_altPressedInOpenMenu) {
-            resetAltTracking();
-        }
-        return false;
-    }
-
-    if (event->key() == Qt::Key_Alt) {
-        m_altPressedInOpenMenu = true;
-        setMenuAccessKeysActive(m_menu, true);
-        event->accept();
-        return true;
-    }
-
-    if (isAltMnemonicKeyPress(*event)) {
-        m_altPressedInOpenMenu = true;
-        setMenuAccessKeysActive(m_menu, true);
-    }
-
-    const bool handled = triggerMnemonic(event, menu);
-    if (handled) {
-        event->accept();
-    }
-    return handled;
+    return routeOpenMenuKey(event, KeyRoutingMode::TriggerMnemonic);
 }
 
 bool MenuAccessKeyRouter::handleKeyRelease(QKeyEvent *event)
@@ -119,11 +94,11 @@ bool MenuAccessKeyRouter::handleKeyRelease(QKeyEvent *event)
     }
 
     if (!m_altPressedInOpenMenu) {
-        setMenuAccessKeysActive(m_menu, false);
+        clearAccessKeySessionVisuals();
         return false;
     }
 
-    setMenuAccessKeysActive(m_menu, false);
+    clearAccessKeySessionVisuals();
     resetAltTracking();
     event->accept();
     return true;
@@ -131,30 +106,37 @@ bool MenuAccessKeyRouter::handleKeyRelease(QKeyEvent *event)
 
 bool MenuAccessKeyRouter::handleShortcutOverride(QKeyEvent *event)
 {
-    QObject *menu = openMenu();
+    return routeOpenMenuKey(event, KeyRoutingMode::ClaimShortcutOverride);
+}
+
+bool MenuAccessKeyRouter::routeOpenMenuKey(QKeyEvent *event, KeyRoutingMode mode)
+{
+    QObject *menu = openMenuOrClearAccessKeys();
     if (menu == nullptr) {
-        setMenuAccessKeysActive(m_menu, false);
-        if (!m_altPressedInOpenMenu) {
-            resetAltTracking();
-        }
         return false;
     }
 
     if (event->key() == Qt::Key_Alt) {
-        m_altPressedInOpenMenu = true;
-        setMenuAccessKeysActive(m_menu, true);
+        beginAccessKeySession();
         event->accept();
         return true;
     }
 
     if (isAltMnemonicKeyPress(*event)) {
-        m_altPressedInOpenMenu = true;
-        setMenuAccessKeysActive(m_menu, true);
-        event->accept();
-        return true;
+        beginAccessKeySession();
+        if (mode == KeyRoutingMode::ClaimShortcutOverride) {
+            event->accept();
+            return true;
+        }
+    } else if (mode == KeyRoutingMode::ClaimShortcutOverride) {
+        return false;
     }
 
-    return false;
+    const bool handled = triggerMnemonic(event, menu);
+    if (handled) {
+        event->accept();
+    }
+    return handled;
 }
 
 bool MenuAccessKeyRouter::triggerMnemonic(QKeyEvent *event, QObject *menu)
@@ -189,7 +171,29 @@ QObject *MenuAccessKeyRouter::openMenu() const
     return deepestOpenMenu(m_menu);
 }
 
-void MenuAccessKeyRouter::clearMenuAccessKeys() { setMenuAccessKeysActive(m_menu, false); }
+QObject *MenuAccessKeyRouter::openMenuOrClearAccessKeys()
+{
+    QObject *menu = openMenu();
+    if (menu != nullptr) {
+        return menu;
+    }
+
+    clearAccessKeySessionVisuals();
+    if (!m_altPressedInOpenMenu) {
+        resetAltTracking();
+    }
+    return nullptr;
+}
+
+void MenuAccessKeyRouter::beginAccessKeySession()
+{
+    m_altPressedInOpenMenu = true;
+    setMenuAccessKeysActive(m_menu, true);
+}
+
+void MenuAccessKeyRouter::clearAccessKeySessionVisuals() { setMenuAccessKeysActive(m_menu, false); }
+
+void MenuAccessKeyRouter::clearMenuAccessKeys() { clearAccessKeySessionVisuals(); }
 
 void MenuAccessKeyRouter::resetAltTracking() { m_altPressedInOpenMenu = false; }
 
