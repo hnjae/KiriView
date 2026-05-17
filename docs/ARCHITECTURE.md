@@ -95,7 +95,7 @@ These defaults apply until this document or an ADR explicitly changes the owner.
 
 QML-facing values may be derived from multiple C++ runtime states. For example, a public loading or status property may combine document state with an active presentation transition. The derived value must not become a second mutable source of truth. Keep the canonical owners explicit, and make notification dependencies follow the derived value.
 
-When a public value has mode-specific ownership, only the active mode owns that value. Inactive mode state is a cache, projection, or restoration point, not a competing owner. Transition code must synchronize the next active owner before exposing the mode change. For example, single-page and two-page presentation may use different zoom state owners, but the public zoom value must have exactly one active owner at a time.
+When a public value has mode-specific ownership, only the active mode owns that value. Inactive mode state is a cache, projection, or restoration point, not a competing owner. Transition code must synchronize the next active owner before exposing the mode change. For example, different presentation modes may use different internal state owners, but the public value must have exactly one active owner at a time.
 
 ## FFI Design
 
@@ -135,19 +135,11 @@ sequenceDiagram
     Cpp->>Cpp: Execute effects and report completions
 ```
 
-For example, opening an image can eventually converge on:
-
-```text
-OpenRequested(request_id, target)
-ImageDataLoaded(request_id, bytes)
-ImageDecoded(request_id, result_summary)
-ImageLoadFailed(request_id, error)
-PresentationFinished(request_id)
-```
+For image opening, concrete event names may evolve. The architectural requirement is that request, loading, decoding, failure, presentation, and completion-related events carry enough operation identity for the C++ owner to reject stale results.
 
 Rust can decide loading status, error recovery, navigation updates, cache policy, and follow-up effects. C++ keeps the actual KIO job, decoder job, presentation controller, image object, and render update mechanics.
 
-Async workflow events that can complete out of order must carry enough identity for the owner to ignore stale completions. For image opening and page navigation, this includes distinguishing the displayed image from the pending selection. For two-page spread transitions, the workflow must also distinguish the primary target page from any secondary page and avoid exposing the new spread until the required visible pages are ready.
+Async workflow events that can complete out of order must carry enough identity for the owner to ignore stale completions. Workflows that update visible state must distinguish the committed public state from pending targets and publish the new state only after the resources required for that state are ready.
 
 This does not require every existing controller to be rewritten at once. Move logic when a workflow is already being changed and when the new boundary reduces complexity.
 
