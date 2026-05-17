@@ -8,7 +8,7 @@
 #include "imagecallback.h"
 #include "imagecontainer.h"
 #include "imagedocumentsourceloadrequest.h"
-#include "imageurl.h"
+#include "imageloadplan.h"
 
 #include <mutex>
 #include <optional>
@@ -18,58 +18,24 @@
 namespace {
 namespace Backend = KiriView::ArchiveBackendDetail;
 
-bool sameArchiveDocumentLocation(
-    const KiriView::ArchiveDocumentLocation &left, const KiriView::ArchiveDocumentLocation &right)
-{
-    return KiriView::sameNormalizedUrl(left.fileUrl(), right.fileUrl())
-        && KiriView::sameNormalizedUrl(left.rootUrl(), right.rootUrl())
-        && left.kind() == right.kind();
-}
-
 KiriView::ArchiveDocumentSessionFactory defaultSessionFactory(
     KiriView::ArchiveDocumentSessionFactory sessionFactory)
 {
     return sessionFactory ? std::move(sessionFactory) : KiriView::openArchiveDocumentSession;
 }
 
-std::optional<KiriView::ArchiveDocumentLocation> containerArchiveDocumentForSourceLoad(
-    const KiriView::ImageDocumentSourceLoadRequest &request)
-{
-    if (request.containerNavigationUrl.isEmpty()) {
-        return std::nullopt;
-    }
-
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
-        = KiriView::archiveDocumentLocationForLocalArchiveUrl(request.containerNavigationUrl);
-    if (archiveDocument.has_value()
-        && KiriView::archiveDocumentContainsUrl(*archiveDocument, request.sourceUrl)) {
-        return archiveDocument;
-    }
-
-    return std::nullopt;
-}
-
 std::optional<KiriView::ArchiveDocumentLocation> archiveDocumentForSourceLoad(
     const KiriView::ImageDocumentSourceLoadRequest &request,
     const KiriView::ArchiveDocumentLocation &displayedArchiveDocument)
 {
-    const std::optional<KiriView::ArchiveDocumentLocation> sourceArchiveDocument
-        = KiriView::directOpenDocumentLocationForLocalUrl(request.sourceUrl);
-    if (sourceArchiveDocument.has_value()) {
-        return sourceArchiveDocument;
+    const KiriView::ImageArchiveLoadPlan plan
+        = KiriView::imageArchiveLoadPlan(KiriView::ImageLoadRequest::fromLocation(
+            request.sourceUrl, displayedArchiveDocument, request.containerNavigationUrl));
+    if (plan.archiveDocument.isEmpty()) {
+        return std::nullopt;
     }
 
-    const std::optional<KiriView::ArchiveDocumentLocation> containerArchiveDocument
-        = containerArchiveDocumentForSourceLoad(request);
-    if (containerArchiveDocument.has_value()) {
-        return containerArchiveDocument;
-    }
-
-    if (KiriView::archiveDocumentContainsUrl(displayedArchiveDocument, request.sourceUrl)) {
-        return displayedArchiveDocument;
-    }
-
-    return std::nullopt;
+    return plan.archiveDocument;
 }
 
 void cancelArchiveSessionToken(QObject *object)

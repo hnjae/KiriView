@@ -9,11 +9,17 @@
 #include <QtGlobal>
 
 namespace KiriView {
+struct ImageArchiveLoadPlan {
+    ArchiveDocumentLocation archiveDocument;
+    bool requiresArchiveListing = false;
+};
+
 struct ImageLoadPlan {
     ImageLoadSession session;
     bool requiresArchiveListing = false;
 };
 
+ImageArchiveLoadPlan imageArchiveLoadPlan(const ImageLoadRequest &request);
 ImageLoadPlan imageLoadPlan(quint64 id, ImageLoadRequest request);
 }
 

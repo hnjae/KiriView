@@ -44,6 +44,7 @@ src/imagecandidaterepository.cpp
 src/imagecandidatestore.cpp
 src/imageiojob.cpp
 src/imageiojobs.cpp
+src/imagelocation.cpp
 src/imagerectmapping.cpp
 src/imagetile.cpp
 src/imagetiledecodeplan.cpp

@@ -94,12 +94,17 @@ void TestImageLoadPlan::containerNavigationRestoresArchiveDocumentForInteriorIma
     const KiriView::ImageLoadPlan plan = KiriView::imageLoadPlan(9,
         KiriView::ImageLoadRequest::fromLocation(
             imageUrl, KiriView::ArchiveDocumentLocation::none(), archiveUrl));
+    const KiriView::ImageArchiveLoadPlan archivePlan
+        = KiriView::imageArchiveLoadPlan(KiriView::ImageLoadRequest::fromLocation(
+            imageUrl, KiriView::ArchiveDocumentLocation::none(), archiveUrl));
 
     QCOMPARE(plan.session.id, quint64(9));
     QVERIFY(!plan.requiresArchiveListing);
     QCOMPARE(plan.session.location.imageUrl(), imageUrl);
     QCOMPARE(plan.session.location.archiveDocumentRootUrl(), archiveDocument->rootUrl());
     QCOMPARE(plan.session.request.containerNavigationUrl(), archiveUrl);
+    QVERIFY(!archivePlan.requiresArchiveListing);
+    QCOMPARE(archivePlan.archiveDocument.rootUrl(), archiveDocument->rootUrl());
 }
 
 void TestImageLoadPlan::displayedArchiveContextIsKeptForInteriorImage()
@@ -112,12 +117,17 @@ void TestImageLoadPlan::displayedArchiveContextIsKeptForInteriorImage()
 
     const KiriView::ImageLoadPlan plan = KiriView::imageLoadPlan(
         10, KiriView::ImageLoadRequest::fromLocation(imageUrl, *archiveDocument));
+    const KiriView::ImageArchiveLoadPlan archivePlan = KiriView::imageArchiveLoadPlan(
+        KiriView::ImageLoadRequest::fromLocation(imageUrl, *archiveDocument));
 
     QCOMPARE(plan.session.id, quint64(10));
     QVERIFY(!plan.requiresArchiveListing);
     QCOMPARE(plan.session.location.imageUrl(), imageUrl);
     QCOMPARE(plan.session.location.archiveDocumentFileUrl(), archiveDocument->fileUrl());
     QCOMPARE(plan.session.location.archiveDocumentRootUrl(), archiveDocument->rootUrl());
+    QVERIFY(!archivePlan.requiresArchiveListing);
+    QCOMPARE(archivePlan.archiveDocument.fileUrl(), archiveDocument->fileUrl());
+    QCOMPARE(archivePlan.archiveDocument.rootUrl(), archiveDocument->rootUrl());
 }
 
 void TestImageLoadPlan::explicitKioArchiveImagePlansDirectLoad()

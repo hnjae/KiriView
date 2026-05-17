@@ -126,14 +126,6 @@ ContainerImageSourceResult containerImageSourceFor(
     return { std::nullopt, KiriView::ImageCandidateRepositoryError::Generic };
 }
 
-bool sameArchiveDocumentLocation(
-    const KiriView::ArchiveDocumentLocation &left, const KiriView::ArchiveDocumentLocation &right)
-{
-    return KiriView::sameNormalizedUrl(left.fileUrl(), right.fileUrl())
-        && KiriView::sameNormalizedUrl(left.rootUrl(), right.rootUrl())
-        && left.kind() == right.kind();
-}
-
 bool sameImageCandidateListSourcePayload(const KiriView::ImageCandidateListSource::Directory &left,
     const KiriView::ImageCandidateListSource::Directory &right)
 {
@@ -144,7 +136,7 @@ bool sameImageCandidateListSourcePayload(
     const KiriView::ImageCandidateListSource::ArchiveDocument &left,
     const KiriView::ImageCandidateListSource::ArchiveDocument &right)
 {
-    return sameArchiveDocumentLocation(left.archiveDocument, right.archiveDocument);
+    return KiriView::sameArchiveDocumentLocation(left.archiveDocument, right.archiveDocument);
 }
 
 template <typename Left, typename Right>

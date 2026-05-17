@@ -15,11 +15,6 @@ using KiriView::ArchiveDocumentLocation;
 using KiriView::archiveDocumentLocationForLocalArchiveUrl;
 using KiriView::directOpenDocumentLocationForLocalUrl;
 
-struct ArchiveDocumentLoadPlan {
-    ArchiveDocumentLocation archiveDocument;
-    bool requiresArchiveListing = false;
-};
-
 std::optional<ArchiveDocumentLocation> containerArchiveDocumentForImageLoadRequest(
     const KiriView::ImageLoadRequest &request)
 {
@@ -36,9 +31,10 @@ std::optional<ArchiveDocumentLocation> containerArchiveDocumentForImageLoadReque
 
     return std::nullopt;
 }
+}
 
-ArchiveDocumentLoadPlan archiveDocumentLoadPlanForImageLoadRequest(
-    const KiriView::ImageLoadRequest &request)
+namespace KiriView {
+ImageArchiveLoadPlan imageArchiveLoadPlan(const ImageLoadRequest &request)
 {
     const std::optional<ArchiveDocumentLocation> sourceArchiveDocument
         = directOpenDocumentLocationForLocalUrl(request.sourceUrl());
@@ -58,13 +54,11 @@ ArchiveDocumentLoadPlan archiveDocumentLoadPlanForImageLoadRequest(
 
     return { ArchiveDocumentLocation::none(), false };
 }
-}
 
-namespace KiriView {
 ImageLoadPlan imageLoadPlan(quint64 id, ImageLoadRequest request)
 {
     QUrl sourceUrl = request.sourceUrl();
-    ArchiveDocumentLoadPlan archivePlan = archiveDocumentLoadPlanForImageLoadRequest(request);
+    ImageArchiveLoadPlan archivePlan = imageArchiveLoadPlan(request);
     const bool requiresArchiveListing = archivePlan.requiresArchiveListing;
     ImageLoadSession session {
         id,

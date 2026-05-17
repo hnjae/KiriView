@@ -111,6 +111,9 @@ private:
     ArchiveDocumentKind m_kind = ArchiveDocumentKind::General;
 };
 
+bool sameArchiveDocumentLocation(
+    const ArchiveDocumentLocation &left, const ArchiveDocumentLocation &right);
+
 class DisplayedImageLocation
 {
 public:
