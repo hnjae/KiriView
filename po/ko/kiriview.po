@@ -15,7 +15,7 @@ msgstr ""
 msgid "Could not decode the selected PNG image."
 msgstr ""
 
-#: src/apngdecoder.cpp src/kiriimagedecoder.cpp
+#: src/apngdecoder.cpp src/imageanimationplayer.cpp
 msgid "Could not decode the selected APNG animation."
 msgstr ""
 
@@ -163,6 +163,12 @@ msgstr ""
 msgid "Could not decode the selected image animation."
 msgstr ""
 
+#: src/kiriviewapplication.cpp
+#, kde-format
+msgctxt "@info:keyboard shortcut"
+msgid "Unassigned"
+msgstr ""
+
 #: src/kiriviewapplicationactions.cpp
 msgid "Open"
 msgstr "열기"
@@ -239,32 +245,22 @@ msgstr ""
 
 #: src/kiriviewapplicationactions.cpp
 msgctxt "@action"
+msgid "Rotate Clockwise"
+msgstr ""
+
+#: src/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Rotate Counterclockwise"
+msgstr ""
+
+#: src/kiriviewapplicationactions.cpp
+msgctxt "@action"
 msgid "Two-Page Spread"
 msgstr ""
 
 #: src/kiriviewapplicationactions.cpp
 msgctxt "@action"
 msgid "Right-to-Left Reading"
-msgstr ""
-
-#: src/kiriviewapplicationactions.cpp
-msgctxt "@action"
-msgid "Pan Left"
-msgstr ""
-
-#: src/kiriviewapplicationactions.cpp
-msgctxt "@action"
-msgid "Pan Right"
-msgstr ""
-
-#: src/kiriviewapplicationactions.cpp
-msgctxt "@action"
-msgid "Pan Up"
-msgstr ""
-
-#: src/kiriviewapplicationactions.cpp
-msgctxt "@action"
-msgid "Pan Down"
 msgstr ""
 
 #: src/kiriviewapplicationactions.cpp
@@ -285,16 +281,6 @@ msgstr ""
 #: src/kiriviewapplicationactions.cpp
 msgctxt "@action"
 msgid "Scan Backward"
-msgstr ""
-
-#: src/kiriviewapplicationactions.cpp
-msgctxt "@action"
-msgid "Previous Page"
-msgstr ""
-
-#: src/kiriviewapplicationactions.cpp
-msgctxt "@action"
-msgid "Next Page"
 msgstr ""
 
 #: src/kiriviewapplicationactions.cpp
@@ -320,6 +306,62 @@ msgstr ""
 msgid "The selected image is too large for fallback full-image decoding."
 msgstr ""
 
+#: src/rawdecoder.cpp
+msgid "Unknown LibRaw error."
+msgstr ""
+
+#: src/rawdecoder.cpp
+#, kde-format
+msgctxt "@info:status"
+msgid "Could not decode the selected RAW image: %1: %2"
+msgstr ""
+
+#: src/rawdecoder.cpp
+msgid "Could not decode the selected RAW image: decoded image size is invalid."
+msgstr ""
+
+#: src/rawdecoder.cpp
+msgid "The selected RAW image is too large for full-image decoding."
+msgstr ""
+
+#: src/rawdecoder.cpp
+msgid "Could not decode the selected RAW image: decoded image is invalid."
+msgstr ""
+
+#: src/rawdecoder.cpp
+msgid ""
+"Could not decode the selected RAW image: decoded pixel format is unsupported."
+msgstr ""
+
+#: src/rawdecoder.cpp
+msgid "Could not decode the selected RAW image: decoded pixel data is invalid."
+msgstr ""
+
+#: src/rawdecoder.cpp
+msgid ""
+"Could not decode the selected RAW image: decoded image allocation failed."
+msgstr ""
+
+#: src/rawdecoder.cpp
+msgid "reading the RAW image"
+msgstr ""
+
+#: src/rawdecoder.cpp
+msgid "unpacking the RAW image"
+msgstr ""
+
+#: src/rawdecoder.cpp
+msgid "processing the RAW image"
+msgstr ""
+
+#: src/rawdecoder.cpp
+msgid "creating the display image"
+msgstr ""
+
+#: src/rawdecoder.cpp
+msgid "Could not render the selected RAW tile."
+msgstr ""
+
 #: src/svgtilesource.cpp
 msgid "Could not determine the selected SVG image size."
 msgstr ""
@@ -334,6 +376,26 @@ msgstr ""
 
 #: src/svgtilesource.cpp
 msgid "Could not render the selected SVG image."
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@action:inmenu"
+msgid "Nex&t Archive"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@action:inmenu"
+msgid "Previous A&rchive"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@action:inmenu"
+msgid "&Next"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml
+msgctxt "@action:inmenu"
+msgid "&Previous"
 msgstr ""
 
 #: src/qml/ApplicationMenuBar.qml
@@ -369,42 +431,12 @@ msgstr ""
 
 #: src/qml/ApplicationMenuBar.qml
 msgctxt "@action:inmenu"
-msgid "&Previous"
-msgstr ""
-
-#: src/qml/ApplicationMenuBar.qml
-msgctxt "@action:inmenu"
-msgid "&Next"
-msgstr ""
-
-#: src/qml/ApplicationMenuBar.qml
-msgctxt "@action:inmenu"
-msgid "Previous P&age"
-msgstr ""
-
-#: src/qml/ApplicationMenuBar.qml
-msgctxt "@action:inmenu"
-msgid "Ne&xt Page"
-msgstr ""
-
-#: src/qml/ApplicationMenuBar.qml
-msgctxt "@action:inmenu"
 msgid "&First Image"
 msgstr ""
 
 #: src/qml/ApplicationMenuBar.qml
 msgctxt "@action:inmenu"
 msgid "&Last Image"
-msgstr ""
-
-#: src/qml/ApplicationMenuBar.qml
-msgctxt "@action:inmenu"
-msgid "Previous A&rchive"
-msgstr ""
-
-#: src/qml/ApplicationMenuBar.qml
-msgctxt "@action:inmenu"
-msgid "Nex&t Archive"
 msgstr ""
 
 #: src/qml/ApplicationMenuBar.qml
@@ -445,6 +477,16 @@ msgstr ""
 #: src/qml/ApplicationMenuBar.qml
 msgctxt "@action:inmenu"
 msgid "&Actual Size"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml src/qml/ImageActions.qml
+msgctxt "@action:inmenu"
+msgid "Rotate &Clockwise"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml src/qml/ImageActions.qml
+msgctxt "@action:inmenu"
+msgid "Rotate C&ounterclockwise"
 msgstr ""
 
 #: src/qml/ApplicationMenuBar.qml src/qml/ImageActions.qml
@@ -566,141 +608,6 @@ msgstr ""
 #: src/qml/Main.qml
 msgctxt "@title:window"
 msgid "Open Image or Comic Book"
-msgstr ""
-
-#: src/qml/ShortcutHelpDialog.qml
-msgctxt "@info:whatsthis"
-msgid "Open an image or comic book"
-msgstr ""
-
-#: src/qml/ShortcutHelpDialog.qml
-msgctxt "@info:keyboard shortcut"
-msgid "Esc"
-msgstr ""
-
-#: src/qml/ShortcutHelpDialog.qml
-msgctxt "@info:whatsthis"
-msgid "Close dialog or leave fullscreen"
-msgstr ""
-
-#: src/qml/ShortcutHelpDialog.qml
-msgctxt "@info:whatsthis"
-msgid "Quit KiriView"
-msgstr ""
-
-#: src/qml/ShortcutHelpDialog.qml
-msgctxt "@info:whatsthis"
-msgid "Previous or next image"
-msgstr ""
-
-#: src/qml/ShortcutHelpDialog.qml
-msgctxt "@info:whatsthis"
-msgid "First or last image"
-msgstr ""
-
-#: src/qml/ShortcutHelpDialog.qml
-msgctxt "@info:whatsthis"
-msgid "Toggle two-page spread"
-msgstr ""
-
-#: src/qml/ShortcutHelpDialog.qml
-msgctxt "@info:whatsthis"
-msgid "Toggle right-to-left reading"
-msgstr ""
-
-#: src/qml/ShortcutHelpDialog.qml
-msgctxt "@info:whatsthis"
-msgid "Adjust two-page spread by one page"
-msgstr ""
-
-#: src/qml/ShortcutHelpDialog.qml
-msgctxt "@info:whatsthis"
-msgid "Zoom in"
-msgstr ""
-
-#: src/qml/ShortcutHelpDialog.qml
-msgctxt "@info:whatsthis"
-msgid "Zoom out"
-msgstr ""
-
-#: src/qml/ShortcutHelpDialog.qml
-msgctxt "@info:whatsthis"
-msgid "Fit image"
-msgstr ""
-
-#: src/qml/ShortcutHelpDialog.qml
-msgctxt "@info:whatsthis"
-msgid "Fit image height"
-msgstr ""
-
-#: src/qml/ShortcutHelpDialog.qml
-msgctxt "@info:whatsthis"
-msgid "Fit image width"
-msgstr ""
-
-#: src/qml/ShortcutHelpDialog.qml
-msgctxt "@info:whatsthis"
-msgid "Set 100% zoom"
-msgstr ""
-
-#: src/qml/ShortcutHelpDialog.qml
-msgctxt "@info:keyboard shortcut"
-msgid "Ctrl+wheel up/down"
-msgstr ""
-
-#: src/qml/ShortcutHelpDialog.qml
-msgctxt "@info:whatsthis"
-msgid "Zoom around the cursor"
-msgstr ""
-
-#: src/qml/ShortcutHelpDialog.qml
-msgctxt "@info:whatsthis"
-msgid "Pan horizontally or go previous/next image"
-msgstr ""
-
-#: src/qml/ShortcutHelpDialog.qml
-msgctxt "@info:keyboard shortcut"
-msgid "Drag / %1"
-msgstr ""
-
-#: src/qml/ShortcutHelpDialog.qml
-msgctxt "@info:whatsthis"
-msgid "Pan the zoomed image"
-msgstr ""
-
-#: src/qml/ShortcutHelpDialog.qml
-msgctxt "@info:whatsthis"
-msgid "Jump to image pan boundary"
-msgstr ""
-
-#: src/qml/ShortcutHelpDialog.qml
-msgctxt "@info:keyboard shortcut"
-msgid "Shift+wheel"
-msgstr ""
-
-#: src/qml/ShortcutHelpDialog.qml
-msgctxt "@info:whatsthis"
-msgid "Pan the zoomed image horizontally"
-msgstr ""
-
-#: src/qml/ShortcutHelpDialog.qml
-msgctxt "@info:whatsthis"
-msgid "Scan image or go previous/next"
-msgstr ""
-
-#: src/qml/ShortcutHelpDialog.qml
-msgctxt "@info:whatsthis"
-msgid "Previous or next archive"
-msgstr ""
-
-#: src/qml/ShortcutHelpDialog.qml
-msgctxt "@info:whatsthis"
-msgid "Toggle fullscreen"
-msgstr ""
-
-#: src/qml/ShortcutHelpDialog.qml
-msgctxt "@info:whatsthis"
-msgid "Show this shortcut help"
 msgstr ""
 
 #: src/qml/ShortcutHelpDialog.qml

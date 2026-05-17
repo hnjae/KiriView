@@ -8,6 +8,37 @@ struct ImageFormat {
     mime_types: &'static [&'static str],
 }
 
+const RAW_IMAGE_EXTENSIONS: &[&str] = &[
+    "3fr", "arw", "bay", "bmq", "cr2", "cr3", "crw", "cs1", "cs2", "dcr", "dng", "erf", "fff",
+    "iiq", "k25", "kdc", "mdc", "mef", "mos", "mrw", "nef", "nrw", "orf", "pef", "raf", "raw",
+    "rdc", "rwl", "rw2", "sr2", "srf", "srw", "x3f",
+];
+const RAW_IMAGE_MIME_TYPES: &[&str] = &[
+    "image/x-adobe-dng",
+    "image/x-canon-cr2",
+    "image/x-canon-cr3",
+    "image/x-canon-crw",
+    "image/x-dcraw",
+    "image/x-fuji-raf",
+    "image/x-kde-raw",
+    "image/x-kodak-dcr",
+    "image/x-kodak-k25",
+    "image/x-kodak-kdc",
+    "image/x-minolta-mrw",
+    "image/x-nikon-nef",
+    "image/x-nikon-nrw",
+    "image/x-olympus-orf",
+    "image/x-panasonic-raw",
+    "image/x-panasonic-raw2",
+    "image/x-panasonic-rw",
+    "image/x-panasonic-rw2",
+    "image/x-pentax-pef",
+    "image/x-sigma-x3f",
+    "image/x-sony-arw",
+    "image/x-sony-sr2",
+    "image/x-sony-srf",
+];
+
 const SUPPORTED_IMAGE_FORMATS: &[ImageFormat] = &[
     ImageFormat {
         extensions: &["png"],
@@ -66,6 +97,10 @@ const SUPPORTED_IMAGE_FORMATS: &[ImageFormat] = &[
         mime_types: &["image/tiff"],
     },
     ImageFormat {
+        extensions: RAW_IMAGE_EXTENSIONS,
+        mime_types: RAW_IMAGE_MIME_TYPES,
+    },
+    ImageFormat {
         extensions: &["svg"],
         mime_types: &["image/svg+xml"],
     },
@@ -85,6 +120,9 @@ mod ffi {
 
         #[cxx_name = "rustIsSupportedImageFileName"]
         fn rust_is_supported_image_file_name(name: &str) -> bool;
+
+        #[cxx_name = "rustIsSupportedRawImageFileName"]
+        fn rust_is_supported_raw_image_file_name(name: &str) -> bool;
     }
 }
 
@@ -114,6 +152,11 @@ fn rust_supported_open_extensions() -> Vec<String> {
 fn rust_is_supported_image_file_name(name: &str) -> bool {
     extension_for_file_name(name)
         .is_some_and(|extension| image_extension_is_supported(extension.as_str()))
+}
+
+fn rust_is_supported_raw_image_file_name(name: &str) -> bool {
+    extension_for_file_name(name)
+        .is_some_and(|extension| RAW_IMAGE_EXTENSIONS.contains(&extension.as_str()))
 }
 
 fn image_extension_is_supported(extension: &str) -> bool {

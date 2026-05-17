@@ -10,6 +10,7 @@
 #include "imagetilesource.h"
 #include "imageviewtext.h"
 #include "kiriview/src/avifcompat.cxx.h"
+#include "rawdecoder.h"
 
 #include <memory>
 #include <optional>
@@ -72,6 +73,11 @@ DecodedImageResult decodeImageData(const QByteArray &data, const ImageDecodeRequ
     const QByteArray imageData = avifDataWithCompatibilityFixes(data);
     if (const std::optional<DecodedImageResult> heifResult = decodeHeifImageData(imageData)) {
         return *heifResult;
+    }
+
+    if (const std::optional<DecodedImageResult> rawResult
+        = decodeRawImageData(imageData, request)) {
+        return *rawResult;
     }
 
     BufferedImageReader reader(imageData);

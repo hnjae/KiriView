@@ -73,6 +73,11 @@ bool isSupportedImageFileName(const QString &name)
     return Bridge::rustResultForQString(name, rustIsSupportedImageFileName);
 }
 
+bool isSupportedRawImageFileName(const QString &name)
+{
+    return Bridge::rustResultForQString(name, rustIsSupportedRawImageFileName);
+}
+
 bool isComicBookArchiveFileName(const QString &name)
 {
     return !KiriView::comicBookArchiveKioSchemeForFileName(name).isEmpty();

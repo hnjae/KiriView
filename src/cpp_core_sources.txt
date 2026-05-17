@@ -74,6 +74,7 @@ src/kiriviewapplicationactions.cpp
 src/powerprofilemonitor.cpp
 src/predecodecache.cpp
 src/qimagereadertilesource.cpp
+src/rawdecoder.cpp
 src/staticimage.cpp
 src/systemmemory.cpp
 src/svgtilesource.cpp

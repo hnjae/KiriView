@@ -16,6 +16,7 @@ QStringList supportedImageExtensions();
 QStringList supportedImageMimeTypes();
 QStringList supportedOpenExtensions();
 bool isSupportedImageFileName(const QString &name);
+bool isSupportedRawImageFileName(const QString &name);
 bool isComicBookArchiveFileName(const QString &name);
 bool isComicBookArchiveUrl(const QUrl &url);
 QString comicBookArchiveKioSchemeForUrl(const QUrl &url);
