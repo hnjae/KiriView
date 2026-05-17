@@ -9,7 +9,6 @@
 #include "imagesurface.h"
 #include "staticimage.h"
 
-#include <QByteArray>
 #include <QImage>
 #include <QRectF>
 #include <QSize>
@@ -38,7 +37,6 @@ QSize svgRasterSize(const QSizeF &displaySize, qreal devicePixelRatio, int maxim
 ImageDocumentRenderContext normalizedImageDocumentRenderContext(ImageDocumentRenderContext context);
 ImageFirstDisplayDecodeContext imageFirstDisplayDecodeContext(
     const QSizeF &viewportSize, qreal devicePixelRatio);
-QImage renderSvgImage(const QByteArray &data, const QSize &size);
 }
 
 #endif

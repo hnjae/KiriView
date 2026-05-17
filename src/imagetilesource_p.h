@@ -11,8 +11,6 @@
 #include <QString>
 #include <optional>
 
-class QSvgRenderer;
-
 namespace KiriView {
 QSize boundedPreviewSize(const QSize &imageSize, int maximumLongEdge);
 bool tileRequestCanDecode(const TileRequest &request);
@@ -24,7 +22,6 @@ std::optional<DecodedTile> decodedTileFromLevelImage(
 std::optional<DecodedTile> decodedTileFromSourceImage(
     const TileRequest &request, const QImage &sourceImage);
 void setTileSourceError(QString *errorString, const QString &message);
-QSize svgIntrinsicSize(const QSvgRenderer &renderer);
 }
 
 #endif

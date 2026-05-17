@@ -47,6 +47,7 @@ const RUST_BRIDGE_SOURCES: &[&str] = &[
     "src/imageviewportgeometry.rs",
     "src/imagezoomstate.rs",
     "src/predecodecachepolicy.rs",
+    "src/svgrenderer.rs",
 ];
 const CXX_QT_CPP_SOURCES: &[&str] = &[
     "src/apnganimationreader.cpp",
@@ -61,7 +62,6 @@ const QT_MODULES: &[&str] = &[
     "Qml",
     "Quick",
     "QuickControls2",
-    "Svg",
     "Network",
     "DBus",
     "Widgets",

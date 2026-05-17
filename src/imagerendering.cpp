@@ -7,11 +7,8 @@
 #include "kiriview/src/imagerendergeometry.cxx.h"
 #include "qtgeometryconversion.h"
 
-#include <QPainter>
 #include <QRect>
 #include <QRectF>
-#include <QSvgRenderer>
-#include <Qt>
 #include <optional>
 #include <utility>
 #include <vector>
@@ -176,27 +173,5 @@ ImageFirstDisplayDecodeContext imageFirstDisplayDecodeContext(
         Bridge::qtSize(rustFirstDisplayPhysicalViewportSize(
             Bridge::rustSizeF<RustImageRenderSizeF>(viewportSize), devicePixelRatio)),
     };
-}
-
-QImage renderSvgImage(const QByteArray &data, const QSize &size)
-{
-    if (data.isEmpty() || size.isEmpty()) {
-        return {};
-    }
-
-    QSvgRenderer renderer(data);
-    if (!renderer.isValid()) {
-        return {};
-    }
-
-    QImage image(size, QImage::Format_RGBA8888_Premultiplied);
-    if (image.isNull()) {
-        return {};
-    }
-
-    image.fill(Qt::transparent);
-    QPainter painter(&image);
-    renderer.render(&painter, QRectF(QPointF(0.0, 0.0), QSizeF(size)));
-    return image;
 }
 }

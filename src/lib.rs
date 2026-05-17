@@ -24,6 +24,7 @@ mod imagezoomstate;
 mod navigationindex;
 mod predecodecachepolicy;
 mod startup_arguments;
+mod svgrenderer;
 
 pub use startup_arguments::{
     STARTUP_ARGUMENT_ERROR_EXIT_CODE, StartupArgumentError, StartupSource, initial_source_from_args,

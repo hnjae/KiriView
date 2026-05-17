@@ -5,10 +5,6 @@
 
 #include "imagerendering.h"
 
-#include <QRectF>
-#include <QSvgRenderer>
-#include <algorithm>
-#include <cmath>
 #include <optional>
 #include <utility>
 
@@ -80,21 +76,5 @@ void setTileSourceError(QString *errorString, const QString &message)
     if (errorString != nullptr) {
         *errorString = message;
     }
-}
-
-QSize svgIntrinsicSize(const QSvgRenderer &renderer)
-{
-    const QSize defaultSize = renderer.defaultSize();
-    if (!defaultSize.isEmpty()) {
-        return defaultSize;
-    }
-
-    const QRectF viewBox = renderer.viewBoxF();
-    if (!viewBox.isValid()) {
-        return {};
-    }
-
-    return QSize(std::max(1, static_cast<int>(std::ceil(viewBox.width()))),
-        std::max(1, static_cast<int>(std::ceil(viewBox.height()))));
 }
 }
