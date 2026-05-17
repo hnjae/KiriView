@@ -52,6 +52,9 @@ private:
     Payload m_source;
 };
 
+bool sameImageCandidateListSource(
+    const ImageCandidateListSource &left, const ImageCandidateListSource &right);
+
 class ImageCandidateListContext
 {
 public:
@@ -61,6 +64,7 @@ public:
     static ImageCandidateListContext forDirectory(QUrl currentUrl, QUrl directoryUrl);
     static ImageCandidateListContext forArchiveDocument(
         QUrl currentUrl, ArchiveDocumentLocation archiveDocument);
+    static ImageCandidateListContext forSource(QUrl currentUrl, ImageCandidateListSource source);
 
     const QUrl &currentUrl() const;
     const ImageCandidateListSource &source() const;
@@ -77,6 +81,9 @@ private:
     QUrl m_currentUrl;
     ImageCandidateListSource m_source;
 };
+
+bool sameImageCandidateListContext(
+    const ImageCandidateListContext &left, const ImageCandidateListContext &right);
 
 using ContainerImageCallback = std::function<void(const QUrl &, const QUrl &)>;
 using CandidateRepositoryErrorCallback

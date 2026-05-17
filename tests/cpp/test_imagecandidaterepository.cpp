@@ -45,6 +45,7 @@ class TestImageCandidateRepository : public QObject
 
 private Q_SLOTS:
     void displayedImageContextsSelectDirectoryOrArchiveListing();
+    void candidateListIdentityComparesNormalizedSourcesAndCurrentUrls();
     void directoryContainerOpensFirstImage();
     void archiveContainerOpensFirstImage();
     void emptyContainerReportsError();
@@ -114,6 +115,36 @@ void TestImageCandidateRepository::displayedImageContextsSelectDirectoryOrArchiv
     QVERIFY(explicitArchiveDirectory != nullptr);
     QCOMPARE(explicitArchiveDirectory->directoryUrl,
         QUrl(QStringLiteral("zip:///books/book.cbz/chapter/")));
+}
+
+void TestImageCandidateRepository::candidateListIdentityComparesNormalizedSourcesAndCurrentUrls()
+{
+    const ImageCandidateListContext directoryContext = ImageCandidateListContext::forDirectory(
+        localUrl(QStringLiteral("/images/01.png")), localUrl(QStringLiteral("/images/")));
+    const ImageCandidateListContext normalizedDirectoryContext
+        = ImageCandidateListContext::forDirectory(
+            localUrl(QStringLiteral("/images/./01.png")), localUrl(QStringLiteral("/images/./")));
+    const ImageCandidateListContext otherDirectoryContext = ImageCandidateListContext::forDirectory(
+        localUrl(QStringLiteral("/other/01.png")), localUrl(QStringLiteral("/other/")));
+
+    QVERIFY(KiriView::sameImageCandidateListSource(
+        directoryContext.source(), normalizedDirectoryContext.source()));
+    QVERIFY(KiriView::sameImageCandidateListContext(directoryContext, normalizedDirectoryContext));
+    QVERIFY(!KiriView::sameImageCandidateListSource(
+        directoryContext.source(), otherDirectoryContext.source()));
+    QVERIFY(!KiriView::sameImageCandidateListContext(directoryContext, otherDirectoryContext));
+
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
+    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveDocument.has_value());
+    const QUrl pageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
+    const ImageCandidateListContext archiveContext
+        = ImageCandidateListContext::forArchiveDocument(pageUrl, *archiveDocument);
+
+    QVERIFY(!KiriView::sameImageCandidateListSource(
+        directoryContext.source(), archiveContext.source()));
+    QVERIFY(!KiriView::sameImageCandidateListContext(directoryContext, archiveContext));
 }
 
 void TestImageCandidateRepository::directoryContainerOpensFirstImage()

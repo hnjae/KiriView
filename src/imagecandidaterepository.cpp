@@ -125,6 +125,33 @@ ContainerImageSourceResult containerImageSourceFor(
 
     return { std::nullopt, KiriView::ImageCandidateRepositoryError::Generic };
 }
+
+bool sameArchiveDocumentLocation(
+    const KiriView::ArchiveDocumentLocation &left, const KiriView::ArchiveDocumentLocation &right)
+{
+    return KiriView::sameNormalizedUrl(left.fileUrl(), right.fileUrl())
+        && KiriView::sameNormalizedUrl(left.rootUrl(), right.rootUrl())
+        && left.kind() == right.kind();
+}
+
+bool sameImageCandidateListSourcePayload(const KiriView::ImageCandidateListSource::Directory &left,
+    const KiriView::ImageCandidateListSource::Directory &right)
+{
+    return KiriView::sameNormalizedUrl(left.directoryUrl, right.directoryUrl);
+}
+
+bool sameImageCandidateListSourcePayload(
+    const KiriView::ImageCandidateListSource::ArchiveDocument &left,
+    const KiriView::ImageCandidateListSource::ArchiveDocument &right)
+{
+    return sameArchiveDocumentLocation(left.archiveDocument, right.archiveDocument);
+}
+
+template <typename Left, typename Right>
+bool sameImageCandidateListSourcePayload(const Left &, const Right &)
+{
+    return false;
+}
 }
 
 namespace KiriView {
@@ -170,6 +197,16 @@ ImageCandidateListSource::ImageCandidateListSource(Payload source)
 {
 }
 
+bool sameImageCandidateListSource(
+    const ImageCandidateListSource &left, const ImageCandidateListSource &right)
+{
+    return left.visit([&right](const auto &leftSource) {
+        return right.visit([&leftSource](const auto &rightSource) {
+            return sameImageCandidateListSourcePayload(leftSource, rightSource);
+        });
+    });
+}
+
 ImageCandidateListContext ImageCandidateListContext::forDirectory(
     QUrl currentUrl, QUrl directoryUrl)
 {
@@ -188,6 +225,15 @@ ImageCandidateListContext ImageCandidateListContext::forArchiveDocument(
     };
 }
 
+ImageCandidateListContext ImageCandidateListContext::forSource(
+    QUrl currentUrl, ImageCandidateListSource source)
+{
+    return ImageCandidateListContext {
+        std::move(currentUrl),
+        std::move(source),
+    };
+}
+
 const QUrl &ImageCandidateListContext::currentUrl() const { return m_currentUrl; }
 
 const ImageCandidateListSource &ImageCandidateListContext::source() const { return m_source; }
@@ -202,6 +248,13 @@ ImageCandidateListContext::ImageCandidateListContext(
     : m_currentUrl(std::move(currentUrl))
     , m_source(std::move(source))
 {
+}
+
+bool sameImageCandidateListContext(
+    const ImageCandidateListContext &left, const ImageCandidateListContext &right)
+{
+    return sameNormalizedUrl(left.currentUrl(), right.currentUrl())
+        && sameImageCandidateListSource(left.source(), right.source());
 }
 
 std::optional<ImageCandidateListContext> imageCandidateListContextForDisplayedImage(

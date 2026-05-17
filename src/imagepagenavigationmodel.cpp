@@ -3,9 +3,7 @@
 
 #include "imagepagenavigationmodel.h"
 
-#include "imagecontainer.h"
 #include "imagenavigationmodel.h"
-#include "imageurl.h"
 
 #include <algorithm>
 #include <cstddef>
@@ -36,43 +34,6 @@ bool samePageNavigationState(
     const KiriView::PageNavigationState &left, const KiriView::PageNavigationState &right)
 {
     return left.urls == right.urls && left.currentIndex == right.currentIndex;
-}
-
-bool sameArchiveDocumentLocation(
-    const KiriView::ArchiveDocumentLocation &left, const KiriView::ArchiveDocumentLocation &right)
-{
-    return KiriView::sameNormalizedUrl(left.fileUrl(), right.fileUrl())
-        && KiriView::sameNormalizedUrl(left.rootUrl(), right.rootUrl())
-        && left.kind() == right.kind();
-}
-
-bool sameImageCandidateListSourcePayload(const KiriView::ImageCandidateListSource::Directory &left,
-    const KiriView::ImageCandidateListSource::Directory &right)
-{
-    return KiriView::sameNormalizedUrl(left.directoryUrl, right.directoryUrl);
-}
-
-bool sameImageCandidateListSourcePayload(
-    const KiriView::ImageCandidateListSource::ArchiveDocument &left,
-    const KiriView::ImageCandidateListSource::ArchiveDocument &right)
-{
-    return sameArchiveDocumentLocation(left.archiveDocument, right.archiveDocument);
-}
-
-template <typename Left, typename Right>
-bool sameImageCandidateListSourcePayload(const Left &, const Right &)
-{
-    return false;
-}
-
-bool sameImageCandidateListSource(
-    const KiriView::ImageCandidateListSource &left, const KiriView::ImageCandidateListSource &right)
-{
-    return left.visit([&right](const auto &leftSource) {
-        return right.visit([&leftSource](const auto &rightSource) {
-            return sameImageCandidateListSourcePayload(leftSource, rightSource);
-        });
-    });
 }
 }
 
@@ -139,21 +100,22 @@ std::optional<QUrl> ImagePageNavigationModel::selectAdjacentPage(NavigationDirec
 bool ImagePageNavigationModel::shouldKeepExistingWatcherFor(
     const ImageCandidateListContext &context) const
 {
-    return m_source.has_value() && sameImageCandidateListSource(*m_source, context.source());
+    return m_knownContext.has_value()
+        && sameImageCandidateListSource(m_knownContext->source(), context.source());
 }
 
 bool ImagePageNavigationModel::previewRefresh(const ImageCandidateListContext &context)
 {
-    const ImageCandidateListSource source = context.source();
-    const bool canReuseKnownState = m_source.has_value()
-        && sameImageCandidateListSource(*m_source, source) && !m_state.urls.empty();
+    const bool canReuseKnownState = m_knownContext.has_value()
+        && sameImageCandidateListSource(m_knownContext->source(), context.source())
+        && !m_state.urls.empty();
 
     bool changed = false;
     if (canReuseKnownState) {
         changed
             = replaceState(pageNavigationStateForCurrentUrl(m_state, context.currentUrl()), true);
     } else {
-        m_source = std::nullopt;
+        m_knownContext = std::nullopt;
         changed = replaceState(PageNavigationState {});
     }
 
@@ -187,13 +149,13 @@ ImagePageNavigationRefreshResult ImagePageNavigationModel::completeRefreshFromCu
 bool ImagePageNavigationModel::completeRefresh(
     std::vector<QUrl> urls, const QUrl &currentUrl, ImageCandidateListSource source)
 {
-    m_source = std::move(source);
+    m_knownContext = ImageCandidateListContext::forSource(currentUrl, std::move(source));
     return replaceState(pageNavigationStateForUrls(std::move(urls), currentUrl));
 }
 
 bool ImagePageNavigationModel::clear()
 {
-    m_source = std::nullopt;
+    m_knownContext = std::nullopt;
     m_refreshContext = std::nullopt;
     return replaceState(PageNavigationState {});
 }

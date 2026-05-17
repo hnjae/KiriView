@@ -43,7 +43,7 @@ private:
     bool replaceState(PageNavigationState state, bool forceChanged = false);
 
     PageNavigationState m_state;
-    std::optional<ImageCandidateListSource> m_source;
+    std::optional<ImageCandidateListContext> m_knownContext;
     std::optional<ImageCandidateListContext> m_refreshContext;
 };
 }
