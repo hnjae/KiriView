@@ -3,8 +3,6 @@
 
 #include "imagepredecodecoordinator.h"
 
-#include "decodedimageresult.h"
-#include "imagedecodejob.h"
 #include "imageurl.h"
 
 #include <QThread>
@@ -16,7 +14,6 @@
 #include <vector>
 
 namespace {
-using KiriView::DecodedImageResult;
 using KiriView::ImageCandidateListContext;
 
 KiriView::PredecodePolicyInput predecodePolicyInput(
@@ -55,39 +52,6 @@ std::vector<QUrl> predecodeWindowImageUrls(
     return urls;
 }
 
-std::vector<QUrl> displayedPredecodeImageUrls(
-    const KiriView::ImagePredecodeCoordinator::Context &context)
-{
-    std::vector<QUrl> urls;
-    if (context.primaryImage.hasLocation()) {
-        urls.push_back(context.primaryImage.location.imageUrl());
-    }
-    if (context.secondaryImage.has_value() && context.secondaryImage->hasLocation()) {
-        urls.push_back(context.secondaryImage->location.imageUrl());
-    }
-
-    return urls;
-}
-
-void cacheDisplayedPredecodeImage(
-    KiriView::PredecodeCache &cache, const KiriView::DisplayedPredecodeImage &image)
-{
-    if (!image.isCacheable()) {
-        return;
-    }
-
-    cache.cacheDisplayedImage(
-        true, image.location.imageUrl(), image.location.archiveDocument(), *image.staticImage);
-}
-
-void cacheDisplayedPredecodeImages(
-    KiriView::PredecodeCache &cache, const KiriView::ImagePredecodeCoordinator::Context &context)
-{
-    cacheDisplayedPredecodeImage(cache, context.primaryImage);
-    if (context.secondaryImage.has_value()) {
-        cacheDisplayedPredecodeImage(cache, *context.secondaryImage);
-    }
-}
 }
 
 namespace KiriView {
@@ -100,8 +64,8 @@ ImagePredecodeCoordinator::ImagePredecodeCoordinator(QObject *parent)
 ImagePredecodeCoordinator::ImagePredecodeCoordinator(QObject *parent,
     ImageNavigationCandidateProvider candidateProvider, ImageDecodeDependencies decodeDependencies)
     : QObject(parent)
-    , m_decodeDependencies(imageDecodeDependenciesWithDefaults(std::move(decodeDependencies)))
     , m_candidateRepository(std::move(candidateProvider))
+    , m_loadController(this, std::move(decodeDependencies))
 {
     m_monotonicClock.start();
     m_debounceTimer.setSingleShot(true);
@@ -124,11 +88,10 @@ void ImagePredecodeCoordinator::schedule(Context context)
 
     const quint64 generation = m_generation.next();
     updateNavigationMomentum(context.pageIndex, currentMonotonicMsec());
-    m_firstDisplayContext = context.firstDisplayContext;
     cacheDisplayedImages(context);
     m_displayedContext = context;
     if (m_powerSaverEnabled) {
-        m_cache.setWindowUrls({});
+        m_loadController.clearWindowUrls();
         return;
     }
 
@@ -147,7 +110,7 @@ void ImagePredecodeCoordinator::setPowerSaverEnabled(bool enabled)
     m_powerSaverEnabled = enabled;
     if (enabled) {
         cancelBackgroundWork();
-        m_cache.setWindowUrls({});
+        m_loadController.clearWindowUrls();
         return;
     }
 
@@ -160,8 +123,19 @@ bool ImagePredecodeCoordinator::powerSaverEnabled() const { return m_powerSaverE
 
 void ImagePredecodeCoordinator::cacheDisplayedImages(const Context &context)
 {
-    m_cache.setDisplayedUrls(displayedPredecodeImageUrls(context));
-    cacheDisplayedPredecodeImages(m_cache, context);
+    m_loadController.cacheDisplayedImages(displayedImages(context));
+}
+
+std::vector<DisplayedPredecodeImage> ImagePredecodeCoordinator::displayedImages(
+    const Context &context) const
+{
+    std::vector<DisplayedPredecodeImage> images;
+    images.push_back(context.primaryImage);
+    if (context.secondaryImage.has_value()) {
+        images.push_back(*context.secondaryImage);
+    }
+
+    return images;
 }
 
 void ImagePredecodeCoordinator::startDebouncedPredecode()
@@ -182,10 +156,8 @@ void ImagePredecodeCoordinator::scheduleSettledNeutralPredecode()
     const Context context = *m_pendingContext;
     m_debounceTimer.stop();
     m_listerJob.cancel();
-    m_activePredecodeRequests.cancel();
-    m_cache.clearQueuedLoads();
+    m_loadController.cancelBackgroundWork();
     m_momentumState.mode = PredecodeMomentumMode::Neutral;
-    m_firstDisplayContext = context.firstDisplayContext;
     m_pendingGeneration = m_generation.next();
     m_pendingContext = context;
     scheduleAdjacentImagePredecode(context, m_pendingGeneration);
@@ -236,85 +208,15 @@ void ImagePredecodeCoordinator::startPredecodeImageLoads(const std::vector<QUrl>
         return;
     }
 
-    m_parallelLimit = parallelLimit;
-    m_cache.setDisplayedUrls(displayedPredecodeImageUrls(context));
-    m_cache.setWindowUrls(urls);
-    cacheDisplayedPredecodeImages(m_cache, context);
-    m_cache.enqueueMissingWindowLoads(context.primaryImage.location.imageUrl(), archiveDocument,
-        m_activePredecodeRequests.urls());
-
-    startNextPredecodeImageLoads(generation);
-}
-
-void ImagePredecodeCoordinator::startNextPredecodeImageLoads(quint64 generation)
-{
-    if (!m_generation.accepts(generation) || m_parallelLimit == 0) {
-        return;
-    }
-
-    while (m_activePredecodeRequests.size() < m_parallelLimit) {
-        const std::optional<KiriView::PredecodeRequest> request
-            = m_cache.takeNextRequest(m_activePredecodeRequests.urls());
-        if (!request.has_value()) {
-            return;
-        }
-        if (!startPredecodeImageLoad(request->url, request->archiveDocument, generation)) {
-            return;
-        }
-    }
-}
-
-bool ImagePredecodeCoordinator::startPredecodeImageLoad(
-    const QUrl &url, const ArchiveDocumentLocation &archiveDocument, quint64 generation)
-{
-    const bool urlAvailable = url.isValid() && !url.isEmpty();
-    const bool cached = urlAvailable && m_cache.hasImage(url);
-    const bool inWindow = urlAvailable && m_cache.windowContains(url);
-    if (!urlAvailable || m_activePredecodeRequests.size() >= m_parallelLimit || cached || !inWindow
-        || m_activePredecodeRequests.containsUrl(url)) {
-        return false;
-    }
-
-    ImageDecodeRequest request = ImageDecodeRequest::fromLocation(
-        generation, DisplayedImageLocation::fromUrl(url, archiveDocument), m_firstDisplayContext);
-    auto *decodeJob = new ImageDecodeJob(this, m_decodeDependencies,
-        ImageDecodeJob::Callbacks {
-            [this](ImageDecodeRequest request, DecodedImageResult result) {
-                finishPredecodeImageDecode(request, result);
-            },
-            [this](const ImageDecodeRequest &request, const QString &) {
-                finishPredecodeImageLoadError(request);
-            },
-        });
-    m_activePredecodeRequests.add(request, decodeJob);
-    decodeJob->start(std::move(request));
-    return true;
-}
-
-void ImagePredecodeCoordinator::finishPredecodeImageLoadError(const ImageDecodeRequest &request)
-{
-    if (!m_activePredecodeRequests.finish(request).has_value()) {
-        return;
-    }
-
-    startNextPredecodeImageLoads(request.id());
-}
-
-void ImagePredecodeCoordinator::finishPredecodeImageDecode(
-    ImageDecodeRequest request, const DecodedImageResult &result)
-{
-    std::optional<ImageDecodeRequest> activeRequest = m_activePredecodeRequests.finish(request);
-    if (!activeRequest.has_value()) {
-        return;
-    }
-
-    const auto *staticImage = decodedImageResultImageAs<StaticDecodedImage>(result);
-    if (staticImage != nullptr) {
-        m_cache.cacheImage(
-            request.imageUrl(), activeRequest->archiveDocument(), staticImage->staticImage);
-    }
-
-    startNextPredecodeImageLoads(request.id());
+    m_loadController.startWindowLoads(PredecodeLoadWindow {
+        context.primaryImage.location.imageUrl(),
+        archiveDocument,
+        urls,
+        displayedImages(context),
+        context.firstDisplayContext,
+        generation,
+        parallelLimit,
+    });
 }
 
 void ImagePredecodeCoordinator::cancelBackgroundWork()
@@ -323,12 +225,9 @@ void ImagePredecodeCoordinator::cancelBackgroundWork()
     m_debounceTimer.stop();
     m_neutralTimer.stop();
     m_listerJob.cancel();
-    m_activePredecodeRequests.cancel();
+    m_loadController.cancelBackgroundWork();
     m_pendingContext.reset();
     m_pendingGeneration = 0;
-    m_parallelLimit = 1;
-    m_firstDisplayContext = {};
-    m_cache.clearQueuedLoads();
 }
 
 void ImagePredecodeCoordinator::resetNavigationMomentum() { m_momentumState = {}; }
@@ -353,11 +252,11 @@ void ImagePredecodeCoordinator::cancel()
 void ImagePredecodeCoordinator::clear()
 {
     cancel();
-    m_cache.clear();
+    m_loadController.clear();
 }
 
 std::optional<PredecodedImage> ImagePredecodeCoordinator::tryTake(const QUrl &url) const
 {
-    return m_cache.findImage(url);
+    return m_loadController.tryTake(url);
 }
 }

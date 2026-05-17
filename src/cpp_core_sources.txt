@@ -81,6 +81,7 @@ src/kiriviewapplicationactions.cpp
 src/powerprofilemonitor.cpp
 src/predecodeactivedecodestore.cpp
 src/predecodecache.cpp
+src/predecodeloadcontroller.cpp
 src/predecodepolicy.cpp
 src/qimagereadertilesource.cpp
 src/rawdecoder.cpp

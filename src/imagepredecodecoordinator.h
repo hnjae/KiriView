@@ -9,9 +9,8 @@
 #include "imagecandidaterepository.h"
 #include "imageiojob.h"
 #include "imagelocation.h"
-#include "predecodeactivedecodestore.h"
-#include "predecodecache.h"
 #include "predecodedimage.h"
+#include "predecodeloadcontroller.h"
 #include "predecodepolicy.h"
 #include "staticimage.h"
 
@@ -47,36 +46,28 @@ public:
 
 private:
     void cacheDisplayedImages(const Context &context);
+    std::vector<DisplayedPredecodeImage> displayedImages(const Context &context) const;
     void startDebouncedPredecode();
     void scheduleSettledNeutralPredecode();
     void scheduleAdjacentImagePredecode(const Context &context, quint64 generation);
     void startPredecodeImageLoads(const std::vector<QUrl> &urls,
         const ArchiveDocumentLocation &archiveDocument, const Context &context, quint64 generation,
         std::size_t parallelLimit);
-    void startNextPredecodeImageLoads(quint64 generation);
-    bool startPredecodeImageLoad(
-        const QUrl &url, const ArchiveDocumentLocation &archiveDocument, quint64 generation);
-    void finishPredecodeImageLoadError(const ImageDecodeRequest &request);
-    void finishPredecodeImageDecode(ImageDecodeRequest request, const DecodedImageResult &result);
     void cancelBackgroundWork();
     void resetNavigationMomentum();
     void updateNavigationMomentum(int pageIndex, qint64 monotonicMsec);
     qint64 currentMonotonicMsec() const;
 
     ImageIoJob m_listerJob;
-    ImageDecodeDependencies m_decodeDependencies;
     ImageCandidateRepository m_candidateRepository;
-    PredecodeCache m_cache;
-    PredecodeActiveDecodeStore m_activePredecodeRequests;
+    PredecodeLoadController m_loadController;
     std::optional<Context> m_displayedContext;
     std::optional<Context> m_pendingContext;
-    ImageFirstDisplayDecodeContext m_firstDisplayContext;
     ImageAsyncTicket m_generation;
     QTimer m_debounceTimer;
     QTimer m_neutralTimer;
     QElapsedTimer m_monotonicClock;
     quint64 m_pendingGeneration = 0;
-    std::size_t m_parallelLimit = 1;
     PredecodeMomentumState m_momentumState;
     bool m_powerSaverEnabled = false;
 };
