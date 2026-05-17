@@ -45,6 +45,7 @@ src/imageiojob.cpp
 src/imageiojobs.cpp
 src/imagerectmapping.cpp
 src/imagetile.cpp
+src/imagetiledecodeplan.cpp
 src/imagetiledecodescheduler.cpp
 src/imagetilevisibility.cpp
 src/imagetilesourcehelpers.cpp

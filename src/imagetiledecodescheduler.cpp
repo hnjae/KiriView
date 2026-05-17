@@ -4,8 +4,7 @@
 #include "imagetiledecodescheduler.h"
 
 #include "imageasyncworker.h"
-#include "imagerotation.h"
-#include "imagetilevisibility.h"
+#include "imagetiledecodeplan.h"
 
 #include <QString>
 #include <memory>
@@ -37,46 +36,19 @@ void ImageTileDecodeScheduler::schedule(
     const std::shared_ptr<DisplayedImageSurface> &displayedSurface, const QSizeF &displaySize,
     const QRectF &visibleItemRect, const ImageDocumentRenderContext &context, int rotationDegrees)
 {
-    if (displayedSurface == nullptr) {
+    const ImageTileDecodePlan plan = imageTileDecodePlan(displayedSurface, displaySize,
+        visibleItemRect, context, rotationDegrees, m_pendingTileKeys, m_failedTileKeys);
+    if (plan.isEmpty()) {
         return;
     }
-
-    auto *surface = displayedSurface->staticTileSurface();
-    if (surface == nullptr || !surface->isValid()) {
-        return;
-    }
-    const QSizeF sourceDisplaySize = rotatedImageSize(displaySize, rotationDegrees);
-    if (tileFirstDisplayIsSufficient(surface->pyramid(), sourceDisplaySize,
-            context.devicePixelRatio, surface->displayHints().firstDisplayPixelsPerSourcePixel)) {
-        return;
-    }
-
-    std::shared_ptr<ImageTileSource> source = surface->source();
-    if (source == nullptr) {
-        return;
-    }
-
     const quint64 generation = m_generation.current();
-    const TileVisibilityContext visibilityContext {
-        displaySize,
-        visibleItemRect,
-        context.devicePixelRatio,
-        rotationDegrees,
-    };
-    for (const TileKey &key : visibleTileKeys(surface->pyramid(), visibilityContext)) {
-        if (surface->containsTile(key) || m_pendingTileKeys.contains(key)
-            || m_failedTileKeys.contains(key)) {
-            continue;
-        }
 
-        const TileRequest request = surface->pyramid().requestForTile(key);
-        if (request.textureLevelRect.isEmpty() || request.sourceRect.isEmpty()) {
-            continue;
-        }
-
-        m_pendingTileKeys.insert(key);
+    for (const TileRequest &request : plan.requests) {
+        m_pendingTileKeys.insert(request.key);
         // Tile workers can outlive this non-QObject scheduler while the Qt context survives.
         const std::weak_ptr<DecodeLifetime> lifetime = m_decodeLifetime;
+        const TileKey key = request.key;
+        std::shared_ptr<ImageTileSource> source = plan.source;
         runAsyncWorker(
             m_context,
             [source, request]() mutable {
