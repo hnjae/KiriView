@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGEDOCUMENTLOADCONTROLLER_H
 #define KIRIVIEW_IMAGEDOCUMENTLOADCONTROLLER_H
 
-#include "imagedocumentsourceloadpolicy.h"
+#include "imagedocumentsourceloadexecutor.h"
 #include "imagedocumentsourceloadrequest.h"
 
 namespace KiriView {
@@ -29,16 +29,7 @@ public:
     void loadSource(const ImageDocumentSourceLoadRequest &request);
 
 private:
-    void applySourceLoadPlan(
-        const ImageDocumentSourceLoadRequest &request, const ImageDocumentSourceLoadPlan &plan);
-    void applyRightToLeftReadingTransition(ImageDocumentRightToLeftReadingTransition transition,
-        bool notifyBeforeSourceState, bool notifyAfterOpen);
-    void applySourceLoadUrlTarget(
-        ImageDocumentSourceLoadUrlTarget target, const ImageDocumentSourceLoadRequest &request);
-    void applyContainerNavigationUrlTarget(
-        ImageDocumentSourceLoadUrlTarget target, const ImageDocumentSourceLoadRequest &request);
-    void applyLoadingContainerNavigationUrlTarget(
-        ImageDocumentSourceLoadUrlTarget target, const ImageDocumentSourceLoadRequest &request);
+    ImageDocumentSourceLoadOperations sourceLoadOperations();
 
     ImageDocumentState &m_state;
     ImageDocumentDeletionController &m_deletionController;

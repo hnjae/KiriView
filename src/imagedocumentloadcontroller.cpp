@@ -6,6 +6,7 @@
 #include "archivedocumentsessionstore.h"
 #include "imagedocumentdeletioncontroller.h"
 #include "imagedocumentpredecodecontroller.h"
+#include "imagedocumentsourceloadexecutor.h"
 #include "imagedocumentsourceloadpolicy.h"
 #include "imagedocumentstate.h"
 #include "imagenavigationservice.h"
@@ -51,13 +52,6 @@ KiriView::ImageDocumentSourceLoadPolicyInput sourceLoadPolicyInput(
     return input;
 }
 
-void cancelNavigationAndPredecode(KiriView::ImageNavigationService &navigationService,
-    KiriView::ImageDocumentPredecodeController &predecodeController)
-{
-    navigationService.cancelNavigation();
-    navigationService.cancelContainerNavigation();
-    predecodeController.cancel();
-}
 }
 
 namespace KiriView {
@@ -82,107 +76,37 @@ void ImageDocumentLoadController::loadSource(const ImageDocumentSourceLoadReques
 
     const ImageDocumentSourceLoadPlan plan = ImageDocumentSourceLoadPolicy::plan(
         sourceLoadPolicyInput(m_state, m_spreadController, request));
-    applySourceLoadPlan(request, plan);
+    executeImageDocumentSourceLoadPlan(request, plan, sourceLoadOperations());
 }
 
-void ImageDocumentLoadController::applySourceLoadPlan(
-    const ImageDocumentSourceLoadRequest &request, const ImageDocumentSourceLoadPlan &plan)
+ImageDocumentSourceLoadOperations ImageDocumentLoadController::sourceLoadOperations()
 {
-    if (plan.cancelNavigationAndPredecode) {
-        ::cancelNavigationAndPredecode(m_navigationService, m_predecodeController);
-    }
-    if (plan.finishSpreadTransition) {
-        m_spreadController.finishTransition();
-    }
-    applyRightToLeftReadingTransition(plan.rightToLeftReadingTransition, true, false);
-    if (plan.clearSecondaryPage) {
-        m_spreadController.clearSecondaryPage();
-    }
-    applyLoadingContainerNavigationUrlTarget(plan.loadingContainerNavigationUrl, request);
-    applyContainerNavigationUrlTarget(plan.containerNavigationUrl, request);
-    applySourceLoadUrlTarget(plan.sourceUrl, request);
-    if (plan.beginOpen) {
-        m_openController.open();
-    }
-    applyRightToLeftReadingTransition(plan.rightToLeftReadingTransition, false, true);
-}
-
-void ImageDocumentLoadController::applyRightToLeftReadingTransition(
-    ImageDocumentRightToLeftReadingTransition transition, bool notifyBeforeSourceState,
-    bool notifyAfterOpen)
-{
-    switch (transition) {
-    case ImageDocumentRightToLeftReadingTransition::Keep:
-        return;
-    case ImageDocumentRightToLeftReadingTransition::Reset:
-        if (notifyBeforeSourceState) {
-            m_spreadController.resetRightToLeftReading();
-        }
-        return;
-    case ImageDocumentRightToLeftReadingTransition::ResetAndNotifyBeforeSourceState:
-        if (notifyBeforeSourceState) {
-            m_spreadController.resetRightToLeftReading();
-            m_spreadController.notifyRightToLeftReadingChanged();
-        }
-        return;
-    case ImageDocumentRightToLeftReadingTransition::ResetAndNotifyAfterOpen:
-        if (notifyBeforeSourceState) {
-            m_spreadController.resetRightToLeftReading();
-        }
-        if (notifyAfterOpen) {
-            m_spreadController.notifyRightToLeftReadingChanged();
-        }
-        return;
-    }
-}
-
-void ImageDocumentLoadController::applyLoadingContainerNavigationUrlTarget(
-    ImageDocumentSourceLoadUrlTarget target, const ImageDocumentSourceLoadRequest &request)
-{
-    switch (target) {
-    case ImageDocumentSourceLoadUrlTarget::Unchanged:
-        return;
-    case ImageDocumentSourceLoadUrlTarget::Empty:
-        m_state.clearLoadingContainerNavigationUrl();
-        return;
-    case ImageDocumentSourceLoadUrlTarget::RequestedContainerNavigation:
-        m_state.setLoadingContainerNavigationUrl(request.containerNavigationUrl);
-        return;
-    case ImageDocumentSourceLoadUrlTarget::RequestedSource:
-        return;
-    }
-}
-
-void ImageDocumentLoadController::applyContainerNavigationUrlTarget(
-    ImageDocumentSourceLoadUrlTarget target, const ImageDocumentSourceLoadRequest &request)
-{
-    switch (target) {
-    case ImageDocumentSourceLoadUrlTarget::Unchanged:
-    case ImageDocumentSourceLoadUrlTarget::Empty:
-    case ImageDocumentSourceLoadUrlTarget::RequestedSource:
-        return;
-    case ImageDocumentSourceLoadUrlTarget::RequestedContainerNavigation:
-        m_state.setContainerNavigationUrl(request.containerNavigationUrl);
-        return;
-    }
-}
-
-void ImageDocumentLoadController::applySourceLoadUrlTarget(
-    ImageDocumentSourceLoadUrlTarget target, const ImageDocumentSourceLoadRequest &request)
-{
-    switch (target) {
-    case ImageDocumentSourceLoadUrlTarget::Unchanged:
-    case ImageDocumentSourceLoadUrlTarget::Empty:
-    case ImageDocumentSourceLoadUrlTarget::RequestedContainerNavigation:
-        return;
-    case ImageDocumentSourceLoadUrlTarget::RequestedSource:
+    ImageDocumentSourceLoadOperations operations;
+    operations.cancelNavigationAndPredecode = [this]() {
+        m_navigationService.cancelNavigation();
+        m_navigationService.cancelContainerNavigation();
+        m_predecodeController.cancel();
+    };
+    operations.finishSpreadTransition = [this]() { m_spreadController.finishTransition(); };
+    operations.resetRightToLeftReading = [this]() { m_spreadController.resetRightToLeftReading(); };
+    operations.notifyRightToLeftReadingChanged
+        = [this]() { m_spreadController.notifyRightToLeftReadingChanged(); };
+    operations.clearSecondaryPage = [this]() { m_spreadController.clearSecondaryPage(); };
+    operations.clearLoadingContainerNavigationUrl
+        = [this]() { m_state.clearLoadingContainerNavigationUrl(); };
+    operations.setLoadingContainerNavigationUrl
+        = [this](const QUrl &url) { m_state.setLoadingContainerNavigationUrl(url); };
+    operations.setContainerNavigationUrl
+        = [this](const QUrl &url) { m_state.setContainerNavigationUrl(url); };
+    operations.prepareSourceLoad = [this](const ImageDocumentSourceLoadRequest &request) {
         if (m_archiveSessionStore != nullptr) {
             m_archiveSessionStore->prepareForSourceLoad(
                 request, m_state.displayedArchiveDocument());
         }
-        m_state.setSourceUrl(request.sourceUrl);
-        return;
-    }
+    };
+    operations.setSourceUrl = [this](const QUrl &url) { m_state.setSourceUrl(url); };
+    operations.beginOpen = [this]() { m_openController.open(); };
+    return operations;
 }
 
 }

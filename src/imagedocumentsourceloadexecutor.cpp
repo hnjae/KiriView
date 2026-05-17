@@ -1,0 +1,113 @@
+// SPDX-FileCopyrightText: 2026 KIM Hyunjae
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+#include "imagedocumentsourceloadexecutor.h"
+
+#include "imagecallback.h"
+
+namespace {
+void applyRightToLeftReadingTransition(
+    KiriView::ImageDocumentRightToLeftReadingTransition transition,
+    const KiriView::ImageDocumentSourceLoadOperations &operations, bool notifyBeforeSourceState,
+    bool notifyAfterOpen)
+{
+    switch (transition) {
+    case KiriView::ImageDocumentRightToLeftReadingTransition::Keep:
+        return;
+    case KiriView::ImageDocumentRightToLeftReadingTransition::Reset:
+        if (notifyBeforeSourceState) {
+            KiriView::invokeIfSet(operations.resetRightToLeftReading);
+        }
+        return;
+    case KiriView::ImageDocumentRightToLeftReadingTransition::ResetAndNotifyBeforeSourceState:
+        if (notifyBeforeSourceState) {
+            KiriView::invokeIfSet(operations.resetRightToLeftReading);
+            KiriView::invokeIfSet(operations.notifyRightToLeftReadingChanged);
+        }
+        return;
+    case KiriView::ImageDocumentRightToLeftReadingTransition::ResetAndNotifyAfterOpen:
+        if (notifyBeforeSourceState) {
+            KiriView::invokeIfSet(operations.resetRightToLeftReading);
+        }
+        if (notifyAfterOpen) {
+            KiriView::invokeIfSet(operations.notifyRightToLeftReadingChanged);
+        }
+        return;
+    }
+}
+
+void applyLoadingContainerNavigationUrlTarget(KiriView::ImageDocumentSourceLoadUrlTarget target,
+    const KiriView::ImageDocumentSourceLoadRequest &request,
+    const KiriView::ImageDocumentSourceLoadOperations &operations)
+{
+    switch (target) {
+    case KiriView::ImageDocumentSourceLoadUrlTarget::Unchanged:
+        return;
+    case KiriView::ImageDocumentSourceLoadUrlTarget::Empty:
+        KiriView::invokeIfSet(operations.clearLoadingContainerNavigationUrl);
+        return;
+    case KiriView::ImageDocumentSourceLoadUrlTarget::RequestedContainerNavigation:
+        KiriView::invokeIfSet(
+            operations.setLoadingContainerNavigationUrl, request.containerNavigationUrl);
+        return;
+    case KiriView::ImageDocumentSourceLoadUrlTarget::RequestedSource:
+        return;
+    }
+}
+
+void applyContainerNavigationUrlTarget(KiriView::ImageDocumentSourceLoadUrlTarget target,
+    const KiriView::ImageDocumentSourceLoadRequest &request,
+    const KiriView::ImageDocumentSourceLoadOperations &operations)
+{
+    switch (target) {
+    case KiriView::ImageDocumentSourceLoadUrlTarget::Unchanged:
+    case KiriView::ImageDocumentSourceLoadUrlTarget::Empty:
+    case KiriView::ImageDocumentSourceLoadUrlTarget::RequestedSource:
+        return;
+    case KiriView::ImageDocumentSourceLoadUrlTarget::RequestedContainerNavigation:
+        KiriView::invokeIfSet(operations.setContainerNavigationUrl, request.containerNavigationUrl);
+        return;
+    }
+}
+
+void applySourceLoadUrlTarget(KiriView::ImageDocumentSourceLoadUrlTarget target,
+    const KiriView::ImageDocumentSourceLoadRequest &request,
+    const KiriView::ImageDocumentSourceLoadOperations &operations)
+{
+    switch (target) {
+    case KiriView::ImageDocumentSourceLoadUrlTarget::Unchanged:
+    case KiriView::ImageDocumentSourceLoadUrlTarget::Empty:
+    case KiriView::ImageDocumentSourceLoadUrlTarget::RequestedContainerNavigation:
+        return;
+    case KiriView::ImageDocumentSourceLoadUrlTarget::RequestedSource:
+        KiriView::invokeIfSet(operations.prepareSourceLoad, request);
+        KiriView::invokeIfSet(operations.setSourceUrl, request.sourceUrl);
+        return;
+    }
+}
+}
+
+namespace KiriView {
+void executeImageDocumentSourceLoadPlan(const ImageDocumentSourceLoadRequest &request,
+    const ImageDocumentSourceLoadPlan &plan, const ImageDocumentSourceLoadOperations &operations)
+{
+    if (plan.cancelNavigationAndPredecode) {
+        invokeIfSet(operations.cancelNavigationAndPredecode);
+    }
+    if (plan.finishSpreadTransition) {
+        invokeIfSet(operations.finishSpreadTransition);
+    }
+    applyRightToLeftReadingTransition(plan.rightToLeftReadingTransition, operations, true, false);
+    if (plan.clearSecondaryPage) {
+        invokeIfSet(operations.clearSecondaryPage);
+    }
+    applyLoadingContainerNavigationUrlTarget(
+        plan.loadingContainerNavigationUrl, request, operations);
+    applyContainerNavigationUrlTarget(plan.containerNavigationUrl, request, operations);
+    applySourceLoadUrlTarget(plan.sourceUrl, request, operations);
+    if (plan.beginOpen) {
+        invokeIfSet(operations.beginOpen);
+    }
+    applyRightToLeftReadingTransition(plan.rightToLeftReadingTransition, operations, false, true);
+}
+}
