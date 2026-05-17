@@ -128,13 +128,14 @@ fn parse_svg_tree(data: &[u8]) -> Option<Tree> {
 }
 
 fn svg_options() -> Options<'static> {
-    let mut options = Options::default();
-    options.resources_dir = None;
-    options.image_href_resolver = ImageHrefResolver {
-        resolve_data: ImageHrefResolver::default_data_resolver(),
-        resolve_string: Box::new(|_, _| None),
-    };
-    options
+    Options {
+        resources_dir: None,
+        image_href_resolver: ImageHrefResolver {
+            resolve_data: ImageHrefResolver::default_data_resolver(),
+            resolve_string: Box::new(|_, _| None),
+        },
+        ..Options::default()
+    }
 }
 
 fn image_transform(tree: &Tree, width: u32, height: u32) -> Transform {

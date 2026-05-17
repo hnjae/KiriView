@@ -101,7 +101,6 @@ let
     "-DQT_QML_LIB"
     "-DQT_QUICK_LIB"
     "-DQT_QUICKCONTROLS2_LIB"
-    "-DQT_SVG_LIB"
     "-DTRANSLATION_DOMAIN=\"kiriview\""
   ];
   qtIncludeModules = [
@@ -113,7 +112,6 @@ let
     "QtQmlIntegration"
     "QtQuick"
     "QtQuickControls2"
-    "QtSvg"
   ];
   cxxStandardLibraryIncludeDirs = [
     "${cxxCompiler}/include/c++/${cxxStandardLibraryVersion}"
