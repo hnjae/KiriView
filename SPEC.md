@@ -256,7 +256,7 @@ When the current image is not horizontally pannable, Left opens the previous ima
 
 In Right-to-Left Reading mode, Left and Right keep physical horizontal panning while the image can pan horizontally, but their non-pannable image navigation fallback is reversed: Left opens the next image and Right opens the previous image.
 
-When an image is zoomed large enough to pan in any direction, Up and Down pan the image vertically within the available scroll bounds and have no image-navigation fallback. Ctrl+< moves the pan position to the top-left, Ctrl+> moves the pan position to the bottom-right, Shift+mouse wheel pans horizontally, and the mouse cursor shows that the image can be dragged to pan.
+When an image is zoomed large enough to pan in any direction, Up and Down pan the image vertically within the available scroll bounds and have no image-navigation fallback. Ctrl+< moves the pan position to the top-left, Ctrl+> moves the pan position to the bottom-right, and the mouse cursor shows that the image can be dragged to pan.
 
 Keyboard panning and Left/Right image navigation are inactive while the page number or zoom input is focused.
 
