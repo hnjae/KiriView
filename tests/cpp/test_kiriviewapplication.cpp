@@ -112,6 +112,7 @@ private Q_SLOTS:
     void showMenubarActionHasNoConfigurableShortcuts();
     void shortcutHelpModelListsConfigurableActions();
     void shortcutHelpModelUpdatesShortcutText();
+    void shortcutHelpModelResetsWhenConfigurableRowsChange();
     void menuPresentationDefaultsToHamburgerMenu();
     void invalidStoredMenuPresentationFallsBackToHamburgerMenu();
     void menuPresentationPersists();
@@ -422,6 +423,27 @@ void TestKiriViewApplication::shortcutHelpModelUpdatesShortcutText()
     QTRY_VERIFY(!dataChangedSpy.isEmpty());
     QCOMPARE(model->data(rotateIndex, shortcutHelpShortcutTextRole).toString(),
         nativeText(shortcut(QStringLiteral("Alt+R"))));
+}
+
+void TestKiriViewApplication::shortcutHelpModelResetsWhenConfigurableRowsChange()
+{
+    KiriViewApplication application;
+
+    QAbstractItemModel *model = application.shortcutHelpModel();
+    QVERIFY(model != nullptr);
+    const QModelIndex rotateIndex
+        = shortcutHelpIndexForAction(model, QStringLiteral("view_rotate_clockwise"));
+    QVERIFY(rotateIndex.isValid());
+
+    QSignalSpy resetSpy(model, &QAbstractItemModel::modelReset);
+    QAction *rotateAction = application.action(QStringLiteral("view_rotate_clockwise"));
+    QVERIFY(rotateAction != nullptr);
+
+    KirigamiActionCollection::setShortcutsConfigurable(rotateAction, false);
+    rotateAction->changed();
+
+    QTRY_COMPARE(resetSpy.count(), 1);
+    QVERIFY(!shortcutHelpIndexForAction(model, QStringLiteral("view_rotate_clockwise")).isValid());
 }
 
 void TestKiriViewApplication::menuPresentationDefaultsToHamburgerMenu()

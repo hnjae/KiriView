@@ -14,6 +14,10 @@
 #include <QString>
 #include <QtQml/qqmlregistration.h>
 
+namespace KiriView::ApplicationActions {
+class ShortcutHelpModel;
+}
+
 class KiriViewApplication : public AbstractKirigamiApplication
 {
     Q_OBJECT
@@ -114,7 +118,7 @@ private:
     void updateShowMenuBarAction();
 
     QAction *m_showMenuBarAction = nullptr;
-    QAbstractListModel *m_shortcutHelpModel = nullptr;
+    KiriView::ApplicationActions::ShortcutHelpModel *m_shortcutHelpModel = nullptr;
     int m_shortcutRevision = 0;
     bool m_sanitizingShortcuts = false;
 };

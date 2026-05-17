@@ -5,175 +5,14 @@
 
 #include "kiriviewapplicationactions.h"
 #include "kiriviewstate.h"
+#include "shortcuthelpmodel.h"
 
-#include <KLocalizedString>
 #include <KirigamiActionCollection>
-#include <QAbstractListModel>
 #include <QIcon>
 #include <QSignalBlocker>
-#include <QVariant>
 
 namespace {
 namespace Actions = KiriView::ApplicationActions;
-
-class ShortcutHelpModel : public QAbstractListModel
-{
-public:
-    enum Role {
-        ActionIdRole = Qt::UserRole + 1,
-        ActionNameRole,
-        ActionTextRole,
-        ShortcutTextRole,
-    };
-
-    explicit ShortcutHelpModel(KiriViewApplication &application, QObject *parent = nullptr)
-        : QAbstractListModel(parent)
-        , m_application(application)
-        , m_rows(collectRows())
-    {
-    }
-
-    int rowCount(const QModelIndex &parent = QModelIndex()) const override
-    {
-        return parent.isValid() ? 0 : m_rows.size();
-    }
-
-    QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override
-    {
-        if (!index.isValid() || index.row() < 0 || index.row() >= m_rows.size()) {
-            return {};
-        }
-
-        const Row &row = m_rows.at(index.row());
-        switch (role) {
-        case ActionIdRole:
-            return static_cast<int>(row.actionId);
-        case ActionNameRole:
-            return row.actionName;
-        case ActionTextRole:
-            return actionDisplayText(row.action);
-        case ShortcutTextRole:
-            return shortcutDisplayText(row.action);
-        default:
-            return {};
-        }
-    }
-
-    QHash<int, QByteArray> roleNames() const override
-    {
-        return {
-            { ActionIdRole, QByteArrayLiteral("actionId") },
-            { ActionNameRole, QByteArrayLiteral("actionName") },
-            { ActionTextRole, QByteArrayLiteral("actionText") },
-            { ShortcutTextRole, QByteArrayLiteral("shortcutText") },
-        };
-    }
-
-    void handleActionChanged(QAction *changedAction)
-    {
-        const QList<Row> rows = collectRows();
-        if (!sameRows(rows, m_rows)) {
-            beginResetModel();
-            m_rows = rows;
-            endResetModel();
-            return;
-        }
-
-        if (changedAction != nullptr) {
-            for (int row = 0; row < m_rows.size(); ++row) {
-                if (m_rows.at(row).action == changedAction) {
-                    Q_EMIT dataChanged(
-                        index(row, 0), index(row, 0), { ActionTextRole, ShortcutTextRole });
-                    return;
-                }
-            }
-        }
-
-        if (!m_rows.isEmpty()) {
-            Q_EMIT dataChanged(
-                index(0, 0), index(m_rows.size() - 1, 0), { ActionTextRole, ShortcutTextRole });
-        }
-    }
-
-private:
-    struct Row {
-        QAction *action = nullptr;
-        KiriViewApplication::ActionId actionId = KiriViewApplication::ActionCount;
-        QString actionName;
-    };
-
-    QList<Row> collectRows() const
-    {
-        QList<Row> rows;
-        rows.reserve(static_cast<qsizetype>(Actions::definitions().size()));
-
-        for (const Actions::ActionDefinition &definition : Actions::definitions()) {
-            const QString name = QString::fromLatin1(definition.name);
-            QAction *action = m_application.action(name);
-            if (action == nullptr || !KirigamiActionCollection::isShortcutsConfigurable(action)) {
-                continue;
-            }
-
-            rows.push_back(Row { action, definition.actionId, name });
-        }
-
-        return rows;
-    }
-
-    static bool sameRows(const QList<Row> &left, const QList<Row> &right)
-    {
-        if (left.size() != right.size()) {
-            return false;
-        }
-
-        for (int index = 0; index < left.size(); ++index) {
-            if (left.at(index).action != right.at(index).action
-                || left.at(index).actionId != right.at(index).actionId
-                || left.at(index).actionName != right.at(index).actionName) {
-                return false;
-            }
-        }
-
-        return true;
-    }
-
-    static QString actionDisplayText(const QAction *action)
-    {
-        if (action == nullptr) {
-            return {};
-        }
-
-        const QString text = action->text();
-        QString displayText;
-        displayText.reserve(text.size());
-        for (qsizetype index = 0; index < text.size(); ++index) {
-            if (text.at(index) != QLatin1Char('&')) {
-                displayText.append(text.at(index));
-                continue;
-            }
-
-            if (index + 1 < text.size() && text.at(index + 1) == QLatin1Char('&')) {
-                displayText.append(QLatin1Char('&'));
-                ++index;
-            }
-        }
-
-        return displayText;
-    }
-
-    static QString shortcutDisplayText(const QAction *action)
-    {
-        if (action == nullptr) {
-            return {};
-        }
-
-        const QString text = Actions::shortcutListText(action->shortcuts());
-        return text.isEmpty() ? i18nc("@info:keyboard shortcut", "Unassigned") : text;
-    }
-
-    KiriViewApplication &m_application;
-    QList<Row> m_rows;
-};
 
 KiriViewApplication::MenuPresentation toMenuPresentation(int value)
 {
@@ -190,7 +29,7 @@ KiriViewApplication::KiriViewApplication(QObject *parent)
     : AbstractKirigamiApplication(parent)
 {
     KiriViewApplication::setupActions();
-    m_shortcutHelpModel = new ShortcutHelpModel(*this, this);
+    m_shortcutHelpModel = new Actions::ShortcutHelpModel(*this, this);
 }
 
 KiriViewApplication::~KiriViewApplication() = default;
@@ -409,7 +248,7 @@ void KiriViewApplication::handleActionChanged()
     }
 
     if (m_shortcutHelpModel != nullptr) {
-        static_cast<ShortcutHelpModel *>(m_shortcutHelpModel)->handleActionChanged(changedAction);
+        m_shortcutHelpModel->handleActionChanged(changedAction);
     }
     ++m_shortcutRevision;
     Q_EMIT shortcutRevisionChanged();
