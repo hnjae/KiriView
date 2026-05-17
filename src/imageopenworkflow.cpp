@@ -301,8 +301,8 @@ public:
     void apply(
         const KiriView::ImageOpenTransition &transition, const ImageOpenTransitionContext &context)
     {
-        for (const KiriView::ImageOpenStateChange &change : transition.state_changes) {
-            applyStateChange(change, context);
+        for (KiriView::ImageOpenStateField field : transition.state_order) {
+            applyStateField(field, transition.state_delta, context);
         }
         for (KiriView::ImageOpenEffect effect : transition.effects) {
             applyEffect(effect, context);
@@ -312,30 +312,32 @@ public:
     KiriView::ImageDocumentEffects takeEffects() { return std::move(m_effects); }
 
 private:
-    void applyStateChange(
-        const KiriView::ImageOpenStateChange &change, const ImageOpenTransitionContext &context)
+    void applyStateField(KiriView::ImageOpenStateField field,
+        const KiriView::ImageOpenStateDelta &delta, const ImageOpenTransitionContext &context)
     {
-        switch (change.kind) {
-        case KiriView::ImageOpenStateChangeKind::SourceUrl:
-            applySourceUrlTarget(change.url_target, context);
+        switch (field) {
+        case KiriView::ImageOpenStateField::SourceUrl:
+            applySourceUrlTarget(delta.source_url, context);
             return;
-        case KiriView::ImageOpenStateChangeKind::DisplayedLocation:
-            applyDisplayedLocationTarget(change.displayed_location_target, context);
+        case KiriView::ImageOpenStateField::DisplayedLocation:
+            applyDisplayedLocationTarget(delta.displayed_location, context);
             return;
-        case KiriView::ImageOpenStateChangeKind::ContainerNavigationUrl:
-            applyContainerNavigationUrlTarget(change.url_target, context);
+        case KiriView::ImageOpenStateField::ContainerNavigationUrl:
+            applyContainerNavigationUrlTarget(delta.container_navigation_url, context);
             return;
-        case KiriView::ImageOpenStateChangeKind::Loading:
-            applyLoadingTarget(change.bool_target);
+        case KiriView::ImageOpenStateField::Loading:
+            applyLoadingTarget(delta.loading);
             return;
-        case KiriView::ImageOpenStateChangeKind::Status:
-            applyStatusTarget(change.status_target);
+        case KiriView::ImageOpenStateField::Status:
+            applyStatusTarget(delta.status);
             return;
-        case KiriView::ImageOpenStateChangeKind::ErrorString:
-            applyErrorStringTarget(change.error_string_target, context);
+        case KiriView::ImageOpenStateField::ErrorString:
+            applyErrorStringTarget(delta.error_string, context);
             return;
-        case KiriView::ImageOpenStateChangeKind::ClearLoadingContainerNavigationUrl:
-            m_state.clearLoadingContainerNavigationUrl();
+        case KiriView::ImageOpenStateField::ClearLoadingContainerNavigationUrl:
+            if (delta.clear_loading_container_navigation_url) {
+                m_state.clearLoadingContainerNavigationUrl();
+            }
             return;
         }
     }

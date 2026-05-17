@@ -102,7 +102,7 @@ mod ffi {
     }
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-    enum ImageOpenStateChangeKind {
+    enum ImageOpenStateField {
         SourceUrl = 0,
         DisplayedLocation = 1,
         ContainerNavigationUrl = 2,
@@ -134,18 +134,20 @@ mod ffi {
 
     #[derive(Debug, PartialEq, Eq)]
     struct ImageOpenTransition {
-        state_changes: Vec<ImageOpenStateChange>,
+        state_delta: ImageOpenStateDelta,
+        state_order: Vec<ImageOpenStateField>,
         effects: Vec<ImageOpenEffect>,
     }
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-    struct ImageOpenStateChange {
-        kind: ImageOpenStateChangeKind,
-        url_target: ImageOpenUrlTarget,
-        displayed_location_target: ImageOpenDisplayedLocationTarget,
-        bool_target: ImageOpenBoolTarget,
-        status_target: ImageOpenStatusTarget,
-        error_string_target: ImageOpenErrorStringTarget,
+    struct ImageOpenStateDelta {
+        source_url: ImageOpenUrlTarget,
+        displayed_location: ImageOpenDisplayedLocationTarget,
+        container_navigation_url: ImageOpenUrlTarget,
+        loading: ImageOpenBoolTarget,
+        status: ImageOpenStatusTarget,
+        error_string: ImageOpenErrorStringTarget,
+        clear_loading_container_navigation_url: bool,
     }
 
     extern "Rust" {
@@ -161,12 +163,11 @@ mod ffi {
 
 use ffi::{
     ImageOpenBoolTarget, ImageOpenDisplayedLocationTarget, ImageOpenEffect,
-    ImageOpenErrorStringTarget, ImageOpenStateChange, ImageOpenStateChangeKind,
-    ImageOpenStatusTarget, ImageOpenTransition, ImageOpenUrlTarget, ImageOpenWorkflowEvent,
-    ImageOpenWorkflowEventKind, RustImageDocumentRightToLeftReadingReset,
-    RustImageDocumentRightToLeftReadingTransition, RustImageDocumentSourceLoadKind,
-    RustImageDocumentSourceLoadPlan, RustImageDocumentSourceLoadPolicyInput,
-    RustImageDocumentSourceLoadUrlTarget,
+    ImageOpenErrorStringTarget, ImageOpenStateDelta, ImageOpenStateField, ImageOpenStatusTarget,
+    ImageOpenTransition, ImageOpenUrlTarget, ImageOpenWorkflowEvent, ImageOpenWorkflowEventKind,
+    RustImageDocumentRightToLeftReadingReset, RustImageDocumentRightToLeftReadingTransition,
+    RustImageDocumentSourceLoadKind, RustImageDocumentSourceLoadPlan,
+    RustImageDocumentSourceLoadPolicyInput, RustImageDocumentSourceLoadUrlTarget,
 };
 
 fn rust_image_document_source_load_plan(
@@ -372,80 +373,74 @@ fn cleared_load_error_transition(reset_zoom: bool) -> ImageOpenTransition {
 }
 
 fn push_tracked_load_completion(transition: &mut ImageOpenTransition) {
-    transition.state_changes.push(state_change(
-        ImageOpenStateChangeKind::ClearLoadingContainerNavigationUrl,
-    ));
+    transition
+        .state_delta
+        .clear_loading_container_navigation_url = true;
+    push_state_field(
+        transition,
+        ImageOpenStateField::ClearLoadingContainerNavigationUrl,
+    );
     push_loading(transition, ImageOpenBoolTarget::False);
 }
 
 fn push_source_url(transition: &mut ImageOpenTransition, target: ImageOpenUrlTarget) {
-    transition.state_changes.push(url_state_change(
-        ImageOpenStateChangeKind::SourceUrl,
-        target,
-    ));
+    transition.state_delta.source_url = target;
+    push_state_field(transition, ImageOpenStateField::SourceUrl);
 }
 
 fn push_displayed_location(
     transition: &mut ImageOpenTransition,
     target: ImageOpenDisplayedLocationTarget,
 ) {
-    let mut change = state_change(ImageOpenStateChangeKind::DisplayedLocation);
-    change.displayed_location_target = target;
-    transition.state_changes.push(change);
+    transition.state_delta.displayed_location = target;
+    push_state_field(transition, ImageOpenStateField::DisplayedLocation);
 }
 
 fn push_container_navigation_url(transition: &mut ImageOpenTransition, target: ImageOpenUrlTarget) {
-    transition.state_changes.push(url_state_change(
-        ImageOpenStateChangeKind::ContainerNavigationUrl,
-        target,
-    ));
+    transition.state_delta.container_navigation_url = target;
+    push_state_field(transition, ImageOpenStateField::ContainerNavigationUrl);
 }
 
 fn push_loading(transition: &mut ImageOpenTransition, target: ImageOpenBoolTarget) {
-    let mut change = state_change(ImageOpenStateChangeKind::Loading);
-    change.bool_target = target;
-    transition.state_changes.push(change);
+    transition.state_delta.loading = target;
+    push_state_field(transition, ImageOpenStateField::Loading);
 }
 
 fn push_status(transition: &mut ImageOpenTransition, target: ImageOpenStatusTarget) {
-    let mut change = state_change(ImageOpenStateChangeKind::Status);
-    change.status_target = target;
-    transition.state_changes.push(change);
+    transition.state_delta.status = target;
+    push_state_field(transition, ImageOpenStateField::Status);
 }
 
 fn push_error_string(transition: &mut ImageOpenTransition, target: ImageOpenErrorStringTarget) {
-    let mut change = state_change(ImageOpenStateChangeKind::ErrorString);
-    change.error_string_target = target;
-    transition.state_changes.push(change);
+    transition.state_delta.error_string = target;
+    push_state_field(transition, ImageOpenStateField::ErrorString);
 }
 
 fn push_effect(transition: &mut ImageOpenTransition, effect: ImageOpenEffect) {
     transition.effects.push(effect);
 }
 
-fn url_state_change(
-    kind: ImageOpenStateChangeKind,
-    target: ImageOpenUrlTarget,
-) -> ImageOpenStateChange {
-    let mut change = state_change(kind);
-    change.url_target = target;
-    change
+fn push_state_field(transition: &mut ImageOpenTransition, field: ImageOpenStateField) {
+    debug_assert!(!transition.state_order.contains(&field));
+    transition.state_order.push(field);
 }
 
-fn state_change(kind: ImageOpenStateChangeKind) -> ImageOpenStateChange {
-    ImageOpenStateChange {
-        kind,
-        url_target: ImageOpenUrlTarget::Unchanged,
-        displayed_location_target: ImageOpenDisplayedLocationTarget::Unchanged,
-        bool_target: ImageOpenBoolTarget::Unchanged,
-        status_target: ImageOpenStatusTarget::Unchanged,
-        error_string_target: ImageOpenErrorStringTarget::Unchanged,
+fn unchanged_state_delta() -> ImageOpenStateDelta {
+    ImageOpenStateDelta {
+        source_url: ImageOpenUrlTarget::Unchanged,
+        displayed_location: ImageOpenDisplayedLocationTarget::Unchanged,
+        container_navigation_url: ImageOpenUrlTarget::Unchanged,
+        loading: ImageOpenBoolTarget::Unchanged,
+        status: ImageOpenStatusTarget::Unchanged,
+        error_string: ImageOpenErrorStringTarget::Unchanged,
+        clear_loading_container_navigation_url: false,
     }
 }
 
 fn empty_transition() -> ImageOpenTransition {
     ImageOpenTransition {
-        state_changes: Vec::new(),
+        state_delta: unchanged_state_delta(),
+        state_order: Vec::new(),
         effects: Vec::new(),
     }
 }
@@ -458,40 +453,8 @@ mod tests {
         transition.effects.contains(&effect)
     }
 
-    fn source_url_change(target: ImageOpenUrlTarget) -> ImageOpenStateChange {
-        url_state_change(ImageOpenStateChangeKind::SourceUrl, target)
-    }
-
-    fn container_navigation_url_change(target: ImageOpenUrlTarget) -> ImageOpenStateChange {
-        url_state_change(ImageOpenStateChangeKind::ContainerNavigationUrl, target)
-    }
-
-    fn displayed_location_change(target: ImageOpenDisplayedLocationTarget) -> ImageOpenStateChange {
-        let mut change = state_change(ImageOpenStateChangeKind::DisplayedLocation);
-        change.displayed_location_target = target;
-        change
-    }
-
-    fn loading_change(target: ImageOpenBoolTarget) -> ImageOpenStateChange {
-        let mut change = state_change(ImageOpenStateChangeKind::Loading);
-        change.bool_target = target;
-        change
-    }
-
-    fn status_change(target: ImageOpenStatusTarget) -> ImageOpenStateChange {
-        let mut change = state_change(ImageOpenStateChangeKind::Status);
-        change.status_target = target;
-        change
-    }
-
-    fn error_string_change(target: ImageOpenErrorStringTarget) -> ImageOpenStateChange {
-        let mut change = state_change(ImageOpenStateChangeKind::ErrorString);
-        change.error_string_target = target;
-        change
-    }
-
-    fn clear_loading_container_navigation_url_change() -> ImageOpenStateChange {
-        state_change(ImageOpenStateChangeKind::ClearLoadingContainerNavigationUrl)
+    fn state_order(fields: &[ImageOpenStateField]) -> Vec<ImageOpenStateField> {
+        fields.to_vec()
     }
 
     fn document_source_load_input(
@@ -648,15 +611,20 @@ mod tests {
     #[test]
     fn first_source_load_clears_image_and_enters_loading() {
         let transition = rust_image_open_transition(begin_source_load_event(false, true));
+        let mut delta = unchanged_state_delta();
+        delta.container_navigation_url = ImageOpenUrlTarget::Empty;
+        delta.loading = ImageOpenBoolTarget::True;
+        delta.status = ImageOpenStatusTarget::Loading;
 
         assert_eq!(
-            transition.state_changes,
-            vec![
-                container_navigation_url_change(ImageOpenUrlTarget::Empty),
-                loading_change(ImageOpenBoolTarget::True),
-                status_change(ImageOpenStatusTarget::Loading),
-            ]
+            transition.state_order,
+            state_order(&[
+                ImageOpenStateField::ContainerNavigationUrl,
+                ImageOpenStateField::Loading,
+                ImageOpenStateField::Status,
+            ])
         );
+        assert_eq!(transition.state_delta, delta);
         assert_eq!(
             transition.effects,
             vec![ImageOpenEffect::ClearImage, ImageOpenEffect::ResetZoom]
@@ -666,14 +634,15 @@ mod tests {
     #[test]
     fn replacement_source_load_preserves_image_and_enters_ready() {
         let transition = rust_image_open_transition(begin_source_load_event(true, true));
+        let mut delta = unchanged_state_delta();
+        delta.loading = ImageOpenBoolTarget::True;
+        delta.status = ImageOpenStatusTarget::Ready;
 
         assert_eq!(
-            transition.state_changes,
-            vec![
-                loading_change(ImageOpenBoolTarget::True),
-                status_change(ImageOpenStatusTarget::Ready),
-            ]
+            transition.state_order,
+            state_order(&[ImageOpenStateField::Loading, ImageOpenStateField::Status])
         );
+        assert_eq!(transition.state_delta, delta);
         assert!(!has_effect(&transition, ImageOpenEffect::ClearImage));
         assert!(!has_effect(&transition, ImageOpenEffect::ResetZoom));
     }
@@ -681,19 +650,28 @@ mod tests {
     #[test]
     fn successful_load_uses_session_targets_and_clears_error() {
         let transition = rust_image_open_transition(successful_image_load_event(false));
+        let mut delta = unchanged_state_delta();
+        delta.source_url = ImageOpenUrlTarget::SessionImage;
+        delta.displayed_location = ImageOpenDisplayedLocationTarget::Session;
+        delta.container_navigation_url = ImageOpenUrlTarget::SessionContainerNavigation;
+        delta.error_string = ImageOpenErrorStringTarget::Clear;
+        delta.clear_loading_container_navigation_url = true;
+        delta.loading = ImageOpenBoolTarget::False;
+        delta.status = ImageOpenStatusTarget::Ready;
 
         assert_eq!(
-            transition.state_changes,
-            vec![
-                source_url_change(ImageOpenUrlTarget::SessionImage),
-                displayed_location_change(ImageOpenDisplayedLocationTarget::Session),
-                container_navigation_url_change(ImageOpenUrlTarget::SessionContainerNavigation),
-                error_string_change(ImageOpenErrorStringTarget::Clear),
-                clear_loading_container_navigation_url_change(),
-                loading_change(ImageOpenBoolTarget::False),
-                status_change(ImageOpenStatusTarget::Ready),
-            ]
+            transition.state_order,
+            state_order(&[
+                ImageOpenStateField::SourceUrl,
+                ImageOpenStateField::DisplayedLocation,
+                ImageOpenStateField::ContainerNavigationUrl,
+                ImageOpenStateField::ErrorString,
+                ImageOpenStateField::ClearLoadingContainerNavigationUrl,
+                ImageOpenStateField::Loading,
+                ImageOpenStateField::Status,
+            ])
         );
+        assert_eq!(transition.state_delta, delta);
         assert_eq!(
             transition.effects,
             vec![
@@ -706,17 +684,24 @@ mod tests {
     #[test]
     fn replacement_failure_restores_displayed_source_and_schedules_predecode() {
         let transition = replacement_load_error_transition(false);
+        let mut delta = unchanged_state_delta();
+        delta.clear_loading_container_navigation_url = true;
+        delta.loading = ImageOpenBoolTarget::False;
+        delta.source_url = ImageOpenUrlTarget::Displayed;
+        delta.error_string = ImageOpenErrorStringTarget::Provided;
+        delta.status = ImageOpenStatusTarget::Ready;
 
         assert_eq!(
-            transition.state_changes,
-            vec![
-                clear_loading_container_navigation_url_change(),
-                loading_change(ImageOpenBoolTarget::False),
-                source_url_change(ImageOpenUrlTarget::Displayed),
-                error_string_change(ImageOpenErrorStringTarget::Provided),
-                status_change(ImageOpenStatusTarget::Ready),
-            ]
+            transition.state_order,
+            state_order(&[
+                ImageOpenStateField::ClearLoadingContainerNavigationUrl,
+                ImageOpenStateField::Loading,
+                ImageOpenStateField::SourceUrl,
+                ImageOpenStateField::ErrorString,
+                ImageOpenStateField::Status,
+            ])
         );
+        assert_eq!(transition.state_delta, delta);
         assert_eq!(
             transition.effects,
             vec![
@@ -737,25 +722,32 @@ mod tests {
         assert!(!has_effect(&initial, ImageOpenEffect::ResetZoom));
         assert!(
             initial
-                .state_changes
-                .contains(&container_navigation_url_change(ImageOpenUrlTarget::Empty))
+                .state_order
+                .contains(&ImageOpenStateField::ContainerNavigationUrl)
         );
-        assert!(
-            initial
-                .state_changes
-                .contains(&status_change(ImageOpenStatusTarget::Error))
+        assert_eq!(
+            initial.state_delta.container_navigation_url,
+            ImageOpenUrlTarget::Empty
         );
+        assert_eq!(initial.state_delta.status, ImageOpenStatusTarget::Error);
+        let mut animation_delta = unchanged_state_delta();
+        animation_delta.clear_loading_container_navigation_url = true;
+        animation_delta.loading = ImageOpenBoolTarget::False;
+        animation_delta.container_navigation_url = ImageOpenUrlTarget::Empty;
+        animation_delta.error_string = ImageOpenErrorStringTarget::Provided;
+        animation_delta.status = ImageOpenStatusTarget::Error;
 
         assert_eq!(
-            animation.state_changes,
-            vec![
-                clear_loading_container_navigation_url_change(),
-                loading_change(ImageOpenBoolTarget::False),
-                container_navigation_url_change(ImageOpenUrlTarget::Empty),
-                error_string_change(ImageOpenErrorStringTarget::Provided),
-                status_change(ImageOpenStatusTarget::Error),
-            ]
+            animation.state_order,
+            state_order(&[
+                ImageOpenStateField::ClearLoadingContainerNavigationUrl,
+                ImageOpenStateField::Loading,
+                ImageOpenStateField::ContainerNavigationUrl,
+                ImageOpenStateField::ErrorString,
+                ImageOpenStateField::Status,
+            ])
         );
+        assert_eq!(animation.state_delta, animation_delta);
         assert_eq!(
             animation.effects,
             vec![ImageOpenEffect::ClearImage, ImageOpenEffect::ResetZoom]
@@ -767,25 +759,29 @@ mod tests {
         let container = rust_image_open_transition(source_load_error_event(false, true, false));
         assert!(
             container
-                .state_changes
-                .contains(&source_url_change(ImageOpenUrlTarget::Container))
+                .state_order
+                .contains(&ImageOpenStateField::SourceUrl)
+        );
+        assert_eq!(
+            container.state_delta.source_url,
+            ImageOpenUrlTarget::Container
         );
         assert!(has_effect(&container, ImageOpenEffect::ClearImage));
         assert!(has_effect(
             &container,
             ImageOpenEffect::PrepareFailedContainer
         ));
-        assert!(
-            container
-                .state_changes
-                .contains(&status_change(ImageOpenStatusTarget::Error))
-        );
+        assert_eq!(container.state_delta.status, ImageOpenStatusTarget::Error);
 
         let replacement = rust_image_open_transition(source_load_error_event(true, true, false));
         assert!(
             replacement
-                .state_changes
-                .contains(&source_url_change(ImageOpenUrlTarget::Displayed))
+                .state_order
+                .contains(&ImageOpenStateField::SourceUrl)
+        );
+        assert_eq!(
+            replacement.state_delta.source_url,
+            ImageOpenUrlTarget::Displayed
         );
         assert!(has_effect(
             &replacement,
@@ -795,38 +791,41 @@ mod tests {
             &replacement,
             ImageOpenEffect::ScheduleAdjacentImagePredecode
         ));
-        assert!(
-            replacement
-                .state_changes
-                .contains(&status_change(ImageOpenStatusTarget::Ready))
-        );
+        assert_eq!(replacement.state_delta.status, ImageOpenStatusTarget::Ready);
 
         let initial = rust_image_open_transition(source_load_error_event(true, false, true));
         assert!(
             !initial
-                .state_changes
-                .iter()
-                .any(|change| { change.kind == ImageOpenStateChangeKind::SourceUrl })
+                .state_order
+                .contains(&ImageOpenStateField::SourceUrl)
+        );
+        assert_eq!(
+            initial.state_delta.source_url,
+            ImageOpenUrlTarget::Unchanged
         );
         assert!(has_effect(&initial, ImageOpenEffect::ClearImage));
         assert!(
             initial
-                .state_changes
-                .contains(&container_navigation_url_change(ImageOpenUrlTarget::Empty))
+                .state_order
+                .contains(&ImageOpenStateField::ContainerNavigationUrl)
         );
-        assert!(
-            initial
-                .state_changes
-                .contains(&status_change(ImageOpenStatusTarget::Error))
+        assert_eq!(
+            initial.state_delta.container_navigation_url,
+            ImageOpenUrlTarget::Empty
         );
+        assert_eq!(initial.state_delta.status, ImageOpenStatusTarget::Error);
 
         let explicit_container = rust_image_open_transition(image_open_event(
             ImageOpenWorkflowEventKind::FinishContainerNavigationLoadWithError,
         ));
         assert!(
             explicit_container
-                .state_changes
-                .contains(&source_url_change(ImageOpenUrlTarget::Container))
+                .state_order
+                .contains(&ImageOpenStateField::SourceUrl)
+        );
+        assert_eq!(
+            explicit_container.state_delta.source_url,
+            ImageOpenUrlTarget::Container
         );
         assert!(has_effect(
             &explicit_container,
