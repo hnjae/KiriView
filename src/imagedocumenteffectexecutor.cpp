@@ -125,6 +125,12 @@ void ImageDocumentEffectExecutor::dispatchPayload(const ContainerNavigationFaile
         payload.containerUrl, payload.errorString);
 }
 
+void ImageDocumentEffectExecutor::dispatchPayload(const PageNavigationSelectedEffect &payload)
+{
+    m_loadController.loadSource(ImageDocumentSourceLoadRequest::fromPageNavigation(
+        payload.url, payload.preserveTwoPageSpreadTransition));
+}
+
 void ImageDocumentEffectExecutor::dispatchPayload(const PrepareFailedContainerEffect &payload)
 {
     m_presentationController.prepareFailedContainer(payload.containerUrl);

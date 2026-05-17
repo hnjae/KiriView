@@ -8,6 +8,7 @@
 #include "imagedocumenteffects.h"
 #include "imagedocumentstate.h"
 #include "imagedocumenttypes.h"
+#include "imagenavigationtypes.h"
 
 #include <QString>
 #include <functional>
@@ -21,7 +22,6 @@ class ImageDocumentDeletionController;
 class ImageDocumentEffectExecutor;
 class ImageDocumentLoadController;
 class ImageDocumentNavigationController;
-class ImageDocumentNavigationCoordinator;
 class ImageDocumentPredecodeController;
 class ImageOpenController;
 class ImagePresentationController;
@@ -40,6 +40,13 @@ struct ImageDocumentRuntime final {
     void dispatchEffect(ImageDocumentEffect effect);
     void notify(ImageDocumentChange change);
     void shutdown();
+    void openPreviousImage();
+    void openNextImage();
+    void openPreviousSinglePage();
+    void openNextSinglePage();
+    void openImageAtPage(int pageNumber);
+    void openPreviousContainer();
+    void openNextContainer();
 
     ImageDocumentState state;
     ChangeCallback changeCallback;
@@ -52,7 +59,11 @@ struct ImageDocumentRuntime final {
     std::unique_ptr<ImageSpreadPresentationController> spreadController;
     std::unique_ptr<ImageDocumentLoadController> loadController;
     std::unique_ptr<ImageDocumentEffectExecutor> effectExecutor;
-    std::unique_ptr<ImageDocumentNavigationCoordinator> navigationCoordinator;
+
+private:
+    void openAdjacentImage(NavigationDirection direction);
+    void openAdjacentContainer(NavigationDirection direction);
+    void openImageAtRelativePageOffset(int offset);
 };
 }
 

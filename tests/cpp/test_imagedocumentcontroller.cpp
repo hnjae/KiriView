@@ -112,6 +112,7 @@ private Q_SLOTS:
     void rotationResetsAndStopsWhileTwoPageModeIsEnabled();
     void pendingAdjacentNavigationSkipsIntermediateLoad();
     void pendingPageSelectionSupersedesEarlierLoad();
+    void pageSelectionStartsTrackedLoadThroughEffectExecutor();
     void pendingLoadFailureRestoresDisplayedPageNavigation();
     void siblingArchiveNavigationResetsManualZoom();
     void smallStaticImageUsesFullImageSurface();
@@ -560,6 +561,41 @@ void TestImageDocumentController::pendingPageSelectionSupersedesEarlierLoad()
     QTRY_COMPARE(controller->displayedUrl(), thirdImageUrl);
     QCOMPARE(controller->sourceUrl(), thirdImageUrl);
     QCOMPARE(controller->currentPageNumber(), 3);
+}
+
+void TestImageDocumentController::pageSelectionStartsTrackedLoadThroughEffectExecutor()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    const QUrl firstImageUrl = localUrl(QStringLiteral("/images/01.png"));
+    const QUrl secondImageUrl = localUrl(QStringLiteral("/images/02.png"));
+    candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
+        {
+            imageCandidate(firstImageUrl),
+            imageCandidate(secondImageUrl),
+        });
+
+    std::unique_ptr<KiriView::ImageDocumentController> controller
+        = createController(this, candidateProvider, dataLoader);
+    controller->setViewportSize(QSizeF(400.0, 300.0));
+    controller->setSourceUrl(firstImageUrl);
+    finishLoad(dataLoader);
+    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
+
+    const std::size_t loadCountBeforeSelection = dataLoader.loadCount();
+    controller->openImageAtPage(2);
+
+    QTRY_COMPARE(dataLoader.loadCount(), loadCountBeforeSelection + std::size_t(1));
+    QCOMPARE(dataLoader.backLoad().url, secondImageUrl);
+    QCOMPARE(controller->sourceUrl(), secondImageUrl);
+    QCOMPARE(controller->displayedUrl(), firstImageUrl);
+    QCOMPARE(controller->currentPageNumber(), 2);
+
+    finishLoad(dataLoader);
+
+    QTRY_COMPARE(controller->displayedUrl(), secondImageUrl);
+    QCOMPARE(controller->sourceUrl(), secondImageUrl);
+    QCOMPARE(controller->currentPageNumber(), 2);
 }
 
 void TestImageDocumentController::pendingLoadFailureRestoresDisplayedPageNavigation()

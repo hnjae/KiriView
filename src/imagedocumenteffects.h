@@ -44,6 +44,11 @@ struct ContainerNavigationFailedEffect {
     QString errorString;
 };
 
+struct PageNavigationSelectedEffect {
+    QUrl url;
+    bool preserveTwoPageSpreadTransition = false;
+};
+
 struct PrepareFailedContainerEffect {
     QUrl containerUrl;
 };
@@ -52,7 +57,7 @@ struct ImageDocumentEffect {
     using Payload = std::variant<ClearImageEffect, ClearDeletedImageEffect, ResetZoomEffect,
         UpdatePageNavigationEffect, ScheduleAdjacentImagePredecodeEffect, OpenUrlEffect,
         ContainerImageSelectedEffect, EmptyContainerSelectedEffect, ContainerNavigationFailedEffect,
-        PrepareFailedContainerEffect>;
+        PageNavigationSelectedEffect, PrepareFailedContainerEffect>;
 
     static ImageDocumentEffect clearImage() { return ImageDocumentEffect(ClearImageEffect {}); }
 
@@ -93,6 +98,13 @@ struct ImageDocumentEffect {
         const QUrl &containerUrl, const QString &errorString)
     {
         return ImageDocumentEffect(ContainerNavigationFailedEffect { containerUrl, errorString });
+    }
+
+    static ImageDocumentEffect pageNavigationSelected(
+        const QUrl &url, bool preserveTwoPageSpreadTransition)
+    {
+        return ImageDocumentEffect(
+            PageNavigationSelectedEffect { url, preserveTwoPageSpreadTransition });
     }
 
     static ImageDocumentEffect prepareFailedContainer(const QUrl &containerUrl)

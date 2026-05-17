@@ -42,6 +42,7 @@ private:
     void dispatchPayload(const ContainerImageSelectedEffect &payload);
     void dispatchPayload(const EmptyContainerSelectedEffect &payload);
     void dispatchPayload(const ContainerNavigationFailedEffect &payload);
+    void dispatchPayload(const PageNavigationSelectedEffect &payload);
     void dispatchPayload(const PrepareFailedContainerEffect &payload);
 
     ImageDocumentState &m_state;

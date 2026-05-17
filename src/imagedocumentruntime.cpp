@@ -9,13 +9,14 @@
 #include "imagedocumenteffectexecutor.h"
 #include "imagedocumentloadcontroller.h"
 #include "imagedocumentnavigationcontroller.h"
-#include "imagedocumentnavigationcoordinator.h"
 #include "imagedocumentpredecodecontroller.h"
 #include "imageopencontroller.h"
 #include "imagepresentationcontroller.h"
 #include "imagespreadpresentationcontroller.h"
 
 #include <QObject>
+#include <QUrl>
+#include <optional>
 #include <utility>
 
 namespace KiriView {
@@ -90,8 +91,6 @@ ImageDocumentRuntime::ImageDocumentRuntime(QObject *documentObject,
     effectExecutor = std::make_unique<ImageDocumentEffectExecutor>(state, *navigationController,
         *predecodeController, *openController, *presentationController, *spreadController,
         *loadController, archiveSessionStore.get());
-    navigationCoordinator = std::make_unique<ImageDocumentNavigationCoordinator>(
-        *navigationController, *spreadController, *loadController);
 }
 
 ImageDocumentRuntime::~ImageDocumentRuntime() { shutdown(); }
@@ -120,5 +119,76 @@ void ImageDocumentRuntime::shutdown()
     if (archiveSessionStore != nullptr) {
         archiveSessionStore->clear();
     }
+}
+
+void ImageDocumentRuntime::openPreviousImage() { openAdjacentImage(NavigationDirection::Previous); }
+
+void ImageDocumentRuntime::openNextImage() { openAdjacentImage(NavigationDirection::Next); }
+
+void ImageDocumentRuntime::openPreviousSinglePage() { openImageAtRelativePageOffset(-1); }
+
+void ImageDocumentRuntime::openNextSinglePage() { openImageAtRelativePageOffset(1); }
+
+void ImageDocumentRuntime::openPreviousContainer()
+{
+    openAdjacentContainer(NavigationDirection::Previous);
+}
+
+void ImageDocumentRuntime::openNextContainer() { openAdjacentContainer(NavigationDirection::Next); }
+
+void ImageDocumentRuntime::openImageAtPage(int pageNumber)
+{
+    const bool spreadTransition = spreadController->shouldBeginTransition(pageNumber);
+    const std::optional<QUrl> pageUrl = navigationController->selectPage(pageNumber);
+    if (!pageUrl.has_value()) {
+        return;
+    }
+
+    if (spreadTransition) {
+        spreadController->beginTransition();
+    }
+
+    dispatchEffect(ImageDocumentEffect::pageNavigationSelected(*pageUrl, spreadTransition));
+}
+
+void ImageDocumentRuntime::openAdjacentImage(NavigationDirection direction)
+{
+    const ImageSpreadPageNavigationTarget target
+        = spreadController->imageNavigationTarget(direction);
+    if (!target.handledBySpread) {
+        if (direction == NavigationDirection::Previous) {
+            navigationController->openPreviousImage();
+            return;
+        }
+
+        navigationController->openNextImage();
+        return;
+    }
+
+    if (target.pageNumber <= 0) {
+        return;
+    }
+
+    openImageAtPage(target.pageNumber);
+}
+
+void ImageDocumentRuntime::openAdjacentContainer(NavigationDirection direction)
+{
+    if (direction == NavigationDirection::Previous) {
+        navigationController->openPreviousContainer();
+        return;
+    }
+
+    navigationController->openNextContainer();
+}
+
+void ImageDocumentRuntime::openImageAtRelativePageOffset(int offset)
+{
+    const int targetPage = spreadController->relativePageNavigationTarget(offset);
+    if (targetPage <= 0) {
+        return;
+    }
+
+    openImageAtPage(targetPage);
 }
 }
