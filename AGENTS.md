@@ -6,8 +6,7 @@ KiriView is a desktop app using Rust, CXX-Qt and KDE Kirigami. Key paths: `src/`
 
 ## Architecture Guidance
 
-For language-boundary, module ownership, FFI design, workflow structure, and other long-term maintainability decisions, follow `docs/ARCHITECTURE.md`. Keep architecture rules in that document or ADRs instead of duplicating them
-here.
+For language-boundary, module ownership, FFI design, workflow structure, and other long-term maintainability decisions, follow `docs/ARCHITECTURE.md`. Keep architecture rules in that document or ADRs instead of duplicating them here.
 
 ## Compatibility Policy
 
@@ -31,6 +30,10 @@ Follow spec-driven development for product behavior and user-facing implementati
 ## Coding Style & Naming Conventions
 
 Rust, QML, C++, and headers use 4-space indentation. Keep app IDs as `io.github.hnjae.KiriView`.
+
+## Markdown Style
+
+Do not hard-wrap prose in Markdown documents. Keep ordinary paragraphs and list item text on a single source line unless Markdown syntax, tables, code blocks, or another structured block require line breaks.
 
 ## Translation Policy
 
