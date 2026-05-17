@@ -206,6 +206,10 @@ HEIF-family still images, including AVIF still images, are supported when the st
 
 If a recognized HEIF-family still image uses an unsupported compression format or cannot be decoded, KiriView reports the decode error without replacing the currently displayed image.
 
+Camera RAW files open as static images. KiriView processes supported RAW files with LibRaw into display-ready 8-bit sRGB images and does not expose RAW editing controls such as demosaic, white-balance, tone-curve, or embedded-preview selection.
+
+RAW files participate in the same open, adjacent navigation, archive, and directory workflows as other supported static image files.
+
 The image viewing area behind empty, loading, ready, and error states uses a dark background color derived from the KDE/Kirigami View color scheme. Dark color schemes use the View background color; light color schemes use the View text color so the image viewing area remains dark.
 
 Navigation transitions do not flash to a different page color.
@@ -398,7 +402,7 @@ If the current image is the first image, pressing Page Up keeps the current imag
 
 If the current image is the last image, pressing Page Down keeps the current image open and notifies the user that it is the last image.
 
-Supported image extensions match the open dialog: AVIF (`.avif` and `.avifs`), BMP, GIF, HEIF (`.heic`, `.heics`, `.heif`, `.heifs`, `.hif`, `.avci`, and `.hej2`), JPEG, JPEG 2000 (`.jp2`), JPEG XL (`.jxl`), PNG, SVG, TIFF (`.tif` and `.tiff`), and WebP, case-insensitively.
+Supported image extensions match the open dialog: AVIF (`.avif` and `.avifs`), BMP, camera RAW (`.3fr`, `.arw`, `.bay`, `.bmq`, `.cr2`, `.cr3`, `.crw`, `.cs1`, `.cs2`, `.dcr`, `.dng`, `.erf`, `.fff`, `.iiq`, `.k25`, `.kdc`, `.mdc`, `.mef`, `.mos`, `.mrw`, `.nef`, `.nrw`, `.orf`, `.pef`, `.raf`, `.raw`, `.rdc`, `.rwl`, `.rw2`, `.sr2`, `.srf`, `.srw`, and `.x3f`), GIF, HEIF (`.heic`, `.heics`, `.heif`, `.heifs`, `.hif`, `.avci`, and `.hej2`), JPEG, JPEG 2000 (`.jp2`), JPEG XL (`.jxl`), PNG, SVG, TIFF (`.tif` and `.tiff`), and WebP, case-insensitively.
 
 JPEG-compressed HEIF files use the generic HEIF extensions because they do not have a dedicated extension.
 
