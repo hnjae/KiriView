@@ -13,6 +13,7 @@
 #include "imagespreadzoomcontroller.h"
 #include "imageurl.h"
 
+#include <limits>
 #include <utility>
 
 namespace KiriView {
@@ -433,24 +434,39 @@ void ImageSpreadPresentationController::refreshSecondaryPage()
         finishTransition();
     };
 
-    const int nextPageNumber = currentPageNumber() + 1;
+    const int currentPage = currentPageNumber();
+    const int nextPageNumber = currentPage == std::numeric_limits<int>::max() ? 0 : currentPage + 1;
     const std::optional<QUrl> nextUrl = urlAtPage(nextPageNumber);
     const bool nextPageIsWide = nextUrl.has_value()
         && m_secondaryPageController->cachedPageIsWide(*nextUrl).value_or(false);
     const bool currentSecondaryMatchesNext = nextUrl.has_value() && secondaryPageVisible()
         && m_secondaryPageController->displayedImageLocation().imageUrl() == *nextUrl;
-    const ImageSpreadSecondaryPageDecision decision
-        = imageSpreadSecondaryPageDecision(twoPageModeActive(), currentPageNumber(), imageCount(),
-            primaryPageIsWide(), nextUrl.has_value(), nextPageIsWide, currentSecondaryMatchesNext);
-    if (decision == ImageSpreadSecondaryPageDecision::PrimaryOnly) {
+    const ImageSpreadSecondaryPageRefreshPlan plan
+        = imageSpreadSecondaryPageRefreshPlan(ImageSpreadSecondaryPageRefreshState {
+            twoPageModeActive(),
+            currentPage,
+            imageCount(),
+            primaryPageIsWide(),
+            nextUrl.has_value(),
+            nextPageIsWide,
+            currentSecondaryMatchesNext,
+        });
+    if (plan.decision == ImageSpreadSecondaryPageDecision::PrimaryOnly) {
         finishWithPrimaryPage();
         return;
     }
-    if (decision == ImageSpreadSecondaryPageDecision::KeepCurrentSecondary) {
+    if (plan.decision == ImageSpreadSecondaryPageDecision::KeepCurrentSecondary) {
         return;
     }
 
-    startSecondaryPageLoad(*nextUrl);
+    const std::optional<QUrl> targetUrl
+        = plan.targetPageNumber == nextPageNumber ? nextUrl : urlAtPage(plan.targetPageNumber);
+    if (!targetUrl.has_value()) {
+        finishWithPrimaryPage();
+        return;
+    }
+
+    startSecondaryPageLoad(*targetUrl);
 }
 
 void ImageSpreadPresentationController::handleDocumentChange(ImageDocumentChange change)

@@ -21,6 +21,14 @@ KiriView::ImageSpreadSecondaryPageDecision imageSpreadSecondaryPageDecision(
 
     return KiriView::ImageSpreadSecondaryPageDecision::PrimaryOnly;
 }
+
+KiriView::RustImageSpreadSecondaryPageRefreshState rustSecondaryPageRefreshState(
+    const KiriView::ImageSpreadSecondaryPageRefreshState &state)
+{
+    return KiriView::RustImageSpreadSecondaryPageRefreshState { state.twoPageModeActive,
+        state.currentPageNumber, state.imageCount, state.primaryPageIsWide, state.nextPageAvailable,
+        state.nextPageIsWide, state.currentSecondaryMatchesNext };
+}
 }
 
 namespace KiriView {
@@ -70,13 +78,15 @@ bool imageSpreadPageIsWide(const QSize &imageSize)
     return rustImageSpreadPageIsWide(Bridge::rustSize<RustImageSpreadSize>(imageSize));
 }
 
-ImageSpreadSecondaryPageDecision imageSpreadSecondaryPageDecision(bool twoPageModeActive,
-    int currentPageNumber, int imageCount, bool primaryPageIsWide, bool nextPageAvailable,
-    bool nextPageIsWide, bool currentSecondaryMatchesNext)
+ImageSpreadSecondaryPageRefreshPlan imageSpreadSecondaryPageRefreshPlan(
+    const ImageSpreadSecondaryPageRefreshState &state)
 {
-    return ::imageSpreadSecondaryPageDecision(
-        rustImageSpreadSecondaryPageDecision(twoPageModeActive, currentPageNumber, imageCount,
-            primaryPageIsWide, nextPageAvailable, nextPageIsWide, currentSecondaryMatchesNext));
+    const RustImageSpreadSecondaryPageRefreshPlan plan
+        = rustImageSpreadSecondaryPageRefreshPlan(rustSecondaryPageRefreshState(state));
+    return ImageSpreadSecondaryPageRefreshPlan {
+        ::imageSpreadSecondaryPageDecision(plan.decision),
+        plan.target_page_number,
+    };
 }
 
 ImageSpreadTwoPageModeChange imageSpreadTwoPageModeChange(

@@ -18,7 +18,7 @@ private Q_SLOTS:
     void scaledPageDisplaySizeUsesSpreadWidthRatio();
     void pageRectsRespectReadingDirectionAndVerticalCentering();
     void widePagePolicyRequiresLandscapeImage();
-    void secondaryPageDecisionSelectsPrimaryKeepOrLoad();
+    void secondaryPageRefreshPlanSelectsPrimaryKeepOrLoad();
     void twoPageModeChangePlansToggleSideEffects();
 };
 
@@ -62,20 +62,44 @@ void TestImageSpreadGeometry::widePagePolicyRequiresLandscapeImage()
     QVERIFY(!KiriView::imageSpreadPageIsWide(QSize()));
 }
 
-void TestImageSpreadGeometry::secondaryPageDecisionSelectsPrimaryKeepOrLoad()
+void TestImageSpreadGeometry::secondaryPageRefreshPlanSelectsPrimaryKeepOrLoad()
 {
     using KiriView::ImageSpreadSecondaryPageDecision;
 
-    QCOMPARE(KiriView::imageSpreadSecondaryPageDecision(true, 1, 4, false, true, false, false),
-        ImageSpreadSecondaryPageDecision::PrimaryOnly);
-    QCOMPARE(KiriView::imageSpreadSecondaryPageDecision(true, 2, 4, true, true, false, false),
-        ImageSpreadSecondaryPageDecision::PrimaryOnly);
-    QCOMPARE(KiriView::imageSpreadSecondaryPageDecision(true, 2, 4, false, true, true, false),
-        ImageSpreadSecondaryPageDecision::PrimaryOnly);
-    QCOMPARE(KiriView::imageSpreadSecondaryPageDecision(true, 2, 4, false, true, false, true),
-        ImageSpreadSecondaryPageDecision::KeepCurrentSecondary);
-    QCOMPARE(KiriView::imageSpreadSecondaryPageDecision(true, 2, 4, false, true, false, false),
-        ImageSpreadSecondaryPageDecision::LoadNext);
+    const KiriView::ImageSpreadSecondaryPageRefreshPlan coverPlan
+        = KiriView::imageSpreadSecondaryPageRefreshPlan(
+            KiriView::ImageSpreadSecondaryPageRefreshState {
+                true, 1, 4, false, true, false, false });
+    QCOMPARE(coverPlan.decision, ImageSpreadSecondaryPageDecision::PrimaryOnly);
+    QCOMPARE(coverPlan.targetPageNumber, 0);
+
+    const KiriView::ImageSpreadSecondaryPageRefreshPlan widePrimaryPlan
+        = KiriView::imageSpreadSecondaryPageRefreshPlan(
+            KiriView::ImageSpreadSecondaryPageRefreshState {
+                true, 2, 4, true, true, false, false });
+    QCOMPARE(widePrimaryPlan.decision, ImageSpreadSecondaryPageDecision::PrimaryOnly);
+    QCOMPARE(widePrimaryPlan.targetPageNumber, 0);
+
+    const KiriView::ImageSpreadSecondaryPageRefreshPlan wideNextPlan
+        = KiriView::imageSpreadSecondaryPageRefreshPlan(
+            KiriView::ImageSpreadSecondaryPageRefreshState {
+                true, 2, 4, false, true, true, false });
+    QCOMPARE(wideNextPlan.decision, ImageSpreadSecondaryPageDecision::PrimaryOnly);
+    QCOMPARE(wideNextPlan.targetPageNumber, 0);
+
+    const KiriView::ImageSpreadSecondaryPageRefreshPlan keepPlan
+        = KiriView::imageSpreadSecondaryPageRefreshPlan(
+            KiriView::ImageSpreadSecondaryPageRefreshState {
+                true, 2, 4, false, true, false, true });
+    QCOMPARE(keepPlan.decision, ImageSpreadSecondaryPageDecision::KeepCurrentSecondary);
+    QCOMPARE(keepPlan.targetPageNumber, 3);
+
+    const KiriView::ImageSpreadSecondaryPageRefreshPlan loadPlan
+        = KiriView::imageSpreadSecondaryPageRefreshPlan(
+            KiriView::ImageSpreadSecondaryPageRefreshState {
+                true, 2, 4, false, true, false, false });
+    QCOMPARE(loadPlan.decision, ImageSpreadSecondaryPageDecision::LoadNext);
+    QCOMPARE(loadPlan.targetPageNumber, 3);
 }
 
 void TestImageSpreadGeometry::twoPageModeChangePlansToggleSideEffects()

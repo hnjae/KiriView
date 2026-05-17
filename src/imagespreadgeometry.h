@@ -15,6 +15,21 @@ enum class ImageSpreadSecondaryPageDecision {
     KeepCurrentSecondary,
 };
 
+struct ImageSpreadSecondaryPageRefreshState {
+    bool twoPageModeActive = false;
+    int currentPageNumber = 0;
+    int imageCount = 0;
+    bool primaryPageIsWide = false;
+    bool nextPageAvailable = false;
+    bool nextPageIsWide = false;
+    bool currentSecondaryMatchesNext = false;
+};
+
+struct ImageSpreadSecondaryPageRefreshPlan {
+    ImageSpreadSecondaryPageDecision decision = ImageSpreadSecondaryPageDecision::PrimaryOnly;
+    int targetPageNumber = 0;
+};
+
 struct ImageSpreadTwoPageModeChange {
     bool changed = false;
     bool resetSpreadZoom = false;
@@ -34,9 +49,8 @@ QRectF imageSpreadSecondaryPageRect(const QSizeF &primaryDisplaySize,
     const QSizeF &secondaryDisplaySize, const QSizeF &spreadDisplaySize, bool rightToLeftReading);
 QRectF imageSpreadVisiblePageRect(const QRectF &visibleRect, const QRectF &pageRect);
 bool imageSpreadPageIsWide(const QSize &imageSize);
-ImageSpreadSecondaryPageDecision imageSpreadSecondaryPageDecision(bool twoPageModeActive,
-    int currentPageNumber, int imageCount, bool primaryPageIsWide, bool nextPageAvailable,
-    bool nextPageIsWide, bool currentSecondaryMatchesNext);
+ImageSpreadSecondaryPageRefreshPlan imageSpreadSecondaryPageRefreshPlan(
+    const ImageSpreadSecondaryPageRefreshState &state);
 ImageSpreadTwoPageModeChange imageSpreadTwoPageModeChange(
     bool currentEnabled, bool nextEnabled, bool secondaryPageVisible);
 }
