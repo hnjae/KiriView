@@ -6,17 +6,36 @@
 
 #include "decodedimageresult.h"
 
+#include <variant>
+
 namespace KiriView {
-struct DecodedImagePresentationPlan {
-    bool presentable = false;
+enum class DecodedImageAnimationKind {
+    Apng,
+    Reader,
+    HeifSequence,
+};
+
+struct DecodedStaticImagePresentation {
+    StaticImagePayload staticImage;
     bool predecodeCacheable = false;
 };
 
-DecodedImagePresentationPlan decodedImagePresentationPlan(const StaticDecodedImage &decoded);
-DecodedImagePresentationPlan decodedImagePresentationPlan(const ApngAnimationImage &decoded);
-DecodedImagePresentationPlan decodedImagePresentationPlan(const ReaderAnimationImage &decoded);
-DecodedImagePresentationPlan decodedImagePresentationPlan(
-    const HeifSequenceAnimationImage &decoded);
+struct DecodedAnimationImagePresentation {
+    DecodedImageAnimationKind kind = DecodedImageAnimationKind::Reader;
+    QImage firstFrame;
+    QByteArray data;
+    QByteArray format;
+    int loopCount = 0;
+    int firstFrameDelay = 0;
+};
+
+struct UnpresentableDecodedImage {
+};
+
+using DecodedImagePresentation = std::variant<DecodedStaticImagePresentation,
+    DecodedAnimationImagePresentation, UnpresentableDecodedImage>;
+
+DecodedImagePresentation decodedImagePresentationForImage(DecodedImage image);
 }
 
 #endif

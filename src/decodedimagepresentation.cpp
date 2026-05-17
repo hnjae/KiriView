@@ -5,31 +5,64 @@
 
 #include "predecodecache.h"
 
+#include <utility>
+#include <variant>
+
 namespace {
-KiriView::DecodedImagePresentationPlan presentationPlan(bool presentable, bool predecodeCacheable)
+KiriView::DecodedImagePresentation presentationForDecoded(KiriView::StaticDecodedImage &decoded)
 {
-    return KiriView::DecodedImagePresentationPlan { presentable, predecodeCacheable };
+    const bool predecodeCacheable = KiriView::PredecodeCache::canCacheImage(decoded.staticImage);
+    return KiriView::DecodedStaticImagePresentation {
+        std::move(decoded.staticImage),
+        predecodeCacheable,
+    };
+}
+
+KiriView::DecodedImagePresentation presentationForDecoded(KiriView::ApngAnimationImage &decoded)
+{
+    if (decoded.firstFrame.isNull()) {
+        return KiriView::UnpresentableDecodedImage {};
+    }
+
+    return KiriView::DecodedAnimationImagePresentation {
+        KiriView::DecodedImageAnimationKind::Apng,
+        std::move(decoded.firstFrame),
+        std::move(decoded.data),
+        {},
+        decoded.loopCount,
+        decoded.firstFrameDelay,
+    };
+}
+
+KiriView::DecodedImagePresentation presentationForDecoded(KiriView::ReaderAnimationImage &decoded)
+{
+    return KiriView::DecodedAnimationImagePresentation {
+        KiriView::DecodedImageAnimationKind::Reader,
+        std::move(decoded.firstFrame),
+        std::move(decoded.data),
+        std::move(decoded.format),
+        decoded.loopCount,
+        decoded.firstFrameDelay,
+    };
+}
+
+KiriView::DecodedImagePresentation presentationForDecoded(
+    KiriView::HeifSequenceAnimationImage &decoded)
+{
+    return KiriView::DecodedAnimationImagePresentation {
+        KiriView::DecodedImageAnimationKind::HeifSequence,
+        std::move(decoded.firstFrame),
+        std::move(decoded.data),
+        {},
+        0,
+        decoded.firstFrameDelay,
+    };
 }
 }
 
 namespace KiriView {
-DecodedImagePresentationPlan decodedImagePresentationPlan(const StaticDecodedImage &decoded)
+DecodedImagePresentation decodedImagePresentationForImage(DecodedImage image)
 {
-    return presentationPlan(true, PredecodeCache::canCacheImage(decoded.staticImage));
-}
-
-DecodedImagePresentationPlan decodedImagePresentationPlan(const ApngAnimationImage &decoded)
-{
-    return presentationPlan(!decoded.firstFrame.isNull(), false);
-}
-
-DecodedImagePresentationPlan decodedImagePresentationPlan(const ReaderAnimationImage &)
-{
-    return presentationPlan(true, false);
-}
-
-DecodedImagePresentationPlan decodedImagePresentationPlan(const HeifSequenceAnimationImage &)
-{
-    return presentationPlan(true, false);
+    return std::visit([](auto &decoded) { return presentationForDecoded(decoded); }, image);
 }
 }

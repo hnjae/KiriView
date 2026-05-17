@@ -136,63 +136,54 @@ void ImageOpenController::finishPredecodedImageLoad(ImageLoadSession session, Pr
 
 void ImageOpenController::finishDecodedImageLoad(ImageLoadSession session, DecodedImage image)
 {
-    auto handleDecoded
-        = [this, &session](auto &decoded) { return finishDecodedImageResult(session, decoded); };
-    std::visit(handleDecoded, image);
+    DecodedImagePresentation presentation = decodedImagePresentationForImage(std::move(image));
+    auto finishPresentation = [this, &session](auto &decodedPresentation) {
+        return finishDecodedImagePresentation(session, decodedPresentation);
+    };
+    std::visit(finishPresentation, presentation);
 }
 
-bool ImageOpenController::finishDecodedImageResult(
-    ImageLoadSession &session, StaticDecodedImage &decoded)
+bool ImageOpenController::finishDecodedImagePresentation(
+    const ImageLoadSession &session, DecodedStaticImagePresentation &presentation)
 {
-    const DecodedImagePresentationPlan plan = decodedImagePresentationPlan(decoded);
-    finishStaticImageLoad(session, std::move(decoded.staticImage), plan.predecodeCacheable);
+    finishStaticImageLoad(
+        session, std::move(presentation.staticImage), presentation.predecodeCacheable);
     return true;
 }
 
-bool ImageOpenController::finishDecodedImageResult(
-    ImageLoadSession &session, ApngAnimationImage &decoded)
+bool ImageOpenController::finishDecodedImagePresentation(
+    const ImageLoadSession &session, DecodedAnimationImagePresentation &presentation)
 {
-    const DecodedImagePresentationPlan plan = decodedImagePresentationPlan(decoded);
-    if (!plan.presentable) {
-        finishLoadWithError(session, ImageLoadError::Generic,
-            imageViewText("Could not decode the selected image animation."));
-        return false;
-    }
+    const QImage firstFrame = presentation.firstFrame;
+    DecodedAnimationImagePresentation animation = std::move(presentation);
+    return finishAnimationImageLoad(session, firstFrame,
+        [this, animation = std::move(animation)]() { startDecodedAnimation(animation); });
+}
 
-    return finishAnimationImageLoad(session, decoded.firstFrame, [this, &decoded]() {
+bool ImageOpenController::finishDecodedImagePresentation(
+    const ImageLoadSession &session, const UnpresentableDecodedImage &)
+{
+    finishLoadWithError(session, ImageLoadError::Generic,
+        imageViewText("Could not decode the selected image animation."));
+    return false;
+}
+
+void ImageOpenController::startDecodedAnimation(
+    const DecodedAnimationImagePresentation &presentation)
+{
+    switch (presentation.kind) {
+    case DecodedImageAnimationKind::Apng:
         m_presentationController.startApngAnimation(
-            decoded.data, decoded.loopCount, decoded.firstFrameDelay);
-    });
-}
-
-bool ImageOpenController::finishDecodedImageResult(
-    ImageLoadSession &session, ReaderAnimationImage &decoded)
-{
-    const DecodedImagePresentationPlan plan = decodedImagePresentationPlan(decoded);
-    if (!plan.presentable) {
-        finishLoadWithError(session, ImageLoadError::Generic,
-            imageViewText("Could not decode the selected image animation."));
-        return false;
+            presentation.data, presentation.loopCount, presentation.firstFrameDelay);
+        return;
+    case DecodedImageAnimationKind::Reader:
+        m_presentationController.startAnimation(presentation.data, presentation.format,
+            presentation.loopCount, presentation.firstFrameDelay);
+        return;
+    case DecodedImageAnimationKind::HeifSequence:
+        m_presentationController.startHeifSequenceAnimation(presentation.data);
+        return;
     }
-
-    return finishAnimationImageLoad(session, decoded.firstFrame, [this, &decoded]() {
-        m_presentationController.startAnimation(
-            decoded.data, decoded.format, decoded.loopCount, decoded.firstFrameDelay);
-    });
-}
-
-bool ImageOpenController::finishDecodedImageResult(
-    ImageLoadSession &session, HeifSequenceAnimationImage &decoded)
-{
-    const DecodedImagePresentationPlan plan = decodedImagePresentationPlan(decoded);
-    if (!plan.presentable) {
-        finishLoadWithError(session, ImageLoadError::Generic,
-            imageViewText("Could not decode the selected image animation."));
-        return false;
-    }
-
-    return finishAnimationImageLoad(session, decoded.firstFrame,
-        [this, &decoded]() { m_presentationController.startHeifSequenceAnimation(decoded.data); });
 }
 
 bool ImageOpenController::finishAnimationImageLoad(

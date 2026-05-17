@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGESECONDARYPAGECONTROLLER_H
 #define KIRIVIEW_IMAGESECONDARYPAGECONTROLLER_H
 
-#include "decodedimageresult.h"
+#include "decodedimagepresentation.h"
 #include "imageasyncdependencies.h"
 #include "imagedocumenttypes.h"
 #include "imageloadtypes.h"
@@ -77,11 +77,12 @@ public:
 private:
     void finishPredecodedImageLoad(ImageLoadSession session, PredecodedImage image);
     void finishDecodedImageLoad(ImageLoadSession session, DecodedImage image);
-    bool finishDecodedImageResult(const ImageLoadSession &session, StaticDecodedImage &decoded);
-    bool finishDecodedImageResult(const ImageLoadSession &session, ApngAnimationImage &decoded);
-    bool finishDecodedImageResult(const ImageLoadSession &session, ReaderAnimationImage &decoded);
-    bool finishDecodedImageResult(
-        const ImageLoadSession &session, HeifSequenceAnimationImage &decoded);
+    bool finishDecodedImagePresentation(
+        const ImageLoadSession &session, DecodedStaticImagePresentation &presentation);
+    bool finishDecodedImagePresentation(
+        const ImageLoadSession &session, const DecodedAnimationImagePresentation &presentation);
+    bool finishDecodedImagePresentation(
+        const ImageLoadSession &session, const UnpresentableDecodedImage &presentation);
     void finishImageLoad(
         const ImageLoadSession &session, const QImage &image, bool predecodeCacheable);
     void finishStaticImageLoad(

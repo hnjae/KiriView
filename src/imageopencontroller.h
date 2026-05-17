@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGEOPENCONTROLLER_H
 #define KIRIVIEW_IMAGEOPENCONTROLLER_H
 
-#include "decodedimageresult.h"
+#include "decodedimagepresentation.h"
 #include "imageasyncdependencies.h"
 #include "imagedocumenteffects.h"
 #include "imageloadtypes.h"
@@ -55,10 +55,13 @@ private:
     void setSourceUrlFromResolvedLoad(const QUrl &sourceUrl);
     void finishPredecodedImageLoad(ImageLoadSession session, PredecodedImage image);
     void finishDecodedImageLoad(ImageLoadSession session, DecodedImage image);
-    bool finishDecodedImageResult(ImageLoadSession &session, StaticDecodedImage &decoded);
-    bool finishDecodedImageResult(ImageLoadSession &session, ApngAnimationImage &decoded);
-    bool finishDecodedImageResult(ImageLoadSession &session, ReaderAnimationImage &decoded);
-    bool finishDecodedImageResult(ImageLoadSession &session, HeifSequenceAnimationImage &decoded);
+    bool finishDecodedImagePresentation(
+        const ImageLoadSession &session, DecodedStaticImagePresentation &presentation);
+    bool finishDecodedImagePresentation(
+        const ImageLoadSession &session, DecodedAnimationImagePresentation &presentation);
+    bool finishDecodedImagePresentation(
+        const ImageLoadSession &session, const UnpresentableDecodedImage &presentation);
+    void startDecodedAnimation(const DecodedAnimationImagePresentation &presentation);
     bool finishAnimationImageLoad(
         const ImageLoadSession &session, const QImage &firstFrame, std::function<void()> start);
     void finishLoadWithError(

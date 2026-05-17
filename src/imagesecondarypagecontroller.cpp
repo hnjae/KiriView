@@ -157,56 +157,33 @@ void ImageSecondaryPageController::finishPredecodedImageLoad(
 void ImageSecondaryPageController::finishDecodedImageLoad(
     ImageLoadSession session, DecodedImage image)
 {
-    auto handleDecoded
-        = [this, &session](auto &decoded) { return finishDecodedImageResult(session, decoded); };
-    std::visit(handleDecoded, image);
+    DecodedImagePresentation presentation = decodedImagePresentationForImage(std::move(image));
+    auto finishPresentation = [this, &session](auto &decodedPresentation) {
+        return finishDecodedImagePresentation(session, decodedPresentation);
+    };
+    std::visit(finishPresentation, presentation);
 }
 
-bool ImageSecondaryPageController::finishDecodedImageResult(
-    const ImageLoadSession &session, StaticDecodedImage &decoded)
+bool ImageSecondaryPageController::finishDecodedImagePresentation(
+    const ImageLoadSession &session, DecodedStaticImagePresentation &presentation)
 {
-    const DecodedImagePresentationPlan plan = decodedImagePresentationPlan(decoded);
-    finishStaticImageLoad(session, std::move(decoded.staticImage), plan.predecodeCacheable);
+    finishStaticImageLoad(
+        session, std::move(presentation.staticImage), presentation.predecodeCacheable);
     return true;
 }
 
-bool ImageSecondaryPageController::finishDecodedImageResult(
-    const ImageLoadSession &session, ApngAnimationImage &decoded)
+bool ImageSecondaryPageController::finishDecodedImagePresentation(
+    const ImageLoadSession &session, const DecodedAnimationImagePresentation &presentation)
 {
-    const DecodedImagePresentationPlan plan = decodedImagePresentationPlan(decoded);
-    if (!plan.presentable) {
-        finishLoadWithError(session);
-        return false;
-    }
-
-    finishImageLoad(session, decoded.firstFrame, plan.predecodeCacheable);
+    finishImageLoad(session, presentation.firstFrame, false);
     return true;
 }
 
-bool ImageSecondaryPageController::finishDecodedImageResult(
-    const ImageLoadSession &session, ReaderAnimationImage &decoded)
+bool ImageSecondaryPageController::finishDecodedImagePresentation(
+    const ImageLoadSession &session, const UnpresentableDecodedImage &)
 {
-    const DecodedImagePresentationPlan plan = decodedImagePresentationPlan(decoded);
-    if (!plan.presentable) {
-        finishLoadWithError(session);
-        return false;
-    }
-
-    finishImageLoad(session, decoded.firstFrame, plan.predecodeCacheable);
-    return true;
-}
-
-bool ImageSecondaryPageController::finishDecodedImageResult(
-    const ImageLoadSession &session, HeifSequenceAnimationImage &decoded)
-{
-    const DecodedImagePresentationPlan plan = decodedImagePresentationPlan(decoded);
-    if (!plan.presentable) {
-        finishLoadWithError(session);
-        return false;
-    }
-
-    finishImageLoad(session, decoded.firstFrame, plan.predecodeCacheable);
-    return true;
+    finishLoadWithError(session);
+    return false;
 }
 
 void ImageSecondaryPageController::finishImageLoad(
