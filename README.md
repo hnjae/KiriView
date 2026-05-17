@@ -5,32 +5,23 @@ KiriView is a desktop image viewer built with KDE Kirigami.
 > [!IMPORTANT]
 > All documentation, code, and artwork in this repository were vibe coded.
 
-## Supported Image Formats
+## Features
 
-KiriView aims to display modern and uncommon image variants that are commonly
-poorly supported by desktop image viewers. This includes AVIF images with alpha
-channels, animated PNG (APNG) images, and HEIF still images or image sequences
-that store JPEG, JPEG 2000, AVC/H.264, HEVC/H.265, or VVC/H.266 image data.
+- Supports common image formats through Qt and KDE image plugins.
+- Adds dedicated support where Qt/KDE fall short: APNG, AVIF images with alpha channels, HEIF sequences (`.heics`), and HEIF still images using non-HEVC codecs.
+- Opens comic book archives: `.cbz`, `.cbr`, `.cb7`, `.cbt`.
+- Smoothly zooms and pans large static images with GPU-backed tiled rendering.
+- Preloads adjacent images for faster previous/next navigation, while respecting the system Power Saver mode.
 
-## Supported Archives
+## Limitations
 
-KiriView supports comic book archive containers with `.cbz`, `.cbr`, `.cb7`,
-and `.cbt` extensions. Archive decoding is delegated to archive libraries
-provided by the application runtime or package: ZIP, 7Z, and TAR containers are
-handled through KDE KArchive, while RAR containers are handled through
-libarchive. In the Flatpak build, these libraries are supplied by the Flatpak
-runtime. KiriView does not implement archive format parsers itself, so archive
-compatibility, unsupported variants, encryption behavior, and error handling are
-bounded by the capabilities and limitations of those libraries.
+KiriView relies on runtime archive libraries instead of implementing archive parsers itself. ZIP, 7Z, and TAR are handled through KDE KArchive, while RAR is handled through libarchive, so archive compatibility, encryption support, and error handling follow those libraries.
 
-As of May 2026, this has been verified with libarchive 3.8.5 in the current
-Flatpak SDK and libarchive 3.8.6 in the Nix/devenv environment: RAR4 solid
-archives are not supported by libarchive.
+As of May 2026, libarchive 3.8.5 in the current Flatpak SDK does not support RAR4 solid archives.
 
 ## Install the Current Development Version
 
-These instructions install the current source checkout as a local Flatpak
-development build. This is not a stable release build.
+These instructions install the current source checkout as a local Flatpak development build. This is not a stable release build.
 
 1. Install `flatpak` and `flatpak-builder`.
 1. Add Flathub if it is not already configured:
