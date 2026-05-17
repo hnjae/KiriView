@@ -56,14 +56,17 @@ in
     kdePackages.qtsvg
     kdePackages.qttools
     libarchive
+    libaom
     libheif.dev
     libheif.lib
+    libde265
     libraw.dev
     libraw.lib
     libpng
     lld
     ninja
     pkg-config
+    x265
   ]);
 
   languages.rust.enable = true;
