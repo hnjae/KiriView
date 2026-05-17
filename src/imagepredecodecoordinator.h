@@ -7,17 +7,15 @@
 #include "imageasyncdependencies.h"
 #include "imageasyncticket.h"
 #include "imagecandidaterepository.h"
-#include "imagedecodejob.h"
 #include "imageiojob.h"
 #include "imagelocation.h"
+#include "predecodeactivedecodestore.h"
 #include "predecodecache.h"
 #include "predecodedimage.h"
 #include "predecodepolicy.h"
 #include "staticimage.h"
 
-#include <QByteArray>
 #include <QElapsedTimer>
-#include <QImage>
 #include <QObject>
 #include <QTimer>
 #include <QUrl>
@@ -48,12 +46,6 @@ public:
     std::optional<PredecodedImage> tryTake(const QUrl &url) const;
 
 private:
-    struct ActivePredecodeRequest {
-        ImageDecodeRequest request;
-        QUrl normalizedUrl;
-        ImageDecodeJob *decodeJob = nullptr;
-    };
-
     void cacheDisplayedImages(const Context &context);
     void startDebouncedPredecode();
     void scheduleSettledNeutralPredecode();
@@ -66,12 +58,6 @@ private:
         const QUrl &url, const ArchiveDocumentLocation &archiveDocument, quint64 generation);
     void finishPredecodeImageLoadError(const ImageDecodeRequest &request);
     void finishPredecodeImageDecode(ImageDecodeRequest request, const DecodedImageResult &result);
-    std::vector<QUrl> activePredecodeUrls() const;
-    bool hasActivePredecodeRequest(const QUrl &normalizedUrl) const;
-    std::optional<ActivePredecodeRequest> takeActivePredecodeRequest(
-        const ImageDecodeRequest &request);
-    bool predecodeRequestIsActive(const ImageDecodeRequest &request) const;
-    void cancelActivePredecodeRequests();
     void cancelBackgroundWork();
     void resetNavigationMomentum();
     void updateNavigationMomentum(int pageIndex, qint64 monotonicMsec);
@@ -81,7 +67,7 @@ private:
     ImageDecodeDependencies m_decodeDependencies;
     ImageCandidateRepository m_candidateRepository;
     PredecodeCache m_cache;
-    std::vector<ActivePredecodeRequest> m_activePredecodeRequests;
+    PredecodeActiveDecodeStore m_activePredecodeRequests;
     std::optional<Context> m_displayedContext;
     std::optional<Context> m_pendingContext;
     ImageFirstDisplayDecodeContext m_firstDisplayContext;

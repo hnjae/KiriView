@@ -75,6 +75,7 @@ src/imagezoomstate.cpp
 src/applicationshortcutpolicy.cpp
 src/kiriviewapplicationactions.cpp
 src/powerprofilemonitor.cpp
+src/predecodeactivedecodestore.cpp
 src/predecodecache.cpp
 src/predecodepolicy.cpp
 src/qimagereadertilesource.cpp

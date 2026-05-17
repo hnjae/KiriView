@@ -4,6 +4,7 @@
 #include "imagepredecodecoordinator.h"
 
 #include "decodedimageresult.h"
+#include "imagedecodejob.h"
 #include "imageurl.h"
 
 #include <QThread>
@@ -17,7 +18,6 @@
 namespace {
 using KiriView::DecodedImageResult;
 using KiriView::ImageCandidateListContext;
-using KiriView::normalizedImageUrl;
 
 KiriView::PredecodePolicyInput predecodePolicyInput(
     const KiriView::ArchiveDocumentLocation &archiveDocument,
@@ -182,7 +182,7 @@ void ImagePredecodeCoordinator::scheduleSettledNeutralPredecode()
     const Context context = *m_pendingContext;
     m_debounceTimer.stop();
     m_listerJob.cancel();
-    cancelActivePredecodeRequests();
+    m_activePredecodeRequests.cancel();
     m_cache.clearQueuedLoads();
     m_momentumState.mode = PredecodeMomentumMode::Neutral;
     m_firstDisplayContext = context.firstDisplayContext;
@@ -240,8 +240,8 @@ void ImagePredecodeCoordinator::startPredecodeImageLoads(const std::vector<QUrl>
     m_cache.setDisplayedUrls(displayedPredecodeImageUrls(context));
     m_cache.setWindowUrls(urls);
     cacheDisplayedPredecodeImages(m_cache, context);
-    m_cache.enqueueMissingWindowLoads(
-        context.primaryImage.location.imageUrl(), archiveDocument, activePredecodeUrls());
+    m_cache.enqueueMissingWindowLoads(context.primaryImage.location.imageUrl(), archiveDocument,
+        m_activePredecodeRequests.urls());
 
     startNextPredecodeImageLoads(generation);
 }
@@ -254,7 +254,7 @@ void ImagePredecodeCoordinator::startNextPredecodeImageLoads(quint64 generation)
 
     while (m_activePredecodeRequests.size() < m_parallelLimit) {
         const std::optional<KiriView::PredecodeRequest> request
-            = m_cache.takeNextRequest(activePredecodeUrls());
+            = m_cache.takeNextRequest(m_activePredecodeRequests.urls());
         if (!request.has_value()) {
             return;
         }
@@ -268,11 +268,10 @@ bool ImagePredecodeCoordinator::startPredecodeImageLoad(
     const QUrl &url, const ArchiveDocumentLocation &archiveDocument, quint64 generation)
 {
     const bool urlAvailable = url.isValid() && !url.isEmpty();
-    const QUrl normalizedUrl = normalizedImageUrl(url);
     const bool cached = urlAvailable && m_cache.hasImage(url);
     const bool inWindow = urlAvailable && m_cache.windowContains(url);
     if (!urlAvailable || m_activePredecodeRequests.size() >= m_parallelLimit || cached || !inWindow
-        || hasActivePredecodeRequest(normalizedUrl)) {
+        || m_activePredecodeRequests.containsUrl(url)) {
         return false;
     }
 
@@ -287,15 +286,14 @@ bool ImagePredecodeCoordinator::startPredecodeImageLoad(
                 finishPredecodeImageLoadError(request);
             },
         });
-    m_activePredecodeRequests.push_back(
-        ActivePredecodeRequest { request, normalizedUrl, decodeJob });
+    m_activePredecodeRequests.add(request, decodeJob);
     decodeJob->start(std::move(request));
     return true;
 }
 
 void ImagePredecodeCoordinator::finishPredecodeImageLoadError(const ImageDecodeRequest &request)
 {
-    if (!takeActivePredecodeRequest(request).has_value()) {
+    if (!m_activePredecodeRequests.finish(request).has_value()) {
         return;
     }
 
@@ -305,7 +303,7 @@ void ImagePredecodeCoordinator::finishPredecodeImageLoadError(const ImageDecodeR
 void ImagePredecodeCoordinator::finishPredecodeImageDecode(
     ImageDecodeRequest request, const DecodedImageResult &result)
 {
-    std::optional<ActivePredecodeRequest> activeRequest = takeActivePredecodeRequest(request);
+    std::optional<ImageDecodeRequest> activeRequest = m_activePredecodeRequests.finish(request);
     if (!activeRequest.has_value()) {
         return;
     }
@@ -313,68 +311,10 @@ void ImagePredecodeCoordinator::finishPredecodeImageDecode(
     const auto *staticImage = decodedImageResultImageAs<StaticDecodedImage>(result);
     if (staticImage != nullptr) {
         m_cache.cacheImage(
-            request.imageUrl(), activeRequest->request.archiveDocument(), staticImage->staticImage);
+            request.imageUrl(), activeRequest->archiveDocument(), staticImage->staticImage);
     }
 
     startNextPredecodeImageLoads(request.id());
-}
-
-std::vector<QUrl> ImagePredecodeCoordinator::activePredecodeUrls() const
-{
-    std::vector<QUrl> urls;
-    urls.reserve(m_activePredecodeRequests.size());
-    for (const ActivePredecodeRequest &request : m_activePredecodeRequests) {
-        urls.push_back(request.normalizedUrl);
-    }
-    return urls;
-}
-
-bool ImagePredecodeCoordinator::hasActivePredecodeRequest(const QUrl &normalizedUrl) const
-{
-    return std::any_of(m_activePredecodeRequests.cbegin(), m_activePredecodeRequests.cend(),
-        [&normalizedUrl](const ActivePredecodeRequest &request) {
-            return request.normalizedUrl == normalizedUrl;
-        });
-}
-
-bool ImagePredecodeCoordinator::predecodeRequestIsActive(const ImageDecodeRequest &request) const
-{
-    return std::any_of(m_activePredecodeRequests.cbegin(), m_activePredecodeRequests.cend(),
-        [&request](const ActivePredecodeRequest &activeRequest) {
-            return activeRequest.request.matches(request);
-        });
-}
-
-std::optional<ImagePredecodeCoordinator::ActivePredecodeRequest>
-ImagePredecodeCoordinator::takeActivePredecodeRequest(const ImageDecodeRequest &request)
-{
-    const auto activeRequest = std::find_if(m_activePredecodeRequests.begin(),
-        m_activePredecodeRequests.end(), [&request](const ActivePredecodeRequest &candidate) {
-            return candidate.request.matches(request);
-        });
-    if (activeRequest == m_activePredecodeRequests.end()) {
-        return std::nullopt;
-    }
-
-    ActivePredecodeRequest requestEntry = *activeRequest;
-    if (requestEntry.decodeJob != nullptr) {
-        requestEntry.decodeJob->deleteLater();
-    }
-    m_activePredecodeRequests.erase(activeRequest);
-    return requestEntry;
-}
-
-void ImagePredecodeCoordinator::cancelActivePredecodeRequests()
-{
-    for (const ActivePredecodeRequest &request : m_activePredecodeRequests) {
-        if (request.decodeJob == nullptr) {
-            continue;
-        }
-
-        request.decodeJob->cancel();
-        request.decodeJob->deleteLater();
-    }
-    m_activePredecodeRequests.clear();
 }
 
 void ImagePredecodeCoordinator::cancelBackgroundWork()
@@ -383,7 +323,7 @@ void ImagePredecodeCoordinator::cancelBackgroundWork()
     m_debounceTimer.stop();
     m_neutralTimer.stop();
     m_listerJob.cancel();
-    cancelActivePredecodeRequests();
+    m_activePredecodeRequests.cancel();
     m_pendingContext.reset();
     m_pendingGeneration = 0;
     m_parallelLimit = 1;
