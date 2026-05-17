@@ -4,12 +4,15 @@ This document records the long-term architecture direction for KiriView. It is n
 
 KiriView is a KDE Kirigami image viewer built from three cooperating layers:
 
-```text
-QML / Kirigami
-    -> C++ QObject and QQuickItem facade
-        -> C++ Qt/KDE runtime and effect executor
-            -> Rust Qt-independent policy core
-        <- typed plans, state deltas, and effect descriptions
+```mermaid
+flowchart TD
+    QML["QML / Kirigami"]
+    Facade["C++ QObject and QQuickItem facade"]
+    Runtime["C++ Qt/KDE runtime and effect executor"]
+    Rust["Rust Qt-independent policy core"]
+
+    QML --> Facade --> Runtime --> Rust
+    Rust -- "typed plans, state deltas, and effect descriptions" --> Runtime
 ```
 
 The main maintenance goal is to keep product policy testable without making Rust own Qt runtime concerns. Rust should decide what should happen. C++ should know how to make it happen in Qt and KDE.
@@ -119,12 +122,17 @@ When a Rust module starts to look like glue, either move the branch back to C++ 
 
 The preferred long-term shape for product workflows is event-driven:
 
-```text
-C++ receives UI/runtime event
-    -> converts it into a plain workflow event
-        -> Rust computes state delta and effects
-            -> C++ applies authoritative state,
-               executes effects, and reports completions
+```mermaid
+sequenceDiagram
+    participant Cpp as C++ runtime/controller
+    participant Rust as Rust policy core
+
+    Cpp->>Cpp: Receive UI/runtime event
+    Cpp->>Cpp: Convert to plain workflow event
+    Cpp->>Rust: Workflow event
+    Rust-->>Cpp: State delta and effects
+    Cpp->>Cpp: Apply authoritative state
+    Cpp->>Cpp: Execute effects and report completions
 ```
 
 For example, opening an image can eventually converge on:
