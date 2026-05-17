@@ -14,6 +14,7 @@
 #include <QPointer>
 #include <QTimer>
 #include <algorithm>
+#include <functional>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -93,26 +94,210 @@ template <typename Item> void pruneInactiveItems(std::vector<Item> *items)
 
 namespace KiriView {
 struct ImageCandidateStore::Entry {
-    explicit Entry(QUrl directoryUrl)
-        : directoryUrl(std::move(directoryUrl))
-        , lister(createLiveImageCandidateLister())
+    Entry(QUrl directoryUrl, ImageCandidateStore &store, QString key)
+        : m_directoryUrl(std::move(directoryUrl))
+        , m_key(std::move(key))
+        , m_lister(createLiveImageCandidateLister())
     {
+        connectSignals(store);
     }
 
     ~Entry()
     {
-        QObject::disconnect(lister.get(), nullptr, nullptr, nullptr);
-        lister->stop();
+        QObject::disconnect(m_lister.get(), nullptr, nullptr, nullptr);
+        m_lister->stop();
     }
 
-    QUrl directoryUrl;
-    std::unique_ptr<KCoreDirLister> lister;
-    std::vector<ImageNavigationCandidate> candidates;
-    std::vector<PendingImageCandidateLoad> pendingLoads;
-    std::vector<ImageCandidateSubscriber> subscribers;
-    bool listed = false;
-    bool failed = false;
-    QString errorString;
+    bool failed() const { return m_failed; }
+    bool listed() const { return m_listed; }
+    const QString &errorString() const { return m_errorString; }
+    const std::vector<ImageNavigationCandidate> &candidates() const { return m_candidates; }
+    bool open() { return m_lister->openUrl(m_directoryUrl, KCoreDirLister::Reload); }
+
+    void handleCompleted()
+    {
+        const bool wasListed = m_listed;
+        const bool changed = updateCandidates();
+        m_listed = true;
+        m_failed = false;
+        m_errorString = QString();
+        finishPendingLoads();
+
+        if (wasListed && changed) {
+            notifySubscribers();
+        }
+    }
+
+    void handleChanged()
+    {
+        const bool changed = updateCandidates();
+        if (m_listed && changed) {
+            notifySubscribers();
+        }
+    }
+
+    void handleError(const QString &errorString)
+    {
+        m_failed = true;
+        m_errorString = errorString;
+        finishPendingLoadErrors();
+        notifySubscriberErrors();
+    }
+
+    ImageIoJob addPendingLoad(ImageCandidatesCallback callback, ErrorCallback errorCallback,
+        QObject *receiver, std::function<void(QObject *)> removeToken)
+    {
+        QObject *token = createJobToken(receiver, m_lister.get());
+        ImageIoJob job(token, [removeToken = std::move(removeToken)](QObject *object) {
+            removeToken(object);
+            object->deleteLater();
+        });
+        m_pendingLoads.push_back(PendingImageCandidateLoad {
+            token,
+            job.state(),
+            std::move(callback),
+            std::move(errorCallback),
+        });
+        return job;
+    }
+
+    ImageIoJob addSubscriber(ImageCandidatesCallback callback, ErrorCallback errorCallback,
+        QObject *receiver, std::function<void(QObject *)> removeToken)
+    {
+        QObject *token = createJobToken(receiver, m_lister.get());
+        ImageIoJob job(token, [removeToken = std::move(removeToken)](QObject *object) {
+            removeToken(object);
+            object->deleteLater();
+        });
+        m_subscribers.push_back(ImageCandidateSubscriber {
+            token,
+            std::move(callback),
+            std::move(errorCallback),
+        });
+        return job;
+    }
+
+    void removePendingLoad(QObject *token)
+    {
+        const auto removed = std::remove_if(m_pendingLoads.begin(), m_pendingLoads.end(),
+            [token](const PendingImageCandidateLoad &load) { return load.token.data() == token; });
+        m_pendingLoads.erase(removed, m_pendingLoads.end());
+    }
+
+    void removeSubscriber(QObject *token)
+    {
+        const auto removed = std::remove_if(m_subscribers.begin(), m_subscribers.end(),
+            [token](const ImageCandidateSubscriber &subscriber) {
+                return subscriber.token.data() == token;
+            });
+        m_subscribers.erase(removed, m_subscribers.end());
+    }
+
+private:
+    void connectSignals(ImageCandidateStore &store)
+    {
+        QObject::connect(m_lister.get(), &KCoreDirLister::completed, &store,
+            [&store, key = m_key]() { store.handleEntryCompleted(key); });
+        QObject::connect(m_lister.get(), &KCoreDirLister::itemsAdded, &store,
+            [&store, key = m_key](const QUrl &, const KFileItemList &) {
+                QTimer::singleShot(0, &store, [&store, key]() { store.handleEntryChanged(key); });
+            });
+        QObject::connect(m_lister.get(), &KCoreDirLister::itemsDeleted, &store,
+            [&store, key = m_key](const KFileItemList &) {
+                QTimer::singleShot(0, &store, [&store, key]() { store.handleEntryChanged(key); });
+            });
+        QObject::connect(m_lister.get(), &KCoreDirLister::refreshItems, &store,
+            [&store, key = m_key](const QList<QPair<KFileItem, KFileItem>> &) {
+                QTimer::singleShot(0, &store, [&store, key]() { store.handleEntryChanged(key); });
+            });
+        QObject::connect(m_lister.get(), &KCoreDirLister::clear, &store, [&store, key = m_key]() {
+            QTimer::singleShot(0, &store, [&store, key]() { store.handleEntryChanged(key); });
+        });
+        QObject::connect(
+            m_lister.get(), &KCoreDirLister::clearDir, &store, [&store, key = m_key](const QUrl &) {
+                QTimer::singleShot(0, &store, [&store, key]() { store.handleEntryChanged(key); });
+            });
+        QObject::connect(m_lister.get(), &KCoreDirLister::jobError, &store,
+            [&store, key = m_key](KIO::Job *job) {
+                store.handleEntryError(key, job == nullptr ? QString() : job->errorString());
+            });
+    }
+
+    bool updateCandidates()
+    {
+        std::vector<ImageNavigationCandidate> candidates
+            = imageCandidatesForLister(m_lister.get(), m_directoryUrl);
+        if (sameImageNavigationCandidates(m_candidates, candidates)) {
+            return false;
+        }
+
+        m_candidates = std::move(candidates);
+        return true;
+    }
+
+    void finishPendingLoads()
+    {
+        std::vector<PendingImageCandidateLoad> pendingLoads = std::move(m_pendingLoads);
+        m_pendingLoads.clear();
+        for (PendingImageCandidateLoad &load : pendingLoads) {
+            QObject *token = load.token.data();
+            if (load.state == nullptr || token == nullptr) {
+                continue;
+            }
+
+            load.state->claimAndRun(token, [&]() {
+                invokeIfSet(load.callback, m_candidates);
+                token->deleteLater();
+            });
+        }
+    }
+
+    void finishPendingLoadErrors()
+    {
+        std::vector<PendingImageCandidateLoad> pendingLoads = std::move(m_pendingLoads);
+        m_pendingLoads.clear();
+        for (PendingImageCandidateLoad &load : pendingLoads) {
+            QObject *token = load.token.data();
+            if (load.state == nullptr || token == nullptr) {
+                continue;
+            }
+
+            load.state->claimAndRun(token, [&]() {
+                invokeIfSet(load.errorCallback, m_errorString);
+                token->deleteLater();
+            });
+        }
+    }
+
+    void notifySubscribers()
+    {
+        pruneInactiveItems(&m_subscribers);
+        const std::vector<ImageCandidateSubscriber> subscribers = m_subscribers;
+        const std::vector<ImageNavigationCandidate> candidates = m_candidates;
+        for (const ImageCandidateSubscriber &subscriber : subscribers) {
+            invokeIfSet(subscriber.callback, candidates);
+        }
+    }
+
+    void notifySubscriberErrors()
+    {
+        pruneInactiveItems(&m_subscribers);
+        const std::vector<ImageCandidateSubscriber> subscribers = m_subscribers;
+        const QString errorString = m_errorString;
+        for (const ImageCandidateSubscriber &subscriber : subscribers) {
+            invokeIfSet(subscriber.errorCallback, errorString);
+        }
+    }
+
+    QUrl m_directoryUrl;
+    QString m_key;
+    std::unique_ptr<KCoreDirLister> m_lister;
+    std::vector<ImageNavigationCandidate> m_candidates;
+    std::vector<PendingImageCandidateLoad> m_pendingLoads;
+    std::vector<ImageCandidateSubscriber> m_subscribers;
+    bool m_listed = false;
+    bool m_failed = false;
+    QString m_errorString;
 };
 
 ImageCandidateStore::ImageCandidateStore(QObject *parent)
@@ -133,16 +318,22 @@ ImageIoJob ImageCandidateStore::loadDirectoryImages(QObject *receiver, QUrl dire
     directoryUrl = normalizedDirectoryUrl(std::move(directoryUrl));
     const QString key = keyForDirectoryUrl(directoryUrl);
     Entry &entry = entryForLocalDirectory(directoryUrl);
-    if (entry.failed) {
-        invokeIfSet(errorCallback, entry.errorString);
+    if (entry.failed()) {
+        invokeIfSet(errorCallback, entry.errorString());
         return ImageIoJob();
     }
-    if (entry.listed) {
-        invokeIfSet(callback, entry.candidates);
+    if (entry.listed()) {
+        invokeIfSet(callback, entry.candidates());
         return ImageIoJob();
     }
 
-    return addPendingLoad(key, entry, std::move(callback), std::move(errorCallback), receiver);
+    QPointer<ImageCandidateStore> store(this);
+    return entry.addPendingLoad(
+        std::move(callback), std::move(errorCallback), receiver, [store, key](QObject *token) {
+            if (!store.isNull()) {
+                store->removePendingLoad(key, token);
+            }
+        });
 }
 
 ImageIoJob ImageCandidateStore::watchDirectoryImages(QObject *receiver, QUrl directoryUrl,
@@ -155,12 +346,18 @@ ImageIoJob ImageCandidateStore::watchDirectoryImages(QObject *receiver, QUrl dir
     directoryUrl = normalizedDirectoryUrl(std::move(directoryUrl));
     const QString key = keyForDirectoryUrl(directoryUrl);
     Entry &entry = entryForLocalDirectory(directoryUrl);
-    if (entry.failed) {
-        invokeIfSet(errorCallback, entry.errorString);
+    if (entry.failed()) {
+        invokeIfSet(errorCallback, entry.errorString());
         return ImageIoJob();
     }
 
-    return addSubscriber(key, entry, std::move(callback), std::move(errorCallback), receiver);
+    QPointer<ImageCandidateStore> store(this);
+    return entry.addSubscriber(
+        std::move(callback), std::move(errorCallback), receiver, [store, key](QObject *token) {
+            if (!store.isNull()) {
+                store->removeSubscriber(key, token);
+            }
+        });
 }
 
 ImageCandidateStore::Entry &ImageCandidateStore::entryForLocalDirectory(const QUrl &directoryUrl)
@@ -171,44 +368,15 @@ ImageCandidateStore::Entry &ImageCandidateStore::entryForLocalDirectory(const QU
         return *entry->second;
     }
 
-    auto insertedEntry = std::make_unique<Entry>(directoryUrl);
+    auto insertedEntry = std::make_unique<Entry>(directoryUrl, *this, key);
     Entry &entryRef = *insertedEntry;
-    connectEntrySignals(key, entryRef);
     m_entries.emplace(key, std::move(insertedEntry));
 
-    if (!entryRef.lister->openUrl(directoryUrl, KCoreDirLister::Reload)) {
+    if (!entryRef.open()) {
         handleEntryError(key, QString());
     }
 
     return entryRef;
-}
-
-void ImageCandidateStore::connectEntrySignals(const QString &key, Entry &entry)
-{
-    QObject::connect(entry.lister.get(), &KCoreDirLister::completed, this,
-        [this, key]() { handleEntryCompleted(key); });
-    QObject::connect(entry.lister.get(), &KCoreDirLister::itemsAdded, this,
-        [this, key](const QUrl &, const KFileItemList &) {
-            QTimer::singleShot(0, this, [this, key]() { handleEntryChanged(key); });
-        });
-    QObject::connect(entry.lister.get(), &KCoreDirLister::itemsDeleted, this,
-        [this, key](const KFileItemList &) {
-            QTimer::singleShot(0, this, [this, key]() { handleEntryChanged(key); });
-        });
-    QObject::connect(entry.lister.get(), &KCoreDirLister::refreshItems, this,
-        [this, key](const QList<QPair<KFileItem, KFileItem>> &) {
-            QTimer::singleShot(0, this, [this, key]() { handleEntryChanged(key); });
-        });
-    QObject::connect(entry.lister.get(), &KCoreDirLister::clear, this,
-        [this, key]() { QTimer::singleShot(0, this, [this, key]() { handleEntryChanged(key); }); });
-    QObject::connect(
-        entry.lister.get(), &KCoreDirLister::clearDir, this, [this, key](const QUrl &) {
-            QTimer::singleShot(0, this, [this, key]() { handleEntryChanged(key); });
-        });
-    QObject::connect(
-        entry.lister.get(), &KCoreDirLister::jobError, this, [this, key](KIO::Job *job) {
-            handleEntryError(key, job == nullptr ? QString() : job->errorString());
-        });
 }
 
 void ImageCandidateStore::handleEntryCompleted(const QString &key)
@@ -218,16 +386,7 @@ void ImageCandidateStore::handleEntryCompleted(const QString &key)
         return;
     }
 
-    const bool wasListed = entry->second->listed;
-    const bool changed = updateEntryCandidates(*entry->second);
-    entry->second->listed = true;
-    entry->second->failed = false;
-    entry->second->errorString = QString();
-    finishPendingLoads(*entry->second);
-
-    if (wasListed && changed) {
-        notifySubscribers(*entry->second);
-    }
+    entry->second->handleCompleted();
 }
 
 void ImageCandidateStore::handleEntryChanged(const QString &key)
@@ -237,10 +396,7 @@ void ImageCandidateStore::handleEntryChanged(const QString &key)
         return;
     }
 
-    const bool changed = updateEntryCandidates(*entry->second);
-    if (entry->second->listed && changed) {
-        notifySubscribers(*entry->second);
-    }
+    entry->second->handleChanged();
 }
 
 void ImageCandidateStore::handleEntryError(const QString &key, const QString &errorString)
@@ -250,109 +406,7 @@ void ImageCandidateStore::handleEntryError(const QString &key, const QString &er
         return;
     }
 
-    entry->second->failed = true;
-    entry->second->errorString = errorString;
-    finishPendingLoadErrors(*entry->second);
-    notifySubscriberErrors(*entry->second);
-}
-
-bool ImageCandidateStore::updateEntryCandidates(Entry &entry)
-{
-    std::vector<ImageNavigationCandidate> candidates
-        = imageCandidatesForLister(entry.lister.get(), entry.directoryUrl);
-    if (sameImageNavigationCandidates(entry.candidates, candidates)) {
-        return false;
-    }
-
-    entry.candidates = std::move(candidates);
-    return true;
-}
-
-void ImageCandidateStore::finishPendingLoads(Entry &entry)
-{
-    std::vector<PendingImageCandidateLoad> pendingLoads = std::move(entry.pendingLoads);
-    entry.pendingLoads.clear();
-    for (PendingImageCandidateLoad &load : pendingLoads) {
-        QObject *token = load.token.data();
-        if (load.state == nullptr || token == nullptr) {
-            continue;
-        }
-
-        load.state->claimAndRun(token, [&]() {
-            invokeIfSet(load.callback, entry.candidates);
-            token->deleteLater();
-        });
-    }
-}
-
-void ImageCandidateStore::finishPendingLoadErrors(Entry &entry)
-{
-    std::vector<PendingImageCandidateLoad> pendingLoads = std::move(entry.pendingLoads);
-    entry.pendingLoads.clear();
-    for (PendingImageCandidateLoad &load : pendingLoads) {
-        QObject *token = load.token.data();
-        if (load.state == nullptr || token == nullptr) {
-            continue;
-        }
-
-        load.state->claimAndRun(token, [&]() {
-            invokeIfSet(load.errorCallback, entry.errorString);
-            token->deleteLater();
-        });
-    }
-}
-
-void ImageCandidateStore::notifySubscribers(Entry &entry)
-{
-    pruneInactiveItems(&entry.subscribers);
-    const std::vector<ImageCandidateSubscriber> subscribers = entry.subscribers;
-    const std::vector<ImageNavigationCandidate> candidates = entry.candidates;
-    for (const ImageCandidateSubscriber &subscriber : subscribers) {
-        invokeIfSet(subscriber.callback, candidates);
-    }
-}
-
-void ImageCandidateStore::notifySubscriberErrors(Entry &entry)
-{
-    pruneInactiveItems(&entry.subscribers);
-    const std::vector<ImageCandidateSubscriber> subscribers = entry.subscribers;
-    const QString errorString = entry.errorString;
-    for (const ImageCandidateSubscriber &subscriber : subscribers) {
-        invokeIfSet(subscriber.errorCallback, errorString);
-    }
-}
-
-ImageIoJob ImageCandidateStore::addPendingLoad(const QString &key, Entry &entry,
-    ImageCandidatesCallback callback, ErrorCallback errorCallback, QObject *receiver)
-{
-    QObject *token = createJobToken(receiver, this);
-    ImageIoJob job(token, [this, key](QObject *object) {
-        removePendingLoad(key, object);
-        object->deleteLater();
-    });
-    entry.pendingLoads.push_back(PendingImageCandidateLoad {
-        token,
-        job.state(),
-        std::move(callback),
-        std::move(errorCallback),
-    });
-    return job;
-}
-
-ImageIoJob ImageCandidateStore::addSubscriber(const QString &key, Entry &entry,
-    ImageCandidatesCallback callback, ErrorCallback errorCallback, QObject *receiver)
-{
-    QObject *token = createJobToken(receiver, this);
-    ImageIoJob job(token, [this, key](QObject *object) {
-        removeSubscriber(key, object);
-        object->deleteLater();
-    });
-    entry.subscribers.push_back(ImageCandidateSubscriber {
-        token,
-        std::move(callback),
-        std::move(errorCallback),
-    });
-    return job;
+    entry->second->handleError(errorString);
 }
 
 void ImageCandidateStore::removePendingLoad(const QString &key, QObject *token)
@@ -362,10 +416,7 @@ void ImageCandidateStore::removePendingLoad(const QString &key, QObject *token)
         return;
     }
 
-    auto &pendingLoads = entry->second->pendingLoads;
-    const auto removed = std::remove_if(pendingLoads.begin(), pendingLoads.end(),
-        [token](const PendingImageCandidateLoad &load) { return load.token.data() == token; });
-    pendingLoads.erase(removed, pendingLoads.end());
+    entry->second->removePendingLoad(token);
 }
 
 void ImageCandidateStore::removeSubscriber(const QString &key, QObject *token)
@@ -375,11 +426,6 @@ void ImageCandidateStore::removeSubscriber(const QString &key, QObject *token)
         return;
     }
 
-    auto &subscribers = entry->second->subscribers;
-    const auto removed = std::remove_if(subscribers.begin(), subscribers.end(),
-        [token](const ImageCandidateSubscriber &subscriber) {
-            return subscriber.token.data() == token;
-        });
-    subscribers.erase(removed, subscribers.end());
+    entry->second->removeSubscriber(token);
 }
 }

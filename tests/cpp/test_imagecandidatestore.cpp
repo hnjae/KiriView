@@ -45,6 +45,7 @@ class TestImageCandidateStore : public QObject
 
 private Q_SLOTS:
     void localDirectoryPublishesAddedAndDeletedImages();
+    void liveDirectoryWatchJobCanOutliveStore();
 };
 
 void TestImageCandidateStore::localDirectoryPublishesAddedAndDeletedImages()
@@ -106,6 +107,25 @@ void TestImageCandidateStore::localDirectoryPublishesAddedAndDeletedImages()
     QCOMPARE(changeCount, 2);
 
     watchJob.cancel();
+}
+
+void TestImageCandidateStore::liveDirectoryWatchJobCanOutliveStore()
+{
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+
+    KiriView::ImageIoJob watchJob;
+    {
+        KiriView::ImageCandidateStore store;
+        watchJob = store.watchDirectoryImages(
+            this, directoryUrl(directory), [](std::vector<KiriView::ImageNavigationCandidate>) { },
+            [](const QString &) { });
+        QVERIFY(watchJob.isActive());
+    }
+
+    QVERIFY(watchJob.isActive());
+    watchJob.cancel();
+    QVERIFY(!watchJob.isActive());
 }
 
 QTEST_GUILESS_MAIN(TestImageCandidateStore)

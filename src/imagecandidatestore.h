@@ -28,19 +28,9 @@ private:
     struct Entry;
 
     Entry &entryForLocalDirectory(const QUrl &directoryUrl);
-    void connectEntrySignals(const QString &key, Entry &entry);
     void handleEntryCompleted(const QString &key);
     void handleEntryChanged(const QString &key);
     void handleEntryError(const QString &key, const QString &errorString);
-    void finishPendingLoads(Entry &entry);
-    void finishPendingLoadErrors(Entry &entry);
-    void notifySubscribers(Entry &entry);
-    void notifySubscriberErrors(Entry &entry);
-    bool updateEntryCandidates(Entry &entry);
-    ImageIoJob addPendingLoad(const QString &key, Entry &entry, ImageCandidatesCallback callback,
-        ErrorCallback errorCallback, QObject *receiver);
-    ImageIoJob addSubscriber(const QString &key, Entry &entry, ImageCandidatesCallback callback,
-        ErrorCallback errorCallback, QObject *receiver);
     void removePendingLoad(const QString &key, QObject *token);
     void removeSubscriber(const QString &key, QObject *token);
 
