@@ -3,6 +3,7 @@
 
 #include "applicationruntime.h"
 
+#include "kiriview/src/applicationruntime.cxx.h"
 #include "localization.h"
 
 #include <QGuiApplication>
@@ -34,6 +35,11 @@ QUrl validInitialSourceUrl(const QUrl &url)
 
     return url;
 }
+
+QString rustStringToQString(const rust::String &text)
+{
+    return QString::fromUtf8(text.data(), static_cast<qsizetype>(text.size()));
+}
 }
 
 namespace KiriView {
@@ -44,20 +50,27 @@ void initializeApplicationRuntime()
     setupDefaultQuickStyle();
 }
 
-QUrl initialSourceUrlFromLocalFilePath(const QString &path)
+QUrl initialSourceUrlFromStartupSource(const ApplicationStartupSource &source)
 {
-    return validInitialSourceUrl(QUrl::fromLocalFile(path));
+    const QString text = rustStringToQString(source.text);
+    switch (source.kind) {
+    case ApplicationStartupSourceKind::None:
+        return QUrl();
+    case ApplicationStartupSourceKind::LocalFilePath:
+        return validInitialSourceUrl(QUrl::fromLocalFile(text));
+    case ApplicationStartupSourceKind::UrlText:
+        return validInitialSourceUrl(QUrl(text));
+    }
+
+    return QUrl();
 }
 
-QUrl initialSourceUrlFromUrlText(const QString &urlText)
-{
-    return validInitialSourceUrl(QUrl(urlText));
-}
-
-void loadApplicationMainQml(QQmlApplicationEngine &engine, const QUrl &initialSourceUrl)
+void loadApplicationMainQml(
+    QQmlApplicationEngine &engine, const ApplicationStartupSource &startupSource)
 {
     setupLocalizedContext(engine);
 
+    const QUrl initialSourceUrl = initialSourceUrlFromStartupSource(startupSource);
     if (!initialSourceUrl.isEmpty()) {
         QVariantMap initialProperties;
         initialProperties.insert(QStringLiteral("initialSourceUrl"), initialSourceUrl);

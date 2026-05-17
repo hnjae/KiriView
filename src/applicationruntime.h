@@ -5,14 +5,15 @@
 #define KIRIVIEW_APPLICATIONRUNTIME_H
 
 class QQmlApplicationEngine;
-class QString;
 class QUrl;
 
 namespace KiriView {
+struct ApplicationStartupSource;
+
 void initializeApplicationRuntime();
-QUrl initialSourceUrlFromLocalFilePath(const QString &path);
-QUrl initialSourceUrlFromUrlText(const QString &urlText);
-void loadApplicationMainQml(QQmlApplicationEngine &engine, const QUrl &initialSourceUrl);
+QUrl initialSourceUrlFromStartupSource(const ApplicationStartupSource &source);
+void loadApplicationMainQml(
+    QQmlApplicationEngine &engine, const ApplicationStartupSource &startupSource);
 }
 
 #endif

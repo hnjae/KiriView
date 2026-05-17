@@ -35,6 +35,6 @@ pub fn initialize_rust_modules() {
 }
 
 pub use applicationruntime::{
-    initial_source_url_from_local_file_path, initial_source_url_from_url_text,
+    ApplicationStartupSource, ApplicationStartupSourceKind, application_startup_source,
     initialize_application_runtime, load_application_main_qml,
 };
