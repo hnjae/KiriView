@@ -16,6 +16,7 @@ mod imagemath;
 mod imagenavigationmodel;
 mod imageopenworkflow;
 mod imagerendergeometry;
+mod imagerotation;
 mod imagespreadgeometry;
 mod imagespreadnavigation;
 mod imagetilegeometry;
