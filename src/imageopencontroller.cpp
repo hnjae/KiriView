@@ -166,6 +166,22 @@ bool ImageOpenController::finishDecodedImageResult(
 }
 
 bool ImageOpenController::finishDecodedImageResult(
+    ImageLoadSession &session, ApngAnimationImage &decoded)
+{
+    const DecodedImagePresentationPlan plan = decodedImagePresentationPlan(decoded);
+    if (!plan.presentable) {
+        finishLoadWithError(session, ImageLoadError::Generic,
+            imageViewText("Could not decode the selected image animation."));
+        return false;
+    }
+
+    return finishAnimationImageLoad(session, decoded.firstFrame, [this, &decoded]() {
+        m_presentationController.startApngAnimation(
+            decoded.data, decoded.loopCount, decoded.firstFrameDelay);
+    });
+}
+
+bool ImageOpenController::finishDecodedImageResult(
     ImageLoadSession &session, ReaderAnimationImage &decoded)
 {
     const DecodedImagePresentationPlan plan = decodedImagePresentationPlan(decoded);

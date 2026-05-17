@@ -58,6 +58,7 @@ in
     libarchive
     libheif.dev
     libheif.lib
+    libpng
     lld
     ninja
     pkg-config

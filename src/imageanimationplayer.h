@@ -5,6 +5,7 @@
 #define KIRIVIEW_IMAGEANIMATIONPLAYER_H
 
 #include "animationframe.h"
+#include "apngdecoder.h"
 #include "imageanimationpolicy.h"
 
 #include <QByteArray>
@@ -13,6 +14,7 @@
 #include <cstddef>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <variant>
 #include <vector>
 
@@ -34,6 +36,7 @@ public:
 
     void start(
         const QByteArray &data, const QByteArray &format, int loopCount, int firstFrameDelay);
+    void startApng(const QByteArray &data, int loopCount, int firstFrameDelay);
     void startDecoded(std::vector<AnimationFrame> frames, int loopCount);
     void startHeifSequence(const QByteArray &data);
     void stop();
@@ -50,19 +53,26 @@ private:
         std::size_t frameIndex = 0;
     };
 
+    struct ApngPlayback {
+        QByteArray data;
+        std::unique_ptr<ApngAnimationReader> reader;
+    };
+
     struct HeifSequencePlayback {
         QByteArray data;
         std::unique_ptr<HeifSequenceReader> reader;
     };
 
-    using Playback
-        = std::variant<std::monostate, ReaderPlayback, DecodedPlayback, HeifSequencePlayback>;
+    using Playback = std::variant<std::monostate, ReaderPlayback, DecodedPlayback, ApngPlayback,
+        HeifSequencePlayback>;
 
     void advanceFrame();
     void advanceReaderFrame(ReaderPlayback &playback);
     void advanceDecodedFrame(DecodedPlayback &playback);
+    void advanceApngFrame(ApngPlayback &playback);
     void advanceHeifSequenceFrame(HeifSequencePlayback &playback);
     bool resetReader(ReaderPlayback &playback, QString *errorString);
+    std::optional<ApngOpenResult> resetApng(ApngPlayback &playback, QString *errorString);
     bool resetHeifSequence(
         HeifSequencePlayback &playback, int *firstFrameDelay, QString *errorString);
     void scheduleNextFrame(int delay);

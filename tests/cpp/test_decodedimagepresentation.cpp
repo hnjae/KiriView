@@ -64,6 +64,11 @@ void TestDecodedImagePresentation::streamedAnimationsUseFirstFrames()
     QVERIFY(plan.presentable);
     QVERIFY(!plan.predecodeCacheable);
 
+    const KiriView::ApngAnimationImage apngAnimation { KiriView::TestSupport::testImage() };
+    plan = KiriView::decodedImagePresentationPlan(apngAnimation);
+    QVERIFY(plan.presentable);
+    QVERIFY(!plan.predecodeCacheable);
+
     const KiriView::HeifSequenceAnimationImage heifSequence { KiriView::TestSupport::testImage() };
     plan = KiriView::decodedImagePresentationPlan(heifSequence);
     QVERIFY(plan.presentable);

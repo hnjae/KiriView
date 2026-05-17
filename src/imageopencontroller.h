@@ -57,6 +57,7 @@ private:
     void finishDecodedImageLoad(ImageLoadSession session, DecodedImage image);
     bool finishDecodedImageResult(ImageLoadSession &session, StaticDecodedImage &decoded);
     bool finishDecodedImageResult(ImageLoadSession &session, DecodedAnimationImage &decoded);
+    bool finishDecodedImageResult(ImageLoadSession &session, ApngAnimationImage &decoded);
     bool finishDecodedImageResult(ImageLoadSession &session, ReaderAnimationImage &decoded);
     bool finishDecodedImageResult(ImageLoadSession &session, HeifSequenceAnimationImage &decoded);
     bool finishAnimationImageLoad(

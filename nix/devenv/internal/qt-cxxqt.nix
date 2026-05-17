@@ -65,6 +65,7 @@ let
   ki18nDev = pkgs.kdePackages.ki18n.dev or pkgs.kdePackages.ki18n;
   kirigamiAddonsDev = pkgs.kdePackages.kirigami-addons.dev or pkgs.kdePackages.kirigami-addons;
   kioDev = pkgs.kdePackages.kio.dev or pkgs.kdePackages.kio;
+  libpngDev = pkgs.libpng.dev or pkgs.libpng;
   appQmlRoot = "${config.devenv.root}/target/cxxqt/qml_modules";
   qtQmlRoot = "${config.devenv.root}/.devenv/profile/lib/qt-6/qml";
   kconfigQmlRoot = "${pkgs.kdePackages.kconfig}/lib/qt-6/qml";
@@ -144,6 +145,7 @@ let
     "${kioDev}/include/KF6/KIO"
     "${kioDev}/include/KF6/KIOCore"
     "${kioDev}/include/KF6/KIOWidgets"
+    "${libpngDev}/include/libpng16"
   ]
   ++ cxxStandardLibraryIncludeDirs
   ++ map (module: ".devenv/profile/include/${module}") qtIncludeModules;

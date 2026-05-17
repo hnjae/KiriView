@@ -23,6 +23,11 @@ DecodedImagePresentationPlan decodedImagePresentationPlan(const DecodedAnimation
     return presentationPlan(!decoded.frames.empty(), false);
 }
 
+DecodedImagePresentationPlan decodedImagePresentationPlan(const ApngAnimationImage &decoded)
+{
+    return presentationPlan(!decoded.firstFrame.isNull(), false);
+}
+
 DecodedImagePresentationPlan decodedImagePresentationPlan(const ReaderAnimationImage &)
 {
     return presentationPlan(true, false);

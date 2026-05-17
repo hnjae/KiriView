@@ -232,6 +232,12 @@ void ImagePresentationController::startAnimation(
     m_displayedImageState->startAnimation(data, format, loopCount, firstFrameDelay);
 }
 
+void ImagePresentationController::startApngAnimation(
+    const QByteArray &data, int loopCount, int firstFrameDelay)
+{
+    m_displayedImageState->startApngAnimation(data, loopCount, firstFrameDelay);
+}
+
 void ImagePresentationController::startDecodedAnimation(
     std::vector<AnimationFrame> frames, int loopCount)
 {

@@ -3,6 +3,7 @@
 
 #include "imageanimationplayer.h"
 
+#include "apngdecoder.h"
 #include "bufferedimagereader.h"
 #include "heifdecoder.h"
 #include "imagecallback.h"
@@ -56,6 +57,28 @@ void ImageAnimationPlayer::start(
     }
 }
 
+void ImageAnimationPlayer::startApng(const QByteArray &data, int loopCount, int firstFrameDelay)
+{
+    clearPlaybackState();
+    m_loopState.loopCount = loopCount;
+
+    ApngPlayback playback;
+    playback.data = data;
+
+    QString errorString;
+    std::optional<ApngOpenResult> openResult = resetApng(playback, &errorString);
+    if (!openResult.has_value()) {
+        finishWithError(errorString);
+        return;
+    }
+
+    const bool hasMoreFrames = openResult->frameCount > 1;
+    m_playback = std::move(playback);
+    if (hasMoreFrames) {
+        scheduleNextFrame(firstFrameDelay);
+    }
+}
+
 void ImageAnimationPlayer::startDecoded(std::vector<AnimationFrame> frames, int loopCount)
 {
     clearPlaybackState();
@@ -99,6 +122,7 @@ void ImageAnimationPlayer::advanceFrame()
         void operator()(std::monostate &) const { }
         void operator()(ReaderPlayback &playback) const { player->advanceReaderFrame(playback); }
         void operator()(DecodedPlayback &playback) const { player->advanceDecodedFrame(playback); }
+        void operator()(ApngPlayback &playback) const { player->advanceApngFrame(playback); }
         void operator()(HeifSequencePlayback &playback) const
         {
             player->advanceHeifSequenceFrame(playback);
@@ -160,6 +184,45 @@ void ImageAnimationPlayer::advanceDecodedFrame(DecodedPlayback &playback)
     scheduleNextFrameOrStop(advance.scheduleNextFrame, frame.delay);
 }
 
+void ImageAnimationPlayer::advanceApngFrame(ApngPlayback &playback)
+{
+    if (playback.reader == nullptr) {
+        return;
+    }
+
+    QString errorString;
+    std::optional<AnimationFrame> frame = playback.reader->readNextFrame(&errorString);
+    if (!frame.has_value()) {
+        if (!errorString.isEmpty()) {
+            finishWithError(errorString);
+            return;
+        }
+
+        const AnimationLoopAdvance loopAdvance = advanceAnimationLoop(m_loopState);
+        m_loopState.completedLoops = loopAdvance.completedLoops;
+        if (!loopAdvance.shouldContinue) {
+            stop();
+            return;
+        }
+
+        std::optional<ApngOpenResult> openResult = resetApng(playback, &errorString);
+        if (!openResult.has_value()) {
+            finishWithError(errorString);
+            return;
+        }
+
+        invokeIfSet(m_frameReady, openResult->firstFrame);
+        scheduleNextFrameOrStop(
+            openResult->frameCount > 1 || animationHasRemainingLoops(m_loopState),
+            openResult->firstFrameDelay);
+        return;
+    }
+
+    invokeIfSet(m_frameReady, frame->image);
+    scheduleNextFrameOrStop(
+        playback.reader->hasMoreFrames() || animationHasRemainingLoops(m_loopState), frame->delay);
+}
+
 void ImageAnimationPlayer::advanceHeifSequenceFrame(HeifSequencePlayback &playback)
 {
     if (playback.reader == nullptr) {
@@ -198,6 +261,29 @@ bool ImageAnimationPlayer::resetReader(ReaderPlayback &playback, QString *errorS
 
     playback.reader = std::move(reader);
     return true;
+}
+
+std::optional<ApngOpenResult> ImageAnimationPlayer::resetApng(
+    ApngPlayback &playback, QString *errorString)
+{
+    playback.reader = std::make_unique<ApngAnimationReader>();
+    ApngOpenResult openResult = playback.reader->open(playback.data);
+    switch (openResult.status) {
+    case ApngOpenStatus::Success:
+        return openResult;
+    case ApngOpenStatus::Error:
+        *errorString = openResult.errorString;
+        playback.reader.reset();
+        return std::nullopt;
+    case ApngOpenStatus::NotApng:
+        *errorString = imageViewText("Could not decode the selected APNG animation.");
+        playback.reader.reset();
+        return std::nullopt;
+    }
+
+    *errorString = imageViewText("Could not decode the selected APNG animation.");
+    playback.reader.reset();
+    return std::nullopt;
 }
 
 bool ImageAnimationPlayer::resetHeifSequence(

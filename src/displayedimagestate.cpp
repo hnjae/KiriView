@@ -121,6 +121,12 @@ void DisplayedImageState::startAnimation(
     m_animationPlayer->start(data, format, loopCount, firstFrameDelay);
 }
 
+void DisplayedImageState::startApngAnimation(
+    const QByteArray &data, int loopCount, int firstFrameDelay)
+{
+    m_animationPlayer->startApng(data, loopCount, firstFrameDelay);
+}
+
 void DisplayedImageState::startDecodedAnimation(std::vector<AnimationFrame> frames, int loopCount)
 {
     m_animationPlayer->startDecoded(std::move(frames), loopCount);

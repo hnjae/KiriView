@@ -7,28 +7,46 @@
 #include "animationframe.h"
 
 #include <QByteArray>
+#include <QImage>
 #include <QString>
-#include <vector>
+#include <memory>
+#include <optional>
 
 namespace KiriView {
-struct ApngAnimation {
-    std::vector<AnimationFrame> frames;
-    int loopCount = 0;
-};
-
-enum class ApngDecodeStatus {
+enum class ApngOpenStatus {
     NotApng,
     Success,
     Error,
 };
 
-struct ApngDecodeResult {
-    ApngDecodeStatus status = ApngDecodeStatus::NotApng;
-    ApngAnimation animation;
+struct ApngOpenResult {
+    ApngOpenStatus status = ApngOpenStatus::NotApng;
+    QImage firstFrame;
+    int firstFrameDelay = 0;
+    int loopCount = 0;
+    int frameCount = 0;
     QString errorString;
 };
 
-ApngDecodeResult decodeApngAnimation(const QByteArray &data);
+class ApngAnimationReader final
+{
+public:
+    ApngAnimationReader();
+    ~ApngAnimationReader();
+
+    ApngAnimationReader(const ApngAnimationReader &) = delete;
+    ApngAnimationReader &operator=(const ApngAnimationReader &) = delete;
+
+    ApngOpenResult open(QByteArray data);
+    std::optional<AnimationFrame> readNextFrame(QString *errorString);
+    bool hasMoreFrames() const;
+    int frameCount() const;
+    void close();
+
+private:
+    class Private;
+    std::unique_ptr<Private> d;
+};
 }
 
 #endif

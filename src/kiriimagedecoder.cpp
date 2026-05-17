@@ -55,23 +55,17 @@ DecodedImageResult decodeImageData(const QByteArray &data, const ImageDecodeRequ
         return *svgResult;
     }
 
-    ApngDecodeResult apngResult = decodeApngAnimation(data);
-    if (apngResult.status == ApngDecodeStatus::Success) {
-        if (apngResult.animation.frames.empty()) {
-            return failedDecodedImageResult(
-                imageViewText("Could not decode the selected APNG animation."));
-        }
-
-        for (AnimationFrame &frame : apngResult.animation.frames) {
-            frame.image = displayReadyImage(frame.image);
-        }
-
-        return successfulDecodedImageResult(DecodedAnimationImage {
-            std::move(apngResult.animation.frames),
-            apngResult.animation.loopCount,
+    ApngAnimationReader apngReader;
+    ApngOpenResult apngResult = apngReader.open(data);
+    if (apngResult.status == ApngOpenStatus::Success) {
+        return successfulDecodedImageResult(ApngAnimationImage {
+            std::move(apngResult.firstFrame),
+            data,
+            apngResult.firstFrameDelay,
+            apngResult.loopCount,
         });
     }
-    if (apngResult.status == ApngDecodeStatus::Error) {
+    if (apngResult.status == ApngOpenStatus::Error) {
         return failedDecodedImageResult(apngResult.errorString);
     }
 

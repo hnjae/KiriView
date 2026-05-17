@@ -22,6 +22,7 @@ find_package(KF6KIO CONFIG REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(LibArchive REQUIRED IMPORTED_TARGET libarchive)
 pkg_check_modules(LibHeif REQUIRED IMPORTED_TARGET libheif)
+pkg_check_modules(LibPng REQUIRED IMPORTED_TARGET libpng)
 find_program(MSGFMT_EXECUTABLE msgfmt REQUIRED)
 find_program(DESKTOP_FILE_VALIDATE_EXECUTABLE desktop-file-validate REQUIRED)
 
@@ -100,6 +101,7 @@ target_link_libraries(kiriview_test_core PUBLIC
     KirigamiAddonsStatefulApp
     PkgConfig::LibArchive
     PkgConfig::LibHeif
+    PkgConfig::LibPng
 )
 
 set(KIRIVIEW_TEST_LOCALE_DIR "${CMAKE_CURRENT_BINARY_DIR}/locale")
