@@ -6,6 +6,10 @@
 
 #include "imagedocumenteffects.h"
 
+#include <QString>
+#include <QUrl>
+#include <functional>
+
 namespace KiriView {
 class ArchiveDocumentSessionStore;
 class ImageDocumentLoadController;
@@ -15,6 +19,34 @@ class ImageDocumentState;
 class ImageOpenController;
 class ImagePresentationController;
 class ImageSpreadPresentationController;
+
+struct ImageDocumentEffectOperations {
+    std::function<void()> clearArchiveSession;
+    std::function<void()> clearPredecode;
+    std::function<void()> cancelPredecode;
+    std::function<void()> finishSpreadTransition;
+    std::function<void()> clearSecondaryPage;
+    std::function<void()> cancelPageNavigationUpdate;
+    std::function<void()> cancelNavigation;
+    std::function<void()> cancelContainerNavigation;
+    std::function<void()> cancelOpen;
+    std::function<void()> clearDisplayedImageLocation;
+    std::function<void()> clearPresentationImage;
+    std::function<void()> clearPageNavigation;
+    std::function<void()> notifyRightToLeftReadingChanged;
+    std::function<void()> resetZoom;
+    std::function<void()> updatePageNavigation;
+    std::function<void()> scheduleAdjacentImagePredecode;
+    std::function<void(const QUrl &)> loadUrl;
+    std::function<void(const QUrl &, const QUrl &)> loadContainerImage;
+    std::function<void(const QUrl &)> finishEmptyContainerNavigation;
+    std::function<void(const QUrl &, const QString &)> finishContainerNavigationLoadWithError;
+    std::function<void(const QUrl &, bool)> loadPageNavigationUrl;
+    std::function<void(const QUrl &)> prepareFailedContainer;
+    std::function<void(const QUrl &)> setSourceUrl;
+    std::function<void(const QString &)> setErrorString;
+    std::function<ImageDocumentEffects()> finishEmptySourceLoad;
+};
 
 class ImageDocumentEffectExecutor final
 {
@@ -26,6 +58,7 @@ public:
         ImageSpreadPresentationController &spreadController,
         ImageDocumentLoadController &loadController,
         ArchiveDocumentSessionStore *archiveSessionStore = nullptr);
+    explicit ImageDocumentEffectExecutor(ImageDocumentEffectOperations operations);
 
     void dispatch(ImageDocumentEffect effect);
 
@@ -45,14 +78,7 @@ private:
     void dispatchPayload(const PageNavigationSelectedEffect &payload);
     void dispatchPayload(const PrepareFailedContainerEffect &payload);
 
-    ImageDocumentState &m_state;
-    ImageDocumentNavigationController &m_navigationController;
-    ImageDocumentPredecodeController &m_predecodeController;
-    ImageOpenController &m_openController;
-    ImagePresentationController &m_presentationController;
-    ImageSpreadPresentationController &m_spreadController;
-    ImageDocumentLoadController &m_loadController;
-    ArchiveDocumentSessionStore *m_archiveSessionStore = nullptr;
+    ImageDocumentEffectOperations m_operations;
 };
 }
 

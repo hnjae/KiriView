@@ -20,20 +20,108 @@
 #include <variant>
 
 namespace KiriView {
+namespace {
+    template <typename Operation, typename... Args>
+    void run(const Operation &operation, Args &&...args)
+    {
+        if (operation) {
+            operation(std::forward<Args>(args)...);
+        }
+    }
+
+    ImageDocumentEffects generatedEffects(const std::function<ImageDocumentEffects()> &operation)
+    {
+        return operation ? operation() : ImageDocumentEffects {};
+    }
+
+    ImageDocumentEffectOperations effectOperations(ImageDocumentState &state,
+        ImageDocumentNavigationController &navigationController,
+        ImageDocumentPredecodeController &predecodeController, ImageOpenController &openController,
+        ImagePresentationController &presentationController,
+        ImageSpreadPresentationController &spreadController,
+        ImageDocumentLoadController &loadController,
+        ArchiveDocumentSessionStore *archiveSessionStore)
+    {
+        ImageDocumentEffectOperations operations;
+        operations.clearArchiveSession = [archiveSessionStore]() {
+            if (archiveSessionStore != nullptr) {
+                archiveSessionStore->clear();
+            }
+        };
+        operations.clearPredecode = [&predecodeController]() { predecodeController.clear(); };
+        operations.cancelPredecode = [&predecodeController]() { predecodeController.cancel(); };
+        operations.finishSpreadTransition
+            = [&spreadController]() { spreadController.finishTransition(); };
+        operations.clearSecondaryPage
+            = [&spreadController]() { spreadController.clearSecondaryPage(); };
+        operations.cancelPageNavigationUpdate
+            = [&navigationController]() { navigationController.cancelPageNavigationUpdate(); };
+        operations.cancelNavigation
+            = [&navigationController]() { navigationController.cancelNavigation(); };
+        operations.cancelContainerNavigation
+            = [&navigationController]() { navigationController.cancelContainerNavigation(); };
+        operations.cancelOpen = [&openController]() { openController.cancel(); };
+        operations.clearDisplayedImageLocation
+            = [&state]() { state.clearDisplayedImageLocation(); };
+        operations.clearPresentationImage
+            = [&presentationController]() { presentationController.clearImage(); };
+        operations.clearPageNavigation
+            = [&navigationController]() { navigationController.clearPageNavigation(); };
+        operations.notifyRightToLeftReadingChanged
+            = [&spreadController]() { spreadController.notifyRightToLeftReadingChanged(); };
+        operations.resetZoom = [&spreadController]() { spreadController.resetZoom(); };
+        operations.updatePageNavigation
+            = [&navigationController]() { navigationController.updatePageNavigation(); };
+        operations.scheduleAdjacentImagePredecode = [&predecodeController, &spreadController]() {
+            predecodeController.scheduleAdjacentImagePredecode(
+                spreadController.secondaryDisplayedPredecodeImage());
+        };
+        operations.loadUrl = [&loadController](const QUrl &url) {
+            loadController.loadSource(ImageDocumentSourceLoadRequest::fromUrl(url));
+        };
+        operations.loadContainerImage
+            = [&loadController](const QUrl &imageUrl, const QUrl &containerUrl) {
+                  loadController.loadSource(
+                      ImageDocumentSourceLoadRequest::fromContainerImage(imageUrl, containerUrl));
+              };
+        operations.finishEmptyContainerNavigation = [&openController](const QUrl &containerUrl) {
+            openController.finishContainerNavigationWithEmptyContainer(containerUrl);
+        };
+        operations.finishContainerNavigationLoadWithError
+            = [&openController](const QUrl &containerUrl, const QString &errorString) {
+                  openController.finishContainerNavigationLoadWithError(containerUrl, errorString);
+              };
+        operations.loadPageNavigationUrl
+            = [&loadController](const QUrl &url, bool preserveTwoPageSpreadTransition) {
+                  loadController.loadSource(ImageDocumentSourceLoadRequest::fromPageNavigation(
+                      url, preserveTwoPageSpreadTransition));
+              };
+        operations.prepareFailedContainer = [&presentationController](const QUrl &containerUrl) {
+            presentationController.prepareFailedContainer(containerUrl);
+        };
+        operations.setSourceUrl = [&state](const QUrl &url) { state.setSourceUrl(url); };
+        operations.setErrorString
+            = [&state](const QString &errorString) { state.setErrorString(errorString); };
+        operations.finishEmptySourceLoad
+            = [&state]() { return ImageOpenWorkflow::finishEmptySourceLoad(state); };
+        return operations;
+    }
+}
+
 ImageDocumentEffectExecutor::ImageDocumentEffectExecutor(ImageDocumentState &state,
     ImageDocumentNavigationController &navigationController,
     ImageDocumentPredecodeController &predecodeController, ImageOpenController &openController,
     ImagePresentationController &presentationController,
     ImageSpreadPresentationController &spreadController,
     ImageDocumentLoadController &loadController, ArchiveDocumentSessionStore *archiveSessionStore)
-    : m_state(state)
-    , m_navigationController(navigationController)
-    , m_predecodeController(predecodeController)
-    , m_openController(openController)
-    , m_presentationController(presentationController)
-    , m_spreadController(spreadController)
-    , m_loadController(loadController)
-    , m_archiveSessionStore(archiveSessionStore)
+    : ImageDocumentEffectExecutor(
+          effectOperations(state, navigationController, predecodeController, openController,
+              presentationController, spreadController, loadController, archiveSessionStore))
+{
+}
+
+ImageDocumentEffectExecutor::ImageDocumentEffectExecutor(ImageDocumentEffectOperations operations)
+    : m_operations(std::move(operations))
 {
 }
 
@@ -51,33 +139,29 @@ void ImageDocumentEffectExecutor::dispatchGeneratedEffects(ImageDocumentEffects 
 
 void ImageDocumentEffectExecutor::clearImage()
 {
-    if (m_archiveSessionStore != nullptr) {
-        m_archiveSessionStore->clear();
-    }
-    m_predecodeController.clear();
-    m_spreadController.finishTransition();
-    m_spreadController.clearSecondaryPage();
-    m_navigationController.cancelPageNavigationUpdate();
-    m_state.clearDisplayedImageLocation();
-    m_presentationController.clearImage();
-    m_navigationController.clearPageNavigation();
-    m_spreadController.notifyRightToLeftReadingChanged();
+    run(m_operations.clearArchiveSession);
+    run(m_operations.clearPredecode);
+    run(m_operations.finishSpreadTransition);
+    run(m_operations.clearSecondaryPage);
+    run(m_operations.cancelPageNavigationUpdate);
+    run(m_operations.clearDisplayedImageLocation);
+    run(m_operations.clearPresentationImage);
+    run(m_operations.clearPageNavigation);
+    run(m_operations.notifyRightToLeftReadingChanged);
 }
 
 ImageDocumentEffects ImageDocumentEffectExecutor::clearAfterSuccessfulFileDeletion()
 {
-    if (m_archiveSessionStore != nullptr) {
-        m_archiveSessionStore->clear();
-    }
-    m_navigationController.cancelNavigation();
-    m_navigationController.cancelContainerNavigation();
-    m_predecodeController.cancel();
-    m_openController.cancel();
-    m_spreadController.finishTransition();
-    m_spreadController.clearSecondaryPage();
-    m_state.setSourceUrl(QUrl());
-    m_state.setErrorString(QString());
-    return ImageOpenWorkflow::finishEmptySourceLoad(m_state);
+    run(m_operations.clearArchiveSession);
+    run(m_operations.cancelNavigation);
+    run(m_operations.cancelContainerNavigation);
+    run(m_operations.cancelPredecode);
+    run(m_operations.cancelOpen);
+    run(m_operations.finishSpreadTransition);
+    run(m_operations.clearSecondaryPage);
+    run(m_operations.setSourceUrl, QUrl());
+    run(m_operations.setErrorString, QString());
+    return generatedEffects(m_operations.finishEmptySourceLoad);
 }
 
 void ImageDocumentEffectExecutor::dispatchPayload(const ClearImageEffect &) { clearImage(); }
@@ -89,50 +173,47 @@ void ImageDocumentEffectExecutor::dispatchPayload(const ClearDeletedImageEffect 
 
 void ImageDocumentEffectExecutor::dispatchPayload(const ResetZoomEffect &)
 {
-    m_spreadController.resetZoom();
+    run(m_operations.resetZoom);
 }
 
 void ImageDocumentEffectExecutor::dispatchPayload(const UpdatePageNavigationEffect &)
 {
-    m_navigationController.updatePageNavigation();
+    run(m_operations.updatePageNavigation);
 }
 
 void ImageDocumentEffectExecutor::dispatchPayload(const ScheduleAdjacentImagePredecodeEffect &)
 {
-    m_predecodeController.scheduleAdjacentImagePredecode(
-        m_spreadController.secondaryDisplayedPredecodeImage());
+    run(m_operations.scheduleAdjacentImagePredecode);
 }
 
 void ImageDocumentEffectExecutor::dispatchPayload(const OpenUrlEffect &payload)
 {
-    m_loadController.loadSource(ImageDocumentSourceLoadRequest::fromUrl(payload.url));
+    run(m_operations.loadUrl, payload.url);
 }
 
 void ImageDocumentEffectExecutor::dispatchPayload(const ContainerImageSelectedEffect &payload)
 {
-    m_loadController.loadSource(
-        ImageDocumentSourceLoadRequest::fromContainerImage(payload.imageUrl, payload.containerUrl));
+    run(m_operations.loadContainerImage, payload.imageUrl, payload.containerUrl);
 }
 
 void ImageDocumentEffectExecutor::dispatchPayload(const EmptyContainerSelectedEffect &payload)
 {
-    m_openController.finishContainerNavigationWithEmptyContainer(payload.containerUrl);
+    run(m_operations.finishEmptyContainerNavigation, payload.containerUrl);
 }
 
 void ImageDocumentEffectExecutor::dispatchPayload(const ContainerNavigationFailedEffect &payload)
 {
-    m_openController.finishContainerNavigationLoadWithError(
-        payload.containerUrl, payload.errorString);
+    run(m_operations.finishContainerNavigationLoadWithError, payload.containerUrl,
+        payload.errorString);
 }
 
 void ImageDocumentEffectExecutor::dispatchPayload(const PageNavigationSelectedEffect &payload)
 {
-    m_loadController.loadSource(ImageDocumentSourceLoadRequest::fromPageNavigation(
-        payload.url, payload.preserveTwoPageSpreadTransition));
+    run(m_operations.loadPageNavigationUrl, payload.url, payload.preserveTwoPageSpreadTransition);
 }
 
 void ImageDocumentEffectExecutor::dispatchPayload(const PrepareFailedContainerEffect &payload)
 {
-    m_presentationController.prepareFailedContainer(payload.containerUrl);
+    run(m_operations.prepareFailedContainer, payload.containerUrl);
 }
 }
