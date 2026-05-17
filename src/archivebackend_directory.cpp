@@ -127,12 +127,6 @@ private:
     std::vector<KiriView::ImageNavigationCandidate> m_candidates;
 };
 
-KiriView::ArchiveImageDataResult loadDirectoryDocumentImageDataForEntry(
-    const KiriView::ArchiveDocumentLocation &archiveDocument, const QString &entryPath)
-{
-    return loadDirectoryDocumentImageData(archiveDocument, entryPath);
-}
-
 KiriView::ArchiveDocumentSessionOpenResult openDirectoryDocumentSession(
     const KiriView::ArchiveDocumentLocation &archiveDocument)
 {
@@ -158,8 +152,6 @@ namespace KiriView::ArchiveBackendDetail {
 const ArchiveBackendOperations *directoryBackendOperations()
 {
     static const ArchiveBackendOperations operations {
-        loadDirectoryDocumentImageCandidates,
-        loadDirectoryDocumentImageDataForEntry,
         openDirectoryDocumentSession,
     };
     return &operations;

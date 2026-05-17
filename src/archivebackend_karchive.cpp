@@ -145,21 +145,6 @@ OpenKArchiveResult openKArchiveDocument(const KiriView::ArchiveDocumentLocation 
     return OpenKArchiveResult { ScopedKArchive(std::move(archive)), QString() };
 }
 
-KiriView::ArchiveImageCandidatesResult loadKArchiveDocumentImageCandidates(
-    const KiriView::ArchiveDocumentLocation &archiveDocument)
-{
-    OpenKArchiveResult opened = openKArchiveDocument(archiveDocument);
-    if (!opened.archive) {
-        return Backend::archiveErrorResult<KiriView::ArchiveImageCandidatesResult>(
-            opened.errorString);
-    }
-
-    std::vector<KiriView::ImageNavigationCandidate> candidates;
-    appendArchiveDirectoryImageCandidates(
-        &candidates, opened.archive.directory(), archiveDocument, QString());
-    return Backend::archiveImageCandidatesResult(std::move(candidates));
-}
-
 KiriView::ArchiveImageDataResult readKArchiveFileData(const KArchiveFile &file)
 {
     std::unique_ptr<QIODevice> device(file.createDevice());
@@ -233,31 +218,12 @@ KiriView::ArchiveDocumentSessionOpenResult openKArchiveDocumentSession(
         std::make_shared<KArchiveDocumentSession>(archiveDocument, std::move(opened.archive)));
 }
 
-KiriView::ArchiveImageDataResult loadKArchiveDocumentImageData(
-    const KiriView::ArchiveDocumentLocation &archiveDocument, const QString &entryPath)
-{
-    OpenKArchiveResult opened = openKArchiveDocument(archiveDocument);
-    if (!opened.archive) {
-        return Backend::archiveErrorResult<KiriView::ArchiveImageDataResult>(opened.errorString);
-    }
-
-    const KArchiveDirectory *directory = opened.archive.directory();
-    const KArchiveFile *file = directory == nullptr ? nullptr : directory->file(entryPath);
-    if (file == nullptr) {
-        return Backend::archiveErrorResult<KiriView::ArchiveImageDataResult>(
-            Backend::archiveImageNotFoundError());
-    }
-
-    return readKArchiveFileData(*file);
-}
 }
 
 namespace KiriView::ArchiveBackendDetail {
 const ArchiveBackendOperations *kArchiveBackendOperations()
 {
     static const ArchiveBackendOperations operations {
-        loadKArchiveDocumentImageCandidates,
-        loadKArchiveDocumentImageData,
         openKArchiveDocumentSession,
     };
     return &operations;

@@ -15,16 +15,10 @@
 #include <vector>
 
 namespace KiriView::ArchiveBackendDetail {
-using ArchiveImageCandidatesLoader
-    = ArchiveImageCandidatesResult (*)(const ArchiveDocumentLocation &);
-using ArchiveImageDataLoader
-    = ArchiveImageDataResult (*)(const ArchiveDocumentLocation &, const QString &);
 using ArchiveDocumentSessionOpener
     = ArchiveDocumentSessionOpenResult (*)(const ArchiveDocumentLocation &);
 
 struct ArchiveBackendOperations {
-    ArchiveImageCandidatesLoader loadImageCandidates;
-    ArchiveImageDataLoader loadImageData;
     ArchiveDocumentSessionOpener openSession;
 };
 

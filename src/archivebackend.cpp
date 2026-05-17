@@ -12,6 +12,7 @@
 #include <KLocalizedString>
 #include <optional>
 #include <utility>
+#include <variant>
 
 namespace {
 namespace Backend = KiriView::ArchiveBackendDetail;
@@ -37,17 +38,17 @@ const Backend::ArchiveBackendOperations *archiveBackendOperationsForDocument(
     return nullptr;
 }
 
-template <typename Result, typename Load>
-Result loadWithArchiveBackend(const KiriView::ArchiveDocumentLocation &archiveDocument, Load load)
+KiriView::ArchiveDocumentSessionOpenResult openWithArchiveBackend(
+    const KiriView::ArchiveDocumentLocation &archiveDocument)
 {
     const Backend::ArchiveBackendOperations *backend
         = archiveBackendOperationsForDocument(archiveDocument);
     if (backend == nullptr) {
-        return Backend::archiveErrorResult<Result>(
+        return Backend::archiveErrorResult<KiriView::ArchiveDocumentSessionOpenResult>(
             Backend::fallbackArchiveOpenError(archiveDocument));
     }
 
-    return load(*backend);
+    return backend->openSession(archiveDocument);
 }
 }
 
@@ -116,31 +117,35 @@ namespace KiriView {
 ArchiveImageCandidatesResult loadArchiveDocumentImageCandidates(
     const ArchiveDocumentLocation &archiveDocument)
 {
-    if (archiveDocument.isEmpty()) {
-        return Backend::archiveErrorResult<ArchiveImageCandidatesResult>(
-            i18nc("@info:status", "Could not open the selected archive."));
+    ArchiveDocumentSessionOpenResult opened = openArchiveDocumentSession(archiveDocument);
+    if (const auto *error = std::get_if<ArchiveError>(&opened)) {
+        return Backend::archiveErrorResult<ArchiveImageCandidatesResult>(error->errorString);
     }
 
-    return loadWithArchiveBackend<ArchiveImageCandidatesResult>(
-        archiveDocument, [&archiveDocument](const Backend::ArchiveBackendOperations &backend) {
-            return backend.loadImageCandidates(archiveDocument);
-        });
+    const auto *session = std::get_if<ArchiveDocumentSessionPtr>(&opened);
+    if (session == nullptr || *session == nullptr) {
+        return Backend::archiveErrorResult<ArchiveImageCandidatesResult>(
+            Backend::fallbackArchiveOpenError(archiveDocument));
+    }
+
+    return (*session)->loadImageCandidates();
 }
 
 ArchiveImageDataResult loadArchiveDocumentImageData(
     const ArchiveDocumentLocation &archiveDocument, const QUrl &imageUrl)
 {
-    const std::optional<QString> entryPath
-        = Backend::archiveImageEntryPathForRead(archiveDocument, imageUrl);
-    if (!entryPath.has_value()) {
-        return Backend::archiveErrorResult<ArchiveImageDataResult>(
-            Backend::archiveImageNotFoundError());
+    ArchiveDocumentSessionOpenResult opened = openArchiveDocumentSession(archiveDocument);
+    if (const auto *error = std::get_if<ArchiveError>(&opened)) {
+        return Backend::archiveErrorResult<ArchiveImageDataResult>(error->errorString);
     }
 
-    return loadWithArchiveBackend<ArchiveImageDataResult>(archiveDocument,
-        [&archiveDocument, &entryPath](const Backend::ArchiveBackendOperations &backend) {
-            return backend.loadImageData(archiveDocument, *entryPath);
-        });
+    const auto *session = std::get_if<ArchiveDocumentSessionPtr>(&opened);
+    if (session == nullptr || *session == nullptr) {
+        return Backend::archiveErrorResult<ArchiveImageDataResult>(
+            Backend::fallbackArchiveOpenError(archiveDocument));
+    }
+
+    return (*session)->loadImageData(imageUrl);
 }
 
 ArchiveDocumentSessionOpenResult openArchiveDocumentSession(
@@ -151,9 +156,6 @@ ArchiveDocumentSessionOpenResult openArchiveDocumentSession(
             i18nc("@info:status", "Could not open the selected archive."));
     }
 
-    return loadWithArchiveBackend<ArchiveDocumentSessionOpenResult>(
-        archiveDocument, [&archiveDocument](const Backend::ArchiveBackendOperations &backend) {
-            return backend.openSession(archiveDocument);
-        });
+    return openWithArchiveBackend(archiveDocument);
 }
 }

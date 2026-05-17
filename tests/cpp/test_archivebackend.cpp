@@ -112,6 +112,7 @@ private Q_SLOTS:
     void readingArchiveEntryReturnsOriginalBytes();
     void readingDirectoryEntryReturnsOriginalBytes();
     void readingRarEntryReturnsOriginalBytes();
+    void standaloneHelpersMatchSessionResults();
     void archiveSessionListsAndReadsKArchiveEntries();
     void directorySessionListsAndReadsEntries();
     void libArchiveSessionScansOnceAndServesRandomReads();
@@ -282,6 +283,52 @@ void TestArchiveBackend::readingRarEntryReturnsOriginalBytes()
 
     QVERIFY(success != nullptr);
     QCOMPARE(success->data, QByteArrayLiteral("two"));
+}
+
+void TestArchiveBackend::standaloneHelpersMatchSessionResults()
+{
+    QTemporaryDir dir;
+    QVERIFY(dir.isValid());
+    const QString archivePath = dir.filePath(QStringLiteral("book.zip"));
+    writeZipArchive(archivePath,
+        {
+            { QStringLiteral("pages/02.jpg"), QByteArrayLiteral("two") },
+            { QStringLiteral("pages/01.png"), QByteArrayLiteral("one") },
+        });
+
+    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+        = archiveDocumentForPath(archivePath);
+    QVERIFY(archiveDocument.has_value());
+    KiriView::ArchiveDocumentSessionOpenResult opened
+        = KiriView::openArchiveDocumentSession(*archiveDocument);
+    auto *session = std::get_if<KiriView::ArchiveDocumentSessionPtr>(&opened);
+    QVERIFY(session != nullptr);
+    QVERIFY(*session != nullptr);
+
+    const KiriView::ArchiveImageCandidatesResult standaloneCandidatesResult
+        = KiriView::loadArchiveDocumentImageCandidates(*archiveDocument);
+    const KiriView::ArchiveImageCandidatesResult sessionCandidatesResult
+        = (*session)->loadImageCandidates();
+    const KiriView::ArchiveImageCandidates *standaloneCandidates
+        = archiveImageCandidates(standaloneCandidatesResult);
+    const KiriView::ArchiveImageCandidates *sessionCandidates
+        = archiveImageCandidates(sessionCandidatesResult);
+    QVERIFY(standaloneCandidates != nullptr);
+    QVERIFY(sessionCandidates != nullptr);
+    QCOMPARE(standaloneCandidates->candidates.size(), sessionCandidates->candidates.size());
+    QCOMPARE(standaloneCandidates->candidates.at(0).name, sessionCandidates->candidates.at(0).name);
+    QCOMPARE(standaloneCandidates->candidates.at(1).name, sessionCandidates->candidates.at(1).name);
+
+    const QUrl imageUrl
+        = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("pages/01.png"));
+    const KiriView::ArchiveImageDataResult standaloneDataResult
+        = KiriView::loadArchiveDocumentImageData(*archiveDocument, imageUrl);
+    const KiriView::ArchiveImageDataResult sessionDataResult = (*session)->loadImageData(imageUrl);
+    const KiriView::ArchiveImageData *standaloneData = archiveImageData(standaloneDataResult);
+    const KiriView::ArchiveImageData *sessionData = archiveImageData(sessionDataResult);
+    QVERIFY(standaloneData != nullptr);
+    QVERIFY(sessionData != nullptr);
+    QCOMPARE(standaloneData->data, sessionData->data);
 }
 
 void TestArchiveBackend::archiveSessionListsAndReadsKArchiveEntries()
