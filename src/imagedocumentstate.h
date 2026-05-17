@@ -4,34 +4,19 @@
 #ifndef KIRIVIEW_IMAGEDOCUMENTSTATE_H
 #define KIRIVIEW_IMAGEDOCUMENTSTATE_H
 
+#include "imagedocumentchangebatcher.h"
 #include "imagedocumenttypes.h"
 #include "imagelocation.h"
 
 #include <QString>
 #include <QUrl>
-#include <functional>
-#include <vector>
 
 namespace KiriView {
 class ImageDocumentState
 {
 public:
-    using ChangeCallback = std::function<void(ImageDocumentChange)>;
-
-    class ChangeBatch final
-    {
-    public:
-        explicit ChangeBatch(ImageDocumentState &state);
-        ~ChangeBatch();
-
-        ChangeBatch(const ChangeBatch &) = delete;
-        ChangeBatch &operator=(const ChangeBatch &) = delete;
-        ChangeBatch(ChangeBatch &&other) noexcept;
-        ChangeBatch &operator=(ChangeBatch &&) = delete;
-
-    private:
-        ImageDocumentState *m_state = nullptr;
-    };
+    using ChangeCallback = ImageDocumentChangeBatcher::ChangeCallback;
+    using ChangeBatch = ImageDocumentChangeBatcher::Batch;
 
     explicit ImageDocumentState(ChangeCallback changeCallback = {});
 
@@ -61,14 +46,9 @@ public:
 
 private:
     void replaceDisplayedImageLocation(DisplayedImageLocation location);
-    void beginBatch();
-    void endBatch();
     void notify(ImageDocumentChange change);
-    void emitChange(ImageDocumentChange change);
 
-    ChangeCallback m_changeCallback;
-    int m_batchDepth = 0;
-    std::vector<ImageDocumentChange> m_pendingChanges;
+    ImageDocumentChangeBatcher m_changes;
     QUrl m_sourceUrl;
     DisplayedImageLocation m_displayedImageLocation;
     ImageDocumentStatus m_status = ImageDocumentStatus::Null;

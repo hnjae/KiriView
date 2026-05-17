@@ -3,11 +3,9 @@
 
 #include "imagedocumentstate.h"
 
-#include "imagecallback.h"
 #include "imagecontainer.h"
 #include "imagedocumentnotifications.h"
 
-#include <algorithm>
 #include <utility>
 
 namespace {
@@ -23,33 +21,14 @@ template <typename Value> bool replaceIfChanged(Value &current, const Value &nex
 }
 
 namespace KiriView {
-ImageDocumentState::ChangeBatch::ChangeBatch(ImageDocumentState &state)
-    : m_state(&state)
-{
-    m_state->beginBatch();
-}
-
-ImageDocumentState::ChangeBatch::~ChangeBatch()
-{
-    if (m_state != nullptr) {
-        m_state->endBatch();
-    }
-}
-
-ImageDocumentState::ChangeBatch::ChangeBatch(ChangeBatch &&other) noexcept
-    : m_state(other.m_state)
-{
-    other.m_state = nullptr;
-}
-
 ImageDocumentState::ImageDocumentState(ChangeCallback changeCallback)
-    : m_changeCallback(std::move(changeCallback))
+    : m_changes(std::move(changeCallback))
 {
 }
 
 ImageDocumentState::ChangeBatch ImageDocumentState::beginChangeBatch()
 {
-    return ChangeBatch(*this);
+    return m_changes.beginBatch();
 }
 
 const QUrl &ImageDocumentState::sourceUrl() const { return m_sourceUrl; }
@@ -114,11 +93,8 @@ void ImageDocumentState::replaceDisplayedImageLocation(DisplayedImageLocation lo
         return;
     }
 
-    for (ImageDocumentChange change :
-        imageDocumentDisplayedLocationNotifications(
-            previousDisplayedUrl != displayedUrl(), previousWindowTitle != windowTitleFileName())) {
-        notify(change);
-    }
+    m_changes.notifyAll(imageDocumentDisplayedLocationNotifications(
+        previousDisplayedUrl != displayedUrl(), previousWindowTitle != windowTitleFileName()));
 }
 
 void ImageDocumentState::setStatus(ImageDocumentStatus status)
@@ -159,43 +135,5 @@ void ImageDocumentState::clearLoadingContainerNavigationUrl()
     m_loadingContainerNavigationUrl = QUrl();
 }
 
-void ImageDocumentState::beginBatch() { ++m_batchDepth; }
-
-void ImageDocumentState::endBatch()
-{
-    if (m_batchDepth <= 0) {
-        return;
-    }
-
-    --m_batchDepth;
-    if (m_batchDepth > 0) {
-        return;
-    }
-
-    std::vector<ImageDocumentChange> changes = std::move(m_pendingChanges);
-    m_pendingChanges.clear();
-    for (ImageDocumentChange change : changes) {
-        emitChange(change);
-    }
-}
-
-void ImageDocumentState::notify(ImageDocumentChange change)
-{
-    if (m_batchDepth > 0) {
-        const bool alreadyPending
-            = std::find(m_pendingChanges.cbegin(), m_pendingChanges.cend(), change)
-            != m_pendingChanges.cend();
-        if (!alreadyPending) {
-            m_pendingChanges.push_back(change);
-        }
-        return;
-    }
-
-    emitChange(change);
-}
-
-void ImageDocumentState::emitChange(ImageDocumentChange change)
-{
-    invokeIfSet(m_changeCallback, change);
-}
+void ImageDocumentState::notify(ImageDocumentChange change) { m_changes.notify(change); }
 }

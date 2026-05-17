@@ -27,6 +27,7 @@ src/imagecontainer.cpp
 src/imagerendering.cpp
 src/imagerotation.cpp
 src/imagedocumentcontroller.cpp
+src/imagedocumentchangebatcher.cpp
 src/imagedocumentdeletioncontroller.cpp
 src/imagedocumenteffectexecutor.cpp
 src/imagedocumentloadcontroller.cpp
