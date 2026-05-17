@@ -2,30 +2,20 @@
 
 ## Project Overview
 
-KiriView is a desktop app using Rust, CXX-Qt and KDE Kirigami.
-Key paths: `src/` app code, `tests/cpp/` C++ tests, `po/` translations,
-`flatpak/` packaging patches, and `nix/` devenv support.
+KiriView is a desktop app using Rust, CXX-Qt and KDE Kirigami. Key paths: `src/` app code, `tests/cpp/` C++ tests, `po/` translations, `flatpak/` packaging patches, and `nix/` devenv support.
 
 ## Architecture Guidance
 
-For language-boundary, module ownership, FFI design, workflow structure, and
-other long-term maintainability decisions, follow `docs/ARCHITECTURE.md`.
-Keep architecture rules in that document or ADRs instead of duplicating them
+For language-boundary, module ownership, FFI design, workflow structure, and other long-term maintainability decisions, follow `docs/ARCHITECTURE.md`. Keep architecture rules in that document or ADRs instead of duplicating them
 here.
 
 ## Compatibility Policy
 
-KiriView is still pre-release. Do not spend effort preserving backward
-compatibility or writing migrations for existing user data, configuration, APIs,
-or internal formats unless explicitly requested.
+KiriView is still pre-release. Do not spend effort preserving backward compatibility or writing migrations for existing user data, configuration, APIs, or internal formats unless explicitly requested.
 
 ## Spec-Driven Development
 
-Follow spec-driven development for product behavior and user-facing implementation
-changes. Before implementing a product behavior change, update `SPEC.md` with the
-intended user-visible behavior, commit that spec update, then implement against
-the committed spec. Development-only or repository-maintenance changes do not
-require `SPEC.md` updates.
+Follow spec-driven development for product behavior and user-facing implementation changes. Before implementing a product behavior change, update `SPEC.md` with the intended user-visible behavior, commit that spec update, then implement against the committed spec. Development-only or repository-maintenance changes do not require `SPEC.md` updates.
 
 ## Build, Test, and Development Commands
 
@@ -44,20 +34,11 @@ Rust, QML, C++, and headers use 4-space indentation. Keep app IDs as `io.github.
 
 ## Translation Policy
 
-Do not personally author translations for individual language files such as
-`po/*.po`. Only update translation templates or existing translation files when
-the strings are supplied by a translator, upstream tooling, or an explicit user
-request.
+Do not personally author translations for individual language files such as `po/*.po`. Only update translation templates or existing translation files when the strings are supplied by a translator, upstream tooling, or an explicit user request.
 
 ## Commit & Pull Request Guidelines
 
-Use Conventional Commit style, such as `feat: init project`. After completing a
-requested repository change, create a commit before ending the task unless the
-user explicitly asks not to commit or asks to pause. If the work naturally
-requires multiple independent steps, commit after each step is complete,
-keeping the `SPEC.md` update as the first commit for product behavior changes.
-Check `git status` before committing and stage paths explicitly. Do not include
-unrelated user changes in these commits.
+Use Conventional Commit style, such as `feat: init project`. After completing a requested repository change, create a commit before ending the task unless the user explicitly asks not to commit or asks to pause. If the work naturally requires multiple independent steps, commit after each step is complete, keeping the `SPEC.md` update as the first commit for product behavior changes. Check `git status` before committing and stage paths explicitly. Do not include unrelated user changes in these commits.
 
 ## Licensing & Configuration
 
