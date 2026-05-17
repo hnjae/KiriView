@@ -51,6 +51,7 @@ src/imagetilevisibility.cpp
 src/imagetilesourcehelpers.cpp
 src/imageloader.cpp
 src/imageloadplan.cpp
+src/imageloadsessiontracker.cpp
 src/imagenavigationmodel.cpp
 src/imagenavigationservice.cpp
 src/localization.cpp

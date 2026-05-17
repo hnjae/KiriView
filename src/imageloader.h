@@ -9,6 +9,7 @@
 #include "imagecandidaterepository.h"
 #include "imagedecodejob.h"
 #include "imageiojob.h"
+#include "imageloadsessiontracker.h"
 #include "imageloadtypes.h"
 #include "predecodedimage.h"
 
@@ -50,7 +51,6 @@ public:
     void cancel();
 
 private:
-    quint64 nextLoadSessionId();
     void finishDecodeResult(ImageDecodeRequest request, DecodedImageResult result);
     void finishImageLoadError(const ImageDecodeRequest &request, const QString &errorString);
     void startImageLoad(ImageLoadSession session);
@@ -72,9 +72,7 @@ private:
     ImageDecodeJob m_decodeJob;
     ImageCandidateRepository m_candidateRepository;
     ImageIoJob m_archiveListJob;
-    std::optional<ImageLoadSession> m_loadSession;
-    quint64 m_nextLoadSessionId = 0;
-    ImageFirstDisplayDecodeContext m_firstDisplayContext;
+    ImageLoadSessionTracker m_sessionTracker;
 };
 }
 

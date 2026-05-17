@@ -5,7 +5,6 @@
 
 #include "decodedimageresult.h"
 #include "imagecallback.h"
-#include "imageloadplan.h"
 
 #include <optional>
 #include <utility>
@@ -46,12 +45,6 @@ ImageLoader::ImageLoader(QObject *parent, ImageNavigationCandidateProvider candi
 {
 }
 
-quint64 ImageLoader::nextLoadSessionId()
-{
-    ++m_nextLoadSessionId;
-    return m_nextLoadSessionId;
-}
-
 void ImageLoader::finishDecodeResult(ImageDecodeRequest request, DecodedImageResult result)
 {
     std::optional<ImageLoadSession> session = currentLoadSessionForDecodeRequest(request);
@@ -87,17 +80,14 @@ void ImageLoader::start(
     ImageLoadRequest request, ImageFirstDisplayDecodeContext firstDisplayContext)
 {
     cancel();
-    m_firstDisplayContext = firstDisplayContext;
 
-    ImageLoadPlan plan = imageLoadPlan(nextLoadSessionId(), std::move(request));
+    ImageLoadPlan plan = m_sessionTracker.start(std::move(request), firstDisplayContext);
     const ImageLoadSession session = std::move(plan.session);
     if (plan.requiresArchiveListing) {
-        m_loadSession = session;
         startArchiveLoad(session);
         return;
     }
 
-    m_loadSession = session;
     if (tryDisplayPredecodedImage(session)) {
         return;
     }
@@ -111,8 +101,8 @@ void ImageLoader::startImageLoad(ImageLoadSession session)
         return;
     }
 
-    m_decodeJob.start(
-        ImageDecodeRequest::fromLocation(session.id, session.location, m_firstDisplayContext));
+    m_decodeJob.start(ImageDecodeRequest::fromLocation(
+        session.id, session.location, m_sessionTracker.firstDisplayContext()));
 }
 
 void ImageLoader::startArchiveLoad(ImageLoadSession session)
@@ -122,19 +112,21 @@ void ImageLoader::startArchiveLoad(ImageLoadSession session)
     m_archiveListJob = m_candidateRepository.loadImages(
         this, candidateSource,
         [this, session](std::vector<ImageNavigationCandidate> candidates) mutable {
-            if (!isCurrentLoadSession(session)) {
-                return;
-            }
-
             if (candidates.empty()) {
-                finishLoadWithError(session, ImageLoadError::EmptyArchive, QString());
+                if (isCurrentLoadSession(session)) {
+                    finishLoadWithError(session, ImageLoadError::EmptyArchive, QString());
+                }
                 return;
             }
 
-            session.location.setImageUrl(candidates.front().url);
-            m_loadSession = session;
-            invokeIfSet(m_callbacks.sourceResolved, session.location.imageUrl());
-            startImageLoad(session);
+            std::optional<ImageLoadSession> resolvedSession
+                = m_sessionTracker.resolveCurrentArchiveImage(session, candidates.front().url);
+            if (!resolvedSession.has_value()) {
+                return;
+            }
+
+            invokeIfSet(m_callbacks.sourceResolved, resolvedSession->location.imageUrl());
+            startImageLoad(*resolvedSession);
         },
         [this, session](const QString &errorString) {
             if (!isCurrentLoadSession(session)) {
@@ -147,8 +139,7 @@ void ImageLoader::startArchiveLoad(ImageLoadSession session)
 
 void ImageLoader::cancel()
 {
-    m_loadSession.reset();
-    m_firstDisplayContext = {};
+    m_sessionTracker.cancel();
     m_decodeJob.cancel();
     m_archiveListJob.cancel();
 }
@@ -156,28 +147,17 @@ void ImageLoader::cancel()
 std::optional<ImageLoadSession> ImageLoader::currentLoadSessionForDecodeRequest(
     const ImageDecodeRequest &request) const
 {
-    if (!m_loadSession.has_value()
-        || !request.matches(m_loadSession->id, m_loadSession->location.imageUrl())) {
-        return std::nullopt;
-    }
-
-    return *m_loadSession;
+    return m_sessionTracker.currentForDecodeRequest(request);
 }
 
 bool ImageLoader::isCurrentLoadSession(const ImageLoadSession &session) const
 {
-    return m_loadSession.has_value() && m_loadSession->id == session.id;
+    return m_sessionTracker.isCurrent(session);
 }
 
 std::optional<ImageLoadSession> ImageLoader::takeCurrentLoadSession(const ImageLoadSession &session)
 {
-    if (!isCurrentLoadSession(session)) {
-        return std::nullopt;
-    }
-
-    std::optional<ImageLoadSession> currentSession = std::move(m_loadSession);
-    m_loadSession.reset();
-    return currentSession;
+    return m_sessionTracker.takeCurrent(session);
 }
 
 bool ImageLoader::tryDisplayPredecodedImage(ImageLoadSession session)
@@ -192,9 +172,13 @@ bool ImageLoader::tryDisplayPredecodedImage(ImageLoadSession session)
         return false;
     }
 
-    session.location = predecoded->location;
-    m_loadSession = session;
-    finishPredecodedImage(session, std::move(*predecoded));
+    std::optional<ImageLoadSession> predecodedSession
+        = m_sessionTracker.replaceCurrentLocation(session, predecoded->location);
+    if (!predecodedSession.has_value()) {
+        return false;
+    }
+
+    finishPredecodedImage(*predecodedSession, std::move(*predecoded));
     return true;
 }
 
