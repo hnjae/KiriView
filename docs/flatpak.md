@@ -17,6 +17,7 @@ Build and install KiriView into your user Flatpak installation:
 
 ```sh
 flatpak-builder \
+    --default-branch main \
     --user \
     --install \
     --install-deps-from=flathub \

@@ -45,6 +45,7 @@ i18n-update:
 [group('build')]
 build:
     devenv shell -- flatpak-builder \
+        --default-branch main \
         --user \
         --install-deps-from=flathub \
         --jobs="${KIRIVIEW_FLATPAK_JOBS:-$(nproc)}" \
@@ -57,6 +58,7 @@ build:
 [group('build')]
 build-with-tests:
     devenv shell -- flatpak-builder \
+        --default-branch main \
         --user \
         --install-deps-from=flathub \
         --jobs="${KIRIVIEW_FLATPAK_JOBS:-$(nproc)}" \
@@ -86,6 +88,7 @@ run:
 [group('build')]
 install:
     devenv shell -- flatpak-builder \
+        --default-branch main \
         --user \
         --install \
         --install-deps-from=flathub \
