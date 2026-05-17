@@ -37,17 +37,13 @@ public:
     using RenderContextProvider = std::function<ImageDocumentRenderContext()>;
     using ChangeCallback = std::function<void(ImageDocumentChange)>;
     using TakePredecodedImageCallback = std::function<std::optional<PredecodedImage>(const QUrl &)>;
-    using CurrentPageNumberProvider = std::function<int()>;
-    using ImageCountProvider = std::function<int()>;
-    using PageUrlProvider = std::function<std::optional<QUrl>(int)>;
+    using PageNavigationSnapshotProvider = std::function<ImagePageNavigationSnapshot()>;
     using ScheduleAdjacentPredecodeCallback = std::function<void()>;
 
     struct Callbacks {
         ChangeCallback change;
         TakePredecodedImageCallback takePredecodedImage;
-        CurrentPageNumberProvider currentPageNumber;
-        ImageCountProvider imageCount;
-        PageUrlProvider urlAtPage;
+        PageNavigationSnapshotProvider pageNavigationSnapshot;
         ScheduleAdjacentPredecodeCallback scheduleAdjacentPredecode;
     };
 
@@ -129,9 +125,7 @@ private:
     ImageSpreadNavigationState navigationState(bool previousPageIsWide = false) const;
     std::optional<bool> cachedPageIsWide(const QUrl &url) const;
     void scheduleAdjacentPredecode();
-    int currentPageNumber() const;
-    int imageCount() const;
-    std::optional<QUrl> urlAtPage(int pageNumber) const;
+    ImagePageNavigationSnapshot pageNavigationSnapshot() const;
     void notifyTwoPageModeChanged();
     void notifySpreadZoomChanged();
     void notifyChanges(const std::vector<ImageDocumentChange> &changes);

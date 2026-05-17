@@ -109,9 +109,7 @@ ImageDocumentRuntime::ImageDocumentRuntime(QObject *documentObject,
         ImageSpreadPresentationController::Callbacks {
             [this](ImageDocumentChange change) { notify(change); },
             [this](const QUrl &url) { return predecodeController->tryTake(url); },
-            [this]() { return navigationService->currentPageNumber(); },
-            [this]() { return navigationService->imageCount(); },
-            [this](int pageNumber) { return navigationService->urlAtPage(pageNumber); },
+            [this]() { return navigationService->pageNavigationSnapshot(); },
             [this]() { dispatchEffect(ImageDocumentEffect::scheduleAdjacentImagePredecode()); },
         },
         dependencies.candidateProvider, dependencies.imageDecode);

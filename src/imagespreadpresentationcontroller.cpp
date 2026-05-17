@@ -434,9 +434,10 @@ void ImageSpreadPresentationController::refreshSecondaryPage()
         finishTransition();
     };
 
-    const int currentPage = currentPageNumber();
+    const ImagePageNavigationSnapshot navigation = pageNavigationSnapshot();
+    const int currentPage = navigation.currentPageNumber();
     const int nextPageNumber = currentPage == std::numeric_limits<int>::max() ? 0 : currentPage + 1;
-    const std::optional<QUrl> nextUrl = urlAtPage(nextPageNumber);
+    const std::optional<QUrl> nextUrl = navigation.urlAtPage(nextPageNumber);
     const bool nextPageIsWide = nextUrl.has_value()
         && m_secondaryPageController->cachedPageIsWide(*nextUrl).value_or(false);
     const bool currentSecondaryMatchesNext = nextUrl.has_value() && secondaryPageVisible()
@@ -445,7 +446,7 @@ void ImageSpreadPresentationController::refreshSecondaryPage()
         = imageSpreadSecondaryPageRefreshPlan(ImageSpreadSecondaryPageRefreshState {
             twoPageModeActive(),
             currentPage,
-            imageCount(),
+            navigation.imageCount(),
             primaryPageIsWide(),
             nextUrl.has_value(),
             nextPageIsWide,
@@ -459,8 +460,9 @@ void ImageSpreadPresentationController::refreshSecondaryPage()
         return;
     }
 
-    const std::optional<QUrl> targetUrl
-        = plan.targetPageNumber == nextPageNumber ? nextUrl : urlAtPage(plan.targetPageNumber);
+    const std::optional<QUrl> targetUrl = plan.targetPageNumber == nextPageNumber
+        ? nextUrl
+        : navigation.urlAtPage(plan.targetPageNumber);
     if (!targetUrl.has_value()) {
         finishWithPrimaryPage();
         return;
@@ -603,23 +605,25 @@ bool ImageSpreadPresentationController::primaryPageIsWide() const
 
 bool ImageSpreadPresentationController::previousPageIsWideForNavigation() const
 {
-    const int pageNumber = currentPageNumber();
+    const ImagePageNavigationSnapshot navigation = pageNavigationSnapshot();
+    const int pageNumber = navigation.currentPageNumber();
     if (!secondaryPageVisible() || pageNumber <= 2) {
         return false;
     }
 
-    const std::optional<QUrl> previousUrl = urlAtPage(pageNumber - 1);
+    const std::optional<QUrl> previousUrl = navigation.urlAtPage(pageNumber - 1);
     return previousUrl.has_value() ? cachedPageIsWide(*previousUrl).value_or(false) : false;
 }
 
 bool ImageSpreadPresentationController::primarySelectionMatchesDisplayed() const
 {
-    const int pageNumber = currentPageNumber();
+    const ImagePageNavigationSnapshot navigation = pageNavigationSnapshot();
+    const int pageNumber = navigation.currentPageNumber();
     if (pageNumber <= 0) {
         return true;
     }
 
-    const std::optional<QUrl> pageUrl = urlAtPage(pageNumber);
+    const std::optional<QUrl> pageUrl = navigation.urlAtPage(pageNumber);
     if (!pageUrl.has_value()) {
         return true;
     }
@@ -635,27 +639,15 @@ void ImageSpreadPresentationController::scheduleAdjacentPredecode()
 ImageSpreadNavigationState ImageSpreadPresentationController::navigationState(
     bool previousPageIsWide) const
 {
-    return ImageSpreadNavigationState { twoPageModeActive(), currentPageNumber(), imageCount(),
-        secondaryPageVisible(), previousPageIsWide };
+    const ImagePageNavigationSnapshot navigation = pageNavigationSnapshot();
+    return ImageSpreadNavigationState { twoPageModeActive(), navigation.currentPageNumber(),
+        navigation.imageCount(), secondaryPageVisible(), previousPageIsWide };
 }
 
-int ImageSpreadPresentationController::currentPageNumber() const
+ImagePageNavigationSnapshot ImageSpreadPresentationController::pageNavigationSnapshot() const
 {
-    return m_callbacks.currentPageNumber ? m_callbacks.currentPageNumber() : 0;
-}
-
-int ImageSpreadPresentationController::imageCount() const
-{
-    return m_callbacks.imageCount ? m_callbacks.imageCount() : 0;
-}
-
-std::optional<QUrl> ImageSpreadPresentationController::urlAtPage(int pageNumber) const
-{
-    if (!m_callbacks.urlAtPage) {
-        return std::nullopt;
-    }
-
-    return m_callbacks.urlAtPage(pageNumber);
+    return m_callbacks.pageNavigationSnapshot ? m_callbacks.pageNavigationSnapshot()
+                                              : ImagePageNavigationSnapshot {};
 }
 
 void ImageSpreadPresentationController::notifyTwoPageModeChanged()
