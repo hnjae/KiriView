@@ -6,17 +6,17 @@
 
 #include "filedeletion.h"
 #include "imagecandidaterepository.h"
-#include "imagedeletioneffects.h"
 #include "imagedocumenteffects.h"
+#include "imageiojob.h"
+#include "imageremovalfallback.h"
 
 #include <QString>
 #include <functional>
-#include <memory>
+#include <optional>
 
 class QObject;
 
 namespace KiriView {
-class ImageDeletionController;
 class ImageDocumentState;
 class ImagePresentationController;
 
@@ -44,17 +44,30 @@ public:
     void cancel();
 
 private:
-    void dispatch(ImageDeletionEffect effect);
-    void dispatchPayload(const ClearDeletedImageAfterDeletionEffect &);
-    void dispatchPayload(const OpenImageDeletionFallbackEffect &payload);
-    void dispatchPayload(const OpenContainerImageDeletionFallbackEffect &payload);
-    void dispatchPayload(const ReportImageDeletionFailureEffect &payload);
+    void finishFileDeletion(const ImageRemovalFallbackPlan &fallbackPlan, FileDeletionResult result,
+        const QString &errorString);
+    void openRemovalFallback(const ImageRemovalFallbackPlan &fallbackPlan);
+    void openFallbackPlan(const NoImageRemovalFallback &);
+    void openFallbackPlan(const ImageRemovalFallback &fallback);
+    void openFallbackPlan(const ComicBookRemovalFallback &fallback);
+    void openComicBookFallbackCandidate(
+        const std::optional<ContainerNavigationCandidate> &candidate,
+        const std::optional<ContainerNavigationCandidate> &fallbackCandidate);
+    void setInProgress(bool inProgress);
+    void cancelFileDeletion();
+    void cancelFallback();
     void reportDocumentEffect(ImageDocumentEffect effect);
+    void reportFailure(const QString &errorString);
 
+    QObject *m_parent = nullptr;
     ImageDocumentState &m_state;
     ImagePresentationController &m_presentationController;
     Callbacks m_callbacks;
-    std::unique_ptr<ImageDeletionController> m_deletionController;
+    ImageCandidateRepository m_candidateRepository;
+    FileOperationProvider m_fileOperationProvider;
+    ImageIoJob m_fileDeletionJob;
+    ImageIoJob m_fallbackJob;
+    bool m_inProgress = false;
 };
 }
 

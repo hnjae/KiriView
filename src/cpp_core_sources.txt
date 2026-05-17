@@ -26,7 +26,6 @@ src/imagebytecost.cpp
 src/imagecontainer.cpp
 src/imagerendering.cpp
 src/imagerotation.cpp
-src/imagedeletioncontroller.cpp
 src/imagedocumentcontroller.cpp
 src/imagedocumentdeletioncontroller.cpp
 src/imagedocumenteffectexecutor.cpp
