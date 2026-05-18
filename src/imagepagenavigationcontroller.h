@@ -21,13 +21,14 @@ class ImagePageNavigationController final : public QObject
 public:
     using OpenUrlCallback = std::function<void(const QUrl &)>;
     using PageNavigationChangedCallback = std::function<void()>;
-    using CurrentImageRemovedCallback
-        = std::function<void(std::vector<ImageNavigationCandidate>, ImageCandidateListContext)>;
+    using ClearCurrentImageCallback = std::function<void()>;
+    using DeletionInProgressCallback = std::function<bool()>;
 
     struct Callbacks {
         OpenUrlCallback openUrl;
         PageNavigationChangedCallback pageNavigationChanged;
-        CurrentImageRemovedCallback currentImageRemoved;
+        ClearCurrentImageCallback clearCurrentImage;
+        DeletionInProgressCallback deletionInProgress;
     };
 
     ImagePageNavigationController(
@@ -54,8 +55,9 @@ private:
     void updateFromChangedCandidates(
         std::vector<ImageNavigationCandidate> candidates, ImageCandidateListSource source);
     void notifyChanged();
-    void reportCurrentImageRemoved(
+    void recoverFromCurrentImageRemoved(
         std::vector<ImageNavigationCandidate> candidates, ImageCandidateListContext context);
+    bool deletionInProgress() const;
 
     const ImageCandidateRepository &m_candidateRepository;
     Callbacks m_callbacks;

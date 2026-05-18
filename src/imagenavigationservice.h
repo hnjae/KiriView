@@ -15,7 +15,6 @@
 #include <QUrl>
 #include <functional>
 #include <optional>
-#include <vector>
 
 namespace KiriView {
 class ImageNavigationService final : public QObject
@@ -62,10 +61,6 @@ public:
     void clearPageNavigation();
 
 private:
-    void handleCurrentImageRemoved(
-        std::vector<ImageNavigationCandidate> candidates, ImageCandidateListContext context);
-    bool deletionInProgress() const;
-
     Callbacks m_callbacks;
     ImageCandidateRepository m_candidateRepository;
     ImageContainerNavigationController m_containerNavigation;

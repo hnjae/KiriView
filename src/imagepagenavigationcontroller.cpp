@@ -5,8 +5,10 @@
 
 #include "imagecallback.h"
 #include "imagenavigationmodel.h"
+#include "imageremovalfallback.h"
 
 #include <QString>
+#include <optional>
 #include <utility>
 
 namespace KiriView {
@@ -157,7 +159,7 @@ void ImagePageNavigationController::updateFromChangedCandidates(
     }
 
     if (refresh.currentImageRemoved && refresh.context.has_value()) {
-        reportCurrentImageRemoved(std::move(candidates), *refresh.context);
+        recoverFromCurrentImageRemoved(std::move(candidates), *refresh.context);
     }
 }
 
@@ -166,9 +168,24 @@ void ImagePageNavigationController::notifyChanged()
     invokeIfSet(m_callbacks.pageNavigationChanged);
 }
 
-void ImagePageNavigationController::reportCurrentImageRemoved(
+void ImagePageNavigationController::recoverFromCurrentImageRemoved(
     std::vector<ImageNavigationCandidate> candidates, ImageCandidateListContext context)
 {
-    invokeIfSet(m_callbacks.currentImageRemoved, std::move(candidates), std::move(context));
+    if (deletionInProgress()) {
+        return;
+    }
+
+    const ImageRemovalFallback fallback = imageRemovalFallbackForImageContext(context);
+    const std::optional<QUrl> fallbackUrl
+        = imageRemovalFallbackUrl(std::move(candidates), fallback);
+    invokeIfSet(m_callbacks.clearCurrentImage);
+    if (fallbackUrl.has_value()) {
+        invokeIfSet(m_callbacks.openUrl, *fallbackUrl);
+    }
+}
+
+bool ImagePageNavigationController::deletionInProgress() const
+{
+    return m_callbacks.deletionInProgress && m_callbacks.deletionInProgress();
 }
 }

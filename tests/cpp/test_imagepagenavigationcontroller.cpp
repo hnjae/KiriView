@@ -7,7 +7,6 @@
 #include <QObject>
 #include <QTest>
 #include <QUrl>
-#include <optional>
 #include <utility>
 #include <vector>
 
@@ -25,12 +24,14 @@ using FakeCandidateProvider = KiriView::TestSupport::FakeImageNavigationCandidat
 ImagePageNavigationController::Callbacks controllerCallbacks(
     ImagePageNavigationController::OpenUrlCallback openUrl = {},
     ImagePageNavigationController::PageNavigationChangedCallback pageNavigationChanged = {},
-    ImagePageNavigationController::CurrentImageRemovedCallback currentImageRemoved = {})
+    ImagePageNavigationController::ClearCurrentImageCallback clearCurrentImage = {},
+    ImagePageNavigationController::DeletionInProgressCallback deletionInProgress = {})
 {
     return ImagePageNavigationController::Callbacks {
         std::move(openUrl),
         std::move(pageNavigationChanged),
-        std::move(currentImageRemoved),
+        std::move(clearCurrentImage),
+        std::move(deletionInProgress),
     };
 }
 
@@ -46,7 +47,8 @@ class TestImagePageNavigationController : public QObject
 
 private Q_SLOTS:
     void updateOwnsRefreshStateAndReusesWatcher();
-    void changedCandidatesReportRemovalAfterStateUpdate();
+    void changedCandidatesRecoverRemovedImageAfterStateUpdate();
+    void deletionInProgressSuppressesRemovedCurrentImageRecovery();
     void fallbackAdjacentNavigationPublishesTargetBeforeOpening();
     void cancelUpdateStopsCandidateChangeWatcher();
 };
@@ -81,7 +83,7 @@ void TestImagePageNavigationController::updateOwnsRefreshStateAndReusesWatcher()
     QCOMPARE(fakeProvider.directoryImageChangeSubscriptionCount(directoryUrl), 1);
 }
 
-void TestImagePageNavigationController::changedCandidatesReportRemovalAfterStateUpdate()
+void TestImagePageNavigationController::changedCandidatesRecoverRemovedImageAfterStateUpdate()
 {
     FakeCandidateProvider fakeProvider;
     const QUrl directoryUrl = localUrl(QStringLiteral("/images/"));
@@ -96,17 +98,11 @@ void TestImagePageNavigationController::changedCandidatesReportRemovalAfterState
         });
 
     ImageCandidateRepository repository(fakeProvider.provider());
-    int removalCount = 0;
-    std::optional<ImageCandidateListContext> removedContext;
-    std::vector<ImageNavigationCandidate> removalCandidates;
+    QUrl openedUrl;
+    int clearCount = 0;
     ImagePageNavigationController controller(nullptr, repository,
-        controllerCallbacks({}, {},
-            [&](std::vector<ImageNavigationCandidate> candidates,
-                ImageCandidateListContext context) {
-                ++removalCount;
-                removalCandidates = std::move(candidates);
-                removedContext = std::move(context);
-            }));
+        controllerCallbacks([&openedUrl](const QUrl &url) { openedUrl = url; }, {},
+            [&clearCount]() { ++clearCount; }));
     controller.update(directoryContext(secondUrl, directoryUrl));
 
     fakeProvider.emitDirectoryImageChanges(directoryUrl,
@@ -117,10 +113,44 @@ void TestImagePageNavigationController::changedCandidatesReportRemovalAfterState
 
     QCOMPARE(controller.currentPageNumber(), 0);
     QCOMPARE(controller.imageCount(), 2);
-    QCOMPARE(removalCount, 1);
-    QVERIFY(removedContext.has_value());
-    QCOMPARE(removedContext->currentUrl(), secondUrl);
-    QCOMPARE(removalCandidates.size(), std::size_t(2));
+    QCOMPARE(clearCount, 1);
+    QCOMPARE(openedUrl, thirdUrl);
+}
+
+void TestImagePageNavigationController::deletionInProgressSuppressesRemovedCurrentImageRecovery()
+{
+    FakeCandidateProvider fakeProvider;
+    const QUrl directoryUrl = localUrl(QStringLiteral("/images/"));
+    const QUrl firstUrl = localUrl(QStringLiteral("/images/01.png"));
+    const QUrl secondUrl = localUrl(QStringLiteral("/images/02.png"));
+    const QUrl thirdUrl = localUrl(QStringLiteral("/images/03.png"));
+    fakeProvider.setDirectoryImages(directoryUrl,
+        {
+            imageCandidate(firstUrl),
+            imageCandidate(secondUrl),
+            imageCandidate(thirdUrl),
+        });
+
+    ImageCandidateRepository repository(fakeProvider.provider());
+    QUrl openedUrl;
+    int clearCount = 0;
+    bool deletionInProgress = true;
+    ImagePageNavigationController controller(nullptr, repository,
+        controllerCallbacks([&openedUrl](const QUrl &url) { openedUrl = url; }, {},
+            [&clearCount]() { ++clearCount; },
+            [&deletionInProgress]() { return deletionInProgress; }));
+    controller.update(directoryContext(secondUrl, directoryUrl));
+
+    fakeProvider.emitDirectoryImageChanges(directoryUrl,
+        {
+            imageCandidate(firstUrl),
+            imageCandidate(thirdUrl),
+        });
+
+    QCOMPARE(controller.currentPageNumber(), 0);
+    QCOMPARE(controller.imageCount(), 2);
+    QCOMPARE(clearCount, 0);
+    QVERIFY(openedUrl.isEmpty());
 }
 
 void TestImagePageNavigationController::fallbackAdjacentNavigationPublishesTargetBeforeOpening()

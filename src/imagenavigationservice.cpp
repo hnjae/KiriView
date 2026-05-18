@@ -4,12 +4,10 @@
 #include "imagenavigationservice.h"
 
 #include "imagecallback.h"
-#include "imageremovalfallback.h"
 
 #include <QString>
 #include <optional>
 #include <utility>
-#include <vector>
 
 namespace {
 bool displayContextHasNavigationSource(
@@ -45,10 +43,8 @@ ImageNavigationService::ImageNavigationService(
           ImagePageNavigationController::Callbacks {
               m_callbacks.openUrl,
               m_callbacks.pageNavigationChanged,
-              [this](std::vector<ImageNavigationCandidate> candidates,
-                  ImageCandidateListContext context) {
-                  handleCurrentImageRemoved(std::move(candidates), std::move(context));
-              },
+              m_callbacks.clearCurrentImage,
+              m_callbacks.deletionInProgress,
           })
 {
 }
@@ -103,27 +99,6 @@ void ImageNavigationService::updatePageNavigation(const DisplayContext &context)
 }
 
 void ImageNavigationService::cancelPageNavigationUpdate() { m_pageNavigation.cancelUpdate(); }
-
-void ImageNavigationService::handleCurrentImageRemoved(
-    std::vector<ImageNavigationCandidate> candidates, ImageCandidateListContext context)
-{
-    if (deletionInProgress()) {
-        return;
-    }
-
-    const ImageRemovalFallback fallback = imageRemovalFallbackForImageContext(context);
-    const std::optional<QUrl> fallbackUrl
-        = imageRemovalFallbackUrl(std::move(candidates), fallback);
-    invokeIfSet(m_callbacks.clearCurrentImage);
-    if (fallbackUrl.has_value()) {
-        invokeIfSet(m_callbacks.openUrl, *fallbackUrl);
-    }
-}
-
-bool ImageNavigationService::deletionInProgress() const
-{
-    return m_callbacks.deletionInProgress && m_callbacks.deletionInProgress();
-}
 
 void ImageNavigationService::clearPageNavigation() { m_pageNavigation.clear(); }
 }
