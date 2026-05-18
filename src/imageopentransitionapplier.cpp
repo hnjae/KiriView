@@ -62,7 +62,7 @@ public:
     void apply(const KiriView::ImageOpenTransition &transition,
         const KiriView::ImageOpenTransitionContext &context)
     {
-        applyStateDelta(transition.state_delta, context);
+        applyStateDelta(transition.stateDelta, context);
         for (KiriView::ImageOpenEffect effect : transition.effects) {
             applyEffect(effect, context);
         }
@@ -76,19 +76,19 @@ private:
     {
         if (trackedLoadCompletionBeforeVisibleState(delta)) {
             applyTrackedLoadCompletion(delta);
-            applyContainerNavigationUrlTarget(delta.container_navigation_url, context);
-            applySourceUrlTarget(delta.source_url, context);
-            applyDisplayedLocationTarget(delta.displayed_location, context);
-            applyErrorStringTarget(delta.error_string, context);
+            applyContainerNavigationUrlTarget(delta.containerNavigationUrl, context);
+            applySourceUrlTarget(delta.sourceUrl, context);
+            applyDisplayedLocationTarget(delta.displayedLocation, context);
+            applyErrorStringTarget(delta.errorString, context);
             applyStatusTarget(delta.status);
             return;
         }
 
-        applySourceUrlTarget(delta.source_url, context);
-        applyDisplayedLocationTarget(delta.displayed_location, context);
-        applyContainerNavigationUrlTarget(delta.container_navigation_url, context);
-        applyErrorStringTarget(delta.error_string, context);
-        if (delta.clear_loading_container_navigation_url) {
+        applySourceUrlTarget(delta.sourceUrl, context);
+        applyDisplayedLocationTarget(delta.displayedLocation, context);
+        applyContainerNavigationUrlTarget(delta.containerNavigationUrl, context);
+        applyErrorStringTarget(delta.errorString, context);
+        if (delta.clearLoadingContainerNavigationUrl) {
             applyTrackedLoadCompletion(delta);
         } else {
             applyLoadingTarget(delta.loading);
@@ -98,13 +98,13 @@ private:
 
     bool trackedLoadCompletionBeforeVisibleState(const KiriView::ImageOpenStateDelta &delta) const
     {
-        return delta.clear_loading_container_navigation_url
-            && delta.displayed_location == KiriView::ImageOpenDisplayedLocationTarget::Unchanged;
+        return delta.clearLoadingContainerNavigationUrl
+            && delta.displayedLocation == KiriView::ImageOpenDisplayedLocationTarget::Unchanged;
     }
 
     void applyTrackedLoadCompletion(const KiriView::ImageOpenStateDelta &delta)
     {
-        if (delta.clear_loading_container_navigation_url) {
+        if (delta.clearLoadingContainerNavigationUrl) {
             m_state.clearLoadingContainerNavigationUrl();
         }
         applyLoadingTarget(delta.loading);

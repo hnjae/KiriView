@@ -82,7 +82,7 @@ void TestImageOpenTransitionApplier::successfulTransitionAppliesSessionStateAndE
         location,
     };
     KiriView::ImageOpenTransition transition;
-    transition.state_delta = stateDelta(KiriView::ImageOpenUrlTarget::SessionImage,
+    transition.stateDelta = stateDelta(KiriView::ImageOpenUrlTarget::SessionImage,
         KiriView::ImageOpenDisplayedLocationTarget::Session,
         KiriView::ImageOpenUrlTarget::DerivedContainerNavigation,
         KiriView::ImageOpenBoolTarget::False, KiriView::ImageOpenStatusTarget::Ready,
@@ -127,7 +127,7 @@ void TestImageOpenTransitionApplier::errorTransitionUsesDisplayedFallbackAndProv
         KiriView::DisplayedImageLocation::fromUrl(failedImageUrl),
     };
     KiriView::ImageOpenTransition transition;
-    transition.state_delta = stateDelta(KiriView::ImageOpenUrlTarget::Displayed,
+    transition.stateDelta = stateDelta(KiriView::ImageOpenUrlTarget::Displayed,
         KiriView::ImageOpenDisplayedLocationTarget::Unchanged,
         KiriView::ImageOpenUrlTarget::Unchanged, KiriView::ImageOpenBoolTarget::False,
         KiriView::ImageOpenStatusTarget::Ready, KiriView::ImageOpenErrorStringTarget::Provided,
