@@ -28,7 +28,7 @@ public:
         const ImageLoadSession &session, QUrl imageUrl);
     std::optional<ImageLoadSession> replaceCurrentLocation(
         const ImageLoadSession &session, DisplayedImageLocation location);
-    std::optional<ImageLoadSession> takeCurrent(const ImageLoadSession &session);
+    std::optional<ImageLoadSession> claimCurrent(const ImageLoadSession &session);
 
 private:
     quint64 nextSessionId();

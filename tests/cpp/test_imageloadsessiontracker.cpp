@@ -26,7 +26,7 @@ private Q_SLOTS:
     void staleSessionsCannotResolveOrFinishCurrentLoad();
     void archiveResolutionUpdatesCanonicalCurrentSession();
     void predecodedLocationReplacementUpdatesCanonicalCurrentSession();
-    void takeCurrentClearsTheActiveSession();
+    void claimCurrentClearsTheActiveSession();
 };
 
 void TestImageLoadSessionTracker::startOwnsSessionIdAndFirstDisplayContext()
@@ -64,7 +64,7 @@ void TestImageLoadSessionTracker::staleSessionsCannotResolveOrFinishCurrentLoad(
             .replaceCurrentLocation(
                 staleSession, KiriView::DisplayedImageLocation::fromUrl(firstUrl))
             .has_value());
-    QVERIFY(!tracker.takeCurrent(staleSession).has_value());
+    QVERIFY(!tracker.claimCurrent(staleSession).has_value());
 
     const KiriView::ImageDecodeRequest staleRequest
         = KiriView::ImageDecodeRequest::fromUrl(staleSession.id, firstUrl);
@@ -124,14 +124,14 @@ void TestImageLoadSessionTracker::predecodedLocationReplacementUpdatesCanonicalC
     QCOMPARE(currentSession->location.archiveDocumentRootUrl(), archiveDocument->rootUrl());
 }
 
-void TestImageLoadSessionTracker::takeCurrentClearsTheActiveSession()
+void TestImageLoadSessionTracker::claimCurrentClearsTheActiveSession()
 {
     KiriView::ImageLoadSessionTracker tracker;
     const QUrl imageUrl = localUrl(QStringLiteral("/images/01.png"));
     const KiriView::ImageLoadSession session
         = tracker.start(KiriView::ImageLoadRequest::fromUrl(imageUrl)).session;
 
-    const std::optional<KiriView::ImageLoadSession> takenSession = tracker.takeCurrent(session);
+    const std::optional<KiriView::ImageLoadSession> takenSession = tracker.claimCurrent(session);
 
     QVERIFY(takenSession.has_value());
     QCOMPARE(takenSession->location.imageUrl(), imageUrl);

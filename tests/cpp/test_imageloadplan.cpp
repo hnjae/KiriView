@@ -37,7 +37,7 @@ void TestImageLoadPlan::localFilePlansDirectImageLoad()
         = KiriView::imageLoadPlan(7, KiriView::ImageLoadRequest::fromUrl(imageUrl));
 
     QCOMPARE(plan.session.id, quint64(7));
-    QVERIFY(!plan.requiresArchiveListing);
+    QCOMPARE(plan.startEffect, KiriView::ImageLoadStartEffect::DecodeImage);
     QCOMPARE(plan.session.location.imageUrl(), imageUrl);
     QVERIFY(plan.session.location.archiveDocument().isEmpty());
 }
@@ -53,7 +53,7 @@ void TestImageLoadPlan::localComicBookArchivePlansArchiveListing()
         = KiriView::imageLoadPlan(8, KiriView::ImageLoadRequest::fromUrl(archiveUrl));
 
     QCOMPARE(plan.session.id, quint64(8));
-    QVERIFY(plan.requiresArchiveListing);
+    QCOMPARE(plan.startEffect, KiriView::ImageLoadStartEffect::LoadArchiveImageCandidates);
     QCOMPARE(plan.session.location.imageUrl(), archiveUrl);
     QCOMPARE(plan.session.location.archiveDocumentFileUrl(), archiveDocument->fileUrl());
     QCOMPARE(plan.session.location.archiveDocumentRootUrl(), archiveDocument->rootUrl());
@@ -75,7 +75,7 @@ void TestImageLoadPlan::localDirectoryPlansDocumentListing()
         = KiriView::imageLoadPlan(12, KiriView::ImageLoadRequest::fromUrl(directoryUrl));
 
     QCOMPARE(plan.session.id, quint64(12));
-    QVERIFY(plan.requiresArchiveListing);
+    QCOMPARE(plan.startEffect, KiriView::ImageLoadStartEffect::LoadArchiveImageCandidates);
     QCOMPARE(plan.session.location.imageUrl(), directoryUrl);
     QCOMPARE(plan.session.location.archiveDocumentFileUrl(), directoryDocument->fileUrl());
     QCOMPARE(plan.session.location.archiveDocumentRootUrl(), directoryDocument->rootUrl());
@@ -99,11 +99,11 @@ void TestImageLoadPlan::containerNavigationRestoresArchiveDocumentForInteriorIma
             imageUrl, KiriView::ArchiveDocumentLocation::none(), archiveUrl));
 
     QCOMPARE(plan.session.id, quint64(9));
-    QVERIFY(!plan.requiresArchiveListing);
+    QCOMPARE(plan.startEffect, KiriView::ImageLoadStartEffect::DecodeImage);
     QCOMPARE(plan.session.location.imageUrl(), imageUrl);
     QCOMPARE(plan.session.location.archiveDocumentRootUrl(), archiveDocument->rootUrl());
     QCOMPARE(plan.session.request.containerNavigationUrl(), archiveUrl);
-    QVERIFY(!archivePlan.requiresArchiveListing);
+    QCOMPARE(archivePlan.effect, KiriView::ImageArchiveLoadEffect::ReadImage);
     QCOMPARE(archivePlan.archiveDocument.rootUrl(), archiveDocument->rootUrl());
 }
 
@@ -121,11 +121,11 @@ void TestImageLoadPlan::displayedArchiveContextIsKeptForInteriorImage()
         KiriView::ImageLoadRequest::fromLocation(imageUrl, *archiveDocument));
 
     QCOMPARE(plan.session.id, quint64(10));
-    QVERIFY(!plan.requiresArchiveListing);
+    QCOMPARE(plan.startEffect, KiriView::ImageLoadStartEffect::DecodeImage);
     QCOMPARE(plan.session.location.imageUrl(), imageUrl);
     QCOMPARE(plan.session.location.archiveDocumentFileUrl(), archiveDocument->fileUrl());
     QCOMPARE(plan.session.location.archiveDocumentRootUrl(), archiveDocument->rootUrl());
-    QVERIFY(!archivePlan.requiresArchiveListing);
+    QCOMPARE(archivePlan.effect, KiriView::ImageArchiveLoadEffect::ReadImage);
     QCOMPARE(archivePlan.archiveDocument.fileUrl(), archiveDocument->fileUrl());
     QCOMPARE(archivePlan.archiveDocument.rootUrl(), archiveDocument->rootUrl());
 }
@@ -137,7 +137,7 @@ void TestImageLoadPlan::explicitKioArchiveImagePlansDirectLoad()
         = KiriView::imageLoadPlan(11, KiriView::ImageLoadRequest::fromUrl(imageUrl));
 
     QCOMPARE(plan.session.id, quint64(11));
-    QVERIFY(!plan.requiresArchiveListing);
+    QCOMPARE(plan.startEffect, KiriView::ImageLoadStartEffect::DecodeImage);
     QCOMPARE(plan.session.location.imageUrl(), imageUrl);
     QVERIFY(plan.session.location.archiveDocument().isEmpty());
 }

@@ -65,7 +65,7 @@ std::optional<ImageLoadSession> ImageLoadSessionTracker::replaceCurrentLocation(
     return *m_session;
 }
 
-std::optional<ImageLoadSession> ImageLoadSessionTracker::takeCurrent(
+std::optional<ImageLoadSession> ImageLoadSessionTracker::claimCurrent(
     const ImageLoadSession &session)
 {
     if (!isCurrent(session)) {
