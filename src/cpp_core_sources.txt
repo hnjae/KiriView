@@ -42,6 +42,7 @@ src/imagedocumentruntime.cpp
 src/imagedocumentruntimedependencies.cpp
 src/imagedocumentsourceloadexecutor.cpp
 src/imagedocumentsourceloadpolicy.cpp
+src/imagedecodepipeline.cpp
 src/imagedecodejob.cpp
 src/imagedecodejobstate.cpp
 src/imagedocumentstate.cpp

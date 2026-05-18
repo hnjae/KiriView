@@ -3,39 +3,7 @@
 
 #include "kiriimagedecoder.h"
 
-#include "apnganimationreader.h"
-#include "heifdecoder.h"
-#include "kiriview/src/avifcompat.cxx.h"
-#include "qimagereaderdecoder.h"
-#include "rawdecoder.h"
-#include "rustqtconversion.h"
-#include "staticimagedecode.h"
-#include "svgtilesource.h"
-
-#include <QByteArray>
-#include <memory>
-#include <optional>
-#include <utility>
-
-namespace {
-QByteArray avifCompatibleImageData(const QByteArray &data)
-{
-    return KiriView::Bridge::qtByteArray(
-        KiriView::avifDataWithCompatibilityFixes(KiriView::Bridge::rustBytes(data)));
-}
-
-std::optional<KiriView::DecodedImageResult> decodeSvgImageData(const QByteArray &data)
-{
-    QString errorString;
-    std::shared_ptr<KiriView::SvgTileSource> source
-        = KiriView::SvgTileSource::open(data, &errorString);
-    if (source == nullptr) {
-        return std::nullopt;
-    }
-
-    return KiriView::staticDecodedImageResult(std::move(source), {}, &errorString);
-}
-}
+#include "imagedecodepipeline.h"
 
 namespace KiriView {
 DecodedImageResult decodeImageData(const QByteArray &data)
@@ -45,33 +13,7 @@ DecodedImageResult decodeImageData(const QByteArray &data)
 
 DecodedImageResult decodeImageData(const QByteArray &data, const ImageDecodeRequest &request)
 {
-    if (const std::optional<DecodedImageResult> svgResult = decodeSvgImageData(data)) {
-        return *svgResult;
-    }
-
-    ApngAnimationReader apngReader;
-    ApngOpenResult apngResult = apngReader.open(data);
-    if (apngResult.status == ApngOpenStatus::Success) {
-        return successfulDecodedImageResult(ApngAnimationImage {
-            std::move(apngResult.firstFrame),
-            data,
-        });
-    }
-    if (apngResult.status == ApngOpenStatus::Error) {
-        return failedDecodedImageResult(apngResult.errorString);
-    }
-
-    const QByteArray imageData = avifCompatibleImageData(data);
-    if (const std::optional<DecodedImageResult> heifResult = decodeHeifImageData(imageData)) {
-        return *heifResult;
-    }
-
-    if (const std::optional<DecodedImageResult> rawResult
-        = decodeRawImageData(imageData, request)) {
-        return *rawResult;
-    }
-
-    return decodeQImageReaderImageData(imageData, request);
+    return decodeImageDataWithDefaultPipeline(data, request);
 }
 
 }
