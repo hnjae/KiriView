@@ -5,17 +5,16 @@
 #define KIRIVIEW_KIRIVIEWAPPLICATION_H
 
 #include <AbstractKirigamiApplication>
-#include <KStandardActions>
-
 #include <QAbstractListModel>
 #include <QAction>
 #include <QKeySequence>
 #include <QList>
 #include <QString>
 #include <QtQml/qqmlregistration.h>
+#include <memory>
 
 namespace KiriView::ApplicationActions {
-class ShortcutHelpModel;
+class ApplicationActionRuntime;
 }
 
 class KiriViewApplication : public AbstractKirigamiApplication
@@ -106,21 +105,9 @@ protected:
     void setupActions() override;
 
 private:
-    QAction *addRegisteredAction(const QString &name, const QString &text, const QString &iconName,
-        const QList<QKeySequence> &defaultShortcuts = {});
-    QAction *addStandardAction(KStandardActions::StandardAction actionType, const QString &name,
-        const QString &text, const QList<QKeySequence> &defaultShortcuts);
-    QAction *finishRegisteredAction(QAction *registeredAction, const QString &text,
-        const QList<QKeySequence> &defaultShortcuts);
-    void handleActionChanged();
-    void sanitizeActionShortcuts();
-    void sanitizeActionShortcuts(QAction *action);
-    void updateShowMenuBarAction();
+    friend class KiriView::ApplicationActions::ApplicationActionRuntime;
 
-    QAction *m_showMenuBarAction = nullptr;
-    KiriView::ApplicationActions::ShortcutHelpModel *m_shortcutHelpModel = nullptr;
-    int m_shortcutRevision = 0;
-    bool m_sanitizingShortcuts = false;
+    std::unique_ptr<KiriView::ApplicationActions::ApplicationActionRuntime> m_actionRuntime;
 };
 
 #endif
