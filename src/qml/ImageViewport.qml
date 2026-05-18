@@ -12,8 +12,6 @@ Item {
     property alias imageView: primaryImageView
     property alias flickable: imageFlickable
     property bool imageReady: imageDocument.status === KiriImageDocument.Ready
-    property bool pendingFinalScanStart: false
-    property bool displayedImageUsesFinalScanStart: false
     property url initialSourceUrl
     readonly property int minimumManualZoomPercent: imageDocument.minimumManualZoomPercent
     readonly property int maximumManualZoomPercent: imageDocument.maximumManualZoomPercent
@@ -44,22 +42,12 @@ Item {
         return moved;
     }
 
-    function resetContentPositionToScanStart() {
-        setContentPosition(imageView.initialScanContentPosition());
-    }
-
     function setNextDisplayedImageStartToFinalScanPosition() {
-        pendingFinalScanStart = true;
+        imageView.setNextDisplayedImageStartToFinalScanPosition();
     }
 
     function applyDisplayedImageInitialContentPosition() {
-        if (displayedImageUsesFinalScanStart) {
-            setContentPosition(imageView.finalScanContentPosition());
-            displayedImageUsesFinalScanStart = false;
-            return;
-        }
-
-        resetContentPositionToScanStart();
+        setContentPosition(imageView.displayedImageInitialContentPosition());
     }
 
     function panBy(deltaX, deltaY) {
@@ -141,17 +129,6 @@ Item {
         visibleItemRect: Qt.rect(imageFlickable.contentX - spreadItem.x, imageFlickable.contentY - spreadItem.y, imageFlickable.width, imageFlickable.height)
         viewportSize: Qt.size(imageFlickable.width, imageFlickable.height)
 
-        onDisplayedUrlChanged: {
-            root.displayedImageUsesFinalScanStart = root.pendingFinalScanStart;
-            root.pendingFinalScanStart = false;
-            Qt.callLater(root.applyDisplayedImageInitialContentPosition);
-        }
-        onLoadingChanged: {
-            if (!loading) {
-                root.pendingFinalScanStart = false;
-            }
-        }
-
         Component.onCompleted: {
             if (root.initialSourceUrl.toString().length > 0) {
                 sourceUrl = root.initialSourceUrl;
@@ -193,6 +170,8 @@ Item {
                 width: imageDocument.primaryDisplaySize.width
                 x: imageDocument.secondaryPageVisible && imageDocument.rightToLeftReadingEnabled && imageDocument.rightToLeftReadingAvailable ? secondaryImageView.width : 0
                 y: Math.max(0, (spreadItem.height - height) / 2)
+
+                onDisplayedImageInitialContentPositionRequested: Qt.callLater(root.applyDisplayedImageInitialContentPosition)
             }
 
             KiriImageView {

@@ -79,6 +79,7 @@ src/imagespreadpresentationcontroller.cpp
 src/imagespreadzoomcontroller.cpp
 src/imageurl.cpp
 src/imageviewportgeometry.cpp
+src/imageviewportscanstate.cpp
 src/imageviewtext.cpp
 src/imagezoomstate.cpp
 src/applicationshortcutpolicy.cpp

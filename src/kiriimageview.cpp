@@ -80,6 +80,20 @@ QPointF KiriImageView::finalScanContentPosition() const
         viewportSize(), viewportImageRect(), rightToLeftReadingActive());
 }
 
+void KiriImageView::setNextDisplayedImageStartToFinalScanPosition()
+{
+    m_scanState.requestNextDisplayedImageFinalScanStart();
+}
+
+QPointF KiriImageView::displayedImageInitialContentPosition() const
+{
+    if (m_scanState.displayedImageScanStart() == KiriView::ImageViewportScanStart::Final) {
+        return finalScanContentPosition();
+    }
+
+    return initialScanContentPosition();
+}
+
 bool KiriImageView::viewportPointInsideImage(
     const QPointF &contentPosition, const QPointF &viewportPoint) const
 {
@@ -187,9 +201,15 @@ void KiriImageView::connectDocument()
 
     m_repaintConnection
         = connect(m_document, &KiriImageDocument::repaintRequested, this, &KiriImageView::update);
+    m_displayedUrlChangedConnection = connect(m_document, &KiriImageDocument::displayedUrlChanged,
+        this, &KiriImageView::handleDisplayedUrlChanged);
+    m_loadingChangedConnection = connect(
+        m_document, &KiriImageDocument::loadingChanged, this, &KiriImageView::handleLoadingChanged);
     m_documentDestroyedConnection = connect(m_document, &QObject::destroyed, this, [this]() {
         m_document = nullptr;
         m_repaintConnection = {};
+        m_displayedUrlChangedConnection = {};
+        m_loadingChangedConnection = {};
         m_documentDestroyedConnection = {};
         Q_EMIT documentChanged();
         update();
@@ -202,11 +222,28 @@ void KiriImageView::disconnectDocument()
     KiriImageDocument *document = m_document;
     m_document = nullptr;
     QObject::disconnect(m_repaintConnection);
+    QObject::disconnect(m_displayedUrlChangedConnection);
+    QObject::disconnect(m_loadingChangedConnection);
     QObject::disconnect(m_documentDestroyedConnection);
     m_repaintConnection = {};
+    m_displayedUrlChangedConnection = {};
+    m_loadingChangedConnection = {};
     m_documentDestroyedConnection = {};
     if (document != nullptr) {
         document->setRenderContextProvider({});
+    }
+}
+
+void KiriImageView::handleDisplayedUrlChanged()
+{
+    m_scanState.beginDisplayedImage();
+    Q_EMIT displayedImageInitialContentPositionRequested();
+}
+
+void KiriImageView::handleLoadingChanged()
+{
+    if (m_document != nullptr && !m_document->loading()) {
+        m_scanState.cancelPendingDisplayedImageStart();
     }
 }
 

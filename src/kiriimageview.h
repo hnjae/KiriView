@@ -6,6 +6,7 @@
 
 #include "imagedocumenttypes.h"
 #include "imagesurface.h"
+#include "imageviewportscanstate.h"
 #include "kiriimagedocument.h"
 
 #include <QMetaObject>
@@ -40,6 +41,8 @@ public:
     Q_INVOKABLE QPointF previousScanContentPosition(const QPointF &contentPosition) const;
     Q_INVOKABLE QPointF initialScanContentPosition() const;
     Q_INVOKABLE QPointF finalScanContentPosition() const;
+    Q_INVOKABLE void setNextDisplayedImageStartToFinalScanPosition();
+    Q_INVOKABLE QPointF displayedImageInitialContentPosition() const;
     Q_INVOKABLE bool viewportPointInsideImage(
         const QPointF &contentPosition, const QPointF &viewportPoint) const;
     Q_INVOKABLE QPointF zoomContentPosition(const QPointF &contentPosition,
@@ -51,6 +54,7 @@ public:
 Q_SIGNALS:
     void documentChanged();
     void secondaryPageChanged();
+    void displayedImageInitialContentPositionRequested();
 
 private:
     KiriView::DisplayedPageRole displayedPageRole() const;
@@ -62,6 +66,8 @@ private:
     bool rightToLeftReadingActive() const;
     void connectDocument();
     void disconnectDocument();
+    void handleDisplayedUrlChanged();
+    void handleLoadingChanged();
     KiriView::ImageDocumentRenderContext renderContext() const;
     qreal displayDevicePixelRatio() const;
     int maximumTextureSize() const;
@@ -69,7 +75,10 @@ private:
     KiriImageDocument *m_document = nullptr;
     bool m_secondaryPage = false;
     QMetaObject::Connection m_repaintConnection;
+    QMetaObject::Connection m_displayedUrlChangedConnection;
+    QMetaObject::Connection m_loadingChangedConnection;
     QMetaObject::Connection m_documentDestroyedConnection;
+    KiriView::ImageViewportScanState m_scanState;
 };
 
 #endif
