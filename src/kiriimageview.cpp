@@ -45,6 +45,7 @@ void KiriImageView::setSecondaryPage(bool secondaryPage)
     }
 
     m_secondaryPage = secondaryPage;
+    applyRenderContextBinding(m_renderContextBinding.setSecondaryPage(secondaryPage), m_document);
     Q_EMIT secondaryPageChanged();
     update();
 }
@@ -152,6 +153,19 @@ void KiriImageView::itemChange(ItemChange change, const ItemChangeData &value)
     }
 }
 
+void KiriImageView::classBegin()
+{
+    QQuickItem::classBegin();
+    m_renderContextBindingDeferred = true;
+}
+
+void KiriImageView::componentComplete()
+{
+    QQuickItem::componentComplete();
+    m_renderContextBindingDeferred = false;
+    synchronizeDeferredRenderContextBinding();
+}
+
 KiriView::DisplayedPageRole KiriImageView::displayedPageRole() const
 {
     return m_secondaryPage ? KiriView::DisplayedPageRole::Secondary
@@ -207,6 +221,7 @@ void KiriImageView::connectDocument()
         m_document, &KiriImageDocument::loadingChanged, this, &KiriImageView::handleLoadingChanged);
     m_documentDestroyedConnection = connect(m_document, &QObject::destroyed, this, [this]() {
         m_document = nullptr;
+        m_renderContextBinding.reset();
         m_repaintConnection = {};
         m_displayedUrlChangedConnection = {};
         m_loadingChangedConnection = {};
@@ -214,7 +229,7 @@ void KiriImageView::connectDocument()
         Q_EMIT documentChanged();
         update();
     });
-    m_document->setRenderContextProvider([this]() { return renderContext(); });
+    applyRenderContextBinding(m_renderContextBinding.setDocumentAttached(true), m_document);
 }
 
 void KiriImageView::disconnectDocument()
@@ -229,9 +244,35 @@ void KiriImageView::disconnectDocument()
     m_displayedUrlChangedConnection = {};
     m_loadingChangedConnection = {};
     m_documentDestroyedConnection = {};
-    if (document != nullptr) {
-        document->setRenderContextProvider({});
+    applyRenderContextBinding(m_renderContextBinding.reset(), document);
+}
+
+void KiriImageView::applyRenderContextBinding(
+    KiriView::ImageViewRenderContextBindingAction action, KiriImageDocument *document)
+{
+    if (m_renderContextBindingDeferred || document == nullptr) {
+        return;
     }
+
+    switch (action) {
+    case KiriView::ImageViewRenderContextBindingAction::None:
+        return;
+    case KiriView::ImageViewRenderContextBindingAction::InstallProvider:
+        document->setRenderContextProvider([this]() { return renderContext(); });
+        return;
+    case KiriView::ImageViewRenderContextBindingAction::ClearProvider:
+        document->setRenderContextProvider({});
+        return;
+    }
+}
+
+void KiriImageView::synchronizeDeferredRenderContextBinding()
+{
+    if (m_document == nullptr || !m_renderContextBinding.providerInstalled()) {
+        return;
+    }
+
+    m_document->setRenderContextProvider([this]() { return renderContext(); });
 }
 
 void KiriImageView::handleDisplayedUrlChanged()

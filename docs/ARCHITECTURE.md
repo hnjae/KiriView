@@ -39,6 +39,7 @@ C++ Qt/KDE runtime code owns platform integration and side effects:
 - `QAction` identity, KDE action collections, configured shortcut state, and shortcut persistence.
 - KIO jobs, KDE settings, dialogs, notifications, file operations, and runtime integration.
 - Image presentation, rendering, and async job orchestration.
+- View-owned render context discovery, such as device pixel ratio and maximum texture size. A document may consume one render context provider, but page render items must not compete to install independent providers for the same document.
 
 Rust owns Qt-independent policy and algorithms:
 
@@ -88,6 +89,7 @@ These defaults apply until this document or an ADR explicitly changes the owner.
 - Document and image loading: C++ owns the current document kind, displayed URL or document page, pending load identity, active jobs, decoded image objects, and user-visible load/error state. Rust may compute transition plans from a snapshot, but it must not keep a second displayed-image or pending-selection state.
 - Supported image lists and page position: C++ owns the confirmed supported image list, current index, boundary state, and pending page selection for a runtime scope unless an ADR gives that scope a different owner. Rust navigation policy may return target indices or follow-up effects from those snapshots.
 - Zoom, pan, rotation, scan-start handoff, and spread presentation: the active C++ presentation controller or view facade owns the public presentation state exposed to QML. Rust geometry or spread policy may calculate next values from snapshots. If a presentation mode needs its own state owner, the mode transition must still expose exactly one active public owner.
+- View render context: `KiriImageView` owns render-context discovery for the attached document only when it is the primary viewport facade. Secondary page views render secondary snapshots but do not install or clear the document render context provider.
 - Deletion: Rust policy may choose the deletion target and post-delete follow-up target from plain document/navigation snapshots. C++ owns KDE confirmation, the file operation, cancellation and failure handling, notifications, and applying the follow-up plan.
 - Preparation and cache: C++ owns prepared image objects, decoder jobs, memory pressure handling, and cache lifetime. Rust may compute preparation priority or eviction policy from plain metadata, but cached runtime objects remain in C++.
 

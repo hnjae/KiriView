@@ -92,6 +92,7 @@ src/imagespreadzoomcontroller.cpp
 src/imageurl.cpp
 src/imageviewportgeometry.cpp
 src/imageviewportscanstate.cpp
+src/imageviewrendercontextbinding.cpp
 src/imageviewtext.cpp
 src/imagezoomstate.cpp
 src/applicationshortcutpolicy.cpp

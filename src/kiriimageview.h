@@ -7,6 +7,7 @@
 #include "imagedocumenttypes.h"
 #include "imagesurface.h"
 #include "imageviewportscanstate.h"
+#include "imageviewrendercontextbinding.h"
 #include "kiriimagedocument.h"
 
 #include <QMetaObject>
@@ -50,6 +51,8 @@ public:
 
     QSGNode *updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *) override;
     void itemChange(ItemChange change, const ItemChangeData &value) override;
+    void classBegin() override;
+    void componentComplete() override;
 
 Q_SIGNALS:
     void documentChanged();
@@ -66,6 +69,9 @@ private:
     bool rightToLeftReadingActive() const;
     void connectDocument();
     void disconnectDocument();
+    void applyRenderContextBinding(
+        KiriView::ImageViewRenderContextBindingAction action, KiriImageDocument *document);
+    void synchronizeDeferredRenderContextBinding();
     void handleDisplayedUrlChanged();
     void handleLoadingChanged();
     KiriView::ImageDocumentRenderContext renderContext() const;
@@ -79,6 +85,8 @@ private:
     QMetaObject::Connection m_loadingChangedConnection;
     QMetaObject::Connection m_documentDestroyedConnection;
     KiriView::ImageViewportScanState m_scanState;
+    KiriView::ImageViewRenderContextBinding m_renderContextBinding;
+    bool m_renderContextBindingDeferred = false;
 };
 
 #endif
