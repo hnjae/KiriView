@@ -5,6 +5,7 @@
 #define KIRIVIEW_IMAGEPRESENTATIONVIEWPORTCONTROLLER_H
 
 #include "imagedocumenttypes.h"
+#include "imagepresentationgeometry.h"
 #include "imagesurface.h"
 #include "imagezoomstate.h"
 
@@ -72,7 +73,8 @@ private:
 
     using ZoomStateMutation = std::function<void(ImageZoomState &, qreal devicePixelRatio)>;
 
-    void setRotationDegrees(int rotationDegrees);
+    void applyGeometryRotationChange();
+    void applyGeometryImageSize(TileRefresh tileRefresh = TileRefresh::WhenZoomStateChanges);
     void mutateZoomState(const ZoomStateMutation &mutation,
         TileRefresh tileRefresh = TileRefresh::WhenZoomStateChanges);
     void applyZoomStateChanges(const ImageZoomSnapshot &previous,
@@ -84,11 +86,10 @@ private:
     RenderContextProvider m_renderContextProvider;
     ImageSurfaceProvider m_imageSurfaceProvider;
     ChangeCallback m_changeCallback;
+    ImagePresentationGeometry m_geometry;
     ImageZoomState m_zoomState;
     ImageDocumentRenderContext m_renderContext;
     std::unique_ptr<ImageTileDecodeScheduler> m_tileDecodeScheduler;
-    QSize m_displayedImageSize;
-    int m_rotationDegrees = 0;
     QRectF m_visibleItemRect;
 };
 }

@@ -66,6 +66,7 @@ src/imageopenworkflow.cpp
 src/imagepagenavigationmodel.cpp
 src/imagepredecodecoordinator.cpp
 src/imagepresentationcontroller.cpp
+src/imagepresentationgeometry.cpp
 src/imagepresentationload.cpp
 src/imagepresentationviewportcontroller.cpp
 src/imagesecondarypagecontroller.cpp

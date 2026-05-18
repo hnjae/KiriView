@@ -6,7 +6,6 @@
 #include "imagecallback.h"
 #include "imagedocumentnotifications.h"
 #include "imagerendering.h"
-#include "imagerotation.h"
 #include "imagetiledecodescheduler.h"
 
 #include <utility>
@@ -26,7 +25,10 @@ ImagePresentationViewportController::ImagePresentationViewportController(QObject
 
 ImagePresentationViewportController::~ImagePresentationViewportController() = default;
 
-QSize ImagePresentationViewportController::imageSize() const { return m_zoomState.imageSize(); }
+QSize ImagePresentationViewportController::imageSize() const
+{
+    return m_geometry.logicalImageSize();
+}
 
 QSizeF ImagePresentationViewportController::viewportSize() const
 {
@@ -62,7 +64,10 @@ qreal ImagePresentationViewportController::steppedManualZoomPercent(qreal stepCo
     return m_zoomState.steppedManualZoomPercent(stepCount, renderContext().devicePixelRatio);
 }
 
-int ImagePresentationViewportController::rotationDegrees() const { return m_rotationDegrees; }
+int ImagePresentationViewportController::rotationDegrees() const
+{
+    return m_geometry.rotationDegrees();
+}
 
 ImageDocumentRenderContext ImagePresentationViewportController::renderContext() const
 {
@@ -123,32 +128,35 @@ void ImagePresentationViewportController::setFitMode(ImageZoomMode zoomMode)
 
 bool ImagePresentationViewportController::resetRotation()
 {
-    if (m_rotationDegrees == 0) {
+    if (!m_geometry.resetRotation()) {
         return false;
     }
 
-    setRotationDegrees(0);
+    applyGeometryRotationChange();
     return true;
 }
 
 void ImagePresentationViewportController::resetRotationForNewImage()
 {
-    if (m_rotationDegrees == 0) {
+    if (!m_geometry.resetRotation()) {
         return;
     }
 
-    m_rotationDegrees = 0;
     notify(ImageDocumentChange::Rotation);
 }
 
 void ImagePresentationViewportController::rotateClockwise()
 {
-    setRotationDegrees(imageRotationClockwise(m_rotationDegrees));
+    if (m_geometry.rotateClockwise()) {
+        applyGeometryRotationChange();
+    }
 }
 
 void ImagePresentationViewportController::rotateCounterclockwise()
 {
-    setRotationDegrees(imageRotationCounterclockwise(m_rotationDegrees));
+    if (m_geometry.rotateCounterclockwise()) {
+        applyGeometryRotationChange();
+    }
 }
 
 void ImagePresentationViewportController::updateRenderContext()
@@ -178,11 +186,8 @@ void ImagePresentationViewportController::clearContainer() { m_zoomState.clearCo
 
 void ImagePresentationViewportController::setDisplayedImageSize(const QSize &imageSize)
 {
-    m_displayedImageSize = imageSize;
-    const QSize logicalImageSize = rotatedImageSize(imageSize, m_rotationDegrees);
-    mutateZoomState([&logicalImageSize](ImageZoomState &zoomState, qreal devicePixelRatio) {
-        zoomState.setImageSize(logicalImageSize, devicePixelRatio);
-    });
+    m_geometry.setSourceImageSize(imageSize);
+    applyGeometryImageSize();
 }
 
 void ImagePresentationViewportController::invalidateTiles() { m_tileDecodeScheduler->invalidate(); }
@@ -190,25 +195,24 @@ void ImagePresentationViewportController::invalidateTiles() { m_tileDecodeSchedu
 void ImagePresentationViewportController::scheduleVisibleTileDecode()
 {
     m_tileDecodeScheduler->schedule(
-        imageSurface(), displaySize(), m_visibleItemRect, renderContext(), m_rotationDegrees);
+        imageSurface(), displaySize(), m_visibleItemRect, renderContext(), rotationDegrees());
 }
 
-void ImagePresentationViewportController::setRotationDegrees(int rotationDegrees)
+void ImagePresentationViewportController::applyGeometryRotationChange()
 {
-    const int normalizedRotationDegrees = normalizedImageRotationDegrees(rotationDegrees);
-    if (m_rotationDegrees == normalizedRotationDegrees) {
-        return;
-    }
+    applyGeometryImageSize(TileRefresh::Always);
+    notify(ImageDocumentChange::Rotation);
+    notify(ImageDocumentChange::Repaint);
+}
 
-    m_rotationDegrees = normalizedRotationDegrees;
-    const QSize logicalImageSize = rotatedImageSize(m_displayedImageSize, m_rotationDegrees);
+void ImagePresentationViewportController::applyGeometryImageSize(TileRefresh tileRefresh)
+{
+    const QSize logicalImageSize = m_geometry.logicalImageSize();
     mutateZoomState(
         [&logicalImageSize](ImageZoomState &zoomState, qreal devicePixelRatio) {
             zoomState.setImageSize(logicalImageSize, devicePixelRatio);
         },
-        TileRefresh::Always);
-    notify(ImageDocumentChange::Rotation);
-    notify(ImageDocumentChange::Repaint);
+        tileRefresh);
 }
 
 void ImagePresentationViewportController::mutateZoomState(
