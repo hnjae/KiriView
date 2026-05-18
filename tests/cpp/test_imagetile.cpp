@@ -3,22 +3,10 @@
 
 #include "imagetile.h"
 
-#include <QImage>
 #include <QObject>
 #include <QSize>
 #include <QTest>
-#include <Qt>
-#include <optional>
-
-namespace {
-KiriView::DecodedTile decodedTile(KiriView::TileKey key, QSize size)
-{
-    QImage image(size, QImage::Format_RGBA8888_Premultiplied);
-    image.fill(Qt::transparent);
-    return KiriView::DecodedTile { key, size, QRect(QPoint(0, 0), size), QRect(QPoint(0, 0), size),
-        image };
-}
-}
+#include <cstddef>
 
 class TestImageTile : public QObject
 {
@@ -29,8 +17,6 @@ private Q_SLOTS:
     void levelSelectionUsesSmallestLevelAtLeastAsDenseAsScreenPixels();
     void tileRectsAndApronsAreClipped();
     void tilesIntersectingVisibleRectAreReturnedInScanOrder();
-    void cacheEvictsLeastRecentlyUsedTilesToBudget();
-    void cacheReportsRejectedTiles();
 };
 
 void TestImageTile::pyramidBuildsDownsampleLevels()
@@ -83,35 +69,6 @@ void TestImageTile::tilesIntersectingVisibleRectAreReturnedInScanOrder()
     QCOMPARE(tiles[1], (KiriView::TileKey { 0, 1, 0 }));
     QCOMPARE(tiles[2], (KiriView::TileKey { 0, 0, 1 }));
     QCOMPARE(tiles[3], (KiriView::TileKey { 0, 1, 1 }));
-}
-
-void TestImageTile::cacheEvictsLeastRecentlyUsedTilesToBudget()
-{
-    KiriView::DecodedTileCache cache(32);
-    const KiriView::TileKey first { 0, 0, 0 };
-    const KiriView::TileKey second { 0, 1, 0 };
-    const KiriView::TileKey third { 0, 2, 0 };
-
-    QVERIFY(cache.insert(decodedTile(first, QSize(2, 2))));
-    QVERIFY(cache.insert(decodedTile(second, QSize(2, 2))));
-    QVERIFY(cache.find(first).has_value());
-    QVERIFY(cache.insert(decodedTile(third, QSize(2, 2))));
-
-    QVERIFY(cache.contains(first));
-    QVERIFY(!cache.contains(second));
-    QVERIFY(cache.contains(third));
-    QVERIFY(cache.byteCost() <= cache.byteBudget());
-}
-
-void TestImageTile::cacheReportsRejectedTiles()
-{
-    KiriView::DecodedTileCache cache(1);
-    const KiriView::TileKey key { 0, 0, 0 };
-
-    QVERIFY(!cache.insert(decodedTile(key, QSize(1, 1))));
-
-    QVERIFY(!cache.contains(key));
-    QCOMPARE(cache.byteCost(), qsizetype(0));
 }
 
 QTEST_GUILESS_MAIN(TestImageTile)

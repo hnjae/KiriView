@@ -3,6 +3,7 @@
 
 src/decodedimageresult.cpp
 src/decodedimagepresentation.cpp
+src/decodedtilecache.cpp
 src/applicationactionruntime.cpp
 src/applicationruntime.cpp
 src/archivebackend.cpp

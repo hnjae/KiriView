@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGESURFACE_H
 #define KIRIVIEW_IMAGESURFACE_H
 
-#include "imagetile.h"
+#include "decodedtilecache.h"
 #include "staticimage.h"
 
 #include <QImage>
