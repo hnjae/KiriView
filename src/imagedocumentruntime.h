@@ -108,7 +108,6 @@ private:
     void openAdjacentImage(NavigationDirection direction);
     void openAdjacentContainer(NavigationDirection direction);
     void openImageAtRelativePageOffset(int offset);
-    ImageDocumentEffectOperations effectOperations();
     void publishChange(ImageDocumentChange change);
 
     ImageDocumentChangeBatcher changeBatcher;
