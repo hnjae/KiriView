@@ -4,6 +4,7 @@
 src/decodedimageresult.cpp
 src/decodedimagepresentation.cpp
 src/decodedtilecache.cpp
+src/applicationactionregistry.cpp
 src/applicationactionruntime.cpp
 src/applicationruntime.cpp
 src/archivebackend.cpp

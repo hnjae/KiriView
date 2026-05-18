@@ -15,11 +15,6 @@
 namespace {
 namespace Actions = KiriView::ApplicationActions;
 
-QString actionDefinitionName(const Actions::ActionDefinition &definition)
-{
-    return QString::fromLatin1(definition.name);
-}
-
 KiriViewApplication::MenuPresentation toMenuPresentation(int value)
 {
     if (value == static_cast<int>(KiriViewApplication::MenuBar)) {
@@ -33,6 +28,7 @@ KiriViewApplication::MenuPresentation toMenuPresentation(int value)
 namespace KiriView::ApplicationActions {
 ApplicationActionRuntime::ApplicationActionRuntime(KiriViewApplication &application)
     : m_application(application)
+    , m_actionRegistry(application)
 {
 }
 
@@ -65,17 +61,17 @@ QAbstractListModel *ApplicationActionRuntime::shortcutHelpModel() const
 
 QAction *ApplicationActionRuntime::action(const QString &actionName)
 {
-    return registeredAction(actionName);
+    return m_actionRegistry.action(actionName);
 }
 
 QAction *ApplicationActionRuntime::actionForId(KiriViewApplication::ActionId actionId)
 {
-    return registeredActionForId(actionId);
+    return m_actionRegistry.actionForId(actionId);
 }
 
 QString ApplicationActionRuntime::actionName(KiriViewApplication::ActionId actionId) const
 {
-    return Actions::actionName(actionId);
+    return m_actionRegistry.actionName(actionId);
 }
 
 QList<QKeySequence> ApplicationActionRuntime::shortcuts(const QString &actionName) const
@@ -164,19 +160,21 @@ void ApplicationActionRuntime::setupActions()
         const QString name = QString::fromLatin1(definition.name);
         const QList<QKeySequence> shortcuts
             = Actions::defaultShortcuts(definition.defaultShortcuts);
+        QAction *registeredAction = nullptr;
 
         switch (definition.kind) {
         case Actions::RegistrationKind::Existing:
-            if (QAction *action = registeredAction(name)) {
-                finishRegisteredAction(action, action->text(), shortcuts);
+            if (QAction *action = m_actionRegistry.collectionAction(name)) {
+                registeredAction = finishRegisteredAction(action, action->text(), shortcuts);
             }
-            return;
+            break;
         case Actions::RegistrationKind::Inherited:
-            return;
+            registeredAction = m_actionRegistry.collectionAction(name);
+            break;
         case Actions::RegistrationKind::Registered:
-            addRegisteredAction(name, Actions::localizedString(definition.text),
+            registeredAction = addRegisteredAction(name, Actions::localizedString(definition.text),
                 Actions::latin1String(definition.iconName), shortcuts);
-            return;
+            break;
         case Actions::RegistrationKind::ShowMenubar:
             m_showMenuBarAction = addStandardAction(
                 definition.actionType, name, Actions::localizedString(definition.text), shortcuts);
@@ -187,12 +185,15 @@ void ApplicationActionRuntime::setupActions()
                     setMenuPresentation(checked ? KiriViewApplication::MenuBar
                                                 : KiriViewApplication::HamburgerMenu);
                 });
-            return;
+            registeredAction = m_showMenuBarAction;
+            break;
         case Actions::RegistrationKind::Standard:
-            addStandardAction(
+            registeredAction = addStandardAction(
                 definition.actionType, name, Actions::localizedString(definition.text), shortcuts);
-            return;
+            break;
         }
+
+        m_actionRegistry.registerAction(definition, registeredAction);
     };
 
     for (const Actions::ActionDefinition &definition : Actions::definitions()) {
@@ -293,24 +294,6 @@ void ApplicationActionRuntime::updateShowMenuBarAction()
     m_showMenuBarAction->setChecked(menuPresentation() == KiriViewApplication::MenuBar);
 }
 
-QAction *ApplicationActionRuntime::registeredAction(const QString &actionName) const
-{
-    return const_cast<KiriViewApplication &>(m_application)
-        .AbstractKirigamiApplication::action(actionName);
-}
-
-QAction *ApplicationActionRuntime::registeredAction(const ActionDefinition &definition) const
-{
-    return registeredAction(actionDefinitionName(definition));
-}
-
-QAction *ApplicationActionRuntime::registeredActionForId(
-    KiriViewApplication::ActionId actionId) const
-{
-    const ActionDefinition *definition = Actions::definitionForId(actionId);
-    return definition == nullptr ? nullptr : registeredAction(*definition);
-}
-
 ApplicationShortcutProjection ApplicationActionRuntime::shortcutProjectionForAction(
     const QAction *registeredAction) const
 {
@@ -321,13 +304,13 @@ ApplicationShortcutProjection ApplicationActionRuntime::shortcutProjectionForAct
 ApplicationShortcutProjection ApplicationActionRuntime::shortcutProjectionForName(
     const QString &actionName) const
 {
-    return shortcutProjectionForAction(registeredAction(actionName));
+    return shortcutProjectionForAction(m_actionRegistry.action(actionName));
 }
 
 ApplicationShortcutProjection ApplicationActionRuntime::shortcutProjectionForId(
     KiriViewApplication::ActionId actionId) const
 {
-    return shortcutProjectionForAction(registeredActionForId(actionId));
+    return shortcutProjectionForAction(m_actionRegistry.actionForId(actionId));
 }
 
 QList<ShortcutHelpRow> ApplicationActionRuntime::shortcutHelpRows() const
@@ -335,14 +318,14 @@ QList<ShortcutHelpRow> ApplicationActionRuntime::shortcutHelpRows() const
     QList<ShortcutHelpRow> rows;
     rows.reserve(static_cast<qsizetype>(Actions::definitions().size()));
 
-    for (const Actions::ActionDefinition &definition : Actions::definitions()) {
-        const QString name = actionDefinitionName(definition);
-        QAction *action = registeredAction(definition);
-        if (action == nullptr || !KirigamiActionCollection::isShortcutsConfigurable(action)) {
+    for (const RegisteredApplicationAction &registeredAction :
+        m_actionRegistry.registeredActions()) {
+        if (!KirigamiActionCollection::isShortcutsConfigurable(registeredAction.action)) {
             continue;
         }
 
-        rows.push_back(ShortcutHelpRow { action, static_cast<int>(definition.actionId), name });
+        rows.push_back(ShortcutHelpRow { registeredAction.action,
+            static_cast<int>(registeredAction.actionId), registeredAction.actionName });
     }
 
     return rows;

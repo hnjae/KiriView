@@ -1,0 +1,47 @@
+// SPDX-FileCopyrightText: 2026 KIM Hyunjae
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+#ifndef KIRIVIEW_APPLICATIONACTIONREGISTRY_H
+#define KIRIVIEW_APPLICATIONACTIONREGISTRY_H
+
+#include "kiriviewapplication.h"
+#include "kiriviewapplicationactions.h"
+
+#include <QAction>
+#include <QHash>
+#include <QList>
+#include <QString>
+#include <array>
+#include <cstddef>
+
+namespace KiriView::ApplicationActions {
+struct RegisteredApplicationAction {
+    QAction *action = nullptr;
+    KiriViewApplication::ActionId actionId = KiriViewApplication::ActionCount;
+    QString actionName;
+};
+
+class ApplicationActionRegistry final
+{
+public:
+    explicit ApplicationActionRegistry(KiriViewApplication &application);
+
+    QAction *collectionAction(const QString &actionName) const;
+    QAction *collectionAction(const ActionDefinition &definition) const;
+    void registerAction(const ActionDefinition &definition, QAction *action);
+    QAction *action(const QString &actionName) const;
+    QAction *actionForId(KiriViewApplication::ActionId actionId) const;
+    QString actionName(KiriViewApplication::ActionId actionId) const;
+    QList<RegisteredApplicationAction> registeredActions() const;
+
+private:
+    static QString definitionName(const ActionDefinition &definition);
+    static std::size_t actionIndex(KiriViewApplication::ActionId actionId);
+
+    KiriViewApplication &m_application;
+    std::array<QAction *, actionDefinitionCount> m_actionsById {};
+    QHash<QString, QAction *> m_actionsByName;
+};
+}
+
+#endif

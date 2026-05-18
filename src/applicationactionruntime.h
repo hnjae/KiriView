@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_APPLICATIONACTIONRUNTIME_H
 #define KIRIVIEW_APPLICATIONACTIONRUNTIME_H
 
+#include "applicationactionregistry.h"
 #include "applicationshortcutpolicy.h"
 #include "kiriviewapplication.h"
 
@@ -64,9 +65,6 @@ private:
     void sanitizeActionShortcuts();
     void sanitizeActionShortcuts(QAction *action);
     void updateShowMenuBarAction();
-    QAction *registeredAction(const QString &actionName) const;
-    QAction *registeredAction(const ActionDefinition &definition) const;
-    QAction *registeredActionForId(KiriViewApplication::ActionId actionId) const;
     ApplicationShortcutProjection shortcutProjectionForAction(
         const QAction *registeredAction) const;
     ApplicationShortcutProjection shortcutProjectionForName(const QString &actionName) const;
@@ -75,6 +73,7 @@ private:
     QList<ShortcutHelpRow> shortcutHelpRows() const;
 
     KiriViewApplication &m_application;
+    ApplicationActionRegistry m_actionRegistry;
     QAction *m_showMenuBarAction = nullptr;
     std::unique_ptr<ShortcutHelpModel> m_shortcutHelpModel;
     int m_shortcutRevision = 0;
