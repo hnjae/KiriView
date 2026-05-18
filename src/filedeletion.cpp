@@ -4,7 +4,6 @@
 #include "filedeletion.h"
 
 #include "imagecallback.h"
-#include "imagecontainer.h"
 
 #include <KIO/AskUserActionInterface>
 #include <KIO/DeleteOrTrashJob>
@@ -81,20 +80,6 @@ KiriView::ImageIoJob startKioFileDeletion(QObject *receiver, KiriView::FileDelet
 }
 
 namespace KiriView {
-QUrl deletionTargetUrlForDisplayedLocation(const DisplayedImageLocation &location)
-{
-    if (location.imageUrl().isEmpty()) {
-        return {};
-    }
-
-    if (!location.archiveDocument().isEmpty()
-        && displayedLocationIsInsideArchiveDocument(location)) {
-        return location.archiveDocumentFileUrl();
-    }
-
-    return location.imageUrl();
-}
-
 FileDeletionCompletionAction fileDeletionCompletionAction(FileDeletionResult result)
 {
     switch (result) {

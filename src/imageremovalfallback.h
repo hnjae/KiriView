@@ -38,8 +38,14 @@ struct ComicBookRemovalFallbackCandidates {
     std::optional<ContainerNavigationCandidate> fallback;
 };
 
-ImageRemovalFallbackPlan imageRemovalFallbackPlanForDisplayedLocation(
-    const DisplayedImageLocation &location);
+struct ImageRemovalPlan {
+    QUrl targetUrl;
+    ImageRemovalFallbackPlan fallbackPlan;
+
+    bool hasTarget() const { return !targetUrl.isEmpty(); }
+};
+
+ImageRemovalPlan imageRemovalPlanForDisplayedLocation(const DisplayedImageLocation &location);
 ImageRemovalFallback imageRemovalFallbackForImageContext(const ImageCandidateListContext &context);
 std::optional<QUrl> imageRemovalFallbackUrl(
     std::vector<ImageNavigationCandidate> candidates, const ImageRemovalFallback &fallback);

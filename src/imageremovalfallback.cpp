@@ -71,31 +71,55 @@ std::optional<KiriView::ContainerNavigationCandidate> previousFallbackCandidate(
     return KiriView::adjacentContainerNavigationCandidate(
         candidates, currentUrl, KiriView::NavigationDirection::Previous);
 }
+
+QUrl removalTargetUrlForDisplayedLocation(const KiriView::DisplayedImageLocation &location)
+{
+    if (location.imageUrl().isEmpty()) {
+        return {};
+    }
+
+    if (!location.archiveDocument().isEmpty()
+        && KiriView::displayedLocationIsInsideArchiveDocument(location)) {
+        return location.archiveDocumentFileUrl();
+    }
+
+    return location.imageUrl();
 }
 
-namespace KiriView {
-ImageRemovalFallbackPlan imageRemovalFallbackPlanForDisplayedLocation(
-    const DisplayedImageLocation &location)
+KiriView::ImageRemovalFallbackPlan removalFallbackPlanForDisplayedLocation(
+    const KiriView::DisplayedImageLocation &location)
 {
-    const std::optional<ImageCandidateListContext> imageContext
-        = imageCandidateListContextForDisplayedImage(location);
+    const std::optional<KiriView::ImageCandidateListContext> imageContext
+        = KiriView::imageCandidateListContextForDisplayedImage(location);
 
-    if (displayedLocationIsInsideArchiveDocument(location)) {
-        if (location.archiveDocument().kind() == ArchiveDocumentKind::ComicBook) {
-            const QUrl currentContainerUrl = containerNavigationUrlForLocation(location);
-            return ComicBookRemovalFallback { currentContainerUrl,
-                parentUrlForContainerNavigation(currentContainerUrl),
+    if (KiriView::displayedLocationIsInsideArchiveDocument(location)) {
+        if (location.archiveDocument().kind() == KiriView::ArchiveDocumentKind::ComicBook) {
+            const QUrl currentContainerUrl = KiriView::containerNavigationUrlForLocation(location);
+            return KiriView::ComicBookRemovalFallback { currentContainerUrl,
+                KiriView::parentUrlForContainerNavigation(currentContainerUrl),
                 currentContainerUrl.fileName() };
         }
 
-        return NoImageRemovalFallback {};
+        return KiriView::NoImageRemovalFallback {};
     }
 
     if (imageContext.has_value()) {
-        return imageRemovalFallbackForImageContext(*imageContext);
+        return KiriView::imageRemovalFallbackForImageContext(*imageContext);
     }
 
-    return NoImageRemovalFallback {};
+    return KiriView::NoImageRemovalFallback {};
+}
+}
+
+namespace KiriView {
+ImageRemovalPlan imageRemovalPlanForDisplayedLocation(const DisplayedImageLocation &location)
+{
+    const QUrl targetUrl = removalTargetUrlForDisplayedLocation(location);
+    if (targetUrl.isEmpty()) {
+        return {};
+    }
+
+    return ImageRemovalPlan { targetUrl, removalFallbackPlanForDisplayedLocation(location) };
 }
 
 ImageRemovalFallback imageRemovalFallbackForImageContext(const ImageCandidateListContext &context)

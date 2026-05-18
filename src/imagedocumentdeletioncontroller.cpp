@@ -43,24 +43,23 @@ void ImageDocumentDeletionController::deleteDisplayedFile(FileDeletionMode mode)
         return;
     }
 
-    const DisplayedImageLocation location = m_state.displayedImageLocation();
-    const QUrl targetUrl = deletionTargetUrlForDisplayedLocation(location);
-    if (targetUrl.isEmpty()) {
+    const ImageRemovalPlan removalPlan
+        = imageRemovalPlanForDisplayedLocation(m_state.displayedImageLocation());
+    if (!removalPlan.hasTarget()) {
         return;
     }
-
-    const ImageRemovalFallbackPlan fallbackPlan
-        = imageRemovalFallbackPlanForDisplayedLocation(location);
 
     cancelFallback();
     m_fileDeletionJob.cancel();
     const quint64 operationId = nextOperationId();
     m_fileDeletionOperationId = operationId;
     setInProgress(true);
-    m_fileDeletionJob = m_fileOperationProvider(m_parent, FileDeletionRequest { targetUrl, mode },
-        [this, operationId, fallbackPlan](FileDeletionResult result, const QString &errorString) {
-            finishFileDeletion(operationId, fallbackPlan, result, errorString);
-        });
+    m_fileDeletionJob
+        = m_fileOperationProvider(m_parent, FileDeletionRequest { removalPlan.targetUrl, mode },
+            [this, operationId, fallbackPlan = removalPlan.fallbackPlan](
+                FileDeletionResult result, const QString &errorString) {
+                finishFileDeletion(operationId, fallbackPlan, result, errorString);
+            });
 }
 
 void ImageDocumentDeletionController::finishFileDeletion(quint64 operationId,

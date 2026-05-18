@@ -5,7 +5,6 @@
 #define KIRIVIEW_FILEDELETION_H
 
 #include "imageiojob.h"
-#include "imagelocation.h"
 
 #include <QString>
 #include <QUrl>
@@ -40,7 +39,6 @@ using FileDeletionCallback = std::function<void(FileDeletionResult, const QStrin
 using FileOperationProvider
     = std::function<ImageIoJob(QObject *, FileDeletionRequest, FileDeletionCallback)>;
 
-QUrl deletionTargetUrlForDisplayedLocation(const DisplayedImageLocation &location);
 FileDeletionCompletionAction fileDeletionCompletionAction(FileDeletionResult result);
 FileOperationProvider defaultFileOperationProvider();
 }
