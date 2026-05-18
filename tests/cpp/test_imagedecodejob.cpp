@@ -4,6 +4,7 @@
 #include "image_test_support.h"
 #include "imagedecodejob.h"
 
+#include <QByteArray>
 #include <QObject>
 #include <QTest>
 #include <QUrl>
@@ -33,6 +34,7 @@ class TestImageDecodeJob : public QObject
 private Q_SLOTS:
     void cancelSuppressesPendingLoad();
     void staleLoadResultIsIgnored();
+    void restartedSameRequestIgnoresStaleLoadResult();
     void loadErrorsAreDeliveredForCurrentRequest();
     void decodeErrorsAreDeliveredAsResults();
     void decodeRequestIsPassedToDecoder();
@@ -80,6 +82,38 @@ void TestImageDecodeJob::staleLoadResultIsIgnored()
     QTRY_COMPARE(decodedRequests.size(), std::size_t(1));
     QCOMPARE(decodedRequests.front().id(), quint64(2));
     QCOMPARE(decodedRequests.front().imageUrl(), indexedImageUrl(2));
+}
+
+void TestImageDecodeJob::restartedSameRequestIgnoresStaleLoadResult()
+{
+    ManualImageDataLoader dataLoader;
+    QByteArray decodedData;
+    int decodedCount = 0;
+    KiriView::ImageDecodeJob decodeJob(this,
+        imageDecodeDependenciesFor(dataLoader,
+            [&decodedData](const QByteArray &data, const KiriView::ImageDecodeRequest &) {
+                decodedData = data;
+                return KiriView::successfulDecodedImageResult(
+                    KiriView::TestSupport::staticDecodedTestImage());
+            }),
+        decodeJobCallbacks([&decodedCount](KiriView::ImageDecodeRequest,
+                               KiriView::DecodedImageResult) { ++decodedCount; }));
+    const KiriView::ImageDecodeRequest request
+        = KiriView::ImageDecodeRequest::fromUrl(7, indexedImageUrl(7));
+
+    decodeJob.start(request);
+    decodeJob.start(request);
+    QCOMPARE(dataLoader.loadCount(), std::size_t(2));
+    QVERIFY(dataLoader.frontLoad().canceled);
+
+    dataLoader.deliverFrontLoadDataIgnoringCancellation(QByteArrayLiteral("old"));
+    QTest::qWait(50);
+    QCOMPARE(decodedCount, 0);
+
+    dataLoader.finishBackLoad(QByteArrayLiteral("new"));
+
+    QTRY_COMPARE(decodedCount, 1);
+    QCOMPARE(decodedData, QByteArrayLiteral("new"));
 }
 
 void TestImageDecodeJob::loadErrorsAreDeliveredForCurrentRequest()

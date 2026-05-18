@@ -40,18 +40,18 @@ void ImageDecodeJob::start(ImageDecodeRequest request)
         return;
     }
 
-    m_request = request;
+    const ImageDecodeJobTicket ticket = m_state.start(std::move(request));
     m_dataLoadJob = m_dependencies.dataLoader(
-        this, request,
-        [this, request](QByteArray data) {
-            if (!isCurrentRequest(request)) {
+        this, ticket.request,
+        [this, ticket](QByteArray data) mutable {
+            if (!m_state.beginDecode(ticket).has_value()) {
                 return;
             }
 
-            startDecode(std::move(data), request);
+            startDecode(std::move(data), std::move(ticket));
         },
-        [this, request](const QString &errorString) {
-            std::optional<ImageDecodeRequest> currentRequest = takeCurrentRequest(request);
+        [this, ticket](const QString &errorString) {
+            std::optional<ImageDecodeRequest> currentRequest = m_state.claimLoadError(ticket);
             if (!currentRequest.has_value()) {
                 return;
             }
@@ -62,42 +62,27 @@ void ImageDecodeJob::start(ImageDecodeRequest request)
 
 void ImageDecodeJob::cancel()
 {
-    m_request.reset();
+    m_state.cancel();
     m_dataLoadJob.cancel();
 }
 
-bool ImageDecodeJob::hasActiveRequest() const { return m_request.has_value(); }
+bool ImageDecodeJob::hasActiveRequest() const { return m_state.hasActiveRequest(); }
 
-void ImageDecodeJob::startDecode(QByteArray data, ImageDecodeRequest request)
+void ImageDecodeJob::startDecode(QByteArray data, ImageDecodeJobTicket ticket)
 {
     const ImageDataDecoder decoder = m_dependencies.dataDecoder;
     runAsyncWorker(
         this,
-        [decoder, data = std::move(data), request]() mutable { return decoder(data, request); },
-        [this, request](DecodedImageResult result) mutable {
-            std::optional<ImageDecodeRequest> currentRequest = takeCurrentRequest(request);
+        [decoder, data = std::move(data), request = ticket.request]() mutable {
+            return decoder(data, request);
+        },
+        [this, ticket = std::move(ticket)](DecodedImageResult result) mutable {
+            std::optional<ImageDecodeRequest> currentRequest = m_state.claimDecodeResult(ticket);
             if (!currentRequest.has_value()) {
                 return;
             }
 
             invokeIfSet(m_callbacks.decoded, std::move(*currentRequest), std::move(result));
         });
-}
-
-bool ImageDecodeJob::isCurrentRequest(const ImageDecodeRequest &request) const
-{
-    return m_request.has_value() && m_request->matches(request);
-}
-
-std::optional<ImageDecodeRequest> ImageDecodeJob::takeCurrentRequest(
-    const ImageDecodeRequest &request)
-{
-    if (!isCurrentRequest(request)) {
-        return std::nullopt;
-    }
-
-    std::optional<ImageDecodeRequest> currentRequest = std::move(m_request);
-    m_request.reset();
-    return currentRequest;
 }
 }

@@ -6,6 +6,7 @@
 
 #include "decodedimageresult.h"
 #include "imageasyncdependencies.h"
+#include "imagedecodejobstate.h"
 #include "imagedecoderequest.h"
 #include "imageiojob.h"
 
@@ -13,7 +14,6 @@
 #include <QObject>
 #include <QString>
 #include <functional>
-#include <optional>
 
 namespace KiriView {
 class ImageDecodeJob final : public QObject
@@ -37,14 +37,12 @@ public:
     bool hasActiveRequest() const;
 
 private:
-    void startDecode(QByteArray data, ImageDecodeRequest request);
-    bool isCurrentRequest(const ImageDecodeRequest &request) const;
-    std::optional<ImageDecodeRequest> takeCurrentRequest(const ImageDecodeRequest &request);
+    void startDecode(QByteArray data, ImageDecodeJobTicket ticket);
 
     ImageDecodeDependencies m_dependencies;
     Callbacks m_callbacks;
     ImageIoJob m_dataLoadJob;
-    std::optional<ImageDecodeRequest> m_request;
+    ImageDecodeJobState m_state;
 };
 }
 
