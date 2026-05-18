@@ -4,9 +4,7 @@
 #include "imagenavigationservice.h"
 
 #include "imagecallback.h"
-#include "imagenavigationmodel.h"
 #include "imageremovalfallback.h"
-#include "imageurl.h"
 
 #include <QString>
 #include <optional>
@@ -43,6 +41,15 @@ ImageNavigationService::ImageNavigationService(
               m_callbacks.openContainerImage,
               m_callbacks.containerNavigationError,
           })
+    , m_pageNavigation(this, m_candidateRepository,
+          ImagePageNavigationController::Callbacks {
+              m_callbacks.openUrl,
+              m_callbacks.pageNavigationChanged,
+              [this](std::vector<ImageNavigationCandidate> candidates,
+                  ImageCandidateListContext context) {
+                  handleCurrentImageRemoved(std::move(candidates), std::move(context));
+              },
+          })
 {
 }
 
@@ -65,65 +72,17 @@ std::optional<QUrl> ImageNavigationService::urlAtPage(int pageNumber) const
 
 std::optional<QUrl> ImageNavigationService::selectPage(int pageNumber)
 {
-    const std::optional<QUrl> targetUrl = m_pageNavigation.selectPage(pageNumber);
-    if (targetUrl.has_value()) {
-        notifyPageNavigationChanged();
-    }
-    return targetUrl;
+    return m_pageNavigation.selectPage(pageNumber);
 }
 
 void ImageNavigationService::openAdjacentImage(
     const DisplayContext &context, NavigationDirection direction)
 {
     cancelContainerNavigation();
-    cancelNavigation();
-
-    if (m_pageNavigation.hasKnownSelection()) {
-        const std::optional<QUrl> targetUrl = m_pageNavigation.selectAdjacentPage(direction);
-        if (targetUrl.has_value()) {
-            notifyPageNavigationChanged();
-            invokeIfSet(m_callbacks.openUrl, *targetUrl);
-        }
-        return;
-    }
-
-    if (!displayContextHasNavigationSource(context)) {
-        return;
-    }
-
-    const std::optional<ImageCandidateListContext> candidateContext
-        = imageCandidateContextForDisplayContext(context);
-    if (!candidateContext.has_value()) {
-        return;
-    }
-
-    m_navigationListerJob = m_candidateRepository.loadImages(
-        this, *candidateContext,
-        [this, direction, currentUrl = candidateContext->currentUrl(),
-            candidateSource = candidateContext->source()](
-            std::vector<ImageNavigationCandidate> candidates) mutable {
-            finishNavigation(
-                std::move(candidates), direction, currentUrl, std::move(candidateSource));
-        },
-        [](const QString &) {});
+    m_pageNavigation.openAdjacentImage(imageCandidateContextForDisplayContext(context), direction);
 }
 
-void ImageNavigationService::cancelNavigation() { m_navigationListerJob.cancel(); }
-
-void ImageNavigationService::finishNavigation(std::vector<ImageNavigationCandidate> candidates,
-    NavigationDirection direction, const QUrl &currentUrl, ImageCandidateListSource candidateSource)
-{
-    const std::optional<QUrl> targetUrl
-        = adjacentImageNavigationUrl(candidates, currentUrl, direction);
-    if (!targetUrl.has_value()) {
-        return;
-    }
-
-    if (m_pageNavigation.completeRefresh(candidates, *targetUrl, std::move(candidateSource))) {
-        notifyPageNavigationChanged();
-    }
-    invokeIfSet(m_callbacks.openUrl, *targetUrl);
-}
+void ImageNavigationService::cancelNavigation() { m_pageNavigation.cancelNavigation(); }
 
 void ImageNavigationService::openAdjacentContainer(
     const QUrl &currentContainerUrl, NavigationDirection direction)
@@ -140,82 +99,18 @@ void ImageNavigationService::cancelContainerNavigation() { m_containerNavigation
 
 void ImageNavigationService::updatePageNavigation(const DisplayContext &context)
 {
-    cancelPageNavigationUpdate();
-
-    const std::optional<ImageCandidateListContext> candidateContext
-        = imageCandidateContextForDisplayContext(context);
-    if (!candidateContext.has_value()) {
-        clearPageNavigation();
-        return;
-    }
-
-    if (m_pageNavigation.previewRefresh(*candidateContext)) {
-        notifyPageNavigationChanged();
-    }
-
-    watchPageNavigationChanges(*candidateContext);
-
-    m_pageNavigationListerJob = m_candidateRepository.loadImages(
-        this, *candidateContext,
-        [this, currentUrl = candidateContext->currentUrl(),
-            candidateSource = candidateContext->source()](
-            std::vector<ImageNavigationCandidate> candidates) {
-            if (m_pageNavigation.completeRefresh(candidates, currentUrl, candidateSource)) {
-                notifyPageNavigationChanged();
-            }
-        },
-        [](const QString &) {});
+    m_pageNavigation.update(imageCandidateContextForDisplayContext(context));
 }
 
-void ImageNavigationService::cancelPageNavigationUpdate()
-{
-    m_pageNavigationListerJob.cancel();
-    m_pageNavigationChangesJob.cancel();
-}
-
-void ImageNavigationService::notifyPageNavigationChanged()
-{
-    invokeIfSet(m_callbacks.pageNavigationChanged);
-}
-
-void ImageNavigationService::watchPageNavigationChanges(const ImageCandidateListContext &context)
-{
-    if (m_pageNavigation.shouldKeepExistingWatcherFor(context)
-        && m_pageNavigationChangesJob.isActive()) {
-        return;
-    }
-
-    m_pageNavigationChangesJob.cancel();
-    const ImageCandidateListSource source = context.source();
-    m_pageNavigationChangesJob = m_candidateRepository.watchCandidateChanges(
-        this, context,
-        [this, source](std::vector<ImageNavigationCandidate> candidates) {
-            updatePageNavigationFromChangedCandidates(std::move(candidates), source);
-        },
-        [](const QString &) {});
-}
-
-void ImageNavigationService::updatePageNavigationFromChangedCandidates(
-    std::vector<ImageNavigationCandidate> candidates, ImageCandidateListSource source)
-{
-    const ImagePageNavigationRefreshResult refresh
-        = m_pageNavigation.completeRefreshFromCurrentContext(candidates, std::move(source));
-    if (!refresh.accepted) {
-        return;
-    }
-
-    if (refresh.changed) {
-        notifyPageNavigationChanged();
-    }
-
-    if (refresh.currentImageRemoved && refresh.context.has_value() && !deletionInProgress()) {
-        handleCurrentImageRemoved(std::move(candidates), *refresh.context);
-    }
-}
+void ImageNavigationService::cancelPageNavigationUpdate() { m_pageNavigation.cancelUpdate(); }
 
 void ImageNavigationService::handleCurrentImageRemoved(
     std::vector<ImageNavigationCandidate> candidates, ImageCandidateListContext context)
 {
+    if (deletionInProgress()) {
+        return;
+    }
+
     const ImageRemovalFallback fallback = imageRemovalFallbackForImageContext(context);
     const std::optional<QUrl> fallbackUrl
         = imageRemovalFallbackUrl(std::move(candidates), fallback);
@@ -230,11 +125,5 @@ bool ImageNavigationService::deletionInProgress() const
     return m_callbacks.deletionInProgress && m_callbacks.deletionInProgress();
 }
 
-void ImageNavigationService::clearPageNavigation()
-{
-    m_pageNavigationChangesJob.cancel();
-    if (m_pageNavigation.clear()) {
-        notifyPageNavigationChanged();
-    }
-}
+void ImageNavigationService::clearPageNavigation() { m_pageNavigation.clear(); }
 }

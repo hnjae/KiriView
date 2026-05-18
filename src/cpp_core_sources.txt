@@ -60,6 +60,7 @@ src/imageloadplan.cpp
 src/imageloadsessiontracker.cpp
 src/imagenavigationmodel.cpp
 src/imagenavigationservice.cpp
+src/imagepagenavigationcontroller.cpp
 src/localization.cpp
 src/menuaccesskeyrouter.cpp
 src/imageopencontroller.cpp

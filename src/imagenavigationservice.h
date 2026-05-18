@@ -8,7 +8,7 @@
 #include "imagecontainernavigationcontroller.h"
 #include "imagelocation.h"
 #include "imagenavigationtypes.h"
-#include "imagepagenavigationmodel.h"
+#include "imagepagenavigationcontroller.h"
 
 #include <QObject>
 #include <QString>
@@ -62,14 +62,6 @@ public:
     void clearPageNavigation();
 
 private:
-    void finishNavigation(std::vector<ImageNavigationCandidate> candidates,
-        NavigationDirection direction, const QUrl &currentUrl,
-        ImageCandidateListSource candidateSource);
-
-    void notifyPageNavigationChanged();
-    void watchPageNavigationChanges(const ImageCandidateListContext &context);
-    void updatePageNavigationFromChangedCandidates(
-        std::vector<ImageNavigationCandidate> candidates, ImageCandidateListSource source);
     void handleCurrentImageRemoved(
         std::vector<ImageNavigationCandidate> candidates, ImageCandidateListContext context);
     bool deletionInProgress() const;
@@ -77,10 +69,7 @@ private:
     Callbacks m_callbacks;
     ImageCandidateRepository m_candidateRepository;
     ImageContainerNavigationController m_containerNavigation;
-    ImageIoJob m_navigationListerJob;
-    ImageIoJob m_pageNavigationListerJob;
-    ImageIoJob m_pageNavigationChangesJob;
-    ImagePageNavigationModel m_pageNavigation;
+    ImagePageNavigationController m_pageNavigation;
 };
 }
 
