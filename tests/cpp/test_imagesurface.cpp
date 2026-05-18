@@ -6,8 +6,31 @@
 
 #include <QObject>
 #include <QTest>
+#include <limits>
+#include <memory>
 #include <optional>
 #include <utility>
+
+namespace {
+class HugeByteCostTileSource final : public KiriView::ImageTileSource
+{
+public:
+    QSize imageSize() const override { return QSize(1, 1); }
+
+    std::optional<KiriView::DecodedTile> decodeTile(
+        const KiriView::TileRequest &, QString *) const override
+    {
+        return std::nullopt;
+    }
+
+    QImage decodeBlockingDisplayImage(int, QString *) const override
+    {
+        return KiriView::TestSupport::testImage();
+    }
+
+    qsizetype byteCost() const override { return std::numeric_limits<qsizetype>::max(); }
+};
+}
 
 class TestImageSurface : public QObject
 {
@@ -15,6 +38,7 @@ class TestImageSurface : public QObject
 
 private Q_SLOTS:
     void staticImagePayloadReportsByteCostWithinBudget();
+    void staticImagePayloadByteCostSaturatesOversizedSources();
     void tileCacheByteBudgetUsesFullDecodeLimitAndSystemMemoryCap();
     void fullImageSurfacePolicyRequiresMatchingPreviewWithinTextureLimit();
     void displayedImageSurfaceExposesOnlyActivePayload();
@@ -33,6 +57,22 @@ void TestImageSurface::staticImagePayloadReportsByteCostWithinBudget()
     QVERIFY(!image.byteCostWithinBudget(byteCost - 1).has_value());
     QVERIFY(!image.byteCostWithinBudget(0).has_value());
     QVERIFY(!KiriView::StaticImagePayload().byteCostWithinBudget(byteCost).has_value());
+}
+
+void TestImageSurface::staticImagePayloadByteCostSaturatesOversizedSources()
+{
+    const KiriView::StaticImagePayload image {
+        std::make_shared<HugeByteCostTileSource>(),
+        KiriView::TestSupport::testImage(),
+        {},
+    };
+
+    QCOMPARE(image.byteCost(), std::numeric_limits<qsizetype>::max());
+    QVERIFY(!image.byteCostWithinBudget(std::numeric_limits<qsizetype>::max() - 1).has_value());
+    const std::optional<qsizetype> byteCost
+        = image.byteCostWithinBudget(std::numeric_limits<qsizetype>::max());
+    QVERIFY(byteCost.has_value());
+    QCOMPARE(*byteCost, std::numeric_limits<qsizetype>::max());
 }
 
 void TestImageSurface::tileCacheByteBudgetUsesFullDecodeLimitAndSystemMemoryCap()

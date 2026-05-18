@@ -4,13 +4,14 @@
 #ifndef KIRIVIEW_RUSTQTCONVERSION_H
 #define KIRIVIEW_RUSTQTCONVERSION_H
 
+#include "imagebyteaccounting.h"
+
 #include <QByteArray>
 #include <QString>
 #include <QStringList>
 #include <QtGlobal>
 #include <cstddef>
 #include <cstdint>
-#include <limits>
 #include <rust/cxx.h>
 
 namespace KiriView::Bridge {
@@ -37,19 +38,7 @@ inline QStringList qtStringList(const rust::Vec<rust::String> &values)
 
 inline std::int64_t rustByteSize(qsizetype byteSize) { return static_cast<std::int64_t>(byteSize); }
 
-inline qsizetype qtByteSize(std::int64_t byteSize)
-{
-    constexpr qsizetype maximumByteSize = std::numeric_limits<qsizetype>::max();
-    constexpr qsizetype minimumByteSize = std::numeric_limits<qsizetype>::min();
-    if (byteSize > static_cast<std::int64_t>(maximumByteSize)) {
-        return maximumByteSize;
-    }
-    if (byteSize < static_cast<std::int64_t>(minimumByteSize)) {
-        return minimumByteSize;
-    }
-
-    return static_cast<qsizetype>(byteSize);
-}
+inline qsizetype qtByteSize(std::int64_t byteSize) { return saturatedQtByteSize(byteSize); }
 
 template <typename Function> auto rustResultForQString(const QString &value, Function rustFunction)
 {

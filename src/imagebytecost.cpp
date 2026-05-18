@@ -3,37 +3,10 @@
 
 #include "imagebytecost.h"
 
-#include <cstdint>
-#include <limits>
+#include "imagebyteaccounting.h"
 
 namespace {
 constexpr std::int64_t rgbaBytesPerPixel = 4;
-
-qsizetype qtByteSize(std::int64_t byteSize)
-{
-    constexpr qsizetype maximumByteSize = std::numeric_limits<qsizetype>::max();
-    constexpr qsizetype minimumByteSize = std::numeric_limits<qsizetype>::min();
-    if (byteSize > static_cast<std::int64_t>(maximumByteSize)) {
-        return maximumByteSize;
-    }
-    if (byteSize < static_cast<std::int64_t>(minimumByteSize)) {
-        return minimumByteSize;
-    }
-
-    return static_cast<qsizetype>(byteSize);
-}
-
-std::int64_t saturatedByteProduct(std::int64_t left, std::int64_t right)
-{
-    if (left <= 0 || right <= 0) {
-        return 0;
-    }
-    if (left > std::numeric_limits<std::int64_t>::max() / right) {
-        return std::numeric_limits<std::int64_t>::max();
-    }
-
-    return left * right;
-}
 }
 
 namespace KiriView {
@@ -47,7 +20,7 @@ qsizetype imageByteCost(const QImage &image)
 
 qsizetype estimatedRgbaByteCost(const QSize &size)
 {
-    const std::int64_t pixelCount = saturatedByteProduct(size.width(), size.height());
-    return qtByteSize(saturatedByteProduct(pixelCount, rgbaBytesPerPixel));
+    const std::int64_t pixelCount = saturatedPositiveByteProduct(size.width(), size.height());
+    return saturatedQtByteProduct(pixelCount, rgbaBytesPerPixel);
 }
 }

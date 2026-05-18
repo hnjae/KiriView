@@ -3,40 +3,13 @@
 
 #include "systemmemory.h"
 
+#include "imagebyteaccounting.h"
+
 #include <cstdint>
-#include <limits>
 
 #if defined(Q_OS_LINUX)
 #include <unistd.h>
 #endif
-
-namespace {
-qsizetype qtByteSize(std::int64_t byteSize)
-{
-    constexpr qsizetype maximumByteSize = std::numeric_limits<qsizetype>::max();
-    constexpr qsizetype minimumByteSize = std::numeric_limits<qsizetype>::min();
-    if (byteSize > static_cast<std::int64_t>(maximumByteSize)) {
-        return maximumByteSize;
-    }
-    if (byteSize < static_cast<std::int64_t>(minimumByteSize)) {
-        return minimumByteSize;
-    }
-
-    return static_cast<qsizetype>(byteSize);
-}
-
-std::int64_t saturatedByteProduct(std::int64_t left, std::int64_t right)
-{
-    if (left <= 0 || right <= 0) {
-        return 0;
-    }
-    if (left > std::numeric_limits<std::int64_t>::max() / right) {
-        return std::numeric_limits<std::int64_t>::max();
-    }
-
-    return left * right;
-}
-}
 
 namespace KiriView {
 std::optional<qsizetype> physicalSystemMemoryByteSize()
@@ -48,7 +21,7 @@ std::optional<qsizetype> physicalSystemMemoryByteSize()
         return std::nullopt;
     }
 
-    return qtByteSize(saturatedByteProduct(pageCount, pageSize));
+    return saturatedQtByteProduct(pageCount, pageSize);
 #else
     return std::nullopt;
 #endif

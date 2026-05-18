@@ -3,6 +3,7 @@
 
 #include "staticimage.h"
 
+#include "imagebyteaccounting.h"
 #include "imagebytecost.h"
 
 namespace KiriView {
@@ -22,7 +23,7 @@ qsizetype StaticImagePayload::byteCost() const
         return 0;
     }
 
-    return source->byteCost() + imageByteCost(preview);
+    return saturatedQtByteSum(source->byteCost(), imageByteCost(preview));
 }
 
 std::optional<qsizetype> StaticImagePayload::byteCostWithinBudget(qsizetype byteBudget) const
