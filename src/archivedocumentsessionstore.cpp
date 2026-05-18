@@ -4,10 +4,10 @@
 #include "archivedocumentsessionstore.h"
 
 #include "archivebackend_p.h"
-#include "imageasyncworker.h"
 #include "imagecallback.h"
 #include "imagecontainer.h"
 #include "imagedocumentsourceloadrequest.h"
+#include "imageioworkerjob.h"
 #include "imageloadplan.h"
 
 #include <mutex>
@@ -38,13 +38,6 @@ std::optional<KiriView::ArchiveDocumentLocation> archiveDocumentForSourceLoad(
     return plan.archiveDocument;
 }
 
-void cancelArchiveSessionToken(QObject *object)
-{
-    if (object != nullptr) {
-        object->deleteLater();
-    }
-}
-
 void finishArchiveCandidateResult(const KiriView::ArchiveImageCandidatesResult &result,
     const KiriView::ImageCandidatesCallback &callback, const KiriView::ErrorCallback &errorCallback)
 {
@@ -70,6 +63,13 @@ void finishArchiveDataResult(KiriView::ArchiveImageDataResult result,
     auto *data = std::get_if<KiriView::ArchiveImageData>(&result);
     if (data != nullptr) {
         KiriView::invokeIfSet(callback, std::move(data->data));
+    }
+}
+
+void cancelArchiveCandidateLoadToken(QObject *object)
+{
+    if (object != nullptr) {
+        object->deleteLater();
     }
 }
 
@@ -271,7 +271,7 @@ ImageIoJob ArchiveDocumentSessionStore::loadArchiveImages(QObject *receiver,
     load->callback = std::move(callback);
     load->errorCallback = std::move(errorCallback);
 
-    ImageIoJob ioJob(token, cancelArchiveSessionToken);
+    ImageIoJob ioJob(token, cancelArchiveCandidateLoadToken);
     load->completion = ioJob.completion();
     ArchiveDocumentCandidateLoadBatch &batch = currentCandidateLoadBatch();
     batch.pendingLoads.push_back(load);
@@ -298,28 +298,22 @@ ImageIoJob ArchiveDocumentSessionStore::loadArchiveImageData(QObject *receiver,
         return ImageIoJob();
     }
 
-    auto *token = new QObject(receiver);
-    ImageIoJob ioJob(token, cancelArchiveSessionToken);
-    const ImageIoJobCompletion completion = ioJob.completion();
     const quint64 generation = m_generation.current();
     const QUrl imageUrl = request.imageUrl();
     std::shared_ptr<ArchiveDocumentSessionRunner> runner = m_runner;
 
-    runAsyncWorker(
-        this, [runner = std::move(runner), imageUrl]() { return runner->loadImageData(imageUrl); },
-        [completion, generation, this, callback = std::move(callback),
+    return startImageIoWorkerJob(
+        this, receiver,
+        [runner = std::move(runner), imageUrl]() { return runner->loadImageData(imageUrl); },
+        [generation, this, callback = std::move(callback),
             errorCallback = std::move(errorCallback)](ArchiveImageDataResult result) mutable {
-            completion.claimAndDelete([&]() mutable {
-                if (!m_generation.accepts(generation)) {
-                    return;
-                }
+            if (!m_generation.accepts(generation)) {
+                return;
+            }
 
-                finishArchiveDataResult(
-                    std::move(result), std::move(callback), std::move(errorCallback));
-            });
+            finishArchiveDataResult(
+                std::move(result), std::move(callback), std::move(errorCallback));
         });
-
-    return ioJob;
 }
 
 void ArchiveDocumentSessionStore::switchToArchiveDocument(ArchiveDocumentLocation archiveDocument)

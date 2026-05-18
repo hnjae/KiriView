@@ -4,9 +4,9 @@
 #include "imageiojobs.h"
 
 #include "archivebackend.h"
-#include "imageasyncworker.h"
 #include "imagecallback.h"
 #include "imagecontainer.h"
+#include "imageioworkerjob.h"
 #include "imagenavigationmodel.h"
 
 #include <KCoreDirLister>
@@ -125,30 +125,10 @@ KiriView::ImageIoJob startDirectoryCandidateList(QObject *receiver, const QUrl &
     return ioJob;
 }
 
-void cancelArchiveWorkerToken(QObject *object)
-{
-    if (object != nullptr) {
-        object->deleteLater();
-    }
-}
-
 template <typename Work, typename Finish>
 KiriView::ImageIoJob startArchiveWorkerJob(QObject *receiver, Work work, Finish finish)
 {
-    if (receiver == nullptr) {
-        finish(work());
-        return KiriView::ImageIoJob();
-    }
-
-    auto *token = new QObject(receiver);
-    KiriView::ImageIoJob ioJob(token, cancelArchiveWorkerToken);
-    const KiriView::ImageIoJobCompletion completion = ioJob.completion();
-
-    KiriView::runAsyncWorker(
-        receiver, std::move(work), [completion, finish = std::move(finish)](auto result) mutable {
-            completion.claimAndDelete([&]() mutable { finish(std::move(result)); });
-        });
-    return ioJob;
+    return KiriView::startImageIoWorkerJob(receiver, std::move(work), std::move(finish));
 }
 }
 
