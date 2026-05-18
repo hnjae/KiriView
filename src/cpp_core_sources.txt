@@ -11,6 +11,7 @@ src/archivebackend_directory.cpp
 src/archivebackend_karchive.cpp
 src/archivebackend_libarchive.cpp
 src/archivedocumentsessionstore.cpp
+src/archivedocumentsessionruntime.cpp
 src/archiveformat.cpp
 src/archivepath.cpp
 src/bufferedimagereader.cpp
