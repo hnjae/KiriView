@@ -89,16 +89,6 @@ DisplayedImageRenderSnapshot ImageSecondaryPageController::renderSnapshot() cons
     return m_visible ? m_presentationController->renderSnapshot() : DisplayedImageRenderSnapshot {};
 }
 
-void ImageSecondaryPageController::cachePageSize(const QUrl &url, const QSize &imageSize)
-{
-    m_pageCache.cachePageSize(url, imageSize);
-}
-
-std::optional<bool> ImageSecondaryPageController::cachedPageIsWide(const QUrl &url) const
-{
-    return m_pageCache.cachedPageIsWide(url);
-}
-
 void ImageSecondaryPageController::setViewportSize(const QSizeF &viewportSize)
 {
     m_presentationController->setViewportSize(viewportSize);

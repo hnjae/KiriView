@@ -329,7 +329,7 @@ DisplayedImageRenderSnapshot ImageSpreadPresentationController::renderSnapshot(
 
 std::optional<bool> ImageSpreadPresentationController::cachedPageIsWide(const QUrl &url) const
 {
-    return m_secondaryPageController->cachedPageIsWide(url);
+    return m_pageCache.cachedPageIsWide(url);
 }
 
 void ImageSpreadPresentationController::setViewportSize(const QSizeF &viewportSize)
@@ -398,8 +398,7 @@ void ImageSpreadPresentationController::updateRenderContext()
 
 void ImageSpreadPresentationController::refreshSecondaryPage()
 {
-    m_secondaryPageController->cachePageSize(
-        m_state.displayedUrl(), m_primaryPresentation.imageSize());
+    m_pageCache.cachePageSize(m_state.displayedUrl(), m_primaryPresentation.imageSize());
 
     auto finishWithPrimaryPage = [this]() {
         const bool wasVisible = secondaryPageVisible();
@@ -416,8 +415,7 @@ void ImageSpreadPresentationController::refreshSecondaryPage()
     const int currentPage = navigation.currentPageNumber();
     const int nextPageNumber = currentPage == std::numeric_limits<int>::max() ? 0 : currentPage + 1;
     const std::optional<QUrl> nextUrl = navigation.urlAtPage(nextPageNumber);
-    const bool nextPageIsWide = nextUrl.has_value()
-        && m_secondaryPageController->cachedPageIsWide(*nextUrl).value_or(false);
+    const bool nextPageIsWide = nextUrl.has_value() && cachedPageIsWide(*nextUrl).value_or(false);
     const bool currentSecondaryMatchesNext = nextUrl.has_value() && secondaryPageVisible()
         && m_secondaryPageController->displayedImageLocation().imageUrl() == *nextUrl;
     const ImageSpreadSecondaryPageRefreshPlan plan
@@ -529,7 +527,7 @@ void ImageSpreadPresentationController::handleSecondaryPageLoadFinished(
     const QSize &imageSize)
 {
     if (result != ImageSecondaryPageLoadResult::Failed) {
-        m_secondaryPageController->cachePageSize(location.imageUrl(), imageSize);
+        m_pageCache.cachePageSize(location.imageUrl(), imageSize);
     }
 
     if (result == ImageSecondaryPageLoadResult::Visible) {
