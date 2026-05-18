@@ -4,6 +4,8 @@
 #ifndef KIRIVIEW_MENUACCESSKEYROUTER_H
 #define KIRIVIEW_MENUACCESSKEYROUTER_H
 
+#include "menuaccesskeysessionstate.h"
+
 #include <QMetaObject>
 #include <QObject>
 #include <QPointer>
@@ -57,6 +59,7 @@ private:
     bool triggerMnemonic(QKeyEvent *event, QObject *menu);
     QObject *openMenu() const;
     QObject *openMenuOrClearAccessKeys();
+    void applySessionTransition(KiriView::MenuAccessKeySessionTransition transition);
     void beginAccessKeySession();
     void clearAccessKeySessionVisuals();
     void resetAltTracking();
@@ -77,8 +80,8 @@ private:
 
     QPointer<QObject> m_menu;
     QMetaObject::Connection m_menuClosedConnection;
+    KiriView::MenuAccessKeySessionState m_accessKeySession;
     bool m_enabled = true;
-    bool m_altPressedInOpenMenu = false;
 };
 
 #endif

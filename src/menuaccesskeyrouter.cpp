@@ -93,15 +93,12 @@ bool MenuAccessKeyRouter::handleKeyRelease(QKeyEvent *event)
         return false;
     }
 
-    if (!m_altPressedInOpenMenu) {
-        clearAccessKeySessionVisuals();
-        return false;
+    const KiriView::MenuAccessKeySessionTransition transition = m_accessKeySession.releaseAltKey();
+    applySessionTransition(transition);
+    if (transition.consumeEvent) {
+        event->accept();
     }
-
-    clearAccessKeySessionVisuals();
-    resetAltTracking();
-    event->accept();
-    return true;
+    return transition.consumeEvent;
 }
 
 bool MenuAccessKeyRouter::handleShortcutOverride(QKeyEvent *event)
@@ -153,7 +150,7 @@ bool MenuAccessKeyRouter::triggerMnemonic(QKeyEvent *event, QObject *menu)
     QObject *subMenu = subMenuForItem(item);
     if (subMenu != nullptr) {
         const bool opened = openSubMenu(subMenu, item);
-        if (opened && (m_altPressedInOpenMenu || (event->modifiers() & Qt::AltModifier))) {
+        if (opened && (m_accessKeySession.isActive() || (event->modifiers() & Qt::AltModifier))) {
             setMenuAccessKeysActive(subMenu, true);
         }
         return opened;
@@ -178,24 +175,38 @@ QObject *MenuAccessKeyRouter::openMenuOrClearAccessKeys()
         return menu;
     }
 
-    clearAccessKeySessionVisuals();
-    if (!m_altPressedInOpenMenu) {
-        resetAltTracking();
-    }
+    applySessionTransition(m_accessKeySession.menuUnavailable());
     return nullptr;
 }
 
 void MenuAccessKeyRouter::beginAccessKeySession()
 {
-    m_altPressedInOpenMenu = true;
-    setMenuAccessKeysActive(m_menu, true);
+    applySessionTransition(m_accessKeySession.beginSession());
 }
 
-void MenuAccessKeyRouter::clearAccessKeySessionVisuals() { setMenuAccessKeysActive(m_menu, false); }
+void MenuAccessKeyRouter::applySessionTransition(
+    KiriView::MenuAccessKeySessionTransition transition)
+{
+    switch (transition.visualEffect) {
+    case KiriView::MenuAccessKeyVisualEffect::None:
+        return;
+    case KiriView::MenuAccessKeyVisualEffect::Activate:
+        setMenuAccessKeysActive(m_menu, true);
+        return;
+    case KiriView::MenuAccessKeyVisualEffect::Clear:
+        setMenuAccessKeysActive(m_menu, false);
+        return;
+    }
+}
+
+void MenuAccessKeyRouter::clearAccessKeySessionVisuals()
+{
+    applySessionTransition(m_accessKeySession.clearVisuals());
+}
 
 void MenuAccessKeyRouter::clearMenuAccessKeys() { clearAccessKeySessionVisuals(); }
 
-void MenuAccessKeyRouter::resetAltTracking() { m_altPressedInOpenMenu = false; }
+void MenuAccessKeyRouter::resetAltTracking() { m_accessKeySession.reset(); }
 
 bool MenuAccessKeyRouter::isMenu(QObject *object)
 {
