@@ -8,7 +8,7 @@
 #include "imagedocumentstate.h"
 #include "imagenavigationtypes.h"
 #include "imagespreadnavigation.h"
-#include "imagespreadpagecache.h"
+#include "imagespreadsecondarypagerefresh.h"
 #include "imagesurface.h"
 #include "imagezoomstate.h"
 #include "predecodedimage.h"
@@ -132,7 +132,7 @@ private:
     std::unique_ptr<ImageSecondaryPageController> m_secondaryPageController;
     std::unique_ptr<ImageSpreadModeController> m_modeController;
     std::unique_ptr<ImageSpreadZoomController> m_zoomController;
-    ImageSpreadPageCache m_pageCache;
+    ImageSpreadSecondaryPageRefresh m_secondaryPageRefresh;
 };
 }
 

@@ -13,7 +13,6 @@
 #include "imagespreadzoomcontroller.h"
 #include "imageurl.h"
 
-#include <limits>
 #include <utility>
 
 namespace KiriView {
@@ -329,7 +328,7 @@ DisplayedImageRenderSnapshot ImageSpreadPresentationController::renderSnapshot(
 
 std::optional<bool> ImageSpreadPresentationController::cachedPageIsWide(const QUrl &url) const
 {
-    return m_pageCache.cachedPageIsWide(url);
+    return m_secondaryPageRefresh.cachedPageIsWide(url);
 }
 
 void ImageSpreadPresentationController::setViewportSize(const QSizeF &viewportSize)
@@ -390,7 +389,7 @@ void ImageSpreadPresentationController::updateRenderContext()
 
 void ImageSpreadPresentationController::refreshSecondaryPage()
 {
-    m_pageCache.cachePageSize(m_state.displayedUrl(), m_primaryPresentation.imageSize());
+    m_secondaryPageRefresh.cachePageSize(m_state.displayedUrl(), m_primaryPresentation.imageSize());
 
     auto finishWithPrimaryPage = [this]() {
         const bool wasVisible = secondaryPageVisible();
@@ -403,40 +402,28 @@ void ImageSpreadPresentationController::refreshSecondaryPage()
         finishTransition();
     };
 
-    const ImagePageNavigationSnapshot navigation = pageNavigationSnapshot();
-    const int currentPage = navigation.currentPageNumber();
-    const int nextPageNumber = currentPage == std::numeric_limits<int>::max() ? 0 : currentPage + 1;
-    const std::optional<QUrl> nextUrl = navigation.urlAtPage(nextPageNumber);
-    const bool nextPageIsWide = nextUrl.has_value() && cachedPageIsWide(*nextUrl).value_or(false);
-    const bool currentSecondaryMatchesNext = nextUrl.has_value() && secondaryPageVisible()
-        && m_secondaryPageController->displayedImageLocation().imageUrl() == *nextUrl;
-    const ImageSpreadSecondaryPageRefreshPlan plan
-        = imageSpreadSecondaryPageRefreshPlan(ImageSpreadSecondaryPageRefreshState {
+    const ImageSpreadSecondaryPageRefreshResult result
+        = m_secondaryPageRefresh.planRefresh(ImageSpreadSecondaryPageRefreshRequest {
             twoPageModeActive(),
-            currentPage,
-            navigation.imageCount(),
             primaryPageIsWide(),
-            nextUrl.has_value(),
-            nextPageIsWide,
-            currentSecondaryMatchesNext,
+            secondaryPageVisible(),
+            m_secondaryPageController->displayedImageLocation().imageUrl(),
+            pageNavigationSnapshot(),
         });
-    if (plan.decision == ImageSpreadSecondaryPageDecision::PrimaryOnly) {
+    if (result.action == ImageSpreadSecondaryPageRefreshAction::PrimaryOnly) {
         finishWithPrimaryPage();
         return;
     }
-    if (plan.decision == ImageSpreadSecondaryPageDecision::KeepCurrentSecondary) {
+    if (result.action == ImageSpreadSecondaryPageRefreshAction::KeepCurrentSecondary) {
         return;
     }
 
-    const std::optional<QUrl> targetUrl = plan.targetPageNumber == nextPageNumber
-        ? nextUrl
-        : navigation.urlAtPage(plan.targetPageNumber);
-    if (!targetUrl.has_value()) {
+    if (result.targetUrl.isEmpty()) {
         finishWithPrimaryPage();
         return;
     }
 
-    startSecondaryPageLoad(*targetUrl);
+    startSecondaryPageLoad(result.targetUrl);
 }
 
 void ImageSpreadPresentationController::handleDocumentChange(ImageDocumentChange change)
@@ -511,7 +498,7 @@ void ImageSpreadPresentationController::handleSecondaryPageLoadFinished(
     const QSize &imageSize)
 {
     if (result != ImageSecondaryPageLoadResult::Failed) {
-        m_pageCache.cachePageSize(location.imageUrl(), imageSize);
+        m_secondaryPageRefresh.cachePageSize(location.imageUrl(), imageSize);
     }
 
     if (result == ImageSecondaryPageLoadResult::Visible) {
