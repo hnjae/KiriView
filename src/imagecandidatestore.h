@@ -13,6 +13,8 @@
 #include <memory>
 
 namespace KiriView {
+class ImageCandidateDirectoryEntry;
+
 class ImageCandidateStore final : public QObject
 {
 public:
@@ -25,16 +27,14 @@ public:
         ImageCandidatesCallback callback, ErrorCallback errorCallback);
 
 private:
-    struct Entry;
-
-    Entry &entryForLocalDirectory(const QUrl &directoryUrl);
+    ImageCandidateDirectoryEntry &entryForLocalDirectory(const QUrl &directoryUrl);
     void handleEntryCompleted(const QString &key);
     void handleEntryChanged(const QString &key);
     void handleEntryError(const QString &key, const QString &errorString);
     void removePendingLoad(const QString &key, QObject *token);
     void removeSubscriber(const QString &key, QObject *token);
 
-    std::map<QString, std::unique_ptr<Entry>> m_entries;
+    std::map<QString, std::unique_ptr<ImageCandidateDirectoryEntry>> m_entries;
 };
 }
 
