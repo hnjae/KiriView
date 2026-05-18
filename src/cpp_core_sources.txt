@@ -91,5 +91,6 @@ src/qimagereadertilesource.cpp
 src/rawdecoder.cpp
 src/shortcuthelpmodel.cpp
 src/staticimage.cpp
+src/staticimagedecode.cpp
 src/systemmemory.cpp
 src/svgtilesource.cpp

@@ -10,7 +10,6 @@
 #include <QImage>
 #include <QString>
 #include <QtGlobal>
-#include <memory>
 #include <optional>
 #include <utility>
 #include <variant>
@@ -70,8 +69,6 @@ template <typename Image> DecodedImageResult successfulDecodedImageResult(Image 
 {
     return successfulDecodedImageResult(DecodedImage { std::move(image) });
 }
-DecodedImageResult staticDecodedImageResult(std::shared_ptr<ImageTileSource> source,
-    const ImageFirstDisplayDecodeContext &firstDisplay, QString *errorString);
 const DecodedImageFailure *decodedImageResultFailure(const DecodedImageResult &result);
 const DecodedImage *decodedImageResultImage(const DecodedImageResult &result);
 template <typename Image> const Image *decodedImageResultImageAs(const DecodedImageResult &result)

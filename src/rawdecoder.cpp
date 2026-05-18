@@ -8,6 +8,7 @@
 #include "imagerendering.h"
 #include "imagetilesource_p.h"
 #include "imageviewtext.h"
+#include "staticimagedecode.h"
 
 #include <KLocalizedString>
 #include <QColorSpace>

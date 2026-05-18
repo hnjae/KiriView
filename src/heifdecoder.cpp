@@ -16,6 +16,7 @@
 #include "heifsupport.h"
 #include "imagetilesource.h"
 #include "imageviewtext.h"
+#include "staticimagedecode.h"
 
 #include <libheif/heif_sequences.h>
 

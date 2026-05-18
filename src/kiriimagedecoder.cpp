@@ -11,6 +11,7 @@
 #include "imageviewtext.h"
 #include "kiriview/src/avifcompat.cxx.h"
 #include "rawdecoder.h"
+#include "staticimagedecode.h"
 
 #include <memory>
 #include <optional>
