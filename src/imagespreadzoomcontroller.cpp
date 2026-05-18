@@ -4,7 +4,6 @@
 #include "imagespreadzoomcontroller.h"
 
 #include "imagepresentationcontroller.h"
-#include "imagerendering.h"
 #include "imagespreadgeometry.h"
 
 #include <utility>
@@ -22,10 +21,9 @@ namespace KiriView {
 ImageSpreadZoomController::ImageSpreadZoomController(RenderContextProvider renderContextProvider,
     ImagePresentationController &primaryPresentation,
     ImagePresentationController &secondaryPresentation)
-    : m_renderContextProvider(std::move(renderContextProvider))
+    : m_renderContextState(std::move(renderContextProvider))
     , m_primaryPresentation(primaryPresentation)
     , m_secondaryPresentation(secondaryPresentation)
-    , m_renderContext(renderContext())
 {
 }
 
@@ -193,14 +191,13 @@ ImageZoomChangeSet ImageSpreadZoomController::mutateZoomState(
     const ZoomStateMutation &mutation, bool rightToLeftReading)
 {
     const ImageZoomSnapshot previous = m_zoomState.snapshot();
-    const ImageDocumentRenderContext previousContext = m_renderContext;
-    const ImageDocumentRenderContext context = renderContext();
+    const ImageRenderContextChange renderContextChange = m_renderContextState.refresh();
 
-    mutation(m_zoomState, context.devicePixelRatio);
-    m_renderContext = context;
+    mutation(m_zoomState, renderContextChange.current.devicePixelRatio);
 
-    const ImageZoomChangeSet changes = ImageZoomState::changeSet(previous,
-        previousContext.devicePixelRatio, m_zoomState.snapshot(), context.devicePixelRatio, false);
+    const ImageZoomChangeSet changes
+        = ImageZoomState::changeSet(previous, renderContextChange.previous.devicePixelRatio,
+            m_zoomState.snapshot(), renderContextChange.current.devicePixelRatio, false);
     if (!hasZoomStateChange(changes)) {
         return changes;
     }
@@ -210,15 +207,8 @@ ImageZoomChangeSet ImageSpreadZoomController::mutateZoomState(
     return changes;
 }
 
-ImageDocumentRenderContext ImageSpreadZoomController::renderContext() const
-{
-    ImageDocumentRenderContext context
-        = m_renderContextProvider ? m_renderContextProvider() : ImageDocumentRenderContext {};
-    return normalizedImageDocumentRenderContext(context);
-}
-
 qreal ImageSpreadZoomController::devicePixelRatio() const
 {
-    return m_renderContext.devicePixelRatio;
+    return m_renderContextState.devicePixelRatio();
 }
 }

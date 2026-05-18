@@ -6,6 +6,7 @@
 
 #include "imagedocumenttypes.h"
 #include "imagepresentationgeometry.h"
+#include "imagerendercontextstate.h"
 #include "imagesurface.h"
 #include "imagezoomstate.h"
 
@@ -83,12 +84,11 @@ private:
     std::shared_ptr<DisplayedImageSurface> imageSurface() const;
     void notify(ImageDocumentChange change);
 
-    RenderContextProvider m_renderContextProvider;
+    ImageRenderContextState m_renderContextState;
     ImageSurfaceProvider m_imageSurfaceProvider;
     ChangeCallback m_changeCallback;
     ImagePresentationGeometry m_geometry;
     ImageZoomState m_zoomState;
-    ImageDocumentRenderContext m_renderContext;
     std::unique_ptr<ImageTileDecodeScheduler> m_tileDecodeScheduler;
     QRectF m_visibleItemRect;
 };

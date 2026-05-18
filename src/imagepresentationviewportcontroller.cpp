@@ -14,11 +14,10 @@ namespace KiriView {
 ImagePresentationViewportController::ImagePresentationViewportController(QObject *context,
     RenderContextProvider renderContextProvider, ImageSurfaceProvider imageSurfaceProvider,
     TileDecodedCallback tileDecoded, ChangeCallback changeCallback)
-    : m_renderContextProvider(std::move(renderContextProvider))
+    : m_renderContextState(std::move(renderContextProvider))
     , m_imageSurfaceProvider(std::move(imageSurfaceProvider))
     , m_changeCallback(std::move(changeCallback))
 {
-    m_renderContext = renderContext();
     m_tileDecodeScheduler
         = std::make_unique<ImageTileDecodeScheduler>(context, std::move(tileDecoded));
 }
@@ -71,9 +70,7 @@ int ImagePresentationViewportController::rotationDegrees() const
 
 ImageDocumentRenderContext ImagePresentationViewportController::renderContext() const
 {
-    ImageDocumentRenderContext context
-        = m_renderContextProvider ? m_renderContextProvider() : ImageDocumentRenderContext {};
-    return normalizedImageDocumentRenderContext(context);
+    return m_renderContextState.current();
 }
 
 ImageFirstDisplayDecodeContext
@@ -218,13 +215,12 @@ void ImagePresentationViewportController::applyGeometryImageSize(TileRefresh til
 void ImagePresentationViewportController::mutateZoomState(
     const ZoomStateMutation &mutation, TileRefresh tileRefresh)
 {
-    const ImageDocumentRenderContext previousContext = m_renderContext;
-    const ImageDocumentRenderContext context = renderContext();
+    const ImageRenderContextChange renderContextChange = m_renderContextState.refresh();
     const ImageZoomSnapshot previous = m_zoomState.snapshot();
-    mutation(m_zoomState, context.devicePixelRatio);
+    mutation(m_zoomState, renderContextChange.current.devicePixelRatio);
 
-    applyZoomStateChanges(previous, previousContext, context, tileRefresh);
-    m_renderContext = context;
+    applyZoomStateChanges(
+        previous, renderContextChange.previous, renderContextChange.current, tileRefresh);
 }
 
 void ImagePresentationViewportController::applyZoomStateChanges(const ImageZoomSnapshot &previous,

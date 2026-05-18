@@ -5,6 +5,7 @@
 #define KIRIVIEW_IMAGESPREADZOOMCONTROLLER_H
 
 #include "imagedocumenttypes.h"
+#include "imagerendercontextstate.h"
 #include "imagezoomstate.h"
 
 #include <QRectF>
@@ -54,14 +55,12 @@ private:
     QRectF secondaryPageRect(bool rightToLeftReading) const;
     void applyZoomPercentToPages();
     ImageZoomChangeSet mutateZoomState(const ZoomStateMutation &mutation, bool rightToLeftReading);
-    ImageDocumentRenderContext renderContext() const;
     qreal devicePixelRatio() const;
 
-    RenderContextProvider m_renderContextProvider;
+    ImageRenderContextState m_renderContextState;
     ImagePresentationController &m_primaryPresentation;
     ImagePresentationController &m_secondaryPresentation;
     ImageZoomState m_zoomState;
-    ImageDocumentRenderContext m_renderContext;
     QRectF m_visibleItemRect;
 };
 }
