@@ -19,7 +19,6 @@
 #include <memory>
 
 namespace KiriView {
-enum class ImageDocumentPublicSignal;
 class ImageDocumentRuntime;
 }
 
@@ -181,7 +180,6 @@ Q_SIGNALS:
 
 private:
     void handleDocumentChange(KiriView::ImageDocumentChange change);
-    void emitDocumentSignal(KiriView::ImageDocumentPublicSignal signal);
     KiriView::ImageDocumentRenderContext renderContext() const;
 
     RenderContextProvider m_renderContextProvider;

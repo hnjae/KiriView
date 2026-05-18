@@ -6,55 +6,6 @@
 #include "imagezoomstate.h"
 
 namespace KiriView {
-std::vector<ImageDocumentPublicSignal> imageDocumentPublicSignals(ImageDocumentChange change)
-{
-    switch (change) {
-    case ImageDocumentChange::SourceUrl:
-        return { ImageDocumentPublicSignal::SourceUrl };
-    case ImageDocumentChange::Status:
-        return { ImageDocumentPublicSignal::Status };
-    case ImageDocumentChange::Loading:
-        return { ImageDocumentPublicSignal::Loading };
-    case ImageDocumentChange::ErrorString:
-        return { ImageDocumentPublicSignal::ErrorString };
-    case ImageDocumentChange::WindowTitleFileName:
-        return { ImageDocumentPublicSignal::WindowTitleFileName };
-    case ImageDocumentChange::DisplayedUrl:
-        return { ImageDocumentPublicSignal::DisplayedUrl };
-    case ImageDocumentChange::ImageSize:
-        return { ImageDocumentPublicSignal::ImageSize };
-    case ImageDocumentChange::ViewportSize:
-        return { ImageDocumentPublicSignal::ViewportSize };
-    case ImageDocumentChange::VisibleItemRect:
-        return { ImageDocumentPublicSignal::VisibleItemRect };
-    case ImageDocumentChange::DisplaySize:
-        return { ImageDocumentPublicSignal::DisplaySize };
-    case ImageDocumentChange::ZoomPercent:
-        return { ImageDocumentPublicSignal::ZoomPercent };
-    case ImageDocumentChange::ZoomMode:
-        return { ImageDocumentPublicSignal::ZoomMode };
-    case ImageDocumentChange::MaximumManualZoomPercent:
-        return { ImageDocumentPublicSignal::MaximumManualZoomPercent };
-    case ImageDocumentChange::PageNavigation:
-        return { ImageDocumentPublicSignal::PageNavigation };
-    case ImageDocumentChange::ContainerNavigation:
-        return { ImageDocumentPublicSignal::ContainerNavigation };
-    case ImageDocumentChange::FileDeletionInProgress:
-        return { ImageDocumentPublicSignal::FileDeletionInProgress };
-    case ImageDocumentChange::TwoPageMode:
-        return { ImageDocumentPublicSignal::TwoPageMode,
-            ImageDocumentPublicSignal::PageNavigation };
-    case ImageDocumentChange::RightToLeftReading:
-        return { ImageDocumentPublicSignal::RightToLeftReading };
-    case ImageDocumentChange::Rotation:
-        return { ImageDocumentPublicSignal::RotationDegrees };
-    case ImageDocumentChange::Repaint:
-        return { ImageDocumentPublicSignal::Repaint };
-    }
-
-    return {};
-}
-
 std::vector<ImageDocumentChange> imageDocumentSpreadTransitionNotifications()
 {
     return { ImageDocumentChange::Status, ImageDocumentChange::Loading,
