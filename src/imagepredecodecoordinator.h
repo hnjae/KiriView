@@ -19,6 +19,7 @@
 #include <QTimer>
 #include <QUrl>
 #include <cstddef>
+#include <memory>
 #include <optional>
 #include <vector>
 
@@ -35,7 +36,7 @@ public:
 
     explicit ImagePredecodeCoordinator(QObject *parent = nullptr);
     ImagePredecodeCoordinator(QObject *parent, ImageNavigationCandidateProvider candidateProvider,
-        ImageDecodeDependencies decodeDependencies);
+        ImageDecodeDependencies decodeDependencies, PowerSaverProvider powerSaverProvider = {});
 
     void schedule(Context context);
     void setPowerSaverEnabled(bool enabled);
@@ -61,6 +62,7 @@ private:
     ImageIoJob m_listerJob;
     ImageCandidateRepository m_candidateRepository;
     PredecodeLoadController m_loadController;
+    std::unique_ptr<PowerSaverStateMonitor> m_powerSaverMonitor;
     std::optional<Context> m_displayedContext;
     std::optional<Context> m_pendingContext;
     ImageAsyncTicket m_generation;

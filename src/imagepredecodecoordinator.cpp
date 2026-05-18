@@ -18,7 +18,8 @@ ImagePredecodeCoordinator::ImagePredecodeCoordinator(QObject *parent)
 }
 
 ImagePredecodeCoordinator::ImagePredecodeCoordinator(QObject *parent,
-    ImageNavigationCandidateProvider candidateProvider, ImageDecodeDependencies decodeDependencies)
+    ImageNavigationCandidateProvider candidateProvider, ImageDecodeDependencies decodeDependencies,
+    PowerSaverProvider powerSaverProvider)
     : QObject(parent)
     , m_candidateRepository(std::move(candidateProvider))
     , m_loadController(this, std::move(decodeDependencies))
@@ -33,6 +34,15 @@ ImagePredecodeCoordinator::ImagePredecodeCoordinator(QObject *parent,
         &m_debounceTimer, &QTimer::timeout, this, [this]() { startDebouncedPredecode(); });
     QObject::connect(
         &m_neutralTimer, &QTimer::timeout, this, [this]() { scheduleSettledNeutralPredecode(); });
+
+    powerSaverProvider = powerSaverProviderWithDefault(std::move(powerSaverProvider));
+    if (powerSaverProvider.monitor) {
+        m_powerSaverMonitor = powerSaverProvider.monitor(
+            this, [this](bool enabled) { setPowerSaverEnabled(enabled); });
+    }
+    if (m_powerSaverMonitor != nullptr) {
+        setPowerSaverEnabled(m_powerSaverMonitor->powerSaverEnabled());
+    }
 }
 
 void ImagePredecodeCoordinator::schedule(Context context)

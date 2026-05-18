@@ -22,52 +22,13 @@ using KiriView::TestSupport::imageDecodeDependenciesFor;
 using KiriView::TestSupport::imagesDirectoryUrl;
 using KiriView::TestSupport::indexedImageUrl;
 using KiriView::TestSupport::ManualImageDataLoader;
+using KiriView::TestSupport::ManualPowerSaverMonitor;
+using KiriView::TestSupport::powerSaverProviderFor;
 using KiriView::TestSupport::staticImageDataDecoder;
 using KiriView::TestSupport::staticTestImagePayload;
 using KiriView::TestSupport::testImage;
 
 using FakeCandidateProvider = KiriView::TestSupport::FakeImageNavigationCandidateProvider;
-
-class ManualPowerSaverMonitor final : public KiriView::PowerSaverStateMonitor
-{
-public:
-    ManualPowerSaverMonitor(bool enabled, KiriView::PowerSaverChangedCallback callback)
-        : m_enabled(enabled)
-        , m_callback(std::move(callback))
-    {
-    }
-
-    bool powerSaverEnabled() const override { return m_enabled; }
-
-    void setPowerSaverEnabled(bool enabled)
-    {
-        if (m_enabled == enabled) {
-            return;
-        }
-
-        m_enabled = enabled;
-        if (m_callback) {
-            m_callback(enabled);
-        }
-    }
-
-private:
-    bool m_enabled = false;
-    KiriView::PowerSaverChangedCallback m_callback;
-};
-
-KiriView::PowerSaverProvider powerSaverProviderFor(
-    ManualPowerSaverMonitor *&monitor, bool initialEnabled)
-{
-    return KiriView::PowerSaverProvider {
-        [&monitor, initialEnabled](QObject *, KiriView::PowerSaverChangedCallback callback) {
-            auto instance
-                = std::make_unique<ManualPowerSaverMonitor>(initialEnabled, std::move(callback));
-            monitor = instance.get();
-            return instance;
-        },
-    };
-}
 
 KiriView::ImagePresentationController createPresentationController(QObject *parent)
 {

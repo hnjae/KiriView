@@ -10,7 +10,9 @@
 #include <QTest>
 #include <QUrl>
 #include <cstddef>
+#include <memory>
 #include <optional>
+#include <utility>
 #include <vector>
 
 namespace {
@@ -21,17 +23,36 @@ using KiriView::TestSupport::imagesDirectoryUrl;
 using KiriView::TestSupport::indexedImageUrl;
 using KiriView::TestSupport::localUrl;
 using KiriView::TestSupport::ManualImageDataLoader;
+using KiriView::TestSupport::ManualPowerSaverMonitor;
+using KiriView::TestSupport::powerSaverProviderFor;
 using KiriView::TestSupport::staticImageDataDecoder;
 using KiriView::TestSupport::staticTestImagePayload;
 using KiriView::TestSupport::testImage;
 
 using FakeCandidateProvider = KiriView::TestSupport::FakeImageNavigationCandidateProvider;
 
+KiriView::PowerSaverProvider noOpPowerSaverProvider()
+{
+    return KiriView::PowerSaverProvider {
+        [](QObject *, KiriView::PowerSaverChangedCallback) {
+            return std::unique_ptr<KiriView::PowerSaverStateMonitor>();
+        },
+    };
+}
+
+KiriView::ImagePredecodeCoordinator createCoordinator(QObject *parent,
+    FakeCandidateProvider &candidateProvider, ManualImageDataLoader &dataLoader,
+    KiriView::PowerSaverProvider powerSaverProvider)
+{
+    return KiriView::ImagePredecodeCoordinator(parent, candidateProvider.provider(),
+        imageDecodeDependenciesFor(dataLoader, staticImageDataDecoder()),
+        std::move(powerSaverProvider));
+}
+
 KiriView::ImagePredecodeCoordinator createCoordinator(
     QObject *parent, FakeCandidateProvider &candidateProvider, ManualImageDataLoader &dataLoader)
 {
-    return KiriView::ImagePredecodeCoordinator(parent, candidateProvider.provider(),
-        imageDecodeDependenciesFor(dataLoader, staticImageDataDecoder()));
+    return createCoordinator(parent, candidateProvider, dataLoader, noOpPowerSaverProvider());
 }
 
 std::vector<KiriView::ImageNavigationCandidate> imageCandidates(int count)
@@ -58,6 +79,7 @@ private Q_SLOTS:
     void directoryDocumentStartsTwoBackgroundDecodes();
     void staleGenerationDecodeIsIgnored();
     void rapidNavigationDebouncesSkippedPagePredecode();
+    void powerSaverMonitorSuppressesAndReschedulesPredecode();
     void cancelSuppressesPendingDecode();
 };
 
@@ -323,6 +345,50 @@ void TestImagePredecodeCoordinator::rapidNavigationDebouncesSkippedPagePredecode
     QCOMPARE(dataLoader.backLoad().url, indexedImageUrl(3));
     QVERIFY(
         !dataLoader.finishOldestActiveLoadForUrl(indexedImageUrl(1), QByteArrayLiteral("image")));
+}
+
+void TestImagePredecodeCoordinator::powerSaverMonitorSuppressesAndReschedulesPredecode()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    ManualPowerSaverMonitor *powerSaverMonitor = nullptr;
+    KiriView::ImagePredecodeCoordinator coordinator = createCoordinator(
+        this, candidateProvider, dataLoader, powerSaverProviderFor(powerSaverMonitor, true));
+    QVERIFY(powerSaverMonitor != nullptr);
+    QVERIFY(coordinator.powerSaverEnabled());
+
+    const QUrl displayedUrl = indexedImageUrl(1);
+    const QUrl nextUrl = indexedImageUrl(2);
+    candidateProvider.setDirectoryImages(imagesDirectoryUrl(),
+        {
+            imageCandidate(displayedUrl),
+            imageCandidate(nextUrl),
+        });
+
+    coordinator.schedule(KiriView::ImagePredecodeCoordinator::Context {
+        KiriView::DisplayedPredecodeImage {
+            KiriView::DisplayedImageLocation::fromUrl(displayedUrl),
+            true,
+            staticTestImagePayload(testImage()),
+        },
+    });
+
+    QVERIFY(coordinator.tryTake(displayedUrl).has_value());
+    QTest::qWait(250);
+    QCOMPARE(dataLoader.loadCount(), std::size_t(0));
+
+    powerSaverMonitor->setPowerSaverEnabled(false);
+    QVERIFY(!coordinator.powerSaverEnabled());
+    QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
+    QCOMPARE(dataLoader.frontLoad().url, nextUrl);
+
+    powerSaverMonitor->setPowerSaverEnabled(true);
+    QVERIFY(coordinator.powerSaverEnabled());
+    QVERIFY(dataLoader.frontLoad().canceled);
+    dataLoader.deliverFrontLoadDataIgnoringCancellation(QByteArrayLiteral("stale"));
+    QTest::qWait(50);
+    QVERIFY(!coordinator.tryTake(nextUrl).has_value());
+    QVERIFY(coordinator.tryTake(displayedUrl).has_value());
 }
 
 void TestImagePredecodeCoordinator::cancelSuppressesPendingDecode()

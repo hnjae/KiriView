@@ -17,18 +17,11 @@ ImageDocumentPredecodeController::ImageDocumentPredecodeController(QObject *pare
     CurrentPageNumberCallback currentPageNumber, PowerSaverProvider powerSaverProvider)
     : m_state(state)
     , m_presentationController(presentationController)
-    , m_coordinator(std::make_unique<ImagePredecodeCoordinator>(
-          parent, std::move(candidateProvider), std::move(decodeDependencies)))
+    , m_coordinator(
+          std::make_unique<ImagePredecodeCoordinator>(parent, std::move(candidateProvider),
+              std::move(decodeDependencies), std::move(powerSaverProvider)))
     , m_currentPageNumber(std::move(currentPageNumber))
 {
-    powerSaverProvider = powerSaverProviderWithDefault(std::move(powerSaverProvider));
-    if (powerSaverProvider.monitor) {
-        m_powerSaverMonitor = powerSaverProvider.monitor(
-            parent, [this](bool enabled) { m_coordinator->setPowerSaverEnabled(enabled); });
-    }
-    if (m_powerSaverMonitor != nullptr) {
-        m_coordinator->setPowerSaverEnabled(m_powerSaverMonitor->powerSaverEnabled());
-    }
 }
 
 ImageDocumentPredecodeController::~ImageDocumentPredecodeController() = default;

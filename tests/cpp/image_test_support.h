@@ -192,6 +192,47 @@ inline ImageDataLoader dataLoaderFor(ManualImageDataLoader &dataLoader)
     return ManualImageDataLoaderAdapter(dataLoader);
 }
 
+class ManualPowerSaverMonitor final : public PowerSaverStateMonitor
+{
+public:
+    ManualPowerSaverMonitor(bool enabled, PowerSaverChangedCallback callback)
+        : m_enabled(enabled)
+        , m_callback(std::move(callback))
+    {
+    }
+
+    bool powerSaverEnabled() const override { return m_enabled; }
+
+    void setPowerSaverEnabled(bool enabled)
+    {
+        if (m_enabled == enabled) {
+            return;
+        }
+
+        m_enabled = enabled;
+        if (m_callback) {
+            m_callback(enabled);
+        }
+    }
+
+private:
+    bool m_enabled = false;
+    PowerSaverChangedCallback m_callback;
+};
+
+inline PowerSaverProvider powerSaverProviderFor(
+    ManualPowerSaverMonitor *&monitor, bool initialEnabled)
+{
+    return PowerSaverProvider {
+        [&monitor, initialEnabled](QObject *, PowerSaverChangedCallback callback) {
+            auto instance
+                = std::make_unique<ManualPowerSaverMonitor>(initialEnabled, std::move(callback));
+            monitor = instance.get();
+            return instance;
+        },
+    };
+}
+
 struct ManualFileOperation {
     QObject *object = nullptr;
     FileDeletionRequest request;

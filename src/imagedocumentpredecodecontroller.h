@@ -42,7 +42,6 @@ private:
     ImageDocumentState &m_state;
     ImagePresentationController &m_presentationController;
     std::unique_ptr<ImagePredecodeCoordinator> m_coordinator;
-    std::unique_ptr<PowerSaverStateMonitor> m_powerSaverMonitor;
     CurrentPageNumberCallback m_currentPageNumber;
 };
 }
