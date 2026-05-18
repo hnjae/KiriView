@@ -52,6 +52,7 @@ const RUST_BRIDGE_SOURCES: &[&str] = &[
 ];
 const CXX_QT_CPP_SOURCES: &[&str] = &[
     "src/apnganimationreader.cpp",
+    "src/apngframecomposer.cpp",
     "src/kiriimagedocument.cpp",
     "src/kiriimagedecoder.cpp",
     "src/kiriimagerendernode.cpp",

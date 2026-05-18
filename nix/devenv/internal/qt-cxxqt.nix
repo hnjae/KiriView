@@ -86,6 +86,7 @@ let
   );
   cxxQtCppSources = [
     "src/apnganimationreader.cpp"
+    "src/apngframecomposer.cpp"
     "src/kiriimagedocument.cpp"
     "src/kiriimagedecoder.cpp"
     "src/kiriimagerendernode.cpp"

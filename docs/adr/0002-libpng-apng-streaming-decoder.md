@@ -8,7 +8,7 @@ APNG playback is inherently sequential: later frames are read in stream order an
 
 ## Decision
 
-C++ owns APNG runtime decoding through APNG-patched libpng. `ApngAnimationReader` keeps the original source bytes, the libpng read state, one composed canvas, one decoded frame buffer, and any temporary restore region needed for `dispose=previous`.
+C++ owns APNG runtime decoding through APNG-patched libpng. `ApngAnimationReader` keeps the original source bytes and libpng read state, while `ApngFrameComposer` owns the composed canvas, decoded frame buffer, first-displayed-frame composition rule, and any temporary restore region needed for `dispose=previous`.
 
 Image loading opens the reader only far enough to decode the first displayable frame and returns a streamed APNG decoded-image variant. The animation player reopens the reader for playback, consumes the already displayed first frame, and then advances frames one at a time on timer ticks. Looping restarts by reopening the reader and replaying from the beginning.
 
