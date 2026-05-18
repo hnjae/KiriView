@@ -41,6 +41,30 @@ void ImageIoJobState::cancel()
 
 bool ImageIoJobState::isActive() const { return !m_object.isNull(); }
 
+QObject *ImageIoJobState::object() const { return m_object.data(); }
+
+ImageIoJobCompletion::ImageIoJobCompletion(QObject *object, std::shared_ptr<ImageIoJobState> state)
+    : m_object(object)
+    , m_state(std::move(state))
+{
+}
+
+QObject *ImageIoJobCompletion::object() const { return m_object.data(); }
+
+bool ImageIoJobCompletion::isActive() const
+{
+    return m_state != nullptr && m_state->isActive() && !m_object.isNull();
+}
+
+void ImageIoJobCompletion::cancel() const
+{
+    if (m_state == nullptr) {
+        return;
+    }
+
+    m_state->cancel();
+}
+
 ImageIoJob::ImageIoJob(QObject *object, CancelCallback cancelCallback)
     : m_state(std::make_shared<ImageIoJobState>(object, std::move(cancelCallback)))
 {
@@ -70,5 +94,8 @@ void ImageIoJob::cancel()
 
 bool ImageIoJob::isActive() const { return m_state != nullptr && m_state->isActive(); }
 
-std::shared_ptr<ImageIoJobState> ImageIoJob::state() const { return m_state; }
+ImageIoJobCompletion ImageIoJob::completion() const
+{
+    return ImageIoJobCompletion(m_state == nullptr ? nullptr : m_state->object(), m_state);
+}
 }

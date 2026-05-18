@@ -53,12 +53,12 @@ KiriView::ImageIoJob startKioFileDeletion(QObject *receiver, KiriView::FileDelet
     auto *job = new KIO::DeleteOrTrashJob(QList<QUrl> { request.targetUrl },
         kioDeletionType(request.mode), KIO::AskUserActionInterface::ForceConfirmation, receiver);
     KiriView::ImageIoJob ioJob(job, cancelKJob);
-    std::shared_ptr<KiriView::ImageIoJobState> jobState = ioJob.state();
+    const KiriView::ImageIoJobCompletion completion = ioJob.completion();
     QObject *context = receiver == nullptr ? job : receiver;
 
     QObject::connect(job, &KJob::result, context,
-        [jobState, job, callback = std::move(callback)](KJob *finishedJob) mutable {
-            jobState->claimAndRun(job, [&]() {
+        [completion, callback = std::move(callback)](KJob *finishedJob) mutable {
+            completion.claimAndRun([&]() {
                 if (finishedJob->error() == KJob::NoError) {
                     KiriView::invokeIfSet(
                         callback, KiriView::FileDeletionResult::Succeeded, QString());

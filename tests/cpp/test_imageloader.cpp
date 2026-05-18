@@ -33,7 +33,7 @@ struct ManualArchiveCandidateLoad {
     KiriView::ArchiveDocumentLocation archiveDocument;
     KiriView::ImageCandidatesCallback callback;
     KiriView::ErrorCallback errorCallback;
-    std::shared_ptr<KiriView::ImageIoJobState> state;
+    KiriView::ImageIoJobCompletion completion;
     bool canceled = false;
 };
 

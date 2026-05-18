@@ -90,13 +90,10 @@ std::vector<ContainerNavigationCandidate> containerCandidatesFromLister(KCoreDir
     return containerNavigationCandidates(lister->items(KCoreDirLister::AllItems));
 }
 
-void finishDirectoryCandidateListWithError(std::shared_ptr<KiriView::ImageIoJobState> jobState,
-    KCoreDirLister *lister, const QString &errorString, const ErrorCallback &errorCallback)
+void finishDirectoryCandidateListWithError(KiriView::ImageIoJobCompletion completion,
+    const QString &errorString, const ErrorCallback &errorCallback)
 {
-    jobState->claimAndRun(lister, [&]() {
-        lister->deleteLater();
-        KiriView::invokeIfSet(errorCallback, errorString);
-    });
+    completion.claimAndDelete([&]() { KiriView::invokeIfSet(errorCallback, errorString); });
 }
 
 template <typename Candidates, typename CandidateCallback, typename CandidateFactory>
@@ -105,25 +102,24 @@ KiriView::ImageIoJob startDirectoryCandidateList(QObject *receiver, const QUrl &
 {
     auto *lister = createImageCandidateLister(receiver);
     KiriView::ImageIoJob ioJob(lister, cancelDirLister);
-    auto jobState = ioJob.state();
+    const KiriView::ImageIoJobCompletion completion = ioJob.completion();
 
     QObject::connect(lister, &KCoreDirLister::completed, receiver,
-        [jobState, lister, callback = std::move(callback),
+        [completion, lister, callback = std::move(callback),
             candidateFactory = std::move(candidateFactory)]() mutable {
-            jobState->claimAndRun(lister, [&]() {
+            completion.claimAndDelete([&]() {
                 Candidates candidates = candidateFactory(lister);
-                lister->deleteLater();
                 KiriView::invokeIfSet(callback, std::move(candidates));
             });
         });
-    QObject::connect(lister, &KCoreDirLister::jobError, receiver,
-        [jobState, lister, errorCallback](KIO::Job *job) {
+    QObject::connect(
+        lister, &KCoreDirLister::jobError, receiver, [completion, errorCallback](KIO::Job *job) {
             const QString errorString = job == nullptr ? QString() : job->errorString();
-            finishDirectoryCandidateListWithError(jobState, lister, errorString, errorCallback);
+            finishDirectoryCandidateListWithError(completion, errorString, errorCallback);
         });
 
     if (!lister->openUrl(directoryUrl, KCoreDirLister::Reload)) {
-        finishDirectoryCandidateListWithError(jobState, lister, QString(), errorCallback);
+        finishDirectoryCandidateListWithError(completion, QString(), errorCallback);
     }
 
     return ioJob;
@@ -146,14 +142,11 @@ KiriView::ImageIoJob startArchiveWorkerJob(QObject *receiver, Work work, Finish 
 
     auto *token = new QObject(receiver);
     KiriView::ImageIoJob ioJob(token, cancelArchiveWorkerToken);
-    auto jobState = ioJob.state();
+    const KiriView::ImageIoJobCompletion completion = ioJob.completion();
 
-    KiriView::runAsyncWorker(receiver, std::move(work),
-        [token, jobState, finish = std::move(finish)](auto result) mutable {
-            jobState->claimAndRun(token, [&]() mutable {
-                token->deleteLater();
-                finish(std::move(result));
-            });
+    KiriView::runAsyncWorker(
+        receiver, std::move(work), [completion, finish = std::move(finish)](auto result) mutable {
+            completion.claimAndDelete([&]() mutable { finish(std::move(result)); });
         });
     return ioJob;
 }
@@ -214,12 +207,12 @@ ImageIoJob startStoredImageDataLoad(QObject *receiver, ImageDecodeRequest reques
 
     auto *job = KIO::storedGet(request.imageUrl(), KIO::NoReload, KIO::HideProgressInfo);
     ImageIoJob ioJob(job, cancelKJob);
-    auto jobState = ioJob.state();
+    const ImageIoJobCompletion completion = ioJob.completion();
 
     QObject::connect(job, &KJob::result, receiver,
-        [jobState, job, callback = std::move(callback), errorCallback = std::move(errorCallback)](
+        [completion, job, callback = std::move(callback), errorCallback = std::move(errorCallback)](
             KJob *finishedJob) mutable {
-            jobState->claimAndRun(job, [&]() {
+            completion.claimAndRun([&]() {
                 if (finishedJob->error() != KJob::NoError) {
                     KiriView::invokeIfSet(errorCallback, finishedJob->errorString());
                     return;

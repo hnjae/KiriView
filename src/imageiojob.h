@@ -4,12 +4,11 @@
 #ifndef KIRIVIEW_IMAGEIOJOB_H
 #define KIRIVIEW_IMAGEIOJOB_H
 
+#include <QObject>
 #include <QPointer>
 #include <functional>
 #include <memory>
 #include <utility>
-
-class QObject;
 
 namespace KiriView {
 class ImageIoJobState final
@@ -33,8 +32,50 @@ public:
     bool isActive() const;
 
 private:
+    friend class ImageIoJob;
+
+    QObject *object() const;
+
     QPointer<QObject> m_object;
     CancelCallback m_cancelCallback;
+};
+
+class ImageIoJobCompletion final
+{
+public:
+    ImageIoJobCompletion() = default;
+    ImageIoJobCompletion(QObject *object, std::shared_ptr<ImageIoJobState> state);
+
+    QObject *object() const;
+    bool isActive() const;
+    void cancel() const;
+
+    template <typename Finish> bool claimAndRun(Finish &&finish) const
+    {
+        QObject *object = m_object.data();
+        if (m_state == nullptr || object == nullptr) {
+            return false;
+        }
+
+        return m_state->claimAndRun(object, std::forward<Finish>(finish));
+    }
+
+    template <typename Finish> bool claimAndDelete(Finish &&finish) const
+    {
+        QObject *object = m_object.data();
+        if (m_state == nullptr || object == nullptr) {
+            return false;
+        }
+
+        return m_state->claimAndRun(object, [&]() {
+            std::forward<Finish>(finish)();
+            object->deleteLater();
+        });
+    }
+
+private:
+    QPointer<QObject> m_object;
+    std::shared_ptr<ImageIoJobState> m_state;
 };
 
 class ImageIoJob final
@@ -53,7 +94,7 @@ public:
 
     void cancel();
     bool isActive() const;
-    std::shared_ptr<ImageIoJobState> state() const;
+    ImageIoJobCompletion completion() const;
 
 private:
     std::shared_ptr<ImageIoJobState> m_state;

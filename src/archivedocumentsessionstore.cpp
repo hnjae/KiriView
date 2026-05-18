@@ -144,8 +144,7 @@ private:
 };
 
 struct ArchiveDocumentCandidateLoad {
-    QObject *token = nullptr;
-    std::shared_ptr<ImageIoJobState> state;
+    ImageIoJobCompletion completion;
     ImageCandidatesCallback callback;
     ErrorCallback errorCallback;
 };
@@ -268,12 +267,12 @@ ImageIoJob ArchiveDocumentSessionStore::loadArchiveImages(QObject *receiver,
     }
 
     auto load = std::make_shared<ArchiveDocumentCandidateLoad>();
-    load->token = new QObject(receiver);
+    QObject *token = new QObject(receiver);
     load->callback = std::move(callback);
     load->errorCallback = std::move(errorCallback);
 
-    ImageIoJob ioJob(load->token, cancelArchiveSessionToken);
-    load->state = ioJob.state();
+    ImageIoJob ioJob(token, cancelArchiveSessionToken);
+    load->completion = ioJob.completion();
     ArchiveDocumentCandidateLoadBatch &batch = currentCandidateLoadBatch();
     batch.pendingLoads.push_back(load);
 
@@ -301,17 +300,16 @@ ImageIoJob ArchiveDocumentSessionStore::loadArchiveImageData(QObject *receiver,
 
     auto *token = new QObject(receiver);
     ImageIoJob ioJob(token, cancelArchiveSessionToken);
-    std::shared_ptr<ImageIoJobState> jobState = ioJob.state();
+    const ImageIoJobCompletion completion = ioJob.completion();
     const quint64 generation = m_generation.current();
     const QUrl imageUrl = request.imageUrl();
     std::shared_ptr<ArchiveDocumentSessionRunner> runner = m_runner;
 
     runAsyncWorker(
         this, [runner = std::move(runner), imageUrl]() { return runner->loadImageData(imageUrl); },
-        [token, jobState, generation, this, callback = std::move(callback),
+        [completion, generation, this, callback = std::move(callback),
             errorCallback = std::move(errorCallback)](ArchiveImageDataResult result) mutable {
-            jobState->claimAndRun(token, [&]() mutable {
-                token->deleteLater();
+            completion.claimAndDelete([&]() mutable {
                 if (!m_generation.accepts(generation)) {
                     return;
                 }
@@ -385,14 +383,12 @@ void ArchiveDocumentSessionStore::finishCandidateLoad(
         = std::move(batch->pendingLoads);
 
     for (const std::shared_ptr<ArchiveDocumentCandidateLoad> &load : pendingLoads) {
-        if (load == nullptr || load->state == nullptr) {
+        if (load == nullptr) {
             continue;
         }
 
-        load->state->claimAndRun(load->token, [&]() {
-            load->token->deleteLater();
-            finishArchiveCandidateResult(result, load->callback, load->errorCallback);
-        });
+        load->completion.claimAndDelete(
+            [&]() { finishArchiveCandidateResult(result, load->callback, load->errorCallback); });
     }
 }
 
@@ -404,8 +400,8 @@ void ArchiveDocumentSessionStore::cancelCandidateLoadBatch()
 
     for (const std::shared_ptr<ArchiveDocumentCandidateLoad> &load :
         m_candidateLoadBatch->pendingLoads) {
-        if (load != nullptr && load->state != nullptr) {
-            load->state->cancel();
+        if (load != nullptr) {
+            load->completion.cancel();
         }
     }
     m_candidateLoadBatch.reset();

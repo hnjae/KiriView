@@ -43,19 +43,19 @@ namespace Detail {
                 object->deleteLater();
             }
         });
-        operation->state = job.state();
+        operation->completion = job.completion();
         return job;
     }
 
     template <typename Operation, typename Delivery>
     void finishManualIoJob(const std::shared_ptr<Operation> &operation, Delivery &&delivery)
     {
-        if (operation == nullptr || operation->state == nullptr) {
+        if (operation == nullptr) {
             return;
         }
 
         QObject *object = operation->object;
-        operation->state->claimAndRun(object, [&]() mutable {
+        operation->completion.claimAndRun([&]() mutable {
             operation->object = nullptr;
             std::forward<Delivery>(delivery)(*operation);
             if (object != nullptr) {
@@ -72,7 +72,7 @@ struct ManualImageDataLoad {
     ImageFirstDisplayDecodeContext firstDisplay;
     ImageDataCallback dataCallback;
     ErrorCallback errorCallback;
-    std::shared_ptr<ImageIoJobState> state;
+    ImageIoJobCompletion completion;
     bool canceled = false;
 };
 
@@ -196,7 +196,7 @@ struct ManualFileOperation {
     QObject *object = nullptr;
     FileDeletionRequest request;
     FileDeletionCallback callback;
-    std::shared_ptr<ImageIoJobState> state;
+    ImageIoJobCompletion completion;
     bool canceled = false;
 };
 

@@ -3,6 +3,8 @@
 
 #include "imageiojob.h"
 
+#include <QCoreApplication>
+#include <QEvent>
 #include <QObject>
 #include <QTest>
 #include <memory>
@@ -14,8 +16,9 @@ class TestImageIoJob : public QObject
 
 private Q_SLOTS:
     void cancelInvokesCallbackOnce();
-    void claimCompletesJobWithoutCanceling();
-    void claimAndRunCompletesJobOnce();
+    void completionClaimCompletesJobWithoutCanceling();
+    void completionClaimAndRunCompletesJobOnce();
+    void completionClaimAndDeleteCompletesJobOnce();
     void destroyedObjectDeactivatesJobWithoutCanceling();
     void moveAssignmentCancelsReplacedJob();
 };
@@ -37,38 +40,59 @@ void TestImageIoJob::cancelInvokesCallbackOnce()
     QCOMPARE(cancelCount, 1);
     QCOMPARE(canceledObject, &object);
     QVERIFY(!job.isActive());
-    QVERIFY(!job.state()->claim(&object));
+    QVERIFY(!job.completion().claimAndRun([]() { }));
 }
 
-void TestImageIoJob::claimCompletesJobWithoutCanceling()
+void TestImageIoJob::completionClaimCompletesJobWithoutCanceling()
 {
     QObject object;
     int cancelCount = 0;
     KiriView::ImageIoJob job(&object, [&cancelCount](QObject *) { ++cancelCount; });
-    const std::shared_ptr<KiriView::ImageIoJobState> jobState = job.state();
+    const KiriView::ImageIoJobCompletion completion = job.completion();
 
-    QVERIFY(jobState->claim(&object));
+    QVERIFY(completion.claimAndRun([]() { }));
     QVERIFY(!job.isActive());
     job.cancel();
 
     QCOMPARE(cancelCount, 0);
 }
 
-void TestImageIoJob::claimAndRunCompletesJobOnce()
+void TestImageIoJob::completionClaimAndRunCompletesJobOnce()
 {
     QObject object;
     int finishCount = 0;
     int cancelCount = 0;
     KiriView::ImageIoJob job(&object, [&cancelCount](QObject *) { ++cancelCount; });
-    const std::shared_ptr<KiriView::ImageIoJobState> jobState = job.state();
+    const KiriView::ImageIoJobCompletion completion = job.completion();
 
-    QVERIFY(jobState->claimAndRun(&object, [&finishCount]() { ++finishCount; }));
-    QVERIFY(!jobState->claimAndRun(&object, [&finishCount]() { ++finishCount; }));
+    QCOMPARE(completion.object(), &object);
+    QVERIFY(completion.isActive());
+    QVERIFY(completion.claimAndRun([&finishCount]() { ++finishCount; }));
+    QVERIFY(!completion.claimAndRun([&finishCount]() { ++finishCount; }));
     job.cancel();
 
     QCOMPARE(finishCount, 1);
     QCOMPARE(cancelCount, 0);
     QVERIFY(!job.isActive());
+    QVERIFY(!completion.isActive());
+}
+
+void TestImageIoJob::completionClaimAndDeleteCompletesJobOnce()
+{
+    auto *object = new QObject();
+    int finishCount = 0;
+    int cancelCount = 0;
+    KiriView::ImageIoJob job(object, [&cancelCount](QObject *) { ++cancelCount; });
+    const KiriView::ImageIoJobCompletion completion = job.completion();
+
+    QVERIFY(completion.claimAndDelete([&finishCount]() { ++finishCount; }));
+    QVERIFY(!completion.claimAndDelete([&finishCount]() { ++finishCount; }));
+    QCoreApplication::sendPostedEvents(object, QEvent::DeferredDelete);
+
+    QCOMPARE(finishCount, 1);
+    QCOMPARE(cancelCount, 0);
+    QVERIFY(!job.isActive());
+    QVERIFY(completion.object() == nullptr);
 }
 
 void TestImageIoJob::destroyedObjectDeactivatesJobWithoutCanceling()

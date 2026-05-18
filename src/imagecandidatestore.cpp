@@ -21,8 +21,7 @@
 
 namespace {
 struct PendingImageCandidateLoad {
-    QPointer<QObject> token;
-    std::shared_ptr<KiriView::ImageIoJobState> state;
+    KiriView::ImageIoJobCompletion completion;
     KiriView::ImageCandidatesCallback callback;
     KiriView::ErrorCallback errorCallback;
 };
@@ -153,8 +152,7 @@ struct ImageCandidateStore::Entry {
             object->deleteLater();
         });
         m_pendingLoads.push_back(PendingImageCandidateLoad {
-            token,
-            job.state(),
+            job.completion(),
             std::move(callback),
             std::move(errorCallback),
         });
@@ -180,7 +178,9 @@ struct ImageCandidateStore::Entry {
     void removePendingLoad(QObject *token)
     {
         const auto removed = std::remove_if(m_pendingLoads.begin(), m_pendingLoads.end(),
-            [token](const PendingImageCandidateLoad &load) { return load.token.data() == token; });
+            [token](const PendingImageCandidateLoad &load) {
+                return load.completion.object() == token;
+            });
         m_pendingLoads.erase(removed, m_pendingLoads.end());
     }
 
@@ -240,15 +240,7 @@ private:
         std::vector<PendingImageCandidateLoad> pendingLoads = std::move(m_pendingLoads);
         m_pendingLoads.clear();
         for (PendingImageCandidateLoad &load : pendingLoads) {
-            QObject *token = load.token.data();
-            if (load.state == nullptr || token == nullptr) {
-                continue;
-            }
-
-            load.state->claimAndRun(token, [&]() {
-                invokeIfSet(load.callback, m_candidates);
-                token->deleteLater();
-            });
+            load.completion.claimAndDelete([&]() { invokeIfSet(load.callback, m_candidates); });
         }
     }
 
@@ -257,15 +249,8 @@ private:
         std::vector<PendingImageCandidateLoad> pendingLoads = std::move(m_pendingLoads);
         m_pendingLoads.clear();
         for (PendingImageCandidateLoad &load : pendingLoads) {
-            QObject *token = load.token.data();
-            if (load.state == nullptr || token == nullptr) {
-                continue;
-            }
-
-            load.state->claimAndRun(token, [&]() {
-                invokeIfSet(load.errorCallback, m_errorString);
-                token->deleteLater();
-            });
+            load.completion.claimAndDelete(
+                [&]() { invokeIfSet(load.errorCallback, m_errorString); });
         }
     }
 
