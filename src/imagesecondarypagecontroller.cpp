@@ -26,9 +26,9 @@ ImageSecondaryPageController::ImageSecondaryPageController(QObject *parent,
                     }
                 },
                 [this](const QString &) {
-                    const bool wasVisible = visible();
+                    const bool hadDisplayedPage = visible();
                     clear();
-                    if (wasVisible) {
+                    if (hadDisplayedPage) {
                         invokeIfSet(m_callbacks.visibilityChanged);
                     }
                 },
@@ -72,21 +72,21 @@ const ImagePresentationController &ImageSecondaryPageController::presentationCon
     return *m_presentationController;
 }
 
-bool ImageSecondaryPageController::visible() const { return m_visible; }
+bool ImageSecondaryPageController::visible() const { return m_displayedPage.has_value(); }
 
-const DisplayedImageLocation &ImageSecondaryPageController::displayedImageLocation() const
+DisplayedImageLocation ImageSecondaryPageController::displayedImageLocation() const
 {
-    return m_displayedImageLocation;
+    return m_displayedPage.has_value() ? m_displayedPage->location : DisplayedImageLocation {};
 }
 
 QSize ImageSecondaryPageController::imageSize() const
 {
-    return m_visible ? m_presentationController->imageSize() : QSize();
+    return m_displayedPage.has_value() ? m_displayedPage->imageSize : QSize();
 }
 
 DisplayedImageRenderSnapshot ImageSecondaryPageController::renderSnapshot() const
 {
-    return m_visible ? m_presentationController->renderSnapshot() : DisplayedImageRenderSnapshot {};
+    return visible() ? m_presentationController->renderSnapshot() : DisplayedImageRenderSnapshot {};
 }
 
 void ImageSecondaryPageController::setViewportSize(const QSizeF &viewportSize)
@@ -113,8 +113,7 @@ void ImageSecondaryPageController::clear()
     cancel();
     stopAnimation();
     m_presentationController->clearImage();
-    m_displayedImageLocation = DisplayedImageLocation {};
-    m_visible = false;
+    clearDisplayedPage();
 }
 
 void ImageSecondaryPageController::cancel()
@@ -154,14 +153,15 @@ void ImageSecondaryPageController::finishImagePresentation(
         return;
     }
 
-    m_displayedImageLocation = session.location;
     if (imageSpreadPageIsWide(result.imageSize)) {
+        m_presentationController->clearImage();
+        clearDisplayedPage();
         reportLoadFinished(
             ImageSecondaryPageLoadResult::PrimaryOnly, session.location, result.imageSize);
         return;
     }
 
-    m_visible = true;
+    showDisplayedPage(session.location, result.imageSize);
     reportLoadFinished(ImageSecondaryPageLoadResult::Visible, session.location, result.imageSize);
 }
 
@@ -169,6 +169,14 @@ void ImageSecondaryPageController::finishLoadWithError(const ImageLoadSession &s
 {
     reportLoadFinished(ImageSecondaryPageLoadResult::Failed, session.location, QSize());
 }
+
+void ImageSecondaryPageController::showDisplayedPage(
+    DisplayedImageLocation location, QSize imageSize)
+{
+    m_displayedPage = ImageSecondaryPageDisplayState { std::move(location), std::move(imageSize) };
+}
+
+void ImageSecondaryPageController::clearDisplayedPage() { m_displayedPage.reset(); }
 
 void ImageSecondaryPageController::notify(ImageDocumentChange change)
 {

@@ -32,6 +32,11 @@ enum class ImageSecondaryPageLoadResult {
     Failed,
 };
 
+struct ImageSecondaryPageDisplayState {
+    DisplayedImageLocation location;
+    QSize imageSize;
+};
+
 class ImageSecondaryPageController final
 {
 public:
@@ -57,7 +62,7 @@ public:
     ImagePresentationController &presentationController();
     const ImagePresentationController &presentationController() const;
     bool visible() const;
-    const DisplayedImageLocation &displayedImageLocation() const;
+    DisplayedImageLocation displayedImageLocation() const;
     QSize imageSize() const;
     DisplayedImageRenderSnapshot renderSnapshot() const;
 
@@ -75,6 +80,8 @@ private:
     void finishImagePresentation(
         const ImageLoadSession &session, const ImagePresentationLoadResult &result);
     void finishLoadWithError(const ImageLoadSession &session);
+    void showDisplayedPage(DisplayedImageLocation location, QSize imageSize);
+    void clearDisplayedPage();
     void notify(ImageDocumentChange change);
     void reportLoadFinished(
         ImageSecondaryPageLoadResult result, const DisplayedImageLocation &location, QSize size);
@@ -82,8 +89,7 @@ private:
     Callbacks m_callbacks;
     std::unique_ptr<ImagePresentationController> m_presentationController;
     std::unique_ptr<ImageLoader> m_imageLoader;
-    DisplayedImageLocation m_displayedImageLocation;
-    bool m_visible = false;
+    std::optional<ImageSecondaryPageDisplayState> m_displayedPage;
 };
 }
 
