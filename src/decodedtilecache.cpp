@@ -4,17 +4,10 @@
 #include "decodedtilecache.h"
 
 #include "imagebytecost.h"
-#include "kiriview/src/imagetilegeometry.cxx.h"
+#include "imagetilegeometrybridge.h"
 
 #include <algorithm>
-#include <cstdint>
 #include <utility>
-
-namespace {
-std::int64_t rustTileByteCost(qsizetype byteCost) { return static_cast<std::int64_t>(byteCost); }
-
-std::uint64_t rustTileUseClock(quint64 useClock) { return static_cast<std::uint64_t>(useClock); }
-}
 
 namespace KiriView {
 qsizetype decodedTileByteCost(const DecodedTile &tile) { return imageByteCost(tile.image); }
@@ -81,18 +74,18 @@ void DecodedTileCache::clear()
 
 void DecodedTileCache::trimToBudget()
 {
-    rust::Vec<std::int64_t> byteCosts;
-    rust::Vec<std::uint64_t> lastUses;
+    std::vector<qsizetype> byteCosts;
+    std::vector<quint64> lastUses;
     byteCosts.reserve(m_entries.size());
     lastUses.reserve(m_entries.size());
 
     for (const Entry &entry : m_entries) {
-        byteCosts.push_back(rustTileByteCost(entry.byteCost));
-        lastUses.push_back(rustTileUseClock(entry.lastUse));
+        byteCosts.push_back(entry.byteCost);
+        lastUses.push_back(entry.lastUse);
     }
 
-    const rust::Vec<std::size_t> retainedIndices = rustTileCacheRetainedIndices(
-        std::move(byteCosts), std::move(lastUses), rustTileByteCost(m_byteBudget));
+    const std::vector<std::size_t> retainedIndices
+        = ImageTileGeometryBridge::tileCacheRetainedIndices(byteCosts, lastUses, m_byteBudget);
 
     std::vector<Entry> retainedEntries;
     retainedEntries.reserve(retainedIndices.size());
