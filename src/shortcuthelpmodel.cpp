@@ -4,28 +4,19 @@
 #include "shortcuthelpmodel.h"
 
 #include "applicationshortcutpolicy.h"
-#include "kiriviewapplication.h"
-#include "kiriviewapplicationactions.h"
 
 #include <KLocalizedString>
-#include <KirigamiActionCollection>
 #include <QAction>
 #include <QByteArray>
 #include <QHash>
 #include <QModelIndex>
 #include <QVariant>
-
-namespace {
-QString actionDefinitionName(const KiriView::ApplicationActions::ActionDefinition &definition)
-{
-    return QString::fromLatin1(definition.name);
-}
-}
+#include <utility>
 
 namespace KiriView::ApplicationActions {
-ShortcutHelpModel::ShortcutHelpModel(KiriViewApplication &application, QObject *parent)
+ShortcutHelpModel::ShortcutHelpModel(ShortcutHelpRowsProvider rowsProvider, QObject *parent)
     : QAbstractListModel(parent)
-    , m_application(application)
+    , m_rowsProvider(std::move(rowsProvider))
     , m_rows(collectRows())
 {
 }
@@ -41,7 +32,7 @@ QVariant ShortcutHelpModel::data(const QModelIndex &index, int role) const
         return {};
     }
 
-    const Row &row = m_rows.at(index.row());
+    const ShortcutHelpRow &row = m_rows.at(index.row());
     switch (role) {
     case ActionIdRole:
         return row.actionId;
@@ -68,7 +59,7 @@ QHash<int, QByteArray> ShortcutHelpModel::roleNames() const
 
 void ShortcutHelpModel::handleActionChanged(QAction *changedAction)
 {
-    const QList<Row> rows = collectRows();
+    const QList<ShortcutHelpRow> rows = collectRows();
     if (!sameRows(rows, m_rows)) {
         beginResetModel();
         m_rows = rows;
@@ -92,25 +83,13 @@ void ShortcutHelpModel::handleActionChanged(QAction *changedAction)
     }
 }
 
-QList<ShortcutHelpModel::Row> ShortcutHelpModel::collectRows() const
+QList<ShortcutHelpRow> ShortcutHelpModel::collectRows() const
 {
-    QList<Row> rows;
-    rows.reserve(static_cast<qsizetype>(definitions().size()));
-
-    for (const ActionDefinition &definition : definitions()) {
-        const QString name = actionDefinitionName(definition);
-        QAction *action = m_application.action(name);
-        if (action == nullptr || !KirigamiActionCollection::isShortcutsConfigurable(action)) {
-            continue;
-        }
-
-        rows.push_back(Row { action, static_cast<int>(definition.actionId), name });
-    }
-
-    return rows;
+    return m_rowsProvider ? m_rowsProvider() : QList<ShortcutHelpRow>();
 }
 
-bool ShortcutHelpModel::sameRows(const QList<Row> &left, const QList<Row> &right)
+bool ShortcutHelpModel::sameRows(
+    const QList<ShortcutHelpRow> &left, const QList<ShortcutHelpRow> &right)
 {
     if (left.size() != right.size()) {
         return false;

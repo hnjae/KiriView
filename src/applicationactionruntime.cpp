@@ -15,6 +15,11 @@
 namespace {
 namespace Actions = KiriView::ApplicationActions;
 
+QString actionDefinitionName(const Actions::ActionDefinition &definition)
+{
+    return QString::fromLatin1(definition.name);
+}
+
 KiriViewApplication::MenuPresentation toMenuPresentation(int value)
 {
     if (value == static_cast<int>(KiriViewApplication::MenuBar)) {
@@ -212,7 +217,8 @@ void ApplicationActionRuntime::setupActions()
     m_application.readSettings();
     sanitizeActionShortcuts();
     updateShowMenuBarAction();
-    m_shortcutHelpModel = std::make_unique<ShortcutHelpModel>(m_application, &m_application);
+    m_shortcutHelpModel = std::make_unique<ShortcutHelpModel>(
+        [this]() { return shortcutHelpRows(); }, &m_application);
 }
 
 QAction *ApplicationActionRuntime::addRegisteredAction(const QString &name, const QString &text,
@@ -306,5 +312,23 @@ QAction *ApplicationActionRuntime::registeredAction(const QString &actionName) c
 {
     return const_cast<KiriViewApplication &>(m_application)
         .AbstractKirigamiApplication::action(actionName);
+}
+
+QList<ShortcutHelpRow> ApplicationActionRuntime::shortcutHelpRows() const
+{
+    QList<ShortcutHelpRow> rows;
+    rows.reserve(static_cast<qsizetype>(Actions::definitions().size()));
+
+    for (const Actions::ActionDefinition &definition : Actions::definitions()) {
+        const QString name = actionDefinitionName(definition);
+        QAction *action = registeredAction(name);
+        if (action == nullptr || !KirigamiActionCollection::isShortcutsConfigurable(action)) {
+            continue;
+        }
+
+        rows.push_back(ShortcutHelpRow { action, static_cast<int>(definition.actionId), name });
+    }
+
+    return rows;
 }
 }

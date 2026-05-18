@@ -16,6 +16,7 @@
 
 namespace KiriView::ApplicationActions {
 class ShortcutHelpModel;
+struct ShortcutHelpRow;
 
 class ApplicationActionRuntime final
 {
@@ -62,6 +63,7 @@ private:
     void sanitizeActionShortcuts(QAction *action);
     void updateShowMenuBarAction();
     QAction *registeredAction(const QString &actionName) const;
+    QList<ShortcutHelpRow> shortcutHelpRows() const;
 
     KiriViewApplication &m_application;
     QAction *m_showMenuBarAction = nullptr;
