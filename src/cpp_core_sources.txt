@@ -34,6 +34,7 @@ src/imagedocumentloadcontroller.cpp
 src/imagedocumentnotifications.cpp
 src/imagedocumentpredecodecontroller.cpp
 src/imagedocumentruntime.cpp
+src/imagedocumentruntimedependencies.cpp
 src/imagedocumentsourceloadexecutor.cpp
 src/imagedocumentsourceloadpolicy.cpp
 src/imagedecodejob.cpp

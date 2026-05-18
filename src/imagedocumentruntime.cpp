@@ -9,6 +9,7 @@
 #include "imagedocumenteffectexecutor.h"
 #include "imagedocumentloadcontroller.h"
 #include "imagedocumentpredecodecontroller.h"
+#include "imagedocumentruntimedependencies.h"
 #include "imagedocumentsourceloadrequest.h"
 #include "imagenavigationservice.h"
 #include "imageopencontroller.h"
@@ -40,17 +41,9 @@ ImageDocumentRuntime::ImageDocumentRuntime(QObject *documentObject,
     , state(changeBatcher)
     , changeCallback(std::move(changeCallback))
 {
-    const bool shouldUseArchiveSessionStore = dependencies.archiveDocumentSessions
-        || (!dependencies.candidateProvider.archiveImages && !dependencies.imageDecode.dataLoader);
-    ArchiveDocumentSessionFactory archiveDocumentSessions
-        = std::move(dependencies.archiveDocumentSessions);
-    dependencies.archiveDocumentSessions = {};
-    dependencies = imageAsyncDependenciesWithDefaults(std::move(dependencies));
-    if (shouldUseArchiveSessionStore) {
-        archiveSessionStore = std::make_unique<ArchiveDocumentSessionStore>(
-            std::move(archiveDocumentSessions), documentObject);
-        dependencies = archiveSessionStore->wrapDependencies(std::move(dependencies));
-    }
+    ImageDocumentRuntimeDependencies runtimeDependencies
+        = resolveImageDocumentRuntimeDependencies(std::move(dependencies), documentObject);
+    archiveSessionStore = std::move(runtimeDependencies.archiveSessionStore);
     RenderContextProvider primaryRenderContextProvider = renderContextProvider;
     RenderContextProvider spreadRenderContextProvider = std::move(renderContextProvider);
     presentationController = std::make_unique<ImagePresentationController>(documentObject,
@@ -62,8 +55,8 @@ ImageDocumentRuntime::ImageDocumentRuntime(QObject *documentObject,
             },
         });
     documentDeletionController = std::make_unique<ImageDocumentDeletionController>(documentObject,
-        state, *presentationController, dependencies.candidateProvider,
-        std::move(dependencies.fileOperations),
+        state, *presentationController, runtimeDependencies.candidateProvider,
+        std::move(runtimeDependencies.fileOperations),
         ImageDocumentDeletionController::Callbacks {
             [this]() { notify(ImageDocumentChange::FileDeletionInProgress); },
             [this](ImageDocumentEffect effect) { dispatchEffect(std::move(effect)); },
@@ -75,9 +68,9 @@ ImageDocumentRuntime::ImageDocumentRuntime(QObject *documentObject,
                 [this](const QUrl &url) { return predecodeController->tryTake(url); },
                 [this](ImageDocumentEffect effect) { dispatchEffect(std::move(effect)); },
             },
-            dependencies.candidateProvider, dependencies.imageDecode);
+            runtimeDependencies.candidateProvider, runtimeDependencies.imageDecode);
     navigationService = std::make_unique<ImageNavigationService>(documentObject,
-        dependencies.candidateProvider,
+        runtimeDependencies.candidateProvider,
         ImageNavigationService::Callbacks {
             [this](const QUrl &url) { dispatchEffect(ImageDocumentEffect::openUrl(url)); },
             [this](const QUrl &imageUrl, const QUrl &containerUrl) {
@@ -102,9 +95,10 @@ ImageDocumentRuntime::ImageDocumentRuntime(QObject *documentObject,
             [this]() { return documentDeletionController->inProgress(); },
         });
     predecodeController = std::make_unique<ImageDocumentPredecodeController>(
-        documentObject, state, *presentationController, dependencies.candidateProvider,
-        dependencies.imageDecode, [this]() { return navigationService->currentPageNumber(); },
-        std::move(dependencies.powerSaver));
+        documentObject, state, *presentationController, runtimeDependencies.candidateProvider,
+        runtimeDependencies.imageDecode,
+        [this]() { return navigationService->currentPageNumber(); },
+        std::move(runtimeDependencies.powerSaver));
     spreadController = std::make_unique<ImageSpreadPresentationController>(documentObject,
         std::move(spreadRenderContextProvider), state, *presentationController,
         ImageSpreadPresentationController::Callbacks {
@@ -113,7 +107,7 @@ ImageDocumentRuntime::ImageDocumentRuntime(QObject *documentObject,
             [this]() { return navigationService->pageNavigationSnapshot(); },
             [this]() { dispatchEffect(ImageDocumentEffect::scheduleAdjacentImagePredecode()); },
         },
-        dependencies.candidateProvider, dependencies.imageDecode);
+        runtimeDependencies.candidateProvider, runtimeDependencies.imageDecode);
     loadController = std::make_unique<ImageDocumentLoadController>(state,
         *documentDeletionController, *navigationService, *predecodeController, *openController,
         *spreadController, archiveSessionStore.get());
