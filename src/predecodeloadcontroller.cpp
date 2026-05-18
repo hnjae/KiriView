@@ -9,22 +9,6 @@
 #include <optional>
 #include <utility>
 
-namespace {
-std::vector<QUrl> displayedPredecodeImageUrls(
-    const std::vector<KiriView::DisplayedPredecodeImage> &images)
-{
-    std::vector<QUrl> urls;
-    urls.reserve(images.size());
-    for (const KiriView::DisplayedPredecodeImage &image : images) {
-        if (image.hasLocation()) {
-            urls.push_back(image.location.imageUrl());
-        }
-    }
-
-    return urls;
-}
-}
-
 namespace KiriView {
 PredecodeLoadController::PredecodeLoadController(QObject *parent)
     : PredecodeLoadController(parent, ImageDecodeDependencies {})
@@ -43,63 +27,36 @@ PredecodeLoadController::~PredecodeLoadController() = default;
 void PredecodeLoadController::cacheDisplayedImages(
     const std::vector<DisplayedPredecodeImage> &images)
 {
-    m_cache.setDisplayedUrls(displayedPredecodeImageUrls(images));
-    for (const DisplayedPredecodeImage &image : images) {
-        if (!image.isCacheable()) {
-            continue;
-        }
-
-        m_cache.cacheDisplayedImage(
-            true, image.location.imageUrl(), image.location.archiveDocument(), *image.staticImage);
-    }
+    m_loadState.cacheDisplayedImages(images);
 }
 
-void PredecodeLoadController::clearWindowUrls() { m_cache.setWindowUrls({}); }
+void PredecodeLoadController::clearWindowUrls() { m_loadState.clearWindowUrls(); }
 
 void PredecodeLoadController::startWindowLoads(PredecodeLoadWindow window)
 {
-    cancelBackgroundWork();
-    m_parallelLimit = window.parallelLimit;
-    m_firstDisplayContext = window.firstDisplayContext;
-    m_cache.setWindowUrls(window.urls);
-    cacheDisplayedImages(window.displayedImages);
-    m_cache.enqueueMissingWindowLoads(
-        window.primaryDisplayedUrl, window.archiveDocument, m_activeRequests.urls());
-
-    startNextLoads(window.generation);
+    m_loadState.startWindow(std::move(window));
+    startNextLoads();
 }
 
-void PredecodeLoadController::startNextLoads(quint64 generation)
+void PredecodeLoadController::startNextLoads()
 {
-    if (m_parallelLimit == 0) {
-        return;
-    }
-
-    while (m_activeRequests.size() < m_parallelLimit) {
-        const std::optional<PredecodeRequest> request
-            = m_cache.takeNextRequest(m_activeRequests.urls());
-        if (!request.has_value()) {
+    while (m_loadState.canStartMoreLoads()) {
+        std::optional<PredecodeLoadStart> load = m_loadState.takeNextLoad();
+        if (!load.has_value()) {
             return;
         }
-        if (!startLoad(request->url, request->archiveDocument, generation)) {
+        if (!startLoad(std::move(*load))) {
             return;
         }
     }
 }
 
-bool PredecodeLoadController::startLoad(
-    const QUrl &url, const ArchiveDocumentLocation &archiveDocument, quint64 generation)
+bool PredecodeLoadController::startLoad(PredecodeLoadStart load)
 {
-    const bool urlAvailable = url.isValid() && !url.isEmpty();
-    const bool cached = urlAvailable && m_cache.hasImage(url);
-    const bool inWindow = urlAvailable && m_cache.windowContains(url);
-    if (!urlAvailable || m_activeRequests.size() >= m_parallelLimit || cached || !inWindow
-        || m_activeRequests.containsUrl(url)) {
+    if (load.request.isEmpty()) {
         return false;
     }
 
-    ImageDecodeRequest request = ImageDecodeRequest::fromLocation(
-        generation, DisplayedImageLocation::fromUrl(url, archiveDocument), m_firstDisplayContext);
     auto *decodeJob = new ImageDecodeJob(m_parent, m_decodeDependencies,
         ImageDecodeJob::Callbacks {
             [this](ImageDecodeRequest request, DecodedImageResult result) {
@@ -108,53 +65,42 @@ bool PredecodeLoadController::startLoad(
             [this](
                 const ImageDecodeRequest &request, const QString &) { finishLoadError(request); },
         });
-    m_activeRequests.add(request, decodeJob);
-    decodeJob->start(std::move(request));
+    m_loadState.addActiveLoad(load.request, decodeJob);
+    decodeJob->start(std::move(load.request));
     return true;
 }
 
 void PredecodeLoadController::finishLoadError(const ImageDecodeRequest &request)
 {
-    if (!m_activeRequests.finish(request).has_value()) {
+    if (!m_loadState.finishActiveLoad(request).has_value()) {
         return;
     }
 
-    startNextLoads(request.id());
+    startNextLoads();
 }
 
 void PredecodeLoadController::finishDecode(
     ImageDecodeRequest request, const DecodedImageResult &result)
 {
-    std::optional<ImageDecodeRequest> activeRequest = m_activeRequests.finish(request);
+    std::optional<ImageDecodeRequest> activeRequest = m_loadState.finishActiveLoad(request);
     if (!activeRequest.has_value()) {
         return;
     }
 
     const auto *staticImage = decodedImageResultImageAs<StaticDecodedImage>(result);
     if (staticImage != nullptr) {
-        m_cache.cacheImage(
-            request.imageUrl(), activeRequest->archiveDocument(), staticImage->staticImage);
+        m_loadState.cacheDecodedImage(*activeRequest, staticImage->staticImage);
     }
 
-    startNextLoads(request.id());
+    startNextLoads();
 }
 
-void PredecodeLoadController::cancelBackgroundWork()
-{
-    m_activeRequests.cancel();
-    m_cache.clearQueuedLoads();
-    m_parallelLimit = 1;
-    m_firstDisplayContext = {};
-}
+void PredecodeLoadController::cancelBackgroundWork() { m_loadState.cancelBackgroundWork(); }
 
-void PredecodeLoadController::clear()
-{
-    cancelBackgroundWork();
-    m_cache.clear();
-}
+void PredecodeLoadController::clear() { m_loadState.clear(); }
 
 std::optional<PredecodedImage> PredecodeLoadController::tryTake(const QUrl &url) const
 {
-    return m_cache.findImage(url);
+    return m_loadState.tryTake(url);
 }
 }

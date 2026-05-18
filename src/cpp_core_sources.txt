@@ -92,6 +92,7 @@ src/predecodeactivedecodestore.cpp
 src/predecodecache.cpp
 src/predecodedisplayedhistory.cpp
 src/predecodeloadcontroller.cpp
+src/predecodeloadstate.cpp
 src/predecodepolicy.cpp
 src/predecodewindowplan.cpp
 src/qimagereaderdecoder.cpp
