@@ -10,8 +10,6 @@
 #include "imageviewtext.h"
 
 #include <QImageIOHandler>
-#include <QMutexLocker>
-#include <algorithm>
 #include <memory>
 #include <optional>
 #include <utility>
@@ -121,7 +119,7 @@ std::optional<DecodedTile> QImageReaderTileSource::decodeReaderClipTile(
 std::optional<DecodedTile> QImageReaderTileSource::decodeCachedOrScaledLevelTile(
     const TileRequest &request, QString *errorString) const
 {
-    if (std::optional<QImage> cached = cachedScaledLevel(request.key.level)) {
+    if (std::optional<QImage> cached = m_scaledLevelCache.find(request.key.level)) {
         if (std::optional<DecodedTile> tile = decodedTileFromLevelImage(request, *cached)) {
             return tile;
         }
@@ -132,7 +130,7 @@ std::optional<DecodedTile> QImageReaderTileSource::decodeCachedOrScaledLevelTile
         return std::nullopt;
     }
 
-    cacheScaledLevel(request.key.level, levelImage);
+    m_scaledLevelCache.insert(request.key.level, levelImage);
     return decodedTileFromLevelImage(request, levelImage);
 }
 
@@ -217,32 +215,5 @@ QImage QImageReaderTileSource::readSourceClip(const QRect &sourceRect, QString *
         m_data, m_format, false,
         [&sourceRect](BufferedImageReader &reader) { reader.setClipRect(sourceRect); },
         errorString);
-}
-
-std::optional<QImage> QImageReaderTileSource::cachedScaledLevel(int level) const
-{
-    QMutexLocker locker(&m_scaledLevelCacheMutex);
-    const auto cached = std::find_if(m_scaledLevelCache.cbegin(), m_scaledLevelCache.cend(),
-        [level](const auto &entry) { return entry.first == level; });
-    if (cached == m_scaledLevelCache.cend()) {
-        return std::nullopt;
-    }
-    return cached->second;
-}
-
-void QImageReaderTileSource::cacheScaledLevel(int level, const QImage &image) const
-{
-    if (image.isNull() || estimatedRgbaByteCost(image.size()) > imageFullDecodeFallbackByteLimit) {
-        return;
-    }
-
-    QMutexLocker locker(&m_scaledLevelCacheMutex);
-    const auto cached = std::find_if(m_scaledLevelCache.begin(), m_scaledLevelCache.end(),
-        [level](const auto &entry) { return entry.first == level; });
-    if (cached != m_scaledLevelCache.end()) {
-        cached->second = image;
-        return;
-    }
-    m_scaledLevelCache.push_back({ level, image });
 }
 }

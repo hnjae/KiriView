@@ -4,11 +4,11 @@
 #ifndef KIRIVIEW_IMAGETILESOURCE_H
 #define KIRIVIEW_IMAGETILESOURCE_H
 
+#include "qimagereaderscaledlevelcache.h"
 #include "staticimage.h"
 
 #include <QByteArray>
 #include <QImage>
-#include <QMutex>
 #include <QSize>
 #include <QString>
 #include <memory>
@@ -42,15 +42,12 @@ private:
     QImage readScaledImage(const QSize &scaledSize, QString *errorString) const;
     QImage readFullImage(QString *errorString) const;
     QImage readSourceClip(const QRect &sourceRect, QString *errorString) const;
-    std::optional<QImage> cachedScaledLevel(int level) const;
-    void cacheScaledLevel(int level, const QImage &image) const;
 
     QByteArray m_data;
     QByteArray m_format;
     QSize m_imageSize;
     bool m_hasTransform = false;
-    mutable QMutex m_scaledLevelCacheMutex;
-    mutable std::vector<std::pair<int, QImage>> m_scaledLevelCache;
+    mutable QImageReaderScaledLevelCache m_scaledLevelCache;
 };
 
 class SvgTileSource final : public ImageTileSource

@@ -1,0 +1,94 @@
+// SPDX-FileCopyrightText: 2026 KIM Hyunjae
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+#include "qimagereaderscaledlevelcache.h"
+
+#include "imagebytecost.h"
+
+#include <QMutexLocker>
+#include <algorithm>
+#include <utility>
+
+namespace KiriView {
+QImageReaderScaledLevelCache::QImageReaderScaledLevelCache(qsizetype byteBudget)
+    : m_byteBudget(std::max<qsizetype>(0, byteBudget))
+{
+}
+
+qsizetype QImageReaderScaledLevelCache::byteBudget() const { return m_byteBudget; }
+
+qsizetype QImageReaderScaledLevelCache::byteCost() const
+{
+    QMutexLocker locker(&m_mutex);
+    return m_byteCost;
+}
+
+bool QImageReaderScaledLevelCache::contains(int level) const
+{
+    QMutexLocker locker(&m_mutex);
+    return findEntry(level) != m_entries.cend();
+}
+
+std::optional<QImage> QImageReaderScaledLevelCache::find(int level)
+{
+    QMutexLocker locker(&m_mutex);
+    auto entry = findEntry(level);
+    if (entry == m_entries.end()) {
+        return std::nullopt;
+    }
+
+    entry->lastUse = ++m_useClock;
+    return entry->image;
+}
+
+bool QImageReaderScaledLevelCache::insert(int level, const QImage &image)
+{
+    const qsizetype byteCost = imageByteCost(image);
+    if (byteCost <= 0 || byteCost > m_byteBudget) {
+        return false;
+    }
+
+    QMutexLocker locker(&m_mutex);
+    auto existing = findEntry(level);
+    if (existing != m_entries.end()) {
+        m_byteCost -= existing->byteCost;
+        m_entries.erase(existing);
+    }
+
+    m_entries.push_back(Entry { level, image, byteCost, ++m_useClock });
+    m_byteCost += byteCost;
+    trimToBudget();
+    return true;
+}
+
+void QImageReaderScaledLevelCache::clear()
+{
+    QMutexLocker locker(&m_mutex);
+    m_entries.clear();
+    m_byteCost = 0;
+}
+
+void QImageReaderScaledLevelCache::trimToBudget()
+{
+    while (m_byteCost > m_byteBudget && !m_entries.empty()) {
+        const auto evicted = std::min_element(m_entries.begin(), m_entries.end(),
+            [](const Entry &left, const Entry &right) { return left.lastUse < right.lastUse; });
+        m_byteCost -= evicted->byteCost;
+        m_entries.erase(evicted);
+    }
+}
+
+std::vector<QImageReaderScaledLevelCache::Entry>::iterator QImageReaderScaledLevelCache::findEntry(
+    int level)
+{
+    return std::find_if(m_entries.begin(), m_entries.end(),
+        [level](const Entry &entry) { return entry.level == level; });
+}
+
+std::vector<QImageReaderScaledLevelCache::Entry>::const_iterator
+QImageReaderScaledLevelCache::findEntry(int level) const
+{
+    return std::find_if(m_entries.cbegin(), m_entries.cend(),
+        [level](const Entry &entry) { return entry.level == level; });
+}
+}
