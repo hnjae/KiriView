@@ -4,6 +4,11 @@
 #ifndef KIRIVIEW_IMAGEDOCUMENTSOURCELOADPOLICY_H
 #define KIRIVIEW_IMAGEDOCUMENTSOURCELOADPOLICY_H
 
+#include "imagedocumentsourceloadrequest.h"
+#include "imagelocation.h"
+
+#include <QUrl>
+
 namespace KiriView {
 enum class ImageDocumentSourceLoadKind {
     CurrentSource,
@@ -40,6 +45,12 @@ struct ImageDocumentSourceLoadPolicyInput {
     bool hasRequestedContainerNavigationUrl = false;
 };
 
+struct ImageDocumentSourceLoadSnapshot {
+    QUrl currentSourceUrl;
+    ArchiveDocumentLocation displayedArchiveDocument;
+    bool rightToLeftReadingEnabled = false;
+};
+
 struct ImageDocumentSourceLoadPlan {
     bool cancelNavigationAndPredecode = false;
     bool finishSpreadTransition = false;
@@ -53,6 +64,9 @@ struct ImageDocumentSourceLoadPlan {
     ImageDocumentSourceLoadSourceTarget sourceUrl = ImageDocumentSourceLoadSourceTarget::Unchanged;
     bool beginOpen = false;
 };
+
+ImageDocumentSourceLoadPolicyInput imageDocumentSourceLoadPolicyInput(
+    const ImageDocumentSourceLoadSnapshot &snapshot, const ImageDocumentSourceLoadRequest &request);
 
 namespace ImageDocumentSourceLoadPolicy {
     ImageDocumentSourceLoadPlan plan(const ImageDocumentSourceLoadPolicyInput &input);

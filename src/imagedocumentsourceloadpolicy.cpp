@@ -3,9 +3,30 @@
 
 #include "imagedocumentsourceloadpolicy.h"
 
+#include "imagecontainer.h"
 #include "kiriview/src/imagedocumentsourceloadpolicy.cxx.h"
 
 namespace {
+KiriView::ImageDocumentSourceLoadKind sourceLoadKind(
+    const KiriView::ImageDocumentSourceLoadSnapshot &snapshot,
+    const KiriView::ImageDocumentSourceLoadRequest &request)
+{
+    if (snapshot.currentSourceUrl == request.sourceUrl) {
+        return KiriView::ImageDocumentSourceLoadKind::CurrentSource;
+    }
+
+    return KiriView::ImageDocumentSourceLoadKind::ReplacementSource;
+}
+
+bool sourceWithinDisplayedComicBookArchive(
+    const KiriView::ImageDocumentSourceLoadSnapshot &snapshot,
+    const KiriView::ImageDocumentSourceLoadRequest &request)
+{
+    return snapshot.displayedArchiveDocument.isComicBook()
+        && KiriView::archiveDocumentContainsUrl(
+            snapshot.displayedArchiveDocument, request.sourceUrl);
+}
+
 KiriView::RustImageDocumentSourceLoadKind rustSourceLoadKind(
     KiriView::ImageDocumentSourceLoadKind loadKind)
 {
@@ -106,6 +127,20 @@ KiriView::ImageDocumentSourceLoadPlan sourceLoadPlan(
     };
 }
 
+}
+
+namespace KiriView {
+ImageDocumentSourceLoadPolicyInput imageDocumentSourceLoadPolicyInput(
+    const ImageDocumentSourceLoadSnapshot &snapshot, const ImageDocumentSourceLoadRequest &request)
+{
+    return ImageDocumentSourceLoadPolicyInput {
+        sourceLoadKind(snapshot, request),
+        request.preserveTwoPageSpreadTransition,
+        snapshot.rightToLeftReadingEnabled,
+        sourceWithinDisplayedComicBookArchive(snapshot, request),
+        !request.containerNavigationUrl.isEmpty(),
+    };
+}
 }
 
 namespace KiriView::ImageDocumentSourceLoadPolicy {

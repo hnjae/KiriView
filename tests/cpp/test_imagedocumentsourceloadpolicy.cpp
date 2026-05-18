@@ -3,10 +3,16 @@
 
 #include "imagedocumentsourceloadpolicy.h"
 
+#include "imagecontainer.h"
+
 #include <QObject>
 #include <QTest>
+#include <QUrl>
+#include <optional>
 
 namespace {
+QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
+
 void compareSourceLoadPlans(const KiriView::ImageDocumentSourceLoadPlan &actual,
     const KiriView::ImageDocumentSourceLoadPlan &expected)
 {
@@ -26,9 +32,63 @@ class TestImageDocumentSourceLoadPolicy : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
+    void sourceLoadPolicyInputCapturesRuntimeSnapshot();
+    void sourceLoadPolicyInputDetectsDisplayedComicBookScope();
     void sourceLoadPlanDecidesRightToLeftReadingResetFromLoadContext();
     void sourceLoadPlanRoutesUnchangedAndReplacementSourceLoads();
 };
+
+void TestImageDocumentSourceLoadPolicy::sourceLoadPolicyInputCapturesRuntimeSnapshot()
+{
+    const QUrl sourceUrl = localUrl(QStringLiteral("/images/page.png"));
+    const QUrl containerUrl = localUrl(QStringLiteral("/books/book.cbz"));
+    const KiriView::ImageDocumentSourceLoadSnapshot snapshot {
+        sourceUrl,
+        {},
+        true,
+    };
+    const KiriView::ImageDocumentSourceLoadRequest request
+        = KiriView::ImageDocumentSourceLoadRequest::fromContainerImage(sourceUrl, containerUrl);
+
+    const KiriView::ImageDocumentSourceLoadPolicyInput input
+        = KiriView::imageDocumentSourceLoadPolicyInput(snapshot, request);
+
+    QCOMPARE(input.loadKind, KiriView::ImageDocumentSourceLoadKind::CurrentSource);
+    QCOMPARE(input.preserveTwoPageSpreadTransition, false);
+    QCOMPARE(input.rightToLeftReadingEnabled, true);
+    QCOMPARE(input.sourceWithinDisplayedComicBookArchive, false);
+    QCOMPARE(input.hasRequestedContainerNavigationUrl, true);
+}
+
+void TestImageDocumentSourceLoadPolicy::sourceLoadPolicyInputDetectsDisplayedComicBookScope()
+{
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
+    const std::optional<QUrl> archiveRootUrl = KiriView::comicBookArchiveRootUrl(archiveUrl);
+    QVERIFY(archiveRootUrl.has_value());
+    const QUrl imageUrl(QStringLiteral("%1/01.png").arg(archiveRootUrl->toString()));
+    const QUrl replacementUrl = localUrl(QStringLiteral("/images/page.png"));
+    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveDocument.has_value());
+
+    const KiriView::ImageDocumentSourceLoadSnapshot snapshot {
+        replacementUrl,
+        *archiveDocument,
+        false,
+    };
+
+    KiriView::ImageDocumentSourceLoadRequest request
+        = KiriView::ImageDocumentSourceLoadRequest::fromPageNavigation(imageUrl, true);
+    KiriView::ImageDocumentSourceLoadPolicyInput input
+        = KiriView::imageDocumentSourceLoadPolicyInput(snapshot, request);
+    QCOMPARE(input.loadKind, KiriView::ImageDocumentSourceLoadKind::ReplacementSource);
+    QCOMPARE(input.preserveTwoPageSpreadTransition, true);
+    QCOMPARE(input.sourceWithinDisplayedComicBookArchive, true);
+
+    request = KiriView::ImageDocumentSourceLoadRequest::fromUrl(replacementUrl);
+    input = KiriView::imageDocumentSourceLoadPolicyInput(snapshot, request);
+    QCOMPARE(input.sourceWithinDisplayedComicBookArchive, false);
+}
 
 void TestImageDocumentSourceLoadPolicy::
     sourceLoadPlanDecidesRightToLeftReadingResetFromLoadContext()

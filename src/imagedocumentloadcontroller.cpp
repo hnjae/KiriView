@@ -4,7 +4,6 @@
 #include "imagedocumentloadcontroller.h"
 
 #include "archivedocumentsessionstore.h"
-#include "imagecontainer.h"
 #include "imagedocumentdeletioncontroller.h"
 #include "imagedocumentpredecodecontroller.h"
 #include "imagedocumentsourceloadexecutor.h"
@@ -15,38 +14,15 @@
 #include "imagespreadpresentationcontroller.h"
 
 namespace {
-KiriView::ImageDocumentSourceLoadKind sourceLoadKind(const KiriView::ImageDocumentState &state,
-    const KiriView::ImageDocumentSourceLoadRequest &request)
-{
-    if (state.sourceUrl() == request.sourceUrl) {
-        return KiriView::ImageDocumentSourceLoadKind::CurrentSource;
-    }
-
-    return KiriView::ImageDocumentSourceLoadKind::ReplacementSource;
-}
-
-bool sourceWithinDisplayedComicBookArchive(const KiriView::ImageDocumentState &state,
-    const KiriView::ImageDocumentSourceLoadRequest &request)
-{
-    const KiriView::ArchiveDocumentLocation displayedArchiveDocument
-        = state.displayedArchiveDocument();
-    return displayedArchiveDocument.isComicBook()
-        && KiriView::archiveDocumentContainsUrl(displayedArchiveDocument, request.sourceUrl);
-}
-
-KiriView::ImageDocumentSourceLoadPolicyInput sourceLoadPolicyInput(
+KiriView::ImageDocumentSourceLoadSnapshot sourceLoadSnapshot(
     const KiriView::ImageDocumentState &state,
-    const KiriView::ImageSpreadPresentationController &spreadController,
-    const KiriView::ImageDocumentSourceLoadRequest &request)
+    const KiriView::ImageSpreadPresentationController &spreadController)
 {
-    KiriView::ImageDocumentSourceLoadPolicyInput input;
-    input.loadKind = sourceLoadKind(state, request);
-    input.preserveTwoPageSpreadTransition = request.preserveTwoPageSpreadTransition;
-    input.rightToLeftReadingEnabled = spreadController.rightToLeftReadingEnabled();
-    input.sourceWithinDisplayedComicBookArchive
-        = sourceWithinDisplayedComicBookArchive(state, request);
-    input.hasRequestedContainerNavigationUrl = !request.containerNavigationUrl.isEmpty();
-    return input;
+    return KiriView::ImageDocumentSourceLoadSnapshot {
+        state.sourceUrl(),
+        state.displayedArchiveDocument(),
+        spreadController.rightToLeftReadingEnabled(),
+    };
 }
 
 }
@@ -71,8 +47,9 @@ void ImageDocumentLoadController::loadSource(const ImageDocumentSourceLoadReques
 {
     m_deletionController.cancel();
 
-    const ImageDocumentSourceLoadPlan plan = ImageDocumentSourceLoadPolicy::plan(
-        sourceLoadPolicyInput(m_state, m_spreadController, request));
+    const ImageDocumentSourceLoadPlan plan
+        = ImageDocumentSourceLoadPolicy::plan(imageDocumentSourceLoadPolicyInput(
+            sourceLoadSnapshot(m_state, m_spreadController), request));
     executeImageDocumentSourceLoadPlan(request, plan, sourceLoadOperations());
 }
 
