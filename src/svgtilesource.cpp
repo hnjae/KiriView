@@ -6,6 +6,7 @@
 #include "imagetilesourcehelpers_p.h"
 #include "imageviewtext.h"
 #include "kiriview/src/svgrenderer.cxx.h"
+#include "rustqtconversion.h"
 
 #include <QByteArray>
 #include <QImage>
@@ -39,7 +40,7 @@ QImage imageFromPremultipliedRgbaBytes(const QByteArray &bytes, const QSize &siz
 namespace KiriView {
 std::shared_ptr<SvgTileSource> SvgTileSource::open(const QByteArray &data, QString *errorString)
 {
-    const RustSvgImageSize intrinsicSize = rustSvgIntrinsicSize(data);
+    const RustSvgImageSize intrinsicSize = rustSvgIntrinsicSize(Bridge::rustBytes(data));
     if (!intrinsicSize.valid) {
         return {};
     }
@@ -69,9 +70,10 @@ std::optional<DecodedTile> SvgTileSource::decodeTile(
         return std::nullopt;
     }
 
-    const QByteArray bytes = rustRenderSvgTile(m_data, request.levelSize.width(),
-        request.levelSize.height(), request.textureLevelRect.x(), request.textureLevelRect.y(),
-        request.textureLevelRect.width(), request.textureLevelRect.height());
+    const QByteArray bytes = Bridge::qtByteArray(
+        rustRenderSvgTile(Bridge::rustBytes(m_data), request.levelSize.width(),
+            request.levelSize.height(), request.textureLevelRect.x(), request.textureLevelRect.y(),
+            request.textureLevelRect.width(), request.textureLevelRect.height()));
     QImage image = imageFromPremultipliedRgbaBytes(bytes, request.textureLevelRect.size());
     if (image.isNull()) {
         setTileSourceError(errorString, imageViewText("Could not render the selected SVG tile."));
@@ -84,7 +86,8 @@ std::optional<DecodedTile> SvgTileSource::decodeTile(
 QImage SvgTileSource::decodeBlockingDisplayImage(int maximumLongEdge, QString *errorString) const
 {
     const QSize previewSize = boundedPreviewSize(m_imageSize, maximumLongEdge);
-    const QByteArray bytes = rustRenderSvgImage(m_data, previewSize.width(), previewSize.height());
+    const QByteArray bytes = Bridge::qtByteArray(
+        rustRenderSvgImage(Bridge::rustBytes(m_data), previewSize.width(), previewSize.height()));
     const QImage preview = imageFromPremultipliedRgbaBytes(bytes, previewSize);
     if (preview.isNull()) {
         setTileSourceError(errorString, imageViewText("Could not render the selected SVG image."));

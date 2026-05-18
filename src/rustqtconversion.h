@@ -12,12 +12,30 @@
 #include <QtGlobal>
 #include <cstddef>
 #include <cstdint>
+#include <limits>
 #include <rust/cxx.h>
 
 namespace KiriView::Bridge {
 inline rust::Str rustStr(const QByteArray &bytes)
 {
     return rust::Str(bytes.constData(), static_cast<std::size_t>(bytes.size()));
+}
+
+inline rust::Slice<const std::uint8_t> rustBytes(const QByteArray &bytes)
+{
+    return rust::Slice<const std::uint8_t>(
+        reinterpret_cast<const std::uint8_t *>(bytes.constData()),
+        static_cast<std::size_t>(bytes.size()));
+}
+
+inline QByteArray qtByteArray(const rust::Vec<std::uint8_t> &bytes)
+{
+    if (bytes.size() > static_cast<std::size_t>(std::numeric_limits<qsizetype>::max())) {
+        return {};
+    }
+
+    return QByteArray(
+        reinterpret_cast<const char *>(bytes.data()), static_cast<qsizetype>(bytes.size()));
 }
 
 inline QString qtString(const rust::String &value)

@@ -8,14 +8,22 @@
 #include "kiriview/src/avifcompat.cxx.h"
 #include "qimagereaderdecoder.h"
 #include "rawdecoder.h"
+#include "rustqtconversion.h"
 #include "staticimagedecode.h"
 #include "svgtilesource.h"
 
+#include <QByteArray>
 #include <memory>
 #include <optional>
 #include <utility>
 
 namespace {
+QByteArray avifCompatibleImageData(const QByteArray &data)
+{
+    return KiriView::Bridge::qtByteArray(
+        KiriView::avifDataWithCompatibilityFixes(KiriView::Bridge::rustBytes(data)));
+}
+
 std::optional<KiriView::DecodedImageResult> decodeSvgImageData(const QByteArray &data)
 {
     QString errorString;
@@ -53,7 +61,7 @@ DecodedImageResult decodeImageData(const QByteArray &data, const ImageDecodeRequ
         return failedDecodedImageResult(apngResult.errorString);
     }
 
-    const QByteArray imageData = avifDataWithCompatibilityFixes(data);
+    const QByteArray imageData = avifCompatibleImageData(data);
     if (const std::optional<DecodedImageResult> heifResult = decodeHeifImageData(imageData)) {
         return *heifResult;
     }

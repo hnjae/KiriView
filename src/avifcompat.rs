@@ -14,7 +14,6 @@ use crate::{
     },
     byteio::{read_be_u16, read_be_u32, write_be_u16, write_be_u32},
 };
-use cxx_qt_lib::QByteArray;
 
 const IPMA_ENTRY_COUNT_SIZE: usize = 4;
 const IPMA_VERSION_AND_FLAGS_OFFSET: usize = BOX_HEADER_SIZE;
@@ -25,16 +24,10 @@ const EMPTY_IPMA_BOX_SIZE: usize = IPMA_ENTRIES_OFFSET;
 
 #[cxx::bridge]
 mod ffi {
-    unsafe extern "C++" {
-        include!("cxx-qt-lib/qbytearray.h");
-
-        type QByteArray = cxx_qt_lib::QByteArray;
-    }
-
     #[namespace = "KiriView"]
     extern "Rust" {
         #[cxx_name = "avifDataWithCompatibilityFixes"]
-        fn avif_data_with_compatibility_fixes(data: &QByteArray) -> QByteArray;
+        fn avif_data_with_compatibility_fixes(data: &[u8]) -> Vec<u8>;
     }
 }
 
@@ -49,10 +42,8 @@ struct MetaBox {
     child_boxes: Vec<BoxHeader>,
 }
 
-fn avif_data_with_compatibility_fixes(data: &QByteArray) -> QByteArray {
-    fixed_avif_data(data.as_slice())
-        .map(|fixed_data| QByteArray::from(fixed_data.as_slice()))
-        .unwrap_or_else(|| data.clone())
+fn avif_data_with_compatibility_fixes(data: &[u8]) -> Vec<u8> {
+    fixed_avif_data(data).unwrap_or_else(|| data.to_vec())
 }
 
 fn has_avif_brand(data: &[u8], ftyp_box: BoxHeader) -> bool {

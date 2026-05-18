@@ -1,7 +1,6 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-use cxx_qt_lib::QByteArray;
 use resvg::{
     tiny_skia::{Pixmap, Transform},
     usvg::{ImageHrefResolver, Options, Tree},
@@ -9,12 +8,6 @@ use resvg::{
 
 #[cxx::bridge]
 mod ffi {
-    unsafe extern "C++" {
-        include!("cxx-qt-lib/qbytearray.h");
-
-        type QByteArray = cxx_qt_lib::QByteArray;
-    }
-
     #[namespace = "KiriView"]
     #[derive(Clone, Copy, Debug, PartialEq)]
     struct RustSvgImageSize {
@@ -26,47 +19,45 @@ mod ffi {
     #[namespace = "KiriView"]
     extern "Rust" {
         #[cxx_name = "rustSvgIntrinsicSize"]
-        fn rust_svg_intrinsic_size(data: &QByteArray) -> RustSvgImageSize;
+        fn rust_svg_intrinsic_size(data: &[u8]) -> RustSvgImageSize;
 
         #[cxx_name = "rustRenderSvgImage"]
-        fn rust_render_svg_image(data: &QByteArray, width: i32, height: i32) -> QByteArray;
+        fn rust_render_svg_image(data: &[u8], width: i32, height: i32) -> Vec<u8>;
 
         #[cxx_name = "rustRenderSvgTile"]
         fn rust_render_svg_tile(
-            data: &QByteArray,
+            data: &[u8],
             level_width: i32,
             level_height: i32,
             texture_x: i32,
             texture_y: i32,
             texture_width: i32,
             texture_height: i32,
-        ) -> QByteArray;
+        ) -> Vec<u8>;
     }
 }
 
 use ffi::RustSvgImageSize;
 
-fn rust_svg_intrinsic_size(data: &QByteArray) -> RustSvgImageSize {
-    svg_intrinsic_size(data.as_slice())
+fn rust_svg_intrinsic_size(data: &[u8]) -> RustSvgImageSize {
+    svg_intrinsic_size(data)
 }
 
-fn rust_render_svg_image(data: &QByteArray, width: i32, height: i32) -> QByteArray {
-    render_svg_image(data.as_slice(), width, height)
-        .map(|bytes| QByteArray::from(bytes.as_slice()))
-        .unwrap_or_default()
+fn rust_render_svg_image(data: &[u8], width: i32, height: i32) -> Vec<u8> {
+    render_svg_image(data, width, height).unwrap_or_default()
 }
 
 fn rust_render_svg_tile(
-    data: &QByteArray,
+    data: &[u8],
     level_width: i32,
     level_height: i32,
     texture_x: i32,
     texture_y: i32,
     texture_width: i32,
     texture_height: i32,
-) -> QByteArray {
+) -> Vec<u8> {
     render_svg_tile(
-        data.as_slice(),
+        data,
         level_width,
         level_height,
         texture_x,
@@ -74,7 +65,6 @@ fn rust_render_svg_tile(
         texture_width,
         texture_height,
     )
-    .map(|bytes| QByteArray::from(bytes.as_slice()))
     .unwrap_or_default()
 }
 
