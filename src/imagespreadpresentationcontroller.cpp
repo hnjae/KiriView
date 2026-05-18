@@ -489,14 +489,6 @@ void ImageSpreadPresentationController::shutdown()
     m_secondaryPageController->cancel();
 }
 
-bool ImageSpreadPresentationController::shouldResetRightToLeftReadingForLoad(
-    const ArchiveDocumentLocation &displayedArchiveDocument, const QUrl &sourceUrl,
-    const QUrl &containerNavigationUrl) const
-{
-    return m_modeController->shouldResetRightToLeftReadingForLoad(
-        displayedArchiveDocument, sourceUrl, containerNavigationUrl);
-}
-
 void ImageSpreadPresentationController::resetRightToLeftReading()
 {
     m_modeController->resetRightToLeftReading();

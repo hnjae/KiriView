@@ -10,18 +10,10 @@ mod ffi {
     }
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-    enum RustImageDocumentRightToLeftReadingReset {
-        Keep = 0,
-        ResetInactive = 1,
-        ResetActive = 2,
-    }
-
-    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     enum RustImageDocumentRightToLeftReadingTransition {
         Keep = 0,
-        Reset = 1,
-        ResetAndNotifyBeforeSourceState = 2,
-        ResetAndNotifyAfterOpen = 3,
+        ResetAndNotifyBeforeSourceState = 1,
+        ResetAndNotifyAfterOpen = 2,
     }
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -36,7 +28,8 @@ mod ffi {
     struct RustImageDocumentSourceLoadPolicyInput {
         load_kind: RustImageDocumentSourceLoadKind,
         preserve_two_page_spread_transition: bool,
-        right_to_left_reading_reset: RustImageDocumentRightToLeftReadingReset,
+        right_to_left_reading_enabled: bool,
+        source_within_displayed_comic_book_archive: bool,
         has_requested_container_navigation_url: bool,
     }
 
@@ -61,9 +54,9 @@ mod ffi {
 }
 
 use ffi::{
-    RustImageDocumentRightToLeftReadingReset, RustImageDocumentRightToLeftReadingTransition,
-    RustImageDocumentSourceLoadKind, RustImageDocumentSourceLoadPlan,
-    RustImageDocumentSourceLoadPolicyInput, RustImageDocumentSourceLoadUrlTarget,
+    RustImageDocumentRightToLeftReadingTransition, RustImageDocumentSourceLoadKind,
+    RustImageDocumentSourceLoadPlan, RustImageDocumentSourceLoadPolicyInput,
+    RustImageDocumentSourceLoadUrlTarget,
 };
 
 fn rust_image_document_source_load_plan(
@@ -81,8 +74,7 @@ fn current_source_load_plan(
 ) -> RustImageDocumentSourceLoadPlan {
     let mut plan = empty_source_load_plan();
     plan.finish_spread_transition = !input.preserve_two_page_spread_transition;
-    plan.right_to_left_reading_transition =
-        right_to_left_reading_transition(input.right_to_left_reading_reset, false);
+    plan.right_to_left_reading_transition = right_to_left_reading_transition(input, false);
     plan.loading_container_navigation_url = RustImageDocumentSourceLoadUrlTarget::Empty;
     if input.has_requested_container_navigation_url {
         plan.container_navigation_url =
@@ -97,8 +89,7 @@ fn replacement_source_load_plan(
     let mut plan = empty_source_load_plan();
     plan.cancel_navigation_and_predecode = true;
     plan.finish_spread_transition = !input.preserve_two_page_spread_transition;
-    plan.right_to_left_reading_transition =
-        right_to_left_reading_transition(input.right_to_left_reading_reset, true);
+    plan.right_to_left_reading_transition = right_to_left_reading_transition(input, true);
     plan.clear_secondary_page = true;
     plan.loading_container_navigation_url =
         RustImageDocumentSourceLoadUrlTarget::RequestedContainerNavigation;
@@ -108,24 +99,20 @@ fn replacement_source_load_plan(
 }
 
 fn right_to_left_reading_transition(
-    reset: RustImageDocumentRightToLeftReadingReset,
+    input: RustImageDocumentSourceLoadPolicyInput,
     replacement_source: bool,
 ) -> RustImageDocumentRightToLeftReadingTransition {
-    match reset {
-        RustImageDocumentRightToLeftReadingReset::Keep => {
-            RustImageDocumentRightToLeftReadingTransition::Keep
-        }
-        RustImageDocumentRightToLeftReadingReset::ResetInactive => {
-            RustImageDocumentRightToLeftReadingTransition::Reset
-        }
-        RustImageDocumentRightToLeftReadingReset::ResetActive => {
-            if replacement_source {
-                RustImageDocumentRightToLeftReadingTransition::ResetAndNotifyAfterOpen
-            } else {
-                RustImageDocumentRightToLeftReadingTransition::ResetAndNotifyBeforeSourceState
-            }
-        }
-        _ => RustImageDocumentRightToLeftReadingTransition::Keep,
+    if !input.right_to_left_reading_enabled
+        || input.has_requested_container_navigation_url
+        || input.source_within_displayed_comic_book_archive
+    {
+        return RustImageDocumentRightToLeftReadingTransition::Keep;
+    }
+
+    if replacement_source {
+        RustImageDocumentRightToLeftReadingTransition::ResetAndNotifyAfterOpen
+    } else {
+        RustImageDocumentRightToLeftReadingTransition::ResetAndNotifyBeforeSourceState
     }
 }
 
@@ -152,7 +139,8 @@ mod tests {
             rust_image_document_source_load_plan(source_load_policy_input(
                 RustImageDocumentSourceLoadKind::CurrentSource,
                 true,
-                RustImageDocumentRightToLeftReadingReset::Keep,
+                false,
+                false,
                 false,
             )),
             RustImageDocumentSourceLoadPlan {
@@ -165,13 +153,12 @@ mod tests {
             rust_image_document_source_load_plan(source_load_policy_input(
                 RustImageDocumentSourceLoadKind::CurrentSource,
                 false,
-                RustImageDocumentRightToLeftReadingReset::ResetActive,
+                true,
+                false,
                 true,
             )),
             RustImageDocumentSourceLoadPlan {
                 finish_spread_transition: true,
-                right_to_left_reading_transition:
-                    RustImageDocumentRightToLeftReadingTransition::ResetAndNotifyBeforeSourceState,
                 loading_container_navigation_url: RustImageDocumentSourceLoadUrlTarget::Empty,
                 container_navigation_url:
                     RustImageDocumentSourceLoadUrlTarget::RequestedContainerNavigation,
@@ -186,7 +173,8 @@ mod tests {
             rust_image_document_source_load_plan(source_load_policy_input(
                 RustImageDocumentSourceLoadKind::ReplacementSource,
                 true,
-                RustImageDocumentRightToLeftReadingReset::Keep,
+                false,
+                false,
                 false,
             )),
             RustImageDocumentSourceLoadPlan {
@@ -204,14 +192,13 @@ mod tests {
             rust_image_document_source_load_plan(source_load_policy_input(
                 RustImageDocumentSourceLoadKind::ReplacementSource,
                 false,
-                RustImageDocumentRightToLeftReadingReset::ResetActive,
+                true,
+                false,
                 true,
             )),
             RustImageDocumentSourceLoadPlan {
                 cancel_navigation_and_predecode: true,
                 finish_spread_transition: true,
-                right_to_left_reading_transition:
-                    RustImageDocumentRightToLeftReadingTransition::ResetAndNotifyAfterOpen,
                 clear_secondary_page: true,
                 loading_container_navigation_url:
                     RustImageDocumentSourceLoadUrlTarget::RequestedContainerNavigation,
@@ -222,16 +209,69 @@ mod tests {
         );
     }
 
+    #[test]
+    fn right_to_left_reading_reset_is_decided_from_source_load_context() {
+        assert_eq!(
+            rust_image_document_source_load_plan(source_load_policy_input(
+                RustImageDocumentSourceLoadKind::CurrentSource,
+                true,
+                true,
+                false,
+                false,
+            ))
+            .right_to_left_reading_transition,
+            RustImageDocumentRightToLeftReadingTransition::ResetAndNotifyBeforeSourceState
+        );
+
+        assert_eq!(
+            rust_image_document_source_load_plan(source_load_policy_input(
+                RustImageDocumentSourceLoadKind::ReplacementSource,
+                true,
+                true,
+                false,
+                false,
+            ))
+            .right_to_left_reading_transition,
+            RustImageDocumentRightToLeftReadingTransition::ResetAndNotifyAfterOpen
+        );
+
+        assert_eq!(
+            rust_image_document_source_load_plan(source_load_policy_input(
+                RustImageDocumentSourceLoadKind::ReplacementSource,
+                true,
+                true,
+                true,
+                false,
+            ))
+            .right_to_left_reading_transition,
+            RustImageDocumentRightToLeftReadingTransition::Keep
+        );
+
+        assert_eq!(
+            rust_image_document_source_load_plan(source_load_policy_input(
+                RustImageDocumentSourceLoadKind::ReplacementSource,
+                true,
+                true,
+                false,
+                true,
+            ))
+            .right_to_left_reading_transition,
+            RustImageDocumentRightToLeftReadingTransition::Keep
+        );
+    }
+
     fn source_load_policy_input(
         load_kind: RustImageDocumentSourceLoadKind,
         preserve_two_page_spread_transition: bool,
-        right_to_left_reading_reset: RustImageDocumentRightToLeftReadingReset,
+        right_to_left_reading_enabled: bool,
+        source_within_displayed_comic_book_archive: bool,
         has_requested_container_navigation_url: bool,
     ) -> RustImageDocumentSourceLoadPolicyInput {
         RustImageDocumentSourceLoadPolicyInput {
             load_kind,
             preserve_two_page_spread_transition,
-            right_to_left_reading_reset,
+            right_to_left_reading_enabled,
+            source_within_displayed_comic_book_archive,
             has_requested_container_navigation_url,
         }
     }

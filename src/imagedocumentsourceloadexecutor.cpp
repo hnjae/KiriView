@@ -14,11 +14,6 @@ void applyRightToLeftReadingTransition(
     switch (transition) {
     case KiriView::ImageDocumentRightToLeftReadingTransition::Keep:
         return;
-    case KiriView::ImageDocumentRightToLeftReadingTransition::Reset:
-        if (notifyBeforeSourceState) {
-            KiriView::invokeIfSet(operations.resetRightToLeftReading);
-        }
-        return;
     case KiriView::ImageDocumentRightToLeftReadingTransition::ResetAndNotifyBeforeSourceState:
         if (notifyBeforeSourceState) {
             KiriView::invokeIfSet(operations.resetRightToLeftReading);

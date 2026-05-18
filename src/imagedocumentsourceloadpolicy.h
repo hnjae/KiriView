@@ -10,15 +10,8 @@ enum class ImageDocumentSourceLoadKind {
     ReplacementSource,
 };
 
-enum class ImageDocumentRightToLeftReadingReset {
-    Keep,
-    ResetInactive,
-    ResetActive,
-};
-
 enum class ImageDocumentRightToLeftReadingTransition {
     Keep,
-    Reset,
     ResetAndNotifyBeforeSourceState,
     ResetAndNotifyAfterOpen,
 };
@@ -33,8 +26,8 @@ enum class ImageDocumentSourceLoadUrlTarget {
 struct ImageDocumentSourceLoadPolicyInput {
     ImageDocumentSourceLoadKind loadKind = ImageDocumentSourceLoadKind::CurrentSource;
     bool preserveTwoPageSpreadTransition = false;
-    ImageDocumentRightToLeftReadingReset rightToLeftReadingReset
-        = ImageDocumentRightToLeftReadingReset::Keep;
+    bool rightToLeftReadingEnabled = false;
+    bool sourceWithinDisplayedComicBookArchive = false;
     bool hasRequestedContainerNavigationUrl = false;
 };
 

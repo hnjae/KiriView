@@ -102,9 +102,6 @@ public:
     void clearSecondaryPage();
     void shutdown();
 
-    bool shouldResetRightToLeftReadingForLoad(
-        const ArchiveDocumentLocation &displayedArchiveDocument, const QUrl &sourceUrl,
-        const QUrl &containerNavigationUrl) const;
     void resetRightToLeftReading();
     void notifyRightToLeftReadingChanged();
 

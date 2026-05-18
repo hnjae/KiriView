@@ -59,15 +59,6 @@ bool ImageSpreadModeController::rightToLeftReadingActive() const
     return m_rightToLeftReadingEnabled && rightToLeftReadingAvailable();
 }
 
-bool ImageSpreadModeController::shouldResetRightToLeftReadingForLoad(
-    const ArchiveDocumentLocation &displayedArchiveDocument, const QUrl &sourceUrl,
-    const QUrl &containerNavigationUrl) const
-{
-    return m_rightToLeftReadingEnabled && containerNavigationUrl.isEmpty()
-        && (!displayedArchiveDocument.isComicBook()
-            || !archiveDocumentContainsUrl(displayedArchiveDocument, sourceUrl));
-}
-
 void ImageSpreadModeController::resetRightToLeftReading() { m_rightToLeftReadingEnabled = false; }
 
 bool ImageSpreadModeController::spreadTransitionInProgress() const

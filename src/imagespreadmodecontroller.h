@@ -32,9 +32,6 @@ public:
     bool setRightToLeftReadingEnabled(bool enabled);
     bool rightToLeftReadingAvailable() const;
     bool rightToLeftReadingActive() const;
-    bool shouldResetRightToLeftReadingForLoad(
-        const ArchiveDocumentLocation &displayedArchiveDocument, const QUrl &sourceUrl,
-        const QUrl &containerNavigationUrl) const;
     void resetRightToLeftReading();
 
     bool spreadTransitionInProgress() const;

@@ -19,21 +19,6 @@ KiriView::RustImageDocumentSourceLoadKind rustSourceLoadKind(
     return KiriView::RustImageDocumentSourceLoadKind::CurrentSource;
 }
 
-KiriView::RustImageDocumentRightToLeftReadingReset rustRightToLeftReadingReset(
-    KiriView::ImageDocumentRightToLeftReadingReset reset)
-{
-    switch (reset) {
-    case KiriView::ImageDocumentRightToLeftReadingReset::Keep:
-        return KiriView::RustImageDocumentRightToLeftReadingReset::Keep;
-    case KiriView::ImageDocumentRightToLeftReadingReset::ResetInactive:
-        return KiriView::RustImageDocumentRightToLeftReadingReset::ResetInactive;
-    case KiriView::ImageDocumentRightToLeftReadingReset::ResetActive:
-        return KiriView::RustImageDocumentRightToLeftReadingReset::ResetActive;
-    }
-
-    return KiriView::RustImageDocumentRightToLeftReadingReset::Keep;
-}
-
 KiriView::ImageDocumentRightToLeftReadingTransition rightToLeftReadingTransition(
     KiriView::RustImageDocumentRightToLeftReadingTransition transition)
 {
@@ -43,8 +28,6 @@ KiriView::ImageDocumentRightToLeftReadingTransition rightToLeftReadingTransition
     switch (transition) {
     case RustReadingTransition::Keep:
         return ReadingTransition::Keep;
-    case RustReadingTransition::Reset:
-        return ReadingTransition::Reset;
     case RustReadingTransition::ResetAndNotifyBeforeSourceState:
         return ReadingTransition::ResetAndNotifyBeforeSourceState;
     case RustReadingTransition::ResetAndNotifyAfterOpen:
@@ -77,7 +60,8 @@ KiriView::RustImageDocumentSourceLoadPolicyInput rustSourceLoadPolicyInput(
     return KiriView::RustImageDocumentSourceLoadPolicyInput {
         rustSourceLoadKind(input.loadKind),
         input.preserveTwoPageSpreadTransition,
-        rustRightToLeftReadingReset(input.rightToLeftReadingReset),
+        input.rightToLeftReadingEnabled,
+        input.sourceWithinDisplayedComicBookArchive,
         input.hasRequestedContainerNavigationUrl,
     };
 }
