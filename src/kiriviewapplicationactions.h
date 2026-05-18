@@ -51,6 +51,7 @@ struct ActionDefinition {
 };
 
 const std::array<ActionDefinition, actionDefinitionCount> &definitions();
+const ActionDefinition *definitionForId(KiriViewApplication::ActionId actionId);
 QString actionName(KiriViewApplication::ActionId actionId);
 QString latin1String(const char *text);
 QString localizedString(const KLazyLocalizedString &text);

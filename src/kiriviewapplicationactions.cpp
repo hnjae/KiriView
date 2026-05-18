@@ -163,15 +163,6 @@ bool actionIdInRange(KiriViewApplication::ActionId actionId)
     return index >= 0 && index < static_cast<int>(Actions::actionDefinitionCount);
 }
 
-const Actions::ActionDefinition *definitionForId(KiriViewApplication::ActionId actionId)
-{
-    if (!actionIdInRange(actionId)) {
-        return nullptr;
-    }
-
-    return &actionDefinitions[static_cast<std::size_t>(actionId)];
-}
-
 QKeySequence shortcut(const char *sequence)
 {
     return QKeySequence::fromString(QString::fromLatin1(sequence), QKeySequence::PortableText);
@@ -199,6 +190,15 @@ namespace KiriView::ApplicationActions {
 const std::array<ActionDefinition, actionDefinitionCount> &definitions()
 {
     return actionDefinitions;
+}
+
+const ActionDefinition *definitionForId(KiriViewApplication::ActionId actionId)
+{
+    if (!actionIdInRange(actionId)) {
+        return nullptr;
+    }
+
+    return &actionDefinitions[static_cast<std::size_t>(actionId)];
 }
 
 QString actionName(KiriViewApplication::ActionId actionId)

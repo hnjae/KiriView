@@ -17,6 +17,7 @@
 #include <QSignalSpy>
 #include <QStandardPaths>
 #include <QTest>
+#include <cstddef>
 
 namespace {
 namespace Actions = KiriView::ApplicationActions;
@@ -104,6 +105,7 @@ private Q_SLOTS:
     void cleanup();
     void actionsAreRegisteredWithDefaultShortcuts();
     void generalSettingsActionIsNotRegistered();
+    void actionDefinitionTableIsCanonicalIdentitySource();
     void actionIdsResolveActionNamesAndShortcuts();
     void shortcutsApiReturnsCurrentShortcuts();
     void shortcutModifierPartitionsTextInputShortcuts();
@@ -151,6 +153,27 @@ void TestKiriViewApplication::generalSettingsActionIsNotRegistered()
 
     QCOMPARE(application.action(QStringLiteral("options_configure")), nullptr);
     QCOMPARE(application.shortcuts(QStringLiteral("options_configure")), QList<QKeySequence>());
+}
+
+void TestKiriViewApplication::actionDefinitionTableIsCanonicalIdentitySource()
+{
+    const auto &definitions = Actions::definitions();
+    QCOMPARE(definitions.size(), Actions::actionDefinitionCount);
+
+    for (std::size_t index = 0; index < definitions.size(); ++index) {
+        const auto actionId = static_cast<KiriViewApplication::ActionId>(index);
+        const Actions::ActionDefinition *definition = Actions::definitionForId(actionId);
+
+        QVERIFY(definition != nullptr);
+        QCOMPARE(definition, &definitions.at(index));
+        QCOMPARE(definition->actionId, actionId);
+        QCOMPARE(Actions::actionName(actionId), definitionActionName(*definition));
+    }
+
+    QVERIFY(Actions::definitionForId(static_cast<KiriViewApplication::ActionId>(-1)) == nullptr);
+    QVERIFY(Actions::definitionForId(KiriViewApplication::ActionCount) == nullptr);
+    QVERIFY(Actions::actionName(static_cast<KiriViewApplication::ActionId>(-1)).isEmpty());
+    QVERIFY(Actions::actionName(KiriViewApplication::ActionCount).isEmpty());
 }
 
 void TestKiriViewApplication::actionIdsResolveActionNamesAndShortcuts()
