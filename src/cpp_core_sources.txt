@@ -84,6 +84,7 @@ src/imageviewtext.cpp
 src/imagezoomstate.cpp
 src/applicationshortcutpolicy.cpp
 src/kiriviewapplicationactions.cpp
+src/powerprofilemonitorstate.cpp
 src/powerprofilemonitor.cpp
 src/predecodeactivedecodestore.cpp
 src/predecodecache.cpp

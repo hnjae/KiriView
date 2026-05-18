@@ -7,9 +7,7 @@
 
 #include <QDBusConnection>
 #include <QDBusMessage>
-#include <QDBusVariant>
 #include <QVariant>
-#include <optional>
 #include <utility>
 
 namespace {
@@ -18,18 +16,6 @@ constexpr auto portalPath = "/org/freedesktop/portal/desktop";
 constexpr auto dbusPropertiesInterface = "org.freedesktop.DBus.Properties";
 constexpr auto powerProfileMonitorInterface = "org.freedesktop.portal.PowerProfileMonitor";
 constexpr auto powerSaverEnabledProperty = "power-saver-enabled";
-
-std::optional<bool> boolFromDBusVariant(QVariant value)
-{
-    if (value.canConvert<QDBusVariant>()) {
-        value = value.value<QDBusVariant>().variant();
-    }
-    if (!value.canConvert<bool>()) {
-        return std::nullopt;
-    }
-
-    return value.toBool();
-}
 }
 
 namespace KiriView {
@@ -43,22 +29,15 @@ PowerProfileMonitor::PowerProfileMonitor(QObject *parent, PowerSaverChangedCallb
         SLOT(handlePropertiesChanged(QString, QVariantMap, QStringList)));
 }
 
-bool PowerProfileMonitor::powerSaverEnabled() const { return m_powerSaverEnabled; }
+bool PowerProfileMonitor::powerSaverEnabled() const { return m_state.powerSaverEnabled(); }
 
 void PowerProfileMonitor::handlePropertiesChanged(const QString &interfaceName,
     const QVariantMap &changedProperties, const QStringList &invalidatedProperties)
 {
-    if (interfaceName != QLatin1String(powerProfileMonitorInterface)) {
-        return;
-    }
-
-    const auto changedProperty = changedProperties.constFind(powerSaverEnabledProperty);
-    if (changedProperty != changedProperties.cend()) {
-        setPowerSaverEnabled(boolFromDBusVariant(*changedProperty).value_or(false));
-        return;
-    }
-
-    if (invalidatedProperties.contains(QLatin1String(powerSaverEnabledProperty))) {
+    const PowerProfileMonitorTransition transition
+        = m_state.applyPropertiesChanged(interfaceName, changedProperties, invalidatedProperties);
+    applyTransition(transition);
+    if (transition.refreshRequested) {
         refreshPowerSaverEnabled();
     }
 }
@@ -72,20 +51,19 @@ void PowerProfileMonitor::refreshPowerSaverEnabled()
 
     const QDBusMessage reply = QDBusConnection::sessionBus().call(message);
     if (reply.type() != QDBusMessage::ReplyMessage || reply.arguments().isEmpty()) {
-        setPowerSaverEnabled(false);
+        applyTransition(m_state.applyRefreshReplyArguments({}));
         return;
     }
 
-    setPowerSaverEnabled(boolFromDBusVariant(reply.arguments().first()).value_or(false));
+    applyTransition(m_state.applyRefreshReplyArguments(reply.arguments()));
 }
 
-void PowerProfileMonitor::setPowerSaverEnabled(bool enabled)
+void PowerProfileMonitor::applyTransition(PowerProfileMonitorTransition transition)
 {
-    if (m_powerSaverEnabled == enabled) {
+    if (!transition.powerSaverChanged) {
         return;
     }
 
-    m_powerSaverEnabled = enabled;
-    invokeIfSet(m_callback, enabled);
+    invokeIfSet(m_callback, m_state.powerSaverEnabled());
 }
 }

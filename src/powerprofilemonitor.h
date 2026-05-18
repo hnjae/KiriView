@@ -5,6 +5,7 @@
 #define KIRIVIEW_POWERPROFILEMONITOR_H
 
 #include "imageasyncdependencies.h"
+#include "powerprofilemonitorstate.h"
 
 #include <QObject>
 #include <QString>
@@ -28,10 +29,10 @@ private Q_SLOTS:
 
 private:
     void refreshPowerSaverEnabled();
-    void setPowerSaverEnabled(bool enabled);
+    void applyTransition(PowerProfileMonitorTransition transition);
 
     PowerSaverChangedCallback m_callback;
-    bool m_powerSaverEnabled = false;
+    PowerProfileMonitorState m_state;
 };
 }
 
