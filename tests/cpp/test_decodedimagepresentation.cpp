@@ -49,49 +49,36 @@ void TestDecodedImagePresentation::streamedAnimationsUseFirstFrames()
                 KiriView::TestSupport::testImage(),
                 QByteArrayLiteral("reader-data"),
                 QByteArrayLiteral("gif"),
-                2,
-                30,
             },
         });
     const auto *readerPresentation
-        = std::get_if<KiriView::DecodedAnimationImagePresentation>(&presentation);
+        = std::get_if<KiriView::DecodedReaderAnimationPresentation>(&presentation);
     QVERIFY(readerPresentation != nullptr);
-    QCOMPARE(readerPresentation->kind, KiriView::DecodedImageAnimationKind::Reader);
     QCOMPARE(readerPresentation->firstFrame.size(), KiriView::TestSupport::testImage().size());
     QCOMPARE(readerPresentation->data, QByteArrayLiteral("reader-data"));
     QCOMPARE(readerPresentation->format, QByteArrayLiteral("gif"));
-    QCOMPARE(readerPresentation->loopCount, 2);
-    QCOMPARE(readerPresentation->firstFrameDelay, 30);
 
     presentation = KiriView::decodedImagePresentationForImage(KiriView::DecodedImage {
         KiriView::ApngAnimationImage {
             KiriView::TestSupport::testImage(),
             QByteArrayLiteral("apng-data"),
-            40,
-            3,
         },
     });
     const auto *apngPresentation
-        = std::get_if<KiriView::DecodedAnimationImagePresentation>(&presentation);
+        = std::get_if<KiriView::DecodedApngAnimationPresentation>(&presentation);
     QVERIFY(apngPresentation != nullptr);
-    QCOMPARE(apngPresentation->kind, KiriView::DecodedImageAnimationKind::Apng);
     QCOMPARE(apngPresentation->data, QByteArrayLiteral("apng-data"));
-    QCOMPARE(apngPresentation->loopCount, 3);
-    QCOMPARE(apngPresentation->firstFrameDelay, 40);
 
     presentation = KiriView::decodedImagePresentationForImage(KiriView::DecodedImage {
         KiriView::HeifSequenceAnimationImage {
             KiriView::TestSupport::testImage(),
             QByteArrayLiteral("heif-data"),
-            50,
         },
     });
     const auto *heifPresentation
-        = std::get_if<KiriView::DecodedAnimationImagePresentation>(&presentation);
+        = std::get_if<KiriView::DecodedHeifSequenceAnimationPresentation>(&presentation);
     QVERIFY(heifPresentation != nullptr);
-    QCOMPARE(heifPresentation->kind, KiriView::DecodedImageAnimationKind::HeifSequence);
     QCOMPARE(heifPresentation->data, QByteArrayLiteral("heif-data"));
-    QCOMPARE(heifPresentation->firstFrameDelay, 50);
 
     presentation = KiriView::decodedImagePresentationForImage(
         KiriView::DecodedImage { KiriView::ApngAnimationImage {} });

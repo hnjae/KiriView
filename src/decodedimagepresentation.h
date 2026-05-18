@@ -9,31 +9,33 @@
 #include <variant>
 
 namespace KiriView {
-enum class DecodedImageAnimationKind {
-    Apng,
-    Reader,
-    HeifSequence,
-};
-
 struct DecodedStaticImagePresentation {
     StaticImagePayload staticImage;
     bool predecodeCacheable = false;
 };
 
-struct DecodedAnimationImagePresentation {
-    DecodedImageAnimationKind kind = DecodedImageAnimationKind::Reader;
+struct DecodedApngAnimationPresentation {
+    QImage firstFrame;
+    QByteArray data;
+};
+
+struct DecodedReaderAnimationPresentation {
     QImage firstFrame;
     QByteArray data;
     QByteArray format;
-    int loopCount = 0;
-    int firstFrameDelay = 0;
+};
+
+struct DecodedHeifSequenceAnimationPresentation {
+    QImage firstFrame;
+    QByteArray data;
 };
 
 struct UnpresentableDecodedImage {
 };
 
 using DecodedImagePresentation = std::variant<DecodedStaticImagePresentation,
-    DecodedAnimationImagePresentation, UnpresentableDecodedImage>;
+    DecodedApngAnimationPresentation, DecodedReaderAnimationPresentation,
+    DecodedHeifSequenceAnimationPresentation, UnpresentableDecodedImage>;
 
 DecodedImagePresentation decodedImagePresentationForImage(DecodedImage image);
 }

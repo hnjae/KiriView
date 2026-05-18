@@ -108,16 +108,14 @@ void DisplayedImageState::clear()
     }
 }
 
-void DisplayedImageState::startAnimation(
-    const QByteArray &data, const QByteArray &format, int loopCount, int firstFrameDelay)
+void DisplayedImageState::startAnimation(const QByteArray &data, const QByteArray &format)
 {
-    m_animationPlayer->start(data, format, loopCount, firstFrameDelay);
+    m_animationPlayer->start(data, format);
 }
 
-void DisplayedImageState::startApngAnimation(
-    const QByteArray &data, int loopCount, int firstFrameDelay)
+void DisplayedImageState::startApngAnimation(const QByteArray &data)
 {
-    m_animationPlayer->startApng(data, loopCount, firstFrameDelay);
+    m_animationPlayer->startApng(data);
 }
 
 void DisplayedImageState::startHeifSequenceAnimation(const QByteArray &data)

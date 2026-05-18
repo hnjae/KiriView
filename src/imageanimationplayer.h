@@ -31,9 +31,8 @@ public:
         QObject *context, FrameReadyCallback frameReady, ErrorCallback animationError);
     ~ImageAnimationPlayer();
 
-    void start(
-        const QByteArray &data, const QByteArray &format, int loopCount, int firstFrameDelay);
-    void startApng(const QByteArray &data, int loopCount, int firstFrameDelay);
+    void start(const QByteArray &data, const QByteArray &format);
+    void startApng(const QByteArray &data);
     void startHeifSequence(const QByteArray &data);
     void stop();
 

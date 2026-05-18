@@ -26,22 +26,17 @@ struct StaticDecodedImage {
 struct ApngAnimationImage {
     QImage firstFrame;
     QByteArray data;
-    int firstFrameDelay = 0;
-    int loopCount = 0;
 };
 
 struct ReaderAnimationImage {
     QImage firstFrame;
     QByteArray data;
     QByteArray format;
-    int loopCount = 0;
-    int firstFrameDelay = 0;
 };
 
 struct HeifSequenceAnimationImage {
     QImage firstFrame;
     QByteArray data;
-    int firstFrameDelay = 0;
 };
 
 using DecodedImage = std::variant<StaticDecodedImage, ApngAnimationImage, ReaderAnimationImage,

@@ -104,8 +104,6 @@ void TestImagePresentationLoad::secondaryAnimationModePresentsFirstFrame()
         testImage(QSize(10, 6)),
         QByteArrayLiteral("reader-data"),
         QByteArrayLiteral("gif"),
-        1,
-        25,
     };
     const KiriView::ImagePresentationLoadResult result
         = KiriView::presentDecodedImageLoad(controller, session, std::move(decoded),

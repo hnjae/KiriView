@@ -49,8 +49,6 @@ DecodedImageResult decodeQImageReaderImageData(
     }
 
     const QByteArray format = reader.format();
-    const int firstFrameDelay = reader.nextImageDelay();
-    const int loopCount = reader.loopCount();
     const bool hasMoreFrames = reader.canRead();
 
     QImage firstFrame = displayReadyImage(image);
@@ -59,8 +57,6 @@ DecodedImageResult decodeQImageReaderImageData(
             std::move(firstFrame),
             data,
             format,
-            loopCount,
-            firstFrameDelay,
         });
     }
     return openedStaticImageResult(data, request);

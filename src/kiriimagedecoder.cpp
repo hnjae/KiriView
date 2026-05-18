@@ -47,8 +47,6 @@ DecodedImageResult decodeImageData(const QByteArray &data, const ImageDecodeRequ
         return successfulDecodedImageResult(ApngAnimationImage {
             std::move(apngResult.firstFrame),
             data,
-            apngResult.firstFrameDelay,
-            apngResult.loopCount,
         });
     }
     if (apngResult.status == ApngOpenStatus::Error) {

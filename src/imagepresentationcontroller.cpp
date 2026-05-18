@@ -210,16 +210,14 @@ void ImagePresentationController::clearImage()
     m_viewportController->setDisplayedImageSize(QSize());
 }
 
-void ImagePresentationController::startAnimation(
-    const QByteArray &data, const QByteArray &format, int loopCount, int firstFrameDelay)
+void ImagePresentationController::startAnimation(const QByteArray &data, const QByteArray &format)
 {
-    m_displayedImageState->startAnimation(data, format, loopCount, firstFrameDelay);
+    m_displayedImageState->startAnimation(data, format);
 }
 
-void ImagePresentationController::startApngAnimation(
-    const QByteArray &data, int loopCount, int firstFrameDelay)
+void ImagePresentationController::startApngAnimation(const QByteArray &data)
 {
-    m_displayedImageState->startApngAnimation(data, loopCount, firstFrameDelay);
+    m_displayedImageState->startApngAnimation(data);
 }
 
 void ImagePresentationController::startHeifSequenceAnimation(const QByteArray &data)

@@ -72,7 +72,6 @@ std::optional<KiriView::DecodedImageResult> decodeHeifSequenceImageDataForInfo(
     return KiriView::successfulDecodedImageResult(KiriView::HeifSequenceAnimationImage {
         std::move(firstFrame->image),
         data,
-        firstFrame->delay,
     });
 }
 }

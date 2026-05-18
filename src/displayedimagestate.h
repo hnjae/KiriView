@@ -43,9 +43,8 @@ public:
     bool insertTile(DecodedTile tile);
     void clear();
 
-    void startAnimation(
-        const QByteArray &data, const QByteArray &format, int loopCount, int firstFrameDelay);
-    void startApngAnimation(const QByteArray &data, int loopCount, int firstFrameDelay);
+    void startAnimation(const QByteArray &data, const QByteArray &format);
+    void startApngAnimation(const QByteArray &data);
     void startHeifSequenceAnimation(const QByteArray &data);
     void stopAnimation();
 

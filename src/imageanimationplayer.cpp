@@ -27,11 +27,9 @@ ImageAnimationPlayer::ImageAnimationPlayer(
 
 ImageAnimationPlayer::~ImageAnimationPlayer() { stop(); }
 
-void ImageAnimationPlayer::start(
-    const QByteArray &data, const QByteArray &format, int loopCount, int firstFrameDelay)
+void ImageAnimationPlayer::start(const QByteArray &data, const QByteArray &format)
 {
     clearPlaybackState();
-    m_loopTracker.start(loopCount);
 
     ReaderPlayback playback;
     playback.data = data;
@@ -49,6 +47,8 @@ void ImageAnimationPlayer::start(
         return;
     }
 
+    const int firstFrameDelay = playback.reader->nextImageDelay();
+    m_loopTracker.start(playback.reader->loopCount());
     const bool hasMoreFrames = playback.reader->canRead();
     m_playback = std::move(playback);
     if (hasMoreFrames) {
@@ -56,10 +56,9 @@ void ImageAnimationPlayer::start(
     }
 }
 
-void ImageAnimationPlayer::startApng(const QByteArray &data, int loopCount, int firstFrameDelay)
+void ImageAnimationPlayer::startApng(const QByteArray &data)
 {
     clearPlaybackState();
-    m_loopTracker.start(loopCount);
 
     ApngPlayback playback;
     playback.data = data;
@@ -72,9 +71,10 @@ void ImageAnimationPlayer::startApng(const QByteArray &data, int loopCount, int 
     }
 
     const bool hasMoreFrames = openResult->frameCount > 1;
+    m_loopTracker.start(openResult->loopCount);
     m_playback = std::move(playback);
     if (hasMoreFrames) {
-        scheduleNextFrame(firstFrameDelay);
+        scheduleNextFrame(openResult->firstFrameDelay);
     }
 }
 

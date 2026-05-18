@@ -24,38 +24,27 @@ KiriView::DecodedImagePresentation presentationForDecoded(KiriView::ApngAnimatio
         return KiriView::UnpresentableDecodedImage {};
     }
 
-    return KiriView::DecodedAnimationImagePresentation {
-        KiriView::DecodedImageAnimationKind::Apng,
+    return KiriView::DecodedApngAnimationPresentation {
         std::move(decoded.firstFrame),
         std::move(decoded.data),
-        {},
-        decoded.loopCount,
-        decoded.firstFrameDelay,
     };
 }
 
 KiriView::DecodedImagePresentation presentationForDecoded(KiriView::ReaderAnimationImage &decoded)
 {
-    return KiriView::DecodedAnimationImagePresentation {
-        KiriView::DecodedImageAnimationKind::Reader,
+    return KiriView::DecodedReaderAnimationPresentation {
         std::move(decoded.firstFrame),
         std::move(decoded.data),
         std::move(decoded.format),
-        decoded.loopCount,
-        decoded.firstFrameDelay,
     };
 }
 
 KiriView::DecodedImagePresentation presentationForDecoded(
     KiriView::HeifSequenceAnimationImage &decoded)
 {
-    return KiriView::DecodedAnimationImagePresentation {
-        KiriView::DecodedImageAnimationKind::HeifSequence,
+    return KiriView::DecodedHeifSequenceAnimationPresentation {
         std::move(decoded.firstFrame),
         std::move(decoded.data),
-        {},
-        0,
-        decoded.firstFrameDelay,
     };
 }
 }

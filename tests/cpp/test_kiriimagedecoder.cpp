@@ -272,7 +272,6 @@ void TestKiriImageDecoder::heifSequenceDecodesAsStreamingAnimation()
     QVERIFY2(decoded != nullptr, "HEIF image sequences should decode as streaming animations");
     QCOMPARE(decoded->firstFrame.size(), QSize(64, 64));
     QVERIFY(!decoded->data.isEmpty());
-    QVERIFY(decoded->firstFrameDelay > 0);
     QVERIFY(qAlpha(decoded->firstFrame.pixel(48, 32)) < 255);
 
     KiriView::HeifSequenceReader reader;

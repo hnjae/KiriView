@@ -357,8 +357,6 @@ void TestApngAnimationReader::imageDecoderReturnsStreamingApngImage()
     const auto *decoded = decodedImage<KiriView::ApngAnimationImage>(result);
     QVERIFY(decoded != nullptr);
     QCOMPARE(pixel(decoded->firstFrame, 0, 0), QColor(255, 0, 0, 255));
-    QCOMPARE(decoded->firstFrameDelay, 100);
-    QCOMPARE(decoded->loopCount, 0);
     QCOMPARE(decoded->data, apng);
 }
 
