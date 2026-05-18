@@ -45,7 +45,7 @@ public:
 
     ImageDocumentRuntime(QObject *documentObject, RenderContextProvider renderContextProvider,
         ChangeCallback changeCallback, ImageAsyncDependencies dependencies,
-        FileDeletionFailedCallback fileDeletionFailedCallback);
+        FileDeletionFailedCallback fileDeletionFailedCallback = {});
     ~ImageDocumentRuntime();
 
     QUrl sourceUrl() const;

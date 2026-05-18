@@ -4,8 +4,8 @@
 #include "kiriimagedocument.h"
 
 #include "filedeletion.h"
-#include "imagedocumentcontroller.h"
 #include "imagedocumentnotifications.h"
+#include "imagedocumentruntime.h"
 #include "imageformatregistry.h"
 
 #include <memory>
@@ -80,7 +80,7 @@ KiriImageDocument::Status fromImageDocumentStatus(ImageDocumentStatus status)
 KiriImageDocument::KiriImageDocument(QObject *parent)
     : QObject(parent)
 {
-    m_documentController = std::make_unique<KiriView::ImageDocumentController>(
+    m_runtime = std::make_unique<KiriView::ImageDocumentRuntime>(
         this, [this]() { return renderContext(); },
         [this](ImageDocumentChange change) { handleDocumentChange(change); },
         KiriView::ImageAsyncDependencies {},
@@ -89,83 +89,62 @@ KiriImageDocument::KiriImageDocument(QObject *parent)
 
 KiriImageDocument::~KiriImageDocument() = default;
 
-QUrl KiriImageDocument::sourceUrl() const { return m_documentController->sourceUrl(); }
+QUrl KiriImageDocument::sourceUrl() const { return m_runtime->sourceUrl(); }
 
-void KiriImageDocument::setSourceUrl(const QUrl &sourceUrl)
-{
-    m_documentController->setSourceUrl(sourceUrl);
-}
+void KiriImageDocument::setSourceUrl(const QUrl &sourceUrl) { m_runtime->setSourceUrl(sourceUrl); }
 
 KiriImageDocument::Status KiriImageDocument::status() const
 {
-    return fromImageDocumentStatus(m_documentController->status());
+    return fromImageDocumentStatus(m_runtime->status());
 }
 
-bool KiriImageDocument::loading() const { return m_documentController->loading(); }
+bool KiriImageDocument::loading() const { return m_runtime->loading(); }
 
-QString KiriImageDocument::errorString() const { return m_documentController->errorString(); }
+QString KiriImageDocument::errorString() const { return m_runtime->errorString(); }
 
-QString KiriImageDocument::windowTitleFileName() const
-{
-    return m_documentController->windowTitleFileName();
-}
+QString KiriImageDocument::windowTitleFileName() const { return m_runtime->windowTitleFileName(); }
 
-QUrl KiriImageDocument::displayedUrl() const { return m_documentController->displayedUrl(); }
+QUrl KiriImageDocument::displayedUrl() const { return m_runtime->displayedUrl(); }
 
-QSize KiriImageDocument::imageSize() const { return m_documentController->imageSize(); }
+QSize KiriImageDocument::imageSize() const { return m_runtime->imageSize(); }
 
-QSize KiriImageDocument::primaryImageSize() const
-{
-    return m_documentController->primaryImageSize();
-}
+QSize KiriImageDocument::primaryImageSize() const { return m_runtime->primaryImageSize(); }
 
-QSize KiriImageDocument::secondaryImageSize() const
-{
-    return m_documentController->secondaryImageSize();
-}
+QSize KiriImageDocument::secondaryImageSize() const { return m_runtime->secondaryImageSize(); }
 
-QSizeF KiriImageDocument::viewportSize() const { return m_documentController->viewportSize(); }
+QSizeF KiriImageDocument::viewportSize() const { return m_runtime->viewportSize(); }
 
 void KiriImageDocument::setViewportSize(const QSizeF &viewportSize)
 {
-    m_documentController->setViewportSize(viewportSize);
+    m_runtime->setViewportSize(viewportSize);
 }
 
-QRectF KiriImageDocument::visibleItemRect() const
-{
-    return m_documentController->visibleItemRect();
-}
+QRectF KiriImageDocument::visibleItemRect() const { return m_runtime->visibleItemRect(); }
 
 void KiriImageDocument::setVisibleItemRect(const QRectF &visibleItemRect)
 {
-    m_documentController->setVisibleItemRect(visibleItemRect);
+    m_runtime->setVisibleItemRect(visibleItemRect);
 }
 
-QSizeF KiriImageDocument::displaySize() const { return m_documentController->displaySize(); }
+QSizeF KiriImageDocument::displaySize() const { return m_runtime->displaySize(); }
 
-QSizeF KiriImageDocument::primaryDisplaySize() const
-{
-    return m_documentController->primaryDisplaySize();
-}
+QSizeF KiriImageDocument::primaryDisplaySize() const { return m_runtime->primaryDisplaySize(); }
 
-QSizeF KiriImageDocument::secondaryDisplaySize() const
-{
-    return m_documentController->secondaryDisplaySize();
-}
+QSizeF KiriImageDocument::secondaryDisplaySize() const { return m_runtime->secondaryDisplaySize(); }
 
-double KiriImageDocument::zoomPercent() const { return m_documentController->zoomPercent(); }
+double KiriImageDocument::zoomPercent() const { return m_runtime->zoomPercent(); }
 
 void KiriImageDocument::setZoomPercent(double zoomPercent)
 {
-    m_documentController->setZoomPercent(zoomPercent);
+    m_runtime->setZoomPercent(zoomPercent);
 }
 
 KiriImageDocument::ZoomMode KiriImageDocument::zoomMode() const
 {
-    return fromImageZoomMode(m_documentController->zoomMode());
+    return fromImageZoomMode(m_runtime->zoomMode());
 }
 
-int KiriImageDocument::rotationDegrees() const { return m_documentController->rotationDegrees(); }
+int KiriImageDocument::rotationDegrees() const { return m_runtime->rotationDegrees(); }
 
 int KiriImageDocument::minimumManualZoomPercent() const
 {
@@ -175,7 +154,7 @@ int KiriImageDocument::minimumManualZoomPercent() const
 int KiriImageDocument::maximumManualZoomPercent() const
 {
     return KiriView::ImageZoomState::manualZoomPercentPropertyValue(
-        m_documentController->maximumManualZoomPercent());
+        m_runtime->maximumManualZoomPercent());
 }
 
 double KiriImageDocument::zoomStepFactor() const
@@ -188,67 +167,52 @@ QStringList KiriImageDocument::openDialogNameFilters() const
     return KiriView::openDialogNameFilters();
 }
 
-int KiriImageDocument::currentPageNumber() const
-{
-    return m_documentController->currentPageNumber();
-}
+int KiriImageDocument::currentPageNumber() const { return m_runtime->currentPageNumber(); }
 
-int KiriImageDocument::currentLastPageNumber() const
-{
-    return m_documentController->currentLastPageNumber();
-}
+int KiriImageDocument::currentLastPageNumber() const { return m_runtime->currentLastPageNumber(); }
 
-int KiriImageDocument::imageCount() const { return m_documentController->imageCount(); }
+int KiriImageDocument::imageCount() const { return m_runtime->imageCount(); }
 
 bool KiriImageDocument::containerNavigationAvailable() const
 {
-    return m_documentController->containerNavigationAvailable();
+    return m_runtime->containerNavigationAvailable();
 }
 
 bool KiriImageDocument::fileDeletionInProgress() const
 {
-    return m_documentController->fileDeletionInProgress();
+    return m_runtime->fileDeletionInProgress();
 }
 
-bool KiriImageDocument::twoPageModeEnabled() const
-{
-    return m_documentController->twoPageModeEnabled();
-}
+bool KiriImageDocument::twoPageModeEnabled() const { return m_runtime->twoPageModeEnabled(); }
 
 void KiriImageDocument::setTwoPageModeEnabled(bool enabled)
 {
-    m_documentController->setTwoPageModeEnabled(enabled);
+    m_runtime->setTwoPageModeEnabled(enabled);
 }
 
-bool KiriImageDocument::twoPageModeAvailable() const
-{
-    return m_documentController->twoPageModeAvailable();
-}
+bool KiriImageDocument::twoPageModeAvailable() const { return m_runtime->twoPageModeAvailable(); }
 
 bool KiriImageDocument::rightToLeftReadingEnabled() const
 {
-    return m_documentController->rightToLeftReadingEnabled();
+    return m_runtime->rightToLeftReadingEnabled();
 }
 
 void KiriImageDocument::setRightToLeftReadingEnabled(bool enabled)
 {
-    m_documentController->setRightToLeftReadingEnabled(enabled);
+    m_runtime->setRightToLeftReadingEnabled(enabled);
 }
 
 bool KiriImageDocument::rightToLeftReadingAvailable() const
 {
-    return m_documentController->rightToLeftReadingAvailable();
+    return m_runtime->rightToLeftReadingAvailable();
 }
 
-bool KiriImageDocument::secondaryPageVisible() const
-{
-    return m_documentController->secondaryPageVisible();
-}
+bool KiriImageDocument::secondaryPageVisible() const { return m_runtime->secondaryPageVisible(); }
 
 KiriView::DisplayedImageRenderSnapshot KiriImageDocument::renderSnapshot(
     KiriView::DisplayedPageRole role) const
 {
-    return m_documentController->renderSnapshot(role);
+    return m_runtime->renderSnapshot(role);
 }
 
 void KiriImageDocument::setRenderContextProvider(RenderContextProvider provider)
@@ -257,50 +221,47 @@ void KiriImageDocument::setRenderContextProvider(RenderContextProvider provider)
     updateRenderContext();
 }
 
-void KiriImageDocument::openPreviousImage() { m_documentController->openPreviousImage(); }
+void KiriImageDocument::openPreviousImage() { m_runtime->openPreviousImage(); }
 
-void KiriImageDocument::openNextImage() { m_documentController->openNextImage(); }
+void KiriImageDocument::openNextImage() { m_runtime->openNextImage(); }
 
-void KiriImageDocument::openPreviousSinglePage() { m_documentController->openPreviousSinglePage(); }
+void KiriImageDocument::openPreviousSinglePage() { m_runtime->openPreviousSinglePage(); }
 
-void KiriImageDocument::openNextSinglePage() { m_documentController->openNextSinglePage(); }
+void KiriImageDocument::openNextSinglePage() { m_runtime->openNextSinglePage(); }
 
-void KiriImageDocument::openPreviousContainer() { m_documentController->openPreviousContainer(); }
+void KiriImageDocument::openPreviousContainer() { m_runtime->openPreviousContainer(); }
 
-void KiriImageDocument::openNextContainer() { m_documentController->openNextContainer(); }
+void KiriImageDocument::openNextContainer() { m_runtime->openNextContainer(); }
 
 void KiriImageDocument::deleteDisplayedFile(DeletionMode mode)
 {
-    m_documentController->deleteDisplayedFile(toFileDeletionMode(mode));
+    m_runtime->deleteDisplayedFile(toFileDeletionMode(mode));
 }
 
-void KiriImageDocument::openImageAtPage(int pageNumber)
-{
-    m_documentController->openImageAtPage(pageNumber);
-}
+void KiriImageDocument::openImageAtPage(int pageNumber) { m_runtime->openImageAtPage(pageNumber); }
 
-void KiriImageDocument::resetZoom() { m_documentController->resetZoom(); }
+void KiriImageDocument::resetZoom() { m_runtime->resetZoom(); }
 
 void KiriImageDocument::setFitMode(ZoomMode zoomMode)
 {
-    m_documentController->setFitMode(toImageZoomMode(zoomMode));
+    m_runtime->setFitMode(toImageZoomMode(zoomMode));
 }
 
-void KiriImageDocument::rotateClockwise() { m_documentController->rotateClockwise(); }
+void KiriImageDocument::rotateClockwise() { m_runtime->rotateClockwise(); }
 
-void KiriImageDocument::rotateCounterclockwise() { m_documentController->rotateCounterclockwise(); }
+void KiriImageDocument::rotateCounterclockwise() { m_runtime->rotateCounterclockwise(); }
 
 double KiriImageDocument::clampedManualZoomPercent(double zoomPercent) const
 {
-    return m_documentController->clampedManualZoomPercent(zoomPercent);
+    return m_runtime->clampedManualZoomPercent(zoomPercent);
 }
 
 double KiriImageDocument::steppedManualZoomPercent(double stepCount) const
 {
-    return m_documentController->steppedManualZoomPercent(stepCount);
+    return m_runtime->steppedManualZoomPercent(stepCount);
 }
 
-void KiriImageDocument::updateRenderContext() { m_documentController->updateRenderContext(); }
+void KiriImageDocument::updateRenderContext() { m_runtime->updateRenderContext(); }
 
 void KiriImageDocument::handleDocumentChange(ImageDocumentChange change)
 {

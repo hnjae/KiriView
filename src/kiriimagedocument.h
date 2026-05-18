@@ -20,7 +20,7 @@
 
 namespace KiriView {
 enum class ImageDocumentPublicSignal;
-class ImageDocumentController;
+class ImageDocumentRuntime;
 }
 
 class KiriImageDocument : public QObject
@@ -185,7 +185,7 @@ private:
     KiriView::ImageDocumentRenderContext renderContext() const;
 
     RenderContextProvider m_renderContextProvider;
-    std::unique_ptr<KiriView::ImageDocumentController> m_documentController;
+    std::unique_ptr<KiriView::ImageDocumentRuntime> m_runtime;
 };
 
 #endif

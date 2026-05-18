@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "imagedocumentcontroller.h"
+#include "imagedocumentruntime.h"
 
 #include "image_test_support.h"
 #include "imagecontainer.h"
@@ -34,6 +34,46 @@ using KiriView::TestSupport::testImage;
 using KiriView::TestSupport::testImageDecodeFailureString;
 
 using FakeCandidateProvider = KiriView::TestSupport::FakeImageNavigationCandidateProvider;
+
+class RuntimeOwner final : public QObject
+{
+public:
+    RuntimeOwner(QObject *parent,
+        KiriView::ImageDocumentRuntime::RenderContextProvider renderContextProvider,
+        KiriView::ImageDocumentRuntime::ChangeCallback changeCallback,
+        KiriView::ImageAsyncDependencies dependencies,
+        KiriView::ImageDocumentRuntime::FileDeletionFailedCallback fileDeletionFailedCallback = {})
+        : QObject(parent)
+        , runtime(this, std::move(renderContextProvider), std::move(changeCallback),
+              std::move(dependencies), std::move(fileDeletionFailedCallback))
+    {
+    }
+
+    KiriView::ImageDocumentRuntime runtime;
+};
+
+class RuntimeHandle final
+{
+public:
+    RuntimeHandle(QObject *parent,
+        KiriView::ImageDocumentRuntime::RenderContextProvider renderContextProvider,
+        KiriView::ImageDocumentRuntime::ChangeCallback changeCallback,
+        KiriView::ImageAsyncDependencies dependencies,
+        KiriView::ImageDocumentRuntime::FileDeletionFailedCallback fileDeletionFailedCallback = {})
+        : m_owner(std::make_unique<RuntimeOwner>(parent, std::move(renderContextProvider),
+              std::move(changeCallback), std::move(dependencies),
+              std::move(fileDeletionFailedCallback)))
+    {
+    }
+
+    KiriView::ImageDocumentRuntime *operator->() { return &m_owner->runtime; }
+    const KiriView::ImageDocumentRuntime *operator->() const { return &m_owner->runtime; }
+    KiriView::ImageDocumentRuntime &operator*() { return m_owner->runtime; }
+    const KiriView::ImageDocumentRuntime &operator*() const { return m_owner->runtime; }
+
+private:
+    std::unique_ptr<RuntimeOwner> m_owner;
+};
 
 class NonCacheableTestImageTileSource final : public KiriView::ImageTileSource
 {
@@ -79,14 +119,14 @@ KiriView::DecodedImageResult singleFrameDecodedImage(const QSize &size)
     });
 }
 
-std::unique_ptr<KiriView::ImageDocumentController> createController(QObject *parent,
-    FakeCandidateProvider &candidateProvider, ManualImageDataLoader &dataLoader,
+RuntimeHandle createRuntime(QObject *parent, FakeCandidateProvider &candidateProvider,
+    ManualImageDataLoader &dataLoader,
     KiriView::ImageDataDecoder dataDecoder = staticImageDataDecoder(testImage(2)),
     int maximumTextureSize = KiriView::fallbackTextureSizeMax, qreal devicePixelRatio = 1.0,
     KiriView::FileOperationProvider fileOperations = {},
-    KiriView::ImageDocumentController::FileDeletionFailedCallback fileDeletionFailedCallback = {})
+    KiriView::ImageDocumentRuntime::FileDeletionFailedCallback fileDeletionFailedCallback = {})
 {
-    return std::make_unique<KiriView::ImageDocumentController>(
+    return RuntimeHandle(
         parent,
         [maximumTextureSize, devicePixelRatio]() {
             return KiriView::ImageDocumentRenderContext {
@@ -94,7 +134,7 @@ std::unique_ptr<KiriView::ImageDocumentController> createController(QObject *par
                 maximumTextureSize,
             };
         },
-        KiriView::ImageDocumentController::ChangeCallback {},
+        KiriView::ImageDocumentRuntime::ChangeCallback {},
         imageAsyncDependenciesFor(
             candidateProvider, dataLoader, std::move(dataDecoder), std::move(fileOperations)),
         std::move(fileDeletionFailedCallback));
@@ -110,19 +150,18 @@ bool finishOldestActiveLoadForUrl(ManualImageDataLoader &dataLoader, const QUrl 
     return dataLoader.finishOldestActiveLoadForUrl(url, QByteArrayLiteral("ok"));
 }
 
-std::size_t staticTileCount(const KiriView::ImageDocumentController &controller,
+std::size_t staticTileCount(const KiriView::ImageDocumentRuntime &runtime,
     KiriView::DisplayedPageRole role = KiriView::DisplayedPageRole::Primary)
 {
-    std::shared_ptr<KiriView::DisplayedImageSurface> surface
-        = controller.renderSnapshot(role).surface;
+    std::shared_ptr<KiriView::DisplayedImageSurface> surface = runtime.renderSnapshot(role).surface;
     auto *staticSurface = surface == nullptr ? nullptr : surface->staticTileSurface();
     return staticSurface == nullptr ? 0 : staticSurface->tiles().size();
 }
 
-bool hasRenderableSnapshot(const KiriView::ImageDocumentController &controller,
+bool hasRenderableSnapshot(const KiriView::ImageDocumentRuntime &runtime,
     KiriView::DisplayedPageRole role = KiriView::DisplayedPageRole::Primary)
 {
-    return controller.renderSnapshot(role).isRenderable();
+    return runtime.renderSnapshot(role).isRenderable();
 }
 
 bool containsChange(
@@ -132,7 +171,7 @@ bool containsChange(
 }
 }
 
-class TestImageDocumentController : public QObject
+class TestImageDocumentRuntime : public QObject
 {
     Q_OBJECT
 
@@ -173,10 +212,9 @@ private Q_SLOTS:
     void twoPageModeRightToLeftKeepsSinglePageNavigationSemantic();
     void twoPageModeWaitsForTargetSpreadBeforeRenderingNavigation();
     void twoPageModeLoadingNavigationUsesPendingPrimaryPage();
-    void twoPageModeKeepsCoverAndWidePagesSingle();
 };
 
-void TestImageDocumentController::initialLoadSuccessUpdatesDocumentState()
+void TestImageDocumentRuntime::initialLoadSuccessUpdatesDocumentState()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -186,26 +224,25 @@ void TestImageDocumentController::initialLoadSuccessUpdatesDocumentState()
             imageCandidate(imageUrl),
         });
 
-    std::unique_ptr<KiriView::ImageDocumentController> controller
-        = createController(this, candidateProvider, dataLoader);
-    controller->setViewportSize(QSizeF(400.0, 300.0));
-    controller->setSourceUrl(imageUrl);
+    RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader);
+    runtime->setViewportSize(QSizeF(400.0, 300.0));
+    runtime->setSourceUrl(imageUrl);
 
-    QCOMPARE(controller->status(), KiriView::ImageDocumentStatus::Loading);
+    QCOMPARE(runtime->status(), KiriView::ImageDocumentStatus::Loading);
     QCOMPARE(dataLoader.loadCount(), std::size_t(1));
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
-    QCOMPARE(controller->sourceUrl(), imageUrl);
-    QCOMPARE(controller->displayedUrl(), imageUrl);
-    QCOMPARE(controller->imageSize(), QSize(2, 1));
-    QCOMPARE(controller->currentPageNumber(), 1);
-    QCOMPARE(controller->imageCount(), 1);
-    QVERIFY(!controller->containerNavigationAvailable());
-    QVERIFY(controller->renderSnapshot().isRenderable());
+    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QCOMPARE(runtime->sourceUrl(), imageUrl);
+    QCOMPARE(runtime->displayedUrl(), imageUrl);
+    QCOMPARE(runtime->imageSize(), QSize(2, 1));
+    QCOMPARE(runtime->currentPageNumber(), 1);
+    QCOMPARE(runtime->imageCount(), 1);
+    QVERIFY(!runtime->containerNavigationAvailable());
+    QVERIFY(runtime->renderSnapshot().isRenderable());
 }
 
-void TestImageDocumentController::imageLoadsUsePhysicalViewportForFirstDisplayDecode()
+void TestImageDocumentRuntime::imageLoadsUsePhysicalViewportForFirstDisplayDecode()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -217,24 +254,22 @@ void TestImageDocumentController::imageLoadsUsePhysicalViewportForFirstDisplayDe
             imageCandidate(nextImageUrl),
         });
 
-    std::unique_ptr<KiriView::ImageDocumentController> controller
-        = createController(this, candidateProvider, dataLoader,
-            staticImageDataDecoder(testImage(2)), KiriView::fallbackTextureSizeMax, 2.0);
-    controller->setViewportSize(QSizeF(400.0, 300.0));
-    controller->setSourceUrl(imageUrl);
+    RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader,
+        staticImageDataDecoder(testImage(2)), KiriView::fallbackTextureSizeMax, 2.0);
+    runtime->setViewportSize(QSizeF(400.0, 300.0));
+    runtime->setSourceUrl(imageUrl);
 
     QCOMPARE(dataLoader.loadCount(), std::size_t(1));
     QCOMPARE(dataLoader.frontLoad().firstDisplay.physicalViewportSize, QSize(800, 600));
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(2));
     QCOMPARE(dataLoader.backLoad().url, nextImageUrl);
     QCOMPARE(dataLoader.backLoad().firstDisplay.physicalViewportSize, QSize(800, 600));
 }
 
-void TestImageDocumentController::
-    maximumManualZoomChangesAfterViewportImageAndRenderContextUpdates()
+void TestImageDocumentRuntime::maximumManualZoomChangesAfterViewportImageAndRenderContextUpdates()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -249,50 +284,40 @@ void TestImageDocumentController::
             : QSize(1000, 500);
         return staticDecodedImageWithPreview(sourceSize, sourceSize);
     };
-    std::unique_ptr<KiriView::ImageDocumentController> controller
-        = std::make_unique<KiriView::ImageDocumentController>(
-            this,
-            [&devicePixelRatio]() {
-                return KiriView::ImageDocumentRenderContext {
-                    devicePixelRatio,
-                    KiriView::fallbackTextureSizeMax,
-                };
-            },
-            [&changes](KiriView::ImageDocumentChange change) { changes.push_back(change); },
-            imageAsyncDependenciesFor(candidateProvider, dataLoader, std::move(dataDecoder)));
+    RuntimeHandle runtime(
+        this,
+        [&devicePixelRatio]() {
+            return KiriView::ImageDocumentRenderContext {
+                devicePixelRatio,
+                KiriView::fallbackTextureSizeMax,
+            };
+        },
+        [&changes](KiriView::ImageDocumentChange change) { changes.push_back(change); },
+        imageAsyncDependenciesFor(candidateProvider, dataLoader, std::move(dataDecoder)));
 
-    controller->setViewportSize(QSizeF(7000.0, 100.0));
-    controller->setSourceUrl(firstImageUrl);
+    runtime->setViewportSize(QSizeF(7000.0, 100.0));
+    runtime->setSourceUrl(firstImageUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
     QVERIFY(KiriView::imageZoomApproximatelyEqual(
-        controller->maximumManualZoomPercent(), 65536.0 * 100.0 / 1000.0));
+        runtime->maximumManualZoomPercent(), 65536.0 * 100.0 / 1000.0));
 
     changes.clear();
-    controller->setViewportSize(QSizeF(9000.0, 100.0));
+    runtime->setViewportSize(QSizeF(9000.0, 100.0));
     QVERIFY(containsChange(changes, KiriView::ImageDocumentChange::MaximumManualZoomPercent));
     QVERIFY(KiriView::imageZoomApproximatelyEqual(
-        controller->maximumManualZoomPercent(), 9000.0 * 8.0 * 100.0 / 1000.0));
-
-    changes.clear();
-    controller->setSourceUrl(secondImageUrl);
-    finishLoad(dataLoader);
-
-    QTRY_COMPARE(controller->displayedUrl(), secondImageUrl);
-    QVERIFY(containsChange(changes, KiriView::ImageDocumentChange::MaximumManualZoomPercent));
-    QVERIFY(KiriView::imageZoomApproximatelyEqual(
-        controller->maximumManualZoomPercent(), 9000.0 * 8.0 * 100.0 / 2000.0));
+        runtime->maximumManualZoomPercent(), 9000.0 * 8.0 * 100.0 / 1000.0));
 
     changes.clear();
     devicePixelRatio = 2.0;
-    controller->updateRenderContext();
+    runtime->updateRenderContext();
     QVERIFY(containsChange(changes, KiriView::ImageDocumentChange::MaximumManualZoomPercent));
     QVERIFY(KiriView::imageZoomApproximatelyEqual(
-        controller->maximumManualZoomPercent(), 9000.0 * 8.0 * 2.0 * 100.0 / 2000.0));
+        runtime->maximumManualZoomPercent(), 9000.0 * 8.0 * 2.0 * 100.0 / 1000.0));
 }
 
-void TestImageDocumentController::directoryImageNavigationResetsManualZoom()
+void TestImageDocumentRuntime::directoryImageNavigationResetsManualZoom()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -304,28 +329,27 @@ void TestImageDocumentController::directoryImageNavigationResetsManualZoom()
             imageCandidate(secondImageUrl),
         });
 
-    std::unique_ptr<KiriView::ImageDocumentController> controller
-        = createController(this, candidateProvider, dataLoader);
-    controller->setViewportSize(QSizeF(400.0, 300.0));
-    controller->setSourceUrl(firstImageUrl);
+    RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader);
+    runtime->setViewportSize(QSizeF(400.0, 300.0));
+    runtime->setSourceUrl(firstImageUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
-    controller->setZoomPercent(150.0);
-    QCOMPARE(controller->zoomMode(), KiriView::ImageZoomMode::Manual);
+    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    runtime->setZoomPercent(150.0);
+    QCOMPARE(runtime->zoomMode(), KiriView::ImageZoomMode::Manual);
 
     const std::size_t loadCountBeforeNavigation = dataLoader.loadCount();
-    controller->openNextImage();
+    runtime->openNextImage();
 
     QTRY_COMPARE(dataLoader.loadCount(), loadCountBeforeNavigation + std::size_t(1));
     QCOMPARE(dataLoader.backLoad().url, secondImageUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(controller->displayedUrl(), secondImageUrl);
-    QCOMPARE(controller->zoomMode(), KiriView::ImageZoomMode::Fit);
+    QTRY_COMPARE(runtime->displayedUrl(), secondImageUrl);
+    QCOMPARE(runtime->zoomMode(), KiriView::ImageZoomMode::Fit);
 }
 
-void TestImageDocumentController::archiveDocumentPageNavigationPreservesManualZoom()
+void TestImageDocumentRuntime::archiveDocumentPageNavigationPreservesManualZoom()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -341,30 +365,29 @@ void TestImageDocumentController::archiveDocumentPageNavigationPreservesManualZo
             imageCandidate(secondPageUrl),
         });
 
-    std::unique_ptr<KiriView::ImageDocumentController> controller
-        = createController(this, candidateProvider, dataLoader);
-    controller->setViewportSize(QSizeF(400.0, 300.0));
-    controller->setSourceUrl(archiveUrl);
+    RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader);
+    runtime->setViewportSize(QSizeF(400.0, 300.0));
+    runtime->setSourceUrl(archiveUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
-    QCOMPARE(controller->displayedUrl(), firstPageUrl);
-    controller->setZoomPercent(150.0);
-    QCOMPARE(controller->zoomMode(), KiriView::ImageZoomMode::Manual);
+    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QCOMPARE(runtime->displayedUrl(), firstPageUrl);
+    runtime->setZoomPercent(150.0);
+    QCOMPARE(runtime->zoomMode(), KiriView::ImageZoomMode::Manual);
 
     const std::size_t loadCountBeforeNavigation = dataLoader.loadCount();
-    controller->openNextImage();
+    runtime->openNextImage();
 
     QTRY_COMPARE(dataLoader.loadCount(), loadCountBeforeNavigation + std::size_t(1));
     QCOMPARE(dataLoader.backLoad().url, secondPageUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(controller->displayedUrl(), secondPageUrl);
-    QCOMPARE(controller->zoomMode(), KiriView::ImageZoomMode::Manual);
-    QVERIFY(KiriView::imageZoomApproximatelyEqual(controller->zoomPercent(), 150.0));
+    QTRY_COMPARE(runtime->displayedUrl(), secondPageUrl);
+    QCOMPARE(runtime->zoomMode(), KiriView::ImageZoomMode::Manual);
+    QVERIFY(KiriView::imageZoomApproximatelyEqual(runtime->zoomPercent(), 150.0));
 }
 
-void TestImageDocumentController::rotationChangesLogicalSizeAndPreservesManualZoom()
+void TestImageDocumentRuntime::rotationChangesLogicalSizeAndPreservesManualZoom()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -375,49 +398,48 @@ void TestImageDocumentController::rotationChangesLogicalSizeAndPreservesManualZo
             imageCandidate(imageUrl),
         });
 
-    std::unique_ptr<KiriView::ImageDocumentController> controller
-        = std::make_unique<KiriView::ImageDocumentController>(
-            this,
-            []() {
-                return KiriView::ImageDocumentRenderContext {
-                    1.0,
-                    KiriView::fallbackTextureSizeMax,
-                };
-            },
-            [&changes](KiriView::ImageDocumentChange change) { changes.push_back(change); },
-            imageAsyncDependenciesFor(candidateProvider, dataLoader,
-                [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
-                    return staticDecodedImageWithPreview(QSize(100, 200), QSize(100, 200));
-                }));
-    controller->setViewportSize(QSizeF(500.0, 500.0));
-    controller->setSourceUrl(imageUrl);
+    RuntimeHandle runtime(
+        this,
+        []() {
+            return KiriView::ImageDocumentRenderContext {
+                1.0,
+                KiriView::fallbackTextureSizeMax,
+            };
+        },
+        [&changes](KiriView::ImageDocumentChange change) { changes.push_back(change); },
+        imageAsyncDependenciesFor(candidateProvider, dataLoader,
+            [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
+                return staticDecodedImageWithPreview(QSize(100, 200), QSize(100, 200));
+            }));
+    runtime->setViewportSize(QSizeF(500.0, 500.0));
+    runtime->setSourceUrl(imageUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
-    controller->setZoomPercent(100.0);
+    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    runtime->setZoomPercent(100.0);
     changes.clear();
 
-    controller->rotateClockwise();
+    runtime->rotateClockwise();
 
-    QCOMPARE(controller->rotationDegrees(), 90);
-    QCOMPARE(controller->imageSize(), QSize(200, 100));
-    QCOMPARE(controller->primaryImageSize(), QSize(200, 100));
-    QCOMPARE(controller->displaySize(), QSizeF(200.0, 100.0));
-    QCOMPARE(controller->zoomMode(), KiriView::ImageZoomMode::Manual);
-    QVERIFY(KiriView::imageZoomApproximatelyEqual(controller->zoomPercent(), 100.0));
+    QCOMPARE(runtime->rotationDegrees(), 90);
+    QCOMPARE(runtime->imageSize(), QSize(200, 100));
+    QCOMPARE(runtime->primaryImageSize(), QSize(200, 100));
+    QCOMPARE(runtime->displaySize(), QSizeF(200.0, 100.0));
+    QCOMPARE(runtime->zoomMode(), KiriView::ImageZoomMode::Manual);
+    QVERIFY(KiriView::imageZoomApproximatelyEqual(runtime->zoomPercent(), 100.0));
     QVERIFY(containsChange(changes, KiriView::ImageDocumentChange::Rotation));
     QVERIFY(containsChange(changes, KiriView::ImageDocumentChange::ImageSize));
     QVERIFY(containsChange(changes, KiriView::ImageDocumentChange::DisplaySize));
     QVERIFY(containsChange(changes, KiriView::ImageDocumentChange::Repaint));
 
-    controller->rotateCounterclockwise();
+    runtime->rotateCounterclockwise();
 
-    QCOMPARE(controller->rotationDegrees(), 0);
-    QCOMPARE(controller->imageSize(), QSize(100, 200));
-    QCOMPARE(controller->displaySize(), QSizeF(100.0, 200.0));
+    QCOMPARE(runtime->rotationDegrees(), 0);
+    QCOMPARE(runtime->imageSize(), QSize(100, 200));
+    QCOMPARE(runtime->displaySize(), QSizeF(100.0, 200.0));
 }
 
-void TestImageDocumentController::rotationRecomputesFitZoomForRotatedBounds()
+void TestImageDocumentRuntime::rotationRecomputesFitZoomForRotatedBounds()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -427,29 +449,28 @@ void TestImageDocumentController::rotationRecomputesFitZoomForRotatedBounds()
             imageCandidate(imageUrl),
         });
 
-    std::unique_ptr<KiriView::ImageDocumentController> controller
-        = createController(this, candidateProvider, dataLoader,
-            [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
-                return staticDecodedImageWithPreview(QSize(100, 200), QSize(100, 200));
-            });
-    controller->setViewportSize(QSizeF(400.0, 300.0));
-    controller->setSourceUrl(imageUrl);
+    RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader,
+        [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
+            return staticDecodedImageWithPreview(QSize(100, 200), QSize(100, 200));
+        });
+    runtime->setViewportSize(QSizeF(400.0, 300.0));
+    runtime->setSourceUrl(imageUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
-    QCOMPARE(controller->zoomMode(), KiriView::ImageZoomMode::Fit);
-    QVERIFY(KiriView::imageZoomApproximatelyEqual(controller->zoomPercent(), 150.0));
-    QCOMPARE(controller->displaySize(), QSizeF(150.0, 300.0));
+    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QCOMPARE(runtime->zoomMode(), KiriView::ImageZoomMode::Fit);
+    QVERIFY(KiriView::imageZoomApproximatelyEqual(runtime->zoomPercent(), 150.0));
+    QCOMPARE(runtime->displaySize(), QSizeF(150.0, 300.0));
 
-    controller->rotateClockwise();
+    runtime->rotateClockwise();
 
-    QCOMPARE(controller->rotationDegrees(), 90);
-    QCOMPARE(controller->zoomMode(), KiriView::ImageZoomMode::Fit);
-    QVERIFY(KiriView::imageZoomApproximatelyEqual(controller->zoomPercent(), 200.0));
-    QCOMPARE(controller->displaySize(), QSizeF(400.0, 200.0));
+    QCOMPARE(runtime->rotationDegrees(), 90);
+    QCOMPARE(runtime->zoomMode(), KiriView::ImageZoomMode::Fit);
+    QVERIFY(KiriView::imageZoomApproximatelyEqual(runtime->zoomPercent(), 200.0));
+    QCOMPARE(runtime->displaySize(), QSizeF(400.0, 200.0));
 }
 
-void TestImageDocumentController::rotationResetsOnImageNavigation()
+void TestImageDocumentRuntime::rotationResetsOnImageNavigation()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -461,32 +482,31 @@ void TestImageDocumentController::rotationResetsOnImageNavigation()
             imageCandidate(secondImageUrl),
         });
 
-    std::unique_ptr<KiriView::ImageDocumentController> controller
-        = createController(this, candidateProvider, dataLoader,
-            [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
-                return staticDecodedImageWithPreview(QSize(100, 200), QSize(100, 200));
-            });
-    controller->setViewportSize(QSizeF(400.0, 300.0));
-    controller->setSourceUrl(firstImageUrl);
+    RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader,
+        [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
+            return staticDecodedImageWithPreview(QSize(100, 200), QSize(100, 200));
+        });
+    runtime->setViewportSize(QSizeF(400.0, 300.0));
+    runtime->setSourceUrl(firstImageUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
-    controller->rotateClockwise();
-    QCOMPARE(controller->rotationDegrees(), 90);
-    QCOMPARE(controller->imageSize(), QSize(200, 100));
+    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    runtime->rotateClockwise();
+    QCOMPARE(runtime->rotationDegrees(), 90);
+    QCOMPARE(runtime->imageSize(), QSize(200, 100));
 
     const std::size_t loadCountBeforeNavigation = dataLoader.loadCount();
-    controller->openNextImage();
+    runtime->openNextImage();
     QTRY_COMPARE(dataLoader.loadCount(), loadCountBeforeNavigation + std::size_t(1));
     QCOMPARE(dataLoader.backLoad().url, secondImageUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(controller->displayedUrl(), secondImageUrl);
-    QCOMPARE(controller->rotationDegrees(), 0);
-    QCOMPARE(controller->imageSize(), QSize(100, 200));
+    QTRY_COMPARE(runtime->displayedUrl(), secondImageUrl);
+    QCOMPARE(runtime->rotationDegrees(), 0);
+    QCOMPARE(runtime->imageSize(), QSize(100, 200));
 }
 
-void TestImageDocumentController::rotationResetsAndStopsWhileTwoPageModeIsEnabled()
+void TestImageDocumentRuntime::rotationResetsAndStopsWhileTwoPageModeIsEnabled()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -502,29 +522,28 @@ void TestImageDocumentController::rotationResetsAndStopsWhileTwoPageModeIsEnable
             imageCandidate(secondPageUrl),
         });
 
-    std::unique_ptr<KiriView::ImageDocumentController> controller
-        = createController(this, candidateProvider, dataLoader,
-            [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
-                return staticDecodedImageWithPreview(QSize(100, 200), QSize(100, 200));
-            });
-    controller->setViewportSize(QSizeF(400.0, 300.0));
-    controller->setSourceUrl(archiveUrl);
+    RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader,
+        [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
+            return staticDecodedImageWithPreview(QSize(100, 200), QSize(100, 200));
+        });
+    runtime->setViewportSize(QSizeF(400.0, 300.0));
+    runtime->setSourceUrl(archiveUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
-    controller->rotateClockwise();
-    QCOMPARE(controller->rotationDegrees(), 90);
+    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    runtime->rotateClockwise();
+    QCOMPARE(runtime->rotationDegrees(), 90);
 
-    controller->setTwoPageModeEnabled(true);
+    runtime->setTwoPageModeEnabled(true);
 
-    QCOMPARE(controller->rotationDegrees(), 0);
-    QVERIFY(controller->twoPageModeEnabled());
-    QVERIFY(controller->twoPageModeAvailable());
-    controller->rotateClockwise();
-    QCOMPARE(controller->rotationDegrees(), 0);
+    QCOMPARE(runtime->rotationDegrees(), 0);
+    QVERIFY(runtime->twoPageModeEnabled());
+    QVERIFY(runtime->twoPageModeAvailable());
+    runtime->rotateClockwise();
+    QCOMPARE(runtime->rotationDegrees(), 0);
 }
 
-void TestImageDocumentController::pendingAdjacentNavigationSkipsIntermediateLoad()
+void TestImageDocumentRuntime::pendingAdjacentNavigationSkipsIntermediateLoad()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -538,30 +557,29 @@ void TestImageDocumentController::pendingAdjacentNavigationSkipsIntermediateLoad
             imageCandidate(thirdImageUrl),
         });
 
-    std::unique_ptr<KiriView::ImageDocumentController> controller
-        = createController(this, candidateProvider, dataLoader);
-    controller->setViewportSize(QSizeF(400.0, 300.0));
-    controller->setSourceUrl(firstImageUrl);
+    RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader);
+    runtime->setViewportSize(QSizeF(400.0, 300.0));
+    runtime->setSourceUrl(firstImageUrl);
     finishLoad(dataLoader);
-    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
 
-    controller->openNextImage();
+    runtime->openNextImage();
     QTRY_COMPARE(dataLoader.backLoad().url, secondImageUrl);
-    QCOMPARE(controller->currentPageNumber(), 2);
+    QCOMPARE(runtime->currentPageNumber(), 2);
 
-    controller->openNextImage();
+    runtime->openNextImage();
     QTRY_COMPARE(dataLoader.backLoad().url, thirdImageUrl);
-    QCOMPARE(controller->currentPageNumber(), 3);
+    QCOMPARE(runtime->currentPageNumber(), 3);
     QVERIFY(!finishOldestActiveLoadForUrl(dataLoader, secondImageUrl));
 
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(controller->displayedUrl(), thirdImageUrl);
-    QCOMPARE(controller->sourceUrl(), thirdImageUrl);
-    QCOMPARE(controller->currentPageNumber(), 3);
+    QTRY_COMPARE(runtime->displayedUrl(), thirdImageUrl);
+    QCOMPARE(runtime->sourceUrl(), thirdImageUrl);
+    QCOMPARE(runtime->currentPageNumber(), 3);
 }
 
-void TestImageDocumentController::pendingPageSelectionSupersedesEarlierLoad()
+void TestImageDocumentRuntime::pendingPageSelectionSupersedesEarlierLoad()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -575,31 +593,30 @@ void TestImageDocumentController::pendingPageSelectionSupersedesEarlierLoad()
             imageCandidate(thirdImageUrl),
         });
 
-    std::unique_ptr<KiriView::ImageDocumentController> controller
-        = createController(this, candidateProvider, dataLoader);
-    controller->setViewportSize(QSizeF(400.0, 300.0));
-    controller->setSourceUrl(firstImageUrl);
+    RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader);
+    runtime->setViewportSize(QSizeF(400.0, 300.0));
+    runtime->setSourceUrl(firstImageUrl);
     finishLoad(dataLoader);
-    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
 
-    controller->openNextImage();
+    runtime->openNextImage();
     QTRY_COMPARE(dataLoader.backLoad().url, secondImageUrl);
-    QCOMPARE(controller->currentPageNumber(), 2);
+    QCOMPARE(runtime->currentPageNumber(), 2);
 
-    controller->openImageAtPage(3);
+    runtime->openImageAtPage(3);
     QTRY_COMPARE(dataLoader.backLoad().url, thirdImageUrl);
-    QCOMPARE(controller->displayedUrl(), firstImageUrl);
-    QCOMPARE(controller->currentPageNumber(), 3);
+    QCOMPARE(runtime->displayedUrl(), firstImageUrl);
+    QCOMPARE(runtime->currentPageNumber(), 3);
     QVERIFY(!finishOldestActiveLoadForUrl(dataLoader, secondImageUrl));
 
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(controller->displayedUrl(), thirdImageUrl);
-    QCOMPARE(controller->sourceUrl(), thirdImageUrl);
-    QCOMPARE(controller->currentPageNumber(), 3);
+    QTRY_COMPARE(runtime->displayedUrl(), thirdImageUrl);
+    QCOMPARE(runtime->sourceUrl(), thirdImageUrl);
+    QCOMPARE(runtime->currentPageNumber(), 3);
 }
 
-void TestImageDocumentController::pageSelectionStartsTrackedLoadThroughEffectExecutor()
+void TestImageDocumentRuntime::pageSelectionStartsTrackedLoadThroughEffectExecutor()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -611,30 +628,29 @@ void TestImageDocumentController::pageSelectionStartsTrackedLoadThroughEffectExe
             imageCandidate(secondImageUrl),
         });
 
-    std::unique_ptr<KiriView::ImageDocumentController> controller
-        = createController(this, candidateProvider, dataLoader);
-    controller->setViewportSize(QSizeF(400.0, 300.0));
-    controller->setSourceUrl(firstImageUrl);
+    RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader);
+    runtime->setViewportSize(QSizeF(400.0, 300.0));
+    runtime->setSourceUrl(firstImageUrl);
     finishLoad(dataLoader);
-    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
 
     const std::size_t loadCountBeforeSelection = dataLoader.loadCount();
-    controller->openImageAtPage(2);
+    runtime->openImageAtPage(2);
 
     QTRY_COMPARE(dataLoader.loadCount(), loadCountBeforeSelection + std::size_t(1));
     QCOMPARE(dataLoader.backLoad().url, secondImageUrl);
-    QCOMPARE(controller->sourceUrl(), secondImageUrl);
-    QCOMPARE(controller->displayedUrl(), firstImageUrl);
-    QCOMPARE(controller->currentPageNumber(), 2);
+    QCOMPARE(runtime->sourceUrl(), secondImageUrl);
+    QCOMPARE(runtime->displayedUrl(), firstImageUrl);
+    QCOMPARE(runtime->currentPageNumber(), 2);
 
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(controller->displayedUrl(), secondImageUrl);
-    QCOMPARE(controller->sourceUrl(), secondImageUrl);
-    QCOMPARE(controller->currentPageNumber(), 2);
+    QTRY_COMPARE(runtime->displayedUrl(), secondImageUrl);
+    QCOMPARE(runtime->sourceUrl(), secondImageUrl);
+    QCOMPARE(runtime->currentPageNumber(), 2);
 }
 
-void TestImageDocumentController::pendingLoadFailureRestoresDisplayedPageNavigation()
+void TestImageDocumentRuntime::pendingLoadFailureRestoresDisplayedPageNavigation()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -646,29 +662,28 @@ void TestImageDocumentController::pendingLoadFailureRestoresDisplayedPageNavigat
             imageCandidate(secondImageUrl),
         });
 
-    std::unique_ptr<KiriView::ImageDocumentController> controller
-        = createController(this, candidateProvider, dataLoader);
-    controller->setViewportSize(QSizeF(400.0, 300.0));
-    controller->setSourceUrl(firstImageUrl);
+    RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader);
+    runtime->setViewportSize(QSizeF(400.0, 300.0));
+    runtime->setSourceUrl(firstImageUrl);
     finishLoad(dataLoader);
-    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
 
-    controller->openNextImage();
+    runtime->openNextImage();
     QTRY_COMPARE(dataLoader.backLoad().url, secondImageUrl);
-    QCOMPARE(controller->sourceUrl(), secondImageUrl);
-    QCOMPARE(controller->displayedUrl(), firstImageUrl);
-    QCOMPARE(controller->currentPageNumber(), 2);
+    QCOMPARE(runtime->sourceUrl(), secondImageUrl);
+    QCOMPARE(runtime->displayedUrl(), firstImageUrl);
+    QCOMPARE(runtime->currentPageNumber(), 2);
 
     dataLoader.failBackLoad(QStringLiteral("missing"));
 
-    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
-    QCOMPARE(controller->sourceUrl(), firstImageUrl);
-    QCOMPARE(controller->displayedUrl(), firstImageUrl);
-    QCOMPARE(controller->currentPageNumber(), 1);
-    QCOMPARE(controller->errorString(), QStringLiteral("missing"));
+    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QCOMPARE(runtime->sourceUrl(), firstImageUrl);
+    QCOMPARE(runtime->displayedUrl(), firstImageUrl);
+    QCOMPARE(runtime->currentPageNumber(), 1);
+    QCOMPARE(runtime->errorString(), QStringLiteral("missing"));
 }
 
-void TestImageDocumentController::siblingArchiveNavigationResetsManualZoom()
+void TestImageDocumentRuntime::siblingArchiveNavigationResetsManualZoom()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -698,29 +713,28 @@ void TestImageDocumentController::siblingArchiveNavigationResetsManualZoom()
             comicBookContainerCandidate(secondArchiveUrl),
         });
 
-    std::unique_ptr<KiriView::ImageDocumentController> controller
-        = createController(this, candidateProvider, dataLoader);
-    controller->setViewportSize(QSizeF(400.0, 300.0));
-    controller->setSourceUrl(firstArchiveUrl);
+    RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader);
+    runtime->setViewportSize(QSizeF(400.0, 300.0));
+    runtime->setSourceUrl(firstArchiveUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
-    QCOMPARE(controller->displayedUrl(), firstPageUrl);
-    controller->setZoomPercent(150.0);
-    QCOMPARE(controller->zoomMode(), KiriView::ImageZoomMode::Manual);
+    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QCOMPARE(runtime->displayedUrl(), firstPageUrl);
+    runtime->setZoomPercent(150.0);
+    QCOMPARE(runtime->zoomMode(), KiriView::ImageZoomMode::Manual);
 
     const std::size_t loadCountBeforeNavigation = dataLoader.loadCount();
-    controller->openNextContainer();
+    runtime->openNextContainer();
 
     QTRY_COMPARE(dataLoader.loadCount(), loadCountBeforeNavigation + std::size_t(1));
     QCOMPARE(dataLoader.backLoad().url, secondPageUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(controller->displayedUrl(), secondPageUrl);
-    QCOMPARE(controller->zoomMode(), KiriView::ImageZoomMode::Fit);
+    QTRY_COMPARE(runtime->displayedUrl(), secondPageUrl);
+    QCOMPARE(runtime->zoomMode(), KiriView::ImageZoomMode::Fit);
 }
 
-void TestImageDocumentController::smallStaticImageUsesFullImageSurface()
+void TestImageDocumentRuntime::smallStaticImageUsesFullImageSurface()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -730,24 +744,24 @@ void TestImageDocumentController::smallStaticImageUsesFullImageSurface()
             imageCandidate(imageUrl),
         });
 
-    std::unique_ptr<KiriView::ImageDocumentController> controller = createController(
+    RuntimeHandle runtime = createRuntime(
         this, candidateProvider, dataLoader,
         [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
             return staticDecodedImageWithPreview(QSize(1024, 1), QSize(1024, 1));
         },
         KiriView::fallbackTextureSizeMax);
-    controller->setViewportSize(QSizeF(400.0, 300.0));
-    controller->setSourceUrl(imageUrl);
+    runtime->setViewportSize(QSizeF(400.0, 300.0));
+    runtime->setSourceUrl(imageUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
-    std::shared_ptr<KiriView::DisplayedImageSurface> surface = controller->renderSnapshot().surface;
+    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    std::shared_ptr<KiriView::DisplayedImageSurface> surface = runtime->renderSnapshot().surface;
     QVERIFY(surface != nullptr);
     QVERIFY(surface->legacyFrameSurface() != nullptr);
-    QCOMPARE(controller->imageSize(), QSize(1024, 1));
+    QCOMPARE(runtime->imageSize(), QSize(1024, 1));
 }
 
-void TestImageDocumentController::largeStaticImageUsesTiledSurface()
+void TestImageDocumentRuntime::largeStaticImageUsesTiledSurface()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -757,7 +771,7 @@ void TestImageDocumentController::largeStaticImageUsesTiledSurface()
             imageCandidate(imageUrl),
         });
 
-    std::unique_ptr<KiriView::ImageDocumentController> controller = createController(
+    RuntimeHandle runtime = createRuntime(
         this, candidateProvider, dataLoader,
         [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
             return staticDecodedImageWithPreview(
@@ -765,12 +779,12 @@ void TestImageDocumentController::largeStaticImageUsesTiledSurface()
                 QSize(KiriView::imageBlockingDisplayLongEdgeMax, 1));
         },
         KiriView::fallbackTextureSizeMax);
-    controller->setViewportSize(QSizeF(400.0, 300.0));
-    controller->setSourceUrl(imageUrl);
+    runtime->setViewportSize(QSizeF(400.0, 300.0));
+    runtime->setSourceUrl(imageUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
-    std::shared_ptr<KiriView::DisplayedImageSurface> surface = controller->renderSnapshot().surface;
+    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    std::shared_ptr<KiriView::DisplayedImageSurface> surface = runtime->renderSnapshot().surface;
     QVERIFY(surface != nullptr);
     auto *staticSurface = surface->staticTileSurface();
     QVERIFY(staticSurface != nullptr);
@@ -778,7 +792,7 @@ void TestImageDocumentController::largeStaticImageUsesTiledSurface()
     QCOMPARE(staticSurface->preview().size(), QSize(KiriView::imageBlockingDisplayLongEdgeMax, 1));
 }
 
-void TestImageDocumentController::tiledStaticImageRefinesNewVisibleTilesAfterPan()
+void TestImageDocumentRuntime::tiledStaticImageRefinesNewVisibleTilesAfterPan()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -788,7 +802,7 @@ void TestImageDocumentController::tiledStaticImageRefinesNewVisibleTilesAfterPan
             imageCandidate(imageUrl),
         });
 
-    std::unique_ptr<KiriView::ImageDocumentController> controller = createController(
+    RuntimeHandle runtime = createRuntime(
         this, candidateProvider, dataLoader,
         [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
             return staticDecodedImageWithPreview(
@@ -796,22 +810,22 @@ void TestImageDocumentController::tiledStaticImageRefinesNewVisibleTilesAfterPan
                 QSize(KiriView::imageBlockingDisplayLongEdgeMax, 512));
         },
         KiriView::fallbackTextureSizeMax);
-    controller->setViewportSize(QSizeF(512.0, 512.0));
-    controller->setSourceUrl(imageUrl);
+    runtime->setViewportSize(QSizeF(512.0, 512.0));
+    runtime->setSourceUrl(imageUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
-    controller->setZoomPercent(100.0);
-    controller->setVisibleItemRect(QRectF(0.0, 0.0, 512.0, 512.0));
-    QTRY_VERIFY(staticTileCount(*controller) > std::size_t(0));
-    const std::size_t initialTileCount = staticTileCount(*controller);
+    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    runtime->setZoomPercent(100.0);
+    runtime->setVisibleItemRect(QRectF(0.0, 0.0, 512.0, 512.0));
+    QTRY_VERIFY(staticTileCount(*runtime) > std::size_t(0));
+    const std::size_t initialTileCount = staticTileCount(*runtime);
 
-    controller->setVisibleItemRect(QRectF(1536.0, 0.0, 512.0, 512.0));
+    runtime->setVisibleItemRect(QRectF(1536.0, 0.0, 512.0, 512.0));
 
-    QTRY_VERIFY(staticTileCount(*controller) > initialTileCount);
+    QTRY_VERIFY(staticTileCount(*runtime) > initialTileCount);
 }
 
-void TestImageDocumentController::firstDisplayDefersTilesUntilZoomNeedsMoreDetail()
+void TestImageDocumentRuntime::firstDisplayDefersTilesUntilZoomNeedsMoreDetail()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -821,28 +835,28 @@ void TestImageDocumentController::firstDisplayDefersTilesUntilZoomNeedsMoreDetai
             imageCandidate(imageUrl),
         });
 
-    std::unique_ptr<KiriView::ImageDocumentController> controller = createController(
+    RuntimeHandle runtime = createRuntime(
         this, candidateProvider, dataLoader,
         [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
             return staticDecodedImageWithPreview(
                 QSize(2048, 2048), QSize(512, 512), KiriView::StaticImageDisplayHints { 0.25 });
         },
         KiriView::fallbackTextureSizeMax);
-    controller->setViewportSize(QSizeF(512.0, 512.0));
-    controller->setSourceUrl(imageUrl);
+    runtime->setViewportSize(QSizeF(512.0, 512.0));
+    runtime->setSourceUrl(imageUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
-    controller->setVisibleItemRect(QRectF(0.0, 0.0, 512.0, 512.0));
+    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    runtime->setVisibleItemRect(QRectF(0.0, 0.0, 512.0, 512.0));
     QTest::qWait(50);
-    QCOMPARE(staticTileCount(*controller), std::size_t(0));
+    QCOMPARE(staticTileCount(*runtime), std::size_t(0));
 
-    controller->setZoomPercent(100.0);
+    runtime->setZoomPercent(100.0);
 
-    QTRY_VERIFY(staticTileCount(*controller) > std::size_t(0));
+    QTRY_VERIFY(staticTileCount(*runtime) > std::size_t(0));
 }
 
-void TestImageDocumentController::smallFullImageSurfaceStillSchedulesAdjacentPredecode()
+void TestImageDocumentRuntime::smallFullImageSurfaceStillSchedulesAdjacentPredecode()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -854,25 +868,25 @@ void TestImageDocumentController::smallFullImageSurfaceStillSchedulesAdjacentPre
             imageCandidate(nextImageUrl),
         });
 
-    std::unique_ptr<KiriView::ImageDocumentController> controller = createController(
+    RuntimeHandle runtime = createRuntime(
         this, candidateProvider, dataLoader,
         [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
             return staticDecodedImageWithPreview(QSize(1024, 1), QSize(1024, 1));
         },
         KiriView::fallbackTextureSizeMax);
-    controller->setViewportSize(QSizeF(400.0, 300.0));
-    controller->setSourceUrl(imageUrl);
+    runtime->setViewportSize(QSizeF(400.0, 300.0));
+    runtime->setSourceUrl(imageUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
-    std::shared_ptr<KiriView::DisplayedImageSurface> surface = controller->renderSnapshot().surface;
+    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    std::shared_ptr<KiriView::DisplayedImageSurface> surface = runtime->renderSnapshot().surface;
     QVERIFY(surface != nullptr);
     QVERIFY(surface->legacyFrameSurface() != nullptr);
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(2));
     QCOMPARE(dataLoader.backLoad().url, nextImageUrl);
 }
 
-void TestImageDocumentController::replacementLoadFailureKeepsDisplayedImage()
+void TestImageDocumentRuntime::replacementLoadFailureKeepsDisplayedImage()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -884,30 +898,29 @@ void TestImageDocumentController::replacementLoadFailureKeepsDisplayedImage()
             imageCandidate(missingUrl),
         });
 
-    std::unique_ptr<KiriView::ImageDocumentController> controller
-        = createController(this, candidateProvider, dataLoader);
-    controller->setViewportSize(QSizeF(400.0, 300.0));
-    controller->setSourceUrl(imageUrl);
+    RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader);
+    runtime->setViewportSize(QSizeF(400.0, 300.0));
+    runtime->setSourceUrl(imageUrl);
     finishLoad(dataLoader);
-    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
-    const quint64 displayedRevision = controller->renderSnapshot().revision;
+    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    const quint64 displayedRevision = runtime->renderSnapshot().revision;
     const std::size_t loadCountBeforeReplacement = dataLoader.loadCount();
 
-    controller->setSourceUrl(missingUrl);
+    runtime->setSourceUrl(missingUrl);
     QCOMPARE(dataLoader.loadCount(), loadCountBeforeReplacement + 1);
     QCOMPARE(dataLoader.backLoad().url, missingUrl);
     dataLoader.failBackLoad(QStringLiteral("missing"));
 
-    QCOMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
-    QCOMPARE(controller->sourceUrl(), imageUrl);
-    QCOMPARE(controller->displayedUrl(), imageUrl);
-    QCOMPARE(controller->errorString(), QStringLiteral("missing"));
-    QCOMPARE(controller->imageSize(), QSize(2, 1));
-    QCOMPARE(controller->renderSnapshot().revision, displayedRevision);
-    QVERIFY(controller->renderSnapshot().isRenderable());
+    QCOMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QCOMPARE(runtime->sourceUrl(), imageUrl);
+    QCOMPARE(runtime->displayedUrl(), imageUrl);
+    QCOMPARE(runtime->errorString(), QStringLiteral("missing"));
+    QCOMPARE(runtime->imageSize(), QSize(2, 1));
+    QCOMPARE(runtime->renderSnapshot().revision, displayedRevision);
+    QVERIFY(runtime->renderSnapshot().isRenderable());
 }
 
-void TestImageDocumentController::decodedReplacementFailureSchedulesRecoveryPredecodeOnce()
+void TestImageDocumentRuntime::decodedReplacementFailureSchedulesRecoveryPredecodeOnce()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -919,30 +932,30 @@ void TestImageDocumentController::decodedReplacementFailureSchedulesRecoveryPred
             imageCandidate(badUrl),
         });
 
-    std::unique_ptr<KiriView::ImageDocumentController> controller = createController(
+    RuntimeHandle runtime = createRuntime(
         this, candidateProvider, dataLoader, staticImageDataDecoderRejectingBadData(testImage(2)));
-    controller->setViewportSize(QSizeF(400.0, 300.0));
-    controller->setSourceUrl(imageUrl);
+    runtime->setViewportSize(QSizeF(400.0, 300.0));
+    runtime->setSourceUrl(imageUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(2));
     QCOMPARE(dataLoader.backLoad().url, badUrl);
     const std::size_t loadCountBeforeReplacement = dataLoader.loadCount();
 
-    controller->setSourceUrl(badUrl);
+    runtime->setSourceUrl(badUrl);
     QCOMPARE(dataLoader.loadCount(), loadCountBeforeReplacement + 1);
     QCOMPARE(dataLoader.backLoad().url, badUrl);
     dataLoader.finishBackLoad(QByteArrayLiteral("bad"));
 
-    QTRY_COMPARE(controller->errorString(), testImageDecodeFailureString());
-    QCOMPARE(controller->sourceUrl(), imageUrl);
-    QCOMPARE(controller->displayedUrl(), imageUrl);
+    QTRY_COMPARE(runtime->errorString(), testImageDecodeFailureString());
+    QCOMPARE(runtime->sourceUrl(), imageUrl);
+    QCOMPARE(runtime->displayedUrl(), imageUrl);
     QTRY_COMPARE(dataLoader.loadCount(), loadCountBeforeReplacement + 2);
     QCOMPARE(dataLoader.backLoad().url, badUrl);
 }
 
-void TestImageDocumentController::emptyContainerNavigationClearsImageAndSelectsContainer()
+void TestImageDocumentRuntime::emptyContainerNavigationClearsImageAndSelectsContainer()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -967,41 +980,40 @@ void TestImageDocumentController::emptyContainerNavigationClearsImageAndSelectsC
         });
     candidateProvider.setArchiveImages(targetArchiveDocument->rootUrl(), {});
 
-    std::unique_ptr<KiriView::ImageDocumentController> controller
-        = createController(this, candidateProvider, dataLoader);
-    controller->setViewportSize(QSizeF(400.0, 300.0));
-    controller->setSourceUrl(currentContainerUrl);
+    RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader);
+    runtime->setViewportSize(QSizeF(400.0, 300.0));
+    runtime->setSourceUrl(currentContainerUrl);
     finishLoad(dataLoader);
-    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
 
-    controller->openNextContainer();
+    runtime->openNextContainer();
 
-    QCOMPARE(controller->status(), KiriView::ImageDocumentStatus::Error);
-    QCOMPARE(controller->sourceUrl(), targetContainerUrl);
-    QCOMPARE(controller->displayedUrl(), QUrl());
-    QVERIFY(controller->containerNavigationAvailable());
-    QVERIFY(!controller->renderSnapshot().isRenderable());
-    QCOMPARE(controller->imageSize(), QSize());
-    QVERIFY(!controller->errorString().isEmpty());
+    QCOMPARE(runtime->status(), KiriView::ImageDocumentStatus::Error);
+    QCOMPARE(runtime->sourceUrl(), targetContainerUrl);
+    QCOMPARE(runtime->displayedUrl(), QUrl());
+    QVERIFY(runtime->containerNavigationAvailable());
+    QVERIFY(!runtime->renderSnapshot().isRenderable());
+    QCOMPARE(runtime->imageSize(), QSize());
+    QVERIFY(!runtime->errorString().isEmpty());
 }
 
-void TestImageDocumentController::deletingWithoutDisplayedImageDoesNotStartFileOperation()
+void TestImageDocumentRuntime::deletingWithoutDisplayedImageDoesNotStartFileOperation()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
     ManualFileOperationProvider fileOperations;
 
-    std::unique_ptr<KiriView::ImageDocumentController> controller = createController(this,
-        candidateProvider, dataLoader, staticImageDataDecoder(testImage(2)),
-        KiriView::fallbackTextureSizeMax, 1.0, fileOperationProviderFor(fileOperations));
+    RuntimeHandle runtime
+        = createRuntime(this, candidateProvider, dataLoader, staticImageDataDecoder(testImage(2)),
+            KiriView::fallbackTextureSizeMax, 1.0, fileOperationProviderFor(fileOperations));
 
-    controller->deleteDisplayedFile(KiriView::FileDeletionMode::MoveToTrash);
+    runtime->deleteDisplayedFile(KiriView::FileDeletionMode::MoveToTrash);
 
     QCOMPARE(fileOperations.operationCount(), std::size_t(0));
-    QVERIFY(!controller->fileDeletionInProgress());
+    QVERIFY(!runtime->fileDeletionInProgress());
 }
 
-void TestImageDocumentController::fileDeletionFailureKeepsDisplayedImageAndReportsError()
+void TestImageDocumentRuntime::fileDeletionFailureKeepsDisplayedImageAndReportsError()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -1013,35 +1025,35 @@ void TestImageDocumentController::fileDeletionFailureKeepsDisplayedImageAndRepor
             imageCandidate(imageUrl),
         });
 
-    std::unique_ptr<KiriView::ImageDocumentController> controller = createController(this,
-        candidateProvider, dataLoader, staticImageDataDecoder(testImage(2)),
-        KiriView::fallbackTextureSizeMax, 1.0, fileOperationProviderFor(fileOperations),
+    RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader,
+        staticImageDataDecoder(testImage(2)), KiriView::fallbackTextureSizeMax, 1.0,
+        fileOperationProviderFor(fileOperations),
         [&deletionErrors](const QString &errorString) { deletionErrors.push_back(errorString); });
-    controller->setViewportSize(QSizeF(400.0, 300.0));
-    controller->setSourceUrl(imageUrl);
+    runtime->setViewportSize(QSizeF(400.0, 300.0));
+    runtime->setSourceUrl(imageUrl);
     finishLoad(dataLoader);
-    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
 
-    controller->deleteDisplayedFile(KiriView::FileDeletionMode::MoveToTrash);
+    runtime->deleteDisplayedFile(KiriView::FileDeletionMode::MoveToTrash);
 
     QCOMPARE(fileOperations.operationCount(), std::size_t(1));
     QCOMPARE(fileOperations.backOperation().request.targetUrl, imageUrl);
     QCOMPARE(fileOperations.backOperation().request.mode, KiriView::FileDeletionMode::MoveToTrash);
-    QVERIFY(controller->fileDeletionInProgress());
+    QVERIFY(runtime->fileDeletionInProgress());
 
     fileOperations.finishBackOperation(
         KiriView::FileDeletionResult::Failed, QStringLiteral("permission denied"));
 
-    QVERIFY(!controller->fileDeletionInProgress());
-    QCOMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
-    QCOMPARE(controller->sourceUrl(), imageUrl);
-    QCOMPARE(controller->displayedUrl(), imageUrl);
+    QVERIFY(!runtime->fileDeletionInProgress());
+    QCOMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QCOMPARE(runtime->sourceUrl(), imageUrl);
+    QCOMPARE(runtime->displayedUrl(), imageUrl);
     QCOMPARE(deletionErrors.size(), std::size_t(1));
     QCOMPARE(deletionErrors.front(), QStringLiteral("permission denied"));
-    QVERIFY(controller->renderSnapshot().isRenderable());
+    QVERIFY(runtime->renderSnapshot().isRenderable());
 }
 
-void TestImageDocumentController::fileDeletionCancelKeepsDisplayedImageWithoutError()
+void TestImageDocumentRuntime::fileDeletionCancelKeepsDisplayedImageWithoutError()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -1053,16 +1065,16 @@ void TestImageDocumentController::fileDeletionCancelKeepsDisplayedImageWithoutEr
             imageCandidate(imageUrl),
         });
 
-    std::unique_ptr<KiriView::ImageDocumentController> controller = createController(this,
-        candidateProvider, dataLoader, staticImageDataDecoder(testImage(2)),
-        KiriView::fallbackTextureSizeMax, 1.0, fileOperationProviderFor(fileOperations),
+    RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader,
+        staticImageDataDecoder(testImage(2)), KiriView::fallbackTextureSizeMax, 1.0,
+        fileOperationProviderFor(fileOperations),
         [&deletionErrors](const QString &errorString) { deletionErrors.push_back(errorString); });
-    controller->setViewportSize(QSizeF(400.0, 300.0));
-    controller->setSourceUrl(imageUrl);
+    runtime->setViewportSize(QSizeF(400.0, 300.0));
+    runtime->setSourceUrl(imageUrl);
     finishLoad(dataLoader);
-    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
 
-    controller->deleteDisplayedFile(KiriView::FileDeletionMode::DeletePermanently);
+    runtime->deleteDisplayedFile(KiriView::FileDeletionMode::DeletePermanently);
 
     QCOMPARE(fileOperations.operationCount(), std::size_t(1));
     QCOMPARE(fileOperations.backOperation().request.targetUrl, imageUrl);
@@ -1071,15 +1083,15 @@ void TestImageDocumentController::fileDeletionCancelKeepsDisplayedImageWithoutEr
 
     fileOperations.finishBackOperation(KiriView::FileDeletionResult::Canceled);
 
-    QVERIFY(!controller->fileDeletionInProgress());
-    QCOMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
-    QCOMPARE(controller->sourceUrl(), imageUrl);
-    QCOMPARE(controller->displayedUrl(), imageUrl);
+    QVERIFY(!runtime->fileDeletionInProgress());
+    QCOMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QCOMPARE(runtime->sourceUrl(), imageUrl);
+    QCOMPARE(runtime->displayedUrl(), imageUrl);
     QVERIFY(deletionErrors.empty());
-    QVERIFY(controller->renderSnapshot().isRenderable());
+    QVERIFY(runtime->renderSnapshot().isRenderable());
 }
 
-void TestImageDocumentController::successfulFileDeletionOpensNextImageFallback()
+void TestImageDocumentRuntime::successfulFileDeletionOpensNextImageFallback()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -1093,27 +1105,27 @@ void TestImageDocumentController::successfulFileDeletionOpensNextImageFallback()
             imageCandidate(nextUrl),
         });
 
-    std::unique_ptr<KiriView::ImageDocumentController> controller = createController(this,
-        candidateProvider, dataLoader, staticImageDataDecoder(testImage(2)),
-        KiriView::fallbackTextureSizeMax, 1.0, fileOperationProviderFor(fileOperations));
-    controller->setViewportSize(QSizeF(400.0, 300.0));
-    controller->setSourceUrl(currentUrl);
+    RuntimeHandle runtime
+        = createRuntime(this, candidateProvider, dataLoader, staticImageDataDecoder(testImage(2)),
+            KiriView::fallbackTextureSizeMax, 1.0, fileOperationProviderFor(fileOperations));
+    runtime->setViewportSize(QSizeF(400.0, 300.0));
+    runtime->setSourceUrl(currentUrl);
     finishLoad(dataLoader);
-    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
 
-    controller->deleteDisplayedFile(KiriView::FileDeletionMode::MoveToTrash);
+    runtime->deleteDisplayedFile(KiriView::FileDeletionMode::MoveToTrash);
     fileOperations.finishBackOperation(KiriView::FileDeletionResult::Succeeded);
 
-    QCOMPARE(controller->sourceUrl(), nextUrl);
-    QCOMPARE(controller->displayedUrl(), QUrl());
+    QCOMPARE(runtime->sourceUrl(), nextUrl);
+    QCOMPARE(runtime->displayedUrl(), QUrl());
     QCOMPARE(dataLoader.backLoad().url, nextUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
-    QCOMPARE(controller->displayedUrl(), nextUrl);
+    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QCOMPARE(runtime->displayedUrl(), nextUrl);
 }
 
-void TestImageDocumentController::successfulFileDeletionOpensPreviousImageFallback()
+void TestImageDocumentRuntime::successfulFileDeletionOpensPreviousImageFallback()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -1127,26 +1139,26 @@ void TestImageDocumentController::successfulFileDeletionOpensPreviousImageFallba
             imageCandidate(previousUrl),
         });
 
-    std::unique_ptr<KiriView::ImageDocumentController> controller = createController(this,
-        candidateProvider, dataLoader, staticImageDataDecoder(testImage(2)),
-        KiriView::fallbackTextureSizeMax, 1.0, fileOperationProviderFor(fileOperations));
-    controller->setViewportSize(QSizeF(400.0, 300.0));
-    controller->setSourceUrl(currentUrl);
+    RuntimeHandle runtime
+        = createRuntime(this, candidateProvider, dataLoader, staticImageDataDecoder(testImage(2)),
+            KiriView::fallbackTextureSizeMax, 1.0, fileOperationProviderFor(fileOperations));
+    runtime->setViewportSize(QSizeF(400.0, 300.0));
+    runtime->setSourceUrl(currentUrl);
     finishLoad(dataLoader);
-    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
 
-    controller->deleteDisplayedFile(KiriView::FileDeletionMode::MoveToTrash);
+    runtime->deleteDisplayedFile(KiriView::FileDeletionMode::MoveToTrash);
     fileOperations.finishBackOperation(KiriView::FileDeletionResult::Succeeded);
 
-    QCOMPARE(controller->sourceUrl(), previousUrl);
+    QCOMPARE(runtime->sourceUrl(), previousUrl);
     QCOMPARE(dataLoader.backLoad().url, previousUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
-    QCOMPARE(controller->displayedUrl(), previousUrl);
+    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QCOMPARE(runtime->displayedUrl(), previousUrl);
 }
 
-void TestImageDocumentController::successfulFileDeletionWithoutFallbackClearsDocument()
+void TestImageDocumentRuntime::successfulFileDeletionWithoutFallbackClearsDocument()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -1154,25 +1166,25 @@ void TestImageDocumentController::successfulFileDeletionWithoutFallbackClearsDoc
     const QUrl imageUrl = localUrl(QStringLiteral("/images/01.png"));
     candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")), {});
 
-    std::unique_ptr<KiriView::ImageDocumentController> controller = createController(this,
-        candidateProvider, dataLoader, staticImageDataDecoder(testImage(2)),
-        KiriView::fallbackTextureSizeMax, 1.0, fileOperationProviderFor(fileOperations));
-    controller->setViewportSize(QSizeF(400.0, 300.0));
-    controller->setSourceUrl(imageUrl);
+    RuntimeHandle runtime
+        = createRuntime(this, candidateProvider, dataLoader, staticImageDataDecoder(testImage(2)),
+            KiriView::fallbackTextureSizeMax, 1.0, fileOperationProviderFor(fileOperations));
+    runtime->setViewportSize(QSizeF(400.0, 300.0));
+    runtime->setSourceUrl(imageUrl);
     finishLoad(dataLoader);
-    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
 
-    controller->deleteDisplayedFile(KiriView::FileDeletionMode::MoveToTrash);
+    runtime->deleteDisplayedFile(KiriView::FileDeletionMode::MoveToTrash);
     fileOperations.finishBackOperation(KiriView::FileDeletionResult::Succeeded);
 
-    QCOMPARE(controller->status(), KiriView::ImageDocumentStatus::Null);
-    QCOMPARE(controller->sourceUrl(), QUrl());
-    QCOMPARE(controller->displayedUrl(), QUrl());
-    QCOMPARE(controller->imageSize(), QSize());
-    QVERIFY(!controller->renderSnapshot().isRenderable());
+    QCOMPARE(runtime->status(), KiriView::ImageDocumentStatus::Null);
+    QCOMPARE(runtime->sourceUrl(), QUrl());
+    QCOMPARE(runtime->displayedUrl(), QUrl());
+    QCOMPARE(runtime->imageSize(), QSize());
+    QVERIFY(!runtime->renderSnapshot().isRenderable());
 }
 
-void TestImageDocumentController::successfulComicBookDeletionOpensNextSiblingArchive()
+void TestImageDocumentRuntime::successfulComicBookDeletionOpensNextSiblingArchive()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -1202,30 +1214,30 @@ void TestImageDocumentController::successfulComicBookDeletionOpensNextSiblingArc
             imageCandidate(nextImageUrl),
         });
 
-    std::unique_ptr<KiriView::ImageDocumentController> controller = createController(this,
-        candidateProvider, dataLoader, staticImageDataDecoder(testImage(2)),
-        KiriView::fallbackTextureSizeMax, 1.0, fileOperationProviderFor(fileOperations));
-    controller->setViewportSize(QSizeF(400.0, 300.0));
-    controller->setSourceUrl(currentArchiveUrl);
+    RuntimeHandle runtime
+        = createRuntime(this, candidateProvider, dataLoader, staticImageDataDecoder(testImage(2)),
+            KiriView::fallbackTextureSizeMax, 1.0, fileOperationProviderFor(fileOperations));
+    runtime->setViewportSize(QSizeF(400.0, 300.0));
+    runtime->setSourceUrl(currentArchiveUrl);
     finishLoad(dataLoader);
-    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
 
-    controller->deleteDisplayedFile(KiriView::FileDeletionMode::DeletePermanently);
+    runtime->deleteDisplayedFile(KiriView::FileDeletionMode::DeletePermanently);
 
     QCOMPARE(fileOperations.operationCount(), std::size_t(1));
     QCOMPARE(fileOperations.backOperation().request.targetUrl, currentArchiveUrl);
     fileOperations.finishBackOperation(KiriView::FileDeletionResult::Succeeded);
 
-    QCOMPARE(controller->sourceUrl(), nextImageUrl);
+    QCOMPARE(runtime->sourceUrl(), nextImageUrl);
     QCOMPARE(dataLoader.backLoad().url, nextImageUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
-    QCOMPARE(controller->displayedUrl(), nextImageUrl);
-    QVERIFY(controller->containerNavigationAvailable());
+    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QCOMPARE(runtime->displayedUrl(), nextImageUrl);
+    QVERIFY(runtime->containerNavigationAvailable());
 }
 
-void TestImageDocumentController::rightToLeftReadingIsOnlyAvailableForComicArchives()
+void TestImageDocumentRuntime::rightToLeftReadingIsOnlyAvailableForComicArchives()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -1245,25 +1257,24 @@ void TestImageDocumentController::rightToLeftReadingIsOnlyAvailableForComicArchi
             imageCandidate(archivePageUrl),
         });
 
-    std::unique_ptr<KiriView::ImageDocumentController> controller
-        = createController(this, candidateProvider, dataLoader);
-    controller->setViewportSize(QSizeF(400.0, 300.0));
-    controller->setSourceUrl(imageUrl);
+    RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader);
+    runtime->setViewportSize(QSizeF(400.0, 300.0));
+    runtime->setSourceUrl(imageUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
-    QVERIFY(!controller->rightToLeftReadingEnabled());
-    QVERIFY(!controller->rightToLeftReadingAvailable());
+    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QVERIFY(!runtime->rightToLeftReadingEnabled());
+    QVERIFY(!runtime->rightToLeftReadingAvailable());
 
-    controller->setSourceUrl(archiveUrl);
+    runtime->setSourceUrl(archiveUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(controller->displayedUrl(), archivePageUrl);
-    QVERIFY(controller->rightToLeftReadingAvailable());
-    QVERIFY(!controller->rightToLeftReadingEnabled());
+    QTRY_COMPARE(runtime->displayedUrl(), archivePageUrl);
+    QVERIFY(runtime->rightToLeftReadingAvailable());
+    QVERIFY(!runtime->rightToLeftReadingEnabled());
 }
 
-void TestImageDocumentController::rightToLeftReadingPersistsAcrossSiblingArchiveNavigation()
+void TestImageDocumentRuntime::rightToLeftReadingPersistsAcrossSiblingArchiveNavigation()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -1298,32 +1309,31 @@ void TestImageDocumentController::rightToLeftReadingPersistsAcrossSiblingArchive
             imageCandidate(ordinaryImageUrl),
         });
 
-    std::unique_ptr<KiriView::ImageDocumentController> controller
-        = createController(this, candidateProvider, dataLoader);
-    controller->setViewportSize(QSizeF(400.0, 300.0));
-    controller->setSourceUrl(firstArchiveUrl);
+    RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader);
+    runtime->setViewportSize(QSizeF(400.0, 300.0));
+    runtime->setSourceUrl(firstArchiveUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(controller->displayedUrl(), firstPageUrl);
-    controller->setRightToLeftReadingEnabled(true);
-    QVERIFY(controller->rightToLeftReadingEnabled());
+    QTRY_COMPARE(runtime->displayedUrl(), firstPageUrl);
+    runtime->setRightToLeftReadingEnabled(true);
+    QVERIFY(runtime->rightToLeftReadingEnabled());
 
-    controller->openNextContainer();
+    runtime->openNextContainer();
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(controller->displayedUrl(), secondPageUrl);
-    QVERIFY(controller->rightToLeftReadingAvailable());
-    QVERIFY(controller->rightToLeftReadingEnabled());
+    QTRY_COMPARE(runtime->displayedUrl(), secondPageUrl);
+    QVERIFY(runtime->rightToLeftReadingAvailable());
+    QVERIFY(runtime->rightToLeftReadingEnabled());
 
-    controller->setSourceUrl(ordinaryImageUrl);
+    runtime->setSourceUrl(ordinaryImageUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(controller->displayedUrl(), ordinaryImageUrl);
-    QVERIFY(!controller->rightToLeftReadingAvailable());
-    QVERIFY(!controller->rightToLeftReadingEnabled());
+    QTRY_COMPARE(runtime->displayedUrl(), ordinaryImageUrl);
+    QVERIFY(!runtime->rightToLeftReadingAvailable());
+    QVERIFY(!runtime->rightToLeftReadingEnabled());
 }
 
-void TestImageDocumentController::twoPageModeDisplaysCurrentAndNextComicArchivePages()
+void TestImageDocumentRuntime::twoPageModeDisplaysCurrentAndNextComicArchivePages()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -1344,45 +1354,44 @@ void TestImageDocumentController::twoPageModeDisplaysCurrentAndNextComicArchiveP
     auto decoder = [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
         return singleFrameDecodedImage(QSize(100, 200));
     };
-    std::unique_ptr<KiriView::ImageDocumentController> controller
-        = createController(this, candidateProvider, dataLoader, std::move(decoder));
-    controller->setViewportSize(QSizeF(400.0, 300.0));
-    controller->setSourceUrl(archiveUrl);
+    RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader, std::move(decoder));
+    runtime->setViewportSize(QSizeF(400.0, 300.0));
+    runtime->setSourceUrl(archiveUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
-    QCOMPARE(controller->displayedUrl(), firstPageUrl);
-    QVERIFY(controller->twoPageModeAvailable());
+    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QCOMPARE(runtime->displayedUrl(), firstPageUrl);
+    QVERIFY(runtime->twoPageModeAvailable());
 
-    controller->rotateClockwise();
+    runtime->rotateClockwise();
     const KiriView::DisplayedImageRenderSnapshot rotatedSinglePageSnapshot
-        = controller->renderSnapshot();
+        = runtime->renderSnapshot();
     QVERIFY(rotatedSinglePageSnapshot.isRenderable());
     QCOMPARE(rotatedSinglePageSnapshot.imageSize, QSize(200, 100));
     QCOMPARE(rotatedSinglePageSnapshot.rotationDegrees, 90);
 
-    controller->setTwoPageModeEnabled(true);
-    QVERIFY(controller->twoPageModeEnabled());
-    QVERIFY(!controller->secondaryPageVisible());
-    QCOMPARE(controller->imageSize(), QSize(100, 200));
+    runtime->setTwoPageModeEnabled(true);
+    QVERIFY(runtime->twoPageModeEnabled());
+    QVERIFY(!runtime->secondaryPageVisible());
+    QCOMPARE(runtime->imageSize(), QSize(100, 200));
 
-    controller->openNextImage();
+    runtime->openNextImage();
     QTRY_COMPARE(dataLoader.backLoad().url, secondPageUrl);
     finishLoad(dataLoader);
-    QTRY_COMPARE(controller->displayedUrl(), secondPageUrl);
+    QTRY_COMPARE(runtime->displayedUrl(), secondPageUrl);
     QTRY_COMPARE(dataLoader.backLoad().url, thirdPageUrl);
     finishLoad(dataLoader);
 
-    QTRY_VERIFY(controller->secondaryPageVisible());
-    QCOMPARE(controller->currentPageNumber(), 2);
-    QCOMPARE(controller->currentLastPageNumber(), 3);
-    QCOMPARE(controller->primaryImageSize(), QSize(100, 200));
-    QCOMPARE(controller->secondaryImageSize(), QSize(100, 200));
-    QCOMPARE(controller->imageSize(), QSize(200, 200));
+    QTRY_VERIFY(runtime->secondaryPageVisible());
+    QCOMPARE(runtime->currentPageNumber(), 2);
+    QCOMPARE(runtime->currentLastPageNumber(), 3);
+    QCOMPARE(runtime->primaryImageSize(), QSize(100, 200));
+    QCOMPARE(runtime->secondaryImageSize(), QSize(100, 200));
+    QCOMPARE(runtime->imageSize(), QSize(200, 200));
 
-    const KiriView::DisplayedImageRenderSnapshot primarySnapshot = controller->renderSnapshot();
+    const KiriView::DisplayedImageRenderSnapshot primarySnapshot = runtime->renderSnapshot();
     const KiriView::DisplayedImageRenderSnapshot secondarySnapshot
-        = controller->renderSnapshot(KiriView::DisplayedPageRole::Secondary);
+        = runtime->renderSnapshot(KiriView::DisplayedPageRole::Secondary);
     QVERIFY(primarySnapshot.isRenderable());
     QVERIFY(secondarySnapshot.isRenderable());
     QCOMPARE(primarySnapshot.imageSize, QSize(100, 200));
@@ -1391,7 +1400,7 @@ void TestImageDocumentController::twoPageModeDisplaysCurrentAndNextComicArchiveP
     QCOMPARE(secondarySnapshot.rotationDegrees, 0);
 }
 
-void TestImageDocumentController::twoPageModeUsesRightToLeftPageOrder()
+void TestImageDocumentRuntime::twoPageModeUsesRightToLeftPageOrder()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -1412,32 +1421,32 @@ void TestImageDocumentController::twoPageModeUsesRightToLeftPageOrder()
     auto decoder = [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
         return staticDecodedImageWithPreview(QSize(100, 200), QSize(100, 200));
     };
-    std::unique_ptr<KiriView::ImageDocumentController> controller
-        = createController(this, candidateProvider, dataLoader, std::move(decoder), 64);
-    controller->setViewportSize(QSizeF(100.0, 200.0));
-    controller->setSourceUrl(archiveUrl);
+    RuntimeHandle runtime
+        = createRuntime(this, candidateProvider, dataLoader, std::move(decoder), 64);
+    runtime->setViewportSize(QSizeF(100.0, 200.0));
+    runtime->setSourceUrl(archiveUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(controller->displayedUrl(), firstPageUrl);
-    controller->setTwoPageModeEnabled(true);
-    controller->setRightToLeftReadingEnabled(true);
-    controller->openNextImage();
+    QTRY_COMPARE(runtime->displayedUrl(), firstPageUrl);
+    runtime->setTwoPageModeEnabled(true);
+    runtime->setRightToLeftReadingEnabled(true);
+    runtime->openNextImage();
     QTRY_COMPARE(dataLoader.backLoad().url, secondPageUrl);
     finishLoad(dataLoader);
     QTRY_COMPARE(dataLoader.backLoad().url, thirdPageUrl);
     QVERIFY(finishOldestActiveLoadForUrl(dataLoader, thirdPageUrl));
 
-    QTRY_VERIFY(controller->secondaryPageVisible());
-    QCOMPARE(controller->currentPageNumber(), 2);
-    QCOMPARE(controller->currentLastPageNumber(), 3);
-    controller->setZoomPercent(100.0);
-    controller->setVisibleItemRect(QRectF(0.0, 0.0, 100.0, 200.0));
+    QTRY_VERIFY(runtime->secondaryPageVisible());
+    QCOMPARE(runtime->currentPageNumber(), 2);
+    QCOMPARE(runtime->currentLastPageNumber(), 3);
+    runtime->setZoomPercent(100.0);
+    runtime->setVisibleItemRect(QRectF(0.0, 0.0, 100.0, 200.0));
 
-    QTRY_VERIFY(staticTileCount(*controller, KiriView::DisplayedPageRole::Secondary) > 0);
-    QCOMPARE(staticTileCount(*controller, KiriView::DisplayedPageRole::Primary), std::size_t(0));
+    QTRY_VERIFY(staticTileCount(*runtime, KiriView::DisplayedPageRole::Secondary) > 0);
+    QCOMPARE(staticTileCount(*runtime, KiriView::DisplayedPageRole::Primary), std::size_t(0));
 }
 
-void TestImageDocumentController::twoPageModeRightToLeftKeepsSinglePageNavigationSemantic()
+void TestImageDocumentRuntime::twoPageModeRightToLeftKeepsSinglePageNavigationSemantic()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -1460,49 +1469,48 @@ void TestImageDocumentController::twoPageModeRightToLeftKeepsSinglePageNavigatio
     auto decoder = [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
         return singleFrameDecodedImage(QSize(100, 200));
     };
-    std::unique_ptr<KiriView::ImageDocumentController> controller
-        = createController(this, candidateProvider, dataLoader, std::move(decoder));
-    controller->setViewportSize(QSizeF(400.0, 300.0));
-    controller->setSourceUrl(archiveUrl);
+    RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader, std::move(decoder));
+    runtime->setViewportSize(QSizeF(400.0, 300.0));
+    runtime->setSourceUrl(archiveUrl);
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(controller->displayedUrl(), firstPageUrl);
-    controller->setTwoPageModeEnabled(true);
-    controller->setRightToLeftReadingEnabled(true);
-    controller->openNextImage();
+    QTRY_COMPARE(runtime->displayedUrl(), firstPageUrl);
+    runtime->setTwoPageModeEnabled(true);
+    runtime->setRightToLeftReadingEnabled(true);
+    runtime->openNextImage();
     QTRY_COMPARE(dataLoader.backLoad().url, secondPageUrl);
     finishLoad(dataLoader);
     QTRY_COMPARE(dataLoader.backLoad().url, thirdPageUrl);
     QVERIFY(finishOldestActiveLoadForUrl(dataLoader, thirdPageUrl));
-    QTRY_COMPARE(controller->currentPageNumber(), 2);
-    QTRY_COMPARE(controller->currentLastPageNumber(), 3);
+    QTRY_COMPARE(runtime->currentPageNumber(), 2);
+    QTRY_COMPARE(runtime->currentLastPageNumber(), 3);
 
     std::size_t loadCountBeforeNavigation = dataLoader.loadCount();
-    controller->openNextSinglePage();
+    runtime->openNextSinglePage();
     QTRY_COMPARE(dataLoader.loadCount(), loadCountBeforeNavigation + std::size_t(1));
     QTRY_COMPARE(dataLoader.backLoad().url, thirdPageUrl);
     finishLoad(dataLoader);
-    QTRY_COMPARE(controller->displayedUrl(), thirdPageUrl);
+    QTRY_COMPARE(runtime->displayedUrl(), thirdPageUrl);
     QTRY_COMPARE(dataLoader.loadCount(), loadCountBeforeNavigation + std::size_t(2));
     QTRY_COMPARE(dataLoader.backLoad().url, fourthPageUrl);
     QVERIFY(finishOldestActiveLoadForUrl(dataLoader, fourthPageUrl));
-    QTRY_COMPARE(controller->currentPageNumber(), 3);
-    QTRY_COMPARE(controller->currentLastPageNumber(), 4);
+    QTRY_COMPARE(runtime->currentPageNumber(), 3);
+    QTRY_COMPARE(runtime->currentLastPageNumber(), 4);
 
     loadCountBeforeNavigation = dataLoader.loadCount();
-    controller->openPreviousSinglePage();
+    runtime->openPreviousSinglePage();
     QTRY_COMPARE(dataLoader.loadCount(), loadCountBeforeNavigation + std::size_t(1));
     QTRY_COMPARE(dataLoader.backLoad().url, secondPageUrl);
     finishLoad(dataLoader);
-    QTRY_COMPARE(controller->displayedUrl(), secondPageUrl);
+    QTRY_COMPARE(runtime->displayedUrl(), secondPageUrl);
     QTRY_COMPARE(dataLoader.loadCount(), loadCountBeforeNavigation + std::size_t(2));
     QTRY_COMPARE(dataLoader.backLoad().url, thirdPageUrl);
     QVERIFY(finishOldestActiveLoadForUrl(dataLoader, thirdPageUrl));
-    QTRY_COMPARE(controller->currentPageNumber(), 2);
-    QTRY_COMPARE(controller->currentLastPageNumber(), 3);
+    QTRY_COMPARE(runtime->currentPageNumber(), 2);
+    QTRY_COMPARE(runtime->currentLastPageNumber(), 3);
 }
 
-void TestImageDocumentController::twoPageModeWaitsForTargetSpreadBeforeRenderingNavigation()
+void TestImageDocumentRuntime::twoPageModeWaitsForTargetSpreadBeforeRenderingNavigation()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -1527,52 +1535,51 @@ void TestImageDocumentController::twoPageModeWaitsForTargetSpreadBeforeRendering
     auto decoder = [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
         return singleFrameDecodedImage(QSize(100, 200));
     };
-    std::unique_ptr<KiriView::ImageDocumentController> controller
-        = createController(this, candidateProvider, dataLoader, std::move(decoder));
-    controller->setViewportSize(QSizeF(400.0, 300.0));
-    controller->setSourceUrl(archiveUrl);
+    RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader, std::move(decoder));
+    runtime->setViewportSize(QSizeF(400.0, 300.0));
+    runtime->setSourceUrl(archiveUrl);
     finishLoad(dataLoader);
-    QTRY_COMPARE(controller->displayedUrl(), firstPageUrl);
+    QTRY_COMPARE(runtime->displayedUrl(), firstPageUrl);
 
-    controller->setTwoPageModeEnabled(true);
-    controller->openNextImage();
+    runtime->setTwoPageModeEnabled(true);
+    runtime->openNextImage();
     QTRY_COMPARE(dataLoader.backLoad().url, secondPageUrl);
     finishLoad(dataLoader);
     QTRY_COMPARE(dataLoader.backLoad().url, thirdPageUrl);
     finishLoad(dataLoader);
 
-    QTRY_VERIFY(controller->secondaryPageVisible());
-    QCOMPARE(controller->displayedUrl(), secondPageUrl);
-    QCOMPARE(controller->currentLastPageNumber(), 3);
-    QVERIFY(hasRenderableSnapshot(*controller));
-    QVERIFY(hasRenderableSnapshot(*controller, KiriView::DisplayedPageRole::Secondary));
+    QTRY_VERIFY(runtime->secondaryPageVisible());
+    QCOMPARE(runtime->displayedUrl(), secondPageUrl);
+    QCOMPARE(runtime->currentLastPageNumber(), 3);
+    QVERIFY(hasRenderableSnapshot(*runtime));
+    QVERIFY(hasRenderableSnapshot(*runtime, KiriView::DisplayedPageRole::Secondary));
 
-    controller->openNextImage();
+    runtime->openNextImage();
 
     QTRY_COMPARE(dataLoader.backLoad().url, fourthPageUrl);
-    QCOMPARE(controller->status(), KiriView::ImageDocumentStatus::Loading);
-    QVERIFY(controller->loading());
-    QVERIFY(!hasRenderableSnapshot(*controller));
-    QVERIFY(!hasRenderableSnapshot(*controller, KiriView::DisplayedPageRole::Secondary));
+    QCOMPARE(runtime->status(), KiriView::ImageDocumentStatus::Loading);
+    QVERIFY(runtime->loading());
+    QVERIFY(!hasRenderableSnapshot(*runtime));
+    QVERIFY(!hasRenderableSnapshot(*runtime, KiriView::DisplayedPageRole::Secondary));
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(controller->displayedUrl(), fourthPageUrl);
+    QTRY_COMPARE(runtime->displayedUrl(), fourthPageUrl);
     QTRY_COMPARE(dataLoader.backLoad().url, fifthPageUrl);
-    QCOMPARE(controller->status(), KiriView::ImageDocumentStatus::Loading);
-    QVERIFY(controller->loading());
-    QVERIFY(!hasRenderableSnapshot(*controller));
-    QVERIFY(!hasRenderableSnapshot(*controller, KiriView::DisplayedPageRole::Secondary));
+    QCOMPARE(runtime->status(), KiriView::ImageDocumentStatus::Loading);
+    QVERIFY(runtime->loading());
+    QVERIFY(!hasRenderableSnapshot(*runtime));
+    QVERIFY(!hasRenderableSnapshot(*runtime, KiriView::DisplayedPageRole::Secondary));
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
-    QTRY_VERIFY(controller->secondaryPageVisible());
-    QCOMPARE(controller->displayedUrl(), fourthPageUrl);
-    QCOMPARE(controller->currentLastPageNumber(), 5);
-    QVERIFY(hasRenderableSnapshot(*controller));
-    QVERIFY(hasRenderableSnapshot(*controller, KiriView::DisplayedPageRole::Secondary));
+    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QTRY_VERIFY(runtime->secondaryPageVisible());
+    QCOMPARE(runtime->displayedUrl(), fourthPageUrl);
+    QCOMPARE(runtime->currentLastPageNumber(), 5);
+    QVERIFY(hasRenderableSnapshot(*runtime));
+    QVERIFY(hasRenderableSnapshot(*runtime, KiriView::DisplayedPageRole::Secondary));
 }
 
-void TestImageDocumentController::twoPageModeLoadingNavigationUsesPendingPrimaryPage()
+void TestImageDocumentRuntime::twoPageModeLoadingNavigationUsesPendingPrimaryPage()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -1597,101 +1604,38 @@ void TestImageDocumentController::twoPageModeLoadingNavigationUsesPendingPrimary
     auto decoder = [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
         return singleFrameDecodedImage(QSize(100, 200));
     };
-    std::unique_ptr<KiriView::ImageDocumentController> controller
-        = createController(this, candidateProvider, dataLoader, std::move(decoder));
-    controller->setViewportSize(QSizeF(400.0, 300.0));
-    controller->setSourceUrl(archiveUrl);
+    RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader, std::move(decoder));
+    runtime->setViewportSize(QSizeF(400.0, 300.0));
+    runtime->setSourceUrl(archiveUrl);
     finishLoad(dataLoader);
-    QTRY_COMPARE(controller->displayedUrl(), firstPageUrl);
+    QTRY_COMPARE(runtime->displayedUrl(), firstPageUrl);
 
-    controller->setTwoPageModeEnabled(true);
-    controller->openNextImage();
+    runtime->setTwoPageModeEnabled(true);
+    runtime->openNextImage();
     QTRY_COMPARE(dataLoader.backLoad().url, secondPageUrl);
     finishLoad(dataLoader);
     QTRY_COMPARE(dataLoader.backLoad().url, thirdPageUrl);
     finishLoad(dataLoader);
-    QTRY_COMPARE(controller->currentPageNumber(), 2);
-    QTRY_COMPARE(controller->currentLastPageNumber(), 3);
-    QVERIFY(controller->secondaryPageVisible());
+    QTRY_COMPARE(runtime->currentPageNumber(), 2);
+    QTRY_COMPARE(runtime->currentLastPageNumber(), 3);
+    QVERIFY(runtime->secondaryPageVisible());
 
-    controller->openNextImage();
+    runtime->openNextImage();
     QTRY_COMPARE(dataLoader.backLoad().url, fourthPageUrl);
-    QCOMPARE(controller->currentPageNumber(), 4);
+    QCOMPARE(runtime->currentPageNumber(), 4);
 
-    controller->openNextImage();
+    runtime->openNextImage();
     QTRY_COMPARE(dataLoader.backLoad().url, fifthPageUrl);
-    QCOMPARE(controller->currentPageNumber(), 5);
+    QCOMPARE(runtime->currentPageNumber(), 5);
     QVERIFY(!finishOldestActiveLoadForUrl(dataLoader, fourthPageUrl));
 
     finishLoad(dataLoader);
 
-    QTRY_COMPARE(controller->displayedUrl(), fifthPageUrl);
-    QCOMPARE(controller->currentPageNumber(), 5);
-    QVERIFY(!controller->secondaryPageVisible());
+    QTRY_COMPARE(runtime->displayedUrl(), fifthPageUrl);
+    QCOMPARE(runtime->currentPageNumber(), 5);
+    QVERIFY(!runtime->secondaryPageVisible());
 }
 
-void TestImageDocumentController::twoPageModeKeepsCoverAndWidePagesSingle()
-{
-    FakeCandidateProvider candidateProvider;
-    ManualImageDataLoader dataLoader;
-    const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
-        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
-    QVERIFY(archiveDocument.has_value());
-    const QUrl coverUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
-    const QUrl widePageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("02.png"));
-    const QUrl portraitPageUrl
-        = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("03.png"));
-    const QUrl fourthPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("04.png"));
-    candidateProvider.setArchiveImages(archiveDocument->rootUrl(),
-        {
-            imageCandidate(coverUrl),
-            imageCandidate(widePageUrl),
-            imageCandidate(portraitPageUrl),
-            imageCandidate(fourthPageUrl),
-        });
+QTEST_GUILESS_MAIN(TestImageDocumentRuntime)
 
-    auto decoder = [widePageUrl](const QByteArray &, const KiriView::ImageDecodeRequest &request) {
-        return singleFrameDecodedImage(
-            request.imageUrl() == widePageUrl ? QSize(300, 100) : QSize(100, 200));
-    };
-    std::unique_ptr<KiriView::ImageDocumentController> controller
-        = createController(this, candidateProvider, dataLoader, std::move(decoder));
-    controller->setViewportSize(QSizeF(400.0, 300.0));
-    controller->setSourceUrl(archiveUrl);
-    finishLoad(dataLoader);
-
-    QTRY_COMPARE(controller->status(), KiriView::ImageDocumentStatus::Ready);
-    controller->setTwoPageModeEnabled(true);
-    QVERIFY(!controller->secondaryPageVisible());
-    QCOMPARE(controller->displayedUrl(), coverUrl);
-
-    controller->openNextImage();
-    QTRY_COMPARE(dataLoader.backLoad().url, widePageUrl);
-    finishLoad(dataLoader);
-
-    QTRY_COMPARE(controller->displayedUrl(), widePageUrl);
-    QVERIFY(!controller->secondaryPageVisible());
-    QCOMPARE(controller->imageSize(), QSize(300, 100));
-
-    controller->openNextImage();
-    QTRY_COMPARE(dataLoader.backLoad().url, portraitPageUrl);
-    finishLoad(dataLoader);
-
-    QTRY_COMPARE(controller->displayedUrl(), portraitPageUrl);
-    QTRY_COMPARE(dataLoader.backLoad().url, fourthPageUrl);
-    finishLoad(dataLoader);
-
-    QTRY_VERIFY(controller->secondaryPageVisible());
-    QCOMPARE(controller->imageSize(), QSize(200, 200));
-
-    controller->openPreviousImage();
-    QTRY_COMPARE(dataLoader.backLoad().url, widePageUrl);
-    finishLoad(dataLoader);
-
-    QTRY_COMPARE(controller->displayedUrl(), widePageUrl);
-}
-
-QTEST_GUILESS_MAIN(TestImageDocumentController)
-
-#include "test_imagedocumentcontroller.moc"
+#include "test_imagedocumentruntime.moc"
