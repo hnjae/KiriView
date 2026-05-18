@@ -42,11 +42,11 @@ KCoreDirLister *createLiveImageCandidateLister()
     return lister;
 }
 
-QUrl normalizedDirectoryUrl(QUrl url) { return url.adjusted(QUrl::NormalizePathSegments); }
+QUrl normalizedDirectoryUrl(QUrl url) { return KiriView::normalizedUrlForIdentity(url); }
 
 QString keyForDirectoryUrl(const QUrl &url)
 {
-    return normalizedDirectoryUrl(url).toString(QUrl::FullyEncoded);
+    return KiriView::normalizedUrlIdentityKey(normalizedDirectoryUrl(url), QUrl::FullyEncoded);
 }
 
 bool isLiveLocalDirectoryUrl(const QUrl &url)

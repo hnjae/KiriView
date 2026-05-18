@@ -4,6 +4,7 @@
 #include "imagespreadpagecache.h"
 
 #include "imagespreadgeometry.h"
+#include "imageurl.h"
 
 namespace KiriView {
 void ImageSpreadPageCache::cachePageSize(const QUrl &url, const QSize &imageSize)
@@ -31,8 +32,5 @@ std::optional<bool> ImageSpreadPageCache::cachedPageIsWide(const QUrl &url) cons
     return cached->second;
 }
 
-QString ImageSpreadPageCache::cacheKey(const QUrl &url)
-{
-    return url.adjusted(QUrl::NormalizePathSegments).toString();
-}
+QString ImageSpreadPageCache::cacheKey(const QUrl &url) { return normalizedUrlIdentityKey(url); }
 }

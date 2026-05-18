@@ -15,17 +15,6 @@
 
 namespace {
 constexpr std::size_t recentDisplayedCacheLimit = 4;
-
-std::optional<QUrl> normalizedValidImageUrl(const QUrl &url)
-{
-    const QUrl normalizedUrl = KiriView::normalizedImageUrl(url);
-    if (!normalizedUrl.isValid() || normalizedUrl.isEmpty()) {
-        return std::nullopt;
-    }
-
-    return normalizedUrl;
-}
-
 }
 
 namespace KiriView {

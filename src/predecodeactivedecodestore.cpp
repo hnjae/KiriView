@@ -9,24 +9,12 @@
 #include <algorithm>
 #include <utility>
 
-namespace {
-std::optional<QUrl> normalizedValidUrl(const QUrl &url)
-{
-    const QUrl normalizedUrl = KiriView::normalizedImageUrl(url);
-    if (!normalizedUrl.isValid() || normalizedUrl.isEmpty()) {
-        return std::nullopt;
-    }
-
-    return normalizedUrl;
-}
-}
-
 namespace KiriView {
 PredecodeActiveDecodeStore::~PredecodeActiveDecodeStore() { cancel(); }
 
 void PredecodeActiveDecodeStore::add(ImageDecodeRequest request, ImageDecodeJob *decodeJob)
 {
-    const std::optional<QUrl> normalizedUrl = normalizedValidUrl(request.imageUrl());
+    const std::optional<QUrl> normalizedUrl = normalizedValidImageUrl(request.imageUrl());
     if (request.isEmpty() || decodeJob == nullptr || !normalizedUrl.has_value()
         || containsUrl(*normalizedUrl)) {
         return;
@@ -39,7 +27,7 @@ std::size_t PredecodeActiveDecodeStore::size() const { return m_entries.size(); 
 
 bool PredecodeActiveDecodeStore::containsUrl(const QUrl &url) const
 {
-    const std::optional<QUrl> normalizedUrl = normalizedValidUrl(url);
+    const std::optional<QUrl> normalizedUrl = normalizedValidImageUrl(url);
     if (!normalizedUrl.has_value()) {
         return false;
     }

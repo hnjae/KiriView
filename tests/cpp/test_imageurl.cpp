@@ -10,6 +10,7 @@
 #include <QTest>
 #include <QUrl>
 #include <QtGlobal>
+#include <optional>
 
 namespace {
 QUrl archiveUrl(const QString &scheme, const QString &path)
@@ -27,6 +28,7 @@ class TestImageUrl : public QObject
 
 private Q_SLOTS:
     void normalizedContainerUrlsStripQueryFragmentsAndCleanLocalPaths();
+    void normalizedUrlIdentityHelpersRejectInvalidImageUrlsAndPreserveKeyFormatting();
     void sameNormalizedUrlMatchesPathSegments();
     void sameContainerNavigationUrlMatchesNormalizedPaths();
     void parentUrlForContainerNavigationHandlesContainers();
@@ -47,6 +49,22 @@ void TestImageUrl::normalizedContainerUrlsStripQueryFragmentsAndCleanLocalPaths(
     directoryUrl.setFragment(QStringLiteral("view"));
     QCOMPARE(KiriView::normalizedDirectoryContainerUrl(directoryUrl),
         QUrl::fromLocalFile(QStringLiteral("/images/chapter/")));
+}
+
+void TestImageUrl::normalizedUrlIdentityHelpersRejectInvalidImageUrlsAndPreserveKeyFormatting()
+{
+    const QUrl normalizedUrl = QUrl::fromLocalFile(QStringLiteral("/images/page 1.png"));
+    const QUrl equivalentUrl = QUrl::fromLocalFile(QStringLiteral("/images/chapter/../page 1.png"));
+
+    QCOMPARE(KiriView::normalizedUrlForIdentity(equivalentUrl), normalizedUrl);
+    const std::optional<QUrl> validImageUrl = KiriView::normalizedValidImageUrl(equivalentUrl);
+    QVERIFY(validImageUrl.has_value());
+    QCOMPARE(*validImageUrl, normalizedUrl);
+    QVERIFY(!KiriView::normalizedValidImageUrl(QUrl()).has_value());
+    QCOMPARE(KiriView::normalizedUrlIdentityKey(equivalentUrl),
+        normalizedUrl.toString(QUrl::PrettyDecoded));
+    QCOMPARE(KiriView::normalizedUrlIdentityKey(equivalentUrl, QUrl::FullyEncoded),
+        normalizedUrl.toString(QUrl::FullyEncoded));
 }
 
 void TestImageUrl::sameNormalizedUrlMatchesPathSegments()

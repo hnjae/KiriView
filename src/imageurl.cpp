@@ -100,7 +100,24 @@ std::optional<QUrl> documentPortalHostUrl(const QUrl &url)
 }
 
 namespace KiriView {
-QUrl normalizedImageUrl(const QUrl &url) { return url.adjusted(QUrl::NormalizePathSegments); }
+QUrl normalizedUrlForIdentity(const QUrl &url) { return url.adjusted(QUrl::NormalizePathSegments); }
+
+QString normalizedUrlIdentityKey(const QUrl &url, QUrl::ComponentFormattingOptions options)
+{
+    return normalizedUrlForIdentity(url).toString(options);
+}
+
+QUrl normalizedImageUrl(const QUrl &url) { return normalizedUrlForIdentity(url); }
+
+std::optional<QUrl> normalizedValidImageUrl(const QUrl &url)
+{
+    const QUrl normalizedUrl = normalizedImageUrl(url);
+    if (!normalizedUrl.isValid() || normalizedUrl.isEmpty()) {
+        return std::nullopt;
+    }
+
+    return normalizedUrl;
+}
 
 QUrl normalizedFileContainerUrl(const QUrl &url)
 {
