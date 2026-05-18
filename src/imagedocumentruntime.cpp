@@ -280,6 +280,9 @@ void ImageDocumentRuntime::notify(ImageDocumentChange change)
 ImageDocumentEffectOperations ImageDocumentRuntime::effectOperations()
 {
     ImageDocumentEffectOperations operations;
+    operations.cancelFileDeletion = [this]() { documentDeletionController->cancel(); };
+    operations.stopPresentationAnimation = [this]() { presentationController->stopAnimation(); };
+    operations.shutdownSpread = [this]() { spreadController->shutdown(); };
     operations.clearArchiveSession = [this]() {
         if (archiveSessionStore != nullptr) {
             archiveSessionStore->clear();
@@ -341,16 +344,8 @@ ImageDocumentEffectOperations ImageDocumentRuntime::effectOperations()
 
 void ImageDocumentRuntime::shutdown()
 {
-    documentDeletionController->cancel();
-    presentationController->stopAnimation();
-    spreadController->shutdown();
-    predecodeController->cancel();
-    navigationService->cancelPageNavigationUpdate();
-    navigationService->cancelContainerNavigation();
-    navigationService->cancelNavigation();
-    openController->cancel();
-    if (archiveSessionStore != nullptr) {
-        archiveSessionStore->clear();
+    if (effectExecutor != nullptr) {
+        effectExecutor->shutdownRuntime();
     }
 }
 

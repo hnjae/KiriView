@@ -34,6 +34,19 @@ void ImageDocumentEffectExecutor::dispatch(ImageDocumentEffect effect)
     std::visit([this](const auto &payload) { dispatchPayload(payload); }, effect.payload);
 }
 
+void ImageDocumentEffectExecutor::shutdownRuntime()
+{
+    run(m_operations.cancelFileDeletion);
+    run(m_operations.stopPresentationAnimation);
+    run(m_operations.shutdownSpread);
+    run(m_operations.cancelPredecode);
+    run(m_operations.cancelPageNavigationUpdate);
+    run(m_operations.cancelContainerNavigation);
+    run(m_operations.cancelNavigation);
+    run(m_operations.cancelOpen);
+    run(m_operations.clearArchiveSession);
+}
+
 void ImageDocumentEffectExecutor::dispatchGeneratedEffects(ImageDocumentEffects effects)
 {
     for (ImageDocumentEffect &effect : effects) {

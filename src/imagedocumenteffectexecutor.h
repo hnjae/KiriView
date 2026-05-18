@@ -12,6 +12,9 @@
 
 namespace KiriView {
 struct ImageDocumentEffectOperations {
+    std::function<void()> cancelFileDeletion;
+    std::function<void()> stopPresentationAnimation;
+    std::function<void()> shutdownSpread;
     std::function<void()> clearArchiveSession;
     std::function<void()> clearPredecode;
     std::function<void()> cancelPredecode;
@@ -45,6 +48,7 @@ public:
     explicit ImageDocumentEffectExecutor(ImageDocumentEffectOperations operations);
 
     void dispatch(ImageDocumentEffect effect);
+    void shutdownRuntime();
 
 private:
     void dispatchGeneratedEffects(ImageDocumentEffects effects);

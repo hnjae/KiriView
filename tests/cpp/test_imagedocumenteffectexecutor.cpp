@@ -25,6 +25,10 @@ struct RecordedEffectOperations {
 
     RecordedEffectOperations()
     {
+        operations.cancelFileDeletion = [this]() { record(QStringLiteral("cancelFileDeletion")); };
+        operations.stopPresentationAnimation
+            = [this]() { record(QStringLiteral("stopPresentationAnimation")); };
+        operations.shutdownSpread = [this]() { record(QStringLiteral("shutdownSpread")); };
         operations.clearArchiveSession
             = [this]() { record(QStringLiteral("clearArchiveSession")); };
         operations.clearPredecode = [this]() { record(QStringLiteral("clearPredecode")); };
@@ -116,6 +120,7 @@ class TestImageDocumentEffectExecutor : public QObject
 private Q_SLOTS:
     void clearImageDispatchesOrderedRuntimeOperations();
     void clearDeletedImageDispatchesDeletionClearThenGeneratedEffects();
+    void shutdownRuntimeDispatchesOrderedLifecycleOperations();
     void payloadEffectsDispatchToRuntimeOperations();
 };
 
@@ -172,6 +177,27 @@ void TestImageDocumentEffectExecutor::clearDeletedImageDispatchesDeletionClearTh
         }));
     QVERIFY(recorded.url.isEmpty());
     QVERIFY(recorded.errorString.isEmpty());
+}
+
+void TestImageDocumentEffectExecutor::shutdownRuntimeDispatchesOrderedLifecycleOperations()
+{
+    RecordedEffectOperations recorded;
+    KiriView::ImageDocumentEffectExecutor executor(recorded.operations);
+
+    executor.shutdownRuntime();
+
+    QCOMPARE(recorded.events,
+        QStringList({
+            QStringLiteral("cancelFileDeletion"),
+            QStringLiteral("stopPresentationAnimation"),
+            QStringLiteral("shutdownSpread"),
+            QStringLiteral("cancelPredecode"),
+            QStringLiteral("cancelPageNavigationUpdate"),
+            QStringLiteral("cancelContainerNavigation"),
+            QStringLiteral("cancelNavigation"),
+            QStringLiteral("cancelOpen"),
+            QStringLiteral("clearArchiveSession"),
+        }));
 }
 
 void TestImageDocumentEffectExecutor::payloadEffectsDispatchToRuntimeOperations()
