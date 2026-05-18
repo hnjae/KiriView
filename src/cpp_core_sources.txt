@@ -24,6 +24,7 @@ src/imageanimationpolicy.cpp
 src/imageanimationplayer.cpp
 src/imageasyncdependencies.cpp
 src/imagebytecost.cpp
+src/imagecontainernavigationcontroller.cpp
 src/imagecontainer.cpp
 src/imagerendering.cpp
 src/imagerotation.cpp

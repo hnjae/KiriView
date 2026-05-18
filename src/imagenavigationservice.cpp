@@ -38,6 +38,11 @@ ImageNavigationService::ImageNavigationService(
     : QObject(parent)
     , m_callbacks(std::move(callbacks))
     , m_candidateRepository(std::move(candidateProvider))
+    , m_containerNavigation(this, m_candidateRepository,
+          ImageContainerNavigationController::Callbacks {
+              m_callbacks.openContainerImage,
+              m_callbacks.containerNavigationError,
+          })
 {
 }
 
@@ -123,65 +128,15 @@ void ImageNavigationService::finishNavigation(std::vector<ImageNavigationCandida
 void ImageNavigationService::openAdjacentContainer(
     const QUrl &currentContainerUrl, NavigationDirection direction)
 {
-    if (currentContainerUrl.isEmpty()) {
-        return;
-    }
-
-    const QUrl parentUrl = parentUrlForContainerNavigation(currentContainerUrl);
-    if (!parentUrl.isValid() || parentUrl.isEmpty()) {
+    if (!ImageContainerNavigationController::canOpenAdjacentContainer(currentContainerUrl)) {
         return;
     }
 
     cancelNavigation();
-    cancelContainerNavigation();
-
-    m_containerNavigationListerJob = m_candidateRepository.loadContainers(
-        this, parentUrl,
-        [this, direction, currentContainerUrl](
-            std::vector<ContainerNavigationCandidate> candidates) {
-            finishContainerNavigation(std::move(candidates), direction, currentContainerUrl);
-        },
-        [](const QString &) {});
+    m_containerNavigation.openAdjacentContainer(currentContainerUrl, direction);
 }
 
-void ImageNavigationService::cancelContainerNavigation()
-{
-    m_containerNavigationListerJob.cancel();
-    m_containerNavigationListJob.cancel();
-}
-
-void ImageNavigationService::finishContainerNavigation(
-    std::vector<ContainerNavigationCandidate> candidates, NavigationDirection direction,
-    const QUrl &currentContainerUrl)
-{
-    const auto target
-        = adjacentContainerNavigationCandidate(candidates, currentContainerUrl, direction);
-    if (!target.has_value()) {
-        return;
-    }
-
-    m_containerNavigationListJob = m_candidateRepository.loadFirstImageInContainer(
-        this, *target,
-        [this](const QUrl &imageUrl, const QUrl &containerUrl) {
-            openImageFromContainerNavigation(imageUrl, containerUrl);
-        },
-        [this](const QUrl &containerUrl, ImageCandidateRepositoryError error,
-            const QString &errorString) {
-            finishContainerNavigationLoadWithError(containerUrl, error, errorString);
-        });
-}
-
-void ImageNavigationService::openImageFromContainerNavigation(
-    const QUrl &imageUrl, const QUrl &containerUrl)
-{
-    invokeIfSet(m_callbacks.openContainerImage, imageUrl, containerUrl);
-}
-
-void ImageNavigationService::finishContainerNavigationLoadWithError(
-    const QUrl &containerUrl, ContainerNavigationError error, const QString &errorString)
-{
-    invokeIfSet(m_callbacks.containerNavigationError, containerUrl, error, errorString);
-}
+void ImageNavigationService::cancelContainerNavigation() { m_containerNavigation.cancel(); }
 
 void ImageNavigationService::updatePageNavigation(const DisplayContext &context)
 {

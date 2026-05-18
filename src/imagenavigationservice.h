@@ -5,6 +5,7 @@
 #define KIRIVIEW_IMAGENAVIGATIONSERVICE_H
 
 #include "imagecandidaterepository.h"
+#include "imagecontainernavigationcontroller.h"
 #include "imagelocation.h"
 #include "imagenavigationtypes.h"
 #include "imagepagenavigationmodel.h"
@@ -17,8 +18,6 @@
 #include <vector>
 
 namespace KiriView {
-using ContainerNavigationError = ImageCandidateRepositoryError;
-
 class ImageNavigationService final : public QObject
 {
 public:
@@ -67,12 +66,6 @@ private:
         NavigationDirection direction, const QUrl &currentUrl,
         ImageCandidateListSource candidateSource);
 
-    void finishContainerNavigation(std::vector<ContainerNavigationCandidate> candidates,
-        NavigationDirection direction, const QUrl &currentContainerUrl);
-    void openImageFromContainerNavigation(const QUrl &imageUrl, const QUrl &containerUrl);
-    void finishContainerNavigationLoadWithError(
-        const QUrl &containerUrl, ContainerNavigationError error, const QString &errorString);
-
     void notifyPageNavigationChanged();
     void watchPageNavigationChanges(const ImageCandidateListContext &context);
     void updatePageNavigationFromChangedCandidates(
@@ -83,9 +76,8 @@ private:
 
     Callbacks m_callbacks;
     ImageCandidateRepository m_candidateRepository;
+    ImageContainerNavigationController m_containerNavigation;
     ImageIoJob m_navigationListerJob;
-    ImageIoJob m_containerNavigationListerJob;
-    ImageIoJob m_containerNavigationListJob;
     ImageIoJob m_pageNavigationListerJob;
     ImageIoJob m_pageNavigationChangesJob;
     ImagePageNavigationModel m_pageNavigation;
