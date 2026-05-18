@@ -3,7 +3,7 @@
 
 #include "imagelocation.h"
 
-#include "image_test_support.h"
+#include "candidate_test_support.h"
 
 #include <QObject>
 #include <QTest>

@@ -3,7 +3,7 @@
 
 #include "imageremovalfallback.h"
 
-#include "image_test_support.h"
+#include "candidate_test_support.h"
 #include "imagecontainer.h"
 
 #include <QObject>

@@ -1,7 +1,8 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "image_test_support.h"
+#include "candidate_test_support.h"
+#include "image_async_test_support.h"
 #include "imagecontainernavigationcontroller.h"
 
 #include <QObject>
