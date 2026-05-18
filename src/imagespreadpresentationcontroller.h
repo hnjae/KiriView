@@ -115,7 +115,7 @@ private:
     void finishSecondaryPageAsPrimaryOnly();
     void finishSecondaryPageVisible();
     void notifyTransitionChanged();
-    void updateZoomState();
+    ImageZoomChangeSet updateZoomState();
     QSize spreadImageSize() const;
     bool primaryPageIsWide() const;
     bool previousPageIsWideForNavigation() const;
@@ -125,7 +125,7 @@ private:
     void scheduleAdjacentPredecode();
     ImagePageNavigationSnapshot pageNavigationSnapshot() const;
     void notifyTwoPageModeChanged();
-    void notifySpreadZoomChanged();
+    void notifySpreadZoomChanged(const ImageZoomChangeSet &changes);
     void notifyChanges(const std::vector<ImageDocumentChange> &changes);
     void notify(ImageDocumentChange change);
 

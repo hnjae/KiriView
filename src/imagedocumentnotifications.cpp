@@ -82,11 +82,35 @@ std::vector<ImageDocumentChange> imageDocumentTwoPageModeNotifications()
         ImageDocumentChange::Repaint };
 }
 
-std::vector<ImageDocumentChange> imageDocumentSpreadZoomNotifications()
+std::vector<ImageDocumentChange> imageDocumentSpreadZoomNotifications(
+    const ImageZoomChangeSet &changes)
 {
-    return { ImageDocumentChange::ZoomMode, ImageDocumentChange::ZoomPercent,
-        ImageDocumentChange::DisplaySize, ImageDocumentChange::MaximumManualZoomPercent,
-        ImageDocumentChange::Repaint, ImageDocumentChange::TwoPageMode };
+    std::vector<ImageDocumentChange> notifications;
+    bool repaint = false;
+    bool twoPageMode = false;
+
+    if (changes.zoomModeChanged) {
+        notifications.push_back(ImageDocumentChange::ZoomMode);
+    }
+    if (changes.zoomPercentChanged) {
+        notifications.push_back(ImageDocumentChange::ZoomPercent);
+    }
+    if (changes.displaySizeChanged) {
+        notifications.push_back(ImageDocumentChange::DisplaySize);
+        repaint = true;
+        twoPageMode = true;
+    }
+    if (changes.maximumManualZoomPercentChanged) {
+        notifications.push_back(ImageDocumentChange::MaximumManualZoomPercent);
+    }
+    if (repaint) {
+        notifications.push_back(ImageDocumentChange::Repaint);
+    }
+    if (twoPageMode) {
+        notifications.push_back(ImageDocumentChange::TwoPageMode);
+    }
+
+    return notifications;
 }
 
 std::vector<ImageDocumentChange> imageDocumentRightToLeftReadingNotifications(

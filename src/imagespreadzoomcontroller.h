@@ -38,19 +38,22 @@ public:
     QSize spreadImageSize() const;
 
     void clearZoomState();
-    void setZoomPercent(qreal zoomPercent, bool rightToLeftReading);
-    bool setFitMode(ImageZoomMode zoomMode, bool rightToLeftReading);
-    void resetZoom(bool rightToLeftReading);
-    void updateFromPrimaryPresentation(bool rightToLeftReading);
-    void updateRenderContext(bool rightToLeftReading);
+    ImageZoomChangeSet setZoomPercent(qreal zoomPercent, bool rightToLeftReading);
+    ImageZoomChangeSet setFitMode(ImageZoomMode zoomMode, bool rightToLeftReading);
+    ImageZoomChangeSet resetZoom(bool rightToLeftReading);
+    ImageZoomChangeSet updateFromPrimaryPresentation(bool rightToLeftReading);
+    ImageZoomChangeSet updateRenderContext(bool rightToLeftReading);
     void applyVisibleItemRects(bool rightToLeftReading);
     void applyZoomToPrimaryPage(ImageZoomMode zoomMode, qreal zoomPercent);
     void applyStoredZoomToPrimaryPage();
 
 private:
+    using ZoomStateMutation = std::function<void(ImageZoomState &, qreal devicePixelRatio)>;
+
     QRectF primaryPageRect(bool rightToLeftReading) const;
     QRectF secondaryPageRect(bool rightToLeftReading) const;
     void applyZoomPercentToPages();
+    ImageZoomChangeSet mutateZoomState(const ZoomStateMutation &mutation, bool rightToLeftReading);
     ImageDocumentRenderContext renderContext() const;
     qreal devicePixelRatio() const;
 
@@ -58,6 +61,7 @@ private:
     ImagePresentationController &m_primaryPresentation;
     ImagePresentationController &m_secondaryPresentation;
     ImageZoomState m_zoomState;
+    ImageDocumentRenderContext m_renderContext;
     QRectF m_visibleItemRect;
 };
 }

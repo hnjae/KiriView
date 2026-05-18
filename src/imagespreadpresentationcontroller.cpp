@@ -140,8 +140,8 @@ qreal ImageSpreadPresentationController::zoomPercent() const
 void ImageSpreadPresentationController::setZoomPercent(qreal zoomPercent)
 {
     if (secondaryPageVisible()) {
-        m_zoomController->setZoomPercent(zoomPercent, rightToLeftReadingActive());
-        notifySpreadZoomChanged();
+        notifySpreadZoomChanged(
+            m_zoomController->setZoomPercent(zoomPercent, rightToLeftReadingActive()));
         return;
     }
 
@@ -337,15 +337,14 @@ void ImageSpreadPresentationController::setViewportSize(const QSizeF &viewportSi
     m_primaryPresentation.setViewportSize(viewportSize);
     m_secondaryPageController->setViewportSize(viewportSize);
     if (secondaryPageVisible()) {
-        updateZoomState();
+        notifySpreadZoomChanged(updateZoomState());
     }
 }
 
 void ImageSpreadPresentationController::resetZoom()
 {
     if (secondaryPageVisible()) {
-        m_zoomController->resetZoom(rightToLeftReadingActive());
-        notifySpreadZoomChanged();
+        notifySpreadZoomChanged(m_zoomController->resetZoom(rightToLeftReadingActive()));
         return;
     }
 
@@ -355,10 +354,7 @@ void ImageSpreadPresentationController::resetZoom()
 void ImageSpreadPresentationController::setFitMode(ImageZoomMode zoomMode)
 {
     if (secondaryPageVisible()) {
-        if (!m_zoomController->setFitMode(zoomMode, rightToLeftReadingActive())) {
-            return;
-        }
-        notifySpreadZoomChanged();
+        notifySpreadZoomChanged(m_zoomController->setFitMode(zoomMode, rightToLeftReadingActive()));
         return;
     }
 
@@ -388,11 +384,7 @@ void ImageSpreadPresentationController::updateRenderContext()
     m_primaryPresentation.updateRenderContext();
     m_secondaryPageController->updateRenderContext();
     if (secondaryPageVisible()) {
-        m_zoomController->updateRenderContext(rightToLeftReadingActive());
-        notify(ImageDocumentChange::DisplaySize);
-        notify(ImageDocumentChange::MaximumManualZoomPercent);
-        notify(ImageDocumentChange::Repaint);
-        notify(ImageDocumentChange::TwoPageMode);
+        notifySpreadZoomChanged(m_zoomController->updateRenderContext(rightToLeftReadingActive()));
     }
 }
 
@@ -560,13 +552,13 @@ void ImageSpreadPresentationController::notifyTransitionChanged()
     notifyChanges(imageDocumentSpreadTransitionNotifications());
 }
 
-void ImageSpreadPresentationController::updateZoomState()
+ImageZoomChangeSet ImageSpreadPresentationController::updateZoomState()
 {
     if (!secondaryPageVisible()) {
-        return;
+        return {};
     }
 
-    m_zoomController->updateFromPrimaryPresentation(rightToLeftReadingActive());
+    return m_zoomController->updateFromPrimaryPresentation(rightToLeftReadingActive());
 }
 
 QSize ImageSpreadPresentationController::spreadImageSize() const
@@ -631,9 +623,9 @@ void ImageSpreadPresentationController::notifyTwoPageModeChanged()
     notifyChanges(imageDocumentTwoPageModeNotifications());
 }
 
-void ImageSpreadPresentationController::notifySpreadZoomChanged()
+void ImageSpreadPresentationController::notifySpreadZoomChanged(const ImageZoomChangeSet &changes)
 {
-    notifyChanges(imageDocumentSpreadZoomNotifications());
+    notifyChanges(imageDocumentSpreadZoomNotifications(changes));
 }
 
 void ImageSpreadPresentationController::notifyChanges(

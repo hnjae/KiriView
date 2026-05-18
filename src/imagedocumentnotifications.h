@@ -38,7 +38,8 @@ std::vector<ImageDocumentChange> imageDocumentSpreadTransitionNotifications();
 std::vector<ImageDocumentChange> imageDocumentDisplayedLocationNotifications(
     bool displayedUrlChanged, bool windowTitleFileNameChanged);
 std::vector<ImageDocumentChange> imageDocumentTwoPageModeNotifications();
-std::vector<ImageDocumentChange> imageDocumentSpreadZoomNotifications();
+std::vector<ImageDocumentChange> imageDocumentSpreadZoomNotifications(
+    const ImageZoomChangeSet &changes);
 std::vector<ImageDocumentChange> imageDocumentRightToLeftReadingNotifications(
     bool secondaryPageVisible);
 std::vector<ImageDocumentChange> imageDocumentPresentationZoomNotifications(

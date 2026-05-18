@@ -9,6 +9,15 @@
 
 #include <utility>
 
+namespace {
+bool hasZoomStateChange(const KiriView::ImageZoomChangeSet &changes)
+{
+    return changes.imageSizeChanged || changes.viewportSizeChanged || changes.zoomModeChanged
+        || changes.zoomPercentChanged || changes.displaySizeChanged
+        || changes.maximumManualZoomPercentChanged;
+}
+}
+
 namespace KiriView {
 ImageSpreadZoomController::ImageSpreadZoomController(RenderContextProvider renderContextProvider,
     ImagePresentationController &primaryPresentation,
@@ -16,6 +25,7 @@ ImageSpreadZoomController::ImageSpreadZoomController(RenderContextProvider rende
     : m_renderContextProvider(std::move(renderContextProvider))
     , m_primaryPresentation(primaryPresentation)
     , m_secondaryPresentation(secondaryPresentation)
+    , m_renderContext(renderContext())
 {
 }
 
@@ -67,36 +77,40 @@ QSize ImageSpreadZoomController::spreadImageSize() const
 
 void ImageSpreadZoomController::clearZoomState() { m_zoomState = ImageZoomState {}; }
 
-void ImageSpreadZoomController::setZoomPercent(qreal zoomPercent, bool rightToLeftReading)
+ImageZoomChangeSet ImageSpreadZoomController::setZoomPercent(
+    qreal zoomPercent, bool rightToLeftReading)
 {
-    m_zoomState.setManualZoomPercent(zoomPercent, devicePixelRatio());
-    applyZoomPercentToPages();
-    applyVisibleItemRects(rightToLeftReading);
+    return mutateZoomState(
+        [zoomPercent](ImageZoomState &zoomState, qreal devicePixelRatio) {
+            zoomState.setManualZoomPercent(zoomPercent, devicePixelRatio);
+        },
+        rightToLeftReading);
 }
 
-bool ImageSpreadZoomController::setFitMode(ImageZoomMode zoomMode, bool rightToLeftReading)
+ImageZoomChangeSet ImageSpreadZoomController::setFitMode(
+    ImageZoomMode zoomMode, bool rightToLeftReading)
 {
     if (zoomMode == ImageZoomMode::Manual) {
-        return false;
+        return {};
     }
 
-    m_zoomState.setFitMode(zoomMode, devicePixelRatio());
-    applyZoomPercentToPages();
-    applyVisibleItemRects(rightToLeftReading);
-    return true;
+    return mutateZoomState(
+        [zoomMode](ImageZoomState &zoomState, qreal devicePixelRatio) {
+            zoomState.setFitMode(zoomMode, devicePixelRatio);
+        },
+        rightToLeftReading);
 }
 
-void ImageSpreadZoomController::resetZoom(bool rightToLeftReading)
+ImageZoomChangeSet ImageSpreadZoomController::resetZoom(bool rightToLeftReading)
 {
-    m_zoomState.resetZoom(devicePixelRatio());
-    applyZoomPercentToPages();
-    applyVisibleItemRects(rightToLeftReading);
+    return mutateZoomState([](ImageZoomState &zoomState,
+                               qreal devicePixelRatio) { zoomState.resetZoom(devicePixelRatio); },
+        rightToLeftReading);
 }
 
-void ImageSpreadZoomController::updateFromPrimaryPresentation(bool rightToLeftReading)
+ImageZoomChangeSet ImageSpreadZoomController::updateFromPrimaryPresentation(bool rightToLeftReading)
 {
     const QSize nextSpreadImageSize = spreadImageSize();
-    const qreal currentDevicePixelRatio = devicePixelRatio();
     const ImageZoomMode activeZoomMode = m_zoomState.imageSize().isEmpty()
         ? m_primaryPresentation.zoomMode()
         : m_zoomState.zoomMode();
@@ -104,22 +118,26 @@ void ImageSpreadZoomController::updateFromPrimaryPresentation(bool rightToLeftRe
         ? m_primaryPresentation.zoomPercent()
         : m_zoomState.zoomPercent();
 
-    m_zoomState.setViewportSize(m_primaryPresentation.viewportSize(), currentDevicePixelRatio);
-    m_zoomState.setImageSize(nextSpreadImageSize, currentDevicePixelRatio);
-    if (activeZoomMode == ImageZoomMode::Manual) {
-        m_zoomState.setManualZoomPercent(activeZoomPercent, currentDevicePixelRatio);
-    } else {
-        m_zoomState.setFitMode(activeZoomMode, currentDevicePixelRatio);
-    }
+    return mutateZoomState(
+        [this, nextSpreadImageSize, activeZoomMode, activeZoomPercent](
+            ImageZoomState &zoomState, qreal devicePixelRatio) {
+            zoomState.setViewportSize(m_primaryPresentation.viewportSize(), devicePixelRatio);
+            zoomState.setImageSize(nextSpreadImageSize, devicePixelRatio);
+            if (activeZoomMode == ImageZoomMode::Manual) {
+                zoomState.setManualZoomPercent(activeZoomPercent, devicePixelRatio);
+                return;
+            }
 
-    applyZoomPercentToPages();
-    applyVisibleItemRects(rightToLeftReading);
+            zoomState.setFitMode(activeZoomMode, devicePixelRatio);
+        },
+        rightToLeftReading);
 }
 
-void ImageSpreadZoomController::updateRenderContext(bool rightToLeftReading)
+ImageZoomChangeSet ImageSpreadZoomController::updateRenderContext(bool rightToLeftReading)
 {
-    m_zoomState.update(devicePixelRatio());
-    applyVisibleItemRects(rightToLeftReading);
+    return mutateZoomState([](ImageZoomState &zoomState,
+                               qreal devicePixelRatio) { zoomState.update(devicePixelRatio); },
+        rightToLeftReading);
 }
 
 void ImageSpreadZoomController::applyVisibleItemRects(bool rightToLeftReading)
@@ -171,6 +189,27 @@ void ImageSpreadZoomController::applyZoomPercentToPages()
     m_secondaryPresentation.setZoomPercent(nextZoomPercent);
 }
 
+ImageZoomChangeSet ImageSpreadZoomController::mutateZoomState(
+    const ZoomStateMutation &mutation, bool rightToLeftReading)
+{
+    const ImageZoomSnapshot previous = m_zoomState.snapshot();
+    const ImageDocumentRenderContext previousContext = m_renderContext;
+    const ImageDocumentRenderContext context = renderContext();
+
+    mutation(m_zoomState, context.devicePixelRatio);
+    m_renderContext = context;
+
+    const ImageZoomChangeSet changes = ImageZoomState::changeSet(previous,
+        previousContext.devicePixelRatio, m_zoomState.snapshot(), context.devicePixelRatio, false);
+    if (!hasZoomStateChange(changes)) {
+        return changes;
+    }
+
+    applyZoomPercentToPages();
+    applyVisibleItemRects(rightToLeftReading);
+    return changes;
+}
+
 ImageDocumentRenderContext ImageSpreadZoomController::renderContext() const
 {
     ImageDocumentRenderContext context
@@ -180,6 +219,6 @@ ImageDocumentRenderContext ImageSpreadZoomController::renderContext() const
 
 qreal ImageSpreadZoomController::devicePixelRatio() const
 {
-    return renderContext().devicePixelRatio;
+    return m_renderContext.devicePixelRatio;
 }
 }
