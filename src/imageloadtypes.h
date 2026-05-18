@@ -5,6 +5,7 @@
 #define KIRIVIEW_IMAGELOADTYPES_H
 
 #include "imagelocation.h"
+#include "staticimage.h"
 
 #include <QUrl>
 #include <QtGlobal>
@@ -42,6 +43,7 @@ struct ImageLoadSession {
     quint64 id = 0;
     ImageLoadRequest request;
     DisplayedImageLocation location;
+    ImageFirstDisplayDecodeContext firstDisplay;
 };
 
 enum class ImageLoadError {

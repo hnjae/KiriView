@@ -244,11 +244,13 @@ void TestImageLoader::comicBookArchiveResolvesFirstImage()
     KiriView::ImageLoader loader
         = createLoader(this, candidateProvider, dataLoader, std::move(callbacks));
 
-    loader.start(KiriView::ImageLoadRequest::fromUrl(archiveUrl));
+    loader.start(KiriView::ImageLoadRequest::fromUrl(archiveUrl),
+        KiriView::ImageFirstDisplayDecodeContext { QSize(320, 240) });
 
     QCOMPARE(resolvedUrl, firstImageUrl);
     QCOMPARE(dataLoader.loadCount(), std::size_t(1));
     QCOMPARE(dataLoader.frontLoad().url, firstImageUrl);
+    QCOMPARE(dataLoader.frontLoad().firstDisplay.physicalViewportSize, QSize(320, 240));
 }
 
 void TestImageLoader::directArchiveResolvesFirstImage()

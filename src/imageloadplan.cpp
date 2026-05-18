@@ -69,7 +69,8 @@ ImageArchiveLoadPlan imageArchiveLoadPlan(const ImageLoadRequest &request)
     return { ArchiveDocumentLocation::none(), ImageArchiveLoadEffect::ReadImage };
 }
 
-ImageLoadPlan imageLoadPlan(quint64 id, ImageLoadRequest request)
+ImageLoadPlan imageLoadPlan(
+    quint64 id, ImageLoadRequest request, ImageFirstDisplayDecodeContext firstDisplayContext)
 {
     QUrl sourceUrl = request.sourceUrl();
     ImageArchiveLoadPlan archivePlan = imageArchiveLoadPlan(request);
@@ -80,6 +81,7 @@ ImageLoadPlan imageLoadPlan(quint64 id, ImageLoadRequest request)
         std::move(request),
         DisplayedImageLocation::fromUrl(
             std::move(sourceUrl), std::move(archivePlan.archiveDocument)),
+        firstDisplayContext,
     };
 
     return ImageLoadPlan { std::move(session), startEffect };

@@ -104,8 +104,8 @@ void ImageLoader::startImageLoad(ImageLoadSession session)
         return;
     }
 
-    m_decodeJob.start(ImageDecodeRequest::fromLocation(
-        session.id, session.location, m_sessionTracker.firstDisplayContext()));
+    m_decodeJob.start(
+        ImageDecodeRequest::fromLocation(session.id, session.location, session.firstDisplay));
 }
 
 void ImageLoader::startArchiveLoad(ImageLoadSession session)

@@ -6,6 +6,7 @@
 #include "imageloadplan.h"
 
 #include <QObject>
+#include <QSize>
 #include <QTemporaryDir>
 #include <QTest>
 #include <QUrl>
@@ -34,11 +35,13 @@ void TestImageLoadPlan::localFilePlansDirectImageLoad()
 {
     const QUrl imageUrl = localUrl(QStringLiteral("/images/page.png"));
     const KiriView::ImageLoadPlan plan
-        = KiriView::imageLoadPlan(7, KiriView::ImageLoadRequest::fromUrl(imageUrl));
+        = KiriView::imageLoadPlan(7, KiriView::ImageLoadRequest::fromUrl(imageUrl),
+            KiriView::ImageFirstDisplayDecodeContext { QSize(320, 240) });
 
     QCOMPARE(plan.session.id, quint64(7));
     QCOMPARE(plan.startEffect, KiriView::ImageLoadStartEffect::DecodeImage);
     QCOMPARE(plan.session.location.imageUrl(), imageUrl);
+    QCOMPARE(plan.session.firstDisplay.physicalViewportSize, QSize(320, 240));
     QVERIFY(plan.session.location.archiveDocument().isEmpty());
 }
 

@@ -43,7 +43,8 @@ void TestImageLoadSessionTracker::startOwnsSessionIdAndFirstDisplayContext()
 
     QCOMPARE(firstPlan.session.id, quint64(1));
     QCOMPARE(secondPlan.session.id, quint64(2));
-    QCOMPARE(tracker.firstDisplayContext().physicalViewportSize, QSize());
+    QCOMPARE(firstPlan.session.firstDisplay.physicalViewportSize, QSize(320, 240));
+    QCOMPARE(secondPlan.session.firstDisplay.physicalViewportSize, QSize());
     QVERIFY(!tracker.isCurrent(firstPlan.session));
     QVERIFY(tracker.isCurrent(secondPlan.session));
 }
@@ -84,18 +85,23 @@ void TestImageLoadSessionTracker::archiveResolutionUpdatesCanonicalCurrentSessio
     const QUrl imageUrl = archivePageUrl(*archiveRootUrl, QStringLiteral("01.png"));
 
     const KiriView::ImageLoadSession session
-        = tracker.start(KiriView::ImageLoadRequest::fromUrl(archiveUrl)).session;
+        = tracker
+              .start(KiriView::ImageLoadRequest::fromUrl(archiveUrl),
+                  KiriView::ImageFirstDisplayDecodeContext { QSize(320, 240) })
+              .session;
     const std::optional<KiriView::ImageLoadSession> resolvedSession
         = tracker.resolveCurrentArchiveImage(session, imageUrl);
 
     QVERIFY(resolvedSession.has_value());
     QCOMPARE(resolvedSession->location.imageUrl(), imageUrl);
+    QCOMPARE(resolvedSession->firstDisplay.physicalViewportSize, QSize(320, 240));
     const KiriView::ImageDecodeRequest request
         = KiriView::ImageDecodeRequest::fromUrl(session.id, imageUrl);
     const std::optional<KiriView::ImageLoadSession> currentSession
         = tracker.currentForDecodeRequest(request);
     QVERIFY(currentSession.has_value());
     QCOMPARE(currentSession->location.imageUrl(), imageUrl);
+    QCOMPARE(currentSession->firstDisplay.physicalViewportSize, QSize(320, 240));
 }
 
 void TestImageLoadSessionTracker::predecodedLocationReplacementUpdatesCanonicalCurrentSession()

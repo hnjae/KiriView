@@ -20,7 +20,6 @@ public:
         ImageLoadRequest request, ImageFirstDisplayDecodeContext firstDisplayContext = {});
     void cancel();
 
-    const ImageFirstDisplayDecodeContext &firstDisplayContext() const;
     bool isCurrent(const ImageLoadSession &session) const;
     std::optional<ImageLoadSession> currentForDecodeRequest(
         const ImageDecodeRequest &request) const;
@@ -34,7 +33,6 @@ private:
     quint64 nextSessionId();
 
     std::optional<ImageLoadSession> m_session;
-    ImageFirstDisplayDecodeContext m_firstDisplayContext;
     quint64 m_nextSessionId = 0;
 };
 }

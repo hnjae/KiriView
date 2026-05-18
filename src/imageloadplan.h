@@ -30,7 +30,8 @@ struct ImageLoadPlan {
 };
 
 ImageArchiveLoadPlan imageArchiveLoadPlan(const ImageLoadRequest &request);
-ImageLoadPlan imageLoadPlan(quint64 id, ImageLoadRequest request);
+ImageLoadPlan imageLoadPlan(
+    quint64 id, ImageLoadRequest request, ImageFirstDisplayDecodeContext firstDisplayContext = {});
 }
 
 #endif

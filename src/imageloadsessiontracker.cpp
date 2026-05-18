@@ -10,23 +10,13 @@ ImageLoadPlan ImageLoadSessionTracker::start(
     ImageLoadRequest request, ImageFirstDisplayDecodeContext firstDisplayContext)
 {
     cancel();
-    m_firstDisplayContext = firstDisplayContext;
 
-    ImageLoadPlan plan = imageLoadPlan(nextSessionId(), std::move(request));
+    ImageLoadPlan plan = imageLoadPlan(nextSessionId(), std::move(request), firstDisplayContext);
     m_session = plan.session;
     return plan;
 }
 
-void ImageLoadSessionTracker::cancel()
-{
-    m_session.reset();
-    m_firstDisplayContext = {};
-}
-
-const ImageFirstDisplayDecodeContext &ImageLoadSessionTracker::firstDisplayContext() const
-{
-    return m_firstDisplayContext;
-}
+void ImageLoadSessionTracker::cancel() { m_session.reset(); }
 
 bool ImageLoadSessionTracker::isCurrent(const ImageLoadSession &session) const
 {
