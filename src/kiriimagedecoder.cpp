@@ -4,12 +4,10 @@
 #include "kiriimagedecoder.h"
 
 #include "apnganimationreader.h"
-#include "bufferedimagereader.h"
 #include "heifdecoder.h"
-#include "imagerendering.h"
 #include "imagetilesource.h"
-#include "imageviewtext.h"
 #include "kiriview/src/avifcompat.cxx.h"
+#include "qimagereaderdecoder.h"
 #include "rawdecoder.h"
 #include "staticimagedecode.h"
 
@@ -28,20 +26,6 @@ std::optional<KiriView::DecodedImageResult> decodeSvgImageData(const QByteArray 
     }
 
     return KiriView::staticDecodedImageResult(std::move(source), {}, &errorString);
-}
-
-KiriView::DecodedImageResult openedStaticImageResult(
-    const QByteArray &data, const KiriView::ImageDecodeRequest &request)
-{
-    QString errorString;
-    std::shared_ptr<KiriView::ImageTileSource> source
-        = KiriView::QImageReaderTileSource::open(data, &errorString);
-    if (source == nullptr) {
-        return KiriView::failedDecodedImageResult(errorString);
-    }
-
-    return KiriView::staticDecodedImageResult(
-        std::move(source), request.firstDisplay(), &errorString);
 }
 }
 
@@ -81,38 +65,7 @@ DecodedImageResult decodeImageData(const QByteArray &data, const ImageDecodeRequ
         return *rawResult;
     }
 
-    BufferedImageReader reader(imageData);
-    if (!reader) {
-        return failedDecodedImageResult(imageViewText("Could not read the selected image data."));
-    }
-
-    const bool supportsAnimation = reader.supportsAnimation();
-
-    if (!supportsAnimation) {
-        return openedStaticImageResult(imageData, request);
-    }
-
-    QImage image = reader.read();
-    if (image.isNull()) {
-        return openedStaticImageResult(imageData, request);
-    }
-
-    const QByteArray format = reader.format();
-    const int firstFrameDelay = reader.nextImageDelay();
-    const int loopCount = reader.loopCount();
-    const bool hasMoreFrames = reader.canRead();
-
-    QImage firstFrame = displayReadyImage(image);
-    if (supportsAnimation && hasMoreFrames) {
-        return successfulDecodedImageResult(ReaderAnimationImage {
-            std::move(firstFrame),
-            imageData,
-            format,
-            loopCount,
-            firstFrameDelay,
-        });
-    }
-    return openedStaticImageResult(imageData, request);
+    return decodeQImageReaderImageData(imageData, request);
 }
 
 }

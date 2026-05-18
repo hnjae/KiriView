@@ -94,6 +94,7 @@ src/predecodedisplayedhistory.cpp
 src/predecodeloadcontroller.cpp
 src/predecodepolicy.cpp
 src/predecodewindowplan.cpp
+src/qimagereaderdecoder.cpp
 src/qimagereadertilesource.cpp
 src/rawdecoder.cpp
 src/shortcuthelpmodel.cpp
