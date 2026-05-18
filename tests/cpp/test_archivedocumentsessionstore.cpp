@@ -3,19 +3,16 @@
 
 #include "archivedocumentsessionstore.h"
 
+#include "archive_session_test_support.h"
 #include "image_test_support.h"
 #include "imagecallback.h"
-#include "imagecontainer.h"
 #include "imagedocumentsourceloadrequest.h"
 #include "imagenavigationservice.h"
 #include "imagepredecodecoordinator.h"
 
+#include <QByteArray>
 #include <QTest>
-#include <atomic>
-#include <condition_variable>
-#include <map>
 #include <memory>
-#include <mutex>
 #include <optional>
 #include <utility>
 #include <vector>
@@ -23,133 +20,18 @@
 namespace {
 using KiriView::ImageNavigationCandidate;
 using KiriView::NavigationDirection;
+using KiriView::TestSupport::addInstrumentedArchiveFixture;
+using KiriView::TestSupport::archiveDocumentForLocalArchiveUrl;
 using KiriView::TestSupport::archivePageUrl;
+using KiriView::TestSupport::blockInstrumentedArchiveDataLoads;
 using KiriView::TestSupport::imageCandidate;
-using KiriView::TestSupport::keyForUrl;
+using KiriView::TestSupport::instrumentedArchiveSessionFactory;
+using KiriView::TestSupport::InstrumentedArchiveSessionState;
 using KiriView::TestSupport::localUrl;
+using KiriView::TestSupport::releaseInstrumentedArchiveLoads;
 using KiriView::TestSupport::staticImageDataDecoder;
 using KiriView::TestSupport::staticTestImagePayload;
 using KiriView::TestSupport::testImage;
-
-struct ArchiveFixture {
-    std::vector<ImageNavigationCandidate> candidates;
-    std::map<QString, QByteArray> dataByUrl;
-};
-
-struct InstrumentedArchiveSessionState {
-    std::atomic<int> openCount = 0;
-    std::atomic<int> candidateLoadCount = 0;
-    std::atomic<int> dataLoadCount = 0;
-    std::atomic<int> waitingDataLoadCount = 0;
-    std::mutex mutex;
-    std::mutex dataLoadBlockMutex;
-    std::condition_variable dataLoadBlockChanged;
-    std::map<QString, ArchiveFixture> fixturesByRootUrl;
-    bool blockDataLoads = false;
-    bool releaseDataLoads = false;
-};
-
-class InstrumentedArchiveSession final : public KiriView::ArchiveDocumentSession
-{
-public:
-    InstrumentedArchiveSession(KiriView::ArchiveDocumentLocation archiveDocument,
-        std::shared_ptr<InstrumentedArchiveSessionState> state)
-        : m_archiveDocument(std::move(archiveDocument))
-        , m_state(std::move(state))
-    {
-    }
-
-    KiriView::ArchiveImageCandidatesResult loadImageCandidates() override
-    {
-        ++m_state->candidateLoadCount;
-        std::lock_guard<std::mutex> lock(m_state->mutex);
-        return KiriView::ArchiveImageCandidates {
-            fixture().candidates,
-        };
-    }
-
-    KiriView::ArchiveImageDataResult loadImageData(const QUrl &imageUrl) override
-    {
-        ++m_state->dataLoadCount;
-        {
-            std::unique_lock<std::mutex> lock(m_state->dataLoadBlockMutex);
-            if (m_state->blockDataLoads && !m_state->releaseDataLoads) {
-                ++m_state->waitingDataLoadCount;
-                m_state->dataLoadBlockChanged.notify_all();
-                m_state->dataLoadBlockChanged.wait(
-                    lock, [this]() { return m_state->releaseDataLoads; });
-            }
-        }
-
-        std::lock_guard<std::mutex> lock(m_state->mutex);
-        const auto data = fixture().dataByUrl.find(keyForUrl(imageUrl));
-        if (data == fixture().dataByUrl.cend()) {
-            return KiriView::ArchiveError { QStringLiteral("missing fake archive image data") };
-        }
-
-        return KiriView::ArchiveImageData { data->second };
-    }
-
-private:
-    const ArchiveFixture &fixture() const
-    {
-        return m_state->fixturesByRootUrl.at(keyForUrl(m_archiveDocument.rootUrl()));
-    }
-
-    KiriView::ArchiveDocumentLocation m_archiveDocument;
-    std::shared_ptr<InstrumentedArchiveSessionState> m_state;
-};
-
-KiriView::ArchiveDocumentSessionFactory instrumentedSessionFactory(
-    std::shared_ptr<InstrumentedArchiveSessionState> state)
-{
-    return [state = std::move(state)](const KiriView::ArchiveDocumentLocation &archiveDocument)
-               -> KiriView::ArchiveDocumentSessionOpenResult {
-        ++state->openCount;
-        std::lock_guard<std::mutex> lock(state->mutex);
-        if (!state->fixturesByRootUrl.count(keyForUrl(archiveDocument.rootUrl()))) {
-            return KiriView::ArchiveError { QStringLiteral("missing fake archive fixture") };
-        }
-
-        return KiriView::ArchiveDocumentSessionPtr(
-            std::make_shared<InstrumentedArchiveSession>(archiveDocument, state));
-    };
-}
-
-void blockArchiveDataLoads(const std::shared_ptr<InstrumentedArchiveSessionState> &state)
-{
-    std::lock_guard<std::mutex> lock(state->dataLoadBlockMutex);
-    state->blockDataLoads = true;
-    state->releaseDataLoads = false;
-}
-
-void releaseArchiveDataLoads(const std::shared_ptr<InstrumentedArchiveSessionState> &state)
-{
-    {
-        std::lock_guard<std::mutex> lock(state->dataLoadBlockMutex);
-        state->releaseDataLoads = true;
-    }
-    state->dataLoadBlockChanged.notify_all();
-}
-
-std::optional<KiriView::ArchiveDocumentLocation> archiveDocumentFor(const QUrl &archiveUrl)
-{
-    return KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
-}
-
-void addArchiveFixture(std::shared_ptr<InstrumentedArchiveSessionState> state,
-    const KiriView::ArchiveDocumentLocation &archiveDocument,
-    std::vector<ImageNavigationCandidate> candidates)
-{
-    ArchiveFixture fixture;
-    fixture.candidates = std::move(candidates);
-    for (const ImageNavigationCandidate &candidate : fixture.candidates) {
-        fixture.dataByUrl[keyForUrl(candidate.url)] = QByteArrayLiteral("image");
-    }
-
-    std::lock_guard<std::mutex> lock(state->mutex);
-    state->fixturesByRootUrl[keyForUrl(archiveDocument.rootUrl())] = std::move(fixture);
-}
 
 KiriView::ImageNavigationCandidateProvider archiveOnlyProvider()
 {
@@ -202,14 +84,14 @@ void TestArchiveDocumentSessionStore::candidateAndDataLoadsShareOneArchiveOpen()
     auto state = std::make_shared<InstrumentedArchiveSessionState>();
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
     const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
-        = archiveDocumentFor(archiveUrl);
+        = archiveDocumentForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveDocument.has_value());
     const QUrl firstUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
     const QUrl secondUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("02.png"));
-    addArchiveFixture(
+    addInstrumentedArchiveFixture(
         state, *archiveDocument, { imageCandidate(firstUrl), imageCandidate(secondUrl) });
 
-    KiriView::ArchiveDocumentSessionStore store(instrumentedSessionFactory(state));
+    KiriView::ArchiveDocumentSessionStore store(instrumentedArchiveSessionFactory(state));
     std::vector<ImageNavigationCandidate> candidates;
     QByteArray firstData;
     QByteArray secondData;
@@ -240,12 +122,12 @@ void TestArchiveDocumentSessionStore::simultaneousCandidateLoadsSharePendingSess
     auto state = std::make_shared<InstrumentedArchiveSessionState>();
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
     const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
-        = archiveDocumentFor(archiveUrl);
+        = archiveDocumentForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveDocument.has_value());
     const QUrl pageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
-    addArchiveFixture(state, *archiveDocument, { imageCandidate(pageUrl) });
+    addInstrumentedArchiveFixture(state, *archiveDocument, { imageCandidate(pageUrl) });
 
-    KiriView::ArchiveDocumentSessionStore store(instrumentedSessionFactory(state));
+    KiriView::ArchiveDocumentSessionStore store(instrumentedArchiveSessionFactory(state));
     int callbackCount = 0;
     KiriView::ImageIoJob firstJob = store.loadArchiveImages(this, *archiveDocument,
         [&callbackCount](std::vector<ImageNavigationCandidate>) { ++callbackCount; }, {});
@@ -263,20 +145,20 @@ void TestArchiveDocumentSessionStore::staleDataLoadCompletionIsIgnoredAfterArchi
     const QUrl firstArchiveUrl = localUrl(QStringLiteral("/books/a.cbz"));
     const QUrl secondArchiveUrl = localUrl(QStringLiteral("/books/b.cbz"));
     const std::optional<KiriView::ArchiveDocumentLocation> firstArchiveDocument
-        = archiveDocumentFor(firstArchiveUrl);
+        = archiveDocumentForLocalArchiveUrl(firstArchiveUrl);
     const std::optional<KiriView::ArchiveDocumentLocation> secondArchiveDocument
-        = archiveDocumentFor(secondArchiveUrl);
+        = archiveDocumentForLocalArchiveUrl(secondArchiveUrl);
     QVERIFY(firstArchiveDocument.has_value());
     QVERIFY(secondArchiveDocument.has_value());
     const QUrl firstPageUrl
         = archivePageUrl(firstArchiveDocument->rootUrl(), QStringLiteral("01.png"));
     const QUrl secondPageUrl
         = archivePageUrl(secondArchiveDocument->rootUrl(), QStringLiteral("01.png"));
-    addArchiveFixture(state, *firstArchiveDocument, { imageCandidate(firstPageUrl) });
-    addArchiveFixture(state, *secondArchiveDocument, { imageCandidate(secondPageUrl) });
-    blockArchiveDataLoads(state);
+    addInstrumentedArchiveFixture(state, *firstArchiveDocument, { imageCandidate(firstPageUrl) });
+    addInstrumentedArchiveFixture(state, *secondArchiveDocument, { imageCandidate(secondPageUrl) });
+    blockInstrumentedArchiveDataLoads(state);
 
-    KiriView::ArchiveDocumentSessionStore store(instrumentedSessionFactory(state));
+    KiriView::ArchiveDocumentSessionStore store(instrumentedArchiveSessionFactory(state));
     int staleCallbackCount = 0;
     KiriView::ImageIoJob staleJob = store.loadArchiveImageData(this,
         KiriView::ImageDecodeRequest::fromLocation(1,
@@ -287,7 +169,7 @@ void TestArchiveDocumentSessionStore::staleDataLoadCompletionIsIgnoredAfterArchi
 
     store.prepareForSourceLoad(
         KiriView::ImageDocumentSourceLoadRequest::fromUrl(secondArchiveUrl), *firstArchiveDocument);
-    releaseArchiveDataLoads(state);
+    releaseInstrumentedArchiveLoads(state);
 
     QTRY_VERIFY(!staleJob.isActive());
     QCOMPARE(staleCallbackCount, 0);
@@ -299,15 +181,15 @@ void TestArchiveDocumentSessionStore::navigationReusesCachedArchiveCandidates()
     auto state = std::make_shared<InstrumentedArchiveSessionState>();
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
     const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
-        = archiveDocumentFor(archiveUrl);
+        = archiveDocumentForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveDocument.has_value());
     const QUrl firstUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
     const QUrl secondUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("02.png"));
     const QUrl thirdUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("03.png"));
-    addArchiveFixture(state, *archiveDocument,
+    addInstrumentedArchiveFixture(state, *archiveDocument,
         { imageCandidate(firstUrl), imageCandidate(secondUrl), imageCandidate(thirdUrl) });
 
-    KiriView::ArchiveDocumentSessionStore store(instrumentedSessionFactory(state));
+    KiriView::ArchiveDocumentSessionStore store(instrumentedArchiveSessionFactory(state));
     QUrl openedUrl;
     KiriView::ImageNavigationService service(this,
         store.wrapCandidateProvider(archiveOnlyProvider()),
@@ -347,15 +229,15 @@ void TestArchiveDocumentSessionStore::predecodeLoadsAdjacentArchiveImagesThrough
     auto state = std::make_shared<InstrumentedArchiveSessionState>();
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
     const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
-        = archiveDocumentFor(archiveUrl);
+        = archiveDocumentForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveDocument.has_value());
     const QUrl firstUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
     const QUrl displayedUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("02.png"));
     const QUrl thirdUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("03.png"));
-    addArchiveFixture(state, *archiveDocument,
+    addInstrumentedArchiveFixture(state, *archiveDocument,
         { imageCandidate(firstUrl), imageCandidate(displayedUrl), imageCandidate(thirdUrl) });
 
-    KiriView::ArchiveDocumentSessionStore store(instrumentedSessionFactory(state));
+    KiriView::ArchiveDocumentSessionStore store(instrumentedArchiveSessionFactory(state));
     KiriView::ImagePredecodeCoordinator coordinator(this,
         store.wrapCandidateProvider(archiveOnlyProvider()),
         store.wrapDecodeDependencies(KiriView::ImageDecodeDependencies {
@@ -384,19 +266,19 @@ void TestArchiveDocumentSessionStore::lifecycleClearsSessionForDifferentArchiveN
     const QUrl firstArchiveUrl = localUrl(QStringLiteral("/books/a.cbz"));
     const QUrl secondArchiveUrl = localUrl(QStringLiteral("/books/b.cbz"));
     const std::optional<KiriView::ArchiveDocumentLocation> firstArchiveDocument
-        = archiveDocumentFor(firstArchiveUrl);
+        = archiveDocumentForLocalArchiveUrl(firstArchiveUrl);
     const std::optional<KiriView::ArchiveDocumentLocation> secondArchiveDocument
-        = archiveDocumentFor(secondArchiveUrl);
+        = archiveDocumentForLocalArchiveUrl(secondArchiveUrl);
     QVERIFY(firstArchiveDocument.has_value());
     QVERIFY(secondArchiveDocument.has_value());
     const QUrl firstPageUrl
         = archivePageUrl(firstArchiveDocument->rootUrl(), QStringLiteral("01.png"));
     const QUrl secondPageUrl
         = archivePageUrl(secondArchiveDocument->rootUrl(), QStringLiteral("01.png"));
-    addArchiveFixture(state, *firstArchiveDocument, { imageCandidate(firstPageUrl) });
-    addArchiveFixture(state, *secondArchiveDocument, { imageCandidate(secondPageUrl) });
+    addInstrumentedArchiveFixture(state, *firstArchiveDocument, { imageCandidate(firstPageUrl) });
+    addInstrumentedArchiveFixture(state, *secondArchiveDocument, { imageCandidate(secondPageUrl) });
 
-    KiriView::ArchiveDocumentSessionStore store(instrumentedSessionFactory(state));
+    KiriView::ArchiveDocumentSessionStore store(instrumentedArchiveSessionFactory(state));
     store.loadArchiveImages(nullptr, *firstArchiveDocument, [](auto) { }, {});
     QCOMPARE(state->openCount.load(), 1);
     QVERIFY(store.hasCurrentArchiveDocument(*firstArchiveDocument));
