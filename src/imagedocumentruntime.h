@@ -111,7 +111,9 @@ private:
     void openAdjacentContainer(NavigationDirection direction);
     void openImageAtRelativePageOffset(int offset);
     ImageDocumentEffectOperations effectOperations();
+    void publishChange(ImageDocumentChange change);
 
+    ImageDocumentChangeBatcher changeBatcher;
     ImageDocumentState state;
     ChangeCallback changeCallback;
     std::unique_ptr<ArchiveDocumentSessionStore> archiveSessionStore;

@@ -10,6 +10,7 @@
 
 #include <QString>
 #include <QUrl>
+#include <memory>
 
 namespace KiriView {
 class ImageDocumentState
@@ -19,6 +20,7 @@ public:
     using ChangeBatch = ImageDocumentChangeBatcher::Batch;
 
     explicit ImageDocumentState(ChangeCallback changeCallback = {});
+    explicit ImageDocumentState(ImageDocumentChangeBatcher &changes);
 
     ChangeBatch beginChangeBatch();
 
@@ -48,7 +50,8 @@ private:
     void replaceDisplayedImageLocation(DisplayedImageLocation location);
     void notify(ImageDocumentChange change);
 
-    ImageDocumentChangeBatcher m_changes;
+    std::unique_ptr<ImageDocumentChangeBatcher> m_ownedChanges;
+    ImageDocumentChangeBatcher *m_changes = nullptr;
     QUrl m_sourceUrl;
     DisplayedImageLocation m_displayedImageLocation;
     ImageDocumentStatus m_status = ImageDocumentStatus::Null;

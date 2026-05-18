@@ -25,6 +25,7 @@ private Q_SLOTS:
     void containerNavigationAvailabilityFollowsContainerUrl();
     void statusAndLoadingReducersOnlyNotifyWhenChanged();
     void changeBatchQueuesUniqueChangesUntilDestroyed();
+    void injectedChangeBatchSharesStateAndRuntimeNotifications();
 };
 
 void TestImageDocumentState::displayedUrlAndWindowTitleFollowDisplayedImageLocation()
@@ -145,6 +146,28 @@ void TestImageDocumentState::changeBatchQueuesUniqueChangesUntilDestroyed()
     QCOMPARE(changes.at(0), KiriView::ImageDocumentChange::Loading);
     QCOMPARE(changes.at(1), KiriView::ImageDocumentChange::ErrorString);
     QCOMPARE(changes.at(2), KiriView::ImageDocumentChange::Status);
+}
+
+void TestImageDocumentState::injectedChangeBatchSharesStateAndRuntimeNotifications()
+{
+    std::vector<KiriView::ImageDocumentChange> changes;
+    KiriView::ImageDocumentChangeBatcher batcher(
+        [&changes](KiriView::ImageDocumentChange change) { changes.push_back(change); });
+    KiriView::ImageDocumentState state(batcher);
+
+    {
+        [[maybe_unused]] auto batch = batcher.beginBatch();
+        state.setLoading(true);
+        batcher.notify(KiriView::ImageDocumentChange::Status);
+        state.setStatus(KiriView::ImageDocumentStatus::Loading);
+        batcher.notify(KiriView::ImageDocumentChange::Repaint);
+        QVERIFY(changes.empty());
+    }
+
+    QCOMPARE(changes.size(), std::size_t(3));
+    QCOMPARE(changes.at(0), KiriView::ImageDocumentChange::Loading);
+    QCOMPARE(changes.at(1), KiriView::ImageDocumentChange::Status);
+    QCOMPARE(changes.at(2), KiriView::ImageDocumentChange::Repaint);
 }
 
 QTEST_GUILESS_MAIN(TestImageDocumentState)

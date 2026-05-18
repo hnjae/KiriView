@@ -22,13 +22,19 @@ template <typename Value> bool replaceIfChanged(Value &current, const Value &nex
 
 namespace KiriView {
 ImageDocumentState::ImageDocumentState(ChangeCallback changeCallback)
-    : m_changes(std::move(changeCallback))
+    : m_ownedChanges(std::make_unique<ImageDocumentChangeBatcher>(std::move(changeCallback)))
+    , m_changes(m_ownedChanges.get())
+{
+}
+
+ImageDocumentState::ImageDocumentState(ImageDocumentChangeBatcher &changes)
+    : m_changes(&changes)
 {
 }
 
 ImageDocumentState::ChangeBatch ImageDocumentState::beginChangeBatch()
 {
-    return m_changes.beginBatch();
+    return m_changes->beginBatch();
 }
 
 const QUrl &ImageDocumentState::sourceUrl() const { return m_sourceUrl; }
@@ -93,7 +99,7 @@ void ImageDocumentState::replaceDisplayedImageLocation(DisplayedImageLocation lo
         return;
     }
 
-    m_changes.notifyAll(imageDocumentDisplayedLocationNotifications(
+    m_changes->notifyAll(imageDocumentDisplayedLocationNotifications(
         previousDisplayedUrl != displayedUrl(), previousWindowTitle != windowTitleFileName()));
 }
 
@@ -135,5 +141,5 @@ void ImageDocumentState::clearLoadingContainerNavigationUrl()
     m_loadingContainerNavigationUrl = QUrl();
 }
 
-void ImageDocumentState::notify(ImageDocumentChange change) { m_changes.notify(change); }
+void ImageDocumentState::notify(ImageDocumentChange change) { m_changes->notify(change); }
 }

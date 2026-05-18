@@ -36,7 +36,8 @@ namespace KiriView {
 ImageDocumentRuntime::ImageDocumentRuntime(QObject *documentObject,
     RenderContextProvider renderContextProvider, ChangeCallback changeCallback,
     ImageAsyncDependencies dependencies, FileDeletionFailedCallback fileDeletionFailedCallback)
-    : state([this](ImageDocumentChange change) { notify(change); })
+    : changeBatcher([this](ImageDocumentChange change) { publishChange(change); })
+    , state(changeBatcher)
     , changeCallback(std::move(changeCallback))
 {
     const bool shouldUseArchiveSessionStore = dependencies.archiveDocumentSessions
@@ -271,7 +272,9 @@ void ImageDocumentRuntime::dispatchEffect(ImageDocumentEffect effect)
     effectExecutor->dispatch(std::move(effect));
 }
 
-void ImageDocumentRuntime::notify(ImageDocumentChange change)
+void ImageDocumentRuntime::notify(ImageDocumentChange change) { changeBatcher.notify(change); }
+
+void ImageDocumentRuntime::publishChange(ImageDocumentChange change)
 {
     spreadController->handleDocumentChange(change);
     invokeIfSet(changeCallback, change);
