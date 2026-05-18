@@ -47,6 +47,7 @@ src/imagesurface.cpp
 src/imageformatregistry.cpp
 src/imagecandidaterepository.cpp
 src/imagecandidatestore.cpp
+src/imagecandidatestoreentrystate.cpp
 src/imageiojob.cpp
 src/imageiojobs.cpp
 src/imagelocation.cpp
