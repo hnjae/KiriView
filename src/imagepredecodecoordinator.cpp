@@ -47,45 +47,47 @@ ImagePredecodeCoordinator::ImagePredecodeCoordinator(QObject *parent,
 
 void ImagePredecodeCoordinator::schedule(Context context)
 {
-    cancelBackgroundWork();
-    if (!context.primaryImage.hasLocation() || !context.primaryImage.hasStaticImage()) {
+    cancelBackgroundEffects();
+    std::optional<PredecodeScheduleUpdate> update
+        = m_scheduleState.schedule(std::move(context), currentMonotonicMsec());
+    if (!update.has_value()) {
         return;
     }
 
-    const quint64 generation = m_generation.next();
-    updateNavigationMomentum(context.pageIndex, currentMonotonicMsec());
-    cacheDisplayedImages(context);
-    m_displayedContext = context;
-    if (m_powerSaverEnabled) {
+    cacheDisplayedImages(update->context);
+    if (update->powerSaverEnabled) {
         m_loadController.clearWindowUrls();
         return;
     }
 
-    m_pendingContext = std::move(context);
-    m_pendingGeneration = generation;
-    m_debounceTimer.start();
-    m_neutralTimer.start();
+    if (update->pendingSchedule.has_value()) {
+        m_debounceTimer.start();
+        m_neutralTimer.start();
+    }
 }
 
 void ImagePredecodeCoordinator::setPowerSaverEnabled(bool enabled)
 {
-    if (m_powerSaverEnabled == enabled) {
+    if (!m_scheduleState.setPowerSaverEnabled(enabled)) {
         return;
     }
 
-    m_powerSaverEnabled = enabled;
     if (enabled) {
         cancelBackgroundWork();
         m_loadController.clearWindowUrls();
         return;
     }
 
-    if (m_displayedContext.has_value()) {
-        schedule(*m_displayedContext);
+    const std::optional<Context> displayedContext = m_scheduleState.displayedContext();
+    if (displayedContext.has_value()) {
+        schedule(*displayedContext);
     }
 }
 
-bool ImagePredecodeCoordinator::powerSaverEnabled() const { return m_powerSaverEnabled; }
+bool ImagePredecodeCoordinator::powerSaverEnabled() const
+{
+    return m_scheduleState.powerSaverEnabled();
+}
 
 void ImagePredecodeCoordinator::cacheDisplayedImages(const Context &context)
 {
@@ -106,27 +108,27 @@ std::vector<DisplayedPredecodeImage> ImagePredecodeCoordinator::displayedImages(
 
 void ImagePredecodeCoordinator::startDebouncedPredecode()
 {
-    if (!m_pendingContext.has_value() || !m_generation.accepts(m_pendingGeneration)) {
+    const std::optional<PredecodePendingSchedule> pendingSchedule
+        = m_scheduleState.pendingDebouncedSchedule();
+    if (!pendingSchedule.has_value()) {
         return;
     }
 
-    scheduleAdjacentImagePredecode(*m_pendingContext, m_pendingGeneration);
+    scheduleAdjacentImagePredecode(pendingSchedule->context, pendingSchedule->generation);
 }
 
 void ImagePredecodeCoordinator::scheduleSettledNeutralPredecode()
 {
-    if (!m_pendingContext.has_value() || m_momentumState.mode == PredecodeMomentumMode::Neutral) {
+    const std::optional<PredecodePendingSchedule> pendingSchedule
+        = m_scheduleState.settlePendingScheduleToNeutral();
+    if (!pendingSchedule.has_value()) {
         return;
     }
 
-    const Context context = *m_pendingContext;
     m_debounceTimer.stop();
     m_listerJob.cancel();
     m_loadController.cancelBackgroundWork();
-    m_momentumState.mode = PredecodeMomentumMode::Neutral;
-    m_pendingGeneration = m_generation.next();
-    m_pendingContext = context;
-    scheduleAdjacentImagePredecode(context, m_pendingGeneration);
+    scheduleAdjacentImagePredecode(pendingSchedule->context, pendingSchedule->generation);
 }
 
 void ImagePredecodeCoordinator::scheduleAdjacentImagePredecode(
@@ -135,8 +137,8 @@ void ImagePredecodeCoordinator::scheduleAdjacentImagePredecode(
     const PredecodeCandidateListPlan candidateListPlan
         = predecodeCandidateListPlan(PredecodeWindowPlanRequest {
             context.primaryImage.location,
-            m_momentumState.mode,
-            m_powerSaverEnabled,
+            m_scheduleState.momentumMode(),
+            m_scheduleState.powerSaverEnabled(),
             QThread::idealThreadCount(),
         });
     if (!candidateListPlan.shouldLoadCandidates()) {
@@ -168,7 +170,7 @@ void ImagePredecodeCoordinator::startPredecodeImageLoads(const std::vector<QUrl>
     const ArchiveDocumentLocation &archiveDocument, const Context &context, quint64 generation,
     std::size_t parallelLimit)
 {
-    if (!m_generation.accepts(generation)) {
+    if (!m_scheduleState.accepts(generation)) {
         return;
     }
 
@@ -185,20 +187,16 @@ void ImagePredecodeCoordinator::startPredecodeImageLoads(const std::vector<QUrl>
 
 void ImagePredecodeCoordinator::cancelBackgroundWork()
 {
-    m_generation.invalidate();
+    m_scheduleState.cancelBackgroundWork();
+    cancelBackgroundEffects();
+}
+
+void ImagePredecodeCoordinator::cancelBackgroundEffects()
+{
     m_debounceTimer.stop();
     m_neutralTimer.stop();
     m_listerJob.cancel();
     m_loadController.cancelBackgroundWork();
-    m_pendingContext.reset();
-    m_pendingGeneration = 0;
-}
-
-void ImagePredecodeCoordinator::resetNavigationMomentum() { m_momentumState = {}; }
-
-void ImagePredecodeCoordinator::updateNavigationMomentum(int pageIndex, qint64 monotonicMsec)
-{
-    m_momentumState = predecodeUpdatedMomentumState(m_momentumState, pageIndex, monotonicMsec);
 }
 
 qint64 ImagePredecodeCoordinator::currentMonotonicMsec() const
@@ -208,9 +206,8 @@ qint64 ImagePredecodeCoordinator::currentMonotonicMsec() const
 
 void ImagePredecodeCoordinator::cancel()
 {
-    cancelBackgroundWork();
-    m_displayedContext.reset();
-    resetNavigationMomentum();
+    cancelBackgroundEffects();
+    m_scheduleState.cancel();
 }
 
 void ImagePredecodeCoordinator::clear()
