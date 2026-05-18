@@ -1,0 +1,61 @@
+// SPDX-FileCopyrightText: 2026 KIM Hyunjae
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+#ifndef KIRIVIEW_PREDECODESCHEDULESTATE_H
+#define KIRIVIEW_PREDECODESCHEDULESTATE_H
+
+#include "imageasyncticket.h"
+#include "predecodedimage.h"
+#include "predecodepolicy.h"
+
+#include <QtGlobal>
+#include <optional>
+
+namespace KiriView {
+struct PredecodeScheduleContext {
+    DisplayedPredecodeImage primaryImage;
+    std::optional<DisplayedPredecodeImage> secondaryImage;
+    ImageFirstDisplayDecodeContext firstDisplayContext;
+    int pageIndex = -1;
+};
+
+struct PredecodePendingSchedule {
+    PredecodeScheduleContext context;
+    quint64 generation = 0;
+};
+
+struct PredecodeScheduleUpdate {
+    PredecodeScheduleContext context;
+    std::optional<PredecodePendingSchedule> pendingSchedule;
+    bool powerSaverEnabled = false;
+};
+
+class PredecodeScheduleState final
+{
+public:
+    std::optional<PredecodeScheduleUpdate> schedule(
+        PredecodeScheduleContext context, qint64 monotonicMsec);
+    bool setPowerSaverEnabled(bool enabled);
+    bool powerSaverEnabled() const;
+    PredecodeMomentumMode momentumMode() const;
+
+    std::optional<PredecodeScheduleContext> displayedContext() const;
+    std::optional<PredecodePendingSchedule> pendingDebouncedSchedule() const;
+    std::optional<PredecodePendingSchedule> settlePendingScheduleToNeutral();
+    bool accepts(quint64 generation) const;
+
+    void cancelBackgroundWork();
+    void cancel();
+
+private:
+    void updateNavigationMomentum(int pageIndex, qint64 monotonicMsec);
+
+    std::optional<PredecodeScheduleContext> m_displayedContext;
+    std::optional<PredecodePendingSchedule> m_pendingSchedule;
+    ImageAsyncTicket m_generation;
+    PredecodeMomentumState m_momentumState;
+    bool m_powerSaverEnabled = false;
+};
+}
+
+#endif

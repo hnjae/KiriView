@@ -100,6 +100,7 @@ src/predecodedisplayedhistory.cpp
 src/predecodeloadcontroller.cpp
 src/predecodeloadstate.cpp
 src/predecodepolicy.cpp
+src/predecodeschedulestate.cpp
 src/predecodewindowplan.cpp
 src/qimagereaderdecoder.cpp
 src/qimagereaderscaledlevelcache.cpp
