@@ -35,7 +35,7 @@ ImageDocumentDeletionController::ImageDocumentDeletionController(QObject *parent
 
 ImageDocumentDeletionController::~ImageDocumentDeletionController() = default;
 
-bool ImageDocumentDeletionController::inProgress() const { return m_inProgress; }
+bool ImageDocumentDeletionController::inProgress() const { return m_deletionState.inProgress(); }
 
 void ImageDocumentDeletionController::deleteDisplayedFile(FileDeletionMode mode)
 {
@@ -51,12 +51,11 @@ void ImageDocumentDeletionController::deleteDisplayedFile(FileDeletionMode mode)
 
     cancelFallback();
     m_fileDeletionJob.cancel();
-    const quint64 operationId = nextOperationId();
-    m_fileDeletionOperationId = operationId;
-    setInProgress(true);
+    const ImageDocumentDeletionFileOperationStart operation = m_deletionState.startFileDeletion();
+    notifyInProgressChangedIf(operation.inProgressChanged);
     m_fileDeletionJob
         = m_fileOperationProvider(m_parent, FileDeletionRequest { removalPlan.targetUrl, mode },
-            [this, operationId, fallbackPlan = removalPlan.fallbackPlan](
+            [this, operationId = operation.operationId, fallbackPlan = removalPlan.fallbackPlan](
                 FileDeletionResult result, const QString &errorString) {
                 finishFileDeletion(operationId, fallbackPlan, result, errorString);
             });
@@ -66,12 +65,13 @@ void ImageDocumentDeletionController::finishFileDeletion(quint64 operationId,
     const ImageRemovalFallbackPlan &fallbackPlan, FileDeletionResult result,
     const QString &errorString)
 {
-    if (!currentFileDeletionOperation(operationId)) {
+    const ImageDocumentDeletionFileOperationFinish operation
+        = m_deletionState.finishFileDeletion(operationId);
+    if (!operation.accepted) {
         return;
     }
 
-    clearFileDeletionOperation(operationId);
-    setInProgress(false);
+    notifyInProgressChangedIf(operation.inProgressChanged);
 
     switch (fileDeletionCompletionAction(result)) {
     case FileDeletionCompletionAction::ClearDeletedImageAndOpenFallback:
@@ -91,8 +91,7 @@ void ImageDocumentDeletionController::openRemovalFallback(
 {
     cancelFallback();
 
-    const quint64 operationId = nextOperationId();
-    m_fallbackOperationId = operationId;
+    const quint64 operationId = m_deletionState.startFallback();
     std::visit([this, operationId](const auto &plan) { openFallbackPlan(operationId, plan); },
         fallbackPlan);
 }
@@ -100,7 +99,7 @@ void ImageDocumentDeletionController::openRemovalFallback(
 void ImageDocumentDeletionController::openFallbackPlan(
     quint64 operationId, const NoImageRemovalFallback &)
 {
-    clearFallbackOperation(operationId);
+    m_deletionState.finishFallback(operationId);
 }
 
 void ImageDocumentDeletionController::openFallbackPlan(
@@ -109,32 +108,32 @@ void ImageDocumentDeletionController::openFallbackPlan(
     m_fallbackJob = m_candidateRepository.loadImages(
         m_parent, fallback.imageContext,
         [this, operationId, fallback](std::vector<ImageNavigationCandidate> candidates) {
-            if (!currentFallbackOperation(operationId)) {
+            if (!m_deletionState.acceptsFallback(operationId)) {
                 return;
             }
 
             const std::optional<QUrl> fallbackUrl
                 = imageRemovalFallbackUrl(std::move(candidates), fallback);
-            clearFallbackOperation(operationId);
+            m_deletionState.finishFallback(operationId);
             if (fallbackUrl.has_value()) {
                 reportDocumentEffect(ImageDocumentEffect::openUrl(*fallbackUrl));
             }
         },
-        [this, operationId](const QString &) { clearFallbackOperation(operationId); });
+        [this, operationId](const QString &) { m_deletionState.finishFallback(operationId); });
 }
 
 void ImageDocumentDeletionController::openFallbackPlan(
     quint64 operationId, const ComicBookRemovalFallback &fallback)
 {
     if (!fallback.candidateDirectoryUrl.isValid() || fallback.candidateDirectoryUrl.isEmpty()) {
-        clearFallbackOperation(operationId);
+        m_deletionState.finishFallback(operationId);
         return;
     }
 
     m_fallbackJob = m_candidateRepository.loadContainers(
         m_parent, fallback.candidateDirectoryUrl,
         [this, operationId, fallback](std::vector<ContainerNavigationCandidate> candidates) {
-            if (!currentFallbackOperation(operationId)) {
+            if (!m_deletionState.acceptsFallback(operationId)) {
                 return;
             }
 
@@ -143,14 +142,14 @@ void ImageDocumentDeletionController::openFallbackPlan(
             openComicBookFallbackCandidate(
                 operationId, fallbackCandidates.preferred, fallbackCandidates.fallback);
         },
-        [this, operationId](const QString &) { clearFallbackOperation(operationId); });
+        [this, operationId](const QString &) { m_deletionState.finishFallback(operationId); });
 }
 
 void ImageDocumentDeletionController::openComicBookFallbackCandidate(quint64 operationId,
     const std::optional<ContainerNavigationCandidate> &candidate,
     const std::optional<ContainerNavigationCandidate> &fallbackCandidate)
 {
-    if (!currentFallbackOperation(operationId)) {
+    if (!m_deletionState.acceptsFallback(operationId)) {
         return;
     }
 
@@ -159,18 +158,18 @@ void ImageDocumentDeletionController::openComicBookFallbackCandidate(quint64 ope
             openComicBookFallbackCandidate(operationId, fallbackCandidate, std::nullopt);
             return;
         }
-        clearFallbackOperation(operationId);
+        m_deletionState.finishFallback(operationId);
         return;
     }
 
     m_fallbackJob = m_candidateRepository.loadFirstImageInContainer(
         m_parent, *candidate,
         [this, operationId](const QUrl &imageUrl, const QUrl &containerUrl) {
-            if (!currentFallbackOperation(operationId)) {
+            if (!m_deletionState.acceptsFallback(operationId)) {
                 return;
             }
 
-            clearFallbackOperation(operationId);
+            m_deletionState.finishFallback(operationId);
             reportDocumentEffect(
                 ImageDocumentEffect::containerImageSelected(imageUrl, containerUrl));
         },
@@ -180,14 +179,11 @@ void ImageDocumentDeletionController::openComicBookFallbackCandidate(quint64 ope
         });
 }
 
-void ImageDocumentDeletionController::setInProgress(bool inProgress)
+void ImageDocumentDeletionController::notifyInProgressChangedIf(bool changed)
 {
-    if (m_inProgress == inProgress) {
-        return;
+    if (changed) {
+        invokeIfSet(m_callbacks.inProgressChanged);
     }
-
-    m_inProgress = inProgress;
-    invokeIfSet(m_callbacks.inProgressChanged);
 }
 
 void ImageDocumentDeletionController::cancel()
@@ -198,48 +194,15 @@ void ImageDocumentDeletionController::cancel()
 
 void ImageDocumentDeletionController::cancelFileDeletion()
 {
-    m_fileDeletionOperationId = 0;
+    const bool inProgressChanged = m_deletionState.cancelFileDeletion();
     m_fileDeletionJob.cancel();
-    setInProgress(false);
+    notifyInProgressChangedIf(inProgressChanged);
 }
 
 void ImageDocumentDeletionController::cancelFallback()
 {
-    m_fallbackOperationId = 0;
+    m_deletionState.cancelFallback();
     m_fallbackJob.cancel();
-}
-
-quint64 ImageDocumentDeletionController::nextOperationId()
-{
-    ++m_nextOperationId;
-    if (m_nextOperationId == 0) {
-        ++m_nextOperationId;
-    }
-    return m_nextOperationId;
-}
-
-bool ImageDocumentDeletionController::currentFileDeletionOperation(quint64 operationId) const
-{
-    return operationId != 0 && operationId == m_fileDeletionOperationId;
-}
-
-bool ImageDocumentDeletionController::currentFallbackOperation(quint64 operationId) const
-{
-    return operationId != 0 && operationId == m_fallbackOperationId;
-}
-
-void ImageDocumentDeletionController::clearFileDeletionOperation(quint64 operationId)
-{
-    if (currentFileDeletionOperation(operationId)) {
-        m_fileDeletionOperationId = 0;
-    }
-}
-
-void ImageDocumentDeletionController::clearFallbackOperation(quint64 operationId)
-{
-    if (currentFallbackOperation(operationId)) {
-        m_fallbackOperationId = 0;
-    }
 }
 
 void ImageDocumentDeletionController::reportDocumentEffect(ImageDocumentEffect effect)

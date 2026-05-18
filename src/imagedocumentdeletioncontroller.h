@@ -6,6 +6,7 @@
 
 #include "filedeletion.h"
 #include "imagecandidaterepository.h"
+#include "imagedocumentdeletionstate.h"
 #include "imagedocumenteffects.h"
 #include "imageiojob.h"
 #include "imageremovalfallback.h"
@@ -54,14 +55,9 @@ private:
     void openComicBookFallbackCandidate(quint64 operationId,
         const std::optional<ContainerNavigationCandidate> &candidate,
         const std::optional<ContainerNavigationCandidate> &fallbackCandidate);
-    void setInProgress(bool inProgress);
+    void notifyInProgressChangedIf(bool changed);
     void cancelFileDeletion();
     void cancelFallback();
-    quint64 nextOperationId();
-    bool currentFileDeletionOperation(quint64 operationId) const;
-    bool currentFallbackOperation(quint64 operationId) const;
-    void clearFileDeletionOperation(quint64 operationId);
-    void clearFallbackOperation(quint64 operationId);
     void reportDocumentEffect(ImageDocumentEffect effect);
     void reportFailure(const QString &errorString);
 
@@ -73,10 +69,7 @@ private:
     FileOperationProvider m_fileOperationProvider;
     ImageIoJob m_fileDeletionJob;
     ImageIoJob m_fallbackJob;
-    bool m_inProgress = false;
-    quint64 m_nextOperationId = 0;
-    quint64 m_fileDeletionOperationId = 0;
-    quint64 m_fallbackOperationId = 0;
+    ImageDocumentDeletionState m_deletionState;
 };
 }
 
