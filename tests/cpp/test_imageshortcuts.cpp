@@ -43,6 +43,7 @@ private Q_SLOTS:
     void shiftArrowsMoveOnePageInTwoPageModeLeftToRight();
     void shiftArrowsMoveOnePageInTwoPageModeRightToLeft();
     void shiftArrowsAreIgnoredWhileViewerShortcutsAreSuppressed();
+    void configuredActionShortcutsTriggerActions();
     void ctrlMTogglesMenubarThroughAction();
     void ctrlMIgnoredWhileHelpDialogOpen();
 };
@@ -545,6 +546,30 @@ void TestImageShortcuts::shiftArrowsAreIgnoredWhileViewerShortcutsAreSuppressed(
     fixture.root->setProperty("helpDialogOpen", true);
     pressKey(fixture.view.get(), Qt::Key_Right, Qt::ShiftModifier);
     QCOMPARE(fixture.root->property("currentPageNumber").toInt(), 2);
+}
+
+void TestImageShortcuts::configuredActionShortcutsTriggerActions()
+{
+    ImageShortcutsFixture fixture = createReadyFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    QTRY_VERIFY(documentReady(fixture.root));
+
+    QAction *rotateAction = fixture.application->action(QStringLiteral("view_rotate_clockwise"));
+    QVERIFY(rotateAction != nullptr);
+    QSignalSpy triggeredSpy(rotateAction, &QAction::triggered);
+
+    pressKey(fixture.view.get(), Qt::Key_R, Qt::ControlModifier);
+    QTRY_COMPARE(triggeredSpy.count(), 1);
+
+    pressKey(fixture.view.get(), Qt::Key_R);
+    QTRY_COMPARE(triggeredSpy.count(), 2);
+
+    fixture.root->setProperty("toolbarTextInputFocused", true);
+    pressKey(fixture.view.get(), Qt::Key_R);
+    QCOMPARE(triggeredSpy.count(), 2);
+
+    pressKey(fixture.view.get(), Qt::Key_R, Qt::ControlModifier);
+    QTRY_COMPARE(triggeredSpy.count(), 3);
 }
 
 void TestImageShortcuts::ctrlMTogglesMenubarThroughAction()
