@@ -10,7 +10,6 @@
 #include "imagesurface.h"
 #include "imagezoomstate.h"
 
-#include <QImage>
 #include <QObject>
 #include <QRectF>
 #include <QSize>
@@ -76,7 +75,6 @@ public:
     bool secondaryPageVisible() const;
     DisplayedImageRenderSnapshot renderSnapshot(
         DisplayedPageRole role = DisplayedPageRole::Primary) const;
-    const QImage &image() const;
 
     void openPreviousImage();
     void openNextImage();

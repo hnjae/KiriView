@@ -34,8 +34,6 @@ std::shared_ptr<DisplayedImageSurface> DisplayedImageState::imageSurface() const
     return m_surface;
 }
 
-const QImage &DisplayedImageState::image() const { return m_image; }
-
 QSize DisplayedImageState::imageSize() const
 {
     if (m_surface != nullptr) {
@@ -61,9 +59,9 @@ std::optional<StaticImagePayload> DisplayedImageState::staticImage() const
 void DisplayedImageState::setImage(const QImage &image, bool predecodeCacheable)
 {
     QImage displayImage = displayReadyImage(image);
-    replaceDisplayedImage(displayImage,
-        std::make_shared<DisplayedImageSurface>(LegacyFrameSurface { displayImage }), std::nullopt,
-        predecodeCacheable);
+    replaceDisplayedImage(
+        std::make_shared<DisplayedImageSurface>(LegacyFrameSurface { std::move(displayImage) }),
+        std::nullopt, predecodeCacheable);
 }
 
 void DisplayedImageState::setStaticImage(
@@ -80,8 +78,7 @@ void DisplayedImageState::setStaticImage(
         surface = std::make_shared<DisplayedImageSurface>(StaticTileSurface { *storedStaticImage });
     }
 
-    replaceDisplayedImage(std::move(displayImage), std::move(surface), std::move(storedStaticImage),
-        predecodeCacheable);
+    replaceDisplayedImage(std::move(surface), std::move(storedStaticImage), predecodeCacheable);
 }
 
 bool DisplayedImageState::insertTile(DecodedTile tile)
@@ -106,8 +103,8 @@ void DisplayedImageState::clear()
 {
     stopAnimation();
 
-    if (m_surface != nullptr || !m_image.isNull()) {
-        replaceDisplayedImage(QImage(), nullptr, std::nullopt, false);
+    if (m_surface != nullptr) {
+        replaceDisplayedImage(nullptr, std::nullopt, false);
     }
 }
 
@@ -130,11 +127,9 @@ void DisplayedImageState::startHeifSequenceAnimation(const QByteArray &data)
 
 void DisplayedImageState::stopAnimation() { m_animationPlayer->stop(); }
 
-void DisplayedImageState::replaceDisplayedImage(QImage image,
-    std::shared_ptr<DisplayedImageSurface> surface, std::optional<StaticImagePayload> staticImage,
-    bool predecodeCacheable)
+void DisplayedImageState::replaceDisplayedImage(std::shared_ptr<DisplayedImageSurface> surface,
+    std::optional<StaticImagePayload> staticImage, bool predecodeCacheable)
 {
-    m_image = std::move(image);
     m_surface = std::move(surface);
     m_staticImage = std::move(staticImage);
     m_imageIsPredecodeCacheable = predecodeCacheable;

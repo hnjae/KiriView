@@ -114,8 +114,6 @@ DisplayedImageRenderSnapshot ImagePresentationController::renderSnapshot() const
     };
 }
 
-const QImage &ImagePresentationController::image() const { return m_displayedImageState->image(); }
-
 quint64 ImagePresentationController::imageRevision() const
 {
     return m_displayedImageState->revision();

@@ -202,7 +202,7 @@ void TestImageDocumentController::initialLoadSuccessUpdatesDocumentState()
     QCOMPARE(controller->currentPageNumber(), 1);
     QCOMPARE(controller->imageCount(), 1);
     QVERIFY(!controller->containerNavigationAvailable());
-    QVERIFY(!controller->image().isNull());
+    QVERIFY(controller->renderSnapshot().isRenderable());
 }
 
 void TestImageDocumentController::imageLoadsUsePhysicalViewportForFirstDisplayDecode()
@@ -904,7 +904,7 @@ void TestImageDocumentController::replacementLoadFailureKeepsDisplayedImage()
     QCOMPARE(controller->errorString(), QStringLiteral("missing"));
     QCOMPARE(controller->imageSize(), QSize(2, 1));
     QCOMPARE(controller->renderSnapshot().revision, displayedRevision);
-    QVERIFY(!controller->image().isNull());
+    QVERIFY(controller->renderSnapshot().isRenderable());
 }
 
 void TestImageDocumentController::decodedReplacementFailureSchedulesRecoveryPredecodeOnce()
@@ -980,7 +980,7 @@ void TestImageDocumentController::emptyContainerNavigationClearsImageAndSelectsC
     QCOMPARE(controller->sourceUrl(), targetContainerUrl);
     QCOMPARE(controller->displayedUrl(), QUrl());
     QVERIFY(controller->containerNavigationAvailable());
-    QVERIFY(controller->image().isNull());
+    QVERIFY(!controller->renderSnapshot().isRenderable());
     QCOMPARE(controller->imageSize(), QSize());
     QVERIFY(!controller->errorString().isEmpty());
 }
@@ -1038,7 +1038,7 @@ void TestImageDocumentController::fileDeletionFailureKeepsDisplayedImageAndRepor
     QCOMPARE(controller->displayedUrl(), imageUrl);
     QCOMPARE(deletionErrors.size(), std::size_t(1));
     QCOMPARE(deletionErrors.front(), QStringLiteral("permission denied"));
-    QVERIFY(!controller->image().isNull());
+    QVERIFY(controller->renderSnapshot().isRenderable());
 }
 
 void TestImageDocumentController::fileDeletionCancelKeepsDisplayedImageWithoutError()
@@ -1076,7 +1076,7 @@ void TestImageDocumentController::fileDeletionCancelKeepsDisplayedImageWithoutEr
     QCOMPARE(controller->sourceUrl(), imageUrl);
     QCOMPARE(controller->displayedUrl(), imageUrl);
     QVERIFY(deletionErrors.empty());
-    QVERIFY(!controller->image().isNull());
+    QVERIFY(controller->renderSnapshot().isRenderable());
 }
 
 void TestImageDocumentController::successfulFileDeletionOpensNextImageFallback()
@@ -1169,7 +1169,7 @@ void TestImageDocumentController::successfulFileDeletionWithoutFallbackClearsDoc
     QCOMPARE(controller->sourceUrl(), QUrl());
     QCOMPARE(controller->displayedUrl(), QUrl());
     QCOMPARE(controller->imageSize(), QSize());
-    QVERIFY(controller->image().isNull());
+    QVERIFY(!controller->renderSnapshot().isRenderable());
 }
 
 void TestImageDocumentController::successfulComicBookDeletionOpensNextSiblingArchive()

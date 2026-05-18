@@ -259,8 +259,6 @@ DisplayedImageRenderSnapshot ImageDocumentRuntime::renderSnapshot(DisplayedPageR
     return spreadController->renderSnapshot(role);
 }
 
-const QImage &ImageDocumentRuntime::image() const { return presentationController->image(); }
-
 void ImageDocumentRuntime::dispatchEffect(ImageDocumentEffect effect)
 {
     effectExecutor->dispatch(std::move(effect));

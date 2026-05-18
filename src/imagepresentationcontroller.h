@@ -56,7 +56,6 @@ public:
     int rotationDegrees() const;
     std::shared_ptr<DisplayedImageSurface> imageSurface() const;
     DisplayedImageRenderSnapshot renderSnapshot() const;
-    const QImage &image() const;
     quint64 imageRevision() const;
     bool hasImage() const;
     bool isPredecodeCacheable() const;

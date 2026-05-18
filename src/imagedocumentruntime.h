@@ -13,7 +13,6 @@
 #include "imagesurface.h"
 #include "imagezoomstate.h"
 
-#include <QImage>
 #include <QRectF>
 #include <QSize>
 #include <QSizeF>
@@ -87,7 +86,6 @@ public:
     bool secondaryPageVisible() const;
     DisplayedImageRenderSnapshot renderSnapshot(
         DisplayedPageRole role = DisplayedPageRole::Primary) const;
-    const QImage &image() const;
 
     void dispatchEffect(ImageDocumentEffect effect);
     void notify(ImageDocumentChange change);

@@ -65,7 +65,8 @@ void TestDisplayedImageState::imageSurfaceChangesAdvanceRevisionAndNotify()
     state.clear();
 
     QCOMPARE(state.revision(), quint64(5));
-    QVERIFY(state.image().isNull());
+    QVERIFY(!state.hasImage());
+    QVERIFY(state.imageSurface() == nullptr);
     QCOMPARE(state.imageSize(), QSize());
     QVERIFY(!state.isPredecodeCacheable());
     QVERIFY(!state.staticImage().has_value());

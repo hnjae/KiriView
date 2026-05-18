@@ -7,7 +7,6 @@
 #include "imagedocumenttypes.h"
 #include "imagesurface.h"
 
-#include <QImage>
 #include <QObject>
 #include <QRectF>
 #include <QSize>
@@ -138,7 +137,6 @@ public:
     bool secondaryPageVisible() const;
     KiriView::DisplayedImageRenderSnapshot renderSnapshot(
         KiriView::DisplayedPageRole role = KiriView::DisplayedPageRole::Primary) const;
-    const QImage &image() const;
 
     void setRenderContextProvider(RenderContextProvider provider);
 

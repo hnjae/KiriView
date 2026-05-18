@@ -166,8 +166,6 @@ DisplayedImageRenderSnapshot ImageDocumentController::renderSnapshot(DisplayedPa
     return m_runtime->renderSnapshot(role);
 }
 
-const QImage &ImageDocumentController::image() const { return m_runtime->image(); }
-
 void ImageDocumentController::openPreviousImage() { m_runtime->openPreviousImage(); }
 
 void ImageDocumentController::openNextImage() { m_runtime->openNextImage(); }

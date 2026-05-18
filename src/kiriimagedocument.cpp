@@ -251,8 +251,6 @@ KiriView::DisplayedImageRenderSnapshot KiriImageDocument::renderSnapshot(
     return m_documentController->renderSnapshot(role);
 }
 
-const QImage &KiriImageDocument::image() const { return m_documentController->image(); }
-
 void KiriImageDocument::setRenderContextProvider(RenderContextProvider provider)
 {
     m_renderContextProvider = std::move(provider);

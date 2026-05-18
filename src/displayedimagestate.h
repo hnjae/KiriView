@@ -32,7 +32,6 @@ public:
 
     bool hasImage() const;
     std::shared_ptr<DisplayedImageSurface> imageSurface() const;
-    const QImage &image() const;
     QSize imageSize() const;
     quint64 revision() const;
     bool isPredecodeCacheable() const;
@@ -51,7 +50,7 @@ public:
     void stopAnimation();
 
 private:
-    void replaceDisplayedImage(QImage image, std::shared_ptr<DisplayedImageSurface> surface,
+    void replaceDisplayedImage(std::shared_ptr<DisplayedImageSurface> surface,
         std::optional<StaticImagePayload> staticImage, bool predecodeCacheable);
     void finishImageChange();
     void notifyImageChanged();
@@ -59,7 +58,6 @@ private:
     ImageChangedCallback m_imageChanged;
     AnimationErrorCallback m_animationError;
     std::shared_ptr<DisplayedImageSurface> m_surface;
-    QImage m_image;
     std::optional<StaticImagePayload> m_staticImage;
     bool m_imageIsPredecodeCacheable = false;
     quint64 m_imageRevision = 0;
