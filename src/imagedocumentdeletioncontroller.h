@@ -11,6 +11,7 @@
 #include "imageremovalfallback.h"
 
 #include <QString>
+#include <QtGlobal>
 #include <functional>
 #include <optional>
 
@@ -44,18 +45,23 @@ public:
     void cancel();
 
 private:
-    void finishFileDeletion(const ImageRemovalFallbackPlan &fallbackPlan, FileDeletionResult result,
-        const QString &errorString);
+    void finishFileDeletion(quint64 operationId, const ImageRemovalFallbackPlan &fallbackPlan,
+        FileDeletionResult result, const QString &errorString);
     void openRemovalFallback(const ImageRemovalFallbackPlan &fallbackPlan);
-    void openFallbackPlan(const NoImageRemovalFallback &);
-    void openFallbackPlan(const ImageRemovalFallback &fallback);
-    void openFallbackPlan(const ComicBookRemovalFallback &fallback);
-    void openComicBookFallbackCandidate(
+    void openFallbackPlan(quint64 operationId, const NoImageRemovalFallback &);
+    void openFallbackPlan(quint64 operationId, const ImageRemovalFallback &fallback);
+    void openFallbackPlan(quint64 operationId, const ComicBookRemovalFallback &fallback);
+    void openComicBookFallbackCandidate(quint64 operationId,
         const std::optional<ContainerNavigationCandidate> &candidate,
         const std::optional<ContainerNavigationCandidate> &fallbackCandidate);
     void setInProgress(bool inProgress);
     void cancelFileDeletion();
     void cancelFallback();
+    quint64 nextOperationId();
+    bool currentFileDeletionOperation(quint64 operationId) const;
+    bool currentFallbackOperation(quint64 operationId) const;
+    void clearFileDeletionOperation(quint64 operationId);
+    void clearFallbackOperation(quint64 operationId);
     void reportDocumentEffect(ImageDocumentEffect effect);
     void reportFailure(const QString &errorString);
 
@@ -68,6 +74,9 @@ private:
     ImageIoJob m_fileDeletionJob;
     ImageIoJob m_fallbackJob;
     bool m_inProgress = false;
+    quint64 m_nextOperationId = 0;
+    quint64 m_fileDeletionOperationId = 0;
+    quint64 m_fallbackOperationId = 0;
 };
 }
 
