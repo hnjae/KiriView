@@ -3,16 +3,7 @@
 
 #include "imagespreadmodecontroller.h"
 
-#include "imagecontainer.h"
-
-#include <utility>
-
 namespace KiriView {
-ImageSpreadModeController::ImageSpreadModeController(AvailabilityProvider availabilityProvider)
-    : m_availabilityProvider(std::move(availabilityProvider))
-{
-}
-
 bool ImageSpreadModeController::twoPageModeEnabled() const { return m_twoPageModeEnabled; }
 
 ImageSpreadTwoPageModeChange ImageSpreadModeController::setTwoPageModeEnabled(
@@ -27,11 +18,16 @@ ImageSpreadTwoPageModeChange ImageSpreadModeController::setTwoPageModeEnabled(
     return change;
 }
 
-bool ImageSpreadModeController::twoPageModeAvailable() const { return readingControlsAvailable(); }
-
-bool ImageSpreadModeController::twoPageModeActive() const
+bool ImageSpreadModeController::twoPageModeAvailable(
+    const ImageSpreadReadingAvailability &availability) const
 {
-    return m_twoPageModeEnabled && twoPageModeAvailable();
+    return imageSpreadReadingControlsAvailable(availability);
+}
+
+bool ImageSpreadModeController::twoPageModeActive(
+    const ImageSpreadReadingAvailability &availability) const
+{
+    return m_twoPageModeEnabled && twoPageModeAvailable(availability);
 }
 
 bool ImageSpreadModeController::rightToLeftReadingEnabled() const
@@ -49,14 +45,16 @@ bool ImageSpreadModeController::setRightToLeftReadingEnabled(bool enabled)
     return true;
 }
 
-bool ImageSpreadModeController::rightToLeftReadingAvailable() const
+bool ImageSpreadModeController::rightToLeftReadingAvailable(
+    const ImageSpreadReadingAvailability &availability) const
 {
-    return readingControlsAvailable();
+    return imageSpreadReadingControlsAvailable(availability);
 }
 
-bool ImageSpreadModeController::rightToLeftReadingActive() const
+bool ImageSpreadModeController::rightToLeftReadingActive(
+    const ImageSpreadReadingAvailability &availability) const
 {
-    return m_rightToLeftReadingEnabled && rightToLeftReadingAvailable();
+    return m_rightToLeftReadingEnabled && rightToLeftReadingAvailable(availability);
 }
 
 void ImageSpreadModeController::resetRightToLeftReading() { m_rightToLeftReadingEnabled = false; }
@@ -84,18 +82,5 @@ bool ImageSpreadModeController::finishSpreadTransition()
 
     m_spreadTransitionInProgress = false;
     return true;
-}
-
-ImageSpreadModeAvailability ImageSpreadModeController::availability() const
-{
-    return m_availabilityProvider ? m_availabilityProvider() : ImageSpreadModeAvailability {};
-}
-
-bool ImageSpreadModeController::readingControlsAvailable() const
-{
-    const ImageSpreadModeAvailability currentAvailability = availability();
-    const DisplayedImageLocation &location = currentAvailability.displayedImageLocation;
-    return currentAvailability.hasImage && !location.imageUrl().isEmpty()
-        && location.archiveDocument().isComicBook();
 }
 }

@@ -48,6 +48,13 @@ mod ffi {
     }
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    struct RustImageSpreadReadingAvailability {
+        has_image: bool,
+        has_displayed_image: bool,
+        displayed_document_is_comic_book: bool,
+    }
+
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     struct RustImageSpreadTwoPageModeChange {
         changed: bool,
         reset_spread_zoom: bool,
@@ -102,6 +109,11 @@ mod ffi {
             state: RustImageSpreadSecondaryPageRefreshState,
         ) -> RustImageSpreadSecondaryPageRefreshPlan;
 
+        #[cxx_name = "rustImageSpreadReadingControlsAvailable"]
+        fn rust_image_spread_reading_controls_available(
+            availability: RustImageSpreadReadingAvailability,
+        ) -> bool;
+
         #[cxx_name = "rustImageSpreadTwoPageModeChange"]
         fn rust_image_spread_two_page_mode_change(
             current_enabled: bool,
@@ -113,7 +125,7 @@ mod ffi {
 }
 
 use ffi::{
-    RustImageSpreadRectF, RustImageSpreadSecondaryPageDecision,
+    RustImageSpreadReadingAvailability, RustImageSpreadRectF, RustImageSpreadSecondaryPageDecision,
     RustImageSpreadSecondaryPageRefreshPlan, RustImageSpreadSecondaryPageRefreshState,
     RustImageSpreadSize, RustImageSpreadSizeF, RustImageSpreadTwoPageModeChange,
 };
@@ -219,6 +231,14 @@ fn rust_image_spread_secondary_page_refresh_plan(
             next_page_number,
         )
     }
+}
+
+fn rust_image_spread_reading_controls_available(
+    availability: RustImageSpreadReadingAvailability,
+) -> bool {
+    availability.has_image
+        && availability.has_displayed_image
+        && availability.displayed_document_is_comic_book
 }
 
 fn rust_image_spread_two_page_mode_change(
@@ -387,6 +407,18 @@ mod tests {
         }
     }
 
+    fn reading_availability(
+        has_image: bool,
+        has_displayed_image: bool,
+        displayed_document_is_comic_book: bool,
+    ) -> RustImageSpreadReadingAvailability {
+        RustImageSpreadReadingAvailability {
+            has_image,
+            has_displayed_image,
+            displayed_document_is_comic_book,
+        }
+    }
+
     fn assert_rect_eq(
         actual: RustImageSpreadRectF,
         expected_x: f64,
@@ -542,6 +574,22 @@ mod tests {
             )),
             secondary_page_refresh_plan(RustImageSpreadSecondaryPageDecision::LoadNext, 3)
         );
+    }
+
+    #[test]
+    fn reading_controls_require_displayed_comic_archive_image() {
+        assert!(!rust_image_spread_reading_controls_available(
+            reading_availability(false, true, true)
+        ));
+        assert!(!rust_image_spread_reading_controls_available(
+            reading_availability(true, false, true)
+        ));
+        assert!(!rust_image_spread_reading_controls_available(
+            reading_availability(true, true, false)
+        ));
+        assert!(rust_image_spread_reading_controls_available(
+            reading_availability(true, true, true)
+        ));
     }
 
     #[test]

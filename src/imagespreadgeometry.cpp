@@ -29,6 +29,13 @@ KiriView::RustImageSpreadSecondaryPageRefreshState rustSecondaryPageRefreshState
         state.currentPageNumber, state.imageCount, state.primaryPageIsWide, state.nextPageAvailable,
         state.nextPageIsWide, state.currentSecondaryMatchesNext };
 }
+
+KiriView::RustImageSpreadReadingAvailability rustReadingAvailability(
+    const KiriView::ImageSpreadReadingAvailability &availability)
+{
+    return KiriView::RustImageSpreadReadingAvailability { availability.hasImage,
+        availability.hasDisplayedImage, availability.displayedDocumentIsComicBook };
+}
 }
 
 namespace KiriView {
@@ -87,6 +94,11 @@ ImageSpreadSecondaryPageRefreshPlan imageSpreadSecondaryPageRefreshPlan(
         ::imageSpreadSecondaryPageDecision(plan.decision),
         plan.target_page_number,
     };
+}
+
+bool imageSpreadReadingControlsAvailable(const ImageSpreadReadingAvailability &availability)
+{
+    return rustImageSpreadReadingControlsAvailable(rustReadingAvailability(availability));
 }
 
 ImageSpreadTwoPageModeChange imageSpreadTwoPageModeChange(

@@ -30,6 +30,12 @@ struct ImageSpreadSecondaryPageRefreshPlan {
     int targetPageNumber = 0;
 };
 
+struct ImageSpreadReadingAvailability {
+    bool hasImage = false;
+    bool hasDisplayedImage = false;
+    bool displayedDocumentIsComicBook = false;
+};
+
 struct ImageSpreadTwoPageModeChange {
     bool changed = false;
     bool resetSpreadZoom = false;
@@ -51,6 +57,7 @@ QRectF imageSpreadVisiblePageRect(const QRectF &visibleRect, const QRectF &pageR
 bool imageSpreadPageIsWide(const QSize &imageSize);
 ImageSpreadSecondaryPageRefreshPlan imageSpreadSecondaryPageRefreshPlan(
     const ImageSpreadSecondaryPageRefreshState &state);
+bool imageSpreadReadingControlsAvailable(const ImageSpreadReadingAvailability &availability);
 ImageSpreadTwoPageModeChange imageSpreadTwoPageModeChange(
     bool currentEnabled, bool nextEnabled, bool secondaryPageVisible);
 }

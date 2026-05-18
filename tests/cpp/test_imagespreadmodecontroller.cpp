@@ -1,11 +1,9 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "imagecontainer.h"
 #include "imagespreadmodecontroller.h"
 
 #include <QTest>
-#include <optional>
 
 class TestImageSpreadModeController : public QObject
 {
@@ -18,73 +16,53 @@ private Q_SLOTS:
 };
 
 namespace {
-KiriView::DisplayedImageLocation comicPageLocation()
+KiriView::ImageSpreadReadingAvailability readingAvailability(
+    bool hasImage, bool hasDisplayedImage, bool displayedDocumentIsComicBook)
 {
-    const QUrl archiveUrl = QUrl::fromLocalFile(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
-        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
-    Q_ASSERT(archiveDocument.has_value());
-
-    QUrl pageUrl = archiveDocument->rootUrl();
-    pageUrl.setPath(archiveDocument->rootUrl().path() + QStringLiteral("page001.png"));
-    return KiriView::DisplayedImageLocation::fromArchiveDocument(pageUrl, *archiveDocument);
-}
-
-KiriView::DisplayedImageLocation generalArchivePageLocation()
-{
-    const QUrl archiveUrl = QUrl::fromLocalFile(QStringLiteral("/books/book.zip"));
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
-        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
-    Q_ASSERT(archiveDocument.has_value());
-
-    QUrl pageUrl = archiveDocument->rootUrl();
-    pageUrl.setPath(archiveDocument->rootUrl().path() + QStringLiteral("page001.png"));
-    return KiriView::DisplayedImageLocation::fromArchiveDocument(pageUrl, *archiveDocument);
+    return KiriView::ImageSpreadReadingAvailability {
+        hasImage,
+        hasDisplayedImage,
+        displayedDocumentIsComicBook,
+    };
 }
 }
 
 void TestImageSpreadModeController::twoPageModeRequiresDisplayedComicArchiveImage()
 {
-    KiriView::ImageSpreadModeAvailability availability;
-    KiriView::ImageSpreadModeController controller([&availability]() { return availability; });
+    KiriView::ImageSpreadModeController controller;
 
     const KiriView::ImageSpreadTwoPageModeChange change
         = controller.setTwoPageModeEnabled(true, false);
     QVERIFY(change.changed);
     QVERIFY(controller.twoPageModeEnabled());
-    QVERIFY(!controller.twoPageModeAvailable());
-    QVERIFY(!controller.twoPageModeActive());
+    QVERIFY(!controller.twoPageModeAvailable(readingAvailability(false, false, false)));
+    QVERIFY(!controller.twoPageModeActive(readingAvailability(false, false, false)));
 
-    availability.hasImage = true;
-    QVERIFY(!controller.twoPageModeAvailable());
-    QVERIFY(!controller.twoPageModeActive());
+    QVERIFY(!controller.twoPageModeAvailable(readingAvailability(true, false, true)));
+    QVERIFY(!controller.twoPageModeActive(readingAvailability(true, false, true)));
 
-    availability.displayedImageLocation = generalArchivePageLocation();
-    QVERIFY(!controller.twoPageModeAvailable());
-    QVERIFY(!controller.twoPageModeActive());
+    QVERIFY(!controller.twoPageModeAvailable(readingAvailability(true, true, false)));
+    QVERIFY(!controller.twoPageModeActive(readingAvailability(true, true, false)));
 
-    availability.hasImage = true;
-    availability.displayedImageLocation = comicPageLocation();
-    QVERIFY(controller.twoPageModeAvailable());
-    QVERIFY(controller.twoPageModeActive());
+    QVERIFY(controller.twoPageModeAvailable(readingAvailability(true, true, true)));
+    QVERIFY(controller.twoPageModeActive(readingAvailability(true, true, true)));
 }
 
 void TestImageSpreadModeController::resetRightToLeftReadingClearsCurrentModeState()
 {
-    KiriView::ImageSpreadModeAvailability availability { true, comicPageLocation() };
-    KiriView::ImageSpreadModeController controller([&availability]() { return availability; });
+    KiriView::ImageSpreadModeController controller;
 
     QVERIFY(controller.setRightToLeftReadingEnabled(true));
-    QVERIFY(controller.rightToLeftReadingActive());
+    QVERIFY(controller.rightToLeftReadingActive(readingAvailability(true, true, true)));
 
     controller.resetRightToLeftReading();
     QVERIFY(!controller.rightToLeftReadingEnabled());
-    QVERIFY(!controller.rightToLeftReadingActive());
+    QVERIFY(!controller.rightToLeftReadingActive(readingAvailability(true, true, true)));
 }
 
 void TestImageSpreadModeController::spreadTransitionReportsStateChanges()
 {
-    KiriView::ImageSpreadModeController controller({});
+    KiriView::ImageSpreadModeController controller;
 
     QVERIFY(!controller.spreadTransitionInProgress());
     QVERIFY(controller.beginSpreadTransition());

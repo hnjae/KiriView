@@ -19,6 +19,7 @@ private Q_SLOTS:
     void pageRectsRespectReadingDirectionAndVerticalCentering();
     void widePagePolicyRequiresLandscapeImage();
     void secondaryPageRefreshPlanSelectsPrimaryKeepOrLoad();
+    void readingControlsRequireDisplayedComicArchiveImage();
     void twoPageModeChangePlansToggleSideEffects();
 };
 
@@ -100,6 +101,18 @@ void TestImageSpreadGeometry::secondaryPageRefreshPlanSelectsPrimaryKeepOrLoad()
                 true, 2, 4, false, true, false, false });
     QCOMPARE(loadPlan.decision, ImageSpreadSecondaryPageDecision::LoadNext);
     QCOMPARE(loadPlan.targetPageNumber, 3);
+}
+
+void TestImageSpreadGeometry::readingControlsRequireDisplayedComicArchiveImage()
+{
+    QVERIFY(!KiriView::imageSpreadReadingControlsAvailable(
+        KiriView::ImageSpreadReadingAvailability { false, true, true }));
+    QVERIFY(!KiriView::imageSpreadReadingControlsAvailable(
+        KiriView::ImageSpreadReadingAvailability { true, false, true }));
+    QVERIFY(!KiriView::imageSpreadReadingControlsAvailable(
+        KiriView::ImageSpreadReadingAvailability { true, true, false }));
+    QVERIFY(KiriView::imageSpreadReadingControlsAvailable(
+        KiriView::ImageSpreadReadingAvailability { true, true, true }));
 }
 
 void TestImageSpreadGeometry::twoPageModeChangePlansToggleSideEffects()

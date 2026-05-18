@@ -7,6 +7,7 @@
 #include "imageasyncdependencies.h"
 #include "imagedocumentstate.h"
 #include "imagenavigationtypes.h"
+#include "imagespreadgeometry.h"
 #include "imagespreadnavigation.h"
 #include "imagespreadsecondarypagerefresh.h"
 #include "imagesurface.h"
@@ -115,6 +116,7 @@ private:
     ImageZoomChangeSet updateZoomState();
     QSize spreadImageSize() const;
     bool primaryPageIsWide() const;
+    ImageSpreadReadingAvailability readingAvailability() const;
     bool previousPageIsWideForNavigation() const;
     bool primarySelectionMatchesDisplayed() const;
     ImageSpreadNavigationState navigationState(bool previousPageIsWide = false) const;

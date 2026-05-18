@@ -45,10 +45,7 @@ ImageSpreadPresentationController::ImageSpreadPresentationController(QObject *pa
             },
         },
         std::move(candidateProvider), std::move(decodeDependencies));
-    m_modeController = std::make_unique<ImageSpreadModeController>([this]() {
-        return ImageSpreadModeAvailability { m_primaryPresentation.hasImage(),
-            m_state.displayedImageLocation() };
-    });
+    m_modeController = std::make_unique<ImageSpreadModeController>();
     m_zoomController
         = std::make_unique<ImageSpreadZoomController>(std::move(spreadRenderContextProvider),
             m_primaryPresentation, m_secondaryPageController->presentationController());
@@ -254,12 +251,12 @@ void ImageSpreadPresentationController::setTwoPageModeEnabled(bool enabled)
 
 bool ImageSpreadPresentationController::twoPageModeAvailable() const
 {
-    return m_modeController->twoPageModeAvailable();
+    return m_modeController->twoPageModeAvailable(readingAvailability());
 }
 
 bool ImageSpreadPresentationController::twoPageModeActive() const
 {
-    return m_modeController->twoPageModeActive();
+    return m_modeController->twoPageModeActive(readingAvailability());
 }
 
 bool ImageSpreadPresentationController::rightToLeftReadingEnabled() const
@@ -281,12 +278,12 @@ void ImageSpreadPresentationController::setRightToLeftReadingEnabled(bool enable
 
 bool ImageSpreadPresentationController::rightToLeftReadingAvailable() const
 {
-    return m_modeController->rightToLeftReadingAvailable();
+    return m_modeController->rightToLeftReadingAvailable(readingAvailability());
 }
 
 bool ImageSpreadPresentationController::rightToLeftReadingActive() const
 {
-    return m_modeController->rightToLeftReadingActive();
+    return m_modeController->rightToLeftReadingActive(readingAvailability());
 }
 
 bool ImageSpreadPresentationController::secondaryPageVisible() const
@@ -548,6 +545,13 @@ QSize ImageSpreadPresentationController::spreadImageSize() const
 bool ImageSpreadPresentationController::primaryPageIsWide() const
 {
     return imageSpreadPageIsWide(m_primaryPresentation.imageSize());
+}
+
+ImageSpreadReadingAvailability ImageSpreadPresentationController::readingAvailability() const
+{
+    const DisplayedImageLocation &location = m_state.displayedImageLocation();
+    return ImageSpreadReadingAvailability { m_primaryPresentation.hasImage(), !location.isEmpty(),
+        location.archiveDocument().isComicBook() };
 }
 
 bool ImageSpreadPresentationController::previousPageIsWideForNavigation() const
