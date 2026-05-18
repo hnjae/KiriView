@@ -3,56 +3,12 @@
 
 #include "imagepredecodecoordinator.h"
 
-#include "imageurl.h"
+#include "predecodewindowplan.h"
 
 #include <QThread>
-#include <algorithm>
 #include <cstddef>
-#include <iterator>
-#include <optional>
 #include <utility>
 #include <vector>
-
-namespace {
-using KiriView::ImageCandidateListContext;
-
-KiriView::PredecodePolicyInput predecodePolicyInput(
-    const KiriView::ArchiveDocumentLocation &archiveDocument,
-    KiriView::PredecodeMomentumMode momentumMode, bool powerSaverEnabled)
-{
-    return KiriView::predecodePolicyInputForArchiveDocument(
-        archiveDocument, momentumMode, powerSaverEnabled, QThread::idealThreadCount());
-}
-
-std::optional<std::size_t> currentCandidateIndex(
-    const std::vector<KiriView::ImageNavigationCandidate> &candidates, const QUrl &currentUrl)
-{
-    const auto currentCandidate = std::find_if(candidates.cbegin(), candidates.cend(),
-        [&currentUrl](const KiriView::ImageNavigationCandidate &candidate) {
-            return KiriView::sameNormalizedUrl(candidate.url, currentUrl);
-        });
-    if (currentCandidate == candidates.cend()) {
-        return std::nullopt;
-    }
-
-    return static_cast<std::size_t>(std::distance(candidates.cbegin(), currentCandidate));
-}
-
-std::vector<QUrl> predecodeWindowImageUrls(
-    const std::vector<KiriView::ImageNavigationCandidate> &candidates,
-    const std::vector<std::size_t> &indices)
-{
-    std::vector<QUrl> urls;
-    urls.reserve(indices.size());
-    for (std::size_t index : indices) {
-        if (index < candidates.size()) {
-            urls.push_back(candidates.at(index).url);
-        }
-    }
-    return urls;
-}
-
-}
 
 namespace KiriView {
 ImagePredecodeCoordinator::ImagePredecodeCoordinator(QObject *parent)
@@ -166,37 +122,35 @@ void ImagePredecodeCoordinator::scheduleSettledNeutralPredecode()
 void ImagePredecodeCoordinator::scheduleAdjacentImagePredecode(
     const Context &context, quint64 generation)
 {
-    const PredecodePolicyInput policyInput = predecodePolicyInput(
-        context.primaryImage.location.archiveDocument(), m_momentumState.mode, m_powerSaverEnabled);
-    const PredecodeSchedulePlan initialPlan = predecodeSchedulePlan(0, std::nullopt, policyInput);
-    const std::size_t parallelLimit = initialPlan.parallelLimit;
-    if (parallelLimit == 0) {
-        startPredecodeImageLoads({}, context.primaryImage.location.archiveDocument(), context,
-            generation, parallelLimit);
+    const PredecodeCandidateListPlan candidateListPlan
+        = predecodeCandidateListPlan(PredecodeWindowPlanRequest {
+            context.primaryImage.location,
+            m_momentumState.mode,
+            m_powerSaverEnabled,
+            QThread::idealThreadCount(),
+        });
+    if (!candidateListPlan.shouldLoadCandidates()) {
+        const PredecodeWindowPlan windowPlan
+            = predecodeWindowPlanWithoutCandidates(candidateListPlan);
+        startPredecodeImageLoads(windowPlan.urls, windowPlan.archiveDocument, context, generation,
+            windowPlan.parallelLimit);
         return;
     }
 
-    const std::optional<ImageCandidateListContext> candidateContext
-        = imageCandidateListContextForDisplayedImage(context.primaryImage.location);
-    if (!candidateContext.has_value()) {
-        startPredecodeImageLoads({}, context.primaryImage.location.archiveDocument(), context,
-            generation, parallelLimit);
-        return;
-    }
-
-    const QUrl currentUrl = candidateContext->currentUrl();
-    const ArchiveDocumentLocation archiveDocument = candidateContext->archiveDocument();
     m_listerJob = m_candidateRepository.loadImages(
-        this, *candidateContext,
-        [this, context, generation, currentUrl, archiveDocument, policyInput](
-            std::vector<ImageNavigationCandidate> candidates) {
-            const PredecodeSchedulePlan plan = predecodeSchedulePlan(
-                candidates.size(), currentCandidateIndex(candidates, currentUrl), policyInput);
-            startPredecodeImageLoads(predecodeWindowImageUrls(candidates, plan.targetIndices),
-                archiveDocument, context, generation, plan.parallelLimit);
+        this, *candidateListPlan.candidateContext,
+        [this, context, generation, candidateListPlan](
+            const std::vector<ImageNavigationCandidate> &candidates) {
+            const PredecodeWindowPlan windowPlan
+                = predecodeWindowPlanForCandidates(candidateListPlan, candidates);
+            startPredecodeImageLoads(windowPlan.urls, windowPlan.archiveDocument, context,
+                generation, windowPlan.parallelLimit);
         },
-        [this, context, generation, archiveDocument, parallelLimit](const QString &) {
-            startPredecodeImageLoads({}, archiveDocument, context, generation, parallelLimit);
+        [this, context, generation, candidateListPlan](const QString &) {
+            const PredecodeWindowPlan windowPlan
+                = predecodeWindowPlanWithoutCandidates(candidateListPlan);
+            startPredecodeImageLoads(windowPlan.urls, windowPlan.archiveDocument, context,
+                generation, windowPlan.parallelLimit);
         });
 }
 

@@ -87,6 +87,7 @@ src/predecodeactivedecodestore.cpp
 src/predecodecache.cpp
 src/predecodeloadcontroller.cpp
 src/predecodepolicy.cpp
+src/predecodewindowplan.cpp
 src/qimagereadertilesource.cpp
 src/rawdecoder.cpp
 src/shortcuthelpmodel.cpp
