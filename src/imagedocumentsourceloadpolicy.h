@@ -16,10 +16,19 @@ enum class ImageDocumentRightToLeftReadingTransition {
     ResetAndNotifyAfterOpen,
 };
 
-enum class ImageDocumentSourceLoadUrlTarget {
+enum class ImageDocumentSourceLoadPendingContainerTarget {
     Unchanged,
     Empty,
     RequestedContainerNavigation,
+};
+
+enum class ImageDocumentSourceLoadContainerTarget {
+    Unchanged,
+    RequestedContainerNavigation,
+};
+
+enum class ImageDocumentSourceLoadSourceTarget {
+    Unchanged,
     RequestedSource,
 };
 
@@ -37,11 +46,11 @@ struct ImageDocumentSourceLoadPlan {
     ImageDocumentRightToLeftReadingTransition rightToLeftReadingTransition
         = ImageDocumentRightToLeftReadingTransition::Keep;
     bool clearSecondaryPage = false;
-    ImageDocumentSourceLoadUrlTarget loadingContainerNavigationUrl
-        = ImageDocumentSourceLoadUrlTarget::Unchanged;
-    ImageDocumentSourceLoadUrlTarget containerNavigationUrl
-        = ImageDocumentSourceLoadUrlTarget::Unchanged;
-    ImageDocumentSourceLoadUrlTarget sourceUrl = ImageDocumentSourceLoadUrlTarget::Unchanged;
+    ImageDocumentSourceLoadPendingContainerTarget loadingContainerNavigationUrl
+        = ImageDocumentSourceLoadPendingContainerTarget::Unchanged;
+    ImageDocumentSourceLoadContainerTarget containerNavigationUrl
+        = ImageDocumentSourceLoadContainerTarget::Unchanged;
+    ImageDocumentSourceLoadSourceTarget sourceUrl = ImageDocumentSourceLoadSourceTarget::Unchanged;
     bool beginOpen = false;
 };
 

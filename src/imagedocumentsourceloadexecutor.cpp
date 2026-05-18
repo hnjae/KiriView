@@ -31,50 +31,45 @@ void applyRightToLeftReadingTransition(
     }
 }
 
-void applyLoadingContainerNavigationUrlTarget(KiriView::ImageDocumentSourceLoadUrlTarget target,
+void applyLoadingContainerNavigationUrlTarget(
+    KiriView::ImageDocumentSourceLoadPendingContainerTarget target,
     const KiriView::ImageDocumentSourceLoadRequest &request,
     const KiriView::ImageDocumentSourceLoadOperations &operations)
 {
     switch (target) {
-    case KiriView::ImageDocumentSourceLoadUrlTarget::Unchanged:
+    case KiriView::ImageDocumentSourceLoadPendingContainerTarget::Unchanged:
         return;
-    case KiriView::ImageDocumentSourceLoadUrlTarget::Empty:
+    case KiriView::ImageDocumentSourceLoadPendingContainerTarget::Empty:
         KiriView::invokeIfSet(operations.clearLoadingContainerNavigationUrl);
         return;
-    case KiriView::ImageDocumentSourceLoadUrlTarget::RequestedContainerNavigation:
+    case KiriView::ImageDocumentSourceLoadPendingContainerTarget::RequestedContainerNavigation:
         KiriView::invokeIfSet(
             operations.setLoadingContainerNavigationUrl, request.containerNavigationUrl);
-        return;
-    case KiriView::ImageDocumentSourceLoadUrlTarget::RequestedSource:
         return;
     }
 }
 
-void applyContainerNavigationUrlTarget(KiriView::ImageDocumentSourceLoadUrlTarget target,
+void applyContainerNavigationUrlTarget(KiriView::ImageDocumentSourceLoadContainerTarget target,
     const KiriView::ImageDocumentSourceLoadRequest &request,
     const KiriView::ImageDocumentSourceLoadOperations &operations)
 {
     switch (target) {
-    case KiriView::ImageDocumentSourceLoadUrlTarget::Unchanged:
-    case KiriView::ImageDocumentSourceLoadUrlTarget::Empty:
-    case KiriView::ImageDocumentSourceLoadUrlTarget::RequestedSource:
+    case KiriView::ImageDocumentSourceLoadContainerTarget::Unchanged:
         return;
-    case KiriView::ImageDocumentSourceLoadUrlTarget::RequestedContainerNavigation:
+    case KiriView::ImageDocumentSourceLoadContainerTarget::RequestedContainerNavigation:
         KiriView::invokeIfSet(operations.setContainerNavigationUrl, request.containerNavigationUrl);
         return;
     }
 }
 
-void applySourceLoadUrlTarget(KiriView::ImageDocumentSourceLoadUrlTarget target,
+void applySourceLoadUrlTarget(KiriView::ImageDocumentSourceLoadSourceTarget target,
     const KiriView::ImageDocumentSourceLoadRequest &request,
     const KiriView::ImageDocumentSourceLoadOperations &operations)
 {
     switch (target) {
-    case KiriView::ImageDocumentSourceLoadUrlTarget::Unchanged:
-    case KiriView::ImageDocumentSourceLoadUrlTarget::Empty:
-    case KiriView::ImageDocumentSourceLoadUrlTarget::RequestedContainerNavigation:
+    case KiriView::ImageDocumentSourceLoadSourceTarget::Unchanged:
         return;
-    case KiriView::ImageDocumentSourceLoadUrlTarget::RequestedSource:
+    case KiriView::ImageDocumentSourceLoadSourceTarget::RequestedSource:
         KiriView::invokeIfSet(operations.prepareSourceLoad, request);
         KiriView::invokeIfSet(operations.setSourceUrl, request.sourceUrl);
         return;

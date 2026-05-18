@@ -75,8 +75,8 @@ void TestImageDocumentSourceLoadExecutor::
         = KiriView::ImageDocumentRightToLeftReadingTransition::ResetAndNotifyAfterOpen;
     plan.clearSecondaryPage = true;
     plan.loadingContainerNavigationUrl
-        = KiriView::ImageDocumentSourceLoadUrlTarget::RequestedContainerNavigation;
-    plan.sourceUrl = KiriView::ImageDocumentSourceLoadUrlTarget::RequestedSource;
+        = KiriView::ImageDocumentSourceLoadPendingContainerTarget::RequestedContainerNavigation;
+    plan.sourceUrl = KiriView::ImageDocumentSourceLoadSourceTarget::RequestedSource;
     plan.beginOpen = true;
 
     QStringList events;
@@ -106,9 +106,10 @@ void TestImageDocumentSourceLoadExecutor::currentLoadExecutesReadingResetBeforeS
     KiriView::ImageDocumentSourceLoadPlan plan;
     plan.rightToLeftReadingTransition
         = KiriView::ImageDocumentRightToLeftReadingTransition::ResetAndNotifyBeforeSourceState;
-    plan.loadingContainerNavigationUrl = KiriView::ImageDocumentSourceLoadUrlTarget::Empty;
+    plan.loadingContainerNavigationUrl
+        = KiriView::ImageDocumentSourceLoadPendingContainerTarget::Empty;
     plan.containerNavigationUrl
-        = KiriView::ImageDocumentSourceLoadUrlTarget::RequestedContainerNavigation;
+        = KiriView::ImageDocumentSourceLoadContainerTarget::RequestedContainerNavigation;
 
     QStringList events;
     KiriView::executeImageDocumentSourceLoadPlan(request, plan, recordingOperations(&events));

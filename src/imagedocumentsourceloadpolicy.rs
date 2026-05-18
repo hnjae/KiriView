@@ -17,11 +17,22 @@ mod ffi {
     }
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
-    enum RustImageDocumentSourceLoadUrlTarget {
+    enum RustImageDocumentSourceLoadPendingContainerTarget {
         Unchanged = 0,
         Empty = 1,
         RequestedContainerNavigation = 2,
-        RequestedSource = 3,
+    }
+
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    enum RustImageDocumentSourceLoadContainerTarget {
+        Unchanged = 0,
+        RequestedContainerNavigation = 1,
+    }
+
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    enum RustImageDocumentSourceLoadSourceTarget {
+        Unchanged = 0,
+        RequestedSource = 1,
     }
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -39,9 +50,9 @@ mod ffi {
         finish_spread_transition: bool,
         right_to_left_reading_transition: RustImageDocumentRightToLeftReadingTransition,
         clear_secondary_page: bool,
-        loading_container_navigation_url: RustImageDocumentSourceLoadUrlTarget,
-        container_navigation_url: RustImageDocumentSourceLoadUrlTarget,
-        source_url: RustImageDocumentSourceLoadUrlTarget,
+        loading_container_navigation_url: RustImageDocumentSourceLoadPendingContainerTarget,
+        container_navigation_url: RustImageDocumentSourceLoadContainerTarget,
+        source_url: RustImageDocumentSourceLoadSourceTarget,
         begin_open: bool,
     }
 
@@ -54,9 +65,10 @@ mod ffi {
 }
 
 use ffi::{
-    RustImageDocumentRightToLeftReadingTransition, RustImageDocumentSourceLoadKind,
+    RustImageDocumentRightToLeftReadingTransition, RustImageDocumentSourceLoadContainerTarget,
+    RustImageDocumentSourceLoadKind, RustImageDocumentSourceLoadPendingContainerTarget,
     RustImageDocumentSourceLoadPlan, RustImageDocumentSourceLoadPolicyInput,
-    RustImageDocumentSourceLoadUrlTarget,
+    RustImageDocumentSourceLoadSourceTarget,
 };
 
 fn rust_image_document_source_load_plan(
@@ -75,10 +87,11 @@ fn current_source_load_plan(
     let mut plan = empty_source_load_plan();
     plan.finish_spread_transition = !input.preserve_two_page_spread_transition;
     plan.right_to_left_reading_transition = right_to_left_reading_transition(input, false);
-    plan.loading_container_navigation_url = RustImageDocumentSourceLoadUrlTarget::Empty;
+    plan.loading_container_navigation_url =
+        RustImageDocumentSourceLoadPendingContainerTarget::Empty;
     if input.has_requested_container_navigation_url {
         plan.container_navigation_url =
-            RustImageDocumentSourceLoadUrlTarget::RequestedContainerNavigation;
+            RustImageDocumentSourceLoadContainerTarget::RequestedContainerNavigation;
     }
     plan
 }
@@ -92,8 +105,8 @@ fn replacement_source_load_plan(
     plan.right_to_left_reading_transition = right_to_left_reading_transition(input, true);
     plan.clear_secondary_page = true;
     plan.loading_container_navigation_url =
-        RustImageDocumentSourceLoadUrlTarget::RequestedContainerNavigation;
-    plan.source_url = RustImageDocumentSourceLoadUrlTarget::RequestedSource;
+        RustImageDocumentSourceLoadPendingContainerTarget::RequestedContainerNavigation;
+    plan.source_url = RustImageDocumentSourceLoadSourceTarget::RequestedSource;
     plan.begin_open = true;
     plan
 }
@@ -122,9 +135,10 @@ fn empty_source_load_plan() -> RustImageDocumentSourceLoadPlan {
         finish_spread_transition: false,
         right_to_left_reading_transition: RustImageDocumentRightToLeftReadingTransition::Keep,
         clear_secondary_page: false,
-        loading_container_navigation_url: RustImageDocumentSourceLoadUrlTarget::Unchanged,
-        container_navigation_url: RustImageDocumentSourceLoadUrlTarget::Unchanged,
-        source_url: RustImageDocumentSourceLoadUrlTarget::Unchanged,
+        loading_container_navigation_url:
+            RustImageDocumentSourceLoadPendingContainerTarget::Unchanged,
+        container_navigation_url: RustImageDocumentSourceLoadContainerTarget::Unchanged,
+        source_url: RustImageDocumentSourceLoadSourceTarget::Unchanged,
         begin_open: false,
     }
 }
@@ -144,7 +158,8 @@ mod tests {
                 false,
             )),
             RustImageDocumentSourceLoadPlan {
-                loading_container_navigation_url: RustImageDocumentSourceLoadUrlTarget::Empty,
+                loading_container_navigation_url:
+                    RustImageDocumentSourceLoadPendingContainerTarget::Empty,
                 ..empty_source_load_plan()
             }
         );
@@ -159,9 +174,10 @@ mod tests {
             )),
             RustImageDocumentSourceLoadPlan {
                 finish_spread_transition: true,
-                loading_container_navigation_url: RustImageDocumentSourceLoadUrlTarget::Empty,
+                loading_container_navigation_url:
+                    RustImageDocumentSourceLoadPendingContainerTarget::Empty,
                 container_navigation_url:
-                    RustImageDocumentSourceLoadUrlTarget::RequestedContainerNavigation,
+                    RustImageDocumentSourceLoadContainerTarget::RequestedContainerNavigation,
                 ..empty_source_load_plan()
             }
         );
@@ -181,8 +197,8 @@ mod tests {
                 cancel_navigation_and_predecode: true,
                 clear_secondary_page: true,
                 loading_container_navigation_url:
-                    RustImageDocumentSourceLoadUrlTarget::RequestedContainerNavigation,
-                source_url: RustImageDocumentSourceLoadUrlTarget::RequestedSource,
+                    RustImageDocumentSourceLoadPendingContainerTarget::RequestedContainerNavigation,
+                source_url: RustImageDocumentSourceLoadSourceTarget::RequestedSource,
                 begin_open: true,
                 ..empty_source_load_plan()
             }
@@ -201,8 +217,8 @@ mod tests {
                 finish_spread_transition: true,
                 clear_secondary_page: true,
                 loading_container_navigation_url:
-                    RustImageDocumentSourceLoadUrlTarget::RequestedContainerNavigation,
-                source_url: RustImageDocumentSourceLoadUrlTarget::RequestedSource,
+                    RustImageDocumentSourceLoadPendingContainerTarget::RequestedContainerNavigation,
+                source_url: RustImageDocumentSourceLoadSourceTarget::RequestedSource,
                 begin_open: true,
                 ..empty_source_load_plan()
             }

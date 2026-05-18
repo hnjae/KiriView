@@ -37,21 +37,46 @@ KiriView::ImageDocumentRightToLeftReadingTransition rightToLeftReadingTransition
     return ReadingTransition::Keep;
 }
 
-KiriView::ImageDocumentSourceLoadUrlTarget sourceLoadUrlTarget(
-    KiriView::RustImageDocumentSourceLoadUrlTarget target)
+KiriView::ImageDocumentSourceLoadPendingContainerTarget pendingContainerTarget(
+    KiriView::RustImageDocumentSourceLoadPendingContainerTarget target)
 {
     switch (target) {
-    case KiriView::RustImageDocumentSourceLoadUrlTarget::Unchanged:
-        return KiriView::ImageDocumentSourceLoadUrlTarget::Unchanged;
-    case KiriView::RustImageDocumentSourceLoadUrlTarget::Empty:
-        return KiriView::ImageDocumentSourceLoadUrlTarget::Empty;
-    case KiriView::RustImageDocumentSourceLoadUrlTarget::RequestedContainerNavigation:
-        return KiriView::ImageDocumentSourceLoadUrlTarget::RequestedContainerNavigation;
-    case KiriView::RustImageDocumentSourceLoadUrlTarget::RequestedSource:
-        return KiriView::ImageDocumentSourceLoadUrlTarget::RequestedSource;
+    case KiriView::RustImageDocumentSourceLoadPendingContainerTarget::Unchanged:
+        return KiriView::ImageDocumentSourceLoadPendingContainerTarget::Unchanged;
+    case KiriView::RustImageDocumentSourceLoadPendingContainerTarget::Empty:
+        return KiriView::ImageDocumentSourceLoadPendingContainerTarget::Empty;
+    case KiriView::RustImageDocumentSourceLoadPendingContainerTarget::RequestedContainerNavigation:
+        return KiriView::ImageDocumentSourceLoadPendingContainerTarget::
+            RequestedContainerNavigation;
     }
 
-    return KiriView::ImageDocumentSourceLoadUrlTarget::Unchanged;
+    return KiriView::ImageDocumentSourceLoadPendingContainerTarget::Unchanged;
+}
+
+KiriView::ImageDocumentSourceLoadContainerTarget containerTarget(
+    KiriView::RustImageDocumentSourceLoadContainerTarget target)
+{
+    switch (target) {
+    case KiriView::RustImageDocumentSourceLoadContainerTarget::Unchanged:
+        return KiriView::ImageDocumentSourceLoadContainerTarget::Unchanged;
+    case KiriView::RustImageDocumentSourceLoadContainerTarget::RequestedContainerNavigation:
+        return KiriView::ImageDocumentSourceLoadContainerTarget::RequestedContainerNavigation;
+    }
+
+    return KiriView::ImageDocumentSourceLoadContainerTarget::Unchanged;
+}
+
+KiriView::ImageDocumentSourceLoadSourceTarget sourceTarget(
+    KiriView::RustImageDocumentSourceLoadSourceTarget target)
+{
+    switch (target) {
+    case KiriView::RustImageDocumentSourceLoadSourceTarget::Unchanged:
+        return KiriView::ImageDocumentSourceLoadSourceTarget::Unchanged;
+    case KiriView::RustImageDocumentSourceLoadSourceTarget::RequestedSource:
+        return KiriView::ImageDocumentSourceLoadSourceTarget::RequestedSource;
+    }
+
+    return KiriView::ImageDocumentSourceLoadSourceTarget::Unchanged;
 }
 
 KiriView::RustImageDocumentSourceLoadPolicyInput rustSourceLoadPolicyInput(
@@ -74,9 +99,9 @@ KiriView::ImageDocumentSourceLoadPlan sourceLoadPlan(
         plan.finish_spread_transition,
         rightToLeftReadingTransition(plan.right_to_left_reading_transition),
         plan.clear_secondary_page,
-        sourceLoadUrlTarget(plan.loading_container_navigation_url),
-        sourceLoadUrlTarget(plan.container_navigation_url),
-        sourceLoadUrlTarget(plan.source_url),
+        pendingContainerTarget(plan.loading_container_navigation_url),
+        containerTarget(plan.container_navigation_url),
+        sourceTarget(plan.source_url),
         plan.begin_open,
     };
 }
