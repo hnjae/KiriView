@@ -70,12 +70,7 @@ QAction *ApplicationActionRuntime::action(const QString &actionName)
 
 QAction *ApplicationActionRuntime::actionForId(KiriViewApplication::ActionId actionId)
 {
-    const QString name = actionName(actionId);
-    if (name.isEmpty()) {
-        return nullptr;
-    }
-
-    return action(name);
+    return registeredActionForId(actionId);
 }
 
 QString ApplicationActionRuntime::actionName(KiriViewApplication::ActionId actionId) const
@@ -85,90 +80,80 @@ QString ApplicationActionRuntime::actionName(KiriViewApplication::ActionId actio
 
 QList<QKeySequence> ApplicationActionRuntime::shortcuts(const QString &actionName) const
 {
-    const QAction *action = registeredAction(actionName);
-    if (action == nullptr) {
-        return {};
-    }
-
-    return action->shortcuts();
+    return shortcutProjection(actionName).shortcuts;
 }
 
 QList<QKeySequence> ApplicationActionRuntime::shortcutsForId(
     KiriViewApplication::ActionId actionId) const
 {
-    const QString name = actionName(actionId);
-    if (name.isEmpty()) {
-        return {};
-    }
-
-    return shortcuts(name);
+    return shortcutProjectionForId(actionId).shortcuts;
 }
 
 QList<QKeySequence> ApplicationActionRuntime::shortcutsWithCommandModifier(
     const QString &actionName) const
 {
-    return Actions::filterShortcutsByCommandModifier(shortcuts(actionName), true);
+    return shortcutProjection(actionName).shortcutsWithCommandModifier;
 }
 
 QList<QKeySequence> ApplicationActionRuntime::shortcutsWithCommandModifierForId(
     KiriViewApplication::ActionId actionId) const
 {
-    return Actions::filterShortcutsByCommandModifier(shortcutsForId(actionId), true);
+    return shortcutProjectionForId(actionId).shortcutsWithCommandModifier;
 }
 
 QList<QKeySequence> ApplicationActionRuntime::shortcutsWithoutCommandModifier(
     const QString &actionName) const
 {
-    return Actions::filterShortcutsByCommandModifier(shortcuts(actionName), false);
+    return shortcutProjection(actionName).shortcutsWithoutCommandModifier;
 }
 
 QList<QKeySequence> ApplicationActionRuntime::shortcutsWithoutCommandModifierForId(
     KiriViewApplication::ActionId actionId) const
 {
-    return Actions::filterShortcutsByCommandModifier(shortcutsForId(actionId), false);
+    return shortcutProjectionForId(actionId).shortcutsWithoutCommandModifier;
 }
 
 QList<QKeySequence> ApplicationActionRuntime::shortcutAliases(const QString &actionName) const
 {
-    return Actions::shortcutAliases(shortcuts(actionName));
+    return shortcutProjection(actionName).shortcutAliases;
 }
 
 QList<QKeySequence> ApplicationActionRuntime::shortcutAliasesForId(
     KiriViewApplication::ActionId actionId) const
 {
-    return Actions::shortcutAliases(shortcutsForId(actionId));
+    return shortcutProjectionForId(actionId).shortcutAliases;
 }
 
 QString ApplicationActionRuntime::shortcutText(const QString &actionName) const
 {
-    return Actions::shortcutListText(shortcuts(actionName));
+    return shortcutProjection(actionName).shortcutText;
 }
 
 QString ApplicationActionRuntime::shortcutTextForId(KiriViewApplication::ActionId actionId) const
 {
-    return Actions::shortcutListText(shortcutsForId(actionId));
+    return shortcutProjectionForId(actionId).shortcutText;
 }
 
 QKeySequence ApplicationActionRuntime::menuShortcut(const QString &actionName) const
 {
-    return Actions::menuShortcut(shortcuts(actionName));
+    return shortcutProjection(actionName).menuShortcut;
 }
 
 QKeySequence ApplicationActionRuntime::menuShortcutForId(
     KiriViewApplication::ActionId actionId) const
 {
-    return Actions::menuShortcut(shortcutsForId(actionId));
+    return shortcutProjectionForId(actionId).menuShortcut;
 }
 
 QString ApplicationActionRuntime::menuShortcutText(const QString &actionName) const
 {
-    return menuShortcut(actionName).toString(QKeySequence::NativeText);
+    return shortcutProjection(actionName).menuShortcutText;
 }
 
 QString ApplicationActionRuntime::menuShortcutTextForId(
     KiriViewApplication::ActionId actionId) const
 {
-    return menuShortcutForId(actionId).toString(QKeySequence::NativeText);
+    return shortcutProjectionForId(actionId).menuShortcutText;
 }
 
 void ApplicationActionRuntime::setupActions()
@@ -312,6 +297,33 @@ QAction *ApplicationActionRuntime::registeredAction(const QString &actionName) c
 {
     return const_cast<KiriViewApplication &>(m_application)
         .AbstractKirigamiApplication::action(actionName);
+}
+
+QAction *ApplicationActionRuntime::registeredActionForId(
+    KiriViewApplication::ActionId actionId) const
+{
+    const QString name = actionName(actionId);
+    if (name.isEmpty()) {
+        return nullptr;
+    }
+
+    return registeredAction(name);
+}
+
+ApplicationShortcutProjection ApplicationActionRuntime::shortcutProjection(
+    const QString &actionName) const
+{
+    const QAction *registered = registeredAction(actionName);
+    return Actions::shortcutProjection(
+        registered == nullptr ? QList<QKeySequence>() : registered->shortcuts());
+}
+
+ApplicationShortcutProjection ApplicationActionRuntime::shortcutProjectionForId(
+    KiriViewApplication::ActionId actionId) const
+{
+    const QAction *registered = registeredActionForId(actionId);
+    return Actions::shortcutProjection(
+        registered == nullptr ? QList<QKeySequence>() : registered->shortcuts());
 }
 
 QList<ShortcutHelpRow> ApplicationActionRuntime::shortcutHelpRows() const

@@ -136,7 +136,7 @@ QString ShortcutHelpModel::shortcutDisplayText(const QAction *action)
         return {};
     }
 
-    const QString text = shortcutListText(action->shortcuts());
+    const QString text = shortcutProjection(action->shortcuts()).shortcutText;
     return text.isEmpty() ? i18nc("@info:keyboard shortcut", "Unassigned") : text;
 }
 }

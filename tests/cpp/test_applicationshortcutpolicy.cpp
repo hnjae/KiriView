@@ -27,6 +27,7 @@ private Q_SLOTS:
     void menuShortcutSkipsViewerOnlyShortcuts();
     void shortcutAliasesDeriveViewerShortcutsFromCtrlShortcuts();
     void shortcutListTextJoinsAssignedShortcuts();
+    void shortcutProjectionDerivesPublicViewsFromOneShortcutList();
     void sanitizeShortcutsRemovesUnmodifiedTextInputShortcuts();
 };
 
@@ -90,6 +91,37 @@ void TestApplicationShortcutPolicy::shortcutListTextJoinsAssignedShortcuts()
                  shortcut(QStringLiteral("Alt+O")), shortcut(QStringLiteral("Ctrl+Shift+O")) }),
         QStringLiteral("%1 / %2").arg(nativeText(shortcut(QStringLiteral("Alt+O"))),
             nativeText(shortcut(QStringLiteral("Ctrl+Shift+O")))));
+}
+
+void TestApplicationShortcutPolicy::shortcutProjectionDerivesPublicViewsFromOneShortcutList()
+{
+    const QList<QKeySequence> shortcuts {
+        QKeySequence(),
+        shortcut(QStringLiteral("Ctrl+R")),
+        shortcut(QStringLiteral("Shift+R")),
+        shortcut(QStringLiteral("Home")),
+        shortcut(QStringLiteral("Alt+O")),
+    };
+
+    const KiriView::ApplicationActions::ApplicationShortcutProjection projection
+        = KiriView::ApplicationActions::shortcutProjection(shortcuts);
+
+    QCOMPARE(projection.shortcuts, shortcuts);
+    QCOMPARE(projection.shortcutsWithCommandModifier,
+        QList<QKeySequence>(
+            { shortcut(QStringLiteral("Ctrl+R")), shortcut(QStringLiteral("Alt+O")) }));
+    QCOMPARE(projection.shortcutsWithoutCommandModifier,
+        QList<QKeySequence>(
+            { shortcut(QStringLiteral("Shift+R")), shortcut(QStringLiteral("Home")) }));
+    QCOMPARE(projection.shortcutAliases, QList<QKeySequence>({ shortcut(QStringLiteral("R")) }));
+    QCOMPARE(projection.menuShortcut, shortcut(QStringLiteral("Ctrl+R")));
+    QCOMPARE(projection.shortcutText,
+        QStringLiteral("%1 / %2 / %3 / %4")
+            .arg(nativeText(shortcut(QStringLiteral("Ctrl+R"))),
+                nativeText(shortcut(QStringLiteral("Shift+R"))),
+                nativeText(shortcut(QStringLiteral("Home"))),
+                nativeText(shortcut(QStringLiteral("Alt+O")))));
+    QCOMPARE(projection.menuShortcutText, nativeText(shortcut(QStringLiteral("Ctrl+R"))));
 }
 
 void TestApplicationShortcutPolicy::sanitizeShortcutsRemovesUnmodifiedTextInputShortcuts()
