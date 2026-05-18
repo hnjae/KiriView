@@ -4,7 +4,6 @@
 #include "kiriimagedocument.h"
 
 #include "filedeletion.h"
-#include "imageasyncdependencies.h"
 #include "imagedocumentcontroller.h"
 #include "imagedocumentnotifications.h"
 #include "imageformatregistry.h"
@@ -84,7 +83,7 @@ KiriImageDocument::KiriImageDocument(QObject *parent)
     m_documentController = std::make_unique<KiriView::ImageDocumentController>(
         this, [this]() { return renderContext(); },
         [this](ImageDocumentChange change) { handleDocumentChange(change); },
-        KiriView::defaultImageAsyncDependencies(),
+        KiriView::ImageAsyncDependencies {},
         [this](const QString &errorString) { Q_EMIT fileDeletionFailed(errorString); });
 }
 

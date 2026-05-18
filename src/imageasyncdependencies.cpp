@@ -100,20 +100,4 @@ FileOperationProvider fileOperationProviderWithDefault(FileOperationProvider pro
     return provider ? std::move(provider) : defaultFileOperationProvider();
 }
 
-ImageAsyncDependencies defaultImageAsyncDependencies()
-{
-    return imageAsyncDependenciesWithDefaults({});
-}
-
-ImageAsyncDependencies imageAsyncDependenciesWithDefaults(ImageAsyncDependencies dependencies)
-{
-    dependencies.candidateProvider
-        = imageNavigationCandidateProviderWithDefaults(std::move(dependencies.candidateProvider));
-    dependencies.imageDecode
-        = imageDecodeDependenciesWithDefaults(std::move(dependencies.imageDecode));
-    dependencies.fileOperations
-        = fileOperationProviderWithDefault(std::move(dependencies.fileOperations));
-    dependencies.powerSaver = powerSaverProviderWithDefault(std::move(dependencies.powerSaver));
-    return dependencies;
-}
 }

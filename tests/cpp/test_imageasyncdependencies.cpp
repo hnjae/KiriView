@@ -9,6 +9,7 @@
 #include <QObject>
 #include <QTest>
 #include <QUrl>
+#include <memory>
 
 class TestImageAsyncDependencies : public QObject
 {
@@ -17,7 +18,8 @@ class TestImageAsyncDependencies : public QObject
 private Q_SLOTS:
     void candidateProviderDefaultsFillMissingLoadersAndPreserveOverrides();
     void decodeDependencyDefaultsFillMissingFunctionsAndPreserveOverrides();
-    void asyncDependencyDefaultsFillAggregateAndPreserveFileOperations();
+    void fileOperationDefaultFillsMissingProviderAndPreservesOverride();
+    void powerSaverDefaultFillsMissingProviderAndPreservesOverride();
 };
 
 void TestImageAsyncDependencies::candidateProviderDefaultsFillMissingLoadersAndPreserveOverrides()
@@ -71,7 +73,7 @@ void TestImageAsyncDependencies::decodeDependencyDefaultsFillMissingFunctionsAnd
     QCOMPARE(dataLoadCount, 1);
 }
 
-void TestImageAsyncDependencies::asyncDependencyDefaultsFillAggregateAndPreserveFileOperations()
+void TestImageAsyncDependencies::fileOperationDefaultFillsMissingProviderAndPreservesOverride()
 {
     int fileOperationCount = 0;
     KiriView::FileOperationProvider fileOperations
@@ -81,22 +83,31 @@ void TestImageAsyncDependencies::asyncDependencyDefaultsFillAggregateAndPreserve
               return KiriView::ImageIoJob();
           };
 
-    KiriView::ImageAsyncDependencies dependencies;
-    dependencies.fileOperations = std::move(fileOperations);
-
-    KiriView::ImageAsyncDependencies resolved
-        = KiriView::imageAsyncDependenciesWithDefaults(std::move(dependencies));
-
-    QVERIFY(resolved.candidateProvider.directoryImages);
-    QVERIFY(resolved.candidateProvider.directoryContainers);
-    QVERIFY(resolved.candidateProvider.archiveImages);
-    QVERIFY(resolved.candidateProvider.directoryImageChanges);
-    QVERIFY(resolved.imageDecode.dataLoader);
-    QVERIFY(resolved.imageDecode.dataDecoder);
-    QVERIFY(resolved.fileOperations);
-
-    resolved.fileOperations(nullptr, KiriView::FileDeletionRequest(), {});
+    KiriView::FileOperationProvider resolved
+        = KiriView::fileOperationProviderWithDefault(std::move(fileOperations));
+    QVERIFY(resolved);
+    resolved(nullptr, KiriView::FileDeletionRequest(), {});
     QCOMPARE(fileOperationCount, 1);
+
+    QVERIFY(KiriView::fileOperationProviderWithDefault({}));
+}
+
+void TestImageAsyncDependencies::powerSaverDefaultFillsMissingProviderAndPreservesOverride()
+{
+    int monitorCount = 0;
+    KiriView::PowerSaverProvider provider;
+    provider.monitor = [&monitorCount](QObject *, KiriView::PowerSaverChangedCallback) {
+        ++monitorCount;
+        return std::unique_ptr<KiriView::PowerSaverStateMonitor>();
+    };
+
+    KiriView::PowerSaverProvider resolved
+        = KiriView::powerSaverProviderWithDefault(std::move(provider));
+    QVERIFY(resolved.monitor);
+    resolved.monitor(nullptr, {});
+    QCOMPARE(monitorCount, 1);
+
+    QVERIFY(KiriView::powerSaverProviderWithDefault({}).monitor);
 }
 
 QTEST_GUILESS_MAIN(TestImageAsyncDependencies)

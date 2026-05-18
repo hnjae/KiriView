@@ -84,8 +84,6 @@ ImageDecodeDependencies imageDecodeDependenciesWithDefaults(ImageDecodeDependenc
 PowerSaverProvider defaultPowerSaverProvider();
 PowerSaverProvider powerSaverProviderWithDefault(PowerSaverProvider provider);
 FileOperationProvider fileOperationProviderWithDefault(FileOperationProvider provider);
-ImageAsyncDependencies defaultImageAsyncDependencies();
-ImageAsyncDependencies imageAsyncDependenciesWithDefaults(ImageAsyncDependencies dependencies);
 }
 
 #endif

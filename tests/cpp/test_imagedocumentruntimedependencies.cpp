@@ -31,6 +31,7 @@ class TestImageDocumentRuntimeDependencies : public QObject
 
 private Q_SLOTS:
     void defaultDependenciesUseArchiveSessionStore();
+    void partialNonArchiveOverridesStillUseArchiveSessionStore();
     void customSessionFactoryWrapsArchiveProviders();
     void explicitArchiveProvidersAvoidSessionStore();
 };
@@ -49,6 +50,36 @@ void TestImageDocumentRuntimeDependencies::defaultDependenciesUseArchiveSessionS
     QVERIFY(resolved.imageDecode.dataDecoder);
     QVERIFY(resolved.fileOperations);
     QVERIFY(resolved.powerSaver.monitor);
+}
+
+void TestImageDocumentRuntimeDependencies::partialNonArchiveOverridesStillUseArchiveSessionStore()
+{
+    int directoryLoadCount = 0;
+    KiriView::ImageAsyncDependencies dependencies;
+    dependencies.candidateProvider.directoryImages
+        = [&directoryLoadCount](QObject *, QUrl, KiriView::ImageCandidatesCallback callback,
+              KiriView::ErrorCallback) {
+              ++directoryLoadCount;
+              callback({});
+              return KiriView::ImageIoJob();
+          };
+
+    KiriView::ImageDocumentRuntimeDependencies resolved
+        = KiriView::resolveImageDocumentRuntimeDependencies(std::move(dependencies), this);
+
+    QVERIFY(resolved.archiveSessionStore);
+    QVERIFY(resolved.candidateProvider.directoryImages);
+    QVERIFY(resolved.candidateProvider.archiveImages);
+    QVERIFY(resolved.imageDecode.dataLoader);
+
+    bool candidatesReported = false;
+    resolved.candidateProvider.directoryImages(nullptr,
+        QUrl::fromLocalFile(QStringLiteral("/tmp/images/")),
+        [&candidatesReported](
+            std::vector<KiriView::ImageNavigationCandidate>) { candidatesReported = true; },
+        {});
+    QCOMPARE(directoryLoadCount, 1);
+    QVERIFY(candidatesReported);
 }
 
 void TestImageDocumentRuntimeDependencies::customSessionFactoryWrapsArchiveProviders()

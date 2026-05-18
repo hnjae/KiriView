@@ -25,7 +25,13 @@ ImageDocumentRuntimeDependencies resolveImageDocumentRuntimeDependencies(
     ArchiveDocumentSessionFactory archiveDocumentSessions
         = std::move(dependencies.archiveDocumentSessions);
     dependencies.archiveDocumentSessions = {};
-    dependencies = imageAsyncDependenciesWithDefaults(std::move(dependencies));
+    dependencies.candidateProvider
+        = imageNavigationCandidateProviderWithDefaults(std::move(dependencies.candidateProvider));
+    dependencies.imageDecode
+        = imageDecodeDependenciesWithDefaults(std::move(dependencies.imageDecode));
+    dependencies.fileOperations
+        = fileOperationProviderWithDefault(std::move(dependencies.fileOperations));
+    dependencies.powerSaver = powerSaverProviderWithDefault(std::move(dependencies.powerSaver));
 
     std::unique_ptr<ArchiveDocumentSessionStore> archiveSessionStore;
     if (useArchiveSessionStore) {
