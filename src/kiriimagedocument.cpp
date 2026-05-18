@@ -6,6 +6,7 @@
 #include "filedeletion.h"
 #include "imageasyncdependencies.h"
 #include "imagedocumentcontroller.h"
+#include "imagedocumentnotifications.h"
 #include "imageformatregistry.h"
 
 #include <memory>
@@ -306,66 +307,73 @@ void KiriImageDocument::updateRenderContext() { m_documentController->updateRend
 
 void KiriImageDocument::handleDocumentChange(ImageDocumentChange change)
 {
-    switch (change) {
-    case ImageDocumentChange::SourceUrl:
+    for (KiriView::ImageDocumentPublicSignal signal :
+        KiriView::imageDocumentPublicSignals(change)) {
+        emitDocumentSignal(signal);
+    }
+}
+
+void KiriImageDocument::emitDocumentSignal(KiriView::ImageDocumentPublicSignal signal)
+{
+    switch (signal) {
+    case KiriView::ImageDocumentPublicSignal::SourceUrl:
         Q_EMIT sourceUrlChanged();
         return;
-    case ImageDocumentChange::Status:
+    case KiriView::ImageDocumentPublicSignal::Status:
         Q_EMIT statusChanged();
         return;
-    case ImageDocumentChange::Loading:
+    case KiriView::ImageDocumentPublicSignal::Loading:
         Q_EMIT loadingChanged();
         return;
-    case ImageDocumentChange::ErrorString:
+    case KiriView::ImageDocumentPublicSignal::ErrorString:
         Q_EMIT errorStringChanged();
         return;
-    case ImageDocumentChange::WindowTitleFileName:
+    case KiriView::ImageDocumentPublicSignal::WindowTitleFileName:
         Q_EMIT windowTitleFileNameChanged();
         return;
-    case ImageDocumentChange::DisplayedUrl:
+    case KiriView::ImageDocumentPublicSignal::DisplayedUrl:
         Q_EMIT displayedUrlChanged();
         return;
-    case ImageDocumentChange::ImageSize:
+    case KiriView::ImageDocumentPublicSignal::ImageSize:
         Q_EMIT imageSizeChanged();
         return;
-    case ImageDocumentChange::ViewportSize:
+    case KiriView::ImageDocumentPublicSignal::ViewportSize:
         Q_EMIT viewportSizeChanged();
         return;
-    case ImageDocumentChange::VisibleItemRect:
+    case KiriView::ImageDocumentPublicSignal::VisibleItemRect:
         Q_EMIT visibleItemRectChanged();
         return;
-    case ImageDocumentChange::DisplaySize:
+    case KiriView::ImageDocumentPublicSignal::DisplaySize:
         Q_EMIT displaySizeChanged();
         return;
-    case ImageDocumentChange::ZoomPercent:
+    case KiriView::ImageDocumentPublicSignal::ZoomPercent:
         Q_EMIT zoomPercentChanged();
         return;
-    case ImageDocumentChange::ZoomMode:
+    case KiriView::ImageDocumentPublicSignal::ZoomMode:
         Q_EMIT zoomModeChanged();
         return;
-    case ImageDocumentChange::MaximumManualZoomPercent:
+    case KiriView::ImageDocumentPublicSignal::MaximumManualZoomPercent:
         Q_EMIT maximumManualZoomPercentChanged();
         return;
-    case ImageDocumentChange::PageNavigation:
+    case KiriView::ImageDocumentPublicSignal::PageNavigation:
         Q_EMIT pageNavigationChanged();
         return;
-    case ImageDocumentChange::ContainerNavigation:
+    case KiriView::ImageDocumentPublicSignal::ContainerNavigation:
         Q_EMIT containerNavigationChanged();
         return;
-    case ImageDocumentChange::FileDeletionInProgress:
+    case KiriView::ImageDocumentPublicSignal::FileDeletionInProgress:
         Q_EMIT fileDeletionInProgressChanged();
         return;
-    case ImageDocumentChange::TwoPageMode:
+    case KiriView::ImageDocumentPublicSignal::TwoPageMode:
         Q_EMIT twoPageModeChanged();
-        Q_EMIT pageNavigationChanged();
         return;
-    case ImageDocumentChange::RightToLeftReading:
+    case KiriView::ImageDocumentPublicSignal::RightToLeftReading:
         Q_EMIT rightToLeftReadingChanged();
         return;
-    case ImageDocumentChange::Rotation:
+    case KiriView::ImageDocumentPublicSignal::RotationDegrees:
         Q_EMIT rotationDegreesChanged();
         return;
-    case ImageDocumentChange::Repaint:
+    case KiriView::ImageDocumentPublicSignal::Repaint:
         Q_EMIT repaintRequested();
         return;
     }
