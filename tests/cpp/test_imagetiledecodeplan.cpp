@@ -6,7 +6,6 @@
 
 #include <QObject>
 #include <QRectF>
-#include <QSet>
 #include <QSize>
 #include <QSizeF>
 #include <QTest>
@@ -66,7 +65,7 @@ void TestImageTileDecodePlan::visibleStaticTilesBecomeDecodeRequests()
 
     const KiriView::ImageTileDecodePlan plan
         = KiriView::imageTileDecodePlan(surface, QSizeF(2048.0, 1024.0),
-            QRectF(0.0, 0.0, 1024.0, 1024.0), KiriView::ImageDocumentRenderContext {}, 0, {}, {});
+            QRectF(0.0, 0.0, 1024.0, 1024.0), KiriView::ImageDocumentRenderContext {}, 0, {});
 
     QVERIFY(plan.source != nullptr);
     QVERIFY(!plan.requests.empty());
@@ -82,12 +81,12 @@ void TestImageTileDecodePlan::firstDisplayHintSuppressesUnneededRequests()
 
     const KiriView::ImageTileDecodePlan suppressedPlan
         = KiriView::imageTileDecodePlan(surface, QSizeF(512.0, 512.0),
-            QRectF(0.0, 0.0, 512.0, 512.0), KiriView::ImageDocumentRenderContext {}, 0, {}, {});
+            QRectF(0.0, 0.0, 512.0, 512.0), KiriView::ImageDocumentRenderContext {}, 0, {});
     QVERIFY(suppressedPlan.isEmpty());
 
     const KiriView::ImageTileDecodePlan detailedPlan
         = KiriView::imageTileDecodePlan(surface, QSizeF(2048.0, 2048.0),
-            QRectF(0.0, 0.0, 512.0, 512.0), KiriView::ImageDocumentRenderContext {}, 0, {}, {});
+            QRectF(0.0, 0.0, 512.0, 512.0), KiriView::ImageDocumentRenderContext {}, 0, {});
     QVERIFY(!detailedPlan.isEmpty());
 }
 
@@ -96,7 +95,7 @@ void TestImageTileDecodePlan::existingPendingAndFailedTilesAreFiltered()
     const auto surface = testSurface(QSize(2048, 1024));
     const KiriView::ImageTileDecodePlan initialPlan
         = KiriView::imageTileDecodePlan(surface, QSizeF(2048.0, 1024.0),
-            QRectF(0.0, 0.0, 2048.0, 1024.0), KiriView::ImageDocumentRenderContext {}, 0, {}, {});
+            QRectF(0.0, 0.0, 2048.0, 1024.0), KiriView::ImageDocumentRenderContext {}, 0, {});
     QVERIFY(initialPlan.requests.size() >= 3);
 
     const KiriView::TileKey existingKey = initialPlan.requests.at(0).key;
@@ -104,14 +103,13 @@ void TestImageTileDecodePlan::existingPendingAndFailedTilesAreFiltered()
     const KiriView::TileKey failedKey = initialPlan.requests.at(2).key;
     insertDecodedTile(initialPlan, surface, initialPlan.requests.at(0));
 
-    QSet<KiriView::TileKey> pendingTileKeys;
-    pendingTileKeys.insert(pendingKey);
-    QSet<KiriView::TileKey> failedTileKeys;
-    failedTileKeys.insert(failedKey);
+    KiriView::ImageTileDecodeExclusions exclusions;
+    exclusions.pendingTileKeys.insert(pendingKey);
+    exclusions.failedTileKeys.insert(failedKey);
 
     const KiriView::ImageTileDecodePlan filteredPlan = KiriView::imageTileDecodePlan(surface,
         QSizeF(2048.0, 1024.0), QRectF(0.0, 0.0, 2048.0, 1024.0),
-        KiriView::ImageDocumentRenderContext {}, 0, pendingTileKeys, failedTileKeys);
+        KiriView::ImageDocumentRenderContext {}, 0, exclusions);
 
     QVERIFY(!containsRequestForKey(filteredPlan, existingKey));
     QVERIFY(!containsRequestForKey(filteredPlan, pendingKey));

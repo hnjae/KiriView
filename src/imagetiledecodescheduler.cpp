@@ -25,26 +25,21 @@ ImageTileDecodeScheduler::ImageTileDecodeScheduler(
 
 ImageTileDecodeScheduler::~ImageTileDecodeScheduler() { m_decodeLifetime.reset(); }
 
-void ImageTileDecodeScheduler::invalidate()
-{
-    m_generation.invalidate();
-    m_pendingTileKeys.clear();
-    m_failedTileKeys.clear();
-}
+void ImageTileDecodeScheduler::invalidate() { m_decodeState.invalidate(); }
 
 void ImageTileDecodeScheduler::schedule(
     const std::shared_ptr<DisplayedImageSurface> &displayedSurface, const QSizeF &displaySize,
     const QRectF &visibleItemRect, const ImageDocumentRenderContext &context, int rotationDegrees)
 {
+    const quint64 generation = m_decodeState.beginSchedule(displayedSurface);
     const ImageTileDecodePlan plan = imageTileDecodePlan(displayedSurface, displaySize,
-        visibleItemRect, context, rotationDegrees, m_pendingTileKeys, m_failedTileKeys);
+        visibleItemRect, context, rotationDegrees, m_decodeState.exclusions());
     if (plan.isEmpty()) {
         return;
     }
-    const quint64 generation = m_generation.current();
 
     for (const TileRequest &request : plan.requests) {
-        m_pendingTileKeys.insert(request.key);
+        m_decodeState.start(request.key);
         // Tile workers can outlive this non-QObject scheduler while the Qt context survives.
         const std::weak_ptr<DecodeLifetime> lifetime = m_decodeLifetime;
         const TileKey key = request.key;
@@ -66,21 +61,15 @@ void ImageTileDecodeScheduler::schedule(
     }
 }
 
-bool ImageTileDecodeScheduler::tileRequestIsCurrent(quint64 generation, const TileKey &key) const
-{
-    return m_generation.accepts(generation) && m_pendingTileKeys.contains(key);
-}
-
 void ImageTileDecodeScheduler::finishTileDecode(
     quint64 generation, TileKey key, std::optional<DecodedTile> tile)
 {
-    if (!tileRequestIsCurrent(generation, key)) {
+    if (!m_decodeState.finish(generation, key)) {
         return;
     }
 
-    m_pendingTileKeys.remove(key);
     if (!tile.has_value()) {
-        m_failedTileKeys.insert(key);
+        m_decodeState.fail(key);
         return;
     }
 

@@ -12,7 +12,7 @@ namespace KiriView {
 ImageTileDecodePlan imageTileDecodePlan(
     const std::shared_ptr<DisplayedImageSurface> &displayedSurface, const QSizeF &displaySize,
     const QRectF &visibleItemRect, const ImageDocumentRenderContext &context, int rotationDegrees,
-    const QSet<TileKey> &pendingTileKeys, const QSet<TileKey> &failedTileKeys)
+    const ImageTileDecodeExclusions &exclusions)
 {
     if (displayedSurface == nullptr) {
         return {};
@@ -42,8 +42,7 @@ ImageTileDecodePlan imageTileDecodePlan(
         rotationDegrees,
     };
     for (const TileKey &key : visibleTileKeys(surface->pyramid(), visibilityContext)) {
-        if (surface->containsTile(key) || pendingTileKeys.contains(key)
-            || failedTileKeys.contains(key)) {
+        if (surface->containsTile(key) || exclusions.contains(key)) {
             continue;
         }
 

@@ -7,9 +7,9 @@
 #include "imagedocumenttypes.h"
 #include "imagesurface.h"
 #include "imagetile.h"
+#include "imagetiledecodestate.h"
 
 #include <QRectF>
-#include <QSet>
 #include <QSizeF>
 #include <memory>
 #include <vector>
@@ -27,7 +27,7 @@ struct ImageTileDecodePlan {
 ImageTileDecodePlan imageTileDecodePlan(
     const std::shared_ptr<DisplayedImageSurface> &displayedSurface, const QSizeF &displaySize,
     const QRectF &visibleItemRect, const ImageDocumentRenderContext &context, int rotationDegrees,
-    const QSet<TileKey> &pendingTileKeys, const QSet<TileKey> &failedTileKeys);
+    const ImageTileDecodeExclusions &exclusions);
 }
 
 #endif

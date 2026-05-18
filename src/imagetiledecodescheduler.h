@@ -4,12 +4,11 @@
 #ifndef KIRIVIEW_IMAGETILEDECODESCHEDULER_H
 #define KIRIVIEW_IMAGETILEDECODESCHEDULER_H
 
-#include "imageasyncticket.h"
 #include "imagedocumenttypes.h"
 #include "imagesurface.h"
+#include "imagetiledecodestate.h"
 
 #include <QRectF>
-#include <QSet>
 #include <QSizeF>
 #include <functional>
 #include <memory>
@@ -34,15 +33,12 @@ public:
 private:
     struct DecodeLifetime;
 
-    bool tileRequestIsCurrent(quint64 generation, const TileKey &key) const;
     void finishTileDecode(quint64 generation, TileKey key, std::optional<DecodedTile> tile);
 
     QObject *m_context = nullptr;
     TileDecodedCallback m_tileDecoded;
     std::shared_ptr<DecodeLifetime> m_decodeLifetime;
-    ImageAsyncTicket m_generation;
-    QSet<TileKey> m_pendingTileKeys;
-    QSet<TileKey> m_failedTileKeys;
+    ImageTileDecodeState m_decodeState;
 };
 }
 
