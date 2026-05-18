@@ -1,12 +1,12 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "imagetilesource.h"
+#include "qimagereadertilesource.h"
 
 #include "bufferedimagereader.h"
 #include "imagebytecost.h"
 #include "imagerendering.h"
-#include "imagetilesource_p.h"
+#include "imagetilesourcehelpers_p.h"
 #include "imageviewtext.h"
 
 #include <QImageIOHandler>

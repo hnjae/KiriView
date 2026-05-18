@@ -1,11 +1,10 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "imagetilesource.h"
+#include "qimagereadertilesource.h"
 
 #include <QBuffer>
 #include <QByteArrayList>
-#include <QColor>
 #include <QImage>
 #include <QImageWriter>
 #include <QObject>
@@ -15,31 +14,6 @@
 #include <optional>
 
 namespace {
-QByteArray encodedImageData(const QImage &image, const QByteArray &format, QString *errorString);
-
-QByteArray pngData()
-{
-    QImage image(4, 4, QImage::Format_RGBA8888);
-    image.fill(Qt::transparent);
-    image.setPixelColor(0, 0, Qt::red);
-    image.setPixelColor(3, 3, Qt::blue);
-
-    return encodedImageData(image, QByteArrayLiteral("png"), nullptr);
-}
-
-QByteArray clippedSvgData()
-{
-    return QByteArrayLiteral("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"12\" height=\"8\">"
-                             "<rect width=\"12\" height=\"8\" fill=\"white\"/>"
-                             "<clipPath id=\"clip\">"
-                             "<rect x=\"2\" y=\"1\" width=\"4\" height=\"4\"/>"
-                             "</clipPath>"
-                             "<g clip-path=\"url(#clip)\">"
-                             "<rect width=\"12\" height=\"8\" fill=\"red\"/>"
-                             "</g>"
-                             "</svg>");
-}
-
 QByteArray encodedImageData(const QImage &image, const QByteArray &format, QString *errorString)
 {
     QByteArray data;
@@ -55,6 +29,16 @@ QByteArray encodedImageData(const QImage &image, const QByteArray &format, QStri
     return data;
 }
 
+QByteArray pngData()
+{
+    QImage image(4, 4, QImage::Format_RGBA8888);
+    image.fill(Qt::transparent);
+    image.setPixelColor(0, 0, Qt::red);
+    image.setPixelColor(3, 3, Qt::blue);
+
+    return encodedImageData(image, QByteArrayLiteral("png"), nullptr);
+}
+
 bool imageWriterSupports(const QByteArray &format)
 {
     const QByteArrayList formats = QImageWriter::supportedImageFormats();
@@ -68,21 +52,18 @@ QByteArray jpegWriterFormat()
 }
 }
 
-class TestImageTileSource : public QObject
+class TestQImageReaderTileSource : public QObject
 {
     Q_OBJECT
 
 private Q_SLOTS:
-    void qImageReaderSourceDecodesBlockingDisplayImageAndTile();
+    void sourceDecodesBlockingDisplayImageAndTile();
     void jpegSourceDecodesFirstDisplayToViewport();
     void jpegSourceSkipsFirstDisplayWhenImageFitsViewport();
     void pngSourceLeavesFirstDisplayNotImplemented();
-    void svgSourceRendersIntrinsicPreviewAndTile();
-    void svgSourceAppliesClipPathToPreviewAndTile();
-    void svgSourceRejectsEmptyTileRequest();
 };
 
-void TestImageTileSource::qImageReaderSourceDecodesBlockingDisplayImageAndTile()
+void TestQImageReaderTileSource::sourceDecodesBlockingDisplayImageAndTile()
 {
     QString errorString;
     std::shared_ptr<KiriView::QImageReaderTileSource> source
@@ -101,7 +82,7 @@ void TestImageTileSource::qImageReaderSourceDecodesBlockingDisplayImageAndTile()
     QCOMPARE(tile->image.size(), QSize(4, 4));
 }
 
-void TestImageTileSource::jpegSourceDecodesFirstDisplayToViewport()
+void TestQImageReaderTileSource::jpegSourceDecodesFirstDisplayToViewport()
 {
     if (!imageWriterSupports(QByteArrayLiteral("jpg"))
         && !imageWriterSupports(QByteArrayLiteral("jpeg"))) {
@@ -128,7 +109,7 @@ void TestImageTileSource::jpegSourceDecodesFirstDisplayToViewport()
     QCOMPARE(result.displayPixelsPerSourcePixel, 0.25);
 }
 
-void TestImageTileSource::jpegSourceSkipsFirstDisplayWhenImageFitsViewport()
+void TestQImageReaderTileSource::jpegSourceSkipsFirstDisplayWhenImageFitsViewport()
 {
     if (!imageWriterSupports(QByteArrayLiteral("jpg"))
         && !imageWriterSupports(QByteArrayLiteral("jpeg"))) {
@@ -152,7 +133,7 @@ void TestImageTileSource::jpegSourceSkipsFirstDisplayWhenImageFitsViewport()
     QVERIFY(result.image.isNull());
 }
 
-void TestImageTileSource::pngSourceLeavesFirstDisplayNotImplemented()
+void TestQImageReaderTileSource::pngSourceLeavesFirstDisplayNotImplemented()
 {
     QString errorString;
     std::shared_ptr<KiriView::QImageReaderTileSource> source
@@ -168,74 +149,6 @@ void TestImageTileSource::pngSourceLeavesFirstDisplayNotImplemented()
     QCOMPARE(blockingDisplay.size(), QSize(2, 2));
 }
 
-void TestImageTileSource::svgSourceRendersIntrinsicPreviewAndTile()
-{
-    const QByteArray data
-        = QByteArrayLiteral("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"80\" height=\"40\">"
-                            "<rect width=\"80\" height=\"40\" fill=\"red\"/>"
-                            "</svg>");
+QTEST_GUILESS_MAIN(TestQImageReaderTileSource)
 
-    QString errorString;
-    std::shared_ptr<KiriView::SvgTileSource> source
-        = KiriView::SvgTileSource::open(data, &errorString);
-    QVERIFY2(source != nullptr, qPrintable(errorString));
-    QCOMPARE(source->imageSize(), QSize(80, 40));
-
-    const KiriView::FirstDisplayImageDecodeResult firstDisplay = source->decodeFirstDisplayImage(
-        KiriView::ImageFirstDisplayDecodeContext { QSize(20, 20) }, &errorString);
-    QCOMPARE(firstDisplay.status, KiriView::FirstDisplayImageDecodeStatus::NotImplemented);
-
-    const QImage preview = source->decodeBlockingDisplayImage(20, &errorString);
-    QVERIFY2(!preview.isNull(), qPrintable(errorString));
-    QCOMPARE(preview.size(), QSize(20, 10));
-
-    const KiriView::TilePyramid pyramid(source->imageSize());
-    const KiriView::TileRequest request = pyramid.requestForTile(KiriView::TileKey { 0, 0, 0 });
-    const std::optional<KiriView::DecodedTile> tile = source->decodeTile(request, &errorString);
-    QVERIFY2(tile.has_value(), qPrintable(errorString));
-    QCOMPARE(tile->image.size(), QSize(80, 40));
-    QVERIFY(qRed(tile->image.pixel(10, 10)) > 0);
-}
-
-void TestImageTileSource::svgSourceAppliesClipPathToPreviewAndTile()
-{
-    QString errorString;
-    std::shared_ptr<KiriView::SvgTileSource> source
-        = KiriView::SvgTileSource::open(clippedSvgData(), &errorString);
-    QVERIFY2(source != nullptr, qPrintable(errorString));
-    QCOMPARE(source->imageSize(), QSize(12, 8));
-
-    const QImage preview = source->decodeBlockingDisplayImage(12, &errorString);
-    QVERIFY2(!preview.isNull(), qPrintable(errorString));
-    QCOMPARE(preview.pixelColor(3, 2), QColor(Qt::red));
-    QCOMPARE(preview.pixelColor(8, 2), QColor(Qt::white));
-
-    const KiriView::TilePyramid pyramid(source->imageSize());
-    const KiriView::TileRequest request = pyramid.requestForTile(KiriView::TileKey { 0, 0, 0 });
-    const std::optional<KiriView::DecodedTile> tile = source->decodeTile(request, &errorString);
-    QVERIFY2(tile.has_value(), qPrintable(errorString));
-    QCOMPARE(tile->image.pixelColor(3, 2), QColor(Qt::red));
-    QCOMPARE(tile->image.pixelColor(8, 2), QColor(Qt::white));
-}
-
-void TestImageTileSource::svgSourceRejectsEmptyTileRequest()
-{
-    const QByteArray data
-        = QByteArrayLiteral("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"80\" height=\"40\">"
-                            "<rect width=\"80\" height=\"40\" fill=\"red\"/>"
-                            "</svg>");
-
-    QString errorString;
-    std::shared_ptr<KiriView::SvgTileSource> source
-        = KiriView::SvgTileSource::open(data, &errorString);
-    QVERIFY2(source != nullptr, qPrintable(errorString));
-
-    const std::optional<KiriView::DecodedTile> tile
-        = source->decodeTile(KiriView::TileRequest {}, &errorString);
-
-    QVERIFY(!tile.has_value());
-}
-
-QTEST_GUILESS_MAIN(TestImageTileSource)
-
-#include "test_imagetilesource.moc"
+#include "test_qimagereadertilesource.moc"

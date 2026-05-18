@@ -5,11 +5,11 @@
 
 #include "apnganimationreader.h"
 #include "heifdecoder.h"
-#include "imagetilesource.h"
 #include "kiriview/src/avifcompat.cxx.h"
 #include "qimagereaderdecoder.h"
 #include "rawdecoder.h"
 #include "staticimagedecode.h"
+#include "svgtilesource.h"
 
 #include <memory>
 #include <optional>

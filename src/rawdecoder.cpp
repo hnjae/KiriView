@@ -6,7 +6,7 @@
 #include "imagebytecost.h"
 #include "imageformatregistry.h"
 #include "imagerendering.h"
-#include "imagetilesource_p.h"
+#include "imagetilesourcehelpers_p.h"
 #include "imageviewtext.h"
 #include "staticimagedecode.h"
 

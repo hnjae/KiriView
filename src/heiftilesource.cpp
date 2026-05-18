@@ -1,12 +1,12 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "imagetilesource.h"
+#include "heiftilesource.h"
 
 #include "heifcontainer.h"
 #include "heifsupport.h"
 #include "imagebytecost.h"
-#include "imagetilesource_p.h"
+#include "imagetilesourcehelpers_p.h"
 #include "imageviewtext.h"
 
 #include <libheif/heif_tiling.h>

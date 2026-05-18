@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#ifndef KIRIVIEW_IMAGETILESOURCE_P_H
-#define KIRIVIEW_IMAGETILESOURCE_P_H
+#ifndef KIRIVIEW_IMAGETILESOURCEHELPERS_P_H
+#define KIRIVIEW_IMAGETILESOURCEHELPERS_P_H
 
 #include "imagetile.h"
 

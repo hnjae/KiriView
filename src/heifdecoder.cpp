@@ -14,7 +14,7 @@
 
 #include "heifcontainer.h"
 #include "heifsupport.h"
-#include "imagetilesource.h"
+#include "heiftilesource.h"
 #include "imageviewtext.h"
 #include "staticimagedecode.h"
 
