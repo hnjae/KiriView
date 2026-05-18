@@ -277,64 +277,67 @@ void ImageDocumentRuntime::publishChange(ImageDocumentChange change)
 ImageDocumentEffectOperations ImageDocumentRuntime::effectOperations()
 {
     ImageDocumentEffectOperations operations;
-    operations.cancelFileDeletion = [this]() { documentDeletionController->cancel(); };
-    operations.stopPresentationAnimation = [this]() { presentationController->stopAnimation(); };
-    operations.shutdownSpread = [this]() { spreadController->shutdown(); };
-    operations.clearArchiveSession = [this]() {
+    operations.lifecycle.cancelFileDeletion = [this]() { documentDeletionController->cancel(); };
+    operations.lifecycle.stopPresentationAnimation
+        = [this]() { presentationController->stopAnimation(); };
+    operations.lifecycle.shutdownSpread = [this]() { spreadController->shutdown(); };
+    operations.archive.clearSession = [this]() {
         if (archiveSessionStore != nullptr) {
             archiveSessionStore->clear();
         }
     };
-    operations.clearPredecode = [this]() { predecodeController->clear(); };
-    operations.cancelPredecode = [this]() { predecodeController->cancel(); };
-    operations.finishSpreadTransition = [this]() { spreadController->finishTransition(); };
-    operations.clearSecondaryPage = [this]() { spreadController->clearSecondaryPage(); };
-    operations.cancelPageNavigationUpdate
-        = [this]() { navigationService->cancelPageNavigationUpdate(); };
-    operations.cancelNavigation = [this]() { navigationService->cancelNavigation(); };
-    operations.cancelContainerNavigation
-        = [this]() { navigationService->cancelContainerNavigation(); };
-    operations.cancelOpen = [this]() { openController->cancel(); };
-    operations.clearDisplayedImageLocation = [this]() { state.clearDisplayedImageLocation(); };
-    operations.clearPresentationImage = [this]() { presentationController->clearImage(); };
-    operations.clearPageNavigation = [this]() { navigationService->clearPageNavigation(); };
-    operations.notifyRightToLeftReadingChanged
-        = [this]() { spreadController->notifyRightToLeftReadingChanged(); };
-    operations.resetZoom = [this]() { spreadController->resetZoom(); };
-    operations.updatePageNavigation = [this]() {
-        navigationService->updatePageNavigation(
-            navigationDisplayContext(state, *presentationController));
-    };
-    operations.scheduleAdjacentImagePredecode = [this]() {
+    operations.predecode.clearPredecode = [this]() { predecodeController->clear(); };
+    operations.predecode.cancelPredecode = [this]() { predecodeController->cancel(); };
+    operations.predecode.scheduleAdjacentImagePredecode = [this]() {
         predecodeController->scheduleAdjacentImagePredecode(
             spreadController->secondaryDisplayedPredecodeImage());
     };
-    operations.loadUrl = [this](const QUrl &url) {
+    operations.spread.finishSpreadTransition = [this]() { spreadController->finishTransition(); };
+    operations.spread.clearSecondaryPage = [this]() { spreadController->clearSecondaryPage(); };
+    operations.spread.notifyRightToLeftReadingChanged
+        = [this]() { spreadController->notifyRightToLeftReadingChanged(); };
+    operations.spread.resetZoom = [this]() { spreadController->resetZoom(); };
+    operations.spread.prepareFailedContainer = [this](const QUrl &containerUrl) {
+        presentationController->prepareFailedContainer(containerUrl);
+    };
+    operations.navigation.cancelPageNavigationUpdate
+        = [this]() { navigationService->cancelPageNavigationUpdate(); };
+    operations.navigation.cancelNavigation = [this]() { navigationService->cancelNavigation(); };
+    operations.navigation.cancelContainerNavigation
+        = [this]() { navigationService->cancelContainerNavigation(); };
+    operations.navigation.clearPageNavigation
+        = [this]() { navigationService->clearPageNavigation(); };
+    operations.navigation.updatePageNavigation = [this]() {
+        navigationService->updatePageNavigation(
+            navigationDisplayContext(state, *presentationController));
+    };
+    operations.navigation.loadUrl = [this](const QUrl &url) {
         loadController->loadSource(ImageDocumentSourceLoadRequest::fromUrl(url));
     };
-    operations.loadContainerImage = [this](const QUrl &imageUrl, const QUrl &containerUrl) {
-        loadController->loadSource(
-            ImageDocumentSourceLoadRequest::fromContainerImage(imageUrl, containerUrl));
-    };
-    operations.finishEmptyContainerNavigation = [this](const QUrl &containerUrl) {
+    operations.navigation.loadContainerImage
+        = [this](const QUrl &imageUrl, const QUrl &containerUrl) {
+              loadController->loadSource(
+                  ImageDocumentSourceLoadRequest::fromContainerImage(imageUrl, containerUrl));
+          };
+    operations.navigation.finishEmptyContainerNavigation = [this](const QUrl &containerUrl) {
         openController->finishContainerNavigationWithEmptyContainer(containerUrl);
     };
-    operations.finishContainerNavigationLoadWithError
+    operations.navigation.finishContainerNavigationLoadWithError
         = [this](const QUrl &containerUrl, const QString &errorString) {
               openController->finishContainerNavigationLoadWithError(containerUrl, errorString);
           };
-    operations.loadPageNavigationUrl
+    operations.navigation.loadPageNavigationUrl
         = [this](const QUrl &url, bool preserveTwoPageSpreadTransition) {
               loadController->loadSource(ImageDocumentSourceLoadRequest::fromPageNavigation(
                   url, preserveTwoPageSpreadTransition));
           };
-    operations.prepareFailedContainer = [this](const QUrl &containerUrl) {
-        presentationController->prepareFailedContainer(containerUrl);
-    };
-    operations.setSourceUrl = [this](const QUrl &url) { state.setSourceUrl(url); };
-    operations.setErrorString
+    operations.open.cancelOpen = [this]() { openController->cancel(); };
+    operations.open.clearDisplayedImageLocation = [this]() { state.clearDisplayedImageLocation(); };
+    operations.open.clearPresentationImage = [this]() { presentationController->clearImage(); };
+    operations.open.setSourceUrl = [this](const QUrl &url) { state.setSourceUrl(url); };
+    operations.open.setErrorString
         = [this](const QString &errorString) { state.setErrorString(errorString); };
-    operations.finishEmptySourceLoad
+    operations.open.finishEmptySourceLoad
         = [this]() { return ImageOpenWorkflow::finishEmptySourceLoad(state); };
     return operations;
 }

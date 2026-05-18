@@ -36,15 +36,15 @@ void ImageDocumentEffectExecutor::dispatch(ImageDocumentEffect effect)
 
 void ImageDocumentEffectExecutor::shutdownRuntime()
 {
-    run(m_operations.cancelFileDeletion);
-    run(m_operations.stopPresentationAnimation);
-    run(m_operations.shutdownSpread);
-    run(m_operations.cancelPredecode);
-    run(m_operations.cancelPageNavigationUpdate);
-    run(m_operations.cancelContainerNavigation);
-    run(m_operations.cancelNavigation);
-    run(m_operations.cancelOpen);
-    run(m_operations.clearArchiveSession);
+    run(m_operations.lifecycle.cancelFileDeletion);
+    run(m_operations.lifecycle.stopPresentationAnimation);
+    run(m_operations.lifecycle.shutdownSpread);
+    run(m_operations.predecode.cancelPredecode);
+    run(m_operations.navigation.cancelPageNavigationUpdate);
+    run(m_operations.navigation.cancelContainerNavigation);
+    run(m_operations.navigation.cancelNavigation);
+    run(m_operations.open.cancelOpen);
+    run(m_operations.archive.clearSession);
 }
 
 void ImageDocumentEffectExecutor::dispatchGeneratedEffects(ImageDocumentEffects effects)
@@ -56,29 +56,29 @@ void ImageDocumentEffectExecutor::dispatchGeneratedEffects(ImageDocumentEffects 
 
 void ImageDocumentEffectExecutor::clearImage()
 {
-    run(m_operations.clearArchiveSession);
-    run(m_operations.clearPredecode);
-    run(m_operations.finishSpreadTransition);
-    run(m_operations.clearSecondaryPage);
-    run(m_operations.cancelPageNavigationUpdate);
-    run(m_operations.clearDisplayedImageLocation);
-    run(m_operations.clearPresentationImage);
-    run(m_operations.clearPageNavigation);
-    run(m_operations.notifyRightToLeftReadingChanged);
+    run(m_operations.archive.clearSession);
+    run(m_operations.predecode.clearPredecode);
+    run(m_operations.spread.finishSpreadTransition);
+    run(m_operations.spread.clearSecondaryPage);
+    run(m_operations.navigation.cancelPageNavigationUpdate);
+    run(m_operations.open.clearDisplayedImageLocation);
+    run(m_operations.open.clearPresentationImage);
+    run(m_operations.navigation.clearPageNavigation);
+    run(m_operations.spread.notifyRightToLeftReadingChanged);
 }
 
 ImageDocumentEffects ImageDocumentEffectExecutor::clearAfterSuccessfulFileDeletion()
 {
-    run(m_operations.clearArchiveSession);
-    run(m_operations.cancelNavigation);
-    run(m_operations.cancelContainerNavigation);
-    run(m_operations.cancelPredecode);
-    run(m_operations.cancelOpen);
-    run(m_operations.finishSpreadTransition);
-    run(m_operations.clearSecondaryPage);
-    run(m_operations.setSourceUrl, QUrl());
-    run(m_operations.setErrorString, QString());
-    return generatedEffects(m_operations.finishEmptySourceLoad);
+    run(m_operations.archive.clearSession);
+    run(m_operations.navigation.cancelNavigation);
+    run(m_operations.navigation.cancelContainerNavigation);
+    run(m_operations.predecode.cancelPredecode);
+    run(m_operations.open.cancelOpen);
+    run(m_operations.spread.finishSpreadTransition);
+    run(m_operations.spread.clearSecondaryPage);
+    run(m_operations.open.setSourceUrl, QUrl());
+    run(m_operations.open.setErrorString, QString());
+    return generatedEffects(m_operations.open.finishEmptySourceLoad);
 }
 
 void ImageDocumentEffectExecutor::dispatchPayload(const ClearImageEffect &) { clearImage(); }
@@ -90,47 +90,48 @@ void ImageDocumentEffectExecutor::dispatchPayload(const ClearDeletedImageEffect 
 
 void ImageDocumentEffectExecutor::dispatchPayload(const ResetZoomEffect &)
 {
-    run(m_operations.resetZoom);
+    run(m_operations.spread.resetZoom);
 }
 
 void ImageDocumentEffectExecutor::dispatchPayload(const UpdatePageNavigationEffect &)
 {
-    run(m_operations.updatePageNavigation);
+    run(m_operations.navigation.updatePageNavigation);
 }
 
 void ImageDocumentEffectExecutor::dispatchPayload(const ScheduleAdjacentImagePredecodeEffect &)
 {
-    run(m_operations.scheduleAdjacentImagePredecode);
+    run(m_operations.predecode.scheduleAdjacentImagePredecode);
 }
 
 void ImageDocumentEffectExecutor::dispatchPayload(const OpenUrlEffect &payload)
 {
-    run(m_operations.loadUrl, payload.url);
+    run(m_operations.navigation.loadUrl, payload.url);
 }
 
 void ImageDocumentEffectExecutor::dispatchPayload(const ContainerImageSelectedEffect &payload)
 {
-    run(m_operations.loadContainerImage, payload.imageUrl, payload.containerUrl);
+    run(m_operations.navigation.loadContainerImage, payload.imageUrl, payload.containerUrl);
 }
 
 void ImageDocumentEffectExecutor::dispatchPayload(const EmptyContainerSelectedEffect &payload)
 {
-    run(m_operations.finishEmptyContainerNavigation, payload.containerUrl);
+    run(m_operations.navigation.finishEmptyContainerNavigation, payload.containerUrl);
 }
 
 void ImageDocumentEffectExecutor::dispatchPayload(const ContainerNavigationFailedEffect &payload)
 {
-    run(m_operations.finishContainerNavigationLoadWithError, payload.containerUrl,
+    run(m_operations.navigation.finishContainerNavigationLoadWithError, payload.containerUrl,
         payload.errorString);
 }
 
 void ImageDocumentEffectExecutor::dispatchPayload(const PageNavigationSelectedEffect &payload)
 {
-    run(m_operations.loadPageNavigationUrl, payload.url, payload.preserveTwoPageSpreadTransition);
+    run(m_operations.navigation.loadPageNavigationUrl, payload.url,
+        payload.preserveTwoPageSpreadTransition);
 }
 
 void ImageDocumentEffectExecutor::dispatchPayload(const PrepareFailedContainerEffect &payload)
 {
-    run(m_operations.prepareFailedContainer, payload.containerUrl);
+    run(m_operations.spread.prepareFailedContainer, payload.containerUrl);
 }
 }

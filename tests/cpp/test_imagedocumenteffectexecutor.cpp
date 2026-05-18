@@ -25,73 +25,81 @@ struct RecordedEffectOperations {
 
     RecordedEffectOperations()
     {
-        operations.cancelFileDeletion = [this]() { record(QStringLiteral("cancelFileDeletion")); };
-        operations.stopPresentationAnimation
+        operations.lifecycle.cancelFileDeletion
+            = [this]() { record(QStringLiteral("cancelFileDeletion")); };
+        operations.lifecycle.stopPresentationAnimation
             = [this]() { record(QStringLiteral("stopPresentationAnimation")); };
-        operations.shutdownSpread = [this]() { record(QStringLiteral("shutdownSpread")); };
-        operations.clearArchiveSession
+        operations.lifecycle.shutdownSpread
+            = [this]() { record(QStringLiteral("shutdownSpread")); };
+        operations.archive.clearSession
             = [this]() { record(QStringLiteral("clearArchiveSession")); };
-        operations.clearPredecode = [this]() { record(QStringLiteral("clearPredecode")); };
-        operations.cancelPredecode = [this]() { record(QStringLiteral("cancelPredecode")); };
-        operations.finishSpreadTransition
-            = [this]() { record(QStringLiteral("finishSpreadTransition")); };
-        operations.clearSecondaryPage = [this]() { record(QStringLiteral("clearSecondaryPage")); };
-        operations.cancelPageNavigationUpdate
-            = [this]() { record(QStringLiteral("cancelPageNavigationUpdate")); };
-        operations.cancelNavigation = [this]() { record(QStringLiteral("cancelNavigation")); };
-        operations.cancelContainerNavigation
-            = [this]() { record(QStringLiteral("cancelContainerNavigation")); };
-        operations.cancelOpen = [this]() { record(QStringLiteral("cancelOpen")); };
-        operations.clearDisplayedImageLocation
-            = [this]() { record(QStringLiteral("clearDisplayedImageLocation")); };
-        operations.clearPresentationImage
-            = [this]() { record(QStringLiteral("clearPresentationImage")); };
-        operations.clearPageNavigation
-            = [this]() { record(QStringLiteral("clearPageNavigation")); };
-        operations.notifyRightToLeftReadingChanged
-            = [this]() { record(QStringLiteral("notifyRightToLeftReadingChanged")); };
-        operations.resetZoom = [this]() { record(QStringLiteral("resetZoom")); };
-        operations.updatePageNavigation
-            = [this]() { record(QStringLiteral("updatePageNavigation")); };
-        operations.scheduleAdjacentImagePredecode
+        operations.predecode.clearPredecode
+            = [this]() { record(QStringLiteral("clearPredecode")); };
+        operations.predecode.cancelPredecode
+            = [this]() { record(QStringLiteral("cancelPredecode")); };
+        operations.predecode.scheduleAdjacentImagePredecode
             = [this]() { record(QStringLiteral("scheduleAdjacentImagePredecode")); };
-        operations.loadUrl = [this](const QUrl &targetUrl) {
+        operations.spread.finishSpreadTransition
+            = [this]() { record(QStringLiteral("finishSpreadTransition")); };
+        operations.spread.clearSecondaryPage
+            = [this]() { record(QStringLiteral("clearSecondaryPage")); };
+        operations.spread.notifyRightToLeftReadingChanged
+            = [this]() { record(QStringLiteral("notifyRightToLeftReadingChanged")); };
+        operations.spread.resetZoom = [this]() { record(QStringLiteral("resetZoom")); };
+        operations.spread.prepareFailedContainer = [this](const QUrl &containerUrl) {
+            url = containerUrl;
+            record(QStringLiteral("prepareFailedContainer"));
+        };
+        operations.navigation.cancelPageNavigationUpdate
+            = [this]() { record(QStringLiteral("cancelPageNavigationUpdate")); };
+        operations.navigation.cancelNavigation
+            = [this]() { record(QStringLiteral("cancelNavigation")); };
+        operations.navigation.cancelContainerNavigation
+            = [this]() { record(QStringLiteral("cancelContainerNavigation")); };
+        operations.navigation.clearPageNavigation
+            = [this]() { record(QStringLiteral("clearPageNavigation")); };
+        operations.navigation.updatePageNavigation
+            = [this]() { record(QStringLiteral("updatePageNavigation")); };
+        operations.navigation.loadUrl = [this](const QUrl &targetUrl) {
             url = targetUrl;
             record(QStringLiteral("loadUrl"));
         };
-        operations.loadContainerImage = [this](const QUrl &imageUrl, const QUrl &containerUrl) {
-            url = imageUrl;
-            secondaryUrl = containerUrl;
-            record(QStringLiteral("loadContainerImage"));
-        };
-        operations.finishEmptyContainerNavigation = [this](const QUrl &containerUrl) {
+        operations.navigation.loadContainerImage
+            = [this](const QUrl &imageUrl, const QUrl &containerUrl) {
+                  url = imageUrl;
+                  secondaryUrl = containerUrl;
+                  record(QStringLiteral("loadContainerImage"));
+              };
+        operations.navigation.finishEmptyContainerNavigation = [this](const QUrl &containerUrl) {
             url = containerUrl;
             record(QStringLiteral("finishEmptyContainerNavigation"));
         };
-        operations.finishContainerNavigationLoadWithError
+        operations.navigation.finishContainerNavigationLoadWithError
             = [this](const QUrl &containerUrl, const QString &message) {
                   url = containerUrl;
                   errorString = message;
                   record(QStringLiteral("finishContainerNavigationLoadWithError"));
               };
-        operations.loadPageNavigationUrl = [this](const QUrl &targetUrl, bool preserveTransition) {
-            url = targetUrl;
-            flag = preserveTransition;
-            record(QStringLiteral("loadPageNavigationUrl"));
-        };
-        operations.prepareFailedContainer = [this](const QUrl &containerUrl) {
-            url = containerUrl;
-            record(QStringLiteral("prepareFailedContainer"));
-        };
-        operations.setSourceUrl = [this](const QUrl &sourceUrl) {
+        operations.navigation.loadPageNavigationUrl
+            = [this](const QUrl &targetUrl, bool preserveTransition) {
+                  url = targetUrl;
+                  flag = preserveTransition;
+                  record(QStringLiteral("loadPageNavigationUrl"));
+              };
+        operations.open.cancelOpen = [this]() { record(QStringLiteral("cancelOpen")); };
+        operations.open.clearDisplayedImageLocation
+            = [this]() { record(QStringLiteral("clearDisplayedImageLocation")); };
+        operations.open.clearPresentationImage
+            = [this]() { record(QStringLiteral("clearPresentationImage")); };
+        operations.open.setSourceUrl = [this](const QUrl &sourceUrl) {
             url = sourceUrl;
             record(QStringLiteral("setSourceUrl"));
         };
-        operations.setErrorString = [this](const QString &message) {
+        operations.open.setErrorString = [this](const QString &message) {
             errorString = message;
             record(QStringLiteral("setErrorString"));
         };
-        operations.finishEmptySourceLoad = [this]() {
+        operations.open.finishEmptySourceLoad = [this]() {
             record(QStringLiteral("finishEmptySourceLoad"));
             return ImageDocumentEffects {
                 ImageDocumentEffect::clearImage(),

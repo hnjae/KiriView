@@ -11,35 +11,59 @@
 #include <functional>
 
 namespace KiriView {
-struct ImageDocumentEffectOperations {
+struct ImageDocumentLifecycleEffectOperations {
     std::function<void()> cancelFileDeletion;
     std::function<void()> stopPresentationAnimation;
     std::function<void()> shutdownSpread;
-    std::function<void()> clearArchiveSession;
+};
+
+struct ImageDocumentArchiveEffectOperations {
+    std::function<void()> clearSession;
+};
+
+struct ImageDocumentPredecodeEffectOperations {
     std::function<void()> clearPredecode;
     std::function<void()> cancelPredecode;
+    std::function<void()> scheduleAdjacentImagePredecode;
+};
+
+struct ImageDocumentSpreadEffectOperations {
     std::function<void()> finishSpreadTransition;
     std::function<void()> clearSecondaryPage;
+    std::function<void()> notifyRightToLeftReadingChanged;
+    std::function<void()> resetZoom;
+    std::function<void(const QUrl &)> prepareFailedContainer;
+};
+
+struct ImageDocumentNavigationEffectOperations {
     std::function<void()> cancelPageNavigationUpdate;
     std::function<void()> cancelNavigation;
     std::function<void()> cancelContainerNavigation;
-    std::function<void()> cancelOpen;
-    std::function<void()> clearDisplayedImageLocation;
-    std::function<void()> clearPresentationImage;
     std::function<void()> clearPageNavigation;
-    std::function<void()> notifyRightToLeftReadingChanged;
-    std::function<void()> resetZoom;
     std::function<void()> updatePageNavigation;
-    std::function<void()> scheduleAdjacentImagePredecode;
     std::function<void(const QUrl &)> loadUrl;
     std::function<void(const QUrl &, const QUrl &)> loadContainerImage;
     std::function<void(const QUrl &)> finishEmptyContainerNavigation;
     std::function<void(const QUrl &, const QString &)> finishContainerNavigationLoadWithError;
     std::function<void(const QUrl &, bool)> loadPageNavigationUrl;
-    std::function<void(const QUrl &)> prepareFailedContainer;
+};
+
+struct ImageDocumentOpenEffectOperations {
+    std::function<void()> cancelOpen;
+    std::function<void()> clearDisplayedImageLocation;
+    std::function<void()> clearPresentationImage;
     std::function<void(const QUrl &)> setSourceUrl;
     std::function<void(const QString &)> setErrorString;
     std::function<ImageDocumentEffects()> finishEmptySourceLoad;
+};
+
+struct ImageDocumentEffectOperations {
+    ImageDocumentLifecycleEffectOperations lifecycle;
+    ImageDocumentArchiveEffectOperations archive;
+    ImageDocumentPredecodeEffectOperations predecode;
+    ImageDocumentSpreadEffectOperations spread;
+    ImageDocumentNavigationEffectOperations navigation;
+    ImageDocumentOpenEffectOperations open;
 };
 
 class ImageDocumentEffectExecutor final
