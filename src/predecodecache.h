@@ -6,6 +6,7 @@
 
 #include "imagelocation.h"
 #include "predecodedimage.h"
+#include "predecodedisplayedhistory.h"
 #include "staticimage.h"
 
 #include <QUrl>
@@ -61,12 +62,6 @@ private:
     using ConstCachedImageIterator = std::vector<CachedImage>::const_iterator;
 
     static bool containsUrl(const std::vector<QUrl> &urls, const QUrl &url);
-    static void removeUrl(std::vector<QUrl> &urls, const QUrl &url);
-    bool currentDisplayedContains(const QUrl &url) const;
-    bool recentDisplayedContains(const QUrl &url) const;
-    bool retainedDisplayedContains(const QUrl &url) const;
-    std::size_t currentDisplayedPriority(const QUrl &normalizedUrl) const;
-    std::size_t recentDisplayedPriority(const QUrl &normalizedUrl) const;
     CachedImageIterator findCachedImage(const QUrl &normalizedUrl);
     ConstCachedImageIterator findCachedImage(const QUrl &normalizedUrl) const;
     void removeCachedImage(const QUrl &normalizedUrl);
@@ -74,8 +69,7 @@ private:
     void trimImagesToWindow();
 
     std::vector<QUrl> m_windowUrls;
-    std::vector<QUrl> m_currentDisplayedUrls;
-    std::vector<QUrl> m_recentDisplayedUrls;
+    PredecodeDisplayedHistory m_displayedHistory;
     std::deque<PredecodeRequest> m_queue;
     std::vector<CachedImage> m_images;
     qsizetype m_byteBudget = defaultByteBudget();

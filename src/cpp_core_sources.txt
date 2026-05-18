@@ -90,6 +90,7 @@ src/powerprofilemonitorstate.cpp
 src/powerprofilemonitor.cpp
 src/predecodeactivedecodestore.cpp
 src/predecodecache.cpp
+src/predecodedisplayedhistory.cpp
 src/predecodeloadcontroller.cpp
 src/predecodepolicy.cpp
 src/predecodewindowplan.cpp

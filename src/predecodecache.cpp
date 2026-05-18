@@ -13,10 +13,6 @@
 #include <optional>
 #include <utility>
 
-namespace {
-constexpr std::size_t recentDisplayedCacheLimit = 4;
-}
-
 namespace KiriView {
 qsizetype PredecodeCache::preferredByteBudget() { return predecodePreferredByteBudget(); }
 
@@ -48,8 +44,7 @@ PredecodeCache::PredecodeCache(qsizetype byteBudget)
 void PredecodeCache::clear()
 {
     m_windowUrls.clear();
-    m_currentDisplayedUrls.clear();
-    m_recentDisplayedUrls.clear();
+    m_displayedHistory.clear();
     m_queue.clear();
     m_images.clear();
 }
@@ -78,37 +73,7 @@ void PredecodeCache::setWindowUrls(const std::vector<QUrl> &urls)
 
 void PredecodeCache::setDisplayedUrls(const std::vector<QUrl> &urls)
 {
-    std::vector<QUrl> displayedUrls;
-
-    for (const QUrl &url : urls) {
-        const std::optional<QUrl> normalizedUrl = normalizedValidImageUrl(url);
-        if (!normalizedUrl.has_value()) {
-            continue;
-        }
-        if (containsUrl(displayedUrls, *normalizedUrl)) {
-            continue;
-        }
-
-        displayedUrls.push_back(*normalizedUrl);
-    }
-
-    for (const QUrl &url : m_currentDisplayedUrls) {
-        if (containsUrl(displayedUrls, url)) {
-            continue;
-        }
-
-        removeUrl(m_recentDisplayedUrls, url);
-        m_recentDisplayedUrls.insert(m_recentDisplayedUrls.begin(), url);
-    }
-
-    for (const QUrl &url : displayedUrls) {
-        removeUrl(m_recentDisplayedUrls, url);
-    }
-    if (m_recentDisplayedUrls.size() > recentDisplayedCacheLimit) {
-        m_recentDisplayedUrls.resize(recentDisplayedCacheLimit);
-    }
-
-    m_currentDisplayedUrls = std::move(displayedUrls);
+    m_displayedHistory.setDisplayedUrls(urls);
     trimImagesToWindow();
 }
 
@@ -121,7 +86,7 @@ void PredecodeCache::enqueueMissingWindowLoads(const QUrl &displayedUrl,
 
     for (const QUrl &url : m_windowUrls) {
         states.push_back(PredecodeWindowLoadState {
-            currentDisplayedContains(url) || url == normalizedDisplayedUrl,
+            m_displayedHistory.currentContains(url) || url == normalizedDisplayedUrl,
             hasImage(url),
             isInFlight(url, activePredecodeUrls),
         });
@@ -222,7 +187,7 @@ void PredecodeCache::cacheImage(
     const std::optional<QUrl> normalizedUrl = normalizedValidImageUrl(url);
     if (!normalizedUrl.has_value()
         || (!containsUrl(m_windowUrls, *normalizedUrl)
-            && !retainedDisplayedContains(*normalizedUrl))) {
+            && !m_displayedHistory.retainedContains(*normalizedUrl))) {
         return;
     }
 
@@ -246,26 +211,6 @@ void PredecodeCache::cacheDisplayedImage(bool cacheable, const QUrl &url,
 bool PredecodeCache::containsUrl(const std::vector<QUrl> &urls, const QUrl &url)
 {
     return std::find(urls.cbegin(), urls.cend(), url) != urls.cend();
-}
-
-void PredecodeCache::removeUrl(std::vector<QUrl> &urls, const QUrl &url)
-{
-    urls.erase(std::remove(urls.begin(), urls.end(), url), urls.end());
-}
-
-bool PredecodeCache::currentDisplayedContains(const QUrl &url) const
-{
-    return containsUrl(m_currentDisplayedUrls, url);
-}
-
-bool PredecodeCache::recentDisplayedContains(const QUrl &url) const
-{
-    return containsUrl(m_recentDisplayedUrls, url);
-}
-
-bool PredecodeCache::retainedDisplayedContains(const QUrl &url) const
-{
-    return currentDisplayedContains(url) || recentDisplayedContains(url);
 }
 
 PredecodeCache::CachedImageIterator PredecodeCache::findCachedImage(const QUrl &normalizedUrl)
@@ -299,28 +244,6 @@ std::size_t PredecodeCache::windowPriority(const QUrl &normalizedUrl) const
     return static_cast<std::size_t>(std::distance(m_windowUrls.cbegin(), priorityEntry));
 }
 
-std::size_t PredecodeCache::currentDisplayedPriority(const QUrl &normalizedUrl) const
-{
-    const auto priorityEntry
-        = std::find(m_currentDisplayedUrls.cbegin(), m_currentDisplayedUrls.cend(), normalizedUrl);
-    if (priorityEntry == m_currentDisplayedUrls.cend()) {
-        return m_currentDisplayedUrls.size();
-    }
-
-    return static_cast<std::size_t>(std::distance(m_currentDisplayedUrls.cbegin(), priorityEntry));
-}
-
-std::size_t PredecodeCache::recentDisplayedPriority(const QUrl &normalizedUrl) const
-{
-    const auto priorityEntry
-        = std::find(m_recentDisplayedUrls.cbegin(), m_recentDisplayedUrls.cend(), normalizedUrl);
-    if (priorityEntry == m_recentDisplayedUrls.cend()) {
-        return m_recentDisplayedUrls.size();
-    }
-
-    return static_cast<std::size_t>(std::distance(m_recentDisplayedUrls.cbegin(), priorityEntry));
-}
-
 void PredecodeCache::trimImagesToWindow()
 {
     std::vector<PredecodeCachedImageState> states;
@@ -328,10 +251,10 @@ void PredecodeCache::trimImagesToWindow()
 
     for (const CachedImage &entry : m_images) {
         states.push_back(PredecodeCachedImageState {
-            currentDisplayedContains(entry.url),
-            recentDisplayedContains(entry.url),
-            currentDisplayedPriority(entry.url),
-            recentDisplayedPriority(entry.url),
+            m_displayedHistory.currentContains(entry.url),
+            m_displayedHistory.recentContains(entry.url),
+            m_displayedHistory.currentPriority(entry.url),
+            m_displayedHistory.recentPriority(entry.url),
             windowPriority(entry.url),
             entry.byteCost,
         });
