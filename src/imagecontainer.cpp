@@ -4,7 +4,6 @@
 #include "imagecontainer.h"
 
 #include "archiveformat.h"
-#include "imageformatregistry.h"
 #include "imagenavigationmodel.h"
 #include "imageurl.h"
 #include "kiriview/src/imagecontainer.cxx.h"
