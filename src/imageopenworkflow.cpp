@@ -16,12 +16,13 @@ KiriView::ImageOpenWorkflowEvent imageOpenWorkflowEvent(KiriView::ImageOpenWorkf
 }
 
 KiriView::ImageOpenWorkflowEvent beginSourceLoadEvent(
-    bool hasImage, bool loadingContainerNavigationUrlEmpty)
+    bool hasImage, bool hasLoadingContainerNavigationTarget)
 {
     KiriView::ImageOpenWorkflowEvent event
         = imageOpenWorkflowEvent(KiriView::ImageOpenWorkflowEventKind::BeginSourceLoad);
-    event.has_image = hasImage;
-    event.loading_container_navigation_url_empty = loadingContainerNavigationUrlEmpty;
+    event.begin_source_load.has_image = hasImage;
+    event.begin_source_load.has_loading_container_navigation_target
+        = hasLoadingContainerNavigationTarget;
     return event;
 }
 
@@ -29,19 +30,19 @@ KiriView::ImageOpenWorkflowEvent successfulImageLoadEvent(const KiriView::ImageL
 {
     KiriView::ImageOpenWorkflowEvent event
         = imageOpenWorkflowEvent(KiriView::ImageOpenWorkflowEventKind::FinishSuccessfulImageLoad);
-    event.request_container_navigation_url_empty
-        = session.request.containerNavigationUrl().isEmpty();
+    event.successful_image_load.has_request_container_navigation_target
+        = !session.request.containerNavigationUrl().isEmpty();
     return event;
 }
 
 KiriView::ImageOpenWorkflowEvent sourceLoadErrorEvent(
-    bool containerNavigationUrlEmpty, bool hasImage, bool displayedUrlEmpty)
+    bool hasContainerNavigationTarget, bool hasImage, bool hasDisplayedUrl)
 {
     KiriView::ImageOpenWorkflowEvent event
         = imageOpenWorkflowEvent(KiriView::ImageOpenWorkflowEventKind::FinishSourceLoadWithError);
-    event.container_navigation_url_empty = containerNavigationUrlEmpty;
-    event.has_image = hasImage;
-    event.displayed_url_empty = displayedUrlEmpty;
+    event.source_load_error.has_container_navigation_target = hasContainerNavigationTarget;
+    event.source_load_error.has_image = hasImage;
+    event.source_load_error.has_displayed_url = hasDisplayedUrl;
     return event;
 }
 }
@@ -51,7 +52,7 @@ ImageDocumentEffects beginSourceLoad(ImageDocumentState &state, bool hasImage)
 {
     return applyImageOpenTransition(state,
         rustImageOpenTransition(
-            beginSourceLoadEvent(hasImage, state.loadingContainerNavigationUrl().isEmpty())));
+            beginSourceLoadEvent(hasImage, !state.loadingContainerNavigationUrl().isEmpty())));
 }
 
 ImageDocumentEffects finishEmptySourceLoad(ImageDocumentState &state)
@@ -76,7 +77,7 @@ ImageDocumentEffects finishLoadWithError(ImageDocumentState &state, const ImageL
     const QUrl displayedUrl = state.displayedUrl();
     return applyImageOpenTransition(state,
         rustImageOpenTransition(
-            sourceLoadErrorEvent(containerUrl.isEmpty(), hasImage, displayedUrl.isEmpty())),
+            sourceLoadErrorEvent(!containerUrl.isEmpty(), hasImage, !displayedUrl.isEmpty())),
         ImageOpenTransitionContext::sourceLoadError(session, displayedUrl, errorString));
 }
 
