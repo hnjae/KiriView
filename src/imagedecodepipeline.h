@@ -23,8 +23,23 @@ enum class ImageDecodePipelineDataSource {
     AvifCompatible,
 };
 
+class ImageDecodePipelineStageResult final
+{
+public:
+    static ImageDecodePipelineStageResult unsupported();
+    static ImageDecodePipelineStageResult decoded(DecodedImageResult result);
+
+    bool handled() const;
+    std::optional<DecodedImageResult> takeDecodedResult() &&;
+
+private:
+    explicit ImageDecodePipelineStageResult(std::optional<DecodedImageResult> result);
+
+    std::optional<DecodedImageResult> m_result;
+};
+
 using ImageDecodePipelineHandler
-    = std::function<std::optional<DecodedImageResult>(const ImageDecodePipelineInput &)>;
+    = std::function<ImageDecodePipelineStageResult(const ImageDecodePipelineInput &)>;
 
 struct ImageDecodePipelineStage {
     ImageDecodePipelineDataSource dataSource = ImageDecodePipelineDataSource::Original;

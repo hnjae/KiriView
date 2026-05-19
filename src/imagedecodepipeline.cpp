@@ -62,53 +62,67 @@ private:
     std::optional<QByteArray> m_compatibleData;
 };
 
-std::optional<KiriView::DecodedImageResult> decodeSvgImageData(
+KiriView::ImageDecodePipelineStageResult optionalDecodedStageResult(
+    std::optional<KiriView::DecodedImageResult> result)
+{
+    if (!result.has_value()) {
+        return KiriView::ImageDecodePipelineStageResult::unsupported();
+    }
+
+    return KiriView::ImageDecodePipelineStageResult::decoded(std::move(*result));
+}
+
+KiriView::ImageDecodePipelineStageResult decodeSvgImageData(
     const KiriView::ImageDecodePipelineInput &input)
 {
     QString errorString;
     std::shared_ptr<KiriView::SvgTileSource> source
         = KiriView::SvgTileSource::open(input.data, &errorString);
     if (source == nullptr) {
-        return std::nullopt;
+        return KiriView::ImageDecodePipelineStageResult::unsupported();
     }
 
-    return KiriView::staticDecodedImageResult(std::move(source), {}, &errorString);
+    return KiriView::ImageDecodePipelineStageResult::decoded(
+        KiriView::staticDecodedImageResult(std::move(source), {}, &errorString));
 }
 
-std::optional<KiriView::DecodedImageResult> decodeApngImageData(
+KiriView::ImageDecodePipelineStageResult decodeApngImageData(
     const KiriView::ImageDecodePipelineInput &input)
 {
     KiriView::ApngAnimationReader apngReader;
     KiriView::ApngOpenResult apngResult = apngReader.open(input.data);
     if (apngResult.status == KiriView::ApngOpenStatus::NotApng) {
-        return std::nullopt;
+        return KiriView::ImageDecodePipelineStageResult::unsupported();
     }
     if (apngResult.status == KiriView::ApngOpenStatus::Error) {
-        return KiriView::failedDecodedImageResult(apngResult.errorString);
+        return KiriView::ImageDecodePipelineStageResult::decoded(
+            KiriView::failedDecodedImageResult(apngResult.errorString));
     }
 
-    return KiriView::successfulDecodedImageResult(KiriView::ApngAnimationImage {
-        std::move(apngResult.firstFrame),
-        input.data,
-    });
+    return KiriView::ImageDecodePipelineStageResult::decoded(
+        KiriView::successfulDecodedImageResult(KiriView::ApngAnimationImage {
+            std::move(apngResult.firstFrame),
+            input.data,
+        }));
 }
 
-std::optional<KiriView::DecodedImageResult> decodeHeifPipelineImageData(
+KiriView::ImageDecodePipelineStageResult decodeHeifPipelineImageData(
     const KiriView::ImageDecodePipelineInput &input)
 {
-    return KiriView::decodeHeifImageData(input.data);
+    return optionalDecodedStageResult(KiriView::decodeHeifImageData(input.data));
 }
 
-std::optional<KiriView::DecodedImageResult> decodeRawPipelineImageData(
+KiriView::ImageDecodePipelineStageResult decodeRawPipelineImageData(
     const KiriView::ImageDecodePipelineInput &input)
 {
-    return KiriView::decodeRawImageData(input.data, input.request);
+    return optionalDecodedStageResult(KiriView::decodeRawImageData(input.data, input.request));
 }
 
-std::optional<KiriView::DecodedImageResult> decodeQImageReaderPipelineImageData(
+KiriView::ImageDecodePipelineStageResult decodeQImageReaderPipelineImageData(
     const KiriView::ImageDecodePipelineInput &input)
 {
-    return KiriView::decodeQImageReaderImageData(input.data, input.request);
+    return KiriView::ImageDecodePipelineStageResult::decoded(
+        KiriView::decodeQImageReaderImageData(input.data, input.request));
 }
 
 std::vector<KiriView::ImageDecodePipelineStage> defaultImageDecodeStages()
@@ -125,6 +139,29 @@ std::vector<KiriView::ImageDecodePipelineStage> defaultImageDecodeStages()
 }
 
 namespace KiriView {
+ImageDecodePipelineStageResult ImageDecodePipelineStageResult::unsupported()
+{
+    return ImageDecodePipelineStageResult(std::nullopt);
+}
+
+ImageDecodePipelineStageResult ImageDecodePipelineStageResult::decoded(DecodedImageResult result)
+{
+    return ImageDecodePipelineStageResult(std::optional<DecodedImageResult>(std::move(result)));
+}
+
+bool ImageDecodePipelineStageResult::handled() const { return m_result.has_value(); }
+
+std::optional<DecodedImageResult> ImageDecodePipelineStageResult::takeDecodedResult() &&
+{
+    return std::move(m_result);
+}
+
+ImageDecodePipelineStageResult::ImageDecodePipelineStageResult(
+    std::optional<DecodedImageResult> result)
+    : m_result(std::move(result))
+{
+}
+
 ImageDecodePipeline::ImageDecodePipeline(std::vector<ImageDecodePipelineStage> stages,
     ImageDecodeCompatibleDataTransform compatibleDataTransform)
     : m_stages(std::move(stages))
@@ -146,9 +183,10 @@ DecodedImageResult ImageDecodePipeline::decode(
             byteInputs.dataFor(stage.dataSource),
             request,
         };
-        std::optional<DecodedImageResult> result = stage.handler(input);
-        if (result.has_value()) {
-            return std::move(*result);
+        ImageDecodePipelineStageResult result = stage.handler(input);
+        if (result.handled()) {
+            std::optional<DecodedImageResult> decodedResult = std::move(result).takeDecodedResult();
+            return std::move(*decodedResult);
         }
     }
 

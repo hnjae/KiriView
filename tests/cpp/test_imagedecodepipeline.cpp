@@ -22,7 +22,7 @@ KiriView::ImageDecodePipelineStage unsupportedStage(
         dataSource,
         [name, calls](const KiriView::ImageDecodePipelineInput &) {
             calls->push_back(name);
-            return std::optional<KiriView::DecodedImageResult>();
+            return KiriView::ImageDecodePipelineStageResult::unsupported();
         },
     };
 }
@@ -34,7 +34,7 @@ KiriView::ImageDecodePipelineStage failureStage(
         dataSource,
         [name, errorString, calls](const KiriView::ImageDecodePipelineInput &) {
             calls->push_back(name);
-            return std::optional<KiriView::DecodedImageResult>(
+            return KiriView::ImageDecodePipelineStageResult::decoded(
                 KiriView::failedDecodedImageResult(errorString));
         },
     };
@@ -49,9 +49,9 @@ KiriView::ImageDecodePipelineStage dataRecordingStage(DataSource dataSource,
             inputData->push_back(input.data);
             requestIds->push_back(input.request.id());
             if (!handled) {
-                return std::optional<KiriView::DecodedImageResult>();
+                return KiriView::ImageDecodePipelineStageResult::unsupported();
             }
-            return std::optional<KiriView::DecodedImageResult>(
+            return KiriView::ImageDecodePipelineStageResult::decoded(
                 KiriView::failedDecodedImageResult(QStringLiteral("recorded")));
         },
     };
@@ -63,12 +63,32 @@ class TestImageDecodePipeline : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
+    void stageResultsDistinguishUnsupportedFromDecodedFailure();
     void firstHandledStageStopsPipeline();
     void unsupportedStagesFallThrough();
     void stagesReceiveSelectedDecodeInputs();
     void compatibleDataIsComputedOnlyWhenRequested();
     void compatibleDataIsSharedAcrossCompatibleStages();
 };
+
+void TestImageDecodePipeline::stageResultsDistinguishUnsupportedFromDecodedFailure()
+{
+    KiriView::ImageDecodePipelineStageResult unsupported
+        = KiriView::ImageDecodePipelineStageResult::unsupported();
+    QVERIFY(!unsupported.handled());
+    QVERIFY(!std::move(unsupported).takeDecodedResult().has_value());
+
+    KiriView::ImageDecodePipelineStageResult decoded
+        = KiriView::ImageDecodePipelineStageResult::decoded(
+            KiriView::failedDecodedImageResult(QStringLiteral("handled failure")));
+    QVERIFY(decoded.handled());
+
+    std::optional<KiriView::DecodedImageResult> result = std::move(decoded).takeDecodedResult();
+    QVERIFY(result.has_value());
+    const auto *failure = KiriView::decodedImageResultFailure(*result);
+    QVERIFY(failure != nullptr);
+    QCOMPARE(failure->errorString, QStringLiteral("handled failure"));
+}
 
 void TestImageDecodePipeline::firstHandledStageStopsPipeline()
 {
