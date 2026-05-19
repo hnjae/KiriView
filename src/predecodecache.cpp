@@ -78,7 +78,7 @@ void PredecodeCache::setDisplayedUrls(const std::vector<QUrl> &urls)
 }
 
 void PredecodeCache::enqueueMissingWindowLoads(const QUrl &displayedUrl,
-    const ArchiveDocumentLocation &archiveDocument, const std::vector<QUrl> &activePredecodeUrls)
+    const ArchiveDocumentLocation &archiveDocument, const PredecodeActiveLoads &activeLoads)
 {
     const QUrl normalizedDisplayedUrl = normalizedImageUrl(displayedUrl);
     std::vector<PredecodeWindowLoadState> states;
@@ -88,7 +88,7 @@ void PredecodeCache::enqueueMissingWindowLoads(const QUrl &displayedUrl,
         states.push_back(PredecodeWindowLoadState {
             m_displayedHistory.currentContains(url) || url == normalizedDisplayedUrl,
             hasImage(url),
-            isInFlight(url, activePredecodeUrls),
+            isInFlight(url, activeLoads),
         });
     }
 
@@ -101,7 +101,7 @@ void PredecodeCache::enqueueMissingWindowLoads(const QUrl &displayedUrl,
 }
 
 std::optional<PredecodeRequest> PredecodeCache::takeNextRequest(
-    const std::vector<QUrl> &activePredecodeUrls)
+    const PredecodeActiveLoads &activeLoads)
 {
     std::vector<PredecodeQueuedLoadState> states;
     states.reserve(m_queue.size());
@@ -111,7 +111,7 @@ std::optional<PredecodeRequest> PredecodeCache::takeNextRequest(
             request.url.isValid() && !request.url.isEmpty(),
             windowContains(request.url),
             hasImage(request.url),
-            containsUrl(activePredecodeUrls, request.url),
+            activeLoads.contains(request.url),
         });
     }
 
@@ -145,14 +145,14 @@ bool PredecodeCache::hasImage(const QUrl &url) const
     return findCachedImage(*normalizedUrl) != m_images.cend();
 }
 
-bool PredecodeCache::isInFlight(const QUrl &url, const std::vector<QUrl> &activePredecodeUrls) const
+bool PredecodeCache::isInFlight(const QUrl &url, const PredecodeActiveLoads &activeLoads) const
 {
     const std::optional<QUrl> normalizedUrl = normalizedValidImageUrl(url);
     if (!normalizedUrl.has_value()) {
         return false;
     }
 
-    return containsUrl(activePredecodeUrls, *normalizedUrl)
+    return activeLoads.contains(*normalizedUrl)
         || std::any_of(
             m_queue.cbegin(), m_queue.cend(), [&normalizedUrl](const PredecodeRequest &request) {
                 return request.url == *normalizedUrl;

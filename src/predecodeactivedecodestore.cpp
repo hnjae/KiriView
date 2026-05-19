@@ -37,14 +37,14 @@ bool PredecodeActiveDecodeStore::containsUrl(const QUrl &url) const
         [&normalizedUrl](const Entry &entry) { return entry.normalizedUrl == *normalizedUrl; });
 }
 
-std::vector<QUrl> PredecodeActiveDecodeStore::urls() const
+PredecodeActiveLoads PredecodeActiveDecodeStore::activeLoads() const
 {
     std::vector<QUrl> urls;
     urls.reserve(m_entries.size());
     for (const Entry &entry : m_entries) {
         urls.push_back(entry.normalizedUrl);
     }
-    return urls;
+    return PredecodeActiveLoads::fromUrls(std::move(urls));
 }
 
 std::optional<ImageDecodeRequest> PredecodeActiveDecodeStore::finish(

@@ -5,6 +5,7 @@
 #define KIRIVIEW_PREDECODECACHE_H
 
 #include "imagelocation.h"
+#include "predecodeactiveloads.h"
 #include "predecodedimage.h"
 #include "predecodedisplayedhistory.h"
 #include "staticimage.h"
@@ -39,12 +40,11 @@ public:
     void setWindowUrls(const std::vector<QUrl> &urls);
     void setDisplayedUrls(const std::vector<QUrl> &urls);
     void enqueueMissingWindowLoads(const QUrl &displayedUrl,
-        const ArchiveDocumentLocation &archiveDocument,
-        const std::vector<QUrl> &activePredecodeUrls);
-    std::optional<PredecodeRequest> takeNextRequest(const std::vector<QUrl> &activePredecodeUrls);
+        const ArchiveDocumentLocation &archiveDocument, const PredecodeActiveLoads &activeLoads);
+    std::optional<PredecodeRequest> takeNextRequest(const PredecodeActiveLoads &activeLoads);
     bool windowContains(const QUrl &url) const;
     bool hasImage(const QUrl &url) const;
-    bool isInFlight(const QUrl &url, const std::vector<QUrl> &activePredecodeUrls) const;
+    bool isInFlight(const QUrl &url, const PredecodeActiveLoads &activeLoads) const;
     std::optional<PredecodedImage> findImage(const QUrl &url) const;
     void cacheImage(const QUrl &url, const ArchiveDocumentLocation &archiveDocument,
         StaticImagePayload staticImage);

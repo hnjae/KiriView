@@ -5,6 +5,7 @@
 #define KIRIVIEW_PREDECODEACTIVEDECODESTORE_H
 
 #include "imagedecoderequest.h"
+#include "predecodeactiveloads.h"
 
 #include <QPointer>
 #include <QUrl>
@@ -23,7 +24,7 @@ public:
     bool add(ImageDecodeRequest request, ImageDecodeJob *decodeJob);
     std::size_t size() const;
     bool containsUrl(const QUrl &url) const;
-    std::vector<QUrl> urls() const;
+    PredecodeActiveLoads activeLoads() const;
     std::optional<ImageDecodeRequest> finish(const ImageDecodeRequest &request);
     void cancel();
 

@@ -10,6 +10,7 @@
 #include <QUrl>
 #include <Qt>
 #include <optional>
+#include <utility>
 #include <vector>
 
 namespace {
@@ -35,6 +36,11 @@ KiriView::ArchiveDocumentLocation comicBookArchiveDocument()
     return KiriView::ArchiveDocumentLocation::fromUrls(
         QUrl::fromLocalFile(QStringLiteral("/books/book.cbz")),
         QUrl(QStringLiteral("zip:///books/book.cbz/")), KiriView::ArchiveDocumentKind::ComicBook);
+}
+
+KiriView::PredecodeActiveLoads activeLoads(std::vector<QUrl> urls)
+{
+    return KiriView::PredecodeActiveLoads::fromUrls(std::move(urls));
 }
 }
 
@@ -67,16 +73,17 @@ void TestPredecodeCache::queueContainsOnlyMissingWindowImages()
     const KiriView::ArchiveDocumentLocation archiveDocument = comicBookArchiveDocument();
     const QImage firstImage = cacheImage();
     cache.cacheImage(firstQueuedUrl, archiveDocument, staticTestImagePayload(firstImage));
-    cache.enqueueMissingWindowLoads(displayedUrl, archiveDocument, {});
+    cache.enqueueMissingWindowLoads(
+        displayedUrl, archiveDocument, KiriView::PredecodeActiveLoads {});
 
-    QVERIFY(cache.isInFlight(secondQueuedUrl, {}));
+    QVERIFY(cache.isInFlight(secondQueuedUrl, KiriView::PredecodeActiveLoads {}));
 
     const std::optional<KiriView::PredecodeRequest> request
-        = cache.takeNextRequest({ indexedImageUrl(9) });
+        = cache.takeNextRequest(activeLoads({ indexedImageUrl(9) }));
     QVERIFY(request.has_value());
     QCOMPARE(request->url, secondQueuedUrl);
     QCOMPARE(request->archiveDocument.rootUrl(), archiveDocument.rootUrl());
-    QVERIFY(!cache.takeNextRequest({}).has_value());
+    QVERIFY(!cache.takeNextRequest(KiriView::PredecodeActiveLoads {}).has_value());
 }
 
 void TestPredecodeCache::queueSkipsAllDisplayedWindowImages()
@@ -89,12 +96,14 @@ void TestPredecodeCache::queueSkipsAllDisplayedWindowImages()
 
     cache.setDisplayedUrls({ primaryDisplayedUrl, secondaryDisplayedUrl });
     cache.setWindowUrls({ primaryDisplayedUrl, secondaryDisplayedUrl, queuedUrl });
-    cache.enqueueMissingWindowLoads(primaryDisplayedUrl, archiveDocument, {});
+    cache.enqueueMissingWindowLoads(
+        primaryDisplayedUrl, archiveDocument, KiriView::PredecodeActiveLoads {});
 
-    const std::optional<KiriView::PredecodeRequest> request = cache.takeNextRequest({});
+    const std::optional<KiriView::PredecodeRequest> request
+        = cache.takeNextRequest(KiriView::PredecodeActiveLoads {});
     QVERIFY(request.has_value());
     QCOMPARE(request->url, queuedUrl);
-    QVERIFY(!cache.takeNextRequest({}).has_value());
+    QVERIFY(!cache.takeNextRequest(KiriView::PredecodeActiveLoads {}).has_value());
 }
 
 void TestPredecodeCache::takeNextRequestDiscardsSkippedQueuePrefix()
@@ -106,17 +115,20 @@ void TestPredecodeCache::takeNextRequestDiscardsSkippedQueuePrefix()
     const KiriView::ArchiveDocumentLocation archiveDocument = comicBookArchiveDocument();
 
     cache.setWindowUrls({ cachedQueuedUrl, firstRequestUrl, secondRequestUrl });
-    cache.enqueueMissingWindowLoads(indexedImageUrl(9), archiveDocument, {});
+    cache.enqueueMissingWindowLoads(
+        indexedImageUrl(9), archiveDocument, KiriView::PredecodeActiveLoads {});
     cache.cacheImage(cachedQueuedUrl, archiveDocument, staticTestImagePayload(cacheImage()));
 
-    const std::optional<KiriView::PredecodeRequest> firstRequest = cache.takeNextRequest({});
+    const std::optional<KiriView::PredecodeRequest> firstRequest
+        = cache.takeNextRequest(KiriView::PredecodeActiveLoads {});
     QVERIFY(firstRequest.has_value());
     QCOMPARE(firstRequest->url, firstRequestUrl);
 
-    const std::optional<KiriView::PredecodeRequest> secondRequest = cache.takeNextRequest({});
+    const std::optional<KiriView::PredecodeRequest> secondRequest
+        = cache.takeNextRequest(KiriView::PredecodeActiveLoads {});
     QVERIFY(secondRequest.has_value());
     QCOMPARE(secondRequest->url, secondRequestUrl);
-    QVERIFY(!cache.takeNextRequest({}).has_value());
+    QVERIFY(!cache.takeNextRequest(KiriView::PredecodeActiveLoads {}).has_value());
 }
 
 void TestPredecodeCache::byteBudgetUsesPreferredLimitAndSystemMemoryCap()

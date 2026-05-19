@@ -41,8 +41,9 @@ void PredecodeLoadController::startWindowLoads(PredecodeLoadWindow window)
 
 void PredecodeLoadController::startNextLoads()
 {
-    while (m_loadState.canStartMoreLoads(m_activeDecodes.size())) {
-        std::optional<PredecodeLoadStart> load = m_loadState.takeNextLoad(m_activeDecodes.urls());
+    while (true) {
+        std::optional<PredecodeLoadStart> load
+            = m_loadState.takeNextLoad(m_activeDecodes.activeLoads());
         if (!load.has_value()) {
             return;
         }

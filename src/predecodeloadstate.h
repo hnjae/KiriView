@@ -5,6 +5,7 @@
 #define KIRIVIEW_PREDECODELOADSTATE_H
 
 #include "imagedecoderequest.h"
+#include "predecodeactiveloads.h"
 #include "predecodecache.h"
 #include "predecodedimage.h"
 #include "staticimage.h"
@@ -36,8 +37,7 @@ public:
     void cacheDisplayedImages(const std::vector<DisplayedPredecodeImage> &images);
     void clearWindowUrls();
     void startWindow(PredecodeLoadWindow window);
-    bool canStartMoreLoads(std::size_t activeLoadCount) const;
-    std::optional<PredecodeLoadStart> takeNextLoad(const std::vector<QUrl> &activeLoadUrls);
+    std::optional<PredecodeLoadStart> takeNextLoad(const PredecodeActiveLoads &activeLoads);
     void cacheDecodedImage(const ImageDecodeRequest &request, StaticImagePayload staticImage);
     void cancelBackgroundWork();
     void clear();
@@ -49,6 +49,8 @@ private:
         quint64 generation = 0;
         std::size_t parallelLimit = 0;
     };
+
+    bool canStartMoreLoads(const PredecodeActiveLoads &activeLoads) const;
 
     std::optional<ActiveWindow> m_activeWindow;
     PredecodeCache m_cache;

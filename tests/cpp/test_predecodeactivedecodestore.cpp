@@ -69,9 +69,10 @@ void TestPredecodeActiveDecodeStore::finishReturnsMatchingRequestAndDeletesJob()
 
     QCOMPARE(store.size(), std::size_t(1));
     QVERIFY(store.containsUrl(url));
-    const std::vector<QUrl> urls = store.urls();
-    QCOMPARE(urls.size(), std::size_t(1));
-    QCOMPARE(urls.front(), KiriView::normalizedImageUrl(url));
+    const KiriView::PredecodeActiveLoads activeLoads = store.activeLoads();
+    QCOMPARE(activeLoads.size(), std::size_t(1));
+    QVERIFY(activeLoads.contains(url));
+    QVERIFY(activeLoads.contains(KiriView::normalizedImageUrl(url)));
 
     const std::optional<KiriView::ImageDecodeRequest> finished
         = store.finish(decodeRequest(7, url));

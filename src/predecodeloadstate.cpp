@@ -47,23 +47,24 @@ void PredecodeLoadState::startWindow(PredecodeLoadWindow window)
     };
     m_cache.setWindowUrls(window.urls);
     cacheDisplayedImages(window.displayedImages);
-    m_cache.enqueueMissingWindowLoads(window.primaryDisplayedUrl, window.archiveDocument, {});
+    m_cache.enqueueMissingWindowLoads(
+        window.primaryDisplayedUrl, window.archiveDocument, PredecodeActiveLoads {});
 }
 
-bool PredecodeLoadState::canStartMoreLoads(std::size_t activeLoadCount) const
+bool PredecodeLoadState::canStartMoreLoads(const PredecodeActiveLoads &activeLoads) const
 {
     return m_activeWindow.has_value() && m_activeWindow->parallelLimit > 0
-        && activeLoadCount < m_activeWindow->parallelLimit;
+        && activeLoads.size() < m_activeWindow->parallelLimit;
 }
 
 std::optional<PredecodeLoadStart> PredecodeLoadState::takeNextLoad(
-    const std::vector<QUrl> &activeLoadUrls)
+    const PredecodeActiveLoads &activeLoads)
 {
-    if (!canStartMoreLoads(activeLoadUrls.size())) {
+    if (!canStartMoreLoads(activeLoads)) {
         return std::nullopt;
     }
 
-    const std::optional<PredecodeRequest> request = m_cache.takeNextRequest(activeLoadUrls);
+    const std::optional<PredecodeRequest> request = m_cache.takeNextRequest(activeLoads);
     if (!request.has_value()) {
         return std::nullopt;
     }
