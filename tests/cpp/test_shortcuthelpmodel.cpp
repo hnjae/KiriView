@@ -4,8 +4,6 @@
 #include "shortcuthelpmodel.h"
 
 #include <QAbstractItemModel>
-#include <QAction>
-#include <QKeySequence>
 #include <QList>
 #include <QObject>
 #include <QSignalSpy>
@@ -18,14 +16,15 @@ constexpr int actionNameRole = Qt::UserRole + 2;
 constexpr int actionTextRole = Qt::UserRole + 3;
 constexpr int shortcutTextRole = Qt::UserRole + 4;
 
-QKeySequence shortcut(const QString &sequence)
+KiriView::ApplicationActions::ShortcutHelpRow row(
+    int actionId, const QString &actionName, const QString &actionText, const QString &shortcutText)
 {
-    return QKeySequence::fromString(sequence, QKeySequence::PortableText);
-}
-
-QString nativeText(const QKeySequence &sequence)
-{
-    return sequence.toString(QKeySequence::NativeText);
+    return KiriView::ApplicationActions::ShortcutHelpRow {
+        actionId,
+        actionName,
+        actionText,
+        shortcutText,
+    };
 }
 }
 
@@ -35,18 +34,15 @@ class TestShortcutHelpModel : public QObject
 
 private Q_SLOTS:
     void rowsComeFromRuntimeProvider();
-    void changedActionUpdatesOnlyMatchingRow();
-    void changedRowProjectionResetsModel();
+    void changedRowDataUpdatesOnlyMatchingRow();
+    void changedRowIdentityResetsModel();
 };
 
 void TestShortcutHelpModel::rowsComeFromRuntimeProvider()
 {
-    QAction action;
-    action.setText(QStringLiteral("&Rotate Clockwise"));
-    action.setShortcuts({ shortcut(QStringLiteral("Ctrl+R")) });
-
     const QList<KiriView::ApplicationActions::ShortcutHelpRow> rows {
-        { &action, 14, QStringLiteral("view_rotate_clockwise") },
+        row(14, QStringLiteral("view_rotate_clockwise"), QStringLiteral("Rotate Clockwise"),
+            QStringLiteral("Ctrl+R")),
     };
     KiriView::ApplicationActions::ShortcutHelpModel model([&rows]() { return rows; });
 
@@ -55,50 +51,38 @@ void TestShortcutHelpModel::rowsComeFromRuntimeProvider()
     QCOMPARE(model.data(index, actionIdRole).toInt(), 14);
     QCOMPARE(model.data(index, actionNameRole).toString(), QStringLiteral("view_rotate_clockwise"));
     QCOMPARE(model.data(index, actionTextRole).toString(), QStringLiteral("Rotate Clockwise"));
-    QCOMPARE(model.data(index, shortcutTextRole).toString(),
-        nativeText(shortcut(QStringLiteral("Ctrl+R"))));
+    QCOMPARE(model.data(index, shortcutTextRole).toString(), QStringLiteral("Ctrl+R"));
 }
 
-void TestShortcutHelpModel::changedActionUpdatesOnlyMatchingRow()
+void TestShortcutHelpModel::changedRowDataUpdatesOnlyMatchingRow()
 {
-    QAction first;
-    first.setText(QStringLiteral("&Open"));
-    first.setShortcuts({ shortcut(QStringLiteral("Ctrl+O")) });
-    QAction second;
-    second.setText(QStringLiteral("&Rotate Clockwise"));
-    second.setShortcuts({ shortcut(QStringLiteral("Ctrl+R")) });
-
-    const QList<KiriView::ApplicationActions::ShortcutHelpRow> rows {
-        { &first, 0, QStringLiteral("file_open") },
-        { &second, 14, QStringLiteral("view_rotate_clockwise") },
+    QList<KiriView::ApplicationActions::ShortcutHelpRow> rows {
+        row(0, QStringLiteral("file_open"), QStringLiteral("Open"), QStringLiteral("Ctrl+O")),
+        row(14, QStringLiteral("view_rotate_clockwise"), QStringLiteral("Rotate Clockwise"),
+            QStringLiteral("Ctrl+R")),
     };
     KiriView::ApplicationActions::ShortcutHelpModel model([&rows]() { return rows; });
     QSignalSpy dataChangedSpy(&model, &QAbstractItemModel::dataChanged);
 
-    second.setShortcuts({ shortcut(QStringLiteral("Alt+R")) });
-    model.handleActionChanged(&second);
+    rows[1].shortcutText = QStringLiteral("Alt+R");
+    model.handleRowsChanged();
 
     QCOMPARE(dataChangedSpy.count(), 1);
     const QModelIndex changedIndex = dataChangedSpy.at(0).at(0).toModelIndex();
     QCOMPARE(changedIndex.row(), 1);
-    QCOMPARE(model.data(model.index(1, 0), shortcutTextRole).toString(),
-        nativeText(shortcut(QStringLiteral("Alt+R"))));
+    QCOMPARE(model.data(model.index(1, 0), shortcutTextRole).toString(), QStringLiteral("Alt+R"));
 }
 
-void TestShortcutHelpModel::changedRowProjectionResetsModel()
+void TestShortcutHelpModel::changedRowIdentityResetsModel()
 {
-    QAction action;
-    action.setText(QStringLiteral("&Open"));
-    action.setShortcuts({ shortcut(QStringLiteral("Ctrl+O")) });
-
     QList<KiriView::ApplicationActions::ShortcutHelpRow> rows {
-        { &action, 0, QStringLiteral("file_open") },
+        row(0, QStringLiteral("file_open"), QStringLiteral("Open"), QStringLiteral("Ctrl+O")),
     };
     KiriView::ApplicationActions::ShortcutHelpModel model([&rows]() { return rows; });
     QSignalSpy resetSpy(&model, &QAbstractItemModel::modelReset);
 
     rows.clear();
-    model.handleActionChanged(&action);
+    model.handleRowsChanged();
 
     QCOMPARE(resetSpy.count(), 1);
     QCOMPARE(model.rowCount(), 0);

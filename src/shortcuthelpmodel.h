@@ -12,13 +12,12 @@
 #include <QVariant>
 #include <functional>
 
-class QAction;
-
 namespace KiriView::ApplicationActions {
 struct ShortcutHelpRow {
-    QAction *action = nullptr;
     int actionId = -1;
     QString actionName;
+    QString actionText;
+    QString shortcutText;
 };
 
 using ShortcutHelpRowsProvider = std::function<QList<ShortcutHelpRow>()>;
@@ -38,14 +37,14 @@ public:
     int rowCount(const QModelIndex &parent = QModelIndex()) const override;
     QVariant data(const QModelIndex &index, int role = Qt::DisplayRole) const override;
     QHash<int, QByteArray> roleNames() const override;
-    void handleActionChanged(QAction *changedAction);
+    void handleRowsChanged();
 
 private:
     QList<ShortcutHelpRow> collectRows() const;
 
-    static bool sameRows(const QList<ShortcutHelpRow> &left, const QList<ShortcutHelpRow> &right);
-    static QString actionDisplayText(const QAction *action);
-    static QString shortcutDisplayText(const QAction *action);
+    static bool sameRowIdentities(
+        const QList<ShortcutHelpRow> &left, const QList<ShortcutHelpRow> &right);
+    static bool sameRowData(const ShortcutHelpRow &left, const ShortcutHelpRow &right);
 
     ShortcutHelpRowsProvider m_rowsProvider;
     QList<ShortcutHelpRow> m_rows;

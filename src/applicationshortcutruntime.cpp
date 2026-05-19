@@ -5,6 +5,7 @@
 
 #include "shortcuthelpmodel.h"
 
+#include <KLocalizedString>
 #include <KirigamiActionCollection>
 
 namespace KiriView::ApplicationActions {
@@ -35,7 +36,7 @@ void ApplicationShortcutRuntime::handleActionChanged(QAction *changedAction)
     }
 
     if (m_shortcutHelpModel != nullptr) {
-        m_shortcutHelpModel->handleActionChanged(changedAction);
+        m_shortcutHelpModel->handleRowsChanged();
     }
     ++m_shortcutRevision;
     Q_EMIT m_application.shortcutRevisionChanged();
@@ -92,6 +93,40 @@ ApplicationShortcutProjection ApplicationShortcutRuntime::shortcutProjectionForI
     return shortcutProjectionForAction(m_actionRegistry.actionForId(actionId));
 }
 
+QString ApplicationShortcutRuntime::actionDisplayText(const QAction *action)
+{
+    if (action == nullptr) {
+        return {};
+    }
+
+    const QString text = action->text();
+    QString displayText;
+    displayText.reserve(text.size());
+    for (qsizetype index = 0; index < text.size(); ++index) {
+        if (text.at(index) != QLatin1Char('&')) {
+            displayText.append(text.at(index));
+            continue;
+        }
+
+        if (index + 1 < text.size() && text.at(index + 1) == QLatin1Char('&')) {
+            displayText.append(QLatin1Char('&'));
+            ++index;
+        }
+    }
+
+    return displayText;
+}
+
+QString ApplicationShortcutRuntime::shortcutDisplayText(const QAction *action)
+{
+    if (action == nullptr) {
+        return {};
+    }
+
+    const QString text = ApplicationActions::shortcutProjection(action->shortcuts()).shortcutText;
+    return text.isEmpty() ? i18nc("@info:keyboard shortcut", "Unassigned") : text;
+}
+
 QList<ShortcutHelpRow> ApplicationShortcutRuntime::shortcutHelpRows() const
 {
     QList<ShortcutHelpRow> rows;
@@ -103,8 +138,9 @@ QList<ShortcutHelpRow> ApplicationShortcutRuntime::shortcutHelpRows() const
             continue;
         }
 
-        rows.push_back(ShortcutHelpRow { registeredAction.action,
-            static_cast<int>(registeredAction.actionId), registeredAction.actionName });
+        rows.push_back(ShortcutHelpRow { static_cast<int>(registeredAction.actionId),
+            registeredAction.actionName, actionDisplayText(registeredAction.action),
+            shortcutDisplayText(registeredAction.action) });
     }
 
     return rows;

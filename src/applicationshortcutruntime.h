@@ -39,6 +39,8 @@ private:
     void sanitizeActionShortcuts();
     void sanitizeActionShortcuts(QAction *action);
     ApplicationShortcutProjection shortcutProjectionForAction(const QAction *action) const;
+    static QString actionDisplayText(const QAction *action);
+    static QString shortcutDisplayText(const QAction *action);
     QList<ShortcutHelpRow> shortcutHelpRows() const;
 
     KiriViewApplication &m_application;

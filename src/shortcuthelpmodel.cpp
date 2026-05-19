@@ -3,10 +3,6 @@
 
 #include "shortcuthelpmodel.h"
 
-#include "applicationshortcutpolicy.h"
-
-#include <KLocalizedString>
-#include <QAction>
 #include <QByteArray>
 #include <QHash>
 #include <QModelIndex>
@@ -39,9 +35,9 @@ QVariant ShortcutHelpModel::data(const QModelIndex &index, int role) const
     case ActionNameRole:
         return row.actionName;
     case ActionTextRole:
-        return actionDisplayText(row.action);
+        return row.actionText;
     case ShortcutTextRole:
-        return shortcutDisplayText(row.action);
+        return row.shortcutText;
     default:
         return {};
     }
@@ -57,29 +53,26 @@ QHash<int, QByteArray> ShortcutHelpModel::roleNames() const
     };
 }
 
-void ShortcutHelpModel::handleActionChanged(QAction *changedAction)
+void ShortcutHelpModel::handleRowsChanged()
 {
     const QList<ShortcutHelpRow> rows = collectRows();
-    if (!sameRows(rows, m_rows)) {
+    if (!sameRowIdentities(rows, m_rows)) {
         beginResetModel();
         m_rows = rows;
         endResetModel();
         return;
     }
 
-    if (changedAction != nullptr) {
-        for (int row = 0; row < m_rows.size(); ++row) {
-            if (m_rows.at(row).action == changedAction) {
-                Q_EMIT dataChanged(
-                    index(row, 0), index(row, 0), { ActionTextRole, ShortcutTextRole });
-                return;
-            }
+    QList<int> changedRows;
+    for (int row = 0; row < m_rows.size(); ++row) {
+        if (!sameRowData(rows.at(row), m_rows.at(row))) {
+            changedRows.push_back(row);
         }
     }
 
-    if (!m_rows.isEmpty()) {
-        Q_EMIT dataChanged(
-            index(0, 0), index(m_rows.size() - 1, 0), { ActionTextRole, ShortcutTextRole });
+    m_rows = rows;
+    for (int row : changedRows) {
+        Q_EMIT dataChanged(index(row, 0), index(row, 0), { ActionTextRole, ShortcutTextRole });
     }
 }
 
@@ -88,7 +81,7 @@ QList<ShortcutHelpRow> ShortcutHelpModel::collectRows() const
     return m_rowsProvider ? m_rowsProvider() : QList<ShortcutHelpRow>();
 }
 
-bool ShortcutHelpModel::sameRows(
+bool ShortcutHelpModel::sameRowIdentities(
     const QList<ShortcutHelpRow> &left, const QList<ShortcutHelpRow> &right)
 {
     if (left.size() != right.size()) {
@@ -96,8 +89,7 @@ bool ShortcutHelpModel::sameRows(
     }
 
     for (int index = 0; index < left.size(); ++index) {
-        if (left.at(index).action != right.at(index).action
-            || left.at(index).actionId != right.at(index).actionId
+        if (left.at(index).actionId != right.at(index).actionId
             || left.at(index).actionName != right.at(index).actionName) {
             return false;
         }
@@ -106,37 +98,8 @@ bool ShortcutHelpModel::sameRows(
     return true;
 }
 
-QString ShortcutHelpModel::actionDisplayText(const QAction *action)
+bool ShortcutHelpModel::sameRowData(const ShortcutHelpRow &left, const ShortcutHelpRow &right)
 {
-    if (action == nullptr) {
-        return {};
-    }
-
-    const QString text = action->text();
-    QString displayText;
-    displayText.reserve(text.size());
-    for (qsizetype index = 0; index < text.size(); ++index) {
-        if (text.at(index) != QLatin1Char('&')) {
-            displayText.append(text.at(index));
-            continue;
-        }
-
-        if (index + 1 < text.size() && text.at(index + 1) == QLatin1Char('&')) {
-            displayText.append(QLatin1Char('&'));
-            ++index;
-        }
-    }
-
-    return displayText;
-}
-
-QString ShortcutHelpModel::shortcutDisplayText(const QAction *action)
-{
-    if (action == nullptr) {
-        return {};
-    }
-
-    const QString text = shortcutProjection(action->shortcuts()).shortcutText;
-    return text.isEmpty() ? i18nc("@info:keyboard shortcut", "Unassigned") : text;
+    return left.actionText == right.actionText && left.shortcutText == right.shortcutText;
 }
 }
