@@ -109,8 +109,10 @@ void ImageOpenController::finishEmptySourceLoad()
 void ImageOpenController::beginSourceLoad()
 {
     reportEffects(applyImageOpenTransition(m_state,
-        ImageOpenWorkflow::beginSourceLoadTransition(m_presentationController.hasImage(),
-            !m_state.loadingContainerNavigationUrl().isEmpty())));
+        ImageOpenWorkflow::beginSourceLoadTransition(ImageOpenBeginSourceLoadSnapshot {
+            m_presentationController.hasImage(),
+            !m_state.loadingContainerNavigationUrl().isEmpty(),
+        })));
 }
 
 void ImageOpenController::finishContainerNavigationWithEmptyContainer(const QUrl &containerUrl)
@@ -165,15 +167,21 @@ void ImageOpenController::finishLoadWithError(
     const QString message = loadErrorMessage(error, errorString);
     const QUrl displayedUrl = m_state.displayedUrl();
     reportEffects(applyImageOpenTransition(m_state,
-        ImageOpenWorkflow::finishLoadWithErrorTransition(
-            session, m_presentationController.hasImage(), !displayedUrl.isEmpty()),
+        ImageOpenWorkflow::finishLoadWithErrorTransition(ImageOpenLoadErrorSnapshot {
+            session.hasContainerNavigationTarget(),
+            m_presentationController.hasImage(),
+            !displayedUrl.isEmpty(),
+        }),
         ImageOpenTransitionContext::sourceLoadError(session, displayedUrl, message)));
 }
 
 void ImageOpenController::finishSuccessfulImageLoad(const ImageLoadSession &session)
 {
     reportEffects(applyImageOpenTransition(m_state,
-        ImageOpenWorkflow::finishSuccessfulImageLoadTransition(session),
+        ImageOpenWorkflow::finishSuccessfulImageLoadTransition(
+            ImageOpenSuccessfulImageLoadSnapshot {
+                session.hasContainerNavigationTarget(),
+            }),
         ImageOpenTransitionContext::successfulImageLoad(session)));
 }
 

@@ -69,7 +69,10 @@ KiriView::ImageDocumentEffects beginSourceLoad(KiriView::ImageDocumentState &sta
 {
     return KiriView::applyImageOpenTransition(state,
         KiriView::ImageOpenWorkflow::beginSourceLoadTransition(
-            hasImage, !state.loadingContainerNavigationUrl().isEmpty()));
+            KiriView::ImageOpenBeginSourceLoadSnapshot {
+                hasImage,
+                !state.loadingContainerNavigationUrl().isEmpty(),
+            }));
 }
 
 KiriView::ImageDocumentEffects finishEmptySourceLoad(KiriView::ImageDocumentState &state)
@@ -82,7 +85,10 @@ KiriView::ImageDocumentEffects finishSuccessfulImageLoad(
     KiriView::ImageDocumentState &state, const KiriView::ImageLoadSession &session)
 {
     return KiriView::applyImageOpenTransition(state,
-        KiriView::ImageOpenWorkflow::finishSuccessfulImageLoadTransition(session),
+        KiriView::ImageOpenWorkflow::finishSuccessfulImageLoadTransition(
+            KiriView::ImageOpenSuccessfulImageLoadSnapshot {
+                session.hasContainerNavigationTarget(),
+            }),
         KiriView::ImageOpenTransitionContext::successfulImageLoad(session));
 }
 
@@ -92,7 +98,11 @@ KiriView::ImageDocumentEffects finishLoadWithError(KiriView::ImageDocumentState 
     const QUrl displayedUrl = state.displayedUrl();
     return KiriView::applyImageOpenTransition(state,
         KiriView::ImageOpenWorkflow::finishLoadWithErrorTransition(
-            session, hasImage, !displayedUrl.isEmpty()),
+            KiriView::ImageOpenLoadErrorSnapshot {
+                session.hasContainerNavigationTarget(),
+                hasImage,
+                !displayedUrl.isEmpty(),
+            }),
         KiriView::ImageOpenTransitionContext::sourceLoadError(session, displayedUrl, errorString));
 }
 
@@ -133,7 +143,8 @@ private Q_SLOTS:
 void TestImageOpenWorkflow::transitionsUseExplicitSnapshotInputs()
 {
     const KiriView::ImageOpenTransition initialLoad
-        = KiriView::ImageOpenWorkflow::beginSourceLoadTransition(false, false);
+        = KiriView::ImageOpenWorkflow::beginSourceLoadTransition(
+            KiriView::ImageOpenBeginSourceLoadSnapshot { false, false });
     QCOMPARE(initialLoad.stateDelta.containerNavigationUrl, KiriView::ImageOpenUrlTarget::Empty);
     QCOMPARE(initialLoad.stateDelta.loading, KiriView::ImageOpenBoolTarget::True);
     QCOMPARE(initialLoad.stateDelta.status, KiriView::ImageOpenStatusTarget::Loading);
@@ -141,13 +152,13 @@ void TestImageOpenWorkflow::transitionsUseExplicitSnapshotInputs()
     QVERIFY(transitionHasEffect(initialLoad, KiriView::ImageOpenEffect::ResetZoom));
 
     const KiriView::ImageOpenTransition routedLoad
-        = KiriView::ImageOpenWorkflow::beginSourceLoadTransition(false, true);
+        = KiriView::ImageOpenWorkflow::beginSourceLoadTransition(
+            KiriView::ImageOpenBeginSourceLoadSnapshot { false, true });
     QCOMPARE(routedLoad.stateDelta.containerNavigationUrl, KiriView::ImageOpenUrlTarget::Unchanged);
 
-    const QUrl imageUrl = localUrl(QStringLiteral("/images/page.png"));
     const KiriView::ImageOpenTransition replacementFailure
         = KiriView::ImageOpenWorkflow::finishLoadWithErrorTransition(
-            loadSession(imageUrl, imageUrl), true, true);
+            KiriView::ImageOpenLoadErrorSnapshot { false, true, true });
     QCOMPARE(replacementFailure.stateDelta.sourceUrl, KiriView::ImageOpenUrlTarget::Displayed);
     QCOMPARE(replacementFailure.stateDelta.status, KiriView::ImageOpenStatusTarget::Ready);
     QVERIFY(

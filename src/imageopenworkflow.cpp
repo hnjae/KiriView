@@ -3,7 +3,6 @@
 
 #include "imageopenworkflow.h"
 
-#include "imageopentransitionapplier.h"
 #include "kiriview/src/imageopenworkflow.cxx.h"
 
 namespace {
@@ -16,34 +15,34 @@ KiriView::RustImageOpenWorkflowEvent imageOpenWorkflowEvent(
 }
 
 KiriView::RustImageOpenWorkflowEvent beginSourceLoadEvent(
-    bool hasImage, bool hasLoadingContainerNavigationTarget)
+    KiriView::ImageOpenBeginSourceLoadSnapshot snapshot)
 {
     KiriView::RustImageOpenWorkflowEvent event
         = imageOpenWorkflowEvent(KiriView::RustImageOpenWorkflowEventKind::BeginSourceLoad);
-    event.begin_source_load.has_image = hasImage;
+    event.begin_source_load.has_image = snapshot.hasImage;
     event.begin_source_load.has_loading_container_navigation_target
-        = hasLoadingContainerNavigationTarget;
+        = snapshot.hasLoadingContainerNavigationTarget;
     return event;
 }
 
 KiriView::RustImageOpenWorkflowEvent successfulImageLoadEvent(
-    const KiriView::ImageLoadSession &session)
+    KiriView::ImageOpenSuccessfulImageLoadSnapshot snapshot)
 {
     KiriView::RustImageOpenWorkflowEvent event = imageOpenWorkflowEvent(
         KiriView::RustImageOpenWorkflowEventKind::FinishSuccessfulImageLoad);
     event.successful_image_load.has_request_container_navigation_target
-        = session.hasContainerNavigationTarget();
+        = snapshot.hasRequestContainerNavigationTarget;
     return event;
 }
 
 KiriView::RustImageOpenWorkflowEvent sourceLoadErrorEvent(
-    bool hasContainerNavigationTarget, bool hasImage, bool hasDisplayedUrl)
+    KiriView::ImageOpenLoadErrorSnapshot snapshot)
 {
     KiriView::RustImageOpenWorkflowEvent event = imageOpenWorkflowEvent(
         KiriView::RustImageOpenWorkflowEventKind::FinishSourceLoadWithError);
-    event.source_load_error.has_container_navigation_target = hasContainerNavigationTarget;
-    event.source_load_error.has_image = hasImage;
-    event.source_load_error.has_displayed_url = hasDisplayedUrl;
+    event.source_load_error.has_container_navigation_target = snapshot.hasContainerNavigationTarget;
+    event.source_load_error.has_image = snapshot.hasImage;
+    event.source_load_error.has_displayed_url = snapshot.hasDisplayedUrl;
     return event;
 }
 
@@ -169,11 +168,9 @@ KiriView::ImageOpenTransition imageOpenTransitionFromRust(
 }
 
 namespace KiriView::ImageOpenWorkflow {
-ImageOpenTransition beginSourceLoadTransition(
-    bool hasImage, bool hasLoadingContainerNavigationTarget)
+ImageOpenTransition beginSourceLoadTransition(ImageOpenBeginSourceLoadSnapshot snapshot)
 {
-    return imageOpenTransitionFromRust(rustImageOpenTransition(
-        beginSourceLoadEvent(hasImage, hasLoadingContainerNavigationTarget)));
+    return imageOpenTransitionFromRust(rustImageOpenTransition(beginSourceLoadEvent(snapshot)));
 }
 
 ImageOpenTransition finishEmptySourceLoadTransition()
@@ -182,16 +179,15 @@ ImageOpenTransition finishEmptySourceLoadTransition()
         imageOpenWorkflowEvent(RustImageOpenWorkflowEventKind::FinishEmptySourceLoad)));
 }
 
-ImageOpenTransition finishSuccessfulImageLoadTransition(const ImageLoadSession &session)
+ImageOpenTransition finishSuccessfulImageLoadTransition(
+    ImageOpenSuccessfulImageLoadSnapshot snapshot)
 {
-    return imageOpenTransitionFromRust(rustImageOpenTransition(successfulImageLoadEvent(session)));
+    return imageOpenTransitionFromRust(rustImageOpenTransition(successfulImageLoadEvent(snapshot)));
 }
 
-ImageOpenTransition finishLoadWithErrorTransition(
-    const ImageLoadSession &session, bool hasImage, bool hasDisplayedUrl)
+ImageOpenTransition finishLoadWithErrorTransition(ImageOpenLoadErrorSnapshot snapshot)
 {
-    return imageOpenTransitionFromRust(rustImageOpenTransition(
-        sourceLoadErrorEvent(session.hasContainerNavigationTarget(), hasImage, hasDisplayedUrl)));
+    return imageOpenTransitionFromRust(rustImageOpenTransition(sourceLoadErrorEvent(snapshot)));
 }
 
 ImageOpenTransition finishContainerNavigationLoadWithErrorTransition()

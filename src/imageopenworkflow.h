@@ -4,18 +4,30 @@
 #ifndef KIRIVIEW_IMAGEOPENWORKFLOW_H
 #define KIRIVIEW_IMAGEOPENWORKFLOW_H
 
-#include "imageloadtypes.h"
+#include "imageopentransition.h"
 
 namespace KiriView {
-struct ImageOpenTransition;
+struct ImageOpenBeginSourceLoadSnapshot {
+    bool hasImage = false;
+    bool hasLoadingContainerNavigationTarget = false;
+};
+
+struct ImageOpenSuccessfulImageLoadSnapshot {
+    bool hasRequestContainerNavigationTarget = false;
+};
+
+struct ImageOpenLoadErrorSnapshot {
+    bool hasContainerNavigationTarget = false;
+    bool hasImage = false;
+    bool hasDisplayedUrl = false;
+};
 
 namespace ImageOpenWorkflow {
-    ImageOpenTransition beginSourceLoadTransition(
-        bool hasImage, bool hasLoadingContainerNavigationTarget);
+    ImageOpenTransition beginSourceLoadTransition(ImageOpenBeginSourceLoadSnapshot snapshot);
     ImageOpenTransition finishEmptySourceLoadTransition();
-    ImageOpenTransition finishSuccessfulImageLoadTransition(const ImageLoadSession &session);
-    ImageOpenTransition finishLoadWithErrorTransition(
-        const ImageLoadSession &session, bool hasImage, bool hasDisplayedUrl);
+    ImageOpenTransition finishSuccessfulImageLoadTransition(
+        ImageOpenSuccessfulImageLoadSnapshot snapshot);
+    ImageOpenTransition finishLoadWithErrorTransition(ImageOpenLoadErrorSnapshot snapshot);
     ImageOpenTransition finishContainerNavigationLoadWithErrorTransition();
     ImageOpenTransition finishAnimationLoadWithErrorTransition();
 }
