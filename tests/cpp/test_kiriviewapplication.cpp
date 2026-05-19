@@ -111,6 +111,7 @@ private Q_SLOTS:
     void shortcutModifierPartitionsTextInputShortcuts();
     void shortcutAliasesDeriveFromCtrlShortcuts();
     void menuShortcutTextReturnsFirstDisplaySafeShortcut();
+    void shortcutRevisionTracksShortcutChanges();
     void showMenubarActionHasNoConfigurableShortcuts();
     void shortcutHelpModelListsConfigurableActions();
     void shortcutHelpModelUpdatesShortcutText();
@@ -384,6 +385,30 @@ void TestKiriViewApplication::menuShortcutTextReturnsFirstDisplaySafeShortcut()
         application.menuShortcutForId(static_cast<KiriViewApplication::ActionId>(999)).isEmpty());
     QVERIFY(application.menuShortcutTextForId(static_cast<KiriViewApplication::ActionId>(999))
             .isEmpty());
+}
+
+void TestKiriViewApplication::shortcutRevisionTracksShortcutChanges()
+{
+    KiriViewApplication application;
+    QSignalSpy revisionSpy(&application, &KiriViewApplication::shortcutRevisionChanged);
+    QAction *rotateAction = application.action(QStringLiteral("view_rotate_clockwise"));
+    QVERIFY(rotateAction != nullptr);
+
+    const int initialRevision = application.shortcutRevision();
+
+    rotateAction->setShortcuts({ shortcut(QStringLiteral("Alt+R")) });
+
+    QTRY_COMPARE(revisionSpy.count(), 1);
+    QCOMPARE(application.shortcutRevision(), initialRevision + 1);
+    QCOMPARE(application.shortcuts(QStringLiteral("view_rotate_clockwise")),
+        QList<QKeySequence>({ shortcut(QStringLiteral("Alt+R")) }));
+
+    rotateAction->setShortcuts({ shortcut(QStringLiteral("R")) });
+
+    QTRY_COMPARE(revisionSpy.count(), 2);
+    QCOMPARE(application.shortcutRevision(), initialRevision + 2);
+    QCOMPARE(rotateAction->shortcuts(), QList<QKeySequence>());
+    QCOMPARE(application.shortcuts(QStringLiteral("view_rotate_clockwise")), QList<QKeySequence>());
 }
 
 void TestKiriViewApplication::showMenubarActionHasNoConfigurableShortcuts()

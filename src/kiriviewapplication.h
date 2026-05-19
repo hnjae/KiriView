@@ -15,6 +15,7 @@
 
 namespace KiriView::ApplicationActions {
 class ApplicationActionRuntime;
+class ApplicationShortcutRuntime;
 }
 
 class KiriViewApplication : public AbstractKirigamiApplication
@@ -106,6 +107,7 @@ protected:
 
 private:
     friend class KiriView::ApplicationActions::ApplicationActionRuntime;
+    friend class KiriView::ApplicationActions::ApplicationShortcutRuntime;
 
     std::unique_ptr<KiriView::ApplicationActions::ApplicationActionRuntime> m_actionRuntime;
 };

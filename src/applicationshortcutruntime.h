@@ -1,13 +1,13 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#ifndef KIRIVIEW_APPLICATIONACTIONRUNTIME_H
-#define KIRIVIEW_APPLICATIONACTIONRUNTIME_H
+#ifndef KIRIVIEW_APPLICATIONSHORTCUTRUNTIME_H
+#define KIRIVIEW_APPLICATIONSHORTCUTRUNTIME_H
 
 #include "applicationactionregistry.h"
+#include "applicationshortcutpolicy.h"
 #include "kiriviewapplication.h"
 
-#include <KStandardActions>
 #include <QAbstractListModel>
 #include <QAction>
 #include <QKeySequence>
@@ -16,23 +16,21 @@
 #include <memory>
 
 namespace KiriView::ApplicationActions {
-struct ActionDefinition;
-class ApplicationShortcutRuntime;
+class ShortcutHelpModel;
+struct ShortcutHelpRow;
 
-class ApplicationActionRuntime final
+class ApplicationShortcutRuntime final
 {
 public:
-    explicit ApplicationActionRuntime(KiriViewApplication &application);
-    ~ApplicationActionRuntime();
+    ApplicationShortcutRuntime(
+        KiriViewApplication &application, const ApplicationActionRegistry &actionRegistry);
+    ~ApplicationShortcutRuntime();
 
-    KiriViewApplication::MenuPresentation menuPresentation() const;
-    void setMenuPresentation(KiriViewApplication::MenuPresentation presentation);
+    void setup();
+    void handleActionChanged(QAction *changedAction);
+
     int shortcutRevision() const;
     QAbstractListModel *shortcutHelpModel() const;
-
-    QAction *action(const QString &actionName);
-    QAction *actionForId(KiriViewApplication::ActionId actionId);
-    QString actionName(KiriViewApplication::ActionId actionId) const;
     QList<QKeySequence> shortcuts(const QString &actionName) const;
     QList<QKeySequence> shortcutsForId(KiriViewApplication::ActionId actionId) const;
     QList<QKeySequence> shortcutsWithCommandModifier(const QString &actionName) const;
@@ -50,22 +48,21 @@ public:
     QString menuShortcutText(const QString &actionName) const;
     QString menuShortcutTextForId(KiriViewApplication::ActionId actionId) const;
 
-    void setupActions();
-
 private:
-    QAction *addRegisteredAction(const QString &name, const QString &text, const QString &iconName,
-        const QList<QKeySequence> &defaultShortcuts = {});
-    QAction *addStandardAction(KStandardActions::StandardAction actionType, const QString &name,
-        const QString &text, const QList<QKeySequence> &defaultShortcuts);
-    QAction *finishRegisteredAction(QAction *registeredAction, const QString &text,
-        const QList<QKeySequence> &defaultShortcuts);
-    void handleActionChanged(QAction *changedAction);
-    void updateShowMenuBarAction();
+    void sanitizeActionShortcuts();
+    void sanitizeActionShortcuts(QAction *action);
+    ApplicationShortcutProjection shortcutProjectionForAction(
+        const QAction *registeredAction) const;
+    ApplicationShortcutProjection shortcutProjectionForName(const QString &actionName) const;
+    ApplicationShortcutProjection shortcutProjectionForId(
+        KiriViewApplication::ActionId actionId) const;
+    QList<ShortcutHelpRow> shortcutHelpRows() const;
 
     KiriViewApplication &m_application;
-    ApplicationActionRegistry m_actionRegistry;
-    QAction *m_showMenuBarAction = nullptr;
-    std::unique_ptr<ApplicationShortcutRuntime> m_shortcutRuntime;
+    const ApplicationActionRegistry &m_actionRegistry;
+    std::unique_ptr<ShortcutHelpModel> m_shortcutHelpModel;
+    int m_shortcutRevision = 0;
+    bool m_sanitizingShortcuts = false;
 };
 }
 
