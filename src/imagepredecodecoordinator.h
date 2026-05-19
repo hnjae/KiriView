@@ -39,6 +39,7 @@ public:
     std::optional<PredecodedImage> tryTake(const QUrl &url) const;
 
 private:
+    void executeScheduleEffects(const PredecodeScheduleEffectPlan &plan);
     void cacheDisplayedImages(const Context &context);
     std::vector<DisplayedPredecodeImage> displayedImages(const Context &context) const;
     void startDebouncedPredecode();

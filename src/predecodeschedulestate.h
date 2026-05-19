@@ -24,24 +24,25 @@ struct PredecodePendingSchedule {
     quint64 generation = 0;
 };
 
-struct PredecodeScheduleUpdate {
-    PredecodeScheduleContext context;
+struct PredecodeScheduleEffectPlan {
+    std::optional<PredecodeScheduleContext> cacheDisplayedContext;
     std::optional<PredecodePendingSchedule> pendingSchedule;
-    bool powerSaverEnabled = false;
+    bool cancelBackgroundEffects = false;
+    bool clearWindowUrls = false;
+    bool startDebounceTimers = false;
 };
 
 class PredecodeScheduleState final
 {
 public:
-    std::optional<PredecodeScheduleUpdate> schedule(
-        PredecodeScheduleContext context, qint64 monotonicMsec);
-    bool setPowerSaverEnabled(bool enabled);
+    PredecodeScheduleEffectPlan schedule(PredecodeScheduleContext context, qint64 monotonicMsec);
+    PredecodeScheduleEffectPlan setPowerSaverEnabled(bool enabled, qint64 monotonicMsec);
     bool powerSaverEnabled() const;
     PredecodeMomentumMode momentumMode() const;
 
     std::optional<PredecodeScheduleContext> displayedContext() const;
     std::optional<PredecodePendingSchedule> pendingDebouncedSchedule() const;
-    std::optional<PredecodePendingSchedule> settlePendingScheduleToNeutral();
+    PredecodeScheduleEffectPlan settlePendingScheduleToNeutral();
     bool accepts(quint64 generation) const;
 
     void cancelBackgroundWork();

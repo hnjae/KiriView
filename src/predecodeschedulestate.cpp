@@ -11,35 +11,55 @@ bool validPredecodeScheduleContext(const KiriView::PredecodeScheduleContext &con
 }
 
 namespace KiriView {
-std::optional<PredecodeScheduleUpdate> PredecodeScheduleState::schedule(
+PredecodeScheduleEffectPlan PredecodeScheduleState::schedule(
     PredecodeScheduleContext context, qint64 monotonicMsec)
 {
     cancelBackgroundWork();
+    PredecodeScheduleEffectPlan plan;
+    plan.cancelBackgroundEffects = true;
+
     if (!validPredecodeScheduleContext(context)) {
-        return std::nullopt;
+        return plan;
     }
 
     updateNavigationMomentum(context.pageIndex, monotonicMsec);
     const quint64 generation = m_generation.next();
     m_displayedContext = context;
+    plan.cacheDisplayedContext = context;
 
-    std::optional<PredecodePendingSchedule> pendingSchedule;
     if (!m_powerSaverEnabled) {
-        pendingSchedule = PredecodePendingSchedule { context, generation };
-        m_pendingSchedule = pendingSchedule;
+        plan.pendingSchedule = PredecodePendingSchedule { context, generation };
+        m_pendingSchedule = plan.pendingSchedule;
+        plan.startDebounceTimers = true;
+    } else {
+        plan.clearWindowUrls = true;
     }
 
-    return PredecodeScheduleUpdate { context, std::move(pendingSchedule), m_powerSaverEnabled };
+    return plan;
 }
 
-bool PredecodeScheduleState::setPowerSaverEnabled(bool enabled)
+PredecodeScheduleEffectPlan PredecodeScheduleState::setPowerSaverEnabled(
+    bool enabled, qint64 monotonicMsec)
 {
     if (m_powerSaverEnabled == enabled) {
-        return false;
+        return {};
     }
 
     m_powerSaverEnabled = enabled;
-    return true;
+    if (enabled) {
+        cancelBackgroundWork();
+        PredecodeScheduleEffectPlan plan;
+        plan.cancelBackgroundEffects = true;
+        plan.clearWindowUrls = true;
+        return plan;
+    }
+
+    const std::optional<PredecodeScheduleContext> displayed = m_displayedContext;
+    if (!displayed.has_value()) {
+        return {};
+    }
+
+    return schedule(*displayed, monotonicMsec);
 }
 
 bool PredecodeScheduleState::powerSaverEnabled() const { return m_powerSaverEnabled; }
@@ -60,15 +80,18 @@ std::optional<PredecodePendingSchedule> PredecodeScheduleState::pendingDebounced
     return m_pendingSchedule;
 }
 
-std::optional<PredecodePendingSchedule> PredecodeScheduleState::settlePendingScheduleToNeutral()
+PredecodeScheduleEffectPlan PredecodeScheduleState::settlePendingScheduleToNeutral()
 {
     if (!m_pendingSchedule.has_value() || m_momentumState.mode == PredecodeMomentumMode::Neutral) {
-        return std::nullopt;
+        return {};
     }
 
     m_momentumState.mode = PredecodeMomentumMode::Neutral;
     m_pendingSchedule->generation = m_generation.next();
-    return m_pendingSchedule;
+    PredecodeScheduleEffectPlan plan;
+    plan.pendingSchedule = m_pendingSchedule;
+    plan.cancelBackgroundEffects = true;
+    return plan;
 }
 
 bool PredecodeScheduleState::accepts(quint64 generation) const

@@ -47,46 +47,38 @@ ImagePredecodeCoordinator::ImagePredecodeCoordinator(QObject *parent,
 
 void ImagePredecodeCoordinator::schedule(Context context)
 {
-    cancelBackgroundEffects();
-    std::optional<PredecodeScheduleUpdate> update
+    const PredecodeScheduleEffectPlan plan
         = m_scheduleState.schedule(std::move(context), currentMonotonicMsec());
-    if (!update.has_value()) {
-        return;
-    }
-
-    cacheDisplayedImages(update->context);
-    if (update->powerSaverEnabled) {
-        m_loadController.clearWindowUrls();
-        return;
-    }
-
-    if (update->pendingSchedule.has_value()) {
-        m_debounceTimer.start();
-        m_neutralTimer.start();
-    }
+    executeScheduleEffects(plan);
 }
 
 void ImagePredecodeCoordinator::setPowerSaverEnabled(bool enabled)
 {
-    if (!m_scheduleState.setPowerSaverEnabled(enabled)) {
-        return;
-    }
-
-    if (enabled) {
-        cancelBackgroundWork();
-        m_loadController.clearWindowUrls();
-        return;
-    }
-
-    const std::optional<Context> displayedContext = m_scheduleState.displayedContext();
-    if (displayedContext.has_value()) {
-        schedule(*displayedContext);
-    }
+    const PredecodeScheduleEffectPlan plan
+        = m_scheduleState.setPowerSaverEnabled(enabled, currentMonotonicMsec());
+    executeScheduleEffects(plan);
 }
 
 bool ImagePredecodeCoordinator::powerSaverEnabled() const
 {
     return m_scheduleState.powerSaverEnabled();
+}
+
+void ImagePredecodeCoordinator::executeScheduleEffects(const PredecodeScheduleEffectPlan &plan)
+{
+    if (plan.cancelBackgroundEffects) {
+        cancelBackgroundEffects();
+    }
+    if (plan.cacheDisplayedContext.has_value()) {
+        cacheDisplayedImages(*plan.cacheDisplayedContext);
+    }
+    if (plan.clearWindowUrls) {
+        m_loadController.clearWindowUrls();
+    }
+    if (plan.startDebounceTimers) {
+        m_debounceTimer.start();
+        m_neutralTimer.start();
+    }
 }
 
 void ImagePredecodeCoordinator::cacheDisplayedImages(const Context &context)
@@ -119,16 +111,13 @@ void ImagePredecodeCoordinator::startDebouncedPredecode()
 
 void ImagePredecodeCoordinator::scheduleSettledNeutralPredecode()
 {
-    const std::optional<PredecodePendingSchedule> pendingSchedule
-        = m_scheduleState.settlePendingScheduleToNeutral();
-    if (!pendingSchedule.has_value()) {
+    const PredecodeScheduleEffectPlan plan = m_scheduleState.settlePendingScheduleToNeutral();
+    executeScheduleEffects(plan);
+    if (!plan.pendingSchedule.has_value()) {
         return;
     }
 
-    m_debounceTimer.stop();
-    m_listerJob.cancel();
-    m_loadController.cancelBackgroundWork();
-    scheduleAdjacentImagePredecode(pendingSchedule->context, pendingSchedule->generation);
+    scheduleAdjacentImagePredecode(plan.pendingSchedule->context, plan.pendingSchedule->generation);
 }
 
 void ImagePredecodeCoordinator::scheduleAdjacentImagePredecode(
