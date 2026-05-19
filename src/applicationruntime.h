@@ -14,6 +14,7 @@ void initializeApplicationRuntime();
 QUrl initialSourceUrlFromStartupSource(const ApplicationStartupSource &source);
 void loadApplicationMainQml(
     QQmlApplicationEngine &engine, const ApplicationStartupSource &startupSource);
+int runApplication(const ApplicationStartupSource &startupSource);
 }
 
 #endif

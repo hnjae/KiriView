@@ -2,8 +2,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 use crate::startup_arguments::StartupSource;
-use cxx_qt_lib::QQmlApplicationEngine;
-use std::pin::Pin;
 
 #[cxx::bridge(namespace = "KiriView")]
 mod ffi {
@@ -19,28 +17,14 @@ mod ffi {
     }
 
     unsafe extern "C++" {
-        include!("cxx-qt-lib/qqmlapplicationengine.h");
-        #[namespace = ""]
-        type QQmlApplicationEngine = cxx_qt_lib::QQmlApplicationEngine;
-
         include!("applicationruntime.h");
 
-        #[cxx_name = "initializeApplicationRuntime"]
-        fn initialize_application_runtime();
-
-        #[cxx_name = "loadApplicationMainQml"]
-        fn load_application_main_qml(
-            engine: Pin<&mut QQmlApplicationEngine>,
-            startup_source: &ApplicationStartupSource,
-        );
+        #[cxx_name = "runApplication"]
+        fn run_application(startup_source: &ApplicationStartupSource) -> i32;
     }
 }
 
 pub use ffi::{ApplicationStartupSource, ApplicationStartupSourceKind};
-
-pub fn initialize_application_runtime() {
-    ffi::initialize_application_runtime();
-}
 
 pub fn application_startup_source(source: Option<StartupSource>) -> ApplicationStartupSource {
     match source {
@@ -59,9 +43,40 @@ pub fn application_startup_source(source: Option<StartupSource>) -> ApplicationS
     }
 }
 
-pub fn load_application_main_qml(
-    engine: Pin<&mut QQmlApplicationEngine>,
-    startup_source: &ApplicationStartupSource,
-) {
-    ffi::load_application_main_qml(engine, startup_source);
+pub fn run_application(startup_source: &ApplicationStartupSource) -> i32 {
+    ffi::run_application(startup_source)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::path::PathBuf;
+
+    #[test]
+    fn startup_source_projects_absent_source() {
+        let source = application_startup_source(None);
+
+        assert!(source.kind == ApplicationStartupSourceKind::None);
+        assert!(source.text.is_empty());
+    }
+
+    #[test]
+    fn startup_source_projects_local_file_path() {
+        let source = application_startup_source(Some(StartupSource::LocalFile(PathBuf::from(
+            "/tmp/kiriview/image.png",
+        ))));
+
+        assert!(source.kind == ApplicationStartupSourceKind::LocalFilePath);
+        assert_eq!(source.text, "/tmp/kiriview/image.png");
+    }
+
+    #[test]
+    fn startup_source_projects_url_text() {
+        let source = application_startup_source(Some(StartupSource::Url(String::from(
+            "https://example.invalid/image.png",
+        ))));
+
+        assert!(source.kind == ApplicationStartupSourceKind::UrlText);
+        assert_eq!(source.text, "https://example.invalid/image.png");
+    }
 }

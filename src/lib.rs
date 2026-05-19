@@ -31,11 +31,16 @@ pub use startup_arguments::{
     STARTUP_ARGUMENT_ERROR_EXIT_CODE, StartupArgumentError, StartupSource, initial_source_from_args,
 };
 
-pub fn initialize_rust_modules() {
-    let _ = core::mem::size_of::<cxx_qt_lib_extras::QApplication>();
+// Keep CXX-Qt dependency initializers linked for Rust test binaries even when Rust does not
+// directly construct Qt runtime objects.
+#[used]
+static CXX_QT_INITIALIZER_LINK_ANCHOR: fn() = link_cxx_qt_initializer_dependencies;
+
+fn link_cxx_qt_initializer_dependencies() {
+    let _ = core::mem::size_of::<cxx_qt_lib::QString>();
 }
 
 pub use applicationruntime::{
     ApplicationStartupSource, ApplicationStartupSourceKind, application_startup_source,
-    initialize_application_runtime, load_application_main_qml,
+    run_application,
 };

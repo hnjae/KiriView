@@ -1,8 +1,6 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-use cxx_qt_lib::QQmlApplicationEngine;
-use cxx_qt_lib_extras::QApplication;
 use std::{env, process};
 
 fn startup_source() -> Result<kiriview::ApplicationStartupSource, kiriview::StartupArgumentError> {
@@ -20,17 +18,5 @@ fn main() {
         }
     };
 
-    kiriview::initialize_rust_modules();
-
-    let mut app = QApplication::new();
-    kiriview::initialize_application_runtime();
-
-    let mut engine = QQmlApplicationEngine::new();
-    if let Some(mut engine) = engine.as_mut() {
-        kiriview::load_application_main_qml(engine.as_mut(), &startup_source);
-    }
-
-    if let Some(app) = app.as_mut() {
-        app.exec();
-    }
+    process::exit(kiriview::run_application(&startup_source));
 }

@@ -6,6 +6,7 @@
 #include "kiriview/src/applicationruntime.cxx.h"
 #include "localization.h"
 
+#include <QApplication>
 #include <QGuiApplication>
 #include <QQmlApplicationEngine>
 #include <QQuickStyle>
@@ -13,6 +14,7 @@
 #include <QUrl>
 #include <QVariant>
 #include <QtGlobal>
+#include <array>
 
 namespace {
 void setupApplicationIdentity()
@@ -78,5 +80,20 @@ void loadApplicationMainQml(
     }
 
     engine.load(QUrl(QStringLiteral("qrc:/qt/qml/io/github/hnjae/kiriview/src/qml/Main.qml")));
+}
+
+int runApplication(const ApplicationStartupSource &startupSource)
+{
+    std::array<char, 9> applicationName { 'k', 'i', 'r', 'i', 'v', 'i', 'e', 'w', '\0' };
+    char *arguments[] = { applicationName.data() };
+    int argumentCount = 1;
+
+    QApplication application(argumentCount, arguments);
+    initializeApplicationRuntime();
+
+    QQmlApplicationEngine engine;
+    loadApplicationMainQml(engine, startupSource);
+
+    return application.exec();
 }
 }
