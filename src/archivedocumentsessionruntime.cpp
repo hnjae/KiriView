@@ -71,12 +71,20 @@ public:
     ArchiveImageCandidatesResult loadImageCandidates()
     {
         std::lock_guard<std::mutex> lock(m_mutex);
+        if (m_cachedCandidates.has_value()) {
+            return ArchiveImageCandidates { *m_cachedCandidates };
+        }
+
         const std::optional<QString> errorString = ensureSession();
         if (errorString.has_value()) {
             return Backend::archiveErrorResult<ArchiveImageCandidatesResult>(*errorString);
         }
 
-        return m_session->loadImageCandidates();
+        ArchiveImageCandidatesResult result = m_session->loadImageCandidates();
+        if (const auto *candidates = std::get_if<ArchiveImageCandidates>(&result)) {
+            m_cachedCandidates = candidates->candidates;
+        }
+        return result;
     }
 
     ArchiveImageDataResult loadImageData(const QUrl &imageUrl)
@@ -88,6 +96,12 @@ public:
         }
 
         return m_session->loadImageData(imageUrl);
+    }
+
+    std::optional<std::vector<ImageNavigationCandidate>> cachedImageCandidates()
+    {
+        std::lock_guard<std::mutex> lock(m_mutex);
+        return m_cachedCandidates;
     }
 
 private:
@@ -121,6 +135,7 @@ private:
     ArchiveDocumentSessionFactory m_sessionFactory;
     ArchiveDocumentSessionPtr m_session;
     QString m_openErrorString;
+    std::optional<std::vector<ImageNavigationCandidate>> m_cachedCandidates;
     bool m_openAttempted = false;
     std::mutex m_mutex;
 };
@@ -152,7 +167,6 @@ void ArchiveDocumentSessionRuntime::clear()
     m_generation.invalidate();
     m_archiveDocument = ArchiveDocumentLocation::none();
     m_runner.reset();
-    m_cachedCandidates.reset();
 }
 
 void ArchiveDocumentSessionRuntime::switchToArchiveDocument(ArchiveDocumentLocation archiveDocument)
@@ -169,7 +183,6 @@ void ArchiveDocumentSessionRuntime::switchToArchiveDocument(ArchiveDocumentLocat
     m_generation.invalidate();
     m_archiveDocument = std::move(archiveDocument);
     m_runner = std::make_shared<ArchiveDocumentSessionRunner>(m_archiveDocument, m_sessionFactory);
-    m_cachedCandidates.reset();
 }
 
 bool ArchiveDocumentSessionRuntime::hasCurrentArchiveDocument() const
@@ -194,17 +207,14 @@ ImageIoJob ArchiveDocumentSessionRuntime::loadArchiveImages(QObject *receiver,
         return ImageIoJob();
     }
 
-    if (m_cachedCandidates.has_value()) {
-        invokeIfSet(callback, *m_cachedCandidates);
+    if (const std::optional<std::vector<ImageNavigationCandidate>> cachedCandidates
+        = m_runner->cachedImageCandidates()) {
+        invokeIfSet(callback, *cachedCandidates);
         return ImageIoJob();
     }
 
     if (receiver == nullptr) {
-        ArchiveImageCandidatesResult result = m_runner->loadImageCandidates();
-        if (const auto *candidates = std::get_if<ArchiveImageCandidates>(&result)) {
-            m_cachedCandidates = candidates->candidates;
-        }
-        finishArchiveCandidateResult(result, callback, errorCallback);
+        finishArchiveCandidateResult(m_runner->loadImageCandidates(), callback, errorCallback);
         return ImageIoJob();
     }
 
@@ -294,10 +304,6 @@ void ArchiveDocumentSessionRuntime::finishCandidateLoad(
     }
 
     std::unique_ptr<ArchiveDocumentCandidateLoadBatch> batch = std::move(m_candidateLoadBatch);
-    if (const auto *candidates = std::get_if<ArchiveImageCandidates>(&result)) {
-        m_cachedCandidates = candidates->candidates;
-    }
-
     std::vector<std::shared_ptr<ArchiveDocumentCandidateLoad>> pendingLoads
         = std::move(batch->pendingLoads);
 

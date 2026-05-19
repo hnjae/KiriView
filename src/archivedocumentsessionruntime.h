@@ -10,8 +10,6 @@
 #include "imageiojob.h"
 
 #include <memory>
-#include <optional>
-#include <vector>
 
 class QObject;
 
@@ -48,7 +46,6 @@ private:
     ArchiveDocumentSessionFactory m_sessionFactory;
     ArchiveDocumentLocation m_archiveDocument;
     std::shared_ptr<ArchiveDocumentSessionRunner> m_runner;
-    std::optional<std::vector<ImageNavigationCandidate>> m_cachedCandidates;
     std::unique_ptr<ArchiveDocumentCandidateLoadBatch> m_candidateLoadBatch;
     ImageAsyncTicket m_generation;
 };
