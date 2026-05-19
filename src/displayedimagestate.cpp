@@ -3,30 +3,13 @@
 
 #include "displayedimagestate.h"
 
-#include "imageanimationplayer.h"
-#include "imagecallback.h"
 #include "imagerendering.h"
 
-#include <QObject>
 #include <memory>
 #include <optional>
 #include <utility>
 
 namespace KiriView {
-DisplayedImageState::DisplayedImageState(
-    QObject *context, ImageChangedCallback imageChanged, AnimationErrorCallback animationError)
-    : m_imageChanged(std::move(imageChanged))
-    , m_animationError(std::move(animationError))
-{
-    auto frameReady = [this](const QImage &image) { setImage(image, false); };
-    auto animationErrorCallback
-        = [this](const QString &errorString) { invokeIfSet(m_animationError, errorString); };
-    m_animationPlayer = std::make_unique<ImageAnimationPlayer>(
-        context, std::move(frameReady), std::move(animationErrorCallback));
-}
-
-DisplayedImageState::~DisplayedImageState() = default;
-
 bool DisplayedImageState::hasImage() const { return m_surface != nullptr && !m_surface->isNull(); }
 
 std::shared_ptr<DisplayedImageSurface> DisplayedImageState::imageSurface() const
@@ -100,31 +83,15 @@ bool DisplayedImageState::insertTile(DecodedTile tile)
     return true;
 }
 
-void DisplayedImageState::clear()
+bool DisplayedImageState::clear()
 {
-    stopAnimation();
-
-    if (m_surface != nullptr) {
-        replaceDisplayedImage(nullptr, std::nullopt, false);
+    if (m_surface == nullptr) {
+        return false;
     }
-}
 
-void DisplayedImageState::startAnimation(const QByteArray &data, const QByteArray &format)
-{
-    m_animationPlayer->start(data, format);
+    replaceDisplayedImage(nullptr, std::nullopt, false);
+    return true;
 }
-
-void DisplayedImageState::startApngAnimation(const QByteArray &data)
-{
-    m_animationPlayer->startApng(data);
-}
-
-void DisplayedImageState::startHeifSequenceAnimation(const QByteArray &data)
-{
-    m_animationPlayer->startHeifSequence(data);
-}
-
-void DisplayedImageState::stopAnimation() { m_animationPlayer->stop(); }
 
 void DisplayedImageState::replaceDisplayedImage(std::shared_ptr<DisplayedImageSurface> surface,
     std::optional<StaticImagePayload> staticImage, bool predecodeCacheable)
@@ -135,11 +102,5 @@ void DisplayedImageState::replaceDisplayedImage(std::shared_ptr<DisplayedImageSu
     finishImageChange();
 }
 
-void DisplayedImageState::finishImageChange()
-{
-    ++m_imageRevision;
-    notifyImageChanged();
-}
-
-void DisplayedImageState::notifyImageChanged() { invokeIfSet(m_imageChanged, imageSize()); }
+void DisplayedImageState::finishImageChange() { ++m_imageRevision; }
 }

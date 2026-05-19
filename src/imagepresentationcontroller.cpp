@@ -4,6 +4,7 @@
 #include "imagepresentationcontroller.h"
 
 #include "displayedimagestate.h"
+#include "imageanimationplayer.h"
 #include "imagecallback.h"
 #include "imagepresentationviewportcontroller.h"
 #include "imagerendering.h"
@@ -17,23 +18,20 @@ ImagePresentationController::ImagePresentationController(QObject *context,
     : m_callbacks(std::move(callbacks))
     , m_staticTileCacheByteBudget(StaticTileSurface::defaultTileCacheByteBudget())
 {
-    m_displayedImageState = std::make_unique<DisplayedImageState>(
-        context,
-        [this](const QSize &imageSize) {
-            m_viewportController->setDisplayedImageSize(imageSize);
-            notify(ImageDocumentChange::Repaint);
-        },
-        [this](
-            const QString &errorString) { invokeIfSet(m_callbacks.animationError, errorString); });
+    m_displayedImageState = std::make_unique<DisplayedImageState>();
     m_viewportController = std::make_unique<ImagePresentationViewportController>(
         context, std::move(renderContextProvider),
         [this]() { return m_displayedImageState->imageSurface(); },
         [this](DecodedTile tile) {
             if (m_displayedImageState->insertTile(std::move(tile))) {
-                notify(ImageDocumentChange::Repaint);
+                applyDisplayedImageTileChange();
             }
         },
         [this](ImageDocumentChange change) { notify(change); });
+    m_animationPlayer = std::make_unique<ImageAnimationPlayer>(
+        context, [this](const QImage &image) { setImage(image, false); },
+        [this](
+            const QString &errorString) { invokeIfSet(m_callbacks.animationError, errorString); });
 }
 
 ImagePresentationController::~ImagePresentationController() = default;
@@ -184,6 +182,7 @@ void ImagePresentationController::setImage(const QImage &image, bool predecodeCa
     resetRotationForNewImage();
     m_viewportController->invalidateTiles();
     m_displayedImageState->setImage(image, predecodeCacheable);
+    applyDisplayedImageChange();
 }
 
 void ImagePresentationController::setStaticImage(
@@ -197,6 +196,7 @@ void ImagePresentationController::setStaticImage(
         = staticImageFitsFullImageSurface(staticImage, context.maximumTextureSize);
     m_displayedImageState->setStaticImage(std::move(staticImage), useFullImageSurface,
         predecodeCacheable, m_staticTileCacheByteBudget);
+    applyDisplayedImageChange();
     if (!useFullImageSurface) {
         m_viewportController->scheduleVisibleTileDecode();
     }
@@ -204,29 +204,42 @@ void ImagePresentationController::setStaticImage(
 
 void ImagePresentationController::clearImage()
 {
+    stopAnimation();
     resetRotationForNewImage();
     m_viewportController->invalidateTiles();
     m_viewportController->clearContainer();
-    m_displayedImageState->clear();
-    m_viewportController->setDisplayedImageSize(QSize());
+    if (m_displayedImageState->clear()) {
+        applyDisplayedImageChange();
+    }
 }
 
 void ImagePresentationController::startAnimation(const QByteArray &data, const QByteArray &format)
 {
-    m_displayedImageState->startAnimation(data, format);
+    m_animationPlayer->start(data, format);
 }
 
 void ImagePresentationController::startApngAnimation(const QByteArray &data)
 {
-    m_displayedImageState->startApngAnimation(data);
+    m_animationPlayer->startApng(data);
 }
 
 void ImagePresentationController::startHeifSequenceAnimation(const QByteArray &data)
 {
-    m_displayedImageState->startHeifSequenceAnimation(data);
+    m_animationPlayer->startHeifSequence(data);
 }
 
-void ImagePresentationController::stopAnimation() { m_displayedImageState->stopAnimation(); }
+void ImagePresentationController::stopAnimation() { m_animationPlayer->stop(); }
+
+void ImagePresentationController::applyDisplayedImageChange()
+{
+    m_viewportController->setDisplayedImageSize(m_displayedImageState->imageSize());
+    notify(ImageDocumentChange::Repaint);
+}
+
+void ImagePresentationController::applyDisplayedImageTileChange()
+{
+    notify(ImageDocumentChange::Repaint);
+}
 
 void ImagePresentationController::resetRotationForNewImage()
 {

@@ -6,30 +6,16 @@
 
 #include "imagesurface.h"
 
-#include <QByteArray>
 #include <QImage>
 #include <QSize>
 #include <QSizeF>
-#include <QString>
-#include <functional>
 #include <memory>
 #include <optional>
 
-class QObject;
-
 namespace KiriView {
-class ImageAnimationPlayer;
-
 class DisplayedImageState
 {
 public:
-    using ImageChangedCallback = std::function<void(const QSize &)>;
-    using AnimationErrorCallback = std::function<void(const QString &)>;
-
-    DisplayedImageState(
-        QObject *context, ImageChangedCallback imageChanged, AnimationErrorCallback animationError);
-    ~DisplayedImageState();
-
     bool hasImage() const;
     std::shared_ptr<DisplayedImageSurface> imageSurface() const;
     QSize imageSize() const;
@@ -41,26 +27,17 @@ public:
     void setStaticImage(StaticImagePayload staticImage, bool useFullImageSurface,
         bool predecodeCacheable, qsizetype tileCacheByteBudget);
     bool insertTile(DecodedTile tile);
-    void clear();
-
-    void startAnimation(const QByteArray &data, const QByteArray &format);
-    void startApngAnimation(const QByteArray &data);
-    void startHeifSequenceAnimation(const QByteArray &data);
-    void stopAnimation();
+    bool clear();
 
 private:
     void replaceDisplayedImage(std::shared_ptr<DisplayedImageSurface> surface,
         std::optional<StaticImagePayload> staticImage, bool predecodeCacheable);
     void finishImageChange();
-    void notifyImageChanged();
 
-    ImageChangedCallback m_imageChanged;
-    AnimationErrorCallback m_animationError;
     std::shared_ptr<DisplayedImageSurface> m_surface;
     std::optional<StaticImagePayload> m_staticImage;
     bool m_imageIsPredecodeCacheable = false;
     quint64 m_imageRevision = 0;
-    std::unique_ptr<ImageAnimationPlayer> m_animationPlayer;
 };
 }
 

@@ -9,22 +9,19 @@
 #include <QRect>
 #include <QSize>
 #include <QTest>
-#include <vector>
 
 class TestDisplayedImageState : public QObject
 {
     Q_OBJECT
 
 private Q_SLOTS:
-    void imageSurfaceChangesAdvanceRevisionAndNotify();
+    void imageSurfaceChangesAdvanceRevisionAndExposeImageSize();
 };
 
-void TestDisplayedImageState::imageSurfaceChangesAdvanceRevisionAndNotify()
+void TestDisplayedImageState::imageSurfaceChangesAdvanceRevisionAndExposeImageSize()
 {
     constexpr qsizetype tileCacheByteBudget = KiriView::imageFullDecodeFallbackByteLimit;
-    std::vector<QSize> changedSizes;
-    KiriView::DisplayedImageState state(
-        this, [&changedSizes](const QSize &size) { changedSizes.push_back(size); }, {});
+    KiriView::DisplayedImageState state;
 
     state.setImage(KiriView::TestSupport::testImage(2, 1), false);
 
@@ -33,7 +30,6 @@ void TestDisplayedImageState::imageSurfaceChangesAdvanceRevisionAndNotify()
     QVERIFY(!state.isPredecodeCacheable());
     QVERIFY(state.imageSurface()->legacyFrameSurface() != nullptr);
     QVERIFY(!state.staticImage().has_value());
-    QCOMPARE(changedSizes.back(), QSize(2, 1));
 
     state.setStaticImage(
         KiriView::TestSupport::staticTestImagePayload(
@@ -46,7 +42,6 @@ void TestDisplayedImageState::imageSurfaceChangesAdvanceRevisionAndNotify()
     QVERIFY(state.imageSurface()->staticTileSurface() != nullptr);
     QCOMPARE(state.imageSurface()->staticTileSurface()->tileCacheByteBudget(), tileCacheByteBudget);
     QVERIFY(state.staticImage().has_value());
-    QCOMPARE(changedSizes.back(), QSize(3, 2));
 
     QVERIFY(state.insertTile(KiriView::DecodedTile {
         KiriView::TileKey { 0, 0, 0 },
@@ -57,14 +52,14 @@ void TestDisplayedImageState::imageSurfaceChangesAdvanceRevisionAndNotify()
     }));
 
     QCOMPARE(state.revision(), quint64(3));
-    QCOMPARE(changedSizes.back(), QSize(3, 2));
+    QCOMPARE(state.imageSize(), QSize(3, 2));
 
     state.setImage(KiriView::TestSupport::testImage(2, 1), false);
 
     QCOMPARE(state.revision(), quint64(4));
     QVERIFY(!state.isPredecodeCacheable());
 
-    state.clear();
+    QVERIFY(state.clear());
 
     QCOMPARE(state.revision(), quint64(5));
     QVERIFY(!state.hasImage());
@@ -72,7 +67,8 @@ void TestDisplayedImageState::imageSurfaceChangesAdvanceRevisionAndNotify()
     QCOMPARE(state.imageSize(), QSize());
     QVERIFY(!state.isPredecodeCacheable());
     QVERIFY(!state.staticImage().has_value());
-    QCOMPARE(changedSizes.back(), QSize());
+    QVERIFY(!state.clear());
+    QCOMPARE(state.revision(), quint64(5));
 }
 
 QTEST_GUILESS_MAIN(TestDisplayedImageState)
