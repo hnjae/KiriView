@@ -25,6 +25,7 @@ const DEFAULT_LIBRARY_DIRS: &[&str] = &["/usr/lib/x86_64-linux-gnu", "/usr/lib"]
 const CXX_QT_HEADER_SOURCES: &[&str] = &[
     "src/kiriimagedocument.h",
     "src/kiriimageview.h",
+    "src/imageshortcutnavigationpolicy.h",
     "src/kiriviewapplication.h",
     "src/menuaccesskeyrouter.h",
     "src/powerprofilemonitor.h",

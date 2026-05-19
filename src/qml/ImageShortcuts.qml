@@ -180,95 +180,76 @@ Item {
         return imageViewport.panToTopLeft();
     }
 
-    function openLeftFallbackImage() {
-        if (root.imageDocument.rightToLeftReadingEnabled && root.imageDocument.rightToLeftReadingAvailable) {
+    function rightToLeftReadingActive() {
+        return root.imageDocument.rightToLeftReadingEnabled && root.imageDocument.rightToLeftReadingAvailable;
+    }
+
+    function applyHorizontalArrowAction(action) {
+        switch (action) {
+        case ImageShortcutNavigationPolicy.PanLeft:
+            root.panBy(-root.keyboardPanDistance, 0);
+            return;
+        case ImageShortcutNavigationPolicy.PanRight:
+            root.panBy(root.keyboardPanDistance, 0);
+            return;
+        case ImageShortcutNavigationPolicy.OpenPreviousImage:
+            root.previousImageQAction.trigger();
+            return;
+        case ImageShortcutNavigationPolicy.OpenNextImage:
             root.nextImageQAction.trigger();
             return;
         }
-
-        root.previousImageQAction.trigger();
     }
 
-    function openRightFallbackImage() {
-        if (root.imageDocument.rightToLeftReadingEnabled && root.imageDocument.rightToLeftReadingAvailable) {
-            root.previousImageQAction.trigger();
+    function applySinglePageArrowAction(action) {
+        switch (action) {
+        case ImageShortcutNavigationPolicy.OpenPreviousSinglePage:
+            root.imageDocument.openPreviousSinglePage();
             return;
-        }
-
-        root.nextImageQAction.trigger();
-    }
-
-    function openLeftSinglePage() {
-        if (root.imageDocument.rightToLeftReadingEnabled && root.imageDocument.rightToLeftReadingAvailable) {
+        case ImageShortcutNavigationPolicy.OpenNextSinglePage:
             root.imageDocument.openNextSinglePage();
             return;
         }
-
-        root.imageDocument.openPreviousSinglePage();
     }
 
-    function openRightSinglePage() {
-        if (root.imageDocument.rightToLeftReadingEnabled && root.imageDocument.rightToLeftReadingAvailable) {
-            root.imageDocument.openPreviousSinglePage();
+    function applyScanAction(action) {
+        switch (action) {
+        case ImageShortcutNavigationPolicy.NoScanAction:
             return;
-        }
-
-        root.imageDocument.openNextSinglePage();
-    }
-
-    function panLeftOrOpenPreviousImage() {
-        if (root.imageHorizontallyPannable) {
-            root.panBy(-root.keyboardPanDistance, 0);
-            return;
-        }
-
-        root.openLeftFallbackImage();
-    }
-
-    function panRightOrOpenNextImage() {
-        if (root.imageHorizontallyPannable) {
-            root.panBy(root.keyboardPanDistance, 0);
-            return;
-        }
-
-        root.openRightFallbackImage();
-    }
-
-    function scanForward() {
-        if (!root.imagePannable) {
-            root.nextImageQAction.trigger();
-            return;
-        }
-
-        if (root.imageViewport.scanForward()) {
-            return;
-        }
-
-        root.nextImageQAction.trigger();
-    }
-
-    function scanBackward() {
-        if (!root.imagePannable) {
+        case ImageShortcutNavigationPolicy.OpenPreviousImageFromScan:
             root.previousImageQAction.trigger();
             return;
-        }
-
-        if (root.imageViewport.scanBackward()) {
+        case ImageShortcutNavigationPolicy.OpenNextImageFromScan:
+            root.nextImageQAction.trigger();
             return;
-        }
-
-        if (root.atFirstImage) {
-            root.imageBoundaryReached(KI18n.i18nc("@info:status", "First image"));
-            return;
-        }
-
-        if (root.imageDocument.currentPageNumber > 1) {
+        case ImageShortcutNavigationPolicy.OpenPreviousPageFromFinalScanStart:
             root.imageViewport.setNextDisplayedImageStartToFinalScanPosition();
             root.imageDocument.openImageAtPage(root.imageDocument.currentPageNumber - 1);
             return;
+        case ImageShortcutNavigationPolicy.ShowFirstImageBoundary:
+            root.imageBoundaryReached(KI18n.i18nc("@info:status", "First image"));
+            return;
         }
+    }
 
-        root.previousImageQAction.trigger();
+    function handleHorizontalArrow(leftArrow) {
+        const action = navigationPolicy.horizontalArrowAction(leftArrow, root.imageHorizontallyPannable, root.rightToLeftReadingActive());
+        root.applyHorizontalArrowAction(action);
+    }
+
+    function handleSinglePageArrow(leftArrow) {
+        const action = navigationPolicy.singlePageArrowAction(leftArrow, root.rightToLeftReadingActive());
+        root.applySinglePageArrowAction(action);
+    }
+
+    function scanForward() {
+        const action = navigationPolicy.scanForwardAction(root.imagePannable, root.imagePannable && root.imageViewport.scanForward());
+        root.applyScanAction(action);
+    }
+
+    function scanBackward() {
+        const action = navigationPolicy.scanBackwardAction(root.imagePannable, root.imagePannable && root.imageViewport.scanBackward(), root.atFirstImage, root.imageDocument.currentPageNumber);
+        root.applyScanAction(action);
     }
 
     function textInputFocused() {
@@ -281,6 +262,10 @@ Item {
 
     function zoomByStepAtCenter(stepCount) {
         return root.zoomByStep(stepCount, root.imageViewport.viewportWidth / 2, root.imageViewport.viewportHeight / 2);
+    }
+
+    ImageShortcutNavigationPolicy {
+        id: navigationPolicy
     }
 
     Repeater {
@@ -309,7 +294,7 @@ Item {
         enabled: root.readyViewerShortcutsEnabled
         sequence: "Left"
 
-        onActivated: root.panLeftOrOpenPreviousImage()
+        onActivated: root.handleHorizontalArrow(true)
     }
 
     Shortcut {
@@ -317,7 +302,7 @@ Item {
         enabled: root.readyViewerShortcutsEnabled
         sequence: "Right"
 
-        onActivated: root.panRightOrOpenNextImage()
+        onActivated: root.handleHorizontalArrow(false)
     }
 
     Shortcut {
@@ -325,7 +310,7 @@ Item {
         enabled: root.twoPageViewerShortcutsEnabled
         sequence: "Shift+Left"
 
-        onActivated: root.openLeftSinglePage()
+        onActivated: root.handleSinglePageArrow(true)
     }
 
     Shortcut {
@@ -333,7 +318,7 @@ Item {
         enabled: root.twoPageViewerShortcutsEnabled
         sequence: "Shift+Right"
 
-        onActivated: root.openRightSinglePage()
+        onActivated: root.handleSinglePageArrow(false)
     }
 
     Shortcut {

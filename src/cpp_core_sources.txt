@@ -113,6 +113,7 @@ src/imagespreadpagecache.cpp
 src/imagespreadpresentationcontroller.cpp
 src/imagespreadsecondarypagerefresh.cpp
 src/imagespreadzoomcontroller.cpp
+src/imageshortcutnavigationpolicy.cpp
 src/imageurl.cpp
 src/imageviewportgeometry.cpp
 src/imageviewportscanstate.cpp
