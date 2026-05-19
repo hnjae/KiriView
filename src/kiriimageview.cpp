@@ -156,14 +156,13 @@ void KiriImageView::itemChange(ItemChange change, const ItemChangeData &value)
 void KiriImageView::classBegin()
 {
     QQuickItem::classBegin();
-    m_renderContextBindingDeferred = true;
+    applyRenderContextBinding(m_renderContextBinding.setComponentComplete(false), m_document);
 }
 
 void KiriImageView::componentComplete()
 {
     QQuickItem::componentComplete();
-    m_renderContextBindingDeferred = false;
-    synchronizeDeferredRenderContextBinding();
+    applyRenderContextBinding(m_renderContextBinding.setComponentComplete(true), m_document);
 }
 
 KiriView::DisplayedPageRole KiriImageView::displayedPageRole() const
@@ -250,7 +249,7 @@ void KiriImageView::disconnectDocument()
 void KiriImageView::applyRenderContextBinding(
     KiriView::ImageViewRenderContextBindingAction action, KiriImageDocument *document)
 {
-    if (m_renderContextBindingDeferred || document == nullptr) {
+    if (document == nullptr) {
         return;
     }
 
@@ -264,15 +263,6 @@ void KiriImageView::applyRenderContextBinding(
         document->setRenderContextProvider({});
         return;
     }
-}
-
-void KiriImageView::synchronizeDeferredRenderContextBinding()
-{
-    if (m_document == nullptr || !m_renderContextBinding.providerInstalled()) {
-        return;
-    }
-
-    m_document->setRenderContextProvider([this]() { return renderContext(); });
 }
 
 void KiriImageView::handleDisplayedUrlChanged()

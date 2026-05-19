@@ -71,7 +71,6 @@ private:
     void disconnectDocument();
     void applyRenderContextBinding(
         KiriView::ImageViewRenderContextBindingAction action, KiriImageDocument *document);
-    void synchronizeDeferredRenderContextBinding();
     void handleDisplayedUrlChanged();
     void handleLoadingChanged();
     KiriView::ImageDocumentRenderContext renderContext() const;
@@ -86,7 +85,6 @@ private:
     QMetaObject::Connection m_documentDestroyedConnection;
     KiriView::ImageViewportScanState m_scanState;
     KiriView::ImageViewRenderContextBinding m_renderContextBinding;
-    bool m_renderContextBindingDeferred = false;
 };
 
 #endif

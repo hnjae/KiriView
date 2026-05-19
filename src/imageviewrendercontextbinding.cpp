@@ -18,6 +18,13 @@ ImageViewRenderContextBindingAction ImageViewRenderContextBinding::setSecondaryP
     return synchronizeProvider();
 }
 
+ImageViewRenderContextBindingAction ImageViewRenderContextBinding::setComponentComplete(
+    bool complete)
+{
+    m_componentComplete = complete;
+    return synchronizeProvider();
+}
+
 ImageViewRenderContextBindingAction ImageViewRenderContextBinding::reset()
 {
     m_documentAttached = false;
@@ -29,7 +36,7 @@ bool ImageViewRenderContextBinding::providerInstalled() const { return m_provide
 
 bool ImageViewRenderContextBinding::shouldInstallProvider() const
 {
-    return m_documentAttached && !m_secondaryPage;
+    return m_componentComplete && m_documentAttached && !m_secondaryPage;
 }
 
 ImageViewRenderContextBindingAction ImageViewRenderContextBinding::synchronizeProvider()

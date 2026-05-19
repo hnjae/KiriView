@@ -16,6 +16,7 @@ class ImageViewRenderContextBinding final
 public:
     ImageViewRenderContextBindingAction setDocumentAttached(bool attached);
     ImageViewRenderContextBindingAction setSecondaryPage(bool secondaryPage);
+    ImageViewRenderContextBindingAction setComponentComplete(bool complete);
     ImageViewRenderContextBindingAction reset();
     bool providerInstalled() const;
 
@@ -25,6 +26,7 @@ private:
 
     bool m_documentAttached = false;
     bool m_secondaryPage = false;
+    bool m_componentComplete = true;
     bool m_providerInstalled = false;
 };
 }
