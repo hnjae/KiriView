@@ -81,6 +81,7 @@ src/imagenavigationservice.cpp
 src/imagepagenavigationcontroller.cpp
 src/imagepagenavigationrefreshstate.cpp
 src/localization.cpp
+src/menuaccesskeymenuruntime.cpp
 src/menuaccesskeyrouter.cpp
 src/menuaccesskeysessionstate.cpp
 src/imageopencontroller.cpp

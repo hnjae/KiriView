@@ -4,16 +4,15 @@
 #ifndef KIRIVIEW_MENUACCESSKEYROUTER_H
 #define KIRIVIEW_MENUACCESSKEYROUTER_H
 
+#include "menuaccesskeymenuruntime.h"
 #include "menuaccesskeysessionstate.h"
 
 #include <QMetaObject>
 #include <QObject>
-#include <QPointer>
 #include <QtQml/qqmlregistration.h>
 
 class QEvent;
 class QKeyEvent;
-class QQuickItem;
 
 // Qt Quick Controls does not give KiriView's toolbar popup menu and menubar the
 // same post-open access-key behavior out of the box. This shim keeps that
@@ -56,29 +55,13 @@ private:
     bool handleKeyRelease(QKeyEvent *event);
     bool handleShortcutOverride(QKeyEvent *event);
     bool routeOpenMenuKey(QKeyEvent *event, KeyRoutingMode mode);
-    bool triggerMnemonic(QKeyEvent *event, QObject *menu);
-    QObject *openMenu() const;
     QObject *openMenuOrClearAccessKeys();
     void applySessionTransition(KiriView::MenuAccessKeySessionTransition transition);
     void beginAccessKeySession();
     void clearAccessKeySessionVisuals();
     void resetAltTracking();
 
-    static bool isMenu(QObject *object);
-    static bool isOpenMenu(QObject *object);
-    static bool isEnabledMenuItem(QObject *object);
-    static bool isMnemonicKeyPress(const QKeyEvent &event);
-    static bool isAltMnemonicKeyPress(const QKeyEvent &event);
-    static QQuickItem *itemAt(QObject *menu, int index);
-    static QObject *subMenuForItem(QObject *item);
-    static QObject *deepestOpenMenu(QObject *menu);
-    static QObject *menuItemForMnemonic(QObject *menu, const QKeyEvent &event);
-    static bool itemMatchesMnemonic(QObject *item, const QKeyEvent &event);
-    static bool openSubMenu(QObject *subMenu, QObject *item);
-    static void setMenuAccessKeysActive(QObject *menu, bool active);
-    static bool clickMenuItem(QObject *item);
-
-    QPointer<QObject> m_menu;
+    KiriView::MenuAccessKeyMenuRuntime m_menuRuntime;
     QMetaObject::Connection m_menuClosedConnection;
     KiriView::MenuAccessKeySessionState m_accessKeySession;
     bool m_enabled = true;

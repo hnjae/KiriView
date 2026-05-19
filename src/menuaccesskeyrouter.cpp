@@ -6,10 +6,7 @@
 #include <QCoreApplication>
 #include <QEvent>
 #include <QKeyEvent>
-#include <QKeySequence>
 #include <QMetaObject>
-#include <QQuickItem>
-#include <QVariant>
 
 MenuAccessKeyRouter::MenuAccessKeyRouter(QObject *parent)
     : QObject(parent)
@@ -26,22 +23,20 @@ MenuAccessKeyRouter::~MenuAccessKeyRouter()
     }
 }
 
-QObject *MenuAccessKeyRouter::menu() const { return m_menu; }
+QObject *MenuAccessKeyRouter::menu() const { return m_menuRuntime.menu(); }
 
 void MenuAccessKeyRouter::setMenu(QObject *menu)
 {
-    if (m_menu == menu) {
+    if (!m_menuRuntime.setMenu(menu)) {
         return;
     }
 
-    setMenuAccessKeysActive(m_menu, false);
     QObject::disconnect(m_menuClosedConnection);
     m_menuClosedConnection = {};
-    m_menu = menu;
     resetAltTracking();
-    if (m_menu != nullptr) {
-        m_menuClosedConnection
-            = QObject::connect(m_menu, SIGNAL(closed()), this, SLOT(clearMenuAccessKeys()));
+    if (m_menuRuntime.menu() != nullptr) {
+        m_menuClosedConnection = QObject::connect(
+            m_menuRuntime.menu(), SIGNAL(closed()), this, SLOT(clearMenuAccessKeys()));
     }
     Q_EMIT menuChanged();
 }
@@ -55,7 +50,7 @@ void MenuAccessKeyRouter::setEnabled(bool enabled)
     }
 
     if (!enabled) {
-        setMenuAccessKeysActive(m_menu, false);
+        m_menuRuntime.setAccessKeysActive(false);
     }
     m_enabled = enabled;
     resetAltTracking();
@@ -66,7 +61,7 @@ bool MenuAccessKeyRouter::eventFilter(QObject *watched, QEvent *event)
 {
     Q_UNUSED(watched)
 
-    if (!m_enabled || m_menu.isNull()) {
+    if (!m_enabled || m_menuRuntime.menu() == nullptr) {
         return false;
     }
 
@@ -119,7 +114,7 @@ bool MenuAccessKeyRouter::routeOpenMenuKey(QKeyEvent *event, KeyRoutingMode mode
         return true;
     }
 
-    if (isAltMnemonicKeyPress(*event)) {
+    if (KiriView::MenuAccessKeyMenuRuntime::isAltMnemonicKeyPress(*event)) {
         beginAccessKeySession();
         if (mode == KeyRoutingMode::ClaimShortcutOverride) {
             event->accept();
@@ -129,48 +124,16 @@ bool MenuAccessKeyRouter::routeOpenMenuKey(QKeyEvent *event, KeyRoutingMode mode
         return false;
     }
 
-    const bool handled = triggerMnemonic(event, menu);
+    const bool handled = m_menuRuntime.triggerMnemonic(event, m_accessKeySession.isActive());
     if (handled) {
         event->accept();
     }
     return handled;
 }
 
-bool MenuAccessKeyRouter::triggerMnemonic(QKeyEvent *event, QObject *menu)
-{
-    if (!isMnemonicKeyPress(*event)) {
-        return false;
-    }
-
-    QObject *item = menuItemForMnemonic(menu, *event);
-    if (item == nullptr) {
-        return isAltMnemonicKeyPress(*event);
-    }
-
-    QObject *subMenu = subMenuForItem(item);
-    if (subMenu != nullptr) {
-        const bool opened = openSubMenu(subMenu, item);
-        if (opened && (m_accessKeySession.isActive() || (event->modifiers() & Qt::AltModifier))) {
-            setMenuAccessKeysActive(subMenu, true);
-        }
-        return opened;
-    }
-
-    return clickMenuItem(item);
-}
-
-QObject *MenuAccessKeyRouter::openMenu() const
-{
-    if (m_menu.isNull() || !isOpenMenu(m_menu)) {
-        return nullptr;
-    }
-
-    return deepestOpenMenu(m_menu);
-}
-
 QObject *MenuAccessKeyRouter::openMenuOrClearAccessKeys()
 {
-    QObject *menu = openMenu();
+    QObject *menu = m_menuRuntime.openMenu();
     if (menu != nullptr) {
         return menu;
     }
@@ -191,10 +154,10 @@ void MenuAccessKeyRouter::applySessionTransition(
     case KiriView::MenuAccessKeyVisualEffect::None:
         return;
     case KiriView::MenuAccessKeyVisualEffect::Activate:
-        setMenuAccessKeysActive(m_menu, true);
+        m_menuRuntime.setAccessKeysActive(true);
         return;
     case KiriView::MenuAccessKeyVisualEffect::Clear:
-        setMenuAccessKeysActive(m_menu, false);
+        m_menuRuntime.setAccessKeysActive(false);
         return;
     }
 }
@@ -207,170 +170,3 @@ void MenuAccessKeyRouter::clearAccessKeySessionVisuals()
 void MenuAccessKeyRouter::clearMenuAccessKeys() { clearAccessKeySessionVisuals(); }
 
 void MenuAccessKeyRouter::resetAltTracking() { m_accessKeySession.reset(); }
-
-bool MenuAccessKeyRouter::isMenu(QObject *object)
-{
-    return object != nullptr && object->inherits("QQuickMenu");
-}
-
-bool MenuAccessKeyRouter::isOpenMenu(QObject *object)
-{
-    if (!isMenu(object)) {
-        return false;
-    }
-
-    const QVariant opened = object->property("opened");
-    if (opened.isValid() && opened.toBool()) {
-        return true;
-    }
-
-    const QVariant visible = object->property("visible");
-    return visible.isValid() && visible.toBool();
-}
-
-bool MenuAccessKeyRouter::isEnabledMenuItem(QObject *object)
-{
-    const QVariant enabled = object->property("enabled");
-    return !enabled.isValid() || enabled.toBool();
-}
-
-bool MenuAccessKeyRouter::isMnemonicKeyPress(const QKeyEvent &event)
-{
-    if (event.key() == Qt::Key_Alt) {
-        return false;
-    }
-
-    Qt::KeyboardModifiers modifiers = event.modifiers();
-    modifiers
-        &= ~(Qt::AltModifier | Qt::ShiftModifier | Qt::KeypadModifier | Qt::GroupSwitchModifier);
-    return modifiers == Qt::NoModifier;
-}
-
-bool MenuAccessKeyRouter::isAltMnemonicKeyPress(const QKeyEvent &event)
-{
-    return isMnemonicKeyPress(event) && (event.modifiers() & Qt::AltModifier);
-}
-
-QQuickItem *MenuAccessKeyRouter::itemAt(QObject *menu, int index)
-{
-    QQuickItem *item = nullptr;
-    QMetaObject::invokeMethod(
-        menu, "itemAt", Qt::DirectConnection, Q_RETURN_ARG(QQuickItem *, item), Q_ARG(int, index));
-    return item;
-}
-
-QObject *MenuAccessKeyRouter::subMenuForItem(QObject *item)
-{
-    if (item == nullptr) {
-        return nullptr;
-    }
-
-    return item->property("subMenu").value<QObject *>();
-}
-
-QObject *MenuAccessKeyRouter::deepestOpenMenu(QObject *menu)
-{
-    if (!isOpenMenu(menu)) {
-        return nullptr;
-    }
-
-    QObject *deepest = menu;
-    bool ok = false;
-    const int count = menu->property("count").toInt(&ok);
-    if (!ok) {
-        return deepest;
-    }
-
-    for (int index = 0; index < count; ++index) {
-        QObject *subMenu = subMenuForItem(itemAt(menu, index));
-        QObject *openSubMenu = deepestOpenMenu(subMenu);
-        if (openSubMenu != nullptr) {
-            deepest = openSubMenu;
-        }
-    }
-
-    return deepest;
-}
-
-QObject *MenuAccessKeyRouter::menuItemForMnemonic(QObject *menu, const QKeyEvent &event)
-{
-    bool ok = false;
-    const int count = menu->property("count").toInt(&ok);
-    if (!ok) {
-        return nullptr;
-    }
-
-    for (int index = 0; index < count; ++index) {
-        QObject *item = itemAt(menu, index);
-        if (item != nullptr && itemMatchesMnemonic(item, event)) {
-            return item;
-        }
-    }
-
-    return nullptr;
-}
-
-bool MenuAccessKeyRouter::itemMatchesMnemonic(QObject *item, const QKeyEvent &event)
-{
-    if (!isEnabledMenuItem(item)) {
-        return false;
-    }
-
-    const QString text = item->property("text").toString();
-    if (text.isEmpty()) {
-        return false;
-    }
-
-    const QKeySequence mnemonic = QKeySequence::mnemonic(text);
-    if (mnemonic.isEmpty()) {
-        return false;
-    }
-
-    const QKeyCombination combination = mnemonic[0];
-    return (combination.keyboardModifiers() & Qt::AltModifier)
-        && combination.key() == static_cast<Qt::Key>(event.key());
-}
-
-bool MenuAccessKeyRouter::openSubMenu(QObject *subMenu, QObject *item)
-{
-    QQuickItem *menuItem = qobject_cast<QQuickItem *>(item);
-    if (menuItem == nullptr) {
-        return false;
-    }
-
-    if (QMetaObject::invokeMethod(subMenu, "popup", Qt::DirectConnection,
-            Q_ARG(QQuickItem *, menuItem), Q_ARG(QQuickItem *, menuItem))) {
-        return true;
-    }
-
-    return QMetaObject::invokeMethod(
-        subMenu, "popup", Qt::DirectConnection, Q_ARG(QQuickItem *, menuItem));
-}
-
-void MenuAccessKeyRouter::setMenuAccessKeysActive(QObject *menu, bool active)
-{
-    if (!isMenu(menu)) {
-        return;
-    }
-
-    bool ok = false;
-    const int count = menu->property("count").toInt(&ok);
-    if (!ok) {
-        return;
-    }
-
-    for (int index = 0; index < count; ++index) {
-        QObject *item = itemAt(menu, index);
-        if (item == nullptr) {
-            continue;
-        }
-
-        item->setProperty("accessKeysActive", active);
-        setMenuAccessKeysActive(subMenuForItem(item), active);
-    }
-}
-
-bool MenuAccessKeyRouter::clickMenuItem(QObject *item)
-{
-    return QMetaObject::invokeMethod(item, "click", Qt::DirectConnection);
-}
