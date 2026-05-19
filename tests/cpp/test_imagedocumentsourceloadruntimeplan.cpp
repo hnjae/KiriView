@@ -10,13 +10,13 @@
 #include <variant>
 #include <vector>
 
-class TestImageDocumentSourceLoadExecutor : public QObject
+class TestImageDocumentSourceLoadRuntimePlan : public QObject
 {
     Q_OBJECT
 
 private Q_SLOTS:
-    void replacementLoadPlansRuntimeEffectsAroundSourceMutation();
-    void currentLoadPlansReadingResetBeforeSourceState();
+    void replacementLoadMapsOperationsAroundSourceMutation();
+    void currentLoadMapsReadingResetBeforeSourceState();
 };
 
 namespace {
@@ -50,7 +50,7 @@ const Operation &operationAt(const KiriView::ImageDocumentRuntimePlan &plan, std
 }
 }
 
-void TestImageDocumentSourceLoadExecutor::replacementLoadPlansRuntimeEffectsAroundSourceMutation()
+void TestImageDocumentSourceLoadRuntimePlan::replacementLoadMapsOperationsAroundSourceMutation()
 {
     const QUrl sourceUrl = localUrl(QStringLiteral("/images/page.png"));
     const QUrl containerUrl = localUrl(QStringLiteral("/books/book.cbz"));
@@ -100,7 +100,7 @@ void TestImageDocumentSourceLoadExecutor::replacementLoadPlansRuntimeEffectsArou
     QCOMPARE(operationAt<KiriView::SetSourceUrlOperation>(runtimePlan, 8).url, sourceUrl);
 }
 
-void TestImageDocumentSourceLoadExecutor::currentLoadPlansReadingResetBeforeSourceState()
+void TestImageDocumentSourceLoadRuntimePlan::currentLoadMapsReadingResetBeforeSourceState()
 {
     const QUrl sourceUrl = localUrl(QStringLiteral("/images/page.png"));
     const QUrl containerUrl = localUrl(QStringLiteral("/books/book.cbz"));
@@ -133,6 +133,6 @@ void TestImageDocumentSourceLoadExecutor::currentLoadPlansReadingResetBeforeSour
         containerUrl);
 }
 
-QTEST_GUILESS_MAIN(TestImageDocumentSourceLoadExecutor)
+QTEST_GUILESS_MAIN(TestImageDocumentSourceLoadRuntimePlan)
 
-#include "test_imagedocumentsourceloadexecutor.moc"
+#include "test_imagedocumentsourceloadruntimeplan.moc"

@@ -30,9 +30,9 @@ class ArchiveDocumentSessionStore;
 class ImageDocumentDeletionController;
 class ImageDocumentEffectExecutor;
 struct ImageDocumentEffectOperations;
-class ImageDocumentLoadController;
 class ImageDocumentNavigationController;
 class ImageDocumentPredecodeController;
+struct ImageDocumentSourceLoadRequest;
 class ImageOpenController;
 class ImageNavigationService;
 class ImagePresentationController;
@@ -109,6 +109,7 @@ public:
 
 private:
     ImageDocumentRenderContext renderContext() const;
+    void loadSource(const ImageDocumentSourceLoadRequest &request);
     void publishChanges(const std::vector<ImageDocumentChange> &changes);
 
     ImageDocumentChangeBatcher changeBatcher;
@@ -123,7 +124,6 @@ private:
     std::unique_ptr<ImageDocumentNavigationController> documentNavigationController;
     std::unique_ptr<ImageDocumentPredecodeController> predecodeController;
     std::unique_ptr<ImageSpreadPresentationController> spreadController;
-    std::unique_ptr<ImageDocumentLoadController> loadController;
     std::unique_ptr<ImageDocumentEffectExecutor> effectExecutor;
 };
 }

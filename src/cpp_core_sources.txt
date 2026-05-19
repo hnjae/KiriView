@@ -47,7 +47,6 @@ src/imagedocumentdeletionfallbackcontroller.cpp
 src/imagedocumentdeletionstate.cpp
 src/imagedocumenteffectexecutor.cpp
 src/imagedocumenteffectplan.cpp
-src/imagedocumentloadcontroller.cpp
 src/imagedocumentnavigationcontroller.cpp
 src/imagedocumentnotifications.cpp
 src/imagedocumentpredecodecontroller.cpp

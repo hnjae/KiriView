@@ -5,7 +5,6 @@
 
 #include "archivedocumentsessionstore.h"
 #include "imagedocumentdeletioncontroller.h"
-#include "imagedocumentloadcontroller.h"
 #include "imagedocumentnavigationcontroller.h"
 #include "imagedocumentpredecodecontroller.h"
 #include "imagedocumentsourceloadrequest.h"
@@ -15,6 +14,8 @@
 #include "imageopenworkflow.h"
 #include "imagepresentationcontroller.h"
 #include "imagespreadpresentationcontroller.h"
+
+#include <utility>
 
 namespace KiriView {
 ImageDocumentEffectOperations imageDocumentRuntimeEffectOperations(
@@ -28,7 +29,7 @@ ImageDocumentEffectOperations imageDocumentRuntimeEffectOperations(
     ImageDocumentNavigationController *navigationController = &binding.navigationController;
     ImageDocumentPredecodeController *predecodeController = &binding.predecodeController;
     ImageSpreadPresentationController *spreadController = &binding.spreadController;
-    ImageDocumentLoadController *loadController = &binding.loadController;
+    auto loadSource = std::move(binding.loadSource);
 
     ImageDocumentEffectOperations operations;
     operations.lifecycle.cancelFileDeletion
@@ -73,14 +74,17 @@ ImageDocumentEffectOperations imageDocumentRuntimeEffectOperations(
         = [navigationController]() { navigationController->clearPageNavigation(); };
     operations.navigation.updatePageNavigation
         = [navigationController]() { navigationController->updatePageNavigation(); };
-    operations.navigation.loadUrl = [loadController](const QUrl &url) {
-        loadController->loadSource(ImageDocumentSourceLoadRequest::fromUrl(url));
+    operations.navigation.loadUrl = [loadSource](const QUrl &url) {
+        if (loadSource) {
+            loadSource(ImageDocumentSourceLoadRequest::fromUrl(url));
+        }
     };
-    operations.navigation.loadContainerImage
-        = [loadController](const QUrl &imageUrl, const QUrl &containerUrl) {
-              loadController->loadSource(
-                  ImageDocumentSourceLoadRequest::fromContainerImage(imageUrl, containerUrl));
-          };
+    operations.navigation.loadContainerImage = [loadSource](
+                                                   const QUrl &imageUrl, const QUrl &containerUrl) {
+        if (loadSource) {
+            loadSource(ImageDocumentSourceLoadRequest::fromContainerImage(imageUrl, containerUrl));
+        }
+    };
     operations.navigation.finishEmptyContainerNavigation
         = [openController](const QUrl &containerUrl) {
               openController->finishContainerNavigationWithEmptyContainer(containerUrl);
@@ -90,9 +94,11 @@ ImageDocumentEffectOperations imageDocumentRuntimeEffectOperations(
               openController->finishContainerNavigationLoadWithError(containerUrl, errorString);
           };
     operations.navigation.loadPageNavigationUrl
-        = [loadController](const QUrl &url, bool preserveTwoPageSpreadTransition) {
-              loadController->loadSource(ImageDocumentSourceLoadRequest::fromPageNavigation(
-                  url, preserveTwoPageSpreadTransition));
+        = [loadSource](const QUrl &url, bool preserveTwoPageSpreadTransition) {
+              if (loadSource) {
+                  loadSource(ImageDocumentSourceLoadRequest::fromPageNavigation(
+                      url, preserveTwoPageSpreadTransition));
+              }
           };
     operations.open.cancelOpen = [openController]() { openController->cancel(); };
     operations.open.clearDisplayedImageLocation

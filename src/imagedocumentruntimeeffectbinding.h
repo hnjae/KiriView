@@ -6,13 +6,15 @@
 
 #include "imagedocumenteffectexecutor.h"
 
+#include <functional>
+
 namespace KiriView {
 class ArchiveDocumentSessionStore;
 class ImageDocumentDeletionController;
-class ImageDocumentLoadController;
 class ImageDocumentNavigationController;
 class ImageDocumentPredecodeController;
 class ImageDocumentState;
+struct ImageDocumentSourceLoadRequest;
 class ImageOpenController;
 class ImagePresentationController;
 class ImageSpreadPresentationController;
@@ -26,7 +28,7 @@ struct ImageDocumentRuntimeEffectBinding {
     ImageDocumentNavigationController &navigationController;
     ImageDocumentPredecodeController &predecodeController;
     ImageSpreadPresentationController &spreadController;
-    ImageDocumentLoadController &loadController;
+    std::function<void(const ImageDocumentSourceLoadRequest &)> loadSource;
 };
 
 ImageDocumentEffectOperations imageDocumentRuntimeEffectOperations(

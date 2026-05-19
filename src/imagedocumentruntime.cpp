@@ -7,12 +7,13 @@
 #include "imagecallback.h"
 #include "imagedocumentdeletioncontroller.h"
 #include "imagedocumenteffectexecutor.h"
-#include "imagedocumentloadcontroller.h"
 #include "imagedocumentnavigationcontroller.h"
 #include "imagedocumentpredecodecontroller.h"
 #include "imagedocumentruntimedependencies.h"
 #include "imagedocumentruntimeeffectbinding.h"
+#include "imagedocumentsourceloadpolicy.h"
 #include "imagedocumentsourceloadrequest.h"
+#include "imagedocumentsourceloadruntimeplan.h"
 #include "imageerrortext.h"
 #include "imagenavigationservice.h"
 #include "imageopencontroller.h"
@@ -24,6 +25,18 @@
 #include <utility>
 
 namespace KiriView {
+namespace {
+    ImageDocumentSourceLoadSnapshot sourceLoadSnapshot(
+        const ImageDocumentState &state, const ImageSpreadPresentationController &spreadController)
+    {
+        return ImageDocumentSourceLoadSnapshot {
+            state.sourceUrl(),
+            state.displayedArchiveDocument(),
+            spreadController.rightToLeftReadingEnabled(),
+        };
+    }
+}
+
 ImageDocumentRuntime::ImageDocumentRuntime(QObject *documentObject,
     RenderContextProvider renderContextProvider, ChangeCallback changeCallback,
     ImageAsyncDependencies dependencies, FileDeletionFailedCallback fileDeletionFailedCallback)
@@ -101,12 +114,6 @@ ImageDocumentRuntime::ImageDocumentRuntime(QObject *documentObject,
     documentNavigationController = std::make_unique<ImageDocumentNavigationController>(state,
         *presentationController, *navigationService, *spreadController,
         [this](ImageDocumentEffect effect) { dispatchEffect(std::move(effect)); });
-    loadController = std::make_unique<ImageDocumentLoadController>(
-        state, *spreadController, [this](const ImageDocumentRuntimePlan &plan) {
-            if (effectExecutor != nullptr) {
-                effectExecutor->dispatchPlan(plan);
-            }
-        });
     effectExecutor = std::make_unique<ImageDocumentEffectExecutor>(
         imageDocumentRuntimeEffectOperations(ImageDocumentRuntimeEffectBinding {
             archiveSessionStore.get(),
@@ -117,7 +124,7 @@ ImageDocumentRuntime::ImageDocumentRuntime(QObject *documentObject,
             *documentNavigationController,
             *predecodeController,
             *spreadController,
-            *loadController,
+            [this](const ImageDocumentSourceLoadRequest &request) { loadSource(request); },
         }));
 }
 
@@ -127,7 +134,7 @@ QUrl ImageDocumentRuntime::sourceUrl() const { return state.sourceUrl(); }
 
 void ImageDocumentRuntime::setSourceUrl(const QUrl &sourceUrl)
 {
-    loadController->loadSource(ImageDocumentSourceLoadRequest::fromUrl(sourceUrl));
+    loadSource(ImageDocumentSourceLoadRequest::fromUrl(sourceUrl));
 }
 
 ImageDocumentStatus ImageDocumentRuntime::status() const
@@ -286,6 +293,15 @@ ImageDocumentRenderContext ImageDocumentRuntime::renderContext() const
     }
 
     return ImageDocumentRenderContext {};
+}
+
+void ImageDocumentRuntime::loadSource(const ImageDocumentSourceLoadRequest &request)
+{
+    const ImageDocumentSourceLoadPlan plan = ImageDocumentSourceLoadPolicy::plan(
+        imageDocumentSourceLoadPolicyInput(sourceLoadSnapshot(state, *spreadController), request));
+    if (effectExecutor != nullptr) {
+        effectExecutor->dispatchPlan(imageDocumentSourceLoadRuntimePlan(request, plan));
+    }
 }
 
 void ImageDocumentRuntime::publishChanges(const std::vector<ImageDocumentChange> &changes)
