@@ -178,6 +178,7 @@ class TestImageDocumentRuntime : public QObject
 private Q_SLOTS:
     void initialLoadSuccessUpdatesDocumentState();
     void imageLoadsUsePhysicalViewportForFirstDisplayDecode();
+    void renderContextProviderCanBeReplacedAfterConstruction();
     void maximumManualZoomChangesAfterViewportImageAndRenderContextUpdates();
     void directoryImageNavigationResetsManualZoom();
     void archiveDocumentPageNavigationPreservesManualZoom();
@@ -267,6 +268,50 @@ void TestImageDocumentRuntime::imageLoadsUsePhysicalViewportForFirstDisplayDecod
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(2));
     QCOMPARE(dataLoader.backLoad().url, nextImageUrl);
     QCOMPARE(dataLoader.backLoad().firstDisplay.physicalViewportSize, QSize(800, 600));
+}
+
+void TestImageDocumentRuntime::renderContextProviderCanBeReplacedAfterConstruction()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    std::vector<KiriView::ImageDocumentChange> changes;
+    const QUrl imageUrl = localUrl(QStringLiteral("/images/regular.png"));
+
+    RuntimeHandle runtime(
+        this,
+        []() {
+            return KiriView::ImageDocumentRenderContext {
+                1.0,
+                KiriView::fallbackTextureSizeMax,
+            };
+        },
+        [&changes](const std::vector<KiriView::ImageDocumentChange> &publishedChanges) {
+            changes.insert(changes.end(), publishedChanges.begin(), publishedChanges.end());
+        },
+        imageAsyncDependenciesFor(candidateProvider, dataLoader,
+            [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
+                return staticDecodedImageWithPreview(QSize(1000, 500), QSize(1000, 500));
+            }));
+
+    runtime->setViewportSize(QSizeF(7000.0, 100.0));
+    runtime->setSourceUrl(imageUrl);
+    finishLoad(dataLoader);
+
+    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QVERIFY(KiriView::imageZoomApproximatelyEqual(
+        runtime->maximumManualZoomPercent(), 65536.0 * 100.0 / 1000.0));
+
+    changes.clear();
+    runtime->setRenderContextProvider([]() {
+        return KiriView::ImageDocumentRenderContext {
+            2.0,
+            KiriView::fallbackTextureSizeMax,
+        };
+    });
+
+    QVERIFY(containsChange(changes, KiriView::ImageDocumentChange::MaximumManualZoomPercent));
+    QVERIFY(KiriView::imageZoomApproximatelyEqual(
+        runtime->maximumManualZoomPercent(), 65536.0 * 2.0 * 100.0 / 1000.0));
 }
 
 void TestImageDocumentRuntime::maximumManualZoomChangesAfterViewportImageAndRenderContextUpdates()

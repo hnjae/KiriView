@@ -31,14 +31,13 @@ ImageDocumentRuntime::ImageDocumentRuntime(QObject *documentObject,
           [this](const std::vector<ImageDocumentChange> &changes) { publishChanges(changes); }))
     , state(changeBatcher)
     , changeCallback(std::move(changeCallback))
+    , renderContextProvider(std::move(renderContextProvider))
 {
     ImageDocumentRuntimeDependencies runtimeDependencies
         = resolveImageDocumentRuntimeDependencies(std::move(dependencies), documentObject);
     archiveSessionStore = std::move(runtimeDependencies.archiveSessionStore);
-    RenderContextProvider primaryRenderContextProvider = renderContextProvider;
-    RenderContextProvider spreadRenderContextProvider = std::move(renderContextProvider);
-    presentationController = std::make_unique<ImagePresentationController>(documentObject,
-        std::move(primaryRenderContextProvider),
+    presentationController = std::make_unique<ImagePresentationController>(
+        documentObject, [this]() { return renderContext(); },
         ImagePresentationController::Callbacks {
             [this](ImageDocumentChange change) { notify(change); },
             [this](const QString &errorString) {
@@ -90,8 +89,8 @@ ImageDocumentRuntime::ImageDocumentRuntime(QObject *documentObject,
         runtimeDependencies.imageDecode,
         [this]() { return navigationService->currentPageNumber(); },
         std::move(runtimeDependencies.powerSaver));
-    spreadController = std::make_unique<ImageSpreadPresentationController>(documentObject,
-        std::move(spreadRenderContextProvider), state, *presentationController,
+    spreadController = std::make_unique<ImageSpreadPresentationController>(
+        documentObject, [this]() { return renderContext(); }, state, *presentationController,
         ImageSpreadPresentationController::Callbacks {
             [this](ImageDocumentChange change) { notify(change); },
             [this](const QUrl &url) { return predecodeController->tryTake(url); },
@@ -270,6 +269,21 @@ void ImageDocumentRuntime::dispatchEffect(ImageDocumentEffect effect)
 }
 
 void ImageDocumentRuntime::notify(ImageDocumentChange change) { changeBatcher.notify(change); }
+
+void ImageDocumentRuntime::setRenderContextProvider(RenderContextProvider provider)
+{
+    renderContextProvider = std::move(provider);
+    updateRenderContext();
+}
+
+ImageDocumentRenderContext ImageDocumentRuntime::renderContext() const
+{
+    if (renderContextProvider) {
+        return renderContextProvider();
+    }
+
+    return ImageDocumentRenderContext {};
+}
 
 void ImageDocumentRuntime::publishChanges(const std::vector<ImageDocumentChange> &changes)
 {

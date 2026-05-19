@@ -181,9 +181,7 @@ Q_SIGNALS:
 
 private:
     void handleDocumentChanges(const std::vector<KiriView::ImageDocumentChange> &changes);
-    KiriView::ImageDocumentRenderContext renderContext() const;
 
-    RenderContextProvider m_renderContextProvider;
     std::unique_ptr<KiriView::ImageDocumentRuntime> m_runtime;
 };
 

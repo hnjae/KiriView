@@ -91,6 +91,7 @@ public:
 
     void dispatchEffect(ImageDocumentEffect effect);
     void notify(ImageDocumentChange change);
+    void setRenderContextProvider(RenderContextProvider provider);
     void shutdown();
     void openPreviousImage();
     void openNextImage();
@@ -107,11 +108,13 @@ public:
     void updateRenderContext();
 
 private:
+    ImageDocumentRenderContext renderContext() const;
     void publishChanges(const std::vector<ImageDocumentChange> &changes);
 
     ImageDocumentChangeBatcher changeBatcher;
     ImageDocumentState state;
     ChangeCallback changeCallback;
+    RenderContextProvider renderContextProvider;
     std::unique_ptr<ArchiveDocumentSessionStore> archiveSessionStore;
     std::unique_ptr<ImageDocumentDeletionController> documentDeletionController;
     std::unique_ptr<ImagePresentationController> presentationController;

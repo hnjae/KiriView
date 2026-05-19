@@ -112,7 +112,7 @@ KiriImageDocument::KiriImageDocument(QObject *parent)
     : QObject(parent)
 {
     m_runtime = std::make_unique<KiriView::ImageDocumentRuntime>(
-        this, [this]() { return renderContext(); },
+        this, RenderContextProvider {},
         [this](const std::vector<ImageDocumentChange> &changes) { handleDocumentChanges(changes); },
         KiriView::ImageAsyncDependencies {},
         [this](const QString &errorString) { Q_EMIT fileDeletionFailed(errorString); });
@@ -248,8 +248,7 @@ KiriView::DisplayedImageRenderSnapshot KiriImageDocument::renderSnapshot(
 
 void KiriImageDocument::setRenderContextProvider(RenderContextProvider provider)
 {
-    m_renderContextProvider = std::move(provider);
-    updateRenderContext();
+    m_runtime->setRenderContextProvider(std::move(provider));
 }
 
 void KiriImageDocument::openPreviousImage() { m_runtime->openPreviousImage(); }
@@ -297,13 +296,4 @@ void KiriImageDocument::updateRenderContext() { m_runtime->updateRenderContext()
 void KiriImageDocument::handleDocumentChanges(const std::vector<ImageDocumentChange> &changes)
 {
     KiriView::ImageDocumentPublicSignalEmitter(publicSignalOperations(*this)).emitChanges(changes);
-}
-
-KiriView::ImageDocumentRenderContext KiriImageDocument::renderContext() const
-{
-    if (m_renderContextProvider) {
-        return m_renderContextProvider();
-    }
-
-    return KiriView::ImageDocumentRenderContext {};
 }
