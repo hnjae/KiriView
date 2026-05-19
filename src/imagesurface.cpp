@@ -20,10 +20,10 @@ KiriView::RustImageRenderSize rustImageRenderSize(const QSize &size)
 }
 
 namespace KiriView {
-StaticTileSurface::StaticTileSurface(StaticImagePayload image)
+StaticTileSurface::StaticTileSurface(StaticImagePayload image, qsizetype tileCacheByteBudget)
     : m_image(std::move(image))
     , m_pyramid(m_image.source == nullptr ? QSize() : m_image.source->imageSize())
-    , m_tileCache(defaultTileCacheByteBudget())
+    , m_tileCache(tileCacheByteBudget)
 {
 }
 
@@ -59,6 +59,8 @@ std::vector<DecodedTile> StaticTileSurface::tiles() const { return m_tileCache.t
 bool StaticTileSurface::insertTile(DecodedTile tile) { return m_tileCache.insert(std::move(tile)); }
 
 void StaticTileSurface::clearTiles() { m_tileCache.clear(); }
+
+qsizetype StaticTileSurface::tileCacheByteBudget() const { return m_tileCache.byteBudget(); }
 
 qsizetype StaticTileSurface::defaultTileCacheByteBudget()
 {

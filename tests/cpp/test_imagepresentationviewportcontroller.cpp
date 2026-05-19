@@ -18,6 +18,8 @@
 #include <vector>
 
 namespace {
+constexpr qsizetype testTileCacheByteBudget = KiriView::imageFullDecodeFallbackByteLimit;
+
 using KiriView::TestSupport::staticTestImagePayload;
 using KiriView::TestSupport::testImage;
 
@@ -27,7 +29,7 @@ std::shared_ptr<KiriView::DisplayedImageSurface> testSurface(const QSize &imageS
     KiriView::StaticImagePayload payload
         = staticTestImagePayload(image, testImage(QSize(512, 512)));
     return std::make_shared<KiriView::DisplayedImageSurface>(
-        KiriView::StaticTileSurface { std::move(payload) });
+        KiriView::StaticTileSurface { std::move(payload), testTileCacheByteBudget });
 }
 
 std::size_t tileCount(const std::shared_ptr<KiriView::DisplayedImageSurface> &surface)

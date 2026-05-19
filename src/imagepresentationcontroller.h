@@ -84,6 +84,7 @@ private:
     void notify(ImageDocumentChange change);
 
     Callbacks m_callbacks;
+    qsizetype m_staticTileCacheByteBudget = 0;
     std::unique_ptr<DisplayedImageState> m_displayedImageState;
     std::unique_ptr<ImagePresentationViewportController> m_viewportController;
 };

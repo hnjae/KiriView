@@ -64,8 +64,8 @@ void DisplayedImageState::setImage(const QImage &image, bool predecodeCacheable)
         std::nullopt, predecodeCacheable);
 }
 
-void DisplayedImageState::setStaticImage(
-    StaticImagePayload staticImage, bool useFullImageSurface, bool predecodeCacheable)
+void DisplayedImageState::setStaticImage(StaticImagePayload staticImage, bool useFullImageSurface,
+    bool predecodeCacheable, qsizetype tileCacheByteBudget)
 {
     QImage displayImage = displayReadyImage(staticImage.preview);
     staticImage.preview = displayImage;
@@ -75,7 +75,8 @@ void DisplayedImageState::setStaticImage(
     if (useFullImageSurface) {
         surface = std::make_shared<DisplayedImageSurface>(LegacyFrameSurface { displayImage });
     } else {
-        surface = std::make_shared<DisplayedImageSurface>(StaticTileSurface { *storedStaticImage });
+        surface = std::make_shared<DisplayedImageSurface>(
+            StaticTileSurface { *storedStaticImage, tileCacheByteBudget });
     }
 
     replaceDisplayedImage(std::move(surface), std::move(storedStaticImage), predecodeCacheable);

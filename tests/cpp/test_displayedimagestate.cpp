@@ -21,6 +21,7 @@ private Q_SLOTS:
 
 void TestDisplayedImageState::imageSurfaceChangesAdvanceRevisionAndNotify()
 {
+    constexpr qsizetype tileCacheByteBudget = KiriView::imageFullDecodeFallbackByteLimit;
     std::vector<QSize> changedSizes;
     KiriView::DisplayedImageState state(
         this, [&changedSizes](const QSize &size) { changedSizes.push_back(size); }, {});
@@ -37,12 +38,13 @@ void TestDisplayedImageState::imageSurfaceChangesAdvanceRevisionAndNotify()
     state.setStaticImage(
         KiriView::TestSupport::staticTestImagePayload(
             KiriView::TestSupport::testImage(3, 2), KiriView::TestSupport::testImage(2, 2)),
-        false, true);
+        false, true, tileCacheByteBudget);
 
     QCOMPARE(state.revision(), quint64(2));
     QCOMPARE(state.imageSize(), QSize(3, 2));
     QVERIFY(state.isPredecodeCacheable());
     QVERIFY(state.imageSurface()->staticTileSurface() != nullptr);
+    QCOMPARE(state.imageSurface()->staticTileSurface()->tileCacheByteBudget(), tileCacheByteBudget);
     QVERIFY(state.staticImage().has_value());
     QCOMPARE(changedSizes.back(), QSize(3, 2));
 

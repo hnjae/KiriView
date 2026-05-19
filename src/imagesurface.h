@@ -19,7 +19,7 @@ namespace KiriView {
 class StaticTileSurface
 {
 public:
-    explicit StaticTileSurface(StaticImagePayload image = {});
+    StaticTileSurface(StaticImagePayload image, qsizetype tileCacheByteBudget);
 
     bool isValid() const;
     const StaticImagePayload &image() const;
@@ -33,6 +33,7 @@ public:
     std::vector<DecodedTile> tiles() const;
     bool insertTile(DecodedTile tile);
     void clearTiles();
+    qsizetype tileCacheByteBudget() const;
 
     static qsizetype defaultTileCacheByteBudget();
     static qsizetype tileCacheByteBudgetForSystemMemory(qsizetype systemMemoryByteSize);

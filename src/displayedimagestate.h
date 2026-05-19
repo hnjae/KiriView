@@ -38,8 +38,8 @@ public:
     std::optional<StaticImagePayload> staticImage() const;
 
     void setImage(const QImage &image, bool predecodeCacheable);
-    void setStaticImage(
-        StaticImagePayload staticImage, bool useFullImageSurface, bool predecodeCacheable);
+    void setStaticImage(StaticImagePayload staticImage, bool useFullImageSurface,
+        bool predecodeCacheable, qsizetype tileCacheByteBudget);
     bool insertTile(DecodedTile tile);
     void clear();
 

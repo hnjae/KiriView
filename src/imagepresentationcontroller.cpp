@@ -15,6 +15,7 @@ namespace KiriView {
 ImagePresentationController::ImagePresentationController(QObject *context,
     RenderContextProvider renderContextProvider, ImagePresentationController::Callbacks callbacks)
     : m_callbacks(std::move(callbacks))
+    , m_staticTileCacheByteBudget(StaticTileSurface::defaultTileCacheByteBudget())
 {
     m_displayedImageState = std::make_unique<DisplayedImageState>(
         context,
@@ -194,8 +195,8 @@ void ImagePresentationController::setStaticImage(
     m_viewportController->invalidateTiles();
     const bool useFullImageSurface
         = staticImageFitsFullImageSurface(staticImage, context.maximumTextureSize);
-    m_displayedImageState->setStaticImage(
-        std::move(staticImage), useFullImageSurface, predecodeCacheable);
+    m_displayedImageState->setStaticImage(std::move(staticImage), useFullImageSurface,
+        predecodeCacheable, m_staticTileCacheByteBudget);
     if (!useFullImageSurface) {
         m_viewportController->scheduleVisibleTileDecode();
     }

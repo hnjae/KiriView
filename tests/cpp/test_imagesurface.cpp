@@ -12,6 +12,8 @@
 #include <utility>
 
 namespace {
+constexpr qsizetype testTileCacheByteBudget = KiriView::imageFullDecodeFallbackByteLimit;
+
 class HugeByteCostTileSource final : public KiriView::ImageTileSource
 {
 public:
@@ -39,6 +41,7 @@ class TestImageSurface : public QObject
 private Q_SLOTS:
     void staticImagePayloadReportsByteCostWithinBudget();
     void staticImagePayloadByteCostSaturatesOversizedSources();
+    void staticTileSurfaceUsesExplicitCacheBudget();
     void tileCacheByteBudgetUsesFullDecodeLimitAndSystemMemoryCap();
     void fullImageSurfacePolicyRequiresMatchingPreviewWithinTextureLimit();
     void displayedImageSurfaceExposesOnlyActivePayload();
@@ -73,6 +76,17 @@ void TestImageSurface::staticImagePayloadByteCostSaturatesOversizedSources()
         = image.byteCostWithinBudget(std::numeric_limits<qsizetype>::max());
     QVERIFY(byteCost.has_value());
     QCOMPARE(*byteCost, std::numeric_limits<qsizetype>::max());
+}
+
+void TestImageSurface::staticTileSurfaceUsesExplicitCacheBudget()
+{
+    KiriView::StaticImagePayload staticImage
+        = KiriView::TestSupport::staticDecodedTestImage(KiriView::TestSupport::testImage(3, 2))
+              .staticImage;
+
+    const KiriView::StaticTileSurface surface(std::move(staticImage), 4096);
+
+    QCOMPARE(surface.tileCacheByteBudget(), qsizetype(4096));
 }
 
 void TestImageSurface::tileCacheByteBudgetUsesFullDecodeLimitAndSystemMemoryCap()
@@ -120,7 +134,7 @@ void TestImageSurface::displayedImageSurfaceExposesOnlyActivePayload()
         = KiriView::TestSupport::staticDecodedTestImage(KiriView::TestSupport::testImage(3, 2))
               .staticImage;
     const KiriView::DisplayedImageSurface staticSurface(
-        KiriView::StaticTileSurface { std::move(staticImage) });
+        KiriView::StaticTileSurface { std::move(staticImage), testTileCacheByteBudget });
 
     QVERIFY(!staticSurface.isNull());
     QCOMPARE(staticSurface.imageSize(), QSize(3, 2));

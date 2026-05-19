@@ -13,6 +13,10 @@
 #include <utility>
 #include <vector>
 
+namespace {
+constexpr qsizetype testTileCacheByteBudget = KiriView::imageFullDecodeFallbackByteLimit;
+}
+
 class TestImageRendering : public QObject
 {
     Q_OBJECT
@@ -91,8 +95,9 @@ void TestImageRendering::firstDisplayDecodeContextUsesPhysicalViewport()
 void TestImageRendering::staticSurfaceDrawEntriesKeepPreviewAndTileRectsSeparate()
 {
     const QImage sourceImage = KiriView::TestSupport::testImage(1024, 1024);
-    KiriView::StaticTileSurface surface(KiriView::TestSupport::staticTestImagePayload(
-        sourceImage, KiriView::TestSupport::testImage(256, 256)));
+    KiriView::StaticTileSurface surface(KiriView::TestSupport::staticTestImagePayload(sourceImage,
+                                            KiriView::TestSupport::testImage(256, 256)),
+        testTileCacheByteBudget);
     QVERIFY(surface.insertTile(KiriView::DecodedTile {
         KiriView::TileKey { 0, 0, 0 },
         QSize(1024, 1024),
@@ -148,8 +153,9 @@ void TestImageRendering::rotatedFullImageDrawEntriesRotateTextureCoordinates()
 void TestImageRendering::rotatedStaticTileDrawEntriesMapSourceRects()
 {
     const QImage sourceImage = KiriView::TestSupport::testImage(1000, 500);
-    KiriView::StaticTileSurface surface(KiriView::TestSupport::staticTestImagePayload(
-        sourceImage, KiriView::TestSupport::testImage(250, 125)));
+    KiriView::StaticTileSurface surface(KiriView::TestSupport::staticTestImagePayload(sourceImage,
+                                            KiriView::TestSupport::testImage(250, 125)),
+        testTileCacheByteBudget);
     QVERIFY(surface.insertTile(KiriView::DecodedTile {
         KiriView::TileKey { 0, 0, 0 },
         QSize(1000, 500),
