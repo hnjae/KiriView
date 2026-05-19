@@ -31,31 +31,14 @@ public:
 
     int shortcutRevision() const;
     QAbstractListModel *shortcutHelpModel() const;
-    QList<QKeySequence> shortcuts(const QString &actionName) const;
-    QList<QKeySequence> shortcutsForId(KiriViewApplication::ActionId actionId) const;
-    QList<QKeySequence> shortcutsWithCommandModifier(const QString &actionName) const;
-    QList<QKeySequence> shortcutsWithCommandModifierForId(
+    ApplicationShortcutProjection shortcutProjection(const QString &actionName) const;
+    ApplicationShortcutProjection shortcutProjectionForId(
         KiriViewApplication::ActionId actionId) const;
-    QList<QKeySequence> shortcutsWithoutCommandModifier(const QString &actionName) const;
-    QList<QKeySequence> shortcutsWithoutCommandModifierForId(
-        KiriViewApplication::ActionId actionId) const;
-    QList<QKeySequence> shortcutAliases(const QString &actionName) const;
-    QList<QKeySequence> shortcutAliasesForId(KiriViewApplication::ActionId actionId) const;
-    QString shortcutText(const QString &actionName) const;
-    QString shortcutTextForId(KiriViewApplication::ActionId actionId) const;
-    QKeySequence menuShortcut(const QString &actionName) const;
-    QKeySequence menuShortcutForId(KiriViewApplication::ActionId actionId) const;
-    QString menuShortcutText(const QString &actionName) const;
-    QString menuShortcutTextForId(KiriViewApplication::ActionId actionId) const;
 
 private:
     void sanitizeActionShortcuts();
     void sanitizeActionShortcuts(QAction *action);
-    ApplicationShortcutProjection shortcutProjectionForAction(
-        const QAction *registeredAction) const;
-    ApplicationShortcutProjection shortcutProjectionForName(const QString &actionName) const;
-    ApplicationShortcutProjection shortcutProjectionForId(
-        KiriViewApplication::ActionId actionId) const;
+    ApplicationShortcutProjection shortcutProjectionForAction(const QAction *action) const;
     QList<ShortcutHelpRow> shortcutHelpRows() const;
 
     KiriViewApplication &m_application;

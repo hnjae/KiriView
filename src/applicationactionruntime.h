@@ -5,12 +5,12 @@
 #define KIRIVIEW_APPLICATIONACTIONRUNTIME_H
 
 #include "applicationactionregistry.h"
+#include "applicationshortcutpolicy.h"
 #include "kiriviewapplication.h"
 
 #include <KStandardActions>
 #include <QAbstractListModel>
 #include <QAction>
-#include <QKeySequence>
 #include <QList>
 #include <QString>
 #include <memory>
@@ -33,22 +33,9 @@ public:
     QAction *action(const QString &actionName);
     QAction *actionForId(KiriViewApplication::ActionId actionId);
     QString actionName(KiriViewApplication::ActionId actionId) const;
-    QList<QKeySequence> shortcuts(const QString &actionName) const;
-    QList<QKeySequence> shortcutsForId(KiriViewApplication::ActionId actionId) const;
-    QList<QKeySequence> shortcutsWithCommandModifier(const QString &actionName) const;
-    QList<QKeySequence> shortcutsWithCommandModifierForId(
+    ApplicationShortcutProjection shortcutProjection(const QString &actionName) const;
+    ApplicationShortcutProjection shortcutProjectionForId(
         KiriViewApplication::ActionId actionId) const;
-    QList<QKeySequence> shortcutsWithoutCommandModifier(const QString &actionName) const;
-    QList<QKeySequence> shortcutsWithoutCommandModifierForId(
-        KiriViewApplication::ActionId actionId) const;
-    QList<QKeySequence> shortcutAliases(const QString &actionName) const;
-    QList<QKeySequence> shortcutAliasesForId(KiriViewApplication::ActionId actionId) const;
-    QString shortcutText(const QString &actionName) const;
-    QString shortcutTextForId(KiriViewApplication::ActionId actionId) const;
-    QKeySequence menuShortcut(const QString &actionName) const;
-    QKeySequence menuShortcutForId(KiriViewApplication::ActionId actionId) const;
-    QString menuShortcutText(const QString &actionName) const;
-    QString menuShortcutTextForId(KiriViewApplication::ActionId actionId) const;
 
     void setupActions();
 

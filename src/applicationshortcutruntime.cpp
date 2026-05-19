@@ -48,84 +48,6 @@ QAbstractListModel *ApplicationShortcutRuntime::shortcutHelpModel() const
     return m_shortcutHelpModel.get();
 }
 
-QList<QKeySequence> ApplicationShortcutRuntime::shortcuts(const QString &actionName) const
-{
-    return shortcutProjectionForName(actionName).shortcuts;
-}
-
-QList<QKeySequence> ApplicationShortcutRuntime::shortcutsForId(
-    KiriViewApplication::ActionId actionId) const
-{
-    return shortcutProjectionForId(actionId).shortcuts;
-}
-
-QList<QKeySequence> ApplicationShortcutRuntime::shortcutsWithCommandModifier(
-    const QString &actionName) const
-{
-    return shortcutProjectionForName(actionName).shortcutsWithCommandModifier;
-}
-
-QList<QKeySequence> ApplicationShortcutRuntime::shortcutsWithCommandModifierForId(
-    KiriViewApplication::ActionId actionId) const
-{
-    return shortcutProjectionForId(actionId).shortcutsWithCommandModifier;
-}
-
-QList<QKeySequence> ApplicationShortcutRuntime::shortcutsWithoutCommandModifier(
-    const QString &actionName) const
-{
-    return shortcutProjectionForName(actionName).shortcutsWithoutCommandModifier;
-}
-
-QList<QKeySequence> ApplicationShortcutRuntime::shortcutsWithoutCommandModifierForId(
-    KiriViewApplication::ActionId actionId) const
-{
-    return shortcutProjectionForId(actionId).shortcutsWithoutCommandModifier;
-}
-
-QList<QKeySequence> ApplicationShortcutRuntime::shortcutAliases(const QString &actionName) const
-{
-    return shortcutProjectionForName(actionName).shortcutAliases;
-}
-
-QList<QKeySequence> ApplicationShortcutRuntime::shortcutAliasesForId(
-    KiriViewApplication::ActionId actionId) const
-{
-    return shortcutProjectionForId(actionId).shortcutAliases;
-}
-
-QString ApplicationShortcutRuntime::shortcutText(const QString &actionName) const
-{
-    return shortcutProjectionForName(actionName).shortcutText;
-}
-
-QString ApplicationShortcutRuntime::shortcutTextForId(KiriViewApplication::ActionId actionId) const
-{
-    return shortcutProjectionForId(actionId).shortcutText;
-}
-
-QKeySequence ApplicationShortcutRuntime::menuShortcut(const QString &actionName) const
-{
-    return shortcutProjectionForName(actionName).menuShortcut;
-}
-
-QKeySequence ApplicationShortcutRuntime::menuShortcutForId(
-    KiriViewApplication::ActionId actionId) const
-{
-    return shortcutProjectionForId(actionId).menuShortcut;
-}
-
-QString ApplicationShortcutRuntime::menuShortcutText(const QString &actionName) const
-{
-    return shortcutProjectionForName(actionName).menuShortcutText;
-}
-
-QString ApplicationShortcutRuntime::menuShortcutTextForId(
-    KiriViewApplication::ActionId actionId) const
-{
-    return shortcutProjectionForId(actionId).menuShortcutText;
-}
-
 void ApplicationShortcutRuntime::sanitizeActionShortcuts()
 {
     for (QAction *action : m_application.mainCollection()->actions()) {
@@ -152,13 +74,13 @@ void ApplicationShortcutRuntime::sanitizeActionShortcuts(QAction *action)
 }
 
 ApplicationShortcutProjection ApplicationShortcutRuntime::shortcutProjectionForAction(
-    const QAction *registeredAction) const
+    const QAction *action) const
 {
-    return shortcutProjection(
-        registeredAction == nullptr ? QList<QKeySequence>() : registeredAction->shortcuts());
+    return ApplicationActions::shortcutProjection(
+        action == nullptr ? QList<QKeySequence>() : action->shortcuts());
 }
 
-ApplicationShortcutProjection ApplicationShortcutRuntime::shortcutProjectionForName(
+ApplicationShortcutProjection ApplicationShortcutRuntime::shortcutProjection(
     const QString &actionName) const
 {
     return shortcutProjectionForAction(m_actionRegistry.action(actionName));
