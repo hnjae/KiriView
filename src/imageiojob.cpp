@@ -10,51 +10,51 @@
 
 namespace KiriView {
 ImageIoJobState::ImageIoJobState(QObject *object, CancelCallback cancelCallback)
-    : m_object(object)
+    : m_token(object)
+    , m_activeObject(object)
     , m_cancelCallback(std::move(cancelCallback))
 {
 }
 
 bool ImageIoJobState::claim(QObject *object)
 {
-    if (m_object.isNull() || object != m_object.data()) {
+    if (m_activeObject.isNull() || object != m_activeObject.data()) {
         return false;
     }
 
-    m_object.clear();
+    m_activeObject.clear();
     m_cancelCallback = {};
     return true;
 }
 
 void ImageIoJobState::cancel()
 {
-    if (m_object.isNull()) {
+    if (m_activeObject.isNull()) {
         m_cancelCallback = {};
         return;
     }
 
-    QObject *object = m_object.data();
+    QObject *object = m_activeObject.data();
     CancelCallback cancelCallback = std::move(m_cancelCallback);
-    m_object.clear();
+    m_activeObject.clear();
     invokeIfSet(cancelCallback, object);
 }
 
-bool ImageIoJobState::isActive() const { return !m_object.isNull(); }
+bool ImageIoJobState::isActive() const { return !m_activeObject.isNull(); }
 
-QObject *ImageIoJobState::object() const { return m_object.data(); }
+QObject *ImageIoJobState::token() const { return m_token.data(); }
 
-ImageIoJobCompletion::ImageIoJobCompletion(QObject *object, std::shared_ptr<ImageIoJobState> state)
-    : m_object(object)
-    , m_state(std::move(state))
+ImageIoJobCompletion::ImageIoJobCompletion(std::shared_ptr<ImageIoJobState> state)
+    : m_state(std::move(state))
 {
 }
 
-QObject *ImageIoJobCompletion::object() const { return m_object.data(); }
-
-bool ImageIoJobCompletion::isActive() const
+QObject *ImageIoJobCompletion::object() const
 {
-    return m_state != nullptr && m_state->isActive() && !m_object.isNull();
+    return m_state == nullptr ? nullptr : m_state->token();
 }
+
+bool ImageIoJobCompletion::isActive() const { return m_state != nullptr && m_state->isActive(); }
 
 void ImageIoJobCompletion::cancel() const
 {
@@ -94,8 +94,5 @@ void ImageIoJob::cancel()
 
 bool ImageIoJob::isActive() const { return m_state != nullptr && m_state->isActive(); }
 
-ImageIoJobCompletion ImageIoJob::completion() const
-{
-    return ImageIoJobCompletion(m_state == nullptr ? nullptr : m_state->object(), m_state);
-}
+ImageIoJobCompletion ImageIoJob::completion() const { return ImageIoJobCompletion(m_state); }
 }
