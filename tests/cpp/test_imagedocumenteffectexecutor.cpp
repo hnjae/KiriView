@@ -56,6 +56,8 @@ struct RecordedEffectOperations {
             = [this]() { record(QStringLiteral("cancelNavigation")); };
         operations.navigation.cancelContainerNavigation
             = [this]() { record(QStringLiteral("cancelContainerNavigation")); };
+        operations.navigation.cancelAllNavigation
+            = [this]() { record(QStringLiteral("cancelAllNavigation")); };
         operations.navigation.clearPageNavigation
             = [this]() { record(QStringLiteral("clearPageNavigation")); };
         operations.navigation.updatePageNavigation
@@ -163,8 +165,7 @@ void TestImageDocumentEffectExecutor::clearDeletedImageDispatchesDeletionClearTh
     QCOMPARE(recorded.events,
         QStringList({
             QStringLiteral("clearArchiveSession"),
-            QStringLiteral("cancelNavigation"),
-            QStringLiteral("cancelContainerNavigation"),
+            QStringLiteral("cancelAllNavigation"),
             QStringLiteral("cancelPredecode"),
             QStringLiteral("cancelOpen"),
             QStringLiteral("finishSpreadTransition"),
@@ -200,9 +201,7 @@ void TestImageDocumentEffectExecutor::shutdownRuntimeDispatchesOrderedLifecycleO
             QStringLiteral("stopPresentationAnimation"),
             QStringLiteral("shutdownSpread"),
             QStringLiteral("cancelPredecode"),
-            QStringLiteral("cancelPageNavigationUpdate"),
-            QStringLiteral("cancelContainerNavigation"),
-            QStringLiteral("cancelNavigation"),
+            QStringLiteral("cancelAllNavigation"),
             QStringLiteral("cancelOpen"),
             QStringLiteral("clearArchiveSession"),
         }));

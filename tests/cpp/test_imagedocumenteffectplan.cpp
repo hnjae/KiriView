@@ -77,8 +77,7 @@ void TestImageDocumentEffectPlan::clearDeletedImagePlansDeletionClearAndEmptySou
     QVERIFY(hasOperationKinds(plan,
         {
             ImageDocumentRuntimeOperationKind::ClearArchiveSession,
-            ImageDocumentRuntimeOperationKind::CancelNavigation,
-            ImageDocumentRuntimeOperationKind::CancelContainerNavigation,
+            ImageDocumentRuntimeOperationKind::CancelAllNavigation,
             ImageDocumentRuntimeOperationKind::CancelPredecode,
             ImageDocumentRuntimeOperationKind::CancelOpen,
             ImageDocumentRuntimeOperationKind::FinishSpreadTransition,
@@ -87,8 +86,8 @@ void TestImageDocumentEffectPlan::clearDeletedImagePlansDeletionClearAndEmptySou
             ImageDocumentRuntimeOperationKind::SetErrorString,
             ImageDocumentRuntimeOperationKind::FinishEmptySourceLoad,
         }));
-    QVERIFY(operationAt<KiriView::SetSourceUrlOperation>(plan, 7).url.isEmpty());
-    QVERIFY(operationAt<KiriView::SetErrorStringOperation>(plan, 8).errorString.isEmpty());
+    QVERIFY(operationAt<KiriView::SetSourceUrlOperation>(plan, 6).url.isEmpty());
+    QVERIFY(operationAt<KiriView::SetErrorStringOperation>(plan, 7).errorString.isEmpty());
 }
 
 void TestImageDocumentEffectPlan::shutdownPlansOrderedRuntimeOperations()
@@ -101,9 +100,7 @@ void TestImageDocumentEffectPlan::shutdownPlansOrderedRuntimeOperations()
             ImageDocumentRuntimeOperationKind::StopPresentationAnimation,
             ImageDocumentRuntimeOperationKind::ShutdownSpread,
             ImageDocumentRuntimeOperationKind::CancelPredecode,
-            ImageDocumentRuntimeOperationKind::CancelPageNavigationUpdate,
-            ImageDocumentRuntimeOperationKind::CancelContainerNavigation,
-            ImageDocumentRuntimeOperationKind::CancelNavigation,
+            ImageDocumentRuntimeOperationKind::CancelAllNavigation,
             ImageDocumentRuntimeOperationKind::CancelOpen,
             ImageDocumentRuntimeOperationKind::ClearArchiveSession,
         }));

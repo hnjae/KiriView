@@ -119,6 +119,11 @@ void ImageDocumentNavigationController::cancelPageNavigationUpdate()
     m_navigationService.cancelPageNavigationUpdate();
 }
 
+void ImageDocumentNavigationController::cancelAllNavigation()
+{
+    m_navigationService.cancelAllNavigation();
+}
+
 void ImageDocumentNavigationController::clearPageNavigation()
 {
     m_navigationService.clearPageNavigation();

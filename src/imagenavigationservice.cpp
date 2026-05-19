@@ -100,5 +100,12 @@ void ImageNavigationService::updatePageNavigation(const DisplayContext &context)
 
 void ImageNavigationService::cancelPageNavigationUpdate() { m_pageNavigation.cancelUpdate(); }
 
+void ImageNavigationService::cancelAllNavigation()
+{
+    cancelNavigation();
+    cancelContainerNavigation();
+    cancelPageNavigationUpdate();
+}
+
 void ImageNavigationService::clearPageNavigation() { m_pageNavigation.clear(); }
 }

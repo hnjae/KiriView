@@ -56,8 +56,7 @@ ImageDocumentSourceLoadOperations ImageDocumentLoadController::sourceLoadOperati
     ImageDocumentSourceLoadOperations operations;
     operations.cancelFileDeletion = [this]() { m_deletionController.cancel(); };
     operations.cancelNavigationAndPredecode = [this]() {
-        m_navigationService.cancelNavigation();
-        m_navigationService.cancelContainerNavigation();
+        m_navigationService.cancelAllNavigation();
         m_predecodeController.cancel();
     };
     operations.finishSpreadTransition = [this]() { m_spreadController.finishTransition(); };

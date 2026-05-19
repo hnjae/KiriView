@@ -40,6 +40,7 @@ struct ImageDocumentNavigationEffectOperations {
     std::function<void()> cancelPageNavigationUpdate;
     std::function<void()> cancelNavigation;
     std::function<void()> cancelContainerNavigation;
+    std::function<void()> cancelAllNavigation;
     std::function<void()> clearPageNavigation;
     std::function<void()> updatePageNavigation;
     std::function<void(const QUrl &)> loadUrl;

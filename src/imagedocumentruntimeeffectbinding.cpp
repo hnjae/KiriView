@@ -65,6 +65,8 @@ ImageDocumentEffectOperations imageDocumentRuntimeEffectOperations(
         = [navigationController]() { navigationController->cancelNavigation(); };
     operations.navigation.cancelContainerNavigation
         = [navigationController]() { navigationController->cancelContainerNavigation(); };
+    operations.navigation.cancelAllNavigation
+        = [navigationController]() { navigationController->cancelAllNavigation(); };
     operations.navigation.clearPageNavigation
         = [navigationController]() { navigationController->clearPageNavigation(); };
     operations.navigation.updatePageNavigation

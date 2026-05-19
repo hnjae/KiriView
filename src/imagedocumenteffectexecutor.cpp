@@ -85,6 +85,8 @@ void ImageDocumentEffectExecutor::dispatchOperation(const ImageDocumentRuntimeOp
                 run(m_operations.navigation.cancelNavigation);
             } else if constexpr (std::is_same_v<Operation, CancelContainerNavigationOperation>) {
                 run(m_operations.navigation.cancelContainerNavigation);
+            } else if constexpr (std::is_same_v<Operation, CancelAllNavigationOperation>) {
+                run(m_operations.navigation.cancelAllNavigation);
             } else if constexpr (std::is_same_v<Operation, ClearPageNavigationOperation>) {
                 run(m_operations.navigation.clearPageNavigation);
             } else if constexpr (std::is_same_v<Operation, UpdatePageNavigationOperation>) {

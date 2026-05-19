@@ -28,6 +28,7 @@ enum class ImageDocumentRuntimeOperationKind {
     CancelPageNavigationUpdate,
     CancelNavigation,
     CancelContainerNavigation,
+    CancelAllNavigation,
     ClearPageNavigation,
     UpdatePageNavigation,
     LoadUrl,
@@ -74,6 +75,8 @@ struct CancelNavigationOperation {
 };
 struct CancelContainerNavigationOperation {
 };
+struct CancelAllNavigationOperation {
+};
 struct ClearPageNavigationOperation {
 };
 struct UpdatePageNavigationOperation {
@@ -117,11 +120,12 @@ using ImageDocumentRuntimeOperation = std::variant<CancelFileDeletionOperation,
     FinishSpreadTransitionOperation, ClearSecondaryPageOperation,
     NotifyRightToLeftReadingChangedOperation, ResetZoomOperation, PrepareFailedContainerOperation,
     CancelPageNavigationUpdateOperation, CancelNavigationOperation,
-    CancelContainerNavigationOperation, ClearPageNavigationOperation, UpdatePageNavigationOperation,
-    LoadUrlOperation, LoadContainerImageOperation, FinishEmptyContainerNavigationOperation,
-    FinishContainerNavigationLoadWithErrorOperation, LoadPageNavigationUrlOperation,
-    CancelOpenOperation, ClearDisplayedImageLocationOperation, ClearPresentationImageOperation,
-    SetSourceUrlOperation, SetErrorStringOperation, FinishEmptySourceLoadOperation>;
+    CancelContainerNavigationOperation, CancelAllNavigationOperation, ClearPageNavigationOperation,
+    UpdatePageNavigationOperation, LoadUrlOperation, LoadContainerImageOperation,
+    FinishEmptyContainerNavigationOperation, FinishContainerNavigationLoadWithErrorOperation,
+    LoadPageNavigationUrlOperation, CancelOpenOperation, ClearDisplayedImageLocationOperation,
+    ClearPresentationImageOperation, SetSourceUrlOperation, SetErrorStringOperation,
+    FinishEmptySourceLoadOperation>;
 
 using ImageDocumentRuntimePlan = std::vector<ImageDocumentRuntimeOperation>;
 

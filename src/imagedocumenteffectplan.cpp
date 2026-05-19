@@ -7,6 +7,7 @@
 #include <variant>
 
 namespace {
+using KiriView::CancelAllNavigationOperation;
 using KiriView::CancelContainerNavigationOperation;
 using KiriView::CancelFileDeletionOperation;
 using KiriView::CancelNavigationOperation;
@@ -68,8 +69,7 @@ ImageDocumentRuntimePlan clearDeletedImagePlan()
 {
     return {
         ClearArchiveSessionOperation {},
-        CancelNavigationOperation {},
-        CancelContainerNavigationOperation {},
+        CancelAllNavigationOperation {},
         CancelPredecodeOperation {},
         CancelOpenOperation {},
         FinishSpreadTransitionOperation {},
@@ -180,6 +180,8 @@ ImageDocumentRuntimeOperationKind imageDocumentRuntimeOperationKind(
                 return ImageDocumentRuntimeOperationKind::CancelNavigation;
             } else if constexpr (std::is_same_v<Operation, CancelContainerNavigationOperation>) {
                 return ImageDocumentRuntimeOperationKind::CancelContainerNavigation;
+            } else if constexpr (std::is_same_v<Operation, CancelAllNavigationOperation>) {
+                return ImageDocumentRuntimeOperationKind::CancelAllNavigation;
             } else if constexpr (std::is_same_v<Operation, ClearPageNavigationOperation>) {
                 return ImageDocumentRuntimeOperationKind::ClearPageNavigation;
             } else if constexpr (std::is_same_v<Operation, UpdatePageNavigationOperation>) {
@@ -225,9 +227,7 @@ ImageDocumentRuntimePlan imageDocumentShutdownPlan()
         StopPresentationAnimationOperation {},
         ShutdownSpreadOperation {},
         CancelPredecodeOperation {},
-        CancelPageNavigationUpdateOperation {},
-        CancelContainerNavigationOperation {},
-        CancelNavigationOperation {},
+        CancelAllNavigationOperation {},
         CancelOpenOperation {},
         ClearArchiveSessionOperation {},
     };

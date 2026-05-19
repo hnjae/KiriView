@@ -38,6 +38,7 @@ public:
     void cancelNavigation();
     void cancelContainerNavigation();
     void cancelPageNavigationUpdate();
+    void cancelAllNavigation();
     void clearPageNavigation();
 
 private:
