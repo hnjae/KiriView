@@ -55,9 +55,52 @@ class TestImageOpenTransitionApplier : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
+    void applicationPlanResolvesRuntimeTargetsBeforeStateMutation();
     void successfulTransitionAppliesSessionStateAndEffects();
     void errorTransitionUsesDisplayedFallbackAndProvidedError();
+    void missingRuntimeContextDoesNotClearResolvedTargets();
 };
+
+void TestImageOpenTransitionApplier::applicationPlanResolvesRuntimeTargetsBeforeStateMutation()
+{
+    const QUrl containerUrl = localUrl(QStringLiteral("/books/book.cbz"));
+    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+        = KiriView::archiveDocumentLocationForLocalArchiveUrl(containerUrl);
+    QVERIFY(archiveDocument.has_value());
+    const QUrl imageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
+    const KiriView::DisplayedImageLocation location
+        = KiriView::DisplayedImageLocation::fromArchiveDocument(imageUrl, *archiveDocument);
+    const KiriView::ImageLoadSession session {
+        5,
+        KiriView::ImageLoadRequest::fromUrl(imageUrl, containerUrl),
+        location,
+    };
+    KiriView::ImageOpenTransition transition;
+    transition.stateDelta = stateDelta(KiriView::ImageOpenUrlTarget::SessionImage,
+        KiriView::ImageOpenDisplayedLocationTarget::Session,
+        KiriView::ImageOpenUrlTarget::SessionContainerNavigation,
+        KiriView::ImageOpenBoolTarget::False, KiriView::ImageOpenStatusTarget::Ready,
+        KiriView::ImageOpenErrorStringTarget::Clear, true);
+    transition.effects.push_back(KiriView::ImageOpenEffect::UpdatePageNavigation);
+
+    const KiriView::ImageOpenApplicationPlan plan = KiriView::imageOpenApplicationPlan(
+        transition, KiriView::ImageOpenTransitionContext::successfulImageLoad(session));
+
+    QVERIFY(plan.stateDelta.sourceUrl.has_value());
+    QCOMPARE(*plan.stateDelta.sourceUrl, imageUrl);
+    QVERIFY(plan.stateDelta.displayedLocation.has_value());
+    QCOMPARE(*plan.stateDelta.displayedLocation, location);
+    QVERIFY(plan.stateDelta.containerNavigationUrl.has_value());
+    QCOMPARE(*plan.stateDelta.containerNavigationUrl, containerUrl);
+    QVERIFY(plan.stateDelta.loading.has_value());
+    QCOMPARE(*plan.stateDelta.loading, false);
+    QVERIFY(plan.stateDelta.status.has_value());
+    QCOMPARE(*plan.stateDelta.status, KiriView::ImageDocumentStatus::Ready);
+    QVERIFY(plan.stateDelta.errorString.has_value());
+    QVERIFY(plan.stateDelta.errorString->isEmpty());
+    QVERIFY(plan.stateDelta.clearLoadingContainerNavigationUrl);
+    QVERIFY(findEffect<KiriView::UpdatePageNavigationEffect>(plan.effects) != nullptr);
+}
 
 void TestImageOpenTransitionApplier::successfulTransitionAppliesSessionStateAndEffects()
 {
@@ -149,6 +192,48 @@ void TestImageOpenTransitionApplier::errorTransitionUsesDisplayedFallbackAndProv
     QVERIFY(findEffect<KiriView::ScheduleAdjacentImagePredecodeEffect>(effects) != nullptr);
     QVERIFY(!changes.empty());
     QCOMPARE(changes.front(), KiriView::ImageDocumentChange::Loading);
+}
+
+void TestImageOpenTransitionApplier::missingRuntimeContextDoesNotClearResolvedTargets()
+{
+    std::vector<KiriView::ImageDocumentChange> changes;
+    KiriView::ImageDocumentState state(
+        [&changes](KiriView::ImageDocumentChange change) { changes.push_back(change); });
+
+    const QUrl sourceUrl = localUrl(QStringLiteral("/images/current.png"));
+    const QUrl displayedUrl = localUrl(QStringLiteral("/images/displayed.png"));
+    const QUrl containerUrl = localUrl(QStringLiteral("/images/"));
+    state.setSourceUrl(sourceUrl);
+    state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromUrl(displayedUrl));
+    state.setContainerNavigationUrl(containerUrl);
+    state.setLoading(true);
+    state.setErrorString(QStringLiteral("previous error"));
+    changes.clear();
+
+    KiriView::ImageOpenTransition transition;
+    transition.stateDelta = stateDelta(KiriView::ImageOpenUrlTarget::SessionImage,
+        KiriView::ImageOpenDisplayedLocationTarget::Session,
+        KiriView::ImageOpenUrlTarget::DerivedContainerNavigation,
+        KiriView::ImageOpenBoolTarget::False, KiriView::ImageOpenStatusTarget::Ready,
+        KiriView::ImageOpenErrorStringTarget::Provided, true);
+    transition.effects.push_back(KiriView::ImageOpenEffect::PrepareFailedContainer);
+
+    const KiriView::ImageDocumentEffects effects
+        = KiriView::applyImageOpenTransition(state, transition);
+
+    QCOMPARE(state.sourceUrl(), sourceUrl);
+    QCOMPARE(state.displayedUrl(), displayedUrl);
+    QCOMPARE(state.containerNavigationUrl(), containerUrl);
+    QCOMPARE(state.errorString(), QStringLiteral("previous error"));
+    QVERIFY(!state.loading());
+    QCOMPARE(state.status(), KiriView::ImageDocumentStatus::Ready);
+    QVERIFY(effects.empty());
+    QVERIFY(!containsChange(changes, KiriView::ImageDocumentChange::SourceUrl));
+    QVERIFY(!containsChange(changes, KiriView::ImageDocumentChange::DisplayedUrl));
+    QVERIFY(!containsChange(changes, KiriView::ImageDocumentChange::ContainerNavigation));
+    QVERIFY(!containsChange(changes, KiriView::ImageDocumentChange::ErrorString));
+    QVERIFY(containsChange(changes, KiriView::ImageDocumentChange::Loading));
+    QVERIFY(containsChange(changes, KiriView::ImageDocumentChange::Status));
 }
 
 QTEST_GUILESS_MAIN(TestImageOpenTransitionApplier)

@@ -5,7 +5,9 @@
 #define KIRIVIEW_IMAGEOPENTRANSITIONAPPLIER_H
 
 #include "imagedocumenteffects.h"
+#include "imagedocumenttypes.h"
 #include "imageloadtypes.h"
+#include "imagelocation.h"
 
 #include <QString>
 #include <QUrl>
@@ -74,6 +76,21 @@ struct ImageOpenTransition {
     std::vector<ImageOpenEffect> effects;
 };
 
+struct ImageOpenResolvedStateDelta {
+    std::optional<QUrl> sourceUrl;
+    std::optional<DisplayedImageLocation> displayedLocation;
+    std::optional<QUrl> containerNavigationUrl;
+    std::optional<bool> loading;
+    std::optional<ImageDocumentStatus> status;
+    std::optional<QString> errorString;
+    bool clearLoadingContainerNavigationUrl = false;
+};
+
+struct ImageOpenApplicationPlan {
+    ImageOpenResolvedStateDelta stateDelta;
+    ImageDocumentEffects effects;
+};
+
 struct ImageOpenTransitionContext {
     const ImageLoadSession *session = nullptr;
     std::optional<QUrl> containerUrl;
@@ -86,12 +103,10 @@ struct ImageOpenTransitionContext {
     static ImageOpenTransitionContext containerNavigationError(
         const QUrl &containerUrl, const QString &errorString);
     static ImageOpenTransitionContext animationError(const QString &errorString);
-
-    QUrl urlForTarget(ImageOpenUrlTarget target) const;
-    const DisplayedImageLocation *sessionLocation() const;
-    QString providedErrorString() const;
 };
 
+ImageOpenApplicationPlan imageOpenApplicationPlan(
+    const ImageOpenTransition &transition, const ImageOpenTransitionContext &context = {});
 ImageDocumentEffects applyImageOpenTransition(ImageDocumentState &state,
     const ImageOpenTransition &transition, const ImageOpenTransitionContext &context = {});
 }
