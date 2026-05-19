@@ -61,6 +61,7 @@ class ImageDocumentPublicSignalEmitter final
 public:
     explicit ImageDocumentPublicSignalEmitter(ImageDocumentPublicSignalOperations operations);
 
+    void emitChanges(const std::vector<ImageDocumentChange> &changes) const;
     void emitChange(ImageDocumentChange change) const;
     void emitSignal(ImageDocumentPublicSignal signal) const;
 
@@ -68,6 +69,8 @@ private:
     ImageDocumentPublicSignalOperations m_operations;
 };
 
+std::vector<ImageDocumentPublicSignal> imageDocumentPublicSignalsForChanges(
+    const std::vector<ImageDocumentChange> &changes);
 std::vector<ImageDocumentPublicSignal> imageDocumentPublicSignals(ImageDocumentChange change);
 }
 

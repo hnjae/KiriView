@@ -292,7 +292,9 @@ void TestImageDocumentRuntime::maximumManualZoomChangesAfterViewportImageAndRend
                 KiriView::fallbackTextureSizeMax,
             };
         },
-        [&changes](KiriView::ImageDocumentChange change) { changes.push_back(change); },
+        [&changes](const std::vector<KiriView::ImageDocumentChange> &publishedChanges) {
+            changes.insert(changes.end(), publishedChanges.begin(), publishedChanges.end());
+        },
         imageAsyncDependenciesFor(candidateProvider, dataLoader, std::move(dataDecoder)));
 
     runtime->setViewportSize(QSizeF(7000.0, 100.0));
@@ -406,7 +408,9 @@ void TestImageDocumentRuntime::rotationChangesLogicalSizeAndPreservesManualZoom(
                 KiriView::fallbackTextureSizeMax,
             };
         },
-        [&changes](KiriView::ImageDocumentChange change) { changes.push_back(change); },
+        [&changes](const std::vector<KiriView::ImageDocumentChange> &publishedChanges) {
+            changes.insert(changes.end(), publishedChanges.begin(), publishedChanges.end());
+        },
         imageAsyncDependenciesFor(candidateProvider, dataLoader,
             [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
                 return staticDecodedImageWithPreview(QSize(100, 200), QSize(100, 200));

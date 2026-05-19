@@ -113,7 +113,7 @@ KiriImageDocument::KiriImageDocument(QObject *parent)
 {
     m_runtime = std::make_unique<KiriView::ImageDocumentRuntime>(
         this, [this]() { return renderContext(); },
-        [this](ImageDocumentChange change) { handleDocumentChange(change); },
+        [this](const std::vector<ImageDocumentChange> &changes) { handleDocumentChanges(changes); },
         KiriView::ImageAsyncDependencies {},
         [this](const QString &errorString) { Q_EMIT fileDeletionFailed(errorString); });
 }
@@ -294,9 +294,9 @@ double KiriImageDocument::steppedManualZoomPercent(double stepCount) const
 
 void KiriImageDocument::updateRenderContext() { m_runtime->updateRenderContext(); }
 
-void KiriImageDocument::handleDocumentChange(ImageDocumentChange change)
+void KiriImageDocument::handleDocumentChanges(const std::vector<ImageDocumentChange> &changes)
 {
-    KiriView::ImageDocumentPublicSignalEmitter(publicSignalOperations(*this)).emitChange(change);
+    KiriView::ImageDocumentPublicSignalEmitter(publicSignalOperations(*this)).emitChanges(changes);
 }
 
 KiriView::ImageDocumentRenderContext KiriImageDocument::renderContext() const

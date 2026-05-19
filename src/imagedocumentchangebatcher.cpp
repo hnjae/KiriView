@@ -33,6 +33,11 @@ ImageDocumentChangeBatcher::ImageDocumentChangeBatcher(ChangeCallback changeCall
 {
 }
 
+ImageDocumentChangeBatcher::ImageDocumentChangeBatcher(ChangeBatchCallback changeBatchCallback)
+    : m_changeBatchCallback(std::move(changeBatchCallback))
+{
+}
+
 ImageDocumentChangeBatcher::Batch ImageDocumentChangeBatcher::beginBatch() { return Batch(*this); }
 
 void ImageDocumentChangeBatcher::notify(ImageDocumentChange change)
@@ -47,7 +52,7 @@ void ImageDocumentChangeBatcher::notify(ImageDocumentChange change)
         return;
     }
 
-    emitChange(change);
+    emitChanges({ change });
 }
 
 void ImageDocumentChangeBatcher::notifyAll(const std::vector<ImageDocumentChange> &changes)
@@ -72,13 +77,18 @@ void ImageDocumentChangeBatcher::end()
 
     std::vector<ImageDocumentChange> changes = std::move(m_pendingChanges);
     m_pendingChanges.clear();
-    for (ImageDocumentChange change : changes) {
-        emitChange(change);
-    }
+    emitChanges(changes);
 }
 
-void ImageDocumentChangeBatcher::emitChange(ImageDocumentChange change)
+void ImageDocumentChangeBatcher::emitChanges(const std::vector<ImageDocumentChange> &changes)
 {
-    invokeIfSet(m_changeCallback, change);
+    if (changes.empty()) {
+        return;
+    }
+
+    invokeIfSet(m_changeBatchCallback, changes);
+    for (ImageDocumentChange change : changes) {
+        invokeIfSet(m_changeCallback, change);
+    }
 }
 }

@@ -3,6 +3,7 @@
 
 #include "imagedocumentpublicsignals.h"
 
+#include <algorithm>
 #include <utility>
 
 namespace {
@@ -23,7 +24,13 @@ ImageDocumentPublicSignalEmitter::ImageDocumentPublicSignalEmitter(
 
 void ImageDocumentPublicSignalEmitter::emitChange(ImageDocumentChange change) const
 {
-    for (ImageDocumentPublicSignal signal : imageDocumentPublicSignals(change)) {
+    emitChanges({ change });
+}
+
+void ImageDocumentPublicSignalEmitter::emitChanges(
+    const std::vector<ImageDocumentChange> &changes) const
+{
+    for (ImageDocumentPublicSignal signal : imageDocumentPublicSignalsForChanges(changes)) {
         emitSignal(signal);
     }
 }
@@ -141,5 +148,21 @@ std::vector<ImageDocumentPublicSignal> imageDocumentPublicSignals(ImageDocumentC
     }
 
     return {};
+}
+
+std::vector<ImageDocumentPublicSignal> imageDocumentPublicSignalsForChanges(
+    const std::vector<ImageDocumentChange> &changes)
+{
+    std::vector<ImageDocumentPublicSignal> signals;
+    for (ImageDocumentChange change : changes) {
+        for (ImageDocumentPublicSignal signal : imageDocumentPublicSignals(change)) {
+            const bool alreadyPlanned
+                = std::find(signals.cbegin(), signals.cend(), signal) != signals.cend();
+            if (!alreadyPlanned) {
+                signals.push_back(signal);
+            }
+        }
+    }
+    return signals;
 }
 }

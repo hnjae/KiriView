@@ -14,6 +14,7 @@ class TestImageDocumentPublicSignals : public QObject
 
 private Q_SLOTS:
     void publicSignalPlansReturnSignalsInEmissionOrder();
+    void publicSignalBatchPlansDeduplicateDerivedSignalsInEmissionOrder();
     void emitterDispatchesChangeSignalsInProjectionOrder();
 };
 
@@ -108,12 +109,24 @@ void TestImageDocumentPublicSignals::publicSignalPlansReturnSignalsInEmissionOrd
         KiriView::imageDocumentPublicSignals(Change::Repaint), { Signal::Repaint });
 }
 
+void TestImageDocumentPublicSignals::
+    publicSignalBatchPlansDeduplicateDerivedSignalsInEmissionOrder()
+{
+    using Change = KiriView::ImageDocumentChange;
+    using Signal = KiriView::ImageDocumentPublicSignal;
+
+    comparePublicSignals(KiriView::imageDocumentPublicSignalsForChanges({ Change::TwoPageMode,
+                             Change::PageNavigation, Change::Repaint, Change::TwoPageMode }),
+        { Signal::TwoPageMode, Signal::PageNavigation, Signal::Repaint });
+}
+
 void TestImageDocumentPublicSignals::emitterDispatchesChangeSignalsInProjectionOrder()
 {
     QStringList events;
     const KiriView::ImageDocumentPublicSignalEmitter emitter(recordingOperations(events));
 
-    emitter.emitChange(KiriView::ImageDocumentChange::TwoPageMode);
+    emitter.emitChanges({ KiriView::ImageDocumentChange::TwoPageMode,
+        KiriView::ImageDocumentChange::PageNavigation });
     emitter.emitSignal(KiriView::ImageDocumentPublicSignal::Repaint);
 
     QCOMPARE(events,

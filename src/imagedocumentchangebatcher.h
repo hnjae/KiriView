@@ -14,6 +14,7 @@ class ImageDocumentChangeBatcher final
 {
 public:
     using ChangeCallback = std::function<void(ImageDocumentChange)>;
+    using ChangeBatchCallback = std::function<void(const std::vector<ImageDocumentChange> &)>;
 
     class Batch final
     {
@@ -31,6 +32,7 @@ public:
     };
 
     explicit ImageDocumentChangeBatcher(ChangeCallback changeCallback = {});
+    explicit ImageDocumentChangeBatcher(ChangeBatchCallback changeBatchCallback);
 
     Batch beginBatch();
     void notify(ImageDocumentChange change);
@@ -39,9 +41,10 @@ public:
 private:
     void begin();
     void end();
-    void emitChange(ImageDocumentChange change);
+    void emitChanges(const std::vector<ImageDocumentChange> &changes);
 
     ChangeCallback m_changeCallback;
+    ChangeBatchCallback m_changeBatchCallback;
     int m_batchDepth = 0;
     std::vector<ImageDocumentChange> m_pendingChanges;
 };

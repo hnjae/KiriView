@@ -17,6 +17,7 @@
 #include <QtQml/qqmlregistration.h>
 #include <functional>
 #include <memory>
+#include <vector>
 
 namespace KiriView {
 class ImageDocumentRuntime;
@@ -179,7 +180,7 @@ Q_SIGNALS:
     void repaintRequested();
 
 private:
-    void handleDocumentChange(KiriView::ImageDocumentChange change);
+    void handleDocumentChanges(const std::vector<KiriView::ImageDocumentChange> &changes);
     KiriView::ImageDocumentRenderContext renderContext() const;
 
     RenderContextProvider m_renderContextProvider;

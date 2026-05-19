@@ -15,6 +15,8 @@ class TestImageDocumentChangeBatcher : public QObject
 
 private Q_SLOTS:
     void immediateNotificationsForwardInOrder();
+    void batchCallbacksReceiveWholeOrderedBatches();
+    void emptyBatchesDoNotPublish();
     void batchesPublishUniqueChangesWhenOutermostBatchEnds();
     void movedBatchKeepsSingleFlushOwner();
 };
@@ -33,6 +35,47 @@ void TestImageDocumentChangeBatcher::immediateNotificationsForwardInOrder()
     QCOMPARE(changes.at(0), KiriView::ImageDocumentChange::Loading);
     QCOMPARE(changes.at(1), KiriView::ImageDocumentChange::Status);
     QCOMPARE(changes.at(2), KiriView::ImageDocumentChange::Repaint);
+}
+
+void TestImageDocumentChangeBatcher::batchCallbacksReceiveWholeOrderedBatches()
+{
+    std::vector<std::vector<KiriView::ImageDocumentChange>> publishedBatches;
+    KiriView::ImageDocumentChangeBatcher batcher(
+        KiriView::ImageDocumentChangeBatcher::ChangeBatchCallback(
+            [&publishedBatches](const std::vector<KiriView::ImageDocumentChange> &changes) {
+                publishedBatches.push_back(changes);
+            }));
+
+    batcher.notify(KiriView::ImageDocumentChange::Loading);
+    {
+        [[maybe_unused]] auto batch = batcher.beginBatch();
+        batcher.notify(KiriView::ImageDocumentChange::Status);
+        batcher.notify(KiriView::ImageDocumentChange::Status);
+        batcher.notify(KiriView::ImageDocumentChange::Repaint);
+        QVERIFY(publishedBatches.size() == std::size_t(1));
+    }
+
+    QCOMPARE(publishedBatches.size(), std::size_t(2));
+    QCOMPARE(publishedBatches.at(0).size(), std::size_t(1));
+    QCOMPARE(publishedBatches.at(0).at(0), KiriView::ImageDocumentChange::Loading);
+    QCOMPARE(publishedBatches.at(1).size(), std::size_t(2));
+    QCOMPARE(publishedBatches.at(1).at(0), KiriView::ImageDocumentChange::Status);
+    QCOMPARE(publishedBatches.at(1).at(1), KiriView::ImageDocumentChange::Repaint);
+}
+
+void TestImageDocumentChangeBatcher::emptyBatchesDoNotPublish()
+{
+    int publishCount = 0;
+    KiriView::ImageDocumentChangeBatcher batcher(
+        KiriView::ImageDocumentChangeBatcher::ChangeBatchCallback(
+            [&publishCount](
+                const std::vector<KiriView::ImageDocumentChange> &) { ++publishCount; }));
+
+    {
+        [[maybe_unused]] auto batch = batcher.beginBatch();
+    }
+
+    QCOMPARE(publishCount, 0);
 }
 
 void TestImageDocumentChangeBatcher::batchesPublishUniqueChangesWhenOutermostBatchEnds()

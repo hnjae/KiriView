@@ -21,6 +21,7 @@
 #include <QtGlobal>
 #include <functional>
 #include <memory>
+#include <vector>
 
 class QObject;
 
@@ -41,7 +42,7 @@ class ImageDocumentRuntime final
 {
 public:
     using RenderContextProvider = std::function<ImageDocumentRenderContext()>;
-    using ChangeCallback = std::function<void(ImageDocumentChange)>;
+    using ChangeCallback = std::function<void(const std::vector<ImageDocumentChange> &)>;
     using FileDeletionFailedCallback = std::function<void(const QString &)>;
 
     ImageDocumentRuntime(QObject *documentObject, RenderContextProvider renderContextProvider,
@@ -106,7 +107,7 @@ public:
     void updateRenderContext();
 
 private:
-    void publishChange(ImageDocumentChange change);
+    void publishChanges(const std::vector<ImageDocumentChange> &changes);
 
     ImageDocumentChangeBatcher changeBatcher;
     ImageDocumentState state;
