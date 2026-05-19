@@ -35,8 +35,12 @@ i18n-pot-check:
     devenv tasks run --mode before kiriview:i18n:pot-check
 
 [group('ci')]
+check:
+    devenv tasks run --mode before kiriview:check
+
+[group('ci')]
 ci:
-    devenv test
+    just check
 
 [group('build')]
 i18n-update:

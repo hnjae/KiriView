@@ -395,12 +395,14 @@ in
     };
 
     "kiriview:check" = {
-      description = "Run KiriView host checks";
+      description = "Run KiriView checks";
       after = [
+        "devenv:git-hooks:run"
+        "kiriview:i18n:check"
+        "kiriview:i18n:pot-check"
         "kiriview:lint"
         "kiriview:test:host"
       ];
-      before = [ "devenv:enterTest" ];
       exec = "true";
     };
   };

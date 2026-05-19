@@ -191,7 +191,6 @@ in
   tasks = {
     "kiriview:i18n:check" = {
       description = "Check translation catalog syntax";
-      before = [ "devenv:enterTest" ];
       exec = "kiriview-check-translations";
     };
 

@@ -1,10 +1,14 @@
 # SPDX-FileCopyrightText: 2026 KIM Hyunjae
 # SPDX-License-Identifier: AGPL-3.0-or-later
-{ pkgs, lib, ... }:
 {
-  git-hooks.excludes = [
-    "devenv\.lock"
-  ];
+  pkgs,
+  lib,
+  config,
+  ...
+}:
+{
+  git-hooks.excludes = [ ".*\\.lock$" ];
+
   git-hooks.hooks = {
     # Static checkers
     detect-private-keys.enable = true;
@@ -47,5 +51,11 @@
       '';
       entry = lib.getExe pkgs.shellcheck;
     };
+  };
+
+  tasks."kiriview:git-hooks" = {
+    exec = "${lib.getExe config.git-hooks.package} run --all-files";
+    after = [ "devenv:files" ];
+    before = [ "kiriview:check" ];
   };
 }

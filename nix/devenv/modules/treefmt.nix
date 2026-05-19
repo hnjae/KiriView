@@ -11,6 +11,7 @@
     enable = true;
 
     config = {
+      settings.excludes = [ "*.lock" ];
       programs = {
         just.enable = true;
         nixfmt.enable = true;
