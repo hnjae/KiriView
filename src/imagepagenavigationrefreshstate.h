@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGEPAGENAVIGATIONREFRESHSTATE_H
 #define KIRIVIEW_IMAGEPAGENAVIGATIONREFRESHSTATE_H
 
-#include "imagecandidaterepository.h"
+#include "imagecandidatelistsource.h"
 
 #include <optional>
 

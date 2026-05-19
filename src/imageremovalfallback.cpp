@@ -5,6 +5,7 @@
 
 #include "imagecontainer.h"
 #include "imagenavigationmodel.h"
+#include "imageurl.h"
 
 #include <optional>
 #include <utility>

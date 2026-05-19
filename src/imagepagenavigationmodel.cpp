@@ -4,6 +4,7 @@
 #include "imagepagenavigationmodel.h"
 
 #include "imagenavigationmodel.h"
+#include "imageurl.h"
 
 #include <algorithm>
 #include <cstddef>

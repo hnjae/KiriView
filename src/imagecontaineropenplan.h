@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_IMAGECONTAINEROPENPLAN_H
 #define KIRIVIEW_IMAGECONTAINEROPENPLAN_H
 
+#include "imagecandidatelistsource.h"
 #include "imagecandidaterepository.h"
 
 #include <QUrl>

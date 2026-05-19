@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGEPAGENAVIGATIONMODEL_H
 #define KIRIVIEW_IMAGEPAGENAVIGATIONMODEL_H
 
-#include "imagecandidaterepository.h"
+#include "imagecandidatelistsource.h"
 #include "imagenavigationtypes.h"
 #include "imagepagenavigationrefreshstate.h"
 

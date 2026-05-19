@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGEREMOVALFALLBACK_H
 #define KIRIVIEW_IMAGEREMOVALFALLBACK_H
 
-#include "imagecandidaterepository.h"
+#include "imagecandidatelistsource.h"
 #include "imagelocation.h"
 #include "imagenavigationtypes.h"
 
