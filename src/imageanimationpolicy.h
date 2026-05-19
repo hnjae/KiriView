@@ -17,17 +17,37 @@ struct AnimationLoopAdvance {
     int completedLoops = 0;
 };
 
-class AnimationLoopTracker
+enum class AnimationFrameAction {
+    Stop,
+    ScheduleNextFrame,
+};
+
+struct AnimationFramePlan {
+    AnimationFrameAction action = AnimationFrameAction::Stop;
+    int completedLoops = 0;
+};
+
+enum class AnimationSequenceAction {
+    Stop,
+    RestartSequence,
+};
+
+struct AnimationSequencePlan {
+    AnimationSequenceAction action = AnimationSequenceAction::Stop;
+    int completedLoops = 0;
+};
+
+class AnimationPlaybackState
 {
 public:
-    void start(int loopCount);
+    void startLoop(int loopCount);
     void clear();
-    AnimationLoopState state() const;
-    bool shouldScheduleAfterFrame(bool sourceHasMoreFrames) const;
-    AnimationLoopAdvance completeSequence();
+    AnimationLoopState loopState() const;
+    AnimationFramePlan planAfterFrame(bool sourceHasMoreFrames) const;
+    AnimationSequencePlan planAtSequenceEnd();
 
 private:
-    AnimationLoopState m_state;
+    AnimationLoopState m_loopState;
 };
 
 int normalizedAnimationFrameDelay(int delayMs);

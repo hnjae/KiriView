@@ -21,8 +21,8 @@ private Q_SLOTS:
     void loopPolicyTracksFiniteAndInfiniteRemainingLoops();
     void loopAdvanceIncrementsOnlyWhenMoreLoopsAreAvailable();
     void loopAdvanceSaturatesCompletedLoopCount();
-    void loopTrackerOwnsPlaybackLoopState();
-    void loopTrackerSchedulesWhenSourceOrLoopCanContinue();
+    void playbackStateOwnsLoopProgress();
+    void playbackStatePlansFrameSchedulingAndStop();
 };
 
 namespace {
@@ -94,44 +94,56 @@ void TestImageAnimationPolicy::loopAdvanceSaturatesCompletedLoopCount()
     QCOMPARE(advance.completedLoops, std::numeric_limits<int>::max());
 }
 
-void TestImageAnimationPolicy::loopTrackerOwnsPlaybackLoopState()
+void TestImageAnimationPolicy::playbackStateOwnsLoopProgress()
 {
-    KiriView::AnimationLoopTracker tracker;
-    tracker.start(2);
+    KiriView::AnimationPlaybackState state;
+    state.startLoop(2);
 
-    QCOMPARE(tracker.state().loopCount, 2);
-    QCOMPARE(tracker.state().completedLoops, 0);
+    QCOMPARE(state.loopState().loopCount, 2);
+    QCOMPARE(state.loopState().completedLoops, 0);
 
-    const KiriView::AnimationLoopAdvance firstRestart = tracker.completeSequence();
-    QVERIFY(firstRestart.shouldContinue);
-    QCOMPARE(tracker.state().completedLoops, 1);
+    const KiriView::AnimationSequencePlan firstRestart = state.planAtSequenceEnd();
+    QVERIFY(firstRestart.action == KiriView::AnimationSequenceAction::RestartSequence);
+    QCOMPARE(firstRestart.completedLoops, 1);
+    QCOMPARE(state.loopState().completedLoops, 1);
 
-    const KiriView::AnimationLoopAdvance secondRestart = tracker.completeSequence();
-    QVERIFY(secondRestart.shouldContinue);
-    QCOMPARE(tracker.state().completedLoops, 2);
+    const KiriView::AnimationSequencePlan secondRestart = state.planAtSequenceEnd();
+    QVERIFY(secondRestart.action == KiriView::AnimationSequenceAction::RestartSequence);
+    QCOMPARE(secondRestart.completedLoops, 2);
+    QCOMPARE(state.loopState().completedLoops, 2);
 
-    const KiriView::AnimationLoopAdvance stop = tracker.completeSequence();
-    QVERIFY(!stop.shouldContinue);
-    QCOMPARE(tracker.state().completedLoops, 2);
+    const KiriView::AnimationSequencePlan stop = state.planAtSequenceEnd();
+    QVERIFY(stop.action == KiriView::AnimationSequenceAction::Stop);
+    QCOMPARE(stop.completedLoops, 2);
+    QCOMPARE(state.loopState().completedLoops, 2);
 
-    tracker.clear();
-    QCOMPARE(tracker.state().loopCount, 0);
-    QCOMPARE(tracker.state().completedLoops, 0);
+    state.clear();
+    QCOMPARE(state.loopState().loopCount, 0);
+    QCOMPARE(state.loopState().completedLoops, 0);
 }
 
-void TestImageAnimationPolicy::loopTrackerSchedulesWhenSourceOrLoopCanContinue()
+void TestImageAnimationPolicy::playbackStatePlansFrameSchedulingAndStop()
 {
-    KiriView::AnimationLoopTracker finiteTracker;
-    finiteTracker.start(1);
+    KiriView::AnimationPlaybackState finiteState;
+    finiteState.startLoop(1);
 
-    QVERIFY(finiteTracker.shouldScheduleAfterFrame(true));
-    QVERIFY(finiteTracker.shouldScheduleAfterFrame(false));
-    finiteTracker.completeSequence();
-    QVERIFY(!finiteTracker.shouldScheduleAfterFrame(false));
+    KiriView::AnimationFramePlan plan = finiteState.planAfterFrame(true);
+    QVERIFY(plan.action == KiriView::AnimationFrameAction::ScheduleNextFrame);
+    QCOMPARE(plan.completedLoops, 0);
 
-    KiriView::AnimationLoopTracker infiniteTracker;
-    infiniteTracker.start(-1);
-    QVERIFY(infiniteTracker.shouldScheduleAfterFrame(false));
+    plan = finiteState.planAfterFrame(false);
+    QVERIFY(plan.action == KiriView::AnimationFrameAction::ScheduleNextFrame);
+    QCOMPARE(plan.completedLoops, 0);
+
+    finiteState.planAtSequenceEnd();
+    plan = finiteState.planAfterFrame(false);
+    QVERIFY(plan.action == KiriView::AnimationFrameAction::Stop);
+    QCOMPARE(plan.completedLoops, 1);
+
+    KiriView::AnimationPlaybackState infiniteState;
+    infiniteState.startLoop(-1);
+    plan = infiniteState.planAfterFrame(false);
+    QVERIFY(plan.action == KiriView::AnimationFrameAction::ScheduleNextFrame);
 }
 
 QTEST_GUILESS_MAIN(TestImageAnimationPolicy)

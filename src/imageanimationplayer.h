@@ -65,7 +65,7 @@ private:
     bool resetHeifSequence(
         HeifSequencePlayback &playback, int *firstFrameDelay, QString *errorString);
     void scheduleNextFrame(int delay);
-    void scheduleNextFrameOrStop(bool shouldContinue, int delay);
+    void applyFramePlan(AnimationFramePlan plan, int delay);
     void clearPlaybackState();
     void finishWithError(const QString &errorString);
 
@@ -73,7 +73,7 @@ private:
     ErrorCallback m_animationError;
     Playback m_playback;
     QTimer m_timer;
-    AnimationLoopTracker m_loopTracker;
+    AnimationPlaybackState m_playbackState;
 };
 }
 

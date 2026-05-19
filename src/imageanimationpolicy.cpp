@@ -13,22 +13,34 @@ constexpr std::uint64_t millisecondsPerSecond = 1000;
 }
 
 namespace KiriView {
-void AnimationLoopTracker::start(int loopCount) { m_state = AnimationLoopState { loopCount, 0 }; }
-
-void AnimationLoopTracker::clear() { m_state = {}; }
-
-AnimationLoopState AnimationLoopTracker::state() const { return m_state; }
-
-bool AnimationLoopTracker::shouldScheduleAfterFrame(bool sourceHasMoreFrames) const
+void AnimationPlaybackState::startLoop(int loopCount)
 {
-    return sourceHasMoreFrames || animationHasRemainingLoops(m_state);
+    m_loopState = AnimationLoopState { loopCount, 0 };
 }
 
-AnimationLoopAdvance AnimationLoopTracker::completeSequence()
+void AnimationPlaybackState::clear() { m_loopState = {}; }
+
+AnimationLoopState AnimationPlaybackState::loopState() const { return m_loopState; }
+
+AnimationFramePlan AnimationPlaybackState::planAfterFrame(bool sourceHasMoreFrames) const
 {
-    const AnimationLoopAdvance advance = advanceAnimationLoop(m_state);
-    m_state.completedLoops = advance.completedLoops;
-    return advance;
+    return AnimationFramePlan {
+        sourceHasMoreFrames || animationHasRemainingLoops(m_loopState)
+            ? AnimationFrameAction::ScheduleNextFrame
+            : AnimationFrameAction::Stop,
+        m_loopState.completedLoops,
+    };
+}
+
+AnimationSequencePlan AnimationPlaybackState::planAtSequenceEnd()
+{
+    const AnimationLoopAdvance advance = advanceAnimationLoop(m_loopState);
+    m_loopState.completedLoops = advance.completedLoops;
+    return AnimationSequencePlan {
+        advance.shouldContinue ? AnimationSequenceAction::RestartSequence
+                               : AnimationSequenceAction::Stop,
+        advance.completedLoops,
+    };
 }
 
 int normalizedAnimationFrameDelay(int delayMs)
