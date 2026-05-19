@@ -20,7 +20,7 @@ class PredecodeActiveDecodeStore final
 public:
     ~PredecodeActiveDecodeStore();
 
-    void add(ImageDecodeRequest request, ImageDecodeJob *decodeJob);
+    bool add(ImageDecodeRequest request, ImageDecodeJob *decodeJob);
     std::size_t size() const;
     bool containsUrl(const QUrl &url) const;
     std::vector<QUrl> urls() const;

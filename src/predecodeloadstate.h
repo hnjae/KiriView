@@ -5,7 +5,6 @@
 #define KIRIVIEW_PREDECODELOADSTATE_H
 
 #include "imagedecoderequest.h"
-#include "predecodeactivedecodestore.h"
 #include "predecodecache.h"
 #include "predecodedimage.h"
 #include "staticimage.h"
@@ -17,8 +16,6 @@
 #include <vector>
 
 namespace KiriView {
-class ImageDecodeJob;
-
 struct PredecodeLoadWindow {
     QUrl primaryDisplayedUrl;
     ArchiveDocumentLocation archiveDocument;
@@ -39,10 +36,8 @@ public:
     void cacheDisplayedImages(const std::vector<DisplayedPredecodeImage> &images);
     void clearWindowUrls();
     void startWindow(PredecodeLoadWindow window);
-    bool canStartMoreLoads() const;
-    std::optional<PredecodeLoadStart> takeNextLoad();
-    void addActiveLoad(ImageDecodeRequest request, ImageDecodeJob *decodeJob);
-    std::optional<ImageDecodeRequest> finishActiveLoad(const ImageDecodeRequest &request);
+    bool canStartMoreLoads(std::size_t activeLoadCount) const;
+    std::optional<PredecodeLoadStart> takeNextLoad(const std::vector<QUrl> &activeLoadUrls);
     void cacheDecodedImage(const ImageDecodeRequest &request, StaticImagePayload staticImage);
     void cancelBackgroundWork();
     void clear();
@@ -57,7 +52,6 @@ private:
 
     std::optional<ActiveWindow> m_activeWindow;
     PredecodeCache m_cache;
-    PredecodeActiveDecodeStore m_activeRequests;
 };
 }
 

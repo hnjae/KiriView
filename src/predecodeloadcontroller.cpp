@@ -34,14 +34,15 @@ void PredecodeLoadController::clearWindowUrls() { m_loadState.clearWindowUrls();
 
 void PredecodeLoadController::startWindowLoads(PredecodeLoadWindow window)
 {
+    m_activeDecodes.cancel();
     m_loadState.startWindow(std::move(window));
     startNextLoads();
 }
 
 void PredecodeLoadController::startNextLoads()
 {
-    while (m_loadState.canStartMoreLoads()) {
-        std::optional<PredecodeLoadStart> load = m_loadState.takeNextLoad();
+    while (m_loadState.canStartMoreLoads(m_activeDecodes.size())) {
+        std::optional<PredecodeLoadStart> load = m_loadState.takeNextLoad(m_activeDecodes.urls());
         if (!load.has_value()) {
             return;
         }
@@ -65,14 +66,19 @@ bool PredecodeLoadController::startLoad(PredecodeLoadStart load)
             [this](
                 const ImageDecodeRequest &request, const QString &) { finishLoadError(request); },
         });
-    m_loadState.addActiveLoad(load.request, decodeJob);
-    decodeJob->start(std::move(load.request));
+    const ImageDecodeRequest request = load.request;
+    if (!m_activeDecodes.add(std::move(load.request), decodeJob)) {
+        decodeJob->deleteLater();
+        return false;
+    }
+
+    decodeJob->start(request);
     return true;
 }
 
 void PredecodeLoadController::finishLoadError(const ImageDecodeRequest &request)
 {
-    if (!m_loadState.finishActiveLoad(request).has_value()) {
+    if (!m_activeDecodes.finish(request).has_value()) {
         return;
     }
 
@@ -82,7 +88,7 @@ void PredecodeLoadController::finishLoadError(const ImageDecodeRequest &request)
 void PredecodeLoadController::finishDecode(
     ImageDecodeRequest request, const DecodedImageResult &result)
 {
-    std::optional<ImageDecodeRequest> activeRequest = m_loadState.finishActiveLoad(request);
+    std::optional<ImageDecodeRequest> activeRequest = m_activeDecodes.finish(request);
     if (!activeRequest.has_value()) {
         return;
     }
@@ -95,9 +101,17 @@ void PredecodeLoadController::finishDecode(
     startNextLoads();
 }
 
-void PredecodeLoadController::cancelBackgroundWork() { m_loadState.cancelBackgroundWork(); }
+void PredecodeLoadController::cancelBackgroundWork()
+{
+    m_activeDecodes.cancel();
+    m_loadState.cancelBackgroundWork();
+}
 
-void PredecodeLoadController::clear() { m_loadState.clear(); }
+void PredecodeLoadController::clear()
+{
+    m_activeDecodes.cancel();
+    m_loadState.clear();
+}
 
 std::optional<PredecodedImage> PredecodeLoadController::tryTake(const QUrl &url) const
 {

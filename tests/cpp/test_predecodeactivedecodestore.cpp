@@ -33,11 +33,30 @@ class TestPredecodeActiveDecodeStore : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
+    void addRejectsDuplicateOrInvalidRequests();
     void finishReturnsMatchingRequestAndDeletesJob();
     void finishRejectsStaleGenerationAndUrl();
     void finishRemovesOnlyMatchingEntry();
     void cancelCancelsDecodeJobsAndClearsStore();
 };
+
+void TestPredecodeActiveDecodeStore::addRejectsDuplicateOrInvalidRequests()
+{
+    KiriView::PredecodeActiveDecodeStore store;
+    auto *firstJob = new KiriView::ImageDecodeJob(this);
+    auto *duplicateJob = new KiriView::ImageDecodeJob(this);
+    const QUrl url = indexedImageUrl(1);
+
+    QVERIFY(store.add(decodeRequest(7, url), firstJob));
+    QVERIFY(!store.add(decodeRequest(8, url), duplicateJob));
+    QVERIFY(!store.add(KiriView::ImageDecodeRequest {}, firstJob));
+    QVERIFY(!store.add(decodeRequest(9, indexedImageUrl(2)), nullptr));
+    QCOMPARE(store.size(), std::size_t(1));
+
+    duplicateJob->deleteLater();
+    store.cancel();
+    sendDeferredDeletes();
+}
 
 void TestPredecodeActiveDecodeStore::finishReturnsMatchingRequestAndDeletesJob()
 {
@@ -46,7 +65,7 @@ void TestPredecodeActiveDecodeStore::finishReturnsMatchingRequestAndDeletesJob()
     QPointer<KiriView::ImageDecodeJob> jobGuard(job);
     const QUrl url = indexedImageUrl(1);
 
-    store.add(decodeRequest(7, url), job);
+    QVERIFY(store.add(decodeRequest(7, url), job));
 
     QCOMPARE(store.size(), std::size_t(1));
     QVERIFY(store.containsUrl(url));
@@ -73,7 +92,7 @@ void TestPredecodeActiveDecodeStore::finishRejectsStaleGenerationAndUrl()
     const QUrl url = indexedImageUrl(1);
     const QUrl otherUrl = indexedImageUrl(2);
 
-    store.add(decodeRequest(7, url), job);
+    QVERIFY(store.add(decodeRequest(7, url), job));
 
     QVERIFY(!store.finish(decodeRequest(8, url)).has_value());
     QVERIFY(!store.finish(decodeRequest(7, otherUrl)).has_value());
@@ -93,8 +112,8 @@ void TestPredecodeActiveDecodeStore::finishRemovesOnlyMatchingEntry()
     const QUrl firstUrl = indexedImageUrl(1);
     const QUrl secondUrl = indexedImageUrl(2);
 
-    store.add(decodeRequest(7, firstUrl), firstJob);
-    store.add(decodeRequest(7, secondUrl), secondJob);
+    QVERIFY(store.add(decodeRequest(7, firstUrl), firstJob));
+    QVERIFY(store.add(decodeRequest(7, secondUrl), secondJob));
 
     QVERIFY(store.finish(decodeRequest(7, firstUrl)).has_value());
 
@@ -122,7 +141,7 @@ void TestPredecodeActiveDecodeStore::cancelCancelsDecodeJobsAndClearsStore()
 
     job->start(request);
     QCOMPARE(dataLoader.loadCount(), std::size_t(1));
-    store.add(request, job);
+    QVERIFY(store.add(request, job));
 
     store.cancel();
 

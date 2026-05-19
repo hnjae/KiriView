@@ -12,15 +12,16 @@
 namespace KiriView {
 PredecodeActiveDecodeStore::~PredecodeActiveDecodeStore() { cancel(); }
 
-void PredecodeActiveDecodeStore::add(ImageDecodeRequest request, ImageDecodeJob *decodeJob)
+bool PredecodeActiveDecodeStore::add(ImageDecodeRequest request, ImageDecodeJob *decodeJob)
 {
     const std::optional<QUrl> normalizedUrl = normalizedValidImageUrl(request.imageUrl());
     if (request.isEmpty() || decodeJob == nullptr || !normalizedUrl.has_value()
         || containsUrl(*normalizedUrl)) {
-        return;
+        return false;
     }
 
     m_entries.push_back(Entry { std::move(request), *normalizedUrl, decodeJob });
+    return true;
 }
 
 std::size_t PredecodeActiveDecodeStore::size() const { return m_entries.size(); }

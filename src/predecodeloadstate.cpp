@@ -47,24 +47,23 @@ void PredecodeLoadState::startWindow(PredecodeLoadWindow window)
     };
     m_cache.setWindowUrls(window.urls);
     cacheDisplayedImages(window.displayedImages);
-    m_cache.enqueueMissingWindowLoads(
-        window.primaryDisplayedUrl, window.archiveDocument, m_activeRequests.urls());
+    m_cache.enqueueMissingWindowLoads(window.primaryDisplayedUrl, window.archiveDocument, {});
 }
 
-bool PredecodeLoadState::canStartMoreLoads() const
+bool PredecodeLoadState::canStartMoreLoads(std::size_t activeLoadCount) const
 {
     return m_activeWindow.has_value() && m_activeWindow->parallelLimit > 0
-        && m_activeRequests.size() < m_activeWindow->parallelLimit;
+        && activeLoadCount < m_activeWindow->parallelLimit;
 }
 
-std::optional<PredecodeLoadStart> PredecodeLoadState::takeNextLoad()
+std::optional<PredecodeLoadStart> PredecodeLoadState::takeNextLoad(
+    const std::vector<QUrl> &activeLoadUrls)
 {
-    if (!canStartMoreLoads()) {
+    if (!canStartMoreLoads(activeLoadUrls.size())) {
         return std::nullopt;
     }
 
-    const std::optional<PredecodeRequest> request
-        = m_cache.takeNextRequest(m_activeRequests.urls());
+    const std::optional<PredecodeRequest> request = m_cache.takeNextRequest(activeLoadUrls);
     if (!request.has_value()) {
         return std::nullopt;
     }
@@ -76,17 +75,6 @@ std::optional<PredecodeLoadStart> PredecodeLoadState::takeNextLoad()
     };
 }
 
-void PredecodeLoadState::addActiveLoad(ImageDecodeRequest request, ImageDecodeJob *decodeJob)
-{
-    m_activeRequests.add(std::move(request), decodeJob);
-}
-
-std::optional<ImageDecodeRequest> PredecodeLoadState::finishActiveLoad(
-    const ImageDecodeRequest &request)
-{
-    return m_activeRequests.finish(request);
-}
-
 void PredecodeLoadState::cacheDecodedImage(
     const ImageDecodeRequest &request, StaticImagePayload staticImage)
 {
@@ -95,7 +83,6 @@ void PredecodeLoadState::cacheDecodedImage(
 
 void PredecodeLoadState::cancelBackgroundWork()
 {
-    m_activeRequests.cancel();
     m_cache.clearQueuedLoads();
     m_activeWindow.reset();
 }

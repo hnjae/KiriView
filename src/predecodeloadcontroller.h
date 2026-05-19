@@ -5,6 +5,7 @@
 #define KIRIVIEW_PREDECODELOADCONTROLLER_H
 
 #include "imageasyncdependencies.h"
+#include "predecodeactivedecodestore.h"
 #include "predecodedimage.h"
 #include "predecodeloadstate.h"
 
@@ -37,6 +38,7 @@ private:
     QObject *m_parent = nullptr;
     ImageDecodeDependencies m_decodeDependencies;
     PredecodeLoadState m_loadState;
+    PredecodeActiveDecodeStore m_activeDecodes;
 };
 }
 

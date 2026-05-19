@@ -47,6 +47,7 @@ class TestPredecodeLoadState : public QObject
 
 private Q_SLOTS:
     void activeWindowBuildsDecodeRequestsFromCanonicalContext();
+    void activeLoadsAreExternalInputsToWindowPlanning();
     void replacingWindowClearsQueuedLoadsAndUsesNextGeneration();
     void cancelBackgroundWorkKeepsDisplayedCacheButDropsQueuedLoads();
 };
@@ -63,12 +64,31 @@ void TestPredecodeLoadState::activeWindowBuildsDecodeRequestsFromCanonicalContex
     QVERIFY(displayed.has_value());
     QCOMPARE(displayed->staticImage.displayHints.firstDisplayPixelsPerSourcePixel, 0.5);
 
-    const std::optional<KiriView::PredecodeLoadStart> load = state.takeNextLoad();
+    const std::optional<KiriView::PredecodeLoadStart> load = state.takeNextLoad({});
     QVERIFY(load.has_value());
     QCOMPARE(load->request.id(), quint64(7));
     QCOMPARE(load->request.imageUrl(), nextUrl);
     QCOMPARE(load->request.firstDisplay().physicalViewportSize, QSize(640, 480));
-    QVERIFY(!state.takeNextLoad().has_value());
+    QVERIFY(!state.takeNextLoad({ nextUrl }).has_value());
+}
+
+void TestPredecodeLoadState::activeLoadsAreExternalInputsToWindowPlanning()
+{
+    KiriView::PredecodeLoadState state;
+    const QUrl displayedUrl = indexedImageUrl(1);
+    const QUrl nextUrl = indexedImageUrl(2);
+    const QUrl previousUrl = indexedImageUrl(0);
+    KiriView::PredecodeLoadWindow window
+        = loadWindow(displayedUrl, { displayedUrl, nextUrl, previousUrl });
+    window.parallelLimit = 2;
+
+    state.startWindow(std::move(window));
+
+    QVERIFY(state.canStartMoreLoads(0));
+    const std::optional<KiriView::PredecodeLoadStart> load = state.takeNextLoad({ nextUrl });
+    QVERIFY(load.has_value());
+    QCOMPARE(load->request.imageUrl(), previousUrl);
+    QVERIFY(!state.canStartMoreLoads(2));
 }
 
 void TestPredecodeLoadState::replacingWindowClearsQueuedLoadsAndUsesNextGeneration()
@@ -82,7 +102,7 @@ void TestPredecodeLoadState::replacingWindowClearsQueuedLoadsAndUsesNextGenerati
     state.startWindow(loadWindow(staleDisplayedUrl, { staleDisplayedUrl, staleNextUrl }));
     state.startWindow(loadWindow(displayedUrl, { displayedUrl, nextUrl }, 8));
 
-    const std::optional<KiriView::PredecodeLoadStart> load = state.takeNextLoad();
+    const std::optional<KiriView::PredecodeLoadStart> load = state.takeNextLoad({});
     QVERIFY(load.has_value());
     QCOMPARE(load->request.id(), quint64(8));
     QCOMPARE(load->request.imageUrl(), nextUrl);
@@ -99,7 +119,7 @@ void TestPredecodeLoadState::cancelBackgroundWorkKeepsDisplayedCacheButDropsQueu
     state.startWindow(loadWindow(displayedUrl, { displayedUrl, nextUrl }));
     state.cancelBackgroundWork();
 
-    QVERIFY(!state.takeNextLoad().has_value());
+    QVERIFY(!state.takeNextLoad({}).has_value());
     QVERIFY(state.tryTake(displayedUrl).has_value());
 }
 
