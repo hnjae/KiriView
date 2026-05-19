@@ -30,6 +30,8 @@ void appendUrlEvent(QStringList *events, const QString &event, const QUrl &url)
 KiriView::ImageDocumentSourceLoadOperations recordingOperations(QStringList *events)
 {
     KiriView::ImageDocumentSourceLoadOperations operations;
+    operations.cancelFileDeletion
+        = [events]() { appendEvent(events, QStringLiteral("cancelFileDeletion")); };
     operations.cancelNavigationAndPredecode
         = [events]() { appendEvent(events, QStringLiteral("cancelNavigationAndPredecode")); };
     operations.finishSpreadTransition
@@ -71,6 +73,7 @@ void TestImageDocumentSourceLoadExecutor::
     KiriView::ImageDocumentSourceLoadPlan plan;
     using Operation = KiriView::ImageDocumentSourceLoadOperation;
     plan.operations = {
+        Operation::CancelFileDeletion,
         Operation::CancelNavigationAndPredecode,
         Operation::FinishSpreadTransition,
         Operation::ResetRightToLeftReading,
@@ -87,6 +90,7 @@ void TestImageDocumentSourceLoadExecutor::
 
     QCOMPARE(events,
         QStringList({
+            QStringLiteral("cancelFileDeletion"),
             QStringLiteral("cancelNavigationAndPredecode"),
             QStringLiteral("finishSpreadTransition"),
             QStringLiteral("resetRightToLeftReading"),
@@ -109,6 +113,7 @@ void TestImageDocumentSourceLoadExecutor::currentLoadExecutesReadingResetBeforeS
     KiriView::ImageDocumentSourceLoadPlan plan;
     using Operation = KiriView::ImageDocumentSourceLoadOperation;
     plan.operations = {
+        Operation::CancelFileDeletion,
         Operation::ResetRightToLeftReading,
         Operation::NotifyRightToLeftReadingChanged,
         Operation::ClearLoadingContainerNavigationUrl,
@@ -120,6 +125,7 @@ void TestImageDocumentSourceLoadExecutor::currentLoadExecutesReadingResetBeforeS
 
     QCOMPARE(events,
         QStringList({
+            QStringLiteral("cancelFileDeletion"),
             QStringLiteral("resetRightToLeftReading"),
             QStringLiteral("notifyRightToLeftReadingChanged"),
             QStringLiteral("clearLoadingContainerNavigationUrl"),

@@ -47,6 +47,8 @@ KiriView::ImageDocumentSourceLoadOperation sourceLoadOperation(
     using RustOperation = KiriView::RustImageDocumentSourceLoadOperation;
 
     switch (operation) {
+    case RustOperation::CancelFileDeletion:
+        return Operation::CancelFileDeletion;
     case RustOperation::CancelNavigationAndPredecode:
         return Operation::CancelNavigationAndPredecode;
     case RustOperation::FinishSpreadTransition:

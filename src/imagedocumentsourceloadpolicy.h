@@ -17,6 +17,7 @@ enum class ImageDocumentSourceLoadKind {
 };
 
 enum class ImageDocumentSourceLoadOperation {
+    CancelFileDeletion,
     CancelNavigationAndPredecode,
     FinishSpreadTransition,
     ResetRightToLeftReading,

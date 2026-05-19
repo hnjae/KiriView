@@ -11,6 +11,9 @@ void executeImageDocumentSourceLoadOperation(KiriView::ImageDocumentSourceLoadOp
     const KiriView::ImageDocumentSourceLoadOperations &operations)
 {
     switch (operation) {
+    case KiriView::ImageDocumentSourceLoadOperation::CancelFileDeletion:
+        KiriView::invokeIfSet(operations.cancelFileDeletion);
+        return;
     case KiriView::ImageDocumentSourceLoadOperation::CancelNavigationAndPredecode:
         KiriView::invokeIfSet(operations.cancelNavigationAndPredecode);
         return;

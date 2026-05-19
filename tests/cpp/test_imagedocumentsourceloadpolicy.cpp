@@ -102,25 +102,26 @@ void TestImageDocumentSourceLoadPolicy::
     input.sourceWithinDisplayedComicBookArchive = false;
     compareSourceLoadPlans(KiriView::ImageDocumentSourceLoadPolicy::plan(input),
         KiriView::ImageDocumentSourceLoadPlan {
-            { Operation::ClearLoadingContainerNavigationUrl } });
+            { Operation::CancelFileDeletion, Operation::ClearLoadingContainerNavigationUrl } });
 
     input.rightToLeftReadingEnabled = true;
     input.sourceWithinDisplayedComicBookArchive = false;
     compareSourceLoadPlans(KiriView::ImageDocumentSourceLoadPolicy::plan(input),
-        KiriView::ImageDocumentSourceLoadPlan {
-            { Operation::ResetRightToLeftReading, Operation::NotifyRightToLeftReadingChanged,
-                Operation::ClearLoadingContainerNavigationUrl } });
+        KiriView::ImageDocumentSourceLoadPlan { { Operation::CancelFileDeletion,
+            Operation::ResetRightToLeftReading, Operation::NotifyRightToLeftReadingChanged,
+            Operation::ClearLoadingContainerNavigationUrl } });
 
     input.sourceWithinDisplayedComicBookArchive = true;
     compareSourceLoadPlans(KiriView::ImageDocumentSourceLoadPolicy::plan(input),
         KiriView::ImageDocumentSourceLoadPlan {
-            { Operation::ClearLoadingContainerNavigationUrl } });
+            { Operation::CancelFileDeletion, Operation::ClearLoadingContainerNavigationUrl } });
 
     input.sourceWithinDisplayedComicBookArchive = false;
     input.hasRequestedContainerNavigationUrl = true;
     compareSourceLoadPlans(KiriView::ImageDocumentSourceLoadPolicy::plan(input),
-        KiriView::ImageDocumentSourceLoadPlan { { Operation::ClearLoadingContainerNavigationUrl,
-            Operation::SetContainerNavigationUrlToRequested } });
+        KiriView::ImageDocumentSourceLoadPlan {
+            { Operation::CancelFileDeletion, Operation::ClearLoadingContainerNavigationUrl,
+                Operation::SetContainerNavigationUrlToRequested } });
 }
 
 void TestImageDocumentSourceLoadPolicy::sourceLoadPlanRoutesUnchangedAndReplacementSourceLoads()
@@ -136,17 +137,18 @@ void TestImageDocumentSourceLoadPolicy::sourceLoadPlanRoutesUnchangedAndReplacem
     const KiriView::ImageDocumentSourceLoadPlan unchanged
         = KiriView::ImageDocumentSourceLoadPolicy::plan(unchangedInput);
     compareSourceLoadPlans(unchanged,
-        KiriView::ImageDocumentSourceLoadPlan {
-            { Operation::FinishSpreadTransition, Operation::ClearLoadingContainerNavigationUrl,
-                Operation::SetContainerNavigationUrlToRequested } });
+        KiriView::ImageDocumentSourceLoadPlan { { Operation::CancelFileDeletion,
+            Operation::FinishSpreadTransition, Operation::ClearLoadingContainerNavigationUrl,
+            Operation::SetContainerNavigationUrlToRequested } });
 
     unchangedInput.hasRequestedContainerNavigationUrl = false;
     const KiriView::ImageDocumentSourceLoadPlan resettingUnchanged
         = KiriView::ImageDocumentSourceLoadPolicy::plan(unchangedInput);
     compareSourceLoadPlans(resettingUnchanged,
-        KiriView::ImageDocumentSourceLoadPlan { { Operation::FinishSpreadTransition,
-            Operation::ResetRightToLeftReading, Operation::NotifyRightToLeftReadingChanged,
-            Operation::ClearLoadingContainerNavigationUrl } });
+        KiriView::ImageDocumentSourceLoadPlan {
+            { Operation::CancelFileDeletion, Operation::FinishSpreadTransition,
+                Operation::ResetRightToLeftReading, Operation::NotifyRightToLeftReadingChanged,
+                Operation::ClearLoadingContainerNavigationUrl } });
 
     KiriView::ImageDocumentSourceLoadPolicyInput replacementInput;
     replacementInput.loadKind = KiriView::ImageDocumentSourceLoadKind::ReplacementSource;
@@ -157,19 +159,19 @@ void TestImageDocumentSourceLoadPolicy::sourceLoadPlanRoutesUnchangedAndReplacem
     const KiriView::ImageDocumentSourceLoadPlan replacement
         = KiriView::ImageDocumentSourceLoadPolicy::plan(replacementInput);
     compareSourceLoadPlans(replacement,
-        KiriView::ImageDocumentSourceLoadPlan { { Operation::CancelNavigationAndPredecode,
-            Operation::ClearSecondaryPage, Operation::SetLoadingContainerNavigationUrlToRequested,
-            Operation::PrepareSourceLoad, Operation::SetSourceUrlToRequested,
-            Operation::BeginOpen } });
+        KiriView::ImageDocumentSourceLoadPlan { { Operation::CancelFileDeletion,
+            Operation::CancelNavigationAndPredecode, Operation::ClearSecondaryPage,
+            Operation::SetLoadingContainerNavigationUrlToRequested, Operation::PrepareSourceLoad,
+            Operation::SetSourceUrlToRequested, Operation::BeginOpen } });
 
     replacementInput.rightToLeftReadingEnabled = true;
     const KiriView::ImageDocumentSourceLoadPlan resettingReplacement
         = KiriView::ImageDocumentSourceLoadPolicy::plan(replacementInput);
     compareSourceLoadPlans(resettingReplacement,
-        KiriView::ImageDocumentSourceLoadPlan { { Operation::CancelNavigationAndPredecode,
-            Operation::ResetRightToLeftReading, Operation::ClearSecondaryPage,
-            Operation::SetLoadingContainerNavigationUrlToRequested, Operation::PrepareSourceLoad,
-            Operation::SetSourceUrlToRequested, Operation::BeginOpen,
+        KiriView::ImageDocumentSourceLoadPlan { { Operation::CancelFileDeletion,
+            Operation::CancelNavigationAndPredecode, Operation::ResetRightToLeftReading,
+            Operation::ClearSecondaryPage, Operation::SetLoadingContainerNavigationUrlToRequested,
+            Operation::PrepareSourceLoad, Operation::SetSourceUrlToRequested, Operation::BeginOpen,
             Operation::NotifyRightToLeftReadingChanged } });
 }
 

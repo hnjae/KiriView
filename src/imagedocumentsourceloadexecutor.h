@@ -12,6 +12,7 @@
 
 namespace KiriView {
 struct ImageDocumentSourceLoadOperations {
+    std::function<void()> cancelFileDeletion;
     std::function<void()> cancelNavigationAndPredecode;
     std::function<void()> finishSpreadTransition;
     std::function<void()> resetRightToLeftReading;

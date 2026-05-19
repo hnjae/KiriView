@@ -45,8 +45,6 @@ ImageDocumentLoadController::ImageDocumentLoadController(ImageDocumentState &sta
 
 void ImageDocumentLoadController::loadSource(const ImageDocumentSourceLoadRequest &request)
 {
-    m_deletionController.cancel();
-
     const ImageDocumentSourceLoadPlan plan
         = ImageDocumentSourceLoadPolicy::plan(imageDocumentSourceLoadPolicyInput(
             sourceLoadSnapshot(m_state, m_spreadController), request));
@@ -56,6 +54,7 @@ void ImageDocumentLoadController::loadSource(const ImageDocumentSourceLoadReques
 ImageDocumentSourceLoadOperations ImageDocumentLoadController::sourceLoadOperations()
 {
     ImageDocumentSourceLoadOperations operations;
+    operations.cancelFileDeletion = [this]() { m_deletionController.cancel(); };
     operations.cancelNavigationAndPredecode = [this]() {
         m_navigationService.cancelNavigation();
         m_navigationService.cancelContainerNavigation();
