@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGEDECODEJOBSTATE_H
 #define KIRIVIEW_IMAGEDECODEJOBSTATE_H
 
-#include "imageasyncticket.h"
+#include "imageasyncoperationstate.h"
 #include "imagedecoderequest.h"
 
 #include <QtGlobal>
@@ -12,13 +12,15 @@
 
 namespace KiriView {
 struct ImageDecodeJobTicket {
-    quint64 generation = 0;
+    quint64 operationId = 0;
     ImageDecodeRequest request;
 };
 
 class ImageDecodeJobState final
 {
 public:
+    explicit ImageDecodeJobState(quint64 nextOperationId = 0);
+
     ImageDecodeJobTicket start(ImageDecodeRequest request);
     void cancel();
     bool hasActiveRequest() const;
@@ -36,7 +38,7 @@ private:
     bool accepts(const ImageDecodeJobTicket &ticket) const;
     std::optional<ImageDecodeRequest> claim(const ImageDecodeJobTicket &ticket, Phase phase);
 
-    ImageAsyncTicket m_generation;
+    ImageAsyncOperationState m_operation;
     std::optional<ImageDecodeRequest> m_request;
     Phase m_phase = Phase::LoadingData;
 };

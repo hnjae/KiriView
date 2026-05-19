@@ -6,16 +6,21 @@
 #include <utility>
 
 namespace KiriView {
+ImageDecodeJobState::ImageDecodeJobState(quint64 nextOperationId)
+    : m_operation(nextOperationId)
+{
+}
+
 ImageDecodeJobTicket ImageDecodeJobState::start(ImageDecodeRequest request)
 {
     m_request = std::move(request);
     m_phase = Phase::LoadingData;
-    return ImageDecodeJobTicket { m_generation.next(), *m_request };
+    return ImageDecodeJobTicket { m_operation.start(), *m_request };
 }
 
 void ImageDecodeJobState::cancel()
 {
-    m_generation.invalidate();
+    m_operation.cancel();
     m_request.reset();
     m_phase = Phase::LoadingData;
 }
@@ -47,7 +52,7 @@ std::optional<ImageDecodeRequest> ImageDecodeJobState::claimDecodeResult(
 
 bool ImageDecodeJobState::accepts(const ImageDecodeJobTicket &ticket) const
 {
-    return m_request.has_value() && m_generation.accepts(ticket.generation)
+    return m_request.has_value() && m_operation.accepts(ticket.operationId)
         && m_request->matches(ticket.request);
 }
 
@@ -59,6 +64,7 @@ std::optional<ImageDecodeRequest> ImageDecodeJobState::claim(
     }
 
     std::optional<ImageDecodeRequest> request = std::move(m_request);
+    m_operation.finish(ticket.operationId);
     m_request.reset();
     m_phase = Phase::LoadingData;
     return request;
