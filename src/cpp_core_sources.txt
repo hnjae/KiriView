@@ -37,6 +37,7 @@ src/imagedocumentchangebatcher.cpp
 src/imagedocumentdeletioncontroller.cpp
 src/imagedocumentdeletionstate.cpp
 src/imagedocumenteffectexecutor.cpp
+src/imagedocumenteffectplan.cpp
 src/imagedocumentloadcontroller.cpp
 src/imagedocumentnotifications.cpp
 src/imagedocumentpredecodecontroller.cpp
