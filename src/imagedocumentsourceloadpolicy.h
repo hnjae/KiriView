@@ -8,6 +8,7 @@
 #include "imagelocation.h"
 
 #include <QUrl>
+#include <vector>
 
 namespace KiriView {
 enum class ImageDocumentSourceLoadKind {
@@ -15,26 +16,18 @@ enum class ImageDocumentSourceLoadKind {
     ReplacementSource,
 };
 
-enum class ImageDocumentRightToLeftReadingTransition {
-    Keep,
-    ResetAndNotifyBeforeSourceState,
-    ResetAndNotifyAfterOpen,
-};
-
-enum class ImageDocumentSourceLoadPendingContainerTarget {
-    Unchanged,
-    Empty,
-    RequestedContainerNavigation,
-};
-
-enum class ImageDocumentSourceLoadContainerTarget {
-    Unchanged,
-    RequestedContainerNavigation,
-};
-
-enum class ImageDocumentSourceLoadSourceTarget {
-    Unchanged,
-    RequestedSource,
+enum class ImageDocumentSourceLoadOperation {
+    CancelNavigationAndPredecode,
+    FinishSpreadTransition,
+    ResetRightToLeftReading,
+    NotifyRightToLeftReadingChanged,
+    ClearSecondaryPage,
+    ClearLoadingContainerNavigationUrl,
+    SetLoadingContainerNavigationUrlToRequested,
+    SetContainerNavigationUrlToRequested,
+    PrepareSourceLoad,
+    SetSourceUrlToRequested,
+    BeginOpen,
 };
 
 struct ImageDocumentSourceLoadPolicyInput {
@@ -52,17 +45,7 @@ struct ImageDocumentSourceLoadSnapshot {
 };
 
 struct ImageDocumentSourceLoadPlan {
-    bool cancelNavigationAndPredecode = false;
-    bool finishSpreadTransition = false;
-    ImageDocumentRightToLeftReadingTransition rightToLeftReadingTransition
-        = ImageDocumentRightToLeftReadingTransition::Keep;
-    bool clearSecondaryPage = false;
-    ImageDocumentSourceLoadPendingContainerTarget loadingContainerNavigationUrl
-        = ImageDocumentSourceLoadPendingContainerTarget::Unchanged;
-    ImageDocumentSourceLoadContainerTarget containerNavigationUrl
-        = ImageDocumentSourceLoadContainerTarget::Unchanged;
-    ImageDocumentSourceLoadSourceTarget sourceUrl = ImageDocumentSourceLoadSourceTarget::Unchanged;
-    bool beginOpen = false;
+    std::vector<ImageDocumentSourceLoadOperation> operations;
 };
 
 ImageDocumentSourceLoadPolicyInput imageDocumentSourceLoadPolicyInput(

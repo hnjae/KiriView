@@ -69,15 +69,18 @@ void TestImageDocumentSourceLoadExecutor::
         = KiriView::ImageDocumentSourceLoadRequest::fromContainerImage(sourceUrl, containerUrl);
 
     KiriView::ImageDocumentSourceLoadPlan plan;
-    plan.cancelNavigationAndPredecode = true;
-    plan.finishSpreadTransition = true;
-    plan.rightToLeftReadingTransition
-        = KiriView::ImageDocumentRightToLeftReadingTransition::ResetAndNotifyAfterOpen;
-    plan.clearSecondaryPage = true;
-    plan.loadingContainerNavigationUrl
-        = KiriView::ImageDocumentSourceLoadPendingContainerTarget::RequestedContainerNavigation;
-    plan.sourceUrl = KiriView::ImageDocumentSourceLoadSourceTarget::RequestedSource;
-    plan.beginOpen = true;
+    using Operation = KiriView::ImageDocumentSourceLoadOperation;
+    plan.operations = {
+        Operation::CancelNavigationAndPredecode,
+        Operation::FinishSpreadTransition,
+        Operation::ResetRightToLeftReading,
+        Operation::ClearSecondaryPage,
+        Operation::SetLoadingContainerNavigationUrlToRequested,
+        Operation::PrepareSourceLoad,
+        Operation::SetSourceUrlToRequested,
+        Operation::BeginOpen,
+        Operation::NotifyRightToLeftReadingChanged,
+    };
 
     QStringList events;
     KiriView::executeImageDocumentSourceLoadPlan(request, plan, recordingOperations(&events));
@@ -104,12 +107,13 @@ void TestImageDocumentSourceLoadExecutor::currentLoadExecutesReadingResetBeforeS
         = KiriView::ImageDocumentSourceLoadRequest::fromContainerImage(sourceUrl, containerUrl);
 
     KiriView::ImageDocumentSourceLoadPlan plan;
-    plan.rightToLeftReadingTransition
-        = KiriView::ImageDocumentRightToLeftReadingTransition::ResetAndNotifyBeforeSourceState;
-    plan.loadingContainerNavigationUrl
-        = KiriView::ImageDocumentSourceLoadPendingContainerTarget::Empty;
-    plan.containerNavigationUrl
-        = KiriView::ImageDocumentSourceLoadContainerTarget::RequestedContainerNavigation;
+    using Operation = KiriView::ImageDocumentSourceLoadOperation;
+    plan.operations = {
+        Operation::ResetRightToLeftReading,
+        Operation::NotifyRightToLeftReadingChanged,
+        Operation::ClearLoadingContainerNavigationUrl,
+        Operation::SetContainerNavigationUrlToRequested,
+    };
 
     QStringList events;
     KiriView::executeImageDocumentSourceLoadPlan(request, plan, recordingOperations(&events));

@@ -40,64 +40,38 @@ KiriView::RustImageDocumentSourceLoadKind rustSourceLoadKind(
     return KiriView::RustImageDocumentSourceLoadKind::CurrentSource;
 }
 
-KiriView::ImageDocumentRightToLeftReadingTransition rightToLeftReadingTransition(
-    KiriView::RustImageDocumentRightToLeftReadingTransition transition)
+KiriView::ImageDocumentSourceLoadOperation sourceLoadOperation(
+    KiriView::RustImageDocumentSourceLoadOperation operation)
 {
-    using ReadingTransition = KiriView::ImageDocumentRightToLeftReadingTransition;
-    using RustReadingTransition = KiriView::RustImageDocumentRightToLeftReadingTransition;
+    using Operation = KiriView::ImageDocumentSourceLoadOperation;
+    using RustOperation = KiriView::RustImageDocumentSourceLoadOperation;
 
-    switch (transition) {
-    case RustReadingTransition::Keep:
-        return ReadingTransition::Keep;
-    case RustReadingTransition::ResetAndNotifyBeforeSourceState:
-        return ReadingTransition::ResetAndNotifyBeforeSourceState;
-    case RustReadingTransition::ResetAndNotifyAfterOpen:
-        return ReadingTransition::ResetAndNotifyAfterOpen;
+    switch (operation) {
+    case RustOperation::CancelNavigationAndPredecode:
+        return Operation::CancelNavigationAndPredecode;
+    case RustOperation::FinishSpreadTransition:
+        return Operation::FinishSpreadTransition;
+    case RustOperation::ResetRightToLeftReading:
+        return Operation::ResetRightToLeftReading;
+    case RustOperation::NotifyRightToLeftReadingChanged:
+        return Operation::NotifyRightToLeftReadingChanged;
+    case RustOperation::ClearSecondaryPage:
+        return Operation::ClearSecondaryPage;
+    case RustOperation::ClearLoadingContainerNavigationUrl:
+        return Operation::ClearLoadingContainerNavigationUrl;
+    case RustOperation::SetLoadingContainerNavigationUrlToRequested:
+        return Operation::SetLoadingContainerNavigationUrlToRequested;
+    case RustOperation::SetContainerNavigationUrlToRequested:
+        return Operation::SetContainerNavigationUrlToRequested;
+    case RustOperation::PrepareSourceLoad:
+        return Operation::PrepareSourceLoad;
+    case RustOperation::SetSourceUrlToRequested:
+        return Operation::SetSourceUrlToRequested;
+    case RustOperation::BeginOpen:
+        return Operation::BeginOpen;
     }
 
-    return ReadingTransition::Keep;
-}
-
-KiriView::ImageDocumentSourceLoadPendingContainerTarget pendingContainerTarget(
-    KiriView::RustImageDocumentSourceLoadPendingContainerTarget target)
-{
-    switch (target) {
-    case KiriView::RustImageDocumentSourceLoadPendingContainerTarget::Unchanged:
-        return KiriView::ImageDocumentSourceLoadPendingContainerTarget::Unchanged;
-    case KiriView::RustImageDocumentSourceLoadPendingContainerTarget::Empty:
-        return KiriView::ImageDocumentSourceLoadPendingContainerTarget::Empty;
-    case KiriView::RustImageDocumentSourceLoadPendingContainerTarget::RequestedContainerNavigation:
-        return KiriView::ImageDocumentSourceLoadPendingContainerTarget::
-            RequestedContainerNavigation;
-    }
-
-    return KiriView::ImageDocumentSourceLoadPendingContainerTarget::Unchanged;
-}
-
-KiriView::ImageDocumentSourceLoadContainerTarget containerTarget(
-    KiriView::RustImageDocumentSourceLoadContainerTarget target)
-{
-    switch (target) {
-    case KiriView::RustImageDocumentSourceLoadContainerTarget::Unchanged:
-        return KiriView::ImageDocumentSourceLoadContainerTarget::Unchanged;
-    case KiriView::RustImageDocumentSourceLoadContainerTarget::RequestedContainerNavigation:
-        return KiriView::ImageDocumentSourceLoadContainerTarget::RequestedContainerNavigation;
-    }
-
-    return KiriView::ImageDocumentSourceLoadContainerTarget::Unchanged;
-}
-
-KiriView::ImageDocumentSourceLoadSourceTarget sourceTarget(
-    KiriView::RustImageDocumentSourceLoadSourceTarget target)
-{
-    switch (target) {
-    case KiriView::RustImageDocumentSourceLoadSourceTarget::Unchanged:
-        return KiriView::ImageDocumentSourceLoadSourceTarget::Unchanged;
-    case KiriView::RustImageDocumentSourceLoadSourceTarget::RequestedSource:
-        return KiriView::ImageDocumentSourceLoadSourceTarget::RequestedSource;
-    }
-
-    return KiriView::ImageDocumentSourceLoadSourceTarget::Unchanged;
+    return Operation::BeginOpen;
 }
 
 KiriView::RustImageDocumentSourceLoadPolicyInput rustSourceLoadPolicyInput(
@@ -113,18 +87,14 @@ KiriView::RustImageDocumentSourceLoadPolicyInput rustSourceLoadPolicyInput(
 }
 
 KiriView::ImageDocumentSourceLoadPlan sourceLoadPlan(
-    const KiriView::RustImageDocumentSourceLoadPlan &plan)
+    const KiriView::RustImageDocumentSourceLoadPlan &rustPlan)
 {
-    return KiriView::ImageDocumentSourceLoadPlan {
-        plan.cancel_navigation_and_predecode,
-        plan.finish_spread_transition,
-        rightToLeftReadingTransition(plan.right_to_left_reading_transition),
-        plan.clear_secondary_page,
-        pendingContainerTarget(plan.loading_container_navigation_url),
-        containerTarget(plan.container_navigation_url),
-        sourceTarget(plan.source_url),
-        plan.begin_open,
-    };
+    KiriView::ImageDocumentSourceLoadPlan plan;
+    plan.operations.reserve(rustPlan.operations.size());
+    for (KiriView::RustImageDocumentSourceLoadOperation operation : rustPlan.operations) {
+        plan.operations.push_back(sourceLoadOperation(operation));
+    }
+    return plan;
 }
 
 }

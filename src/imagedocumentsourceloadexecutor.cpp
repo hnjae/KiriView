@@ -6,72 +6,44 @@
 #include "imagecallback.h"
 
 namespace {
-void applyRightToLeftReadingTransition(
-    KiriView::ImageDocumentRightToLeftReadingTransition transition,
-    const KiriView::ImageDocumentSourceLoadOperations &operations, bool notifyBeforeSourceState,
-    bool notifyAfterOpen)
-{
-    switch (transition) {
-    case KiriView::ImageDocumentRightToLeftReadingTransition::Keep:
-        return;
-    case KiriView::ImageDocumentRightToLeftReadingTransition::ResetAndNotifyBeforeSourceState:
-        if (notifyBeforeSourceState) {
-            KiriView::invokeIfSet(operations.resetRightToLeftReading);
-            KiriView::invokeIfSet(operations.notifyRightToLeftReadingChanged);
-        }
-        return;
-    case KiriView::ImageDocumentRightToLeftReadingTransition::ResetAndNotifyAfterOpen:
-        if (notifyBeforeSourceState) {
-            KiriView::invokeIfSet(operations.resetRightToLeftReading);
-        }
-        if (notifyAfterOpen) {
-            KiriView::invokeIfSet(operations.notifyRightToLeftReadingChanged);
-        }
-        return;
-    }
-}
-
-void applyLoadingContainerNavigationUrlTarget(
-    KiriView::ImageDocumentSourceLoadPendingContainerTarget target,
+void executeImageDocumentSourceLoadOperation(KiriView::ImageDocumentSourceLoadOperation operation,
     const KiriView::ImageDocumentSourceLoadRequest &request,
     const KiriView::ImageDocumentSourceLoadOperations &operations)
 {
-    switch (target) {
-    case KiriView::ImageDocumentSourceLoadPendingContainerTarget::Unchanged:
+    switch (operation) {
+    case KiriView::ImageDocumentSourceLoadOperation::CancelNavigationAndPredecode:
+        KiriView::invokeIfSet(operations.cancelNavigationAndPredecode);
         return;
-    case KiriView::ImageDocumentSourceLoadPendingContainerTarget::Empty:
+    case KiriView::ImageDocumentSourceLoadOperation::FinishSpreadTransition:
+        KiriView::invokeIfSet(operations.finishSpreadTransition);
+        return;
+    case KiriView::ImageDocumentSourceLoadOperation::ResetRightToLeftReading:
+        KiriView::invokeIfSet(operations.resetRightToLeftReading);
+        return;
+    case KiriView::ImageDocumentSourceLoadOperation::NotifyRightToLeftReadingChanged:
+        KiriView::invokeIfSet(operations.notifyRightToLeftReadingChanged);
+        return;
+    case KiriView::ImageDocumentSourceLoadOperation::ClearSecondaryPage:
+        KiriView::invokeIfSet(operations.clearSecondaryPage);
+        return;
+    case KiriView::ImageDocumentSourceLoadOperation::ClearLoadingContainerNavigationUrl:
         KiriView::invokeIfSet(operations.clearLoadingContainerNavigationUrl);
         return;
-    case KiriView::ImageDocumentSourceLoadPendingContainerTarget::RequestedContainerNavigation:
+    case KiriView::ImageDocumentSourceLoadOperation::SetLoadingContainerNavigationUrlToRequested:
         KiriView::invokeIfSet(
             operations.setLoadingContainerNavigationUrl, request.containerNavigationUrl);
         return;
-    }
-}
-
-void applyContainerNavigationUrlTarget(KiriView::ImageDocumentSourceLoadContainerTarget target,
-    const KiriView::ImageDocumentSourceLoadRequest &request,
-    const KiriView::ImageDocumentSourceLoadOperations &operations)
-{
-    switch (target) {
-    case KiriView::ImageDocumentSourceLoadContainerTarget::Unchanged:
-        return;
-    case KiriView::ImageDocumentSourceLoadContainerTarget::RequestedContainerNavigation:
+    case KiriView::ImageDocumentSourceLoadOperation::SetContainerNavigationUrlToRequested:
         KiriView::invokeIfSet(operations.setContainerNavigationUrl, request.containerNavigationUrl);
         return;
-    }
-}
-
-void applySourceLoadUrlTarget(KiriView::ImageDocumentSourceLoadSourceTarget target,
-    const KiriView::ImageDocumentSourceLoadRequest &request,
-    const KiriView::ImageDocumentSourceLoadOperations &operations)
-{
-    switch (target) {
-    case KiriView::ImageDocumentSourceLoadSourceTarget::Unchanged:
-        return;
-    case KiriView::ImageDocumentSourceLoadSourceTarget::RequestedSource:
+    case KiriView::ImageDocumentSourceLoadOperation::PrepareSourceLoad:
         KiriView::invokeIfSet(operations.prepareSourceLoad, request);
+        return;
+    case KiriView::ImageDocumentSourceLoadOperation::SetSourceUrlToRequested:
         KiriView::invokeIfSet(operations.setSourceUrl, request.sourceUrl);
+        return;
+    case KiriView::ImageDocumentSourceLoadOperation::BeginOpen:
+        KiriView::invokeIfSet(operations.beginOpen);
         return;
     }
 }
@@ -81,23 +53,8 @@ namespace KiriView {
 void executeImageDocumentSourceLoadPlan(const ImageDocumentSourceLoadRequest &request,
     const ImageDocumentSourceLoadPlan &plan, const ImageDocumentSourceLoadOperations &operations)
 {
-    if (plan.cancelNavigationAndPredecode) {
-        invokeIfSet(operations.cancelNavigationAndPredecode);
+    for (ImageDocumentSourceLoadOperation operation : plan.operations) {
+        executeImageDocumentSourceLoadOperation(operation, request, operations);
     }
-    if (plan.finishSpreadTransition) {
-        invokeIfSet(operations.finishSpreadTransition);
-    }
-    applyRightToLeftReadingTransition(plan.rightToLeftReadingTransition, operations, true, false);
-    if (plan.clearSecondaryPage) {
-        invokeIfSet(operations.clearSecondaryPage);
-    }
-    applyLoadingContainerNavigationUrlTarget(
-        plan.loadingContainerNavigationUrl, request, operations);
-    applyContainerNavigationUrlTarget(plan.containerNavigationUrl, request, operations);
-    applySourceLoadUrlTarget(plan.sourceUrl, request, operations);
-    if (plan.beginOpen) {
-        invokeIfSet(operations.beginOpen);
-    }
-    applyRightToLeftReadingTransition(plan.rightToLeftReadingTransition, operations, false, true);
 }
 }
