@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_IMAGEDOCUMENTDELETIONFALLBACKCONTROLLER_H
 #define KIRIVIEW_IMAGEDOCUMENTDELETIONFALLBACKCONTROLLER_H
 
+#include "imageasyncoperationstate.h"
 #include "imagecandidaterepository.h"
 #include "imagedocumenteffects.h"
 #include "imageiojob.h"
@@ -29,11 +30,6 @@ public:
     void cancel();
 
 private:
-    quint64 startOperation();
-    bool acceptsOperation(quint64 operationId) const;
-    bool finishOperation(quint64 operationId);
-    quint64 nextOperationId();
-
     void openFallbackPlan(quint64 operationId, const NoImageRemovalFallback &);
     void openFallbackPlan(quint64 operationId, const ImageRemovalFallback &fallback);
     void openFallbackPlan(quint64 operationId, const ComicBookRemovalFallback &fallback);
@@ -46,8 +42,7 @@ private:
     ImageCandidateRepository m_candidateRepository;
     EffectCallback m_effectCallback;
     ImageIoJob m_job;
-    quint64 m_nextOperationId = 0;
-    quint64 m_operationId = 0;
+    ImageAsyncOperationState m_operation;
 };
 }
 

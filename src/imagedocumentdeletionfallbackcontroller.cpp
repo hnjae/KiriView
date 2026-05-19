@@ -24,51 +24,21 @@ void ImageDocumentDeletionFallbackController::open(const ImageRemovalFallbackPla
 {
     cancel();
 
-    const quint64 operationId = startOperation();
+    const quint64 operationId = m_operation.start();
     std::visit([this, operationId](const auto &plan) { openFallbackPlan(operationId, plan); },
         fallbackPlan);
 }
 
 void ImageDocumentDeletionFallbackController::cancel()
 {
-    m_operationId = 0;
+    m_operation.cancel();
     m_job.cancel();
-}
-
-quint64 ImageDocumentDeletionFallbackController::startOperation()
-{
-    m_operationId = nextOperationId();
-    return m_operationId;
-}
-
-bool ImageDocumentDeletionFallbackController::acceptsOperation(quint64 operationId) const
-{
-    return operationId != 0 && operationId == m_operationId;
-}
-
-bool ImageDocumentDeletionFallbackController::finishOperation(quint64 operationId)
-{
-    if (!acceptsOperation(operationId)) {
-        return false;
-    }
-
-    m_operationId = 0;
-    return true;
-}
-
-quint64 ImageDocumentDeletionFallbackController::nextOperationId()
-{
-    ++m_nextOperationId;
-    if (m_nextOperationId == 0) {
-        ++m_nextOperationId;
-    }
-    return m_nextOperationId;
 }
 
 void ImageDocumentDeletionFallbackController::openFallbackPlan(
     quint64 operationId, const NoImageRemovalFallback &)
 {
-    finishOperation(operationId);
+    m_operation.finish(operationId);
 }
 
 void ImageDocumentDeletionFallbackController::openFallbackPlan(
@@ -77,32 +47,32 @@ void ImageDocumentDeletionFallbackController::openFallbackPlan(
     m_job = m_candidateRepository.loadImages(
         m_parent, fallback.imageContext,
         [this, operationId, fallback](std::vector<ImageNavigationCandidate> candidates) {
-            if (!acceptsOperation(operationId)) {
+            if (!m_operation.accepts(operationId)) {
                 return;
             }
 
             const std::optional<QUrl> fallbackUrl
                 = imageRemovalFallbackUrl(std::move(candidates), fallback);
-            finishOperation(operationId);
+            m_operation.finish(operationId);
             if (fallbackUrl.has_value()) {
                 reportDocumentEffect(ImageDocumentEffect::openUrl(*fallbackUrl));
             }
         },
-        [this, operationId](const QString &) { finishOperation(operationId); });
+        [this, operationId](const QString &) { m_operation.finish(operationId); });
 }
 
 void ImageDocumentDeletionFallbackController::openFallbackPlan(
     quint64 operationId, const ComicBookRemovalFallback &fallback)
 {
     if (!fallback.candidateDirectoryUrl.isValid() || fallback.candidateDirectoryUrl.isEmpty()) {
-        finishOperation(operationId);
+        m_operation.finish(operationId);
         return;
     }
 
     m_job = m_candidateRepository.loadContainers(
         m_parent, fallback.candidateDirectoryUrl,
         [this, operationId, fallback](std::vector<ContainerNavigationCandidate> candidates) {
-            if (!acceptsOperation(operationId)) {
+            if (!m_operation.accepts(operationId)) {
                 return;
             }
 
@@ -111,14 +81,14 @@ void ImageDocumentDeletionFallbackController::openFallbackPlan(
             openComicBookFallbackCandidate(
                 operationId, fallbackCandidates.preferred, fallbackCandidates.fallback);
         },
-        [this, operationId](const QString &) { finishOperation(operationId); });
+        [this, operationId](const QString &) { m_operation.finish(operationId); });
 }
 
 void ImageDocumentDeletionFallbackController::openComicBookFallbackCandidate(quint64 operationId,
     const std::optional<ContainerNavigationCandidate> &candidate,
     const std::optional<ContainerNavigationCandidate> &fallbackCandidate)
 {
-    if (!acceptsOperation(operationId)) {
+    if (!m_operation.accepts(operationId)) {
         return;
     }
 
@@ -127,18 +97,18 @@ void ImageDocumentDeletionFallbackController::openComicBookFallbackCandidate(qui
             openComicBookFallbackCandidate(operationId, fallbackCandidate, std::nullopt);
             return;
         }
-        finishOperation(operationId);
+        m_operation.finish(operationId);
         return;
     }
 
     m_job = m_candidateRepository.loadFirstImageInContainer(
         m_parent, *candidate,
         [this, operationId](const QUrl &imageUrl, const QUrl &containerUrl) {
-            if (!acceptsOperation(operationId)) {
+            if (!m_operation.accepts(operationId)) {
                 return;
             }
 
-            finishOperation(operationId);
+            m_operation.finish(operationId);
             reportDocumentEffect(
                 ImageDocumentEffect::containerImageSelected(imageUrl, containerUrl));
         },

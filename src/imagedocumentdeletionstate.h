@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGEDOCUMENTDELETIONSTATE_H
 #define KIRIVIEW_IMAGEDOCUMENTDELETIONSTATE_H
 
-#include <QtGlobal>
+#include "imageasyncoperationstate.h"
 
 namespace KiriView {
 struct ImageDocumentDeletionFileOperationStart {
@@ -28,13 +28,10 @@ public:
     bool cancelFileDeletion();
 
 private:
-    quint64 nextOperationId();
     bool setInProgress(bool inProgress);
-    bool acceptsFileDeletion(quint64 operationId) const;
 
     bool m_inProgress = false;
-    quint64 m_nextOperationId = 0;
-    quint64 m_fileDeletionOperationId = 0;
+    ImageAsyncOperationState m_fileDeletion;
 };
 }
 

@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGECONTAINERNAVIGATIONSTATE_H
 #define KIRIVIEW_IMAGECONTAINERNAVIGATIONSTATE_H
 
-#include <QtGlobal>
+#include "imageasyncoperationstate.h"
 
 namespace KiriView {
 class ImageContainerNavigationState final
@@ -18,10 +18,7 @@ public:
     void cancel();
 
 private:
-    quint64 nextOperationId();
-
-    quint64 m_nextOperationId = 0;
-    quint64 m_activeOperationId = 0;
+    ImageAsyncOperationState m_operation;
 };
 }
 

@@ -5,39 +5,21 @@
 
 namespace KiriView {
 ImageContainerNavigationState::ImageContainerNavigationState(quint64 nextOperationId)
-    : m_nextOperationId(nextOperationId)
+    : m_operation(nextOperationId)
 {
 }
 
-quint64 ImageContainerNavigationState::startNavigation()
-{
-    m_activeOperationId = nextOperationId();
-    return m_activeOperationId;
-}
+quint64 ImageContainerNavigationState::startNavigation() { return m_operation.start(); }
 
 bool ImageContainerNavigationState::acceptsNavigation(quint64 operationId) const
 {
-    return operationId != 0 && operationId == m_activeOperationId;
+    return m_operation.accepts(operationId);
 }
 
 bool ImageContainerNavigationState::finishNavigation(quint64 operationId)
 {
-    if (!acceptsNavigation(operationId)) {
-        return false;
-    }
-
-    m_activeOperationId = 0;
-    return true;
+    return m_operation.finish(operationId);
 }
 
-void ImageContainerNavigationState::cancel() { m_activeOperationId = 0; }
-
-quint64 ImageContainerNavigationState::nextOperationId()
-{
-    ++m_nextOperationId;
-    if (m_nextOperationId == 0) {
-        ++m_nextOperationId;
-    }
-    return m_nextOperationId;
-}
+void ImageContainerNavigationState::cancel() { m_operation.cancel(); }
 }

@@ -5,7 +5,7 @@
 
 namespace KiriView {
 ImageDocumentDeletionState::ImageDocumentDeletionState(quint64 nextOperationId)
-    : m_nextOperationId(nextOperationId)
+    : m_fileDeletion(nextOperationId)
 {
 }
 
@@ -13,8 +13,7 @@ bool ImageDocumentDeletionState::inProgress() const { return m_inProgress; }
 
 ImageDocumentDeletionFileOperationStart ImageDocumentDeletionState::startFileDeletion()
 {
-    const quint64 operationId = nextOperationId();
-    m_fileDeletionOperationId = operationId;
+    const quint64 operationId = m_fileDeletion.start();
     return ImageDocumentDeletionFileOperationStart {
         operationId,
         setInProgress(true),
@@ -24,11 +23,10 @@ ImageDocumentDeletionFileOperationStart ImageDocumentDeletionState::startFileDel
 ImageDocumentDeletionFileOperationFinish ImageDocumentDeletionState::finishFileDeletion(
     quint64 operationId)
 {
-    if (!acceptsFileDeletion(operationId)) {
+    if (!m_fileDeletion.finish(operationId)) {
         return {};
     }
 
-    m_fileDeletionOperationId = 0;
     return ImageDocumentDeletionFileOperationFinish {
         true,
         setInProgress(false),
@@ -37,17 +35,8 @@ ImageDocumentDeletionFileOperationFinish ImageDocumentDeletionState::finishFileD
 
 bool ImageDocumentDeletionState::cancelFileDeletion()
 {
-    m_fileDeletionOperationId = 0;
+    m_fileDeletion.cancel();
     return setInProgress(false);
-}
-
-quint64 ImageDocumentDeletionState::nextOperationId()
-{
-    ++m_nextOperationId;
-    if (m_nextOperationId == 0) {
-        ++m_nextOperationId;
-    }
-    return m_nextOperationId;
 }
 
 bool ImageDocumentDeletionState::setInProgress(bool inProgress)
@@ -58,10 +47,5 @@ bool ImageDocumentDeletionState::setInProgress(bool inProgress)
 
     m_inProgress = inProgress;
     return true;
-}
-
-bool ImageDocumentDeletionState::acceptsFileDeletion(quint64 operationId) const
-{
-    return operationId != 0 && operationId == m_fileDeletionOperationId;
 }
 }
