@@ -3,7 +3,7 @@
 
 #include "imagecandidatedirectoryentry.h"
 
-#include "imagenavigationmodel.h"
+#include "imagecandidateitems.h"
 
 #include <KCoreDirLister>
 #include <KIO/Job>

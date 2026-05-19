@@ -51,6 +51,7 @@ src/imagedocumentstate.cpp
 src/imagesurface.cpp
 src/imageformatregistry.cpp
 src/imageerrortext.cpp
+src/imagecandidateitems.cpp
 src/imagecandidaterepository.cpp
 src/imagecandidatedirectoryentry.cpp
 src/imagecandidatestore.cpp

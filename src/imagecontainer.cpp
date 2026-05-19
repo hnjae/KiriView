@@ -4,7 +4,6 @@
 #include "imagecontainer.h"
 
 #include "archiveformat.h"
-#include "imagenavigationmodel.h"
 #include "imageurl.h"
 #include "kiriview/src/imagecontainer.cxx.h"
 #include "rustqtconversion.h"
@@ -228,25 +227,6 @@ QString windowTitleFileNameForDisplayedLocation(const DisplayedImageLocation &lo
     }
 
     return location.imageUrl().fileName();
-}
-
-std::vector<ContainerNavigationCandidate> containerNavigationCandidates(const KFileItemList &items)
-{
-    std::vector<ContainerNavigationCandidate> candidates;
-    candidates.reserve(static_cast<std::size_t>(items.size()));
-
-    for (const KFileItem &item : items) {
-        const QString name = item.name();
-        if (item.isFile() && item.url().isLocalFile()
-            && KiriView::isComicBookArchiveFileName(name)) {
-            candidates.push_back(
-                ContainerNavigationCandidate { normalizedFileContainerUrl(item.url()), name,
-                    ContainerNavigationCandidateType::ComicBookArchive });
-        }
-    }
-
-    sortContainerNavigationCandidates(&candidates);
-    return candidates;
 }
 
 QUrl zoomScopeUrlForLocation(const DisplayedImageLocation &location)

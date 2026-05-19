@@ -7,11 +7,9 @@
 #include "imagelocation.h"
 #include "imagenavigationtypes.h"
 
-#include <KFileItem>
 #include <QString>
 #include <QUrl>
 #include <optional>
-#include <vector>
 
 namespace KiriView {
 std::optional<QUrl> comicBookArchiveRootUrl(const QUrl &url);
@@ -24,7 +22,6 @@ bool displayedLocationIsInsideArchiveDocument(const DisplayedImageLocation &loca
 std::optional<QUrl> containingComicBookArchiveRootUrl(const QUrl &url);
 std::optional<QUrl> containingDirectArchiveOpenRootUrl(const QUrl &url);
 QString windowTitleFileNameForDisplayedLocation(const DisplayedImageLocation &location);
-std::vector<ContainerNavigationCandidate> containerNavigationCandidates(const KFileItemList &items);
 QUrl zoomScopeUrlForLocation(const DisplayedImageLocation &location);
 QUrl containerNavigationUrlForLocation(const DisplayedImageLocation &location);
 }

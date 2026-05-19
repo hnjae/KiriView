@@ -3,7 +3,6 @@
 
 #include "imagenavigationmodel.h"
 
-#include "imageformatregistry.h"
 #include "imageurl.h"
 #include "kiriview/src/imagenavigationmodel.cxx.h"
 
@@ -202,21 +201,4 @@ void sortContainerNavigationCandidates(std::vector<ContainerNavigationCandidate>
     sortNavigationCandidates(candidates);
 }
 
-std::vector<ImageNavigationCandidate> imageNavigationCandidates(const KFileItemList &items)
-{
-    std::vector<ImageNavigationCandidate> candidates;
-    candidates.reserve(static_cast<std::size_t>(items.size()));
-
-    for (const KFileItem &item : items) {
-        const QString name = item.name();
-        if (!item.isFile() || !KiriView::isSupportedImageFileName(name)) {
-            continue;
-        }
-
-        candidates.push_back(ImageNavigationCandidate { item.url(), name });
-    }
-
-    sortImageNavigationCandidates(&candidates);
-    return candidates;
-}
 }

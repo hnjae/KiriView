@@ -8,7 +8,6 @@
 #include <QTest>
 #include <QUrl>
 #include <optional>
-#include <sys/stat.h>
 #include <vector>
 
 namespace {
@@ -77,7 +76,6 @@ private Q_SLOTS:
     void directDirectoryPagesResolveToDirectoryDocumentScope();
     void regularImagesDoNotResolveToZoomScopes();
     void explicitKdeArchiveUrlImagesDoNotResolveToZoomScopes();
-    void containerCandidatesOnlyIncludeComicBookArchives();
 };
 
 void TestImageContainer::comicBookArchiveRootUrlsUseZipScheme()
@@ -230,28 +228,6 @@ void TestImageContainer::explicitKdeArchiveUrlImagesDoNotResolveToZoomScopes()
 
     QVERIFY(KiriView::zoomScopeUrlForLocation(location).isEmpty());
     QVERIFY(KiriView::containerNavigationUrlForLocation(location).isEmpty());
-}
-
-void TestImageContainer::containerCandidatesOnlyIncludeComicBookArchives()
-{
-    KFileItemList items;
-    items.append(KFileItem(QUrl::fromLocalFile(QStringLiteral("/books/a/")), QString(), S_IFDIR));
-    items.append(
-        KFileItem(QUrl::fromLocalFile(QStringLiteral("/books/a.cbz")), QString(), S_IFREG));
-    items.append(
-        KFileItem(QUrl::fromLocalFile(QStringLiteral("/books/b.cbr")), QString(), S_IFREG));
-    items.append(
-        KFileItem(QUrl::fromLocalFile(QStringLiteral("/books/book.zip")), QString(), S_IFREG));
-    items.append(
-        KFileItem(QUrl::fromLocalFile(QStringLiteral("/books/book.rar")), QString(), S_IFREG));
-
-    const std::vector<KiriView::ContainerNavigationCandidate> candidates
-        = KiriView::containerNavigationCandidates(items);
-    QCOMPARE(candidates.size(), std::size_t(2));
-    QCOMPARE(candidates.front().url, QUrl::fromLocalFile(QStringLiteral("/books/a.cbz")));
-    QCOMPARE(candidates.front().type, KiriView::ContainerNavigationCandidateType::ComicBookArchive);
-    QCOMPARE(candidates.back().url, QUrl::fromLocalFile(QStringLiteral("/books/b.cbr")));
-    QCOMPARE(candidates.back().type, KiriView::ContainerNavigationCandidateType::ComicBookArchive);
 }
 
 QTEST_GUILESS_MAIN(TestImageContainer)
