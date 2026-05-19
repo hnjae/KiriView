@@ -1,6 +1,9 @@
 # SPDX-FileCopyrightText: 2026 KIM Hyunjae
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
+src/apnganimationreader.cpp
+src/apngframecomposer.cpp
+src/apngrgbabuffer.cpp
 src/decodedimageresult.cpp
 src/decodedtilecache.cpp
 src/applicationactionregistry.cpp

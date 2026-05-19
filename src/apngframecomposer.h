@@ -4,6 +4,8 @@
 #ifndef KIRIVIEW_APNGFRAMECOMPOSER_H
 #define KIRIVIEW_APNGFRAMECOMPOSER_H
 
+#include "apngrgbabuffer.h"
+
 #include <QImage>
 #include <QSize>
 #include <QtGlobal>
@@ -43,20 +45,15 @@ public:
     std::optional<QImage> composeFrame(ApngFrameControl control);
 
 private:
-    std::optional<std::size_t> rowOffset(quint32 x, quint32 y) const;
+    ApngRgbaRegion region(const ApngFrameControl &control) const;
     void premultiplyFrame(const ApngFrameControl &control);
-    std::optional<std::vector<unsigned char>> copyRegion(const ApngFrameControl &control) const;
     bool blendFrame(const ApngFrameControl &control);
-    std::optional<QImage> canvasImage() const;
     bool applyDispose(
         const ApngFrameControl &control, const std::optional<std::vector<unsigned char>> &previous);
 
-    QSize m_canvasSize;
-    std::size_t m_rowBytes = 0;
     bool m_hasDisplayedFrame = false;
-    std::vector<unsigned char> m_canvas;
-    std::vector<unsigned char> m_frame;
-    std::vector<unsigned char *> m_frameRows;
+    ApngRgbaBuffer m_canvas;
+    ApngRgbaBuffer m_frame;
 };
 }
 
