@@ -10,9 +10,9 @@ namespace KiriView {
 class ArchiveDocumentSessionStore;
 class ImageDocumentDeletionController;
 class ImageDocumentLoadController;
+class ImageDocumentNavigationController;
 class ImageDocumentPredecodeController;
 class ImageDocumentState;
-class ImageNavigationService;
 class ImageOpenController;
 class ImagePresentationController;
 class ImageSpreadPresentationController;
@@ -23,7 +23,7 @@ struct ImageDocumentRuntimeEffectBinding {
     ImageDocumentDeletionController &deletionController;
     ImagePresentationController &presentationController;
     ImageOpenController &openController;
-    ImageNavigationService &navigationService;
+    ImageDocumentNavigationController &navigationController;
     ImageDocumentPredecodeController &predecodeController;
     ImageSpreadPresentationController &spreadController;
     ImageDocumentLoadController &loadController;

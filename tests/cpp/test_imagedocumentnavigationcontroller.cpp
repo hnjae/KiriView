@@ -1,0 +1,209 @@
+// SPDX-FileCopyrightText: 2026 KIM Hyunjae
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+#include "imagedocumentnavigationcontroller.h"
+
+#include "image_test_support.h"
+#include "imagecontainer.h"
+#include "imagedocumentstate.h"
+#include "imagenavigationservice.h"
+#include "imagepresentationcontroller.h"
+#include "imagerendering.h"
+#include "imagespreadpresentationcontroller.h"
+
+#include <QObject>
+#include <QSize>
+#include <QTest>
+#include <QUrl>
+#include <optional>
+#include <utility>
+#include <variant>
+#include <vector>
+
+namespace {
+using KiriView::TestSupport::archivePageUrl;
+using KiriView::TestSupport::imageCandidate;
+using KiriView::TestSupport::imageDecodeDependenciesFor;
+using KiriView::TestSupport::localUrl;
+using KiriView::TestSupport::ManualImageDataLoader;
+using KiriView::TestSupport::staticImageDataDecoder;
+using KiriView::TestSupport::staticTestImagePayload;
+using KiriView::TestSupport::testImage;
+
+using FakeCandidateProvider = KiriView::TestSupport::FakeImageNavigationCandidateProvider;
+
+KiriView::ImageDocumentRenderContext renderContext()
+{
+    return KiriView::ImageDocumentRenderContext {
+        1.0,
+        KiriView::fallbackTextureSizeMax,
+    };
+}
+
+template <typename Effect> const Effect *findEffect(const KiriView::ImageDocumentEffects &effects)
+{
+    for (const KiriView::ImageDocumentEffect &effect : effects) {
+        if (const auto *payload = std::get_if<Effect>(&effect.payload)) {
+            return payload;
+        }
+    }
+
+    return nullptr;
+}
+
+class DocumentNavigationFixture
+{
+public:
+    DocumentNavigationFixture()
+        : presentation(&context, renderContext, {})
+        , navigation(&context, candidateProvider.provider(),
+              KiriView::ImageNavigationService::Callbacks {
+                  [this](const QUrl &url) {
+                      effects.push_back(KiriView::ImageDocumentEffect::openUrl(url));
+                  },
+                  {},
+                  {},
+                  {},
+                  {},
+                  {},
+              })
+        , spread(&context, renderContext, state, presentation,
+              KiriView::ImageSpreadPresentationController::Callbacks {
+                  {},
+                  {},
+                  [this]() { return navigation.pageNavigationSnapshot(); },
+                  {},
+              },
+              candidateProvider.provider(),
+              imageDecodeDependenciesFor(dataLoader, staticImageDataDecoder(testImage())))
+        , controller(state, presentation, navigation, spread,
+              [this](
+                  KiriView::ImageDocumentEffect effect) { effects.push_back(std::move(effect)); })
+    {
+    }
+
+    void displayImage(const QUrl &url)
+    {
+        state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromUrl(url));
+        presentation.setStaticImage(staticTestImagePayload(testImage()), false);
+    }
+
+    void displayComicPage(const QUrl &url, const KiriView::ArchiveDocumentLocation &archiveDocument)
+    {
+        state.setDisplayedImageLocation(
+            KiriView::DisplayedImageLocation::fromArchiveDocument(url, archiveDocument));
+        presentation.setStaticImage(staticTestImagePayload(testImage(QSize(800, 1200))), false);
+    }
+
+    QObject context;
+    KiriView::ImageDocumentState state;
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    KiriView::ImagePresentationController presentation;
+    KiriView::ImageNavigationService navigation;
+    KiriView::ImageSpreadPresentationController spread;
+    KiriView::ImageDocumentNavigationController controller;
+    KiriView::ImageDocumentEffects effects;
+};
+}
+
+class TestImageDocumentNavigationController : public QObject
+{
+    Q_OBJECT
+
+private Q_SLOTS:
+    void updatePageNavigationUsesDisplayedImageContext();
+    void adjacentImageNavigationUsesDisplayedImageContext();
+    void pageSelectionDispatchesPageNavigationEffect();
+    void spreadPageSelectionStartsTrackedTransition();
+};
+
+void TestImageDocumentNavigationController::updatePageNavigationUsesDisplayedImageContext()
+{
+    DocumentNavigationFixture fixture;
+    const QUrl firstUrl = localUrl(QStringLiteral("/images/01.png"));
+    const QUrl secondUrl = localUrl(QStringLiteral("/images/02.png"));
+    fixture.candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
+        {
+            imageCandidate(firstUrl),
+            imageCandidate(secondUrl),
+        });
+    fixture.displayImage(firstUrl);
+
+    fixture.controller.updatePageNavigation();
+
+    QCOMPARE(fixture.controller.currentPageNumber(), 1);
+    QCOMPARE(fixture.controller.imageCount(), 2);
+}
+
+void TestImageDocumentNavigationController::adjacentImageNavigationUsesDisplayedImageContext()
+{
+    DocumentNavigationFixture fixture;
+    const QUrl firstUrl = localUrl(QStringLiteral("/images/01.png"));
+    const QUrl secondUrl = localUrl(QStringLiteral("/images/02.png"));
+    fixture.candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
+        {
+            imageCandidate(firstUrl),
+            imageCandidate(secondUrl),
+        });
+    fixture.displayImage(firstUrl);
+
+    fixture.controller.openAdjacentImage(KiriView::NavigationDirection::Next);
+
+    const auto *effect = findEffect<KiriView::OpenUrlEffect>(fixture.effects);
+    QVERIFY(effect != nullptr);
+    QCOMPARE(effect->url, secondUrl);
+}
+
+void TestImageDocumentNavigationController::pageSelectionDispatchesPageNavigationEffect()
+{
+    DocumentNavigationFixture fixture;
+    const QUrl firstUrl = localUrl(QStringLiteral("/images/01.png"));
+    const QUrl secondUrl = localUrl(QStringLiteral("/images/02.png"));
+    fixture.candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
+        {
+            imageCandidate(firstUrl),
+            imageCandidate(secondUrl),
+        });
+    fixture.displayImage(firstUrl);
+    fixture.controller.updatePageNavigation();
+
+    fixture.controller.openImageAtPage(2);
+
+    const auto *effect = findEffect<KiriView::PageNavigationSelectedEffect>(fixture.effects);
+    QVERIFY(effect != nullptr);
+    QCOMPARE(effect->url, secondUrl);
+    QVERIFY(!effect->preserveTwoPageSpreadTransition);
+    QCOMPARE(fixture.controller.currentPageNumber(), 2);
+}
+
+void TestImageDocumentNavigationController::spreadPageSelectionStartsTrackedTransition()
+{
+    DocumentNavigationFixture fixture;
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
+    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveDocument.has_value());
+    const QUrl firstUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
+    const QUrl secondUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("02.png"));
+    fixture.candidateProvider.setArchiveImages(archiveDocument->rootUrl(),
+        {
+            imageCandidate(firstUrl),
+            imageCandidate(secondUrl),
+        });
+    fixture.displayComicPage(firstUrl, *archiveDocument);
+    fixture.controller.updatePageNavigation();
+    fixture.spread.setTwoPageModeEnabled(true);
+
+    fixture.controller.openImageAtPage(2);
+
+    const auto *effect = findEffect<KiriView::PageNavigationSelectedEffect>(fixture.effects);
+    QVERIFY(effect != nullptr);
+    QCOMPARE(effect->url, secondUrl);
+    QVERIFY(effect->preserveTwoPageSpreadTransition);
+    QVERIFY(fixture.spread.transitionInProgress());
+}
+
+QTEST_GUILESS_MAIN(TestImageDocumentNavigationController)
+
+#include "test_imagedocumentnavigationcontroller.moc"

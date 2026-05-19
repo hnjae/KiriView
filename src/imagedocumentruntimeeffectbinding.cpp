@@ -6,24 +6,14 @@
 #include "archivedocumentsessionstore.h"
 #include "imagedocumentdeletioncontroller.h"
 #include "imagedocumentloadcontroller.h"
+#include "imagedocumentnavigationcontroller.h"
 #include "imagedocumentpredecodecontroller.h"
 #include "imagedocumentsourceloadrequest.h"
 #include "imagedocumentstate.h"
-#include "imagenavigationservice.h"
 #include "imageopencontroller.h"
 #include "imageopenworkflow.h"
 #include "imagepresentationcontroller.h"
 #include "imagespreadpresentationcontroller.h"
-
-namespace {
-KiriView::ImageNavigationService::DisplayContext navigationDisplayContext(
-    const KiriView::ImageDocumentState &state,
-    const KiriView::ImagePresentationController &presentationController)
-{
-    return KiriView::ImageNavigationService::DisplayContext { presentationController.hasImage(),
-        state.displayedImageLocation() };
-}
-}
 
 namespace KiriView {
 ImageDocumentEffectOperations imageDocumentRuntimeEffectOperations(
@@ -34,7 +24,7 @@ ImageDocumentEffectOperations imageDocumentRuntimeEffectOperations(
     ImageDocumentDeletionController *deletionController = &binding.deletionController;
     ImagePresentationController *presentationController = &binding.presentationController;
     ImageOpenController *openController = &binding.openController;
-    ImageNavigationService *navigationService = &binding.navigationService;
+    ImageDocumentNavigationController *navigationController = &binding.navigationController;
     ImageDocumentPredecodeController *predecodeController = &binding.predecodeController;
     ImageSpreadPresentationController *spreadController = &binding.spreadController;
     ImageDocumentLoadController *loadController = &binding.loadController;
@@ -69,18 +59,15 @@ ImageDocumentEffectOperations imageDocumentRuntimeEffectOperations(
         presentationController->prepareFailedContainer(containerUrl);
     };
     operations.navigation.cancelPageNavigationUpdate
-        = [navigationService]() { navigationService->cancelPageNavigationUpdate(); };
+        = [navigationController]() { navigationController->cancelPageNavigationUpdate(); };
     operations.navigation.cancelNavigation
-        = [navigationService]() { navigationService->cancelNavigation(); };
+        = [navigationController]() { navigationController->cancelNavigation(); };
     operations.navigation.cancelContainerNavigation
-        = [navigationService]() { navigationService->cancelContainerNavigation(); };
+        = [navigationController]() { navigationController->cancelContainerNavigation(); };
     operations.navigation.clearPageNavigation
-        = [navigationService]() { navigationService->clearPageNavigation(); };
+        = [navigationController]() { navigationController->clearPageNavigation(); };
     operations.navigation.updatePageNavigation
-        = [navigationService, state, presentationController]() {
-              navigationService->updatePageNavigation(
-                  navigationDisplayContext(*state, *presentationController));
-          };
+        = [navigationController]() { navigationController->updatePageNavigation(); };
     operations.navigation.loadUrl = [loadController](const QUrl &url) {
         loadController->loadSource(ImageDocumentSourceLoadRequest::fromUrl(url));
     };

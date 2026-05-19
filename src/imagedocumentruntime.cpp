@@ -8,6 +8,7 @@
 #include "imagedocumentdeletioncontroller.h"
 #include "imagedocumenteffectexecutor.h"
 #include "imagedocumentloadcontroller.h"
+#include "imagedocumentnavigationcontroller.h"
 #include "imagedocumentpredecodecontroller.h"
 #include "imagedocumentruntimedependencies.h"
 #include "imagedocumentruntimeeffectbinding.h"
@@ -20,18 +21,7 @@
 
 #include <QObject>
 #include <QUrl>
-#include <optional>
 #include <utility>
-
-namespace {
-KiriView::ImageNavigationService::DisplayContext navigationDisplayContext(
-    const KiriView::ImageDocumentState &state,
-    const KiriView::ImagePresentationController &presentationController)
-{
-    return KiriView::ImageNavigationService::DisplayContext { presentationController.hasImage(),
-        state.displayedImageLocation() };
-}
-}
 
 namespace KiriView {
 ImageDocumentRuntime::ImageDocumentRuntime(QObject *documentObject,
@@ -104,10 +94,13 @@ ImageDocumentRuntime::ImageDocumentRuntime(QObject *documentObject,
         ImageSpreadPresentationController::Callbacks {
             [this](ImageDocumentChange change) { notify(change); },
             [this](const QUrl &url) { return predecodeController->tryTake(url); },
-            [this]() { return navigationService->pageNavigationSnapshot(); },
+            [this]() { return documentNavigationController->pageNavigationSnapshot(); },
             [this]() { dispatchEffect(ImageDocumentEffect::scheduleAdjacentImagePredecode()); },
         },
         runtimeDependencies.candidateProvider, runtimeDependencies.imageDecode);
+    documentNavigationController = std::make_unique<ImageDocumentNavigationController>(state,
+        *presentationController, *navigationService, *spreadController,
+        [this](ImageDocumentEffect effect) { dispatchEffect(std::move(effect)); });
     loadController = std::make_unique<ImageDocumentLoadController>(state,
         *documentDeletionController, *navigationService, *predecodeController, *openController,
         *spreadController, archiveSessionStore.get());
@@ -118,7 +111,7 @@ ImageDocumentRuntime::ImageDocumentRuntime(QObject *documentObject,
             *documentDeletionController,
             *presentationController,
             *openController,
-            *navigationService,
+            *documentNavigationController,
             *predecodeController,
             *spreadController,
             *loadController,
@@ -210,7 +203,7 @@ int ImageDocumentRuntime::rotationDegrees() const { return spreadController->rot
 
 int ImageDocumentRuntime::currentPageNumber() const
 {
-    return navigationService->currentPageNumber();
+    return documentNavigationController->currentPageNumber();
 }
 
 int ImageDocumentRuntime::currentLastPageNumber() const
@@ -218,7 +211,7 @@ int ImageDocumentRuntime::currentLastPageNumber() const
     return spreadController->currentLastPageNumber();
 }
 
-int ImageDocumentRuntime::imageCount() const { return navigationService->imageCount(); }
+int ImageDocumentRuntime::imageCount() const { return documentNavigationController->imageCount(); }
 
 bool ImageDocumentRuntime::containerNavigationAvailable() const
 {
@@ -290,20 +283,35 @@ void ImageDocumentRuntime::shutdown()
     }
 }
 
-void ImageDocumentRuntime::openPreviousImage() { openAdjacentImage(NavigationDirection::Previous); }
+void ImageDocumentRuntime::openPreviousImage()
+{
+    documentNavigationController->openAdjacentImage(NavigationDirection::Previous);
+}
 
-void ImageDocumentRuntime::openNextImage() { openAdjacentImage(NavigationDirection::Next); }
+void ImageDocumentRuntime::openNextImage()
+{
+    documentNavigationController->openAdjacentImage(NavigationDirection::Next);
+}
 
-void ImageDocumentRuntime::openPreviousSinglePage() { openImageAtRelativePageOffset(-1); }
+void ImageDocumentRuntime::openPreviousSinglePage()
+{
+    documentNavigationController->openImageAtRelativePageOffset(-1);
+}
 
-void ImageDocumentRuntime::openNextSinglePage() { openImageAtRelativePageOffset(1); }
+void ImageDocumentRuntime::openNextSinglePage()
+{
+    documentNavigationController->openImageAtRelativePageOffset(1);
+}
 
 void ImageDocumentRuntime::openPreviousContainer()
 {
-    openAdjacentContainer(NavigationDirection::Previous);
+    documentNavigationController->openAdjacentContainer(NavigationDirection::Previous);
 }
 
-void ImageDocumentRuntime::openNextContainer() { openAdjacentContainer(NavigationDirection::Next); }
+void ImageDocumentRuntime::openNextContainer()
+{
+    documentNavigationController->openAdjacentContainer(NavigationDirection::Next);
+}
 
 void ImageDocumentRuntime::deleteDisplayedFile(FileDeletionMode mode)
 {
@@ -325,48 +333,6 @@ void ImageDocumentRuntime::updateRenderContext() { spreadController->updateRende
 
 void ImageDocumentRuntime::openImageAtPage(int pageNumber)
 {
-    const bool spreadTransition = spreadController->shouldBeginTransition(pageNumber);
-    const std::optional<QUrl> pageUrl = navigationService->selectPage(pageNumber);
-    if (!pageUrl.has_value()) {
-        return;
-    }
-
-    if (spreadTransition) {
-        spreadController->beginTransition();
-    }
-
-    dispatchEffect(ImageDocumentEffect::pageNavigationSelected(*pageUrl, spreadTransition));
-}
-
-void ImageDocumentRuntime::openAdjacentImage(NavigationDirection direction)
-{
-    const ImageSpreadPageNavigationTarget target
-        = spreadController->imageNavigationTarget(direction);
-    if (!target.handledBySpread) {
-        navigationService->openAdjacentImage(
-            navigationDisplayContext(state, *presentationController), direction);
-        return;
-    }
-
-    if (target.pageNumber <= 0) {
-        return;
-    }
-
-    openImageAtPage(target.pageNumber);
-}
-
-void ImageDocumentRuntime::openAdjacentContainer(NavigationDirection direction)
-{
-    navigationService->openAdjacentContainer(state.containerNavigationUrl(), direction);
-}
-
-void ImageDocumentRuntime::openImageAtRelativePageOffset(int offset)
-{
-    const int targetPage = spreadController->relativePageNavigationTarget(offset);
-    if (targetPage <= 0) {
-        return;
-    }
-
-    openImageAtPage(targetPage);
+    documentNavigationController->openImageAtPage(pageNumber);
 }
 }

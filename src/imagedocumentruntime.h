@@ -30,6 +30,7 @@ class ImageDocumentDeletionController;
 class ImageDocumentEffectExecutor;
 struct ImageDocumentEffectOperations;
 class ImageDocumentLoadController;
+class ImageDocumentNavigationController;
 class ImageDocumentPredecodeController;
 class ImageOpenController;
 class ImageNavigationService;
@@ -105,9 +106,6 @@ public:
     void updateRenderContext();
 
 private:
-    void openAdjacentImage(NavigationDirection direction);
-    void openAdjacentContainer(NavigationDirection direction);
-    void openImageAtRelativePageOffset(int offset);
     void publishChange(ImageDocumentChange change);
 
     ImageDocumentChangeBatcher changeBatcher;
@@ -118,6 +116,7 @@ private:
     std::unique_ptr<ImagePresentationController> presentationController;
     std::unique_ptr<ImageOpenController> openController;
     std::unique_ptr<ImageNavigationService> navigationService;
+    std::unique_ptr<ImageDocumentNavigationController> documentNavigationController;
     std::unique_ptr<ImageDocumentPredecodeController> predecodeController;
     std::unique_ptr<ImageSpreadPresentationController> spreadController;
     std::unique_ptr<ImageDocumentLoadController> loadController;
