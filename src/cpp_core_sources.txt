@@ -21,6 +21,7 @@ src/filedeletion.cpp
 src/imageremovalfallback.cpp
 src/heifcontainer.cpp
 src/heifdecoder.cpp
+src/heifsequencereader.cpp
 src/heifsupport.cpp
 src/heiftilesource.cpp
 src/imageanimationpolicy.cpp

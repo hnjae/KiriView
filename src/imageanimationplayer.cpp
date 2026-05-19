@@ -5,7 +5,7 @@
 
 #include "apnganimationreader.h"
 #include "bufferedimagereader.h"
-#include "heifdecoder.h"
+#include "heifsequencereader.h"
 #include "imagecallback.h"
 #include "imageerrortext.h"
 

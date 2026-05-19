@@ -3,24 +3,22 @@
 
 // Compatibility shim: KiriView decodes selected HEIF data through libheif
 // because current KImageFormats/QImageReader support does not reliably cover
-// every HEIF variant KiriView supports. HEIF image sequences are read here so
-// they play as authored animations with frames, delays, alpha, and supported
-// JPEG/JPEG 2000/AVC/HEVC/VVC sequence codecs. Remove the sequence reader and
-// route HEIF sequences through QImageReader once KImageFormats reliably exposes
-// those semantics. Re-evaluate the still-image fallback separately once
-// KImageFormats covers the still HEIF variants KiriView supports.
+// every HEIF variant KiriView supports. HEIF image sequences use
+// HeifSequenceReader so they play as authored animations with frames, delays,
+// alpha, and supported JPEG/JPEG 2000/AVC/HEVC/VVC sequence codecs. Remove the
+// sequence reader and route HEIF sequences through QImageReader once
+// KImageFormats reliably exposes those semantics. Re-evaluate the still-image
+// fallback separately once KImageFormats covers the still HEIF variants KiriView
+// supports.
 
 #include "heifdecoder.h"
 
 #include "heifcontainer.h"
+#include "heifsequencereader.h"
 #include "heifsupport.h"
 #include "heiftilesource.h"
-#include "imageerrortext.h"
 #include "staticimagedecode.h"
 
-#include <libheif/heif_sequences.h>
-
-#include <cstdint>
 #include <memory>
 #include <optional>
 #include <utility>
@@ -82,11 +80,6 @@ std::optional<DecodedImageResult> decodeHeifStillImageData(const QByteArray &dat
     return decodeHeifStillImageDataForInfo(data, heifContainerInfo(data));
 }
 
-QString heifSequenceDecodeErrorString()
-{
-    return imageErrorText(ImageErrorTextId::DecodeHeifSequence);
-}
-
 std::optional<DecodedImageResult> decodeHeifSequenceImageData(const QByteArray &data)
 {
     return decodeHeifSequenceImageDataForInfo(data, heifContainerInfo(data));
@@ -101,134 +94,5 @@ std::optional<DecodedImageResult> decodeHeifImageData(const QByteArray &data)
     }
 
     return decodeHeifStillImageDataForInfo(data, info);
-}
-
-class HeifSequenceReader::Private
-{
-public:
-    Private() = default;
-    ~Private() = default;
-
-    Private(const Private &) = delete;
-    Private &operator=(const Private &) = delete;
-
-    void reset()
-    {
-        options.reset();
-        track = HeifTrack();
-        context.reset();
-        data.clear();
-        timescale = 0;
-    }
-
-    QByteArray data;
-    std::optional<HeifContext> context;
-    HeifTrack track;
-    std::optional<HeifDecodingOptions> options;
-    uint32_t timescale = 0;
-};
-
-HeifSequenceReader::HeifSequenceReader()
-    : d(std::make_unique<Private>())
-{
-}
-
-HeifSequenceReader::~HeifSequenceReader() = default;
-
-HeifSequenceReader::HeifSequenceReader(HeifSequenceReader &&) noexcept = default;
-
-HeifSequenceReader &HeifSequenceReader::operator=(HeifSequenceReader &&) noexcept = default;
-
-HeifSequenceOpenResult HeifSequenceReader::open(QByteArray data)
-{
-    close();
-
-    if (!isLikelyHeifContainer(data)) {
-        return { HeifSequenceOpenStatus::NotHeif, {} };
-    }
-
-    d->data = std::move(data);
-    QString errorString;
-    d->context = openHeifContext(d->data, &errorString);
-    if (!d->context.has_value()) {
-        close();
-        return { HeifSequenceOpenStatus::Error, errorString };
-    }
-
-    if (!heif_context_has_sequence(d->context->get())) {
-        close();
-        return { HeifSequenceOpenStatus::NotSequence, {} };
-    }
-
-    d->track = HeifTrack(heif_context_get_track(d->context->get(), 0));
-    if (d->track.get() == nullptr) {
-        close();
-        return { HeifSequenceOpenStatus::Error,
-            imageErrorText(ImageErrorTextId::HeifSequenceTrackMissing) };
-    }
-
-    if (heif_track_get_track_handler_type(d->track.get()) != heif_track_type_image_sequence) {
-        close();
-        return { HeifSequenceOpenStatus::NotSequence, {} };
-    }
-
-    d->options.emplace();
-    if (d->options->get() == nullptr) {
-        close();
-        return { HeifSequenceOpenStatus::Error,
-            imageErrorText(ImageErrorTextId::HeifDecodeOptionsAllocationFailed) };
-    }
-    d->timescale = heif_track_get_timescale(d->track.get());
-
-    return { HeifSequenceOpenStatus::Success, {} };
-}
-
-std::optional<AnimationFrame> HeifSequenceReader::readNextFrame(QString *errorString)
-{
-    if (errorString != nullptr) {
-        errorString->clear();
-    }
-
-    if (d->track.get() == nullptr) {
-        if (errorString != nullptr) {
-            *errorString = imageErrorText(ImageErrorTextId::HeifSequenceTrackMissing);
-        }
-        return std::nullopt;
-    }
-
-    HeifImage heifImage;
-    const heif_error error = heif_track_decode_next_image(d->track.get(), heifImage.out(),
-        heif_colorspace_RGB, heif_chroma_interleaved_RGBA, d->options->get());
-    if (error.code == heif_error_End_of_sequence) {
-        return std::nullopt;
-    }
-    if (error.code != heif_error_Ok) {
-        if (errorString != nullptr) {
-            *errorString = heifErrorString(
-                imageErrorActionText(ImageErrorActionTextId::DecodeHeifSequence), error);
-        }
-        return std::nullopt;
-    }
-
-    QString conversionError;
-    std::optional<QImage> image = qImageFromHeifImage(heifImage.get(), &conversionError);
-    if (!image.has_value()) {
-        if (errorString != nullptr) {
-            *errorString = conversionError;
-        }
-        return std::nullopt;
-    }
-
-    return AnimationFrame {
-        std::move(*image),
-        heifFrameDelay(heif_image_get_duration(heifImage.get()), d->timescale),
-    };
-}
-
-void HeifSequenceReader::close()
-{
-    if (d != nullptr) {
-        d->reset();
-    }
 }
 }

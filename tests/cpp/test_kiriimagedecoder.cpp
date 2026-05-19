@@ -4,7 +4,6 @@
 #include "kiriimagedecoder.h"
 
 #include "heifcontainer.h"
-#include "heifdecoder.h"
 #include "image_test_support.h"
 #include "qimagereadertilesource.h"
 
@@ -273,25 +272,6 @@ void TestKiriImageDecoder::heifSequenceDecodesAsStreamingAnimation()
     QCOMPARE(decoded->firstFrame.size(), QSize(64, 64));
     QVERIFY(!decoded->data.isEmpty());
     QVERIFY(qAlpha(decoded->firstFrame.pixel(48, 32)) < 255);
-
-    KiriView::HeifSequenceReader reader;
-    const KiriView::HeifSequenceOpenResult openResult = reader.open(imageData);
-    QCOMPARE(openResult.status, KiriView::HeifSequenceOpenStatus::Success);
-
-    QString errorString;
-    const std::optional<KiriView::AnimationFrame> firstFrame = reader.readNextFrame(&errorString);
-    QVERIFY2(firstFrame.has_value(), qPrintable(errorString));
-    QCOMPARE(firstFrame->image.size(), QSize(64, 64));
-    QVERIFY(firstFrame->delay > 0);
-    QVERIFY(qAlpha(firstFrame->image.pixel(16, 32)) > 0);
-    QVERIFY(qAlpha(firstFrame->image.pixel(48, 32)) < 255);
-
-    const std::optional<KiriView::AnimationFrame> secondFrame = reader.readNextFrame(&errorString);
-    QVERIFY2(secondFrame.has_value(), qPrintable(errorString));
-    QCOMPARE(secondFrame->image.size(), QSize(64, 64));
-    QVERIFY(secondFrame->delay > 0);
-    QVERIFY(qAlpha(secondFrame->image.pixel(16, 32)) < 255);
-    QVERIFY(qAlpha(secondFrame->image.pixel(48, 32)) > 0);
 }
 
 void TestKiriImageDecoder::rawExtensionForcesRawDecodeBeforeQtFallback()

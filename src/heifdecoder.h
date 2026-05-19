@@ -4,51 +4,15 @@
 #ifndef KIRIVIEW_HEIFDECODER_H
 #define KIRIVIEW_HEIFDECODER_H
 
-#include "animationframe.h"
 #include "decodedimageresult.h"
 
 #include <QByteArray>
-#include <QString>
-#include <memory>
 #include <optional>
 
 namespace KiriView {
-enum class HeifSequenceOpenStatus {
-    NotHeif,
-    NotSequence,
-    Success,
-    Error,
-};
-
-struct HeifSequenceOpenResult {
-    HeifSequenceOpenStatus status = HeifSequenceOpenStatus::NotHeif;
-    QString errorString;
-};
-
-class HeifSequenceReader final
-{
-public:
-    HeifSequenceReader();
-    ~HeifSequenceReader();
-
-    HeifSequenceReader(const HeifSequenceReader &) = delete;
-    HeifSequenceReader &operator=(const HeifSequenceReader &) = delete;
-    HeifSequenceReader(HeifSequenceReader &&) noexcept;
-    HeifSequenceReader &operator=(HeifSequenceReader &&) noexcept;
-
-    HeifSequenceOpenResult open(QByteArray data);
-    std::optional<AnimationFrame> readNextFrame(QString *errorString);
-    void close();
-
-private:
-    class Private;
-    std::unique_ptr<Private> d;
-};
-
 std::optional<DecodedImageResult> decodeHeifStillImageData(const QByteArray &data);
 std::optional<DecodedImageResult> decodeHeifSequenceImageData(const QByteArray &data);
 std::optional<DecodedImageResult> decodeHeifImageData(const QByteArray &data);
-QString heifSequenceDecodeErrorString();
 }
 
 #endif
