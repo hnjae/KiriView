@@ -28,6 +28,7 @@ src/heifcontainer.cpp
 src/heifdecoder.cpp
 src/heifsequencereader.cpp
 src/heifsupport.cpp
+src/heiftilingplan.cpp
 src/heiftilesource.cpp
 src/imageanimationpolicy.cpp
 src/imageanimationplayer.cpp

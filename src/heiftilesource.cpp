@@ -5,6 +5,7 @@
 
 #include "heifcontainer.h"
 #include "heifsupport.h"
+#include "heiftilingplan.h"
 #include "imagebytecost.h"
 #include "imageerrortext.h"
 #include "imagetilesourcehelpers_p.h"
@@ -12,7 +13,6 @@
 #include <libheif/heif_tiling.h>
 
 #include <QPainter>
-#include <algorithm>
 #include <cstdint>
 #include <memory>
 #include <optional>
@@ -22,11 +22,10 @@ namespace {
 class HeifTileSource final : public KiriView::ImageTileSource
 {
 public:
-    HeifTileSource(QByteArray data, QSize imageSize, heif_image_tiling tiling, bool tiled)
+    HeifTileSource(QByteArray data, QSize imageSize, std::optional<KiriView::HeifTileGrid> tileGrid)
         : m_data(std::move(data))
         , m_imageSize(std::move(imageSize))
-        , m_tiling(tiling)
-        , m_tiled(tiled)
+        , m_tileGrid(std::move(tileGrid))
     {
     }
 
@@ -47,7 +46,7 @@ public:
         }
 
         QImage sourceImage;
-        if (m_tiled && request.key.level == 0) {
+        if (m_tileGrid.has_value() && request.key.level == 0) {
             sourceImage = decodeGridSourceRect(request.sourceRect, errorString);
         } else {
             sourceImage = decodeFullOrScaled(request.levelSize, errorString);
@@ -126,41 +125,28 @@ private:
 
         KiriView::HeifDecodingOptions options;
         QPainter painter(&image);
-        const int firstTileX
-            = std::max(0, sourceRect.left() / static_cast<int>(m_tiling.tile_width));
-        const int firstTileY
-            = std::max(0, sourceRect.top() / static_cast<int>(m_tiling.tile_height));
-        const int lastTileX = std::min<int>(
-            m_tiling.num_columns - 1, sourceRect.right() / static_cast<int>(m_tiling.tile_width));
-        const int lastTileY = std::min<int>(
-            m_tiling.num_rows - 1, sourceRect.bottom() / static_cast<int>(m_tiling.tile_height));
-
-        for (int tileY = firstTileY; tileY <= lastTileY; ++tileY) {
-            for (int tileX = firstTileX; tileX <= lastTileX; ++tileX) {
-                KiriView::HeifImage heifImage;
-                const heif_error error
-                    = heif_image_handle_decode_image_tile(opened->handle.get(), heifImage.out(),
-                        heif_colorspace_RGB, heif_chroma_interleaved_RGBA, options.get(),
-                        static_cast<std::uint32_t>(tileX), static_cast<std::uint32_t>(tileY));
-                if (error.code != heif_error_Ok) {
-                    KiriView::setTileSourceError(errorString,
-                        KiriView::heifErrorString(
-                            KiriView::imageErrorActionText(
-                                KiriView::ImageErrorActionTextId::DecodeHeifGridTile),
-                            error));
-                    return {};
-                }
-
-                std::optional<QImage> tileImage
-                    = KiriView::qImageFromHeifImage(heifImage.get(), errorString);
-                if (!tileImage.has_value()) {
-                    return {};
-                }
-
-                const QPoint target(tileX * static_cast<int>(m_tiling.tile_width) - sourceRect.x(),
-                    tileY * static_cast<int>(m_tiling.tile_height) - sourceRect.y());
-                painter.drawImage(target, *tileImage);
+        for (const KiriView::HeifTileDecodeRegion &region :
+            KiriView::heifTileDecodeRegions(*m_tileGrid, sourceRect)) {
+            KiriView::HeifImage heifImage;
+            const heif_error error = heif_image_handle_decode_image_tile(opened->handle.get(),
+                heifImage.out(), heif_colorspace_RGB, heif_chroma_interleaved_RGBA, options.get(),
+                static_cast<std::uint32_t>(region.tileX), static_cast<std::uint32_t>(region.tileY));
+            if (error.code != heif_error_Ok) {
+                KiriView::setTileSourceError(errorString,
+                    KiriView::heifErrorString(
+                        KiriView::imageErrorActionText(
+                            KiriView::ImageErrorActionTextId::DecodeHeifGridTile),
+                        error));
+                return {};
             }
+
+            std::optional<QImage> tileImage
+                = KiriView::qImageFromHeifImage(heifImage.get(), errorString);
+            if (!tileImage.has_value()) {
+                return {};
+            }
+
+            painter.drawImage(region.targetPoint, *tileImage);
         }
 
         return image;
@@ -168,8 +154,7 @@ private:
 
     QByteArray m_data;
     QSize m_imageSize;
-    heif_image_tiling m_tiling {};
-    bool m_tiled = false;
+    std::optional<KiriView::HeifTileGrid> m_tileGrid;
 };
 }
 
@@ -195,10 +180,11 @@ std::shared_ptr<ImageTileSource> openHeifTileSource(const QByteArray &data, QStr
     heif_image_tiling tiling {};
     tiling.version = 1;
     heif_error error = heif_image_handle_get_image_tiling(opened->handle.get(), 1, &tiling);
-    const bool tiled = error.code == heif_error_Ok && tiling.num_columns > 0 && tiling.num_rows > 0
-        && tiling.tile_width > 0 && tiling.tile_height > 0
-        && (tiling.num_columns > 1 || tiling.num_rows > 1);
+    std::optional<HeifTileGrid> tileGrid;
+    if (error.code == heif_error_Ok) {
+        tileGrid = heifTileGridForTiling(tiling);
+    }
 
-    return std::make_shared<HeifTileSource>(data, imageSize, tiling, tiled);
+    return std::make_shared<HeifTileSource>(data, imageSize, std::move(tileGrid));
 }
 }
