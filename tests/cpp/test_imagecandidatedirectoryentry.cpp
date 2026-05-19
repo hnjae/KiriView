@@ -56,25 +56,8 @@ void TestImageCandidateDirectoryEntry::listerCompletionPublishesPendingLoad()
     QVERIFY(directory.isValid());
     QVERIFY(createFile(directory, QStringLiteral("01.png")));
 
-    KiriView::ImageCandidateDirectoryEntry *entryPtr = nullptr;
-    QString completedKey;
-    QString errorKey;
     QString errorString;
-    KiriView::ImageCandidateDirectoryEntry entry(directoryUrl(directory), QStringLiteral("entry"),
-        this,
-        KiriView::ImageCandidateDirectoryEntry::Callbacks {
-            [&entryPtr, &completedKey](const QString &key) {
-                completedKey = key;
-                entryPtr->handleCompleted();
-            },
-            [&entryPtr](const QString &) { entryPtr->handleChanged(); },
-            [&entryPtr, &errorKey, &errorString](const QString &key, const QString &message) {
-                errorKey = key;
-                errorString = message;
-                entryPtr->handleError(message);
-            },
-        });
-    entryPtr = &entry;
+    KiriView::ImageCandidateDirectoryEntry entry(directoryUrl(directory), this);
 
     std::vector<KiriView::ImageNavigationCandidate> loadedCandidates;
     bool loaded = false;
@@ -90,8 +73,6 @@ void TestImageCandidateDirectoryEntry::listerCompletionPublishesPendingLoad()
 
     QTRY_VERIFY_WITH_TIMEOUT(loaded || !errorString.isEmpty(), 10000);
     QVERIFY2(errorString.isEmpty(), qPrintable(errorString));
-    QCOMPARE(completedKey, QStringLiteral("entry"));
-    QVERIFY(errorKey.isEmpty());
     QCOMPARE(candidateUrls(loadedCandidates),
         std::vector<QUrl>({ fileUrl(directory, QStringLiteral("01.png")) }));
     QVERIFY(entry.listed());
@@ -104,16 +85,7 @@ void TestImageCandidateDirectoryEntry::listerChangesPublishSubscriberUpdates()
     QVERIFY(directory.isValid());
     QVERIFY(createFile(directory, QStringLiteral("01.png")));
 
-    KiriView::ImageCandidateDirectoryEntry *entryPtr = nullptr;
-    KiriView::ImageCandidateDirectoryEntry entry(directoryUrl(directory), QStringLiteral("entry"),
-        this,
-        KiriView::ImageCandidateDirectoryEntry::Callbacks {
-            [&entryPtr](const QString &) { entryPtr->handleCompleted(); },
-            [&entryPtr](const QString &) { entryPtr->handleChanged(); },
-            [&entryPtr](
-                const QString &, const QString &message) { entryPtr->handleError(message); },
-        });
-    entryPtr = &entry;
+    KiriView::ImageCandidateDirectoryEntry entry(directoryUrl(directory), this);
 
     bool loaded = false;
     QString errorString;

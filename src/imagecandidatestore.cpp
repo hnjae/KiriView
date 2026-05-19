@@ -96,52 +96,15 @@ ImageCandidateDirectoryEntry &ImageCandidateStore::entryForLocalDirectory(const 
         return *entry->second;
     }
 
-    auto insertedEntry = std::make_unique<ImageCandidateDirectoryEntry>(directoryUrl, key, this,
-        ImageCandidateDirectoryEntry::Callbacks {
-            [this](const QString &entryKey) { handleEntryCompleted(entryKey); },
-            [this](const QString &entryKey) { handleEntryChanged(entryKey); },
-            [this](const QString &entryKey, const QString &errorString) {
-                handleEntryError(entryKey, errorString);
-            },
-        });
+    auto insertedEntry = std::make_unique<ImageCandidateDirectoryEntry>(directoryUrl, this);
     ImageCandidateDirectoryEntry &entryRef = *insertedEntry;
     m_entries.emplace(key, std::move(insertedEntry));
 
     if (!entryRef.open()) {
-        handleEntryError(key, QString());
+        entryRef.handleError(QString());
     }
 
     return entryRef;
-}
-
-void ImageCandidateStore::handleEntryCompleted(const QString &key)
-{
-    auto entry = m_entries.find(key);
-    if (entry == m_entries.end()) {
-        return;
-    }
-
-    entry->second->handleCompleted();
-}
-
-void ImageCandidateStore::handleEntryChanged(const QString &key)
-{
-    auto entry = m_entries.find(key);
-    if (entry == m_entries.end()) {
-        return;
-    }
-
-    entry->second->handleChanged();
-}
-
-void ImageCandidateStore::handleEntryError(const QString &key, const QString &errorString)
-{
-    auto entry = m_entries.find(key);
-    if (entry == m_entries.end()) {
-        return;
-    }
-
-    entry->second->handleError(errorString);
 }
 
 void ImageCandidateStore::removePendingLoad(const QString &key, QObject *token)

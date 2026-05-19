@@ -28,9 +28,6 @@ public:
 
 private:
     ImageCandidateDirectoryEntry &entryForLocalDirectory(const QUrl &directoryUrl);
-    void handleEntryCompleted(const QString &key);
-    void handleEntryChanged(const QString &key);
-    void handleEntryError(const QString &key, const QString &errorString);
     void removePendingLoad(const QString &key, QObject *token);
     void removeSubscriber(const QString &key, QObject *token);
 

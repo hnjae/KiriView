@@ -21,21 +21,9 @@ namespace KiriView {
 class ImageCandidateDirectoryEntry final
 {
 public:
-    using CompletedCallback = std::function<void(const QString &)>;
-    using ChangedCallback = std::function<void(const QString &)>;
-    using EntryErrorCallback = std::function<void(const QString &, const QString &)>;
-
-    struct Callbacks {
-        CompletedCallback completed;
-        ChangedCallback changed;
-        EntryErrorCallback error;
-    };
-
-    ImageCandidateDirectoryEntry(
-        QUrl directoryUrl, QString key, QObject *signalContext, Callbacks callbacks);
+    ImageCandidateDirectoryEntry(QUrl directoryUrl, QObject *signalContext);
     ~ImageCandidateDirectoryEntry();
 
-    const QString &key() const;
     bool failed() const;
     bool listed() const;
     const QString &errorString() const;
@@ -54,10 +42,9 @@ public:
     void removeSubscriber(QObject *token);
 
 private:
-    void connectSignals(QObject *signalContext, Callbacks callbacks);
+    void connectSignals(QObject *signalContext);
 
     QUrl m_directoryUrl;
-    QString m_key;
     std::unique_ptr<KCoreDirLister> m_lister;
     ImageCandidateStoreEntryState m_state;
 };

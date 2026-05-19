@@ -29,13 +29,11 @@ std::vector<KiriView::ImageNavigationCandidate> imageCandidatesForLister(
         lister->itemsForDir(directoryUrl, KCoreDirLister::AllItems));
 }
 
-void notifyChanged(QObject *context,
-    const std::shared_ptr<KiriView::ImageCandidateDirectoryEntry::Callbacks> &callbacks,
-    const QString &key)
+void notifyChanged(QObject *context, KiriView::ImageCandidateDirectoryEntry *entry)
 {
-    QTimer::singleShot(0, context, [callbacks, key]() {
-        if (callbacks->changed) {
-            callbacks->changed(key);
+    QTimer::singleShot(0, context, [entry]() {
+        if (entry != nullptr) {
+            entry->handleChanged();
         }
     });
 }
@@ -43,12 +41,11 @@ void notifyChanged(QObject *context,
 
 namespace KiriView {
 ImageCandidateDirectoryEntry::ImageCandidateDirectoryEntry(
-    QUrl directoryUrl, QString key, QObject *signalContext, Callbacks callbacks)
+    QUrl directoryUrl, QObject *signalContext)
     : m_directoryUrl(std::move(directoryUrl))
-    , m_key(std::move(key))
     , m_lister(createLiveImageCandidateLister())
 {
-    connectSignals(signalContext, std::move(callbacks));
+    connectSignals(signalContext);
 }
 
 ImageCandidateDirectoryEntry::~ImageCandidateDirectoryEntry()
@@ -56,8 +53,6 @@ ImageCandidateDirectoryEntry::~ImageCandidateDirectoryEntry()
     QObject::disconnect(m_lister.get(), nullptr, nullptr, nullptr);
     m_lister->stop();
 }
-
-const QString &ImageCandidateDirectoryEntry::key() const { return m_key; }
 
 bool ImageCandidateDirectoryEntry::failed() const { return m_state.failed(); }
 
@@ -114,40 +109,24 @@ void ImageCandidateDirectoryEntry::removeSubscriber(QObject *token)
     m_state.removeSubscriber(token);
 }
 
-void ImageCandidateDirectoryEntry::connectSignals(QObject *signalContext, Callbacks callbacks)
+void ImageCandidateDirectoryEntry::connectSignals(QObject *signalContext)
 {
     QObject *context = signalContext == nullptr ? m_lister.get() : signalContext;
-    auto sharedCallbacks = std::make_shared<Callbacks>(std::move(callbacks));
 
-    QObject::connect(m_lister.get(), &KCoreDirLister::completed, context,
-        [callbacks = sharedCallbacks, key = m_key]() {
-            if (callbacks->completed) {
-                callbacks->completed(key);
-            }
-        });
+    QObject::connect(
+        m_lister.get(), &KCoreDirLister::completed, context, [this]() { handleCompleted(); });
     QObject::connect(m_lister.get(), &KCoreDirLister::itemsAdded, context,
-        [context, callbacks = sharedCallbacks, key = m_key](
-            const QUrl &, const KFileItemList &) { notifyChanged(context, callbacks, key); });
+        [this, context](const QUrl &, const KFileItemList &) { notifyChanged(context, this); });
     QObject::connect(m_lister.get(), &KCoreDirLister::itemsDeleted, context,
-        [context, callbacks = sharedCallbacks, key = m_key](
-            const KFileItemList &) { notifyChanged(context, callbacks, key); });
+        [this, context](const KFileItemList &) { notifyChanged(context, this); });
     QObject::connect(m_lister.get(), &KCoreDirLister::refreshItems, context,
-        [context, callbacks = sharedCallbacks, key = m_key](
-            const QList<QPair<KFileItem, KFileItem>> &) {
-            notifyChanged(context, callbacks, key);
-        });
+        [this, context](
+            const QList<QPair<KFileItem, KFileItem>> &) { notifyChanged(context, this); });
     QObject::connect(m_lister.get(), &KCoreDirLister::clear, context,
-        [context, callbacks = sharedCallbacks, key = m_key]() {
-            notifyChanged(context, callbacks, key);
-        });
+        [this, context]() { notifyChanged(context, this); });
     QObject::connect(m_lister.get(), &KCoreDirLister::clearDir, context,
-        [context, callbacks = sharedCallbacks, key = m_key](
-            const QUrl &) { notifyChanged(context, callbacks, key); });
+        [this, context](const QUrl &) { notifyChanged(context, this); });
     QObject::connect(m_lister.get(), &KCoreDirLister::jobError, context,
-        [callbacks = sharedCallbacks, key = m_key](KIO::Job *job) {
-            if (callbacks->error) {
-                callbacks->error(key, job == nullptr ? QString() : job->errorString());
-            }
-        });
+        [this](KIO::Job *job) { handleError(job == nullptr ? QString() : job->errorString()); });
 }
 }
