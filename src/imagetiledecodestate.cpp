@@ -3,6 +3,8 @@
 
 #include "imagetiledecodestate.h"
 
+#include <utility>
+
 namespace KiriView {
 bool ImageTileDecodeExclusions::contains(const TileKey &key) const
 {
@@ -15,18 +17,37 @@ void ImageTileDecodeState::invalidate()
     clearRequests();
 }
 
-quint64 ImageTileDecodeState::beginSchedule(const std::shared_ptr<DisplayedImageSurface> &surface)
-{
-    syncSurface(surface);
-    return m_generation.current();
-}
-
 ImageTileDecodeExclusions ImageTileDecodeState::exclusions() const
 {
     return ImageTileDecodeExclusions { m_pendingTileKeys, m_failedTileKeys };
 }
 
-void ImageTileDecodeState::start(const TileKey &key) { m_pendingTileKeys.insert(key); }
+ImageTileDecodeScheduleState ImageTileDecodeState::beginSchedule(
+    const std::shared_ptr<DisplayedImageSurface> &surface)
+{
+    syncSurface(surface);
+    return ImageTileDecodeScheduleState { m_generation.current(), exclusions() };
+}
+
+std::vector<TileRequest> ImageTileDecodeState::startRequests(
+    quint64 generation, std::vector<TileRequest> requests)
+{
+    if (!m_generation.accepts(generation)) {
+        return {};
+    }
+
+    std::vector<TileRequest> acceptedRequests;
+    acceptedRequests.reserve(requests.size());
+    for (TileRequest &request : requests) {
+        if (m_pendingTileKeys.contains(request.key) || m_failedTileKeys.contains(request.key)) {
+            continue;
+        }
+
+        m_pendingTileKeys.insert(request.key);
+        acceptedRequests.push_back(std::move(request));
+    }
+    return acceptedRequests;
+}
 
 bool ImageTileDecodeState::finish(quint64 generation, const TileKey &key)
 {

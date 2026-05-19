@@ -31,15 +31,20 @@ void ImageTileDecodeScheduler::schedule(
     const std::shared_ptr<DisplayedImageSurface> &displayedSurface, const QSizeF &displaySize,
     const QRectF &visibleItemRect, const ImageDocumentRenderContext &context, int rotationDegrees)
 {
-    const quint64 generation = m_decodeState.beginSchedule(displayedSurface);
-    const ImageTileDecodePlan plan = imageTileDecodePlan(displayedSurface, displaySize,
-        visibleItemRect, context, rotationDegrees, m_decodeState.exclusions());
+    const ImageTileDecodeScheduleState scheduleState
+        = m_decodeState.beginSchedule(displayedSurface);
+    ImageTileDecodePlan plan = imageTileDecodePlan(displayedSurface, displaySize, visibleItemRect,
+        context, rotationDegrees, scheduleState.exclusions);
     if (plan.isEmpty()) {
         return;
     }
 
+    plan.requests = m_decodeState.startRequests(scheduleState.generation, std::move(plan.requests));
+    if (plan.requests.empty()) {
+        return;
+    }
+
     for (const TileRequest &request : plan.requests) {
-        m_decodeState.start(request.key);
         // Tile workers can outlive this non-QObject scheduler while the Qt context survives.
         const std::weak_ptr<DecodeLifetime> lifetime = m_decodeLifetime;
         const TileKey key = request.key;
@@ -51,7 +56,8 @@ void ImageTileDecodeScheduler::schedule(
                 std::optional<DecodedTile> tile = source->decodeTile(request, &errorString);
                 return tile;
             },
-            [this, lifetime, generation, key](std::optional<DecodedTile> tile) mutable {
+            [this, lifetime, generation = scheduleState.generation, key](
+                std::optional<DecodedTile> tile) mutable {
                 if (lifetime.expired()) {
                     return;
                 }

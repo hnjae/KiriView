@@ -10,6 +10,7 @@
 
 #include <QSet>
 #include <memory>
+#include <vector>
 
 namespace KiriView {
 struct ImageTileDecodeExclusions {
@@ -19,17 +20,23 @@ struct ImageTileDecodeExclusions {
     bool contains(const TileKey &key) const;
 };
 
+struct ImageTileDecodeScheduleState {
+    quint64 generation = 0;
+    ImageTileDecodeExclusions exclusions;
+};
+
 class ImageTileDecodeState final
 {
 public:
     void invalidate();
-    quint64 beginSchedule(const std::shared_ptr<DisplayedImageSurface> &surface);
-    ImageTileDecodeExclusions exclusions() const;
-    void start(const TileKey &key);
+    ImageTileDecodeScheduleState beginSchedule(
+        const std::shared_ptr<DisplayedImageSurface> &surface);
+    std::vector<TileRequest> startRequests(quint64 generation, std::vector<TileRequest> requests);
     bool finish(quint64 generation, const TileKey &key);
     void fail(const TileKey &key);
 
 private:
+    ImageTileDecodeExclusions exclusions() const;
     void clearRequests();
     void syncSurface(const std::shared_ptr<DisplayedImageSurface> &surface);
 
