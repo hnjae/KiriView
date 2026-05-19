@@ -88,9 +88,11 @@ void ImagePageNavigationController::update(std::optional<ImageCandidateListConte
 
     m_refreshListerJob = m_candidateRepository.loadImages(
         this, *context,
-        [this, currentUrl = context->currentUrl(), candidateSource = context->source()](
+        [this, candidateSource = context->source()](
             std::vector<ImageNavigationCandidate> candidates) {
-            if (m_model.completeRefresh(candidates, currentUrl, candidateSource)) {
+            const ImagePageNavigationRefreshResult refresh
+                = m_model.completeRefreshFromCurrentContext(candidates, candidateSource);
+            if (refresh.accepted && refresh.changed) {
                 notifyChanged();
             }
         },

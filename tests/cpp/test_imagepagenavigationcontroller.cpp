@@ -7,6 +7,7 @@
 #include <QObject>
 #include <QTest>
 #include <QUrl>
+#include <cstddef>
 #include <utility>
 #include <vector>
 
@@ -20,6 +21,49 @@ using KiriView::TestSupport::imageCandidate;
 using KiriView::TestSupport::localUrl;
 
 using FakeCandidateProvider = KiriView::TestSupport::FakeImageNavigationCandidateProvider;
+
+class DelayedDirectoryImageProvider
+{
+public:
+    KiriView::ImageNavigationCandidateProvider provider()
+    {
+        return KiriView::ImageNavigationCandidateProvider {
+            [this](QObject *, QUrl directoryUrl, KiriView::ImageCandidatesCallback callback,
+                KiriView::ErrorCallback) {
+                m_loads.push_back(Load { std::move(directoryUrl), std::move(callback) });
+                return KiriView::ImageIoJob();
+            },
+            [](QObject *, QUrl, KiriView::ContainerCandidatesCallback, KiriView::ErrorCallback) {
+                return KiriView::ImageIoJob();
+            },
+            [](QObject *, KiriView::ArchiveDocumentLocation, KiriView::ImageCandidatesCallback,
+                KiriView::ErrorCallback) { return KiriView::ImageIoJob(); },
+            [](QObject *, QUrl, KiriView::ImageCandidatesCallback, KiriView::ErrorCallback) {
+                return KiriView::ImageIoJob();
+            },
+        };
+    }
+
+    std::size_t loadCount() const { return m_loads.size(); }
+
+    const QUrl &loadDirectory(std::size_t index) const { return m_loads.at(index).directoryUrl; }
+
+    void finishLoad(std::size_t index, std::vector<ImageNavigationCandidate> candidates)
+    {
+        KiriView::ImageCandidatesCallback callback = m_loads.at(index).callback;
+        if (callback) {
+            callback(std::move(candidates));
+        }
+    }
+
+private:
+    struct Load {
+        QUrl directoryUrl;
+        KiriView::ImageCandidatesCallback callback;
+    };
+
+    std::vector<Load> m_loads;
+};
 
 ImagePageNavigationController::Callbacks controllerCallbacks(
     ImagePageNavigationController::OpenUrlCallback openUrl = {},
@@ -50,6 +94,7 @@ private Q_SLOTS:
     void changedCandidatesRecoverRemovedImageAfterStateUpdate();
     void deletionInProgressSuppressesRemovedCurrentImageRecovery();
     void fallbackAdjacentNavigationPublishesTargetBeforeOpening();
+    void staleUpdateCompletionCannotReplaceCurrentRefreshContext();
     void cancelUpdateStopsCandidateChangeWatcher();
 };
 
@@ -188,6 +233,35 @@ void TestImagePageNavigationController::fallbackAdjacentNavigationPublishesTarge
     QCOMPARE(imageCountAtOpen, 3);
     QCOMPARE(controller.currentPageNumber(), 2);
     QCOMPARE(controller.imageCount(), 3);
+}
+
+void TestImagePageNavigationController::staleUpdateCompletionCannotReplaceCurrentRefreshContext()
+{
+    DelayedDirectoryImageProvider delayedProvider;
+    ImageCandidateRepository repository(delayedProvider.provider());
+    int changeCount = 0;
+    ImagePageNavigationController controller(
+        nullptr, repository, controllerCallbacks({}, [&changeCount]() { ++changeCount; }));
+    const QUrl firstDirectoryUrl = localUrl(QStringLiteral("/images/"));
+    const QUrl secondDirectoryUrl = localUrl(QStringLiteral("/other/"));
+    const QUrl firstUrl = localUrl(QStringLiteral("/images/01.png"));
+    const QUrl secondUrl = localUrl(QStringLiteral("/other/02.png"));
+
+    controller.update(directoryContext(firstUrl, firstDirectoryUrl));
+    controller.update(directoryContext(secondUrl, secondDirectoryUrl));
+    QCOMPARE(delayedProvider.loadCount(), std::size_t(2));
+    QCOMPARE(delayedProvider.loadDirectory(0), firstDirectoryUrl);
+    QCOMPARE(delayedProvider.loadDirectory(1), secondDirectoryUrl);
+
+    delayedProvider.finishLoad(0, { imageCandidate(firstUrl) });
+    QCOMPARE(controller.currentPageNumber(), 0);
+    QCOMPARE(controller.imageCount(), 0);
+    QCOMPARE(changeCount, 0);
+
+    delayedProvider.finishLoad(1, { imageCandidate(secondUrl) });
+    QCOMPARE(controller.currentPageNumber(), 1);
+    QCOMPARE(controller.imageCount(), 1);
+    QCOMPARE(changeCount, 1);
 }
 
 void TestImagePageNavigationController::cancelUpdateStopsCandidateChangeWatcher()

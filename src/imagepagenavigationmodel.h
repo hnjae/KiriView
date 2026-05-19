@@ -6,6 +6,7 @@
 
 #include "imagecandidaterepository.h"
 #include "imagenavigationtypes.h"
+#include "imagepagenavigationrefreshstate.h"
 
 #include <QUrl>
 #include <optional>
@@ -39,13 +40,11 @@ public:
     bool clear();
 
 private:
-    bool completeRefresh(
-        std::vector<QUrl> urls, const QUrl &currentUrl, ImageCandidateListSource source);
+    bool completeRefresh(std::vector<QUrl> urls, ImageCandidateListContext context);
     bool replaceState(PageNavigationState state, bool forceChanged = false);
 
     PageNavigationState m_state;
-    std::optional<ImageCandidateListContext> m_knownContext;
-    std::optional<ImageCandidateListContext> m_refreshContext;
+    ImagePageNavigationRefreshState m_refreshState;
 };
 }
 
