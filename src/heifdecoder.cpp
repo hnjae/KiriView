@@ -15,7 +15,7 @@
 #include "heifcontainer.h"
 #include "heifsupport.h"
 #include "heiftilesource.h"
-#include "imageviewtext.h"
+#include "imageerrortext.h"
 #include "staticimagedecode.h"
 
 #include <libheif/heif_sequences.h>
@@ -84,7 +84,7 @@ std::optional<DecodedImageResult> decodeHeifStillImageData(const QByteArray &dat
 
 QString heifSequenceDecodeErrorString()
 {
-    return imageViewText("Could not decode the selected HEIF image sequence.");
+    return imageErrorText(ImageErrorTextId::DecodeHeifSequence);
 }
 
 std::optional<DecodedImageResult> decodeHeifSequenceImageData(const QByteArray &data)
@@ -164,7 +164,7 @@ HeifSequenceOpenResult HeifSequenceReader::open(QByteArray data)
     if (d->track.get() == nullptr) {
         close();
         return { HeifSequenceOpenStatus::Error,
-            imageViewText("Could not decode the selected HEIF image: sequence track is missing.") };
+            imageErrorText(ImageErrorTextId::HeifSequenceTrackMissing) };
     }
 
     if (heif_track_get_track_handler_type(d->track.get()) != heif_track_type_image_sequence) {
@@ -175,9 +175,8 @@ HeifSequenceOpenResult HeifSequenceReader::open(QByteArray data)
     d->options.emplace();
     if (d->options->get() == nullptr) {
         close();
-        constexpr const char messageStr[] = "Could not decode the selected HEIF image: libheif "
-                                            "could not allocate decoding options.";
-        return { HeifSequenceOpenStatus::Error, imageViewText(messageStr) };
+        return { HeifSequenceOpenStatus::Error,
+            imageErrorText(ImageErrorTextId::HeifDecodeOptionsAllocationFailed) };
     }
     d->timescale = heif_track_get_timescale(d->track.get());
 
@@ -192,9 +191,7 @@ std::optional<AnimationFrame> HeifSequenceReader::readNextFrame(QString *errorSt
 
     if (d->track.get() == nullptr) {
         if (errorString != nullptr) {
-            *errorString
-                = imageViewText("Could not decode the selected HEIF image: sequence track is "
-                                "missing.");
+            *errorString = imageErrorText(ImageErrorTextId::HeifSequenceTrackMissing);
         }
         return std::nullopt;
     }
@@ -207,8 +204,8 @@ std::optional<AnimationFrame> HeifSequenceReader::readNextFrame(QString *errorSt
     }
     if (error.code != heif_error_Ok) {
         if (errorString != nullptr) {
-            *errorString
-                = heifErrorString(imageViewText("decoding the HEIF image sequence"), error);
+            *errorString = heifErrorString(
+                imageErrorActionText(ImageErrorActionTextId::DecodeHeifSequence), error);
         }
         return std::nullopt;
     }

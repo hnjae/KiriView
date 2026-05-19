@@ -6,8 +6,8 @@
 #include "heifcontainer.h"
 #include "heifsupport.h"
 #include "imagebytecost.h"
+#include "imageerrortext.h"
 #include "imagetilesourcehelpers_p.h"
-#include "imageviewtext.h"
 
 #include <libheif/heif_tiling.h>
 
@@ -65,7 +65,7 @@ public:
             = KiriView::decodedTileFromSourceImage(request, sourceImage);
         if (!tile.has_value()) {
             KiriView::setTileSourceError(
-                errorString, KiriView::imageViewText("Could not render the selected tile."));
+                errorString, KiriView::imageErrorText(KiriView::ImageErrorTextId::RenderTile));
             return std::nullopt;
         }
         return tile;
@@ -77,8 +77,8 @@ private:
         if (KiriView::estimatedRgbaByteCost(m_imageSize)
             > KiriView::imageFullDecodeFallbackByteLimit) {
             KiriView::setTileSourceError(errorString,
-                KiriView::imageViewText("The selected HEIF image is too large for fallback "
-                                        "full-image decoding."));
+                KiriView::imageErrorText(
+                    KiriView::ImageErrorTextId::HeifFullDecodeFallbackTooLarge));
             return {};
         }
 
@@ -94,8 +94,9 @@ private:
             heif_colorspace_RGB, heif_chroma_interleaved_RGBA, options.get());
         if (error.code != heif_error_Ok) {
             KiriView::setTileSourceError(errorString,
-                KiriView::heifErrorString(
-                    KiriView::imageViewText("decoding the primary image"), error));
+                KiriView::heifErrorString(KiriView::imageErrorActionText(
+                                              KiriView::ImageErrorActionTextId::DecodePrimaryImage),
+                    error));
             return {};
         }
 
@@ -118,7 +119,7 @@ private:
         QImage image(sourceRect.size(), QImage::Format_RGBA8888_Premultiplied);
         if (image.isNull()) {
             KiriView::setTileSourceError(
-                errorString, KiriView::imageViewText("Could not allocate the selected tile."));
+                errorString, KiriView::imageErrorText(KiriView::ImageErrorTextId::AllocateTile));
             return {};
         }
         image.fill(Qt::transparent);
@@ -144,7 +145,9 @@ private:
                 if (error.code != heif_error_Ok) {
                     KiriView::setTileSourceError(errorString,
                         KiriView::heifErrorString(
-                            KiriView::imageViewText("decoding a HEIF grid tile"), error));
+                            KiriView::imageErrorActionText(
+                                KiriView::ImageErrorActionTextId::DecodeHeifGridTile),
+                            error));
                     return {};
                 }
 
@@ -185,8 +188,7 @@ std::shared_ptr<ImageTileSource> openHeifTileSource(const QByteArray &data, QStr
     const QSize imageSize(heif_image_handle_get_width(opened->handle.get()),
         heif_image_handle_get_height(opened->handle.get()));
     if (imageSize.isEmpty()) {
-        setTileSourceError(errorString,
-            imageViewText("Could not decode the selected HEIF image: image size is invalid."));
+        setTileSourceError(errorString, imageErrorText(ImageErrorTextId::HeifImageSizeInvalid));
         return {};
     }
 

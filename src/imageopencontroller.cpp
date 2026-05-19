@@ -5,11 +5,11 @@
 
 #include "imagecallback.h"
 #include "imagedocumentstate.h"
+#include "imageerrortext.h"
 #include "imageloader.h"
 #include "imageopenworkflow.h"
 #include "imagepresentationcontroller.h"
 #include "imagepresentationload.h"
-#include "imageviewtext.h"
 
 #include <memory>
 #include <utility>
@@ -17,12 +17,12 @@
 namespace {
 QString emptyArchiveErrorMessage()
 {
-    return KiriView::imageViewText("The selected archive does not contain any supported images.");
+    return KiriView::imageErrorText(KiriView::ImageErrorTextId::EmptyArchive);
 }
 
 QString archiveOpenErrorMessage(const QString &errorString)
 {
-    return errorString.isEmpty() ? KiriView::imageViewText("Could not open the selected archive.")
+    return errorString.isEmpty() ? KiriView::imageErrorText(KiriView::ImageErrorTextId::OpenArchive)
                                  : errorString;
 }
 
@@ -35,7 +35,7 @@ QString loadErrorMessage(KiriView::ImageLoadError error, const QString &errorStr
 QString animationLoadErrorMessage(const QString &errorString)
 {
     return errorString.isEmpty()
-        ? KiriView::imageViewText("Could not decode the selected image animation.")
+        ? KiriView::imageErrorText(KiriView::ImageErrorTextId::DecodeImageAnimation)
         : errorString;
 }
 }
@@ -145,7 +145,7 @@ void ImageOpenController::finishPresentedImageLoad(
 {
     if (!result.presented) {
         finishLoadWithError(session, ImageLoadError::Generic,
-            imageViewText("Could not decode the selected image animation."));
+            imageErrorText(ImageErrorTextId::DecodeImageAnimation));
         return;
     }
 

@@ -5,9 +5,9 @@
 
 #include "bufferedimagereader.h"
 #include "imagebytecost.h"
+#include "imageerrortext.h"
 #include "imagerendering.h"
 #include "imagetilesourcehelpers_p.h"
-#include "imageviewtext.h"
 
 #include <QImageIOHandler>
 #include <memory>
@@ -17,7 +17,7 @@
 namespace {
 QString imageDataReadError()
 {
-    return KiriView::imageViewText("Could not read the selected image data.");
+    return KiriView::imageErrorText(KiriView::ImageErrorTextId::ReadImageData);
 }
 
 template <typename ConfigureReader>
@@ -165,8 +165,8 @@ FirstDisplayImageDecodeResult QImageReaderTileSource::decodeFirstDisplayImage(
 
     const qreal displayPixelsPerSourcePixel = imagePixelsPerSourcePixel(m_imageSize, image.size());
     if (displayPixelsPerSourcePixel <= 0.0) {
-        setTileSourceError(errorString,
-            imageViewText("Could not determine the selected JPEG first-display size."));
+        setTileSourceError(
+            errorString, imageErrorText(ImageErrorTextId::DetermineJpegFirstDisplaySize));
         return { FirstDisplayImageDecodeStatus::Error, {}, 0.0 };
     }
 
@@ -202,8 +202,8 @@ QImage QImageReaderTileSource::readScaledImage(const QSize &scaledSize, QString 
 QImage QImageReaderTileSource::readFullImage(QString *errorString) const
 {
     if (estimatedRgbaByteCost(m_imageSize) > imageFullDecodeFallbackByteLimit) {
-        setTileSourceError(errorString,
-            imageViewText("The selected image is too large for fallback full-image decoding."));
+        setTileSourceError(
+            errorString, imageErrorText(ImageErrorTextId::ImageFullDecodeFallbackTooLarge));
         return {};
     }
     return readScaledImage(m_imageSize, errorString);

@@ -4,8 +4,8 @@
 #include "qimagereaderdecoder.h"
 
 #include "bufferedimagereader.h"
+#include "imageerrortext.h"
 #include "imagerendering.h"
-#include "imageviewtext.h"
 #include "qimagereadertilesource.h"
 #include "staticimagedecode.h"
 
@@ -35,7 +35,7 @@ DecodedImageResult decodeQImageReaderImageData(
 {
     BufferedImageReader reader(data);
     if (!reader) {
-        return failedDecodedImageResult(imageViewText("Could not read the selected image data."));
+        return failedDecodedImageResult(imageErrorText(ImageErrorTextId::ReadImageData));
     }
 
     const bool supportsAnimation = reader.supportsAnimation();

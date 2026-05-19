@@ -4,13 +4,12 @@
 #include "rawdecoder.h"
 
 #include "imagebytecost.h"
+#include "imageerrortext.h"
 #include "imageformatregistry.h"
 #include "imagerendering.h"
 #include "imagetilesourcehelpers_p.h"
-#include "imageviewtext.h"
 #include "staticimagedecode.h"
 
-#include <KLocalizedString>
 #include <QColorSpace>
 #include <cstddef>
 #include <libraw/libraw.h>
@@ -31,15 +30,12 @@ void setRawDecodeError(QString *errorString, QString message)
 
 QString rawDecodeErrorString(const QString &action, int errorCode)
 {
-    QString message = KiriView::imageViewText("Unknown LibRaw error.");
+    QString message = KiriView::imageErrorText(KiriView::ImageErrorTextId::UnknownLibrawError);
     if (const char *rawMessage = LibRaw::strerror(errorCode); rawMessage != nullptr) {
         message = QString::fromUtf8(rawMessage);
     }
 
-    return ki18nc("@info:status", "Could not decode the selected RAW image: %1: %2")
-        .subs(action)
-        .subs(message)
-        .toString();
+    return KiriView::rawDecodeErrorText(action, message);
 }
 
 QSize libRawImageSize(const LibRaw &processor)
@@ -55,15 +51,13 @@ bool validateRawImageSize(const QSize &size, QString *errorString)
 {
     if (size.isEmpty()) {
         setRawDecodeError(errorString,
-            KiriView::imageViewText(
-                "Could not decode the selected RAW image: decoded image size is invalid."));
+            KiriView::imageErrorText(KiriView::ImageErrorTextId::RawDecodedImageSizeInvalid));
         return false;
     }
 
     if (KiriView::estimatedRgbaByteCost(size) > KiriView::imageFullDecodeFallbackByteLimit) {
         setRawDecodeError(errorString,
-            KiriView::imageViewText(
-                "The selected RAW image is too large for full-image decoding."));
+            KiriView::imageErrorText(KiriView::ImageErrorTextId::RawFullDecodeTooLarge));
         return false;
     }
 
@@ -75,16 +69,14 @@ std::optional<QImage> qImageFromRawProcessedImage(
 {
     if (processedImage == nullptr) {
         setRawDecodeError(errorString,
-            KiriView::imageViewText(
-                "Could not decode the selected RAW image: decoded image is invalid."));
+            KiriView::imageErrorText(KiriView::ImageErrorTextId::RawDecodedImageInvalid));
         return std::nullopt;
     }
 
     if (processedImage->type != LIBRAW_IMAGE_BITMAP || processedImage->bits != 8
         || (processedImage->colors != 3 && processedImage->colors != 4)) {
         setRawDecodeError(errorString,
-            KiriView::imageViewText(
-                "Could not decode the selected RAW image: decoded pixel format is unsupported."));
+            KiriView::imageErrorText(KiriView::ImageErrorTextId::RawDecodedPixelFormatUnsupported));
         return std::nullopt;
     }
 
@@ -98,16 +90,14 @@ std::optional<QImage> qImageFromRawProcessedImage(
         * static_cast<std::size_t>(processedImage->height) * channelCount;
     if (processedImage->data_size < minimumDataSize) {
         setRawDecodeError(errorString,
-            KiriView::imageViewText(
-                "Could not decode the selected RAW image: decoded pixel data is invalid."));
+            KiriView::imageErrorText(KiriView::ImageErrorTextId::RawDecodedPixelDataInvalid));
         return std::nullopt;
     }
 
     QImage image(imageSize, QImage::Format_RGBA8888);
     if (image.isNull()) {
         setRawDecodeError(errorString,
-            KiriView::imageViewText(
-                "Could not decode the selected RAW image: decoded image allocation failed."));
+            KiriView::imageErrorText(KiriView::ImageErrorTextId::RawDecodedImageAllocationFailed));
         return std::nullopt;
     }
 
@@ -137,7 +127,9 @@ std::optional<QImage> decodeRawImage(const QByteArray &data, QString *errorStrin
     int errorCode = processor.open_buffer(data.constData(), static_cast<std::size_t>(data.size()));
     if (errorCode != LIBRAW_SUCCESS) {
         setRawDecodeError(errorString,
-            rawDecodeErrorString(KiriView::imageViewText("reading the RAW image"), errorCode));
+            rawDecodeErrorString(
+                KiriView::imageErrorActionText(KiriView::ImageErrorActionTextId::ReadRawImage),
+                errorCode));
         return std::nullopt;
     }
 
@@ -152,14 +144,18 @@ std::optional<QImage> decodeRawImage(const QByteArray &data, QString *errorStrin
     errorCode = processor.unpack();
     if (errorCode != LIBRAW_SUCCESS) {
         setRawDecodeError(errorString,
-            rawDecodeErrorString(KiriView::imageViewText("unpacking the RAW image"), errorCode));
+            rawDecodeErrorString(
+                KiriView::imageErrorActionText(KiriView::ImageErrorActionTextId::UnpackRawImage),
+                errorCode));
         return std::nullopt;
     }
 
     errorCode = processor.dcraw_process();
     if (errorCode != LIBRAW_SUCCESS) {
         setRawDecodeError(errorString,
-            rawDecodeErrorString(KiriView::imageViewText("processing the RAW image"), errorCode));
+            rawDecodeErrorString(
+                KiriView::imageErrorActionText(KiriView::ImageErrorActionTextId::ProcessRawImage),
+                errorCode));
         return std::nullopt;
     }
 
@@ -168,8 +164,9 @@ std::optional<QImage> decodeRawImage(const QByteArray &data, QString *errorStrin
         processor.dcraw_make_mem_image(&memImageErrorCode), &LibRaw::dcraw_clear_mem);
     if (memImageErrorCode != LIBRAW_SUCCESS) {
         setRawDecodeError(errorString,
-            rawDecodeErrorString(
-                KiriView::imageViewText("creating the display image"), memImageErrorCode));
+            rawDecodeErrorString(KiriView::imageErrorActionText(
+                                     KiriView::ImageErrorActionTextId::CreateDisplayImage),
+                memImageErrorCode));
         return std::nullopt;
     }
 
@@ -207,7 +204,7 @@ public:
         }
 
         KiriView::setTileSourceError(
-            errorString, KiriView::imageViewText("Could not render the selected RAW tile."));
+            errorString, KiriView::imageErrorText(KiriView::ImageErrorTextId::RenderRawTile));
         return std::nullopt;
     }
 

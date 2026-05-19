@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 #include "applicationruntime.h"
-#include "imageviewtext.h"
+#include "imageerrortext.h"
 #include "kiriviewapplication.h"
 #include "localization.h"
 
@@ -59,7 +59,7 @@ void TestLocalization::actionsUseTestCatalog()
 
 void TestLocalization::statusMessagesUseTestCatalog()
 {
-    QCOMPARE(KiriView::imageViewText("Could not read the selected image data."),
+    QCOMPARE(KiriView::imageErrorText(KiriView::ImageErrorTextId::ReadImageData),
         QStringLiteral("__kiriview_test_status_read_image_data__"));
 }
 

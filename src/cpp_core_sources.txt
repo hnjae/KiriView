@@ -50,6 +50,7 @@ src/imagedecodejobstate.cpp
 src/imagedocumentstate.cpp
 src/imagesurface.cpp
 src/imageformatregistry.cpp
+src/imageerrortext.cpp
 src/imagecandidaterepository.cpp
 src/imagecandidatedirectoryentry.cpp
 src/imagecandidatestore.cpp
@@ -96,7 +97,6 @@ src/imageurl.cpp
 src/imageviewportgeometry.cpp
 src/imageviewportscanstate.cpp
 src/imageviewrendercontextbinding.cpp
-src/imageviewtext.cpp
 src/imagezoomstate.cpp
 src/applicationshortcutpolicy.cpp
 src/kiriviewapplicationactions.cpp

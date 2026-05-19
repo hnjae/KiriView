@@ -4,10 +4,9 @@
 #include "heifsupport.h"
 
 #include "imageanimationpolicy.h"
+#include "imageerrortext.h"
 #include "imagerendering.h"
-#include "imageviewtext.h"
 
-#include <KLocalizedString>
 #include <QColorSpace>
 #include <cstddef>
 #include <cstring>
@@ -26,14 +25,11 @@ void setHeifSupportError(QString *errorString, const QString &message)
 namespace KiriView {
 QString heifErrorString(const QString &action, const heif_error &error)
 {
-    QString message = imageViewText("Unknown libheif error.");
+    QString message = imageErrorText(ImageErrorTextId::UnknownLibheifError);
     if (error.message != nullptr) {
         message = QString::fromUtf8(error.message);
     }
-    return ki18nc("@info:status", "Could not decode the selected HEIF image: %1: %2")
-        .subs(action)
-        .subs(message)
-        .toString();
+    return heifDecodeErrorText(action, message);
 }
 
 namespace {
@@ -44,7 +40,8 @@ namespace {
         std::call_once(initFlag, [] { initError = heif_init(nullptr); });
 
         if (initError.code != heif_error_Ok) {
-            return heifErrorString(imageViewText("initializing libheif"), initError);
+            return heifErrorString(
+                imageErrorActionText(ImageErrorActionTextId::InitializeLibheif), initError);
         }
         return std::nullopt;
     }
@@ -91,17 +88,17 @@ std::optional<HeifContext> openHeifContext(const QByteArray &data, QString *erro
 
     HeifContext context;
     if (context.get() == nullptr) {
-        setHeifSupportError(errorString,
-            imageViewText(
-                "Could not decode the selected HEIF image: libheif could not allocate a context."));
+        setHeifSupportError(
+            errorString, imageErrorText(ImageErrorTextId::HeifContextAllocationFailed));
         return std::nullopt;
     }
 
     heif_error error = heif_context_read_from_memory_without_copy(
         context.get(), data.constData(), static_cast<size_t>(data.size()), nullptr);
     if (error.code != heif_error_Ok) {
-        setHeifSupportError(
-            errorString, heifErrorString(imageViewText("reading the HEIF container"), error));
+        setHeifSupportError(errorString,
+            heifErrorString(
+                imageErrorActionText(ImageErrorActionTextId::ReadHeifContainer), error));
         return std::nullopt;
     }
 
@@ -118,8 +115,8 @@ std::optional<HeifPrimaryImage> openHeifPrimaryImage(const QByteArray &data, QSt
     HeifImageHandle handle;
     const heif_error error = heif_context_get_primary_image_handle(context->get(), handle.out());
     if (error.code != heif_error_Ok) {
-        setHeifSupportError(
-            errorString, heifErrorString(imageViewText("reading the primary image"), error));
+        setHeifSupportError(errorString,
+            heifErrorString(imageErrorActionText(ImageErrorActionTextId::ReadPrimaryImage), error));
         return std::nullopt;
     }
 
@@ -130,8 +127,7 @@ std::optional<QImage> qImageFromHeifImage(const heif_image *heifImage, QString *
 {
     if (heifImage == nullptr) {
         if (errorString != nullptr) {
-            *errorString = imageViewText(
-                "Could not decode the selected HEIF image: decoded image is invalid.");
+            *errorString = imageErrorText(ImageErrorTextId::HeifDecodedImageInvalid);
         }
         return std::nullopt;
     }
@@ -140,8 +136,7 @@ std::optional<QImage> qImageFromHeifImage(const heif_image *heifImage, QString *
     const int imageHeight = heif_image_get_height(heifImage, heif_channel_interleaved);
     if (imageWidth <= 0 || imageHeight <= 0) {
         if (errorString != nullptr) {
-            *errorString = imageViewText(
-                "Could not decode the selected HEIF image: decoded image size is invalid.");
+            *errorString = imageErrorText(ImageErrorTextId::HeifDecodedImageSizeInvalid);
         }
         return std::nullopt;
     }
@@ -153,8 +148,7 @@ std::optional<QImage> qImageFromHeifImage(const heif_image *heifImage, QString *
     const size_t rowBytes = static_cast<size_t>(imageWidth) * bytesPerPixel;
     if (source == nullptr || sourceStride < rowBytes) {
         if (errorString != nullptr) {
-            *errorString = imageViewText(
-                "Could not decode the selected HEIF image: decoded pixel data is invalid.");
+            *errorString = imageErrorText(ImageErrorTextId::HeifDecodedPixelDataInvalid);
         }
         return std::nullopt;
     }
@@ -162,8 +156,7 @@ std::optional<QImage> qImageFromHeifImage(const heif_image *heifImage, QString *
     QImage image(imageWidth, imageHeight, QImage::Format_RGBA8888);
     if (image.isNull()) {
         if (errorString != nullptr) {
-            *errorString = imageViewText(
-                "Could not decode the selected HEIF image: decoded image allocation failed.");
+            *errorString = imageErrorText(ImageErrorTextId::HeifDecodedImageAllocationFailed);
         }
         return std::nullopt;
     }

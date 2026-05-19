@@ -10,7 +10,7 @@
 
 #include "apngframecomposer.h"
 #include "imageanimationpolicy.h"
-#include "imageviewtext.h"
+#include "imageerrortext.h"
 
 #include <png.h>
 
@@ -60,12 +60,12 @@ bool isPngData(const QByteArray &data)
 
 QString pngDecodeErrorString()
 {
-    return KiriView::imageViewText("Could not decode the selected PNG image.");
+    return KiriView::imageErrorText(KiriView::ImageErrorTextId::DecodePngImage);
 }
 
 QString apngDecodeErrorString()
 {
-    return KiriView::imageViewText("Could not decode the selected APNG animation.");
+    return KiriView::imageErrorText(KiriView::ImageErrorTextId::DecodeApngAnimation);
 }
 
 KiriView::ApngOpenResult notApngResult() { return {}; }

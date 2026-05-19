@@ -5,6 +5,7 @@
 
 #include "apnganimationreader.h"
 #include "heifdecoder.h"
+#include "imageerrortext.h"
 #include "kiriview/src/avifcompat.cxx.h"
 #include "qimagereaderdecoder.h"
 #include "rawdecoder.h"
@@ -111,7 +112,7 @@ DecodedImageResult ImageDecodePipeline::decode(
         }
     }
 
-    return failedDecodedImageResult(QStringLiteral("Could not read the selected image data."));
+    return failedDecodedImageResult(imageErrorText(ImageErrorTextId::ReadImageData));
 }
 
 DecodedImageResult decodeImageDataWithDefaultPipeline(

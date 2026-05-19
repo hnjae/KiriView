@@ -19,14 +19,6 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/apnganimationreader.cpp
-msgid "Could not decode the selected PNG image."
-msgstr ""
-
-#: src/apnganimationreader.cpp src/imageanimationplayer.cpp
-msgid "Could not decode the selected APNG animation."
-msgstr ""
-
 #: src/archivebackend.cpp
 #, kde-format
 msgctxt "@info:status"
@@ -51,100 +43,245 @@ msgctxt "@info:status"
 msgid "Could not read the selected archive image."
 msgstr ""
 
-#: src/heifdecoder.cpp
+#: src/imageerrortext.cpp
+#, kde-format
+msgid "Could not read the selected image data."
+msgstr ""
+
+#: src/imageerrortext.cpp
+#, kde-format
+msgid "Could not decode the selected PNG image."
+msgstr ""
+
+#: src/imageerrortext.cpp
+#, kde-format
+msgid "Could not decode the selected APNG animation."
+msgstr ""
+
+#: src/imageerrortext.cpp
+#, kde-format
+msgid "Could not decode the selected image animation."
+msgstr ""
+
+#: src/imageerrortext.cpp
+#, kde-format
+msgid "The selected archive does not contain any supported images."
+msgstr ""
+
+#: src/imageerrortext.cpp
+#, kde-format
+msgid "Could not open the selected archive."
+msgstr ""
+
+#: src/imageerrortext.cpp
+#, kde-format
+msgid "Could not open the selected comic book archive."
+msgstr ""
+
+#: src/imageerrortext.cpp
+#, kde-format
+msgid "Could not delete the selected file."
+msgstr ""
+
+#: src/imageerrortext.cpp
+#, kde-format
+msgid "Could not determine the selected SVG image size."
+msgstr ""
+
+#: src/imageerrortext.cpp
+#, kde-format
+msgid "Could not render the selected SVG tile."
+msgstr ""
+
+#: src/imageerrortext.cpp
+#, kde-format
+msgid "Could not render the selected SVG image."
+msgstr ""
+
+#: src/imageerrortext.cpp
+#, kde-format
+msgid "Could not determine the selected JPEG first-display size."
+msgstr ""
+
+#: src/imageerrortext.cpp
+#, kde-format
+msgid "The selected image is too large for fallback full-image decoding."
+msgstr ""
+
+#: src/imageerrortext.cpp
+#, kde-format
+msgid "Could not render the selected tile."
+msgstr ""
+
+#: src/imageerrortext.cpp
+#, kde-format
+msgid "Could not allocate the selected tile."
+msgstr ""
+
+#: src/imageerrortext.cpp
+#, kde-format
 msgid "Could not decode the selected HEIF image sequence."
 msgstr ""
 
-#: src/heifdecoder.cpp
+#: src/imageerrortext.cpp
+#, kde-format
 msgid "Could not decode the selected HEIF image: sequence track is missing."
 msgstr ""
 
-#: src/heifdecoder.cpp
-msgid "decoding the HEIF image sequence"
-msgstr ""
-
-#: src/heifsupport.cpp
-msgid "Unknown libheif error."
-msgstr ""
-
-#: src/heifsupport.cpp
+#: src/imageerrortext.cpp
 #, kde-format
-msgctxt "@info:status"
-msgid "Could not decode the selected HEIF image: %1: %2"
+msgid ""
+"Could not decode the selected HEIF image: libheif could not allocate "
+"decoding options."
 msgstr ""
 
-#: src/heifsupport.cpp
-msgid "initializing libheif"
-msgstr ""
-
-#: src/heifsupport.cpp
+#: src/imageerrortext.cpp
+#, kde-format
 msgid ""
 "Could not decode the selected HEIF image: libheif could not allocate a "
 "context."
 msgstr ""
 
-#: src/heifsupport.cpp
-msgid "reading the HEIF container"
-msgstr ""
-
-#: src/heifsupport.cpp
-msgid "reading the primary image"
-msgstr ""
-
-#: src/heifsupport.cpp
+#: src/imageerrortext.cpp
+#, kde-format
 msgid "Could not decode the selected HEIF image: decoded image is invalid."
 msgstr ""
 
-#: src/heifsupport.cpp
+#: src/imageerrortext.cpp
+#, kde-format
 msgid ""
 "Could not decode the selected HEIF image: decoded image size is invalid."
 msgstr ""
 
-#: src/heifsupport.cpp
+#: src/imageerrortext.cpp
+#, kde-format
 msgid ""
 "Could not decode the selected HEIF image: decoded pixel data is invalid."
 msgstr ""
 
-#: src/heifsupport.cpp
+#: src/imageerrortext.cpp
+#, kde-format
 msgid ""
 "Could not decode the selected HEIF image: decoded image allocation failed."
 msgstr ""
 
-#: src/heiftilesource.cpp
-msgid "Could not render the selected tile."
-msgstr ""
-
-#: src/heiftilesource.cpp
-msgid "The selected HEIF image is too large for fallback full-image decoding."
-msgstr ""
-
-#: src/heiftilesource.cpp
-msgid "decoding the primary image"
-msgstr ""
-
-#: src/heiftilesource.cpp
-msgid "Could not allocate the selected tile."
-msgstr ""
-
-#: src/heiftilesource.cpp
-msgid "decoding a HEIF grid tile"
-msgstr ""
-
-#: src/heiftilesource.cpp
+#: src/imageerrortext.cpp
+#, kde-format
 msgid "Could not decode the selected HEIF image: image size is invalid."
 msgstr ""
 
-#: src/imageanimationplayer.cpp src/kiriimagedecoder.cpp
-#: src/qimagereadertilesource.cpp
-msgid "Could not read the selected image data."
+#: src/imageerrortext.cpp
+#, kde-format
+msgid "The selected HEIF image is too large for fallback full-image decoding."
 msgstr ""
 
-#: src/imagedocumentdeletioncontroller.cpp
-msgid "Could not delete the selected file."
+#: src/imageerrortext.cpp
+#, kde-format
+msgid "Could not decode the selected RAW image: decoded image size is invalid."
 msgstr ""
 
-#: src/imagedocumentruntime.cpp
-msgid "Could not open the selected comic book archive."
+#: src/imageerrortext.cpp
+#, kde-format
+msgid "The selected RAW image is too large for full-image decoding."
+msgstr ""
+
+#: src/imageerrortext.cpp
+#, kde-format
+msgid "Could not decode the selected RAW image: decoded image is invalid."
+msgstr ""
+
+#: src/imageerrortext.cpp
+#, kde-format
+msgid ""
+"Could not decode the selected RAW image: decoded pixel format is unsupported."
+msgstr ""
+
+#: src/imageerrortext.cpp
+#, kde-format
+msgid "Could not decode the selected RAW image: decoded pixel data is invalid."
+msgstr ""
+
+#: src/imageerrortext.cpp
+#, kde-format
+msgid ""
+"Could not decode the selected RAW image: decoded image allocation failed."
+msgstr ""
+
+#: src/imageerrortext.cpp
+#, kde-format
+msgid "Could not render the selected RAW tile."
+msgstr ""
+
+#: src/imageerrortext.cpp
+#, kde-format
+msgid "Unknown libheif error."
+msgstr ""
+
+#: src/imageerrortext.cpp
+#, kde-format
+msgid "Unknown LibRaw error."
+msgstr ""
+
+#: src/imageerrortext.cpp
+#, kde-format
+msgid "initializing libheif"
+msgstr ""
+
+#: src/imageerrortext.cpp
+#, kde-format
+msgid "reading the HEIF container"
+msgstr ""
+
+#: src/imageerrortext.cpp
+#, kde-format
+msgid "reading the primary image"
+msgstr ""
+
+#: src/imageerrortext.cpp
+#, kde-format
+msgid "decoding the primary image"
+msgstr ""
+
+#: src/imageerrortext.cpp
+#, kde-format
+msgid "decoding a HEIF grid tile"
+msgstr ""
+
+#: src/imageerrortext.cpp
+#, kde-format
+msgid "decoding the HEIF image sequence"
+msgstr ""
+
+#: src/imageerrortext.cpp
+#, kde-format
+msgid "reading the RAW image"
+msgstr ""
+
+#: src/imageerrortext.cpp
+#, kde-format
+msgid "unpacking the RAW image"
+msgstr ""
+
+#: src/imageerrortext.cpp
+#, kde-format
+msgid "processing the RAW image"
+msgstr ""
+
+#: src/imageerrortext.cpp
+#, kde-format
+msgid "creating the display image"
+msgstr ""
+
+#: src/imageerrortext.cpp
+#, kde-format
+msgctxt "@info:status"
+msgid "Could not decode the selected HEIF image: %1: %2"
+msgstr ""
+
+#: src/imageerrortext.cpp
+#, kde-format
+msgctxt "@info:status"
+msgid "Could not decode the selected RAW image: %1: %2"
 msgstr ""
 
 #: src/imageformatregistry.cpp
@@ -157,18 +294,6 @@ msgstr ""
 #, kde-format
 msgctxt "@item:inlistbox"
 msgid "All files (*)"
-msgstr ""
-
-#: src/imageopencontroller.cpp
-msgid "The selected archive does not contain any supported images."
-msgstr ""
-
-#: src/imageopencontroller.cpp
-msgid "Could not open the selected archive."
-msgstr ""
-
-#: src/imageopencontroller.cpp
-msgid "Could not decode the selected image animation."
 msgstr ""
 
 #: src/kiriviewapplicationactions.cpp
@@ -300,86 +425,10 @@ msgctxt "@action"
 msgid "Show Menubar"
 msgstr ""
 
-#: src/qimagereadertilesource.cpp
-msgid "Could not determine the selected JPEG first-display size."
-msgstr ""
-
-#: src/qimagereadertilesource.cpp
-msgid "The selected image is too large for fallback full-image decoding."
-msgstr ""
-
-#: src/rawdecoder.cpp
-msgid "Unknown LibRaw error."
-msgstr ""
-
-#: src/rawdecoder.cpp
-#, kde-format
-msgctxt "@info:status"
-msgid "Could not decode the selected RAW image: %1: %2"
-msgstr ""
-
-#: src/rawdecoder.cpp
-msgid "Could not decode the selected RAW image: decoded image size is invalid."
-msgstr ""
-
-#: src/rawdecoder.cpp
-msgid "The selected RAW image is too large for full-image decoding."
-msgstr ""
-
-#: src/rawdecoder.cpp
-msgid "Could not decode the selected RAW image: decoded image is invalid."
-msgstr ""
-
-#: src/rawdecoder.cpp
-msgid ""
-"Could not decode the selected RAW image: decoded pixel format is unsupported."
-msgstr ""
-
-#: src/rawdecoder.cpp
-msgid "Could not decode the selected RAW image: decoded pixel data is invalid."
-msgstr ""
-
-#: src/rawdecoder.cpp
-msgid ""
-"Could not decode the selected RAW image: decoded image allocation failed."
-msgstr ""
-
-#: src/rawdecoder.cpp
-msgid "reading the RAW image"
-msgstr ""
-
-#: src/rawdecoder.cpp
-msgid "unpacking the RAW image"
-msgstr ""
-
-#: src/rawdecoder.cpp
-msgid "processing the RAW image"
-msgstr ""
-
-#: src/rawdecoder.cpp
-msgid "creating the display image"
-msgstr ""
-
-#: src/rawdecoder.cpp
-msgid "Could not render the selected RAW tile."
-msgstr ""
-
 #: src/shortcuthelpmodel.cpp
 #, kde-format
 msgctxt "@info:keyboard shortcut"
 msgid "Unassigned"
-msgstr ""
-
-#: src/svgtilesource.cpp
-msgid "Could not determine the selected SVG image size."
-msgstr ""
-
-#: src/svgtilesource.cpp
-msgid "Could not render the selected SVG tile."
-msgstr ""
-
-#: src/svgtilesource.cpp
-msgid "Could not render the selected SVG image."
 msgstr ""
 
 #: src/qml/ApplicationMenuBar.qml

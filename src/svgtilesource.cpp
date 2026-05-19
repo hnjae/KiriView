@@ -3,8 +3,8 @@
 
 #include "svgtilesource.h"
 
+#include "imageerrortext.h"
 #include "imagetilesourcehelpers_p.h"
-#include "imageviewtext.h"
 #include "kiriview/src/svgrenderer.cxx.h"
 #include "rustqtconversion.h"
 
@@ -47,8 +47,7 @@ std::shared_ptr<SvgTileSource> SvgTileSource::open(const QByteArray &data, QStri
 
     const QSize imageSize(intrinsicSize.width, intrinsicSize.height);
     if (imageSize.isEmpty()) {
-        setTileSourceError(
-            errorString, imageViewText("Could not determine the selected SVG image size."));
+        setTileSourceError(errorString, imageErrorText(ImageErrorTextId::DetermineSvgImageSize));
         return {};
     }
 
@@ -76,7 +75,7 @@ std::optional<DecodedTile> SvgTileSource::decodeTile(
             request.textureLevelRect.width(), request.textureLevelRect.height()));
     QImage image = imageFromPremultipliedRgbaBytes(bytes, request.textureLevelRect.size());
     if (image.isNull()) {
-        setTileSourceError(errorString, imageViewText("Could not render the selected SVG tile."));
+        setTileSourceError(errorString, imageErrorText(ImageErrorTextId::RenderSvgTile));
         return std::nullopt;
     }
 
@@ -90,7 +89,7 @@ QImage SvgTileSource::decodeBlockingDisplayImage(int maximumLongEdge, QString *e
         rustRenderSvgImage(Bridge::rustBytes(m_data), previewSize.width(), previewSize.height()));
     const QImage preview = imageFromPremultipliedRgbaBytes(bytes, previewSize);
     if (preview.isNull()) {
-        setTileSourceError(errorString, imageViewText("Could not render the selected SVG image."));
+        setTileSourceError(errorString, imageErrorText(ImageErrorTextId::RenderSvgImage));
         return {};
     }
     return preview;

@@ -5,8 +5,8 @@
 
 #include "imagecallback.h"
 #include "imagedocumentstate.h"
+#include "imageerrortext.h"
 #include "imagepresentationcontroller.h"
-#include "imageviewtext.h"
 
 #include <utility>
 #include <variant>
@@ -15,7 +15,7 @@
 namespace {
 QString genericFileDeletionErrorMessage()
 {
-    return KiriView::imageViewText("Could not delete the selected file.");
+    return KiriView::imageErrorText(KiriView::ImageErrorTextId::DeleteFile);
 }
 }
 

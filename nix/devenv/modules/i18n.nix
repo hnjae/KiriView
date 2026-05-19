@@ -116,7 +116,6 @@ let
         --keyword=ki18nc:1c,2 \
         --keyword=kli18n \
         --keyword=kli18nc:1c,2 \
-        --keyword=imageViewText \
         --output="$generated_pot" \
         --directory="$repo_root" \
         "''${cpp_files[@]}"

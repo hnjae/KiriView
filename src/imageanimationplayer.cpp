@@ -7,7 +7,7 @@
 #include "bufferedimagereader.h"
 #include "heifdecoder.h"
 #include "imagecallback.h"
-#include "imageviewtext.h"
+#include "imageerrortext.h"
 
 #include <QObject>
 #include <memory>
@@ -211,7 +211,7 @@ bool ImageAnimationPlayer::resetReader(ReaderPlayback &playback, QString *errorS
 
     auto reader = std::make_unique<BufferedImageReader>(playback.data, playback.format);
     if (!*reader) {
-        *errorString = imageViewText("Could not read the selected image data.");
+        *errorString = imageErrorText(ImageErrorTextId::ReadImageData);
         return false;
     }
 
@@ -237,12 +237,12 @@ std::optional<ApngOpenResult> ImageAnimationPlayer::resetApng(
         playback.reader.reset();
         return std::nullopt;
     case ApngOpenStatus::NotApng:
-        *errorString = imageViewText("Could not decode the selected APNG animation.");
+        *errorString = imageErrorText(ImageErrorTextId::DecodeApngAnimation);
         playback.reader.reset();
         return std::nullopt;
     }
 
-    *errorString = imageViewText("Could not decode the selected APNG animation.");
+    *errorString = imageErrorText(ImageErrorTextId::DecodeApngAnimation);
     playback.reader.reset();
     return std::nullopt;
 }

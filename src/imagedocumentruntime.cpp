@@ -12,11 +12,11 @@
 #include "imagedocumentruntimedependencies.h"
 #include "imagedocumentruntimeeffectbinding.h"
 #include "imagedocumentsourceloadrequest.h"
+#include "imageerrortext.h"
 #include "imagenavigationservice.h"
 #include "imageopencontroller.h"
 #include "imagepresentationcontroller.h"
 #include "imagespreadpresentationcontroller.h"
-#include "imageviewtext.h"
 
 #include <QObject>
 #include <QUrl>
@@ -84,7 +84,7 @@ ImageDocumentRuntime::ImageDocumentRuntime(QObject *documentObject,
 
                 if (error == ContainerNavigationError::InvalidComicBookArchive) {
                     dispatchEffect(ImageDocumentEffect::containerNavigationFailed(
-                        url, imageViewText("Could not open the selected comic book archive.")));
+                        url, imageErrorText(ImageErrorTextId::OpenComicBookArchive)));
                     return;
                 }
 
