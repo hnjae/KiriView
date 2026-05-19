@@ -57,6 +57,7 @@ src/imagecandidaterepository.cpp
 src/imagecandidatedirectoryentry.cpp
 src/imagecandidatestore.cpp
 src/imagecandidatestoreentrystate.cpp
+src/imagecontaineropenplan.cpp
 src/imageiojob.cpp
 src/imageiojobs.cpp
 src/imagelocation.cpp

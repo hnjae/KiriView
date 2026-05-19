@@ -6,6 +6,7 @@
 #include "imagecallback.h"
 #include "imagecandidatestore.h"
 #include "imagecontainer.h"
+#include "imagecontaineropenplan.h"
 #include "imageiojobs.h"
 #include "imageurl.h"
 
@@ -79,51 +80,6 @@ KiriView::ErrorCallback containerLoadErrorCallback(
         reportCandidateRepositoryError(containerUrl,
             KiriView::ImageCandidateRepositoryError::Generic, errorString, errorCallback);
     };
-}
-
-struct FirstContainerImageSelector {
-    QUrl containerUrl;
-    KiriView::ContainerImageCallback imageCallback;
-    KiriView::CandidateRepositoryErrorCallback errorCallback;
-
-    void operator()(std::vector<KiriView::ImageNavigationCandidate> candidates)
-    {
-        if (candidates.empty()) {
-            reportCandidateRepositoryError(containerUrl,
-                KiriView::ImageCandidateRepositoryError::EmptyContainer, QString(), errorCallback);
-            return;
-        }
-
-        KiriView::invokeIfSet(imageCallback, candidates.front().url, containerUrl);
-    }
-};
-
-struct ContainerImageSourceResult {
-    std::optional<KiriView::ImageCandidateListSource> source;
-    KiriView::ImageCandidateRepositoryError error
-        = KiriView::ImageCandidateRepositoryError::Generic;
-};
-
-ContainerImageSourceResult containerImageSourceFor(
-    const KiriView::ContainerNavigationCandidate &container)
-{
-    switch (container.type) {
-    case KiriView::ContainerNavigationCandidateType::Directory:
-        return { KiriView::ImageCandidateListSource::forDirectory(container.url),
-            KiriView::ImageCandidateRepositoryError::Generic };
-    case KiriView::ContainerNavigationCandidateType::ComicBookArchive: {
-        const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
-            = KiriView::archiveDocumentLocationForLocalArchiveUrl(container.url);
-        if (archiveDocument.has_value() && archiveDocument->isComicBook()) {
-            return { KiriView::ImageCandidateListSource::forArchiveDocument(*archiveDocument),
-                KiriView::ImageCandidateRepositoryError::Generic };
-        }
-
-        return { std::nullopt, KiriView::ImageCandidateRepositoryError::InvalidComicBookArchive };
-    }
-    }
-
-    return { std::nullopt, KiriView::ImageCandidateRepositoryError::Generic };
 }
 
 bool sameImageCandidateListSourcePayload(const KiriView::ImageCandidateListSource::Directory &left,
@@ -355,11 +311,19 @@ ImageIoJob ImageCandidateRepository::loadFirstImageInContainer(QObject *receiver
     CandidateRepositoryErrorCallback errorCallback) const
 {
     CandidateRepositoryErrorCallback sharedErrorCallback = std::move(errorCallback);
-    ImageCandidatesCallback firstImageCallback = FirstContainerImageSelector {
-        container.url,
-        std::move(callback),
-        sharedErrorCallback,
-    };
+    ImageCandidatesCallback firstImageCallback
+        = [containerUrl = container.url, imageCallback = std::move(callback),
+              errorCallback = sharedErrorCallback](
+              const std::vector<ImageNavigationCandidate> &candidates) {
+              const ImageContainerOpenResult result
+                  = imageContainerOpenResultForCandidates(candidates);
+              if (result.openedImage()) {
+                  invokeIfSet(imageCallback, *result.imageUrl, containerUrl);
+                  return;
+              }
+
+              reportCandidateRepositoryError(containerUrl, result.error, QString(), errorCallback);
+          };
     return loadImagesInContainer(
         receiver, container, std::move(firstImageCallback), std::move(sharedErrorCallback));
 }
@@ -368,13 +332,13 @@ ImageIoJob ImageCandidateRepository::loadImagesInContainer(QObject *receiver,
     const ContainerNavigationCandidate &container, ImageCandidatesCallback callback,
     CandidateRepositoryErrorCallback errorCallback) const
 {
-    ContainerImageSourceResult sourceResult = containerImageSourceFor(container);
-    if (!sourceResult.source.has_value()) {
-        reportCandidateRepositoryError(container.url, sourceResult.error, QString(), errorCallback);
+    ImageContainerOpenPlan plan = imageContainerOpenPlanForCandidate(container);
+    if (!plan.shouldLoadCandidates()) {
+        reportCandidateRepositoryError(container.url, plan.error, QString(), errorCallback);
         return ImageIoJob();
     }
 
-    return loadImages(receiver, *sourceResult.source, std::move(callback),
+    return loadImages(receiver, *plan.source, std::move(callback),
         containerLoadErrorCallback(container.url, std::move(errorCallback)));
 }
 }
