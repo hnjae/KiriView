@@ -113,7 +113,7 @@ void ImageDocumentDeletionFallbackController::openComicBookFallbackCandidate(qui
                 ImageDocumentEffect::containerImageSelected(imageUrl, containerUrl));
         },
         [this, operationId, fallbackCandidate](
-            const QUrl &, ImageCandidateRepositoryError, const QString &) {
+            const QUrl &, ImageContainerOpenError, const QString &) {
             openComicBookFallbackCandidate(operationId, fallbackCandidate, std::nullopt);
         });
 }

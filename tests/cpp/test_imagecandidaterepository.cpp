@@ -13,7 +13,7 @@
 
 namespace {
 using KiriView::ContainerNavigationCandidateType;
-using KiriView::ImageCandidateRepositoryError;
+using KiriView::ImageContainerOpenError;
 using KiriView::TestSupport::archivePageUrl;
 using KiriView::TestSupport::containerCandidate;
 using KiriView::TestSupport::imageCandidate;
@@ -95,17 +95,17 @@ void TestImageCandidateRepository::emptyContainerReportsError()
 
     KiriView::ImageCandidateRepository repository(fakeProvider.provider());
     QUrl errorContainerUrl;
-    ImageCandidateRepositoryError error = ImageCandidateRepositoryError::Generic;
+    ImageContainerOpenError error = ImageContainerOpenError::Generic;
     repository.loadFirstImageInContainer(nullptr,
         containerCandidate(containerUrl, ContainerNavigationCandidateType::Directory), {},
         [&errorContainerUrl, &error](
-            const QUrl &container, ImageCandidateRepositoryError type, const QString &) {
+            const QUrl &container, ImageContainerOpenError type, const QString &) {
             errorContainerUrl = container;
             error = type;
         });
 
     QCOMPARE(errorContainerUrl, containerUrl);
-    QCOMPARE(error, ImageCandidateRepositoryError::EmptyContainer);
+    QCOMPARE(error, ImageContainerOpenError::EmptyContainer);
 }
 
 void TestImageCandidateRepository::listingErrorIsForwarded()
@@ -116,19 +116,19 @@ void TestImageCandidateRepository::listingErrorIsForwarded()
 
     KiriView::ImageCandidateRepository repository(fakeProvider.provider());
     QUrl errorContainerUrl;
-    ImageCandidateRepositoryError error = ImageCandidateRepositoryError::EmptyContainer;
+    ImageContainerOpenError error = ImageContainerOpenError::EmptyContainer;
     QString errorString;
     repository.loadFirstImageInContainer(nullptr,
         containerCandidate(containerUrl, ContainerNavigationCandidateType::Directory), {},
         [&errorContainerUrl, &error, &errorString](
-            const QUrl &container, ImageCandidateRepositoryError type, const QString &message) {
+            const QUrl &container, ImageContainerOpenError type, const QString &message) {
             errorContainerUrl = container;
             error = type;
             errorString = message;
         });
 
     QCOMPARE(errorContainerUrl, containerUrl);
-    QCOMPARE(error, ImageCandidateRepositoryError::Generic);
+    QCOMPARE(error, ImageContainerOpenError::Generic);
     QCOMPARE(errorString, QStringLiteral("No access"));
 }
 
@@ -140,20 +140,20 @@ void TestImageCandidateRepository::invalidComicBookArchiveReportsError()
     KiriView::ImageCandidateRepository repository(fakeProvider.provider());
     bool openedImage = false;
     QUrl errorContainerUrl;
-    ImageCandidateRepositoryError error = ImageCandidateRepositoryError::Generic;
+    ImageContainerOpenError error = ImageContainerOpenError::Generic;
     repository.loadFirstImageInContainer(
         nullptr,
         containerCandidate(containerUrl, ContainerNavigationCandidateType::ComicBookArchive),
         [&openedImage](const QUrl &, const QUrl &) { openedImage = true; },
         [&errorContainerUrl, &error](
-            const QUrl &container, ImageCandidateRepositoryError type, const QString &) {
+            const QUrl &container, ImageContainerOpenError type, const QString &) {
             errorContainerUrl = container;
             error = type;
         });
 
     QVERIFY(!openedImage);
     QCOMPARE(errorContainerUrl, containerUrl);
-    QCOMPARE(error, ImageCandidateRepositoryError::InvalidComicBookArchive);
+    QCOMPARE(error, ImageContainerOpenError::InvalidComicBookArchive);
 }
 
 void TestImageCandidateRepository::unsupportedContainerTypeReportsError()
@@ -164,20 +164,20 @@ void TestImageCandidateRepository::unsupportedContainerTypeReportsError()
     KiriView::ImageCandidateRepository repository(fakeProvider.provider());
     bool openedImage = false;
     QUrl errorContainerUrl;
-    ImageCandidateRepositoryError error = ImageCandidateRepositoryError::EmptyContainer;
+    ImageContainerOpenError error = ImageContainerOpenError::EmptyContainer;
     repository.loadFirstImageInContainer(
         nullptr,
         containerCandidate(containerUrl, static_cast<ContainerNavigationCandidateType>(999)),
         [&openedImage](const QUrl &, const QUrl &) { openedImage = true; },
         [&errorContainerUrl, &error](
-            const QUrl &container, ImageCandidateRepositoryError type, const QString &) {
+            const QUrl &container, ImageContainerOpenError type, const QString &) {
             errorContainerUrl = container;
             error = type;
         });
 
     QVERIFY(!openedImage);
     QCOMPARE(errorContainerUrl, containerUrl);
-    QCOMPARE(error, ImageCandidateRepositoryError::Generic);
+    QCOMPARE(error, ImageContainerOpenError::Generic);
 }
 
 QTEST_GUILESS_MAIN(TestImageCandidateRepository)

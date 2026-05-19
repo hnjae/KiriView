@@ -59,20 +59,19 @@ KiriView::ImageIoJob watchChangesForSource(const KiriView::ImageCandidateReposit
     return KiriView::ImageIoJob();
 }
 
-void reportCandidateRepositoryError(const QUrl &containerUrl,
-    KiriView::ImageCandidateRepositoryError error, const QString &errorString,
-    const KiriView::CandidateRepositoryErrorCallback &errorCallback)
+void reportContainerOpenError(const QUrl &containerUrl, KiriView::ImageContainerOpenError error,
+    const QString &errorString, const KiriView::ContainerOpenErrorCallback &errorCallback)
 {
     KiriView::invokeIfSet(errorCallback, containerUrl, error, errorString);
 }
 
 KiriView::ErrorCallback containerLoadErrorCallback(
-    QUrl containerUrl, KiriView::CandidateRepositoryErrorCallback errorCallback)
+    QUrl containerUrl, KiriView::ContainerOpenErrorCallback errorCallback)
 {
     return [containerUrl = std::move(containerUrl), errorCallback = std::move(errorCallback)](
                const QString &errorString) {
-        reportCandidateRepositoryError(containerUrl,
-            KiriView::ImageCandidateRepositoryError::Generic, errorString, errorCallback);
+        reportContainerOpenError(
+            containerUrl, KiriView::ImageContainerOpenError::Generic, errorString, errorCallback);
     };
 }
 
@@ -154,9 +153,9 @@ ImageIoJob ImageCandidateRepository::watchDirectoryImageChanges(QObject *receive
 
 ImageIoJob ImageCandidateRepository::loadFirstImageInContainer(QObject *receiver,
     const ContainerNavigationCandidate &container, ContainerImageCallback callback,
-    CandidateRepositoryErrorCallback errorCallback) const
+    ContainerOpenErrorCallback errorCallback) const
 {
-    CandidateRepositoryErrorCallback sharedErrorCallback = std::move(errorCallback);
+    ContainerOpenErrorCallback sharedErrorCallback = std::move(errorCallback);
     ImageCandidatesCallback firstImageCallback
         = [containerUrl = container.url, imageCallback = std::move(callback),
               errorCallback = sharedErrorCallback](
@@ -168,7 +167,7 @@ ImageIoJob ImageCandidateRepository::loadFirstImageInContainer(QObject *receiver
                   return;
               }
 
-              reportCandidateRepositoryError(containerUrl, result.error, QString(), errorCallback);
+              reportContainerOpenError(containerUrl, result.error, QString(), errorCallback);
           };
     return loadImagesInContainer(
         receiver, container, std::move(firstImageCallback), std::move(sharedErrorCallback));
@@ -176,11 +175,11 @@ ImageIoJob ImageCandidateRepository::loadFirstImageInContainer(QObject *receiver
 
 ImageIoJob ImageCandidateRepository::loadImagesInContainer(QObject *receiver,
     const ContainerNavigationCandidate &container, ImageCandidatesCallback callback,
-    CandidateRepositoryErrorCallback errorCallback) const
+    ContainerOpenErrorCallback errorCallback) const
 {
     ImageContainerOpenPlan plan = imageContainerOpenPlanForCandidate(container);
     if (!plan.shouldLoadCandidates()) {
-        reportCandidateRepositoryError(container.url, plan.error, QString(), errorCallback);
+        reportContainerOpenError(container.url, plan.error, QString(), errorCallback);
         return ImageIoJob();
     }
 

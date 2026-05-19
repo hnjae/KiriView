@@ -4,6 +4,7 @@
 #include "imagecontainernavigationcontroller.h"
 
 #include "imagecallback.h"
+#include "imagecandidaterepository.h"
 #include "imagenavigationmodel.h"
 #include "imageurl.h"
 
@@ -84,8 +85,8 @@ void ImageContainerNavigationController::finishContainerNavigation(quint64 opera
         [this, operationId](const QUrl &imageUrl, const QUrl &containerUrl) {
             openImageFromContainerNavigation(operationId, imageUrl, containerUrl);
         },
-        [this, operationId](const QUrl &containerUrl, ImageCandidateRepositoryError error,
-            const QString &errorString) {
+        [this, operationId](
+            const QUrl &containerUrl, ImageContainerOpenError error, const QString &errorString) {
             finishContainerNavigationLoadWithError(operationId, containerUrl, error, errorString);
         });
 }

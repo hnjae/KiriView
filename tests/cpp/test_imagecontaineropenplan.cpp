@@ -15,7 +15,7 @@
 namespace {
 using KiriView::ContainerNavigationCandidateType;
 using KiriView::ImageCandidateListSource;
-using KiriView::ImageCandidateRepositoryError;
+using KiriView::ImageContainerOpenError;
 using KiriView::TestSupport::imageCandidate;
 using KiriView::TestSupport::localUrl;
 
@@ -83,7 +83,7 @@ void TestImageContainerOpenPlan::invalidArchiveContainerReportsTypedError()
             ContainerNavigationCandidateType::ComicBookArchive });
 
     QVERIFY(!plan.shouldLoadCandidates());
-    QCOMPARE(plan.error, ImageCandidateRepositoryError::InvalidComicBookArchive);
+    QCOMPARE(plan.error, ImageContainerOpenError::InvalidComicBookArchive);
 }
 
 void TestImageContainerOpenPlan::firstCandidateSelectionReportsImageOrEmptyContainer()
@@ -99,7 +99,7 @@ void TestImageContainerOpenPlan::firstCandidateSelectionReportsImageOrEmptyConta
     const KiriView::ImageContainerOpenResult empty
         = KiriView::imageContainerOpenResultForCandidates({});
     QVERIFY(!empty.openedImage());
-    QCOMPARE(empty.error, ImageCandidateRepositoryError::EmptyContainer);
+    QCOMPARE(empty.error, ImageContainerOpenError::EmptyContainer);
 }
 
 QTEST_GUILESS_MAIN(TestImageContainerOpenPlan)

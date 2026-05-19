@@ -4,8 +4,8 @@
 #ifndef KIRIVIEW_IMAGECONTAINERNAVIGATIONCONTROLLER_H
 #define KIRIVIEW_IMAGECONTAINERNAVIGATIONCONTROLLER_H
 
-#include "imagecandidaterepository.h"
 #include "imagecontainernavigationstate.h"
+#include "imagecontaineropenplan.h"
 #include "imageiojob.h"
 #include "imagenavigationtypes.h"
 
@@ -16,7 +16,9 @@
 #include <vector>
 
 namespace KiriView {
-using ContainerNavigationError = ImageCandidateRepositoryError;
+class ImageCandidateRepository;
+
+using ContainerNavigationError = ImageContainerOpenError;
 
 class ImageContainerNavigationController final : public QObject
 {

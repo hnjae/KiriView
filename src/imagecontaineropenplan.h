@@ -5,23 +5,29 @@
 #define KIRIVIEW_IMAGECONTAINEROPENPLAN_H
 
 #include "imagecandidatelistsource.h"
-#include "imagecandidaterepository.h"
+#include "imagenavigationtypes.h"
 
 #include <QUrl>
 #include <optional>
 #include <vector>
 
 namespace KiriView {
+enum class ImageContainerOpenError {
+    Generic,
+    EmptyContainer,
+    InvalidComicBookArchive,
+};
+
 struct ImageContainerOpenPlan {
     std::optional<ImageCandidateListSource> source;
-    ImageCandidateRepositoryError error = ImageCandidateRepositoryError::Generic;
+    ImageContainerOpenError error = ImageContainerOpenError::Generic;
 
     bool shouldLoadCandidates() const;
 };
 
 struct ImageContainerOpenResult {
     std::optional<QUrl> imageUrl;
-    ImageCandidateRepositoryError error = ImageCandidateRepositoryError::Generic;
+    ImageContainerOpenError error = ImageContainerOpenError::Generic;
 
     bool openedImage() const;
 };

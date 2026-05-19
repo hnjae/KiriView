@@ -16,29 +16,29 @@ ImageContainerOpenPlan imageContainerOpenPlanForCandidate(
     switch (container.type) {
     case ContainerNavigationCandidateType::Directory:
         return { ImageCandidateListSource::forDirectory(container.url),
-            ImageCandidateRepositoryError::Generic };
+            ImageContainerOpenError::Generic };
     case ContainerNavigationCandidateType::ComicBookArchive: {
         const std::optional<ArchiveDocumentLocation> archiveDocument
             = archiveDocumentLocationForLocalArchiveUrl(container.url);
         if (archiveDocument.has_value() && archiveDocument->isComicBook()) {
             return { ImageCandidateListSource::forArchiveDocument(*archiveDocument),
-                ImageCandidateRepositoryError::Generic };
+                ImageContainerOpenError::Generic };
         }
 
-        return { std::nullopt, ImageCandidateRepositoryError::InvalidComicBookArchive };
+        return { std::nullopt, ImageContainerOpenError::InvalidComicBookArchive };
     }
     }
 
-    return { std::nullopt, ImageCandidateRepositoryError::Generic };
+    return { std::nullopt, ImageContainerOpenError::Generic };
 }
 
 ImageContainerOpenResult imageContainerOpenResultForCandidates(
     const std::vector<ImageNavigationCandidate> &candidates)
 {
     if (candidates.empty()) {
-        return { std::nullopt, ImageCandidateRepositoryError::EmptyContainer };
+        return { std::nullopt, ImageContainerOpenError::EmptyContainer };
     }
 
-    return { candidates.front().url, ImageCandidateRepositoryError::Generic };
+    return { candidates.front().url, ImageContainerOpenError::Generic };
 }
 }
