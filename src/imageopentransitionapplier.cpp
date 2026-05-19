@@ -63,7 +63,7 @@ std::optional<KiriView::DisplayedImageLocation> displayedLocationTarget(
     switch (target) {
     case KiriView::ImageOpenDisplayedLocationTarget::Session:
         if (context.session != nullptr) {
-            return context.session->location;
+            return context.session->location();
         }
         return std::nullopt;
     case KiriView::ImageOpenDisplayedLocationTarget::Unchanged:
@@ -102,16 +102,15 @@ std::optional<QUrl> resolvedUrlForTarget(
     case KiriView::ImageOpenUrlTarget::Empty:
         return QUrl();
     case KiriView::ImageOpenUrlTarget::SessionImage:
-        return context.session != nullptr
-            ? std::optional<QUrl>(context.session->location.imageUrl())
-            : std::nullopt;
+        return context.session != nullptr ? std::optional<QUrl>(context.session->imageUrl())
+                                          : std::nullopt;
     case KiriView::ImageOpenUrlTarget::SessionContainerNavigation:
         return context.session != nullptr
-            ? std::optional<QUrl>(context.session->request.containerNavigationUrl())
+            ? std::optional<QUrl>(context.session->containerNavigationUrl())
             : std::nullopt;
     case KiriView::ImageOpenUrlTarget::DerivedContainerNavigation:
         return context.session != nullptr
-            ? std::optional<QUrl>(containerNavigationUrlForLocation(context.session->location))
+            ? std::optional<QUrl>(containerNavigationUrlForLocation(context.session->location()))
             : std::nullopt;
     case KiriView::ImageOpenUrlTarget::Container:
         return context.containerUrl;
@@ -271,7 +270,7 @@ ImageOpenTransitionContext ImageOpenTransitionContext::sourceLoadError(
 {
     ImageOpenTransitionContext context;
     context.session = &session;
-    context.containerUrl = session.request.containerNavigationUrl();
+    context.containerUrl = session.containerNavigationUrl();
     context.displayedUrl = displayedUrl;
     context.errorString = errorString;
     return context;

@@ -6,6 +6,11 @@
 #include <utility>
 
 namespace KiriView {
+ImageLoadSessionTracker::ImageLoadSessionTracker(quint64 nextSessionId)
+    : m_sessionIds(nextSessionId)
+{
+}
+
 ImageLoadPlan ImageLoadSessionTracker::start(
     ImageLoadRequest request, ImageFirstDisplayDecodeContext firstDisplayContext)
 {
@@ -20,13 +25,13 @@ void ImageLoadSessionTracker::cancel() { m_session.reset(); }
 
 bool ImageLoadSessionTracker::isCurrent(const ImageLoadSession &session) const
 {
-    return m_session.has_value() && m_session->id == session.id;
+    return m_session.has_value() && m_session->sameSession(session);
 }
 
 std::optional<ImageLoadSession> ImageLoadSessionTracker::claimCurrentForDecodeRequest(
     const ImageDecodeRequest &request)
 {
-    if (!m_session.has_value() || !request.matches(m_session->id, m_session->location.imageUrl())) {
+    if (!m_session.has_value() || !request.matches(m_session->decodeRequest())) {
         return std::nullopt;
     }
 
@@ -51,7 +56,7 @@ ImageArchiveCandidateCompletion ImageLoadSessionTracker::completeArchiveCandidat
         };
     }
 
-    m_session->location.setImageUrl(candidates.front().url);
+    m_session->setImageUrl(candidates.front().url);
     return ImageArchiveCandidateCompletion {
         ImageArchiveCandidateCompletionAction::StartImageDecode,
         *m_session,
@@ -66,7 +71,7 @@ std::optional<ImageLoadSession> ImageLoadSessionTracker::claimPredecodedImage(
         return std::nullopt;
     }
 
-    m_session->location = std::move(location);
+    m_session->setLocation(std::move(location));
     return claimCurrent(*m_session);
 }
 
@@ -82,9 +87,5 @@ std::optional<ImageLoadSession> ImageLoadSessionTracker::claimCurrent(
     return currentSession;
 }
 
-quint64 ImageLoadSessionTracker::nextSessionId()
-{
-    ++m_nextSessionId;
-    return m_nextSessionId;
-}
+quint64 ImageLoadSessionTracker::nextSessionId() { return m_sessionIds.next(); }
 }

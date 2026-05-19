@@ -151,12 +151,12 @@ void ImageSecondaryPageController::finishImagePresentation(
     }
 
     applyLoadCompletion(m_displayState.finishPresentedLoad(
-        session.location, result.imageSize, imageSpreadPageIsWide(result.imageSize)));
+        session.location(), result.imageSize, imageSpreadPageIsWide(result.imageSize)));
 }
 
 void ImageSecondaryPageController::finishLoadWithError(const ImageLoadSession &session)
 {
-    applyLoadCompletion(m_displayState.finishFailedLoad(session.location));
+    applyLoadCompletion(m_displayState.finishFailedLoad(session.location()));
 }
 
 void ImageSecondaryPageController::applyLoadCompletion(

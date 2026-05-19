@@ -150,7 +150,7 @@ void TestImageLoader::imageLoadDeliversDecodedResult()
 
     QTRY_VERIFY(decodedResult.has_value());
     QVERIFY(decodedSession.has_value());
-    QCOMPARE(decodedSession->location.imageUrl(), imageUrl);
+    QCOMPARE(decodedSession->imageUrl(), imageUrl);
     QVERIFY(std::get_if<KiriView::StaticDecodedImage>(&*decodedResult) != nullptr);
 }
 
@@ -179,7 +179,7 @@ void TestImageLoader::decodeFailureUsesErrorCallback()
     dataLoader.finishFrontLoad(QByteArrayLiteral("bad"));
 
     QTRY_VERIFY(errorSession.has_value());
-    QCOMPARE(errorSession->location.imageUrl(), imageUrl);
+    QCOMPARE(errorSession->imageUrl(), imageUrl);
     QCOMPARE(error, KiriView::ImageLoadError::Generic);
     QCOMPARE(errorString, testImageDecodeFailureString());
     QCOMPARE(decodedCount, 0);
@@ -218,8 +218,8 @@ void TestImageLoader::predecodedImageBypassesDataLoad()
     loader.start(KiriView::ImageLoadRequest::fromUrl(imageUrl));
 
     QVERIFY(predecodedSession.has_value());
-    QCOMPARE(predecodedSession->location.imageUrl(), imageUrl);
-    QCOMPARE(predecodedSession->location.archiveDocumentRootUrl(), archiveDocument->rootUrl());
+    QCOMPARE(predecodedSession->imageUrl(), imageUrl);
+    QCOMPARE(predecodedSession->location().archiveDocumentRootUrl(), archiveDocument->rootUrl());
     QCOMPARE(imageSize, QSize(1, 1));
     QVERIFY(dataLoader.empty());
 }
@@ -285,10 +285,9 @@ void TestImageLoader::directArchiveResolvesFirstImage()
     dataLoader.finishFrontLoad(QByteArrayLiteral("ok"));
 
     QTRY_VERIFY(decodedSession.has_value());
-    QCOMPARE(decodedSession->location.imageUrl(), firstImageUrl);
-    QCOMPARE(decodedSession->location.archiveDocumentRootUrl(), *archiveRootUrl);
-    QCOMPARE(
-        decodedSession->location.archiveDocument().kind(), KiriView::ArchiveDocumentKind::General);
+    QCOMPARE(decodedSession->imageUrl(), firstImageUrl);
+    QCOMPARE(decodedSession->location().archiveDocumentRootUrl(), *archiveRootUrl);
+    QCOMPARE(decodedSession->archiveDocument().kind(), KiriView::ArchiveDocumentKind::General);
 }
 
 void TestImageLoader::directDirectoryResolvesFirstImage()
@@ -327,10 +326,9 @@ void TestImageLoader::directDirectoryResolvesFirstImage()
     dataLoader.finishFrontLoad(QByteArrayLiteral("ok"));
 
     QTRY_VERIFY(decodedSession.has_value());
-    QCOMPARE(decodedSession->location.imageUrl(), firstImageUrl);
-    QCOMPARE(decodedSession->location.archiveDocumentRootUrl(), directoryDocument->rootUrl());
-    QCOMPARE(decodedSession->location.archiveDocument().kind(),
-        KiriView::ArchiveDocumentKind::Directory);
+    QCOMPARE(decodedSession->imageUrl(), firstImageUrl);
+    QCOMPARE(decodedSession->location().archiveDocumentRootUrl(), directoryDocument->rootUrl());
+    QCOMPARE(decodedSession->archiveDocument().kind(), KiriView::ArchiveDocumentKind::Directory);
 }
 
 void TestImageLoader::explicitKioArchiveImageStaysImageUrlMode()
@@ -354,8 +352,8 @@ void TestImageLoader::explicitKioArchiveImageStaysImageUrlMode()
     dataLoader.finishFrontLoad(QByteArrayLiteral("ok"));
 
     QTRY_VERIFY(decodedSession.has_value());
-    QCOMPARE(decodedSession->location.imageUrl(), imageUrl);
-    QVERIFY(decodedSession->location.archiveDocument().isEmpty());
+    QCOMPARE(decodedSession->imageUrl(), imageUrl);
+    QVERIFY(decodedSession->archiveDocument().isEmpty());
 }
 
 void TestImageLoader::archiveInteriorImageKeepsComicBookRoot()
@@ -385,8 +383,8 @@ void TestImageLoader::archiveInteriorImageKeepsComicBookRoot()
     dataLoader.finishFrontLoad(QByteArrayLiteral("ok"));
 
     QTRY_VERIFY(decodedSession.has_value());
-    QCOMPARE(decodedSession->location.imageUrl(), imageUrl);
-    QCOMPARE(decodedSession->location.archiveDocumentRootUrl(), *archiveRootUrl);
+    QCOMPARE(decodedSession->location().imageUrl(), imageUrl);
+    QCOMPARE(decodedSession->location().archiveDocumentRootUrl(), *archiveRootUrl);
 }
 
 void TestImageLoader::staleLoadResultIsIgnored()
@@ -396,7 +394,7 @@ void TestImageLoader::staleLoadResultIsIgnored()
     std::vector<QUrl> decodedUrls;
     KiriView::ImageLoader::Callbacks callbacks;
     callbacks.decodedImage = [&decodedUrls](KiriView::ImageLoadSession session, auto) {
-        decodedUrls.push_back(session.location.imageUrl());
+        decodedUrls.push_back(session.imageUrl());
     };
     KiriView::ImageLoader loader
         = createLoader(this, candidateProvider, dataLoader, std::move(callbacks));
@@ -423,7 +421,7 @@ void TestImageLoader::staleArchiveListingResultIsIgnored()
     KiriView::ImageLoader::Callbacks callbacks;
     callbacks.sourceResolved = [&decodedUrls](const QUrl &url) { decodedUrls.push_back(url); };
     callbacks.decodedImage = [&decodedUrls](KiriView::ImageLoadSession session, auto) {
-        decodedUrls.push_back(session.location.imageUrl());
+        decodedUrls.push_back(session.imageUrl());
     };
     KiriView::ImageLoader loader(this, candidateProvider.provider(),
         imageDecodeDependenciesFor(dataLoader, staticImageDataDecoderRejectingBadData()),

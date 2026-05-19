@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_IMAGELOADTYPES_H
 #define KIRIVIEW_IMAGELOADTYPES_H
 
+#include "imagedecoderequest.h"
 #include "imagelocation.h"
 #include "staticimage.h"
 
@@ -39,11 +40,32 @@ struct ImageLoadRequest {
     bool isContainerNavigation() const { return !containerNavigation.isEmpty(); }
 };
 
-struct ImageLoadSession {
-    quint64 id = 0;
-    ImageLoadRequest request;
-    DisplayedImageLocation location;
-    ImageFirstDisplayDecodeContext firstDisplay;
+class ImageLoadSession
+{
+public:
+    ImageLoadSession() = default;
+    ImageLoadSession(quint64 id, ImageLoadRequest request, DisplayedImageLocation location,
+        ImageFirstDisplayDecodeContext firstDisplay = {});
+
+    quint64 id() const;
+    const ImageLoadRequest &request() const;
+    const DisplayedImageLocation &location() const;
+    const ImageFirstDisplayDecodeContext &firstDisplay() const;
+    const QUrl &imageUrl() const;
+    const ArchiveDocumentLocation &archiveDocument() const;
+    const QUrl &containerNavigationUrl() const;
+    bool hasContainerNavigationTarget() const;
+    ImageDecodeRequest decodeRequest() const;
+    bool sameSession(const ImageLoadSession &session) const;
+
+    void setImageUrl(const QUrl &url);
+    void setLocation(DisplayedImageLocation location);
+
+private:
+    quint64 m_id = 0;
+    ImageLoadRequest m_request;
+    DisplayedImageLocation m_location;
+    ImageFirstDisplayDecodeContext m_firstDisplay;
 };
 
 enum class ImageLoadError {

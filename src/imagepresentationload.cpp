@@ -15,7 +15,7 @@ namespace {
 void prepareImagePresentation(
     KiriView::ImagePresentationController &presentation, const KiriView::ImageLoadSession &session)
 {
-    presentation.prepareImageContainer(KiriView::zoomScopeUrlForLocation(session.location));
+    presentation.prepareImageContainer(KiriView::zoomScopeUrlForLocation(session.location()));
 }
 
 KiriView::ImagePresentationLoadResult finishImagePresentation(

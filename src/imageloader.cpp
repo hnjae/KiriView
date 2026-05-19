@@ -100,14 +100,13 @@ void ImageLoader::startImageLoad(ImageLoadSession session)
         return;
     }
 
-    m_decodeJob.start(
-        ImageDecodeRequest::fromLocation(session.id, session.location, session.firstDisplay));
+    m_decodeJob.start(session.decodeRequest());
 }
 
 void ImageLoader::startArchiveLoad(ImageLoadSession session)
 {
     const ImageCandidateListSource candidateSource
-        = ImageCandidateListSource::forArchiveDocument(session.location.archiveDocument());
+        = ImageCandidateListSource::forArchiveDocument(session.archiveDocument());
     m_archiveListJob = m_candidateRepository.loadImages(
         this, candidateSource,
         [this, session](std::vector<ImageNavigationCandidate> candidates) mutable {
@@ -151,8 +150,7 @@ bool ImageLoader::tryDisplayPredecodedImage(ImageLoadSession session)
         return false;
     }
 
-    std::optional<PredecodedImage> predecoded
-        = m_callbacks.takePredecodedImage(session.location.imageUrl());
+    std::optional<PredecodedImage> predecoded = m_callbacks.takePredecodedImage(session.imageUrl());
     if (!predecoded.has_value()) {
         return false;
     }

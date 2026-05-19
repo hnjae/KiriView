@@ -10,6 +10,7 @@
 #include <QSize>
 #include <QTest>
 #include <QUrl>
+#include <limits>
 #include <optional>
 
 namespace {
@@ -30,6 +31,7 @@ private Q_SLOTS:
     void predecodedLocationReplacementUpdatesCanonicalCurrentSession();
     void decodeRequestClaimClearsTheActiveSession();
     void claimCurrentClearsTheActiveSession();
+    void sessionIdsStayNonZeroAfterWrap();
 };
 
 void TestImageLoadSessionTracker::startOwnsSessionIdAndFirstDisplayContext()
@@ -44,10 +46,10 @@ void TestImageLoadSessionTracker::startOwnsSessionIdAndFirstDisplayContext()
     const KiriView::ImageLoadPlan secondPlan
         = tracker.start(KiriView::ImageLoadRequest::fromUrl(secondUrl));
 
-    QCOMPARE(firstPlan.session.id, quint64(1));
-    QCOMPARE(secondPlan.session.id, quint64(2));
-    QCOMPARE(firstPlan.session.firstDisplay.physicalViewportSize, QSize(320, 240));
-    QCOMPARE(secondPlan.session.firstDisplay.physicalViewportSize, QSize());
+    QCOMPARE(firstPlan.session.id(), quint64(1));
+    QCOMPARE(secondPlan.session.id(), quint64(2));
+    QCOMPARE(firstPlan.session.firstDisplay().physicalViewportSize, QSize(320, 240));
+    QCOMPARE(secondPlan.session.firstDisplay().physicalViewportSize, QSize());
     QVERIFY(!tracker.isCurrent(firstPlan.session));
     QVERIFY(tracker.isCurrent(secondPlan.session));
 }
@@ -73,11 +75,11 @@ void TestImageLoadSessionTracker::staleSessionsCannotResolveOrFinishCurrentLoad(
     QVERIFY(!tracker.claimCurrent(staleSession).has_value());
 
     const KiriView::ImageDecodeRequest staleRequest
-        = KiriView::ImageDecodeRequest::fromUrl(staleSession.id, firstUrl);
+        = KiriView::ImageDecodeRequest::fromUrl(staleSession.id(), firstUrl);
     QVERIFY(!tracker.claimCurrentForDecodeRequest(staleRequest).has_value());
 
     const KiriView::ImageDecodeRequest currentRequest
-        = KiriView::ImageDecodeRequest::fromUrl(currentSession.id, secondUrl);
+        = KiriView::ImageDecodeRequest::fromUrl(currentSession.id(), secondUrl);
     QVERIFY(tracker.claimCurrentForDecodeRequest(currentRequest).has_value());
 }
 
@@ -100,15 +102,14 @@ void TestImageLoadSessionTracker::archiveResolutionUpdatesCanonicalCurrentSessio
     QCOMPARE(completion.action, KiriView::ImageArchiveCandidateCompletionAction::StartImageDecode);
     QCOMPARE(completion.resolvedUrl, imageUrl);
     const KiriView::ImageLoadSession &resolvedSession = completion.session;
-    QCOMPARE(resolvedSession.location.imageUrl(), imageUrl);
-    QCOMPARE(resolvedSession.firstDisplay.physicalViewportSize, QSize(320, 240));
-    const KiriView::ImageDecodeRequest request
-        = KiriView::ImageDecodeRequest::fromUrl(session.id, imageUrl);
+    QCOMPARE(resolvedSession.imageUrl(), imageUrl);
+    QCOMPARE(resolvedSession.firstDisplay().physicalViewportSize, QSize(320, 240));
+    const KiriView::ImageDecodeRequest request = resolvedSession.decodeRequest();
     const std::optional<KiriView::ImageLoadSession> currentSession
         = tracker.claimCurrentForDecodeRequest(request);
     QVERIFY(currentSession.has_value());
-    QCOMPARE(currentSession->location.imageUrl(), imageUrl);
-    QCOMPARE(currentSession->firstDisplay.physicalViewportSize, QSize(320, 240));
+    QCOMPARE(currentSession->imageUrl(), imageUrl);
+    QCOMPARE(currentSession->firstDisplay().physicalViewportSize, QSize(320, 240));
 }
 
 void TestImageLoadSessionTracker::emptyArchiveResolutionClaimsCurrentSessionForError()
@@ -124,7 +125,7 @@ void TestImageLoadSessionTracker::emptyArchiveResolutionClaimsCurrentSessionForE
 
     QCOMPARE(
         completion.action, KiriView::ImageArchiveCandidateCompletionAction::ReportEmptyArchive);
-    QCOMPARE(completion.session.location.imageUrl(), archiveUrl);
+    QCOMPARE(completion.session.imageUrl(), archiveUrl);
     QVERIFY(!tracker.isCurrent(session));
 }
 
@@ -143,8 +144,8 @@ void TestImageLoadSessionTracker::predecodedLocationReplacementUpdatesCanonicalC
         session, KiriView::DisplayedImageLocation::fromArchiveDocument(imageUrl, *archiveDocument));
 
     QVERIFY(replacedSession.has_value());
-    QCOMPARE(replacedSession->location.imageUrl(), imageUrl);
-    QCOMPARE(replacedSession->location.archiveDocumentRootUrl(), archiveDocument->rootUrl());
+    QCOMPARE(replacedSession->imageUrl(), imageUrl);
+    QCOMPARE(replacedSession->location().archiveDocumentRootUrl(), archiveDocument->rootUrl());
     QVERIFY(!tracker.isCurrent(session));
 }
 
@@ -154,14 +155,13 @@ void TestImageLoadSessionTracker::decodeRequestClaimClearsTheActiveSession()
     const QUrl imageUrl = localUrl(QStringLiteral("/images/01.png"));
     const KiriView::ImageLoadSession session
         = tracker.start(KiriView::ImageLoadRequest::fromUrl(imageUrl)).session;
-    const KiriView::ImageDecodeRequest request
-        = KiriView::ImageDecodeRequest::fromLocation(session.id, session.location);
+    const KiriView::ImageDecodeRequest request = session.decodeRequest();
 
     const std::optional<KiriView::ImageLoadSession> claimedSession
         = tracker.claimCurrentForDecodeRequest(request);
 
     QVERIFY(claimedSession.has_value());
-    QCOMPARE(claimedSession->location.imageUrl(), imageUrl);
+    QCOMPARE(claimedSession->imageUrl(), imageUrl);
     QVERIFY(!tracker.isCurrent(session));
 }
 
@@ -175,8 +175,21 @@ void TestImageLoadSessionTracker::claimCurrentClearsTheActiveSession()
     const std::optional<KiriView::ImageLoadSession> takenSession = tracker.claimCurrent(session);
 
     QVERIFY(takenSession.has_value());
-    QCOMPARE(takenSession->location.imageUrl(), imageUrl);
+    QCOMPARE(takenSession->imageUrl(), imageUrl);
     QVERIFY(!tracker.isCurrent(session));
+}
+
+void TestImageLoadSessionTracker::sessionIdsStayNonZeroAfterWrap()
+{
+    KiriView::ImageLoadSessionTracker tracker(std::numeric_limits<quint64>::max());
+
+    const KiriView::ImageLoadPlan firstPlan
+        = tracker.start(KiriView::ImageLoadRequest::fromUrl(localUrl(QStringLiteral("/1.png"))));
+    const KiriView::ImageLoadPlan secondPlan
+        = tracker.start(KiriView::ImageLoadRequest::fromUrl(localUrl(QStringLiteral("/2.png"))));
+
+    QCOMPARE(firstPlan.session.id(), quint64(1));
+    QCOMPARE(secondPlan.session.id(), quint64(2));
 }
 
 QTEST_GUILESS_MAIN(TestImageLoadSessionTracker)

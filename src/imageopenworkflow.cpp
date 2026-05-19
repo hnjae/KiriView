@@ -32,7 +32,7 @@ KiriView::RustImageOpenWorkflowEvent successfulImageLoadEvent(
     KiriView::RustImageOpenWorkflowEvent event = imageOpenWorkflowEvent(
         KiriView::RustImageOpenWorkflowEventKind::FinishSuccessfulImageLoad);
     event.successful_image_load.has_request_container_navigation_target
-        = !session.request.containerNavigationUrl().isEmpty();
+        = session.hasContainerNavigationTarget();
     return event;
 }
 
@@ -190,8 +190,8 @@ ImageOpenTransition finishSuccessfulImageLoadTransition(const ImageLoadSession &
 ImageOpenTransition finishLoadWithErrorTransition(
     const ImageLoadSession &session, bool hasImage, bool hasDisplayedUrl)
 {
-    return imageOpenTransitionFromRust(rustImageOpenTransition(sourceLoadErrorEvent(
-        !session.request.containerNavigationUrl().isEmpty(), hasImage, hasDisplayedUrl)));
+    return imageOpenTransitionFromRust(rustImageOpenTransition(
+        sourceLoadErrorEvent(session.hasContainerNavigationTarget(), hasImage, hasDisplayedUrl)));
 }
 
 ImageOpenTransition finishContainerNavigationLoadWithErrorTransition()

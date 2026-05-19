@@ -26,12 +26,10 @@ KiriView::ImageLoadSession loadSession(const QUrl &sourceUrl, const QUrl &imageU
     = KiriView::ArchiveDocumentLocation::none(),
     const QUrl &containerNavigationUrl = QUrl())
 {
-    return KiriView::ImageLoadSession {
-        1,
+    return KiriView::ImageLoadSession(1,
         KiriView::ImageLoadRequest::fromLocation(
             sourceUrl, archiveDocument, containerNavigationUrl),
-        KiriView::DisplayedImageLocation::fromUrl(imageUrl, archiveDocument),
-    };
+        KiriView::DisplayedImageLocation::fromUrl(imageUrl, archiveDocument));
 }
 
 template <typename Effect> const Effect *findEffect(const KiriView::ImageDocumentEffects &effects)

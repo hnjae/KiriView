@@ -22,11 +22,8 @@ using KiriView::TestSupport::testImage;
 
 KiriView::ImageLoadSession loadSession(const QUrl &url)
 {
-    return KiriView::ImageLoadSession {
-        1,
-        KiriView::ImageLoadRequest::fromUrl(url),
-        KiriView::DisplayedImageLocation::fromUrl(url),
-    };
+    return KiriView::ImageLoadSession(1, KiriView::ImageLoadRequest::fromUrl(url),
+        KiriView::DisplayedImageLocation::fromUrl(url));
 }
 
 KiriView::ImagePresentationController presentationController(QObject *parent)

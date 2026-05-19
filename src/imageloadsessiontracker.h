@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_IMAGELOADSESSIONTRACKER_H
 #define KIRIVIEW_IMAGELOADSESSIONTRACKER_H
 
+#include "imageasyncticket.h"
 #include "imagedecoderequest.h"
 #include "imageloadplan.h"
 #include "imagenavigationtypes.h"
@@ -30,6 +31,8 @@ struct ImageArchiveCandidateCompletion {
 class ImageLoadSessionTracker final
 {
 public:
+    explicit ImageLoadSessionTracker(quint64 nextSessionId = 0);
+
     ImageLoadPlan start(
         ImageLoadRequest request, ImageFirstDisplayDecodeContext firstDisplayContext = {});
     void cancel();
@@ -46,7 +49,7 @@ private:
     quint64 nextSessionId();
 
     std::optional<ImageLoadSession> m_session;
-    quint64 m_nextSessionId = 0;
+    ImageAsyncTicket m_sessionIds;
 };
 }
 

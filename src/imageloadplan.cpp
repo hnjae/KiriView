@@ -76,13 +76,10 @@ ImageLoadPlan imageLoadPlan(
     ImageArchiveLoadPlan archivePlan = imageArchiveLoadPlan(request);
     const ImageLoadStartEffect startEffect
         = imageLoadStartEffectForArchiveEffect(archivePlan.effect);
-    ImageLoadSession session {
-        id,
-        std::move(request),
+    ImageLoadSession session(id, std::move(request),
         DisplayedImageLocation::fromUrl(
             std::move(sourceUrl), std::move(archivePlan.archiveDocument)),
-        firstDisplayContext,
-    };
+        firstDisplayContext);
 
     return ImageLoadPlan { std::move(session), startEffect };
 }
