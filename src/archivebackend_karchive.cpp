@@ -128,6 +128,14 @@ void appendArchiveDirectoryImageCandidates(
     }
 }
 
+std::vector<KiriView::ImageNavigationCandidate> archiveDirectoryImageCandidates(
+    const KArchiveDirectory *directory, const KiriView::ArchiveDocumentLocation &archiveDocument)
+{
+    std::vector<KiriView::ImageNavigationCandidate> candidates;
+    appendArchiveDirectoryImageCandidates(&candidates, directory, archiveDocument, QString());
+    return candidates;
+}
+
 OpenKArchiveResult openKArchiveDocument(const KiriView::ArchiveDocumentLocation &archiveDocument)
 {
     std::unique_ptr<KArchive> archive = createArchive(archiveDocument);
@@ -163,22 +171,15 @@ KiriView::ArchiveImageDataResult readKArchiveFileData(const KArchiveFile &file)
     return Backend::archiveImageDataResult(std::move(data));
 }
 
-class KArchiveDocumentSession final : public KiriView::ArchiveDocumentSession
+class KArchiveDocumentSession final : public Backend::ArchiveDocumentSessionWithCandidateSnapshot
 {
 public:
-    KArchiveDocumentSession(
-        KiriView::ArchiveDocumentLocation archiveDocument, ScopedKArchive archive)
-        : m_archiveDocument(std::move(archiveDocument))
+    KArchiveDocumentSession(KiriView::ArchiveDocumentLocation archiveDocument,
+        ScopedKArchive archive, std::vector<KiriView::ImageNavigationCandidate> candidates)
+        : Backend::ArchiveDocumentSessionWithCandidateSnapshot(std::move(candidates))
+        , m_archiveDocument(std::move(archiveDocument))
         , m_archive(std::move(archive))
     {
-    }
-
-    KiriView::ArchiveImageCandidatesResult loadImageCandidates() override
-    {
-        std::vector<KiriView::ImageNavigationCandidate> candidates;
-        appendArchiveDirectoryImageCandidates(
-            &candidates, m_archive.directory(), m_archiveDocument, QString());
-        return Backend::archiveImageCandidatesResult(std::move(candidates));
     }
 
     KiriView::ArchiveImageDataResult loadImageData(const QUrl &imageUrl) override
@@ -214,8 +215,10 @@ KiriView::ArchiveDocumentSessionOpenResult openKArchiveDocumentSession(
             opened.errorString);
     }
 
-    return KiriView::ArchiveDocumentSessionPtr(
-        std::make_shared<KArchiveDocumentSession>(archiveDocument, std::move(opened.archive)));
+    std::vector<KiriView::ImageNavigationCandidate> candidates
+        = archiveDirectoryImageCandidates(opened.archive.directory(), archiveDocument);
+    return KiriView::ArchiveDocumentSessionPtr(std::make_shared<KArchiveDocumentSession>(
+        archiveDocument, std::move(opened.archive), std::move(candidates)));
 }
 
 }

@@ -3,6 +3,7 @@
 
 #include "archivebackend.h"
 
+#include "archivebackend_p.h"
 #include "image_test_support.h"
 #include "imagecontainer.h"
 
@@ -19,6 +20,7 @@
 #include <vector>
 
 namespace {
+namespace Backend = KiriView::ArchiveBackendDetail;
 using KiriView::TestSupport::archivePageUrl;
 using KiriView::TestSupport::localUrl;
 
@@ -98,6 +100,20 @@ const KiriView::ArchiveError *archiveDataError(const KiriView::ArchiveImageDataR
 {
     return std::get_if<KiriView::ArchiveError>(&result);
 }
+
+class CandidateSnapshotSession final : public Backend::ArchiveDocumentSessionWithCandidateSnapshot
+{
+public:
+    explicit CandidateSnapshotSession(std::vector<KiriView::ImageNavigationCandidate> candidates)
+        : Backend::ArchiveDocumentSessionWithCandidateSnapshot(std::move(candidates))
+    {
+    }
+
+    KiriView::ArchiveImageDataResult loadImageData(const QUrl &) override
+    {
+        return KiriView::ArchiveImageData {};
+    }
+};
 }
 
 class TestArchiveBackend : public QObject
@@ -113,6 +129,7 @@ private Q_SLOTS:
     void readingDirectoryEntryReturnsOriginalBytes();
     void readingRarEntryReturnsOriginalBytes();
     void standaloneHelpersMatchSessionResults();
+    void candidateSnapshotSessionsOwnSortedDefensiveListing();
     void archiveSessionListsAndReadsKArchiveEntries();
     void directorySessionListsAndReadsEntries();
     void libArchiveSessionScansOnceAndServesRandomReads();
@@ -329,6 +346,37 @@ void TestArchiveBackend::standaloneHelpersMatchSessionResults()
     QVERIFY(standaloneData != nullptr);
     QVERIFY(sessionData != nullptr);
     QCOMPARE(standaloneData->data, sessionData->data);
+}
+
+void TestArchiveBackend::candidateSnapshotSessionsOwnSortedDefensiveListing()
+{
+    const QUrl archiveRootUrl(QStringLiteral("zip:///books/book.cbz/"));
+    CandidateSnapshotSession session({
+        KiriView::ImageNavigationCandidate {
+            archivePageUrl(archiveRootUrl, QStringLiteral("pages/02.jpg")),
+            QStringLiteral("pages/02.jpg"),
+        },
+        KiriView::ImageNavigationCandidate {
+            archivePageUrl(archiveRootUrl, QStringLiteral("pages/01.png")),
+            QStringLiteral("pages/01.png"),
+        },
+    });
+
+    KiriView::ArchiveImageCandidatesResult firstResult = session.loadImageCandidates();
+    auto *first = std::get_if<KiriView::ArchiveImageCandidates>(&firstResult);
+    QVERIFY(first != nullptr);
+    QCOMPARE(first->candidates.size(), std::size_t(2));
+    QCOMPARE(first->candidates.at(0).name, QStringLiteral("pages/01.png"));
+    QCOMPARE(first->candidates.at(1).name, QStringLiteral("pages/02.jpg"));
+
+    first->candidates.clear();
+
+    const KiriView::ArchiveImageCandidatesResult secondResult = session.loadImageCandidates();
+    const KiriView::ArchiveImageCandidates *second = archiveImageCandidates(secondResult);
+    QVERIFY(second != nullptr);
+    QCOMPARE(second->candidates.size(), std::size_t(2));
+    QCOMPARE(second->candidates.at(0).name, QStringLiteral("pages/01.png"));
+    QCOMPARE(second->candidates.at(1).name, QStringLiteral("pages/02.jpg"));
 }
 
 void TestArchiveBackend::archiveSessionListsAndReadsKArchiveEntries()

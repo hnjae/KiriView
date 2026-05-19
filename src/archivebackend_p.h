@@ -22,6 +22,21 @@ struct ArchiveBackendOperations {
     ArchiveDocumentSessionOpener openSession;
 };
 
+class ArchiveDocumentSessionWithCandidateSnapshot : public ArchiveDocumentSession
+{
+public:
+    explicit ArchiveDocumentSessionWithCandidateSnapshot(
+        std::vector<ImageNavigationCandidate> candidates);
+
+    ArchiveImageCandidatesResult loadImageCandidates() final;
+
+protected:
+    void replaceCandidateSnapshot(std::vector<ImageNavigationCandidate> candidates);
+
+private:
+    std::vector<ImageNavigationCandidate> m_candidates;
+};
+
 std::optional<ImageNavigationCandidate> archiveImageCandidate(
     const ArchiveDocumentLocation &archiveDocument, const QString &entryPath);
 std::optional<QString> archiveImageEntryPathForRead(

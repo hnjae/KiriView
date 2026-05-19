@@ -95,19 +95,14 @@ KiriView::ArchiveImageDataResult loadDirectoryDocumentImageData(
     return Backend::archiveImageDataResult(std::move(data));
 }
 
-class DirectoryDocumentSession final : public KiriView::ArchiveDocumentSession
+class DirectoryDocumentSession final : public Backend::ArchiveDocumentSessionWithCandidateSnapshot
 {
 public:
     DirectoryDocumentSession(KiriView::ArchiveDocumentLocation archiveDocument,
         std::vector<KiriView::ImageNavigationCandidate> candidates)
-        : m_archiveDocument(std::move(archiveDocument))
-        , m_candidates(std::move(candidates))
+        : Backend::ArchiveDocumentSessionWithCandidateSnapshot(std::move(candidates))
+        , m_archiveDocument(std::move(archiveDocument))
     {
-    }
-
-    KiriView::ArchiveImageCandidatesResult loadImageCandidates() override
-    {
-        return KiriView::ArchiveImageCandidates { m_candidates };
     }
 
     KiriView::ArchiveImageDataResult loadImageData(const QUrl &imageUrl) override
@@ -124,7 +119,6 @@ public:
 
 private:
     KiriView::ArchiveDocumentLocation m_archiveDocument;
-    std::vector<KiriView::ImageNavigationCandidate> m_candidates;
 };
 
 KiriView::ArchiveDocumentSessionOpenResult openDirectoryDocumentSession(

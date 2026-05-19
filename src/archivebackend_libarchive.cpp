@@ -201,7 +201,48 @@ KiriView::ArchiveImageDataResult readLibArchiveEntryData(archive *reader, archiv
     return Backend::archiveImageDataResult(std::move(data));
 }
 
-class LibArchiveDocumentSession final : public KiriView::ArchiveDocumentSession
+struct LibArchiveSessionMetadata {
+    std::vector<KiriView::ImageNavigationCandidate> candidates;
+    std::map<QString, int> entryOrderByPath;
+};
+
+std::optional<LibArchiveSessionMetadata> scanLibArchiveSessionMetadata(
+    const KiriView::ArchiveDocumentLocation &archiveDocument, archive *reader, QString *errorString)
+{
+    LibArchiveSessionMetadata metadata;
+    archive_entry *entry = nullptr;
+    int entryOrder = 0;
+
+    while (true) {
+        const int status = archive_read_next_header(reader, &entry);
+        if (status == ARCHIVE_EOF) {
+            return metadata;
+        }
+        if (status != ARCHIVE_OK) {
+            *errorString
+                = libArchiveErrorString(reader, Backend::fallbackArchiveOpenError(archiveDocument));
+            return std::nullopt;
+        }
+
+        const int currentEntryOrder = entryOrder;
+        ++entryOrder;
+
+        if (archive_entry_filetype(entry) == AE_IFREG) {
+            std::optional<KiriView::ImageNavigationCandidate> candidate
+                = Backend::archiveImageCandidate(archiveDocument, libArchiveEntryPath(entry));
+            if (candidate.has_value()) {
+                metadata.entryOrderByPath[candidate->name] = currentEntryOrder;
+                metadata.candidates.push_back(std::move(*candidate));
+            }
+        }
+
+        if (!skipLibArchiveEntry(reader, errorString)) {
+            return std::nullopt;
+        }
+    }
+}
+
+class LibArchiveDocumentSession final : public Backend::ArchiveDocumentSessionWithCandidateSnapshot
 {
 public:
     static KiriView::ArchiveDocumentSessionOpenResult create(
@@ -223,17 +264,16 @@ public:
                 errorString);
         }
 
-        if (!session->scan(reader.get(), &errorString)) {
+        std::optional<LibArchiveSessionMetadata> metadata
+            = scanLibArchiveSessionMetadata(archiveDocument, reader.get(), &errorString);
+        if (!metadata.has_value()) {
             return Backend::archiveErrorResult<KiriView::ArchiveDocumentSessionOpenResult>(
                 errorString);
         }
 
+        session->m_entryOrderByPath = std::move(metadata->entryOrderByPath);
+        session->replaceCandidateSnapshot(std::move(metadata->candidates));
         return KiriView::ArchiveDocumentSessionPtr(std::move(session));
-    }
-
-    KiriView::ArchiveImageCandidatesResult loadImageCandidates() override
-    {
-        return KiriView::ArchiveImageCandidates { m_candidates };
     }
 
     KiriView::ArchiveImageDataResult loadImageData(const QUrl &imageUrl) override
@@ -257,51 +297,10 @@ public:
 private:
     LibArchiveDocumentSession(
         KiriView::ArchiveDocumentLocation archiveDocument, ScopedFileDescriptor archiveFile)
-        : m_archiveDocument(std::move(archiveDocument))
+        : Backend::ArchiveDocumentSessionWithCandidateSnapshot({})
+        , m_archiveDocument(std::move(archiveDocument))
         , m_archiveFile(std::move(archiveFile))
     {
-    }
-
-    bool scan(archive *reader, QString *errorString)
-    {
-        std::vector<KiriView::ImageNavigationCandidate> candidates;
-        std::map<QString, int> entryOrderByPath;
-        archive_entry *entry = nullptr;
-        int entryOrder = 0;
-
-        while (true) {
-            const int status = archive_read_next_header(reader, &entry);
-            if (status == ARCHIVE_EOF) {
-                KiriView::ArchiveImageCandidatesResult sorted
-                    = Backend::archiveImageCandidatesResult(std::move(candidates));
-                if (auto *success = std::get_if<KiriView::ArchiveImageCandidates>(&sorted)) {
-                    m_candidates = std::move(success->candidates);
-                }
-                m_entryOrderByPath = std::move(entryOrderByPath);
-                return true;
-            }
-            if (status != ARCHIVE_OK) {
-                *errorString = libArchiveErrorString(
-                    reader, Backend::fallbackArchiveOpenError(m_archiveDocument));
-                return false;
-            }
-
-            const int currentEntryOrder = entryOrder;
-            ++entryOrder;
-
-            if (archive_entry_filetype(entry) == AE_IFREG) {
-                std::optional<KiriView::ImageNavigationCandidate> candidate
-                    = Backend::archiveImageCandidate(m_archiveDocument, libArchiveEntryPath(entry));
-                if (candidate.has_value()) {
-                    entryOrderByPath[candidate->name] = currentEntryOrder;
-                    candidates.push_back(std::move(*candidate));
-                }
-            }
-
-            if (!skipLibArchiveEntry(reader, errorString)) {
-                return false;
-            }
-        }
     }
 
     KiriView::ArchiveImageDataResult readImageDataAtOrder(int targetEntryOrder)
@@ -370,7 +369,6 @@ private:
 
     KiriView::ArchiveDocumentLocation m_archiveDocument;
     ScopedFileDescriptor m_archiveFile;
-    std::vector<KiriView::ImageNavigationCandidate> m_candidates;
     std::map<QString, int> m_entryOrderByPath;
     LibArchiveReader m_reader { nullptr, archive_read_free };
     int m_nextEntryOrder = 0;

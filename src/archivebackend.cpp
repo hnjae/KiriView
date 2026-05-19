@@ -53,6 +53,24 @@ KiriView::ArchiveDocumentSessionOpenResult openWithArchiveBackend(
 }
 
 namespace KiriView::ArchiveBackendDetail {
+ArchiveDocumentSessionWithCandidateSnapshot::ArchiveDocumentSessionWithCandidateSnapshot(
+    std::vector<ImageNavigationCandidate> candidates)
+{
+    replaceCandidateSnapshot(std::move(candidates));
+}
+
+ArchiveImageCandidatesResult ArchiveDocumentSessionWithCandidateSnapshot::loadImageCandidates()
+{
+    return ArchiveImageCandidates { m_candidates };
+}
+
+void ArchiveDocumentSessionWithCandidateSnapshot::replaceCandidateSnapshot(
+    std::vector<ImageNavigationCandidate> candidates)
+{
+    sortImageNavigationCandidates(&candidates);
+    m_candidates = std::move(candidates);
+}
+
 std::optional<ImageNavigationCandidate> archiveImageCandidate(
     const ArchiveDocumentLocation &archiveDocument, const QString &entryPath)
 {
