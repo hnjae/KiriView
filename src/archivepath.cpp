@@ -8,6 +8,7 @@
 #include "rustqtconversion.h"
 
 #include <QByteArray>
+#include <optional>
 
 namespace {
 QString rustStringForQString(const QString &value, rust::String (*rustFunction)(rust::Str))
@@ -59,6 +60,41 @@ QUrl archiveEntryUrl(const ArchiveDocumentLocation &archiveDocument, const QStri
     url.setPath(normalizedArchiveRootPath(url) + cleanEntryPath);
     url.setQuery(QString());
     url.setFragment(QString());
+    return url;
+}
+
+std::optional<KioFuseArchivePath> kioFuseArchivePath(
+    const QString &localPath, const QString &runtimeDir)
+{
+    const QByteArray localPathBytes = localPath.toUtf8();
+    const QByteArray runtimeDirBytes = runtimeDir.toUtf8();
+    const RustKioFuseArchivePath archivePath
+        = rustKioFuseArchivePath(Bridge::rustStr(localPathBytes), Bridge::rustStr(runtimeDirBytes));
+    if (!archivePath.found) {
+        return std::nullopt;
+    }
+
+    return KioFuseArchivePath {
+        Bridge::qtString(archivePath.scheme),
+        Bridge::qtString(archivePath.path),
+    };
+}
+
+std::optional<QUrl> kioFuseArchiveUrlForLocalPath(
+    const QString &localPath, const QString &runtimeDir)
+{
+    const std::optional<KioFuseArchivePath> archivePath = kioFuseArchivePath(localPath, runtimeDir);
+    if (!archivePath.has_value()) {
+        return std::nullopt;
+    }
+
+    QUrl url;
+    url.setScheme(archivePath->scheme);
+    url.setPath(archivePath->path);
+    if (!url.isValid() || url.path().isEmpty()) {
+        return std::nullopt;
+    }
+
     return url;
 }
 }

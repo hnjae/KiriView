@@ -3,8 +3,7 @@
 
 #include "imageurl.h"
 
-#include "kiriview/src/archivepath.cxx.h"
-#include "rustqtconversion.h"
+#include "archivepath.h"
 
 #include <QByteArray>
 #include <QDir>
@@ -21,22 +20,7 @@ constexpr const char *documentPortalHostPathAttribute = "user.document-portal.ho
 std::optional<QUrl> kioFuseArchiveUrl(const QString &localPath)
 {
     const QString runtimeDir = QFile::decodeName(qgetenv("XDG_RUNTIME_DIR"));
-    const QByteArray localPathBytes = localPath.toUtf8();
-    const QByteArray runtimeDirBytes = runtimeDir.toUtf8();
-    const KiriView::RustKioFuseArchivePath archivePath = KiriView::rustKioFuseArchivePath(
-        KiriView::Bridge::rustStr(localPathBytes), KiriView::Bridge::rustStr(runtimeDirBytes));
-    if (!archivePath.found) {
-        return std::nullopt;
-    }
-
-    QUrl url;
-    url.setScheme(KiriView::Bridge::qtString(archivePath.scheme));
-    url.setPath(KiriView::Bridge::qtString(archivePath.path));
-    if (!url.isValid() || url.path().isEmpty()) {
-        return std::nullopt;
-    }
-
-    return url;
+    return KiriView::kioFuseArchiveUrlForLocalPath(localPath, runtimeDir);
 }
 
 QUrl navigationUrlForLocalPath(const QString &localPath)

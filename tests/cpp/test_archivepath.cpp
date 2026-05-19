@@ -8,6 +8,7 @@
 #include <QString>
 #include <QTest>
 #include <QUrl>
+#include <optional>
 
 namespace {
 KiriView::ArchiveDocumentLocation archiveDocument()
@@ -26,6 +27,8 @@ private Q_SLOTS:
     void entryUrlsNormalizePathsAndClearUrlMetadata();
     void entryUrlsRejectUnsafePaths();
     void entryPathsResolveOnlyInsideArchiveRoot();
+    void kioFuseArchivePathsExposeParsedArchiveParts();
+    void kioFuseArchiveUrlsRejectUnsupportedOrMalformedPaths();
 };
 
 void TestArchivePath::entryUrlsNormalizePathsAndClearUrlMetadata()
@@ -71,6 +74,41 @@ void TestArchivePath::entryPathsResolveOnlyInsideArchiveRoot()
     QVERIFY(KiriView::archiveEntryPathForUrl(
         archive, QUrl(QStringLiteral("tar:///books/book.cbz/chapter/page001.png")))
             .isEmpty());
+}
+
+void TestArchivePath::kioFuseArchivePathsExposeParsedArchiveParts()
+{
+    const std::optional<KiriView::KioFuseArchivePath> parsed = KiriView::kioFuseArchivePath(
+        QStringLiteral("/run/user/1000/kio-fuse-test/zip/books/book.cbz/page001.png"),
+        QStringLiteral("/run/user/1000"));
+
+    QVERIFY(parsed.has_value());
+    QCOMPARE(parsed->scheme, QStringLiteral("zip"));
+    QCOMPARE(parsed->path, QStringLiteral("/books/book.cbz/page001.png"));
+
+    QVERIFY(!KiriView::kioFuseArchivePath(
+        QStringLiteral("/tmp/kio-fuse-test/zip/books/book.cbz/page001.png"),
+        QStringLiteral("/run/user/1000"))
+            .has_value());
+}
+
+void TestArchivePath::kioFuseArchiveUrlsRejectUnsupportedOrMalformedPaths()
+{
+    const QString runtimeDir = QStringLiteral("/run/user/1000");
+
+    const std::optional<QUrl> url = KiriView::kioFuseArchiveUrlForLocalPath(
+        QStringLiteral("/run/user/1000/kio-fuse-test/sevenz/books/book.cb7/page001.png"),
+        runtimeDir);
+    QVERIFY(url.has_value());
+    QCOMPARE(url->scheme(), QStringLiteral("sevenz"));
+    QCOMPARE(url->path(), QStringLiteral("/books/book.cb7/page001.png"));
+
+    QVERIFY(!KiriView::kioFuseArchiveUrlForLocalPath(
+        QStringLiteral("/run/user/1000/kio-fuse-test/rar/books/book.cbr/page001.png"), runtimeDir)
+            .has_value());
+    QVERIFY(!KiriView::kioFuseArchiveUrlForLocalPath(
+        QStringLiteral("/run/user/1000/kio-fuse-test/zip"), runtimeDir)
+            .has_value());
 }
 
 QTEST_GUILESS_MAIN(TestArchivePath)
