@@ -51,6 +51,8 @@ ImageDocumentEffectOperations imageDocumentRuntimeEffectOperations(
           };
     operations.spread.finishSpreadTransition
         = [spreadController]() { spreadController->finishTransition(); };
+    operations.spread.resetRightToLeftReading
+        = [spreadController]() { spreadController->resetRightToLeftReading(); };
     operations.spread.clearSecondaryPage
         = [spreadController]() { spreadController->clearSecondaryPage(); };
     operations.spread.notifyRightToLeftReadingChanged
@@ -97,7 +99,20 @@ ImageDocumentEffectOperations imageDocumentRuntimeEffectOperations(
         = [state]() { state->clearDisplayedImageLocation(); };
     operations.open.clearPresentationImage
         = [presentationController]() { presentationController->clearImage(); };
+    operations.sourceLoad.clearLoadingContainerNavigationUrl
+        = [state]() { state->clearLoadingContainerNavigationUrl(); };
+    operations.sourceLoad.setLoadingContainerNavigationUrl
+        = [state](const QUrl &url) { state->setLoadingContainerNavigationUrl(url); };
+    operations.sourceLoad.setContainerNavigationUrl
+        = [state](const QUrl &url) { state->setContainerNavigationUrl(url); };
+    operations.sourceLoad.prepareSourceLoad = [archiveSessionStore, state](
+                                                  const ImageDocumentSourceLoadRequest &request) {
+        if (archiveSessionStore != nullptr) {
+            archiveSessionStore->prepareForSourceLoad(request, state->displayedArchiveDocument());
+        }
+    };
     operations.open.setSourceUrl = [state](const QUrl &url) { state->setSourceUrl(url); };
+    operations.sourceLoad.beginOpen = [openController]() { openController->open(); };
     operations.open.setErrorString
         = [state](const QString &errorString) { state->setErrorString(errorString); };
     operations.open.finishEmptySourceLoad = [state]() {

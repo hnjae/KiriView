@@ -7,6 +7,7 @@
 #include <variant>
 
 namespace {
+using KiriView::BeginOpenOperation;
 using KiriView::CancelAllNavigationOperation;
 using KiriView::CancelContainerNavigationOperation;
 using KiriView::CancelFileDeletionOperation;
@@ -18,6 +19,7 @@ using KiriView::ClearArchiveSessionOperation;
 using KiriView::ClearDeletedImageEffect;
 using KiriView::ClearDisplayedImageLocationOperation;
 using KiriView::ClearImageEffect;
+using KiriView::ClearLoadingContainerNavigationUrlOperation;
 using KiriView::ClearPageNavigationOperation;
 using KiriView::ClearPredecodeOperation;
 using KiriView::ClearPresentationImageOperation;
@@ -39,11 +41,15 @@ using KiriView::OpenUrlEffect;
 using KiriView::PageNavigationSelectedEffect;
 using KiriView::PrepareFailedContainerEffect;
 using KiriView::PrepareFailedContainerOperation;
+using KiriView::PrepareSourceLoadOperation;
+using KiriView::ResetRightToLeftReadingOperation;
 using KiriView::ResetZoomEffect;
 using KiriView::ResetZoomOperation;
 using KiriView::ScheduleAdjacentImagePredecodeEffect;
 using KiriView::ScheduleAdjacentImagePredecodeOperation;
+using KiriView::SetContainerNavigationUrlOperation;
 using KiriView::SetErrorStringOperation;
+using KiriView::SetLoadingContainerNavigationUrlOperation;
 using KiriView::SetSourceUrlOperation;
 using KiriView::ShutdownSpreadOperation;
 using KiriView::StopPresentationAnimationOperation;
@@ -165,6 +171,8 @@ ImageDocumentRuntimeOperationKind imageDocumentRuntimeOperationKind(
                 return ImageDocumentRuntimeOperationKind::ScheduleAdjacentImagePredecode;
             } else if constexpr (std::is_same_v<Operation, FinishSpreadTransitionOperation>) {
                 return ImageDocumentRuntimeOperationKind::FinishSpreadTransition;
+            } else if constexpr (std::is_same_v<Operation, ResetRightToLeftReadingOperation>) {
+                return ImageDocumentRuntimeOperationKind::ResetRightToLeftReading;
             } else if constexpr (std::is_same_v<Operation, ClearSecondaryPageOperation>) {
                 return ImageDocumentRuntimeOperationKind::ClearSecondaryPage;
             } else if constexpr (std::is_same_v<Operation,
@@ -204,8 +212,20 @@ ImageDocumentRuntimeOperationKind imageDocumentRuntimeOperationKind(
                 return ImageDocumentRuntimeOperationKind::ClearDisplayedImageLocation;
             } else if constexpr (std::is_same_v<Operation, ClearPresentationImageOperation>) {
                 return ImageDocumentRuntimeOperationKind::ClearPresentationImage;
+            } else if constexpr (std::is_same_v<Operation,
+                                     ClearLoadingContainerNavigationUrlOperation>) {
+                return ImageDocumentRuntimeOperationKind::ClearLoadingContainerNavigationUrl;
+            } else if constexpr (std::is_same_v<Operation,
+                                     SetLoadingContainerNavigationUrlOperation>) {
+                return ImageDocumentRuntimeOperationKind::SetLoadingContainerNavigationUrl;
+            } else if constexpr (std::is_same_v<Operation, SetContainerNavigationUrlOperation>) {
+                return ImageDocumentRuntimeOperationKind::SetContainerNavigationUrl;
+            } else if constexpr (std::is_same_v<Operation, PrepareSourceLoadOperation>) {
+                return ImageDocumentRuntimeOperationKind::PrepareSourceLoad;
             } else if constexpr (std::is_same_v<Operation, SetSourceUrlOperation>) {
                 return ImageDocumentRuntimeOperationKind::SetSourceUrl;
+            } else if constexpr (std::is_same_v<Operation, BeginOpenOperation>) {
+                return ImageDocumentRuntimeOperationKind::BeginOpen;
             } else if constexpr (std::is_same_v<Operation, SetErrorStringOperation>) {
                 return ImageDocumentRuntimeOperationKind::SetErrorString;
             } else {

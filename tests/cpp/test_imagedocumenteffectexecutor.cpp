@@ -41,6 +41,8 @@ struct RecordedEffectOperations {
             = [this]() { record(QStringLiteral("scheduleAdjacentImagePredecode")); };
         operations.spread.finishSpreadTransition
             = [this]() { record(QStringLiteral("finishSpreadTransition")); };
+        operations.spread.resetRightToLeftReading
+            = [this]() { record(QStringLiteral("resetRightToLeftReading")); };
         operations.spread.clearSecondaryPage
             = [this]() { record(QStringLiteral("clearSecondaryPage")); };
         operations.spread.notifyRightToLeftReadingChanged
@@ -93,10 +95,28 @@ struct RecordedEffectOperations {
             = [this]() { record(QStringLiteral("clearDisplayedImageLocation")); };
         operations.open.clearPresentationImage
             = [this]() { record(QStringLiteral("clearPresentationImage")); };
+        operations.sourceLoad.clearLoadingContainerNavigationUrl
+            = [this]() { record(QStringLiteral("clearLoadingContainerNavigationUrl")); };
+        operations.sourceLoad.setLoadingContainerNavigationUrl = [this](const QUrl &targetUrl) {
+            url = targetUrl;
+            record(QStringLiteral("setLoadingContainerNavigationUrl"));
+        };
+        operations.sourceLoad.setContainerNavigationUrl = [this](const QUrl &targetUrl) {
+            url = targetUrl;
+            record(QStringLiteral("setContainerNavigationUrl"));
+        };
+        operations.sourceLoad.prepareSourceLoad
+            = [this](const KiriView::ImageDocumentSourceLoadRequest &request) {
+                  url = request.sourceUrl;
+                  secondaryUrl = request.containerNavigationUrl;
+                  flag = request.preserveTwoPageSpreadTransition;
+                  record(QStringLiteral("prepareSourceLoad"));
+              };
         operations.open.setSourceUrl = [this](const QUrl &sourceUrl) {
             url = sourceUrl;
             record(QStringLiteral("setSourceUrl"));
         };
+        operations.sourceLoad.beginOpen = [this]() { record(QStringLiteral("beginOpen")); };
         operations.open.setErrorString = [this](const QString &message) {
             errorString = message;
             record(QStringLiteral("setErrorString"));
@@ -132,6 +152,7 @@ private Q_SLOTS:
     void clearDeletedImageDispatchesDeletionClearThenGeneratedEffects();
     void shutdownRuntimeDispatchesOrderedLifecycleOperations();
     void payloadEffectsDispatchToRuntimeOperations();
+    void runtimePlansDispatchSourceLoadOperations();
 };
 
 void TestImageDocumentEffectExecutor::clearImageDispatchesOrderedRuntimeOperations()
@@ -259,6 +280,52 @@ void TestImageDocumentEffectExecutor::payloadEffectsDispatchToRuntimeOperations(
             QStringLiteral("updatePageNavigation"),
             QStringLiteral("scheduleAdjacentImagePredecode"),
         }));
+}
+
+void TestImageDocumentEffectExecutor::runtimePlansDispatchSourceLoadOperations()
+{
+    RecordedEffectOperations recorded;
+    KiriView::ImageDocumentEffectExecutor executor(recorded.operations);
+    const QUrl sourceUrl = localUrl(QStringLiteral("/book/01.png"));
+    const QUrl containerUrl = localUrl(QStringLiteral("/book.cbz"));
+
+    executor.dispatchPlan({
+        KiriView::CancelFileDeletionOperation {},
+        KiriView::CancelAllNavigationOperation {},
+        KiriView::CancelPredecodeOperation {},
+        KiriView::FinishSpreadTransitionOperation {},
+        KiriView::ResetRightToLeftReadingOperation {},
+        KiriView::ClearSecondaryPageOperation {},
+        KiriView::ClearLoadingContainerNavigationUrlOperation {},
+        KiriView::SetLoadingContainerNavigationUrlOperation { containerUrl },
+        KiriView::SetContainerNavigationUrlOperation { containerUrl },
+        KiriView::PrepareSourceLoadOperation {
+            KiriView::ImageDocumentSourceLoadRequest::fromPageNavigation(sourceUrl, true),
+        },
+        KiriView::SetSourceUrlOperation { sourceUrl },
+        KiriView::BeginOpenOperation {},
+        KiriView::NotifyRightToLeftReadingChangedOperation {},
+    });
+
+    QCOMPARE(recorded.events,
+        QStringList({
+            QStringLiteral("cancelFileDeletion"),
+            QStringLiteral("cancelAllNavigation"),
+            QStringLiteral("cancelPredecode"),
+            QStringLiteral("finishSpreadTransition"),
+            QStringLiteral("resetRightToLeftReading"),
+            QStringLiteral("clearSecondaryPage"),
+            QStringLiteral("clearLoadingContainerNavigationUrl"),
+            QStringLiteral("setLoadingContainerNavigationUrl"),
+            QStringLiteral("setContainerNavigationUrl"),
+            QStringLiteral("prepareSourceLoad"),
+            QStringLiteral("setSourceUrl"),
+            QStringLiteral("beginOpen"),
+            QStringLiteral("notifyRightToLeftReadingChanged"),
+        }));
+    QCOMPARE(recorded.url, sourceUrl);
+    QVERIFY(recorded.secondaryUrl.isEmpty());
+    QVERIFY(recorded.flag);
 }
 
 QTEST_GUILESS_MAIN(TestImageDocumentEffectExecutor)

@@ -101,9 +101,12 @@ ImageDocumentRuntime::ImageDocumentRuntime(QObject *documentObject,
     documentNavigationController = std::make_unique<ImageDocumentNavigationController>(state,
         *presentationController, *navigationService, *spreadController,
         [this](ImageDocumentEffect effect) { dispatchEffect(std::move(effect)); });
-    loadController = std::make_unique<ImageDocumentLoadController>(state,
-        *documentDeletionController, *navigationService, *predecodeController, *openController,
-        *spreadController, archiveSessionStore.get());
+    loadController = std::make_unique<ImageDocumentLoadController>(
+        state, *spreadController, [this](const ImageDocumentRuntimePlan &plan) {
+            if (effectExecutor != nullptr) {
+                effectExecutor->dispatchPlan(plan);
+            }
+        });
     effectExecutor = std::make_unique<ImageDocumentEffectExecutor>(
         imageDocumentRuntimeEffectOperations(ImageDocumentRuntimeEffectBinding {
             archiveSessionStore.get(),

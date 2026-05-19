@@ -1,69 +1,56 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "imagedocumentsourceloadexecutor.h"
+#include "imagedocumentsourceloadruntimeplan.h"
 
 #include <QObject>
-#include <QStringList>
 #include <QTest>
 #include <QUrl>
+#include <cstddef>
+#include <variant>
+#include <vector>
 
 class TestImageDocumentSourceLoadExecutor : public QObject
 {
     Q_OBJECT
 
 private Q_SLOTS:
-    void replacementLoadExecutesRuntimeEffectsAroundSourceMutation();
-    void currentLoadExecutesReadingResetBeforeSourceState();
+    void replacementLoadPlansRuntimeEffectsAroundSourceMutation();
+    void currentLoadPlansReadingResetBeforeSourceState();
 };
 
 namespace {
 QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
 
-void appendEvent(QStringList *events, const QString &event) { events->append(event); }
-
-void appendUrlEvent(QStringList *events, const QString &event, const QUrl &url)
+std::vector<KiriView::ImageDocumentRuntimeOperationKind> operationKinds(
+    const KiriView::ImageDocumentRuntimePlan &plan)
 {
-    events->append(event + QLatin1Char('=') + url.toString());
+    std::vector<KiriView::ImageDocumentRuntimeOperationKind> kinds;
+    kinds.reserve(plan.size());
+    for (const KiriView::ImageDocumentRuntimeOperation &operation : plan) {
+        kinds.push_back(KiriView::imageDocumentRuntimeOperationKind(operation));
+    }
+    return kinds;
 }
 
-KiriView::ImageDocumentSourceLoadOperations recordingOperations(QStringList *events)
+void compareOperationKinds(const KiriView::ImageDocumentRuntimePlan &plan,
+    const std::vector<KiriView::ImageDocumentRuntimeOperationKind> &expected)
 {
-    KiriView::ImageDocumentSourceLoadOperations operations;
-    operations.cancelFileDeletion
-        = [events]() { appendEvent(events, QStringLiteral("cancelFileDeletion")); };
-    operations.cancelNavigationAndPredecode
-        = [events]() { appendEvent(events, QStringLiteral("cancelNavigationAndPredecode")); };
-    operations.finishSpreadTransition
-        = [events]() { appendEvent(events, QStringLiteral("finishSpreadTransition")); };
-    operations.resetRightToLeftReading
-        = [events]() { appendEvent(events, QStringLiteral("resetRightToLeftReading")); };
-    operations.notifyRightToLeftReadingChanged
-        = [events]() { appendEvent(events, QStringLiteral("notifyRightToLeftReadingChanged")); };
-    operations.clearSecondaryPage
-        = [events]() { appendEvent(events, QStringLiteral("clearSecondaryPage")); };
-    operations.clearLoadingContainerNavigationUrl
-        = [events]() { appendEvent(events, QStringLiteral("clearLoadingContainerNavigationUrl")); };
-    operations.setLoadingContainerNavigationUrl = [events](const QUrl &url) {
-        appendUrlEvent(events, QStringLiteral("setLoadingContainerNavigationUrl"), url);
-    };
-    operations.setContainerNavigationUrl = [events](const QUrl &url) {
-        appendUrlEvent(events, QStringLiteral("setContainerNavigationUrl"), url);
-    };
-    operations.prepareSourceLoad
-        = [events](const KiriView::ImageDocumentSourceLoadRequest &request) {
-              appendUrlEvent(events, QStringLiteral("prepareSourceLoad"), request.sourceUrl);
-          };
-    operations.setSourceUrl = [events](const QUrl &url) {
-        appendUrlEvent(events, QStringLiteral("setSourceUrl"), url);
-    };
-    operations.beginOpen = [events]() { appendEvent(events, QStringLiteral("beginOpen")); };
-    return operations;
+    const std::vector<KiriView::ImageDocumentRuntimeOperationKind> actual = operationKinds(plan);
+    QCOMPARE(actual.size(), expected.size());
+    for (std::size_t index = 0; index < expected.size(); ++index) {
+        QCOMPARE(actual.at(index), expected.at(index));
+    }
+}
+
+template <typename Operation>
+const Operation &operationAt(const KiriView::ImageDocumentRuntimePlan &plan, std::size_t index)
+{
+    return std::get<Operation>(plan.at(index));
 }
 }
 
-void TestImageDocumentSourceLoadExecutor::
-    replacementLoadExecutesRuntimeEffectsAroundSourceMutation()
+void TestImageDocumentSourceLoadExecutor::replacementLoadPlansRuntimeEffectsAroundSourceMutation()
 {
     const QUrl sourceUrl = localUrl(QStringLiteral("/images/page.png"));
     const QUrl containerUrl = localUrl(QStringLiteral("/books/book.cbz"));
@@ -85,25 +72,35 @@ void TestImageDocumentSourceLoadExecutor::
         Operation::NotifyRightToLeftReadingChanged,
     };
 
-    QStringList events;
-    KiriView::executeImageDocumentSourceLoadPlan(request, plan, recordingOperations(&events));
+    const KiriView::ImageDocumentRuntimePlan runtimePlan
+        = KiriView::imageDocumentSourceLoadRuntimePlan(request, plan);
 
-    QCOMPARE(events,
-        QStringList({
-            QStringLiteral("cancelFileDeletion"),
-            QStringLiteral("cancelNavigationAndPredecode"),
-            QStringLiteral("finishSpreadTransition"),
-            QStringLiteral("resetRightToLeftReading"),
-            QStringLiteral("clearSecondaryPage"),
-            QStringLiteral("setLoadingContainerNavigationUrl=%1").arg(containerUrl.toString()),
-            QStringLiteral("prepareSourceLoad=%1").arg(sourceUrl.toString()),
-            QStringLiteral("setSourceUrl=%1").arg(sourceUrl.toString()),
-            QStringLiteral("beginOpen"),
-            QStringLiteral("notifyRightToLeftReadingChanged"),
-        }));
+    using RuntimeOperation = KiriView::ImageDocumentRuntimeOperationKind;
+    compareOperationKinds(runtimePlan,
+        {
+            RuntimeOperation::CancelFileDeletion,
+            RuntimeOperation::CancelAllNavigation,
+            RuntimeOperation::CancelPredecode,
+            RuntimeOperation::FinishSpreadTransition,
+            RuntimeOperation::ResetRightToLeftReading,
+            RuntimeOperation::ClearSecondaryPage,
+            RuntimeOperation::SetLoadingContainerNavigationUrl,
+            RuntimeOperation::PrepareSourceLoad,
+            RuntimeOperation::SetSourceUrl,
+            RuntimeOperation::BeginOpen,
+            RuntimeOperation::NotifyRightToLeftReadingChanged,
+        });
+    QCOMPARE(operationAt<KiriView::SetLoadingContainerNavigationUrlOperation>(runtimePlan, 6).url,
+        containerUrl);
+    QCOMPARE(operationAt<KiriView::PrepareSourceLoadOperation>(runtimePlan, 7).request.sourceUrl,
+        sourceUrl);
+    QCOMPARE(operationAt<KiriView::PrepareSourceLoadOperation>(runtimePlan, 7)
+                 .request.containerNavigationUrl,
+        containerUrl);
+    QCOMPARE(operationAt<KiriView::SetSourceUrlOperation>(runtimePlan, 8).url, sourceUrl);
 }
 
-void TestImageDocumentSourceLoadExecutor::currentLoadExecutesReadingResetBeforeSourceState()
+void TestImageDocumentSourceLoadExecutor::currentLoadPlansReadingResetBeforeSourceState()
 {
     const QUrl sourceUrl = localUrl(QStringLiteral("/images/page.png"));
     const QUrl containerUrl = localUrl(QStringLiteral("/books/book.cbz"));
@@ -120,17 +117,20 @@ void TestImageDocumentSourceLoadExecutor::currentLoadExecutesReadingResetBeforeS
         Operation::SetContainerNavigationUrlToRequested,
     };
 
-    QStringList events;
-    KiriView::executeImageDocumentSourceLoadPlan(request, plan, recordingOperations(&events));
+    const KiriView::ImageDocumentRuntimePlan runtimePlan
+        = KiriView::imageDocumentSourceLoadRuntimePlan(request, plan);
 
-    QCOMPARE(events,
-        QStringList({
-            QStringLiteral("cancelFileDeletion"),
-            QStringLiteral("resetRightToLeftReading"),
-            QStringLiteral("notifyRightToLeftReadingChanged"),
-            QStringLiteral("clearLoadingContainerNavigationUrl"),
-            QStringLiteral("setContainerNavigationUrl=%1").arg(containerUrl.toString()),
-        }));
+    using RuntimeOperation = KiriView::ImageDocumentRuntimeOperationKind;
+    compareOperationKinds(runtimePlan,
+        {
+            RuntimeOperation::CancelFileDeletion,
+            RuntimeOperation::ResetRightToLeftReading,
+            RuntimeOperation::NotifyRightToLeftReadingChanged,
+            RuntimeOperation::ClearLoadingContainerNavigationUrl,
+            RuntimeOperation::SetContainerNavigationUrl,
+        });
+    QCOMPARE(operationAt<KiriView::SetContainerNavigationUrlOperation>(runtimePlan, 4).url,
+        containerUrl);
 }
 
 QTEST_GUILESS_MAIN(TestImageDocumentSourceLoadExecutor)

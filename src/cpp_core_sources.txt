@@ -55,7 +55,7 @@ src/imagedocumentpublicsignals.cpp
 src/imagedocumentruntime.cpp
 src/imagedocumentruntimeeffectbinding.cpp
 src/imagedocumentruntimedependencies.cpp
-src/imagedocumentsourceloadexecutor.cpp
+src/imagedocumentsourceloadruntimeplan.cpp
 src/imagedocumentsourceloadpolicy.cpp
 src/imagedecodepipeline.cpp
 src/imagedecodedependencies.cpp

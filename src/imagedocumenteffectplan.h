@@ -5,6 +5,7 @@
 #define KIRIVIEW_IMAGEDOCUMENTEFFECTPLAN_H
 
 #include "imagedocumenteffects.h"
+#include "imagedocumentsourceloadrequest.h"
 
 #include <QString>
 #include <QUrl>
@@ -21,6 +22,7 @@ enum class ImageDocumentRuntimeOperationKind {
     CancelPredecode,
     ScheduleAdjacentImagePredecode,
     FinishSpreadTransition,
+    ResetRightToLeftReading,
     ClearSecondaryPage,
     NotifyRightToLeftReadingChanged,
     ResetZoom,
@@ -39,7 +41,12 @@ enum class ImageDocumentRuntimeOperationKind {
     CancelOpen,
     ClearDisplayedImageLocation,
     ClearPresentationImage,
+    ClearLoadingContainerNavigationUrl,
+    SetLoadingContainerNavigationUrl,
+    SetContainerNavigationUrl,
+    PrepareSourceLoad,
     SetSourceUrl,
+    BeginOpen,
     SetErrorString,
     FinishEmptySourceLoad,
 };
@@ -59,6 +66,8 @@ struct CancelPredecodeOperation {
 struct ScheduleAdjacentImagePredecodeOperation {
 };
 struct FinishSpreadTransitionOperation {
+};
+struct ResetRightToLeftReadingOperation {
 };
 struct ClearSecondaryPageOperation {
 };
@@ -105,8 +114,21 @@ struct ClearDisplayedImageLocationOperation {
 };
 struct ClearPresentationImageOperation {
 };
+struct ClearLoadingContainerNavigationUrlOperation {
+};
+struct SetLoadingContainerNavigationUrlOperation {
+    QUrl url;
+};
+struct SetContainerNavigationUrlOperation {
+    QUrl url;
+};
+struct PrepareSourceLoadOperation {
+    ImageDocumentSourceLoadRequest request;
+};
 struct SetSourceUrlOperation {
     QUrl url;
+};
+struct BeginOpenOperation {
 };
 struct SetErrorStringOperation {
     QString errorString;
@@ -117,14 +139,16 @@ struct FinishEmptySourceLoadOperation {
 using ImageDocumentRuntimeOperation = std::variant<CancelFileDeletionOperation,
     StopPresentationAnimationOperation, ShutdownSpreadOperation, ClearArchiveSessionOperation,
     ClearPredecodeOperation, CancelPredecodeOperation, ScheduleAdjacentImagePredecodeOperation,
-    FinishSpreadTransitionOperation, ClearSecondaryPageOperation,
+    FinishSpreadTransitionOperation, ResetRightToLeftReadingOperation, ClearSecondaryPageOperation,
     NotifyRightToLeftReadingChangedOperation, ResetZoomOperation, PrepareFailedContainerOperation,
     CancelPageNavigationUpdateOperation, CancelNavigationOperation,
     CancelContainerNavigationOperation, CancelAllNavigationOperation, ClearPageNavigationOperation,
     UpdatePageNavigationOperation, LoadUrlOperation, LoadContainerImageOperation,
     FinishEmptyContainerNavigationOperation, FinishContainerNavigationLoadWithErrorOperation,
     LoadPageNavigationUrlOperation, CancelOpenOperation, ClearDisplayedImageLocationOperation,
-    ClearPresentationImageOperation, SetSourceUrlOperation, SetErrorStringOperation,
+    ClearPresentationImageOperation, ClearLoadingContainerNavigationUrlOperation,
+    SetLoadingContainerNavigationUrlOperation, SetContainerNavigationUrlOperation,
+    PrepareSourceLoadOperation, SetSourceUrlOperation, BeginOpenOperation, SetErrorStringOperation,
     FinishEmptySourceLoadOperation>;
 
 using ImageDocumentRuntimePlan = std::vector<ImageDocumentRuntimeOperation>;

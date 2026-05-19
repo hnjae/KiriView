@@ -30,6 +30,7 @@ struct ImageDocumentPredecodeEffectOperations {
 
 struct ImageDocumentSpreadEffectOperations {
     std::function<void()> finishSpreadTransition;
+    std::function<void()> resetRightToLeftReading;
     std::function<void()> clearSecondaryPage;
     std::function<void()> notifyRightToLeftReadingChanged;
     std::function<void()> resetZoom;
@@ -59,6 +60,14 @@ struct ImageDocumentOpenEffectOperations {
     std::function<ImageDocumentEffects()> finishEmptySourceLoad;
 };
 
+struct ImageDocumentSourceLoadEffectOperations {
+    std::function<void()> clearLoadingContainerNavigationUrl;
+    std::function<void(const QUrl &)> setLoadingContainerNavigationUrl;
+    std::function<void(const QUrl &)> setContainerNavigationUrl;
+    std::function<void(const ImageDocumentSourceLoadRequest &)> prepareSourceLoad;
+    std::function<void()> beginOpen;
+};
+
 struct ImageDocumentEffectOperations {
     ImageDocumentLifecycleEffectOperations lifecycle;
     ImageDocumentArchiveEffectOperations archive;
@@ -66,6 +75,7 @@ struct ImageDocumentEffectOperations {
     ImageDocumentSpreadEffectOperations spread;
     ImageDocumentNavigationEffectOperations navigation;
     ImageDocumentOpenEffectOperations open;
+    ImageDocumentSourceLoadEffectOperations sourceLoad;
 };
 
 class ImageDocumentEffectExecutor final
@@ -74,10 +84,10 @@ public:
     explicit ImageDocumentEffectExecutor(ImageDocumentEffectOperations operations);
 
     void dispatch(ImageDocumentEffect effect);
+    void dispatchPlan(const ImageDocumentRuntimePlan &plan);
     void shutdownRuntime();
 
 private:
-    void dispatchPlan(const ImageDocumentRuntimePlan &plan);
     void dispatchGeneratedEffects(ImageDocumentEffects effects);
     void dispatchOperation(const ImageDocumentRuntimeOperation &operation);
 

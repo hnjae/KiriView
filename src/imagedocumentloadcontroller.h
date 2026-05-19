@@ -4,40 +4,30 @@
 #ifndef KIRIVIEW_IMAGEDOCUMENTLOADCONTROLLER_H
 #define KIRIVIEW_IMAGEDOCUMENTLOADCONTROLLER_H
 
-#include "imagedocumentsourceloadexecutor.h"
+#include "imagedocumenteffectplan.h"
 #include "imagedocumentsourceloadrequest.h"
 
+#include <functional>
+
 namespace KiriView {
-class ArchiveDocumentSessionStore;
-class ImageDocumentDeletionController;
-class ImageDocumentPredecodeController;
 class ImageDocumentState;
-class ImageOpenController;
 class ImageSpreadPresentationController;
-class ImageNavigationService;
 
 class ImageDocumentLoadController final
 {
 public:
+    using RuntimePlanDispatcher = std::function<void(const ImageDocumentRuntimePlan &)>;
+
     ImageDocumentLoadController(ImageDocumentState &state,
-        ImageDocumentDeletionController &deletionController,
-        ImageNavigationService &navigationService,
-        ImageDocumentPredecodeController &predecodeController, ImageOpenController &openController,
         ImageSpreadPresentationController &spreadController,
-        ArchiveDocumentSessionStore *archiveSessionStore = nullptr);
+        RuntimePlanDispatcher dispatchRuntimePlan);
 
     void loadSource(const ImageDocumentSourceLoadRequest &request);
 
 private:
-    ImageDocumentSourceLoadOperations sourceLoadOperations();
-
     ImageDocumentState &m_state;
-    ImageDocumentDeletionController &m_deletionController;
-    ImageNavigationService &m_navigationService;
-    ImageDocumentPredecodeController &m_predecodeController;
-    ImageOpenController &m_openController;
     ImageSpreadPresentationController &m_spreadController;
-    ArchiveDocumentSessionStore *m_archiveSessionStore = nullptr;
+    RuntimePlanDispatcher m_dispatchRuntimePlan;
 };
 }
 
