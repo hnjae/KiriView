@@ -11,7 +11,6 @@
 #include "imagespreadmodecontroller.h"
 #include "imagespreadnavigation.h"
 #include "imagespreadzoomcontroller.h"
-#include "imageurl.h"
 
 #include <utility>
 
@@ -187,23 +186,18 @@ int ImageSpreadPresentationController::rotationDegrees() const
 
 int ImageSpreadPresentationController::currentLastPageNumber() const
 {
-    return imageSpreadNavigationCurrentLastPageNumber(navigationState());
+    return m_secondaryPageRefresh.currentLastPageNumber(pageNavigationContext());
 }
 
 ImageSpreadPageNavigationTarget ImageSpreadPresentationController::imageNavigationTarget(
     NavigationDirection direction) const
 {
-    ImageSpreadNavigationState state = navigationState();
-    if (direction == NavigationDirection::Previous) {
-        state.previousPageIsWide = previousPageIsWideForNavigation();
-    }
-
-    return imageSpreadPageNavigationTarget(direction, state);
+    return m_secondaryPageRefresh.pageNavigationTarget(direction, pageNavigationContext());
 }
 
 int ImageSpreadPresentationController::relativePageNavigationTarget(int offset) const
 {
-    return imageSpreadRelativePageNavigationTarget(navigationState(), offset);
+    return m_secondaryPageRefresh.relativePageNavigationTarget(offset, pageNavigationContext());
 }
 
 bool ImageSpreadPresentationController::twoPageModeEnabled() const
@@ -323,11 +317,6 @@ DisplayedImageRenderSnapshot ImageSpreadPresentationController::renderSnapshot(
     return m_primaryPresentation.renderSnapshot();
 }
 
-std::optional<bool> ImageSpreadPresentationController::cachedPageIsWide(const QUrl &url) const
-{
-    return m_secondaryPageRefresh.cachedPageIsWide(url);
-}
-
 void ImageSpreadPresentationController::setViewportSize(const QSizeF &viewportSize)
 {
     m_primaryPresentation.setViewportSize(viewportSize);
@@ -430,7 +419,8 @@ void ImageSpreadPresentationController::handleDocumentChange(ImageDocumentChange
     }
 
     if (change == ImageDocumentChange::PageNavigation) {
-        if (primarySelectionMatchesDisplayed()) {
+        if (m_secondaryPageRefresh.primarySelectionMatchesDisplayed(
+                pageNavigationSnapshot(), m_state.displayedUrl())) {
             refreshSecondaryPage();
         }
         notifyRightToLeftReadingChanged();
@@ -439,7 +429,8 @@ void ImageSpreadPresentationController::handleDocumentChange(ImageDocumentChange
 
 bool ImageSpreadPresentationController::shouldBeginTransition(int targetPageNumber) const
 {
-    return imageSpreadShouldBeginNavigationTransition(navigationState(), targetPageNumber);
+    return m_secondaryPageRefresh.shouldBeginNavigationTransition(
+        targetPageNumber, pageNavigationContext());
 }
 
 void ImageSpreadPresentationController::beginTransition()
@@ -554,45 +545,15 @@ ImageSpreadReadingAvailability ImageSpreadPresentationController::readingAvailab
         location.archiveDocument().isComicBook() };
 }
 
-bool ImageSpreadPresentationController::previousPageIsWideForNavigation() const
-{
-    const ImagePageNavigationSnapshot navigation = pageNavigationSnapshot();
-    const int pageNumber = navigation.currentPageNumber();
-    if (!secondaryPageVisible() || pageNumber <= 2) {
-        return false;
-    }
-
-    const std::optional<QUrl> previousUrl = navigation.urlAtPage(pageNumber - 1);
-    return previousUrl.has_value() ? cachedPageIsWide(*previousUrl).value_or(false) : false;
-}
-
-bool ImageSpreadPresentationController::primarySelectionMatchesDisplayed() const
-{
-    const ImagePageNavigationSnapshot navigation = pageNavigationSnapshot();
-    const int pageNumber = navigation.currentPageNumber();
-    if (pageNumber <= 0) {
-        return true;
-    }
-
-    const std::optional<QUrl> pageUrl = navigation.urlAtPage(pageNumber);
-    if (!pageUrl.has_value()) {
-        return true;
-    }
-
-    return sameNormalizedUrl(*pageUrl, m_state.displayedUrl());
-}
-
 void ImageSpreadPresentationController::scheduleAdjacentPredecode()
 {
     invokeIfSet(m_callbacks.scheduleAdjacentPredecode);
 }
 
-ImageSpreadNavigationState ImageSpreadPresentationController::navigationState(
-    bool previousPageIsWide) const
+ImageSpreadPageNavigationContext ImageSpreadPresentationController::pageNavigationContext() const
 {
-    const ImagePageNavigationSnapshot navigation = pageNavigationSnapshot();
-    return ImageSpreadNavigationState { twoPageModeActive(), navigation.currentPageNumber(),
-        navigation.imageCount(), secondaryPageVisible(), previousPageIsWide };
+    return ImageSpreadPageNavigationContext { twoPageModeActive(), secondaryPageVisible(),
+        pageNavigationSnapshot() };
 }
 
 ImagePageNavigationSnapshot ImageSpreadPresentationController::pageNavigationSnapshot() const

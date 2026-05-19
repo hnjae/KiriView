@@ -4,6 +4,7 @@
 #include "imagespreadsecondarypagerefresh.h"
 
 #include "imagespreadgeometry.h"
+#include "imageurl.h"
 
 #include <limits>
 
@@ -73,5 +74,70 @@ ImageSpreadSecondaryPageRefreshResult ImageSpreadSecondaryPageRefresh::planRefre
     }
 
     return loadTargetRefresh(*targetUrl);
+}
+
+int ImageSpreadSecondaryPageRefresh::currentLastPageNumber(
+    const ImageSpreadPageNavigationContext &context) const
+{
+    return imageSpreadNavigationCurrentLastPageNumber(navigationState(context));
+}
+
+ImageSpreadPageNavigationTarget ImageSpreadSecondaryPageRefresh::pageNavigationTarget(
+    NavigationDirection direction, const ImageSpreadPageNavigationContext &context) const
+{
+    ImageSpreadNavigationState state = navigationState(context);
+    if (direction == NavigationDirection::Previous) {
+        state.previousPageIsWide = previousPageIsWideForNavigation(context);
+    }
+
+    return imageSpreadPageNavigationTarget(direction, state);
+}
+
+int ImageSpreadSecondaryPageRefresh::relativePageNavigationTarget(
+    int offset, const ImageSpreadPageNavigationContext &context) const
+{
+    return imageSpreadRelativePageNavigationTarget(navigationState(context), offset);
+}
+
+bool ImageSpreadSecondaryPageRefresh::shouldBeginNavigationTransition(
+    int targetPageNumber, const ImageSpreadPageNavigationContext &context) const
+{
+    return imageSpreadShouldBeginNavigationTransition(navigationState(context), targetPageNumber);
+}
+
+bool ImageSpreadSecondaryPageRefresh::primarySelectionMatchesDisplayed(
+    const ImagePageNavigationSnapshot &navigation, const QUrl &displayedUrl) const
+{
+    const int pageNumber = navigation.currentPageNumber();
+    if (pageNumber <= 0) {
+        return true;
+    }
+
+    const std::optional<QUrl> pageUrl = navigation.urlAtPage(pageNumber);
+    if (!pageUrl.has_value()) {
+        return true;
+    }
+
+    return sameNormalizedUrl(*pageUrl, displayedUrl);
+}
+
+ImageSpreadNavigationState ImageSpreadSecondaryPageRefresh::navigationState(
+    const ImageSpreadPageNavigationContext &context, bool previousPageIsWide) const
+{
+    return ImageSpreadNavigationState { context.twoPageModeActive,
+        context.navigation.currentPageNumber(), context.navigation.imageCount(),
+        context.secondaryPageVisible, previousPageIsWide };
+}
+
+bool ImageSpreadSecondaryPageRefresh::previousPageIsWideForNavigation(
+    const ImageSpreadPageNavigationContext &context) const
+{
+    const int pageNumber = context.navigation.currentPageNumber();
+    if (!context.secondaryPageVisible || pageNumber <= 2) {
+        return false;
+    }
+
+    const std::optional<QUrl> previousUrl = context.navigation.urlAtPage(pageNumber - 1);
+    return previousUrl.has_value() ? cachedPageIsWide(*previousUrl).value_or(false) : false;
 }
 }

@@ -5,6 +5,7 @@
 #define KIRIVIEW_IMAGESPREADSECONDARYPAGEREFRESH_H
 
 #include "imagenavigationtypes.h"
+#include "imagespreadnavigation.h"
 #include "imagespreadpagecache.h"
 
 #include <QSize>
@@ -32,6 +33,12 @@ struct ImageSpreadSecondaryPageRefreshResult {
     QUrl targetUrl;
 };
 
+struct ImageSpreadPageNavigationContext {
+    bool twoPageModeActive = false;
+    bool secondaryPageVisible = false;
+    ImagePageNavigationSnapshot navigation;
+};
+
 class ImageSpreadSecondaryPageRefresh final
 {
 public:
@@ -40,8 +47,20 @@ public:
 
     ImageSpreadSecondaryPageRefreshResult planRefresh(
         const ImageSpreadSecondaryPageRefreshRequest &request) const;
+    int currentLastPageNumber(const ImageSpreadPageNavigationContext &context) const;
+    ImageSpreadPageNavigationTarget pageNavigationTarget(
+        NavigationDirection direction, const ImageSpreadPageNavigationContext &context) const;
+    int relativePageNavigationTarget(
+        int offset, const ImageSpreadPageNavigationContext &context) const;
+    bool shouldBeginNavigationTransition(
+        int targetPageNumber, const ImageSpreadPageNavigationContext &context) const;
+    bool primarySelectionMatchesDisplayed(
+        const ImagePageNavigationSnapshot &navigation, const QUrl &displayedUrl) const;
 
 private:
+    ImageSpreadNavigationState navigationState(
+        const ImageSpreadPageNavigationContext &context, bool previousPageIsWide = false) const;
+    bool previousPageIsWideForNavigation(const ImageSpreadPageNavigationContext &context) const;
     ImageSpreadPageCache m_pageCache;
 };
 }
