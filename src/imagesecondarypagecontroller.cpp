@@ -72,17 +72,14 @@ const ImagePresentationController &ImageSecondaryPageController::presentationCon
     return *m_presentationController;
 }
 
-bool ImageSecondaryPageController::visible() const { return m_displayedPage.has_value(); }
+bool ImageSecondaryPageController::visible() const { return m_displayState.visible(); }
 
 DisplayedImageLocation ImageSecondaryPageController::displayedImageLocation() const
 {
-    return m_displayedPage.has_value() ? m_displayedPage->location : DisplayedImageLocation {};
+    return m_displayState.displayedImageLocation();
 }
 
-QSize ImageSecondaryPageController::imageSize() const
-{
-    return m_displayedPage.has_value() ? m_displayedPage->imageSize : QSize();
-}
+QSize ImageSecondaryPageController::imageSize() const { return m_displayState.imageSize(); }
 
 DisplayedImageRenderSnapshot ImageSecondaryPageController::renderSnapshot() const
 {
@@ -113,7 +110,7 @@ void ImageSecondaryPageController::clear()
     cancel();
     stopAnimation();
     m_presentationController->clearImage();
-    clearDisplayedPage();
+    m_displayState.clear();
 }
 
 void ImageSecondaryPageController::cancel()
@@ -153,39 +150,28 @@ void ImageSecondaryPageController::finishImagePresentation(
         return;
     }
 
-    if (imageSpreadPageIsWide(result.imageSize)) {
-        m_presentationController->clearImage();
-        clearDisplayedPage();
-        reportLoadFinished(
-            ImageSecondaryPageLoadResult::PrimaryOnly, session.location, result.imageSize);
-        return;
-    }
-
-    showDisplayedPage(session.location, result.imageSize);
-    reportLoadFinished(ImageSecondaryPageLoadResult::Visible, session.location, result.imageSize);
+    applyLoadCompletion(m_displayState.finishPresentedLoad(
+        session.location, result.imageSize, imageSpreadPageIsWide(result.imageSize)));
 }
 
 void ImageSecondaryPageController::finishLoadWithError(const ImageLoadSession &session)
 {
-    reportLoadFinished(ImageSecondaryPageLoadResult::Failed, session.location, QSize());
+    applyLoadCompletion(m_displayState.finishFailedLoad(session.location));
 }
 
-void ImageSecondaryPageController::showDisplayedPage(
-    DisplayedImageLocation location, QSize imageSize)
+void ImageSecondaryPageController::applyLoadCompletion(
+    const ImageSecondaryPageLoadCompletion &completion)
 {
-    m_displayedPage = ImageSecondaryPageDisplayState { std::move(location), std::move(imageSize) };
-}
+    if (completion.clearPresentation) {
+        m_presentationController->clearImage();
+    }
 
-void ImageSecondaryPageController::clearDisplayedPage() { m_displayedPage.reset(); }
+    invokeIfSet(
+        m_callbacks.loadFinished, completion.result, completion.location, completion.imageSize);
+}
 
 void ImageSecondaryPageController::notify(ImageDocumentChange change)
 {
     invokeIfSet(m_callbacks.change, change);
-}
-
-void ImageSecondaryPageController::reportLoadFinished(
-    ImageSecondaryPageLoadResult result, const DisplayedImageLocation &location, QSize size)
-{
-    invokeIfSet(m_callbacks.loadFinished, result, location, size);
 }
 }

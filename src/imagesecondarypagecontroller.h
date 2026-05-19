@@ -9,6 +9,7 @@
 #include "imageloadtypes.h"
 #include "imagelocation.h"
 #include "imagepresentationload.h"
+#include "imagesecondarypagestate.h"
 #include "imagesurface.h"
 #include "predecodedimage.h"
 
@@ -25,17 +26,6 @@ class QObject;
 namespace KiriView {
 class ImageLoader;
 class ImagePresentationController;
-
-enum class ImageSecondaryPageLoadResult {
-    PrimaryOnly,
-    Visible,
-    Failed,
-};
-
-struct ImageSecondaryPageDisplayState {
-    DisplayedImageLocation location;
-    QSize imageSize;
-};
 
 class ImageSecondaryPageController final
 {
@@ -80,16 +70,13 @@ private:
     void finishImagePresentation(
         const ImageLoadSession &session, const ImagePresentationLoadResult &result);
     void finishLoadWithError(const ImageLoadSession &session);
-    void showDisplayedPage(DisplayedImageLocation location, QSize imageSize);
-    void clearDisplayedPage();
+    void applyLoadCompletion(const ImageSecondaryPageLoadCompletion &completion);
     void notify(ImageDocumentChange change);
-    void reportLoadFinished(
-        ImageSecondaryPageLoadResult result, const DisplayedImageLocation &location, QSize size);
 
     Callbacks m_callbacks;
     std::unique_ptr<ImagePresentationController> m_presentationController;
     std::unique_ptr<ImageLoader> m_imageLoader;
-    std::optional<ImageSecondaryPageDisplayState> m_displayedPage;
+    ImageSecondaryPageState m_displayState;
 };
 }
 

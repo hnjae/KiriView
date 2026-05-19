@@ -90,6 +90,7 @@ src/imagepresentationload.cpp
 src/imagepresentationviewportcontroller.cpp
 src/imagerendercontextstate.cpp
 src/imagesecondarypagecontroller.cpp
+src/imagesecondarypagestate.cpp
 src/imagespreadgeometry.cpp
 src/imagespreadmodecontroller.cpp
 src/imagespreadnavigation.cpp
