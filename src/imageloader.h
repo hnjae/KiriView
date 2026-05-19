@@ -56,13 +56,10 @@ private:
     void startImageLoad(ImageLoadSession session);
     void startArchiveLoad(ImageLoadSession session);
     bool tryDisplayPredecodedImage(ImageLoadSession session);
-    void finishLoadWithError(
-        const ImageLoadSession &session, ImageLoadError error, const QString &errorString);
+    void finishDecodeRequestWithError(
+        const ImageDecodeRequest &request, ImageLoadError error, const QString &errorString);
     void finishDecodedImage(ImageLoadSession session, DecodedImage image);
     void finishPredecodedImage(ImageLoadSession session, PredecodedImage image);
-    template <typename Callback, typename... Args>
-    void finishCurrentLoadSession(
-        const ImageLoadSession &session, Callback &callback, Args &&...args);
 
     Callbacks m_callbacks;
     ImageDecodeJob m_decodeJob;

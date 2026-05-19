@@ -14,6 +14,7 @@
 
 namespace {
 using KiriView::TestSupport::archivePageUrl;
+using KiriView::TestSupport::imageCandidate;
 using KiriView::TestSupport::localUrl;
 }
 
@@ -25,7 +26,9 @@ private Q_SLOTS:
     void startOwnsSessionIdAndFirstDisplayContext();
     void staleSessionsCannotResolveOrFinishCurrentLoad();
     void archiveResolutionUpdatesCanonicalCurrentSession();
+    void emptyArchiveResolutionClaimsCurrentSessionForError();
     void predecodedLocationReplacementUpdatesCanonicalCurrentSession();
+    void decodeRequestClaimClearsTheActiveSession();
     void claimCurrentClearsTheActiveSession();
 };
 
@@ -60,20 +63,22 @@ void TestImageLoadSessionTracker::staleSessionsCannotResolveOrFinishCurrentLoad(
     const KiriView::ImageLoadSession currentSession
         = tracker.start(KiriView::ImageLoadRequest::fromUrl(secondUrl)).session;
 
-    QVERIFY(!tracker.resolveCurrentArchiveImage(staleSession, firstUrl).has_value());
+    const KiriView::ImageArchiveCandidateCompletion staleArchiveCompletion
+        = tracker.completeArchiveCandidates(staleSession, { imageCandidate(firstUrl) });
+    QCOMPARE(
+        staleArchiveCompletion.action, KiriView::ImageArchiveCandidateCompletionAction::Ignored);
     QVERIFY(!tracker
-            .replaceCurrentLocation(
-                staleSession, KiriView::DisplayedImageLocation::fromUrl(firstUrl))
+            .claimPredecodedImage(staleSession, KiriView::DisplayedImageLocation::fromUrl(firstUrl))
             .has_value());
     QVERIFY(!tracker.claimCurrent(staleSession).has_value());
 
     const KiriView::ImageDecodeRequest staleRequest
         = KiriView::ImageDecodeRequest::fromUrl(staleSession.id, firstUrl);
-    QVERIFY(!tracker.currentForDecodeRequest(staleRequest).has_value());
+    QVERIFY(!tracker.claimCurrentForDecodeRequest(staleRequest).has_value());
 
     const KiriView::ImageDecodeRequest currentRequest
         = KiriView::ImageDecodeRequest::fromUrl(currentSession.id, secondUrl);
-    QVERIFY(tracker.currentForDecodeRequest(currentRequest).has_value());
+    QVERIFY(tracker.claimCurrentForDecodeRequest(currentRequest).has_value());
 }
 
 void TestImageLoadSessionTracker::archiveResolutionUpdatesCanonicalCurrentSession()
@@ -89,19 +94,38 @@ void TestImageLoadSessionTracker::archiveResolutionUpdatesCanonicalCurrentSessio
               .start(KiriView::ImageLoadRequest::fromUrl(archiveUrl),
                   KiriView::ImageFirstDisplayDecodeContext { QSize(320, 240) })
               .session;
-    const std::optional<KiriView::ImageLoadSession> resolvedSession
-        = tracker.resolveCurrentArchiveImage(session, imageUrl);
+    const KiriView::ImageArchiveCandidateCompletion completion
+        = tracker.completeArchiveCandidates(session, { imageCandidate(imageUrl) });
 
-    QVERIFY(resolvedSession.has_value());
-    QCOMPARE(resolvedSession->location.imageUrl(), imageUrl);
-    QCOMPARE(resolvedSession->firstDisplay.physicalViewportSize, QSize(320, 240));
+    QCOMPARE(completion.action, KiriView::ImageArchiveCandidateCompletionAction::StartImageDecode);
+    QCOMPARE(completion.resolvedUrl, imageUrl);
+    const KiriView::ImageLoadSession &resolvedSession = completion.session;
+    QCOMPARE(resolvedSession.location.imageUrl(), imageUrl);
+    QCOMPARE(resolvedSession.firstDisplay.physicalViewportSize, QSize(320, 240));
     const KiriView::ImageDecodeRequest request
         = KiriView::ImageDecodeRequest::fromUrl(session.id, imageUrl);
     const std::optional<KiriView::ImageLoadSession> currentSession
-        = tracker.currentForDecodeRequest(request);
+        = tracker.claimCurrentForDecodeRequest(request);
     QVERIFY(currentSession.has_value());
     QCOMPARE(currentSession->location.imageUrl(), imageUrl);
     QCOMPARE(currentSession->firstDisplay.physicalViewportSize, QSize(320, 240));
+}
+
+void TestImageLoadSessionTracker::emptyArchiveResolutionClaimsCurrentSessionForError()
+{
+    KiriView::ImageLoadSessionTracker tracker;
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
+
+    const KiriView::ImageLoadSession session
+        = tracker.start(KiriView::ImageLoadRequest::fromUrl(archiveUrl)).session;
+
+    const KiriView::ImageArchiveCandidateCompletion completion
+        = tracker.completeArchiveCandidates(session, {});
+
+    QCOMPARE(
+        completion.action, KiriView::ImageArchiveCandidateCompletionAction::ReportEmptyArchive);
+    QCOMPARE(completion.session.location.imageUrl(), archiveUrl);
+    QVERIFY(!tracker.isCurrent(session));
 }
 
 void TestImageLoadSessionTracker::predecodedLocationReplacementUpdatesCanonicalCurrentSession()
@@ -115,19 +139,30 @@ void TestImageLoadSessionTracker::predecodedLocationReplacementUpdatesCanonicalC
 
     const KiriView::ImageLoadSession session
         = tracker.start(KiriView::ImageLoadRequest::fromUrl(imageUrl)).session;
-    const std::optional<KiriView::ImageLoadSession> replacedSession
-        = tracker.replaceCurrentLocation(session,
-            KiriView::DisplayedImageLocation::fromArchiveDocument(imageUrl, *archiveDocument));
+    const std::optional<KiriView::ImageLoadSession> replacedSession = tracker.claimPredecodedImage(
+        session, KiriView::DisplayedImageLocation::fromArchiveDocument(imageUrl, *archiveDocument));
 
     QVERIFY(replacedSession.has_value());
     QCOMPARE(replacedSession->location.imageUrl(), imageUrl);
     QCOMPARE(replacedSession->location.archiveDocumentRootUrl(), archiveDocument->rootUrl());
+    QVERIFY(!tracker.isCurrent(session));
+}
+
+void TestImageLoadSessionTracker::decodeRequestClaimClearsTheActiveSession()
+{
+    KiriView::ImageLoadSessionTracker tracker;
+    const QUrl imageUrl = localUrl(QStringLiteral("/images/01.png"));
+    const KiriView::ImageLoadSession session
+        = tracker.start(KiriView::ImageLoadRequest::fromUrl(imageUrl)).session;
     const KiriView::ImageDecodeRequest request
-        = KiriView::ImageDecodeRequest::fromLocation(session.id, replacedSession->location);
-    const std::optional<KiriView::ImageLoadSession> currentSession
-        = tracker.currentForDecodeRequest(request);
-    QVERIFY(currentSession.has_value());
-    QCOMPARE(currentSession->location.archiveDocumentRootUrl(), archiveDocument->rootUrl());
+        = KiriView::ImageDecodeRequest::fromLocation(session.id, session.location);
+
+    const std::optional<KiriView::ImageLoadSession> claimedSession
+        = tracker.claimCurrentForDecodeRequest(request);
+
+    QVERIFY(claimedSession.has_value());
+    QCOMPARE(claimedSession->location.imageUrl(), imageUrl);
+    QVERIFY(!tracker.isCurrent(session));
 }
 
 void TestImageLoadSessionTracker::claimCurrentClearsTheActiveSession()

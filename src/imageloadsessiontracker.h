@@ -6,13 +6,27 @@
 
 #include "imagedecoderequest.h"
 #include "imageloadplan.h"
+#include "imagenavigationtypes.h"
 #include "staticimage.h"
 
 #include <QUrl>
 #include <QtGlobal>
 #include <optional>
+#include <vector>
 
 namespace KiriView {
+enum class ImageArchiveCandidateCompletionAction {
+    Ignored,
+    ReportEmptyArchive,
+    StartImageDecode,
+};
+
+struct ImageArchiveCandidateCompletion {
+    ImageArchiveCandidateCompletionAction action = ImageArchiveCandidateCompletionAction::Ignored;
+    ImageLoadSession session;
+    QUrl resolvedUrl;
+};
+
 class ImageLoadSessionTracker final
 {
 public:
@@ -21,11 +35,10 @@ public:
     void cancel();
 
     bool isCurrent(const ImageLoadSession &session) const;
-    std::optional<ImageLoadSession> currentForDecodeRequest(
-        const ImageDecodeRequest &request) const;
-    std::optional<ImageLoadSession> resolveCurrentArchiveImage(
-        const ImageLoadSession &session, QUrl imageUrl);
-    std::optional<ImageLoadSession> replaceCurrentLocation(
+    std::optional<ImageLoadSession> claimCurrentForDecodeRequest(const ImageDecodeRequest &request);
+    ImageArchiveCandidateCompletion completeArchiveCandidates(
+        const ImageLoadSession &session, const std::vector<ImageNavigationCandidate> &candidates);
+    std::optional<ImageLoadSession> claimPredecodedImage(
         const ImageLoadSession &session, DisplayedImageLocation location);
     std::optional<ImageLoadSession> claimCurrent(const ImageLoadSession &session);
 

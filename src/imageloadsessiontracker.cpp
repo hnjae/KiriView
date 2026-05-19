@@ -23,28 +23,43 @@ bool ImageLoadSessionTracker::isCurrent(const ImageLoadSession &session) const
     return m_session.has_value() && m_session->id == session.id;
 }
 
-std::optional<ImageLoadSession> ImageLoadSessionTracker::currentForDecodeRequest(
-    const ImageDecodeRequest &request) const
+std::optional<ImageLoadSession> ImageLoadSessionTracker::claimCurrentForDecodeRequest(
+    const ImageDecodeRequest &request)
 {
     if (!m_session.has_value() || !request.matches(m_session->id, m_session->location.imageUrl())) {
         return std::nullopt;
     }
 
-    return *m_session;
+    std::optional<ImageLoadSession> currentSession = std::move(m_session);
+    m_session.reset();
+    return currentSession;
 }
 
-std::optional<ImageLoadSession> ImageLoadSessionTracker::resolveCurrentArchiveImage(
-    const ImageLoadSession &session, QUrl imageUrl)
+ImageArchiveCandidateCompletion ImageLoadSessionTracker::completeArchiveCandidates(
+    const ImageLoadSession &session, const std::vector<ImageNavigationCandidate> &candidates)
 {
     if (!isCurrent(session)) {
-        return std::nullopt;
+        return {};
     }
 
-    m_session->location.setImageUrl(std::move(imageUrl));
-    return *m_session;
+    if (candidates.empty()) {
+        std::optional<ImageLoadSession> claimedSession = claimCurrent(session);
+        return ImageArchiveCandidateCompletion {
+            ImageArchiveCandidateCompletionAction::ReportEmptyArchive,
+            claimedSession.value_or(ImageLoadSession {}),
+            {},
+        };
+    }
+
+    m_session->location.setImageUrl(candidates.front().url);
+    return ImageArchiveCandidateCompletion {
+        ImageArchiveCandidateCompletionAction::StartImageDecode,
+        *m_session,
+        candidates.front().url,
+    };
 }
 
-std::optional<ImageLoadSession> ImageLoadSessionTracker::replaceCurrentLocation(
+std::optional<ImageLoadSession> ImageLoadSessionTracker::claimPredecodedImage(
     const ImageLoadSession &session, DisplayedImageLocation location)
 {
     if (!isCurrent(session)) {
@@ -52,7 +67,7 @@ std::optional<ImageLoadSession> ImageLoadSessionTracker::replaceCurrentLocation(
     }
 
     m_session->location = std::move(location);
-    return *m_session;
+    return claimCurrent(*m_session);
 }
 
 std::optional<ImageLoadSession> ImageLoadSessionTracker::claimCurrent(
