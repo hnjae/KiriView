@@ -4,12 +4,9 @@
 #include "imagecandidaterepository.h"
 
 #include "imagecallback.h"
-#include "imagecandidatestore.h"
 #include "imagecontainer.h"
 #include "imagecontaineropenplan.h"
-#include "imageiojobs.h"
 
-#include <memory>
 #include <utility>
 #include <vector>
 
@@ -82,25 +79,6 @@ KiriView::ErrorCallback containerLoadErrorCallback(
 }
 
 namespace KiriView {
-ImageNavigationCandidateProvider defaultImageNavigationCandidateProvider()
-{
-    auto candidateStore = std::make_shared<ImageCandidateStore>();
-    return ImageNavigationCandidateProvider {
-        [candidateStore](QObject *receiver, QUrl directoryUrl, ImageCandidatesCallback callback,
-            ErrorCallback errorCallback) {
-            return candidateStore->loadDirectoryImages(
-                receiver, std::move(directoryUrl), std::move(callback), std::move(errorCallback));
-        },
-        startDirectoryContainerCandidateList,
-        startArchiveImageCandidateList,
-        [candidateStore](QObject *receiver, QUrl directoryUrl, ImageCandidatesCallback callback,
-            ErrorCallback errorCallback) {
-            return candidateStore->watchDirectoryImages(
-                receiver, std::move(directoryUrl), std::move(callback), std::move(errorCallback));
-        },
-    };
-}
-
 ImageCandidateRepository::ImageCandidateRepository(ImageNavigationCandidateProvider provider)
     : m_provider(imageNavigationCandidateProviderWithDefaults(std::move(provider)))
 {

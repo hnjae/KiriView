@@ -6,8 +6,8 @@
 
 #include "archivebackend.h"
 #include "archivedocumentcandidateloadstate.h"
-#include "imageasyncdependencies.h"
 #include "imageasyncticket.h"
+#include "imagedecodedependencies.h"
 #include "imageiojob.h"
 
 #include <memory>

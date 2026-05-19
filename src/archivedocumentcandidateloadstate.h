@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_ARCHIVEDOCUMENTCANDIDATELOADSTATE_H
 #define KIRIVIEW_ARCHIVEDOCUMENTCANDIDATELOADSTATE_H
 
-#include "imageasyncdependencies.h"
+#include "imageasynccallbacks.h"
 #include "imageiojob.h"
 
 #include <QtGlobal>

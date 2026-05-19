@@ -100,4 +100,9 @@ FileOperationProvider defaultFileOperationProvider()
         return startKioFileDeletion(receiver, std::move(request), std::move(callback));
     };
 }
+
+FileOperationProvider fileOperationProviderWithDefault(FileOperationProvider provider)
+{
+    return provider ? std::move(provider) : defaultFileOperationProvider();
+}
 }

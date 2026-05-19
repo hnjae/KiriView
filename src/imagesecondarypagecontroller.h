@@ -4,7 +4,8 @@
 #ifndef KIRIVIEW_IMAGESECONDARYPAGECONTROLLER_H
 #define KIRIVIEW_IMAGESECONDARYPAGECONTROLLER_H
 
-#include "imageasyncdependencies.h"
+#include "imagecandidateprovider.h"
+#include "imagedecodedependencies.h"
 #include "imagedocumenttypes.h"
 #include "imageloadtypes.h"
 #include "imagelocation.h"

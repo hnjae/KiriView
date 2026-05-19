@@ -41,6 +41,7 @@ using FileOperationProvider
 
 FileDeletionCompletionAction fileDeletionCompletionAction(FileDeletionResult result);
 FileOperationProvider defaultFileOperationProvider();
+FileOperationProvider fileOperationProviderWithDefault(FileOperationProvider provider);
 }
 
 #endif

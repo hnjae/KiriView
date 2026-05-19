@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGECANDIDATESTORE_H
 #define KIRIVIEW_IMAGECANDIDATESTORE_H
 
-#include "imageasyncdependencies.h"
+#include "imagecandidateprovider.h"
 
 #include <QObject>
 #include <QString>

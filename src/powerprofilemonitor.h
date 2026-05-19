@@ -4,8 +4,8 @@
 #ifndef KIRIVIEW_POWERPROFILEMONITOR_H
 #define KIRIVIEW_POWERPROFILEMONITOR_H
 
-#include "imageasyncdependencies.h"
 #include "powerprofilemonitorstate.h"
+#include "powersaverprovider.h"
 
 #include <QObject>
 #include <QString>

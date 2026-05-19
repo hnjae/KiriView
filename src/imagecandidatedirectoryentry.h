@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGECANDIDATEDIRECTORYENTRY_H
 #define KIRIVIEW_IMAGECANDIDATEDIRECTORYENTRY_H
 
-#include "imageasyncdependencies.h"
+#include "imageasynccallbacks.h"
 #include "imagecandidatestoreentrystate.h"
 #include "imagenavigationtypes.h"
 

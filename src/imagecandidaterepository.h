@@ -4,8 +4,8 @@
 #ifndef KIRIVIEW_IMAGECANDIDATEREPOSITORY_H
 #define KIRIVIEW_IMAGECANDIDATEREPOSITORY_H
 
-#include "imageasyncdependencies.h"
 #include "imagecandidatelistsource.h"
+#include "imagecandidateprovider.h"
 #include "imagenavigationtypes.h"
 
 #include <QObject>

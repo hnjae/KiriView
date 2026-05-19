@@ -5,8 +5,9 @@
 #define KIRIVIEW_IMAGELOADER_H
 
 #include "decodedimageresult.h"
-#include "imageasyncdependencies.h"
+#include "imagecandidateprovider.h"
 #include "imagecandidaterepository.h"
+#include "imagedecodedependencies.h"
 #include "imagedecodejob.h"
 #include "imageiojob.h"
 #include "imageloadsessiontracker.h"

@@ -5,7 +5,7 @@
 #define KIRIVIEW_IMAGEDECODEJOB_H
 
 #include "decodedimageresult.h"
-#include "imageasyncdependencies.h"
+#include "imagedecodedependencies.h"
 #include "imagedecodejobstate.h"
 #include "imagedecoderequest.h"
 #include "imageiojob.h"

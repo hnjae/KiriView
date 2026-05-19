@@ -7,6 +7,8 @@
 #include "archivebackend.h"
 #include "archivedocumentsessionruntime.h"
 #include "imageasyncdependencies.h"
+#include "imagecandidateprovider.h"
+#include "imagedecodedependencies.h"
 #include "imageiojob.h"
 
 #include <QObject>

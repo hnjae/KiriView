@@ -28,9 +28,9 @@ src/heifsupport.cpp
 src/heiftilesource.cpp
 src/imageanimationpolicy.cpp
 src/imageanimationplayer.cpp
-src/imageasyncdependencies.cpp
 src/imageasyncoperationstate.cpp
 src/imagebytecost.cpp
+src/imagecandidateprovider.cpp
 src/imagecachepolicy.cpp
 src/imagecandidatelistsource.cpp
 src/imagecontainernavigationcontroller.cpp
@@ -55,6 +55,7 @@ src/imagedocumentruntimedependencies.cpp
 src/imagedocumentsourceloadexecutor.cpp
 src/imagedocumentsourceloadpolicy.cpp
 src/imagedecodepipeline.cpp
+src/imagedecodedependencies.cpp
 src/imagedecodejob.cpp
 src/imagedecodejobstate.cpp
 src/imagedocumentstate.cpp
@@ -118,6 +119,7 @@ src/applicationshortcutpolicy.cpp
 src/kiriviewapplicationactions.cpp
 src/powerprofilemonitorstate.cpp
 src/powerprofilemonitor.cpp
+src/powersaverprovider.cpp
 src/predecodeactivedecodestore.cpp
 src/predecodecache.cpp
 src/predecodedisplayedhistory.cpp

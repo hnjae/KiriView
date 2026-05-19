@@ -4,7 +4,8 @@
 #ifndef KIRIVIEW_IMAGESPREADPRESENTATIONCONTROLLER_H
 #define KIRIVIEW_IMAGESPREADPRESENTATIONCONTROLLER_H
 
-#include "imageasyncdependencies.h"
+#include "imagecandidateprovider.h"
+#include "imagedecodedependencies.h"
 #include "imagedocumentstate.h"
 #include "imagenavigationtypes.h"
 #include "imagespreadgeometry.h"

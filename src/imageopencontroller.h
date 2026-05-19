@@ -4,7 +4,8 @@
 #ifndef KIRIVIEW_IMAGEOPENCONTROLLER_H
 #define KIRIVIEW_IMAGEOPENCONTROLLER_H
 
-#include "imageasyncdependencies.h"
+#include "imagecandidateprovider.h"
+#include "imagedecodedependencies.h"
 #include "imagedocumenteffects.h"
 #include "imageloadtypes.h"
 #include "imagepresentationload.h"
