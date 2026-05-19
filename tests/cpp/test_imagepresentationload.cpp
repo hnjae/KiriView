@@ -47,11 +47,99 @@ class TestImagePresentationLoad : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
+    void predecodedImagesPlanStaticCacheablePresentation();
+    void decodedImagesPlanPresentationActions();
+    void animationHandlingControlsPlannedEffects();
     void staticDecodedImagesAreAppliedToPresentation();
     void unpresentableDecodedImagesLeaveExistingPresentationUntouched();
     void streamedAnimationImagesPresentFirstFrames();
     void secondaryAnimationModePresentsFirstFrame();
 };
+
+void TestImagePresentationLoad::predecodedImagesPlanStaticCacheablePresentation()
+{
+    KiriView::PredecodedImage image {
+        staticTestImagePayload(testImage(QSize(9, 5))),
+        KiriView::DisplayedImageLocation::fromUrl(localUrl(QStringLiteral("/images/page.png"))),
+    };
+
+    const KiriView::ImagePresentationLoadPlan plan
+        = KiriView::planPredecodedImagePresentationLoad(std::move(image));
+
+    QVERIFY(plan.hasPresentation());
+    QCOMPARE(plan.action, KiriView::ImagePresentationLoadAction::StaticImage);
+    QVERIFY(plan.predecodeCacheable);
+    QVERIFY(plan.staticImage.isValid());
+    QCOMPARE(plan.staticImage.source->imageSize(), QSize(9, 5));
+}
+
+void TestImagePresentationLoad::decodedImagesPlanPresentationActions()
+{
+    {
+        KiriView::DecodedImage decoded
+            = KiriView::StaticDecodedImage { staticTestImagePayload(testImage(QSize(12, 8))) };
+        const KiriView::ImagePresentationLoadPlan plan = KiriView::planDecodedImagePresentationLoad(
+            std::move(decoded), KiriView::ImagePresentationAnimationHandling::StartAnimation);
+
+        QVERIFY(plan.hasPresentation());
+        QCOMPARE(plan.action, KiriView::ImagePresentationLoadAction::StaticImage);
+        QVERIFY(plan.predecodeCacheable);
+        QCOMPARE(plan.staticImage.source->imageSize(), QSize(12, 8));
+    }
+
+    {
+        KiriView::DecodedImage decoded = KiriView::ApngAnimationImage {};
+        const KiriView::ImagePresentationLoadPlan plan = KiriView::planDecodedImagePresentationLoad(
+            std::move(decoded), KiriView::ImagePresentationAnimationHandling::StartAnimation);
+
+        QVERIFY(!plan.hasPresentation());
+        QCOMPARE(plan.action, KiriView::ImagePresentationLoadAction::None);
+    }
+}
+
+void TestImagePresentationLoad::animationHandlingControlsPlannedEffects()
+{
+    {
+        KiriView::DecodedImage decoded = KiriView::ApngAnimationImage {
+            testImage(QSize(13, 7)),
+            QByteArrayLiteral("apng-data"),
+        };
+        const KiriView::ImagePresentationLoadPlan plan = KiriView::planDecodedImagePresentationLoad(
+            std::move(decoded), KiriView::ImagePresentationAnimationHandling::FirstFrameOnly);
+
+        QCOMPARE(plan.action, KiriView::ImagePresentationLoadAction::ImageFrame);
+        QCOMPARE(plan.frame.size(), QSize(13, 7));
+        QVERIFY(plan.animationData.isEmpty());
+    }
+
+    {
+        KiriView::DecodedImage decoded = KiriView::ReaderAnimationImage {
+            testImage(QSize(10, 6)),
+            QByteArrayLiteral("reader-data"),
+            QByteArrayLiteral("gif"),
+        };
+        const KiriView::ImagePresentationLoadPlan plan = KiriView::planDecodedImagePresentationLoad(
+            std::move(decoded), KiriView::ImagePresentationAnimationHandling::StartAnimation);
+
+        QCOMPARE(plan.action, KiriView::ImagePresentationLoadAction::ReaderAnimation);
+        QCOMPARE(plan.frame.size(), QSize(10, 6));
+        QCOMPARE(plan.animationData, QByteArrayLiteral("reader-data"));
+        QCOMPARE(plan.animationFormat, QByteArrayLiteral("gif"));
+    }
+
+    {
+        KiriView::DecodedImage decoded = KiriView::HeifSequenceAnimationImage {
+            testImage(QSize(11, 5)),
+            QByteArrayLiteral("heif-data"),
+        };
+        const KiriView::ImagePresentationLoadPlan plan = KiriView::planDecodedImagePresentationLoad(
+            std::move(decoded), KiriView::ImagePresentationAnimationHandling::StartAnimation);
+
+        QCOMPARE(plan.action, KiriView::ImagePresentationLoadAction::HeifSequenceAnimation);
+        QCOMPARE(plan.frame.size(), QSize(11, 5));
+        QCOMPARE(plan.animationData, QByteArrayLiteral("heif-data"));
+    }
+}
 
 void TestImagePresentationLoad::staticDecodedImagesAreAppliedToPresentation()
 {

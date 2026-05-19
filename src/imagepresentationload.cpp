@@ -12,24 +12,6 @@
 #include <variant>
 
 namespace {
-void startDecodedAnimation(KiriView::ImagePresentationController &presentation,
-    const KiriView::ApngAnimationImage &animation)
-{
-    presentation.startApngAnimation(animation.data);
-}
-
-void startDecodedAnimation(KiriView::ImagePresentationController &presentation,
-    const KiriView::ReaderAnimationImage &animation)
-{
-    presentation.startAnimation(animation.data, animation.format);
-}
-
-void startDecodedAnimation(KiriView::ImagePresentationController &presentation,
-    const KiriView::HeifSequenceAnimationImage &animation)
-{
-    presentation.startHeifSequenceAnimation(animation.data);
-}
-
 void prepareImagePresentation(
     KiriView::ImagePresentationController &presentation, const KiriView::ImageLoadSession &session)
 {
@@ -65,73 +47,165 @@ KiriView::ImagePresentationLoadResult presentImageFrame(
     return finishImagePresentation(presentation);
 }
 
-template <typename AnimationPresentation>
-KiriView::ImagePresentationLoadResult presentAnimationImage(
-    KiriView::ImagePresentationController &presentation, const KiriView::ImageLoadSession &session,
-    AnimationPresentation animation, KiriView::ImagePresentationAnimationHandling animationHandling)
+KiriView::ImagePresentationLoadPlan staticImagePlan(
+    KiriView::StaticImagePayload staticImage, bool predecodeCacheable)
 {
-    const QImage firstFrame = animation.firstFrame;
-    KiriView::ImagePresentationLoadResult result
-        = presentImageFrame(presentation, session, firstFrame, false);
-    if (animationHandling == KiriView::ImagePresentationAnimationHandling::StartAnimation) {
-        startDecodedAnimation(presentation, animation);
-    }
-    return result;
+    return KiriView::ImagePresentationLoadPlan {
+        KiriView::ImagePresentationLoadAction::StaticImage,
+        std::move(staticImage),
+        {},
+        {},
+        {},
+        predecodeCacheable,
+    };
 }
 
-KiriView::ImagePresentationLoadResult presentDecodedImage(
-    KiriView::ImagePresentationController &presentation, const KiriView::ImageLoadSession &session,
+KiriView::ImagePresentationLoadPlan framePlan(QImage frame)
+{
+    return KiriView::ImagePresentationLoadPlan {
+        KiriView::ImagePresentationLoadAction::ImageFrame,
+        {},
+        std::move(frame),
+        {},
+        {},
+        false,
+    };
+}
+
+KiriView::ImagePresentationLoadPlan animationPlan(KiriView::ImagePresentationLoadAction action,
+    QImage firstFrame, QByteArray data, QByteArray format = {})
+{
+    return KiriView::ImagePresentationLoadPlan {
+        action,
+        {},
+        std::move(firstFrame),
+        std::move(data),
+        std::move(format),
+        false,
+    };
+}
+
+KiriView::ImagePresentationLoadPlan planAnimationImage(KiriView::ImagePresentationLoadAction action,
+    QImage firstFrame, QByteArray data, QByteArray format,
+    KiriView::ImagePresentationAnimationHandling animationHandling)
+{
+    if (animationHandling == KiriView::ImagePresentationAnimationHandling::FirstFrameOnly) {
+        return framePlan(std::move(firstFrame));
+    }
+
+    return animationPlan(action, std::move(firstFrame), std::move(data), std::move(format));
+}
+
+KiriView::ImagePresentationLoadPlan planDecodedImage(
     KiriView::StaticDecodedImage &decoded, KiriView::ImagePresentationAnimationHandling)
 {
     const bool predecodeCacheable = KiriView::PredecodeCache::canCacheImage(decoded.staticImage);
-    return presentStaticImage(
-        presentation, session, std::move(decoded.staticImage), predecodeCacheable);
+    return staticImagePlan(std::move(decoded.staticImage), predecodeCacheable);
 }
 
-KiriView::ImagePresentationLoadResult presentDecodedImage(
-    KiriView::ImagePresentationController &presentation, const KiriView::ImageLoadSession &session,
-    KiriView::ApngAnimationImage &decoded,
+KiriView::ImagePresentationLoadPlan planDecodedImage(KiriView::ApngAnimationImage &decoded,
     KiriView::ImagePresentationAnimationHandling animationHandling)
 {
     if (decoded.firstFrame.isNull()) {
         return {};
     }
 
-    return presentAnimationImage(presentation, session, std::move(decoded), animationHandling);
+    return planAnimationImage(KiriView::ImagePresentationLoadAction::ApngAnimation,
+        std::move(decoded.firstFrame), std::move(decoded.data), {}, animationHandling);
 }
 
-KiriView::ImagePresentationLoadResult presentDecodedImage(
-    KiriView::ImagePresentationController &presentation, const KiriView::ImageLoadSession &session,
-    KiriView::ReaderAnimationImage &decoded,
+KiriView::ImagePresentationLoadPlan planDecodedImage(KiriView::ReaderAnimationImage &decoded,
     KiriView::ImagePresentationAnimationHandling animationHandling)
 {
-    return presentAnimationImage(presentation, session, std::move(decoded), animationHandling);
+    return planAnimationImage(KiriView::ImagePresentationLoadAction::ReaderAnimation,
+        std::move(decoded.firstFrame), std::move(decoded.data), std::move(decoded.format),
+        animationHandling);
 }
 
-KiriView::ImagePresentationLoadResult presentDecodedImage(
-    KiriView::ImagePresentationController &presentation, const KiriView::ImageLoadSession &session,
-    KiriView::HeifSequenceAnimationImage &decoded,
+KiriView::ImagePresentationLoadPlan planDecodedImage(KiriView::HeifSequenceAnimationImage &decoded,
     KiriView::ImagePresentationAnimationHandling animationHandling)
 {
-    return presentAnimationImage(presentation, session, std::move(decoded), animationHandling);
+    return planAnimationImage(KiriView::ImagePresentationLoadAction::HeifSequenceAnimation,
+        std::move(decoded.firstFrame), std::move(decoded.data), {}, animationHandling);
+}
+
+void startPlannedAnimation(
+    KiriView::ImagePresentationController &presentation, KiriView::ImagePresentationLoadPlan &plan)
+{
+    switch (plan.action) {
+    case KiriView::ImagePresentationLoadAction::ApngAnimation:
+        presentation.startApngAnimation(plan.animationData);
+        return;
+    case KiriView::ImagePresentationLoadAction::ReaderAnimation:
+        presentation.startAnimation(plan.animationData, plan.animationFormat);
+        return;
+    case KiriView::ImagePresentationLoadAction::HeifSequenceAnimation:
+        presentation.startHeifSequenceAnimation(plan.animationData);
+        return;
+    case KiriView::ImagePresentationLoadAction::None:
+    case KiriView::ImagePresentationLoadAction::StaticImage:
+    case KiriView::ImagePresentationLoadAction::ImageFrame:
+        return;
+    }
 }
 }
 
 namespace KiriView {
+bool ImagePresentationLoadPlan::hasPresentation() const
+{
+    return action != ImagePresentationLoadAction::None;
+}
+
+ImagePresentationLoadPlan planPredecodedImagePresentationLoad(PredecodedImage image)
+{
+    return staticImagePlan(std::move(image.staticImage), true);
+}
+
+ImagePresentationLoadPlan planDecodedImagePresentationLoad(
+    DecodedImage image, ImagePresentationAnimationHandling animationHandling)
+{
+    return std::visit(
+        [animationHandling](auto &decoded) { return planDecodedImage(decoded, animationHandling); },
+        image);
+}
+
+ImagePresentationLoadResult executeImagePresentationLoadPlan(
+    ImagePresentationController &presentation, const ImageLoadSession &session,
+    ImagePresentationLoadPlan plan)
+{
+    switch (plan.action) {
+    case ImagePresentationLoadAction::None:
+        return {};
+    case ImagePresentationLoadAction::StaticImage:
+        return presentStaticImage(
+            presentation, session, std::move(plan.staticImage), plan.predecodeCacheable);
+    case ImagePresentationLoadAction::ImageFrame:
+        return presentImageFrame(presentation, session, plan.frame, plan.predecodeCacheable);
+    case ImagePresentationLoadAction::ApngAnimation:
+    case ImagePresentationLoadAction::ReaderAnimation:
+    case ImagePresentationLoadAction::HeifSequenceAnimation: {
+        ImagePresentationLoadResult result
+            = presentImageFrame(presentation, session, plan.frame, false);
+        startPlannedAnimation(presentation, plan);
+        return result;
+    }
+    }
+
+    return {};
+}
+
 ImagePresentationLoadResult presentPredecodedImageLoad(ImagePresentationController &presentation,
     const ImageLoadSession &session, PredecodedImage image)
 {
-    return presentStaticImage(presentation, session, std::move(image.staticImage), true);
+    return executeImagePresentationLoadPlan(
+        presentation, session, planPredecodedImagePresentationLoad(std::move(image)));
 }
 
 ImagePresentationLoadResult presentDecodedImageLoad(ImagePresentationController &presentation,
     const ImageLoadSession &session, DecodedImage image,
     ImagePresentationAnimationHandling animationHandling)
 {
-    return std::visit(
-        [&presentation, &session, animationHandling](auto &decoded) {
-            return presentDecodedImage(presentation, session, decoded, animationHandling);
-        },
-        image);
+    return executeImagePresentationLoadPlan(presentation, session,
+        planDecodedImagePresentationLoad(std::move(image), animationHandling));
 }
 }

@@ -8,6 +8,8 @@
 #include "imageloadtypes.h"
 #include "predecodedimage.h"
 
+#include <QByteArray>
+#include <QImage>
 #include <QSize>
 
 namespace KiriView {
@@ -23,6 +25,32 @@ struct ImagePresentationLoadResult {
     QSize imageSize;
 };
 
+enum class ImagePresentationLoadAction {
+    None,
+    StaticImage,
+    ImageFrame,
+    ApngAnimation,
+    ReaderAnimation,
+    HeifSequenceAnimation,
+};
+
+struct ImagePresentationLoadPlan {
+    ImagePresentationLoadAction action = ImagePresentationLoadAction::None;
+    StaticImagePayload staticImage;
+    QImage frame;
+    QByteArray animationData;
+    QByteArray animationFormat;
+    bool predecodeCacheable = false;
+
+    bool hasPresentation() const;
+};
+
+ImagePresentationLoadPlan planPredecodedImagePresentationLoad(PredecodedImage image);
+ImagePresentationLoadPlan planDecodedImagePresentationLoad(
+    DecodedImage image, ImagePresentationAnimationHandling animationHandling);
+ImagePresentationLoadResult executeImagePresentationLoadPlan(
+    ImagePresentationController &presentation, const ImageLoadSession &session,
+    ImagePresentationLoadPlan plan);
 ImagePresentationLoadResult presentPredecodedImageLoad(ImagePresentationController &presentation,
     const ImageLoadSession &session, PredecodedImage image);
 ImagePresentationLoadResult presentDecodedImageLoad(ImagePresentationController &presentation,
