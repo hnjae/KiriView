@@ -4,26 +4,20 @@
 #ifndef KIRIVIEW_IMAGEOPENWORKFLOW_H
 #define KIRIVIEW_IMAGEOPENWORKFLOW_H
 
-#include "imagedocumenteffects.h"
 #include "imageloadtypes.h"
 
-#include <QString>
-#include <QUrl>
-
 namespace KiriView {
-class ImageDocumentState;
+struct ImageOpenTransition;
 
 namespace ImageOpenWorkflow {
-    ImageDocumentEffects beginSourceLoad(ImageDocumentState &state, bool hasImage);
-    ImageDocumentEffects finishEmptySourceLoad(ImageDocumentState &state);
-    ImageDocumentEffects finishSuccessfulImageLoad(
-        ImageDocumentState &state, const ImageLoadSession &session);
-    ImageDocumentEffects finishLoadWithError(ImageDocumentState &state,
-        const ImageLoadSession &session, bool hasImage, const QString &errorString);
-    ImageDocumentEffects finishContainerNavigationLoadWithError(
-        ImageDocumentState &state, const QUrl &containerUrl, const QString &errorString);
-    ImageDocumentEffects finishAnimationLoadWithError(
-        ImageDocumentState &state, const QString &errorString);
+    ImageOpenTransition beginSourceLoadTransition(
+        bool hasImage, bool hasLoadingContainerNavigationTarget);
+    ImageOpenTransition finishEmptySourceLoadTransition();
+    ImageOpenTransition finishSuccessfulImageLoadTransition(const ImageLoadSession &session);
+    ImageOpenTransition finishLoadWithErrorTransition(
+        const ImageLoadSession &session, bool hasImage, bool hasDisplayedUrl);
+    ImageOpenTransition finishContainerNavigationLoadWithErrorTransition();
+    ImageOpenTransition finishAnimationLoadWithErrorTransition();
 }
 }
 

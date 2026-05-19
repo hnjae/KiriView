@@ -11,6 +11,7 @@
 #include "imagedocumentsourceloadrequest.h"
 #include "imagedocumentstate.h"
 #include "imageopencontroller.h"
+#include "imageopentransitionapplier.h"
 #include "imageopenworkflow.h"
 #include "imagepresentationcontroller.h"
 #include "imagespreadpresentationcontroller.h"
@@ -97,8 +98,10 @@ ImageDocumentEffectOperations imageDocumentRuntimeEffectOperations(
     operations.open.setSourceUrl = [state](const QUrl &url) { state->setSourceUrl(url); };
     operations.open.setErrorString
         = [state](const QString &errorString) { state->setErrorString(errorString); };
-    operations.open.finishEmptySourceLoad
-        = [state]() { return ImageOpenWorkflow::finishEmptySourceLoad(*state); };
+    operations.open.finishEmptySourceLoad = [state]() {
+        return applyImageOpenTransition(
+            *state, ImageOpenWorkflow::finishEmptySourceLoadTransition());
+    };
     return operations;
 }
 }

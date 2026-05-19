@@ -7,6 +7,7 @@
 #include "imagedocumentstate.h"
 #include "imageerrortext.h"
 #include "imageloader.h"
+#include "imageopentransitionapplier.h"
 #include "imageopenworkflow.h"
 #include "imagepresentationcontroller.h"
 #include "imagepresentationload.h"
@@ -94,17 +95,22 @@ void ImageOpenController::cancel() { m_imageLoader->cancel(); }
 void ImageOpenController::finishAnimationLoadWithError(const QString &errorString)
 {
     const QString message = animationLoadErrorMessage(errorString);
-    reportEffects(ImageOpenWorkflow::finishAnimationLoadWithError(m_state, message));
+    reportEffects(applyImageOpenTransition(m_state,
+        ImageOpenWorkflow::finishAnimationLoadWithErrorTransition(),
+        ImageOpenTransitionContext::animationError(message)));
 }
 
 void ImageOpenController::finishEmptySourceLoad()
 {
-    reportEffects(ImageOpenWorkflow::finishEmptySourceLoad(m_state));
+    reportEffects(
+        applyImageOpenTransition(m_state, ImageOpenWorkflow::finishEmptySourceLoadTransition()));
 }
 
 void ImageOpenController::beginSourceLoad()
 {
-    reportEffects(ImageOpenWorkflow::beginSourceLoad(m_state, m_presentationController.hasImage()));
+    reportEffects(applyImageOpenTransition(m_state,
+        ImageOpenWorkflow::beginSourceLoadTransition(m_presentationController.hasImage(),
+            !m_state.loadingContainerNavigationUrl().isEmpty())));
 }
 
 void ImageOpenController::finishContainerNavigationWithEmptyContainer(const QUrl &containerUrl)
@@ -118,8 +124,9 @@ void ImageOpenController::finishContainerNavigationLoadWithError(
     cancel();
 
     const QString message = archiveOpenErrorMessage(errorString);
-    reportEffects(
-        ImageOpenWorkflow::finishContainerNavigationLoadWithError(m_state, containerUrl, message));
+    reportEffects(applyImageOpenTransition(m_state,
+        ImageOpenWorkflow::finishContainerNavigationLoadWithErrorTransition(),
+        ImageOpenTransitionContext::containerNavigationError(containerUrl, message)));
 }
 
 void ImageOpenController::setSourceUrlFromResolvedLoad(const QUrl &sourceUrl)
@@ -156,13 +163,18 @@ void ImageOpenController::finishLoadWithError(
     const ImageLoadSession &session, ImageLoadError error, const QString &errorString)
 {
     const QString message = loadErrorMessage(error, errorString);
-    reportEffects(ImageOpenWorkflow::finishLoadWithError(
-        m_state, session, m_presentationController.hasImage(), message));
+    const QUrl displayedUrl = m_state.displayedUrl();
+    reportEffects(applyImageOpenTransition(m_state,
+        ImageOpenWorkflow::finishLoadWithErrorTransition(
+            session, m_presentationController.hasImage(), !displayedUrl.isEmpty()),
+        ImageOpenTransitionContext::sourceLoadError(session, displayedUrl, message)));
 }
 
 void ImageOpenController::finishSuccessfulImageLoad(const ImageLoadSession &session)
 {
-    reportEffects(ImageOpenWorkflow::finishSuccessfulImageLoad(m_state, session));
+    reportEffects(applyImageOpenTransition(m_state,
+        ImageOpenWorkflow::finishSuccessfulImageLoadTransition(session),
+        ImageOpenTransitionContext::successfulImageLoad(session)));
 }
 
 void ImageOpenController::reportEffects(ImageDocumentEffects effects)

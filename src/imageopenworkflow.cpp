@@ -3,7 +3,6 @@
 
 #include "imageopenworkflow.h"
 
-#include "imagedocumentstate.h"
 #include "imageopentransitionapplier.h"
 #include "kiriview/src/imageopenworkflow.cxx.h"
 
@@ -170,54 +169,40 @@ KiriView::ImageOpenTransition imageOpenTransitionFromRust(
 }
 
 namespace KiriView::ImageOpenWorkflow {
-ImageDocumentEffects beginSourceLoad(ImageDocumentState &state, bool hasImage)
+ImageOpenTransition beginSourceLoadTransition(
+    bool hasImage, bool hasLoadingContainerNavigationTarget)
 {
-    return applyImageOpenTransition(state,
-        imageOpenTransitionFromRust(rustImageOpenTransition(
-            beginSourceLoadEvent(hasImage, !state.loadingContainerNavigationUrl().isEmpty()))));
+    return imageOpenTransitionFromRust(rustImageOpenTransition(
+        beginSourceLoadEvent(hasImage, hasLoadingContainerNavigationTarget)));
 }
 
-ImageDocumentEffects finishEmptySourceLoad(ImageDocumentState &state)
+ImageOpenTransition finishEmptySourceLoadTransition()
 {
-    return applyImageOpenTransition(state,
-        imageOpenTransitionFromRust(rustImageOpenTransition(
-            imageOpenWorkflowEvent(RustImageOpenWorkflowEventKind::FinishEmptySourceLoad))));
+    return imageOpenTransitionFromRust(rustImageOpenTransition(
+        imageOpenWorkflowEvent(RustImageOpenWorkflowEventKind::FinishEmptySourceLoad)));
 }
 
-ImageDocumentEffects finishSuccessfulImageLoad(
-    ImageDocumentState &state, const ImageLoadSession &session)
+ImageOpenTransition finishSuccessfulImageLoadTransition(const ImageLoadSession &session)
 {
-    return applyImageOpenTransition(state,
-        imageOpenTransitionFromRust(rustImageOpenTransition(successfulImageLoadEvent(session))),
-        ImageOpenTransitionContext::successfulImageLoad(session));
+    return imageOpenTransitionFromRust(rustImageOpenTransition(successfulImageLoadEvent(session)));
 }
 
-ImageDocumentEffects finishLoadWithError(ImageDocumentState &state, const ImageLoadSession &session,
-    bool hasImage, const QString &errorString)
+ImageOpenTransition finishLoadWithErrorTransition(
+    const ImageLoadSession &session, bool hasImage, bool hasDisplayedUrl)
 {
-    const QUrl containerUrl = session.request.containerNavigationUrl();
-    const QUrl displayedUrl = state.displayedUrl();
-    return applyImageOpenTransition(state,
-        imageOpenTransitionFromRust(rustImageOpenTransition(
-            sourceLoadErrorEvent(!containerUrl.isEmpty(), hasImage, !displayedUrl.isEmpty()))),
-        ImageOpenTransitionContext::sourceLoadError(session, displayedUrl, errorString));
+    return imageOpenTransitionFromRust(rustImageOpenTransition(sourceLoadErrorEvent(
+        !session.request.containerNavigationUrl().isEmpty(), hasImage, hasDisplayedUrl)));
 }
 
-ImageDocumentEffects finishContainerNavigationLoadWithError(
-    ImageDocumentState &state, const QUrl &containerUrl, const QString &errorString)
+ImageOpenTransition finishContainerNavigationLoadWithErrorTransition()
 {
-    return applyImageOpenTransition(state,
-        imageOpenTransitionFromRust(rustImageOpenTransition(imageOpenWorkflowEvent(
-            RustImageOpenWorkflowEventKind::FinishContainerNavigationLoadWithError))),
-        ImageOpenTransitionContext::containerNavigationError(containerUrl, errorString));
+    return imageOpenTransitionFromRust(rustImageOpenTransition(imageOpenWorkflowEvent(
+        RustImageOpenWorkflowEventKind::FinishContainerNavigationLoadWithError)));
 }
 
-ImageDocumentEffects finishAnimationLoadWithError(
-    ImageDocumentState &state, const QString &errorString)
+ImageOpenTransition finishAnimationLoadWithErrorTransition()
 {
-    return applyImageOpenTransition(state,
-        imageOpenTransitionFromRust(rustImageOpenTransition(
-            imageOpenWorkflowEvent(RustImageOpenWorkflowEventKind::FinishAnimationLoadWithError))),
-        ImageOpenTransitionContext::animationError(errorString));
+    return imageOpenTransitionFromRust(rustImageOpenTransition(
+        imageOpenWorkflowEvent(RustImageOpenWorkflowEventKind::FinishAnimationLoadWithError)));
 }
 }
