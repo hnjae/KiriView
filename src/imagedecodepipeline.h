@@ -14,23 +14,36 @@
 
 namespace KiriView {
 struct ImageDecodePipelineInput {
-    const QByteArray &originalData;
-    const QByteArray &compatibleData;
+    const QByteArray &data;
     const ImageDecodeRequest &request;
 };
 
-using ImageDecodePipelineStage
+enum class ImageDecodePipelineDataSource {
+    Original,
+    AvifCompatible,
+};
+
+using ImageDecodePipelineHandler
     = std::function<std::optional<DecodedImageResult>(const ImageDecodePipelineInput &)>;
+
+struct ImageDecodePipelineStage {
+    ImageDecodePipelineDataSource dataSource = ImageDecodePipelineDataSource::Original;
+    ImageDecodePipelineHandler handler;
+};
+
+using ImageDecodeCompatibleDataTransform = std::function<QByteArray(const QByteArray &)>;
 
 class ImageDecodePipeline final
 {
 public:
-    explicit ImageDecodePipeline(std::vector<ImageDecodePipelineStage> stages);
+    explicit ImageDecodePipeline(std::vector<ImageDecodePipelineStage> stages,
+        ImageDecodeCompatibleDataTransform compatibleDataTransform = {});
 
     DecodedImageResult decode(const QByteArray &data, const ImageDecodeRequest &request) const;
 
 private:
     std::vector<ImageDecodePipelineStage> m_stages;
+    ImageDecodeCompatibleDataTransform m_compatibleDataTransform;
 };
 
 DecodedImageResult decodeImageDataWithDefaultPipeline(
