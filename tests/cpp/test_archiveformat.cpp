@@ -15,6 +15,7 @@ class TestArchiveFormat : public QObject
 private Q_SLOTS:
     void comicBookArchiveFileNamesAreCaseInsensitive();
     void comicBookArchiveUrlsMapToKioSchemes();
+    void comicBookArchiveUrlMatchesExposeArchiveKind();
     void directArchiveOpenUrlsMapGeneralArchivesToKioSchemes();
     void directArchiveOpenMatchesExposeArchiveKind();
     void directArchiveOpenMimeTypesMapGeneralArchivesToKioSchemes();
@@ -46,6 +47,22 @@ void TestArchiveFormat::comicBookArchiveUrlsMapToKioSchemes()
     QVERIFY(KiriView::comicBookArchiveKioSchemeForUrl(
         QUrl(QStringLiteral("smb://server/books/book.cb7")))
             .isEmpty());
+}
+
+void TestArchiveFormat::comicBookArchiveUrlMatchesExposeArchiveKind()
+{
+    const std::optional<KiriView::ArchiveOpenMatch> match = KiriView::comicBookArchiveMatchForUrl(
+        QUrl::fromLocalFile(QStringLiteral("/books/book.cbz")));
+    QVERIFY(match.has_value());
+    QCOMPARE(match->scheme, QStringLiteral("zip"));
+    QVERIFY(match->kind == KiriView::ArchiveOpenMatchKind::ComicBook);
+
+    QVERIFY(!KiriView::comicBookArchiveMatchForUrl(
+        QUrl::fromLocalFile(QStringLiteral("/books/book.zip")))
+            .has_value());
+    QVERIFY(
+        !KiriView::comicBookArchiveMatchForUrl(QUrl(QStringLiteral("smb://server/books/book.cbz")))
+            .has_value());
 }
 
 void TestArchiveFormat::directArchiveOpenUrlsMapGeneralArchivesToKioSchemes()

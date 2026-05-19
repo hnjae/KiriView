@@ -107,6 +107,12 @@ void TestImageContainer::comicBookArchiveRootUrlsUseFormatSpecificKioSchemes()
     QVERIFY(cbrRootUrl.has_value());
     QCOMPARE(cbrRootUrl->scheme(), QStringLiteral("rar"));
     QCOMPARE(cbrRootUrl->path(), QStringLiteral("/books/book.cbr/"));
+
+    QVERIFY(
+        !KiriView::comicBookArchiveRootUrl(QUrl::fromLocalFile(QStringLiteral("/books/book.zip")))
+            .has_value());
+    QVERIFY(!KiriView::comicBookArchiveRootUrl(QUrl(QStringLiteral("smb://server/books/book.cbz")))
+            .has_value());
 }
 
 void TestImageContainer::directArchiveRootUrlsUseFormatSpecificKioSchemes()
@@ -134,6 +140,9 @@ void TestImageContainer::directArchiveRootUrlsUseFormatSpecificKioSchemes()
     QVERIFY(rarRootUrl.has_value());
     QCOMPARE(rarRootUrl->scheme(), QStringLiteral("rar"));
     QCOMPARE(rarRootUrl->path(), QStringLiteral("/books/book.rar/"));
+
+    QVERIFY(!KiriView::directArchiveOpenRootUrl(QUrl(QStringLiteral("smb://server/books/book.zip")))
+            .has_value());
 }
 
 void TestImageContainer::archiveInteriorUrlsResolveToTheirRootAndTitle()

@@ -62,10 +62,9 @@ KiriView::ArchiveDocumentKind archiveDocumentKindForMatch(const KiriView::Archiv
     return KiriView::ArchiveDocumentKind::General;
 }
 
-std::optional<ArchiveDocumentRoot> archiveDocumentRootForLocalArchive(const QUrl &url)
+std::optional<ArchiveDocumentRoot> archiveDocumentRootForLocalArchive(
+    const QUrl &url, std::optional<KiriView::ArchiveOpenMatch> match)
 {
-    const std::optional<KiriView::ArchiveOpenMatch> match
-        = KiriView::directArchiveOpenMatchForUrl(url);
     if (!match.has_value()) {
         return std::nullopt;
     }
@@ -76,6 +75,11 @@ std::optional<ArchiveDocumentRoot> archiveDocumentRootForLocalArchive(const QUrl
     }
 
     return ArchiveDocumentRoot { *rootUrl, archiveDocumentKindForMatch(*match) };
+}
+
+std::optional<ArchiveDocumentRoot> directArchiveDocumentRootForLocalArchive(const QUrl &url)
+{
+    return archiveDocumentRootForLocalArchive(url, KiriView::directArchiveOpenMatchForUrl(url));
 }
 
 std::optional<KiriView::ArchiveDocumentLocation> directoryDocumentLocationForLocalUrl(
@@ -140,13 +144,18 @@ bool archiveDocumentContainsUrlInRust(
 namespace KiriView {
 std::optional<QUrl> comicBookArchiveRootUrl(const QUrl &url)
 {
-    const QString archiveScheme = KiriView::comicBookArchiveKioSchemeForUrl(url);
-    return archiveRootUrlForLocalArchive(url, archiveScheme);
+    const std::optional<ArchiveDocumentRoot> root
+        = archiveDocumentRootForLocalArchive(url, KiriView::comicBookArchiveMatchForUrl(url));
+    if (!root.has_value()) {
+        return std::nullopt;
+    }
+
+    return root->rootUrl;
 }
 
 std::optional<QUrl> directArchiveOpenRootUrl(const QUrl &url)
 {
-    const std::optional<ArchiveDocumentRoot> root = archiveDocumentRootForLocalArchive(url);
+    const std::optional<ArchiveDocumentRoot> root = directArchiveDocumentRootForLocalArchive(url);
     if (!root.has_value()) {
         return std::nullopt;
     }
@@ -156,11 +165,7 @@ std::optional<QUrl> directArchiveOpenRootUrl(const QUrl &url)
 
 std::optional<ArchiveDocumentLocation> archiveDocumentLocationForLocalArchiveUrl(const QUrl &url)
 {
-    if (!url.isLocalFile()) {
-        return std::nullopt;
-    }
-
-    const std::optional<ArchiveDocumentRoot> root = archiveDocumentRootForLocalArchive(url);
+    const std::optional<ArchiveDocumentRoot> root = directArchiveDocumentRootForLocalArchive(url);
     if (!root.has_value()) {
         return std::nullopt;
     }

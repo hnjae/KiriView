@@ -39,6 +39,7 @@ std::optional<ArchiveOpenMatch> comicBookArchiveMatchForFileName(const QString &
 std::optional<ArchiveOpenMatch> directArchiveOpenMatchForFileName(const QString &fileName);
 std::optional<ArchiveOpenMatch> comicBookArchiveMatchForMimeTypeName(const QString &mimeTypeName);
 std::optional<ArchiveOpenMatch> directArchiveOpenMatchForMimeTypeName(const QString &mimeTypeName);
+std::optional<ArchiveOpenMatch> comicBookArchiveMatchForUrl(const QUrl &url);
 std::optional<ArchiveOpenMatch> directArchiveOpenMatchForUrl(const QUrl &url);
 QString comicBookArchiveKioSchemeForFileName(const QString &fileName);
 QString directArchiveOpenKioSchemeForFileName(const QString &fileName);

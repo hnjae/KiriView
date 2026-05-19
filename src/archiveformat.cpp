@@ -150,6 +150,12 @@ std::optional<ArchiveOpenMatch> directArchiveOpenMatchForMimeTypeName(const QStr
     return archiveMatchForQString(mimeTypeName, rustDirectArchiveOpenMatchForMimeTypeName);
 }
 
+std::optional<ArchiveOpenMatch> comicBookArchiveMatchForUrl(const QUrl &url)
+{
+    return archiveMatchForUrl(url, QMimeDatabase::MatchExtension,
+        KiriView::comicBookArchiveMatchForFileName, KiriView::comicBookArchiveMatchForMimeTypeName);
+}
+
 std::optional<ArchiveOpenMatch> directArchiveOpenMatchForUrl(const QUrl &url)
 {
     return archiveMatchForUrl(url, QMimeDatabase::MatchDefault,
@@ -179,8 +185,7 @@ QString directArchiveOpenKioSchemeForMimeTypeName(const QString &mimeTypeName)
 
 QString comicBookArchiveKioSchemeForUrl(const QUrl &url)
 {
-    return archiveKioSchemeForUrl(url, QMimeDatabase::MatchExtension,
-        KiriView::comicBookArchiveMatchForFileName, KiriView::comicBookArchiveMatchForMimeTypeName);
+    return schemeString(comicBookArchiveMatchForUrl(url));
 }
 
 QString directArchiveOpenKioSchemeForUrl(const QUrl &url)
