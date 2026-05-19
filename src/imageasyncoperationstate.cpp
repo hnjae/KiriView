@@ -5,13 +5,13 @@
 
 namespace KiriView {
 ImageAsyncOperationState::ImageAsyncOperationState(quint64 nextOperationId)
-    : m_nextOperationId(nextOperationId)
+    : m_ticket(nextOperationId)
 {
 }
 
 quint64 ImageAsyncOperationState::start()
 {
-    m_activeOperationId = nextOperationId();
+    m_activeOperationId = m_ticket.next();
     return m_activeOperationId;
 }
 
@@ -31,13 +31,4 @@ bool ImageAsyncOperationState::finish(quint64 operationId)
 }
 
 void ImageAsyncOperationState::cancel() { m_activeOperationId = 0; }
-
-quint64 ImageAsyncOperationState::nextOperationId()
-{
-    ++m_nextOperationId;
-    if (m_nextOperationId == 0) {
-        ++m_nextOperationId;
-    }
-    return m_nextOperationId;
-}
 }

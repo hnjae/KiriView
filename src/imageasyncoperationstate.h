@@ -4,6 +4,8 @@
 #ifndef KIRIVIEW_IMAGEASYNCOPERATIONSTATE_H
 #define KIRIVIEW_IMAGEASYNCOPERATIONSTATE_H
 
+#include "imageasyncticket.h"
+
 #include <QtGlobal>
 
 namespace KiriView {
@@ -18,9 +20,7 @@ public:
     void cancel();
 
 private:
-    quint64 nextOperationId();
-
-    quint64 m_nextOperationId = 0;
+    ImageAsyncTicket m_ticket;
     quint64 m_activeOperationId = 0;
 };
 }
