@@ -45,51 +45,73 @@ void ImageContainerNavigationController::openAdjacentContainer(
     }
     cancel();
 
+    const quint64 operationId = m_navigationState.startNavigation();
     m_containerListJob = m_candidateRepository.loadContainers(
         this, parentUrl,
-        [this, direction, currentContainerUrl](
+        [this, operationId, direction, currentContainerUrl](
             std::vector<ContainerNavigationCandidate> candidates) {
-            finishContainerNavigation(std::move(candidates), direction, currentContainerUrl);
+            finishContainerNavigation(
+                operationId, std::move(candidates), direction, currentContainerUrl);
         },
-        [](const QString &) {});
+        [this, operationId](
+            const QString &) { finishContainerNavigationListWithError(operationId); });
 }
 
 void ImageContainerNavigationController::cancel()
 {
+    m_navigationState.cancel();
     m_containerListJob.cancel();
     m_firstImageJob.cancel();
 }
 
-void ImageContainerNavigationController::finishContainerNavigation(
+void ImageContainerNavigationController::finishContainerNavigation(quint64 operationId,
     std::vector<ContainerNavigationCandidate> candidates, NavigationDirection direction,
     const QUrl &currentContainerUrl)
 {
+    if (!m_navigationState.acceptsNavigation(operationId)) {
+        return;
+    }
+
     const auto target
         = adjacentContainerNavigationCandidate(candidates, currentContainerUrl, direction);
     if (!target.has_value()) {
+        m_navigationState.finishNavigation(operationId);
         return;
     }
 
     m_firstImageJob = m_candidateRepository.loadFirstImageInContainer(
         this, *target,
-        [this](const QUrl &imageUrl, const QUrl &containerUrl) {
-            openImageFromContainerNavigation(imageUrl, containerUrl);
+        [this, operationId](const QUrl &imageUrl, const QUrl &containerUrl) {
+            openImageFromContainerNavigation(operationId, imageUrl, containerUrl);
         },
-        [this](const QUrl &containerUrl, ImageCandidateRepositoryError error,
+        [this, operationId](const QUrl &containerUrl, ImageCandidateRepositoryError error,
             const QString &errorString) {
-            finishContainerNavigationLoadWithError(containerUrl, error, errorString);
+            finishContainerNavigationLoadWithError(operationId, containerUrl, error, errorString);
         });
 }
 
-void ImageContainerNavigationController::openImageFromContainerNavigation(
-    const QUrl &imageUrl, const QUrl &containerUrl)
+void ImageContainerNavigationController::finishContainerNavigationListWithError(quint64 operationId)
 {
+    m_navigationState.finishNavigation(operationId);
+}
+
+void ImageContainerNavigationController::openImageFromContainerNavigation(
+    quint64 operationId, const QUrl &imageUrl, const QUrl &containerUrl)
+{
+    if (!m_navigationState.finishNavigation(operationId)) {
+        return;
+    }
+
     invokeIfSet(m_callbacks.openContainerImage, imageUrl, containerUrl);
 }
 
-void ImageContainerNavigationController::finishContainerNavigationLoadWithError(
+void ImageContainerNavigationController::finishContainerNavigationLoadWithError(quint64 operationId,
     const QUrl &containerUrl, ContainerNavigationError error, const QString &errorString)
 {
+    if (!m_navigationState.finishNavigation(operationId)) {
+        return;
+    }
+
     invokeIfSet(m_callbacks.containerNavigationError, containerUrl, error, errorString);
 }
 }

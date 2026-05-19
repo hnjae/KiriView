@@ -81,6 +81,15 @@ public:
             });
     }
 
+    void deliverContainerListAtIgnoringCancellation(
+        std::size_t index, std::vector<ContainerNavigationCandidate> candidates)
+    {
+        ManualContainerList &load = *m_containerLists.at(index);
+        if (load.callback) {
+            load.callback(std::move(candidates));
+        }
+    }
+
     void finishImageListAt(std::size_t index, std::vector<ImageNavigationCandidate> candidates)
     {
         KiriView::TestSupport::Detail::finishManualIoJob(m_imageLists.at(index),
@@ -89,6 +98,15 @@ public:
                     load.callback(std::move(candidates));
                 }
             });
+    }
+
+    void deliverImageListAtIgnoringCancellation(
+        std::size_t index, std::vector<ImageNavigationCandidate> candidates)
+    {
+        ManualImageList &load = *m_imageLists.at(index);
+        if (load.callback) {
+            load.callback(std::move(candidates));
+        }
     }
 
     KiriView::ImageNavigationCandidateProvider provider()
@@ -129,6 +147,8 @@ private Q_SLOTS:
     void opensFirstImageFromAdjacentContainer();
     void cancelRejectsPendingContainerListing();
     void newRequestCancelsPendingFirstImageLoad();
+    void canceledContainerListingCompletionIsIgnored();
+    void canceledFirstImageCompletionIsIgnored();
 };
 
 void TestImageContainerNavigationController::opensFirstImageFromAdjacentContainer()
@@ -225,7 +245,7 @@ void TestImageContainerNavigationController::newRequestCancelsPendingFirstImageL
 
     controller.openAdjacentContainer(secondCurrentContainerUrl, NavigationDirection::Next);
     QVERIFY(provider.imageListAt(0).canceled);
-    provider.finishImageListAt(0, { imageCandidate(firstTargetImageUrl) });
+    provider.deliverImageListAtIgnoringCancellation(0, { imageCandidate(firstTargetImageUrl) });
 
     QCOMPARE(provider.containerListCount(), std::size_t(2));
     provider.finishContainerListAt(1,
@@ -240,6 +260,63 @@ void TestImageContainerNavigationController::newRequestCancelsPendingFirstImageL
 
     QCOMPARE(openedImageUrls.size(), std::size_t(1));
     QCOMPARE(openedImageUrls.front(), secondTargetImageUrl);
+}
+
+void TestImageContainerNavigationController::canceledContainerListingCompletionIsIgnored()
+{
+    ManualContainerNavigationProvider provider;
+    KiriView::ImageCandidateRepository repository(provider.provider());
+    const QUrl currentContainerUrl = localUrl(QStringLiteral("/books/a/"));
+    const QUrl targetContainerUrl = localUrl(QStringLiteral("/books/b/"));
+
+    QUrl openedImageUrl;
+    KiriView::ImageContainerNavigationController controller(nullptr, repository,
+        KiriView::ImageContainerNavigationController::Callbacks {
+            [&openedImageUrl](const QUrl &imageUrl, const QUrl &) { openedImageUrl = imageUrl; },
+            {},
+        });
+
+    controller.openAdjacentContainer(currentContainerUrl, NavigationDirection::Next);
+    QCOMPARE(provider.containerListCount(), std::size_t(1));
+
+    controller.cancel();
+    provider.deliverContainerListAtIgnoringCancellation(0,
+        {
+            containerCandidate(currentContainerUrl, ContainerNavigationCandidateType::Directory),
+            containerCandidate(targetContainerUrl, ContainerNavigationCandidateType::Directory),
+        });
+
+    QVERIFY(openedImageUrl.isEmpty());
+    QCOMPARE(provider.imageListCount(), std::size_t(0));
+}
+
+void TestImageContainerNavigationController::canceledFirstImageCompletionIsIgnored()
+{
+    ManualContainerNavigationProvider provider;
+    KiriView::ImageCandidateRepository repository(provider.provider());
+    const QUrl currentContainerUrl = localUrl(QStringLiteral("/books/a/"));
+    const QUrl targetContainerUrl = localUrl(QStringLiteral("/books/b/"));
+    const QUrl targetImageUrl = localUrl(QStringLiteral("/books/b/01.png"));
+
+    QUrl openedImageUrl;
+    KiriView::ImageContainerNavigationController controller(nullptr, repository,
+        KiriView::ImageContainerNavigationController::Callbacks {
+            [&openedImageUrl](const QUrl &imageUrl, const QUrl &) { openedImageUrl = imageUrl; },
+            {},
+        });
+
+    controller.openAdjacentContainer(currentContainerUrl, NavigationDirection::Next);
+    provider.finishContainerListAt(0,
+        {
+            containerCandidate(currentContainerUrl, ContainerNavigationCandidateType::Directory),
+            containerCandidate(targetContainerUrl, ContainerNavigationCandidateType::Directory),
+        });
+    QCOMPARE(provider.imageListCount(), std::size_t(1));
+
+    controller.cancel();
+    provider.deliverImageListAtIgnoringCancellation(0, { imageCandidate(targetImageUrl) });
+
+    QVERIFY(openedImageUrl.isEmpty());
 }
 
 QTEST_GUILESS_MAIN(TestImageContainerNavigationController)

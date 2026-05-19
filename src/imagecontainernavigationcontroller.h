@@ -5,6 +5,7 @@
 #define KIRIVIEW_IMAGECONTAINERNAVIGATIONCONTROLLER_H
 
 #include "imagecandidaterepository.h"
+#include "imagecontainernavigationstate.h"
 #include "imageiojob.h"
 #include "imagenavigationtypes.h"
 
@@ -38,14 +39,18 @@ public:
     void cancel();
 
 private:
-    void finishContainerNavigation(std::vector<ContainerNavigationCandidate> candidates,
-        NavigationDirection direction, const QUrl &currentContainerUrl);
-    void openImageFromContainerNavigation(const QUrl &imageUrl, const QUrl &containerUrl);
-    void finishContainerNavigationLoadWithError(
-        const QUrl &containerUrl, ContainerNavigationError error, const QString &errorString);
+    void finishContainerNavigation(quint64 operationId,
+        std::vector<ContainerNavigationCandidate> candidates, NavigationDirection direction,
+        const QUrl &currentContainerUrl);
+    void finishContainerNavigationListWithError(quint64 operationId);
+    void openImageFromContainerNavigation(
+        quint64 operationId, const QUrl &imageUrl, const QUrl &containerUrl);
+    void finishContainerNavigationLoadWithError(quint64 operationId, const QUrl &containerUrl,
+        ContainerNavigationError error, const QString &errorString);
 
     const ImageCandidateRepository &m_candidateRepository;
     Callbacks m_callbacks;
+    ImageContainerNavigationState m_navigationState;
     ImageIoJob m_containerListJob;
     ImageIoJob m_firstImageJob;
 };
