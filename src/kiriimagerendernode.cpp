@@ -148,16 +148,12 @@ void KiriImageRenderNode::setRhi(QRhi *rhi)
 void KiriImageRenderNode::setSurface(
     std::shared_ptr<DisplayedImageSurface> surface, quint64 revision)
 {
-    const bool sameSurface = m_surface == surface;
-    const bool revisionChanged = m_state.setSurfaceRevision(revision);
-    if (sameSurface && !revisionChanged) {
+    const ImageRenderNodeSurfaceUpdate update = m_state.setSurface(m_surface == surface, revision);
+    if (!update.acceptSurface) {
         return;
     }
 
     m_surface = std::move(surface);
-    if (!revisionChanged) {
-        m_state.markSurfaceChanged();
-    }
 }
 
 void KiriImageRenderNode::setTargetRect(const QRectF &targetRect)
@@ -336,31 +332,20 @@ bool KiriImageRenderNode::ensureVertexBuffer(QRhiResourceUpdateBatch *&resourceU
 
 bool KiriImageRenderNode::ensureTextures(QRhiResourceUpdateBatch *&resourceUpdates)
 {
-    if (tryReuseUploadedTextures()) {
+    switch (m_state.textureUpdatePlan()) {
+    case ImageRenderNodeTextureUpdatePlan::ReuseTextures:
         return true;
+    case ImageRenderNodeTextureUpdatePlan::SynchronizeDrawGeometry:
+        if (syncDrawTextureEntries()) {
+            m_state.applyDrawGeometrySyncResult(true);
+            return true;
+        }
+        m_state.applyDrawGeometrySyncResult(false);
+        return rebuildDrawTextures(resourceUpdates);
+    case ImageRenderNodeTextureUpdatePlan::RebuildTextures:
+        return rebuildDrawTextures(resourceUpdates);
     }
 
-    return rebuildDrawTextures(resourceUpdates);
-}
-
-bool KiriImageRenderNode::uploadedTexturesAreCurrent() const
-{
-    return m_state.uploadedTexturesAreCurrent();
-}
-
-bool KiriImageRenderNode::tryReuseUploadedTextures()
-{
-    if (!uploadedTexturesAreCurrent()) {
-        return false;
-    }
-    if (!m_state.drawGeometryDirty()) {
-        return true;
-    }
-    if (syncDrawTextureEntries()) {
-        return true;
-    }
-
-    m_state.markTextureReuseFailed();
     return false;
 }
 
@@ -398,7 +383,6 @@ bool KiriImageRenderNode::syncDrawTextureEntries()
         m_drawTextures[index].textureRect = entries[index].textureRect;
         m_drawTextures[index].textureTransform = entries[index].textureTransform;
     }
-    m_state.markDrawGeometrySynchronized();
     return true;
 }
 

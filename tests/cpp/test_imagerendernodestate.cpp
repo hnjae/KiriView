@@ -12,79 +12,102 @@ class TestImageRenderNodeState : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
-    void surfaceRevisionInvalidatesUploadedTextures();
-    void surfacePayloadChangeInvalidatesCurrentRevision();
-    void targetGeometryOnlyInvalidatesDrawGeometry();
+    void surfaceUpdateOwnsRevisionAndPointerInvalidation();
+    void targetGeometryOnlyRequestsDrawGeometrySync();
+    void drawGeometrySyncFailurePromotesTextureRebuild();
     void rotationIsNormalizedBeforeComparison();
     void resetUploadedResourcesKeepsPublicInputs();
 };
 
-void TestImageRenderNodeState::surfaceRevisionInvalidatesUploadedTextures()
+namespace {
+void expectTextureUpdatePlan(const KiriView::ImageRenderNodeState &state,
+    KiriView::ImageRenderNodeTextureUpdatePlan expectedPlan)
 {
-    KiriView::ImageRenderNodeState state;
-
-    QVERIFY(state.setSurfaceRevision(10));
-    state.markTexturesUploaded();
-    QVERIFY(state.uploadedTexturesAreCurrent());
-    QVERIFY(!state.drawGeometryDirty());
-
-    QVERIFY(!state.setSurfaceRevision(10));
-    QVERIFY(state.uploadedTexturesAreCurrent());
-
-    QVERIFY(state.setSurfaceRevision(11));
-    QVERIFY(!state.uploadedTexturesAreCurrent());
-    QVERIFY(state.drawGeometryDirty());
+    QCOMPARE(static_cast<int>(state.textureUpdatePlan()), static_cast<int>(expectedPlan));
+}
 }
 
-void TestImageRenderNodeState::surfacePayloadChangeInvalidatesCurrentRevision()
+void TestImageRenderNodeState::surfaceUpdateOwnsRevisionAndPointerInvalidation()
 {
     KiriView::ImageRenderNodeState state;
-    QVERIFY(state.setSurfaceRevision(10));
+
+    KiriView::ImageRenderNodeSurfaceUpdate update = state.setSurface(false, 10);
+    QVERIFY(update.acceptSurface);
+    expectTextureUpdatePlan(state, KiriView::ImageRenderNodeTextureUpdatePlan::RebuildTextures);
+
     state.markTexturesUploaded();
-    QVERIFY(state.uploadedTexturesAreCurrent());
+    expectTextureUpdatePlan(state, KiriView::ImageRenderNodeTextureUpdatePlan::ReuseTextures);
 
-    state.markSurfaceChanged();
+    update = state.setSurface(true, 10);
+    QVERIFY(!update.acceptSurface);
+    expectTextureUpdatePlan(state, KiriView::ImageRenderNodeTextureUpdatePlan::ReuseTextures);
 
-    QVERIFY(!state.uploadedTexturesAreCurrent());
-    QVERIFY(state.drawGeometryDirty());
+    update = state.setSurface(true, 11);
+    QVERIFY(update.acceptSurface);
+    expectTextureUpdatePlan(state, KiriView::ImageRenderNodeTextureUpdatePlan::RebuildTextures);
+
+    state.markTexturesUploaded();
+    expectTextureUpdatePlan(state, KiriView::ImageRenderNodeTextureUpdatePlan::ReuseTextures);
+
+    update = state.setSurface(false, 11);
+    QVERIFY(update.acceptSurface);
+    expectTextureUpdatePlan(state, KiriView::ImageRenderNodeTextureUpdatePlan::RebuildTextures);
 }
 
-void TestImageRenderNodeState::targetGeometryOnlyInvalidatesDrawGeometry()
+void TestImageRenderNodeState::targetGeometryOnlyRequestsDrawGeometrySync()
 {
     KiriView::ImageRenderNodeState state;
-    QVERIFY(state.setSurfaceRevision(7));
+    state.setSurface(false, 7);
     state.markTexturesUploaded();
 
     QVERIFY(state.setTargetRect(QRectF(10.0, 20.0, 30.0, 40.0)));
-    QVERIFY(state.uploadedTexturesAreCurrent());
-    QVERIFY(state.drawGeometryDirty());
+    expectTextureUpdatePlan(
+        state, KiriView::ImageRenderNodeTextureUpdatePlan::SynchronizeDrawGeometry);
     QCOMPARE(state.targetRect(), QRectF(10.0, 20.0, 30.0, 40.0));
 
-    state.markDrawGeometrySynchronized();
+    state.applyDrawGeometrySyncResult(true);
+    expectTextureUpdatePlan(state, KiriView::ImageRenderNodeTextureUpdatePlan::ReuseTextures);
     QVERIFY(!state.setTargetRect(QRectF(10.0, 20.0, 30.0, 40.0)));
-    QVERIFY(!state.drawGeometryDirty());
+    expectTextureUpdatePlan(state, KiriView::ImageRenderNodeTextureUpdatePlan::ReuseTextures);
+}
+
+void TestImageRenderNodeState::drawGeometrySyncFailurePromotesTextureRebuild()
+{
+    KiriView::ImageRenderNodeState state;
+    state.setSurface(false, 7);
+    state.markTexturesUploaded();
+    state.setTargetRect(QRectF(10.0, 20.0, 30.0, 40.0));
+
+    state.applyDrawGeometrySyncResult(false);
+
+    expectTextureUpdatePlan(state, KiriView::ImageRenderNodeTextureUpdatePlan::RebuildTextures);
 }
 
 void TestImageRenderNodeState::rotationIsNormalizedBeforeComparison()
 {
     KiriView::ImageRenderNodeState state;
+    state.setSurface(false, 1);
+    state.markTexturesUploaded();
 
     QVERIFY(state.setRotationDegrees(450));
     QCOMPARE(state.rotationDegrees(), 90);
-    state.markDrawGeometrySynchronized();
+    expectTextureUpdatePlan(
+        state, KiriView::ImageRenderNodeTextureUpdatePlan::SynchronizeDrawGeometry);
+    state.applyDrawGeometrySyncResult(true);
 
     QVERIFY(!state.setRotationDegrees(90));
-    QVERIFY(!state.drawGeometryDirty());
+    expectTextureUpdatePlan(state, KiriView::ImageRenderNodeTextureUpdatePlan::ReuseTextures);
 
     QVERIFY(state.setRotationDegrees(-90));
     QCOMPARE(state.rotationDegrees(), 270);
-    QVERIFY(state.drawGeometryDirty());
+    expectTextureUpdatePlan(
+        state, KiriView::ImageRenderNodeTextureUpdatePlan::SynchronizeDrawGeometry);
 }
 
 void TestImageRenderNodeState::resetUploadedResourcesKeepsPublicInputs()
 {
     KiriView::ImageRenderNodeState state;
-    QVERIFY(state.setSurfaceRevision(3));
+    state.setSurface(false, 3);
     QVERIFY(state.setTargetRect(QRectF(1.0, 2.0, 3.0, 4.0)));
     QVERIFY(state.setRotationDegrees(180));
     state.markTexturesUploaded();
@@ -93,8 +116,7 @@ void TestImageRenderNodeState::resetUploadedResourcesKeepsPublicInputs()
 
     QCOMPARE(state.targetRect(), QRectF(1.0, 2.0, 3.0, 4.0));
     QCOMPARE(state.rotationDegrees(), 180);
-    QVERIFY(!state.uploadedTexturesAreCurrent());
-    QVERIFY(state.drawGeometryDirty());
+    expectTextureUpdatePlan(state, KiriView::ImageRenderNodeTextureUpdatePlan::RebuildTextures);
 }
 
 QTEST_GUILESS_MAIN(TestImageRenderNodeState)

@@ -8,25 +8,36 @@
 #include <QtGlobal>
 
 namespace KiriView {
+enum class ImageRenderNodeTextureUpdatePlan {
+    ReuseTextures,
+    SynchronizeDrawGeometry,
+    RebuildTextures,
+};
+
+struct ImageRenderNodeSurfaceUpdate {
+    bool acceptSurface = false;
+};
+
 class ImageRenderNodeState final
 {
 public:
     const QRectF &targetRect() const;
     int rotationDegrees() const;
 
-    bool setSurfaceRevision(quint64 revision);
-    void markSurfaceChanged();
+    ImageRenderNodeSurfaceUpdate setSurface(bool sameSurface, quint64 revision);
     bool setTargetRect(const QRectF &targetRect);
     bool setRotationDegrees(int rotationDegrees);
 
-    bool uploadedTexturesAreCurrent() const;
-    bool drawGeometryDirty() const;
-    void markDrawGeometrySynchronized();
-    void markTextureReuseFailed();
+    ImageRenderNodeTextureUpdatePlan textureUpdatePlan() const;
+    void applyDrawGeometrySyncResult(bool synchronized);
     void markTexturesUploaded();
     void resetUploadedResources();
 
 private:
+    bool setSurfaceRevision(quint64 revision);
+    void markSurfaceChanged();
+    bool uploadedTexturesAreCurrent() const;
+
     quint64 m_surfaceRevision = 0;
     quint64 m_uploadedSurfaceRevision = 0;
     QRectF m_targetRect;

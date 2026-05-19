@@ -10,6 +10,19 @@ const QRectF &ImageRenderNodeState::targetRect() const { return m_targetRect; }
 
 int ImageRenderNodeState::rotationDegrees() const { return m_rotationDegrees; }
 
+ImageRenderNodeSurfaceUpdate ImageRenderNodeState::setSurface(bool sameSurface, quint64 revision)
+{
+    const bool revisionChanged = setSurfaceRevision(revision);
+    if (sameSurface && !revisionChanged) {
+        return {};
+    }
+
+    if (!revisionChanged) {
+        markSurfaceChanged();
+    }
+    return ImageRenderNodeSurfaceUpdate { true };
+}
+
 bool ImageRenderNodeState::setSurfaceRevision(quint64 revision)
 {
     if (m_surfaceRevision == revision) {
@@ -55,11 +68,27 @@ bool ImageRenderNodeState::uploadedTexturesAreCurrent() const
     return !m_texturesDirty && m_uploadedSurfaceRevision == m_surfaceRevision;
 }
 
-bool ImageRenderNodeState::drawGeometryDirty() const { return m_drawGeometryDirty; }
+ImageRenderNodeTextureUpdatePlan ImageRenderNodeState::textureUpdatePlan() const
+{
+    if (!uploadedTexturesAreCurrent()) {
+        return ImageRenderNodeTextureUpdatePlan::RebuildTextures;
+    }
+    if (m_drawGeometryDirty) {
+        return ImageRenderNodeTextureUpdatePlan::SynchronizeDrawGeometry;
+    }
 
-void ImageRenderNodeState::markDrawGeometrySynchronized() { m_drawGeometryDirty = false; }
+    return ImageRenderNodeTextureUpdatePlan::ReuseTextures;
+}
 
-void ImageRenderNodeState::markTextureReuseFailed() { m_texturesDirty = true; }
+void ImageRenderNodeState::applyDrawGeometrySyncResult(bool synchronized)
+{
+    if (synchronized) {
+        m_drawGeometryDirty = false;
+        return;
+    }
+
+    m_texturesDirty = true;
+}
 
 void ImageRenderNodeState::markTexturesUploaded()
 {
