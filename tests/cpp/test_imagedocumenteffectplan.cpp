@@ -16,19 +16,26 @@ using KiriView::ImageDocumentRuntimePlan;
 
 QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
 
-ImageDocumentRuntimeOperation operation(ImageDocumentRuntimeOperationKind kind)
-{
-    return ImageDocumentRuntimeOperation::simple(kind);
-}
-
 std::vector<ImageDocumentRuntimeOperationKind> operationKinds(const ImageDocumentRuntimePlan &plan)
 {
     std::vector<ImageDocumentRuntimeOperationKind> kinds;
     kinds.reserve(plan.size());
     for (const ImageDocumentRuntimeOperation &operation : plan) {
-        kinds.push_back(operation.kind);
+        kinds.push_back(KiriView::imageDocumentRuntimeOperationKind(operation));
     }
     return kinds;
+}
+
+bool hasOperationKinds(const ImageDocumentRuntimePlan &plan,
+    const std::vector<ImageDocumentRuntimeOperationKind> &expected)
+{
+    return operationKinds(plan) == expected;
+}
+
+template <typename Operation>
+const Operation &operationAt(const ImageDocumentRuntimePlan &plan, std::size_t index)
+{
+    return std::get<Operation>(plan.at(index));
 }
 }
 
@@ -48,8 +55,8 @@ void TestImageDocumentEffectPlan::clearImagePlansOrderedRuntimeOperations()
     const ImageDocumentRuntimePlan plan
         = KiriView::imageDocumentEffectPlan(ImageDocumentEffect::clearImage());
 
-    QVERIFY(operationKinds(plan)
-        == std::vector<ImageDocumentRuntimeOperationKind>({
+    QVERIFY(hasOperationKinds(plan,
+        {
             ImageDocumentRuntimeOperationKind::ClearArchiveSession,
             ImageDocumentRuntimeOperationKind::ClearPredecode,
             ImageDocumentRuntimeOperationKind::FinishSpreadTransition,
@@ -67,27 +74,29 @@ void TestImageDocumentEffectPlan::clearDeletedImagePlansDeletionClearAndEmptySou
     const ImageDocumentRuntimePlan plan
         = KiriView::imageDocumentEffectPlan(ImageDocumentEffect::clearDeletedImage());
 
-    QVERIFY(plan
-        == ImageDocumentRuntimePlan({
-            operation(ImageDocumentRuntimeOperationKind::ClearArchiveSession),
-            operation(ImageDocumentRuntimeOperationKind::CancelNavigation),
-            operation(ImageDocumentRuntimeOperationKind::CancelContainerNavigation),
-            operation(ImageDocumentRuntimeOperationKind::CancelPredecode),
-            operation(ImageDocumentRuntimeOperationKind::CancelOpen),
-            operation(ImageDocumentRuntimeOperationKind::FinishSpreadTransition),
-            operation(ImageDocumentRuntimeOperationKind::ClearSecondaryPage),
-            ImageDocumentRuntimeOperation::setSourceUrl(QUrl()),
-            ImageDocumentRuntimeOperation::setErrorString(QString()),
-            operation(ImageDocumentRuntimeOperationKind::FinishEmptySourceLoad),
+    QVERIFY(hasOperationKinds(plan,
+        {
+            ImageDocumentRuntimeOperationKind::ClearArchiveSession,
+            ImageDocumentRuntimeOperationKind::CancelNavigation,
+            ImageDocumentRuntimeOperationKind::CancelContainerNavigation,
+            ImageDocumentRuntimeOperationKind::CancelPredecode,
+            ImageDocumentRuntimeOperationKind::CancelOpen,
+            ImageDocumentRuntimeOperationKind::FinishSpreadTransition,
+            ImageDocumentRuntimeOperationKind::ClearSecondaryPage,
+            ImageDocumentRuntimeOperationKind::SetSourceUrl,
+            ImageDocumentRuntimeOperationKind::SetErrorString,
+            ImageDocumentRuntimeOperationKind::FinishEmptySourceLoad,
         }));
+    QVERIFY(operationAt<KiriView::SetSourceUrlOperation>(plan, 7).url.isEmpty());
+    QVERIFY(operationAt<KiriView::SetErrorStringOperation>(plan, 8).errorString.isEmpty());
 }
 
 void TestImageDocumentEffectPlan::shutdownPlansOrderedRuntimeOperations()
 {
     const ImageDocumentRuntimePlan plan = KiriView::imageDocumentShutdownPlan();
 
-    QVERIFY(operationKinds(plan)
-        == std::vector<ImageDocumentRuntimeOperationKind>({
+    QVERIFY(hasOperationKinds(plan,
+        {
             ImageDocumentRuntimeOperationKind::CancelFileDeletion,
             ImageDocumentRuntimeOperationKind::StopPresentationAnimation,
             ImageDocumentRuntimeOperationKind::ShutdownSpread,
@@ -102,37 +111,43 @@ void TestImageDocumentEffectPlan::shutdownPlansOrderedRuntimeOperations()
 
 void TestImageDocumentEffectPlan::payloadEffectsPlanRuntimeOperations()
 {
-    QVERIFY(KiriView::imageDocumentEffectPlan(
-                ImageDocumentEffect::openUrl(localUrl(QStringLiteral("/image.png"))))
-        == ImageDocumentRuntimePlan(
-            { ImageDocumentRuntimeOperation::loadUrl(localUrl(QStringLiteral("/image.png"))) }));
+    ImageDocumentRuntimePlan plan = KiriView::imageDocumentEffectPlan(
+        ImageDocumentEffect::openUrl(localUrl(QStringLiteral("/image.png"))));
+    QCOMPARE(operationAt<KiriView::LoadUrlOperation>(plan, 0).url,
+        localUrl(QStringLiteral("/image.png")));
 
-    QVERIFY(KiriView::imageDocumentEffectPlan(ImageDocumentEffect::containerImageSelected(
-                localUrl(QStringLiteral("/book/01.png")), localUrl(QStringLiteral("/book.cbz"))))
-        == ImageDocumentRuntimePlan({ ImageDocumentRuntimeOperation::loadContainerImage(
-            localUrl(QStringLiteral("/book/01.png")), localUrl(QStringLiteral("/book.cbz"))) }));
+    plan = KiriView::imageDocumentEffectPlan(ImageDocumentEffect::containerImageSelected(
+        localUrl(QStringLiteral("/book/01.png")), localUrl(QStringLiteral("/book.cbz"))));
+    QCOMPARE(operationAt<KiriView::LoadContainerImageOperation>(plan, 0).imageUrl,
+        localUrl(QStringLiteral("/book/01.png")));
+    QCOMPARE(operationAt<KiriView::LoadContainerImageOperation>(plan, 0).containerUrl,
+        localUrl(QStringLiteral("/book.cbz")));
 
-    QVERIFY(KiriView::imageDocumentEffectPlan(
-                ImageDocumentEffect::emptyContainerSelected(localUrl(QStringLiteral("/empty.cbz"))))
-        == ImageDocumentRuntimePlan({ ImageDocumentRuntimeOperation::finishEmptyContainerNavigation(
-            localUrl(QStringLiteral("/empty.cbz"))) }));
+    plan = KiriView::imageDocumentEffectPlan(
+        ImageDocumentEffect::emptyContainerSelected(localUrl(QStringLiteral("/empty.cbz"))));
+    QCOMPARE(operationAt<KiriView::FinishEmptyContainerNavigationOperation>(plan, 0).containerUrl,
+        localUrl(QStringLiteral("/empty.cbz")));
 
-    QVERIFY(KiriView::imageDocumentEffectPlan(ImageDocumentEffect::containerNavigationFailed(
-                localUrl(QStringLiteral("/broken.cbz")), QStringLiteral("broken")))
-        == ImageDocumentRuntimePlan({
-            ImageDocumentRuntimeOperation::finishContainerNavigationLoadWithError(
-                localUrl(QStringLiteral("/broken.cbz")), QStringLiteral("broken")),
-        }));
+    plan = KiriView::imageDocumentEffectPlan(ImageDocumentEffect::containerNavigationFailed(
+        localUrl(QStringLiteral("/broken.cbz")), QStringLiteral("broken")));
+    QCOMPARE(operationAt<KiriView::FinishContainerNavigationLoadWithErrorOperation>(plan, 0)
+                 .containerUrl,
+        localUrl(QStringLiteral("/broken.cbz")));
+    QCOMPARE(
+        operationAt<KiriView::FinishContainerNavigationLoadWithErrorOperation>(plan, 0).errorString,
+        QStringLiteral("broken"));
 
-    QVERIFY(KiriView::imageDocumentEffectPlan(ImageDocumentEffect::pageNavigationSelected(
-                localUrl(QStringLiteral("/next.png")), true))
-        == ImageDocumentRuntimePlan({ ImageDocumentRuntimeOperation::loadPageNavigationUrl(
-            localUrl(QStringLiteral("/next.png")), true) }));
+    plan = KiriView::imageDocumentEffectPlan(
+        ImageDocumentEffect::pageNavigationSelected(localUrl(QStringLiteral("/next.png")), true));
+    QCOMPARE(operationAt<KiriView::LoadPageNavigationUrlOperation>(plan, 0).url,
+        localUrl(QStringLiteral("/next.png")));
+    QVERIFY(operationAt<KiriView::LoadPageNavigationUrlOperation>(plan, 0)
+            .preserveTwoPageSpreadTransition);
 
-    QVERIFY(KiriView::imageDocumentEffectPlan(
-                ImageDocumentEffect::prepareFailedContainer(localUrl(QStringLiteral("/bad.zip"))))
-        == ImageDocumentRuntimePlan({ ImageDocumentRuntimeOperation::prepareFailedContainer(
-            localUrl(QStringLiteral("/bad.zip"))) }));
+    plan = KiriView::imageDocumentEffectPlan(
+        ImageDocumentEffect::prepareFailedContainer(localUrl(QStringLiteral("/bad.zip"))));
+    QCOMPARE(operationAt<KiriView::PrepareFailedContainerOperation>(plan, 0).containerUrl,
+        localUrl(QStringLiteral("/bad.zip")));
 }
 
 QTEST_GUILESS_MAIN(TestImageDocumentEffectPlan)
