@@ -49,12 +49,6 @@ void finishArchiveDataResult(KiriView::ArchiveImageDataResult result,
     }
 }
 
-void cancelArchiveCandidateLoadToken(QObject *object)
-{
-    if (object != nullptr) {
-        object->deleteLater();
-    }
-}
 }
 
 namespace KiriView {
@@ -140,18 +134,6 @@ private:
     std::mutex m_mutex;
 };
 
-struct ArchiveDocumentCandidateLoad {
-    ImageIoJobCompletion completion;
-    ImageCandidatesCallback callback;
-    ErrorCallback errorCallback;
-};
-
-struct ArchiveDocumentCandidateLoadBatch {
-    quint64 generation = 0;
-    std::vector<std::shared_ptr<ArchiveDocumentCandidateLoad>> pendingLoads;
-    bool inProgress = false;
-};
-
 ArchiveDocumentSessionRuntime::ArchiveDocumentSessionRuntime(
     QObject *context, ArchiveDocumentSessionFactory sessionFactory)
     : m_context(context)
@@ -218,18 +200,11 @@ ImageIoJob ArchiveDocumentSessionRuntime::loadArchiveImages(QObject *receiver,
         return ImageIoJob();
     }
 
-    auto load = std::make_shared<ArchiveDocumentCandidateLoad>();
-    QObject *token = new QObject(receiver);
-    load->callback = std::move(callback);
-    load->errorCallback = std::move(errorCallback);
-
-    ImageIoJob ioJob(token, cancelArchiveCandidateLoadToken);
-    load->completion = ioJob.completion();
-    ArchiveDocumentCandidateLoadBatch &batch = currentCandidateLoadBatch();
-    batch.pendingLoads.push_back(load);
-
-    if (!batch.inProgress) {
-        startCandidateLoad(batch.generation);
+    const quint64 generation = m_generation.current();
+    ImageIoJob ioJob = m_candidateLoadState.addLoad(
+        receiver, generation, std::move(callback), std::move(errorCallback));
+    if (m_candidateLoadState.startBatch(generation)) {
+        startCandidateLoad(generation);
     }
 
     return ioJob;
@@ -268,25 +243,13 @@ ImageIoJob ArchiveDocumentSessionRuntime::loadArchiveImageData(QObject *receiver
         });
 }
 
-ArchiveDocumentCandidateLoadBatch &ArchiveDocumentSessionRuntime::currentCandidateLoadBatch()
-{
-    if (m_candidateLoadBatch == nullptr
-        || !m_generation.accepts(m_candidateLoadBatch->generation)) {
-        m_candidateLoadBatch = std::make_unique<ArchiveDocumentCandidateLoadBatch>();
-        m_candidateLoadBatch->generation = m_generation.current();
-    }
-
-    return *m_candidateLoadBatch;
-}
-
 void ArchiveDocumentSessionRuntime::startCandidateLoad(quint64 generation)
 {
-    if (m_runner == nullptr || !m_generation.accepts(generation) || m_candidateLoadBatch == nullptr
-        || m_candidateLoadBatch->generation != generation) {
+    if (m_runner == nullptr || !m_generation.accepts(generation)
+        || !m_candidateLoadState.acceptsBatch(generation)) {
         return;
     }
 
-    m_candidateLoadBatch->inProgress = true;
     std::shared_ptr<ArchiveDocumentSessionRunner> runner = m_runner;
     runAsyncWorker(
         m_context, [runner = std::move(runner)]() { return runner->loadImageCandidates(); },
@@ -298,37 +261,18 @@ void ArchiveDocumentSessionRuntime::startCandidateLoad(quint64 generation)
 void ArchiveDocumentSessionRuntime::finishCandidateLoad(
     quint64 generation, ArchiveImageCandidatesResult result)
 {
-    if (!m_generation.accepts(generation) || m_candidateLoadBatch == nullptr
-        || m_candidateLoadBatch->generation != generation) {
+    if (!m_generation.accepts(generation)) {
         return;
     }
 
-    std::unique_ptr<ArchiveDocumentCandidateLoadBatch> batch = std::move(m_candidateLoadBatch);
-    std::vector<std::shared_ptr<ArchiveDocumentCandidateLoad>> pendingLoads
-        = std::move(batch->pendingLoads);
+    std::vector<ArchiveDocumentCandidateLoad> pendingLoads
+        = m_candidateLoadState.finishBatch(generation);
 
-    for (const std::shared_ptr<ArchiveDocumentCandidateLoad> &load : pendingLoads) {
-        if (load == nullptr) {
-            continue;
-        }
-
-        load->completion.claimAndDelete(
-            [&]() { finishArchiveCandidateResult(result, load->callback, load->errorCallback); });
+    for (const ArchiveDocumentCandidateLoad &load : pendingLoads) {
+        load.completion.claimAndDelete(
+            [&]() { finishArchiveCandidateResult(result, load.callback, load.errorCallback); });
     }
 }
 
-void ArchiveDocumentSessionRuntime::cancelCandidateLoadBatch()
-{
-    if (m_candidateLoadBatch == nullptr) {
-        return;
-    }
-
-    for (const std::shared_ptr<ArchiveDocumentCandidateLoad> &load :
-        m_candidateLoadBatch->pendingLoads) {
-        if (load != nullptr) {
-            load->completion.cancel();
-        }
-    }
-    m_candidateLoadBatch.reset();
-}
+void ArchiveDocumentSessionRuntime::cancelCandidateLoadBatch() { m_candidateLoadState.cancel(); }
 }
