@@ -14,7 +14,6 @@ class TestImageDocumentDeletionState : public QObject
 private Q_SLOTS:
     void fileDeletionCompletionClaimsOnlyCurrentOperation();
     void cancelFileDeletionClearsProgressAndRejectsCompletion();
-    void fallbackCompletionClaimsOnlyCurrentOperation();
     void operationIdsStayNonZeroAfterWrap();
 };
 
@@ -66,36 +65,14 @@ void TestImageDocumentDeletionState::cancelFileDeletionClearsProgressAndRejectsC
     QVERIFY(!state.cancelFileDeletion());
 }
 
-void TestImageDocumentDeletionState::fallbackCompletionClaimsOnlyCurrentOperation()
-{
-    KiriView::ImageDocumentDeletionState state;
-
-    const quint64 stale = state.startFallback();
-    const quint64 current = state.startFallback();
-
-    QVERIFY(!state.acceptsFallback(stale));
-    QVERIFY(state.acceptsFallback(current));
-    QVERIFY(!state.finishFallback(stale));
-    QVERIFY(state.finishFallback(current));
-    QVERIFY(!state.acceptsFallback(current));
-    QVERIFY(!state.finishFallback(current));
-
-    const quint64 canceled = state.startFallback();
-    state.cancelFallback();
-    QVERIFY(!state.acceptsFallback(canceled));
-    QVERIFY(!state.finishFallback(canceled));
-}
-
 void TestImageDocumentDeletionState::operationIdsStayNonZeroAfterWrap()
 {
     KiriView::ImageDocumentDeletionState state(std::numeric_limits<quint64>::max());
 
     const KiriView::ImageDocumentDeletionFileOperationStart fileDeletion
         = state.startFileDeletion();
-    const quint64 fallback = state.startFallback();
 
     QCOMPARE(fileDeletion.operationId, quint64(1));
-    QCOMPARE(fallback, quint64(2));
 }
 
 QTEST_GUILESS_MAIN(TestImageDocumentDeletionState)

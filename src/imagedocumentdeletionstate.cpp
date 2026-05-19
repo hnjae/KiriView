@@ -41,29 +41,6 @@ bool ImageDocumentDeletionState::cancelFileDeletion()
     return setInProgress(false);
 }
 
-quint64 ImageDocumentDeletionState::startFallback()
-{
-    m_fallbackOperationId = nextOperationId();
-    return m_fallbackOperationId;
-}
-
-bool ImageDocumentDeletionState::acceptsFallback(quint64 operationId) const
-{
-    return operationId != 0 && operationId == m_fallbackOperationId;
-}
-
-bool ImageDocumentDeletionState::finishFallback(quint64 operationId)
-{
-    if (!acceptsFallback(operationId)) {
-        return false;
-    }
-
-    m_fallbackOperationId = 0;
-    return true;
-}
-
-void ImageDocumentDeletionState::cancelFallback() { m_fallbackOperationId = 0; }
-
 quint64 ImageDocumentDeletionState::nextOperationId()
 {
     ++m_nextOperationId;

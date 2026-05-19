@@ -27,11 +27,6 @@ public:
     ImageDocumentDeletionFileOperationFinish finishFileDeletion(quint64 operationId);
     bool cancelFileDeletion();
 
-    quint64 startFallback();
-    bool acceptsFallback(quint64 operationId) const;
-    bool finishFallback(quint64 operationId);
-    void cancelFallback();
-
 private:
     quint64 nextOperationId();
     bool setInProgress(bool inProgress);
@@ -40,7 +35,6 @@ private:
     bool m_inProgress = false;
     quint64 m_nextOperationId = 0;
     quint64 m_fileDeletionOperationId = 0;
-    quint64 m_fallbackOperationId = 0;
 };
 }
 
