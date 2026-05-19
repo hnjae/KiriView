@@ -3,9 +3,9 @@
 
 #include "imagepresentationload.h"
 
-#include "decodedimagepresentation.h"
 #include "imagecontainer.h"
 #include "imagepresentationcontroller.h"
+#include "predecodecache.h"
 
 #include <QImage>
 #include <utility>
@@ -13,19 +13,19 @@
 
 namespace {
 void startDecodedAnimation(KiriView::ImagePresentationController &presentation,
-    const KiriView::DecodedApngAnimationPresentation &animation)
+    const KiriView::ApngAnimationImage &animation)
 {
     presentation.startApngAnimation(animation.data);
 }
 
 void startDecodedAnimation(KiriView::ImagePresentationController &presentation,
-    const KiriView::DecodedReaderAnimationPresentation &animation)
+    const KiriView::ReaderAnimationImage &animation)
 {
     presentation.startAnimation(animation.data, animation.format);
 }
 
 void startDecodedAnimation(KiriView::ImagePresentationController &presentation,
-    const KiriView::DecodedHeifSequenceAnimationPresentation &animation)
+    const KiriView::HeifSequenceAnimationImage &animation)
 {
     presentation.startHeifSequenceAnimation(animation.data);
 }
@@ -79,43 +79,41 @@ KiriView::ImagePresentationLoadResult presentAnimationImage(
     return result;
 }
 
-KiriView::ImagePresentationLoadResult presentDecodedImagePresentation(
+KiriView::ImagePresentationLoadResult presentDecodedImage(
     KiriView::ImagePresentationController &presentation, const KiriView::ImageLoadSession &session,
-    KiriView::DecodedStaticImagePresentation &decoded, KiriView::ImagePresentationAnimationHandling)
+    KiriView::StaticDecodedImage &decoded, KiriView::ImagePresentationAnimationHandling)
 {
+    const bool predecodeCacheable = KiriView::PredecodeCache::canCacheImage(decoded.staticImage);
     return presentStaticImage(
-        presentation, session, std::move(decoded.staticImage), decoded.predecodeCacheable);
+        presentation, session, std::move(decoded.staticImage), predecodeCacheable);
 }
 
-KiriView::ImagePresentationLoadResult presentDecodedImagePresentation(
+KiriView::ImagePresentationLoadResult presentDecodedImage(
     KiriView::ImagePresentationController &presentation, const KiriView::ImageLoadSession &session,
-    KiriView::DecodedApngAnimationPresentation &decoded,
+    KiriView::ApngAnimationImage &decoded,
+    KiriView::ImagePresentationAnimationHandling animationHandling)
+{
+    if (decoded.firstFrame.isNull()) {
+        return {};
+    }
+
+    return presentAnimationImage(presentation, session, std::move(decoded), animationHandling);
+}
+
+KiriView::ImagePresentationLoadResult presentDecodedImage(
+    KiriView::ImagePresentationController &presentation, const KiriView::ImageLoadSession &session,
+    KiriView::ReaderAnimationImage &decoded,
     KiriView::ImagePresentationAnimationHandling animationHandling)
 {
     return presentAnimationImage(presentation, session, std::move(decoded), animationHandling);
 }
 
-KiriView::ImagePresentationLoadResult presentDecodedImagePresentation(
+KiriView::ImagePresentationLoadResult presentDecodedImage(
     KiriView::ImagePresentationController &presentation, const KiriView::ImageLoadSession &session,
-    KiriView::DecodedReaderAnimationPresentation &decoded,
+    KiriView::HeifSequenceAnimationImage &decoded,
     KiriView::ImagePresentationAnimationHandling animationHandling)
 {
     return presentAnimationImage(presentation, session, std::move(decoded), animationHandling);
-}
-
-KiriView::ImagePresentationLoadResult presentDecodedImagePresentation(
-    KiriView::ImagePresentationController &presentation, const KiriView::ImageLoadSession &session,
-    KiriView::DecodedHeifSequenceAnimationPresentation &decoded,
-    KiriView::ImagePresentationAnimationHandling animationHandling)
-{
-    return presentAnimationImage(presentation, session, std::move(decoded), animationHandling);
-}
-
-KiriView::ImagePresentationLoadResult presentDecodedImagePresentation(
-    KiriView::ImagePresentationController &, const KiriView::ImageLoadSession &,
-    const KiriView::UnpresentableDecodedImage &, KiriView::ImagePresentationAnimationHandling)
-{
-    return {};
 }
 }
 
@@ -130,13 +128,10 @@ ImagePresentationLoadResult presentDecodedImageLoad(ImagePresentationController 
     const ImageLoadSession &session, DecodedImage image,
     ImagePresentationAnimationHandling animationHandling)
 {
-    DecodedImagePresentation decodedPresentation
-        = decodedImagePresentationForImage(std::move(image));
     return std::visit(
         [&presentation, &session, animationHandling](auto &decoded) {
-            return presentDecodedImagePresentation(
-                presentation, session, decoded, animationHandling);
+            return presentDecodedImage(presentation, session, decoded, animationHandling);
         },
-        decodedPresentation);
+        image);
 }
 }

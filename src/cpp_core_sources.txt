@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 src/decodedimageresult.cpp
-src/decodedimagepresentation.cpp
 src/decodedtilecache.cpp
 src/applicationactionregistry.cpp
 src/applicationactionruntime.cpp

@@ -49,6 +49,7 @@ class TestImagePresentationLoad : public QObject
 private Q_SLOTS:
     void staticDecodedImagesAreAppliedToPresentation();
     void unpresentableDecodedImagesLeaveExistingPresentationUntouched();
+    void streamedAnimationImagesPresentFirstFrames();
     void secondaryAnimationModePresentsFirstFrame();
 };
 
@@ -69,6 +70,7 @@ void TestImagePresentationLoad::staticDecodedImagesAreAppliedToPresentation()
     QCOMPARE(result.imageSize, QSize(12, 8));
     QCOMPARE(controller.imageSize(), QSize(12, 8));
     QVERIFY(controller.hasImage());
+    QVERIFY(controller.isPredecodeCacheable());
 }
 
 void TestImagePresentationLoad::unpresentableDecodedImagesLeaveExistingPresentationUntouched()
@@ -91,6 +93,48 @@ void TestImagePresentationLoad::unpresentableDecodedImagesLeaveExistingPresentat
     QVERIFY(!result.presented);
     QCOMPARE(controller.imageSize(), QSize(12, 8));
     QVERIFY(controller.hasImage());
+}
+
+void TestImagePresentationLoad::streamedAnimationImagesPresentFirstFrames()
+{
+    const QUrl imageUrl = localUrl(QStringLiteral("/images/animated.png"));
+    const KiriView::ImageLoadSession session = loadSession(imageUrl);
+
+    {
+        KiriView::ImagePresentationController controller = presentationController(this);
+        controller.setViewportSize(QSizeF(200.0, 100.0));
+        KiriView::DecodedImage decoded = KiriView::ApngAnimationImage {
+            testImage(QSize(13, 7)),
+            QByteArrayLiteral("apng-data"),
+        };
+
+        const KiriView::ImagePresentationLoadResult result
+            = KiriView::presentDecodedImageLoad(controller, session, std::move(decoded),
+                KiriView::ImagePresentationAnimationHandling::FirstFrameOnly);
+
+        QVERIFY(result.presented);
+        QCOMPARE(result.imageSize, QSize(13, 7));
+        QCOMPARE(controller.imageSize(), QSize(13, 7));
+        QVERIFY(!controller.isPredecodeCacheable());
+    }
+
+    {
+        KiriView::ImagePresentationController controller = presentationController(this);
+        controller.setViewportSize(QSizeF(200.0, 100.0));
+        KiriView::DecodedImage decoded = KiriView::HeifSequenceAnimationImage {
+            testImage(QSize(11, 5)),
+            QByteArrayLiteral("heif-data"),
+        };
+
+        const KiriView::ImagePresentationLoadResult result
+            = KiriView::presentDecodedImageLoad(controller, session, std::move(decoded),
+                KiriView::ImagePresentationAnimationHandling::FirstFrameOnly);
+
+        QVERIFY(result.presented);
+        QCOMPARE(result.imageSize, QSize(11, 5));
+        QCOMPARE(controller.imageSize(), QSize(11, 5));
+        QVERIFY(!controller.isPredecodeCacheable());
+    }
 }
 
 void TestImagePresentationLoad::secondaryAnimationModePresentsFirstFrame()
