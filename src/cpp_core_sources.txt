@@ -29,6 +29,7 @@ src/heiftilesource.cpp
 src/imageanimationpolicy.cpp
 src/imageanimationplayer.cpp
 src/imageasyncdependencies.cpp
+src/imageasyncoperationstate.cpp
 src/imagebytecost.cpp
 src/imagecachepolicy.cpp
 src/imagecandidatelistsource.cpp
