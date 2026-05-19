@@ -11,7 +11,6 @@
 #include <QSize>
 #include <QSizeF>
 #include <QtGlobal>
-#include <cstddef>
 #include <vector>
 
 namespace KiriView::ImageTileGeometryBridge {
@@ -43,8 +42,6 @@ QRect tileLevelRectForItemRect(
 std::vector<TileKey> visibleTileKeys(const QSize &imageSize, int tileSize,
     const QSizeF &displaySize, const QRectF &visibleItemRect, qreal devicePixelRatio);
 
-std::vector<std::size_t> tileCacheRetainedIndices(const std::vector<qsizetype> &byteCosts,
-    const std::vector<quint64> &lastUses, qsizetype byteBudget);
 }
 
 #endif

@@ -6,9 +6,6 @@
 #include "kiriview/src/imagetilegeometry.cxx.h"
 #include "qtgeometryconversion.h"
 
-#include <cstdint>
-#include <utility>
-
 namespace {
 KiriView::RustTileSize rustTileSize(const QSize &size)
 {
@@ -56,9 +53,6 @@ KiriView::TileRequest tileRequestFromRust(const KiriView::RustTileRequest &reque
     };
 }
 
-std::int64_t rustTileByteCost(qsizetype byteCost) { return static_cast<std::int64_t>(byteCost); }
-
-std::uint64_t rustTileUseClock(quint64 useClock) { return static_cast<std::uint64_t>(useClock); }
 }
 
 namespace KiriView::ImageTileGeometryBridge {
@@ -183,23 +177,4 @@ std::vector<TileKey> visibleTileKeys(const QSize &imageSize, int tileSize,
     return keys;
 }
 
-std::vector<std::size_t> tileCacheRetainedIndices(const std::vector<qsizetype> &byteCosts,
-    const std::vector<quint64> &lastUses, qsizetype byteBudget)
-{
-    rust::Vec<std::int64_t> rustByteCosts;
-    rust::Vec<std::uint64_t> rustLastUses;
-    rustByteCosts.reserve(byteCosts.size());
-    rustLastUses.reserve(lastUses.size());
-
-    for (qsizetype byteCost : byteCosts) {
-        rustByteCosts.push_back(rustTileByteCost(byteCost));
-    }
-    for (quint64 lastUse : lastUses) {
-        rustLastUses.push_back(rustTileUseClock(lastUse));
-    }
-
-    const rust::Vec<std::size_t> retainedIndices = rustTileCacheRetainedIndices(
-        std::move(rustByteCosts), std::move(rustLastUses), rustTileByteCost(byteBudget));
-    return std::vector<std::size_t>(retainedIndices.cbegin(), retainedIndices.cend());
-}
 }

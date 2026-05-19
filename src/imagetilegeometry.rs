@@ -168,13 +168,6 @@ mod ffi {
             visible_item_rect: RustTileRectF,
             device_pixel_ratio: f64,
         ) -> Vec<RustTileKey>;
-
-        #[cxx_name = "rustTileCacheRetainedIndices"]
-        fn rust_tile_cache_retained_indices(
-            byte_costs: Vec<i64>,
-            last_uses: Vec<u64>,
-            byte_budget: i64,
-        ) -> Vec<usize>;
     }
 }
 
@@ -318,21 +311,6 @@ fn rust_visible_tile_keys(
         visible_item_rect,
         device_pixel_ratio,
     )
-}
-
-fn rust_tile_cache_retained_indices(
-    byte_costs: Vec<i64>,
-    last_uses: Vec<u64>,
-    byte_budget: i64,
-) -> Vec<usize> {
-    tile_cache_retained_indices(byte_costs, last_uses, byte_budget)
-}
-
-#[derive(Clone, Copy)]
-struct TileCacheEntry {
-    original_index: usize,
-    byte_cost: i64,
-    last_use: u64,
 }
 
 fn bounded_integer_rect(rect: RustTileRect, bounds_size: RustTileSize) -> RustTileRect {
@@ -683,54 +661,6 @@ fn visible_tile_keys(
     keys
 }
 
-fn tile_cache_retained_indices(
-    byte_costs: Vec<i64>,
-    last_uses: Vec<u64>,
-    byte_budget: i64,
-) -> Vec<usize> {
-    if byte_budget <= 0 {
-        return Vec::new();
-    }
-
-    let mut entries: Vec<TileCacheEntry> = byte_costs
-        .into_iter()
-        .zip(last_uses)
-        .enumerate()
-        .filter_map(|(original_index, (byte_cost, last_use))| {
-            if byte_cost <= 0 {
-                return None;
-            }
-
-            Some(TileCacheEntry {
-                original_index,
-                byte_cost,
-                last_use,
-            })
-        })
-        .collect();
-    let mut total_byte_cost = entries
-        .iter()
-        .fold(0_i64, |total, entry| total.saturating_add(entry.byte_cost));
-
-    while total_byte_cost > byte_budget && !entries.is_empty() {
-        let Some(oldest_index) = entries
-            .iter()
-            .enumerate()
-            .min_by_key(|(_, entry)| entry.last_use)
-            .map(|(index, _)| index)
-        else {
-            break;
-        };
-        let removed = entries.remove(oldest_index);
-        total_byte_cost = total_byte_cost.saturating_sub(removed.byte_cost);
-    }
-
-    entries
-        .into_iter()
-        .map(|entry| entry.original_index)
-        .collect()
-}
-
 fn level_size(image_size: RustTileSize, level: i32) -> RustTileSize {
     if level < 0 {
         return empty_size();
@@ -1071,26 +1001,5 @@ mod tests {
             f64::NAN,
             0.25,
         ));
-    }
-
-    #[test]
-    fn tile_cache_retention_drops_oldest_entries_until_within_budget() {
-        assert_eq!(
-            tile_cache_retained_indices(vec![16, 16, 16], vec![3, 1, 2], 32),
-            vec![0, 2]
-        );
-        assert_eq!(
-            tile_cache_retained_indices(vec![60, 50, 40], vec![3, 2, 1], 100),
-            vec![0]
-        );
-    }
-
-    #[test]
-    fn tile_cache_retention_rejects_invalid_costs_and_budgets() {
-        assert_eq!(
-            tile_cache_retained_indices(vec![0, 10, -1], vec![1, 2, 3], 100),
-            vec![1]
-        );
-        assert!(tile_cache_retained_indices(vec![10], vec![1], 0).is_empty());
     }
 }

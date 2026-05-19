@@ -4,7 +4,7 @@
 #include "decodedtilecache.h"
 
 #include "imagebytecost.h"
-#include "imagetilegeometrybridge.h"
+#include "imagecachepolicy.h"
 
 #include <algorithm>
 #include <utility>
@@ -85,7 +85,7 @@ void DecodedTileCache::trimToBudget()
     }
 
     const std::vector<std::size_t> retainedIndices
-        = ImageTileGeometryBridge::tileCacheRetainedIndices(byteCosts, lastUses, m_byteBudget);
+        = lruCacheRetainedIndices(byteCosts, lastUses, m_byteBudget);
 
     std::vector<Entry> retainedEntries;
     retainedEntries.reserve(retainedIndices.size());

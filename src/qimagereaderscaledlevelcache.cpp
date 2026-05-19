@@ -4,6 +4,7 @@
 #include "qimagereaderscaledlevelcache.h"
 
 #include "imagebytecost.h"
+#include "imagecachepolicy.h"
 
 #include <QMutexLocker>
 #include <algorithm>
@@ -70,12 +71,33 @@ void QImageReaderScaledLevelCache::clear()
 
 void QImageReaderScaledLevelCache::trimToBudget()
 {
-    while (m_byteCost > m_byteBudget && !m_entries.empty()) {
-        const auto evicted = std::min_element(m_entries.begin(), m_entries.end(),
-            [](const Entry &left, const Entry &right) { return left.lastUse < right.lastUse; });
-        m_byteCost -= evicted->byteCost;
-        m_entries.erase(evicted);
+    std::vector<qsizetype> byteCosts;
+    std::vector<quint64> lastUses;
+    byteCosts.reserve(m_entries.size());
+    lastUses.reserve(m_entries.size());
+
+    for (const Entry &entry : m_entries) {
+        byteCosts.push_back(entry.byteCost);
+        lastUses.push_back(entry.lastUse);
     }
+
+    const std::vector<std::size_t> retainedIndices
+        = lruCacheRetainedIndices(byteCosts, lastUses, m_byteBudget);
+
+    std::vector<Entry> retainedEntries;
+    retainedEntries.reserve(retainedIndices.size());
+    qsizetype retainedByteCost = 0;
+    for (std::size_t index : retainedIndices) {
+        if (index >= m_entries.size()) {
+            continue;
+        }
+
+        retainedByteCost += m_entries[index].byteCost;
+        retainedEntries.push_back(std::move(m_entries[index]));
+    }
+
+    m_entries = std::move(retainedEntries);
+    m_byteCost = retainedByteCost;
 }
 
 std::vector<QImageReaderScaledLevelCache::Entry>::iterator QImageReaderScaledLevelCache::findEntry(

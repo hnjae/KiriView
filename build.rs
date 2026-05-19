@@ -34,6 +34,7 @@ const RUST_BRIDGE_SOURCES: &[&str] = &[
     "src/archiveformat.rs",
     "src/archivepath.rs",
     "src/avifcompat.rs",
+    "src/cachebudget.rs",
     "src/heifcontainer.rs",
     "src/imagecontainer.rs",
     "src/imagedocumentsourceloadpolicy.rs",
