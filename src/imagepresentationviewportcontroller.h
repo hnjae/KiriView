@@ -5,10 +5,8 @@
 #define KIRIVIEW_IMAGEPRESENTATIONVIEWPORTCONTROLLER_H
 
 #include "imagedocumenttypes.h"
-#include "imagepresentationgeometry.h"
-#include "imagerendercontextstate.h"
+#include "imagepresentationviewportstate.h"
 #include "imagesurface.h"
-#include "imagezoomstate.h"
 
 #include <QRectF>
 #include <QSize>
@@ -67,30 +65,14 @@ public:
     void scheduleVisibleTileDecode();
 
 private:
-    enum class TileRefresh {
-        WhenZoomStateChanges,
-        Always,
-    };
-
-    using ZoomStateMutation = std::function<void(ImageZoomState &, qreal devicePixelRatio)>;
-
-    void applyGeometryRotationChange();
-    void applyGeometryImageSize(TileRefresh tileRefresh = TileRefresh::WhenZoomStateChanges);
-    void mutateZoomState(const ZoomStateMutation &mutation,
-        TileRefresh tileRefresh = TileRefresh::WhenZoomStateChanges);
-    void applyZoomStateChanges(const ImageZoomSnapshot &previous,
-        const ImageDocumentRenderContext &previousContext,
-        const ImageDocumentRenderContext &context, TileRefresh tileRefresh);
+    void applyPlan(const ImagePresentationViewportPlan &plan);
     std::shared_ptr<DisplayedImageSurface> imageSurface() const;
     void notify(ImageDocumentChange change);
 
-    ImageRenderContextState m_renderContextState;
+    ImagePresentationViewportState m_state;
     ImageSurfaceProvider m_imageSurfaceProvider;
     ChangeCallback m_changeCallback;
-    ImagePresentationGeometry m_geometry;
-    ImageZoomState m_zoomState;
     std::unique_ptr<ImageTileDecodeScheduler> m_tileDecodeScheduler;
-    QRectF m_visibleItemRect;
 };
 }
 

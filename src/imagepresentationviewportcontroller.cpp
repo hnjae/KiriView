@@ -4,8 +4,6 @@
 #include "imagepresentationviewportcontroller.h"
 
 #include "imagecallback.h"
-#include "imagedocumentnotifications.h"
-#include "imagerendering.h"
 #include "imagetiledecodescheduler.h"
 
 #include <utility>
@@ -14,7 +12,7 @@ namespace KiriView {
 ImagePresentationViewportController::ImagePresentationViewportController(QObject *context,
     RenderContextProvider renderContextProvider, ImageSurfaceProvider imageSurfaceProvider,
     TileDecodedCallback tileDecoded, ChangeCallback changeCallback)
-    : m_renderContextState(std::move(renderContextProvider))
+    : m_state(std::move(renderContextProvider))
     , m_imageSurfaceProvider(std::move(imageSurfaceProvider))
     , m_changeCallback(std::move(changeCallback))
 {
@@ -24,167 +22,117 @@ ImagePresentationViewportController::ImagePresentationViewportController(QObject
 
 ImagePresentationViewportController::~ImagePresentationViewportController() = default;
 
-QSize ImagePresentationViewportController::imageSize() const
+QSize ImagePresentationViewportController::imageSize() const { return m_state.imageSize(); }
+
+QSizeF ImagePresentationViewportController::viewportSize() const { return m_state.viewportSize(); }
+
+QSizeF ImagePresentationViewportController::displaySize() const { return m_state.displaySize(); }
+
+QRectF ImagePresentationViewportController::visibleItemRect() const
 {
-    return m_geometry.logicalImageSize();
+    return m_state.visibleItemRect();
 }
 
-QSizeF ImagePresentationViewportController::viewportSize() const
-{
-    return m_zoomState.viewportSize();
-}
+qreal ImagePresentationViewportController::zoomPercent() const { return m_state.zoomPercent(); }
 
-QSizeF ImagePresentationViewportController::displaySize() const
-{
-    return m_zoomState.displaySize();
-}
-
-QRectF ImagePresentationViewportController::visibleItemRect() const { return m_visibleItemRect; }
-
-qreal ImagePresentationViewportController::zoomPercent() const { return m_zoomState.zoomPercent(); }
-
-ImageZoomMode ImagePresentationViewportController::zoomMode() const
-{
-    return m_zoomState.zoomMode();
-}
+ImageZoomMode ImagePresentationViewportController::zoomMode() const { return m_state.zoomMode(); }
 
 qreal ImagePresentationViewportController::maximumManualZoomPercent() const
 {
-    return m_zoomState.maximumManualZoomPercent(renderContext().devicePixelRatio);
+    return m_state.maximumManualZoomPercent();
 }
 
 qreal ImagePresentationViewportController::clampedManualZoomPercent(qreal zoomPercent) const
 {
-    return m_zoomState.clampedManualZoomPercent(zoomPercent, renderContext().devicePixelRatio);
+    return m_state.clampedManualZoomPercent(zoomPercent);
 }
 
 qreal ImagePresentationViewportController::steppedManualZoomPercent(qreal stepCount) const
 {
-    return m_zoomState.steppedManualZoomPercent(stepCount, renderContext().devicePixelRatio);
+    return m_state.steppedManualZoomPercent(stepCount);
 }
 
 int ImagePresentationViewportController::rotationDegrees() const
 {
-    return m_geometry.rotationDegrees();
+    return m_state.rotationDegrees();
 }
 
 ImageDocumentRenderContext ImagePresentationViewportController::renderContext() const
 {
-    return m_renderContextState.current();
+    return m_state.renderContext();
 }
 
 ImageFirstDisplayDecodeContext
 ImagePresentationViewportController::firstDisplayDecodeContext() const
 {
-    const ImageDocumentRenderContext context = renderContext();
-    return imageFirstDisplayDecodeContext(viewportSize(), context.devicePixelRatio);
+    return m_state.firstDisplayDecodeContext();
 }
 
 void ImagePresentationViewportController::setViewportSize(const QSizeF &viewportSize)
 {
-    mutateZoomState([&viewportSize](ImageZoomState &zoomState, qreal devicePixelRatio) {
-        zoomState.setViewportSize(viewportSize, devicePixelRatio);
-    });
+    applyPlan(m_state.setViewportSize(viewportSize));
 }
 
 void ImagePresentationViewportController::setVisibleItemRect(const QRectF &visibleItemRect)
 {
-    if (m_visibleItemRect == visibleItemRect) {
-        return;
-    }
-
-    m_visibleItemRect = visibleItemRect;
-    notify(ImageDocumentChange::VisibleItemRect);
-    scheduleVisibleTileDecode();
+    applyPlan(m_state.setVisibleItemRect(visibleItemRect));
 }
 
 void ImagePresentationViewportController::setZoomPercent(qreal zoomPercent)
 {
-    mutateZoomState([zoomPercent](ImageZoomState &zoomState, qreal devicePixelRatio) {
-        zoomState.setManualZoomPercent(zoomPercent, devicePixelRatio);
-    });
+    applyPlan(m_state.setZoomPercent(zoomPercent));
 }
 
-void ImagePresentationViewportController::resetZoom()
-{
-    mutateZoomState([](ImageZoomState &zoomState, qreal devicePixelRatio) {
-        zoomState.resetZoom(devicePixelRatio);
-    });
-}
+void ImagePresentationViewportController::resetZoom() { applyPlan(m_state.resetZoom()); }
 
 void ImagePresentationViewportController::setFitMode(ImageZoomMode zoomMode)
 {
-    if (zoomMode == ImageZoomMode::Manual) {
-        return;
-    }
-
-    mutateZoomState([zoomMode](ImageZoomState &zoomState, qreal devicePixelRatio) {
-        zoomState.setFitMode(zoomMode, devicePixelRatio);
-    });
+    applyPlan(m_state.setFitMode(zoomMode));
 }
 
 bool ImagePresentationViewportController::resetRotation()
 {
-    if (!m_geometry.resetRotation()) {
-        return false;
-    }
-
-    applyGeometryRotationChange();
-    return true;
+    ImagePresentationViewportPlan plan = m_state.resetRotation();
+    const bool changed = !plan.changes.empty() || plan.scheduleVisibleTileDecode;
+    applyPlan(plan);
+    return changed;
 }
 
 void ImagePresentationViewportController::resetRotationForNewImage()
 {
-    if (!m_geometry.resetRotation()) {
-        return;
-    }
-
-    notify(ImageDocumentChange::Rotation);
+    applyPlan(m_state.resetRotationForNewImage());
 }
 
 void ImagePresentationViewportController::rotateClockwise()
 {
-    if (m_geometry.rotateClockwise()) {
-        applyGeometryRotationChange();
-    }
+    applyPlan(m_state.rotateClockwise());
 }
 
 void ImagePresentationViewportController::rotateCounterclockwise()
 {
-    if (m_geometry.rotateCounterclockwise()) {
-        applyGeometryRotationChange();
-    }
+    applyPlan(m_state.rotateCounterclockwise());
 }
 
 void ImagePresentationViewportController::updateRenderContext()
 {
-    mutateZoomState([](ImageZoomState &zoomState,
-                        qreal devicePixelRatio) { zoomState.update(devicePixelRatio); },
-        TileRefresh::Always);
+    applyPlan(m_state.updateRenderContext());
 }
 
 void ImagePresentationViewportController::prepareImageContainer(const QUrl &containerUrl)
 {
-    mutateZoomState([&containerUrl](ImageZoomState &zoomState, qreal) {
-        zoomState.prepareImageContainer(containerUrl);
-    });
+    applyPlan(m_state.prepareImageContainer(containerUrl));
 }
 
 void ImagePresentationViewportController::prepareFailedContainer(const QUrl &containerUrl)
 {
-    mutateZoomState([&containerUrl](ImageZoomState &zoomState, qreal devicePixelRatio) {
-        zoomState.clearContainer();
-        zoomState.prepareImageContainer(containerUrl);
-        zoomState.resetZoom(devicePixelRatio);
-    });
+    applyPlan(m_state.prepareFailedContainer(containerUrl));
 }
 
-void ImagePresentationViewportController::clearContainer() { m_zoomState.clearContainer(); }
+void ImagePresentationViewportController::clearContainer() { m_state.clearContainer(); }
 
 void ImagePresentationViewportController::setDisplayedImageSize(const QSize &imageSize)
 {
-    m_geometry.setSourceImageSize(imageSize);
-    applyGeometryImageSize();
+    applyPlan(m_state.setDisplayedImageSize(imageSize));
 }
 
 void ImagePresentationViewportController::invalidateTiles() { m_tileDecodeScheduler->invalidate(); }
@@ -192,50 +140,16 @@ void ImagePresentationViewportController::invalidateTiles() { m_tileDecodeSchedu
 void ImagePresentationViewportController::scheduleVisibleTileDecode()
 {
     m_tileDecodeScheduler->schedule(
-        imageSurface(), displaySize(), m_visibleItemRect, renderContext(), rotationDegrees());
+        imageSurface(), displaySize(), visibleItemRect(), renderContext(), rotationDegrees());
 }
 
-void ImagePresentationViewportController::applyGeometryRotationChange()
+void ImagePresentationViewportController::applyPlan(const ImagePresentationViewportPlan &plan)
 {
-    applyGeometryImageSize(TileRefresh::Always);
-    notify(ImageDocumentChange::Rotation);
-    notify(ImageDocumentChange::Repaint);
-}
-
-void ImagePresentationViewportController::applyGeometryImageSize(TileRefresh tileRefresh)
-{
-    const QSize logicalImageSize = m_geometry.logicalImageSize();
-    mutateZoomState(
-        [&logicalImageSize](ImageZoomState &zoomState, qreal devicePixelRatio) {
-            zoomState.setImageSize(logicalImageSize, devicePixelRatio);
-        },
-        tileRefresh);
-}
-
-void ImagePresentationViewportController::mutateZoomState(
-    const ZoomStateMutation &mutation, TileRefresh tileRefresh)
-{
-    const ImageRenderContextChange renderContextChange = m_renderContextState.refresh();
-    const ImageZoomSnapshot previous = m_zoomState.snapshot();
-    mutation(m_zoomState, renderContextChange.current.devicePixelRatio);
-
-    applyZoomStateChanges(
-        previous, renderContextChange.previous, renderContextChange.current, tileRefresh);
-}
-
-void ImagePresentationViewportController::applyZoomStateChanges(const ImageZoomSnapshot &previous,
-    const ImageDocumentRenderContext &previousContext, const ImageDocumentRenderContext &context,
-    TileRefresh tileRefresh)
-{
-    const ImageZoomSnapshot current = m_zoomState.snapshot();
-    const ImageZoomChangeSet changes
-        = ImageZoomState::changeSet(previous, previousContext.devicePixelRatio, current,
-            context.devicePixelRatio, tileRefresh == TileRefresh::Always);
-    for (ImageDocumentChange change : imageDocumentPresentationZoomNotifications(changes)) {
+    for (ImageDocumentChange change : plan.changes) {
         notify(change);
     }
 
-    if (changes.scheduleVisibleTileDecode) {
+    if (plan.scheduleVisibleTileDecode) {
         scheduleVisibleTileDecode();
     }
 }
