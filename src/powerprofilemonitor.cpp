@@ -16,17 +16,44 @@ constexpr auto portalPath = "/org/freedesktop/portal/desktop";
 constexpr auto dbusPropertiesInterface = "org.freedesktop.DBus.Properties";
 constexpr auto powerProfileMonitorInterface = "org.freedesktop.portal.PowerProfileMonitor";
 constexpr auto powerSaverEnabledProperty = "power-saver-enabled";
+
+QVariantList readPortalPowerSaverEnabled()
+{
+    QDBusMessage message = QDBusMessage::createMethodCall(
+        portalService, portalPath, dbusPropertiesInterface, QStringLiteral("Get"));
+    message << QString::fromLatin1(powerProfileMonitorInterface)
+            << QString::fromLatin1(powerSaverEnabledProperty);
+
+    const QDBusMessage reply = QDBusConnection::sessionBus().call(message);
+    if (reply.type() != QDBusMessage::ReplyMessage) {
+        return {};
+    }
+
+    return reply.arguments();
+}
+
+void subscribePortalPowerSaverChanges(QObject *receiver)
+{
+    QDBusConnection::sessionBus().connect(portalService, portalPath, dbusPropertiesInterface,
+        QStringLiteral("PropertiesChanged"), receiver,
+        SLOT(handlePropertiesChanged(QString, QVariantMap, QStringList)));
+}
 }
 
 namespace KiriView {
 PowerProfileMonitor::PowerProfileMonitor(QObject *parent, PowerSaverChangedCallback callback)
+    : PowerProfileMonitor(parent, std::move(callback), {})
+{
+}
+
+PowerProfileMonitor::PowerProfileMonitor(
+    QObject *parent, PowerSaverChangedCallback callback, PowerProfileMonitorRuntime runtime)
     : QObject(parent)
     , m_callback(std::move(callback))
+    , m_runtime(powerProfileMonitorRuntimeWithDefaults(std::move(runtime)))
 {
     refreshPowerSaverEnabled();
-    QDBusConnection::sessionBus().connect(portalService, portalPath, dbusPropertiesInterface,
-        QStringLiteral("PropertiesChanged"), this,
-        SLOT(handlePropertiesChanged(QString, QVariantMap, QStringList)));
+    m_runtime.subscribePropertiesChanged(this);
 }
 
 bool PowerProfileMonitor::powerSaverEnabled() const { return m_state.powerSaverEnabled(); }
@@ -44,18 +71,13 @@ void PowerProfileMonitor::handlePropertiesChanged(const QString &interfaceName,
 
 void PowerProfileMonitor::refreshPowerSaverEnabled()
 {
-    QDBusMessage message = QDBusMessage::createMethodCall(
-        portalService, portalPath, dbusPropertiesInterface, QStringLiteral("Get"));
-    message << QString::fromLatin1(powerProfileMonitorInterface)
-            << QString::fromLatin1(powerSaverEnabledProperty);
-
-    const QDBusMessage reply = QDBusConnection::sessionBus().call(message);
-    if (reply.type() != QDBusMessage::ReplyMessage || reply.arguments().isEmpty()) {
+    const QVariantList arguments = m_runtime.readPowerSaverEnabled();
+    if (arguments.isEmpty()) {
         applyTransition(m_state.applyRefreshReplyArguments({}));
         return;
     }
 
-    applyTransition(m_state.applyRefreshReplyArguments(reply.arguments()));
+    applyTransition(m_state.applyRefreshReplyArguments(arguments));
 }
 
 void PowerProfileMonitor::applyTransition(PowerProfileMonitorTransition transition)
@@ -65,5 +87,27 @@ void PowerProfileMonitor::applyTransition(PowerProfileMonitorTransition transiti
     }
 
     invokeIfSet(m_callback, m_state.powerSaverEnabled());
+}
+
+PowerProfileMonitorRuntime defaultPowerProfileMonitorRuntime()
+{
+    return PowerProfileMonitorRuntime {
+        readPortalPowerSaverEnabled,
+        subscribePortalPowerSaverChanges,
+    };
+}
+
+PowerProfileMonitorRuntime powerProfileMonitorRuntimeWithDefaults(
+    PowerProfileMonitorRuntime runtime)
+{
+    PowerProfileMonitorRuntime defaults = defaultPowerProfileMonitorRuntime();
+    if (!runtime.readPowerSaverEnabled) {
+        runtime.readPowerSaverEnabled = std::move(defaults.readPowerSaverEnabled);
+    }
+    if (!runtime.subscribePropertiesChanged) {
+        runtime.subscribePropertiesChanged = std::move(defaults.subscribePropertiesChanged);
+    }
+
+    return runtime;
 }
 }

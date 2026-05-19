@@ -10,9 +10,19 @@
 #include <QObject>
 #include <QString>
 #include <QStringList>
+#include <QVariantList>
 #include <QVariantMap>
+#include <functional>
 
 namespace KiriView {
+using PowerProfilePortalReader = std::function<QVariantList()>;
+using PowerProfilePortalSubscription = std::function<void(QObject *)>;
+
+struct PowerProfileMonitorRuntime {
+    PowerProfilePortalReader readPowerSaverEnabled;
+    PowerProfilePortalSubscription subscribePropertiesChanged;
+};
+
 class PowerProfileMonitor final : public QObject, public PowerSaverStateMonitor
 {
     Q_OBJECT
@@ -20,6 +30,8 @@ class PowerProfileMonitor final : public QObject, public PowerSaverStateMonitor
 public:
     explicit PowerProfileMonitor(
         QObject *parent = nullptr, PowerSaverChangedCallback callback = {});
+    PowerProfileMonitor(
+        QObject *parent, PowerSaverChangedCallback callback, PowerProfileMonitorRuntime runtime);
 
     bool powerSaverEnabled() const override;
 
@@ -32,8 +44,13 @@ private:
     void applyTransition(PowerProfileMonitorTransition transition);
 
     PowerSaverChangedCallback m_callback;
+    PowerProfileMonitorRuntime m_runtime;
     PowerProfileMonitorState m_state;
 };
+
+PowerProfileMonitorRuntime defaultPowerProfileMonitorRuntime();
+PowerProfileMonitorRuntime powerProfileMonitorRuntimeWithDefaults(
+    PowerProfileMonitorRuntime runtime);
 }
 
 #endif
