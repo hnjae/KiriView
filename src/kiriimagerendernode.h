@@ -5,6 +5,7 @@
 #define KIRIVIEW_KIRIIMAGERENDERNODE_H
 
 #include "imagerendering.h"
+#include "imagerendernodestate.h"
 
 #include <QRectF>
 #include <QSGRenderNode>
@@ -57,12 +58,7 @@ private:
 
     QRhi *m_rhi = nullptr;
     std::shared_ptr<DisplayedImageSurface> m_surface;
-    quint64 m_surfaceRevision = 0;
-    quint64 m_uploadedSurfaceRevision = 0;
-    QRectF m_targetRect;
-    int m_rotationDegrees = 0;
-    bool m_texturesDirty = true;
-    bool m_drawGeometryDirty = true;
+    ImageRenderNodeState m_state;
     QRhiRenderPassDescriptor *m_renderPassDescriptor = nullptr;
     std::unique_ptr<QRhiBuffer> m_vertexBuffer;
     std::unique_ptr<QRhiSampler> m_sampler;

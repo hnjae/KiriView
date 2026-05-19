@@ -3,7 +3,6 @@
 
 #include "kiriimagerendernode.h"
 
-#include "imagerotation.h"
 #include "shaders/kiriimageview_shaders.h"
 
 #include <QByteArray>
@@ -143,43 +142,32 @@ void KiriImageRenderNode::setRhi(QRhi *rhi)
 
     releaseResources();
     m_rhi = rhi;
-    m_uploadedSurfaceRevision = 0;
-    m_texturesDirty = true;
-    m_drawGeometryDirty = true;
+    m_state.resetUploadedResources();
 }
 
 void KiriImageRenderNode::setSurface(
     std::shared_ptr<DisplayedImageSurface> surface, quint64 revision)
 {
-    if (m_surfaceRevision == revision && m_surface == surface) {
+    const bool sameSurface = m_surface == surface;
+    const bool revisionChanged = m_state.setSurfaceRevision(revision);
+    if (sameSurface && !revisionChanged) {
         return;
     }
 
     m_surface = std::move(surface);
-    m_surfaceRevision = revision;
-    m_texturesDirty = true;
-    m_drawGeometryDirty = true;
+    if (!revisionChanged) {
+        m_state.markSurfaceChanged();
+    }
 }
 
 void KiriImageRenderNode::setTargetRect(const QRectF &targetRect)
 {
-    if (m_targetRect == targetRect) {
-        return;
-    }
-
-    m_targetRect = targetRect;
-    m_drawGeometryDirty = true;
+    m_state.setTargetRect(targetRect);
 }
 
 void KiriImageRenderNode::setRotationDegrees(int rotationDegrees)
 {
-    const int normalized = normalizedImageRotationDegrees(rotationDegrees);
-    if (m_rotationDegrees == normalized) {
-        return;
-    }
-
-    m_rotationDegrees = normalized;
-    m_drawGeometryDirty = true;
+    m_state.setRotationDegrees(rotationDegrees);
 }
 
 QSGRenderNode::StateFlags KiriImageRenderNode::changedStates() const
@@ -192,7 +180,7 @@ QSGRenderNode::RenderingFlags KiriImageRenderNode::flags() const
     return BoundedRectRendering | NoExternalRendering;
 }
 
-QRectF KiriImageRenderNode::rect() const { return m_targetRect; }
+QRectF KiriImageRenderNode::rect() const { return m_state.targetRect(); }
 
 void KiriImageRenderNode::prepare()
 {
@@ -229,7 +217,7 @@ void KiriImageRenderNode::prepare()
 void KiriImageRenderNode::render(const RenderState *state)
 {
     if (m_rhi == nullptr || m_pipeline == nullptr || m_vertexBuffer == nullptr
-        || m_targetRect.isEmpty() || m_drawTextures.empty()) {
+        || m_state.targetRect().isEmpty() || m_drawTextures.empty()) {
         return;
     }
 
@@ -272,9 +260,7 @@ void KiriImageRenderNode::releaseResources()
     m_sampler.reset();
     m_drawTextures.clear();
     m_vertexBuffer.reset();
-    m_uploadedSurfaceRevision = 0;
-    m_texturesDirty = true;
-    m_drawGeometryDirty = true;
+    m_state.resetUploadedResources();
     m_renderPassDescriptor = nullptr;
 }
 
@@ -359,7 +345,7 @@ bool KiriImageRenderNode::ensureTextures(QRhiResourceUpdateBatch *&resourceUpdat
 
 bool KiriImageRenderNode::uploadedTexturesAreCurrent() const
 {
-    return !m_texturesDirty && m_uploadedSurfaceRevision == m_surfaceRevision;
+    return m_state.uploadedTexturesAreCurrent();
 }
 
 bool KiriImageRenderNode::tryReuseUploadedTextures()
@@ -367,14 +353,14 @@ bool KiriImageRenderNode::tryReuseUploadedTextures()
     if (!uploadedTexturesAreCurrent()) {
         return false;
     }
-    if (!m_drawGeometryDirty) {
+    if (!m_state.drawGeometryDirty()) {
         return true;
     }
     if (syncDrawTextureEntries()) {
         return true;
     }
 
-    m_texturesDirty = true;
+    m_state.markTextureReuseFailed();
     return false;
 }
 
@@ -383,7 +369,7 @@ bool KiriImageRenderNode::rebuildDrawTextures(QRhiResourceUpdateBatch *&resource
     m_pipeline.reset();
     m_drawTextures.clear();
     const std::vector<ImageSurfaceDrawEntry> entries
-        = imageSurfaceDrawEntries(*m_surface, m_targetRect, m_rotationDegrees);
+        = imageSurfaceDrawEntries(*m_surface, m_state.targetRect(), m_state.rotationDegrees());
     for (const ImageSurfaceDrawEntry &entry : entries) {
         if (!addDrawTexture(resourceUpdates, entry)) {
             m_drawTextures.clear();
@@ -391,9 +377,7 @@ bool KiriImageRenderNode::rebuildDrawTextures(QRhiResourceUpdateBatch *&resource
         }
     }
 
-    m_uploadedSurfaceRevision = m_surfaceRevision;
-    m_texturesDirty = false;
-    m_drawGeometryDirty = false;
+    m_state.markTexturesUploaded();
     return true;
 }
 
@@ -404,7 +388,7 @@ bool KiriImageRenderNode::syncDrawTextureEntries()
     }
 
     const std::vector<ImageSurfaceDrawEntry> entries
-        = imageSurfaceDrawEntries(*m_surface, m_targetRect, m_rotationDegrees);
+        = imageSurfaceDrawEntries(*m_surface, m_state.targetRect(), m_state.rotationDegrees());
     if (entries.size() != m_drawTextures.size()) {
         return false;
     }
@@ -414,7 +398,7 @@ bool KiriImageRenderNode::syncDrawTextureEntries()
         m_drawTextures[index].textureRect = entries[index].textureRect;
         m_drawTextures[index].textureTransform = entries[index].textureTransform;
     }
-    m_drawGeometryDirty = false;
+    m_state.markDrawGeometrySynchronized();
     return true;
 }
 

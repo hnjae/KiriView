@@ -19,6 +19,7 @@ src/bufferedimagereader.cpp
 src/displayedimagestate.cpp
 src/filedeletion.cpp
 src/imageremovalfallback.cpp
+src/imagerendernodestate.cpp
 src/heifcontainer.cpp
 src/heifdecoder.cpp
 src/heifsequencereader.cpp
