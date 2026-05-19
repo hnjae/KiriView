@@ -4,13 +4,13 @@
 #ifndef KIRIVIEW_QIMAGEREADERSCALEDLEVELCACHE_H
 #define KIRIVIEW_QIMAGEREADERSCALEDLEVELCACHE_H
 
+#include "imagelrucachestate.h"
 #include "staticimage.h"
 
 #include <QImage>
 #include <QMutex>
 #include <QtGlobal>
 #include <optional>
-#include <vector>
 
 namespace KiriView {
 class QImageReaderScaledLevelCache final
@@ -26,22 +26,8 @@ public:
     void clear();
 
 private:
-    struct Entry {
-        int level = 0;
-        QImage image;
-        qsizetype byteCost = 0;
-        quint64 lastUse = 0;
-    };
-
-    void trimToBudget();
-    std::vector<Entry>::iterator findEntry(int level);
-    std::vector<Entry>::const_iterator findEntry(int level) const;
-
     mutable QMutex m_mutex;
-    std::vector<Entry> m_entries;
-    qsizetype m_byteBudget = 0;
-    qsizetype m_byteCost = 0;
-    quint64 m_useClock = 0;
+    ImageLruCacheState<int, QImage> m_cache;
 };
 }
 

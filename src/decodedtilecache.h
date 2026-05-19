@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_DECODEDTILECACHE_H
 #define KIRIVIEW_DECODEDTILECACHE_H
 
+#include "imagelrucachestate.h"
 #include "imagetile.h"
 
 #include <QtGlobal>
@@ -27,20 +28,7 @@ public:
     void clear();
 
 private:
-    struct Entry {
-        DecodedTile tile;
-        qsizetype byteCost = 0;
-        quint64 lastUse = 0;
-    };
-
-    void trimToBudget();
-    std::vector<Entry>::iterator findEntry(const TileKey &key);
-    std::vector<Entry>::const_iterator findEntry(const TileKey &key) const;
-
-    std::vector<Entry> m_entries;
-    qsizetype m_byteBudget = 0;
-    qsizetype m_byteCost = 0;
-    quint64 m_useClock = 0;
+    ImageLruCacheState<TileKey, DecodedTile> m_cache;
 };
 }
 
