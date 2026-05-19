@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_IMAGEDOCUMENTEFFECTEXECUTOR_H
 #define KIRIVIEW_IMAGEDOCUMENTEFFECTEXECUTOR_H
 
+#include "imagedocumenteffectplan.h"
 #include "imagedocumenteffects.h"
 
 #include <QString>
@@ -75,20 +76,9 @@ public:
     void shutdownRuntime();
 
 private:
+    void dispatchPlan(const ImageDocumentRuntimePlan &plan);
     void dispatchGeneratedEffects(ImageDocumentEffects effects);
-    void clearImage();
-    ImageDocumentEffects clearAfterSuccessfulFileDeletion();
-    void dispatchPayload(const ClearImageEffect &);
-    void dispatchPayload(const ClearDeletedImageEffect &);
-    void dispatchPayload(const ResetZoomEffect &);
-    void dispatchPayload(const UpdatePageNavigationEffect &);
-    void dispatchPayload(const ScheduleAdjacentImagePredecodeEffect &);
-    void dispatchPayload(const OpenUrlEffect &payload);
-    void dispatchPayload(const ContainerImageSelectedEffect &payload);
-    void dispatchPayload(const EmptyContainerSelectedEffect &payload);
-    void dispatchPayload(const ContainerNavigationFailedEffect &payload);
-    void dispatchPayload(const PageNavigationSelectedEffect &payload);
-    void dispatchPayload(const PrepareFailedContainerEffect &payload);
+    void dispatchOperation(const ImageDocumentRuntimeOperation &operation);
 
     ImageDocumentEffectOperations m_operations;
 };
