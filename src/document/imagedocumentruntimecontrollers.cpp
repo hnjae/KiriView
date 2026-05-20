@@ -14,10 +14,10 @@
 #include "imagedocumentsourceloadrequest.h"
 #include "imagedocumentstate.h"
 #include "imageerrortext.h"
-#include "imagenavigationservice.h"
 #include "imageopencontroller.h"
 #include "imagepresentationcontroller.h"
 #include "imagespreadpresentationcontroller.h"
+#include "navigation/imagenavigationservice.h"
 
 #include <QObject>
 #include <QUrl>

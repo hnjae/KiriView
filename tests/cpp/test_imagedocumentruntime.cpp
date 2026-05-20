@@ -4,7 +4,7 @@
 #include "document/imagedocumentruntime.h"
 
 #include "image_test_support.h"
-#include "imagecontainer.h"
+#include "navigation/imagecontainer.h"
 #include "rendering/imagerendering.h"
 
 #include <QObject>

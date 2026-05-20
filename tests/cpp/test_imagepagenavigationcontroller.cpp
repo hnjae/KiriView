@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 #include "candidate_test_support.h"
-#include "imagepagenavigationcontroller.h"
+#include "navigation/imagepagenavigationcontroller.h"
 
 #include <QObject>
 #include <QTest>

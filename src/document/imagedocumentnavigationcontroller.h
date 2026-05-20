@@ -5,7 +5,7 @@
 #define KIRIVIEW_IMAGEDOCUMENTNAVIGATIONCONTROLLER_H
 
 #include "imagedocumenteffects.h"
-#include "imagenavigationtypes.h"
+#include "navigation/imagenavigationtypes.h"
 
 #include <functional>
 

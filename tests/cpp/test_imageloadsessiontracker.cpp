@@ -3,8 +3,8 @@
 
 #include "candidate_test_support.h"
 #include "document/imageloadsessiontracker.h"
-#include "imagecontainer.h"
 #include "imagedecoderequest.h"
+#include "navigation/imagecontainer.h"
 
 #include <QObject>
 #include <QSize>

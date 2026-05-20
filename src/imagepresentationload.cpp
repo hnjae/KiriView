@@ -3,8 +3,8 @@
 
 #include "imagepresentationload.h"
 
-#include "imagecontainer.h"
 #include "imagepresentationcontroller.h"
+#include "navigation/imagecontainer.h"
 #include "predecode/predecodecache.h"
 
 #include <QImage>

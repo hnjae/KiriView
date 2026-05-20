@@ -6,11 +6,11 @@
 
 #include "document/imagedocumenttypes.h"
 #include "document/imageloadtypes.h"
-#include "imagecandidateprovider.h"
 #include "imagedecodedependencies.h"
 #include "imagelocation.h"
 #include "imagepresentationload.h"
 #include "imagesecondarypagestate.h"
+#include "navigation/imagecandidateprovider.h"
 #include "predecode/predecodedimage.h"
 #include "rendering/imagesurface.h"
 

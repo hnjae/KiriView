@@ -3,8 +3,8 @@
 
 #include "imagedocumentsourceloadpolicy.h"
 
-#include "imagecontainer.h"
 #include "kiriview/src/imagedocumentsourceloadpolicy.cxx.h"
+#include "navigation/imagecontainer.h"
 
 namespace {
 KiriView::ImageDocumentSourceLoadKind sourceLoadKind(

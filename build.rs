@@ -27,7 +27,7 @@ const CXX_QT_HEADER_SOURCES: &[&str] = &[
     "src/imageactionavailability.h",
     "src/kiriimagedocument.h",
     "src/kiriimageview.h",
-    "src/imageshortcutnavigationpolicy.h",
+    "src/navigation/imageshortcutnavigationpolicy.h",
     "src/kiriviewapplication.h",
     "src/powerprofilemonitor.h",
 ];

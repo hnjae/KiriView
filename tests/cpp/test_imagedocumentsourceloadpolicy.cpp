@@ -3,7 +3,7 @@
 
 #include "document/imagedocumentsourceloadpolicy.h"
 
-#include "imagecontainer.h"
+#include "navigation/imagecontainer.h"
 
 #include <QObject>
 #include <QTest>

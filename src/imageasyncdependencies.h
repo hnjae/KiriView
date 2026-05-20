@@ -6,8 +6,8 @@
 
 #include "archive/archivebackend.h"
 #include "document/filedeletion.h"
-#include "imagecandidateprovider.h"
 #include "imagedecodedependencies.h"
+#include "navigation/imagecandidateprovider.h"
 #include "powersaverprovider.h"
 
 namespace KiriView {

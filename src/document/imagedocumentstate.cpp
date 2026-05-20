@@ -3,8 +3,8 @@
 
 #include "imagedocumentstate.h"
 
-#include "imagecontainer.h"
 #include "imagedocumentnotifications.h"
+#include "navigation/imagecontainer.h"
 
 #include <utility>
 

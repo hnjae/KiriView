@@ -3,7 +3,7 @@
 
 #include "document/imagedocumentstate.h"
 #include "document/imageopentransitionapplier.h"
-#include "imagecontainer.h"
+#include "navigation/imagecontainer.h"
 
 #include <QObject>
 #include <QTest>

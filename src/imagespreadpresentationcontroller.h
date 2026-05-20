@@ -5,13 +5,13 @@
 #define KIRIVIEW_IMAGESPREADPRESENTATIONCONTROLLER_H
 
 #include "document/imagedocumentstate.h"
-#include "imagecandidateprovider.h"
 #include "imagedecodedependencies.h"
-#include "imagenavigationtypes.h"
 #include "imagespreadgeometry.h"
 #include "imagespreadnavigation.h"
 #include "imagespreadsecondarypagerefresh.h"
 #include "imagezoomstate.h"
+#include "navigation/imagecandidateprovider.h"
+#include "navigation/imagenavigationtypes.h"
 #include "predecode/predecodedimage.h"
 #include "rendering/imagesurface.h"
 

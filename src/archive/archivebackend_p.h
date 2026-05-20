@@ -6,7 +6,7 @@
 
 #include "archivebackend.h"
 #include "imagelocation.h"
-#include "imagenavigationtypes.h"
+#include "navigation/imagenavigationtypes.h"
 
 #include <QByteArray>
 #include <QString>

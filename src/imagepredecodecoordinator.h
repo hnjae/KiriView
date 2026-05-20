@@ -4,10 +4,10 @@
 #ifndef KIRIVIEW_IMAGEPREDECODECOORDINATOR_H
 #define KIRIVIEW_IMAGEPREDECODECOORDINATOR_H
 
-#include "imagecandidateprovider.h"
-#include "imagecandidaterepository.h"
 #include "imagedecodedependencies.h"
 #include "imageiojob.h"
+#include "navigation/imagecandidateprovider.h"
+#include "navigation/imagecandidaterepository.h"
 #include "powersaverprovider.h"
 #include "predecode/predecodedimage.h"
 #include "predecode/predecodeloadcontroller.h"

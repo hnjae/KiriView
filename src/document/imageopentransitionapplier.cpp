@@ -3,8 +3,8 @@
 
 #include "imageopentransitionapplier.h"
 
-#include "imagecontainer.h"
 #include "imagedocumentstate.h"
+#include "navigation/imagecontainer.h"
 
 #include <utility>
 

@@ -5,10 +5,10 @@
 #define KIRIVIEW_IMAGEDOCUMENTDELETIONFALLBACKCONTROLLER_H
 
 #include "imageasyncoperationstate.h"
-#include "imagecandidaterepository.h"
 #include "imagedocumenteffects.h"
 #include "imageiojob.h"
 #include "imageremovalfallback.h"
+#include "navigation/imagecandidaterepository.h"
 
 #include <QtGlobal>
 #include <functional>

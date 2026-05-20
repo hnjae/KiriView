@@ -8,7 +8,7 @@
 #include "imagedecoderequest.h"
 #include "imageiojob.h"
 #include "imagelocation.h"
-#include "imagenavigationtypes.h"
+#include "navigation/imagenavigationtypes.h"
 
 #include <QUrl>
 

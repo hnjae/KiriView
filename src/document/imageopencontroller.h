@@ -4,11 +4,11 @@
 #ifndef KIRIVIEW_IMAGEOPENCONTROLLER_H
 #define KIRIVIEW_IMAGEOPENCONTROLLER_H
 
-#include "imagecandidateprovider.h"
 #include "imagedecodedependencies.h"
 #include "imagedocumenteffects.h"
 #include "imageloadtypes.h"
 #include "imagepresentationload.h"
+#include "navigation/imagecandidateprovider.h"
 #include "predecode/predecodedimage.h"
 
 #include <QString>

@@ -4,9 +4,9 @@
 #ifndef KIRIVIEW_TESTS_CANDIDATE_TEST_SUPPORT_H
 #define KIRIVIEW_TESTS_CANDIDATE_TEST_SUPPORT_H
 
-#include "imagecandidateprovider.h"
 #include "imageiojob.h"
-#include "imagenavigationtypes.h"
+#include "navigation/imagecandidateprovider.h"
+#include "navigation/imagenavigationtypes.h"
 
 #include <QObject>
 #include <QString>

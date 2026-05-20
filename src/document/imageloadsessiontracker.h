@@ -7,7 +7,7 @@
 #include "imageasyncticket.h"
 #include "imagedecoderequest.h"
 #include "imageloadplan.h"
-#include "imagenavigationtypes.h"
+#include "navigation/imagenavigationtypes.h"
 #include "rendering/staticimage.h"
 
 #include <QUrl>

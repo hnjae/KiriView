@@ -5,9 +5,9 @@
 
 #include "archive/archivebackend.h"
 #include "imagecallback.h"
-#include "imagecandidateitems.h"
-#include "imagecontainer.h"
 #include "imageioworkerjob.h"
+#include "navigation/imagecandidateitems.h"
+#include "navigation/imagecontainer.h"
 
 #include <KCoreDirLister>
 #include <KIO/Job>

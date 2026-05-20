@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGEASYNCCALLBACKS_H
 #define KIRIVIEW_IMAGEASYNCCALLBACKS_H
 
-#include "imagenavigationtypes.h"
+#include "navigation/imagenavigationtypes.h"
 
 #include <QByteArray>
 #include <QString>

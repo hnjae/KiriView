@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 #include "imageactionavailability.h"
-#include "imageshortcutnavigationpolicy.h"
 #include "kiriimagedocument.h"
 #include "kiriviewapplication.h"
 #include "kiriviewstate.h"
 #include "localization.h"
+#include "navigation/imageshortcutnavigationpolicy.h"
 
 #include <KConfigGroup>
 #include <KLocalizedQmlContext>

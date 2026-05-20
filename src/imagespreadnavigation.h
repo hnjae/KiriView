@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGESPREADNAVIGATION_H
 #define KIRIVIEW_IMAGESPREADNAVIGATION_H
 
-#include "imagenavigationtypes.h"
+#include "navigation/imagenavigationtypes.h"
 
 namespace KiriView {
 struct ImageSpreadNavigationState {

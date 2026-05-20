@@ -4,7 +4,7 @@
 #include "document/imageremovalfallback.h"
 
 #include "candidate_test_support.h"
-#include "imagecontainer.h"
+#include "navigation/imagecontainer.h"
 
 #include <QObject>
 #include <QTemporaryDir>

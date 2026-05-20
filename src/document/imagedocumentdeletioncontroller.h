@@ -5,12 +5,12 @@
 #define KIRIVIEW_IMAGEDOCUMENTDELETIONCONTROLLER_H
 
 #include "filedeletion.h"
-#include "imagecandidaterepository.h"
 #include "imagedocumentdeletionfallbackcontroller.h"
 #include "imagedocumentdeletionstate.h"
 #include "imagedocumenteffects.h"
 #include "imageiojob.h"
 #include "imageremovalfallback.h"
+#include "navigation/imagecandidaterepository.h"
 
 #include <QString>
 #include <QtGlobal>

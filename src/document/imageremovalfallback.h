@@ -4,9 +4,9 @@
 #ifndef KIRIVIEW_IMAGEREMOVALFALLBACK_H
 #define KIRIVIEW_IMAGEREMOVALFALLBACK_H
 
-#include "imagecandidatelistsource.h"
 #include "imagelocation.h"
-#include "imagenavigationtypes.h"
+#include "navigation/imagecandidatelistsource.h"
+#include "navigation/imagenavigationtypes.h"
 
 #include <QString>
 #include <QUrl>

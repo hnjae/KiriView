@@ -4,9 +4,9 @@
 #ifndef KIRIVIEW_IMAGESPREADSECONDARYPAGEREFRESH_H
 #define KIRIVIEW_IMAGESPREADSECONDARYPAGEREFRESH_H
 
-#include "imagenavigationtypes.h"
 #include "imagespreadnavigation.h"
 #include "imagespreadpagecache.h"
+#include "navigation/imagenavigationtypes.h"
 
 #include <QSize>
 #include <QUrl>

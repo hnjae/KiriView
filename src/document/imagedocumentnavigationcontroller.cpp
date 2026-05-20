@@ -5,9 +5,9 @@
 
 #include "imagecallback.h"
 #include "imagedocumentstate.h"
-#include "imagenavigationservice.h"
 #include "imagepresentationcontroller.h"
 #include "imagespreadpresentationcontroller.h"
+#include "navigation/imagenavigationservice.h"
 
 #include <QUrl>
 #include <optional>

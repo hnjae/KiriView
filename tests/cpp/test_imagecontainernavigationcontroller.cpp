@@ -3,8 +3,8 @@
 
 #include "candidate_test_support.h"
 #include "image_async_test_support.h"
-#include "imagecandidaterepository.h"
-#include "imagecontainernavigationcontroller.h"
+#include "navigation/imagecandidaterepository.h"
+#include "navigation/imagecontainernavigationcontroller.h"
 
 #include <QObject>
 #include <QTest>

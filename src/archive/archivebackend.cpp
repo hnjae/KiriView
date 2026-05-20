@@ -7,7 +7,7 @@
 #include "archiveformat.h"
 #include "archivepath.h"
 #include "imageformatregistry.h"
-#include "imagenavigationmodel.h"
+#include "navigation/imagenavigationmodel.h"
 
 #include <KLocalizedString>
 #include <optional>
