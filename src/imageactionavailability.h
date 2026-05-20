@@ -133,8 +133,29 @@ class ImageActionAvailability : public QObject
         bool containerShortcutsEnabled READ containerShortcutsEnabled NOTIFY availabilityChanged)
     Q_PROPERTY(bool containerViewerShortcutsEnabled READ containerViewerShortcutsEnabled NOTIFY
             availabilityChanged)
+    Q_PROPERTY(int availabilityRevision READ availabilityRevision NOTIFY availabilityChanged)
 
 public:
+    enum ShortcutScope {
+        HelpShortcutScope = 0,
+        ViewerShortcutScope,
+        ReadyShortcutScope,
+        ReadyViewerShortcutScope,
+        ImageSelectionShortcutScope,
+        ImageSelectionViewerShortcutScope,
+        PageShortcutScope,
+        PageViewerShortcutScope,
+        RightToLeftReadingShortcutScope,
+        RightToLeftReadingViewerShortcutScope,
+        RotateShortcutScope,
+        RotateViewerShortcutScope,
+        PannableShortcutScope,
+        PannableViewerShortcutScope,
+        ContainerShortcutScope,
+        ContainerViewerShortcutScope,
+    };
+    Q_ENUM(ShortcutScope)
+
     explicit ImageActionAvailability(QObject *parent = nullptr);
 
     bool imageReady() const;
@@ -194,6 +215,9 @@ public:
     bool pannableViewerShortcutsEnabled() const;
     bool containerShortcutsEnabled() const;
     bool containerViewerShortcutsEnabled() const;
+    int availabilityRevision() const;
+
+    Q_INVOKABLE bool shortcutsEnabledForScope(ShortcutScope scope) const;
 
 Q_SIGNALS:
     void availabilityChanged();
@@ -205,6 +229,7 @@ private:
 
     ImageActionAvailabilityInput m_input;
     ImageActionAvailabilityProjection m_projection;
+    int m_availabilityRevision = 0;
 };
 
 #endif

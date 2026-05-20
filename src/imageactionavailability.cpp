@@ -300,6 +300,48 @@ bool ImageActionAvailability::containerViewerShortcutsEnabled() const
     return m_projection.containerViewerShortcutsEnabled;
 }
 
+int ImageActionAvailability::availabilityRevision() const { return m_availabilityRevision; }
+
+bool ImageActionAvailability::shortcutsEnabledForScope(ShortcutScope scope) const
+{
+    switch (scope) {
+    case HelpShortcutScope:
+        return m_projection.helpShortcutsEnabled;
+    case ViewerShortcutScope:
+        return m_projection.viewerShortcutsEnabled;
+    case ReadyShortcutScope:
+        return m_projection.readyShortcutsEnabled;
+    case ReadyViewerShortcutScope:
+        return m_projection.readyViewerShortcutsEnabled;
+    case ImageSelectionShortcutScope:
+        return m_projection.imageSelectionShortcutsEnabled;
+    case ImageSelectionViewerShortcutScope:
+        return m_projection.imageSelectionViewerShortcutsEnabled;
+    case PageShortcutScope:
+        return m_projection.pageShortcutsEnabled;
+    case PageViewerShortcutScope:
+        return m_projection.pageViewerShortcutsEnabled;
+    case RightToLeftReadingShortcutScope:
+        return m_projection.rightToLeftReadingShortcutsEnabled;
+    case RightToLeftReadingViewerShortcutScope:
+        return m_projection.rightToLeftReadingViewerShortcutsEnabled;
+    case RotateShortcutScope:
+        return m_projection.rotateShortcutsEnabled;
+    case RotateViewerShortcutScope:
+        return m_projection.rotateViewerShortcutsEnabled;
+    case PannableShortcutScope:
+        return m_projection.pannableShortcutsEnabled;
+    case PannableViewerShortcutScope:
+        return m_projection.pannableViewerShortcutsEnabled;
+    case ContainerShortcutScope:
+        return m_projection.containerShortcutsEnabled;
+    case ContainerViewerShortcutScope:
+        return m_projection.containerViewerShortcutsEnabled;
+    }
+
+    return false;
+}
+
 void ImageActionAvailability::setBool(bool &target, bool value)
 {
     if (target == value) {
@@ -321,5 +363,6 @@ void ImageActionAvailability::setInt(int &target, int value)
 void ImageActionAvailability::publishInputChange()
 {
     m_projection = imageActionAvailabilityProjection(m_input);
+    ++m_availabilityRevision;
     Q_EMIT availabilityChanged();
 }

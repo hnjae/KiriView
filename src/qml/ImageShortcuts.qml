@@ -40,22 +40,6 @@ Item {
     readonly property var containerNavigationActionIds: [KiriViewApplication.GoPreviousArchiveAction, KiriViewApplication.GoNextArchiveAction]
     readonly property var globalActionIds: [KiriViewApplication.WindowFullscreenAction, KiriViewApplication.HelpShortcutsAction]
     readonly property var optionsActionIds: [KiriViewApplication.OptionsConfigureKeybindingAction, KiriViewApplication.OptionsShowMenubarAction]
-    readonly property int shortcutScopeHelp: 0
-    readonly property int shortcutScopeViewer: 1
-    readonly property int shortcutScopeReady: 2
-    readonly property int shortcutScopeReadyViewer: 3
-    readonly property int shortcutScopeImageSelection: 4
-    readonly property int shortcutScopeImageSelectionViewer: 5
-    readonly property int shortcutScopePage: 6
-    readonly property int shortcutScopePageViewer: 7
-    readonly property int shortcutScopeRightToLeftReading: 8
-    readonly property int shortcutScopeRightToLeftReadingViewer: 9
-    readonly property int shortcutScopeRotate: 10
-    readonly property int shortcutScopeRotateViewer: 11
-    readonly property int shortcutScopePannable: 12
-    readonly property int shortcutScopePannableViewer: 13
-    readonly property int shortcutScopeContainer: 14
-    readonly property int shortcutScopeContainerViewer: 15
     readonly property var actionShortcutRoutes: root.createActionShortcutRoutes()
 
     signal imageBoundaryReached(string message)
@@ -89,80 +73,48 @@ Item {
 
     function createActionShortcutRoutes() {
         const routes = [];
-        routes.push(root.shortcutRoute(root.fileOpenActionIds, ConfiguredActionShortcut.WithCommandModifier, root.shortcutScopeHelp));
-        routes.push(root.shortcutRoute(root.fileOpenActionIds, ConfiguredActionShortcut.WithoutCommandModifier, root.shortcutScopeViewer));
-        routes.push(root.shortcutRoute(root.fileQuitActionIds, ConfiguredActionShortcut.WithCommandModifier, root.shortcutScopeHelp));
-        routes.push(root.shortcutRoute(root.fileQuitActionIds, ConfiguredActionShortcut.WithoutCommandModifier, root.shortcutScopeViewer));
-        routes.push(root.shortcutRoute(root.fileQuitActionIds, ConfiguredActionShortcut.ShortcutAliases, root.shortcutScopeViewer));
-        routes.push(root.shortcutRoute(root.fileRemovalActionIds, ConfiguredActionShortcut.AllShortcuts, root.shortcutScopeReadyViewer));
-        routes.push(root.shortcutRoute(root.zoomActionIds, ConfiguredActionShortcut.WithCommandModifier, root.shortcutScopeReady));
-        routes.push(root.shortcutRoute(root.zoomActionIds, ConfiguredActionShortcut.WithoutCommandModifier, root.shortcutScopeReadyViewer));
-        routes.push(root.shortcutRoute(root.zoomActionIds, ConfiguredActionShortcut.ShortcutAliases, root.shortcutScopeReadyViewer));
-        routes.push(root.shortcutRoute(root.rotateActionIds, ConfiguredActionShortcut.WithCommandModifier, root.shortcutScopeRotate));
-        routes.push(root.shortcutRoute(root.rotateActionIds, ConfiguredActionShortcut.WithoutCommandModifier, root.shortcutScopeRotateViewer));
-        routes.push(root.shortcutRoute(root.rotateActionIds, ConfiguredActionShortcut.ShortcutAliases, root.shortcutScopeRotateViewer));
-        routes.push(root.shortcutRoute(root.rightToLeftReadingActionIds, ConfiguredActionShortcut.WithCommandModifier, root.shortcutScopeRightToLeftReading));
-        routes.push(root.shortcutRoute(root.rightToLeftReadingActionIds, ConfiguredActionShortcut.WithoutCommandModifier, root.shortcutScopeRightToLeftReadingViewer));
-        routes.push(root.shortcutRoute(root.rightToLeftReadingActionIds, ConfiguredActionShortcut.ShortcutAliases, root.shortcutScopeRightToLeftReadingViewer));
-        routes.push(root.shortcutRoute(root.panActionIds, ConfiguredActionShortcut.WithCommandModifier, root.shortcutScopePannable));
-        routes.push(root.shortcutRoute(root.panActionIds, ConfiguredActionShortcut.WithoutCommandModifier, root.shortcutScopePannableViewer));
-        routes.push(root.shortcutRoute(root.panActionIds, ConfiguredActionShortcut.ShortcutAliases, root.shortcutScopePannableViewer));
-        routes.push(root.shortcutRoute(root.scanActionIds, ConfiguredActionShortcut.WithCommandModifier, root.shortcutScopeReady));
-        routes.push(root.shortcutRoute(root.scanActionIds, ConfiguredActionShortcut.WithoutCommandModifier, root.shortcutScopeReadyViewer));
-        routes.push(root.shortcutRoute(root.scanActionIds, ConfiguredActionShortcut.ShortcutAliases, root.shortcutScopeReadyViewer));
-        routes.push(root.shortcutRoute(root.imageNavigationActionIds, ConfiguredActionShortcut.WithCommandModifier, root.shortcutScopeImageSelection));
-        routes.push(root.shortcutRoute(root.imageNavigationActionIds, ConfiguredActionShortcut.WithoutCommandModifier, root.shortcutScopeImageSelectionViewer));
-        routes.push(root.shortcutRoute(root.imageNavigationActionIds, ConfiguredActionShortcut.ShortcutAliases, root.shortcutScopeImageSelectionViewer));
-        routes.push(root.shortcutRoute(root.pageNavigationActionIds, ConfiguredActionShortcut.WithCommandModifier, root.shortcutScopePage));
-        routes.push(root.shortcutRoute(root.pageNavigationActionIds, ConfiguredActionShortcut.WithoutCommandModifier, root.shortcutScopePageViewer));
-        routes.push(root.shortcutRoute(root.pageNavigationActionIds, ConfiguredActionShortcut.ShortcutAliases, root.shortcutScopePageViewer));
-        routes.push(root.shortcutRoute(root.containerNavigationActionIds, ConfiguredActionShortcut.WithCommandModifier, root.shortcutScopeContainer));
-        routes.push(root.shortcutRoute(root.containerNavigationActionIds, ConfiguredActionShortcut.WithoutCommandModifier, root.shortcutScopeContainerViewer));
-        routes.push(root.shortcutRoute(root.containerNavigationActionIds, ConfiguredActionShortcut.ShortcutAliases, root.shortcutScopeContainerViewer));
-        routes.push(root.shortcutRoute(root.globalActionIds, ConfiguredActionShortcut.WithCommandModifier, root.shortcutScopeHelp));
-        routes.push(root.shortcutRoute(root.globalActionIds, ConfiguredActionShortcut.WithoutCommandModifier, root.shortcutScopeHelp));
-        routes.push(root.shortcutRoute(root.globalActionIds, ConfiguredActionShortcut.ShortcutAliases, root.shortcutScopeViewer));
-        routes.push(root.shortcutRoute(root.optionsActionIds, ConfiguredActionShortcut.AllShortcuts, root.shortcutScopeHelp));
+        routes.push(root.shortcutRoute(root.fileOpenActionIds, ConfiguredActionShortcut.WithCommandModifier, ImageActionAvailability.HelpShortcutScope));
+        routes.push(root.shortcutRoute(root.fileOpenActionIds, ConfiguredActionShortcut.WithoutCommandModifier, ImageActionAvailability.ViewerShortcutScope));
+        routes.push(root.shortcutRoute(root.fileQuitActionIds, ConfiguredActionShortcut.WithCommandModifier, ImageActionAvailability.HelpShortcutScope));
+        routes.push(root.shortcutRoute(root.fileQuitActionIds, ConfiguredActionShortcut.WithoutCommandModifier, ImageActionAvailability.ViewerShortcutScope));
+        routes.push(root.shortcutRoute(root.fileQuitActionIds, ConfiguredActionShortcut.ShortcutAliases, ImageActionAvailability.ViewerShortcutScope));
+        routes.push(root.shortcutRoute(root.fileRemovalActionIds, ConfiguredActionShortcut.AllShortcuts, ImageActionAvailability.ReadyViewerShortcutScope));
+        routes.push(root.shortcutRoute(root.zoomActionIds, ConfiguredActionShortcut.WithCommandModifier, ImageActionAvailability.ReadyShortcutScope));
+        routes.push(root.shortcutRoute(root.zoomActionIds, ConfiguredActionShortcut.WithoutCommandModifier, ImageActionAvailability.ReadyViewerShortcutScope));
+        routes.push(root.shortcutRoute(root.zoomActionIds, ConfiguredActionShortcut.ShortcutAliases, ImageActionAvailability.ReadyViewerShortcutScope));
+        routes.push(root.shortcutRoute(root.rotateActionIds, ConfiguredActionShortcut.WithCommandModifier, ImageActionAvailability.RotateShortcutScope));
+        routes.push(root.shortcutRoute(root.rotateActionIds, ConfiguredActionShortcut.WithoutCommandModifier, ImageActionAvailability.RotateViewerShortcutScope));
+        routes.push(root.shortcutRoute(root.rotateActionIds, ConfiguredActionShortcut.ShortcutAliases, ImageActionAvailability.RotateViewerShortcutScope));
+        routes.push(root.shortcutRoute(root.rightToLeftReadingActionIds, ConfiguredActionShortcut.WithCommandModifier, ImageActionAvailability.RightToLeftReadingShortcutScope));
+        routes.push(root.shortcutRoute(root.rightToLeftReadingActionIds, ConfiguredActionShortcut.WithoutCommandModifier, ImageActionAvailability.RightToLeftReadingViewerShortcutScope));
+        routes.push(root.shortcutRoute(root.rightToLeftReadingActionIds, ConfiguredActionShortcut.ShortcutAliases, ImageActionAvailability.RightToLeftReadingViewerShortcutScope));
+        routes.push(root.shortcutRoute(root.panActionIds, ConfiguredActionShortcut.WithCommandModifier, ImageActionAvailability.PannableShortcutScope));
+        routes.push(root.shortcutRoute(root.panActionIds, ConfiguredActionShortcut.WithoutCommandModifier, ImageActionAvailability.PannableViewerShortcutScope));
+        routes.push(root.shortcutRoute(root.panActionIds, ConfiguredActionShortcut.ShortcutAliases, ImageActionAvailability.PannableViewerShortcutScope));
+        routes.push(root.shortcutRoute(root.scanActionIds, ConfiguredActionShortcut.WithCommandModifier, ImageActionAvailability.ReadyShortcutScope));
+        routes.push(root.shortcutRoute(root.scanActionIds, ConfiguredActionShortcut.WithoutCommandModifier, ImageActionAvailability.ReadyViewerShortcutScope));
+        routes.push(root.shortcutRoute(root.scanActionIds, ConfiguredActionShortcut.ShortcutAliases, ImageActionAvailability.ReadyViewerShortcutScope));
+        routes.push(root.shortcutRoute(root.imageNavigationActionIds, ConfiguredActionShortcut.WithCommandModifier, ImageActionAvailability.ImageSelectionShortcutScope));
+        routes.push(root.shortcutRoute(root.imageNavigationActionIds, ConfiguredActionShortcut.WithoutCommandModifier, ImageActionAvailability.ImageSelectionViewerShortcutScope));
+        routes.push(root.shortcutRoute(root.imageNavigationActionIds, ConfiguredActionShortcut.ShortcutAliases, ImageActionAvailability.ImageSelectionViewerShortcutScope));
+        routes.push(root.shortcutRoute(root.pageNavigationActionIds, ConfiguredActionShortcut.WithCommandModifier, ImageActionAvailability.PageShortcutScope));
+        routes.push(root.shortcutRoute(root.pageNavigationActionIds, ConfiguredActionShortcut.WithoutCommandModifier, ImageActionAvailability.PageViewerShortcutScope));
+        routes.push(root.shortcutRoute(root.pageNavigationActionIds, ConfiguredActionShortcut.ShortcutAliases, ImageActionAvailability.PageViewerShortcutScope));
+        routes.push(root.shortcutRoute(root.containerNavigationActionIds, ConfiguredActionShortcut.WithCommandModifier, ImageActionAvailability.ContainerShortcutScope));
+        routes.push(root.shortcutRoute(root.containerNavigationActionIds, ConfiguredActionShortcut.WithoutCommandModifier, ImageActionAvailability.ContainerViewerShortcutScope));
+        routes.push(root.shortcutRoute(root.containerNavigationActionIds, ConfiguredActionShortcut.ShortcutAliases, ImageActionAvailability.ContainerViewerShortcutScope));
+        routes.push(root.shortcutRoute(root.globalActionIds, ConfiguredActionShortcut.WithCommandModifier, ImageActionAvailability.HelpShortcutScope));
+        routes.push(root.shortcutRoute(root.globalActionIds, ConfiguredActionShortcut.WithoutCommandModifier, ImageActionAvailability.HelpShortcutScope));
+        routes.push(root.shortcutRoute(root.globalActionIds, ConfiguredActionShortcut.ShortcutAliases, ImageActionAvailability.ViewerShortcutScope));
+        routes.push(root.shortcutRoute(root.optionsActionIds, ConfiguredActionShortcut.AllShortcuts, ImageActionAvailability.HelpShortcutScope));
         return routes;
     }
 
-    function shortcutsEnabledForScope(shortcutScope) {
-        switch (shortcutScope) {
-        case root.shortcutScopeHelp:
-            return actionAvailability.helpShortcutsEnabled;
-        case root.shortcutScopeViewer:
-            return actionAvailability.viewerShortcutsEnabled;
-        case root.shortcutScopeReady:
-            return actionAvailability.readyShortcutsEnabled;
-        case root.shortcutScopeReadyViewer:
-            return actionAvailability.readyViewerShortcutsEnabled;
-        case root.shortcutScopeImageSelection:
-            return actionAvailability.imageSelectionShortcutsEnabled;
-        case root.shortcutScopeImageSelectionViewer:
-            return actionAvailability.imageSelectionViewerShortcutsEnabled;
-        case root.shortcutScopePage:
-            return actionAvailability.pageShortcutsEnabled;
-        case root.shortcutScopePageViewer:
-            return actionAvailability.pageViewerShortcutsEnabled;
-        case root.shortcutScopeRightToLeftReading:
-            return actionAvailability.rightToLeftReadingShortcutsEnabled;
-        case root.shortcutScopeRightToLeftReadingViewer:
-            return actionAvailability.rightToLeftReadingViewerShortcutsEnabled;
-        case root.shortcutScopeRotate:
-            return actionAvailability.rotateShortcutsEnabled;
-        case root.shortcutScopeRotateViewer:
-            return actionAvailability.rotateViewerShortcutsEnabled;
-        case root.shortcutScopePannable:
-            return actionAvailability.pannableShortcutsEnabled;
-        case root.shortcutScopePannableViewer:
-            return actionAvailability.pannableViewerShortcutsEnabled;
-        case root.shortcutScopeContainer:
-            return actionAvailability.containerShortcutsEnabled;
-        case root.shortcutScopeContainerViewer:
-            return actionAvailability.containerViewerShortcutsEnabled;
-        default:
+    function shortcutsEnabledForScope(shortcutScope, availabilityRevision) {
+        if (availabilityRevision < 0) {
             return false;
         }
+        return actionAvailability.shortcutsEnabledForScope(shortcutScope);
     }
 
     function panBy(deltaX, deltaY) {
@@ -266,7 +218,7 @@ Item {
             actionIds: modelData.actionIds
             application: root.application
             shortcutFilter: modelData.shortcutFilter
-            shortcutsEnabled: root.shortcutsEnabledForScope(modelData.shortcutScope)
+            shortcutsEnabled: root.shortcutsEnabledForScope(modelData.shortcutScope, actionAvailability.availabilityRevision)
         }
     }
 

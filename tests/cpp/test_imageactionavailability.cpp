@@ -17,6 +17,7 @@ private Q_SLOTS:
     void imageNavigationStateDrivesActionAvailability();
     void readyActionAvailabilityRejectsCompetingModes();
     void shortcutAvailabilityUsesViewerAndRuntimeGates();
+    void shortcutScopeLookupUsesProjectionFields();
     void settersNotifyOnlyWhenInputsChange();
 };
 
@@ -206,22 +207,83 @@ void TestImageActionAvailability::shortcutAvailabilityUsesViewerAndRuntimeGates(
     QVERIFY(!availability.containerShortcutsEnabled());
 }
 
+void TestImageActionAvailability::shortcutScopeLookupUsesProjectionFields()
+{
+    ImageActionAvailability availability;
+    availability.setImageReady(true);
+    availability.setImageCount(5);
+    availability.setCurrentPageNumber(2);
+    availability.setImagePannable(true);
+    availability.setContainerNavigationAvailable(true);
+    availability.setTwoPageModeAvailable(true);
+    availability.setRightToLeftReadingAvailable(true);
+
+    QCOMPARE(availability.shortcutsEnabledForScope(ImageActionAvailability::HelpShortcutScope),
+        availability.helpShortcutsEnabled());
+    QCOMPARE(availability.shortcutsEnabledForScope(ImageActionAvailability::ViewerShortcutScope),
+        availability.viewerShortcutsEnabled());
+    QCOMPARE(availability.shortcutsEnabledForScope(ImageActionAvailability::ReadyShortcutScope),
+        availability.readyShortcutsEnabled());
+    QCOMPARE(
+        availability.shortcutsEnabledForScope(ImageActionAvailability::ReadyViewerShortcutScope),
+        availability.readyViewerShortcutsEnabled());
+    QCOMPARE(
+        availability.shortcutsEnabledForScope(ImageActionAvailability::ImageSelectionShortcutScope),
+        availability.imageSelectionShortcutsEnabled());
+    QCOMPARE(availability.shortcutsEnabledForScope(
+                 ImageActionAvailability::ImageSelectionViewerShortcutScope),
+        availability.imageSelectionViewerShortcutsEnabled());
+    QCOMPARE(availability.shortcutsEnabledForScope(ImageActionAvailability::PageShortcutScope),
+        availability.pageShortcutsEnabled());
+    QCOMPARE(
+        availability.shortcutsEnabledForScope(ImageActionAvailability::PageViewerShortcutScope),
+        availability.pageViewerShortcutsEnabled());
+    QCOMPARE(availability.shortcutsEnabledForScope(
+                 ImageActionAvailability::RightToLeftReadingShortcutScope),
+        availability.rightToLeftReadingShortcutsEnabled());
+    QCOMPARE(availability.shortcutsEnabledForScope(
+                 ImageActionAvailability::RightToLeftReadingViewerShortcutScope),
+        availability.rightToLeftReadingViewerShortcutsEnabled());
+    QCOMPARE(availability.shortcutsEnabledForScope(ImageActionAvailability::RotateShortcutScope),
+        availability.rotateShortcutsEnabled());
+    QCOMPARE(
+        availability.shortcutsEnabledForScope(ImageActionAvailability::RotateViewerShortcutScope),
+        availability.rotateViewerShortcutsEnabled());
+    QCOMPARE(availability.shortcutsEnabledForScope(ImageActionAvailability::PannableShortcutScope),
+        availability.pannableShortcutsEnabled());
+    QCOMPARE(
+        availability.shortcutsEnabledForScope(ImageActionAvailability::PannableViewerShortcutScope),
+        availability.pannableViewerShortcutsEnabled());
+    QCOMPARE(availability.shortcutsEnabledForScope(ImageActionAvailability::ContainerShortcutScope),
+        availability.containerShortcutsEnabled());
+    QCOMPARE(availability.shortcutsEnabledForScope(
+                 ImageActionAvailability::ContainerViewerShortcutScope),
+        availability.containerViewerShortcutsEnabled());
+    QVERIFY(!availability.shortcutsEnabledForScope(
+        static_cast<ImageActionAvailability::ShortcutScope>(999)));
+}
+
 void TestImageActionAvailability::settersNotifyOnlyWhenInputsChange()
 {
     ImageActionAvailability availability;
     QSignalSpy spy(&availability, &ImageActionAvailability::availabilityChanged);
+    QCOMPARE(availability.availabilityRevision(), 0);
 
     availability.setImageReady(false);
     QCOMPARE(spy.count(), 0);
+    QCOMPARE(availability.availabilityRevision(), 0);
 
     availability.setImageReady(true);
     QCOMPARE(spy.count(), 1);
+    QCOMPARE(availability.availabilityRevision(), 1);
 
     availability.setImageReady(true);
     QCOMPARE(spy.count(), 1);
+    QCOMPARE(availability.availabilityRevision(), 1);
 
     availability.setCurrentPageNumber(1);
     QCOMPARE(spy.count(), 2);
+    QCOMPARE(availability.availabilityRevision(), 2);
 }
 
 QTEST_GUILESS_MAIN(TestImageActionAvailability)
