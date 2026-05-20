@@ -1,6 +1,6 @@
 # Architecture
 
-This document records the long-term architecture direction for KiriView. It is not a product behavior specification; user-visible behavior belongs in `SPEC.md`.
+This document records the long-term architecture direction for KiriView. It is not a product behavior specification; user-visible behavior belongs in the files under `../spec/`.
 
 KiriView is a KDE Kirigami image viewer built from three cooperating layers:
 
