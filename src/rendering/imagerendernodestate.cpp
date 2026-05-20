@@ -3,7 +3,7 @@
 
 #include "imagerendernodestate.h"
 
-#include "imagerotation.h"
+#include "presentation/imagerotation.h"
 
 namespace KiriView {
 const QRectF &ImageRenderNodeState::targetRect() const { return m_targetRect; }

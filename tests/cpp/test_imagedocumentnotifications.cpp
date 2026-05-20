@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 #include "document/imagedocumentnotifications.h"
-#include "imagezoomstate.h"
+#include "presentation/imagezoomstate.h"
 
 #include <QObject>
 #include <QTest>

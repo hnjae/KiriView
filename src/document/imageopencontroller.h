@@ -7,9 +7,9 @@
 #include "decoding/imagedecodedependencies.h"
 #include "imagedocumenteffects.h"
 #include "imageloadtypes.h"
-#include "imagepresentationload.h"
 #include "navigation/imagecandidateprovider.h"
 #include "predecode/predecodedimage.h"
+#include "presentation/imagepresentationload.h"
 
 #include <QString>
 #include <QUrl>

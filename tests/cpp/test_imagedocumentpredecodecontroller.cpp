@@ -4,7 +4,7 @@
 #include "document/imagedocumentpredecodecontroller.h"
 #include "document/imagedocumentstate.h"
 #include "image_test_support.h"
-#include "imagepresentationcontroller.h"
+#include "presentation/imagepresentationcontroller.h"
 #include "rendering/imagerendering.h"
 
 #include <QObject>

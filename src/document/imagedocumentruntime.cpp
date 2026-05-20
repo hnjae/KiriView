@@ -10,8 +10,8 @@
 #include "imagedocumentsourceloadpolicy.h"
 #include "imagedocumentsourceloadrequest.h"
 #include "imagedocumentsourceloadruntimeplan.h"
-#include "imagepresentationcontroller.h"
-#include "imagespreadpresentationcontroller.h"
+#include "presentation/imagepresentationcontroller.h"
+#include "presentation/imagespreadpresentationcontroller.h"
 
 #include <QObject>
 #include <QUrl>

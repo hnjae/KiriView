@@ -5,10 +5,10 @@
 
 #include "document/imagedocumentstate.h"
 #include "image_test_support.h"
-#include "imagepresentationcontroller.h"
-#include "imagespreadpresentationcontroller.h"
 #include "navigation/imagecontainer.h"
 #include "navigation/imagenavigationservice.h"
+#include "presentation/imagepresentationcontroller.h"
+#include "presentation/imagespreadpresentationcontroller.h"
 #include "rendering/imagerendering.h"
 
 #include <QObject>

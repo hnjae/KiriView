@@ -9,8 +9,8 @@
 #include "imagedocumenteffects.h"
 #include "imagedocumentstate.h"
 #include "imagedocumenttypes.h"
-#include "imagezoomstate.h"
 #include "navigation/imagenavigationtypes.h"
+#include "presentation/imagezoomstate.h"
 #include "rendering/imagesurface.h"
 
 #include <QRectF>

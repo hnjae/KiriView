@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "imagespreadgeometry.h"
+#include "presentation/imagespreadgeometry.h"
 
 #include <QObject>
 #include <QRectF>

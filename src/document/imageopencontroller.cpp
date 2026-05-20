@@ -9,8 +9,8 @@
 #include "imageloader.h"
 #include "imageopentransitionapplier.h"
 #include "imageopenworkflow.h"
-#include "imagepresentationcontroller.h"
-#include "imagepresentationload.h"
+#include "presentation/imagepresentationcontroller.h"
+#include "presentation/imagepresentationload.h"
 
 #include <memory>
 #include <utility>

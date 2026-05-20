@@ -3,8 +3,8 @@
 
 #include "kiriimageview.h"
 
-#include "imageviewportgeometry.h"
 #include "kiriimagedocument.h"
+#include "presentation/imageviewportgeometry.h"
 #include "rendering/imagerendering.h"
 #include "rendering/kiriimagerendernode.h"
 

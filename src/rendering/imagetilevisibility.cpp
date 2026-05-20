@@ -3,8 +3,8 @@
 
 #include "imagetilevisibility.h"
 
-#include "imagerotation.h"
 #include "imagetilegeometrybridge.h"
+#include "presentation/imagerotation.h"
 
 namespace KiriView {
 qreal tileDisplayPixelsPerSourcePixel(

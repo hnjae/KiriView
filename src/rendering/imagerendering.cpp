@@ -3,8 +3,8 @@
 
 #include "imagerendering.h"
 
-#include "imagerotation.h"
 #include "kiriview/src/imagerendergeometry.cxx.h"
+#include "presentation/imagerotation.h"
 #include "qtgeometryconversion.h"
 
 #include <QRect>

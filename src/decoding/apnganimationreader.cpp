@@ -9,8 +9,8 @@
 #include "apnganimationreader.h"
 
 #include "apngframecomposer.h"
-#include "imageanimationpolicy.h"
 #include "imageerrortext.h"
+#include "presentation/imageanimationpolicy.h"
 
 #include <png.h>
 

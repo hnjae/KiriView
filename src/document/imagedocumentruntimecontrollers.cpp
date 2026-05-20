@@ -15,9 +15,9 @@
 #include "imagedocumentstate.h"
 #include "imageerrortext.h"
 #include "imageopencontroller.h"
-#include "imagepresentationcontroller.h"
-#include "imagespreadpresentationcontroller.h"
 #include "navigation/imagenavigationservice.h"
+#include "presentation/imagepresentationcontroller.h"
+#include "presentation/imagespreadpresentationcontroller.h"
 
 #include <QObject>
 #include <QUrl>

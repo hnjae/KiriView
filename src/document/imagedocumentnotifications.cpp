@@ -3,7 +3,7 @@
 
 #include "imagedocumentnotifications.h"
 
-#include "imagezoomstate.h"
+#include "presentation/imagezoomstate.h"
 
 namespace KiriView {
 std::vector<ImageDocumentChange> imageDocumentSpreadTransitionNotifications()

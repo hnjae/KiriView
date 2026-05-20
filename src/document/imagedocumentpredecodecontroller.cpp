@@ -5,7 +5,7 @@
 
 #include "imagedocumentstate.h"
 #include "imagepredecodecoordinator.h"
-#include "imagepresentationcontroller.h"
+#include "presentation/imagepresentationcontroller.h"
 
 #include <optional>
 #include <utility>

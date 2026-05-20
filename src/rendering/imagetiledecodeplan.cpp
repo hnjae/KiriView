@@ -3,9 +3,9 @@
 
 #include "imagetiledecodeplan.h"
 
-#include "imagerotation.h"
 #include "imagetilegeometrybridge.h"
 #include "imagetilevisibility.h"
+#include "presentation/imagerotation.h"
 
 #include <QPointF>
 #include <QRect>

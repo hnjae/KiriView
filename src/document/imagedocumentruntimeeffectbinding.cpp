@@ -12,8 +12,8 @@
 #include "imageopencontroller.h"
 #include "imageopentransitionapplier.h"
 #include "imageopenworkflow.h"
-#include "imagepresentationcontroller.h"
-#include "imagespreadpresentationcontroller.h"
+#include "presentation/imagepresentationcontroller.h"
+#include "presentation/imagespreadpresentationcontroller.h"
 
 #include <utility>
 

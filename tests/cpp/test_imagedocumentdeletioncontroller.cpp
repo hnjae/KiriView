@@ -5,7 +5,7 @@
 
 #include "document/imagedocumentstate.h"
 #include "image_test_support.h"
-#include "imagepresentationcontroller.h"
+#include "presentation/imagepresentationcontroller.h"
 
 #include <QObject>
 #include <QTest>

@@ -5,8 +5,8 @@
 #define KIRIVIEW_IMAGERENDERING_H
 
 #include "document/imagedocumenttypes.h"
-#include "imagerotation.h"
 #include "imagesurface.h"
+#include "presentation/imagerotation.h"
 #include "staticimage.h"
 
 #include <QImage>

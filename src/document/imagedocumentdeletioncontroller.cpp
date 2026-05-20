@@ -6,7 +6,7 @@
 #include "imagecallback.h"
 #include "imagedocumentstate.h"
 #include "imageerrortext.h"
-#include "imagepresentationcontroller.h"
+#include "presentation/imagepresentationcontroller.h"
 
 #include <utility>
 
