@@ -90,7 +90,7 @@ let
     "src/apngframecomposer.cpp"
     "src/kiriimagedocument.cpp"
     "src/kiriimagedecoder.cpp"
-    "src/kiriimagerendernode.cpp"
+    "src/rendering/kiriimagerendernode.cpp"
     "src/kiriimageview.cpp"
     "src/kiriviewapplication.cpp"
   ];
@@ -158,6 +158,7 @@ let
       "clang++"
       "-std=c++17"
       "-Isrc"
+      "-Isrc/rendering"
       "-Itarget/cxxqt/clangd/include"
     ]
     ++ qtCompileDefines

@@ -56,7 +56,7 @@ const RUST_BRIDGE_SOURCES: &[&str] = &[
 const CXX_QT_CPP_SOURCES: &[&str] = &[
     "src/kiriimagedocument.cpp",
     "src/kiriimagedecoder.cpp",
-    "src/kiriimagerendernode.cpp",
+    "src/rendering/kiriimagerendernode.cpp",
     "src/kiriimageview.cpp",
     "src/kiriviewapplication.cpp",
 ];
@@ -218,6 +218,7 @@ fn main() {
             cc.include("src/application");
             cc.include("src/archive");
             cc.include("src/predecode");
+            cc.include("src/rendering");
             cc.include(&generated_state.include_dir);
             for dir in &native_include_dirs {
                 cc.include(dir);

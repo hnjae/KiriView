@@ -77,6 +77,7 @@ target_include_directories(kiriview_test_core PUBLIC
     ../../src/application
     ../../src/archive
     ../../src/predecode
+    ../../src/rendering
     "${CMAKE_CURRENT_BINARY_DIR}"
     "${KIRIVIEW_CXXQT_INCLUDE_DIR}"
 )
