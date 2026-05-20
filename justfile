@@ -86,6 +86,7 @@ run:
         --env=LIBHEIF_PLUGIN_PATH=/app/lib/libheif \
         --env=WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-wayland-0}" \
         --env=QT_QPA_PLATFORM=wayland \
+        --env=QT_LOGGING_RULES="${QT_LOGGING_RULES:-io.github.hnjae.kiriview.input.debug=true}" \
         build-dir \
         kiriview
 

@@ -3,6 +3,7 @@
 
 import QtQuick
 import QtQuick.Controls as Controls
+import QtQml
 import io.github.hnjae.kiriview
 
 Item {
@@ -22,6 +23,13 @@ Item {
     readonly property real viewportHeight: imageFlickable.height
 
     signal viewerClicked
+
+    LoggingCategory {
+        id: inputLog
+
+        name: "io.github.hnjae.kiriview.input"
+        defaultLogLevel: LoggingCategory.Warning
+    }
 
     function currentContentPosition() {
         return Qt.point(imageFlickable.contentX, imageFlickable.contentY);
@@ -165,12 +173,20 @@ Item {
 
             onWheel: wheel => {
                 const stepCount = root.wheelZoomStepCount(wheel);
-                if (stepCount === 0 || !root.viewportPointInsideImage(wheel.x, wheel.y)) {
+                const insideImage = root.viewportPointInsideImage(wheel.x, wheel.y);
+                console.debug(inputLog, "ctrl-wheel received", "x", wheel.x, "y", wheel.y, "pixelDelta", wheel.pixelDelta, "angleDelta", wheel.angleDelta, "stepCount", stepCount, "insideImage", insideImage, "zoomPercent", imageDocument.zoomPercent, "contentX", imageFlickable.contentX, "contentY", imageFlickable.contentY, "contentWidth", imageFlickable.contentWidth, "contentHeight", imageFlickable.contentHeight, "viewportWidth", imageFlickable.width, "viewportHeight", imageFlickable.height);
+
+                if (stepCount === 0 || !insideImage) {
+                    console.debug(inputLog, "ctrl-wheel ignored", "reason", stepCount === 0 ? "zero-step" : "outside-image", "x", wheel.x, "y", wheel.y);
                     wheel.accepted = false;
                     return;
                 }
 
-                root.zoomByStep(stepCount, wheel.x, wheel.y);
+                const previousZoomPercent = imageDocument.zoomPercent;
+                const previousContentX = imageFlickable.contentX;
+                const previousContentY = imageFlickable.contentY;
+                const zoomed = root.zoomByStep(stepCount, wheel.x, wheel.y);
+                console.debug(inputLog, "ctrl-wheel zoomed", "applied", zoomed, "previousZoomPercent", previousZoomPercent, "nextZoomPercent", imageDocument.zoomPercent, "previousContentX", previousContentX, "previousContentY", previousContentY, "nextContentX", imageFlickable.contentX, "nextContentY", imageFlickable.contentY);
                 wheel.accepted = true;
             }
         }
