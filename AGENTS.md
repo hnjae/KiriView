@@ -33,7 +33,9 @@ Rust, QML, C++, and headers use 4-space indentation. Keep app IDs as `io.github.
 
 ## Markdown Style
 
-Write documentation in a concise, technical style. Use Mermaid for diagrams. Do not hard-wrap prose in Markdown documents. Keep ordinary paragraphs and list item text on a single source line unless Markdown syntax, tables, code blocks, or another structured block require line breaks.
+- Write all documentation in a concise, technical style.
+- Do not hard-wrap prose in Markdown files. Keep ordinary paragraphs and list items on a single source line unless Markdown syntax or structured blocks require line breaks.
+- Use Mermaid for diagrams when diagrams are needed.
 
 ## Translation Policy
 
