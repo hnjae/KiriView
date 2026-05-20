@@ -19,25 +19,31 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/archivebackend.cpp
+#: src/applicationshortcutruntime.cpp
+#, kde-format
+msgctxt "@info:keyboard shortcut"
+msgid "Unassigned"
+msgstr ""
+
+#: src/archive/archivebackend.cpp
 #, kde-format
 msgctxt "@info:status"
 msgid "Could not open the selected archive."
 msgstr ""
 
-#: src/archivebackend.cpp
+#: src/archive/archivebackend.cpp
 #, kde-format
 msgctxt "@info:status"
 msgid "Could not open %1."
 msgstr ""
 
-#: src/archivebackend.cpp
+#: src/archive/archivebackend.cpp
 #, kde-format
 msgctxt "@info:status"
 msgid "Could not find the selected image in the archive."
 msgstr ""
 
-#: src/archivebackend.cpp
+#: src/archive/archivebackend.cpp
 #, kde-format
 msgctxt "@info:status"
 msgid "Could not read the selected archive image."
@@ -423,12 +429,6 @@ msgstr ""
 #: src/kiriviewapplicationactions.cpp
 msgctxt "@action"
 msgid "Show Menubar"
-msgstr ""
-
-#: src/shortcuthelpmodel.cpp
-#, kde-format
-msgctxt "@info:keyboard shortcut"
-msgid "Unassigned"
 msgstr ""
 
 #: src/qml/ApplicationMenuBar.qml

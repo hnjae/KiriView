@@ -74,6 +74,7 @@ add_library(kiriview_test_core STATIC
 )
 target_include_directories(kiriview_test_core PUBLIC
     ../../src
+    ../../src/archive
     ../../src/predecode
     "${CMAKE_CURRENT_BINARY_DIR}"
     "${KIRIVIEW_CXXQT_INCLUDE_DIR}"

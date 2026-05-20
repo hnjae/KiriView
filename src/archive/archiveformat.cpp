@@ -85,12 +85,6 @@ std::optional<KiriView::ArchiveOpenMatch> archiveMatchForUrl(const QUrl &url,
     return matchForMimeTypeName(mimeType.name());
 }
 
-QString archiveKioSchemeForUrl(const QUrl &url, QMimeDatabase::MatchMode mimeMatchMode,
-    ArchiveMatchResolver matchForFileName, ArchiveMatchResolver matchForMimeTypeName)
-{
-    return schemeString(
-        archiveMatchForUrl(url, mimeMatchMode, matchForFileName, matchForMimeTypeName));
-}
 }
 
 namespace KiriView {
