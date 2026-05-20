@@ -1,15 +1,15 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "imagedocumentnavigationcontroller.h"
+#include "document/imagedocumentnavigationcontroller.h"
 
+#include "document/imagedocumentstate.h"
 #include "image_test_support.h"
 #include "imagecontainer.h"
-#include "imagedocumentstate.h"
 #include "imagenavigationservice.h"
 #include "imagepresentationcontroller.h"
-#include "imagerendering.h"
 #include "imagespreadpresentationcontroller.h"
+#include "rendering/imagerendering.h"
 
 #include <QObject>
 #include <QSize>

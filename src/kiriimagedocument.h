@@ -4,8 +4,8 @@
 #ifndef KIRIVIEW_KIRIIMAGEDOCUMENT_H
 #define KIRIVIEW_KIRIIMAGEDOCUMENT_H
 
-#include "imagedocumenttypes.h"
-#include "imagesurface.h"
+#include "document/imagedocumenttypes.h"
+#include "rendering/imagesurface.h"
 
 #include <QObject>
 #include <QRectF>

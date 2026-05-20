@@ -3,8 +3,8 @@
 
 #include "imagepresentationviewportstate.h"
 
-#include "imagedocumentnotifications.h"
-#include "imagerendering.h"
+#include "document/imagedocumentnotifications.h"
+#include "rendering/imagerendering.h"
 
 #include <utility>
 

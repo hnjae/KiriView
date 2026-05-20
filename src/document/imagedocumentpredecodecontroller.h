@@ -7,7 +7,7 @@
 #include "imagecandidateprovider.h"
 #include "imagedecodedependencies.h"
 #include "powersaverprovider.h"
-#include "predecodedimage.h"
+#include "predecode/predecodedimage.h"
 
 #include <QUrl>
 #include <functional>

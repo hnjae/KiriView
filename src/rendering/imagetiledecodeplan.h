@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGETILEDECODEPLAN_H
 #define KIRIVIEW_IMAGETILEDECODEPLAN_H
 
-#include "imagedocumenttypes.h"
+#include "document/imagedocumenttypes.h"
 #include "imagesurface.h"
 #include "imagetile.h"
 #include "imagetiledecodestate.h"

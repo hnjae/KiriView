@@ -3,7 +3,7 @@
 
 #include "imagecontainer.h"
 
-#include "archiveformat.h"
+#include "archive/archiveformat.h"
 #include "imageurl.h"
 #include "kiriview/src/archivepath.cxx.h"
 #include "rustqtconversion.h"

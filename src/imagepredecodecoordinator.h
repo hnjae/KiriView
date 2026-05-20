@@ -9,10 +9,10 @@
 #include "imagedecodedependencies.h"
 #include "imageiojob.h"
 #include "powersaverprovider.h"
-#include "predecodedimage.h"
-#include "predecodeloadcontroller.h"
-#include "predecodeschedulestate.h"
-#include "staticimage.h"
+#include "predecode/predecodedimage.h"
+#include "predecode/predecodeloadcontroller.h"
+#include "predecode/predecodeschedulestate.h"
+#include "rendering/staticimage.h"
 
 #include <QElapsedTimer>
 #include <QObject>

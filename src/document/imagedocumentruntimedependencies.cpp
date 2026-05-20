@@ -3,7 +3,7 @@
 
 #include "imagedocumentruntimedependencies.h"
 
-#include "archivedocumentsessionstore.h"
+#include "archive/archivedocumentsessionstore.h"
 
 #include <utility>
 

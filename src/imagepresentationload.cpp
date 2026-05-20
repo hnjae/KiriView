@@ -5,7 +5,7 @@
 
 #include "imagecontainer.h"
 #include "imagepresentationcontroller.h"
-#include "predecodecache.h"
+#include "predecode/predecodecache.h"
 
 #include <QImage>
 #include <utility>

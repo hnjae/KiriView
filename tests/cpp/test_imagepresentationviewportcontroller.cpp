@@ -4,7 +4,7 @@
 #include "imagepresentationviewportcontroller.h"
 
 #include "image_test_support.h"
-#include "imagerendering.h"
+#include "rendering/imagerendering.h"
 
 #include <QObject>
 #include <QRectF>

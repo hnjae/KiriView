@@ -8,7 +8,7 @@
 #include "predecodeactiveloads.h"
 #include "predecodedimage.h"
 #include "predecodedisplayedhistory.h"
-#include "staticimage.h"
+#include "rendering/staticimage.h"
 
 #include <QUrl>
 #include <QtGlobal>

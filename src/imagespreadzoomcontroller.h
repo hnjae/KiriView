@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGESPREADZOOMCONTROLLER_H
 #define KIRIVIEW_IMAGESPREADZOOMCONTROLLER_H
 
-#include "imagedocumenttypes.h"
+#include "document/imagedocumenttypes.h"
 #include "imagerendercontextstate.h"
 #include "imagezoomstate.h"
 

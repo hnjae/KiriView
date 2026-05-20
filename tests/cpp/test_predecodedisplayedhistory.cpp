@@ -3,7 +3,7 @@
 
 #include "image_test_support.h"
 #include "imageurl.h"
-#include "predecodedisplayedhistory.h"
+#include "predecode/predecodedisplayedhistory.h"
 
 #include <QObject>
 #include <QTest>

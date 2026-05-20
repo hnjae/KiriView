@@ -4,9 +4,9 @@
 #ifndef KIRIVIEW_IMAGEPRESENTATIONVIEWPORTCONTROLLER_H
 #define KIRIVIEW_IMAGEPRESENTATIONVIEWPORTCONTROLLER_H
 
-#include "imagedocumenttypes.h"
+#include "document/imagedocumenttypes.h"
 #include "imagepresentationviewportstate.h"
-#include "imagesurface.h"
+#include "rendering/imagesurface.h"
 
 #include <QRectF>
 #include <QSize>

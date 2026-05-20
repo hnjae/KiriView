@@ -2,9 +2,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 #include "candidate_test_support.h"
+#include "document/imageloadsessiontracker.h"
 #include "imagecontainer.h"
 #include "imagedecoderequest.h"
-#include "imageloadsessiontracker.h"
 
 #include <QObject>
 #include <QSize>

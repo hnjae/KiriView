@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "applicationmenupresentationruntime.h"
+#include "application/applicationmenupresentationruntime.h"
 #include "kiriviewstate.h"
 
 #include <KConfigGroup>

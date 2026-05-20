@@ -3,7 +3,7 @@
 
 #include "candidate_test_support.h"
 #include "imagecontainer.h"
-#include "predecodewindowplan.h"
+#include "predecode/predecodewindowplan.h"
 
 #include <QObject>
 #include <QTest>

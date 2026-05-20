@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 #include "image_test_support.h"
-#include "imagetiledecodeplan.h"
-#include "svgtilesource.h"
+#include "rendering/imagetiledecodeplan.h"
+#include "rendering/svgtilesource.h"
 
 #include <QByteArray>
 #include <QImage>

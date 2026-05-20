@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "applicationactionregistry.h"
+#include "application/applicationactionregistry.h"
+#include "application/kiriviewapplicationactions.h"
 #include "kiriviewapplication.h"
-#include "kiriviewapplicationactions.h"
 #include "kiriviewstate.h"
 
 #include <QAction>

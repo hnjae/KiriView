@@ -5,8 +5,8 @@
 
 #include "bufferedimagereader.h"
 #include "imageerrortext.h"
-#include "imagerendering.h"
-#include "qimagereadertilesource.h"
+#include "rendering/imagerendering.h"
+#include "rendering/qimagereadertilesource.h"
 #include "staticimagedecode.h"
 
 #include <QImage>

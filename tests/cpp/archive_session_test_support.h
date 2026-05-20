@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_TESTS_ARCHIVE_SESSION_TEST_SUPPORT_H
 #define KIRIVIEW_TESTS_ARCHIVE_SESSION_TEST_SUPPORT_H
 
-#include "archivebackend.h"
+#include "archive/archivebackend.h"
 #include "image_test_support.h"
 #include "imagecontainer.h"
 

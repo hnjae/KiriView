@@ -1,11 +1,11 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+#include "document/imagedocumentpredecodecontroller.h"
+#include "document/imagedocumentstate.h"
 #include "image_test_support.h"
-#include "imagedocumentpredecodecontroller.h"
-#include "imagedocumentstate.h"
 #include "imagepresentationcontroller.h"
-#include "imagerendering.h"
+#include "rendering/imagerendering.h"
 
 #include <QObject>
 #include <QSize>

@@ -3,10 +3,10 @@
 
 #include "kiriimageview.h"
 
-#include "imagerendering.h"
 #include "imageviewportgeometry.h"
 #include "kiriimagedocument.h"
-#include "kiriimagerendernode.h"
+#include "rendering/imagerendering.h"
+#include "rendering/kiriimagerendernode.h"
 
 #include <QQuickWindow>
 #include <cmath>

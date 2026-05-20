@@ -3,7 +3,7 @@
 
 #include "imagedocumentruntimecontrollers.h"
 
-#include "archivedocumentsessionstore.h"
+#include "archive/archivedocumentsessionstore.h"
 #include "imagecallback.h"
 #include "imagedocumentdeletioncontroller.h"
 #include "imagedocumenteffectexecutor.h"

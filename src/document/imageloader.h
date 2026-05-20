@@ -12,7 +12,7 @@
 #include "imageiojob.h"
 #include "imageloadsessiontracker.h"
 #include "imageloadtypes.h"
-#include "predecodedimage.h"
+#include "predecode/predecodedimage.h"
 
 #include <QByteArray>
 #include <QImage>

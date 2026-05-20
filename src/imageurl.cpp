@@ -3,7 +3,7 @@
 
 #include "imageurl.h"
 
-#include "archivepath.h"
+#include "archive/archivepath.h"
 
 #include <QByteArray>
 #include <QDir>

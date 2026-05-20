@@ -3,7 +3,7 @@
 
 #include "imagedocumentruntimeeffectbinding.h"
 
-#include "archivedocumentsessionstore.h"
+#include "archive/archivedocumentsessionstore.h"
 #include "imagedocumentdeletioncontroller.h"
 #include "imagedocumentnavigationcontroller.h"
 #include "imagedocumentpredecodecontroller.h"

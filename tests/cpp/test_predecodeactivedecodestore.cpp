@@ -4,7 +4,7 @@
 #include "image_test_support.h"
 #include "imagedecodejob.h"
 #include "imageurl.h"
-#include "predecodeactivedecodestore.h"
+#include "predecode/predecodeactivedecodestore.h"
 
 #include <QCoreApplication>
 #include <QEvent>

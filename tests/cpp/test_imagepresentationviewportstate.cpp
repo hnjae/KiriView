@@ -3,7 +3,7 @@
 
 #include "imagepresentationviewportstate.h"
 
-#include "imagerendering.h"
+#include "rendering/imagerendering.h"
 
 #include <QObject>
 #include <QRectF>

@@ -4,9 +4,9 @@
 #ifndef KIRIVIEW_IMAGEPRESENTATIONCONTROLLER_H
 #define KIRIVIEW_IMAGEPRESENTATIONCONTROLLER_H
 
-#include "imagedocumenttypes.h"
-#include "imagesurface.h"
+#include "document/imagedocumenttypes.h"
 #include "imagezoomstate.h"
+#include "rendering/imagesurface.h"
 
 #include <QByteArray>
 #include <QImage>

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "imagedocumenteffectexecutor.h"
+#include "document/imagedocumenteffectexecutor.h"
 
 #include <QObject>
 #include <QStringList>

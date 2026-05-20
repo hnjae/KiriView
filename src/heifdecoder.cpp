@@ -16,7 +16,7 @@
 #include "heifcontainer.h"
 #include "heifsequencereader.h"
 #include "heifsupport.h"
-#include "heiftilesource.h"
+#include "rendering/heiftilesource.h"
 #include "staticimagedecode.h"
 
 #include <memory>

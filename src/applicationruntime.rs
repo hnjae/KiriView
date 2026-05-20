@@ -17,7 +17,7 @@ mod ffi {
     }
 
     unsafe extern "C++" {
-        include!("applicationruntime.h");
+        include!("application/applicationruntime.h");
 
         #[cxx_name = "runApplication"]
         fn run_application(startup_source: &ApplicationStartupSource) -> i32;

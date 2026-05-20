@@ -3,8 +3,8 @@
 
 #include "imagespreadpresentationcontroller.h"
 
+#include "document/imagedocumentnotifications.h"
 #include "imagecallback.h"
-#include "imagedocumentnotifications.h"
 #include "imagepresentationcontroller.h"
 #include "imagesecondarypagecontroller.h"
 #include "imagespreadgeometry.h"

@@ -5,8 +5,8 @@
 
 #include "imagebytecost.h"
 #include "imageerrortext.h"
-#include "imagerendering.h"
-#include "imagetilesourcehelpers_p.h"
+#include "rendering/imagerendering.h"
+#include "rendering/imagetilesourcehelpers_p.h"
 #include "staticimagedecode.h"
 
 #include <QColorSpace>

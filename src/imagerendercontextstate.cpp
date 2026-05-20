@@ -3,7 +3,7 @@
 
 #include "imagerendercontextstate.h"
 
-#include "imagerendering.h"
+#include "rendering/imagerendering.h"
 
 #include <utility>
 

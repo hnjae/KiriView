@@ -3,10 +3,10 @@
 
 #include "archivedocumentsessionstore.h"
 
+#include "document/imagedocumentsourceloadrequest.h"
+#include "document/imageloadplan.h"
 #include "imagecallback.h"
 #include "imagecontainer.h"
-#include "imagedocumentsourceloadrequest.h"
-#include "imageloadplan.h"
 
 #include <optional>
 #include <utility>

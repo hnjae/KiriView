@@ -3,9 +3,9 @@
 
 #include "kiriimagedocument.h"
 
-#include "filedeletion.h"
-#include "imagedocumentpublicsignals.h"
-#include "imagedocumentruntime.h"
+#include "document/filedeletion.h"
+#include "document/imagedocumentpublicsignals.h"
+#include "document/imagedocumentruntime.h"
 #include "imageformatregistry.h"
 
 #include <memory>

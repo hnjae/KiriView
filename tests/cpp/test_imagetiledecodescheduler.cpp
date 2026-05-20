@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 #include "image_test_support.h"
-#include "imagetiledecodescheduler.h"
+#include "rendering/imagetiledecodescheduler.h"
 
 #include <QImage>
 #include <QObject>

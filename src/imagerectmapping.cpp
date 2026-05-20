@@ -3,7 +3,7 @@
 
 #include "imagerectmapping.h"
 
-#include "imagetilegeometrybridge.h"
+#include "rendering/imagetilegeometrybridge.h"
 
 namespace KiriView {
 QRect boundedIntegerRect(const QRect &rect, const QSize &boundsSize)

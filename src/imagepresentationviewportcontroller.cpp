@@ -4,7 +4,7 @@
 #include "imagepresentationviewportcontroller.h"
 
 #include "imagecallback.h"
-#include "imagetiledecodescheduler.h"
+#include "rendering/imagetiledecodescheduler.h"
 
 #include <utility>
 

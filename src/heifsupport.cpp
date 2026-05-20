@@ -5,7 +5,7 @@
 
 #include "imageanimationpolicy.h"
 #include "imageerrortext.h"
-#include "imagerendering.h"
+#include "rendering/imagerendering.h"
 
 #include <QColorSpace>
 #include <cstddef>

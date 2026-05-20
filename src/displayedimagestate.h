@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_DISPLAYEDIMAGESTATE_H
 #define KIRIVIEW_DISPLAYEDIMAGESTATE_H
 
-#include "imagesurface.h"
+#include "rendering/imagesurface.h"
 
 #include <QImage>
 #include <QSize>

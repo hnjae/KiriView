@@ -5,8 +5,8 @@
 #define KIRIVIEW_IMAGEPRESENTATIONLOAD_H
 
 #include "decodedimageresult.h"
-#include "imageloadtypes.h"
-#include "predecodedimage.h"
+#include "document/imageloadtypes.h"
+#include "predecode/predecodedimage.h"
 
 #include <QByteArray>
 #include <QImage>

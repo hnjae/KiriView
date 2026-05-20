@@ -3,8 +3,8 @@
 
 #include "imagesecondarypagecontroller.h"
 
+#include "document/imageloader.h"
 #include "imagecallback.h"
-#include "imageloader.h"
 #include "imagepresentationcontroller.h"
 #include "imagepresentationload.h"
 #include "imagespreadgeometry.h"

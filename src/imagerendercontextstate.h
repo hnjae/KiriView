@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGERENDERCONTEXTSTATE_H
 #define KIRIVIEW_IMAGERENDERCONTEXTSTATE_H
 
-#include "imagedocumenttypes.h"
+#include "document/imagedocumenttypes.h"
 
 #include <QtGlobal>
 #include <functional>

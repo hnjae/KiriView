@@ -1,10 +1,10 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "imagedocumentdeletioncontroller.h"
+#include "document/imagedocumentdeletioncontroller.h"
 
+#include "document/imagedocumentstate.h"
 #include "image_test_support.h"
-#include "imagedocumentstate.h"
 #include "imagepresentationcontroller.h"
 
 #include <QObject>

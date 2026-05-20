@@ -4,16 +4,16 @@
 #ifndef KIRIVIEW_IMAGESPREADPRESENTATIONCONTROLLER_H
 #define KIRIVIEW_IMAGESPREADPRESENTATIONCONTROLLER_H
 
+#include "document/imagedocumentstate.h"
 #include "imagecandidateprovider.h"
 #include "imagedecodedependencies.h"
-#include "imagedocumentstate.h"
 #include "imagenavigationtypes.h"
 #include "imagespreadgeometry.h"
 #include "imagespreadnavigation.h"
 #include "imagespreadsecondarypagerefresh.h"
-#include "imagesurface.h"
 #include "imagezoomstate.h"
-#include "predecodedimage.h"
+#include "predecode/predecodedimage.h"
+#include "rendering/imagesurface.h"
 
 #include <QRectF>
 #include <QSize>

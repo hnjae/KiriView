@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 #include "image_test_support.h"
-#include "predecodeloadstate.h"
+#include "predecode/predecodeloadstate.h"
 
 #include <QObject>
 #include <QSize>

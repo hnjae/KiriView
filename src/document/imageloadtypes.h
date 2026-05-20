@@ -6,7 +6,7 @@
 
 #include "imagedecoderequest.h"
 #include "imagelocation.h"
-#include "staticimage.h"
+#include "rendering/staticimage.h"
 
 #include <QUrl>
 #include <QtGlobal>

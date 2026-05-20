@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGERENDERING_H
 #define KIRIVIEW_IMAGERENDERING_H
 
-#include "imagedocumenttypes.h"
+#include "document/imagedocumenttypes.h"
 #include "imagerotation.h"
 #include "imagesurface.h"
 #include "staticimage.h"

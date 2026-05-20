@@ -3,7 +3,7 @@
 
 #include "kiriviewapplication.h"
 
-#include "applicationactionruntime.h"
+#include "application/applicationactionruntime.h"
 
 namespace Actions = KiriView::ApplicationActions;
 

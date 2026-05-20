@@ -5,7 +5,7 @@
 
 #include "heifcontainer.h"
 #include "image_test_support.h"
-#include "qimagereadertilesource.h"
+#include "rendering/qimagereadertilesource.h"
 
 #include <libheif/heif.h>
 

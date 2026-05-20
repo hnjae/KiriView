@@ -5,7 +5,7 @@
 
 #include "image_test_support.h"
 #include "imagepresentationcontroller.h"
-#include "imagerendering.h"
+#include "rendering/imagerendering.h"
 
 #include <QObject>
 #include <QSize>

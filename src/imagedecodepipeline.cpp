@@ -9,9 +9,9 @@
 #include "kiriview/src/avifcompat.cxx.h"
 #include "qimagereaderdecoder.h"
 #include "rawdecoder.h"
+#include "rendering/svgtilesource.h"
 #include "rustqtconversion.h"
 #include "staticimagedecode.h"
-#include "svgtilesource.h"
 
 #include <QString>
 #include <memory>

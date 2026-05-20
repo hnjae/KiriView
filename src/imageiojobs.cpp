@@ -3,7 +3,7 @@
 
 #include "imageiojobs.h"
 
-#include "archivebackend.h"
+#include "archive/archivebackend.h"
 #include "imagecallback.h"
 #include "imagecandidateitems.h"
 #include "imagecontainer.h"

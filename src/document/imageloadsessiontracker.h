@@ -8,7 +8,7 @@
 #include "imagedecoderequest.h"
 #include "imageloadplan.h"
 #include "imagenavigationtypes.h"
-#include "staticimage.h"
+#include "rendering/staticimage.h"
 
 #include <QUrl>
 #include <QtGlobal>

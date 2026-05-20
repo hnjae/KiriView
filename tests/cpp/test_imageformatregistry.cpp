@@ -3,7 +3,7 @@
 
 #include "imageformatregistry.h"
 
-#include "archiveformat.h"
+#include "archive/archiveformat.h"
 
 #include <QFile>
 #include <QObject>

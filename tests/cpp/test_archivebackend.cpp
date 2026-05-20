@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "archivebackend.h"
+#include "archive/archivebackend.h"
 
-#include "archivebackend_p.h"
+#include "archive/archivebackend_p.h"
 #include "image_test_support.h"
 #include "imagecontainer.h"
 

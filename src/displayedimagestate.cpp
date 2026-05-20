@@ -3,7 +3,7 @@
 
 #include "displayedimagestate.h"
 
-#include "imagerendering.h"
+#include "rendering/imagerendering.h"
 
 #include <memory>
 #include <optional>

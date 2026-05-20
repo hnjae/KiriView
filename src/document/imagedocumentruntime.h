@@ -10,8 +10,8 @@
 #include "imagedocumentstate.h"
 #include "imagedocumenttypes.h"
 #include "imagenavigationtypes.h"
-#include "imagesurface.h"
 #include "imagezoomstate.h"
+#include "rendering/imagesurface.h"
 
 #include <QRectF>
 #include <QSize>

@@ -4,11 +4,11 @@
 #ifndef KIRIVIEW_IMAGEPRESENTATIONVIEWPORTSTATE_H
 #define KIRIVIEW_IMAGEPRESENTATIONVIEWPORTSTATE_H
 
-#include "imagedocumenttypes.h"
+#include "document/imagedocumenttypes.h"
 #include "imagepresentationgeometry.h"
 #include "imagerendercontextstate.h"
 #include "imagezoomstate.h"
-#include "staticimage.h"
+#include "rendering/staticimage.h"
 
 #include <QRectF>
 #include <QSize>

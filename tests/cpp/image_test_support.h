@@ -7,7 +7,7 @@
 #include "candidate_test_support.h"
 #include "image_async_test_support.h"
 #include "imageasyncdependencies.h"
-#include "staticimage.h"
+#include "rendering/staticimage.h"
 
 #include <QByteArray>
 #include <QImage>

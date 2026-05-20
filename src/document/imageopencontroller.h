@@ -9,7 +9,7 @@
 #include "imagedocumenteffects.h"
 #include "imageloadtypes.h"
 #include "imagepresentationload.h"
-#include "predecodedimage.h"
+#include "predecode/predecodedimage.h"
 
 #include <QString>
 #include <QUrl>

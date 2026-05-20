@@ -5,7 +5,7 @@
 #define KIRIVIEW_PREDECODEDIMAGE_H
 
 #include "imagelocation.h"
-#include "staticimage.h"
+#include "rendering/staticimage.h"
 
 #include <optional>
 

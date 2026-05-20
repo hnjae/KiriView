@@ -7,7 +7,7 @@
 #include "imageanimationplayer.h"
 #include "imagecallback.h"
 #include "imagepresentationviewportcontroller.h"
-#include "imagerendering.h"
+#include "rendering/imagerendering.h"
 
 #include <memory>
 #include <utility>

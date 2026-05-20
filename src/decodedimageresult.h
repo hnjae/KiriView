@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_DECODEDIMAGERESULT_H
 #define KIRIVIEW_DECODEDIMAGERESULT_H
 
-#include "staticimage.h"
+#include "rendering/staticimage.h"
 
 #include <QByteArray>
 #include <QImage>

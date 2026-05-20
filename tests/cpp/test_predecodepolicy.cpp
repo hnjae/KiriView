@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "predecodepolicy.h"
+#include "predecode/predecodepolicy.h"
 
 #include "candidate_test_support.h"
 #include "imagecontainer.h"

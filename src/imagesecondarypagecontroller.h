@@ -4,15 +4,15 @@
 #ifndef KIRIVIEW_IMAGESECONDARYPAGECONTROLLER_H
 #define KIRIVIEW_IMAGESECONDARYPAGECONTROLLER_H
 
+#include "document/imagedocumenttypes.h"
+#include "document/imageloadtypes.h"
 #include "imagecandidateprovider.h"
 #include "imagedecodedependencies.h"
-#include "imagedocumenttypes.h"
-#include "imageloadtypes.h"
 #include "imagelocation.h"
 #include "imagepresentationload.h"
 #include "imagesecondarypagestate.h"
-#include "imagesurface.h"
-#include "predecodedimage.h"
+#include "predecode/predecodedimage.h"
+#include "rendering/imagesurface.h"
 
 #include <QSize>
 #include <QSizeF>

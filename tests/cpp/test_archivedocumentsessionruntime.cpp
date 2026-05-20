@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "archivedocumentsessionruntime.h"
+#include "archive/archivedocumentsessionruntime.h"
 
 #include "archive_session_test_support.h"
 #include "image_test_support.h"

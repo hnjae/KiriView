@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "applicationruntime.h"
+#include "application/applicationruntime.h"
 #include "imageerrortext.h"
 #include "kiriviewapplication.h"
 #include "localization.h"

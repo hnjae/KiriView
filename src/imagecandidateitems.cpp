@@ -3,7 +3,7 @@
 
 #include "imagecandidateitems.h"
 
-#include "archiveformat.h"
+#include "archive/archiveformat.h"
 #include "imageformatregistry.h"
 #include "imagenavigationmodel.h"
 #include "imageurl.h"

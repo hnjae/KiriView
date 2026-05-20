@@ -3,7 +3,7 @@
 
 #include "qimagereaderdecoder.h"
 
-#include "qimagereadertilesource.h"
+#include "rendering/qimagereadertilesource.h"
 
 #include <QBuffer>
 #include <QByteArrayList>

@@ -4,8 +4,8 @@
 #include "imagepresentationcontroller.h"
 
 #include "image_test_support.h"
-#include "imagerendering.h"
-#include "svgtilesource.h"
+#include "rendering/imagerendering.h"
+#include "rendering/svgtilesource.h"
 
 #include <QByteArray>
 #include <QObject>

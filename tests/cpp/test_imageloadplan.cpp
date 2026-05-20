@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+#include "document/imageloadplan.h"
 #include "image_test_support.h"
 #include "imagecontainer.h"
-#include "imageloadplan.h"
 
 #include <QObject>
 #include <QSize>

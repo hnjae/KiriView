@@ -158,7 +158,6 @@ let
       "clang++"
       "-std=c++17"
       "-Isrc"
-      "-Isrc/rendering"
       "-Itarget/cxxqt/clangd/include"
     ]
     ++ qtCompileDefines

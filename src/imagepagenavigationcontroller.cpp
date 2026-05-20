@@ -3,9 +3,9 @@
 
 #include "imagepagenavigationcontroller.h"
 
+#include "document/imageremovalfallback.h"
 #include "imagecallback.h"
 #include "imagenavigationmodel.h"
-#include "imageremovalfallback.h"
 
 #include <QString>
 #include <optional>
