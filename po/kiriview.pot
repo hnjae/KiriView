@@ -19,10 +19,139 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 
-#: src/applicationshortcutruntime.cpp
+#: src/application/applicationshortcutruntime.cpp
 #, kde-format
 msgctxt "@info:keyboard shortcut"
 msgid "Unassigned"
+msgstr ""
+
+#: src/application/kiriviewapplicationactions.cpp
+msgid "Open"
+msgstr ""
+
+#: src/application/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Move to Trash"
+msgstr ""
+
+#: src/application/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Delete Permanently"
+msgstr ""
+
+#: src/application/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Previous Archive"
+msgstr ""
+
+#: src/application/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Next Archive"
+msgstr ""
+
+#: src/application/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Previous"
+msgstr ""
+
+#: src/application/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Next"
+msgstr ""
+
+#: src/application/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "First Image"
+msgstr ""
+
+#: src/application/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Last Image"
+msgstr ""
+
+#: src/application/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Zoom In"
+msgstr ""
+
+#: src/application/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Zoom Out"
+msgstr ""
+
+#: src/application/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Fit"
+msgstr ""
+
+#: src/application/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Fit Height"
+msgstr ""
+
+#: src/application/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Fit Width"
+msgstr ""
+
+#: src/application/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Actual Size"
+msgstr ""
+
+#: src/application/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Rotate Clockwise"
+msgstr ""
+
+#: src/application/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Rotate Counterclockwise"
+msgstr ""
+
+#: src/application/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Two-Page Spread"
+msgstr ""
+
+#: src/application/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Right-to-Left Reading"
+msgstr ""
+
+#: src/application/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Top Left"
+msgstr ""
+
+#: src/application/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Bottom Right"
+msgstr ""
+
+#: src/application/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Scan Forward"
+msgstr ""
+
+#: src/application/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Scan Backward"
+msgstr ""
+
+#: src/application/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Fullscreen"
+msgstr ""
+
+#: src/application/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Keyboard Shortcuts"
+msgstr ""
+
+#: src/application/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Show Menubar"
 msgstr ""
 
 #: src/archive/archivebackend.cpp
@@ -47,6 +176,18 @@ msgstr ""
 #, kde-format
 msgctxt "@info:status"
 msgid "Could not read the selected archive image."
+msgstr ""
+
+#: src/decoding/imageformatregistry.cpp
+#, kde-format
+msgctxt "@item:inlistbox"
+msgid "Image and comic book files (%1)"
+msgstr ""
+
+#: src/decoding/imageformatregistry.cpp
+#, kde-format
+msgctxt "@item:inlistbox"
+msgid "All files (*)"
 msgstr ""
 
 #: src/imageerrortext.cpp
@@ -288,147 +429,6 @@ msgstr ""
 #, kde-format
 msgctxt "@info:status"
 msgid "Could not decode the selected RAW image: %1: %2"
-msgstr ""
-
-#: src/imageformatregistry.cpp
-#, kde-format
-msgctxt "@item:inlistbox"
-msgid "Image and comic book files (%1)"
-msgstr ""
-
-#: src/imageformatregistry.cpp
-#, kde-format
-msgctxt "@item:inlistbox"
-msgid "All files (*)"
-msgstr ""
-
-#: src/kiriviewapplicationactions.cpp
-msgid "Open"
-msgstr ""
-
-#: src/kiriviewapplicationactions.cpp
-msgctxt "@action"
-msgid "Move to Trash"
-msgstr ""
-
-#: src/kiriviewapplicationactions.cpp
-msgctxt "@action"
-msgid "Delete Permanently"
-msgstr ""
-
-#: src/kiriviewapplicationactions.cpp
-msgctxt "@action"
-msgid "Previous Archive"
-msgstr ""
-
-#: src/kiriviewapplicationactions.cpp
-msgctxt "@action"
-msgid "Next Archive"
-msgstr ""
-
-#: src/kiriviewapplicationactions.cpp
-msgctxt "@action"
-msgid "Previous"
-msgstr ""
-
-#: src/kiriviewapplicationactions.cpp
-msgctxt "@action"
-msgid "Next"
-msgstr ""
-
-#: src/kiriviewapplicationactions.cpp
-msgctxt "@action"
-msgid "First Image"
-msgstr ""
-
-#: src/kiriviewapplicationactions.cpp
-msgctxt "@action"
-msgid "Last Image"
-msgstr ""
-
-#: src/kiriviewapplicationactions.cpp
-msgctxt "@action"
-msgid "Zoom In"
-msgstr ""
-
-#: src/kiriviewapplicationactions.cpp
-msgctxt "@action"
-msgid "Zoom Out"
-msgstr ""
-
-#: src/kiriviewapplicationactions.cpp
-msgctxt "@action"
-msgid "Fit"
-msgstr ""
-
-#: src/kiriviewapplicationactions.cpp
-msgctxt "@action"
-msgid "Fit Height"
-msgstr ""
-
-#: src/kiriviewapplicationactions.cpp
-msgctxt "@action"
-msgid "Fit Width"
-msgstr ""
-
-#: src/kiriviewapplicationactions.cpp
-msgctxt "@action"
-msgid "Actual Size"
-msgstr ""
-
-#: src/kiriviewapplicationactions.cpp
-msgctxt "@action"
-msgid "Rotate Clockwise"
-msgstr ""
-
-#: src/kiriviewapplicationactions.cpp
-msgctxt "@action"
-msgid "Rotate Counterclockwise"
-msgstr ""
-
-#: src/kiriviewapplicationactions.cpp
-msgctxt "@action"
-msgid "Two-Page Spread"
-msgstr ""
-
-#: src/kiriviewapplicationactions.cpp
-msgctxt "@action"
-msgid "Right-to-Left Reading"
-msgstr ""
-
-#: src/kiriviewapplicationactions.cpp
-msgctxt "@action"
-msgid "Top Left"
-msgstr ""
-
-#: src/kiriviewapplicationactions.cpp
-msgctxt "@action"
-msgid "Bottom Right"
-msgstr ""
-
-#: src/kiriviewapplicationactions.cpp
-msgctxt "@action"
-msgid "Scan Forward"
-msgstr ""
-
-#: src/kiriviewapplicationactions.cpp
-msgctxt "@action"
-msgid "Scan Backward"
-msgstr ""
-
-#: src/kiriviewapplicationactions.cpp
-msgctxt "@action"
-msgid "Fullscreen"
-msgstr ""
-
-#: src/kiriviewapplicationactions.cpp
-msgctxt "@action"
-msgid "Keyboard Shortcuts"
-msgstr ""
-
-#: src/kiriviewapplicationactions.cpp
-msgctxt "@action"
-msgid "Show Menubar"
 msgstr ""
 
 #: src/qml/ApplicationMenuBar.qml
