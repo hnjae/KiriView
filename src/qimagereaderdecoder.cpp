@@ -15,11 +15,11 @@
 
 namespace {
 KiriView::DecodedImageResult openedStaticImageResult(
-    const QByteArray &data, const KiriView::ImageDecodeRequest &request)
+    const QByteArray &data, const KiriView::ImageDecodeRequest &request, const QByteArray &format)
 {
     QString errorString;
     std::shared_ptr<KiriView::ImageTileSource> source
-        = KiriView::QImageReaderTileSource::open(data, &errorString);
+        = KiriView::QImageReaderTileSource::open(data, format, &errorString);
     if (source == nullptr) {
         return KiriView::failedDecodedImageResult(errorString);
     }
@@ -31,24 +31,25 @@ KiriView::DecodedImageResult openedStaticImageResult(
 
 namespace KiriView {
 DecodedImageResult decodeQImageReaderImageData(
-    const QByteArray &data, const ImageDecodeRequest &request)
+    const QByteArray &data, const ImageDecodeRequest &request, QtRasterFormat format)
 {
-    BufferedImageReader reader(data);
+    const QByteArray readerFormat = qtImageReaderFormat(format);
+    BufferedImageReader reader(data, readerFormat);
     if (!reader) {
         return failedDecodedImageResult(imageErrorText(ImageErrorTextId::ReadImageData));
     }
 
     const bool supportsAnimation = reader.supportsAnimation();
     if (!supportsAnimation) {
-        return openedStaticImageResult(data, request);
+        return openedStaticImageResult(data, request, readerFormat);
     }
 
     QImage image = reader.read();
     if (image.isNull()) {
-        return openedStaticImageResult(data, request);
+        return openedStaticImageResult(data, request, readerFormat);
     }
 
-    const QByteArray format = reader.format();
+    const QByteArray animationFormat = reader.format();
     const bool hasMoreFrames = reader.canRead();
 
     QImage firstFrame = displayReadyImage(image);
@@ -56,9 +57,9 @@ DecodedImageResult decodeQImageReaderImageData(
         return successfulDecodedImageResult(ReaderAnimationImage {
             std::move(firstFrame),
             data,
-            format,
+            animationFormat,
         });
     }
-    return openedStaticImageResult(data, request);
+    return openedStaticImageResult(data, request, readerFormat);
 }
 }

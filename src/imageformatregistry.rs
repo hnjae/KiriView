@@ -2,17 +2,13 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 use crate::archiveformat::supported_comic_book_archive_extensions;
+use crate::imageinputclassification::{RAW_IMAGE_EXTENSIONS, extension_for_file_name};
 
 struct ImageFormat {
     extensions: &'static [&'static str],
     mime_types: &'static [&'static str],
 }
 
-const RAW_IMAGE_EXTENSIONS: &[&str] = &[
-    "3fr", "arw", "bay", "bmq", "cr2", "cr3", "crw", "cs1", "cs2", "dcr", "dng", "erf", "fff",
-    "iiq", "k25", "kdc", "mdc", "mef", "mos", "mrw", "nef", "nrw", "orf", "pef", "raf", "raw",
-    "rdc", "rwl", "rw2", "sr2", "srf", "srw", "x3f",
-];
 const RAW_IMAGE_MIME_TYPES: &[&str] = &[
     "image/x-adobe-dng",
     "image/x-canon-cr2",
@@ -170,15 +166,6 @@ fn unique_sorted_strings(values: impl IntoIterator<Item = &'static str>) -> Vec<
     strings.sort();
     strings.dedup();
     strings
-}
-
-fn extension_for_file_name(name: &str) -> Option<String> {
-    let dot_index = name.rfind('.')?;
-    if dot_index == 0 || dot_index == name.len() - 1 {
-        return None;
-    }
-
-    Some(name[dot_index + 1..].to_ascii_lowercase())
 }
 
 #[cfg(test)]

@@ -60,8 +60,8 @@ private Q_SLOTS:
 
 void TestQImageReaderDecoder::invalidDataReturnsFailure()
 {
-    const KiriView::DecodedImageResult result
-        = KiriView::decodeQImageReaderImageData(QByteArrayLiteral("not image data"), {});
+    const KiriView::DecodedImageResult result = KiriView::decodeQImageReaderImageData(
+        QByteArrayLiteral("not image data"), {}, KiriView::QtRasterFormat::Png);
 
     const KiriView::DecodedImageFailure *failure = KiriView::decodedImageResultFailure(result);
     QVERIFY(failure != nullptr);
@@ -78,7 +78,8 @@ void TestQImageReaderDecoder::pngDataDecodesAsStaticTileSource()
     const QByteArray data = encodedImageData(image, QByteArrayLiteral("png"), &errorString);
     QVERIFY2(!data.isEmpty(), qPrintable(errorString));
 
-    const KiriView::DecodedImageResult result = KiriView::decodeQImageReaderImageData(data, {});
+    const KiriView::DecodedImageResult result
+        = KiriView::decodeQImageReaderImageData(data, {}, KiriView::QtRasterFormat::Png);
     const KiriView::StaticDecodedImage *decoded
         = decodedImage<KiriView::StaticDecodedImage>(result);
 
@@ -108,7 +109,7 @@ void TestQImageReaderDecoder::jpegDataUsesFirstDisplayRequest()
         QUrl::fromLocalFile(QStringLiteral("/tmp/photo.jpg")),
         KiriView::ImageFirstDisplayDecodeContext { QSize(400, 300) });
     const KiriView::DecodedImageResult result
-        = KiriView::decodeQImageReaderImageData(data, request);
+        = KiriView::decodeQImageReaderImageData(data, request, KiriView::QtRasterFormat::Jpeg);
     const KiriView::StaticDecodedImage *decoded
         = decodedImage<KiriView::StaticDecodedImage>(result);
 

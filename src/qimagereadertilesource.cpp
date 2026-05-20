@@ -43,16 +43,15 @@ QImage readBufferedImage(const QByteArray &data, const QByteArray &format, bool 
 
 namespace KiriView {
 std::shared_ptr<QImageReaderTileSource> QImageReaderTileSource::open(
-    const QByteArray &data, QString *errorString)
+    const QByteArray &data, const QByteArray &format, QString *errorString)
 {
-    BufferedImageReader reader(data);
+    BufferedImageReader reader(data, format);
     if (!reader) {
         setTileSourceError(errorString, imageDataReadError());
         return {};
     }
 
     const QSize imageSize = reader.size();
-    const QByteArray format = reader.format();
     if (imageSize.isEmpty()) {
         setTileSourceError(errorString, reader.errorString());
         return {};

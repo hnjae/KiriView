@@ -8,11 +8,9 @@
 #include "imagedecoderequest.h"
 
 #include <QByteArray>
-#include <optional>
 
 namespace KiriView {
-std::optional<DecodedImageResult> decodeRawImageData(
-    const QByteArray &data, const ImageDecodeRequest &request);
+DecodedImageResult decodeRawImageData(const QByteArray &data, const ImageDecodeRequest &request);
 }
 
 #endif

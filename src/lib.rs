@@ -12,6 +12,7 @@ mod heifcontainer;
 mod imagecontainer;
 mod imagedocumentsourceloadpolicy;
 mod imageformatregistry;
+mod imageinputclassification;
 mod imagemath;
 mod imagenavigationmodel;
 mod imageopenworkflow;

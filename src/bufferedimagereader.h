@@ -20,7 +20,7 @@ class BufferedImageReader final
 {
 public:
     explicit BufferedImageReader(
-        const QByteArray &data, const QByteArray &format = QByteArray(), bool autoTransform = true);
+        const QByteArray &data, const QByteArray &format, bool autoTransform = true);
     ~BufferedImageReader();
 
     explicit operator bool() const;

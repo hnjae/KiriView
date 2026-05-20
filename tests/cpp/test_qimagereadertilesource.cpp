@@ -67,7 +67,7 @@ void TestQImageReaderTileSource::sourceDecodesBlockingDisplayImageAndTile()
 {
     QString errorString;
     std::shared_ptr<KiriView::QImageReaderTileSource> source
-        = KiriView::QImageReaderTileSource::open(pngData(), &errorString);
+        = KiriView::QImageReaderTileSource::open(pngData(), QByteArrayLiteral("png"), &errorString);
     QVERIFY2(source != nullptr, qPrintable(errorString));
     QCOMPARE(source->imageSize(), QSize(4, 4));
 
@@ -96,7 +96,7 @@ void TestQImageReaderTileSource::jpegSourceDecodesFirstDisplayToViewport()
     QVERIFY2(!data.isEmpty(), qPrintable(errorString));
 
     std::shared_ptr<KiriView::QImageReaderTileSource> source
-        = KiriView::QImageReaderTileSource::open(data, &errorString);
+        = KiriView::QImageReaderTileSource::open(data, QByteArrayLiteral("jpeg"), &errorString);
     QVERIFY2(source != nullptr, qPrintable(errorString));
 
     const KiriView::FirstDisplayImageDecodeResult result = source->decodeFirstDisplayImage(
@@ -123,7 +123,7 @@ void TestQImageReaderTileSource::jpegSourceSkipsFirstDisplayWhenImageFitsViewpor
     QVERIFY2(!data.isEmpty(), qPrintable(errorString));
 
     std::shared_ptr<KiriView::QImageReaderTileSource> source
-        = KiriView::QImageReaderTileSource::open(data, &errorString);
+        = KiriView::QImageReaderTileSource::open(data, QByteArrayLiteral("jpeg"), &errorString);
     QVERIFY2(source != nullptr, qPrintable(errorString));
 
     const KiriView::FirstDisplayImageDecodeResult result = source->decodeFirstDisplayImage(
@@ -137,7 +137,7 @@ void TestQImageReaderTileSource::pngSourceLeavesFirstDisplayNotImplemented()
 {
     QString errorString;
     std::shared_ptr<KiriView::QImageReaderTileSource> source
-        = KiriView::QImageReaderTileSource::open(pngData(), &errorString);
+        = KiriView::QImageReaderTileSource::open(pngData(), QByteArrayLiteral("png"), &errorString);
     QVERIFY2(source != nullptr, qPrintable(errorString));
 
     const KiriView::FirstDisplayImageDecodeResult result = source->decodeFirstDisplayImage(

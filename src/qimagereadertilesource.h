@@ -20,7 +20,7 @@ class QImageReaderTileSource final : public ImageTileSource
 {
 public:
     static std::shared_ptr<QImageReaderTileSource> open(
-        const QByteArray &data, QString *errorString);
+        const QByteArray &data, const QByteArray &format, QString *errorString);
 
     QImageReaderTileSource(QByteArray data, QByteArray format, QSize imageSize, bool hasTransform);
 

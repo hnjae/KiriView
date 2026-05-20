@@ -6,62 +6,48 @@
 
 #include "decodedimageresult.h"
 #include "imagedecoderequest.h"
+#include "imageinputclassification.h"
 
 #include <QByteArray>
 #include <functional>
-#include <optional>
-#include <vector>
 
 namespace KiriView {
-struct ImageDecodePipelineInput {
+struct ImageDecodeRouterInput {
     const QByteArray &data;
     const ImageDecodeRequest &request;
+    QtRasterFormat qtRasterFormat = QtRasterFormat::None;
 };
 
-enum class ImageDecodePipelineDataSource {
-    Original,
-    AvifCompatible,
+using ImageDecodeRouterHandler = std::function<DecodedImageResult(const ImageDecodeRouterInput &)>;
+
+struct ImageDecodeRouterHandlers {
+    ImageDecodeRouterHandler svg;
+    ImageDecodeRouterHandler apng;
+    ImageDecodeRouterHandler heifFamily;
+    ImageDecodeRouterHandler raw;
+    ImageDecodeRouterHandler qtRaster;
 };
 
-class ImageDecodePipelineStageResult final
-{
-public:
-    static ImageDecodePipelineStageResult unsupported();
-    static ImageDecodePipelineStageResult decoded(DecodedImageResult result);
-
-    bool handled() const;
-    std::optional<DecodedImageResult> takeDecodedResult() &&;
-
-private:
-    explicit ImageDecodePipelineStageResult(std::optional<DecodedImageResult> result);
-
-    std::optional<DecodedImageResult> m_result;
-};
-
-using ImageDecodePipelineHandler
-    = std::function<ImageDecodePipelineStageResult(const ImageDecodePipelineInput &)>;
-
-struct ImageDecodePipelineStage {
-    ImageDecodePipelineDataSource dataSource = ImageDecodePipelineDataSource::Original;
-    ImageDecodePipelineHandler handler;
-};
-
+using ImageDecodeInputClassifier
+    = std::function<ImageInputClassification(const QByteArray &, const QString &)>;
 using ImageDecodeCompatibleDataTransform = std::function<QByteArray(const QByteArray &)>;
 
-class ImageDecodePipeline final
+class ImageDecodeRouter final
 {
 public:
-    explicit ImageDecodePipeline(std::vector<ImageDecodePipelineStage> stages,
+    explicit ImageDecodeRouter(ImageDecodeRouterHandlers handlers = {},
+        ImageDecodeInputClassifier classifier = {},
         ImageDecodeCompatibleDataTransform compatibleDataTransform = {});
 
     DecodedImageResult decode(const QByteArray &data, const ImageDecodeRequest &request) const;
 
 private:
-    std::vector<ImageDecodePipelineStage> m_stages;
+    ImageDecodeRouterHandlers m_handlers;
+    ImageDecodeInputClassifier m_classifier;
     ImageDecodeCompatibleDataTransform m_compatibleDataTransform;
 };
 
-DecodedImageResult decodeImageDataWithDefaultPipeline(
+DecodedImageResult decodeImageDataWithDefaultRouter(
     const QByteArray &data, const ImageDecodeRequest &request);
 }
 

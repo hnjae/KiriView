@@ -25,22 +25,22 @@ QByteArray avifCompatibleImageData(const QByteArray &data)
         KiriView::avifDataWithCompatibilityFixes(KiriView::Bridge::rustBytes(data)));
 }
 
-class ImageDecodePipelineByteInputs
+class ImageDecodeRouterByteInputs
 {
 public:
-    ImageDecodePipelineByteInputs(const QByteArray &originalData,
+    ImageDecodeRouterByteInputs(const QByteArray &originalData,
         const KiriView::ImageDecodeCompatibleDataTransform &compatibleDataTransform)
         : m_originalData(originalData)
         , m_compatibleDataTransform(compatibleDataTransform)
     {
     }
 
-    const QByteArray &dataFor(KiriView::ImageDecodePipelineDataSource dataSource)
+    const QByteArray &dataFor(KiriView::ImageDecodeDataSource dataSource)
     {
         switch (dataSource) {
-        case KiriView::ImageDecodePipelineDataSource::Original:
+        case KiriView::ImageDecodeDataSource::Original:
             return m_originalData;
-        case KiriView::ImageDecodePipelineDataSource::AvifCompatible:
+        case KiriView::ImageDecodeDataSource::AvifCompatible:
             return compatibleData();
         }
 
@@ -62,141 +62,160 @@ private:
     std::optional<QByteArray> m_compatibleData;
 };
 
-KiriView::ImageDecodePipelineStageResult optionalDecodedStageResult(
-    std::optional<KiriView::DecodedImageResult> result)
+KiriView::DecodedImageResult failedReadImageDataResult()
 {
-    if (!result.has_value()) {
-        return KiriView::ImageDecodePipelineStageResult::unsupported();
-    }
-
-    return KiriView::ImageDecodePipelineStageResult::decoded(std::move(*result));
+    return KiriView::failedDecodedImageResult(
+        KiriView::imageErrorText(KiriView::ImageErrorTextId::ReadImageData));
 }
 
-KiriView::ImageDecodePipelineStageResult decodeSvgImageData(
-    const KiriView::ImageDecodePipelineInput &input)
+KiriView::DecodedImageResult failedImageDataResult(QString errorString)
+{
+    if (errorString.isEmpty()) {
+        return failedReadImageDataResult();
+    }
+    return KiriView::failedDecodedImageResult(std::move(errorString));
+}
+
+KiriView::DecodedImageResult decodeSvgImageData(const KiriView::ImageDecodeRouterInput &input)
 {
     QString errorString;
     std::shared_ptr<KiriView::SvgTileSource> source
         = KiriView::SvgTileSource::open(input.data, &errorString);
     if (source == nullptr) {
-        return KiriView::ImageDecodePipelineStageResult::unsupported();
+        return failedImageDataResult(std::move(errorString));
     }
 
-    return KiriView::ImageDecodePipelineStageResult::decoded(
-        KiriView::staticDecodedImageResult(std::move(source), {}, &errorString));
+    return KiriView::staticDecodedImageResult(std::move(source), {}, &errorString);
 }
 
-KiriView::ImageDecodePipelineStageResult decodeApngImageData(
-    const KiriView::ImageDecodePipelineInput &input)
+KiriView::DecodedImageResult decodeApngImageData(const KiriView::ImageDecodeRouterInput &input)
 {
     KiriView::ApngAnimationReader apngReader;
     KiriView::ApngOpenResult apngResult = apngReader.open(input.data);
     if (apngResult.status == KiriView::ApngOpenStatus::NotApng) {
-        return KiriView::ImageDecodePipelineStageResult::unsupported();
+        return KiriView::failedDecodedImageResult(
+            KiriView::imageErrorText(KiriView::ImageErrorTextId::DecodeApngAnimation));
     }
     if (apngResult.status == KiriView::ApngOpenStatus::Error) {
-        return KiriView::ImageDecodePipelineStageResult::decoded(
-            KiriView::failedDecodedImageResult(apngResult.errorString));
+        return KiriView::failedDecodedImageResult(apngResult.errorString);
     }
 
-    return KiriView::ImageDecodePipelineStageResult::decoded(
-        KiriView::successfulDecodedImageResult(KiriView::ApngAnimationImage {
-            std::move(apngResult.firstFrame),
-            input.data,
-        }));
+    return KiriView::successfulDecodedImageResult(KiriView::ApngAnimationImage {
+        std::move(apngResult.firstFrame),
+        input.data,
+    });
 }
 
-KiriView::ImageDecodePipelineStageResult decodeHeifPipelineImageData(
-    const KiriView::ImageDecodePipelineInput &input)
+KiriView::DecodedImageResult decodeHeifRouterImageData(
+    const KiriView::ImageDecodeRouterInput &input)
 {
-    return optionalDecodedStageResult(KiriView::decodeHeifImageData(input.data));
+    std::optional<KiriView::DecodedImageResult> result = KiriView::decodeHeifImageData(input.data);
+    if (!result.has_value()) {
+        return failedReadImageDataResult();
+    }
+    return std::move(*result);
 }
 
-KiriView::ImageDecodePipelineStageResult decodeRawPipelineImageData(
-    const KiriView::ImageDecodePipelineInput &input)
+KiriView::DecodedImageResult decodeRawRouterImageData(const KiriView::ImageDecodeRouterInput &input)
 {
-    return optionalDecodedStageResult(KiriView::decodeRawImageData(input.data, input.request));
+    return KiriView::decodeRawImageData(input.data, input.request);
 }
 
-KiriView::ImageDecodePipelineStageResult decodeQImageReaderPipelineImageData(
-    const KiriView::ImageDecodePipelineInput &input)
+KiriView::DecodedImageResult decodeQImageReaderRouterImageData(
+    const KiriView::ImageDecodeRouterInput &input)
 {
-    return KiriView::ImageDecodePipelineStageResult::decoded(
-        KiriView::decodeQImageReaderImageData(input.data, input.request));
+    return KiriView::decodeQImageReaderImageData(input.data, input.request, input.qtRasterFormat);
 }
 
-std::vector<KiriView::ImageDecodePipelineStage> defaultImageDecodeStages()
+KiriView::ImageDecodeRouterHandlers defaultImageDecodeRouterHandlers()
 {
-    using DataSource = KiriView::ImageDecodePipelineDataSource;
-    return {
-        { DataSource::Original, decodeSvgImageData },
-        { DataSource::Original, decodeApngImageData },
-        { DataSource::AvifCompatible, decodeHeifPipelineImageData },
-        { DataSource::Original, decodeRawPipelineImageData },
-        { DataSource::AvifCompatible, decodeQImageReaderPipelineImageData },
+    return KiriView::ImageDecodeRouterHandlers {
+        decodeSvgImageData,
+        decodeApngImageData,
+        decodeHeifRouterImageData,
+        decodeRawRouterImageData,
+        decodeQImageReaderRouterImageData,
     };
+}
+
+KiriView::ImageDecodeRouterHandlers withDefaultHandlers(
+    KiriView::ImageDecodeRouterHandlers handlers)
+{
+    const KiriView::ImageDecodeRouterHandlers defaults = defaultImageDecodeRouterHandlers();
+    if (!handlers.svg) {
+        handlers.svg = defaults.svg;
+    }
+    if (!handlers.apng) {
+        handlers.apng = defaults.apng;
+    }
+    if (!handlers.heifFamily) {
+        handlers.heifFamily = defaults.heifFamily;
+    }
+    if (!handlers.raw) {
+        handlers.raw = defaults.raw;
+    }
+    if (!handlers.qtRaster) {
+        handlers.qtRaster = defaults.qtRaster;
+    }
+    return handlers;
+}
+
+KiriView::DecodedImageResult dispatchToHandler(const KiriView::ImageDecodeRouterHandler &handler,
+    const KiriView::ImageDecodeRouterInput &input)
+{
+    if (!handler) {
+        return failedReadImageDataResult();
+    }
+    return handler(input);
 }
 }
 
 namespace KiriView {
-ImageDecodePipelineStageResult ImageDecodePipelineStageResult::unsupported()
-{
-    return ImageDecodePipelineStageResult(std::nullopt);
-}
-
-ImageDecodePipelineStageResult ImageDecodePipelineStageResult::decoded(DecodedImageResult result)
-{
-    return ImageDecodePipelineStageResult(std::optional<DecodedImageResult>(std::move(result)));
-}
-
-bool ImageDecodePipelineStageResult::handled() const { return m_result.has_value(); }
-
-std::optional<DecodedImageResult> ImageDecodePipelineStageResult::takeDecodedResult() &&
-{
-    return std::move(m_result);
-}
-
-ImageDecodePipelineStageResult::ImageDecodePipelineStageResult(
-    std::optional<DecodedImageResult> result)
-    : m_result(std::move(result))
-{
-}
-
-ImageDecodePipeline::ImageDecodePipeline(std::vector<ImageDecodePipelineStage> stages,
+ImageDecodeRouter::ImageDecodeRouter(ImageDecodeRouterHandlers handlers,
+    ImageDecodeInputClassifier classifier,
     ImageDecodeCompatibleDataTransform compatibleDataTransform)
-    : m_stages(std::move(stages))
+    : m_handlers(withDefaultHandlers(std::move(handlers)))
+    , m_classifier(std::move(classifier))
     , m_compatibleDataTransform(std::move(compatibleDataTransform))
 {
+    if (!m_classifier) {
+        m_classifier = classifyImageInput;
+    }
 }
 
-DecodedImageResult ImageDecodePipeline::decode(
+DecodedImageResult ImageDecodeRouter::decode(
     const QByteArray &data, const ImageDecodeRequest &request) const
 {
-    ImageDecodePipelineByteInputs byteInputs(data, m_compatibleDataTransform);
+    const ImageInputClassification classification
+        = m_classifier(data, request.imageUrl().fileName());
+    ImageDecodeRouterByteInputs byteInputs(data, m_compatibleDataTransform);
+    const ImageDecodeRouterInput input {
+        byteInputs.dataFor(classification.dataSource),
+        request,
+        classification.qtFormat,
+    };
 
-    for (const ImageDecodePipelineStage &stage : m_stages) {
-        if (!stage.handler) {
-            continue;
-        }
-
-        const ImageDecodePipelineInput input {
-            byteInputs.dataFor(stage.dataSource),
-            request,
-        };
-        ImageDecodePipelineStageResult result = stage.handler(input);
-        if (result.handled()) {
-            std::optional<DecodedImageResult> decodedResult = std::move(result).takeDecodedResult();
-            return std::move(*decodedResult);
-        }
+    switch (classification.kind) {
+    case ImageInputKind::Svg:
+        return dispatchToHandler(m_handlers.svg, input);
+    case ImageInputKind::Apng:
+        return dispatchToHandler(m_handlers.apng, input);
+    case ImageInputKind::HeifFamily:
+        return dispatchToHandler(m_handlers.heifFamily, input);
+    case ImageInputKind::Raw:
+        return dispatchToHandler(m_handlers.raw, input);
+    case ImageInputKind::QtRaster:
+        return dispatchToHandler(m_handlers.qtRaster, input);
+    case ImageInputKind::Unknown:
+        return failedReadImageDataResult();
     }
-
-    return failedDecodedImageResult(imageErrorText(ImageErrorTextId::ReadImageData));
+    return failedReadImageDataResult();
 }
 
-DecodedImageResult decodeImageDataWithDefaultPipeline(
+DecodedImageResult decodeImageDataWithDefaultRouter(
     const QByteArray &data, const ImageDecodeRequest &request)
 {
-    static const ImageDecodePipeline pipeline(defaultImageDecodeStages());
-    return pipeline.decode(data, request);
+    static const ImageDecodeRouter router;
+    return router.decode(data, request);
 }
 }

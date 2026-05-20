@@ -13,7 +13,7 @@ DecodedImageResult decodeImageData(const QByteArray &data)
 
 DecodedImageResult decodeImageData(const QByteArray &data, const ImageDecodeRequest &request)
 {
-    return decodeImageDataWithDefaultPipeline(data, request);
+    return decodeImageDataWithDefaultRouter(data, request);
 }
 
 }

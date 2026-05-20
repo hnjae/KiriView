@@ -5,7 +5,6 @@
 
 #include "imagebytecost.h"
 #include "imageerrortext.h"
-#include "imageformatregistry.h"
 #include "imagerendering.h"
 #include "imagetilesourcehelpers_p.h"
 #include "staticimagedecode.h"
@@ -20,16 +19,6 @@
 namespace {
 using ProcessedRawImage
     = std::unique_ptr<libraw_processed_image_t, decltype(&LibRaw::dcraw_clear_mem)>;
-
-enum class TiffByteOrder {
-    LittleEndian,
-    BigEndian,
-};
-
-constexpr quint16 tiffPhotometricInterpretationTag = 262;
-constexpr quint16 tiffDngVersionTag = 50706;
-constexpr quint16 tiffShortType = 3;
-constexpr quint16 tiffCfaPhotometricInterpretation = 32803;
 
 void setRawDecodeError(QString *errorString, QString message)
 {
@@ -46,126 +35,6 @@ QString rawDecodeErrorString(const QString &action, int errorCode)
     }
 
     return KiriView::rawDecodeErrorText(action, message);
-}
-
-bool byteRangeIsValid(const QByteArray &data, qsizetype offset, qsizetype size)
-{
-    return offset >= 0 && size >= 0 && offset <= data.size() && size <= data.size() - offset;
-}
-
-std::optional<TiffByteOrder> tiffByteOrder(const QByteArray &data)
-{
-    if (!byteRangeIsValid(data, 0, 4)) {
-        return std::nullopt;
-    }
-
-    if (data[0] == 'I' && data[1] == 'I' && static_cast<unsigned char>(data[2]) == 42
-        && static_cast<unsigned char>(data[3]) == 0) {
-        return TiffByteOrder::LittleEndian;
-    }
-    if (data[0] == 'M' && data[1] == 'M' && static_cast<unsigned char>(data[2]) == 0
-        && static_cast<unsigned char>(data[3]) == 42) {
-        return TiffByteOrder::BigEndian;
-    }
-    return std::nullopt;
-}
-
-quint16 tiffUInt16(const QByteArray &data, qsizetype offset, TiffByteOrder byteOrder)
-{
-    const auto first = static_cast<quint16>(static_cast<unsigned char>(data[offset]));
-    const auto second = static_cast<quint16>(static_cast<unsigned char>(data[offset + 1]));
-    if (byteOrder == TiffByteOrder::LittleEndian) {
-        return static_cast<quint16>(first | (second << 8));
-    }
-    return static_cast<quint16>((first << 8) | second);
-}
-
-quint32 tiffUInt32(const QByteArray &data, qsizetype offset, TiffByteOrder byteOrder)
-{
-    const auto first = static_cast<quint32>(static_cast<unsigned char>(data[offset]));
-    const auto second = static_cast<quint32>(static_cast<unsigned char>(data[offset + 1]));
-    const auto third = static_cast<quint32>(static_cast<unsigned char>(data[offset + 2]));
-    const auto fourth = static_cast<quint32>(static_cast<unsigned char>(data[offset + 3]));
-    if (byteOrder == TiffByteOrder::LittleEndian) {
-        return first | (second << 8) | (third << 16) | (fourth << 24);
-    }
-    return (first << 24) | (second << 16) | (third << 8) | fourth;
-}
-
-std::optional<quint16> tiffShortValue(
-    const QByteArray &data, qsizetype tagEntryOffset, quint32 valueCount, TiffByteOrder byteOrder)
-{
-    if (valueCount == 0) {
-        return std::nullopt;
-    }
-
-    if (valueCount <= 2) {
-        return tiffUInt16(data, tagEntryOffset + 8, byteOrder);
-    }
-
-    const quint32 valueOffset = tiffUInt32(data, tagEntryOffset + 8, byteOrder);
-    if (!byteRangeIsValid(data, static_cast<qsizetype>(valueOffset), 2)) {
-        return std::nullopt;
-    }
-    return tiffUInt16(data, static_cast<qsizetype>(valueOffset), byteOrder);
-}
-
-bool isLikelyTiffRawImageData(const QByteArray &data)
-{
-    const std::optional<TiffByteOrder> byteOrder = tiffByteOrder(data);
-    if (!byteOrder.has_value() || !byteRangeIsValid(data, 4, 4)) {
-        return false;
-    }
-
-    if (data.contains(QByteArray::fromHex("06010300010000002380"))
-        || data.contains(QByteArray::fromHex("01060003000000018023"))
-        || data.contains(QByteArray::fromHex("12c6010004000000"))
-        || data.contains(QByteArray::fromHex("c612000100000004"))) {
-        return true;
-    }
-
-    const qsizetype ifdOffset = static_cast<qsizetype>(tiffUInt32(data, 4, *byteOrder));
-    if (!byteRangeIsValid(data, ifdOffset, 2)) {
-        return false;
-    }
-
-    const quint16 tagCount = tiffUInt16(data, ifdOffset, *byteOrder);
-    const qsizetype tagEntriesOffset = ifdOffset + 2;
-    if (!byteRangeIsValid(data, tagEntriesOffset, static_cast<qsizetype>(tagCount) * 12)) {
-        return false;
-    }
-
-    for (quint16 tagIndex = 0; tagIndex < tagCount; ++tagIndex) {
-        const qsizetype tagEntryOffset = tagEntriesOffset + static_cast<qsizetype>(tagIndex) * 12;
-        const quint16 tag = tiffUInt16(data, tagEntryOffset, *byteOrder);
-        if (tag == tiffDngVersionTag) {
-            return true;
-        }
-
-        if (tag != tiffPhotometricInterpretationTag) {
-            continue;
-        }
-
-        const quint16 type = tiffUInt16(data, tagEntryOffset + 2, *byteOrder);
-        const quint32 valueCount = tiffUInt32(data, tagEntryOffset + 4, *byteOrder);
-        if (type != tiffShortType) {
-            continue;
-        }
-
-        const std::optional<quint16> value
-            = tiffShortValue(data, tagEntryOffset, valueCount, *byteOrder);
-        if (value == tiffCfaPhotometricInterpretation) {
-            return true;
-        }
-    }
-
-    return false;
-}
-
-bool shouldAttemptRawDecode(const QByteArray &data, const KiriView::ImageDecodeRequest &request)
-{
-    return KiriView::isSupportedRawImageFileName(request.imageUrl().fileName())
-        || isLikelyTiffRawImageData(data);
 }
 
 QSize libRawImageSize(const LibRaw &processor)
@@ -344,13 +213,8 @@ private:
 }
 
 namespace KiriView {
-std::optional<DecodedImageResult> decodeRawImageData(
-    const QByteArray &data, const ImageDecodeRequest &request)
+DecodedImageResult decodeRawImageData(const QByteArray &data, const ImageDecodeRequest &request)
 {
-    if (!shouldAttemptRawDecode(data, request)) {
-        return std::nullopt;
-    }
-
     QString errorString;
     std::optional<QImage> image = decodeRawImage(data, &errorString);
     if (!image.has_value()) {

@@ -6,12 +6,13 @@
 
 #include "decodedimageresult.h"
 #include "imagedecoderequest.h"
+#include "imageinputclassification.h"
 
 #include <QByteArray>
 
 namespace KiriView {
 DecodedImageResult decodeQImageReaderImageData(
-    const QByteArray &data, const ImageDecodeRequest &request);
+    const QByteArray &data, const ImageDecodeRequest &request, QtRasterFormat format);
 }
 
 #endif

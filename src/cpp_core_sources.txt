@@ -67,6 +67,7 @@ src/imagedecodejobstate.cpp
 src/imagedocumentstate.cpp
 src/imagesurface.cpp
 src/imageformatregistry.cpp
+src/imageinputclassification.cpp
 src/imageerrortext.cpp
 src/imagecandidateitems.cpp
 src/imagecandidaterepository.cpp

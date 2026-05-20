@@ -3,6 +3,8 @@
 
 #include "imagedecodepipeline.h"
 
+#include "imageerrortext.h"
+
 #include <QByteArray>
 #include <QByteArrayList>
 #include <QList>
@@ -10,50 +12,47 @@
 #include <QStringList>
 #include <QTest>
 #include <QUrl>
-#include <optional>
+#include <utility>
 
 namespace {
-using DataSource = KiriView::ImageDecodePipelineDataSource;
-
-KiriView::ImageDecodePipelineStage unsupportedStage(
-    DataSource dataSource, const QString &name, QStringList *calls)
+KiriView::ImageInputClassification classification(KiriView::ImageInputKind kind,
+    KiriView::QtRasterFormat qtFormat = KiriView::QtRasterFormat::None,
+    KiriView::ImageDecodeDataSource dataSource = KiriView::ImageDecodeDataSource::Original)
 {
-    return {
+    return KiriView::ImageInputClassification {
+        kind,
+        qtFormat,
         dataSource,
-        [name, calls](const KiriView::ImageDecodePipelineInput &) {
-            calls->push_back(name);
-            return KiriView::ImageDecodePipelineStageResult::unsupported();
-        },
     };
 }
 
-KiriView::ImageDecodePipelineStage failureStage(
-    DataSource dataSource, const QString &name, const QString &errorString, QStringList *calls)
+KiriView::ImageDecodeRouterHandler recordingHandler(const QString &name, QStringList *calls,
+    QByteArrayList *inputData = nullptr, QList<KiriView::QtRasterFormat> *qtFormats = nullptr,
+    QString errorString = {})
 {
-    return {
-        dataSource,
-        [name, errorString, calls](const KiriView::ImageDecodePipelineInput &) {
-            calls->push_back(name);
-            return KiriView::ImageDecodePipelineStageResult::decoded(
-                KiriView::failedDecodedImageResult(errorString));
-        },
-    };
-}
-
-KiriView::ImageDecodePipelineStage dataRecordingStage(DataSource dataSource,
-    QByteArrayList *inputData, QList<quint64> *requestIds, bool handled = false)
-{
-    return {
-        dataSource,
-        [inputData, requestIds, handled](const KiriView::ImageDecodePipelineInput &input) {
+    return [name, calls, inputData, qtFormats, errorString](
+               const KiriView::ImageDecodeRouterInput &input) {
+        calls->push_back(name);
+        if (inputData != nullptr) {
             inputData->push_back(input.data);
-            requestIds->push_back(input.request.id());
-            if (!handled) {
-                return KiriView::ImageDecodePipelineStageResult::unsupported();
-            }
-            return KiriView::ImageDecodePipelineStageResult::decoded(
-                KiriView::failedDecodedImageResult(QStringLiteral("recorded")));
-        },
+        }
+        if (qtFormats != nullptr) {
+            qtFormats->push_back(input.qtRasterFormat);
+        }
+        return KiriView::failedDecodedImageResult(
+            errorString.isEmpty() ? name + QStringLiteral(" failed") : errorString);
+    };
+}
+
+KiriView::ImageDecodeRouterHandlers recordingHandlers(QStringList *calls,
+    QByteArrayList *inputData = nullptr, QList<KiriView::QtRasterFormat> *qtFormats = nullptr)
+{
+    return KiriView::ImageDecodeRouterHandlers {
+        recordingHandler(QStringLiteral("svg"), calls, inputData, qtFormats),
+        recordingHandler(QStringLiteral("apng"), calls, inputData, qtFormats),
+        recordingHandler(QStringLiteral("heif"), calls, inputData, qtFormats),
+        recordingHandler(QStringLiteral("raw"), calls, inputData, qtFormats),
+        recordingHandler(QStringLiteral("qt"), calls, inputData, qtFormats),
     };
 }
 }
@@ -63,103 +62,133 @@ class TestImageDecodePipeline : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
-    void stageResultsDistinguishUnsupportedFromDecodedFailure();
-    void firstHandledStageStopsPipeline();
-    void unsupportedStagesFallThrough();
-    void stagesReceiveSelectedDecodeInputs();
-    void compatibleDataIsComputedOnlyWhenRequested();
-    void compatibleDataIsSharedAcrossCompatibleStages();
+    void routerCallsExactlyOneDecoderForClassifiedInputs();
+    void selectedDecoderFailureDoesNotFallback();
+    void compatibleDataIsComputedOnlyWhenClassificationRequestsIt();
+    void qtRasterClassificationCarriesExplicitFormat();
+    void unknownClassificationFailsWithoutDecoder();
 };
 
-void TestImageDecodePipeline::stageResultsDistinguishUnsupportedFromDecodedFailure()
+void TestImageDecodePipeline::routerCallsExactlyOneDecoderForClassifiedInputs()
 {
-    KiriView::ImageDecodePipelineStageResult unsupported
-        = KiriView::ImageDecodePipelineStageResult::unsupported();
-    QVERIFY(!unsupported.handled());
-    QVERIFY(!std::move(unsupported).takeDecodedResult().has_value());
+    struct Case {
+        KiriView::ImageInputClassification classification;
+        QString expectedCall;
+    };
+    const QList<Case> cases {
+        { classification(KiriView::ImageInputKind::Svg), QStringLiteral("svg") },
+        { classification(KiriView::ImageInputKind::Apng), QStringLiteral("apng") },
+        { classification(KiriView::ImageInputKind::HeifFamily), QStringLiteral("heif") },
+        { classification(KiriView::ImageInputKind::Raw), QStringLiteral("raw") },
+        { classification(KiriView::ImageInputKind::QtRaster, KiriView::QtRasterFormat::Png),
+            QStringLiteral("qt") },
+    };
 
-    KiriView::ImageDecodePipelineStageResult decoded
-        = KiriView::ImageDecodePipelineStageResult::decoded(
-            KiriView::failedDecodedImageResult(QStringLiteral("handled failure")));
-    QVERIFY(decoded.handled());
+    for (const Case &testCase : cases) {
+        QStringList calls;
+        KiriView::ImageDecodeRouter router(recordingHandlers(&calls),
+            [testCase](const QByteArray &, const QString &) { return testCase.classification; });
 
-    std::optional<KiriView::DecodedImageResult> result = std::move(decoded).takeDecodedResult();
-    QVERIFY(result.has_value());
-    const auto *failure = KiriView::decodedImageResultFailure(*result);
-    QVERIFY(failure != nullptr);
-    QCOMPARE(failure->errorString, QStringLiteral("handled failure"));
+        const KiriView::DecodedImageResult result
+            = router.decode(QByteArrayLiteral("image bytes"), KiriView::ImageDecodeRequest {});
+
+        QVERIFY(KiriView::decodedImageResultFailure(result) != nullptr);
+        QCOMPARE(calls, QStringList({ testCase.expectedCall }));
+    }
 }
 
-void TestImageDecodePipeline::firstHandledStageStopsPipeline()
+void TestImageDecodePipeline::selectedDecoderFailureDoesNotFallback()
 {
     QStringList calls;
-    KiriView::ImageDecodePipeline pipeline({
-        unsupportedStage(DataSource::Original, QStringLiteral("svg"), &calls),
-        failureStage(
-            DataSource::Original, QStringLiteral("apng"), QStringLiteral("APNG failed"), &calls),
-        failureStage(DataSource::AvifCompatible, QStringLiteral("fallback"),
-            QStringLiteral("fallback ran"), &calls),
-    });
+    KiriView::ImageDecodeRouterHandlers handlers = recordingHandlers(&calls);
+    handlers.raw = recordingHandler(
+        QStringLiteral("raw"), &calls, nullptr, nullptr, QStringLiteral("raw failed"));
+    handlers.qtRaster = recordingHandler(
+        QStringLiteral("qt"), &calls, nullptr, nullptr, QStringLiteral("qt fallback ran"));
+    KiriView::ImageDecodeRouter router(
+        std::move(handlers), [](const QByteArray &, const QString &) {
+            return classification(KiriView::ImageInputKind::Raw);
+        });
 
     const KiriView::DecodedImageResult result
-        = pipeline.decode(QByteArrayLiteral("not an image"), KiriView::ImageDecodeRequest {});
+        = router.decode(QByteArrayLiteral("not raw"), KiriView::ImageDecodeRequest {});
 
-    const auto *failure = KiriView::decodedImageResultFailure(result);
+    const KiriView::DecodedImageFailure *failure = KiriView::decodedImageResultFailure(result);
     QVERIFY(failure != nullptr);
-    QCOMPARE(failure->errorString, QStringLiteral("APNG failed"));
-    QCOMPARE(calls, QStringList({ QStringLiteral("svg"), QStringLiteral("apng") }));
+    QCOMPARE(failure->errorString, QStringLiteral("raw failed"));
+    QCOMPARE(calls, QStringList({ QStringLiteral("raw") }));
 }
 
-void TestImageDecodePipeline::unsupportedStagesFallThrough()
+void TestImageDecodePipeline::compatibleDataIsComputedOnlyWhenClassificationRequestsIt()
 {
-    QStringList calls;
-    KiriView::ImageDecodePipeline pipeline({
-        unsupportedStage(DataSource::Original, QStringLiteral("svg"), &calls),
-        unsupportedStage(DataSource::Original, QStringLiteral("apng"), &calls),
-        failureStage(DataSource::AvifCompatible, QStringLiteral("fallback"),
-            QStringLiteral("fallback ran"), &calls),
-    });
-
-    const KiriView::DecodedImageResult result
-        = pipeline.decode(QByteArrayLiteral("not an image"), KiriView::ImageDecodeRequest {});
-
-    const auto *failure = KiriView::decodedImageResultFailure(result);
-    QVERIFY(failure != nullptr);
-    QCOMPARE(failure->errorString, QStringLiteral("fallback ran"));
-    QCOMPARE(calls,
-        QStringList({ QStringLiteral("svg"), QStringLiteral("apng"), QStringLiteral("fallback") }));
-}
-
-void TestImageDecodePipeline::stagesReceiveSelectedDecodeInputs()
-{
-    QByteArrayList recordedInputData;
-    QList<quint64> requestIds;
-    const QByteArray originalData = QByteArrayLiteral("image bytes");
+    const QByteArray originalData = QByteArrayLiteral("original image bytes");
     const QByteArray compatibleData = QByteArrayLiteral("compatible image bytes");
-    KiriView::ImageDecodePipeline pipeline(
-        {
-            dataRecordingStage(DataSource::Original, &recordedInputData, &requestIds),
-            dataRecordingStage(DataSource::AvifCompatible, &recordedInputData, &requestIds, true),
+
+    int qtCompatibleTransformCount = 0;
+    QStringList qtCalls;
+    QByteArrayList qtInputData;
+    KiriView::ImageDecodeRouter qtRouter(
+        recordingHandlers(&qtCalls, &qtInputData),
+        [](const QByteArray &, const QString &) {
+            return classification(
+                KiriView::ImageInputKind::QtRaster, KiriView::QtRasterFormat::Png);
         },
-        [compatibleData](const QByteArray &) { return compatibleData; });
-    const KiriView::ImageDecodeRequest request = KiriView::ImageDecodeRequest::fromUrl(
-        42, QUrl::fromLocalFile(QStringLiteral("/tmp/image.png")));
+        [&qtCompatibleTransformCount, compatibleData](const QByteArray &) {
+            ++qtCompatibleTransformCount;
+            return compatibleData;
+        });
 
-    const KiriView::DecodedImageResult result = pipeline.decode(originalData, request);
+    qtRouter.decode(originalData, KiriView::ImageDecodeRequest {});
 
-    QVERIFY(KiriView::decodedImageResultFailure(result) != nullptr);
-    QCOMPARE(recordedInputData, QByteArrayList({ originalData, compatibleData }));
-    QCOMPARE(requestIds, QList<quint64>({ 42, 42 }));
+    QCOMPARE(qtCompatibleTransformCount, 0);
+    QCOMPARE(qtCalls, QStringList({ QStringLiteral("qt") }));
+    QCOMPARE(qtInputData, QByteArrayList({ originalData }));
+
+    int heifCompatibleTransformCount = 0;
+    QStringList heifCalls;
+    QByteArrayList heifInputData;
+    KiriView::ImageDecodeRouter heifRouter(
+        recordingHandlers(&heifCalls, &heifInputData),
+        [](const QByteArray &, const QString &) {
+            return classification(KiriView::ImageInputKind::HeifFamily,
+                KiriView::QtRasterFormat::None, KiriView::ImageDecodeDataSource::AvifCompatible);
+        },
+        [&heifCompatibleTransformCount, compatibleData](const QByteArray &) {
+            ++heifCompatibleTransformCount;
+            return compatibleData;
+        });
+
+    heifRouter.decode(originalData, KiriView::ImageDecodeRequest {});
+
+    QCOMPARE(heifCompatibleTransformCount, 1);
+    QCOMPARE(heifCalls, QStringList({ QStringLiteral("heif") }));
+    QCOMPARE(heifInputData, QByteArrayList({ compatibleData }));
 }
 
-void TestImageDecodePipeline::compatibleDataIsComputedOnlyWhenRequested()
+void TestImageDecodePipeline::qtRasterClassificationCarriesExplicitFormat()
+{
+    QStringList calls;
+    QList<KiriView::QtRasterFormat> qtFormats;
+    KiriView::ImageDecodeRouter router(
+        recordingHandlers(&calls, nullptr, &qtFormats), [](const QByteArray &, const QString &) {
+            return classification(
+                KiriView::ImageInputKind::QtRaster, KiriView::QtRasterFormat::Tiff);
+        });
+
+    router.decode(QByteArrayLiteral("tiff bytes"), KiriView::ImageDecodeRequest {});
+
+    QCOMPARE(calls, QStringList({ QStringLiteral("qt") }));
+    QCOMPARE(qtFormats, QList<KiriView::QtRasterFormat>({ KiriView::QtRasterFormat::Tiff }));
+}
+
+void TestImageDecodePipeline::unknownClassificationFailsWithoutDecoder()
 {
     int compatibleTransformCount = 0;
     QStringList calls;
-    KiriView::ImageDecodePipeline pipeline(
-        {
-            failureStage(
-                DataSource::Original, QStringLiteral("original"), QStringLiteral("done"), &calls),
+    KiriView::ImageDecodeRouter router(
+        recordingHandlers(&calls),
+        [](const QByteArray &, const QString &) {
+            return classification(KiriView::ImageInputKind::Unknown);
         },
         [&compatibleTransformCount](const QByteArray &data) {
             ++compatibleTransformCount;
@@ -167,36 +196,14 @@ void TestImageDecodePipeline::compatibleDataIsComputedOnlyWhenRequested()
         });
 
     const KiriView::DecodedImageResult result
-        = pipeline.decode(QByteArrayLiteral("image bytes"), KiriView::ImageDecodeRequest {});
+        = router.decode(QByteArrayLiteral("unknown bytes"), KiriView::ImageDecodeRequest {});
 
-    QVERIFY(KiriView::decodedImageResultFailure(result) != nullptr);
-    QCOMPARE(calls, QStringList({ QStringLiteral("original") }));
+    const KiriView::DecodedImageFailure *failure = KiriView::decodedImageResultFailure(result);
+    QVERIFY(failure != nullptr);
+    QCOMPARE(
+        failure->errorString, KiriView::imageErrorText(KiriView::ImageErrorTextId::ReadImageData));
+    QVERIFY(calls.isEmpty());
     QCOMPARE(compatibleTransformCount, 0);
-}
-
-void TestImageDecodePipeline::compatibleDataIsSharedAcrossCompatibleStages()
-{
-    int compatibleTransformCount = 0;
-    QByteArrayList inputData;
-    QList<quint64> requestIds;
-    KiriView::ImageDecodePipeline pipeline(
-        {
-            dataRecordingStage(DataSource::AvifCompatible, &inputData, &requestIds),
-            dataRecordingStage(DataSource::AvifCompatible, &inputData, &requestIds, true),
-        },
-        [&compatibleTransformCount](const QByteArray &data) {
-            ++compatibleTransformCount;
-            return data + QByteArrayLiteral("-compatible");
-        });
-
-    const KiriView::DecodedImageResult result
-        = pipeline.decode(QByteArrayLiteral("image bytes"), KiriView::ImageDecodeRequest {});
-
-    QVERIFY(KiriView::decodedImageResultFailure(result) != nullptr);
-    QCOMPARE(inputData,
-        QByteArrayList({ QByteArrayLiteral("image bytes-compatible"),
-            QByteArrayLiteral("image bytes-compatible") }));
-    QCOMPARE(compatibleTransformCount, 1);
 }
 
 QTEST_GUILESS_MAIN(TestImageDecodePipeline)
