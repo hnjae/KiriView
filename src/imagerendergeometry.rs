@@ -1,8 +1,6 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-const STATIC_TILE_CACHE_SYSTEM_MEMORY_DIVISOR: i64 = 16;
-
 #[cxx::bridge(namespace = "KiriView")]
 mod ffi {
     #[derive(Clone, Copy, Debug, PartialEq)]
@@ -104,12 +102,6 @@ mod ffi {
             preview_size: RustImageRenderSize,
             maximum_texture_size: i32,
         ) -> bool;
-
-        #[cxx_name = "rustStaticTileCacheByteBudgetForSystemMemory"]
-        fn rust_static_tile_cache_byte_budget_for_system_memory(
-            system_memory_byte_size: i64,
-            full_decode_fallback_byte_limit: i64,
-        ) -> i64;
     }
 }
 
@@ -330,17 +322,6 @@ fn rust_static_image_fits_full_image_surface(
         && maximum_texture_size > 0
         && image_size.width <= maximum_texture_size
         && image_size.height <= maximum_texture_size
-}
-
-fn rust_static_tile_cache_byte_budget_for_system_memory(
-    system_memory_byte_size: i64,
-    full_decode_fallback_byte_limit: i64,
-) -> i64 {
-    crate::cachebudget::system_memory_capped_byte_budget(
-        full_decode_fallback_byte_limit,
-        system_memory_byte_size,
-        STATIC_TILE_CACHE_SYSTEM_MEMORY_DIVISOR,
-    )
 }
 
 fn min_like_cpp(left: f64, right: f64) -> f64 {
@@ -642,27 +623,5 @@ mod tests {
             size(512, 256),
             0,
         ));
-    }
-
-    #[test]
-    fn static_tile_cache_byte_budget_uses_full_decode_limit_and_system_memory_cap() {
-        let preferred = 512 * 1024 * 1024;
-
-        assert_eq!(
-            rust_static_tile_cache_byte_budget_for_system_memory(0, preferred),
-            preferred
-        );
-        assert_eq!(
-            rust_static_tile_cache_byte_budget_for_system_memory(preferred, preferred),
-            preferred / STATIC_TILE_CACHE_SYSTEM_MEMORY_DIVISOR
-        );
-        assert_eq!(
-            rust_static_tile_cache_byte_budget_for_system_memory(preferred * 32, preferred),
-            preferred
-        );
-        assert_eq!(
-            rust_static_tile_cache_byte_budget_for_system_memory(preferred, -1),
-            0
-        );
     }
 }

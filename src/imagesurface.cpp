@@ -3,9 +3,9 @@
 
 #include "imagesurface.h"
 
+#include "imagecachepolicy.h"
 #include "kiriview/src/imagerendergeometry.cxx.h"
 #include "qtgeometryconversion.h"
-#include "rustqtconversion.h"
 #include "systemmemory.h"
 
 #include <optional>
@@ -69,9 +69,8 @@ qsizetype StaticTileSurface::defaultTileCacheByteBudget()
 
 qsizetype StaticTileSurface::tileCacheByteBudgetForSystemMemory(qsizetype systemMemoryByteSize)
 {
-    return Bridge::qtByteSize(
-        rustStaticTileCacheByteBudgetForSystemMemory(Bridge::rustByteSize(systemMemoryByteSize),
-            Bridge::rustByteSize(imageFullDecodeFallbackByteLimit)));
+    return staticTileCacheByteBudgetForSystemMemory(
+        systemMemoryByteSize, imageFullDecodeFallbackByteLimit);
 }
 
 bool staticImageFitsFullImageSurface(const StaticImagePayload &image, int maximumTextureSize)

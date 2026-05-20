@@ -4,6 +4,7 @@
 #include "imagecachepolicy.h"
 
 #include "kiriview/src/cachebudget.cxx.h"
+#include "rustqtconversion.h"
 
 #include <cstdint>
 #include <utility>
@@ -33,5 +34,12 @@ std::vector<std::size_t> lruCacheRetainedIndices(const std::vector<qsizetype> &b
     const rust::Vec<std::size_t> retainedIndices = rustLruCacheRetainedIndices(
         std::move(rustByteCosts), std::move(rustLastUses), rustByteCost(byteBudget));
     return std::vector<std::size_t>(retainedIndices.cbegin(), retainedIndices.cend());
+}
+
+qsizetype staticTileCacheByteBudgetForSystemMemory(
+    qsizetype systemMemoryByteSize, qsizetype preferredByteBudget)
+{
+    return Bridge::qtByteSize(rustStaticTileCacheByteBudgetForSystemMemory(
+        Bridge::rustByteSize(systemMemoryByteSize), Bridge::rustByteSize(preferredByteBudget)));
 }
 }

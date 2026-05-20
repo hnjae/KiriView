@@ -15,6 +15,7 @@ class TestImageCachePolicy : public QObject
 private Q_SLOTS:
     void retainsLeastRecentlyUsedEntriesWithinBudget();
     void rejectsInvalidEntriesBudgetsAndMismatchedInputs();
+    void staticTileCacheByteBudgetUsesPreferredLimitAndSystemMemoryCap();
 };
 
 void TestImageCachePolicy::retainsLeastRecentlyUsedEntriesWithinBudget()
@@ -31,6 +32,22 @@ void TestImageCachePolicy::rejectsInvalidEntriesBudgetsAndMismatchedInputs()
         std::vector<std::size_t>({ 1 }));
     QVERIFY(KiriView::lruCacheRetainedIndices({ 10 }, { 1 }, 0).empty());
     QVERIFY(KiriView::lruCacheRetainedIndices({ 10, 20 }, { 1 }, 100).empty());
+}
+
+void TestImageCachePolicy::staticTileCacheByteBudgetUsesPreferredLimitAndSystemMemoryCap()
+{
+    constexpr qsizetype preferredByteBudget = 512 * 1024 * 1024;
+
+    QCOMPARE(KiriView::staticTileCacheByteBudgetForSystemMemory(0, preferredByteBudget),
+        preferredByteBudget);
+    QCOMPARE(KiriView::staticTileCacheByteBudgetForSystemMemory(
+                 preferredByteBudget, preferredByteBudget),
+        preferredByteBudget / 16);
+    QCOMPARE(KiriView::staticTileCacheByteBudgetForSystemMemory(
+                 preferredByteBudget * 32, preferredByteBudget),
+        preferredByteBudget);
+    QCOMPARE(
+        KiriView::staticTileCacheByteBudgetForSystemMemory(preferredByteBudget, -1), qsizetype(0));
 }
 
 QTEST_GUILESS_MAIN(TestImageCachePolicy)

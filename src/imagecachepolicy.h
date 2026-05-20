@@ -11,6 +11,8 @@
 namespace KiriView {
 std::vector<std::size_t> lruCacheRetainedIndices(const std::vector<qsizetype> &byteCosts,
     const std::vector<quint64> &lastUses, qsizetype byteBudget);
+qsizetype staticTileCacheByteBudgetForSystemMemory(
+    qsizetype systemMemoryByteSize, qsizetype preferredByteBudget);
 }
 
 #endif
