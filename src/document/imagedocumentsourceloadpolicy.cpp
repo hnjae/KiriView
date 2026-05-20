@@ -40,40 +40,57 @@ KiriView::RustImageDocumentSourceLoadKind rustSourceLoadKind(
     return KiriView::RustImageDocumentSourceLoadKind::CurrentSource;
 }
 
-KiriView::ImageDocumentSourceLoadOperation sourceLoadOperation(
-    KiriView::RustImageDocumentSourceLoadOperation operation)
+void appendSourceLoadRuntimeOperation(KiriView::ImageDocumentRuntimePlan &runtimePlan,
+    KiriView::RustImageDocumentSourceLoadOperation operation,
+    const KiriView::ImageDocumentSourceLoadRequest &request)
 {
-    using Operation = KiriView::ImageDocumentSourceLoadOperation;
     using RustOperation = KiriView::RustImageDocumentSourceLoadOperation;
 
     switch (operation) {
     case RustOperation::CancelFileDeletion:
-        return Operation::CancelFileDeletion;
-    case RustOperation::CancelNavigationAndPredecode:
-        return Operation::CancelNavigationAndPredecode;
+        runtimePlan.push_back(KiriView::CancelFileDeletionOperation {});
+        return;
+    case RustOperation::CancelAllNavigation:
+        runtimePlan.push_back(KiriView::CancelAllNavigationOperation {});
+        return;
+    case RustOperation::CancelPredecode:
+        runtimePlan.push_back(KiriView::CancelPredecodeOperation {});
+        return;
     case RustOperation::FinishSpreadTransition:
-        return Operation::FinishSpreadTransition;
+        runtimePlan.push_back(KiriView::FinishSpreadTransitionOperation {});
+        return;
     case RustOperation::ResetRightToLeftReading:
-        return Operation::ResetRightToLeftReading;
+        runtimePlan.push_back(KiriView::ResetRightToLeftReadingOperation {});
+        return;
     case RustOperation::NotifyRightToLeftReadingChanged:
-        return Operation::NotifyRightToLeftReadingChanged;
+        runtimePlan.push_back(KiriView::NotifyRightToLeftReadingChangedOperation {});
+        return;
     case RustOperation::ClearSecondaryPage:
-        return Operation::ClearSecondaryPage;
+        runtimePlan.push_back(KiriView::ClearSecondaryPageOperation {});
+        return;
     case RustOperation::ClearLoadingContainerNavigationUrl:
-        return Operation::ClearLoadingContainerNavigationUrl;
+        runtimePlan.push_back(KiriView::ClearLoadingContainerNavigationUrlOperation {});
+        return;
     case RustOperation::SetLoadingContainerNavigationUrlToRequested:
-        return Operation::SetLoadingContainerNavigationUrlToRequested;
+        runtimePlan.push_back(KiriView::SetLoadingContainerNavigationUrlOperation {
+            request.containerNavigationUrl,
+        });
+        return;
     case RustOperation::SetContainerNavigationUrlToRequested:
-        return Operation::SetContainerNavigationUrlToRequested;
+        runtimePlan.push_back(KiriView::SetContainerNavigationUrlOperation {
+            request.containerNavigationUrl,
+        });
+        return;
     case RustOperation::PrepareSourceLoad:
-        return Operation::PrepareSourceLoad;
+        runtimePlan.push_back(KiriView::PrepareSourceLoadOperation { request });
+        return;
     case RustOperation::SetSourceUrlToRequested:
-        return Operation::SetSourceUrlToRequested;
+        runtimePlan.push_back(KiriView::SetSourceUrlOperation { request.sourceUrl });
+        return;
     case RustOperation::BeginOpen:
-        return Operation::BeginOpen;
+        runtimePlan.push_back(KiriView::BeginOpenOperation {});
+        return;
     }
-
-    return Operation::BeginOpen;
 }
 
 KiriView::RustImageDocumentSourceLoadPolicyInput rustSourceLoadPolicyInput(
@@ -88,13 +105,14 @@ KiriView::RustImageDocumentSourceLoadPolicyInput rustSourceLoadPolicyInput(
     };
 }
 
-KiriView::ImageDocumentSourceLoadPlan sourceLoadPlan(
-    const KiriView::RustImageDocumentSourceLoadPlan &rustPlan)
+KiriView::ImageDocumentRuntimePlan runtimePlanFromRust(
+    const KiriView::RustImageDocumentSourceLoadPlan &rustPlan,
+    const KiriView::ImageDocumentSourceLoadRequest &request)
 {
-    KiriView::ImageDocumentSourceLoadPlan plan;
-    plan.operations.reserve(rustPlan.operations.size());
+    KiriView::ImageDocumentRuntimePlan plan;
+    plan.reserve(rustPlan.operations.size());
     for (KiriView::RustImageDocumentSourceLoadOperation operation : rustPlan.operations) {
-        plan.operations.push_back(sourceLoadOperation(operation));
+        appendSourceLoadRuntimeOperation(plan, operation, request);
     }
     return plan;
 }
@@ -116,8 +134,10 @@ ImageDocumentSourceLoadPolicyInput imageDocumentSourceLoadPolicyInput(
 }
 
 namespace KiriView::ImageDocumentSourceLoadPolicy {
-ImageDocumentSourceLoadPlan plan(const ImageDocumentSourceLoadPolicyInput &input)
+ImageDocumentRuntimePlan plan(
+    const ImageDocumentSourceLoadPolicyInput &input, const ImageDocumentSourceLoadRequest &request)
 {
-    return sourceLoadPlan(rustImageDocumentSourceLoadPlan(rustSourceLoadPolicyInput(input)));
+    return runtimePlanFromRust(
+        rustImageDocumentSourceLoadPlan(rustSourceLoadPolicyInput(input)), request);
 }
 }

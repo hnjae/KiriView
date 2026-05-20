@@ -58,7 +58,6 @@ src/document/imagedocumentruntime.cpp
 src/document/imagedocumentruntimecontrollers.cpp
 src/document/imagedocumentruntimeeffectbinding.cpp
 src/document/imagedocumentruntimedependencies.cpp
-src/document/imagedocumentsourceloadruntimeplan.cpp
 src/document/imagedocumentsourceloadpolicy.cpp
 src/decoding/imagedecodepipeline.cpp
 src/decoding/imagedecodedependencies.cpp

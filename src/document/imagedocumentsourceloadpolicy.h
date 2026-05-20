@@ -4,31 +4,16 @@
 #ifndef KIRIVIEW_IMAGEDOCUMENTSOURCELOADPOLICY_H
 #define KIRIVIEW_IMAGEDOCUMENTSOURCELOADPOLICY_H
 
+#include "imagedocumenteffectplan.h"
 #include "imagedocumentsourceloadrequest.h"
 #include "location/imagelocation.h"
 
 #include <QUrl>
-#include <vector>
 
 namespace KiriView {
 enum class ImageDocumentSourceLoadKind {
     CurrentSource,
     ReplacementSource,
-};
-
-enum class ImageDocumentSourceLoadOperation {
-    CancelFileDeletion,
-    CancelNavigationAndPredecode,
-    FinishSpreadTransition,
-    ResetRightToLeftReading,
-    NotifyRightToLeftReadingChanged,
-    ClearSecondaryPage,
-    ClearLoadingContainerNavigationUrl,
-    SetLoadingContainerNavigationUrlToRequested,
-    SetContainerNavigationUrlToRequested,
-    PrepareSourceLoad,
-    SetSourceUrlToRequested,
-    BeginOpen,
 };
 
 struct ImageDocumentSourceLoadPolicyInput {
@@ -45,15 +30,12 @@ struct ImageDocumentSourceLoadSnapshot {
     bool rightToLeftReadingEnabled = false;
 };
 
-struct ImageDocumentSourceLoadPlan {
-    std::vector<ImageDocumentSourceLoadOperation> operations;
-};
-
 ImageDocumentSourceLoadPolicyInput imageDocumentSourceLoadPolicyInput(
     const ImageDocumentSourceLoadSnapshot &snapshot, const ImageDocumentSourceLoadRequest &request);
 
 namespace ImageDocumentSourceLoadPolicy {
-    ImageDocumentSourceLoadPlan plan(const ImageDocumentSourceLoadPolicyInput &input);
+    ImageDocumentRuntimePlan plan(const ImageDocumentSourceLoadPolicyInput &input,
+        const ImageDocumentSourceLoadRequest &request);
 }
 }
 

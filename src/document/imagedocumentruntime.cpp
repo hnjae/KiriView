@@ -9,7 +9,6 @@
 #include "imagedocumentruntimecontrollers.h"
 #include "imagedocumentsourceloadpolicy.h"
 #include "imagedocumentsourceloadrequest.h"
-#include "imagedocumentsourceloadruntimeplan.h"
 #include "presentation/imagepresentationcontroller.h"
 #include "presentation/imagespreadpresentationcontroller.h"
 
@@ -249,10 +248,10 @@ ImageDocumentRenderContext ImageDocumentRuntime::renderContext() const
 
 void ImageDocumentRuntime::loadSource(const ImageDocumentSourceLoadRequest &request)
 {
-    const ImageDocumentSourceLoadPlan plan
-        = ImageDocumentSourceLoadPolicy::plan(imageDocumentSourceLoadPolicyInput(
-            sourceLoadSnapshot(state, controllers->spreadController()), request));
-    controllers->dispatchPlan(imageDocumentSourceLoadRuntimePlan(request, plan));
+    controllers->dispatchPlan(ImageDocumentSourceLoadPolicy::plan(
+        imageDocumentSourceLoadPolicyInput(
+            sourceLoadSnapshot(state, controllers->spreadController()), request),
+        request));
 }
 
 void ImageDocumentRuntime::publishChanges(const std::vector<ImageDocumentChange> &changes)
