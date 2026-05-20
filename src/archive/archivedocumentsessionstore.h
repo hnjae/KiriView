@@ -6,8 +6,8 @@
 
 #include "archivebackend.h"
 #include "archivedocumentsessionruntime.h"
+#include "decoding/imagedecodedependencies.h"
 #include "imageasyncdependencies.h"
-#include "imagedecodedependencies.h"
 #include "imageiojob.h"
 #include "navigation/imagecandidateprovider.h"
 

@@ -3,7 +3,7 @@
 
 #include "imageloader.h"
 
-#include "decodedimageresult.h"
+#include "decoding/decodedimageresult.h"
 #include "imagecallback.h"
 
 #include <optional>

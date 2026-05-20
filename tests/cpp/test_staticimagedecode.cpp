@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "staticimagedecode.h"
+#include "decoding/staticimagedecode.h"
 
 #include <QImage>
 #include <QObject>

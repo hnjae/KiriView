@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "kiriimagedecoder.h"
+#include "decoding/kiriimagedecoder.h"
 
-#include "heifcontainer.h"
+#include "decoding/heifcontainer.h"
 #include "image_test_support.h"
 #include "rendering/qimagereadertilesource.h"
 

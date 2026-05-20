@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_PREDECODEACTIVEDECODESTORE_H
 #define KIRIVIEW_PREDECODEACTIVEDECODESTORE_H
 
-#include "imagedecoderequest.h"
+#include "decoding/imagedecoderequest.h"
 #include "predecodeactiveloads.h"
 
 #include <QPointer>

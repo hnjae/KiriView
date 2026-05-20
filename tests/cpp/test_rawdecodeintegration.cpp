@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "imageformatregistry.h"
-#include "kiriimagedecoder.h"
+#include "decoding/imageformatregistry.h"
+#include "decoding/kiriimagedecoder.h"
 
 #include <QByteArray>
 #include <QFile>

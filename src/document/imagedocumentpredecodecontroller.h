@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGEDOCUMENTPREDECODECONTROLLER_H
 #define KIRIVIEW_IMAGEDOCUMENTPREDECODECONTROLLER_H
 
-#include "imagedecodedependencies.h"
+#include "decoding/imagedecodedependencies.h"
 #include "navigation/imagecandidateprovider.h"
 #include "powersaverprovider.h"
 #include "predecode/predecodedimage.h"

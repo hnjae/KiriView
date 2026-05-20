@@ -1,10 +1,10 @@
 # SPDX-FileCopyrightText: 2026 KIM Hyunjae
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
-src/apnganimationreader.cpp
-src/apngframecomposer.cpp
-src/apngrgbabuffer.cpp
-src/decodedimageresult.cpp
+src/decoding/apnganimationreader.cpp
+src/decoding/apngframecomposer.cpp
+src/decoding/apngrgbabuffer.cpp
+src/decoding/decodedimageresult.cpp
 src/rendering/decodedtilecache.cpp
 src/application/applicationactionregistry.cpp
 src/application/applicationactionruntime.cpp
@@ -20,16 +20,16 @@ src/archive/archivedocumentsessionstore.cpp
 src/archive/archivedocumentsessionruntime.cpp
 src/archive/archiveformat.cpp
 src/archive/archivepath.cpp
-src/bufferedimagereader.cpp
+src/decoding/bufferedimagereader.cpp
 src/displayedimagestate.cpp
 src/document/filedeletion.cpp
 src/document/imageremovalfallback.cpp
 src/rendering/imagerendernodestate.cpp
-src/heifcontainer.cpp
-src/heifdecoder.cpp
-src/heifsequencereader.cpp
-src/heifsupport.cpp
-src/heiftilingplan.cpp
+src/decoding/heifcontainer.cpp
+src/decoding/heifdecoder.cpp
+src/decoding/heifsequencereader.cpp
+src/decoding/heifsupport.cpp
+src/decoding/heiftilingplan.cpp
 src/rendering/heiftilesource.cpp
 src/imageanimationpolicy.cpp
 src/imageanimationplayer.cpp
@@ -60,14 +60,14 @@ src/document/imagedocumentruntimeeffectbinding.cpp
 src/document/imagedocumentruntimedependencies.cpp
 src/document/imagedocumentsourceloadruntimeplan.cpp
 src/document/imagedocumentsourceloadpolicy.cpp
-src/imagedecodepipeline.cpp
-src/imagedecodedependencies.cpp
-src/imagedecodejob.cpp
-src/imagedecodejobstate.cpp
+src/decoding/imagedecodepipeline.cpp
+src/decoding/imagedecodedependencies.cpp
+src/decoding/imagedecodejob.cpp
+src/decoding/imagedecodejobstate.cpp
 src/document/imagedocumentstate.cpp
 src/rendering/imagesurface.cpp
-src/imageformatregistry.cpp
-src/imageinputclassification.cpp
+src/decoding/imageformatregistry.cpp
+src/decoding/imageinputclassification.cpp
 src/imageerrortext.cpp
 src/navigation/imagecandidateitems.cpp
 src/navigation/imagecandidaterepository.cpp
@@ -137,12 +137,12 @@ src/predecode/predecodeloadstate.cpp
 src/predecode/predecodepolicy.cpp
 src/predecode/predecodeschedulestate.cpp
 src/predecode/predecodewindowplan.cpp
-src/qimagereaderdecoder.cpp
+src/decoding/qimagereaderdecoder.cpp
 src/rendering/qimagereaderscaledlevelcache.cpp
 src/rendering/qimagereadertilesource.cpp
-src/rawdecoder.cpp
+src/decoding/rawdecoder.cpp
 src/application/shortcuthelpmodel.cpp
 src/rendering/staticimage.cpp
-src/staticimagedecode.cpp
+src/decoding/staticimagedecode.cpp
 src/systemmemory.cpp
 src/rendering/svgtilesource.cpp

@@ -5,8 +5,8 @@
 #define KIRIVIEW_IMAGEASYNCDEPENDENCIES_H
 
 #include "archive/archivebackend.h"
+#include "decoding/imagedecodedependencies.h"
 #include "document/filedeletion.h"
-#include "imagedecodedependencies.h"
 #include "navigation/imagecandidateprovider.h"
 #include "powersaverprovider.h"
 

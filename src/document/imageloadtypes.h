@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGELOADTYPES_H
 #define KIRIVIEW_IMAGELOADTYPES_H
 
-#include "imagedecoderequest.h"
+#include "decoding/imagedecoderequest.h"
 #include "imagelocation.h"
 #include "rendering/staticimage.h"
 

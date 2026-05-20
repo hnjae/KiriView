@@ -3,7 +3,7 @@
 
 #include "qimagereadertilesource.h"
 
-#include "bufferedimagereader.h"
+#include "decoding/bufferedimagereader.h"
 #include "imagebytecost.h"
 #include "imageerrortext.h"
 #include "imagerendering.h"

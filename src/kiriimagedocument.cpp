@@ -3,10 +3,10 @@
 
 #include "kiriimagedocument.h"
 
+#include "decoding/imageformatregistry.h"
 #include "document/filedeletion.h"
 #include "document/imagedocumentpublicsignals.h"
 #include "document/imagedocumentruntime.h"
-#include "imageformatregistry.h"
 
 #include <memory>
 #include <utility>

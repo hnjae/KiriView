@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGEANIMATIONPLAYER_H
 #define KIRIVIEW_IMAGEANIMATIONPLAYER_H
 
-#include "apnganimationreader.h"
+#include "decoding/apnganimationreader.h"
 #include "imageanimationpolicy.h"
 
 #include <QByteArray>

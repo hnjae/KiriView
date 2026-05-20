@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGEPRESENTATIONLOAD_H
 #define KIRIVIEW_IMAGEPRESENTATIONLOAD_H
 
-#include "decodedimageresult.h"
+#include "decoding/decodedimageresult.h"
 #include "document/imageloadtypes.h"
 #include "predecode/predecodedimage.h"
 

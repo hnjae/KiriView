@@ -4,8 +4,8 @@
 #ifndef KIRIVIEW_TESTS_IMAGE_ASYNC_TEST_SUPPORT_H
 #define KIRIVIEW_TESTS_IMAGE_ASYNC_TEST_SUPPORT_H
 
+#include "decoding/imagedecodedependencies.h"
 #include "document/filedeletion.h"
-#include "imagedecodedependencies.h"
 #include "imageiojob.h"
 #include "powersaverprovider.h"
 

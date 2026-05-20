@@ -55,7 +55,7 @@ const RUST_BRIDGE_SOURCES: &[&str] = &[
 ];
 const CXX_QT_CPP_SOURCES: &[&str] = &[
     "src/kiriimagedocument.cpp",
-    "src/kiriimagedecoder.cpp",
+    "src/decoding/kiriimagedecoder.cpp",
     "src/rendering/kiriimagerendernode.cpp",
     "src/kiriimageview.cpp",
     "src/kiriviewapplication.cpp",

@@ -3,8 +3,8 @@
 
 #include "predecodeloadcontroller.h"
 
-#include "decodedimageresult.h"
-#include "imagedecodejob.h"
+#include "decoding/decodedimageresult.h"
+#include "decoding/imagedecodejob.h"
 
 #include <optional>
 #include <utility>

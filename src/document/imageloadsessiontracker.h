@@ -4,8 +4,8 @@
 #ifndef KIRIVIEW_IMAGELOADSESSIONTRACKER_H
 #define KIRIVIEW_IMAGELOADSESSIONTRACKER_H
 
+#include "decoding/imagedecoderequest.h"
 #include "imageasyncticket.h"
-#include "imagedecoderequest.h"
 #include "imageloadplan.h"
 #include "navigation/imagenavigationtypes.h"
 #include "rendering/staticimage.h"

@@ -6,7 +6,7 @@
 #include "archivebackend_p.h"
 #include "archiveformat.h"
 #include "archivepath.h"
-#include "imageformatregistry.h"
+#include "decoding/imageformatregistry.h"
 #include "navigation/imagenavigationmodel.h"
 
 #include <KLocalizedString>

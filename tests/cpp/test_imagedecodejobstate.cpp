@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "imagedecodejobstate.h"
+#include "decoding/imagedecodejobstate.h"
 
 #include "image_test_support.h"
 

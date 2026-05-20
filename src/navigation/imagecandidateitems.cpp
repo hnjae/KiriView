@@ -4,7 +4,7 @@
 #include "imagecandidateitems.h"
 
 #include "archive/archiveformat.h"
-#include "imageformatregistry.h"
+#include "decoding/imageformatregistry.h"
 #include "imagenavigationmodel.h"
 #include "imageurl.h"
 

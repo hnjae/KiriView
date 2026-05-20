@@ -3,7 +3,7 @@
 
 #include "predecodeactivedecodestore.h"
 
-#include "imagedecodejob.h"
+#include "decoding/imagedecodejob.h"
 #include "imageurl.h"
 
 #include <algorithm>

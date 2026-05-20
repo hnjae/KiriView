@@ -3,9 +3,9 @@
 
 #include "imageanimationplayer.h"
 
-#include "apnganimationreader.h"
-#include "bufferedimagereader.h"
-#include "heifsequencereader.h"
+#include "decoding/apnganimationreader.h"
+#include "decoding/bufferedimagereader.h"
+#include "decoding/heifsequencereader.h"
 #include "imagecallback.h"
 #include "imageerrortext.h"
 

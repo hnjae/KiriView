@@ -3,9 +3,9 @@
 
 #include "heiftilesource.h"
 
-#include "heifcontainer.h"
-#include "heifsupport.h"
-#include "heiftilingplan.h"
+#include "decoding/heifcontainer.h"
+#include "decoding/heifsupport.h"
+#include "decoding/heiftilingplan.h"
 #include "imagebytecost.h"
 #include "imageerrortext.h"
 #include "imagetilesourcehelpers_p.h"
