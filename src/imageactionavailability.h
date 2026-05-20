@@ -7,6 +7,57 @@
 #include <QObject>
 #include <QtQml/qqmlregistration.h>
 
+struct ImageActionAvailabilityInput {
+    bool imageReady = false;
+    int imageCount = 0;
+    int currentPageNumber = 0;
+    int currentLastPageNumber = 0;
+    bool fileDeletionInProgress = false;
+    bool helpDialogOpen = false;
+    bool textInputFocused = false;
+    bool imagePannable = false;
+    bool imageHorizontallyPannable = false;
+    bool containerNavigationAvailable = false;
+    bool twoPageModeEnabled = false;
+    bool twoPageModeAvailable = false;
+    bool rightToLeftReadingEnabled = false;
+    bool rightToLeftReadingAvailable = false;
+};
+
+struct ImageActionAvailabilityProjection {
+    bool canOpenNextImage = false;
+    bool canOpenPreviousImage = false;
+    bool atKnownFirstImage = false;
+    bool atKnownLastImage = false;
+    bool canUsePageActions = false;
+    bool canUseReadyActions = false;
+    bool canUseRotateActions = false;
+    bool canUseTwoPageModeActions = false;
+    bool canUseRightToLeftReadingActions = false;
+    bool rightToLeftReadingActive = false;
+    bool twoPageModeActive = false;
+    bool helpShortcutsEnabled = false;
+    bool viewerShortcutsEnabled = false;
+    bool readyShortcutsEnabled = false;
+    bool readyViewerShortcutsEnabled = false;
+    bool imageSelectionShortcutsEnabled = false;
+    bool imageSelectionViewerShortcutsEnabled = false;
+    bool pageShortcutsEnabled = false;
+    bool pageViewerShortcutsEnabled = false;
+    bool twoPageViewerShortcutsEnabled = false;
+    bool rightToLeftReadingShortcutsEnabled = false;
+    bool rightToLeftReadingViewerShortcutsEnabled = false;
+    bool rotateShortcutsEnabled = false;
+    bool rotateViewerShortcutsEnabled = false;
+    bool pannableShortcutsEnabled = false;
+    bool pannableViewerShortcutsEnabled = false;
+    bool containerShortcutsEnabled = false;
+    bool containerViewerShortcutsEnabled = false;
+};
+
+ImageActionAvailabilityProjection imageActionAvailabilityProjection(
+    const ImageActionAvailabilityInput &input);
+
 class ImageActionAvailability : public QObject
 {
     Q_OBJECT
@@ -150,21 +201,10 @@ Q_SIGNALS:
 private:
     void setBool(bool &target, bool value);
     void setInt(int &target, int value);
+    void publishInputChange();
 
-    bool m_imageReady = false;
-    int m_imageCount = 0;
-    int m_currentPageNumber = 0;
-    int m_currentLastPageNumber = 0;
-    bool m_fileDeletionInProgress = false;
-    bool m_helpDialogOpen = false;
-    bool m_textInputFocused = false;
-    bool m_imagePannable = false;
-    bool m_imageHorizontallyPannable = false;
-    bool m_containerNavigationAvailable = false;
-    bool m_twoPageModeEnabled = false;
-    bool m_twoPageModeAvailable = false;
-    bool m_rightToLeftReadingEnabled = false;
-    bool m_rightToLeftReadingAvailable = false;
+    ImageActionAvailabilityInput m_input;
+    ImageActionAvailabilityProjection m_projection;
 };
 
 #endif

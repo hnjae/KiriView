@@ -12,11 +12,102 @@ class TestImageActionAvailability : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
+    void projectionDerivesNavigationAndModeAvailabilityFromSnapshot();
+    void projectionDerivesShortcutGatesFromSnapshot();
     void imageNavigationStateDrivesActionAvailability();
     void readyActionAvailabilityRejectsCompetingModes();
     void shortcutAvailabilityUsesViewerAndRuntimeGates();
     void settersNotifyOnlyWhenInputsChange();
 };
+
+void TestImageActionAvailability::projectionDerivesNavigationAndModeAvailabilityFromSnapshot()
+{
+    ImageActionAvailabilityInput input;
+    input.imageReady = true;
+    input.imageCount = 5;
+    input.currentPageNumber = 1;
+    input.currentLastPageNumber = 2;
+    input.twoPageModeAvailable = true;
+    input.rightToLeftReadingAvailable = true;
+
+    ImageActionAvailabilityProjection projection = imageActionAvailabilityProjection(input);
+
+    QVERIFY(projection.canUsePageActions);
+    QVERIFY(!projection.canOpenPreviousImage);
+    QVERIFY(projection.canOpenNextImage);
+    QVERIFY(projection.atKnownFirstImage);
+    QVERIFY(!projection.atKnownLastImage);
+    QVERIFY(projection.canUseReadyActions);
+    QVERIFY(projection.canUseRotateActions);
+    QVERIFY(projection.canUseTwoPageModeActions);
+    QVERIFY(projection.canUseRightToLeftReadingActions);
+    QVERIFY(!projection.twoPageModeActive);
+    QVERIFY(!projection.rightToLeftReadingActive);
+
+    input.currentPageNumber = 5;
+    input.currentLastPageNumber = 5;
+    input.twoPageModeEnabled = true;
+    input.rightToLeftReadingEnabled = true;
+    projection = imageActionAvailabilityProjection(input);
+
+    QVERIFY(projection.canOpenPreviousImage);
+    QVERIFY(!projection.canOpenNextImage);
+    QVERIFY(!projection.atKnownFirstImage);
+    QVERIFY(projection.atKnownLastImage);
+    QVERIFY(projection.twoPageModeActive);
+    QVERIFY(projection.rightToLeftReadingActive);
+    QVERIFY(!projection.canUseRotateActions);
+}
+
+void TestImageActionAvailability::projectionDerivesShortcutGatesFromSnapshot()
+{
+    ImageActionAvailabilityInput input;
+    input.imageReady = true;
+    input.imageCount = 3;
+    input.currentPageNumber = 2;
+    input.imagePannable = true;
+    input.containerNavigationAvailable = true;
+    input.twoPageModeEnabled = true;
+    input.twoPageModeAvailable = true;
+    input.rightToLeftReadingAvailable = true;
+
+    ImageActionAvailabilityProjection projection = imageActionAvailabilityProjection(input);
+
+    QVERIFY(projection.helpShortcutsEnabled);
+    QVERIFY(projection.viewerShortcutsEnabled);
+    QVERIFY(projection.readyShortcutsEnabled);
+    QVERIFY(projection.readyViewerShortcutsEnabled);
+    QVERIFY(projection.imageSelectionShortcutsEnabled);
+    QVERIFY(projection.imageSelectionViewerShortcutsEnabled);
+    QVERIFY(projection.pageShortcutsEnabled);
+    QVERIFY(projection.pageViewerShortcutsEnabled);
+    QVERIFY(projection.twoPageViewerShortcutsEnabled);
+    QVERIFY(projection.rightToLeftReadingShortcutsEnabled);
+    QVERIFY(projection.rightToLeftReadingViewerShortcutsEnabled);
+    QVERIFY(projection.pannableShortcutsEnabled);
+    QVERIFY(projection.pannableViewerShortcutsEnabled);
+    QVERIFY(projection.containerShortcutsEnabled);
+    QVERIFY(projection.containerViewerShortcutsEnabled);
+    QVERIFY(!projection.rotateShortcutsEnabled);
+    QVERIFY(!projection.rotateViewerShortcutsEnabled);
+
+    input.textInputFocused = true;
+    projection = imageActionAvailabilityProjection(input);
+
+    QVERIFY(!projection.viewerShortcutsEnabled);
+    QVERIFY(projection.readyShortcutsEnabled);
+    QVERIFY(!projection.readyViewerShortcutsEnabled);
+    QVERIFY(!projection.pannableViewerShortcutsEnabled);
+    QVERIFY(!projection.containerViewerShortcutsEnabled);
+
+    input.fileDeletionInProgress = true;
+    projection = imageActionAvailabilityProjection(input);
+
+    QVERIFY(!projection.readyShortcutsEnabled);
+    QVERIFY(!projection.imageSelectionShortcutsEnabled);
+    QVERIFY(!projection.pannableShortcutsEnabled);
+    QVERIFY(!projection.containerShortcutsEnabled);
+}
 
 void TestImageActionAvailability::imageNavigationStateDrivesActionAvailability()
 {
