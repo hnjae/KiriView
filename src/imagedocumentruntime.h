@@ -26,17 +26,8 @@
 class QObject;
 
 namespace KiriView {
-class ArchiveDocumentSessionStore;
-class ImageDocumentDeletionController;
-class ImageDocumentEffectExecutor;
-struct ImageDocumentEffectOperations;
-class ImageDocumentNavigationController;
-class ImageDocumentPredecodeController;
+class ImageDocumentRuntimeControllers;
 struct ImageDocumentSourceLoadRequest;
-class ImageOpenController;
-class ImageNavigationService;
-class ImagePresentationController;
-class ImageSpreadPresentationController;
 
 class ImageDocumentRuntime final
 {
@@ -116,15 +107,7 @@ private:
     ImageDocumentState state;
     ChangeCallback changeCallback;
     RenderContextProvider renderContextProvider;
-    std::unique_ptr<ArchiveDocumentSessionStore> archiveSessionStore;
-    std::unique_ptr<ImageDocumentDeletionController> documentDeletionController;
-    std::unique_ptr<ImagePresentationController> presentationController;
-    std::unique_ptr<ImageOpenController> openController;
-    std::unique_ptr<ImageNavigationService> navigationService;
-    std::unique_ptr<ImageDocumentNavigationController> documentNavigationController;
-    std::unique_ptr<ImageDocumentPredecodeController> predecodeController;
-    std::unique_ptr<ImageSpreadPresentationController> spreadController;
-    std::unique_ptr<ImageDocumentEffectExecutor> effectExecutor;
+    std::unique_ptr<ImageDocumentRuntimeControllers> controllers;
 };
 }
 

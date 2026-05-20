@@ -54,6 +54,7 @@ src/imagedocumentnotifications.cpp
 src/imagedocumentpredecodecontroller.cpp
 src/imagedocumentpublicsignals.cpp
 src/imagedocumentruntime.cpp
+src/imagedocumentruntimecontrollers.cpp
 src/imagedocumentruntimeeffectbinding.cpp
 src/imagedocumentruntimedependencies.cpp
 src/imagedocumentsourceloadruntimeplan.cpp

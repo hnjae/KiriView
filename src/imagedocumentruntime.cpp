@@ -3,20 +3,13 @@
 
 #include "imagedocumentruntime.h"
 
-#include "archivedocumentsessionstore.h"
 #include "imagecallback.h"
 #include "imagedocumentdeletioncontroller.h"
-#include "imagedocumenteffectexecutor.h"
 #include "imagedocumentnavigationcontroller.h"
-#include "imagedocumentpredecodecontroller.h"
-#include "imagedocumentruntimedependencies.h"
-#include "imagedocumentruntimeeffectbinding.h"
+#include "imagedocumentruntimecontrollers.h"
 #include "imagedocumentsourceloadpolicy.h"
 #include "imagedocumentsourceloadrequest.h"
 #include "imagedocumentsourceloadruntimeplan.h"
-#include "imageerrortext.h"
-#include "imagenavigationservice.h"
-#include "imageopencontroller.h"
 #include "imagepresentationcontroller.h"
 #include "imagespreadpresentationcontroller.h"
 
@@ -46,86 +39,14 @@ ImageDocumentRuntime::ImageDocumentRuntime(QObject *documentObject,
     , changeCallback(std::move(changeCallback))
     , renderContextProvider(std::move(renderContextProvider))
 {
-    ImageDocumentRuntimeDependencies runtimeDependencies
-        = resolveImageDocumentRuntimeDependencies(std::move(dependencies), documentObject);
-    archiveSessionStore = std::move(runtimeDependencies.archiveSessionStore);
-    presentationController = std::make_unique<ImagePresentationController>(
-        documentObject, [this]() { return renderContext(); },
-        ImagePresentationController::Callbacks {
+    controllers = std::make_unique<ImageDocumentRuntimeControllers>(documentObject, state,
+        std::move(dependencies),
+        ImageDocumentRuntimeControllerCallbacks {
+            [this]() { return renderContext(); },
             [this](ImageDocumentChange change) { notify(change); },
-            [this](const QString &errorString) {
-                openController->finishAnimationLoadWithError(errorString);
-            },
-        });
-    documentDeletionController = std::make_unique<ImageDocumentDeletionController>(documentObject,
-        state, *presentationController, runtimeDependencies.candidateProvider,
-        std::move(runtimeDependencies.fileOperations),
-        ImageDocumentDeletionController::Callbacks {
-            [this]() { notify(ImageDocumentChange::FileDeletionInProgress); },
-            [this](ImageDocumentEffect effect) { dispatchEffect(std::move(effect)); },
+            [this](const ImageDocumentSourceLoadRequest &request) { loadSource(request); },
             std::move(fileDeletionFailedCallback),
         });
-    openController
-        = std::make_unique<ImageOpenController>(documentObject, state, *presentationController,
-            ImageOpenController::Callbacks {
-                [this](const QUrl &url) { return predecodeController->tryTake(url); },
-                [this](ImageDocumentEffect effect) { dispatchEffect(std::move(effect)); },
-            },
-            runtimeDependencies.candidateProvider, runtimeDependencies.imageDecode);
-    navigationService = std::make_unique<ImageNavigationService>(documentObject,
-        runtimeDependencies.candidateProvider,
-        ImageNavigationService::Callbacks {
-            [this](const QUrl &url) { dispatchEffect(ImageDocumentEffect::openUrl(url)); },
-            [this](const QUrl &imageUrl, const QUrl &containerUrl) {
-                dispatchEffect(ImageDocumentEffect::containerImageSelected(imageUrl, containerUrl));
-            },
-            [this](const QUrl &url, ContainerNavigationError error, const QString &message) {
-                if (error == ContainerNavigationError::EmptyContainer) {
-                    dispatchEffect(ImageDocumentEffect::emptyContainerSelected(url));
-                    return;
-                }
-
-                if (error == ContainerNavigationError::InvalidComicBookArchive) {
-                    dispatchEffect(ImageDocumentEffect::containerNavigationFailed(
-                        url, imageErrorText(ImageErrorTextId::OpenComicBookArchive)));
-                    return;
-                }
-
-                dispatchEffect(ImageDocumentEffect::containerNavigationFailed(url, message));
-            },
-            [this]() { notify(ImageDocumentChange::PageNavigation); },
-            [this]() { dispatchEffect(ImageDocumentEffect::clearDeletedImage()); },
-            [this]() { return documentDeletionController->inProgress(); },
-        });
-    predecodeController = std::make_unique<ImageDocumentPredecodeController>(
-        documentObject, state, *presentationController, runtimeDependencies.candidateProvider,
-        runtimeDependencies.imageDecode,
-        [this]() { return navigationService->currentPageNumber(); },
-        std::move(runtimeDependencies.powerSaver));
-    spreadController = std::make_unique<ImageSpreadPresentationController>(
-        documentObject, [this]() { return renderContext(); }, state, *presentationController,
-        ImageSpreadPresentationController::Callbacks {
-            [this](ImageDocumentChange change) { notify(change); },
-            [this](const QUrl &url) { return predecodeController->tryTake(url); },
-            [this]() { return documentNavigationController->pageNavigationSnapshot(); },
-            [this]() { dispatchEffect(ImageDocumentEffect::scheduleAdjacentImagePredecode()); },
-        },
-        runtimeDependencies.candidateProvider, runtimeDependencies.imageDecode);
-    documentNavigationController = std::make_unique<ImageDocumentNavigationController>(state,
-        *presentationController, *navigationService, *spreadController,
-        [this](ImageDocumentEffect effect) { dispatchEffect(std::move(effect)); });
-    effectExecutor = std::make_unique<ImageDocumentEffectExecutor>(
-        imageDocumentRuntimeEffectOperations(ImageDocumentRuntimeEffectBinding {
-            archiveSessionStore.get(),
-            state,
-            *documentDeletionController,
-            *presentationController,
-            *openController,
-            *documentNavigationController,
-            *predecodeController,
-            *spreadController,
-            [this](const ImageDocumentSourceLoadRequest &request) { loadSource(request); },
-        }));
 }
 
 ImageDocumentRuntime::~ImageDocumentRuntime() { shutdown(); }
@@ -139,10 +60,13 @@ void ImageDocumentRuntime::setSourceUrl(const QUrl &sourceUrl)
 
 ImageDocumentStatus ImageDocumentRuntime::status() const
 {
-    return spreadController->status(state.status());
+    return controllers->spreadController().status(state.status());
 }
 
-bool ImageDocumentRuntime::loading() const { return spreadController->loading(state.loading()); }
+bool ImageDocumentRuntime::loading() const
+{
+    return controllers->spreadController().loading(state.loading());
+}
 
 QString ImageDocumentRuntime::errorString() const { return state.errorString(); }
 
@@ -150,78 +74,105 @@ QString ImageDocumentRuntime::windowTitleFileName() const { return state.windowT
 
 QUrl ImageDocumentRuntime::displayedUrl() const { return state.displayedUrl(); }
 
-QSize ImageDocumentRuntime::imageSize() const { return spreadController->imageSize(); }
+QSize ImageDocumentRuntime::imageSize() const
+{
+    return controllers->spreadController().imageSize();
+}
 
-QSize ImageDocumentRuntime::primaryImageSize() const { return presentationController->imageSize(); }
+QSize ImageDocumentRuntime::primaryImageSize() const
+{
+    return controllers->presentationController().imageSize();
+}
 
 QSize ImageDocumentRuntime::secondaryImageSize() const
 {
-    return spreadController->secondaryImageSize();
+    return controllers->spreadController().secondaryImageSize();
 }
 
-QSizeF ImageDocumentRuntime::viewportSize() const { return presentationController->viewportSize(); }
+QSizeF ImageDocumentRuntime::viewportSize() const
+{
+    return controllers->presentationController().viewportSize();
+}
 
 void ImageDocumentRuntime::setViewportSize(const QSizeF &viewportSize)
 {
-    spreadController->setViewportSize(viewportSize);
+    controllers->spreadController().setViewportSize(viewportSize);
 }
 
-QRectF ImageDocumentRuntime::visibleItemRect() const { return spreadController->visibleItemRect(); }
+QRectF ImageDocumentRuntime::visibleItemRect() const
+{
+    return controllers->spreadController().visibleItemRect();
+}
 
 void ImageDocumentRuntime::setVisibleItemRect(const QRectF &visibleItemRect)
 {
-    spreadController->setVisibleItemRect(visibleItemRect);
+    controllers->spreadController().setVisibleItemRect(visibleItemRect);
 }
 
-QSizeF ImageDocumentRuntime::displaySize() const { return spreadController->displaySize(); }
+QSizeF ImageDocumentRuntime::displaySize() const
+{
+    return controllers->spreadController().displaySize();
+}
 
 QSizeF ImageDocumentRuntime::primaryDisplaySize() const
 {
-    return spreadController->primaryDisplaySize();
+    return controllers->spreadController().primaryDisplaySize();
 }
 
 QSizeF ImageDocumentRuntime::secondaryDisplaySize() const
 {
-    return spreadController->secondaryDisplaySize();
+    return controllers->spreadController().secondaryDisplaySize();
 }
 
-qreal ImageDocumentRuntime::zoomPercent() const { return spreadController->zoomPercent(); }
+qreal ImageDocumentRuntime::zoomPercent() const
+{
+    return controllers->spreadController().zoomPercent();
+}
 
 void ImageDocumentRuntime::setZoomPercent(qreal zoomPercent)
 {
-    spreadController->setZoomPercent(zoomPercent);
+    controllers->spreadController().setZoomPercent(zoomPercent);
 }
 
-ImageZoomMode ImageDocumentRuntime::zoomMode() const { return spreadController->zoomMode(); }
+ImageZoomMode ImageDocumentRuntime::zoomMode() const
+{
+    return controllers->spreadController().zoomMode();
+}
 
 qreal ImageDocumentRuntime::maximumManualZoomPercent() const
 {
-    return spreadController->maximumManualZoomPercent();
+    return controllers->spreadController().maximumManualZoomPercent();
 }
 
 qreal ImageDocumentRuntime::clampedManualZoomPercent(qreal zoomPercent) const
 {
-    return spreadController->clampedManualZoomPercent(zoomPercent);
+    return controllers->spreadController().clampedManualZoomPercent(zoomPercent);
 }
 
 qreal ImageDocumentRuntime::steppedManualZoomPercent(qreal stepCount) const
 {
-    return spreadController->steppedManualZoomPercent(stepCount);
+    return controllers->spreadController().steppedManualZoomPercent(stepCount);
 }
 
-int ImageDocumentRuntime::rotationDegrees() const { return spreadController->rotationDegrees(); }
+int ImageDocumentRuntime::rotationDegrees() const
+{
+    return controllers->spreadController().rotationDegrees();
+}
 
 int ImageDocumentRuntime::currentPageNumber() const
 {
-    return documentNavigationController->currentPageNumber();
+    return controllers->navigationController().currentPageNumber();
 }
 
 int ImageDocumentRuntime::currentLastPageNumber() const
 {
-    return spreadController->currentLastPageNumber();
+    return controllers->spreadController().currentLastPageNumber();
 }
 
-int ImageDocumentRuntime::imageCount() const { return documentNavigationController->imageCount(); }
+int ImageDocumentRuntime::imageCount() const
+{
+    return controllers->navigationController().imageCount();
+}
 
 bool ImageDocumentRuntime::containerNavigationAvailable() const
 {
@@ -230,52 +181,52 @@ bool ImageDocumentRuntime::containerNavigationAvailable() const
 
 bool ImageDocumentRuntime::fileDeletionInProgress() const
 {
-    return documentDeletionController->inProgress();
+    return controllers->deletionController().inProgress();
 }
 
 bool ImageDocumentRuntime::twoPageModeEnabled() const
 {
-    return spreadController->twoPageModeEnabled();
+    return controllers->spreadController().twoPageModeEnabled();
 }
 
 void ImageDocumentRuntime::setTwoPageModeEnabled(bool enabled)
 {
-    spreadController->setTwoPageModeEnabled(enabled);
+    controllers->spreadController().setTwoPageModeEnabled(enabled);
 }
 
 bool ImageDocumentRuntime::twoPageModeAvailable() const
 {
-    return spreadController->twoPageModeAvailable();
+    return controllers->spreadController().twoPageModeAvailable();
 }
 
 bool ImageDocumentRuntime::rightToLeftReadingEnabled() const
 {
-    return spreadController->rightToLeftReadingEnabled();
+    return controllers->spreadController().rightToLeftReadingEnabled();
 }
 
 void ImageDocumentRuntime::setRightToLeftReadingEnabled(bool enabled)
 {
-    spreadController->setRightToLeftReadingEnabled(enabled);
+    controllers->spreadController().setRightToLeftReadingEnabled(enabled);
 }
 
 bool ImageDocumentRuntime::rightToLeftReadingAvailable() const
 {
-    return spreadController->rightToLeftReadingAvailable();
+    return controllers->spreadController().rightToLeftReadingAvailable();
 }
 
 bool ImageDocumentRuntime::secondaryPageVisible() const
 {
-    return spreadController->secondaryPageVisible();
+    return controllers->spreadController().secondaryPageVisible();
 }
 
 DisplayedImageRenderSnapshot ImageDocumentRuntime::renderSnapshot(DisplayedPageRole role) const
 {
-    return spreadController->renderSnapshot(role);
+    return controllers->spreadController().renderSnapshot(role);
 }
 
 void ImageDocumentRuntime::dispatchEffect(ImageDocumentEffect effect)
 {
-    effectExecutor->dispatch(std::move(effect));
+    controllers->dispatchEffect(std::move(effect));
 }
 
 void ImageDocumentRuntime::notify(ImageDocumentChange change) { changeBatcher.notify(change); }
@@ -297,78 +248,78 @@ ImageDocumentRenderContext ImageDocumentRuntime::renderContext() const
 
 void ImageDocumentRuntime::loadSource(const ImageDocumentSourceLoadRequest &request)
 {
-    const ImageDocumentSourceLoadPlan plan = ImageDocumentSourceLoadPolicy::plan(
-        imageDocumentSourceLoadPolicyInput(sourceLoadSnapshot(state, *spreadController), request));
-    if (effectExecutor != nullptr) {
-        effectExecutor->dispatchPlan(imageDocumentSourceLoadRuntimePlan(request, plan));
-    }
+    const ImageDocumentSourceLoadPlan plan
+        = ImageDocumentSourceLoadPolicy::plan(imageDocumentSourceLoadPolicyInput(
+            sourceLoadSnapshot(state, controllers->spreadController()), request));
+    controllers->dispatchPlan(imageDocumentSourceLoadRuntimePlan(request, plan));
 }
 
 void ImageDocumentRuntime::publishChanges(const std::vector<ImageDocumentChange> &changes)
 {
     for (ImageDocumentChange change : changes) {
-        spreadController->handleDocumentChange(change);
+        controllers->spreadController().handleDocumentChange(change);
     }
     invokeIfSet(changeCallback, changes);
 }
 
-void ImageDocumentRuntime::shutdown()
-{
-    if (effectExecutor != nullptr) {
-        effectExecutor->shutdownRuntime();
-    }
-}
+void ImageDocumentRuntime::shutdown() { controllers->shutdownRuntime(); }
 
 void ImageDocumentRuntime::openPreviousImage()
 {
-    documentNavigationController->openAdjacentImage(NavigationDirection::Previous);
+    controllers->navigationController().openAdjacentImage(NavigationDirection::Previous);
 }
 
 void ImageDocumentRuntime::openNextImage()
 {
-    documentNavigationController->openAdjacentImage(NavigationDirection::Next);
+    controllers->navigationController().openAdjacentImage(NavigationDirection::Next);
 }
 
 void ImageDocumentRuntime::openPreviousSinglePage()
 {
-    documentNavigationController->openImageAtRelativePageOffset(-1);
+    controllers->navigationController().openImageAtRelativePageOffset(-1);
 }
 
 void ImageDocumentRuntime::openNextSinglePage()
 {
-    documentNavigationController->openImageAtRelativePageOffset(1);
+    controllers->navigationController().openImageAtRelativePageOffset(1);
 }
 
 void ImageDocumentRuntime::openPreviousContainer()
 {
-    documentNavigationController->openAdjacentContainer(NavigationDirection::Previous);
+    controllers->navigationController().openAdjacentContainer(NavigationDirection::Previous);
 }
 
 void ImageDocumentRuntime::openNextContainer()
 {
-    documentNavigationController->openAdjacentContainer(NavigationDirection::Next);
+    controllers->navigationController().openAdjacentContainer(NavigationDirection::Next);
 }
 
 void ImageDocumentRuntime::deleteDisplayedFile(FileDeletionMode mode)
 {
-    documentDeletionController->deleteDisplayedFile(mode);
+    controllers->deletionController().deleteDisplayedFile(mode);
 }
 
-void ImageDocumentRuntime::resetZoom() { spreadController->resetZoom(); }
+void ImageDocumentRuntime::resetZoom() { controllers->spreadController().resetZoom(); }
 
 void ImageDocumentRuntime::setFitMode(ImageZoomMode zoomMode)
 {
-    spreadController->setFitMode(zoomMode);
+    controllers->spreadController().setFitMode(zoomMode);
 }
 
-void ImageDocumentRuntime::rotateClockwise() { spreadController->rotateClockwise(); }
+void ImageDocumentRuntime::rotateClockwise() { controllers->spreadController().rotateClockwise(); }
 
-void ImageDocumentRuntime::rotateCounterclockwise() { spreadController->rotateCounterclockwise(); }
+void ImageDocumentRuntime::rotateCounterclockwise()
+{
+    controllers->spreadController().rotateCounterclockwise();
+}
 
-void ImageDocumentRuntime::updateRenderContext() { spreadController->updateRenderContext(); }
+void ImageDocumentRuntime::updateRenderContext()
+{
+    controllers->spreadController().updateRenderContext();
+}
 
 void ImageDocumentRuntime::openImageAtPage(int pageNumber)
 {
-    documentNavigationController->openImageAtPage(pageNumber);
+    controllers->navigationController().openImageAtPage(pageNumber);
 }
 }
