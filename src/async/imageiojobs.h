@@ -4,10 +4,11 @@
 #ifndef KIRIVIEW_IMAGEIOJOBS_H
 #define KIRIVIEW_IMAGEIOJOBS_H
 
+#include "async/imageasynccallbacks.h"
 #include "async/imageiojob.h"
 #include "decoding/imagedecoderequest.h"
-#include "imageasynccallbacks.h"
 #include "imagelocation.h"
+#include "navigation/imagecandidatecallbacks.h"
 #include "navigation/imagenavigationtypes.h"
 
 #include <QUrl>

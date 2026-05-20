@@ -3,7 +3,7 @@
 
 #include "imagecontainernavigationcontroller.h"
 
-#include "imagecallback.h"
+#include "async/imagecallback.h"
 #include "imagecandidaterepository.h"
 #include "imagenavigationmodel.h"
 #include "imageurl.h"

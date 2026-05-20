@@ -3,7 +3,7 @@
 
 #include "imagedocumentdeletionfallbackcontroller.h"
 
-#include "imagecallback.h"
+#include "async/imagecallback.h"
 
 #include <utility>
 #include <variant>

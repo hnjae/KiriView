@@ -3,8 +3,8 @@
 
 #include "imagecandidatestore.h"
 
+#include "async/imagecallback.h"
 #include "async/imageiojobs.h"
-#include "imagecallback.h"
 #include "imagecandidatedirectoryentry.h"
 #include "imageurl.h"
 

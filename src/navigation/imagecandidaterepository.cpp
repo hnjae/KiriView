@@ -3,7 +3,7 @@
 
 #include "imagecandidaterepository.h"
 
-#include "imagecallback.h"
+#include "async/imagecallback.h"
 #include "imagecontainer.h"
 #include "imagecontaineropenplan.h"
 

@@ -3,7 +3,7 @@
 
 #include "filedeletion.h"
 
-#include "imagecallback.h"
+#include "async/imagecallback.h"
 
 #include <KIO/AskUserActionInterface>
 #include <KIO/DeleteOrTrashJob>

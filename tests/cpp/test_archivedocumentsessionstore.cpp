@@ -4,9 +4,9 @@
 #include "archive/archivedocumentsessionstore.h"
 
 #include "archive_session_test_support.h"
+#include "async/imagecallback.h"
 #include "document/imagedocumentsourceloadrequest.h"
 #include "image_test_support.h"
-#include "imagecallback.h"
 #include "navigation/imagenavigationservice.h"
 #include "predecode/imagepredecodecoordinator.h"
 

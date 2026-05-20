@@ -3,8 +3,8 @@
 
 #include "imagepagenavigationcontroller.h"
 
+#include "async/imagecallback.h"
 #include "document/imageremovalfallback.h"
-#include "imagecallback.h"
 #include "imagenavigationmodel.h"
 
 #include <QString>

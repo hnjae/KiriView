@@ -3,7 +3,7 @@
 
 #include "imagedocumentruntime.h"
 
-#include "imagecallback.h"
+#include "async/imagecallback.h"
 #include "imagedocumentdeletioncontroller.h"
 #include "imagedocumentnavigationcontroller.h"
 #include "imagedocumentruntimecontrollers.h"

@@ -4,9 +4,9 @@
 #ifndef KIRIVIEW_IMAGEDECODEDEPENDENCIES_H
 #define KIRIVIEW_IMAGEDECODEDEPENDENCIES_H
 
+#include "async/imageasynccallbacks.h"
 #include "async/imageiojob.h"
 #include "decodedimageresult.h"
-#include "imageasynccallbacks.h"
 #include "imagedecoderequest.h"
 
 #include <QByteArray>

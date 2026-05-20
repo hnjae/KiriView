@@ -4,8 +4,9 @@
 #ifndef KIRIVIEW_IMAGECANDIDATESTOREENTRYSTATE_H
 #define KIRIVIEW_IMAGECANDIDATESTOREENTRYSTATE_H
 
+#include "async/imageasynccallbacks.h"
 #include "async/imageiojob.h"
-#include "imageasynccallbacks.h"
+#include "imagecandidatecallbacks.h"
 #include "imagenavigationtypes.h"
 
 #include <QObject>

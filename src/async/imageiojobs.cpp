@@ -4,8 +4,8 @@
 #include "async/imageiojobs.h"
 
 #include "archive/archivebackend.h"
+#include "async/imagecallback.h"
 #include "async/imageioworkerjob.h"
-#include "imagecallback.h"
 #include "navigation/imagecandidateitems.h"
 #include "navigation/imagecontainer.h"
 

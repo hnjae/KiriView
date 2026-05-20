@@ -3,7 +3,7 @@
 
 #include "async/imageiojob.h"
 
-#include "imagecallback.h"
+#include "async/imagecallback.h"
 
 #include <QObject>
 #include <utility>

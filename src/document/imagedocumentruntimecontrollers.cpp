@@ -4,7 +4,7 @@
 #include "imagedocumentruntimecontrollers.h"
 
 #include "archive/archivedocumentsessionstore.h"
-#include "imagecallback.h"
+#include "async/imagecallback.h"
 #include "imagedocumentdeletioncontroller.h"
 #include "imagedocumenteffectexecutor.h"
 #include "imagedocumentnavigationcontroller.h"

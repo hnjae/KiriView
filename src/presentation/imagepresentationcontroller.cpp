@@ -3,7 +3,7 @@
 
 #include "presentation/imagepresentationcontroller.h"
 
-#include "imagecallback.h"
+#include "async/imagecallback.h"
 #include "presentation/displayedimagestate.h"
 #include "presentation/imageanimationplayer.h"
 #include "presentation/imagepresentationviewportcontroller.h"

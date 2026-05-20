@@ -3,7 +3,7 @@
 
 #include "imagedocumentchangebatcher.h"
 
-#include "imagecallback.h"
+#include "async/imagecallback.h"
 
 #include <algorithm>
 #include <utility>

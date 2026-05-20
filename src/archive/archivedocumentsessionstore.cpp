@@ -3,9 +3,9 @@
 
 #include "archivedocumentsessionstore.h"
 
+#include "async/imagecallback.h"
 #include "document/imagedocumentsourceloadrequest.h"
 #include "document/imageloadplan.h"
-#include "imagecallback.h"
 #include "navigation/imagecontainer.h"
 
 #include <optional>

@@ -3,7 +3,7 @@
 
 #include "imagedocumentdeletioncontroller.h"
 
-#include "imagecallback.h"
+#include "async/imagecallback.h"
 #include "imagedocumentstate.h"
 #include "imageerrortext.h"
 #include "presentation/imagepresentationcontroller.h"

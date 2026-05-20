@@ -3,7 +3,7 @@
 
 #include "imagecandidatedirectoryentry.h"
 
-#include "imagecallback.h"
+#include "async/imagecallback.h"
 #include "imagecandidateitems.h"
 
 #include <KCoreDirLister>

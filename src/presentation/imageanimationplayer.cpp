@@ -3,10 +3,10 @@
 
 #include "presentation/imageanimationplayer.h"
 
+#include "async/imagecallback.h"
 #include "decoding/apnganimationreader.h"
 #include "decoding/bufferedimagereader.h"
 #include "decoding/heifsequencereader.h"
-#include "imagecallback.h"
 #include "imageerrortext.h"
 
 #include <QObject>

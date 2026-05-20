@@ -3,7 +3,7 @@
 
 #include "powerprofilemonitor.h"
 
-#include "imagecallback.h"
+#include "async/imagecallback.h"
 
 #include <QDBusConnection>
 #include <QDBusMessage>

@@ -3,7 +3,7 @@
 
 #include "imagedocumentnavigationcontroller.h"
 
-#include "imagecallback.h"
+#include "async/imagecallback.h"
 #include "imagedocumentstate.h"
 #include "navigation/imagenavigationservice.h"
 #include "presentation/imagepresentationcontroller.h"

@@ -3,7 +3,7 @@
 
 #include "presentation/imagepresentationviewportcontroller.h"
 
-#include "imagecallback.h"
+#include "async/imagecallback.h"
 #include "rendering/imagetiledecodescheduler.h"
 
 #include <utility>
