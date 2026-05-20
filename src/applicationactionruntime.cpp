@@ -5,29 +5,19 @@
 
 #include "applicationshortcutruntime.h"
 #include "kiriviewapplicationactions.h"
-#include "kiriviewstate.h"
 
 #include <KirigamiActionCollection>
 #include <QIcon>
-#include <QSignalBlocker>
 
 namespace {
 namespace Actions = KiriView::ApplicationActions;
-
-KiriViewApplication::MenuPresentation toMenuPresentation(int value)
-{
-    if (value == static_cast<int>(KiriViewApplication::MenuBar)) {
-        return KiriViewApplication::MenuBar;
-    }
-
-    return KiriViewApplication::HamburgerMenu;
-}
 }
 
 namespace KiriView::ApplicationActions {
 ApplicationActionRuntime::ApplicationActionRuntime(KiriViewApplication &application)
     : m_application(application)
     , m_actionRegistry(application)
+    , m_menuPresentationRuntime(application)
     , m_shortcutRuntime(
           std::make_unique<ApplicationShortcutRuntime>(m_application, m_actionRegistry))
 {
@@ -37,20 +27,13 @@ ApplicationActionRuntime::~ApplicationActionRuntime() = default;
 
 KiriViewApplication::MenuPresentation ApplicationActionRuntime::menuPresentation() const
 {
-    return toMenuPresentation(KiriViewState::menuPresentation());
+    return m_menuPresentationRuntime.menuPresentation();
 }
 
 void ApplicationActionRuntime::setMenuPresentation(
     KiriViewApplication::MenuPresentation presentation)
 {
-    if (toMenuPresentation(KiriViewState::menuPresentation()) == presentation) {
-        return;
-    }
-
-    KiriViewState::setMenuPresentation(static_cast<int>(presentation));
-    KiriViewState::self()->save();
-    updateShowMenuBarAction();
-    Q_EMIT m_application.menuPresentationChanged();
+    m_menuPresentationRuntime.setMenuPresentation(presentation);
 }
 
 int ApplicationActionRuntime::shortcutRevision() const
@@ -114,16 +97,9 @@ void ApplicationActionRuntime::setupActions()
                 Actions::latin1String(definition.iconName), shortcuts);
             break;
         case Actions::RegistrationKind::ShowMenubar:
-            m_showMenuBarAction = addStandardAction(
+            registeredAction = addStandardAction(
                 definition.actionType, name, Actions::localizedString(definition.text), shortcuts);
-            KirigamiActionCollection::setShortcutsConfigurable(m_showMenuBarAction, false);
-            m_showMenuBarAction->setCheckable(true);
-            QObject::connect(
-                m_showMenuBarAction, &QAction::triggered, &m_application, [this](bool checked) {
-                    setMenuPresentation(checked ? KiriViewApplication::MenuBar
-                                                : KiriViewApplication::HamburgerMenu);
-                });
-            registeredAction = m_showMenuBarAction;
+            m_menuPresentationRuntime.bindShowMenuBarAction(registeredAction);
             break;
         case Actions::RegistrationKind::Standard:
             registeredAction = addStandardAction(
@@ -140,7 +116,7 @@ void ApplicationActionRuntime::setupActions()
 
     m_application.readSettings();
     m_shortcutRuntime->setup();
-    updateShowMenuBarAction();
+    m_menuPresentationRuntime.syncShowMenuBarAction();
 }
 
 QAction *ApplicationActionRuntime::addRegisteredAction(const QString &name, const QString &text,
@@ -181,16 +157,6 @@ QAction *ApplicationActionRuntime::finishRegisteredAction(
 void ApplicationActionRuntime::handleActionChanged(QAction *changedAction)
 {
     m_shortcutRuntime->handleActionChanged(changedAction);
-}
-
-void ApplicationActionRuntime::updateShowMenuBarAction()
-{
-    if (m_showMenuBarAction == nullptr) {
-        return;
-    }
-
-    const QSignalBlocker blocker(m_showMenuBarAction);
-    m_showMenuBarAction->setChecked(menuPresentation() == KiriViewApplication::MenuBar);
 }
 
 }

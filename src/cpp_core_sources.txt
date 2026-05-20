@@ -8,6 +8,7 @@ src/decodedimageresult.cpp
 src/decodedtilecache.cpp
 src/applicationactionregistry.cpp
 src/applicationactionruntime.cpp
+src/applicationmenupresentationruntime.cpp
 src/applicationshortcutruntime.cpp
 src/applicationruntime.cpp
 src/archivebackend.cpp

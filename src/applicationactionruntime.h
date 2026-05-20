@@ -5,6 +5,7 @@
 #define KIRIVIEW_APPLICATIONACTIONRUNTIME_H
 
 #include "applicationactionregistry.h"
+#include "applicationmenupresentationruntime.h"
 #include "applicationshortcutpolicy.h"
 #include "kiriviewapplication.h"
 
@@ -47,11 +48,10 @@ private:
     QAction *finishRegisteredAction(QAction *registeredAction, const QString &text,
         const QList<QKeySequence> &defaultShortcuts);
     void handleActionChanged(QAction *changedAction);
-    void updateShowMenuBarAction();
 
     KiriViewApplication &m_application;
     ApplicationActionRegistry m_actionRegistry;
-    QAction *m_showMenuBarAction = nullptr;
+    ApplicationMenuPresentationRuntime m_menuPresentationRuntime;
     std::unique_ptr<ApplicationShortcutRuntime> m_shortcutRuntime;
 };
 }
