@@ -8,10 +8,11 @@
 #include <utility>
 
 namespace {
-bool shouldUseArchiveSessionStore(const KiriView::ImageAsyncDependencies &dependencies)
+bool shouldUseArchiveSessionStore(
+    const KiriView::ImageDocumentRuntimeDependencyOverrides &overrides)
 {
-    return dependencies.archiveDocumentSessions
-        || (!dependencies.candidateProvider.archiveImages && !dependencies.imageDecode.dataLoader);
+    return overrides.archiveDocumentSessions
+        || (!overrides.candidateProvider.archiveImages && !overrides.imageDecode.dataLoader);
 }
 }
 
@@ -19,32 +20,34 @@ namespace KiriView {
 ImageDocumentRuntimeDependencies::~ImageDocumentRuntimeDependencies() = default;
 
 ImageDocumentRuntimeDependencies resolveImageDocumentRuntimeDependencies(
-    ImageAsyncDependencies dependencies, QObject *parent)
+    ImageDocumentRuntimeDependencyOverrides overrides, QObject *parent)
 {
-    const bool useArchiveSessionStore = shouldUseArchiveSessionStore(dependencies);
+    const bool useArchiveSessionStore = shouldUseArchiveSessionStore(overrides);
     ArchiveDocumentSessionFactory archiveDocumentSessions
-        = std::move(dependencies.archiveDocumentSessions);
-    dependencies.archiveDocumentSessions = {};
-    dependencies.candidateProvider
-        = imageNavigationCandidateProviderWithDefaults(std::move(dependencies.candidateProvider));
-    dependencies.imageDecode
-        = imageDecodeDependenciesWithDefaults(std::move(dependencies.imageDecode));
-    dependencies.fileOperations
-        = fileOperationProviderWithDefault(std::move(dependencies.fileOperations));
-    dependencies.powerSaver = powerSaverProviderWithDefault(std::move(dependencies.powerSaver));
+        = std::move(overrides.archiveDocumentSessions);
+    overrides.archiveDocumentSessions = {};
+    overrides.candidateProvider
+        = imageNavigationCandidateProviderWithDefaults(std::move(overrides.candidateProvider));
+    overrides.imageDecode = imageDecodeDependenciesWithDefaults(std::move(overrides.imageDecode));
+    overrides.fileOperations
+        = fileOperationProviderWithDefault(std::move(overrides.fileOperations));
+    overrides.powerSaver = powerSaverProviderWithDefault(std::move(overrides.powerSaver));
 
     std::unique_ptr<ArchiveDocumentSessionStore> archiveSessionStore;
     if (useArchiveSessionStore) {
         archiveSessionStore = std::make_unique<ArchiveDocumentSessionStore>(
             std::move(archiveDocumentSessions), parent);
-        dependencies = archiveSessionStore->wrapDependencies(std::move(dependencies));
+        overrides.candidateProvider
+            = archiveSessionStore->wrapCandidateProvider(std::move(overrides.candidateProvider));
+        overrides.imageDecode
+            = archiveSessionStore->wrapDecodeDependencies(std::move(overrides.imageDecode));
     }
 
     return ImageDocumentRuntimeDependencies {
-        std::move(dependencies.candidateProvider),
-        std::move(dependencies.imageDecode),
-        std::move(dependencies.fileOperations),
-        std::move(dependencies.powerSaver),
+        std::move(overrides.candidateProvider),
+        std::move(overrides.imageDecode),
+        std::move(overrides.fileOperations),
+        std::move(overrides.powerSaver),
         std::move(archiveSessionStore),
     };
 }

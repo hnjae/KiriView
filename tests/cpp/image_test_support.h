@@ -5,8 +5,8 @@
 #define KIRIVIEW_TESTS_IMAGE_TEST_SUPPORT_H
 
 #include "candidate_test_support.h"
+#include "document/imagedocumentruntimedependencies.h"
 #include "image_async_test_support.h"
-#include "imageasyncdependencies.h"
 #include "rendering/staticimage.h"
 
 #include <QByteArray>
@@ -149,11 +149,11 @@ inline ImageDecodeDependencies imageDecodeDependenciesFor(
     };
 }
 
-inline ImageAsyncDependencies imageAsyncDependenciesFor(
+inline ImageDocumentRuntimeDependencyOverrides imageDocumentRuntimeDependencyOverridesFor(
     FakeImageNavigationCandidateProvider &candidateProvider, ManualImageDataLoader &dataLoader,
     ImageDataDecoder dataDecoder, FileOperationProvider fileOperations = {})
 {
-    return ImageAsyncDependencies {
+    return ImageDocumentRuntimeDependencyOverrides {
         candidateProvider.provider(),
         imageDecodeDependenciesFor(dataLoader, std::move(dataDecoder)),
         std::move(fileOperations),

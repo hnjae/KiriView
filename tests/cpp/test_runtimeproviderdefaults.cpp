@@ -1,17 +1,20 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "imageasyncdependencies.h"
-
+#include "decoding/imagedecodedependencies.h"
+#include "document/filedeletion.h"
 #include "imageiojob.h"
+#include "navigation/imagecandidateprovider.h"
+#include "powersaverprovider.h"
 
 #include <QByteArray>
 #include <QObject>
 #include <QTest>
 #include <QUrl>
 #include <memory>
+#include <utility>
 
-class TestImageAsyncDependencies : public QObject
+class TestRuntimeProviderDefaults : public QObject
 {
     Q_OBJECT
 
@@ -22,7 +25,7 @@ private Q_SLOTS:
     void powerSaverDefaultFillsMissingProviderAndPreservesOverride();
 };
 
-void TestImageAsyncDependencies::candidateProviderDefaultsFillMissingLoadersAndPreserveOverrides()
+void TestRuntimeProviderDefaults::candidateProviderDefaultsFillMissingLoadersAndPreserveOverrides()
 {
     int directoryLoadCount = 0;
     int directoryChangeSubscriptionCount = 0;
@@ -53,7 +56,7 @@ void TestImageAsyncDependencies::candidateProviderDefaultsFillMissingLoadersAndP
     QCOMPARE(directoryChangeSubscriptionCount, 1);
 }
 
-void TestImageAsyncDependencies::decodeDependencyDefaultsFillMissingFunctionsAndPreserveOverrides()
+void TestRuntimeProviderDefaults::decodeDependencyDefaultsFillMissingFunctionsAndPreserveOverrides()
 {
     int dataLoadCount = 0;
     KiriView::ImageDataLoader dataLoader
@@ -73,7 +76,7 @@ void TestImageAsyncDependencies::decodeDependencyDefaultsFillMissingFunctionsAnd
     QCOMPARE(dataLoadCount, 1);
 }
 
-void TestImageAsyncDependencies::fileOperationDefaultFillsMissingProviderAndPreservesOverride()
+void TestRuntimeProviderDefaults::fileOperationDefaultFillsMissingProviderAndPreservesOverride()
 {
     int fileOperationCount = 0;
     KiriView::FileOperationProvider fileOperations
@@ -92,7 +95,7 @@ void TestImageAsyncDependencies::fileOperationDefaultFillsMissingProviderAndPres
     QVERIFY(KiriView::fileOperationProviderWithDefault({}));
 }
 
-void TestImageAsyncDependencies::powerSaverDefaultFillsMissingProviderAndPreservesOverride()
+void TestRuntimeProviderDefaults::powerSaverDefaultFillsMissingProviderAndPreservesOverride()
 {
     int monitorCount = 0;
     KiriView::PowerSaverProvider provider;
@@ -110,5 +113,5 @@ void TestImageAsyncDependencies::powerSaverDefaultFillsMissingProviderAndPreserv
     QVERIFY(KiriView::powerSaverProviderWithDefault({}).monitor);
 }
 
-QTEST_GUILESS_MAIN(TestImageAsyncDependencies)
-#include "test_imageasyncdependencies.moc"
+QTEST_GUILESS_MAIN(TestRuntimeProviderDefaults)
+#include "test_runtimeproviderdefaults.moc"

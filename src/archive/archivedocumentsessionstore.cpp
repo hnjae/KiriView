@@ -71,15 +71,6 @@ ImageDecodeDependencies ArchiveDocumentSessionStore::wrapDecodeDependencies(
     return dependencies;
 }
 
-ImageAsyncDependencies ArchiveDocumentSessionStore::wrapDependencies(
-    ImageAsyncDependencies dependencies)
-{
-    dependencies.candidateProvider
-        = wrapCandidateProvider(std::move(dependencies.candidateProvider));
-    dependencies.imageDecode = wrapDecodeDependencies(std::move(dependencies.imageDecode));
-    return dependencies;
-}
-
 void ArchiveDocumentSessionStore::prepareForSourceLoad(
     const ImageDocumentSourceLoadRequest &request,
     const ArchiveDocumentLocation &displayedArchiveDocument)

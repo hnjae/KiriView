@@ -7,7 +7,6 @@
 #include "archivebackend.h"
 #include "archivedocumentsessionruntime.h"
 #include "decoding/imagedecodedependencies.h"
-#include "imageasyncdependencies.h"
 #include "imageiojob.h"
 #include "navigation/imagecandidateprovider.h"
 
@@ -26,7 +25,6 @@ public:
     ImageNavigationCandidateProvider wrapCandidateProvider(
         ImageNavigationCandidateProvider provider);
     ImageDecodeDependencies wrapDecodeDependencies(ImageDecodeDependencies dependencies);
-    ImageAsyncDependencies wrapDependencies(ImageAsyncDependencies dependencies);
 
     void prepareForSourceLoad(const ImageDocumentSourceLoadRequest &request,
         const ArchiveDocumentLocation &displayedArchiveDocument);

@@ -5,8 +5,8 @@
 #define KIRIVIEW_IMAGEDOCUMENTRUNTIME_H
 
 #include "filedeletion.h"
-#include "imageasyncdependencies.h"
 #include "imagedocumenteffects.h"
+#include "imagedocumentruntimedependencies.h"
 #include "imagedocumentstate.h"
 #include "imagedocumenttypes.h"
 #include "navigation/imagenavigationtypes.h"
@@ -37,7 +37,7 @@ public:
     using FileDeletionFailedCallback = std::function<void(const QString &)>;
 
     ImageDocumentRuntime(QObject *documentObject, RenderContextProvider renderContextProvider,
-        ChangeCallback changeCallback, ImageAsyncDependencies dependencies,
+        ChangeCallback changeCallback, ImageDocumentRuntimeDependencyOverrides dependencies,
         FileDeletionFailedCallback fileDeletionFailedCallback = {});
     ~ImageDocumentRuntime();
 

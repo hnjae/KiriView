@@ -4,9 +4,9 @@
 #ifndef KIRIVIEW_IMAGEDOCUMENTRUNTIMECONTROLLERS_H
 #define KIRIVIEW_IMAGEDOCUMENTRUNTIMECONTROLLERS_H
 
-#include "imageasyncdependencies.h"
 #include "imagedocumenteffectplan.h"
 #include "imagedocumenteffects.h"
+#include "imagedocumentruntimedependencies.h"
 #include "imagedocumenttypes.h"
 
 #include <QString>
@@ -39,7 +39,8 @@ class ImageDocumentRuntimeControllers final
 {
 public:
     ImageDocumentRuntimeControllers(QObject *documentObject, ImageDocumentState &state,
-        ImageAsyncDependencies dependencies, ImageDocumentRuntimeControllerCallbacks callbacks);
+        ImageDocumentRuntimeDependencyOverrides dependencies,
+        ImageDocumentRuntimeControllerCallbacks callbacks);
     ~ImageDocumentRuntimeControllers();
 
     ImageDocumentDeletionController &deletionController() const;

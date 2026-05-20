@@ -4,7 +4,11 @@
 #ifndef KIRIVIEW_IMAGEDOCUMENTRUNTIMEDEPENDENCIES_H
 #define KIRIVIEW_IMAGEDOCUMENTRUNTIMEDEPENDENCIES_H
 
-#include "imageasyncdependencies.h"
+#include "archive/archivebackend.h"
+#include "decoding/imagedecodedependencies.h"
+#include "filedeletion.h"
+#include "navigation/imagecandidateprovider.h"
+#include "powersaverprovider.h"
 
 #include <memory>
 
@@ -12,6 +16,14 @@ class QObject;
 
 namespace KiriView {
 class ArchiveDocumentSessionStore;
+
+struct ImageDocumentRuntimeDependencyOverrides {
+    ImageNavigationCandidateProvider candidateProvider;
+    ImageDecodeDependencies imageDecode;
+    FileOperationProvider fileOperations;
+    ArchiveDocumentSessionFactory archiveDocumentSessions;
+    PowerSaverProvider powerSaver;
+};
 
 struct ImageDocumentRuntimeDependencies {
     ImageNavigationCandidateProvider candidateProvider;
@@ -24,7 +36,7 @@ struct ImageDocumentRuntimeDependencies {
 };
 
 ImageDocumentRuntimeDependencies resolveImageDocumentRuntimeDependencies(
-    ImageAsyncDependencies dependencies, QObject *parent);
+    ImageDocumentRuntimeDependencyOverrides overrides, QObject *parent);
 }
 
 #endif

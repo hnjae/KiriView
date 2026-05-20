@@ -22,8 +22,8 @@ namespace {
 using KiriView::TestSupport::archivePageUrl;
 using KiriView::TestSupport::comicBookContainerCandidate;
 using KiriView::TestSupport::fileOperationProviderFor;
-using KiriView::TestSupport::imageAsyncDependenciesFor;
 using KiriView::TestSupport::imageCandidate;
+using KiriView::TestSupport::imageDocumentRuntimeDependencyOverridesFor;
 using KiriView::TestSupport::localUrl;
 using KiriView::TestSupport::ManualFileOperationProvider;
 using KiriView::TestSupport::ManualImageDataLoader;
@@ -41,7 +41,7 @@ public:
     RuntimeOwner(QObject *parent,
         KiriView::ImageDocumentRuntime::RenderContextProvider renderContextProvider,
         KiriView::ImageDocumentRuntime::ChangeCallback changeCallback,
-        KiriView::ImageAsyncDependencies dependencies,
+        KiriView::ImageDocumentRuntimeDependencyOverrides dependencies,
         KiriView::ImageDocumentRuntime::FileDeletionFailedCallback fileDeletionFailedCallback = {})
         : QObject(parent)
         , runtime(this, std::move(renderContextProvider), std::move(changeCallback),
@@ -58,7 +58,7 @@ public:
     RuntimeHandle(QObject *parent,
         KiriView::ImageDocumentRuntime::RenderContextProvider renderContextProvider,
         KiriView::ImageDocumentRuntime::ChangeCallback changeCallback,
-        KiriView::ImageAsyncDependencies dependencies,
+        KiriView::ImageDocumentRuntimeDependencyOverrides dependencies,
         KiriView::ImageDocumentRuntime::FileDeletionFailedCallback fileDeletionFailedCallback = {})
         : m_owner(std::make_unique<RuntimeOwner>(parent, std::move(renderContextProvider),
               std::move(changeCallback), std::move(dependencies),
@@ -135,7 +135,7 @@ RuntimeHandle createRuntime(QObject *parent, FakeCandidateProvider &candidatePro
             };
         },
         KiriView::ImageDocumentRuntime::ChangeCallback {},
-        imageAsyncDependenciesFor(
+        imageDocumentRuntimeDependencyOverridesFor(
             candidateProvider, dataLoader, std::move(dataDecoder), std::move(fileOperations)),
         std::move(fileDeletionFailedCallback));
 }
@@ -288,7 +288,7 @@ void TestImageDocumentRuntime::renderContextProviderCanBeReplacedAfterConstructi
         [&changes](const std::vector<KiriView::ImageDocumentChange> &publishedChanges) {
             changes.insert(changes.end(), publishedChanges.begin(), publishedChanges.end());
         },
-        imageAsyncDependenciesFor(candidateProvider, dataLoader,
+        imageDocumentRuntimeDependencyOverridesFor(candidateProvider, dataLoader,
             [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
                 return staticDecodedImageWithPreview(QSize(1000, 500), QSize(1000, 500));
             }));
@@ -340,7 +340,8 @@ void TestImageDocumentRuntime::maximumManualZoomChangesAfterViewportImageAndRend
         [&changes](const std::vector<KiriView::ImageDocumentChange> &publishedChanges) {
             changes.insert(changes.end(), publishedChanges.begin(), publishedChanges.end());
         },
-        imageAsyncDependenciesFor(candidateProvider, dataLoader, std::move(dataDecoder)));
+        imageDocumentRuntimeDependencyOverridesFor(
+            candidateProvider, dataLoader, std::move(dataDecoder)));
 
     runtime->setViewportSize(QSizeF(7000.0, 100.0));
     runtime->setSourceUrl(firstImageUrl);
@@ -456,7 +457,7 @@ void TestImageDocumentRuntime::rotationChangesLogicalSizeAndPreservesManualZoom(
         [&changes](const std::vector<KiriView::ImageDocumentChange> &publishedChanges) {
             changes.insert(changes.end(), publishedChanges.begin(), publishedChanges.end());
         },
-        imageAsyncDependenciesFor(candidateProvider, dataLoader,
+        imageDocumentRuntimeDependencyOverridesFor(candidateProvider, dataLoader,
             [](const QByteArray &, const KiriView::ImageDecodeRequest &) {
                 return staticDecodedImageWithPreview(QSize(100, 200), QSize(100, 200));
             }));

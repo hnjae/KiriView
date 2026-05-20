@@ -33,7 +33,7 @@ namespace {
 }
 
 ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject *documentObject,
-    ImageDocumentState &state, ImageAsyncDependencies dependencies,
+    ImageDocumentState &state, ImageDocumentRuntimeDependencyOverrides dependencies,
     ImageDocumentRuntimeControllerCallbacks callbacks)
     : m_callbacks(std::move(callbacks))
 {

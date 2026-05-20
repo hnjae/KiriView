@@ -114,7 +114,7 @@ KiriImageDocument::KiriImageDocument(QObject *parent)
     m_runtime = std::make_unique<KiriView::ImageDocumentRuntime>(
         this, RenderContextProvider {},
         [this](const std::vector<ImageDocumentChange> &changes) { handleDocumentChanges(changes); },
-        KiriView::ImageAsyncDependencies {},
+        KiriView::ImageDocumentRuntimeDependencyOverrides {},
         [this](const QString &errorString) { Q_EMIT fileDeletionFailed(errorString); });
 }
 

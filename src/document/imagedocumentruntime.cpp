@@ -32,7 +32,8 @@ namespace {
 
 ImageDocumentRuntime::ImageDocumentRuntime(QObject *documentObject,
     RenderContextProvider renderContextProvider, ChangeCallback changeCallback,
-    ImageAsyncDependencies dependencies, FileDeletionFailedCallback fileDeletionFailedCallback)
+    ImageDocumentRuntimeDependencyOverrides dependencies,
+    FileDeletionFailedCallback fileDeletionFailedCallback)
     : changeBatcher(ImageDocumentChangeBatcher::ChangeBatchCallback(
           [this](const std::vector<ImageDocumentChange> &changes) { publishChanges(changes); }))
     , state(changeBatcher)

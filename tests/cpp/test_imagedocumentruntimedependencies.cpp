@@ -55,7 +55,7 @@ void TestImageDocumentRuntimeDependencies::defaultDependenciesUseArchiveSessionS
 void TestImageDocumentRuntimeDependencies::partialNonArchiveOverridesStillUseArchiveSessionStore()
 {
     int directoryLoadCount = 0;
-    KiriView::ImageAsyncDependencies dependencies;
+    KiriView::ImageDocumentRuntimeDependencyOverrides dependencies;
     dependencies.candidateProvider.directoryImages
         = [&directoryLoadCount](QObject *, QUrl, KiriView::ImageCandidatesCallback callback,
               KiriView::ErrorCallback) {
@@ -85,7 +85,7 @@ void TestImageDocumentRuntimeDependencies::partialNonArchiveOverridesStillUseArc
 void TestImageDocumentRuntimeDependencies::customSessionFactoryWrapsArchiveProviders()
 {
     int openCount = 0;
-    KiriView::ImageAsyncDependencies dependencies;
+    KiriView::ImageDocumentRuntimeDependencyOverrides dependencies;
     dependencies.archiveDocumentSessions = [&openCount](const KiriView::ArchiveDocumentLocation &)
         -> KiriView::ArchiveDocumentSessionOpenResult {
         ++openCount;
@@ -117,7 +117,7 @@ void TestImageDocumentRuntimeDependencies::explicitArchiveProvidersAvoidSessionS
     int fileOperationCount = 0;
     int powerSaverMonitorCount = 0;
 
-    KiriView::ImageAsyncDependencies dependencies;
+    KiriView::ImageDocumentRuntimeDependencyOverrides dependencies;
     dependencies.candidateProvider.archiveImages
         = [&archiveLoadCount](QObject *, KiriView::ArchiveDocumentLocation,
               KiriView::ImageCandidatesCallback callback, KiriView::ErrorCallback) {
