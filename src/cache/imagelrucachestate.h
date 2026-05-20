@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGELRUCACHESTATE_H
 #define KIRIVIEW_IMAGELRUCACHESTATE_H
 
-#include "imagecachepolicy.h"
+#include "cache/imagecachepolicy.h"
 
 #include <QtGlobal>
 #include <algorithm>

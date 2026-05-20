@@ -1,9 +1,9 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "imagebytecost.h"
+#include "cache/imagebytecost.h"
 
-#include "imagebyteaccounting.h"
+#include "cache/imagebyteaccounting.h"
 
 namespace {
 constexpr std::int64_t rgbaBytesPerPixel = 4;

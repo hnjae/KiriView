@@ -3,7 +3,7 @@
 
 #include "rawdecoder.h"
 
-#include "imagebytecost.h"
+#include "cache/imagebytecost.h"
 #include "imageerrortext.h"
 #include "rendering/imagerendering.h"
 #include "rendering/imagetilesourcehelpers_p.h"

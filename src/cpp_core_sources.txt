@@ -35,9 +35,9 @@ src/presentation/imageanimationpolicy.cpp
 src/presentation/imageanimationplayer.cpp
 src/imageasyncoperationstate.cpp
 src/imageactionavailability.cpp
-src/imagebytecost.cpp
+src/cache/imagebytecost.cpp
 src/navigation/imagecandidateprovider.cpp
-src/imagecachepolicy.cpp
+src/cache/imagecachepolicy.cpp
 src/navigation/imagecandidatelistsource.cpp
 src/navigation/imagecontainernavigationcontroller.cpp
 src/navigation/imagecontainernavigationstate.cpp

@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_QIMAGEREADERSCALEDLEVELCACHE_H
 #define KIRIVIEW_QIMAGEREADERSCALEDLEVELCACHE_H
 
-#include "imagelrucachestate.h"
+#include "cache/imagelrucachestate.h"
 #include "staticimage.h"
 
 #include <QImage>

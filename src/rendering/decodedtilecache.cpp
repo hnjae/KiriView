@@ -3,7 +3,7 @@
 
 #include "decodedtilecache.h"
 
-#include "imagebytecost.h"
+#include "cache/imagebytecost.h"
 
 #include <utility>
 

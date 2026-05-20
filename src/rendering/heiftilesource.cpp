@@ -3,10 +3,10 @@
 
 #include "heiftilesource.h"
 
+#include "cache/imagebytecost.h"
 #include "decoding/heifcontainer.h"
 #include "decoding/heifsupport.h"
 #include "decoding/heiftilingplan.h"
-#include "imagebytecost.h"
 #include "imageerrortext.h"
 #include "imagetilesourcehelpers_p.h"
 

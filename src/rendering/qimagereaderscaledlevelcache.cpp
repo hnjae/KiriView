@@ -3,7 +3,7 @@
 
 #include "qimagereaderscaledlevelcache.h"
 
-#include "imagebytecost.h"
+#include "cache/imagebytecost.h"
 
 #include <QMutexLocker>
 

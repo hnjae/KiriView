@@ -3,7 +3,7 @@
 
 #include "imagesurface.h"
 
-#include "imagecachepolicy.h"
+#include "cache/imagecachepolicy.h"
 #include "kiriview/src/imagerendergeometry.cxx.h"
 #include "qtgeometryconversion.h"
 #include "systemmemory.h"

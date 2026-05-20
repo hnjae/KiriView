@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_RUSTQTCONVERSION_H
 #define KIRIVIEW_RUSTQTCONVERSION_H
 
-#include "imagebyteaccounting.h"
+#include "cache/imagebyteaccounting.h"
 
 #include <QByteArray>
 #include <QString>

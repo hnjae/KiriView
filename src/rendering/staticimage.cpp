@@ -3,8 +3,8 @@
 
 #include "staticimage.h"
 
-#include "imagebyteaccounting.h"
-#include "imagebytecost.h"
+#include "cache/imagebyteaccounting.h"
+#include "cache/imagebytecost.h"
 
 namespace KiriView {
 FirstDisplayImageDecodeResult ImageTileSource::decodeFirstDisplayImage(

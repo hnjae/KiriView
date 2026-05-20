@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "imagecachepolicy.h"
+#include "cache/imagecachepolicy.h"
 
 #include "kiriview/src/cachebudget.cxx.h"
 #include "rustqtconversion.h"

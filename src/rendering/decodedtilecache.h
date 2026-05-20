@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_DECODEDTILECACHE_H
 #define KIRIVIEW_DECODEDTILECACHE_H
 
-#include "imagelrucachestate.h"
+#include "cache/imagelrucachestate.h"
 #include "imagetile.h"
 
 #include <QtGlobal>
