@@ -4,7 +4,7 @@
 #include "imagenavigationmodel.h"
 
 #include "imageurl.h"
-#include "kiriview/src/imagenavigationmodel.cxx.h"
+#include "kiriview/src/policy/imagenavigationmodel.cxx.h"
 
 #include <QCollator>
 #include <QLocale>

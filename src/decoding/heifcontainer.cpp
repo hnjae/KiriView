@@ -3,7 +3,7 @@
 
 #include "heifcontainer.h"
 
-#include "kiriview/src/heifcontainer.cxx.h"
+#include "kiriview/src/policy/heifcontainer.cxx.h"
 
 #include <cstddef>
 #include <cstdint>

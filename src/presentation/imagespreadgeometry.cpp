@@ -3,7 +3,7 @@
 
 #include "presentation/imagespreadgeometry.h"
 
-#include "kiriview/src/imagespreadgeometry.cxx.h"
+#include "kiriview/src/policy/imagespreadgeometry.cxx.h"
 #include "qtgeometryconversion.h"
 
 namespace {

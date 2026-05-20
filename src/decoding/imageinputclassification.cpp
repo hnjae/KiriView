@@ -3,7 +3,7 @@
 
 #include "imageinputclassification.h"
 
-#include "kiriview/src/imageinputclassification.cxx.h"
+#include "kiriview/src/policy/imageinputclassification.cxx.h"
 #include "rustqtconversion.h"
 
 namespace {

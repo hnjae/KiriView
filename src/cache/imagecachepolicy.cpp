@@ -3,7 +3,7 @@
 
 #include "cache/imagecachepolicy.h"
 
-#include "kiriview/src/cachebudget.cxx.h"
+#include "kiriview/src/policy/cachebudget.cxx.h"
 #include "rustqtconversion.h"
 
 #include <cstdint>

@@ -3,7 +3,7 @@
 
 #include "presentation/imagerotation.h"
 
-#include "kiriview/src/imagerotation.cxx.h"
+#include "kiriview/src/policy/imagerotation.cxx.h"
 #include "qtgeometryconversion.h"
 
 namespace KiriView {

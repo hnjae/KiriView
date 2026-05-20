@@ -3,7 +3,7 @@
 
 #include "imagetilegeometrybridge.h"
 
-#include "kiriview/src/imagetilegeometry.cxx.h"
+#include "kiriview/src/policy/imagetilegeometry.cxx.h"
 #include "qtgeometryconversion.h"
 
 namespace {

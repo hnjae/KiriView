@@ -3,7 +3,7 @@
 
 #include "presentation/imagespreadnavigation.h"
 
-#include "kiriview/src/imagespreadnavigation.cxx.h"
+#include "kiriview/src/policy/imagespreadnavigation.cxx.h"
 
 namespace {
 KiriView::RustImageSpreadNavigationDirection rustNavigationDirection(

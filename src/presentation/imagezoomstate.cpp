@@ -4,7 +4,7 @@
 #include "presentation/imagezoomstate.h"
 
 #include "imageurl.h"
-#include "kiriview/src/imagezoomstate.cxx.h"
+#include "kiriview/src/policy/imagezoomstate.cxx.h"
 #include "qtgeometryconversion.h"
 
 namespace {

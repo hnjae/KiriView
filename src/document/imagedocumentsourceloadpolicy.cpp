@@ -3,7 +3,7 @@
 
 #include "imagedocumentsourceloadpolicy.h"
 
-#include "kiriview/src/imagedocumentsourceloadpolicy.cxx.h"
+#include "kiriview/src/policy/imagedocumentsourceloadpolicy.cxx.h"
 #include "navigation/imagecontainer.h"
 
 namespace {

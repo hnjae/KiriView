@@ -418,4 +418,5 @@ fn fixed_avif_data(data: &[u8]) -> Option<Vec<u8>> {
 }
 
 #[cfg(test)]
+#[path = "avifcompat/tests.rs"]
 mod tests;

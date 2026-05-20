@@ -3,7 +3,7 @@
 
 #include "presentation/imageviewportgeometry.h"
 
-#include "kiriview/src/imageviewportgeometry.cxx.h"
+#include "kiriview/src/policy/imageviewportgeometry.cxx.h"
 #include "qtgeometryconversion.h"
 
 namespace KiriView {

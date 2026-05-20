@@ -3,7 +3,7 @@
 
 #include "imagerendering.h"
 
-#include "kiriview/src/imagerendergeometry.cxx.h"
+#include "kiriview/src/policy/imagerendergeometry.cxx.h"
 #include "presentation/imagerotation.h"
 #include "qtgeometryconversion.h"
 

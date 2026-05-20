@@ -552,7 +552,7 @@ mod tests {
             RustImageInputKind::Raw
         );
 
-        let raw_dng = include_bytes!("../tests/fixtures/raw-cfa-smoke.dng");
+        let raw_dng = include_bytes!("../../tests/fixtures/raw-cfa-smoke.dng");
         assert_eq!(
             classify_image_input(raw_dng, "raw-cfa-smoke").kind,
             RustImageInputKind::Raw

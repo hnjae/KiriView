@@ -1,30 +1,72 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+// Application policy.
+#[path = "policy/applicationruntime.rs"]
 mod applicationruntime;
-mod archiveformat;
-mod archivepath;
-mod avifcompat;
-mod bmff;
-mod byteio;
-mod cachebudget;
-mod heifcontainer;
-mod imagedocumentsourceloadpolicy;
-mod imageformatregistry;
-mod imageinputclassification;
-mod imagemath;
-mod imagenavigationmodel;
-mod imageopenworkflow;
-mod imagerendergeometry;
-mod imagerotation;
-mod imagespreadgeometry;
-mod imagespreadnavigation;
-mod imagetilegeometry;
-mod imageviewportgeometry;
-mod imagezoomstate;
-mod navigationindex;
-mod predecodecachepolicy;
+#[path = "policy/startup_arguments.rs"]
 mod startup_arguments;
+
+// Archive policy.
+#[path = "policy/archiveformat.rs"]
+mod archiveformat;
+#[path = "policy/archivepath.rs"]
+mod archivepath;
+
+// Cache policy.
+#[path = "policy/cachebudget.rs"]
+mod cachebudget;
+
+// Decoding and format policy.
+#[path = "policy/avifcompat.rs"]
+mod avifcompat;
+#[path = "policy/bmff.rs"]
+mod bmff;
+#[path = "policy/byteio.rs"]
+mod byteio;
+#[path = "policy/heifcontainer.rs"]
+mod heifcontainer;
+#[path = "policy/imageformatregistry.rs"]
+mod imageformatregistry;
+#[path = "policy/imageinputclassification.rs"]
+mod imageinputclassification;
+
+// Document workflow policy.
+#[path = "policy/imagedocumentsourceloadpolicy.rs"]
+mod imagedocumentsourceloadpolicy;
+#[path = "policy/imageopenworkflow.rs"]
+mod imageopenworkflow;
+
+// Navigation policy.
+#[path = "policy/imagenavigationmodel.rs"]
+mod imagenavigationmodel;
+#[path = "policy/navigationindex.rs"]
+mod navigationindex;
+
+// Predecode policy.
+#[path = "policy/predecodecachepolicy.rs"]
+mod predecodecachepolicy;
+
+// Presentation policy.
+#[path = "policy/imagemath.rs"]
+mod imagemath;
+#[path = "policy/imagerotation.rs"]
+mod imagerotation;
+#[path = "policy/imagespreadgeometry.rs"]
+mod imagespreadgeometry;
+#[path = "policy/imagespreadnavigation.rs"]
+mod imagespreadnavigation;
+#[path = "policy/imageviewportgeometry.rs"]
+mod imageviewportgeometry;
+#[path = "policy/imagezoomstate.rs"]
+mod imagezoomstate;
+
+// Rendering policy.
+#[path = "policy/imagerendergeometry.rs"]
+mod imagerendergeometry;
+#[path = "policy/imagetilegeometry.rs"]
+mod imagetilegeometry;
+#[path = "policy/svgrenderer.rs"]
 mod svgrenderer;
 
 pub use startup_arguments::{

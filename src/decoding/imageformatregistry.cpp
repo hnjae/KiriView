@@ -3,7 +3,7 @@
 
 #include "imageformatregistry.h"
 
-#include "kiriview/src/imageformatregistry.cxx.h"
+#include "kiriview/src/policy/imageformatregistry.cxx.h"
 #include "rustqtconversion.h"
 
 #include <KLocalizedString>

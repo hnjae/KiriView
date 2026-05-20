@@ -5,7 +5,7 @@
 
 #include "imageerrortext.h"
 #include "imagetilesourcehelpers_p.h"
-#include "kiriview/src/svgrenderer.cxx.h"
+#include "kiriview/src/policy/svgrenderer.cxx.h"
 #include "rustqtconversion.h"
 
 #include <QByteArray>

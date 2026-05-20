@@ -3,7 +3,7 @@
 
 #include "imageopenworkflow.h"
 
-#include "kiriview/src/imageopenworkflow.cxx.h"
+#include "kiriview/src/policy/imageopenworkflow.cxx.h"
 
 namespace {
 KiriView::RustImageOpenWorkflowEvent imageOpenWorkflowEvent(

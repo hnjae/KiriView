@@ -3,7 +3,7 @@
 
 #include "application/applicationruntime.h"
 
-#include "kiriview/src/applicationruntime.cxx.h"
+#include "kiriview/src/policy/applicationruntime.cxx.h"
 
 #include <QByteArray>
 #include <QObject>

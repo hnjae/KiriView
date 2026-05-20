@@ -3,7 +3,7 @@
 
 #include "predecodepolicy.h"
 
-#include "kiriview/src/predecodecachepolicy.cxx.h"
+#include "kiriview/src/policy/predecodecachepolicy.cxx.h"
 #include "rustqtconversion.h"
 
 #include <algorithm>

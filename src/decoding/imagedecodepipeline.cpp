@@ -6,7 +6,7 @@
 #include "apnganimationreader.h"
 #include "heifdecoder.h"
 #include "imageerrortext.h"
-#include "kiriview/src/avifcompat.cxx.h"
+#include "kiriview/src/policy/avifcompat.cxx.h"
 #include "qimagereaderdecoder.h"
 #include "rawdecoder.h"
 #include "rendering/svgtilesource.h"
