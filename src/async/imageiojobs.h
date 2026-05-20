@@ -7,7 +7,7 @@
 #include "async/imageasynccallbacks.h"
 #include "async/imageiojob.h"
 #include "decoding/imagedecoderequest.h"
-#include "imagelocation.h"
+#include "location/imagelocation.h"
 #include "navigation/imagecandidatecallbacks.h"
 #include "navigation/imagenavigationtypes.h"
 

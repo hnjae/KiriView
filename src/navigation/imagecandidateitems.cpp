@@ -6,7 +6,7 @@
 #include "archive/archiveformat.h"
 #include "decoding/imageformatregistry.h"
 #include "imagenavigationmodel.h"
-#include "imageurl.h"
+#include "location/imageurl.h"
 
 #include <cstddef>
 

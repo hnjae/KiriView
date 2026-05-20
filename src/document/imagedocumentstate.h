@@ -6,7 +6,7 @@
 
 #include "imagedocumentchangebatcher.h"
 #include "imagedocumenttypes.h"
-#include "imagelocation.h"
+#include "location/imagelocation.h"
 
 #include <QString>
 #include <QUrl>

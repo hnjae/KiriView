@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 #include "document/imageloadtypes.h"
-#include "imagelocation.h"
-#include "imageurl.h"
+#include "location/imagelocation.h"
+#include "location/imageurl.h"
 
 #include <QByteArray>
 #include <QObject>

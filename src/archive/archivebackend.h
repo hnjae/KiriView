@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_ARCHIVEBACKEND_H
 #define KIRIVIEW_ARCHIVEBACKEND_H
 
-#include "imagelocation.h"
+#include "location/imagelocation.h"
 #include "navigation/imagenavigationtypes.h"
 
 #include <QByteArray>

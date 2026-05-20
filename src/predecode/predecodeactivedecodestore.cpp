@@ -4,7 +4,7 @@
 #include "predecodeactivedecodestore.h"
 
 #include "decoding/imagedecodejob.h"
-#include "imageurl.h"
+#include "location/imageurl.h"
 
 #include <algorithm>
 #include <utility>

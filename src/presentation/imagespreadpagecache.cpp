@@ -3,7 +3,7 @@
 
 #include "presentation/imagespreadpagecache.h"
 
-#include "imageurl.h"
+#include "location/imageurl.h"
 #include "presentation/imagespreadgeometry.h"
 
 namespace KiriView {

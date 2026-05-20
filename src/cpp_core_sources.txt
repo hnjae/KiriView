@@ -77,7 +77,7 @@ src/navigation/imagecandidatestoreentrystate.cpp
 src/navigation/imagecontaineropenplan.cpp
 src/async/imageiojob.cpp
 src/async/imageiojobs.cpp
-src/imagelocation.cpp
+src/location/imagelocation.cpp
 src/presentation/imagerectmapping.cpp
 src/rendering/imagetile.cpp
 src/rendering/imagetilegeometrybridge.cpp
@@ -119,7 +119,7 @@ src/presentation/imagespreadpresentationcontroller.cpp
 src/presentation/imagespreadsecondarypagerefresh.cpp
 src/presentation/imagespreadzoomcontroller.cpp
 src/navigation/imageshortcutnavigationpolicy.cpp
-src/imageurl.cpp
+src/location/imageurl.cpp
 src/presentation/imageviewportgeometry.cpp
 src/presentation/imageviewportscanstate.cpp
 src/presentation/imageviewrendercontextbinding.cpp

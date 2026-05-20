@@ -5,7 +5,7 @@
 #define KIRIVIEW_ARCHIVEBACKEND_P_H
 
 #include "archivebackend.h"
-#include "imagelocation.h"
+#include "location/imagelocation.h"
 #include "navigation/imagenavigationtypes.h"
 
 #include <QByteArray>

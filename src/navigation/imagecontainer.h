@@ -4,8 +4,8 @@
 #ifndef KIRIVIEW_IMAGECONTAINER_H
 #define KIRIVIEW_IMAGECONTAINER_H
 
-#include "imagelocation.h"
 #include "imagenavigationtypes.h"
+#include "location/imagelocation.h"
 
 #include <QString>
 #include <QUrl>

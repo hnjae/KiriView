@@ -3,7 +3,7 @@
 
 #include "predecodewindowplan.h"
 
-#include "imageurl.h"
+#include "location/imageurl.h"
 
 #include <algorithm>
 #include <iterator>

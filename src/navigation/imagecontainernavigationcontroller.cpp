@@ -6,7 +6,7 @@
 #include "async/imagecallback.h"
 #include "imagecandidaterepository.h"
 #include "imagenavigationmodel.h"
-#include "imageurl.h"
+#include "location/imageurl.h"
 
 #include <QString>
 #include <utility>

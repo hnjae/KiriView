@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_PREDECODEACTIVELOADS_H
 #define KIRIVIEW_PREDECODEACTIVELOADS_H
 
-#include "imageurl.h"
+#include "location/imageurl.h"
 
 #include <QUrl>
 #include <algorithm>

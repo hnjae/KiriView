@@ -4,7 +4,7 @@
 #include "imagecandidatelistsource.h"
 
 #include "imagecontainer.h"
-#include "imageurl.h"
+#include "location/imageurl.h"
 
 #include <optional>
 #include <utility>

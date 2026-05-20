@@ -7,7 +7,7 @@
 #include "decoding/imagedecodedependencies.h"
 #include "document/imagedocumenttypes.h"
 #include "document/imageloadtypes.h"
-#include "imagelocation.h"
+#include "location/imagelocation.h"
 #include "navigation/imagecandidateprovider.h"
 #include "predecode/predecodedimage.h"
 #include "presentation/imagepresentationload.h"

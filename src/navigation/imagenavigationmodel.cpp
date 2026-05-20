@@ -3,8 +3,8 @@
 
 #include "imagenavigationmodel.h"
 
-#include "imageurl.h"
 #include "kiriview/src/policy/imagenavigationmodel.cxx.h"
+#include "location/imageurl.h"
 
 #include <QCollator>
 #include <QLocale>

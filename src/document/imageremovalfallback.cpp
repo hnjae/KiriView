@@ -3,7 +3,7 @@
 
 #include "imageremovalfallback.h"
 
-#include "imageurl.h"
+#include "location/imageurl.h"
 #include "navigation/imagecontainer.h"
 #include "navigation/imagenavigationmodel.h"
 

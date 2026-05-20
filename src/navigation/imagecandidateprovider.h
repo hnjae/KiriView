@@ -7,7 +7,7 @@
 #include "async/imageasynccallbacks.h"
 #include "async/imageiojob.h"
 #include "imagecandidatecallbacks.h"
-#include "imagelocation.h"
+#include "location/imagelocation.h"
 
 #include <QUrl>
 #include <functional>

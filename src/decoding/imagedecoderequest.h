@@ -4,8 +4,8 @@
 #ifndef KIRIVIEW_IMAGEDECODEREQUEST_H
 #define KIRIVIEW_IMAGEDECODEREQUEST_H
 
-#include "imagelocation.h"
-#include "imageurl.h"
+#include "location/imagelocation.h"
+#include "location/imageurl.h"
 #include "rendering/staticimage.h"
 
 #include <QUrl>

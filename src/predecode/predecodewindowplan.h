@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_PREDECODEWINDOWPLAN_H
 #define KIRIVIEW_PREDECODEWINDOWPLAN_H
 
-#include "imagelocation.h"
+#include "location/imagelocation.h"
 #include "navigation/imagecandidatelistsource.h"
 #include "navigation/imagenavigationtypes.h"
 #include "predecodepolicy.h"

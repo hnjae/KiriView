@@ -3,7 +3,7 @@
 
 #include "predecodecache.h"
 
-#include "imageurl.h"
+#include "location/imageurl.h"
 #include "predecodepolicy.h"
 #include "system/systemmemory.h"
 

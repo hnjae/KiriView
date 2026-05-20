@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGECANDIDATELISTSOURCE_H
 #define KIRIVIEW_IMAGECANDIDATELISTSOURCE_H
 
-#include "imagelocation.h"
+#include "location/imagelocation.h"
 
 #include <QUrl>
 #include <optional>

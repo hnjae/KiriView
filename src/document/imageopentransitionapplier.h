@@ -7,8 +7,8 @@
 #include "imagedocumenteffects.h"
 #include "imagedocumenttypes.h"
 #include "imageloadtypes.h"
-#include "imagelocation.h"
 #include "imageopentransition.h"
+#include "location/imagelocation.h"
 
 #include <QString>
 #include <QUrl>

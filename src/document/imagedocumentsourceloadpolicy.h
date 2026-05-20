@@ -5,7 +5,7 @@
 #define KIRIVIEW_IMAGEDOCUMENTSOURCELOADPOLICY_H
 
 #include "imagedocumentsourceloadrequest.h"
-#include "imagelocation.h"
+#include "location/imagelocation.h"
 
 #include <QUrl>
 #include <vector>

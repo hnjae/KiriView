@@ -6,9 +6,9 @@
 
 #include "imagecandidaterepository.h"
 #include "imagecontainernavigationcontroller.h"
-#include "imagelocation.h"
 #include "imagenavigationtypes.h"
 #include "imagepagenavigationcontroller.h"
+#include "location/imagelocation.h"
 
 #include <QObject>
 #include <QString>

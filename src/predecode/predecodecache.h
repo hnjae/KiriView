@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_PREDECODECACHE_H
 #define KIRIVIEW_PREDECODECACHE_H
 
-#include "imagelocation.h"
+#include "location/imagelocation.h"
 #include "predecodeactiveloads.h"
 #include "predecodedimage.h"
 #include "predecodedisplayedhistory.h"

@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_PREDECODEPOLICY_H
 #define KIRIVIEW_PREDECODEPOLICY_H
 
-#include "imagelocation.h"
+#include "location/imagelocation.h"
 
 #include <QtGlobal>
 #include <cstddef>

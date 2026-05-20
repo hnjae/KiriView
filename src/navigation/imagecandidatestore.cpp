@@ -6,7 +6,7 @@
 #include "async/imagecallback.h"
 #include "async/imageiojobs.h"
 #include "imagecandidatedirectoryentry.h"
-#include "imageurl.h"
+#include "location/imageurl.h"
 
 #include <QPointer>
 #include <functional>

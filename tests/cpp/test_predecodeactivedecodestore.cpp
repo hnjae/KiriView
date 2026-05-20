@@ -3,7 +3,7 @@
 
 #include "decoding/imagedecodejob.h"
 #include "image_test_support.h"
-#include "imageurl.h"
+#include "location/imageurl.h"
 #include "predecode/predecodeactivedecodestore.h"
 
 #include <QCoreApplication>

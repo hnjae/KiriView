@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGESECONDARYPAGESTATE_H
 #define KIRIVIEW_IMAGESECONDARYPAGESTATE_H
 
-#include "imagelocation.h"
+#include "location/imagelocation.h"
 
 #include <QSize>
 #include <optional>
