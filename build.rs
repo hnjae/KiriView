@@ -29,7 +29,7 @@ const CXX_QT_HEADER_SOURCES: &[&str] = &[
     "src/kiriimageview.h",
     "src/navigation/imageshortcutnavigationpolicy.h",
     "src/kiriviewapplication.h",
-    "src/powerprofilemonitor.h",
+    "src/system/powerprofilemonitor.h",
 ];
 const RUST_BRIDGE_SOURCES: &[&str] = &[
     "src/applicationruntime.rs",

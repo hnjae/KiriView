@@ -8,11 +8,11 @@
 #include "decoding/imagedecodedependencies.h"
 #include "navigation/imagecandidateprovider.h"
 #include "navigation/imagecandidaterepository.h"
-#include "powersaverprovider.h"
 #include "predecodedimage.h"
 #include "predecodeloadcontroller.h"
 #include "predecodeschedulestate.h"
 #include "rendering/staticimage.h"
+#include "system/powersaverprovider.h"
 
 #include <QElapsedTimer>
 #include <QObject>

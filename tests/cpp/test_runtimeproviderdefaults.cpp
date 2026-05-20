@@ -5,7 +5,7 @@
 #include "decoding/imagedecodedependencies.h"
 #include "document/filedeletion.h"
 #include "navigation/imagecandidateprovider.h"
-#include "powersaverprovider.h"
+#include "system/powersaverprovider.h"
 
 #include <QByteArray>
 #include <QObject>

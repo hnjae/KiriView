@@ -6,8 +6,8 @@
 
 #include "decoding/imagedecodedependencies.h"
 #include "navigation/imagecandidateprovider.h"
-#include "powersaverprovider.h"
 #include "predecode/predecodedimage.h"
+#include "system/powersaverprovider.h"
 
 #include <QUrl>
 #include <functional>

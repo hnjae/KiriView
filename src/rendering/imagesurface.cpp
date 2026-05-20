@@ -6,7 +6,7 @@
 #include "cache/imagecachepolicy.h"
 #include "kiriview/src/imagerendergeometry.cxx.h"
 #include "qtgeometryconversion.h"
-#include "systemmemory.h"
+#include "system/systemmemory.h"
 
 #include <optional>
 #include <utility>

@@ -8,7 +8,7 @@
 #include "decoding/imagedecodedependencies.h"
 #include "filedeletion.h"
 #include "navigation/imagecandidateprovider.h"
-#include "powersaverprovider.h"
+#include "system/powersaverprovider.h"
 
 #include <memory>
 

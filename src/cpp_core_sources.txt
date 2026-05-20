@@ -126,9 +126,9 @@ src/presentation/imageviewrendercontextbinding.cpp
 src/presentation/imagezoomstate.cpp
 src/application/applicationshortcutpolicy.cpp
 src/application/kiriviewapplicationactions.cpp
-src/powerprofilemonitorstate.cpp
-src/powerprofilemonitor.cpp
-src/powersaverprovider.cpp
+src/system/powerprofilemonitorstate.cpp
+src/system/powerprofilemonitor.cpp
+src/system/powersaverprovider.cpp
 src/predecode/predecodeactivedecodestore.cpp
 src/predecode/predecodecache.cpp
 src/predecode/predecodedisplayedhistory.cpp
@@ -144,5 +144,5 @@ src/decoding/rawdecoder.cpp
 src/application/shortcuthelpmodel.cpp
 src/rendering/staticimage.cpp
 src/decoding/staticimagedecode.cpp
-src/systemmemory.cpp
+src/system/systemmemory.cpp
 src/rendering/svgtilesource.cpp

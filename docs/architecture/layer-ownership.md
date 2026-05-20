@@ -17,6 +17,7 @@ C++ Qt/KDE runtime code owns platform integration and side effects:
 
 - `QObject` lifetime, signal delivery, thread affinity, and cancellation.
 - `QUrl`, `QImage`, `QAction`, `QQuickItem`, `QSGRenderNode`, and other Qt objects.
+- OS and desktop-environment observers such as system-memory discovery and power-saver portal state.
 - `QAction` identity, KDE action collections, configured shortcut state, and shortcut persistence.
 - KIO jobs, KDE settings, dialogs, notifications, file operations, and runtime integration.
 - Image presentation, rendering, and async job orchestration.

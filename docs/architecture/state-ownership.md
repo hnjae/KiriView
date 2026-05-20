@@ -19,6 +19,7 @@ These defaults apply until this document or an ADR explicitly changes the owner.
 - View render context: `KiriImageView` owns render-context discovery for the attached document only when it is the primary viewport facade. Secondary page views render secondary snapshots but do not install or clear the document render context provider.
 - Deletion: Rust policy may choose the deletion target and post-delete follow-up target from plain document/navigation snapshots. C++ owns KDE confirmation, the file operation, cancellation and failure handling, notifications, and applying the follow-up plan.
 - Preparation and cache: C++ owns prepared image objects, decoder jobs, memory pressure handling, and cache lifetime. Rust may compute preparation priority or eviction policy from plain metadata, but cached runtime objects remain in C++.
+- System runtime state: C++ owns desktop-environment observer lifetime and platform probes, including power-saver portal subscription state and physical-memory discovery. Rust may compute cache or scheduling policy from plain snapshots derived from those observers.
 
 ## Derived Public State
 

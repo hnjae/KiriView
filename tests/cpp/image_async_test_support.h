@@ -7,7 +7,7 @@
 #include "async/imageiojob.h"
 #include "decoding/imagedecodedependencies.h"
 #include "document/filedeletion.h"
-#include "powersaverprovider.h"
+#include "system/powersaverprovider.h"
 
 #include <QByteArray>
 #include <QObject>

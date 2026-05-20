@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "powerprofilemonitorstate.h"
+#include "system/powerprofilemonitorstate.h"
 
 #include <QDBusVariant>
 #include <QObject>

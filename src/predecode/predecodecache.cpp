@@ -5,7 +5,7 @@
 
 #include "imageurl.h"
 #include "predecodepolicy.h"
-#include "systemmemory.h"
+#include "system/systemmemory.h"
 
 #include <algorithm>
 #include <cstddef>
