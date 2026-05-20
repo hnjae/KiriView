@@ -13,4 +13,4 @@ flowchart TD
     Rust -- "typed plans, state deltas, and effect descriptions" --> Runtime
 ```
 
-The main maintenance goal is to keep product policy testable without making Rust own Qt runtime concerns. Rust should decide what should happen. C++ should know how to make it happen in Qt and KDE.
+The main maintenance goal is to keep product policy testable without making Rust own Qt runtime concerns. Rust defines policy decisions. C++ executes them through Qt and KDE.

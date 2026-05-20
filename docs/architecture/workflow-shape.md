@@ -21,4 +21,4 @@ Rust can decide loading status, error recovery, navigation updates, cache policy
 
 Async workflow events that can complete out of order must carry enough identity for the owner to ignore stale completions. Workflows that update visible state must distinguish the committed public state from pending targets and publish the new state only after the resources required for that state are ready.
 
-This does not require every existing controller to be rewritten at once. Move logic when a workflow is already being changed and when the new boundary reduces complexity.
+Existing controllers do not need immediate rewrites. Move logic when the workflow is already changing and the new boundary reduces complexity.

@@ -36,11 +36,11 @@ Static image files, including bitmap images and SVG files, appear at full resolu
 
 Larger JPEG images may first appear quickly at a lower level of detail. The visible area then becomes sharper for the current zoom, pan position, viewport size, and display scale.
 
-Newly visible areas may briefly show less detail until sharper data is ready, but normal panning should avoid blank holes.
+Newly visible areas may briefly show lower detail until sharper data is ready, but routine panning should avoid blank regions.
 
 When adjacent images are already available, Previous and Next navigation can replace the view immediately.
 
-If a very large static image cannot be opened because it is too large, KiriView reports a decode error without replacing the currently displayed image.
+If a static image exceeds the supported decode or display size, KiriView reports a decode error without replacing the currently displayed image.
 
 HEIF-family still images, including AVIF still images, are supported when the still image is encoded with AV1, HEVC, AVC/H.264, JPEG, JPEG 2000, or VVC/H.266.
 

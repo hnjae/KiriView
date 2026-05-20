@@ -2,7 +2,7 @@
 
 ## Context
 
-The original APNG shim parsed APNG chunks in Rust, decoded every frame, composed every full-canvas image, and returned all frames to C++ at load completion. That kept APNG policy easy to unit test, but it made memory use scale with canvas size times frame count before the first frame could be presented.
+The original APNG shim parsed APNG chunks in Rust, decoded every frame, composed every full-canvas image, and returned all frames to C++ at load completion. That kept APNG policy covered by Rust unit tests, but it made memory use scale with canvas size times frame count before the first frame could be presented.
 
 APNG playback is inherently sequential: later frames are read in stream order and may depend on prior composition state through blend and dispose operations.
 

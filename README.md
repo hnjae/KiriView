@@ -3,7 +3,7 @@
 KiriView is a desktop image viewer built with KDE Kirigami.
 
 > [!IMPORTANT]
-> All documentation, code, and artwork in this repository were vibe coded.
+> This repository was developed with AI-assisted workflows.
 
 ## Features
 

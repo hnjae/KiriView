@@ -1,6 +1,6 @@
 # FFI Design
 
-FFI code should be intentionally boring. A good bridge is explicit, typed, and easy to audit.
+FFI code should be explicit, typed, and audit-friendly.
 
 Use small bridge structs and enums for:
 

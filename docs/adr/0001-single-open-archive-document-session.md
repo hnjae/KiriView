@@ -4,8 +4,7 @@
 
 Directly opened local archives are document containers. Listing pages, opening the selected page, page navigation, and predecode all operate on the same archive document while it remains the current document.
 
-The older dependency shape exposed archive listing and archive image reads as independent jobs. That made each operation free to reopen the archive backend, which is wasteful for KArchive formats and especially poor for libarchive
-formats that only support sequential access.
+The older dependency shape exposed archive listing and archive image reads as independent jobs. Each operation could reopen the archive backend, adding overhead for KArchive formats and increasing replay cost for libarchive formats that only support sequential access.
 
 ## Decision
 
