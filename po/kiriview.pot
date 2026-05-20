@@ -190,242 +190,242 @@ msgctxt "@item:inlistbox"
 msgid "All files (*)"
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgid "Could not read the selected image data."
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgid "Could not decode the selected PNG image."
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgid "Could not decode the selected APNG animation."
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgid "Could not decode the selected image animation."
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgid "The selected archive does not contain any supported images."
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgid "Could not open the selected archive."
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgid "Could not open the selected comic book archive."
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgid "Could not delete the selected file."
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgid "Could not determine the selected SVG image size."
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgid "Could not render the selected SVG tile."
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgid "Could not render the selected SVG image."
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgid "Could not determine the selected JPEG first-display size."
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgid "The selected image is too large for fallback full-image decoding."
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgid "Could not render the selected tile."
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgid "Could not allocate the selected tile."
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgid "Could not decode the selected HEIF image sequence."
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgid "Could not decode the selected HEIF image: sequence track is missing."
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgid ""
 "Could not decode the selected HEIF image: libheif could not allocate "
 "decoding options."
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgid ""
 "Could not decode the selected HEIF image: libheif could not allocate a "
 "context."
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgid "Could not decode the selected HEIF image: decoded image is invalid."
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgid ""
 "Could not decode the selected HEIF image: decoded image size is invalid."
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgid ""
 "Could not decode the selected HEIF image: decoded pixel data is invalid."
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgid ""
 "Could not decode the selected HEIF image: decoded image allocation failed."
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgid "Could not decode the selected HEIF image: image size is invalid."
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgid "The selected HEIF image is too large for fallback full-image decoding."
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgid "Could not decode the selected RAW image: decoded image size is invalid."
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgid "The selected RAW image is too large for full-image decoding."
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgid "Could not decode the selected RAW image: decoded image is invalid."
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgid ""
 "Could not decode the selected RAW image: decoded pixel format is unsupported."
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgid "Could not decode the selected RAW image: decoded pixel data is invalid."
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgid ""
 "Could not decode the selected RAW image: decoded image allocation failed."
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgid "Could not render the selected RAW tile."
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgid "Unknown libheif error."
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgid "Unknown LibRaw error."
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgid "initializing libheif"
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgid "reading the HEIF container"
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgid "reading the primary image"
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgid "decoding the primary image"
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgid "decoding a HEIF grid tile"
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgid "decoding the HEIF image sequence"
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgid "reading the RAW image"
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgid "unpacking the RAW image"
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgid "processing the RAW image"
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgid "creating the display image"
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgctxt "@info:status"
 msgid "Could not decode the selected HEIF image: %1: %2"
 msgstr ""
 
-#: src/imageerrortext.cpp
+#: src/localization/imageerrortext.cpp
 #, kde-format
 msgctxt "@info:status"
 msgid "Could not decode the selected RAW image: %1: %2"

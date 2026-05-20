@@ -5,10 +5,10 @@
 
 #include "async/imagecallback.h"
 #include "imagedocumentstate.h"
-#include "imageerrortext.h"
 #include "imageloader.h"
 #include "imageopentransitionapplier.h"
 #include "imageopenworkflow.h"
+#include "localization/imageerrortext.h"
 #include "presentation/imagepresentationcontroller.h"
 #include "presentation/imagepresentationload.h"
 

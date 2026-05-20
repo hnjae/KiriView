@@ -4,7 +4,7 @@
 #include "applicationruntime.h"
 
 #include "kiriview/src/policy/applicationruntime.cxx.h"
-#include "localization.h"
+#include "localization/localization.h"
 
 #include <QApplication>
 #include <QGuiApplication>

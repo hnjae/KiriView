@@ -5,7 +5,7 @@
 
 #include "heifcontainer.h"
 #include "heifsupport.h"
-#include "imageerrortext.h"
+#include "localization/imageerrortext.h"
 
 #include <libheif/heif_sequences.h>
 

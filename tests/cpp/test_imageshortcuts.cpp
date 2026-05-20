@@ -5,7 +5,7 @@
 #include "facade/kiriimagedocument.h"
 #include "facade/kiriviewapplication.h"
 #include "kiriviewstate.h"
-#include "localization.h"
+#include "localization/localization.h"
 #include "navigation/imageshortcutnavigationpolicy.h"
 
 #include <KConfigGroup>

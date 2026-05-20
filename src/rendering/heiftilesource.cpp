@@ -7,8 +7,8 @@
 #include "decoding/heifcontainer.h"
 #include "decoding/heifsupport.h"
 #include "decoding/heiftilingplan.h"
-#include "imageerrortext.h"
 #include "imagetilesourcehelpers_p.h"
+#include "localization/imageerrortext.h"
 
 #include <libheif/heif_tiling.h>
 

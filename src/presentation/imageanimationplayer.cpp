@@ -7,7 +7,7 @@
 #include "decoding/apnganimationreader.h"
 #include "decoding/bufferedimagereader.h"
 #include "decoding/heifsequencereader.h"
-#include "imageerrortext.h"
+#include "localization/imageerrortext.h"
 
 #include <QObject>
 #include <memory>

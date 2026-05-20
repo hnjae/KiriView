@@ -5,9 +5,9 @@
 
 #include "cache/imagebytecost.h"
 #include "decoding/bufferedimagereader.h"
-#include "imageerrortext.h"
 #include "imagerendering.h"
 #include "imagetilesourcehelpers_p.h"
+#include "localization/imageerrortext.h"
 
 #include <QImageIOHandler>
 #include <memory>

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "localization.h"
+#include "localization/localization.h"
 
 #include <KLocalizedQmlContext>
 #include <KLocalizedString>

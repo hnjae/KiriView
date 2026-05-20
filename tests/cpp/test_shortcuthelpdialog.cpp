@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 #include "facade/kiriviewapplication.h"
-#include "localization.h"
+#include "localization/localization.h"
 
 #include <KLocalizedQmlContext>
 #include <KSharedConfig>

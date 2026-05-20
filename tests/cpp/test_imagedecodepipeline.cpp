@@ -3,7 +3,7 @@
 
 #include "decoding/imagedecodepipeline.h"
 
-#include "imageerrortext.h"
+#include "localization/imageerrortext.h"
 
 #include <QByteArray>
 #include <QByteArrayList>

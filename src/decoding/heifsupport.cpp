@@ -3,7 +3,7 @@
 
 #include "heifsupport.h"
 
-#include "imageerrortext.h"
+#include "localization/imageerrortext.h"
 #include "presentation/imageanimationpolicy.h"
 #include "rendering/imagerendering.h"
 

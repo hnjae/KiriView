@@ -5,7 +5,7 @@
 #include "application/menuaccesskeyrouter.h"
 #include "facade/kiriimagedocument.h"
 #include "facade/kiriviewapplication.h"
-#include "localization.h"
+#include "localization/localization.h"
 
 #include <KLocalizedQmlContext>
 #include <KZip>

@@ -3,8 +3,8 @@
 
 #include "application/applicationruntime.h"
 #include "facade/kiriviewapplication.h"
-#include "imageerrortext.h"
-#include "localization.h"
+#include "localization/imageerrortext.h"
+#include "localization/localization.h"
 
 #include <KLocalizedString>
 #include <QAction>

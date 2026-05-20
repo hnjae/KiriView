@@ -4,7 +4,7 @@
 #include "qimagereaderdecoder.h"
 
 #include "bufferedimagereader.h"
-#include "imageerrortext.h"
+#include "localization/imageerrortext.h"
 #include "rendering/imagerendering.h"
 #include "rendering/qimagereadertilesource.h"
 #include "staticimagedecode.h"

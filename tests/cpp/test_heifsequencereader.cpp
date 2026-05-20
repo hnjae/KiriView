@@ -4,7 +4,7 @@
 #include "decoding/heifsequencereader.h"
 
 #include "image_test_support.h"
-#include "imageerrortext.h"
+#include "localization/imageerrortext.h"
 
 #include <QByteArray>
 #include <QFile>

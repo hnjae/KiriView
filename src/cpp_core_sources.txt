@@ -67,7 +67,7 @@ src/document/imagedocumentstate.cpp
 src/rendering/imagesurface.cpp
 src/decoding/imageformatregistry.cpp
 src/decoding/imageinputclassification.cpp
-src/imageerrortext.cpp
+src/localization/imageerrortext.cpp
 src/navigation/imagecandidateitems.cpp
 src/navigation/imagecandidaterepository.cpp
 src/navigation/imagecandidatedirectoryentry.cpp
@@ -93,7 +93,7 @@ src/navigation/imagenavigationmodel.cpp
 src/navigation/imagenavigationservice.cpp
 src/navigation/imagepagenavigationcontroller.cpp
 src/navigation/imagepagenavigationrefreshstate.cpp
-src/localization.cpp
+src/localization/localization.cpp
 src/application/menuaccesskeymenuruntime.cpp
 src/application/menuaccesskeyrouter.cpp
 src/application/menuaccesskeysessionstate.cpp

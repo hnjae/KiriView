@@ -4,7 +4,7 @@
 #include "rawdecoder.h"
 
 #include "cache/imagebytecost.h"
-#include "imageerrortext.h"
+#include "localization/imageerrortext.h"
 #include "rendering/imagerendering.h"
 #include "rendering/imagetilesourcehelpers_p.h"
 #include "staticimagedecode.h"
