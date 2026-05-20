@@ -34,7 +34,7 @@ src/rendering/heiftilesource.cpp
 src/presentation/imageanimationpolicy.cpp
 src/presentation/imageanimationplayer.cpp
 src/async/imageasyncoperationstate.cpp
-src/imageactionavailability.cpp
+src/application/imageactionavailability.cpp
 src/cache/imagebytecost.cpp
 src/navigation/imagecandidateprovider.cpp
 src/cache/imagecachepolicy.cpp

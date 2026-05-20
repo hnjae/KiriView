@@ -18,7 +18,6 @@ KiriView::RustImageActionAvailabilityInput rustImageActionAvailabilityInput(
         input.helpDialogOpen,
         input.textInputFocused,
         input.imagePannable,
-        input.imageHorizontallyPannable,
         input.containerNavigationAvailable,
         input.twoPageModeEnabled,
         input.twoPageModeAvailable,
