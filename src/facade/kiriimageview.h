@@ -5,7 +5,7 @@
 #define KIRIVIEW_KIRIIMAGEVIEW_H
 
 #include "document/imagedocumenttypes.h"
-#include "kiriimagedocument.h"
+#include "facade/kiriimagedocument.h"
 #include "presentation/imageviewportscanstate.h"
 #include "presentation/imageviewrendercontextbinding.h"
 #include "rendering/imagesurface.h"

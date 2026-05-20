@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 #include "application/kiriviewapplicationactions.h"
-#include "kiriviewapplication.h"
+#include "facade/kiriviewapplication.h"
 #include "kiriviewstate.h"
 
 #include <KConfigGroup>

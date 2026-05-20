@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_APPLICATIONACTIONREGISTRY_H
 #define KIRIVIEW_APPLICATIONACTIONREGISTRY_H
 
-#include "kiriviewapplication.h"
+#include "facade/kiriviewapplication.h"
 #include "kiriviewapplicationactions.h"
 
 #include <QAction>

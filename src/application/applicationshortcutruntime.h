@@ -6,7 +6,7 @@
 
 #include "applicationactionregistry.h"
 #include "applicationshortcutpolicy.h"
-#include "kiriviewapplication.h"
+#include "facade/kiriviewapplication.h"
 
 #include <QAbstractListModel>
 #include <QAction>

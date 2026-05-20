@@ -88,11 +88,11 @@ let
   cxxQtCppSources = [
     "src/decoding/apnganimationreader.cpp"
     "src/decoding/apngframecomposer.cpp"
-    "src/kiriimagedocument.cpp"
+    "src/facade/kiriimagedocument.cpp"
     "src/decoding/kiriimagedecoder.cpp"
     "src/rendering/kiriimagerendernode.cpp"
-    "src/kiriimageview.cpp"
-    "src/kiriviewapplication.cpp"
+    "src/facade/kiriimageview.cpp"
+    "src/facade/kiriviewapplication.cpp"
   ];
   cppSources = lib.sort builtins.lessThan (cxxQtCppSources ++ cppCoreSources);
   qtCompileDefines = [

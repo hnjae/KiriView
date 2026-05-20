@@ -7,7 +7,7 @@
 #include "applicationactionregistry.h"
 #include "applicationmenupresentationruntime.h"
 #include "applicationshortcutpolicy.h"
-#include "kiriviewapplication.h"
+#include "facade/kiriviewapplication.h"
 
 #include <KStandardActions>
 #include <QAbstractListModel>

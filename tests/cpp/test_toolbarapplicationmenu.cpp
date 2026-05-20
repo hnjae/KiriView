@@ -3,8 +3,8 @@
 
 #include "application/imageactionavailability.h"
 #include "application/menuaccesskeyrouter.h"
-#include "kiriimagedocument.h"
-#include "kiriviewapplication.h"
+#include "facade/kiriimagedocument.h"
+#include "facade/kiriviewapplication.h"
 #include "localization.h"
 
 #include <KLocalizedQmlContext>

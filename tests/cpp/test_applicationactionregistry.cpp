@@ -3,7 +3,7 @@
 
 #include "application/applicationactionregistry.h"
 #include "application/kiriviewapplicationactions.h"
-#include "kiriviewapplication.h"
+#include "facade/kiriviewapplication.h"
 #include "kiriviewstate.h"
 
 #include <QAction>

@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_APPLICATIONMENUPRESENTATIONRUNTIME_H
 #define KIRIVIEW_APPLICATIONMENUPRESENTATIONRUNTIME_H
 
-#include "kiriviewapplication.h"
+#include "facade/kiriviewapplication.h"
 
 class QAction;
 

@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_KIRIVIEWAPPLICATIONACTIONS_H
 #define KIRIVIEW_KIRIVIEWAPPLICATIONACTIONS_H
 
-#include "kiriviewapplication.h"
+#include "facade/kiriviewapplication.h"
 
 #include <KLazyLocalizedString>
 #include <KStandardActions>

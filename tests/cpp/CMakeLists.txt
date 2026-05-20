@@ -67,7 +67,7 @@ file(STRINGS "../../src/cpp_core_sources.txt" KIRIVIEW_CORE_SOURCES
 foreach(source IN LISTS KIRIVIEW_CORE_SOURCES)
     list(APPEND KIRIVIEW_CORE_SOURCE_PATHS "../../${source}")
 endforeach()
-list(APPEND KIRIVIEW_CORE_SOURCE_PATHS "../../src/kiriviewapplication.cpp")
+list(APPEND KIRIVIEW_CORE_SOURCE_PATHS "../../src/facade/kiriviewapplication.cpp")
 
 add_library(kiriview_test_core STATIC
     ${KIRIVIEW_CORE_SOURCE_PATHS}

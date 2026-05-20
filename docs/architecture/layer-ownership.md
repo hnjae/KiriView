@@ -13,6 +13,8 @@ C++ QObject and QQuickItem facade classes own the public QML surface:
 - Conversion between QML-friendly types and internal controller APIs.
 - Thin forwarding to controllers and render items.
 
+These facade classes live under `src/facade/`. Keep QML-facing API shape there and move domain behavior into the appropriate runtime, presentation, rendering, or policy module instead of growing facade-owned workflow state.
+
 C++ Qt/KDE runtime code owns platform integration and side effects:
 
 - `QObject` lifetime, signal delivery, thread affinity, and cancellation.

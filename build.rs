@@ -25,10 +25,10 @@ const DEFAULT_LIBRARY_DIRS: &[&str] = &["/usr/lib/x86_64-linux-gnu", "/usr/lib"]
 const CXX_QT_HEADER_SOURCES: &[&str] = &[
     "src/application/menuaccesskeyrouter.h",
     "src/application/imageactionavailability.h",
-    "src/kiriimagedocument.h",
-    "src/kiriimageview.h",
+    "src/facade/kiriimagedocument.h",
+    "src/facade/kiriimageview.h",
     "src/navigation/imageshortcutnavigationpolicy.h",
-    "src/kiriviewapplication.h",
+    "src/facade/kiriviewapplication.h",
     "src/system/powerprofilemonitor.h",
 ];
 const RUST_BRIDGE_SOURCES: &[&str] = &[
@@ -55,11 +55,11 @@ const RUST_BRIDGE_SOURCES: &[&str] = &[
     "src/policy/svgrenderer.rs",
 ];
 const CXX_QT_CPP_SOURCES: &[&str] = &[
-    "src/kiriimagedocument.cpp",
+    "src/facade/kiriimagedocument.cpp",
     "src/decoding/kiriimagedecoder.cpp",
     "src/rendering/kiriimagerendernode.cpp",
-    "src/kiriimageview.cpp",
-    "src/kiriviewapplication.cpp",
+    "src/facade/kiriimageview.cpp",
+    "src/facade/kiriviewapplication.cpp",
 ];
 const QT_MODULES: &[&str] = &[
     "Gui",

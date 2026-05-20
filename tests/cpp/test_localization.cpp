@@ -2,8 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 #include "application/applicationruntime.h"
+#include "facade/kiriviewapplication.h"
 #include "imageerrortext.h"
-#include "kiriviewapplication.h"
 #include "localization.h"
 
 #include <KLocalizedString>
