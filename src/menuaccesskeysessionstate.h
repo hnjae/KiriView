@@ -11,9 +11,28 @@ enum class MenuAccessKeyVisualEffect {
     Clear,
 };
 
+enum class MenuAccessKeyInputKind {
+    AltKey,
+    AltMnemonic,
+    Mnemonic,
+    Other,
+};
+
+enum class MenuAccessKeyRoutingPhase {
+    KeyPress,
+    ShortcutOverride,
+};
+
 struct MenuAccessKeySessionTransition {
     MenuAccessKeyVisualEffect visualEffect = MenuAccessKeyVisualEffect::None;
     bool consumeEvent = false;
+};
+
+struct MenuAccessKeyRoutePlan {
+    MenuAccessKeyVisualEffect visualEffect = MenuAccessKeyVisualEffect::None;
+    bool consumeEvent = false;
+    bool triggerMnemonic = false;
+    bool accessKeySessionActive = false;
 };
 
 class MenuAccessKeySessionState final
@@ -25,6 +44,8 @@ public:
     MenuAccessKeySessionTransition releaseAltKey();
     MenuAccessKeySessionTransition menuUnavailable() const;
     MenuAccessKeySessionTransition clearVisuals() const;
+    MenuAccessKeyRoutePlan routeOpenMenuKey(
+        MenuAccessKeyInputKind input, MenuAccessKeyRoutingPhase phase);
     void reset();
 
 private:

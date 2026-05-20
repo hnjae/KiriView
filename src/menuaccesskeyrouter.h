@@ -46,18 +46,14 @@ private Q_SLOTS:
     void clearMenuAccessKeys();
 
 private:
-    enum class KeyRoutingMode {
-        TriggerMnemonic,
-        ClaimShortcutOverride,
-    };
-
     bool handleKeyPress(QKeyEvent *event);
     bool handleKeyRelease(QKeyEvent *event);
     bool handleShortcutOverride(QKeyEvent *event);
-    bool routeOpenMenuKey(QKeyEvent *event, KeyRoutingMode mode);
+    bool routeOpenMenuKey(QKeyEvent *event, KiriView::MenuAccessKeyRoutingPhase phase);
+    KiriView::MenuAccessKeyInputKind inputKind(const QKeyEvent &event) const;
     QObject *openMenuOrClearAccessKeys();
     void applySessionTransition(KiriView::MenuAccessKeySessionTransition transition);
-    void beginAccessKeySession();
+    bool executeRoutePlan(QKeyEvent *event, KiriView::MenuAccessKeyRoutePlan plan);
     void clearAccessKeySessionVisuals();
     void resetAltTracking();
 

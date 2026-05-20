@@ -79,7 +79,7 @@ bool MenuAccessKeyRouter::eventFilter(QObject *watched, QEvent *event)
 
 bool MenuAccessKeyRouter::handleKeyPress(QKeyEvent *event)
 {
-    return routeOpenMenuKey(event, KeyRoutingMode::TriggerMnemonic);
+    return routeOpenMenuKey(event, KiriView::MenuAccessKeyRoutingPhase::KeyPress);
 }
 
 bool MenuAccessKeyRouter::handleKeyRelease(QKeyEvent *event)
@@ -98,37 +98,31 @@ bool MenuAccessKeyRouter::handleKeyRelease(QKeyEvent *event)
 
 bool MenuAccessKeyRouter::handleShortcutOverride(QKeyEvent *event)
 {
-    return routeOpenMenuKey(event, KeyRoutingMode::ClaimShortcutOverride);
+    return routeOpenMenuKey(event, KiriView::MenuAccessKeyRoutingPhase::ShortcutOverride);
 }
 
-bool MenuAccessKeyRouter::routeOpenMenuKey(QKeyEvent *event, KeyRoutingMode mode)
+bool MenuAccessKeyRouter::routeOpenMenuKey(
+    QKeyEvent *event, KiriView::MenuAccessKeyRoutingPhase phase)
 {
-    QObject *menu = openMenuOrClearAccessKeys();
-    if (menu == nullptr) {
+    if (openMenuOrClearAccessKeys() == nullptr) {
         return false;
     }
 
-    if (event->key() == Qt::Key_Alt) {
-        beginAccessKeySession();
-        event->accept();
-        return true;
-    }
+    return executeRoutePlan(event, m_accessKeySession.routeOpenMenuKey(inputKind(*event), phase));
+}
 
-    if (KiriView::MenuAccessKeyMenuRuntime::isAltMnemonicKeyPress(*event)) {
-        beginAccessKeySession();
-        if (mode == KeyRoutingMode::ClaimShortcutOverride) {
-            event->accept();
-            return true;
-        }
-    } else if (mode == KeyRoutingMode::ClaimShortcutOverride) {
-        return false;
+KiriView::MenuAccessKeyInputKind MenuAccessKeyRouter::inputKind(const QKeyEvent &event) const
+{
+    if (event.key() == Qt::Key_Alt) {
+        return KiriView::MenuAccessKeyInputKind::AltKey;
     }
-
-    const bool handled = m_menuRuntime.triggerMnemonic(event, m_accessKeySession.isActive());
-    if (handled) {
-        event->accept();
+    if (KiriView::MenuAccessKeyMenuRuntime::isAltMnemonicKeyPress(event)) {
+        return KiriView::MenuAccessKeyInputKind::AltMnemonic;
     }
-    return handled;
+    if (KiriView::MenuAccessKeyMenuRuntime::isMnemonicKeyPress(event)) {
+        return KiriView::MenuAccessKeyInputKind::Mnemonic;
+    }
+    return KiriView::MenuAccessKeyInputKind::Other;
 }
 
 QObject *MenuAccessKeyRouter::openMenuOrClearAccessKeys()
@@ -142,9 +136,21 @@ QObject *MenuAccessKeyRouter::openMenuOrClearAccessKeys()
     return nullptr;
 }
 
-void MenuAccessKeyRouter::beginAccessKeySession()
+bool MenuAccessKeyRouter::executeRoutePlan(QKeyEvent *event, KiriView::MenuAccessKeyRoutePlan plan)
 {
-    applySessionTransition(m_accessKeySession.beginSession());
+    applySessionTransition(KiriView::MenuAccessKeySessionTransition {
+        plan.visualEffect,
+        false,
+    });
+
+    bool handled = plan.consumeEvent;
+    if (plan.triggerMnemonic) {
+        handled = m_menuRuntime.triggerMnemonic(event, plan.accessKeySessionActive);
+    }
+    if (handled) {
+        event->accept();
+    }
+    return handled;
 }
 
 void MenuAccessKeyRouter::applySessionTransition(

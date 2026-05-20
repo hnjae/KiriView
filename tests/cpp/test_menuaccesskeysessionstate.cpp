@@ -15,6 +15,11 @@ private Q_SLOTS:
     void activeAltReleaseClearsVisualsConsumesEventAndResetsSession();
     void inactiveAltReleaseOnlyClearsVisuals();
     void unavailableMenuClearsVisualsWithoutResettingActiveSession();
+    void altKeyRouteActivatesVisualsConsumesAndStartsSession();
+    void altMnemonicRouteActivatesVisualsAndTriggersFromKeyPress();
+    void shortcutOverrideClaimsAltMnemonicWithoutTriggering();
+    void shortcutOverrideIgnoresPlainMnemonicsAndOtherKeys();
+    void plainMnemonicRouteUsesCurrentSessionState();
     void resetClearsSessionOwnership();
 };
 
@@ -24,6 +29,16 @@ void compareTransition(const KiriView::MenuAccessKeySessionTransition &transitio
 {
     QVERIFY(transition.visualEffect == visualEffect);
     QCOMPARE(transition.consumeEvent, consumeEvent);
+}
+
+void compareRoutePlan(const KiriView::MenuAccessKeyRoutePlan &plan,
+    KiriView::MenuAccessKeyVisualEffect visualEffect, bool consumeEvent, bool triggerMnemonic,
+    bool accessKeySessionActive)
+{
+    QVERIFY(plan.visualEffect == visualEffect);
+    QCOMPARE(plan.consumeEvent, consumeEvent);
+    QCOMPARE(plan.triggerMnemonic, triggerMnemonic);
+    QCOMPARE(plan.accessKeySessionActive, accessKeySessionActive);
 }
 }
 
@@ -59,6 +74,63 @@ void TestMenuAccessKeySessionState::unavailableMenuClearsVisualsWithoutResetting
 
     compareTransition(state.menuUnavailable(), KiriView::MenuAccessKeyVisualEffect::Clear, false);
     QVERIFY(state.isActive());
+}
+
+void TestMenuAccessKeySessionState::altKeyRouteActivatesVisualsConsumesAndStartsSession()
+{
+    KiriView::MenuAccessKeySessionState state;
+
+    compareRoutePlan(state.routeOpenMenuKey(KiriView::MenuAccessKeyInputKind::AltKey,
+                         KiriView::MenuAccessKeyRoutingPhase::KeyPress),
+        KiriView::MenuAccessKeyVisualEffect::Activate, true, false, true);
+    QVERIFY(state.isActive());
+}
+
+void TestMenuAccessKeySessionState::altMnemonicRouteActivatesVisualsAndTriggersFromKeyPress()
+{
+    KiriView::MenuAccessKeySessionState state;
+
+    compareRoutePlan(state.routeOpenMenuKey(KiriView::MenuAccessKeyInputKind::AltMnemonic,
+                         KiriView::MenuAccessKeyRoutingPhase::KeyPress),
+        KiriView::MenuAccessKeyVisualEffect::Activate, false, true, true);
+    QVERIFY(state.isActive());
+}
+
+void TestMenuAccessKeySessionState::shortcutOverrideClaimsAltMnemonicWithoutTriggering()
+{
+    KiriView::MenuAccessKeySessionState state;
+
+    compareRoutePlan(state.routeOpenMenuKey(KiriView::MenuAccessKeyInputKind::AltMnemonic,
+                         KiriView::MenuAccessKeyRoutingPhase::ShortcutOverride),
+        KiriView::MenuAccessKeyVisualEffect::Activate, true, false, true);
+    QVERIFY(state.isActive());
+}
+
+void TestMenuAccessKeySessionState::shortcutOverrideIgnoresPlainMnemonicsAndOtherKeys()
+{
+    KiriView::MenuAccessKeySessionState state;
+
+    compareRoutePlan(state.routeOpenMenuKey(KiriView::MenuAccessKeyInputKind::Mnemonic,
+                         KiriView::MenuAccessKeyRoutingPhase::ShortcutOverride),
+        KiriView::MenuAccessKeyVisualEffect::None, false, false, false);
+    compareRoutePlan(state.routeOpenMenuKey(KiriView::MenuAccessKeyInputKind::Other,
+                         KiriView::MenuAccessKeyRoutingPhase::ShortcutOverride),
+        KiriView::MenuAccessKeyVisualEffect::None, false, false, false);
+    QVERIFY(!state.isActive());
+}
+
+void TestMenuAccessKeySessionState::plainMnemonicRouteUsesCurrentSessionState()
+{
+    KiriView::MenuAccessKeySessionState state;
+
+    compareRoutePlan(state.routeOpenMenuKey(KiriView::MenuAccessKeyInputKind::Mnemonic,
+                         KiriView::MenuAccessKeyRoutingPhase::KeyPress),
+        KiriView::MenuAccessKeyVisualEffect::None, false, true, false);
+
+    state.beginSession();
+    compareRoutePlan(state.routeOpenMenuKey(KiriView::MenuAccessKeyInputKind::Mnemonic,
+                         KiriView::MenuAccessKeyRoutingPhase::KeyPress),
+        KiriView::MenuAccessKeyVisualEffect::None, false, true, true);
 }
 
 void TestMenuAccessKeySessionState::resetClearsSessionOwnership()
