@@ -1,0 +1,10 @@
+# SPDX-FileCopyrightText: 2026 KIM Hyunjae
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+src/application/menuaccesskeyrouter.h
+src/application/imageactionavailability.h
+src/facade/kiriimagedocument.h
+src/facade/kiriimageview.h
+src/navigation/imageshortcutnavigationpolicy.h
+src/facade/kiriviewapplication.h
+src/system/powerprofilemonitor.h

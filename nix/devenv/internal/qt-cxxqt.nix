@@ -82,18 +82,13 @@ let
   ];
   qtPluginPath = "${config.devenv.root}/.devenv/profile/lib/qt-6/plugins";
   qtVersion = lib.getVersion pkgs.kdePackages.qtbase;
-  cppCoreSources = lib.filter (source: source != "" && !(lib.hasPrefix "#" source)) (
-    lib.splitString "\n" (builtins.readFile ../../../src/cpp_core_sources.txt)
-  );
-  cxxQtCppSources = [
-    "src/decoding/apnganimationreader.cpp"
-    "src/decoding/apngframecomposer.cpp"
-    "src/facade/kiriimagedocument.cpp"
-    "src/decoding/kiriimagedecoder.cpp"
-    "src/rendering/kiriimagerendernode.cpp"
-    "src/facade/kiriimageview.cpp"
-    "src/facade/kiriviewapplication.cpp"
-  ];
+  readSourceManifest =
+    path:
+    lib.filter (source: source != "" && !(lib.hasPrefix "#" source)) (
+      lib.splitString "\n" (builtins.readFile path)
+    );
+  cppCoreSources = readSourceManifest ../../../src/cpp_core_sources.txt;
+  cxxQtCppSources = readSourceManifest ../../../src/cpp_cxxqt_sources.txt;
   cppSources = lib.sort builtins.lessThan (cxxQtCppSources ++ cppCoreSources);
   qtCompileDefines = [
     "-DQT_CORE_LIB"

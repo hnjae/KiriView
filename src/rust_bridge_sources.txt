@@ -1,0 +1,24 @@
+# SPDX-FileCopyrightText: 2026 KIM Hyunjae
+# SPDX-License-Identifier: AGPL-3.0-or-later
+
+src/policy/applicationruntime.rs
+src/policy/archiveformat.rs
+src/policy/archivepath.rs
+src/policy/avifcompat.rs
+src/policy/cachebudget.rs
+src/policy/heifcontainer.rs
+src/policy/imageactionavailability.rs
+src/policy/imageformatregistry.rs
+src/policy/imageinputclassification.rs
+src/policy/imagedocumentsourceloadpolicy.rs
+src/policy/imageopenworkflow.rs
+src/policy/imagerendergeometry.rs
+src/policy/imagerotation.rs
+src/policy/imagespreadgeometry.rs
+src/policy/imagespreadnavigation.rs
+src/policy/imagetilegeometry.rs
+src/policy/imagenavigationmodel.rs
+src/policy/imageviewportgeometry.rs
+src/policy/imagezoomstate.rs
+src/policy/predecodecachepolicy.rs
+src/policy/svgrenderer.rs

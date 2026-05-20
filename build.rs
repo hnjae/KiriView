@@ -17,50 +17,14 @@ struct IncludeSearch {
 }
 
 const CPP_CORE_SOURCES_FILE: &str = "src/cpp_core_sources.txt";
+const CXX_QT_HEADER_SOURCES_FILE: &str = "src/cpp_cxxqt_header_sources.txt";
+const CXX_QT_CPP_SOURCES_FILE: &str = "src/cpp_cxxqt_sources.txt";
+const RUST_BRIDGE_SOURCES_FILE: &str = "src/rust_bridge_sources.txt";
 const KCONFIG_SCHEMA_FILE: &str = "src/kiriviewstate.kcfg";
 const KCONFIG_COMPILER_FILE: &str = "src/kiriviewstate.kcfgc";
 const QML_SOURCE_DIR: &str = "src/qml";
 const DEFAULT_INCLUDE_ROOTS: &[&str] = &["/usr/include"];
 const DEFAULT_LIBRARY_DIRS: &[&str] = &["/usr/lib/x86_64-linux-gnu", "/usr/lib"];
-const CXX_QT_HEADER_SOURCES: &[&str] = &[
-    "src/application/menuaccesskeyrouter.h",
-    "src/application/imageactionavailability.h",
-    "src/facade/kiriimagedocument.h",
-    "src/facade/kiriimageview.h",
-    "src/navigation/imageshortcutnavigationpolicy.h",
-    "src/facade/kiriviewapplication.h",
-    "src/system/powerprofilemonitor.h",
-];
-const RUST_BRIDGE_SOURCES: &[&str] = &[
-    "src/policy/applicationruntime.rs",
-    "src/policy/archiveformat.rs",
-    "src/policy/archivepath.rs",
-    "src/policy/avifcompat.rs",
-    "src/policy/cachebudget.rs",
-    "src/policy/heifcontainer.rs",
-    "src/policy/imageactionavailability.rs",
-    "src/policy/imageformatregistry.rs",
-    "src/policy/imageinputclassification.rs",
-    "src/policy/imagedocumentsourceloadpolicy.rs",
-    "src/policy/imageopenworkflow.rs",
-    "src/policy/imagerendergeometry.rs",
-    "src/policy/imagerotation.rs",
-    "src/policy/imagespreadgeometry.rs",
-    "src/policy/imagespreadnavigation.rs",
-    "src/policy/imagetilegeometry.rs",
-    "src/policy/imagenavigationmodel.rs",
-    "src/policy/imageviewportgeometry.rs",
-    "src/policy/imagezoomstate.rs",
-    "src/policy/predecodecachepolicy.rs",
-    "src/policy/svgrenderer.rs",
-];
-const CXX_QT_CPP_SOURCES: &[&str] = &[
-    "src/facade/kiriimagedocument.cpp",
-    "src/decoding/kiriimagedecoder.cpp",
-    "src/rendering/kiriimagerendernode.cpp",
-    "src/facade/kiriimageview.cpp",
-    "src/facade/kiriviewapplication.cpp",
-];
 const QT_MODULES: &[&str] = &[
     "Gui",
     "Qml",
@@ -192,7 +156,10 @@ struct GeneratedState {
 fn main() {
     let native_include_dirs = native_include_dirs();
     let shader_source = bake_shaders();
-    let cpp_core_sources = cpp_core_sources();
+    let cxx_qt_header_sources = source_manifest(CXX_QT_HEADER_SOURCES_FILE);
+    let rust_bridge_sources = source_manifest(RUST_BRIDGE_SOURCES_FILE);
+    let cxx_qt_cpp_sources = source_manifest(CXX_QT_CPP_SOURCES_FILE);
+    let cpp_core_sources = source_manifest(CPP_CORE_SOURCES_FILE);
     let generated_state = generate_kconfig_state();
     let generated_state_source = generated_state.source.to_string_lossy().into_owned();
     let qml_module = qml_module();
@@ -203,10 +170,10 @@ fn main() {
         // build artifacts such as build-dir/, including symlinks into /run.
         .crate_include_root(None);
 
-    builder = add_cpp_files(builder, CXX_QT_HEADER_SOURCES);
+    builder = add_cpp_file_strings(builder, cxx_qt_header_sources);
     builder = builder.cpp_file(CppFile::from(generated_state_source.as_str()));
-    builder = add_rust_files(builder, RUST_BRIDGE_SOURCES);
-    builder = add_cpp_files(builder, CXX_QT_CPP_SOURCES);
+    builder = add_rust_file_strings(builder, rust_bridge_sources);
+    builder = add_cpp_file_strings(builder, cxx_qt_cpp_sources);
     builder = add_cpp_file_strings(builder, cpp_core_sources);
     builder = add_qt_modules(builder, QT_MODULES);
 
@@ -226,13 +193,6 @@ fn main() {
     builder.build();
 }
 
-fn add_cpp_files(mut builder: CxxQtBuilder, files: &[&str]) -> CxxQtBuilder {
-    for file in files {
-        builder = builder.cpp_file(CppFile::from(*file));
-    }
-    builder
-}
-
 fn add_cpp_file_strings(mut builder: CxxQtBuilder, files: Vec<String>) -> CxxQtBuilder {
     for file in files {
         builder = builder.cpp_file(CppFile::from(file.as_str()));
@@ -240,9 +200,9 @@ fn add_cpp_file_strings(mut builder: CxxQtBuilder, files: Vec<String>) -> CxxQtB
     builder
 }
 
-fn add_rust_files(mut builder: CxxQtBuilder, files: &[&str]) -> CxxQtBuilder {
+fn add_rust_file_strings(mut builder: CxxQtBuilder, files: Vec<String>) -> CxxQtBuilder {
     for file in files {
-        builder = builder.file(*file);
+        builder = builder.file(file.as_str());
     }
     builder
 }
@@ -307,10 +267,10 @@ fn qml_files() -> Vec<String> {
     files
 }
 
-fn cpp_core_sources() -> Vec<String> {
-    println!("cargo::rerun-if-changed={CPP_CORE_SOURCES_FILE}");
-    fs::read_to_string(CPP_CORE_SOURCES_FILE)
-        .expect("failed to read C++ core source list")
+fn source_manifest(path: &str) -> Vec<String> {
+    println!("cargo::rerun-if-changed={path}");
+    fs::read_to_string(path)
+        .unwrap_or_else(|error| panic!("failed to read source manifest {path}: {error}"))
         .lines()
         .map(str::trim)
         .filter(|line| !line.is_empty() && !line.starts_with('#'))
