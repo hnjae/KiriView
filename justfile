@@ -84,6 +84,7 @@ run:
         --filesystem=xdg-run/gvfs \
         --bind-mount="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/doc=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/doc" \
         --env=LIBHEIF_PLUGIN_PATH=/app/lib/libheif \
+        --env=QSG_RHI_BACKEND="${QSG_RHI_BACKEND:-vulkan}" \
         --env=WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-wayland-0}" \
         --env=QT_QPA_PLATFORM=wayland \
         --env=QT_LOGGING_RULES="${QT_LOGGING_RULES:-io.github.hnjae.kiriview.input.debug=true}" \
