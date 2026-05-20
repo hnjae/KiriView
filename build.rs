@@ -23,12 +23,12 @@ const QML_SOURCE_DIR: &str = "src/qml";
 const DEFAULT_INCLUDE_ROOTS: &[&str] = &["/usr/include"];
 const DEFAULT_LIBRARY_DIRS: &[&str] = &["/usr/lib/x86_64-linux-gnu", "/usr/lib"];
 const CXX_QT_HEADER_SOURCES: &[&str] = &[
+    "src/application/menuaccesskeyrouter.h",
     "src/imageactionavailability.h",
     "src/kiriimagedocument.h",
     "src/kiriimageview.h",
     "src/imageshortcutnavigationpolicy.h",
     "src/kiriviewapplication.h",
-    "src/menuaccesskeyrouter.h",
     "src/powerprofilemonitor.h",
 ];
 const RUST_BRIDGE_SOURCES: &[&str] = &[
@@ -215,6 +215,7 @@ fn main() {
             cc.define("TRANSLATION_DOMAIN", "\"kiriview\"");
             cc.file(&shader_source);
             cc.include("src");
+            cc.include("src/application");
             cc.include("src/archive");
             cc.include("src/predecode");
             cc.include(&generated_state.include_dir);
