@@ -210,6 +210,8 @@ If a recognized HEIF-family still image uses an unsupported compression format o
 
 Camera RAW files open as static images. KiriView processes supported RAW files with LibRaw into display-ready 8-bit sRGB images and does not expose RAW editing controls such as demosaic, white-balance, tone-curve, or embedded-preview selection.
 
+When KiriView recognizes selected image data as RAW, including TIFF-family RAW files such as DNG files, it uses LibRaw for that input and reports the LibRaw decode result without retrying the same bytes through another image backend. Ordinary TIFF files that are not recognized as RAW are decoded as general raster images through Qt imageformats.
+
 RAW files participate in the same open, adjacent navigation, archive, and directory workflows as other supported static image files.
 
 The image viewing area behind empty, loading, ready, and error states uses a dark background color derived from the KDE/Kirigami View color scheme. Dark color schemes use the View background color; light color schemes use the View text color so the image viewing area remains dark.
