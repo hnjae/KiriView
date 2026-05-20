@@ -28,11 +28,19 @@ Kirigami.Dialog {
     }
 
     Shortcut {
-        context: Qt.WindowShortcut
+        context: Qt.ApplicationShortcut
         enabled: root.opened
         sequences: ["Return", "Enter"]
 
         onActivated: root.accept()
+    }
+
+    Shortcut {
+        context: Qt.ApplicationShortcut
+        enabled: root.opened
+        sequence: "Esc"
+
+        onActivated: root.close()
     }
 
     ColumnLayout {
