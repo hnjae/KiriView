@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+#include "imageformatregistry.h"
 #include "kiriimagedecoder.h"
 
 #include <QByteArray>
@@ -17,20 +18,25 @@ class TestRawDecodeIntegration : public QObject
 
 private Q_SLOTS:
     void smallDngFixtureDecodesThroughPublicDecodePath();
+    void smallDngFixtureDecodesWhenRequestUrlLacksRawExtension();
 };
 
-void TestRawDecodeIntegration::smallDngFixtureDecodesThroughPublicDecodePath()
+namespace {
+QByteArray rawFixtureData(QFileInfo *fixtureInfo)
 {
-    const QFileInfo fixtureInfo(
-        QStringLiteral(KIRIVIEW_TEST_SOURCE_DIR "/../fixtures/raw-cfa-smoke.dng"));
-    QFile file(fixtureInfo.filePath());
-    QVERIFY2(file.open(QIODevice::ReadOnly), qPrintable(file.errorString()));
+    *fixtureInfo
+        = QFileInfo(QStringLiteral(KIRIVIEW_TEST_SOURCE_DIR "/../fixtures/raw-cfa-smoke.dng"));
+    QFile file(fixtureInfo->filePath());
+    if (!file.open(QIODevice::ReadOnly)) {
+        return {};
+    }
 
-    const QByteArray imageData = file.readAll();
-    QVERIFY(!imageData.isEmpty());
+    return file.readAll();
+}
 
-    const KiriView::ImageDecodeRequest request
-        = KiriView::ImageDecodeRequest::fromUrl(1, QUrl::fromLocalFile(fixtureInfo.filePath()));
+void verifyDecodedRawFixture(
+    const QByteArray &imageData, const KiriView::ImageDecodeRequest &request)
+{
     const KiriView::DecodedImageResult result = KiriView::decodeImageData(imageData, request);
 
     const auto *decoded = KiriView::decodedImageResultImageAs<KiriView::StaticDecodedImage>(result);
@@ -43,6 +49,36 @@ void TestRawDecodeIntegration::smallDngFixtureDecodesThroughPublicDecodePath()
     QCOMPARE(decoded->staticImage.source->imageSize(), QSize(32, 32));
     QVERIFY(!decoded->staticImage.preview.isNull());
     QVERIFY(!decoded->staticImage.preview.size().isEmpty());
+}
+}
+
+void TestRawDecodeIntegration::smallDngFixtureDecodesThroughPublicDecodePath()
+{
+    QFileInfo fixtureInfo;
+    const QByteArray imageData = rawFixtureData(&fixtureInfo);
+    QVERIFY2(fixtureInfo.exists(), qPrintable(fixtureInfo.filePath()));
+    QVERIFY(!imageData.isEmpty());
+
+    const KiriView::ImageDecodeRequest request
+        = KiriView::ImageDecodeRequest::fromUrl(1, QUrl::fromLocalFile(fixtureInfo.filePath()));
+    verifyDecodedRawFixture(imageData, request);
+}
+
+void TestRawDecodeIntegration::smallDngFixtureDecodesWhenRequestUrlLacksRawExtension()
+{
+    const QFileInfo fixtureInfo(
+        QStringLiteral(KIRIVIEW_TEST_SOURCE_DIR "/../fixtures/raw-cfa-smoke.dng"));
+    QFileInfo loadedFixtureInfo;
+    const QByteArray imageData = rawFixtureData(&loadedFixtureInfo);
+    QVERIFY2(loadedFixtureInfo.exists(), qPrintable(loadedFixtureInfo.filePath()));
+    QVERIFY(!imageData.isEmpty());
+
+    const QUrl extensionlessUrl
+        = QUrl::fromLocalFile(fixtureInfo.absolutePath() + QStringLiteral("/raw-cfa-smoke"));
+    const KiriView::ImageDecodeRequest request
+        = KiriView::ImageDecodeRequest::fromUrl(1, extensionlessUrl);
+    QVERIFY(!KiriView::isSupportedRawImageFileName(request.imageUrl().fileName()));
+    verifyDecodedRawFixture(imageData, request);
 }
 
 QTEST_GUILESS_MAIN(TestRawDecodeIntegration)
