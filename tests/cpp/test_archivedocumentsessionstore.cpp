@@ -7,8 +7,8 @@
 #include "document/imagedocumentsourceloadrequest.h"
 #include "image_test_support.h"
 #include "imagecallback.h"
-#include "imagepredecodecoordinator.h"
 #include "navigation/imagenavigationservice.h"
+#include "predecode/imagepredecodecoordinator.h"
 
 #include <QByteArray>
 #include <QTest>

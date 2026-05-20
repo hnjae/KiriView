@@ -3,7 +3,7 @@
 
 #include "imagepredecodecoordinator.h"
 
-#include "predecode/predecodewindowplan.h"
+#include "predecodewindowplan.h"
 
 #include <QThread>
 #include <cstddef>

@@ -102,7 +102,7 @@ src/document/imageopencontroller.cpp
 src/document/imageopentransitionapplier.cpp
 src/document/imageopenworkflow.cpp
 src/navigation/imagepagenavigationmodel.cpp
-src/imagepredecodecoordinator.cpp
+src/predecode/imagepredecodecoordinator.cpp
 src/presentation/imagepresentationcontroller.cpp
 src/presentation/imagepresentationgeometry.cpp
 src/presentation/imagepresentationload.cpp

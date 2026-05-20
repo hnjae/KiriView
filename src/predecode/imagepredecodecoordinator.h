@@ -9,9 +9,9 @@
 #include "navigation/imagecandidateprovider.h"
 #include "navigation/imagecandidaterepository.h"
 #include "powersaverprovider.h"
-#include "predecode/predecodedimage.h"
-#include "predecode/predecodeloadcontroller.h"
-#include "predecode/predecodeschedulestate.h"
+#include "predecodedimage.h"
+#include "predecodeloadcontroller.h"
+#include "predecodeschedulestate.h"
 #include "rendering/staticimage.h"
 
 #include <QElapsedTimer>
