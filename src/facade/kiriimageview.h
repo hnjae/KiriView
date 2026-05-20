@@ -6,7 +6,7 @@
 
 #include "document/imagedocumenttypes.h"
 #include "facade/kiriimagedocument.h"
-#include "presentation/imageviewportscanstate.h"
+#include "presentation/imageviewportinteraction.h"
 #include "presentation/imageviewrendercontextbinding.h"
 #include "rendering/imagesurface.h"
 
@@ -61,11 +61,10 @@ Q_SIGNALS:
 
 private:
     KiriView::DisplayedPageRole displayedPageRole() const;
-    QSize imageSize() const;
+    KiriView::ImageViewportInteractionSnapshot viewportInteractionSnapshot() const;
     KiriView::DisplayedImageRenderSnapshot renderSnapshot() const;
     QSizeF viewportSize() const;
     QSizeF displaySize() const;
-    QRectF viewportImageRect() const;
     bool rightToLeftReadingActive() const;
     void connectDocument();
     void disconnectDocument();
@@ -83,7 +82,7 @@ private:
     QMetaObject::Connection m_displayedUrlChangedConnection;
     QMetaObject::Connection m_loadingChangedConnection;
     QMetaObject::Connection m_documentDestroyedConnection;
-    KiriView::ImageViewportScanState m_scanState;
+    KiriView::ImageViewportInteraction m_viewportInteraction;
     KiriView::ImageViewRenderContextBinding m_renderContextBinding;
 };
 

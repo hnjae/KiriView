@@ -4,7 +4,6 @@
 #include "facade/kiriimageview.h"
 
 #include "facade/kiriimagedocument.h"
-#include "presentation/imageviewportgeometry.h"
 #include "rendering/imagerendering.h"
 #include "rendering/kiriimagerendernode.h"
 
@@ -53,62 +52,55 @@ void KiriImageView::setSecondaryPage(bool secondaryPage)
 QPointF KiriImageView::panContentPosition(
     const QPointF &contentPosition, const QPointF &delta) const
 {
-    return KiriView::imageViewportPanPosition(
-        viewportSize(), viewportImageRect(), contentPosition, delta);
+    return m_viewportInteraction.panContentPosition(
+        viewportInteractionSnapshot(), contentPosition, delta);
 }
 
 QPointF KiriImageView::nextScanContentPosition(const QPointF &contentPosition) const
 {
-    return KiriView::imageViewportNextZScanPosition(
-        viewportSize(), viewportImageRect(), contentPosition, rightToLeftReadingActive());
+    return m_viewportInteraction.nextScanContentPosition(
+        viewportInteractionSnapshot(), contentPosition);
 }
 
 QPointF KiriImageView::previousScanContentPosition(const QPointF &contentPosition) const
 {
-    return KiriView::imageViewportPreviousZScanPosition(
-        viewportSize(), viewportImageRect(), contentPosition, rightToLeftReadingActive());
+    return m_viewportInteraction.previousScanContentPosition(
+        viewportInteractionSnapshot(), contentPosition);
 }
 
 QPointF KiriImageView::initialScanContentPosition() const
 {
-    return KiriView::imageViewportInitialZScanPosition(
-        viewportSize(), viewportImageRect(), rightToLeftReadingActive());
+    return m_viewportInteraction.initialScanContentPosition(viewportInteractionSnapshot());
 }
 
 QPointF KiriImageView::finalScanContentPosition() const
 {
-    return KiriView::imageViewportFinalZScanPosition(
-        viewportSize(), viewportImageRect(), rightToLeftReadingActive());
+    return m_viewportInteraction.finalScanContentPosition(viewportInteractionSnapshot());
 }
 
 void KiriImageView::setNextDisplayedImageStartToFinalScanPosition()
 {
-    m_scanState.requestNextDisplayedImageFinalScanStart();
+    m_viewportInteraction.requestNextDisplayedImageFinalScanStart();
 }
 
 QPointF KiriImageView::displayedImageInitialContentPosition() const
 {
-    if (m_scanState.displayedImageScanStart() == KiriView::ImageViewportScanStart::Final) {
-        return finalScanContentPosition();
-    }
-
-    return initialScanContentPosition();
+    return m_viewportInteraction.displayedImageInitialContentPosition(
+        viewportInteractionSnapshot());
 }
 
 bool KiriImageView::viewportPointInsideImage(
     const QPointF &contentPosition, const QPointF &viewportPoint) const
 {
-    return KiriView::imageViewportPointInsideImage(
-        contentPosition, viewportPoint, viewportImageRect());
+    return m_viewportInteraction.viewportPointInsideImage(
+        viewportInteractionSnapshot(), contentPosition, viewportPoint);
 }
 
 QPointF KiriImageView::zoomContentPosition(const QPointF &contentPosition,
     const QPointF &viewportAnchorPoint, double nextZoomPercent) const
 {
-    const QSizeF nextDisplaySize = KiriView::imageViewportDisplaySizeForZoom(
-        imageSize(), nextZoomPercent, displayDevicePixelRatio());
-    return KiriView::imageViewportContentPositionForZoom(
-        viewportSize(), displaySize(), nextDisplaySize, contentPosition, viewportAnchorPoint);
+    return m_viewportInteraction.zoomContentPosition(
+        viewportInteractionSnapshot(), contentPosition, viewportAnchorPoint, nextZoomPercent);
 }
 
 QSGNode *KiriImageView::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *)
@@ -171,9 +163,15 @@ KiriView::DisplayedPageRole KiriImageView::displayedPageRole() const
                            : KiriView::DisplayedPageRole::Primary;
 }
 
-QSize KiriImageView::imageSize() const
+KiriView::ImageViewportInteractionSnapshot KiriImageView::viewportInteractionSnapshot() const
 {
-    return m_document == nullptr ? QSize() : m_document->imageSize();
+    return KiriView::ImageViewportInteractionSnapshot {
+        m_document == nullptr ? QSize() : m_document->imageSize(),
+        viewportSize(),
+        displaySize(),
+        displayDevicePixelRatio(),
+        rightToLeftReadingActive(),
+    };
 }
 
 KiriView::DisplayedImageRenderSnapshot KiriImageView::renderSnapshot() const
@@ -193,11 +191,6 @@ QSizeF KiriImageView::viewportSize() const
 QSizeF KiriImageView::displaySize() const
 {
     return m_document == nullptr ? QSizeF() : m_document->displaySize();
-}
-
-QRectF KiriImageView::viewportImageRect() const
-{
-    return KiriView::imageViewportImageRect(viewportSize(), displaySize());
 }
 
 bool KiriImageView::rightToLeftReadingActive() const
@@ -267,14 +260,14 @@ void KiriImageView::applyRenderContextBinding(
 
 void KiriImageView::handleDisplayedUrlChanged()
 {
-    m_scanState.beginDisplayedImage();
+    m_viewportInteraction.beginDisplayedImage();
     Q_EMIT displayedImageInitialContentPositionRequested();
 }
 
 void KiriImageView::handleLoadingChanged()
 {
     if (m_document != nullptr && !m_document->loading()) {
-        m_scanState.cancelPendingDisplayedImageStart();
+        m_viewportInteraction.cancelPendingDisplayedImageStart();
     }
 }
 
