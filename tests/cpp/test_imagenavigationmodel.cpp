@@ -19,6 +19,7 @@ using KiriView::NavigationDirection;
 using KiriView::PageNavigationState;
 using KiriView::TestSupport::indexedImageFileName;
 using KiriView::TestSupport::indexedImageUrl;
+using KiriView::TestSupport::localUrl;
 
 std::vector<ImageNavigationCandidate> imageCandidates(int count)
 {
@@ -45,8 +46,10 @@ class TestImageNavigationModel : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
+    void imageNavigationCandidateProjectionsUseNormalizedUrlIdentity();
     void adjacentImageNavigationDoesNotWrap();
     void adjacentContainerNavigationUsesTheSameRules();
+    void pageNavigationStateProjectionsExposeCanonicalPublicValues();
     void pageNavigationTargetSkipsInvalidCurrentAndOutOfRangePages();
     void pageNavigationAdjacentTargetUsesKnownCurrentIndex();
     void pageNavigationPreviewReusesKnownList();
@@ -54,6 +57,20 @@ private Q_SLOTS:
     void pageNavigationInsertsFallbackCurrentUrl();
     void pageNavigationUpdateKeepsCandidateListWhenCurrentMissing();
 };
+
+void TestImageNavigationModel::imageNavigationCandidateProjectionsUseNormalizedUrlIdentity()
+{
+    const std::vector<ImageNavigationCandidate> candidates = imageCandidates(3);
+    const std::vector<QUrl> urls = KiriView::imageNavigationCandidateUrls(candidates);
+
+    compareUrls(urls, { indexedImageUrl(0), indexedImageUrl(1), indexedImageUrl(2) });
+    const std::optional<std::size_t> secondIndex = KiriView::imageNavigationCandidateIndex(
+        candidates, localUrl(QStringLiteral("/images/subdirectory/../01.png")));
+    QVERIFY(secondIndex.has_value());
+    QCOMPARE(*secondIndex, std::size_t(1));
+    QVERIFY(KiriView::imageNavigationCandidatesContainUrl(candidates, indexedImageUrl(2)));
+    QVERIFY(!KiriView::imageNavigationCandidatesContainUrl(candidates, indexedImageUrl(9)));
+}
 
 void TestImageNavigationModel::adjacentImageNavigationDoesNotWrap()
 {
@@ -110,6 +127,33 @@ void TestImageNavigationModel::adjacentContainerNavigationUsesTheSameRules()
     QVERIFY(!KiriView::adjacentContainerNavigationCandidate(
         candidates, third, NavigationDirection::Next)
             .has_value());
+}
+
+void TestImageNavigationModel::pageNavigationStateProjectionsExposeCanonicalPublicValues()
+{
+    const PageNavigationState state {
+        { indexedImageUrl(0), indexedImageUrl(1), indexedImageUrl(2) },
+        1,
+    };
+
+    QCOMPARE(KiriView::pageNavigationCurrentPageNumber(state), 2);
+    QCOMPARE(KiriView::pageNavigationImageCount(state), 3);
+    QVERIFY(KiriView::pageNavigationHasKnownSelection(state));
+    QVERIFY(KiriView::pageNavigationUrlAtPage(state, 2).has_value());
+    QCOMPARE(*KiriView::pageNavigationUrlAtPage(state, 2), indexedImageUrl(1));
+    QVERIFY(!KiriView::pageNavigationUrlAtPage(state, 0).has_value());
+    QVERIFY(!KiriView::pageNavigationUrlAtPage(state, 4).has_value());
+    QVERIFY(KiriView::samePageNavigationState(state,
+        PageNavigationState { { indexedImageUrl(0), indexedImageUrl(1), indexedImageUrl(2) }, 1 }));
+    QVERIFY(!KiriView::samePageNavigationState(state,
+        PageNavigationState { { indexedImageUrl(0), indexedImageUrl(1), indexedImageUrl(2) }, 2 }));
+
+    const PageNavigationState unknownSelection {
+        { indexedImageUrl(0) },
+        -1,
+    };
+    QCOMPARE(KiriView::pageNavigationCurrentPageNumber(unknownSelection), 0);
+    QVERIFY(!KiriView::pageNavigationHasKnownSelection(unknownSelection));
 }
 
 void TestImageNavigationModel::pageNavigationTargetSkipsInvalidCurrentAndOutOfRangePages()

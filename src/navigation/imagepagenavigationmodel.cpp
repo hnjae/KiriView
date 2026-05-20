@@ -4,47 +4,17 @@
 #include "imagepagenavigationmodel.h"
 
 #include "imagenavigationmodel.h"
-#include "location/imageurl.h"
 
-#include <algorithm>
 #include <cstddef>
 #include <utility>
-
-namespace {
-std::vector<QUrl> imageNavigationCandidateUrls(
-    const std::vector<KiriView::ImageNavigationCandidate> &candidates)
-{
-    std::vector<QUrl> urls;
-    urls.reserve(candidates.size());
-    for (const KiriView::ImageNavigationCandidate &candidate : candidates) {
-        urls.push_back(candidate.url);
-    }
-    return urls;
-}
-
-bool imageNavigationCandidatesContainUrl(
-    const std::vector<KiriView::ImageNavigationCandidate> &candidates, const QUrl &url)
-{
-    return std::any_of(candidates.cbegin(), candidates.cend(),
-        [&url](const KiriView::ImageNavigationCandidate &candidate) {
-            return KiriView::sameNormalizedUrl(candidate.url, url);
-        });
-}
-
-bool samePageNavigationState(
-    const KiriView::PageNavigationState &left, const KiriView::PageNavigationState &right)
-{
-    return left.urls == right.urls && left.currentIndex == right.currentIndex;
-}
-}
 
 namespace KiriView {
 int ImagePageNavigationModel::currentPageNumber() const
 {
-    return m_state.currentIndex < 0 ? 0 : m_state.currentIndex + 1;
+    return pageNavigationCurrentPageNumber(m_state);
 }
 
-int ImagePageNavigationModel::imageCount() const { return static_cast<int>(m_state.urls.size()); }
+int ImagePageNavigationModel::imageCount() const { return pageNavigationImageCount(m_state); }
 
 ImagePageNavigationSnapshot ImagePageNavigationModel::snapshot() const
 {
@@ -53,25 +23,12 @@ ImagePageNavigationSnapshot ImagePageNavigationModel::snapshot() const
 
 bool ImagePageNavigationModel::hasKnownSelection() const
 {
-    if (m_state.currentIndex < 0) {
-        return false;
-    }
-
-    return static_cast<std::size_t>(m_state.currentIndex) < m_state.urls.size();
+    return pageNavigationHasKnownSelection(m_state);
 }
 
 std::optional<QUrl> ImagePageNavigationModel::urlAtPage(int pageNumber) const
 {
-    if (pageNumber < 1) {
-        return std::nullopt;
-    }
-
-    const std::size_t pageIndex = static_cast<std::size_t>(pageNumber - 1);
-    if (pageIndex >= m_state.urls.size()) {
-        return std::nullopt;
-    }
-
-    return m_state.urls.at(pageIndex);
+    return pageNavigationUrlAtPage(m_state, pageNumber);
 }
 
 std::optional<QUrl> ImagePageNavigationModel::selectPage(int pageNumber)

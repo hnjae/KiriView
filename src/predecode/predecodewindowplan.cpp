@@ -3,28 +3,12 @@
 
 #include "predecodewindowplan.h"
 
-#include "location/imageurl.h"
+#include "navigation/imagenavigationmodel.h"
 
-#include <algorithm>
-#include <iterator>
 #include <optional>
 #include <utility>
 
 namespace {
-std::optional<std::size_t> currentCandidateIndex(
-    const std::vector<KiriView::ImageNavigationCandidate> &candidates, const QUrl &currentUrl)
-{
-    const auto currentCandidate = std::find_if(candidates.cbegin(), candidates.cend(),
-        [&currentUrl](const KiriView::ImageNavigationCandidate &candidate) {
-            return KiriView::sameNormalizedUrl(candidate.url, currentUrl);
-        });
-    if (currentCandidate == candidates.cend()) {
-        return std::nullopt;
-    }
-
-    return static_cast<std::size_t>(std::distance(candidates.cbegin(), currentCandidate));
-}
-
 std::vector<QUrl> predecodeWindowImageUrls(
     const std::vector<KiriView::ImageNavigationCandidate> &candidates,
     const std::vector<std::size_t> &indices)
@@ -72,7 +56,8 @@ PredecodeWindowPlan predecodeWindowPlanForCandidates(
     }
 
     const PredecodeSchedulePlan schedule = predecodeSchedulePlan(candidates.size(),
-        currentCandidateIndex(candidates, plan.candidateContext->currentUrl()), plan.policyInput);
+        imageNavigationCandidateIndex(candidates, plan.candidateContext->currentUrl()),
+        plan.policyInput);
     return PredecodeWindowPlan {
         plan.archiveDocument,
         predecodeWindowImageUrls(candidates, schedule.targetIndices),

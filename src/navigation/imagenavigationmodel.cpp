@@ -104,23 +104,38 @@ std::optional<std::size_t> adjacentCandidateIndex(const std::vector<Candidate> &
 namespace KiriView {
 int ImagePageNavigationSnapshot::currentPageNumber() const
 {
-    return state.currentIndex < 0 ? 0 : state.currentIndex + 1;
+    return pageNavigationCurrentPageNumber(state);
 }
 
-int ImagePageNavigationSnapshot::imageCount() const { return static_cast<int>(state.urls.size()); }
+int ImagePageNavigationSnapshot::imageCount() const { return pageNavigationImageCount(state); }
 
 std::optional<QUrl> ImagePageNavigationSnapshot::urlAtPage(int pageNumber) const
 {
-    if (pageNumber < 1) {
-        return std::nullopt;
+    return pageNavigationUrlAtPage(state, pageNumber);
+}
+
+std::vector<QUrl> imageNavigationCandidateUrls(
+    const std::vector<ImageNavigationCandidate> &candidates)
+{
+    std::vector<QUrl> urls;
+    urls.reserve(candidates.size());
+    for (const ImageNavigationCandidate &candidate : candidates) {
+        urls.push_back(candidate.url);
     }
 
-    const std::size_t pageIndex = static_cast<std::size_t>(pageNumber - 1);
-    if (pageIndex >= state.urls.size()) {
-        return std::nullopt;
-    }
+    return urls;
+}
 
-    return state.urls.at(pageIndex);
+std::optional<std::size_t> imageNavigationCandidateIndex(
+    const std::vector<ImageNavigationCandidate> &candidates, const QUrl &currentUrl)
+{
+    return currentCandidateIndex(candidates, currentUrl);
+}
+
+bool imageNavigationCandidatesContainUrl(
+    const std::vector<ImageNavigationCandidate> &candidates, const QUrl &url)
+{
+    return imageNavigationCandidateIndex(candidates, url).has_value();
 }
 
 std::optional<QUrl> adjacentImageNavigationUrl(
@@ -147,6 +162,39 @@ std::optional<ContainerNavigationCandidate> adjacentContainerNavigationCandidate
     }
 
     return candidates.at(*targetIndex);
+}
+
+int pageNavigationCurrentPageNumber(const PageNavigationState &state)
+{
+    return state.currentIndex < 0 ? 0 : state.currentIndex + 1;
+}
+
+int pageNavigationImageCount(const PageNavigationState &state)
+{
+    return static_cast<int>(state.urls.size());
+}
+
+bool pageNavigationHasKnownSelection(const PageNavigationState &state)
+{
+    if (state.currentIndex < 0) {
+        return false;
+    }
+
+    return static_cast<std::size_t>(state.currentIndex) < state.urls.size();
+}
+
+std::optional<QUrl> pageNavigationUrlAtPage(const PageNavigationState &state, int pageNumber)
+{
+    if (pageNumber < 1) {
+        return std::nullopt;
+    }
+
+    const std::size_t pageIndex = static_cast<std::size_t>(pageNumber - 1);
+    if (pageIndex >= state.urls.size()) {
+        return std::nullopt;
+    }
+
+    return state.urls.at(pageIndex);
 }
 
 std::optional<std::size_t> pageNavigationTargetIndex(
@@ -189,6 +237,11 @@ PageNavigationState pageNavigationStateForUrls(std::vector<QUrl> urls, const QUr
     state.currentIndex = update.current_index;
 
     return state;
+}
+
+bool samePageNavigationState(const PageNavigationState &left, const PageNavigationState &right)
+{
+    return left.urls == right.urls && left.currentIndex == right.currentIndex;
 }
 
 void sortImageNavigationCandidates(std::vector<ImageNavigationCandidate> *candidates)
