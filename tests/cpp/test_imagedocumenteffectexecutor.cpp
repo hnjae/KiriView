@@ -153,6 +153,7 @@ private Q_SLOTS:
     void shutdownRuntimeDispatchesOrderedLifecycleOperations();
     void payloadEffectsDispatchToRuntimeOperations();
     void runtimePlansDispatchSourceLoadOperations();
+    void runtimePlansDispatchEveryOperationExplicitly();
 };
 
 void TestImageDocumentEffectExecutor::clearImageDispatchesOrderedRuntimeOperations()
@@ -326,6 +327,106 @@ void TestImageDocumentEffectExecutor::runtimePlansDispatchSourceLoadOperations()
     QCOMPARE(recorded.url, sourceUrl);
     QVERIFY(recorded.secondaryUrl.isEmpty());
     QVERIFY(recorded.flag);
+}
+
+void TestImageDocumentEffectExecutor::runtimePlansDispatchEveryOperationExplicitly()
+{
+    RecordedEffectOperations recorded;
+    KiriView::ImageDocumentEffectExecutor executor(recorded.operations);
+    const QUrl sourceUrl = localUrl(QStringLiteral("/book/01.png"));
+    const QUrl containerUrl = localUrl(QStringLiteral("/book.cbz"));
+
+    executor.dispatchPlan({
+        KiriView::CancelFileDeletionOperation {},
+        KiriView::StopPresentationAnimationOperation {},
+        KiriView::ShutdownSpreadOperation {},
+        KiriView::ClearArchiveSessionOperation {},
+        KiriView::ClearPredecodeOperation {},
+        KiriView::CancelPredecodeOperation {},
+        KiriView::ScheduleAdjacentImagePredecodeOperation {},
+        KiriView::FinishSpreadTransitionOperation {},
+        KiriView::ResetRightToLeftReadingOperation {},
+        KiriView::ClearSecondaryPageOperation {},
+        KiriView::NotifyRightToLeftReadingChangedOperation {},
+        KiriView::ResetZoomOperation {},
+        KiriView::PrepareFailedContainerOperation { containerUrl },
+        KiriView::CancelPageNavigationUpdateOperation {},
+        KiriView::CancelNavigationOperation {},
+        KiriView::CancelContainerNavigationOperation {},
+        KiriView::CancelAllNavigationOperation {},
+        KiriView::ClearPageNavigationOperation {},
+        KiriView::UpdatePageNavigationOperation {},
+        KiriView::LoadUrlOperation { sourceUrl },
+        KiriView::LoadContainerImageOperation { sourceUrl, containerUrl },
+        KiriView::FinishEmptyContainerNavigationOperation { containerUrl },
+        KiriView::FinishContainerNavigationLoadWithErrorOperation {
+            containerUrl,
+            QStringLiteral("broken"),
+        },
+        KiriView::LoadPageNavigationUrlOperation { sourceUrl, true },
+        KiriView::CancelOpenOperation {},
+        KiriView::ClearDisplayedImageLocationOperation {},
+        KiriView::ClearPresentationImageOperation {},
+        KiriView::ClearLoadingContainerNavigationUrlOperation {},
+        KiriView::SetLoadingContainerNavigationUrlOperation { containerUrl },
+        KiriView::SetContainerNavigationUrlOperation { containerUrl },
+        KiriView::PrepareSourceLoadOperation {
+            KiriView::ImageDocumentSourceLoadRequest::fromContainerImage(sourceUrl, containerUrl),
+        },
+        KiriView::SetSourceUrlOperation { sourceUrl },
+        KiriView::BeginOpenOperation {},
+        KiriView::SetErrorStringOperation { QStringLiteral("failed") },
+        KiriView::FinishEmptySourceLoadOperation {},
+    });
+
+    QCOMPARE(recorded.events,
+        QStringList({
+            QStringLiteral("cancelFileDeletion"),
+            QStringLiteral("stopPresentationAnimation"),
+            QStringLiteral("shutdownSpread"),
+            QStringLiteral("clearArchiveSession"),
+            QStringLiteral("clearPredecode"),
+            QStringLiteral("cancelPredecode"),
+            QStringLiteral("scheduleAdjacentImagePredecode"),
+            QStringLiteral("finishSpreadTransition"),
+            QStringLiteral("resetRightToLeftReading"),
+            QStringLiteral("clearSecondaryPage"),
+            QStringLiteral("notifyRightToLeftReadingChanged"),
+            QStringLiteral("resetZoom"),
+            QStringLiteral("prepareFailedContainer"),
+            QStringLiteral("cancelPageNavigationUpdate"),
+            QStringLiteral("cancelNavigation"),
+            QStringLiteral("cancelContainerNavigation"),
+            QStringLiteral("cancelAllNavigation"),
+            QStringLiteral("clearPageNavigation"),
+            QStringLiteral("updatePageNavigation"),
+            QStringLiteral("loadUrl"),
+            QStringLiteral("loadContainerImage"),
+            QStringLiteral("finishEmptyContainerNavigation"),
+            QStringLiteral("finishContainerNavigationLoadWithError"),
+            QStringLiteral("loadPageNavigationUrl"),
+            QStringLiteral("cancelOpen"),
+            QStringLiteral("clearDisplayedImageLocation"),
+            QStringLiteral("clearPresentationImage"),
+            QStringLiteral("clearLoadingContainerNavigationUrl"),
+            QStringLiteral("setLoadingContainerNavigationUrl"),
+            QStringLiteral("setContainerNavigationUrl"),
+            QStringLiteral("prepareSourceLoad"),
+            QStringLiteral("setSourceUrl"),
+            QStringLiteral("beginOpen"),
+            QStringLiteral("setErrorString"),
+            QStringLiteral("finishEmptySourceLoad"),
+            QStringLiteral("clearArchiveSession"),
+            QStringLiteral("clearPredecode"),
+            QStringLiteral("finishSpreadTransition"),
+            QStringLiteral("clearSecondaryPage"),
+            QStringLiteral("cancelPageNavigationUpdate"),
+            QStringLiteral("clearDisplayedImageLocation"),
+            QStringLiteral("clearPresentationImage"),
+            QStringLiteral("clearPageNavigation"),
+            QStringLiteral("notifyRightToLeftReadingChanged"),
+            QStringLiteral("resetZoom"),
+        }));
 }
 
 QTEST_GUILESS_MAIN(TestImageDocumentEffectExecutor)

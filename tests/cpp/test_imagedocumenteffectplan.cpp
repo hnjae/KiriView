@@ -48,6 +48,7 @@ private Q_SLOTS:
     void clearDeletedImagePlansDeletionClearAndEmptySourceCompletion();
     void shutdownPlansOrderedRuntimeOperations();
     void payloadEffectsPlanRuntimeOperations();
+    void operationKindMapsEveryRuntimeOperationExplicitly();
 };
 
 void TestImageDocumentEffectPlan::clearImagePlansOrderedRuntimeOperations()
@@ -145,6 +146,93 @@ void TestImageDocumentEffectPlan::payloadEffectsPlanRuntimeOperations()
         ImageDocumentEffect::prepareFailedContainer(localUrl(QStringLiteral("/bad.zip"))));
     QCOMPARE(operationAt<KiriView::PrepareFailedContainerOperation>(plan, 0).containerUrl,
         localUrl(QStringLiteral("/bad.zip")));
+}
+
+void TestImageDocumentEffectPlan::operationKindMapsEveryRuntimeOperationExplicitly()
+{
+    const QUrl sourceUrl = localUrl(QStringLiteral("/book/01.png"));
+    const QUrl containerUrl = localUrl(QStringLiteral("/book.cbz"));
+    const ImageDocumentRuntimePlan plan {
+        KiriView::CancelFileDeletionOperation {},
+        KiriView::StopPresentationAnimationOperation {},
+        KiriView::ShutdownSpreadOperation {},
+        KiriView::ClearArchiveSessionOperation {},
+        KiriView::ClearPredecodeOperation {},
+        KiriView::CancelPredecodeOperation {},
+        KiriView::ScheduleAdjacentImagePredecodeOperation {},
+        KiriView::FinishSpreadTransitionOperation {},
+        KiriView::ResetRightToLeftReadingOperation {},
+        KiriView::ClearSecondaryPageOperation {},
+        KiriView::NotifyRightToLeftReadingChangedOperation {},
+        KiriView::ResetZoomOperation {},
+        KiriView::PrepareFailedContainerOperation { containerUrl },
+        KiriView::CancelPageNavigationUpdateOperation {},
+        KiriView::CancelNavigationOperation {},
+        KiriView::CancelContainerNavigationOperation {},
+        KiriView::CancelAllNavigationOperation {},
+        KiriView::ClearPageNavigationOperation {},
+        KiriView::UpdatePageNavigationOperation {},
+        KiriView::LoadUrlOperation { sourceUrl },
+        KiriView::LoadContainerImageOperation { sourceUrl, containerUrl },
+        KiriView::FinishEmptyContainerNavigationOperation { containerUrl },
+        KiriView::FinishContainerNavigationLoadWithErrorOperation {
+            containerUrl,
+            QStringLiteral("broken"),
+        },
+        KiriView::LoadPageNavigationUrlOperation { sourceUrl, true },
+        KiriView::CancelOpenOperation {},
+        KiriView::ClearDisplayedImageLocationOperation {},
+        KiriView::ClearPresentationImageOperation {},
+        KiriView::ClearLoadingContainerNavigationUrlOperation {},
+        KiriView::SetLoadingContainerNavigationUrlOperation { containerUrl },
+        KiriView::SetContainerNavigationUrlOperation { containerUrl },
+        KiriView::PrepareSourceLoadOperation {
+            KiriView::ImageDocumentSourceLoadRequest::fromContainerImage(sourceUrl, containerUrl),
+        },
+        KiriView::SetSourceUrlOperation { sourceUrl },
+        KiriView::BeginOpenOperation {},
+        KiriView::SetErrorStringOperation { QStringLiteral("failed") },
+        KiriView::FinishEmptySourceLoadOperation {},
+    };
+
+    QVERIFY(hasOperationKinds(plan,
+        {
+            ImageDocumentRuntimeOperationKind::CancelFileDeletion,
+            ImageDocumentRuntimeOperationKind::StopPresentationAnimation,
+            ImageDocumentRuntimeOperationKind::ShutdownSpread,
+            ImageDocumentRuntimeOperationKind::ClearArchiveSession,
+            ImageDocumentRuntimeOperationKind::ClearPredecode,
+            ImageDocumentRuntimeOperationKind::CancelPredecode,
+            ImageDocumentRuntimeOperationKind::ScheduleAdjacentImagePredecode,
+            ImageDocumentRuntimeOperationKind::FinishSpreadTransition,
+            ImageDocumentRuntimeOperationKind::ResetRightToLeftReading,
+            ImageDocumentRuntimeOperationKind::ClearSecondaryPage,
+            ImageDocumentRuntimeOperationKind::NotifyRightToLeftReadingChanged,
+            ImageDocumentRuntimeOperationKind::ResetZoom,
+            ImageDocumentRuntimeOperationKind::PrepareFailedContainer,
+            ImageDocumentRuntimeOperationKind::CancelPageNavigationUpdate,
+            ImageDocumentRuntimeOperationKind::CancelNavigation,
+            ImageDocumentRuntimeOperationKind::CancelContainerNavigation,
+            ImageDocumentRuntimeOperationKind::CancelAllNavigation,
+            ImageDocumentRuntimeOperationKind::ClearPageNavigation,
+            ImageDocumentRuntimeOperationKind::UpdatePageNavigation,
+            ImageDocumentRuntimeOperationKind::LoadUrl,
+            ImageDocumentRuntimeOperationKind::LoadContainerImage,
+            ImageDocumentRuntimeOperationKind::FinishEmptyContainerNavigation,
+            ImageDocumentRuntimeOperationKind::FinishContainerNavigationLoadWithError,
+            ImageDocumentRuntimeOperationKind::LoadPageNavigationUrl,
+            ImageDocumentRuntimeOperationKind::CancelOpen,
+            ImageDocumentRuntimeOperationKind::ClearDisplayedImageLocation,
+            ImageDocumentRuntimeOperationKind::ClearPresentationImage,
+            ImageDocumentRuntimeOperationKind::ClearLoadingContainerNavigationUrl,
+            ImageDocumentRuntimeOperationKind::SetLoadingContainerNavigationUrl,
+            ImageDocumentRuntimeOperationKind::SetContainerNavigationUrl,
+            ImageDocumentRuntimeOperationKind::PrepareSourceLoad,
+            ImageDocumentRuntimeOperationKind::SetSourceUrl,
+            ImageDocumentRuntimeOperationKind::BeginOpen,
+            ImageDocumentRuntimeOperationKind::SetErrorString,
+            ImageDocumentRuntimeOperationKind::FinishEmptySourceLoad,
+        }));
 }
 
 QTEST_GUILESS_MAIN(TestImageDocumentEffectPlan)
