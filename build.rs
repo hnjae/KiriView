@@ -215,6 +215,7 @@ fn main() {
             cc.define("TRANSLATION_DOMAIN", "\"kiriview\"");
             cc.file(&shader_source);
             cc.include("src");
+            cc.include("src/predecode");
             cc.include(&generated_state.include_dir);
             for dir in &native_include_dirs {
                 cc.include(dir);
