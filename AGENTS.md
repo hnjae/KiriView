@@ -6,7 +6,7 @@ KiriView is a desktop app using Rust, CXX-Qt and KDE Kirigami. Key paths: `src/`
 
 ## Architecture Guidance
 
-For language-boundary, module ownership, FFI design, workflow structure, and other long-term maintainability decisions, follow `docs/architecture/ARCHITECTURE.md`. Keep architecture rules in that document or ADRs instead of duplicating them here.
+For language-boundary, module ownership, FFI design, workflow structure, and other long-term maintainability decisions, follow the documents under `docs/architecture/`, starting from `docs/architecture/ARCHITECTURE.md`. Keep architecture rules in those documents or ADRs instead of duplicating them here.
 
 ## Compatibility Policy
 
