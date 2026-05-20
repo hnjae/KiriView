@@ -8,6 +8,8 @@
 
 namespace KiriView {
 namespace {
+    template <typename> inline constexpr bool alwaysFalse = false;
+
     template <typename Operation, typename... Args>
     void run(const Operation &operation, Args &&...args)
     {
@@ -130,8 +132,10 @@ void ImageDocumentEffectExecutor::dispatchOperation(const ImageDocumentRuntimeOp
                 run(m_operations.sourceLoad.beginOpen);
             } else if constexpr (std::is_same_v<Operation, SetErrorStringOperation>) {
                 run(m_operations.open.setErrorString, payload.errorString);
-            } else {
+            } else if constexpr (std::is_same_v<Operation, FinishEmptySourceLoadOperation>) {
                 dispatchGeneratedEffects(generatedEffects(m_operations.open.finishEmptySourceLoad));
+            } else {
+                static_assert(alwaysFalse<Operation>, "Unhandled image document runtime operation");
             }
         },
         operation);

@@ -56,6 +56,8 @@ using KiriView::StopPresentationAnimationOperation;
 using KiriView::UpdatePageNavigationEffect;
 using KiriView::UpdatePageNavigationOperation;
 
+template <typename> inline constexpr bool alwaysFalse = false;
+
 ImageDocumentRuntimePlan clearImagePlan()
 {
     return {
@@ -228,8 +230,10 @@ ImageDocumentRuntimeOperationKind imageDocumentRuntimeOperationKind(
                 return ImageDocumentRuntimeOperationKind::BeginOpen;
             } else if constexpr (std::is_same_v<Operation, SetErrorStringOperation>) {
                 return ImageDocumentRuntimeOperationKind::SetErrorString;
-            } else {
+            } else if constexpr (std::is_same_v<Operation, FinishEmptySourceLoadOperation>) {
                 return ImageDocumentRuntimeOperationKind::FinishEmptySourceLoad;
+            } else {
+                static_assert(alwaysFalse<Operation>, "Unhandled image document runtime operation");
             }
         },
         operation);
