@@ -5,6 +5,7 @@
 
 #include <QColor>
 #include <QObject>
+#include <QRect>
 #include <QTest>
 #include <Qt>
 #include <memory>
@@ -32,6 +33,7 @@ class TestSvgTileSource : public QObject
 private Q_SLOTS:
     void sourceRendersIntrinsicPreviewAndTile();
     void sourceAppliesClipPathToPreviewAndTile();
+    void sourceRendersOversampledBucketTile();
     void sourceRejectsEmptyTileRequest();
 };
 
@@ -83,6 +85,34 @@ void TestSvgTileSource::sourceAppliesClipPathToPreviewAndTile()
     QVERIFY2(tile.has_value(), qPrintable(errorString));
     QCOMPARE(tile->image.pixelColor(3, 2), QColor(Qt::red));
     QCOMPARE(tile->image.pixelColor(8, 2), QColor(Qt::white));
+}
+
+void TestSvgTileSource::sourceRendersOversampledBucketTile()
+{
+    const QByteArray data
+        = QByteArrayLiteral("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"80\" height=\"40\">"
+                            "<rect width=\"80\" height=\"40\" fill=\"red\"/>"
+                            "</svg>");
+
+    QString errorString;
+    std::shared_ptr<KiriView::SvgTileSource> source
+        = KiriView::SvgTileSource::open(data, &errorString);
+    QVERIFY2(source != nullptr, qPrintable(errorString));
+
+    KiriView::TileRequest request;
+    request.key = KiriView::TileKey { 0, 0, 0, 1 };
+    request.levelSize = QSize(120, 60);
+    request.levelRect = QRect(0, 0, 120, 60);
+    request.textureLevelRect = QRect(0, 0, 120, 60);
+    request.sourceRect = QRect(0, 0, 80, 40);
+    request.displaySourceRect = QRect(0, 0, 80, 40);
+
+    const std::optional<KiriView::DecodedTile> tile = source->decodeTile(request, &errorString);
+    QVERIFY2(tile.has_value(), qPrintable(errorString));
+    QCOMPARE(tile->key.scaleBucket, 1);
+    QCOMPARE(tile->image.size(), QSize(120, 60));
+    QCOMPARE(tile->displaySourceRect, QRect(0, 0, 80, 40));
+    QCOMPARE(tile->image.pixelColor(10, 10), QColor(Qt::red));
 }
 
 void TestSvgTileSource::sourceRejectsEmptyTileRequest()

@@ -29,6 +29,7 @@ class TestDecodedTileCache : public QObject
 private Q_SLOTS:
     void evictsLeastRecentlyUsedTilesToBudget();
     void replacesExistingTileWithoutDoubleCounting();
+    void scaleBucketsAreDistinctCacheKeys();
     void reportsRejectedTiles();
     void clearRemovesTilesAndByteCost();
 };
@@ -65,6 +66,20 @@ void TestDecodedTileCache::replacesExistingTileWithoutDoubleCounting()
     QVERIFY(cache.byteCost() > 0);
     QVERIFY(cache.byteCost() != firstByteCost);
     QVERIFY(cache.byteCost() <= cache.byteBudget());
+}
+
+void TestDecodedTileCache::scaleBucketsAreDistinctCacheKeys()
+{
+    KiriView::DecodedTileCache cache(80);
+    const KiriView::TileKey defaultBucket { 0, 0, 0 };
+    const KiriView::TileKey oversampledBucket { 0, 0, 0, 1 };
+
+    QVERIFY(cache.insert(decodedTile(defaultBucket, QSize(1, 1))));
+    QVERIFY(cache.insert(decodedTile(oversampledBucket, QSize(1, 1))));
+
+    QVERIFY(cache.contains(defaultBucket));
+    QVERIFY(cache.contains(oversampledBucket));
+    QCOMPARE(cache.tiles().size(), std::size_t(2));
 }
 
 void TestDecodedTileCache::reportsRejectedTiles()

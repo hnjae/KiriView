@@ -96,4 +96,6 @@ QImage SvgTileSource::decodeBlockingDisplayImage(int maximumLongEdge, QString *e
 }
 
 qsizetype SvgTileSource::byteCost() const { return m_data.size(); }
+
+bool SvgTileSource::isResolutionIndependent() const { return true; }
 }

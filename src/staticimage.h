@@ -52,6 +52,7 @@ public:
         const ImageFirstDisplayDecodeContext &context, QString *errorString) const;
     virtual QImage decodeBlockingDisplayImage(int maximumLongEdge, QString *errorString) const = 0;
     virtual qsizetype byteCost() const = 0;
+    virtual bool isResolutionIndependent() const;
 };
 
 struct StaticImagePayload {

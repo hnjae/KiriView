@@ -18,10 +18,12 @@ struct TileKey {
     int level = 0;
     int x = 0;
     int y = 0;
+    int scaleBucket = 0;
 
     friend bool operator==(const TileKey &left, const TileKey &right)
     {
-        return left.level == right.level && left.x == right.x && left.y == right.y;
+        return left.level == right.level && left.x == right.x && left.y == right.y
+            && left.scaleBucket == right.scaleBucket;
     }
 
     friend bool operator!=(const TileKey &left, const TileKey &right) { return !(left == right); }
@@ -40,6 +42,7 @@ struct TileRequest {
     QRect levelRect;
     QRect textureLevelRect;
     QRect sourceRect;
+    QRect displaySourceRect;
 };
 
 struct DecodedTile {
@@ -48,6 +51,7 @@ struct DecodedTile {
     QRect levelRect;
     QRect textureLevelRect;
     QImage image;
+    QRect displaySourceRect;
 };
 
 class TilePyramid

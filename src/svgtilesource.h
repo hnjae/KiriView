@@ -26,6 +26,7 @@ public:
         const TileRequest &request, QString *errorString) const override;
     QImage decodeBlockingDisplayImage(int maximumLongEdge, QString *errorString) const override;
     qsizetype byteCost() const override;
+    bool isResolutionIndependent() const override;
 
 private:
     QByteArray m_data;

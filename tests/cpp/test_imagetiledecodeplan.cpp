@@ -3,12 +3,17 @@
 
 #include "image_test_support.h"
 #include "imagetiledecodeplan.h"
+#include "svgtilesource.h"
 
+#include <QByteArray>
+#include <QImage>
 #include <QObject>
 #include <QRectF>
 #include <QSize>
 #include <QSizeF>
+#include <QString>
 #include <QTest>
+#include <Qt>
 #include <algorithm>
 #include <cstddef>
 #include <memory>
@@ -17,6 +22,7 @@
 
 namespace {
 constexpr qsizetype testTileCacheByteBudget = KiriView::imageFullDecodeFallbackByteLimit;
+constexpr int testMaximumTextureSize = 4096;
 
 using KiriView::TestSupport::staticTestImagePayload;
 using KiriView::TestSupport::testImage;
@@ -27,6 +33,32 @@ std::shared_ptr<KiriView::DisplayedImageSurface> testSurface(
     const QImage image = testImage(imageSize);
     KiriView::StaticImagePayload payload
         = staticTestImagePayload(image, testImage(QSize(512, 512)), displayHints);
+    return std::make_shared<KiriView::DisplayedImageSurface>(
+        KiriView::StaticTileSurface { std::move(payload), testTileCacheByteBudget });
+}
+
+QByteArray svgData(const QSize &imageSize)
+{
+    return QStringLiteral("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"%1\" height=\"%2\">"
+                          "<rect width=\"%1\" height=\"%2\" fill=\"red\"/>"
+                          "</svg>")
+        .arg(imageSize.width())
+        .arg(imageSize.height())
+        .toUtf8();
+}
+
+std::shared_ptr<KiriView::DisplayedImageSurface> svgSurface(const QSize &imageSize)
+{
+    QString errorString;
+    std::shared_ptr<KiriView::SvgTileSource> source
+        = KiriView::SvgTileSource::open(svgData(imageSize), &errorString);
+    Q_ASSERT(source != nullptr);
+
+    KiriView::StaticImagePayload payload {
+        std::move(source),
+        testImage(imageSize),
+        {},
+    };
     return std::make_shared<KiriView::DisplayedImageSurface>(
         KiriView::StaticTileSurface { std::move(payload), testTileCacheByteBudget });
 }
@@ -49,6 +81,26 @@ void insertDecodedTile(const KiriView::ImageTileDecodePlan &plan,
     QVERIFY(staticSurface != nullptr);
     QVERIFY(staticSurface->insertTile(std::move(*tile)));
 }
+
+void insertSyntheticDecodedTiles(const KiriView::ImageTileDecodePlan &plan,
+    const std::shared_ptr<KiriView::DisplayedImageSurface> &surface)
+{
+    auto *staticSurface = surface->staticTileSurface();
+    QVERIFY(staticSurface != nullptr);
+
+    for (const KiriView::TileRequest &request : plan.requests) {
+        QImage image(request.textureLevelRect.size(), QImage::Format_RGBA8888_Premultiplied);
+        image.fill(Qt::transparent);
+        QVERIFY(staticSurface->insertTile(KiriView::DecodedTile {
+            request.key,
+            request.levelSize,
+            request.levelRect,
+            request.textureLevelRect,
+            std::move(image),
+            request.displaySourceRect,
+        }));
+    }
+}
 }
 
 class TestImageTileDecodePlan : public QObject
@@ -59,6 +111,7 @@ private Q_SLOTS:
     void visibleStaticTilesBecomeDecodeRequests();
     void firstDisplayHintSuppressesUnneededRequests();
     void existingPendingAndFailedTilesAreFiltered();
+    void svgScaleBucketKeysChangeOnlyAcrossBucketBoundary();
 };
 
 void TestImageTileDecodePlan::visibleStaticTilesBecomeDecodeRequests()
@@ -117,6 +170,37 @@ void TestImageTileDecodePlan::existingPendingAndFailedTilesAreFiltered()
     QVERIFY(!containsRequestForKey(filteredPlan, pendingKey));
     QVERIFY(!containsRequestForKey(filteredPlan, failedKey));
     QCOMPARE(filteredPlan.requests.size(), initialPlan.requests.size() - 3);
+}
+
+void TestImageTileDecodePlan::svgScaleBucketKeysChangeOnlyAcrossBucketBoundary()
+{
+    const auto surface = svgSurface(QSize(1000, 1000));
+    const KiriView::ImageDocumentRenderContext context { 1.0, testMaximumTextureSize };
+
+    const KiriView::ImageTileDecodePlan initialPlan = KiriView::imageTileDecodePlan(
+        surface, QSizeF(1000.0, 1000.0), QRectF(0.0, 0.0, 1000.0, 1000.0), context, 0, {});
+    QVERIFY(!initialPlan.isEmpty());
+    for (const KiriView::TileRequest &request : initialPlan.requests) {
+        QCOMPARE(request.key.level, 0);
+        QCOMPARE(request.key.scaleBucket, 1);
+        QCOMPARE(request.levelSize, QSize(1500, 1500));
+        QVERIFY(!request.displaySourceRect.isEmpty());
+    }
+
+    insertSyntheticDecodedTiles(initialPlan, surface);
+
+    const KiriView::ImageTileDecodePlan sameBucketPlan = KiriView::imageTileDecodePlan(
+        surface, QSizeF(1200.0, 1200.0), QRectF(0.0, 0.0, 1200.0, 1200.0), context, 0, {});
+    QVERIFY(sameBucketPlan.isEmpty());
+
+    const KiriView::ImageTileDecodePlan nextBucketPlan = KiriView::imageTileDecodePlan(
+        surface, QSizeF(1600.0, 1600.0), QRectF(0.0, 0.0, 1600.0, 1600.0), context, 0, {});
+    QVERIFY(!nextBucketPlan.isEmpty());
+    for (const KiriView::TileRequest &request : nextBucketPlan.requests) {
+        QCOMPARE(request.key.level, 0);
+        QCOMPARE(request.key.scaleBucket, 2);
+        QCOMPARE(request.levelSize, QSize(2250, 2250));
+    }
 }
 
 QTEST_GUILESS_MAIN(TestImageTileDecodePlan)

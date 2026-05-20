@@ -75,6 +75,10 @@ qsizetype StaticTileSurface::tileCacheByteBudgetForSystemMemory(qsizetype system
 
 bool staticImageFitsFullImageSurface(const StaticImagePayload &image, int maximumTextureSize)
 {
+    if (image.isValid() && image.source->isResolutionIndependent()) {
+        return false;
+    }
+
     const QSize imageSize = image.source == nullptr ? QSize() : image.source->imageSize();
     return rustStaticImageFitsFullImageSurface(image.isValid(), rustImageRenderSize(imageSize),
         rustImageRenderSize(image.preview.size()), maximumTextureSize);

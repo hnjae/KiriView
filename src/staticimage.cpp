@@ -15,6 +15,8 @@ FirstDisplayImageDecodeResult ImageTileSource::decodeFirstDisplayImage(
     return {};
 }
 
+bool ImageTileSource::isResolutionIndependent() const { return false; }
+
 bool StaticImagePayload::isValid() const { return source != nullptr && !preview.isNull(); }
 
 qsizetype StaticImagePayload::byteCost() const

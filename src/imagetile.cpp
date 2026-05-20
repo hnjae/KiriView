@@ -9,7 +9,10 @@
 #include <utility>
 
 namespace KiriView {
-uint qHash(const TileKey &key, uint seed) { return qHashMulti(seed, key.level, key.x, key.y); }
+uint qHash(const TileKey &key, uint seed)
+{
+    return qHashMulti(seed, key.level, key.x, key.y, key.scaleBucket);
+}
 
 TilePyramid::TilePyramid(QSize imageSize, int tileSize, int apronSourcePixels)
     : m_imageSize(std::move(imageSize))
@@ -76,8 +79,11 @@ QRect TilePyramid::sourceRectForLevelRect(int level, const QRect &levelRect) con
 
 TileRequest TilePyramid::requestForTile(const TileKey &key) const
 {
-    return ImageTileGeometryBridge::tilePyramidRequestForTile(
+    TileRequest request = ImageTileGeometryBridge::tilePyramidRequestForTile(
         m_imageSize, m_tileSize, m_apronSourcePixels, key);
+    request.key = key;
+    request.displaySourceRect = sourceRectForLevelRect(key.level, request.levelRect);
+    return request;
 }
 
 std::vector<TileKey> TilePyramid::tilesIntersectingLevelRect(

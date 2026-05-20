@@ -5,12 +5,16 @@
 
 #include "image_test_support.h"
 #include "imagerendering.h"
+#include "svgtilesource.h"
 
+#include <QByteArray>
 #include <QObject>
 #include <QSize>
 #include <QSizeF>
 #include <QTest>
 #include <algorithm>
+#include <memory>
+#include <utility>
 #include <vector>
 
 namespace {
@@ -22,6 +26,13 @@ bool containsChange(
 {
     return std::find(changes.cbegin(), changes.cend(), change) != changes.cend();
 }
+
+QByteArray smallSvgData()
+{
+    return QByteArrayLiteral("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"32\" height=\"32\">"
+                             "<path d=\"M4 4h24v24H4z\" fill=\"red\"/>"
+                             "</svg>");
+}
 }
 
 class TestImagePresentationController : public QObject
@@ -30,6 +41,7 @@ class TestImagePresentationController : public QObject
 
 private Q_SLOTS:
     void displayedImageChangesSynchronizeViewportThroughController();
+    void smallSvgUsesStaticTileSurfaceInsteadOfLegacyFrameSurface();
 };
 
 void TestImagePresentationController::displayedImageChangesSynchronizeViewportThroughController()
@@ -74,6 +86,35 @@ void TestImagePresentationController::displayedImageChangesSynchronizeViewportTh
 
     QVERIFY(changes.empty());
     QCOMPARE(controller.imageRevision(), quint64(2));
+}
+
+void TestImagePresentationController::smallSvgUsesStaticTileSurfaceInsteadOfLegacyFrameSurface()
+{
+    QString errorString;
+    std::shared_ptr<KiriView::SvgTileSource> source
+        = KiriView::SvgTileSource::open(smallSvgData(), &errorString);
+    QVERIFY2(source != nullptr, qPrintable(errorString));
+
+    const QImage preview = source->decodeBlockingDisplayImage(32, &errorString);
+    QVERIFY2(!preview.isNull(), qPrintable(errorString));
+    QCOMPARE(preview.size(), source->imageSize());
+
+    KiriView::ImagePresentationController controller(this,
+        []() {
+            return KiriView::ImageDocumentRenderContext {
+                1.0,
+                KiriView::fallbackTextureSizeMax,
+            };
+        },
+        {});
+    controller.setViewportSize(QSizeF(32.0, 32.0));
+    controller.setStaticImage(
+        KiriView::StaticImagePayload { std::move(source), preview, {} }, true);
+
+    const std::shared_ptr<KiriView::DisplayedImageSurface> surface = controller.imageSurface();
+    QVERIFY(surface != nullptr);
+    QVERIFY(surface->staticTileSurface() != nullptr);
+    QVERIFY(surface->legacyFrameSurface() == nullptr);
 }
 
 QTEST_GUILESS_MAIN(TestImagePresentationController)

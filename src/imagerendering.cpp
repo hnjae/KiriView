@@ -61,8 +61,10 @@ std::optional<KiriView::ImageSurfaceDrawEntry> staticTileDrawEntry(
         return std::nullopt;
     }
 
-    const QRect sourceRect
-        = surface.pyramid().sourceRectForLevelRect(tile.key.level, tile.levelRect);
+    QRect sourceRect = tile.displaySourceRect;
+    if (sourceRect.isEmpty()) {
+        sourceRect = surface.pyramid().sourceRectForLevelRect(tile.key.level, tile.levelRect);
+    }
     if (sourceRect.isEmpty()) {
         return std::nullopt;
     }
