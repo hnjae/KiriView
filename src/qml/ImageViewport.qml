@@ -154,6 +154,27 @@ Item {
             policy: imageFlickable.contentHeight > imageFlickable.height ? Controls.ScrollBar.AsNeeded : Controls.ScrollBar.AlwaysOff
         }
 
+        WheelHandler {
+            id: zoomWheelHandler
+
+            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+            acceptedModifiers: Qt.ControlModifier
+            blocking: true
+            enabled: root.imageReady
+            target: null
+
+            onWheel: wheel => {
+                const stepCount = root.wheelZoomStepCount(wheel);
+                if (stepCount === 0 || !root.viewportPointInsideImage(wheel.x, wheel.y)) {
+                    wheel.accepted = false;
+                    return;
+                }
+
+                root.zoomByStep(stepCount, wheel.x, wheel.y);
+                wheel.accepted = true;
+            }
+        }
+
         Item {
             id: spreadItem
 
@@ -209,26 +230,5 @@ Item {
             return Qt.OpenHandCursor;
         }
         enabled: root.imageReady
-    }
-
-    WheelHandler {
-        id: zoomWheelHandler
-
-        acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
-        acceptedModifiers: Qt.ControlModifier
-        blocking: true
-        enabled: root.imageReady
-        target: null
-
-        onWheel: wheel => {
-            const stepCount = root.wheelZoomStepCount(wheel);
-            if (stepCount === 0 || !root.viewportPointInsideImage(wheel.x, wheel.y)) {
-                wheel.accepted = false;
-                return;
-            }
-
-            root.zoomByStep(stepCount, wheel.x, wheel.y);
-            wheel.accepted = true;
-        }
     }
 }
