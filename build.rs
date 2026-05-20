@@ -38,7 +38,6 @@ const RUST_BRIDGE_SOURCES: &[&str] = &[
     "src/avifcompat.rs",
     "src/cachebudget.rs",
     "src/heifcontainer.rs",
-    "src/imagecontainer.rs",
     "src/imagedocumentsourceloadpolicy.rs",
     "src/imageformatregistry.rs",
     "src/imageinputclassification.rs",

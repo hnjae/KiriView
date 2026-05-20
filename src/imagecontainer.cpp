@@ -5,7 +5,7 @@
 
 #include "archiveformat.h"
 #include "imageurl.h"
-#include "kiriview/src/imagecontainer.cxx.h"
+#include "kiriview/src/archivepath.cxx.h"
 #include "rustqtconversion.h"
 
 #include <QByteArray>

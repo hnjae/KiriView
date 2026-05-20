@@ -9,7 +9,6 @@ mod bmff;
 mod byteio;
 mod cachebudget;
 mod heifcontainer;
-mod imagecontainer;
 mod imagedocumentsourceloadpolicy;
 mod imageformatregistry;
 mod imageinputclassification;
