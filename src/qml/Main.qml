@@ -197,14 +197,46 @@ StatefulApp.StatefulWindow {
             readonly property color darkBackgroundColor: lightColorScheme ? viewTextColor : viewBackgroundColor
         }
 
+        ImageViewport {
+            id: imageViewport
+
+            anchors.fill: parent
+            initialSourceUrl: root.initialSourceUrl
+
+            onViewerClicked: {
+                if (root.activeImageToolBar().commitTextInputEditing(true)) {
+                    return;
+                }
+
+                root.focusImageViewport();
+            }
+        }
+
+        ImageActionAvailability {
+            id: actionAvailability
+
+            containerNavigationAvailable: page.imageDocument.containerNavigationAvailable
+            currentLastPageNumber: page.imageDocument.currentLastPageNumber
+            currentPageNumber: page.imageDocument.currentPageNumber
+            fileDeletionInProgress: page.imageDocument.fileDeletionInProgress
+            helpDialogOpen: root.helpDialogOpen
+            imageCount: page.imageDocument.imageCount
+            imageHorizontallyPannable: imageViewport.imageHorizontallyPannable
+            imagePannable: imageViewport.imagePannable
+            imageReady: page.imageReady
+            rightToLeftReadingAvailable: page.imageDocument.rightToLeftReadingAvailable
+            rightToLeftReadingEnabled: page.imageDocument.rightToLeftReadingEnabled
+            twoPageModeAvailable: page.imageDocument.twoPageModeAvailable
+            twoPageModeEnabled: page.imageDocument.twoPageModeEnabled
+        }
+
         ImageActions {
             id: imageActions
 
             application: kiriApplication
+            actionAvailability: actionAvailability
             fullscreen: root.fullscreen
-            helpDialogOpen: root.helpDialogOpen
             imageDocument: page.imageDocument
-            imageReady: page.imageReady
 
             onImageBoundaryReached: function (message) {
                 toastNotification.show(message, "image-boundary");
@@ -248,21 +280,6 @@ StatefulApp.StatefulWindow {
             }
         }
 
-        ImageViewport {
-            id: imageViewport
-
-            anchors.fill: parent
-            initialSourceUrl: root.initialSourceUrl
-
-            onViewerClicked: {
-                if (root.activeImageToolBar().commitTextInputEditing(true)) {
-                    return;
-                }
-
-                root.focusImageViewport();
-            }
-        }
-
         Connections {
             target: page.imageDocument
 
@@ -277,9 +294,8 @@ StatefulApp.StatefulWindow {
 
         ImageShortcuts {
             application: kiriApplication
-            helpDialogOpen: root.helpDialogOpen
+            actionAvailability: actionAvailability
             imageDocument: page.imageDocument
-            imageToolBar: root.fullscreen ? fullscreenImageToolBar : headerImageToolBar
             imageViewport: imageViewport
 
             onImageBoundaryReached: function (message) {
@@ -334,6 +350,12 @@ StatefulApp.StatefulWindow {
 
                 root.scheduleFullscreenToolBarHide();
             }
+        }
+
+        Binding {
+            target: actionAvailability
+            property: "textInputFocused"
+            value: root.toolbarTextInputFocused()
         }
     }
 

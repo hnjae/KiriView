@@ -278,11 +278,29 @@ Item {
         }
     }
 
+    ImageActionAvailability {
+        id: actionAvailability
+
+        containerNavigationAvailable: imageDocument.containerNavigationAvailable
+        currentLastPageNumber: imageDocument.currentLastPageNumber
+        currentPageNumber: imageDocument.currentPageNumber
+        fileDeletionInProgress: imageDocument.fileDeletionInProgress
+        helpDialogOpen: root.helpDialogOpen
+        imageCount: imageDocument.imageCount
+        imageHorizontallyPannable: imageViewport.imageHorizontallyPannable
+        imagePannable: imageViewport.imagePannable
+        imageReady: imageDocument.status === KiriImageDocument.Ready
+        rightToLeftReadingAvailable: imageDocument.rightToLeftReadingAvailable
+        rightToLeftReadingEnabled: imageDocument.rightToLeftReadingEnabled
+        textInputFocused: imageToolBar.textInputFocused()
+        twoPageModeAvailable: imageDocument.twoPageModeAvailable
+        twoPageModeEnabled: imageDocument.twoPageModeEnabled
+    }
+
     KiriViewQml.ImageShortcuts {
         application: application
-        helpDialogOpen: root.helpDialogOpen
+        actionAvailability: actionAvailability
         imageDocument: imageDocument
-        imageToolBar: imageToolBar
         imageViewport: imageViewport
     }
 }

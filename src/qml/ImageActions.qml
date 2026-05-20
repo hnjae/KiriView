@@ -10,9 +10,8 @@ Item {
     id: root
 
     required property KiriViewApplication application
+    required property ImageActionAvailability actionAvailability
     required property KiriImageDocument imageDocument
-    required property bool imageReady
-    required property bool helpDialogOpen
     required property bool fullscreen
 
     readonly property var openAction: openManagedAction.proxy
@@ -73,22 +72,6 @@ Item {
     signal imageBoundaryReached(string message)
     signal shortcutHelpRequested
     signal toggleFullScreenRequested
-
-    ImageActionAvailability {
-        id: actionAvailability
-
-        containerNavigationAvailable: root.imageDocument.containerNavigationAvailable
-        currentLastPageNumber: root.imageDocument.currentLastPageNumber
-        currentPageNumber: root.imageDocument.currentPageNumber
-        fileDeletionInProgress: root.imageDocument.fileDeletionInProgress
-        helpDialogOpen: root.helpDialogOpen
-        imageCount: root.imageDocument.imageCount
-        imageReady: root.imageReady
-        rightToLeftReadingAvailable: root.imageDocument.rightToLeftReadingAvailable
-        rightToLeftReadingEnabled: root.imageDocument.rightToLeftReadingEnabled
-        twoPageModeAvailable: root.imageDocument.twoPageModeAvailable
-        twoPageModeEnabled: root.imageDocument.twoPageModeEnabled
-    }
 
     function openFirstImage() {
         if (root.imageDocument.imageCount > 0) {

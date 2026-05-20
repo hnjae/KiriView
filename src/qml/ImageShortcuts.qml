@@ -11,10 +11,9 @@ Item {
     id: root
 
     required property KiriViewApplication application
+    required property ImageActionAvailability actionAvailability
     required property KiriImageDocument imageDocument
     required property var imageViewport
-    required property var imageToolBar
-    required property bool helpDialogOpen
 
     readonly property int keyboardPanDistance: 64
 
@@ -43,25 +42,6 @@ Item {
     readonly property var actionShortcutRoutes: root.createActionShortcutRoutes()
 
     signal imageBoundaryReached(string message)
-
-    ImageActionAvailability {
-        id: actionAvailability
-
-        containerNavigationAvailable: root.imageDocument.containerNavigationAvailable
-        currentLastPageNumber: root.imageDocument.currentLastPageNumber
-        currentPageNumber: root.imageDocument.currentPageNumber
-        fileDeletionInProgress: root.imageDocument.fileDeletionInProgress
-        helpDialogOpen: root.helpDialogOpen
-        imageCount: root.imageDocument.imageCount
-        imageHorizontallyPannable: root.imageViewport.imageHorizontallyPannable
-        imagePannable: root.imageViewport.imagePannable
-        imageReady: root.imageDocument.status === KiriImageDocument.Ready
-        rightToLeftReadingAvailable: root.imageDocument.rightToLeftReadingAvailable
-        rightToLeftReadingEnabled: root.imageDocument.rightToLeftReadingEnabled
-        textInputFocused: root.imageToolBar.textInputFocused()
-        twoPageModeAvailable: root.imageDocument.twoPageModeAvailable
-        twoPageModeEnabled: root.imageDocument.twoPageModeEnabled
-    }
 
     function shortcutRoute(actionIds, shortcutFilter, shortcutScope) {
         return {

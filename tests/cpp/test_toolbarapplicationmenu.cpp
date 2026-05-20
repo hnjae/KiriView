@@ -500,14 +500,29 @@ Item {
         sourceUrl: "%2"
     }
 
+    ImageActionAvailability {
+        id: actionAvailability
+
+        containerNavigationAvailable: imageDocument.containerNavigationAvailable
+        currentLastPageNumber: imageDocument.currentLastPageNumber
+        currentPageNumber: imageDocument.currentPageNumber
+        fileDeletionInProgress: imageDocument.fileDeletionInProgress
+        helpDialogOpen: false
+        imageCount: imageDocument.imageCount
+        imageReady: imageDocument.status === KiriImageDocument.Ready
+        rightToLeftReadingAvailable: imageDocument.rightToLeftReadingAvailable
+        rightToLeftReadingEnabled: imageDocument.rightToLeftReadingEnabled
+        twoPageModeAvailable: imageDocument.twoPageModeAvailable
+        twoPageModeEnabled: imageDocument.twoPageModeEnabled
+    }
+
     KiriViewQml.ImageActions {
         id: imageActions
 
         application: application
+        actionAvailability: actionAvailability
         fullscreen: false
-        helpDialogOpen: false
         imageDocument: imageDocument
-        imageReady: imageDocument.status === KiriImageDocument.Ready
     }
 }
 )")
