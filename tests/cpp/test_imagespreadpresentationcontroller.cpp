@@ -59,7 +59,7 @@ public:
         , controller(&context, renderContext, state, primaryPresentation,
               KiriView::ImageSpreadPresentationController::Callbacks {
                   {},
-                  [this](const QUrl &url) { return takePredecodedImage(url); },
+                  [this](const QUrl &url) { return findPredecodedImage(url); },
                   [this]() { return snapshot; },
                   {},
               },
@@ -75,7 +75,7 @@ public:
         primaryPresentation.setStaticImage(staticTestImagePayload(testImage(imageSize)), false);
     }
 
-    std::optional<KiriView::PredecodedImage> takePredecodedImage(const QUrl &url) const
+    std::optional<KiriView::PredecodedImage> findPredecodedImage(const QUrl &url) const
     {
         const auto imageSize = predecodedImageSizes.find(url);
         if (imageSize == predecodedImageSizes.cend()) {

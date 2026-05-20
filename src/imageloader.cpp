@@ -146,11 +146,11 @@ void ImageLoader::cancel()
 
 bool ImageLoader::tryDisplayPredecodedImage(ImageLoadSession session)
 {
-    if (!m_callbacks.takePredecodedImage) {
+    if (!m_callbacks.findPredecodedImage) {
         return false;
     }
 
-    std::optional<PredecodedImage> predecoded = m_callbacks.takePredecodedImage(session.imageUrl());
+    std::optional<PredecodedImage> predecoded = m_callbacks.findPredecodedImage(session.imageUrl());
     if (!predecoded.has_value()) {
         return false;
     }

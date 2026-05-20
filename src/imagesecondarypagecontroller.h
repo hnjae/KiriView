@@ -36,13 +36,13 @@ public:
     using LoadFinishedCallback = std::function<void(
         ImageSecondaryPageLoadResult, const DisplayedImageLocation &, const QSize &)>;
     using VisibilityChangedCallback = std::function<void()>;
-    using TakePredecodedImageCallback = std::function<std::optional<PredecodedImage>(const QUrl &)>;
+    using FindPredecodedImageCallback = std::function<std::optional<PredecodedImage>(const QUrl &)>;
 
     struct Callbacks {
         ChangeCallback change;
         LoadFinishedCallback loadFinished;
         VisibilityChangedCallback visibilityChanged;
-        TakePredecodedImageCallback takePredecodedImage;
+        FindPredecodedImageCallback findPredecodedImage;
     };
 
     ImageSecondaryPageController(QObject *parent, RenderContextProvider renderContextProvider,

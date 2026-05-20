@@ -27,11 +27,11 @@ class ImagePresentationController;
 class ImageOpenController final
 {
 public:
-    using TakePredecodedImageCallback = std::function<std::optional<PredecodedImage>(const QUrl &)>;
+    using FindPredecodedImageCallback = std::function<std::optional<PredecodedImage>(const QUrl &)>;
     using EffectCallback = std::function<void(ImageDocumentEffect)>;
 
     struct Callbacks {
-        TakePredecodedImageCallback takePredecodedImage;
+        FindPredecodedImageCallback findPredecodedImage;
         EffectCallback effect;
     };
 

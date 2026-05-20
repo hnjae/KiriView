@@ -52,8 +52,9 @@ void ImageDocumentPredecodeController::cancel() { m_coordinator->cancel(); }
 
 void ImageDocumentPredecodeController::clear() { m_coordinator->clear(); }
 
-std::optional<PredecodedImage> ImageDocumentPredecodeController::tryTake(const QUrl &url) const
+std::optional<PredecodedImage> ImageDocumentPredecodeController::findPredecodedImage(
+    const QUrl &url) const
 {
-    return m_coordinator->tryTake(url);
+    return m_coordinator->findPredecodedImage(url);
 }
 }

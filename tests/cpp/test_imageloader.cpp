@@ -197,7 +197,7 @@ void TestImageLoader::predecodedImageBypassesDataLoad()
     std::optional<KiriView::ImageLoadSession> predecodedSession;
     QSize imageSize;
     KiriView::ImageLoader::Callbacks callbacks;
-    callbacks.takePredecodedImage = [imageUrl, archiveDocument](const QUrl &url) {
+    callbacks.findPredecodedImage = [imageUrl, archiveDocument](const QUrl &url) {
         if (url != imageUrl) {
             return std::optional<KiriView::PredecodedImage>();
         }

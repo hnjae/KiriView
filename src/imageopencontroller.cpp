@@ -62,11 +62,11 @@ ImageOpenController::ImageOpenController(QObject *parent, ImageDocumentState &st
                 finishPredecodedImageLoad(std::move(session), std::move(image));
             },
             [this](const QUrl &url) {
-                if (!m_callbacks.takePredecodedImage) {
+                if (!m_callbacks.findPredecodedImage) {
                     return std::optional<PredecodedImage>();
                 }
 
-                return m_callbacks.takePredecodedImage(url);
+                return m_callbacks.findPredecodedImage(url);
             },
         });
 }

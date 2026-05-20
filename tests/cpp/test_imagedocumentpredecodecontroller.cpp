@@ -79,7 +79,8 @@ void TestImageDocumentPredecodeController::scheduleAdjacentImagePredecodeUsesPre
 
     controller.scheduleAdjacentImagePredecode();
 
-    const std::optional<KiriView::PredecodedImage> displayed = controller.tryTake(displayedUrl);
+    const std::optional<KiriView::PredecodedImage> displayed
+        = controller.findPredecodedImage(displayedUrl);
     QVERIFY(displayed.has_value());
     QCOMPARE(displayed->staticImage.displayHints.firstDisplayPixelsPerSourcePixel, 0.5);
 
@@ -117,7 +118,7 @@ void TestImageDocumentPredecodeController::
 
     QVERIFY(dataLoader.frontLoad().canceled);
     QCOMPARE(dataLoader.loadCount(), std::size_t(1));
-    QVERIFY(!controller.tryTake(nextUrl).has_value());
+    QVERIFY(!controller.findPredecodedImage(nextUrl).has_value());
 }
 
 void TestImageDocumentPredecodeController::
@@ -147,7 +148,7 @@ void TestImageDocumentPredecodeController::
 
     controller.scheduleAdjacentImagePredecode();
 
-    QVERIFY(controller.tryTake(displayedUrl).has_value());
+    QVERIFY(controller.findPredecodedImage(displayedUrl).has_value());
     QTest::qWait(250);
     QCOMPARE(dataLoader.loadCount(), std::size_t(0));
 
@@ -159,8 +160,8 @@ void TestImageDocumentPredecodeController::
     QVERIFY(dataLoader.frontLoad().canceled);
     dataLoader.deliverFrontLoadDataIgnoringCancellation(QByteArrayLiteral("stale"));
     QTest::qWait(50);
-    QVERIFY(!controller.tryTake(nextUrl).has_value());
-    QVERIFY(controller.tryTake(displayedUrl).has_value());
+    QVERIFY(!controller.findPredecodedImage(nextUrl).has_value());
+    QVERIFY(controller.findPredecodedImage(displayedUrl).has_value());
 }
 
 QTEST_GUILESS_MAIN(TestImageDocumentPredecodeController)

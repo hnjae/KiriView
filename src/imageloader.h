@@ -31,14 +31,14 @@ public:
     using ErrorCallback = std::function<void(ImageLoadSession, ImageLoadError, const QString &)>;
     using DecodedImageCallback = std::function<void(ImageLoadSession, DecodedImage)>;
     using PredecodedImageCallback = std::function<void(ImageLoadSession, PredecodedImage)>;
-    using TakePredecodedImageCallback = std::function<std::optional<PredecodedImage>(const QUrl &)>;
+    using FindPredecodedImageCallback = std::function<std::optional<PredecodedImage>(const QUrl &)>;
 
     struct Callbacks {
         SourceResolvedCallback sourceResolved;
         ErrorCallback error;
         DecodedImageCallback decodedImage;
         PredecodedImageCallback predecodedImage;
-        TakePredecodedImageCallback takePredecodedImage;
+        FindPredecodedImageCallback findPredecodedImage;
     };
 
     explicit ImageLoader(QObject *parent = nullptr);

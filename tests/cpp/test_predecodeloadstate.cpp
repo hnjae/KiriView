@@ -56,6 +56,7 @@ private Q_SLOTS:
     void activeLoadSnapshotIsTheAdmissionInput();
     void replacingWindowClearsQueuedLoadsAndUsesNextGeneration();
     void cancelBackgroundWorkKeepsDisplayedCacheButDropsQueuedLoads();
+    void findPredecodedImageDoesNotConsumeCachedImage();
 };
 
 void TestPredecodeLoadState::activeWindowBuildsDecodeRequestsFromCanonicalContext()
@@ -66,7 +67,8 @@ void TestPredecodeLoadState::activeWindowBuildsDecodeRequestsFromCanonicalContex
 
     state.startWindow(loadWindow(displayedUrl, { displayedUrl, nextUrl }));
 
-    const std::optional<KiriView::PredecodedImage> displayed = state.tryTake(displayedUrl);
+    const std::optional<KiriView::PredecodedImage> displayed
+        = state.findPredecodedImage(displayedUrl);
     QVERIFY(displayed.has_value());
     QCOMPARE(displayed->staticImage.displayHints.firstDisplayPixelsPerSourcePixel, 0.5);
 
@@ -114,8 +116,8 @@ void TestPredecodeLoadState::replacingWindowClearsQueuedLoadsAndUsesNextGenerati
     QVERIFY(load.has_value());
     QCOMPARE(load->request.id(), quint64(8));
     QCOMPARE(load->request.imageUrl(), nextUrl);
-    QVERIFY(!state.tryTake(staleNextUrl).has_value());
-    QVERIFY(state.tryTake(displayedUrl).has_value());
+    QVERIFY(!state.findPredecodedImage(staleNextUrl).has_value());
+    QVERIFY(state.findPredecodedImage(displayedUrl).has_value());
 }
 
 void TestPredecodeLoadState::cancelBackgroundWorkKeepsDisplayedCacheButDropsQueuedLoads()
@@ -128,7 +130,26 @@ void TestPredecodeLoadState::cancelBackgroundWorkKeepsDisplayedCacheButDropsQueu
     state.cancelBackgroundWork();
 
     QVERIFY(!state.takeNextLoad(KiriView::PredecodeActiveLoads {}).has_value());
-    QVERIFY(state.tryTake(displayedUrl).has_value());
+    QVERIFY(state.findPredecodedImage(displayedUrl).has_value());
+}
+
+void TestPredecodeLoadState::findPredecodedImageDoesNotConsumeCachedImage()
+{
+    KiriView::PredecodeLoadState state;
+    const QUrl displayedUrl = indexedImageUrl(1);
+
+    state.startWindow(loadWindow(displayedUrl, { displayedUrl }));
+
+    const std::optional<KiriView::PredecodedImage> firstLookup
+        = state.findPredecodedImage(displayedUrl);
+    const std::optional<KiriView::PredecodedImage> secondLookup
+        = state.findPredecodedImage(displayedUrl);
+
+    QVERIFY(firstLookup.has_value());
+    QVERIFY(secondLookup.has_value());
+    QCOMPARE(secondLookup->location.imageUrl(), displayedUrl);
+    QCOMPARE(secondLookup->staticImage.displayHints.firstDisplayPixelsPerSourcePixel,
+        firstLookup->staticImage.displayHints.firstDisplayPixelsPerSourcePixel);
 }
 
 QTEST_GUILESS_MAIN(TestPredecodeLoadState)

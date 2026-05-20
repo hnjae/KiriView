@@ -205,8 +205,8 @@ void ImagePredecodeCoordinator::clear()
     m_loadController.clear();
 }
 
-std::optional<PredecodedImage> ImagePredecodeCoordinator::tryTake(const QUrl &url) const
+std::optional<PredecodedImage> ImagePredecodeCoordinator::findPredecodedImage(const QUrl &url) const
 {
-    return m_loadController.tryTake(url);
+    return m_loadController.findPredecodedImage(url);
 }
 }

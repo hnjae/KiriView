@@ -94,7 +94,7 @@ void PredecodeLoadState::clear()
     m_cache.clear();
 }
 
-std::optional<PredecodedImage> PredecodeLoadState::tryTake(const QUrl &url) const
+std::optional<PredecodedImage> PredecodeLoadState::findPredecodedImage(const QUrl &url) const
 {
     return m_cache.findImage(url);
 }

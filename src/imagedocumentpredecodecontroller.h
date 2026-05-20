@@ -38,7 +38,7 @@ public:
         std::optional<DisplayedPredecodeImage> secondaryImage = std::nullopt);
     void cancel();
     void clear();
-    std::optional<PredecodedImage> tryTake(const QUrl &url) const;
+    std::optional<PredecodedImage> findPredecodedImage(const QUrl &url) const;
 
 private:
     ImageDocumentState &m_state;

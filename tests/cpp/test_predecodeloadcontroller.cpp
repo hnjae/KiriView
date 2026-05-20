@@ -67,7 +67,8 @@ void TestPredecodeLoadController::windowLoadsCacheDisplayedImageAndPumpQueuedDec
 
     controller.startWindowLoads(loadWindow(displayedUrl, { displayedUrl, nextUrl, previousUrl }));
 
-    const std::optional<KiriView::PredecodedImage> displayed = controller.tryTake(displayedUrl);
+    const std::optional<KiriView::PredecodedImage> displayed
+        = controller.findPredecodedImage(displayedUrl);
     QVERIFY(displayed.has_value());
     QCOMPARE(displayed->staticImage.displayHints.firstDisplayPixelsPerSourcePixel, 0.5);
 
@@ -76,7 +77,7 @@ void TestPredecodeLoadController::windowLoadsCacheDisplayedImageAndPumpQueuedDec
     QCOMPARE(dataLoader.frontLoad().firstDisplay.physicalViewportSize, QSize(640, 480));
 
     dataLoader.finishFrontLoad(QByteArrayLiteral("next"));
-    QTRY_VERIFY(controller.tryTake(nextUrl).has_value());
+    QTRY_VERIFY(controller.findPredecodedImage(nextUrl).has_value());
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(2));
     QCOMPARE(dataLoader.backLoad().url, previousUrl);
 }
@@ -122,10 +123,10 @@ void TestPredecodeLoadController::startWindowLoadsReplacesActiveGeneration()
 
     dataLoader.deliverFrontLoadDataIgnoringCancellation(QByteArrayLiteral("stale"));
     QTest::qWait(50);
-    QVERIFY(!controller.tryTake(staleNextUrl).has_value());
+    QVERIFY(!controller.findPredecodedImage(staleNextUrl).has_value());
 
     dataLoader.finishBackLoad(QByteArrayLiteral("next"));
-    QTRY_VERIFY(controller.tryTake(nextUrl).has_value());
+    QTRY_VERIFY(controller.findPredecodedImage(nextUrl).has_value());
 }
 
 void TestPredecodeLoadController::cancelBackgroundWorkSuppressesStaleDecode()
@@ -144,8 +145,8 @@ void TestPredecodeLoadController::cancelBackgroundWorkSuppressesStaleDecode()
 
     dataLoader.deliverFrontLoadDataIgnoringCancellation(QByteArrayLiteral("stale"));
     QTest::qWait(50);
-    QVERIFY(!controller.tryTake(nextUrl).has_value());
-    QVERIFY(controller.tryTake(displayedUrl).has_value());
+    QVERIFY(!controller.findPredecodedImage(nextUrl).has_value());
+    QVERIFY(controller.findPredecodedImage(displayedUrl).has_value());
 }
 
 QTEST_GUILESS_MAIN(TestPredecodeLoadController)

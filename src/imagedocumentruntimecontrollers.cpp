@@ -61,7 +61,7 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject *docume
     m_openController
         = std::make_unique<ImageOpenController>(documentObject, state, *m_presentationController,
             ImageOpenController::Callbacks {
-                [this](const QUrl &url) { return m_predecodeController->tryTake(url); },
+                [this](const QUrl &url) { return m_predecodeController->findPredecodedImage(url); },
                 [this](ImageDocumentEffect effect) { dispatchEffect(std::move(effect)); },
             },
             runtimeDependencies.candidateProvider, runtimeDependencies.imageDecode);
@@ -100,7 +100,7 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject *docume
         state, *m_presentationController,
         ImageSpreadPresentationController::Callbacks {
             [this](ImageDocumentChange change) { invokeIfSet(m_callbacks.notify, change); },
-            [this](const QUrl &url) { return m_predecodeController->tryTake(url); },
+            [this](const QUrl &url) { return m_predecodeController->findPredecodedImage(url); },
             [this]() { return m_navigationController->pageNavigationSnapshot(); },
             [this]() { dispatchEffect(ImageDocumentEffect::scheduleAdjacentImagePredecode()); },
         },

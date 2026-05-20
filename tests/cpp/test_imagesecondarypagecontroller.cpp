@@ -52,7 +52,7 @@ public:
                           SecondaryPageLoadReport { result, location, imageSize });
                   },
                   [this]() { ++visibilityChangedCount; },
-                  [this](const QUrl &url) { return takePredecodedImage(url); },
+                  [this](const QUrl &url) { return findPredecodedImage(url); },
               },
               {}, {})
     {
@@ -69,7 +69,7 @@ public:
         controller.startLoad(url, KiriView::ArchiveDocumentLocation::none(), {});
     }
 
-    std::optional<KiriView::PredecodedImage> takePredecodedImage(const QUrl &url) const
+    std::optional<KiriView::PredecodedImage> findPredecodedImage(const QUrl &url) const
     {
         const auto imageSize = predecodedImageSizes.find(url);
         if (imageSize == predecodedImageSizes.cend()) {

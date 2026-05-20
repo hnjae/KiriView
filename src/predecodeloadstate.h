@@ -41,7 +41,7 @@ public:
     void cacheDecodedImage(const ImageDecodeRequest &request, StaticImagePayload staticImage);
     void cancelBackgroundWork();
     void clear();
-    std::optional<PredecodedImage> tryTake(const QUrl &url) const;
+    std::optional<PredecodedImage> findPredecodedImage(const QUrl &url) const;
 
 private:
     struct ActiveWindow {

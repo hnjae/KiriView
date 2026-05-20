@@ -253,8 +253,8 @@ void TestArchiveDocumentSessionStore::predecodeLoadsAdjacentArchiveImagesThrough
         },
     });
 
-    QTRY_VERIFY(coordinator.tryTake(thirdUrl).has_value());
-    QTRY_VERIFY(coordinator.tryTake(firstUrl).has_value());
+    QTRY_VERIFY(coordinator.findPredecodedImage(thirdUrl).has_value());
+    QTRY_VERIFY(coordinator.findPredecodedImage(firstUrl).has_value());
     QCOMPARE(state->openCount.load(), 1);
     QCOMPARE(state->candidateLoadCount.load(), 1);
     QCOMPARE(state->dataLoadCount.load(), 2);
