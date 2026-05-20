@@ -3,6 +3,7 @@
 
 #include "imagecandidatedirectoryentry.h"
 
+#include "imagecallback.h"
 #include "imagecandidateitems.h"
 
 #include <KCoreDirLister>
@@ -36,6 +37,24 @@ void notifyChanged(QObject *context, KiriView::ImageCandidateDirectoryEntry *ent
             entry->handleChanged();
         }
     });
+}
+
+void applyEntryNotificationPlan(KiriView::ImageCandidateStoreEntryNotificationPlan plan)
+{
+    for (const KiriView::ImageCandidateStoreEntryPendingLoad &load : plan.completedLoads) {
+        load.completion.claimAndDelete(
+            [&]() { KiriView::invokeIfSet(load.callback, plan.candidates); });
+    }
+    for (const KiriView::ImageCandidateStoreEntrySubscriber &subscriber : plan.changedSubscribers) {
+        KiriView::invokeIfSet(subscriber.callback, plan.candidates);
+    }
+    for (const KiriView::ImageCandidateStoreEntryPendingLoad &load : plan.failedLoads) {
+        load.completion.claimAndDelete(
+            [&]() { KiriView::invokeIfSet(load.errorCallback, plan.errorString); });
+    }
+    for (const KiriView::ImageCandidateStoreEntrySubscriber &subscriber : plan.failedSubscribers) {
+        KiriView::invokeIfSet(subscriber.errorCallback, plan.errorString);
+    }
 }
 }
 
@@ -72,17 +91,19 @@ bool ImageCandidateDirectoryEntry::open()
 
 void ImageCandidateDirectoryEntry::handleCompleted()
 {
-    m_state.completeListing(imageCandidatesForLister(m_lister.get(), m_directoryUrl));
+    applyEntryNotificationPlan(
+        m_state.completeListing(imageCandidatesForLister(m_lister.get(), m_directoryUrl)));
 }
 
 void ImageCandidateDirectoryEntry::handleChanged()
 {
-    m_state.updateListing(imageCandidatesForLister(m_lister.get(), m_directoryUrl));
+    applyEntryNotificationPlan(
+        m_state.updateListing(imageCandidatesForLister(m_lister.get(), m_directoryUrl)));
 }
 
 void ImageCandidateDirectoryEntry::handleError(const QString &errorString)
 {
-    m_state.failListing(errorString);
+    applyEntryNotificationPlan(m_state.failListing(errorString));
 }
 
 ImageIoJob ImageCandidateDirectoryEntry::addPendingLoad(ImageCandidatesCallback callback,

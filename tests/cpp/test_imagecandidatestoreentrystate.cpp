@@ -31,6 +31,38 @@ std::vector<KiriView::ImageNavigationCandidate> candidates(std::initializer_list
     }
     return result;
 }
+
+void deliverCandidatePlan(const KiriView::ImageCandidateStoreEntryNotificationPlan &plan)
+{
+    for (const KiriView::ImageCandidateStoreEntryPendingLoad &load : plan.completedLoads) {
+        load.completion.claimAndDelete([&]() {
+            if (load.callback) {
+                load.callback(plan.candidates);
+            }
+        });
+    }
+    for (const KiriView::ImageCandidateStoreEntrySubscriber &subscriber : plan.changedSubscribers) {
+        if (subscriber.callback) {
+            subscriber.callback(plan.candidates);
+        }
+    }
+}
+
+void deliverErrorPlan(const KiriView::ImageCandidateStoreEntryNotificationPlan &plan)
+{
+    for (const KiriView::ImageCandidateStoreEntryPendingLoad &load : plan.failedLoads) {
+        load.completion.claimAndDelete([&]() {
+            if (load.errorCallback) {
+                load.errorCallback(plan.errorString);
+            }
+        });
+    }
+    for (const KiriView::ImageCandidateStoreEntrySubscriber &subscriber : plan.failedSubscribers) {
+        if (subscriber.errorCallback) {
+            subscriber.errorCallback(plan.errorString);
+        }
+    }
+}
 }
 
 class TestImageCandidateStoreEntryState : public QObject
@@ -38,13 +70,13 @@ class TestImageCandidateStoreEntryState : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
-    void completedListingFinishesPendingLoadsAndCachesCandidates();
+    void completedListingReturnsPendingLoadPlanAndCachesCandidates();
     void cancelledPendingLoadDoesNotReceiveCompletion();
-    void subscribersOnlyReceiveChangesAfterInitialListing();
-    void failedListingFinishesPendingErrorsAndNotifiesSubscribers();
+    void subscribersOnlyReceivePlansAfterInitialListing();
+    void failedListingReturnsErrorPlansForPendingLoadsAndSubscribers();
 };
 
-void TestImageCandidateStoreEntryState::completedListingFinishesPendingLoadsAndCachesCandidates()
+void TestImageCandidateStoreEntryState::completedListingReturnsPendingLoadPlanAndCachesCandidates()
 {
     KiriView::ImageCandidateStoreEntryState state;
     std::vector<KiriView::ImageNavigationCandidate> loadedCandidates;
@@ -63,10 +95,17 @@ void TestImageCandidateStoreEntryState::completedListingFinishesPendingLoadsAndC
         });
 
     QVERIFY(job.isActive());
-    state.completeListing(candidates({ QStringLiteral("01.png"), QStringLiteral("02.png") }));
+    const KiriView::ImageCandidateStoreEntryNotificationPlan plan
+        = state.completeListing(candidates({ QStringLiteral("01.png"), QStringLiteral("02.png") }));
 
     QVERIFY(state.listed());
     QVERIFY(!state.failed());
+    QCOMPARE(plan.completedLoads.size(), std::size_t(1));
+    QCOMPARE(plan.failedLoads.size(), std::size_t(0));
+    QCOMPARE(plan.changedSubscribers.size(), std::size_t(0));
+    QCOMPARE(plan.candidates.size(), std::size_t(2));
+    QVERIFY(job.isActive());
+    deliverCandidatePlan(plan);
     QVERIFY(!job.isActive());
     QCOMPARE(errorCount, 0);
     QCOMPARE(cancelCount, 0);
@@ -93,14 +132,16 @@ void TestImageCandidateStoreEntryState::cancelledPendingLoadDoesNotReceiveComple
         });
 
     job.cancel();
-    state.completeListing(candidates({ QStringLiteral("01.png") }));
+    const KiriView::ImageCandidateStoreEntryNotificationPlan plan
+        = state.completeListing(candidates({ QStringLiteral("01.png") }));
 
+    QCOMPARE(plan.completedLoads.size(), std::size_t(0));
     QCOMPARE(cancelCount, 1);
     QCOMPARE(loadCount, 0);
     QVERIFY(!job.isActive());
 }
 
-void TestImageCandidateStoreEntryState::subscribersOnlyReceiveChangesAfterInitialListing()
+void TestImageCandidateStoreEntryState::subscribersOnlyReceivePlansAfterInitialListing()
 {
     KiriView::ImageCandidateStoreEntryState state;
     std::vector<KiriView::ImageNavigationCandidate> changedCandidates;
@@ -120,24 +161,32 @@ void TestImageCandidateStoreEntryState::subscribersOnlyReceiveChangesAfterInitia
             state.removeSubscriber(token);
         });
 
-    state.completeListing(candidates({ QStringLiteral("01.png") }));
+    KiriView::ImageCandidateStoreEntryNotificationPlan plan
+        = state.completeListing(candidates({ QStringLiteral("01.png") }));
+    QCOMPARE(plan.changedSubscribers.size(), std::size_t(0));
     QCOMPARE(changeCount, 0);
 
-    state.updateListing(candidates({ QStringLiteral("01.png") }));
+    plan = state.updateListing(candidates({ QStringLiteral("01.png") }));
+    QCOMPARE(plan.changedSubscribers.size(), std::size_t(0));
     QCOMPARE(changeCount, 0);
 
-    state.updateListing(candidates({ QStringLiteral("01.png"), QStringLiteral("02.png") }));
+    plan = state.updateListing(candidates({ QStringLiteral("01.png"), QStringLiteral("02.png") }));
+    QCOMPARE(plan.changedSubscribers.size(), std::size_t(1));
+    QCOMPARE(plan.candidates.size(), std::size_t(2));
+    deliverCandidatePlan(plan);
     QCOMPARE(changeCount, 1);
     QCOMPARE(changedCandidates.size(), std::size_t(2));
 
     job.cancel();
-    state.updateListing(candidates(
+    plan = state.updateListing(candidates(
         { QStringLiteral("01.png"), QStringLiteral("02.png"), QStringLiteral("03.png") }));
+    QCOMPARE(plan.changedSubscribers.size(), std::size_t(0));
     QCOMPARE(cancelCount, 1);
     QCOMPARE(changeCount, 1);
 }
 
-void TestImageCandidateStoreEntryState::failedListingFinishesPendingErrorsAndNotifiesSubscribers()
+void TestImageCandidateStoreEntryState::
+    failedListingReturnsErrorPlansForPendingLoadsAndSubscribers()
 {
     KiriView::ImageCandidateStoreEntryState state;
     QString pendingError;
@@ -156,10 +205,17 @@ void TestImageCandidateStoreEntryState::failedListingFinishesPendingErrorsAndNot
         [&subscriberError](const QString &errorString) { subscriberError = errorString; },
         [&state](QObject *token) { state.removeSubscriber(token); });
 
-    state.failListing(QStringLiteral("missing directory"));
+    const KiriView::ImageCandidateStoreEntryNotificationPlan plan
+        = state.failListing(QStringLiteral("missing directory"));
 
     QVERIFY(state.failed());
     QCOMPARE(state.errorString(), QStringLiteral("missing directory"));
+    QCOMPARE(plan.failedLoads.size(), std::size_t(1));
+    QCOMPARE(plan.failedSubscribers.size(), std::size_t(1));
+    QCOMPARE(plan.errorString, QStringLiteral("missing directory"));
+    QVERIFY(pending.isActive());
+    QVERIFY(subscriber.isActive());
+    deliverErrorPlan(plan);
     QVERIFY(!pending.isActive());
     QVERIFY(subscriber.isActive());
     QCOMPARE(loadCount, 0);

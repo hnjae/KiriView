@@ -3,7 +3,6 @@
 
 #include "imagecandidatestoreentrystate.h"
 
-#include "imagecallback.h"
 #include "imageurl.h"
 
 #include <algorithm>
@@ -61,7 +60,7 @@ ImageIoJob ImageCandidateStoreEntryState::addPendingLoad(QObject *receiver, QObj
         removeToken(object);
         object->deleteLater();
     });
-    m_pendingLoads.push_back(PendingLoad {
+    m_pendingLoads.push_back(ImageCandidateStoreEntryPendingLoad {
         job.completion(),
         std::move(callback),
         std::move(errorCallback),
@@ -78,7 +77,7 @@ ImageIoJob ImageCandidateStoreEntryState::addSubscriber(QObject *receiver, QObje
         removeToken(object);
         object->deleteLater();
     });
-    m_subscribers.push_back(Subscriber {
+    m_subscribers.push_back(ImageCandidateStoreEntrySubscriber {
         token,
         std::move(callback),
         std::move(errorCallback),
@@ -89,18 +88,22 @@ ImageIoJob ImageCandidateStoreEntryState::addSubscriber(QObject *receiver, QObje
 void ImageCandidateStoreEntryState::removePendingLoad(QObject *token)
 {
     const auto removed = std::remove_if(m_pendingLoads.begin(), m_pendingLoads.end(),
-        [token](const PendingLoad &load) { return load.completion.object() == token; });
+        [token](const ImageCandidateStoreEntryPendingLoad &load) {
+            return load.completion.object() == token;
+        });
     m_pendingLoads.erase(removed, m_pendingLoads.end());
 }
 
 void ImageCandidateStoreEntryState::removeSubscriber(QObject *token)
 {
     const auto removed = std::remove_if(m_subscribers.begin(), m_subscribers.end(),
-        [token](const Subscriber &subscriber) { return subscriber.token.data() == token; });
+        [token](const ImageCandidateStoreEntrySubscriber &subscriber) {
+            return subscriber.token.data() == token;
+        });
     m_subscribers.erase(removed, m_subscribers.end());
 }
 
-void ImageCandidateStoreEntryState::completeListing(
+ImageCandidateStoreEntryNotificationPlan ImageCandidateStoreEntryState::completeListing(
     std::vector<ImageNavigationCandidate> candidates)
 {
     const bool wasListed = m_listed;
@@ -108,27 +111,39 @@ void ImageCandidateStoreEntryState::completeListing(
     m_listed = true;
     m_failed = false;
     m_errorString = QString();
-    finishPendingLoads();
 
+    ImageCandidateStoreEntryNotificationPlan plan;
+    plan.completedLoads = takePendingLoads();
+    plan.candidates = m_candidates;
     if (wasListed && changed) {
-        notifySubscribers();
+        plan.changedSubscribers = activeSubscribers();
     }
+    return plan;
 }
 
-void ImageCandidateStoreEntryState::updateListing(std::vector<ImageNavigationCandidate> candidates)
+ImageCandidateStoreEntryNotificationPlan ImageCandidateStoreEntryState::updateListing(
+    std::vector<ImageNavigationCandidate> candidates)
 {
     const bool changed = replaceCandidates(std::move(candidates));
+    ImageCandidateStoreEntryNotificationPlan plan;
+    plan.candidates = m_candidates;
     if (m_listed && changed) {
-        notifySubscribers();
+        plan.changedSubscribers = activeSubscribers();
     }
+    return plan;
 }
 
-void ImageCandidateStoreEntryState::failListing(QString errorString)
+ImageCandidateStoreEntryNotificationPlan ImageCandidateStoreEntryState::failListing(
+    QString errorString)
 {
     m_failed = true;
     m_errorString = std::move(errorString);
-    finishPendingLoadErrors();
-    notifySubscriberErrors();
+
+    ImageCandidateStoreEntryNotificationPlan plan;
+    plan.failedLoads = takePendingLoads();
+    plan.failedSubscribers = activeSubscribers();
+    plan.errorString = m_errorString;
+    return plan;
 }
 
 bool ImageCandidateStoreEntryState::replaceCandidates(
@@ -142,41 +157,16 @@ bool ImageCandidateStoreEntryState::replaceCandidates(
     return true;
 }
 
-void ImageCandidateStoreEntryState::finishPendingLoads()
+std::vector<ImageCandidateStoreEntryPendingLoad> ImageCandidateStoreEntryState::takePendingLoads()
 {
-    std::vector<PendingLoad> pendingLoads = std::move(m_pendingLoads);
+    std::vector<ImageCandidateStoreEntryPendingLoad> pendingLoads = std::move(m_pendingLoads);
     m_pendingLoads.clear();
-    for (PendingLoad &load : pendingLoads) {
-        load.completion.claimAndDelete([&]() { invokeIfSet(load.callback, m_candidates); });
-    }
+    return pendingLoads;
 }
 
-void ImageCandidateStoreEntryState::finishPendingLoadErrors()
-{
-    std::vector<PendingLoad> pendingLoads = std::move(m_pendingLoads);
-    m_pendingLoads.clear();
-    for (PendingLoad &load : pendingLoads) {
-        load.completion.claimAndDelete([&]() { invokeIfSet(load.errorCallback, m_errorString); });
-    }
-}
-
-void ImageCandidateStoreEntryState::notifySubscribers()
+std::vector<ImageCandidateStoreEntrySubscriber> ImageCandidateStoreEntryState::activeSubscribers()
 {
     pruneInactiveItems(&m_subscribers);
-    const std::vector<Subscriber> subscribers = m_subscribers;
-    const std::vector<ImageNavigationCandidate> candidates = m_candidates;
-    for (const Subscriber &subscriber : subscribers) {
-        invokeIfSet(subscriber.callback, candidates);
-    }
-}
-
-void ImageCandidateStoreEntryState::notifySubscriberErrors()
-{
-    pruneInactiveItems(&m_subscribers);
-    const std::vector<Subscriber> subscribers = m_subscribers;
-    const QString errorString = m_errorString;
-    for (const Subscriber &subscriber : subscribers) {
-        invokeIfSet(subscriber.errorCallback, errorString);
-    }
+    return m_subscribers;
 }
 }

@@ -15,6 +15,27 @@
 #include <vector>
 
 namespace KiriView {
+struct ImageCandidateStoreEntryPendingLoad {
+    ImageIoJobCompletion completion;
+    ImageCandidatesCallback callback;
+    ErrorCallback errorCallback;
+};
+
+struct ImageCandidateStoreEntrySubscriber {
+    QPointer<QObject> token;
+    ImageCandidatesCallback callback;
+    ErrorCallback errorCallback;
+};
+
+struct ImageCandidateStoreEntryNotificationPlan {
+    std::vector<ImageCandidateStoreEntryPendingLoad> completedLoads;
+    std::vector<ImageCandidateStoreEntryPendingLoad> failedLoads;
+    std::vector<ImageCandidateStoreEntrySubscriber> changedSubscribers;
+    std::vector<ImageCandidateStoreEntrySubscriber> failedSubscribers;
+    std::vector<ImageNavigationCandidate> candidates;
+    QString errorString;
+};
+
 class ImageCandidateStoreEntryState final
 {
 public:
@@ -32,32 +53,20 @@ public:
     void removePendingLoad(QObject *token);
     void removeSubscriber(QObject *token);
 
-    void completeListing(std::vector<ImageNavigationCandidate> candidates);
-    void updateListing(std::vector<ImageNavigationCandidate> candidates);
-    void failListing(QString errorString);
+    ImageCandidateStoreEntryNotificationPlan completeListing(
+        std::vector<ImageNavigationCandidate> candidates);
+    ImageCandidateStoreEntryNotificationPlan updateListing(
+        std::vector<ImageNavigationCandidate> candidates);
+    ImageCandidateStoreEntryNotificationPlan failListing(QString errorString);
 
 private:
-    struct PendingLoad {
-        ImageIoJobCompletion completion;
-        ImageCandidatesCallback callback;
-        ErrorCallback errorCallback;
-    };
-
-    struct Subscriber {
-        QPointer<QObject> token;
-        ImageCandidatesCallback callback;
-        ErrorCallback errorCallback;
-    };
-
     bool replaceCandidates(std::vector<ImageNavigationCandidate> candidates);
-    void finishPendingLoads();
-    void finishPendingLoadErrors();
-    void notifySubscribers();
-    void notifySubscriberErrors();
+    std::vector<ImageCandidateStoreEntryPendingLoad> takePendingLoads();
+    std::vector<ImageCandidateStoreEntrySubscriber> activeSubscribers();
 
     std::vector<ImageNavigationCandidate> m_candidates;
-    std::vector<PendingLoad> m_pendingLoads;
-    std::vector<Subscriber> m_subscribers;
+    std::vector<ImageCandidateStoreEntryPendingLoad> m_pendingLoads;
+    std::vector<ImageCandidateStoreEntrySubscriber> m_subscribers;
     bool m_listed = false;
     bool m_failed = false;
     QString m_errorString;
