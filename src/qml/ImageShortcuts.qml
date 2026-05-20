@@ -16,29 +16,7 @@ Item {
     required property var imageToolBar
     required property bool helpDialogOpen
 
-    readonly property bool imageReady: imageDocument.status === KiriImageDocument.Ready
-    readonly property bool imagePannable: imageViewport.imagePannable
-    readonly property bool imageHorizontallyPannable: imageViewport.imageHorizontallyPannable
-    readonly property bool atFirstImage: imageDocument.currentPageNumber === 1 && imageDocument.imageCount > 0
-    readonly property bool atLastImage: imageDocument.currentPageNumber > 0 && imageDocument.currentPageNumber === imageDocument.imageCount
     readonly property int keyboardPanDistance: 64
-    readonly property bool helpShortcutsEnabled: !root.helpDialogOpen
-    readonly property bool viewerShortcutsEnabled: !root.textInputFocused() && root.helpShortcutsEnabled
-    readonly property bool readyShortcutsEnabled: root.imageReady && !root.imageDocument.fileDeletionInProgress && root.helpShortcutsEnabled
-    readonly property bool readyViewerShortcutsEnabled: root.imageReady && !root.imageDocument.fileDeletionInProgress && root.viewerShortcutsEnabled
-    readonly property bool imageSelectionShortcutsEnabled: root.imageDocument.imageCount > 0 && root.imageDocument.currentPageNumber > 0 && !root.imageDocument.fileDeletionInProgress && root.helpShortcutsEnabled
-    readonly property bool imageSelectionViewerShortcutsEnabled: root.imageDocument.imageCount > 0 && root.imageDocument.currentPageNumber > 0 && !root.imageDocument.fileDeletionInProgress && root.viewerShortcutsEnabled
-    readonly property bool pageShortcutsEnabled: root.imageSelectionShortcutsEnabled
-    readonly property bool pageViewerShortcutsEnabled: root.imageSelectionViewerShortcutsEnabled
-    readonly property bool twoPageViewerShortcutsEnabled: root.imageSelectionViewerShortcutsEnabled && root.imageDocument.twoPageModeAvailable && root.imageDocument.twoPageModeEnabled
-    readonly property bool rightToLeftReadingShortcutsEnabled: root.readyShortcutsEnabled && root.imageDocument.rightToLeftReadingAvailable
-    readonly property bool rightToLeftReadingViewerShortcutsEnabled: root.readyViewerShortcutsEnabled && root.imageDocument.rightToLeftReadingAvailable
-    readonly property bool rotateShortcutsEnabled: root.readyShortcutsEnabled && !(root.imageDocument.twoPageModeEnabled && root.imageDocument.twoPageModeAvailable)
-    readonly property bool rotateViewerShortcutsEnabled: root.readyViewerShortcutsEnabled && !(root.imageDocument.twoPageModeEnabled && root.imageDocument.twoPageModeAvailable)
-    readonly property bool pannableShortcutsEnabled: root.imagePannable && !root.imageDocument.fileDeletionInProgress && root.helpShortcutsEnabled
-    readonly property bool pannableViewerShortcutsEnabled: root.imagePannable && !root.imageDocument.fileDeletionInProgress && root.viewerShortcutsEnabled
-    readonly property bool containerShortcutsEnabled: root.imageDocument.containerNavigationAvailable && !root.imageDocument.fileDeletionInProgress && root.helpShortcutsEnabled
-    readonly property bool containerViewerShortcutsEnabled: root.imageDocument.containerNavigationAvailable && !root.imageDocument.fileDeletionInProgress && root.viewerShortcutsEnabled
 
     readonly property var previousImageQAction: root.application.actionForId(KiriViewApplication.GoPreviousImageAction)
     readonly property var nextImageQAction: root.application.actionForId(KiriViewApplication.GoNextImageAction)
@@ -81,6 +59,25 @@ Item {
     readonly property var actionShortcutRoutes: root.createActionShortcutRoutes()
 
     signal imageBoundaryReached(string message)
+
+    ImageActionAvailability {
+        id: actionAvailability
+
+        containerNavigationAvailable: root.imageDocument.containerNavigationAvailable
+        currentLastPageNumber: root.imageDocument.currentLastPageNumber
+        currentPageNumber: root.imageDocument.currentPageNumber
+        fileDeletionInProgress: root.imageDocument.fileDeletionInProgress
+        helpDialogOpen: root.helpDialogOpen
+        imageCount: root.imageDocument.imageCount
+        imageHorizontallyPannable: root.imageViewport.imageHorizontallyPannable
+        imagePannable: root.imageViewport.imagePannable
+        imageReady: root.imageDocument.status === KiriImageDocument.Ready
+        rightToLeftReadingAvailable: root.imageDocument.rightToLeftReadingAvailable
+        rightToLeftReadingEnabled: root.imageDocument.rightToLeftReadingEnabled
+        textInputFocused: root.imageToolBar.textInputFocused()
+        twoPageModeAvailable: root.imageDocument.twoPageModeAvailable
+        twoPageModeEnabled: root.imageDocument.twoPageModeEnabled
+    }
 
     function shortcutRoute(actionIds, shortcutFilter, shortcutScope) {
         return {
@@ -132,37 +129,37 @@ Item {
     function shortcutsEnabledForScope(shortcutScope) {
         switch (shortcutScope) {
         case root.shortcutScopeHelp:
-            return root.helpShortcutsEnabled;
+            return actionAvailability.helpShortcutsEnabled;
         case root.shortcutScopeViewer:
-            return root.viewerShortcutsEnabled;
+            return actionAvailability.viewerShortcutsEnabled;
         case root.shortcutScopeReady:
-            return root.readyShortcutsEnabled;
+            return actionAvailability.readyShortcutsEnabled;
         case root.shortcutScopeReadyViewer:
-            return root.readyViewerShortcutsEnabled;
+            return actionAvailability.readyViewerShortcutsEnabled;
         case root.shortcutScopeImageSelection:
-            return root.imageSelectionShortcutsEnabled;
+            return actionAvailability.imageSelectionShortcutsEnabled;
         case root.shortcutScopeImageSelectionViewer:
-            return root.imageSelectionViewerShortcutsEnabled;
+            return actionAvailability.imageSelectionViewerShortcutsEnabled;
         case root.shortcutScopePage:
-            return root.pageShortcutsEnabled;
+            return actionAvailability.pageShortcutsEnabled;
         case root.shortcutScopePageViewer:
-            return root.pageViewerShortcutsEnabled;
+            return actionAvailability.pageViewerShortcutsEnabled;
         case root.shortcutScopeRightToLeftReading:
-            return root.rightToLeftReadingShortcutsEnabled;
+            return actionAvailability.rightToLeftReadingShortcutsEnabled;
         case root.shortcutScopeRightToLeftReadingViewer:
-            return root.rightToLeftReadingViewerShortcutsEnabled;
+            return actionAvailability.rightToLeftReadingViewerShortcutsEnabled;
         case root.shortcutScopeRotate:
-            return root.rotateShortcutsEnabled;
+            return actionAvailability.rotateShortcutsEnabled;
         case root.shortcutScopeRotateViewer:
-            return root.rotateViewerShortcutsEnabled;
+            return actionAvailability.rotateViewerShortcutsEnabled;
         case root.shortcutScopePannable:
-            return root.pannableShortcutsEnabled;
+            return actionAvailability.pannableShortcutsEnabled;
         case root.shortcutScopePannableViewer:
-            return root.pannableViewerShortcutsEnabled;
+            return actionAvailability.pannableViewerShortcutsEnabled;
         case root.shortcutScopeContainer:
-            return root.containerShortcutsEnabled;
+            return actionAvailability.containerShortcutsEnabled;
         case root.shortcutScopeContainerViewer:
-            return root.containerViewerShortcutsEnabled;
+            return actionAvailability.containerViewerShortcutsEnabled;
         default:
             return false;
         }
@@ -178,10 +175,6 @@ Item {
 
     function panToTopLeft() {
         return imageViewport.panToTopLeft();
-    }
-
-    function rightToLeftReadingActive() {
-        return root.imageDocument.rightToLeftReadingEnabled && root.imageDocument.rightToLeftReadingAvailable;
     }
 
     function applyHorizontalArrowAction(action) {
@@ -233,27 +226,23 @@ Item {
     }
 
     function handleHorizontalArrow(leftArrow) {
-        const action = navigationPolicy.horizontalArrowAction(leftArrow, root.imageHorizontallyPannable, root.rightToLeftReadingActive());
+        const action = navigationPolicy.horizontalArrowAction(leftArrow, actionAvailability.imageHorizontallyPannable, actionAvailability.rightToLeftReadingActive);
         root.applyHorizontalArrowAction(action);
     }
 
     function handleSinglePageArrow(leftArrow) {
-        const action = navigationPolicy.singlePageArrowAction(leftArrow, root.rightToLeftReadingActive());
+        const action = navigationPolicy.singlePageArrowAction(leftArrow, actionAvailability.rightToLeftReadingActive);
         root.applySinglePageArrowAction(action);
     }
 
     function scanForward() {
-        const action = navigationPolicy.scanForwardAction(root.imagePannable, root.imagePannable && root.imageViewport.scanForward());
+        const action = navigationPolicy.scanForwardAction(actionAvailability.imagePannable, actionAvailability.imagePannable && root.imageViewport.scanForward());
         root.applyScanAction(action);
     }
 
     function scanBackward() {
-        const action = navigationPolicy.scanBackwardAction(root.imagePannable, root.imagePannable && root.imageViewport.scanBackward(), root.atFirstImage, root.imageDocument.currentPageNumber);
+        const action = navigationPolicy.scanBackwardAction(actionAvailability.imagePannable, actionAvailability.imagePannable && root.imageViewport.scanBackward(), actionAvailability.atKnownFirstImage, root.imageDocument.currentPageNumber);
         root.applyScanAction(action);
-    }
-
-    function textInputFocused() {
-        return imageToolBar.textInputFocused();
     }
 
     function zoomByStep(stepCount, viewportX, viewportY) {
@@ -283,7 +272,7 @@ Item {
 
     Shortcut {
         context: Qt.WindowShortcut
-        enabled: root.helpShortcutsEnabled
+        enabled: actionAvailability.helpShortcutsEnabled
         sequence: "Ctrl+M"
 
         onActivated: root.showMenubarQAction.trigger()
@@ -291,7 +280,7 @@ Item {
 
     Shortcut {
         context: Qt.WindowShortcut
-        enabled: root.readyViewerShortcutsEnabled
+        enabled: actionAvailability.readyViewerShortcutsEnabled
         sequence: "Left"
 
         onActivated: root.handleHorizontalArrow(true)
@@ -299,7 +288,7 @@ Item {
 
     Shortcut {
         context: Qt.WindowShortcut
-        enabled: root.readyViewerShortcutsEnabled
+        enabled: actionAvailability.readyViewerShortcutsEnabled
         sequence: "Right"
 
         onActivated: root.handleHorizontalArrow(false)
@@ -307,7 +296,7 @@ Item {
 
     Shortcut {
         context: Qt.WindowShortcut
-        enabled: root.twoPageViewerShortcutsEnabled
+        enabled: actionAvailability.twoPageViewerShortcutsEnabled
         sequence: "Shift+Left"
 
         onActivated: root.handleSinglePageArrow(true)
@@ -315,7 +304,7 @@ Item {
 
     Shortcut {
         context: Qt.WindowShortcut
-        enabled: root.twoPageViewerShortcutsEnabled
+        enabled: actionAvailability.twoPageViewerShortcutsEnabled
         sequence: "Shift+Right"
 
         onActivated: root.handleSinglePageArrow(false)
@@ -323,7 +312,7 @@ Item {
 
     Shortcut {
         context: Qt.WindowShortcut
-        enabled: root.pannableViewerShortcutsEnabled
+        enabled: actionAvailability.pannableViewerShortcutsEnabled
         sequence: "Up"
 
         onActivated: root.panBy(0, -root.keyboardPanDistance)
@@ -331,7 +320,7 @@ Item {
 
     Shortcut {
         context: Qt.WindowShortcut
-        enabled: root.pannableViewerShortcutsEnabled
+        enabled: actionAvailability.pannableViewerShortcutsEnabled
         sequence: "Down"
 
         onActivated: root.panBy(0, root.keyboardPanDistance)

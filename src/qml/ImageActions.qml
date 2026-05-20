@@ -15,16 +15,6 @@ Item {
     required property bool helpDialogOpen
     required property bool fullscreen
 
-    readonly property bool canOpenNextImage: root.imageDocument.currentPageNumber > 0 && root.imageDocument.currentLastPageNumber < root.imageDocument.imageCount
-    readonly property bool canOpenPreviousImage: root.imageDocument.currentPageNumber > 1
-    readonly property bool atKnownFirstImage: root.imageDocument.imageCount > 0 && root.imageDocument.currentPageNumber === 1
-    readonly property bool atKnownLastImage: root.imageDocument.imageCount > 0 && root.imageDocument.currentPageNumber > 0 && root.imageDocument.currentLastPageNumber > 0 && root.imageDocument.currentLastPageNumber >= root.imageDocument.imageCount
-    readonly property bool canUsePageActions: root.imageDocument.imageCount > 0 && root.imageDocument.currentPageNumber > 0 && !root.imageDocument.fileDeletionInProgress && !root.helpDialogOpen
-    readonly property bool canUseReadyActions: root.imageReady && !root.imageDocument.fileDeletionInProgress && !root.helpDialogOpen
-    readonly property bool canUseRotateActions: root.canUseReadyActions && !(root.imageDocument.twoPageModeEnabled && root.imageDocument.twoPageModeAvailable)
-    readonly property bool canUseRightToLeftReadingActions: root.canUseReadyActions && root.imageDocument.rightToLeftReadingAvailable
-    readonly property bool rightToLeftReadingActive: root.imageDocument.rightToLeftReadingEnabled && root.imageDocument.rightToLeftReadingAvailable
-
     readonly property var openAction: openManagedAction.proxy
     readonly property var moveToTrashAction: moveToTrashManagedAction.proxy
     readonly property var deleteFileAction: deleteFileManagedAction.proxy
@@ -75,6 +65,7 @@ Item {
     readonly property var configureShortcutsMenuAction: configureShortcutsManagedAction.menuProxy
     readonly property var showMenubarMenuAction: showMenubarManagedAction.menuProxy
     readonly property var quitMenuAction: quitManagedAction.menuProxy
+    readonly property bool rightToLeftReadingActive: actionAvailability.rightToLeftReadingActive
     readonly property var applicationMenuNavigationActions: root.rightToLeftReadingActive ? [nextContainerManagedAction.menuProxy, previousContainerManagedAction.menuProxy] : [previousContainerManagedAction.menuProxy, nextContainerManagedAction.menuProxy]
     readonly property var applicationMenuActions: [openManagedAction.menuProxy, applicationMenuFileSeparator, moveToTrashManagedAction.menuProxy, deleteFileManagedAction.menuProxy, applicationMenuNavigationSeparator].concat(root.applicationMenuNavigationActions, [applicationMenuViewSeparator, rotateClockwiseManagedAction.menuProxy, rotateCounterclockwiseManagedAction.menuProxy, twoPageModeManagedAction.menuProxy, rightToLeftReadingManagedAction.menuProxy, fullscreenManagedAction.menuProxy, applicationMenuSettingsSeparator, showMenubarManagedAction.menuProxy, configureShortcutsManagedAction.menuProxy, applicationMenuHelpSeparator, shortcutHelpManagedAction.menuProxy, applicationMenuQuitSeparator, quitManagedAction.menuProxy])
 
@@ -82,6 +73,22 @@ Item {
     signal imageBoundaryReached(string message)
     signal shortcutHelpRequested
     signal toggleFullScreenRequested
+
+    ImageActionAvailability {
+        id: actionAvailability
+
+        containerNavigationAvailable: root.imageDocument.containerNavigationAvailable
+        currentLastPageNumber: root.imageDocument.currentLastPageNumber
+        currentPageNumber: root.imageDocument.currentPageNumber
+        fileDeletionInProgress: root.imageDocument.fileDeletionInProgress
+        helpDialogOpen: root.helpDialogOpen
+        imageCount: root.imageDocument.imageCount
+        imageReady: root.imageReady
+        rightToLeftReadingAvailable: root.imageDocument.rightToLeftReadingAvailable
+        rightToLeftReadingEnabled: root.imageDocument.rightToLeftReadingEnabled
+        twoPageModeAvailable: root.imageDocument.twoPageModeAvailable
+        twoPageModeEnabled: root.imageDocument.twoPageModeEnabled
+    }
 
     function openFirstImage() {
         if (root.imageDocument.imageCount > 0) {
@@ -96,7 +103,7 @@ Item {
     }
 
     function openNextImage() {
-        if (root.atKnownLastImage) {
+        if (actionAvailability.atKnownLastImage) {
             root.imageBoundaryReached(KI18n.i18nc("@info:status", "Last image"));
             return;
         }
@@ -105,7 +112,7 @@ Item {
     }
 
     function openPreviousImage() {
-        if (root.atKnownFirstImage) {
+        if (actionAvailability.atKnownFirstImage) {
             root.imageBoundaryReached(KI18n.i18nc("@info:status", "First image"));
             return;
         }
@@ -146,7 +153,7 @@ Item {
     ManagedAction {
         id: openManagedAction
 
-        actionEnabled: !root.helpDialogOpen
+        actionEnabled: actionAvailability.helpShortcutsEnabled
         actionId: KiriViewApplication.FileOpenAction
         application: root.application
         bindEnabled: true
@@ -159,7 +166,7 @@ Item {
     ManagedAction {
         id: moveToTrashManagedAction
 
-        actionEnabled: root.canUseReadyActions
+        actionEnabled: actionAvailability.canUseReadyActions
         actionId: KiriViewApplication.FileMoveToTrashAction
         application: root.application
         bindEnabled: true
@@ -172,7 +179,7 @@ Item {
     ManagedAction {
         id: deleteFileManagedAction
 
-        actionEnabled: root.canUseReadyActions
+        actionEnabled: actionAvailability.canUseReadyActions
         actionId: KiriViewApplication.FileDeleteAction
         application: root.application
         bindEnabled: true
@@ -185,7 +192,7 @@ Item {
     ManagedAction {
         id: previousContainerManagedAction
 
-        actionEnabled: root.imageDocument.containerNavigationAvailable && !root.imageDocument.fileDeletionInProgress && !root.helpDialogOpen
+        actionEnabled: actionAvailability.containerShortcutsEnabled
         actionId: KiriViewApplication.GoPreviousArchiveAction
         application: root.application
         bindEnabled: true
@@ -198,7 +205,7 @@ Item {
     ManagedAction {
         id: nextContainerManagedAction
 
-        actionEnabled: root.imageDocument.containerNavigationAvailable && !root.imageDocument.fileDeletionInProgress && !root.helpDialogOpen
+        actionEnabled: actionAvailability.containerShortcutsEnabled
         actionId: KiriViewApplication.GoNextArchiveAction
         application: root.application
         bindEnabled: true
@@ -211,11 +218,11 @@ Item {
     ManagedAction {
         id: previousImageManagedAction
 
-        actionEnabled: root.canUsePageActions
+        actionEnabled: actionAvailability.canUsePageActions
         actionId: KiriViewApplication.GoPreviousImageAction
         application: root.application
         bindEnabled: true
-        proxyEnabled: root.canUsePageActions && root.canOpenPreviousImage
+        proxyEnabled: actionAvailability.canUsePageActions && actionAvailability.canOpenPreviousImage
 
         onTriggered: root.openPreviousImage()
     }
@@ -223,11 +230,11 @@ Item {
     ManagedAction {
         id: nextImageManagedAction
 
-        actionEnabled: root.canUsePageActions
+        actionEnabled: actionAvailability.canUsePageActions
         actionId: KiriViewApplication.GoNextImageAction
         application: root.application
         bindEnabled: true
-        proxyEnabled: root.canUsePageActions && root.canOpenNextImage
+        proxyEnabled: actionAvailability.canUsePageActions && actionAvailability.canOpenNextImage
 
         onTriggered: root.openNextImage()
     }
@@ -235,11 +242,11 @@ Item {
     ManagedAction {
         id: firstImageManagedAction
 
-        actionEnabled: root.canUsePageActions
+        actionEnabled: actionAvailability.canUsePageActions
         actionId: KiriViewApplication.GoFirstImageAction
         application: root.application
         bindEnabled: true
-        proxyEnabled: root.canUsePageActions
+        proxyEnabled: actionAvailability.canUsePageActions
 
         onTriggered: root.openFirstImage()
     }
@@ -247,11 +254,11 @@ Item {
     ManagedAction {
         id: lastImageManagedAction
 
-        actionEnabled: root.canUsePageActions
+        actionEnabled: actionAvailability.canUsePageActions
         actionId: KiriViewApplication.GoLastImageAction
         application: root.application
         bindEnabled: true
-        proxyEnabled: root.canUsePageActions
+        proxyEnabled: actionAvailability.canUsePageActions
 
         onTriggered: root.openLastImage()
     }
@@ -259,7 +266,7 @@ Item {
     ManagedAction {
         id: fitManagedAction
 
-        actionEnabled: root.canUseReadyActions
+        actionEnabled: actionAvailability.canUseReadyActions
         actionId: KiriViewApplication.ViewFitAction
         application: root.application
         bindEnabled: true
@@ -272,7 +279,7 @@ Item {
     ManagedAction {
         id: fitHeightManagedAction
 
-        actionEnabled: root.canUseReadyActions
+        actionEnabled: actionAvailability.canUseReadyActions
         actionId: KiriViewApplication.ViewFitHeightAction
         application: root.application
         bindEnabled: true
@@ -285,7 +292,7 @@ Item {
     ManagedAction {
         id: fitWidthManagedAction
 
-        actionEnabled: root.canUseReadyActions
+        actionEnabled: actionAvailability.canUseReadyActions
         actionId: KiriViewApplication.ViewFitWidthAction
         application: root.application
         bindEnabled: true
@@ -298,7 +305,7 @@ Item {
     ManagedAction {
         id: actualSizeManagedAction
 
-        actionEnabled: root.canUseReadyActions
+        actionEnabled: actionAvailability.canUseReadyActions
         actionId: KiriViewApplication.ViewActualSizeAction
         application: root.application
         bindEnabled: true
@@ -309,7 +316,7 @@ Item {
     ManagedAction {
         id: rotateClockwiseManagedAction
 
-        actionEnabled: root.canUseRotateActions
+        actionEnabled: actionAvailability.canUseRotateActions
         actionId: KiriViewApplication.ViewRotateClockwiseAction
         application: root.application
         bindEnabled: true
@@ -322,7 +329,7 @@ Item {
     ManagedAction {
         id: rotateCounterclockwiseManagedAction
 
-        actionEnabled: root.canUseRotateActions
+        actionEnabled: actionAvailability.canUseRotateActions
         actionId: KiriViewApplication.ViewRotateCounterclockwiseAction
         application: root.application
         bindEnabled: true
@@ -335,8 +342,8 @@ Item {
     ManagedAction {
         id: twoPageModeManagedAction
 
-        actionChecked: root.imageDocument.twoPageModeEnabled && root.imageDocument.twoPageModeAvailable
-        actionEnabled: root.canUseReadyActions && root.imageDocument.twoPageModeAvailable
+        actionChecked: actionAvailability.twoPageModeActive
+        actionEnabled: actionAvailability.canUseTwoPageModeActions
         actionId: KiriViewApplication.ViewToggleTwoPageModeAction
         application: root.application
         bindChecked: true
@@ -344,7 +351,7 @@ Item {
         displayHint: Kirigami.DisplayHint.KeepVisible
         menuText: KI18n.i18nc("@action:inmenu", "Two-Page &Spread")
         proxyCheckable: true
-        proxyChecked: root.imageDocument.twoPageModeEnabled && root.imageDocument.twoPageModeAvailable
+        proxyChecked: actionAvailability.twoPageModeActive
 
         onTriggered: root.imageDocument.twoPageModeEnabled = !root.imageDocument.twoPageModeEnabled
     }
@@ -352,8 +359,8 @@ Item {
     ManagedAction {
         id: rightToLeftReadingManagedAction
 
-        actionChecked: root.imageDocument.rightToLeftReadingEnabled && root.imageDocument.rightToLeftReadingAvailable
-        actionEnabled: root.canUseRightToLeftReadingActions
+        actionChecked: actionAvailability.rightToLeftReadingActive
+        actionEnabled: actionAvailability.canUseRightToLeftReadingActions
         actionId: KiriViewApplication.ViewToggleRightToLeftReadingAction
         application: root.application
         bindChecked: true
@@ -361,7 +368,7 @@ Item {
         displayHint: Kirigami.DisplayHint.KeepVisible
         menuText: KI18n.i18nc("@action:inmenu", "&Right-to-Left Reading")
         proxyCheckable: true
-        proxyChecked: root.imageDocument.rightToLeftReadingEnabled && root.imageDocument.rightToLeftReadingAvailable
+        proxyChecked: actionAvailability.rightToLeftReadingActive
 
         onTriggered: root.imageDocument.rightToLeftReadingEnabled = !root.imageDocument.rightToLeftReadingEnabled
     }
@@ -369,7 +376,7 @@ Item {
     ManagedAction {
         id: zoomInManagedAction
 
-        actionEnabled: root.canUseReadyActions
+        actionEnabled: actionAvailability.canUseReadyActions
         actionId: KiriViewApplication.ViewZoomInAction
         application: root.application
         bindEnabled: true
@@ -378,7 +385,7 @@ Item {
     ManagedAction {
         id: zoomOutManagedAction
 
-        actionEnabled: root.canUseReadyActions
+        actionEnabled: actionAvailability.canUseReadyActions
         actionId: KiriViewApplication.ViewZoomOutAction
         application: root.application
         bindEnabled: true
@@ -387,7 +394,7 @@ Item {
     ManagedAction {
         id: scanForwardManagedAction
 
-        actionEnabled: root.canUseReadyActions
+        actionEnabled: actionAvailability.canUseReadyActions
         actionId: KiriViewApplication.ViewScanForwardAction
         application: root.application
         bindEnabled: true
@@ -396,7 +403,7 @@ Item {
     ManagedAction {
         id: scanBackwardManagedAction
 
-        actionEnabled: root.canUseReadyActions
+        actionEnabled: actionAvailability.canUseReadyActions
         actionId: KiriViewApplication.ViewScanBackwardAction
         application: root.application
         bindEnabled: true
@@ -406,7 +413,7 @@ Item {
         id: fullscreenManagedAction
 
         actionChecked: root.fullscreen
-        actionEnabled: !root.helpDialogOpen
+        actionEnabled: actionAvailability.helpShortcutsEnabled
         actionId: KiriViewApplication.WindowFullscreenAction
         application: root.application
         bindChecked: true
@@ -422,7 +429,7 @@ Item {
     ManagedAction {
         id: shortcutHelpManagedAction
 
-        actionEnabled: !root.helpDialogOpen
+        actionEnabled: actionAvailability.helpShortcutsEnabled
         actionId: KiriViewApplication.HelpShortcutsAction
         application: root.application
         bindEnabled: true

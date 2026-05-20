@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+#include "imageactionavailability.h"
 #include "kiriimagedocument.h"
 #include "kiriviewapplication.h"
 #include "localization.h"
@@ -73,6 +74,8 @@ void registerKiriViewQmlTypes()
 
     KiriView::initializeLocalization();
     qmlRegisterType<KiriViewApplication>("io.github.hnjae.kiriview", 1, 0, "KiriViewApplication");
+    qmlRegisterType<ImageActionAvailability>(
+        "io.github.hnjae.kiriview", 1, 0, "ImageActionAvailability");
     qmlRegisterType<KiriImageDocument>("io.github.hnjae.kiriview", 1, 0, "KiriImageDocument");
     qmlRegisterType<MenuAccessKeyRouter>("io.github.hnjae.kiriview", 1, 0, "MenuAccessKeyRouter");
     registered = true;

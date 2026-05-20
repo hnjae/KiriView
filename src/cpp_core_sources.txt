@@ -33,6 +33,7 @@ src/heiftilesource.cpp
 src/imageanimationpolicy.cpp
 src/imageanimationplayer.cpp
 src/imageasyncoperationstate.cpp
+src/imageactionavailability.cpp
 src/imagebytecost.cpp
 src/imagecandidateprovider.cpp
 src/imagecachepolicy.cpp
