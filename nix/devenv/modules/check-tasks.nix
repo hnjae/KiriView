@@ -18,6 +18,8 @@ let
 
     cd ${repoRoot}
 
+    ${qtCxxqt.runtimeEnvironment}
+
     host_runtime_library_path=${lib.escapeShellArg hostRuntimeLibraryPath}
     nix_runtime_library_path=""
     nix_ldflags=( ''${NIX_LDFLAGS:-} )

@@ -132,7 +132,7 @@ std::vector<KiriView::ImageDecodePipelineStage> defaultImageDecodeStages()
         { DataSource::Original, decodeSvgImageData },
         { DataSource::Original, decodeApngImageData },
         { DataSource::AvifCompatible, decodeHeifPipelineImageData },
-        { DataSource::AvifCompatible, decodeRawPipelineImageData },
+        { DataSource::Original, decodeRawPipelineImageData },
         { DataSource::AvifCompatible, decodeQImageReaderPipelineImageData },
     };
 }

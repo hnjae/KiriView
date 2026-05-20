@@ -80,6 +80,7 @@ let
     kirigamiQmlRoot
     kirigamiAddonsQmlRoot
   ];
+  qtPluginPath = "${config.devenv.root}/.devenv/profile/lib/qt-6/plugins";
   qtVersion = lib.getVersion pkgs.kdePackages.qtbase;
   cppCoreSources = lib.filter (source: source != "" && !(lib.hasPrefix "#" source)) (
     lib.splitString "\n" (builtins.readFile ../../../src/cpp_core_sources.txt)
@@ -235,6 +236,9 @@ let
     echo "compile_commands.json does not contain any C++ sources" >&2
     exit 1
   '';
+  runtimeEnvironment = ''
+    export QT_PLUGIN_PATH=${lib.escapeShellArg qtPluginPath}
+  '';
 in
 {
   inherit
@@ -245,10 +249,12 @@ in
     qmake
     qmlLintImportArgs
     refreshCxxqtIncludes
+    runtimeEnvironment
     ;
 
   enterShell = ''
     export QMAKE=${lib.getExe' qmake "qmake6"}
+    ${runtimeEnvironment}
 
     "${lib.getExe refreshCxxqtIncludes}"
   '';
