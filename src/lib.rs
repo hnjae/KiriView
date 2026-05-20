@@ -4,6 +4,8 @@
 // Application policy.
 #[path = "policy/applicationruntime.rs"]
 mod applicationruntime;
+#[path = "policy/imageactionavailability.rs"]
+mod imageactionavailability;
 #[path = "policy/startup_arguments.rs"]
 mod startup_arguments;
 

@@ -3,60 +3,71 @@
 
 #include "imageactionavailability.h"
 
+#include "kiriview/src/policy/imageactionavailability.cxx.h"
+
+namespace {
+KiriView::RustImageActionAvailabilityInput rustImageActionAvailabilityInput(
+    const ImageActionAvailabilityInput &input)
+{
+    return KiriView::RustImageActionAvailabilityInput {
+        input.imageReady,
+        input.imageCount,
+        input.currentPageNumber,
+        input.currentLastPageNumber,
+        input.fileDeletionInProgress,
+        input.helpDialogOpen,
+        input.textInputFocused,
+        input.imagePannable,
+        input.imageHorizontallyPannable,
+        input.containerNavigationAvailable,
+        input.twoPageModeEnabled,
+        input.twoPageModeAvailable,
+        input.rightToLeftReadingEnabled,
+        input.rightToLeftReadingAvailable,
+    };
+}
+
+ImageActionAvailabilityProjection imageActionAvailabilityProjection(
+    const KiriView::RustImageActionAvailabilityProjection &projection)
+{
+    return ImageActionAvailabilityProjection {
+        projection.can_open_next_image,
+        projection.can_open_previous_image,
+        projection.at_known_first_image,
+        projection.at_known_last_image,
+        projection.can_use_page_actions,
+        projection.can_use_ready_actions,
+        projection.can_use_rotate_actions,
+        projection.can_use_two_page_mode_actions,
+        projection.can_use_right_to_left_reading_actions,
+        projection.right_to_left_reading_active,
+        projection.two_page_mode_active,
+        projection.help_shortcuts_enabled,
+        projection.viewer_shortcuts_enabled,
+        projection.ready_shortcuts_enabled,
+        projection.ready_viewer_shortcuts_enabled,
+        projection.image_selection_shortcuts_enabled,
+        projection.image_selection_viewer_shortcuts_enabled,
+        projection.page_shortcuts_enabled,
+        projection.page_viewer_shortcuts_enabled,
+        projection.two_page_viewer_shortcuts_enabled,
+        projection.right_to_left_reading_shortcuts_enabled,
+        projection.right_to_left_reading_viewer_shortcuts_enabled,
+        projection.rotate_shortcuts_enabled,
+        projection.rotate_viewer_shortcuts_enabled,
+        projection.pannable_shortcuts_enabled,
+        projection.pannable_viewer_shortcuts_enabled,
+        projection.container_shortcuts_enabled,
+        projection.container_viewer_shortcuts_enabled,
+    };
+}
+}
+
 ImageActionAvailabilityProjection imageActionAvailabilityProjection(
     const ImageActionAvailabilityInput &input)
 {
-    ImageActionAvailabilityProjection projection;
-    projection.canOpenNextImage
-        = input.currentPageNumber > 0 && input.currentLastPageNumber < input.imageCount;
-    projection.canOpenPreviousImage = input.currentPageNumber > 1;
-    projection.atKnownFirstImage = input.imageCount > 0 && input.currentPageNumber == 1;
-    projection.atKnownLastImage = input.imageCount > 0 && input.currentPageNumber > 0
-        && input.currentLastPageNumber > 0 && input.currentLastPageNumber >= input.imageCount;
-    projection.rightToLeftReadingActive
-        = input.rightToLeftReadingEnabled && input.rightToLeftReadingAvailable;
-    projection.twoPageModeActive = input.twoPageModeEnabled && input.twoPageModeAvailable;
-    projection.canUsePageActions = input.imageCount > 0 && input.currentPageNumber > 0
-        && !input.fileDeletionInProgress && !input.helpDialogOpen;
-    projection.canUseReadyActions
-        = input.imageReady && !input.fileDeletionInProgress && !input.helpDialogOpen;
-    projection.canUseRotateActions = projection.canUseReadyActions && !projection.twoPageModeActive;
-    projection.canUseTwoPageModeActions
-        = projection.canUseReadyActions && input.twoPageModeAvailable;
-    projection.canUseRightToLeftReadingActions
-        = projection.canUseReadyActions && input.rightToLeftReadingAvailable;
-    projection.helpShortcutsEnabled = !input.helpDialogOpen;
-    projection.viewerShortcutsEnabled = !input.textInputFocused && projection.helpShortcutsEnabled;
-    projection.readyShortcutsEnabled
-        = input.imageReady && !input.fileDeletionInProgress && projection.helpShortcutsEnabled;
-    projection.readyViewerShortcutsEnabled
-        = input.imageReady && !input.fileDeletionInProgress && projection.viewerShortcutsEnabled;
-    projection.imageSelectionShortcutsEnabled = input.imageCount > 0 && input.currentPageNumber > 0
-        && !input.fileDeletionInProgress && projection.helpShortcutsEnabled;
-    projection.imageSelectionViewerShortcutsEnabled = input.imageCount > 0
-        && input.currentPageNumber > 0 && !input.fileDeletionInProgress
-        && projection.viewerShortcutsEnabled;
-    projection.pageShortcutsEnabled = projection.imageSelectionShortcutsEnabled;
-    projection.pageViewerShortcutsEnabled = projection.imageSelectionViewerShortcutsEnabled;
-    projection.twoPageViewerShortcutsEnabled
-        = projection.imageSelectionViewerShortcutsEnabled && projection.twoPageModeActive;
-    projection.rightToLeftReadingShortcutsEnabled
-        = projection.readyShortcutsEnabled && input.rightToLeftReadingAvailable;
-    projection.rightToLeftReadingViewerShortcutsEnabled
-        = projection.readyViewerShortcutsEnabled && input.rightToLeftReadingAvailable;
-    projection.rotateShortcutsEnabled
-        = projection.readyShortcutsEnabled && !projection.twoPageModeActive;
-    projection.rotateViewerShortcutsEnabled
-        = projection.readyViewerShortcutsEnabled && !projection.twoPageModeActive;
-    projection.pannableShortcutsEnabled
-        = input.imagePannable && !input.fileDeletionInProgress && projection.helpShortcutsEnabled;
-    projection.pannableViewerShortcutsEnabled
-        = input.imagePannable && !input.fileDeletionInProgress && projection.viewerShortcutsEnabled;
-    projection.containerShortcutsEnabled = input.containerNavigationAvailable
-        && !input.fileDeletionInProgress && projection.helpShortcutsEnabled;
-    projection.containerViewerShortcutsEnabled = input.containerNavigationAvailable
-        && !input.fileDeletionInProgress && projection.viewerShortcutsEnabled;
-    return projection;
+    return imageActionAvailabilityProjection(
+        KiriView::rustImageActionAvailabilityProjection(rustImageActionAvailabilityInput(input)));
 }
 
 ImageActionAvailability::ImageActionAvailability(QObject *parent)
