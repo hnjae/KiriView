@@ -13,44 +13,6 @@
 #include <vector>
 
 namespace KiriView {
-enum class ImageDocumentRuntimeOperationKind {
-    CancelFileDeletion,
-    StopPresentationAnimation,
-    ShutdownSpread,
-    ClearArchiveSession,
-    ClearPredecode,
-    CancelPredecode,
-    ScheduleAdjacentImagePredecode,
-    FinishSpreadTransition,
-    ResetRightToLeftReading,
-    ClearSecondaryPage,
-    NotifyRightToLeftReadingChanged,
-    ResetZoom,
-    PrepareFailedContainer,
-    CancelPageNavigationUpdate,
-    CancelNavigation,
-    CancelContainerNavigation,
-    CancelAllNavigation,
-    ClearPageNavigation,
-    UpdatePageNavigation,
-    LoadUrl,
-    LoadContainerImage,
-    FinishEmptyContainerNavigation,
-    FinishContainerNavigationLoadWithError,
-    LoadPageNavigationUrl,
-    CancelOpen,
-    ClearDisplayedImageLocation,
-    ClearPresentationImage,
-    ClearLoadingContainerNavigationUrl,
-    SetLoadingContainerNavigationUrl,
-    SetContainerNavigationUrl,
-    PrepareSourceLoad,
-    SetSourceUrl,
-    BeginOpen,
-    SetErrorString,
-    FinishEmptySourceLoad,
-};
-
 struct CancelFileDeletionOperation {
 };
 struct StopPresentationAnimationOperation {
@@ -153,8 +115,6 @@ using ImageDocumentRuntimeOperation = std::variant<CancelFileDeletionOperation,
 
 using ImageDocumentRuntimePlan = std::vector<ImageDocumentRuntimeOperation>;
 
-ImageDocumentRuntimeOperationKind imageDocumentRuntimeOperationKind(
-    const ImageDocumentRuntimeOperation &operation);
 ImageDocumentRuntimePlan imageDocumentEffectPlan(const ImageDocumentEffect &effect);
 ImageDocumentRuntimePlan imageDocumentShutdownPlan();
 }

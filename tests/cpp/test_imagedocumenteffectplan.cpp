@@ -3,40 +3,20 @@
 
 #include "document/imagedocumenteffectplan.h"
 
+#include "image_document_plan_test_support.h"
+
 #include <QObject>
 #include <QTest>
 #include <QUrl>
-#include <vector>
 
 namespace {
 using KiriView::ImageDocumentEffect;
-using KiriView::ImageDocumentRuntimeOperation;
-using KiriView::ImageDocumentRuntimeOperationKind;
 using KiriView::ImageDocumentRuntimePlan;
+using KiriView::TestSupport::hasOperationTypes;
+using KiriView::TestSupport::operationAt;
+using KiriView::TestSupport::operationTypes;
 
 QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
-
-std::vector<ImageDocumentRuntimeOperationKind> operationKinds(const ImageDocumentRuntimePlan &plan)
-{
-    std::vector<ImageDocumentRuntimeOperationKind> kinds;
-    kinds.reserve(plan.size());
-    for (const ImageDocumentRuntimeOperation &operation : plan) {
-        kinds.push_back(KiriView::imageDocumentRuntimeOperationKind(operation));
-    }
-    return kinds;
-}
-
-bool hasOperationKinds(const ImageDocumentRuntimePlan &plan,
-    const std::vector<ImageDocumentRuntimeOperationKind> &expected)
-{
-    return operationKinds(plan) == expected;
-}
-
-template <typename Operation>
-const Operation &operationAt(const ImageDocumentRuntimePlan &plan, std::size_t index)
-{
-    return std::get<Operation>(plan.at(index));
-}
 }
 
 class TestImageDocumentEffectPlan : public QObject
@@ -48,7 +28,7 @@ private Q_SLOTS:
     void clearDeletedImagePlansDeletionClearAndEmptySourceCompletion();
     void shutdownPlansOrderedRuntimeOperations();
     void payloadEffectsPlanRuntimeOperations();
-    void operationKindMapsEveryRuntimeOperationExplicitly();
+    void operationTypeAssertionsCoverEveryRuntimeOperation();
 };
 
 void TestImageDocumentEffectPlan::clearImagePlansOrderedRuntimeOperations()
@@ -56,18 +36,13 @@ void TestImageDocumentEffectPlan::clearImagePlansOrderedRuntimeOperations()
     const ImageDocumentRuntimePlan plan
         = KiriView::imageDocumentEffectPlan(ImageDocumentEffect::clearImage());
 
-    QVERIFY(hasOperationKinds(plan,
-        {
-            ImageDocumentRuntimeOperationKind::ClearArchiveSession,
-            ImageDocumentRuntimeOperationKind::ClearPredecode,
-            ImageDocumentRuntimeOperationKind::FinishSpreadTransition,
-            ImageDocumentRuntimeOperationKind::ClearSecondaryPage,
-            ImageDocumentRuntimeOperationKind::CancelPageNavigationUpdate,
-            ImageDocumentRuntimeOperationKind::ClearDisplayedImageLocation,
-            ImageDocumentRuntimeOperationKind::ClearPresentationImage,
-            ImageDocumentRuntimeOperationKind::ClearPageNavigation,
-            ImageDocumentRuntimeOperationKind::NotifyRightToLeftReadingChanged,
-        }));
+    QVERIFY(hasOperationTypes(plan,
+        operationTypes<KiriView::ClearArchiveSessionOperation, KiriView::ClearPredecodeOperation,
+            KiriView::FinishSpreadTransitionOperation, KiriView::ClearSecondaryPageOperation,
+            KiriView::CancelPageNavigationUpdateOperation,
+            KiriView::ClearDisplayedImageLocationOperation,
+            KiriView::ClearPresentationImageOperation, KiriView::ClearPageNavigationOperation,
+            KiriView::NotifyRightToLeftReadingChangedOperation>()));
 }
 
 void TestImageDocumentEffectPlan::clearDeletedImagePlansDeletionClearAndEmptySourceCompletion()
@@ -75,18 +50,12 @@ void TestImageDocumentEffectPlan::clearDeletedImagePlansDeletionClearAndEmptySou
     const ImageDocumentRuntimePlan plan
         = KiriView::imageDocumentEffectPlan(ImageDocumentEffect::clearDeletedImage());
 
-    QVERIFY(hasOperationKinds(plan,
-        {
-            ImageDocumentRuntimeOperationKind::ClearArchiveSession,
-            ImageDocumentRuntimeOperationKind::CancelAllNavigation,
-            ImageDocumentRuntimeOperationKind::CancelPredecode,
-            ImageDocumentRuntimeOperationKind::CancelOpen,
-            ImageDocumentRuntimeOperationKind::FinishSpreadTransition,
-            ImageDocumentRuntimeOperationKind::ClearSecondaryPage,
-            ImageDocumentRuntimeOperationKind::SetSourceUrl,
-            ImageDocumentRuntimeOperationKind::SetErrorString,
-            ImageDocumentRuntimeOperationKind::FinishEmptySourceLoad,
-        }));
+    QVERIFY(hasOperationTypes(plan,
+        operationTypes<KiriView::ClearArchiveSessionOperation,
+            KiriView::CancelAllNavigationOperation, KiriView::CancelPredecodeOperation,
+            KiriView::CancelOpenOperation, KiriView::FinishSpreadTransitionOperation,
+            KiriView::ClearSecondaryPageOperation, KiriView::SetSourceUrlOperation,
+            KiriView::SetErrorStringOperation, KiriView::FinishEmptySourceLoadOperation>()));
     QVERIFY(operationAt<KiriView::SetSourceUrlOperation>(plan, 6).url.isEmpty());
     QVERIFY(operationAt<KiriView::SetErrorStringOperation>(plan, 7).errorString.isEmpty());
 }
@@ -95,16 +64,11 @@ void TestImageDocumentEffectPlan::shutdownPlansOrderedRuntimeOperations()
 {
     const ImageDocumentRuntimePlan plan = KiriView::imageDocumentShutdownPlan();
 
-    QVERIFY(hasOperationKinds(plan,
-        {
-            ImageDocumentRuntimeOperationKind::CancelFileDeletion,
-            ImageDocumentRuntimeOperationKind::StopPresentationAnimation,
-            ImageDocumentRuntimeOperationKind::ShutdownSpread,
-            ImageDocumentRuntimeOperationKind::CancelPredecode,
-            ImageDocumentRuntimeOperationKind::CancelAllNavigation,
-            ImageDocumentRuntimeOperationKind::CancelOpen,
-            ImageDocumentRuntimeOperationKind::ClearArchiveSession,
-        }));
+    QVERIFY(hasOperationTypes(plan,
+        operationTypes<KiriView::CancelFileDeletionOperation,
+            KiriView::StopPresentationAnimationOperation, KiriView::ShutdownSpreadOperation,
+            KiriView::CancelPredecodeOperation, KiriView::CancelAllNavigationOperation,
+            KiriView::CancelOpenOperation, KiriView::ClearArchiveSessionOperation>()));
 }
 
 void TestImageDocumentEffectPlan::payloadEffectsPlanRuntimeOperations()
@@ -148,7 +112,7 @@ void TestImageDocumentEffectPlan::payloadEffectsPlanRuntimeOperations()
         localUrl(QStringLiteral("/bad.zip")));
 }
 
-void TestImageDocumentEffectPlan::operationKindMapsEveryRuntimeOperationExplicitly()
+void TestImageDocumentEffectPlan::operationTypeAssertionsCoverEveryRuntimeOperation()
 {
     const QUrl sourceUrl = localUrl(QStringLiteral("/book/01.png"));
     const QUrl containerUrl = localUrl(QStringLiteral("/book.cbz"));
@@ -195,44 +159,29 @@ void TestImageDocumentEffectPlan::operationKindMapsEveryRuntimeOperationExplicit
         KiriView::FinishEmptySourceLoadOperation {},
     };
 
-    QVERIFY(hasOperationKinds(plan,
-        {
-            ImageDocumentRuntimeOperationKind::CancelFileDeletion,
-            ImageDocumentRuntimeOperationKind::StopPresentationAnimation,
-            ImageDocumentRuntimeOperationKind::ShutdownSpread,
-            ImageDocumentRuntimeOperationKind::ClearArchiveSession,
-            ImageDocumentRuntimeOperationKind::ClearPredecode,
-            ImageDocumentRuntimeOperationKind::CancelPredecode,
-            ImageDocumentRuntimeOperationKind::ScheduleAdjacentImagePredecode,
-            ImageDocumentRuntimeOperationKind::FinishSpreadTransition,
-            ImageDocumentRuntimeOperationKind::ResetRightToLeftReading,
-            ImageDocumentRuntimeOperationKind::ClearSecondaryPage,
-            ImageDocumentRuntimeOperationKind::NotifyRightToLeftReadingChanged,
-            ImageDocumentRuntimeOperationKind::ResetZoom,
-            ImageDocumentRuntimeOperationKind::PrepareFailedContainer,
-            ImageDocumentRuntimeOperationKind::CancelPageNavigationUpdate,
-            ImageDocumentRuntimeOperationKind::CancelNavigation,
-            ImageDocumentRuntimeOperationKind::CancelContainerNavigation,
-            ImageDocumentRuntimeOperationKind::CancelAllNavigation,
-            ImageDocumentRuntimeOperationKind::ClearPageNavigation,
-            ImageDocumentRuntimeOperationKind::UpdatePageNavigation,
-            ImageDocumentRuntimeOperationKind::LoadUrl,
-            ImageDocumentRuntimeOperationKind::LoadContainerImage,
-            ImageDocumentRuntimeOperationKind::FinishEmptyContainerNavigation,
-            ImageDocumentRuntimeOperationKind::FinishContainerNavigationLoadWithError,
-            ImageDocumentRuntimeOperationKind::LoadPageNavigationUrl,
-            ImageDocumentRuntimeOperationKind::CancelOpen,
-            ImageDocumentRuntimeOperationKind::ClearDisplayedImageLocation,
-            ImageDocumentRuntimeOperationKind::ClearPresentationImage,
-            ImageDocumentRuntimeOperationKind::ClearLoadingContainerNavigationUrl,
-            ImageDocumentRuntimeOperationKind::SetLoadingContainerNavigationUrl,
-            ImageDocumentRuntimeOperationKind::SetContainerNavigationUrl,
-            ImageDocumentRuntimeOperationKind::PrepareSourceLoad,
-            ImageDocumentRuntimeOperationKind::SetSourceUrl,
-            ImageDocumentRuntimeOperationKind::BeginOpen,
-            ImageDocumentRuntimeOperationKind::SetErrorString,
-            ImageDocumentRuntimeOperationKind::FinishEmptySourceLoad,
-        }));
+    QVERIFY(hasOperationTypes(plan,
+        operationTypes<KiriView::CancelFileDeletionOperation,
+            KiriView::StopPresentationAnimationOperation, KiriView::ShutdownSpreadOperation,
+            KiriView::ClearArchiveSessionOperation, KiriView::ClearPredecodeOperation,
+            KiriView::CancelPredecodeOperation, KiriView::ScheduleAdjacentImagePredecodeOperation,
+            KiriView::FinishSpreadTransitionOperation, KiriView::ResetRightToLeftReadingOperation,
+            KiriView::ClearSecondaryPageOperation,
+            KiriView::NotifyRightToLeftReadingChangedOperation, KiriView::ResetZoomOperation,
+            KiriView::PrepareFailedContainerOperation,
+            KiriView::CancelPageNavigationUpdateOperation, KiriView::CancelNavigationOperation,
+            KiriView::CancelContainerNavigationOperation, KiriView::CancelAllNavigationOperation,
+            KiriView::ClearPageNavigationOperation, KiriView::UpdatePageNavigationOperation,
+            KiriView::LoadUrlOperation, KiriView::LoadContainerImageOperation,
+            KiriView::FinishEmptyContainerNavigationOperation,
+            KiriView::FinishContainerNavigationLoadWithErrorOperation,
+            KiriView::LoadPageNavigationUrlOperation, KiriView::CancelOpenOperation,
+            KiriView::ClearDisplayedImageLocationOperation,
+            KiriView::ClearPresentationImageOperation,
+            KiriView::ClearLoadingContainerNavigationUrlOperation,
+            KiriView::SetLoadingContainerNavigationUrlOperation,
+            KiriView::SetContainerNavigationUrlOperation, KiriView::PrepareSourceLoadOperation,
+            KiriView::SetSourceUrlOperation, KiriView::BeginOpenOperation,
+            KiriView::SetErrorStringOperation, KiriView::FinishEmptySourceLoadOperation>()));
 }
 
 QTEST_GUILESS_MAIN(TestImageDocumentEffectPlan)

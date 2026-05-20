@@ -3,7 +3,6 @@
 
 #include "imagedocumenteffectplan.h"
 
-#include <type_traits>
 #include <variant>
 
 namespace {
@@ -31,7 +30,6 @@ using KiriView::FinishContainerNavigationLoadWithErrorOperation;
 using KiriView::FinishEmptyContainerNavigationOperation;
 using KiriView::FinishEmptySourceLoadOperation;
 using KiriView::FinishSpreadTransitionOperation;
-using KiriView::ImageDocumentRuntimeOperationKind;
 using KiriView::ImageDocumentRuntimePlan;
 using KiriView::LoadContainerImageOperation;
 using KiriView::LoadPageNavigationUrlOperation;
@@ -55,8 +53,6 @@ using KiriView::ShutdownSpreadOperation;
 using KiriView::StopPresentationAnimationOperation;
 using KiriView::UpdatePageNavigationEffect;
 using KiriView::UpdatePageNavigationOperation;
-
-template <typename> inline constexpr bool alwaysFalse = false;
 
 ImageDocumentRuntimePlan clearImagePlan()
 {
@@ -150,95 +146,6 @@ struct ImageDocumentEffectPlanVisitor {
 }
 
 namespace KiriView {
-ImageDocumentRuntimeOperationKind imageDocumentRuntimeOperationKind(
-    const ImageDocumentRuntimeOperation &operation)
-{
-    return std::visit(
-        [](const auto &payload) {
-            using Operation = std::decay_t<decltype(payload)>;
-            if constexpr (std::is_same_v<Operation, CancelFileDeletionOperation>) {
-                return ImageDocumentRuntimeOperationKind::CancelFileDeletion;
-            } else if constexpr (std::is_same_v<Operation, StopPresentationAnimationOperation>) {
-                return ImageDocumentRuntimeOperationKind::StopPresentationAnimation;
-            } else if constexpr (std::is_same_v<Operation, ShutdownSpreadOperation>) {
-                return ImageDocumentRuntimeOperationKind::ShutdownSpread;
-            } else if constexpr (std::is_same_v<Operation, ClearArchiveSessionOperation>) {
-                return ImageDocumentRuntimeOperationKind::ClearArchiveSession;
-            } else if constexpr (std::is_same_v<Operation, ClearPredecodeOperation>) {
-                return ImageDocumentRuntimeOperationKind::ClearPredecode;
-            } else if constexpr (std::is_same_v<Operation, CancelPredecodeOperation>) {
-                return ImageDocumentRuntimeOperationKind::CancelPredecode;
-            } else if constexpr (std::is_same_v<Operation,
-                                     ScheduleAdjacentImagePredecodeOperation>) {
-                return ImageDocumentRuntimeOperationKind::ScheduleAdjacentImagePredecode;
-            } else if constexpr (std::is_same_v<Operation, FinishSpreadTransitionOperation>) {
-                return ImageDocumentRuntimeOperationKind::FinishSpreadTransition;
-            } else if constexpr (std::is_same_v<Operation, ResetRightToLeftReadingOperation>) {
-                return ImageDocumentRuntimeOperationKind::ResetRightToLeftReading;
-            } else if constexpr (std::is_same_v<Operation, ClearSecondaryPageOperation>) {
-                return ImageDocumentRuntimeOperationKind::ClearSecondaryPage;
-            } else if constexpr (std::is_same_v<Operation,
-                                     NotifyRightToLeftReadingChangedOperation>) {
-                return ImageDocumentRuntimeOperationKind::NotifyRightToLeftReadingChanged;
-            } else if constexpr (std::is_same_v<Operation, ResetZoomOperation>) {
-                return ImageDocumentRuntimeOperationKind::ResetZoom;
-            } else if constexpr (std::is_same_v<Operation, PrepareFailedContainerOperation>) {
-                return ImageDocumentRuntimeOperationKind::PrepareFailedContainer;
-            } else if constexpr (std::is_same_v<Operation, CancelPageNavigationUpdateOperation>) {
-                return ImageDocumentRuntimeOperationKind::CancelPageNavigationUpdate;
-            } else if constexpr (std::is_same_v<Operation, CancelNavigationOperation>) {
-                return ImageDocumentRuntimeOperationKind::CancelNavigation;
-            } else if constexpr (std::is_same_v<Operation, CancelContainerNavigationOperation>) {
-                return ImageDocumentRuntimeOperationKind::CancelContainerNavigation;
-            } else if constexpr (std::is_same_v<Operation, CancelAllNavigationOperation>) {
-                return ImageDocumentRuntimeOperationKind::CancelAllNavigation;
-            } else if constexpr (std::is_same_v<Operation, ClearPageNavigationOperation>) {
-                return ImageDocumentRuntimeOperationKind::ClearPageNavigation;
-            } else if constexpr (std::is_same_v<Operation, UpdatePageNavigationOperation>) {
-                return ImageDocumentRuntimeOperationKind::UpdatePageNavigation;
-            } else if constexpr (std::is_same_v<Operation, LoadUrlOperation>) {
-                return ImageDocumentRuntimeOperationKind::LoadUrl;
-            } else if constexpr (std::is_same_v<Operation, LoadContainerImageOperation>) {
-                return ImageDocumentRuntimeOperationKind::LoadContainerImage;
-            } else if constexpr (std::is_same_v<Operation,
-                                     FinishEmptyContainerNavigationOperation>) {
-                return ImageDocumentRuntimeOperationKind::FinishEmptyContainerNavigation;
-            } else if constexpr (std::is_same_v<Operation,
-                                     FinishContainerNavigationLoadWithErrorOperation>) {
-                return ImageDocumentRuntimeOperationKind::FinishContainerNavigationLoadWithError;
-            } else if constexpr (std::is_same_v<Operation, LoadPageNavigationUrlOperation>) {
-                return ImageDocumentRuntimeOperationKind::LoadPageNavigationUrl;
-            } else if constexpr (std::is_same_v<Operation, CancelOpenOperation>) {
-                return ImageDocumentRuntimeOperationKind::CancelOpen;
-            } else if constexpr (std::is_same_v<Operation, ClearDisplayedImageLocationOperation>) {
-                return ImageDocumentRuntimeOperationKind::ClearDisplayedImageLocation;
-            } else if constexpr (std::is_same_v<Operation, ClearPresentationImageOperation>) {
-                return ImageDocumentRuntimeOperationKind::ClearPresentationImage;
-            } else if constexpr (std::is_same_v<Operation,
-                                     ClearLoadingContainerNavigationUrlOperation>) {
-                return ImageDocumentRuntimeOperationKind::ClearLoadingContainerNavigationUrl;
-            } else if constexpr (std::is_same_v<Operation,
-                                     SetLoadingContainerNavigationUrlOperation>) {
-                return ImageDocumentRuntimeOperationKind::SetLoadingContainerNavigationUrl;
-            } else if constexpr (std::is_same_v<Operation, SetContainerNavigationUrlOperation>) {
-                return ImageDocumentRuntimeOperationKind::SetContainerNavigationUrl;
-            } else if constexpr (std::is_same_v<Operation, PrepareSourceLoadOperation>) {
-                return ImageDocumentRuntimeOperationKind::PrepareSourceLoad;
-            } else if constexpr (std::is_same_v<Operation, SetSourceUrlOperation>) {
-                return ImageDocumentRuntimeOperationKind::SetSourceUrl;
-            } else if constexpr (std::is_same_v<Operation, BeginOpenOperation>) {
-                return ImageDocumentRuntimeOperationKind::BeginOpen;
-            } else if constexpr (std::is_same_v<Operation, SetErrorStringOperation>) {
-                return ImageDocumentRuntimeOperationKind::SetErrorString;
-            } else if constexpr (std::is_same_v<Operation, FinishEmptySourceLoadOperation>) {
-                return ImageDocumentRuntimeOperationKind::FinishEmptySourceLoad;
-            } else {
-                static_assert(alwaysFalse<Operation>, "Unhandled image document runtime operation");
-            }
-        },
-        operation);
-}
-
 ImageDocumentRuntimePlan imageDocumentEffectPlan(const ImageDocumentEffect &effect)
 {
     return std::visit(ImageDocumentEffectPlanVisitor {}, effect.payload);
