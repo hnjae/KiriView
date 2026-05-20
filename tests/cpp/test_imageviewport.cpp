@@ -30,6 +30,7 @@ class TestImageViewport : public QObject
 
 private Q_SLOTS:
     void ctrlWheelZoomsWhileImageIsPannable();
+    void ctrlWheelZoomsWhileImageIsPanned();
     void plainWheelStillPansWhileImageIsPannable();
 };
 
@@ -319,6 +320,10 @@ Item {
         return imageViewport.flickable.contentY;
     }
 
+    function contentX() {
+        return imageViewport.flickable.contentX;
+    }
+
     function documentReady() {
         return imageViewport.imageDocument.status === KiriImageDocument.Ready;
     }
@@ -329,6 +334,10 @@ Item {
 
     function setContentY(contentY) {
         imageViewport.flickable.contentY = contentY;
+    }
+
+    function setContentX(contentX) {
+        imageViewport.flickable.contentX = contentX;
     }
 
     function setManualZoom(zoomPercent) {
@@ -434,6 +443,23 @@ void TestImageViewport::ctrlWheelZoomsWhileImageIsPannable()
     ImageViewportFixture fixture = createFixture();
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
     preparePannableImage(fixture);
+
+    const qreal initialZoomPercent = invokeReal(fixture.root, "zoomPercent");
+    sendWheel(fixture.view.get(), QPointF(100.0, 80.0), 120, Qt::ControlModifier);
+
+    QTRY_VERIFY(invokeReal(fixture.root, "zoomPercent") > initialZoomPercent);
+}
+
+void TestImageViewport::ctrlWheelZoomsWhileImageIsPanned()
+{
+    ImageViewportFixture fixture = createFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    preparePannableImage(fixture);
+
+    invokeSetReal(fixture.root, "setContentX", 300.0);
+    invokeSetReal(fixture.root, "setContentY", 400.0);
+    QTRY_VERIFY(std::abs(invokeReal(fixture.root, "contentX") - 300.0) < 0.001);
+    QTRY_VERIFY(std::abs(invokeReal(fixture.root, "contentY") - 400.0) < 0.001);
 
     const qreal initialZoomPercent = invokeReal(fixture.root, "zoomPercent");
     sendWheel(fixture.view.get(), QPointF(100.0, 80.0), 120, Qt::ControlModifier);

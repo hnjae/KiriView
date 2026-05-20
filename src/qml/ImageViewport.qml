@@ -131,6 +131,10 @@ Item {
         return verticalDelta / wheelAngleDeltaPerStep;
     }
 
+    function wheelViewportPoint(wheel) {
+        return Qt.point(wheel.x - imageFlickable.contentX, wheel.y - imageFlickable.contentY);
+    }
+
     KiriImageDocument {
         id: imageDocument
 
@@ -173,11 +177,12 @@ Item {
 
             onWheel: wheel => {
                 const stepCount = root.wheelZoomStepCount(wheel);
-                const insideImage = root.viewportPointInsideImage(wheel.x, wheel.y);
-                console.debug(inputLog, "ctrl-wheel received", "x", wheel.x, "y", wheel.y, "pixelDelta", wheel.pixelDelta, "angleDelta", wheel.angleDelta, "stepCount", stepCount, "insideImage", insideImage, "zoomPercent", imageDocument.zoomPercent, "contentX", imageFlickable.contentX, "contentY", imageFlickable.contentY, "contentWidth", imageFlickable.contentWidth, "contentHeight", imageFlickable.contentHeight, "viewportWidth", imageFlickable.width, "viewportHeight", imageFlickable.height);
+                const viewportPoint = root.wheelViewportPoint(wheel);
+                const insideImage = root.viewportPointInsideImage(viewportPoint.x, viewportPoint.y);
+                console.debug(inputLog, "ctrl-wheel received", "rawX", wheel.x, "rawY", wheel.y, "viewportX", viewportPoint.x, "viewportY", viewportPoint.y, "pixelDelta", wheel.pixelDelta, "angleDelta", wheel.angleDelta, "stepCount", stepCount, "insideImage", insideImage, "zoomPercent", imageDocument.zoomPercent, "contentX", imageFlickable.contentX, "contentY", imageFlickable.contentY, "contentWidth", imageFlickable.contentWidth, "contentHeight", imageFlickable.contentHeight, "viewportWidth", imageFlickable.width, "viewportHeight", imageFlickable.height);
 
                 if (stepCount === 0 || !insideImage) {
-                    console.debug(inputLog, "ctrl-wheel ignored", "reason", stepCount === 0 ? "zero-step" : "outside-image", "x", wheel.x, "y", wheel.y);
+                    console.debug(inputLog, "ctrl-wheel ignored", "reason", stepCount === 0 ? "zero-step" : "outside-image", "rawX", wheel.x, "rawY", wheel.y, "viewportX", viewportPoint.x, "viewportY", viewportPoint.y);
                     wheel.accepted = false;
                     return;
                 }
@@ -185,7 +190,7 @@ Item {
                 const previousZoomPercent = imageDocument.zoomPercent;
                 const previousContentX = imageFlickable.contentX;
                 const previousContentY = imageFlickable.contentY;
-                const zoomed = root.zoomByStep(stepCount, wheel.x, wheel.y);
+                const zoomed = root.zoomByStep(stepCount, viewportPoint.x, viewportPoint.y);
                 console.debug(inputLog, "ctrl-wheel zoomed", "applied", zoomed, "previousZoomPercent", previousZoomPercent, "nextZoomPercent", imageDocument.zoomPercent, "previousContentX", previousContentX, "previousContentY", previousContentY, "nextContentX", imageFlickable.contentX, "nextContentY", imageFlickable.contentY);
                 wheel.accepted = true;
             }
