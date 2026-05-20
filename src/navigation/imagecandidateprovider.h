@@ -4,8 +4,8 @@
 #ifndef KIRIVIEW_IMAGECANDIDATEPROVIDER_H
 #define KIRIVIEW_IMAGECANDIDATEPROVIDER_H
 
+#include "async/imageiojob.h"
 #include "imageasynccallbacks.h"
-#include "imageiojob.h"
 #include "imagelocation.h"
 
 #include <QUrl>

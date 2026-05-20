@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGEDOCUMENTDELETIONSTATE_H
 #define KIRIVIEW_IMAGEDOCUMENTDELETIONSTATE_H
 
-#include "imageasyncoperationstate.h"
+#include "async/imageasyncoperationstate.h"
 
 namespace KiriView {
 struct ImageDocumentDeletionFileOperationStart {

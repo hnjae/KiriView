@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "imageasyncoperationstate.h"
+#include "async/imageasyncoperationstate.h"
 
 namespace KiriView {
 ImageAsyncOperationState::ImageAsyncOperationState(quint64 nextOperationId)

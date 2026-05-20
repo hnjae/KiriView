@@ -3,7 +3,7 @@
 
 #include "imagedecodejob.h"
 
-#include "imageasyncworker.h"
+#include "async/imageasyncworker.h"
 #include "imagecallback.h"
 
 #include <optional>

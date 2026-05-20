@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGEDECODEJOBSTATE_H
 #define KIRIVIEW_IMAGEDECODEJOBSTATE_H
 
-#include "imageasyncoperationstate.h"
+#include "async/imageasyncoperationstate.h"
 #include "imagedecoderequest.h"
 
 #include <QtGlobal>

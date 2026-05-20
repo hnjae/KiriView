@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_TESTS_CANDIDATE_TEST_SUPPORT_H
 #define KIRIVIEW_TESTS_CANDIDATE_TEST_SUPPORT_H
 
-#include "imageiojob.h"
+#include "async/imageiojob.h"
 #include "navigation/imagecandidateprovider.h"
 #include "navigation/imagenavigationtypes.h"
 

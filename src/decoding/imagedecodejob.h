@@ -4,11 +4,11 @@
 #ifndef KIRIVIEW_IMAGEDECODEJOB_H
 #define KIRIVIEW_IMAGEDECODEJOB_H
 
+#include "async/imageiojob.h"
 #include "decodedimageresult.h"
 #include "imagedecodedependencies.h"
 #include "imagedecodejobstate.h"
 #include "imagedecoderequest.h"
-#include "imageiojob.h"
 
 #include <QByteArray>
 #include <QObject>

@@ -4,9 +4,9 @@
 #ifndef KIRIVIEW_IMAGECONTAINERNAVIGATIONCONTROLLER_H
 #define KIRIVIEW_IMAGECONTAINERNAVIGATIONCONTROLLER_H
 
+#include "async/imageiojob.h"
 #include "imagecontainernavigationstate.h"
 #include "imagecontaineropenplan.h"
-#include "imageiojob.h"
 #include "imagenavigationtypes.h"
 
 #include <QObject>

@@ -3,9 +3,9 @@
 
 #include "imagecandidatestore.h"
 
+#include "async/imageiojobs.h"
 #include "imagecallback.h"
 #include "imagecandidatedirectoryentry.h"
-#include "imageiojobs.h"
 #include "imageurl.h"
 
 #include <QPointer>

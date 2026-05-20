@@ -33,7 +33,7 @@ src/decoding/heiftilingplan.cpp
 src/rendering/heiftilesource.cpp
 src/presentation/imageanimationpolicy.cpp
 src/presentation/imageanimationplayer.cpp
-src/imageasyncoperationstate.cpp
+src/async/imageasyncoperationstate.cpp
 src/imageactionavailability.cpp
 src/cache/imagebytecost.cpp
 src/navigation/imagecandidateprovider.cpp
@@ -75,8 +75,8 @@ src/navigation/imagecandidatedirectoryentry.cpp
 src/navigation/imagecandidatestore.cpp
 src/navigation/imagecandidatestoreentrystate.cpp
 src/navigation/imagecontaineropenplan.cpp
-src/imageiojob.cpp
-src/imageiojobs.cpp
+src/async/imageiojob.cpp
+src/async/imageiojobs.cpp
 src/imagelocation.cpp
 src/presentation/imagerectmapping.cpp
 src/rendering/imagetile.cpp

@@ -4,8 +4,8 @@
 #ifndef KIRIVIEW_IMAGEPAGENAVIGATIONCONTROLLER_H
 #define KIRIVIEW_IMAGEPAGENAVIGATIONCONTROLLER_H
 
+#include "async/imageiojob.h"
 #include "imagecandidaterepository.h"
-#include "imageiojob.h"
 #include "imagenavigationtypes.h"
 #include "imagepagenavigationmodel.h"
 

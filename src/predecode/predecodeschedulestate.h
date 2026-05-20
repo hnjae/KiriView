@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_PREDECODESCHEDULESTATE_H
 #define KIRIVIEW_PREDECODESCHEDULESTATE_H
 
-#include "imageasyncticket.h"
+#include "async/imageasyncticket.h"
 #include "predecodedimage.h"
 #include "predecodepolicy.h"
 

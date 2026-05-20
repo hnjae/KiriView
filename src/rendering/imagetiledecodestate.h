@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGETILEDECODESTATE_H
 #define KIRIVIEW_IMAGETILEDECODESTATE_H
 
-#include "imageasyncticket.h"
+#include "async/imageasyncticket.h"
 #include "imagesurface.h"
 #include "imagetile.h"
 

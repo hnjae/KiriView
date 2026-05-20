@@ -4,10 +4,10 @@
 #ifndef KIRIVIEW_IMAGELOADER_H
 #define KIRIVIEW_IMAGELOADER_H
 
+#include "async/imageiojob.h"
 #include "decoding/decodedimageresult.h"
 #include "decoding/imagedecodedependencies.h"
 #include "decoding/imagedecodejob.h"
-#include "imageiojob.h"
 #include "imageloadsessiontracker.h"
 #include "imageloadtypes.h"
 #include "navigation/imagecandidateprovider.h"

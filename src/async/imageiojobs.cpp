@@ -1,11 +1,11 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "imageiojobs.h"
+#include "async/imageiojobs.h"
 
 #include "archive/archivebackend.h"
+#include "async/imageioworkerjob.h"
 #include "imagecallback.h"
-#include "imageioworkerjob.h"
 #include "navigation/imagecandidateitems.h"
 #include "navigation/imagecontainer.h"
 

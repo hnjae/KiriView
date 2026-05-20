@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_FILEDELETION_H
 #define KIRIVIEW_FILEDELETION_H
 
-#include "imageiojob.h"
+#include "async/imageiojob.h"
 
 #include <QString>
 #include <QUrl>

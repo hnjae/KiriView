@@ -3,7 +3,7 @@
 
 #include "imagedecodedependencies.h"
 
-#include "imageiojobs.h"
+#include "async/imageiojobs.h"
 #include "kiriimagedecoder.h"
 
 #include <utility>

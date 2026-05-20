@@ -4,8 +4,8 @@
 #ifndef KIRIVIEW_IMAGEIOWORKERJOB_H
 #define KIRIVIEW_IMAGEIOWORKERJOB_H
 
-#include "imageasyncworker.h"
-#include "imageiojob.h"
+#include "async/imageasyncworker.h"
+#include "async/imageiojob.h"
 
 #include <QObject>
 #include <utility>

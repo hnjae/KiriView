@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGEASYNCOPERATIONSTATE_H
 #define KIRIVIEW_IMAGEASYNCOPERATIONSTATE_H
 
-#include "imageasyncticket.h"
+#include "async/imageasyncticket.h"
 
 #include <QtGlobal>
 

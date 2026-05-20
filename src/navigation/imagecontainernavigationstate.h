@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGECONTAINERNAVIGATIONSTATE_H
 #define KIRIVIEW_IMAGECONTAINERNAVIGATIONSTATE_H
 
-#include "imageasyncoperationstate.h"
+#include "async/imageasyncoperationstate.h"
 
 namespace KiriView {
 class ImageContainerNavigationState final

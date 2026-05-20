@@ -4,8 +4,8 @@
 #ifndef KIRIVIEW_ARCHIVEDOCUMENTCANDIDATELOADSTATE_H
 #define KIRIVIEW_ARCHIVEDOCUMENTCANDIDATELOADSTATE_H
 
+#include "async/imageiojob.h"
 #include "imageasynccallbacks.h"
-#include "imageiojob.h"
 
 #include <QtGlobal>
 #include <vector>

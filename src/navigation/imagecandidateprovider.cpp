@@ -3,8 +3,8 @@
 
 #include "imagecandidateprovider.h"
 
+#include "async/imageiojobs.h"
 #include "imagecandidatestore.h"
-#include "imageiojobs.h"
 
 #include <memory>
 #include <utility>

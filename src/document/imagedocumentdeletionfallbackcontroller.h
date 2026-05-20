@@ -4,9 +4,9 @@
 #ifndef KIRIVIEW_IMAGEDOCUMENTDELETIONFALLBACKCONTROLLER_H
 #define KIRIVIEW_IMAGEDOCUMENTDELETIONFALLBACKCONTROLLER_H
 
-#include "imageasyncoperationstate.h"
+#include "async/imageasyncoperationstate.h"
+#include "async/imageiojob.h"
 #include "imagedocumenteffects.h"
-#include "imageiojob.h"
 #include "imageremovalfallback.h"
 #include "navigation/imagecandidaterepository.h"
 

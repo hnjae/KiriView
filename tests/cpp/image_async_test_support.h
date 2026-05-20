@@ -4,9 +4,9 @@
 #ifndef KIRIVIEW_TESTS_IMAGE_ASYNC_TEST_SUPPORT_H
 #define KIRIVIEW_TESTS_IMAGE_ASYNC_TEST_SUPPORT_H
 
+#include "async/imageiojob.h"
 #include "decoding/imagedecodedependencies.h"
 #include "document/filedeletion.h"
-#include "imageiojob.h"
 #include "powersaverprovider.h"
 
 #include <QByteArray>

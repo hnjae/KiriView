@@ -3,7 +3,7 @@
 
 #include "imagetiledecodescheduler.h"
 
-#include "imageasyncworker.h"
+#include "async/imageasyncworker.h"
 #include "imagetiledecodeplan.h"
 
 #include <QString>
