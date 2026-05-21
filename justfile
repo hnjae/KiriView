@@ -75,6 +75,7 @@ build-with-tests:
 run:
     flatpak build \
         --socket=wayland \
+        --socket=pulseaudio \
         --device=dri \
         --talk-name=org.freedesktop.portal.Desktop \
         --filesystem=home \

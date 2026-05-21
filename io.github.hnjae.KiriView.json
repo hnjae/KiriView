@@ -35,6 +35,7 @@
   ],
   "finish-args": [
     "--socket=wayland",
+    "--socket=pulseaudio",
     "--device=dri",
     "--share=network",
     "--filesystem=home",
