@@ -11,12 +11,11 @@ bool validPredecodeScheduleContext(const KiriView::PredecodeScheduleContext &con
 }
 
 namespace KiriView {
-PredecodeScheduleEffectPlan PredecodeScheduleState::schedule(
+PredecodeScheduleRuntimePlan PredecodeScheduleState::schedule(
     PredecodeScheduleContext context, qint64 monotonicMsec)
 {
     cancelBackgroundWork();
-    PredecodeScheduleEffectPlan plan;
-    plan.cancelBackgroundEffects = true;
+    PredecodeScheduleRuntimePlan plan { CancelBackgroundPredecodeOperation {} };
 
     if (!validPredecodeScheduleContext(context)) {
         return plan;
@@ -25,20 +24,19 @@ PredecodeScheduleEffectPlan PredecodeScheduleState::schedule(
     updateNavigationMomentum(context.pageIndex, monotonicMsec);
     const quint64 generation = m_generation.next();
     m_displayedContext = context;
-    plan.cacheDisplayedContext = context;
+    plan.push_back(CacheDisplayedPredecodeContextOperation { context });
 
     if (!m_powerSaverEnabled) {
-        plan.pendingSchedule = PredecodePendingSchedule { context, generation };
-        m_pendingSchedule = plan.pendingSchedule;
-        plan.startDebounceTimers = true;
+        m_pendingSchedule = PredecodePendingSchedule { context, generation };
+        plan.push_back(StartPredecodeDebounceOperation { *m_pendingSchedule });
     } else {
-        plan.clearWindowUrls = true;
+        plan.push_back(ClearPredecodeWindowUrlsOperation {});
     }
 
     return plan;
 }
 
-PredecodeScheduleEffectPlan PredecodeScheduleState::setPowerSaverEnabled(
+PredecodeScheduleRuntimePlan PredecodeScheduleState::setPowerSaverEnabled(
     bool enabled, qint64 monotonicMsec)
 {
     if (m_powerSaverEnabled == enabled) {
@@ -48,10 +46,10 @@ PredecodeScheduleEffectPlan PredecodeScheduleState::setPowerSaverEnabled(
     m_powerSaverEnabled = enabled;
     if (enabled) {
         cancelBackgroundWork();
-        PredecodeScheduleEffectPlan plan;
-        plan.cancelBackgroundEffects = true;
-        plan.clearWindowUrls = true;
-        return plan;
+        return {
+            CancelBackgroundPredecodeOperation {},
+            ClearPredecodeWindowUrlsOperation {},
+        };
     }
 
     const std::optional<PredecodeScheduleContext> displayed = m_displayedContext;
@@ -80,7 +78,7 @@ std::optional<PredecodePendingSchedule> PredecodeScheduleState::pendingDebounced
     return m_pendingSchedule;
 }
 
-PredecodeScheduleEffectPlan PredecodeScheduleState::settlePendingScheduleToNeutral()
+PredecodeScheduleRuntimePlan PredecodeScheduleState::settlePendingScheduleToNeutral()
 {
     if (!m_pendingSchedule.has_value() || m_momentumState.mode == PredecodeMomentumMode::Neutral) {
         return {};
@@ -88,10 +86,10 @@ PredecodeScheduleEffectPlan PredecodeScheduleState::settlePendingScheduleToNeutr
 
     m_momentumState.mode = PredecodeMomentumMode::Neutral;
     m_pendingSchedule->generation = m_generation.next();
-    PredecodeScheduleEffectPlan plan;
-    plan.pendingSchedule = m_pendingSchedule;
-    plan.cancelBackgroundEffects = true;
-    return plan;
+    return {
+        CancelBackgroundPredecodeOperation {},
+        StartAdjacentPredecodeOperation { *m_pendingSchedule },
+    };
 }
 
 bool PredecodeScheduleState::accepts(quint64 generation) const

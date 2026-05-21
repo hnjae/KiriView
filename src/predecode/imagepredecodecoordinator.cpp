@@ -7,10 +7,15 @@
 
 #include <QThread>
 #include <cstddef>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
 namespace KiriView {
+namespace {
+    template <typename> inline constexpr bool alwaysFalse = false;
+}
+
 struct ImagePredecodeCoordinator::WindowLoadContext {
     Context scheduleContext;
     quint64 generation = 0;
@@ -52,16 +57,16 @@ ImagePredecodeCoordinator::ImagePredecodeCoordinator(QObject *parent,
 
 void ImagePredecodeCoordinator::schedule(Context context)
 {
-    const PredecodeScheduleEffectPlan plan
+    const PredecodeScheduleRuntimePlan plan
         = m_scheduleState.schedule(std::move(context), currentMonotonicMsec());
-    executeScheduleEffects(plan);
+    dispatchSchedulePlan(plan);
 }
 
 void ImagePredecodeCoordinator::setPowerSaverEnabled(bool enabled)
 {
-    const PredecodeScheduleEffectPlan plan
+    const PredecodeScheduleRuntimePlan plan
         = m_scheduleState.setPowerSaverEnabled(enabled, currentMonotonicMsec());
-    executeScheduleEffects(plan);
+    dispatchSchedulePlan(plan);
 }
 
 bool ImagePredecodeCoordinator::powerSaverEnabled() const
@@ -69,21 +74,37 @@ bool ImagePredecodeCoordinator::powerSaverEnabled() const
     return m_scheduleState.powerSaverEnabled();
 }
 
-void ImagePredecodeCoordinator::executeScheduleEffects(const PredecodeScheduleEffectPlan &plan)
+void ImagePredecodeCoordinator::dispatchSchedulePlan(const PredecodeScheduleRuntimePlan &plan)
 {
-    if (plan.cancelBackgroundEffects) {
-        cancelBackgroundEffects();
+    for (const PredecodeScheduleOperation &operation : plan) {
+        dispatchScheduleOperation(operation);
     }
-    if (plan.cacheDisplayedContext.has_value()) {
-        cacheDisplayedImages(*plan.cacheDisplayedContext);
-    }
-    if (plan.clearWindowUrls) {
-        m_loadController.clearWindowUrls();
-    }
-    if (plan.startDebounceTimers) {
-        m_debounceTimer.start();
-        m_neutralTimer.start();
-    }
+}
+
+void ImagePredecodeCoordinator::dispatchScheduleOperation(
+    const PredecodeScheduleOperation &operation)
+{
+    std::visit(
+        [this](const auto &payload) {
+            using Operation = std::decay_t<decltype(payload)>;
+            if constexpr (std::is_same_v<Operation, CancelBackgroundPredecodeOperation>) {
+                cancelBackgroundRuntime();
+            } else if constexpr (std::is_same_v<Operation,
+                                     CacheDisplayedPredecodeContextOperation>) {
+                cacheDisplayedImages(payload.context);
+            } else if constexpr (std::is_same_v<Operation, ClearPredecodeWindowUrlsOperation>) {
+                m_loadController.clearWindowUrls();
+            } else if constexpr (std::is_same_v<Operation, StartPredecodeDebounceOperation>) {
+                m_debounceTimer.start();
+                m_neutralTimer.start();
+            } else if constexpr (std::is_same_v<Operation, StartAdjacentPredecodeOperation>) {
+                scheduleAdjacentImagePredecode(
+                    payload.schedule.context, payload.schedule.generation);
+            } else {
+                static_assert(alwaysFalse<Operation>, "Unhandled predecode schedule operation");
+            }
+        },
+        operation);
 }
 
 void ImagePredecodeCoordinator::cacheDisplayedImages(const Context &context)
@@ -116,13 +137,7 @@ void ImagePredecodeCoordinator::startDebouncedPredecode()
 
 void ImagePredecodeCoordinator::scheduleSettledNeutralPredecode()
 {
-    const PredecodeScheduleEffectPlan plan = m_scheduleState.settlePendingScheduleToNeutral();
-    executeScheduleEffects(plan);
-    if (!plan.pendingSchedule.has_value()) {
-        return;
-    }
-
-    scheduleAdjacentImagePredecode(plan.pendingSchedule->context, plan.pendingSchedule->generation);
+    dispatchSchedulePlan(m_scheduleState.settlePendingScheduleToNeutral());
 }
 
 void ImagePredecodeCoordinator::scheduleAdjacentImagePredecode(
@@ -171,10 +186,10 @@ void ImagePredecodeCoordinator::startPredecodeImageLoads(
 void ImagePredecodeCoordinator::cancelBackgroundWork()
 {
     m_scheduleState.cancelBackgroundWork();
-    cancelBackgroundEffects();
+    cancelBackgroundRuntime();
 }
 
-void ImagePredecodeCoordinator::cancelBackgroundEffects()
+void ImagePredecodeCoordinator::cancelBackgroundRuntime()
 {
     m_debounceTimer.stop();
     m_neutralTimer.stop();
@@ -189,7 +204,7 @@ qint64 ImagePredecodeCoordinator::currentMonotonicMsec() const
 
 void ImagePredecodeCoordinator::cancel()
 {
-    cancelBackgroundEffects();
+    cancelBackgroundRuntime();
     m_scheduleState.cancel();
 }
 

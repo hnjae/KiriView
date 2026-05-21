@@ -45,7 +45,8 @@ public:
 private:
     struct WindowLoadContext;
 
-    void executeScheduleEffects(const PredecodeScheduleEffectPlan &plan);
+    void dispatchSchedulePlan(const PredecodeScheduleRuntimePlan &plan);
+    void dispatchScheduleOperation(const PredecodeScheduleOperation &operation);
     void cacheDisplayedImages(const Context &context);
     std::vector<DisplayedPredecodeImage> displayedImages(const Context &context) const;
     void startDebouncedPredecode();
@@ -54,7 +55,7 @@ private:
     void startPredecodeImageLoads(
         const PredecodeWindowPlan &plan, const WindowLoadContext &context);
     void cancelBackgroundWork();
-    void cancelBackgroundEffects();
+    void cancelBackgroundRuntime();
     qint64 currentMonotonicMsec() const;
 
     ImageIoJob m_listerJob;

@@ -10,6 +10,8 @@
 
 #include <QtGlobal>
 #include <optional>
+#include <variant>
+#include <vector>
 
 namespace KiriView {
 struct PredecodeScheduleContext {
@@ -24,25 +26,36 @@ struct PredecodePendingSchedule {
     quint64 generation = 0;
 };
 
-struct PredecodeScheduleEffectPlan {
-    std::optional<PredecodeScheduleContext> cacheDisplayedContext;
-    std::optional<PredecodePendingSchedule> pendingSchedule;
-    bool cancelBackgroundEffects = false;
-    bool clearWindowUrls = false;
-    bool startDebounceTimers = false;
+struct CancelBackgroundPredecodeOperation {
 };
+struct CacheDisplayedPredecodeContextOperation {
+    PredecodeScheduleContext context;
+};
+struct ClearPredecodeWindowUrlsOperation {
+};
+struct StartPredecodeDebounceOperation {
+    PredecodePendingSchedule schedule;
+};
+struct StartAdjacentPredecodeOperation {
+    PredecodePendingSchedule schedule;
+};
+
+using PredecodeScheduleOperation = std::variant<CancelBackgroundPredecodeOperation,
+    CacheDisplayedPredecodeContextOperation, ClearPredecodeWindowUrlsOperation,
+    StartPredecodeDebounceOperation, StartAdjacentPredecodeOperation>;
+using PredecodeScheduleRuntimePlan = std::vector<PredecodeScheduleOperation>;
 
 class PredecodeScheduleState final
 {
 public:
-    PredecodeScheduleEffectPlan schedule(PredecodeScheduleContext context, qint64 monotonicMsec);
-    PredecodeScheduleEffectPlan setPowerSaverEnabled(bool enabled, qint64 monotonicMsec);
+    PredecodeScheduleRuntimePlan schedule(PredecodeScheduleContext context, qint64 monotonicMsec);
+    PredecodeScheduleRuntimePlan setPowerSaverEnabled(bool enabled, qint64 monotonicMsec);
     bool powerSaverEnabled() const;
     PredecodeMomentumMode momentumMode() const;
 
     std::optional<PredecodeScheduleContext> displayedContext() const;
     std::optional<PredecodePendingSchedule> pendingDebouncedSchedule() const;
-    PredecodeScheduleEffectPlan settlePendingScheduleToNeutral();
+    PredecodeScheduleRuntimePlan settlePendingScheduleToNeutral();
     bool accepts(quint64 generation) const;
 
     void cancelBackgroundWork();
