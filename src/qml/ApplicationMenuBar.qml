@@ -145,8 +145,8 @@ Controls.MenuBar {
         Controls.Menu {
             id: fitMenu
 
+            enabled: root.imageMode
             title: KI18n.i18nc("@title:menu", "&Fit")
-            visible: root.imageMode
 
             MenuActionItem {
                 action: root.actions.fitMenuAction

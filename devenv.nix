@@ -66,6 +66,7 @@ in
     libpng
     lld
     ninja
+    pipewire
     pkg-config
     x265
   ]);

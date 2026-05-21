@@ -11,14 +11,21 @@ let
   repoRoot = lib.escapeShellArg config.devenv.root;
   hostRuntimeLibraryPath = lib.concatStringsSep ":" [
     "${config.devenv.root}/.devenv/profile/lib"
-    (lib.makeLibraryPath [ (lib.getLib pkgs.stdenv.cc.cc) ])
+    (lib.makeLibraryPath [
+      (lib.getLib pkgs.pipewire)
+      (lib.getLib pkgs.stdenv.cc.cc)
+    ])
   ];
   hostTaskPrelude = ''
     set -euo pipefail
 
     cd ${repoRoot}
 
+    export LC_ALL=C.UTF-8
+    export LANG=C.UTF-8
+
     ${qtCxxqt.runtimeEnvironment}
+    unset QT_ADDITIONAL_PACKAGES_PREFIX_PATH
 
     host_runtime_library_path=${lib.escapeShellArg hostRuntimeLibraryPath}
     nix_runtime_library_path=""
@@ -313,6 +320,8 @@ in
       description = "Run Rust clippy";
       exec = ''
         ${hostTaskPrelude}
+        unset LD_LIBRARY_PATH
+        unset QT_PLUGIN_PATH
         ${rustHostLinkerPrelude}
         ${lintJobsPrelude}
 
@@ -322,7 +331,9 @@ in
             --all-features \
             --jobs "$lint_jobs" \
             -- \
-            -D warnings
+            -D warnings \
+            2>&1 \
+            | cat
       '';
     };
 
@@ -330,15 +341,31 @@ in
       description = "Run qmllint against QML sources";
       after = [ "kiriview:lint:clippy" ];
       exec = ''
-        ${hostTaskPrelude}
+        set -euo pipefail
 
-        ${lib.getExe' pkgs.kdePackages.qtdeclarative "qmllint"} ${qtCxxqt.qmlLintImportArgs} --ignore-settings --max-warnings 0 src/qml/*.qml
+        cd ${repoRoot}
+
+        export LC_ALL=C.UTF-8
+        export LANG=C.UTF-8
+        unset LD_LIBRARY_PATH
+        unset QT_PLUGIN_PATH
+        unset QT_ADDITIONAL_PACKAGES_PREFIX_PATH
+
+        ${lib.getExe' pkgs.kdePackages.qtdeclarative "qmllint"} ${qtCxxqt.qmlLintImportArgs} --ignore-settings --max-warnings 0 src/qml/*.qml \
+            2>&1 \
+            | sed \
+                -e '/^Two plugins named "Quick" present, make sure no plugins are duplicated\. The second plugin will not be loaded\.$/d' \
+                -e '/^Two plugins named "QtDesignStudio" present, make sure no plugins are duplicated\. The second plugin will not be loaded\.$/d'
       '';
     };
 
     "kiriview:lint:cpp-prepare" = {
       description = "Prepare C++ lint inputs";
-      after = [ "kiriview:lint:clippy" ];
+      after = [
+        "devenv:files"
+        "kiriview:lint:clippy"
+        "kiriview:lint:qmllint"
+      ];
       exec = ''
         ${qtCxxqt.cppLintPrelude}
       '';
@@ -349,6 +376,7 @@ in
       after = [ "kiriview:lint:cpp-prepare" ];
       exec = ''
         ${hostTaskPrelude}
+        unset QT_PLUGIN_PATH
         ${lintJobsPrelude}
 
         ${lib.getExe' pkgs.llvmPackages.clang-unwrapped "run-clang-tidy"} \
@@ -365,6 +393,7 @@ in
       after = [ "kiriview:lint:cpp-prepare" ];
       exec = ''
         ${hostTaskPrelude}
+        unset QT_PLUGIN_PATH
         ${lintJobsPrelude}
 
         run-clazy-parallel \

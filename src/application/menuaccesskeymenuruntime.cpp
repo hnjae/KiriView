@@ -191,13 +191,17 @@ bool MenuAccessKeyMenuRuntime::openSubMenu(QObject *subMenu, QObject *item)
         return false;
     }
 
+    // clang-format off
     if (QMetaObject::invokeMethod(subMenu, "popup", Qt::DirectConnection,
-            Q_ARG(QQuickItem *, menuItem), Q_ARG(QQuickItem *, menuItem))) {
+            Q_ARG(QQuickItem*, menuItem), Q_ARG(QQuickItem*, menuItem))) {
+        // clang-format on
         return true;
     }
 
+    // clang-format off
     return QMetaObject::invokeMethod(
-        subMenu, "popup", Qt::DirectConnection, Q_ARG(QQuickItem *, menuItem));
+        subMenu, "popup", Qt::DirectConnection, Q_ARG(QQuickItem*, menuItem));
+    // clang-format on
 }
 
 void MenuAccessKeyMenuRuntime::setMenuAccessKeysActive(QObject *menu, bool active)

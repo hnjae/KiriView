@@ -312,7 +312,8 @@ bool ImageActionAvailability::containerViewerShortcutsEnabled() const
 
 int ImageActionAvailability::availabilityRevision() const { return m_availabilityRevision; }
 
-bool ImageActionAvailability::shortcutsEnabledForScope(ShortcutScope scope) const
+bool ImageActionAvailability::shortcutsEnabledForScope(
+    ImageActionAvailability::ShortcutScope scope) const
 {
     switch (scope) {
     case HelpShortcutScope:

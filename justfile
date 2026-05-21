@@ -10,13 +10,13 @@ _:
 
 [group('ci')]
 lint:
-    devenv tasks run --mode before kiriview:lint
+    devenv tasks run --refresh-eval-cache --refresh-task-cache --mode before kiriview:lint
 
 alias test-host := test
 
 [group('ci')]
 test:
-    devenv tasks run --mode before kiriview:test:host
+    devenv tasks run --refresh-eval-cache --refresh-task-cache --mode before kiriview:test:host
 
 [group('ci')]
 format:
@@ -28,15 +28,15 @@ format-check:
 
 [group('ci')]
 i18n-check:
-    devenv tasks run --mode before kiriview:i18n:check
+    devenv tasks run --refresh-eval-cache --refresh-task-cache --mode before kiriview:i18n:check
 
 [group('ci')]
 i18n-pot-check:
-    devenv tasks run --mode before kiriview:i18n:pot-check
+    devenv tasks run --refresh-eval-cache --refresh-task-cache --mode before kiriview:i18n:pot-check
 
 [group('ci')]
 check:
-    devenv tasks run --mode before kiriview:check
+    devenv tasks run --refresh-eval-cache --refresh-task-cache --mode before kiriview:check
 
 [group('ci')]
 ci:

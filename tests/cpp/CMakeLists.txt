@@ -202,6 +202,14 @@ foreach(test_source IN LISTS KIRIVIEW_CPP_TEST_SOURCES)
     add_kiriview_cpp_test("${test_target}" "${test_source}")
 endforeach()
 
+foreach(kdirnotify_test IN ITEMS test_imagecandidatedirectoryentry test_imagecandidatestore)
+    if(TARGET ${kdirnotify_test})
+        set_tests_properties(${kdirnotify_test} PROPERTIES
+            RESOURCE_LOCK kdirnotify
+        )
+    endif()
+endforeach()
+
 if(TARGET test_localization)
     add_dependencies(test_localization kiriview_test_i18n)
     target_compile_definitions(test_localization PRIVATE

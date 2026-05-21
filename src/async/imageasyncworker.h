@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_IMAGEASYNCWORKER_H
 #define KIRIVIEW_IMAGEASYNCWORKER_H
 
+#include <QCoreApplication>
 #include <QMetaObject>
 #include <QObject>
 #include <QPointer>
@@ -36,24 +37,28 @@ void runAsyncWorker(QObject *context, Work work, Finish finish)
         return;
     }
 
+    QObject *deliveryContext = QCoreApplication::instance();
+    if (deliveryContext == nullptr) {
+        callbacks->finish(callbacks->work());
+        return;
+    }
+
     const QPointer<QObject> guardedContext(context);
-    QThreadPool::globalInstance()->start(QRunnable::create([guardedContext, callbacks]() mutable {
-        Result result = callbacks->work();
-        if (guardedContext == nullptr) {
-            return;
-        }
+    QThreadPool::globalInstance()->start(
+        QRunnable::create([deliveryContext, guardedContext, callbacks]() mutable {
+            Result result = callbacks->work();
 
-        QMetaObject::invokeMethod(
-            guardedContext.data(),
-            [guardedContext, callbacks, result = std::move(result)]() mutable {
-                if (guardedContext == nullptr) {
-                    return;
-                }
+            QMetaObject::invokeMethod(
+                deliveryContext,
+                [guardedContext, callbacks, result = std::move(result)]() mutable {
+                    if (guardedContext == nullptr) {
+                        return;
+                    }
 
-                callbacks->finish(std::move(result));
-            },
-            Qt::QueuedConnection);
-    }));
+                    callbacks->finish(std::move(result));
+                },
+                Qt::QueuedConnection);
+        }));
 }
 }
 

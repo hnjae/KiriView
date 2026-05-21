@@ -34,9 +34,11 @@ QVariantList readPortalPowerSaverEnabled()
 
 void subscribePortalPowerSaverChanges(QObject *receiver)
 {
+    // clang-format off
     QDBusConnection::sessionBus().connect(portalService, portalPath, dbusPropertiesInterface,
         QStringLiteral("PropertiesChanged"), receiver,
-        SLOT(handlePropertiesChanged(QString, QVariantMap, QStringList)));
+        SLOT(handlePropertiesChanged(QString,QVariantMap,QStringList)));
+    // clang-format on
 }
 }
 

@@ -194,6 +194,35 @@ QByteArray createPngData()
     return data;
 }
 
+void appendLittleEndian16(QByteArray *data, quint16 value)
+{
+    data->append(static_cast<char>(value & 0xff));
+    data->append(static_cast<char>((value >> 8) & 0xff));
+}
+
+void appendLittleEndian32(QByteArray *data, quint32 value)
+{
+    data->append(static_cast<char>(value & 0xff));
+    data->append(static_cast<char>((value >> 8) & 0xff));
+    data->append(static_cast<char>((value >> 16) & 0xff));
+    data->append(static_cast<char>((value >> 24) & 0xff));
+}
+
+QByteArray ordinaryTiffData()
+{
+    QByteArray data;
+    data.append("II*\0", 4);
+    appendLittleEndian32(&data, 8);
+    appendLittleEndian16(&data, 1);
+    appendLittleEndian16(&data, 262);
+    appendLittleEndian16(&data, 3);
+    appendLittleEndian32(&data, 1);
+    appendLittleEndian16(&data, 2);
+    appendLittleEndian16(&data, 0);
+    appendLittleEndian32(&data, 0);
+    return data;
+}
+
 template <typename Image> const Image *decodedImage(const KiriView::DecodedImageResult &result)
 {
     return KiriView::decodedImageResultImageAs<Image>(result);
@@ -276,7 +305,7 @@ void TestKiriImageDecoder::heifSequenceDecodesAsStreamingAnimation()
 
 void TestKiriImageDecoder::rawExtensionForcesRawDecodeBeforeQtFallback()
 {
-    const QByteArray imageData = createPngData();
+    const QByteArray imageData = ordinaryTiffData();
     QVERIFY(!imageData.isEmpty());
 
     const KiriView::ImageDecodeRequest request = KiriView::ImageDecodeRequest::fromUrl(
@@ -284,7 +313,7 @@ void TestKiriImageDecoder::rawExtensionForcesRawDecodeBeforeQtFallback()
     KiriView::DecodedImageResult result = KiriView::decodeImageData(imageData, request);
 
     const auto *failure = KiriView::decodedImageResultFailure(result);
-    QVERIFY2(failure != nullptr, "A .dng request should use LibRaw before Qt image fallback");
+    QVERIFY2(failure != nullptr, "A TIFF-family .dng request should use LibRaw before Qt fallback");
     QVERIFY(failure->errorString.contains(QStringLiteral("RAW image")));
     QVERIFY(decodedImage<KiriView::StaticDecodedImage>(result) == nullptr);
 }

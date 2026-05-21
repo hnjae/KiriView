@@ -217,7 +217,7 @@ public:
     bool containerViewerShortcutsEnabled() const;
     int availabilityRevision() const;
 
-    Q_INVOKABLE bool shortcutsEnabledForScope(ShortcutScope scope) const;
+    Q_INVOKABLE bool shortcutsEnabledForScope(ImageActionAvailability::ShortcutScope scope) const;
 
 Q_SIGNALS:
     void availabilityChanged();

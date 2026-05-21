@@ -38,12 +38,13 @@ public:
 
     explicit ImageShortcutNavigationPolicy(QObject *parent = nullptr);
 
-    Q_INVOKABLE HorizontalArrowAction horizontalArrowAction(
+    Q_INVOKABLE ImageShortcutNavigationPolicy::HorizontalArrowAction horizontalArrowAction(
         bool leftArrow, bool horizontallyPannable, bool rightToLeftReadingActive) const;
-    Q_INVOKABLE SinglePageArrowAction singlePageArrowAction(
+    Q_INVOKABLE ImageShortcutNavigationPolicy::SinglePageArrowAction singlePageArrowAction(
         bool leftArrow, bool rightToLeftReadingActive) const;
-    Q_INVOKABLE ScanAction scanForwardAction(bool imagePannable, bool viewportMoved) const;
-    Q_INVOKABLE ScanAction scanBackwardAction(
+    Q_INVOKABLE ImageShortcutNavigationPolicy::ScanAction scanForwardAction(
+        bool imagePannable, bool viewportMoved) const;
+    Q_INVOKABLE ImageShortcutNavigationPolicy::ScanAction scanBackwardAction(
         bool imagePannable, bool viewportMoved, bool atFirstImage, int currentPageNumber) const;
 };
 

@@ -70,7 +70,7 @@ let
   qtmultimediaDev = pkgs.kdePackages.qtmultimedia.dev or pkgs.kdePackages.qtmultimedia;
   libpngDev = pkgs.libpng.dev or pkgs.libpng;
   appQmlRoot = "${config.devenv.root}/target/cxxqt/qml_modules";
-  qtQmlRoot = "${config.devenv.root}/.devenv/profile/lib/qt-6/qml";
+  qtQmlRoot = "${pkgs.kdePackages.qtdeclarative}/lib/qt-6/qml";
   qtmultimediaQmlRoot = "${pkgs.kdePackages.qtmultimedia}/lib/qt-6/qml";
   kconfigQmlRoot = "${pkgs.kdePackages.kconfig}/lib/qt-6/qml";
   ki18nQmlRoot = "${pkgs.kdePackages.ki18n}/lib/qt-6/qml";
@@ -185,14 +185,19 @@ let
     runtimeInputs = with pkgs; [
       coreutils
       findutils
+      util-linux
     ];
     text = ''
       set -euo pipefail
 
       repo_root=${lib.escapeShellArg config.devenv.root}
       cxxqt_clangd_include="$repo_root/target/cxxqt/clangd/include"
+      lock_file="$repo_root/target/cxxqt/clangd/refresh.lock"
 
       mkdir -p "$cxxqt_clangd_include"
+      exec 9>"$lock_file"
+      flock 9
+
       find "$cxxqt_clangd_include" -mindepth 1 -maxdepth 1 -type l -delete
 
       link_generated_include_dir() {
@@ -207,7 +212,7 @@ let
           while IFS= read -r -d "" generated_include; do
               link_target="$cxxqt_clangd_include/''${generated_include##*/}"
               rm -rf "$link_target"
-              ln -s "$generated_include" "$link_target"
+              ln -sT "$generated_include" "$link_target"
           done < <(find "$generated_include_dir" -mindepth 1 -maxdepth 1 -print0)
       }
 
