@@ -28,6 +28,8 @@ mod bmff;
 mod byteio;
 #[path = "policy/heifcontainer.rs"]
 mod heifcontainer;
+#[path = "policy/heiftiling.rs"]
+mod heiftiling;
 #[path = "policy/imageformatregistry.rs"]
 mod imageformatregistry;
 #[path = "policy/imageinputclassification.rs"]

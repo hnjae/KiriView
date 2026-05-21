@@ -21,6 +21,7 @@ These defaults apply until this document or an ADR explicitly changes the owner.
 - Location identity: the C++ location domain owns QUrl-based image, container, archive-document, and displayed-image value objects plus normalized URL identity comparison. Runtime domains may store these values as their authoritative state or consume derived snapshots, but they should not invent parallel URL normalization rules.
 - Deletion: Rust policy may choose the deletion target and post-delete follow-up target from plain document/navigation snapshots. C++ owns KDE confirmation, the file operation, cancellation and failure handling, notifications, and applying the follow-up plan.
 - Preparation and cache: C++ owns prepared image objects, decoder jobs, memory pressure handling, and cache lifetime. Rust may compute preparation priority or eviction policy from plain metadata, but cached runtime objects remain in C++.
+- HEIF tiled rendering: C++ owns libheif context and image handles, QImage allocation, tile decoding, and painting into source-rect images. Rust owns tile-grid validation and source-rect tile-region planning from plain numeric tiling metadata.
 - System runtime state: C++ owns desktop-environment observer lifetime and platform probes, including power-saver portal subscription state and physical-memory discovery. Rust may compute cache or scheduling policy from plain snapshots derived from those observers.
 
 ## Derived Public State

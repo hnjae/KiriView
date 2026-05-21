@@ -10,6 +10,7 @@ src/policy/bmff.rs
 src/policy/byteio.rs
 src/policy/cachebudget.rs
 src/policy/heifcontainer.rs
+src/policy/heiftiling.rs
 src/policy/imageactionavailability.rs
 src/policy/imagedocumentsourceloadpolicy.rs
 src/policy/imageformatregistry.rs
