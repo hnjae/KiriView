@@ -4,7 +4,7 @@
 #include "presentation/imagespreadsecondarypagerefresh.h"
 
 #include "location/imageurl.h"
-#include "presentation/imagespreadgeometry.h"
+#include "presentation/imagespreadsecondarypagerefreshpolicy.h"
 
 #include <limits>
 

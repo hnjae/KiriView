@@ -112,11 +112,13 @@ src/presentation/imagerendercontextstate.cpp
 src/presentation/imagesecondarypagecontroller.cpp
 src/presentation/imagesecondarypagestate.cpp
 src/presentation/imagespreadgeometry.cpp
+src/presentation/imagespreadmodepolicy.cpp
 src/presentation/imagespreadmodecontroller.cpp
 src/presentation/imagespreadnavigation.cpp
 src/presentation/imagespreadpagecache.cpp
 src/presentation/imagespreadpresentationcontroller.cpp
 src/presentation/imagespreadsecondarypagerefresh.cpp
+src/presentation/imagespreadsecondarypagerefreshpolicy.cpp
 src/presentation/imagespreadzoomcontroller.cpp
 src/navigation/imageshortcutnavigationpolicy.cpp
 src/location/imageurl.cpp

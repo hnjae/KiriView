@@ -10,6 +10,7 @@
 #include "navigation/imagenavigationtypes.h"
 #include "predecode/predecodedimage.h"
 #include "presentation/imagespreadgeometry.h"
+#include "presentation/imagespreadmodepolicy.h"
 #include "presentation/imagespreadnavigation.h"
 #include "presentation/imagespreadsecondarypagerefresh.h"
 #include "presentation/imagezoomstate.h"

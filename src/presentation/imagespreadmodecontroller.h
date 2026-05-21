@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGESPREADMODECONTROLLER_H
 #define KIRIVIEW_IMAGESPREADMODECONTROLLER_H
 
-#include "presentation/imagespreadgeometry.h"
+#include "presentation/imagespreadmodepolicy.h"
 
 namespace KiriView {
 class ImageSpreadModeController final

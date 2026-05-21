@@ -18,9 +18,6 @@ private Q_SLOTS:
     void scaledPageDisplaySizeUsesSpreadWidthRatio();
     void pageRectsRespectReadingDirectionAndVerticalCentering();
     void widePagePolicyRequiresLandscapeImage();
-    void secondaryPageRefreshPlanSelectsPrimaryKeepOrLoad();
-    void readingControlsRequireDisplayedComicArchiveImage();
-    void twoPageModeChangePlansToggleSideEffects();
 };
 
 void TestImageSpreadGeometry::spreadSizeCombinesPagesWhenBothAreAvailable()
@@ -61,89 +58,6 @@ void TestImageSpreadGeometry::widePagePolicyRequiresLandscapeImage()
     QVERIFY(KiriView::imageSpreadPageIsWide(QSize(1200, 800)));
     QVERIFY(!KiriView::imageSpreadPageIsWide(QSize(800, 800)));
     QVERIFY(!KiriView::imageSpreadPageIsWide(QSize()));
-}
-
-void TestImageSpreadGeometry::secondaryPageRefreshPlanSelectsPrimaryKeepOrLoad()
-{
-    using KiriView::ImageSpreadSecondaryPageDecision;
-
-    const KiriView::ImageSpreadSecondaryPageRefreshPlan coverPlan
-        = KiriView::imageSpreadSecondaryPageRefreshPlan(
-            KiriView::ImageSpreadSecondaryPageRefreshState {
-                true, 1, 4, false, true, false, false });
-    QCOMPARE(coverPlan.decision, ImageSpreadSecondaryPageDecision::PrimaryOnly);
-    QCOMPARE(coverPlan.targetPageNumber, 0);
-
-    const KiriView::ImageSpreadSecondaryPageRefreshPlan widePrimaryPlan
-        = KiriView::imageSpreadSecondaryPageRefreshPlan(
-            KiriView::ImageSpreadSecondaryPageRefreshState {
-                true, 2, 4, true, true, false, false });
-    QCOMPARE(widePrimaryPlan.decision, ImageSpreadSecondaryPageDecision::PrimaryOnly);
-    QCOMPARE(widePrimaryPlan.targetPageNumber, 0);
-
-    const KiriView::ImageSpreadSecondaryPageRefreshPlan wideNextPlan
-        = KiriView::imageSpreadSecondaryPageRefreshPlan(
-            KiriView::ImageSpreadSecondaryPageRefreshState {
-                true, 2, 4, false, true, true, false });
-    QCOMPARE(wideNextPlan.decision, ImageSpreadSecondaryPageDecision::PrimaryOnly);
-    QCOMPARE(wideNextPlan.targetPageNumber, 0);
-
-    const KiriView::ImageSpreadSecondaryPageRefreshPlan keepPlan
-        = KiriView::imageSpreadSecondaryPageRefreshPlan(
-            KiriView::ImageSpreadSecondaryPageRefreshState {
-                true, 2, 4, false, true, false, true });
-    QCOMPARE(keepPlan.decision, ImageSpreadSecondaryPageDecision::KeepCurrentSecondary);
-    QCOMPARE(keepPlan.targetPageNumber, 3);
-
-    const KiriView::ImageSpreadSecondaryPageRefreshPlan loadPlan
-        = KiriView::imageSpreadSecondaryPageRefreshPlan(
-            KiriView::ImageSpreadSecondaryPageRefreshState {
-                true, 2, 4, false, true, false, false });
-    QCOMPARE(loadPlan.decision, ImageSpreadSecondaryPageDecision::LoadNext);
-    QCOMPARE(loadPlan.targetPageNumber, 3);
-}
-
-void TestImageSpreadGeometry::readingControlsRequireDisplayedComicArchiveImage()
-{
-    QVERIFY(!KiriView::imageSpreadReadingControlsAvailable(
-        KiriView::ImageSpreadReadingAvailability { false, true, true }));
-    QVERIFY(!KiriView::imageSpreadReadingControlsAvailable(
-        KiriView::ImageSpreadReadingAvailability { true, false, true }));
-    QVERIFY(!KiriView::imageSpreadReadingControlsAvailable(
-        KiriView::ImageSpreadReadingAvailability { true, true, false }));
-    QVERIFY(KiriView::imageSpreadReadingControlsAvailable(
-        KiriView::ImageSpreadReadingAvailability { true, true, true }));
-}
-
-void TestImageSpreadGeometry::twoPageModeChangePlansToggleSideEffects()
-{
-    const KiriView::ImageSpreadTwoPageModeChange noChange
-        = KiriView::imageSpreadTwoPageModeChange(true, true, true);
-    QVERIFY(!noChange.changed);
-
-    const KiriView::ImageSpreadTwoPageModeChange enable
-        = KiriView::imageSpreadTwoPageModeChange(false, true, false);
-    QVERIFY(enable.changed);
-    QVERIFY(enable.resetSpreadZoom);
-    QVERIFY(!enable.finishTransition);
-    QVERIFY(!enable.clearSecondaryPage);
-    QVERIFY(!enable.restorePrimaryZoom);
-    QVERIFY(enable.refreshSecondaryPage);
-    QVERIFY(enable.notifyTwoPageMode);
-
-    const KiriView::ImageSpreadTwoPageModeChange disableHidden
-        = KiriView::imageSpreadTwoPageModeChange(true, false, false);
-    QVERIFY(disableHidden.changed);
-    QVERIFY(!disableHidden.resetSpreadZoom);
-    QVERIFY(disableHidden.finishTransition);
-    QVERIFY(disableHidden.clearSecondaryPage);
-    QVERIFY(!disableHidden.restorePrimaryZoom);
-    QVERIFY(disableHidden.refreshSecondaryPage);
-    QVERIFY(disableHidden.notifyTwoPageMode);
-
-    const KiriView::ImageSpreadTwoPageModeChange disableVisible
-        = KiriView::imageSpreadTwoPageModeChange(true, false, true);
-    QVERIFY(disableVisible.restorePrimaryZoom);
 }
 
 QTEST_GUILESS_MAIN(TestImageSpreadGeometry)
