@@ -168,9 +168,77 @@ KiriView::DecodedImageResult dispatchToHandler(const KiriView::ImageDecodeRouter
     }
     return handler(input);
 }
+
+const KiriView::ImageDecodeRouterHandler &emptyHandler()
+{
+    static const KiriView::ImageDecodeRouterHandler handler;
+    return handler;
+}
+
+const KiriView::ImageDecodeRouterHandler &handlerForRoute(
+    const KiriView::ImageDecodeRouterHandlers &handlers,
+    KiriView::ImageDecodeHandlerKind handlerKind)
+{
+    switch (handlerKind) {
+    case KiriView::ImageDecodeHandlerKind::Svg:
+        return handlers.svg;
+    case KiriView::ImageDecodeHandlerKind::Apng:
+        return handlers.apng;
+    case KiriView::ImageDecodeHandlerKind::HeifFamily:
+        return handlers.heifFamily;
+    case KiriView::ImageDecodeHandlerKind::Raw:
+        return handlers.raw;
+    case KiriView::ImageDecodeHandlerKind::QtRaster:
+        return handlers.qtRaster;
+    case KiriView::ImageDecodeHandlerKind::None:
+        return emptyHandler();
+    }
+
+    return emptyHandler();
+}
 }
 
 namespace KiriView {
+ImageDecodeRoute imageDecodeRouteForClassification(ImageInputClassification classification)
+{
+    switch (classification.kind) {
+    case ImageInputKind::Svg:
+        return ImageDecodeRoute {
+            ImageDecodeHandlerKind::Svg,
+            classification.dataSource,
+            classification.qtFormat,
+        };
+    case ImageInputKind::Apng:
+        return ImageDecodeRoute {
+            ImageDecodeHandlerKind::Apng,
+            classification.dataSource,
+            classification.qtFormat,
+        };
+    case ImageInputKind::HeifFamily:
+        return ImageDecodeRoute {
+            ImageDecodeHandlerKind::HeifFamily,
+            classification.dataSource,
+            classification.qtFormat,
+        };
+    case ImageInputKind::Raw:
+        return ImageDecodeRoute {
+            ImageDecodeHandlerKind::Raw,
+            classification.dataSource,
+            classification.qtFormat,
+        };
+    case ImageInputKind::QtRaster:
+        return ImageDecodeRoute {
+            ImageDecodeHandlerKind::QtRaster,
+            classification.dataSource,
+            classification.qtFormat,
+        };
+    case ImageInputKind::Unknown:
+        return {};
+    }
+
+    return {};
+}
+
 ImageDecodeRouter::ImageDecodeRouter(ImageDecodeRouterHandlers handlers,
     ImageDecodeInputClassifier classifier,
     ImageDecodeCompatibleDataTransform compatibleDataTransform)
@@ -188,28 +256,19 @@ DecodedImageResult ImageDecodeRouter::decode(
 {
     const ImageInputClassification classification
         = m_classifier(data, request.imageUrl().fileName());
-    ImageDecodeRouterByteInputs byteInputs(data, m_compatibleDataTransform);
-    const ImageDecodeRouterInput input {
-        byteInputs.dataFor(classification.dataSource),
-        request,
-        classification.qtFormat,
-    };
-
-    switch (classification.kind) {
-    case ImageInputKind::Svg:
-        return dispatchToHandler(m_handlers.svg, input);
-    case ImageInputKind::Apng:
-        return dispatchToHandler(m_handlers.apng, input);
-    case ImageInputKind::HeifFamily:
-        return dispatchToHandler(m_handlers.heifFamily, input);
-    case ImageInputKind::Raw:
-        return dispatchToHandler(m_handlers.raw, input);
-    case ImageInputKind::QtRaster:
-        return dispatchToHandler(m_handlers.qtRaster, input);
-    case ImageInputKind::Unknown:
+    const ImageDecodeRoute route = imageDecodeRouteForClassification(classification);
+    if (!route.shouldDecode()) {
         return failedReadImageDataResult();
     }
-    return failedReadImageDataResult();
+
+    ImageDecodeRouterByteInputs byteInputs(data, m_compatibleDataTransform);
+    const ImageDecodeRouterInput input {
+        byteInputs.dataFor(route.dataSource),
+        request,
+        route.qtRasterFormat,
+    };
+
+    return dispatchToHandler(handlerForRoute(m_handlers, route.handlerKind), input);
 }
 
 DecodedImageResult decodeImageDataWithDefaultRouter(

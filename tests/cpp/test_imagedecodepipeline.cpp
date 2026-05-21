@@ -62,12 +62,52 @@ class TestImageDecodePipeline : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
+    void routePlanKeepsClassificationSeparateFromDecoderExecution();
     void routerCallsExactlyOneDecoderForClassifiedInputs();
     void selectedDecoderFailureDoesNotFallback();
     void compatibleDataIsComputedOnlyWhenClassificationRequestsIt();
     void qtRasterClassificationCarriesExplicitFormat();
     void unknownClassificationFailsWithoutDecoder();
 };
+
+void TestImageDecodePipeline::routePlanKeepsClassificationSeparateFromDecoderExecution()
+{
+    struct Case {
+        KiriView::ImageInputClassification classification;
+        KiriView::ImageDecodeHandlerKind expectedHandler;
+        KiriView::ImageDecodeDataSource expectedDataSource;
+        KiriView::QtRasterFormat expectedFormat;
+        bool expectedShouldDecode = true;
+    };
+    const QList<Case> cases {
+        { classification(KiriView::ImageInputKind::Svg), KiriView::ImageDecodeHandlerKind::Svg,
+            KiriView::ImageDecodeDataSource::Original, KiriView::QtRasterFormat::None },
+        { classification(KiriView::ImageInputKind::Apng), KiriView::ImageDecodeHandlerKind::Apng,
+            KiriView::ImageDecodeDataSource::Original, KiriView::QtRasterFormat::None },
+        { classification(KiriView::ImageInputKind::HeifFamily, KiriView::QtRasterFormat::None,
+              KiriView::ImageDecodeDataSource::AvifCompatible),
+            KiriView::ImageDecodeHandlerKind::HeifFamily,
+            KiriView::ImageDecodeDataSource::AvifCompatible, KiriView::QtRasterFormat::None },
+        { classification(KiriView::ImageInputKind::Raw), KiriView::ImageDecodeHandlerKind::Raw,
+            KiriView::ImageDecodeDataSource::Original, KiriView::QtRasterFormat::None },
+        { classification(KiriView::ImageInputKind::QtRaster, KiriView::QtRasterFormat::Jxl),
+            KiriView::ImageDecodeHandlerKind::QtRaster, KiriView::ImageDecodeDataSource::Original,
+            KiriView::QtRasterFormat::Jxl },
+        { classification(KiriView::ImageInputKind::Unknown, KiriView::QtRasterFormat::None,
+              KiriView::ImageDecodeDataSource::AvifCompatible),
+            KiriView::ImageDecodeHandlerKind::None, KiriView::ImageDecodeDataSource::Original,
+            KiriView::QtRasterFormat::None, false },
+    };
+
+    for (const Case &testCase : cases) {
+        const KiriView::ImageDecodeRoute route
+            = KiriView::imageDecodeRouteForClassification(testCase.classification);
+        QCOMPARE(route.handlerKind, testCase.expectedHandler);
+        QCOMPARE(route.dataSource, testCase.expectedDataSource);
+        QCOMPARE(route.qtRasterFormat, testCase.expectedFormat);
+        QCOMPARE(route.shouldDecode(), testCase.expectedShouldDecode);
+    }
+}
 
 void TestImageDecodePipeline::routerCallsExactlyOneDecoderForClassifiedInputs()
 {
@@ -188,7 +228,8 @@ void TestImageDecodePipeline::unknownClassificationFailsWithoutDecoder()
     KiriView::ImageDecodeRouter router(
         recordingHandlers(&calls),
         [](const QByteArray &, const QString &) {
-            return classification(KiriView::ImageInputKind::Unknown);
+            return classification(KiriView::ImageInputKind::Unknown, KiriView::QtRasterFormat::None,
+                KiriView::ImageDecodeDataSource::AvifCompatible);
         },
         [&compatibleTransformCount](const QByteArray &data) {
             ++compatibleTransformCount;

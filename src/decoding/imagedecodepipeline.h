@@ -18,6 +18,23 @@ struct ImageDecodeRouterInput {
     QtRasterFormat qtRasterFormat = QtRasterFormat::None;
 };
 
+enum class ImageDecodeHandlerKind {
+    None,
+    Svg,
+    Apng,
+    HeifFamily,
+    Raw,
+    QtRaster,
+};
+
+struct ImageDecodeRoute {
+    ImageDecodeHandlerKind handlerKind = ImageDecodeHandlerKind::None;
+    ImageDecodeDataSource dataSource = ImageDecodeDataSource::Original;
+    QtRasterFormat qtRasterFormat = QtRasterFormat::None;
+
+    bool shouldDecode() const { return handlerKind != ImageDecodeHandlerKind::None; }
+};
+
 using ImageDecodeRouterHandler = std::function<DecodedImageResult(const ImageDecodeRouterInput &)>;
 
 struct ImageDecodeRouterHandlers {
@@ -31,6 +48,8 @@ struct ImageDecodeRouterHandlers {
 using ImageDecodeInputClassifier
     = std::function<ImageInputClassification(const QByteArray &, const QString &)>;
 using ImageDecodeCompatibleDataTransform = std::function<QByteArray(const QByteArray &)>;
+
+ImageDecodeRoute imageDecodeRouteForClassification(ImageInputClassification classification);
 
 class ImageDecodeRouter final
 {
