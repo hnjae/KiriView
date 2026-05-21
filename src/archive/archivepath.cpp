@@ -3,9 +3,9 @@
 
 #include "archivepath.h"
 
+#include "bridge/rustqtconversion.h"
 #include "kiriview/src/policy/archivepath.cxx.h"
 #include "location/imagelocation.h"
-#include "rustqtconversion.h"
 
 #include <QByteArray>
 #include <optional>

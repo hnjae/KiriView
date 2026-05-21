@@ -3,9 +3,9 @@
 
 #include "imagesurface.h"
 
+#include "bridge/qtgeometryconversion.h"
 #include "cache/imagecachepolicy.h"
 #include "kiriview/src/policy/imagerendergeometry.cxx.h"
-#include "qtgeometryconversion.h"
 #include "system/systemmemory.h"
 
 #include <optional>

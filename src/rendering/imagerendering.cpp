@@ -3,9 +3,9 @@
 
 #include "imagerendering.h"
 
+#include "bridge/qtgeometryconversion.h"
 #include "kiriview/src/policy/imagerendergeometry.cxx.h"
 #include "presentation/imagerotation.h"
-#include "qtgeometryconversion.h"
 
 #include <QRect>
 #include <QRectF>

@@ -3,8 +3,8 @@
 
 #include "archiveformat.h"
 
+#include "bridge/rustqtconversion.h"
 #include "kiriview/src/policy/archiveformat.cxx.h"
-#include "rustqtconversion.h"
 
 #include <QMimeDatabase>
 #include <QMimeType>

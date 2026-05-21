@@ -3,9 +3,9 @@
 
 #include "presentation/imagezoomstate.h"
 
+#include "bridge/qtgeometryconversion.h"
 #include "kiriview/src/policy/imagezoomstate.cxx.h"
 #include "location/imageurl.h"
-#include "qtgeometryconversion.h"
 
 namespace {
 KiriView::RustImageZoomMode rustZoomMode(KiriView::ImageZoomMode zoomMode)

@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#ifndef KIRIVIEW_RUSTQTCONVERSION_H
-#define KIRIVIEW_RUSTQTCONVERSION_H
+#ifndef KIRIVIEW_BRIDGE_RUSTQTCONVERSION_H
+#define KIRIVIEW_BRIDGE_RUSTQTCONVERSION_H
 
 #include "cache/imagebyteaccounting.h"
 

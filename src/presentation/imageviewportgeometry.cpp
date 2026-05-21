@@ -3,8 +3,8 @@
 
 #include "presentation/imageviewportgeometry.h"
 
+#include "bridge/qtgeometryconversion.h"
 #include "kiriview/src/policy/imageviewportgeometry.cxx.h"
-#include "qtgeometryconversion.h"
 
 namespace KiriView {
 QRectF imageViewportImageRect(const QSizeF &viewportSize, const QSizeF &displaySize)

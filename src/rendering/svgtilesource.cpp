@@ -3,10 +3,10 @@
 
 #include "svgtilesource.h"
 
+#include "bridge/rustqtconversion.h"
 #include "imagetilesourcehelpers_p.h"
 #include "kiriview/src/policy/svgrenderer.cxx.h"
 #include "localization/imageerrortext.h"
-#include "rustqtconversion.h"
 
 #include <QByteArray>
 #include <QImage>

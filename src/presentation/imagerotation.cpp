@@ -3,8 +3,8 @@
 
 #include "presentation/imagerotation.h"
 
+#include "bridge/qtgeometryconversion.h"
 #include "kiriview/src/policy/imagerotation.cxx.h"
-#include "qtgeometryconversion.h"
 
 namespace KiriView {
 int normalizedImageRotationDegrees(int degrees)

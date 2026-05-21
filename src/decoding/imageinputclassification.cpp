@@ -3,8 +3,8 @@
 
 #include "imageinputclassification.h"
 
+#include "bridge/rustqtconversion.h"
 #include "kiriview/src/policy/imageinputclassification.cxx.h"
-#include "rustqtconversion.h"
 
 namespace {
 KiriView::ImageInputKind imageInputKindFromRust(KiriView::RustImageInputKind kind)

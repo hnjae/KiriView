@@ -4,13 +4,13 @@
 #include "imagedecodepipeline.h"
 
 #include "apnganimationreader.h"
+#include "bridge/rustqtconversion.h"
 #include "heifdecoder.h"
 #include "kiriview/src/policy/avifcompat.cxx.h"
 #include "localization/imageerrortext.h"
 #include "qimagereaderdecoder.h"
 #include "rawdecoder.h"
 #include "rendering/svgtilesource.h"
-#include "rustqtconversion.h"
 #include "staticimagedecode.h"
 
 #include <QString>

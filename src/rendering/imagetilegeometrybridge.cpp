@@ -3,8 +3,8 @@
 
 #include "imagetilegeometrybridge.h"
 
+#include "bridge/qtgeometryconversion.h"
 #include "kiriview/src/policy/imagetilegeometry.cxx.h"
-#include "qtgeometryconversion.h"
 
 namespace {
 KiriView::RustTileSize rustTileSize(const QSize &size)

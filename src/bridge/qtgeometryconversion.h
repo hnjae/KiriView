@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#ifndef KIRIVIEW_QTGEOMETRYCONVERSION_H
-#define KIRIVIEW_QTGEOMETRYCONVERSION_H
+#ifndef KIRIVIEW_BRIDGE_QTGEOMETRYCONVERSION_H
+#define KIRIVIEW_BRIDGE_QTGEOMETRYCONVERSION_H
 
 #include <QPointF>
 #include <QRect>

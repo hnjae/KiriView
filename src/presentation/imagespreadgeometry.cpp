@@ -3,8 +3,8 @@
 
 #include "presentation/imagespreadgeometry.h"
 
+#include "bridge/qtgeometryconversion.h"
 #include "kiriview/src/policy/imagespreadgeometry.cxx.h"
-#include "qtgeometryconversion.h"
 
 namespace {
 KiriView::ImageSpreadSecondaryPageDecision imageSpreadSecondaryPageDecision(
