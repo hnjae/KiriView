@@ -36,6 +36,16 @@ void writeFramePixels(KiriView::ApngFrameComposer *composer, std::initializer_li
 }
 
 QColor pixel(const QImage &image, int x, int y) { return image.pixelColor(x, y); }
+
+void comparePlan(const KiriView::ApngFrameCompositionPlan &plan, KiriView::ApngFrameBlendOp blendOp,
+    KiriView::ApngFrameDisposeOp disposeOp, bool capturePreviousRegion,
+    KiriView::ApngFrameDisposeAction disposeAction)
+{
+    QVERIFY(plan.displayControl.blendOp == blendOp);
+    QVERIFY(plan.displayControl.disposeOp == disposeOp);
+    QCOMPARE(plan.capturePreviousRegion, capturePreviousRegion);
+    QVERIFY(plan.disposeAction == disposeAction);
+}
 }
 
 class TestApngFrameComposer : public QObject
@@ -43,11 +53,55 @@ class TestApngFrameComposer : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
+    void firstFramePlanUsesSourceBlendAndBackgroundDispose();
+    void subsequentFramePlanPreservesPreviousDispose();
+    void framePlanMapsDisposeActions();
     void rejectsFramesOutsideTheCanvas();
     void firstFrameWithDisposePreviousClearsAsBackground();
     void blendOverComposesWithExistingCanvas();
     void disposePreviousRestoresCanvasForFollowingFrames();
 };
+
+void TestApngFrameComposer::firstFramePlanUsesSourceBlendAndBackgroundDispose()
+{
+    KiriView::ApngFrameControl control = frameControl(2, 1);
+    control.blendOp = KiriView::ApngFrameBlendOp::Over;
+    control.disposeOp = KiriView::ApngFrameDisposeOp::Previous;
+
+    const KiriView::ApngFrameCompositionPlan plan
+        = KiriView::apngFrameCompositionPlan(false, control);
+
+    comparePlan(plan, KiriView::ApngFrameBlendOp::Source, KiriView::ApngFrameDisposeOp::Background,
+        false, KiriView::ApngFrameDisposeAction::ClearFrameRegion);
+}
+
+void TestApngFrameComposer::subsequentFramePlanPreservesPreviousDispose()
+{
+    KiriView::ApngFrameControl control = frameControl(2, 1);
+    control.blendOp = KiriView::ApngFrameBlendOp::Over;
+    control.disposeOp = KiriView::ApngFrameDisposeOp::Previous;
+
+    const KiriView::ApngFrameCompositionPlan plan
+        = KiriView::apngFrameCompositionPlan(true, control);
+
+    comparePlan(plan, KiriView::ApngFrameBlendOp::Over, KiriView::ApngFrameDisposeOp::Previous,
+        true, KiriView::ApngFrameDisposeAction::RestorePreviousRegion);
+}
+
+void TestApngFrameComposer::framePlanMapsDisposeActions()
+{
+    KiriView::ApngFrameControl control = frameControl(2, 1);
+
+    control.disposeOp = KiriView::ApngFrameDisposeOp::None;
+    comparePlan(KiriView::apngFrameCompositionPlan(true, control),
+        KiriView::ApngFrameBlendOp::Source, KiriView::ApngFrameDisposeOp::None, false,
+        KiriView::ApngFrameDisposeAction::None);
+
+    control.disposeOp = KiriView::ApngFrameDisposeOp::Background;
+    comparePlan(KiriView::apngFrameCompositionPlan(true, control),
+        KiriView::ApngFrameBlendOp::Source, KiriView::ApngFrameDisposeOp::Background, false,
+        KiriView::ApngFrameDisposeAction::ClearFrameRegion);
+}
 
 void TestApngFrameComposer::rejectsFramesOutsideTheCanvas()
 {

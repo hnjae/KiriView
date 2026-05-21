@@ -25,6 +25,12 @@ enum class ApngFrameBlendOp {
     Over,
 };
 
+enum class ApngFrameDisposeAction {
+    None,
+    ClearFrameRegion,
+    RestorePreviousRegion,
+};
+
 struct ApngFrameControl {
     quint32 width = 0;
     quint32 height = 0;
@@ -33,6 +39,14 @@ struct ApngFrameControl {
     ApngFrameDisposeOp disposeOp = ApngFrameDisposeOp::None;
     ApngFrameBlendOp blendOp = ApngFrameBlendOp::Source;
 };
+
+struct ApngFrameCompositionPlan {
+    ApngFrameControl displayControl;
+    bool capturePreviousRegion = false;
+    ApngFrameDisposeAction disposeAction = ApngFrameDisposeAction::None;
+};
+
+ApngFrameCompositionPlan apngFrameCompositionPlan(bool hasDisplayedFrame, ApngFrameControl control);
 
 class ApngFrameComposer final
 {
@@ -48,8 +62,8 @@ private:
     ApngRgbaRegion region(const ApngFrameControl &control) const;
     void premultiplyFrame(const ApngFrameControl &control);
     bool blendFrame(const ApngFrameControl &control);
-    bool applyDispose(
-        const ApngFrameControl &control, const std::optional<std::vector<unsigned char>> &previous);
+    bool applyDispose(const ApngFrameCompositionPlan &plan,
+        const std::optional<std::vector<unsigned char>> &previous);
 
     bool m_hasDisplayedFrame = false;
     ApngRgbaBuffer m_canvas;

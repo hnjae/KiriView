@@ -52,6 +52,37 @@ void blendPixelOver(unsigned char *destination, const unsigned char *source)
 }
 
 namespace KiriView {
+ApngFrameCompositionPlan apngFrameCompositionPlan(bool hasDisplayedFrame, ApngFrameControl control)
+{
+    if (!hasDisplayedFrame) {
+        control.blendOp = ApngFrameBlendOp::Source;
+        if (control.disposeOp == ApngFrameDisposeOp::Previous) {
+            control.disposeOp = ApngFrameDisposeOp::Background;
+        }
+    }
+
+    ApngFrameDisposeAction disposeAction = ApngFrameDisposeAction::None;
+    bool capturePreviousRegion = false;
+    switch (control.disposeOp) {
+    case ApngFrameDisposeOp::Background:
+        disposeAction = ApngFrameDisposeAction::ClearFrameRegion;
+        break;
+    case ApngFrameDisposeOp::Previous:
+        capturePreviousRegion = true;
+        disposeAction = ApngFrameDisposeAction::RestorePreviousRegion;
+        break;
+    case ApngFrameDisposeOp::None:
+    default:
+        break;
+    }
+
+    return ApngFrameCompositionPlan {
+        control,
+        capturePreviousRegion,
+        disposeAction,
+    };
+}
+
 bool ApngFrameComposer::initialize(QSize canvasSize, std::size_t rowBytes)
 {
     clear();
@@ -82,27 +113,22 @@ std::optional<QImage> ApngFrameComposer::composeFrame(ApngFrameControl control)
         return std::nullopt;
     }
 
-    if (!m_hasDisplayedFrame) {
-        control.blendOp = ApngFrameBlendOp::Source;
-        if (control.disposeOp == ApngFrameDisposeOp::Previous) {
-            control.disposeOp = ApngFrameDisposeOp::Background;
-        }
-    }
+    const ApngFrameCompositionPlan plan = apngFrameCompositionPlan(m_hasDisplayedFrame, control);
+    const ApngFrameControl &displayControl = plan.displayControl;
 
-    premultiplyFrame(control);
+    premultiplyFrame(displayControl);
     std::optional<std::vector<unsigned char>> previous
-        = control.disposeOp == ApngFrameDisposeOp::Previous ? m_canvas.copyRegion(region(control))
-                                                            : std::nullopt;
-    if (control.disposeOp == ApngFrameDisposeOp::Previous && !previous.has_value()) {
+        = plan.capturePreviousRegion ? m_canvas.copyRegion(region(displayControl)) : std::nullopt;
+    if (plan.capturePreviousRegion && !previous.has_value()) {
         return std::nullopt;
     }
 
-    if (!blendFrame(control)) {
+    if (!blendFrame(displayControl)) {
         return std::nullopt;
     }
 
     std::optional<QImage> image = m_canvas.imageCopy();
-    if (!image.has_value() || !applyDispose(control, previous)) {
+    if (!image.has_value() || !applyDispose(plan, previous)) {
         return std::nullopt;
     }
 
@@ -153,17 +179,17 @@ bool ApngFrameComposer::blendFrame(const ApngFrameControl &control)
 }
 
 bool ApngFrameComposer::applyDispose(
-    const ApngFrameControl &control, const std::optional<std::vector<unsigned char>> &previous)
+    const ApngFrameCompositionPlan &plan, const std::optional<std::vector<unsigned char>> &previous)
 {
-    switch (control.disposeOp) {
-    case ApngFrameDisposeOp::Background:
-        return m_canvas.clearRegion(region(control));
-    case ApngFrameDisposeOp::Previous:
+    switch (plan.disposeAction) {
+    case ApngFrameDisposeAction::ClearFrameRegion:
+        return m_canvas.clearRegion(region(plan.displayControl));
+    case ApngFrameDisposeAction::RestorePreviousRegion:
         if (!previous.has_value()) {
             return false;
         }
-        return m_canvas.restoreRegion(region(control), *previous);
-    case ApngFrameDisposeOp::None:
+        return m_canvas.restoreRegion(region(plan.displayControl), *previous);
+    case ApngFrameDisposeAction::None:
     default:
         return true;
     }
