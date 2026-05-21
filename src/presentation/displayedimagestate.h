@@ -13,6 +13,11 @@
 #include <optional>
 
 namespace KiriView {
+struct DisplayedImageStateChange {
+    QSize imageSize;
+    quint64 revision = 0;
+};
+
 class DisplayedImageState
 {
 public:
@@ -23,16 +28,16 @@ public:
     bool isPredecodeCacheable() const;
     std::optional<StaticImagePayload> staticImage() const;
 
-    void setImage(const QImage &image, bool predecodeCacheable);
-    void setStaticImage(StaticImagePayload staticImage, bool useFullImageSurface,
-        bool predecodeCacheable, qsizetype tileCacheByteBudget);
-    bool insertTile(DecodedTile tile);
-    bool clear();
+    DisplayedImageStateChange setImage(const QImage &image, bool predecodeCacheable);
+    DisplayedImageStateChange setStaticImage(StaticImagePayload staticImage,
+        bool useFullImageSurface, bool predecodeCacheable, qsizetype tileCacheByteBudget);
+    std::optional<DisplayedImageStateChange> insertTile(DecodedTile tile);
+    std::optional<DisplayedImageStateChange> clear();
 
 private:
-    void replaceDisplayedImage(std::shared_ptr<DisplayedImageSurface> surface,
+    DisplayedImageStateChange replaceDisplayedImage(std::shared_ptr<DisplayedImageSurface> surface,
         std::optional<StaticImagePayload> staticImage, bool predecodeCacheable);
-    void finishImageChange();
+    DisplayedImageStateChange finishImageChange();
 
     std::shared_ptr<DisplayedImageSurface> m_surface;
     std::optional<StaticImagePayload> m_staticImage;

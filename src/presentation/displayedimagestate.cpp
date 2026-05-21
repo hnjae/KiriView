@@ -39,16 +39,17 @@ std::optional<StaticImagePayload> DisplayedImageState::staticImage() const
     return m_staticImage;
 }
 
-void DisplayedImageState::setImage(const QImage &image, bool predecodeCacheable)
+DisplayedImageStateChange DisplayedImageState::setImage(
+    const QImage &image, bool predecodeCacheable)
 {
     QImage displayImage = displayReadyImage(image);
-    replaceDisplayedImage(
+    return replaceDisplayedImage(
         std::make_shared<DisplayedImageSurface>(LegacyFrameSurface { std::move(displayImage) }),
         std::nullopt, predecodeCacheable);
 }
 
-void DisplayedImageState::setStaticImage(StaticImagePayload staticImage, bool useFullImageSurface,
-    bool predecodeCacheable, qsizetype tileCacheByteBudget)
+DisplayedImageStateChange DisplayedImageState::setStaticImage(StaticImagePayload staticImage,
+    bool useFullImageSurface, bool predecodeCacheable, qsizetype tileCacheByteBudget)
 {
     QImage displayImage = displayReadyImage(staticImage.preview);
     staticImage.preview = displayImage;
@@ -62,45 +63,52 @@ void DisplayedImageState::setStaticImage(StaticImagePayload staticImage, bool us
             StaticTileSurface { *storedStaticImage, tileCacheByteBudget });
     }
 
-    replaceDisplayedImage(std::move(surface), std::move(storedStaticImage), predecodeCacheable);
+    return replaceDisplayedImage(
+        std::move(surface), std::move(storedStaticImage), predecodeCacheable);
 }
 
-bool DisplayedImageState::insertTile(DecodedTile tile)
+std::optional<DisplayedImageStateChange> DisplayedImageState::insertTile(DecodedTile tile)
 {
     if (m_surface == nullptr) {
-        return false;
+        return std::nullopt;
     }
     auto *surface = m_surface->staticTileSurface();
     if (surface == nullptr) {
-        return false;
+        return std::nullopt;
     }
 
     if (!surface->insertTile(std::move(tile))) {
-        return false;
+        return std::nullopt;
     }
 
-    finishImageChange();
-    return true;
+    return finishImageChange();
 }
 
-bool DisplayedImageState::clear()
+std::optional<DisplayedImageStateChange> DisplayedImageState::clear()
 {
     if (m_surface == nullptr) {
-        return false;
+        return std::nullopt;
     }
 
-    replaceDisplayedImage(nullptr, std::nullopt, false);
-    return true;
+    return replaceDisplayedImage(nullptr, std::nullopt, false);
 }
 
-void DisplayedImageState::replaceDisplayedImage(std::shared_ptr<DisplayedImageSurface> surface,
-    std::optional<StaticImagePayload> staticImage, bool predecodeCacheable)
+DisplayedImageStateChange DisplayedImageState::replaceDisplayedImage(
+    std::shared_ptr<DisplayedImageSurface> surface, std::optional<StaticImagePayload> staticImage,
+    bool predecodeCacheable)
 {
     m_surface = std::move(surface);
     m_staticImage = std::move(staticImage);
     m_imageIsPredecodeCacheable = predecodeCacheable;
-    finishImageChange();
+    return finishImageChange();
 }
 
-void DisplayedImageState::finishImageChange() { ++m_imageRevision; }
+DisplayedImageStateChange DisplayedImageState::finishImageChange()
+{
+    ++m_imageRevision;
+    return DisplayedImageStateChange {
+        imageSize(),
+        m_imageRevision,
+    };
+}
 }

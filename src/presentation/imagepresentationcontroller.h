@@ -23,6 +23,7 @@ class QObject;
 
 namespace KiriView {
 class DisplayedImageState;
+struct DisplayedImageStateChange;
 class ImageAnimationPlayer;
 class ImagePresentationViewportController;
 
@@ -81,8 +82,8 @@ public:
     void stopAnimation();
 
 private:
-    void applyDisplayedImageChange();
-    void applyDisplayedImageTileChange();
+    void applyDisplayedImageChange(const DisplayedImageStateChange &change);
+    void applyDisplayedImageTileChange(const DisplayedImageStateChange &change);
     void resetRotationForNewImage();
     void notify(ImageDocumentChange change);
 
