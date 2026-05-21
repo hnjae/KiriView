@@ -11,6 +11,7 @@
 #include <QByteArray>
 #include <QImage>
 #include <QSize>
+#include <variant>
 
 namespace KiriView {
 class ImagePresentationController;
@@ -25,22 +26,37 @@ struct ImagePresentationLoadResult {
     QSize imageSize;
 };
 
-enum class ImagePresentationLoadAction {
-    None,
-    StaticImage,
-    ImageFrame,
-    ApngAnimation,
-    ReaderAnimation,
-    HeifSequenceAnimation,
+struct ImagePresentationStaticImageLoad {
+    StaticImagePayload staticImage;
+    bool predecodeCacheable = false;
+};
+
+struct ImagePresentationFrameLoad {
+    QImage frame;
+};
+
+struct ImagePresentationApngAnimationLoad {
+    QImage firstFrame;
+    QByteArray data;
+};
+
+struct ImagePresentationReaderAnimationLoad {
+    QImage firstFrame;
+    QByteArray data;
+    QByteArray format;
+};
+
+struct ImagePresentationHeifSequenceAnimationLoad {
+    QImage firstFrame;
+    QByteArray data;
 };
 
 struct ImagePresentationLoadPlan {
-    ImagePresentationLoadAction action = ImagePresentationLoadAction::None;
-    StaticImagePayload staticImage;
-    QImage frame;
-    QByteArray animationData;
-    QByteArray animationFormat;
-    bool predecodeCacheable = false;
+    using Payload = std::variant<std::monostate, ImagePresentationStaticImageLoad,
+        ImagePresentationFrameLoad, ImagePresentationApngAnimationLoad,
+        ImagePresentationReaderAnimationLoad, ImagePresentationHeifSequenceAnimationLoad>;
+
+    Payload payload;
 
     bool hasPresentation() const;
 };

@@ -39,61 +39,56 @@ KiriView::ImagePresentationLoadResult presentStaticImage(
 
 KiriView::ImagePresentationLoadResult presentImageFrame(
     KiriView::ImagePresentationController &presentation, const KiriView::ImageLoadSession &session,
-    const QImage &image, bool predecodeCacheable)
+    const QImage &image)
 {
     prepareImagePresentation(presentation, session);
     presentation.stopAnimation();
-    presentation.setImage(image, predecodeCacheable);
+    presentation.setImage(image, false);
     return finishImagePresentation(presentation);
 }
 
 KiriView::ImagePresentationLoadPlan staticImagePlan(
     KiriView::StaticImagePayload staticImage, bool predecodeCacheable)
 {
-    return KiriView::ImagePresentationLoadPlan {
-        KiriView::ImagePresentationLoadAction::StaticImage,
+    return KiriView::ImagePresentationLoadPlan { KiriView::ImagePresentationStaticImageLoad {
         std::move(staticImage),
-        {},
-        {},
-        {},
         predecodeCacheable,
-    };
+    } };
 }
 
 KiriView::ImagePresentationLoadPlan framePlan(QImage frame)
 {
-    return KiriView::ImagePresentationLoadPlan {
-        KiriView::ImagePresentationLoadAction::ImageFrame,
-        {},
+    return KiriView::ImagePresentationLoadPlan { KiriView::ImagePresentationFrameLoad {
         std::move(frame),
-        {},
-        {},
-        false,
-    };
+    } };
 }
 
-KiriView::ImagePresentationLoadPlan animationPlan(KiriView::ImagePresentationLoadAction action,
-    QImage firstFrame, QByteArray data, QByteArray format = {})
+KiriView::ImagePresentationLoadPlan apngAnimationPlan(QImage firstFrame, QByteArray data)
 {
-    return KiriView::ImagePresentationLoadPlan {
-        action,
-        {},
+    return KiriView::ImagePresentationLoadPlan { KiriView::ImagePresentationApngAnimationLoad {
+        std::move(firstFrame),
+        std::move(data),
+    } };
+}
+
+KiriView::ImagePresentationLoadPlan readerAnimationPlan(
+    QImage firstFrame, QByteArray data, QByteArray format)
+{
+    return KiriView::ImagePresentationLoadPlan { KiriView::ImagePresentationReaderAnimationLoad {
         std::move(firstFrame),
         std::move(data),
         std::move(format),
-        false,
-    };
+    } };
 }
 
-KiriView::ImagePresentationLoadPlan planAnimationImage(KiriView::ImagePresentationLoadAction action,
-    QImage firstFrame, QByteArray data, QByteArray format,
-    KiriView::ImagePresentationAnimationHandling animationHandling)
+KiriView::ImagePresentationLoadPlan heifSequenceAnimationPlan(QImage firstFrame, QByteArray data)
 {
-    if (animationHandling == KiriView::ImagePresentationAnimationHandling::FirstFrameOnly) {
-        return framePlan(std::move(firstFrame));
-    }
-
-    return animationPlan(action, std::move(firstFrame), std::move(data), std::move(format));
+    return KiriView::ImagePresentationLoadPlan {
+        KiriView::ImagePresentationHeifSequenceAnimationLoad {
+            std::move(firstFrame),
+            std::move(data),
+        },
+    };
 }
 
 KiriView::ImagePresentationLoadPlan planDecodedImage(
@@ -110,50 +105,39 @@ KiriView::ImagePresentationLoadPlan planDecodedImage(KiriView::ApngAnimationImag
         return {};
     }
 
-    return planAnimationImage(KiriView::ImagePresentationLoadAction::ApngAnimation,
-        std::move(decoded.firstFrame), std::move(decoded.data), {}, animationHandling);
+    if (animationHandling == KiriView::ImagePresentationAnimationHandling::FirstFrameOnly) {
+        return framePlan(std::move(decoded.firstFrame));
+    }
+
+    return apngAnimationPlan(std::move(decoded.firstFrame), std::move(decoded.data));
 }
 
 KiriView::ImagePresentationLoadPlan planDecodedImage(KiriView::ReaderAnimationImage &decoded,
     KiriView::ImagePresentationAnimationHandling animationHandling)
 {
-    return planAnimationImage(KiriView::ImagePresentationLoadAction::ReaderAnimation,
-        std::move(decoded.firstFrame), std::move(decoded.data), std::move(decoded.format),
-        animationHandling);
+    if (animationHandling == KiriView::ImagePresentationAnimationHandling::FirstFrameOnly) {
+        return framePlan(std::move(decoded.firstFrame));
+    }
+
+    return readerAnimationPlan(
+        std::move(decoded.firstFrame), std::move(decoded.data), std::move(decoded.format));
 }
 
 KiriView::ImagePresentationLoadPlan planDecodedImage(KiriView::HeifSequenceAnimationImage &decoded,
     KiriView::ImagePresentationAnimationHandling animationHandling)
 {
-    return planAnimationImage(KiriView::ImagePresentationLoadAction::HeifSequenceAnimation,
-        std::move(decoded.firstFrame), std::move(decoded.data), {}, animationHandling);
-}
-
-void startPlannedAnimation(
-    KiriView::ImagePresentationController &presentation, KiriView::ImagePresentationLoadPlan &plan)
-{
-    switch (plan.action) {
-    case KiriView::ImagePresentationLoadAction::ApngAnimation:
-        presentation.startApngAnimation(plan.animationData);
-        return;
-    case KiriView::ImagePresentationLoadAction::ReaderAnimation:
-        presentation.startAnimation(plan.animationData, plan.animationFormat);
-        return;
-    case KiriView::ImagePresentationLoadAction::HeifSequenceAnimation:
-        presentation.startHeifSequenceAnimation(plan.animationData);
-        return;
-    case KiriView::ImagePresentationLoadAction::None:
-    case KiriView::ImagePresentationLoadAction::StaticImage:
-    case KiriView::ImagePresentationLoadAction::ImageFrame:
-        return;
+    if (animationHandling == KiriView::ImagePresentationAnimationHandling::FirstFrameOnly) {
+        return framePlan(std::move(decoded.firstFrame));
     }
+
+    return heifSequenceAnimationPlan(std::move(decoded.firstFrame), std::move(decoded.data));
 }
 }
 
 namespace KiriView {
 bool ImagePresentationLoadPlan::hasPresentation() const
 {
-    return action != ImagePresentationLoadAction::None;
+    return !std::holds_alternative<std::monostate>(payload);
 }
 
 ImagePresentationLoadPlan planPredecodedImagePresentationLoad(PredecodedImage image)
@@ -173,22 +157,33 @@ ImagePresentationLoadResult executeImagePresentationLoadPlan(
     ImagePresentationController &presentation, const ImageLoadSession &session,
     ImagePresentationLoadPlan plan)
 {
-    switch (plan.action) {
-    case ImagePresentationLoadAction::None:
+    if (std::holds_alternative<std::monostate>(plan.payload)) {
         return {};
-    case ImagePresentationLoadAction::StaticImage:
-        return presentStaticImage(
-            presentation, session, std::move(plan.staticImage), plan.predecodeCacheable);
-    case ImagePresentationLoadAction::ImageFrame:
-        return presentImageFrame(presentation, session, plan.frame, plan.predecodeCacheable);
-    case ImagePresentationLoadAction::ApngAnimation:
-    case ImagePresentationLoadAction::ReaderAnimation:
-    case ImagePresentationLoadAction::HeifSequenceAnimation: {
+    }
+    if (auto *staticImage = std::get_if<ImagePresentationStaticImageLoad>(&plan.payload)) {
+        return presentStaticImage(presentation, session, std::move(staticImage->staticImage),
+            staticImage->predecodeCacheable);
+    }
+    if (const auto *frame = std::get_if<ImagePresentationFrameLoad>(&plan.payload)) {
+        return presentImageFrame(presentation, session, frame->frame);
+    }
+    if (auto *animation = std::get_if<ImagePresentationApngAnimationLoad>(&plan.payload)) {
         ImagePresentationLoadResult result
-            = presentImageFrame(presentation, session, plan.frame, false);
-        startPlannedAnimation(presentation, plan);
+            = presentImageFrame(presentation, session, animation->firstFrame);
+        presentation.startApngAnimation(animation->data);
         return result;
     }
+    if (auto *animation = std::get_if<ImagePresentationReaderAnimationLoad>(&plan.payload)) {
+        ImagePresentationLoadResult result
+            = presentImageFrame(presentation, session, animation->firstFrame);
+        presentation.startAnimation(animation->data, animation->format);
+        return result;
+    }
+    if (auto *animation = std::get_if<ImagePresentationHeifSequenceAnimationLoad>(&plan.payload)) {
+        ImagePresentationLoadResult result
+            = presentImageFrame(presentation, session, animation->firstFrame);
+        presentation.startHeifSequenceAnimation(animation->data);
+        return result;
     }
 
     return {};

@@ -14,6 +14,7 @@
 #include <QString>
 #include <QTest>
 #include <utility>
+#include <variant>
 
 namespace {
 using KiriView::TestSupport::localUrl;
@@ -36,6 +37,11 @@ KiriView::ImagePresentationController presentationController(QObject *parent)
             };
         },
         {});
+}
+
+template <typename Load> const Load *planPayload(const KiriView::ImagePresentationLoadPlan &plan)
+{
+    return std::get_if<Load>(&plan.payload);
 }
 }
 
@@ -64,10 +70,11 @@ void TestImagePresentationLoad::predecodedImagesPlanStaticCacheablePresentation(
         = KiriView::planPredecodedImagePresentationLoad(std::move(image));
 
     QVERIFY(plan.hasPresentation());
-    QCOMPARE(plan.action, KiriView::ImagePresentationLoadAction::StaticImage);
-    QVERIFY(plan.predecodeCacheable);
-    QVERIFY(plan.staticImage.isValid());
-    QCOMPARE(plan.staticImage.source->imageSize(), QSize(9, 5));
+    const auto *load = planPayload<KiriView::ImagePresentationStaticImageLoad>(plan);
+    QVERIFY(load != nullptr);
+    QVERIFY(load->predecodeCacheable);
+    QVERIFY(load->staticImage.isValid());
+    QCOMPARE(load->staticImage.source->imageSize(), QSize(9, 5));
 }
 
 void TestImagePresentationLoad::decodedImagesPlanPresentationActions()
@@ -79,9 +86,10 @@ void TestImagePresentationLoad::decodedImagesPlanPresentationActions()
             std::move(decoded), KiriView::ImagePresentationAnimationHandling::StartAnimation);
 
         QVERIFY(plan.hasPresentation());
-        QCOMPARE(plan.action, KiriView::ImagePresentationLoadAction::StaticImage);
-        QVERIFY(plan.predecodeCacheable);
-        QCOMPARE(plan.staticImage.source->imageSize(), QSize(12, 8));
+        const auto *load = planPayload<KiriView::ImagePresentationStaticImageLoad>(plan);
+        QVERIFY(load != nullptr);
+        QVERIFY(load->predecodeCacheable);
+        QCOMPARE(load->staticImage.source->imageSize(), QSize(12, 8));
     }
 
     {
@@ -90,7 +98,7 @@ void TestImagePresentationLoad::decodedImagesPlanPresentationActions()
             std::move(decoded), KiriView::ImagePresentationAnimationHandling::StartAnimation);
 
         QVERIFY(!plan.hasPresentation());
-        QCOMPARE(plan.action, KiriView::ImagePresentationLoadAction::None);
+        QVERIFY(std::holds_alternative<std::monostate>(plan.payload));
     }
 }
 
@@ -104,9 +112,9 @@ void TestImagePresentationLoad::animationHandlingControlsPlannedEffects()
         const KiriView::ImagePresentationLoadPlan plan = KiriView::planDecodedImagePresentationLoad(
             std::move(decoded), KiriView::ImagePresentationAnimationHandling::FirstFrameOnly);
 
-        QCOMPARE(plan.action, KiriView::ImagePresentationLoadAction::ImageFrame);
-        QCOMPARE(plan.frame.size(), QSize(13, 7));
-        QVERIFY(plan.animationData.isEmpty());
+        const auto *load = planPayload<KiriView::ImagePresentationFrameLoad>(plan);
+        QVERIFY(load != nullptr);
+        QCOMPARE(load->frame.size(), QSize(13, 7));
     }
 
     {
@@ -118,10 +126,11 @@ void TestImagePresentationLoad::animationHandlingControlsPlannedEffects()
         const KiriView::ImagePresentationLoadPlan plan = KiriView::planDecodedImagePresentationLoad(
             std::move(decoded), KiriView::ImagePresentationAnimationHandling::StartAnimation);
 
-        QCOMPARE(plan.action, KiriView::ImagePresentationLoadAction::ReaderAnimation);
-        QCOMPARE(plan.frame.size(), QSize(10, 6));
-        QCOMPARE(plan.animationData, QByteArrayLiteral("reader-data"));
-        QCOMPARE(plan.animationFormat, QByteArrayLiteral("gif"));
+        const auto *load = planPayload<KiriView::ImagePresentationReaderAnimationLoad>(plan);
+        QVERIFY(load != nullptr);
+        QCOMPARE(load->firstFrame.size(), QSize(10, 6));
+        QCOMPARE(load->data, QByteArrayLiteral("reader-data"));
+        QCOMPARE(load->format, QByteArrayLiteral("gif"));
     }
 
     {
@@ -132,9 +141,10 @@ void TestImagePresentationLoad::animationHandlingControlsPlannedEffects()
         const KiriView::ImagePresentationLoadPlan plan = KiriView::planDecodedImagePresentationLoad(
             std::move(decoded), KiriView::ImagePresentationAnimationHandling::StartAnimation);
 
-        QCOMPARE(plan.action, KiriView::ImagePresentationLoadAction::HeifSequenceAnimation);
-        QCOMPARE(plan.frame.size(), QSize(11, 5));
-        QCOMPARE(plan.animationData, QByteArrayLiteral("heif-data"));
+        const auto *load = planPayload<KiriView::ImagePresentationHeifSequenceAnimationLoad>(plan);
+        QVERIFY(load != nullptr);
+        QCOMPARE(load->firstFrame.size(), QSize(11, 5));
+        QCOMPARE(load->data, QByteArrayLiteral("heif-data"));
     }
 }
 
