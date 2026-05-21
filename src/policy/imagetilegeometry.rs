@@ -2,6 +2,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 const FIRST_DISPLAY_PIXELS_PER_SOURCE_PIXEL_EPSILON: f64 = 0.001;
+const SVG_RASTER_SCALE_BUCKET_FACTOR: f64 = 1.5;
+const SVG_RASTER_TILE_LEVEL: i32 = 0;
 
 #[cxx::bridge(namespace = "KiriView")]
 mod ffi {
@@ -38,6 +40,7 @@ mod ffi {
         level: i32,
         x: i32,
         y: i32,
+        scale_bucket: i32,
     }
 
     #[derive(Clone, Copy, Debug, PartialEq)]
@@ -53,6 +56,7 @@ mod ffi {
         level_rect: RustTileRect,
         texture_level_rect: RustTileRect,
         source_rect: RustTileRect,
+        display_source_rect: RustTileRect,
     }
 
     extern "Rust" {
@@ -168,6 +172,16 @@ mod ffi {
             visible_item_rect: RustTileRectF,
             device_pixel_ratio: f64,
         ) -> Vec<RustTileKey>;
+
+        #[cxx_name = "rustSvgRasterTileRequests"]
+        fn rust_svg_raster_tile_requests(
+            image_size: RustTileSize,
+            tile_size: i32,
+            apron_source_pixels: i32,
+            display_size: RustTileSizeF,
+            visible_item_rect: RustTileRectF,
+            device_pixel_ratio: f64,
+        ) -> Vec<RustTileRequest>;
     }
 }
 
@@ -307,6 +321,24 @@ fn rust_visible_tile_keys(
     visible_tile_keys(
         image_size,
         tile_size,
+        display_size,
+        visible_item_rect,
+        device_pixel_ratio,
+    )
+}
+
+fn rust_svg_raster_tile_requests(
+    image_size: RustTileSize,
+    tile_size: i32,
+    apron_source_pixels: i32,
+    display_size: RustTileSizeF,
+    visible_item_rect: RustTileRectF,
+    device_pixel_ratio: f64,
+) -> Vec<RustTileRequest> {
+    svg_raster_tile_requests(
+        image_size,
+        tile_size,
+        apron_source_pixels,
         display_size,
         visible_item_rect,
         device_pixel_ratio,
@@ -504,6 +536,7 @@ fn request_for_tile(
         level_rect,
         texture_level_rect,
         source_rect: source_rect_for_level_rect(image_size, key.level, texture_level_rect),
+        display_source_rect: source_rect_for_level_rect(image_size, key.level, level_rect),
     }
 }
 
@@ -537,7 +570,12 @@ fn tiles_intersecting_level_rect(
 
     for y in top..=bottom {
         for x in left..=right {
-            keys.push(RustTileKey { level, x, y });
+            keys.push(RustTileKey {
+                level,
+                x,
+                y,
+                scale_bucket: 0,
+            });
         }
     }
     keys
@@ -661,6 +699,178 @@ fn visible_tile_keys(
     keys
 }
 
+fn svg_raster_tile_requests(
+    image_size: RustTileSize,
+    tile_size: i32,
+    apron_source_pixels: i32,
+    display_size: RustTileSizeF,
+    visible_item_rect: RustTileRectF,
+    device_pixel_ratio: f64,
+) -> Vec<RustTileRequest> {
+    let required_scale =
+        tile_display_pixels_per_source_pixel(image_size, display_size, device_pixel_ratio);
+    if !required_scale.is_finite() || required_scale <= 0.0 {
+        return Vec::new();
+    }
+
+    let scale_bucket = svg_raster_scale_bucket(required_scale);
+    let bucket_size = svg_raster_size_for_bucket(image_size, scale_bucket);
+    if size_is_empty(bucket_size) {
+        return Vec::new();
+    }
+
+    svg_raster_bucket_tile_keys(bucket_size, tile_size, display_size, visible_item_rect)
+        .into_iter()
+        .map(|mut key| {
+            key.scale_bucket = scale_bucket;
+            svg_raster_bucket_request_for_tile(
+                bucket_size,
+                image_size,
+                tile_size,
+                apron_source_pixels,
+                key,
+            )
+        })
+        .filter(|request| {
+            !rect_is_empty(request.texture_level_rect)
+                && !rect_is_empty(request.source_rect)
+                && !rect_is_empty(request.display_source_rect)
+        })
+        .collect()
+}
+
+fn svg_raster_bucket_tile_keys(
+    bucket_size: RustTileSize,
+    tile_size: i32,
+    display_size: RustTileSizeF,
+    visible_item_rect: RustTileRectF,
+) -> Vec<RustTileKey> {
+    let visible_level_rect = tile_level_rect_for_item_rect(
+        bucket_size,
+        SVG_RASTER_TILE_LEVEL,
+        display_size,
+        visible_item_rect,
+    );
+    let mut keys = tiles_intersecting_level_rect(
+        bucket_size,
+        tile_size,
+        SVG_RASTER_TILE_LEVEL,
+        visible_level_rect,
+    );
+
+    let prefetch_item_rect = intersect_rectf(
+        adjusted_rectf(
+            visible_item_rect,
+            -visible_item_rect.width,
+            -visible_item_rect.height,
+            visible_item_rect.width,
+            visible_item_rect.height,
+        ),
+        RustTileRectF {
+            x: 0.0,
+            y: 0.0,
+            width: display_size.width,
+            height: display_size.height,
+        },
+    );
+    let prefetch_level_rect = tile_level_rect_for_item_rect(
+        bucket_size,
+        SVG_RASTER_TILE_LEVEL,
+        display_size,
+        prefetch_item_rect,
+    );
+    for key in tiles_intersecting_level_rect(
+        bucket_size,
+        tile_size,
+        SVG_RASTER_TILE_LEVEL,
+        prefetch_level_rect,
+    ) {
+        if !keys.iter().any(|existing| tile_keys_equal(*existing, key)) {
+            keys.push(key);
+        }
+    }
+
+    keys
+}
+
+fn svg_raster_bucket_request_for_tile(
+    bucket_size: RustTileSize,
+    image_size: RustTileSize,
+    tile_size: i32,
+    apron_source_pixels: i32,
+    key: RustTileKey,
+) -> RustTileRequest {
+    let level_rect = level_tile_rect(bucket_size, tile_size, key);
+    let texture_level_rect =
+        level_tile_texture_rect(bucket_size, tile_size, apron_source_pixels, key);
+    RustTileRequest {
+        key,
+        level_size: level_size(bucket_size, key.level),
+        level_rect,
+        texture_level_rect,
+        source_rect: intrinsic_rect_for_bucket_rect(texture_level_rect, bucket_size, image_size),
+        display_source_rect: intrinsic_rect_for_bucket_rect(level_rect, bucket_size, image_size),
+    }
+}
+
+fn intrinsic_rect_for_bucket_rect(
+    bucket_rect: RustTileRect,
+    bucket_size: RustTileSize,
+    image_size: RustTileSize,
+) -> RustTileRect {
+    scaled_integer_rect(
+        rect_to_rectf(bucket_rect),
+        size_to_sizef(bucket_size),
+        image_size,
+    )
+}
+
+fn svg_raster_scale_bucket(required_scale: f64) -> i32 {
+    if !required_scale.is_finite() || required_scale <= 0.0 {
+        return 0;
+    }
+
+    let mut bucket = 0;
+    let mut bucket_scale = 1.0;
+    if required_scale >= 1.0 {
+        while bucket_scale <= required_scale {
+            bucket_scale *= SVG_RASTER_SCALE_BUCKET_FACTOR;
+            bucket += 1;
+        }
+        return bucket;
+    }
+
+    while (bucket_scale / SVG_RASTER_SCALE_BUCKET_FACTOR) > required_scale {
+        bucket_scale /= SVG_RASTER_SCALE_BUCKET_FACTOR;
+        bucket -= 1;
+    }
+    bucket
+}
+
+fn svg_raster_scale_for_bucket(bucket: i32) -> f64 {
+    SVG_RASTER_SCALE_BUCKET_FACTOR.powi(bucket)
+}
+
+fn svg_raster_size_for_bucket(image_size: RustTileSize, bucket: i32) -> RustTileSize {
+    let scale = svg_raster_scale_for_bucket(bucket);
+    if size_is_empty(image_size) || !scale.is_finite() || scale <= 0.0 {
+        return empty_size();
+    }
+
+    RustTileSize {
+        width: scaled_dimension_for_bucket(image_size.width, scale),
+        height: scaled_dimension_for_bucket(image_size.height, scale),
+    }
+}
+
+fn scaled_dimension_for_bucket(dimension: i32, scale: f64) -> i32 {
+    let scaled = (f64::from(dimension) * scale).ceil();
+    if !scaled.is_finite() || scaled <= 0.0 || scaled > f64::from(i32::MAX) {
+        return 0;
+    }
+    scaled as i32
+}
+
 fn level_size(image_size: RustTileSize, level: i32) -> RustTileSize {
     if level < 0 {
         return empty_size();
@@ -731,6 +941,13 @@ fn rect_to_rectf(rect: RustTileRect) -> RustTileRectF {
     }
 }
 
+fn size_to_sizef(size: RustTileSize) -> RustTileSizeF {
+    RustTileSizeF {
+        width: f64::from(size.width),
+        height: f64::from(size.height),
+    }
+}
+
 fn rect_from_edges(left: i64, top: i64, right: i64, bottom: i64) -> RustTileRect {
     if right <= left || bottom <= top {
         return empty_rect();
@@ -773,7 +990,10 @@ fn i64_to_i32_saturating(value: i64) -> i32 {
 }
 
 fn tile_keys_equal(left: RustTileKey, right: RustTileKey) -> bool {
-    left.level == right.level && left.x == right.x && left.y == right.y
+    left.level == right.level
+        && left.x == right.x
+        && left.y == right.y
+        && left.scale_bucket == right.scale_bucket
 }
 
 fn rectf_right(rect: RustTileRectF) -> f64 {
@@ -864,7 +1084,21 @@ mod tests {
     }
 
     fn key(level: i32, x: i32, y: i32) -> RustTileKey {
-        RustTileKey { level, x, y }
+        RustTileKey {
+            level,
+            x,
+            y,
+            scale_bucket: 0,
+        }
+    }
+
+    fn bucket_key(level: i32, x: i32, y: i32, scale_bucket: i32) -> RustTileKey {
+        RustTileKey {
+            level,
+            x,
+            y,
+            scale_bucket,
+        }
     }
 
     #[test]
@@ -1001,5 +1235,40 @@ mod tests {
             f64::NAN,
             0.25,
         ));
+    }
+
+    #[test]
+    fn svg_raster_bucket_requests_use_bucketed_keys_and_intrinsic_source_rects() {
+        let requests = svg_raster_tile_requests(
+            size(1000, 1000),
+            512,
+            1,
+            sizef(1000.0, 1000.0),
+            rectf(0.0, 0.0, 1000.0, 1000.0),
+            1.0,
+        );
+
+        assert!(!requests.is_empty());
+        for request in &requests {
+            assert_eq!(request.key.scale_bucket, 1);
+            assert_eq!(request.level_size, size(1500, 1500));
+            assert_eq!(request.key.level, 0);
+            assert!(!rect_is_empty(request.source_rect));
+            assert!(!rect_is_empty(request.display_source_rect));
+        }
+        assert_eq!(requests[0].key, bucket_key(0, 0, 0, 1));
+        assert_eq!(requests[0].source_rect, rect(0, 0, 342, 342));
+        assert_eq!(requests[0].display_source_rect, rect(0, 0, 342, 342));
+    }
+
+    #[test]
+    fn svg_raster_bucket_changes_only_across_bucket_boundary() {
+        assert_eq!(svg_raster_scale_bucket(1.0), 1);
+        assert_eq!(svg_raster_scale_bucket(1.49), 1);
+        assert_eq!(svg_raster_scale_bucket(1.5), 2);
+        assert_eq!(
+            svg_raster_size_for_bucket(size(1000, 1000), 2),
+            size(2250, 2250)
+        );
     }
 }

@@ -29,12 +29,12 @@ KiriView::RustTileRectF rustTileRectF(const QRectF &rect)
 
 KiriView::RustTileKey rustTileKey(const KiriView::TileKey &key)
 {
-    return KiriView::RustTileKey { key.level, key.x, key.y };
+    return KiriView::RustTileKey { key.level, key.x, key.y, key.scaleBucket };
 }
 
 KiriView::TileKey tileKeyFromRust(const KiriView::RustTileKey &key)
 {
-    return KiriView::TileKey { key.level, key.x, key.y };
+    return KiriView::TileKey { key.level, key.x, key.y, key.scale_bucket };
 }
 
 KiriView::TileLevel tileLevelFromRust(const KiriView::RustTileLevel &level)
@@ -50,7 +50,7 @@ KiriView::TileRequest tileRequestFromRust(const KiriView::RustTileRequest &reque
         KiriView::Bridge::qtRect(request.level_rect),
         KiriView::Bridge::qtRect(request.texture_level_rect),
         KiriView::Bridge::qtRect(request.source_rect),
-        {},
+        KiriView::Bridge::qtRect(request.display_source_rect),
     };
 }
 
@@ -176,6 +176,21 @@ std::vector<TileKey> visibleTileKeys(const QSize &imageSize, int tileSize,
         keys.push_back(tileKeyFromRust(key));
     }
     return keys;
+}
+
+std::vector<TileRequest> svgRasterTileRequests(const QSize &imageSize, int tileSize,
+    int apronSourcePixels, const QSizeF &displaySize, const QRectF &visibleItemRect,
+    qreal devicePixelRatio)
+{
+    std::vector<TileRequest> requests;
+    const rust::Vec<RustTileRequest> rustRequests
+        = rustSvgRasterTileRequests(rustTileSize(imageSize), tileSize, apronSourcePixels,
+            rustTileSizeF(displaySize), rustTileRectF(visibleItemRect), devicePixelRatio);
+    requests.reserve(rustRequests.size());
+    for (const RustTileRequest &request : rustRequests) {
+        requests.push_back(tileRequestFromRust(request));
+    }
+    return requests;
 }
 
 }

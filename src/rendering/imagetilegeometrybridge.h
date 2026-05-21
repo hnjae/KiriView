@@ -41,6 +41,9 @@ QRect tileLevelRectForItemRect(
     const QSize &imageSize, int level, const QSizeF &displaySize, const QRectF &itemRect);
 std::vector<TileKey> visibleTileKeys(const QSize &imageSize, int tileSize,
     const QSizeF &displaySize, const QRectF &visibleItemRect, qreal devicePixelRatio);
+std::vector<TileRequest> svgRasterTileRequests(const QSize &imageSize, int tileSize,
+    int apronSourcePixels, const QSizeF &displaySize, const QRectF &visibleItemRect,
+    qreal devicePixelRatio);
 
 }
 
