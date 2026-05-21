@@ -27,27 +27,25 @@ void ImageDecodeJobState::cancel()
 
 bool ImageDecodeJobState::hasActiveRequest() const { return m_request.has_value(); }
 
-std::optional<ImageDecodeRequest> ImageDecodeJobState::beginDecode(
-    const ImageDecodeJobTicket &ticket)
+ImageDecodeJobRuntimePlan ImageDecodeJobState::acceptLoadedData(const ImageDecodeJobTicket &ticket)
 {
     if (!accepts(ticket) || m_phase != Phase::LoadingData) {
-        return std::nullopt;
+        return noOperation();
     }
 
     m_phase = Phase::Decoding;
-    return *m_request;
+    return startDecodePlan(*m_request);
 }
 
-std::optional<ImageDecodeRequest> ImageDecodeJobState::claimLoadError(
-    const ImageDecodeJobTicket &ticket)
+ImageDecodeJobRuntimePlan ImageDecodeJobState::acceptLoadError(const ImageDecodeJobTicket &ticket)
 {
-    return claim(ticket, Phase::LoadingData);
+    return claim(ticket, Phase::LoadingData, ImageDecodeJobRuntimeOperation::DeliverLoadError);
 }
 
-std::optional<ImageDecodeRequest> ImageDecodeJobState::claimDecodeResult(
+ImageDecodeJobRuntimePlan ImageDecodeJobState::acceptDecodeResult(
     const ImageDecodeJobTicket &ticket)
 {
-    return claim(ticket, Phase::Decoding);
+    return claim(ticket, Phase::Decoding, ImageDecodeJobRuntimeOperation::DeliverDecodeResult);
 }
 
 bool ImageDecodeJobState::accepts(const ImageDecodeJobTicket &ticket) const
@@ -56,17 +54,31 @@ bool ImageDecodeJobState::accepts(const ImageDecodeJobTicket &ticket) const
         && m_request->matches(ticket.request);
 }
 
-std::optional<ImageDecodeRequest> ImageDecodeJobState::claim(
-    const ImageDecodeJobTicket &ticket, Phase phase)
+ImageDecodeJobRuntimePlan ImageDecodeJobState::noOperation() const { return {}; }
+
+ImageDecodeJobRuntimePlan ImageDecodeJobState::startDecodePlan(
+    const ImageDecodeRequest &request) const
+{
+    return ImageDecodeJobRuntimePlan {
+        ImageDecodeJobRuntimeOperation::StartDecode,
+        request,
+    };
+}
+
+ImageDecodeJobRuntimePlan ImageDecodeJobState::claim(
+    const ImageDecodeJobTicket &ticket, Phase phase, ImageDecodeJobRuntimeOperation operation)
 {
     if (!accepts(ticket) || m_phase != phase) {
-        return std::nullopt;
+        return noOperation();
     }
 
-    std::optional<ImageDecodeRequest> request = std::move(m_request);
+    ImageDecodeRequest request = std::move(*m_request);
     m_operation.finish(ticket.operationId);
     m_request.reset();
     m_phase = Phase::LoadingData;
-    return request;
+    return ImageDecodeJobRuntimePlan {
+        operation,
+        std::move(request),
+    };
 }
 }

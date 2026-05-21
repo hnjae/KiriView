@@ -37,7 +37,7 @@ public:
     bool hasActiveRequest() const;
 
 private:
-    void startDecode(QByteArray data, ImageDecodeJobTicket ticket);
+    void startDecode(QByteArray data, ImageDecodeJobTicket ticket, ImageDecodeRequest request);
 
     ImageDecodeDependencies m_dependencies;
     Callbacks m_callbacks;

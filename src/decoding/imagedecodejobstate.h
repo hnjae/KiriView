@@ -16,6 +16,20 @@ struct ImageDecodeJobTicket {
     ImageDecodeRequest request;
 };
 
+enum class ImageDecodeJobRuntimeOperation {
+    None,
+    StartDecode,
+    DeliverLoadError,
+    DeliverDecodeResult,
+};
+
+struct ImageDecodeJobRuntimePlan {
+    ImageDecodeJobRuntimeOperation operation = ImageDecodeJobRuntimeOperation::None;
+    ImageDecodeRequest request;
+
+    bool hasOperation() const { return operation != ImageDecodeJobRuntimeOperation::None; }
+};
+
 class ImageDecodeJobState final
 {
 public:
@@ -25,9 +39,9 @@ public:
     void cancel();
     bool hasActiveRequest() const;
 
-    std::optional<ImageDecodeRequest> beginDecode(const ImageDecodeJobTicket &ticket);
-    std::optional<ImageDecodeRequest> claimLoadError(const ImageDecodeJobTicket &ticket);
-    std::optional<ImageDecodeRequest> claimDecodeResult(const ImageDecodeJobTicket &ticket);
+    ImageDecodeJobRuntimePlan acceptLoadedData(const ImageDecodeJobTicket &ticket);
+    ImageDecodeJobRuntimePlan acceptLoadError(const ImageDecodeJobTicket &ticket);
+    ImageDecodeJobRuntimePlan acceptDecodeResult(const ImageDecodeJobTicket &ticket);
 
 private:
     enum class Phase {
@@ -36,7 +50,10 @@ private:
     };
 
     bool accepts(const ImageDecodeJobTicket &ticket) const;
-    std::optional<ImageDecodeRequest> claim(const ImageDecodeJobTicket &ticket, Phase phase);
+    ImageDecodeJobRuntimePlan noOperation() const;
+    ImageDecodeJobRuntimePlan startDecodePlan(const ImageDecodeRequest &request) const;
+    ImageDecodeJobRuntimePlan claim(
+        const ImageDecodeJobTicket &ticket, Phase phase, ImageDecodeJobRuntimeOperation operation);
 
     ImageAsyncOperationState m_operation;
     std::optional<ImageDecodeRequest> m_request;

@@ -6,7 +6,6 @@
 #include "async/imageasyncworker.h"
 #include "async/imagecallback.h"
 
-#include <optional>
 #include <utility>
 
 namespace KiriView {
@@ -44,19 +43,20 @@ void ImageDecodeJob::start(ImageDecodeRequest request)
     m_dataLoadJob = m_dependencies.dataLoader(
         this, ticket.request,
         [this, ticket](QByteArray data) mutable {
-            if (!m_state.beginDecode(ticket).has_value()) {
+            ImageDecodeJobRuntimePlan plan = m_state.acceptLoadedData(ticket);
+            if (plan.operation != ImageDecodeJobRuntimeOperation::StartDecode) {
                 return;
             }
 
-            startDecode(std::move(data), std::move(ticket));
+            startDecode(std::move(data), std::move(ticket), std::move(plan.request));
         },
         [this, ticket](const QString &errorString) {
-            std::optional<ImageDecodeRequest> currentRequest = m_state.claimLoadError(ticket);
-            if (!currentRequest.has_value()) {
+            ImageDecodeJobRuntimePlan plan = m_state.acceptLoadError(ticket);
+            if (plan.operation != ImageDecodeJobRuntimeOperation::DeliverLoadError) {
                 return;
             }
 
-            invokeIfSet(m_callbacks.loadError, *currentRequest, errorString);
+            invokeIfSet(m_callbacks.loadError, plan.request, errorString);
         });
 }
 
@@ -68,21 +68,22 @@ void ImageDecodeJob::cancel()
 
 bool ImageDecodeJob::hasActiveRequest() const { return m_state.hasActiveRequest(); }
 
-void ImageDecodeJob::startDecode(QByteArray data, ImageDecodeJobTicket ticket)
+void ImageDecodeJob::startDecode(
+    QByteArray data, ImageDecodeJobTicket ticket, ImageDecodeRequest request)
 {
     const ImageDataDecoder decoder = m_dependencies.dataDecoder;
     runAsyncWorker(
         this,
-        [decoder, data = std::move(data), request = ticket.request]() mutable {
+        [decoder, data = std::move(data), request = std::move(request)]() mutable {
             return decoder(data, request);
         },
         [this, ticket = std::move(ticket)](DecodedImageResult result) mutable {
-            std::optional<ImageDecodeRequest> currentRequest = m_state.claimDecodeResult(ticket);
-            if (!currentRequest.has_value()) {
+            ImageDecodeJobRuntimePlan plan = m_state.acceptDecodeResult(ticket);
+            if (plan.operation != ImageDecodeJobRuntimeOperation::DeliverDecodeResult) {
                 return;
             }
 
-            invokeIfSet(m_callbacks.decoded, std::move(*currentRequest), std::move(result));
+            invokeIfSet(m_callbacks.decoded, std::move(plan.request), std::move(result));
         });
 }
 }
