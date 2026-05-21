@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "imagedocumentruntimeeffectbinding.h"
+#include "imagedocumentruntimeoperationbinding.h"
 
 #include "archive/archivedocumentsessionstore.h"
 #include "imagedocumentdeletioncontroller.h"
@@ -18,8 +18,8 @@
 #include <utility>
 
 namespace KiriView {
-ImageDocumentEffectOperations imageDocumentRuntimeEffectOperations(
-    ImageDocumentRuntimeEffectBinding binding)
+ImageDocumentRuntimeOperations imageDocumentRuntimeOperations(
+    ImageDocumentRuntimeOperationBinding binding)
 {
     ArchiveDocumentSessionStore *archiveSessionStore = binding.archiveSessionStore;
     ImageDocumentState *state = &binding.state;
@@ -31,7 +31,7 @@ ImageDocumentEffectOperations imageDocumentRuntimeEffectOperations(
     ImageSpreadPresentationController *spreadController = &binding.spreadController;
     auto loadSource = std::move(binding.loadSource);
 
-    ImageDocumentEffectOperations operations;
+    ImageDocumentRuntimeOperations operations;
     operations.lifecycle.cancelFileDeletion
         = [deletionController]() { deletionController->cancel(); };
     operations.lifecycle.stopPresentationAnimation

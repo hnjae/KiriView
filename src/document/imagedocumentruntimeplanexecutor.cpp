@@ -1,9 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "imagedocumenteffectexecutor.h"
-
-#include "imagedocumenteffectplan.h"
+#include "imagedocumentruntimeplanexecutor.h"
 
 #include <type_traits>
 #include <utility>
@@ -27,26 +25,26 @@ namespace {
     }
 }
 
-ImageDocumentEffectExecutor::ImageDocumentEffectExecutor(ImageDocumentEffectOperations operations)
+ImageDocumentRuntimePlanExecutor::ImageDocumentRuntimePlanExecutor(
+    ImageDocumentRuntimeOperations operations)
     : m_operations(std::move(operations))
 {
 }
 
-void ImageDocumentEffectExecutor::dispatch(ImageDocumentEffect effect)
+void ImageDocumentRuntimePlanExecutor::shutdownRuntime()
 {
-    dispatchPlan(imageDocumentEffectPlan(effect));
+    dispatchPlan(imageDocumentShutdownPlan());
 }
 
-void ImageDocumentEffectExecutor::shutdownRuntime() { dispatchPlan(imageDocumentShutdownPlan()); }
-
-void ImageDocumentEffectExecutor::dispatchPlan(const ImageDocumentRuntimePlan &plan)
+void ImageDocumentRuntimePlanExecutor::dispatchPlan(const ImageDocumentRuntimePlan &plan)
 {
     for (const ImageDocumentRuntimeOperation &operation : plan) {
         dispatchOperation(operation);
     }
 }
 
-void ImageDocumentEffectExecutor::dispatchOperation(const ImageDocumentRuntimeOperation &operation)
+void ImageDocumentRuntimePlanExecutor::dispatchOperation(
+    const ImageDocumentRuntimeOperation &operation)
 {
     std::visit(
         [this](const auto &payload) {

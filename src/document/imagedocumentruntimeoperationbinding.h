@@ -1,10 +1,10 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#ifndef KIRIVIEW_IMAGEDOCUMENTRUNTIMEEFFECTBINDING_H
-#define KIRIVIEW_IMAGEDOCUMENTRUNTIMEEFFECTBINDING_H
+#ifndef KIRIVIEW_IMAGEDOCUMENTRUNTIMEOPERATIONBINDING_H
+#define KIRIVIEW_IMAGEDOCUMENTRUNTIMEOPERATIONBINDING_H
 
-#include "imagedocumenteffectexecutor.h"
+#include "imagedocumentruntimeplanexecutor.h"
 
 #include <functional>
 
@@ -19,7 +19,7 @@ class ImageOpenController;
 class ImagePresentationController;
 class ImageSpreadPresentationController;
 
-struct ImageDocumentRuntimeEffectBinding {
+struct ImageDocumentRuntimeOperationBinding {
     ArchiveDocumentSessionStore *archiveSessionStore = nullptr;
     ImageDocumentState &state;
     ImageDocumentDeletionController &deletionController;
@@ -31,8 +31,8 @@ struct ImageDocumentRuntimeEffectBinding {
     std::function<void(const ImageDocumentSourceLoadRequest &)> loadSource;
 };
 
-ImageDocumentEffectOperations imageDocumentRuntimeEffectOperations(
-    ImageDocumentRuntimeEffectBinding binding);
+ImageDocumentRuntimeOperations imageDocumentRuntimeOperations(
+    ImageDocumentRuntimeOperationBinding binding);
 }
 
 #endif

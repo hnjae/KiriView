@@ -40,10 +40,11 @@ KiriView::ImageDocumentRenderContext renderContext()
     };
 }
 
-template <typename Effect> const Effect *findEffect(const KiriView::ImageDocumentEffects &effects)
+template <typename Operation>
+const Operation *findOperation(const KiriView::ImageDocumentRuntimePlan &plan)
 {
-    for (const KiriView::ImageDocumentEffect &effect : effects) {
-        if (const auto *payload = std::get_if<Effect>(&effect.payload)) {
+    for (const KiriView::ImageDocumentRuntimeOperation &operation : plan) {
+        if (const auto *payload = std::get_if<Operation>(&operation)) {
             return payload;
         }
     }
@@ -59,7 +60,8 @@ public:
         , navigation(&context, candidateProvider.provider(),
               KiriView::ImageNavigationService::Callbacks {
                   [this](const QUrl &url) {
-                      effects.push_back(KiriView::ImageDocumentEffect::openUrl(url));
+                      runtimePlans.push_back(KiriView::ImageDocumentRuntimePlan {
+                          KiriView::LoadUrlOperation { url } });
                   },
                   {},
                   {},
@@ -77,8 +79,9 @@ public:
               candidateProvider.provider(),
               imageDecodeDependenciesFor(dataLoader, staticImageDataDecoder(testImage())))
         , controller(state, presentation, navigation, spread,
-              [this](
-                  KiriView::ImageDocumentEffect effect) { effects.push_back(std::move(effect)); })
+              [this](KiriView::ImageDocumentRuntimePlan plan) {
+                  runtimePlans.push_back(std::move(plan));
+              })
     {
     }
 
@@ -103,7 +106,7 @@ public:
     KiriView::ImageNavigationService navigation;
     KiriView::ImageSpreadPresentationController spread;
     KiriView::ImageDocumentNavigationController controller;
-    KiriView::ImageDocumentEffects effects;
+    std::vector<KiriView::ImageDocumentRuntimePlan> runtimePlans;
 };
 }
 
@@ -114,7 +117,7 @@ class TestImageDocumentNavigationController : public QObject
 private Q_SLOTS:
     void updatePageNavigationUsesDisplayedImageContext();
     void adjacentImageNavigationUsesDisplayedImageContext();
-    void pageSelectionDispatchesPageNavigationEffect();
+    void pageSelectionDispatchesPageNavigationRuntimePlan();
     void spreadPageSelectionStartsTrackedTransition();
 };
 
@@ -150,12 +153,13 @@ void TestImageDocumentNavigationController::adjacentImageNavigationUsesDisplayed
 
     fixture.controller.openAdjacentImage(KiriView::NavigationDirection::Next);
 
-    const auto *effect = findEffect<KiriView::OpenUrlEffect>(fixture.effects);
-    QVERIFY(effect != nullptr);
-    QCOMPARE(effect->url, secondUrl);
+    QCOMPARE(fixture.runtimePlans.size(), std::size_t(1));
+    const auto *operation = findOperation<KiriView::LoadUrlOperation>(fixture.runtimePlans.front());
+    QVERIFY(operation != nullptr);
+    QCOMPARE(operation->url, secondUrl);
 }
 
-void TestImageDocumentNavigationController::pageSelectionDispatchesPageNavigationEffect()
+void TestImageDocumentNavigationController::pageSelectionDispatchesPageNavigationRuntimePlan()
 {
     DocumentNavigationFixture fixture;
     const QUrl firstUrl = localUrl(QStringLiteral("/images/01.png"));
@@ -170,10 +174,12 @@ void TestImageDocumentNavigationController::pageSelectionDispatchesPageNavigatio
 
     fixture.controller.openImageAtPage(2);
 
-    const auto *effect = findEffect<KiriView::PageNavigationSelectedEffect>(fixture.effects);
-    QVERIFY(effect != nullptr);
-    QCOMPARE(effect->url, secondUrl);
-    QVERIFY(!effect->preserveTwoPageSpreadTransition);
+    QCOMPARE(fixture.runtimePlans.size(), std::size_t(1));
+    const auto *operation
+        = findOperation<KiriView::LoadPageNavigationUrlOperation>(fixture.runtimePlans.front());
+    QVERIFY(operation != nullptr);
+    QCOMPARE(operation->url, secondUrl);
+    QVERIFY(!operation->preserveTwoPageSpreadTransition);
     QCOMPARE(fixture.controller.currentPageNumber(), 2);
 }
 
@@ -197,10 +203,12 @@ void TestImageDocumentNavigationController::spreadPageSelectionStartsTrackedTran
 
     fixture.controller.openImageAtPage(2);
 
-    const auto *effect = findEffect<KiriView::PageNavigationSelectedEffect>(fixture.effects);
-    QVERIFY(effect != nullptr);
-    QCOMPARE(effect->url, secondUrl);
-    QVERIFY(effect->preserveTwoPageSpreadTransition);
+    QCOMPARE(fixture.runtimePlans.size(), std::size_t(1));
+    const auto *operation
+        = findOperation<KiriView::LoadPageNavigationUrlOperation>(fixture.runtimePlans.front());
+    QVERIFY(operation != nullptr);
+    QCOMPARE(operation->url, secondUrl);
+    QVERIFY(operation->preserveTwoPageSpreadTransition);
     QVERIFY(fixture.spread.transitionInProgress());
 }
 

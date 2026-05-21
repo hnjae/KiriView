@@ -29,7 +29,7 @@ ImageDocumentDeletionController::ImageDocumentDeletionController(QObject *parent
     , m_fileOperationProvider(fileOperationProviderWithDefault(std::move(fileOperationProvider)))
     , m_deletionState()
     , m_fallbackController(m_parent, std::move(candidateProvider),
-          [this](ImageDocumentEffect effect) { reportDocumentEffect(std::move(effect)); })
+          [this](ImageDocumentRuntimePlan plan) { reportRuntimePlan(std::move(plan)); })
 {
 }
 
@@ -75,7 +75,7 @@ void ImageDocumentDeletionController::finishFileDeletion(quint64 operationId,
 
     switch (fileDeletionCompletionAction(result)) {
     case FileDeletionCompletionAction::ClearDeletedImageAndOpenFallback:
-        reportDocumentEffect(ImageDocumentEffect::clearDeletedImage());
+        reportRuntimePlan(imageDocumentClearDeletedImagePlan());
         m_fallbackController.open(fallbackPlan);
         return;
     case FileDeletionCompletionAction::Ignore:
@@ -106,9 +106,9 @@ void ImageDocumentDeletionController::cancelFileDeletion()
     notifyInProgressChangedIf(inProgressChanged);
 }
 
-void ImageDocumentDeletionController::reportDocumentEffect(ImageDocumentEffect effect)
+void ImageDocumentDeletionController::reportRuntimePlan(ImageDocumentRuntimePlan plan)
 {
-    invokeIfSet(m_callbacks.effect, std::move(effect));
+    invokeIfSet(m_callbacks.runtimePlan, std::move(plan));
 }
 
 void ImageDocumentDeletionController::reportFailure(const QString &errorString)

@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGE_DOCUMENT_PLAN_TEST_SUPPORT_H
 #define KIRIVIEW_IMAGE_DOCUMENT_PLAN_TEST_SUPPORT_H
 
-#include "document/imagedocumenteffectplan.h"
+#include "document/imagedocumentruntimeplan.h"
 
 #include <cstddef>
 #include <variant>

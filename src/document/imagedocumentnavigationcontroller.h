@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGEDOCUMENTNAVIGATIONCONTROLLER_H
 #define KIRIVIEW_IMAGEDOCUMENTNAVIGATIONCONTROLLER_H
 
-#include "imagedocumenteffects.h"
+#include "imagedocumentruntimeplan.h"
 #include "navigation/imagenavigationtypes.h"
 
 #include <functional>
@@ -18,12 +18,13 @@ class ImageSpreadPresentationController;
 class ImageDocumentNavigationController final
 {
 public:
-    using EffectCallback = std::function<void(ImageDocumentEffect)>;
+    using RuntimePlanCallback = std::function<void(ImageDocumentRuntimePlan)>;
 
     ImageDocumentNavigationController(ImageDocumentState &state,
         ImagePresentationController &presentationController,
         ImageNavigationService &navigationService,
-        ImageSpreadPresentationController &spreadController, EffectCallback effectCallback);
+        ImageSpreadPresentationController &spreadController,
+        RuntimePlanCallback runtimePlanCallback);
 
     int currentPageNumber() const;
     int imageCount() const;
@@ -46,7 +47,7 @@ private:
     ImagePresentationController &m_presentationController;
     ImageNavigationService &m_navigationService;
     ImageSpreadPresentationController &m_spreadController;
-    EffectCallback m_effectCallback;
+    RuntimePlanCallback m_runtimePlanCallback;
 };
 }
 

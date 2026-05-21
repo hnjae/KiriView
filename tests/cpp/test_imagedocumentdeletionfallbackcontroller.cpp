@@ -80,18 +80,30 @@ private:
     std::vector<std::shared_ptr<ManualImageCandidateLoad>> m_imageLoads;
 };
 
-bool isOpenUrlEffect(const KiriView::ImageDocumentEffect &effect, const QUrl &url)
+template <typename Operation>
+const Operation *findOperation(const KiriView::ImageDocumentRuntimePlan &plan)
 {
-    const auto *payload = std::get_if<KiriView::OpenUrlEffect>(&effect.payload);
-    return payload != nullptr && payload->url == url;
+    for (const KiriView::ImageDocumentRuntimeOperation &operation : plan) {
+        if (const auto *payload = std::get_if<Operation>(&operation)) {
+            return payload;
+        }
+    }
+
+    return nullptr;
 }
 
-bool isContainerImageSelectedEffect(
-    const KiriView::ImageDocumentEffect &effect, const QUrl &imageUrl, const QUrl &containerUrl)
+bool planLoadsUrl(const KiriView::ImageDocumentRuntimePlan &plan, const QUrl &url)
 {
-    const auto *payload = std::get_if<KiriView::ContainerImageSelectedEffect>(&effect.payload);
-    return payload != nullptr && payload->imageUrl == imageUrl
-        && payload->containerUrl == containerUrl;
+    const auto *operation = findOperation<KiriView::LoadUrlOperation>(plan);
+    return operation != nullptr && operation->url == url;
+}
+
+bool planLoadsContainerImage(
+    const KiriView::ImageDocumentRuntimePlan &plan, const QUrl &imageUrl, const QUrl &containerUrl)
+{
+    const auto *operation = findOperation<KiriView::LoadContainerImageOperation>(plan);
+    return operation != nullptr && operation->imageUrl == imageUrl
+        && operation->containerUrl == containerUrl;
 }
 }
 
@@ -109,7 +121,7 @@ void TestImageDocumentDeletionFallbackController::imageFallbackOpensNextSibling(
 {
     QObject parent;
     KiriView::TestSupport::FakeImageNavigationCandidateProvider provider;
-    std::vector<KiriView::ImageDocumentEffect> effects;
+    std::vector<KiriView::ImageDocumentRuntimePlan> runtimePlans;
     const QUrl currentUrl = localUrl(QStringLiteral("/images/02.png"));
     const QUrl nextUrl = localUrl(QStringLiteral("/images/03.png"));
     provider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
@@ -118,8 +130,10 @@ void TestImageDocumentDeletionFallbackController::imageFallbackOpensNextSibling(
             imageCandidate(nextUrl),
         });
 
-    KiriView::ImageDocumentDeletionFallbackController controller(&parent, provider.provider(),
-        [&effects](KiriView::ImageDocumentEffect effect) { effects.push_back(std::move(effect)); });
+    KiriView::ImageDocumentDeletionFallbackController controller(
+        &parent, provider.provider(), [&runtimePlans](KiriView::ImageDocumentRuntimePlan plan) {
+            runtimePlans.push_back(std::move(plan));
+        });
 
     controller.open(KiriView::ImageRemovalFallback {
         KiriView::ImageCandidateListContext::forDirectory(
@@ -128,20 +142,22 @@ void TestImageDocumentDeletionFallbackController::imageFallbackOpensNextSibling(
         QStringLiteral("02.png"),
     });
 
-    QCOMPARE(effects.size(), std::size_t(1));
-    QVERIFY(isOpenUrlEffect(effects.front(), nextUrl));
+    QCOMPARE(runtimePlans.size(), std::size_t(1));
+    QVERIFY(planLoadsUrl(runtimePlans.front(), nextUrl));
 }
 
 void TestImageDocumentDeletionFallbackController::canceledImageFallbackCompletionIsIgnored()
 {
     QObject parent;
     ManualDeletionFallbackCandidateProvider provider;
-    std::vector<KiriView::ImageDocumentEffect> effects;
+    std::vector<KiriView::ImageDocumentRuntimePlan> runtimePlans;
     const QUrl currentUrl = localUrl(QStringLiteral("/images/02.png"));
     const QUrl nextUrl = localUrl(QStringLiteral("/images/03.png"));
 
-    KiriView::ImageDocumentDeletionFallbackController controller(&parent, provider.provider(),
-        [&effects](KiriView::ImageDocumentEffect effect) { effects.push_back(std::move(effect)); });
+    KiriView::ImageDocumentDeletionFallbackController controller(
+        &parent, provider.provider(), [&runtimePlans](KiriView::ImageDocumentRuntimePlan plan) {
+            runtimePlans.push_back(std::move(plan));
+        });
 
     controller.open(KiriView::ImageRemovalFallback {
         KiriView::ImageCandidateListContext::forDirectory(
@@ -156,7 +172,7 @@ void TestImageDocumentDeletionFallbackController::canceledImageFallbackCompletio
 
     provider.deliverBackImageCandidatesIgnoringCancellation({ imageCandidate(nextUrl) });
 
-    QVERIFY(effects.empty());
+    QVERIFY(runtimePlans.empty());
 }
 
 void TestImageDocumentDeletionFallbackController::
@@ -164,7 +180,7 @@ void TestImageDocumentDeletionFallbackController::
 {
     QObject parent;
     KiriView::TestSupport::FakeImageNavigationCandidateProvider provider;
-    std::vector<KiriView::ImageDocumentEffect> effects;
+    std::vector<KiriView::ImageDocumentRuntimePlan> runtimePlans;
     const QUrl previousContainerUrl = localUrl(QStringLiteral("/books/a.cbz"));
     const QUrl currentContainerUrl = localUrl(QStringLiteral("/books/b.cbz"));
     const QUrl nextContainerUrl = localUrl(QStringLiteral("/books/c.cbz"));
@@ -186,8 +202,10 @@ void TestImageDocumentDeletionFallbackController::
     provider.setArchiveImages(nextArchive->rootUrl(), {});
     provider.setArchiveImages(previousArchive->rootUrl(), { imageCandidate(previousPageUrl) });
 
-    KiriView::ImageDocumentDeletionFallbackController controller(&parent, provider.provider(),
-        [&effects](KiriView::ImageDocumentEffect effect) { effects.push_back(std::move(effect)); });
+    KiriView::ImageDocumentDeletionFallbackController controller(
+        &parent, provider.provider(), [&runtimePlans](KiriView::ImageDocumentRuntimePlan plan) {
+            runtimePlans.push_back(std::move(plan));
+        });
 
     controller.open(KiriView::ComicBookRemovalFallback {
         currentContainerUrl,
@@ -195,8 +213,8 @@ void TestImageDocumentDeletionFallbackController::
         QStringLiteral("b.cbz"),
     });
 
-    QCOMPARE(effects.size(), std::size_t(1));
-    QVERIFY(isContainerImageSelectedEffect(effects.front(), previousPageUrl, previousContainerUrl));
+    QCOMPARE(runtimePlans.size(), std::size_t(1));
+    QVERIFY(planLoadsContainerImage(runtimePlans.front(), previousPageUrl, previousContainerUrl));
 }
 
 QTEST_GUILESS_MAIN(TestImageDocumentDeletionFallbackController)

@@ -5,7 +5,6 @@
 #define KIRIVIEW_IMAGEDOCUMENTRUNTIME_H
 
 #include "filedeletion.h"
-#include "imagedocumenteffects.h"
 #include "imagedocumentruntimedependencies.h"
 #include "imagedocumentstate.h"
 #include "imagedocumenttypes.h"
@@ -80,7 +79,6 @@ public:
     DisplayedImageRenderSnapshot renderSnapshot(
         DisplayedPageRole role = DisplayedPageRole::Primary) const;
 
-    void dispatchEffect(ImageDocumentEffect effect);
     void notify(ImageDocumentChange change);
     void setRenderContextProvider(RenderContextProvider provider);
     void shutdown();

@@ -26,12 +26,12 @@ KiriView::ImageNavigationService::DisplayContext navigationDisplayContext(
 namespace KiriView {
 ImageDocumentNavigationController::ImageDocumentNavigationController(ImageDocumentState &state,
     ImagePresentationController &presentationController, ImageNavigationService &navigationService,
-    ImageSpreadPresentationController &spreadController, EffectCallback effectCallback)
+    ImageSpreadPresentationController &spreadController, RuntimePlanCallback runtimePlanCallback)
     : m_state(state)
     , m_presentationController(presentationController)
     , m_navigationService(navigationService)
     , m_spreadController(spreadController)
-    , m_effectCallback(std::move(effectCallback))
+    , m_runtimePlanCallback(std::move(runtimePlanCallback))
 {
 }
 
@@ -84,8 +84,10 @@ void ImageDocumentNavigationController::openImageAtPage(int pageNumber)
         m_spreadController.beginTransition();
     }
 
-    invokeIfSet(
-        m_effectCallback, ImageDocumentEffect::pageNavigationSelected(*pageUrl, spreadTransition));
+    invokeIfSet(m_runtimePlanCallback,
+        ImageDocumentRuntimePlan {
+            LoadPageNavigationUrlOperation { *pageUrl, spreadTransition },
+        });
 }
 
 void ImageDocumentNavigationController::openImageAtRelativePageOffset(int offset)

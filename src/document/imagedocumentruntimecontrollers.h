@@ -4,7 +4,6 @@
 #ifndef KIRIVIEW_IMAGEDOCUMENTRUNTIMECONTROLLERS_H
 #define KIRIVIEW_IMAGEDOCUMENTRUNTIMECONTROLLERS_H
 
-#include "imagedocumenteffects.h"
 #include "imagedocumentruntimedependencies.h"
 #include "imagedocumentruntimeplan.h"
 #include "imagedocumenttypes.h"
@@ -18,7 +17,7 @@ class QObject;
 namespace KiriView {
 class ArchiveDocumentSessionStore;
 class ImageDocumentDeletionController;
-class ImageDocumentEffectExecutor;
+class ImageDocumentRuntimePlanExecutor;
 class ImageDocumentNavigationController;
 class ImageDocumentPredecodeController;
 class ImageDocumentState;
@@ -48,7 +47,6 @@ public:
     ImageDocumentNavigationController &navigationController() const;
     ImageSpreadPresentationController &spreadController() const;
 
-    void dispatchEffect(ImageDocumentEffect effect);
     void dispatchPlan(const ImageDocumentRuntimePlan &plan);
     void shutdownRuntime();
 
@@ -62,7 +60,7 @@ private:
     std::unique_ptr<ImageDocumentPredecodeController> m_predecodeController;
     std::unique_ptr<ImageSpreadPresentationController> m_spreadController;
     std::unique_ptr<ImageDocumentNavigationController> m_navigationController;
-    std::unique_ptr<ImageDocumentEffectExecutor> m_effectExecutor;
+    std::unique_ptr<ImageDocumentRuntimePlanExecutor> m_runtimePlanExecutor;
 };
 }
 

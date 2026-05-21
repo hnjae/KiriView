@@ -6,11 +6,11 @@
 #include "archive/archivedocumentsessionstore.h"
 #include "async/imagecallback.h"
 #include "imagedocumentdeletioncontroller.h"
-#include "imagedocumenteffectexecutor.h"
 #include "imagedocumentnavigationcontroller.h"
 #include "imagedocumentpredecodecontroller.h"
 #include "imagedocumentruntimedependencies.h"
-#include "imagedocumentruntimeeffectbinding.h"
+#include "imagedocumentruntimeoperationbinding.h"
+#include "imagedocumentruntimeplanexecutor.h"
 #include "imagedocumentsourceloadrequest.h"
 #include "imagedocumentstate.h"
 #include "imageopencontroller.h"
@@ -55,7 +55,7 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject *docume
             [this]() {
                 invokeIfSet(m_callbacks.notify, ImageDocumentChange::FileDeletionInProgress);
             },
-            [this](ImageDocumentEffect effect) { dispatchEffect(std::move(effect)); },
+            [this](ImageDocumentRuntimePlan plan) { dispatchPlan(plan); },
             std::move(m_callbacks.fileDeletionFailed),
         });
     m_openController
@@ -68,26 +68,38 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject *docume
     m_navigationService = std::make_unique<ImageNavigationService>(documentObject,
         runtimeDependencies.candidateProvider,
         ImageNavigationService::Callbacks {
-            [this](const QUrl &url) { dispatchEffect(ImageDocumentEffect::openUrl(url)); },
+            [this](const QUrl &url) {
+                dispatchPlan(ImageDocumentRuntimePlan { LoadUrlOperation { url } });
+            },
             [this](const QUrl &imageUrl, const QUrl &containerUrl) {
-                dispatchEffect(ImageDocumentEffect::containerImageSelected(imageUrl, containerUrl));
+                dispatchPlan(ImageDocumentRuntimePlan {
+                    LoadContainerImageOperation { imageUrl, containerUrl },
+                });
             },
             [this](const QUrl &url, ContainerNavigationError error, const QString &message) {
                 if (error == ContainerNavigationError::EmptyContainer) {
-                    dispatchEffect(ImageDocumentEffect::emptyContainerSelected(url));
+                    dispatchPlan(ImageDocumentRuntimePlan {
+                        FinishEmptyContainerNavigationOperation { url },
+                    });
                     return;
                 }
 
                 if (error == ContainerNavigationError::InvalidComicBookArchive) {
-                    dispatchEffect(ImageDocumentEffect::containerNavigationFailed(
-                        url, imageErrorText(ImageErrorTextId::OpenComicBookArchive)));
+                    dispatchPlan(ImageDocumentRuntimePlan {
+                        FinishContainerNavigationLoadWithErrorOperation {
+                            url,
+                            imageErrorText(ImageErrorTextId::OpenComicBookArchive),
+                        },
+                    });
                     return;
                 }
 
-                dispatchEffect(ImageDocumentEffect::containerNavigationFailed(url, message));
+                dispatchPlan(ImageDocumentRuntimePlan {
+                    FinishContainerNavigationLoadWithErrorOperation { url, message },
+                });
             },
             [this]() { invokeIfSet(m_callbacks.notify, ImageDocumentChange::PageNavigation); },
-            [this]() { dispatchEffect(ImageDocumentEffect::clearDeletedImage()); },
+            [this]() { dispatchPlan(imageDocumentClearDeletedImagePlan()); },
             [this]() { return m_deletionController->inProgress(); },
         });
     m_predecodeController = std::make_unique<ImageDocumentPredecodeController>(
@@ -102,14 +114,17 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject *docume
             [this](ImageDocumentChange change) { invokeIfSet(m_callbacks.notify, change); },
             [this](const QUrl &url) { return m_predecodeController->findPredecodedImage(url); },
             [this]() { return m_navigationController->pageNavigationSnapshot(); },
-            [this]() { dispatchEffect(ImageDocumentEffect::scheduleAdjacentImagePredecode()); },
+            [this]() {
+                dispatchPlan(
+                    ImageDocumentRuntimePlan { ScheduleAdjacentImagePredecodeOperation {} });
+            },
         },
         runtimeDependencies.candidateProvider, runtimeDependencies.imageDecode);
     m_navigationController = std::make_unique<ImageDocumentNavigationController>(state,
         *m_presentationController, *m_navigationService, *m_spreadController,
-        [this](ImageDocumentEffect effect) { dispatchEffect(std::move(effect)); });
-    m_effectExecutor = std::make_unique<ImageDocumentEffectExecutor>(
-        imageDocumentRuntimeEffectOperations(ImageDocumentRuntimeEffectBinding {
+        [this](ImageDocumentRuntimePlan plan) { dispatchPlan(plan); });
+    m_runtimePlanExecutor = std::make_unique<ImageDocumentRuntimePlanExecutor>(
+        imageDocumentRuntimeOperations(ImageDocumentRuntimeOperationBinding {
             m_archiveSessionStore.get(),
             state,
             *m_deletionController,
@@ -146,24 +161,17 @@ ImageSpreadPresentationController &ImageDocumentRuntimeControllers::spreadContro
     return *m_spreadController;
 }
 
-void ImageDocumentRuntimeControllers::dispatchEffect(ImageDocumentEffect effect)
-{
-    if (m_effectExecutor != nullptr) {
-        m_effectExecutor->dispatch(std::move(effect));
-    }
-}
-
 void ImageDocumentRuntimeControllers::dispatchPlan(const ImageDocumentRuntimePlan &plan)
 {
-    if (m_effectExecutor != nullptr) {
-        m_effectExecutor->dispatchPlan(plan);
+    if (m_runtimePlanExecutor != nullptr) {
+        m_runtimePlanExecutor->dispatchPlan(plan);
     }
 }
 
 void ImageDocumentRuntimeControllers::shutdownRuntime()
 {
-    if (m_effectExecutor != nullptr) {
-        m_effectExecutor->shutdownRuntime();
+    if (m_runtimePlanExecutor != nullptr) {
+        m_runtimePlanExecutor->shutdownRuntime();
     }
 }
 }

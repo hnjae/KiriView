@@ -11,10 +11,10 @@
 
 namespace KiriView {
 ImageDocumentDeletionFallbackController::ImageDocumentDeletionFallbackController(QObject *parent,
-    ImageNavigationCandidateProvider candidateProvider, EffectCallback effectCallback)
+    ImageNavigationCandidateProvider candidateProvider, RuntimePlanCallback runtimePlanCallback)
     : m_parent(parent)
     , m_candidateRepository(std::move(candidateProvider))
-    , m_effectCallback(std::move(effectCallback))
+    , m_runtimePlanCallback(std::move(runtimePlanCallback))
 {
 }
 
@@ -55,7 +55,7 @@ void ImageDocumentDeletionFallbackController::openFallbackPlan(
                 = imageRemovalFallbackUrl(std::move(candidates), fallback);
             m_operation.finish(operationId);
             if (fallbackUrl.has_value()) {
-                reportDocumentEffect(ImageDocumentEffect::openUrl(*fallbackUrl));
+                reportRuntimePlan(ImageDocumentRuntimePlan { LoadUrlOperation { *fallbackUrl } });
             }
         },
         [this, operationId](const QString &) { m_operation.finish(operationId); });
@@ -109,8 +109,8 @@ void ImageDocumentDeletionFallbackController::openComicBookFallbackCandidate(qui
             }
 
             m_operation.finish(operationId);
-            reportDocumentEffect(
-                ImageDocumentEffect::containerImageSelected(imageUrl, containerUrl));
+            reportRuntimePlan(ImageDocumentRuntimePlan {
+                LoadContainerImageOperation { imageUrl, containerUrl } });
         },
         [this, operationId, fallbackCandidate](
             const QUrl &, ImageContainerOpenError, const QString &) {
@@ -118,8 +118,8 @@ void ImageDocumentDeletionFallbackController::openComicBookFallbackCandidate(qui
         });
 }
 
-void ImageDocumentDeletionFallbackController::reportDocumentEffect(ImageDocumentEffect effect)
+void ImageDocumentDeletionFallbackController::reportRuntimePlan(ImageDocumentRuntimePlan plan)
 {
-    invokeIfSet(m_effectCallback, std::move(effect));
+    invokeIfSet(m_runtimePlanCallback, std::move(plan));
 }
 }

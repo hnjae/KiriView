@@ -8,7 +8,7 @@
 #include "filedeletion.h"
 #include "imagedocumentdeletionfallbackcontroller.h"
 #include "imagedocumentdeletionstate.h"
-#include "imagedocumenteffects.h"
+#include "imagedocumentruntimeplan.h"
 #include "imageremovalfallback.h"
 #include "navigation/imagecandidaterepository.h"
 
@@ -26,12 +26,12 @@ class ImageDocumentDeletionController final
 {
 public:
     using InProgressChangedCallback = std::function<void()>;
-    using EffectCallback = std::function<void(ImageDocumentEffect)>;
+    using RuntimePlanCallback = std::function<void(ImageDocumentRuntimePlan)>;
     using FailedCallback = std::function<void(const QString &)>;
 
     struct Callbacks {
         InProgressChangedCallback inProgressChanged;
-        EffectCallback effect;
+        RuntimePlanCallback runtimePlan;
         FailedCallback failed;
     };
 
@@ -50,7 +50,7 @@ private:
         FileDeletionResult result, const QString &errorString);
     void notifyInProgressChangedIf(bool changed);
     void cancelFileDeletion();
-    void reportDocumentEffect(ImageDocumentEffect effect);
+    void reportRuntimePlan(ImageDocumentRuntimePlan plan);
     void reportFailure(const QString &errorString);
 
     QObject *m_parent = nullptr;

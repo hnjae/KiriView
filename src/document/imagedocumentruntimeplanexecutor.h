@@ -1,10 +1,9 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#ifndef KIRIVIEW_IMAGEDOCUMENTEFFECTEXECUTOR_H
-#define KIRIVIEW_IMAGEDOCUMENTEFFECTEXECUTOR_H
+#ifndef KIRIVIEW_IMAGEDOCUMENTRUNTIMEPLANEXECUTOR_H
+#define KIRIVIEW_IMAGEDOCUMENTRUNTIMEPLANEXECUTOR_H
 
-#include "imagedocumenteffects.h"
 #include "imagedocumentruntimeplan.h"
 
 #include <QString>
@@ -12,23 +11,23 @@
 #include <functional>
 
 namespace KiriView {
-struct ImageDocumentLifecycleEffectOperations {
+struct ImageDocumentLifecycleRuntimeOperations {
     std::function<void()> cancelFileDeletion;
     std::function<void()> stopPresentationAnimation;
     std::function<void()> shutdownSpread;
 };
 
-struct ImageDocumentArchiveEffectOperations {
+struct ImageDocumentArchiveRuntimeOperations {
     std::function<void()> clearSession;
 };
 
-struct ImageDocumentPredecodeEffectOperations {
+struct ImageDocumentPredecodeRuntimeOperations {
     std::function<void()> clearPredecode;
     std::function<void()> cancelPredecode;
     std::function<void()> scheduleAdjacentImagePredecode;
 };
 
-struct ImageDocumentSpreadEffectOperations {
+struct ImageDocumentSpreadRuntimeOperations {
     std::function<void()> finishSpreadTransition;
     std::function<void()> resetRightToLeftReading;
     std::function<void()> clearSecondaryPage;
@@ -37,7 +36,7 @@ struct ImageDocumentSpreadEffectOperations {
     std::function<void(const QUrl &)> prepareFailedContainer;
 };
 
-struct ImageDocumentNavigationEffectOperations {
+struct ImageDocumentNavigationRuntimeOperations {
     std::function<void()> cancelPageNavigationUpdate;
     std::function<void()> cancelNavigation;
     std::function<void()> cancelContainerNavigation;
@@ -51,7 +50,7 @@ struct ImageDocumentNavigationEffectOperations {
     std::function<void(const QUrl &, bool)> loadPageNavigationUrl;
 };
 
-struct ImageDocumentOpenEffectOperations {
+struct ImageDocumentOpenRuntimeOperations {
     std::function<void()> cancelOpen;
     std::function<void()> clearDisplayedImageLocation;
     std::function<void()> clearPresentationImage;
@@ -60,7 +59,7 @@ struct ImageDocumentOpenEffectOperations {
     std::function<ImageDocumentRuntimePlan()> finishEmptySourceLoad;
 };
 
-struct ImageDocumentSourceLoadEffectOperations {
+struct ImageDocumentSourceLoadRuntimeOperations {
     std::function<void()> clearLoadingContainerNavigationUrl;
     std::function<void(const QUrl &)> setLoadingContainerNavigationUrl;
     std::function<void(const QUrl &)> setContainerNavigationUrl;
@@ -68,29 +67,28 @@ struct ImageDocumentSourceLoadEffectOperations {
     std::function<void()> beginOpen;
 };
 
-struct ImageDocumentEffectOperations {
-    ImageDocumentLifecycleEffectOperations lifecycle;
-    ImageDocumentArchiveEffectOperations archive;
-    ImageDocumentPredecodeEffectOperations predecode;
-    ImageDocumentSpreadEffectOperations spread;
-    ImageDocumentNavigationEffectOperations navigation;
-    ImageDocumentOpenEffectOperations open;
-    ImageDocumentSourceLoadEffectOperations sourceLoad;
+struct ImageDocumentRuntimeOperations {
+    ImageDocumentLifecycleRuntimeOperations lifecycle;
+    ImageDocumentArchiveRuntimeOperations archive;
+    ImageDocumentPredecodeRuntimeOperations predecode;
+    ImageDocumentSpreadRuntimeOperations spread;
+    ImageDocumentNavigationRuntimeOperations navigation;
+    ImageDocumentOpenRuntimeOperations open;
+    ImageDocumentSourceLoadRuntimeOperations sourceLoad;
 };
 
-class ImageDocumentEffectExecutor final
+class ImageDocumentRuntimePlanExecutor final
 {
 public:
-    explicit ImageDocumentEffectExecutor(ImageDocumentEffectOperations operations);
+    explicit ImageDocumentRuntimePlanExecutor(ImageDocumentRuntimeOperations operations);
 
-    void dispatch(ImageDocumentEffect effect);
     void dispatchPlan(const ImageDocumentRuntimePlan &plan);
     void shutdownRuntime();
 
 private:
     void dispatchOperation(const ImageDocumentRuntimeOperation &operation);
 
-    ImageDocumentEffectOperations m_operations;
+    ImageDocumentRuntimeOperations m_operations;
 };
 }
 

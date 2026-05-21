@@ -113,6 +113,10 @@ using ImageDocumentRuntimeOperation = std::variant<CancelFileDeletionOperation,
     FinishEmptySourceLoadOperation>;
 
 using ImageDocumentRuntimePlan = std::vector<ImageDocumentRuntimeOperation>;
+
+ImageDocumentRuntimePlan imageDocumentClearImagePlan();
+ImageDocumentRuntimePlan imageDocumentClearDeletedImagePlan();
+ImageDocumentRuntimePlan imageDocumentShutdownPlan();
 }
 
 #endif

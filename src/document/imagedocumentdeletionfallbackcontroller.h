@@ -6,7 +6,7 @@
 
 #include "async/imageasyncoperationstate.h"
 #include "async/imageiojob.h"
-#include "imagedocumenteffects.h"
+#include "imagedocumentruntimeplan.h"
 #include "imageremovalfallback.h"
 #include "navigation/imagecandidaterepository.h"
 
@@ -20,10 +20,11 @@ namespace KiriView {
 class ImageDocumentDeletionFallbackController final
 {
 public:
-    using EffectCallback = std::function<void(ImageDocumentEffect)>;
+    using RuntimePlanCallback = std::function<void(ImageDocumentRuntimePlan)>;
 
     ImageDocumentDeletionFallbackController(QObject *parent,
-        ImageNavigationCandidateProvider candidateProvider, EffectCallback effectCallback);
+        ImageNavigationCandidateProvider candidateProvider,
+        RuntimePlanCallback runtimePlanCallback);
     ~ImageDocumentDeletionFallbackController();
 
     void open(const ImageRemovalFallbackPlan &fallbackPlan);
@@ -36,11 +37,11 @@ private:
     void openComicBookFallbackCandidate(quint64 operationId,
         const std::optional<ContainerNavigationCandidate> &candidate,
         const std::optional<ContainerNavigationCandidate> &fallbackCandidate);
-    void reportDocumentEffect(ImageDocumentEffect effect);
+    void reportRuntimePlan(ImageDocumentRuntimePlan plan);
 
     QObject *m_parent = nullptr;
     ImageCandidateRepository m_candidateRepository;
-    EffectCallback m_effectCallback;
+    RuntimePlanCallback m_runtimePlanCallback;
     ImageIoJob m_job;
     ImageAsyncOperationState m_operation;
 };

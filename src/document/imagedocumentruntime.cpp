@@ -224,11 +224,6 @@ DisplayedImageRenderSnapshot ImageDocumentRuntime::renderSnapshot(DisplayedPageR
     return controllers->spreadController().renderSnapshot(role);
 }
 
-void ImageDocumentRuntime::dispatchEffect(ImageDocumentEffect effect)
-{
-    controllers->dispatchEffect(std::move(effect));
-}
-
 void ImageDocumentRuntime::notify(ImageDocumentChange change) { changeBatcher.notify(change); }
 
 void ImageDocumentRuntime::setRenderContextProvider(RenderContextProvider provider)

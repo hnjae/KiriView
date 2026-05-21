@@ -78,15 +78,16 @@ private:
     std::vector<std::shared_ptr<ManualImageCandidateLoad>> m_imageLoads;
 };
 
-bool isClearDeletedImageEffect(const KiriView::ImageDocumentEffect &effect)
+template <typename Operation>
+const Operation *findOperation(const KiriView::ImageDocumentRuntimePlan &plan)
 {
-    return std::holds_alternative<KiriView::ClearDeletedImageEffect>(effect.payload);
-}
+    for (const KiriView::ImageDocumentRuntimeOperation &operation : plan) {
+        if (const auto *payload = std::get_if<Operation>(&operation)) {
+            return payload;
+        }
+    }
 
-bool isOpenUrlEffect(const KiriView::ImageDocumentEffect &effect, const QUrl &url)
-{
-    const auto *payload = std::get_if<KiriView::OpenUrlEffect>(&effect.payload);
-    return payload != nullptr && payload->url == url;
+    return nullptr;
 }
 }
 
@@ -107,7 +108,7 @@ void TestImageDocumentDeletionController::canceledFileDeletionCompletionIsIgnore
         &parent, []() { return KiriView::ImageDocumentRenderContext {}; }, {});
     KiriView::TestSupport::ManualFileOperationProvider fileOperations;
     ManualDeletionCandidateProvider candidateProvider;
-    std::vector<KiriView::ImageDocumentEffect> effects;
+    std::vector<KiriView::ImageDocumentRuntimePlan> runtimePlans;
     std::vector<QString> failures;
     int inProgressChangeCount = 0;
     const QUrl imageUrl = localUrl(QStringLiteral("/images/01.png"));
@@ -119,8 +120,9 @@ void TestImageDocumentDeletionController::canceledFileDeletionCompletionIsIgnore
         KiriView::TestSupport::fileOperationProviderFor(fileOperations),
         KiriView::ImageDocumentDeletionController::Callbacks {
             [&inProgressChangeCount]() { ++inProgressChangeCount; },
-            [&effects](
-                KiriView::ImageDocumentEffect effect) { effects.push_back(std::move(effect)); },
+            [&runtimePlans](KiriView::ImageDocumentRuntimePlan plan) {
+                runtimePlans.push_back(std::move(plan));
+            },
             [&failures](const QString &errorString) { failures.push_back(errorString); },
         });
 
@@ -134,7 +136,7 @@ void TestImageDocumentDeletionController::canceledFileDeletionCompletionIsIgnore
 
     fileOperations.backOperation().callback(KiriView::FileDeletionResult::Succeeded, QString());
 
-    QVERIFY(effects.empty());
+    QVERIFY(runtimePlans.empty());
     QVERIFY(failures.empty());
     QCOMPARE(inProgressChangeCount, 2);
 }
@@ -147,7 +149,7 @@ void TestImageDocumentDeletionController::canceledFallbackCandidateCompletionIsI
         &parent, []() { return KiriView::ImageDocumentRenderContext {}; }, {});
     KiriView::TestSupport::ManualFileOperationProvider fileOperations;
     ManualDeletionCandidateProvider candidateProvider;
-    std::vector<KiriView::ImageDocumentEffect> effects;
+    std::vector<KiriView::ImageDocumentRuntimePlan> runtimePlans;
     std::vector<QString> failures;
     const QUrl currentUrl = localUrl(QStringLiteral("/images/01.png"));
     const QUrl nextUrl = localUrl(QStringLiteral("/images/02.png"));
@@ -159,24 +161,26 @@ void TestImageDocumentDeletionController::canceledFallbackCandidateCompletionIsI
         KiriView::TestSupport::fileOperationProviderFor(fileOperations),
         KiriView::ImageDocumentDeletionController::Callbacks {
             {},
-            [&effects](
-                KiriView::ImageDocumentEffect effect) { effects.push_back(std::move(effect)); },
+            [&runtimePlans](KiriView::ImageDocumentRuntimePlan plan) {
+                runtimePlans.push_back(std::move(plan));
+            },
             [&failures](const QString &errorString) { failures.push_back(errorString); },
         });
 
     controller.deleteDisplayedFile(KiriView::FileDeletionMode::MoveToTrash);
     fileOperations.finishBackOperation(KiriView::FileDeletionResult::Succeeded);
     QCOMPARE(candidateProvider.imageLoadCount(), std::size_t(1));
-    QCOMPARE(effects.size(), std::size_t(1));
-    QVERIFY(isClearDeletedImageEffect(effects.front()));
+    QCOMPARE(runtimePlans.size(), std::size_t(1));
+    QVERIFY(
+        findOperation<KiriView::FinishEmptySourceLoadOperation>(runtimePlans.front()) != nullptr);
 
     controller.cancel();
     QVERIFY(candidateProvider.backImageLoad().canceled);
 
     candidateProvider.deliverBackImageCandidatesIgnoringCancellation({ imageCandidate(nextUrl) });
 
-    QCOMPARE(effects.size(), std::size_t(1));
-    QVERIFY(!isOpenUrlEffect(effects.front(), nextUrl));
+    QCOMPARE(runtimePlans.size(), std::size_t(1));
+    QVERIFY(findOperation<KiriView::LoadUrlOperation>(runtimePlans.front()) == nullptr);
     QVERIFY(failures.empty());
 }
 

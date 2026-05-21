@@ -3,7 +3,6 @@
 
 #include "imageopentransitionapplier.h"
 
-#include "imagedocumenteffectplan.h"
 #include "imagedocumentstate.h"
 #include "navigation/imagecontainer.h"
 
@@ -75,26 +74,31 @@ std::optional<KiriView::DisplayedImageLocation> displayedLocationTarget(
     return std::nullopt;
 }
 
-std::optional<KiriView::ImageDocumentEffect> imageOpenDocumentEffect(
+void appendRuntimeOperationsForOpenEffect(KiriView::ImageDocumentRuntimePlan &plan,
     KiriView::ImageOpenEffect effect, const KiriView::ImageOpenTransitionContext &context)
 {
     switch (effect) {
-    case KiriView::ImageOpenEffect::ClearImage:
-        return KiriView::ImageDocumentEffect::clearImage();
+    case KiriView::ImageOpenEffect::ClearImage: {
+        KiriView::ImageDocumentRuntimePlan clearPlan = KiriView::imageDocumentClearImagePlan();
+        plan.insert(plan.end(), std::make_move_iterator(clearPlan.begin()),
+            std::make_move_iterator(clearPlan.end()));
+        return;
+    }
     case KiriView::ImageOpenEffect::ResetZoom:
-        return KiriView::ImageDocumentEffect::resetZoom();
+        plan.push_back(KiriView::ResetZoomOperation {});
+        return;
     case KiriView::ImageOpenEffect::UpdatePageNavigation:
-        return KiriView::ImageDocumentEffect::updatePageNavigation();
+        plan.push_back(KiriView::UpdatePageNavigationOperation {});
+        return;
     case KiriView::ImageOpenEffect::ScheduleAdjacentImagePredecode:
-        return KiriView::ImageDocumentEffect::scheduleAdjacentImagePredecode();
+        plan.push_back(KiriView::ScheduleAdjacentImagePredecodeOperation {});
+        return;
     case KiriView::ImageOpenEffect::PrepareFailedContainer:
         if (context.containerUrl.has_value()) {
-            return KiriView::ImageDocumentEffect::prepareFailedContainer(*context.containerUrl);
+            plan.push_back(KiriView::PrepareFailedContainerOperation { *context.containerUrl });
         }
-        return std::nullopt;
+        return;
     }
-
-    return std::nullopt;
 }
 
 std::optional<QUrl> resolvedUrlForTarget(
@@ -146,14 +150,7 @@ KiriView::ImageDocumentRuntimePlan resolvedRuntimePlan(
     KiriView::ImageDocumentRuntimePlan plan;
     plan.reserve(transition.effects.size());
     for (KiriView::ImageOpenEffect effect : transition.effects) {
-        std::optional<KiriView::ImageDocumentEffect> documentEffect
-            = imageOpenDocumentEffect(effect, context);
-        if (documentEffect.has_value()) {
-            KiriView::ImageDocumentRuntimePlan effectPlan
-                = KiriView::imageDocumentEffectPlan(*documentEffect);
-            plan.insert(plan.end(), std::make_move_iterator(effectPlan.begin()),
-                std::make_move_iterator(effectPlan.end()));
-        }
+        appendRuntimeOperationsForOpenEffect(plan, effect, context);
     }
     return plan;
 }

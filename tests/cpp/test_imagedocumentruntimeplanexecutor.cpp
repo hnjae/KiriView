@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "document/imagedocumenteffectexecutor.h"
+#include "document/imagedocumentruntimeplanexecutor.h"
 
 #include <QObject>
 #include <QStringList>
@@ -9,21 +9,20 @@
 #include <QUrl>
 
 namespace {
-using KiriView::ImageDocumentEffect;
-using KiriView::ImageDocumentEffectOperations;
+using KiriView::ImageDocumentRuntimeOperations;
 using KiriView::ImageDocumentRuntimePlan;
 
 QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
 
-struct RecordedEffectOperations {
-    ImageDocumentEffectOperations operations;
+struct RecordedRuntimeOperations {
+    ImageDocumentRuntimeOperations operations;
     QStringList events;
     QUrl url;
     QUrl secondaryUrl;
     QString errorString;
     bool flag = false;
 
-    RecordedEffectOperations()
+    RecordedRuntimeOperations()
     {
         operations.lifecycle.cancelFileDeletion
             = [this]() { record(QStringLiteral("cancelFileDeletion")); };
@@ -151,25 +150,25 @@ struct RecordedEffectOperations {
 };
 }
 
-class TestImageDocumentEffectExecutor : public QObject
+class TestImageDocumentRuntimePlanExecutor : public QObject
 {
     Q_OBJECT
 
 private Q_SLOTS:
     void clearImageDispatchesOrderedRuntimeOperations();
-    void clearDeletedImageDispatchesDeletionClearThenGeneratedEffects();
+    void clearDeletedImageDispatchesDeletionClearThenGeneratedPlans();
     void shutdownRuntimeDispatchesOrderedLifecycleOperations();
-    void payloadEffectsDispatchToRuntimeOperations();
+    void payloadRuntimePlansDispatchToOperations();
     void runtimePlansDispatchSourceLoadOperations();
     void runtimePlansDispatchEveryOperationExplicitly();
 };
 
-void TestImageDocumentEffectExecutor::clearImageDispatchesOrderedRuntimeOperations()
+void TestImageDocumentRuntimePlanExecutor::clearImageDispatchesOrderedRuntimeOperations()
 {
-    RecordedEffectOperations recorded;
-    KiriView::ImageDocumentEffectExecutor executor(recorded.operations);
+    RecordedRuntimeOperations recorded;
+    KiriView::ImageDocumentRuntimePlanExecutor executor(recorded.operations);
 
-    executor.dispatch(KiriView::ImageDocumentEffect::clearImage());
+    executor.dispatchPlan(KiriView::imageDocumentClearImagePlan());
 
     QCOMPARE(recorded.events,
         QStringList({
@@ -185,12 +184,13 @@ void TestImageDocumentEffectExecutor::clearImageDispatchesOrderedRuntimeOperatio
         }));
 }
 
-void TestImageDocumentEffectExecutor::clearDeletedImageDispatchesDeletionClearThenGeneratedEffects()
+void TestImageDocumentRuntimePlanExecutor::
+    clearDeletedImageDispatchesDeletionClearThenGeneratedPlans()
 {
-    RecordedEffectOperations recorded;
-    KiriView::ImageDocumentEffectExecutor executor(recorded.operations);
+    RecordedRuntimeOperations recorded;
+    KiriView::ImageDocumentRuntimePlanExecutor executor(recorded.operations);
 
-    executor.dispatch(KiriView::ImageDocumentEffect::clearDeletedImage());
+    executor.dispatchPlan(KiriView::imageDocumentClearDeletedImagePlan());
 
     QCOMPARE(recorded.events,
         QStringList({
@@ -218,10 +218,10 @@ void TestImageDocumentEffectExecutor::clearDeletedImageDispatchesDeletionClearTh
     QVERIFY(recorded.errorString.isEmpty());
 }
 
-void TestImageDocumentEffectExecutor::shutdownRuntimeDispatchesOrderedLifecycleOperations()
+void TestImageDocumentRuntimePlanExecutor::shutdownRuntimeDispatchesOrderedLifecycleOperations()
 {
-    RecordedEffectOperations recorded;
-    KiriView::ImageDocumentEffectExecutor executor(recorded.operations);
+    RecordedRuntimeOperations recorded;
+    KiriView::ImageDocumentRuntimePlanExecutor executor(recorded.operations);
 
     executor.shutdownRuntime();
 
@@ -237,53 +237,66 @@ void TestImageDocumentEffectExecutor::shutdownRuntimeDispatchesOrderedLifecycleO
         }));
 }
 
-void TestImageDocumentEffectExecutor::payloadEffectsDispatchToRuntimeOperations()
+void TestImageDocumentRuntimePlanExecutor::payloadRuntimePlansDispatchToOperations()
 {
-    RecordedEffectOperations recorded;
-    KiriView::ImageDocumentEffectExecutor executor(recorded.operations);
+    RecordedRuntimeOperations recorded;
+    KiriView::ImageDocumentRuntimePlanExecutor executor(recorded.operations);
 
-    executor.dispatch(
-        KiriView::ImageDocumentEffect::openUrl(localUrl(QStringLiteral("/image.png"))));
+    executor.dispatchPlan(ImageDocumentRuntimePlan { KiriView::LoadUrlOperation {
+        localUrl(QStringLiteral("/image.png")),
+    } });
     QCOMPARE(recorded.events, QStringList({ QStringLiteral("loadUrl") }));
     QCOMPARE(recorded.url, localUrl(QStringLiteral("/image.png")));
 
     recorded.clear();
-    executor.dispatch(KiriView::ImageDocumentEffect::containerImageSelected(
-        localUrl(QStringLiteral("/book/01.png")), localUrl(QStringLiteral("/book.cbz"))));
+    executor.dispatchPlan(ImageDocumentRuntimePlan { KiriView::LoadContainerImageOperation {
+        localUrl(QStringLiteral("/book/01.png")),
+        localUrl(QStringLiteral("/book.cbz")),
+    } });
     QCOMPARE(recorded.events, QStringList({ QStringLiteral("loadContainerImage") }));
     QCOMPARE(recorded.url, localUrl(QStringLiteral("/book/01.png")));
     QCOMPARE(recorded.secondaryUrl, localUrl(QStringLiteral("/book.cbz")));
 
     recorded.clear();
-    executor.dispatch(KiriView::ImageDocumentEffect::emptyContainerSelected(
-        localUrl(QStringLiteral("/empty.cbz"))));
+    executor.dispatchPlan(
+        ImageDocumentRuntimePlan { KiriView::FinishEmptyContainerNavigationOperation {
+            localUrl(QStringLiteral("/empty.cbz")),
+        } });
     QCOMPARE(recorded.events, QStringList({ QStringLiteral("finishEmptyContainerNavigation") }));
     QCOMPARE(recorded.url, localUrl(QStringLiteral("/empty.cbz")));
 
     recorded.clear();
-    executor.dispatch(KiriView::ImageDocumentEffect::containerNavigationFailed(
-        localUrl(QStringLiteral("/broken.cbz")), QStringLiteral("broken")));
+    executor.dispatchPlan(
+        ImageDocumentRuntimePlan { KiriView::FinishContainerNavigationLoadWithErrorOperation {
+            localUrl(QStringLiteral("/broken.cbz")),
+            QStringLiteral("broken"),
+        } });
     QCOMPARE(
         recorded.events, QStringList({ QStringLiteral("finishContainerNavigationLoadWithError") }));
     QCOMPARE(recorded.url, localUrl(QStringLiteral("/broken.cbz")));
     QCOMPARE(recorded.errorString, QStringLiteral("broken"));
 
     recorded.clear();
-    executor.dispatch(KiriView::ImageDocumentEffect::pageNavigationSelected(
-        localUrl(QStringLiteral("/next.png")), true));
+    executor.dispatchPlan(ImageDocumentRuntimePlan { KiriView::LoadPageNavigationUrlOperation {
+        localUrl(QStringLiteral("/next.png")),
+        true,
+    } });
     QCOMPARE(recorded.events, QStringList({ QStringLiteral("loadPageNavigationUrl") }));
     QCOMPARE(recorded.url, localUrl(QStringLiteral("/next.png")));
     QVERIFY(recorded.flag);
 
     recorded.clear();
-    executor.dispatch(KiriView::ImageDocumentEffect::prepareFailedContainer(
-        localUrl(QStringLiteral("/bad.zip"))));
+    executor.dispatchPlan(ImageDocumentRuntimePlan { KiriView::PrepareFailedContainerOperation {
+        localUrl(QStringLiteral("/bad.zip")),
+    } });
     QCOMPARE(recorded.events, QStringList({ QStringLiteral("prepareFailedContainer") }));
     QCOMPARE(recorded.url, localUrl(QStringLiteral("/bad.zip")));
 
     recorded.clear();
-    executor.dispatch(KiriView::ImageDocumentEffect::updatePageNavigation());
-    executor.dispatch(KiriView::ImageDocumentEffect::scheduleAdjacentImagePredecode());
+    executor.dispatchPlan(ImageDocumentRuntimePlan {
+        KiriView::UpdatePageNavigationOperation {},
+        KiriView::ScheduleAdjacentImagePredecodeOperation {},
+    });
     QCOMPARE(recorded.events,
         QStringList({
             QStringLiteral("updatePageNavigation"),
@@ -291,10 +304,10 @@ void TestImageDocumentEffectExecutor::payloadEffectsDispatchToRuntimeOperations(
         }));
 }
 
-void TestImageDocumentEffectExecutor::runtimePlansDispatchSourceLoadOperations()
+void TestImageDocumentRuntimePlanExecutor::runtimePlansDispatchSourceLoadOperations()
 {
-    RecordedEffectOperations recorded;
-    KiriView::ImageDocumentEffectExecutor executor(recorded.operations);
+    RecordedRuntimeOperations recorded;
+    KiriView::ImageDocumentRuntimePlanExecutor executor(recorded.operations);
     const QUrl sourceUrl = localUrl(QStringLiteral("/book/01.png"));
     const QUrl containerUrl = localUrl(QStringLiteral("/book.cbz"));
 
@@ -337,10 +350,10 @@ void TestImageDocumentEffectExecutor::runtimePlansDispatchSourceLoadOperations()
     QVERIFY(recorded.flag);
 }
 
-void TestImageDocumentEffectExecutor::runtimePlansDispatchEveryOperationExplicitly()
+void TestImageDocumentRuntimePlanExecutor::runtimePlansDispatchEveryOperationExplicitly()
 {
-    RecordedEffectOperations recorded;
-    KiriView::ImageDocumentEffectExecutor executor(recorded.operations);
+    RecordedRuntimeOperations recorded;
+    KiriView::ImageDocumentRuntimePlanExecutor executor(recorded.operations);
     const QUrl sourceUrl = localUrl(QStringLiteral("/book/01.png"));
     const QUrl containerUrl = localUrl(QStringLiteral("/book.cbz"));
 
@@ -437,6 +450,6 @@ void TestImageDocumentEffectExecutor::runtimePlansDispatchEveryOperationExplicit
         }));
 }
 
-QTEST_GUILESS_MAIN(TestImageDocumentEffectExecutor)
+QTEST_GUILESS_MAIN(TestImageDocumentRuntimePlanExecutor)
 
-#include "test_imagedocumenteffectexecutor.moc"
+#include "test_imagedocumentruntimeplanexecutor.moc"
