@@ -5,7 +5,7 @@ use cxx_qt_build::{CppFile, CxxQtBuilder, QmlModule};
 use std::{
     collections::BTreeSet,
     env, fs,
-    path::{Path, PathBuf},
+    path::{Component, Path, PathBuf},
     process::Command,
 };
 
@@ -160,6 +160,11 @@ fn main() {
     let rust_bridge_sources = source_manifest(RUST_BRIDGE_SOURCES_FILE);
     let cxx_qt_cpp_sources = source_manifest(CXX_QT_CPP_SOURCES_FILE);
     let cpp_core_sources = source_manifest(CPP_CORE_SOURCES_FILE);
+    validate_source_manifest_extensions(&cxx_qt_header_sources, CXX_QT_HEADER_SOURCES_FILE, "h");
+    validate_source_manifest_extensions(&rust_bridge_sources, RUST_BRIDGE_SOURCES_FILE, "rs");
+    validate_source_manifest_extensions(&cxx_qt_cpp_sources, CXX_QT_CPP_SOURCES_FILE, "cpp");
+    validate_source_manifest_extensions(&cpp_core_sources, CPP_CORE_SOURCES_FILE, "cpp");
+    validate_cpp_source_ownership(&cpp_core_sources, &cxx_qt_cpp_sources);
     let generated_state = generate_kconfig_state();
     let generated_state_source = generated_state.source.to_string_lossy().into_owned();
     let qml_module = qml_module();
@@ -269,13 +274,98 @@ fn qml_files() -> Vec<String> {
 
 fn source_manifest(path: &str) -> Vec<String> {
     println!("cargo::rerun-if-changed={path}");
+    let mut seen = BTreeSet::new();
     fs::read_to_string(path)
         .unwrap_or_else(|error| panic!("failed to read source manifest {path}: {error}"))
         .lines()
         .map(str::trim)
         .filter(|line| !line.is_empty() && !line.starts_with('#'))
-        .map(str::to_owned)
+        .map(|line| {
+            validate_source_manifest_path(path, line);
+            if !seen.insert(line.to_owned()) {
+                panic!("duplicate source manifest entry {line} in {path}");
+            }
+            line.to_owned()
+        })
         .collect()
+}
+
+fn validate_source_manifest_path(manifest: &str, source: &str) {
+    let path = Path::new(source);
+    if path.is_absolute() {
+        panic!("source manifest entry {source} in {manifest} must be relative");
+    }
+
+    if path.components().any(|component| {
+        matches!(
+            component,
+            Component::ParentDir | Component::RootDir | Component::Prefix(_)
+        )
+    }) {
+        panic!("source manifest entry {source} in {manifest} must stay inside the repository");
+    }
+
+    if !path.starts_with("src") {
+        panic!("source manifest entry {source} in {manifest} must live under src/");
+    }
+
+    if !path.exists() {
+        panic!("source manifest entry {source} in {manifest} does not exist");
+    }
+}
+
+fn validate_source_manifest_extensions(sources: &[String], manifest: &str, extension: &str) {
+    for source in sources {
+        if Path::new(source)
+            .extension()
+            .and_then(|value| value.to_str())
+            != Some(extension)
+        {
+            panic!("source manifest entry {source} in {manifest} must be a .{extension} file");
+        }
+    }
+}
+
+fn validate_cpp_source_ownership(cpp_core_sources: &[String], cxx_qt_cpp_sources: &[String]) {
+    let mut manifest_sources = BTreeSet::new();
+    for source in cpp_core_sources.iter().chain(cxx_qt_cpp_sources) {
+        if !manifest_sources.insert(source.clone()) {
+            panic!("C++ source {source} is listed in more than one source manifest");
+        }
+    }
+
+    let discovered_sources = discovered_cpp_sources(Path::new("src"));
+    for source in &discovered_sources {
+        if !manifest_sources.contains(source) {
+            panic!("C++ source {source} is not listed in a source manifest");
+        }
+    }
+}
+
+fn discovered_cpp_sources(root: &Path) -> BTreeSet<String> {
+    let mut sources = BTreeSet::new();
+    collect_cpp_sources(root, &mut sources);
+    sources
+}
+
+fn collect_cpp_sources(dir: &Path, sources: &mut BTreeSet<String>) {
+    for entry in fs::read_dir(dir).unwrap_or_else(|error| {
+        panic!("failed to read source directory {}: {error}", dir.display())
+    }) {
+        let path = entry
+            .unwrap_or_else(|error| {
+                panic!(
+                    "failed to read source directory entry under {}: {error}",
+                    dir.display()
+                )
+            })
+            .path();
+        if path.is_dir() {
+            collect_cpp_sources(&path, sources);
+        } else if path.extension().and_then(|value| value.to_str()) == Some("cpp") {
+            sources.insert(path.to_string_lossy().replace('\\', "/"));
+        }
+    }
 }
 
 fn bake_shaders() -> PathBuf {
