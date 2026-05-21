@@ -25,7 +25,6 @@ enum class ImageArchiveCandidateCompletionAction {
 struct ImageArchiveCandidateCompletion {
     ImageArchiveCandidateCompletionAction action = ImageArchiveCandidateCompletionAction::Ignored;
     ImageLoadSession session;
-    QUrl resolvedUrl;
 };
 
 class ImageLoadSessionTracker final

@@ -100,7 +100,6 @@ void TestImageLoadSessionTracker::archiveResolutionUpdatesCanonicalCurrentSessio
         = tracker.completeArchiveCandidates(session, { imageCandidate(imageUrl) });
 
     QCOMPARE(completion.action, KiriView::ImageArchiveCandidateCompletionAction::StartImageDecode);
-    QCOMPARE(completion.resolvedUrl, imageUrl);
     const KiriView::ImageLoadSession &resolvedSession = completion.session;
     QCOMPARE(resolvedSession.imageUrl(), imageUrl);
     QCOMPARE(resolvedSession.firstDisplay().physicalViewportSize, QSize(320, 240));

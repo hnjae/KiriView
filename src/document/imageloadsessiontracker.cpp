@@ -52,7 +52,6 @@ ImageArchiveCandidateCompletion ImageLoadSessionTracker::completeArchiveCandidat
         return ImageArchiveCandidateCompletion {
             ImageArchiveCandidateCompletionAction::ReportEmptyArchive,
             claimedSession.value_or(ImageLoadSession {}),
-            {},
         };
     }
 
@@ -60,7 +59,6 @@ ImageArchiveCandidateCompletion ImageLoadSessionTracker::completeArchiveCandidat
     return ImageArchiveCandidateCompletion {
         ImageArchiveCandidateCompletionAction::StartImageDecode,
         *m_session,
-        candidates.front().url,
     };
 }
 
