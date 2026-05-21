@@ -80,7 +80,8 @@ void ImagePageNavigationController::update(std::optional<ImageCandidateListConte
         return;
     }
 
-    if (m_model.previewRefresh(*context)) {
+    const ImagePageNavigationRefreshPlan refreshPlan = m_model.beginRefresh(*context);
+    if (refreshPlan.changed) {
         notifyChanged();
     }
 
@@ -88,10 +89,10 @@ void ImagePageNavigationController::update(std::optional<ImageCandidateListConte
 
     m_refreshListerJob = m_candidateRepository.loadImages(
         this, *context,
-        [this, candidateSource = context->source()](
+        [this, refreshId = refreshPlan.refreshId, candidateSource = context->source()](
             std::vector<ImageNavigationCandidate> candidates) {
             const ImagePageNavigationRefreshResult refresh
-                = m_model.completeRefreshFromCurrentContext(candidates, candidateSource);
+                = m_model.completePendingRefresh(candidates, refreshId, candidateSource);
             if (refresh.accepted && refresh.changed) {
                 notifyChanged();
             }
@@ -151,7 +152,7 @@ void ImagePageNavigationController::updateFromChangedCandidates(
     std::vector<ImageNavigationCandidate> candidates, ImageCandidateListSource source)
 {
     const ImagePageNavigationRefreshResult refresh
-        = m_model.completeRefreshFromCurrentContext(candidates, std::move(source));
+        = m_model.completeWatchedRefreshFromCurrentContext(candidates, std::move(source));
     if (!refresh.accepted) {
         return;
     }

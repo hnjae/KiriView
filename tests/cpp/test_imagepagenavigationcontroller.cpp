@@ -95,6 +95,7 @@ private Q_SLOTS:
     void deletionInProgressSuppressesRemovedCurrentImageRecovery();
     void fallbackAdjacentNavigationPublishesTargetBeforeOpening();
     void staleUpdateCompletionCannotReplaceCurrentRefreshContext();
+    void staleSameSourceUpdateCompletionIsRejected();
     void cancelUpdateStopsCandidateChangeWatcher();
 };
 
@@ -261,6 +262,34 @@ void TestImagePageNavigationController::staleUpdateCompletionCannotReplaceCurren
     delayedProvider.finishLoad(1, { imageCandidate(secondUrl) });
     QCOMPARE(controller.currentPageNumber(), 1);
     QCOMPARE(controller.imageCount(), 1);
+    QCOMPARE(changeCount, 1);
+}
+
+void TestImagePageNavigationController::staleSameSourceUpdateCompletionIsRejected()
+{
+    DelayedDirectoryImageProvider delayedProvider;
+    ImageCandidateRepository repository(delayedProvider.provider());
+    int changeCount = 0;
+    ImagePageNavigationController controller(
+        nullptr, repository, controllerCallbacks({}, [&changeCount]() { ++changeCount; }));
+    const QUrl directoryUrl = localUrl(QStringLiteral("/images/"));
+    const QUrl firstUrl = localUrl(QStringLiteral("/images/01.png"));
+    const QUrl secondUrl = localUrl(QStringLiteral("/images/02.png"));
+
+    controller.update(directoryContext(firstUrl, directoryUrl));
+    controller.update(directoryContext(secondUrl, directoryUrl));
+    QCOMPARE(delayedProvider.loadCount(), std::size_t(2));
+    QCOMPARE(delayedProvider.loadDirectory(0), directoryUrl);
+    QCOMPARE(delayedProvider.loadDirectory(1), directoryUrl);
+
+    delayedProvider.finishLoad(0, { imageCandidate(firstUrl) });
+    QCOMPARE(controller.currentPageNumber(), 0);
+    QCOMPARE(controller.imageCount(), 0);
+    QCOMPARE(changeCount, 0);
+
+    delayedProvider.finishLoad(1, { imageCandidate(firstUrl), imageCandidate(secondUrl) });
+    QCOMPARE(controller.currentPageNumber(), 2);
+    QCOMPARE(controller.imageCount(), 2);
     QCOMPARE(changeCount, 1);
 }
 

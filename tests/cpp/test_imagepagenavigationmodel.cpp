@@ -36,7 +36,8 @@ private Q_SLOTS:
     void refreshPreviewReusesKnownSourceAndForcesNotification();
     void refreshPreviewClearsDifferentSource();
     void selectionUpdatesCurrentPageWithoutChangingKnownUrls();
-    void refreshSourceGuardsStaleWatcherUpdates();
+    void pendingRefreshOperationGuardsStaleSameSourceCompletions();
+    void watchedRefreshSourceTracksCurrentContext();
     void changedCandidateRefreshReportsCurrentImageRemoval();
     void snapshotIsStableProjection();
 };
@@ -72,12 +73,15 @@ void TestImagePageNavigationModel::refreshPreviewReusesKnownSourceAndForcesNotif
 
     const ImageCandidateListContext firstContext
         = ImageCandidateListContext::forDirectory(first, directory);
-    QVERIFY(model.previewRefresh(firstContext));
+    const KiriView::ImagePageNavigationRefreshPlan firstRefresh = model.beginRefresh(firstContext);
+    QVERIFY(firstRefresh.changed);
     comparePage(model, 1, 2);
 
     const ImageCandidateListContext secondContext
         = ImageCandidateListContext::forDirectory(second, directory);
-    QVERIFY(model.previewRefresh(secondContext));
+    const KiriView::ImagePageNavigationRefreshPlan secondRefresh
+        = model.beginRefresh(secondContext);
+    QVERIFY(secondRefresh.changed);
     comparePage(model, 2, 2);
     QVERIFY(model.shouldKeepExistingWatcherFor(secondContext));
 }
@@ -94,7 +98,8 @@ void TestImagePageNavigationModel::refreshPreviewClearsDifferentSource()
 
     const ImageCandidateListContext nextContext
         = ImageCandidateListContext::forDirectory(second, secondDirectory);
-    QVERIFY(model.previewRefresh(nextContext));
+    const KiriView::ImagePageNavigationRefreshPlan refresh = model.beginRefresh(nextContext);
+    QVERIFY(refresh.changed);
     comparePage(model, 0, 0);
     QVERIFY(!model.shouldKeepExistingWatcherFor(nextContext));
 }
@@ -125,7 +130,35 @@ void TestImagePageNavigationModel::selectionUpdatesCurrentPageWithoutChangingKno
     QVERIFY(!model.selectAdjacentPage(NavigationDirection::Next).has_value());
 }
 
-void TestImagePageNavigationModel::refreshSourceGuardsStaleWatcherUpdates()
+void TestImagePageNavigationModel::pendingRefreshOperationGuardsStaleSameSourceCompletions()
+{
+    ImagePageNavigationModel model;
+    const QUrl directory = localUrl(QStringLiteral("/images/"));
+    const QUrl first = indexedImageUrl(0);
+    const QUrl second = indexedImageUrl(1);
+    const ImageCandidateListContext firstContext
+        = ImageCandidateListContext::forDirectory(first, directory);
+    const ImageCandidateListContext secondContext
+        = ImageCandidateListContext::forDirectory(second, directory);
+
+    const KiriView::ImagePageNavigationRefreshPlan firstRefresh = model.beginRefresh(firstContext);
+    const KiriView::ImagePageNavigationRefreshPlan secondRefresh
+        = model.beginRefresh(secondContext);
+
+    const KiriView::ImagePageNavigationRefreshResult staleResult = model.completePendingRefresh(
+        { imageCandidate(first) }, firstRefresh.refreshId, firstContext.source());
+    QVERIFY(!staleResult.accepted);
+
+    const KiriView::ImagePageNavigationRefreshResult currentResult
+        = model.completePendingRefresh({ imageCandidate(first), imageCandidate(second) },
+            secondRefresh.refreshId, secondContext.source());
+    QVERIFY(currentResult.accepted);
+    QVERIFY(currentResult.context.has_value());
+    QCOMPARE(currentResult.context->currentUrl(), second);
+    comparePage(model, 2, 2);
+}
+
+void TestImagePageNavigationModel::watchedRefreshSourceTracksCurrentContext()
 {
     ImagePageNavigationModel model;
     const QUrl firstDirectory = localUrl(QStringLiteral("/images/"));
@@ -135,28 +168,31 @@ void TestImagePageNavigationModel::refreshSourceGuardsStaleWatcherUpdates()
     const ImageCandidateListContext secondContext
         = ImageCandidateListContext::forDirectory(indexedImageUrl(1), secondDirectory);
 
-    QVERIFY(!model.previewRefresh(firstContext));
+    const KiriView::ImagePageNavigationRefreshPlan firstRefresh = model.beginRefresh(firstContext);
+    QVERIFY(!firstRefresh.changed);
     const KiriView::ImagePageNavigationRefreshResult firstResult
-        = model.completeRefreshFromCurrentContext(
+        = model.completeWatchedRefreshFromCurrentContext(
             { imageCandidate(indexedImageUrl(0)) }, firstContext.source());
     QVERIFY(firstResult.accepted);
     QVERIFY(firstResult.context.has_value());
     QCOMPARE(firstResult.context->currentUrl(), firstContext.currentUrl());
 
     const KiriView::ImagePageNavigationRefreshResult staleResult
-        = model.completeRefreshFromCurrentContext(
+        = model.completeWatchedRefreshFromCurrentContext(
             { imageCandidate(indexedImageUrl(1)) }, secondContext.source());
     QVERIFY(!staleResult.accepted);
 
-    QVERIFY(model.previewRefresh(secondContext));
+    const KiriView::ImagePageNavigationRefreshPlan secondRefresh
+        = model.beginRefresh(secondContext);
+    QVERIFY(secondRefresh.changed);
 
     const KiriView::ImagePageNavigationRefreshResult oldSourceResult
-        = model.completeRefreshFromCurrentContext(
+        = model.completeWatchedRefreshFromCurrentContext(
             { imageCandidate(indexedImageUrl(0)) }, firstContext.source());
     QVERIFY(!oldSourceResult.accepted);
 
     const KiriView::ImagePageNavigationRefreshResult secondResult
-        = model.completeRefreshFromCurrentContext(
+        = model.completeWatchedRefreshFromCurrentContext(
             { imageCandidate(indexedImageUrl(1)) }, secondContext.source());
     QVERIFY(secondResult.accepted);
     QVERIFY(secondResult.context.has_value());
@@ -175,16 +211,17 @@ void TestImagePageNavigationModel::changedCandidateRefreshReportsCurrentImageRem
 
     const ImageCandidateListContext context
         = ImageCandidateListContext::forDirectory(first, directory);
-    QVERIFY(model.previewRefresh(context));
+    const KiriView::ImagePageNavigationRefreshPlan refreshPlan = model.beginRefresh(context);
+    QVERIFY(refreshPlan.changed);
 
-    const KiriView::ImagePageNavigationRefreshResult refresh
-        = model.completeRefreshFromCurrentContext({ imageCandidate(second) }, source);
+    const KiriView::ImagePageNavigationRefreshResult refreshResult
+        = model.completeWatchedRefreshFromCurrentContext({ imageCandidate(second) }, source);
 
-    QVERIFY(refresh.accepted);
-    QVERIFY(refresh.changed);
-    QVERIFY(refresh.currentImageRemoved);
-    QVERIFY(refresh.context.has_value());
-    QCOMPARE(refresh.context->currentUrl(), first);
+    QVERIFY(refreshResult.accepted);
+    QVERIFY(refreshResult.changed);
+    QVERIFY(refreshResult.currentImageRemoved);
+    QVERIFY(refreshResult.context.has_value());
+    QCOMPARE(refreshResult.context->currentUrl(), first);
     comparePage(model, 0, 1);
 }
 

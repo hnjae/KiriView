@@ -26,7 +26,8 @@ class TestImagePageNavigationRefreshState : public QObject
 
 private Q_SLOTS:
     void refreshPreviewKeepsKnownUrlsOnlyForSameSource();
-    void pendingRefreshAcceptsOnlyCurrentSource();
+    void pendingRefreshAcceptsOnlyCurrentOperationAndSource();
+    void watchedRefreshAcceptsCurrentSourceWithoutOperationId();
     void clearDropsKnownAndPendingRefreshContext();
 };
 
@@ -47,22 +48,51 @@ void TestImagePageNavigationRefreshState::refreshPreviewKeepsKnownUrlsOnlyForSam
     QVERIFY(!state.beginRefresh(secondContext, false).keepKnownUrls);
 }
 
-void TestImagePageNavigationRefreshState::pendingRefreshAcceptsOnlyCurrentSource()
+void TestImagePageNavigationRefreshState::pendingRefreshAcceptsOnlyCurrentOperationAndSource()
 {
     ImagePageNavigationRefreshState state;
     const QUrl firstDirectoryUrl = localUrl(QStringLiteral("/images/"));
-    const QUrl secondDirectoryUrl = localUrl(QStringLiteral("/other/"));
+    const QUrl secondDirectoryUrl = localUrl(QStringLiteral("/images/"));
+    const QUrl thirdDirectoryUrl = localUrl(QStringLiteral("/other/"));
     const QUrl firstUrl = localUrl(QStringLiteral("/images/01.png"));
-    const QUrl secondUrl = localUrl(QStringLiteral("/other/02.png"));
+    const QUrl secondUrl = localUrl(QStringLiteral("/images/02.png"));
+    const QUrl thirdUrl = localUrl(QStringLiteral("/other/03.png"));
     const ImageCandidateListContext firstContext = directoryContext(firstUrl, firstDirectoryUrl);
     const ImageCandidateListContext secondContext = directoryContext(secondUrl, secondDirectoryUrl);
+    const ImageCandidateListContext thirdContext = directoryContext(thirdUrl, thirdDirectoryUrl);
+
+    const KiriView::ImagePageNavigationRefreshPreview firstPreview
+        = state.beginRefresh(firstContext, false);
+    const KiriView::ImagePageNavigationRefreshPreview secondPreview
+        = state.beginRefresh(secondContext, false);
+
+    QVERIFY(!state.acceptedPendingRefreshContext(firstPreview.refreshId, firstContext.source())
+            .has_value());
+    QVERIFY(!state.acceptedPendingRefreshContext(secondPreview.refreshId, thirdContext.source())
+            .has_value());
+    const std::optional<ImageCandidateListContext> acceptedContext
+        = state.acceptedPendingRefreshContext(secondPreview.refreshId, secondContext.source());
+    QVERIFY(acceptedContext.has_value());
+    QCOMPARE(acceptedContext->currentUrl(), secondUrl);
+    QVERIFY(state.finishPendingRefresh(secondPreview.refreshId));
+    QVERIFY(!state.acceptedPendingRefreshContext(secondPreview.refreshId, secondContext.source())
+            .has_value());
+}
+
+void TestImagePageNavigationRefreshState::watchedRefreshAcceptsCurrentSourceWithoutOperationId()
+{
+    ImagePageNavigationRefreshState state;
+    const QUrl directoryUrl = localUrl(QStringLiteral("/images/"));
+    const QUrl firstUrl = localUrl(QStringLiteral("/images/01.png"));
+    const QUrl secondUrl = localUrl(QStringLiteral("/images/02.png"));
+    const ImageCandidateListContext firstContext = directoryContext(firstUrl, directoryUrl);
+    const ImageCandidateListContext secondContext = directoryContext(secondUrl, directoryUrl);
 
     state.beginRefresh(firstContext, false);
     state.beginRefresh(secondContext, false);
 
-    QVERIFY(!state.acceptedPendingRefreshContext(firstContext.source()).has_value());
     const std::optional<ImageCandidateListContext> acceptedContext
-        = state.acceptedPendingRefreshContext(secondContext.source());
+        = state.acceptedWatchedRefreshContext(firstContext.source());
     QVERIFY(acceptedContext.has_value());
     QCOMPARE(acceptedContext->currentUrl(), secondUrl);
 }
@@ -80,7 +110,7 @@ void TestImagePageNavigationRefreshState::clearDropsKnownAndPendingRefreshContex
 
     state.clear();
     QVERIFY(!state.shouldKeepExistingWatcherFor(context));
-    QVERIFY(!state.acceptedPendingRefreshContext(context.source()).has_value());
+    QVERIFY(!state.acceptedWatchedRefreshContext(context.source()).has_value());
 }
 
 QTEST_GUILESS_MAIN(TestImagePageNavigationRefreshState)
