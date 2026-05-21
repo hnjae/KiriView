@@ -28,6 +28,7 @@ const DEFAULT_INCLUDE_ROOTS: &[&str] = &["/usr/include"];
 const DEFAULT_LIBRARY_DIRS: &[&str] = &["/usr/lib/x86_64-linux-gnu", "/usr/lib"];
 const QT_MODULES: &[&str] = &[
     "Gui",
+    "Multimedia",
     "Qml",
     "Quick",
     "QuickControls2",
@@ -225,6 +226,7 @@ fn add_qt_modules(mut builder: CxxQtBuilder, modules: &[&str]) -> CxxQtBuilder {
 
 fn qml_module() -> QmlModule {
     let mut module = QmlModule::new("io.github.hnjae.kiriview")
+        .depend("QtMultimedia")
         .depend("QtQuick")
         .depend("org.kde.kirigamiaddons.statefulapp");
     for qml_file in qml_files() {

@@ -17,6 +17,8 @@ let
       qtbase
       qtdeclarative
       qtimageformats
+      qtmultimedia
+      (qtmultimedia.dev or qtmultimedia)
       qtsvg
     ];
   };
@@ -65,9 +67,11 @@ let
   ki18nDev = pkgs.kdePackages.ki18n.dev or pkgs.kdePackages.ki18n;
   kirigamiAddonsDev = pkgs.kdePackages.kirigami-addons.dev or pkgs.kdePackages.kirigami-addons;
   kioDev = pkgs.kdePackages.kio.dev or pkgs.kdePackages.kio;
+  qtmultimediaDev = pkgs.kdePackages.qtmultimedia.dev or pkgs.kdePackages.qtmultimedia;
   libpngDev = pkgs.libpng.dev or pkgs.libpng;
   appQmlRoot = "${config.devenv.root}/target/cxxqt/qml_modules";
   qtQmlRoot = "${config.devenv.root}/.devenv/profile/lib/qt-6/qml";
+  qtmultimediaQmlRoot = "${pkgs.kdePackages.qtmultimedia}/lib/qt-6/qml";
   kconfigQmlRoot = "${pkgs.kdePackages.kconfig}/lib/qt-6/qml";
   ki18nQmlRoot = "${pkgs.kdePackages.ki18n}/lib/qt-6/qml";
   kirigamiQmlRoot = "${pkgs.kdePackages.kirigami.unwrapped}/lib/qt-6/qml";
@@ -75,6 +79,7 @@ let
   qmlImportPaths = [
     appQmlRoot
     qtQmlRoot
+    qtmultimediaQmlRoot
     kconfigQmlRoot
     ki18nQmlRoot
     kirigamiQmlRoot
@@ -94,6 +99,7 @@ let
     "-DQT_CORE_LIB"
     "-DQT_DBUS_LIB"
     "-DQT_GUI_LIB"
+    "-DQT_MULTIMEDIA_LIB"
     "-DQT_NETWORK_LIB"
     "-DQT_QML_LIB"
     "-DQT_QUICK_LIB"
@@ -105,6 +111,7 @@ let
     "QtCore"
     "QtDBus"
     "QtGui"
+    "QtMultimedia"
     "QtNetwork"
     "QtQml"
     "QtQmlIntegration"
@@ -143,6 +150,9 @@ let
     "${kioDev}/include/KF6/KIOCore"
     "${kioDev}/include/KF6/KIOWidgets"
     "${libpngDev}/include/libpng16"
+    "${pkgs.kdePackages.qtmultimedia}/include"
+    "${pkgs.kdePackages.qtmultimedia}/include/QtMultimedia"
+    "${qtmultimediaDev}/mkspecs/modules"
   ]
   ++ cxxStandardLibraryIncludeDirs
   ++ map (module: ".devenv/profile/include/${module}") qtIncludeModules;

@@ -53,6 +53,7 @@ in
     kdePackages.qtbase
     kdePackages.qtdeclarative
     kdePackages.qtimageformats
+    kdePackages.qtmultimedia
     kdePackages.qtsvg
     kdePackages.qttools
     libarchive
