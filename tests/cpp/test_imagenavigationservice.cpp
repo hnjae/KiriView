@@ -39,6 +39,12 @@ KiriView::ImageNavigationService::Callbacks navigationCallbacks(
         std::move(deletionInProgress) };
 }
 
+std::optional<KiriView::ImageCandidateListContext> navigationContext(
+    KiriView::DisplayedImageLocation displayedImage)
+{
+    return KiriView::imageCandidateListContextForDisplayedImage(std::move(displayedImage));
+}
+
 struct ManualImageCandidateList {
     QObject *object = nullptr;
     KiriView::ArchiveDocumentLocation archiveDocument;
@@ -154,10 +160,7 @@ void TestImageNavigationService::directoryAdjacentImageUsesInjectedProvider()
     KiriView::ImageNavigationService service(nullptr, fakeProvider.provider(),
         navigationCallbacks([&openedUrl](const QUrl &url) { openedUrl = url; }));
     service.openAdjacentImage(
-        KiriView::ImageNavigationService::DisplayContext {
-            true,
-            KiriView::DisplayedImageLocation::fromUrl(currentUrl),
-        },
+        navigationContext(KiriView::DisplayedImageLocation::fromUrl(currentUrl)),
         NavigationDirection::Next);
 
     QCOMPARE(openedUrl, nextUrl);
@@ -182,10 +185,8 @@ void TestImageNavigationService::comicBookAdjacentImageUsesInjectedProvider()
     KiriView::ImageNavigationService service(nullptr, fakeProvider.provider(),
         navigationCallbacks([&openedUrl](const QUrl &url) { openedUrl = url; }));
     service.openAdjacentImage(
-        KiriView::ImageNavigationService::DisplayContext {
-            true,
-            KiriView::DisplayedImageLocation::fromArchiveDocument(currentUrl, *archiveDocument),
-        },
+        navigationContext(
+            KiriView::DisplayedImageLocation::fromArchiveDocument(currentUrl, *archiveDocument)),
         NavigationDirection::Next);
 
     QCOMPARE(openedUrl, nextUrl);
@@ -210,10 +211,8 @@ void TestImageNavigationService::directArchiveAdjacentImageUsesInjectedProvider(
     KiriView::ImageNavigationService service(nullptr, fakeProvider.provider(),
         navigationCallbacks([&openedUrl](const QUrl &url) { openedUrl = url; }));
     service.openAdjacentImage(
-        KiriView::ImageNavigationService::DisplayContext {
-            true,
-            KiriView::DisplayedImageLocation::fromArchiveDocument(currentUrl, *archiveDocument),
-        },
+        navigationContext(
+            KiriView::DisplayedImageLocation::fromArchiveDocument(currentUrl, *archiveDocument)),
         NavigationDirection::Next);
 
     QCOMPARE(openedUrl, nextUrl);
@@ -241,18 +240,14 @@ void TestImageNavigationService::pageNavigationKeepsKnownListWhileRefreshingCurr
         }));
     servicePtr = &service;
 
-    service.updatePageNavigation(KiriView::ImageNavigationService::DisplayContext {
-        true,
-        KiriView::DisplayedImageLocation::fromUrl(firstUrl),
-    });
+    service.updatePageNavigation(
+        navigationContext(KiriView::DisplayedImageLocation::fromUrl(firstUrl)));
     QCOMPARE(service.currentPageNumber(), 1);
     QCOMPARE(service.imageCount(), 3);
 
     observedStates.clear();
-    service.updatePageNavigation(KiriView::ImageNavigationService::DisplayContext {
-        true,
-        KiriView::DisplayedImageLocation::fromUrl(secondUrl),
-    });
+    service.updatePageNavigation(
+        navigationContext(KiriView::DisplayedImageLocation::fromUrl(secondUrl)));
 
     QCOMPARE(service.currentPageNumber(), 2);
     QCOMPARE(service.imageCount(), 3);
@@ -280,10 +275,8 @@ void TestImageNavigationService::pageNavigationStaysUnknownUntilArchiveListCompl
         }));
     servicePtr = &service;
 
-    service.updatePageNavigation(KiriView::ImageNavigationService::DisplayContext {
-        true,
-        KiriView::DisplayedImageLocation::fromArchiveDocument(firstUrl, *archiveDocument),
-    });
+    service.updatePageNavigation(navigationContext(
+        KiriView::DisplayedImageLocation::fromArchiveDocument(firstUrl, *archiveDocument)));
 
     QCOMPARE(candidateProvider.loadCount(), std::size_t(1));
     QCOMPARE(candidateProvider.backLoad().archiveDocument.rootUrl(), archiveDocument->rootUrl());
@@ -325,18 +318,14 @@ void TestImageNavigationService::pageNavigationDoesNotPublishSyntheticBoundaryWh
             imageCandidate(firstUrl),
             imageCandidate(thirdUrl),
         });
-    service.updatePageNavigation(KiriView::ImageNavigationService::DisplayContext {
-        true,
-        KiriView::DisplayedImageLocation::fromUrl(firstUrl),
-    });
+    service.updatePageNavigation(
+        navigationContext(KiriView::DisplayedImageLocation::fromUrl(firstUrl)));
     QCOMPARE(service.currentPageNumber(), 1);
     QCOMPARE(service.imageCount(), 2);
 
     observedStates.clear();
-    service.updatePageNavigation(KiriView::ImageNavigationService::DisplayContext {
-        true,
-        KiriView::DisplayedImageLocation::fromUrl(secondUrl),
-    });
+    service.updatePageNavigation(
+        navigationContext(KiriView::DisplayedImageLocation::fromUrl(secondUrl)));
 
     QCOMPARE(service.currentPageNumber(), 0);
     QCOMPARE(service.imageCount(), 2);
@@ -353,14 +342,10 @@ void TestImageNavigationService::pageNavigationDoesNotPublishSyntheticBoundaryWh
             imageCandidate(secondUrl),
             imageCandidate(thirdUrl),
         });
-    service.updatePageNavigation(KiriView::ImageNavigationService::DisplayContext {
-        true,
-        KiriView::DisplayedImageLocation::fromUrl(firstUrl),
-    });
-    service.updatePageNavigation(KiriView::ImageNavigationService::DisplayContext {
-        true,
-        KiriView::DisplayedImageLocation::fromUrl(secondUrl),
-    });
+    service.updatePageNavigation(
+        navigationContext(KiriView::DisplayedImageLocation::fromUrl(firstUrl)));
+    service.updatePageNavigation(
+        navigationContext(KiriView::DisplayedImageLocation::fromUrl(secondUrl)));
     QCOMPARE(service.currentPageNumber(), 2);
     QCOMPARE(service.imageCount(), 3);
 
@@ -370,10 +355,8 @@ void TestImageNavigationService::pageNavigationDoesNotPublishSyntheticBoundaryWh
             imageCandidate(firstUrl),
             imageCandidate(thirdUrl),
         });
-    service.updatePageNavigation(KiriView::ImageNavigationService::DisplayContext {
-        true,
-        KiriView::DisplayedImageLocation::fromUrl(secondUrl),
-    });
+    service.updatePageNavigation(
+        navigationContext(KiriView::DisplayedImageLocation::fromUrl(secondUrl)));
 
     QCOMPARE(service.currentPageNumber(), 0);
     QCOMPARE(service.imageCount(), 2);
@@ -400,10 +383,8 @@ void TestImageNavigationService::selectPageUpdatesCurrentPageImmediately()
     KiriView::ImageNavigationService service(nullptr, fakeProvider.provider(),
         navigationCallbacks(
             {}, {}, {}, [&pageNavigationChangeCount]() { ++pageNavigationChangeCount; }));
-    service.updatePageNavigation(KiriView::ImageNavigationService::DisplayContext {
-        true,
-        KiriView::DisplayedImageLocation::fromUrl(firstUrl),
-    });
+    service.updatePageNavigation(
+        navigationContext(KiriView::DisplayedImageLocation::fromUrl(firstUrl)));
 
     pageNavigationChangeCount = 0;
     const std::optional<QUrl> selectedUrl = service.selectPage(3);
@@ -439,10 +420,8 @@ void TestImageNavigationService::snapshotFollowsCanonicalPageNavigation()
 
     KiriView::ImageNavigationService service(
         nullptr, fakeProvider.provider(), navigationCallbacks());
-    service.updatePageNavigation(KiriView::ImageNavigationService::DisplayContext {
-        true,
-        KiriView::DisplayedImageLocation::fromUrl(firstUrl),
-    });
+    service.updatePageNavigation(
+        navigationContext(KiriView::DisplayedImageLocation::fromUrl(firstUrl)));
 
     const KiriView::ImagePageNavigationSnapshot firstSnapshot = service.pageNavigationSnapshot();
     QCOMPARE(firstSnapshot.currentPageNumber(), 1);
@@ -473,10 +452,8 @@ void TestImageNavigationService::knownAdjacentNavigationUsesPendingCurrentPage()
     std::vector<QUrl> openedUrls;
     KiriView::ImageNavigationService service(nullptr, fakeProvider.provider(),
         navigationCallbacks([&openedUrls](const QUrl &url) { openedUrls.push_back(url); }));
-    const KiriView::ImageNavigationService::DisplayContext displayedFirstContext {
-        true,
-        KiriView::DisplayedImageLocation::fromUrl(firstUrl),
-    };
+    const std::optional<KiriView::ImageCandidateListContext> displayedFirstContext
+        = navigationContext(KiriView::DisplayedImageLocation::fromUrl(firstUrl));
     service.updatePageNavigation(displayedFirstContext);
 
     service.openAdjacentImage(displayedFirstContext, NavigationDirection::Next);
@@ -513,10 +490,8 @@ void TestImageNavigationService::fallbackAdjacentNavigationPublishesTargetBefore
     servicePtr = &service;
 
     service.openAdjacentImage(
-        KiriView::ImageNavigationService::DisplayContext {
-            true,
-            KiriView::DisplayedImageLocation::fromArchiveDocument(firstUrl, *archiveDocument),
-        },
+        navigationContext(
+            KiriView::DisplayedImageLocation::fromArchiveDocument(firstUrl, *archiveDocument)),
         NavigationDirection::Next);
 
     QCOMPARE(candidateProvider.loadCount(), std::size_t(1));
@@ -550,10 +525,8 @@ void TestImageNavigationService::pageNavigationUpdatesWhenDirectoryCandidatesCha
     KiriView::ImageNavigationService service(nullptr, fakeProvider.provider(),
         navigationCallbacks(
             {}, {}, {}, [&pageNavigationChangeCount]() { ++pageNavigationChangeCount; }));
-    service.updatePageNavigation(KiriView::ImageNavigationService::DisplayContext {
-        true,
-        KiriView::DisplayedImageLocation::fromUrl(firstUrl),
-    });
+    service.updatePageNavigation(
+        navigationContext(KiriView::DisplayedImageLocation::fromUrl(firstUrl)));
     QCOMPARE(service.currentPageNumber(), 1);
     QCOMPARE(service.imageCount(), 2);
     QCOMPARE(fakeProvider.directoryImageChangeSubscriptionCount(parentUrl), 1);
@@ -590,10 +563,8 @@ void TestImageNavigationService::externalCurrentImageRemovalOpensNextFallback()
     KiriView::ImageNavigationService service(nullptr, fakeProvider.provider(),
         navigationCallbacks([&openedUrl](const QUrl &url) { openedUrl = url; }, {}, {}, {},
             [&clearCount]() { ++clearCount; }));
-    service.updatePageNavigation(KiriView::ImageNavigationService::DisplayContext {
-        true,
-        KiriView::DisplayedImageLocation::fromUrl(secondUrl),
-    });
+    service.updatePageNavigation(
+        navigationContext(KiriView::DisplayedImageLocation::fromUrl(secondUrl)));
 
     fakeProvider.emitDirectoryImageChanges(parentUrl,
         {
@@ -624,10 +595,8 @@ void TestImageNavigationService::externalCurrentImageRemovalOpensPreviousFallbac
     KiriView::ImageNavigationService service(nullptr, fakeProvider.provider(),
         navigationCallbacks([&openedUrl](const QUrl &url) { openedUrl = url; }, {}, {}, {},
             [&clearCount]() { ++clearCount; }));
-    service.updatePageNavigation(KiriView::ImageNavigationService::DisplayContext {
-        true,
-        KiriView::DisplayedImageLocation::fromUrl(thirdUrl),
-    });
+    service.updatePageNavigation(
+        navigationContext(KiriView::DisplayedImageLocation::fromUrl(thirdUrl)));
 
     fakeProvider.emitDirectoryImageChanges(parentUrl,
         {
@@ -654,10 +623,8 @@ void TestImageNavigationService::externalCurrentImageRemovalClearsWithoutFallbac
     KiriView::ImageNavigationService service(nullptr, fakeProvider.provider(),
         navigationCallbacks([&openedUrl](const QUrl &url) { openedUrl = url; }, {}, {}, {},
             [&clearCount]() { ++clearCount; }));
-    service.updatePageNavigation(KiriView::ImageNavigationService::DisplayContext {
-        true,
-        KiriView::DisplayedImageLocation::fromUrl(currentUrl),
-    });
+    service.updatePageNavigation(
+        navigationContext(KiriView::DisplayedImageLocation::fromUrl(currentUrl)));
 
     fakeProvider.emitDirectoryImageChanges(parentUrl, {});
 
@@ -686,10 +653,8 @@ void TestImageNavigationService::internalDeletionCandidateChangeDoesNotOpenExter
         navigationCallbacks([&openedUrl](const QUrl &url) { openedUrl = url; }, {}, {}, {},
             [&clearCount]() { ++clearCount; },
             [&deletionInProgress]() { return deletionInProgress; }));
-    service.updatePageNavigation(KiriView::ImageNavigationService::DisplayContext {
-        true,
-        KiriView::DisplayedImageLocation::fromUrl(secondUrl),
-    });
+    service.updatePageNavigation(
+        navigationContext(KiriView::DisplayedImageLocation::fromUrl(secondUrl)));
 
     fakeProvider.emitDirectoryImageChanges(parentUrl,
         {
@@ -718,10 +683,8 @@ void TestImageNavigationService::archivePageNavigationDoesNotSubscribeToDirector
 
     KiriView::ImageNavigationService service(
         nullptr, fakeProvider.provider(), navigationCallbacks());
-    service.updatePageNavigation(KiriView::ImageNavigationService::DisplayContext {
-        true,
-        KiriView::DisplayedImageLocation::fromArchiveDocument(firstUrl, *archiveDocument),
-    });
+    service.updatePageNavigation(navigationContext(
+        KiriView::DisplayedImageLocation::fromArchiveDocument(firstUrl, *archiveDocument)));
 
     QCOMPARE(service.currentPageNumber(), 1);
     QCOMPARE(service.imageCount(), 1);
@@ -742,10 +705,8 @@ void TestImageNavigationService::cancelAllNavigationCancelsPendingAdjacentImageL
     KiriView::ImageNavigationService service(nullptr, candidateProvider.provider(),
         navigationCallbacks([&openedUrl](const QUrl &url) { openedUrl = url; }));
     service.openAdjacentImage(
-        KiriView::ImageNavigationService::DisplayContext {
-            true,
-            KiriView::DisplayedImageLocation::fromArchiveDocument(currentUrl, *archiveDocument),
-        },
+        navigationContext(
+            KiriView::DisplayedImageLocation::fromArchiveDocument(currentUrl, *archiveDocument)),
         NavigationDirection::Next);
     QCOMPARE(candidateProvider.loadCount(), std::size_t(1));
 
@@ -776,10 +737,8 @@ void TestImageNavigationService::cancelAllNavigationStopsPageRefreshWatcher()
     KiriView::ImageNavigationService service(nullptr, fakeProvider.provider(),
         navigationCallbacks(
             {}, {}, {}, [&pageNavigationChangeCount]() { ++pageNavigationChangeCount; }));
-    service.updatePageNavigation(KiriView::ImageNavigationService::DisplayContext {
-        true,
-        KiriView::DisplayedImageLocation::fromUrl(firstUrl),
-    });
+    service.updatePageNavigation(
+        navigationContext(KiriView::DisplayedImageLocation::fromUrl(firstUrl)));
     QCOMPARE(fakeProvider.directoryImageChangeSubscriptionCount(parentUrl), 1);
     QCOMPARE(service.imageCount(), 2);
 

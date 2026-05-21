@@ -116,6 +116,7 @@ class TestImageDocumentNavigationController : public QObject
 
 private Q_SLOTS:
     void updatePageNavigationUsesDisplayedImageContext();
+    void updatePageNavigationRequiresPresentedImage();
     void adjacentImageNavigationUsesDisplayedImageContext();
     void pageSelectionDispatchesPageNavigationRuntimePlan();
     void spreadPageSelectionStartsTrackedTransition();
@@ -137,6 +138,26 @@ void TestImageDocumentNavigationController::updatePageNavigationUsesDisplayedIma
 
     QCOMPARE(fixture.controller.currentPageNumber(), 1);
     QCOMPARE(fixture.controller.imageCount(), 2);
+}
+
+void TestImageDocumentNavigationController::updatePageNavigationRequiresPresentedImage()
+{
+    DocumentNavigationFixture fixture;
+    const QUrl firstUrl = localUrl(QStringLiteral("/images/01.png"));
+    const QUrl secondUrl = localUrl(QStringLiteral("/images/02.png"));
+    fixture.candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
+        {
+            imageCandidate(firstUrl),
+            imageCandidate(secondUrl),
+        });
+    fixture.state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromUrl(firstUrl));
+
+    fixture.controller.updatePageNavigation();
+    fixture.controller.openAdjacentImage(KiriView::NavigationDirection::Next);
+
+    QCOMPARE(fixture.controller.currentPageNumber(), 0);
+    QCOMPARE(fixture.controller.imageCount(), 0);
+    QVERIFY(fixture.runtimePlans.empty());
 }
 
 void TestImageDocumentNavigationController::adjacentImageNavigationUsesDisplayedImageContext()

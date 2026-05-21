@@ -64,6 +64,12 @@ KiriView::ImageNavigationService::Callbacks navigationCallbacks(
         {},
     };
 }
+
+std::optional<KiriView::ImageCandidateListContext> navigationContext(
+    KiriView::DisplayedImageLocation displayedImage)
+{
+    return KiriView::imageCandidateListContextForDisplayedImage(std::move(displayedImage));
+}
 }
 
 class TestArchiveDocumentSessionStore : public QObject
@@ -195,29 +201,23 @@ void TestArchiveDocumentSessionStore::navigationReusesCachedArchiveCandidates()
         store.wrapCandidateProvider(archiveOnlyProvider()),
         navigationCallbacks([&openedUrl](const QUrl &url) { openedUrl = url; }));
 
-    service.updatePageNavigation(KiriView::ImageNavigationService::DisplayContext {
-        true,
-        KiriView::DisplayedImageLocation::fromArchiveDocument(firstUrl, *archiveDocument),
-    });
+    service.updatePageNavigation(navigationContext(
+        KiriView::DisplayedImageLocation::fromArchiveDocument(firstUrl, *archiveDocument)));
     QTRY_COMPARE(service.imageCount(), 3);
     QCOMPARE(service.currentPageNumber(), 1);
     QCOMPARE(state->openCount.load(), 1);
     QCOMPARE(state->candidateLoadCount.load(), 1);
 
     service.openAdjacentImage(
-        KiriView::ImageNavigationService::DisplayContext {
-            true,
-            KiriView::DisplayedImageLocation::fromArchiveDocument(firstUrl, *archiveDocument),
-        },
+        navigationContext(
+            KiriView::DisplayedImageLocation::fromArchiveDocument(firstUrl, *archiveDocument)),
         NavigationDirection::Next);
     QCOMPARE(openedUrl, secondUrl);
     QCOMPARE(state->openCount.load(), 1);
     QCOMPARE(state->candidateLoadCount.load(), 1);
 
-    service.updatePageNavigation(KiriView::ImageNavigationService::DisplayContext {
-        true,
-        KiriView::DisplayedImageLocation::fromArchiveDocument(secondUrl, *archiveDocument),
-    });
+    service.updatePageNavigation(navigationContext(
+        KiriView::DisplayedImageLocation::fromArchiveDocument(secondUrl, *archiveDocument)));
     QCOMPARE(service.currentPageNumber(), 2);
     QCOMPARE(service.imageCount(), 3);
     QCOMPARE(state->openCount.load(), 1);

@@ -5,6 +5,7 @@
 
 #include "async/imagecallback.h"
 #include "imagedocumentstate.h"
+#include "navigation/imagecandidatelistsource.h"
 #include "navigation/imagenavigationservice.h"
 #include "presentation/imagepresentationcontroller.h"
 #include "presentation/imagespreadpresentationcontroller.h"
@@ -14,12 +15,15 @@
 #include <utility>
 
 namespace {
-KiriView::ImageNavigationService::DisplayContext navigationDisplayContext(
+std::optional<KiriView::ImageCandidateListContext> navigationCandidateContext(
     const KiriView::ImageDocumentState &state,
     const KiriView::ImagePresentationController &presentationController)
 {
-    return KiriView::ImageNavigationService::DisplayContext { presentationController.hasImage(),
-        state.displayedImageLocation() };
+    if (!presentationController.hasImage()) {
+        return std::nullopt;
+    }
+
+    return KiriView::imageCandidateListContextForDisplayedImage(state.displayedImageLocation());
 }
 }
 
@@ -56,7 +60,7 @@ void ImageDocumentNavigationController::openAdjacentImage(NavigationDirection di
         = m_spreadController.imageNavigationTarget(direction);
     if (!target.handledBySpread) {
         m_navigationService.openAdjacentImage(
-            navigationDisplayContext(m_state, m_presentationController), direction);
+            navigationCandidateContext(m_state, m_presentationController), direction);
         return;
     }
 
@@ -103,7 +107,7 @@ void ImageDocumentNavigationController::openImageAtRelativePageOffset(int offset
 void ImageDocumentNavigationController::updatePageNavigation()
 {
     m_navigationService.updatePageNavigation(
-        navigationDisplayContext(m_state, m_presentationController));
+        navigationCandidateContext(m_state, m_presentationController));
 }
 
 void ImageDocumentNavigationController::cancelNavigation()

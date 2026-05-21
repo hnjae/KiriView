@@ -5,28 +5,8 @@
 
 #include "async/imagecallback.h"
 
-#include <QString>
 #include <optional>
 #include <utility>
-
-namespace {
-bool displayContextHasNavigationSource(
-    const KiriView::ImageNavigationService::DisplayContext &context)
-{
-    return context.hasDisplayedImage && !context.location.imageUrl().isEmpty();
-}
-
-std::optional<KiriView::ImageCandidateListContext> imageCandidateContextForDisplayContext(
-    const KiriView::ImageNavigationService::DisplayContext &context)
-{
-    if (!displayContextHasNavigationSource(context)) {
-        return std::nullopt;
-    }
-
-    return KiriView::imageCandidateListContextForDisplayedImage(context.location);
-}
-
-}
 
 namespace KiriView {
 ImageNavigationService::ImageNavigationService(
@@ -72,10 +52,10 @@ std::optional<QUrl> ImageNavigationService::selectPage(int pageNumber)
 }
 
 void ImageNavigationService::openAdjacentImage(
-    const DisplayContext &context, NavigationDirection direction)
+    std::optional<ImageCandidateListContext> context, NavigationDirection direction)
 {
     cancelContainerNavigation();
-    m_pageNavigation.openAdjacentImage(imageCandidateContextForDisplayContext(context), direction);
+    m_pageNavigation.openAdjacentImage(std::move(context), direction);
 }
 
 void ImageNavigationService::cancelNavigation() { m_pageNavigation.cancelNavigation(); }
@@ -93,9 +73,9 @@ void ImageNavigationService::openAdjacentContainer(
 
 void ImageNavigationService::cancelContainerNavigation() { m_containerNavigation.cancel(); }
 
-void ImageNavigationService::updatePageNavigation(const DisplayContext &context)
+void ImageNavigationService::updatePageNavigation(std::optional<ImageCandidateListContext> context)
 {
-    m_pageNavigation.update(imageCandidateContextForDisplayContext(context));
+    m_pageNavigation.update(std::move(context));
 }
 
 void ImageNavigationService::cancelPageNavigationUpdate() { m_pageNavigation.cancelUpdate(); }

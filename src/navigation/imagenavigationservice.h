@@ -4,11 +4,11 @@
 #ifndef KIRIVIEW_IMAGENAVIGATIONSERVICE_H
 #define KIRIVIEW_IMAGENAVIGATIONSERVICE_H
 
+#include "imagecandidatelistsource.h"
 #include "imagecandidaterepository.h"
 #include "imagecontainernavigationcontroller.h"
 #include "imagenavigationtypes.h"
 #include "imagepagenavigationcontroller.h"
-#include "location/imagelocation.h"
 
 #include <QObject>
 #include <QString>
@@ -20,11 +20,6 @@ namespace KiriView {
 class ImageNavigationService final : public QObject
 {
 public:
-    struct DisplayContext {
-        bool hasDisplayedImage = false;
-        DisplayedImageLocation location;
-    };
-
     using OpenUrlCallback = std::function<void(const QUrl &)>;
     using OpenContainerImageCallback = std::function<void(const QUrl &, const QUrl &)>;
     using ContainerNavigationErrorCallback
@@ -51,9 +46,10 @@ public:
     std::optional<QUrl> urlAtPage(int pageNumber) const;
     std::optional<QUrl> selectPage(int pageNumber);
 
-    void openAdjacentImage(const DisplayContext &context, NavigationDirection direction);
+    void openAdjacentImage(
+        std::optional<ImageCandidateListContext> context, NavigationDirection direction);
     void openAdjacentContainer(const QUrl &currentContainerUrl, NavigationDirection direction);
-    void updatePageNavigation(const DisplayContext &context);
+    void updatePageNavigation(std::optional<ImageCandidateListContext> context);
 
     void cancelNavigation();
     void cancelContainerNavigation();
