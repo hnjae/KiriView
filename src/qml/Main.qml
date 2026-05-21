@@ -1,6 +1,8 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+pragma ComponentBehavior: Bound
+
 import QtQuick
 import QtQuick.Dialogs as Dialogs
 import io.github.hnjae.kiriview
@@ -14,7 +16,7 @@ StatefulApp.StatefulWindow {
     application: KiriViewApplication {
         id: kiriApplication
     }
-    title: page.imageDocument.windowTitleFileName.length > 0 ? KI18n.i18nc("@title:window", "%1 — KiriView", page.imageDocument.windowTitleFileName) : "KiriView"
+    title: documentSession.windowTitleFileName.length > 0 ? KI18n.i18nc("@title:window", "%1 — KiriView", documentSession.windowTitleFileName) : "KiriView"
     visible: true
     windowName: "Main"
 
@@ -55,7 +57,7 @@ StatefulApp.StatefulWindow {
             return;
         }
 
-        page.imageDocument.sourceUrl = urls[0];
+        documentSession.sourceUrl = urls[0];
     }
 
     function revealFullscreenToolBar() {
@@ -85,15 +87,29 @@ StatefulApp.StatefulWindow {
         return root.fullscreen ? fullscreenImageToolBar : headerImageToolBar;
     }
 
-    function focusImageViewport() {
-        imageViewport.forceActiveFocus();
+    function activeMenuHost() {
+        if (page.videoMode && !root.fullscreen) {
+            return videoApplicationMenuHost;
+        }
+
+        return root.activeImageToolBar();
+    }
+
+    function focusActiveViewport() {
+        if (!page.videoMode) {
+            imageViewport.forceActiveFocus();
+        }
     }
 
     function openApplicationMenu() {
-        return root.activeImageToolBar().openApplicationMenu();
+        return root.activeMenuHost().openApplicationMenu();
     }
 
     function toolbarTextInputFocused() {
+        if (page.videoMode) {
+            return false;
+        }
+
         return activeImageToolBar().textInputFocused();
     }
 
@@ -136,6 +152,14 @@ StatefulApp.StatefulWindow {
         onActivated: root.openApplicationMenu()
     }
 
+    Shortcut {
+        context: Qt.WindowShortcut
+        enabled: !root.helpDialogOpen
+        sequence: "Ctrl+M"
+
+        onActivated: kiriApplication.actionForId(KiriViewApplication.OptionsShowMenubarAction).trigger()
+    }
+
     Timer {
         id: fullscreenToolBarHideTimer
 
@@ -145,6 +169,16 @@ StatefulApp.StatefulWindow {
         onTriggered: {
             if (root.fullscreen && !fullscreenImageToolBar.interactionActive) {
                 root.fullscreenToolBarRevealed = false;
+            }
+        }
+    }
+
+    KiriDocumentSession {
+        id: documentSession
+
+        Component.onCompleted: {
+            if (root.initialSourceUrl.toString().length > 0) {
+                sourceUrl = root.initialSourceUrl;
             }
         }
     }
@@ -175,8 +209,12 @@ StatefulApp.StatefulWindow {
         id: page
 
         readonly property var imageDocument: imageViewport.imageDocument
-        readonly property bool imageReady: imageDocument.status === KiriImageDocument.Ready
+        readonly property var videoDocument: documentSession.videoDocument
+        readonly property bool imageMode: documentSession.documentKind === KiriDocumentSession.Image
+        readonly property bool videoMode: documentSession.documentKind === KiriDocumentSession.Video
+        readonly property bool imageReady: imageMode && imageDocument.status === KiriImageDocument.Ready
         readonly property point fullscreenPointerPosition: fullscreenRevealHandler.point.position
+        property bool documentDeletionWasInProgress: false
 
         background: Rectangle {
             color: imageViewTheme.darkBackgroundColor
@@ -201,33 +239,47 @@ StatefulApp.StatefulWindow {
             id: imageViewport
 
             anchors.fill: parent
-            initialSourceUrl: root.initialSourceUrl
+            imageDocument: documentSession.imageDocument
+            visible: !page.videoMode
 
             onViewerClicked: {
                 if (root.activeImageToolBar().commitTextInputEditing(true)) {
                     return;
                 }
 
-                root.focusImageViewport();
+                root.focusActiveViewport();
+            }
+        }
+
+        Loader {
+            id: videoViewportLoader
+
+            anchors.fill: parent
+            active: page.videoMode
+            sourceComponent: VideoViewport {
+                active: page.videoMode
+                videoDocument: page.videoDocument
+
+                onViewerClicked: forceActiveFocus()
             }
         }
 
         ImageActionAvailability {
             id: actionAvailability
 
-            containerNavigationAvailable: page.imageDocument.containerNavigationAvailable
-            currentLastPageNumber: page.imageDocument.currentLastPageNumber
-            currentPageNumber: page.imageDocument.currentPageNumber
-            fileDeletionInProgress: page.imageDocument.fileDeletionInProgress
+            containerNavigationAvailable: page.imageMode && page.imageDocument.containerNavigationAvailable
+            currentLastPageNumber: page.imageMode ? page.imageDocument.currentLastPageNumber : 0
+            currentPageNumber: page.imageMode ? page.imageDocument.currentPageNumber : 0
+            fileDeletionInProgress: documentSession.fileDeletionInProgress
             helpDialogOpen: root.helpDialogOpen
-            imageCount: page.imageDocument.imageCount
-            imageHorizontallyPannable: imageViewport.imageHorizontallyPannable
-            imagePannable: imageViewport.imagePannable
+            imageCount: page.imageMode ? page.imageDocument.imageCount : 0
+            imageHorizontallyPannable: page.imageMode && imageViewport.imageHorizontallyPannable
+            imagePannable: page.imageMode && imageViewport.imagePannable
             imageReady: page.imageReady
-            rightToLeftReadingAvailable: page.imageDocument.rightToLeftReadingAvailable
-            rightToLeftReadingEnabled: page.imageDocument.rightToLeftReadingEnabled
-            twoPageModeAvailable: page.imageDocument.twoPageModeAvailable
-            twoPageModeEnabled: page.imageDocument.twoPageModeEnabled
+            rightToLeftReadingAvailable: page.imageMode && page.imageDocument.rightToLeftReadingAvailable
+            rightToLeftReadingEnabled: page.imageMode && page.imageDocument.rightToLeftReadingEnabled
+            twoPageModeAvailable: page.imageMode && page.imageDocument.twoPageModeAvailable
+            twoPageModeEnabled: page.imageMode && page.imageDocument.twoPageModeEnabled
         }
 
         ImageActions {
@@ -235,6 +287,7 @@ StatefulApp.StatefulWindow {
 
             application: kiriApplication
             actionAvailability: actionAvailability
+            documentSession: documentSession
             fullscreen: root.fullscreen
             imageDocument: page.imageDocument
 
@@ -246,20 +299,37 @@ StatefulApp.StatefulWindow {
             onToggleFullScreenRequested: root.toggleFullScreen()
         }
 
-        header: ImageDocumentToolBar {
-            id: headerImageToolBar
+        header: Item {
+            id: windowHeader
 
-            actions: imageActions
-            enabled: !root.fullscreen
-            height: root.fullscreen ? 0 : implicitHeight
-            imageDocument: page.imageDocument
-            imageReady: page.imageReady
-            applicationMenuActions: imageActions.applicationMenuActions
-            rightToLeftReadingActive: imageActions.rightToLeftReadingActive
-            showApplicationMenuActions: !root.menuBarMode && !root.fullscreen
+            height: root.fullscreen ? 0 : (page.videoMode ? videoApplicationMenuHost.implicitHeight : headerImageToolBar.implicitHeight)
             visible: !root.fullscreen
 
-            onTextInputFocusReturnRequested: root.focusImageViewport()
+            ImageDocumentToolBar {
+                id: headerImageToolBar
+
+                actions: imageActions
+                anchors.fill: parent
+                enabled: !root.fullscreen && !page.videoMode
+                imageDocument: page.imageDocument
+                imageReady: page.imageReady
+                applicationMenuActions: imageActions.applicationMenuActions
+                rightToLeftReadingActive: imageActions.rightToLeftReadingActive
+                showApplicationMenuActions: !root.menuBarMode && !root.fullscreen
+                visible: !root.fullscreen && !page.videoMode
+
+                onTextInputFocusReturnRequested: root.focusActiveViewport()
+            }
+
+            ApplicationMenuHost {
+                id: videoApplicationMenuHost
+
+                actions: imageActions.applicationMenuActions
+                anchors.fill: parent
+                enabled: !root.fullscreen && page.videoMode
+                showApplicationMenuActions: !root.menuBarMode && !root.fullscreen
+                visible: !root.fullscreen && page.videoMode
+            }
         }
 
         onFullscreenPointerPositionChanged: {
@@ -292,14 +362,120 @@ StatefulApp.StatefulWindow {
             }
         }
 
-        ImageShortcuts {
-            application: kiriApplication
-            actionAvailability: actionAvailability
-            imageDocument: page.imageDocument
-            imageViewport: imageViewport
+        Connections {
+            target: documentSession
 
-            onImageBoundaryReached: function (message) {
-                toastNotification.show(message, "image-boundary");
+            function onErrorStringChanged() {
+                if (page.documentDeletionWasInProgress && documentSession.errorString.length > 0) {
+                    toastNotification.show(documentSession.errorString, "general");
+                    page.documentDeletionWasInProgress = false;
+                }
+            }
+
+            function onFileDeletionInProgressChanged() {
+                if (documentSession.fileDeletionInProgress) {
+                    page.documentDeletionWasInProgress = true;
+                    return;
+                }
+
+                Qt.callLater(function () {
+                    if (!documentSession.fileDeletionInProgress && documentSession.errorString.length <= 0) {
+                        page.documentDeletionWasInProgress = false;
+                    }
+                });
+            }
+
+            function onSourceUrlChanged() {
+                toastNotification.dismissIfScope("image-boundary");
+            }
+        }
+
+        Loader {
+            active: page.imageMode
+            sourceComponent: ImageShortcuts {
+                application: kiriApplication
+                actionAvailability: actionAvailability
+                handleMenuPresentationShortcut: false
+                imageDocument: page.imageDocument
+                imageViewport: imageViewport
+
+                onImageBoundaryReached: function (message) {
+                    toastNotification.show(message, "image-boundary");
+                }
+            }
+        }
+
+        Shortcut {
+            context: Qt.WindowShortcut
+            enabled: page.videoMode && !root.helpDialogOpen
+            sequence: "Left"
+
+            onActivated: imageActions.openPreviousImage()
+        }
+
+        Shortcut {
+            context: Qt.WindowShortcut
+            enabled: page.videoMode && !root.helpDialogOpen
+            sequence: "Right"
+
+            onActivated: imageActions.openNextImage()
+        }
+
+        Item {
+            enabled: !page.imageMode
+
+            ConfiguredActionShortcut {
+                actionId: KiriViewApplication.FileOpenAction
+                application: kiriApplication
+                shortcutsEnabled: parent.enabled && !root.helpDialogOpen
+            }
+
+            ConfiguredActionShortcut {
+                actionId: KiriViewApplication.FileQuitAction
+                application: kiriApplication
+                shortcutsEnabled: parent.enabled && !root.helpDialogOpen
+            }
+
+            ConfiguredActionShortcut {
+                actionId: KiriViewApplication.FileMoveToTrashAction
+                application: kiriApplication
+                shortcutsEnabled: parent.enabled && documentSession.displayedFileDeletionAvailable && !root.helpDialogOpen
+            }
+
+            ConfiguredActionShortcut {
+                actionId: KiriViewApplication.FileDeleteAction
+                application: kiriApplication
+                shortcutsEnabled: parent.enabled && documentSession.displayedFileDeletionAvailable && !root.helpDialogOpen
+            }
+
+            ConfiguredActionShortcut {
+                actionId: KiriViewApplication.GoPreviousImageAction
+                application: kiriApplication
+                shortcutsEnabled: parent.enabled && documentSession.mediaNavigationActive && !documentSession.fileDeletionInProgress && !root.helpDialogOpen
+            }
+
+            ConfiguredActionShortcut {
+                actionId: KiriViewApplication.GoNextImageAction
+                application: kiriApplication
+                shortcutsEnabled: parent.enabled && documentSession.mediaNavigationActive && !documentSession.fileDeletionInProgress && !root.helpDialogOpen
+            }
+
+            ConfiguredActionShortcut {
+                actionId: KiriViewApplication.WindowFullscreenAction
+                application: kiriApplication
+                shortcutsEnabled: parent.enabled && !root.helpDialogOpen
+            }
+
+            ConfiguredActionShortcut {
+                actionId: KiriViewApplication.HelpShortcutsAction
+                application: kiriApplication
+                shortcutsEnabled: parent.enabled && !root.helpDialogOpen
+            }
+
+            ConfiguredActionShortcut {
+                actionId: KiriViewApplication.OptionsConfigureKeybindingAction
+                application: kiriApplication
+                shortcutsEnabled: parent.enabled && !root.helpDialogOpen
             }
         }
 
@@ -308,6 +484,7 @@ StatefulApp.StatefulWindow {
             imageDocument: page.imageDocument
             imageReady: page.imageReady
             openAction: imageActions.openAction
+            visible: !page.videoMode
         }
 
         ToastNotification {
@@ -333,10 +510,10 @@ StatefulApp.StatefulWindow {
             rightToLeftReadingActive: imageActions.rightToLeftReadingActive
             showApplicationMenuActions: !root.menuBarMode && !root.fullscreen
             transientOverlay: true
-            visible: root.fullscreen && root.fullscreenToolBarRevealed
+            visible: root.fullscreen && root.fullscreenToolBarRevealed && !page.videoMode
             z: 20
 
-            onTextInputFocusReturnRequested: root.focusImageViewport()
+            onTextInputFocusReturnRequested: root.focusActiveViewport()
 
             onInteractionActiveChanged: {
                 if (!root.fullscreen) {
@@ -363,6 +540,7 @@ StatefulApp.StatefulWindow {
         actions: imageActions
         fullscreen: root.fullscreen
         imageDocument: page.imageDocument
+        imageMode: page.imageMode
         rightToLeftReadingActive: imageActions.rightToLeftReadingActive
         visible: root.menuBarMode && !root.fullscreen
     }
@@ -380,9 +558,9 @@ StatefulApp.StatefulWindow {
         id: fileDialog
 
         fileMode: Dialogs.FileDialog.OpenFile
-        nameFilters: page.imageDocument.openDialogNameFilters
-        title: KI18n.i18nc("@title:window", "Open Image or Comic Book")
+        nameFilters: documentSession.openDialogNameFilters
+        title: KI18n.i18nc("@title:window", "Open Image, Video, or Comic Book")
 
-        onAccepted: page.imageDocument.sourceUrl = selectedFile
+        onAccepted: documentSession.sourceUrl = selectedFile
     }
 }

@@ -11,6 +11,7 @@ Item {
 
     required property KiriViewApplication application
     required property ImageActionAvailability actionAvailability
+    required property KiriDocumentSession documentSession
     required property KiriImageDocument imageDocument
     required property bool fullscreen
 
@@ -64,9 +65,20 @@ Item {
     readonly property var configureShortcutsMenuAction: configureShortcutsManagedAction.menuProxy
     readonly property var showMenubarMenuAction: showMenubarManagedAction.menuProxy
     readonly property var quitMenuAction: quitManagedAction.menuProxy
+    readonly property bool imageMode: root.documentSession.documentKind === KiriDocumentSession.Image
+    readonly property bool videoMode: root.documentSession.documentKind === KiriDocumentSession.Video
+    readonly property bool mediaNavigationActive: root.documentSession.mediaNavigationActive
+    readonly property bool documentDeletionAvailable: root.documentSession.displayedFileDeletionAvailable && root.actionAvailability.helpShortcutsEnabled
+    readonly property bool mediaPageActionsAvailable: root.mediaNavigationActive && !root.documentSession.fileDeletionInProgress && root.actionAvailability.helpShortcutsEnabled
+    readonly property bool previousPageActionAvailable: root.mediaNavigationActive ? root.mediaPageActionsAvailable : root.actionAvailability.canUsePageActions
+    readonly property bool nextPageActionAvailable: root.mediaNavigationActive ? root.mediaPageActionsAvailable : root.actionAvailability.canUsePageActions
+    readonly property bool previousPageProxyAvailable: root.mediaNavigationActive ? root.mediaPageActionsAvailable && root.documentSession.canOpenPreviousMedia : root.actionAvailability.canUsePageActions && root.actionAvailability.canOpenPreviousImage
+    readonly property bool nextPageProxyAvailable: root.mediaNavigationActive ? root.mediaPageActionsAvailable && root.documentSession.canOpenNextMedia : root.actionAvailability.canUsePageActions && root.actionAvailability.canOpenNextImage
     readonly property bool rightToLeftReadingActive: root.actionAvailability.rightToLeftReadingActive
     readonly property var applicationMenuNavigationActions: root.rightToLeftReadingActive ? [nextContainerManagedAction.menuProxy, previousContainerManagedAction.menuProxy] : [previousContainerManagedAction.menuProxy, nextContainerManagedAction.menuProxy]
-    readonly property var applicationMenuActions: [openManagedAction.menuProxy, applicationMenuFileSeparator, moveToTrashManagedAction.menuProxy, deleteFileManagedAction.menuProxy, applicationMenuNavigationSeparator].concat(root.applicationMenuNavigationActions, [applicationMenuViewSeparator, rotateClockwiseManagedAction.menuProxy, rotateCounterclockwiseManagedAction.menuProxy, twoPageModeManagedAction.menuProxy, rightToLeftReadingManagedAction.menuProxy, fullscreenManagedAction.menuProxy, applicationMenuSettingsSeparator, showMenubarManagedAction.menuProxy, configureShortcutsManagedAction.menuProxy, applicationMenuHelpSeparator, shortcutHelpManagedAction.menuProxy, applicationMenuQuitSeparator, quitManagedAction.menuProxy])
+    readonly property var applicationMenuDocumentActions: root.imageMode || root.videoMode ? [applicationMenuNavigationSeparator, previousImageManagedAction.menuProxy, nextImageManagedAction.menuProxy] : []
+    readonly property var applicationMenuImageActions: root.imageMode ? root.applicationMenuNavigationActions.concat([rotateClockwiseManagedAction.menuProxy, rotateCounterclockwiseManagedAction.menuProxy, twoPageModeManagedAction.menuProxy, rightToLeftReadingManagedAction.menuProxy]) : []
+    readonly property var applicationMenuActions: [openManagedAction.menuProxy, applicationMenuFileSeparator, moveToTrashManagedAction.menuProxy, deleteFileManagedAction.menuProxy].concat(root.applicationMenuDocumentActions, root.applicationMenuImageActions, [applicationMenuViewSeparator, fullscreenManagedAction.menuProxy, applicationMenuSettingsSeparator, showMenubarManagedAction.menuProxy, configureShortcutsManagedAction.menuProxy, applicationMenuHelpSeparator, shortcutHelpManagedAction.menuProxy, applicationMenuQuitSeparator, quitManagedAction.menuProxy])
 
     signal openDialogRequested
     signal imageBoundaryReached(string message)
@@ -86,6 +98,16 @@ Item {
     }
 
     function openNextImage() {
+        if (root.mediaNavigationActive) {
+            if (root.documentSession.atKnownLastMedia) {
+                root.imageBoundaryReached(KI18n.i18nc("@info:status", "Last media item"));
+                return;
+            }
+
+            root.documentSession.openNextMedia();
+            return;
+        }
+
         if (root.actionAvailability.atKnownLastImage) {
             root.imageBoundaryReached(KI18n.i18nc("@info:status", "Last image"));
             return;
@@ -95,6 +117,16 @@ Item {
     }
 
     function openPreviousImage() {
+        if (root.mediaNavigationActive) {
+            if (root.documentSession.atKnownFirstMedia) {
+                root.imageBoundaryReached(KI18n.i18nc("@info:status", "First media item"));
+                return;
+            }
+
+            root.documentSession.openPreviousMedia();
+            return;
+        }
+
         if (root.actionAvailability.atKnownFirstImage) {
             root.imageBoundaryReached(KI18n.i18nc("@info:status", "First image"));
             return;
@@ -149,27 +181,27 @@ Item {
     ManagedAction {
         id: moveToTrashManagedAction
 
-        actionEnabled: root.actionAvailability.canUseReadyActions
+        actionEnabled: root.documentDeletionAvailable
         actionId: KiriViewApplication.FileMoveToTrashAction
         application: root.application
         bindEnabled: true
         displayHint: Kirigami.DisplayHint.AlwaysHide
         menuText: KI18n.i18nc("@action:inmenu", "Move to &Trash")
 
-        onTriggered: root.imageDocument.deleteDisplayedFile(KiriImageDocument.MoveToTrash)
+        onTriggered: root.documentSession.deleteDisplayedFile(KiriDocumentSession.MoveToTrash)
     }
 
     ManagedAction {
         id: deleteFileManagedAction
 
-        actionEnabled: root.actionAvailability.canUseReadyActions
+        actionEnabled: root.documentDeletionAvailable
         actionId: KiriViewApplication.FileDeleteAction
         application: root.application
         bindEnabled: true
         displayHint: Kirigami.DisplayHint.AlwaysHide
         menuText: KI18n.i18nc("@action:inmenu", "&Delete Permanently")
 
-        onTriggered: root.imageDocument.deleteDisplayedFile(KiriImageDocument.DeletePermanently)
+        onTriggered: root.documentSession.deleteDisplayedFile(KiriDocumentSession.DeletePermanently)
     }
 
     ManagedAction {
@@ -201,11 +233,11 @@ Item {
     ManagedAction {
         id: previousImageManagedAction
 
-        actionEnabled: root.actionAvailability.canUsePageActions
+        actionEnabled: root.previousPageActionAvailable
         actionId: KiriViewApplication.GoPreviousImageAction
         application: root.application
         bindEnabled: true
-        proxyEnabled: root.actionAvailability.canUsePageActions && root.actionAvailability.canOpenPreviousImage
+        proxyEnabled: root.previousPageProxyAvailable
 
         onTriggered: root.openPreviousImage()
     }
@@ -213,11 +245,11 @@ Item {
     ManagedAction {
         id: nextImageManagedAction
 
-        actionEnabled: root.actionAvailability.canUsePageActions
+        actionEnabled: root.nextPageActionAvailable
         actionId: KiriViewApplication.GoNextImageAction
         application: root.application
         bindEnabled: true
-        proxyEnabled: root.actionAvailability.canUsePageActions && root.actionAvailability.canOpenNextImage
+        proxyEnabled: root.nextPageProxyAvailable
 
         onTriggered: root.openNextImage()
     }

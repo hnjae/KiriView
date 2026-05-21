@@ -14,6 +14,7 @@ Item {
     required property ImageActionAvailability actionAvailability
     required property KiriImageDocument imageDocument
     required property var imageViewport
+    property bool handleMenuPresentationShortcut: true
 
     readonly property int keyboardPanDistance: 64
 
@@ -144,7 +145,7 @@ Item {
 
     Shortcut {
         context: Qt.WindowShortcut
-        enabled: root.actionAvailability.helpShortcutsEnabled
+        enabled: root.handleMenuPresentationShortcut && root.actionAvailability.helpShortcutsEnabled
         sequence: "Ctrl+M"
 
         onActivated: root.showMenubarQAction.trigger()

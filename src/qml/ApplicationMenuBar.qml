@@ -11,6 +11,7 @@ Controls.MenuBar {
     required property var actions
     required property KiriImageDocument imageDocument
     required property bool fullscreen
+    property bool imageMode: true
     property bool rightToLeftReadingActive: false
 
     readonly property var leadingArchiveMenuAction: root.rightToLeftReadingActive ? root.actions.nextContainerMenuAction : root.actions.previousContainerMenuAction
@@ -87,26 +88,32 @@ Controls.MenuBar {
             action: root.actions.firstImageMenuAction
             icon.name: root.firstImageMenuIconName
             text: KI18n.i18nc("@action:inmenu", "&First Image")
+            visible: root.imageMode
         }
 
         MenuActionItem {
             action: root.actions.lastImageMenuAction
             icon.name: root.lastImageMenuIconName
             text: KI18n.i18nc("@action:inmenu", "&Last Image")
+            visible: root.imageMode
         }
 
-        Controls.MenuSeparator {}
+        Controls.MenuSeparator {
+            visible: root.imageMode
+        }
 
         MenuActionItem {
             action: root.leadingArchiveMenuAction
             icon.name: root.leadingArchiveMenuIconName
             text: root.leadingArchiveMenuText
+            visible: root.imageMode
         }
 
         MenuActionItem {
             action: root.trailingArchiveMenuAction
             icon.name: root.trailingArchiveMenuIconName
             text: root.trailingArchiveMenuText
+            visible: root.imageMode
         }
     }
 
@@ -122,38 +129,43 @@ Controls.MenuBar {
         MenuActionItem {
             action: root.actions.zoomInMenuAction
             text: KI18n.i18nc("@action:inmenu", "&Zoom In")
+            visible: root.imageMode
         }
 
         MenuActionItem {
             action: root.actions.zoomOutMenuAction
             text: KI18n.i18nc("@action:inmenu", "Zoom &Out")
+            visible: root.imageMode
         }
 
-        Controls.MenuSeparator {}
+        Controls.MenuSeparator {
+            visible: root.imageMode
+        }
 
         Controls.Menu {
             id: fitMenu
 
             title: KI18n.i18nc("@title:menu", "&Fit")
+            visible: root.imageMode
 
             MenuActionItem {
                 action: root.actions.fitMenuAction
                 checkable: true
-                checked: root.imageDocument.zoomMode === KiriImageDocument.Fit
+                checked: root.imageMode && root.imageDocument.zoomMode === KiriImageDocument.Fit
                 text: KI18n.i18nc("@action:inmenu", "&Fit")
             }
 
             MenuActionItem {
                 action: root.actions.fitHeightMenuAction
                 checkable: true
-                checked: root.imageDocument.zoomMode === KiriImageDocument.FitHeight
+                checked: root.imageMode && root.imageDocument.zoomMode === KiriImageDocument.FitHeight
                 text: KI18n.i18nc("@action:inmenu", "Fit &Height")
             }
 
             MenuActionItem {
                 action: root.actions.fitWidthMenuAction
                 checkable: true
-                checked: root.imageDocument.zoomMode === KiriImageDocument.FitWidth
+                checked: root.imageMode && root.imageDocument.zoomMode === KiriImageDocument.FitWidth
                 text: KI18n.i18nc("@action:inmenu", "Fit &Width")
             }
         }
@@ -161,37 +173,48 @@ Controls.MenuBar {
         MenuActionItem {
             action: root.actions.actualSizeMenuAction
             text: KI18n.i18nc("@action:inmenu", "&Actual Size")
+            visible: root.imageMode
         }
 
-        Controls.MenuSeparator {}
+        Controls.MenuSeparator {
+            visible: root.imageMode
+        }
 
         MenuActionItem {
             action: root.actions.rotateClockwiseMenuAction
             text: KI18n.i18nc("@action:inmenu", "Rotate &Clockwise")
+            visible: root.imageMode
         }
 
         MenuActionItem {
             action: root.actions.rotateCounterclockwiseMenuAction
             text: KI18n.i18nc("@action:inmenu", "Rotate C&ounterclockwise")
+            visible: root.imageMode
         }
 
-        Controls.MenuSeparator {}
+        Controls.MenuSeparator {
+            visible: root.imageMode
+        }
 
         MenuActionItem {
             action: root.actions.twoPageModeMenuAction
             checkable: true
-            checked: root.imageDocument.twoPageModeEnabled && root.imageDocument.twoPageModeAvailable
+            checked: root.imageMode && root.imageDocument.twoPageModeEnabled && root.imageDocument.twoPageModeAvailable
             text: KI18n.i18nc("@action:inmenu", "Two-Page &Spread")
+            visible: root.imageMode
         }
 
         MenuActionItem {
             action: root.actions.rightToLeftReadingMenuAction
             checkable: true
-            checked: root.imageDocument.rightToLeftReadingEnabled && root.imageDocument.rightToLeftReadingAvailable
+            checked: root.imageMode && root.imageDocument.rightToLeftReadingEnabled && root.imageDocument.rightToLeftReadingAvailable
             text: KI18n.i18nc("@action:inmenu", "&Right-to-Left Reading")
+            visible: root.imageMode
         }
 
-        Controls.MenuSeparator {}
+        Controls.MenuSeparator {
+            visible: root.imageMode
+        }
 
         MenuActionItem {
             action: root.actions.fullscreenMenuAction

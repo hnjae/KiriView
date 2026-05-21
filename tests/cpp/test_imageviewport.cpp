@@ -348,10 +348,15 @@ Item {
         return imageViewport.imageDocument.zoomPercent;
     }
 
+    KiriImageDocument {
+        id: imageDocument
+    }
+
     KiriViewQml.ImageViewport {
         id: imageViewport
 
         anchors.fill: parent
+        imageDocument: imageDocument
     }
 }
 )")

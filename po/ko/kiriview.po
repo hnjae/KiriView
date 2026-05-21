@@ -176,7 +176,7 @@ msgctxt "@item:inlistbox"
 msgid "Image and comic book files (%1)"
 msgstr ""
 
-#: src/decoding/imageformatregistry.cpp
+#: src/decoding/imageformatregistry.cpp src/navigation/mediaformatregistry.cpp
 #, kde-format
 msgctxt "@item:inlistbox"
 msgid "All files (*)"
@@ -423,6 +423,12 @@ msgctxt "@info:status"
 msgid "Could not decode the selected RAW image: %1: %2"
 msgstr ""
 
+#: src/navigation/mediaformatregistry.cpp
+#, kde-format
+msgctxt "@item:inlistbox"
+msgid "Image, video, and comic book files (%1)"
+msgstr ""
+
 #: src/qml/ApplicationMenuBar.qml
 msgctxt "@action:inmenu"
 msgid "Nex&t Archive"
@@ -574,9 +580,30 @@ msgctxt "@action:inmenu"
 msgid "&Keyboard Shortcuts"
 msgstr ""
 
+#: src/qml/ApplicationMenuHost.qml src/qml/ImageToolBar.qml
+msgctxt "@action"
+msgid "Application Menu"
+msgstr ""
+
+#: src/qml/ApplicationMenuHost.qml src/qml/ImageToolBar.qml
+#, fuzzy
+msgctxt "@info:tooltip"
+msgid "Open menu"
+msgstr "열기"
+
+#: src/qml/ImageActions.qml
+msgctxt "@info:status"
+msgid "Last media item"
+msgstr ""
+
 #: src/qml/ImageActions.qml
 msgctxt "@info:status"
 msgid "Last image"
+msgstr ""
+
+#: src/qml/ImageActions.qml
+msgctxt "@info:status"
+msgid "First media item"
 msgstr ""
 
 #: src/qml/ImageActions.qml src/qml/ImageShortcuts.qml
@@ -634,17 +661,6 @@ msgctxt "@action"
 msgid "Zoom"
 msgstr ""
 
-#: src/qml/ImageToolBar.qml
-msgctxt "@action"
-msgid "Application Menu"
-msgstr ""
-
-#: src/qml/ImageToolBar.qml
-#, fuzzy
-msgctxt "@info:tooltip"
-msgid "Open menu"
-msgstr "열기"
-
 #: src/qml/Main.qml
 msgctxt "@title:window"
 msgid "%1 — KiriView"
@@ -652,12 +668,42 @@ msgstr ""
 
 #: src/qml/Main.qml
 msgctxt "@title:window"
-msgid "Open Image or Comic Book"
+msgid "Open Image, Video, or Comic Book"
 msgstr ""
 
 #: src/qml/ShortcutHelpDialog.qml
 msgctxt "@title:window"
 msgid "Keyboard Shortcuts"
+msgstr ""
+
+#: src/qml/VideoFloatingControls.qml
+msgctxt "@action:button"
+msgid "Pause"
+msgstr ""
+
+#: src/qml/VideoFloatingControls.qml
+msgctxt "@action:button"
+msgid "Play"
+msgstr ""
+
+#: src/qml/VideoFloatingControls.qml
+msgctxt "@label:slider"
+msgid "Position"
+msgstr ""
+
+#: src/qml/VideoViewport.qml
+msgctxt "@info:placeholder"
+msgid "No video selected"
+msgstr ""
+
+#: src/qml/VideoViewport.qml
+msgctxt "@info:placeholder"
+msgid "No video track"
+msgstr ""
+
+#: src/qml/VideoViewport.qml
+msgctxt "@info:placeholder"
+msgid "Unable to open video"
 msgstr ""
 
 #: io.github.hnjae.KiriView.desktop

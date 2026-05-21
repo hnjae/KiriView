@@ -8,8 +8,10 @@
 #include "image_async_test_support.h"
 #include "navigation/medianavigationmodel.h"
 
+#include <QImage>
 #include <QObject>
 #include <QSignalSpy>
+#include <QTemporaryDir>
 #include <QTest>
 #include <map>
 #include <memory>
@@ -79,6 +81,7 @@ private Q_SLOTS:
     void directVideoRoutesToVideoDocumentWithOriginalSource();
     void archiveAndDirectoryInputsRouteToImageDocument();
     void nextMediaFromVideoCanRouteToImageWithoutUsingImageNavigation();
+    void directImageDeletionCanOpenVideoFallback();
     void videoDeletionUsesOriginalUrlAndOpensMediaFallback();
     void canceledVideoDeletionKeepsCurrentVideo();
 };
@@ -136,6 +139,40 @@ void TestKiriDocumentSession::nextMediaFromVideoCanRouteToImageWithoutUsingImage
     QCOMPARE(session->sourceUrl(), image);
     QCOMPARE(session->imageDocument()->sourceUrl(), image);
     QCOMPARE(session->videoDocument()->sourceUrl(), QUrl());
+}
+
+void TestKiriDocumentSession::directImageDeletionCanOpenVideoFallback()
+{
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+
+    const QString imagePath = directory.filePath(QStringLiteral("01.png"));
+    QImage image(QSize(2, 2), QImage::Format_RGBA8888);
+    image.fill(Qt::red);
+    QVERIFY(image.save(imagePath, "PNG"));
+
+    FakeMediaCandidateProvider mediaProvider;
+    KiriView::TestSupport::ManualFileOperationProvider fileOperations;
+    const QUrl imageUrl = localUrl(imagePath);
+    const QUrl videoUrl = localUrl(directory.filePath(QStringLiteral("02.mp4")));
+    mediaProvider.setMedia(localUrl(directory.path() + QStringLiteral("/")),
+        { mediaCandidate(imageUrl), mediaCandidate(videoUrl) });
+    std::unique_ptr<KiriDocumentSession> session = createSession(mediaProvider, &fileOperations);
+    session->setSourceUrl(imageUrl);
+    QTRY_COMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Image);
+    QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Ready);
+    QVERIFY(session->mediaNavigationActive());
+
+    session->deleteDisplayedFile(KiriDocumentSession::DeletionMode::MoveToTrash);
+
+    QCOMPARE(fileOperations.operationCount(), std::size_t(1));
+    QCOMPARE(fileOperations.backOperation().request.targetUrl, imageUrl);
+
+    fileOperations.finishBackOperation(KiriView::FileDeletionResult::Succeeded);
+
+    QCOMPARE(session->sourceUrl(), videoUrl);
+    QCOMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Video);
+    QCOMPARE(session->videoDocument()->sourceUrl(), videoUrl);
 }
 
 void TestKiriDocumentSession::videoDeletionUsesOriginalUrlAndOpensMediaFallback()

@@ -3,7 +3,9 @@
 
 #include "application/imageactionavailability.h"
 #include "application/menuaccesskeyrouter.h"
+#include "facade/kiridocumentsession.h"
 #include "facade/kiriimagedocument.h"
+#include "facade/kirivideodocument.h"
 #include "facade/kiriviewapplication.h"
 #include "localization/localization.h"
 
@@ -76,7 +78,9 @@ void registerKiriViewQmlTypes()
     qmlRegisterType<KiriViewApplication>("io.github.hnjae.kiriview", 1, 0, "KiriViewApplication");
     qmlRegisterType<ImageActionAvailability>(
         "io.github.hnjae.kiriview", 1, 0, "ImageActionAvailability");
+    qmlRegisterType<KiriDocumentSession>("io.github.hnjae.kiriview", 1, 0, "KiriDocumentSession");
     qmlRegisterType<KiriImageDocument>("io.github.hnjae.kiriview", 1, 0, "KiriImageDocument");
+    qmlRegisterType<KiriVideoDocument>("io.github.hnjae.kiriview", 1, 0, "KiriVideoDocument");
     qmlRegisterType<MenuAccessKeyRouter>("io.github.hnjae.kiriview", 1, 0, "MenuAccessKeyRouter");
     registered = true;
 }
@@ -466,7 +470,14 @@ Item {
     width: 720
     height: 420
 
-    property alias rightToLeftReadingEnabled: imageDocument.rightToLeftReadingEnabled
+    readonly property var imageDocument: documentSession.imageDocument
+    property bool rightToLeftReadingEnabled: imageDocument.rightToLeftReadingEnabled
+
+    onRightToLeftReadingEnabledChanged: {
+        if (imageDocument.rightToLeftReadingEnabled !== rightToLeftReadingEnabled) {
+            imageDocument.rightToLeftReadingEnabled = rightToLeftReadingEnabled;
+        }
+    }
 
     function applicationMenuActionTexts() {
         const texts = [];
@@ -494,8 +505,8 @@ Item {
         id: application
     }
 
-    KiriImageDocument {
-        id: imageDocument
+    KiriDocumentSession {
+        id: documentSession
 
         sourceUrl: "%2"
     }
@@ -521,6 +532,7 @@ Item {
 
         application: application
         actionAvailability: actionAvailability
+        documentSession: documentSession
         fullscreen: false
         imageDocument: imageDocument
     }
