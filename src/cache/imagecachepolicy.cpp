@@ -13,26 +13,29 @@ namespace {
 std::int64_t rustByteCost(qsizetype byteCost) { return static_cast<std::int64_t>(byteCost); }
 
 std::uint64_t rustUseClock(quint64 useClock) { return static_cast<std::uint64_t>(useClock); }
+
+KiriView::RustLruCacheRetentionEntry rustRetentionEntry(KiriView::ImageCacheRetentionEntry entry)
+{
+    return KiriView::RustLruCacheRetentionEntry {
+        rustByteCost(entry.byteCost),
+        rustUseClock(entry.lastUse),
+    };
+}
 }
 
 namespace KiriView {
-std::vector<std::size_t> lruCacheRetainedIndices(const std::vector<qsizetype> &byteCosts,
-    const std::vector<quint64> &lastUses, qsizetype byteBudget)
+std::vector<std::size_t> lruCacheRetainedIndices(
+    const std::vector<ImageCacheRetentionEntry> &entries, qsizetype byteBudget)
 {
-    rust::Vec<std::int64_t> rustByteCosts;
-    rust::Vec<std::uint64_t> rustLastUses;
-    rustByteCosts.reserve(byteCosts.size());
-    rustLastUses.reserve(lastUses.size());
+    rust::Vec<RustLruCacheRetentionEntry> rustEntries;
+    rustEntries.reserve(entries.size());
 
-    for (qsizetype byteCost : byteCosts) {
-        rustByteCosts.push_back(rustByteCost(byteCost));
-    }
-    for (quint64 lastUse : lastUses) {
-        rustLastUses.push_back(rustUseClock(lastUse));
+    for (ImageCacheRetentionEntry entry : entries) {
+        rustEntries.push_back(rustRetentionEntry(entry));
     }
 
-    const rust::Vec<std::size_t> retainedIndices = rustLruCacheRetainedIndices(
-        std::move(rustByteCosts), std::move(rustLastUses), rustByteCost(byteBudget));
+    const rust::Vec<std::size_t> retainedIndices
+        = rustLruCacheRetainedIndices(std::move(rustEntries), rustByteCost(byteBudget));
     return std::vector<std::size_t>(retainedIndices.cbegin(), retainedIndices.cend());
 }
 

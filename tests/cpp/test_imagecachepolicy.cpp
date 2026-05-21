@@ -14,24 +14,30 @@ class TestImageCachePolicy : public QObject
 
 private Q_SLOTS:
     void retainsLeastRecentlyUsedEntriesWithinBudget();
-    void rejectsInvalidEntriesBudgetsAndMismatchedInputs();
+    void rejectsInvalidEntriesAndBudgets();
     void staticTileCacheByteBudgetUsesPreferredLimitAndSystemMemoryCap();
 };
 
 void TestImageCachePolicy::retainsLeastRecentlyUsedEntriesWithinBudget()
 {
-    QCOMPARE(KiriView::lruCacheRetainedIndices({ 16, 16, 16 }, { 3, 1, 2 }, 32),
+    using Entry = KiriView::ImageCacheRetentionEntry;
+
+    QCOMPARE(KiriView::lruCacheRetainedIndices(
+                 { Entry { 16, 3 }, Entry { 16, 1 }, Entry { 16, 2 } }, 32),
         std::vector<std::size_t>({ 0, 2 }));
-    QCOMPARE(KiriView::lruCacheRetainedIndices({ 60, 50, 40 }, { 3, 2, 1 }, 100),
+    QCOMPARE(KiriView::lruCacheRetainedIndices(
+                 { Entry { 60, 3 }, Entry { 50, 2 }, Entry { 40, 1 } }, 100),
         std::vector<std::size_t>({ 0 }));
 }
 
-void TestImageCachePolicy::rejectsInvalidEntriesBudgetsAndMismatchedInputs()
+void TestImageCachePolicy::rejectsInvalidEntriesAndBudgets()
 {
-    QCOMPARE(KiriView::lruCacheRetainedIndices({ 0, 10, -1 }, { 1, 2, 3 }, 100),
+    using Entry = KiriView::ImageCacheRetentionEntry;
+
+    QCOMPARE(KiriView::lruCacheRetainedIndices(
+                 { Entry { 0, 1 }, Entry { 10, 2 }, Entry { -1, 3 } }, 100),
         std::vector<std::size_t>({ 1 }));
-    QVERIFY(KiriView::lruCacheRetainedIndices({ 10 }, { 1 }, 0).empty());
-    QVERIFY(KiriView::lruCacheRetainedIndices({ 10, 20 }, { 1 }, 100).empty());
+    QVERIFY(KiriView::lruCacheRetainedIndices({ Entry { 10, 1 } }, 0).empty());
 }
 
 void TestImageCachePolicy::staticTileCacheByteBudgetUsesPreferredLimitAndSystemMemoryCap()

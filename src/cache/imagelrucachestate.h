@@ -82,18 +82,18 @@ private:
 
     void trimToBudget()
     {
-        std::vector<qsizetype> byteCosts;
-        std::vector<quint64> lastUses;
-        byteCosts.reserve(m_entries.size());
-        lastUses.reserve(m_entries.size());
+        std::vector<ImageCacheRetentionEntry> retentionEntries;
+        retentionEntries.reserve(m_entries.size());
 
         for (const Entry &entry : m_entries) {
-            byteCosts.push_back(entry.byteCost);
-            lastUses.push_back(entry.lastUse);
+            retentionEntries.push_back(ImageCacheRetentionEntry {
+                entry.byteCost,
+                entry.lastUse,
+            });
         }
 
         const std::vector<std::size_t> retainedIndices
-            = lruCacheRetainedIndices(byteCosts, lastUses, m_byteBudget);
+            = lruCacheRetainedIndices(retentionEntries, m_byteBudget);
 
         std::vector<Entry> retainedEntries;
         retainedEntries.reserve(retainedIndices.size());
