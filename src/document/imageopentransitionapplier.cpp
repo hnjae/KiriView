@@ -3,9 +3,11 @@
 
 #include "imageopentransitionapplier.h"
 
+#include "imagedocumenteffectplan.h"
 #include "imagedocumentstate.h"
 #include "navigation/imagecontainer.h"
 
+#include <iterator>
 #include <utility>
 
 namespace {
@@ -137,19 +139,23 @@ KiriView::ImageOpenResolvedStateDelta resolvedStateDelta(
     };
 }
 
-KiriView::ImageDocumentEffects resolvedEffects(const KiriView::ImageOpenTransition &transition,
+KiriView::ImageDocumentRuntimePlan resolvedRuntimePlan(
+    const KiriView::ImageOpenTransition &transition,
     const KiriView::ImageOpenTransitionContext &context)
 {
-    KiriView::ImageDocumentEffects effects;
-    effects.reserve(transition.effects.size());
+    KiriView::ImageDocumentRuntimePlan plan;
+    plan.reserve(transition.effects.size());
     for (KiriView::ImageOpenEffect effect : transition.effects) {
         std::optional<KiriView::ImageDocumentEffect> documentEffect
             = imageOpenDocumentEffect(effect, context);
         if (documentEffect.has_value()) {
-            effects.push_back(std::move(*documentEffect));
+            KiriView::ImageDocumentRuntimePlan effectPlan
+                = KiriView::imageDocumentEffectPlan(*documentEffect);
+            plan.insert(plan.end(), std::make_move_iterator(effectPlan.begin()),
+                std::make_move_iterator(effectPlan.end()));
         }
     }
-    return effects;
+    return plan;
 }
 
 class ImageOpenTransitionApplier final
@@ -164,10 +170,10 @@ public:
     void apply(KiriView::ImageOpenApplicationPlan plan)
     {
         applyStateDelta(plan.stateDelta);
-        m_effects = std::move(plan.effects);
+        m_runtimePlan = std::move(plan.runtimePlan);
     }
 
-    KiriView::ImageDocumentEffects takeEffects() { return std::move(m_effects); }
+    KiriView::ImageDocumentRuntimePlan takeRuntimePlan() { return std::move(m_runtimePlan); }
 
 private:
     void applyStateDelta(const KiriView::ImageOpenResolvedStateDelta &delta)
@@ -252,7 +258,7 @@ private:
 
     KiriView::ImageDocumentState &m_state;
     KiriView::ImageDocumentState::ChangeBatch m_batch;
-    KiriView::ImageDocumentEffects m_effects;
+    KiriView::ImageDocumentRuntimePlan m_runtimePlan;
 };
 }
 
@@ -297,15 +303,15 @@ ImageOpenApplicationPlan imageOpenApplicationPlan(
 {
     return ImageOpenApplicationPlan {
         resolvedStateDelta(transition.stateDelta, context),
-        resolvedEffects(transition, context),
+        resolvedRuntimePlan(transition, context),
     };
 }
 
-ImageDocumentEffects applyImageOpenTransition(ImageDocumentState &state,
+ImageDocumentRuntimePlan applyImageOpenTransition(ImageDocumentState &state,
     const ImageOpenTransition &transition, const ImageOpenTransitionContext &context)
 {
     ImageOpenTransitionApplier applier(state);
     applier.apply(imageOpenApplicationPlan(transition, context));
-    return applier.takeEffects();
+    return applier.takeRuntimePlan();
 }
 }

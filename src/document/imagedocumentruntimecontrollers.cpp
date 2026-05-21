@@ -62,7 +62,7 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject *docume
         = std::make_unique<ImageOpenController>(documentObject, state, *m_presentationController,
             ImageOpenController::Callbacks {
                 [this](const QUrl &url) { return m_predecodeController->findPredecodedImage(url); },
-                [this](ImageDocumentEffect effect) { dispatchEffect(std::move(effect)); },
+                [this](const ImageDocumentRuntimePlan &plan) { dispatchPlan(plan); },
             },
             runtimeDependencies.candidateProvider, runtimeDependencies.imageDecode);
     m_navigationService = std::make_unique<ImageNavigationService>(documentObject,

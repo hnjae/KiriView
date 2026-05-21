@@ -95,20 +95,20 @@ void ImageOpenController::cancel() { m_imageLoader->cancel(); }
 void ImageOpenController::finishAnimationLoadWithError(const QString &errorString)
 {
     const QString message = animationLoadErrorMessage(errorString);
-    reportEffects(applyImageOpenTransition(m_state,
+    reportRuntimePlan(applyImageOpenTransition(m_state,
         ImageOpenWorkflow::finishAnimationLoadWithErrorTransition(),
         ImageOpenTransitionContext::animationError(message)));
 }
 
 void ImageOpenController::finishEmptySourceLoad()
 {
-    reportEffects(
+    reportRuntimePlan(
         applyImageOpenTransition(m_state, ImageOpenWorkflow::finishEmptySourceLoadTransition()));
 }
 
 void ImageOpenController::beginSourceLoad()
 {
-    reportEffects(applyImageOpenTransition(m_state,
+    reportRuntimePlan(applyImageOpenTransition(m_state,
         ImageOpenWorkflow::beginSourceLoadTransition(ImageOpenBeginSourceLoadSnapshot {
             m_presentationController.hasImage(),
             !m_state.loadingContainerNavigationUrl().isEmpty(),
@@ -126,7 +126,7 @@ void ImageOpenController::finishContainerNavigationLoadWithError(
     cancel();
 
     const QString message = archiveOpenErrorMessage(errorString);
-    reportEffects(applyImageOpenTransition(m_state,
+    reportRuntimePlan(applyImageOpenTransition(m_state,
         ImageOpenWorkflow::finishContainerNavigationLoadWithErrorTransition(),
         ImageOpenTransitionContext::containerNavigationError(containerUrl, message)));
 }
@@ -166,7 +166,7 @@ void ImageOpenController::finishLoadWithError(
 {
     const QString message = loadErrorMessage(error, errorString);
     const QUrl displayedUrl = m_state.displayedUrl();
-    reportEffects(applyImageOpenTransition(m_state,
+    reportRuntimePlan(applyImageOpenTransition(m_state,
         ImageOpenWorkflow::finishLoadWithErrorTransition(ImageOpenLoadErrorSnapshot {
             session.hasContainerNavigationTarget(),
             m_presentationController.hasImage(),
@@ -177,7 +177,7 @@ void ImageOpenController::finishLoadWithError(
 
 void ImageOpenController::finishSuccessfulImageLoad(const ImageLoadSession &session)
 {
-    reportEffects(applyImageOpenTransition(m_state,
+    reportRuntimePlan(applyImageOpenTransition(m_state,
         ImageOpenWorkflow::finishSuccessfulImageLoadTransition(
             ImageOpenSuccessfulImageLoadSnapshot {
                 session.hasContainerNavigationTarget(),
@@ -185,15 +185,8 @@ void ImageOpenController::finishSuccessfulImageLoad(const ImageLoadSession &sess
         ImageOpenTransitionContext::successfulImageLoad(session)));
 }
 
-void ImageOpenController::reportEffects(ImageDocumentEffects effects)
+void ImageOpenController::reportRuntimePlan(ImageDocumentRuntimePlan plan)
 {
-    for (ImageDocumentEffect &effect : effects) {
-        report(std::move(effect));
-    }
-}
-
-void ImageOpenController::report(ImageDocumentEffect effect)
-{
-    invokeIfSet(m_callbacks.effect, std::move(effect));
+    invokeIfSet(m_callbacks.runtimePlan, plan);
 }
 }

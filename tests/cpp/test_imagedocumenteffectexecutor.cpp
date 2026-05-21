@@ -11,7 +11,7 @@
 namespace {
 using KiriView::ImageDocumentEffect;
 using KiriView::ImageDocumentEffectOperations;
-using KiriView::ImageDocumentEffects;
+using KiriView::ImageDocumentRuntimePlan;
 
 QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
 
@@ -123,9 +123,17 @@ struct RecordedEffectOperations {
         };
         operations.open.finishEmptySourceLoad = [this]() {
             record(QStringLiteral("finishEmptySourceLoad"));
-            return ImageDocumentEffects {
-                ImageDocumentEffect::clearImage(),
-                ImageDocumentEffect::resetZoom(),
+            return ImageDocumentRuntimePlan {
+                KiriView::ClearArchiveSessionOperation {},
+                KiriView::ClearPredecodeOperation {},
+                KiriView::FinishSpreadTransitionOperation {},
+                KiriView::ClearSecondaryPageOperation {},
+                KiriView::CancelPageNavigationUpdateOperation {},
+                KiriView::ClearDisplayedImageLocationOperation {},
+                KiriView::ClearPresentationImageOperation {},
+                KiriView::ClearPageNavigationOperation {},
+                KiriView::NotifyRightToLeftReadingChangedOperation {},
+                KiriView::ResetZoomOperation {},
             };
         };
     }

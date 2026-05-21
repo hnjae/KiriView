@@ -23,4 +23,6 @@ Async workflow events that can complete out of order must carry enough identity 
 
 When multiple C++ policy adapters emit runtime operations for the same workflow, keep the operation contract in a dedicated runtime-plan type instead of letting one producer own the shared operation vocabulary. Effect planners, Rust policy adapters, and controllers may produce or execute those plans, but the plan contract itself should remain the canonical C++ side-effect boundary.
 
+Image-open workflow transitions apply C++-owned document state and return `ImageDocumentRuntimePlan` follow-up operations. Controllers should dispatch those plans directly instead of reporting a second layer of document effects for the same runtime work.
+
 Existing controllers do not need immediate rewrites. Move logic when the workflow is already changing and the new boundary reduces complexity.

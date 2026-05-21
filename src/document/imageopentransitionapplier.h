@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGEOPENTRANSITIONAPPLIER_H
 #define KIRIVIEW_IMAGEOPENTRANSITIONAPPLIER_H
 
-#include "imagedocumenteffects.h"
+#include "imagedocumentruntimeplan.h"
 #include "imagedocumenttypes.h"
 #include "imageloadtypes.h"
 #include "imageopentransition.h"
@@ -29,7 +29,7 @@ struct ImageOpenResolvedStateDelta {
 
 struct ImageOpenApplicationPlan {
     ImageOpenResolvedStateDelta stateDelta;
-    ImageDocumentEffects effects;
+    ImageDocumentRuntimePlan runtimePlan;
 };
 
 struct ImageOpenTransitionContext {
@@ -48,7 +48,7 @@ struct ImageOpenTransitionContext {
 
 ImageOpenApplicationPlan imageOpenApplicationPlan(
     const ImageOpenTransition &transition, const ImageOpenTransitionContext &context = {});
-ImageDocumentEffects applyImageOpenTransition(ImageDocumentState &state,
+ImageDocumentRuntimePlan applyImageOpenTransition(ImageDocumentState &state,
     const ImageOpenTransition &transition, const ImageOpenTransitionContext &context = {});
 }
 

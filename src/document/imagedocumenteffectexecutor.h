@@ -57,7 +57,7 @@ struct ImageDocumentOpenEffectOperations {
     std::function<void()> clearPresentationImage;
     std::function<void(const QUrl &)> setSourceUrl;
     std::function<void(const QString &)> setErrorString;
-    std::function<ImageDocumentEffects()> finishEmptySourceLoad;
+    std::function<ImageDocumentRuntimePlan()> finishEmptySourceLoad;
 };
 
 struct ImageDocumentSourceLoadEffectOperations {
@@ -88,7 +88,6 @@ public:
     void shutdownRuntime();
 
 private:
-    void dispatchGeneratedEffects(ImageDocumentEffects effects);
     void dispatchOperation(const ImageDocumentRuntimeOperation &operation);
 
     ImageDocumentEffectOperations m_operations;

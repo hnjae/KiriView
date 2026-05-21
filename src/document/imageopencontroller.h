@@ -5,7 +5,7 @@
 #define KIRIVIEW_IMAGEOPENCONTROLLER_H
 
 #include "decoding/imagedecodedependencies.h"
-#include "imagedocumenteffects.h"
+#include "imagedocumentruntimeplan.h"
 #include "imageloadtypes.h"
 #include "navigation/imagecandidateprovider.h"
 #include "predecode/predecodedimage.h"
@@ -28,11 +28,11 @@ class ImageOpenController final
 {
 public:
     using FindPredecodedImageCallback = std::function<std::optional<PredecodedImage>(const QUrl &)>;
-    using EffectCallback = std::function<void(ImageDocumentEffect)>;
+    using RuntimePlanCallback = std::function<void(const ImageDocumentRuntimePlan &)>;
 
     struct Callbacks {
         FindPredecodedImageCallback findPredecodedImage;
-        EffectCallback effect;
+        RuntimePlanCallback runtimePlan;
     };
 
     ImageOpenController(QObject *parent, ImageDocumentState &state,
@@ -59,8 +59,7 @@ private:
     void finishLoadWithError(
         const ImageLoadSession &session, ImageLoadError error, const QString &errorString);
     void finishSuccessfulImageLoad(const ImageLoadSession &session);
-    void reportEffects(ImageDocumentEffects effects);
-    void report(ImageDocumentEffect effect);
+    void reportRuntimePlan(ImageDocumentRuntimePlan plan);
 
     ImageDocumentState &m_state;
     ImagePresentationController &m_presentationController;

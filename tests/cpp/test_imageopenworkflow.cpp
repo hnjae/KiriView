@@ -32,10 +32,11 @@ KiriView::ImageLoadSession loadSession(const QUrl &sourceUrl, const QUrl &imageU
         KiriView::DisplayedImageLocation::fromUrl(imageUrl, archiveDocument));
 }
 
-template <typename Effect> const Effect *findEffect(const KiriView::ImageDocumentEffects &effects)
+template <typename Operation>
+const Operation *findOperation(const KiriView::ImageDocumentRuntimePlan &plan)
 {
-    for (const KiriView::ImageDocumentEffect &effect : effects) {
-        if (const auto *payload = std::get_if<Effect>(&effect.payload)) {
+    for (const KiriView::ImageDocumentRuntimeOperation &operation : plan) {
+        if (const auto *payload = std::get_if<Operation>(&operation)) {
             return payload;
         }
     }
@@ -43,19 +44,19 @@ template <typename Effect> const Effect *findEffect(const KiriView::ImageDocumen
     return nullptr;
 }
 
-template <typename Effect> bool hasEffect(const KiriView::ImageDocumentEffects &effects)
+template <typename Operation> bool hasOperation(const KiriView::ImageDocumentRuntimePlan &plan)
 {
-    return findEffect<Effect>(effects) != nullptr;
+    return findOperation<Operation>(plan) != nullptr;
 }
 
-template <typename Effect>
-bool effectAt(const KiriView::ImageDocumentEffects &effects, std::size_t index)
+template <typename Operation>
+bool operationAtType(const KiriView::ImageDocumentRuntimePlan &plan, std::size_t index)
 {
-    if (index >= effects.size()) {
+    if (index >= plan.size()) {
         return false;
     }
 
-    return std::holds_alternative<Effect>(effects.at(index).payload);
+    return std::holds_alternative<Operation>(plan.at(index));
 }
 
 bool transitionHasEffect(
@@ -65,7 +66,8 @@ bool transitionHasEffect(
         != transition.effects.cend();
 }
 
-KiriView::ImageDocumentEffects beginSourceLoad(KiriView::ImageDocumentState &state, bool hasImage)
+KiriView::ImageDocumentRuntimePlan beginSourceLoad(
+    KiriView::ImageDocumentState &state, bool hasImage)
 {
     return KiriView::applyImageOpenTransition(state,
         KiriView::ImageOpenWorkflow::beginSourceLoadTransition(
@@ -75,13 +77,13 @@ KiriView::ImageDocumentEffects beginSourceLoad(KiriView::ImageDocumentState &sta
             }));
 }
 
-KiriView::ImageDocumentEffects finishEmptySourceLoad(KiriView::ImageDocumentState &state)
+KiriView::ImageDocumentRuntimePlan finishEmptySourceLoad(KiriView::ImageDocumentState &state)
 {
     return KiriView::applyImageOpenTransition(
         state, KiriView::ImageOpenWorkflow::finishEmptySourceLoadTransition());
 }
 
-KiriView::ImageDocumentEffects finishSuccessfulImageLoad(
+KiriView::ImageDocumentRuntimePlan finishSuccessfulImageLoad(
     KiriView::ImageDocumentState &state, const KiriView::ImageLoadSession &session)
 {
     return KiriView::applyImageOpenTransition(state,
@@ -92,7 +94,7 @@ KiriView::ImageDocumentEffects finishSuccessfulImageLoad(
         KiriView::ImageOpenTransitionContext::successfulImageLoad(session));
 }
 
-KiriView::ImageDocumentEffects finishLoadWithError(KiriView::ImageDocumentState &state,
+KiriView::ImageDocumentRuntimePlan finishLoadWithError(KiriView::ImageDocumentState &state,
     const KiriView::ImageLoadSession &session, bool hasImage, const QString &errorString)
 {
     const QUrl displayedUrl = state.displayedUrl();
@@ -106,7 +108,7 @@ KiriView::ImageDocumentEffects finishLoadWithError(KiriView::ImageDocumentState 
         KiriView::ImageOpenTransitionContext::sourceLoadError(session, displayedUrl, errorString));
 }
 
-KiriView::ImageDocumentEffects finishContainerNavigationLoadWithError(
+KiriView::ImageDocumentRuntimePlan finishContainerNavigationLoadWithError(
     KiriView::ImageDocumentState &state, const QUrl &containerUrl, const QString &errorString)
 {
     return KiriView::applyImageOpenTransition(state,
@@ -114,7 +116,7 @@ KiriView::ImageDocumentEffects finishContainerNavigationLoadWithError(
         KiriView::ImageOpenTransitionContext::containerNavigationError(containerUrl, errorString));
 }
 
-KiriView::ImageDocumentEffects finishAnimationLoadWithError(
+KiriView::ImageDocumentRuntimePlan finishAnimationLoadWithError(
     KiriView::ImageDocumentState &state, const QString &errorString)
 {
     return KiriView::applyImageOpenTransition(state,
@@ -171,21 +173,22 @@ void TestImageOpenWorkflow::firstImageLoadSuccessTransitionsToReady()
     const QUrl imageUrl = localUrl(QStringLiteral("/images/page.png"));
     state.setSourceUrl(imageUrl);
 
-    const KiriView::ImageDocumentEffects beginEffects = beginSourceLoad(state, false);
-    QVERIFY(hasEffect<KiriView::ClearImageEffect>(beginEffects));
-    QVERIFY(hasEffect<KiriView::ResetZoomEffect>(beginEffects));
-    QCOMPARE(beginEffects.size(), 2);
-    QVERIFY(effectAt<KiriView::ClearImageEffect>(beginEffects, 0));
-    QVERIFY(effectAt<KiriView::ResetZoomEffect>(beginEffects, 1));
+    const KiriView::ImageDocumentRuntimePlan beginPlan = beginSourceLoad(state, false);
+    QVERIFY(hasOperation<KiriView::ClearPresentationImageOperation>(beginPlan));
+    QVERIFY(hasOperation<KiriView::ResetZoomOperation>(beginPlan));
+    QCOMPARE(beginPlan.size(), std::size_t(10));
+    QVERIFY(operationAtType<KiriView::ClearArchiveSessionOperation>(beginPlan, 0));
+    QVERIFY(operationAtType<KiriView::ClearPresentationImageOperation>(beginPlan, 6));
+    QVERIFY(operationAtType<KiriView::ResetZoomOperation>(beginPlan, 9));
     QVERIFY(state.loading());
     QCOMPARE(state.status(), KiriView::ImageDocumentStatus::Loading);
 
-    const KiriView::ImageDocumentEffects successEffects
+    const KiriView::ImageDocumentRuntimePlan successPlan
         = finishSuccessfulImageLoad(state, loadSession(imageUrl, imageUrl));
-    QVERIFY(hasEffect<KiriView::UpdatePageNavigationEffect>(successEffects));
-    QCOMPARE(successEffects.size(), 2);
-    QVERIFY(effectAt<KiriView::UpdatePageNavigationEffect>(successEffects, 0));
-    QVERIFY(effectAt<KiriView::ScheduleAdjacentImagePredecodeEffect>(successEffects, 1));
+    QVERIFY(hasOperation<KiriView::UpdatePageNavigationOperation>(successPlan));
+    QCOMPARE(successPlan.size(), std::size_t(2));
+    QVERIFY(operationAtType<KiriView::UpdatePageNavigationOperation>(successPlan, 0));
+    QVERIFY(operationAtType<KiriView::ScheduleAdjacentImagePredecodeOperation>(successPlan, 1));
     QCOMPARE(state.sourceUrl(), imageUrl);
     QCOMPARE(state.displayedUrl(), imageUrl);
     QVERIFY(state.containerNavigationUrl().isEmpty());
@@ -205,10 +208,10 @@ void TestImageOpenWorkflow::directArchiveImageLoadSuccessDisablesContainerNaviga
 
     state.setSourceUrl(archiveUrl);
 
-    const KiriView::ImageDocumentEffects successEffects
+    const KiriView::ImageDocumentRuntimePlan successPlan
         = finishSuccessfulImageLoad(state, loadSession(archiveUrl, imageUrl, *archiveDocument));
 
-    QVERIFY(hasEffect<KiriView::UpdatePageNavigationEffect>(successEffects));
+    QVERIFY(hasOperation<KiriView::UpdatePageNavigationOperation>(successPlan));
     QCOMPARE(state.sourceUrl(), imageUrl);
     QCOMPARE(state.displayedUrl(), imageUrl);
     QCOMPARE(state.windowTitleFileName(), QStringLiteral("book.zip"));
@@ -227,11 +230,11 @@ void TestImageOpenWorkflow::replacementLoadFailureKeepsDisplayedImage()
     state.setLoading(true);
     state.setStatus(KiriView::ImageDocumentStatus::Ready);
 
-    const KiriView::ImageDocumentEffects effects = finishLoadWithError(
+    const KiriView::ImageDocumentRuntimePlan plan = finishLoadWithError(
         state, loadSession(replacementUrl, replacementUrl), true, QStringLiteral("missing"));
-    QVERIFY(!hasEffect<KiriView::ClearImageEffect>(effects));
-    QVERIFY(hasEffect<KiriView::UpdatePageNavigationEffect>(effects));
-    QVERIFY(hasEffect<KiriView::ScheduleAdjacentImagePredecodeEffect>(effects));
+    QVERIFY(!hasOperation<KiriView::ClearPresentationImageOperation>(plan));
+    QVERIFY(hasOperation<KiriView::UpdatePageNavigationOperation>(plan));
+    QVERIFY(hasOperation<KiriView::ScheduleAdjacentImagePredecodeOperation>(plan));
     QCOMPARE(state.sourceUrl(), displayedUrl);
     QCOMPARE(state.displayedUrl(), displayedUrl);
     QCOMPARE(state.errorString(), QStringLiteral("missing"));
@@ -246,11 +249,11 @@ void TestImageOpenWorkflow::emptyContainerFailureSelectsFailedContainer()
     state.setLoading(true);
     state.setLoadingContainerNavigationUrl(containerUrl);
 
-    const KiriView::ImageDocumentEffects effects
+    const KiriView::ImageDocumentRuntimePlan plan
         = finishContainerNavigationLoadWithError(state, containerUrl, QStringLiteral("empty"));
-    QVERIFY(hasEffect<KiriView::ClearImageEffect>(effects));
+    QVERIFY(hasOperation<KiriView::ClearPresentationImageOperation>(plan));
     const auto *prepareFailedContainer
-        = findEffect<KiriView::PrepareFailedContainerEffect>(effects);
+        = findOperation<KiriView::PrepareFailedContainerOperation>(plan);
     QVERIFY(prepareFailedContainer != nullptr);
     QCOMPARE(prepareFailedContainer->containerUrl, containerUrl);
     QCOMPARE(state.sourceUrl(), containerUrl);
@@ -269,11 +272,11 @@ void TestImageOpenWorkflow::animationFailureClearsImageAndResetsZoom()
     state.setLoading(true);
     state.setStatus(KiriView::ImageDocumentStatus::Ready);
 
-    const KiriView::ImageDocumentEffects effects
+    const KiriView::ImageDocumentRuntimePlan plan
         = finishAnimationLoadWithError(state, QStringLiteral("animation failed"));
 
-    QVERIFY(hasEffect<KiriView::ClearImageEffect>(effects));
-    QVERIFY(hasEffect<KiriView::ResetZoomEffect>(effects));
+    QVERIFY(hasOperation<KiriView::ClearPresentationImageOperation>(plan));
+    QVERIFY(hasOperation<KiriView::ResetZoomOperation>(plan));
     QVERIFY(state.containerNavigationUrl().isEmpty());
     QCOMPARE(state.errorString(), QStringLiteral("animation failed"));
     QVERIFY(!state.loading());
@@ -291,10 +294,10 @@ void TestImageOpenWorkflow::routedLoadFailureAppliesErrorTransitions()
     {
         KiriView::ImageDocumentState state;
         state.setLoading(true);
-        const KiriView::ImageDocumentEffects effects
+        const KiriView::ImageDocumentRuntimePlan plan
             = finishLoadWithError(state, containerNavigationSession, true, QStringLiteral("empty"));
-        QVERIFY(hasEffect<KiriView::ClearImageEffect>(effects));
-        QVERIFY(hasEffect<KiriView::PrepareFailedContainerEffect>(effects));
+        QVERIFY(hasOperation<KiriView::ClearPresentationImageOperation>(plan));
+        QVERIFY(hasOperation<KiriView::PrepareFailedContainerOperation>(plan));
         QCOMPARE(state.sourceUrl(), containerUrl);
         QCOMPARE(state.containerNavigationUrl(), containerUrl);
         QCOMPARE(state.status(), KiriView::ImageDocumentStatus::Error);
@@ -306,10 +309,10 @@ void TestImageOpenWorkflow::routedLoadFailureAppliesErrorTransitions()
         state.setSourceUrl(localUrl(QStringLiteral("/images/missing.png")));
         state.setLoading(true);
         state.setStatus(KiriView::ImageDocumentStatus::Ready);
-        const KiriView::ImageDocumentEffects effects
+        const KiriView::ImageDocumentRuntimePlan plan
             = finishLoadWithError(state, imageSession, true, QStringLiteral("missing"));
-        QVERIFY(!hasEffect<KiriView::ClearImageEffect>(effects));
-        QVERIFY(hasEffect<KiriView::UpdatePageNavigationEffect>(effects));
+        QVERIFY(!hasOperation<KiriView::ClearPresentationImageOperation>(plan));
+        QVERIFY(hasOperation<KiriView::UpdatePageNavigationOperation>(plan));
         QCOMPARE(state.sourceUrl(), imageUrl);
         QCOMPARE(state.status(), KiriView::ImageDocumentStatus::Ready);
     }
@@ -317,9 +320,9 @@ void TestImageOpenWorkflow::routedLoadFailureAppliesErrorTransitions()
     {
         KiriView::ImageDocumentState state;
         state.setLoading(true);
-        const KiriView::ImageDocumentEffects effects
+        const KiriView::ImageDocumentRuntimePlan plan
             = finishLoadWithError(state, imageSession, false, QStringLiteral("missing"));
-        QVERIFY(hasEffect<KiriView::ClearImageEffect>(effects));
+        QVERIFY(hasOperation<KiriView::ClearPresentationImageOperation>(plan));
         QCOMPARE(state.sourceUrl(), QUrl());
         QCOMPARE(state.containerNavigationUrl(), QUrl());
         QCOMPARE(state.status(), KiriView::ImageDocumentStatus::Error);

@@ -20,9 +20,10 @@ namespace {
         }
     }
 
-    ImageDocumentEffects generatedEffects(const std::function<ImageDocumentEffects()> &operation)
+    ImageDocumentRuntimePlan generatedRuntimePlan(
+        const std::function<ImageDocumentRuntimePlan()> &operation)
     {
-        return operation ? operation() : ImageDocumentEffects {};
+        return operation ? operation() : ImageDocumentRuntimePlan {};
     }
 }
 
@@ -42,13 +43,6 @@ void ImageDocumentEffectExecutor::dispatchPlan(const ImageDocumentRuntimePlan &p
 {
     for (const ImageDocumentRuntimeOperation &operation : plan) {
         dispatchOperation(operation);
-    }
-}
-
-void ImageDocumentEffectExecutor::dispatchGeneratedEffects(ImageDocumentEffects effects)
-{
-    for (ImageDocumentEffect &effect : effects) {
-        dispatch(std::move(effect));
     }
 }
 
@@ -135,7 +129,7 @@ void ImageDocumentEffectExecutor::dispatchOperation(const ImageDocumentRuntimeOp
             } else if constexpr (std::is_same_v<Operation, SetErrorStringOperation>) {
                 run(m_operations.open.setErrorString, payload.errorString);
             } else if constexpr (std::is_same_v<Operation, FinishEmptySourceLoadOperation>) {
-                dispatchGeneratedEffects(generatedEffects(m_operations.open.finishEmptySourceLoad));
+                dispatchPlan(generatedRuntimePlan(m_operations.open.finishEmptySourceLoad));
             } else {
                 static_assert(alwaysFalse<Operation>, "Unhandled image document runtime operation");
             }
