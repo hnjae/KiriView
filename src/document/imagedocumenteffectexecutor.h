@@ -4,8 +4,8 @@
 #ifndef KIRIVIEW_IMAGEDOCUMENTEFFECTEXECUTOR_H
 #define KIRIVIEW_IMAGEDOCUMENTEFFECTEXECUTOR_H
 
-#include "imagedocumenteffectplan.h"
 #include "imagedocumenteffects.h"
+#include "imagedocumentruntimeplan.h"
 
 #include <QString>
 #include <QUrl>

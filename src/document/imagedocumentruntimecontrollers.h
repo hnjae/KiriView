@@ -4,9 +4,9 @@
 #ifndef KIRIVIEW_IMAGEDOCUMENTRUNTIMECONTROLLERS_H
 #define KIRIVIEW_IMAGEDOCUMENTRUNTIMECONTROLLERS_H
 
-#include "imagedocumenteffectplan.h"
 #include "imagedocumenteffects.h"
 #include "imagedocumentruntimedependencies.h"
+#include "imagedocumentruntimeplan.h"
 #include "imagedocumenttypes.h"
 
 #include <QString>

@@ -3,6 +3,8 @@
 
 #include "imagedocumenteffectexecutor.h"
 
+#include "imagedocumenteffectplan.h"
+
 #include <type_traits>
 #include <utility>
 

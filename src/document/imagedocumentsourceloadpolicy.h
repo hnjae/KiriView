@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGEDOCUMENTSOURCELOADPOLICY_H
 #define KIRIVIEW_IMAGEDOCUMENTSOURCELOADPOLICY_H
 
-#include "imagedocumenteffectplan.h"
+#include "imagedocumentruntimeplan.h"
 #include "imagedocumentsourceloadrequest.h"
 #include "location/imagelocation.h"
 
