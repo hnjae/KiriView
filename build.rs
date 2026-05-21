@@ -19,6 +19,7 @@ struct IncludeSearch {
 const CPP_CORE_SOURCES_FILE: &str = "src/cpp_core_sources.txt";
 const CXX_QT_HEADER_SOURCES_FILE: &str = "src/cpp_cxxqt_header_sources.txt";
 const CXX_QT_CPP_SOURCES_FILE: &str = "src/cpp_cxxqt_sources.txt";
+const RUST_POLICY_SOURCES_FILE: &str = "src/rust_policy_sources.txt";
 const RUST_BRIDGE_SOURCES_FILE: &str = "src/rust_bridge_sources.txt";
 const KCONFIG_SCHEMA_FILE: &str = "src/kiriviewstate.kcfg";
 const KCONFIG_COMPILER_FILE: &str = "src/kiriviewstate.kcfgc";
@@ -157,14 +158,17 @@ fn main() {
     let native_include_dirs = native_include_dirs();
     let shader_source = bake_shaders();
     let cxx_qt_header_sources = source_manifest(CXX_QT_HEADER_SOURCES_FILE);
+    let rust_policy_sources = source_manifest(RUST_POLICY_SOURCES_FILE);
     let rust_bridge_sources = source_manifest(RUST_BRIDGE_SOURCES_FILE);
     let cxx_qt_cpp_sources = source_manifest(CXX_QT_CPP_SOURCES_FILE);
     let cpp_core_sources = source_manifest(CPP_CORE_SOURCES_FILE);
     validate_source_manifest_extensions(&cxx_qt_header_sources, CXX_QT_HEADER_SOURCES_FILE, "h");
+    validate_source_manifest_extensions(&rust_policy_sources, RUST_POLICY_SOURCES_FILE, "rs");
     validate_source_manifest_extensions(&rust_bridge_sources, RUST_BRIDGE_SOURCES_FILE, "rs");
     validate_source_manifest_extensions(&cxx_qt_cpp_sources, CXX_QT_CPP_SOURCES_FILE, "cpp");
     validate_source_manifest_extensions(&cpp_core_sources, CPP_CORE_SOURCES_FILE, "cpp");
     validate_cpp_source_ownership(&cpp_core_sources, &cxx_qt_cpp_sources);
+    validate_rust_policy_source_ownership(&rust_policy_sources, &rust_bridge_sources);
     let generated_state = generate_kconfig_state();
     let generated_state_source = generated_state.source.to_string_lossy().into_owned();
     let qml_module = qml_module();
@@ -342,13 +346,51 @@ fn validate_cpp_source_ownership(cpp_core_sources: &[String], cxx_qt_cpp_sources
     }
 }
 
+fn validate_rust_policy_source_ownership(
+    rust_policy_sources: &[String],
+    rust_bridge_sources: &[String],
+) {
+    let policy_source_set: BTreeSet<String> = rust_policy_sources.iter().cloned().collect();
+
+    for source in rust_policy_sources {
+        if !Path::new(source).starts_with("src/policy") {
+            panic!("Rust policy source {source} must live under src/policy/");
+        }
+    }
+
+    for source in rust_bridge_sources {
+        if !policy_source_set.contains(source) {
+            panic!(
+                "Rust bridge source {source} is not listed in the Rust policy source manifest {RUST_POLICY_SOURCES_FILE}"
+            );
+        }
+    }
+
+    let discovered_sources = discovered_rs_sources(Path::new("src/policy"));
+    for source in &discovered_sources {
+        if !policy_source_set.contains(source) {
+            panic!("Rust policy source {source} is not listed in {RUST_POLICY_SOURCES_FILE}");
+        }
+    }
+}
+
 fn discovered_cpp_sources(root: &Path) -> BTreeSet<String> {
     let mut sources = BTreeSet::new();
     collect_cpp_sources(root, &mut sources);
     sources
 }
 
+fn discovered_rs_sources(root: &Path) -> BTreeSet<String> {
+    let mut sources = BTreeSet::new();
+    collect_sources_with_extension(root, "rs", &mut sources);
+    sources
+}
+
 fn collect_cpp_sources(dir: &Path, sources: &mut BTreeSet<String>) {
+    collect_sources_with_extension(dir, "cpp", sources);
+}
+
+fn collect_sources_with_extension(dir: &Path, extension: &str, sources: &mut BTreeSet<String>) {
     for entry in fs::read_dir(dir).unwrap_or_else(|error| {
         panic!("failed to read source directory {}: {error}", dir.display())
     }) {
@@ -361,8 +403,8 @@ fn collect_cpp_sources(dir: &Path, sources: &mut BTreeSet<String>) {
             })
             .path();
         if path.is_dir() {
-            collect_cpp_sources(&path, sources);
-        } else if path.extension().and_then(|value| value.to_str()) == Some("cpp") {
+            collect_sources_with_extension(&path, extension, sources);
+        } else if path.extension().and_then(|value| value.to_str()) == Some(extension) {
             sources.insert(path.to_string_lossy().replace('\\', "/"));
         }
     }
