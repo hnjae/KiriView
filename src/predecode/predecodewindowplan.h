@@ -22,13 +22,9 @@ struct PredecodeWindowPlanRequest {
     int idealThreadCount = 1;
 };
 
-struct PredecodeCandidateListPlan {
-    ArchiveDocumentLocation archiveDocument;
-    std::optional<ImageCandidateListContext> candidateContext;
+struct PredecodeCandidateListLoadPlan {
+    ImageCandidateListContext context;
     PredecodePolicyInput policyInput;
-    std::size_t parallelLimit = 0;
-
-    bool shouldLoadCandidates() const;
 };
 
 struct PredecodeWindowPlan {
@@ -37,10 +33,16 @@ struct PredecodeWindowPlan {
     std::size_t parallelLimit = 0;
 };
 
-PredecodeCandidateListPlan predecodeCandidateListPlan(const PredecodeWindowPlanRequest &request);
-PredecodeWindowPlan predecodeWindowPlanForCandidates(const PredecodeCandidateListPlan &plan,
-    const std::vector<ImageNavigationCandidate> &candidates);
-PredecodeWindowPlan predecodeWindowPlanWithoutCandidates(const PredecodeCandidateListPlan &plan);
+struct PredecodeWindowStartPlan {
+    PredecodeWindowPlan fallbackWindow;
+    std::optional<PredecodeCandidateListLoadPlan> candidateList;
+
+    bool shouldLoadCandidates() const;
+};
+
+PredecodeWindowStartPlan predecodeWindowStartPlan(const PredecodeWindowPlanRequest &request);
+PredecodeWindowPlan predecodeWindowPlanForCandidates(
+    const PredecodeWindowStartPlan &plan, const std::vector<ImageNavigationCandidate> &candidates);
 }
 
 #endif

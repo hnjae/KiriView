@@ -77,6 +77,7 @@ private Q_SLOTS:
     void archivePredecodeKeepsArchiveDocumentContext();
     void regularPredecodeWindowKeepsOnePreviousAndTwoNextPages();
     void directoryDocumentStartsTwoBackgroundDecodes();
+    void candidateListingFailureStartsEmptyFallbackWindow();
     void staleGenerationDecodeIsIgnored();
     void rapidNavigationDebouncesSkippedPagePredecode();
     void powerSaverMonitorSuppressesAndReschedulesPredecode();
@@ -282,6 +283,30 @@ void TestImagePredecodeCoordinator::directoryDocumentStartsTwoBackgroundDecodes(
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(2));
     QCOMPARE(dataLoader.frontLoad().url, indexedImageUrl(6));
     QCOMPARE(dataLoader.backLoad().url, indexedImageUrl(4));
+}
+
+void TestImagePredecodeCoordinator::candidateListingFailureStartsEmptyFallbackWindow()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    KiriView::ImagePredecodeCoordinator coordinator
+        = createCoordinator(this, candidateProvider, dataLoader);
+
+    const QUrl displayedUrl = indexedImageUrl(5);
+    candidateProvider.setDirectoryImageError(
+        imagesDirectoryUrl(), QStringLiteral("candidate listing failed"));
+
+    coordinator.schedule(KiriView::ImagePredecodeCoordinator::Context {
+        KiriView::DisplayedPredecodeImage {
+            KiriView::DisplayedImageLocation::fromUrl(displayedUrl),
+            true,
+            staticTestImagePayload(testImage()),
+        },
+    });
+
+    QTest::qWait(250);
+    QCOMPARE(dataLoader.loadCount(), std::size_t(0));
+    QVERIFY(coordinator.findPredecodedImage(displayedUrl).has_value());
 }
 
 void TestImagePredecodeCoordinator::staleGenerationDecodeIsIgnored()

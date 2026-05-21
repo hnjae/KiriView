@@ -25,12 +25,9 @@ std::vector<QUrl> predecodeWindowImageUrls(
 }
 
 namespace KiriView {
-bool PredecodeCandidateListPlan::shouldLoadCandidates() const
-{
-    return parallelLimit > 0 && candidateContext.has_value();
-}
+bool PredecodeWindowStartPlan::shouldLoadCandidates() const { return candidateList.has_value(); }
 
-PredecodeCandidateListPlan predecodeCandidateListPlan(const PredecodeWindowPlanRequest &request)
+PredecodeWindowStartPlan predecodeWindowStartPlan(const PredecodeWindowPlanRequest &request)
 {
     const ArchiveDocumentLocation archiveDocument = request.displayedLocation.archiveDocument();
     const PredecodePolicyInput policyInput = predecodePolicyInputForArchiveDocument(
@@ -40,37 +37,35 @@ PredecodeCandidateListPlan predecodeCandidateListPlan(const PredecodeWindowPlanR
     const std::optional<ImageCandidateListContext> candidateContext
         = imageCandidateListContextForDisplayedImage(request.displayedLocation);
 
-    return PredecodeCandidateListPlan {
-        archiveDocument,
-        candidateContext,
-        policyInput,
-        initialSchedule.parallelLimit,
+    PredecodeWindowStartPlan plan {
+        PredecodeWindowPlan {
+            archiveDocument,
+            {},
+            initialSchedule.parallelLimit,
+        },
+        std::nullopt,
     };
+    if (initialSchedule.parallelLimit > 0 && candidateContext.has_value()) {
+        plan.candidateList = PredecodeCandidateListLoadPlan { *candidateContext, policyInput };
+    }
+
+    return plan;
 }
 
 PredecodeWindowPlan predecodeWindowPlanForCandidates(
-    const PredecodeCandidateListPlan &plan, const std::vector<ImageNavigationCandidate> &candidates)
+    const PredecodeWindowStartPlan &plan, const std::vector<ImageNavigationCandidate> &candidates)
 {
-    if (!plan.candidateContext.has_value()) {
-        return predecodeWindowPlanWithoutCandidates(plan);
+    if (!plan.candidateList.has_value()) {
+        return plan.fallbackWindow;
     }
 
     const PredecodeSchedulePlan schedule = predecodeSchedulePlan(candidates.size(),
-        imageNavigationCandidateIndex(candidates, plan.candidateContext->currentUrl()),
-        plan.policyInput);
+        imageNavigationCandidateIndex(candidates, plan.candidateList->context.currentUrl()),
+        plan.candidateList->policyInput);
     return PredecodeWindowPlan {
-        plan.archiveDocument,
+        plan.fallbackWindow.archiveDocument,
         predecodeWindowImageUrls(candidates, schedule.targetIndices),
         schedule.parallelLimit,
-    };
-}
-
-PredecodeWindowPlan predecodeWindowPlanWithoutCandidates(const PredecodeCandidateListPlan &plan)
-{
-    return PredecodeWindowPlan {
-        plan.archiveDocument,
-        {},
-        plan.parallelLimit,
     };
 }
 }

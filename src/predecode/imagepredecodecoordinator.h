@@ -24,6 +24,8 @@
 #include <vector>
 
 namespace KiriView {
+struct PredecodeWindowPlan;
+
 class ImagePredecodeCoordinator final : public QObject
 {
 public:
@@ -41,15 +43,16 @@ public:
     std::optional<PredecodedImage> findPredecodedImage(const QUrl &url) const;
 
 private:
+    struct WindowLoadContext;
+
     void executeScheduleEffects(const PredecodeScheduleEffectPlan &plan);
     void cacheDisplayedImages(const Context &context);
     std::vector<DisplayedPredecodeImage> displayedImages(const Context &context) const;
     void startDebouncedPredecode();
     void scheduleSettledNeutralPredecode();
     void scheduleAdjacentImagePredecode(const Context &context, quint64 generation);
-    void startPredecodeImageLoads(const std::vector<QUrl> &urls,
-        const ArchiveDocumentLocation &archiveDocument, const Context &context, quint64 generation,
-        std::size_t parallelLimit);
+    void startPredecodeImageLoads(
+        const PredecodeWindowPlan &plan, const WindowLoadContext &context);
     void cancelBackgroundWork();
     void cancelBackgroundEffects();
     qint64 currentMonotonicMsec() const;
