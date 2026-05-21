@@ -73,6 +73,11 @@ ApplicationShortcutProjection ApplicationActionRuntime::shortcutProjectionForId(
     return m_shortcutRuntime->shortcutProjectionForId(actionId);
 }
 
+QVariantList ApplicationActionRuntime::shortcutRoutes() const
+{
+    return ApplicationActions::shortcutRouteVariants();
+}
+
 void ApplicationActionRuntime::setupActions()
 {
     m_application.mainCollection()->setComponentDisplayName(QStringLiteral("KiriView"));

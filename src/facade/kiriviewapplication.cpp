@@ -121,6 +121,11 @@ QString KiriViewApplication::menuShortcutTextForId(ActionId actionId) const
     return m_actionRuntime->shortcutProjectionForId(actionId).menuShortcutText;
 }
 
+QVariantList KiriViewApplication::shortcutRoutes() const
+{
+    return m_actionRuntime->shortcutRoutes();
+}
+
 void KiriViewApplication::setupActions()
 {
     AbstractKirigamiApplication::setupActions();

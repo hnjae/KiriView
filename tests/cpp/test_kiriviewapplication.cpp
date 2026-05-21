@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+#include "application/applicationshortcutpolicy.h"
 #include "application/kiriviewapplicationactions.h"
 #include "facade/kiriviewapplication.h"
 #include "kiriviewstate.h"
@@ -107,6 +108,7 @@ private Q_SLOTS:
     void generalSettingsActionIsNotRegistered();
     void actionDefinitionTableIsCanonicalIdentitySource();
     void actionIdsResolveActionNamesAndShortcuts();
+    void shortcutRoutesExposeApplicationPolicy();
     void shortcutsApiReturnsCurrentShortcuts();
     void shortcutModifierPartitionsTextInputShortcuts();
     void shortcutAliasesDeriveFromCtrlShortcuts();
@@ -227,6 +229,13 @@ void TestKiriViewApplication::actionIdsResolveActionNamesAndShortcuts()
     QVERIFY(application.shortcutTextForId(KiriViewApplication::ActionCount).isEmpty());
     QVERIFY(application.menuShortcutForId(KiriViewApplication::ActionCount).isEmpty());
     QVERIFY(application.menuShortcutTextForId(KiriViewApplication::ActionCount).isEmpty());
+}
+
+void TestKiriViewApplication::shortcutRoutesExposeApplicationPolicy()
+{
+    KiriViewApplication application;
+
+    QCOMPARE(application.shortcutRoutes(), Actions::shortcutRouteVariants());
 }
 
 void TestKiriViewApplication::shortcutsApiReturnsCurrentShortcuts()

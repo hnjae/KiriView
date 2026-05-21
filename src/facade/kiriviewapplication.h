@@ -10,6 +10,7 @@
 #include <QKeySequence>
 #include <QList>
 #include <QString>
+#include <QVariantList>
 #include <QtQml/qqmlregistration.h>
 #include <memory>
 
@@ -97,6 +98,7 @@ public:
     Q_INVOKABLE QKeySequence menuShortcutForId(KiriViewApplication::ActionId actionId) const;
     Q_INVOKABLE QString menuShortcutText(const QString &actionName) const;
     Q_INVOKABLE QString menuShortcutTextForId(KiriViewApplication::ActionId actionId) const;
+    Q_INVOKABLE QVariantList shortcutRoutes() const;
 
 Q_SIGNALS:
     void menuPresentationChanged();

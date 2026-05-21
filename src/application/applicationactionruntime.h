@@ -14,6 +14,7 @@
 #include <QAction>
 #include <QList>
 #include <QString>
+#include <QVariantList>
 #include <memory>
 
 namespace KiriView::ApplicationActions {
@@ -37,6 +38,7 @@ public:
     ApplicationShortcutProjection shortcutProjection(const QString &actionName) const;
     ApplicationShortcutProjection shortcutProjectionForId(
         KiriViewApplication::ActionId actionId) const;
+    QVariantList shortcutRoutes() const;
 
     void setupActions();
 

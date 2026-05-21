@@ -4,11 +4,29 @@
 #ifndef KIRIVIEW_APPLICATIONSHORTCUTPOLICY_H
 #define KIRIVIEW_APPLICATIONSHORTCUTPOLICY_H
 
+#include "application/imageactionavailability.h"
+#include "facade/kiriviewapplication.h"
+
 #include <QKeySequence>
 #include <QList>
 #include <QString>
+#include <QVariantList>
 
 namespace KiriView::ApplicationActions {
+enum class ApplicationShortcutFilter {
+    AllShortcuts = 0,
+    WithCommandModifier,
+    WithoutCommandModifier,
+    ShortcutAliases,
+};
+
+struct ApplicationShortcutRoute {
+    QList<KiriViewApplication::ActionId> actionIds;
+    ApplicationShortcutFilter shortcutFilter = ApplicationShortcutFilter::AllShortcuts;
+    ImageActionAvailability::ShortcutScope shortcutScope
+        = ImageActionAvailability::HelpShortcutScope;
+};
+
 struct ApplicationShortcutProjection {
     QList<QKeySequence> shortcuts;
     QList<QKeySequence> shortcutsWithCommandModifier;
@@ -26,6 +44,8 @@ QList<QKeySequence> shortcutAliases(const QList<QKeySequence> &shortcuts);
 QString shortcutListText(const QList<QKeySequence> &shortcuts);
 QList<QKeySequence> sanitizeShortcuts(const QList<QKeySequence> &shortcuts);
 ApplicationShortcutProjection shortcutProjection(const QList<QKeySequence> &shortcuts);
+const QList<ApplicationShortcutRoute> &shortcutRoutes();
+QVariantList shortcutRouteVariants();
 }
 
 #endif

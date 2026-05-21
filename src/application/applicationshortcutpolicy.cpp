@@ -4,8 +4,14 @@
 #include "applicationshortcutpolicy.h"
 
 #include <QStringList>
+#include <QVariantMap>
 
 namespace {
+using Route = KiriView::ApplicationActions::ApplicationShortcutRoute;
+using Filter = KiriView::ApplicationActions::ApplicationShortcutFilter;
+using ActionId = KiriViewApplication::ActionId;
+using Scope = ImageActionAvailability::ShortcutScope;
+
 bool shortcutHasCommandModifier(const QKeySequence &shortcut)
 {
     const Qt::KeyboardModifiers commandModifiers
@@ -103,6 +109,18 @@ QKeySequence shortcutAlias(const QKeySequence &shortcut)
 
     return QKeySequence(QKeyCombination(modifiers & ~Qt::ControlModifier, combination.key()));
 }
+
+QVariantList actionIdVariants(const QList<ActionId> &actionIds)
+{
+    QVariantList variants;
+    variants.reserve(actionIds.size());
+
+    for (ActionId actionId : actionIds) {
+        variants.push_back(static_cast<int>(actionId));
+    }
+
+    return variants;
+}
 }
 
 namespace KiriView::ApplicationActions {
@@ -186,5 +204,102 @@ ApplicationShortcutProjection shortcutProjection(const QList<QKeySequence> &shor
         shortcutListText(shortcuts),
         menu.toString(QKeySequence::NativeText),
     };
+}
+
+const QList<ApplicationShortcutRoute> &shortcutRoutes()
+{
+    static const QList<ApplicationShortcutRoute> routes {
+        Route {
+            { ActionId::FileOpenAction }, Filter::WithCommandModifier, Scope::HelpShortcutScope },
+        Route { { ActionId::FileOpenAction }, Filter::WithoutCommandModifier,
+            Scope::ViewerShortcutScope },
+        Route {
+            { ActionId::FileQuitAction }, Filter::WithCommandModifier, Scope::HelpShortcutScope },
+        Route { { ActionId::FileQuitAction }, Filter::WithoutCommandModifier,
+            Scope::ViewerShortcutScope },
+        Route { { ActionId::FileQuitAction }, Filter::ShortcutAliases, Scope::ViewerShortcutScope },
+        Route { { ActionId::FileMoveToTrashAction, ActionId::FileDeleteAction },
+            Filter::AllShortcuts, Scope::ReadyViewerShortcutScope },
+        Route { { ActionId::ViewZoomInAction, ActionId::ViewZoomOutAction, ActionId::ViewFitAction,
+                    ActionId::ViewFitHeightAction, ActionId::ViewFitWidthAction,
+                    ActionId::ViewActualSizeAction, ActionId::ViewToggleTwoPageModeAction },
+            Filter::WithCommandModifier, Scope::ReadyShortcutScope },
+        Route { { ActionId::ViewZoomInAction, ActionId::ViewZoomOutAction, ActionId::ViewFitAction,
+                    ActionId::ViewFitHeightAction, ActionId::ViewFitWidthAction,
+                    ActionId::ViewActualSizeAction, ActionId::ViewToggleTwoPageModeAction },
+            Filter::WithoutCommandModifier, Scope::ReadyViewerShortcutScope },
+        Route { { ActionId::ViewZoomInAction, ActionId::ViewZoomOutAction, ActionId::ViewFitAction,
+                    ActionId::ViewFitHeightAction, ActionId::ViewFitWidthAction,
+                    ActionId::ViewActualSizeAction, ActionId::ViewToggleTwoPageModeAction },
+            Filter::ShortcutAliases, Scope::ReadyViewerShortcutScope },
+        Route { { ActionId::ViewRotateClockwiseAction, ActionId::ViewRotateCounterclockwiseAction },
+            Filter::WithCommandModifier, Scope::RotateShortcutScope },
+        Route { { ActionId::ViewRotateClockwiseAction, ActionId::ViewRotateCounterclockwiseAction },
+            Filter::WithoutCommandModifier, Scope::RotateViewerShortcutScope },
+        Route { { ActionId::ViewRotateClockwiseAction, ActionId::ViewRotateCounterclockwiseAction },
+            Filter::ShortcutAliases, Scope::RotateViewerShortcutScope },
+        Route { { ActionId::ViewToggleRightToLeftReadingAction }, Filter::WithCommandModifier,
+            Scope::RightToLeftReadingShortcutScope },
+        Route { { ActionId::ViewToggleRightToLeftReadingAction }, Filter::WithoutCommandModifier,
+            Scope::RightToLeftReadingViewerShortcutScope },
+        Route { { ActionId::ViewToggleRightToLeftReadingAction }, Filter::ShortcutAliases,
+            Scope::RightToLeftReadingViewerShortcutScope },
+        Route { { ActionId::ViewPanTopLeftAction, ActionId::ViewPanBottomRightAction },
+            Filter::WithCommandModifier, Scope::PannableShortcutScope },
+        Route { { ActionId::ViewPanTopLeftAction, ActionId::ViewPanBottomRightAction },
+            Filter::WithoutCommandModifier, Scope::PannableViewerShortcutScope },
+        Route { { ActionId::ViewPanTopLeftAction, ActionId::ViewPanBottomRightAction },
+            Filter::ShortcutAliases, Scope::PannableViewerShortcutScope },
+        Route { { ActionId::ViewScanForwardAction, ActionId::ViewScanBackwardAction },
+            Filter::WithCommandModifier, Scope::ReadyShortcutScope },
+        Route { { ActionId::ViewScanForwardAction, ActionId::ViewScanBackwardAction },
+            Filter::WithoutCommandModifier, Scope::ReadyViewerShortcutScope },
+        Route { { ActionId::ViewScanForwardAction, ActionId::ViewScanBackwardAction },
+            Filter::ShortcutAliases, Scope::ReadyViewerShortcutScope },
+        Route { { ActionId::GoPreviousImageAction, ActionId::GoNextImageAction },
+            Filter::WithCommandModifier, Scope::ImageSelectionShortcutScope },
+        Route { { ActionId::GoPreviousImageAction, ActionId::GoNextImageAction },
+            Filter::WithoutCommandModifier, Scope::ImageSelectionViewerShortcutScope },
+        Route { { ActionId::GoPreviousImageAction, ActionId::GoNextImageAction },
+            Filter::ShortcutAliases, Scope::ImageSelectionViewerShortcutScope },
+        Route { { ActionId::GoFirstImageAction, ActionId::GoLastImageAction },
+            Filter::WithCommandModifier, Scope::PageShortcutScope },
+        Route { { ActionId::GoFirstImageAction, ActionId::GoLastImageAction },
+            Filter::WithoutCommandModifier, Scope::PageViewerShortcutScope },
+        Route { { ActionId::GoFirstImageAction, ActionId::GoLastImageAction },
+            Filter::ShortcutAliases, Scope::PageViewerShortcutScope },
+        Route { { ActionId::GoPreviousArchiveAction, ActionId::GoNextArchiveAction },
+            Filter::WithCommandModifier, Scope::ContainerShortcutScope },
+        Route { { ActionId::GoPreviousArchiveAction, ActionId::GoNextArchiveAction },
+            Filter::WithoutCommandModifier, Scope::ContainerViewerShortcutScope },
+        Route { { ActionId::GoPreviousArchiveAction, ActionId::GoNextArchiveAction },
+            Filter::ShortcutAliases, Scope::ContainerViewerShortcutScope },
+        Route { { ActionId::WindowFullscreenAction, ActionId::HelpShortcutsAction },
+            Filter::WithCommandModifier, Scope::HelpShortcutScope },
+        Route { { ActionId::WindowFullscreenAction, ActionId::HelpShortcutsAction },
+            Filter::WithoutCommandModifier, Scope::HelpShortcutScope },
+        Route { { ActionId::WindowFullscreenAction, ActionId::HelpShortcutsAction },
+            Filter::ShortcutAliases, Scope::ViewerShortcutScope },
+        Route { { ActionId::OptionsConfigureKeybindingAction, ActionId::OptionsShowMenubarAction },
+            Filter::AllShortcuts, Scope::HelpShortcutScope },
+    };
+    return routes;
+}
+
+QVariantList shortcutRouteVariants()
+{
+    const QList<ApplicationShortcutRoute> &routes = shortcutRoutes();
+    QVariantList variants;
+    variants.reserve(routes.size());
+
+    for (const ApplicationShortcutRoute &route : routes) {
+        variants.push_back(QVariantMap {
+            { QStringLiteral("actionIds"), actionIdVariants(route.actionIds) },
+            { QStringLiteral("shortcutFilter"), static_cast<int>(route.shortcutFilter) },
+            { QStringLiteral("shortcutScope"), static_cast<int>(route.shortcutScope) },
+        });
+    }
+
+    return variants;
 }
 }

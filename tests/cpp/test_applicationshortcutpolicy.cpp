@@ -5,8 +5,13 @@
 
 #include <QObject>
 #include <QTest>
+#include <QVariantMap>
 
 namespace {
+using ActionId = KiriViewApplication::ActionId;
+using Filter = KiriView::ApplicationActions::ApplicationShortcutFilter;
+using Scope = ImageActionAvailability::ShortcutScope;
+
 QKeySequence shortcut(const QString &sequence)
 {
     return QKeySequence::fromString(sequence, QKeySequence::PortableText);
@@ -15,6 +20,18 @@ QKeySequence shortcut(const QString &sequence)
 QString nativeText(const QKeySequence &sequence)
 {
     return sequence.toString(QKeySequence::NativeText);
+}
+
+QVariantList actionIdVariants(const QList<ActionId> &actionIds)
+{
+    QVariantList variants;
+    variants.reserve(actionIds.size());
+
+    for (ActionId actionId : actionIds) {
+        variants.push_back(static_cast<int>(actionId));
+    }
+
+    return variants;
 }
 }
 
@@ -29,6 +46,8 @@ private Q_SLOTS:
     void shortcutListTextJoinsAssignedShortcuts();
     void shortcutProjectionDerivesPublicViewsFromOneShortcutList();
     void sanitizeShortcutsRemovesUnmodifiedTextInputShortcuts();
+    void shortcutRoutesOwnApplicationShortcutScopes();
+    void shortcutRouteVariantsExposeQmlShape();
 };
 
 void TestApplicationShortcutPolicy::commandModifierFilterPartitionsShortcuts()
@@ -136,6 +155,84 @@ void TestApplicationShortcutPolicy::sanitizeShortcutsRemovesUnmodifiedTextInputS
     QCOMPARE(KiriView::ApplicationActions::sanitizeShortcuts(shortcuts),
         QList<QKeySequence>({ shortcut(QStringLiteral("Shift+Q")),
             shortcut(QStringLiteral("Ctrl+Q")), shortcut(QStringLiteral("Delete")) }));
+}
+
+void TestApplicationShortcutPolicy::shortcutRoutesOwnApplicationShortcutScopes()
+{
+    const QList<KiriView::ApplicationActions::ApplicationShortcutRoute> &routes
+        = KiriView::ApplicationActions::shortcutRoutes();
+
+    QCOMPARE(routes.size(), 34);
+
+    QCOMPARE(
+        actionIdVariants(routes.at(0).actionIds), actionIdVariants({ ActionId::FileOpenAction }));
+    QCOMPARE(static_cast<int>(routes.at(0).shortcutFilter),
+        static_cast<int>(Filter::WithCommandModifier));
+    QCOMPARE(
+        static_cast<int>(routes.at(0).shortcutScope), static_cast<int>(Scope::HelpShortcutScope));
+
+    QCOMPARE(
+        actionIdVariants(routes.at(1).actionIds), actionIdVariants({ ActionId::FileOpenAction }));
+    QCOMPARE(static_cast<int>(routes.at(1).shortcutFilter),
+        static_cast<int>(Filter::WithoutCommandModifier));
+    QCOMPARE(
+        static_cast<int>(routes.at(1).shortcutScope), static_cast<int>(Scope::ViewerShortcutScope));
+
+    QCOMPARE(actionIdVariants(routes.at(5).actionIds),
+        actionIdVariants({ ActionId::FileMoveToTrashAction, ActionId::FileDeleteAction }));
+    QCOMPARE(static_cast<int>(routes.at(5).shortcutFilter), static_cast<int>(Filter::AllShortcuts));
+    QCOMPARE(static_cast<int>(routes.at(5).shortcutScope),
+        static_cast<int>(Scope::ReadyViewerShortcutScope));
+
+    QCOMPARE(actionIdVariants(routes.at(6).actionIds),
+        actionIdVariants({ ActionId::ViewZoomInAction, ActionId::ViewZoomOutAction,
+            ActionId::ViewFitAction, ActionId::ViewFitHeightAction, ActionId::ViewFitWidthAction,
+            ActionId::ViewActualSizeAction, ActionId::ViewToggleTwoPageModeAction }));
+    QCOMPARE(static_cast<int>(routes.at(6).shortcutFilter),
+        static_cast<int>(Filter::WithCommandModifier));
+    QCOMPARE(
+        static_cast<int>(routes.at(6).shortcutScope), static_cast<int>(Scope::ReadyShortcutScope));
+
+    QCOMPARE(actionIdVariants(routes.at(12).actionIds),
+        actionIdVariants({ ActionId::ViewToggleRightToLeftReadingAction }));
+    QCOMPARE(static_cast<int>(routes.at(12).shortcutFilter),
+        static_cast<int>(Filter::WithCommandModifier));
+    QCOMPARE(static_cast<int>(routes.at(12).shortcutScope),
+        static_cast<int>(Scope::RightToLeftReadingShortcutScope));
+
+    QCOMPARE(actionIdVariants(routes.at(21).actionIds),
+        actionIdVariants({ ActionId::GoPreviousImageAction, ActionId::GoNextImageAction }));
+    QCOMPARE(static_cast<int>(routes.at(21).shortcutFilter),
+        static_cast<int>(Filter::WithCommandModifier));
+    QCOMPARE(static_cast<int>(routes.at(21).shortcutScope),
+        static_cast<int>(Scope::ImageSelectionShortcutScope));
+
+    QCOMPARE(actionIdVariants(routes.at(33).actionIds),
+        actionIdVariants(
+            { ActionId::OptionsConfigureKeybindingAction, ActionId::OptionsShowMenubarAction }));
+    QCOMPARE(
+        static_cast<int>(routes.at(33).shortcutFilter), static_cast<int>(Filter::AllShortcuts));
+    QCOMPARE(
+        static_cast<int>(routes.at(33).shortcutScope), static_cast<int>(Scope::HelpShortcutScope));
+}
+
+void TestApplicationShortcutPolicy::shortcutRouteVariantsExposeQmlShape()
+{
+    const QList<KiriView::ApplicationActions::ApplicationShortcutRoute> &routes
+        = KiriView::ApplicationActions::shortcutRoutes();
+    const QVariantList variants = KiriView::ApplicationActions::shortcutRouteVariants();
+
+    QCOMPARE(variants.size(), routes.size());
+
+    for (qsizetype index = 0; index < variants.size(); ++index) {
+        const QVariantMap route = variants.at(index).toMap();
+        QCOMPARE(route.value(QStringLiteral("actionIds")).toList(),
+            actionIdVariants(routes.at(index).actionIds));
+        QCOMPARE(route.value(QStringLiteral("shortcutFilter")).toInt(),
+            static_cast<int>(routes.at(index).shortcutFilter));
+        QCOMPARE(route.value(QStringLiteral("shortcutScope")).toInt(),
+            static_cast<int>(routes.at(index).shortcutScope));
+    }
 }
 
 QTEST_GUILESS_MAIN(TestApplicationShortcutPolicy)
