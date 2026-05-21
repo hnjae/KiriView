@@ -34,6 +34,10 @@ mod heiftiling;
 mod imageformatregistry;
 #[path = "policy/imageinputclassification.rs"]
 mod imageinputclassification;
+#[path = "policy/mediaformatregistry.rs"]
+mod mediaformatregistry;
+#[path = "policy/videoformatregistry.rs"]
+mod videoformatregistry;
 
 // Document workflow policy.
 #[path = "policy/imagedocumentsourceloadpolicy.rs"]
@@ -44,6 +48,8 @@ mod imageopenworkflow;
 // Navigation policy.
 #[path = "policy/imagenavigationmodel.rs"]
 mod imagenavigationmodel;
+#[path = "policy/medianavigationmodel.rs"]
+mod medianavigationmodel;
 #[path = "policy/navigationindex.rs"]
 mod navigationindex;
 

@@ -123,6 +123,10 @@ mod ffi {
 }
 
 fn rust_supported_image_extensions() -> Vec<String> {
+    supported_image_extensions()
+}
+
+pub(crate) fn supported_image_extensions() -> Vec<String> {
     unique_sorted_strings(
         SUPPORTED_IMAGE_FORMATS
             .iter()
@@ -146,6 +150,10 @@ fn rust_supported_open_extensions() -> Vec<String> {
 }
 
 fn rust_is_supported_image_file_name(name: &str) -> bool {
+    is_supported_image_file_name(name)
+}
+
+pub(crate) fn is_supported_image_file_name(name: &str) -> bool {
     extension_for_file_name(name)
         .is_some_and(|extension| image_extension_is_supported(extension.as_str()))
 }

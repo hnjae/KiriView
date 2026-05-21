@@ -15,6 +15,7 @@ src/policy/imageactionavailability.rs
 src/policy/imagedocumentsourceloadpolicy.rs
 src/policy/imageformatregistry.rs
 src/policy/imageinputclassification.rs
+src/policy/mediaformatregistry.rs
 src/policy/imagemath.rs
 src/policy/imagenavigationmodel.rs
 src/policy/imageopenworkflow.rs
@@ -25,7 +26,9 @@ src/policy/imagespreadnavigation.rs
 src/policy/imagetilegeometry.rs
 src/policy/imageviewportgeometry.rs
 src/policy/imagezoomstate.rs
+src/policy/medianavigationmodel.rs
 src/policy/navigationindex.rs
 src/policy/predecodecachepolicy.rs
 src/policy/startup_arguments.rs
 src/policy/svgrenderer.rs
+src/policy/videoformatregistry.rs

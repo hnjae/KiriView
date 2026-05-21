@@ -11,6 +11,7 @@ src/policy/heiftiling.rs
 src/policy/imageactionavailability.rs
 src/policy/imageformatregistry.rs
 src/policy/imageinputclassification.rs
+src/policy/mediaformatregistry.rs
 src/policy/imagedocumentsourceloadpolicy.rs
 src/policy/imageopenworkflow.rs
 src/policy/imagerendergeometry.rs
@@ -23,3 +24,4 @@ src/policy/imageviewportgeometry.rs
 src/policy/imagezoomstate.rs
 src/policy/predecodecachepolicy.rs
 src/policy/svgrenderer.rs
+src/policy/videoformatregistry.rs
