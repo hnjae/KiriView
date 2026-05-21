@@ -8,6 +8,7 @@
 #include "document/imagedocumentpublicsignals.h"
 #include "document/imagedocumentruntime.h"
 
+#include <algorithm>
 #include <memory>
 #include <utility>
 
@@ -209,6 +210,11 @@ bool KiriImageDocument::containerNavigationAvailable() const
     return m_runtime->containerNavigationAvailable();
 }
 
+bool KiriImageDocument::ordinaryDirectMediaScopeActive() const
+{
+    return m_runtime->ordinaryDirectMediaScopeActive();
+}
+
 bool KiriImageDocument::fileDeletionInProgress() const
 {
     return m_runtime->fileDeletionInProgress();
@@ -296,4 +302,10 @@ void KiriImageDocument::updateRenderContext() { m_runtime->updateRenderContext()
 void KiriImageDocument::handleDocumentChanges(const std::vector<ImageDocumentChange> &changes)
 {
     KiriView::ImageDocumentPublicSignalEmitter(publicSignalOperations(*this)).emitChanges(changes);
+    if (std::find(changes.cbegin(), changes.cend(), ImageDocumentChange::DisplayedUrl)
+            != changes.cend()
+        || std::find(changes.cbegin(), changes.cend(), ImageDocumentChange::Status)
+            != changes.cend()) {
+        Q_EMIT documentScopeChanged();
+    }
 }

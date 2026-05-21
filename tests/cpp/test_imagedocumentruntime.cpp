@@ -177,6 +177,7 @@ class TestImageDocumentRuntime : public QObject
 
 private Q_SLOTS:
     void initialLoadSuccessUpdatesDocumentState();
+    void ordinaryDirectMediaScopeProjectionFollowsDisplayedImageScope();
     void imageLoadsUsePhysicalViewportForFirstDisplayDecode();
     void renderContextProviderCanBeReplacedAfterConstruction();
     void maximumManualZoomChangesAfterViewportImageAndRenderContextUpdates();
@@ -241,6 +242,42 @@ void TestImageDocumentRuntime::initialLoadSuccessUpdatesDocumentState()
     QCOMPARE(runtime->imageCount(), 1);
     QVERIFY(!runtime->containerNavigationAvailable());
     QVERIFY(runtime->renderSnapshot().isRenderable());
+}
+
+void TestImageDocumentRuntime::ordinaryDirectMediaScopeProjectionFollowsDisplayedImageScope()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    const QUrl imageUrl = localUrl(QStringLiteral("/images/01.png"));
+    candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
+        {
+            imageCandidate(imageUrl),
+        });
+
+    RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader);
+    QVERIFY(!runtime->ordinaryDirectMediaScopeActive());
+    runtime->setViewportSize(QSizeF(400.0, 300.0));
+    runtime->setSourceUrl(imageUrl);
+    finishLoad(dataLoader);
+
+    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QVERIFY(runtime->ordinaryDirectMediaScopeActive());
+
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
+    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveDocument.has_value());
+    const QUrl archivePage = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
+    candidateProvider.setArchiveImages(archiveDocument->rootUrl(), { imageCandidate(archivePage) });
+
+    RuntimeHandle archiveRuntime = createRuntime(this, candidateProvider, dataLoader);
+    archiveRuntime->setViewportSize(QSizeF(400.0, 300.0));
+    archiveRuntime->setSourceUrl(archiveUrl);
+    QVERIFY(finishOldestActiveLoadForUrl(dataLoader, archivePage));
+
+    QTRY_COMPARE(archiveRuntime->status(), KiriView::ImageDocumentStatus::Ready);
+    QCOMPARE(archiveRuntime->displayedUrl(), archivePage);
+    QVERIFY(!archiveRuntime->ordinaryDirectMediaScopeActive());
 }
 
 void TestImageDocumentRuntime::imageLoadsUsePhysicalViewportForFirstDisplayDecode()

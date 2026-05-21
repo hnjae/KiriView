@@ -179,6 +179,11 @@ bool ImageDocumentRuntime::containerNavigationAvailable() const
     return state.containerNavigationAvailable();
 }
 
+bool ImageDocumentRuntime::ordinaryDirectMediaScopeActive() const
+{
+    return !state.displayedUrl().isEmpty() && state.displayedArchiveDocument().isEmpty();
+}
+
 bool ImageDocumentRuntime::fileDeletionInProgress() const
 {
     return controllers->deletionController().inProgress();

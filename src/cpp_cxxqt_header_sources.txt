@@ -3,6 +3,7 @@
 
 src/application/menuaccesskeyrouter.h
 src/application/imageactionavailability.h
+src/facade/kiridocumentsession.h
 src/facade/kiriimagedocument.h
 src/facade/kiriimageview.h
 src/facade/kirivideodocument.h

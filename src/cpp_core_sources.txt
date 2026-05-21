@@ -102,6 +102,9 @@ src/document/imageopencontroller.cpp
 src/document/imageopentransitionapplier.cpp
 src/document/imageopenworkflow.cpp
 src/navigation/imagepagenavigationmodel.cpp
+src/navigation/mediaformatregistry.cpp
+src/navigation/mediacandidateprovider.cpp
+src/navigation/medianavigationmodel.cpp
 src/predecode/imagepredecodecoordinator.cpp
 src/presentation/imagepresentationcontroller.cpp
 src/presentation/imagepresentationload.cpp
@@ -144,6 +147,7 @@ src/rendering/qimagereaderscaledlevelcache.cpp
 src/rendering/qimagereadertilesource.cpp
 src/decoding/rawdecoder.cpp
 src/application/shortcuthelpmodel.cpp
+src/session/documentsessionruntime.cpp
 src/rendering/staticimage.cpp
 src/decoding/staticimagedecode.cpp
 src/system/systemmemory.cpp

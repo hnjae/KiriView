@@ -68,6 +68,7 @@ public:
     int currentLastPageNumber() const;
     int imageCount() const;
     bool containerNavigationAvailable() const;
+    bool ordinaryDirectMediaScopeActive() const;
     bool fileDeletionInProgress() const;
     bool twoPageModeEnabled() const;
     void setTwoPageModeEnabled(bool enabled);

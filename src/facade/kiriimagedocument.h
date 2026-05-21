@@ -58,6 +58,8 @@ class KiriImageDocument : public QObject
     Q_PROPERTY(int imageCount READ imageCount NOTIFY pageNavigationChanged)
     Q_PROPERTY(bool containerNavigationAvailable READ containerNavigationAvailable NOTIFY
             containerNavigationChanged)
+    Q_PROPERTY(bool ordinaryDirectMediaScopeActive READ ordinaryDirectMediaScopeActive NOTIFY
+            documentScopeChanged)
     Q_PROPERTY(bool fileDeletionInProgress READ fileDeletionInProgress NOTIFY
             fileDeletionInProgressChanged)
     Q_PROPERTY(bool twoPageModeEnabled READ twoPageModeEnabled WRITE setTwoPageModeEnabled NOTIFY
@@ -127,6 +129,7 @@ public:
     int currentLastPageNumber() const;
     int imageCount() const;
     bool containerNavigationAvailable() const;
+    bool ordinaryDirectMediaScopeActive() const;
     bool fileDeletionInProgress() const;
     bool twoPageModeEnabled() const;
     void setTwoPageModeEnabled(bool enabled);
@@ -173,6 +176,7 @@ Q_SIGNALS:
     void maximumManualZoomPercentChanged();
     void pageNavigationChanged();
     void containerNavigationChanged();
+    void documentScopeChanged();
     void fileDeletionInProgressChanged();
     void twoPageModeChanged();
     void rightToLeftReadingChanged();
