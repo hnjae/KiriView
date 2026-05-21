@@ -28,6 +28,7 @@ class TestImagePresentationViewportState : public QObject
 private Q_SLOTS:
     void displayedImageSizeUpdatesZoomAndTilePlan();
     void rotationOwnsLogicalImageSizeAndPlan();
+    void redundantSourceAndRotationUpdatesReturnEmptyPlans();
     void visibleRectPlansTileRefreshWithoutDuplicatingState();
     void renderContextRefreshPlansForcedTileRefresh();
 };
@@ -66,6 +67,46 @@ void TestImagePresentationViewportState::rotationOwnsLogicalImageSizeAndPlan()
     QVERIFY(containsChange(plan.changes, KiriView::ImageDocumentChange::ImageSize));
     QVERIFY(containsChange(plan.changes, KiriView::ImageDocumentChange::Repaint));
     QVERIFY(plan.scheduleVisibleTileDecode);
+
+    const KiriView::ImagePresentationViewportPlan counterclockwisePlan
+        = state.rotateCounterclockwise();
+
+    QCOMPARE(state.rotationDegrees(), 0);
+    QCOMPARE(state.imageSize(), QSize(20, 10));
+    QVERIFY(containsChange(counterclockwisePlan.changes, KiriView::ImageDocumentChange::Rotation));
+    QVERIFY(containsChange(counterclockwisePlan.changes, KiriView::ImageDocumentChange::ImageSize));
+    QVERIFY(counterclockwisePlan.scheduleVisibleTileDecode);
+}
+
+void TestImagePresentationViewportState::redundantSourceAndRotationUpdatesReturnEmptyPlans()
+{
+    KiriView::ImagePresentationViewportState state([]() {
+        return KiriView::ImageDocumentRenderContext { 1.0, KiriView::fallbackTextureSizeMax };
+    });
+    state.setViewportSize(QSizeF(100.0, 100.0));
+    state.setDisplayedImageSize(QSize(20, 10));
+    state.rotateClockwise();
+
+    KiriView::ImagePresentationViewportPlan plan = state.setDisplayedImageSize(QSize(20, 10));
+
+    QVERIFY(plan.changes.empty());
+    QVERIFY(!plan.scheduleVisibleTileDecode);
+
+    plan = state.rotateClockwise();
+
+    QCOMPARE(state.rotationDegrees(), 180);
+    QCOMPARE(state.imageSize(), QSize(20, 10));
+    QVERIFY(containsChange(plan.changes, KiriView::ImageDocumentChange::Rotation));
+    QVERIFY(containsChange(plan.changes, KiriView::ImageDocumentChange::ImageSize));
+
+    plan = state.resetRotation();
+    QVERIFY(containsChange(plan.changes, KiriView::ImageDocumentChange::Rotation));
+    QVERIFY(!containsChange(plan.changes, KiriView::ImageDocumentChange::ImageSize));
+    QCOMPARE(state.rotationDegrees(), 0);
+
+    plan = state.resetRotation();
+    QVERIFY(plan.changes.empty());
+    QVERIFY(!plan.scheduleVisibleTileDecode);
 }
 
 void TestImagePresentationViewportState::visibleRectPlansTileRefreshWithoutDuplicatingState()

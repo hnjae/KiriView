@@ -104,7 +104,6 @@ src/document/imageopenworkflow.cpp
 src/navigation/imagepagenavigationmodel.cpp
 src/predecode/imagepredecodecoordinator.cpp
 src/presentation/imagepresentationcontroller.cpp
-src/presentation/imagepresentationgeometry.cpp
 src/presentation/imagepresentationload.cpp
 src/presentation/imagepresentationviewportcontroller.cpp
 src/presentation/imagepresentationviewportstate.cpp

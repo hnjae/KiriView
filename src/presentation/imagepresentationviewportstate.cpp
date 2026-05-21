@@ -4,6 +4,7 @@
 #include "presentation/imagepresentationviewportstate.h"
 
 #include "document/imagedocumentnotifications.h"
+#include "presentation/imagerotation.h"
 #include "rendering/imagerendering.h"
 
 #include <utility>
@@ -15,7 +16,7 @@ ImagePresentationViewportState::ImagePresentationViewportState(
 {
 }
 
-QSize ImagePresentationViewportState::imageSize() const { return m_geometry.logicalImageSize(); }
+QSize ImagePresentationViewportState::imageSize() const { return logicalImageSize(); }
 
 QSizeF ImagePresentationViewportState::viewportSize() const { return m_zoomState.viewportSize(); }
 
@@ -27,7 +28,7 @@ qreal ImagePresentationViewportState::zoomPercent() const { return m_zoomState.z
 
 ImageZoomMode ImagePresentationViewportState::zoomMode() const { return m_zoomState.zoomMode(); }
 
-int ImagePresentationViewportState::rotationDegrees() const { return m_geometry.rotationDegrees(); }
+int ImagePresentationViewportState::rotationDegrees() const { return m_rotationDegrees; }
 
 ImageDocumentRenderContext ImagePresentationViewportState::renderContext() const
 {
@@ -101,7 +102,7 @@ ImagePresentationViewportPlan ImagePresentationViewportState::setFitMode(ImageZo
 
 ImagePresentationViewportPlan ImagePresentationViewportState::resetRotation()
 {
-    if (!m_geometry.resetRotation()) {
+    if (!resetPresentationRotation()) {
         return {};
     }
 
@@ -110,7 +111,7 @@ ImagePresentationViewportPlan ImagePresentationViewportState::resetRotation()
 
 ImagePresentationViewportPlan ImagePresentationViewportState::resetRotationForNewImage()
 {
-    if (!m_geometry.resetRotation()) {
+    if (!resetPresentationRotation()) {
         return {};
     }
 
@@ -119,7 +120,7 @@ ImagePresentationViewportPlan ImagePresentationViewportState::resetRotationForNe
 
 ImagePresentationViewportPlan ImagePresentationViewportState::rotateClockwise()
 {
-    if (!m_geometry.rotateClockwise()) {
+    if (!rotatePresentationClockwise()) {
         return {};
     }
 
@@ -128,7 +129,7 @@ ImagePresentationViewportPlan ImagePresentationViewportState::rotateClockwise()
 
 ImagePresentationViewportPlan ImagePresentationViewportState::rotateCounterclockwise()
 {
-    if (!m_geometry.rotateCounterclockwise()) {
+    if (!rotatePresentationCounterclockwise()) {
         return {};
     }
 
@@ -165,8 +166,46 @@ void ImagePresentationViewportState::clearContainer() { m_zoomState.clearContain
 ImagePresentationViewportPlan ImagePresentationViewportState::setDisplayedImageSize(
     const QSize &imageSize)
 {
-    m_geometry.setSourceImageSize(imageSize);
+    setSourceImageSize(imageSize);
     return applyGeometryImageSize();
+}
+
+QSize ImagePresentationViewportState::logicalImageSize() const
+{
+    return rotatedImageSize(m_sourceImageSize, m_rotationDegrees);
+}
+
+bool ImagePresentationViewportState::setSourceImageSize(const QSize &sourceImageSize)
+{
+    if (m_sourceImageSize == sourceImageSize) {
+        return false;
+    }
+
+    m_sourceImageSize = sourceImageSize;
+    return true;
+}
+
+bool ImagePresentationViewportState::setRotationDegrees(int rotationDegrees)
+{
+    const int normalizedRotationDegrees = normalizedImageRotationDegrees(rotationDegrees);
+    if (m_rotationDegrees == normalizedRotationDegrees) {
+        return false;
+    }
+
+    m_rotationDegrees = normalizedRotationDegrees;
+    return true;
+}
+
+bool ImagePresentationViewportState::resetPresentationRotation() { return setRotationDegrees(0); }
+
+bool ImagePresentationViewportState::rotatePresentationClockwise()
+{
+    return setRotationDegrees(imageRotationClockwise(m_rotationDegrees));
+}
+
+bool ImagePresentationViewportState::rotatePresentationCounterclockwise()
+{
+    return setRotationDegrees(imageRotationCounterclockwise(m_rotationDegrees));
 }
 
 ImagePresentationViewportPlan ImagePresentationViewportState::applyGeometryRotationChange()
@@ -180,10 +219,10 @@ ImagePresentationViewportPlan ImagePresentationViewportState::applyGeometryRotat
 ImagePresentationViewportPlan ImagePresentationViewportState::applyGeometryImageSize(
     TileRefresh tileRefresh)
 {
-    const QSize logicalImageSize = m_geometry.logicalImageSize();
+    const QSize nextLogicalImageSize = logicalImageSize();
     return mutateZoomState(
-        [&logicalImageSize](ImageZoomState &zoomState, qreal devicePixelRatio) {
-            zoomState.setImageSize(logicalImageSize, devicePixelRatio);
+        [&nextLogicalImageSize](ImageZoomState &zoomState, qreal devicePixelRatio) {
+            zoomState.setImageSize(nextLogicalImageSize, devicePixelRatio);
         },
         tileRefresh);
 }
