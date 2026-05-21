@@ -148,3 +148,5 @@ src/rendering/staticimage.cpp
 src/decoding/staticimagedecode.cpp
 src/system/systemmemory.cpp
 src/rendering/svgtilesource.cpp
+src/video/videodocumentruntime.cpp
+src/video/videoplaybackurlresolver.cpp

@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 
 src/facade/kiriimagedocument.cpp
+src/facade/kirivideodocument.cpp
 src/decoding/kiriimagedecoder.cpp
 src/rendering/kiriimagerendernode.cpp
 src/facade/kiriimageview.cpp

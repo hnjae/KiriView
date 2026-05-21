@@ -5,6 +5,7 @@ src/application/menuaccesskeyrouter.h
 src/application/imageactionavailability.h
 src/facade/kiriimagedocument.h
 src/facade/kiriimageview.h
+src/facade/kirivideodocument.h
 src/navigation/imageshortcutnavigationpolicy.h
 src/facade/kiriviewapplication.h
 src/system/powerprofilemonitor.h
