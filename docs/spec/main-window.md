@@ -2,11 +2,13 @@
 
 ## Toolbar
 
-The main window toolbar shows image controls without a page title.
+The main window toolbar shows media controls without a page title.
 
-The leading side of the toolbar contains Previous Image, the current page number, `of`, the total image count, and Next Image.
+The leading side of the toolbar contains Previous, the current page number, `of`, the total item count, and Next.
 
-The trailing action toolbar contains Right-to-Left Reading, Two-Page Spread, zoom, Fit, and, when Hamburger Menu presentation is active outside fullscreen, a toolbar application menu button.
+When an image is displayed, the trailing action toolbar contains Right-to-Left Reading, Two-Page Spread, zoom, Fit, and, when Hamburger Menu presentation is active outside fullscreen, a toolbar application menu button.
+
+When a video is displayed, image-only toolbar controls such as Right-to-Left Reading, Two-Page Spread, zoom, and Fit are unavailable.
 
 The trailing action toolbar shows as many trailing controls as fit and moves the rest into an overflow menu. When it runs out of horizontal space, KiriView keeps the zoom percentage visible the longest, then Fit.
 
@@ -14,7 +16,7 @@ The Right-to-Left Reading control is immediately to the left of the Two-Page Spr
 
 Outside fullscreen, the toolbar uses normal application header placement and reserves layout space above the image viewing area.
 
-Controls that require a ready image are disabled until an image is ready.
+Controls that require ready media are disabled until an image or video is ready.
 
 The toolbar page navigation arrow buttons keep their physical affordance. The left arrow button triggers Previous in Left-to-Right Reading mode and Next in Right-to-Left Reading mode. The right arrow button triggers Next in Left-to-Right Reading mode and Previous in Right-to-Left Reading mode. Each button's tooltip and accessible text follow the action that button triggers.
 
@@ -36,9 +38,9 @@ In fullscreen, KiriView hides both the menubar and toolbar application menu butt
 
 The menubar and toolbar application menu keep each action's identity, text, shortcut, and enabled state unchanged.
 
-Adjacent navigation actions are projected in reading progression order. When Right-to-Left Reading is active, the adjacent page navigation pair is displayed as Next before Previous, and the adjacent archive navigation pair is displayed as Next Archive before Previous Archive. First Image and Last Image keep their normal order because their page-index meaning does not change with reading direction.
+Adjacent navigation actions are projected in reading progression order. When Right-to-Left Reading is active, the adjacent page navigation pair is displayed as Next before Previous, and the adjacent archive navigation pair is displayed as Next Archive before Previous Archive. First and Last keep their normal order because their page-index meaning does not change with reading direction.
 
-The menubar Go menu projects directional navigation icons to match the displayed reading progression meaning without changing the underlying action identity. When Right-to-Left Reading is active, Next uses the previous-direction icon, Previous uses the next-direction icon, First Image uses the last-boundary icon, and Last Image uses the first-boundary icon.
+The menubar Go menu projects directional navigation icons to match the displayed reading progression meaning without changing the underlying action identity. When Right-to-Left Reading is active, Next uses the previous-direction icon, Previous uses the next-direction icon, First uses the last-boundary icon, and Last uses the first-boundary icon.
 
 The toolbar application menu is a single popup menu surface. Activating the toolbar application menu button and pressing F10 open a toolbar application menu with the same width, actions, access keys, and shortcut column.
 
@@ -70,6 +72,8 @@ Dropping one or more file or URL items onto the running main window opens only t
 
 If the first startup argument is a local file path or file URL and that file does not exist, KiriView prints a clear error message naming the path and reason to standard error, does not open the main window, and exits with code 2.
 
+Startup arguments, drop, and open dialog selection may open supported direct video files.
+
 ## Window Size and Title
 
 KiriView permits compact window sizes down to 14 by 12 Kirigami grid units.
@@ -78,13 +82,15 @@ When no saved window geometry overrides the launch size, KiriView opens at 24 by
 
 When an image file is displayed, the main window title is the displayed image file name, a spaced em dash, and `KiriView`.
 
+When a direct video file is displayed, the main window title is the original direct media URL's file name, a spaced em dash, and `KiriView`.
+
 When a CBZ, CBT, CB7, CBR, ZIP, TAR, 7Z, or RAR archive opened by KiriView is displayed, the title is the archive file name, a spaced em dash, and `KiriView`.
 
 When a directly opened local directory is displayed, the title is the directory name, a spaced em dash, and `KiriView`.
 
 KiriView does not show file paths in the window title.
 
-When no image, archive page, or directory page is displayed, the window title is `KiriView`.
+When no image, video, archive page, or directory page is displayed, the window title is `KiriView`.
 
 ## Fullscreen
 
@@ -94,7 +100,7 @@ Fullscreen hides the system titlebar and window decorations and shows the app to
 
 The fullscreen overlay toolbar uses the normal toolbar background and padding, attaches to the top, left, and right window edges, and does not use an outer margin, rounded floating-card background, or shadow.
 
-The fullscreen overlay toolbar contains image controls without the toolbar application menu button.
+The fullscreen overlay toolbar contains media controls without the toolbar application menu button.
 
 The fullscreen overlay toolbar is shown when entering fullscreen and when the pointer moves over the window.
 
@@ -115,6 +121,18 @@ It does not list fixed shortcuts, mouse gestures, or mouse-wheel gestures.
 It can be dismissed with standard dialog dismissal actions such as Enter/OK, Escape, the close button, or clicking outside the dialog.
 
 While the shortcut help dialog is open, standard dialog dismissal actions close the dialog before any fullscreen handling.
+
+Video seek shortcuts are fixed shortcuts and are not listed in Keyboard Shortcuts configuration or shortcut help.
+
+## Video Playback Panel
+
+Video mode shows a video viewport with a Kirigami floating playback panel over the bottom of the video.
+
+The panel includes play/pause, timeline position selection and scrubbing, duration and position display, and a disabled non-interactive timeline state when the media is not seekable.
+
+The floating panel does not reserve page layout height.
+
+The floating panel remains usable in fullscreen and remains visible while video mode is active in the MVP.
 
 ## Menu Presentation
 

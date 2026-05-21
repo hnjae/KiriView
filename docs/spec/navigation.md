@@ -2,49 +2,55 @@
 
 ## Page Controls
 
-The toolbar provides page navigation with Previous and Next actions, the current page number, the total number of supported images in the current directory or archive scope after that scope's supported image list has been confirmed, and editable page number entry.
+The toolbar provides page navigation with Previous and Next actions, the current page number, the total number of supported items in the current scope after that scope's supported list has been confirmed, and editable page number entry.
 
-First and Last are page navigation actions available through their configured shortcuts and menus. They open the first or last known page in the current image scope.
+First and Last are page navigation actions available through their configured shortcuts and menus. They open the first or last known page or media item in the current scope.
 
-The Previous action is disabled on the first image, and the Next action is disabled on the last image.
+The Previous action is disabled on the first item, and the Next action is disabled on the last item.
 
 Page numbers are shown to users starting at 1.
 
-When a new directory or archive scope is being listed and KiriView has no confirmed supported image list for that same scope yet, the current page number and total image count are unknown, and KiriView does not treat the current image as the first or last image.
+When a new directory, archive, or ordinary direct media scope is being listed and KiriView has no confirmed supported item list for that same scope yet, the current page number and total item count are unknown, and KiriView does not treat the current item as the first or last item.
 
 Entering a page number and pressing Enter or clicking the image viewing area opens the nearest valid page, returns focus to the image viewing area, and restores viewer keyboard shortcuts.
 
-If the entered text cannot be parsed as a number, KiriView leaves the current image open and restores the displayed page number.
+If the entered text cannot be parsed as a number, KiriView leaves the current item open and restores the displayed page number.
 
 Pressing Escape while editing the page number cancels the edit, restores the displayed page number, returns focus to the image viewing area, and does not leave fullscreen.
 
-When KiriView has a confirmed supported image list for the current image scope, Previous, Next, First, Last, and page number entry remain available while a selected image is still loading.
+When KiriView has a confirmed supported item list for the current scope, Previous, Next, First, Last, and page number entry remain available while a selected image or video is still loading.
 
-During that loading interval, the page number shown in the UI is the most recent valid page selection requested by the user, not necessarily the image that remains visible until replacement succeeds.
+During that loading interval, the page number shown in the UI is the most recent valid page selection requested by the user, not necessarily the item that remains visible until replacement succeeds.
 
-The displayed image URL continues to mean the image actually being shown.
+The displayed image URL or direct video source URL continues to mean the media item actually being shown.
 
 If users make multiple page selections before loading finishes, only the most recent selection is displayed.
 
-If that replacement load fails, the previously displayed image remains visible, KiriView reports the error, and page navigation returns to the still-displayed image.
+If that replacement load fails, the previously displayed media item remains visible, KiriView reports the error, and page navigation returns to the still-displayed item.
 
-When moving between images in the current directory or archive scope, the page navigation controls keep their layout stable.
+When moving between items in the current scope, the page navigation controls keep their layout stable.
 
-The current page number updates to the newly displayed image, and the known total image count remains visible while KiriView updates the current position.
+The current page number updates to the newly displayed item, and the known total item count remains visible while KiriView updates the current position.
 
-## Adjacent Images
+## Adjacent Media
 
-When an image is open, Page Up opens the previous supported image file in the same parent URL and Page Down opens the next one.
+When an ordinary direct image or video is open, Page Up opens the previous supported media file in the same ordinary direct media URL scope and Page Down opens the next one.
 
-If the current image is the first image, pressing Page Up keeps the current image open and notifies the user that it is the first image.
+If the current media item is the first supported media item, pressing Page Up keeps the current item open and notifies the user that it is the first media item.
 
-If the current image is the last image, pressing Page Down keeps the current image open and notifies the user that it is the last image.
+If the current media item is the last supported media item, pressing Page Down keeps the current item open and notifies the user that it is the last media item.
 
 Supported image extensions match the open dialog: AVIF (`.avif` and `.avifs`), BMP, camera RAW (`.3fr`, `.arw`, `.bay`, `.bmq`, `.cr2`, `.cr3`, `.crw`, `.cs1`, `.cs2`, `.dcr`, `.dng`, `.erf`, `.fff`, `.iiq`, `.k25`, `.kdc`, `.mdc`, `.mef`, `.mos`, `.mrw`, `.nef`, `.nrw`, `.orf`, `.pef`, `.raf`, `.raw`, `.rdc`, `.rwl`, `.rw2`, `.sr2`, `.srf`, `.srw`, and `.x3f`), GIF, HEIF (`.heic`, `.heics`, `.heif`, `.heifs`, `.hif`, `.avci`, and `.hej2`), JPEG, JPEG 2000 (`.jp2`), JPEG XL (`.jxl`), PNG, SVG, TIFF (`.tif` and `.tiff`), and WebP, case-insensitively.
 
 JPEG-compressed HEIF files use the generic HEIF extensions because they do not have a dedicated extension.
 
-When an image is opened from a KDE-supported archive URL such as `zip://`, `tar://`, or `sevenz://`, KiriView treats the opened item as a single image URL, and navigation moves between supported image files in the same directory inside that archive URL.
+Supported direct video extensions are MP4 (`.mp4`), M4V (`.m4v`), and MOV (`.mov`), case-insensitively.
+
+An ordinary direct media URL scope is the non-recursive parent URL of the active direct media URL. This includes ordinary local parent directories and KDE archive URL parent locations such as `zip:///path/archive.zip!/chapter/`.
+
+The ordinary direct media URL parent follows KiriView's existing direct image candidate context rule rather than a new URL-scheme-specific parser: KiriView normalizes the original direct URL through the same `navigationSourceUrl(...)` path used for displayed direct images, then derives the parent with `QUrl::RemoveFilename | QUrl::NormalizePathSegments`.
+
+When an image or video is opened from a KDE-supported archive URL such as `zip://`, `tar://`, or `sevenz://`, KiriView treats the opened item as a single direct media URL, and navigation moves between supported media files in the same directory inside that archive URL.
 
 When an image is displayed from a local CBZ, CBT, CB7, CBR, ZIP, TAR, 7Z, or RAR archive document opened directly by KiriView, navigation moves between all supported image files inside that archive document, including images in subdirectories.
 
@@ -52,27 +58,29 @@ When an image is displayed from a local directory document opened directly by Ki
 
 After the archive or directory document has been listed, page navigation uses all supported image files inside that document as its navigation target set.
 
-If the parent URL cannot be listed, the current image is not found, or no adjacent supported image exists, the current image remains open and the app remains ready for another open action.
+Video entries inside directly opened archive documents and directly opened directory documents are out of scope and do not participate in document navigation.
+
+If the parent URL cannot be listed, the current media item is not found, or no adjacent supported media item exists, the current media item remains open and the app remains ready for another open action.
 
 ## Sorting and Boundary Feedback
 
 The previous and next files are determined by sorting candidate names with the user's locale-aware file name order.
 
-For ordinary directory navigation, the candidate name is the file name.
+For ordinary direct media navigation, the candidate name is the file name.
 
 For archive and directory documents opened directly by KiriView, candidate names are document-relative paths such as `foo/a.jpg` and `bar/a.jpg`.
 
-Navigation does not wrap. Pressing Page Up on the first candidate or Page Down on the last candidate keeps the current image open and notifies the user that it is the first or last image.
+Navigation does not wrap. Pressing Page Up on the first candidate or Page Down on the last candidate keeps the current item open and notifies the user that it is the first or last media item in ordinary direct media scopes and the first or last image in archive or directory document scopes.
 
-KiriView shows those first-image and last-image notifications only when the current supported image list is known and the current image is at a known boundary.
+KiriView shows those first-item and last-item notifications only when the current supported list is known and the current item is at a known boundary.
 
 KiriView has one visible in-app toast notification slot.
 
 New toast requests replace the current toast and replay the entrance animation, including when the same message and scope are requested again while already visible.
 
-A first-image or last-image toast is scoped to the currently displayed image's known boundary.
+A first-item or last-item toast is scoped to the currently displayed item's known boundary.
 
-When the displayed image changes or is cleared, KiriView removes the current toast only if its scope is the image boundary. Non-boundary toasts such as file operation errors remain governed by normal replacement and timeout behavior.
+When the displayed item changes or is cleared, KiriView removes the current toast only if its scope is the boundary. Non-boundary toasts such as file operation errors remain governed by normal replacement and timeout behavior.
 
 ## Panning and Viewer Keys
 
@@ -84,13 +92,29 @@ While the page number or zoom input is not focused, the plain arrow keys are fix
 
 When an image is horizontally pannable at the current zoom, Left and Right pan the image within the available horizontal scroll bounds.
 
-When the current image is not horizontally pannable, Left opens the previous image and Right opens the next image with the same boundary behavior as the Previous and Next actions.
+When the current image is not horizontally pannable, Left opens the previous supported media item and Right opens the next supported media item with the same boundary behavior as the Previous and Next actions in an ordinary direct media scope.
 
-In Right-to-Left Reading mode, Left and Right keep physical horizontal panning while the image can pan horizontally, but their non-pannable image navigation fallback is reversed: Left opens the next image and Right opens the previous image.
+In video mode, Left opens the previous supported media item and Right opens the next supported media item in the ordinary direct media scope. They do not seek within the video.
+
+In Right-to-Left Reading mode, Left and Right keep physical horizontal panning while the image can pan horizontally, but their non-pannable ordinary direct media navigation fallback is reversed: Left opens the next supported media item and Right opens the previous supported media item.
 
 When an image is zoomed large enough to pan in any direction, Up and Down pan the image vertically within the available scroll bounds and have no image-navigation fallback. Ctrl+< moves the pan position to the top-left, Ctrl+> moves the pan position to the bottom-right, and the mouse cursor shows that the image can be dragged to pan.
 
-Keyboard panning and Left/Right image navigation are inactive while the page number or zoom input is focused.
+Keyboard panning and Left/Right viewer navigation are inactive while the page number or zoom input is focused.
+
+## Video Seeking
+
+Timeline dragging and scrubbing is the primary way to seek within the current video.
+
+If keyboard focus is inside the timeline control, that control may handle its own keyboard interaction.
+
+Video mode supports fixed local seek shortcuts: `Alt+Left` seeks backward 5 seconds, `Alt+Right` seeks forward 5 seconds, `Alt+Up` seeks forward 45 seconds, and `Alt+Down` seeks backward 45 seconds.
+
+Video seek shortcuts are video-mode-only and do not affect image mode, archive document mode, or directly opened directory document mode.
+
+Video seek shortcuts are best-effort time seeks through Qt Multimedia position seeking. They run only when the media is seekable, clamp to the valid `[0, duration]` range when duration is known, and do not promise frame-accurate seeking.
+
+The actual landed position may be adjusted by the Qt Multimedia backend, commonly to a nearby decodable or keyframe position.
 
 ## Scan Shortcuts
 

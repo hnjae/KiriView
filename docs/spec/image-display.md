@@ -4,21 +4,21 @@
 
 The UI remains responsive while a selected image is being opened.
 
-If no image is currently displayed, the UI shows a loading state.
+If no media item is currently displayed, the UI shows a loading state.
 
-If no image is selected, the empty state says that no image is selected and offers Open.
+If no media item is selected, the empty state says that no file is selected and offers Open.
 
-If the selected image cannot be opened while no image is displayed, the error state explains that the image could not be opened, shows the underlying error when available, and offers Open.
+If the selected image or video cannot be opened while no media item is displayed, the error state explains that the selected file could not be opened, shows the underlying error when available, and offers Open.
 
-If an image is already displayed, that image remains visible until the newly selected image is ready to replace it, with a compact loading indicator shown at the top-left of the image viewing area.
+If a media item is already displayed, that item remains visible until the newly selected image or video is ready to replace it, with a compact loading indicator shown at the top-left of the viewing area.
 
 If another file is selected before the previous load finishes, only the most recent selection is displayed.
 
 When a new image is selected while an image is already displayed, any running animation keeps playing until the replacement image is ready.
 
-If the selected URL cannot be read or the file is not a decodable image, the current image remains visible and the app reports the error without disrupting the view.
+If the selected URL cannot be read or the file is not a decodable image or playable video, the current media item remains visible and the app reports the error without disrupting the view.
 
-If no image is currently displayed, failures show an error state.
+If no media item is currently displayed, failures show an error state.
 
 If animation playback fails for the displayed image, the UI shows an error state and remains ready for another open action.
 
