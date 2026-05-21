@@ -8,9 +8,9 @@
 
 #include "apnganimationreader.h"
 
+#include "animationtiming.h"
 #include "apngframecomposer.h"
 #include "localization/imageerrortext.h"
-#include "presentation/imageanimationpolicy.h"
 
 #include <png.h>
 
@@ -35,8 +35,6 @@
 
 namespace {
 constexpr std::array<unsigned char, 8> pngSignature { 0x89, 'P', 'N', 'G', 0x0d, 0x0a, 0x1a, 0x0a };
-constexpr png_uint_16 apngDefaultDelayDenominator = 100;
-
 struct PngErrorContext {
     QString errorString;
 };
@@ -106,23 +104,9 @@ void readPngBytes(png_structp png, png_bytep output, png_size_t byteCount)
     cursor->offset += requested;
 }
 
-int loopCountForPlayCount(png_uint_32 playCount)
-{
-    if (playCount == 0) {
-        return -1;
-    }
-    return static_cast<int>(std::min<png_uint_32>(
-        playCount - 1, static_cast<png_uint_32>(std::numeric_limits<int>::max())));
-}
-
 int frameDelay(const FrameControl &control)
 {
-    const png_uint_16 denominator
-        = control.delayDen == 0 ? apngDefaultDelayDenominator : control.delayDen;
-    const std::uint64_t delay
-        = (static_cast<std::uint64_t>(control.delayNum) * 1000U) / denominator;
-    return static_cast<int>(
-        std::min(delay, static_cast<std::uint64_t>(std::numeric_limits<int>::max())));
+    return KiriView::apngFrameDelay(control.delayNum, control.delayDen);
 }
 
 KiriView::ApngFrameDisposeOp disposeOpFromPng(png_byte disposeOp)
@@ -235,7 +219,7 @@ public:
         result.status = ApngOpenStatus::Success;
         result.firstFrame = std::move(firstFrame->image);
         result.firstFrameDelay = firstFrame->delay;
-        result.loopCount = loopCountForPlayCount(playCount);
+        result.loopCount = apngLoopCountForPlayCount(playCount);
         result.frameCount = displayFrameCount();
         return result;
     }

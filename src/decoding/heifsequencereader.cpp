@@ -3,6 +3,7 @@
 
 #include "heifsequencereader.h"
 
+#include "animationtiming.h"
 #include "heifcontainer.h"
 #include "heifsupport.h"
 #include "localization/imageerrortext.h"

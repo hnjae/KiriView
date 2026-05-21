@@ -9,7 +9,6 @@
 namespace {
 constexpr int defaultAnimationFrameDelayMs = 100;
 constexpr int minimumAnimationFrameDelayMs = 10;
-constexpr std::uint64_t millisecondsPerSecond = 1000;
 }
 
 namespace KiriView {
@@ -50,19 +49,6 @@ int normalizedAnimationFrameDelay(int delayMs)
     }
 
     return std::max(delayMs, minimumAnimationFrameDelayMs);
-}
-
-int animationFrameDelayFromTimescale(std::uint32_t duration, std::uint32_t timescale)
-{
-    if (duration == 0 || timescale == 0) {
-        return 0;
-    }
-
-    const std::uint64_t delayMs
-        = (static_cast<std::uint64_t>(duration) * millisecondsPerSecond + timescale - 1)
-        / timescale;
-    return static_cast<int>(
-        std::min(delayMs, static_cast<std::uint64_t>(std::numeric_limits<int>::max())));
 }
 
 bool animationHasRemainingLoops(AnimationLoopState state)

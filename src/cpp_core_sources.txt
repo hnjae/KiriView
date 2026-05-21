@@ -4,6 +4,7 @@
 src/decoding/apnganimationreader.cpp
 src/decoding/apngframecomposer.cpp
 src/decoding/apngrgbabuffer.cpp
+src/decoding/animationtiming.cpp
 src/decoding/decodedimageresult.cpp
 src/rendering/decodedtilecache.cpp
 src/application/applicationactionregistry.cpp

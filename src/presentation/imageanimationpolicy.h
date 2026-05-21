@@ -4,8 +4,6 @@
 #ifndef KIRIVIEW_IMAGEANIMATIONPOLICY_H
 #define KIRIVIEW_IMAGEANIMATIONPOLICY_H
 
-#include <cstdint>
-
 namespace KiriView {
 struct AnimationLoopState {
     int loopCount = 0;
@@ -51,7 +49,6 @@ private:
 };
 
 int normalizedAnimationFrameDelay(int delayMs);
-int animationFrameDelayFromTimescale(std::uint32_t duration, std::uint32_t timescale);
 bool animationHasRemainingLoops(AnimationLoopState state);
 AnimationLoopAdvance advanceAnimationLoop(AnimationLoopState state);
 }

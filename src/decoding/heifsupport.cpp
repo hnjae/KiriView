@@ -4,7 +4,6 @@
 #include "heifsupport.h"
 
 #include "localization/imageerrortext.h"
-#include "presentation/imageanimationpolicy.h"
 #include "rendering/imagerendering.h"
 
 #include <QColorSpace>
@@ -169,8 +168,4 @@ std::optional<QImage> qImageFromHeifImage(const heif_image *heifImage, QString *
     return displayReadyImage(image);
 }
 
-int heifFrameDelay(std::uint32_t duration, std::uint32_t timescale)
-{
-    return animationFrameDelayFromTimescale(duration, timescale);
-}
 }

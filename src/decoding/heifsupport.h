@@ -168,7 +168,6 @@ struct HeifPrimaryImage {
 // The input data must outlive the returned context because libheif reads it without copying.
 std::optional<HeifPrimaryImage> openHeifPrimaryImage(const QByteArray &data, QString *errorString);
 std::optional<QImage> qImageFromHeifImage(const heif_image *heifImage, QString *errorString);
-int heifFrameDelay(std::uint32_t duration, std::uint32_t timescale);
 }
 
 #endif
