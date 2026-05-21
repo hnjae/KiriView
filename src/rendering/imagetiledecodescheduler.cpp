@@ -31,16 +31,9 @@ void ImageTileDecodeScheduler::schedule(
     const std::shared_ptr<DisplayedImageSurface> &displayedSurface, const QSizeF &displaySize,
     const QRectF &visibleItemRect, const ImageDocumentRenderContext &context, int rotationDegrees)
 {
-    const ImageTileDecodeScheduleState scheduleState
-        = m_decodeState.beginSchedule(displayedSurface);
-    ImageTileDecodePlan plan = imageTileDecodePlan(displayedSurface, displaySize, visibleItemRect,
-        context, rotationDegrees, scheduleState.exclusions);
+    const ImageTileDecodeSchedulePlan plan = imageTileDecodeSchedulePlan(
+        m_decodeState, displayedSurface, displaySize, visibleItemRect, context, rotationDegrees);
     if (plan.isEmpty()) {
-        return;
-    }
-
-    plan.requests = m_decodeState.startRequests(scheduleState.generation, std::move(plan.requests));
-    if (plan.requests.empty()) {
         return;
     }
 
@@ -56,7 +49,7 @@ void ImageTileDecodeScheduler::schedule(
                 std::optional<DecodedTile> tile = source->decodeTile(request, &errorString);
                 return tile;
             },
-            [this, lifetime, generation = scheduleState.generation, key](
+            [this, lifetime, generation = plan.generation, key](
                 std::optional<DecodedTile> tile) mutable {
                 if (lifetime.expired()) {
                     return;

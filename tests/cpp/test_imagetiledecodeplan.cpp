@@ -111,6 +111,7 @@ private Q_SLOTS:
     void visibleStaticTilesBecomeDecodeRequests();
     void firstDisplayHintSuppressesUnneededRequests();
     void existingPendingAndFailedTilesAreFiltered();
+    void schedulePlanCommitsAcceptedRequestsToDecodeState();
     void svgScaleBucketKeysChangeOnlyAcrossBucketBoundary();
 };
 
@@ -170,6 +171,27 @@ void TestImageTileDecodePlan::existingPendingAndFailedTilesAreFiltered()
     QVERIFY(!containsRequestForKey(filteredPlan, pendingKey));
     QVERIFY(!containsRequestForKey(filteredPlan, failedKey));
     QCOMPARE(filteredPlan.requests.size(), initialPlan.requests.size() - 3);
+}
+
+void TestImageTileDecodePlan::schedulePlanCommitsAcceptedRequestsToDecodeState()
+{
+    KiriView::ImageTileDecodeState state;
+    const auto surface = testSurface(QSize(2048, 1024));
+
+    const KiriView::ImageTileDecodeSchedulePlan initialPlan
+        = KiriView::imageTileDecodeSchedulePlan(state, surface, QSizeF(2048.0, 1024.0),
+            QRectF(0.0, 0.0, 2048.0, 1024.0), KiriView::ImageDocumentRenderContext {}, 0);
+
+    QVERIFY(!initialPlan.isEmpty());
+    QVERIFY(initialPlan.generation > 0);
+    QVERIFY(initialPlan.source != nullptr);
+
+    const KiriView::ImageTileDecodeSchedulePlan duplicatePlan
+        = KiriView::imageTileDecodeSchedulePlan(state, surface, QSizeF(2048.0, 1024.0),
+            QRectF(0.0, 0.0, 2048.0, 1024.0), KiriView::ImageDocumentRenderContext {}, 0);
+    QVERIFY(duplicatePlan.isEmpty());
+
+    QVERIFY(state.finish(initialPlan.generation, initialPlan.requests.front().key));
 }
 
 void TestImageTileDecodePlan::svgScaleBucketKeysChangeOnlyAcrossBucketBoundary()

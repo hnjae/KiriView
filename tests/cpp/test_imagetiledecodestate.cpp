@@ -40,7 +40,8 @@ void TestImageTileDecodeState::surfaceChangeOwnsGenerationAndClearsRequestState(
     const quint64 firstGeneration = firstSchedule.generation;
     QVERIFY(firstSchedule.exclusions.pendingTileKeys.isEmpty());
     QVERIFY(firstSchedule.exclusions.failedTileKeys.isEmpty());
-    QCOMPARE(state.startRequests(firstGeneration, { tileRequest(key) }).size(), std::size_t(1));
+    QCOMPARE(
+        state.commitScheduleRequests(firstSchedule, { tileRequest(key) }).size(), std::size_t(1));
     QVERIFY(state.finish(firstGeneration, key));
     state.fail(key);
     QVERIFY(state.beginSchedule(firstSurface).exclusions.contains(key));
@@ -73,7 +74,7 @@ void TestImageTileDecodeState::requestStartCommitsOnlyAcceptedScheduleWork()
     };
 
     std::vector<KiriView::TileRequest> accepted
-        = state.startRequests(schedule.generation, std::move(requests));
+        = state.commitScheduleRequests(schedule, std::move(requests));
 
     QCOMPARE(accepted.size(), std::size_t(2));
     QCOMPARE(accepted.at(0).key, firstKey);
@@ -81,8 +82,10 @@ void TestImageTileDecodeState::requestStartCommitsOnlyAcceptedScheduleWork()
     QVERIFY(state.beginSchedule(surface).exclusions.pendingTileKeys.contains(firstKey));
     QVERIFY(state.beginSchedule(surface).exclusions.pendingTileKeys.contains(secondKey));
     QVERIFY(state.beginSchedule(surface).exclusions.failedTileKeys.contains(failedKey));
+    KiriView::ImageTileDecodeScheduleState staleSchedule = schedule;
+    staleSchedule.generation += 1;
     QVERIFY(
-        state.startRequests(schedule.generation + 1, { tileRequest(KiriView::TileKey { 0, 2, 0 }) })
+        state.commitScheduleRequests(staleSchedule, { tileRequest(KiriView::TileKey { 0, 2, 0 }) })
             .empty());
 }
 
@@ -93,7 +96,9 @@ void TestImageTileDecodeState::invalidateRejectsPendingRequests()
     const KiriView::TileKey key { 0, 0, 0 };
     const quint64 generation = state.beginSchedule(surface).generation;
 
-    QCOMPARE(state.startRequests(generation, { tileRequest(key) }).size(), std::size_t(1));
+    QCOMPARE(
+        state.commitScheduleRequests(state.beginSchedule(surface), { tileRequest(key) }).size(),
+        std::size_t(1));
     state.invalidate();
 
     QVERIFY(!state.finish(generation, key));

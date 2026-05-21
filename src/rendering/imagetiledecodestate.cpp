@@ -29,17 +29,18 @@ ImageTileDecodeScheduleState ImageTileDecodeState::beginSchedule(
     return ImageTileDecodeScheduleState { m_generation.current(), exclusions() };
 }
 
-std::vector<TileRequest> ImageTileDecodeState::startRequests(
-    quint64 generation, std::vector<TileRequest> requests)
+std::vector<TileRequest> ImageTileDecodeState::commitScheduleRequests(
+    const ImageTileDecodeScheduleState &schedule, std::vector<TileRequest> requests)
 {
-    if (!m_generation.accepts(generation)) {
+    if (!m_generation.accepts(schedule.generation)) {
         return {};
     }
 
     std::vector<TileRequest> acceptedRequests;
     acceptedRequests.reserve(requests.size());
     for (TileRequest &request : requests) {
-        if (m_pendingTileKeys.contains(request.key) || m_failedTileKeys.contains(request.key)) {
+        if (schedule.exclusions.contains(request.key) || m_pendingTileKeys.contains(request.key)
+            || m_failedTileKeys.contains(request.key)) {
             continue;
         }
 

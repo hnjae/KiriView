@@ -31,7 +31,8 @@ public:
     void invalidate();
     ImageTileDecodeScheduleState beginSchedule(
         const std::shared_ptr<DisplayedImageSurface> &surface);
-    std::vector<TileRequest> startRequests(quint64 generation, std::vector<TileRequest> requests);
+    std::vector<TileRequest> commitScheduleRequests(
+        const ImageTileDecodeScheduleState &schedule, std::vector<TileRequest> requests);
     bool finish(quint64 generation, const TileKey &key);
     void fail(const TileKey &key);
 
