@@ -30,6 +30,8 @@ Opening a video after an image must not route the video through `KiriImageDocume
 
 Opening an image after a video restores image behavior.
 
+The top-level document session owns the active document kind for direct image and video routing. Its public source URL follows the same user-facing identity as the active image or video document: assigning it starts an open request, successful opens expose the original direct media URL, replacement failures keep the previously displayed direct URL, initial failures may keep the failed request as error context, and resolver-local playback URLs are never exposed as the session source.
+
 ## Ordinary Direct Media URL Scope
 
 An ordinary direct media URL scope is the non-recursive parent URL of the active direct media URL.
@@ -45,6 +47,8 @@ Direct KDE archive-entry URLs use this direct URL branch unless KiriView has exp
 Supported image files and supported direct video files share one locale-aware sibling order in ordinary direct media URL scopes.
 
 Adjacent media navigation is non-recursive, does not wrap, and uses the same boundary-feedback model as image navigation. Boundary feedback in a media-aware scope uses neutral first-media-item and last-media-item wording rather than calling every boundary item an image.
+
+The top-level document session exposes whether adjacent Previous and Next should dispatch through media navigation. This is true in video mode and in image mode only when the active image belongs to an ordinary direct media URL scope; archive document and directly opened directory document image scopes keep image-only navigation dispatch.
 
 ## Playback
 
@@ -89,3 +93,5 @@ If deletion is canceled, the current video remains open and no notification is s
 If deletion fails, the current video remains open and the file operation error is shown as an in-app toast notification.
 
 After successful video deletion, playback stops and KiriView opens the next supported media item in the current ordinary media scope when possible, falls back to the previous supported media item when no next item exists, and otherwise returns to empty state.
+
+In image mode, ordinary direct media deletion uses the same media-aware fallback order, so deleting an image can open a neighboring supported video. Archive document and directly opened directory document image deletion keep their image and document-specific fallback behavior.
