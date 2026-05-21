@@ -34,7 +34,7 @@ Item {
         if (availabilityRevision < 0) {
             return false;
         }
-        return actionAvailability.shortcutsEnabledForScope(shortcutScope);
+        return root.actionAvailability.shortcutsEnabledForScope(shortcutScope);
     }
 
     function panBy(deltaX, deltaY) {
@@ -98,22 +98,22 @@ Item {
     }
 
     function handleHorizontalArrow(leftArrow) {
-        const action = navigationPolicy.horizontalArrowAction(leftArrow, actionAvailability.imageHorizontallyPannable, actionAvailability.rightToLeftReadingActive);
+        const action = navigationPolicy.horizontalArrowAction(leftArrow, root.actionAvailability.imageHorizontallyPannable, root.actionAvailability.rightToLeftReadingActive);
         root.applyHorizontalArrowAction(action);
     }
 
     function handleSinglePageArrow(leftArrow) {
-        const action = navigationPolicy.singlePageArrowAction(leftArrow, actionAvailability.rightToLeftReadingActive);
+        const action = navigationPolicy.singlePageArrowAction(leftArrow, root.actionAvailability.rightToLeftReadingActive);
         root.applySinglePageArrowAction(action);
     }
 
     function scanForward() {
-        const action = navigationPolicy.scanForwardAction(actionAvailability.imagePannable, actionAvailability.imagePannable && root.imageViewport.scanForward());
+        const action = navigationPolicy.scanForwardAction(root.actionAvailability.imagePannable, root.actionAvailability.imagePannable && root.imageViewport.scanForward());
         root.applyScanAction(action);
     }
 
     function scanBackward() {
-        const action = navigationPolicy.scanBackwardAction(actionAvailability.imagePannable, actionAvailability.imagePannable && root.imageViewport.scanBackward(), actionAvailability.atKnownFirstImage, root.imageDocument.currentPageNumber);
+        const action = navigationPolicy.scanBackwardAction(root.actionAvailability.imagePannable, root.actionAvailability.imagePannable && root.imageViewport.scanBackward(), root.actionAvailability.atKnownFirstImage, root.imageDocument.currentPageNumber);
         root.applyScanAction(action);
     }
 
@@ -138,13 +138,13 @@ Item {
             actionIds: modelData.actionIds
             application: root.application
             shortcutFilter: modelData.shortcutFilter
-            shortcutsEnabled: root.shortcutsEnabledForScope(modelData.shortcutScope, actionAvailability.availabilityRevision)
+            shortcutsEnabled: root.shortcutsEnabledForScope(modelData.shortcutScope, root.actionAvailability.availabilityRevision)
         }
     }
 
     Shortcut {
         context: Qt.WindowShortcut
-        enabled: actionAvailability.helpShortcutsEnabled
+        enabled: root.actionAvailability.helpShortcutsEnabled
         sequence: "Ctrl+M"
 
         onActivated: root.showMenubarQAction.trigger()
@@ -152,7 +152,7 @@ Item {
 
     Shortcut {
         context: Qt.WindowShortcut
-        enabled: actionAvailability.readyViewerShortcutsEnabled
+        enabled: root.actionAvailability.readyViewerShortcutsEnabled
         sequence: "Left"
 
         onActivated: root.handleHorizontalArrow(true)
@@ -160,7 +160,7 @@ Item {
 
     Shortcut {
         context: Qt.WindowShortcut
-        enabled: actionAvailability.readyViewerShortcutsEnabled
+        enabled: root.actionAvailability.readyViewerShortcutsEnabled
         sequence: "Right"
 
         onActivated: root.handleHorizontalArrow(false)
@@ -168,7 +168,7 @@ Item {
 
     Shortcut {
         context: Qt.WindowShortcut
-        enabled: actionAvailability.twoPageViewerShortcutsEnabled
+        enabled: root.actionAvailability.twoPageViewerShortcutsEnabled
         sequence: "Shift+Left"
 
         onActivated: root.handleSinglePageArrow(true)
@@ -176,7 +176,7 @@ Item {
 
     Shortcut {
         context: Qt.WindowShortcut
-        enabled: actionAvailability.twoPageViewerShortcutsEnabled
+        enabled: root.actionAvailability.twoPageViewerShortcutsEnabled
         sequence: "Shift+Right"
 
         onActivated: root.handleSinglePageArrow(false)
@@ -184,7 +184,7 @@ Item {
 
     Shortcut {
         context: Qt.WindowShortcut
-        enabled: actionAvailability.pannableViewerShortcutsEnabled
+        enabled: root.actionAvailability.pannableViewerShortcutsEnabled
         sequence: "Up"
 
         onActivated: root.panBy(0, -root.keyboardPanDistance)
@@ -192,7 +192,7 @@ Item {
 
     Shortcut {
         context: Qt.WindowShortcut
-        enabled: actionAvailability.pannableViewerShortcutsEnabled
+        enabled: root.actionAvailability.pannableViewerShortcutsEnabled
         sequence: "Down"
 
         onActivated: root.panBy(0, root.keyboardPanDistance)
