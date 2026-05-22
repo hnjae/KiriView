@@ -54,7 +54,7 @@ The top-level document session exposes whether adjacent Previous and Next should
 
 ## Playback
 
-Opening a video does not autoplay by default.
+Opening a video starts playback automatically.
 
 Video mode shows a video viewport and a Kirigami floating playback panel over the bottom of the video.
 
@@ -65,6 +65,8 @@ Video mode keeps image-only toolbar controls visible in their image-mode positio
 Video mode shows a read-only zoom percentage when the video frame size and displayed video content rectangle are known. The value is the current fitted display size in physical pixels relative to the video's intrinsic frame size. When the percentage is unknown, the read-only zoom control displays `--%`. Users cannot edit this value or use image zoom actions for video.
 
 The floating playback panel includes play/pause, timeline position selection and scrubbing, duration and position display, and a disabled non-interactive timeline state when the media is not seekable.
+
+When video playback reaches the natural end of the media, KiriView leaves the final decoded frame visible and stops playback at the final position. Pressing Play from that ended state restarts playback from the beginning when seeking is available.
 
 The floating playback panel must not reserve page layout height and must remain usable in fullscreen.
 
