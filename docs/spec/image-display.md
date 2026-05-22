@@ -100,6 +100,8 @@ Rotation is unavailable while Two-Page Spread is enabled. Enabling Two-Page Spre
 
 The toolbar provides a zoom percentage input.
 
+When a direct video is ready, the toolbar provides a read-only zoom percentage for the fitted video display when KiriView can determine the intrinsic video frame size and current displayed content size.
+
 When an image is ready, users can enter manual zoom values from 10% through a dynamic maximum that keeps the displayed image within the application's supported display size.
 
 The maximum manual zoom is never lower than the normal Fit zoom percentage.

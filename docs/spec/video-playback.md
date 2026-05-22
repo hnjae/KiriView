@@ -56,6 +56,10 @@ Opening a video does not autoplay by default.
 
 Video mode shows a video viewport and a Kirigami floating playback panel over the bottom of the video.
 
+The regular toolbar remains available in video mode for application menu access and ordinary direct media navigation. It shows Previous and Next controls, the current media item number, and the total supported media item count for the ordinary direct media URL scope when that list is known.
+
+Video mode shows a read-only zoom percentage when the video frame size and displayed video content rectangle are known. The value is the current fitted display size in physical pixels relative to the video's intrinsic frame size. Users cannot edit this value or use image zoom actions for video.
+
 The floating playback panel includes play/pause, timeline position selection and scrubbing, duration and position display, and a disabled non-interactive timeline state when the media is not seekable.
 
 The floating playback panel must not reserve page layout height and must remain usable in fullscreen.

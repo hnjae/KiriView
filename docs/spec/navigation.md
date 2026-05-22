@@ -4,6 +4,8 @@
 
 The toolbar provides page navigation with Previous and Next actions, the current page number, the total number of supported items in the current scope after that scope's supported list has been confirmed, and editable page number entry.
 
+For ordinary direct media URL scopes, the page navigation controls count and select supported images and direct videos together. For archive document and directly opened directory document scopes, the page navigation controls keep their existing image-only document page behavior.
+
 First and Last are page navigation actions available through their configured shortcuts and menus. They open the first or last known page or media item in the current scope.
 
 The Previous action is disabled on the first item, and the Next action is disabled on the last item.
