@@ -3,7 +3,6 @@
 
 #include "applicationruntime.h"
 
-#include "kiriview/src/policy/applicationruntime.cxx.h"
 #include "localization/localization.h"
 
 #include <QApplication>
@@ -28,20 +27,6 @@ void setupDefaultQuickStyle()
         QQuickStyle::setStyle(QStringLiteral("org.kde.desktop"));
     }
 }
-
-QUrl validInitialSourceUrl(const QUrl &url)
-{
-    if (url.isEmpty() || !url.isValid()) {
-        return QUrl();
-    }
-
-    return url;
-}
-
-QString rustStringToQString(const rust::String &text)
-{
-    return QString::fromUtf8(text.data(), static_cast<qsizetype>(text.size()));
-}
 }
 
 namespace KiriView {
@@ -52,23 +37,8 @@ void initializeApplicationRuntime()
     setupDefaultQuickStyle();
 }
 
-QUrl initialSourceUrlFromStartupSource(const ApplicationStartupSource &source)
-{
-    const QString text = rustStringToQString(source.text);
-    switch (source.kind) {
-    case ApplicationStartupSourceKind::None:
-        return QUrl();
-    case ApplicationStartupSourceKind::LocalFilePath:
-        return validInitialSourceUrl(QUrl::fromLocalFile(text));
-    case ApplicationStartupSourceKind::UrlText:
-        return validInitialSourceUrl(QUrl(text));
-    }
-
-    return QUrl();
-}
-
 void loadApplicationMainQml(
-    QQmlApplicationEngine &engine, const ApplicationStartupSource &startupSource)
+    QQmlApplicationEngine &engine, const ApplicationInitialSource &startupSource)
 {
     setupLocalizedContext(engine);
 
@@ -82,7 +52,7 @@ void loadApplicationMainQml(
     engine.load(QUrl(QStringLiteral("qrc:/qt/qml/io/github/hnjae/kiriview/src/qml/Main.qml")));
 }
 
-int runApplication(const ApplicationStartupSource &startupSource)
+int runApplication(const ApplicationInitialSource &startupSource)
 {
     std::array<char, 9> applicationName { 'k', 'i', 'r', 'i', 'v', 'i', 'e', 'w', '\0' };
     char *arguments[] = { applicationName.data() };

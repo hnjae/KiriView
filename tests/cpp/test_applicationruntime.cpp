@@ -3,24 +3,16 @@
 
 #include "application/applicationruntime.h"
 
-#include "kiriview/src/policy/applicationruntime.cxx.h"
-
-#include <QByteArray>
 #include <QObject>
 #include <QString>
 #include <QTest>
 #include <QUrl>
-#include <string>
 
 namespace {
-KiriView::ApplicationStartupSource startupSource(
-    KiriView::ApplicationStartupSourceKind kind, const QString &text = {})
+KiriView::ApplicationInitialSource startupSource(
+    KiriView::ApplicationInitialSourceKind kind, const QString &text = {})
 {
-    const QByteArray utf8Text = text.toUtf8();
-    return KiriView::ApplicationStartupSource {
-        kind,
-        rust::String(std::string(utf8Text.constData(), static_cast<std::size_t>(utf8Text.size()))),
-    };
+    return KiriView::ApplicationInitialSource { kind, text };
 }
 }
 
@@ -38,7 +30,7 @@ private Q_SLOTS:
 void TestApplicationRuntime::startupSourceUrlIsEmptyWithoutSource()
 {
     const QUrl url = KiriView::initialSourceUrlFromStartupSource(
-        startupSource(KiriView::ApplicationStartupSourceKind::None));
+        startupSource(KiriView::ApplicationInitialSourceKind::None));
 
     QVERIFY(url.isEmpty());
 }
@@ -48,7 +40,7 @@ void TestApplicationRuntime::startupSourceUrlUsesLocalFilePath()
     const QString path = QStringLiteral("/tmp/kiriview/image.png");
 
     const QUrl url = KiriView::initialSourceUrlFromStartupSource(
-        startupSource(KiriView::ApplicationStartupSourceKind::LocalFilePath, path));
+        startupSource(KiriView::ApplicationInitialSourceKind::LocalFilePath, path));
 
     QVERIFY(url.isValid());
     QVERIFY(url.isLocalFile());
@@ -58,7 +50,7 @@ void TestApplicationRuntime::startupSourceUrlUsesLocalFilePath()
 void TestApplicationRuntime::startupSourceUrlUsesUrlText()
 {
     const QUrl url = KiriView::initialSourceUrlFromStartupSource(
-        startupSource(KiriView::ApplicationStartupSourceKind::UrlText,
+        startupSource(KiriView::ApplicationInitialSourceKind::UrlText,
             QStringLiteral("https://example.invalid/image.png")));
 
     QVERIFY(url.isValid());
@@ -68,7 +60,7 @@ void TestApplicationRuntime::startupSourceUrlUsesUrlText()
 void TestApplicationRuntime::startupSourceUrlRejectsEmptyUrlText()
 {
     const QUrl url = KiriView::initialSourceUrlFromStartupSource(
-        startupSource(KiriView::ApplicationStartupSourceKind::UrlText));
+        startupSource(KiriView::ApplicationInitialSourceKind::UrlText));
 
     QVERIFY(url.isEmpty());
 }

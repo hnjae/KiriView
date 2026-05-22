@@ -10,8 +10,10 @@ src/rendering/decodedtilecache.cpp
 src/application/applicationactionregistry.cpp
 src/application/applicationactionruntime.cpp
 src/application/applicationmenupresentationruntime.cpp
+src/application/applicationruntimebridge.cpp
 src/application/applicationshortcutruntime.cpp
 src/application/applicationruntime.cpp
+src/application/applicationstartupsource.cpp
 src/archive/archivebackend.cpp
 src/archive/archivebackend_directory.cpp
 src/archive/archivebackend_karchive.cpp
@@ -23,6 +25,7 @@ src/archive/archivedocumentsessionrunner.cpp
 src/archive/archiveformat.cpp
 src/archive/archivepath.cpp
 src/decoding/bufferedimagereader.cpp
+src/bridge/applicationstartupsourceconversion.cpp
 src/presentation/displayedimagestate.cpp
 src/document/filedeletion.cpp
 src/document/imageremovalfallback.cpp

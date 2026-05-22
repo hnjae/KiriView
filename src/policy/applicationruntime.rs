@@ -17,10 +17,10 @@ mod ffi {
     }
 
     unsafe extern "C++" {
-        include!("application/applicationruntime.h");
+        include!("application/applicationruntimebridge.h");
 
-        #[cxx_name = "runApplication"]
-        fn run_application(startup_source: &ApplicationStartupSource) -> i32;
+        #[cxx_name = "runApplicationFromBridge"]
+        fn run_application_from_bridge(startup_source: &ApplicationStartupSource) -> i32;
     }
 }
 
@@ -44,7 +44,7 @@ pub fn application_startup_source(source: Option<StartupSource>) -> ApplicationS
 }
 
 pub fn run_application(startup_source: &ApplicationStartupSource) -> i32 {
-    ffi::run_application(startup_source)
+    ffi::run_application_from_bridge(startup_source)
 }
 
 #[cfg(test)]
