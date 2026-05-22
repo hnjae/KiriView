@@ -128,9 +128,7 @@ bool DocumentSessionRuntime::displayedFileDeletionAvailable() const
 
 bool DocumentSessionRuntime::fileDeletionInProgress() const
 {
-    return m_state.fileDeletionInProgress()
-        || (m_state.documentKind() == DocumentSessionKind::Image
-            && m_imageDocument.fileDeletionInProgress());
+    return m_state.fileDeletionInProgress();
 }
 
 bool DocumentSessionRuntime::mediaNavigationActive() const
@@ -240,8 +238,7 @@ void DocumentSessionRuntime::deleteDisplayedFile(FileDeletionMode mode)
         m_imageDocument.deleteDisplayedFile(mode == FileDeletionMode::MoveToTrash
                 ? KiriImageDocument::DeletionMode::MoveToTrash
                 : KiriImageDocument::DeletionMode::DeletePermanently);
-        m_state.publish({ DocumentSessionChange::FileDeletionInProgress,
-            DocumentSessionChange::FileDeletionAvailability });
+        syncImageDocumentFileDeletionProgress();
         return;
     }
 
@@ -274,11 +271,8 @@ void DocumentSessionRuntime::connectDocuments()
         m_state.publish({ DocumentSessionChange::MediaNavigationAvailability,
             DocumentSessionChange::FileDeletionAvailability });
     });
-    QObject::connect(
-        &m_imageDocument, &KiriImageDocument::fileDeletionInProgressChanged, m_owner, [this]() {
-            m_state.publish({ DocumentSessionChange::FileDeletionInProgress,
-                DocumentSessionChange::FileDeletionAvailability });
-        });
+    QObject::connect(&m_imageDocument, &KiriImageDocument::fileDeletionInProgressChanged, m_owner,
+        [this]() { syncImageDocumentFileDeletionProgress(); });
 
     QObject::connect(&m_videoDocument, &KiriVideoDocument::sourceUrlChanged, m_owner,
         [this]() { syncFromVideoDocument(); });
@@ -288,6 +282,15 @@ void DocumentSessionRuntime::connectDocuments()
         [this]() { m_state.publish(DocumentSessionChange::WindowTitleFileName); });
     QObject::connect(&m_videoDocument, &KiriVideoDocument::errorStringChanged, m_owner,
         [this]() { m_state.publish(DocumentSessionChange::ErrorString); });
+}
+
+void DocumentSessionRuntime::syncImageDocumentFileDeletionProgress()
+{
+    if (m_state.documentKind() != DocumentSessionKind::Image || activeImageUsesMediaScope()) {
+        return;
+    }
+
+    m_state.setFileDeletionInProgress(m_imageDocument.fileDeletionInProgress());
 }
 
 void DocumentSessionRuntime::routeSourceUrl(const QUrl &sourceUrl)

@@ -65,6 +65,7 @@ public:
 
 private:
     void connectDocuments();
+    void syncImageDocumentFileDeletionProgress();
     void routeSourceUrl(const QUrl &sourceUrl);
     void openMediaUrl(const QUrl &url);
     void leaveVideoMode();
