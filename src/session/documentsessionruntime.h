@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_DOCUMENTSESSIONRUNTIME_H
 #define KIRIVIEW_DOCUMENTSESSIONRUNTIME_H
 
+#include "async/imageasyncoperationstate.h"
 #include "async/imageiojob.h"
 #include "document/filedeletion.h"
 #include "document/imagedocumentruntimedependencies.h"
@@ -82,9 +83,10 @@ private:
     void scheduleMediaPredecode(const std::vector<MediaNavigationCandidate> &candidates);
     std::vector<DisplayedPredecodeImage> displayedPredecodeImages() const;
     ImageFirstDisplayDecodeContext firstDisplayDecodeContext() const;
+    void cancelMediaDeletion();
     void startMediaDeletion(
         FileDeletionMode mode, std::vector<MediaNavigationCandidate> candidates = {});
-    void finishMediaDeletion(const MediaDeletionFallbackPlan &fallbackPlan,
+    void finishMediaDeletion(quint64 operationId, const MediaDeletionFallbackPlan &fallbackPlan,
         FileDeletionResult result, const QString &errorString);
     QUrl currentMediaUrl() const;
     bool activeImageUsesMediaScope() const;
@@ -100,6 +102,7 @@ private:
     ImageIoJob m_mediaCandidateJob;
     DocumentSessionMediaCandidateLoadState m_mediaCandidateLoadState;
     ImageIoJob m_fileDeletionJob;
+    ImageAsyncOperationState m_fileDeletionOperation;
     bool m_routingSource = false;
 };
 }

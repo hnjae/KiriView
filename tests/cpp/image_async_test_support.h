@@ -253,9 +253,24 @@ public:
 
     const ManualFileOperation &backOperation() const { return *m_operations.back(); }
 
+    ManualFileOperation &operationAt(std::size_t index) { return *m_operations.at(index); }
+
+    const ManualFileOperation &operationAt(std::size_t index) const
+    {
+        return *m_operations.at(index);
+    }
+
     void finishBackOperation(FileDeletionResult result, const QString &errorString = QString())
     {
         finishOperation(m_operations.back(), result, errorString);
+    }
+
+    void deliverOperationAtIgnoringCancellation(
+        std::size_t index, FileDeletionResult result, const QString &errorString = QString())
+    {
+        if (m_operations.at(index)->callback) {
+            m_operations.at(index)->callback(result, errorString);
+        }
     }
 
 private:

@@ -165,6 +165,7 @@ private Q_SLOTS:
     void directImageDeletionCanOpenVideoFallback();
     void videoDeletionUsesOriginalUrlAndOpensMediaFallback();
     void canceledVideoDeletionKeepsCurrentVideo();
+    void staleVideoDeletionCompletionAfterSourceChangeIsIgnored();
 };
 
 void TestKiriDocumentSession::directVideoRoutesToVideoDocumentWithOriginalSource()
@@ -482,6 +483,42 @@ void TestKiriDocumentSession::canceledVideoDeletionKeepsCurrentVideo()
     QCOMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Video);
     QCOMPARE(session->sourceUrl(), clip);
     QCOMPARE(session->videoDocument()->sourceUrl(), clip);
+    QCOMPARE(session->errorString(), QString());
+}
+
+void TestKiriDocumentSession::staleVideoDeletionCompletionAfterSourceChangeIsIgnored()
+{
+    FakeMediaCandidateProvider mediaProvider;
+    KiriView::TestSupport::ManualFileOperationProvider fileOperations;
+    const QUrl firstClip = localUrl(QStringLiteral("/first/01.mov"));
+    const QUrl staleFallback = localUrl(QStringLiteral("/first/02.png"));
+    const QUrl secondClip = localUrl(QStringLiteral("/second/01.mov"));
+    mediaProvider.setMedia(localUrl(QStringLiteral("/first/")),
+        { mediaCandidate(firstClip), mediaCandidate(staleFallback) });
+    mediaProvider.setMedia(localUrl(QStringLiteral("/second/")), { mediaCandidate(secondClip) });
+    std::unique_ptr<KiriDocumentSession> session = createSession(mediaProvider, &fileOperations);
+    session->setSourceUrl(firstClip);
+
+    session->deleteDisplayedFile(KiriDocumentSession::DeletionMode::MoveToTrash);
+
+    QCOMPARE(fileOperations.operationCount(), std::size_t(1));
+    QCOMPARE(fileOperations.operationAt(0).request.targetUrl, firstClip);
+    QVERIFY(session->fileDeletionInProgress());
+
+    session->setSourceUrl(secondClip);
+
+    QCOMPARE(session->sourceUrl(), secondClip);
+    QCOMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Video);
+    QVERIFY(!session->fileDeletionInProgress());
+    QVERIFY(fileOperations.operationAt(0).canceled);
+
+    fileOperations.deliverOperationAtIgnoringCancellation(
+        0, KiriView::FileDeletionResult::Succeeded);
+
+    QCOMPARE(session->sourceUrl(), secondClip);
+    QCOMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Video);
+    QCOMPARE(session->videoDocument()->sourceUrl(), secondClip);
+    QVERIFY(!session->fileDeletionInProgress());
     QCOMPARE(session->errorString(), QString());
 }
 

@@ -67,6 +67,7 @@ DocumentSessionRuntime::~DocumentSessionRuntime()
 {
     m_mediaCandidateJob.cancel();
     m_fileDeletionJob.cancel();
+    m_fileDeletionOperation.cancel();
 }
 
 QUrl DocumentSessionRuntime::sourceUrl() const { return m_state.sourceUrl(); }
@@ -298,6 +299,7 @@ void DocumentSessionRuntime::routeSourceUrl(const QUrl &sourceUrl)
     m_state.setSessionErrorString(QString());
     m_mediaCandidateJob.cancel();
     m_mediaCandidateLoadState.cancel();
+    cancelMediaDeletion();
 
     if (sourceUrl.isEmpty()) {
         m_routingSource = true;
@@ -482,6 +484,19 @@ ImageFirstDisplayDecodeContext DocumentSessionRuntime::firstDisplayDecodeContext
     return m_imageDocument.firstDisplayDecodeContext();
 }
 
+void DocumentSessionRuntime::cancelMediaDeletion()
+{
+    const bool sessionMediaDeletionInProgress
+        = m_state.fileDeletionInProgress() && mediaNavigationActive();
+    if (!m_fileDeletionOperation.active() && !sessionMediaDeletionInProgress) {
+        return;
+    }
+
+    m_fileDeletionJob.cancel();
+    m_fileDeletionOperation.cancel();
+    m_state.setFileDeletionInProgress(false);
+}
+
 void DocumentSessionRuntime::startMediaDeletion(
     FileDeletionMode mode, std::vector<MediaNavigationCandidate> candidates)
 {
@@ -494,15 +509,21 @@ void DocumentSessionRuntime::startMediaDeletion(
     const MediaDeletionFallbackPlan fallbackPlan
         = mediaDeletionFallbackPlan(std::move(candidates), targetUrl);
     m_fileDeletionJob.cancel();
+    const quint64 operationId = m_fileDeletionOperation.start();
     m_fileDeletionJob = m_fileOperationProvider(m_owner, FileDeletionRequest { targetUrl, mode },
-        [this, fallbackPlan](FileDeletionResult result, const QString &errorString) {
-            finishMediaDeletion(fallbackPlan, result, errorString);
+        [this, operationId, fallbackPlan](FileDeletionResult result, const QString &errorString) {
+            finishMediaDeletion(operationId, fallbackPlan, result, errorString);
         });
 }
 
-void DocumentSessionRuntime::finishMediaDeletion(const MediaDeletionFallbackPlan &fallbackPlan,
-    FileDeletionResult result, const QString &errorString)
+void DocumentSessionRuntime::finishMediaDeletion(quint64 operationId,
+    const MediaDeletionFallbackPlan &fallbackPlan, FileDeletionResult result,
+    const QString &errorString)
 {
+    if (!m_fileDeletionOperation.finish(operationId)) {
+        return;
+    }
+
     m_state.setFileDeletionInProgress(false);
 
     switch (fileDeletionCompletionAction(result)) {
