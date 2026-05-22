@@ -88,6 +88,8 @@ MediaNavigationBoundaryState mediaNavigationBoundaryState(
         *currentIndex + 1 < candidates.size(),
         *currentIndex == 0,
         *currentIndex + 1 == candidates.size(),
+        static_cast<int>(*currentIndex + 1),
+        static_cast<int>(candidates.size()),
     };
 }
 

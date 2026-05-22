@@ -64,6 +64,14 @@ void TestMediaNavigationModel::navigatesMixedMediaWithoutWrapping()
     QVERIFY(firstBoundary.atKnownFirst);
     QVERIFY(!firstBoundary.canOpenPrevious);
     QVERIFY(firstBoundary.canOpenNext);
+    QCOMPARE(firstBoundary.currentNumber, 1);
+    QCOMPARE(firstBoundary.count, 3);
+
+    const KiriView::MediaNavigationBoundaryState videoBoundary
+        = KiriView::mediaNavigationBoundaryState(
+            candidates, localUrl(QStringLiteral("/media/02.mp4")));
+    QCOMPARE(videoBoundary.currentNumber, 2);
+    QCOMPARE(videoBoundary.count, 3);
 }
 
 void TestMediaNavigationModel::deletionFallbackUsesOriginalDirectMediaUrl()

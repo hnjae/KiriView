@@ -88,17 +88,16 @@ StatefulApp.StatefulWindow {
     }
 
     function activeMenuHost() {
-        if (page.videoMode && !root.fullscreen) {
-            return videoApplicationMenuHost;
-        }
-
         return root.activeImageToolBar();
     }
 
     function focusActiveViewport() {
-        if (!page.videoMode) {
-            imageViewport.forceActiveFocus();
+        if (page.videoMode) {
+            videoViewportLoader.forceVideoViewportFocus();
+            return;
         }
+
+        imageViewport.forceActiveFocus();
     }
 
     function openApplicationMenu() {
@@ -106,10 +105,6 @@ StatefulApp.StatefulWindow {
     }
 
     function toolbarTextInputFocused() {
-        if (page.videoMode) {
-            return false;
-        }
-
         return activeImageToolBar().textInputFocused();
     }
 
@@ -213,6 +208,8 @@ StatefulApp.StatefulWindow {
         readonly property bool imageMode: documentSession.documentKind === KiriDocumentSession.Image
         readonly property bool videoMode: documentSession.documentKind === KiriDocumentSession.Video
         readonly property bool imageReady: imageMode && imageDocument.status === KiriImageDocument.Ready
+        readonly property bool videoZoomReady: videoMode && videoViewportLoader.zoomPercentKnown
+        readonly property int videoZoomPercent: videoZoomReady ? videoViewportLoader.zoomPercent : 0
         readonly property point fullscreenPointerPosition: fullscreenRevealHandler.point.position
         property bool documentDeletionWasInProgress: false
 
@@ -254,13 +251,70 @@ StatefulApp.StatefulWindow {
         Loader {
             id: videoViewportLoader
 
+            property bool zoomPercentKnown: false
+            property int zoomPercent: 0
+
             anchors.fill: parent
             active: page.videoMode
-            sourceComponent: VideoViewport {
-                active: page.videoMode
-                videoDocument: page.videoDocument
 
-                onViewerClicked: forceActiveFocus()
+            function clearVideoViewportState() {
+                zoomPercentKnown = false;
+                zoomPercent = 0;
+            }
+
+            function ensureVideoViewportLoaded() {
+                if (!active) {
+                    source = "";
+                    clearVideoViewportState();
+                    return;
+                }
+
+                if (source.toString().length === 0) {
+                    setSource(Qt.resolvedUrl("VideoViewport.qml"), {
+                        "videoDocument": page.videoDocument
+                    });
+                }
+            }
+
+            function forceVideoViewportFocus() {
+                // Dynamic VideoViewport access keeps QtMultimedia out of image startup.
+                // qmllint disable missing-property
+                if (item !== null) {
+                    item["forceActiveFocus"]();
+                }
+                // qmllint enable missing-property
+            }
+
+            function updateVideoViewportState() {
+                if (item === null || status !== Loader.Ready) {
+                    clearVideoViewportState();
+                    return;
+                }
+
+                // Dynamic VideoViewport access keeps QtMultimedia out of image startup.
+                // qmllint disable missing-property
+                zoomPercentKnown = Boolean(item["zoomPercentKnown"]);
+                zoomPercent = zoomPercentKnown ? Number(item["zoomPercent"]) : 0;
+                // qmllint enable missing-property
+            }
+
+            Component.onCompleted: ensureVideoViewportLoaded()
+            onActiveChanged: ensureVideoViewportLoaded()
+            onItemChanged: updateVideoViewportState()
+            onLoaded: updateVideoViewportState()
+            onStatusChanged: updateVideoViewportState()
+
+            Connections {
+                target: videoViewportLoader.item
+                ignoreUnknownSignals: true
+
+                function onZoomPercentChanged() {
+                    videoViewportLoader.updateVideoViewportState();
+                }
+
+                function onZoomPercentKnownChanged() {
+                    videoViewportLoader.updateVideoViewportState();
+                }
             }
         }
 
@@ -302,7 +356,7 @@ StatefulApp.StatefulWindow {
         header: Item {
             id: windowHeader
 
-            height: root.fullscreen ? 0 : (page.videoMode ? videoApplicationMenuHost.implicitHeight : headerImageToolBar.implicitHeight)
+            height: root.fullscreen ? 0 : headerImageToolBar.implicitHeight
             visible: !root.fullscreen
 
             ImageDocumentToolBar {
@@ -310,25 +364,27 @@ StatefulApp.StatefulWindow {
 
                 actions: imageActions
                 anchors.fill: parent
-                enabled: !root.fullscreen && !page.videoMode
+                currentMediaNumber: documentSession.currentMediaNumber
+                enabled: !root.fullscreen && (page.imageMode || page.videoMode)
+                fileDeletionInProgress: documentSession.fileDeletionInProgress
                 imageDocument: page.imageDocument
                 imageReady: page.imageReady
                 applicationMenuActions: imageActions.applicationMenuActions
+                mediaCount: documentSession.mediaCount
+                mediaNavigationActive: documentSession.mediaNavigationActive
+                mediaNavigationKnown: documentSession.mediaNavigationKnown
                 rightToLeftReadingActive: imageActions.rightToLeftReadingActive
                 showApplicationMenuActions: !root.menuBarMode && !root.fullscreen
-                visible: !root.fullscreen && !page.videoMode
+                showImageControls: page.imageMode
+                showVideoZoomReadout: page.videoMode
+                videoZoomPercent: page.videoZoomPercent
+                videoZoomReady: page.videoZoomReady
+                visible: !root.fullscreen && (page.imageMode || page.videoMode)
 
+                onMediaNumberRequested: function (mediaNumber) {
+                    documentSession.openMediaAtNumber(mediaNumber);
+                }
                 onTextInputFocusReturnRequested: root.focusActiveViewport()
-            }
-
-            ApplicationMenuHost {
-                id: videoApplicationMenuHost
-
-                actions: imageActions.applicationMenuActions
-                anchors.fill: parent
-                enabled: !root.fullscreen && page.videoMode
-                showApplicationMenuActions: !root.menuBarMode && !root.fullscreen
-                visible: !root.fullscreen && page.videoMode
             }
         }
 
@@ -461,6 +517,18 @@ StatefulApp.StatefulWindow {
             }
 
             ConfiguredActionShortcut {
+                actionId: KiriViewApplication.GoFirstImageAction
+                application: kiriApplication
+                shortcutsEnabled: parent.enabled && documentSession.mediaNavigationActive && documentSession.mediaNavigationKnown && documentSession.mediaCount > 0 && !documentSession.fileDeletionInProgress && !root.helpDialogOpen
+            }
+
+            ConfiguredActionShortcut {
+                actionId: KiriViewApplication.GoLastImageAction
+                application: kiriApplication
+                shortcutsEnabled: parent.enabled && documentSession.mediaNavigationActive && documentSession.mediaNavigationKnown && documentSession.mediaCount > 0 && !documentSession.fileDeletionInProgress && !root.helpDialogOpen
+            }
+
+            ConfiguredActionShortcut {
                 actionId: KiriViewApplication.WindowFullscreenAction
                 application: kiriApplication
                 shortcutsEnabled: parent.enabled && !root.helpDialogOpen
@@ -502,17 +570,29 @@ StatefulApp.StatefulWindow {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
+            currentMediaNumber: documentSession.currentMediaNumber
             enabled: visible
+            fileDeletionInProgress: documentSession.fileDeletionInProgress
             height: implicitHeight
             imageDocument: page.imageDocument
             imageReady: page.imageReady
             applicationMenuActions: imageActions.applicationMenuActions
+            mediaCount: documentSession.mediaCount
+            mediaNavigationActive: documentSession.mediaNavigationActive
+            mediaNavigationKnown: documentSession.mediaNavigationKnown
             rightToLeftReadingActive: imageActions.rightToLeftReadingActive
             showApplicationMenuActions: !root.menuBarMode && !root.fullscreen
+            showImageControls: page.imageMode
+            showVideoZoomReadout: page.videoMode
             transientOverlay: true
-            visible: root.fullscreen && root.fullscreenToolBarRevealed && !page.videoMode
+            videoZoomPercent: page.videoZoomPercent
+            videoZoomReady: page.videoZoomReady
+            visible: root.fullscreen && root.fullscreenToolBarRevealed && (page.imageMode || page.videoMode)
             z: 20
 
+            onMediaNumberRequested: function (mediaNumber) {
+                documentSession.openMediaAtNumber(mediaNumber);
+            }
             onTextInputFocusReturnRequested: root.focusActiveViewport()
 
             onInteractionActiveChanged: {
@@ -541,6 +621,7 @@ StatefulApp.StatefulWindow {
         fullscreen: root.fullscreen
         imageDocument: page.imageDocument
         imageMode: page.imageMode
+        mediaMode: page.imageMode || page.videoMode
         rightToLeftReadingActive: imageActions.rightToLeftReadingActive
         visible: root.menuBarMode && !root.fullscreen
     }

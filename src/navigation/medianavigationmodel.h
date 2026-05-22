@@ -22,6 +22,8 @@ struct MediaNavigationBoundaryState {
     bool canOpenNext = false;
     bool atKnownFirst = false;
     bool atKnownLast = false;
+    int currentNumber = 0;
+    int count = 0;
 };
 
 struct MediaDeletionFallbackPlan {

@@ -25,6 +25,15 @@ Controls.ToolBar {
     property bool transientOverlay: false
     property var applicationMenuActions: []
     property bool showApplicationMenuActions: false
+    property bool showImageControls: true
+    property bool showVideoZoomReadout: false
+    property bool videoZoomReady: false
+    property int videoZoomPercent: 0
+    property bool fileDeletionInProgress: imageDocument.fileDeletionInProgress
+    property bool mediaNavigationActive: false
+    property bool mediaNavigationKnown: false
+    property int currentMediaNumber: 0
+    property int mediaCount: 0
     property bool rightToLeftReadingActive: false
     property bool pageNavigationInputFocused: false
     property bool zoomInputFocused: false
@@ -35,9 +44,12 @@ Controls.ToolBar {
     readonly property int edgeMargin: controlSpacing
     readonly property bool interactionActive: toolbarHoverHandler.hovered || textInputFocused()
     readonly property int toolbarVerticalPadding: controlSpacing
-    readonly property var toolbarControls: [root.actions.rightToLeftReadingAction, root.actions.twoPageModeAction, zoomLevelAction, fitMenuAction]
+    readonly property var imageToolbarControls: [root.actions.rightToLeftReadingAction, root.actions.twoPageModeAction, zoomLevelAction, fitMenuAction]
+    readonly property var videoToolbarControls: showVideoZoomReadout ? [videoZoomLevelAction] : []
+    readonly property var toolbarControls: showImageControls ? imageToolbarControls : videoToolbarControls
     readonly property var toolbarActions: showApplicationMenuActions ? toolbarControls.concat([applicationMenuAction]) : toolbarControls
 
+    signal mediaNumberRequested(int mediaNumber)
     signal pageNumberResetRequested
     signal textInputCancelRequested(bool returnViewerFocus)
     signal textInputCommitRequested(bool returnViewerFocus)
@@ -217,6 +229,31 @@ Controls.ToolBar {
         tooltip: text
     }
 
+    readonly property Kirigami.Action videoZoomLevelAction: Kirigami.Action {
+        displayComponent: Controls.Label {
+            Accessible.name: root.videoZoomLevelAction.text
+            Accessible.role: Accessible.StaticText
+            Layout.alignment: Qt.AlignVCenter
+            Layout.minimumWidth: Kirigami.Units.gridUnit * 4
+            color: Kirigami.Theme.textColor
+            horizontalAlignment: Text.AlignHCenter
+            text: root.videoZoomReady ? KI18n.i18nc("@label:zoom percentage", "%1%", root.videoZoomPercent) : KI18n.i18nc("@label:unknown zoom percentage", "--%")
+            textFormat: Text.PlainText
+
+            HoverHandler {
+                id: videoZoomHoverHandler
+            }
+
+            Controls.ToolTip.text: root.videoZoomLevelAction.tooltip
+            Controls.ToolTip.visible: root.videoZoomLevelAction.tooltip.length > 0 && videoZoomHoverHandler.hovered && !Kirigami.Settings.hasTransientTouchInput
+        }
+        displayHint: Kirigami.DisplayHint.KeepVisible
+        enabled: root.videoZoomReady
+        icon.name: "zoom-fit-best-symbolic"
+        text: KI18n.i18nc("@action", "Zoom")
+        tooltip: root.videoZoomReady ? KI18n.i18nc("@info:tooltip", "Fitted video zoom") : KI18n.i18nc("@info:tooltip", "Video zoom unavailable")
+    }
+
     readonly property Kirigami.Action applicationMenuAction: Kirigami.Action {
         displayComponent: Controls.ToolButton {
             id: applicationMenuButton
@@ -336,8 +373,13 @@ Controls.ToolBar {
 
             actions: root.actions
             compact: root.compact
+            currentMediaNumber: root.currentMediaNumber
+            fileDeletionInProgress: root.fileDeletionInProgress
             imageDocument: root.imageDocument
             imageReady: root.imageReady
+            mediaCount: root.mediaCount
+            mediaNavigationActive: root.mediaNavigationActive
+            mediaNavigationKnown: root.mediaNavigationKnown
             rightToLeftReadingActive: root.rightToLeftReadingActive
 
             Component.onDestruction: {
@@ -346,6 +388,9 @@ Controls.ToolBar {
                 }
             }
             onTextInputActiveChanged: root.pageNavigationInputFocused = textInputActive
+            onMediaNumberRequested: function (mediaNumber) {
+                root.mediaNumberRequested(mediaNumber);
+            }
 
             onEditingCompleted: function (returnViewerFocus) {
                 if (returnViewerFocus) {

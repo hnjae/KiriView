@@ -33,6 +33,11 @@ class KiriDocumentSession : public QObject
             fileDeletionInProgressChanged)
     Q_PROPERTY(bool mediaNavigationActive READ mediaNavigationActive NOTIFY
             mediaNavigationAvailabilityChanged)
+    Q_PROPERTY(bool mediaNavigationKnown READ mediaNavigationKnown NOTIFY
+            mediaNavigationAvailabilityChanged)
+    Q_PROPERTY(
+        int currentMediaNumber READ currentMediaNumber NOTIFY mediaNavigationAvailabilityChanged)
+    Q_PROPERTY(int mediaCount READ mediaCount NOTIFY mediaNavigationAvailabilityChanged)
     Q_PROPERTY(bool canOpenPreviousMedia READ canOpenPreviousMedia NOTIFY
             mediaNavigationAvailabilityChanged)
     Q_PROPERTY(
@@ -72,6 +77,9 @@ public:
     bool displayedFileDeletionAvailable() const;
     bool fileDeletionInProgress() const;
     bool mediaNavigationActive() const;
+    bool mediaNavigationKnown() const;
+    int currentMediaNumber() const;
+    int mediaCount() const;
     bool canOpenPreviousMedia() const;
     bool canOpenNextMedia() const;
     bool atKnownFirstMedia() const;
@@ -81,6 +89,7 @@ public:
 
     Q_INVOKABLE void openPreviousMedia();
     Q_INVOKABLE void openNextMedia();
+    Q_INVOKABLE void openMediaAtNumber(int mediaNumber);
     Q_INVOKABLE void deleteDisplayedFile(KiriDocumentSession::DeletionMode mode);
 
 Q_SIGNALS:

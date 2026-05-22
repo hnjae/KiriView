@@ -124,6 +124,21 @@ bool DocumentSessionRuntime::mediaNavigationActive() const
         || (m_documentKind == DocumentSessionKind::Image && activeImageUsesMediaScope());
 }
 
+bool DocumentSessionRuntime::mediaNavigationKnown() const
+{
+    return mediaNavigationActive() && m_mediaNavigationKnown;
+}
+
+int DocumentSessionRuntime::currentMediaNumber() const
+{
+    return mediaNavigationKnown() ? m_mediaNavigationState.currentNumber : 0;
+}
+
+int DocumentSessionRuntime::mediaCount() const
+{
+    return mediaNavigationKnown() ? m_mediaNavigationState.count : 0;
+}
+
 bool DocumentSessionRuntime::canOpenPreviousMedia() const
 {
     return mediaNavigationActive() && m_mediaNavigationKnown
@@ -174,6 +189,23 @@ void DocumentSessionRuntime::openNextMedia()
         if (target.has_value()) {
             openMediaUrl(*target);
         }
+    });
+}
+
+void DocumentSessionRuntime::openMediaAtNumber(int mediaNumber)
+{
+    if (!mediaNavigationActive()) {
+        return;
+    }
+
+    loadMediaCandidates([this, mediaNumber](std::vector<MediaNavigationCandidate> candidates) {
+        updateMediaBoundaryState(candidates);
+        if (candidates.empty()) {
+            return;
+        }
+
+        const int clampedNumber = std::clamp(mediaNumber, 1, static_cast<int>(candidates.size()));
+        openMediaUrl(candidates.at(static_cast<std::size_t>(clampedNumber - 1)).url);
     });
 }
 
@@ -463,7 +495,9 @@ void DocumentSessionRuntime::setMediaNavigationState(MediaNavigationBoundaryStat
         && m_mediaNavigationState.canOpenPrevious == state.canOpenPrevious
         && m_mediaNavigationState.canOpenNext == state.canOpenNext
         && m_mediaNavigationState.atKnownFirst == state.atKnownFirst
-        && m_mediaNavigationState.atKnownLast == state.atKnownLast) {
+        && m_mediaNavigationState.atKnownLast == state.atKnownLast
+        && m_mediaNavigationState.currentNumber == state.currentNumber
+        && m_mediaNavigationState.count == state.count) {
         return;
     }
 

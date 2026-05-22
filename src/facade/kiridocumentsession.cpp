@@ -98,6 +98,12 @@ bool KiriDocumentSession::mediaNavigationActive() const
     return m_runtime->mediaNavigationActive();
 }
 
+bool KiriDocumentSession::mediaNavigationKnown() const { return m_runtime->mediaNavigationKnown(); }
+
+int KiriDocumentSession::currentMediaNumber() const { return m_runtime->currentMediaNumber(); }
+
+int KiriDocumentSession::mediaCount() const { return m_runtime->mediaCount(); }
+
 bool KiriDocumentSession::canOpenPreviousMedia() const { return m_runtime->canOpenPreviousMedia(); }
 
 bool KiriDocumentSession::canOpenNextMedia() const { return m_runtime->canOpenNextMedia(); }
@@ -113,6 +119,11 @@ KiriVideoDocument *KiriDocumentSession::videoDocument() const { return m_videoDo
 void KiriDocumentSession::openPreviousMedia() { m_runtime->openPreviousMedia(); }
 
 void KiriDocumentSession::openNextMedia() { m_runtime->openNextMedia(); }
+
+void KiriDocumentSession::openMediaAtNumber(int mediaNumber)
+{
+    m_runtime->openMediaAtNumber(mediaNumber);
+}
 
 void KiriDocumentSession::deleteDisplayedFile(DeletionMode mode)
 {

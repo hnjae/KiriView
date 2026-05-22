@@ -15,14 +15,22 @@ RowLayout {
     required property bool imageReady
     required property var actions
     property bool compact: false
+    property bool fileDeletionInProgress: imageDocument.fileDeletionInProgress
+    property bool mediaNavigationActive: false
+    property bool mediaNavigationKnown: false
+    property int currentMediaNumber: 0
+    property int mediaCount: 0
     readonly property int controlSpacing: compact ? Math.max(1, Math.round(Kirigami.Units.smallSpacing / 2)) : Kirigami.Units.smallSpacing
+    readonly property int currentItemNumber: mediaNavigationActive ? currentMediaNumber : imageDocument.currentPageNumber
+    readonly property int itemCount: mediaNavigationActive ? mediaCount : imageDocument.imageCount
     property bool rightToLeftReadingActive: false
     readonly property var leftNavigationAction: root.rightToLeftReadingActive ? root.actions.nextImageAction : root.actions.previousImageAction
     readonly property var rightNavigationAction: root.rightToLeftReadingActive ? root.actions.previousImageAction : root.actions.nextImageAction
     readonly property bool textInputActive: pageNumberField.activeFocus
-    readonly property bool pageNavigationAvailable: imageDocument.imageCount > 0 && !imageDocument.fileDeletionInProgress
+    readonly property bool pageNavigationAvailable: itemCount > 0 && !fileDeletionInProgress && (!mediaNavigationActive || mediaNavigationKnown)
 
     signal editingCompleted(bool returnViewerFocus)
+    signal mediaNumberRequested(int mediaNumber)
 
     enabled: pageNavigationAvailable
     spacing: controlSpacing
@@ -40,7 +48,7 @@ RowLayout {
     }
 
     function pageNumberText() {
-        return imageDocument.currentPageNumber > 0 ? imageDocument.currentPageNumber.toString() : "0";
+        return currentItemNumber > 0 ? currentItemNumber.toString() : "0";
     }
 
     function resetPageNumberText() {
@@ -90,8 +98,8 @@ RowLayout {
         inputMethodHints: Qt.ImhDigitsOnly
         selectByMouse: true
         validator: IntValidator {
-            bottom: root.imageDocument.imageCount > 0 ? 1 : 0
-            top: Math.max(1, root.imageDocument.imageCount)
+            bottom: root.itemCount > 0 ? 1 : 0
+            top: Math.max(1, root.itemCount)
         }
 
         function cancelEditing(returnViewerFocus) {
@@ -109,7 +117,7 @@ RowLayout {
         }
 
         function clampedPageNumber(pageNumber) {
-            return Math.max(1, Math.min(root.imageDocument.imageCount, Math.round(pageNumber)));
+            return Math.max(1, Math.min(root.itemCount, Math.round(pageNumber)));
         }
 
         function commitEditing(returnViewerFocus) {
@@ -140,7 +148,12 @@ RowLayout {
 
             const pageNumber = Number(trimmedText);
             if (Number.isFinite(pageNumber)) {
-                root.imageDocument.openImageAtPage(clampedPageNumber(pageNumber));
+                const targetNumber = clampedPageNumber(pageNumber);
+                if (root.mediaNavigationActive) {
+                    root.mediaNumberRequested(targetNumber);
+                } else {
+                    root.imageDocument.openImageAtPage(targetNumber);
+                }
             }
             resetPageNumberText();
         }
@@ -174,7 +187,7 @@ RowLayout {
         id: pageNumberMetrics
 
         font: pageNumberField.font
-        text: Array(Math.max(1, Math.max(1, root.imageDocument.imageCount).toString().length) + 1).join("8")
+        text: Array(Math.max(1, Math.max(1, root.itemCount).toString().length) + 1).join("8")
     }
 
     Controls.Label {
@@ -183,7 +196,7 @@ RowLayout {
     }
 
     Controls.Label {
-        text: root.imageDocument.imageCount.toString()
+        text: root.itemCount.toString()
         textFormat: Text.PlainText
     }
 
@@ -207,6 +220,18 @@ RowLayout {
         Controls.ToolTip.visible: hovered && Controls.ToolTip.text.length > 0
 
         onClicked: root.triggerNavigationAction(navigationAction)
+    }
+
+    onCurrentItemNumberChanged: {
+        if (!pageNumberField.activeFocus) {
+            pageNumberField.resetPageNumberText();
+        }
+    }
+
+    onItemCountChanged: {
+        if (!pageNumberField.activeFocus) {
+            pageNumberField.resetPageNumberText();
+        }
     }
 
     Connections {

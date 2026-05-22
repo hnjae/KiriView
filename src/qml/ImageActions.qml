@@ -74,9 +74,10 @@ Item {
     readonly property bool nextPageActionAvailable: root.mediaNavigationActive ? root.mediaPageActionsAvailable : root.actionAvailability.canUsePageActions
     readonly property bool previousPageProxyAvailable: root.mediaNavigationActive ? root.mediaPageActionsAvailable && root.documentSession.canOpenPreviousMedia : root.actionAvailability.canUsePageActions && root.actionAvailability.canOpenPreviousImage
     readonly property bool nextPageProxyAvailable: root.mediaNavigationActive ? root.mediaPageActionsAvailable && root.documentSession.canOpenNextMedia : root.actionAvailability.canUsePageActions && root.actionAvailability.canOpenNextImage
+    readonly property bool firstLastPageActionAvailable: root.mediaNavigationActive ? root.mediaPageActionsAvailable && root.documentSession.mediaNavigationKnown && root.documentSession.mediaCount > 0 : root.actionAvailability.canUsePageActions
     readonly property bool rightToLeftReadingActive: root.actionAvailability.rightToLeftReadingActive
     readonly property var applicationMenuNavigationActions: root.rightToLeftReadingActive ? [nextContainerManagedAction.menuProxy, previousContainerManagedAction.menuProxy] : [previousContainerManagedAction.menuProxy, nextContainerManagedAction.menuProxy]
-    readonly property var applicationMenuDocumentActions: root.imageMode || root.videoMode ? [applicationMenuNavigationSeparator, previousImageManagedAction.menuProxy, nextImageManagedAction.menuProxy] : []
+    readonly property var applicationMenuDocumentActions: root.imageMode || root.videoMode ? [applicationMenuNavigationSeparator, previousImageManagedAction.menuProxy, nextImageManagedAction.menuProxy, firstImageManagedAction.menuProxy, lastImageManagedAction.menuProxy] : []
     readonly property var applicationMenuImageActions: root.imageMode ? root.applicationMenuNavigationActions.concat([rotateClockwiseManagedAction.menuProxy, rotateCounterclockwiseManagedAction.menuProxy, twoPageModeManagedAction.menuProxy, rightToLeftReadingManagedAction.menuProxy]) : []
     readonly property var applicationMenuActions: [openManagedAction.menuProxy, applicationMenuFileSeparator, moveToTrashManagedAction.menuProxy, deleteFileManagedAction.menuProxy].concat(root.applicationMenuDocumentActions, root.applicationMenuImageActions, [applicationMenuViewSeparator, fullscreenManagedAction.menuProxy, applicationMenuSettingsSeparator, showMenubarManagedAction.menuProxy, configureShortcutsManagedAction.menuProxy, applicationMenuHelpSeparator, shortcutHelpManagedAction.menuProxy, applicationMenuQuitSeparator, quitManagedAction.menuProxy])
 
@@ -86,12 +87,22 @@ Item {
     signal toggleFullScreenRequested
 
     function openFirstImage() {
+        if (root.mediaNavigationActive) {
+            root.documentSession.openMediaAtNumber(1);
+            return;
+        }
+
         if (root.imageDocument.imageCount > 0) {
             root.imageDocument.openImageAtPage(1);
         }
     }
 
     function openLastImage() {
+        if (root.mediaNavigationActive) {
+            root.documentSession.openMediaAtNumber(root.documentSession.mediaCount);
+            return;
+        }
+
         if (root.imageDocument.imageCount > 0) {
             root.imageDocument.openImageAtPage(root.imageDocument.imageCount);
         }
@@ -257,11 +268,12 @@ Item {
     ManagedAction {
         id: firstImageManagedAction
 
-        actionEnabled: root.actionAvailability.canUsePageActions
+        actionEnabled: root.firstLastPageActionAvailable
         actionId: KiriViewApplication.GoFirstImageAction
         application: root.application
         bindEnabled: true
-        proxyEnabled: root.actionAvailability.canUsePageActions
+        menuText: root.mediaNavigationActive ? KI18n.i18nc("@action:inmenu", "&First Media Item") : ""
+        proxyEnabled: root.firstLastPageActionAvailable
 
         onTriggered: root.openFirstImage()
     }
@@ -269,11 +281,12 @@ Item {
     ManagedAction {
         id: lastImageManagedAction
 
-        actionEnabled: root.actionAvailability.canUsePageActions
+        actionEnabled: root.firstLastPageActionAvailable
         actionId: KiriViewApplication.GoLastImageAction
         application: root.application
         bindEnabled: true
-        proxyEnabled: root.actionAvailability.canUsePageActions
+        menuText: root.mediaNavigationActive ? KI18n.i18nc("@action:inmenu", "&Last Media Item") : ""
+        proxyEnabled: root.firstLastPageActionAvailable
 
         onTriggered: root.openLastImage()
     }
@@ -286,7 +299,7 @@ Item {
         application: root.application
         bindEnabled: true
         proxyCheckable: true
-        proxyChecked: root.imageDocument.zoomMode === KiriImageDocument.Fit
+        proxyChecked: root.imageDocument !== null && root.imageDocument.zoomMode === KiriImageDocument.Fit
 
         onTriggered: root.imageDocument.resetZoom()
     }
@@ -299,7 +312,7 @@ Item {
         application: root.application
         bindEnabled: true
         proxyCheckable: true
-        proxyChecked: root.imageDocument.zoomMode === KiriImageDocument.FitHeight
+        proxyChecked: root.imageDocument !== null && root.imageDocument.zoomMode === KiriImageDocument.FitHeight
 
         onTriggered: root.imageDocument.setFitMode(KiriImageDocument.FitHeight)
     }
@@ -312,7 +325,7 @@ Item {
         application: root.application
         bindEnabled: true
         proxyCheckable: true
-        proxyChecked: root.imageDocument.zoomMode === KiriImageDocument.FitWidth
+        proxyChecked: root.imageDocument !== null && root.imageDocument.zoomMode === KiriImageDocument.FitWidth
 
         onTriggered: root.imageDocument.setFitMode(KiriImageDocument.FitWidth)
     }

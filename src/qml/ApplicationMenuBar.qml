@@ -12,6 +12,7 @@ Controls.MenuBar {
     required property KiriImageDocument imageDocument
     required property bool fullscreen
     property bool imageMode: true
+    property bool mediaMode: imageMode
     property bool rightToLeftReadingActive: false
 
     readonly property var leadingArchiveMenuAction: root.rightToLeftReadingActive ? root.actions.nextContainerMenuAction : root.actions.previousContainerMenuAction
@@ -87,15 +88,15 @@ Controls.MenuBar {
         MenuActionItem {
             action: root.actions.firstImageMenuAction
             icon.name: root.firstImageMenuIconName
-            text: KI18n.i18nc("@action:inmenu", "&First Image")
-            visible: root.imageMode
+            text: root.imageMode ? KI18n.i18nc("@action:inmenu", "&First Image") : KI18n.i18nc("@action:inmenu", "&First Media Item")
+            visible: root.mediaMode
         }
 
         MenuActionItem {
             action: root.actions.lastImageMenuAction
             icon.name: root.lastImageMenuIconName
-            text: KI18n.i18nc("@action:inmenu", "&Last Image")
-            visible: root.imageMode
+            text: root.imageMode ? KI18n.i18nc("@action:inmenu", "&Last Image") : KI18n.i18nc("@action:inmenu", "&Last Media Item")
+            visible: root.mediaMode
         }
 
         Controls.MenuSeparator {

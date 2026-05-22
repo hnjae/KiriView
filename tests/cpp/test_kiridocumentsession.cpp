@@ -81,6 +81,8 @@ private Q_SLOTS:
     void directVideoRoutesToVideoDocumentWithOriginalSource();
     void archiveAndDirectoryInputsRouteToImageDocument();
     void directImageAfterVideoRestoresImageDocument();
+    void directImageMediaNavigationIncludesSiblingVideos();
+    void videoMediaNavigationExposesCurrentNumberAndCount();
     void nextMediaFromVideoCanRouteToImageWithoutUsingImageNavigation();
     void directImageDeletionCanOpenVideoFallback();
     void videoDeletionUsesOriginalUrlAndOpensMediaFallback();
@@ -141,6 +143,70 @@ void TestKiriDocumentSession::directImageAfterVideoRestoresImageDocument()
     QCOMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Image);
     QCOMPARE(session->sourceUrl(), image);
     QCOMPARE(session->imageDocument()->sourceUrl(), image);
+    QCOMPARE(session->videoDocument()->sourceUrl(), QUrl());
+}
+
+void TestKiriDocumentSession::directImageMediaNavigationIncludesSiblingVideos()
+{
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+
+    const QString imagePath = directory.filePath(QStringLiteral("01.png"));
+    QImage image(QSize(2, 2), QImage::Format_RGBA8888);
+    image.fill(Qt::red);
+    QVERIFY(image.save(imagePath, "PNG"));
+
+    FakeMediaCandidateProvider mediaProvider;
+    const QUrl imageUrl = localUrl(imagePath);
+    const QUrl videoUrl = localUrl(directory.filePath(QStringLiteral("02.mp4")));
+    mediaProvider.setMedia(localUrl(directory.path() + QStringLiteral("/")),
+        { mediaCandidate(imageUrl), mediaCandidate(videoUrl) });
+    std::unique_ptr<KiriDocumentSession> session = createSession(mediaProvider);
+
+    session->setSourceUrl(imageUrl);
+
+    QTRY_COMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Image);
+    QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Ready);
+    QTRY_VERIFY(session->mediaNavigationActive());
+    QTRY_VERIFY(session->mediaNavigationKnown());
+    QCOMPARE(session->currentMediaNumber(), 1);
+    QCOMPARE(session->mediaCount(), 2);
+    QVERIFY(!session->canOpenPreviousMedia());
+    QVERIFY(session->canOpenNextMedia());
+
+    session->openMediaAtNumber(2);
+
+    QCOMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Video);
+    QCOMPARE(session->sourceUrl(), videoUrl);
+    QCOMPARE(session->videoDocument()->sourceUrl(), videoUrl);
+    QCOMPARE(session->currentMediaNumber(), 2);
+    QCOMPARE(session->mediaCount(), 2);
+}
+
+void TestKiriDocumentSession::videoMediaNavigationExposesCurrentNumberAndCount()
+{
+    FakeMediaCandidateProvider mediaProvider;
+    const QUrl imageUrl = localUrl(QStringLiteral("/media/01.png"));
+    const QUrl videoUrl = localUrl(QStringLiteral("/media/02.mp4"));
+    mediaProvider.setMedia(localUrl(QStringLiteral("/media/")),
+        { mediaCandidate(imageUrl), mediaCandidate(videoUrl) });
+    std::unique_ptr<KiriDocumentSession> session = createSession(mediaProvider);
+
+    session->setSourceUrl(videoUrl);
+
+    QCOMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Video);
+    QVERIFY(session->mediaNavigationActive());
+    QVERIFY(session->mediaNavigationKnown());
+    QCOMPARE(session->currentMediaNumber(), 2);
+    QCOMPARE(session->mediaCount(), 2);
+    QVERIFY(session->canOpenPreviousMedia());
+    QVERIFY(!session->canOpenNextMedia());
+
+    session->openMediaAtNumber(1);
+
+    QCOMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Image);
+    QCOMPARE(session->sourceUrl(), imageUrl);
+    QCOMPARE(session->imageDocument()->sourceUrl(), imageUrl);
     QCOMPARE(session->videoDocument()->sourceUrl(), QUrl());
 }
 

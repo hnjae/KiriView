@@ -58,6 +58,9 @@ public:
     bool displayedFileDeletionAvailable() const;
     bool fileDeletionInProgress() const;
     bool mediaNavigationActive() const;
+    bool mediaNavigationKnown() const;
+    int currentMediaNumber() const;
+    int mediaCount() const;
     bool canOpenPreviousMedia() const;
     bool canOpenNextMedia() const;
     bool atKnownFirstMedia() const;
@@ -65,6 +68,7 @@ public:
 
     void openPreviousMedia();
     void openNextMedia();
+    void openMediaAtNumber(int mediaNumber);
     void deleteDisplayedFile(FileDeletionMode mode);
 
 private:

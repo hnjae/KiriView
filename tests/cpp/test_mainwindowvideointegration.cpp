@@ -15,6 +15,7 @@ private Q_SLOTS:
     void mainWindowRoutesExternalInputsThroughDocumentSession();
     void imageViewportUsesExternallyOwnedImageDocument();
     void mainWindowUsesSessionModeAndMediaDispatch();
+    void videoModeExposesReadOnlyZoomReadout();
 };
 
 namespace {
@@ -73,15 +74,47 @@ void TestMainWindowVideoIntegration::mainWindowUsesSessionModeAndMediaDispatch()
     QVERIFY(mainQml.contains(
         QStringLiteral("documentSession.documentKind === KiriDocumentSession.Video")));
     QVERIFY(mainQml.contains(QStringLiteral("active: page.videoMode")));
-    QVERIFY(mainQml.contains(QStringLiteral("sourceComponent: VideoViewport")));
+    QVERIFY(mainQml.contains(QStringLiteral("setSource(Qt.resolvedUrl(\"VideoViewport.qml\")")));
+    QVERIFY(!mainQml.contains(QStringLiteral("sourceComponent: VideoViewport")));
+    QVERIFY(!mainQml.contains(QStringLiteral("property VideoViewport")));
     QVERIFY(mainQml.contains(QStringLiteral("active: page.imageMode")));
     QVERIFY(mainQml.contains(QStringLiteral("sourceComponent: ImageShortcuts")));
+    QVERIFY(
+        mainQml.contains(QStringLiteral("currentMediaNumber: documentSession.currentMediaNumber")));
+    QVERIFY(mainQml.contains(QStringLiteral("mediaCount: documentSession.mediaCount")));
+    QVERIFY(mainQml.contains(
+        QStringLiteral("mediaNavigationKnown: documentSession.mediaNavigationKnown")));
+    QVERIFY(mainQml.contains(QStringLiteral("documentSession.openMediaAtNumber(mediaNumber)")));
+    QVERIFY(mainQml.contains(QStringLiteral("showVideoZoomReadout: page.videoMode")));
     QVERIFY(imageActionsQml.contains(QStringLiteral("root.documentSession.mediaNavigationActive")));
     QVERIFY(imageActionsQml.contains(QStringLiteral("root.documentSession.openPreviousMedia()")));
     QVERIFY(imageActionsQml.contains(QStringLiteral("root.documentSession.openNextMedia()")));
+    QVERIFY(imageActionsQml.contains(QStringLiteral("root.documentSession.openMediaAtNumber")));
     QVERIFY(imageActionsQml.contains(QStringLiteral("root.documentSession.deleteDisplayedFile")));
+    QVERIFY(!mainQml.contains(QStringLiteral("videoApplicationMenuHost")));
     QVERIFY(!mainQml.contains(QStringLiteral("ordinaryDirectMediaScopeActive")));
     QVERIFY(!imageActionsQml.contains(QStringLiteral("ordinaryDirectMediaScopeActive")));
+}
+
+void TestMainWindowVideoIntegration::videoModeExposesReadOnlyZoomReadout()
+{
+    const QString mainQml = readSource(QStringLiteral("src/qml/Main.qml"));
+    const QString videoViewportQml = readSource(QStringLiteral("src/qml/VideoViewport.qml"));
+    const QString imageToolBarQml = readSource(QStringLiteral("src/qml/ImageToolBar.qml"));
+    QVERIFY2(!mainQml.isEmpty(), "Main.qml should be readable");
+    QVERIFY2(!videoViewportQml.isEmpty(), "VideoViewport.qml should be readable");
+    QVERIFY2(!imageToolBarQml.isEmpty(), "ImageToolBar.qml should be readable");
+
+    QVERIFY(videoViewportQml.contains(QStringLiteral("videoZoomPercentForRects")));
+    QVERIFY(videoViewportQml.contains(QStringLiteral("videoOutput.contentRect")));
+    QVERIFY(videoViewportQml.contains(QStringLiteral("videoOutput.sourceRect")));
+    QVERIFY(videoViewportQml.contains(QStringLiteral("displayDevicePixelRatio")));
+    QVERIFY(imageToolBarQml.contains(QStringLiteral("videoZoomLevelAction")));
+    QVERIFY(imageToolBarQml.contains(QStringLiteral("showVideoZoomReadout")));
+    QVERIFY(imageToolBarQml.contains(
+        QStringLiteral("showImageControls ? imageToolbarControls : videoToolbarControls")));
+    QVERIFY(mainQml.contains(QStringLiteral("videoZoomPercent: page.videoZoomPercent")));
+    QVERIFY(mainQml.contains(QStringLiteral("videoZoomReady: page.videoZoomReady")));
 }
 
 QTEST_GUILESS_MAIN(TestMainWindowVideoIntegration)
