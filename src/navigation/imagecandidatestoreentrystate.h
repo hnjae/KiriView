@@ -9,11 +9,11 @@
 #include "imagecandidatecallbacks.h"
 #include "imagenavigationtypes.h"
 
-#include <QObject>
 #include <QPointer>
 #include <QString>
-#include <functional>
 #include <vector>
+
+class QObject;
 
 namespace KiriView {
 struct ImageCandidateStoreEntryPendingLoad {
@@ -45,12 +45,10 @@ public:
     bool failed() const;
     const QString &errorString() const;
 
-    ImageIoJob addPendingLoad(QObject *receiver, QObject *fallbackParent,
-        ImageCandidatesCallback callback, ErrorCallback errorCallback,
-        std::function<void(QObject *)> removeToken);
-    ImageIoJob addSubscriber(QObject *receiver, QObject *fallbackParent,
-        ImageCandidatesCallback callback, ErrorCallback errorCallback,
-        std::function<void(QObject *)> removeToken);
+    void addPendingLoad(ImageIoJobCompletion completion, ImageCandidatesCallback callback,
+        ErrorCallback errorCallback);
+    void addSubscriber(
+        QObject *token, ImageCandidatesCallback callback, ErrorCallback errorCallback);
     void removePendingLoad(QObject *token);
     void removeSubscriber(QObject *token);
 

@@ -30,6 +30,19 @@ std::vector<KiriView::ImageNavigationCandidate> imageCandidatesForLister(
         lister->itemsForDir(directoryUrl, KCoreDirLister::AllItems));
 }
 
+QObject *createEntryJobToken(QObject *receiver, QObject *fallbackParent)
+{
+    return new QObject(receiver == nullptr ? fallbackParent : receiver);
+}
+
+KiriView::ImageIoJob createEntryJob(QObject *token, std::function<void(QObject *)> removeToken)
+{
+    return KiriView::ImageIoJob(token, [removeToken = std::move(removeToken)](QObject *object) {
+        removeToken(object);
+        object->deleteLater();
+    });
+}
+
 void notifyChanged(QObject *context, KiriView::ImageCandidateDirectoryEntry *entry)
 {
     QTimer::singleShot(0, context, [entry]() {
@@ -109,15 +122,19 @@ void ImageCandidateDirectoryEntry::handleError(const QString &errorString)
 ImageIoJob ImageCandidateDirectoryEntry::addPendingLoad(ImageCandidatesCallback callback,
     ErrorCallback errorCallback, QObject *receiver, std::function<void(QObject *)> removeToken)
 {
-    return m_state.addPendingLoad(receiver, m_lister.get(), std::move(callback),
-        std::move(errorCallback), std::move(removeToken));
+    QObject *token = createEntryJobToken(receiver, m_lister.get());
+    ImageIoJob job = createEntryJob(token, std::move(removeToken));
+    m_state.addPendingLoad(job.completion(), std::move(callback), std::move(errorCallback));
+    return job;
 }
 
 ImageIoJob ImageCandidateDirectoryEntry::addSubscriber(ImageCandidatesCallback callback,
     ErrorCallback errorCallback, QObject *receiver, std::function<void(QObject *)> removeToken)
 {
-    return m_state.addSubscriber(receiver, m_lister.get(), std::move(callback),
-        std::move(errorCallback), std::move(removeToken));
+    QObject *token = createEntryJobToken(receiver, m_lister.get());
+    ImageIoJob job = createEntryJob(token, std::move(removeToken));
+    m_state.addSubscriber(token, std::move(callback), std::move(errorCallback));
+    return job;
 }
 
 void ImageCandidateDirectoryEntry::removePendingLoad(QObject *token)

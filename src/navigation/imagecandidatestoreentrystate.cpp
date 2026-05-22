@@ -9,11 +9,6 @@
 #include <utility>
 
 namespace {
-QObject *createJobToken(QObject *receiver, QObject *fallbackParent)
-{
-    return new QObject(receiver == nullptr ? fallbackParent : receiver);
-}
-
 bool sameImageNavigationCandidates(const std::vector<KiriView::ImageNavigationCandidate> &left,
     const std::vector<KiriView::ImageNavigationCandidate> &right)
 {
@@ -51,38 +46,24 @@ bool ImageCandidateStoreEntryState::failed() const { return m_failed; }
 
 const QString &ImageCandidateStoreEntryState::errorString() const { return m_errorString; }
 
-ImageIoJob ImageCandidateStoreEntryState::addPendingLoad(QObject *receiver, QObject *fallbackParent,
-    ImageCandidatesCallback callback, ErrorCallback errorCallback,
-    std::function<void(QObject *)> removeToken)
+void ImageCandidateStoreEntryState::addPendingLoad(
+    ImageIoJobCompletion completion, ImageCandidatesCallback callback, ErrorCallback errorCallback)
 {
-    QObject *token = createJobToken(receiver, fallbackParent);
-    ImageIoJob job(token, [removeToken = std::move(removeToken)](QObject *object) {
-        removeToken(object);
-        object->deleteLater();
-    });
     m_pendingLoads.push_back(ImageCandidateStoreEntryPendingLoad {
-        job.completion(),
+        std::move(completion),
         std::move(callback),
         std::move(errorCallback),
     });
-    return job;
 }
 
-ImageIoJob ImageCandidateStoreEntryState::addSubscriber(QObject *receiver, QObject *fallbackParent,
-    ImageCandidatesCallback callback, ErrorCallback errorCallback,
-    std::function<void(QObject *)> removeToken)
+void ImageCandidateStoreEntryState::addSubscriber(
+    QObject *token, ImageCandidatesCallback callback, ErrorCallback errorCallback)
 {
-    QObject *token = createJobToken(receiver, fallbackParent);
-    ImageIoJob job(token, [removeToken = std::move(removeToken)](QObject *object) {
-        removeToken(object);
-        object->deleteLater();
-    });
     m_subscribers.push_back(ImageCandidateStoreEntrySubscriber {
         token,
         std::move(callback),
         std::move(errorCallback),
     });
-    return job;
 }
 
 void ImageCandidateStoreEntryState::removePendingLoad(QObject *token)

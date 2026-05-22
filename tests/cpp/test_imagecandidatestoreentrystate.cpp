@@ -7,6 +7,7 @@
 #include <QTest>
 #include <QUrl>
 #include <cstddef>
+#include <functional>
 #include <initializer_list>
 #include <utility>
 #include <vector>
@@ -30,6 +31,32 @@ std::vector<KiriView::ImageNavigationCandidate> candidates(std::initializer_list
         result.push_back(candidate(QStringLiteral("/images/%1").arg(name), name));
     }
     return result;
+}
+
+KiriView::ImageIoJob addPendingLoad(KiriView::ImageCandidateStoreEntryState &state, QObject *parent,
+    KiriView::ImageCandidatesCallback callback, KiriView::ErrorCallback errorCallback,
+    std::function<void(QObject *)> removeToken)
+{
+    QObject *token = new QObject(parent);
+    KiriView::ImageIoJob job(token, [removeToken = std::move(removeToken)](QObject *object) {
+        removeToken(object);
+        object->deleteLater();
+    });
+    state.addPendingLoad(job.completion(), std::move(callback), std::move(errorCallback));
+    return job;
+}
+
+KiriView::ImageIoJob addSubscriber(KiriView::ImageCandidateStoreEntryState &state, QObject *parent,
+    KiriView::ImageCandidatesCallback callback, KiriView::ErrorCallback errorCallback,
+    std::function<void(QObject *)> removeToken)
+{
+    QObject *token = new QObject(parent);
+    KiriView::ImageIoJob job(token, [removeToken = std::move(removeToken)](QObject *object) {
+        removeToken(object);
+        object->deleteLater();
+    });
+    state.addSubscriber(token, std::move(callback), std::move(errorCallback));
+    return job;
 }
 
 void deliverCandidatePlan(const KiriView::ImageCandidateStoreEntryNotificationPlan &plan)
@@ -83,8 +110,8 @@ void TestImageCandidateStoreEntryState::completedListingReturnsPendingLoadPlanAn
     int errorCount = 0;
     int cancelCount = 0;
 
-    KiriView::ImageIoJob job = state.addPendingLoad(
-        this, this,
+    KiriView::ImageIoJob job = addPendingLoad(
+        state, this,
         [&loadedCandidates](std::vector<KiriView::ImageNavigationCandidate> candidates) {
             loadedCandidates = std::move(candidates);
         },
@@ -123,8 +150,8 @@ void TestImageCandidateStoreEntryState::cancelledPendingLoadDoesNotReceiveComple
     int loadCount = 0;
     int cancelCount = 0;
 
-    KiriView::ImageIoJob job = state.addPendingLoad(
-        this, this, [&loadCount](std::vector<KiriView::ImageNavigationCandidate>) { ++loadCount; },
+    KiriView::ImageIoJob job = addPendingLoad(
+        state, this, [&loadCount](std::vector<KiriView::ImageNavigationCandidate>) { ++loadCount; },
         [](const QString &) {},
         [&state, &cancelCount](QObject *token) {
             ++cancelCount;
@@ -148,8 +175,8 @@ void TestImageCandidateStoreEntryState::subscribersOnlyReceivePlansAfterInitialL
     int changeCount = 0;
     int cancelCount = 0;
 
-    KiriView::ImageIoJob job = state.addSubscriber(
-        this, this,
+    KiriView::ImageIoJob job = addSubscriber(
+        state, this,
         [&changedCandidates, &changeCount](
             std::vector<KiriView::ImageNavigationCandidate> candidates) {
             changedCandidates = std::move(candidates);
@@ -194,12 +221,12 @@ void TestImageCandidateStoreEntryState::
     int loadCount = 0;
     int subscriberChangeCount = 0;
 
-    KiriView::ImageIoJob pending = state.addPendingLoad(
-        this, this, [&loadCount](std::vector<KiriView::ImageNavigationCandidate>) { ++loadCount; },
+    KiriView::ImageIoJob pending = addPendingLoad(
+        state, this, [&loadCount](std::vector<KiriView::ImageNavigationCandidate>) { ++loadCount; },
         [&pendingError](const QString &errorString) { pendingError = errorString; },
         [&state](QObject *token) { state.removePendingLoad(token); });
-    KiriView::ImageIoJob subscriber = state.addSubscriber(
-        this, this,
+    KiriView::ImageIoJob subscriber = addSubscriber(
+        state, this,
         [&subscriberChangeCount](
             std::vector<KiriView::ImageNavigationCandidate>) { ++subscriberChangeCount; },
         [&subscriberError](const QString &errorString) { subscriberError = errorString; },
