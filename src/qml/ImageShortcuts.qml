@@ -20,7 +20,7 @@ Item {
     property bool videoMode: false
 
     readonly property int keyboardPanDistance: 64
-    readonly property bool horizontalArrowShortcutsEnabled: videoMode ? videoMediaNavigationActive && !videoFileDeletionInProgress && actionAvailability.viewerShortcutsEnabled : actionAvailability.readyViewerShortcutsEnabled
+    readonly property bool horizontalArrowShortcutsEnabled: root.application.mediaHorizontalArrowShortcutsEnabled(root.videoMode, root.actionAvailability.readyViewerShortcutsEnabled, root.actionAvailability.viewerShortcutsEnabled, root.videoMediaNavigationActive, root.videoFileDeletionInProgress)
 
     readonly property var previousImageQAction: root.application.actionForId(KiriViewApplication.GoPreviousImageAction)
     readonly property var nextImageQAction: root.application.actionForId(KiriViewApplication.GoNextImageAction)
@@ -38,7 +38,7 @@ Item {
 
     function shortcutsEnabledForScope(shortcutScope, availabilityRevision) {
         if (root.videoMode) {
-            return root.videoShortcutsEnabledForScope(shortcutScope);
+            return root.application.videoShortcutsEnabledForScope(shortcutScope, root.actionAvailability.helpShortcutsEnabled, root.actionAvailability.viewerShortcutsEnabled, root.videoFileDeletionInProgress, root.videoMediaNavigationActive);
         }
 
         if (availabilityRevision < 0) {
@@ -48,63 +48,7 @@ Item {
     }
 
     function unsupportedVideoAction(actionId) {
-        switch (actionId) {
-        case KiriViewApplication.GoPreviousArchiveAction:
-        case KiriViewApplication.GoNextArchiveAction:
-        case KiriViewApplication.ViewZoomInAction:
-        case KiriViewApplication.ViewZoomOutAction:
-        case KiriViewApplication.ViewFitAction:
-        case KiriViewApplication.ViewFitHeightAction:
-        case KiriViewApplication.ViewFitWidthAction:
-        case KiriViewApplication.ViewActualSizeAction:
-        case KiriViewApplication.ViewRotateClockwiseAction:
-        case KiriViewApplication.ViewRotateCounterclockwiseAction:
-        case KiriViewApplication.ViewToggleTwoPageModeAction:
-        case KiriViewApplication.ViewToggleRightToLeftReadingAction:
-        case KiriViewApplication.ViewPanTopLeftAction:
-        case KiriViewApplication.ViewPanBottomRightAction:
-        case KiriViewApplication.ViewScanForwardAction:
-        case KiriViewApplication.ViewScanBackwardAction:
-            return true;
-        default:
-            return false;
-        }
-    }
-
-    function videoShortcutsEnabledForScope(shortcutScope) {
-        const helpShortcutsEnabled = root.actionAvailability.helpShortcutsEnabled;
-        const viewerShortcutsEnabled = root.actionAvailability.viewerShortcutsEnabled;
-        const videoReadyShortcutsEnabled = helpShortcutsEnabled && !root.videoFileDeletionInProgress;
-        const videoReadyViewerShortcutsEnabled = viewerShortcutsEnabled && !root.videoFileDeletionInProgress;
-        const videoMediaShortcutsEnabled = root.videoMediaNavigationActive && videoReadyShortcutsEnabled;
-        const videoMediaViewerShortcutsEnabled = root.videoMediaNavigationActive && videoReadyViewerShortcutsEnabled;
-
-        switch (shortcutScope) {
-        case ImageActionAvailability.HelpShortcutScope:
-            return helpShortcutsEnabled;
-        case ImageActionAvailability.ViewerShortcutScope:
-            return viewerShortcutsEnabled;
-        case ImageActionAvailability.ReadyShortcutScope:
-        case ImageActionAvailability.RotateShortcutScope:
-        case ImageActionAvailability.PannableShortcutScope:
-        case ImageActionAvailability.ContainerShortcutScope:
-        case ImageActionAvailability.RightToLeftReadingShortcutScope:
-            return videoReadyShortcutsEnabled;
-        case ImageActionAvailability.ReadyViewerShortcutScope:
-        case ImageActionAvailability.RotateViewerShortcutScope:
-        case ImageActionAvailability.PannableViewerShortcutScope:
-        case ImageActionAvailability.ContainerViewerShortcutScope:
-        case ImageActionAvailability.RightToLeftReadingViewerShortcutScope:
-            return videoReadyViewerShortcutsEnabled;
-        case ImageActionAvailability.ImageSelectionShortcutScope:
-        case ImageActionAvailability.PageShortcutScope:
-            return videoMediaShortcutsEnabled;
-        case ImageActionAvailability.ImageSelectionViewerShortcutScope:
-        case ImageActionAvailability.PageViewerShortcutScope:
-            return videoMediaViewerShortcutsEnabled;
-        default:
-            return false;
-        }
+        return root.application.videoActionUnsupported(actionId);
     }
 
     function panBy(deltaX, deltaY) {

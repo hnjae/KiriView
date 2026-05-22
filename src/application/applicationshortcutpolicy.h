@@ -36,6 +36,13 @@ struct ApplicationShortcutProjection {
     QString menuShortcutText;
 };
 
+struct VideoShortcutAvailabilityInput {
+    bool helpShortcutsEnabled = false;
+    bool viewerShortcutsEnabled = false;
+    bool fileDeletionInProgress = false;
+    bool mediaNavigationActive = false;
+};
+
 QList<QKeySequence> filterShortcutsByCommandModifier(
     const QList<QKeySequence> &shortcuts, bool requireCommandModifier);
 QKeySequence menuShortcut(const QList<QKeySequence> &shortcuts);
@@ -45,6 +52,11 @@ QList<QKeySequence> sanitizeShortcuts(const QList<QKeySequence> &shortcuts);
 ApplicationShortcutProjection shortcutProjection(const QList<QKeySequence> &shortcuts);
 const QList<ApplicationShortcutRoute> &shortcutRoutes();
 QVariantList shortcutRouteVariants();
+bool videoShortcutsEnabledForScope(
+    const VideoShortcutAvailabilityInput &input, ImageShortcutScope scope);
+bool videoActionUnsupported(KiriViewApplication::ActionId actionId);
+bool mediaHorizontalArrowShortcutsEnabled(bool videoMode, bool imageReadyViewerShortcutsEnabled,
+    const VideoShortcutAvailabilityInput &videoInput);
 }
 
 #endif

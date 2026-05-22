@@ -48,6 +48,9 @@ private Q_SLOTS:
     void sanitizeShortcutsRemovesUnmodifiedTextInputShortcuts();
     void shortcutRoutesOwnApplicationShortcutScopes();
     void shortcutRouteVariantsExposeQmlShape();
+    void videoShortcutScopesUseViewerDeletionAndNavigationGates();
+    void videoUnsupportedActionPolicyRejectsImageOnlyCommands();
+    void horizontalArrowShortcutPolicyUsesActiveMediaMode();
 };
 
 void TestApplicationShortcutPolicy::commandModifierFilterPartitionsShortcuts()
@@ -233,6 +236,92 @@ void TestApplicationShortcutPolicy::shortcutRouteVariantsExposeQmlShape()
         QCOMPARE(route.value(QStringLiteral("shortcutScope")).toInt(),
             static_cast<int>(routes.at(index).shortcutScope));
     }
+}
+
+void TestApplicationShortcutPolicy::videoShortcutScopesUseViewerDeletionAndNavigationGates()
+{
+    KiriView::ApplicationActions::VideoShortcutAvailabilityInput input;
+    input.helpShortcutsEnabled = true;
+    input.viewerShortcutsEnabled = true;
+    input.mediaNavigationActive = true;
+
+    QVERIFY(KiriView::ApplicationActions::videoShortcutsEnabledForScope(
+        input, Scope::HelpShortcutScope));
+    QVERIFY(KiriView::ApplicationActions::videoShortcutsEnabledForScope(
+        input, Scope::ViewerShortcutScope));
+    QVERIFY(KiriView::ApplicationActions::videoShortcutsEnabledForScope(
+        input, Scope::ReadyShortcutScope));
+    QVERIFY(KiriView::ApplicationActions::videoShortcutsEnabledForScope(
+        input, Scope::ReadyViewerShortcutScope));
+    QVERIFY(KiriView::ApplicationActions::videoShortcutsEnabledForScope(
+        input, Scope::ImageSelectionShortcutScope));
+    QVERIFY(KiriView::ApplicationActions::videoShortcutsEnabledForScope(
+        input, Scope::ImageSelectionViewerShortcutScope));
+
+    input.viewerShortcutsEnabled = false;
+    QVERIFY(KiriView::ApplicationActions::videoShortcutsEnabledForScope(
+        input, Scope::ReadyShortcutScope));
+    QVERIFY(!KiriView::ApplicationActions::videoShortcutsEnabledForScope(
+        input, Scope::ReadyViewerShortcutScope));
+    QVERIFY(!KiriView::ApplicationActions::videoShortcutsEnabledForScope(
+        input, Scope::ImageSelectionViewerShortcutScope));
+
+    input.viewerShortcutsEnabled = true;
+    input.mediaNavigationActive = false;
+    QVERIFY(!KiriView::ApplicationActions::videoShortcutsEnabledForScope(
+        input, Scope::ImageSelectionShortcutScope));
+    QVERIFY(!KiriView::ApplicationActions::videoShortcutsEnabledForScope(
+        input, Scope::PageViewerShortcutScope));
+
+    input.fileDeletionInProgress = true;
+    QVERIFY(KiriView::ApplicationActions::videoShortcutsEnabledForScope(
+        input, Scope::HelpShortcutScope));
+    QVERIFY(!KiriView::ApplicationActions::videoShortcutsEnabledForScope(
+        input, Scope::ReadyShortcutScope));
+    QVERIFY(!KiriView::ApplicationActions::videoShortcutsEnabledForScope(
+        input, Scope::ContainerViewerShortcutScope));
+}
+
+void TestApplicationShortcutPolicy::videoUnsupportedActionPolicyRejectsImageOnlyCommands()
+{
+    QVERIFY(
+        KiriView::ApplicationActions::videoActionUnsupported(ActionId::ViewRotateClockwiseAction));
+    QVERIFY(KiriView::ApplicationActions::videoActionUnsupported(ActionId::ViewZoomInAction));
+    QVERIFY(KiriView::ApplicationActions::videoActionUnsupported(
+        ActionId::ViewToggleTwoPageModeAction));
+    QVERIFY(
+        KiriView::ApplicationActions::videoActionUnsupported(ActionId::GoPreviousArchiveAction));
+    QVERIFY(KiriView::ApplicationActions::videoActionUnsupported(ActionId::ViewScanForwardAction));
+
+    QVERIFY(
+        !KiriView::ApplicationActions::videoActionUnsupported(ActionId::WindowFullscreenAction));
+    QVERIFY(!KiriView::ApplicationActions::videoActionUnsupported(ActionId::HelpShortcutsAction));
+    QVERIFY(!KiriView::ApplicationActions::videoActionUnsupported(ActionId::FileOpenAction));
+    QVERIFY(!KiriView::ApplicationActions::videoActionUnsupported(ActionId::GoPreviousImageAction));
+    QVERIFY(!KiriView::ApplicationActions::videoActionUnsupported(ActionId::FileDeleteAction));
+}
+
+void TestApplicationShortcutPolicy::horizontalArrowShortcutPolicyUsesActiveMediaMode()
+{
+    KiriView::ApplicationActions::VideoShortcutAvailabilityInput input;
+    input.viewerShortcutsEnabled = true;
+    input.mediaNavigationActive = true;
+
+    QVERIFY(KiriView::ApplicationActions::mediaHorizontalArrowShortcutsEnabled(false, true, input));
+    QVERIFY(
+        !KiriView::ApplicationActions::mediaHorizontalArrowShortcutsEnabled(false, false, input));
+    QVERIFY(KiriView::ApplicationActions::mediaHorizontalArrowShortcutsEnabled(true, false, input));
+
+    input.viewerShortcutsEnabled = false;
+    QVERIFY(!KiriView::ApplicationActions::mediaHorizontalArrowShortcutsEnabled(true, true, input));
+
+    input.viewerShortcutsEnabled = true;
+    input.fileDeletionInProgress = true;
+    QVERIFY(!KiriView::ApplicationActions::mediaHorizontalArrowShortcutsEnabled(true, true, input));
+
+    input.fileDeletionInProgress = false;
+    input.mediaNavigationActive = false;
+    QVERIFY(!KiriView::ApplicationActions::mediaHorizontalArrowShortcutsEnabled(true, true, input));
 }
 
 QTEST_GUILESS_MAIN(TestApplicationShortcutPolicy)

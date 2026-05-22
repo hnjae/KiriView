@@ -23,6 +23,8 @@
 namespace {
 namespace Actions = KiriView::ApplicationActions;
 
+using Scope = KiriView::ApplicationActions::ImageShortcutScope;
+
 constexpr const char *interfaceConfigGroup = "Interface";
 constexpr const char *menuPresentationConfigKey = "menuPresentation";
 constexpr const char *stateConfigFileName = "kiriviewstaterc";
@@ -109,6 +111,7 @@ private Q_SLOTS:
     void actionDefinitionTableIsCanonicalIdentitySource();
     void actionIdsResolveActionNamesAndShortcuts();
     void shortcutRoutesExposeApplicationPolicy();
+    void videoShortcutPolicyApiExposesApplicationPolicy();
     void shortcutsApiReturnsCurrentShortcuts();
     void shortcutModifierPartitionsTextInputShortcuts();
     void shortcutAliasesDeriveFromCtrlShortcuts();
@@ -236,6 +239,27 @@ void TestKiriViewApplication::shortcutRoutesExposeApplicationPolicy()
     KiriViewApplication application;
 
     QCOMPARE(application.shortcutRoutes(), Actions::shortcutRouteVariants());
+}
+
+void TestKiriViewApplication::videoShortcutPolicyApiExposesApplicationPolicy()
+{
+    KiriViewApplication application;
+
+    QVERIFY(application.videoShortcutsEnabledForScope(
+        static_cast<int>(Scope::ReadyViewerShortcutScope), true, true, false, true));
+    QVERIFY(!application.videoShortcutsEnabledForScope(
+        static_cast<int>(Scope::ReadyViewerShortcutScope), true, false, false, true));
+    QVERIFY(!application.videoShortcutsEnabledForScope(
+        static_cast<int>(Scope::ImageSelectionShortcutScope), true, true, false, false));
+    QVERIFY(!application.videoShortcutsEnabledForScope(999, true, true, false, true));
+
+    QVERIFY(application.videoActionUnsupported(KiriViewApplication::ViewZoomInAction));
+    QVERIFY(!application.videoActionUnsupported(KiriViewApplication::WindowFullscreenAction));
+
+    QVERIFY(application.mediaHorizontalArrowShortcutsEnabled(false, true, false, false, false));
+    QVERIFY(!application.mediaHorizontalArrowShortcutsEnabled(false, false, true, true, false));
+    QVERIFY(application.mediaHorizontalArrowShortcutsEnabled(true, false, true, true, false));
+    QVERIFY(!application.mediaHorizontalArrowShortcutsEnabled(true, true, true, true, true));
 }
 
 void TestKiriViewApplication::shortcutsApiReturnsCurrentShortcuts()
