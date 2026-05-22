@@ -84,6 +84,12 @@ std::optional<QUrl> documentPortalHostUrl(const QUrl &url)
 }
 
 namespace KiriView {
+bool DirectoryNavigationLocation::isValid() const
+{
+    return fileUrl.isValid() && !fileUrl.isEmpty() && directoryUrl.isValid()
+        && !directoryUrl.isEmpty();
+}
+
 QUrl normalizedUrlForIdentity(const QUrl &url) { return url.adjusted(QUrl::NormalizePathSegments); }
 
 QString normalizedUrlIdentityKey(const QUrl &url, QUrl::ComponentFormattingOptions options)
@@ -101,6 +107,13 @@ std::optional<QUrl> normalizedValidImageUrl(const QUrl &url)
     }
 
     return normalizedUrl;
+}
+
+QUrl normalizedDirectoryUrlForIdentity(const QUrl &url) { return normalizedUrlForIdentity(url); }
+
+QString directoryUrlIdentityKey(const QUrl &url, QUrl::ComponentFormattingOptions options)
+{
+    return normalizedUrlIdentityKey(normalizedDirectoryUrlForIdentity(url), options);
 }
 
 QUrl normalizedFileContainerUrl(const QUrl &url)
@@ -123,6 +136,11 @@ QUrl normalizedDirectoryContainerUrl(const QUrl &url)
         normalizedUrl.setPath(path);
     }
     return normalizedUrl;
+}
+
+QUrl parentDirectoryUrlForFileNavigation(const QUrl &url)
+{
+    return url.adjusted(QUrl::RemoveFilename | QUrl::NormalizePathSegments);
 }
 
 QUrl parentUrlForContainerNavigation(const QUrl &containerUrl)
@@ -152,6 +170,15 @@ QUrl navigationSourceUrl(const QUrl &url)
     }
 
     return url;
+}
+
+DirectoryNavigationLocation directoryNavigationLocationForFileUrl(const QUrl &url)
+{
+    QUrl fileUrl = navigationSourceUrl(url);
+    return DirectoryNavigationLocation {
+        fileUrl,
+        parentDirectoryUrlForFileNavigation(fileUrl),
+    };
 }
 
 bool sameNormalizedUrl(const QUrl &left, const QUrl &right)

@@ -132,13 +132,13 @@ std::optional<ImageCandidateListContext> imageCandidateListContextForDisplayedIm
             currentUrl, location.archiveDocument());
     }
 
-    const QUrl currentUrl = navigationSourceUrl(displayedUrl);
-    const QUrl parentUrl = currentUrl.adjusted(QUrl::RemoveFilename | QUrl::NormalizePathSegments);
-    if (!currentUrl.isValid() || currentUrl.isEmpty() || !parentUrl.isValid()
-        || parentUrl.isEmpty()) {
+    const DirectoryNavigationLocation navigationLocation
+        = directoryNavigationLocationForFileUrl(displayedUrl);
+    if (!navigationLocation.isValid()) {
         return std::nullopt;
     }
 
-    return ImageCandidateListContext::forDirectory(currentUrl, parentUrl);
+    return ImageCandidateListContext::forDirectory(
+        navigationLocation.fileUrl, navigationLocation.directoryUrl);
 }
 }

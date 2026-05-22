@@ -14,13 +14,6 @@
 #include <utility>
 
 namespace {
-QUrl normalizedDirectoryUrl(QUrl url) { return KiriView::normalizedUrlForIdentity(url); }
-
-QString keyForDirectoryUrl(const QUrl &url)
-{
-    return KiriView::normalizedUrlIdentityKey(normalizedDirectoryUrl(url), QUrl::FullyEncoded);
-}
-
 bool isLiveLocalDirectoryUrl(const QUrl &url)
 {
     return url.isLocalFile() && url.isValid() && !url.isEmpty();
@@ -43,8 +36,8 @@ ImageIoJob ImageCandidateStore::loadDirectoryImages(QObject *receiver, QUrl dire
             receiver, std::move(directoryUrl), std::move(callback), std::move(errorCallback));
     }
 
-    directoryUrl = normalizedDirectoryUrl(std::move(directoryUrl));
-    const QString key = keyForDirectoryUrl(directoryUrl);
+    directoryUrl = normalizedDirectoryUrlForIdentity(directoryUrl);
+    const QString key = directoryUrlIdentityKey(directoryUrl);
     ImageCandidateDirectoryEntry &entry = entryForLocalDirectory(directoryUrl);
     if (entry.failed()) {
         invokeIfSet(errorCallback, entry.errorString());
@@ -71,8 +64,8 @@ ImageIoJob ImageCandidateStore::watchDirectoryImages(QObject *receiver, QUrl dir
         return ImageIoJob();
     }
 
-    directoryUrl = normalizedDirectoryUrl(std::move(directoryUrl));
-    const QString key = keyForDirectoryUrl(directoryUrl);
+    directoryUrl = normalizedDirectoryUrlForIdentity(directoryUrl);
+    const QString key = directoryUrlIdentityKey(directoryUrl);
     ImageCandidateDirectoryEntry &entry = entryForLocalDirectory(directoryUrl);
     if (entry.failed()) {
         invokeIfSet(errorCallback, entry.errorString());
@@ -90,7 +83,7 @@ ImageIoJob ImageCandidateStore::watchDirectoryImages(QObject *receiver, QUrl dir
 
 ImageCandidateDirectoryEntry &ImageCandidateStore::entryForLocalDirectory(const QUrl &directoryUrl)
 {
-    const QString key = keyForDirectoryUrl(directoryUrl);
+    const QString key = directoryUrlIdentityKey(directoryUrl);
     auto entry = m_entries.find(key);
     if (entry != m_entries.end()) {
         return *entry->second;

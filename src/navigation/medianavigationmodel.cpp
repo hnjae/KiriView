@@ -34,12 +34,14 @@ void appendRemovedCandidate(
 }
 
 namespace KiriView {
-QUrl mediaNavigationSourceUrl(const QUrl &url) { return navigationSourceUrl(url); }
+QUrl mediaNavigationSourceUrl(const QUrl &url)
+{
+    return directoryNavigationLocationForFileUrl(url).fileUrl;
+}
 
 QUrl mediaNavigationParentUrl(const QUrl &url)
 {
-    const QUrl currentUrl = mediaNavigationSourceUrl(url);
-    return currentUrl.adjusted(QUrl::RemoveFilename | QUrl::NormalizePathSegments);
+    return directoryNavigationLocationForFileUrl(url).directoryUrl;
 }
 
 std::optional<std::size_t> mediaNavigationCandidateIndex(

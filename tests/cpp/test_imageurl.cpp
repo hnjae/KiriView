@@ -29,6 +29,7 @@ class TestImageUrl : public QObject
 private Q_SLOTS:
     void normalizedContainerUrlsStripQueryFragmentsAndCleanLocalPaths();
     void normalizedUrlIdentityHelpersRejectInvalidImageUrlsAndPreserveKeyFormatting();
+    void directoryNavigationHelpersOwnParentAndIdentityRules();
     void sameNormalizedUrlMatchesPathSegments();
     void sameContainerNavigationUrlMatchesNormalizedPaths();
     void parentUrlForContainerNavigationHandlesContainers();
@@ -65,6 +66,31 @@ void TestImageUrl::normalizedUrlIdentityHelpersRejectInvalidImageUrlsAndPreserve
         normalizedUrl.toString(QUrl::PrettyDecoded));
     QCOMPARE(KiriView::normalizedUrlIdentityKey(equivalentUrl, QUrl::FullyEncoded),
         normalizedUrl.toString(QUrl::FullyEncoded));
+}
+
+void TestImageUrl::directoryNavigationHelpersOwnParentAndIdentityRules()
+{
+    const QUrl directoryUrl = QUrl::fromLocalFile(QStringLiteral("/images/chapter/../"));
+    const QUrl normalizedDirectoryUrl = QUrl::fromLocalFile(QStringLiteral("/images/"));
+    QCOMPARE(KiriView::normalizedDirectoryUrlForIdentity(directoryUrl), normalizedDirectoryUrl);
+    QCOMPARE(KiriView::directoryUrlIdentityKey(directoryUrl),
+        normalizedDirectoryUrl.toString(QUrl::FullyEncoded));
+
+    QCOMPARE(KiriView::parentDirectoryUrlForFileNavigation(
+                 QUrl::fromLocalFile(QStringLiteral("/images/a/../b/page.png"))),
+        QUrl::fromLocalFile(QStringLiteral("/images/b/")));
+
+    const QUrl archiveEntry(QStringLiteral("zip:///path/archive.zip!/chapter/page.png"));
+    QCOMPARE(KiriView::parentDirectoryUrlForFileNavigation(archiveEntry),
+        QUrl(QStringLiteral("zip:///path/archive.zip!/chapter/")));
+
+    const KiriView::DirectoryNavigationLocation navigationLocation
+        = KiriView::directoryNavigationLocationForFileUrl(
+            QUrl::fromLocalFile(QStringLiteral("/images/a/../b/page.png")));
+    QVERIFY(navigationLocation.isValid());
+    QVERIFY(KiriView::sameNormalizedUrl(
+        navigationLocation.fileUrl, QUrl::fromLocalFile(QStringLiteral("/images/b/page.png"))));
+    QCOMPARE(navigationLocation.directoryUrl, QUrl::fromLocalFile(QStringLiteral("/images/b/")));
 }
 
 void TestImageUrl::sameNormalizedUrlMatchesPathSegments()
