@@ -22,6 +22,7 @@ class TestMediaNavigationModel : public QObject
 private Q_SLOTS:
     void parentUrlUsesDirectImageCandidateContextRule();
     void navigatesMixedMediaWithoutWrapping();
+    void openPlanUpdatesBoundaryStateAndSelectsTargets();
     void deletionFallbackUsesOriginalDirectMediaUrl();
     void sortingAndMatchingNormalizePathSegmentsAndPercentEncoding();
     void boundaryStateIsUnknownWhenCurrentMediaIsMissing();
@@ -75,6 +76,44 @@ void TestMediaNavigationModel::navigatesMixedMediaWithoutWrapping()
             candidates, localUrl(QStringLiteral("/media/02.mp4")));
     QCOMPARE(videoBoundary.currentNumber, 2);
     QCOMPARE(videoBoundary.count, 3);
+}
+
+void TestMediaNavigationModel::openPlanUpdatesBoundaryStateAndSelectsTargets()
+{
+    std::vector<KiriView::MediaNavigationCandidate> candidates {
+        candidate(localUrl(QStringLiteral("/media/01.jpg"))),
+        candidate(localUrl(QStringLiteral("/media/02.mp4"))),
+        candidate(localUrl(QStringLiteral("/media/03.png"))),
+    };
+    KiriView::sortMediaNavigationCandidates(&candidates);
+
+    const KiriView::MediaNavigationOpenPlan nextPlan = KiriView::mediaNavigationOpenPlan(candidates,
+        localUrl(QStringLiteral("/media/02.mp4")), KiriView::nextMediaNavigationOpenRequest());
+    QCOMPARE(nextPlan.targetUrl.value(), localUrl(QStringLiteral("/media/03.png")));
+    QCOMPARE(nextPlan.boundaryState.currentNumber, 2);
+    QCOMPARE(nextPlan.boundaryState.count, 3);
+    QVERIFY(nextPlan.boundaryState.canOpenPrevious);
+    QVERIFY(nextPlan.boundaryState.canOpenNext);
+
+    const KiriView::MediaNavigationOpenPlan previousPlan
+        = KiriView::mediaNavigationOpenPlan(candidates, localUrl(QStringLiteral("/media/02.mp4")),
+            KiriView::previousMediaNavigationOpenRequest());
+    QCOMPARE(previousPlan.targetUrl.value(), localUrl(QStringLiteral("/media/01.jpg")));
+
+    const KiriView::MediaNavigationOpenPlan lowNumberPlan
+        = KiriView::mediaNavigationOpenPlan(candidates, localUrl(QStringLiteral("/media/02.mp4")),
+            KiriView::numberedMediaNavigationOpenRequest(-4));
+    QCOMPARE(lowNumberPlan.targetUrl.value(), localUrl(QStringLiteral("/media/01.jpg")));
+
+    const KiriView::MediaNavigationOpenPlan highNumberPlan
+        = KiriView::mediaNavigationOpenPlan(candidates, localUrl(QStringLiteral("/media/02.mp4")),
+            KiriView::numberedMediaNavigationOpenRequest(9));
+    QCOMPARE(highNumberPlan.targetUrl.value(), localUrl(QStringLiteral("/media/03.png")));
+
+    const KiriView::MediaNavigationOpenPlan emptyPlan = KiriView::mediaNavigationOpenPlan({},
+        localUrl(QStringLiteral("/media/02.mp4")), KiriView::numberedMediaNavigationOpenRequest(1));
+    QVERIFY(!emptyPlan.targetUrl.has_value());
+    QCOMPARE(emptyPlan.boundaryState.count, 0);
 }
 
 void TestMediaNavigationModel::deletionFallbackUsesOriginalDirectMediaUrl()

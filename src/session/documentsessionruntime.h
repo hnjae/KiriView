@@ -79,6 +79,8 @@ private:
         std::vector<MediaNavigationCandidate> candidates,
         const std::shared_ptr<std::function<void(std::vector<MediaNavigationCandidate>)>>
             &callback);
+    void finishMediaNavigation(
+        std::vector<MediaNavigationCandidate> candidates, MediaNavigationOpenRequest request);
     void updateMediaBoundaryState(const std::vector<MediaNavigationCandidate> &candidates);
     void scheduleMediaPredecode(const std::vector<MediaNavigationCandidate> &candidates);
     std::vector<DisplayedPredecodeImage> displayedPredecodeImages() const;

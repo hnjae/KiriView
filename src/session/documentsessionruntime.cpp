@@ -12,7 +12,6 @@
 
 #include <QObject>
 #include <QString>
-#include <algorithm>
 #include <memory>
 #include <optional>
 #include <utility>
@@ -191,12 +190,7 @@ void DocumentSessionRuntime::openPreviousMedia()
     }
 
     loadMediaCandidates([this](std::vector<MediaNavigationCandidate> candidates) {
-        updateMediaBoundaryState(candidates);
-        const std::optional<QUrl> target = adjacentMediaNavigationUrl(
-            candidates, currentMediaUrl(), NavigationDirection::Previous);
-        if (target.has_value()) {
-            openMediaUrl(*target);
-        }
+        finishMediaNavigation(std::move(candidates), previousMediaNavigationOpenRequest());
     });
 }
 
@@ -207,12 +201,7 @@ void DocumentSessionRuntime::openNextMedia()
     }
 
     loadMediaCandidates([this](std::vector<MediaNavigationCandidate> candidates) {
-        updateMediaBoundaryState(candidates);
-        const std::optional<QUrl> target
-            = adjacentMediaNavigationUrl(candidates, currentMediaUrl(), NavigationDirection::Next);
-        if (target.has_value()) {
-            openMediaUrl(*target);
-        }
+        finishMediaNavigation(std::move(candidates), nextMediaNavigationOpenRequest());
     });
 }
 
@@ -223,13 +212,8 @@ void DocumentSessionRuntime::openMediaAtNumber(int mediaNumber)
     }
 
     loadMediaCandidates([this, mediaNumber](std::vector<MediaNavigationCandidate> candidates) {
-        updateMediaBoundaryState(candidates);
-        if (candidates.empty()) {
-            return;
-        }
-
-        const int clampedNumber = std::clamp(mediaNumber, 1, static_cast<int>(candidates.size()));
-        openMediaUrl(candidates.at(static_cast<std::size_t>(clampedNumber - 1)).url);
+        finishMediaNavigation(
+            std::move(candidates), numberedMediaNavigationOpenRequest(mediaNumber));
     });
 }
 
@@ -433,6 +417,18 @@ void DocumentSessionRuntime::finishMediaCandidateLoad(DocumentSessionMediaCandid
     }
 
     (*callback)(std::move(candidates));
+}
+
+void DocumentSessionRuntime::finishMediaNavigation(
+    std::vector<MediaNavigationCandidate> candidates, MediaNavigationOpenRequest request)
+{
+    const MediaNavigationOpenPlan plan
+        = mediaNavigationOpenPlan(candidates, currentMediaUrl(), request);
+    m_state.setMediaNavigationState(plan.boundaryState, true);
+    scheduleMediaPredecode(candidates);
+    if (plan.targetUrl.has_value()) {
+        openMediaUrl(*plan.targetUrl);
+    }
 }
 
 void DocumentSessionRuntime::updateMediaBoundaryState(

@@ -34,6 +34,25 @@ struct MediaDeletionFallbackPlan {
     bool hasTarget() const { return !targetUrl.isEmpty(); }
 };
 
+enum class MediaNavigationOpenKind {
+    Previous,
+    Next,
+    Number,
+};
+
+struct MediaNavigationOpenRequest {
+    MediaNavigationOpenKind kind = MediaNavigationOpenKind::Next;
+    int mediaNumber = 0;
+};
+
+struct MediaNavigationOpenPlan {
+    MediaNavigationBoundaryState boundaryState;
+    std::optional<QUrl> targetUrl;
+};
+
+MediaNavigationOpenRequest previousMediaNavigationOpenRequest();
+MediaNavigationOpenRequest nextMediaNavigationOpenRequest();
+MediaNavigationOpenRequest numberedMediaNavigationOpenRequest(int mediaNumber);
 QUrl mediaNavigationSourceUrl(const QUrl &url);
 QUrl mediaNavigationParentUrl(const QUrl &url);
 std::optional<std::size_t> mediaNavigationCandidateIndex(
@@ -43,6 +62,9 @@ std::optional<QUrl> adjacentMediaNavigationUrl(
     NavigationDirection direction);
 MediaNavigationBoundaryState mediaNavigationBoundaryState(
     const std::vector<MediaNavigationCandidate> &candidates, const QUrl &currentUrl);
+MediaNavigationOpenPlan mediaNavigationOpenPlan(
+    const std::vector<MediaNavigationCandidate> &candidates, const QUrl &currentUrl,
+    MediaNavigationOpenRequest request);
 MediaDeletionFallbackPlan mediaDeletionFallbackPlan(
     std::vector<MediaNavigationCandidate> candidates, const QUrl &currentUrl);
 void sortMediaNavigationCandidates(std::vector<MediaNavigationCandidate> *candidates);
