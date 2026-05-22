@@ -46,8 +46,6 @@ mod imageopenworkflow;
 // Navigation policy.
 #[path = "policy/imagenavigationmodel.rs"]
 mod imagenavigationmodel;
-#[path = "policy/medianavigationmodel.rs"]
-mod medianavigationmodel;
 #[path = "policy/navigationindex.rs"]
 mod navigationindex;
 

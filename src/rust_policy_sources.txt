@@ -26,7 +26,6 @@ src/policy/imagespreadpolicy.rs
 src/policy/imagetilegeometry.rs
 src/policy/imageviewportgeometry.rs
 src/policy/imagezoomstate.rs
-src/policy/medianavigationmodel.rs
 src/policy/navigationindex.rs
 src/policy/predecodepolicy.rs
 src/policy/predecodepolicy/budget.rs
