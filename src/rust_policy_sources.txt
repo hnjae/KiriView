@@ -29,7 +29,13 @@ src/policy/imageviewportgeometry.rs
 src/policy/imagezoomstate.rs
 src/policy/medianavigationmodel.rs
 src/policy/navigationindex.rs
-src/policy/predecodecachepolicy.rs
+src/policy/predecodepolicy.rs
+src/policy/predecodepolicy/budget.rs
+src/policy/predecodepolicy/cache_retention.rs
+src/policy/predecodepolicy/config.rs
+src/policy/predecodepolicy/load_queue.rs
+src/policy/predecodepolicy/momentum.rs
+src/policy/predecodepolicy/schedule.rs
 src/policy/startup_arguments.rs
 src/policy/svgrenderer.rs
 src/policy/videoformatregistry.rs

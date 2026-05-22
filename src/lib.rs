@@ -54,8 +54,8 @@ mod medianavigationmodel;
 mod navigationindex;
 
 // Predecode policy.
-#[path = "policy/predecodecachepolicy.rs"]
-mod predecodecachepolicy;
+#[path = "policy/predecodepolicy.rs"]
+mod predecodepolicy;
 
 // Presentation policy.
 #[path = "policy/imagemath.rs"]

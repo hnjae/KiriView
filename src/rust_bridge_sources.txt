@@ -23,5 +23,5 @@ src/policy/imagetilegeometry.rs
 src/policy/imagenavigationmodel.rs
 src/policy/imageviewportgeometry.rs
 src/policy/imagezoomstate.rs
-src/policy/predecodecachepolicy.rs
+src/policy/predecodepolicy.rs
 src/policy/svgrenderer.rs

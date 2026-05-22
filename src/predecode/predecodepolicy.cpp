@@ -4,7 +4,7 @@
 #include "predecodepolicy.h"
 
 #include "bridge/rustqtconversion.h"
-#include "kiriview/src/policy/predecodecachepolicy.cxx.h"
+#include "kiriview/src/policy/predecodepolicy.cxx.h"
 
 #include <algorithm>
 #include <cstdint>
