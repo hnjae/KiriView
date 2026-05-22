@@ -375,8 +375,7 @@ StatefulApp.StatefulWindow {
                 mediaNavigationKnown: documentSession.mediaNavigationKnown
                 rightToLeftReadingActive: imageActions.rightToLeftReadingActive
                 showApplicationMenuActions: !root.menuBarMode && !root.fullscreen
-                showImageControls: page.imageMode
-                showVideoZoomReadout: page.videoMode
+                videoMode: page.videoMode
                 videoZoomPercent: page.videoZoomPercent
                 videoZoomReady: page.videoZoomReady
                 visible: !root.fullscreen && (page.imageMode || page.videoMode)
@@ -447,103 +446,24 @@ StatefulApp.StatefulWindow {
         }
 
         Loader {
-            active: page.imageMode
+            active: page.imageMode || page.videoMode
             sourceComponent: ImageShortcuts {
                 application: kiriApplication
                 actionAvailability: actionAvailability
                 handleMenuPresentationShortcut: false
                 imageDocument: page.imageDocument
                 imageViewport: imageViewport
+                videoFileDeletionInProgress: documentSession.fileDeletionInProgress
+                videoMediaNavigationActive: documentSession.mediaNavigationActive
+                videoMode: page.videoMode
 
                 onImageBoundaryReached: function (message) {
                     toastNotification.show(message, "image-boundary");
                 }
-            }
-        }
 
-        Shortcut {
-            context: Qt.WindowShortcut
-            enabled: page.videoMode && !root.helpDialogOpen
-            sequence: "Left"
-
-            onActivated: imageActions.openPreviousImage()
-        }
-
-        Shortcut {
-            context: Qt.WindowShortcut
-            enabled: page.videoMode && !root.helpDialogOpen
-            sequence: "Right"
-
-            onActivated: imageActions.openNextImage()
-        }
-
-        Item {
-            enabled: !page.imageMode
-
-            ConfiguredActionShortcut {
-                actionId: KiriViewApplication.FileOpenAction
-                application: kiriApplication
-                shortcutsEnabled: parent.enabled && !root.helpDialogOpen
-            }
-
-            ConfiguredActionShortcut {
-                actionId: KiriViewApplication.FileQuitAction
-                application: kiriApplication
-                shortcutsEnabled: parent.enabled && !root.helpDialogOpen
-            }
-
-            ConfiguredActionShortcut {
-                actionId: KiriViewApplication.FileMoveToTrashAction
-                application: kiriApplication
-                shortcutsEnabled: parent.enabled && documentSession.displayedFileDeletionAvailable && !root.helpDialogOpen
-            }
-
-            ConfiguredActionShortcut {
-                actionId: KiriViewApplication.FileDeleteAction
-                application: kiriApplication
-                shortcutsEnabled: parent.enabled && documentSession.displayedFileDeletionAvailable && !root.helpDialogOpen
-            }
-
-            ConfiguredActionShortcut {
-                actionId: KiriViewApplication.GoPreviousImageAction
-                application: kiriApplication
-                shortcutsEnabled: parent.enabled && documentSession.mediaNavigationActive && !documentSession.fileDeletionInProgress && !root.helpDialogOpen
-            }
-
-            ConfiguredActionShortcut {
-                actionId: KiriViewApplication.GoNextImageAction
-                application: kiriApplication
-                shortcutsEnabled: parent.enabled && documentSession.mediaNavigationActive && !documentSession.fileDeletionInProgress && !root.helpDialogOpen
-            }
-
-            ConfiguredActionShortcut {
-                actionId: KiriViewApplication.GoFirstImageAction
-                application: kiriApplication
-                shortcutsEnabled: parent.enabled && documentSession.mediaNavigationActive && documentSession.mediaNavigationKnown && documentSession.mediaCount > 0 && !documentSession.fileDeletionInProgress && !root.helpDialogOpen
-            }
-
-            ConfiguredActionShortcut {
-                actionId: KiriViewApplication.GoLastImageAction
-                application: kiriApplication
-                shortcutsEnabled: parent.enabled && documentSession.mediaNavigationActive && documentSession.mediaNavigationKnown && documentSession.mediaCount > 0 && !documentSession.fileDeletionInProgress && !root.helpDialogOpen
-            }
-
-            ConfiguredActionShortcut {
-                actionId: KiriViewApplication.WindowFullscreenAction
-                application: kiriApplication
-                shortcutsEnabled: parent.enabled && !root.helpDialogOpen
-            }
-
-            ConfiguredActionShortcut {
-                actionId: KiriViewApplication.HelpShortcutsAction
-                application: kiriApplication
-                shortcutsEnabled: parent.enabled && !root.helpDialogOpen
-            }
-
-            ConfiguredActionShortcut {
-                actionId: KiriViewApplication.OptionsConfigureKeybindingAction
-                application: kiriApplication
-                shortcutsEnabled: parent.enabled && !root.helpDialogOpen
+                onUnsupportedVideoActionRequested: {
+                    toastNotification.show(KI18n.i18nc("@info:status", "This action is not available for videos"), "unsupported-video-action");
+                }
             }
         }
 
@@ -582,9 +502,8 @@ StatefulApp.StatefulWindow {
             mediaNavigationKnown: documentSession.mediaNavigationKnown
             rightToLeftReadingActive: imageActions.rightToLeftReadingActive
             showApplicationMenuActions: !root.menuBarMode && !root.fullscreen
-            showImageControls: page.imageMode
-            showVideoZoomReadout: page.videoMode
             transientOverlay: true
+            videoMode: page.videoMode
             videoZoomPercent: page.videoZoomPercent
             videoZoomReady: page.videoZoomReady
             visible: root.fullscreen && root.fullscreenToolBarRevealed && (page.imageMode || page.videoMode)

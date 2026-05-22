@@ -10,8 +10,13 @@ Item {
 
     required property var actionIds
     required property var application
+    property var interceptShortcut: function (actionId) {
+        return false;
+    }
     property int shortcutFilter: ConfiguredActionShortcut.AllShortcuts
     property bool shortcutsEnabled: true
+
+    signal shortcutIntercepted(int actionId)
 
     Repeater {
         model: root.actionIds
@@ -21,8 +26,13 @@ Item {
 
             actionId: modelData
             application: root.application
+            interceptShortcut: root.interceptShortcut(modelData)
             shortcutFilter: root.shortcutFilter
             shortcutsEnabled: root.shortcutsEnabled
+
+            onShortcutIntercepted: function (actionId) {
+                root.shortcutIntercepted(actionId);
+            }
         }
     }
 }

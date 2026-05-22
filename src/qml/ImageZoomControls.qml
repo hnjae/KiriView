@@ -5,6 +5,7 @@ import QtQuick
 import QtQuick.Controls as Controls
 import QtQuick.Layouts
 import io.github.hnjae.kiriview
+import org.kde.ki18n
 import org.kde.kirigami as Kirigami
 
 RowLayout {
@@ -16,8 +17,12 @@ RowLayout {
     required property int maximumManualZoomPercent
     required property real zoomStepFactor
     property bool compact: false
+    property bool readOnlyDisplayMode: false
+    property bool readOnlyPercentKnown: false
+    property int readOnlyPercent: 0
     property real pendingZoomStepCount: 0
     readonly property int controlSpacing: compact ? Math.max(1, Math.round(Kirigami.Units.smallSpacing / 2)) : Kirigami.Units.smallSpacing
+    readonly property string readOnlyDisplayText: readOnlyPercentKnown ? KI18n.i18nc("@label:zoom percentage", "%1%", readOnlyPercent) : KI18n.i18nc("@label:unknown zoom percentage", "--%")
     readonly property bool textInputActive: textInputFocused()
 
     signal editingCompleted(bool returnViewerFocus)
@@ -53,9 +58,9 @@ RowLayout {
 
         property bool completingEdit: false
 
-        editable: true
-        enabled: root.imageReady
-        from: Math.min(root.minimumManualZoomPercent, Math.floor(root.imageDocument.zoomPercent))
+        editable: !root.readOnlyDisplayMode
+        enabled: !root.readOnlyDisplayMode && root.imageReady
+        from: root.readOnlyDisplayMode ? 0 : Math.min(root.minimumManualZoomPercent, Math.floor(root.imageDocument.zoomPercent))
         implicitWidth: Kirigami.Units.gridUnit * 5
         live: false
         stepSize: {
@@ -67,8 +72,8 @@ RowLayout {
             }
             return Math.max(1, Math.round(root.imageDocument.zoomPercent * (root.zoomStepFactor - 1)));
         }
-        to: Math.max(root.maximumManualZoomPercent, Math.ceil(root.imageDocument.zoomPercent))
-        value: Math.round(root.imageDocument.zoomPercent)
+        to: root.readOnlyDisplayMode ? Math.max(0, root.readOnlyPercent) : Math.max(root.maximumManualZoomPercent, Math.ceil(root.imageDocument.zoomPercent))
+        value: root.readOnlyDisplayMode ? Math.max(0, root.readOnlyPercent) : Math.round(root.imageDocument.zoomPercent)
         wheelEnabled: false
 
         textFromValue: function (value, locale) {
@@ -93,7 +98,7 @@ RowLayout {
             font: zoomSpinBox.font
             horizontalAlignment: Text.AlignHCenter
             inputMethodHints: Qt.ImhFormattedNumbersOnly
-            readOnly: !zoomSpinBox.editable
+            readOnly: root.readOnlyDisplayMode || !zoomSpinBox.editable
             selectByMouse: true
             selectedTextColor: zoomSpinBox.palette.highlightedText
             selectionColor: zoomSpinBox.palette.highlight
@@ -102,8 +107,8 @@ RowLayout {
             Binding {
                 property: "text"
                 target: zoomTextInput
-                value: zoomSpinBox.displayText
-                when: !zoomTextInput.activeFocus
+                value: root.readOnlyDisplayMode ? root.readOnlyDisplayText : zoomSpinBox.displayText
+                when: root.readOnlyDisplayMode || !zoomTextInput.activeFocus
             }
         }
 
@@ -141,7 +146,7 @@ RowLayout {
         }
 
         function commitZoomText() {
-            if (!enabled) {
+            if (root.readOnlyDisplayMode || !enabled) {
                 restoreZoomText();
                 return;
             }
@@ -173,6 +178,10 @@ RowLayout {
         }
 
         onValueModified: {
+            if (root.readOnlyDisplayMode) {
+                return;
+            }
+
             const stepCount = zoomSpinBox.up.pressed ? 1 : (zoomSpinBox.down.pressed ? -1 : root.pendingZoomStepCount);
             root.pendingZoomStepCount = 0;
             root.imageDocument.zoomPercent = stepCount === 0 ? root.imageDocument.clampedManualZoomPercent(value) : root.imageDocument.steppedManualZoomPercent(stepCount);

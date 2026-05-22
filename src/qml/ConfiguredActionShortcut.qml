@@ -15,10 +15,13 @@ Item {
 
     required property var application
     required property int actionId
+    property bool interceptShortcut: false
     property int shortcutFilter: ConfiguredActionShortcut.AllShortcuts
     property bool shortcutsEnabled: true
     readonly property int shortcutRevision: application.shortcutRevision
     readonly property var action: application.actionForId(actionId)
+
+    signal shortcutIntercepted(int actionId)
 
     function actionShortcuts() {
         root.shortcutRevision;
@@ -40,6 +43,11 @@ Item {
     }
 
     function triggerAction() {
+        if (root.interceptShortcut) {
+            root.shortcutIntercepted(root.actionId);
+            return;
+        }
+
         if (actionEnabled()) {
             root.action.trigger();
         }
@@ -47,7 +55,7 @@ Item {
 
     Shortcut {
         context: Qt.WindowShortcut
-        enabled: root.shortcutsEnabled && root.actionEnabled()
+        enabled: root.shortcutsEnabled && (root.actionEnabled() || root.interceptShortcut)
         sequences: root.actionShortcuts()
 
         onActivated: root.triggerAction()

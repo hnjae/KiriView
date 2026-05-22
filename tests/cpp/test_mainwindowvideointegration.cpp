@@ -79,13 +79,17 @@ void TestMainWindowVideoIntegration::mainWindowUsesSessionModeAndMediaDispatch()
     QVERIFY(!mainQml.contains(QStringLiteral("property VideoViewport")));
     QVERIFY(mainQml.contains(QStringLiteral("active: page.imageMode")));
     QVERIFY(mainQml.contains(QStringLiteral("sourceComponent: ImageShortcuts")));
+    QVERIFY(mainQml.contains(QStringLiteral("active: page.imageMode || page.videoMode")));
     QVERIFY(
         mainQml.contains(QStringLiteral("currentMediaNumber: documentSession.currentMediaNumber")));
     QVERIFY(mainQml.contains(QStringLiteral("mediaCount: documentSession.mediaCount")));
     QVERIFY(mainQml.contains(
         QStringLiteral("mediaNavigationKnown: documentSession.mediaNavigationKnown")));
     QVERIFY(mainQml.contains(QStringLiteral("documentSession.openMediaAtNumber(mediaNumber)")));
-    QVERIFY(mainQml.contains(QStringLiteral("showVideoZoomReadout: page.videoMode")));
+    QVERIFY(mainQml.contains(QStringLiteral("videoMode: page.videoMode")));
+    QVERIFY(!mainQml.contains(QStringLiteral("showVideoZoomReadout")));
+    QVERIFY(!mainQml.contains(QStringLiteral("showImageControls")));
+    QVERIFY(!mainQml.contains(QStringLiteral("enabled: !page.imageMode")));
     QVERIFY(imageActionsQml.contains(QStringLiteral("root.documentSession.mediaNavigationActive")));
     QVERIFY(imageActionsQml.contains(QStringLiteral("root.documentSession.openPreviousMedia()")));
     QVERIFY(imageActionsQml.contains(QStringLiteral("root.documentSession.openNextMedia()")));
@@ -109,10 +113,15 @@ void TestMainWindowVideoIntegration::videoModeExposesReadOnlyZoomReadout()
     QVERIFY(videoViewportQml.contains(QStringLiteral("videoOutput.contentRect")));
     QVERIFY(videoViewportQml.contains(QStringLiteral("videoOutput.sourceRect")));
     QVERIFY(videoViewportQml.contains(QStringLiteral("displayDevicePixelRatio")));
-    QVERIFY(imageToolBarQml.contains(QStringLiteral("videoZoomLevelAction")));
-    QVERIFY(imageToolBarQml.contains(QStringLiteral("showVideoZoomReadout")));
+    QVERIFY(!imageToolBarQml.contains(QStringLiteral("videoZoomLevelAction")));
+    QVERIFY(!imageToolBarQml.contains(QStringLiteral("videoToolbarControls")));
+    QVERIFY(!imageToolBarQml.contains(QStringLiteral("showVideoZoomReadout")));
+    QVERIFY(!imageToolBarQml.contains(QStringLiteral("showImageControls")));
     QVERIFY(imageToolBarQml.contains(
-        QStringLiteral("showImageControls ? imageToolbarControls : videoToolbarControls")));
+        QStringLiteral("readonly property var toolbarControls: imageToolbarControls")));
+    QVERIFY(imageToolBarQml.contains(QStringLiteral("readOnlyDisplayMode: root.videoMode")));
+    QVERIFY(imageToolBarQml.contains(QStringLiteral("readOnlyPercent: root.videoZoomPercent")));
+    QVERIFY(imageToolBarQml.contains(QStringLiteral("readOnlyPercentKnown: root.videoZoomReady")));
     QVERIFY(mainQml.contains(QStringLiteral("videoZoomPercent: page.videoZoomPercent")));
     QVERIFY(mainQml.contains(QStringLiteral("videoZoomReady: page.videoZoomReady")));
 }

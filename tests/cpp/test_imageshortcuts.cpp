@@ -46,6 +46,8 @@ private Q_SLOTS:
     void shiftArrowsMoveOnePageInTwoPageModeRightToLeft();
     void shiftArrowsAreIgnoredWhileViewerShortcutsAreSuppressed();
     void configuredActionShortcutsTriggerActions();
+    void videoViewerAliasTriggersFullscreenAction();
+    void videoImageOnlyShortcutsShowUnsupportedToast();
     void ctrlMTogglesMenubarThroughAction();
     void ctrlMIgnoredWhileHelpDialogOpen();
 };
@@ -187,7 +189,11 @@ Item {
     property bool imageHorizontallyPannable: false
     property bool imagePannable: false
     property bool toolbarTextInputFocused: false
+    property bool videoFileDeletionInProgress: false
+    property bool videoMediaNavigationActive: true
+    property bool videoMode: false
     property int panCount: 0
+    property int unsupportedVideoActionCount: 0
     property real lastPanX: 0
     property real lastPanY: 0
     property alias currentPageNumber: imageDocument.currentPageNumber
@@ -302,6 +308,11 @@ Item {
         actionAvailability: actionAvailability
         imageDocument: imageDocument
         imageViewport: imageViewport
+        videoFileDeletionInProgress: root.videoFileDeletionInProgress
+        videoMediaNavigationActive: root.videoMediaNavigationActive
+        videoMode: root.videoMode
+
+        onUnsupportedVideoActionRequested: root.unsupportedVideoActionCount += 1
     }
 }
 )")
@@ -594,6 +605,56 @@ void TestImageShortcuts::configuredActionShortcutsTriggerActions()
 
     pressKey(fixture.view.get(), Qt::Key_R, Qt::ControlModifier);
     QTRY_COMPARE(triggeredSpy.count(), 3);
+}
+
+void TestImageShortcuts::videoViewerAliasTriggersFullscreenAction()
+{
+    ImageShortcutsFixture fixture = createFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    QVERIFY(fixture.root->setProperty("videoMode", true));
+
+    QAction *fullscreenAction = fixture.application->action(QStringLiteral("window_fullscreen"));
+    QVERIFY(fullscreenAction != nullptr);
+    QSignalSpy triggeredSpy(fullscreenAction, &QAction::triggered);
+
+    pressKey(fixture.view.get(), Qt::Key_F);
+
+    QTRY_COMPARE(triggeredSpy.count(), 1);
+    QCOMPARE(fixture.root->property("unsupportedVideoActionCount").toInt(), 0);
+}
+
+void TestImageShortcuts::videoImageOnlyShortcutsShowUnsupportedToast()
+{
+    ImageShortcutsFixture fixture = createFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    QVERIFY(fixture.root->setProperty("videoMode", true));
+
+    QAction *rotateAction = fixture.application->action(QStringLiteral("view_rotate_clockwise"));
+    QAction *zoomInAction = fixture.application->action(QStringLiteral("view_zoom_in"));
+    QAction *fitAction = fixture.application->action(QStringLiteral("view_fit"));
+    QVERIFY(rotateAction != nullptr);
+    QVERIFY(zoomInAction != nullptr);
+    QVERIFY(fitAction != nullptr);
+
+    QSignalSpy rotateSpy(rotateAction, &QAction::triggered);
+    QSignalSpy zoomInSpy(zoomInAction, &QAction::triggered);
+    QSignalSpy fitSpy(fitAction, &QAction::triggered);
+
+    pressKey(fixture.view.get(), Qt::Key_R, Qt::ControlModifier);
+    QTRY_COMPARE(fixture.root->property("unsupportedVideoActionCount").toInt(), 1);
+    QCOMPARE(rotateSpy.count(), 0);
+
+    pressKey(fixture.view.get(), Qt::Key_R);
+    QTRY_COMPARE(fixture.root->property("unsupportedVideoActionCount").toInt(), 2);
+    QCOMPARE(rotateSpy.count(), 0);
+
+    pressKey(fixture.view.get(), Qt::Key_Equal, Qt::ControlModifier);
+    QTRY_COMPARE(fixture.root->property("unsupportedVideoActionCount").toInt(), 3);
+    QCOMPARE(zoomInSpy.count(), 0);
+
+    pressKey(fixture.view.get(), Qt::Key_1, Qt::ControlModifier);
+    QTRY_COMPARE(fixture.root->property("unsupportedVideoActionCount").toInt(), 4);
+    QCOMPARE(fitSpy.count(), 0);
 }
 
 void TestImageShortcuts::ctrlMTogglesMenubarThroughAction()

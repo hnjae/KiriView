@@ -15,8 +15,12 @@ Item {
     required property KiriImageDocument imageDocument
     required property var imageViewport
     property bool handleMenuPresentationShortcut: true
+    property bool videoFileDeletionInProgress: false
+    property bool videoMediaNavigationActive: false
+    property bool videoMode: false
 
     readonly property int keyboardPanDistance: 64
+    readonly property bool horizontalArrowShortcutsEnabled: videoMode ? videoMediaNavigationActive && !videoFileDeletionInProgress && actionAvailability.viewerShortcutsEnabled : actionAvailability.readyViewerShortcutsEnabled
 
     readonly property var previousImageQAction: root.application.actionForId(KiriViewApplication.GoPreviousImageAction)
     readonly property var nextImageQAction: root.application.actionForId(KiriViewApplication.GoNextImageAction)
@@ -30,12 +34,77 @@ Item {
     readonly property var actionShortcutRoutes: root.application.shortcutRoutes()
 
     signal imageBoundaryReached(string message)
+    signal unsupportedVideoActionRequested
 
     function shortcutsEnabledForScope(shortcutScope, availabilityRevision) {
+        if (root.videoMode) {
+            return root.videoShortcutsEnabledForScope(shortcutScope);
+        }
+
         if (availabilityRevision < 0) {
             return false;
         }
         return root.actionAvailability.shortcutsEnabledForScope(shortcutScope);
+    }
+
+    function unsupportedVideoAction(actionId) {
+        switch (actionId) {
+        case KiriViewApplication.GoPreviousArchiveAction:
+        case KiriViewApplication.GoNextArchiveAction:
+        case KiriViewApplication.ViewZoomInAction:
+        case KiriViewApplication.ViewZoomOutAction:
+        case KiriViewApplication.ViewFitAction:
+        case KiriViewApplication.ViewFitHeightAction:
+        case KiriViewApplication.ViewFitWidthAction:
+        case KiriViewApplication.ViewActualSizeAction:
+        case KiriViewApplication.ViewRotateClockwiseAction:
+        case KiriViewApplication.ViewRotateCounterclockwiseAction:
+        case KiriViewApplication.ViewToggleTwoPageModeAction:
+        case KiriViewApplication.ViewToggleRightToLeftReadingAction:
+        case KiriViewApplication.ViewPanTopLeftAction:
+        case KiriViewApplication.ViewPanBottomRightAction:
+        case KiriViewApplication.ViewScanForwardAction:
+        case KiriViewApplication.ViewScanBackwardAction:
+            return true;
+        default:
+            return false;
+        }
+    }
+
+    function videoShortcutsEnabledForScope(shortcutScope) {
+        const helpShortcutsEnabled = root.actionAvailability.helpShortcutsEnabled;
+        const viewerShortcutsEnabled = root.actionAvailability.viewerShortcutsEnabled;
+        const videoReadyShortcutsEnabled = helpShortcutsEnabled && !root.videoFileDeletionInProgress;
+        const videoReadyViewerShortcutsEnabled = viewerShortcutsEnabled && !root.videoFileDeletionInProgress;
+        const videoMediaShortcutsEnabled = root.videoMediaNavigationActive && videoReadyShortcutsEnabled;
+        const videoMediaViewerShortcutsEnabled = root.videoMediaNavigationActive && videoReadyViewerShortcutsEnabled;
+
+        switch (shortcutScope) {
+        case ImageActionAvailability.HelpShortcutScope:
+            return helpShortcutsEnabled;
+        case ImageActionAvailability.ViewerShortcutScope:
+            return viewerShortcutsEnabled;
+        case ImageActionAvailability.ReadyShortcutScope:
+        case ImageActionAvailability.RotateShortcutScope:
+        case ImageActionAvailability.PannableShortcutScope:
+        case ImageActionAvailability.ContainerShortcutScope:
+        case ImageActionAvailability.RightToLeftReadingShortcutScope:
+            return videoReadyShortcutsEnabled;
+        case ImageActionAvailability.ReadyViewerShortcutScope:
+        case ImageActionAvailability.RotateViewerShortcutScope:
+        case ImageActionAvailability.PannableViewerShortcutScope:
+        case ImageActionAvailability.ContainerViewerShortcutScope:
+        case ImageActionAvailability.RightToLeftReadingViewerShortcutScope:
+            return videoReadyViewerShortcutsEnabled;
+        case ImageActionAvailability.ImageSelectionShortcutScope:
+        case ImageActionAvailability.PageShortcutScope:
+            return videoMediaShortcutsEnabled;
+        case ImageActionAvailability.ImageSelectionViewerShortcutScope:
+        case ImageActionAvailability.PageViewerShortcutScope:
+            return videoMediaViewerShortcutsEnabled;
+        default:
+            return false;
+        }
     }
 
     function panBy(deltaX, deltaY) {
@@ -99,6 +168,16 @@ Item {
     }
 
     function handleHorizontalArrow(leftArrow) {
+        if (root.videoMode) {
+            if (leftArrow) {
+                root.previousImageQAction.trigger();
+                return;
+            }
+
+            root.nextImageQAction.trigger();
+            return;
+        }
+
         const action = navigationPolicy.horizontalArrowAction(leftArrow, root.actionAvailability.imageHorizontallyPannable, root.actionAvailability.rightToLeftReadingActive);
         root.applyHorizontalArrowAction(action);
     }
@@ -138,8 +217,11 @@ Item {
 
             actionIds: modelData.actionIds
             application: root.application
+            interceptShortcut: actionId => root.videoMode && root.unsupportedVideoAction(actionId)
             shortcutFilter: modelData.shortcutFilter
             shortcutsEnabled: root.shortcutsEnabledForScope(modelData.shortcutScope, root.actionAvailability.availabilityRevision)
+
+            onShortcutIntercepted: root.unsupportedVideoActionRequested()
         }
     }
 
@@ -153,7 +235,7 @@ Item {
 
     Shortcut {
         context: Qt.WindowShortcut
-        enabled: root.actionAvailability.readyViewerShortcutsEnabled
+        enabled: root.horizontalArrowShortcutsEnabled
         sequence: "Left"
 
         onActivated: root.handleHorizontalArrow(true)
@@ -161,7 +243,7 @@ Item {
 
     Shortcut {
         context: Qt.WindowShortcut
-        enabled: root.actionAvailability.readyViewerShortcutsEnabled
+        enabled: root.horizontalArrowShortcutsEnabled
         sequence: "Right"
 
         onActivated: root.handleHorizontalArrow(false)

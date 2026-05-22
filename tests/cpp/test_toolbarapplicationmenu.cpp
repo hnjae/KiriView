@@ -43,6 +43,7 @@ private Q_SLOTS:
     void openApplicationMenuOnlyOpens();
     void mnemonicRoutingStillTriggersMenuAction();
     void toolbarActionOrderKeepsReadingDirectionBesideSpread();
+    void videoToolbarKeepsImageControlOrderDisabled();
     void pageNavigationButtonsUseSemanticActionsForReadingDirection();
     void menubarGoMenuOrderFollowsReadingDirection();
     void menubarGoMenuIconsFollowReadingDirection();
@@ -172,6 +173,7 @@ Item {
     property int nextTriggerCount: 0
     property bool navigationActionsEnabled: %3
     property bool rightToLeftReadingActive: false
+    property bool videoMode: false
 
     function documentReady() {
         return imageDocument.status === KiriImageDocument.Ready;
@@ -210,6 +212,10 @@ Item {
         return toolbar.toolbarControls.map(action => action.text);
     }
 
+    function toolbarControlEnabledStates() {
+        return toolbar.toolbarControls.map(action => action.enabled);
+    }
+
     function resetNavigationTriggerCounts() {
         previousTriggerCount = 0;
         nextTriggerCount = 0;
@@ -244,7 +250,7 @@ Item {
     Kirigami.Action {
         id: twoPageModeKirigamiAction
 
-        enabled: false
+        enabled: !root.videoMode
         icon.name: "view-split-left-right-symbolic"
         text: "Two-Page Spread"
     }
@@ -252,7 +258,7 @@ Item {
     Kirigami.Action {
         id: rightToLeftReadingKirigamiAction
 
-        enabled: false
+        enabled: !root.videoMode
         icon.name: "format-text-direction-rtl-symbolic"
         text: "Right-to-Left Reading"
     }
@@ -260,7 +266,7 @@ Item {
     Kirigami.Action {
         id: fitKirigamiAction
 
-        enabled: false
+        enabled: !root.videoMode
         icon.name: "zoom-fit-best-symbolic"
         text: "Fit"
     }
@@ -321,11 +327,14 @@ Item {
         applicationMenuActions: [openMenuAction, separatorAction, quitMenuAction]
         compact: true
         imageDocument: imageDocument
-        imageReady: imageDocument.status === KiriImageDocument.Ready
+        imageReady: !root.videoMode && imageDocument.status === KiriImageDocument.Ready
         maximumManualZoomPercent: imageDocument.maximumManualZoomPercent
         minimumManualZoomPercent: imageDocument.minimumManualZoomPercent
         rightToLeftReadingActive: root.rightToLeftReadingActive
         showApplicationMenuActions: true
+        videoMode: root.videoMode
+        videoZoomPercent: 67
+        videoZoomReady: root.videoMode
         zoomStepFactor: imageDocument.zoomStepFactor
     }
 }
@@ -789,6 +798,30 @@ void TestToolBarApplicationMenu::toolbarActionOrderKeepsReadingDirectionBesideSp
     QCOMPARE(texts,
         QStringList({ QStringLiteral("Right-to-Left Reading"), QStringLiteral("Two-Page Spread"),
             QStringLiteral("Zoom"), QStringLiteral("Fit") }));
+}
+
+void TestToolBarApplicationMenu::videoToolbarKeepsImageControlOrderDisabled()
+{
+    ToolBarMenuFixture fixture = createFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    QVERIFY(fixture.root->setProperty("videoMode", true));
+    QCoreApplication::processEvents();
+
+    bool ok = false;
+    const QStringList texts = invokeStringList(fixture.root, "toolbarControlTexts", &ok);
+    QVERIFY(ok);
+    QCOMPARE(texts,
+        QStringList({ QStringLiteral("Right-to-Left Reading"), QStringLiteral("Two-Page Spread"),
+            QStringLiteral("Zoom"), QStringLiteral("Fit") }));
+
+    bool invoked = false;
+    const QVariantList enabledStates
+        = invokeVariant(fixture.root, "toolbarControlEnabledStates", &invoked).toList();
+    QVERIFY(invoked);
+    QCOMPARE(enabledStates.size(), 4);
+    for (const QVariant &enabledState : enabledStates) {
+        QVERIFY(!enabledState.toBool());
+    }
 }
 
 void TestToolBarApplicationMenu::pageNavigationButtonsUseSemanticActionsForReadingDirection()
