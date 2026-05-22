@@ -150,6 +150,7 @@ src/rendering/qimagereadertilesource.cpp
 src/decoding/rawdecoder.cpp
 src/application/shortcuthelpmodel.cpp
 src/session/documentsessionruntime.cpp
+src/session/documentsessionstate.cpp
 src/rendering/staticimage.cpp
 src/decoding/staticimagedecode.cpp
 src/system/systemmemory.cpp

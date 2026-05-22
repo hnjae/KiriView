@@ -9,6 +9,7 @@
 #include "document/imagedocumentruntimedependencies.h"
 #include "navigation/mediacandidateprovider.h"
 #include "navigation/medianavigationmodel.h"
+#include "session/documentsessionstate.h"
 
 #include <QUrl>
 #include <functional>
@@ -24,22 +25,6 @@ class QString;
 namespace KiriView {
 class MediaPredecodeCoordinator;
 
-enum class DocumentSessionKind {
-    Empty,
-    Image,
-    Video,
-};
-
-enum class DocumentSessionChange {
-    SourceUrl,
-    DocumentKind,
-    ErrorString,
-    WindowTitleFileName,
-    FileDeletionAvailability,
-    FileDeletionInProgress,
-    MediaNavigationAvailability,
-};
-
 struct DocumentSessionRuntimeDependencies {
     MediaNavigationCandidateProvider mediaCandidateProvider;
     FileOperationProvider fileOperationProvider;
@@ -49,7 +34,7 @@ struct DocumentSessionRuntimeDependencies {
 class DocumentSessionRuntime final
 {
 public:
-    using ChangeCallback = std::function<void(const std::vector<DocumentSessionChange> &)>;
+    using ChangeCallback = DocumentSessionState::ChangeCallback;
 
     DocumentSessionRuntime(QObject *owner, KiriImageDocument &imageDocument,
         KiriVideoDocument &videoDocument, ChangeCallback changeCallback = {},
@@ -82,7 +67,6 @@ private:
     void connectDocuments();
     void routeSourceUrl(const QUrl &sourceUrl);
     void openMediaUrl(const QUrl &url);
-    void switchToKind(DocumentSessionKind kind);
     void leaveVideoMode();
     void syncFromImageDocument();
     void syncFromVideoDocument();
@@ -99,30 +83,17 @@ private:
     QUrl currentMediaUrl() const;
     bool activeImageUsesMediaScope() const;
     bool pendingDirectImageLoadMayUseMediaScope() const;
-    void setSourceIdentity(const QUrl &url);
-    void setDocumentKind(DocumentSessionKind kind);
-    void setFileDeletionInProgress(bool inProgress);
-    void setMediaNavigationState(MediaNavigationBoundaryState state, bool known);
-    void setSessionErrorString(const QString &errorString);
-    void publish(DocumentSessionChange change);
-    void publish(std::vector<DocumentSessionChange> changes);
 
     QObject *m_owner = nullptr;
     KiriImageDocument &m_imageDocument;
     KiriVideoDocument &m_videoDocument;
-    ChangeCallback m_changeCallback;
+    DocumentSessionState m_state;
     MediaNavigationCandidateProvider m_mediaCandidateProvider;
     FileOperationProvider m_fileOperationProvider;
     std::unique_ptr<MediaPredecodeCoordinator> m_mediaPredecodeCoordinator;
     ImageIoJob m_mediaCandidateJob;
     ImageIoJob m_fileDeletionJob;
-    QUrl m_sourceUrl;
-    DocumentSessionKind m_documentKind = DocumentSessionKind::Empty;
-    MediaNavigationBoundaryState m_mediaNavigationState;
-    bool m_mediaNavigationKnown = false;
-    bool m_fileDeletionInProgress = false;
     bool m_routingSource = false;
-    QString m_sessionErrorString;
 };
 }
 
