@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_VIDEODOCUMENTPUBLICSIGNALS_H
 #define KIRIVIEW_VIDEODOCUMENTPUBLICSIGNALS_H
 
-#include "videodocumentruntime.h"
+#include "video/videodocumenttypes.h"
 
 #include <functional>
 #include <vector>

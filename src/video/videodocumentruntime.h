@@ -5,6 +5,7 @@
 #define KIRIVIEW_VIDEODOCUMENTRUNTIME_H
 
 #include "async/imageasyncoperationstate.h"
+#include "video/videodocumentstate.h"
 #include "video/videoplaybackurlresolver.h"
 
 #include <QObject>
@@ -17,13 +18,6 @@
 #include <vector>
 
 namespace KiriView {
-enum class VideoDocumentStatus {
-    Null,
-    Loading,
-    Ready,
-    Error,
-};
-
 enum class VideoMediaStatus {
     Null,
     Loading,
@@ -33,20 +27,6 @@ enum class VideoMediaStatus {
     Buffered,
     EndOfMedia,
     Invalid,
-};
-
-enum class VideoDocumentChange {
-    SourceUrl,
-    Status,
-    ErrorString,
-    WindowTitleFileName,
-    Duration,
-    Position,
-    Playing,
-    Seekable,
-    HasVideo,
-    HasAudio,
-    VideoOutput,
 };
 
 struct VideoMediaBackendCallbacks {
@@ -132,37 +112,16 @@ private:
     void disconnectVideoOutputDestroyed();
     void updateStatusFromBackend();
     void updateErrorFromBackend();
-    void setEndedValue(bool ended);
-    void setStatus(VideoDocumentStatus status);
-    void setErrorString(const QString &errorString);
-    void setDurationValue(qint64 duration);
-    void setPositionValue(qint64 position);
-    void setPlayingValue(bool playing);
-    void setSeekableValue(bool seekable);
-    void setHasVideoValue(bool hasVideo);
-    void setHasAudioValue(bool hasAudio);
     void publish(VideoDocumentChange change);
-    void publish(std::vector<VideoDocumentChange> changes);
 
     QObject *m_documentObject = nullptr;
-    ChangeCallback m_changeCallback;
+    VideoDocumentState m_state;
     std::unique_ptr<VideoMediaBackend> m_mediaBackend;
     MediaBackendFactory m_mediaBackendFactory;
     std::unique_ptr<VideoPlaybackUrlResolver> m_playbackUrlResolver;
     QPointer<QObject> m_videoOutput;
     QMetaObject::Connection m_videoOutputDestroyedConnection;
-    QUrl m_sourceUrl;
     ImageAsyncScopedOperationState<QUrl> m_playbackUrlResolution;
-    VideoDocumentStatus m_status = VideoDocumentStatus::Null;
-    QString m_errorString;
-    QString m_windowTitleFileName;
-    qint64 m_duration = 0;
-    qint64 m_position = 0;
-    bool m_playing = false;
-    bool m_seekable = false;
-    bool m_hasVideo = false;
-    bool m_hasAudio = false;
-    bool m_ended = false;
 };
 
 std::unique_ptr<VideoMediaBackend> createDefaultVideoMediaBackend(QObject *parent);

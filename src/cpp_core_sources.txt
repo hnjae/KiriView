@@ -164,5 +164,6 @@ src/decoding/staticimagedecode.cpp
 src/system/systemmemory.cpp
 src/rendering/svgtilesource.cpp
 src/video/videodocumentruntime.cpp
+src/video/videodocumentstate.cpp
 src/video/videodocumentpublicsignals.cpp
 src/video/videoplaybackurlresolver.cpp

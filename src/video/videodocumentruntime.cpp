@@ -12,11 +12,6 @@
 #include <utility>
 
 namespace {
-QString fileNameForWindowTitle(const QUrl &sourceUrl)
-{
-    return sourceUrl.fileName(QUrl::PrettyDecoded);
-}
-
 KiriView::VideoDocumentStatus documentStatusForMediaStatus(KiriView::VideoMediaStatus status)
 {
     switch (status) {
@@ -129,7 +124,7 @@ VideoDocumentRuntime::VideoDocumentRuntime(QObject *documentObject, ChangeCallba
     std::unique_ptr<VideoPlaybackUrlResolver> playbackUrlResolver,
     MediaBackendFactory mediaBackendFactory)
     : m_documentObject(documentObject)
-    , m_changeCallback(std::move(changeCallback))
+    , m_state(std::move(changeCallback))
     , m_mediaBackend(std::move(mediaBackend))
     , m_mediaBackendFactory(std::move(mediaBackendFactory))
     , m_playbackUrlResolver(playbackUrlResolver == nullptr ? createDefaultVideoPlaybackUrlResolver()
@@ -165,12 +160,12 @@ void VideoDocumentRuntime::installMediaBackendCallbacks()
     m_mediaBackend->setCallbacks(VideoMediaBackendCallbacks {
         [this]() { updateStatusFromBackend(); },
         [this]() { updateErrorFromBackend(); },
-        [this]() { setDurationValue(m_mediaBackend->duration()); },
-        [this]() { setPositionValue(m_mediaBackend->position()); },
-        [this]() { setPlayingValue(m_mediaBackend->playing()); },
-        [this]() { setSeekableValue(m_mediaBackend->seekable()); },
-        [this]() { setHasVideoValue(m_mediaBackend->hasVideo()); },
-        [this]() { setHasAudioValue(m_mediaBackend->hasAudio()); },
+        [this]() { m_state.setDuration(m_mediaBackend->duration()); },
+        [this]() { m_state.setPosition(m_mediaBackend->position()); },
+        [this]() { m_state.setPlaying(m_mediaBackend->playing()); },
+        [this]() { m_state.setSeekable(m_mediaBackend->seekable()); },
+        [this]() { m_state.setHasVideo(m_mediaBackend->hasVideo()); },
+        [this]() { m_state.setHasAudio(m_mediaBackend->hasAudio()); },
         {},
     });
 }
@@ -188,11 +183,11 @@ VideoDocumentRuntime::~VideoDocumentRuntime()
     }
 }
 
-QUrl VideoDocumentRuntime::sourceUrl() const { return m_sourceUrl; }
+QUrl VideoDocumentRuntime::sourceUrl() const { return m_state.sourceUrl(); }
 
 void VideoDocumentRuntime::setSourceUrl(const QUrl &sourceUrl)
 {
-    if (m_sourceUrl == sourceUrl) {
+    if (m_state.sourceUrl() == sourceUrl) {
         return;
     }
 
@@ -210,36 +205,36 @@ void VideoDocumentRuntime::setSourceUrl(const QUrl &sourceUrl)
     beginSourceLoad(sourceUrl);
 }
 
-VideoDocumentStatus VideoDocumentRuntime::status() const { return m_status; }
+VideoDocumentStatus VideoDocumentRuntime::status() const { return m_state.status(); }
 
-QString VideoDocumentRuntime::errorString() const { return m_errorString; }
+QString VideoDocumentRuntime::errorString() const { return m_state.errorString(); }
 
-QString VideoDocumentRuntime::windowTitleFileName() const { return m_windowTitleFileName; }
+QString VideoDocumentRuntime::windowTitleFileName() const { return m_state.windowTitleFileName(); }
 
-qint64 VideoDocumentRuntime::duration() const { return m_duration; }
+qint64 VideoDocumentRuntime::duration() const { return m_state.duration(); }
 
-qint64 VideoDocumentRuntime::position() const { return m_position; }
+qint64 VideoDocumentRuntime::position() const { return m_state.position(); }
 
 void VideoDocumentRuntime::setPosition(qint64 position)
 {
-    if (!m_seekable) {
+    if (!m_state.seekable()) {
         return;
     }
 
-    setEndedValue(false);
-    const qint64 upperBound = m_duration > 0 ? m_duration : position;
+    m_state.setEnded(false);
+    const qint64 upperBound = m_state.duration() > 0 ? m_state.duration() : position;
     const qint64 clamped = std::clamp(position, qint64(0), upperBound);
     ensureMediaBackend()->setPosition(clamped);
-    setPositionValue(clamped);
+    m_state.setPosition(clamped);
 }
 
-bool VideoDocumentRuntime::playing() const { return m_playing; }
+bool VideoDocumentRuntime::playing() const { return m_state.playing(); }
 
-bool VideoDocumentRuntime::seekable() const { return m_seekable; }
+bool VideoDocumentRuntime::seekable() const { return m_state.seekable(); }
 
-bool VideoDocumentRuntime::hasVideo() const { return m_hasVideo; }
+bool VideoDocumentRuntime::hasVideo() const { return m_state.hasVideo(); }
 
-bool VideoDocumentRuntime::hasAudio() const { return m_hasAudio; }
+bool VideoDocumentRuntime::hasAudio() const { return m_state.hasAudio(); }
 
 QObject *VideoDocumentRuntime::videoOutput() const { return m_videoOutput.data(); }
 
@@ -261,16 +256,16 @@ void VideoDocumentRuntime::setVideoOutput(QObject *videoOutput)
 
 void VideoDocumentRuntime::play()
 {
-    if (m_sourceUrl.isEmpty()) {
+    if (m_state.sourceUrl().isEmpty()) {
         return;
     }
 
     VideoMediaBackend *mediaBackend = ensureMediaBackend();
-    if (m_ended && m_seekable) {
+    if (m_state.ended() && m_state.seekable()) {
         mediaBackend->setPosition(0);
-        setPositionValue(0);
+        m_state.setPosition(0);
     }
-    setEndedValue(false);
+    m_state.setEnded(false);
     mediaBackend->play();
 }
 
@@ -285,22 +280,22 @@ void VideoDocumentRuntime::pause()
 
 void VideoDocumentRuntime::stop()
 {
-    setEndedValue(false);
+    m_state.setEnded(false);
     if (m_mediaBackend != nullptr) {
         m_mediaBackend->stop();
     }
-    setPlayingValue(false);
-    if (m_seekable) {
+    m_state.setPlaying(false);
+    if (m_state.seekable()) {
         if (m_mediaBackend != nullptr) {
             m_mediaBackend->setPosition(0);
         }
-        setPositionValue(0);
+        m_state.setPosition(0);
     }
 }
 
 void VideoDocumentRuntime::togglePlayback()
 {
-    if (m_playing) {
+    if (m_state.playing()) {
         pause();
         return;
     }
@@ -310,15 +305,15 @@ void VideoDocumentRuntime::togglePlayback()
 
 void VideoDocumentRuntime::seekBy(qint64 deltaMilliseconds)
 {
-    const qint64 nextPosition
-        = clampedSeekPosition(m_position, deltaMilliseconds, m_duration, m_seekable);
-    if (!m_seekable || nextPosition == m_position) {
+    const qint64 nextPosition = clampedSeekPosition(
+        m_state.position(), deltaMilliseconds, m_state.duration(), m_state.seekable());
+    if (!m_state.seekable() || nextPosition == m_state.position()) {
         return;
     }
 
-    setEndedValue(false);
+    m_state.setEnded(false);
     ensureMediaBackend()->setPosition(nextPosition);
-    setPositionValue(nextPosition);
+    m_state.setPosition(nextPosition);
 }
 
 qint64 VideoDocumentRuntime::clampedSeekPosition(
@@ -342,51 +337,8 @@ void VideoDocumentRuntime::clearSourceState()
         m_mediaBackend->stop();
         m_mediaBackend->setSource(QUrl());
     }
-    m_sourceUrl = QUrl();
     m_playbackUrlResolution.cancel();
-    m_ended = false;
-
-    std::vector<VideoDocumentChange> changes { VideoDocumentChange::SourceUrl };
-    const auto appendChange = [&changes](VideoDocumentChange change) { changes.push_back(change); };
-
-    if (m_status != VideoDocumentStatus::Null) {
-        m_status = VideoDocumentStatus::Null;
-        appendChange(VideoDocumentChange::Status);
-    }
-    if (!m_errorString.isEmpty()) {
-        m_errorString.clear();
-        appendChange(VideoDocumentChange::ErrorString);
-    }
-    if (!m_windowTitleFileName.isEmpty()) {
-        m_windowTitleFileName.clear();
-        appendChange(VideoDocumentChange::WindowTitleFileName);
-    }
-    if (m_duration != 0) {
-        m_duration = 0;
-        appendChange(VideoDocumentChange::Duration);
-    }
-    if (m_position != 0) {
-        m_position = 0;
-        appendChange(VideoDocumentChange::Position);
-    }
-    if (m_playing) {
-        m_playing = false;
-        appendChange(VideoDocumentChange::Playing);
-    }
-    if (m_seekable) {
-        m_seekable = false;
-        appendChange(VideoDocumentChange::Seekable);
-    }
-    if (m_hasVideo) {
-        m_hasVideo = false;
-        appendChange(VideoDocumentChange::HasVideo);
-    }
-    if (m_hasAudio) {
-        m_hasAudio = false;
-        appendChange(VideoDocumentChange::HasAudio);
-    }
-
-    publish(std::move(changes));
+    m_state.resetForClearedSource();
 }
 
 void VideoDocumentRuntime::beginSourceLoad(const QUrl &sourceUrl)
@@ -395,51 +347,8 @@ void VideoDocumentRuntime::beginSourceLoad(const QUrl &sourceUrl)
         m_mediaBackend->stop();
         m_mediaBackend->setSource(QUrl());
     }
-    m_sourceUrl = sourceUrl;
     const ImageAsyncScopedOperation<QUrl> operation = m_playbackUrlResolution.start(sourceUrl);
-    m_ended = false;
-
-    std::vector<VideoDocumentChange> changes {
-        VideoDocumentChange::SourceUrl,
-    };
-    const QString fileName = fileNameForWindowTitle(sourceUrl);
-    if (m_windowTitleFileName != fileName) {
-        m_windowTitleFileName = fileName;
-        changes.push_back(VideoDocumentChange::WindowTitleFileName);
-    }
-    if (m_errorString != QString()) {
-        m_errorString.clear();
-        changes.push_back(VideoDocumentChange::ErrorString);
-    }
-    if (m_status != VideoDocumentStatus::Loading) {
-        m_status = VideoDocumentStatus::Loading;
-        changes.push_back(VideoDocumentChange::Status);
-    }
-    if (m_duration != 0) {
-        m_duration = 0;
-        changes.push_back(VideoDocumentChange::Duration);
-    }
-    if (m_position != 0) {
-        m_position = 0;
-        changes.push_back(VideoDocumentChange::Position);
-    }
-    if (m_playing) {
-        m_playing = false;
-        changes.push_back(VideoDocumentChange::Playing);
-    }
-    if (m_seekable) {
-        m_seekable = false;
-        changes.push_back(VideoDocumentChange::Seekable);
-    }
-    if (m_hasVideo) {
-        m_hasVideo = false;
-        changes.push_back(VideoDocumentChange::HasVideo);
-    }
-    if (m_hasAudio) {
-        m_hasAudio = false;
-        changes.push_back(VideoDocumentChange::HasAudio);
-    }
-    publish(std::move(changes));
+    m_state.resetForSourceLoad(sourceUrl);
 
     m_playbackUrlResolver->resolve(
         operation.operationId, sourceUrl, m_documentObject,
@@ -470,8 +379,8 @@ void VideoDocumentRuntime::failPlaybackUrlResolution(
         return;
     }
 
-    setErrorString(errorString);
-    setStatus(VideoDocumentStatus::Error);
+    m_state.setErrorString(errorString);
+    m_state.setStatus(VideoDocumentStatus::Error);
 }
 
 void VideoDocumentRuntime::connectVideoOutputDestroyed(QObject *videoOutput)
@@ -500,33 +409,33 @@ void VideoDocumentRuntime::disconnectVideoOutputDestroyed()
 
 void VideoDocumentRuntime::updateStatusFromBackend()
 {
-    if (m_sourceUrl.isEmpty()) {
-        setEndedValue(false);
-        setStatus(VideoDocumentStatus::Null);
+    if (m_state.sourceUrl().isEmpty()) {
+        m_state.setEnded(false);
+        m_state.setStatus(VideoDocumentStatus::Null);
         return;
     }
     if (m_playbackUrlResolution.active()) {
-        setEndedValue(false);
-        setStatus(VideoDocumentStatus::Loading);
+        m_state.setEnded(false);
+        m_state.setStatus(VideoDocumentStatus::Loading);
         return;
     }
     if (m_mediaBackend == nullptr) {
-        setEndedValue(false);
-        setStatus(VideoDocumentStatus::Loading);
+        m_state.setEnded(false);
+        m_state.setStatus(VideoDocumentStatus::Loading);
         return;
     }
 
     const VideoMediaStatus mediaStatus = m_mediaBackend->mediaStatus();
     if (mediaStatus == VideoMediaStatus::Null) {
-        setEndedValue(false);
-        setStatus(VideoDocumentStatus::Loading);
+        m_state.setEnded(false);
+        m_state.setStatus(VideoDocumentStatus::Loading);
         return;
     }
-    setEndedValue(mediaStatus == VideoMediaStatus::EndOfMedia);
-    if (m_ended) {
-        setPlayingValue(false);
+    m_state.setEnded(mediaStatus == VideoMediaStatus::EndOfMedia);
+    if (m_state.ended()) {
+        m_state.setPlaying(false);
     }
-    setStatus(documentStatusForMediaStatus(mediaStatus));
+    m_state.setStatus(documentStatusForMediaStatus(mediaStatus));
 }
 
 void VideoDocumentRuntime::updateErrorFromBackend()
@@ -537,116 +446,10 @@ void VideoDocumentRuntime::updateErrorFromBackend()
 
     const QString backendError = m_mediaBackend->errorString();
     if (!backendError.isEmpty()) {
-        setErrorString(backendError);
-        setStatus(VideoDocumentStatus::Error);
+        m_state.setErrorString(backendError);
+        m_state.setStatus(VideoDocumentStatus::Error);
     }
 }
 
-void VideoDocumentRuntime::setStatus(VideoDocumentStatus status)
-{
-    if (m_status == status) {
-        return;
-    }
-
-    m_status = status;
-    publish(VideoDocumentChange::Status);
-}
-
-void VideoDocumentRuntime::setErrorString(const QString &errorString)
-{
-    if (m_errorString == errorString) {
-        return;
-    }
-
-    m_errorString = errorString;
-    publish(VideoDocumentChange::ErrorString);
-}
-
-void VideoDocumentRuntime::setEndedValue(bool ended) { m_ended = ended; }
-
-void VideoDocumentRuntime::setDurationValue(qint64 duration)
-{
-    const qint64 normalizedDuration = std::max<qint64>(0, duration);
-    if (m_duration == normalizedDuration) {
-        return;
-    }
-
-    m_duration = normalizedDuration;
-    publish(VideoDocumentChange::Duration);
-}
-
-void VideoDocumentRuntime::setPositionValue(qint64 position)
-{
-    const qint64 normalizedPosition = std::max<qint64>(0, position);
-    if (m_position == normalizedPosition) {
-        return;
-    }
-
-    m_position = normalizedPosition;
-    publish(VideoDocumentChange::Position);
-}
-
-void VideoDocumentRuntime::setPlayingValue(bool playing)
-{
-    if (playing) {
-        setEndedValue(false);
-    }
-    if (m_playing == playing) {
-        return;
-    }
-
-    m_playing = playing;
-    publish(VideoDocumentChange::Playing);
-}
-
-void VideoDocumentRuntime::setSeekableValue(bool seekable)
-{
-    if (m_seekable == seekable) {
-        return;
-    }
-
-    m_seekable = seekable;
-    publish(VideoDocumentChange::Seekable);
-}
-
-void VideoDocumentRuntime::setHasVideoValue(bool hasVideo)
-{
-    if (m_hasVideo == hasVideo) {
-        return;
-    }
-
-    m_hasVideo = hasVideo;
-    publish(VideoDocumentChange::HasVideo);
-}
-
-void VideoDocumentRuntime::setHasAudioValue(bool hasAudio)
-{
-    if (m_hasAudio == hasAudio) {
-        return;
-    }
-
-    m_hasAudio = hasAudio;
-    publish(VideoDocumentChange::HasAudio);
-}
-
-void VideoDocumentRuntime::publish(VideoDocumentChange change)
-{
-    publish(std::vector<VideoDocumentChange> { change });
-}
-
-void VideoDocumentRuntime::publish(std::vector<VideoDocumentChange> changes)
-{
-    if (changes.empty()) {
-        return;
-    }
-
-    std::vector<VideoDocumentChange> uniqueChanges;
-    for (VideoDocumentChange change : changes) {
-        if (std::find(uniqueChanges.cbegin(), uniqueChanges.cend(), change)
-            == uniqueChanges.cend()) {
-            uniqueChanges.push_back(change);
-        }
-    }
-    invokeIfSet(m_changeCallback, uniqueChanges);
-}
+void VideoDocumentRuntime::publish(VideoDocumentChange change) { m_state.publish(change); }
 }
