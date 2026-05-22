@@ -4,12 +4,12 @@
 #include "async/imageiojobs.h"
 
 #include "archive/archivebackend.h"
+#include "async/directorylistingjob.h"
 #include "async/imagecallback.h"
 #include "async/imageioworkerjob.h"
 #include "navigation/imagecandidateitems.h"
 #include "navigation/imagecontainer.h"
 
-#include <KCoreDirLister>
 #include <KIO/Job>
 #include <KIO/StoredTransferJob>
 #include <KJob>
@@ -24,10 +24,8 @@ using KiriView::ArchiveImageCandidates;
 using KiriView::ArchiveImageCandidatesResult;
 using KiriView::ArchiveImageData;
 using KiriView::ArchiveImageDataResult;
-using KiriView::ContainerNavigationCandidate;
 using KiriView::containerNavigationCandidates;
 using KiriView::ErrorCallback;
-using KiriView::ImageNavigationCandidate;
 using KiriView::imageNavigationCandidates;
 
 template <typename... Handlers> struct ArchiveResultHandler : Handlers... {
@@ -59,70 +57,17 @@ void cancelKJob(QObject *object)
     job->kill(KJob::Quietly);
 }
 
-void cancelDirLister(QObject *object)
-{
-    auto *lister = qobject_cast<KCoreDirLister *>(object);
-    if (lister == nullptr) {
-        return;
-    }
-
-    lister->stop();
-    lister->deleteLater();
-}
-
-KCoreDirLister *createImageCandidateLister(QObject *parent)
-{
-    auto *lister = new KCoreDirLister(parent);
-    lister->setAutoErrorHandlingEnabled(false);
-    lister->setAutoUpdate(false);
-    lister->setDelayedMimeTypes(true);
-    lister->setShowHiddenFiles(true);
-    return lister;
-}
-
-std::vector<ImageNavigationCandidate> imageCandidatesFromLister(KCoreDirLister *lister)
-{
-    return imageNavigationCandidates(lister->items(KCoreDirLister::AllItems));
-}
-
-std::vector<ContainerNavigationCandidate> containerCandidatesFromLister(KCoreDirLister *lister)
-{
-    return containerNavigationCandidates(lister->items(KCoreDirLister::AllItems));
-}
-
-void finishDirectoryCandidateListWithError(KiriView::ImageIoJobCompletion completion,
-    const QString &errorString, const ErrorCallback &errorCallback)
-{
-    completion.claimAndDelete([&]() { KiriView::invokeIfSet(errorCallback, errorString); });
-}
-
-template <typename Candidates, typename CandidateCallback, typename CandidateFactory>
+template <typename CandidateCallback, typename CandidateFactory>
 KiriView::ImageIoJob startDirectoryCandidateList(QObject *receiver, const QUrl &directoryUrl,
     CandidateCallback callback, ErrorCallback errorCallback, CandidateFactory candidateFactory)
 {
-    auto *lister = createImageCandidateLister(receiver);
-    KiriView::ImageIoJob ioJob(lister, cancelDirLister);
-    const KiriView::ImageIoJobCompletion completion = ioJob.completion();
-
-    QObject::connect(lister, &KCoreDirLister::completed, receiver,
-        [completion, lister, callback = std::move(callback),
-            candidateFactory = std::move(candidateFactory)]() mutable {
-            completion.claimAndDelete([&]() {
-                Candidates candidates = candidateFactory(lister);
-                KiriView::invokeIfSet(callback, std::move(candidates));
-            });
-        });
-    QObject::connect(
-        lister, &KCoreDirLister::jobError, receiver, [completion, errorCallback](KIO::Job *job) {
-            const QString errorString = job == nullptr ? QString() : job->errorString();
-            finishDirectoryCandidateListWithError(completion, errorString, errorCallback);
-        });
-
-    if (!lister->openUrl(directoryUrl, KCoreDirLister::Reload)) {
-        finishDirectoryCandidateListWithError(completion, QString(), errorCallback);
-    }
-
-    return ioJob;
+    return KiriView::startDirectoryItemList(
+        receiver, directoryUrl,
+        [callback = std::move(callback), candidateFactory = std::move(candidateFactory)](
+            KFileItemList items) mutable {
+            KiriView::invokeIfSet(callback, candidateFactory(items));
+        },
+        std::move(errorCallback));
 }
 
 template <typename Work, typename Finish>
@@ -136,15 +81,15 @@ namespace KiriView {
 ImageIoJob startDirectoryImageCandidateList(QObject *receiver, QUrl directoryUrl,
     ImageCandidatesCallback callback, ErrorCallback errorCallback)
 {
-    return startDirectoryCandidateList<std::vector<ImageNavigationCandidate>>(receiver,
-        directoryUrl, std::move(callback), std::move(errorCallback), imageCandidatesFromLister);
+    return startDirectoryCandidateList(receiver, directoryUrl, std::move(callback),
+        std::move(errorCallback), imageNavigationCandidates);
 }
 
 ImageIoJob startDirectoryContainerCandidateList(QObject *receiver, QUrl directoryUrl,
     ContainerCandidatesCallback callback, ErrorCallback errorCallback)
 {
-    return startDirectoryCandidateList<std::vector<ContainerNavigationCandidate>>(receiver,
-        directoryUrl, std::move(callback), std::move(errorCallback), containerCandidatesFromLister);
+    return startDirectoryCandidateList(receiver, directoryUrl, std::move(callback),
+        std::move(errorCallback), containerNavigationCandidates);
 }
 
 ImageIoJob startArchiveImageCandidateList(QObject *receiver,

@@ -35,6 +35,7 @@ src/decoding/heifdecoder.cpp
 src/decoding/heifsequencereader.cpp
 src/decoding/heifsupport.cpp
 src/decoding/heiftilingplan.cpp
+src/async/directorylistingjob.cpp
 src/rendering/heiftilesource.cpp
 src/presentation/imageanimationplaybacksource.cpp
 src/presentation/imageanimationpolicy.cpp
