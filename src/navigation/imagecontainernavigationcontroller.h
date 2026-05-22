@@ -45,6 +45,10 @@ private:
         std::vector<ContainerNavigationCandidate> candidates, NavigationDirection direction,
         const QUrl &currentContainerUrl);
     void finishContainerNavigationListWithError(quint64 operationId);
+    void loadFirstImageFromContainerNavigation(
+        quint64 operationId, const ContainerNavigationCandidate &container);
+    void finishContainerNavigationImageLoad(quint64 operationId, const QUrl &containerUrl,
+        std::vector<ImageNavigationCandidate> candidates);
     void openImageFromContainerNavigation(
         quint64 operationId, const QUrl &imageUrl, const QUrl &containerUrl);
     void finishContainerNavigationLoadWithError(quint64 operationId, const QUrl &containerUrl,

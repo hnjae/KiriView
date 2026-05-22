@@ -4,6 +4,7 @@
 #include "imagedocumentdeletionfallbackcontroller.h"
 
 #include "async/imagecallback.h"
+#include "navigation/imagecontaineropenplan.h"
 
 #include <utility>
 #include <variant>
@@ -101,21 +102,58 @@ void ImageDocumentDeletionFallbackController::openComicBookFallbackCandidate(qui
         return;
     }
 
-    m_job = m_candidateRepository.loadFirstImageInContainer(
-        m_parent, *candidate,
-        [this, operationId](const QUrl &imageUrl, const QUrl &containerUrl) {
-            if (!m_operation.accepts(operationId)) {
-                return;
-            }
+    loadComicBookFallbackImage(operationId, *candidate, fallbackCandidate);
+}
 
-            m_operation.finish(operationId);
-            reportRuntimePlan(ImageDocumentRuntimePlan {
-                LoadContainerImageOperation { imageUrl, containerUrl } });
+void ImageDocumentDeletionFallbackController::loadComicBookFallbackImage(quint64 operationId,
+    const ContainerNavigationCandidate &candidate,
+    const std::optional<ContainerNavigationCandidate> &fallbackCandidate)
+{
+    const ImageContainerOpenPlan plan = imageContainerOpenPlanForCandidate(candidate);
+    if (!plan.shouldLoadCandidates()) {
+        failComicBookFallbackImageLoad(operationId, fallbackCandidate);
+        return;
+    }
+
+    const QUrl containerUrl = candidate.url;
+    m_job = m_candidateRepository.loadImages(
+        m_parent, *plan.source,
+        [this, operationId, containerUrl, fallbackCandidate](
+            std::vector<ImageNavigationCandidate> candidates) {
+            finishComicBookFallbackImageLoad(
+                operationId, containerUrl, fallbackCandidate, std::move(candidates));
         },
         [this, operationId, fallbackCandidate](
-            const QUrl &, ImageContainerOpenError, const QString &) {
-            openComicBookFallbackCandidate(operationId, fallbackCandidate, std::nullopt);
-        });
+            const QString &) { failComicBookFallbackImageLoad(operationId, fallbackCandidate); });
+}
+
+void ImageDocumentDeletionFallbackController::finishComicBookFallbackImageLoad(quint64 operationId,
+    const QUrl &containerUrl, const std::optional<ContainerNavigationCandidate> &fallbackCandidate,
+    std::vector<ImageNavigationCandidate> candidates)
+{
+    if (!m_operation.accepts(operationId)) {
+        return;
+    }
+
+    const ImageContainerOpenResult result = imageContainerOpenResultForCandidates(candidates);
+    if (!result.openedImage()) {
+        failComicBookFallbackImageLoad(operationId, fallbackCandidate);
+        return;
+    }
+
+    m_operation.finish(operationId);
+    reportRuntimePlan(ImageDocumentRuntimePlan {
+        LoadContainerImageOperation { *result.imageUrl, containerUrl } });
+}
+
+void ImageDocumentDeletionFallbackController::failComicBookFallbackImageLoad(
+    quint64 operationId, const std::optional<ContainerNavigationCandidate> &fallbackCandidate)
+{
+    if (!m_operation.accepts(operationId)) {
+        return;
+    }
+
+    openComicBookFallbackCandidate(operationId, fallbackCandidate, std::nullopt);
 }
 
 void ImageDocumentDeletionFallbackController::reportRuntimePlan(ImageDocumentRuntimePlan plan)

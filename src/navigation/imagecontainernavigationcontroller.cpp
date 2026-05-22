@@ -80,20 +80,45 @@ void ImageContainerNavigationController::finishContainerNavigation(quint64 opera
         return;
     }
 
-    m_firstImageJob = m_candidateRepository.loadFirstImageInContainer(
-        this, *target,
-        [this, operationId](const QUrl &imageUrl, const QUrl &containerUrl) {
-            openImageFromContainerNavigation(operationId, imageUrl, containerUrl);
-        },
-        [this, operationId](
-            const QUrl &containerUrl, ImageContainerOpenError error, const QString &errorString) {
-            finishContainerNavigationLoadWithError(operationId, containerUrl, error, errorString);
-        });
+    loadFirstImageFromContainerNavigation(operationId, *target);
 }
 
 void ImageContainerNavigationController::finishContainerNavigationListWithError(quint64 operationId)
 {
     m_navigationState.finishNavigation(operationId);
+}
+
+void ImageContainerNavigationController::loadFirstImageFromContainerNavigation(
+    quint64 operationId, const ContainerNavigationCandidate &container)
+{
+    const ImageContainerOpenPlan plan = imageContainerOpenPlanForCandidate(container);
+    if (!plan.shouldLoadCandidates()) {
+        finishContainerNavigationLoadWithError(operationId, container.url, plan.error, QString());
+        return;
+    }
+
+    const QUrl containerUrl = container.url;
+    m_firstImageJob = m_candidateRepository.loadImages(
+        this, *plan.source,
+        [this, operationId, containerUrl](std::vector<ImageNavigationCandidate> candidates) {
+            finishContainerNavigationImageLoad(operationId, containerUrl, std::move(candidates));
+        },
+        [this, operationId, containerUrl](const QString &errorString) {
+            finishContainerNavigationLoadWithError(
+                operationId, containerUrl, ImageContainerOpenError::Generic, errorString);
+        });
+}
+
+void ImageContainerNavigationController::finishContainerNavigationImageLoad(
+    quint64 operationId, const QUrl &containerUrl, std::vector<ImageNavigationCandidate> candidates)
+{
+    const ImageContainerOpenResult result = imageContainerOpenResultForCandidates(candidates);
+    if (result.openedImage()) {
+        openImageFromContainerNavigation(operationId, *result.imageUrl, containerUrl);
+        return;
+    }
+
+    finishContainerNavigationLoadWithError(operationId, containerUrl, result.error, QString());
 }
 
 void ImageContainerNavigationController::openImageFromContainerNavigation(

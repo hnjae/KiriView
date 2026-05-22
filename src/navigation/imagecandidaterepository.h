@@ -6,7 +6,6 @@
 
 #include "imagecandidatelistsource.h"
 #include "imagecandidateprovider.h"
-#include "imagecontaineropenplan.h"
 #include "imagenavigationtypes.h"
 
 #include <QObject>
@@ -15,10 +14,6 @@
 #include <functional>
 
 namespace KiriView {
-using ContainerImageCallback = std::function<void(const QUrl &, const QUrl &)>;
-using ContainerOpenErrorCallback
-    = std::function<void(const QUrl &, ImageContainerOpenError, const QString &)>;
-
 class ImageCandidateRepository
 {
 public:
@@ -40,15 +35,8 @@ public:
         ImageCandidatesCallback callback, ErrorCallback errorCallback) const;
     ImageIoJob watchDirectoryImageChanges(QObject *receiver, const QUrl &directoryUrl,
         ImageCandidatesCallback callback, ErrorCallback errorCallback) const;
-    ImageIoJob loadFirstImageInContainer(QObject *receiver,
-        const ContainerNavigationCandidate &container, ContainerImageCallback callback,
-        ContainerOpenErrorCallback errorCallback) const;
 
 private:
-    ImageIoJob loadImagesInContainer(QObject *receiver,
-        const ContainerNavigationCandidate &container, ImageCandidatesCallback callback,
-        ContainerOpenErrorCallback errorCallback) const;
-
     ImageNavigationCandidateProvider m_provider;
 };
 }

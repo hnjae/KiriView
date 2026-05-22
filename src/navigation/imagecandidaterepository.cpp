@@ -4,8 +4,6 @@
 #include "imagecandidaterepository.h"
 
 #include "async/imagecallback.h"
-#include "imagecontainer.h"
-#include "imagecontaineropenplan.h"
 
 #include <utility>
 #include <vector>
@@ -57,22 +55,6 @@ KiriView::ImageIoJob watchChangesForSource(const KiriView::ImageCandidateReposit
     KiriView::ErrorCallback)
 {
     return KiriView::ImageIoJob();
-}
-
-void reportContainerOpenError(const QUrl &containerUrl, KiriView::ImageContainerOpenError error,
-    const QString &errorString, const KiriView::ContainerOpenErrorCallback &errorCallback)
-{
-    KiriView::invokeIfSet(errorCallback, containerUrl, error, errorString);
-}
-
-KiriView::ErrorCallback containerLoadErrorCallback(
-    QUrl containerUrl, KiriView::ContainerOpenErrorCallback errorCallback)
-{
-    return [containerUrl = std::move(containerUrl), errorCallback = std::move(errorCallback)](
-               const QString &errorString) {
-        reportContainerOpenError(
-            containerUrl, KiriView::ImageContainerOpenError::Generic, errorString, errorCallback);
-    };
 }
 
 }
@@ -149,41 +131,5 @@ ImageIoJob ImageCandidateRepository::watchDirectoryImageChanges(QObject *receive
 {
     return loadWithProvider(m_provider.directoryImageChanges, std::move(errorCallback), receiver,
         directoryUrl, std::move(callback));
-}
-
-ImageIoJob ImageCandidateRepository::loadFirstImageInContainer(QObject *receiver,
-    const ContainerNavigationCandidate &container, ContainerImageCallback callback,
-    ContainerOpenErrorCallback errorCallback) const
-{
-    ContainerOpenErrorCallback sharedErrorCallback = std::move(errorCallback);
-    ImageCandidatesCallback firstImageCallback
-        = [containerUrl = container.url, imageCallback = std::move(callback),
-              errorCallback = sharedErrorCallback](
-              const std::vector<ImageNavigationCandidate> &candidates) {
-              const ImageContainerOpenResult result
-                  = imageContainerOpenResultForCandidates(candidates);
-              if (result.openedImage()) {
-                  invokeIfSet(imageCallback, *result.imageUrl, containerUrl);
-                  return;
-              }
-
-              reportContainerOpenError(containerUrl, result.error, QString(), errorCallback);
-          };
-    return loadImagesInContainer(
-        receiver, container, std::move(firstImageCallback), std::move(sharedErrorCallback));
-}
-
-ImageIoJob ImageCandidateRepository::loadImagesInContainer(QObject *receiver,
-    const ContainerNavigationCandidate &container, ImageCandidatesCallback callback,
-    ContainerOpenErrorCallback errorCallback) const
-{
-    ImageContainerOpenPlan plan = imageContainerOpenPlanForCandidate(container);
-    if (!plan.shouldLoadCandidates()) {
-        reportContainerOpenError(container.url, plan.error, QString(), errorCallback);
-        return ImageIoJob();
-    }
-
-    return loadImages(receiver, *plan.source, std::move(callback),
-        containerLoadErrorCallback(container.url, std::move(errorCallback)));
 }
 }

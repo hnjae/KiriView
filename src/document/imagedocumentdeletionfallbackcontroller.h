@@ -13,6 +13,7 @@
 #include <QtGlobal>
 #include <functional>
 #include <optional>
+#include <vector>
 
 class QObject;
 
@@ -37,6 +38,14 @@ private:
     void openComicBookFallbackCandidate(quint64 operationId,
         const std::optional<ContainerNavigationCandidate> &candidate,
         const std::optional<ContainerNavigationCandidate> &fallbackCandidate);
+    void loadComicBookFallbackImage(quint64 operationId,
+        const ContainerNavigationCandidate &candidate,
+        const std::optional<ContainerNavigationCandidate> &fallbackCandidate);
+    void finishComicBookFallbackImageLoad(quint64 operationId, const QUrl &containerUrl,
+        const std::optional<ContainerNavigationCandidate> &fallbackCandidate,
+        std::vector<ImageNavigationCandidate> candidates);
+    void failComicBookFallbackImageLoad(
+        quint64 operationId, const std::optional<ContainerNavigationCandidate> &fallbackCandidate);
     void reportRuntimePlan(ImageDocumentRuntimePlan plan);
 
     QObject *m_parent = nullptr;

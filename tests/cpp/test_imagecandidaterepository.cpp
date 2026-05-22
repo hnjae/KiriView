@@ -10,16 +10,32 @@
 #include <QTest>
 #include <QUrl>
 #include <optional>
+#include <vector>
 
 namespace {
+using KiriView::ContainerNavigationCandidate;
 using KiriView::ContainerNavigationCandidateType;
-using KiriView::ImageContainerOpenError;
+using KiriView::ImageCandidateListSource;
+using KiriView::ImageNavigationCandidate;
 using KiriView::TestSupport::archivePageUrl;
 using KiriView::TestSupport::containerCandidate;
+using KiriView::TestSupport::FakeImageNavigationCandidateProvider;
 using KiriView::TestSupport::imageCandidate;
 using KiriView::TestSupport::localUrl;
 
-using FakeCandidateProvider = KiriView::TestSupport::FakeImageNavigationCandidateProvider;
+void compareSingleImageCandidate(
+    const std::vector<ImageNavigationCandidate> &candidates, const QUrl &url)
+{
+    QCOMPARE(candidates.size(), std::size_t(1));
+    QCOMPARE(candidates.front().url, url);
+}
+
+void compareSingleContainerCandidate(
+    const std::vector<ContainerNavigationCandidate> &candidates, const QUrl &url)
+{
+    QCOMPARE(candidates.size(), std::size_t(1));
+    QCOMPARE(candidates.front().url, url);
+}
 }
 
 class TestImageCandidateRepository : public QObject
@@ -27,157 +43,92 @@ class TestImageCandidateRepository : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
-    void directoryContainerOpensFirstImage();
-    void archiveContainerOpensFirstImage();
-    void emptyContainerReportsError();
-    void listingErrorIsForwarded();
-    void invalidComicBookArchiveReportsError();
-    void unsupportedContainerTypeReportsError();
+    void loadImagesRoutesDirectorySources();
+    void loadImagesRoutesArchiveSources();
+    void loadContainersRoutesDirectoryContainerSources();
+    void watchCandidateChangesRoutesDirectorySources();
 };
 
-void TestImageCandidateRepository::directoryContainerOpensFirstImage()
+void TestImageCandidateRepository::loadImagesRoutesDirectorySources()
 {
-    FakeCandidateProvider fakeProvider;
-    const QUrl containerUrl = localUrl(QStringLiteral("/books/a/"));
+    FakeImageNavigationCandidateProvider fakeProvider;
+    const QUrl directoryUrl = localUrl(QStringLiteral("/books/a/"));
     const QUrl imageUrl = localUrl(QStringLiteral("/books/a/01.png"));
-    fakeProvider.setDirectoryImages(containerUrl, { imageCandidate(imageUrl) });
+    fakeProvider.setDirectoryImages(directoryUrl, { imageCandidate(imageUrl) });
 
     KiriView::ImageCandidateRepository repository(fakeProvider.provider());
-    QUrl openedImageUrl;
-    QUrl openedContainerUrl;
-    repository.loadFirstImageInContainer(nullptr,
-        containerCandidate(containerUrl, ContainerNavigationCandidateType::Directory),
-        [&openedImageUrl, &openedContainerUrl](
-            const QUrl &candidateImageUrl, const QUrl &candidateContainerUrl) {
-            openedImageUrl = candidateImageUrl;
-            openedContainerUrl = candidateContainerUrl;
+    std::vector<ImageNavigationCandidate> loadedCandidates;
+    repository.loadImages(nullptr, ImageCandidateListSource::forDirectory(directoryUrl),
+        [&loadedCandidates](std::vector<ImageNavigationCandidate> candidates) {
+            loadedCandidates = std::move(candidates);
         },
         {});
 
-    QCOMPARE(openedImageUrl, imageUrl);
-    QCOMPARE(openedContainerUrl, containerUrl);
+    compareSingleImageCandidate(loadedCandidates, imageUrl);
 }
 
-void TestImageCandidateRepository::archiveContainerOpensFirstImage()
+void TestImageCandidateRepository::loadImagesRoutesArchiveSources()
 {
-    FakeCandidateProvider fakeProvider;
-    const QUrl containerUrl = localUrl(QStringLiteral("/books/book.cbz"));
+    FakeImageNavigationCandidateProvider fakeProvider;
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
     const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
-        = KiriView::archiveDocumentLocationForLocalArchiveUrl(containerUrl);
+        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveDocument.has_value());
     const QUrl imageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
-    fakeProvider.setArchiveImages(archiveDocument->rootUrl(),
-        {
-            imageCandidate(imageUrl),
-        });
+    fakeProvider.setArchiveImages(archiveDocument->rootUrl(), { imageCandidate(imageUrl) });
 
     KiriView::ImageCandidateRepository repository(fakeProvider.provider());
-    QUrl openedImageUrl;
-    QUrl openedContainerUrl;
-    repository.loadFirstImageInContainer(nullptr,
-        containerCandidate(containerUrl, ContainerNavigationCandidateType::ComicBookArchive),
-        [&openedImageUrl, &openedContainerUrl](
-            const QUrl &candidateImageUrl, const QUrl &candidateContainerUrl) {
-            openedImageUrl = candidateImageUrl;
-            openedContainerUrl = candidateContainerUrl;
+    std::vector<ImageNavigationCandidate> loadedCandidates;
+    repository.loadImages(nullptr, ImageCandidateListSource::forArchiveDocument(*archiveDocument),
+        [&loadedCandidates](std::vector<ImageNavigationCandidate> candidates) {
+            loadedCandidates = std::move(candidates);
         },
         {});
 
-    QCOMPARE(openedImageUrl, imageUrl);
-    QCOMPARE(openedContainerUrl, containerUrl);
+    compareSingleImageCandidate(loadedCandidates, imageUrl);
 }
 
-void TestImageCandidateRepository::emptyContainerReportsError()
+void TestImageCandidateRepository::loadContainersRoutesDirectoryContainerSources()
 {
-    FakeCandidateProvider fakeProvider;
+    FakeImageNavigationCandidateProvider fakeProvider;
+    const QUrl directoryUrl = localUrl(QStringLiteral("/books/"));
     const QUrl containerUrl = localUrl(QStringLiteral("/books/a/"));
-    fakeProvider.setDirectoryImages(containerUrl, {});
+    fakeProvider.setContainerCandidates(directoryUrl,
+        { containerCandidate(containerUrl, ContainerNavigationCandidateType::Directory) });
 
     KiriView::ImageCandidateRepository repository(fakeProvider.provider());
-    QUrl errorContainerUrl;
-    ImageContainerOpenError error = ImageContainerOpenError::Generic;
-    repository.loadFirstImageInContainer(nullptr,
-        containerCandidate(containerUrl, ContainerNavigationCandidateType::Directory), {},
-        [&errorContainerUrl, &error](
-            const QUrl &container, ImageContainerOpenError type, const QString &) {
-            errorContainerUrl = container;
-            error = type;
-        });
+    std::vector<ContainerNavigationCandidate> loadedCandidates;
+    repository.loadContainers(nullptr, directoryUrl,
+        [&loadedCandidates](std::vector<ContainerNavigationCandidate> candidates) {
+            loadedCandidates = std::move(candidates);
+        },
+        {});
 
-    QCOMPARE(errorContainerUrl, containerUrl);
-    QCOMPARE(error, ImageContainerOpenError::EmptyContainer);
+    compareSingleContainerCandidate(loadedCandidates, containerUrl);
 }
 
-void TestImageCandidateRepository::listingErrorIsForwarded()
+void TestImageCandidateRepository::watchCandidateChangesRoutesDirectorySources()
 {
-    FakeCandidateProvider fakeProvider;
-    const QUrl containerUrl = localUrl(QStringLiteral("/books/a/"));
-    fakeProvider.setDirectoryImageError(containerUrl, QStringLiteral("No access"));
+    FakeImageNavigationCandidateProvider fakeProvider;
+    const QUrl directoryUrl = localUrl(QStringLiteral("/books/a/"));
+    const QUrl imageUrl = localUrl(QStringLiteral("/books/a/01.png"));
+    QObject receiver;
 
     KiriView::ImageCandidateRepository repository(fakeProvider.provider());
-    QUrl errorContainerUrl;
-    ImageContainerOpenError error = ImageContainerOpenError::EmptyContainer;
-    QString errorString;
-    repository.loadFirstImageInContainer(nullptr,
-        containerCandidate(containerUrl, ContainerNavigationCandidateType::Directory), {},
-        [&errorContainerUrl, &error, &errorString](
-            const QUrl &container, ImageContainerOpenError type, const QString &message) {
-            errorContainerUrl = container;
-            error = type;
-            errorString = message;
-        });
+    std::vector<ImageNavigationCandidate> changedCandidates;
+    KiriView::ImageIoJob watchJob = repository.watchCandidateChanges(&receiver,
+        ImageCandidateListSource::forDirectory(directoryUrl),
+        [&changedCandidates](std::vector<ImageNavigationCandidate> candidates) {
+            changedCandidates = std::move(candidates);
+        },
+        {});
 
-    QCOMPARE(errorContainerUrl, containerUrl);
-    QCOMPARE(error, ImageContainerOpenError::Generic);
-    QCOMPARE(errorString, QStringLiteral("No access"));
-}
+    QCOMPARE(fakeProvider.directoryImageChangeSubscriptionCount(directoryUrl), 1);
+    fakeProvider.emitDirectoryImageChanges(directoryUrl, { imageCandidate(imageUrl) });
+    compareSingleImageCandidate(changedCandidates, imageUrl);
 
-void TestImageCandidateRepository::invalidComicBookArchiveReportsError()
-{
-    FakeCandidateProvider fakeProvider;
-    const QUrl containerUrl = localUrl(QStringLiteral("/books/not-an-archive.png"));
-
-    KiriView::ImageCandidateRepository repository(fakeProvider.provider());
-    bool openedImage = false;
-    QUrl errorContainerUrl;
-    ImageContainerOpenError error = ImageContainerOpenError::Generic;
-    repository.loadFirstImageInContainer(
-        nullptr,
-        containerCandidate(containerUrl, ContainerNavigationCandidateType::ComicBookArchive),
-        [&openedImage](const QUrl &, const QUrl &) { openedImage = true; },
-        [&errorContainerUrl, &error](
-            const QUrl &container, ImageContainerOpenError type, const QString &) {
-            errorContainerUrl = container;
-            error = type;
-        });
-
-    QVERIFY(!openedImage);
-    QCOMPARE(errorContainerUrl, containerUrl);
-    QCOMPARE(error, ImageContainerOpenError::InvalidComicBookArchive);
-}
-
-void TestImageCandidateRepository::unsupportedContainerTypeReportsError()
-{
-    FakeCandidateProvider fakeProvider;
-    const QUrl containerUrl = localUrl(QStringLiteral("/books/unknown"));
-
-    KiriView::ImageCandidateRepository repository(fakeProvider.provider());
-    bool openedImage = false;
-    QUrl errorContainerUrl;
-    ImageContainerOpenError error = ImageContainerOpenError::EmptyContainer;
-    repository.loadFirstImageInContainer(
-        nullptr,
-        containerCandidate(containerUrl, static_cast<ContainerNavigationCandidateType>(999)),
-        [&openedImage](const QUrl &, const QUrl &) { openedImage = true; },
-        [&errorContainerUrl, &error](
-            const QUrl &container, ImageContainerOpenError type, const QString &) {
-            errorContainerUrl = container;
-            error = type;
-        });
-
-    QVERIFY(!openedImage);
-    QCOMPARE(errorContainerUrl, containerUrl);
-    QCOMPARE(error, ImageContainerOpenError::Generic);
+    watchJob.cancel();
+    QCOMPARE(fakeProvider.directoryImageChangeSubscriptionCount(directoryUrl), 0);
 }
 
 QTEST_GUILESS_MAIN(TestImageCandidateRepository)
