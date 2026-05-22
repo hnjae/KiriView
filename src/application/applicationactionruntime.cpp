@@ -9,8 +9,21 @@
 #include <KirigamiActionCollection>
 #include <QIcon>
 
+#include <optional>
+
 namespace {
 namespace Actions = KiriView::ApplicationActions;
+
+Actions::VideoShortcutAvailabilityInput videoShortcutInput(bool helpShortcutsEnabled,
+    bool viewerShortcutsEnabled, bool videoFileDeletionInProgress, bool videoMediaNavigationActive)
+{
+    return Actions::VideoShortcutAvailabilityInput {
+        helpShortcutsEnabled,
+        viewerShortcutsEnabled,
+        videoFileDeletionInProgress,
+        videoMediaNavigationActive,
+    };
+}
 }
 
 namespace KiriView::ApplicationActions {
@@ -76,6 +89,36 @@ ApplicationShortcutProjection ApplicationActionRuntime::shortcutProjectionForId(
 QVariantList ApplicationActionRuntime::shortcutRoutes() const
 {
     return ApplicationActions::shortcutRouteVariants();
+}
+
+bool ApplicationActionRuntime::videoShortcutsEnabledForScope(int shortcutScope,
+    bool helpShortcutsEnabled, bool viewerShortcutsEnabled, bool videoFileDeletionInProgress,
+    bool videoMediaNavigationActive) const
+{
+    const std::optional<ImageShortcutScope> scope = imageShortcutScopeFromValue(shortcutScope);
+    if (!scope.has_value()) {
+        return false;
+    }
+
+    return ApplicationActions::videoShortcutsEnabledForScope(
+        videoShortcutInput(helpShortcutsEnabled, viewerShortcutsEnabled,
+            videoFileDeletionInProgress, videoMediaNavigationActive),
+        *scope);
+}
+
+bool ApplicationActionRuntime::videoActionUnsupported(KiriViewApplication::ActionId actionId) const
+{
+    return ApplicationActions::videoActionUnsupported(actionId);
+}
+
+bool ApplicationActionRuntime::mediaHorizontalArrowShortcutsEnabled(bool videoMode,
+    bool imageReadyViewerShortcutsEnabled, bool videoViewerShortcutsEnabled,
+    bool videoMediaNavigationActive, bool videoFileDeletionInProgress) const
+{
+    return ApplicationActions::mediaHorizontalArrowShortcutsEnabled(videoMode,
+        imageReadyViewerShortcutsEnabled,
+        videoShortcutInput(false, videoViewerShortcutsEnabled, videoFileDeletionInProgress,
+            videoMediaNavigationActive));
 }
 
 void ApplicationActionRuntime::setupActions()

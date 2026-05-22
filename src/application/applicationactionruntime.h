@@ -39,6 +39,13 @@ public:
     ApplicationShortcutProjection shortcutProjectionForId(
         KiriViewApplication::ActionId actionId) const;
     QVariantList shortcutRoutes() const;
+    bool videoShortcutsEnabledForScope(int shortcutScope, bool helpShortcutsEnabled,
+        bool viewerShortcutsEnabled, bool videoFileDeletionInProgress,
+        bool videoMediaNavigationActive) const;
+    bool videoActionUnsupported(KiriViewApplication::ActionId actionId) const;
+    bool mediaHorizontalArrowShortcutsEnabled(bool videoMode, bool imageReadyViewerShortcutsEnabled,
+        bool videoViewerShortcutsEnabled, bool videoMediaNavigationActive,
+        bool videoFileDeletionInProgress) const;
 
     void setupActions();
 

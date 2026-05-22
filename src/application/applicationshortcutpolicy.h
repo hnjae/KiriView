@@ -11,6 +11,7 @@
 #include <QList>
 #include <QString>
 #include <QVariantList>
+#include <optional>
 
 namespace KiriView::ApplicationActions {
 enum class ApplicationShortcutFilter {
@@ -52,6 +53,7 @@ QList<QKeySequence> sanitizeShortcuts(const QList<QKeySequence> &shortcuts);
 ApplicationShortcutProjection shortcutProjection(const QList<QKeySequence> &shortcuts);
 const QList<ApplicationShortcutRoute> &shortcutRoutes();
 QVariantList shortcutRouteVariants();
+std::optional<ImageShortcutScope> imageShortcutScopeFromValue(int value);
 bool videoShortcutsEnabledForScope(
     const VideoShortcutAvailabilityInput &input, ImageShortcutScope scope);
 bool videoActionUnsupported(KiriViewApplication::ActionId actionId);

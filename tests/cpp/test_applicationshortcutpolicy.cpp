@@ -6,6 +6,7 @@
 #include <QObject>
 #include <QTest>
 #include <QVariantMap>
+#include <optional>
 
 namespace {
 using ActionId = KiriViewApplication::ActionId;
@@ -48,6 +49,7 @@ private Q_SLOTS:
     void sanitizeShortcutsRemovesUnmodifiedTextInputShortcuts();
     void shortcutRoutesOwnApplicationShortcutScopes();
     void shortcutRouteVariantsExposeQmlShape();
+    void shortcutScopeValuesMapOnlyKnownScopes();
     void videoShortcutScopesUseViewerDeletionAndNavigationGates();
     void videoUnsupportedActionPolicyRejectsImageOnlyCommands();
     void horizontalArrowShortcutPolicyUsesActiveMediaMode();
@@ -236,6 +238,24 @@ void TestApplicationShortcutPolicy::shortcutRouteVariantsExposeQmlShape()
         QCOMPARE(route.value(QStringLiteral("shortcutScope")).toInt(),
             static_cast<int>(routes.at(index).shortcutScope));
     }
+}
+
+void TestApplicationShortcutPolicy::shortcutScopeValuesMapOnlyKnownScopes()
+{
+    const std::optional<Scope> readyViewerScope
+        = KiriView::ApplicationActions::imageShortcutScopeFromValue(
+            static_cast<int>(Scope::ReadyViewerShortcutScope));
+    QVERIFY(readyViewerScope.has_value());
+    QCOMPARE(*readyViewerScope, Scope::ReadyViewerShortcutScope);
+
+    const std::optional<Scope> containerViewerScope
+        = KiriView::ApplicationActions::imageShortcutScopeFromValue(
+            static_cast<int>(Scope::ContainerViewerShortcutScope));
+    QVERIFY(containerViewerScope.has_value());
+    QCOMPARE(*containerViewerScope, Scope::ContainerViewerShortcutScope);
+
+    QVERIFY(!KiriView::ApplicationActions::imageShortcutScopeFromValue(-1).has_value());
+    QVERIFY(!KiriView::ApplicationActions::imageShortcutScopeFromValue(999).has_value());
 }
 
 void TestApplicationShortcutPolicy::videoShortcutScopesUseViewerDeletionAndNavigationGates()

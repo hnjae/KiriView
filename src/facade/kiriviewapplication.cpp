@@ -4,50 +4,8 @@
 #include "facade/kiriviewapplication.h"
 
 #include "application/applicationactionruntime.h"
-#include "application/applicationshortcutpolicy.h"
-
-#include <optional>
 
 namespace Actions = KiriView::ApplicationActions;
-
-namespace {
-std::optional<Actions::ImageShortcutScope> imageShortcutScopeFromValue(int value)
-{
-    using Scope = Actions::ImageShortcutScope;
-    switch (static_cast<Scope>(value)) {
-    case Scope::HelpShortcutScope:
-    case Scope::ViewerShortcutScope:
-    case Scope::ReadyShortcutScope:
-    case Scope::ReadyViewerShortcutScope:
-    case Scope::ImageSelectionShortcutScope:
-    case Scope::ImageSelectionViewerShortcutScope:
-    case Scope::PageShortcutScope:
-    case Scope::PageViewerShortcutScope:
-    case Scope::RightToLeftReadingShortcutScope:
-    case Scope::RightToLeftReadingViewerShortcutScope:
-    case Scope::RotateShortcutScope:
-    case Scope::RotateViewerShortcutScope:
-    case Scope::PannableShortcutScope:
-    case Scope::PannableViewerShortcutScope:
-    case Scope::ContainerShortcutScope:
-    case Scope::ContainerViewerShortcutScope:
-        return static_cast<Scope>(value);
-    }
-
-    return std::nullopt;
-}
-
-Actions::VideoShortcutAvailabilityInput videoShortcutInput(bool helpShortcutsEnabled,
-    bool viewerShortcutsEnabled, bool videoFileDeletionInProgress, bool videoMediaNavigationActive)
-{
-    return Actions::VideoShortcutAvailabilityInput {
-        helpShortcutsEnabled,
-        viewerShortcutsEnabled,
-        videoFileDeletionInProgress,
-        videoMediaNavigationActive,
-    };
-}
-}
 
 KiriViewApplication::KiriViewApplication(QObject *parent)
     : AbstractKirigamiApplication(parent)
@@ -172,31 +130,22 @@ bool KiriViewApplication::videoShortcutsEnabledForScope(int shortcutScope,
     bool helpShortcutsEnabled, bool viewerShortcutsEnabled, bool videoFileDeletionInProgress,
     bool videoMediaNavigationActive) const
 {
-    const std::optional<Actions::ImageShortcutScope> scope
-        = imageShortcutScopeFromValue(shortcutScope);
-    if (!scope.has_value()) {
-        return false;
-    }
-
-    return Actions::videoShortcutsEnabledForScope(
-        videoShortcutInput(helpShortcutsEnabled, viewerShortcutsEnabled,
-            videoFileDeletionInProgress, videoMediaNavigationActive),
-        *scope);
+    return m_actionRuntime->videoShortcutsEnabledForScope(shortcutScope, helpShortcutsEnabled,
+        viewerShortcutsEnabled, videoFileDeletionInProgress, videoMediaNavigationActive);
 }
 
 bool KiriViewApplication::videoActionUnsupported(ActionId actionId) const
 {
-    return Actions::videoActionUnsupported(actionId);
+    return m_actionRuntime->videoActionUnsupported(actionId);
 }
 
 bool KiriViewApplication::mediaHorizontalArrowShortcutsEnabled(bool videoMode,
     bool imageReadyViewerShortcutsEnabled, bool videoViewerShortcutsEnabled,
     bool videoMediaNavigationActive, bool videoFileDeletionInProgress) const
 {
-    return Actions::mediaHorizontalArrowShortcutsEnabled(videoMode,
-        imageReadyViewerShortcutsEnabled,
-        videoShortcutInput(false, videoViewerShortcutsEnabled, videoFileDeletionInProgress,
-            videoMediaNavigationActive));
+    return m_actionRuntime->mediaHorizontalArrowShortcutsEnabled(videoMode,
+        imageReadyViewerShortcutsEnabled, videoViewerShortcutsEnabled, videoMediaNavigationActive,
+        videoFileDeletionInProgress);
 }
 
 void KiriViewApplication::setupActions()
