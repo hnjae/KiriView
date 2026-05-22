@@ -3,28 +3,28 @@
 
 #include "imagetilevisibility.h"
 
-#include "imagetilegeometrybridge.h"
+#include "imagetilegeometrypolicy.h"
 #include "presentation/imagerotation.h"
 
 namespace KiriView {
 qreal tileDisplayPixelsPerSourcePixel(
     const TilePyramid &pyramid, const QSizeF &displaySize, qreal devicePixelRatio)
 {
-    return ImageTileGeometryBridge::tileDisplayPixelsPerSourcePixel(
+    return ImageTileGeometryPolicy::tileDisplayPixelsPerSourcePixel(
         pyramid.imageSize(), displaySize, devicePixelRatio);
 }
 
 bool tileFirstDisplayIsSufficient(const TilePyramid &pyramid, const QSizeF &displaySize,
     qreal devicePixelRatio, qreal firstDisplayPixelsPerSourcePixel)
 {
-    return ImageTileGeometryBridge::tileFirstDisplayIsSufficient(
+    return ImageTileGeometryPolicy::tileFirstDisplayIsSufficient(
         pyramid.imageSize(), displaySize, devicePixelRatio, firstDisplayPixelsPerSourcePixel);
 }
 
 QRect tileLevelRectForItemRect(
     const TilePyramid &pyramid, int level, const QSizeF &displaySize, const QRectF &itemRect)
 {
-    return ImageTileGeometryBridge::tileLevelRectForItemRect(
+    return ImageTileGeometryPolicy::tileLevelRectForItemRect(
         pyramid.imageSize(), level, displaySize, itemRect);
 }
 
@@ -34,7 +34,7 @@ std::vector<TileKey> visibleTileKeys(
     const QSizeF sourceDisplaySize = rotatedImageSize(context.displaySize, context.rotationDegrees);
     const QRectF sourceVisibleItemRect = unrotatedVisibleRectForRotation(
         sourceDisplaySize, context.visibleItemRect, context.rotationDegrees);
-    return ImageTileGeometryBridge::visibleTileKeys(pyramid.imageSize(), pyramid.tileSize(),
+    return ImageTileGeometryPolicy::visibleTileKeys(pyramid.imageSize(), pyramid.tileSize(),
         sourceDisplaySize, sourceVisibleItemRect, context.devicePixelRatio);
 }
 }

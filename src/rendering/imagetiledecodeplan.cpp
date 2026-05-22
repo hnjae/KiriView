@@ -3,7 +3,7 @@
 
 #include "imagetiledecodeplan.h"
 
-#include "imagetilegeometrybridge.h"
+#include "imagetilegeometrypolicy.h"
 #include "imagetilevisibility.h"
 #include "presentation/imagerotation.h"
 
@@ -46,7 +46,7 @@ namespace {
         const QRectF sourceVisibleItemRect
             = unrotatedVisibleRectForRotation(sourceDisplaySize, visibleItemRect, rotationDegrees);
         for (TileRequest request :
-            ImageTileGeometryBridge::svgRasterTileRequests(surface.imageSize(),
+            ImageTileGeometryPolicy::svgRasterTileRequests(surface.imageSize(),
                 surface.pyramid().tileSize(), surface.pyramid().apronSourcePixels(),
                 sourceDisplaySize, sourceVisibleItemRect, context.devicePixelRatio)) {
             if (surface.containsTile(request.key) || exclusions.contains(request.key)) {

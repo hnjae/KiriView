@@ -1,8 +1,8 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#ifndef KIRIVIEW_IMAGETILEGEOMETRYBRIDGE_H
-#define KIRIVIEW_IMAGETILEGEOMETRYBRIDGE_H
+#ifndef KIRIVIEW_IMAGETILEGEOMETRYPOLICY_H
+#define KIRIVIEW_IMAGETILEGEOMETRYPOLICY_H
 
 #include "imagetile.h"
 
@@ -13,10 +13,7 @@
 #include <QtGlobal>
 #include <vector>
 
-namespace KiriView::ImageTileGeometryBridge {
-QRect boundedIntegerRect(const QRect &rect, const QSize &boundsSize);
-QRect scaledIntegerRect(const QRectF &rect, const QSizeF &sourceSize, const QSize &targetSize);
-
+namespace KiriView::ImageTileGeometryPolicy {
 std::vector<TileLevel> tilePyramidLevels(const QSize &imageSize);
 QSize tilePyramidTileGridSize(const QSize &imageSize, int tileSize, int level);
 bool tilePyramidContainsLevel(int levelCount, int level);

@@ -3,7 +3,7 @@
 
 #include "imagetile.h"
 
-#include "imagetilegeometrybridge.h"
+#include "imagetilegeometrypolicy.h"
 
 #include <algorithm>
 #include <utility>
@@ -41,45 +41,45 @@ QSize TilePyramid::levelSize(int level) const
 
 QSize TilePyramid::tileGridSize(int level) const
 {
-    return ImageTileGeometryBridge::tilePyramidTileGridSize(m_imageSize, m_tileSize, level);
+    return ImageTileGeometryPolicy::tilePyramidTileGridSize(m_imageSize, m_tileSize, level);
 }
 
 bool TilePyramid::containsLevel(int level) const
 {
-    return ImageTileGeometryBridge::tilePyramidContainsLevel(levelCount(), level);
+    return ImageTileGeometryPolicy::tilePyramidContainsLevel(levelCount(), level);
 }
 
 bool TilePyramid::containsTile(const TileKey &key) const
 {
-    return ImageTileGeometryBridge::tilePyramidContainsTile(m_imageSize, m_tileSize, key);
+    return ImageTileGeometryPolicy::tilePyramidContainsTile(m_imageSize, m_tileSize, key);
 }
 
 int TilePyramid::selectLevelForDisplayScale(qreal displayPixelsPerSourcePixel) const
 {
-    return ImageTileGeometryBridge::tilePyramidSelectLevelForDisplayScale(
+    return ImageTileGeometryPolicy::tilePyramidSelectLevelForDisplayScale(
         m_imageSize, displayPixelsPerSourcePixel);
 }
 
 QRect TilePyramid::levelTileRect(const TileKey &key) const
 {
-    return ImageTileGeometryBridge::tilePyramidLevelTileRect(m_imageSize, m_tileSize, key);
+    return ImageTileGeometryPolicy::tilePyramidLevelTileRect(m_imageSize, m_tileSize, key);
 }
 
 QRect TilePyramid::levelTileTextureRect(const TileKey &key) const
 {
-    return ImageTileGeometryBridge::tilePyramidLevelTileTextureRect(
+    return ImageTileGeometryPolicy::tilePyramidLevelTileTextureRect(
         m_imageSize, m_tileSize, m_apronSourcePixels, key);
 }
 
 QRect TilePyramid::sourceRectForLevelRect(int level, const QRect &levelRect) const
 {
-    return ImageTileGeometryBridge::tilePyramidSourceRectForLevelRect(
+    return ImageTileGeometryPolicy::tilePyramidSourceRectForLevelRect(
         m_imageSize, level, levelRect);
 }
 
 TileRequest TilePyramid::requestForTile(const TileKey &key) const
 {
-    TileRequest request = ImageTileGeometryBridge::tilePyramidRequestForTile(
+    TileRequest request = ImageTileGeometryPolicy::tilePyramidRequestForTile(
         m_imageSize, m_tileSize, m_apronSourcePixels, key);
     request.key = key;
     request.displaySourceRect = sourceRectForLevelRect(key.level, request.levelRect);
@@ -89,17 +89,17 @@ TileRequest TilePyramid::requestForTile(const TileKey &key) const
 std::vector<TileKey> TilePyramid::tilesIntersectingLevelRect(
     int level, const QRect &levelRect) const
 {
-    return ImageTileGeometryBridge::tilePyramidTilesIntersectingLevelRect(
+    return ImageTileGeometryPolicy::tilePyramidTilesIntersectingLevelRect(
         m_imageSize, m_tileSize, level, levelRect);
 }
 
 void TilePyramid::rebuildLevels()
 {
-    m_levels = ImageTileGeometryBridge::tilePyramidLevels(m_imageSize);
+    m_levels = ImageTileGeometryPolicy::tilePyramidLevels(m_imageSize);
 }
 
 qreal TilePyramid::levelPixelsPerSourcePixel(int level) const
 {
-    return ImageTileGeometryBridge::tilePyramidLevelPixelsPerSourcePixel(m_imageSize, level);
+    return ImageTileGeometryPolicy::tilePyramidLevelPixelsPerSourcePixel(m_imageSize, level);
 }
 }
