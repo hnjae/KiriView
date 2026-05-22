@@ -31,4 +31,6 @@ bool ImageAsyncOperationState::finish(quint64 operationId)
 }
 
 void ImageAsyncOperationState::cancel() { m_activeOperationId = 0; }
+
+bool ImageAsyncOperationState::active() const { return m_activeOperationId != 0; }
 }

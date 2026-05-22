@@ -13,32 +13,23 @@ DocumentSessionMediaCandidateLoadState::DocumentSessionMediaCandidateLoadState(
 DocumentSessionMediaCandidateLoad DocumentSessionMediaCandidateLoadState::start(
     const QUrl &currentUrl)
 {
-    m_currentUrl = currentUrl;
+    const ImageAsyncScopedOperation<QUrl> operation = m_operation.start(currentUrl);
     return DocumentSessionMediaCandidateLoad {
-        m_operation.start(),
-        currentUrl,
+        operation.operationId,
+        operation.scope,
     };
 }
 
 bool DocumentSessionMediaCandidateLoadState::accepts(
     const DocumentSessionMediaCandidateLoad &load) const
 {
-    return m_operation.accepts(load.operationId) && m_currentUrl == load.currentUrl;
+    return m_operation.accepts(load.operationId, load.currentUrl);
 }
 
 bool DocumentSessionMediaCandidateLoadState::finish(const DocumentSessionMediaCandidateLoad &load)
 {
-    if (!accepts(load)) {
-        return false;
-    }
-
-    m_currentUrl = QUrl();
-    return m_operation.finish(load.operationId);
+    return m_operation.finish(load.operationId, load.currentUrl);
 }
 
-void DocumentSessionMediaCandidateLoadState::cancel()
-{
-    m_currentUrl = QUrl();
-    m_operation.cancel();
-}
+void DocumentSessionMediaCandidateLoadState::cancel() { m_operation.cancel(); }
 }

@@ -26,8 +26,7 @@ public:
     void cancel();
 
 private:
-    ImageAsyncOperationState m_operation;
-    QUrl m_currentUrl;
+    ImageAsyncScopedOperationState<QUrl> m_operation;
 };
 }
 

@@ -196,7 +196,7 @@ void VideoDocumentRuntime::setSourceUrl(const QUrl &sourceUrl)
         return;
     }
 
-    ++m_operationId;
+    m_playbackUrlResolution.cancel();
     if (m_playbackUrlResolver != nullptr) {
         m_playbackUrlResolver->cancel();
         m_playbackUrlResolver->cleanup();
@@ -343,7 +343,7 @@ void VideoDocumentRuntime::clearSourceState()
         m_mediaBackend->setSource(QUrl());
     }
     m_sourceUrl = QUrl();
-    m_resolvingPlaybackUrl = false;
+    m_playbackUrlResolution.cancel();
     m_ended = false;
 
     std::vector<VideoDocumentChange> changes { VideoDocumentChange::SourceUrl };
@@ -396,7 +396,7 @@ void VideoDocumentRuntime::beginSourceLoad(const QUrl &sourceUrl)
         m_mediaBackend->setSource(QUrl());
     }
     m_sourceUrl = sourceUrl;
-    m_resolvingPlaybackUrl = true;
+    const ImageAsyncScopedOperation<QUrl> operation = m_playbackUrlResolution.start(sourceUrl);
     m_ended = false;
 
     std::vector<VideoDocumentChange> changes {
@@ -441,9 +441,8 @@ void VideoDocumentRuntime::beginSourceLoad(const QUrl &sourceUrl)
     }
     publish(std::move(changes));
 
-    const quint64 operationId = m_operationId;
     m_playbackUrlResolver->resolve(
-        operationId, sourceUrl, m_documentObject,
+        operation.operationId, sourceUrl, m_documentObject,
         [this](
             VideoPlaybackUrlResolution resolution) { completePlaybackUrlResolution(resolution); },
         [this](quint64 failedOperationId, QUrl failedSourceUrl, QString failure) {
@@ -454,11 +453,10 @@ void VideoDocumentRuntime::beginSourceLoad(const QUrl &sourceUrl)
 void VideoDocumentRuntime::completePlaybackUrlResolution(
     const VideoPlaybackUrlResolution &resolution)
 {
-    if (resolution.operationId != m_operationId || resolution.sourceUrl != m_sourceUrl) {
+    if (!m_playbackUrlResolution.finish(resolution.operationId, resolution.sourceUrl)) {
         return;
     }
 
-    m_resolvingPlaybackUrl = false;
     VideoMediaBackend *mediaBackend = ensureMediaBackend();
     mediaBackend->setSource(resolution.playbackUrl);
     updateStatusFromBackend();
@@ -468,11 +466,10 @@ void VideoDocumentRuntime::completePlaybackUrlResolution(
 void VideoDocumentRuntime::failPlaybackUrlResolution(
     quint64 operationId, const QUrl &sourceUrl, const QString &errorString)
 {
-    if (operationId != m_operationId || sourceUrl != m_sourceUrl) {
+    if (!m_playbackUrlResolution.finish(operationId, sourceUrl)) {
         return;
     }
 
-    m_resolvingPlaybackUrl = false;
     setErrorString(errorString);
     setStatus(VideoDocumentStatus::Error);
 }
@@ -508,7 +505,7 @@ void VideoDocumentRuntime::updateStatusFromBackend()
         setStatus(VideoDocumentStatus::Null);
         return;
     }
-    if (m_resolvingPlaybackUrl) {
+    if (m_playbackUrlResolution.active()) {
         setEndedValue(false);
         setStatus(VideoDocumentStatus::Loading);
         return;

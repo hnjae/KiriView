@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_VIDEODOCUMENTRUNTIME_H
 #define KIRIVIEW_VIDEODOCUMENTRUNTIME_H
 
+#include "async/imageasyncoperationstate.h"
 #include "video/videoplaybackurlresolver.h"
 
 #include <QObject>
@@ -151,8 +152,7 @@ private:
     QPointer<QObject> m_videoOutput;
     QMetaObject::Connection m_videoOutputDestroyedConnection;
     QUrl m_sourceUrl;
-    quint64 m_operationId = 0;
-    bool m_resolvingPlaybackUrl = false;
+    ImageAsyncScopedOperationState<QUrl> m_playbackUrlResolution;
     VideoDocumentStatus m_status = VideoDocumentStatus::Null;
     QString m_errorString;
     QString m_windowTitleFileName;
