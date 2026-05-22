@@ -5,10 +5,9 @@
 
 #include "kiriview/src/policy/imagenavigationmodel.cxx.h"
 #include "location/imageurl.h"
+#include "navigationcandidateordering.h"
+#include "navigationindexpolicy.h"
 
-#include <QCollator>
-#include <QLocale>
-#include <Qt>
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
@@ -53,31 +52,7 @@ std::optional<std::size_t> currentUrlIndex(const std::vector<QUrl> &urls, const 
     return static_cast<std::size_t>(std::distance(urls.cbegin(), current));
 }
 
-template <typename Candidate> void sortNavigationCandidates(std::vector<Candidate> *candidates)
-{
-    QCollator collator(QLocale::system());
-    collator.setCaseSensitivity(Qt::CaseSensitive);
-    collator.setNumericMode(false);
-    collator.setIgnorePunctuation(false);
-
-    std::stable_sort(candidates->begin(), candidates->end(),
-        [&collator](const Candidate &left, const Candidate &right) {
-            const int nameComparison = collator.compare(left.name, right.name);
-            if (nameComparison != 0) {
-                return nameComparison < 0;
-            }
-
-            return left.url.toEncoded() < right.url.toEncoded();
-        });
-
-    const auto duplicateStart = std::unique(
-        candidates->begin(), candidates->end(), [](const Candidate &left, const Candidate &right) {
-            return KiriView::sameNormalizedUrl(left.url, right.url);
-        });
-    candidates->erase(duplicateStart, candidates->end());
-}
-
-std::optional<std::size_t> navigationIndexValue(KiriView::RustNavigationIndex index)
+std::optional<std::size_t> pageNavigationIndexValue(KiriView::RustNavigationIndex index)
 {
     if (!index.found) {
         return std::nullopt;
@@ -86,18 +61,9 @@ std::optional<std::size_t> navigationIndexValue(KiriView::RustNavigationIndex in
     return index.index;
 }
 
-KiriView::RustNavigationIndex rustNavigationIndex(std::optional<std::size_t> index)
+KiriView::RustNavigationIndex pageRustNavigationIndex(std::optional<std::size_t> index)
 {
     return KiriView::RustNavigationIndex { index.has_value(), index.value_or(0) };
-}
-
-template <typename Candidate>
-std::optional<std::size_t> adjacentCandidateIndex(const std::vector<Candidate> &candidates,
-    const QUrl &currentUrl, KiriView::NavigationDirection direction)
-{
-    return navigationIndexValue(KiriView::rustAdjacentNavigationCandidateIndex(candidates.size(),
-        rustNavigationIndex(currentCandidateIndex(candidates, currentUrl)),
-        rustNavigationDirection(direction)));
 }
 }
 
@@ -142,8 +108,8 @@ std::optional<QUrl> adjacentImageNavigationUrl(
     const std::vector<ImageNavigationCandidate> &candidates, const QUrl &currentUrl,
     NavigationDirection direction)
 {
-    const std::optional<std::size_t> targetIndex
-        = adjacentCandidateIndex(candidates, currentUrl, direction);
+    const std::optional<std::size_t> targetIndex = adjacentNavigationCandidateIndex(
+        candidates.size(), currentCandidateIndex(candidates, currentUrl), direction);
     if (!targetIndex.has_value()) {
         return std::nullopt;
     }
@@ -155,8 +121,8 @@ std::optional<ContainerNavigationCandidate> adjacentContainerNavigationCandidate
     const std::vector<ContainerNavigationCandidate> &candidates, const QUrl &currentContainerUrl,
     NavigationDirection direction)
 {
-    const std::optional<std::size_t> targetIndex
-        = adjacentCandidateIndex(candidates, currentContainerUrl, direction);
+    const std::optional<std::size_t> targetIndex = adjacentNavigationCandidateIndex(
+        candidates.size(), currentCandidateIndex(candidates, currentContainerUrl), direction);
     if (!targetIndex.has_value()) {
         return std::nullopt;
     }
@@ -200,14 +166,14 @@ std::optional<QUrl> pageNavigationUrlAtPage(const PageNavigationState &state, in
 std::optional<std::size_t> pageNavigationTargetIndex(
     const PageNavigationState &state, int pageNumber)
 {
-    return navigationIndexValue(
+    return pageNavigationIndexValue(
         rustPageNavigationTargetIndex(state.urls.size(), state.currentIndex, pageNumber));
 }
 
 std::optional<std::size_t> pageNavigationAdjacentTargetIndex(
     const PageNavigationState &state, NavigationDirection direction)
 {
-    return navigationIndexValue(rustPageNavigationAdjacentTargetIndex(
+    return pageNavigationIndexValue(rustPageNavigationAdjacentTargetIndex(
         state.urls.size(), state.currentIndex, rustNavigationDirection(direction)));
 }
 
@@ -215,7 +181,7 @@ PageNavigationState pageNavigationStateForCurrentUrl(
     const PageNavigationState &knownState, const QUrl &currentUrl)
 {
     const RustPageNavigationPreviewState preview = rustPageNavigationPreviewState(
-        rustNavigationIndex(currentUrlIndex(knownState.urls, currentUrl)),
+        pageRustNavigationIndex(currentUrlIndex(knownState.urls, currentUrl)),
         currentUrl.isValid() && !currentUrl.isEmpty(), knownState.urls.size());
 
     if (!preview.keep_known_urls) {
@@ -229,7 +195,7 @@ PageNavigationState pageNavigationStateForUrls(std::vector<QUrl> urls, const QUr
 {
     PageNavigationState state { std::move(urls), -1 };
     const RustPageNavigationUpdate update = rustPageNavigationStateUpdate(
-        rustNavigationIndex(currentUrlIndex(state.urls, currentUrl)),
+        pageRustNavigationIndex(currentUrlIndex(state.urls, currentUrl)),
         currentUrl.isValid() && !currentUrl.isEmpty(), state.urls.size());
     if (update.insert_current_url) {
         state.urls.insert(state.urls.begin(), normalizedImageUrl(currentUrl));
@@ -246,12 +212,12 @@ bool samePageNavigationState(const PageNavigationState &left, const PageNavigati
 
 void sortImageNavigationCandidates(std::vector<ImageNavigationCandidate> *candidates)
 {
-    sortNavigationCandidates(candidates);
+    sortNavigationCandidatesByNameAndUrl(candidates);
 }
 
 void sortContainerNavigationCandidates(std::vector<ContainerNavigationCandidate> *candidates)
 {
-    sortNavigationCandidates(candidates);
+    sortNavigationCandidatesByNameAndUrl(candidates);
 }
 
 }

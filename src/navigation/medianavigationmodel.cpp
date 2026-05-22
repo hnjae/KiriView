@@ -4,9 +4,9 @@
 #include "medianavigationmodel.h"
 
 #include "location/imageurl.h"
+#include "navigationcandidateordering.h"
+#include "navigationindexpolicy.h"
 
-#include <QCollator>
-#include <QLocale>
 #include <algorithm>
 #include <cstddef>
 #include <utility>
@@ -54,24 +54,13 @@ std::optional<QUrl> adjacentMediaNavigationUrl(
 {
     const std::optional<std::size_t> currentIndex
         = mediaNavigationCandidateIndex(candidates, currentUrl);
-    if (!currentIndex.has_value()) {
+    const std::optional<std::size_t> targetIndex
+        = adjacentNavigationCandidateIndex(candidates.size(), currentIndex, direction);
+    if (!targetIndex.has_value()) {
         return std::nullopt;
     }
 
-    switch (direction) {
-    case NavigationDirection::Previous:
-        if (*currentIndex == 0) {
-            return std::nullopt;
-        }
-        return candidates.at(*currentIndex - 1).url;
-    case NavigationDirection::Next:
-        if (*currentIndex + 1 >= candidates.size()) {
-            return std::nullopt;
-        }
-        return candidates.at(*currentIndex + 1).url;
-    }
-
-    return std::nullopt;
+    return candidates.at(*targetIndex).url;
 }
 
 MediaNavigationBoundaryState mediaNavigationBoundaryState(
@@ -115,25 +104,6 @@ MediaDeletionFallbackPlan mediaDeletionFallbackPlan(
 
 void sortMediaNavigationCandidates(std::vector<MediaNavigationCandidate> *candidates)
 {
-    QCollator collator(QLocale::system());
-    collator.setCaseSensitivity(Qt::CaseSensitive);
-    collator.setNumericMode(false);
-    collator.setIgnorePunctuation(false);
-
-    std::stable_sort(candidates->begin(), candidates->end(),
-        [&collator](const MediaNavigationCandidate &left, const MediaNavigationCandidate &right) {
-            const int nameComparison = collator.compare(left.name, right.name);
-            if (nameComparison != 0) {
-                return nameComparison < 0;
-            }
-
-            return left.url.toEncoded() < right.url.toEncoded();
-        });
-
-    const auto duplicateStart = std::unique(candidates->begin(), candidates->end(),
-        [](const MediaNavigationCandidate &left, const MediaNavigationCandidate &right) {
-            return sameNormalizedUrl(left.url, right.url);
-        });
-    candidates->erase(duplicateStart, candidates->end());
+    sortNavigationCandidatesByNameAndUrl(candidates);
 }
 }
