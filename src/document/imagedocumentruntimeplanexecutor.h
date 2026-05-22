@@ -56,7 +56,7 @@ struct ImageDocumentOpenRuntimeOperations {
     std::function<void()> clearPresentationImage;
     std::function<void(const QUrl &)> setSourceUrl;
     std::function<void(const QString &)> setErrorString;
-    std::function<ImageDocumentRuntimePlan()> finishEmptySourceLoad;
+    std::function<void()> finishEmptySourceLoad;
 };
 
 struct ImageDocumentSourceLoadRuntimeOperations {

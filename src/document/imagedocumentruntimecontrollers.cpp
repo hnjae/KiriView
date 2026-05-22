@@ -13,8 +13,6 @@
 #include "imagedocumentsourceloadrequest.h"
 #include "imagedocumentstate.h"
 #include "imageopencontroller.h"
-#include "imageopentransitionapplier.h"
-#include "imageopenworkflow.h"
 #include "localization/imageerrortext.h"
 #include "navigation/imagenavigationservice.h"
 #include "presentation/imagepresentationcontroller.h"
@@ -262,10 +260,7 @@ ImageDocumentRuntimeOperations ImageDocumentRuntimeControllers::runtimeOperation
     operations.sourceLoad.beginOpen = [this]() { m_openController->open(); };
     operations.open.setErrorString
         = [stateOwner](const QString &errorString) { stateOwner->setErrorString(errorString); };
-    operations.open.finishEmptySourceLoad = [stateOwner]() {
-        return applyImageOpenTransition(
-            *stateOwner, ImageOpenWorkflow::finishEmptySourceLoadTransition());
-    };
+    operations.open.finishEmptySourceLoad = [this]() { m_openController->finishEmptySourceLoad(); };
     return operations;
 }
 }

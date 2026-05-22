@@ -120,21 +120,8 @@ struct RecordedRuntimeOperations {
             errorString = message;
             record(QStringLiteral("setErrorString"));
         };
-        operations.open.finishEmptySourceLoad = [this]() {
-            record(QStringLiteral("finishEmptySourceLoad"));
-            return ImageDocumentRuntimePlan {
-                KiriView::ClearArchiveSessionOperation {},
-                KiriView::ClearPredecodeOperation {},
-                KiriView::FinishSpreadTransitionOperation {},
-                KiriView::ClearSecondaryPageOperation {},
-                KiriView::CancelPageNavigationUpdateOperation {},
-                KiriView::ClearDisplayedImageLocationOperation {},
-                KiriView::ClearPresentationImageOperation {},
-                KiriView::ClearPageNavigationOperation {},
-                KiriView::NotifyRightToLeftReadingChangedOperation {},
-                KiriView::ResetZoomOperation {},
-            };
-        };
+        operations.open.finishEmptySourceLoad
+            = [this]() { record(QStringLiteral("finishEmptySourceLoad")); };
     }
 
     void clear()
@@ -156,7 +143,7 @@ class TestImageDocumentRuntimePlanExecutor : public QObject
 
 private Q_SLOTS:
     void clearImageDispatchesOrderedRuntimeOperations();
-    void clearDeletedImageDispatchesDeletionClearThenGeneratedPlans();
+    void clearDeletedImageDispatchesDeletionClearThenOpenCompletion();
     void shutdownRuntimeDispatchesOrderedLifecycleOperations();
     void payloadRuntimePlansDispatchToOperations();
     void runtimePlansDispatchSourceLoadOperations();
@@ -185,7 +172,7 @@ void TestImageDocumentRuntimePlanExecutor::clearImageDispatchesOrderedRuntimeOpe
 }
 
 void TestImageDocumentRuntimePlanExecutor::
-    clearDeletedImageDispatchesDeletionClearThenGeneratedPlans()
+    clearDeletedImageDispatchesDeletionClearThenOpenCompletion()
 {
     RecordedRuntimeOperations recorded;
     KiriView::ImageDocumentRuntimePlanExecutor executor(recorded.operations);
@@ -203,16 +190,6 @@ void TestImageDocumentRuntimePlanExecutor::
             QStringLiteral("setSourceUrl"),
             QStringLiteral("setErrorString"),
             QStringLiteral("finishEmptySourceLoad"),
-            QStringLiteral("clearArchiveSession"),
-            QStringLiteral("clearPredecode"),
-            QStringLiteral("finishSpreadTransition"),
-            QStringLiteral("clearSecondaryPage"),
-            QStringLiteral("cancelPageNavigationUpdate"),
-            QStringLiteral("clearDisplayedImageLocation"),
-            QStringLiteral("clearPresentationImage"),
-            QStringLiteral("clearPageNavigation"),
-            QStringLiteral("notifyRightToLeftReadingChanged"),
-            QStringLiteral("resetZoom"),
         }));
     QVERIFY(recorded.url.isEmpty());
     QVERIFY(recorded.errorString.isEmpty());
@@ -437,16 +414,6 @@ void TestImageDocumentRuntimePlanExecutor::runtimePlansDispatchEveryOperationExp
             QStringLiteral("beginOpen"),
             QStringLiteral("setErrorString"),
             QStringLiteral("finishEmptySourceLoad"),
-            QStringLiteral("clearArchiveSession"),
-            QStringLiteral("clearPredecode"),
-            QStringLiteral("finishSpreadTransition"),
-            QStringLiteral("clearSecondaryPage"),
-            QStringLiteral("cancelPageNavigationUpdate"),
-            QStringLiteral("clearDisplayedImageLocation"),
-            QStringLiteral("clearPresentationImage"),
-            QStringLiteral("clearPageNavigation"),
-            QStringLiteral("notifyRightToLeftReadingChanged"),
-            QStringLiteral("resetZoom"),
         }));
 }
 

@@ -43,13 +43,13 @@ public:
 
     void open();
     void cancel();
+    void finishEmptySourceLoad();
     void finishAnimationLoadWithError(const QString &errorString);
     void finishContainerNavigationWithEmptyContainer(const QUrl &containerUrl);
     void finishContainerNavigationLoadWithError(
         const QUrl &containerUrl, const QString &errorString);
 
 private:
-    void finishEmptySourceLoad();
     void beginSourceLoad();
     void setSourceUrlFromResolvedLoad(const QUrl &sourceUrl);
     void finishPredecodedImageLoad(ImageLoadSession session, PredecodedImage image);

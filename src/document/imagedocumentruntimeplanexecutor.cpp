@@ -18,11 +18,6 @@ namespace {
         }
     }
 
-    ImageDocumentRuntimePlan generatedRuntimePlan(
-        const std::function<ImageDocumentRuntimePlan()> &operation)
-    {
-        return operation ? operation() : ImageDocumentRuntimePlan {};
-    }
 }
 
 ImageDocumentRuntimePlanExecutor::ImageDocumentRuntimePlanExecutor(
@@ -127,7 +122,7 @@ void ImageDocumentRuntimePlanExecutor::dispatchOperation(
             } else if constexpr (std::is_same_v<Operation, SetErrorStringOperation>) {
                 run(m_operations.open.setErrorString, payload.errorString);
             } else if constexpr (std::is_same_v<Operation, FinishEmptySourceLoadOperation>) {
-                dispatchPlan(generatedRuntimePlan(m_operations.open.finishEmptySourceLoad));
+                run(m_operations.open.finishEmptySourceLoad);
             } else {
                 static_assert(alwaysFalse<Operation>, "Unhandled image document runtime operation");
             }
