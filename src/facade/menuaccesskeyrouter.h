@@ -4,15 +4,12 @@
 #ifndef KIRIVIEW_MENUACCESSKEYROUTER_H
 #define KIRIVIEW_MENUACCESSKEYROUTER_H
 
-#include "application/menuaccesskeymenuruntime.h"
-#include "application/menuaccesskeysessionstate.h"
+#include "application/menuaccesskeyrouterruntime.h"
 
-#include <QMetaObject>
 #include <QObject>
 #include <QtQml/qqmlregistration.h>
 
 class QEvent;
-class QKeyEvent;
 
 // Qt Quick Controls does not give KiriView's toolbar popup menu and menubar the
 // same post-open access-key behavior out of the box. This shim keeps that
@@ -46,21 +43,7 @@ private Q_SLOTS:
     void clearMenuAccessKeys();
 
 private:
-    bool handleKeyPress(QKeyEvent *event);
-    bool handleKeyRelease(QKeyEvent *event);
-    bool handleShortcutOverride(QKeyEvent *event);
-    bool routeOpenMenuKey(QKeyEvent *event, KiriView::MenuAccessKeyRoutingPhase phase);
-    KiriView::MenuAccessKeyInputKind inputKind(const QKeyEvent &event) const;
-    QObject *openMenuOrClearAccessKeys();
-    void applySessionTransition(KiriView::MenuAccessKeySessionTransition transition);
-    bool executeRoutePlan(QKeyEvent *event, KiriView::MenuAccessKeyRoutePlan plan);
-    void clearAccessKeySessionVisuals();
-    void resetAltTracking();
-
-    KiriView::MenuAccessKeyMenuRuntime m_menuRuntime;
-    QMetaObject::Connection m_menuClosedConnection;
-    KiriView::MenuAccessKeySessionState m_accessKeySession;
-    bool m_enabled = true;
+    KiriView::MenuAccessKeyRouterRuntime m_runtime;
 };
 
 #endif
