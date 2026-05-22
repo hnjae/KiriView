@@ -18,7 +18,7 @@ qsizetype PredecodeCache::preferredByteBudget() { return predecodePreferredByteB
 
 qsizetype PredecodeCache::defaultByteBudget()
 {
-    return byteBudgetForSystemMemory(physicalSystemMemoryByteSize().value_or(0));
+    return byteBudgetForSystemMemory(systemMemorySnapshot().physicalByteSize);
 }
 
 qsizetype PredecodeCache::byteBudgetForSystemMemory(qsizetype systemMemoryByteSize)

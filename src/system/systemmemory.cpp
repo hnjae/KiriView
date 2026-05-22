@@ -5,7 +5,9 @@
 
 #include "cache/imagebyteaccounting.h"
 
+#include <algorithm>
 #include <cstdint>
+#include <utility>
 
 #if defined(Q_OS_LINUX)
 #include <unistd.h>
@@ -25,5 +27,31 @@ std::optional<qsizetype> physicalSystemMemoryByteSize()
 #else
     return std::nullopt;
 #endif
+}
+
+SystemMemoryRuntime defaultSystemMemoryRuntime()
+{
+    return SystemMemoryRuntime {
+        physicalSystemMemoryByteSize,
+    };
+}
+
+SystemMemoryRuntime systemMemoryRuntimeWithDefaults(SystemMemoryRuntime runtime)
+{
+    SystemMemoryRuntime defaults = defaultSystemMemoryRuntime();
+    if (!runtime.readPhysicalSystemMemory) {
+        runtime.readPhysicalSystemMemory = std::move(defaults.readPhysicalSystemMemory);
+    }
+
+    return runtime;
+}
+
+SystemMemorySnapshot systemMemorySnapshot(SystemMemoryRuntime runtime)
+{
+    runtime = systemMemoryRuntimeWithDefaults(std::move(runtime));
+    const std::optional<qsizetype> physicalByteSize = runtime.readPhysicalSystemMemory();
+    return SystemMemorySnapshot {
+        std::max<qsizetype>(0, physicalByteSize.value_or(0)),
+    };
 }
 }

@@ -64,7 +64,7 @@ qsizetype StaticTileSurface::tileCacheByteBudget() const { return m_tileCache.by
 
 qsizetype StaticTileSurface::defaultTileCacheByteBudget()
 {
-    return tileCacheByteBudgetForSystemMemory(physicalSystemMemoryByteSize().value_or(0));
+    return tileCacheByteBudgetForSystemMemory(systemMemorySnapshot().physicalByteSize);
 }
 
 qsizetype StaticTileSurface::tileCacheByteBudgetForSystemMemory(qsizetype systemMemoryByteSize)
