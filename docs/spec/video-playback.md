@@ -14,7 +14,9 @@ Direct KDE archive-entry URLs are not KiriView archive document mode. KiriView m
 
 The product boundary is based on KiriView's document-mode state, not on URL scheme alone. If KiriView has opened an archive or directory as a document, video entries inside that document are out of scope. If KiriView is handling a direct media URL without an active archive or directory document context, that URL remains eligible for video support even when its scheme is a KDE archive scheme.
 
-Video files do not participate in KiriView archive document navigation, comic book archive document handling, directly opened directory documents, predecode, image cache, editable image zoom, image pan, image rotate, two-page spread, or Right-to-Left Reading.
+Video files do not participate in KiriView archive document navigation, comic book archive document handling, directly opened directory documents, video-frame predecode, video-frame image cache, editable image zoom, image pan, image rotate, two-page spread, or Right-to-Left Reading.
+
+In ordinary direct media URL scopes, showing a video must not clear or stop the background predecode/cache lifecycle for nearby supported image files. KiriView may keep and continue predecoding adjacent still images around the current video cursor, but it must not attempt to predecode the video itself.
 
 Archive-document-internal video, directly opened directory-document video, recursive directory video, playlists, subtitles, track selection, metadata panels, frame stepping, and timeline preview thumbnails are out of scope.
 

@@ -136,6 +136,8 @@ In Right-to-Left Reading mode, scan order starts at the top-right and proceeds t
 
 After an image is displayed, KiriView may make adjacent images available for quicker Previous or Next navigation, so the switch can happen without showing a full-page loading state.
 
+In an ordinary direct media URL scope, direct videos act as navigation positions for this background image loading even though video frames are not predecoded. While a direct video is current, KiriView may continue making nearby supported image files available for quick Previous or Next navigation.
+
 This background work must not change what is displayed until the user opens an adjacent image.
 
 When Two-Page Spread shows two pages, both the current primary page and the visible secondary page are treated as displayed images for this background work.

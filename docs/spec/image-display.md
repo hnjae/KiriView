@@ -40,6 +40,8 @@ Newly visible areas may briefly show lower detail until sharper data is ready, b
 
 When adjacent images are already available, Previous and Next navigation can replace the view immediately.
 
+When ordinary direct media navigation moves from an image to a video and then back to a nearby image, previously prepared still-image data may remain available so returning to that image can avoid a full-page loading state. Direct videos themselves are not decoded into this still-image cache.
+
 If a static image exceeds the supported decode or display size, KiriView reports a decode error without replacing the currently displayed image.
 
 HEIF-family still images, including AVIF still images, are supported when the still image is encoded with AV1, HEVC, AVC/H.264, JPEG, JPEG 2000, or VVC/H.266.
