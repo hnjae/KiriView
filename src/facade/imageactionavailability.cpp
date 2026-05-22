@@ -3,70 +3,12 @@
 
 #include "imageactionavailability.h"
 
-#include "kiriview/src/policy/imageactionavailability.cxx.h"
-
 namespace {
-KiriView::RustImageActionAvailabilityInput rustImageActionAvailabilityInput(
-    const ImageActionAvailabilityInput &input)
+KiriView::ApplicationActions::ImageShortcutScope applicationShortcutScope(
+    ImageActionAvailability::ShortcutScope scope)
 {
-    return KiriView::RustImageActionAvailabilityInput {
-        input.imageReady,
-        input.imageCount,
-        input.currentPageNumber,
-        input.currentLastPageNumber,
-        input.fileDeletionInProgress,
-        input.helpDialogOpen,
-        input.textInputFocused,
-        input.imagePannable,
-        input.containerNavigationAvailable,
-        input.twoPageModeEnabled,
-        input.twoPageModeAvailable,
-        input.rightToLeftReadingEnabled,
-        input.rightToLeftReadingAvailable,
-    };
+    return static_cast<KiriView::ApplicationActions::ImageShortcutScope>(scope);
 }
-
-ImageActionAvailabilityProjection imageActionAvailabilityProjection(
-    const KiriView::RustImageActionAvailabilityProjection &projection)
-{
-    return ImageActionAvailabilityProjection {
-        projection.can_open_next_image,
-        projection.can_open_previous_image,
-        projection.at_known_first_image,
-        projection.at_known_last_image,
-        projection.can_use_page_actions,
-        projection.can_use_ready_actions,
-        projection.can_use_rotate_actions,
-        projection.can_use_two_page_mode_actions,
-        projection.can_use_right_to_left_reading_actions,
-        projection.right_to_left_reading_active,
-        projection.two_page_mode_active,
-        projection.help_shortcuts_enabled,
-        projection.viewer_shortcuts_enabled,
-        projection.ready_shortcuts_enabled,
-        projection.ready_viewer_shortcuts_enabled,
-        projection.image_selection_shortcuts_enabled,
-        projection.image_selection_viewer_shortcuts_enabled,
-        projection.page_shortcuts_enabled,
-        projection.page_viewer_shortcuts_enabled,
-        projection.two_page_viewer_shortcuts_enabled,
-        projection.right_to_left_reading_shortcuts_enabled,
-        projection.right_to_left_reading_viewer_shortcuts_enabled,
-        projection.rotate_shortcuts_enabled,
-        projection.rotate_viewer_shortcuts_enabled,
-        projection.pannable_shortcuts_enabled,
-        projection.pannable_viewer_shortcuts_enabled,
-        projection.container_shortcuts_enabled,
-        projection.container_viewer_shortcuts_enabled,
-    };
-}
-}
-
-ImageActionAvailabilityProjection imageActionAvailabilityProjection(
-    const ImageActionAvailabilityInput &input)
-{
-    return imageActionAvailabilityProjection(
-        KiriView::rustImageActionAvailabilityProjection(rustImageActionAvailabilityInput(input)));
 }
 
 ImageActionAvailability::ImageActionAvailability(QObject *parent)
@@ -315,42 +257,8 @@ int ImageActionAvailability::availabilityRevision() const { return m_availabilit
 bool ImageActionAvailability::shortcutsEnabledForScope(
     ImageActionAvailability::ShortcutScope scope) const
 {
-    switch (scope) {
-    case HelpShortcutScope:
-        return m_projection.helpShortcutsEnabled;
-    case ViewerShortcutScope:
-        return m_projection.viewerShortcutsEnabled;
-    case ReadyShortcutScope:
-        return m_projection.readyShortcutsEnabled;
-    case ReadyViewerShortcutScope:
-        return m_projection.readyViewerShortcutsEnabled;
-    case ImageSelectionShortcutScope:
-        return m_projection.imageSelectionShortcutsEnabled;
-    case ImageSelectionViewerShortcutScope:
-        return m_projection.imageSelectionViewerShortcutsEnabled;
-    case PageShortcutScope:
-        return m_projection.pageShortcutsEnabled;
-    case PageViewerShortcutScope:
-        return m_projection.pageViewerShortcutsEnabled;
-    case RightToLeftReadingShortcutScope:
-        return m_projection.rightToLeftReadingShortcutsEnabled;
-    case RightToLeftReadingViewerShortcutScope:
-        return m_projection.rightToLeftReadingViewerShortcutsEnabled;
-    case RotateShortcutScope:
-        return m_projection.rotateShortcutsEnabled;
-    case RotateViewerShortcutScope:
-        return m_projection.rotateViewerShortcutsEnabled;
-    case PannableShortcutScope:
-        return m_projection.pannableShortcutsEnabled;
-    case PannableViewerShortcutScope:
-        return m_projection.pannableViewerShortcutsEnabled;
-    case ContainerShortcutScope:
-        return m_projection.containerShortcutsEnabled;
-    case ContainerViewerShortcutScope:
-        return m_projection.containerViewerShortcutsEnabled;
-    }
-
-    return false;
+    return imageActionAvailabilityShortcutsEnabledForScope(
+        m_projection, applicationShortcutScope(scope));
 }
 
 void ImageActionAvailability::setBool(bool &target, bool value)

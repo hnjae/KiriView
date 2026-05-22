@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "application/imageactionavailability.h"
+#include "facade/imageactionavailability.h"
 #include "facade/kiriimagedocument.h"
 #include "facade/kiriviewapplication.h"
 #include "kiriviewstate.h"

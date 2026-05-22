@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "application/imageactionavailability.h"
+#include "facade/imageactionavailability.h"
 
 #include <QObject>
 #include <QSignalSpy>
@@ -17,6 +17,7 @@ private Q_SLOTS:
     void imageNavigationStateDrivesActionAvailability();
     void readyActionAvailabilityRejectsCompetingModes();
     void shortcutAvailabilityUsesViewerAndRuntimeGates();
+    void policyScopeLookupUsesApplicationScope();
     void shortcutScopeLookupUsesProjectionFields();
     void settersNotifyOnlyWhenInputsChange();
 };
@@ -205,6 +206,24 @@ void TestImageActionAvailability::shortcutAvailabilityUsesViewerAndRuntimeGates(
     QVERIFY(!availability.imageSelectionShortcutsEnabled());
     QVERIFY(!availability.pannableShortcutsEnabled());
     QVERIFY(!availability.containerShortcutsEnabled());
+}
+
+void TestImageActionAvailability::policyScopeLookupUsesApplicationScope()
+{
+    using Scope = KiriView::ApplicationActions::ImageShortcutScope;
+
+    ImageActionAvailabilityProjection projection;
+    projection.helpShortcutsEnabled = true;
+    projection.readyViewerShortcutsEnabled = true;
+    projection.containerShortcutsEnabled = true;
+
+    QVERIFY(imageActionAvailabilityShortcutsEnabledForScope(projection, Scope::HelpShortcutScope));
+    QVERIFY(imageActionAvailabilityShortcutsEnabledForScope(
+        projection, Scope::ReadyViewerShortcutScope));
+    QVERIFY(
+        imageActionAvailabilityShortcutsEnabledForScope(projection, Scope::ContainerShortcutScope));
+    QVERIFY(
+        !imageActionAvailabilityShortcutsEnabledForScope(projection, Scope::ViewerShortcutScope));
 }
 
 void TestImageActionAvailability::shortcutScopeLookupUsesProjectionFields()

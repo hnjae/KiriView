@@ -10,7 +10,7 @@ namespace {
 using Route = KiriView::ApplicationActions::ApplicationShortcutRoute;
 using Filter = KiriView::ApplicationActions::ApplicationShortcutFilter;
 using ActionId = KiriViewApplication::ActionId;
-using Scope = ImageActionAvailability::ShortcutScope;
+using Scope = KiriView::ApplicationActions::ImageShortcutScope;
 
 bool shortcutHasCommandModifier(const QKeySequence &shortcut)
 {

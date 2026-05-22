@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_APPLICATIONSHORTCUTPOLICY_H
 #define KIRIVIEW_APPLICATIONSHORTCUTPOLICY_H
 
-#include "application/imageactionavailability.h"
+#include "application/imageactionavailabilitypolicy.h"
 #include "facade/kiriviewapplication.h"
 
 #include <QKeySequence>
@@ -23,8 +23,7 @@ enum class ApplicationShortcutFilter {
 struct ApplicationShortcutRoute {
     QList<KiriViewApplication::ActionId> actionIds;
     ApplicationShortcutFilter shortcutFilter = ApplicationShortcutFilter::AllShortcuts;
-    ImageActionAvailability::ShortcutScope shortcutScope
-        = ImageActionAvailability::HelpShortcutScope;
+    ImageShortcutScope shortcutScope = ImageShortcutScope::HelpShortcutScope;
 };
 
 struct ApplicationShortcutProjection {

@@ -10,7 +10,7 @@
 namespace {
 using ActionId = KiriViewApplication::ActionId;
 using Filter = KiriView::ApplicationActions::ApplicationShortcutFilter;
-using Scope = ImageActionAvailability::ShortcutScope;
+using Scope = KiriView::ApplicationActions::ImageShortcutScope;
 
 QKeySequence shortcut(const QString &sequence)
 {
