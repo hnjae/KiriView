@@ -61,6 +61,8 @@ Q_SIGNALS:
 
 private:
     KiriView::DisplayedPageRole displayedPageRole() const;
+    KiriView::ImageViewRenderContextBindingInput renderContextBindingInput(
+        bool documentAttached) const;
     KiriView::ImageViewportInteractionSnapshot viewportInteractionSnapshot() const;
     KiriView::DisplayedImageRenderSnapshot renderSnapshot() const;
     QSizeF viewportSize() const;
@@ -68,6 +70,7 @@ private:
     bool rightToLeftReadingActive() const;
     void connectDocument();
     void disconnectDocument();
+    void synchronizeRenderContextBinding(KiriImageDocument *document, bool documentAttached);
     void applyRenderContextBinding(
         KiriView::ImageViewRenderContextBindingAction action, KiriImageDocument *document);
     void handleDisplayedUrlChanged();
@@ -78,6 +81,7 @@ private:
 
     KiriImageDocument *m_document = nullptr;
     bool m_secondaryPage = false;
+    bool m_componentComplete = true;
     QMetaObject::Connection m_repaintConnection;
     QMetaObject::Connection m_displayedUrlChangedConnection;
     QMetaObject::Connection m_loadingChangedConnection;

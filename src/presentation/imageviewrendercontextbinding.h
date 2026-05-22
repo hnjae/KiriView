@@ -11,22 +11,22 @@ enum class ImageViewRenderContextBindingAction {
     ClearProvider,
 };
 
+struct ImageViewRenderContextBindingInput {
+    bool documentAttached = false;
+    bool secondaryPage = false;
+    bool componentComplete = true;
+};
+
 class ImageViewRenderContextBinding final
 {
 public:
-    ImageViewRenderContextBindingAction setDocumentAttached(bool attached);
-    ImageViewRenderContextBindingAction setSecondaryPage(bool secondaryPage);
-    ImageViewRenderContextBindingAction setComponentComplete(bool complete);
-    ImageViewRenderContextBindingAction reset();
+    ImageViewRenderContextBindingAction synchronize(
+        const ImageViewRenderContextBindingInput &input);
     bool providerInstalled() const;
 
 private:
-    bool shouldInstallProvider() const;
-    ImageViewRenderContextBindingAction synchronizeProvider();
+    static bool shouldInstallProvider(const ImageViewRenderContextBindingInput &input);
 
-    bool m_documentAttached = false;
-    bool m_secondaryPage = false;
-    bool m_componentComplete = true;
     bool m_providerInstalled = false;
 };
 }

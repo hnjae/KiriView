@@ -15,46 +15,63 @@ private Q_SLOTS:
     void secondaryViewDoesNotInstallProvider();
     void changingPageRoleTransfersProviderOwnership();
     void componentDeferralDelaysProviderOwnership();
+    void secondaryViewStaysSecondaryAcrossDocumentSwitch();
 };
+
+namespace {
+KiriView::ImageViewRenderContextBindingInput bindingInput(
+    bool documentAttached, bool secondaryPage = false, bool componentComplete = true)
+{
+    return KiriView::ImageViewRenderContextBindingInput {
+        documentAttached,
+        secondaryPage,
+        componentComplete,
+    };
+}
+}
 
 void TestImageViewRenderContextBinding::primaryViewInstallsAndClearsProvider()
 {
     KiriView::ImageViewRenderContextBinding binding;
 
-    QCOMPARE(binding.setDocumentAttached(true),
+    QCOMPARE(binding.synchronize(bindingInput(true)),
         KiriView::ImageViewRenderContextBindingAction::InstallProvider);
     QVERIFY(binding.providerInstalled());
-    QCOMPARE(
-        binding.setDocumentAttached(true), KiriView::ImageViewRenderContextBindingAction::None);
+    QCOMPARE(binding.synchronize(bindingInput(true)),
+        KiriView::ImageViewRenderContextBindingAction::None);
 
-    QCOMPARE(binding.reset(), KiriView::ImageViewRenderContextBindingAction::ClearProvider);
+    QCOMPARE(binding.synchronize(bindingInput(false)),
+        KiriView::ImageViewRenderContextBindingAction::ClearProvider);
     QVERIFY(!binding.providerInstalled());
-    QCOMPARE(binding.reset(), KiriView::ImageViewRenderContextBindingAction::None);
+    QCOMPARE(binding.synchronize(bindingInput(false)),
+        KiriView::ImageViewRenderContextBindingAction::None);
 }
 
 void TestImageViewRenderContextBinding::secondaryViewDoesNotInstallProvider()
 {
     KiriView::ImageViewRenderContextBinding binding;
 
-    QCOMPARE(binding.setSecondaryPage(true), KiriView::ImageViewRenderContextBindingAction::None);
-    QCOMPARE(
-        binding.setDocumentAttached(true), KiriView::ImageViewRenderContextBindingAction::None);
+    QCOMPARE(binding.synchronize(bindingInput(false, true)),
+        KiriView::ImageViewRenderContextBindingAction::None);
+    QCOMPARE(binding.synchronize(bindingInput(true, true)),
+        KiriView::ImageViewRenderContextBindingAction::None);
     QVERIFY(!binding.providerInstalled());
 
-    QCOMPARE(binding.reset(), KiriView::ImageViewRenderContextBindingAction::None);
+    QCOMPARE(binding.synchronize(bindingInput(false, true)),
+        KiriView::ImageViewRenderContextBindingAction::None);
 }
 
 void TestImageViewRenderContextBinding::changingPageRoleTransfersProviderOwnership()
 {
     KiriView::ImageViewRenderContextBinding binding;
 
-    QCOMPARE(binding.setDocumentAttached(true),
+    QCOMPARE(binding.synchronize(bindingInput(true)),
         KiriView::ImageViewRenderContextBindingAction::InstallProvider);
-    QCOMPARE(binding.setSecondaryPage(true),
+    QCOMPARE(binding.synchronize(bindingInput(true, true)),
         KiriView::ImageViewRenderContextBindingAction::ClearProvider);
     QVERIFY(!binding.providerInstalled());
 
-    QCOMPARE(binding.setSecondaryPage(false),
+    QCOMPARE(binding.synchronize(bindingInput(true, false)),
         KiriView::ImageViewRenderContextBindingAction::InstallProvider);
     QVERIFY(binding.providerInstalled());
 }
@@ -63,22 +80,38 @@ void TestImageViewRenderContextBinding::componentDeferralDelaysProviderOwnership
 {
     KiriView::ImageViewRenderContextBinding binding;
 
-    QCOMPARE(
-        binding.setComponentComplete(false), KiriView::ImageViewRenderContextBindingAction::None);
-    QCOMPARE(
-        binding.setDocumentAttached(true), KiriView::ImageViewRenderContextBindingAction::None);
+    QCOMPARE(binding.synchronize(bindingInput(false, false, false)),
+        KiriView::ImageViewRenderContextBindingAction::None);
+    QCOMPARE(binding.synchronize(bindingInput(true, false, false)),
+        KiriView::ImageViewRenderContextBindingAction::None);
     QVERIFY(!binding.providerInstalled());
 
-    QCOMPARE(binding.setComponentComplete(true),
+    QCOMPARE(binding.synchronize(bindingInput(true, false, true)),
         KiriView::ImageViewRenderContextBindingAction::InstallProvider);
     QVERIFY(binding.providerInstalled());
 
-    QCOMPARE(binding.setComponentComplete(false),
+    QCOMPARE(binding.synchronize(bindingInput(true, false, false)),
         KiriView::ImageViewRenderContextBindingAction::ClearProvider);
     QVERIFY(!binding.providerInstalled());
-    QCOMPARE(binding.reset(), KiriView::ImageViewRenderContextBindingAction::None);
-    QCOMPARE(
-        binding.setDocumentAttached(true), KiriView::ImageViewRenderContextBindingAction::None);
+    QCOMPARE(binding.synchronize(bindingInput(false, false, false)),
+        KiriView::ImageViewRenderContextBindingAction::None);
+    QCOMPARE(binding.synchronize(bindingInput(true, false, false)),
+        KiriView::ImageViewRenderContextBindingAction::None);
+}
+
+void TestImageViewRenderContextBinding::secondaryViewStaysSecondaryAcrossDocumentSwitch()
+{
+    KiriView::ImageViewRenderContextBinding binding;
+
+    QCOMPARE(binding.synchronize(bindingInput(true, true)),
+        KiriView::ImageViewRenderContextBindingAction::None);
+    QVERIFY(!binding.providerInstalled());
+
+    QCOMPARE(binding.synchronize(bindingInput(false, true)),
+        KiriView::ImageViewRenderContextBindingAction::None);
+    QCOMPARE(binding.synchronize(bindingInput(true, true)),
+        KiriView::ImageViewRenderContextBindingAction::None);
+    QVERIFY(!binding.providerInstalled());
 }
 
 QTEST_GUILESS_MAIN(TestImageViewRenderContextBinding)

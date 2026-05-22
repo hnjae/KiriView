@@ -44,7 +44,7 @@ void KiriImageView::setSecondaryPage(bool secondaryPage)
     }
 
     m_secondaryPage = secondaryPage;
-    applyRenderContextBinding(m_renderContextBinding.setSecondaryPage(secondaryPage), m_document);
+    synchronizeRenderContextBinding(m_document, m_document != nullptr);
     Q_EMIT secondaryPageChanged();
     update();
 }
@@ -148,19 +148,31 @@ void KiriImageView::itemChange(ItemChange change, const ItemChangeData &value)
 void KiriImageView::classBegin()
 {
     QQuickItem::classBegin();
-    applyRenderContextBinding(m_renderContextBinding.setComponentComplete(false), m_document);
+    m_componentComplete = false;
+    synchronizeRenderContextBinding(m_document, m_document != nullptr);
 }
 
 void KiriImageView::componentComplete()
 {
     QQuickItem::componentComplete();
-    applyRenderContextBinding(m_renderContextBinding.setComponentComplete(true), m_document);
+    m_componentComplete = true;
+    synchronizeRenderContextBinding(m_document, m_document != nullptr);
 }
 
 KiriView::DisplayedPageRole KiriImageView::displayedPageRole() const
 {
     return m_secondaryPage ? KiriView::DisplayedPageRole::Secondary
                            : KiriView::DisplayedPageRole::Primary;
+}
+
+KiriView::ImageViewRenderContextBindingInput KiriImageView::renderContextBindingInput(
+    bool documentAttached) const
+{
+    return KiriView::ImageViewRenderContextBindingInput {
+        documentAttached,
+        m_secondaryPage,
+        m_componentComplete,
+    };
 }
 
 KiriView::ImageViewportInteractionSnapshot KiriImageView::viewportInteractionSnapshot() const
@@ -213,15 +225,15 @@ void KiriImageView::connectDocument()
         m_document, &KiriImageDocument::loadingChanged, this, &KiriImageView::handleLoadingChanged);
     m_documentDestroyedConnection = connect(m_document, &QObject::destroyed, this, [this]() {
         m_document = nullptr;
-        m_renderContextBinding.reset();
         m_repaintConnection = {};
         m_displayedUrlChangedConnection = {};
         m_loadingChangedConnection = {};
         m_documentDestroyedConnection = {};
+        m_renderContextBinding.synchronize(renderContextBindingInput(false));
         Q_EMIT documentChanged();
         update();
     });
-    applyRenderContextBinding(m_renderContextBinding.setDocumentAttached(true), m_document);
+    synchronizeRenderContextBinding(m_document, true);
 }
 
 void KiriImageView::disconnectDocument()
@@ -236,7 +248,14 @@ void KiriImageView::disconnectDocument()
     m_displayedUrlChangedConnection = {};
     m_loadingChangedConnection = {};
     m_documentDestroyedConnection = {};
-    applyRenderContextBinding(m_renderContextBinding.reset(), document);
+    synchronizeRenderContextBinding(document, false);
+}
+
+void KiriImageView::synchronizeRenderContextBinding(
+    KiriImageDocument *document, bool documentAttached)
+{
+    applyRenderContextBinding(
+        m_renderContextBinding.synchronize(renderContextBindingInput(documentAttached)), document);
 }
 
 void KiriImageView::applyRenderContextBinding(
