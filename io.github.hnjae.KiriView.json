@@ -42,6 +42,7 @@
     "--filesystem=/media",
     "--filesystem=/mnt",
     "--filesystem=/run/media",
+    "--filesystem=xdg-run/pipewire-0",
     "--filesystem=xdg-run/gvfs",
     "--talk-name=org.freedesktop.portal.Desktop",
     "--env=LIBHEIF_PLUGIN_PATH=/app/lib/libheif"
