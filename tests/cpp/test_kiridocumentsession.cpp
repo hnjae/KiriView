@@ -14,6 +14,7 @@
 #include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QTest>
+#include <cstddef>
 #include <map>
 #include <memory>
 #include <utility>
@@ -61,12 +62,70 @@ private:
     std::map<QString, std::vector<KiriView::MediaNavigationCandidate>> m_candidates;
 };
 
-std::unique_ptr<KiriDocumentSession> createSession(FakeMediaCandidateProvider &mediaProvider,
+struct ManualMediaCandidateLoad {
+    QObject *object = nullptr;
+    QUrl parentUrl;
+    KiriView::MediaCandidatesCallback callback;
+    KiriView::ErrorCallback errorCallback;
+    KiriView::ImageIoJobCompletion completion;
+    bool canceled = false;
+};
+
+class ManualMediaCandidateProvider
+{
+public:
+    KiriView::MediaNavigationCandidateProvider provider()
+    {
+        return KiriView::MediaNavigationCandidateProvider {
+            [this](QObject *receiver, QUrl parentUrl, KiriView::MediaCandidatesCallback callback,
+                KiriView::ErrorCallback errorCallback) {
+                auto load = std::make_shared<ManualMediaCandidateLoad>();
+                load->parentUrl = std::move(parentUrl);
+                load->callback = std::move(callback);
+                load->errorCallback = std::move(errorCallback);
+
+                KiriView::ImageIoJob job
+                    = KiriView::TestSupport::Detail::startManualIoJob(receiver, load);
+                m_loads.push_back(load);
+                return job;
+            },
+        };
+    }
+
+    std::size_t loadCount() const { return m_loads.size(); }
+
+    ManualMediaCandidateLoad &loadAt(std::size_t index) { return *m_loads.at(index); }
+
+    void finishLoad(std::size_t index, std::vector<KiriView::MediaNavigationCandidate> candidates)
+    {
+        KiriView::TestSupport::Detail::finishManualIoJob(m_loads.at(index),
+            [candidates = std::move(candidates)](ManualMediaCandidateLoad &load) mutable {
+                if (load.callback) {
+                    load.callback(std::move(candidates));
+                }
+            });
+    }
+
+    void deliverIgnoringCancellation(
+        std::size_t index, std::vector<KiriView::MediaNavigationCandidate> candidates)
+    {
+        ManualMediaCandidateLoad &load = loadAt(index);
+        if (load.callback) {
+            load.callback(std::move(candidates));
+        }
+    }
+
+private:
+    std::vector<std::shared_ptr<ManualMediaCandidateLoad>> m_loads;
+};
+
+std::unique_ptr<KiriDocumentSession> createSessionWithProvider(
+    KiriView::MediaNavigationCandidateProvider mediaCandidateProvider,
     KiriView::TestSupport::ManualFileOperationProvider *fileOperations = nullptr,
     KiriView::TestSupport::ManualImageDataLoader *imageDataLoader = nullptr)
 {
     KiriView::DocumentSessionRuntimeDependencies dependencies;
-    dependencies.mediaCandidateProvider = mediaProvider.provider();
+    dependencies.mediaCandidateProvider = std::move(mediaCandidateProvider);
     if (fileOperations != nullptr) {
         dependencies.fileOperationProvider
             = KiriView::TestSupport::fileOperationProviderFor(*fileOperations);
@@ -79,6 +138,13 @@ std::unique_ptr<KiriDocumentSession> createSession(FakeMediaCandidateProvider &m
                 *imageDataLoader, KiriView::TestSupport::staticImageDataDecoder());
     }
     return std::make_unique<KiriDocumentSession>(std::move(dependencies));
+}
+
+std::unique_ptr<KiriDocumentSession> createSession(FakeMediaCandidateProvider &mediaProvider,
+    KiriView::TestSupport::ManualFileOperationProvider *fileOperations = nullptr,
+    KiriView::TestSupport::ManualImageDataLoader *imageDataLoader = nullptr)
+{
+    return createSessionWithProvider(mediaProvider.provider(), fileOperations, imageDataLoader);
 }
 }
 
@@ -93,6 +159,7 @@ private Q_SLOTS:
     void directImageMediaNavigationIncludesSiblingVideos();
     void videoNavigationKeepsStillImagePredecodeCache();
     void videoMediaNavigationExposesCurrentNumberAndCount();
+    void staleMediaCandidateCompletionCannotPublishForNewSource();
     void nextMediaFromVideoCanRouteToImageWithoutUsingImageNavigation();
     void nonMediaImageDeletionProgressIsMirroredThroughSessionState();
     void directImageDeletionCanOpenVideoFallback();
@@ -255,6 +322,38 @@ void TestKiriDocumentSession::videoMediaNavigationExposesCurrentNumberAndCount()
     QCOMPARE(session->sourceUrl(), imageUrl);
     QCOMPARE(session->imageDocument()->sourceUrl(), imageUrl);
     QCOMPARE(session->videoDocument()->sourceUrl(), QUrl());
+}
+
+void TestKiriDocumentSession::staleMediaCandidateCompletionCannotPublishForNewSource()
+{
+    ManualMediaCandidateProvider mediaProvider;
+    std::unique_ptr<KiriDocumentSession> session
+        = createSessionWithProvider(mediaProvider.provider());
+
+    const QUrl firstClip = localUrl(QStringLiteral("/first/01.mp4"));
+    const QUrl secondClip = localUrl(QStringLiteral("/second/01.mp4"));
+    const QUrl secondSibling = localUrl(QStringLiteral("/second/02.mp4"));
+
+    session->setSourceUrl(firstClip);
+    QCOMPARE(mediaProvider.loadCount(), std::size_t(1));
+    QCOMPARE(mediaProvider.loadAt(0).parentUrl, localUrl(QStringLiteral("/first/")));
+
+    session->setSourceUrl(secondClip);
+    QCOMPARE(mediaProvider.loadCount(), std::size_t(2));
+    QCOMPARE(mediaProvider.loadAt(1).parentUrl, localUrl(QStringLiteral("/second/")));
+    QVERIFY(mediaProvider.loadAt(0).canceled);
+    QVERIFY(!session->mediaNavigationKnown());
+
+    mediaProvider.deliverIgnoringCancellation(
+        0, { mediaCandidate(secondClip), mediaCandidate(secondSibling) });
+
+    QVERIFY(!session->mediaNavigationKnown());
+
+    mediaProvider.finishLoad(1, { mediaCandidate(secondClip) });
+
+    QVERIFY(session->mediaNavigationKnown());
+    QCOMPARE(session->currentMediaNumber(), 1);
+    QCOMPARE(session->mediaCount(), 1);
 }
 
 void TestKiriDocumentSession::nextMediaFromVideoCanRouteToImageWithoutUsingImageNavigation()

@@ -9,6 +9,7 @@
 #include "document/imagedocumentruntimedependencies.h"
 #include "navigation/mediacandidateprovider.h"
 #include "navigation/medianavigationmodel.h"
+#include "session/documentsessionmediacandidateloadstate.h"
 #include "session/documentsessionstate.h"
 
 #include <QUrl>
@@ -73,6 +74,10 @@ private:
     void syncFromVideoDocument();
     void refreshMediaNavigation();
     void loadMediaCandidates(std::function<void(std::vector<MediaNavigationCandidate>)> callback);
+    void finishMediaCandidateLoad(DocumentSessionMediaCandidateLoad load,
+        std::vector<MediaNavigationCandidate> candidates,
+        const std::shared_ptr<std::function<void(std::vector<MediaNavigationCandidate>)>>
+            &callback);
     void updateMediaBoundaryState(const std::vector<MediaNavigationCandidate> &candidates);
     void scheduleMediaPredecode(const std::vector<MediaNavigationCandidate> &candidates);
     std::vector<DisplayedPredecodeImage> displayedPredecodeImages() const;
@@ -93,6 +98,7 @@ private:
     FileOperationProvider m_fileOperationProvider;
     std::unique_ptr<MediaPredecodeCoordinator> m_mediaPredecodeCoordinator;
     ImageIoJob m_mediaCandidateJob;
+    DocumentSessionMediaCandidateLoadState m_mediaCandidateLoadState;
     ImageIoJob m_fileDeletionJob;
     bool m_routingSource = false;
 };

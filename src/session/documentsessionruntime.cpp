@@ -297,10 +297,13 @@ void DocumentSessionRuntime::routeSourceUrl(const QUrl &sourceUrl)
 {
     m_state.setSessionErrorString(QString());
     m_mediaCandidateJob.cancel();
+    m_mediaCandidateLoadState.cancel();
 
     if (sourceUrl.isEmpty()) {
+        m_routingSource = true;
         leaveVideoMode();
         m_imageDocument.setSourceUrl(QUrl());
+        m_routingSource = false;
         m_state.setSourceIdentity(QUrl());
         m_state.setDocumentKind(DocumentSessionKind::Empty);
         m_state.setMediaNavigationState({}, false);
@@ -316,17 +319,19 @@ void DocumentSessionRuntime::openMediaUrl(const QUrl &url)
     if (isDirectVideoUrl(url)) {
         m_routingSource = true;
         m_imageDocument.setSourceUrl(QUrl());
-        m_routingSource = false;
         m_state.setDocumentKind(DocumentSessionKind::Video);
         m_videoDocument.setSourceUrl(url);
+        m_routingSource = false;
         m_state.setSourceIdentity(url);
         refreshMediaNavigation();
         return;
     }
 
+    m_routingSource = true;
     leaveVideoMode();
     m_state.setDocumentKind(DocumentSessionKind::Image);
     m_imageDocument.setSourceUrl(url);
+    m_routingSource = false;
     m_state.setSourceIdentity(m_imageDocument.sourceUrl());
     refreshMediaNavigation();
 }
@@ -357,7 +362,7 @@ void DocumentSessionRuntime::syncFromImageDocument()
 
 void DocumentSessionRuntime::syncFromVideoDocument()
 {
-    if (m_state.documentKind() != DocumentSessionKind::Video) {
+    if (m_routingSource || m_state.documentKind() != DocumentSessionKind::Video) {
         return;
     }
 
@@ -395,28 +400,37 @@ void DocumentSessionRuntime::loadMediaCandidates(
 {
     const QUrl currentUrl = currentMediaUrl();
     const QUrl parentUrl = mediaNavigationParentUrl(currentUrl);
+    m_mediaCandidateJob.cancel();
+    m_mediaCandidateLoadState.cancel();
+
     if (currentUrl.isEmpty() || parentUrl.isEmpty() || !parentUrl.isValid()
         || !m_mediaCandidateProvider.directoryMedia) {
         callback({});
         return;
     }
 
-    m_mediaCandidateJob.cancel();
+    const DocumentSessionMediaCandidateLoad load = m_mediaCandidateLoadState.start(currentUrl);
     auto sharedCallback
         = std::make_shared<std::function<void(std::vector<MediaNavigationCandidate>)>>(
             std::move(callback));
     m_mediaCandidateJob = m_mediaCandidateProvider.directoryMedia(
         m_owner, parentUrl,
-        [sharedCallback](std::vector<MediaNavigationCandidate> candidates) mutable {
-            if (*sharedCallback) {
-                (*sharedCallback)(std::move(candidates));
-            }
+        [this, load, sharedCallback](std::vector<MediaNavigationCandidate> candidates) mutable {
+            finishMediaCandidateLoad(load, std::move(candidates), sharedCallback);
         },
-        [sharedCallback](const QString &) mutable {
-            if (*sharedCallback) {
-                (*sharedCallback)({});
-            }
-        });
+        [this, load, sharedCallback](
+            const QString &) mutable { finishMediaCandidateLoad(load, {}, sharedCallback); });
+}
+
+void DocumentSessionRuntime::finishMediaCandidateLoad(DocumentSessionMediaCandidateLoad load,
+    std::vector<MediaNavigationCandidate> candidates,
+    const std::shared_ptr<std::function<void(std::vector<MediaNavigationCandidate>)>> &callback)
+{
+    if (!m_mediaCandidateLoadState.finish(load) || !callback || !*callback) {
+        return;
+    }
+
+    (*callback)(std::move(candidates));
 }
 
 void DocumentSessionRuntime::updateMediaBoundaryState(
