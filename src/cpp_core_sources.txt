@@ -106,6 +106,7 @@ src/navigation/mediaformatregistry.cpp
 src/navigation/mediacandidateprovider.cpp
 src/navigation/medianavigationmodel.cpp
 src/predecode/imagepredecodecoordinator.cpp
+src/predecode/mediapredecodecoordinator.cpp
 src/presentation/imagepresentationcontroller.cpp
 src/presentation/imagepresentationload.cpp
 src/presentation/imagepresentationviewportcontroller.cpp

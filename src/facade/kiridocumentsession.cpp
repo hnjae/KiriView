@@ -8,6 +8,7 @@
 #include "navigation/mediaformatregistry.h"
 
 #include <memory>
+#include <optional>
 #include <utility>
 
 namespace {
@@ -36,6 +37,14 @@ KiriView::FileDeletionMode toFileDeletionMode(KiriDocumentSession::DeletionMode 
 
     return KiriView::FileDeletionMode::MoveToTrash;
 }
+
+KiriView::ImageDocumentRuntimeDependencyOverrides imageDocumentDependenciesWithPredecodeFinder(
+    KiriView::ImageDocumentRuntimeDependencyOverrides dependencies,
+    KiriView::ExternalPredecodedImageFinder predecodedImageFinder)
+{
+    dependencies.externalPredecodedImageFinder = std::move(predecodedImageFinder);
+    return dependencies;
+}
 }
 
 KiriDocumentSession::KiriDocumentSession(QObject *parent)
@@ -46,7 +55,13 @@ KiriDocumentSession::KiriDocumentSession(QObject *parent)
 KiriDocumentSession::KiriDocumentSession(
     KiriView::DocumentSessionRuntimeDependencies dependencies, QObject *parent)
     : QObject(parent)
-    , m_imageDocument(std::make_unique<KiriImageDocument>(this))
+    , m_imageDocument(std::make_unique<KiriImageDocument>(
+          imageDocumentDependenciesWithPredecodeFinder(dependencies.imageDocumentDependencies,
+              [this](const QUrl &url) {
+                  return m_runtime != nullptr ? m_runtime->findPredecodedImage(url)
+                                              : std::optional<KiriView::PredecodedImage>();
+              }),
+          this))
     , m_videoDocument(std::make_unique<KiriVideoDocument>(this))
 {
     m_runtime = std::make_unique<KiriView::DocumentSessionRuntime>(

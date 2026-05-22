@@ -224,6 +224,27 @@ bool ImageDocumentRuntime::secondaryPageVisible() const
     return controllers->spreadController().secondaryPageVisible();
 }
 
+std::optional<DisplayedPredecodeImage> ImageDocumentRuntime::primaryDisplayedPredecodeImage() const
+{
+    std::optional<StaticImagePayload> staticImage
+        = controllers->presentationController().staticImage();
+    if (!controllers->presentationController().hasImage() || state.displayedUrl().isEmpty()
+        || !staticImage.has_value()) {
+        return std::nullopt;
+    }
+
+    return DisplayedPredecodeImage {
+        state.displayedImageLocation(),
+        controllers->presentationController().isPredecodeCacheable(),
+        std::move(staticImage),
+    };
+}
+
+ImageFirstDisplayDecodeContext ImageDocumentRuntime::firstDisplayDecodeContext() const
+{
+    return controllers->presentationController().firstDisplayDecodeContext();
+}
+
 DisplayedImageRenderSnapshot ImageDocumentRuntime::renderSnapshot(DisplayedPageRole role) const
 {
     return controllers->spreadController().renderSnapshot(role);

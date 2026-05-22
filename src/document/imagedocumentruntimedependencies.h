@@ -8,14 +8,20 @@
 #include "decoding/imagedecodedependencies.h"
 #include "filedeletion.h"
 #include "navigation/imagecandidateprovider.h"
+#include "predecode/predecodedimage.h"
 #include "system/powersaverprovider.h"
 
+#include <QUrl>
+#include <functional>
 #include <memory>
+#include <optional>
 
 class QObject;
 
 namespace KiriView {
 class ArchiveDocumentSessionStore;
+
+using ExternalPredecodedImageFinder = std::function<std::optional<PredecodedImage>(const QUrl &)>;
 
 struct ImageDocumentRuntimeDependencyOverrides {
     ImageNavigationCandidateProvider candidateProvider;
@@ -23,6 +29,7 @@ struct ImageDocumentRuntimeDependencyOverrides {
     FileOperationProvider fileOperations;
     ArchiveDocumentSessionFactory archiveDocumentSessions;
     PowerSaverProvider powerSaver;
+    ExternalPredecodedImageFinder externalPredecodedImageFinder;
 };
 
 struct ImageDocumentRuntimeDependencies {
@@ -31,6 +38,7 @@ struct ImageDocumentRuntimeDependencies {
     FileOperationProvider fileOperations;
     PowerSaverProvider powerSaver;
     std::unique_ptr<ArchiveDocumentSessionStore> archiveSessionStore;
+    ExternalPredecodedImageFinder externalPredecodedImageFinder;
 
     ~ImageDocumentRuntimeDependencies();
 };

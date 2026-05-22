@@ -110,12 +110,18 @@ KiriView::ImageDocumentPublicSignalOperations publicSignalOperations(KiriImageDo
 }
 
 KiriImageDocument::KiriImageDocument(QObject *parent)
+    : KiriImageDocument(KiriView::ImageDocumentRuntimeDependencyOverrides {}, parent)
+{
+}
+
+KiriImageDocument::KiriImageDocument(
+    KiriView::ImageDocumentRuntimeDependencyOverrides dependencies, QObject *parent)
     : QObject(parent)
 {
     m_runtime = std::make_unique<KiriView::ImageDocumentRuntime>(
         this, RenderContextProvider {},
         [this](const std::vector<ImageDocumentChange> &changes) { handleDocumentChanges(changes); },
-        KiriView::ImageDocumentRuntimeDependencyOverrides {},
+        std::move(dependencies),
         [this](const QString &errorString) { Q_EMIT fileDeletionFailed(errorString); });
 }
 
@@ -245,6 +251,17 @@ bool KiriImageDocument::rightToLeftReadingAvailable() const
 }
 
 bool KiriImageDocument::secondaryPageVisible() const { return m_runtime->secondaryPageVisible(); }
+
+std::optional<KiriView::DisplayedPredecodeImage>
+KiriImageDocument::primaryDisplayedPredecodeImage() const
+{
+    return m_runtime->primaryDisplayedPredecodeImage();
+}
+
+KiriView::ImageFirstDisplayDecodeContext KiriImageDocument::firstDisplayDecodeContext() const
+{
+    return m_runtime->firstDisplayDecodeContext();
+}
 
 KiriView::DisplayedImageRenderSnapshot KiriImageDocument::renderSnapshot(
     KiriView::DisplayedPageRole role) const

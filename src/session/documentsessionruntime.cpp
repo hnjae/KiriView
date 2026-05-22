@@ -4,15 +4,18 @@
 #include "documentsessionruntime.h"
 
 #include "async/imagecallback.h"
+#include "decoding/imageformatregistry.h"
 #include "facade/kiriimagedocument.h"
 #include "facade/kirivideodocument.h"
 #include "localization/imageerrortext.h"
 #include "navigation/mediaformatregistry.h"
+#include "predecode/mediapredecodecoordinator.h"
 
 #include <QObject>
 #include <QString>
 #include <algorithm>
 #include <memory>
+#include <optional>
 #include <utility>
 
 namespace {
@@ -24,6 +27,16 @@ bool isDirectVideoUrl(const QUrl &url)
     }
 
     return KiriView::isSupportedDirectVideoFileName(url.toString(QUrl::PrettyDecoded));
+}
+
+bool isDirectImageUrl(const QUrl &url)
+{
+    const QString fileName = url.fileName(QUrl::PrettyDecoded);
+    if (KiriView::isSupportedImageFileName(fileName)) {
+        return true;
+    }
+
+    return KiriView::isSupportedImageFileName(url.toString(QUrl::PrettyDecoded));
 }
 
 QString genericFileDeletionErrorMessage()
@@ -44,6 +57,9 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner, KiriImageDocument
           std::move(dependencies.mediaCandidateProvider)))
     , m_fileOperationProvider(
           fileOperationProviderWithDefault(std::move(dependencies.fileOperationProvider)))
+    , m_mediaPredecodeCoordinator(std::make_unique<MediaPredecodeCoordinator>(owner,
+          std::move(dependencies.imageDocumentDependencies.imageDecode),
+          std::move(dependencies.imageDocumentDependencies.powerSaver)))
 {
     connectDocuments();
 }
@@ -160,6 +176,13 @@ bool DocumentSessionRuntime::atKnownLastMedia() const
     return mediaNavigationActive() && m_mediaNavigationKnown && m_mediaNavigationState.atKnownLast;
 }
 
+std::optional<PredecodedImage> DocumentSessionRuntime::findPredecodedImage(const QUrl &url) const
+{
+    return m_mediaPredecodeCoordinator != nullptr
+        ? m_mediaPredecodeCoordinator->findPredecodedImage(url)
+        : std::optional<PredecodedImage>();
+}
+
 void DocumentSessionRuntime::openPreviousMedia()
 {
     if (!mediaNavigationActive()) {
@@ -241,6 +264,10 @@ void DocumentSessionRuntime::connectDocuments()
     QObject::connect(&m_imageDocument, &KiriImageDocument::errorStringChanged, m_owner,
         [this]() { publish(DocumentSessionChange::ErrorString); });
     QObject::connect(&m_imageDocument, &KiriImageDocument::documentScopeChanged, m_owner, [this]() {
+        if (m_routingSource) {
+            return;
+        }
+
         refreshMediaNavigation();
         publish({ DocumentSessionChange::MediaNavigationAvailability,
             DocumentSessionChange::FileDeletionAvailability });
@@ -272,6 +299,7 @@ void DocumentSessionRuntime::routeSourceUrl(const QUrl &sourceUrl)
         setSourceIdentity(QUrl());
         setDocumentKind(DocumentSessionKind::Empty);
         setMediaNavigationState({}, false);
+        m_mediaPredecodeCoordinator->clear();
         return;
     }
 
@@ -344,6 +372,9 @@ void DocumentSessionRuntime::refreshMediaNavigation()
 {
     if (!mediaNavigationActive()) {
         setMediaNavigationState({}, false);
+        if (!pendingDirectImageLoadMayUseMediaScope()) {
+            m_mediaPredecodeCoordinator->clear();
+        }
         return;
     }
 
@@ -385,6 +416,48 @@ void DocumentSessionRuntime::updateMediaBoundaryState(
     const std::vector<MediaNavigationCandidate> &candidates)
 {
     setMediaNavigationState(mediaNavigationBoundaryState(candidates, currentMediaUrl()), true);
+    scheduleMediaPredecode(candidates);
+}
+
+void DocumentSessionRuntime::scheduleMediaPredecode(
+    const std::vector<MediaNavigationCandidate> &candidates)
+{
+    if (!mediaNavigationActive() || m_mediaPredecodeCoordinator == nullptr) {
+        return;
+    }
+
+    const QUrl currentUrl = currentMediaUrl();
+    if (currentUrl.isEmpty()) {
+        return;
+    }
+
+    m_mediaPredecodeCoordinator->schedule(MediaPredecodeCoordinator::Context {
+        currentUrl,
+        candidates,
+        displayedPredecodeImages(),
+        firstDisplayDecodeContext(),
+    });
+}
+
+std::vector<DisplayedPredecodeImage> DocumentSessionRuntime::displayedPredecodeImages() const
+{
+    if (m_documentKind != DocumentSessionKind::Image || !activeImageUsesMediaScope()
+        || m_imageDocument.status() != KiriImageDocument::Status::Ready) {
+        return {};
+    }
+
+    std::optional<DisplayedPredecodeImage> displayed
+        = m_imageDocument.primaryDisplayedPredecodeImage();
+    if (!displayed.has_value()) {
+        return {};
+    }
+
+    return { std::move(*displayed) };
+}
+
+ImageFirstDisplayDecodeContext DocumentSessionRuntime::firstDisplayDecodeContext() const
+{
+    return m_imageDocument.firstDisplayDecodeContext();
 }
 
 void DocumentSessionRuntime::startMediaDeletion(
@@ -426,6 +499,7 @@ void DocumentSessionRuntime::finishMediaDeletion(const MediaDeletionFallbackPlan
             setSourceIdentity(QUrl());
             setDocumentKind(DocumentSessionKind::Empty);
             setMediaNavigationState({}, false);
+            m_mediaPredecodeCoordinator->clear();
         }
         return;
     case FileDeletionCompletionAction::Ignore:
@@ -454,6 +528,12 @@ QUrl DocumentSessionRuntime::currentMediaUrl() const
 bool DocumentSessionRuntime::activeImageUsesMediaScope() const
 {
     return m_imageDocument.ordinaryDirectMediaScopeActive();
+}
+
+bool DocumentSessionRuntime::pendingDirectImageLoadMayUseMediaScope() const
+{
+    return m_documentKind == DocumentSessionKind::Image && !m_imageDocument.sourceUrl().isEmpty()
+        && isDirectImageUrl(m_imageDocument.sourceUrl());
 }
 
 void DocumentSessionRuntime::setSourceIdentity(const QUrl &url)

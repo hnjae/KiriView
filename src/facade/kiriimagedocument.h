@@ -4,7 +4,9 @@
 #ifndef KIRIVIEW_KIRIIMAGEDOCUMENT_H
 #define KIRIVIEW_KIRIIMAGEDOCUMENT_H
 
+#include "document/imagedocumentruntimedependencies.h"
 #include "document/imagedocumenttypes.h"
+#include "predecode/predecodedimage.h"
 #include "rendering/imagesurface.h"
 
 #include <QObject>
@@ -17,6 +19,7 @@
 #include <QtQml/qqmlregistration.h>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <vector>
 
 namespace KiriView {
@@ -97,6 +100,8 @@ public:
     Q_ENUM(DeletionMode)
 
     explicit KiriImageDocument(QObject *parent = nullptr);
+    explicit KiriImageDocument(
+        KiriView::ImageDocumentRuntimeDependencyOverrides dependencies, QObject *parent = nullptr);
     ~KiriImageDocument() override;
 
     QUrl sourceUrl() const;
@@ -138,6 +143,8 @@ public:
     void setRightToLeftReadingEnabled(bool enabled);
     bool rightToLeftReadingAvailable() const;
     bool secondaryPageVisible() const;
+    std::optional<KiriView::DisplayedPredecodeImage> primaryDisplayedPredecodeImage() const;
+    KiriView::ImageFirstDisplayDecodeContext firstDisplayDecodeContext() const;
     KiriView::DisplayedImageRenderSnapshot renderSnapshot(
         KiriView::DisplayedPageRole role = KiriView::DisplayedPageRole::Primary) const;
 

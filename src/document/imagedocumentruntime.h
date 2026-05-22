@@ -9,6 +9,7 @@
 #include "imagedocumentstate.h"
 #include "imagedocumenttypes.h"
 #include "navigation/imagenavigationtypes.h"
+#include "predecode/predecodedimage.h"
 #include "presentation/imagezoomstate.h"
 #include "rendering/imagesurface.h"
 
@@ -20,6 +21,7 @@
 #include <QtGlobal>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <vector>
 
 class QObject;
@@ -77,6 +79,8 @@ public:
     void setRightToLeftReadingEnabled(bool enabled);
     bool rightToLeftReadingAvailable() const;
     bool secondaryPageVisible() const;
+    std::optional<DisplayedPredecodeImage> primaryDisplayedPredecodeImage() const;
+    ImageFirstDisplayDecodeContext firstDisplayDecodeContext() const;
     DisplayedImageRenderSnapshot renderSnapshot(
         DisplayedPageRole role = DisplayedPageRole::Primary) const;
 

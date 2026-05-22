@@ -6,11 +6,14 @@
 
 #include "async/imageiojob.h"
 #include "document/filedeletion.h"
+#include "document/imagedocumentruntimedependencies.h"
 #include "navigation/mediacandidateprovider.h"
 #include "navigation/medianavigationmodel.h"
 
 #include <QUrl>
 #include <functional>
+#include <memory>
+#include <optional>
 #include <vector>
 
 class KiriImageDocument;
@@ -19,6 +22,8 @@ class QObject;
 class QString;
 
 namespace KiriView {
+class MediaPredecodeCoordinator;
+
 enum class DocumentSessionKind {
     Empty,
     Image,
@@ -38,6 +43,7 @@ enum class DocumentSessionChange {
 struct DocumentSessionRuntimeDependencies {
     MediaNavigationCandidateProvider mediaCandidateProvider;
     FileOperationProvider fileOperationProvider;
+    ImageDocumentRuntimeDependencyOverrides imageDocumentDependencies;
 };
 
 class DocumentSessionRuntime final
@@ -65,6 +71,7 @@ public:
     bool canOpenNextMedia() const;
     bool atKnownFirstMedia() const;
     bool atKnownLastMedia() const;
+    std::optional<PredecodedImage> findPredecodedImage(const QUrl &url) const;
 
     void openPreviousMedia();
     void openNextMedia();
@@ -82,12 +89,16 @@ private:
     void refreshMediaNavigation();
     void loadMediaCandidates(std::function<void(std::vector<MediaNavigationCandidate>)> callback);
     void updateMediaBoundaryState(const std::vector<MediaNavigationCandidate> &candidates);
+    void scheduleMediaPredecode(const std::vector<MediaNavigationCandidate> &candidates);
+    std::vector<DisplayedPredecodeImage> displayedPredecodeImages() const;
+    ImageFirstDisplayDecodeContext firstDisplayDecodeContext() const;
     void startMediaDeletion(
         FileDeletionMode mode, std::vector<MediaNavigationCandidate> candidates = {});
     void finishMediaDeletion(const MediaDeletionFallbackPlan &fallbackPlan,
         FileDeletionResult result, const QString &errorString);
     QUrl currentMediaUrl() const;
     bool activeImageUsesMediaScope() const;
+    bool pendingDirectImageLoadMayUseMediaScope() const;
     void setSourceIdentity(const QUrl &url);
     void setDocumentKind(DocumentSessionKind kind);
     void setFileDeletionInProgress(bool inProgress);
@@ -102,6 +113,7 @@ private:
     ChangeCallback m_changeCallback;
     MediaNavigationCandidateProvider m_mediaCandidateProvider;
     FileOperationProvider m_fileOperationProvider;
+    std::unique_ptr<MediaPredecodeCoordinator> m_mediaPredecodeCoordinator;
     ImageIoJob m_mediaCandidateJob;
     ImageIoJob m_fileDeletionJob;
     QUrl m_sourceUrl;

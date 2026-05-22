@@ -49,6 +49,7 @@ ImageDocumentRuntimeDependencies resolveImageDocumentRuntimeDependencies(
         std::move(overrides.fileOperations),
         std::move(overrides.powerSaver),
         std::move(archiveSessionStore),
+        std::move(overrides.externalPredecodedImageFinder),
     };
 }
 }

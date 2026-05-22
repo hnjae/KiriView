@@ -21,6 +21,7 @@
 
 #include <QObject>
 #include <QUrl>
+#include <optional>
 #include <utility>
 
 namespace KiriView {
@@ -39,6 +40,8 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject *docume
 {
     ImageDocumentRuntimeDependencies runtimeDependencies
         = resolveImageDocumentRuntimeDependencies(std::move(dependencies), documentObject);
+    ExternalPredecodedImageFinder externalPredecodedImageFinder
+        = std::move(runtimeDependencies.externalPredecodedImageFinder);
     m_archiveSessionStore = std::move(runtimeDependencies.archiveSessionStore);
     m_presentationController = std::make_unique<ImagePresentationController>(
         documentObject, [this]() { return renderContextOrDefault(m_callbacks.renderContext); },
@@ -58,13 +61,23 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject *docume
             [this](ImageDocumentRuntimePlan plan) { dispatchPlan(plan); },
             std::move(m_callbacks.fileDeletionFailed),
         });
-    m_openController
-        = std::make_unique<ImageOpenController>(documentObject, state, *m_presentationController,
-            ImageOpenController::Callbacks {
-                [this](const QUrl &url) { return m_predecodeController->findPredecodedImage(url); },
-                [this](const ImageDocumentRuntimePlan &plan) { dispatchPlan(plan); },
+    m_openController = std::make_unique<ImageOpenController>(documentObject, state,
+        *m_presentationController,
+        ImageOpenController::Callbacks {
+            [this, externalPredecodedImageFinder = std::move(externalPredecodedImageFinder)](
+                const QUrl &url) {
+                if (externalPredecodedImageFinder) {
+                    std::optional<PredecodedImage> predecoded = externalPredecodedImageFinder(url);
+                    if (predecoded.has_value()) {
+                        return predecoded;
+                    }
+                }
+
+                return m_predecodeController->findPredecodedImage(url);
             },
-            runtimeDependencies.candidateProvider, runtimeDependencies.imageDecode);
+            [this](const ImageDocumentRuntimePlan &plan) { dispatchPlan(plan); },
+        },
+        runtimeDependencies.candidateProvider, runtimeDependencies.imageDecode);
     m_navigationService = std::make_unique<ImageNavigationService>(documentObject,
         runtimeDependencies.candidateProvider,
         ImageNavigationService::Callbacks {

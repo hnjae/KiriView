@@ -28,6 +28,11 @@ std::vector<KiriView::ImageNavigationCandidate> imageCandidates(int count)
     }
     return candidates;
 }
+
+KiriView::MediaNavigationCandidate mediaCandidate(const QUrl &url)
+{
+    return KiriView::MediaNavigationCandidate { url, url.fileName(QUrl::PrettyDecoded) };
+}
 }
 
 class TestPredecodeWindowPlan : public QObject
@@ -40,6 +45,7 @@ private Q_SLOTS:
     void missingCandidateContextStillCarriesFallbackWindow();
     void directoryDocumentUsesDocumentParallelLimit();
     void archiveWindowPreservesArchiveDocumentContext();
+    void mediaWindowUsesVideoCursorAndQueuesOnlyImages();
     void missingCurrentCandidateYieldsEmptyWindow();
     void candidateListingFailureUsesPlannedFallbackWindow();
 };
@@ -167,6 +173,34 @@ void TestPredecodeWindowPlan::archiveWindowPreservesArchiveDocumentContext()
     QCOMPARE(windowPlan.urls.size(), std::size_t(2));
     QCOMPARE(windowPlan.urls.at(0), displayedUrl);
     QCOMPARE(windowPlan.urls.at(1), nextUrl);
+}
+
+void TestPredecodeWindowPlan::mediaWindowUsesVideoCursorAndQueuesOnlyImages()
+{
+    const QUrl previousImage = localUrl(QStringLiteral("/media/00.png"));
+    const QUrl currentVideo = localUrl(QStringLiteral("/media/01.mp4"));
+    const QUrl nextImage = localUrl(QStringLiteral("/media/02.png"));
+    const QUrl nextVideo = localUrl(QStringLiteral("/media/03.mov"));
+    const KiriView::PredecodeWindowPlan windowPlan
+        = KiriView::predecodeWindowPlanForMediaCandidates(currentVideo,
+            {
+                mediaCandidate(previousImage),
+                mediaCandidate(currentVideo),
+                mediaCandidate(nextImage),
+                mediaCandidate(nextVideo),
+            },
+            KiriView::PredecodePolicyInput {
+                KiriView::PredecodeDocumentKind::Regular,
+                KiriView::PredecodeMomentumMode::Neutral,
+                false,
+                4,
+            });
+
+    QCOMPARE(windowPlan.archiveDocument, KiriView::ArchiveDocumentLocation {});
+    QCOMPARE(windowPlan.parallelLimit, std::size_t(1));
+    QCOMPARE(windowPlan.urls.size(), std::size_t(2));
+    QCOMPARE(windowPlan.urls.at(0), nextImage);
+    QCOMPARE(windowPlan.urls.at(1), previousImage);
 }
 
 void TestPredecodeWindowPlan::missingCurrentCandidateYieldsEmptyWindow()
