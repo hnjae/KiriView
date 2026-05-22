@@ -3,24 +3,20 @@
 
 #include "imageshortcutnavigationpolicy.h"
 
-ImageShortcutNavigationPolicy::ImageShortcutNavigationPolicy(QObject *parent)
-    : QObject(parent)
-{
-}
-
+namespace KiriView {
 ImageShortcutNavigationPolicy::HorizontalArrowAction
 ImageShortcutNavigationPolicy::horizontalArrowAction(
     bool leftArrow, bool horizontallyPannable, bool rightToLeftReadingActive) const
 {
     if (horizontallyPannable) {
-        return leftArrow ? PanLeft : PanRight;
+        return leftArrow ? HorizontalArrowAction::PanLeft : HorizontalArrowAction::PanRight;
     }
 
     if (leftArrow == rightToLeftReadingActive) {
-        return OpenNextImage;
+        return HorizontalArrowAction::OpenNextImage;
     }
 
-    return OpenPreviousImage;
+    return HorizontalArrowAction::OpenPreviousImage;
 }
 
 ImageShortcutNavigationPolicy::SinglePageArrowAction
@@ -28,40 +24,41 @@ ImageShortcutNavigationPolicy::singlePageArrowAction(
     bool leftArrow, bool rightToLeftReadingActive) const
 {
     if (leftArrow == rightToLeftReadingActive) {
-        return OpenNextSinglePage;
+        return SinglePageArrowAction::OpenNextSinglePage;
     }
 
-    return OpenPreviousSinglePage;
+    return SinglePageArrowAction::OpenPreviousSinglePage;
 }
 
 ImageShortcutNavigationPolicy::ScanAction ImageShortcutNavigationPolicy::scanForwardAction(
     bool imagePannable, bool viewportMoved) const
 {
     if (imagePannable && viewportMoved) {
-        return NoScanAction;
+        return ScanAction::NoScanAction;
     }
 
-    return OpenNextImageFromScan;
+    return ScanAction::OpenNextImageFromScan;
 }
 
 ImageShortcutNavigationPolicy::ScanAction ImageShortcutNavigationPolicy::scanBackwardAction(
     bool imagePannable, bool viewportMoved, bool atFirstImage, int currentPageNumber) const
 {
     if (!imagePannable) {
-        return OpenPreviousImageFromScan;
+        return ScanAction::OpenPreviousImageFromScan;
     }
 
     if (viewportMoved) {
-        return NoScanAction;
+        return ScanAction::NoScanAction;
     }
 
     if (atFirstImage) {
-        return ShowFirstImageBoundary;
+        return ScanAction::ShowFirstImageBoundary;
     }
 
     if (currentPageNumber > 1) {
-        return OpenPreviousPageFromFinalScanStart;
+        return ScanAction::OpenPreviousPageFromFinalScanStart;
     }
 
-    return OpenPreviousImageFromScan;
+    return ScanAction::OpenPreviousImageFromScan;
+}
 }

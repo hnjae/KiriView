@@ -4,8 +4,8 @@
 #ifndef KIRIVIEW_MENUACCESSKEYROUTER_H
 #define KIRIVIEW_MENUACCESSKEYROUTER_H
 
-#include "menuaccesskeymenuruntime.h"
-#include "menuaccesskeysessionstate.h"
+#include "application/menuaccesskeymenuruntime.h"
+#include "application/menuaccesskeysessionstate.h"
 
 #include <QMetaObject>
 #include <QObject>

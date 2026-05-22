@@ -37,6 +37,7 @@ src/presentation/imageanimationplayer.cpp
 src/async/imageasyncoperationstate.cpp
 src/application/imageactionavailabilitypolicy.cpp
 src/facade/imageactionavailability.cpp
+src/facade/imageshortcutnavigationpolicy.cpp
 src/cache/imagebytecost.cpp
 src/navigation/imagecandidateprovider.cpp
 src/cache/imagecachepolicy.cpp
@@ -98,7 +99,7 @@ src/navigation/imagepagenavigationcontroller.cpp
 src/navigation/imagepagenavigationrefreshstate.cpp
 src/localization/localization.cpp
 src/application/menuaccesskeymenuruntime.cpp
-src/application/menuaccesskeyrouter.cpp
+src/facade/menuaccesskeyrouter.cpp
 src/application/menuaccesskeysessionstate.cpp
 src/document/imageopencontroller.cpp
 src/document/imageopentransitionapplier.cpp
