@@ -95,6 +95,9 @@ void ImageDocumentPublicSignalEmitter::emitSignal(ImageDocumentPublicSignal sign
     case ImageDocumentPublicSignal::RotationDegrees:
         run(m_operations.rotationDegreesChanged);
         return;
+    case ImageDocumentPublicSignal::DocumentScope:
+        run(m_operations.documentScopeChanged);
+        return;
     case ImageDocumentPublicSignal::Repaint:
         run(m_operations.repaintRequested);
         return;
@@ -153,16 +156,23 @@ std::vector<ImageDocumentPublicSignal> imageDocumentPublicSignals(ImageDocumentC
 std::vector<ImageDocumentPublicSignal> imageDocumentPublicSignalsForChanges(
     const std::vector<ImageDocumentChange> &changes)
 {
-    std::vector<ImageDocumentPublicSignal> signals;
+    std::vector<ImageDocumentPublicSignal> plannedSignals;
+    bool documentScopeChanged = false;
     for (ImageDocumentChange change : changes) {
+        documentScopeChanged = documentScopeChanged || change == ImageDocumentChange::DisplayedUrl
+            || change == ImageDocumentChange::Status;
         for (ImageDocumentPublicSignal signal : imageDocumentPublicSignals(change)) {
             const bool alreadyPlanned
-                = std::find(signals.cbegin(), signals.cend(), signal) != signals.cend();
+                = std::find(plannedSignals.cbegin(), plannedSignals.cend(), signal)
+                != plannedSignals.cend();
             if (!alreadyPlanned) {
-                signals.push_back(signal);
+                plannedSignals.push_back(signal);
             }
         }
     }
-    return signals;
+    if (documentScopeChanged) {
+        plannedSignals.push_back(ImageDocumentPublicSignal::DocumentScope);
+    }
+    return plannedSignals;
 }
 }

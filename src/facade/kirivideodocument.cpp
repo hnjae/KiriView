@@ -3,6 +3,7 @@
 
 #include "facade/kirivideodocument.h"
 
+#include "video/videodocumentpublicsignals.h"
 #include "video/videodocumentruntime.h"
 
 #include <memory>
@@ -22,6 +23,24 @@ KiriVideoDocument::Status fromVideoDocumentStatus(KiriView::VideoDocumentStatus 
     }
 
     return KiriVideoDocument::Status::Null;
+}
+
+KiriView::VideoDocumentPublicSignalOperations publicSignalOperations(KiriVideoDocument &document)
+{
+    KiriView::VideoDocumentPublicSignalOperations operations;
+    operations.sourceUrlChanged = [&document]() { Q_EMIT document.sourceUrlChanged(); };
+    operations.statusChanged = [&document]() { Q_EMIT document.statusChanged(); };
+    operations.errorStringChanged = [&document]() { Q_EMIT document.errorStringChanged(); };
+    operations.windowTitleFileNameChanged
+        = [&document]() { Q_EMIT document.windowTitleFileNameChanged(); };
+    operations.durationChanged = [&document]() { Q_EMIT document.durationChanged(); };
+    operations.positionChanged = [&document]() { Q_EMIT document.positionChanged(); };
+    operations.playingChanged = [&document]() { Q_EMIT document.playingChanged(); };
+    operations.seekableChanged = [&document]() { Q_EMIT document.seekableChanged(); };
+    operations.hasVideoChanged = [&document]() { Q_EMIT document.hasVideoChanged(); };
+    operations.hasAudioChanged = [&document]() { Q_EMIT document.hasAudioChanged(); };
+    operations.videoOutputChanged = [&document]() { Q_EMIT document.videoOutputChanged(); };
+    return operations;
 }
 }
 
@@ -83,41 +102,5 @@ void KiriVideoDocument::seekBy(qint64 deltaMilliseconds) { m_runtime->seekBy(del
 void KiriVideoDocument::handleDocumentChanges(
     const std::vector<KiriView::VideoDocumentChange> &changes)
 {
-    for (KiriView::VideoDocumentChange change : changes) {
-        switch (change) {
-        case KiriView::VideoDocumentChange::SourceUrl:
-            Q_EMIT sourceUrlChanged();
-            break;
-        case KiriView::VideoDocumentChange::Status:
-            Q_EMIT statusChanged();
-            break;
-        case KiriView::VideoDocumentChange::ErrorString:
-            Q_EMIT errorStringChanged();
-            break;
-        case KiriView::VideoDocumentChange::WindowTitleFileName:
-            Q_EMIT windowTitleFileNameChanged();
-            break;
-        case KiriView::VideoDocumentChange::Duration:
-            Q_EMIT durationChanged();
-            break;
-        case KiriView::VideoDocumentChange::Position:
-            Q_EMIT positionChanged();
-            break;
-        case KiriView::VideoDocumentChange::Playing:
-            Q_EMIT playingChanged();
-            break;
-        case KiriView::VideoDocumentChange::Seekable:
-            Q_EMIT seekableChanged();
-            break;
-        case KiriView::VideoDocumentChange::HasVideo:
-            Q_EMIT hasVideoChanged();
-            break;
-        case KiriView::VideoDocumentChange::HasAudio:
-            Q_EMIT hasAudioChanged();
-            break;
-        case KiriView::VideoDocumentChange::VideoOutput:
-            Q_EMIT videoOutputChanged();
-            break;
-        }
-    }
+    KiriView::VideoDocumentPublicSignalEmitter(publicSignalOperations(*this)).emitChanges(changes);
 }

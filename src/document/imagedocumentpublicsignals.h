@@ -30,6 +30,7 @@ enum class ImageDocumentPublicSignal {
     TwoPageMode,
     RightToLeftReading,
     RotationDegrees,
+    DocumentScope,
     Repaint,
 };
 
@@ -53,6 +54,7 @@ struct ImageDocumentPublicSignalOperations {
     std::function<void()> twoPageModeChanged;
     std::function<void()> rightToLeftReadingChanged;
     std::function<void()> rotationDegreesChanged;
+    std::function<void()> documentScopeChanged;
     std::function<void()> repaintRequested;
 };
 

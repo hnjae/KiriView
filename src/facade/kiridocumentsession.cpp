@@ -6,6 +6,7 @@
 #include "facade/kiriimagedocument.h"
 #include "facade/kirivideodocument.h"
 #include "navigation/mediaformatregistry.h"
+#include "session/documentsessionpublicsignals.h"
 
 #include <memory>
 #include <optional>
@@ -44,6 +45,23 @@ KiriView::ImageDocumentRuntimeDependencyOverrides imageDocumentDependenciesWithP
 {
     dependencies.externalPredecodedImageFinder = std::move(predecodedImageFinder);
     return dependencies;
+}
+
+KiriView::DocumentSessionPublicSignalOperations publicSignalOperations(KiriDocumentSession &session)
+{
+    KiriView::DocumentSessionPublicSignalOperations operations;
+    operations.sourceUrlChanged = [&session]() { Q_EMIT session.sourceUrlChanged(); };
+    operations.documentKindChanged = [&session]() { Q_EMIT session.documentKindChanged(); };
+    operations.errorStringChanged = [&session]() { Q_EMIT session.errorStringChanged(); };
+    operations.windowTitleFileNameChanged
+        = [&session]() { Q_EMIT session.windowTitleFileNameChanged(); };
+    operations.displayedFileDeletionAvailabilityChanged
+        = [&session]() { Q_EMIT session.displayedFileDeletionAvailabilityChanged(); };
+    operations.fileDeletionInProgressChanged
+        = [&session]() { Q_EMIT session.fileDeletionInProgressChanged(); };
+    operations.mediaNavigationAvailabilityChanged
+        = [&session]() { Q_EMIT session.mediaNavigationAvailabilityChanged(); };
+    return operations;
 }
 }
 
@@ -148,29 +166,6 @@ void KiriDocumentSession::deleteDisplayedFile(DeletionMode mode)
 void KiriDocumentSession::handleSessionChanges(
     const std::vector<KiriView::DocumentSessionChange> &changes)
 {
-    for (KiriView::DocumentSessionChange change : changes) {
-        switch (change) {
-        case KiriView::DocumentSessionChange::SourceUrl:
-            Q_EMIT sourceUrlChanged();
-            break;
-        case KiriView::DocumentSessionChange::DocumentKind:
-            Q_EMIT documentKindChanged();
-            break;
-        case KiriView::DocumentSessionChange::ErrorString:
-            Q_EMIT errorStringChanged();
-            break;
-        case KiriView::DocumentSessionChange::WindowTitleFileName:
-            Q_EMIT windowTitleFileNameChanged();
-            break;
-        case KiriView::DocumentSessionChange::FileDeletionAvailability:
-            Q_EMIT displayedFileDeletionAvailabilityChanged();
-            break;
-        case KiriView::DocumentSessionChange::FileDeletionInProgress:
-            Q_EMIT fileDeletionInProgressChanged();
-            break;
-        case KiriView::DocumentSessionChange::MediaNavigationAvailability:
-            Q_EMIT mediaNavigationAvailabilityChanged();
-            break;
-        }
-    }
+    KiriView::DocumentSessionPublicSignalEmitter(publicSignalOperations(*this))
+        .emitChanges(changes);
 }

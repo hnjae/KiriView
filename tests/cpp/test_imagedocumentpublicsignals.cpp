@@ -58,6 +58,8 @@ KiriView::ImageDocumentPublicSignalOperations recordingOperations(QStringList &e
         = [&events]() { events.append(QStringLiteral("rightToLeftReading")); };
     operations.rotationDegreesChanged
         = [&events]() { events.append(QStringLiteral("rotationDegrees")); };
+    operations.documentScopeChanged
+        = [&events]() { events.append(QStringLiteral("documentScope")); };
     operations.repaintRequested = [&events]() { events.append(QStringLiteral("repaint")); };
     return operations;
 }
@@ -115,9 +117,11 @@ void TestImageDocumentPublicSignals::
     using Change = KiriView::ImageDocumentChange;
     using Signal = KiriView::ImageDocumentPublicSignal;
 
-    comparePublicSignals(KiriView::imageDocumentPublicSignalsForChanges({ Change::TwoPageMode,
-                             Change::PageNavigation, Change::Repaint, Change::TwoPageMode }),
-        { Signal::TwoPageMode, Signal::PageNavigation, Signal::Repaint });
+    comparePublicSignals(KiriView::imageDocumentPublicSignalsForChanges(
+                             { Change::TwoPageMode, Change::PageNavigation, Change::DisplayedUrl,
+                                 Change::Status, Change::Repaint, Change::TwoPageMode }),
+        { Signal::TwoPageMode, Signal::PageNavigation, Signal::DisplayedUrl, Signal::Status,
+            Signal::Repaint, Signal::DocumentScope });
 }
 
 void TestImageDocumentPublicSignals::emitterDispatchesChangeSignalsInProjectionOrder()

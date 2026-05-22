@@ -156,10 +156,12 @@ src/decoding/rawdecoder.cpp
 src/application/shortcuthelpmodel.cpp
 src/session/documentsessionruntime.cpp
 src/session/documentsessionmediacandidateloadstate.cpp
+src/session/documentsessionpublicsignals.cpp
 src/session/documentsessionstate.cpp
 src/rendering/staticimage.cpp
 src/decoding/staticimagedecode.cpp
 src/system/systemmemory.cpp
 src/rendering/svgtilesource.cpp
 src/video/videodocumentruntime.cpp
+src/video/videodocumentpublicsignals.cpp
 src/video/videoplaybackurlresolver.cpp

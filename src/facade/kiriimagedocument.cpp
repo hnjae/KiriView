@@ -8,7 +8,6 @@
 #include "document/imagedocumentpublicsignals.h"
 #include "document/imagedocumentruntime.h"
 
-#include <algorithm>
 #include <memory>
 #include <utility>
 
@@ -104,6 +103,7 @@ KiriView::ImageDocumentPublicSignalOperations publicSignalOperations(KiriImageDo
     operations.rightToLeftReadingChanged
         = [&document]() { Q_EMIT document.rightToLeftReadingChanged(); };
     operations.rotationDegreesChanged = [&document]() { Q_EMIT document.rotationDegreesChanged(); };
+    operations.documentScopeChanged = [&document]() { Q_EMIT document.documentScopeChanged(); };
     operations.repaintRequested = [&document]() { Q_EMIT document.repaintRequested(); };
     return operations;
 }
@@ -319,10 +319,4 @@ void KiriImageDocument::updateRenderContext() { m_runtime->updateRenderContext()
 void KiriImageDocument::handleDocumentChanges(const std::vector<ImageDocumentChange> &changes)
 {
     KiriView::ImageDocumentPublicSignalEmitter(publicSignalOperations(*this)).emitChanges(changes);
-    if (std::find(changes.cbegin(), changes.cend(), ImageDocumentChange::DisplayedUrl)
-            != changes.cend()
-        || std::find(changes.cbegin(), changes.cend(), ImageDocumentChange::Status)
-            != changes.cend()) {
-        Q_EMIT documentScopeChanged();
-    }
 }
