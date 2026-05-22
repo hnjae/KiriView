@@ -5,8 +5,7 @@
 #define KIRIVIEW_IMAGEPRESENTATIONVIEWPORTSTATE_H
 
 #include "document/imagedocumenttypes.h"
-#include "presentation/imagerendercontextstate.h"
-#include "presentation/imagezoomstate.h"
+#include "presentation/imagezoomworkflowstate.h"
 #include "rendering/staticimage.h"
 
 #include <QRectF>
@@ -25,7 +24,7 @@ struct ImagePresentationViewportPlan {
 class ImagePresentationViewportState final
 {
 public:
-    using RenderContextProvider = ImageRenderContextState::Provider;
+    using RenderContextProvider = ImageZoomWorkflowState::RenderContextProvider;
 
     explicit ImagePresentationViewportState(RenderContextProvider renderContextProvider = {});
 
@@ -64,7 +63,7 @@ private:
         Always,
     };
 
-    using ZoomStateMutation = std::function<void(ImageZoomState &, qreal devicePixelRatio)>;
+    using ZoomStateMutation = ImageZoomWorkflowState::ZoomStateMutation;
 
     QSize logicalImageSize() const;
     bool setSourceImageSize(const QSize &sourceImageSize);
@@ -78,8 +77,7 @@ private:
     ImagePresentationViewportPlan mutateZoomState(const ZoomStateMutation &mutation,
         TileRefresh tileRefresh = TileRefresh::WhenZoomStateChanges);
 
-    ImageRenderContextState m_renderContextState;
-    ImageZoomState m_zoomState;
+    ImageZoomWorkflowState m_zoomWorkflowState;
     QSize m_sourceImageSize;
     int m_rotationDegrees = 0;
     QRectF m_visibleItemRect;

@@ -21,7 +21,7 @@ namespace KiriView {
 ImageSpreadZoomController::ImageSpreadZoomController(RenderContextProvider renderContextProvider,
     ImagePresentationController &primaryPresentation,
     ImagePresentationController &secondaryPresentation)
-    : m_renderContextState(std::move(renderContextProvider))
+    : m_zoomWorkflowState(std::move(renderContextProvider))
     , m_primaryPresentation(primaryPresentation)
     , m_secondaryPresentation(secondaryPresentation)
 {
@@ -34,7 +34,10 @@ void ImageSpreadZoomController::setVisibleItemRect(const QRectF &visibleItemRect
     m_visibleItemRect = visibleItemRect;
 }
 
-QSizeF ImageSpreadZoomController::displaySize() const { return m_zoomState.displaySize(); }
+QSizeF ImageSpreadZoomController::displaySize() const
+{
+    return m_zoomWorkflowState.zoomState().displaySize();
+}
 
 QSizeF ImageSpreadZoomController::primaryDisplaySize() const
 {
@@ -48,23 +51,30 @@ QSizeF ImageSpreadZoomController::secondaryDisplaySize() const
         m_secondaryPresentation.imageSize(), spreadImageSize(), displaySize());
 }
 
-qreal ImageSpreadZoomController::zoomPercent() const { return m_zoomState.zoomPercent(); }
+qreal ImageSpreadZoomController::zoomPercent() const
+{
+    return m_zoomWorkflowState.zoomState().zoomPercent();
+}
 
-ImageZoomMode ImageSpreadZoomController::zoomMode() const { return m_zoomState.zoomMode(); }
+ImageZoomMode ImageSpreadZoomController::zoomMode() const
+{
+    return m_zoomWorkflowState.zoomState().zoomMode();
+}
 
 qreal ImageSpreadZoomController::maximumManualZoomPercent() const
 {
-    return m_zoomState.maximumManualZoomPercent(devicePixelRatio());
+    return m_zoomWorkflowState.zoomState().maximumManualZoomPercent(devicePixelRatio());
 }
 
 qreal ImageSpreadZoomController::clampedManualZoomPercent(qreal zoomPercent) const
 {
-    return m_zoomState.clampedManualZoomPercent(zoomPercent, devicePixelRatio());
+    return m_zoomWorkflowState.zoomState().clampedManualZoomPercent(
+        zoomPercent, devicePixelRatio());
 }
 
 qreal ImageSpreadZoomController::steppedManualZoomPercent(qreal stepCount) const
 {
-    return m_zoomState.steppedManualZoomPercent(stepCount, devicePixelRatio());
+    return m_zoomWorkflowState.zoomState().steppedManualZoomPercent(stepCount, devicePixelRatio());
 }
 
 QSize ImageSpreadZoomController::spreadImageSize() const
@@ -73,7 +83,7 @@ QSize ImageSpreadZoomController::spreadImageSize() const
         m_primaryPresentation.imageSize(), m_secondaryPresentation.imageSize());
 }
 
-void ImageSpreadZoomController::clearZoomState() { m_zoomState = ImageZoomState {}; }
+void ImageSpreadZoomController::clearZoomState() { m_zoomWorkflowState.clear(); }
 
 ImageZoomChangeSet ImageSpreadZoomController::setZoomPercent(
     qreal zoomPercent, bool rightToLeftReading)
@@ -109,12 +119,12 @@ ImageZoomChangeSet ImageSpreadZoomController::resetZoom(bool rightToLeftReading)
 ImageZoomChangeSet ImageSpreadZoomController::updateFromPrimaryPresentation(bool rightToLeftReading)
 {
     const QSize nextSpreadImageSize = spreadImageSize();
-    const ImageZoomMode activeZoomMode = m_zoomState.imageSize().isEmpty()
-        ? m_primaryPresentation.zoomMode()
-        : m_zoomState.zoomMode();
-    const qreal activeZoomPercent = m_zoomState.imageSize().isEmpty()
+    const ImageZoomState &zoomState = m_zoomWorkflowState.zoomState();
+    const ImageZoomMode activeZoomMode
+        = zoomState.imageSize().isEmpty() ? m_primaryPresentation.zoomMode() : zoomState.zoomMode();
+    const qreal activeZoomPercent = zoomState.imageSize().isEmpty()
         ? m_primaryPresentation.zoomPercent()
-        : m_zoomState.zoomPercent();
+        : zoomState.zoomPercent();
 
     return mutateZoomState(
         [this, nextSpreadImageSize, activeZoomMode, activeZoomPercent](
@@ -161,11 +171,12 @@ void ImageSpreadZoomController::applyZoomToPrimaryPage(ImageZoomMode zoomMode, q
 
 void ImageSpreadZoomController::applyStoredZoomToPrimaryPage()
 {
-    if (m_zoomState.imageSize().isEmpty()) {
+    if (m_zoomWorkflowState.zoomState().imageSize().isEmpty()) {
         return;
     }
 
-    applyZoomToPrimaryPage(m_zoomState.zoomMode(), m_zoomState.zoomPercent());
+    applyZoomToPrimaryPage(
+        m_zoomWorkflowState.zoomState().zoomMode(), m_zoomWorkflowState.zoomState().zoomPercent());
 }
 
 QRectF ImageSpreadZoomController::primaryPageRect(bool rightToLeftReading) const
@@ -182,7 +193,7 @@ QRectF ImageSpreadZoomController::secondaryPageRect(bool rightToLeftReading) con
 
 void ImageSpreadZoomController::applyZoomPercentToPages()
 {
-    const qreal nextZoomPercent = m_zoomState.zoomPercent();
+    const qreal nextZoomPercent = m_zoomWorkflowState.zoomState().zoomPercent();
     m_primaryPresentation.setZoomPercent(nextZoomPercent);
     m_secondaryPresentation.setZoomPercent(nextZoomPercent);
 }
@@ -190,14 +201,8 @@ void ImageSpreadZoomController::applyZoomPercentToPages()
 ImageZoomChangeSet ImageSpreadZoomController::mutateZoomState(
     const ZoomStateMutation &mutation, bool rightToLeftReading)
 {
-    const ImageZoomSnapshot previous = m_zoomState.snapshot();
-    const ImageRenderContextChange renderContextChange = m_renderContextState.refresh();
-
-    mutation(m_zoomState, renderContextChange.current.devicePixelRatio);
-
-    const ImageZoomChangeSet changes
-        = ImageZoomState::changeSet(previous, renderContextChange.previous.devicePixelRatio,
-            m_zoomState.snapshot(), renderContextChange.current.devicePixelRatio, false);
+    const ImageZoomWorkflowMutationResult result = m_zoomWorkflowState.mutate(mutation);
+    const ImageZoomChangeSet changes = result.changes;
     if (!hasZoomStateChange(changes)) {
         return changes;
     }
@@ -209,6 +214,6 @@ ImageZoomChangeSet ImageSpreadZoomController::mutateZoomState(
 
 qreal ImageSpreadZoomController::devicePixelRatio() const
 {
-    return m_renderContextState.devicePixelRatio();
+    return m_zoomWorkflowState.devicePixelRatio();
 }
 }

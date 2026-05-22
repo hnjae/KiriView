@@ -12,27 +12,39 @@
 namespace KiriView {
 ImagePresentationViewportState::ImagePresentationViewportState(
     RenderContextProvider renderContextProvider)
-    : m_renderContextState(std::move(renderContextProvider))
+    : m_zoomWorkflowState(std::move(renderContextProvider))
 {
 }
 
 QSize ImagePresentationViewportState::imageSize() const { return logicalImageSize(); }
 
-QSizeF ImagePresentationViewportState::viewportSize() const { return m_zoomState.viewportSize(); }
+QSizeF ImagePresentationViewportState::viewportSize() const
+{
+    return m_zoomWorkflowState.zoomState().viewportSize();
+}
 
-QSizeF ImagePresentationViewportState::displaySize() const { return m_zoomState.displaySize(); }
+QSizeF ImagePresentationViewportState::displaySize() const
+{
+    return m_zoomWorkflowState.zoomState().displaySize();
+}
 
 const QRectF &ImagePresentationViewportState::visibleItemRect() const { return m_visibleItemRect; }
 
-qreal ImagePresentationViewportState::zoomPercent() const { return m_zoomState.zoomPercent(); }
+qreal ImagePresentationViewportState::zoomPercent() const
+{
+    return m_zoomWorkflowState.zoomState().zoomPercent();
+}
 
-ImageZoomMode ImagePresentationViewportState::zoomMode() const { return m_zoomState.zoomMode(); }
+ImageZoomMode ImagePresentationViewportState::zoomMode() const
+{
+    return m_zoomWorkflowState.zoomState().zoomMode();
+}
 
 int ImagePresentationViewportState::rotationDegrees() const { return m_rotationDegrees; }
 
 ImageDocumentRenderContext ImagePresentationViewportState::renderContext() const
 {
-    return m_renderContextState.current();
+    return m_zoomWorkflowState.renderContext();
 }
 
 ImageFirstDisplayDecodeContext ImagePresentationViewportState::firstDisplayDecodeContext() const
@@ -43,17 +55,20 @@ ImageFirstDisplayDecodeContext ImagePresentationViewportState::firstDisplayDecod
 
 qreal ImagePresentationViewportState::maximumManualZoomPercent() const
 {
-    return m_zoomState.maximumManualZoomPercent(renderContext().devicePixelRatio);
+    return m_zoomWorkflowState.zoomState().maximumManualZoomPercent(
+        renderContext().devicePixelRatio);
 }
 
 qreal ImagePresentationViewportState::clampedManualZoomPercent(qreal zoomPercent) const
 {
-    return m_zoomState.clampedManualZoomPercent(zoomPercent, renderContext().devicePixelRatio);
+    return m_zoomWorkflowState.zoomState().clampedManualZoomPercent(
+        zoomPercent, renderContext().devicePixelRatio);
 }
 
 qreal ImagePresentationViewportState::steppedManualZoomPercent(qreal stepCount) const
 {
-    return m_zoomState.steppedManualZoomPercent(stepCount, renderContext().devicePixelRatio);
+    return m_zoomWorkflowState.zoomState().steppedManualZoomPercent(
+        stepCount, renderContext().devicePixelRatio);
 }
 
 ImagePresentationViewportPlan ImagePresentationViewportState::setViewportSize(
@@ -161,7 +176,7 @@ ImagePresentationViewportPlan ImagePresentationViewportState::prepareFailedConta
     });
 }
 
-void ImagePresentationViewportState::clearContainer() { m_zoomState.clearContainer(); }
+void ImagePresentationViewportState::clearContainer() { m_zoomWorkflowState.clearContainer(); }
 
 ImagePresentationViewportPlan ImagePresentationViewportState::setDisplayedImageSize(
     const QSize &imageSize)
@@ -230,17 +245,11 @@ ImagePresentationViewportPlan ImagePresentationViewportState::applyGeometryImage
 ImagePresentationViewportPlan ImagePresentationViewportState::mutateZoomState(
     const ZoomStateMutation &mutation, TileRefresh tileRefresh)
 {
-    const ImageRenderContextChange renderContextChange = m_renderContextState.refresh();
-    const ImageZoomSnapshot previous = m_zoomState.snapshot();
-    mutation(m_zoomState, renderContextChange.current.devicePixelRatio);
-
-    const ImageZoomSnapshot current = m_zoomState.snapshot();
-    const ImageZoomChangeSet changes = ImageZoomState::changeSet(previous,
-        renderContextChange.previous.devicePixelRatio, current,
-        renderContextChange.current.devicePixelRatio, tileRefresh == TileRefresh::Always);
+    const ImageZoomWorkflowMutationResult result
+        = m_zoomWorkflowState.mutate(mutation, tileRefresh == TileRefresh::Always);
     return ImagePresentationViewportPlan {
-        imageDocumentPresentationZoomNotifications(changes),
-        changes.scheduleVisibleTileDecode,
+        imageDocumentPresentationZoomNotifications(result.changes),
+        result.changes.scheduleVisibleTileDecode,
     };
 }
 }

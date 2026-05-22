@@ -133,6 +133,7 @@ src/presentation/imageviewportinteraction.cpp
 src/presentation/imageviewportscanstate.cpp
 src/presentation/imageviewrendercontextbinding.cpp
 src/presentation/imagezoomstate.cpp
+src/presentation/imagezoomworkflowstate.cpp
 src/application/applicationshortcutpolicy.cpp
 src/application/kiriviewapplicationactions.cpp
 src/system/powerprofilemonitorstate.cpp

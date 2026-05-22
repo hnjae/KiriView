@@ -5,8 +5,7 @@
 #define KIRIVIEW_IMAGESPREADZOOMCONTROLLER_H
 
 #include "document/imagedocumenttypes.h"
-#include "presentation/imagerendercontextstate.h"
-#include "presentation/imagezoomstate.h"
+#include "presentation/imagezoomworkflowstate.h"
 
 #include <QRectF>
 #include <QSize>
@@ -20,7 +19,7 @@ class ImagePresentationController;
 class ImageSpreadZoomController final
 {
 public:
-    using RenderContextProvider = std::function<ImageDocumentRenderContext()>;
+    using RenderContextProvider = ImageZoomWorkflowState::RenderContextProvider;
 
     ImageSpreadZoomController(RenderContextProvider renderContextProvider,
         ImagePresentationController &primaryPresentation,
@@ -49,7 +48,7 @@ public:
     void applyStoredZoomToPrimaryPage();
 
 private:
-    using ZoomStateMutation = std::function<void(ImageZoomState &, qreal devicePixelRatio)>;
+    using ZoomStateMutation = ImageZoomWorkflowState::ZoomStateMutation;
 
     QRectF primaryPageRect(bool rightToLeftReading) const;
     QRectF secondaryPageRect(bool rightToLeftReading) const;
@@ -57,10 +56,9 @@ private:
     ImageZoomChangeSet mutateZoomState(const ZoomStateMutation &mutation, bool rightToLeftReading);
     qreal devicePixelRatio() const;
 
-    ImageRenderContextState m_renderContextState;
+    ImageZoomWorkflowState m_zoomWorkflowState;
     ImagePresentationController &m_primaryPresentation;
     ImagePresentationController &m_secondaryPresentation;
-    ImageZoomState m_zoomState;
     QRectF m_visibleItemRect;
 };
 }
