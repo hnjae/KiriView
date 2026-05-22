@@ -104,27 +104,4 @@ ImageTileDecodePlan imageTileDecodePlan(
     return plan;
 }
 
-ImageTileDecodeSchedulePlan imageTileDecodeSchedulePlan(ImageTileDecodeState &state,
-    const std::shared_ptr<DisplayedImageSurface> &displayedSurface, const QSizeF &displaySize,
-    const QRectF &visibleItemRect, const ImageDocumentRenderContext &context, int rotationDegrees)
-{
-    const ImageTileDecodeScheduleState schedule = state.beginSchedule(displayedSurface);
-    ImageTileDecodePlan candidatePlan = imageTileDecodePlan(displayedSurface, displaySize,
-        visibleItemRect, context, rotationDegrees, schedule.exclusions);
-    if (candidatePlan.isEmpty()) {
-        return {};
-    }
-
-    std::vector<TileRequest> requests
-        = state.commitScheduleRequests(schedule, std::move(candidatePlan.requests));
-    if (requests.empty()) {
-        return {};
-    }
-
-    return ImageTileDecodeSchedulePlan {
-        schedule.generation,
-        std::move(candidatePlan.source),
-        std::move(requests),
-    };
-}
 }

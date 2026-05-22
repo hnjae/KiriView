@@ -6,7 +6,7 @@
 
 #include "document/imagedocumenttypes.h"
 #include "imagesurface.h"
-#include "imagetiledecodestate.h"
+#include "imagetiledecoderuntime.h"
 
 #include <QRectF>
 #include <QSizeF>
@@ -38,7 +38,7 @@ private:
     QObject *m_context = nullptr;
     TileDecodedCallback m_tileDecoded;
     std::shared_ptr<DecodeLifetime> m_decodeLifetime;
-    ImageTileDecodeState m_decodeState;
+    ImageTileDecodeRuntime m_runtime;
 };
 }
 

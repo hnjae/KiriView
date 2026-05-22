@@ -4,7 +4,6 @@
 #include "imagetiledecodescheduler.h"
 
 #include "async/imageasyncworker.h"
-#include "imagetiledecodeplan.h"
 
 #include <QString>
 #include <memory>
@@ -25,14 +24,14 @@ ImageTileDecodeScheduler::ImageTileDecodeScheduler(
 
 ImageTileDecodeScheduler::~ImageTileDecodeScheduler() { m_decodeLifetime.reset(); }
 
-void ImageTileDecodeScheduler::invalidate() { m_decodeState.invalidate(); }
+void ImageTileDecodeScheduler::invalidate() { m_runtime.invalidate(); }
 
 void ImageTileDecodeScheduler::schedule(
     const std::shared_ptr<DisplayedImageSurface> &displayedSurface, const QSizeF &displaySize,
     const QRectF &visibleItemRect, const ImageDocumentRenderContext &context, int rotationDegrees)
 {
-    const ImageTileDecodeSchedulePlan plan = imageTileDecodeSchedulePlan(
-        m_decodeState, displayedSurface, displaySize, visibleItemRect, context, rotationDegrees);
+    const ImageTileDecodeRuntimePlan plan = m_runtime.schedule(
+        displayedSurface, displaySize, visibleItemRect, context, rotationDegrees);
     if (plan.isEmpty()) {
         return;
     }
@@ -63,12 +62,11 @@ void ImageTileDecodeScheduler::schedule(
 void ImageTileDecodeScheduler::finishTileDecode(
     quint64 generation, TileKey key, std::optional<DecodedTile> tile)
 {
-    if (!m_decodeState.finish(generation, key)) {
+    if (!m_runtime.acceptFinishedTileDecode(generation, key, tile.has_value())) {
         return;
     }
 
     if (!tile.has_value()) {
-        m_decodeState.fail(key);
         return;
     }
 

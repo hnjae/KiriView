@@ -82,6 +82,7 @@ src/async/imageiojobs.cpp
 src/location/imagelocation.cpp
 src/presentation/imagerectmapping.cpp
 src/rendering/imagetile.cpp
+src/rendering/imagetiledecoderuntime.cpp
 src/rendering/imagetilegeometrybridge.cpp
 src/rendering/imagetiledecodestate.cpp
 src/rendering/imagetiledecodeplan.cpp
