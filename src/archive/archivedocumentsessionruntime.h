@@ -42,7 +42,6 @@ private:
 
     QObject *m_context = nullptr;
     ArchiveDocumentSessionFactory m_sessionFactory;
-    ArchiveDocumentLocation m_archiveDocument;
     std::shared_ptr<ArchiveDocumentSessionRunner> m_runner;
     ArchiveDocumentCandidateLoadState m_candidateLoadState;
     ImageAsyncTicket m_generation;
