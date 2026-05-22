@@ -62,6 +62,8 @@ The floating playback panel must not reserve page layout height and must remain 
 
 For the MVP, the floating playback panel remains visible while video mode is active. Auto-hide is out of scope unless explicitly specified later.
 
+In Flatpak, KiriView exposes the host PipeWire runtime socket for Qt Multimedia video playback initialization while keeping PulseAudio-compatible audio output available.
+
 During timeline dragging, the user's drag position remains visually stable instead of being overwritten by ordinary playback position updates.
 
 Unknown duration, invalid duration, and non-seekable media produce a stable disabled timeline state rather than invalid or flickering values.
