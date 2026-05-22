@@ -10,16 +10,13 @@
 #include "navigation/imagecandidaterepository.h"
 #include "predecodedimage.h"
 #include "predecodeloadcontroller.h"
-#include "predecodeschedulestate.h"
+#include "predecodescheduleruntime.h"
 #include "rendering/staticimage.h"
 #include "system/powersaverprovider.h"
 
-#include <QElapsedTimer>
 #include <QObject>
-#include <QTimer>
 #include <QUrl>
 #include <cstddef>
-#include <memory>
 #include <optional>
 #include <vector>
 
@@ -43,26 +40,14 @@ public:
     std::optional<PredecodedImage> findPredecodedImage(const QUrl &url) const;
 
 private:
-    struct WindowLoadContext;
-
-    void dispatchSchedulePlan(const PredecodeScheduleRuntimePlan &plan);
-    void dispatchScheduleOperation(const PredecodeScheduleOperation &operation);
-    void startDebouncedPredecode();
-    void scheduleSettledNeutralPredecode();
-    void scheduleAdjacentImagePredecode(const Context &context, quint64 generation);
+    void scheduleAdjacentImagePredecode(const PredecodePendingSchedule &schedule);
     void startPredecodeImageLoads(
-        const PredecodeWindowPlan &plan, const WindowLoadContext &context);
-    void cancelBackgroundRuntime();
-    qint64 currentMonotonicMsec() const;
+        const PredecodeWindowPlan &plan, const PredecodePendingSchedule &schedule);
 
     ImageIoJob m_listerJob;
     ImageCandidateRepository m_candidateRepository;
     PredecodeLoadController m_loadController;
-    std::unique_ptr<PowerSaverStateMonitor> m_powerSaverMonitor;
-    PredecodeScheduleState m_scheduleState;
-    QTimer m_debounceTimer;
-    QTimer m_neutralTimer;
-    QElapsedTimer m_monotonicClock;
+    PredecodeScheduleRuntime m_scheduleRuntime;
 };
 }
 

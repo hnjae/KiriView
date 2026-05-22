@@ -145,6 +145,7 @@ src/predecode/predecodedisplayedhistory.cpp
 src/predecode/predecodeloadcontroller.cpp
 src/predecode/predecodeloadstate.cpp
 src/predecode/predecodepolicy.cpp
+src/predecode/predecodescheduleruntime.cpp
 src/predecode/predecodeschedulestate.cpp
 src/predecode/predecodewindowplan.cpp
 src/decoding/qimagereaderdecoder.cpp

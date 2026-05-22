@@ -8,12 +8,9 @@
 
 #include <QThread>
 #include <optional>
-#include <type_traits>
 #include <utility>
 
 namespace {
-template <typename> inline constexpr bool alwaysFalse = false;
-
 bool validMediaPredecodeContext(const KiriView::MediaPredecodeCoordinator::Context &context)
 {
     return KiriView::normalizedValidImageUrl(context.currentUrl).has_value();
@@ -30,102 +27,37 @@ MediaPredecodeCoordinator::MediaPredecodeCoordinator(QObject *parent,
     ImageDecodeDependencies decodeDependencies, PowerSaverProvider powerSaverProvider)
     : QObject(parent)
     , m_loadController(this, std::move(decodeDependencies))
+    , m_scheduleRuntime(
+          this, m_loadController,
+          [this](const PredecodePendingSchedule &schedule) { startPredecodeWindow(schedule); },
+          std::move(powerSaverProvider))
 {
-    m_monotonicClock.start();
-    m_debounceTimer.setSingleShot(true);
-    m_debounceTimer.setInterval(predecodeDebounceMsec());
-    m_neutralTimer.setSingleShot(true);
-    m_neutralTimer.setInterval(predecodeNeutralRefreshMsec());
-
-    QObject::connect(
-        &m_debounceTimer, &QTimer::timeout, this, [this]() { startDebouncedPredecode(); });
-    QObject::connect(
-        &m_neutralTimer, &QTimer::timeout, this, [this]() { scheduleSettledNeutralPredecode(); });
-
-    powerSaverProvider = powerSaverProviderWithDefault(std::move(powerSaverProvider));
-    if (powerSaverProvider.monitor) {
-        m_powerSaverMonitor = powerSaverProvider.monitor(
-            this, [this](bool enabled) { setPowerSaverEnabled(enabled); });
-    }
-    if (m_powerSaverMonitor != nullptr) {
-        setPowerSaverEnabled(m_powerSaverMonitor->powerSaverEnabled());
-    }
 }
 
 void MediaPredecodeCoordinator::schedule(Context context)
 {
     if (!validMediaPredecodeContext(context)) {
-        dispatchSchedulePlan(
-            m_scheduleState.schedule(PredecodeScheduleContext {}, currentMonotonicMsec()));
+        m_scheduleRuntime.schedule(PredecodeScheduleContext {});
         return;
     }
 
     m_currentCandidates = context.candidates;
-    dispatchSchedulePlan(
-        m_scheduleState.schedule(scheduleContext(context), currentMonotonicMsec()));
+    m_scheduleRuntime.schedule(scheduleContext(context));
 }
 
 void MediaPredecodeCoordinator::setPowerSaverEnabled(bool enabled)
 {
-    dispatchSchedulePlan(m_scheduleState.setPowerSaverEnabled(enabled, currentMonotonicMsec()));
+    m_scheduleRuntime.setPowerSaverEnabled(enabled);
 }
 
 bool MediaPredecodeCoordinator::powerSaverEnabled() const
 {
-    return m_scheduleState.powerSaverEnabled();
-}
-
-void MediaPredecodeCoordinator::dispatchSchedulePlan(const PredecodeScheduleRuntimePlan &plan)
-{
-    for (const PredecodeScheduleOperation &operation : plan) {
-        dispatchScheduleOperation(operation);
-    }
-}
-
-void MediaPredecodeCoordinator::dispatchScheduleOperation(
-    const PredecodeScheduleOperation &operation)
-{
-    std::visit(
-        [this](const auto &payload) {
-            using Operation = std::decay_t<decltype(payload)>;
-            if constexpr (std::is_same_v<Operation, CancelBackgroundPredecodeOperation>) {
-                cancelBackgroundRuntime();
-            } else if constexpr (std::is_same_v<Operation,
-                                     CacheDisplayedPredecodeContextOperation>) {
-                m_loadController.cacheDisplayedImages(payload.images);
-            } else if constexpr (std::is_same_v<Operation, ClearPredecodeWindowUrlsOperation>) {
-                m_loadController.clearWindowUrls();
-            } else if constexpr (std::is_same_v<Operation, StartPredecodeDebounceOperation>) {
-                m_debounceTimer.start();
-                m_neutralTimer.start();
-            } else if constexpr (std::is_same_v<Operation, StartAdjacentPredecodeOperation>) {
-                startPredecodeWindow(payload.schedule);
-            } else {
-                static_assert(alwaysFalse<Operation>, "Unhandled predecode schedule operation");
-            }
-        },
-        operation);
-}
-
-void MediaPredecodeCoordinator::startDebouncedPredecode()
-{
-    const std::optional<PredecodePendingSchedule> pendingSchedule
-        = m_scheduleState.pendingDebouncedSchedule();
-    if (!pendingSchedule.has_value()) {
-        return;
-    }
-
-    startPredecodeWindow(*pendingSchedule);
-}
-
-void MediaPredecodeCoordinator::scheduleSettledNeutralPredecode()
-{
-    dispatchSchedulePlan(m_scheduleState.settlePendingScheduleToNeutral());
+    return m_scheduleRuntime.powerSaverEnabled();
 }
 
 void MediaPredecodeCoordinator::startPredecodeWindow(const PredecodePendingSchedule &schedule)
 {
-    if (!m_scheduleState.accepts(schedule.generation)) {
+    if (!m_scheduleRuntime.accepts(schedule.generation)) {
         return;
     }
 
@@ -140,13 +72,6 @@ void MediaPredecodeCoordinator::startPredecodeWindow(const PredecodePendingSched
         schedule.generation,
         plan.parallelLimit,
     });
-}
-
-void MediaPredecodeCoordinator::cancelBackgroundRuntime()
-{
-    m_debounceTimer.stop();
-    m_neutralTimer.stop();
-    m_loadController.cancelBackgroundWork();
 }
 
 PredecodeScheduleContext MediaPredecodeCoordinator::scheduleContext(const Context &context) const
@@ -165,21 +90,15 @@ PredecodePolicyInput MediaPredecodeCoordinator::policyInput() const
 {
     return PredecodePolicyInput {
         PredecodeDocumentKind::Regular,
-        m_scheduleState.momentumMode(),
-        m_scheduleState.powerSaverEnabled(),
+        m_scheduleRuntime.momentumMode(),
+        m_scheduleRuntime.powerSaverEnabled(),
         QThread::idealThreadCount(),
     };
 }
 
-qint64 MediaPredecodeCoordinator::currentMonotonicMsec() const
-{
-    return m_monotonicClock.isValid() ? m_monotonicClock.elapsed() : 0;
-}
-
 void MediaPredecodeCoordinator::cancel()
 {
-    cancelBackgroundRuntime();
-    m_scheduleState.cancel();
+    m_scheduleRuntime.cancel();
     m_currentCandidates.clear();
 }
 
