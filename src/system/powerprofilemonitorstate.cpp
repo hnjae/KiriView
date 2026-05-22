@@ -3,69 +3,42 @@
 
 #include "powerprofilemonitorstate.h"
 
-#include <QDBusVariant>
-#include <QLatin1String>
-#include <QVariant>
+namespace KiriView {
+PowerProfileMonitorEvent PowerProfileMonitorEvent::ignore() { return {}; }
 
-namespace {
-constexpr auto powerProfileMonitorInterface = "org.freedesktop.portal.PowerProfileMonitor";
-constexpr auto powerSaverEnabledProperty = "power-saver-enabled";
+PowerProfileMonitorEvent PowerProfileMonitorEvent::powerSaverValue(bool enabled)
+{
+    return PowerProfileMonitorEvent { PowerProfileMonitorEventKind::PowerSaverValue, enabled };
 }
 
-namespace KiriView {
-std::optional<bool> powerSaverEnabledFromPortalValue(QVariant value)
+PowerProfileMonitorEvent PowerProfileMonitorEvent::powerSaverInvalidated()
 {
-    if (value.canConvert<QDBusVariant>()) {
-        value = value.value<QDBusVariant>().variant();
-    }
-    if (!value.canConvert<bool>()) {
-        return std::nullopt;
-    }
-
-    return value.toBool();
+    return PowerProfileMonitorEvent { PowerProfileMonitorEventKind::PowerSaverInvalidated, false };
 }
 
 bool PowerProfileMonitorState::powerSaverEnabled() const { return m_powerSaverEnabled; }
 
-PowerProfileMonitorTransition PowerProfileMonitorState::applyPowerSaverValue(bool enabled)
+PowerProfileMonitorPlan PowerProfileMonitorState::applyEvent(PowerProfileMonitorEvent event)
+{
+    switch (event.kind) {
+    case PowerProfileMonitorEventKind::Ignore:
+        return {};
+    case PowerProfileMonitorEventKind::PowerSaverValue:
+        return applyPowerSaverValue(event.powerSaverEnabled);
+    case PowerProfileMonitorEventKind::PowerSaverInvalidated:
+        return PowerProfileMonitorPlan { false, true };
+    }
+
+    return {};
+}
+
+PowerProfileMonitorPlan PowerProfileMonitorState::applyPowerSaverValue(bool enabled)
 {
     if (m_powerSaverEnabled == enabled) {
         return {};
     }
 
     m_powerSaverEnabled = enabled;
-    return PowerProfileMonitorTransition { true, false };
-}
-
-PowerProfileMonitorTransition PowerProfileMonitorState::applyRefreshReplyArguments(
-    const QVariantList &arguments)
-{
-    if (arguments.isEmpty()) {
-        return applyPowerSaverValue(false);
-    }
-
-    return applyPowerSaverValue(
-        powerSaverEnabledFromPortalValue(arguments.first()).value_or(false));
-}
-
-PowerProfileMonitorTransition PowerProfileMonitorState::applyPropertiesChanged(
-    const QString &interfaceName, const QVariantMap &changedProperties,
-    const QStringList &invalidatedProperties)
-{
-    if (interfaceName != QLatin1String(powerProfileMonitorInterface)) {
-        return {};
-    }
-
-    const auto changedProperty = changedProperties.constFind(powerSaverEnabledProperty);
-    if (changedProperty != changedProperties.cend()) {
-        return applyPowerSaverValue(
-            powerSaverEnabledFromPortalValue(*changedProperty).value_or(false));
-    }
-
-    if (invalidatedProperties.contains(QLatin1String(powerSaverEnabledProperty))) {
-        return PowerProfileMonitorTransition { false, true };
-    }
-
-    return {};
+    return PowerProfileMonitorPlan { true, false };
 }
 }

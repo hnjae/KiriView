@@ -3,121 +3,65 @@
 
 #include "system/powerprofilemonitorstate.h"
 
-#include <QDBusVariant>
 #include <QObject>
 #include <QTest>
-#include <QVariant>
-#include <QVariantList>
-#include <QVariantMap>
-#include <optional>
 
 class TestPowerProfileMonitorState : public QObject
 {
     Q_OBJECT
 
 private Q_SLOTS:
-    void portalValuesUnwrapDBusVariants();
-    void powerSaverValueOwnsCanonicalStateChanges();
-    void propertiesChangedAppliesPowerSaverProperty();
-    void propertiesChangedRequestsRefreshForInvalidation();
-    void refreshReplyFallsBackToDisabledWhenUnreadable();
+    void powerSaverValueEventOwnsCanonicalStateChanges();
+    void invalidationEventRequestsRefreshWithoutChangingState();
+    void ignoredEventLeavesStateUnchanged();
 };
 
-void TestPowerProfileMonitorState::portalValuesUnwrapDBusVariants()
-{
-    std::optional<bool> value = KiriView::powerSaverEnabledFromPortalValue(QVariant(true));
-    QVERIFY(value.has_value());
-    QCOMPARE(*value, true);
-
-    value = KiriView::powerSaverEnabledFromPortalValue(
-        QVariant::fromValue(QDBusVariant(QVariant(false))));
-    QVERIFY(value.has_value());
-    QCOMPARE(*value, false);
-
-    QVERIFY(!KiriView::powerSaverEnabledFromPortalValue(QVariant(QVariantMap())).has_value());
-}
-
-void TestPowerProfileMonitorState::powerSaverValueOwnsCanonicalStateChanges()
+void TestPowerProfileMonitorState::powerSaverValueEventOwnsCanonicalStateChanges()
 {
     KiriView::PowerProfileMonitorState state;
     QVERIFY(!state.powerSaverEnabled());
 
-    KiriView::PowerProfileMonitorTransition transition = state.applyPowerSaverValue(true);
-    QVERIFY(transition.powerSaverChanged);
-    QVERIFY(!transition.refreshRequested);
+    KiriView::PowerProfileMonitorPlan plan
+        = state.applyEvent(KiriView::PowerProfileMonitorEvent::powerSaverValue(true));
+    QVERIFY(plan.powerSaverChanged);
+    QVERIFY(!plan.refreshPowerSaverEnabled);
     QVERIFY(state.powerSaverEnabled());
 
-    transition = state.applyPowerSaverValue(true);
-    QVERIFY(!transition.powerSaverChanged);
-    QVERIFY(!transition.refreshRequested);
+    plan = state.applyEvent(KiriView::PowerProfileMonitorEvent::powerSaverValue(true));
+    QVERIFY(!plan.powerSaverChanged);
+    QVERIFY(!plan.refreshPowerSaverEnabled);
     QVERIFY(state.powerSaverEnabled());
 
-    transition = state.applyPowerSaverValue(false);
-    QVERIFY(transition.powerSaverChanged);
+    plan = state.applyEvent(KiriView::PowerProfileMonitorEvent::powerSaverValue(false));
+    QVERIFY(plan.powerSaverChanged);
     QVERIFY(!state.powerSaverEnabled());
 }
 
-void TestPowerProfileMonitorState::propertiesChangedAppliesPowerSaverProperty()
+void TestPowerProfileMonitorState::invalidationEventRequestsRefreshWithoutChangingState()
 {
     KiriView::PowerProfileMonitorState state;
-    QVariantMap changedProperties;
-    changedProperties.insert(
-        QStringLiteral("power-saver-enabled"), QVariant::fromValue(QDBusVariant(QVariant(true))));
+    state.applyEvent(KiriView::PowerProfileMonitorEvent::powerSaverValue(true));
 
-    KiriView::PowerProfileMonitorTransition transition = state.applyPropertiesChanged(
-        QStringLiteral("org.freedesktop.portal.PowerProfileMonitor"), changedProperties, {});
-    QVERIFY(transition.powerSaverChanged);
-    QVERIFY(!transition.refreshRequested);
-    QVERIFY(state.powerSaverEnabled());
+    const KiriView::PowerProfileMonitorPlan plan
+        = state.applyEvent(KiriView::PowerProfileMonitorEvent::powerSaverInvalidated());
 
-    changedProperties.insert(QStringLiteral("power-saver-enabled"), QVariantMap());
-    transition = state.applyPropertiesChanged(
-        QStringLiteral("org.freedesktop.portal.PowerProfileMonitor"), changedProperties, {});
-    QVERIFY(transition.powerSaverChanged);
-    QVERIFY(!state.powerSaverEnabled());
-
-    changedProperties.insert(QStringLiteral("power-saver-enabled"), true);
-    transition = state.applyPropertiesChanged(
-        QStringLiteral("org.freedesktop.portal.Other"), changedProperties, {});
-    QVERIFY(!transition.powerSaverChanged);
-    QVERIFY(!transition.refreshRequested);
-    QVERIFY(!state.powerSaverEnabled());
-}
-
-void TestPowerProfileMonitorState::propertiesChangedRequestsRefreshForInvalidation()
-{
-    KiriView::PowerProfileMonitorState state;
-    KiriView::PowerProfileMonitorTransition transition
-        = state.applyPropertiesChanged(QStringLiteral("org.freedesktop.portal.PowerProfileMonitor"),
-            {}, { QStringLiteral("power-saver-enabled") });
-    QVERIFY(!transition.powerSaverChanged);
-    QVERIFY(transition.refreshRequested);
-
-    QVariantMap changedProperties;
-    changedProperties.insert(QStringLiteral("power-saver-enabled"), true);
-    transition
-        = state.applyPropertiesChanged(QStringLiteral("org.freedesktop.portal.PowerProfileMonitor"),
-            changedProperties, { QStringLiteral("power-saver-enabled") });
-    QVERIFY(transition.powerSaverChanged);
-    QVERIFY(!transition.refreshRequested);
+    QVERIFY(!plan.powerSaverChanged);
+    QVERIFY(plan.refreshPowerSaverEnabled);
     QVERIFY(state.powerSaverEnabled());
 }
 
-void TestPowerProfileMonitorState::refreshReplyFallsBackToDisabledWhenUnreadable()
+void TestPowerProfileMonitorState::ignoredEventLeavesStateUnchanged()
 {
     KiriView::PowerProfileMonitorState state;
-    QVERIFY(state.applyRefreshReplyArguments(QVariantList { true }).powerSaverChanged);
+    state.applyEvent(KiriView::PowerProfileMonitorEvent::powerSaverValue(true));
     QVERIFY(state.powerSaverEnabled());
 
-    KiriView::PowerProfileMonitorTransition transition = state.applyRefreshReplyArguments({});
-    QVERIFY(transition.powerSaverChanged);
-    QVERIFY(!transition.refreshRequested);
-    QVERIFY(!state.powerSaverEnabled());
+    const KiriView::PowerProfileMonitorPlan plan
+        = state.applyEvent(KiriView::PowerProfileMonitorEvent::ignore());
 
-    state.applyPowerSaverValue(true);
-    transition = state.applyRefreshReplyArguments(QVariantList { QVariantMap() });
-    QVERIFY(transition.powerSaverChanged);
-    QVERIFY(!state.powerSaverEnabled());
+    QVERIFY(!plan.powerSaverChanged);
+    QVERIFY(!plan.refreshPowerSaverEnabled);
+    QVERIFY(state.powerSaverEnabled());
 }
 
 QTEST_GUILESS_MAIN(TestPowerProfileMonitorState)

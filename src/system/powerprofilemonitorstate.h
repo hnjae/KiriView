@@ -4,16 +4,25 @@
 #ifndef KIRIVIEW_POWERPROFILEMONITORSTATE_H
 #define KIRIVIEW_POWERPROFILEMONITORSTATE_H
 
-#include <QString>
-#include <QStringList>
-#include <QVariantList>
-#include <QVariantMap>
-#include <optional>
-
 namespace KiriView {
-struct PowerProfileMonitorTransition {
+enum class PowerProfileMonitorEventKind {
+    Ignore,
+    PowerSaverValue,
+    PowerSaverInvalidated,
+};
+
+struct PowerProfileMonitorEvent {
+    PowerProfileMonitorEventKind kind = PowerProfileMonitorEventKind::Ignore;
+    bool powerSaverEnabled = false;
+
+    static PowerProfileMonitorEvent ignore();
+    static PowerProfileMonitorEvent powerSaverValue(bool enabled);
+    static PowerProfileMonitorEvent powerSaverInvalidated();
+};
+
+struct PowerProfileMonitorPlan {
     bool powerSaverChanged = false;
-    bool refreshRequested = false;
+    bool refreshPowerSaverEnabled = false;
 };
 
 class PowerProfileMonitorState final
@@ -21,16 +30,13 @@ class PowerProfileMonitorState final
 public:
     bool powerSaverEnabled() const;
 
-    PowerProfileMonitorTransition applyPowerSaverValue(bool enabled);
-    PowerProfileMonitorTransition applyRefreshReplyArguments(const QVariantList &arguments);
-    PowerProfileMonitorTransition applyPropertiesChanged(const QString &interfaceName,
-        const QVariantMap &changedProperties, const QStringList &invalidatedProperties);
+    PowerProfileMonitorPlan applyEvent(PowerProfileMonitorEvent event);
 
 private:
+    PowerProfileMonitorPlan applyPowerSaverValue(bool enabled);
+
     bool m_powerSaverEnabled = false;
 };
-
-std::optional<bool> powerSaverEnabledFromPortalValue(QVariant value);
 }
 
 #endif

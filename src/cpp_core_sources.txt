@@ -137,6 +137,7 @@ src/presentation/imagezoomworkflowstate.cpp
 src/application/applicationshortcutpolicy.cpp
 src/application/kiriviewapplicationactions.cpp
 src/system/powerprofilemonitorstate.cpp
+src/system/powerprofileportalevents.cpp
 src/system/powerprofilemonitor.cpp
 src/system/powersaverprovider.cpp
 src/predecode/predecodeactivedecodestore.cpp

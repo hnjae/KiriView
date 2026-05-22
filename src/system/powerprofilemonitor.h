@@ -41,7 +41,7 @@ private Q_SLOTS:
 
 private:
     void refreshPowerSaverEnabled();
-    void applyTransition(PowerProfileMonitorTransition transition);
+    void applyPlan(PowerProfileMonitorPlan plan);
 
     PowerSaverChangedCallback m_callback;
     PowerProfileMonitorRuntime m_runtime;

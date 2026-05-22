@@ -4,6 +4,7 @@
 #include "powerprofilemonitor.h"
 
 #include "async/imagecallback.h"
+#include "powerprofileportalevents.h"
 
 #include <QDBusConnection>
 #include <QDBusMessage>
@@ -63,28 +64,24 @@ bool PowerProfileMonitor::powerSaverEnabled() const { return m_state.powerSaverE
 void PowerProfileMonitor::handlePropertiesChanged(const QString &interfaceName,
     const QVariantMap &changedProperties, const QStringList &invalidatedProperties)
 {
-    const PowerProfileMonitorTransition transition
-        = m_state.applyPropertiesChanged(interfaceName, changedProperties, invalidatedProperties);
-    applyTransition(transition);
-    if (transition.refreshRequested) {
+    const PowerProfileMonitorPlan plan
+        = m_state.applyEvent(powerProfileMonitorEventFromPropertiesChanged(
+            interfaceName, changedProperties, invalidatedProperties));
+    applyPlan(plan);
+    if (plan.refreshPowerSaverEnabled) {
         refreshPowerSaverEnabled();
     }
 }
 
 void PowerProfileMonitor::refreshPowerSaverEnabled()
 {
-    const QVariantList arguments = m_runtime.readPowerSaverEnabled();
-    if (arguments.isEmpty()) {
-        applyTransition(m_state.applyRefreshReplyArguments({}));
-        return;
-    }
-
-    applyTransition(m_state.applyRefreshReplyArguments(arguments));
+    applyPlan(m_state.applyEvent(
+        powerProfileMonitorEventFromRefreshReply(m_runtime.readPowerSaverEnabled())));
 }
 
-void PowerProfileMonitor::applyTransition(PowerProfileMonitorTransition transition)
+void PowerProfileMonitor::applyPlan(PowerProfileMonitorPlan plan)
 {
-    if (!transition.powerSaverChanged) {
+    if (!plan.powerSaverChanged) {
         return;
     }
 
