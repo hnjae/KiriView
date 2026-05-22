@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGEANIMATIONPLAYER_H
 #define KIRIVIEW_IMAGEANIMATIONPLAYER_H
 
-#include "decoding/apnganimationreader.h"
+#include "presentation/imageanimationplaybacksource.h"
 #include "presentation/imageanimationpolicy.h"
 
 #include <QByteArray>
@@ -12,15 +12,11 @@
 #include <QTimer>
 #include <functional>
 #include <memory>
-#include <optional>
-#include <variant>
 
 class QObject;
 class QString;
 
 namespace KiriView {
-class BufferedImageReader;
-class HeifSequenceReader;
 class ImageAnimationPlayer
 {
 public:
@@ -34,36 +30,12 @@ public:
     void start(const QByteArray &data, const QByteArray &format);
     void startApng(const QByteArray &data);
     void startHeifSequence(const QByteArray &data);
+    void start(std::unique_ptr<ImageAnimationPlaybackSource> source);
     void stop();
 
 private:
-    struct ReaderPlayback {
-        QByteArray data;
-        QByteArray format;
-        std::unique_ptr<BufferedImageReader> reader;
-    };
-
-    struct ApngPlayback {
-        QByteArray data;
-        std::unique_ptr<ApngAnimationReader> reader;
-    };
-
-    struct HeifSequencePlayback {
-        QByteArray data;
-        std::unique_ptr<HeifSequenceReader> reader;
-    };
-
-    using Playback
-        = std::variant<std::monostate, ReaderPlayback, ApngPlayback, HeifSequencePlayback>;
-
     void advanceFrame();
-    void advanceReaderFrame(ReaderPlayback &playback);
-    void advanceApngFrame(ApngPlayback &playback);
-    void advanceHeifSequenceFrame(HeifSequencePlayback &playback);
-    bool resetReader(ReaderPlayback &playback, QString *errorString);
-    std::optional<ApngOpenResult> resetApng(ApngPlayback &playback, QString *errorString);
-    bool resetHeifSequence(
-        HeifSequencePlayback &playback, int *firstFrameDelay, QString *errorString);
+    void handleSequenceEnd();
     void scheduleNextFrame(int delay);
     void applyFramePlan(AnimationFramePlan plan, int delay);
     void clearPlaybackState();
@@ -71,7 +43,7 @@ private:
 
     FrameReadyCallback m_frameReady;
     ErrorCallback m_animationError;
-    Playback m_playback;
+    std::unique_ptr<ImageAnimationPlaybackSource> m_source;
     QTimer m_timer;
     AnimationPlaybackState m_playbackState;
 };

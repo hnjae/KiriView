@@ -4,16 +4,11 @@
 #include "presentation/imageanimationplayer.h"
 
 #include "async/imagecallback.h"
-#include "decoding/apnganimationreader.h"
-#include "decoding/bufferedimagereader.h"
-#include "decoding/heifsequencereader.h"
-#include "localization/imageerrortext.h"
 
 #include <QObject>
 #include <memory>
 #include <optional>
 #include <utility>
-#include <variant>
 
 namespace KiriView {
 ImageAnimationPlayer::ImageAnimationPlayer(
@@ -29,245 +24,67 @@ ImageAnimationPlayer::~ImageAnimationPlayer() { stop(); }
 
 void ImageAnimationPlayer::start(const QByteArray &data, const QByteArray &format)
 {
-    clearPlaybackState();
-
-    ReaderPlayback playback;
-    playback.data = data;
-    playback.format = format;
-
-    QString errorString;
-    if (!resetReader(playback, &errorString)) {
-        finishWithError(errorString);
-        return;
-    }
-
-    const QImage firstFrame = playback.reader->read();
-    if (firstFrame.isNull()) {
-        finishWithError(playback.reader->errorString());
-        return;
-    }
-
-    const int firstFrameDelay = playback.reader->nextImageDelay();
-    m_playbackState.startLoop(playback.reader->loopCount());
-    const bool hasMoreFrames = playback.reader->canRead();
-    m_playback = std::move(playback);
-    if (hasMoreFrames) {
-        scheduleNextFrame(firstFrameDelay);
-    }
+    start(makeReaderAnimationPlaybackSource(data, format));
 }
 
 void ImageAnimationPlayer::startApng(const QByteArray &data)
 {
-    clearPlaybackState();
+    start(makeApngAnimationPlaybackSource(data));
+}
 
-    ApngPlayback playback;
-    playback.data = data;
+void ImageAnimationPlayer::startHeifSequence(const QByteArray &data)
+{
+    start(makeHeifSequenceAnimationPlaybackSource(data));
+}
+
+void ImageAnimationPlayer::start(std::unique_ptr<ImageAnimationPlaybackSource> source)
+{
+    clearPlaybackState();
+    if (source == nullptr) {
+        return;
+    }
 
     QString errorString;
-    std::optional<ApngOpenResult> openResult = resetApng(playback, &errorString);
+    const std::optional<ImageAnimationPlaybackOpenResult> openResult = source->open(&errorString);
     if (!openResult.has_value()) {
         finishWithError(errorString);
         return;
     }
 
-    const bool hasMoreFrames = openResult->frameCount > 1;
     m_playbackState.startLoop(openResult->loopCount);
-    m_playback = std::move(playback);
-    if (hasMoreFrames) {
+    m_source = std::move(source);
+    if (openResult->sourceHasMoreFrames) {
         scheduleNextFrame(openResult->firstFrameDelay);
     }
-}
-
-void ImageAnimationPlayer::startHeifSequence(const QByteArray &data)
-{
-    clearPlaybackState();
-    HeifSequencePlayback playback;
-    playback.data = data;
-
-    QString errorString;
-    int firstFrameDelay = 0;
-    if (!resetHeifSequence(playback, &firstFrameDelay, &errorString)) {
-        finishWithError(errorString);
-        return;
-    }
-
-    m_playback = std::move(playback);
-    scheduleNextFrame(firstFrameDelay);
 }
 
 void ImageAnimationPlayer::stop() { clearPlaybackState(); }
 
 void ImageAnimationPlayer::advanceFrame()
 {
-    struct PlaybackVisitor {
-        ImageAnimationPlayer *player = nullptr;
-
-        void operator()(std::monostate &) const { }
-        void operator()(ReaderPlayback &playback) const { player->advanceReaderFrame(playback); }
-        void operator()(ApngPlayback &playback) const { player->advanceApngFrame(playback); }
-        void operator()(HeifSequencePlayback &playback) const
-        {
-            player->advanceHeifSequenceFrame(playback);
-        }
-    };
-
-    std::visit(PlaybackVisitor { this }, m_playback);
-}
-
-void ImageAnimationPlayer::advanceReaderFrame(ReaderPlayback &playback)
-{
-    if (playback.reader == nullptr) {
+    if (m_source == nullptr) {
         return;
     }
 
-    if (!playback.reader->canRead()) {
-        const AnimationSequencePlan sequencePlan = m_playbackState.planAtSequenceEnd();
-        if (sequencePlan.action != AnimationSequenceAction::RestartSequence) {
-            stop();
-            return;
-        }
-
-        QString errorString;
-        if (!resetReader(playback, &errorString)) {
-            finishWithError(errorString);
-            return;
-        }
-    }
-
-    QImage frame = playback.reader->read();
-    if (frame.isNull()) {
-        finishWithError(playback.reader->errorString());
-        return;
-    }
-
-    const int delay = playback.reader->nextImageDelay();
-    invokeIfSet(m_frameReady, frame);
-
-    applyFramePlan(m_playbackState.planAfterFrame(playback.reader->canRead()), delay);
-}
-
-void ImageAnimationPlayer::advanceApngFrame(ApngPlayback &playback)
-{
-    if (playback.reader == nullptr) {
+    if (!m_source->hasMoreFrames()) {
+        handleSequenceEnd();
         return;
     }
 
     QString errorString;
-    std::optional<AnimationFrame> frame = playback.reader->readNextFrame(&errorString);
+    std::optional<AnimationFrame> frame = m_source->readNextFrame(&errorString);
+    if (!frame.has_value() && errorString.isEmpty()) {
+        handleSequenceEnd();
+        return;
+    }
+
     if (!frame.has_value()) {
-        if (!errorString.isEmpty()) {
-            finishWithError(errorString);
-            return;
-        }
-
-        const AnimationSequencePlan sequencePlan = m_playbackState.planAtSequenceEnd();
-        if (sequencePlan.action != AnimationSequenceAction::RestartSequence) {
-            stop();
-            return;
-        }
-
-        std::optional<ApngOpenResult> openResult = resetApng(playback, &errorString);
-        if (!openResult.has_value()) {
-            finishWithError(errorString);
-            return;
-        }
-
-        invokeIfSet(m_frameReady, openResult->firstFrame);
-        applyFramePlan(m_playbackState.planAfterFrame(openResult->frameCount > 1),
-            openResult->firstFrameDelay);
+        finishWithError(errorString);
         return;
     }
 
     invokeIfSet(m_frameReady, frame->image);
-    applyFramePlan(m_playbackState.planAfterFrame(playback.reader->hasMoreFrames()), frame->delay);
-}
-
-void ImageAnimationPlayer::advanceHeifSequenceFrame(HeifSequencePlayback &playback)
-{
-    if (playback.reader == nullptr) {
-        return;
-    }
-
-    QString errorString;
-    std::optional<AnimationFrame> frame = playback.reader->readNextFrame(&errorString);
-    if (!frame.has_value()) {
-        if (errorString.isEmpty()) {
-            stop();
-        } else {
-            finishWithError(errorString);
-        }
-        return;
-    }
-
-    invokeIfSet(m_frameReady, frame->image);
-    scheduleNextFrame(frame->delay);
-}
-
-bool ImageAnimationPlayer::resetReader(ReaderPlayback &playback, QString *errorString)
-{
-    playback.reader.reset();
-
-    auto reader = std::make_unique<BufferedImageReader>(playback.data, playback.format);
-    if (!*reader) {
-        *errorString = imageErrorText(ImageErrorTextId::ReadImageData);
-        return false;
-    }
-
-    if (!reader->canRead()) {
-        *errorString = reader->errorString();
-        return false;
-    }
-
-    playback.reader = std::move(reader);
-    return true;
-}
-
-std::optional<ApngOpenResult> ImageAnimationPlayer::resetApng(
-    ApngPlayback &playback, QString *errorString)
-{
-    playback.reader = std::make_unique<ApngAnimationReader>();
-    ApngOpenResult openResult = playback.reader->open(playback.data);
-    switch (openResult.status) {
-    case ApngOpenStatus::Success:
-        return openResult;
-    case ApngOpenStatus::Error:
-        *errorString = openResult.errorString;
-        playback.reader.reset();
-        return std::nullopt;
-    case ApngOpenStatus::NotApng:
-        *errorString = imageErrorText(ImageErrorTextId::DecodeApngAnimation);
-        playback.reader.reset();
-        return std::nullopt;
-    }
-
-    *errorString = imageErrorText(ImageErrorTextId::DecodeApngAnimation);
-    playback.reader.reset();
-    return std::nullopt;
-}
-
-bool ImageAnimationPlayer::resetHeifSequence(
-    HeifSequencePlayback &playback, int *firstFrameDelay, QString *errorString)
-{
-    playback.reader = std::make_unique<HeifSequenceReader>();
-    const HeifSequenceOpenResult openResult = playback.reader->open(playback.data);
-    if (openResult.status != HeifSequenceOpenStatus::Success) {
-        *errorString = openResult.errorString.isEmpty() ? heifSequenceDecodeErrorString()
-                                                        : openResult.errorString;
-        playback.reader.reset();
-        return false;
-    }
-
-    std::optional<AnimationFrame> firstFrame = playback.reader->readNextFrame(errorString);
-    if (!firstFrame.has_value()) {
-        if (errorString->isEmpty()) {
-            *errorString = heifSequenceDecodeErrorString();
-        }
-        playback.reader.reset();
-        return false;
-    }
-
-    *firstFrameDelay = firstFrame->delay;
-    return true;
+    applyFramePlan(m_playbackState.planAfterFrame(m_source->hasMoreFrames()), frame->delay);
 }
 
 void ImageAnimationPlayer::scheduleNextFrame(int delay)
@@ -287,10 +104,35 @@ void ImageAnimationPlayer::applyFramePlan(AnimationFramePlan plan, int delay)
     }
 }
 
+void ImageAnimationPlayer::handleSequenceEnd()
+{
+    if (m_source == nullptr || !m_source->restartable()) {
+        stop();
+        return;
+    }
+
+    const AnimationSequencePlan sequencePlan = m_playbackState.planAtSequenceEnd();
+    if (sequencePlan.action != AnimationSequenceAction::RestartSequence) {
+        stop();
+        return;
+    }
+
+    QString errorString;
+    const std::optional<ImageAnimationPlaybackOpenResult> openResult = m_source->open(&errorString);
+    if (!openResult.has_value()) {
+        finishWithError(errorString);
+        return;
+    }
+
+    invokeIfSet(m_frameReady, openResult->firstFrame);
+    applyFramePlan(m_playbackState.planAfterFrame(openResult->sourceHasMoreFrames),
+        openResult->firstFrameDelay);
+}
+
 void ImageAnimationPlayer::clearPlaybackState()
 {
     m_timer.stop();
-    m_playback = std::monostate();
+    m_source.reset();
     m_playbackState.clear();
 }
 

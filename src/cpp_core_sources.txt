@@ -36,6 +36,7 @@ src/decoding/heifsequencereader.cpp
 src/decoding/heifsupport.cpp
 src/decoding/heiftilingplan.cpp
 src/rendering/heiftilesource.cpp
+src/presentation/imageanimationplaybacksource.cpp
 src/presentation/imageanimationpolicy.cpp
 src/presentation/imageanimationplayer.cpp
 src/async/imageasyncoperationstate.cpp
