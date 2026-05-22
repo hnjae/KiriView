@@ -6,9 +6,9 @@ The main window toolbar shows media controls without a page title.
 
 The leading side of the toolbar contains Previous, the current page number, `of`, the total item count, and Next.
 
-When an image is displayed, the trailing action toolbar contains Right-to-Left Reading, Two-Page Spread, zoom, Fit, and, when Hamburger Menu presentation is active outside fullscreen, a toolbar application menu button.
+When an image or direct video is displayed, the trailing action toolbar contains Right-to-Left Reading, Two-Page Spread, zoom, Fit, and, when Hamburger Menu presentation is active outside fullscreen, a toolbar application menu button.
 
-When a video is displayed, image-only toolbar controls such as Right-to-Left Reading, Two-Page Spread, zoom, and Fit are unavailable.
+When a video is displayed, image-only toolbar controls such as Right-to-Left Reading, Two-Page Spread, editable zoom, and Fit remain in the same positions but are disabled or read-only.
 
 The trailing action toolbar shows as many trailing controls as fit and moves the rest into an overflow menu. When it runs out of horizontal space, KiriView keeps the zoom percentage visible the longest, then Fit.
 

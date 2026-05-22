@@ -14,7 +14,7 @@ Direct KDE archive-entry URLs are not KiriView archive document mode. KiriView m
 
 The product boundary is based on KiriView's document-mode state, not on URL scheme alone. If KiriView has opened an archive or directory as a document, video entries inside that document are out of scope. If KiriView is handling a direct media URL without an active archive or directory document context, that URL remains eligible for video support even when its scheme is a KDE archive scheme.
 
-Video files do not participate in KiriView archive document navigation, comic book archive document handling, directly opened directory documents, predecode, image cache, image zoom, image pan, image rotate, two-page spread, or Right-to-Left Reading.
+Video files do not participate in KiriView archive document navigation, comic book archive document handling, directly opened directory documents, predecode, image cache, editable image zoom, image pan, image rotate, two-page spread, or Right-to-Left Reading.
 
 Archive-document-internal video, directly opened directory-document video, recursive directory video, playlists, subtitles, track selection, metadata panels, frame stepping, and timeline preview thumbnails are out of scope.
 
@@ -56,9 +56,11 @@ Opening a video does not autoplay by default.
 
 Video mode shows a video viewport and a Kirigami floating playback panel over the bottom of the video.
 
-The regular toolbar remains available in video mode for application menu access and ordinary direct media navigation. It shows Previous and Next controls, the current media item number, and the total supported media item count for the ordinary direct media URL scope when that list is known.
+The regular toolbar remains available in video mode for application menu access and ordinary direct media navigation. It shows Previous and Next controls, the current media item number, the total supported media item count for the ordinary direct media URL scope when that list is known, and the same trailing control order as image mode.
 
-Video mode shows a read-only zoom percentage when the video frame size and displayed video content rectangle are known. The value is the current fitted display size in physical pixels relative to the video's intrinsic frame size. Users cannot edit this value or use image zoom actions for video.
+Video mode keeps image-only toolbar controls visible in their image-mode positions but unavailable: Right-to-Left Reading, Two-Page Spread, and Fit are disabled, and the zoom control is read-only.
+
+Video mode shows a read-only zoom percentage when the video frame size and displayed video content rectangle are known. The value is the current fitted display size in physical pixels relative to the video's intrinsic frame size. When the percentage is unknown, the read-only zoom control displays `--%`. Users cannot edit this value or use image zoom actions for video.
 
 The floating playback panel includes play/pause, timeline position selection and scrubbing, duration and position display, and a disabled non-interactive timeline state when the media is not seekable.
 
@@ -75,6 +77,10 @@ Unknown duration, invalid duration, and non-seekable media produce a stable disa
 ## Video Navigation and Seeking
 
 In video mode, viewer Left and Right and existing adjacent navigation actions move to the previous or next supported media item in the ordinary parent location. They do not seek within the video.
+
+Video mode supports the shared configurable shortcuts for Open, Move to Trash, Delete Permanently, Previous Media Item, Next Media Item, First Media Item, Last Media Item, Fullscreen, Keyboard Shortcuts, Configure Shortcuts, Show Menubar, and Quit.
+
+When an image-only configurable shortcut is pressed in video mode, KiriView does not trigger the image action and shows the in-app toast `This action is not available for videos`. Repeated unsupported video shortcut presses update the same toast instance.
 
 Timeline dragging and scrubbing is the primary way to seek within the current video.
 
