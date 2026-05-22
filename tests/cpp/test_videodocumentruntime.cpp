@@ -16,6 +16,7 @@ class TestVideoDocumentRuntime : public QObject
 
 private Q_SLOTS:
     void initialStateIsNull();
+    void mediaBackendFactoryIsLazyUntilPlaybackUrlResolution();
     void localResolverCompletionUsesOriginalPlaybackUrl();
     void settingAndClearingSourcePreservesUserFacingUrlAndTitle();
     void resolverCanReturnSeparatePlaybackUrl();
@@ -217,6 +218,48 @@ void TestVideoDocumentRuntime::initialStateIsNull()
     QVERIFY(!fixture.runtime->hasVideo());
     QVERIFY(!fixture.runtime->hasAudio());
     QCOMPARE(fixture.runtime->videoOutput(), nullptr);
+}
+
+void TestVideoDocumentRuntime::mediaBackendFactoryIsLazyUntilPlaybackUrlResolution()
+{
+    QObject documentObject;
+    QObject output;
+    auto resolverState = std::make_shared<FakeResolverState>();
+    FakeVideoMediaBackend *backend = nullptr;
+    QObject *factoryParent = nullptr;
+    int factoryCallCount = 0;
+    KiriView::VideoDocumentRuntime runtime(&documentObject, {},
+        std::unique_ptr<KiriView::VideoMediaBackend>(),
+        std::make_unique<FakeVideoPlaybackUrlResolver>(resolverState), [&](QObject *parent) {
+            factoryParent = parent;
+            ++factoryCallCount;
+            auto mediaBackend = std::make_unique<FakeVideoMediaBackend>();
+            backend = mediaBackend.get();
+            return mediaBackend;
+        });
+    const QUrl sourceUrl = QUrl::fromLocalFile(QStringLiteral("/home/me/clip.mp4"));
+
+    QCOMPARE(factoryCallCount, 0);
+    runtime.setVideoOutput(&output);
+    QCOMPARE(factoryCallCount, 0);
+
+    runtime.setSourceUrl(sourceUrl);
+    QCOMPARE(factoryCallCount, 0);
+    QCOMPARE(runtime.status(), KiriView::VideoDocumentStatus::Loading);
+    QCOMPARE(resolverState->requests.size(), std::size_t(1));
+
+    auto &request = resolverState->requests.back();
+    request.resolvedCallback(KiriView::VideoPlaybackUrlResolution {
+        request.operationId,
+        request.sourceUrl,
+        sourceUrl,
+    });
+
+    QCOMPARE(factoryCallCount, 1);
+    QCOMPARE(factoryParent, &documentObject);
+    QVERIFY(backend != nullptr);
+    QCOMPARE(backend->sourceUrl, sourceUrl);
+    QCOMPARE(backend->videoOutput(), &output);
 }
 
 void TestVideoDocumentRuntime::localResolverCompletionUsesOriginalPlaybackUrl()

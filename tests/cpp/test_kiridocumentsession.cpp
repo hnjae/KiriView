@@ -80,6 +80,7 @@ class TestKiriDocumentSession : public QObject
 private Q_SLOTS:
     void directVideoRoutesToVideoDocumentWithOriginalSource();
     void archiveAndDirectoryInputsRouteToImageDocument();
+    void directImageAfterVideoRestoresImageDocument();
     void nextMediaFromVideoCanRouteToImageWithoutUsingImageNavigation();
     void directImageDeletionCanOpenVideoFallback();
     void videoDeletionUsesOriginalUrlAndOpensMediaFallback();
@@ -120,6 +121,27 @@ void TestKiriDocumentSession::archiveAndDirectoryInputsRouteToImageDocument()
     session->setSourceUrl(directory);
     QCOMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Image);
     QCOMPARE(session->imageDocument()->sourceUrl(), directory);
+}
+
+void TestKiriDocumentSession::directImageAfterVideoRestoresImageDocument()
+{
+    FakeMediaCandidateProvider mediaProvider;
+    const QUrl clip = localUrl(QStringLiteral("/media/01.mp4"));
+    const QUrl image = localUrl(QStringLiteral("/media/02.svg"));
+    mediaProvider.setMedia(
+        localUrl(QStringLiteral("/media/")), { mediaCandidate(clip), mediaCandidate(image) });
+    std::unique_ptr<KiriDocumentSession> session = createSession(mediaProvider);
+
+    session->setSourceUrl(clip);
+    QCOMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Video);
+    QCOMPARE(session->videoDocument()->sourceUrl(), clip);
+
+    session->setSourceUrl(image);
+
+    QCOMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Image);
+    QCOMPARE(session->sourceUrl(), image);
+    QCOMPARE(session->imageDocument()->sourceUrl(), image);
+    QCOMPARE(session->videoDocument()->sourceUrl(), QUrl());
 }
 
 void TestKiriDocumentSession::nextMediaFromVideoCanRouteToImageWithoutUsingImageNavigation()

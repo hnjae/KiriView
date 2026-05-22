@@ -102,13 +102,41 @@ std::unique_ptr<VideoMediaBackend> createDefaultVideoMediaBackend(QObject *paren
 
 VideoDocumentRuntime::VideoDocumentRuntime(QObject *documentObject, ChangeCallback changeCallback,
     std::unique_ptr<VideoMediaBackend> mediaBackend,
-    std::unique_ptr<VideoPlaybackUrlResolver> playbackUrlResolver)
+    std::unique_ptr<VideoPlaybackUrlResolver> playbackUrlResolver,
+    MediaBackendFactory mediaBackendFactory)
     : m_documentObject(documentObject)
     , m_changeCallback(std::move(changeCallback))
-    , m_mediaBackend(mediaBackend == nullptr ? createDefaultVideoMediaBackend(documentObject)
-                                             : std::move(mediaBackend))
+    , m_mediaBackend(std::move(mediaBackend))
+    , m_mediaBackendFactory(std::move(mediaBackendFactory))
     , m_playbackUrlResolver(playbackUrlResolver == nullptr ? createDefaultVideoPlaybackUrlResolver()
                                                            : std::move(playbackUrlResolver))
+{
+    if (!m_mediaBackendFactory) {
+        m_mediaBackendFactory
+            = [](QObject *parent) { return createDefaultVideoMediaBackend(parent); };
+    }
+
+    if (m_mediaBackend == nullptr) {
+        return;
+    }
+
+    installMediaBackendCallbacks();
+}
+
+VideoMediaBackend *VideoDocumentRuntime::ensureMediaBackend()
+{
+    if (m_mediaBackend == nullptr) {
+        m_mediaBackend = m_mediaBackendFactory(m_documentObject);
+        installMediaBackendCallbacks();
+        if (m_videoOutput != nullptr) {
+            m_mediaBackend->setVideoOutput(m_videoOutput.data());
+        }
+    }
+
+    return m_mediaBackend.get();
+}
+
+void VideoDocumentRuntime::installMediaBackendCallbacks()
 {
     m_mediaBackend->setCallbacks(VideoMediaBackendCallbacks {
         [this]() { updateStatusFromBackend(); },
@@ -176,7 +204,7 @@ void VideoDocumentRuntime::setPosition(qint64 position)
 
     const qint64 upperBound = m_duration > 0 ? m_duration : position;
     const qint64 clamped = std::clamp(position, qint64(0), upperBound);
-    m_mediaBackend->setPosition(clamped);
+    ensureMediaBackend()->setPosition(clamped);
     setPositionValue(clamped);
 }
 
@@ -192,27 +220,48 @@ QObject *VideoDocumentRuntime::videoOutput() const { return m_videoOutput.data()
 
 void VideoDocumentRuntime::setVideoOutput(QObject *videoOutput)
 {
-    if (m_videoOutput.data() == videoOutput && m_mediaBackend->videoOutput() == videoOutput) {
+    if (m_videoOutput.data() == videoOutput
+        && (m_mediaBackend == nullptr || m_mediaBackend->videoOutput() == videoOutput)) {
         return;
     }
 
     disconnectVideoOutputDestroyed();
     m_videoOutput = videoOutput;
-    m_mediaBackend->setVideoOutput(videoOutput);
+    if (m_mediaBackend != nullptr) {
+        m_mediaBackend->setVideoOutput(videoOutput);
+    }
     connectVideoOutputDestroyed(videoOutput);
     publish(VideoDocumentChange::VideoOutput);
 }
 
-void VideoDocumentRuntime::play() { m_mediaBackend->play(); }
+void VideoDocumentRuntime::play()
+{
+    if (m_sourceUrl.isEmpty()) {
+        return;
+    }
 
-void VideoDocumentRuntime::pause() { m_mediaBackend->pause(); }
+    ensureMediaBackend()->play();
+}
+
+void VideoDocumentRuntime::pause()
+{
+    if (m_mediaBackend == nullptr) {
+        return;
+    }
+
+    m_mediaBackend->pause();
+}
 
 void VideoDocumentRuntime::stop()
 {
-    m_mediaBackend->stop();
+    if (m_mediaBackend != nullptr) {
+        m_mediaBackend->stop();
+    }
     setPlayingValue(false);
     if (m_seekable) {
-        m_mediaBackend->setPosition(0);
+        if (m_mediaBackend != nullptr) {
+            m_mediaBackend->setPosition(0);
+        }
         setPositionValue(0);
     }
 }
@@ -235,7 +284,7 @@ void VideoDocumentRuntime::seekBy(qint64 deltaMilliseconds)
         return;
     }
 
-    m_mediaBackend->setPosition(nextPosition);
+    ensureMediaBackend()->setPosition(nextPosition);
     setPositionValue(nextPosition);
 }
 
@@ -256,8 +305,10 @@ qint64 VideoDocumentRuntime::clampedSeekPosition(
 
 void VideoDocumentRuntime::clearSourceState()
 {
-    m_mediaBackend->stop();
-    m_mediaBackend->setSource(QUrl());
+    if (m_mediaBackend != nullptr) {
+        m_mediaBackend->stop();
+        m_mediaBackend->setSource(QUrl());
+    }
     m_sourceUrl = QUrl();
     m_resolvingPlaybackUrl = false;
 
@@ -306,8 +357,10 @@ void VideoDocumentRuntime::clearSourceState()
 
 void VideoDocumentRuntime::beginSourceLoad(const QUrl &sourceUrl)
 {
-    m_mediaBackend->stop();
-    m_mediaBackend->setSource(QUrl());
+    if (m_mediaBackend != nullptr) {
+        m_mediaBackend->stop();
+        m_mediaBackend->setSource(QUrl());
+    }
     m_sourceUrl = sourceUrl;
     m_resolvingPlaybackUrl = true;
 
@@ -371,7 +424,7 @@ void VideoDocumentRuntime::completePlaybackUrlResolution(
     }
 
     m_resolvingPlaybackUrl = false;
-    m_mediaBackend->setSource(resolution.playbackUrl);
+    ensureMediaBackend()->setSource(resolution.playbackUrl);
     updateStatusFromBackend();
 }
 
@@ -396,7 +449,9 @@ void VideoDocumentRuntime::connectVideoOutputDestroyed(QObject *videoOutput)
     m_videoOutputDestroyedConnection
         = QObject::connect(videoOutput, &QObject::destroyed, m_documentObject, [this]() {
               m_videoOutput.clear();
-              m_mediaBackend->setVideoOutput(nullptr);
+              if (m_mediaBackend != nullptr) {
+                  m_mediaBackend->setVideoOutput(nullptr);
+              }
               publish(VideoDocumentChange::VideoOutput);
           });
 }
@@ -419,6 +474,10 @@ void VideoDocumentRuntime::updateStatusFromBackend()
         setStatus(VideoDocumentStatus::Loading);
         return;
     }
+    if (m_mediaBackend == nullptr) {
+        setStatus(VideoDocumentStatus::Loading);
+        return;
+    }
 
     const VideoDocumentStatus backendStatus = m_mediaBackend->mediaStatus();
     if (backendStatus == VideoDocumentStatus::Null) {
@@ -430,6 +489,10 @@ void VideoDocumentRuntime::updateStatusFromBackend()
 
 void VideoDocumentRuntime::updateErrorFromBackend()
 {
+    if (m_mediaBackend == nullptr) {
+        return;
+    }
+
     const QString backendError = m_mediaBackend->errorString();
     if (!backendError.isEmpty()) {
         setErrorString(backendError);

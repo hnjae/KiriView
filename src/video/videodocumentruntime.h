@@ -76,10 +76,12 @@ class VideoDocumentRuntime final
 {
 public:
     using ChangeCallback = std::function<void(const std::vector<VideoDocumentChange> &)>;
+    using MediaBackendFactory = std::function<std::unique_ptr<VideoMediaBackend>(QObject *)>;
 
     explicit VideoDocumentRuntime(QObject *documentObject, ChangeCallback changeCallback = {},
         std::unique_ptr<VideoMediaBackend> mediaBackend = {},
-        std::unique_ptr<VideoPlaybackUrlResolver> playbackUrlResolver = {});
+        std::unique_ptr<VideoPlaybackUrlResolver> playbackUrlResolver = {},
+        MediaBackendFactory mediaBackendFactory = {});
     ~VideoDocumentRuntime();
 
     QUrl sourceUrl() const;
@@ -107,6 +109,8 @@ public:
         qint64 currentPosition, qint64 deltaMilliseconds, qint64 duration, bool seekable);
 
 private:
+    VideoMediaBackend *ensureMediaBackend();
+    void installMediaBackendCallbacks();
     void clearSourceState();
     void beginSourceLoad(const QUrl &sourceUrl);
     void completePlaybackUrlResolution(const VideoPlaybackUrlResolution &resolution);
@@ -130,6 +134,7 @@ private:
     QObject *m_documentObject = nullptr;
     ChangeCallback m_changeCallback;
     std::unique_ptr<VideoMediaBackend> m_mediaBackend;
+    MediaBackendFactory m_mediaBackendFactory;
     std::unique_ptr<VideoPlaybackUrlResolver> m_playbackUrlResolver;
     QPointer<QObject> m_videoOutput;
     QMetaObject::Connection m_videoOutputDestroyedConnection;
