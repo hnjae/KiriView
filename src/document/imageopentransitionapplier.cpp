@@ -260,6 +260,14 @@ private:
 }
 
 namespace KiriView {
+ImageOpenTransitionContext ImageOpenTransitionContext::sourceResolved(
+    const ImageLoadSession &session)
+{
+    ImageOpenTransitionContext context;
+    context.session = &session;
+    return context;
+}
+
 ImageOpenTransitionContext ImageOpenTransitionContext::successfulImageLoad(
     const ImageLoadSession &session)
 {

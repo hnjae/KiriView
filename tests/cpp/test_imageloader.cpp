@@ -238,16 +238,19 @@ void TestImageLoader::comicBookArchiveResolvesFirstImage()
             imageCandidate(firstImageUrl),
         });
 
-    QUrl resolvedUrl;
+    std::optional<KiriView::ImageLoadSession> resolvedSession;
     KiriView::ImageLoader::Callbacks callbacks;
-    callbacks.sourceResolved = [&resolvedUrl](const QUrl &url) { resolvedUrl = url; };
+    callbacks.sourceResolved = [&resolvedSession](KiriView::ImageLoadSession session) {
+        resolvedSession = std::move(session);
+    };
     KiriView::ImageLoader loader
         = createLoader(this, candidateProvider, dataLoader, std::move(callbacks));
 
     loader.start(KiriView::ImageLoadRequest::fromUrl(archiveUrl),
         KiriView::ImageFirstDisplayDecodeContext { QSize(320, 240) });
 
-    QCOMPARE(resolvedUrl, firstImageUrl);
+    QVERIFY(resolvedSession.has_value());
+    QCOMPARE(resolvedSession->imageUrl(), firstImageUrl);
     QCOMPARE(dataLoader.loadCount(), std::size_t(1));
     QCOMPARE(dataLoader.frontLoad().url, firstImageUrl);
     QCOMPARE(dataLoader.frontLoad().firstDisplay.physicalViewportSize, QSize(320, 240));
@@ -267,10 +270,12 @@ void TestImageLoader::directArchiveResolvesFirstImage()
             imageCandidate(firstImageUrl),
         });
 
-    QUrl resolvedUrl;
     std::optional<KiriView::ImageLoadSession> decodedSession;
+    std::optional<KiriView::ImageLoadSession> resolvedSession;
     KiriView::ImageLoader::Callbacks callbacks;
-    callbacks.sourceResolved = [&resolvedUrl](const QUrl &url) { resolvedUrl = url; };
+    callbacks.sourceResolved = [&resolvedSession](KiriView::ImageLoadSession session) {
+        resolvedSession = std::move(session);
+    };
     callbacks.decodedImage = [&decodedSession](KiriView::ImageLoadSession session, auto) {
         decodedSession = std::move(session);
     };
@@ -279,7 +284,8 @@ void TestImageLoader::directArchiveResolvesFirstImage()
 
     loader.start(KiriView::ImageLoadRequest::fromUrl(archiveUrl));
 
-    QCOMPARE(resolvedUrl, firstImageUrl);
+    QVERIFY(resolvedSession.has_value());
+    QCOMPARE(resolvedSession->imageUrl(), firstImageUrl);
     QCOMPARE(dataLoader.loadCount(), std::size_t(1));
     QCOMPARE(dataLoader.frontLoad().url, firstImageUrl);
     dataLoader.finishFrontLoad(QByteArrayLiteral("ok"));
@@ -308,10 +314,12 @@ void TestImageLoader::directDirectoryResolvesFirstImage()
             imageCandidate(firstImageUrl),
         });
 
-    QUrl resolvedUrl;
     std::optional<KiriView::ImageLoadSession> decodedSession;
+    std::optional<KiriView::ImageLoadSession> resolvedSession;
     KiriView::ImageLoader::Callbacks callbacks;
-    callbacks.sourceResolved = [&resolvedUrl](const QUrl &url) { resolvedUrl = url; };
+    callbacks.sourceResolved = [&resolvedSession](KiriView::ImageLoadSession session) {
+        resolvedSession = std::move(session);
+    };
     callbacks.decodedImage = [&decodedSession](KiriView::ImageLoadSession session, auto) {
         decodedSession = std::move(session);
     };
@@ -320,7 +328,8 @@ void TestImageLoader::directDirectoryResolvesFirstImage()
 
     loader.start(KiriView::ImageLoadRequest::fromUrl(directoryUrl));
 
-    QCOMPARE(resolvedUrl, firstImageUrl);
+    QVERIFY(resolvedSession.has_value());
+    QCOMPARE(resolvedSession->imageUrl(), firstImageUrl);
     QCOMPARE(dataLoader.loadCount(), std::size_t(1));
     QCOMPARE(dataLoader.frontLoad().url, firstImageUrl);
     dataLoader.finishFrontLoad(QByteArrayLiteral("ok"));
@@ -419,7 +428,9 @@ void TestImageLoader::staleArchiveListingResultIsIgnored()
     ManualImageDataLoader dataLoader;
     std::vector<QUrl> decodedUrls;
     KiriView::ImageLoader::Callbacks callbacks;
-    callbacks.sourceResolved = [&decodedUrls](const QUrl &url) { decodedUrls.push_back(url); };
+    callbacks.sourceResolved = [&decodedUrls](KiriView::ImageLoadSession session) {
+        decodedUrls.push_back(session.imageUrl());
+    };
     callbacks.decodedImage = [&decodedUrls](KiriView::ImageLoadSession session, auto) {
         decodedUrls.push_back(session.imageUrl());
     };

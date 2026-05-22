@@ -51,7 +51,7 @@ public:
 
 private:
     void beginSourceLoad();
-    void setSourceUrlFromResolvedLoad(const QUrl &sourceUrl);
+    void finishSourceResolved(ImageLoadSession session);
     void finishPredecodedImageLoad(ImageLoadSession session, PredecodedImage image);
     void finishDecodedImageLoad(ImageLoadSession session, DecodedImage image);
     void finishPresentedImageLoad(

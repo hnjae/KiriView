@@ -27,18 +27,18 @@ namespace KiriView {
 class ImageLoader final : public QObject
 {
 public:
-    using SourceResolvedCallback = std::function<void(const QUrl &)>;
+    using SourceResolvedCallback = std::function<void(ImageLoadSession)>;
     using ErrorCallback = std::function<void(ImageLoadSession, ImageLoadError, const QString &)>;
     using DecodedImageCallback = std::function<void(ImageLoadSession, DecodedImage)>;
     using PredecodedImageCallback = std::function<void(ImageLoadSession, PredecodedImage)>;
     using FindPredecodedImageCallback = std::function<std::optional<PredecodedImage>(const QUrl &)>;
 
     struct Callbacks {
-        SourceResolvedCallback sourceResolved;
         ErrorCallback error;
         DecodedImageCallback decodedImage;
         PredecodedImageCallback predecodedImage;
         FindPredecodedImageCallback findPredecodedImage;
+        SourceResolvedCallback sourceResolved;
     };
 
     explicit ImageLoader(QObject *parent = nullptr);

@@ -52,6 +52,7 @@ namespace ImageOpenWorkflow {
         const ImageDocumentSourceLoadRequest &request);
     ImageOpenTransition beginSourceLoadTransition(ImageOpenBeginSourceLoadSnapshot snapshot);
     ImageOpenTransition finishEmptySourceLoadTransition();
+    ImageOpenTransition resolveSourceImageTransition();
     ImageOpenTransition finishSuccessfulImageLoadTransition(
         ImageOpenSuccessfulImageLoadSnapshot snapshot);
     ImageOpenTransition finishLoadWithErrorTransition(ImageOpenLoadErrorSnapshot snapshot);

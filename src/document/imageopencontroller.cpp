@@ -52,7 +52,6 @@ ImageOpenController::ImageOpenController(QObject *parent, ImageDocumentState &st
     m_imageLoader = std::make_unique<ImageLoader>(parent, std::move(candidateProvider),
         std::move(decodeDependencies),
         ImageLoader::Callbacks {
-            [this](const QUrl &sourceUrl) { setSourceUrlFromResolvedLoad(sourceUrl); },
             [this](const ImageLoadSession &session, ImageLoadError error,
                 const QString &errorString) { finishLoadWithError(session, error, errorString); },
             [this](ImageLoadSession session, DecodedImage image) {
@@ -68,6 +67,7 @@ ImageOpenController::ImageOpenController(QObject *parent, ImageDocumentState &st
 
                 return m_callbacks.findPredecodedImage(url);
             },
+            [this](ImageLoadSession session) { finishSourceResolved(std::move(session)); },
         });
 }
 
@@ -131,9 +131,11 @@ void ImageOpenController::finishContainerNavigationLoadWithError(
         ImageOpenTransitionContext::containerNavigationError(containerUrl, message)));
 }
 
-void ImageOpenController::setSourceUrlFromResolvedLoad(const QUrl &sourceUrl)
+void ImageOpenController::finishSourceResolved(ImageLoadSession session)
 {
-    m_state.setSourceUrl(sourceUrl);
+    reportRuntimePlan(
+        applyImageOpenTransition(m_state, ImageOpenWorkflow::resolveSourceImageTransition(),
+            ImageOpenTransitionContext::sourceResolved(session)));
 }
 
 void ImageOpenController::finishPredecodedImageLoad(ImageLoadSession session, PredecodedImage image)

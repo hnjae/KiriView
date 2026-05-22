@@ -309,6 +309,12 @@ ImageOpenTransition finishEmptySourceLoadTransition()
         imageOpenWorkflowEvent(RustImageOpenWorkflowEventKind::FinishEmptySourceLoad)));
 }
 
+ImageOpenTransition resolveSourceImageTransition()
+{
+    return imageOpenTransitionFromRust(rustImageOpenTransition(
+        imageOpenWorkflowEvent(RustImageOpenWorkflowEventKind::ResolveSourceImage)));
+}
+
 ImageOpenTransition finishSuccessfulImageLoadTransition(
     ImageOpenSuccessfulImageLoadSnapshot snapshot)
 {

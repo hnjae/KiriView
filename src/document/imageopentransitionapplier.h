@@ -38,6 +38,7 @@ struct ImageOpenTransitionContext {
     std::optional<QUrl> displayedUrl;
     std::optional<QString> errorString;
 
+    static ImageOpenTransitionContext sourceResolved(const ImageLoadSession &session);
     static ImageOpenTransitionContext successfulImageLoad(const ImageLoadSession &session);
     static ImageOpenTransitionContext sourceLoadError(
         const ImageLoadSession &session, const QUrl &displayedUrl, const QString &errorString);

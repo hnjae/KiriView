@@ -123,7 +123,7 @@ void ImageLoader::startArchiveLoad(ImageLoadSession session)
                 break;
             }
 
-            invokeIfSet(m_callbacks.sourceResolved, completion.session.imageUrl());
+            invokeIfSet(m_callbacks.sourceResolved, completion.session);
             startImageLoad(std::move(completion.session));
         },
         [this, session](const QString &errorString) {

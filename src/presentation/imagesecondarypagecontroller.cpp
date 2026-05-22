@@ -36,7 +36,6 @@ ImageSecondaryPageController::ImageSecondaryPageController(QObject *parent,
     m_imageLoader = std::make_unique<ImageLoader>(parent, std::move(candidateProvider),
         std::move(decodeDependencies),
         ImageLoader::Callbacks {
-            {},
             [this](ImageLoadSession session, ImageLoadError, const QString &) {
                 finishLoadWithError(session);
             },
@@ -53,6 +52,7 @@ ImageSecondaryPageController::ImageSecondaryPageController(QObject *parent,
 
                 return m_callbacks.findPredecodedImage(url);
             },
+            {},
         });
 }
 

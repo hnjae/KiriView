@@ -60,6 +60,7 @@ mod ffi {
         FinishSourceLoadWithError = 3,
         FinishContainerNavigationLoadWithError = 4,
         FinishAnimationLoadWithError = 5,
+        ResolveSourceImage = 6,
     }
 
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
@@ -181,6 +182,7 @@ fn rust_image_open_transition(event: RustImageOpenWorkflowEvent) -> RustImageOpe
         RustImageOpenWorkflowEventKind::FinishAnimationLoadWithError => {
             animation_load_error_transition()
         }
+        RustImageOpenWorkflowEventKind::ResolveSourceImage => resolve_source_image_transition(),
         _ => empty_transition(),
     }
 }
@@ -338,6 +340,12 @@ fn finish_empty_source_load_transition() -> RustImageOpenTransition {
     set_tracked_load_completed(&mut transition);
     set_container_navigation_url(&mut transition, RustImageOpenUrlTarget::Empty);
     set_status(&mut transition, RustImageOpenStatusTarget::Null);
+    transition
+}
+
+fn resolve_source_image_transition() -> RustImageOpenTransition {
+    let mut transition = empty_transition();
+    set_source_url(&mut transition, RustImageOpenUrlTarget::SessionImage);
     transition
 }
 
@@ -704,6 +712,27 @@ mod tests {
                 RustImageOpenEffect::ScheduleAdjacentImagePredecode,
             ]
         );
+    }
+
+    #[test]
+    fn source_resolution_uses_session_image_without_completing_load() {
+        let transition = rust_image_open_transition(image_open_event(
+            RustImageOpenWorkflowEventKind::ResolveSourceImage,
+        ));
+
+        assert_eq!(
+            transition.state_delta,
+            state_delta(
+                RustImageOpenUrlTarget::SessionImage,
+                RustImageOpenDisplayedLocationTarget::Unchanged,
+                RustImageOpenUrlTarget::Unchanged,
+                RustImageOpenBoolTarget::Unchanged,
+                RustImageOpenStatusTarget::Unchanged,
+                RustImageOpenErrorStringTarget::Unchanged,
+                false,
+            )
+        );
+        assert!(transition.effects.is_empty());
     }
 
     #[test]

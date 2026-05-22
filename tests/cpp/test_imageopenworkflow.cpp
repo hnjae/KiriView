@@ -83,6 +83,14 @@ KiriView::ImageDocumentRuntimePlan finishEmptySourceLoad(KiriView::ImageDocument
         state, KiriView::ImageOpenWorkflow::finishEmptySourceLoadTransition());
 }
 
+KiriView::ImageDocumentRuntimePlan resolveSourceImage(
+    KiriView::ImageDocumentState &state, const KiriView::ImageLoadSession &session)
+{
+    return KiriView::applyImageOpenTransition(state,
+        KiriView::ImageOpenWorkflow::resolveSourceImageTransition(),
+        KiriView::ImageOpenTransitionContext::sourceResolved(session));
+}
+
 KiriView::ImageDocumentRuntimePlan finishSuccessfulImageLoad(
     KiriView::ImageDocumentState &state, const KiriView::ImageLoadSession &session)
 {
@@ -132,6 +140,7 @@ class TestImageOpenWorkflow : public QObject
 
 private Q_SLOTS:
     void transitionsUseExplicitSnapshotInputs();
+    void sourceResolutionUsesCanonicalSessionImageUrl();
     void firstImageLoadSuccessTransitionsToReady();
     void directArchiveImageLoadSuccessDisablesContainerNavigation();
     void replacementLoadFailureKeepsDisplayedImage();
@@ -165,6 +174,28 @@ void TestImageOpenWorkflow::transitionsUseExplicitSnapshotInputs()
     QCOMPARE(replacementFailure.stateDelta.status, KiriView::ImageOpenStatusTarget::Ready);
     QVERIFY(
         transitionHasEffect(replacementFailure, KiriView::ImageOpenEffect::UpdatePageNavigation));
+}
+
+void TestImageOpenWorkflow::sourceResolutionUsesCanonicalSessionImageUrl()
+{
+    KiriView::ImageDocumentState state;
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.zip"));
+    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveDocument.has_value());
+    const QUrl imageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
+    state.setSourceUrl(archiveUrl);
+    state.setLoading(true);
+    state.setStatus(KiriView::ImageDocumentStatus::Loading);
+
+    const KiriView::ImageDocumentRuntimePlan plan
+        = resolveSourceImage(state, loadSession(archiveUrl, imageUrl, *archiveDocument));
+
+    QVERIFY(plan.empty());
+    QCOMPARE(state.sourceUrl(), imageUrl);
+    QVERIFY(state.displayedUrl().isEmpty());
+    QVERIFY(state.loading());
+    QCOMPARE(state.status(), KiriView::ImageDocumentStatus::Loading);
 }
 
 void TestImageOpenWorkflow::firstImageLoadSuccessTransitionsToReady()
