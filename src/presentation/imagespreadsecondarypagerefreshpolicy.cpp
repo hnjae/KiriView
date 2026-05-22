@@ -3,7 +3,7 @@
 
 #include "presentation/imagespreadsecondarypagerefreshpolicy.h"
 
-#include "kiriview/src/policy/imagespreadgeometry.cxx.h"
+#include "kiriview/src/policy/imagespreadpolicy.cxx.h"
 
 namespace {
 KiriView::ImageSpreadSecondaryPageDecision imageSpreadSecondaryPageDecision(

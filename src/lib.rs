@@ -66,6 +66,8 @@ mod imagerotation;
 mod imagespreadgeometry;
 #[path = "policy/imagespreadnavigation.rs"]
 mod imagespreadnavigation;
+#[path = "policy/imagespreadpolicy.rs"]
+mod imagespreadpolicy;
 #[path = "policy/imageviewportgeometry.rs"]
 mod imageviewportgeometry;
 #[path = "policy/imagezoomstate.rs"]

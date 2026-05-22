@@ -18,6 +18,7 @@ src/policy/imagerendergeometry.rs
 src/policy/imagerotation.rs
 src/policy/imagespreadgeometry.rs
 src/policy/imagespreadnavigation.rs
+src/policy/imagespreadpolicy.rs
 src/policy/imagetilegeometry.rs
 src/policy/imagenavigationmodel.rs
 src/policy/imageviewportgeometry.rs

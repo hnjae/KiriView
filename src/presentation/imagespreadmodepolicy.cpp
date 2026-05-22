@@ -3,7 +3,7 @@
 
 #include "presentation/imagespreadmodepolicy.h"
 
-#include "kiriview/src/policy/imagespreadgeometry.cxx.h"
+#include "kiriview/src/policy/imagespreadpolicy.cxx.h"
 
 namespace {
 KiriView::RustImageSpreadReadingAvailability rustReadingAvailability(
