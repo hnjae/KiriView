@@ -39,13 +39,13 @@ ImageDecodeJobRuntimePlan ImageDecodeJobState::acceptLoadedData(const ImageDecod
 
 ImageDecodeJobRuntimePlan ImageDecodeJobState::acceptLoadError(const ImageDecodeJobTicket &ticket)
 {
-    return claim(ticket, Phase::LoadingData, ImageDecodeJobRuntimeOperation::DeliverLoadError);
+    return claim<DeliverImageLoadErrorOperation>(ticket, Phase::LoadingData);
 }
 
 ImageDecodeJobRuntimePlan ImageDecodeJobState::acceptDecodeResult(
     const ImageDecodeJobTicket &ticket)
 {
-    return claim(ticket, Phase::Decoding, ImageDecodeJobRuntimeOperation::DeliverDecodeResult);
+    return claim<DeliverImageDecodeResultOperation>(ticket, Phase::Decoding);
 }
 
 bool ImageDecodeJobState::accepts(const ImageDecodeJobTicket &ticket) const
@@ -60,13 +60,13 @@ ImageDecodeJobRuntimePlan ImageDecodeJobState::startDecodePlan(
     const ImageDecodeRequest &request) const
 {
     return ImageDecodeJobRuntimePlan {
-        ImageDecodeJobRuntimeOperation::StartDecode,
-        request,
+        StartImageDecodeOperation { request },
     };
 }
 
+template <typename Operation>
 ImageDecodeJobRuntimePlan ImageDecodeJobState::claim(
-    const ImageDecodeJobTicket &ticket, Phase phase, ImageDecodeJobRuntimeOperation operation)
+    const ImageDecodeJobTicket &ticket, Phase phase)
 {
     if (!accepts(ticket) || m_phase != phase) {
         return noOperation();
@@ -77,8 +77,7 @@ ImageDecodeJobRuntimePlan ImageDecodeJobState::claim(
     m_request.reset();
     m_phase = Phase::LoadingData;
     return ImageDecodeJobRuntimePlan {
-        operation,
-        std::move(request),
+        Operation { std::move(request) },
     };
 }
 }

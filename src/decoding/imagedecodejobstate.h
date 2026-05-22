@@ -9,6 +9,7 @@
 
 #include <QtGlobal>
 #include <optional>
+#include <variant>
 
 namespace KiriView {
 struct ImageDecodeJobTicket {
@@ -16,18 +17,31 @@ struct ImageDecodeJobTicket {
     ImageDecodeRequest request;
 };
 
-enum class ImageDecodeJobRuntimeOperation {
-    None,
-    StartDecode,
-    DeliverLoadError,
-    DeliverDecodeResult,
+struct NoImageDecodeJobOperation {
 };
 
-struct ImageDecodeJobRuntimePlan {
-    ImageDecodeJobRuntimeOperation operation = ImageDecodeJobRuntimeOperation::None;
+struct StartImageDecodeOperation {
     ImageDecodeRequest request;
+};
 
-    bool hasOperation() const { return operation != ImageDecodeJobRuntimeOperation::None; }
+struct DeliverImageLoadErrorOperation {
+    ImageDecodeRequest request;
+};
+
+struct DeliverImageDecodeResultOperation {
+    ImageDecodeRequest request;
+};
+
+using ImageDecodeJobRuntimeOperation = std::variant<NoImageDecodeJobOperation,
+    StartImageDecodeOperation, DeliverImageLoadErrorOperation, DeliverImageDecodeResultOperation>;
+
+struct ImageDecodeJobRuntimePlan {
+    ImageDecodeJobRuntimeOperation operation;
+
+    bool hasOperation() const
+    {
+        return !std::holds_alternative<NoImageDecodeJobOperation>(operation);
+    }
 };
 
 class ImageDecodeJobState final
@@ -52,8 +66,8 @@ private:
     bool accepts(const ImageDecodeJobTicket &ticket) const;
     ImageDecodeJobRuntimePlan noOperation() const;
     ImageDecodeJobRuntimePlan startDecodePlan(const ImageDecodeRequest &request) const;
-    ImageDecodeJobRuntimePlan claim(
-        const ImageDecodeJobTicket &ticket, Phase phase, ImageDecodeJobRuntimeOperation operation);
+    template <typename Operation>
+    ImageDecodeJobRuntimePlan claim(const ImageDecodeJobTicket &ticket, Phase phase);
 
     ImageAsyncOperationState m_operation;
     std::optional<ImageDecodeRequest> m_request;

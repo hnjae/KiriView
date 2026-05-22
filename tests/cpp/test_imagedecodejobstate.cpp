@@ -8,6 +8,7 @@
 #include <QObject>
 #include <QTest>
 #include <limits>
+#include <variant>
 
 namespace {
 KiriView::ImageDecodeRequest request(int index)
@@ -16,14 +17,19 @@ KiriView::ImageDecodeRequest request(int index)
         static_cast<quint64>(index), KiriView::TestSupport::indexedImageUrl(index));
 }
 
-void comparePlan(const KiriView::ImageDecodeJobRuntimePlan &plan,
-    KiriView::ImageDecodeJobRuntimeOperation operation, quint64 requestId = 0)
+void compareNoOperation(const KiriView::ImageDecodeJobRuntimePlan &plan)
 {
-    QCOMPARE(plan.operation, operation);
-    QCOMPARE(plan.hasOperation(), operation != KiriView::ImageDecodeJobRuntimeOperation::None);
-    if (operation != KiriView::ImageDecodeJobRuntimeOperation::None) {
-        QCOMPARE(plan.request.id(), requestId);
-    }
+    QVERIFY(std::holds_alternative<KiriView::NoImageDecodeJobOperation>(plan.operation));
+    QVERIFY(!plan.hasOperation());
+}
+
+template <typename Operation>
+void compareOperation(const KiriView::ImageDecodeJobRuntimePlan &plan, quint64 requestId)
+{
+    const auto *operation = std::get_if<Operation>(&plan.operation);
+    QVERIFY(operation != nullptr);
+    QVERIFY(plan.hasOperation());
+    QCOMPARE(operation->request.id(), requestId);
 }
 }
 
@@ -46,14 +52,13 @@ void TestImageDecodeJobState::decodePhaseClaimsOnlyDecodeResults()
     const KiriView::ImageDecodeJobTicket ticket = state.start(request(1));
 
     QVERIFY(state.hasActiveRequest());
-    comparePlan(
-        state.acceptLoadedData(ticket), KiriView::ImageDecodeJobRuntimeOperation::StartDecode, 1);
-    comparePlan(state.acceptLoadError(ticket), KiriView::ImageDecodeJobRuntimeOperation::None);
+    compareOperation<KiriView::StartImageDecodeOperation>(state.acceptLoadedData(ticket), 1);
+    compareNoOperation(state.acceptLoadError(ticket));
 
-    comparePlan(state.acceptDecodeResult(ticket),
-        KiriView::ImageDecodeJobRuntimeOperation::DeliverDecodeResult, 1);
+    compareOperation<KiriView::DeliverImageDecodeResultOperation>(
+        state.acceptDecodeResult(ticket), 1);
     QVERIFY(!state.hasActiveRequest());
-    comparePlan(state.acceptDecodeResult(ticket), KiriView::ImageDecodeJobRuntimeOperation::None);
+    compareNoOperation(state.acceptDecodeResult(ticket));
 }
 
 void TestImageDecodeJobState::loadPhaseClaimsOnlyLoadErrors()
@@ -61,11 +66,10 @@ void TestImageDecodeJobState::loadPhaseClaimsOnlyLoadErrors()
     KiriView::ImageDecodeJobState state;
     const KiriView::ImageDecodeJobTicket ticket = state.start(request(8));
 
-    comparePlan(state.acceptDecodeResult(ticket), KiriView::ImageDecodeJobRuntimeOperation::None);
-    comparePlan(state.acceptLoadError(ticket),
-        KiriView::ImageDecodeJobRuntimeOperation::DeliverLoadError, 8);
+    compareNoOperation(state.acceptDecodeResult(ticket));
+    compareOperation<KiriView::DeliverImageLoadErrorOperation>(state.acceptLoadError(ticket), 8);
     QVERIFY(!state.hasActiveRequest());
-    comparePlan(state.acceptLoadError(ticket), KiriView::ImageDecodeJobRuntimeOperation::None);
+    compareNoOperation(state.acceptLoadError(ticket));
 }
 
 void TestImageDecodeJobState::restartedSameRequestRejectsStaleTicket()
@@ -75,28 +79,23 @@ void TestImageDecodeJobState::restartedSameRequestRejectsStaleTicket()
     const KiriView::ImageDecodeJobTicket staleTicket = state.start(decodeRequest);
     const KiriView::ImageDecodeJobTicket currentTicket = state.start(decodeRequest);
 
-    comparePlan(
-        state.acceptLoadedData(staleTicket), KiriView::ImageDecodeJobRuntimeOperation::None);
-    comparePlan(state.acceptLoadError(staleTicket), KiriView::ImageDecodeJobRuntimeOperation::None);
-    comparePlan(state.acceptLoadedData(currentTicket),
-        KiriView::ImageDecodeJobRuntimeOperation::StartDecode, 2);
+    compareNoOperation(state.acceptLoadedData(staleTicket));
+    compareNoOperation(state.acceptLoadError(staleTicket));
+    compareOperation<KiriView::StartImageDecodeOperation>(state.acceptLoadedData(currentTicket), 2);
 }
 
 void TestImageDecodeJobState::restartedDuringDecodeRejectsStaleDecodeResult()
 {
     KiriView::ImageDecodeJobState state;
     const KiriView::ImageDecodeJobTicket staleTicket = state.start(request(4));
-    comparePlan(state.acceptLoadedData(staleTicket),
-        KiriView::ImageDecodeJobRuntimeOperation::StartDecode, 4);
+    compareOperation<KiriView::StartImageDecodeOperation>(state.acceptLoadedData(staleTicket), 4);
 
     const KiriView::ImageDecodeJobTicket currentTicket = state.start(request(5));
 
-    comparePlan(
-        state.acceptDecodeResult(staleTicket), KiriView::ImageDecodeJobRuntimeOperation::None);
-    comparePlan(state.acceptLoadedData(currentTicket),
-        KiriView::ImageDecodeJobRuntimeOperation::StartDecode, 5);
-    comparePlan(state.acceptDecodeResult(currentTicket),
-        KiriView::ImageDecodeJobRuntimeOperation::DeliverDecodeResult, 5);
+    compareNoOperation(state.acceptDecodeResult(staleTicket));
+    compareOperation<KiriView::StartImageDecodeOperation>(state.acceptLoadedData(currentTicket), 5);
+    compareOperation<KiriView::DeliverImageDecodeResultOperation>(
+        state.acceptDecodeResult(currentTicket), 5);
 }
 
 void TestImageDecodeJobState::cancelInvalidatesActiveTicket()
@@ -107,8 +106,8 @@ void TestImageDecodeJobState::cancelInvalidatesActiveTicket()
     state.cancel();
 
     QVERIFY(!state.hasActiveRequest());
-    comparePlan(state.acceptLoadedData(ticket), KiriView::ImageDecodeJobRuntimeOperation::None);
-    comparePlan(state.acceptLoadError(ticket), KiriView::ImageDecodeJobRuntimeOperation::None);
+    compareNoOperation(state.acceptLoadedData(ticket));
+    compareNoOperation(state.acceptLoadError(ticket));
 }
 
 void TestImageDecodeJobState::operationIdsStayNonZeroAfterWrap()
@@ -118,8 +117,7 @@ void TestImageDecodeJobState::operationIdsStayNonZeroAfterWrap()
     const KiriView::ImageDecodeJobTicket ticket = state.start(request(7));
 
     QVERIFY(ticket.operationId != 0);
-    comparePlan(
-        state.acceptLoadedData(ticket), KiriView::ImageDecodeJobRuntimeOperation::StartDecode, 7);
+    compareOperation<KiriView::StartImageDecodeOperation>(state.acceptLoadedData(ticket), 7);
 }
 
 QTEST_GUILESS_MAIN(TestImageDecodeJobState)

@@ -7,6 +7,7 @@
 #include "async/imagecallback.h"
 
 #include <utility>
+#include <variant>
 
 namespace KiriView {
 ImageDecodeJob::ImageDecodeJob(QObject *parent)
@@ -44,19 +45,21 @@ void ImageDecodeJob::start(ImageDecodeRequest request)
         this, ticket.request,
         [this, ticket](QByteArray data) mutable {
             ImageDecodeJobRuntimePlan plan = m_state.acceptLoadedData(ticket);
-            if (plan.operation != ImageDecodeJobRuntimeOperation::StartDecode) {
+            auto *operation = std::get_if<StartImageDecodeOperation>(&plan.operation);
+            if (operation == nullptr) {
                 return;
             }
 
-            startDecode(std::move(data), std::move(ticket), std::move(plan.request));
+            startDecode(std::move(data), std::move(ticket), std::move(operation->request));
         },
         [this, ticket](const QString &errorString) {
             ImageDecodeJobRuntimePlan plan = m_state.acceptLoadError(ticket);
-            if (plan.operation != ImageDecodeJobRuntimeOperation::DeliverLoadError) {
+            const auto *operation = std::get_if<DeliverImageLoadErrorOperation>(&plan.operation);
+            if (operation == nullptr) {
                 return;
             }
 
-            invokeIfSet(m_callbacks.loadError, plan.request, errorString);
+            invokeIfSet(m_callbacks.loadError, operation->request, errorString);
         });
 }
 
@@ -79,11 +82,12 @@ void ImageDecodeJob::startDecode(
         },
         [this, ticket = std::move(ticket)](DecodedImageResult result) mutable {
             ImageDecodeJobRuntimePlan plan = m_state.acceptDecodeResult(ticket);
-            if (plan.operation != ImageDecodeJobRuntimeOperation::DeliverDecodeResult) {
+            auto *operation = std::get_if<DeliverImageDecodeResultOperation>(&plan.operation);
+            if (operation == nullptr) {
                 return;
             }
 
-            invokeIfSet(m_callbacks.decoded, std::move(plan.request), std::move(result));
+            invokeIfSet(m_callbacks.decoded, std::move(operation->request), std::move(result));
         });
 }
 }
