@@ -6,7 +6,6 @@
 #include "archive/archiveformat.h"
 #include "bridge/rustqtconversion.h"
 #include "kiriview/src/policy/mediaformatregistry.cxx.h"
-#include "kiriview/src/policy/videoformatregistry.cxx.h"
 
 #include <KLocalizedString>
 

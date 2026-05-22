@@ -25,4 +25,3 @@ src/policy/imageviewportgeometry.rs
 src/policy/imagezoomstate.rs
 src/policy/predecodecachepolicy.rs
 src/policy/svgrenderer.rs
-src/policy/videoformatregistry.rs

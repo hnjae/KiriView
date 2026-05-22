@@ -14,6 +14,9 @@ mod ffi {
 
         #[cxx_name = "rustIsSupportedOrdinaryMediaFileName"]
         fn rust_is_supported_ordinary_media_file_name(name: &str) -> bool;
+
+        #[cxx_name = "rustIsSupportedDirectVideoFileName"]
+        fn rust_is_supported_direct_video_file_name(name: &str) -> bool;
     }
 }
 
@@ -23,6 +26,10 @@ fn rust_supported_ordinary_media_extensions() -> Vec<String> {
 
 fn rust_is_supported_ordinary_media_file_name(name: &str) -> bool {
     is_supported_ordinary_media_file_name(name)
+}
+
+fn rust_is_supported_direct_video_file_name(name: &str) -> bool {
+    is_supported_direct_video_file_name(name)
 }
 
 pub(crate) fn supported_ordinary_media_extensions() -> Vec<String> {
