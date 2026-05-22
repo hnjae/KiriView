@@ -17,12 +17,15 @@ class TestVideoDocumentRuntime : public QObject
 private Q_SLOTS:
     void initialStateIsNull();
     void mediaBackendFactoryIsLazyUntilPlaybackUrlResolution();
+    void playbackUrlResolutionStartsPlayback();
     void localResolverCompletionUsesOriginalPlaybackUrl();
     void settingAndClearingSourcePreservesUserFacingUrlAndTitle();
     void resolverCanReturnSeparatePlaybackUrl();
     void resolverFailureSurfacesErrorWithoutChangingSourceUrl();
     void staleResolverCompletionsAreIgnored();
     void resolverCleanupRunsOnSourceChangeAndDestruction();
+    void naturalPlaybackEndKeepsFinalPositionWithoutStopping();
+    void playAfterNaturalEndRestartsFromBeginningWhenSeekable();
     void seekByClampsToKnownDuration();
     void seekByNoopsWhenNotSeekable();
     void videoOutputDetachAndDestructionClearBackendOutput();
@@ -78,7 +81,7 @@ public:
     }
 
     QObject *videoOutput() const override { return output.data(); }
-    KiriView::VideoDocumentStatus mediaStatus() const override { return currentStatus; }
+    KiriView::VideoMediaStatus mediaStatus() const override { return currentStatus; }
     QString errorString() const override { return currentErrorString; }
     qint64 duration() const override { return currentDuration; }
     qint64 position() const override { return currentPosition; }
@@ -87,7 +90,7 @@ public:
     bool hasVideo() const override { return videoAvailable; }
     bool hasAudio() const override { return audioAvailable; }
 
-    void emitStatus(KiriView::VideoDocumentStatus status)
+    void emitStatus(KiriView::VideoMediaStatus status)
     {
         currentStatus = status;
         callbacks.mediaStatusChanged();
@@ -114,7 +117,7 @@ public:
     QUrl sourceUrl;
     QPointer<QObject> output;
     KiriView::VideoMediaBackendCallbacks callbacks;
-    KiriView::VideoDocumentStatus currentStatus = KiriView::VideoDocumentStatus::Null;
+    KiriView::VideoMediaStatus currentStatus = KiriView::VideoMediaStatus::Null;
     QString currentErrorString;
     qint64 currentDuration = 0;
     qint64 currentPosition = 0;
@@ -262,6 +265,18 @@ void TestVideoDocumentRuntime::mediaBackendFactoryIsLazyUntilPlaybackUrlResoluti
     QCOMPARE(backend->videoOutput(), &output);
 }
 
+void TestVideoDocumentRuntime::playbackUrlResolutionStartsPlayback()
+{
+    RuntimeFixture fixture;
+    const QUrl sourceUrl = QUrl::fromLocalFile(QStringLiteral("/home/me/clip.mp4"));
+
+    fixture.runtime->setSourceUrl(sourceUrl);
+    fixture.resolveLatest(sourceUrl);
+
+    QCOMPARE(fixture.backend->playCount, 1);
+    QVERIFY(fixture.runtime->playing());
+}
+
 void TestVideoDocumentRuntime::localResolverCompletionUsesOriginalPlaybackUrl()
 {
     RuntimeFixture fixture;
@@ -291,7 +306,7 @@ void TestVideoDocumentRuntime::settingAndClearingSourcePreservesUserFacingUrlAnd
     QCOMPARE(fixture.runtime->sourceUrl(), sourceUrl);
     QCOMPARE(fixture.backend->sourceUrl, playbackUrl);
 
-    fixture.backend->emitStatus(KiriView::VideoDocumentStatus::Ready);
+    fixture.backend->emitStatus(KiriView::VideoMediaStatus::Buffered);
     QCOMPARE(fixture.runtime->status(), KiriView::VideoDocumentStatus::Ready);
 
     fixture.runtime->setSourceUrl(QUrl());
@@ -371,6 +386,48 @@ void TestVideoDocumentRuntime::resolverCleanupRunsOnSourceChangeAndDestruction()
 
     QCOMPARE(resolverState->cancelCount, 3);
     QCOMPARE(resolverState->cleanupCount, 3);
+}
+
+void TestVideoDocumentRuntime::naturalPlaybackEndKeepsFinalPositionWithoutStopping()
+{
+    RuntimeFixture fixture;
+    const QUrl sourceUrl = QUrl::fromLocalFile(QStringLiteral("/home/me/clip.mp4"));
+
+    fixture.runtime->setSourceUrl(sourceUrl);
+    fixture.resolveLatest(sourceUrl);
+    fixture.backend->emitDuration(10000);
+    fixture.backend->emitSeekable(true);
+    fixture.backend->emitPosition(10000);
+
+    const int stopCountBeforeEnd = fixture.backend->stopCount;
+    fixture.backend->emitStatus(KiriView::VideoMediaStatus::EndOfMedia);
+
+    QCOMPARE(fixture.runtime->status(), KiriView::VideoDocumentStatus::Ready);
+    QVERIFY(!fixture.runtime->playing());
+    QCOMPARE(fixture.runtime->position(), 10000);
+    QCOMPARE(fixture.backend->currentPosition, 10000);
+    QCOMPARE(fixture.backend->stopCount, stopCountBeforeEnd);
+}
+
+void TestVideoDocumentRuntime::playAfterNaturalEndRestartsFromBeginningWhenSeekable()
+{
+    RuntimeFixture fixture;
+    const QUrl sourceUrl = QUrl::fromLocalFile(QStringLiteral("/home/me/clip.mp4"));
+
+    fixture.runtime->setSourceUrl(sourceUrl);
+    fixture.resolveLatest(sourceUrl);
+    fixture.backend->emitDuration(10000);
+    fixture.backend->emitSeekable(true);
+    fixture.backend->emitPosition(10000);
+    fixture.backend->emitStatus(KiriView::VideoMediaStatus::EndOfMedia);
+
+    fixture.runtime->play();
+
+    QCOMPARE(fixture.backend->setPositionCount, 1);
+    QCOMPARE(fixture.backend->currentPosition, 0);
+    QCOMPARE(fixture.runtime->position(), 0);
+    QCOMPARE(fixture.backend->playCount, 2);
+    QVERIFY(fixture.runtime->playing());
 }
 
 void TestVideoDocumentRuntime::seekByClampsToKnownDuration()

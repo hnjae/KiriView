@@ -23,6 +23,17 @@ enum class VideoDocumentStatus {
     Error,
 };
 
+enum class VideoMediaStatus {
+    Null,
+    Loading,
+    Loaded,
+    Stalled,
+    Buffering,
+    Buffered,
+    EndOfMedia,
+    Invalid,
+};
+
 enum class VideoDocumentChange {
     SourceUrl,
     Status,
@@ -62,7 +73,7 @@ public:
     virtual void setPosition(qint64 position) = 0;
     virtual void setVideoOutput(QObject *videoOutput) = 0;
     virtual QObject *videoOutput() const = 0;
-    virtual VideoDocumentStatus mediaStatus() const = 0;
+    virtual VideoMediaStatus mediaStatus() const = 0;
     virtual QString errorString() const = 0;
     virtual qint64 duration() const = 0;
     virtual qint64 position() const = 0;
@@ -120,6 +131,7 @@ private:
     void disconnectVideoOutputDestroyed();
     void updateStatusFromBackend();
     void updateErrorFromBackend();
+    void setEndedValue(bool ended);
     void setStatus(VideoDocumentStatus status);
     void setErrorString(const QString &errorString);
     void setDurationValue(qint64 duration);
@@ -150,6 +162,7 @@ private:
     bool m_seekable = false;
     bool m_hasVideo = false;
     bool m_hasAudio = false;
+    bool m_ended = false;
 };
 
 std::unique_ptr<VideoMediaBackend> createDefaultVideoMediaBackend(QObject *parent);

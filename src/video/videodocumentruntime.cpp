@@ -17,6 +17,26 @@ QString fileNameForWindowTitle(const QUrl &sourceUrl)
     return sourceUrl.fileName(QUrl::PrettyDecoded);
 }
 
+KiriView::VideoDocumentStatus documentStatusForMediaStatus(KiriView::VideoMediaStatus status)
+{
+    switch (status) {
+    case KiriView::VideoMediaStatus::Null:
+        return KiriView::VideoDocumentStatus::Null;
+    case KiriView::VideoMediaStatus::Loading:
+    case KiriView::VideoMediaStatus::Stalled:
+        return KiriView::VideoDocumentStatus::Loading;
+    case KiriView::VideoMediaStatus::Loaded:
+    case KiriView::VideoMediaStatus::Buffering:
+    case KiriView::VideoMediaStatus::Buffered:
+    case KiriView::VideoMediaStatus::EndOfMedia:
+        return KiriView::VideoDocumentStatus::Ready;
+    case KiriView::VideoMediaStatus::Invalid:
+        return KiriView::VideoDocumentStatus::Error;
+    }
+
+    return KiriView::VideoDocumentStatus::Null;
+}
+
 class QtVideoMediaBackend final : public QObject, public KiriView::VideoMediaBackend
 {
 public:
@@ -59,24 +79,28 @@ public:
     void setVideoOutput(QObject *videoOutput) override { m_player.setVideoOutput(videoOutput); }
     QObject *videoOutput() const override { return m_player.videoOutput(); }
 
-    KiriView::VideoDocumentStatus mediaStatus() const override
+    KiriView::VideoMediaStatus mediaStatus() const override
     {
         switch (m_player.mediaStatus()) {
         case QMediaPlayer::NoMedia:
-            return KiriView::VideoDocumentStatus::Null;
+            return KiriView::VideoMediaStatus::Null;
         case QMediaPlayer::LoadingMedia:
-        case QMediaPlayer::StalledMedia:
-            return KiriView::VideoDocumentStatus::Loading;
+            return KiriView::VideoMediaStatus::Loading;
         case QMediaPlayer::LoadedMedia:
+            return KiriView::VideoMediaStatus::Loaded;
+        case QMediaPlayer::StalledMedia:
+            return KiriView::VideoMediaStatus::Stalled;
         case QMediaPlayer::BufferingMedia:
+            return KiriView::VideoMediaStatus::Buffering;
         case QMediaPlayer::BufferedMedia:
+            return KiriView::VideoMediaStatus::Buffered;
         case QMediaPlayer::EndOfMedia:
-            return KiriView::VideoDocumentStatus::Ready;
+            return KiriView::VideoMediaStatus::EndOfMedia;
         case QMediaPlayer::InvalidMedia:
-            return KiriView::VideoDocumentStatus::Error;
+            return KiriView::VideoMediaStatus::Invalid;
         }
 
-        return KiriView::VideoDocumentStatus::Null;
+        return KiriView::VideoMediaStatus::Null;
     }
 
     QString errorString() const override { return m_player.errorString(); }
@@ -202,6 +226,7 @@ void VideoDocumentRuntime::setPosition(qint64 position)
         return;
     }
 
+    setEndedValue(false);
     const qint64 upperBound = m_duration > 0 ? m_duration : position;
     const qint64 clamped = std::clamp(position, qint64(0), upperBound);
     ensureMediaBackend()->setPosition(clamped);
@@ -240,7 +265,13 @@ void VideoDocumentRuntime::play()
         return;
     }
 
-    ensureMediaBackend()->play();
+    VideoMediaBackend *mediaBackend = ensureMediaBackend();
+    if (m_ended && m_seekable) {
+        mediaBackend->setPosition(0);
+        setPositionValue(0);
+    }
+    setEndedValue(false);
+    mediaBackend->play();
 }
 
 void VideoDocumentRuntime::pause()
@@ -254,6 +285,7 @@ void VideoDocumentRuntime::pause()
 
 void VideoDocumentRuntime::stop()
 {
+    setEndedValue(false);
     if (m_mediaBackend != nullptr) {
         m_mediaBackend->stop();
     }
@@ -284,6 +316,7 @@ void VideoDocumentRuntime::seekBy(qint64 deltaMilliseconds)
         return;
     }
 
+    setEndedValue(false);
     ensureMediaBackend()->setPosition(nextPosition);
     setPositionValue(nextPosition);
 }
@@ -311,6 +344,7 @@ void VideoDocumentRuntime::clearSourceState()
     }
     m_sourceUrl = QUrl();
     m_resolvingPlaybackUrl = false;
+    m_ended = false;
 
     std::vector<VideoDocumentChange> changes { VideoDocumentChange::SourceUrl };
     const auto appendChange = [&changes](VideoDocumentChange change) { changes.push_back(change); };
@@ -363,6 +397,7 @@ void VideoDocumentRuntime::beginSourceLoad(const QUrl &sourceUrl)
     }
     m_sourceUrl = sourceUrl;
     m_resolvingPlaybackUrl = true;
+    m_ended = false;
 
     std::vector<VideoDocumentChange> changes {
         VideoDocumentChange::SourceUrl,
@@ -424,8 +459,10 @@ void VideoDocumentRuntime::completePlaybackUrlResolution(
     }
 
     m_resolvingPlaybackUrl = false;
-    ensureMediaBackend()->setSource(resolution.playbackUrl);
+    VideoMediaBackend *mediaBackend = ensureMediaBackend();
+    mediaBackend->setSource(resolution.playbackUrl);
     updateStatusFromBackend();
+    play();
 }
 
 void VideoDocumentRuntime::failPlaybackUrlResolution(
@@ -467,24 +504,32 @@ void VideoDocumentRuntime::disconnectVideoOutputDestroyed()
 void VideoDocumentRuntime::updateStatusFromBackend()
 {
     if (m_sourceUrl.isEmpty()) {
+        setEndedValue(false);
         setStatus(VideoDocumentStatus::Null);
         return;
     }
     if (m_resolvingPlaybackUrl) {
+        setEndedValue(false);
         setStatus(VideoDocumentStatus::Loading);
         return;
     }
     if (m_mediaBackend == nullptr) {
+        setEndedValue(false);
         setStatus(VideoDocumentStatus::Loading);
         return;
     }
 
-    const VideoDocumentStatus backendStatus = m_mediaBackend->mediaStatus();
-    if (backendStatus == VideoDocumentStatus::Null) {
+    const VideoMediaStatus mediaStatus = m_mediaBackend->mediaStatus();
+    if (mediaStatus == VideoMediaStatus::Null) {
+        setEndedValue(false);
         setStatus(VideoDocumentStatus::Loading);
         return;
     }
-    setStatus(backendStatus);
+    setEndedValue(mediaStatus == VideoMediaStatus::EndOfMedia);
+    if (m_ended) {
+        setPlayingValue(false);
+    }
+    setStatus(documentStatusForMediaStatus(mediaStatus));
 }
 
 void VideoDocumentRuntime::updateErrorFromBackend()
@@ -520,6 +565,8 @@ void VideoDocumentRuntime::setErrorString(const QString &errorString)
     publish(VideoDocumentChange::ErrorString);
 }
 
+void VideoDocumentRuntime::setEndedValue(bool ended) { m_ended = ended; }
+
 void VideoDocumentRuntime::setDurationValue(qint64 duration)
 {
     const qint64 normalizedDuration = std::max<qint64>(0, duration);
@@ -544,6 +591,9 @@ void VideoDocumentRuntime::setPositionValue(qint64 position)
 
 void VideoDocumentRuntime::setPlayingValue(bool playing)
 {
+    if (playing) {
+        setEndedValue(false);
+    }
     if (m_playing == playing) {
         return;
     }
