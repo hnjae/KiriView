@@ -58,7 +58,6 @@ src/document/imagedocumentpredecodecontroller.cpp
 src/document/imagedocumentpublicsignals.cpp
 src/document/imagedocumentruntime.cpp
 src/document/imagedocumentruntimecontrollers.cpp
-src/document/imagedocumentruntimeoperationbinding.cpp
 src/document/imagedocumentruntimedependencies.cpp
 src/document/imagedocumentruntimeplan.cpp
 src/document/imagedocumentruntimeplanexecutor.cpp

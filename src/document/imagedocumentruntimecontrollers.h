@@ -18,6 +18,7 @@ namespace KiriView {
 class ArchiveDocumentSessionStore;
 class ImageDocumentDeletionController;
 class ImageDocumentRuntimePlanExecutor;
+struct ImageDocumentRuntimeOperations;
 class ImageDocumentNavigationController;
 class ImageDocumentPredecodeController;
 class ImageDocumentState;
@@ -51,6 +52,8 @@ public:
     void shutdownRuntime();
 
 private:
+    ImageDocumentRuntimeOperations runtimeOperations(ImageDocumentState &state);
+
     ImageDocumentRuntimeControllerCallbacks m_callbacks;
     std::unique_ptr<ArchiveDocumentSessionStore> m_archiveSessionStore;
     std::unique_ptr<ImageDocumentDeletionController> m_deletionController;

@@ -9,11 +9,12 @@
 #include "imagedocumentnavigationcontroller.h"
 #include "imagedocumentpredecodecontroller.h"
 #include "imagedocumentruntimedependencies.h"
-#include "imagedocumentruntimeoperationbinding.h"
 #include "imagedocumentruntimeplanexecutor.h"
 #include "imagedocumentsourceloadrequest.h"
 #include "imagedocumentstate.h"
 #include "imageopencontroller.h"
+#include "imageopentransitionapplier.h"
+#include "imageopenworkflow.h"
 #include "localization/imageerrortext.h"
 #include "navigation/imagenavigationservice.h"
 #include "presentation/imagepresentationcontroller.h"
@@ -136,20 +137,8 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject *docume
     m_navigationController = std::make_unique<ImageDocumentNavigationController>(state,
         *m_presentationController, *m_navigationService, *m_spreadController,
         [this](ImageDocumentRuntimePlan plan) { dispatchPlan(plan); });
-    m_runtimePlanExecutor = std::make_unique<ImageDocumentRuntimePlanExecutor>(
-        imageDocumentRuntimeOperations(ImageDocumentRuntimeOperationBinding {
-            m_archiveSessionStore.get(),
-            state,
-            *m_deletionController,
-            *m_presentationController,
-            *m_openController,
-            *m_navigationController,
-            *m_predecodeController,
-            *m_spreadController,
-            [this](const ImageDocumentSourceLoadRequest &request) {
-                invokeIfSet(m_callbacks.loadSource, request);
-            },
-        }));
+    m_runtimePlanExecutor
+        = std::make_unique<ImageDocumentRuntimePlanExecutor>(runtimeOperations(state));
 }
 
 ImageDocumentRuntimeControllers::~ImageDocumentRuntimeControllers() = default;
@@ -186,5 +175,97 @@ void ImageDocumentRuntimeControllers::shutdownRuntime()
     if (m_runtimePlanExecutor != nullptr) {
         m_runtimePlanExecutor->shutdownRuntime();
     }
+}
+
+ImageDocumentRuntimeOperations ImageDocumentRuntimeControllers::runtimeOperations(
+    ImageDocumentState &state)
+{
+    ImageDocumentState *stateOwner = &state;
+
+    ImageDocumentRuntimeOperations operations;
+    operations.lifecycle.cancelFileDeletion = [this]() { m_deletionController->cancel(); };
+    operations.lifecycle.stopPresentationAnimation
+        = [this]() { m_presentationController->stopAnimation(); };
+    operations.lifecycle.shutdownSpread = [this]() { m_spreadController->shutdown(); };
+    operations.archive.clearSession = [this]() {
+        if (m_archiveSessionStore != nullptr) {
+            m_archiveSessionStore->clear();
+        }
+    };
+    operations.predecode.clearPredecode = [this]() { m_predecodeController->clear(); };
+    operations.predecode.cancelPredecode = [this]() { m_predecodeController->cancel(); };
+    operations.predecode.scheduleAdjacentImagePredecode = [this]() {
+        m_predecodeController->scheduleAdjacentImagePredecode(
+            m_spreadController->secondaryDisplayedPredecodeImage());
+    };
+    operations.spread.finishSpreadTransition = [this]() { m_spreadController->finishTransition(); };
+    operations.spread.resetRightToLeftReading
+        = [this]() { m_spreadController->resetRightToLeftReading(); };
+    operations.spread.clearSecondaryPage = [this]() { m_spreadController->clearSecondaryPage(); };
+    operations.spread.notifyRightToLeftReadingChanged
+        = [this]() { m_spreadController->notifyRightToLeftReadingChanged(); };
+    operations.spread.resetZoom = [this]() { m_spreadController->resetZoom(); };
+    operations.spread.prepareFailedContainer = [this](const QUrl &containerUrl) {
+        m_presentationController->prepareFailedContainer(containerUrl);
+    };
+    operations.navigation.cancelPageNavigationUpdate
+        = [this]() { m_navigationController->cancelPageNavigationUpdate(); };
+    operations.navigation.cancelNavigation
+        = [this]() { m_navigationController->cancelNavigation(); };
+    operations.navigation.cancelContainerNavigation
+        = [this]() { m_navigationController->cancelContainerNavigation(); };
+    operations.navigation.cancelAllNavigation
+        = [this]() { m_navigationController->cancelAllNavigation(); };
+    operations.navigation.clearPageNavigation
+        = [this]() { m_navigationController->clearPageNavigation(); };
+    operations.navigation.updatePageNavigation
+        = [this]() { m_navigationController->updatePageNavigation(); };
+    operations.navigation.loadUrl = [this](const QUrl &url) {
+        invokeIfSet(m_callbacks.loadSource, ImageDocumentSourceLoadRequest::fromUrl(url));
+    };
+    operations.navigation.loadContainerImage
+        = [this](const QUrl &imageUrl, const QUrl &containerUrl) {
+              invokeIfSet(m_callbacks.loadSource,
+                  ImageDocumentSourceLoadRequest::fromContainerImage(imageUrl, containerUrl));
+          };
+    operations.navigation.finishEmptyContainerNavigation = [this](const QUrl &containerUrl) {
+        m_openController->finishContainerNavigationWithEmptyContainer(containerUrl);
+    };
+    operations.navigation.finishContainerNavigationLoadWithError
+        = [this](const QUrl &containerUrl, const QString &errorString) {
+              m_openController->finishContainerNavigationLoadWithError(containerUrl, errorString);
+          };
+    operations.navigation.loadPageNavigationUrl
+        = [this](const QUrl &url, bool preserveTwoPageSpreadTransition) {
+              invokeIfSet(m_callbacks.loadSource,
+                  ImageDocumentSourceLoadRequest::fromPageNavigation(
+                      url, preserveTwoPageSpreadTransition));
+          };
+    operations.open.cancelOpen = [this]() { m_openController->cancel(); };
+    operations.open.clearDisplayedImageLocation
+        = [stateOwner]() { stateOwner->clearDisplayedImageLocation(); };
+    operations.open.clearPresentationImage = [this]() { m_presentationController->clearImage(); };
+    operations.sourceLoad.clearLoadingContainerNavigationUrl
+        = [stateOwner]() { stateOwner->clearLoadingContainerNavigationUrl(); };
+    operations.sourceLoad.setLoadingContainerNavigationUrl
+        = [stateOwner](const QUrl &url) { stateOwner->setLoadingContainerNavigationUrl(url); };
+    operations.sourceLoad.setContainerNavigationUrl
+        = [stateOwner](const QUrl &url) { stateOwner->setContainerNavigationUrl(url); };
+    operations.sourceLoad.prepareSourceLoad
+        = [this, stateOwner](const ImageDocumentSourceLoadRequest &request) {
+              if (m_archiveSessionStore != nullptr) {
+                  m_archiveSessionStore->prepareForSourceLoad(
+                      request, stateOwner->displayedArchiveDocument());
+              }
+          };
+    operations.open.setSourceUrl = [stateOwner](const QUrl &url) { stateOwner->setSourceUrl(url); };
+    operations.sourceLoad.beginOpen = [this]() { m_openController->open(); };
+    operations.open.setErrorString
+        = [stateOwner](const QString &errorString) { stateOwner->setErrorString(errorString); };
+    operations.open.finishEmptySourceLoad = [stateOwner]() {
+        return applyImageOpenTransition(
+            *stateOwner, ImageOpenWorkflow::finishEmptySourceLoadTransition());
+    };
+    return operations;
 }
 }
