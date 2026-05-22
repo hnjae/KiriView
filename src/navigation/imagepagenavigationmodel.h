@@ -4,9 +4,9 @@
 #ifndef KIRIVIEW_IMAGEPAGENAVIGATIONMODEL_H
 #define KIRIVIEW_IMAGEPAGENAVIGATIONMODEL_H
 
+#include "async/imageasyncoperationstate.h"
 #include "imagecandidatelistsource.h"
 #include "imagenavigationtypes.h"
-#include "imagepagenavigationrefreshstate.h"
 
 #include <QUrl>
 #include <optional>
@@ -50,11 +50,18 @@ public:
 private:
     ImagePageNavigationRefreshResult completeRefreshFromCurrentContext(
         const std::vector<ImageNavigationCandidate> &candidates, ImageCandidateListContext context);
+    std::optional<ImageCandidateListContext> acceptedPendingRefreshContext(
+        quint64 refreshId, ImageCandidateListSource source) const;
+    std::optional<ImageCandidateListContext> acceptedWatchedRefreshContext(
+        ImageCandidateListSource source) const;
     bool completeRefresh(std::vector<QUrl> urls, ImageCandidateListContext context);
+    void finishRefresh(ImageCandidateListContext context);
     bool replaceState(PageNavigationState state, bool forceChanged = false);
 
     PageNavigationState m_state;
-    ImagePageNavigationRefreshState m_refreshState;
+    std::optional<ImageCandidateListContext> m_knownRefreshContext;
+    std::optional<ImageCandidateListContext> m_pendingRefreshContext;
+    ImageAsyncOperationState m_pendingRefresh;
 };
 }
 

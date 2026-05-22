@@ -98,7 +98,6 @@ src/navigation/imagenavigationmodel.cpp
 src/navigation/imagenavigationservice.cpp
 src/navigation/navigationindexpolicy.cpp
 src/navigation/imagepagenavigationcontroller.cpp
-src/navigation/imagepagenavigationrefreshstate.cpp
 src/localization/localization.cpp
 src/application/menuaccesskeymenuruntime.cpp
 src/facade/menuaccesskeyrouter.cpp

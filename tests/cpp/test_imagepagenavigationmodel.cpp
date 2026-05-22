@@ -39,6 +39,7 @@ private Q_SLOTS:
     void pendingRefreshOperationGuardsStaleSameSourceCompletions();
     void watchedRefreshSourceTracksCurrentContext();
     void changedCandidateRefreshReportsCurrentImageRemoval();
+    void clearDropsRefreshContexts();
     void snapshotIsStableProjection();
 };
 
@@ -223,6 +224,34 @@ void TestImagePageNavigationModel::changedCandidateRefreshReportsCurrentImageRem
     QVERIFY(refreshResult.context.has_value());
     QCOMPARE(refreshResult.context->currentUrl(), first);
     comparePage(model, 0, 1);
+}
+
+void TestImagePageNavigationModel::clearDropsRefreshContexts()
+{
+    ImagePageNavigationModel model;
+    const QUrl directory = localUrl(QStringLiteral("/images/"));
+    const QUrl first = indexedImageUrl(0);
+    const QUrl second = indexedImageUrl(1);
+    const ImageCandidateListSource source = ImageCandidateListSource::forDirectory(directory);
+    QVERIFY(
+        model.completeRefresh({ imageCandidate(first), imageCandidate(second) }, first, source));
+
+    const ImageCandidateListContext context
+        = ImageCandidateListContext::forDirectory(first, directory);
+    const KiriView::ImagePageNavigationRefreshPlan refresh = model.beginRefresh(context);
+    QVERIFY(refresh.changed);
+    QVERIFY(model.shouldKeepExistingWatcherFor(context));
+
+    QVERIFY(model.clear());
+    QVERIFY(!model.shouldKeepExistingWatcherFor(context));
+
+    const KiriView::ImagePageNavigationRefreshResult watchedResult
+        = model.completeWatchedRefreshFromCurrentContext({ imageCandidate(first) }, source);
+    QVERIFY(!watchedResult.accepted);
+
+    const KiriView::ImagePageNavigationRefreshResult pendingResult
+        = model.completePendingRefresh({ imageCandidate(first) }, refresh.refreshId, source);
+    QVERIFY(!pendingResult.accepted);
 }
 
 void TestImagePageNavigationModel::snapshotIsStableProjection()

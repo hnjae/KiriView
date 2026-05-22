@@ -63,23 +63,31 @@ std::optional<QUrl> ImagePageNavigationModel::selectAdjacentPage(NavigationDirec
 bool ImagePageNavigationModel::shouldKeepExistingWatcherFor(
     const ImageCandidateListContext &context) const
 {
-    return m_refreshState.shouldKeepExistingWatcherFor(context);
+    return m_knownRefreshContext.has_value()
+        && sameImageCandidateListSource(m_knownRefreshContext->source(), context.source());
 }
 
 ImagePageNavigationRefreshPlan ImagePageNavigationModel::beginRefresh(
     const ImageCandidateListContext &context)
 {
-    const ImagePageNavigationRefreshPreview preview
-        = m_refreshState.beginRefresh(context, !m_state.urls.empty());
+    const quint64 refreshId = m_pendingRefresh.start();
+    const bool keepKnownUrls = m_knownRefreshContext.has_value() && !m_state.urls.empty()
+        && sameImageCandidateListSource(m_knownRefreshContext->source(), context.source());
+    if (!keepKnownUrls) {
+        m_knownRefreshContext = std::nullopt;
+    }
+
+    m_pendingRefreshContext = context;
+
     bool changed = false;
-    if (preview.keepKnownUrls) {
+    if (keepKnownUrls) {
         changed
             = replaceState(pageNavigationStateForCurrentUrl(m_state, context.currentUrl()), true);
     } else {
         changed = replaceState(PageNavigationState {});
     }
 
-    return ImagePageNavigationRefreshPlan { changed, preview.refreshId };
+    return ImagePageNavigationRefreshPlan { changed, refreshId };
 }
 
 bool ImagePageNavigationModel::completeRefresh(
@@ -95,12 +103,12 @@ ImagePageNavigationRefreshResult ImagePageNavigationModel::completePendingRefres
     ImageCandidateListSource source)
 {
     std::optional<ImageCandidateListContext> context
-        = m_refreshState.acceptedPendingRefreshContext(refreshId, std::move(source));
+        = acceptedPendingRefreshContext(refreshId, std::move(source));
     if (!context.has_value()) {
         return {};
     }
 
-    m_refreshState.finishPendingRefresh(refreshId);
+    m_pendingRefresh.finish(refreshId);
     return completeRefreshFromCurrentContext(candidates, *context);
 }
 
@@ -108,7 +116,7 @@ ImagePageNavigationRefreshResult ImagePageNavigationModel::completeWatchedRefres
     const std::vector<ImageNavigationCandidate> &candidates, ImageCandidateListSource source)
 {
     std::optional<ImageCandidateListContext> context
-        = m_refreshState.acceptedWatchedRefreshContext(std::move(source));
+        = acceptedWatchedRefreshContext(std::move(source));
     if (!context.has_value()) {
         return {};
     }
@@ -125,17 +133,46 @@ ImagePageNavigationRefreshResult ImagePageNavigationModel::completeRefreshFromCu
     return ImagePageNavigationRefreshResult { true, changed, currentImageRemoved, context };
 }
 
+std::optional<ImageCandidateListContext> ImagePageNavigationModel::acceptedPendingRefreshContext(
+    quint64 refreshId, ImageCandidateListSource source) const
+{
+    if (!m_pendingRefresh.accepts(refreshId)) {
+        return std::nullopt;
+    }
+
+    return acceptedWatchedRefreshContext(std::move(source));
+}
+
+std::optional<ImageCandidateListContext> ImagePageNavigationModel::acceptedWatchedRefreshContext(
+    ImageCandidateListSource source) const
+{
+    if (!m_pendingRefreshContext.has_value()
+        || !sameImageCandidateListSource(m_pendingRefreshContext->source(), source)) {
+        return std::nullopt;
+    }
+
+    return ImageCandidateListContext::forSource(
+        m_pendingRefreshContext->currentUrl(), std::move(source));
+}
+
 bool ImagePageNavigationModel::completeRefresh(
     std::vector<QUrl> urls, ImageCandidateListContext context)
 {
     const QUrl currentUrl = context.currentUrl();
-    m_refreshState.finishRefresh(std::move(context));
+    finishRefresh(std::move(context));
     return replaceState(pageNavigationStateForUrls(std::move(urls), currentUrl));
+}
+
+void ImagePageNavigationModel::finishRefresh(ImageCandidateListContext context)
+{
+    m_knownRefreshContext = std::move(context);
 }
 
 bool ImagePageNavigationModel::clear()
 {
-    m_refreshState.clear();
+    m_pendingRefresh.cancel();
+    m_knownRefreshContext = std::nullopt;
+    m_pendingRefreshContext = std::nullopt;
     return replaceState(PageNavigationState {});
 }
 
