@@ -239,24 +239,16 @@ ImageDecodeRoute imageDecodeRouteForClassification(ImageInputClassification clas
     return {};
 }
 
-ImageDecodeRouter::ImageDecodeRouter(ImageDecodeRouterHandlers handlers,
-    ImageDecodeInputClassifier classifier,
-    ImageDecodeCompatibleDataTransform compatibleDataTransform)
+ImageDecodeRouterRuntime::ImageDecodeRouterRuntime(
+    ImageDecodeRouterHandlers handlers, ImageDecodeCompatibleDataTransform compatibleDataTransform)
     : m_handlers(withDefaultHandlers(std::move(handlers)))
-    , m_classifier(std::move(classifier))
     , m_compatibleDataTransform(std::move(compatibleDataTransform))
 {
-    if (!m_classifier) {
-        m_classifier = classifyImageInput;
-    }
 }
 
-DecodedImageResult ImageDecodeRouter::decode(
-    const QByteArray &data, const ImageDecodeRequest &request) const
+DecodedImageResult ImageDecodeRouterRuntime::execute(
+    const ImageDecodeRoute &route, const QByteArray &data, const ImageDecodeRequest &request) const
 {
-    const ImageInputClassification classification
-        = m_classifier(data, request.imageUrl().fileName());
-    const ImageDecodeRoute route = imageDecodeRouteForClassification(classification);
     if (!route.shouldDecode()) {
         return failedReadImageDataResult();
     }
@@ -269,6 +261,26 @@ DecodedImageResult ImageDecodeRouter::decode(
     };
 
     return dispatchToHandler(handlerForRoute(m_handlers, route.handlerKind), input);
+}
+
+ImageDecodeRouter::ImageDecodeRouter(ImageDecodeRouterHandlers handlers,
+    ImageDecodeInputClassifier classifier,
+    ImageDecodeCompatibleDataTransform compatibleDataTransform)
+    : m_classifier(std::move(classifier))
+    , m_runtime(std::move(handlers), std::move(compatibleDataTransform))
+{
+    if (!m_classifier) {
+        m_classifier = classifyImageInput;
+    }
+}
+
+DecodedImageResult ImageDecodeRouter::decode(
+    const QByteArray &data, const ImageDecodeRequest &request) const
+{
+    const ImageInputClassification classification
+        = m_classifier(data, request.imageUrl().fileName());
+    const ImageDecodeRoute route = imageDecodeRouteForClassification(classification);
+    return m_runtime.execute(route, data, request);
 }
 
 DecodedImageResult decodeImageDataWithDefaultRouter(

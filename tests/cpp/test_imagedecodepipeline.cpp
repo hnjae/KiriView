@@ -63,6 +63,7 @@ class TestImageDecodePipeline : public QObject
 
 private Q_SLOTS:
     void routePlanKeepsClassificationSeparateFromDecoderExecution();
+    void runtimeExecutesRoutePlansWithoutClassifier();
     void routerCallsExactlyOneDecoderForClassifiedInputs();
     void selectedDecoderFailureDoesNotFallback();
     void compatibleDataIsComputedOnlyWhenClassificationRequestsIt();
@@ -107,6 +108,35 @@ void TestImageDecodePipeline::routePlanKeepsClassificationSeparateFromDecoderExe
         QCOMPARE(route.qtRasterFormat, testCase.expectedFormat);
         QCOMPARE(route.shouldDecode(), testCase.expectedShouldDecode);
     }
+}
+
+void TestImageDecodePipeline::runtimeExecutesRoutePlansWithoutClassifier()
+{
+    const QByteArray originalData = QByteArrayLiteral("original image bytes");
+    const QByteArray compatibleData = QByteArrayLiteral("compatible image bytes");
+
+    int compatibleTransformCount = 0;
+    QStringList calls;
+    QByteArrayList inputData;
+    QList<KiriView::QtRasterFormat> qtFormats;
+    KiriView::ImageDecodeRouterRuntime runtime(recordingHandlers(&calls, &inputData, &qtFormats),
+        [&compatibleTransformCount, compatibleData](const QByteArray &) {
+            ++compatibleTransformCount;
+            return compatibleData;
+        });
+
+    const KiriView::ImageDecodeRoute route {
+        KiriView::ImageDecodeHandlerKind::QtRaster,
+        KiriView::ImageDecodeDataSource::AvifCompatible,
+        KiriView::QtRasterFormat::Jxl,
+    };
+
+    runtime.execute(route, originalData, KiriView::ImageDecodeRequest {});
+
+    QCOMPARE(compatibleTransformCount, 1);
+    QCOMPARE(calls, QStringList({ QStringLiteral("qt") }));
+    QCOMPARE(inputData, QByteArrayList({ compatibleData }));
+    QCOMPARE(qtFormats, QList<KiriView::QtRasterFormat>({ KiriView::QtRasterFormat::Jxl }));
 }
 
 void TestImageDecodePipeline::routerCallsExactlyOneDecoderForClassifiedInputs()

@@ -51,6 +51,20 @@ using ImageDecodeCompatibleDataTransform = std::function<QByteArray(const QByteA
 
 ImageDecodeRoute imageDecodeRouteForClassification(ImageInputClassification classification);
 
+class ImageDecodeRouterRuntime final
+{
+public:
+    explicit ImageDecodeRouterRuntime(ImageDecodeRouterHandlers handlers = {},
+        ImageDecodeCompatibleDataTransform compatibleDataTransform = {});
+
+    DecodedImageResult execute(const ImageDecodeRoute &route, const QByteArray &data,
+        const ImageDecodeRequest &request) const;
+
+private:
+    ImageDecodeRouterHandlers m_handlers;
+    ImageDecodeCompatibleDataTransform m_compatibleDataTransform;
+};
+
 class ImageDecodeRouter final
 {
 public:
@@ -61,9 +75,8 @@ public:
     DecodedImageResult decode(const QByteArray &data, const ImageDecodeRequest &request) const;
 
 private:
-    ImageDecodeRouterHandlers m_handlers;
     ImageDecodeInputClassifier m_classifier;
-    ImageDecodeCompatibleDataTransform m_compatibleDataTransform;
+    ImageDecodeRouterRuntime m_runtime;
 };
 
 DecodedImageResult decodeImageDataWithDefaultRouter(
