@@ -12,7 +12,6 @@ src/policy/cachebudget.rs
 src/policy/heifcontainer.rs
 src/policy/heiftiling.rs
 src/policy/imageactionavailability.rs
-src/policy/imagedocumentsourceloadpolicy.rs
 src/policy/imageformatregistry.rs
 src/policy/imageinputclassification.rs
 src/policy/mediaformatregistry.rs

@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "document/imagedocumentsourceloadpolicy.h"
+#include "document/imageopenworkflow.h"
 
 #include "image_document_plan_test_support.h"
 #include "navigation/imagecontainer.h"
@@ -44,7 +44,7 @@ void TestImageDocumentSourceLoadPolicy::sourceLoadPolicyInputCapturesRuntimeSnap
         = KiriView::ImageDocumentSourceLoadRequest::fromContainerImage(sourceUrl, containerUrl);
 
     const KiriView::ImageDocumentSourceLoadPolicyInput input
-        = KiriView::imageDocumentSourceLoadPolicyInput(snapshot, request);
+        = KiriView::ImageOpenWorkflow::sourceLoadPolicyInput(snapshot, request);
 
     QCOMPARE(input.loadKind, KiriView::ImageDocumentSourceLoadKind::CurrentSource);
     QCOMPARE(input.preserveTwoPageSpreadTransition, false);
@@ -73,13 +73,13 @@ void TestImageDocumentSourceLoadPolicy::sourceLoadPolicyInputDetectsDisplayedCom
     KiriView::ImageDocumentSourceLoadRequest request
         = KiriView::ImageDocumentSourceLoadRequest::fromPageNavigation(imageUrl, true);
     KiriView::ImageDocumentSourceLoadPolicyInput input
-        = KiriView::imageDocumentSourceLoadPolicyInput(snapshot, request);
+        = KiriView::ImageOpenWorkflow::sourceLoadPolicyInput(snapshot, request);
     QCOMPARE(input.loadKind, KiriView::ImageDocumentSourceLoadKind::ReplacementSource);
     QCOMPARE(input.preserveTwoPageSpreadTransition, true);
     QCOMPARE(input.sourceWithinDisplayedComicBookArchive, true);
 
     request = KiriView::ImageDocumentSourceLoadRequest::fromUrl(replacementUrl);
-    input = KiriView::imageDocumentSourceLoadPolicyInput(snapshot, request);
+    input = KiriView::ImageOpenWorkflow::sourceLoadPolicyInput(snapshot, request);
     QCOMPARE(input.sourceWithinDisplayedComicBookArchive, false);
 }
 
@@ -96,26 +96,26 @@ void TestImageDocumentSourceLoadPolicy::
 
     input.rightToLeftReadingEnabled = false;
     input.sourceWithinDisplayedComicBookArchive = false;
-    QVERIFY(hasOperationTypes(KiriView::ImageDocumentSourceLoadPolicy::plan(input, request),
+    QVERIFY(hasOperationTypes(KiriView::ImageOpenWorkflow::sourceLoadPlan(input, request),
         operationTypes<KiriView::CancelFileDeletionOperation,
             KiriView::ClearLoadingContainerNavigationUrlOperation>()));
 
     input.rightToLeftReadingEnabled = true;
     input.sourceWithinDisplayedComicBookArchive = false;
-    QVERIFY(hasOperationTypes(KiriView::ImageDocumentSourceLoadPolicy::plan(input, request),
+    QVERIFY(hasOperationTypes(KiriView::ImageOpenWorkflow::sourceLoadPlan(input, request),
         operationTypes<KiriView::CancelFileDeletionOperation,
             KiriView::ResetRightToLeftReadingOperation,
             KiriView::NotifyRightToLeftReadingChangedOperation,
             KiriView::ClearLoadingContainerNavigationUrlOperation>()));
 
     input.sourceWithinDisplayedComicBookArchive = true;
-    QVERIFY(hasOperationTypes(KiriView::ImageDocumentSourceLoadPolicy::plan(input, request),
+    QVERIFY(hasOperationTypes(KiriView::ImageOpenWorkflow::sourceLoadPlan(input, request),
         operationTypes<KiriView::CancelFileDeletionOperation,
             KiriView::ClearLoadingContainerNavigationUrlOperation>()));
 
     input.sourceWithinDisplayedComicBookArchive = false;
     input.hasRequestedContainerNavigationUrl = true;
-    QVERIFY(hasOperationTypes(KiriView::ImageDocumentSourceLoadPolicy::plan(input, request),
+    QVERIFY(hasOperationTypes(KiriView::ImageOpenWorkflow::sourceLoadPlan(input, request),
         operationTypes<KiriView::CancelFileDeletionOperation,
             KiriView::ClearLoadingContainerNavigationUrlOperation,
             KiriView::SetContainerNavigationUrlOperation>()));
@@ -133,16 +133,14 @@ void TestImageDocumentSourceLoadPolicy::sourceLoadPlanRoutesUnchangedAndReplacem
     unchangedInput.rightToLeftReadingEnabled = true;
     unchangedInput.sourceWithinDisplayedComicBookArchive = false;
     unchangedInput.hasRequestedContainerNavigationUrl = true;
-    QVERIFY(
-        hasOperationTypes(KiriView::ImageDocumentSourceLoadPolicy::plan(unchangedInput, request),
-            operationTypes<KiriView::CancelFileDeletionOperation,
-                KiriView::FinishSpreadTransitionOperation,
-                KiriView::ClearLoadingContainerNavigationUrlOperation,
-                KiriView::SetContainerNavigationUrlOperation>()));
+    QVERIFY(hasOperationTypes(KiriView::ImageOpenWorkflow::sourceLoadPlan(unchangedInput, request),
+        operationTypes<KiriView::CancelFileDeletionOperation,
+            KiriView::FinishSpreadTransitionOperation,
+            KiriView::ClearLoadingContainerNavigationUrlOperation,
+            KiriView::SetContainerNavigationUrlOperation>()));
 
     unchangedInput.hasRequestedContainerNavigationUrl = false;
-    QVERIFY(hasOperationTypes(
-        KiriView::ImageDocumentSourceLoadPolicy::plan(unchangedInput, request),
+    QVERIFY(hasOperationTypes(KiriView::ImageOpenWorkflow::sourceLoadPlan(unchangedInput, request),
         operationTypes<KiriView::CancelFileDeletionOperation,
             KiriView::FinishSpreadTransitionOperation, KiriView::ResetRightToLeftReadingOperation,
             KiriView::NotifyRightToLeftReadingChangedOperation,
@@ -155,7 +153,7 @@ void TestImageDocumentSourceLoadPolicy::sourceLoadPlanRoutesUnchangedAndReplacem
     replacementInput.sourceWithinDisplayedComicBookArchive = false;
     replacementInput.hasRequestedContainerNavigationUrl = false;
     QVERIFY(
-        hasOperationTypes(KiriView::ImageDocumentSourceLoadPolicy::plan(replacementInput, request),
+        hasOperationTypes(KiriView::ImageOpenWorkflow::sourceLoadPlan(replacementInput, request),
             operationTypes<KiriView::CancelFileDeletionOperation,
                 KiriView::CancelAllNavigationOperation, KiriView::CancelPredecodeOperation,
                 KiriView::ClearSecondaryPageOperation,
@@ -165,7 +163,7 @@ void TestImageDocumentSourceLoadPolicy::sourceLoadPlanRoutesUnchangedAndReplacem
 
     replacementInput.rightToLeftReadingEnabled = true;
     QVERIFY(hasOperationTypes(
-        KiriView::ImageDocumentSourceLoadPolicy::plan(replacementInput, request),
+        KiriView::ImageOpenWorkflow::sourceLoadPlan(replacementInput, request),
         operationTypes<KiriView::CancelFileDeletionOperation,
             KiriView::CancelAllNavigationOperation, KiriView::CancelPredecodeOperation,
             KiriView::ResetRightToLeftReadingOperation, KiriView::ClearSecondaryPageOperation,
@@ -185,7 +183,7 @@ void TestImageDocumentSourceLoadPolicy::sourceLoadPlanResolvesRequestedRuntimePa
     replacementInput.loadKind = KiriView::ImageDocumentSourceLoadKind::ReplacementSource;
     replacementInput.preserveTwoPageSpreadTransition = true;
     const KiriView::ImageDocumentRuntimePlan replacementPlan
-        = KiriView::ImageDocumentSourceLoadPolicy::plan(replacementInput, request);
+        = KiriView::ImageOpenWorkflow::sourceLoadPlan(replacementInput, request);
 
     QVERIFY(hasOperationTypes(replacementPlan,
         operationTypes<KiriView::CancelFileDeletionOperation,
@@ -210,7 +208,7 @@ void TestImageDocumentSourceLoadPolicy::sourceLoadPlanResolvesRequestedRuntimePa
     currentInput.preserveTwoPageSpreadTransition = true;
     currentInput.hasRequestedContainerNavigationUrl = true;
     const KiriView::ImageDocumentRuntimePlan currentPlan
-        = KiriView::ImageDocumentSourceLoadPolicy::plan(currentInput, request);
+        = KiriView::ImageOpenWorkflow::sourceLoadPlan(currentInput, request);
     QCOMPARE(operationAt<KiriView::SetContainerNavigationUrlOperation>(currentPlan, 2).url,
         containerUrl);
 }

@@ -7,8 +7,8 @@
 #include "imagedocumentdeletioncontroller.h"
 #include "imagedocumentnavigationcontroller.h"
 #include "imagedocumentruntimecontrollers.h"
-#include "imagedocumentsourceloadpolicy.h"
 #include "imagedocumentsourceloadrequest.h"
+#include "imageopenworkflow.h"
 #include "presentation/imagepresentationcontroller.h"
 #include "presentation/imagespreadpresentationcontroller.h"
 
@@ -269,8 +269,8 @@ ImageDocumentRenderContext ImageDocumentRuntime::renderContext() const
 
 void ImageDocumentRuntime::loadSource(const ImageDocumentSourceLoadRequest &request)
 {
-    controllers->dispatchPlan(ImageDocumentSourceLoadPolicy::plan(
-        imageDocumentSourceLoadPolicyInput(
+    controllers->dispatchPlan(ImageOpenWorkflow::sourceLoadPlan(
+        ImageOpenWorkflow::sourceLoadPolicyInput(
             sourceLoadSnapshot(state, controllers->spreadController()), request),
         request));
 }

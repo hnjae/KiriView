@@ -40,8 +40,6 @@ mod mediaformatregistry;
 mod videoformatregistry;
 
 // Document workflow policy.
-#[path = "policy/imagedocumentsourceloadpolicy.rs"]
-mod imagedocumentsourceloadpolicy;
 #[path = "policy/imageopenworkflow.rs"]
 mod imageopenworkflow;
 
