@@ -4,6 +4,7 @@
 #include "candidate_test_support.h"
 #include "image_async_test_support.h"
 #include "navigation/imagecandidaterepository.h"
+#include "navigation/imagecontainer.h"
 #include "navigation/imagecontainernavigationcontroller.h"
 
 #include <QObject>
@@ -16,9 +17,12 @@
 namespace {
 using KiriView::ContainerNavigationCandidate;
 using KiriView::ContainerNavigationCandidateType;
+using KiriView::ImageContainerOpenError;
 using KiriView::ImageNavigationCandidate;
 using KiriView::NavigationDirection;
+using KiriView::TestSupport::archivePageUrl;
 using KiriView::TestSupport::containerCandidate;
+using KiriView::TestSupport::FakeImageNavigationCandidateProvider;
 using KiriView::TestSupport::imageCandidate;
 using KiriView::TestSupport::localUrl;
 
@@ -146,6 +150,10 @@ class TestImageContainerNavigationController : public QObject
 
 private Q_SLOTS:
     void opensFirstImageFromAdjacentContainer();
+    void opensFirstImageFromAdjacentArchiveContainer();
+    void reportsEmptyAdjacentContainer();
+    void reportsInvalidAdjacentArchiveContainer();
+    void forwardsAdjacentContainerImageListingError();
     void cancelRejectsPendingContainerListing();
     void newRequestCancelsPendingFirstImageLoad();
     void canceledContainerListingCompletionIsIgnored();
@@ -184,6 +192,144 @@ void TestImageContainerNavigationController::opensFirstImageFromAdjacentContaine
 
     QCOMPARE(openedImageUrl, targetImageUrl);
     QCOMPARE(openedContainerUrl, targetContainerUrl);
+}
+
+void TestImageContainerNavigationController::opensFirstImageFromAdjacentArchiveContainer()
+{
+    FakeImageNavigationCandidateProvider fakeProvider;
+    const QUrl parentUrl = localUrl(QStringLiteral("/books/"));
+    const QUrl currentContainerUrl = localUrl(QStringLiteral("/books/a/"));
+    const QUrl targetContainerUrl = localUrl(QStringLiteral("/books/book.cbz"));
+    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+        = KiriView::archiveDocumentLocationForLocalArchiveUrl(targetContainerUrl);
+    QVERIFY(archiveDocument.has_value());
+    const QUrl targetImageUrl
+        = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
+    fakeProvider.setContainerCandidates(parentUrl,
+        {
+            containerCandidate(currentContainerUrl, ContainerNavigationCandidateType::Directory),
+            containerCandidate(
+                targetContainerUrl, ContainerNavigationCandidateType::ComicBookArchive),
+        });
+    fakeProvider.setArchiveImages(archiveDocument->rootUrl(), { imageCandidate(targetImageUrl) });
+
+    KiriView::ImageCandidateRepository repository(fakeProvider.provider());
+    QUrl openedImageUrl;
+    QUrl openedContainerUrl;
+    KiriView::ImageContainerNavigationController controller(nullptr, repository,
+        KiriView::ImageContainerNavigationController::Callbacks {
+            [&openedImageUrl, &openedContainerUrl](const QUrl &imageUrl, const QUrl &containerUrl) {
+                openedImageUrl = imageUrl;
+                openedContainerUrl = containerUrl;
+            },
+            {},
+        });
+
+    controller.openAdjacentContainer(currentContainerUrl, NavigationDirection::Next);
+
+    QCOMPARE(openedImageUrl, targetImageUrl);
+    QCOMPARE(openedContainerUrl, targetContainerUrl);
+}
+
+void TestImageContainerNavigationController::reportsEmptyAdjacentContainer()
+{
+    FakeImageNavigationCandidateProvider fakeProvider;
+    const QUrl parentUrl = localUrl(QStringLiteral("/books/"));
+    const QUrl currentContainerUrl = localUrl(QStringLiteral("/books/a/"));
+    const QUrl targetContainerUrl = localUrl(QStringLiteral("/books/b/"));
+    fakeProvider.setContainerCandidates(parentUrl,
+        {
+            containerCandidate(currentContainerUrl, ContainerNavigationCandidateType::Directory),
+            containerCandidate(targetContainerUrl, ContainerNavigationCandidateType::Directory),
+        });
+    fakeProvider.setDirectoryImages(targetContainerUrl, {});
+
+    KiriView::ImageCandidateRepository repository(fakeProvider.provider());
+    QUrl errorContainerUrl;
+    ImageContainerOpenError error = ImageContainerOpenError::Generic;
+    KiriView::ImageContainerNavigationController controller(nullptr, repository,
+        KiriView::ImageContainerNavigationController::Callbacks {
+            {},
+            [&errorContainerUrl, &error](
+                const QUrl &containerUrl, ImageContainerOpenError type, const QString &) {
+                errorContainerUrl = containerUrl;
+                error = type;
+            },
+        });
+
+    controller.openAdjacentContainer(currentContainerUrl, NavigationDirection::Next);
+
+    QCOMPARE(errorContainerUrl, targetContainerUrl);
+    QCOMPARE(error, ImageContainerOpenError::EmptyContainer);
+}
+
+void TestImageContainerNavigationController::reportsInvalidAdjacentArchiveContainer()
+{
+    FakeImageNavigationCandidateProvider fakeProvider;
+    const QUrl parentUrl = localUrl(QStringLiteral("/books/"));
+    const QUrl currentContainerUrl = localUrl(QStringLiteral("/books/a/"));
+    const QUrl targetContainerUrl = localUrl(QStringLiteral("/books/not-an-archive.png"));
+    fakeProvider.setContainerCandidates(parentUrl,
+        {
+            containerCandidate(currentContainerUrl, ContainerNavigationCandidateType::Directory),
+            containerCandidate(
+                targetContainerUrl, ContainerNavigationCandidateType::ComicBookArchive),
+        });
+
+    KiriView::ImageCandidateRepository repository(fakeProvider.provider());
+    bool openedImage = false;
+    QUrl errorContainerUrl;
+    ImageContainerOpenError error = ImageContainerOpenError::Generic;
+    KiriView::ImageContainerNavigationController controller(nullptr, repository,
+        KiriView::ImageContainerNavigationController::Callbacks {
+            [&openedImage](const QUrl &, const QUrl &) { openedImage = true; },
+            [&errorContainerUrl, &error](
+                const QUrl &containerUrl, ImageContainerOpenError type, const QString &) {
+                errorContainerUrl = containerUrl;
+                error = type;
+            },
+        });
+
+    controller.openAdjacentContainer(currentContainerUrl, NavigationDirection::Next);
+
+    QVERIFY(!openedImage);
+    QCOMPARE(errorContainerUrl, targetContainerUrl);
+    QCOMPARE(error, ImageContainerOpenError::InvalidComicBookArchive);
+}
+
+void TestImageContainerNavigationController::forwardsAdjacentContainerImageListingError()
+{
+    FakeImageNavigationCandidateProvider fakeProvider;
+    const QUrl parentUrl = localUrl(QStringLiteral("/books/"));
+    const QUrl currentContainerUrl = localUrl(QStringLiteral("/books/a/"));
+    const QUrl targetContainerUrl = localUrl(QStringLiteral("/books/b/"));
+    fakeProvider.setContainerCandidates(parentUrl,
+        {
+            containerCandidate(currentContainerUrl, ContainerNavigationCandidateType::Directory),
+            containerCandidate(targetContainerUrl, ContainerNavigationCandidateType::Directory),
+        });
+    fakeProvider.setDirectoryImageError(targetContainerUrl, QStringLiteral("No access"));
+
+    KiriView::ImageCandidateRepository repository(fakeProvider.provider());
+    QUrl errorContainerUrl;
+    ImageContainerOpenError error = ImageContainerOpenError::EmptyContainer;
+    QString errorString;
+    KiriView::ImageContainerNavigationController controller(nullptr, repository,
+        KiriView::ImageContainerNavigationController::Callbacks {
+            {},
+            [&errorContainerUrl, &error, &errorString](
+                const QUrl &containerUrl, ImageContainerOpenError type, const QString &message) {
+                errorContainerUrl = containerUrl;
+                error = type;
+                errorString = message;
+            },
+        });
+
+    controller.openAdjacentContainer(currentContainerUrl, NavigationDirection::Next);
+
+    QCOMPARE(errorContainerUrl, targetContainerUrl);
+    QCOMPARE(error, ImageContainerOpenError::Generic);
+    QCOMPARE(errorString, QStringLiteral("No access"));
 }
 
 void TestImageContainerNavigationController::cancelRejectsPendingContainerListing()
