@@ -4,7 +4,7 @@
 #include "presentation/imagerotation.h"
 
 #include "bridge/qtgeometryconversion.h"
-#include "kiriview/src/policy/imagerotation.cxx.h"
+#include "kiriview/src/policy/imagerendergeometry.cxx.h"
 
 namespace KiriView {
 int normalizedImageRotationDegrees(int degrees)
@@ -24,37 +24,37 @@ bool imageRotationSwapsAxes(int degrees) { return rustImageRotationSwapsAxes(deg
 QSize rotatedImageSize(const QSize &size, int degrees)
 {
     return Bridge::qtSize(
-        rustRotatedImageSize(Bridge::rustSize<RustImageRotationSize>(size), degrees));
+        rustRotatedImageSize(Bridge::rustSize<RustImageRenderSize>(size), degrees));
 }
 
 QSizeF rotatedImageSize(const QSizeF &size, int degrees)
 {
     return Bridge::qtSizeF(
-        rustRotatedImageSizeF(Bridge::rustSizeF<RustImageRotationSizeF>(size), degrees));
+        rustRotatedImageSizeF(Bridge::rustSizeF<RustImageRenderSizeF>(size), degrees));
 }
 
 QRectF rotatedSourceRectInTarget(
     const QRectF &sourceRect, const QSizeF &sourceSize, const QRectF &targetRect, int degrees)
 {
     return Bridge::qtRectF(
-        rustRotatedSourceRectInTarget(Bridge::rustRectF<RustImageRotationRectF>(sourceRect),
-            Bridge::rustSizeF<RustImageRotationSizeF>(sourceSize),
-            Bridge::rustRectF<RustImageRotationRectF>(targetRect), degrees));
+        rustRotatedSourceRectInTarget(Bridge::rustRectF<RustImageRenderRectF>(sourceRect),
+            Bridge::rustSizeF<RustImageRenderSizeF>(sourceSize),
+            Bridge::rustRectF<RustImageRenderRectF>(targetRect), degrees));
 }
 
 QRectF unrotatedVisibleRectForRotation(
     const QSizeF &sourceDisplaySize, const QRectF &visibleItemRect, int degrees)
 {
     return Bridge::qtRectF(rustUnrotatedVisibleRectForRotation(
-        Bridge::rustSizeF<RustImageRotationSizeF>(sourceDisplaySize),
-        Bridge::rustRectF<RustImageRotationRectF>(visibleItemRect), degrees));
+        Bridge::rustSizeF<RustImageRenderSizeF>(sourceDisplaySize),
+        Bridge::rustRectF<RustImageRenderRectF>(visibleItemRect), degrees));
 }
 
 ImageTextureCoordinateTransform imageTextureCoordinateTransform(
     const QRectF &textureRect, int degrees)
 {
     const RustImageTextureCoordinateTransform transform = rustImageTextureCoordinateTransform(
-        Bridge::rustRectF<RustImageRotationRectF>(textureRect), degrees);
+        Bridge::rustRectF<RustImageRenderRectF>(textureRect), degrees);
     return ImageTextureCoordinateTransform {
         Bridge::qtPointF(transform.origin),
         Bridge::qtPointF(transform.x_axis),

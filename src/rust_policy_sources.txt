@@ -19,7 +19,6 @@ src/policy/imagemath.rs
 src/policy/imagenavigationmodel.rs
 src/policy/imageopenworkflow.rs
 src/policy/imagerendergeometry.rs
-src/policy/imagerotation.rs
 src/policy/imagespreadgeometry.rs
 src/policy/imagespreadnavigation.rs
 src/policy/imagespreadpolicy.rs

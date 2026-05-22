@@ -56,8 +56,6 @@ mod predecodepolicy;
 // Presentation policy.
 #[path = "policy/imagemath.rs"]
 mod imagemath;
-#[path = "policy/imagerotation.rs"]
-mod imagerotation;
 #[path = "policy/imagespreadgeometry.rs"]
 mod imagespreadgeometry;
 #[path = "policy/imagespreadnavigation.rs"]
