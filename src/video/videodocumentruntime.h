@@ -4,9 +4,8 @@
 #ifndef KIRIVIEW_VIDEODOCUMENTRUNTIME_H
 #define KIRIVIEW_VIDEODOCUMENTRUNTIME_H
 
-#include "async/imageasyncoperationstate.h"
 #include "video/videodocumentstate.h"
-#include "video/videoplaybackurlresolver.h"
+#include "video/videosourceloadruntime.h"
 
 #include <QObject>
 #include <QPointer>
@@ -103,11 +102,10 @@ public:
 private:
     VideoMediaBackend *ensureMediaBackend();
     void installMediaBackendCallbacks();
-    void clearSourceState();
-    void beginSourceLoad(const QUrl &sourceUrl);
-    void completePlaybackUrlResolution(const VideoPlaybackUrlResolution &resolution);
-    void failPlaybackUrlResolution(
-        quint64 operationId, const QUrl &sourceUrl, const QString &errorString);
+    VideoSourceLoadOperations sourceLoadOperations();
+    void clearPlaybackSource();
+    void applyResolvedPlaybackUrl(const VideoPlaybackUrlResolution &resolution);
+    void publishSourceLoadFailure(const QUrl &sourceUrl, const QString &errorString);
     void connectVideoOutputDestroyed(QObject *videoOutput);
     void disconnectVideoOutputDestroyed();
     void updateStatusFromBackend();
@@ -118,10 +116,9 @@ private:
     VideoDocumentState m_state;
     std::unique_ptr<VideoMediaBackend> m_mediaBackend;
     MediaBackendFactory m_mediaBackendFactory;
-    std::unique_ptr<VideoPlaybackUrlResolver> m_playbackUrlResolver;
+    VideoSourceLoadRuntime m_sourceLoadRuntime;
     QPointer<QObject> m_videoOutput;
     QMetaObject::Connection m_videoOutputDestroyedConnection;
-    ImageAsyncScopedOperationState<QUrl> m_playbackUrlResolution;
 };
 
 std::unique_ptr<VideoMediaBackend> createDefaultVideoMediaBackend(QObject *parent);

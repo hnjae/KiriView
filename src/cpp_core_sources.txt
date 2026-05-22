@@ -165,3 +165,4 @@ src/video/videodocumentruntime.cpp
 src/video/videodocumentstate.cpp
 src/video/videodocumentpublicsignals.cpp
 src/video/videoplaybackurlresolver.cpp
+src/video/videosourceloadruntime.cpp

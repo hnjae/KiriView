@@ -127,8 +127,7 @@ VideoDocumentRuntime::VideoDocumentRuntime(QObject *documentObject, ChangeCallba
     , m_state(std::move(changeCallback))
     , m_mediaBackend(std::move(mediaBackend))
     , m_mediaBackendFactory(std::move(mediaBackendFactory))
-    , m_playbackUrlResolver(playbackUrlResolver == nullptr ? createDefaultVideoPlaybackUrlResolver()
-                                                           : std::move(playbackUrlResolver))
+    , m_sourceLoadRuntime(std::move(playbackUrlResolver))
 {
     if (!m_mediaBackendFactory) {
         m_mediaBackendFactory
@@ -173,10 +172,7 @@ void VideoDocumentRuntime::installMediaBackendCallbacks()
 VideoDocumentRuntime::~VideoDocumentRuntime()
 {
     disconnectVideoOutputDestroyed();
-    if (m_playbackUrlResolver != nullptr) {
-        m_playbackUrlResolver->cancel();
-        m_playbackUrlResolver->cleanup();
-    }
+    m_sourceLoadRuntime.shutdown();
     if (m_mediaBackend != nullptr) {
         m_mediaBackend->setVideoOutput(nullptr);
         m_mediaBackend->setSource(QUrl());
@@ -191,18 +187,7 @@ void VideoDocumentRuntime::setSourceUrl(const QUrl &sourceUrl)
         return;
     }
 
-    m_playbackUrlResolution.cancel();
-    if (m_playbackUrlResolver != nullptr) {
-        m_playbackUrlResolver->cancel();
-        m_playbackUrlResolver->cleanup();
-    }
-
-    if (sourceUrl.isEmpty()) {
-        clearSourceState();
-        return;
-    }
-
-    beginSourceLoad(sourceUrl);
+    m_sourceLoadRuntime.setSourceUrl(sourceUrl, m_documentObject, sourceLoadOperations());
 }
 
 VideoDocumentStatus VideoDocumentRuntime::status() const { return m_state.status(); }
@@ -331,54 +316,38 @@ qint64 VideoDocumentRuntime::clampedSeekPosition(
     return std::max<qint64>(0, target);
 }
 
-void VideoDocumentRuntime::clearSourceState()
+VideoSourceLoadOperations VideoDocumentRuntime::sourceLoadOperations()
 {
-    if (m_mediaBackend != nullptr) {
-        m_mediaBackend->stop();
-        m_mediaBackend->setSource(QUrl());
-    }
-    m_playbackUrlResolution.cancel();
-    m_state.resetForClearedSource();
-}
-
-void VideoDocumentRuntime::beginSourceLoad(const QUrl &sourceUrl)
-{
-    if (m_mediaBackend != nullptr) {
-        m_mediaBackend->stop();
-        m_mediaBackend->setSource(QUrl());
-    }
-    const ImageAsyncScopedOperation<QUrl> operation = m_playbackUrlResolution.start(sourceUrl);
-    m_state.resetForSourceLoad(sourceUrl);
-
-    m_playbackUrlResolver->resolve(
-        operation.operationId, sourceUrl, m_documentObject,
+    return VideoSourceLoadOperations {
+        [this]() { clearPlaybackSource(); },
+        [this]() { m_state.resetForClearedSource(); },
+        [this](const QUrl &sourceUrl) { m_state.resetForSourceLoad(sourceUrl); },
         [this](
-            VideoPlaybackUrlResolution resolution) { completePlaybackUrlResolution(resolution); },
-        [this](quint64 failedOperationId, QUrl failedSourceUrl, QString failure) {
-            failPlaybackUrlResolution(failedOperationId, failedSourceUrl, failure);
-        });
+            const VideoPlaybackUrlResolution &resolution) { applyResolvedPlaybackUrl(resolution); },
+        [this](const QUrl &sourceUrl, const QString &errorString) {
+            publishSourceLoadFailure(sourceUrl, errorString);
+        },
+    };
 }
 
-void VideoDocumentRuntime::completePlaybackUrlResolution(
-    const VideoPlaybackUrlResolution &resolution)
+void VideoDocumentRuntime::clearPlaybackSource()
 {
-    if (!m_playbackUrlResolution.finish(resolution.operationId, resolution.sourceUrl)) {
-        return;
+    if (m_mediaBackend != nullptr) {
+        m_mediaBackend->stop();
+        m_mediaBackend->setSource(QUrl());
     }
+}
 
+void VideoDocumentRuntime::applyResolvedPlaybackUrl(const VideoPlaybackUrlResolution &resolution)
+{
     VideoMediaBackend *mediaBackend = ensureMediaBackend();
     mediaBackend->setSource(resolution.playbackUrl);
     updateStatusFromBackend();
     play();
 }
 
-void VideoDocumentRuntime::failPlaybackUrlResolution(
-    quint64 operationId, const QUrl &sourceUrl, const QString &errorString)
+void VideoDocumentRuntime::publishSourceLoadFailure(const QUrl &, const QString &errorString)
 {
-    if (!m_playbackUrlResolution.finish(operationId, sourceUrl)) {
-        return;
-    }
-
     m_state.setErrorString(errorString);
     m_state.setStatus(VideoDocumentStatus::Error);
 }
@@ -414,7 +383,7 @@ void VideoDocumentRuntime::updateStatusFromBackend()
         m_state.setStatus(VideoDocumentStatus::Null);
         return;
     }
-    if (m_playbackUrlResolution.active()) {
+    if (m_sourceLoadRuntime.active()) {
         m_state.setEnded(false);
         m_state.setStatus(VideoDocumentStatus::Loading);
         return;
