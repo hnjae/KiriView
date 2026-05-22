@@ -5,6 +5,7 @@
 #define KIRIVIEW_PREDECODESCHEDULESTATE_H
 
 #include "async/imageasyncticket.h"
+#include "navigation/medianavigationmodel.h"
 #include "predecodedimage.h"
 #include "predecodepolicy.h"
 
@@ -19,6 +20,7 @@ struct PredecodeScheduleContext {
     std::vector<DisplayedPredecodeImage> displayedImages;
     ImageFirstDisplayDecodeContext firstDisplayContext;
     int pageIndex = -1;
+    std::vector<MediaNavigationCandidate> mediaCandidates;
 };
 
 struct PredecodePendingSchedule {

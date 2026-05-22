@@ -46,7 +46,6 @@ private:
 
     PredecodeLoadController m_loadController;
     PredecodeScheduleRuntime m_scheduleRuntime;
-    std::vector<MediaNavigationCandidate> m_currentCandidates;
 };
 }
 

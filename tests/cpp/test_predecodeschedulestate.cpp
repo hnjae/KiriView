@@ -26,7 +26,13 @@ KiriView::PredecodeScheduleContext scheduleContext(const QUrl &url, int pageInde
         { std::move(displayedImage) },
         KiriView::ImageFirstDisplayDecodeContext {},
         pageIndex,
+        {},
     };
+}
+
+KiriView::MediaNavigationCandidate mediaCandidate(const QUrl &url)
+{
+    return KiriView::MediaNavigationCandidate { url, url.fileName(QUrl::PrettyDecoded) };
 }
 
 template <typename Operation>
@@ -46,8 +52,9 @@ class TestPredecodeScheduleState : public QObject
 
 private Q_SLOTS:
     void schedulePublishesCurrentContextAndPendingGeneration();
-    void invalidScheduleCancelsPendingWithoutReplacingCurrentContext();
+    void invalidScheduleCancelsPendingAndClearsCurrentContext();
     void scheduleAcceptsCursorWithoutDisplayedImages();
+    void pendingScheduleCarriesMediaCandidates();
     void powerSaverSuppressesPendingScheduleButKeepsCurrentContext();
     void disablingPowerSaverReschedulesCurrentContext();
     void cancelClearsCurrentContextAndMomentum();
@@ -81,12 +88,11 @@ void TestPredecodeScheduleState::schedulePublishesCurrentContextAndPendingGenera
     QCOMPARE(pending->generation, debounceOperation->schedule.generation);
 }
 
-void TestPredecodeScheduleState::invalidScheduleCancelsPendingWithoutReplacingCurrentContext()
+void TestPredecodeScheduleState::invalidScheduleCancelsPendingAndClearsCurrentContext()
 {
     KiriView::PredecodeScheduleState state;
-    const QUrl displayedUrl = KiriView::TestSupport::indexedImageUrl(2);
     const KiriView::PredecodeScheduleRuntimePlan update
-        = state.schedule(scheduleContext(displayedUrl, 2), 1000);
+        = state.schedule(scheduleContext(KiriView::TestSupport::indexedImageUrl(2), 2), 1000);
     const auto *debounceOperation
         = operationAt<KiriView::StartPredecodeDebounceOperation>(update, 2);
     QVERIFY(debounceOperation != nullptr);
@@ -97,10 +103,7 @@ void TestPredecodeScheduleState::invalidScheduleCancelsPendingWithoutReplacingCu
     QVERIFY(operationAt<KiriView::CancelBackgroundPredecodeOperation>(invalidUpdate, 0) != nullptr);
     QVERIFY(!state.pendingDebouncedSchedule().has_value());
     QVERIFY(!state.accepts(debounceOperation->schedule.generation));
-
-    const std::optional<KiriView::PredecodeScheduleContext> current = state.currentContext();
-    QVERIFY(current.has_value());
-    QCOMPARE(current->currentLocation.imageUrl(), displayedUrl);
+    QVERIFY(!state.currentContext().has_value());
 }
 
 void TestPredecodeScheduleState::scheduleAcceptsCursorWithoutDisplayedImages()
@@ -114,6 +117,7 @@ void TestPredecodeScheduleState::scheduleAcceptsCursorWithoutDisplayedImages()
             {},
             KiriView::ImageFirstDisplayDecodeContext {},
             11,
+            {},
         },
         1000);
 
@@ -128,6 +132,31 @@ void TestPredecodeScheduleState::scheduleAcceptsCursorWithoutDisplayedImages()
     QVERIFY(debounceOperation != nullptr);
     QCOMPARE(debounceOperation->schedule.context.currentLocation.imageUrl(), cursorUrl);
     QVERIFY(state.accepts(debounceOperation->schedule.generation));
+}
+
+void TestPredecodeScheduleState::pendingScheduleCarriesMediaCandidates()
+{
+    KiriView::PredecodeScheduleState state;
+    const QUrl cursorUrl = KiriView::TestSupport::indexedImageUrl(12);
+    const QUrl nextUrl = KiriView::TestSupport::indexedImageUrl(13);
+
+    KiriView::PredecodeScheduleContext context = scheduleContext(cursorUrl, 12);
+    context.mediaCandidates = { mediaCandidate(cursorUrl), mediaCandidate(nextUrl) };
+
+    const KiriView::PredecodeScheduleRuntimePlan update = state.schedule(std::move(context), 1000);
+
+    const auto *debounceOperation
+        = operationAt<KiriView::StartPredecodeDebounceOperation>(update, 2);
+    QVERIFY(debounceOperation != nullptr);
+    QCOMPARE(debounceOperation->schedule.context.mediaCandidates.size(), std::size_t(2));
+    QCOMPARE(debounceOperation->schedule.context.mediaCandidates.at(0).url, cursorUrl);
+    QCOMPARE(debounceOperation->schedule.context.mediaCandidates.at(1).url, nextUrl);
+
+    const std::optional<KiriView::PredecodePendingSchedule> pending
+        = state.pendingDebouncedSchedule();
+    QVERIFY(pending.has_value());
+    QCOMPARE(pending->context.mediaCandidates.size(), std::size_t(2));
+    QCOMPARE(pending->context.mediaCandidates.at(1).url, nextUrl);
 }
 
 void TestPredecodeScheduleState::powerSaverSuppressesPendingScheduleButKeepsCurrentContext()

@@ -18,6 +18,7 @@ PredecodeScheduleRuntimePlan PredecodeScheduleState::schedule(
     PredecodeScheduleRuntimePlan plan { CancelBackgroundPredecodeOperation {} };
 
     if (!validPredecodeScheduleContext(context)) {
+        m_currentContext.reset();
         return plan;
     }
 

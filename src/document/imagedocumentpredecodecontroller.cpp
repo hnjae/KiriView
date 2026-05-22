@@ -54,6 +54,7 @@ void ImageDocumentPredecodeController::scheduleAdjacentImagePredecode(
         std::move(displayedImages),
         m_presentationController.firstDisplayDecodeContext(),
         m_currentPageNumber ? m_currentPageNumber() - 1 : -1,
+        {},
     });
 }
 

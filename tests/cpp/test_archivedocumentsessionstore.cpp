@@ -253,6 +253,9 @@ void TestArchiveDocumentSessionStore::predecodeLoadsAdjacentArchiveImagesThrough
     coordinator.schedule(KiriView::ImagePredecodeCoordinator::Context {
         displayedImage.location,
         { std::move(displayedImage) },
+        {},
+        -1,
+        {},
     });
 
     QTRY_VERIFY(coordinator.findPredecodedImage(thirdUrl).has_value());

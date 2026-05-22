@@ -79,6 +79,7 @@ private Q_SLOTS:
     void videoCursorKeepsImageCacheAndLoadsAdjacentImages();
     void powerSaverSuppressesLoadsButRetainsDisplayedImages();
     void powerSaverReschedulesVideoCursorWithoutDisplayedImages();
+    void invalidScheduleClearsSuppressedMediaCandidates();
 };
 
 void TestMediaPredecodeCoordinator::videoCursorKeepsImageCacheAndLoadsAdjacentImages()
@@ -167,6 +168,27 @@ void TestMediaPredecodeCoordinator::powerSaverReschedulesVideoCursorWithoutDispl
 
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
     QCOMPARE(dataLoader.frontLoad().url, nextUrl);
+}
+
+void TestMediaPredecodeCoordinator::invalidScheduleClearsSuppressedMediaCandidates()
+{
+    ManualImageDataLoader dataLoader;
+    ManualPowerSaverMonitor *powerSaverMonitor = nullptr;
+    KiriView::MediaPredecodeCoordinator coordinator
+        = createCoordinator(this, dataLoader, powerSaverProviderFor(powerSaverMonitor, true));
+    QVERIFY(powerSaverMonitor != nullptr);
+
+    coordinator.schedule(KiriView::MediaPredecodeCoordinator::Context {
+        localUrl(QStringLiteral("/media/01.mp4")),
+        mixedMediaCandidates(),
+        {},
+    });
+    coordinator.schedule(KiriView::MediaPredecodeCoordinator::Context {});
+
+    powerSaverMonitor->setPowerSaverEnabled(false);
+
+    QTest::qWait(250);
+    QCOMPARE(dataLoader.loadCount(), std::size_t(0));
 }
 
 QTEST_GUILESS_MAIN(TestMediaPredecodeCoordinator)

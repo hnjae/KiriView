@@ -33,6 +33,7 @@ KiriView::PredecodeScheduleContext scheduleContext(const QUrl &url)
         { displayedImage(url) },
         {},
         1,
+        {},
     };
 }
 

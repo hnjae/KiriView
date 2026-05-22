@@ -41,7 +41,6 @@ void MediaPredecodeCoordinator::schedule(Context context)
         return;
     }
 
-    m_currentCandidates = context.candidates;
     m_scheduleRuntime.schedule(scheduleContext(context));
 }
 
@@ -61,8 +60,9 @@ void MediaPredecodeCoordinator::startPredecodeWindow(const PredecodePendingSched
         return;
     }
 
-    const PredecodeWindowPlan plan = predecodeWindowPlanForMediaCandidates(
-        schedule.context.currentLocation.imageUrl(), m_currentCandidates, policyInput());
+    const PredecodeWindowPlan plan
+        = predecodeWindowPlanForMediaCandidates(schedule.context.currentLocation.imageUrl(),
+            schedule.context.mediaCandidates, policyInput());
     m_loadController.startWindowLoads(PredecodeLoadWindow {
         schedule.context.currentLocation.imageUrl(),
         plan.archiveDocument,
@@ -83,6 +83,7 @@ PredecodeScheduleContext MediaPredecodeCoordinator::scheduleContext(const Contex
         context.displayedImages,
         context.firstDisplayContext,
         currentIndex.has_value() ? static_cast<int>(*currentIndex) : -1,
+        context.candidates,
     };
 }
 
@@ -96,11 +97,7 @@ PredecodePolicyInput MediaPredecodeCoordinator::policyInput() const
     };
 }
 
-void MediaPredecodeCoordinator::cancel()
-{
-    m_scheduleRuntime.cancel();
-    m_currentCandidates.clear();
-}
+void MediaPredecodeCoordinator::cancel() { m_scheduleRuntime.cancel(); }
 
 void MediaPredecodeCoordinator::clear()
 {

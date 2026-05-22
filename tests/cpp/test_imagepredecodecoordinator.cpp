@@ -82,6 +82,7 @@ KiriView::ImagePredecodeCoordinator::Context predecodeContext(
         std::move(displayedImages),
         firstDisplayContext,
         pageIndex,
+        {},
     };
 }
 }
