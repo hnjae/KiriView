@@ -64,6 +64,26 @@ std::vector<KiriView::ImageNavigationCandidate> imageCandidates(int count)
     }
     return candidates;
 }
+
+KiriView::ImagePredecodeCoordinator::Context predecodeContext(
+    KiriView::DisplayedPredecodeImage primaryImage,
+    std::optional<KiriView::DisplayedPredecodeImage> secondaryImage = std::nullopt,
+    KiriView::ImageFirstDisplayDecodeContext firstDisplayContext = {}, int pageIndex = -1)
+{
+    const KiriView::DisplayedImageLocation currentLocation = primaryImage.location;
+    std::vector<KiriView::DisplayedPredecodeImage> displayedImages;
+    displayedImages.push_back(std::move(primaryImage));
+    if (secondaryImage.has_value()) {
+        displayedImages.push_back(std::move(*secondaryImage));
+    }
+
+    return KiriView::ImagePredecodeCoordinator::Context {
+        currentLocation,
+        std::move(displayedImages),
+        firstDisplayContext,
+        pageIndex,
+    };
+}
 }
 
 class TestImagePredecodeCoordinator : public QObject
@@ -102,15 +122,13 @@ void TestImagePredecodeCoordinator::scheduleCachesDisplayedImageAndPredecodesWin
         });
 
     const QImage displayedImage = testImage();
-    coordinator.schedule(KiriView::ImagePredecodeCoordinator::Context {
+    coordinator.schedule(predecodeContext(
         KiriView::DisplayedPredecodeImage {
             KiriView::DisplayedImageLocation::fromUrl(displayedUrl),
             true,
             staticTestImagePayload(displayedImage, KiriView::StaticImageDisplayHints { 0.5 }),
         },
-        std::nullopt,
-        KiriView::ImageFirstDisplayDecodeContext { QSize(640, 480) },
-    });
+        std::nullopt, KiriView::ImageFirstDisplayDecodeContext { QSize(640, 480) }));
 
     const std::optional<KiriView::PredecodedImage> displayed
         = coordinator.findPredecodedImage(displayedUrl);
@@ -145,7 +163,7 @@ void TestImagePredecodeCoordinator::scheduleCachesVisibleSpreadPagesAndSkipsSeco
             imageCandidate(nextUrl),
         });
 
-    coordinator.schedule(KiriView::ImagePredecodeCoordinator::Context {
+    coordinator.schedule(predecodeContext(
         KiriView::DisplayedPredecodeImage {
             KiriView::DisplayedImageLocation::fromUrl(primaryUrl),
             true,
@@ -155,8 +173,7 @@ void TestImagePredecodeCoordinator::scheduleCachesVisibleSpreadPagesAndSkipsSeco
             KiriView::DisplayedImageLocation::fromUrl(secondaryUrl),
             true,
             staticTestImagePayload(testImage(), KiriView::StaticImageDisplayHints { 0.75 }),
-        }),
-    });
+        })));
 
     const std::optional<KiriView::PredecodedImage> primary
         = coordinator.findPredecodedImage(primaryUrl);
@@ -203,13 +220,11 @@ void TestImagePredecodeCoordinator::archivePredecodeKeepsArchiveDocumentContext(
             imageCandidate(nextUrl),
         });
 
-    coordinator.schedule(KiriView::ImagePredecodeCoordinator::Context {
-        KiriView::DisplayedPredecodeImage {
-            KiriView::DisplayedImageLocation::fromArchiveDocument(displayedUrl, *archiveDocument),
-            false,
-            staticTestImagePayload(testImage()),
-        },
-    });
+    coordinator.schedule(predecodeContext(KiriView::DisplayedPredecodeImage {
+        KiriView::DisplayedImageLocation::fromArchiveDocument(displayedUrl, *archiveDocument),
+        false,
+        staticTestImagePayload(testImage()),
+    }));
 
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
     QCOMPARE(dataLoader.frontLoad().url, nextUrl);
@@ -233,13 +248,11 @@ void TestImagePredecodeCoordinator::regularPredecodeWindowKeepsOnePreviousAndTwo
     const QUrl displayedUrl = indexedImageUrl(5);
     candidateProvider.setDirectoryImages(imagesDirectoryUrl(), imageCandidates(15));
 
-    coordinator.schedule(KiriView::ImagePredecodeCoordinator::Context {
-        KiriView::DisplayedPredecodeImage {
-            KiriView::DisplayedImageLocation::fromUrl(displayedUrl),
-            false,
-            staticTestImagePayload(testImage()),
-        },
-    });
+    coordinator.schedule(predecodeContext(KiriView::DisplayedPredecodeImage {
+        KiriView::DisplayedImageLocation::fromUrl(displayedUrl),
+        false,
+        staticTestImagePayload(testImage()),
+    }));
 
     const std::vector<QUrl> expectedLoadOrder {
         indexedImageUrl(6),
@@ -272,13 +285,11 @@ void TestImagePredecodeCoordinator::directoryDocumentStartsTwoBackgroundDecodes(
     const QUrl displayedUrl = indexedImageUrl(5);
     candidateProvider.setArchiveImages(directoryDocument.rootUrl(), imageCandidates(15));
 
-    coordinator.schedule(KiriView::ImagePredecodeCoordinator::Context {
-        KiriView::DisplayedPredecodeImage {
-            KiriView::DisplayedImageLocation::fromArchiveDocument(displayedUrl, directoryDocument),
-            false,
-            staticTestImagePayload(testImage()),
-        },
-    });
+    coordinator.schedule(predecodeContext(KiriView::DisplayedPredecodeImage {
+        KiriView::DisplayedImageLocation::fromArchiveDocument(displayedUrl, directoryDocument),
+        false,
+        staticTestImagePayload(testImage()),
+    }));
 
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(2));
     QCOMPARE(dataLoader.frontLoad().url, indexedImageUrl(6));
@@ -296,13 +307,11 @@ void TestImagePredecodeCoordinator::candidateListingFailureStartsEmptyFallbackWi
     candidateProvider.setDirectoryImageError(
         imagesDirectoryUrl(), QStringLiteral("candidate listing failed"));
 
-    coordinator.schedule(KiriView::ImagePredecodeCoordinator::Context {
-        KiriView::DisplayedPredecodeImage {
-            KiriView::DisplayedImageLocation::fromUrl(displayedUrl),
-            true,
-            staticTestImagePayload(testImage()),
-        },
-    });
+    coordinator.schedule(predecodeContext(KiriView::DisplayedPredecodeImage {
+        KiriView::DisplayedImageLocation::fromUrl(displayedUrl),
+        true,
+        staticTestImagePayload(testImage()),
+    }));
 
     QTest::qWait(250);
     QCOMPARE(dataLoader.loadCount(), std::size_t(0));
@@ -318,23 +327,19 @@ void TestImagePredecodeCoordinator::staleGenerationDecodeIsIgnored()
 
     candidateProvider.setDirectoryImages(imagesDirectoryUrl(), imageCandidates(5));
 
-    coordinator.schedule(KiriView::ImagePredecodeCoordinator::Context {
-        KiriView::DisplayedPredecodeImage {
-            KiriView::DisplayedImageLocation::fromUrl(indexedImageUrl(0)),
-            false,
-            staticTestImagePayload(testImage()),
-        },
-    });
+    coordinator.schedule(predecodeContext(KiriView::DisplayedPredecodeImage {
+        KiriView::DisplayedImageLocation::fromUrl(indexedImageUrl(0)),
+        false,
+        staticTestImagePayload(testImage()),
+    }));
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
     QCOMPARE(dataLoader.frontLoad().url, indexedImageUrl(1));
 
-    coordinator.schedule(KiriView::ImagePredecodeCoordinator::Context {
-        KiriView::DisplayedPredecodeImage {
-            KiriView::DisplayedImageLocation::fromUrl(indexedImageUrl(2)),
-            false,
-            staticTestImagePayload(testImage()),
-        },
-    });
+    coordinator.schedule(predecodeContext(KiriView::DisplayedPredecodeImage {
+        KiriView::DisplayedImageLocation::fromUrl(indexedImageUrl(2)),
+        false,
+        staticTestImagePayload(testImage()),
+    }));
 
     dataLoader.deliverFrontLoadDataIgnoringCancellation(QByteArrayLiteral("stale"));
     QTest::qWait(50);
@@ -351,16 +356,13 @@ void TestImagePredecodeCoordinator::rapidNavigationDebouncesSkippedPagePredecode
     candidateProvider.setDirectoryImages(imagesDirectoryUrl(), imageCandidates(10));
 
     const auto schedulePage = [&coordinator](int pageIndex) {
-        coordinator.schedule(KiriView::ImagePredecodeCoordinator::Context {
+        coordinator.schedule(predecodeContext(
             KiriView::DisplayedPredecodeImage {
                 KiriView::DisplayedImageLocation::fromUrl(indexedImageUrl(pageIndex)),
                 false,
                 staticTestImagePayload(testImage()),
             },
-            std::nullopt,
-            {},
-            pageIndex,
-        });
+            std::nullopt, {}, pageIndex));
     };
 
     schedulePage(0);
@@ -394,13 +396,11 @@ void TestImagePredecodeCoordinator::powerSaverMonitorSuppressesAndReschedulesPre
             imageCandidate(nextUrl),
         });
 
-    coordinator.schedule(KiriView::ImagePredecodeCoordinator::Context {
-        KiriView::DisplayedPredecodeImage {
-            KiriView::DisplayedImageLocation::fromUrl(displayedUrl),
-            true,
-            staticTestImagePayload(testImage()),
-        },
-    });
+    coordinator.schedule(predecodeContext(KiriView::DisplayedPredecodeImage {
+        KiriView::DisplayedImageLocation::fromUrl(displayedUrl),
+        true,
+        staticTestImagePayload(testImage()),
+    }));
 
     QVERIFY(coordinator.findPredecodedImage(displayedUrl).has_value());
     QTest::qWait(250);
@@ -436,13 +436,11 @@ void TestImagePredecodeCoordinator::cancelSuppressesPendingDecode()
         });
 
     const QImage displayedImage = testImage();
-    coordinator.schedule(KiriView::ImagePredecodeCoordinator::Context {
-        KiriView::DisplayedPredecodeImage {
-            KiriView::DisplayedImageLocation::fromUrl(displayedUrl),
-            false,
-            staticTestImagePayload(displayedImage),
-        },
-    });
+    coordinator.schedule(predecodeContext(KiriView::DisplayedPredecodeImage {
+        KiriView::DisplayedImageLocation::fromUrl(displayedUrl),
+        false,
+        staticTestImagePayload(displayedImage),
+    }));
 
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
     coordinator.cancel();

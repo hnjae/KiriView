@@ -9,6 +9,7 @@
 
 #include <optional>
 #include <utility>
+#include <vector>
 
 namespace KiriView {
 ImageDocumentPredecodeController::ImageDocumentPredecodeController(QObject *parent,
@@ -36,13 +37,21 @@ void ImageDocumentPredecodeController::scheduleAdjacentImagePredecode(
         return;
     }
 
+    DisplayedPredecodeImage primaryImage {
+        m_state.displayedImageLocation(),
+        m_presentationController.isPredecodeCacheable(),
+        std::move(staticImage),
+    };
+    const DisplayedImageLocation currentLocation = primaryImage.location;
+    std::vector<DisplayedPredecodeImage> displayedImages;
+    displayedImages.push_back(std::move(primaryImage));
+    if (secondaryImage.has_value()) {
+        displayedImages.push_back(std::move(*secondaryImage));
+    }
+
     m_coordinator->schedule(ImagePredecodeCoordinator::Context {
-        DisplayedPredecodeImage {
-            m_state.displayedImageLocation(),
-            m_presentationController.isPredecodeCacheable(),
-            std::move(staticImage),
-        },
-        std::move(secondaryImage),
+        currentLocation,
+        std::move(displayedImages),
         m_presentationController.firstDisplayDecodeContext(),
         m_currentPageNumber ? m_currentPageNumber() - 1 : -1,
     });

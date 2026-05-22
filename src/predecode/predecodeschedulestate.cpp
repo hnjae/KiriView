@@ -6,7 +6,7 @@
 namespace {
 bool validPredecodeScheduleContext(const KiriView::PredecodeScheduleContext &context)
 {
-    return context.primaryImage.hasLocation() && context.primaryImage.hasStaticImage();
+    return !context.currentLocation.isEmpty();
 }
 }
 
@@ -23,8 +23,8 @@ PredecodeScheduleRuntimePlan PredecodeScheduleState::schedule(
 
     updateNavigationMomentum(context.pageIndex, monotonicMsec);
     const quint64 generation = m_generation.next();
-    m_displayedContext = context;
-    plan.push_back(CacheDisplayedPredecodeContextOperation { context });
+    m_currentContext = context;
+    plan.push_back(CacheDisplayedPredecodeContextOperation { context.displayedImages });
 
     if (!m_powerSaverEnabled) {
         m_pendingSchedule = PredecodePendingSchedule { context, generation };
@@ -52,21 +52,21 @@ PredecodeScheduleRuntimePlan PredecodeScheduleState::setPowerSaverEnabled(
         };
     }
 
-    const std::optional<PredecodeScheduleContext> displayed = m_displayedContext;
-    if (!displayed.has_value()) {
+    const std::optional<PredecodeScheduleContext> current = m_currentContext;
+    if (!current.has_value()) {
         return {};
     }
 
-    return schedule(*displayed, monotonicMsec);
+    return schedule(*current, monotonicMsec);
 }
 
 bool PredecodeScheduleState::powerSaverEnabled() const { return m_powerSaverEnabled; }
 
 PredecodeMomentumMode PredecodeScheduleState::momentumMode() const { return m_momentumState.mode; }
 
-std::optional<PredecodeScheduleContext> PredecodeScheduleState::displayedContext() const
+std::optional<PredecodeScheduleContext> PredecodeScheduleState::currentContext() const
 {
-    return m_displayedContext;
+    return m_currentContext;
 }
 
 std::optional<PredecodePendingSchedule> PredecodeScheduleState::pendingDebouncedSchedule() const
@@ -106,7 +106,7 @@ void PredecodeScheduleState::cancelBackgroundWork()
 void PredecodeScheduleState::cancel()
 {
     cancelBackgroundWork();
-    m_displayedContext.reset();
+    m_currentContext.reset();
     m_momentumState = {};
 }
 

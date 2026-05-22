@@ -15,8 +15,8 @@
 
 namespace KiriView {
 struct PredecodeScheduleContext {
-    DisplayedPredecodeImage primaryImage;
-    std::optional<DisplayedPredecodeImage> secondaryImage;
+    DisplayedImageLocation currentLocation;
+    std::vector<DisplayedPredecodeImage> displayedImages;
     ImageFirstDisplayDecodeContext firstDisplayContext;
     int pageIndex = -1;
 };
@@ -29,7 +29,7 @@ struct PredecodePendingSchedule {
 struct CancelBackgroundPredecodeOperation {
 };
 struct CacheDisplayedPredecodeContextOperation {
-    PredecodeScheduleContext context;
+    std::vector<DisplayedPredecodeImage> images;
 };
 struct ClearPredecodeWindowUrlsOperation {
 };
@@ -53,7 +53,7 @@ public:
     bool powerSaverEnabled() const;
     PredecodeMomentumMode momentumMode() const;
 
-    std::optional<PredecodeScheduleContext> displayedContext() const;
+    std::optional<PredecodeScheduleContext> currentContext() const;
     std::optional<PredecodePendingSchedule> pendingDebouncedSchedule() const;
     PredecodeScheduleRuntimePlan settlePendingScheduleToNeutral();
     bool accepts(quint64 generation) const;
@@ -64,7 +64,7 @@ public:
 private:
     void updateNavigationMomentum(int pageIndex, qint64 monotonicMsec);
 
-    std::optional<PredecodeScheduleContext> m_displayedContext;
+    std::optional<PredecodeScheduleContext> m_currentContext;
     std::optional<PredecodePendingSchedule> m_pendingSchedule;
     ImageAsyncTicket m_generation;
     PredecodeMomentumState m_momentumState;

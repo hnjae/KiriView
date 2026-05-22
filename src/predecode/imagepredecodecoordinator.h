@@ -47,14 +47,11 @@ private:
 
     void dispatchSchedulePlan(const PredecodeScheduleRuntimePlan &plan);
     void dispatchScheduleOperation(const PredecodeScheduleOperation &operation);
-    void cacheDisplayedImages(const Context &context);
-    std::vector<DisplayedPredecodeImage> displayedImages(const Context &context) const;
     void startDebouncedPredecode();
     void scheduleSettledNeutralPredecode();
     void scheduleAdjacentImagePredecode(const Context &context, quint64 generation);
     void startPredecodeImageLoads(
         const PredecodeWindowPlan &plan, const WindowLoadContext &context);
-    void cancelBackgroundWork();
     void cancelBackgroundRuntime();
     qint64 currentMonotonicMsec() const;
 

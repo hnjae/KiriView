@@ -245,12 +245,14 @@ void TestArchiveDocumentSessionStore::predecodeLoadsAdjacentArchiveImagesThrough
             staticImageDataDecoder(),
         }));
 
+    KiriView::DisplayedPredecodeImage displayedImage {
+        KiriView::DisplayedImageLocation::fromArchiveDocument(displayedUrl, *archiveDocument),
+        true,
+        staticTestImagePayload(testImage()),
+    };
     coordinator.schedule(KiriView::ImagePredecodeCoordinator::Context {
-        KiriView::DisplayedPredecodeImage {
-            KiriView::DisplayedImageLocation::fromArchiveDocument(displayedUrl, *archiveDocument),
-            true,
-            staticTestImagePayload(testImage()),
-        },
+        displayedImage.location,
+        { std::move(displayedImage) },
     });
 
     QTRY_VERIFY(coordinator.findPredecodedImage(thirdUrl).has_value());

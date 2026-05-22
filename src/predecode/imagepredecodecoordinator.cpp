@@ -91,7 +91,7 @@ void ImagePredecodeCoordinator::dispatchScheduleOperation(
                 cancelBackgroundRuntime();
             } else if constexpr (std::is_same_v<Operation,
                                      CacheDisplayedPredecodeContextOperation>) {
-                cacheDisplayedImages(payload.context);
+                m_loadController.cacheDisplayedImages(payload.images);
             } else if constexpr (std::is_same_v<Operation, ClearPredecodeWindowUrlsOperation>) {
                 m_loadController.clearWindowUrls();
             } else if constexpr (std::is_same_v<Operation, StartPredecodeDebounceOperation>) {
@@ -105,23 +105,6 @@ void ImagePredecodeCoordinator::dispatchScheduleOperation(
             }
         },
         operation);
-}
-
-void ImagePredecodeCoordinator::cacheDisplayedImages(const Context &context)
-{
-    m_loadController.cacheDisplayedImages(displayedImages(context));
-}
-
-std::vector<DisplayedPredecodeImage> ImagePredecodeCoordinator::displayedImages(
-    const Context &context) const
-{
-    std::vector<DisplayedPredecodeImage> images;
-    images.push_back(context.primaryImage);
-    if (context.secondaryImage.has_value()) {
-        images.push_back(*context.secondaryImage);
-    }
-
-    return images;
 }
 
 void ImagePredecodeCoordinator::startDebouncedPredecode()
@@ -144,7 +127,7 @@ void ImagePredecodeCoordinator::scheduleAdjacentImagePredecode(
     const Context &context, quint64 generation)
 {
     const PredecodeWindowStartPlan plan = predecodeWindowStartPlan(PredecodeWindowPlanRequest {
-        context.primaryImage.location,
+        context.currentLocation,
         m_scheduleState.momentumMode(),
         m_scheduleState.powerSaverEnabled(),
         QThread::idealThreadCount(),
@@ -173,20 +156,14 @@ void ImagePredecodeCoordinator::startPredecodeImageLoads(
     }
 
     m_loadController.startWindowLoads(PredecodeLoadWindow {
-        context.scheduleContext.primaryImage.location.imageUrl(),
+        context.scheduleContext.currentLocation.imageUrl(),
         plan.archiveDocument,
         plan.urls,
-        displayedImages(context.scheduleContext),
+        context.scheduleContext.displayedImages,
         context.scheduleContext.firstDisplayContext,
         context.generation,
         plan.parallelLimit,
     });
-}
-
-void ImagePredecodeCoordinator::cancelBackgroundWork()
-{
-    m_scheduleState.cancelBackgroundWork();
-    cancelBackgroundRuntime();
 }
 
 void ImagePredecodeCoordinator::cancelBackgroundRuntime()

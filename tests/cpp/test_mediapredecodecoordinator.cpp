@@ -78,6 +78,7 @@ class TestMediaPredecodeCoordinator : public QObject
 private Q_SLOTS:
     void videoCursorKeepsImageCacheAndLoadsAdjacentImages();
     void powerSaverSuppressesLoadsButRetainsDisplayedImages();
+    void powerSaverReschedulesVideoCursorWithoutDisplayedImages();
 };
 
 void TestMediaPredecodeCoordinator::videoCursorKeepsImageCacheAndLoadsAdjacentImages()
@@ -141,6 +142,31 @@ void TestMediaPredecodeCoordinator::powerSaverSuppressesLoadsButRetainsDisplayed
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
     QCOMPARE(dataLoader.frontLoad().url, nextUrl);
     QVERIFY(coordinator.findPredecodedImage(displayedUrl).has_value());
+}
+
+void TestMediaPredecodeCoordinator::powerSaverReschedulesVideoCursorWithoutDisplayedImages()
+{
+    ManualImageDataLoader dataLoader;
+    ManualPowerSaverMonitor *powerSaverMonitor = nullptr;
+    KiriView::MediaPredecodeCoordinator coordinator
+        = createCoordinator(this, dataLoader, powerSaverProviderFor(powerSaverMonitor, true));
+    QVERIFY(powerSaverMonitor != nullptr);
+
+    const QUrl videoUrl = localUrl(QStringLiteral("/media/01.mp4"));
+    const QUrl nextUrl = localUrl(QStringLiteral("/media/02.png"));
+    coordinator.schedule(KiriView::MediaPredecodeCoordinator::Context {
+        videoUrl,
+        mixedMediaCandidates(),
+        {},
+    });
+
+    QTest::qWait(250);
+    QCOMPARE(dataLoader.loadCount(), std::size_t(0));
+
+    powerSaverMonitor->setPowerSaverEnabled(false);
+
+    QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
+    QCOMPARE(dataLoader.frontLoad().url, nextUrl);
 }
 
 QTEST_GUILESS_MAIN(TestMediaPredecodeCoordinator)
