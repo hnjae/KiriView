@@ -23,6 +23,13 @@ enum class ImageShortcutScope {
     ContainerShortcutScope,
     ContainerViewerShortcutScope,
 };
+
+struct VideoShortcutAvailabilityInput {
+    bool helpShortcutsEnabled = false;
+    bool viewerShortcutsEnabled = false;
+    bool fileDeletionInProgress = false;
+    bool mediaNavigationActive = false;
+};
 }
 
 struct ImageActionAvailabilityInput {
@@ -78,5 +85,12 @@ ImageActionAvailabilityProjection imageActionAvailabilityProjection(
 bool imageActionAvailabilityShortcutsEnabledForScope(
     const ImageActionAvailabilityProjection &projection,
     KiriView::ApplicationActions::ImageShortcutScope scope);
+
+namespace KiriView::ApplicationActions {
+bool videoShortcutsEnabledForScope(
+    const VideoShortcutAvailabilityInput &input, ImageShortcutScope scope);
+bool mediaHorizontalArrowShortcutsEnabled(bool videoMode, bool imageReadyViewerShortcutsEnabled,
+    const VideoShortcutAvailabilityInput &videoInput);
+}
 
 #endif

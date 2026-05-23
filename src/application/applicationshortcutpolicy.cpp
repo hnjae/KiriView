@@ -328,46 +328,6 @@ std::optional<ImageShortcutScope> imageShortcutScopeFromValue(int value)
     return std::nullopt;
 }
 
-bool videoShortcutsEnabledForScope(
-    const VideoShortcutAvailabilityInput &input, ImageShortcutScope scope)
-{
-    const bool videoReadyShortcutsEnabled
-        = input.helpShortcutsEnabled && !input.fileDeletionInProgress;
-    const bool videoReadyViewerShortcutsEnabled
-        = input.viewerShortcutsEnabled && !input.fileDeletionInProgress;
-    const bool videoMediaShortcutsEnabled
-        = input.mediaNavigationActive && videoReadyShortcutsEnabled;
-    const bool videoMediaViewerShortcutsEnabled
-        = input.mediaNavigationActive && videoReadyViewerShortcutsEnabled;
-
-    switch (scope) {
-    case ImageShortcutScope::HelpShortcutScope:
-        return input.helpShortcutsEnabled;
-    case ImageShortcutScope::ViewerShortcutScope:
-        return input.viewerShortcutsEnabled;
-    case ImageShortcutScope::ReadyShortcutScope:
-    case ImageShortcutScope::RotateShortcutScope:
-    case ImageShortcutScope::PannableShortcutScope:
-    case ImageShortcutScope::ContainerShortcutScope:
-    case ImageShortcutScope::RightToLeftReadingShortcutScope:
-        return videoReadyShortcutsEnabled;
-    case ImageShortcutScope::ReadyViewerShortcutScope:
-    case ImageShortcutScope::RotateViewerShortcutScope:
-    case ImageShortcutScope::PannableViewerShortcutScope:
-    case ImageShortcutScope::ContainerViewerShortcutScope:
-    case ImageShortcutScope::RightToLeftReadingViewerShortcutScope:
-        return videoReadyViewerShortcutsEnabled;
-    case ImageShortcutScope::ImageSelectionShortcutScope:
-    case ImageShortcutScope::PageShortcutScope:
-        return videoMediaShortcutsEnabled;
-    case ImageShortcutScope::ImageSelectionViewerShortcutScope:
-    case ImageShortcutScope::PageViewerShortcutScope:
-        return videoMediaViewerShortcutsEnabled;
-    }
-
-    return false;
-}
-
 bool videoActionUnsupported(KiriViewApplication::ActionId actionId)
 {
     switch (actionId) {
@@ -393,14 +353,4 @@ bool videoActionUnsupported(KiriViewApplication::ActionId actionId)
     }
 }
 
-bool mediaHorizontalArrowShortcutsEnabled(bool videoMode, bool imageReadyViewerShortcutsEnabled,
-    const VideoShortcutAvailabilityInput &videoInput)
-{
-    if (!videoMode) {
-        return imageReadyViewerShortcutsEnabled;
-    }
-
-    return videoInput.mediaNavigationActive && !videoInput.fileDeletionInProgress
-        && videoInput.viewerShortcutsEnabled;
-}
 }

@@ -26,6 +26,60 @@ KiriView::RustImageActionAvailabilityInput rustImageActionAvailabilityInput(
     };
 }
 
+KiriView::RustImageShortcutScope rustImageShortcutScope(
+    KiriView::ApplicationActions::ImageShortcutScope scope)
+{
+    using Scope = KiriView::ApplicationActions::ImageShortcutScope;
+
+    switch (scope) {
+    case Scope::HelpShortcutScope:
+        return KiriView::RustImageShortcutScope::HelpShortcutScope;
+    case Scope::ViewerShortcutScope:
+        return KiriView::RustImageShortcutScope::ViewerShortcutScope;
+    case Scope::ReadyShortcutScope:
+        return KiriView::RustImageShortcutScope::ReadyShortcutScope;
+    case Scope::ReadyViewerShortcutScope:
+        return KiriView::RustImageShortcutScope::ReadyViewerShortcutScope;
+    case Scope::ImageSelectionShortcutScope:
+        return KiriView::RustImageShortcutScope::ImageSelectionShortcutScope;
+    case Scope::ImageSelectionViewerShortcutScope:
+        return KiriView::RustImageShortcutScope::ImageSelectionViewerShortcutScope;
+    case Scope::PageShortcutScope:
+        return KiriView::RustImageShortcutScope::PageShortcutScope;
+    case Scope::PageViewerShortcutScope:
+        return KiriView::RustImageShortcutScope::PageViewerShortcutScope;
+    case Scope::RightToLeftReadingShortcutScope:
+        return KiriView::RustImageShortcutScope::RightToLeftReadingShortcutScope;
+    case Scope::RightToLeftReadingViewerShortcutScope:
+        return KiriView::RustImageShortcutScope::RightToLeftReadingViewerShortcutScope;
+    case Scope::RotateShortcutScope:
+        return KiriView::RustImageShortcutScope::RotateShortcutScope;
+    case Scope::RotateViewerShortcutScope:
+        return KiriView::RustImageShortcutScope::RotateViewerShortcutScope;
+    case Scope::PannableShortcutScope:
+        return KiriView::RustImageShortcutScope::PannableShortcutScope;
+    case Scope::PannableViewerShortcutScope:
+        return KiriView::RustImageShortcutScope::PannableViewerShortcutScope;
+    case Scope::ContainerShortcutScope:
+        return KiriView::RustImageShortcutScope::ContainerShortcutScope;
+    case Scope::ContainerViewerShortcutScope:
+        return KiriView::RustImageShortcutScope::ContainerViewerShortcutScope;
+    }
+
+    return KiriView::RustImageShortcutScope::HelpShortcutScope;
+}
+
+KiriView::RustVideoShortcutAvailabilityInput rustVideoShortcutAvailabilityInput(
+    const KiriView::ApplicationActions::VideoShortcutAvailabilityInput &input)
+{
+    return KiriView::RustVideoShortcutAvailabilityInput {
+        input.helpShortcutsEnabled,
+        input.viewerShortcutsEnabled,
+        input.fileDeletionInProgress,
+        input.mediaNavigationActive,
+    };
+}
+
 ImageActionAvailabilityProjection imageActionAvailabilityProjection(
     const KiriView::RustImageActionAvailabilityProjection &projection)
 {
@@ -111,4 +165,26 @@ bool imageActionAvailabilityShortcutsEnabledForScope(
     }
 
     return false;
+}
+
+namespace KiriView::ApplicationActions {
+bool videoShortcutsEnabledForScope(
+    const VideoShortcutAvailabilityInput &input, ImageShortcutScope scope)
+{
+    return KiriView::rustVideoShortcutsEnabledForScope(
+        rustVideoShortcutAvailabilityInput(input), rustImageShortcutScope(scope));
+}
+
+bool mediaHorizontalArrowShortcutsEnabled(bool videoMode, bool imageReadyViewerShortcutsEnabled,
+    const VideoShortcutAvailabilityInput &videoInput)
+{
+    return KiriView::rustMediaHorizontalArrowShortcutsEnabled(
+        KiriView::RustMediaHorizontalArrowShortcutInput {
+            videoMode,
+            imageReadyViewerShortcutsEnabled,
+            videoInput.viewerShortcutsEnabled,
+            videoInput.mediaNavigationActive,
+            videoInput.fileDeletionInProgress,
+        });
+}
 }

@@ -4,6 +4,26 @@
 #[cxx::bridge(namespace = "KiriView")]
 mod ffi {
     #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    enum RustImageShortcutScope {
+        HelpShortcutScope = 0,
+        ViewerShortcutScope = 1,
+        ReadyShortcutScope = 2,
+        ReadyViewerShortcutScope = 3,
+        ImageSelectionShortcutScope = 4,
+        ImageSelectionViewerShortcutScope = 5,
+        PageShortcutScope = 6,
+        PageViewerShortcutScope = 7,
+        RightToLeftReadingShortcutScope = 8,
+        RightToLeftReadingViewerShortcutScope = 9,
+        RotateShortcutScope = 10,
+        RotateViewerShortcutScope = 11,
+        PannableShortcutScope = 12,
+        PannableViewerShortcutScope = 13,
+        ContainerShortcutScope = 14,
+        ContainerViewerShortcutScope = 15,
+    }
+
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
     struct RustImageActionAvailabilityInput {
         image_ready: bool,
         image_count: i32,
@@ -52,15 +72,47 @@ mod ffi {
         container_viewer_shortcuts_enabled: bool,
     }
 
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    struct RustVideoShortcutAvailabilityInput {
+        help_shortcuts_enabled: bool,
+        viewer_shortcuts_enabled: bool,
+        file_deletion_in_progress: bool,
+        media_navigation_active: bool,
+    }
+
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    struct RustMediaHorizontalArrowShortcutInput {
+        video_mode: bool,
+        image_ready_viewer_shortcuts_enabled: bool,
+        video_viewer_shortcuts_enabled: bool,
+        video_media_navigation_active: bool,
+        video_file_deletion_in_progress: bool,
+    }
+
     extern "Rust" {
         #[cxx_name = "rustImageActionAvailabilityProjection"]
         fn rust_image_action_availability_projection(
             input: RustImageActionAvailabilityInput,
         ) -> RustImageActionAvailabilityProjection;
+
+        #[cxx_name = "rustVideoShortcutsEnabledForScope"]
+        fn rust_video_shortcuts_enabled_for_scope(
+            input: RustVideoShortcutAvailabilityInput,
+            scope: RustImageShortcutScope,
+        ) -> bool;
+
+        #[cxx_name = "rustMediaHorizontalArrowShortcutsEnabled"]
+        fn rust_media_horizontal_arrow_shortcuts_enabled(
+            input: RustMediaHorizontalArrowShortcutInput,
+        ) -> bool;
     }
 }
 
-use ffi::{RustImageActionAvailabilityInput, RustImageActionAvailabilityProjection};
+use ffi::{
+    RustImageActionAvailabilityInput, RustImageActionAvailabilityProjection,
+    RustImageShortcutScope, RustMediaHorizontalArrowShortcutInput,
+    RustVideoShortcutAvailabilityInput,
+};
 
 fn rust_image_action_availability_projection(
     input: RustImageActionAvailabilityInput,
@@ -135,6 +187,52 @@ fn rust_image_action_availability_projection(
             && !input.file_deletion_in_progress
             && viewer_shortcuts_enabled,
     }
+}
+
+fn rust_video_shortcuts_enabled_for_scope(
+    input: RustVideoShortcutAvailabilityInput,
+    scope: RustImageShortcutScope,
+) -> bool {
+    let ready_shortcuts_enabled = input.help_shortcuts_enabled && !input.file_deletion_in_progress;
+    let ready_viewer_shortcuts_enabled =
+        input.viewer_shortcuts_enabled && !input.file_deletion_in_progress;
+    let media_shortcuts_enabled = input.media_navigation_active && ready_shortcuts_enabled;
+    let media_viewer_shortcuts_enabled =
+        input.media_navigation_active && ready_viewer_shortcuts_enabled;
+
+    match scope {
+        RustImageShortcutScope::HelpShortcutScope => input.help_shortcuts_enabled,
+        RustImageShortcutScope::ViewerShortcutScope => input.viewer_shortcuts_enabled,
+        RustImageShortcutScope::ReadyShortcutScope
+        | RustImageShortcutScope::RotateShortcutScope
+        | RustImageShortcutScope::PannableShortcutScope
+        | RustImageShortcutScope::ContainerShortcutScope
+        | RustImageShortcutScope::RightToLeftReadingShortcutScope => ready_shortcuts_enabled,
+        RustImageShortcutScope::ReadyViewerShortcutScope
+        | RustImageShortcutScope::RotateViewerShortcutScope
+        | RustImageShortcutScope::PannableViewerShortcutScope
+        | RustImageShortcutScope::ContainerViewerShortcutScope
+        | RustImageShortcutScope::RightToLeftReadingViewerShortcutScope => {
+            ready_viewer_shortcuts_enabled
+        }
+        RustImageShortcutScope::ImageSelectionShortcutScope
+        | RustImageShortcutScope::PageShortcutScope => media_shortcuts_enabled,
+        RustImageShortcutScope::ImageSelectionViewerShortcutScope
+        | RustImageShortcutScope::PageViewerShortcutScope => media_viewer_shortcuts_enabled,
+        _ => false,
+    }
+}
+
+fn rust_media_horizontal_arrow_shortcuts_enabled(
+    input: RustMediaHorizontalArrowShortcutInput,
+) -> bool {
+    if !input.video_mode {
+        return input.image_ready_viewer_shortcuts_enabled;
+    }
+
+    input.video_media_navigation_active
+        && !input.video_file_deletion_in_progress
+        && input.video_viewer_shortcuts_enabled
 }
 
 #[cfg(test)]
@@ -256,6 +354,106 @@ mod tests {
         assert!(!projection.container_shortcuts_enabled);
     }
 
+    #[test]
+    fn video_shortcut_scopes_use_viewer_deletion_and_navigation_gates() {
+        let mut input = video_shortcut_availability_input();
+        input.help_shortcuts_enabled = true;
+        input.viewer_shortcuts_enabled = true;
+        input.media_navigation_active = true;
+
+        assert!(rust_video_shortcuts_enabled_for_scope(
+            input,
+            RustImageShortcutScope::HelpShortcutScope
+        ));
+        assert!(rust_video_shortcuts_enabled_for_scope(
+            input,
+            RustImageShortcutScope::ViewerShortcutScope
+        ));
+        assert!(rust_video_shortcuts_enabled_for_scope(
+            input,
+            RustImageShortcutScope::ReadyShortcutScope
+        ));
+        assert!(rust_video_shortcuts_enabled_for_scope(
+            input,
+            RustImageShortcutScope::ReadyViewerShortcutScope
+        ));
+        assert!(rust_video_shortcuts_enabled_for_scope(
+            input,
+            RustImageShortcutScope::ImageSelectionShortcutScope
+        ));
+        assert!(rust_video_shortcuts_enabled_for_scope(
+            input,
+            RustImageShortcutScope::ImageSelectionViewerShortcutScope
+        ));
+
+        input.viewer_shortcuts_enabled = false;
+        assert!(rust_video_shortcuts_enabled_for_scope(
+            input,
+            RustImageShortcutScope::ReadyShortcutScope
+        ));
+        assert!(!rust_video_shortcuts_enabled_for_scope(
+            input,
+            RustImageShortcutScope::ReadyViewerShortcutScope
+        ));
+        assert!(!rust_video_shortcuts_enabled_for_scope(
+            input,
+            RustImageShortcutScope::ImageSelectionViewerShortcutScope
+        ));
+
+        input.viewer_shortcuts_enabled = true;
+        input.media_navigation_active = false;
+        assert!(!rust_video_shortcuts_enabled_for_scope(
+            input,
+            RustImageShortcutScope::ImageSelectionShortcutScope
+        ));
+        assert!(!rust_video_shortcuts_enabled_for_scope(
+            input,
+            RustImageShortcutScope::PageViewerShortcutScope
+        ));
+
+        input.file_deletion_in_progress = true;
+        assert!(rust_video_shortcuts_enabled_for_scope(
+            input,
+            RustImageShortcutScope::HelpShortcutScope
+        ));
+        assert!(!rust_video_shortcuts_enabled_for_scope(
+            input,
+            RustImageShortcutScope::ReadyShortcutScope
+        ));
+        assert!(!rust_video_shortcuts_enabled_for_scope(
+            input,
+            RustImageShortcutScope::ContainerViewerShortcutScope
+        ));
+    }
+
+    #[test]
+    fn horizontal_arrow_shortcut_policy_uses_active_media_mode() {
+        let mut input = media_horizontal_arrow_shortcut_input();
+        input.video_viewer_shortcuts_enabled = true;
+        input.video_media_navigation_active = true;
+
+        input.video_mode = false;
+        input.image_ready_viewer_shortcuts_enabled = true;
+        assert!(rust_media_horizontal_arrow_shortcuts_enabled(input));
+
+        input.image_ready_viewer_shortcuts_enabled = false;
+        assert!(!rust_media_horizontal_arrow_shortcuts_enabled(input));
+
+        input.video_mode = true;
+        assert!(rust_media_horizontal_arrow_shortcuts_enabled(input));
+
+        input.video_viewer_shortcuts_enabled = false;
+        assert!(!rust_media_horizontal_arrow_shortcuts_enabled(input));
+
+        input.video_viewer_shortcuts_enabled = true;
+        input.video_file_deletion_in_progress = true;
+        assert!(!rust_media_horizontal_arrow_shortcuts_enabled(input));
+
+        input.video_file_deletion_in_progress = false;
+        input.video_media_navigation_active = false;
+        assert!(!rust_media_horizontal_arrow_shortcuts_enabled(input));
+    }
+
     fn image_action_availability_input() -> RustImageActionAvailabilityInput {
         RustImageActionAvailabilityInput {
             image_ready: false,
@@ -271,6 +469,25 @@ mod tests {
             two_page_mode_available: false,
             right_to_left_reading_enabled: false,
             right_to_left_reading_available: false,
+        }
+    }
+
+    fn video_shortcut_availability_input() -> RustVideoShortcutAvailabilityInput {
+        RustVideoShortcutAvailabilityInput {
+            help_shortcuts_enabled: false,
+            viewer_shortcuts_enabled: false,
+            file_deletion_in_progress: false,
+            media_navigation_active: false,
+        }
+    }
+
+    fn media_horizontal_arrow_shortcut_input() -> RustMediaHorizontalArrowShortcutInput {
+        RustMediaHorizontalArrowShortcutInput {
+            video_mode: false,
+            image_ready_viewer_shortcuts_enabled: false,
+            video_viewer_shortcuts_enabled: false,
+            video_media_navigation_active: false,
+            video_file_deletion_in_progress: false,
         }
     }
 }
