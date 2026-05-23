@@ -24,6 +24,18 @@ bool sameMediaNavigationState(const KiriView::MediaNavigationBoundaryState &left
         && left.atKnownFirst == right.atKnownFirst && left.atKnownLast == right.atKnownLast
         && left.currentNumber == right.currentNumber && left.count == right.count;
 }
+
+bool replaceDirectMediaCursor(
+    KiriView::DirectMediaCursor &current, KiriView::DirectMediaCursor next)
+{
+    if (current.stableUrl == next.stableUrl && current.pendingUrl == next.pendingUrl) {
+        return false;
+    }
+
+    next.generation = current.generation + 1;
+    current = std::move(next);
+    return true;
+}
 }
 
 namespace KiriView {
@@ -46,6 +58,17 @@ const MediaNavigationBoundaryState &DocumentSessionState::mediaNavigationState()
 }
 
 bool DocumentSessionState::mediaNavigationKnown() const { return m_mediaNavigationKnown; }
+
+const DirectMediaCursor &DocumentSessionState::directMediaCursor() const
+{
+    return m_directMediaCursor;
+}
+
+QUrl DocumentSessionState::directMediaCursorUrl() const
+{
+    return !m_directMediaCursor.pendingUrl.isEmpty() ? m_directMediaCursor.pendingUrl
+                                                     : m_directMediaCursor.stableUrl;
+}
 
 void DocumentSessionState::setSourceIdentity(const QUrl &url)
 {
@@ -95,6 +118,43 @@ void DocumentSessionState::setSessionErrorString(const QString &errorString)
     if (replaceIfChanged(m_sessionErrorString, errorString)) {
         publish(DocumentSessionChange::ErrorString);
     }
+}
+
+void DocumentSessionState::clearDirectMediaCursor()
+{
+    DirectMediaCursor next;
+    next.generation = m_directMediaCursor.generation;
+    replaceDirectMediaCursor(m_directMediaCursor, std::move(next));
+}
+
+void DocumentSessionState::requestDirectImageCursor(const QUrl &url)
+{
+    DirectMediaCursor next = m_directMediaCursor;
+    next.pendingUrl = url;
+    replaceDirectMediaCursor(m_directMediaCursor, std::move(next));
+}
+
+void DocumentSessionState::confirmDirectImageCursor(const QUrl &url)
+{
+    DirectMediaCursor next = m_directMediaCursor;
+    next.stableUrl = url;
+    next.pendingUrl = QUrl();
+    replaceDirectMediaCursor(m_directMediaCursor, std::move(next));
+}
+
+void DocumentSessionState::restoreDirectImageCursorAfterFailure()
+{
+    DirectMediaCursor next = m_directMediaCursor;
+    next.pendingUrl = QUrl();
+    replaceDirectMediaCursor(m_directMediaCursor, std::move(next));
+}
+
+void DocumentSessionState::setDirectVideoCursor(const QUrl &url)
+{
+    DirectMediaCursor next = m_directMediaCursor;
+    next.stableUrl = url;
+    next.pendingUrl = QUrl();
+    replaceDirectMediaCursor(m_directMediaCursor, std::move(next));
 }
 
 void DocumentSessionState::publish(DocumentSessionChange change)

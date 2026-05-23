@@ -30,6 +30,12 @@ enum class DocumentSessionChange {
     ActiveNavigation,
 };
 
+struct DirectMediaCursor {
+    QUrl stableUrl;
+    QUrl pendingUrl;
+    quint64 generation = 0;
+};
+
 class DocumentSessionState final
 {
 public:
@@ -43,12 +49,19 @@ public:
     bool fileDeletionInProgress() const;
     const MediaNavigationBoundaryState &mediaNavigationState() const;
     bool mediaNavigationKnown() const;
+    const DirectMediaCursor &directMediaCursor() const;
+    QUrl directMediaCursorUrl() const;
 
     void setSourceIdentity(const QUrl &url);
     void setDocumentKind(DocumentSessionKind kind);
     void setFileDeletionInProgress(bool inProgress);
     void setMediaNavigationState(MediaNavigationBoundaryState state, bool known);
     void setSessionErrorString(const QString &errorString);
+    void clearDirectMediaCursor();
+    void requestDirectImageCursor(const QUrl &url);
+    void confirmDirectImageCursor(const QUrl &url);
+    void restoreDirectImageCursorAfterFailure();
+    void setDirectVideoCursor(const QUrl &url);
 
     void publish(DocumentSessionChange change);
     void publish(std::vector<DocumentSessionChange> changes);
@@ -57,6 +70,7 @@ private:
     ChangeCallback m_changeCallback;
     QUrl m_sourceUrl;
     DocumentSessionKind m_documentKind = DocumentSessionKind::Empty;
+    DirectMediaCursor m_directMediaCursor;
     MediaNavigationBoundaryState m_mediaNavigationState;
     bool m_mediaNavigationKnown = false;
     bool m_fileDeletionInProgress = false;

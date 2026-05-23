@@ -17,6 +17,7 @@ private Q_SLOTS:
     void documentKindPublishesDerivedPublicChanges();
     void fileDeletionProgressPublishesProgressAndAvailability();
     void mediaNavigationStateOnlyNotifiesWhenBoundaryChanges();
+    void directMediaCursorKeepsPendingAndStableIdentity();
     void publishDeduplicatesChangesInOrder();
 };
 
@@ -114,6 +115,42 @@ void TestDocumentSessionState::mediaNavigationStateOnlyNotifiesWhenBoundaryChang
     boundary.canOpenNext = true;
     state.setMediaNavigationState(boundary, true);
     QCOMPARE(changes.size(), std::size_t(4));
+}
+
+void TestDocumentSessionState::directMediaCursorKeepsPendingAndStableIdentity()
+{
+    KiriView::DocumentSessionState state;
+    const QUrl firstImage = QUrl::fromLocalFile(QStringLiteral("/media/01.png"));
+    const QUrl secondImage = QUrl::fromLocalFile(QStringLiteral("/media/02.png"));
+    const QUrl video = QUrl::fromLocalFile(QStringLiteral("/media/03.mp4"));
+
+    state.requestDirectImageCursor(firstImage);
+    QCOMPARE(state.directMediaCursorUrl(), firstImage);
+    QCOMPARE(state.directMediaCursor().pendingUrl, firstImage);
+    QCOMPARE(state.directMediaCursor().stableUrl, QUrl());
+    const quint64 requestedGeneration = state.directMediaCursor().generation;
+
+    state.confirmDirectImageCursor(firstImage);
+    QCOMPARE(state.directMediaCursorUrl(), firstImage);
+    QCOMPARE(state.directMediaCursor().pendingUrl, QUrl());
+    QCOMPARE(state.directMediaCursor().stableUrl, firstImage);
+    QVERIFY(state.directMediaCursor().generation > requestedGeneration);
+
+    state.requestDirectImageCursor(secondImage);
+    QCOMPARE(state.directMediaCursorUrl(), secondImage);
+    QCOMPARE(state.directMediaCursor().stableUrl, firstImage);
+    state.restoreDirectImageCursorAfterFailure();
+    QCOMPARE(state.directMediaCursorUrl(), firstImage);
+    QCOMPARE(state.directMediaCursor().pendingUrl, QUrl());
+    QCOMPARE(state.directMediaCursor().stableUrl, firstImage);
+
+    state.setDirectVideoCursor(video);
+    QCOMPARE(state.directMediaCursorUrl(), video);
+    QCOMPARE(state.directMediaCursor().stableUrl, video);
+
+    state.clearDirectMediaCursor();
+    QCOMPARE(state.directMediaCursorUrl(), QUrl());
+    QCOMPARE(state.directMediaCursor().stableUrl, QUrl());
 }
 
 void TestDocumentSessionState::publishDeduplicatesChangesInOrder()

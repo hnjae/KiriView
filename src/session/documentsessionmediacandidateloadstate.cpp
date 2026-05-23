@@ -11,24 +11,38 @@ DocumentSessionMediaCandidateLoadState::DocumentSessionMediaCandidateLoadState(
 }
 
 DocumentSessionMediaCandidateLoad DocumentSessionMediaCandidateLoadState::start(
-    const QUrl &currentUrl)
+    const QUrl &currentUrl, const QUrl &parentUrl, quint64 cursorGeneration)
 {
-    const ImageAsyncScopedOperation<QUrl> operation = m_operation.start(currentUrl);
+    const ImageAsyncScopedOperation<DocumentSessionMediaCandidateLoadScope> operation
+        = m_operation.start(
+            DocumentSessionMediaCandidateLoadScope { currentUrl, parentUrl, cursorGeneration });
     return DocumentSessionMediaCandidateLoad {
         operation.operationId,
-        operation.scope,
+        operation.scope.currentUrl,
+        operation.scope.parentUrl,
+        operation.scope.cursorGeneration,
     };
 }
 
 bool DocumentSessionMediaCandidateLoadState::accepts(
     const DocumentSessionMediaCandidateLoad &load) const
 {
-    return m_operation.accepts(load.operationId, load.currentUrl);
+    return m_operation.accepts(load.operationId,
+        DocumentSessionMediaCandidateLoadScope {
+            load.currentUrl,
+            load.parentUrl,
+            load.cursorGeneration,
+        });
 }
 
 bool DocumentSessionMediaCandidateLoadState::finish(const DocumentSessionMediaCandidateLoad &load)
 {
-    return m_operation.finish(load.operationId, load.currentUrl);
+    return m_operation.finish(load.operationId,
+        DocumentSessionMediaCandidateLoadScope {
+            load.currentUrl,
+            load.parentUrl,
+            load.cursorGeneration,
+        });
 }
 
 void DocumentSessionMediaCandidateLoadState::cancel() { m_operation.cancel(); }

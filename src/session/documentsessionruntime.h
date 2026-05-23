@@ -129,9 +129,12 @@ private:
         FileDeletionMode mode, std::vector<MediaNavigationCandidate> candidates = {});
     void finishMediaDeletion(quint64 operationId, const MediaDeletionFallbackPlan &fallbackPlan,
         FileDeletionResult result, const QString &errorString);
-    QUrl currentMediaUrl() const;
+    QUrl activeDirectMediaCursorUrl() const;
+    QUrl activeDirectMediaScopeUrl() const;
+    bool directMediaCursorMatches(const DocumentSessionMediaCandidateLoad &load) const;
     bool activeImageUsesMediaScope() const;
-    bool pendingDirectImageLoadMayUseMediaScope() const;
+    bool directImageLoadMayUseMediaScope() const;
+    void syncDirectImageCursorFromDocument();
     ActiveNavigationSourceKind activeNavigationSourceKind() const;
     ActiveNavigationSnapshot activeNavigationSnapshot() const;
     ActiveNavigationSnapshot mediaActiveNavigationSnapshot() const;
