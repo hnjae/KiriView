@@ -92,19 +92,19 @@ private:
             });
         }
 
-        const std::vector<std::size_t> retainedIndices
-            = lruCacheRetainedIndices(retentionEntries, m_byteBudget);
+        const std::vector<ImageCacheRetainedEntry> retainedEntriesPlan
+            = lruCacheRetentionPlan(retentionEntries, m_byteBudget);
 
         std::vector<Entry> retainedEntries;
-        retainedEntries.reserve(retainedIndices.size());
+        retainedEntries.reserve(retainedEntriesPlan.size());
         qsizetype retainedByteCost = 0;
-        for (std::size_t index : retainedIndices) {
-            if (index >= m_entries.size()) {
+        for (ImageCacheRetainedEntry retainedEntry : retainedEntriesPlan) {
+            if (retainedEntry.originalIndex >= m_entries.size()) {
                 continue;
             }
 
-            retainedByteCost += m_entries[index].byteCost;
-            retainedEntries.push_back(std::move(m_entries[index]));
+            retainedByteCost += retainedEntry.byteCost;
+            retainedEntries.push_back(std::move(m_entries[retainedEntry.originalIndex]));
         }
 
         m_entries = std::move(retainedEntries);

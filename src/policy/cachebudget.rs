@@ -9,12 +9,18 @@ mod ffi {
         last_use: u64,
     }
 
+    #[derive(Clone, Copy, Debug, PartialEq, Eq)]
+    struct RustLruCacheRetainedEntry {
+        original_index: usize,
+        byte_cost: i64,
+    }
+
     extern "Rust" {
-        #[cxx_name = "rustLruCacheRetainedIndices"]
-        fn rust_lru_cache_retained_indices(
+        #[cxx_name = "rustLruCacheRetentionPlan"]
+        fn rust_lru_cache_retention_plan(
             entries: Vec<RustLruCacheRetentionEntry>,
             byte_budget: i64,
-        ) -> Vec<usize>;
+        ) -> Vec<RustLruCacheRetainedEntry>;
 
         #[cxx_name = "rustStaticTileCacheByteBudgetForSystemMemory"]
         fn rust_static_tile_cache_byte_budget_for_system_memory(
@@ -48,13 +54,13 @@ pub(crate) fn system_memory_capped_byte_budget(
     preferred_byte_budget.min(system_memory_byte_size / memory_divisor)
 }
 
-use ffi::RustLruCacheRetentionEntry;
+use ffi::{RustLruCacheRetainedEntry, RustLruCacheRetentionEntry};
 
-fn rust_lru_cache_retained_indices(
+fn rust_lru_cache_retention_plan(
     entries: Vec<RustLruCacheRetentionEntry>,
     byte_budget: i64,
-) -> Vec<usize> {
-    lru_cache_retained_indices(entries, byte_budget)
+) -> Vec<RustLruCacheRetainedEntry> {
+    lru_cache_retention_plan(entries, byte_budget)
 }
 
 fn rust_static_tile_cache_byte_budget_for_system_memory(
@@ -64,10 +70,10 @@ fn rust_static_tile_cache_byte_budget_for_system_memory(
     static_tile_cache_byte_budget_for_system_memory(system_memory_byte_size, preferred_byte_budget)
 }
 
-pub(crate) fn lru_cache_retained_indices(
+pub(crate) fn lru_cache_retention_plan(
     entries: Vec<RustLruCacheRetentionEntry>,
     byte_budget: i64,
-) -> Vec<usize> {
+) -> Vec<RustLruCacheRetainedEntry> {
     if byte_budget <= 0 {
         return Vec::new();
     }
@@ -106,7 +112,10 @@ pub(crate) fn lru_cache_retained_indices(
 
     entries
         .into_iter()
-        .map(|entry| entry.original_index)
+        .map(|entry| RustLruCacheRetainedEntry {
+            original_index: entry.original_index,
+            byte_cost: entry.byte_cost,
+        })
         .collect()
 }
 
@@ -128,25 +137,25 @@ mod tests {
     #[test]
     fn lru_cache_retention_drops_oldest_entries_until_within_budget() {
         assert_eq!(
-            lru_cache_retained_indices(
+            retained_indices(lru_cache_retention_plan(
                 vec![
                     retention_entry(16, 3),
                     retention_entry(16, 1),
                     retention_entry(16, 2)
                 ],
                 32
-            ),
+            )),
             vec![0, 2]
         );
         assert_eq!(
-            lru_cache_retained_indices(
+            retained_indices(lru_cache_retention_plan(
                 vec![
                     retention_entry(60, 3),
                     retention_entry(50, 2),
                     retention_entry(40, 1)
                 ],
                 100
-            ),
+            )),
             vec![0]
         );
     }
@@ -154,17 +163,32 @@ mod tests {
     #[test]
     fn lru_cache_retention_rejects_invalid_costs_and_budgets() {
         assert_eq!(
-            lru_cache_retained_indices(
+            retained_indices(lru_cache_retention_plan(
                 vec![
                     retention_entry(0, 1),
                     retention_entry(10, 2),
                     retention_entry(-1, 3)
                 ],
                 100
-            ),
+            )),
             vec![1]
         );
-        assert!(lru_cache_retained_indices(vec![retention_entry(10, 1)], 0).is_empty());
+        assert!(lru_cache_retention_plan(vec![retention_entry(10, 1)], 0).is_empty());
+    }
+
+    #[test]
+    fn lru_cache_retention_reports_retained_byte_costs() {
+        assert_eq!(
+            lru_cache_retention_plan(
+                vec![
+                    retention_entry(18, 3),
+                    retention_entry(16, 1),
+                    retention_entry(14, 2)
+                ],
+                32
+            ),
+            vec![retained_entry(0, 18), retained_entry(2, 14)]
+        );
     }
 
     #[test]
@@ -194,5 +218,19 @@ mod tests {
             byte_cost,
             last_use,
         }
+    }
+
+    fn retained_entry(original_index: usize, byte_cost: i64) -> RustLruCacheRetainedEntry {
+        RustLruCacheRetainedEntry {
+            original_index,
+            byte_cost,
+        }
+    }
+
+    fn retained_indices(entries: Vec<RustLruCacheRetainedEntry>) -> Vec<usize> {
+        entries
+            .into_iter()
+            .map(|entry| entry.original_index)
+            .collect()
     }
 }

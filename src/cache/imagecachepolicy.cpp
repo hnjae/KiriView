@@ -21,10 +21,18 @@ KiriView::RustLruCacheRetentionEntry rustRetentionEntry(KiriView::ImageCacheRete
         rustUseClock(entry.lastUse),
     };
 }
+
+KiriView::ImageCacheRetainedEntry retainedEntryFromRust(KiriView::RustLruCacheRetainedEntry entry)
+{
+    return KiriView::ImageCacheRetainedEntry {
+        entry.original_index,
+        KiriView::Bridge::qtByteSize(entry.byte_cost),
+    };
+}
 }
 
 namespace KiriView {
-std::vector<std::size_t> lruCacheRetainedIndices(
+std::vector<ImageCacheRetainedEntry> lruCacheRetentionPlan(
     const std::vector<ImageCacheRetentionEntry> &entries, qsizetype byteBudget)
 {
     rust::Vec<RustLruCacheRetentionEntry> rustEntries;
@@ -34,9 +42,14 @@ std::vector<std::size_t> lruCacheRetainedIndices(
         rustEntries.push_back(rustRetentionEntry(entry));
     }
 
-    const rust::Vec<std::size_t> retainedIndices
-        = rustLruCacheRetainedIndices(std::move(rustEntries), rustByteCost(byteBudget));
-    return std::vector<std::size_t>(retainedIndices.cbegin(), retainedIndices.cend());
+    const rust::Vec<RustLruCacheRetainedEntry> retainedEntries
+        = rustLruCacheRetentionPlan(std::move(rustEntries), rustByteCost(byteBudget));
+    std::vector<ImageCacheRetainedEntry> retentionPlan;
+    retentionPlan.reserve(retainedEntries.size());
+    for (RustLruCacheRetainedEntry entry : retainedEntries) {
+        retentionPlan.push_back(retainedEntryFromRust(entry));
+    }
+    return retentionPlan;
 }
 
 qsizetype staticTileCacheByteBudgetForSystemMemory(

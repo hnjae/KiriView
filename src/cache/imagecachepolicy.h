@@ -14,7 +14,12 @@ struct ImageCacheRetentionEntry {
     quint64 lastUse = 0;
 };
 
-std::vector<std::size_t> lruCacheRetainedIndices(
+struct ImageCacheRetainedEntry {
+    std::size_t originalIndex = 0;
+    qsizetype byteCost = 0;
+};
+
+std::vector<ImageCacheRetainedEntry> lruCacheRetentionPlan(
     const std::vector<ImageCacheRetentionEntry> &entries, qsizetype byteBudget);
 qsizetype staticTileCacheByteBudgetForSystemMemory(
     qsizetype systemMemoryByteSize, qsizetype preferredByteBudget);
