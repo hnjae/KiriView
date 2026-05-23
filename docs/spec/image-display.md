@@ -100,9 +100,9 @@ Rotation is unavailable while Two-Page Spread is enabled. Enabling Two-Page Spre
 
 ## Zoom Controls
 
-The toolbar provides a zoom percentage input.
+The toolbar provides a fixed-width zoom percentage input. It shows values below 10,000% as a rounded integer percentage without digit grouping, capped at `9999 %`. It shows values from 10,000% through 999,999% in thousands using `k`, adds `+` when the actual value is above the displayed thousand bucket, and shows values at or above 1,000,000% as `999k+ %`. The displayed text is right-aligned, uses a fixed-width font, and includes one space between the number or suffix and `%`.
 
-When a direct video is displayed, the toolbar zoom control remains in the same position as image mode and becomes read-only. It displays the fitted video zoom percentage when KiriView can determine the intrinsic video frame size and current displayed content size, and `--%` when the percentage is unavailable.
+When no zoom input value exists, the toolbar zoom control displays `- %`. When a direct video is displayed, the toolbar zoom control remains in the same position as image mode and becomes read-only. It displays the fitted video zoom percentage when KiriView can determine the intrinsic video frame size and current displayed content size, and `? %` when the percentage is unavailable.
 
 When an image is ready, users can enter manual zoom values from 10% through a dynamic maximum that keeps the displayed image within the application's supported display size.
 
