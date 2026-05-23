@@ -34,15 +34,15 @@ KiriView::ImageSurfaceDrawEntry fullImageDrawEntry(KiriView::ImageSurfaceDrawIde
 }
 
 QRectF tileTargetRect(
-    const QRect &sourceRect, const QSize &imageSize, const QRectF &targetRect, int rotationDegrees)
+    const QRectF &sourceRect, const QSize &imageSize, const QRectF &targetRect, int rotationDegrees)
 {
     if (KiriView::normalizedImageRotationDegrees(rotationDegrees) != 0) {
         return KiriView::rotatedSourceRectInTarget(
-            QRectF(sourceRect), QSizeF(imageSize), targetRect, rotationDegrees);
+            sourceRect, QSizeF(imageSize), targetRect, rotationDegrees);
     }
 
-    return KiriView::Bridge::qtRectF(KiriView::rustImageTileTargetRect(
-        KiriView::Bridge::rustRect<KiriView::RustImageRenderRect>(sourceRect),
+    return KiriView::Bridge::qtRectF(KiriView::rustImageTileTargetRectF(
+        KiriView::Bridge::rustRectF<KiriView::RustImageRenderRectF>(sourceRect),
         KiriView::Bridge::rustSize<KiriView::RustImageRenderSize>(imageSize),
         KiriView::Bridge::rustRectF<KiriView::RustImageRenderRectF>(targetRect)));
 }
@@ -63,9 +63,13 @@ std::optional<KiriView::ImageSurfaceDrawEntry> staticTileDrawEntry(
         return std::nullopt;
     }
 
-    QRect sourceRect = tile.displaySourceRect;
+    QRectF sourceRect = resolutionIndependent ? tile.displaySourceRectF : QRectF();
     if (sourceRect.isEmpty()) {
-        sourceRect = surface.pyramid().sourceRectForLevelRect(tile.key.level, tile.levelRect);
+        sourceRect = QRectF(tile.displaySourceRect);
+    }
+    if (sourceRect.isEmpty()) {
+        sourceRect
+            = QRectF(surface.pyramid().sourceRectForLevelRect(tile.key.level, tile.levelRect));
     }
     if (sourceRect.isEmpty()) {
         return std::nullopt;

@@ -63,6 +63,7 @@ mod ffi {
         texture_level_rect: RustTileRect,
         source_rect: RustTileRect,
         display_source_rect: RustTileRect,
+        display_source_rect_f: RustTileRectF,
     }
 
     extern "Rust" {
@@ -560,13 +561,15 @@ fn request_for_tile(
     let level_rect = level_tile_rect(image_size, tile_size, key);
     let texture_level_rect =
         level_tile_texture_rect(image_size, tile_size, apron_source_pixels, key);
+    let display_source_rect = source_rect_for_level_rect(image_size, key.level, level_rect);
     RustTileRequest {
         key,
         level_size: level_size(image_size, key.level),
         level_rect,
         texture_level_rect,
         source_rect: source_rect_for_level_rect(image_size, key.level, texture_level_rect),
-        display_source_rect: source_rect_for_level_rect(image_size, key.level, level_rect),
+        display_source_rect,
+        display_source_rect_f: rect_to_rectf(display_source_rect),
     }
 }
 
@@ -859,6 +862,7 @@ fn svg_raster_bucket_request_for_tile(
         texture_level_rect,
         source_rect: intrinsic_rect_for_bucket_rect(texture_level_rect, bucket_size, image_size),
         display_source_rect: intrinsic_rect_for_bucket_rect(level_rect, bucket_size, image_size),
+        display_source_rect_f: intrinsic_rectf_for_bucket_rect(level_rect, bucket_size, image_size),
     }
 }
 
@@ -872,6 +876,33 @@ fn intrinsic_rect_for_bucket_rect(
         size_to_sizef(bucket_size),
         image_size,
     )
+}
+
+fn intrinsic_rectf_for_bucket_rect(
+    bucket_rect: RustTileRect,
+    bucket_size: RustTileSize,
+    image_size: RustTileSize,
+) -> RustTileRectF {
+    if rect_is_empty(bucket_rect) || size_is_empty(bucket_size) || size_is_empty(image_size) {
+        return empty_rectf();
+    }
+
+    let x_scale = f64::from(image_size.width) / f64::from(bucket_size.width);
+    let y_scale = f64::from(image_size.height) / f64::from(bucket_size.height);
+    if !x_scale.is_finite() || !y_scale.is_finite() || x_scale <= 0.0 || y_scale <= 0.0 {
+        return empty_rectf();
+    }
+
+    let left = f64::from(bucket_rect.x) * x_scale;
+    let top = f64::from(bucket_rect.y) * y_scale;
+    let right = f64::from(bucket_rect.x + bucket_rect.width) * x_scale;
+    let bottom = f64::from(bucket_rect.y + bucket_rect.height) * y_scale;
+    RustTileRectF {
+        x: left,
+        y: top,
+        width: right - left,
+        height: bottom - top,
+    }
 }
 
 fn svg_raster_scale_bucket(required_scale: f64) -> i32 {
@@ -1328,6 +1359,61 @@ mod tests {
         assert_eq!(requests[0].key, bucket_key(0, 0, 0, 1));
         assert_eq!(requests[0].source_rect, rect(0, 0, 342, 342));
         assert_eq!(requests[0].display_source_rect, rect(0, 0, 342, 342));
+        assert_eq!(requests[0].display_source_rect_f.x, 0.0);
+        assert_eq!(requests[0].display_source_rect_f.y, 0.0);
+        assert!(
+            (requests[0].display_source_rect_f.width - (512.0 / 1500.0 * 1000.0)).abs()
+                < 0.000000000001
+        );
+        assert!(
+            (requests[0].display_source_rect_f.height - (512.0 / 1500.0 * 1000.0)).abs()
+                < 0.000000000001
+        );
+    }
+
+    #[test]
+    fn svg_raster_bucket_display_rects_preserve_fractional_continuity() {
+        let requests = svg_raster_tile_requests(
+            size(48, 48),
+            512,
+            1,
+            sizef(1920.0, 1920.0),
+            rectf(0.0, 0.0, 1920.0, 1920.0),
+            1.0,
+        );
+
+        let first = requests
+            .iter()
+            .find(|request| request.key.x == 0 && request.key.y == 0)
+            .unwrap();
+        let right_neighbor = requests
+            .iter()
+            .find(|request| request.key.x == 1 && request.key.y == 0)
+            .unwrap();
+        let bottom_neighbor = requests
+            .iter()
+            .find(|request| request.key.x == 0 && request.key.y == 1)
+            .unwrap();
+        let last = requests
+            .iter()
+            .find(|request| request.key.x == 5 && request.key.y == 5)
+            .unwrap();
+
+        assert_eq!(first.key.scale_bucket, 10);
+        assert!(first.display_source_rect_f.width > 8.0);
+        assert!(first.display_source_rect_f.width < 9.0);
+        assert_eq!(first.display_source_rect_f.x, 0.0);
+        assert_eq!(first.display_source_rect_f.y, 0.0);
+        assert_eq!(
+            rectf_right(first.display_source_rect_f),
+            right_neighbor.display_source_rect_f.x
+        );
+        assert_eq!(
+            rectf_bottom(first.display_source_rect_f),
+            bottom_neighbor.display_source_rect_f.y
+        );
+        assert!((rectf_right(last.display_source_rect_f) - 48.0).abs() < 0.000000000001);
+        assert!((rectf_bottom(last.display_source_rect_f) - 48.0).abs() < 0.000000000001);
     }
 
     #[test]

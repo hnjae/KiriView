@@ -102,6 +102,13 @@ mod ffi {
             target_rect: RustImageRenderRectF,
         ) -> RustImageRenderRectF;
 
+        #[cxx_name = "rustImageTileTargetRectF"]
+        fn rust_image_tile_target_rect_f(
+            source_rect: RustImageRenderRectF,
+            image_size: RustImageRenderSize,
+            target_rect: RustImageRenderRectF,
+        ) -> RustImageRenderRectF;
+
         #[cxx_name = "rustImageTileTextureRect"]
         fn rust_image_tile_texture_rect(
             level_rect: RustImageRenderRect,
@@ -334,17 +341,34 @@ fn rust_image_tile_target_rect(
     image_size: RustImageRenderSize,
     target_rect: RustImageRenderRectF,
 ) -> RustImageRenderRectF {
-    if rect_empty(source_rect) || size_empty(image_size) || rect_f_empty(target_rect) {
+    rust_image_tile_target_rect_f(
+        RustImageRenderRectF {
+            x: f64::from(source_rect.x),
+            y: f64::from(source_rect.y),
+            width: f64::from(source_rect.width),
+            height: f64::from(source_rect.height),
+        },
+        image_size,
+        target_rect,
+    )
+}
+
+fn rust_image_tile_target_rect_f(
+    source_rect: RustImageRenderRectF,
+    image_size: RustImageRenderSize,
+    target_rect: RustImageRenderRectF,
+) -> RustImageRenderRectF {
+    if rect_f_empty(source_rect) || size_empty(image_size) || rect_f_empty(target_rect) {
         return empty_rect_f();
     }
 
     let image_width = f64::from(image_size.width);
     let image_height = f64::from(image_size.height);
     RustImageRenderRectF {
-        x: target_rect.x + (f64::from(source_rect.x) / image_width) * target_rect.width,
-        y: target_rect.y + (f64::from(source_rect.y) / image_height) * target_rect.height,
-        width: (f64::from(source_rect.width) / image_width) * target_rect.width,
-        height: (f64::from(source_rect.height) / image_height) * target_rect.height,
+        x: target_rect.x + (source_rect.x / image_width) * target_rect.width,
+        y: target_rect.y + (source_rect.y / image_height) * target_rect.height,
+        width: (source_rect.width / image_width) * target_rect.width,
+        height: (source_rect.height / image_height) * target_rect.height,
     }
 }
 

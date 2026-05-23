@@ -14,6 +14,7 @@
 #include <QString>
 #include <QTest>
 #include <Qt>
+#include <algorithm>
 #include <limits>
 #include <memory>
 #include <optional>
@@ -34,6 +35,7 @@ KiriView::DecodedTile decodedTileForRequest(const KiriView::TileRequest &request
         request.textureLevelRect,
         std::move(image),
         request.displaySourceRect,
+        request.displaySourceRectF,
     };
 }
 
@@ -80,6 +82,7 @@ private Q_SLOTS:
     void staticSurfaceDrawEntriesOnlyDrawActiveRasterLevel();
     void svgSurfaceDrawEntriesOnlyDrawActiveScaleBucket();
     void svgZoomOutThenInSkipsStaleLowBucketTiles();
+    void svgTileDrawEntriesUseFractionalDisplayCoverage();
     void rotatedFullImageDrawEntriesRotateTextureCoordinates();
     void rotatedStaticTileDrawEntriesMapSourceRects();
 };
@@ -274,6 +277,52 @@ void TestImageRendering::svgZoomOutThenInSkipsStaleLowBucketTiles()
 
     QCOMPARE(entries.size(), std::size_t(2));
     QCOMPARE(entries[1].identity.tileKey, highBucketRequest.key);
+}
+
+void TestImageRendering::svgTileDrawEntriesUseFractionalDisplayCoverage()
+{
+    KiriView::StaticTileSurface surface = svgTileSurface(QSize(48, 48));
+    const std::vector<KiriView::TileRequest> requests
+        = KiriView::ImageTileGeometryPolicy::svgRasterTileRequests(
+            QSize(48, 48), 512, 1, QSizeF(1920.0, 1920.0), QRectF(0.0, 0.0, 1920.0, 1920.0), 1.0);
+    const auto firstIt = std::find_if(
+        requests.cbegin(), requests.cend(), [](const KiriView::TileRequest &request) {
+            return request.key.x == 0 && request.key.y == 0;
+        });
+    const auto secondIt = std::find_if(
+        requests.cbegin(), requests.cend(), [](const KiriView::TileRequest &request) {
+            return request.key.x == 1 && request.key.y == 0;
+        });
+    QVERIFY(firstIt != requests.cend());
+    QVERIFY(secondIt != requests.cend());
+    QVERIFY(firstIt->displaySourceRectF.width() > 8.0);
+    QVERIFY(firstIt->displaySourceRectF.width() < 9.0);
+    QVERIFY(surface.insertTile(decodedTileForRequest(*firstIt)));
+    QVERIFY(surface.insertTile(decodedTileForRequest(*secondIt)));
+
+    const KiriView::DisplayedImageSurface displayedSurface(std::move(surface));
+    const std::vector<KiriView::ImageSurfaceDrawEntry> entries
+        = KiriView::imageSurfaceDrawEntries(displayedSurface,
+            KiriView::ImageSurfaceDrawContext {
+                QRectF(0.0, 0.0, 1920.0, 1920.0),
+                QSizeF(1920.0, 1920.0),
+                QRectF(0.0, 0.0, 1920.0, 1920.0),
+                1.0,
+                0,
+            });
+    const auto firstEntry = std::find_if(
+        entries.cbegin(), entries.cend(), [&firstIt](const KiriView::ImageSurfaceDrawEntry &entry) {
+            return entry.identity.tileKey == firstIt->key;
+        });
+    const auto secondEntry = std::find_if(entries.cbegin(), entries.cend(),
+        [&secondIt](const KiriView::ImageSurfaceDrawEntry &entry) {
+            return entry.identity.tileKey == secondIt->key;
+        });
+    QVERIFY(firstEntry != entries.cend());
+    QVERIFY(secondEntry != entries.cend());
+    QVERIFY(qAbs(firstEntry->targetRect.right() - secondEntry->targetRect.left()) < 0.000001);
+    QVERIFY(firstEntry->targetRect.width() < 360.0);
+    QVERIFY(secondEntry->targetRect.left() < 360.0);
 }
 
 void TestImageRendering::rotatedFullImageDrawEntriesRotateTextureCoordinates()

@@ -6,6 +6,7 @@
 #include <QColor>
 #include <QObject>
 #include <QRect>
+#include <QRectF>
 #include <QTest>
 #include <Qt>
 #include <memory>
@@ -106,12 +107,14 @@ void TestSvgTileSource::sourceRendersOversampledBucketTile()
     request.textureLevelRect = QRect(0, 0, 120, 60);
     request.sourceRect = QRect(0, 0, 80, 40);
     request.displaySourceRect = QRect(0, 0, 80, 40);
+    request.displaySourceRectF = QRectF(0.0, 0.0, 80.0 / 1.5, 40.0);
 
     const std::optional<KiriView::DecodedTile> tile = source->decodeTile(request, &errorString);
     QVERIFY2(tile.has_value(), qPrintable(errorString));
     QCOMPARE(tile->key.scaleBucket, 1);
     QCOMPARE(tile->image.size(), QSize(120, 60));
     QCOMPARE(tile->displaySourceRect, QRect(0, 0, 80, 40));
+    QCOMPARE(tile->displaySourceRectF, QRectF(0.0, 0.0, 80.0 / 1.5, 40.0));
     QCOMPARE(tile->image.pixelColor(10, 10), QColor(Qt::red));
 }
 

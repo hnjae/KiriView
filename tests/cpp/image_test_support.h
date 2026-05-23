@@ -86,7 +86,7 @@ public:
             = m_image.scaled(request.levelSize, Qt::IgnoreAspectRatio, Qt::SmoothTransformation);
         return DecodedTile { request.key, request.levelSize, request.levelRect,
             request.textureLevelRect, levelImage.copy(request.textureLevelRect),
-            request.displaySourceRect };
+            request.displaySourceRect, request.displaySourceRectF };
     }
 
 private:

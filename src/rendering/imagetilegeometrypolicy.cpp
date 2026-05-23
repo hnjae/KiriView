@@ -56,6 +56,7 @@ KiriView::TileRequest tileRequestFromRust(const KiriView::RustTileRequest &reque
         KiriView::Bridge::qtRect(request.texture_level_rect),
         KiriView::Bridge::qtRect(request.source_rect),
         KiriView::Bridge::qtRect(request.display_source_rect),
+        KiriView::Bridge::qtRectF(request.display_source_rect_f),
     };
 }
 

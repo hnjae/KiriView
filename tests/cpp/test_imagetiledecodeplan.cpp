@@ -98,6 +98,7 @@ void insertSyntheticDecodedTiles(const KiriView::ImageTileDecodePlan &plan,
             request.textureLevelRect,
             std::move(image),
             request.displaySourceRect,
+            request.displaySourceRectF,
         }));
     }
 }

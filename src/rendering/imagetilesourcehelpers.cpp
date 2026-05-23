@@ -47,6 +47,7 @@ DecodedTile decodedTileFromImage(const TileRequest &request, QImage image)
         request.textureLevelRect,
         displayReadyImage(image),
         request.displaySourceRect,
+        request.displaySourceRectF,
     };
 }
 

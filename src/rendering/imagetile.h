@@ -7,6 +7,7 @@
 #include <QHash>
 #include <QImage>
 #include <QRect>
+#include <QRectF>
 #include <QSize>
 #include <vector>
 
@@ -53,6 +54,7 @@ struct TileRequest {
     QRect textureLevelRect;
     QRect sourceRect;
     QRect displaySourceRect;
+    QRectF displaySourceRectF;
 };
 
 struct DecodedTile {
@@ -62,6 +64,7 @@ struct DecodedTile {
     QRect textureLevelRect;
     QImage image;
     QRect displaySourceRect;
+    QRectF displaySourceRectF;
 };
 
 class TilePyramid

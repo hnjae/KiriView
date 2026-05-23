@@ -83,6 +83,7 @@ TileRequest TilePyramid::requestForTile(const TileKey &key) const
         m_imageSize, m_tileSize, m_apronSourcePixels, key);
     request.key = key;
     request.displaySourceRect = sourceRectForLevelRect(key.level, request.levelRect);
+    request.displaySourceRectF = QRectF(request.displaySourceRect);
     return request;
 }
 
