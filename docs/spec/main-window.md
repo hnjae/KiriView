@@ -20,6 +20,8 @@ Outside fullscreen, the toolbar uses normal application header placement, reserv
 
 Controls that require selected, navigable, or ready media are disabled until the corresponding program state is available.
 
+The toolbar zoom control displays the document session's active zoom readout rather than reading image or video document zoom values directly. When the document session is empty, the zoom control remains in place and displays `- %`.
+
 The toolbar page navigation arrow buttons keep their physical affordance. The left arrow button triggers Previous in Left-to-Right Reading mode and Next in Right-to-Left Reading mode. The right arrow button triggers Next in Left-to-Right Reading mode and Previous in Right-to-Left Reading mode. Each button's tooltip and accessible text follow the action that button triggers.
 
 Open, Previous Archive, and Next Archive are provided by the application menu and shortcuts rather than fixed toolbar buttons. Previous Archive and Next Archive use visually distinct previous/next-use icons so they are not confused with page Previous and Next navigation.
