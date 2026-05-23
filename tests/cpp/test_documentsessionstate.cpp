@@ -51,13 +51,14 @@ void TestDocumentSessionState::documentKindPublishesDerivedPublicChanges()
 
     QCOMPARE(state.documentKind(), KiriView::DocumentSessionKind::Video);
     QCOMPARE(batches.size(), std::size_t(1));
-    QCOMPARE(batches.back().size(), std::size_t(6));
+    QCOMPARE(batches.back().size(), std::size_t(7));
     QCOMPARE(batches.back().at(0), KiriView::DocumentSessionChange::DocumentKind);
     QCOMPARE(batches.back().at(1), KiriView::DocumentSessionChange::ActiveZoomReadout);
     QCOMPARE(batches.back().at(2), KiriView::DocumentSessionChange::WindowTitleFileName);
     QCOMPARE(batches.back().at(3), KiriView::DocumentSessionChange::ErrorString);
     QCOMPARE(batches.back().at(4), KiriView::DocumentSessionChange::FileDeletionAvailability);
     QCOMPARE(batches.back().at(5), KiriView::DocumentSessionChange::MediaNavigationAvailability);
+    QCOMPARE(batches.back().at(6), KiriView::DocumentSessionChange::ActiveNavigation);
 
     state.setDocumentKind(KiriView::DocumentSessionKind::Video);
     QCOMPARE(batches.size(), std::size_t(1));
@@ -103,15 +104,16 @@ void TestDocumentSessionState::mediaNavigationStateOnlyNotifiesWhenBoundaryChang
 
     QVERIFY(state.mediaNavigationKnown());
     QCOMPARE(state.mediaNavigationState().currentNumber, 2);
-    QCOMPARE(changes.size(), std::size_t(1));
-    QCOMPARE(changes.back(), KiriView::DocumentSessionChange::MediaNavigationAvailability);
+    QCOMPARE(changes.size(), std::size_t(2));
+    QCOMPARE(changes.at(0), KiriView::DocumentSessionChange::MediaNavigationAvailability);
+    QCOMPARE(changes.at(1), KiriView::DocumentSessionChange::ActiveNavigation);
 
     state.setMediaNavigationState(boundary, true);
-    QCOMPARE(changes.size(), std::size_t(1));
+    QCOMPARE(changes.size(), std::size_t(2));
 
     boundary.canOpenNext = true;
     state.setMediaNavigationState(boundary, true);
-    QCOMPARE(changes.size(), std::size_t(2));
+    QCOMPARE(changes.size(), std::size_t(4));
 }
 
 void TestDocumentSessionState::publishDeduplicatesChangesInOrder()

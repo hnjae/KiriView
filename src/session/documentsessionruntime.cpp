@@ -41,6 +41,26 @@ QString genericFileDeletionErrorMessage()
 {
     return KiriView::imageErrorText(KiriView::ImageErrorTextId::DeleteFile);
 }
+
+KiriView::ActiveNavigationSnapshot unavailableActiveNavigation() { return {}; }
+
+KiriView::ActiveNavigationSnapshot unknownActiveNavigation()
+{
+    return KiriView::ActiveNavigationSnapshot { true };
+}
+
+KiriView::ActiveNavigationSnapshot normalizedActiveNavigation(
+    KiriView::ActiveNavigationSnapshot snapshot)
+{
+    if (!snapshot.available || !snapshot.known || snapshot.currentNumber < 1 || snapshot.count < 1
+        || snapshot.currentNumber > snapshot.count) {
+        return snapshot.available ? unknownActiveNavigation() : unavailableActiveNavigation();
+    }
+
+    snapshot.known = true;
+    snapshot.editable = true;
+    return snapshot;
+}
 }
 
 namespace KiriView {
@@ -228,6 +248,51 @@ bool DocumentSessionRuntime::atKnownLastMedia() const
         && m_state.mediaNavigationState().atKnownLast;
 }
 
+bool DocumentSessionRuntime::activeNavigationAvailable() const
+{
+    return activeNavigationSnapshot().available;
+}
+
+bool DocumentSessionRuntime::activeNavigationKnown() const
+{
+    return activeNavigationSnapshot().known;
+}
+
+bool DocumentSessionRuntime::activeNavigationEditable() const
+{
+    return activeNavigationSnapshot().editable;
+}
+
+int DocumentSessionRuntime::activeNavigationCurrentNumber() const
+{
+    return activeNavigationSnapshot().currentNumber;
+}
+
+int DocumentSessionRuntime::activeNavigationCount() const
+{
+    return activeNavigationSnapshot().count;
+}
+
+bool DocumentSessionRuntime::canOpenPreviousActiveNavigation() const
+{
+    return activeNavigationSnapshot().canOpenPrevious;
+}
+
+bool DocumentSessionRuntime::canOpenNextActiveNavigation() const
+{
+    return activeNavigationSnapshot().canOpenNext;
+}
+
+bool DocumentSessionRuntime::atKnownFirstActiveNavigation() const
+{
+    return activeNavigationSnapshot().atKnownFirst;
+}
+
+bool DocumentSessionRuntime::atKnownLastActiveNavigation() const
+{
+    return activeNavigationSnapshot().atKnownLast;
+}
+
 std::optional<PredecodedImage> DocumentSessionRuntime::findPredecodedImage(const QUrl &url) const
 {
     return m_mediaPredecodeCoordinator != nullptr
@@ -269,6 +334,80 @@ void DocumentSessionRuntime::openMediaAtNumber(int mediaNumber)
     });
 }
 
+void DocumentSessionRuntime::openPreviousActiveNavigation()
+{
+    if (!canOpenPreviousActiveNavigation()) {
+        return;
+    }
+
+    switch (activeNavigationSourceKind()) {
+    case ActiveNavigationSourceKind::OrdinaryDirectMedia:
+        openPreviousMedia();
+        return;
+    case ActiveNavigationSourceKind::ImageDocumentPages:
+        m_imageDocument.openPreviousImage();
+        return;
+    case ActiveNavigationSourceKind::None:
+        return;
+    }
+}
+
+void DocumentSessionRuntime::openNextActiveNavigation()
+{
+    if (!canOpenNextActiveNavigation()) {
+        return;
+    }
+
+    switch (activeNavigationSourceKind()) {
+    case ActiveNavigationSourceKind::OrdinaryDirectMedia:
+        openNextMedia();
+        return;
+    case ActiveNavigationSourceKind::ImageDocumentPages:
+        m_imageDocument.openNextImage();
+        return;
+    case ActiveNavigationSourceKind::None:
+        return;
+    }
+}
+
+void DocumentSessionRuntime::openFirstActiveNavigation()
+{
+    if (!activeNavigationKnown() || atKnownFirstActiveNavigation()) {
+        return;
+    }
+
+    openActiveNavigationAtNumber(1);
+}
+
+void DocumentSessionRuntime::openLastActiveNavigation()
+{
+    const ActiveNavigationSnapshot snapshot = activeNavigationSnapshot();
+    if (!snapshot.known || snapshot.atKnownLast) {
+        return;
+    }
+
+    openActiveNavigationAtNumber(snapshot.count);
+}
+
+void DocumentSessionRuntime::openActiveNavigationAtNumber(int number)
+{
+    const ActiveNavigationSnapshot snapshot = activeNavigationSnapshot();
+    if (!snapshot.known || !snapshot.editable) {
+        return;
+    }
+
+    switch (activeNavigationSourceKind()) {
+    case ActiveNavigationSourceKind::OrdinaryDirectMedia:
+        openMediaAtNumber(number);
+        return;
+    case ActiveNavigationSourceKind::ImageDocumentPages:
+        m_imageDocument.openImageAtPage(number);
+        return;
+    case ActiveNavigationSourceKind::None:
+        return;
+    }
+}
+
 void DocumentSessionRuntime::deleteDisplayedFile(FileDeletionMode mode)
 {
     if (m_state.documentKind() == DocumentSessionKind::Image && !activeImageUsesMediaScope()) {
@@ -306,7 +445,8 @@ void DocumentSessionRuntime::connectDocuments()
 
         refreshMediaNavigation();
         m_state.publish({ DocumentSessionChange::MediaNavigationAvailability,
-            DocumentSessionChange::FileDeletionAvailability });
+            DocumentSessionChange::FileDeletionAvailability,
+            DocumentSessionChange::ActiveNavigation });
     });
     QObject::connect(&m_imageDocument, &KiriImageDocument::fileDeletionInProgressChanged, m_owner,
         [this]() { syncImageDocumentFileDeletionProgress(); });
@@ -314,6 +454,8 @@ void DocumentSessionRuntime::connectDocuments()
         [this]() { publishActiveZoomReadoutForKind(DocumentSessionKind::Image); });
     QObject::connect(&m_imageDocument, &KiriImageDocument::zoomPercentChanged, m_owner,
         [this]() { publishActiveZoomReadoutForKind(DocumentSessionKind::Image); });
+    QObject::connect(&m_imageDocument, &KiriImageDocument::pageNavigationChanged, m_owner,
+        [this]() { publishActiveNavigationForImagePages(); });
 
     QObject::connect(&m_videoDocument, &KiriVideoDocument::sourceUrlChanged, m_owner,
         [this]() { syncFromVideoDocument(); });
@@ -345,12 +487,20 @@ void DocumentSessionRuntime::publishActiveZoomReadoutForKind(DocumentSessionKind
     }
 }
 
+void DocumentSessionRuntime::publishActiveNavigationForImagePages()
+{
+    if (activeNavigationSourceKind() == ActiveNavigationSourceKind::ImageDocumentPages) {
+        m_state.publish(DocumentSessionChange::ActiveNavigation);
+    }
+}
+
 void DocumentSessionRuntime::routeSourceUrl(const QUrl &sourceUrl)
 {
     m_state.setSessionErrorString(QString());
     m_mediaCandidateJob.cancel();
     m_mediaCandidateLoadState.cancel();
     cancelMediaDeletion();
+    m_state.setMediaNavigationState({}, false);
 
     if (sourceUrl.isEmpty()) {
         m_routingSource = true;
@@ -409,7 +559,8 @@ void DocumentSessionRuntime::syncFromImageDocument()
     m_state.setSourceIdentity(m_imageDocument.sourceUrl());
     m_state.publish(
         { DocumentSessionChange::ErrorString, DocumentSessionChange::FileDeletionAvailability,
-            DocumentSessionChange::MediaNavigationAvailability });
+            DocumentSessionChange::MediaNavigationAvailability,
+            DocumentSessionChange::ActiveNavigation });
     refreshMediaNavigation();
 }
 
@@ -430,7 +581,8 @@ void DocumentSessionRuntime::syncFromVideoDocument()
 
     m_state.publish(
         { DocumentSessionChange::ErrorString, DocumentSessionChange::FileDeletionAvailability,
-            DocumentSessionChange::MediaNavigationAvailability });
+            DocumentSessionChange::MediaNavigationAvailability,
+            DocumentSessionChange::ActiveNavigation });
 }
 
 void DocumentSessionRuntime::refreshMediaNavigation()
@@ -640,5 +792,88 @@ bool DocumentSessionRuntime::pendingDirectImageLoadMayUseMediaScope() const
 {
     return m_state.documentKind() == DocumentSessionKind::Image
         && !m_imageDocument.sourceUrl().isEmpty() && isDirectImageUrl(m_imageDocument.sourceUrl());
+}
+
+DocumentSessionRuntime::ActiveNavigationSourceKind
+DocumentSessionRuntime::activeNavigationSourceKind() const
+{
+    switch (m_state.documentKind()) {
+    case DocumentSessionKind::Video:
+        return ActiveNavigationSourceKind::OrdinaryDirectMedia;
+    case DocumentSessionKind::Image:
+        if (activeImageUsesMediaScope()) {
+            return ActiveNavigationSourceKind::OrdinaryDirectMedia;
+        }
+        if (m_imageDocument.currentPageNumber() > 0 || m_imageDocument.imageCount() > 0
+            || (!m_imageDocument.sourceUrl().isEmpty()
+                && !pendingDirectImageLoadMayUseMediaScope())) {
+            return ActiveNavigationSourceKind::ImageDocumentPages;
+        }
+        if (pendingDirectImageLoadMayUseMediaScope()) {
+            return ActiveNavigationSourceKind::OrdinaryDirectMedia;
+        }
+        return ActiveNavigationSourceKind::None;
+    case DocumentSessionKind::Empty:
+        return ActiveNavigationSourceKind::None;
+    }
+
+    return ActiveNavigationSourceKind::None;
+}
+
+ActiveNavigationSnapshot DocumentSessionRuntime::activeNavigationSnapshot() const
+{
+    switch (activeNavigationSourceKind()) {
+    case ActiveNavigationSourceKind::OrdinaryDirectMedia:
+        return mediaActiveNavigationSnapshot();
+    case ActiveNavigationSourceKind::ImageDocumentPages:
+        return imageDocumentActiveNavigationSnapshot();
+    case ActiveNavigationSourceKind::None:
+        return unavailableActiveNavigation();
+    }
+
+    return unavailableActiveNavigation();
+}
+
+ActiveNavigationSnapshot DocumentSessionRuntime::mediaActiveNavigationSnapshot() const
+{
+    if (!m_state.mediaNavigationKnown()) {
+        return unknownActiveNavigation();
+    }
+
+    const MediaNavigationBoundaryState &state = m_state.mediaNavigationState();
+    return normalizedActiveNavigation(ActiveNavigationSnapshot {
+        true,
+        true,
+        true,
+        state.canOpenPrevious,
+        state.canOpenNext,
+        state.atKnownFirst,
+        state.atKnownLast,
+        state.currentNumber,
+        state.count,
+    });
+}
+
+ActiveNavigationSnapshot DocumentSessionRuntime::imageDocumentActiveNavigationSnapshot() const
+{
+    const int currentNumber = m_imageDocument.currentPageNumber();
+    const int currentLastNumber = m_imageDocument.currentLastPageNumber();
+    const int count = m_imageDocument.imageCount();
+    if (currentNumber < 1 || currentLastNumber < currentNumber || count < 1
+        || currentLastNumber > count) {
+        return unknownActiveNavigation();
+    }
+
+    return normalizedActiveNavigation(ActiveNavigationSnapshot {
+        true,
+        true,
+        true,
+        currentNumber > 1,
+        currentLastNumber < count,
+        currentNumber == 1,
+        currentLastNumber >= count,
+        currentNumber,
+        count,
+    });
 }
 }

@@ -63,6 +63,7 @@ KiriView::DocumentSessionPublicSignalOperations publicSignalOperations(KiriDocum
         = [&session]() { Q_EMIT session.activeZoomReadoutChanged(); };
     operations.mediaNavigationAvailabilityChanged
         = [&session]() { Q_EMIT session.mediaNavigationAvailabilityChanged(); };
+    operations.activeNavigationChanged = [&session]() { Q_EMIT session.activeNavigationChanged(); };
     return operations;
 }
 }
@@ -161,6 +162,51 @@ bool KiriDocumentSession::atKnownFirstMedia() const { return m_runtime->atKnownF
 
 bool KiriDocumentSession::atKnownLastMedia() const { return m_runtime->atKnownLastMedia(); }
 
+bool KiriDocumentSession::activeNavigationAvailable() const
+{
+    return m_runtime->activeNavigationAvailable();
+}
+
+bool KiriDocumentSession::activeNavigationKnown() const
+{
+    return m_runtime->activeNavigationKnown();
+}
+
+bool KiriDocumentSession::activeNavigationEditable() const
+{
+    return m_runtime->activeNavigationEditable();
+}
+
+int KiriDocumentSession::activeNavigationCurrentNumber() const
+{
+    return m_runtime->activeNavigationCurrentNumber();
+}
+
+int KiriDocumentSession::activeNavigationCount() const
+{
+    return m_runtime->activeNavigationCount();
+}
+
+bool KiriDocumentSession::canOpenPreviousActiveNavigation() const
+{
+    return m_runtime->canOpenPreviousActiveNavigation();
+}
+
+bool KiriDocumentSession::canOpenNextActiveNavigation() const
+{
+    return m_runtime->canOpenNextActiveNavigation();
+}
+
+bool KiriDocumentSession::atKnownFirstActiveNavigation() const
+{
+    return m_runtime->atKnownFirstActiveNavigation();
+}
+
+bool KiriDocumentSession::atKnownLastActiveNavigation() const
+{
+    return m_runtime->atKnownLastActiveNavigation();
+}
+
 KiriImageDocument *KiriDocumentSession::imageDocument() const { return m_imageDocument.get(); }
 
 KiriVideoDocument *KiriDocumentSession::videoDocument() const { return m_videoDocument.get(); }
@@ -172,6 +218,22 @@ void KiriDocumentSession::openNextMedia() { m_runtime->openNextMedia(); }
 void KiriDocumentSession::openMediaAtNumber(int mediaNumber)
 {
     m_runtime->openMediaAtNumber(mediaNumber);
+}
+
+void KiriDocumentSession::openPreviousActiveNavigation()
+{
+    m_runtime->openPreviousActiveNavigation();
+}
+
+void KiriDocumentSession::openNextActiveNavigation() { m_runtime->openNextActiveNavigation(); }
+
+void KiriDocumentSession::openFirstActiveNavigation() { m_runtime->openFirstActiveNavigation(); }
+
+void KiriDocumentSession::openLastActiveNavigation() { m_runtime->openLastActiveNavigation(); }
+
+void KiriDocumentSession::openActiveNavigationAtNumber(int number)
+{
+    m_runtime->openActiveNavigationAtNumber(number);
 }
 
 void KiriDocumentSession::deleteDisplayedFile(DeletionMode mode)

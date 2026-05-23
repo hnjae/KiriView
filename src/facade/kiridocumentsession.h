@@ -52,6 +52,22 @@ class KiriDocumentSession : public QObject
         bool atKnownFirstMedia READ atKnownFirstMedia NOTIFY mediaNavigationAvailabilityChanged)
     Q_PROPERTY(
         bool atKnownLastMedia READ atKnownLastMedia NOTIFY mediaNavigationAvailabilityChanged)
+    Q_PROPERTY(bool activeNavigationAvailable READ activeNavigationAvailable NOTIFY
+            activeNavigationChanged)
+    Q_PROPERTY(bool activeNavigationKnown READ activeNavigationKnown NOTIFY activeNavigationChanged)
+    Q_PROPERTY(
+        bool activeNavigationEditable READ activeNavigationEditable NOTIFY activeNavigationChanged)
+    Q_PROPERTY(int activeNavigationCurrentNumber READ activeNavigationCurrentNumber NOTIFY
+            activeNavigationChanged)
+    Q_PROPERTY(int activeNavigationCount READ activeNavigationCount NOTIFY activeNavigationChanged)
+    Q_PROPERTY(bool canOpenPreviousActiveNavigation READ canOpenPreviousActiveNavigation NOTIFY
+            activeNavigationChanged)
+    Q_PROPERTY(bool canOpenNextActiveNavigation READ canOpenNextActiveNavigation NOTIFY
+            activeNavigationChanged)
+    Q_PROPERTY(bool atKnownFirstActiveNavigation READ atKnownFirstActiveNavigation NOTIFY
+            activeNavigationChanged)
+    Q_PROPERTY(bool atKnownLastActiveNavigation READ atKnownLastActiveNavigation NOTIFY
+            activeNavigationChanged)
     Q_PROPERTY(KiriImageDocument *imageDocument READ imageDocument CONSTANT)
     Q_PROPERTY(KiriVideoDocument *videoDocument READ videoDocument CONSTANT)
 
@@ -94,12 +110,26 @@ public:
     bool canOpenNextMedia() const;
     bool atKnownFirstMedia() const;
     bool atKnownLastMedia() const;
+    bool activeNavigationAvailable() const;
+    bool activeNavigationKnown() const;
+    bool activeNavigationEditable() const;
+    int activeNavigationCurrentNumber() const;
+    int activeNavigationCount() const;
+    bool canOpenPreviousActiveNavigation() const;
+    bool canOpenNextActiveNavigation() const;
+    bool atKnownFirstActiveNavigation() const;
+    bool atKnownLastActiveNavigation() const;
     KiriImageDocument *imageDocument() const;
     KiriVideoDocument *videoDocument() const;
 
     Q_INVOKABLE void openPreviousMedia();
     Q_INVOKABLE void openNextMedia();
     Q_INVOKABLE void openMediaAtNumber(int mediaNumber);
+    Q_INVOKABLE void openPreviousActiveNavigation();
+    Q_INVOKABLE void openNextActiveNavigation();
+    Q_INVOKABLE void openFirstActiveNavigation();
+    Q_INVOKABLE void openLastActiveNavigation();
+    Q_INVOKABLE void openActiveNavigationAtNumber(int number);
     Q_INVOKABLE void deleteDisplayedFile(KiriDocumentSession::DeletionMode mode);
 
 Q_SIGNALS:
@@ -111,6 +141,7 @@ Q_SIGNALS:
     void fileDeletionInProgressChanged();
     void activeZoomReadoutChanged();
     void mediaNavigationAvailabilityChanged();
+    void activeNavigationChanged();
 
 private:
     void handleSessionChanges(const std::vector<KiriView::DocumentSessionChange> &changes);

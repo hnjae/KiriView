@@ -34,6 +34,18 @@ struct DocumentSessionRuntimeDependencies {
     ImageDocumentRuntimeDependencyOverrides imageDocumentDependencies;
 };
 
+struct ActiveNavigationSnapshot {
+    bool available = false;
+    bool known = false;
+    bool editable = false;
+    bool canOpenPrevious = false;
+    bool canOpenNext = false;
+    bool atKnownFirst = false;
+    bool atKnownLast = false;
+    int currentNumber = 0;
+    int count = 0;
+};
+
 class DocumentSessionRuntime final
 {
 public:
@@ -63,17 +75,38 @@ public:
     bool canOpenNextMedia() const;
     bool atKnownFirstMedia() const;
     bool atKnownLastMedia() const;
+    bool activeNavigationAvailable() const;
+    bool activeNavigationKnown() const;
+    bool activeNavigationEditable() const;
+    int activeNavigationCurrentNumber() const;
+    int activeNavigationCount() const;
+    bool canOpenPreviousActiveNavigation() const;
+    bool canOpenNextActiveNavigation() const;
+    bool atKnownFirstActiveNavigation() const;
+    bool atKnownLastActiveNavigation() const;
     std::optional<PredecodedImage> findPredecodedImage(const QUrl &url) const;
 
     void openPreviousMedia();
     void openNextMedia();
     void openMediaAtNumber(int mediaNumber);
+    void openPreviousActiveNavigation();
+    void openNextActiveNavigation();
+    void openFirstActiveNavigation();
+    void openLastActiveNavigation();
+    void openActiveNavigationAtNumber(int number);
     void deleteDisplayedFile(FileDeletionMode mode);
 
 private:
+    enum class ActiveNavigationSourceKind {
+        None,
+        OrdinaryDirectMedia,
+        ImageDocumentPages,
+    };
+
     void connectDocuments();
     void syncImageDocumentFileDeletionProgress();
     void publishActiveZoomReadoutForKind(DocumentSessionKind kind);
+    void publishActiveNavigationForImagePages();
     void routeSourceUrl(const QUrl &sourceUrl);
     void openMediaUrl(const QUrl &url);
     void leaveVideoMode();
@@ -99,6 +132,10 @@ private:
     QUrl currentMediaUrl() const;
     bool activeImageUsesMediaScope() const;
     bool pendingDirectImageLoadMayUseMediaScope() const;
+    ActiveNavigationSourceKind activeNavigationSourceKind() const;
+    ActiveNavigationSnapshot activeNavigationSnapshot() const;
+    ActiveNavigationSnapshot mediaActiveNavigationSnapshot() const;
+    ActiveNavigationSnapshot imageDocumentActiveNavigationSnapshot() const;
 
     QObject *m_owner = nullptr;
     KiriImageDocument &m_imageDocument;

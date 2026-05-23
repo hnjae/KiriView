@@ -27,6 +27,7 @@ enum class DocumentSessionChange {
     FileDeletionAvailability,
     FileDeletionInProgress,
     MediaNavigationAvailability,
+    ActiveNavigation,
 };
 
 class DocumentSessionState final

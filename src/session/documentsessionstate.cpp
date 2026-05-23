@@ -63,7 +63,8 @@ void DocumentSessionState::setDocumentKind(DocumentSessionKind kind)
     publish({ DocumentSessionChange::DocumentKind, DocumentSessionChange::ActiveZoomReadout,
         DocumentSessionChange::WindowTitleFileName, DocumentSessionChange::ErrorString,
         DocumentSessionChange::FileDeletionAvailability,
-        DocumentSessionChange::MediaNavigationAvailability });
+        DocumentSessionChange::MediaNavigationAvailability,
+        DocumentSessionChange::ActiveNavigation });
 }
 
 void DocumentSessionState::setFileDeletionInProgress(bool inProgress)
@@ -85,7 +86,8 @@ void DocumentSessionState::setMediaNavigationState(MediaNavigationBoundaryState 
 
     m_mediaNavigationKnown = known;
     m_mediaNavigationState = state;
-    publish(DocumentSessionChange::MediaNavigationAvailability);
+    publish({ DocumentSessionChange::MediaNavigationAvailability,
+        DocumentSessionChange::ActiveNavigation });
 }
 
 void DocumentSessionState::setSessionErrorString(const QString &errorString)

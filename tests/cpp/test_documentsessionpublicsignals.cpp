@@ -44,6 +44,8 @@ KiriView::DocumentSessionPublicSignalOperations recordingOperations(QStringList 
         = [&events]() { events.append(QStringLiteral("fileDeletionInProgress")); };
     operations.mediaNavigationAvailabilityChanged
         = [&events]() { events.append(QStringLiteral("mediaNavigationAvailability")); };
+    operations.activeNavigationChanged
+        = [&events]() { events.append(QStringLiteral("activeNavigation")); };
     return operations;
 }
 }
@@ -70,6 +72,8 @@ void TestDocumentSessionPublicSignals::publicSignalPlansReturnSignalsInEmissionO
     comparePublicSignals(
         KiriView::documentSessionPublicSignals(Change::MediaNavigationAvailability),
         { Signal::MediaNavigationAvailability });
+    comparePublicSignals(KiriView::documentSessionPublicSignals(Change::ActiveNavigation),
+        { Signal::ActiveNavigation });
 }
 
 void TestDocumentSessionPublicSignals::publicSignalBatchPlansDeduplicateSignalsInEmissionOrder()
@@ -77,10 +81,11 @@ void TestDocumentSessionPublicSignals::publicSignalBatchPlansDeduplicateSignalsI
     using Change = KiriView::DocumentSessionChange;
     using Signal = KiriView::DocumentSessionPublicSignal;
 
-    comparePublicSignals(
-        KiriView::documentSessionPublicSignalsForChanges({ Change::DocumentKind,
-            Change::ErrorString, Change::DocumentKind, Change::MediaNavigationAvailability }),
-        { Signal::DocumentKind, Signal::ErrorString, Signal::MediaNavigationAvailability });
+    comparePublicSignals(KiriView::documentSessionPublicSignalsForChanges(
+                             { Change::DocumentKind, Change::ErrorString, Change::DocumentKind,
+                                 Change::MediaNavigationAvailability, Change::ActiveNavigation }),
+        { Signal::DocumentKind, Signal::ErrorString, Signal::MediaNavigationAvailability,
+            Signal::ActiveNavigation });
 }
 
 void TestDocumentSessionPublicSignals::emitterDispatchesChangeSignalsInProjectionOrder()

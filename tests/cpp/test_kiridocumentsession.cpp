@@ -3,10 +3,13 @@
 
 #include "facade/kiridocumentsession.h"
 
+#include "candidate_test_support.h"
 #include "facade/kiriimagedocument.h"
 #include "facade/kirivideodocument.h"
 #include "image_async_test_support.h"
 #include "image_test_support.h"
+#include "location/imagedocumentlocation.h"
+#include "navigation/imagecandidateprovider.h"
 #include "navigation/medianavigationmodel.h"
 
 #include <QImage>
@@ -123,10 +126,13 @@ private:
 std::unique_ptr<KiriDocumentSession> createSessionWithProvider(
     KiriView::MediaNavigationCandidateProvider mediaCandidateProvider,
     KiriView::TestSupport::ManualFileOperationProvider *fileOperations = nullptr,
-    KiriView::TestSupport::ManualImageDataLoader *imageDataLoader = nullptr)
+    KiriView::TestSupport::ManualImageDataLoader *imageDataLoader = nullptr,
+    KiriView::ImageNavigationCandidateProvider imageCandidateProvider = {},
+    KiriView::ImageDataDecoder imageDataDecoder = KiriView::TestSupport::staticImageDataDecoder())
 {
     KiriView::DocumentSessionRuntimeDependencies dependencies;
     dependencies.mediaCandidateProvider = std::move(mediaCandidateProvider);
+    dependencies.imageDocumentDependencies.candidateProvider = std::move(imageCandidateProvider);
     if (fileOperations != nullptr) {
         dependencies.fileOperationProvider
             = KiriView::TestSupport::fileOperationProviderFor(*fileOperations);
@@ -136,7 +142,7 @@ std::unique_ptr<KiriDocumentSession> createSessionWithProvider(
     if (imageDataLoader != nullptr) {
         dependencies.imageDocumentDependencies.imageDecode
             = KiriView::TestSupport::imageDecodeDependenciesFor(
-                *imageDataLoader, KiriView::TestSupport::staticImageDataDecoder());
+                *imageDataLoader, std::move(imageDataDecoder));
     }
     return std::make_unique<KiriDocumentSession>(std::move(dependencies));
 }
@@ -147,6 +153,26 @@ std::unique_ptr<KiriDocumentSession> createSession(FakeMediaCandidateProvider &m
 {
     return createSessionWithProvider(mediaProvider.provider(), fileOperations, imageDataLoader);
 }
+
+void compareUnavailableActiveNavigation(const KiriDocumentSession &session)
+{
+    QVERIFY(!session.activeNavigationAvailable());
+    QVERIFY(!session.activeNavigationKnown());
+    QVERIFY(!session.activeNavigationEditable());
+    QCOMPARE(session.activeNavigationCurrentNumber(), 0);
+    QCOMPARE(session.activeNavigationCount(), 0);
+    QVERIFY(!session.canOpenPreviousActiveNavigation());
+    QVERIFY(!session.canOpenNextActiveNavigation());
+    QVERIFY(!session.atKnownFirstActiveNavigation());
+    QVERIFY(!session.atKnownLastActiveNavigation());
+}
+
+bool writeTestImage(const QString &path)
+{
+    QImage image(QSize(2, 2), QImage::Format_RGBA8888);
+    image.fill(Qt::red);
+    return image.save(path, "PNG");
+}
 }
 
 class TestKiriDocumentSession : public QObject
@@ -154,11 +180,17 @@ class TestKiriDocumentSession : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
+    void emptySessionProjectsUnavailableActiveNavigation();
     void directVideoRoutesToVideoDocumentWithOriginalSource();
     void activeZoomReadoutFollowsSessionDocumentKind();
     void archiveAndDirectoryInputsRouteToImageDocument();
     void directImageAfterVideoRestoresImageDocument();
     void directImageMediaNavigationIncludesSiblingVideos();
+    void archiveImageDocumentProjectsActiveNavigationFromPages();
+    void imagePageNavigationChangesEmitActiveNavigationWhenRelevant();
+    void activeNavigationClearsWhenSwitchingFromKnownDirectMedia();
+    void activeNavigationAvailabilityUsesSameSnapshotAsCurrentAndCount();
+    void twoPageSpreadLastBoundaryProjectsThroughActiveNavigation();
     void videoNavigationKeepsStillImagePredecodeCache();
     void videoMediaNavigationExposesCurrentNumberAndCount();
     void staleMediaCandidateCompletionCannotPublishForNewSource();
@@ -169,6 +201,14 @@ private Q_SLOTS:
     void canceledVideoDeletionKeepsCurrentVideo();
     void staleVideoDeletionCompletionAfterSourceChangeIsIgnored();
 };
+
+void TestKiriDocumentSession::emptySessionProjectsUnavailableActiveNavigation()
+{
+    FakeMediaCandidateProvider mediaProvider;
+    std::unique_ptr<KiriDocumentSession> session = createSession(mediaProvider);
+
+    compareUnavailableActiveNavigation(*session);
+}
 
 void TestKiriDocumentSession::directVideoRoutesToVideoDocumentWithOriginalSource()
 {
@@ -186,6 +226,15 @@ void TestKiriDocumentSession::directVideoRoutesToVideoDocumentWithOriginalSource
     QVERIFY(session->mediaNavigationActive());
     QVERIFY(session->atKnownFirstMedia());
     QVERIFY(session->atKnownLastMedia());
+    QVERIFY(session->activeNavigationAvailable());
+    QVERIFY(session->activeNavigationKnown());
+    QVERIFY(session->activeNavigationEditable());
+    QCOMPARE(session->activeNavigationCurrentNumber(), 1);
+    QCOMPARE(session->activeNavigationCount(), 1);
+    QVERIFY(!session->canOpenPreviousActiveNavigation());
+    QVERIFY(!session->canOpenNextActiveNavigation());
+    QVERIFY(session->atKnownFirstActiveNavigation());
+    QVERIFY(session->atKnownLastActiveNavigation());
 }
 
 void TestKiriDocumentSession::activeZoomReadoutFollowsSessionDocumentKind()
@@ -194,9 +243,7 @@ void TestKiriDocumentSession::activeZoomReadoutFollowsSessionDocumentKind()
     QVERIFY(directory.isValid());
 
     const QString imagePath = directory.filePath(QStringLiteral("01.png"));
-    QImage image(QSize(2, 2), QImage::Format_RGBA8888);
-    image.fill(Qt::red);
-    QVERIFY(image.save(imagePath, "PNG"));
+    QVERIFY(writeTestImage(imagePath));
 
     FakeMediaCandidateProvider mediaProvider;
     const QUrl imageUrl = localUrl(imagePath);
@@ -275,9 +322,7 @@ void TestKiriDocumentSession::directImageMediaNavigationIncludesSiblingVideos()
     QVERIFY(directory.isValid());
 
     const QString imagePath = directory.filePath(QStringLiteral("01.png"));
-    QImage image(QSize(2, 2), QImage::Format_RGBA8888);
-    image.fill(Qt::red);
-    QVERIFY(image.save(imagePath, "PNG"));
+    QVERIFY(writeTestImage(imagePath));
 
     FakeMediaCandidateProvider mediaProvider;
     const QUrl imageUrl = localUrl(imagePath);
@@ -296,6 +341,14 @@ void TestKiriDocumentSession::directImageMediaNavigationIncludesSiblingVideos()
     QCOMPARE(session->mediaCount(), 2);
     QVERIFY(!session->canOpenPreviousMedia());
     QVERIFY(session->canOpenNextMedia());
+    QVERIFY(session->activeNavigationAvailable());
+    QVERIFY(session->activeNavigationKnown());
+    QCOMPARE(session->activeNavigationCurrentNumber(), 1);
+    QCOMPARE(session->activeNavigationCount(), 2);
+    QVERIFY(!session->canOpenPreviousActiveNavigation());
+    QVERIFY(session->canOpenNextActiveNavigation());
+    QVERIFY(session->atKnownFirstActiveNavigation());
+    QVERIFY(!session->atKnownLastActiveNavigation());
 
     session->openMediaAtNumber(2);
 
@@ -304,6 +357,211 @@ void TestKiriDocumentSession::directImageMediaNavigationIncludesSiblingVideos()
     QCOMPARE(session->videoDocument()->sourceUrl(), videoUrl);
     QCOMPARE(session->currentMediaNumber(), 2);
     QCOMPARE(session->mediaCount(), 2);
+    QCOMPARE(session->activeNavigationCurrentNumber(), 2);
+    QCOMPARE(session->activeNavigationCount(), 2);
+    QVERIFY(session->atKnownLastActiveNavigation());
+}
+
+void TestKiriDocumentSession::archiveImageDocumentProjectsActiveNavigationFromPages()
+{
+    FakeMediaCandidateProvider mediaProvider;
+    KiriView::TestSupport::FakeImageNavigationCandidateProvider imageCandidates;
+    KiriView::TestSupport::ManualImageDataLoader dataLoader;
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
+    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveDocument.has_value());
+    const QUrl firstPage = KiriView::TestSupport::archivePageUrl(
+        archiveDocument->rootUrl(), QStringLiteral("01.png"));
+    const QUrl secondPage = KiriView::TestSupport::archivePageUrl(
+        archiveDocument->rootUrl(), QStringLiteral("02.png"));
+    imageCandidates.setArchiveImages(archiveDocument->rootUrl(),
+        { KiriView::TestSupport::imageCandidate(firstPage),
+            KiriView::TestSupport::imageCandidate(secondPage) });
+    std::unique_ptr<KiriDocumentSession> session = createSessionWithProvider(
+        mediaProvider.provider(), nullptr, &dataLoader, imageCandidates.provider());
+
+    session->setSourceUrl(archiveUrl);
+    QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
+    dataLoader.finishBackLoad(QByteArrayLiteral("first"));
+
+    QTRY_COMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Image);
+    QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Ready);
+    QVERIFY(!session->mediaNavigationActive());
+    QVERIFY(session->activeNavigationAvailable());
+    QTRY_COMPARE(session->imageDocument()->currentPageNumber(), 1);
+    QTRY_COMPARE(session->imageDocument()->currentLastPageNumber(), 1);
+    QTRY_COMPARE(session->imageDocument()->imageCount(), 2);
+    QTRY_VERIFY(session->activeNavigationKnown());
+    QVERIFY(session->activeNavigationEditable());
+    QCOMPARE(session->activeNavigationCurrentNumber(), 1);
+    QCOMPARE(session->activeNavigationCount(), 2);
+    QVERIFY(!session->canOpenPreviousActiveNavigation());
+    QVERIFY(session->canOpenNextActiveNavigation());
+    QVERIFY(session->atKnownFirstActiveNavigation());
+    QVERIFY(!session->atKnownLastActiveNavigation());
+}
+
+void TestKiriDocumentSession::imagePageNavigationChangesEmitActiveNavigationWhenRelevant()
+{
+    FakeMediaCandidateProvider mediaProvider;
+    KiriView::TestSupport::FakeImageNavigationCandidateProvider imageCandidates;
+    KiriView::TestSupport::ManualImageDataLoader dataLoader;
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/signals.cbz"));
+    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveDocument.has_value());
+    const QUrl firstPage = KiriView::TestSupport::archivePageUrl(
+        archiveDocument->rootUrl(), QStringLiteral("01.png"));
+    const QUrl secondPage = KiriView::TestSupport::archivePageUrl(
+        archiveDocument->rootUrl(), QStringLiteral("02.png"));
+    imageCandidates.setArchiveImages(archiveDocument->rootUrl(),
+        { KiriView::TestSupport::imageCandidate(firstPage),
+            KiriView::TestSupport::imageCandidate(secondPage) });
+    std::unique_ptr<KiriDocumentSession> session = createSessionWithProvider(
+        mediaProvider.provider(), nullptr, &dataLoader, imageCandidates.provider());
+    QSignalSpy activeNavigationSpy(session.get(), &KiriDocumentSession::activeNavigationChanged);
+
+    session->setSourceUrl(archiveUrl);
+    QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
+    dataLoader.finishBackLoad(QByteArrayLiteral("first"));
+    QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Ready);
+    QTRY_COMPARE(session->activeNavigationCount(), 2);
+    const int baselineSignalCount = activeNavigationSpy.count();
+
+    session->imageDocument()->openImageAtPage(2);
+
+    QTRY_COMPARE(session->activeNavigationCurrentNumber(), 2);
+    QVERIFY(activeNavigationSpy.count() > baselineSignalCount);
+    QVERIFY(!session->canOpenNextActiveNavigation());
+    QVERIFY(session->atKnownLastActiveNavigation());
+}
+
+void TestKiriDocumentSession::activeNavigationClearsWhenSwitchingFromKnownDirectMedia()
+{
+    FakeMediaCandidateProvider mediaProvider;
+    KiriView::TestSupport::FakeImageNavigationCandidateProvider imageCandidates;
+    KiriView::TestSupport::ManualImageDataLoader dataLoader;
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/clear.cbz"));
+    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveDocument.has_value());
+    const QUrl page = KiriView::TestSupport::archivePageUrl(
+        archiveDocument->rootUrl(), QStringLiteral("01.png"));
+    imageCandidates.setArchiveImages(
+        archiveDocument->rootUrl(), { KiriView::TestSupport::imageCandidate(page) });
+    const QUrl clip = localUrl(QStringLiteral("/media/01.mp4"));
+    const QUrl nextClip = localUrl(QStringLiteral("/media/02.mp4"));
+    const QUrl lastClip = localUrl(QStringLiteral("/media/03.mp4"));
+    mediaProvider.setMedia(localUrl(QStringLiteral("/media/")),
+        { mediaCandidate(clip), mediaCandidate(nextClip), mediaCandidate(lastClip) });
+    std::unique_ptr<KiriDocumentSession> session = createSessionWithProvider(
+        mediaProvider.provider(), nullptr, &dataLoader, imageCandidates.provider());
+
+    session->setSourceUrl(nextClip);
+    QVERIFY(session->activeNavigationKnown());
+    QCOMPARE(session->activeNavigationCurrentNumber(), 2);
+    QCOMPARE(session->activeNavigationCount(), 3);
+
+    session->setSourceUrl(archiveUrl);
+
+    QVERIFY(session->activeNavigationCount() != 3);
+    QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
+    dataLoader.finishBackLoad(QByteArrayLiteral("page"));
+    QTRY_COMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Image);
+    QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Ready);
+    QCOMPARE(session->activeNavigationCurrentNumber(), 1);
+    QCOMPARE(session->activeNavigationCount(), 1);
+
+    session->setSourceUrl(nextClip);
+    QVERIFY(session->activeNavigationKnown());
+    QCOMPARE(session->activeNavigationCurrentNumber(), 2);
+    QCOMPARE(session->activeNavigationCount(), 3);
+
+    session->setSourceUrl(QUrl());
+
+    QCOMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Empty);
+    compareUnavailableActiveNavigation(*session);
+}
+
+void TestKiriDocumentSession::activeNavigationAvailabilityUsesSameSnapshotAsCurrentAndCount()
+{
+    FakeMediaCandidateProvider mediaProvider;
+    const QUrl first = localUrl(QStringLiteral("/media/01.mp4"));
+    const QUrl second = localUrl(QStringLiteral("/media/02.mp4"));
+    const QUrl third = localUrl(QStringLiteral("/media/03.mp4"));
+    mediaProvider.setMedia(localUrl(QStringLiteral("/media/")),
+        { mediaCandidate(first), mediaCandidate(second), mediaCandidate(third) });
+    std::unique_ptr<KiriDocumentSession> session = createSession(mediaProvider);
+
+    session->setSourceUrl(second);
+
+    QVERIFY(session->activeNavigationKnown());
+    QCOMPARE(session->activeNavigationCurrentNumber(), 2);
+    QCOMPARE(session->activeNavigationCount(), 3);
+    QVERIFY(session->canOpenPreviousActiveNavigation());
+    QVERIFY(session->canOpenNextActiveNavigation());
+    QVERIFY(!session->atKnownFirstActiveNavigation());
+    QVERIFY(!session->atKnownLastActiveNavigation());
+
+    session->openLastActiveNavigation();
+
+    QCOMPARE(session->sourceUrl(), third);
+    QCOMPARE(session->activeNavigationCurrentNumber(), 3);
+    QCOMPARE(session->activeNavigationCount(), 3);
+    QVERIFY(session->canOpenPreviousActiveNavigation());
+    QVERIFY(!session->canOpenNextActiveNavigation());
+    QVERIFY(!session->atKnownFirstActiveNavigation());
+    QVERIFY(session->atKnownLastActiveNavigation());
+}
+
+void TestKiriDocumentSession::twoPageSpreadLastBoundaryProjectsThroughActiveNavigation()
+{
+    FakeMediaCandidateProvider mediaProvider;
+    KiriView::TestSupport::FakeImageNavigationCandidateProvider imageCandidates;
+    KiriView::TestSupport::ManualImageDataLoader dataLoader;
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
+    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveDocument.has_value());
+    const QUrl firstPage = KiriView::TestSupport::archivePageUrl(
+        archiveDocument->rootUrl(), QStringLiteral("01.png"));
+    const QUrl secondPage = KiriView::TestSupport::archivePageUrl(
+        archiveDocument->rootUrl(), QStringLiteral("02.png"));
+    const QUrl thirdPage = KiriView::TestSupport::archivePageUrl(
+        archiveDocument->rootUrl(), QStringLiteral("03.png"));
+    imageCandidates.setArchiveImages(archiveDocument->rootUrl(),
+        { KiriView::TestSupport::imageCandidate(firstPage),
+            KiriView::TestSupport::imageCandidate(secondPage),
+            KiriView::TestSupport::imageCandidate(thirdPage) });
+    std::unique_ptr<KiriDocumentSession> session = createSessionWithProvider(
+        mediaProvider.provider(), nullptr, &dataLoader, imageCandidates.provider(),
+        KiriView::TestSupport::staticImageDataDecoder(
+            KiriView::TestSupport::testImage(QSize(100, 200))));
+    session->imageDocument()->setViewportSize(QSizeF(400.0, 300.0));
+
+    session->setSourceUrl(archiveUrl);
+    QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
+    dataLoader.finishBackLoad(QByteArrayLiteral("first"));
+    QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Ready);
+
+    session->imageDocument()->setTwoPageModeEnabled(true);
+    session->imageDocument()->openNextImage();
+    QTRY_COMPARE(dataLoader.backLoad().url, secondPage);
+    dataLoader.finishBackLoad(QByteArrayLiteral("second"));
+    QTRY_COMPARE(dataLoader.backLoad().url, thirdPage);
+    dataLoader.finishBackLoad(QByteArrayLiteral("third"));
+
+    QTRY_VERIFY(session->imageDocument()->secondaryPageVisible());
+    QCOMPARE(session->imageDocument()->currentPageNumber(), 2);
+    QCOMPARE(session->imageDocument()->currentLastPageNumber(), 3);
+    QCOMPARE(session->activeNavigationCurrentNumber(), 2);
+    QCOMPARE(session->activeNavigationCount(), 3);
+    QVERIFY(session->activeNavigationKnown());
+    QVERIFY(session->canOpenPreviousActiveNavigation());
+    QVERIFY(!session->canOpenNextActiveNavigation());
+    QVERIFY(!session->atKnownFirstActiveNavigation());
+    QVERIFY(session->atKnownLastActiveNavigation());
 }
 
 void TestKiriDocumentSession::videoNavigationKeepsStillImagePredecodeCache()
