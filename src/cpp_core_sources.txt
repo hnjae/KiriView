@@ -27,6 +27,7 @@ src/archive/archiveformat.cpp
 src/archive/archivepath.cpp
 src/decoding/bufferedimagereader.cpp
 src/bridge/applicationstartupsourceconversion.cpp
+src/bridge/imageopenworkflowconversion.cpp
 src/presentation/displayedimagestate.cpp
 src/document/filedeletion.cpp
 src/document/imageremovalfallback.cpp
