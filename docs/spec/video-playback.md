@@ -34,6 +34,8 @@ Opening an image after a video restores image behavior.
 
 The top-level document session owns the active document kind for direct image and video routing. Its public source URL follows the same user-facing identity as the active image or video document: assigning it starts an open request, successful opens expose the original direct media URL, replacement failures keep the previously displayed direct URL, initial failures may keep the failed request as error context, and resolver-local playback URLs are never exposed as the session source.
 
+For direct video and direct image media scopes, the document session owns the active navigation projection used by toolbar readouts, shared action availability, and navigation dispatch. Asynchronous sibling discovery uses the requested session-owned direct media URL as the cursor for the eventual readout, not an image-document displayed URL.
+
 ## Ordinary Direct Media URL Scope
 
 An ordinary direct media URL scope is the non-recursive parent URL of the active direct media URL.
@@ -48,9 +50,9 @@ Direct KDE archive-entry URLs use this direct URL branch unless KiriView has exp
 
 Supported image files and supported direct video files share one locale-aware sibling order in ordinary direct media URL scopes.
 
-Adjacent media navigation is non-recursive, does not wrap, and uses the same boundary-feedback model as image navigation. Boundary feedback in a media-aware scope uses neutral first-media-item and last-media-item wording rather than calling every boundary item an image.
+Adjacent media navigation is non-recursive, does not wrap, and uses the same session-owned active navigation projection and boundary-feedback model as image navigation. Boundary feedback in a media-aware scope uses neutral first-media-item and last-media-item wording rather than calling every boundary item an image.
 
-The top-level document session exposes whether adjacent Previous and Next should dispatch through media navigation. This is true in video mode and in image mode only when the active image belongs to an ordinary direct media URL scope; archive document and directly opened directory document image scopes keep image-only navigation dispatch.
+The top-level document session dispatches adjacent Previous and Next through media navigation in video mode and in image mode only when the active image belongs to an ordinary direct media URL scope. Archive document and directly opened directory document image scopes keep image-document navigation as the session projection's internal source.
 
 ## Playback
 
@@ -58,7 +60,7 @@ Opening a video starts playback automatically.
 
 Video mode shows a video viewport and a Kirigami floating playback panel over the bottom of the video.
 
-The regular toolbar remains available in video mode for application menu access and ordinary direct media navigation. It shows Previous and Next controls, the current media item number, the total supported media item count for the ordinary direct media URL scope when that list is known, and the same trailing control order as image mode.
+The regular toolbar remains available in video mode for application menu access and ordinary direct media navigation. It shows Previous and Next controls, the current media item number, the total supported media item count for the ordinary direct media URL scope when that list is known, and the same trailing control order as image mode, all from the document session's active navigation projection.
 
 Video mode keeps image-only toolbar controls visible in their image-mode positions but unavailable: Right-to-Left Reading, Two-Page Spread, and Fit are disabled, and the zoom control is read-only.
 
@@ -82,7 +84,7 @@ Unknown duration, invalid duration, and non-seekable media produce a stable disa
 
 In video mode, viewer Left and Right and existing adjacent navigation actions move to the previous or next supported media item in the ordinary parent location. They do not seek within the video.
 
-Video mode supports the shared configurable shortcuts for Open, Move to Trash, Delete Permanently, Previous Media Item, Next Media Item, First Media Item, Last Media Item, Fullscreen, Keyboard Shortcuts, Configure Shortcuts, Show Menubar, and Quit.
+Video mode supports the shared configurable shortcuts for Open, Move to Trash, Delete Permanently, Previous Media Item, Next Media Item, First Media Item, Last Media Item, Fullscreen, Keyboard Shortcuts, Configure Shortcuts, Show Menubar, and Quit. Shared media navigation shortcuts use session active-navigation dispatch and availability.
 
 When an image-only configurable shortcut is pressed in video mode, KiriView does not trigger the image action and shows the in-app toast `This action is not available for videos`. Repeated unsupported video shortcut presses update the same toast instance.
 

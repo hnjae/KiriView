@@ -8,6 +8,8 @@ The main window toolbar shows media controls without a page title.
 
 The leading side of the toolbar contains Previous, the current page number, `of`, the total item count, and Next.
 
+The toolbar page navigation readout and page-number entry use the document session's active navigation projection. The toolbar does not combine raw image-document page state with separate media-navigation state.
+
 When an image or direct video is displayed, the trailing action toolbar contains Right-to-Left Reading, Two-Page Spread, zoom, Fit, and, when Hamburger Menu presentation is active outside fullscreen, a toolbar application menu button.
 
 When a video is displayed, image-only toolbar controls such as Right-to-Left Reading, Two-Page Spread, editable zoom, and Fit remain in the same positions but are disabled or read-only.
@@ -23,6 +25,8 @@ Controls that require selected, navigable, or ready media are disabled until the
 The toolbar zoom control displays the document session's active zoom readout rather than reading image or video document zoom values directly. When the document session is empty, the zoom control remains in place and displays `- %`.
 
 The toolbar page navigation arrow buttons keep their physical affordance. The left arrow button triggers Previous in Left-to-Right Reading mode and Next in Right-to-Left Reading mode. The right arrow button triggers Next in Left-to-Right Reading mode and Previous in Right-to-Left Reading mode. Each button's tooltip and accessible text follow the action that button triggers.
+
+The toolbar page navigation arrow buttons, page-number entry, shared Previous, Next, First, and Last actions, menus, and shortcuts dispatch through the document session's active navigation dispatch. Their enabled state comes from the same active navigation projection.
 
 Open, Previous Archive, and Next Archive are provided by the application menu and shortcuts rather than fixed toolbar buttons. Previous Archive and Next Archive use visually distinct previous/next-use icons so they are not confused with page Previous and Next navigation.
 

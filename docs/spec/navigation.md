@@ -4,6 +4,8 @@
 
 The toolbar provides page navigation with Previous and Next actions, the current page number, the total number of supported items in the current scope after that scope's supported list has been confirmed, and editable page number entry.
 
+The document session owns the active navigation projection used by the toolbar readout, page-number entry, shared Previous, Next, First, and Last actions, menus, and shortcuts. QML renders that projection and calls session dispatch; it does not decide whether the active item is backed by direct media siblings or image-document pages.
+
 For ordinary direct media URL scopes, the page navigation controls count and select supported images and direct videos together. For archive document and directly opened directory document scopes, the page navigation controls keep their existing image-only document page behavior.
 
 First and Last are page navigation actions available through their configured shortcuts and menus. They open the first or last known page or media item in the current scope.
@@ -11,6 +13,10 @@ First and Last are page navigation actions available through their configured sh
 The Previous action is disabled on the first item, and the Next action is disabled on the last item.
 
 Page numbers are shown to users starting at 1.
+
+The active navigation projection has these user-visible invariants: `available` means the current mode exposes a navigable scope; `known` means KiriView has a confirmed current position and total count for the active scope; `editable` means entering a page number can dispatch to that same scope. When navigation is unavailable or unknown, the page-number entry is disabled, Previous, Next, First, and Last are disabled, and KiriView does not display a stale current/count pair. When navigation is known, the current number is within `1..total`, the total count is at least 1, previous and next availability match whether a previous or next target exists in reading order, and first/last boundary state matches whether the active visible item or spread is at the known start or end of the scope.
+
+For image-document scopes, the active navigation projection consumes the image document's full page-navigation snapshot rather than a single raw current page number. The snapshot includes the current first and last visible page for spread-aware display, total count, previous and next availability, and first and last boundary state, so QML does not recompute spread boundaries.
 
 When a new directory, archive, or ordinary direct media scope is being listed and KiriView has no confirmed supported item list for that same scope yet, the current page number and total item count are unknown, and KiriView does not treat the current item as the first or last item.
 
@@ -30,6 +36,8 @@ If users make multiple page selections before loading finishes, only the most re
 
 If that replacement load fails, the previously displayed media item remains visible, KiriView reports the error, and page navigation returns to the still-displayed item.
 
+During replacement failures, empty startup, loading intervals without a confirmed same-scope selection, and mode switches, KiriView clears or marks unknown the active navigation projection before exposing any new readout. Values from the previous document are not reused for the current number, total count, editability, dispatch availability, or boundary state.
+
 When moving between items in the current scope, the page navigation controls keep their layout stable.
 
 The current page number updates to the newly displayed item, and the known total item count remains visible while KiriView updates the current position.
@@ -37,6 +45,8 @@ The current page number updates to the newly displayed item, and the known total
 ## Adjacent Media
 
 When an ordinary direct image or video is open, Page Up opens the previous supported media file in the same ordinary direct media URL scope and Page Down opens the next one.
+
+For direct media, sibling discovery may be asynchronous. The cursor used for the eventual active navigation readout is the session-owned direct media URL requested for the active open operation, not an image-document displayed URL observed before image replacement has completed.
 
 If the current media item is the first supported media item, pressing Page Up keeps the current item open and notifies the user that it is the first media item.
 
