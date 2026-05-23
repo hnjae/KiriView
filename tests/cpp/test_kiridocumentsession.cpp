@@ -200,7 +200,7 @@ private Q_SLOTS:
     void activeNavigationBoundaryScopeFollowsSessionSource();
     void twoPageSpreadLastBoundaryProjectsThroughActiveNavigation();
     void videoNavigationKeepsStillImagePredecodeCache();
-    void videoMediaNavigationExposesCurrentNumberAndCount();
+    void videoActiveNavigationExposesCurrentNumberAndCount();
     void initialDirectImagePredecodeUsesRequestedMediaCursor();
     void staleMediaCandidateCompletionCannotPublishForNewSource();
     void nextMediaFromVideoCanRouteToImageWithoutUsingImageNavigation();
@@ -233,9 +233,6 @@ void TestKiriDocumentSession::directVideoRoutesToVideoDocumentWithOriginalSource
     QCOMPARE(session->sourceUrl(), clip);
     QCOMPARE(session->videoDocument()->sourceUrl(), clip);
     QCOMPARE(session->imageDocument()->sourceUrl(), QUrl());
-    QVERIFY(session->mediaNavigationActive());
-    QVERIFY(session->atKnownFirstMedia());
-    QVERIFY(session->atKnownLastMedia());
     QVERIFY(session->activeNavigationAvailable());
     QVERIFY(session->activeNavigationKnown());
     QVERIFY(session->activeNavigationEditable());
@@ -345,12 +342,6 @@ void TestKiriDocumentSession::directImageMediaNavigationIncludesSiblingVideos()
 
     QTRY_COMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Image);
     QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Ready);
-    QTRY_VERIFY(session->mediaNavigationActive());
-    QTRY_VERIFY(session->mediaNavigationKnown());
-    QCOMPARE(session->currentMediaNumber(), 1);
-    QCOMPARE(session->mediaCount(), 2);
-    QVERIFY(!session->canOpenPreviousMedia());
-    QVERIFY(session->canOpenNextMedia());
     QVERIFY(session->activeNavigationAvailable());
     QVERIFY(session->activeNavigationKnown());
     QCOMPARE(session->activeNavigationCurrentNumber(), 1);
@@ -360,13 +351,11 @@ void TestKiriDocumentSession::directImageMediaNavigationIncludesSiblingVideos()
     QVERIFY(session->atKnownFirstActiveNavigation());
     QVERIFY(!session->atKnownLastActiveNavigation());
 
-    session->openMediaAtNumber(2);
+    session->openActiveNavigationAtNumber(2);
 
     QCOMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Video);
     QCOMPARE(session->sourceUrl(), videoUrl);
     QCOMPARE(session->videoDocument()->sourceUrl(), videoUrl);
-    QCOMPARE(session->currentMediaNumber(), 2);
-    QCOMPARE(session->mediaCount(), 2);
     QCOMPARE(session->activeNavigationCurrentNumber(), 2);
     QCOMPARE(session->activeNavigationCount(), 2);
     QVERIFY(session->atKnownLastActiveNavigation());
@@ -388,10 +377,6 @@ void TestKiriDocumentSession::freshDirectImageReadoutUsesRequestedCursorBeforeDi
     QCOMPARE(imageDataLoader.loadCount(), std::size_t(1));
     QCOMPARE(session->imageDocument()->displayedUrl(), QUrl());
     QCOMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Loading);
-    QVERIFY(session->mediaNavigationActive());
-    QVERIFY(session->mediaNavigationKnown());
-    QCOMPARE(session->currentMediaNumber(), 1);
-    QCOMPARE(session->mediaCount(), 2);
     QVERIFY(session->activeNavigationKnown());
     QCOMPARE(session->activeNavigationCurrentNumber(), 1);
     QCOMPARE(session->activeNavigationCount(), 2);
@@ -413,14 +398,13 @@ void TestKiriDocumentSession::directImageReplacementFailureRestoresPreviousMedia
     imageDataLoader.finishBackLoad(QByteArrayLiteral("first"));
     QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Ready);
     QCOMPARE(session->imageDocument()->displayedUrl(), firstImage);
-    QCOMPARE(session->currentMediaNumber(), 1);
+    QCOMPARE(session->activeNavigationCurrentNumber(), 1);
 
     session->setSourceUrl(secondImage);
 
     QCOMPARE(imageDataLoader.loadCount(), std::size_t(2));
     QCOMPARE(session->imageDocument()->displayedUrl(), firstImage);
-    QVERIFY(session->mediaNavigationKnown());
-    QCOMPARE(session->currentMediaNumber(), 2);
+    QVERIFY(session->activeNavigationKnown());
     QCOMPARE(session->activeNavigationCurrentNumber(), 2);
 
     imageDataLoader.failBackLoad(QStringLiteral("replacement failed"));
@@ -428,10 +412,9 @@ void TestKiriDocumentSession::directImageReplacementFailureRestoresPreviousMedia
     QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Ready);
     QCOMPARE(session->sourceUrl(), firstImage);
     QCOMPARE(session->imageDocument()->displayedUrl(), firstImage);
-    QVERIFY(session->mediaNavigationKnown());
-    QCOMPARE(session->currentMediaNumber(), 1);
-    QCOMPARE(session->mediaCount(), 2);
+    QVERIFY(session->activeNavigationKnown());
     QCOMPARE(session->activeNavigationCurrentNumber(), 1);
+    QCOMPARE(session->activeNavigationCount(), 2);
 }
 
 void TestKiriDocumentSession::stalePendingDirectImageCandidateCompletionCannotPublishForNewCursor()
@@ -453,19 +436,19 @@ void TestKiriDocumentSession::stalePendingDirectImageCandidateCompletionCannotPu
     QCOMPARE(mediaProvider.loadCount(), std::size_t(2));
     QCOMPARE(mediaProvider.loadAt(1).parentUrl, localUrl(QStringLiteral("/second/")));
     QVERIFY(mediaProvider.loadAt(0).canceled);
-    QVERIFY(!session->mediaNavigationKnown());
+    QVERIFY(!session->activeNavigationKnown());
 
     mediaProvider.deliverIgnoringCancellation(
         0, { mediaCandidate(firstImage), mediaCandidate(staleSibling) });
 
-    QVERIFY(!session->mediaNavigationKnown());
+    QVERIFY(!session->activeNavigationKnown());
     QCOMPARE(session->activeNavigationCount(), 0);
 
     mediaProvider.finishLoad(1, { mediaCandidate(secondImage) });
 
-    QVERIFY(session->mediaNavigationKnown());
-    QCOMPARE(session->currentMediaNumber(), 1);
-    QCOMPARE(session->mediaCount(), 1);
+    QVERIFY(session->activeNavigationKnown());
+    QCOMPARE(session->activeNavigationCurrentNumber(), 1);
+    QCOMPARE(session->activeNavigationCount(), 1);
 }
 
 void TestKiriDocumentSession::freshDirectImageFailureLeavesNavigationUnknown()
@@ -488,7 +471,6 @@ void TestKiriDocumentSession::freshDirectImageFailureLeavesNavigationUnknown()
     imageDataLoader.failBackLoad(QStringLiteral("initial load failed"));
 
     QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Error);
-    QVERIFY(!session->mediaNavigationKnown());
     QVERIFY(!session->activeNavigationKnown());
     QCOMPARE(session->activeNavigationCurrentNumber(), 0);
     QCOMPARE(session->activeNavigationCount(), 0);
@@ -521,7 +503,8 @@ void TestKiriDocumentSession::archiveImageDocumentProjectsActiveNavigationFromPa
 
     QTRY_COMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Image);
     QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Ready);
-    QVERIFY(!session->mediaNavigationActive());
+    QCOMPARE(session->activeNavigationBoundaryScope(),
+        KiriDocumentSession::ActiveNavigationBoundaryScope::ImageNavigationBoundary);
     QVERIFY(session->activeNavigationAvailable());
     QTRY_COMPARE(session->imageDocument()->currentPageNumber(), 1);
     QTRY_COMPARE(session->imageDocument()->currentLastPageNumber(), 1);
@@ -851,12 +834,12 @@ void TestKiriDocumentSession::videoNavigationKeepsStillImagePredecodeCache()
     QCOMPARE(imageDataLoader.backLoad().url, nextImage);
     imageDataLoader.finishBackLoad(QByteArrayLiteral("next"));
 
-    session->openNextMedia();
+    session->openNextActiveNavigation();
     QCOMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Video);
     QCOMPARE(session->sourceUrl(), video);
 
     const std::size_t loadCountBeforeReturn = imageDataLoader.loadCount();
-    session->openPreviousMedia();
+    session->openPreviousActiveNavigation();
 
     QCOMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Image);
     QCOMPARE(session->sourceUrl(), firstImage);
@@ -864,7 +847,7 @@ void TestKiriDocumentSession::videoNavigationKeepsStillImagePredecodeCache()
     QCOMPARE(imageDataLoader.loadCount(), loadCountBeforeReturn);
 }
 
-void TestKiriDocumentSession::videoMediaNavigationExposesCurrentNumberAndCount()
+void TestKiriDocumentSession::videoActiveNavigationExposesCurrentNumberAndCount()
 {
     FakeMediaCandidateProvider mediaProvider;
     const QUrl imageUrl = localUrl(QStringLiteral("/media/01.png"));
@@ -876,14 +859,14 @@ void TestKiriDocumentSession::videoMediaNavigationExposesCurrentNumberAndCount()
     session->setSourceUrl(videoUrl);
 
     QCOMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Video);
-    QVERIFY(session->mediaNavigationActive());
-    QVERIFY(session->mediaNavigationKnown());
-    QCOMPARE(session->currentMediaNumber(), 2);
-    QCOMPARE(session->mediaCount(), 2);
-    QVERIFY(session->canOpenPreviousMedia());
-    QVERIFY(!session->canOpenNextMedia());
+    QVERIFY(session->activeNavigationAvailable());
+    QVERIFY(session->activeNavigationKnown());
+    QCOMPARE(session->activeNavigationCurrentNumber(), 2);
+    QCOMPARE(session->activeNavigationCount(), 2);
+    QVERIFY(session->canOpenPreviousActiveNavigation());
+    QVERIFY(!session->canOpenNextActiveNavigation());
 
-    session->openMediaAtNumber(1);
+    session->openActiveNavigationAtNumber(1);
 
     QCOMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Image);
     QCOMPARE(session->sourceUrl(), imageUrl);
@@ -908,8 +891,8 @@ void TestKiriDocumentSession::initialDirectImagePredecodeUsesRequestedMediaCurso
     QCOMPARE(imageDataLoader.loadCount(), std::size_t(1));
     QCOMPARE(imageDataLoader.frontLoad().url, firstImage);
     QCOMPARE(session->imageDocument()->displayedUrl(), QUrl());
-    QVERIFY(session->mediaNavigationKnown());
-    QCOMPARE(session->currentMediaNumber(), 1);
+    QVERIFY(session->activeNavigationKnown());
+    QCOMPARE(session->activeNavigationCurrentNumber(), 1);
     QTRY_COMPARE(imageDataLoader.loadCount(), std::size_t(2));
     QCOMPARE(imageDataLoader.backLoad().url, nextImage);
 }
@@ -932,18 +915,18 @@ void TestKiriDocumentSession::staleMediaCandidateCompletionCannotPublishForNewSo
     QCOMPARE(mediaProvider.loadCount(), std::size_t(2));
     QCOMPARE(mediaProvider.loadAt(1).parentUrl, localUrl(QStringLiteral("/second/")));
     QVERIFY(mediaProvider.loadAt(0).canceled);
-    QVERIFY(!session->mediaNavigationKnown());
+    QVERIFY(!session->activeNavigationKnown());
 
     mediaProvider.deliverIgnoringCancellation(
         0, { mediaCandidate(secondClip), mediaCandidate(secondSibling) });
 
-    QVERIFY(!session->mediaNavigationKnown());
+    QVERIFY(!session->activeNavigationKnown());
 
     mediaProvider.finishLoad(1, { mediaCandidate(secondClip) });
 
-    QVERIFY(session->mediaNavigationKnown());
-    QCOMPARE(session->currentMediaNumber(), 1);
-    QCOMPARE(session->mediaCount(), 1);
+    QVERIFY(session->activeNavigationKnown());
+    QCOMPARE(session->activeNavigationCurrentNumber(), 1);
+    QCOMPARE(session->activeNavigationCount(), 1);
 }
 
 void TestKiriDocumentSession::nextMediaFromVideoCanRouteToImageWithoutUsingImageNavigation()
@@ -956,8 +939,8 @@ void TestKiriDocumentSession::nextMediaFromVideoCanRouteToImageWithoutUsingImage
     std::unique_ptr<KiriDocumentSession> session = createSession(mediaProvider);
     session->setSourceUrl(clip);
 
-    QVERIFY(session->canOpenNextMedia());
-    session->openNextMedia();
+    QVERIFY(session->canOpenNextActiveNavigation());
+    session->openNextActiveNavigation();
 
     QCOMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Image);
     QCOMPARE(session->sourceUrl(), image);
@@ -984,7 +967,8 @@ void TestKiriDocumentSession::nonMediaImageDeletionProgressIsMirroredThroughSess
     session->setSourceUrl(directoryUrl);
     QTRY_COMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Image);
     QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Ready);
-    QVERIFY(!session->mediaNavigationActive());
+    QCOMPARE(session->activeNavigationBoundaryScope(),
+        KiriDocumentSession::ActiveNavigationBoundaryScope::ImageNavigationBoundary);
 
     session->deleteDisplayedFile(KiriDocumentSession::DeletionMode::MoveToTrash);
 
@@ -1019,7 +1003,8 @@ void TestKiriDocumentSession::directImageDeletionCanOpenVideoFallback()
     session->setSourceUrl(imageUrl);
     QTRY_COMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Image);
     QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Ready);
-    QVERIFY(session->mediaNavigationActive());
+    QCOMPARE(session->activeNavigationBoundaryScope(),
+        KiriDocumentSession::ActiveNavigationBoundaryScope::MediaNavigationBoundary);
 
     session->deleteDisplayedFile(KiriDocumentSession::DeletionMode::MoveToTrash);
 
@@ -1064,7 +1049,7 @@ void TestKiriDocumentSession::pendingDirectImageReplacementDoesNotDeletePrevious
     QCOMPARE(session->sourceUrl(), firstImage);
     QCOMPARE(session->imageDocument()->displayedUrl(), firstImage);
     QVERIFY(session->displayedFileDeletionAvailable());
-    QCOMPARE(session->currentMediaNumber(), 1);
+    QCOMPARE(session->activeNavigationCurrentNumber(), 1);
 
     session->deleteDisplayedFile(KiriDocumentSession::DeletionMode::MoveToTrash);
 

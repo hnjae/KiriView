@@ -87,34 +87,6 @@ QString qmlSourceImport()
     return QUrl::fromLocalFile(qmlPath).toString();
 }
 
-bool writeTestPng(const QString &path)
-{
-    QImage image(QSize(2, 2), QImage::Format_RGBA8888);
-    image.fill(Qt::red);
-    return image.save(path, "PNG");
-}
-
-std::unique_ptr<QTemporaryDir> createMixedMediaDirectory(
-    QString *firstImagePath, QString *middleImagePath, QString *lastImagePath, QString *errorString)
-{
-    auto directory = std::make_unique<QTemporaryDir>();
-    if (!directory->isValid()) {
-        *errorString = QStringLiteral("temporary media directory was not created");
-        return nullptr;
-    }
-
-    *firstImagePath = directory->filePath(QStringLiteral("01.png"));
-    *middleImagePath = directory->filePath(QStringLiteral("02.png"));
-    *lastImagePath = directory->filePath(QStringLiteral("03.png"));
-    if (!writeTestPng(*firstImagePath) || !writeTestPng(*middleImagePath)
-        || !writeTestPng(*lastImagePath)) {
-        *errorString = QStringLiteral("failed to write image media fixture");
-        return nullptr;
-    }
-
-    return directory;
-}
-
 std::unique_ptr<QTemporaryDir> createComicBookArchive(QString *sourcePath, QString *errorString)
 {
     auto directory = std::make_unique<QTemporaryDir>();
@@ -292,25 +264,7 @@ void TestImageActions::previousNextAvailabilityFollowsSessionActiveNavigation()
     QVERIFY(!emptyFixture.root->property("previousProxyEnabled").toBool());
     QVERIFY(!emptyFixture.root->property("nextProxyEnabled").toBool());
 
-    QString firstImagePath;
-    QString middleImagePath;
-    QString lastImagePath;
     QString errorString;
-    auto mediaDirectory = createMixedMediaDirectory(
-        &firstImagePath, &middleImagePath, &lastImagePath, &errorString);
-    QVERIFY2(mediaDirectory != nullptr, qPrintable(errorString));
-
-    ImageActionsFixture directImageFixture
-        = createFixture(QUrl::fromLocalFile(middleImagePath).toString());
-    directImageFixture.temporaryDirectory = std::move(mediaDirectory);
-    QVERIFY2(directImageFixture.isValid(), qPrintable(directImageFixture.errorString));
-    QTRY_VERIFY_WITH_TIMEOUT(directImageFixture.documentSession->activeNavigationKnown(), 30000);
-    QTRY_COMPARE(directImageFixture.documentSession->activeNavigationCurrentNumber(), 2);
-    QVERIFY(directImageFixture.root->property("previousQActionEnabled").toBool());
-    QVERIFY(directImageFixture.root->property("nextQActionEnabled").toBool());
-    QVERIFY(directImageFixture.root->property("previousProxyEnabled").toBool());
-    QVERIFY(directImageFixture.root->property("nextProxyEnabled").toBool());
-
     QString archivePath;
     auto archiveDirectory = createComicBookArchive(&archivePath, &errorString);
     QVERIFY2(archiveDirectory != nullptr, qPrintable(errorString));
@@ -321,6 +275,13 @@ void TestImageActions::previousNextAvailabilityFollowsSessionActiveNavigation()
     QVERIFY(archiveFixture.root->property("previousQActionEnabled").toBool());
     QVERIFY(archiveFixture.root->property("nextQActionEnabled").toBool());
     QVERIFY(!archiveFixture.root->property("previousProxyEnabled").toBool());
+    QVERIFY(archiveFixture.root->property("nextProxyEnabled").toBool());
+
+    archiveFixture.documentSession->openActiveNavigationAtNumber(2);
+    QTRY_COMPARE(archiveFixture.documentSession->activeNavigationCurrentNumber(), 2);
+    QVERIFY(archiveFixture.root->property("previousQActionEnabled").toBool());
+    QVERIFY(archiveFixture.root->property("nextQActionEnabled").toBool());
+    QVERIFY(archiveFixture.root->property("previousProxyEnabled").toBool());
     QVERIFY(archiveFixture.root->property("nextProxyEnabled").toBool());
 }
 

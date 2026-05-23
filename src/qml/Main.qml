@@ -291,6 +291,8 @@ StatefulApp.StatefulWindow {
             id: actionAvailability
 
             containerNavigationAvailable: page.imageMode && page.imageDocument.containerNavigationAvailable
+            // Raw image page inputs are limited to image-internal scan/presentation availability.
+            // Shared toolbar, QAction, menu, and shortcut navigation use documentSession.activeNavigation*.
             currentLastPageNumber: page.imageMode ? page.imageDocument.currentLastPageNumber : 0
             currentPageNumber: page.imageMode ? page.imageDocument.currentPageNumber : 0
             fileDeletionInProgress: documentSession.fileDeletionInProgress

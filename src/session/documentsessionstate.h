@@ -26,7 +26,6 @@ enum class DocumentSessionChange {
     ActiveZoomReadout,
     FileDeletionAvailability,
     FileDeletionInProgress,
-    MediaNavigationAvailability,
     ActiveNavigation,
 };
 

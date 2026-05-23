@@ -76,8 +76,6 @@ KiriView::DocumentSessionPublicSignalOperations publicSignalOperations(KiriDocum
         = [&session]() { Q_EMIT session.fileDeletionInProgressChanged(); };
     operations.activeZoomReadoutChanged
         = [&session]() { Q_EMIT session.activeZoomReadoutChanged(); };
-    operations.mediaNavigationAvailabilityChanged
-        = [&session]() { Q_EMIT session.mediaNavigationAvailabilityChanged(); };
     operations.activeNavigationChanged = [&session]() { Q_EMIT session.activeNavigationChanged(); };
     return operations;
 }
@@ -158,25 +156,6 @@ double KiriDocumentSession::activeZoomPercent() const { return m_runtime->active
 
 bool KiriDocumentSession::activeZoomEditable() const { return m_runtime->activeZoomEditable(); }
 
-bool KiriDocumentSession::mediaNavigationActive() const
-{
-    return m_runtime->mediaNavigationActive();
-}
-
-bool KiriDocumentSession::mediaNavigationKnown() const { return m_runtime->mediaNavigationKnown(); }
-
-int KiriDocumentSession::currentMediaNumber() const { return m_runtime->currentMediaNumber(); }
-
-int KiriDocumentSession::mediaCount() const { return m_runtime->mediaCount(); }
-
-bool KiriDocumentSession::canOpenPreviousMedia() const { return m_runtime->canOpenPreviousMedia(); }
-
-bool KiriDocumentSession::canOpenNextMedia() const { return m_runtime->canOpenNextMedia(); }
-
-bool KiriDocumentSession::atKnownFirstMedia() const { return m_runtime->atKnownFirstMedia(); }
-
-bool KiriDocumentSession::atKnownLastMedia() const { return m_runtime->atKnownLastMedia(); }
-
 bool KiriDocumentSession::activeNavigationAvailable() const
 {
     return m_runtime->activeNavigationAvailable();
@@ -231,15 +210,6 @@ KiriDocumentSession::activeNavigationBoundaryScope() const
 KiriImageDocument *KiriDocumentSession::imageDocument() const { return m_imageDocument.get(); }
 
 KiriVideoDocument *KiriDocumentSession::videoDocument() const { return m_videoDocument.get(); }
-
-void KiriDocumentSession::openPreviousMedia() { m_runtime->openPreviousMedia(); }
-
-void KiriDocumentSession::openNextMedia() { m_runtime->openNextMedia(); }
-
-void KiriDocumentSession::openMediaAtNumber(int mediaNumber)
-{
-    m_runtime->openMediaAtNumber(mediaNumber);
-}
 
 void KiriDocumentSession::openPreviousActiveNavigation()
 {

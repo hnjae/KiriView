@@ -54,9 +54,6 @@ void DocumentSessionPublicSignalEmitter::emitSignal(DocumentSessionPublicSignal 
     case DocumentSessionPublicSignal::FileDeletionInProgress:
         run(m_operations.fileDeletionInProgressChanged);
         return;
-    case DocumentSessionPublicSignal::MediaNavigationAvailability:
-        run(m_operations.mediaNavigationAvailabilityChanged);
-        return;
     case DocumentSessionPublicSignal::ActiveNavigation:
         run(m_operations.activeNavigationChanged);
         return;
@@ -80,8 +77,6 @@ std::vector<DocumentSessionPublicSignal> documentSessionPublicSignals(DocumentSe
         return { DocumentSessionPublicSignal::DisplayedFileDeletionAvailability };
     case DocumentSessionChange::FileDeletionInProgress:
         return { DocumentSessionPublicSignal::FileDeletionInProgress };
-    case DocumentSessionChange::MediaNavigationAvailability:
-        return { DocumentSessionPublicSignal::MediaNavigationAvailability };
     case DocumentSessionChange::ActiveNavigation:
         return { DocumentSessionPublicSignal::ActiveNavigation };
     }
