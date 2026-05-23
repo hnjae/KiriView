@@ -75,7 +75,7 @@ StatefulApp.StatefulWindow {
             return;
         }
 
-        if (fullscreenImageToolBar.interactionActive) {
+        if (mainImageToolBar.interactionActive) {
             fullscreenToolBarHideTimer.stop();
             return;
         }
@@ -84,7 +84,7 @@ StatefulApp.StatefulWindow {
     }
 
     function activeImageToolBar() {
-        return root.fullscreen ? fullscreenImageToolBar : headerImageToolBar;
+        return mainImageToolBar;
     }
 
     function activeMenuHost() {
@@ -162,7 +162,7 @@ StatefulApp.StatefulWindow {
         repeat: false
 
         onTriggered: {
-            if (root.fullscreen && !fullscreenImageToolBar.interactionActive) {
+            if (root.fullscreen && !mainImageToolBar.interactionActive) {
                 root.fullscreenToolBarRevealed = false;
             }
         }
@@ -235,7 +235,10 @@ StatefulApp.StatefulWindow {
         ImageViewport {
             id: imageViewport
 
-            anchors.fill: parent
+            anchors.bottom: parent.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: root.fullscreen ? parent.top : mainImageToolBar.bottom
             imageDocument: documentSession.imageDocument
             visible: !page.videoMode
 
@@ -254,7 +257,10 @@ StatefulApp.StatefulWindow {
             property bool zoomPercentKnown: false
             property int zoomPercent: 0
 
-            anchors.fill: parent
+            anchors.bottom: parent.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: root.fullscreen ? parent.top : mainImageToolBar.bottom
             active: page.videoMode
 
             function clearVideoViewportState() {
@@ -353,40 +359,6 @@ StatefulApp.StatefulWindow {
             onToggleFullScreenRequested: root.toggleFullScreen()
         }
 
-        header: Item {
-            id: windowHeader
-
-            height: root.fullscreen ? 0 : headerImageToolBar.implicitHeight
-            visible: !root.fullscreen
-
-            ImageDocumentToolBar {
-                id: headerImageToolBar
-
-                actions: imageActions
-                anchors.fill: parent
-                currentMediaNumber: documentSession.currentMediaNumber
-                enabled: !root.fullscreen && (page.imageMode || page.videoMode)
-                fileDeletionInProgress: documentSession.fileDeletionInProgress
-                imageDocument: page.imageDocument
-                imageReady: page.imageReady
-                applicationMenuActions: imageActions.applicationMenuActions
-                mediaCount: documentSession.mediaCount
-                mediaNavigationActive: documentSession.mediaNavigationActive
-                mediaNavigationKnown: documentSession.mediaNavigationKnown
-                rightToLeftReadingActive: imageActions.rightToLeftReadingActive
-                showApplicationMenuActions: !root.menuBarMode && !root.fullscreen
-                videoMode: page.videoMode
-                videoZoomPercent: page.videoZoomPercent
-                videoZoomReady: page.videoZoomReady
-                visible: !root.fullscreen && (page.imageMode || page.videoMode)
-
-                onMediaNumberRequested: function (mediaNumber) {
-                    documentSession.openMediaAtNumber(mediaNumber);
-                }
-                onTextInputFocusReturnRequested: root.focusActiveViewport()
-            }
-        }
-
         onFullscreenPointerPositionChanged: {
             if (root.fullscreen && fullscreenRevealHandler.hovered) {
                 root.revealFullscreenToolBar();
@@ -468,7 +440,10 @@ StatefulApp.StatefulWindow {
         }
 
         ImageStateOverlay {
-            anchors.fill: parent
+            anchors.bottom: parent.bottom
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.top: root.fullscreen ? parent.top : mainImageToolBar.bottom
             imageDocument: page.imageDocument
             imageReady: page.imageReady
             openAction: imageActions.openAction
@@ -484,7 +459,9 @@ StatefulApp.StatefulWindow {
         }
 
         ImageDocumentToolBar {
-            id: fullscreenImageToolBar
+            id: mainImageToolBar
+
+            objectName: "mainImageToolBar"
 
             actions: imageActions
             anchors.left: parent.left
@@ -502,11 +479,11 @@ StatefulApp.StatefulWindow {
             mediaNavigationKnown: documentSession.mediaNavigationKnown
             rightToLeftReadingActive: imageActions.rightToLeftReadingActive
             showApplicationMenuActions: !root.menuBarMode && !root.fullscreen
-            transientOverlay: true
+            transientOverlay: root.fullscreen
             videoMode: page.videoMode
             videoZoomPercent: page.videoZoomPercent
             videoZoomReady: page.videoZoomReady
-            visible: root.fullscreen && root.fullscreenToolBarRevealed && (page.imageMode || page.videoMode)
+            visible: !root.fullscreen || root.fullscreenToolBarRevealed
             z: 20
 
             onMediaNumberRequested: function (mediaNumber) {
