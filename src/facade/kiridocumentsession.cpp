@@ -39,6 +39,21 @@ KiriView::FileDeletionMode toFileDeletionMode(KiriDocumentSession::DeletionMode 
     return KiriView::FileDeletionMode::MoveToTrash;
 }
 
+KiriDocumentSession::ActiveNavigationBoundaryScope fromRuntimeBoundaryScope(
+    KiriView::ActiveNavigationBoundaryScope scope)
+{
+    switch (scope) {
+    case KiriView::ActiveNavigationBoundaryScope::Media:
+        return KiriDocumentSession::ActiveNavigationBoundaryScope::MediaNavigationBoundary;
+    case KiriView::ActiveNavigationBoundaryScope::ImageDocument:
+        return KiriDocumentSession::ActiveNavigationBoundaryScope::ImageNavigationBoundary;
+    case KiriView::ActiveNavigationBoundaryScope::None:
+        return KiriDocumentSession::ActiveNavigationBoundaryScope::NoNavigationBoundary;
+    }
+
+    return KiriDocumentSession::ActiveNavigationBoundaryScope::NoNavigationBoundary;
+}
+
 KiriView::ImageDocumentRuntimeDependencyOverrides imageDocumentDependenciesWithPredecodeFinder(
     KiriView::ImageDocumentRuntimeDependencyOverrides dependencies,
     KiriView::ExternalPredecodedImageFinder predecodedImageFinder)
@@ -205,6 +220,12 @@ bool KiriDocumentSession::atKnownFirstActiveNavigation() const
 bool KiriDocumentSession::atKnownLastActiveNavigation() const
 {
     return m_runtime->atKnownLastActiveNavigation();
+}
+
+KiriDocumentSession::ActiveNavigationBoundaryScope
+KiriDocumentSession::activeNavigationBoundaryScope() const
+{
+    return fromRuntimeBoundaryScope(m_runtime->activeNavigationBoundaryScope());
 }
 
 KiriImageDocument *KiriDocumentSession::imageDocument() const { return m_imageDocument.get(); }

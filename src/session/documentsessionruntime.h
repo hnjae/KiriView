@@ -34,6 +34,12 @@ struct DocumentSessionRuntimeDependencies {
     ImageDocumentRuntimeDependencyOverrides imageDocumentDependencies;
 };
 
+enum class ActiveNavigationBoundaryScope {
+    None,
+    Media,
+    ImageDocument,
+};
+
 struct ActiveNavigationSnapshot {
     bool available = false;
     bool known = false;
@@ -84,6 +90,7 @@ public:
     bool canOpenNextActiveNavigation() const;
     bool atKnownFirstActiveNavigation() const;
     bool atKnownLastActiveNavigation() const;
+    ActiveNavigationBoundaryScope activeNavigationBoundaryScope() const;
     std::optional<PredecodedImage> findPredecodedImage(const QUrl &url) const;
 
     void openPreviousMedia();

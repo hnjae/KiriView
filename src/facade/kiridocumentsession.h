@@ -68,6 +68,8 @@ class KiriDocumentSession : public QObject
             activeNavigationChanged)
     Q_PROPERTY(bool atKnownLastActiveNavigation READ atKnownLastActiveNavigation NOTIFY
             activeNavigationChanged)
+    Q_PROPERTY(ActiveNavigationBoundaryScope activeNavigationBoundaryScope READ
+            activeNavigationBoundaryScope NOTIFY activeNavigationChanged)
     Q_PROPERTY(KiriImageDocument *imageDocument READ imageDocument CONSTANT)
     Q_PROPERTY(KiriVideoDocument *videoDocument READ videoDocument CONSTANT)
 
@@ -84,6 +86,13 @@ public:
         DeletePermanently,
     };
     Q_ENUM(DeletionMode)
+
+    enum class ActiveNavigationBoundaryScope {
+        NoNavigationBoundary,
+        MediaNavigationBoundary,
+        ImageNavigationBoundary,
+    };
+    Q_ENUM(ActiveNavigationBoundaryScope)
 
     explicit KiriDocumentSession(QObject *parent = nullptr);
     explicit KiriDocumentSession(
@@ -119,6 +128,7 @@ public:
     bool canOpenNextActiveNavigation() const;
     bool atKnownFirstActiveNavigation() const;
     bool atKnownLastActiveNavigation() const;
+    ActiveNavigationBoundaryScope activeNavigationBoundaryScope() const;
     KiriImageDocument *imageDocument() const;
     KiriVideoDocument *videoDocument() const;
 

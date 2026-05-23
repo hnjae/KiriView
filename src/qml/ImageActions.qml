@@ -67,7 +67,6 @@ Item {
     readonly property var quitMenuAction: quitManagedAction.menuProxy
     readonly property bool imageMode: root.documentSession.documentKind === KiriDocumentSession.Image
     readonly property bool videoMode: root.documentSession.documentKind === KiriDocumentSession.Video
-    readonly property bool mediaNavigationActive: root.documentSession.mediaNavigationActive
     readonly property bool documentDeletionAvailable: root.documentSession.displayedFileDeletionAvailable && root.actionAvailability.helpShortcutsEnabled
     readonly property bool activeNavigationActionsAvailable: root.documentSession.activeNavigationAvailable && root.documentSession.activeNavigationKnown && !root.documentSession.fileDeletionInProgress && root.actionAvailability.helpShortcutsEnabled
     readonly property bool previousPageActionAvailable: root.activeNavigationActionsAvailable
@@ -87,11 +86,35 @@ Item {
     signal toggleFullScreenRequested
 
     function firstBoundaryText() {
-        return root.mediaNavigationActive ? KI18n.i18nc("@info:status", "First media item") : KI18n.i18nc("@info:status", "First image");
+        switch (root.documentSession.activeNavigationBoundaryScope) {
+        case KiriDocumentSession.MediaNavigationBoundary:
+            return KI18n.i18nc("@info:status", "First media item");
+        case KiriDocumentSession.ImageNavigationBoundary:
+            return KI18n.i18nc("@info:status", "First image");
+        case KiriDocumentSession.NoNavigationBoundary:
+        default:
+            return "";
+        }
     }
 
     function lastBoundaryText() {
-        return root.mediaNavigationActive ? KI18n.i18nc("@info:status", "Last media item") : KI18n.i18nc("@info:status", "Last image");
+        switch (root.documentSession.activeNavigationBoundaryScope) {
+        case KiriDocumentSession.MediaNavigationBoundary:
+            return KI18n.i18nc("@info:status", "Last media item");
+        case KiriDocumentSession.ImageNavigationBoundary:
+            return KI18n.i18nc("@info:status", "Last image");
+        case KiriDocumentSession.NoNavigationBoundary:
+        default:
+            return "";
+        }
+    }
+
+    function activeFirstMenuText() {
+        return root.documentSession.activeNavigationBoundaryScope === KiriDocumentSession.MediaNavigationBoundary ? KI18n.i18nc("@action:inmenu", "&First Media Item") : "";
+    }
+
+    function activeLastMenuText() {
+        return root.documentSession.activeNavigationBoundaryScope === KiriDocumentSession.MediaNavigationBoundary ? KI18n.i18nc("@action:inmenu", "&Last Media Item") : "";
     }
 
     function openFirstImage() {
@@ -246,7 +269,7 @@ Item {
         actionId: KiriViewApplication.GoFirstImageAction
         application: root.application
         bindEnabled: true
-        menuText: root.mediaNavigationActive ? KI18n.i18nc("@action:inmenu", "&First Media Item") : ""
+        menuText: root.activeFirstMenuText()
         proxyEnabled: root.firstLastPageActionAvailable
 
         onTriggered: root.openFirstImage()
@@ -259,7 +282,7 @@ Item {
         actionId: KiriViewApplication.GoLastImageAction
         application: root.application
         bindEnabled: true
-        menuText: root.mediaNavigationActive ? KI18n.i18nc("@action:inmenu", "&Last Media Item") : ""
+        menuText: root.activeLastMenuText()
         proxyEnabled: root.firstLastPageActionAvailable
 
         onTriggered: root.openLastImage()

@@ -385,11 +385,11 @@ StatefulApp.StatefulWindow {
             sourceComponent: ImageShortcuts {
                 application: kiriApplication
                 actionAvailability: actionAvailability
+                documentSession: documentSession
                 handleMenuPresentationShortcut: false
                 imageDocument: page.imageDocument
                 imageViewport: imageViewport
                 videoFileDeletionInProgress: documentSession.fileDeletionInProgress
-                videoMediaNavigationActive: documentSession.mediaNavigationActive
                 videoMode: page.videoMode
 
                 onImageBoundaryReached: function (message) {

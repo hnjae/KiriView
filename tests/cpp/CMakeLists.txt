@@ -227,6 +227,12 @@ if(TARGET test_toastnotification)
     )
 endif()
 
+if(TARGET test_imageactions)
+    set_tests_properties(test_imageactions PROPERTIES
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+    )
+endif()
+
 if(TARGET test_menuaccesskeyrouter)
     set_tests_properties(test_menuaccesskeyrouter PROPERTIES
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen"

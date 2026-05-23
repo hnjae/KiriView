@@ -197,6 +197,7 @@ private Q_SLOTS:
     void activeNavigationNumberDispatchIgnoresUnknownNavigation();
     void activeNavigationClearsWhenSwitchingFromKnownDirectMedia();
     void activeNavigationAvailabilityUsesSameSnapshotAsCurrentAndCount();
+    void activeNavigationBoundaryScopeFollowsSessionSource();
     void twoPageSpreadLastBoundaryProjectsThroughActiveNavigation();
     void videoNavigationKeepsStillImagePredecodeCache();
     void videoMediaNavigationExposesCurrentNumberAndCount();
@@ -730,6 +731,52 @@ void TestKiriDocumentSession::activeNavigationAvailabilityUsesSameSnapshotAsCurr
     QVERIFY(!session->canOpenNextActiveNavigation());
     QVERIFY(!session->atKnownFirstActiveNavigation());
     QVERIFY(session->atKnownLastActiveNavigation());
+
+    session->openFirstActiveNavigation();
+
+    QCOMPARE(session->sourceUrl(), first);
+    QCOMPARE(session->activeNavigationCurrentNumber(), 1);
+    QCOMPARE(session->activeNavigationCount(), 3);
+    QVERIFY(!session->canOpenPreviousActiveNavigation());
+    QVERIFY(session->canOpenNextActiveNavigation());
+    QVERIFY(session->atKnownFirstActiveNavigation());
+    QVERIFY(!session->atKnownLastActiveNavigation());
+}
+
+void TestKiriDocumentSession::activeNavigationBoundaryScopeFollowsSessionSource()
+{
+    FakeMediaCandidateProvider mediaProvider;
+    KiriView::TestSupport::FakeImageNavigationCandidateProvider imageCandidates;
+    KiriView::TestSupport::ManualImageDataLoader dataLoader;
+    const QUrl clip = localUrl(QStringLiteral("/media/01.mp4"));
+    mediaProvider.setMedia(localUrl(QStringLiteral("/media/")), { mediaCandidate(clip) });
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/boundary.cbz"));
+    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveDocument.has_value());
+    const QUrl page = KiriView::TestSupport::archivePageUrl(
+        archiveDocument->rootUrl(), QStringLiteral("01.png"));
+    imageCandidates.setArchiveImages(
+        archiveDocument->rootUrl(), { KiriView::TestSupport::imageCandidate(page) });
+    std::unique_ptr<KiriDocumentSession> session = createSessionWithProvider(
+        mediaProvider.provider(), nullptr, &dataLoader, imageCandidates.provider());
+
+    QCOMPARE(session->activeNavigationBoundaryScope(),
+        KiriDocumentSession::ActiveNavigationBoundaryScope::NoNavigationBoundary);
+
+    session->setSourceUrl(clip);
+
+    QVERIFY(session->activeNavigationKnown());
+    QCOMPARE(session->activeNavigationBoundaryScope(),
+        KiriDocumentSession::ActiveNavigationBoundaryScope::MediaNavigationBoundary);
+
+    session->setSourceUrl(archiveUrl);
+    QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
+    dataLoader.finishBackLoad(QByteArrayLiteral("page"));
+    QTRY_COMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Image);
+    QTRY_VERIFY(session->activeNavigationKnown());
+    QCOMPARE(session->activeNavigationBoundaryScope(),
+        KiriDocumentSession::ActiveNavigationBoundaryScope::ImageNavigationBoundary);
 }
 
 void TestKiriDocumentSession::twoPageSpreadLastBoundaryProjectsThroughActiveNavigation()

@@ -12,15 +12,16 @@ Item {
 
     required property KiriViewApplication application
     required property ImageActionAvailability actionAvailability
+    required property KiriDocumentSession documentSession
     required property KiriImageDocument imageDocument
     required property var imageViewport
     property bool handleMenuPresentationShortcut: true
     property bool videoFileDeletionInProgress: false
-    property bool videoMediaNavigationActive: false
     property bool videoMode: false
 
     readonly property int keyboardPanDistance: 64
-    readonly property bool horizontalArrowShortcutsEnabled: root.application.mediaHorizontalArrowShortcutsEnabled(root.videoMode, root.actionAvailability.readyViewerShortcutsEnabled, root.actionAvailability.viewerShortcutsEnabled, root.videoMediaNavigationActive, root.videoFileDeletionInProgress)
+    readonly property bool activeNavigationActionsAvailable: root.documentSession.activeNavigationAvailable && root.documentSession.activeNavigationKnown && !root.documentSession.fileDeletionInProgress && root.actionAvailability.helpShortcutsEnabled
+    readonly property bool horizontalArrowShortcutsEnabled: root.application.mediaHorizontalArrowShortcutsEnabled(root.videoMode, root.actionAvailability.readyViewerShortcutsEnabled, root.actionAvailability.viewerShortcutsEnabled, root.activeNavigationActionsAvailable, root.videoFileDeletionInProgress)
 
     readonly property var previousImageQAction: root.application.actionForId(KiriViewApplication.GoPreviousImageAction)
     readonly property var nextImageQAction: root.application.actionForId(KiriViewApplication.GoNextImageAction)
@@ -36,9 +37,27 @@ Item {
     signal imageBoundaryReached(string message)
     signal unsupportedVideoActionRequested
 
+    function activeNavigationShortcutsEnabledForScope(shortcutScope) {
+        switch (shortcutScope) {
+        case ImageActionAvailability.ImageSelectionShortcutScope:
+        case ImageActionAvailability.PageShortcutScope:
+            return root.activeNavigationActionsAvailable;
+        case ImageActionAvailability.ImageSelectionViewerShortcutScope:
+        case ImageActionAvailability.PageViewerShortcutScope:
+            return root.activeNavigationActionsAvailable && root.actionAvailability.viewerShortcutsEnabled;
+        default:
+            return null;
+        }
+    }
+
     function shortcutsEnabledForScope(shortcutScope, availabilityRevision) {
+        const activeNavigationEnabled = root.activeNavigationShortcutsEnabledForScope(shortcutScope);
+        if (activeNavigationEnabled !== null) {
+            return activeNavigationEnabled;
+        }
+
         if (root.videoMode) {
-            return root.application.videoShortcutsEnabledForScope(shortcutScope, root.actionAvailability.helpShortcutsEnabled, root.actionAvailability.viewerShortcutsEnabled, root.videoFileDeletionInProgress, root.videoMediaNavigationActive);
+            return root.application.videoShortcutsEnabledForScope(shortcutScope, root.actionAvailability.helpShortcutsEnabled, root.actionAvailability.viewerShortcutsEnabled, root.videoFileDeletionInProgress, root.activeNavigationActionsAvailable);
         }
 
         if (availabilityRevision < 0) {
@@ -83,9 +102,13 @@ Item {
     function applySinglePageArrowAction(action) {
         switch (action) {
         case ImageShortcutNavigationPolicy.OpenPreviousSinglePage:
+            // Image-internal single-page stepping preserves spread-local movement without changing
+            // the shared Previous/Next action route.
             root.imageDocument.openPreviousSinglePage();
             return;
         case ImageShortcutNavigationPolicy.OpenNextSinglePage:
+            // Image-internal single-page stepping preserves spread-local movement without changing
+            // the shared Previous/Next action route.
             root.imageDocument.openNextSinglePage();
             return;
         }
@@ -102,6 +125,8 @@ Item {
             root.nextImageQAction.trigger();
             return;
         case ImageShortcutNavigationPolicy.OpenPreviousPageFromFinalScanStart:
+            // Image-internal scan fallback intentionally opens the previous document page and
+            // hands off the viewport start. Shared active Previous/Next routing uses QActions.
             root.imageViewport.setNextDisplayedImageStartToFinalScanPosition();
             root.imageDocument.openImageAtPage(root.imageDocument.currentPageNumber - 1);
             return;

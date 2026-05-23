@@ -298,6 +298,20 @@ bool DocumentSessionRuntime::atKnownLastActiveNavigation() const
     return activeNavigationSnapshot().atKnownLast;
 }
 
+ActiveNavigationBoundaryScope DocumentSessionRuntime::activeNavigationBoundaryScope() const
+{
+    switch (activeNavigationSourceKind()) {
+    case ActiveNavigationSourceKind::OrdinaryDirectMedia:
+        return ActiveNavigationBoundaryScope::Media;
+    case ActiveNavigationSourceKind::ImageDocumentPages:
+        return ActiveNavigationBoundaryScope::ImageDocument;
+    case ActiveNavigationSourceKind::None:
+        return ActiveNavigationBoundaryScope::None;
+    }
+
+    return ActiveNavigationBoundaryScope::None;
+}
+
 std::optional<PredecodedImage> DocumentSessionRuntime::findPredecodedImage(const QUrl &url) const
 {
     return m_mediaPredecodeCoordinator != nullptr

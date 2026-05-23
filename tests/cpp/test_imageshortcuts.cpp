@@ -3,7 +3,9 @@
 
 #include "facade/imageactionavailability.h"
 #include "facade/imageshortcutnavigationpolicy.h"
+#include "facade/kiridocumentsession.h"
 #include "facade/kiriimagedocument.h"
+#include "facade/kirivideodocument.h"
 #include "facade/kiriviewapplication.h"
 #include "kiriviewstate.h"
 #include "localization/localization.h"
@@ -79,6 +81,8 @@ void registerKiriViewQmlTypes()
     }
 
     qmlRegisterType<KiriImageDocument>("io.github.hnjae.kiriview", 1, 0, "KiriImageDocument");
+    qmlRegisterType<KiriDocumentSession>("io.github.hnjae.kiriview", 1, 0, "KiriDocumentSession");
+    qmlRegisterType<KiriVideoDocument>("io.github.hnjae.kiriview", 1, 0, "KiriVideoDocument");
     qmlRegisterType<ImageActionAvailability>(
         "io.github.hnjae.kiriview", 1, 0, "ImageActionAvailability");
     qmlRegisterType<ImageShortcutNavigationPolicy>(
@@ -190,7 +194,6 @@ Item {
     property bool imagePannable: false
     property bool toolbarTextInputFocused: false
     property bool videoFileDeletionInProgress: false
-    property bool videoMediaNavigationActive: true
     property bool videoMode: false
     property int panCount: 0
     property int unsupportedVideoActionCount: 0
@@ -202,6 +205,7 @@ Item {
     property alias rightToLeftReadingAvailable: imageDocument.rightToLeftReadingAvailable
     property alias rightToLeftReadingEnabled: imageDocument.rightToLeftReadingEnabled
     property alias secondaryPageVisible: imageDocument.secondaryPageVisible
+    property KiriImageDocument testImageDocument: imageDocument
     property alias twoPageModeAvailable: imageDocument.twoPageModeAvailable
     property alias twoPageModeEnabled: imageDocument.twoPageModeEnabled
 
@@ -229,6 +233,12 @@ Item {
         id: application
 
         objectName: "application"
+    }
+
+    KiriDocumentSession {
+        id: documentSession
+
+        sourceUrl: "%2"
     }
 
     KiriImageDocument {
@@ -306,10 +316,10 @@ Item {
     KiriViewQml.ImageShortcuts {
         application: application
         actionAvailability: actionAvailability
-        imageDocument: imageDocument
+        documentSession: documentSession
+        imageDocument: root.testImageDocument
         imageViewport: imageViewport
         videoFileDeletionInProgress: root.videoFileDeletionInProgress
-        videoMediaNavigationActive: root.videoMediaNavigationActive
         videoMode: root.videoMode
 
         onUnsupportedVideoActionRequested: root.unsupportedVideoActionCount += 1
