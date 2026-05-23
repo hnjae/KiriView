@@ -5,12 +5,12 @@
 
 namespace {
 KiriView::RustImageDocumentSourceLoadKind rustSourceLoadKind(
-    KiriView::ImageDocumentSourceLoadKind loadKind)
+    KiriView::Bridge::ImageDocumentSourceLoadKind loadKind)
 {
     switch (loadKind) {
-    case KiriView::ImageDocumentSourceLoadKind::CurrentSource:
+    case KiriView::Bridge::ImageDocumentSourceLoadKind::CurrentSource:
         return KiriView::RustImageDocumentSourceLoadKind::CurrentSource;
-    case KiriView::ImageDocumentSourceLoadKind::ReplacementSource:
+    case KiriView::Bridge::ImageDocumentSourceLoadKind::ReplacementSource:
         return KiriView::RustImageDocumentSourceLoadKind::ReplacementSource;
     }
 
@@ -173,7 +173,7 @@ KiriView::ImageOpenEffect imageOpenEffect(KiriView::RustImageOpenEffect effect)
 
 namespace KiriView {
 RustImageDocumentSourceLoadPolicyInput rustImageDocumentSourceLoadPolicyInput(
-    const ImageDocumentSourceLoadPolicyInput &input)
+    const Bridge::ImageDocumentSourceLoadPolicyInput &input)
 {
     return RustImageDocumentSourceLoadPolicyInput {
         rustSourceLoadKind(input.loadKind),

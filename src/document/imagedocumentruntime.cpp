@@ -270,9 +270,7 @@ ImageDocumentRenderContext ImageDocumentRuntime::renderContext() const
 void ImageDocumentRuntime::loadSource(const ImageDocumentSourceLoadRequest &request)
 {
     controllers->dispatchPlan(ImageOpenWorkflow::sourceLoadPlan(
-        ImageOpenWorkflow::sourceLoadPolicyInput(
-            sourceLoadSnapshot(state, controllers->spreadController()), request),
-        request));
+        sourceLoadSnapshot(state, controllers->spreadController()), request));
 }
 
 void ImageDocumentRuntime::publishChanges(const std::vector<ImageDocumentChange> &changes)

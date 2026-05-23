@@ -8,8 +8,23 @@
 #include "kiriview/src/policy/imageopenworkflow.cxx.h"
 
 namespace KiriView {
+namespace Bridge {
+    enum class ImageDocumentSourceLoadKind {
+        CurrentSource,
+        ReplacementSource,
+    };
+
+    struct ImageDocumentSourceLoadPolicyInput {
+        ImageDocumentSourceLoadKind loadKind = ImageDocumentSourceLoadKind::CurrentSource;
+        bool preserveTwoPageSpreadTransition = false;
+        bool rightToLeftReadingEnabled = false;
+        bool sourceWithinDisplayedComicBookArchive = false;
+        bool hasRequestedContainerNavigationUrl = false;
+    };
+}
+
 RustImageDocumentSourceLoadPolicyInput rustImageDocumentSourceLoadPolicyInput(
-    const ImageDocumentSourceLoadPolicyInput &input);
+    const Bridge::ImageDocumentSourceLoadPolicyInput &input);
 ImageDocumentRuntimePlan imageDocumentRuntimePlanFromBridge(
     const RustImageDocumentSourceLoadPlan &rustPlan, const ImageDocumentSourceLoadRequest &request);
 

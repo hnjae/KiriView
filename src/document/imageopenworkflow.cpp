@@ -7,15 +7,15 @@
 #include "navigation/imagecontainer.h"
 
 namespace {
-KiriView::ImageDocumentSourceLoadKind sourceLoadKind(
+KiriView::Bridge::ImageDocumentSourceLoadKind sourceLoadKind(
     const KiriView::ImageDocumentSourceLoadSnapshot &snapshot,
     const KiriView::ImageDocumentSourceLoadRequest &request)
 {
     if (snapshot.currentSourceUrl == request.sourceUrl) {
-        return KiriView::ImageDocumentSourceLoadKind::CurrentSource;
+        return KiriView::Bridge::ImageDocumentSourceLoadKind::CurrentSource;
     }
 
-    return KiriView::ImageDocumentSourceLoadKind::ReplacementSource;
+    return KiriView::Bridge::ImageDocumentSourceLoadKind::ReplacementSource;
 }
 
 bool sourceWithinDisplayedComicBookArchive(
@@ -26,13 +26,12 @@ bool sourceWithinDisplayedComicBookArchive(
         && KiriView::archiveDocumentContainsUrl(
             snapshot.displayedArchiveDocument, request.sourceUrl);
 }
-}
 
-namespace KiriView::ImageOpenWorkflow {
-ImageDocumentSourceLoadPolicyInput sourceLoadPolicyInput(
-    const ImageDocumentSourceLoadSnapshot &snapshot, const ImageDocumentSourceLoadRequest &request)
+KiriView::Bridge::ImageDocumentSourceLoadPolicyInput sourceLoadPolicyInput(
+    const KiriView::ImageDocumentSourceLoadSnapshot &snapshot,
+    const KiriView::ImageDocumentSourceLoadRequest &request)
 {
-    return ImageDocumentSourceLoadPolicyInput {
+    return KiriView::Bridge::ImageDocumentSourceLoadPolicyInput {
         sourceLoadKind(snapshot, request),
         request.preserveTwoPageSpreadTransition,
         snapshot.rightToLeftReadingEnabled,
@@ -40,10 +39,14 @@ ImageDocumentSourceLoadPolicyInput sourceLoadPolicyInput(
         !request.containerNavigationUrl.isEmpty(),
     };
 }
+}
 
+namespace KiriView::ImageOpenWorkflow {
 ImageDocumentRuntimePlan sourceLoadPlan(
-    const ImageDocumentSourceLoadPolicyInput &input, const ImageDocumentSourceLoadRequest &request)
+    const ImageDocumentSourceLoadSnapshot &snapshot, const ImageDocumentSourceLoadRequest &request)
 {
+    const Bridge::ImageDocumentSourceLoadPolicyInput input
+        = sourceLoadPolicyInput(snapshot, request);
     return imageDocumentRuntimePlanFromBridge(
         rustImageDocumentSourceLoadPlan(rustImageDocumentSourceLoadPolicyInput(input)), request);
 }
