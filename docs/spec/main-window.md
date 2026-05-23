@@ -2,6 +2,8 @@
 
 ## Toolbar
 
+The main window has exactly one toolbar instance.
+
 The main window toolbar shows media controls without a page title.
 
 The leading side of the toolbar contains Previous, the current page number, `of`, the total item count, and Next.
@@ -14,9 +16,9 @@ The trailing action toolbar shows as many trailing controls as fit and moves the
 
 The Right-to-Left Reading control is immediately to the left of the Two-Page Spread control. It toggles archive binding between left-to-right and right-to-left reading when that option is available.
 
-Outside fullscreen, the toolbar uses normal application header placement and reserves layout space above the image viewing area.
+Outside fullscreen, the toolbar uses normal application header placement, reserves layout space above the image viewing area, and remains visible even when no image or video is open.
 
-Controls that require ready media are disabled until an image or video is ready.
+Controls that require selected, navigable, or ready media are disabled until the corresponding program state is available.
 
 The toolbar page navigation arrow buttons keep their physical affordance. The left arrow button triggers Previous in Left-to-Right Reading mode and Next in Right-to-Left Reading mode. The right arrow button triggers Next in Left-to-Right Reading mode and Previous in Right-to-Left Reading mode. Each button's tooltip and accessible text follow the action that button triggers.
 

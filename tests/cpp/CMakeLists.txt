@@ -239,6 +239,12 @@ if(TARGET test_menuactionitem)
     )
 endif()
 
+if(TARGET test_mainwindowtoolbar)
+    set_tests_properties(test_mainwindowtoolbar PROPERTIES
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+    )
+endif()
+
 if(TARGET test_toolbarapplicationmenu)
     set_tests_properties(test_toolbarapplicationmenu PROPERTIES
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
