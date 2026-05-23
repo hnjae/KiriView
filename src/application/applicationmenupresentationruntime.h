@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_APPLICATIONMENUPRESENTATIONRUNTIME_H
 #define KIRIVIEW_APPLICATIONMENUPRESENTATIONRUNTIME_H
 
+#include "application/applicationmenupresentationstate.h"
 #include "facade/kiriviewapplication.h"
 
 class QAction;
@@ -17,12 +18,12 @@ public:
     KiriViewApplication::MenuPresentation menuPresentation() const;
     void setMenuPresentation(KiriViewApplication::MenuPresentation presentation);
     void bindShowMenuBarAction(QAction *action);
+    void syncFromSettings();
     void syncShowMenuBarAction();
 
 private:
-    static KiriViewApplication::MenuPresentation presentationForStoredValue(int value);
-
     KiriViewApplication &m_application;
+    ApplicationMenuPresentationState m_state;
     QAction *m_showMenuBarAction = nullptr;
 };
 }

@@ -14,22 +14,24 @@ namespace KiriView::ApplicationActions {
 ApplicationMenuPresentationRuntime::ApplicationMenuPresentationRuntime(
     KiriViewApplication &application)
     : m_application(application)
+    , m_state(ApplicationMenuPresentationState::presentationForStoredValue(
+          KiriViewState::menuPresentation()))
 {
 }
 
 KiriViewApplication::MenuPresentation ApplicationMenuPresentationRuntime::menuPresentation() const
 {
-    return presentationForStoredValue(KiriViewState::menuPresentation());
+    return m_state.presentation();
 }
 
 void ApplicationMenuPresentationRuntime::setMenuPresentation(
     KiriViewApplication::MenuPresentation presentation)
 {
-    if (menuPresentation() == presentation) {
+    if (!m_state.setPresentation(presentation)) {
         return;
     }
 
-    KiriViewState::setMenuPresentation(static_cast<int>(presentation));
+    KiriViewState::setMenuPresentation(m_state.storedValue());
     KiriViewState::self()->save();
     syncShowMenuBarAction();
     Q_EMIT m_application.menuPresentationChanged();
@@ -52,6 +54,15 @@ void ApplicationMenuPresentationRuntime::bindShowMenuBarAction(QAction *action)
     syncShowMenuBarAction();
 }
 
+void ApplicationMenuPresentationRuntime::syncFromSettings()
+{
+    const bool changed = m_state.setStoredValue(KiriViewState::menuPresentation());
+    syncShowMenuBarAction();
+    if (changed) {
+        Q_EMIT m_application.menuPresentationChanged();
+    }
+}
+
 void ApplicationMenuPresentationRuntime::syncShowMenuBarAction()
 {
     if (m_showMenuBarAction == nullptr) {
@@ -60,15 +71,5 @@ void ApplicationMenuPresentationRuntime::syncShowMenuBarAction()
 
     const QSignalBlocker blocker(m_showMenuBarAction);
     m_showMenuBarAction->setChecked(menuPresentation() == KiriViewApplication::MenuBar);
-}
-
-KiriViewApplication::MenuPresentation
-ApplicationMenuPresentationRuntime::presentationForStoredValue(int value)
-{
-    if (value == static_cast<int>(KiriViewApplication::MenuBar)) {
-        return KiriViewApplication::MenuBar;
-    }
-
-    return KiriViewApplication::HamburgerMenu;
 }
 }

@@ -163,8 +163,8 @@ void ApplicationActionRuntime::setupActions()
     }
 
     m_application.readSettings();
+    m_menuPresentationRuntime.syncFromSettings();
     m_shortcutRuntime->setup();
-    m_menuPresentationRuntime.syncShowMenuBarAction();
 }
 
 QAction *ApplicationActionRuntime::addRegisteredAction(const QString &name, const QString &text,

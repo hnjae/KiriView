@@ -48,6 +48,7 @@ private Q_SLOTS:
     void cleanup();
     void invalidStoredValueFallsBackToHamburgerMenu();
     void setMenuPresentationPersistsAndSignalsChanges();
+    void syncFromSettingsUpdatesRuntimeStateAndAction();
     void showMenuBarActionMirrorsAndUpdatesPresentation();
 };
 
@@ -87,6 +88,28 @@ void TestApplicationMenuPresentationRuntime::setMenuPresentationPersistsAndSigna
 
     runtime.setMenuPresentation(KiriViewApplication::MenuBar);
     QCOMPARE(changedSpy.count(), 1);
+}
+
+void TestApplicationMenuPresentationRuntime::syncFromSettingsUpdatesRuntimeStateAndAction()
+{
+    KiriViewApplication application;
+    KiriView::ApplicationActions::ApplicationMenuPresentationRuntime runtime(application);
+    QAction action;
+    QSignalSpy changedSpy(&application, &KiriViewApplication::menuPresentationChanged);
+
+    runtime.bindShowMenuBarAction(&action);
+    QVERIFY(!action.isChecked());
+
+    KiriViewState::setMenuPresentation(KiriViewState::EnumMenuPresentation::MenuBar);
+    runtime.syncFromSettings();
+
+    QCOMPARE(changedSpy.count(), 1);
+    QCOMPARE(runtime.menuPresentation(), KiriViewApplication::MenuBar);
+    QVERIFY(action.isChecked());
+
+    runtime.syncFromSettings();
+    QCOMPARE(changedSpy.count(), 1);
+    QVERIFY(action.isChecked());
 }
 
 void TestApplicationMenuPresentationRuntime::showMenuBarActionMirrorsAndUpdatesPresentation()

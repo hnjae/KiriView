@@ -550,23 +550,27 @@ void TestKiriViewApplication::invalidStoredMenuPresentationFallsBackToHamburgerM
 
 void TestKiriViewApplication::menuPresentationPersists()
 {
-    KiriViewApplication application;
-    QSignalSpy changedSpy(&application, &KiriViewApplication::menuPresentationChanged);
+    {
+        KiriViewApplication application;
+        QSignalSpy changedSpy(&application, &KiriViewApplication::menuPresentationChanged);
 
-    application.setMenuPresentation(KiriViewApplication::MenuBar);
+        application.setMenuPresentation(KiriViewApplication::MenuBar);
 
-    QCOMPARE(changedSpy.count(), 1);
-    QCOMPARE(application.menuPresentation(), KiriViewApplication::MenuBar);
-    QCOMPARE(KiriViewState::menuPresentation(),
-        static_cast<int>(KiriViewState::EnumMenuPresentation::MenuBar));
-    QCOMPARE(stateInterfaceGroup().readEntry(QLatin1String(menuPresentationConfigKey), QString()),
-        QStringLiteral("MenuBar"));
+        QCOMPARE(changedSpy.count(), 1);
+        QCOMPARE(application.menuPresentation(), KiriViewApplication::MenuBar);
+        QCOMPARE(KiriViewState::menuPresentation(),
+            static_cast<int>(KiriViewState::EnumMenuPresentation::MenuBar));
+        QCOMPARE(
+            stateInterfaceGroup().readEntry(QLatin1String(menuPresentationConfigKey), QString()),
+            QStringLiteral("MenuBar"));
 
-    KiriViewState::setMenuPresentation(KiriViewState::EnumMenuPresentation::HamburgerMenu);
-    QCOMPARE(application.menuPresentation(), KiriViewApplication::HamburgerMenu);
+        KiriViewState::setMenuPresentation(KiriViewState::EnumMenuPresentation::HamburgerMenu);
+        QCOMPARE(application.menuPresentation(), KiriViewApplication::MenuBar);
+    }
 
     KiriViewState::self()->read();
-    QCOMPARE(application.menuPresentation(), KiriViewApplication::MenuBar);
+    KiriViewApplication reloadedApplication;
+    QCOMPARE(reloadedApplication.menuPresentation(), KiriViewApplication::MenuBar);
 }
 
 void TestKiriViewApplication::menuPresentationStateUsesGenericStateLocation()

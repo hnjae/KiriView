@@ -10,6 +10,7 @@ src/rendering/decodedtilecache.cpp
 src/application/applicationactionregistry.cpp
 src/application/applicationactionruntime.cpp
 src/application/applicationmenupresentationruntime.cpp
+src/application/applicationmenupresentationstate.cpp
 src/application/applicationruntimebridge.cpp
 src/application/applicationshortcutruntime.cpp
 src/application/applicationruntime.cpp
