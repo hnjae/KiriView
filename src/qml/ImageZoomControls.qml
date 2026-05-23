@@ -5,7 +5,6 @@ import QtQuick
 import QtQuick.Controls as Controls
 import QtQuick.Layouts
 import io.github.hnjae.kiriview
-import org.kde.ki18n
 import org.kde.kirigami as Kirigami
 
 RowLayout {
@@ -22,7 +21,6 @@ RowLayout {
     property int readOnlyPercent: 0
     property real pendingZoomStepCount: 0
     readonly property int controlSpacing: compact ? Math.max(1, Math.round(Kirigami.Units.smallSpacing / 2)) : Kirigami.Units.smallSpacing
-    readonly property string readOnlyDisplayText: readOnlyPercentKnown ? KI18n.i18nc("@label:zoom percentage", "%1%", readOnlyPercent) : KI18n.i18nc("@label:unknown zoom percentage", "--%")
     readonly property bool textInputActive: textInputFocused()
 
     signal editingCompleted(bool returnViewerFocus)
@@ -56,7 +54,18 @@ RowLayout {
     Controls.SpinBox {
         id: zoomSpinBox
 
+        objectName: "zoomSpinBox"
+
         property bool completingEdit: false
+        readonly property int zoomDisplayWidth: 7
+        readonly property real zoomDisplayEpsilon: 0.001
+        readonly property int zoomKiloThresholdPercent: 10000
+        readonly property int zoomOverflowThresholdPercent: 1000000
+        readonly property bool zoomValueAvailable: root.readOnlyDisplayMode || root.imageReady
+        readonly property bool zoomValueKnown: root.readOnlyDisplayMode ? root.readOnlyPercentKnown : root.imageReady
+        readonly property real rawZoomPercent: root.readOnlyDisplayMode ? root.readOnlyPercent : root.imageDocument.zoomPercent
+        readonly property string formattedDisplayText: formattedZoomText(rawZoomPercent, zoomValueAvailable, zoomValueKnown)
+        readonly property string editableDisplayText: plainZoomText(value)
 
         editable: !root.readOnlyDisplayMode
         enabled: !root.readOnlyDisplayMode && root.imageReady
@@ -77,7 +86,7 @@ RowLayout {
         wheelEnabled: false
 
         textFromValue: function (value, locale) {
-            return Number(value).toLocaleString(locale, "f", 0) + "%";
+            return plainZoomText(value);
         }
 
         valueFromText: function (text, locale) {
@@ -94,9 +103,11 @@ RowLayout {
         contentItem: TextInput {
             id: zoomTextInput
 
+            objectName: "zoomTextInput"
+
             color: zoomSpinBox.palette.text
-            font: zoomSpinBox.font
-            horizontalAlignment: Text.AlignHCenter
+            font: Kirigami.Theme.fixedWidthFont
+            horizontalAlignment: Text.AlignRight
             inputMethodHints: Qt.ImhFormattedNumbersOnly
             readOnly: root.readOnlyDisplayMode || !zoomSpinBox.editable
             selectByMouse: true
@@ -107,9 +118,59 @@ RowLayout {
             Binding {
                 property: "text"
                 target: zoomTextInput
-                value: root.readOnlyDisplayMode ? root.readOnlyDisplayText : zoomSpinBox.displayText
+                value: zoomSpinBox.formattedDisplayText
                 when: root.readOnlyDisplayMode || !zoomTextInput.activeFocus
             }
+
+            onActiveFocusChanged: {
+                if (activeFocus && !root.readOnlyDisplayMode && zoomSpinBox.enabled) {
+                    text = zoomSpinBox.editableDisplayText;
+                }
+            }
+        }
+
+        function formattedZoomText(rawPercent, valueAvailable, valueKnown) {
+            if (!valueAvailable) {
+                return paddedZoomText("- %");
+            }
+
+            const percent = Number(rawPercent);
+            if (!valueKnown || !Number.isFinite(percent)) {
+                return paddedZoomText("? %");
+            }
+
+            if (percent < zoomKiloThresholdPercent) {
+                const roundedPercent = Math.min(zoomKiloThresholdPercent - 1, Math.max(0, Math.round(percent)));
+                return paddedZoomText(roundedPercent.toString() + " %");
+            }
+
+            if (percent >= zoomOverflowThresholdPercent) {
+                return paddedZoomText("999k+ %");
+            }
+
+            const nearestKilo = Math.round(percent / 1000);
+            const nearestKiloPercent = nearestKilo * 1000;
+            if (Math.abs(percent - nearestKiloPercent) < zoomDisplayEpsilon) {
+                if (nearestKilo >= 1000) {
+                    return paddedZoomText("999k+ %");
+                }
+                return paddedZoomText(nearestKilo.toString() + "k %");
+            }
+
+            const kilo = Math.min(999, Math.floor(percent / 1000));
+            return paddedZoomText(kilo.toString() + "k+ %");
+        }
+
+        function paddedZoomText(text) {
+            let paddedText = text.toString();
+            while (paddedText.length < zoomDisplayWidth) {
+                paddedText = " " + paddedText;
+            }
+            return paddedText;
+        }
+
+        function plainZoomText(value) {
+            return Number(value).toString() + " %";
         }
 
         function cancelEditing(returnViewerFocus) {
@@ -170,7 +231,7 @@ RowLayout {
         }
 
         function restoreZoomText() {
-            zoomTextInput.text = zoomSpinBox.displayText;
+            zoomTextInput.text = zoomSpinBox.formattedDisplayText;
         }
 
         function zoomText() {
