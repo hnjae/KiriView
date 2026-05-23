@@ -97,7 +97,7 @@ void DocumentSessionState::setFileDeletionInProgress(bool inProgress)
     }
 
     publish({ DocumentSessionChange::FileDeletionInProgress,
-        DocumentSessionChange::FileDeletionAvailability });
+        DocumentSessionChange::FileDeletionAvailability, DocumentSessionChange::ActiveNavigation });
 }
 
 void DocumentSessionState::setMediaNavigationState(MediaNavigationBoundaryState state, bool known)

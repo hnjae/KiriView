@@ -324,6 +324,11 @@ Item {
         anchors.right: parent.right
         anchors.top: parent.top
         actions: toolbarActions
+        activeNavigationAvailable: imageDocument.imageCount > 0
+        activeNavigationCount: imageDocument.imageCount
+        activeNavigationCurrentNumber: imageDocument.currentPageNumber
+        activeNavigationEditable: imageDocument.imageCount > 0
+        activeNavigationKnown: imageDocument.currentPageNumber > 0 && imageDocument.imageCount > 0
         applicationMenuActions: [openMenuAction, separatorAction, quitMenuAction]
         compact: true
         imageDocument: imageDocument

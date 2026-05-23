@@ -4,35 +4,33 @@
 import QtQuick
 import QtQuick.Controls as Controls
 import QtQuick.Layouts
-import io.github.hnjae.kiriview
 import org.kde.ki18n
 import org.kde.kirigami as Kirigami
 
 RowLayout {
     id: root
 
-    required property KiriImageDocument imageDocument
-    required property bool imageReady
+    required property bool activeNavigationAvailable
+    required property int activeNavigationCount
+    required property int activeNavigationCurrentNumber
+    required property bool activeNavigationEditable
+    required property bool activeNavigationKnown
+    required property var openActiveNavigationAtNumber
     required property var actions
     property bool compact: false
-    property bool fileDeletionInProgress: imageDocument.fileDeletionInProgress
-    property bool mediaNavigationActive: false
-    property bool mediaNavigationKnown: false
-    property int currentMediaNumber: 0
-    property int mediaCount: 0
     readonly property int controlSpacing: compact ? Math.max(1, Math.round(Kirigami.Units.smallSpacing / 2)) : Kirigami.Units.smallSpacing
-    readonly property int currentItemNumber: mediaNavigationActive ? currentMediaNumber : imageDocument.currentPageNumber
-    readonly property int itemCount: mediaNavigationActive ? mediaCount : imageDocument.imageCount
+    readonly property int currentItemNumber: activeNavigationKnown ? activeNavigationCurrentNumber : 0
+    readonly property int itemCount: activeNavigationKnown ? activeNavigationCount : 0
+    property int pageNumberDigitCapacity: 1
     property bool rightToLeftReadingActive: false
     readonly property var leftNavigationAction: root.rightToLeftReadingActive ? root.actions.nextImageAction : root.actions.previousImageAction
     readonly property var rightNavigationAction: root.rightToLeftReadingActive ? root.actions.previousImageAction : root.actions.nextImageAction
     readonly property bool textInputActive: pageNumberField.activeFocus
-    readonly property bool pageNavigationAvailable: itemCount > 0 && !fileDeletionInProgress && (!mediaNavigationActive || mediaNavigationKnown)
+    readonly property bool pageNavigationAvailable: activeNavigationAvailable && activeNavigationKnown
 
     signal editingCompleted(bool returnViewerFocus)
-    signal mediaNumberRequested(int mediaNumber)
 
-    enabled: pageNavigationAvailable
+    enabled: pageNavigationAvailable && activeNavigationEditable
     spacing: controlSpacing
 
     function cancelEditing(returnViewerFocus) {
@@ -90,10 +88,12 @@ RowLayout {
     Controls.TextField {
         id: pageNumberField
 
+        objectName: "pageNumberField"
+
         property bool completingEdit: false
 
         Layout.preferredWidth: Math.max(Kirigami.Units.gridUnit * 3, pageNumberMetrics.advanceWidth + leftPadding + rightPadding + root.controlSpacing * 2)
-        enabled: root.pageNavigationAvailable
+        enabled: root.pageNavigationAvailable && root.activeNavigationEditable
         horizontalAlignment: Text.AlignHCenter
         inputMethodHints: Qt.ImhDigitsOnly
         selectByMouse: true
@@ -135,7 +135,7 @@ RowLayout {
         }
 
         function commitPageNumber() {
-            if (!enabled) {
+            if (!root.pageNavigationAvailable || !root.activeNavigationEditable) {
                 resetPageNumberText();
                 return;
             }
@@ -149,10 +149,8 @@ RowLayout {
             const pageNumber = Number(trimmedText);
             if (Number.isFinite(pageNumber)) {
                 const targetNumber = clampedPageNumber(pageNumber);
-                if (root.mediaNavigationActive) {
-                    root.mediaNumberRequested(targetNumber);
-                } else {
-                    root.imageDocument.openImageAtPage(targetNumber);
+                if (typeof root.openActiveNavigationAtNumber === "function") {
+                    root.openActiveNavigationAtNumber(targetNumber);
                 }
             }
             resetPageNumberText();
@@ -187,7 +185,7 @@ RowLayout {
         id: pageNumberMetrics
 
         font: pageNumberField.font
-        text: Array(Math.max(1, Math.max(1, root.itemCount).toString().length) + 1).join("8")
+        text: Array(Math.max(1, root.pageNumberDigitCapacity) + 1).join("8")
     }
 
     Controls.Label {
@@ -196,8 +194,21 @@ RowLayout {
     }
 
     Controls.Label {
+        id: pageCountLabel
+
+        objectName: "pageCountLabel"
+
+        Layout.preferredWidth: pageCountMetrics.advanceWidth
+        horizontalAlignment: Text.AlignLeft
         text: root.itemCount.toString()
         textFormat: Text.PlainText
+    }
+
+    TextMetrics {
+        id: pageCountMetrics
+
+        font: pageCountLabel.font
+        text: Array(Math.max(1, root.pageNumberDigitCapacity) + 1).join("8")
     }
 
     Controls.ToolButton {
@@ -229,18 +240,23 @@ RowLayout {
     }
 
     onItemCountChanged: {
+        if (root.activeNavigationKnown && root.itemCount > 0) {
+            root.pageNumberDigitCapacity = Math.max(root.pageNumberDigitCapacity, root.itemCount.toString().length);
+        }
         if (!pageNumberField.activeFocus) {
             pageNumberField.resetPageNumberText();
         }
     }
 
-    Connections {
-        target: root.imageDocument
+    onActiveNavigationKnownChanged: {
+        if (!pageNumberField.activeFocus) {
+            pageNumberField.resetPageNumberText();
+        }
+    }
 
-        function onPageNavigationChanged() {
-            if (!pageNumberField.activeFocus) {
-                pageNumberField.resetPageNumberText();
-            }
+    onPageNavigationAvailableChanged: {
+        if (!pageNumberField.activeFocus) {
+            pageNumberField.resetPageNumberText();
         }
     }
 }

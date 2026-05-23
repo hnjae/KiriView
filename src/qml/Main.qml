@@ -171,6 +171,8 @@ StatefulApp.StatefulWindow {
     KiriDocumentSession {
         id: documentSession
 
+        objectName: "documentSession"
+
         Component.onCompleted: {
             if (root.initialSourceUrl.toString().length > 0) {
                 sourceUrl = root.initialSourceUrl;
@@ -425,19 +427,22 @@ StatefulApp.StatefulWindow {
             objectName: "mainImageToolBar"
 
             actions: imageActions
+            activeNavigationAvailable: documentSession.activeNavigationAvailable
+            activeNavigationCount: documentSession.activeNavigationCount
+            activeNavigationCurrentNumber: documentSession.activeNavigationCurrentNumber
+            activeNavigationEditable: documentSession.activeNavigationEditable
+            activeNavigationKnown: documentSession.activeNavigationKnown
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: parent.top
-            currentMediaNumber: documentSession.currentMediaNumber
             enabled: visible
-            fileDeletionInProgress: documentSession.fileDeletionInProgress
             height: implicitHeight
             imageDocument: page.imageDocument
             imageReady: page.imageReady
             applicationMenuActions: imageActions.applicationMenuActions
-            mediaCount: documentSession.mediaCount
-            mediaNavigationActive: documentSession.mediaNavigationActive
-            mediaNavigationKnown: documentSession.mediaNavigationKnown
+            openActiveNavigationAtNumber: function (number) {
+                documentSession.openActiveNavigationAtNumber(number);
+            }
             rightToLeftReadingActive: imageActions.rightToLeftReadingActive
             showApplicationMenuActions: !root.menuBarMode && !root.fullscreen
             transientOverlay: root.fullscreen
@@ -449,9 +454,6 @@ StatefulApp.StatefulWindow {
             zoomPercentKnown: documentSession.activeZoomPercentKnown
             z: 20
 
-            onMediaNumberRequested: function (mediaNumber) {
-                documentSession.openMediaAtNumber(mediaNumber);
-            }
             onTextInputFocusReturnRequested: root.focusActiveViewport()
 
             onInteractionActiveChanged: {

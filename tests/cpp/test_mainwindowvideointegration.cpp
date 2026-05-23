@@ -16,6 +16,8 @@ private Q_SLOTS:
     void imageViewportUsesExternallyOwnedImageDocument();
     void mainWindowUsesSessionModeAndMediaDispatch();
     void videoModeExposesReadOnlyZoomReadout();
+    void toolbarPageNavigationUsesSessionActiveProjection();
+    void pageNavigationComponentDoesNotChooseBetweenRawNavigationSources();
 };
 
 namespace {
@@ -80,24 +82,92 @@ void TestMainWindowVideoIntegration::mainWindowUsesSessionModeAndMediaDispatch()
     QVERIFY(mainQml.contains(QStringLiteral("active: page.imageMode")));
     QVERIFY(mainQml.contains(QStringLiteral("sourceComponent: ImageShortcuts")));
     QVERIFY(mainQml.contains(QStringLiteral("active: page.imageMode || page.videoMode")));
-    QVERIFY(
-        mainQml.contains(QStringLiteral("currentMediaNumber: documentSession.currentMediaNumber")));
-    QVERIFY(mainQml.contains(QStringLiteral("mediaCount: documentSession.mediaCount")));
+    QVERIFY(mainQml.contains(QStringLiteral(
+        "activeNavigationCurrentNumber: documentSession.activeNavigationCurrentNumber")));
     QVERIFY(mainQml.contains(
-        QStringLiteral("mediaNavigationKnown: documentSession.mediaNavigationKnown")));
-    QVERIFY(mainQml.contains(QStringLiteral("documentSession.openMediaAtNumber(mediaNumber)")));
+        QStringLiteral("activeNavigationCount: documentSession.activeNavigationCount")));
+    QVERIFY(mainQml.contains(
+        QStringLiteral("activeNavigationKnown: documentSession.activeNavigationKnown")));
+    QVERIFY(
+        mainQml.contains(QStringLiteral("documentSession.openActiveNavigationAtNumber(number)")));
     QVERIFY(mainQml.contains(QStringLiteral("videoMode: page.videoMode")));
     QVERIFY(!mainQml.contains(QStringLiteral("showVideoZoomReadout")));
     QVERIFY(!mainQml.contains(QStringLiteral("showImageControls")));
     QVERIFY(!mainQml.contains(QStringLiteral("enabled: !page.imageMode")));
-    QVERIFY(imageActionsQml.contains(QStringLiteral("root.documentSession.mediaNavigationActive")));
-    QVERIFY(imageActionsQml.contains(QStringLiteral("root.documentSession.openPreviousMedia()")));
-    QVERIFY(imageActionsQml.contains(QStringLiteral("root.documentSession.openNextMedia()")));
-    QVERIFY(imageActionsQml.contains(QStringLiteral("root.documentSession.openMediaAtNumber")));
+    QVERIFY(
+        imageActionsQml.contains(QStringLiteral("root.documentSession.activeNavigationAvailable")));
+    QVERIFY(imageActionsQml.contains(
+        QStringLiteral("root.documentSession.openPreviousActiveNavigation()")));
+    QVERIFY(imageActionsQml.contains(
+        QStringLiteral("root.documentSession.openNextActiveNavigation()")));
+    QVERIFY(imageActionsQml.contains(
+        QStringLiteral("root.documentSession.openFirstActiveNavigation()")));
+    QVERIFY(imageActionsQml.contains(
+        QStringLiteral("root.documentSession.openLastActiveNavigation()")));
     QVERIFY(imageActionsQml.contains(QStringLiteral("root.documentSession.deleteDisplayedFile")));
     QVERIFY(!mainQml.contains(QStringLiteral("videoApplicationMenuHost")));
     QVERIFY(!mainQml.contains(QStringLiteral("ordinaryDirectMediaScopeActive")));
     QVERIFY(!imageActionsQml.contains(QStringLiteral("ordinaryDirectMediaScopeActive")));
+}
+
+void TestMainWindowVideoIntegration::toolbarPageNavigationUsesSessionActiveProjection()
+{
+    const QString mainQml = readSource(QStringLiteral("src/qml/Main.qml"));
+    const QString imageToolBarQml = readSource(QStringLiteral("src/qml/ImageToolBar.qml"));
+    QVERIFY2(!mainQml.isEmpty(), "Main.qml should be readable");
+    QVERIFY2(!imageToolBarQml.isEmpty(), "ImageToolBar.qml should be readable");
+
+    QVERIFY(mainQml.contains(
+        QStringLiteral("activeNavigationAvailable: documentSession.activeNavigationAvailable")));
+    QVERIFY(mainQml.contains(
+        QStringLiteral("activeNavigationKnown: documentSession.activeNavigationKnown")));
+    QVERIFY(mainQml.contains(
+        QStringLiteral("activeNavigationEditable: documentSession.activeNavigationEditable")));
+    QVERIFY(mainQml.contains(QStringLiteral(
+        "activeNavigationCurrentNumber: documentSession.activeNavigationCurrentNumber")));
+    QVERIFY(mainQml.contains(
+        QStringLiteral("activeNavigationCount: documentSession.activeNavigationCount")));
+    QVERIFY(
+        mainQml.contains(QStringLiteral("documentSession.openActiveNavigationAtNumber(number)")));
+
+    QVERIFY(!mainQml.contains(
+        QStringLiteral("currentMediaNumber: documentSession.currentMediaNumber")));
+    QVERIFY(!mainQml.contains(QStringLiteral("mediaCount: documentSession.mediaCount")));
+    QVERIFY(!mainQml.contains(
+        QStringLiteral("mediaNavigationActive: documentSession.mediaNavigationActive")));
+    QVERIFY(!mainQml.contains(
+        QStringLiteral("mediaNavigationKnown: documentSession.mediaNavigationKnown")));
+
+    QVERIFY(!imageToolBarQml.contains(QStringLiteral("property bool mediaNavigationActive")));
+    QVERIFY(!imageToolBarQml.contains(QStringLiteral("property bool mediaNavigationKnown")));
+    QVERIFY(!imageToolBarQml.contains(QStringLiteral("property int currentMediaNumber")));
+    QVERIFY(!imageToolBarQml.contains(QStringLiteral("property int mediaCount")));
+    QVERIFY(!imageToolBarQml.contains(QStringLiteral("ImageActionAvailability")));
+    QVERIFY(imageToolBarQml.contains(
+        QStringLiteral("activeNavigationCurrentNumber: root.activeNavigationCurrentNumber")));
+    QVERIFY(imageToolBarQml.contains(
+        QStringLiteral("activeNavigationCount: root.activeNavigationCount")));
+    QVERIFY(imageToolBarQml.contains(
+        QStringLiteral("openActiveNavigationAtNumber: root.openActiveNavigationAtNumber")));
+}
+
+void TestMainWindowVideoIntegration::
+    pageNavigationComponentDoesNotChooseBetweenRawNavigationSources()
+{
+    const QString pageNavigationQml = readSource(QStringLiteral("src/qml/ImagePageNavigation.qml"));
+    QVERIFY2(!pageNavigationQml.isEmpty(), "ImagePageNavigation.qml should be readable");
+
+    QVERIFY(!pageNavigationQml.contains(QStringLiteral("required property KiriImageDocument")));
+    QVERIFY(!pageNavigationQml.contains(QStringLiteral("mediaNavigationActive")));
+    QVERIFY(!pageNavigationQml.contains(QStringLiteral("currentMediaNumber")));
+    QVERIFY(!pageNavigationQml.contains(QStringLiteral("mediaCount")));
+    QVERIFY(!pageNavigationQml.contains(QStringLiteral("imageDocument.currentPageNumber")));
+    QVERIFY(!pageNavigationQml.contains(QStringLiteral("imageDocument.imageCount")));
+    QVERIFY(!pageNavigationQml.contains(QStringLiteral("openImageAtPage")));
+    QVERIFY(pageNavigationQml.contains(QStringLiteral("activeNavigationCurrentNumber")));
+    QVERIFY(pageNavigationQml.contains(QStringLiteral("activeNavigationCount")));
+    QVERIFY(pageNavigationQml.contains(QStringLiteral("activeNavigationEditable")));
+    QVERIFY(pageNavigationQml.contains(QStringLiteral("openActiveNavigationAtNumber")));
 }
 
 void TestMainWindowVideoIntegration::videoModeExposesReadOnlyZoomReadout()

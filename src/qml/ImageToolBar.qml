@@ -30,11 +30,12 @@ Controls.ToolBar {
     property bool zoomPercentKnown: imageReady
     property real zoomPercent: imageDocument.zoomPercent
     property bool zoomEditable: !videoMode && imageReady
-    property bool fileDeletionInProgress: imageDocument.fileDeletionInProgress
-    property bool mediaNavigationActive: false
-    property bool mediaNavigationKnown: false
-    property int currentMediaNumber: 0
-    property int mediaCount: 0
+    property bool activeNavigationAvailable: false
+    property int activeNavigationCount: 0
+    property int activeNavigationCurrentNumber: 0
+    property bool activeNavigationEditable: false
+    property bool activeNavigationKnown: false
+    property var openActiveNavigationAtNumber: function (number) {}
     property bool rightToLeftReadingActive: false
     property bool pageNavigationInputFocused: false
     property bool zoomInputFocused: false
@@ -49,7 +50,6 @@ Controls.ToolBar {
     readonly property var toolbarControls: imageToolbarControls
     readonly property var toolbarActions: showApplicationMenuActions ? toolbarControls.concat([applicationMenuAction]) : toolbarControls
 
-    signal mediaNumberRequested(int mediaNumber)
     signal pageNumberResetRequested
     signal textInputCancelRequested(bool returnViewerFocus)
     signal textInputCommitRequested(bool returnViewerFocus)
@@ -355,14 +355,13 @@ Controls.ToolBar {
             Layout.alignment: Qt.AlignLeft | Qt.AlignVCenter
 
             actions: root.actions
+            activeNavigationAvailable: root.activeNavigationAvailable
+            activeNavigationCount: root.activeNavigationCount
+            activeNavigationCurrentNumber: root.activeNavigationCurrentNumber
+            activeNavigationEditable: root.activeNavigationEditable
+            activeNavigationKnown: root.activeNavigationKnown
             compact: root.compact
-            currentMediaNumber: root.currentMediaNumber
-            fileDeletionInProgress: root.fileDeletionInProgress
-            imageDocument: root.imageDocument
-            imageReady: root.imageReady
-            mediaCount: root.mediaCount
-            mediaNavigationActive: root.mediaNavigationActive
-            mediaNavigationKnown: root.mediaNavigationKnown
+            openActiveNavigationAtNumber: root.openActiveNavigationAtNumber
             rightToLeftReadingActive: root.rightToLeftReadingActive
 
             Component.onDestruction: {
@@ -371,9 +370,6 @@ Controls.ToolBar {
                 }
             }
             onTextInputActiveChanged: root.pageNavigationInputFocused = textInputActive
-            onMediaNumberRequested: function (mediaNumber) {
-                root.mediaNumberRequested(mediaNumber);
-            }
 
             onEditingCompleted: function (returnViewerFocus) {
                 if (returnViewerFocus) {

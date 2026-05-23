@@ -69,12 +69,12 @@ Item {
     readonly property bool videoMode: root.documentSession.documentKind === KiriDocumentSession.Video
     readonly property bool mediaNavigationActive: root.documentSession.mediaNavigationActive
     readonly property bool documentDeletionAvailable: root.documentSession.displayedFileDeletionAvailable && root.actionAvailability.helpShortcutsEnabled
-    readonly property bool mediaPageActionsAvailable: root.mediaNavigationActive && !root.documentSession.fileDeletionInProgress && root.actionAvailability.helpShortcutsEnabled
-    readonly property bool previousPageActionAvailable: root.mediaNavigationActive ? root.mediaPageActionsAvailable : root.actionAvailability.canUsePageActions
-    readonly property bool nextPageActionAvailable: root.mediaNavigationActive ? root.mediaPageActionsAvailable : root.actionAvailability.canUsePageActions
-    readonly property bool previousPageProxyAvailable: root.mediaNavigationActive ? root.mediaPageActionsAvailable && root.documentSession.canOpenPreviousMedia : root.actionAvailability.canUsePageActions && root.actionAvailability.canOpenPreviousImage
-    readonly property bool nextPageProxyAvailable: root.mediaNavigationActive ? root.mediaPageActionsAvailable && root.documentSession.canOpenNextMedia : root.actionAvailability.canUsePageActions && root.actionAvailability.canOpenNextImage
-    readonly property bool firstLastPageActionAvailable: root.mediaNavigationActive ? root.mediaPageActionsAvailable && root.documentSession.mediaNavigationKnown && root.documentSession.mediaCount > 0 : root.actionAvailability.canUsePageActions
+    readonly property bool activeNavigationActionsAvailable: root.documentSession.activeNavigationAvailable && root.documentSession.activeNavigationKnown && !root.documentSession.fileDeletionInProgress && root.actionAvailability.helpShortcutsEnabled
+    readonly property bool previousPageActionAvailable: root.activeNavigationActionsAvailable
+    readonly property bool nextPageActionAvailable: root.activeNavigationActionsAvailable
+    readonly property bool previousPageProxyAvailable: root.activeNavigationActionsAvailable && root.documentSession.canOpenPreviousActiveNavigation
+    readonly property bool nextPageProxyAvailable: root.activeNavigationActionsAvailable && root.documentSession.canOpenNextActiveNavigation
+    readonly property bool firstLastPageActionAvailable: root.activeNavigationActionsAvailable && root.documentSession.activeNavigationCount > 0
     readonly property bool rightToLeftReadingActive: root.actionAvailability.rightToLeftReadingActive
     readonly property var applicationMenuNavigationActions: root.rightToLeftReadingActive ? [nextContainerManagedAction.menuProxy, previousContainerManagedAction.menuProxy] : [previousContainerManagedAction.menuProxy, nextContainerManagedAction.menuProxy]
     readonly property var applicationMenuDocumentActions: root.imageMode || root.videoMode ? [applicationMenuNavigationSeparator, previousImageManagedAction.menuProxy, nextImageManagedAction.menuProxy, firstImageManagedAction.menuProxy, lastImageManagedAction.menuProxy] : []
@@ -86,64 +86,38 @@ Item {
     signal shortcutHelpRequested
     signal toggleFullScreenRequested
 
-    function openFirstImage() {
-        if (root.mediaNavigationActive) {
-            root.documentSession.openMediaAtNumber(1);
-            return;
-        }
+    function firstBoundaryText() {
+        return root.mediaNavigationActive ? KI18n.i18nc("@info:status", "First media item") : KI18n.i18nc("@info:status", "First image");
+    }
 
-        if (root.imageDocument.imageCount > 0) {
-            root.imageDocument.openImageAtPage(1);
-        }
+    function lastBoundaryText() {
+        return root.mediaNavigationActive ? KI18n.i18nc("@info:status", "Last media item") : KI18n.i18nc("@info:status", "Last image");
+    }
+
+    function openFirstImage() {
+        root.documentSession.openFirstActiveNavigation();
     }
 
     function openLastImage() {
-        if (root.mediaNavigationActive) {
-            root.documentSession.openMediaAtNumber(root.documentSession.mediaCount);
-            return;
-        }
-
-        if (root.imageDocument.imageCount > 0) {
-            root.imageDocument.openImageAtPage(root.imageDocument.imageCount);
-        }
+        root.documentSession.openLastActiveNavigation();
     }
 
     function openNextImage() {
-        if (root.mediaNavigationActive) {
-            if (root.documentSession.atKnownLastMedia) {
-                root.imageBoundaryReached(KI18n.i18nc("@info:status", "Last media item"));
-                return;
-            }
-
-            root.documentSession.openNextMedia();
+        if (root.documentSession.atKnownLastActiveNavigation) {
+            root.imageBoundaryReached(lastBoundaryText());
             return;
         }
 
-        if (root.actionAvailability.atKnownLastImage) {
-            root.imageBoundaryReached(KI18n.i18nc("@info:status", "Last image"));
-            return;
-        }
-
-        root.imageDocument.openNextImage();
+        root.documentSession.openNextActiveNavigation();
     }
 
     function openPreviousImage() {
-        if (root.mediaNavigationActive) {
-            if (root.documentSession.atKnownFirstMedia) {
-                root.imageBoundaryReached(KI18n.i18nc("@info:status", "First media item"));
-                return;
-            }
-
-            root.documentSession.openPreviousMedia();
+        if (root.documentSession.atKnownFirstActiveNavigation) {
+            root.imageBoundaryReached(firstBoundaryText());
             return;
         }
 
-        if (root.actionAvailability.atKnownFirstImage) {
-            root.imageBoundaryReached(KI18n.i18nc("@info:status", "First image"));
-            return;
-        }
-
-        root.imageDocument.openPreviousImage();
+        root.documentSession.openPreviousActiveNavigation();
     }
 
     property Kirigami.Action applicationMenuFileSeparator: Kirigami.Action {

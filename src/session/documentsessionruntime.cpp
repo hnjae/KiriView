@@ -878,16 +878,26 @@ DocumentSessionRuntime::activeNavigationSourceKind() const
 
 ActiveNavigationSnapshot DocumentSessionRuntime::activeNavigationSnapshot() const
 {
+    ActiveNavigationSnapshot snapshot;
     switch (activeNavigationSourceKind()) {
     case ActiveNavigationSourceKind::OrdinaryDirectMedia:
-        return mediaActiveNavigationSnapshot();
+        snapshot = mediaActiveNavigationSnapshot();
+        break;
     case ActiveNavigationSourceKind::ImageDocumentPages:
-        return imageDocumentActiveNavigationSnapshot();
+        snapshot = imageDocumentActiveNavigationSnapshot();
+        break;
     case ActiveNavigationSourceKind::None:
-        return unavailableActiveNavigation();
+        snapshot = unavailableActiveNavigation();
+        break;
     }
 
-    return unavailableActiveNavigation();
+    if (m_state.fileDeletionInProgress()) {
+        snapshot.editable = false;
+        snapshot.canOpenPrevious = false;
+        snapshot.canOpenNext = false;
+    }
+
+    return snapshot;
 }
 
 ActiveNavigationSnapshot DocumentSessionRuntime::mediaActiveNavigationSnapshot() const

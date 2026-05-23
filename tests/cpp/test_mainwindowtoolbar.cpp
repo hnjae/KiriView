@@ -14,12 +14,15 @@
 
 #include <KLocalizedQmlContext>
 #include <QDir>
+#include <QFile>
+#include <QImage>
 #include <QObject>
 #include <QQmlApplicationEngine>
 #include <QQuickItem>
 #include <QQuickStyle>
 #include <QQuickWindow>
 #include <QRegularExpression>
+#include <QTemporaryDir>
 #include <QTest>
 #include <QUrl>
 #include <QtQml/qqml.h>
@@ -33,6 +36,8 @@ private Q_SLOTS:
     void initTestCase();
     void init();
     void startupCreatesOneVisibleToolbarWithDisabledMediaControls();
+    void directImageShowsMediaPositionAfterSiblingListing();
+    void directoryImageDocumentShowsPagePosition();
     void fullscreenReusesSingleToolbarAndHidesApplicationMenuButton();
 };
 
@@ -111,6 +116,68 @@ QQuickItem *findQuickItem(QObject *root, const QString &objectName)
     return root->findChild<QQuickItem *>(objectName, Qt::FindChildrenRecursively);
 }
 
+KiriDocumentSession *findDocumentSession(QObject *root)
+{
+    return root->findChild<KiriDocumentSession *>(
+        QStringLiteral("documentSession"), Qt::FindChildrenRecursively);
+}
+
+bool writeTestPng(const QString &path)
+{
+    QImage image(QSize(2, 2), QImage::Format_RGBA8888);
+    image.fill(Qt::red);
+    return image.save(path, "PNG");
+}
+
+bool writeEmptyFile(const QString &path)
+{
+    QFile file(path);
+    return file.open(QIODevice::WriteOnly);
+}
+
+std::unique_ptr<QTemporaryDir> createMediaDirectory(
+    QString *imageSourcePath, QString *videoSourcePath, QString *errorString)
+{
+    auto directory = std::make_unique<QTemporaryDir>();
+    if (!directory->isValid()) {
+        *errorString = QStringLiteral("temporary media directory was not created");
+        return nullptr;
+    }
+
+    const QString firstImage = directory->filePath(QStringLiteral("01.png"));
+    const QString secondVideo = directory->filePath(QStringLiteral("02.mp4"));
+    const QString thirdImage = directory->filePath(QStringLiteral("03.png"));
+    if (!writeTestPng(firstImage) || !writeEmptyFile(secondVideo) || !writeTestPng(thirdImage)) {
+        *errorString = QStringLiteral("failed to create test media files");
+        return nullptr;
+    }
+
+    *imageSourcePath = thirdImage;
+    *videoSourcePath = secondVideo;
+    return directory;
+}
+
+std::unique_ptr<QTemporaryDir> createDirectoryDocument(QString *sourcePath, QString *errorString)
+{
+    auto directory = std::make_unique<QTemporaryDir>();
+    if (!directory->isValid()) {
+        *errorString = QStringLiteral("temporary image document directory was not created");
+        return nullptr;
+    }
+
+    for (int index = 1; index <= 3; ++index) {
+        const QString path
+            = directory->filePath(QStringLiteral("%1.png").arg(index, 2, 10, QLatin1Char('0')));
+        if (!writeTestPng(path)) {
+            *errorString = QStringLiteral("failed to write test image %1").arg(path);
+            return nullptr;
+        }
+    }
+
+    *sourcePath = directory->path();
+    return directory;
+}
+
 MainWindowFixture createMainWindowFixture()
 {
     MainWindowFixture fixture;
@@ -139,6 +206,32 @@ MainWindowFixture createMainWindowFixture()
     }
 
     return fixture;
+}
+
+void openSourceUrl(MainWindowFixture &fixture, const QString &sourcePath)
+{
+    KiriDocumentSession *documentSession = findDocumentSession(fixture.window);
+    QVERIFY(documentSession != nullptr);
+    documentSession->setSourceUrl(QUrl::fromLocalFile(sourcePath));
+}
+
+void compareToolbarPageReadout(
+    MainWindowFixture &fixture, const QString &currentText, const QString &countText, bool enabled)
+{
+    QQuickItem *pageNumberField = findQuickItem(fixture.window, QStringLiteral("pageNumberField"));
+    QQuickItem *pageCountLabel = findQuickItem(fixture.window, QStringLiteral("pageCountLabel"));
+    QQuickItem *leftPageButton
+        = findQuickItem(fixture.window, QStringLiteral("leftPageNavigationButton"));
+    QQuickItem *rightPageButton
+        = findQuickItem(fixture.window, QStringLiteral("rightPageNavigationButton"));
+    QVERIFY(pageNumberField != nullptr);
+    QVERIFY(pageCountLabel != nullptr);
+    QVERIFY(leftPageButton != nullptr);
+    QVERIFY(rightPageButton != nullptr);
+
+    QTRY_COMPARE(pageNumberField->property("text").toString(), currentText);
+    QTRY_COMPARE(pageCountLabel->property("text").toString(), countText);
+    QCOMPARE(pageNumberField->isEnabled(), enabled);
 }
 }
 
@@ -173,6 +266,7 @@ void TestMainWindowToolBar::startupCreatesOneVisibleToolbarWithDisabledMediaCont
     QVERIFY(rightPageButton != nullptr);
     QVERIFY(!leftPageButton->isEnabled());
     QVERIFY(!rightPageButton->isEnabled());
+    compareToolbarPageReadout(fixture, QStringLiteral("0"), QStringLiteral("0"), false);
 
     QQuickItem *zoomSpinBox = findQuickItem(fixture.window, QStringLiteral("zoomSpinBox"));
     QQuickItem *zoomTextInput = findQuickItem(fixture.window, QStringLiteral("zoomTextInput"));
@@ -186,6 +280,39 @@ void TestMainWindowToolBar::startupCreatesOneVisibleToolbarWithDisabledMediaCont
         = visibleItemsByObjectName(fixture.window, QStringLiteral("toolbarApplicationMenuButton"));
     QCOMPARE(visibleApplicationMenuButtons.size(), 1);
     QVERIFY(visibleApplicationMenuButtons.constFirst()->isEnabled());
+}
+
+void TestMainWindowToolBar::directImageShowsMediaPositionAfterSiblingListing()
+{
+    QString imageSourcePath;
+    QString videoSourcePath;
+    QString errorString;
+    std::unique_ptr<QTemporaryDir> mediaDirectory
+        = createMediaDirectory(&imageSourcePath, &videoSourcePath, &errorString);
+    QVERIFY2(mediaDirectory != nullptr, qPrintable(errorString));
+
+    MainWindowFixture fixture = createMainWindowFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+
+    openSourceUrl(fixture, imageSourcePath);
+
+    compareToolbarPageReadout(fixture, QStringLiteral("3"), QStringLiteral("3"), true);
+}
+
+void TestMainWindowToolBar::directoryImageDocumentShowsPagePosition()
+{
+    QString sourcePath;
+    QString errorString;
+    std::unique_ptr<QTemporaryDir> imageDirectory
+        = createDirectoryDocument(&sourcePath, &errorString);
+    QVERIFY2(imageDirectory != nullptr, qPrintable(errorString));
+
+    MainWindowFixture fixture = createMainWindowFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+
+    openSourceUrl(fixture, sourcePath);
+
+    compareToolbarPageReadout(fixture, QStringLiteral("1"), QStringLiteral("3"), true);
 }
 
 void TestMainWindowToolBar::fullscreenReusesSingleToolbarAndHidesApplicationMenuButton()

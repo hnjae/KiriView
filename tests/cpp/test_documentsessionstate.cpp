@@ -77,9 +77,10 @@ void TestDocumentSessionState::fileDeletionProgressPublishesProgressAndAvailabil
 
     QVERIFY(state.fileDeletionInProgress());
     QCOMPARE(batches.size(), std::size_t(1));
-    QCOMPARE(batches.back().size(), std::size_t(2));
+    QCOMPARE(batches.back().size(), std::size_t(3));
     QCOMPARE(batches.back().at(0), KiriView::DocumentSessionChange::FileDeletionInProgress);
     QCOMPARE(batches.back().at(1), KiriView::DocumentSessionChange::FileDeletionAvailability);
+    QCOMPARE(batches.back().at(2), KiriView::DocumentSessionChange::ActiveNavigation);
 
     state.setFileDeletionInProgress(true);
     QCOMPARE(batches.size(), std::size_t(1));
