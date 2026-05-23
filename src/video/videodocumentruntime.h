@@ -5,64 +5,18 @@
 #define KIRIVIEW_VIDEODOCUMENTRUNTIME_H
 
 #include "video/videodocumentstate.h"
+#include "video/videomediabackend.h"
 #include "video/videosourceloadruntime.h"
 
 #include <QObject>
 #include <QPointer>
 #include <QString>
 #include <QUrl>
-#include <QtGlobal>
 #include <functional>
 #include <memory>
 #include <vector>
 
 namespace KiriView {
-enum class VideoMediaStatus {
-    Null,
-    Loading,
-    Loaded,
-    Stalled,
-    Buffering,
-    Buffered,
-    EndOfMedia,
-    Invalid,
-};
-
-struct VideoMediaBackendCallbacks {
-    std::function<void()> mediaStatusChanged;
-    std::function<void()> errorChanged;
-    std::function<void()> durationChanged;
-    std::function<void()> positionChanged;
-    std::function<void()> playingChanged;
-    std::function<void()> seekableChanged;
-    std::function<void()> hasVideoChanged;
-    std::function<void()> hasAudioChanged;
-    std::function<void()> videoOutputChanged;
-};
-
-class VideoMediaBackend
-{
-public:
-    virtual ~VideoMediaBackend() = default;
-
-    virtual void setCallbacks(VideoMediaBackendCallbacks callbacks) = 0;
-    virtual void setSource(const QUrl &sourceUrl) = 0;
-    virtual void play() = 0;
-    virtual void pause() = 0;
-    virtual void stop() = 0;
-    virtual void setPosition(qint64 position) = 0;
-    virtual void setVideoOutput(QObject *videoOutput) = 0;
-    virtual QObject *videoOutput() const = 0;
-    virtual VideoMediaStatus mediaStatus() const = 0;
-    virtual QString errorString() const = 0;
-    virtual qint64 duration() const = 0;
-    virtual qint64 position() const = 0;
-    virtual bool playing() const = 0;
-    virtual bool seekable() const = 0;
-    virtual bool hasVideo() const = 0;
-    virtual bool hasAudio() const = 0;
-};
-
 class VideoDocumentRuntime final
 {
 public:
@@ -120,8 +74,6 @@ private:
     QPointer<QObject> m_videoOutput;
     QMetaObject::Connection m_videoOutputDestroyedConnection;
 };
-
-std::unique_ptr<VideoMediaBackend> createDefaultVideoMediaBackend(QObject *parent);
 }
 
 #endif
