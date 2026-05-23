@@ -4,7 +4,7 @@
 #include "imageopentransitionapplier.h"
 
 #include "imagedocumentstate.h"
-#include "navigation/imagecontainer.h"
+#include "location/imagedocumentlocation.h"
 
 #include <iterator>
 #include <utility>

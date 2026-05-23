@@ -6,7 +6,7 @@
 #include "document/imagedocumentstate.h"
 #include "document/imageopentransitionapplier.h"
 #include "image_test_support.h"
-#include "navigation/imagecontainer.h"
+#include "location/imagedocumentlocation.h"
 
 #include <QObject>
 #include <QTest>

@@ -4,7 +4,7 @@
 #include "imageopenworkflow.h"
 
 #include "bridge/imageopenworkflowconversion.h"
-#include "navigation/imagecontainer.h"
+#include "location/imagedocumentlocation.h"
 
 namespace {
 KiriView::Bridge::ImageDocumentSourceLoadKind sourceLoadKind(

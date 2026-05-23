@@ -3,7 +3,7 @@
 
 #include "imageloadplan.h"
 
-#include "navigation/imagecontainer.h"
+#include "location/imagedocumentlocation.h"
 
 #include <QUrl>
 #include <optional>

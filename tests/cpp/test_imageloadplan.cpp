@@ -3,7 +3,7 @@
 
 #include "document/imageloadplan.h"
 #include "image_test_support.h"
-#include "navigation/imagecontainer.h"
+#include "location/imagedocumentlocation.h"
 
 #include <QObject>
 #include <QSize>

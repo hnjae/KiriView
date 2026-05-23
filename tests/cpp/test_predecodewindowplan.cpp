@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 #include "candidate_test_support.h"
-#include "navigation/imagecontainer.h"
+#include "location/imagedocumentlocation.h"
 #include "predecode/predecodewindowplan.h"
 
 #include <QObject>

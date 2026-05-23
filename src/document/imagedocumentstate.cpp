@@ -4,7 +4,7 @@
 #include "imagedocumentstate.h"
 
 #include "imagedocumentnotifications.h"
-#include "navigation/imagecontainer.h"
+#include "location/imagedocumentlocation.h"
 
 #include <utility>
 

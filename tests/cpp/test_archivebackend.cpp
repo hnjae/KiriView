@@ -5,7 +5,7 @@
 
 #include "archive/archivebackend_p.h"
 #include "image_test_support.h"
-#include "navigation/imagecontainer.h"
+#include "location/imagedocumentlocation.h"
 
 #include <KTar>
 #include <KZip>

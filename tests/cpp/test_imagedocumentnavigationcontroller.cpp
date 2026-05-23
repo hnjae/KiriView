@@ -5,7 +5,7 @@
 
 #include "document/imagedocumentstate.h"
 #include "image_test_support.h"
-#include "navigation/imagecontainer.h"
+#include "location/imagedocumentlocation.h"
 #include "navigation/imagenavigationservice.h"
 #include "presentation/imagepresentationcontroller.h"
 #include "presentation/imagespreadpresentationcontroller.h"

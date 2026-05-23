@@ -3,7 +3,7 @@
 
 #include "imagecontaineropenplan.h"
 
-#include "imagecontainer.h"
+#include "location/imagedocumentlocation.h"
 
 namespace KiriView {
 bool ImageContainerOpenPlan::shouldLoadCandidates() const { return source.has_value(); }

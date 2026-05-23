@@ -3,7 +3,7 @@
 
 #include "imagecandidatelistsource.h"
 
-#include "imagecontainer.h"
+#include "location/imagedocumentlocation.h"
 #include "location/imageurl.h"
 
 #include <optional>

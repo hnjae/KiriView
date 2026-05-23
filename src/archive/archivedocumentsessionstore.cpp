@@ -6,7 +6,7 @@
 #include "async/imagecallback.h"
 #include "document/imagedocumentsourceloadrequest.h"
 #include "document/imageloadplan.h"
-#include "navigation/imagecontainer.h"
+#include "location/imagedocumentlocation.h"
 
 #include <optional>
 #include <utility>

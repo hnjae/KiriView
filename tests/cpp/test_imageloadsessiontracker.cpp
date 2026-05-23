@@ -4,7 +4,7 @@
 #include "candidate_test_support.h"
 #include "decoding/imagedecoderequest.h"
 #include "document/imageloadsessiontracker.h"
-#include "navigation/imagecontainer.h"
+#include "location/imagedocumentlocation.h"
 
 #include <QObject>
 #include <QSize>

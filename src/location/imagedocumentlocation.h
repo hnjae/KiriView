@@ -1,10 +1,9 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#ifndef KIRIVIEW_IMAGECONTAINER_H
-#define KIRIVIEW_IMAGECONTAINER_H
+#ifndef KIRIVIEW_IMAGEDOCUMENTLOCATION_H
+#define KIRIVIEW_IMAGEDOCUMENTLOCATION_H
 
-#include "imagenavigationtypes.h"
 #include "location/imagelocation.h"
 
 #include <QString>

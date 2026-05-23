@@ -7,8 +7,8 @@
 #include "async/directorylistingjob.h"
 #include "async/imagecallback.h"
 #include "async/imageioworkerjob.h"
+#include "location/imagedocumentlocation.h"
 #include "navigation/imagecandidateitems.h"
-#include "navigation/imagecontainer.h"
 
 #include <KIO/Job>
 #include <KIO/StoredTransferJob>

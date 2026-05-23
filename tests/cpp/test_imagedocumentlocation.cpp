@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "navigation/imagecontainer.h"
+#include "location/imagedocumentlocation.h"
 
 #include <QObject>
 #include <QTemporaryDir>
@@ -62,7 +62,7 @@ void verifyArchiveInteriorRoot(const ArchiveInteriorCase &testCase)
 }
 }
 
-class TestImageContainer : public QObject
+class TestImageDocumentLocation : public QObject
 {
     Q_OBJECT
 
@@ -78,7 +78,7 @@ private Q_SLOTS:
     void explicitKdeArchiveUrlImagesDoNotResolveToZoomScopes();
 };
 
-void TestImageContainer::comicBookArchiveRootUrlsUseZipScheme()
+void TestImageDocumentLocation::comicBookArchiveRootUrlsUseZipScheme()
 {
     const QUrl archiveUrl = QUrl::fromLocalFile(QStringLiteral("/books/book.cbz"));
     const std::optional<QUrl> archiveRootUrl = KiriView::comicBookArchiveRootUrl(archiveUrl);
@@ -88,7 +88,7 @@ void TestImageContainer::comicBookArchiveRootUrlsUseZipScheme()
     QCOMPARE(archiveRootUrl->path(), QStringLiteral("/books/book.cbz/"));
 }
 
-void TestImageContainer::comicBookArchiveRootUrlsUseFormatSpecificKioSchemes()
+void TestImageDocumentLocation::comicBookArchiveRootUrlsUseFormatSpecificKioSchemes()
 {
     const std::optional<QUrl> cbtRootUrl
         = KiriView::comicBookArchiveRootUrl(QUrl::fromLocalFile(QStringLiteral("/books/book.cbt")));
@@ -115,7 +115,7 @@ void TestImageContainer::comicBookArchiveRootUrlsUseFormatSpecificKioSchemes()
             .has_value());
 }
 
-void TestImageContainer::directArchiveRootUrlsUseFormatSpecificKioSchemes()
+void TestImageDocumentLocation::directArchiveRootUrlsUseFormatSpecificKioSchemes()
 {
     const std::optional<QUrl> zipRootUrl = KiriView::directArchiveOpenRootUrl(
         QUrl::fromLocalFile(QStringLiteral("/books/book.zip")));
@@ -145,7 +145,7 @@ void TestImageContainer::directArchiveRootUrlsUseFormatSpecificKioSchemes()
             .has_value());
 }
 
-void TestImageContainer::archiveInteriorUrlsResolveToTheirRootAndTitle()
+void TestImageDocumentLocation::archiveInteriorUrlsResolveToTheirRootAndTitle()
 {
     const std::vector<ArchiveInteriorCase> cases = {
         { QStringLiteral("zip"), QStringLiteral("cbz"), KiriView::ArchiveDocumentKind::ComicBook },
@@ -164,7 +164,7 @@ void TestImageContainer::archiveInteriorUrlsResolveToTheirRootAndTitle()
     }
 }
 
-void TestImageContainer::archiveDocumentPagesResolveToArchiveZoomScope()
+void TestImageDocumentLocation::archiveDocumentPagesResolveToArchiveZoomScope()
 {
     const QUrl archiveUrl = QUrl::fromLocalFile(QStringLiteral("/books/book.cbz"));
     const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
@@ -180,7 +180,7 @@ void TestImageContainer::archiveDocumentPagesResolveToArchiveZoomScope()
     QCOMPARE(KiriView::zoomScopeUrlForLocation(location), archiveUrl);
 }
 
-void TestImageContainer::directArchivePagesResolveToZoomScopeOnly()
+void TestImageDocumentLocation::directArchivePagesResolveToZoomScopeOnly()
 {
     const QUrl archiveUrl = QUrl::fromLocalFile(QStringLiteral("/books/book.zip"));
     const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
@@ -196,7 +196,7 @@ void TestImageContainer::directArchivePagesResolveToZoomScopeOnly()
     QCOMPARE(KiriView::zoomScopeUrlForLocation(location), archiveUrl);
 }
 
-void TestImageContainer::directDirectoryPagesResolveToDirectoryDocumentScope()
+void TestImageDocumentLocation::directDirectoryPagesResolveToDirectoryDocumentScope()
 {
     QTemporaryDir directory;
     QVERIFY(directory.isValid());
@@ -220,7 +220,7 @@ void TestImageContainer::directDirectoryPagesResolveToDirectoryDocumentScope()
     QCOMPARE(KiriView::windowTitleFileNameForDisplayedLocation(location), directoryUrl.fileName());
 }
 
-void TestImageContainer::regularImagesDoNotResolveToZoomScopes()
+void TestImageDocumentLocation::regularImagesDoNotResolveToZoomScopes()
 {
     const QUrl fileUrl = QUrl::fromLocalFile(QStringLiteral("/images/page.png"));
     const KiriView::DisplayedImageLocation location
@@ -230,7 +230,7 @@ void TestImageContainer::regularImagesDoNotResolveToZoomScopes()
     QVERIFY(KiriView::containerNavigationUrlForLocation(location).isEmpty());
 }
 
-void TestImageContainer::explicitKdeArchiveUrlImagesDoNotResolveToZoomScopes()
+void TestImageDocumentLocation::explicitKdeArchiveUrlImagesDoNotResolveToZoomScopes()
 {
     const KiriView::DisplayedImageLocation location = KiriView::DisplayedImageLocation::fromUrl(
         QUrl(QStringLiteral("zip:///books/book.cbz/chapter/page001.png")));
@@ -239,6 +239,6 @@ void TestImageContainer::explicitKdeArchiveUrlImagesDoNotResolveToZoomScopes()
     QVERIFY(KiriView::containerNavigationUrlForLocation(location).isEmpty());
 }
 
-QTEST_GUILESS_MAIN(TestImageContainer)
+QTEST_GUILESS_MAIN(TestImageDocumentLocation)
 
-#include "test_imagecontainer.moc"
+#include "test_imagedocumentlocation.moc"

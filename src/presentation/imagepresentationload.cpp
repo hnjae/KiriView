@@ -3,7 +3,7 @@
 
 #include "presentation/imagepresentationload.h"
 
-#include "navigation/imagecontainer.h"
+#include "location/imagedocumentlocation.h"
 #include "predecode/predecodecache.h"
 #include "presentation/imagepresentationcontroller.h"
 
