@@ -3,6 +3,9 @@
 
 #include "video/videodocumentruntime.h"
 
+#include "video/videooutputrendercontextobserver.h"
+#include "video/videozoomstate.h"
+
 #include <QObject>
 #include <algorithm>
 #include <utility>
@@ -39,6 +42,8 @@ VideoDocumentRuntime::VideoDocumentRuntime(QObject *documentObject, ChangeCallba
     , m_mediaBackend(std::move(mediaBackend))
     , m_mediaBackendFactory(std::move(mediaBackendFactory))
     , m_sourceLoadRuntime(std::move(playbackUrlResolver))
+    , m_renderContextObserver(std::make_unique<VideoOutputRenderContextObserver>(
+          documentObject, [this]() { updateZoomPercent(); }))
 {
     if (!m_mediaBackendFactory) {
         m_mediaBackendFactory
@@ -74,7 +79,10 @@ void VideoDocumentRuntime::installMediaBackendCallbacks()
         [this]() { m_state.setPosition(m_mediaBackend->position()); },
         [this]() { m_state.setPlaying(m_mediaBackend->playing()); },
         [this]() { m_state.setSeekable(m_mediaBackend->seekable()); },
-        [this]() { m_state.setHasVideo(m_mediaBackend->hasVideo()); },
+        [this]() {
+            m_state.setHasVideo(m_mediaBackend->hasVideo());
+            updateZoomPercent();
+        },
         [this]() { m_state.setHasAudio(m_mediaBackend->hasAudio()); },
         {},
     });
@@ -132,6 +140,10 @@ bool VideoDocumentRuntime::hasVideo() const { return m_state.hasVideo(); }
 
 bool VideoDocumentRuntime::hasAudio() const { return m_state.hasAudio(); }
 
+bool VideoDocumentRuntime::zoomPercentKnown() const { return m_state.zoomPercentKnown(); }
+
+int VideoDocumentRuntime::zoomPercent() const { return m_state.zoomPercent(); }
+
 QObject *VideoDocumentRuntime::videoOutput() const { return m_videoOutput.data(); }
 
 void VideoDocumentRuntime::setVideoOutput(QObject *videoOutput)
@@ -143,11 +155,25 @@ void VideoDocumentRuntime::setVideoOutput(QObject *videoOutput)
 
     disconnectVideoOutputDestroyed();
     m_videoOutput = videoOutput;
+    m_renderContextObserver->setVideoOutput(videoOutput);
     if (m_mediaBackend != nullptr) {
         m_mediaBackend->setVideoOutput(videoOutput);
     }
     connectVideoOutputDestroyed(videoOutput);
     publish(VideoDocumentChange::VideoOutput);
+    updateZoomPercent();
+}
+
+void VideoDocumentRuntime::setVideoOutputGeometry(
+    const QRectF &contentRect, const QRectF &sourceRect)
+{
+    if (m_videoOutputContentRect == contentRect && m_videoOutputSourceRect == sourceRect) {
+        return;
+    }
+
+    m_videoOutputContentRect = contentRect;
+    m_videoOutputSourceRect = sourceRect;
+    updateZoomPercent();
 }
 
 void VideoDocumentRuntime::play()
@@ -261,6 +287,7 @@ void VideoDocumentRuntime::publishSourceLoadFailure(const QUrl &, const QString 
 {
     m_state.setErrorString(errorString);
     m_state.setStatus(VideoDocumentStatus::Error);
+    updateZoomPercent();
 }
 
 void VideoDocumentRuntime::connectVideoOutputDestroyed(QObject *videoOutput)
@@ -275,7 +302,9 @@ void VideoDocumentRuntime::connectVideoOutputDestroyed(QObject *videoOutput)
               if (m_mediaBackend != nullptr) {
                   m_mediaBackend->setVideoOutput(nullptr);
               }
+              m_renderContextObserver->setVideoOutput(nullptr);
               publish(VideoDocumentChange::VideoOutput);
+              updateZoomPercent();
           });
 }
 
@@ -292,16 +321,19 @@ void VideoDocumentRuntime::updateStatusFromBackend()
     if (m_state.sourceUrl().isEmpty()) {
         m_state.setEnded(false);
         m_state.setStatus(VideoDocumentStatus::Null);
+        updateZoomPercent();
         return;
     }
     if (m_sourceLoadRuntime.active()) {
         m_state.setEnded(false);
         m_state.setStatus(VideoDocumentStatus::Loading);
+        updateZoomPercent();
         return;
     }
     if (m_mediaBackend == nullptr) {
         m_state.setEnded(false);
         m_state.setStatus(VideoDocumentStatus::Loading);
+        updateZoomPercent();
         return;
     }
 
@@ -309,6 +341,7 @@ void VideoDocumentRuntime::updateStatusFromBackend()
     if (mediaStatus == VideoMediaStatus::Null) {
         m_state.setEnded(false);
         m_state.setStatus(VideoDocumentStatus::Loading);
+        updateZoomPercent();
         return;
     }
     m_state.setEnded(mediaStatus == VideoMediaStatus::EndOfMedia);
@@ -316,6 +349,7 @@ void VideoDocumentRuntime::updateStatusFromBackend()
         m_state.setPlaying(false);
     }
     m_state.setStatus(documentStatusForMediaStatus(mediaStatus));
+    updateZoomPercent();
 }
 
 void VideoDocumentRuntime::updateErrorFromBackend()
@@ -328,7 +362,25 @@ void VideoDocumentRuntime::updateErrorFromBackend()
     if (!backendError.isEmpty()) {
         m_state.setErrorString(backendError);
         m_state.setStatus(VideoDocumentStatus::Error);
+        updateZoomPercent();
     }
+}
+
+void VideoDocumentRuntime::updateZoomPercent()
+{
+    if (m_state.status() != VideoDocumentStatus::Ready || !m_state.hasVideo()) {
+        m_state.setZoomPercent(std::nullopt);
+        return;
+    }
+
+    const std::optional<qreal> devicePixelRatio = m_renderContextObserver->devicePixelRatio();
+    if (!devicePixelRatio.has_value()) {
+        m_state.setZoomPercent(std::nullopt);
+        return;
+    }
+
+    m_state.setZoomPercent(videoZoomPercentForRects(
+        m_videoOutputContentRect, m_videoOutputSourceRect, devicePixelRatio.value()));
 }
 
 void VideoDocumentRuntime::publish(VideoDocumentChange change) { m_state.publish(change); }

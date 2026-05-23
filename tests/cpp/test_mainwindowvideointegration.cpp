@@ -109,10 +109,16 @@ void TestMainWindowVideoIntegration::videoModeExposesReadOnlyZoomReadout()
     QVERIFY2(!videoViewportQml.isEmpty(), "VideoViewport.qml should be readable");
     QVERIFY2(!imageToolBarQml.isEmpty(), "ImageToolBar.qml should be readable");
 
-    QVERIFY(videoViewportQml.contains(QStringLiteral("videoZoomPercentForRects")));
+    QVERIFY(!videoViewportQml.contains(QStringLiteral("videoZoomPercentForRects")));
     QVERIFY(videoViewportQml.contains(QStringLiteral("videoOutput.contentRect")));
     QVERIFY(videoViewportQml.contains(QStringLiteral("videoOutput.sourceRect")));
-    QVERIFY(videoViewportQml.contains(QStringLiteral("displayDevicePixelRatio")));
+    QVERIFY(videoViewportQml.contains(QStringLiteral("setVideoOutputGeometry")));
+    QVERIFY(!videoViewportQml.contains(QStringLiteral("displayDevicePixelRatio")));
+    QVERIFY(!videoViewportQml.contains(QStringLiteral("devicePixelRatio")));
+    QVERIFY(mainQml.contains(QStringLiteral("videoDocument.zoomPercentKnown")));
+    QVERIFY(mainQml.contains(QStringLiteral("videoDocument.zoomPercent")));
+    QVERIFY(!mainQml.contains(QStringLiteral("videoViewportLoader.zoomPercentKnown")));
+    QVERIFY(!mainQml.contains(QStringLiteral("videoViewportLoader.zoomPercent")));
     QVERIFY(!imageToolBarQml.contains(QStringLiteral("videoZoomLevelAction")));
     QVERIFY(!imageToolBarQml.contains(QStringLiteral("videoToolbarControls")));
     QVERIFY(!imageToolBarQml.contains(QStringLiteral("showVideoZoomReadout")));

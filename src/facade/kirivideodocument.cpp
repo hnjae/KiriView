@@ -39,6 +39,9 @@ KiriView::VideoDocumentPublicSignalOperations publicSignalOperations(KiriVideoDo
     operations.seekableChanged = [&document]() { Q_EMIT document.seekableChanged(); };
     operations.hasVideoChanged = [&document]() { Q_EMIT document.hasVideoChanged(); };
     operations.hasAudioChanged = [&document]() { Q_EMIT document.hasAudioChanged(); };
+    operations.zoomPercentKnownChanged
+        = [&document]() { Q_EMIT document.zoomPercentKnownChanged(); };
+    operations.zoomPercentChanged = [&document]() { Q_EMIT document.zoomPercentChanged(); };
     operations.videoOutputChanged = [&document]() { Q_EMIT document.videoOutputChanged(); };
     return operations;
 }
@@ -80,6 +83,10 @@ bool KiriVideoDocument::hasVideo() const { return m_runtime->hasVideo(); }
 
 bool KiriVideoDocument::hasAudio() const { return m_runtime->hasAudio(); }
 
+bool KiriVideoDocument::zoomPercentKnown() const { return m_runtime->zoomPercentKnown(); }
+
+int KiriVideoDocument::zoomPercent() const { return m_runtime->zoomPercent(); }
+
 QObject *KiriVideoDocument::videoOutput() const { return m_runtime->videoOutput(); }
 
 void KiriVideoDocument::setVideoOutput(QObject *videoOutput)
@@ -98,6 +105,11 @@ void KiriVideoDocument::togglePlayback() { m_runtime->togglePlayback(); }
 void KiriVideoDocument::setPosition(qint64 position) { m_runtime->setPosition(position); }
 
 void KiriVideoDocument::seekBy(qint64 deltaMilliseconds) { m_runtime->seekBy(deltaMilliseconds); }
+
+void KiriVideoDocument::setVideoOutputGeometry(const QRectF &contentRect, const QRectF &sourceRect)
+{
+    m_runtime->setVideoOutputGeometry(contentRect, sourceRect);
+}
 
 void KiriVideoDocument::handleDocumentChanges(
     const std::vector<KiriView::VideoDocumentChange> &changes)

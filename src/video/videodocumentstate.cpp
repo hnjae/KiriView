@@ -41,6 +41,10 @@ bool VideoDocumentState::hasVideo() const { return m_hasVideo; }
 
 bool VideoDocumentState::hasAudio() const { return m_hasAudio; }
 
+bool VideoDocumentState::zoomPercentKnown() const { return m_zoomPercentKnown; }
+
+int VideoDocumentState::zoomPercent() const { return m_zoomPercent; }
+
 bool VideoDocumentState::ended() const { return m_ended; }
 
 void VideoDocumentState::resetForClearedSource()
@@ -58,6 +62,8 @@ void VideoDocumentState::resetForClearedSource()
     appendIfSeekableChanged(changes, false);
     appendIfHasVideoChanged(changes, false);
     appendIfHasAudioChanged(changes, false);
+    appendIfZoomPercentKnownChanged(changes, false);
+    appendIfZoomPercentChanged(changes, 0);
     publish(std::move(changes));
 }
 
@@ -76,6 +82,8 @@ void VideoDocumentState::resetForSourceLoad(const QUrl &sourceUrl)
     appendIfSeekableChanged(changes, false);
     appendIfHasVideoChanged(changes, false);
     appendIfHasAudioChanged(changes, false);
+    appendIfZoomPercentKnownChanged(changes, false);
+    appendIfZoomPercentChanged(changes, 0);
     publish(std::move(changes));
 }
 
@@ -136,6 +144,19 @@ void VideoDocumentState::setHasAudio(bool hasAudio)
 {
     std::vector<VideoDocumentChange> changes;
     appendIfHasAudioChanged(changes, hasAudio);
+    publish(std::move(changes));
+}
+
+void VideoDocumentState::setZoomPercent(std::optional<int> zoomPercent)
+{
+    std::vector<VideoDocumentChange> changes;
+    if (zoomPercent.has_value()) {
+        appendIfZoomPercentChanged(changes, zoomPercent.value());
+        appendIfZoomPercentKnownChanged(changes, true);
+    } else {
+        appendIfZoomPercentKnownChanged(changes, false);
+        appendIfZoomPercentChanged(changes, 0);
+    }
     publish(std::move(changes));
 }
 
@@ -274,5 +295,28 @@ void VideoDocumentState::appendIfHasAudioChanged(
 
     m_hasAudio = hasAudio;
     changes.push_back(VideoDocumentChange::HasAudio);
+}
+
+void VideoDocumentState::appendIfZoomPercentKnownChanged(
+    std::vector<VideoDocumentChange> &changes, bool known)
+{
+    if (m_zoomPercentKnown == known) {
+        return;
+    }
+
+    m_zoomPercentKnown = known;
+    changes.push_back(VideoDocumentChange::ZoomPercentKnown);
+}
+
+void VideoDocumentState::appendIfZoomPercentChanged(
+    std::vector<VideoDocumentChange> &changes, int zoomPercent)
+{
+    const int normalizedZoomPercent = nonNegative(zoomPercent);
+    if (m_zoomPercent == normalizedZoomPercent) {
+        return;
+    }
+
+    m_zoomPercent = normalizedZoomPercent;
+    changes.push_back(VideoDocumentChange::ZoomPercent);
 }
 }

@@ -10,13 +10,16 @@
 
 #include <QObject>
 #include <QPointer>
+#include <QRectF>
 #include <QString>
 #include <QUrl>
 #include <functional>
 #include <memory>
+#include <optional>
 #include <vector>
 
 namespace KiriView {
+class VideoOutputRenderContextObserver;
 class VideoDocumentRuntime final
 {
 public:
@@ -41,8 +44,11 @@ public:
     bool seekable() const;
     bool hasVideo() const;
     bool hasAudio() const;
+    bool zoomPercentKnown() const;
+    int zoomPercent() const;
     QObject *videoOutput() const;
     void setVideoOutput(QObject *videoOutput);
+    void setVideoOutputGeometry(const QRectF &contentRect, const QRectF &sourceRect);
 
     void play();
     void pause();
@@ -64,6 +70,7 @@ private:
     void disconnectVideoOutputDestroyed();
     void updateStatusFromBackend();
     void updateErrorFromBackend();
+    void updateZoomPercent();
     void publish(VideoDocumentChange change);
 
     QObject *m_documentObject = nullptr;
@@ -71,7 +78,10 @@ private:
     std::unique_ptr<VideoMediaBackend> m_mediaBackend;
     MediaBackendFactory m_mediaBackendFactory;
     VideoSourceLoadRuntime m_sourceLoadRuntime;
+    std::unique_ptr<VideoOutputRenderContextObserver> m_renderContextObserver;
     QPointer<QObject> m_videoOutput;
+    QRectF m_videoOutputContentRect;
+    QRectF m_videoOutputSourceRect;
     QMetaObject::Connection m_videoOutputDestroyedConnection;
 };
 }

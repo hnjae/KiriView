@@ -31,6 +31,8 @@ void TestKiriVideoDocument::initialStateIsNull()
     QVERIFY(!document.seekable());
     QVERIFY(!document.hasVideo());
     QVERIFY(!document.hasAudio());
+    QVERIFY(!document.zoomPercentKnown());
+    QCOMPARE(document.zoomPercent(), 0);
     QCOMPARE(document.videoOutput(), nullptr);
 }
 

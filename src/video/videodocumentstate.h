@@ -10,6 +10,7 @@
 #include <QUrl>
 #include <QtGlobal>
 #include <functional>
+#include <optional>
 #include <vector>
 
 namespace KiriView {
@@ -30,6 +31,8 @@ public:
     bool seekable() const;
     bool hasVideo() const;
     bool hasAudio() const;
+    bool zoomPercentKnown() const;
+    int zoomPercent() const;
     bool ended() const;
 
     void resetForClearedSource();
@@ -42,6 +45,7 @@ public:
     void setSeekable(bool seekable);
     void setHasVideo(bool hasVideo);
     void setHasAudio(bool hasAudio);
+    void setZoomPercent(std::optional<int> zoomPercent);
     void setEnded(bool ended);
 
     void publish(VideoDocumentChange change);
@@ -61,6 +65,8 @@ private:
     void appendIfSeekableChanged(std::vector<VideoDocumentChange> &changes, bool seekable);
     void appendIfHasVideoChanged(std::vector<VideoDocumentChange> &changes, bool hasVideo);
     void appendIfHasAudioChanged(std::vector<VideoDocumentChange> &changes, bool hasAudio);
+    void appendIfZoomPercentKnownChanged(std::vector<VideoDocumentChange> &changes, bool known);
+    void appendIfZoomPercentChanged(std::vector<VideoDocumentChange> &changes, int zoomPercent);
 
     ChangeCallback m_changeCallback;
     QUrl m_sourceUrl;
@@ -73,6 +79,8 @@ private:
     bool m_seekable = false;
     bool m_hasVideo = false;
     bool m_hasAudio = false;
+    bool m_zoomPercentKnown = false;
+    int m_zoomPercent = 0;
     bool m_ended = false;
 };
 }

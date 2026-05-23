@@ -6,6 +6,7 @@
 #include <QObject>
 #include <QTest>
 #include <QUrl>
+#include <optional>
 #include <vector>
 
 class TestVideoDocumentState : public QObject
@@ -16,6 +17,7 @@ private Q_SLOTS:
     void sourceLoadResetsPublicPlaybackStateInOrder();
     void clearedSourceResetsPublicStateInOrder();
     void scalarSettersOnlyNotifyOnChangedValues();
+    void zoomPercentStatePublishesKnownValuePair();
     void setPlayingClearsEndedState();
     void publishDeduplicatesChangesInOrder();
 };
@@ -58,6 +60,7 @@ void TestVideoDocumentState::sourceLoadResetsPublicPlaybackStateInOrder()
     state.setSeekable(true);
     state.setHasVideo(true);
     state.setHasAudio(true);
+    state.setZoomPercent(std::optional<int>(125));
     batches.clear();
 
     state.resetForSourceLoad(sourceUrl);
@@ -72,10 +75,12 @@ void TestVideoDocumentState::sourceLoadResetsPublicPlaybackStateInOrder()
     QVERIFY(!state.seekable());
     QVERIFY(!state.hasVideo());
     QVERIFY(!state.hasAudio());
+    QVERIFY(!state.zoomPercentKnown());
+    QCOMPARE(state.zoomPercent(), 0);
     compareChanges(batches.front(),
         { Change::SourceUrl, Change::WindowTitleFileName, Change::ErrorString, Change::Status,
             Change::Duration, Change::Position, Change::Playing, Change::Seekable, Change::HasVideo,
-            Change::HasAudio });
+            Change::HasAudio, Change::ZoomPercentKnown, Change::ZoomPercent });
 }
 
 void TestVideoDocumentState::clearedSourceResetsPublicStateInOrder()
@@ -93,6 +98,7 @@ void TestVideoDocumentState::clearedSourceResetsPublicStateInOrder()
     state.setSeekable(true);
     state.setHasVideo(true);
     state.setHasAudio(true);
+    state.setZoomPercent(std::optional<int>(125));
     batches.clear();
 
     state.resetForClearedSource();
@@ -107,10 +113,12 @@ void TestVideoDocumentState::clearedSourceResetsPublicStateInOrder()
     QVERIFY(!state.seekable());
     QVERIFY(!state.hasVideo());
     QVERIFY(!state.hasAudio());
+    QVERIFY(!state.zoomPercentKnown());
+    QCOMPARE(state.zoomPercent(), 0);
     compareChanges(batches.front(),
         { Change::SourceUrl, Change::Status, Change::ErrorString, Change::WindowTitleFileName,
             Change::Duration, Change::Position, Change::Playing, Change::Seekable, Change::HasVideo,
-            Change::HasAudio });
+            Change::HasAudio, Change::ZoomPercentKnown, Change::ZoomPercent });
 }
 
 void TestVideoDocumentState::scalarSettersOnlyNotifyOnChangedValues()
@@ -142,6 +150,29 @@ void TestVideoDocumentState::scalarSettersOnlyNotifyOnChangedValues()
     compareChanges(flatten(batches),
         { Change::Duration, Change::Position, Change::Seekable, Change::HasVideo,
             Change::HasAudio });
+}
+
+void TestVideoDocumentState::zoomPercentStatePublishesKnownValuePair()
+{
+    std::vector<std::vector<Change>> batches;
+    KiriView::VideoDocumentState state(
+        [&batches](const std::vector<Change> &changes) { batches.push_back(changes); });
+
+    state.setZoomPercent(std::optional<int>(150));
+
+    QVERIFY(state.zoomPercentKnown());
+    QCOMPARE(state.zoomPercent(), 150);
+    compareChanges(batches.front(), { Change::ZoomPercent, Change::ZoomPercentKnown });
+
+    batches.clear();
+    state.setZoomPercent(std::optional<int>(150));
+    QVERIFY(batches.empty());
+
+    state.setZoomPercent(std::nullopt);
+
+    QVERIFY(!state.zoomPercentKnown());
+    QCOMPARE(state.zoomPercent(), 0);
+    compareChanges(batches.front(), { Change::ZoomPercentKnown, Change::ZoomPercent });
 }
 
 void TestVideoDocumentState::setPlayingClearsEndedState()

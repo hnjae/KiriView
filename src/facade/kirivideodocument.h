@@ -5,6 +5,7 @@
 #define KIRIVIEW_KIRIVIDEODOCUMENT_H
 
 #include <QObject>
+#include <QRectF>
 #include <QString>
 #include <QUrl>
 #include <QtGlobal>
@@ -33,6 +34,8 @@ class KiriVideoDocument : public QObject
     Q_PROPERTY(bool seekable READ seekable NOTIFY seekableChanged)
     Q_PROPERTY(bool hasVideo READ hasVideo NOTIFY hasVideoChanged)
     Q_PROPERTY(bool hasAudio READ hasAudio NOTIFY hasAudioChanged)
+    Q_PROPERTY(bool zoomPercentKnown READ zoomPercentKnown NOTIFY zoomPercentKnownChanged)
+    Q_PROPERTY(int zoomPercent READ zoomPercent NOTIFY zoomPercentChanged)
     Q_PROPERTY(QObject *videoOutput READ videoOutput WRITE setVideoOutput NOTIFY videoOutputChanged)
 
 public:
@@ -58,6 +61,8 @@ public:
     bool seekable() const;
     bool hasVideo() const;
     bool hasAudio() const;
+    bool zoomPercentKnown() const;
+    int zoomPercent() const;
     QObject *videoOutput() const;
     // QML assigns a QtMultimedia VideoOutput object here. KiriVideoDocument does not own it,
     // tracks its destruction, and detaches from the media player when this is set to null.
@@ -69,6 +74,7 @@ public:
     Q_INVOKABLE void togglePlayback();
     Q_INVOKABLE void setPosition(qint64 position);
     Q_INVOKABLE void seekBy(qint64 deltaMilliseconds);
+    Q_INVOKABLE void setVideoOutputGeometry(const QRectF &contentRect, const QRectF &sourceRect);
 
 Q_SIGNALS:
     void sourceUrlChanged();
@@ -81,6 +87,8 @@ Q_SIGNALS:
     void seekableChanged();
     void hasVideoChanged();
     void hasAudioChanged();
+    void zoomPercentKnownChanged();
+    void zoomPercentChanged();
     void videoOutputChanged();
 
 private:

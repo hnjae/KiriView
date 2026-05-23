@@ -208,8 +208,8 @@ StatefulApp.StatefulWindow {
         readonly property bool imageMode: documentSession.documentKind === KiriDocumentSession.Image
         readonly property bool videoMode: documentSession.documentKind === KiriDocumentSession.Video
         readonly property bool imageReady: imageMode && imageDocument.status === KiriImageDocument.Ready
-        readonly property bool videoZoomReady: videoMode && videoViewportLoader.zoomPercentKnown
-        readonly property int videoZoomPercent: videoZoomReady ? videoViewportLoader.zoomPercent : 0
+        readonly property bool videoZoomReady: videoMode && videoDocument.zoomPercentKnown
+        readonly property int videoZoomPercent: videoZoomReady ? videoDocument.zoomPercent : 0
         readonly property point fullscreenPointerPosition: fullscreenRevealHandler.point.position
         property bool documentDeletionWasInProgress: false
 
@@ -254,24 +254,15 @@ StatefulApp.StatefulWindow {
         Loader {
             id: videoViewportLoader
 
-            property bool zoomPercentKnown: false
-            property int zoomPercent: 0
-
             anchors.bottom: parent.bottom
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: root.fullscreen ? parent.top : mainImageToolBar.bottom
             active: page.videoMode
 
-            function clearVideoViewportState() {
-                zoomPercentKnown = false;
-                zoomPercent = 0;
-            }
-
             function ensureVideoViewportLoaded() {
                 if (!active) {
                     source = "";
-                    clearVideoViewportState();
                     return;
                 }
 
@@ -291,37 +282,8 @@ StatefulApp.StatefulWindow {
                 // qmllint enable missing-property
             }
 
-            function updateVideoViewportState() {
-                if (item === null || status !== Loader.Ready) {
-                    clearVideoViewportState();
-                    return;
-                }
-
-                // Dynamic VideoViewport access keeps QtMultimedia out of image startup.
-                // qmllint disable missing-property
-                zoomPercentKnown = Boolean(item["zoomPercentKnown"]);
-                zoomPercent = zoomPercentKnown ? Number(item["zoomPercent"]) : 0;
-                // qmllint enable missing-property
-            }
-
             Component.onCompleted: ensureVideoViewportLoaded()
             onActiveChanged: ensureVideoViewportLoaded()
-            onItemChanged: updateVideoViewportState()
-            onLoaded: updateVideoViewportState()
-            onStatusChanged: updateVideoViewportState()
-
-            Connections {
-                target: videoViewportLoader.item
-                ignoreUnknownSignals: true
-
-                function onZoomPercentChanged() {
-                    videoViewportLoader.updateVideoViewportState();
-                }
-
-                function onZoomPercentKnownChanged() {
-                    videoViewportLoader.updateVideoViewportState();
-                }
-            }
         }
 
         ImageActionAvailability {

@@ -17,27 +17,9 @@ FocusScope {
     property alias controls: floatingControls
     property alias videoOutput: videoOutput
     readonly property bool videoReady: videoDocument.status === KiriVideoDocument.Ready
-    readonly property real displayDevicePixelRatio: {
-        const window = root.Window.window;
-        const ratio = window ? window.devicePixelRatio : 1;
-        return Number.isFinite(ratio) && ratio > 0 ? ratio : 1;
-    }
-    readonly property bool zoomPercentKnown: root.videoReady && videoOutput.sourceRect.width > 0 && videoOutput.sourceRect.height > 0 && videoOutput.contentRect.width > 0 && videoOutput.contentRect.height > 0
-    readonly property int zoomPercent: zoomPercentKnown ? videoZoomPercentForRects(videoOutput.contentRect, videoOutput.sourceRect, displayDevicePixelRatio) : 0
     property KiriVideoDocument attachedVideoDocument: null
 
     signal viewerClicked
-
-    function videoZoomPercentForRects(contentRect, sourceRect, devicePixelRatio) {
-        if (sourceRect.width <= 0 || sourceRect.height <= 0 || contentRect.width <= 0 || contentRect.height <= 0 || !Number.isFinite(devicePixelRatio) || devicePixelRatio <= 0) {
-            return 0;
-        }
-
-        const widthZoom = contentRect.width * devicePixelRatio / sourceRect.width * 100;
-        const heightZoom = contentRect.height * devicePixelRatio / sourceRect.height * 100;
-        const zoom = Math.min(widthZoom, heightZoom);
-        return Number.isFinite(zoom) && zoom > 0 ? Math.round(zoom) : 0;
-    }
 
     function shouldAttachVideoOutput() {
         return root.active && root.visible && root.videoDocument !== null;
@@ -60,6 +42,13 @@ FocusScope {
 
         if (nextDocument !== null && nextDocument.videoOutput !== videoOutput) {
             nextDocument.videoOutput = videoOutput;
+        }
+        reportVideoOutputGeometry();
+    }
+
+    function reportVideoOutputGeometry() {
+        if (root.videoDocument !== null) {
+            root.videoDocument.setVideoOutputGeometry(videoOutput.contentRect, videoOutput.sourceRect);
         }
     }
 
@@ -99,7 +88,10 @@ FocusScope {
     onVideoDocumentChanged: updateVideoOutputAttachment()
     onVisibleChanged: updateVideoOutputAttachment()
 
-    Component.onCompleted: updateVideoOutputAttachment()
+    Component.onCompleted: {
+        updateVideoOutputAttachment();
+        reportVideoOutputGeometry();
+    }
     Component.onDestruction: {
         detachVideoOutput(root.attachedVideoDocument);
         root.attachedVideoDocument = null;
@@ -121,6 +113,9 @@ FocusScope {
             anchors.fill: parent
             fillMode: VideoOutput.PreserveAspectFit
             visible: root.videoReady && root.videoDocument.hasVideo
+
+            onContentRectChanged: root.reportVideoOutputGeometry()
+            onSourceRectChanged: root.reportVideoOutputGeometry()
         }
     }
 

@@ -171,9 +171,11 @@ src/rendering/staticimage.cpp
 src/decoding/staticimagedecode.cpp
 src/system/systemmemory.cpp
 src/rendering/svgtilesource.cpp
+src/video/videooutputrendercontextobserver.cpp
 src/video/videodocumentruntime.cpp
 src/video/videodocumentstate.cpp
 src/video/videodocumentpublicsignals.cpp
 src/video/videomediabackend.cpp
 src/video/videoplaybackurlresolver.cpp
 src/video/videosourceloadruntime.cpp
+src/video/videozoomstate.cpp

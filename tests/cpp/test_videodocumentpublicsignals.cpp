@@ -42,6 +42,9 @@ KiriView::VideoDocumentPublicSignalOperations recordingOperations(QStringList &e
     operations.seekableChanged = [&events]() { events.append(QStringLiteral("seekable")); };
     operations.hasVideoChanged = [&events]() { events.append(QStringLiteral("hasVideo")); };
     operations.hasAudioChanged = [&events]() { events.append(QStringLiteral("hasAudio")); };
+    operations.zoomPercentKnownChanged
+        = [&events]() { events.append(QStringLiteral("zoomPercentKnown")); };
+    operations.zoomPercentChanged = [&events]() { events.append(QStringLiteral("zoomPercent")); };
     operations.videoOutputChanged = [&events]() { events.append(QStringLiteral("videoOutput")); };
     return operations;
 }
@@ -71,6 +74,10 @@ void TestVideoDocumentPublicSignals::publicSignalPlansReturnSignalsInEmissionOrd
         KiriView::videoDocumentPublicSignals(Change::HasVideo), { Signal::HasVideo });
     comparePublicSignals(
         KiriView::videoDocumentPublicSignals(Change::HasAudio), { Signal::HasAudio });
+    comparePublicSignals(KiriView::videoDocumentPublicSignals(Change::ZoomPercentKnown),
+        { Signal::ZoomPercentKnown });
+    comparePublicSignals(
+        KiriView::videoDocumentPublicSignals(Change::ZoomPercent), { Signal::ZoomPercent });
     comparePublicSignals(
         KiriView::videoDocumentPublicSignals(Change::VideoOutput), { Signal::VideoOutput });
 }
@@ -90,14 +97,15 @@ void TestVideoDocumentPublicSignals::emitterDispatchesChangeSignalsInProjectionO
     QStringList events;
     const KiriView::VideoDocumentPublicSignalEmitter emitter(recordingOperations(events));
 
-    emitter.emitChanges(
-        { KiriView::VideoDocumentChange::Position, KiriView::VideoDocumentChange::HasVideo });
+    emitter.emitChanges({ KiriView::VideoDocumentChange::Position,
+        KiriView::VideoDocumentChange::HasVideo, KiriView::VideoDocumentChange::ZoomPercent });
     emitter.emitSignal(KiriView::VideoDocumentPublicSignal::VideoOutput);
 
     QCOMPARE(events,
         QStringList({
             QStringLiteral("position"),
             QStringLiteral("hasVideo"),
+            QStringLiteral("zoomPercent"),
             QStringLiteral("videoOutput"),
         }));
 }
