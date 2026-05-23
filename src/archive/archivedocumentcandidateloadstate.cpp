@@ -16,11 +16,9 @@ void cancelArchiveCandidateLoadToken(QObject *object)
 }
 
 namespace KiriView {
-ImageIoJob ArchiveDocumentCandidateLoadState::addLoad(QObject *receiver, quint64 generation,
-    ImageCandidatesCallback callback, ErrorCallback errorCallback)
+ImageIoJob ArchiveDocumentCandidateLoadState::addLoad(
+    QObject *receiver, ImageCandidatesCallback callback, ErrorCallback errorCallback)
 {
-    ensureGeneration(generation);
-
     QObject *token = new QObject(receiver);
     ImageIoJob job(token, cancelArchiveCandidateLoadToken);
     m_pendingLoads.push_back(ArchiveDocumentCandidateLoad {
@@ -31,25 +29,28 @@ ImageIoJob ArchiveDocumentCandidateLoadState::addLoad(QObject *receiver, quint64
     return job;
 }
 
-bool ArchiveDocumentCandidateLoadState::startBatch(quint64 generation)
+std::optional<ArchiveDocumentCandidateLoadBatch> ArchiveDocumentCandidateLoadState::startBatch()
 {
-    if (!acceptsBatch(generation) || m_inProgress || m_pendingLoads.empty()) {
-        return false;
+    if (m_batch.active() || m_pendingLoads.empty()) {
+        return std::nullopt;
     }
 
-    m_inProgress = true;
-    return true;
+    return ArchiveDocumentCandidateLoadBatch {
+        m_batch.start(),
+    };
 }
 
-bool ArchiveDocumentCandidateLoadState::acceptsBatch(quint64 generation) const
+bool ArchiveDocumentCandidateLoadState::acceptsBatch(ArchiveDocumentCandidateLoadBatch batch) const
 {
-    return m_hasGeneration && m_generation == generation;
+    return m_batch.accepts(batch.operationId);
 }
+
+bool ArchiveDocumentCandidateLoadState::batchInProgress() const { return m_batch.active(); }
 
 std::vector<ArchiveDocumentCandidateLoad> ArchiveDocumentCandidateLoadState::finishBatch(
-    quint64 generation)
+    ArchiveDocumentCandidateLoadBatch batch)
 {
-    if (!acceptsBatch(generation)) {
+    if (!m_batch.finish(batch.operationId)) {
         return {};
     }
 
@@ -66,23 +67,9 @@ void ArchiveDocumentCandidateLoadState::cancel()
     reset();
 }
 
-void ArchiveDocumentCandidateLoadState::ensureGeneration(quint64 generation)
-{
-    if (!m_hasGeneration || m_generation == generation) {
-        m_generation = generation;
-        m_hasGeneration = true;
-        return;
-    }
-
-    cancel();
-    m_generation = generation;
-    m_hasGeneration = true;
-}
-
 void ArchiveDocumentCandidateLoadState::reset()
 {
     m_pendingLoads.clear();
-    m_hasGeneration = false;
-    m_inProgress = false;
+    m_batch.cancel();
 }
 }

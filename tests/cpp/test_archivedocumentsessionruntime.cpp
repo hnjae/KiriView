@@ -33,6 +33,7 @@ class TestArchiveDocumentSessionRuntime : public QObject
 private Q_SLOTS:
     void synchronousLoadsShareLazyOpenAndCandidateCache();
     void simultaneousCandidateLoadsSharePendingBatch();
+    void candidateLoadAddedDuringActiveBatchSharesWorker();
     void candidateBatchCancellationPreventsStaleCallbacks();
     void dataCompletionAfterArchiveSwitchIsIgnored();
 };
@@ -91,6 +92,33 @@ void TestArchiveDocumentSessionRuntime::simultaneousCandidateLoadsSharePendingBa
     releaseInstrumentedArchiveLoads(state);
 
     QTRY_COMPARE(callbackCount, 2);
+    QCOMPARE(state->openCount.load(), 1);
+    QCOMPARE(state->candidateLoadCount.load(), 1);
+}
+
+void TestArchiveDocumentSessionRuntime::candidateLoadAddedDuringActiveBatchSharesWorker()
+{
+    auto state = std::make_shared<InstrumentedArchiveSessionState>();
+    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+        = archiveDocumentForLocalArchiveUrl(localUrl(QStringLiteral("/books/book.cbz")));
+    QVERIFY(archiveDocument.has_value());
+    const QUrl pageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
+    addInstrumentedArchiveFixture(state, *archiveDocument, { imageCandidate(pageUrl) });
+    blockInstrumentedArchiveCandidateLoads(state);
+
+    KiriView::ArchiveDocumentSessionRuntime runtime(this, instrumentedArchiveSessionFactory(state));
+    int callbackCount = 0;
+    KiriView::ImageIoJob firstJob = runtime.loadArchiveImages(this, *archiveDocument,
+        [&callbackCount](std::vector<ImageNavigationCandidate>) { ++callbackCount; }, {});
+    QTRY_COMPARE(state->waitingCandidateLoadCount.load(), 1);
+
+    KiriView::ImageIoJob secondJob = runtime.loadArchiveImages(this, *archiveDocument,
+        [&callbackCount](std::vector<ImageNavigationCandidate>) { ++callbackCount; }, {});
+    releaseInstrumentedArchiveLoads(state);
+
+    QTRY_COMPARE(callbackCount, 2);
+    QVERIFY(!firstJob.isActive());
+    QVERIFY(!secondJob.isActive());
     QCOMPARE(state->openCount.load(), 1);
     QCOMPARE(state->candidateLoadCount.load(), 1);
 }

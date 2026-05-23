@@ -36,15 +36,16 @@ public:
         ImageDataCallback callback, ErrorCallback errorCallback);
 
 private:
-    void startCandidateLoad(quint64 generation);
-    void finishCandidateLoad(quint64 generation, ArchiveImageCandidatesResult result);
+    void startCandidateLoad(ArchiveDocumentCandidateLoadBatch batch);
+    void finishCandidateLoad(
+        ArchiveDocumentCandidateLoadBatch batch, ArchiveImageCandidatesResult result);
     void cancelCandidateLoadBatch();
 
     QObject *m_context = nullptr;
     ArchiveDocumentSessionFactory m_sessionFactory;
     std::shared_ptr<ArchiveDocumentSessionRunner> m_runner;
     ArchiveDocumentCandidateLoadState m_candidateLoadState;
-    ImageAsyncTicket m_generation;
+    ImageAsyncTicket m_sessionGeneration;
 };
 }
 

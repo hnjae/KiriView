@@ -8,6 +8,7 @@
 #include "async/imagecallback.h"
 #include "async/imageioworkerjob.h"
 
+#include <optional>
 #include <utility>
 #include <variant>
 
@@ -57,7 +58,7 @@ ArchiveDocumentSessionRuntime::~ArchiveDocumentSessionRuntime() { clear(); }
 void ArchiveDocumentSessionRuntime::clear()
 {
     cancelCandidateLoadBatch();
-    m_generation.invalidate();
+    m_sessionGeneration.invalidate();
     m_runner.reset();
 }
 
@@ -72,7 +73,7 @@ void ArchiveDocumentSessionRuntime::switchToArchiveDocument(ArchiveDocumentLocat
     }
 
     cancelCandidateLoadBatch();
-    m_generation.invalidate();
+    m_sessionGeneration.invalidate();
     m_runner = std::make_shared<ArchiveDocumentSessionRunner>(
         std::move(archiveDocument), m_sessionFactory);
 }
@@ -100,6 +101,11 @@ ImageIoJob ArchiveDocumentSessionRuntime::loadArchiveImages(QObject *receiver,
         return ImageIoJob();
     }
 
+    if (receiver != nullptr && m_candidateLoadState.batchInProgress()) {
+        return m_candidateLoadState.addLoad(
+            receiver, std::move(callback), std::move(errorCallback));
+    }
+
     if (const std::optional<std::vector<ImageNavigationCandidate>> cachedCandidates
         = m_runner->cachedImageCandidates()) {
         invokeIfSet(callback, *cachedCandidates);
@@ -111,11 +117,11 @@ ImageIoJob ArchiveDocumentSessionRuntime::loadArchiveImages(QObject *receiver,
         return ImageIoJob();
     }
 
-    const quint64 generation = m_generation.current();
-    ImageIoJob ioJob = m_candidateLoadState.addLoad(
-        receiver, generation, std::move(callback), std::move(errorCallback));
-    if (m_candidateLoadState.startBatch(generation)) {
-        startCandidateLoad(generation);
+    ImageIoJob ioJob
+        = m_candidateLoadState.addLoad(receiver, std::move(callback), std::move(errorCallback));
+    if (const std::optional<ArchiveDocumentCandidateLoadBatch> batch
+        = m_candidateLoadState.startBatch()) {
+        startCandidateLoad(*batch);
     }
 
     return ioJob;
@@ -137,7 +143,7 @@ ImageIoJob ArchiveDocumentSessionRuntime::loadArchiveImageData(QObject *receiver
         return ImageIoJob();
     }
 
-    const quint64 generation = m_generation.current();
+    const quint64 generation = m_sessionGeneration.current();
     const QUrl imageUrl = request.imageUrl();
     std::shared_ptr<ArchiveDocumentSessionRunner> runner = m_runner;
 
@@ -146,7 +152,7 @@ ImageIoJob ArchiveDocumentSessionRuntime::loadArchiveImageData(QObject *receiver
         [runner = std::move(runner), imageUrl]() { return runner->loadImageData(imageUrl); },
         [generation, this, callback = std::move(callback),
             errorCallback = std::move(errorCallback)](ArchiveImageDataResult result) mutable {
-            if (!m_generation.accepts(generation)) {
+            if (!m_sessionGeneration.accepts(generation)) {
                 return;
             }
 
@@ -155,30 +161,25 @@ ImageIoJob ArchiveDocumentSessionRuntime::loadArchiveImageData(QObject *receiver
         });
 }
 
-void ArchiveDocumentSessionRuntime::startCandidateLoad(quint64 generation)
+void ArchiveDocumentSessionRuntime::startCandidateLoad(ArchiveDocumentCandidateLoadBatch batch)
 {
-    if (m_runner == nullptr || !m_generation.accepts(generation)
-        || !m_candidateLoadState.acceptsBatch(generation)) {
+    if (m_runner == nullptr || !m_candidateLoadState.acceptsBatch(batch)) {
         return;
     }
 
     std::shared_ptr<ArchiveDocumentSessionRunner> runner = m_runner;
     runAsyncWorker(
         m_context, [runner = std::move(runner)]() { return runner->loadImageCandidates(); },
-        [this, generation](ArchiveImageCandidatesResult result) mutable {
-            finishCandidateLoad(generation, std::move(result));
+        [this, batch](ArchiveImageCandidatesResult result) mutable {
+            finishCandidateLoad(batch, std::move(result));
         });
 }
 
 void ArchiveDocumentSessionRuntime::finishCandidateLoad(
-    quint64 generation, ArchiveImageCandidatesResult result)
+    ArchiveDocumentCandidateLoadBatch batch, ArchiveImageCandidatesResult result)
 {
-    if (!m_generation.accepts(generation)) {
-        return;
-    }
-
     std::vector<ArchiveDocumentCandidateLoad> pendingLoads
-        = m_candidateLoadState.finishBatch(generation);
+        = m_candidateLoadState.finishBatch(batch);
 
     for (const ArchiveDocumentCandidateLoad &load : pendingLoads) {
         load.completion.claimAndDelete(

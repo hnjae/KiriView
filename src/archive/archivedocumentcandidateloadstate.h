@@ -5,10 +5,12 @@
 #define KIRIVIEW_ARCHIVEDOCUMENTCANDIDATELOADSTATE_H
 
 #include "async/imageasynccallbacks.h"
+#include "async/imageasyncoperationstate.h"
 #include "async/imageiojob.h"
 #include "navigation/imagecandidatecallbacks.h"
 
 #include <QtGlobal>
+#include <optional>
 #include <vector>
 
 class QObject;
@@ -20,24 +22,26 @@ struct ArchiveDocumentCandidateLoad {
     ErrorCallback errorCallback;
 };
 
+struct ArchiveDocumentCandidateLoadBatch {
+    quint64 operationId = 0;
+};
+
 class ArchiveDocumentCandidateLoadState final
 {
 public:
-    ImageIoJob addLoad(QObject *receiver, quint64 generation, ImageCandidatesCallback callback,
-        ErrorCallback errorCallback);
-    bool startBatch(quint64 generation);
-    bool acceptsBatch(quint64 generation) const;
-    std::vector<ArchiveDocumentCandidateLoad> finishBatch(quint64 generation);
+    ImageIoJob addLoad(
+        QObject *receiver, ImageCandidatesCallback callback, ErrorCallback errorCallback);
+    std::optional<ArchiveDocumentCandidateLoadBatch> startBatch();
+    bool acceptsBatch(ArchiveDocumentCandidateLoadBatch batch) const;
+    bool batchInProgress() const;
+    std::vector<ArchiveDocumentCandidateLoad> finishBatch(ArchiveDocumentCandidateLoadBatch batch);
     void cancel();
 
 private:
-    void ensureGeneration(quint64 generation);
     void reset();
 
     std::vector<ArchiveDocumentCandidateLoad> m_pendingLoads;
-    quint64 m_generation = 0;
-    bool m_hasGeneration = false;
-    bool m_inProgress = false;
+    ImageAsyncOperationState m_batch;
 };
 }
 

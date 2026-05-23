@@ -5,6 +5,7 @@
 
 #include <QObject>
 #include <QTest>
+#include <optional>
 #include <vector>
 
 class TestArchiveDocumentCandidateLoadState : public QObject
@@ -12,73 +13,108 @@ class TestArchiveDocumentCandidateLoadState : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
-    void sameGenerationLoadsShareOneStartableBatch();
-    void generationChangeCancelsPreviousBatch();
-    void wrongGenerationCannotFinishBatch();
+    void pendingLoadsShareOneStartableBatch();
+    void loadAddedDuringBatchJoinsActiveBatch();
+    void cancelRejectsActiveBatch();
+    void wrongBatchCannotFinishPendingLoads();
     void cancelInvalidatesPendingLoads();
 };
 
-void TestArchiveDocumentCandidateLoadState::sameGenerationLoadsShareOneStartableBatch()
+void TestArchiveDocumentCandidateLoadState::pendingLoadsShareOneStartableBatch()
 {
     KiriView::ArchiveDocumentCandidateLoadState state;
-    KiriView::ImageIoJob firstJob = state.addLoad(this, 7, {}, {});
-    KiriView::ImageIoJob secondJob = state.addLoad(this, 7, {}, {});
+    KiriView::ImageIoJob firstJob = state.addLoad(this, {}, {});
+    KiriView::ImageIoJob secondJob = state.addLoad(this, {}, {});
 
     QVERIFY(firstJob.isActive());
     QVERIFY(secondJob.isActive());
-    QVERIFY(state.startBatch(7));
-    QVERIFY(!state.startBatch(7));
+    const std::optional<KiriView::ArchiveDocumentCandidateLoadBatch> batch = state.startBatch();
+    QVERIFY(batch.has_value());
+    QVERIFY(state.batchInProgress());
+    QVERIFY(!state.startBatch().has_value());
 
-    std::vector<KiriView::ArchiveDocumentCandidateLoad> loads = state.finishBatch(7);
+    std::vector<KiriView::ArchiveDocumentCandidateLoad> loads = state.finishBatch(*batch);
     QCOMPARE(loads.size(), std::size_t(2));
     QVERIFY(loads[0].completion.claimAndDelete([]() { }));
     QVERIFY(loads[1].completion.claimAndDelete([]() { }));
     QVERIFY(!firstJob.isActive());
     QVERIFY(!secondJob.isActive());
-    QVERIFY(!state.startBatch(7));
+    QVERIFY(!state.batchInProgress());
+    QVERIFY(!state.startBatch().has_value());
 }
 
-void TestArchiveDocumentCandidateLoadState::generationChangeCancelsPreviousBatch()
+void TestArchiveDocumentCandidateLoadState::loadAddedDuringBatchJoinsActiveBatch()
 {
     KiriView::ArchiveDocumentCandidateLoadState state;
-    KiriView::ImageIoJob staleJob = state.addLoad(this, 3, {}, {});
+    KiriView::ImageIoJob firstJob = state.addLoad(this, {}, {});
 
-    QVERIFY(state.startBatch(3));
-    KiriView::ImageIoJob currentJob = state.addLoad(this, 4, {}, {});
+    const std::optional<KiriView::ArchiveDocumentCandidateLoadBatch> batch = state.startBatch();
+    QVERIFY(batch.has_value());
+    QVERIFY(state.batchInProgress());
+    KiriView::ImageIoJob secondJob = state.addLoad(this, {}, {});
 
+    QVERIFY(firstJob.isActive());
+    QVERIFY(secondJob.isActive());
+    QVERIFY(!state.startBatch().has_value());
+
+    std::vector<KiriView::ArchiveDocumentCandidateLoad> loads = state.finishBatch(*batch);
+    QCOMPARE(loads.size(), std::size_t(2));
+    QVERIFY(loads[0].completion.claimAndDelete([]() { }));
+    QVERIFY(loads[1].completion.claimAndDelete([]() { }));
+    QVERIFY(!firstJob.isActive());
+    QVERIFY(!secondJob.isActive());
+    QVERIFY(!state.batchInProgress());
+}
+
+void TestArchiveDocumentCandidateLoadState::cancelRejectsActiveBatch()
+{
+    KiriView::ArchiveDocumentCandidateLoadState state;
+    KiriView::ImageIoJob job = state.addLoad(this, {}, {});
+
+    const std::optional<KiriView::ArchiveDocumentCandidateLoadBatch> batch = state.startBatch();
+    QVERIFY(batch.has_value());
+    state.cancel();
+
+    QVERIFY(!job.isActive());
+    QCOMPARE(state.finishBatch(*batch).size(), std::size_t(0));
+    QVERIFY(!state.acceptsBatch(*batch));
+    QVERIFY(!state.batchInProgress());
+}
+
+void TestArchiveDocumentCandidateLoadState::wrongBatchCannotFinishPendingLoads()
+{
+    KiriView::ArchiveDocumentCandidateLoadState state;
+    KiriView::ImageIoJob staleJob = state.addLoad(this, {}, {});
+    const std::optional<KiriView::ArchiveDocumentCandidateLoadBatch> staleBatch
+        = state.startBatch();
+    QVERIFY(staleBatch.has_value());
+    state.cancel();
+
+    KiriView::ImageIoJob currentJob = state.addLoad(this, {}, {});
+    const std::optional<KiriView::ArchiveDocumentCandidateLoadBatch> currentBatch
+        = state.startBatch();
+    QVERIFY(currentBatch.has_value());
     QVERIFY(!staleJob.isActive());
     QVERIFY(currentJob.isActive());
-    QVERIFY(!state.startBatch(3));
-    QVERIFY(state.startBatch(4));
-    QCOMPARE(state.finishBatch(3).size(), std::size_t(0));
-    QCOMPARE(state.finishBatch(4).size(), std::size_t(1));
-}
+    QCOMPARE(state.finishBatch(*staleBatch).size(), std::size_t(0));
+    QVERIFY(currentJob.isActive());
 
-void TestArchiveDocumentCandidateLoadState::wrongGenerationCannotFinishBatch()
-{
-    KiriView::ArchiveDocumentCandidateLoadState state;
-    KiriView::ImageIoJob job = state.addLoad(this, 9, {}, {});
-
-    QVERIFY(state.startBatch(9));
-    QCOMPARE(state.finishBatch(10).size(), std::size_t(0));
-    QVERIFY(job.isActive());
-
-    std::vector<KiriView::ArchiveDocumentCandidateLoad> loads = state.finishBatch(9);
+    std::vector<KiriView::ArchiveDocumentCandidateLoad> loads = state.finishBatch(*currentBatch);
     QCOMPARE(loads.size(), std::size_t(1));
     QVERIFY(loads.front().completion.claimAndDelete([]() { }));
-    QVERIFY(!job.isActive());
+    QVERIFY(!currentJob.isActive());
 }
 
 void TestArchiveDocumentCandidateLoadState::cancelInvalidatesPendingLoads()
 {
     KiriView::ArchiveDocumentCandidateLoadState state;
-    KiriView::ImageIoJob job = state.addLoad(this, 11, {}, {});
+    KiriView::ImageIoJob job = state.addLoad(this, {}, {});
 
     state.cancel();
 
     QVERIFY(!job.isActive());
-    QVERIFY(!state.startBatch(11));
-    QCOMPARE(state.finishBatch(11).size(), std::size_t(0));
+    QVERIFY(!state.startBatch().has_value());
+    QCOMPARE(state.finishBatch({ 1 }).size(), std::size_t(0));
 }
 
 QTEST_GUILESS_MAIN(TestArchiveDocumentCandidateLoadState)
