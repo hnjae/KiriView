@@ -156,6 +156,11 @@ void KiriImageRenderNode::setSurface(
     m_surface = std::move(surface);
 }
 
+void KiriImageRenderNode::setDrawContext(const ImageSurfaceDrawContext &context)
+{
+    m_state.setDrawContext(context);
+}
+
 void KiriImageRenderNode::setTargetRect(const QRectF &targetRect)
 {
     m_state.setTargetRect(targetRect);
@@ -277,6 +282,7 @@ bool KiriImageRenderNode::addDrawTexture(
     }
 
     DrawTexture drawTexture;
+    drawTexture.identity = entry.identity;
     drawTexture.targetRect = entry.targetRect;
     drawTexture.textureRect = entry.textureRect;
     drawTexture.textureTransform = entry.textureTransform;
@@ -354,7 +360,7 @@ bool KiriImageRenderNode::rebuildDrawTextures(QRhiResourceUpdateBatch *&resource
     m_pipeline.reset();
     m_drawTextures.clear();
     const std::vector<ImageSurfaceDrawEntry> entries
-        = imageSurfaceDrawEntries(*m_surface, m_state.targetRect(), m_state.rotationDegrees());
+        = imageSurfaceDrawEntries(*m_surface, m_state.drawContext());
     for (const ImageSurfaceDrawEntry &entry : entries) {
         if (!addDrawTexture(resourceUpdates, entry)) {
             m_drawTextures.clear();
@@ -362,7 +368,7 @@ bool KiriImageRenderNode::rebuildDrawTextures(QRhiResourceUpdateBatch *&resource
         }
     }
 
-    m_state.markTexturesUploaded();
+    m_state.markTexturesUploaded(imageSurfaceDrawIdentities(entries));
     return true;
 }
 
@@ -373,12 +379,16 @@ bool KiriImageRenderNode::syncDrawTextureEntries()
     }
 
     const std::vector<ImageSurfaceDrawEntry> entries
-        = imageSurfaceDrawEntries(*m_surface, m_state.targetRect(), m_state.rotationDegrees());
+        = imageSurfaceDrawEntries(*m_surface, m_state.drawContext());
     if (entries.size() != m_drawTextures.size()) {
+        return false;
+    }
+    if (!m_state.drawEntryIdentitiesMatch(imageSurfaceDrawIdentities(entries))) {
         return false;
     }
 
     for (std::size_t index = 0; index < entries.size(); ++index) {
+        m_drawTextures[index].identity = entries[index].identity;
         m_drawTextures[index].targetRect = entries[index].targetRect;
         m_drawTextures[index].textureRect = entries[index].textureRect;
         m_drawTextures[index].textureTransform = entries[index].textureTransform;

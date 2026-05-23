@@ -5,10 +5,14 @@
 
 #include "presentation/imagerotation.h"
 
-namespace KiriView {
-const QRectF &ImageRenderNodeState::targetRect() const { return m_targetRect; }
+#include <utility>
 
-int ImageRenderNodeState::rotationDegrees() const { return m_rotationDegrees; }
+namespace KiriView {
+const ImageSurfaceDrawContext &ImageRenderNodeState::drawContext() const { return m_drawContext; }
+
+const QRectF &ImageRenderNodeState::targetRect() const { return m_drawContext.targetRect; }
+
+int ImageRenderNodeState::rotationDegrees() const { return m_drawContext.rotationDegrees; }
 
 ImageRenderNodeSurfaceUpdate ImageRenderNodeState::setSurface(bool sameSurface, quint64 revision)
 {
@@ -42,11 +46,24 @@ void ImageRenderNodeState::markSurfaceChanged()
 
 bool ImageRenderNodeState::setTargetRect(const QRectF &targetRect)
 {
-    if (m_targetRect == targetRect) {
+    if (m_drawContext.targetRect == targetRect) {
         return false;
     }
 
-    m_targetRect = targetRect;
+    m_drawContext.targetRect = targetRect;
+    m_drawGeometryDirty = true;
+    return true;
+}
+
+bool ImageRenderNodeState::setDrawContext(const ImageSurfaceDrawContext &context)
+{
+    ImageSurfaceDrawContext normalized = context;
+    normalized.rotationDegrees = normalizedImageRotationDegrees(context.rotationDegrees);
+    if (m_drawContext == normalized) {
+        return false;
+    }
+
+    m_drawContext = normalized;
     m_drawGeometryDirty = true;
     return true;
 }
@@ -54,11 +71,11 @@ bool ImageRenderNodeState::setTargetRect(const QRectF &targetRect)
 bool ImageRenderNodeState::setRotationDegrees(int rotationDegrees)
 {
     const int normalized = normalizedImageRotationDegrees(rotationDegrees);
-    if (m_rotationDegrees == normalized) {
+    if (m_drawContext.rotationDegrees == normalized) {
         return false;
     }
 
-    m_rotationDegrees = normalized;
+    m_drawContext.rotationDegrees = normalized;
     m_drawGeometryDirty = true;
     return true;
 }
@@ -80,6 +97,12 @@ ImageRenderNodeTextureUpdatePlan ImageRenderNodeState::textureUpdatePlan() const
     return ImageRenderNodeTextureUpdatePlan::ReuseTextures;
 }
 
+bool ImageRenderNodeState::drawEntryIdentitiesMatch(
+    const std::vector<ImageSurfaceDrawIdentity> &identities) const
+{
+    return m_uploadedDrawIdentities == identities;
+}
+
 void ImageRenderNodeState::applyDrawGeometrySyncResult(bool synchronized)
 {
     if (synchronized) {
@@ -90,9 +113,10 @@ void ImageRenderNodeState::applyDrawGeometrySyncResult(bool synchronized)
     m_texturesDirty = true;
 }
 
-void ImageRenderNodeState::markTexturesUploaded()
+void ImageRenderNodeState::markTexturesUploaded(std::vector<ImageSurfaceDrawIdentity> identities)
 {
     m_uploadedSurfaceRevision = m_surfaceRevision;
+    m_uploadedDrawIdentities = std::move(identities);
     m_texturesDirty = false;
     m_drawGeometryDirty = false;
 }
@@ -100,6 +124,7 @@ void ImageRenderNodeState::markTexturesUploaded()
 void ImageRenderNodeState::resetUploadedResources()
 {
     m_uploadedSurfaceRevision = 0;
+    m_uploadedDrawIdentities.clear();
     m_texturesDirty = true;
     m_drawGeometryDirty = true;
 }

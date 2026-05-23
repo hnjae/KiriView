@@ -6,6 +6,7 @@
 
 #include "document/imagedocumenttypes.h"
 #include "imagesurface.h"
+#include "imagesurfacedrawcontext.h"
 #include "presentation/imagerotation.h"
 #include "staticimage.h"
 
@@ -19,7 +20,33 @@
 namespace KiriView {
 inline constexpr int fallbackTextureSizeMax = 16384;
 
+enum class ImageSurfaceDrawIdentityKind {
+    LegacyFrame,
+    Preview,
+    Tile,
+};
+
+struct ImageSurfaceDrawIdentity {
+    ImageSurfaceDrawIdentityKind kind = ImageSurfaceDrawIdentityKind::LegacyFrame;
+    TileKey tileKey;
+    bool resolutionIndependent = false;
+
+    friend bool operator==(
+        const ImageSurfaceDrawIdentity &left, const ImageSurfaceDrawIdentity &right)
+    {
+        return left.kind == right.kind && left.tileKey == right.tileKey
+            && left.resolutionIndependent == right.resolutionIndependent;
+    }
+
+    friend bool operator!=(
+        const ImageSurfaceDrawIdentity &left, const ImageSurfaceDrawIdentity &right)
+    {
+        return !(left == right);
+    }
+};
+
 struct ImageSurfaceDrawEntry {
+    ImageSurfaceDrawIdentity identity;
     QImage image;
     QRectF targetRect;
     QRectF textureRect;
@@ -31,7 +58,11 @@ QSize scaledImageSizeToFit(const QSizeF &imageSize, const QSize &boundsSize);
 QSize firstDisplayScaledImageSize(const QSize &imageSize, const QSize &physicalViewportSize);
 qreal imagePixelsPerSourcePixel(const QSize &imageSize, const QSize &displaySize);
 std::vector<ImageSurfaceDrawEntry> imageSurfaceDrawEntries(
+    const DisplayedImageSurface &surface, const ImageSurfaceDrawContext &context);
+std::vector<ImageSurfaceDrawEntry> imageSurfaceDrawEntries(
     const DisplayedImageSurface &surface, const QRectF &targetRect, int rotationDegrees = 0);
+std::vector<ImageSurfaceDrawIdentity> imageSurfaceDrawIdentities(
+    const std::vector<ImageSurfaceDrawEntry> &entries);
 QImage displayReadyImage(const QImage &image);
 QSize svgRasterSize(const QSizeF &displaySize, qreal devicePixelRatio, int maximumTextureSize);
 ImageDocumentRenderContext normalizedImageDocumentRenderContext(ImageDocumentRenderContext context);

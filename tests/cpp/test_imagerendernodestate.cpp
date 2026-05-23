@@ -15,6 +15,7 @@ private Q_SLOTS:
     void surfaceUpdateOwnsRevisionAndPointerInvalidation();
     void targetGeometryOnlyRequestsDrawGeometrySync();
     void drawGeometrySyncFailurePromotesTextureRebuild();
+    void changedDrawEntryIdentityPromotesTextureRebuild();
     void rotationIsNormalizedBeforeComparison();
     void resetUploadedResourcesKeepsPublicInputs();
 };
@@ -77,6 +78,54 @@ void TestImageRenderNodeState::drawGeometrySyncFailurePromotesTextureRebuild()
     state.setSurface(false, 7);
     state.markTexturesUploaded();
     state.setTargetRect(QRectF(10.0, 20.0, 30.0, 40.0));
+
+    state.applyDrawGeometrySyncResult(false);
+
+    expectTextureUpdatePlan(state, KiriView::ImageRenderNodeTextureUpdatePlan::RebuildTextures);
+}
+
+void TestImageRenderNodeState::changedDrawEntryIdentityPromotesTextureRebuild()
+{
+    KiriView::ImageRenderNodeState state;
+    state.setSurface(false, 7);
+    state.markTexturesUploaded({
+        KiriView::ImageSurfaceDrawIdentity {
+            KiriView::ImageSurfaceDrawIdentityKind::Preview,
+            {},
+            false,
+        },
+        KiriView::ImageSurfaceDrawIdentity {
+            KiriView::ImageSurfaceDrawIdentityKind::Tile,
+            KiriView::TileKey { 0, 0, 0 },
+            false,
+        },
+    });
+    state.setTargetRect(QRectF(10.0, 20.0, 30.0, 40.0));
+
+    QVERIFY(state.drawEntryIdentitiesMatch({
+        KiriView::ImageSurfaceDrawIdentity {
+            KiriView::ImageSurfaceDrawIdentityKind::Preview,
+            {},
+            false,
+        },
+        KiriView::ImageSurfaceDrawIdentity {
+            KiriView::ImageSurfaceDrawIdentityKind::Tile,
+            KiriView::TileKey { 0, 0, 0 },
+            false,
+        },
+    }));
+    QVERIFY(!state.drawEntryIdentitiesMatch({
+        KiriView::ImageSurfaceDrawIdentity {
+            KiriView::ImageSurfaceDrawIdentityKind::Preview,
+            {},
+            false,
+        },
+        KiriView::ImageSurfaceDrawIdentity {
+            KiriView::ImageSurfaceDrawIdentityKind::Tile,
+            KiriView::TileKey { 0, 1, 0 },
+            false,
+        },
+    }));
 
     state.applyDrawGeometrySyncResult(false);
 

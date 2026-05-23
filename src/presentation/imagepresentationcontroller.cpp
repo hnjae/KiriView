@@ -111,6 +111,9 @@ DisplayedImageRenderSnapshot ImagePresentationController::renderSnapshot() const
         imageSurface(),
         imageRevision(),
         imageSize(),
+        displaySize(),
+        visibleItemRect(),
+        m_viewportController->renderContext().devicePixelRatio,
         rotationDegrees(),
     };
 }

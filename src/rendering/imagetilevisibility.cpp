@@ -14,6 +14,13 @@ qreal tileDisplayPixelsPerSourcePixel(
         pyramid.imageSize(), displaySize, devicePixelRatio);
 }
 
+ActiveTileLayer activeTileLayer(
+    const TilePyramid &pyramid, const TileVisibilityContext &context, bool resolutionIndependent)
+{
+    return ImageTileGeometryPolicy::activeTileLayer(pyramid.imageSize(), context.displaySize,
+        context.devicePixelRatio, context.rotationDegrees, resolutionIndependent);
+}
+
 bool tileFirstDisplayIsSufficient(const TilePyramid &pyramid, const QSizeF &displaySize,
     qreal devicePixelRatio, qreal firstDisplayPixelsPerSourcePixel)
 {

@@ -50,6 +50,12 @@ mod ffi {
     }
 
     #[derive(Clone, Copy, Debug, PartialEq)]
+    struct RustActiveTileLayer {
+        level: i32,
+        scale_bucket: i32,
+    }
+
+    #[derive(Clone, Copy, Debug, PartialEq)]
     struct RustTileRequest {
         key: RustTileKey,
         level_size: RustTileSize,
@@ -141,6 +147,15 @@ mod ffi {
             level: i32,
         ) -> f64;
 
+        #[cxx_name = "rustActiveTileLayer"]
+        fn rust_active_tile_layer(
+            image_size: RustTileSize,
+            display_size: RustTileSizeF,
+            device_pixel_ratio: f64,
+            rotation_degrees: i32,
+            resolution_independent: bool,
+        ) -> RustActiveTileLayer;
+
         #[cxx_name = "rustTileDisplayPixelsPerSourcePixel"]
         fn rust_tile_display_pixels_per_source_pixel(
             image_size: RustTileSize,
@@ -186,8 +201,8 @@ mod ffi {
 }
 
 use ffi::{
-    RustTileKey, RustTileLevel, RustTileRect, RustTileRectF, RustTileRequest, RustTileSize,
-    RustTileSizeF,
+    RustActiveTileLayer, RustTileKey, RustTileLevel, RustTileRect, RustTileRectF, RustTileRequest,
+    RustTileSize, RustTileSizeF,
 };
 
 fn rust_bounded_integer_rect(rect: RustTileRect, bounds_size: RustTileSize) -> RustTileRect {
@@ -278,6 +293,21 @@ fn rust_tile_pyramid_tiles_intersecting_level_rect(
 
 fn rust_tile_pyramid_level_pixels_per_source_pixel(image_size: RustTileSize, level: i32) -> f64 {
     level_pixels_per_source_pixel(image_size, level)
+}
+
+fn rust_active_tile_layer(
+    image_size: RustTileSize,
+    display_size: RustTileSizeF,
+    device_pixel_ratio: f64,
+    rotation_degrees: i32,
+    resolution_independent: bool,
+) -> RustActiveTileLayer {
+    active_tile_layer(
+        image_size,
+        rotated_sizef(display_size, rotation_degrees),
+        device_pixel_ratio,
+        resolution_independent,
+    )
 }
 
 fn rust_tile_display_pixels_per_source_pixel(
@@ -609,6 +639,27 @@ fn tile_display_pixels_per_source_pixel(
         .min((display_size.height * device_pixel_ratio) / f64::from(image_size.height))
 }
 
+fn active_tile_layer(
+    image_size: RustTileSize,
+    source_display_size: RustTileSizeF,
+    device_pixel_ratio: f64,
+    resolution_independent: bool,
+) -> RustActiveTileLayer {
+    let display_pixels_per_source_pixel =
+        tile_display_pixels_per_source_pixel(image_size, source_display_size, device_pixel_ratio);
+    if resolution_independent {
+        return RustActiveTileLayer {
+            level: SVG_RASTER_TILE_LEVEL,
+            scale_bucket: svg_raster_scale_bucket(display_pixels_per_source_pixel),
+        };
+    }
+
+    RustActiveTileLayer {
+        level: select_level_for_display_scale(image_size, display_pixels_per_source_pixel),
+        scale_bucket: 0,
+    }
+}
+
 fn tile_first_display_is_sufficient(
     image_size: RustTileSize,
     display_size: RustTileSizeF,
@@ -665,10 +716,7 @@ fn visible_tile_keys(
         return Vec::new();
     }
 
-    let level = select_level_for_display_scale(
-        image_size,
-        tile_display_pixels_per_source_pixel(image_size, display_size, device_pixel_ratio),
-    );
+    let level = active_tile_layer(image_size, display_size, device_pixel_ratio, false).level;
     let current_level_rect =
         tile_level_rect_for_item_rect(image_size, level, display_size, visible_item_rect);
     let mut keys = tiles_intersecting_level_rect(image_size, tile_size, level, current_level_rect);
@@ -707,13 +755,14 @@ fn svg_raster_tile_requests(
     visible_item_rect: RustTileRectF,
     device_pixel_ratio: f64,
 ) -> Vec<RustTileRequest> {
-    let required_scale =
+    let display_pixels_per_source_pixel =
         tile_display_pixels_per_source_pixel(image_size, display_size, device_pixel_ratio);
-    if !required_scale.is_finite() || required_scale <= 0.0 {
+    if !display_pixels_per_source_pixel.is_finite() || display_pixels_per_source_pixel <= 0.0 {
         return Vec::new();
     }
 
-    let scale_bucket = svg_raster_scale_bucket(required_scale);
+    let scale_bucket =
+        active_tile_layer(image_size, display_size, device_pixel_ratio, true).scale_bucket;
     let bucket_size = svg_raster_size_for_bucket(image_size, scale_bucket);
     if size_is_empty(bucket_size) {
         return Vec::new();
@@ -869,6 +918,26 @@ fn scaled_dimension_for_bucket(dimension: i32, scale: f64) -> i32 {
         return 0;
     }
     scaled as i32
+}
+
+fn normalized_rotation_degrees(degrees: i32) -> i32 {
+    let normalized = degrees.rem_euclid(360);
+    if normalized % 90 == 0 { normalized } else { 0 }
+}
+
+fn rotation_swaps_axes(degrees: i32) -> bool {
+    matches!(normalized_rotation_degrees(degrees), 90 | 270)
+}
+
+fn rotated_sizef(size: RustTileSizeF, degrees: i32) -> RustTileSizeF {
+    if rotation_swaps_axes(degrees) {
+        RustTileSizeF {
+            width: size.height,
+            height: size.width,
+        }
+    } else {
+        size
+    }
 }
 
 fn level_size(image_size: RustTileSize, level: i32) -> RustTileSize {
@@ -1269,6 +1338,31 @@ mod tests {
         assert_eq!(
             svg_raster_size_for_bucket(size(1000, 1000), 2),
             size(2250, 2250)
+        );
+    }
+
+    #[test]
+    fn active_tile_layer_selects_raster_level_or_svg_bucket() {
+        assert_eq!(
+            active_tile_layer(size(2048, 1024), sizef(512.0, 256.0), 1.0, false),
+            RustActiveTileLayer {
+                level: 2,
+                scale_bucket: 0,
+            }
+        );
+        assert_eq!(
+            active_tile_layer(size(1000, 1000), sizef(1600.0, 1600.0), 1.0, true),
+            RustActiveTileLayer {
+                level: 0,
+                scale_bucket: 2,
+            }
+        );
+        assert_eq!(
+            rust_active_tile_layer(size(2000, 1000), sizef(500.0, 1000.0), 1.0, 90, false),
+            RustActiveTileLayer {
+                level: 1,
+                scale_bucket: 0,
+            }
         );
     }
 }

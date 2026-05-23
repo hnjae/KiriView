@@ -42,6 +42,11 @@ KiriView::TileLevel tileLevelFromRust(const KiriView::RustTileLevel &level)
     return KiriView::TileLevel { level.index, KiriView::Bridge::qtSize(level.size) };
 }
 
+KiriView::ActiveTileLayer activeTileLayerFromRust(const KiriView::RustActiveTileLayer &layer)
+{
+    return KiriView::ActiveTileLayer { layer.level, layer.scale_bucket };
+}
+
 KiriView::TileRequest tileRequestFromRust(const KiriView::RustTileRequest &request)
 {
     return KiriView::TileRequest {
@@ -131,6 +136,13 @@ std::vector<TileKey> tilePyramidTilesIntersectingLevelRect(
 qreal tilePyramidLevelPixelsPerSourcePixel(const QSize &imageSize, int level)
 {
     return rustTilePyramidLevelPixelsPerSourcePixel(rustTileSize(imageSize), level);
+}
+
+ActiveTileLayer activeTileLayer(const QSize &imageSize, const QSizeF &displaySize,
+    qreal devicePixelRatio, int rotationDegrees, bool resolutionIndependent)
+{
+    return activeTileLayerFromRust(rustActiveTileLayer(rustTileSize(imageSize),
+        rustTileSizeF(displaySize), devicePixelRatio, rotationDegrees, resolutionIndependent));
 }
 
 qreal tileDisplayPixelsPerSourcePixel(

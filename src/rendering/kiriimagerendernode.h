@@ -31,6 +31,7 @@ public:
 
     void setRhi(QRhi *rhi);
     void setSurface(std::shared_ptr<DisplayedImageSurface> surface, quint64 revision);
+    void setDrawContext(const ImageSurfaceDrawContext &context);
     void setTargetRect(const QRectF &targetRect);
     void setRotationDegrees(int rotationDegrees);
 
@@ -63,6 +64,7 @@ private:
     std::unique_ptr<QRhiGraphicsPipeline> m_pipeline;
 
     struct DrawTexture {
+        ImageSurfaceDrawIdentity identity;
         QRectF targetRect;
         QRectF textureRect;
         ImageTextureCoordinateTransform textureTransform;

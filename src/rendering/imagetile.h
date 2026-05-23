@@ -31,6 +31,16 @@ struct TileKey {
 
 uint qHash(const TileKey &key, uint seed = 0);
 
+struct ActiveTileLayer {
+    int level = 0;
+    int scaleBucket = 0;
+
+    bool contains(const TileKey &key) const
+    {
+        return key.level == level && key.scaleBucket == scaleBucket;
+    }
+};
+
 struct TileLevel {
     int index = 0;
     QSize size;

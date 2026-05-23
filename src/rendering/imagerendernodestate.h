@@ -4,8 +4,12 @@
 #ifndef KIRIVIEW_IMAGERENDERNODESTATE_H
 #define KIRIVIEW_IMAGERENDERNODESTATE_H
 
+#include "imagerendering.h"
+#include "imagesurfacedrawcontext.h"
+
 #include <QRectF>
 #include <QtGlobal>
+#include <vector>
 
 namespace KiriView {
 enum class ImageRenderNodeTextureUpdatePlan {
@@ -21,16 +25,19 @@ struct ImageRenderNodeSurfaceUpdate {
 class ImageRenderNodeState final
 {
 public:
+    const ImageSurfaceDrawContext &drawContext() const;
     const QRectF &targetRect() const;
     int rotationDegrees() const;
 
     ImageRenderNodeSurfaceUpdate setSurface(bool sameSurface, quint64 revision);
+    bool setDrawContext(const ImageSurfaceDrawContext &context);
     bool setTargetRect(const QRectF &targetRect);
     bool setRotationDegrees(int rotationDegrees);
 
     ImageRenderNodeTextureUpdatePlan textureUpdatePlan() const;
+    bool drawEntryIdentitiesMatch(const std::vector<ImageSurfaceDrawIdentity> &identities) const;
     void applyDrawGeometrySyncResult(bool synchronized);
-    void markTexturesUploaded();
+    void markTexturesUploaded(std::vector<ImageSurfaceDrawIdentity> identities = {});
     void resetUploadedResources();
 
 private:
@@ -40,8 +47,8 @@ private:
 
     quint64 m_surfaceRevision = 0;
     quint64 m_uploadedSurfaceRevision = 0;
-    QRectF m_targetRect;
-    int m_rotationDegrees = 0;
+    ImageSurfaceDrawContext m_drawContext;
+    std::vector<ImageSurfaceDrawIdentity> m_uploadedDrawIdentities;
     bool m_texturesDirty = true;
     bool m_drawGeometryDirty = true;
 };

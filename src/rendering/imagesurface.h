@@ -8,7 +8,9 @@
 #include "staticimage.h"
 
 #include <QImage>
+#include <QRectF>
 #include <QSize>
+#include <QSizeF>
 #include <QtGlobal>
 #include <memory>
 #include <optional>
@@ -72,6 +74,9 @@ struct DisplayedImageRenderSnapshot {
     std::shared_ptr<DisplayedImageSurface> surface;
     quint64 revision = 0;
     QSize imageSize;
+    QSizeF displaySize;
+    QRectF visibleItemRect;
+    qreal devicePixelRatio = 1.0;
     int rotationDegrees = 0;
 
     bool isRenderable() const { return surface != nullptr && !surface->isNull(); }

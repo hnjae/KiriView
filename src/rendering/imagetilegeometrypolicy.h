@@ -29,6 +29,8 @@ TileRequest tilePyramidRequestForTile(
 std::vector<TileKey> tilePyramidTilesIntersectingLevelRect(
     const QSize &imageSize, int tileSize, int level, const QRect &levelRect);
 qreal tilePyramidLevelPixelsPerSourcePixel(const QSize &imageSize, int level);
+ActiveTileLayer activeTileLayer(const QSize &imageSize, const QSizeF &displaySize,
+    qreal devicePixelRatio, int rotationDegrees, bool resolutionIndependent);
 
 qreal tileDisplayPixelsPerSourcePixel(
     const QSize &imageSize, const QSizeF &displaySize, qreal devicePixelRatio);
