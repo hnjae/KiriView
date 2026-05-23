@@ -227,14 +227,17 @@ void TestImageDocumentRuntime::initialLoadSuccessUpdatesDocumentState()
         });
 
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader);
+    QVERIFY(!runtime->zoomPercentKnown());
     runtime->setViewportSize(QSizeF(400.0, 300.0));
     runtime->setSourceUrl(imageUrl);
 
     QCOMPARE(runtime->status(), KiriView::ImageDocumentStatus::Loading);
+    QVERIFY(!runtime->zoomPercentKnown());
     QCOMPARE(dataLoader.loadCount(), std::size_t(1));
     finishLoad(dataLoader);
 
     QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QVERIFY(runtime->zoomPercentKnown());
     QCOMPARE(runtime->sourceUrl(), imageUrl);
     QCOMPARE(runtime->displayedUrl(), imageUrl);
     QCOMPARE(runtime->imageSize(), QSize(2, 1));

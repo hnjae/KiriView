@@ -51,12 +51,13 @@ void TestDocumentSessionState::documentKindPublishesDerivedPublicChanges()
 
     QCOMPARE(state.documentKind(), KiriView::DocumentSessionKind::Video);
     QCOMPARE(batches.size(), std::size_t(1));
-    QCOMPARE(batches.back().size(), std::size_t(5));
+    QCOMPARE(batches.back().size(), std::size_t(6));
     QCOMPARE(batches.back().at(0), KiriView::DocumentSessionChange::DocumentKind);
-    QCOMPARE(batches.back().at(1), KiriView::DocumentSessionChange::WindowTitleFileName);
-    QCOMPARE(batches.back().at(2), KiriView::DocumentSessionChange::ErrorString);
-    QCOMPARE(batches.back().at(3), KiriView::DocumentSessionChange::FileDeletionAvailability);
-    QCOMPARE(batches.back().at(4), KiriView::DocumentSessionChange::MediaNavigationAvailability);
+    QCOMPARE(batches.back().at(1), KiriView::DocumentSessionChange::ActiveZoomReadout);
+    QCOMPARE(batches.back().at(2), KiriView::DocumentSessionChange::WindowTitleFileName);
+    QCOMPARE(batches.back().at(3), KiriView::DocumentSessionChange::ErrorString);
+    QCOMPARE(batches.back().at(4), KiriView::DocumentSessionChange::FileDeletionAvailability);
+    QCOMPARE(batches.back().at(5), KiriView::DocumentSessionChange::MediaNavigationAvailability);
 
     state.setDocumentKind(KiriView::DocumentSessionKind::Video);
     QCOMPARE(batches.size(), std::size_t(1));

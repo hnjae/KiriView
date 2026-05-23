@@ -115,8 +115,12 @@ void TestMainWindowVideoIntegration::videoModeExposesReadOnlyZoomReadout()
     QVERIFY(videoViewportQml.contains(QStringLiteral("setVideoOutputGeometry")));
     QVERIFY(!videoViewportQml.contains(QStringLiteral("displayDevicePixelRatio")));
     QVERIFY(!videoViewportQml.contains(QStringLiteral("devicePixelRatio")));
-    QVERIFY(mainQml.contains(QStringLiteral("videoDocument.zoomPercentKnown")));
-    QVERIFY(mainQml.contains(QStringLiteral("videoDocument.zoomPercent")));
+    QVERIFY(!mainQml.contains(QStringLiteral("videoDocument.zoomPercentKnown")));
+    QVERIFY(!mainQml.contains(QStringLiteral("videoDocument.zoomPercent")));
+    QVERIFY(mainQml.contains(QStringLiteral("documentSession.activeZoomPercentAvailable")));
+    QVERIFY(mainQml.contains(QStringLiteral("documentSession.activeZoomPercentKnown")));
+    QVERIFY(mainQml.contains(QStringLiteral("documentSession.activeZoomPercent")));
+    QVERIFY(mainQml.contains(QStringLiteral("documentSession.activeZoomEditable")));
     QVERIFY(!mainQml.contains(QStringLiteral("videoViewportLoader.zoomPercentKnown")));
     QVERIFY(!mainQml.contains(QStringLiteral("videoViewportLoader.zoomPercent")));
     QVERIFY(!imageToolBarQml.contains(QStringLiteral("videoZoomLevelAction")));
@@ -126,10 +130,21 @@ void TestMainWindowVideoIntegration::videoModeExposesReadOnlyZoomReadout()
     QVERIFY(imageToolBarQml.contains(
         QStringLiteral("readonly property var toolbarControls: imageToolbarControls")));
     QVERIFY(imageToolBarQml.contains(QStringLiteral("readOnlyDisplayMode: root.videoMode")));
-    QVERIFY(imageToolBarQml.contains(QStringLiteral("readOnlyPercent: root.videoZoomPercent")));
-    QVERIFY(imageToolBarQml.contains(QStringLiteral("readOnlyPercentKnown: root.videoZoomReady")));
-    QVERIFY(mainQml.contains(QStringLiteral("videoZoomPercent: page.videoZoomPercent")));
-    QVERIFY(mainQml.contains(QStringLiteral("videoZoomReady: page.videoZoomReady")));
+    QVERIFY(
+        imageToolBarQml.contains(QStringLiteral("readOnlyPercent: Math.round(root.zoomPercent)")));
+    QVERIFY(
+        imageToolBarQml.contains(QStringLiteral("readOnlyPercentKnown: root.zoomPercentKnown")));
+    QVERIFY(imageToolBarQml.contains(QStringLiteral("zoomPercent: root.zoomPercent")));
+    QVERIFY(imageToolBarQml.contains(
+        QStringLiteral("zoomPercentAvailable: root.zoomPercentAvailable")));
+    QVERIFY(imageToolBarQml.contains(QStringLiteral("zoomPercentKnown: root.zoomPercentKnown")));
+    QVERIFY(mainQml.contains(QStringLiteral("zoomPercent: documentSession.activeZoomPercent")));
+    QVERIFY(mainQml.contains(
+        QStringLiteral("zoomPercentAvailable: documentSession.activeZoomPercentAvailable")));
+    QVERIFY(mainQml.contains(
+        QStringLiteral("zoomPercentKnown: documentSession.activeZoomPercentKnown")));
+    QVERIFY(!mainQml.contains(QStringLiteral("videoZoomPercent:")));
+    QVERIFY(!mainQml.contains(QStringLiteral("videoZoomReady:")));
 }
 
 QTEST_GUILESS_MAIN(TestMainWindowVideoIntegration)

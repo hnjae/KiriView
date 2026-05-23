@@ -14,6 +14,7 @@
 #include "session/documentsessionstate.h"
 
 #include <QUrl>
+#include <QtGlobal>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -50,6 +51,10 @@ public:
     QString windowTitleFileName() const;
     bool displayedFileDeletionAvailable() const;
     bool fileDeletionInProgress() const;
+    bool activeZoomPercentAvailable() const;
+    bool activeZoomPercentKnown() const;
+    qreal activeZoomPercent() const;
+    bool activeZoomEditable() const;
     bool mediaNavigationActive() const;
     bool mediaNavigationKnown() const;
     int currentMediaNumber() const;
@@ -68,6 +73,7 @@ public:
 private:
     void connectDocuments();
     void syncImageDocumentFileDeletionProgress();
+    void publishActiveZoomReadoutForKind(DocumentSessionKind kind);
     void routeSourceUrl(const QUrl &sourceUrl);
     void openMediaUrl(const QUrl &url);
     void leaveVideoMode();

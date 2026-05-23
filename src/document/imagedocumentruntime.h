@@ -59,6 +59,7 @@ public:
     QSizeF displaySize() const;
     QSizeF primaryDisplaySize() const;
     QSizeF secondaryDisplaySize() const;
+    bool zoomPercentKnown() const;
     qreal zoomPercent() const;
     void setZoomPercent(qreal zoomPercent);
     ImageZoomMode zoomMode() const;

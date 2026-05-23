@@ -172,14 +172,29 @@ void TestImageZoomControls::displayTextReflectsMissingAndUnknownZoomValues()
     ZoomControlsFixture fixture = createZoomControlsFixture();
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
     QObject *zoomTextInput = findObject(fixture.root.get(), QStringLiteral("zoomTextInput"));
+    QObject *zoomSpinBox = findObject(fixture.root.get(), QStringLiteral("zoomSpinBox"));
     QVERIFY(zoomTextInput != nullptr);
+    QVERIFY(zoomSpinBox != nullptr);
     QCOMPARE(zoomTextInput->property("text").toString(), QStringLiteral("    - %"));
+    QCOMPARE(zoomSpinBox->property("value").toInt(), 0);
+
+    QVERIFY(fixture.root->setProperty("zoomPercent", 208.0));
+    QVERIFY(fixture.root->setProperty("zoomPercentAvailable", false));
+    QVERIFY(fixture.root->setProperty("zoomPercentKnown", false));
+    QCoreApplication::processEvents();
+    QCOMPARE(zoomTextInput->property("text").toString(), QStringLiteral("    - %"));
+    QCOMPARE(zoomSpinBox->property("value").toInt(), 0);
 
     QVERIFY(fixture.root->setProperty("readOnlyDisplayMode", true));
+    QVERIFY(fixture.root->setProperty("zoomPercentAvailable", true));
+    QVERIFY(fixture.root->setProperty("zoomPercentKnown", false));
     QVERIFY(fixture.root->setProperty("readOnlyPercentKnown", false));
     QCoreApplication::processEvents();
     QCOMPARE(zoomTextInput->property("text").toString(), QStringLiteral("    ? %"));
+    QCOMPARE(zoomSpinBox->property("value").toInt(), 0);
 
+    QVERIFY(fixture.root->setProperty("zoomPercentKnown", true));
+    QVERIFY(fixture.root->setProperty("zoomPercent", 10000.0));
     QVERIFY(fixture.root->setProperty("readOnlyPercentKnown", true));
     QVERIFY(fixture.root->setProperty("readOnlyPercent", 10000));
     QCoreApplication::processEvents();

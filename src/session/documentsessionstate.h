@@ -23,6 +23,7 @@ enum class DocumentSessionChange {
     DocumentKind,
     ErrorString,
     WindowTitleFileName,
+    ActiveZoomReadout,
     FileDeletionAvailability,
     FileDeletionInProgress,
     MediaNavigationAvailability,

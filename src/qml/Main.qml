@@ -208,8 +208,6 @@ StatefulApp.StatefulWindow {
         readonly property bool imageMode: documentSession.documentKind === KiriDocumentSession.Image
         readonly property bool videoMode: documentSession.documentKind === KiriDocumentSession.Video
         readonly property bool imageReady: imageMode && imageDocument.status === KiriImageDocument.Ready
-        readonly property bool videoZoomReady: videoMode && videoDocument.zoomPercentKnown
-        readonly property int videoZoomPercent: videoZoomReady ? videoDocument.zoomPercent : 0
         readonly property point fullscreenPointerPosition: fullscreenRevealHandler.point.position
         property bool documentDeletionWasInProgress: false
 
@@ -240,6 +238,7 @@ StatefulApp.StatefulWindow {
             anchors.right: parent.right
             anchors.top: root.fullscreen ? parent.top : mainImageToolBar.bottom
             imageDocument: documentSession.imageDocument
+            presentationActive: page.imageMode
             visible: !page.videoMode
 
             onViewerClicked: {
@@ -443,9 +442,11 @@ StatefulApp.StatefulWindow {
             showApplicationMenuActions: !root.menuBarMode && !root.fullscreen
             transientOverlay: root.fullscreen
             videoMode: page.videoMode
-            videoZoomPercent: page.videoZoomPercent
-            videoZoomReady: page.videoZoomReady
             visible: !root.fullscreen || root.fullscreenToolBarRevealed
+            zoomEditable: documentSession.activeZoomEditable
+            zoomPercent: documentSession.activeZoomPercent
+            zoomPercentAvailable: documentSession.activeZoomPercentAvailable
+            zoomPercentKnown: documentSession.activeZoomPercentKnown
             z: 20
 
             onMediaNumberRequested: function (mediaNumber) {

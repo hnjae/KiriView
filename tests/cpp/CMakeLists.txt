@@ -241,7 +241,7 @@ endif()
 
 if(TARGET test_mainwindowtoolbar)
     set_tests_properties(test_mainwindowtoolbar PROPERTIES
-        ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen;QT_SCALE_FACTOR=2.075"
     )
 endif()
 

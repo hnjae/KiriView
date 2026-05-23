@@ -12,6 +12,7 @@
 #include <QImage>
 #include <QObject>
 #include <QSignalSpy>
+#include <QSizeF>
 #include <QTemporaryDir>
 #include <QTest>
 #include <cstddef>
@@ -154,6 +155,7 @@ class TestKiriDocumentSession : public QObject
 
 private Q_SLOTS:
     void directVideoRoutesToVideoDocumentWithOriginalSource();
+    void activeZoomReadoutFollowsSessionDocumentKind();
     void archiveAndDirectoryInputsRouteToImageDocument();
     void directImageAfterVideoRestoresImageDocument();
     void directImageMediaNavigationIncludesSiblingVideos();
@@ -184,6 +186,48 @@ void TestKiriDocumentSession::directVideoRoutesToVideoDocumentWithOriginalSource
     QVERIFY(session->mediaNavigationActive());
     QVERIFY(session->atKnownFirstMedia());
     QVERIFY(session->atKnownLastMedia());
+}
+
+void TestKiriDocumentSession::activeZoomReadoutFollowsSessionDocumentKind()
+{
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+
+    const QString imagePath = directory.filePath(QStringLiteral("01.png"));
+    QImage image(QSize(2, 2), QImage::Format_RGBA8888);
+    image.fill(Qt::red);
+    QVERIFY(image.save(imagePath, "PNG"));
+
+    FakeMediaCandidateProvider mediaProvider;
+    const QUrl imageUrl = localUrl(imagePath);
+    const QUrl videoUrl = localUrl(directory.filePath(QStringLiteral("02.mp4")));
+    mediaProvider.setMedia(localUrl(directory.path() + QStringLiteral("/")),
+        { mediaCandidate(imageUrl), mediaCandidate(videoUrl) });
+    std::unique_ptr<KiriDocumentSession> session = createSession(mediaProvider);
+
+    QCOMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Empty);
+    QVERIFY(!session->activeZoomPercentAvailable());
+    QVERIFY(!session->activeZoomPercentKnown());
+    QCOMPARE(session->activeZoomPercent(), 0.0);
+    QVERIFY(!session->activeZoomEditable());
+
+    session->setSourceUrl(videoUrl);
+
+    QCOMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Video);
+    QVERIFY(session->activeZoomPercentAvailable());
+    QVERIFY(!session->activeZoomPercentKnown());
+    QCOMPARE(session->activeZoomPercent(), 0.0);
+    QVERIFY(!session->activeZoomEditable());
+
+    session->imageDocument()->setViewportSize(QSizeF(400.0, 300.0));
+    session->setSourceUrl(imageUrl);
+
+    QTRY_COMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Image);
+    QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Ready);
+    QVERIFY(session->activeZoomPercentAvailable());
+    QVERIFY(session->activeZoomPercentKnown());
+    QVERIFY(session->activeZoomPercent() > 0.0);
+    QVERIFY(session->activeZoomEditable());
 }
 
 void TestKiriDocumentSession::archiveAndDirectoryInputsRouteToImageDocument()

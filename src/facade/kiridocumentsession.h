@@ -31,6 +31,12 @@ class KiriDocumentSession : public QObject
             displayedFileDeletionAvailabilityChanged)
     Q_PROPERTY(bool fileDeletionInProgress READ fileDeletionInProgress NOTIFY
             fileDeletionInProgressChanged)
+    Q_PROPERTY(bool activeZoomPercentAvailable READ activeZoomPercentAvailable NOTIFY
+            activeZoomReadoutChanged)
+    Q_PROPERTY(
+        bool activeZoomPercentKnown READ activeZoomPercentKnown NOTIFY activeZoomReadoutChanged)
+    Q_PROPERTY(double activeZoomPercent READ activeZoomPercent NOTIFY activeZoomReadoutChanged)
+    Q_PROPERTY(bool activeZoomEditable READ activeZoomEditable NOTIFY activeZoomReadoutChanged)
     Q_PROPERTY(bool mediaNavigationActive READ mediaNavigationActive NOTIFY
             mediaNavigationAvailabilityChanged)
     Q_PROPERTY(bool mediaNavigationKnown READ mediaNavigationKnown NOTIFY
@@ -76,6 +82,10 @@ public:
     QStringList openDialogNameFilters() const;
     bool displayedFileDeletionAvailable() const;
     bool fileDeletionInProgress() const;
+    bool activeZoomPercentAvailable() const;
+    bool activeZoomPercentKnown() const;
+    double activeZoomPercent() const;
+    bool activeZoomEditable() const;
     bool mediaNavigationActive() const;
     bool mediaNavigationKnown() const;
     int currentMediaNumber() const;
@@ -99,6 +109,7 @@ Q_SIGNALS:
     void windowTitleFileNameChanged();
     void displayedFileDeletionAvailabilityChanged();
     void fileDeletionInProgressChanged();
+    void activeZoomReadoutChanged();
     void mediaNavigationAvailabilityChanged();
 
 private:

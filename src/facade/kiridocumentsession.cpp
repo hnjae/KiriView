@@ -59,6 +59,8 @@ KiriView::DocumentSessionPublicSignalOperations publicSignalOperations(KiriDocum
         = [&session]() { Q_EMIT session.displayedFileDeletionAvailabilityChanged(); };
     operations.fileDeletionInProgressChanged
         = [&session]() { Q_EMIT session.fileDeletionInProgressChanged(); };
+    operations.activeZoomReadoutChanged
+        = [&session]() { Q_EMIT session.activeZoomReadoutChanged(); };
     operations.mediaNavigationAvailabilityChanged
         = [&session]() { Q_EMIT session.mediaNavigationAvailabilityChanged(); };
     return operations;
@@ -125,6 +127,20 @@ bool KiriDocumentSession::fileDeletionInProgress() const
 {
     return m_runtime->fileDeletionInProgress();
 }
+
+bool KiriDocumentSession::activeZoomPercentAvailable() const
+{
+    return m_runtime->activeZoomPercentAvailable();
+}
+
+bool KiriDocumentSession::activeZoomPercentKnown() const
+{
+    return m_runtime->activeZoomPercentKnown();
+}
+
+double KiriDocumentSession::activeZoomPercent() const { return m_runtime->activeZoomPercent(); }
+
+bool KiriDocumentSession::activeZoomEditable() const { return m_runtime->activeZoomEditable(); }
 
 bool KiriDocumentSession::mediaNavigationActive() const
 {

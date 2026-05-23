@@ -131,6 +131,58 @@ bool DocumentSessionRuntime::fileDeletionInProgress() const
     return m_state.fileDeletionInProgress();
 }
 
+bool DocumentSessionRuntime::activeZoomPercentAvailable() const
+{
+    switch (m_state.documentKind()) {
+    case DocumentSessionKind::Image:
+        return m_imageDocument.zoomPercentKnown();
+    case DocumentSessionKind::Video:
+        return true;
+    case DocumentSessionKind::Empty:
+        return false;
+    }
+
+    return false;
+}
+
+bool DocumentSessionRuntime::activeZoomPercentKnown() const
+{
+    switch (m_state.documentKind()) {
+    case DocumentSessionKind::Image:
+        return m_imageDocument.zoomPercentKnown();
+    case DocumentSessionKind::Video:
+        return m_videoDocument.zoomPercentKnown();
+    case DocumentSessionKind::Empty:
+        return false;
+    }
+
+    return false;
+}
+
+qreal DocumentSessionRuntime::activeZoomPercent() const
+{
+    if (!activeZoomPercentKnown()) {
+        return 0.0;
+    }
+
+    switch (m_state.documentKind()) {
+    case DocumentSessionKind::Image:
+        return m_imageDocument.zoomPercent();
+    case DocumentSessionKind::Video:
+        return m_videoDocument.zoomPercent();
+    case DocumentSessionKind::Empty:
+        return 0.0;
+    }
+
+    return 0.0;
+}
+
+bool DocumentSessionRuntime::activeZoomEditable() const
+{
+    return m_state.documentKind() == DocumentSessionKind::Image
+        && m_imageDocument.zoomPercentKnown();
+}
+
 bool DocumentSessionRuntime::mediaNavigationActive() const
 {
     return m_state.documentKind() == DocumentSessionKind::Video
@@ -258,6 +310,10 @@ void DocumentSessionRuntime::connectDocuments()
     });
     QObject::connect(&m_imageDocument, &KiriImageDocument::fileDeletionInProgressChanged, m_owner,
         [this]() { syncImageDocumentFileDeletionProgress(); });
+    QObject::connect(&m_imageDocument, &KiriImageDocument::zoomPercentKnownChanged, m_owner,
+        [this]() { publishActiveZoomReadoutForKind(DocumentSessionKind::Image); });
+    QObject::connect(&m_imageDocument, &KiriImageDocument::zoomPercentChanged, m_owner,
+        [this]() { publishActiveZoomReadoutForKind(DocumentSessionKind::Image); });
 
     QObject::connect(&m_videoDocument, &KiriVideoDocument::sourceUrlChanged, m_owner,
         [this]() { syncFromVideoDocument(); });
@@ -267,6 +323,10 @@ void DocumentSessionRuntime::connectDocuments()
         [this]() { m_state.publish(DocumentSessionChange::WindowTitleFileName); });
     QObject::connect(&m_videoDocument, &KiriVideoDocument::errorStringChanged, m_owner,
         [this]() { m_state.publish(DocumentSessionChange::ErrorString); });
+    QObject::connect(&m_videoDocument, &KiriVideoDocument::zoomPercentKnownChanged, m_owner,
+        [this]() { publishActiveZoomReadoutForKind(DocumentSessionKind::Video); });
+    QObject::connect(&m_videoDocument, &KiriVideoDocument::zoomPercentChanged, m_owner,
+        [this]() { publishActiveZoomReadoutForKind(DocumentSessionKind::Video); });
 }
 
 void DocumentSessionRuntime::syncImageDocumentFileDeletionProgress()
@@ -276,6 +336,13 @@ void DocumentSessionRuntime::syncImageDocumentFileDeletionProgress()
     }
 
     m_state.setFileDeletionInProgress(m_imageDocument.fileDeletionInProgress());
+}
+
+void DocumentSessionRuntime::publishActiveZoomReadoutForKind(DocumentSessionKind kind)
+{
+    if (m_state.documentKind() == kind) {
+        m_state.publish(DocumentSessionChange::ActiveZoomReadout);
+    }
 }
 
 void DocumentSessionRuntime::routeSourceUrl(const QUrl &sourceUrl)
@@ -305,8 +372,8 @@ void DocumentSessionRuntime::openMediaUrl(const QUrl &url)
     if (isDirectVideoUrl(url)) {
         m_routingSource = true;
         m_imageDocument.setSourceUrl(QUrl());
-        m_state.setDocumentKind(DocumentSessionKind::Video);
         m_videoDocument.setSourceUrl(url);
+        m_state.setDocumentKind(DocumentSessionKind::Video);
         m_routingSource = false;
         m_state.setSourceIdentity(url);
         refreshMediaNavigation();
@@ -315,8 +382,8 @@ void DocumentSessionRuntime::openMediaUrl(const QUrl &url)
 
     m_routingSource = true;
     leaveVideoMode();
-    m_state.setDocumentKind(DocumentSessionKind::Image);
     m_imageDocument.setSourceUrl(url);
+    m_state.setDocumentKind(DocumentSessionKind::Image);
     m_routingSource = false;
     m_state.setSourceIdentity(m_imageDocument.sourceUrl());
     refreshMediaNavigation();

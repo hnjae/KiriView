@@ -68,6 +68,9 @@ void ImageDocumentPublicSignalEmitter::emitSignal(ImageDocumentPublicSignal sign
     case ImageDocumentPublicSignal::DisplaySize:
         run(m_operations.displaySizeChanged);
         return;
+    case ImageDocumentPublicSignal::ZoomPercentKnown:
+        run(m_operations.zoomPercentKnownChanged);
+        return;
     case ImageDocumentPublicSignal::ZoomPercent:
         run(m_operations.zoomPercentChanged);
         return;
@@ -110,7 +113,7 @@ std::vector<ImageDocumentPublicSignal> imageDocumentPublicSignals(ImageDocumentC
     case ImageDocumentChange::SourceUrl:
         return { ImageDocumentPublicSignal::SourceUrl };
     case ImageDocumentChange::Status:
-        return { ImageDocumentPublicSignal::Status };
+        return { ImageDocumentPublicSignal::Status, ImageDocumentPublicSignal::ZoomPercentKnown };
     case ImageDocumentChange::Loading:
         return { ImageDocumentPublicSignal::Loading };
     case ImageDocumentChange::ErrorString:
@@ -120,13 +123,15 @@ std::vector<ImageDocumentPublicSignal> imageDocumentPublicSignals(ImageDocumentC
     case ImageDocumentChange::DisplayedUrl:
         return { ImageDocumentPublicSignal::DisplayedUrl };
     case ImageDocumentChange::ImageSize:
-        return { ImageDocumentPublicSignal::ImageSize };
+        return { ImageDocumentPublicSignal::ImageSize,
+            ImageDocumentPublicSignal::ZoomPercentKnown };
     case ImageDocumentChange::ViewportSize:
         return { ImageDocumentPublicSignal::ViewportSize };
     case ImageDocumentChange::VisibleItemRect:
         return { ImageDocumentPublicSignal::VisibleItemRect };
     case ImageDocumentChange::DisplaySize:
-        return { ImageDocumentPublicSignal::DisplaySize };
+        return { ImageDocumentPublicSignal::DisplaySize,
+            ImageDocumentPublicSignal::ZoomPercentKnown };
     case ImageDocumentChange::ZoomPercent:
         return { ImageDocumentPublicSignal::ZoomPercent };
     case ImageDocumentChange::ZoomMode:

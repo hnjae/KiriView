@@ -60,8 +60,9 @@ void DocumentSessionState::setDocumentKind(DocumentSessionKind kind)
         return;
     }
 
-    publish({ DocumentSessionChange::DocumentKind, DocumentSessionChange::WindowTitleFileName,
-        DocumentSessionChange::ErrorString, DocumentSessionChange::FileDeletionAvailability,
+    publish({ DocumentSessionChange::DocumentKind, DocumentSessionChange::ActiveZoomReadout,
+        DocumentSessionChange::WindowTitleFileName, DocumentSessionChange::ErrorString,
+        DocumentSessionChange::FileDeletionAvailability,
         DocumentSessionChange::MediaNavigationAvailability });
 }
 

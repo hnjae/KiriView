@@ -19,6 +19,10 @@ RowLayout {
     property bool readOnlyDisplayMode: false
     property bool readOnlyPercentKnown: false
     property int readOnlyPercent: 0
+    property bool zoomPercentAvailable: readOnlyDisplayMode || imageReady
+    property bool zoomPercentKnown: readOnlyDisplayMode ? readOnlyPercentKnown : imageReady
+    property real zoomPercent: readOnlyDisplayMode ? readOnlyPercent : imageDocument.zoomPercent
+    property bool zoomEditable: !readOnlyDisplayMode && imageReady
     property real pendingZoomStepCount: 0
     readonly property int controlSpacing: compact ? Math.max(1, Math.round(Kirigami.Units.smallSpacing / 2)) : Kirigami.Units.smallSpacing
     readonly property bool textInputActive: textInputFocused()
@@ -61,15 +65,16 @@ RowLayout {
         readonly property real zoomDisplayEpsilon: 0.001
         readonly property int zoomKiloThresholdPercent: 10000
         readonly property int zoomOverflowThresholdPercent: 1000000
-        readonly property bool zoomValueAvailable: root.readOnlyDisplayMode || root.imageReady
-        readonly property bool zoomValueKnown: root.readOnlyDisplayMode ? root.readOnlyPercentKnown : root.imageReady
-        readonly property real rawZoomPercent: root.readOnlyDisplayMode ? root.readOnlyPercent : root.imageDocument.zoomPercent
+        readonly property bool zoomValueAvailable: root.zoomPercentAvailable
+        readonly property bool zoomValueKnown: root.zoomPercentKnown
+        readonly property real rawZoomPercent: root.zoomPercent
+        readonly property real numericZoomPercent: Number.isFinite(Number(rawZoomPercent)) ? Number(rawZoomPercent) : 0
         readonly property string formattedDisplayText: formattedZoomText(rawZoomPercent, zoomValueAvailable, zoomValueKnown)
         readonly property string editableDisplayText: plainZoomText(value)
 
-        editable: !root.readOnlyDisplayMode
-        enabled: !root.readOnlyDisplayMode && root.imageReady
-        from: root.readOnlyDisplayMode ? 0 : Math.min(root.minimumManualZoomPercent, Math.floor(root.imageDocument.zoomPercent))
+        editable: root.zoomEditable
+        enabled: root.zoomEditable
+        from: root.zoomEditable ? Math.min(root.minimumManualZoomPercent, Math.floor(numericZoomPercent)) : 0
         implicitWidth: Kirigami.Units.gridUnit * 5
         live: false
         stepSize: {
@@ -79,10 +84,10 @@ RowLayout {
             if (zoomSpinBox.down.pressed) {
                 return root.multiplicativeStepSize(-1);
             }
-            return Math.max(1, Math.round(root.imageDocument.zoomPercent * (root.zoomStepFactor - 1)));
+            return Math.max(1, Math.round(numericZoomPercent * (root.zoomStepFactor - 1)));
         }
-        to: root.readOnlyDisplayMode ? Math.max(0, root.readOnlyPercent) : Math.max(root.maximumManualZoomPercent, Math.ceil(root.imageDocument.zoomPercent))
-        value: root.readOnlyDisplayMode ? Math.max(0, root.readOnlyPercent) : Math.round(root.imageDocument.zoomPercent)
+        to: root.zoomEditable ? Math.max(root.maximumManualZoomPercent, Math.ceil(numericZoomPercent)) : Math.max(0, Math.round(numericZoomPercent))
+        value: zoomValueAvailable && zoomValueKnown ? Math.max(0, Math.round(numericZoomPercent)) : 0
         wheelEnabled: false
 
         textFromValue: function (value, locale) {
@@ -109,7 +114,7 @@ RowLayout {
             font: Kirigami.Theme.fixedWidthFont
             horizontalAlignment: Text.AlignRight
             inputMethodHints: Qt.ImhFormattedNumbersOnly
-            readOnly: root.readOnlyDisplayMode || !zoomSpinBox.editable
+            readOnly: !root.zoomEditable || !zoomSpinBox.editable
             selectByMouse: true
             selectedTextColor: zoomSpinBox.palette.highlightedText
             selectionColor: zoomSpinBox.palette.highlight
@@ -119,11 +124,11 @@ RowLayout {
                 property: "text"
                 target: zoomTextInput
                 value: zoomSpinBox.formattedDisplayText
-                when: root.readOnlyDisplayMode || !zoomTextInput.activeFocus
+                when: !root.zoomEditable || !zoomTextInput.activeFocus
             }
 
             onActiveFocusChanged: {
-                if (activeFocus && !root.readOnlyDisplayMode && zoomSpinBox.enabled) {
+                if (activeFocus && root.zoomEditable && zoomSpinBox.enabled) {
                     text = zoomSpinBox.editableDisplayText;
                 }
             }
@@ -207,7 +212,7 @@ RowLayout {
         }
 
         function commitZoomText() {
-            if (root.readOnlyDisplayMode || !enabled) {
+            if (!root.zoomEditable || !enabled) {
                 restoreZoomText();
                 return;
             }
@@ -239,7 +244,7 @@ RowLayout {
         }
 
         onValueModified: {
-            if (root.readOnlyDisplayMode) {
+            if (!root.zoomEditable) {
                 return;
             }
 

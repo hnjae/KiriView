@@ -48,6 +48,7 @@ class KiriImageDocument : public QObject
     Q_PROPERTY(QSizeF displaySize READ displaySize NOTIFY displaySizeChanged)
     Q_PROPERTY(QSizeF primaryDisplaySize READ primaryDisplaySize NOTIFY displaySizeChanged)
     Q_PROPERTY(QSizeF secondaryDisplaySize READ secondaryDisplaySize NOTIFY twoPageModeChanged)
+    Q_PROPERTY(bool zoomPercentKnown READ zoomPercentKnown NOTIFY zoomPercentKnownChanged)
     Q_PROPERTY(double zoomPercent READ zoomPercent WRITE setZoomPercent NOTIFY zoomPercentChanged)
     Q_PROPERTY(ZoomMode zoomMode READ zoomMode NOTIFY zoomModeChanged)
     Q_PROPERTY(int rotationDegrees READ rotationDegrees NOTIFY rotationDegreesChanged)
@@ -122,6 +123,7 @@ public:
     QSizeF displaySize() const;
     QSizeF primaryDisplaySize() const;
     QSizeF secondaryDisplaySize() const;
+    bool zoomPercentKnown() const;
     double zoomPercent() const;
     void setZoomPercent(double zoomPercent);
     ZoomMode zoomMode() const;
@@ -177,6 +179,7 @@ Q_SIGNALS:
     void viewportSizeChanged();
     void visibleItemRectChanged();
     void displaySizeChanged();
+    void zoomPercentKnownChanged();
     void zoomPercentChanged();
     void zoomModeChanged();
     void rotationDegreesChanged();

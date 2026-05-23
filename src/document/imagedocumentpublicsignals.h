@@ -21,6 +21,7 @@ enum class ImageDocumentPublicSignal {
     ViewportSize,
     VisibleItemRect,
     DisplaySize,
+    ZoomPercentKnown,
     ZoomPercent,
     ZoomMode,
     MaximumManualZoomPercent,
@@ -45,6 +46,7 @@ struct ImageDocumentPublicSignalOperations {
     std::function<void()> viewportSizeChanged;
     std::function<void()> visibleItemRectChanged;
     std::function<void()> displaySizeChanged;
+    std::function<void()> zoomPercentKnownChanged;
     std::function<void()> zoomPercentChanged;
     std::function<void()> zoomModeChanged;
     std::function<void()> maximumManualZoomPercentChanged;

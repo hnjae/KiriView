@@ -90,6 +90,8 @@ KiriView::ImageDocumentPublicSignalOperations publicSignalOperations(KiriImageDo
     operations.viewportSizeChanged = [&document]() { Q_EMIT document.viewportSizeChanged(); };
     operations.visibleItemRectChanged = [&document]() { Q_EMIT document.visibleItemRectChanged(); };
     operations.displaySizeChanged = [&document]() { Q_EMIT document.displaySizeChanged(); };
+    operations.zoomPercentKnownChanged
+        = [&document]() { Q_EMIT document.zoomPercentKnownChanged(); };
     operations.zoomPercentChanged = [&document]() { Q_EMIT document.zoomPercentChanged(); };
     operations.zoomModeChanged = [&document]() { Q_EMIT document.zoomModeChanged(); };
     operations.maximumManualZoomPercentChanged
@@ -169,6 +171,8 @@ QSizeF KiriImageDocument::displaySize() const { return m_runtime->displaySize();
 QSizeF KiriImageDocument::primaryDisplaySize() const { return m_runtime->primaryDisplaySize(); }
 
 QSizeF KiriImageDocument::secondaryDisplaySize() const { return m_runtime->secondaryDisplaySize(); }
+
+bool KiriImageDocument::zoomPercentKnown() const { return m_runtime->zoomPercentKnown(); }
 
 double KiriImageDocument::zoomPercent() const { return m_runtime->zoomPercent(); }
 

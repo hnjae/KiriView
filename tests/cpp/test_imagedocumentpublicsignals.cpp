@@ -43,6 +43,8 @@ KiriView::ImageDocumentPublicSignalOperations recordingOperations(QStringList &e
     operations.visibleItemRectChanged
         = [&events]() { events.append(QStringLiteral("visibleItemRect")); };
     operations.displaySizeChanged = [&events]() { events.append(QStringLiteral("displaySize")); };
+    operations.zoomPercentKnownChanged
+        = [&events]() { events.append(QStringLiteral("zoomPercentKnown")); };
     operations.zoomPercentChanged = [&events]() { events.append(QStringLiteral("zoomPercent")); };
     operations.zoomModeChanged = [&events]() { events.append(QStringLiteral("zoomMode")); };
     operations.maximumManualZoomPercentChanged
@@ -72,7 +74,8 @@ void TestImageDocumentPublicSignals::publicSignalPlansReturnSignalsInEmissionOrd
 
     comparePublicSignals(
         KiriView::imageDocumentPublicSignals(Change::SourceUrl), { Signal::SourceUrl });
-    comparePublicSignals(KiriView::imageDocumentPublicSignals(Change::Status), { Signal::Status });
+    comparePublicSignals(KiriView::imageDocumentPublicSignals(Change::Status),
+        { Signal::Status, Signal::ZoomPercentKnown });
     comparePublicSignals(
         KiriView::imageDocumentPublicSignals(Change::Loading), { Signal::Loading });
     comparePublicSignals(
@@ -81,14 +84,14 @@ void TestImageDocumentPublicSignals::publicSignalPlansReturnSignalsInEmissionOrd
         { Signal::WindowTitleFileName });
     comparePublicSignals(
         KiriView::imageDocumentPublicSignals(Change::DisplayedUrl), { Signal::DisplayedUrl });
-    comparePublicSignals(
-        KiriView::imageDocumentPublicSignals(Change::ImageSize), { Signal::ImageSize });
+    comparePublicSignals(KiriView::imageDocumentPublicSignals(Change::ImageSize),
+        { Signal::ImageSize, Signal::ZoomPercentKnown });
     comparePublicSignals(
         KiriView::imageDocumentPublicSignals(Change::ViewportSize), { Signal::ViewportSize });
     comparePublicSignals(
         KiriView::imageDocumentPublicSignals(Change::VisibleItemRect), { Signal::VisibleItemRect });
-    comparePublicSignals(
-        KiriView::imageDocumentPublicSignals(Change::DisplaySize), { Signal::DisplaySize });
+    comparePublicSignals(KiriView::imageDocumentPublicSignals(Change::DisplaySize),
+        { Signal::DisplaySize, Signal::ZoomPercentKnown });
     comparePublicSignals(
         KiriView::imageDocumentPublicSignals(Change::ZoomPercent), { Signal::ZoomPercent });
     comparePublicSignals(
@@ -121,7 +124,7 @@ void TestImageDocumentPublicSignals::
                              { Change::TwoPageMode, Change::PageNavigation, Change::DisplayedUrl,
                                  Change::Status, Change::Repaint, Change::TwoPageMode }),
         { Signal::TwoPageMode, Signal::PageNavigation, Signal::DisplayedUrl, Signal::Status,
-            Signal::Repaint, Signal::DocumentScope });
+            Signal::ZoomPercentKnown, Signal::Repaint, Signal::DocumentScope });
 }
 
 void TestImageDocumentPublicSignals::emitterDispatchesChangeSignalsInProjectionOrder()

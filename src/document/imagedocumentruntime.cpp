@@ -124,6 +124,12 @@ QSizeF ImageDocumentRuntime::secondaryDisplaySize() const
     return controllers->spreadController().secondaryDisplaySize();
 }
 
+bool ImageDocumentRuntime::zoomPercentKnown() const
+{
+    return status() == ImageDocumentStatus::Ready && !imageSize().isEmpty()
+        && !displaySize().isEmpty();
+}
+
 qreal ImageDocumentRuntime::zoomPercent() const
 {
     return controllers->spreadController().zoomPercent();

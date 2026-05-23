@@ -12,7 +12,8 @@ Item {
     required property KiriImageDocument imageDocument
     property alias imageView: primaryImageView
     property alias flickable: imageFlickable
-    property bool imageReady: root.imageDocument.status === KiriImageDocument.Ready
+    property bool presentationActive: true
+    property bool imageReady: root.presentationActive && root.imageDocument.status === KiriImageDocument.Ready
     readonly property int minimumManualZoomPercent: root.imageDocument.minimumManualZoomPercent
     readonly property int maximumManualZoomPercent: root.imageDocument.maximumManualZoomPercent
     readonly property int wheelAngleDeltaPerStep: 120
@@ -138,14 +139,14 @@ Item {
         target: root.imageDocument
         property: "visibleItemRect"
         value: Qt.rect(imageFlickable.contentX - spreadItem.x, imageFlickable.contentY - spreadItem.y, imageFlickable.width, imageFlickable.height)
-        when: root.imageDocument !== null
+        when: root.presentationActive && root.imageDocument !== null
     }
 
     Binding {
         target: root.imageDocument
         property: "viewportSize"
         value: Qt.size(imageFlickable.width, imageFlickable.height)
-        when: root.imageDocument !== null
+        when: root.presentationActive && root.imageDocument !== null
     }
 
     Flickable {
@@ -199,18 +200,18 @@ Item {
         Item {
             id: spreadItem
 
-            height: root.imageDocument.displaySize.height
-            width: root.imageDocument.displaySize.width
+            height: root.presentationActive ? root.imageDocument.displaySize.height : 0
+            width: root.presentationActive ? root.imageDocument.displaySize.width : 0
             x: Math.max(0, (imageFlickable.width - width) / 2)
             y: Math.max(0, (imageFlickable.height - height) / 2)
 
             KiriImageView {
                 id: primaryImageView
 
-                document: root.imageDocument
-                height: root.imageDocument.primaryDisplaySize.height
-                width: root.imageDocument.primaryDisplaySize.width
-                x: root.imageDocument.secondaryPageVisible && root.imageDocument.rightToLeftReadingEnabled && root.imageDocument.rightToLeftReadingAvailable ? secondaryImageView.width : 0
+                document: root.presentationActive ? root.imageDocument : null
+                height: root.presentationActive ? root.imageDocument.primaryDisplaySize.height : 0
+                width: root.presentationActive ? root.imageDocument.primaryDisplaySize.width : 0
+                x: root.presentationActive && root.imageDocument.secondaryPageVisible && root.imageDocument.rightToLeftReadingEnabled && root.imageDocument.rightToLeftReadingAvailable ? secondaryImageView.width : 0
                 y: Math.max(0, (spreadItem.height - height) / 2)
 
                 onDisplayedImageInitialContentPositionRequested: Qt.callLater(root.applyDisplayedImageInitialContentPosition)
@@ -219,12 +220,12 @@ Item {
             KiriImageView {
                 id: secondaryImageView
 
-                document: root.imageDocument
-                height: root.imageDocument.secondaryDisplaySize.height
+                document: root.presentationActive ? root.imageDocument : null
+                height: root.presentationActive ? root.imageDocument.secondaryDisplaySize.height : 0
                 secondaryPage: true
-                visible: root.imageDocument.secondaryPageVisible
-                width: root.imageDocument.secondaryDisplaySize.width
-                x: root.imageDocument.rightToLeftReadingEnabled && root.imageDocument.rightToLeftReadingAvailable ? 0 : primaryImageView.width
+                visible: root.presentationActive && root.imageDocument.secondaryPageVisible
+                width: root.presentationActive ? root.imageDocument.secondaryDisplaySize.width : 0
+                x: root.presentationActive && root.imageDocument.rightToLeftReadingEnabled && root.imageDocument.rightToLeftReadingAvailable ? 0 : primaryImageView.width
                 y: Math.max(0, (spreadItem.height - height) / 2)
             }
         }

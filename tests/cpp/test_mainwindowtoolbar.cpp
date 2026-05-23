@@ -174,6 +174,14 @@ void TestMainWindowToolBar::startupCreatesOneVisibleToolbarWithDisabledMediaCont
     QVERIFY(!leftPageButton->isEnabled());
     QVERIFY(!rightPageButton->isEnabled());
 
+    QQuickItem *zoomSpinBox = findQuickItem(fixture.window, QStringLiteral("zoomSpinBox"));
+    QQuickItem *zoomTextInput = findQuickItem(fixture.window, QStringLiteral("zoomTextInput"));
+    QVERIFY(zoomSpinBox != nullptr);
+    QVERIFY(zoomTextInput != nullptr);
+    QVERIFY(!zoomSpinBox->isEnabled());
+    QTRY_COMPARE(zoomSpinBox->property("value").toInt(), 0);
+    QTRY_COMPARE(zoomTextInput->property("text").toString(), QStringLiteral("    - %"));
+
     const QList<QQuickItem *> visibleApplicationMenuButtons
         = visibleItemsByObjectName(fixture.window, QStringLiteral("toolbarApplicationMenuButton"));
     QCOMPARE(visibleApplicationMenuButtons.size(), 1);

@@ -333,8 +333,10 @@ Item {
         rightToLeftReadingActive: root.rightToLeftReadingActive
         showApplicationMenuActions: true
         videoMode: root.videoMode
-        videoZoomPercent: 67
-        videoZoomReady: root.videoMode
+        zoomEditable: !root.videoMode && imageDocument.zoomPercentKnown
+        zoomPercent: root.videoMode ? 67 : (imageDocument.zoomPercentKnown ? imageDocument.zoomPercent : 0)
+        zoomPercentAvailable: root.videoMode || imageDocument.zoomPercentKnown
+        zoomPercentKnown: root.videoMode ? true : imageDocument.zoomPercentKnown
         zoomStepFactor: imageDocument.zoomStepFactor
     }
 }

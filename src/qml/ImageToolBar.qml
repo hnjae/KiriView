@@ -26,8 +26,10 @@ Controls.ToolBar {
     property var applicationMenuActions: []
     property bool showApplicationMenuActions: false
     property bool videoMode: false
-    property bool videoZoomReady: false
-    property int videoZoomPercent: 0
+    property bool zoomPercentAvailable: imageReady
+    property bool zoomPercentKnown: imageReady
+    property real zoomPercent: imageDocument.zoomPercent
+    property bool zoomEditable: !videoMode && imageReady
     property bool fileDeletionInProgress: imageDocument.fileDeletionInProgress
     property bool mediaNavigationActive: false
     property bool mediaNavigationKnown: false
@@ -186,8 +188,12 @@ Controls.ToolBar {
             maximumManualZoomPercent: root.maximumManualZoomPercent
             minimumManualZoomPercent: root.minimumManualZoomPercent
             readOnlyDisplayMode: root.videoMode
-            readOnlyPercent: root.videoZoomPercent
-            readOnlyPercentKnown: root.videoZoomReady
+            readOnlyPercent: Math.round(root.zoomPercent)
+            readOnlyPercentKnown: root.zoomPercentKnown
+            zoomEditable: root.zoomEditable
+            zoomPercent: root.zoomPercent
+            zoomPercentAvailable: root.zoomPercentAvailable
+            zoomPercentKnown: root.zoomPercentKnown
             zoomStepFactor: root.zoomStepFactor
 
             Component.onDestruction: {
@@ -219,7 +225,7 @@ Controls.ToolBar {
         enabled: !root.videoMode && root.imageReady
         icon.name: "zoom-original-symbolic"
         text: KI18n.i18nc("@action", "Zoom")
-        tooltip: root.videoMode ? (root.videoZoomReady ? KI18n.i18nc("@info:tooltip", "Fitted video zoom") : KI18n.i18nc("@info:tooltip", "Video zoom unavailable")) : text
+        tooltip: root.videoMode ? (root.zoomPercentKnown ? KI18n.i18nc("@info:tooltip", "Fitted video zoom") : KI18n.i18nc("@info:tooltip", "Video zoom unavailable")) : text
     }
 
     readonly property Kirigami.Action fitMenuAction: Kirigami.Action {
