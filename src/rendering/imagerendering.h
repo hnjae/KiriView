@@ -64,7 +64,6 @@ std::vector<ImageSurfaceDrawEntry> imageSurfaceDrawEntries(
 std::vector<ImageSurfaceDrawIdentity> imageSurfaceDrawIdentities(
     const std::vector<ImageSurfaceDrawEntry> &entries);
 QImage displayReadyImage(const QImage &image);
-QSize svgRasterSize(const QSizeF &displaySize, qreal devicePixelRatio, int maximumTextureSize);
 ImageDocumentRenderContext normalizedImageDocumentRenderContext(ImageDocumentRenderContext context);
 ImageFirstDisplayDecodeContext imageFirstDisplayDecodeContext(
     const QSizeF &viewportSize, qreal devicePixelRatio);

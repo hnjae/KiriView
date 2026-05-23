@@ -126,6 +126,30 @@ void TestImageRenderNodeState::changedDrawEntryIdentityPromotesTextureRebuild()
             false,
         },
     }));
+    QVERIFY(!state.drawEntryIdentitiesMatch({
+        KiriView::ImageSurfaceDrawIdentity {
+            KiriView::ImageSurfaceDrawIdentityKind::Preview,
+            {},
+            false,
+        },
+        KiriView::ImageSurfaceDrawIdentity {
+            KiriView::ImageSurfaceDrawIdentityKind::Tile,
+            KiriView::TileKey { 0, 0, 0 },
+            true,
+        },
+    }));
+    QVERIFY(!state.drawEntryIdentitiesMatch({
+        KiriView::ImageSurfaceDrawIdentity {
+            KiriView::ImageSurfaceDrawIdentityKind::Preview,
+            {},
+            false,
+        },
+        KiriView::ImageSurfaceDrawIdentity {
+            KiriView::ImageSurfaceDrawIdentityKind::Tile,
+            KiriView::TileKey { 0, 0, 0, 2 },
+            true,
+        },
+    }));
 
     state.applyDrawGeometrySyncResult(false);
 

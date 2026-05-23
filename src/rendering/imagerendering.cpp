@@ -218,12 +218,6 @@ QImage displayReadyImage(const QImage &image)
     return image.convertToFormat(QImage::Format_RGBA8888_Premultiplied);
 }
 
-QSize svgRasterSize(const QSizeF &displaySize, qreal devicePixelRatio, int maximumTextureSize)
-{
-    return Bridge::qtSize(rustSvgRasterSize(Bridge::rustSizeF<RustImageRenderSizeF>(displaySize),
-        devicePixelRatio, maximumTextureSize, fallbackTextureSizeMax));
-}
-
 ImageDocumentRenderContext normalizedImageDocumentRenderContext(ImageDocumentRenderContext context)
 {
     const RustImageDocumentRenderContext normalized = rustNormalizedImageDocumentRenderContext(
