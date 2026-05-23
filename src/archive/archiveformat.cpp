@@ -3,6 +3,7 @@
 
 #include "archiveformat.h"
 
+#include "bridge/archiveformatconversion.h"
 #include "bridge/rustqtconversion.h"
 #include "kiriview/src/policy/archiveformat.cxx.h"
 
@@ -13,54 +14,11 @@
 namespace {
 using ArchiveMatchResolver = std::optional<KiriView::ArchiveOpenMatch> (*)(const QString &);
 
-KiriView::ArchiveStorageBackend archiveStorageBackendFromRust(
-    KiriView::RustArchiveStorageBackend backend)
-{
-    switch (backend) {
-    case KiriView::RustArchiveStorageBackend::KZip:
-        return KiriView::ArchiveStorageBackend::KZip;
-    case KiriView::RustArchiveStorageBackend::KTar:
-        return KiriView::ArchiveStorageBackend::KTar;
-    case KiriView::RustArchiveStorageBackend::K7Zip:
-        return KiriView::ArchiveStorageBackend::K7Zip;
-    case KiriView::RustArchiveStorageBackend::LibArchive:
-        return KiriView::ArchiveStorageBackend::LibArchive;
-    case KiriView::RustArchiveStorageBackend::None:
-        return KiriView::ArchiveStorageBackend::None;
-    }
-
-    return KiriView::ArchiveStorageBackend::None;
-}
-
-KiriView::ArchiveOpenMatchKind archiveOpenMatchKindFromRust(KiriView::RustArchiveOpenMatchKind kind)
-{
-    switch (kind) {
-    case KiriView::RustArchiveOpenMatchKind::ComicBook:
-        return KiriView::ArchiveOpenMatchKind::ComicBook;
-    case KiriView::RustArchiveOpenMatchKind::GeneralArchive:
-        return KiriView::ArchiveOpenMatchKind::GeneralArchive;
-    }
-
-    return KiriView::ArchiveOpenMatchKind::GeneralArchive;
-}
-
-std::optional<KiriView::ArchiveOpenMatch> archiveOpenMatchFromRust(
-    const KiriView::RustArchiveOpenMatch &match)
-{
-    if (!match.found) {
-        return std::nullopt;
-    }
-
-    return KiriView::ArchiveOpenMatch {
-        KiriView::Bridge::qtString(match.scheme),
-        archiveOpenMatchKindFromRust(match.kind),
-    };
-}
-
 std::optional<KiriView::ArchiveOpenMatch> archiveMatchForQString(
     const QString &value, KiriView::RustArchiveOpenMatch (*rustFunction)(rust::Str))
 {
-    return archiveOpenMatchFromRust(KiriView::Bridge::rustResultForQString(value, rustFunction));
+    return KiriView::archiveOpenMatchFromBridge(
+        KiriView::Bridge::rustResultForQString(value, rustFunction));
 }
 
 QString schemeString(const std::optional<KiriView::ArchiveOpenMatch> &match)
@@ -95,7 +53,7 @@ bool isSupportedArchiveRootScheme(const QString &scheme)
 
 ArchiveStorageBackend archiveStorageBackendForRootScheme(const QString &scheme)
 {
-    return archiveStorageBackendFromRust(
+    return archiveStorageBackendFromBridge(
         Bridge::rustResultForQString(scheme, rustArchiveStorageBackendForRootScheme));
 }
 

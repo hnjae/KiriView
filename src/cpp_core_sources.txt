@@ -27,6 +27,8 @@ src/archive/archiveformat.cpp
 src/archive/archivepath.cpp
 src/decoding/bufferedimagereader.cpp
 src/bridge/applicationstartupsourceconversion.cpp
+src/bridge/archiveformatconversion.cpp
+src/bridge/imageinputclassificationconversion.cpp
 src/bridge/imageopenworkflowconversion.cpp
 src/presentation/displayedimagestate.cpp
 src/document/filedeletion.cpp
