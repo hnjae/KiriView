@@ -5,22 +5,28 @@
 #define KIRIVIEW_PREDECODESCHEDULESTATE_H
 
 #include "async/imageasyncticket.h"
-#include "navigation/medianavigationmodel.h"
 #include "predecodedimage.h"
 #include "predecodepolicy.h"
 
 #include <QtGlobal>
+#include <memory>
 #include <optional>
 #include <variant>
 #include <vector>
 
 namespace KiriView {
+class PredecodeSchedulePayload
+{
+public:
+    virtual ~PredecodeSchedulePayload() = default;
+};
+
 struct PredecodeScheduleContext {
     DisplayedImageLocation currentLocation;
     std::vector<DisplayedPredecodeImage> displayedImages;
     ImageFirstDisplayDecodeContext firstDisplayContext;
     int pageIndex = -1;
-    std::vector<MediaNavigationCandidate> mediaCandidates;
+    std::shared_ptr<const PredecodeSchedulePayload> payload;
 };
 
 struct PredecodePendingSchedule {

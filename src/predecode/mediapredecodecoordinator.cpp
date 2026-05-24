@@ -7,13 +7,32 @@
 #include "predecodewindowplan.h"
 
 #include <QThread>
+#include <memory>
 #include <optional>
 #include <utility>
 
 namespace {
+class MediaPredecodeSchedulePayload final : public KiriView::PredecodeSchedulePayload
+{
+public:
+    explicit MediaPredecodeSchedulePayload(
+        std::vector<KiriView::MediaNavigationCandidate> candidates)
+        : mediaCandidates(std::move(candidates))
+    {
+    }
+
+    std::vector<KiriView::MediaNavigationCandidate> mediaCandidates;
+};
+
 bool validMediaPredecodeContext(const KiriView::MediaPredecodeCoordinator::Context &context)
 {
     return KiriView::normalizedValidImageUrl(context.currentUrl).has_value();
+}
+
+const MediaPredecodeSchedulePayload *mediaPredecodeSchedulePayload(
+    const KiriView::PredecodePendingSchedule &schedule)
+{
+    return dynamic_cast<const MediaPredecodeSchedulePayload *>(schedule.context.payload.get());
 }
 }
 
@@ -60,9 +79,13 @@ void MediaPredecodeCoordinator::startPredecodeWindow(const PredecodePendingSched
         return;
     }
 
-    const PredecodeWindowPlan plan
-        = predecodeWindowPlanForMediaCandidates(schedule.context.currentLocation.imageUrl(),
-            schedule.context.mediaCandidates, policyInput());
+    const MediaPredecodeSchedulePayload *payload = mediaPredecodeSchedulePayload(schedule);
+    if (payload == nullptr) {
+        return;
+    }
+
+    const PredecodeWindowPlan plan = predecodeWindowPlanForMediaCandidates(
+        schedule.context.currentLocation.imageUrl(), payload->mediaCandidates, policyInput());
     m_loadController.startWindowLoads(PredecodeLoadWindow {
         schedule.context.currentLocation.imageUrl(),
         plan.archiveDocument,
@@ -83,7 +106,7 @@ PredecodeScheduleContext MediaPredecodeCoordinator::scheduleContext(const Contex
         context.displayedImages,
         context.firstDisplayContext,
         currentIndex.has_value() ? static_cast<int>(*currentIndex) : -1,
-        context.candidates,
+        std::make_shared<MediaPredecodeSchedulePayload>(context.candidates),
     };
 }
 
