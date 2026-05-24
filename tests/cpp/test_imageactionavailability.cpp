@@ -12,9 +12,9 @@ class TestImageActionAvailability : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
-    void projectionDerivesNavigationAndModeAvailabilityFromSnapshot();
+    void projectionDerivesReadyAndModeAvailabilityFromSnapshot();
     void projectionDerivesShortcutGatesFromSnapshot();
-    void imageNavigationStateDrivesActionAvailability();
+    void scanBoundaryStateIsImageLocalAvailability();
     void readyActionAvailabilityRejectsCompetingModes();
     void shortcutAvailabilityUsesViewerAndRuntimeGates();
     void policyScopeLookupUsesApplicationScope();
@@ -22,23 +22,15 @@ private Q_SLOTS:
     void settersNotifyOnlyWhenInputsChange();
 };
 
-void TestImageActionAvailability::projectionDerivesNavigationAndModeAvailabilityFromSnapshot()
+void TestImageActionAvailability::projectionDerivesReadyAndModeAvailabilityFromSnapshot()
 {
     ImageActionAvailabilityInput input;
     input.imageReady = true;
-    input.imageCount = 5;
-    input.currentPageNumber = 1;
-    input.currentLastPageNumber = 2;
     input.twoPageModeAvailable = true;
     input.rightToLeftReadingAvailable = true;
 
     ImageActionAvailabilityProjection projection = imageActionAvailabilityProjection(input);
 
-    QVERIFY(projection.canUsePageActions);
-    QVERIFY(!projection.canOpenPreviousImage);
-    QVERIFY(projection.canOpenNextImage);
-    QVERIFY(projection.atKnownFirstImage);
-    QVERIFY(!projection.atKnownLastImage);
     QVERIFY(projection.canUseReadyActions);
     QVERIFY(projection.canUseRotateActions);
     QVERIFY(projection.canUseTwoPageModeActions);
@@ -46,16 +38,10 @@ void TestImageActionAvailability::projectionDerivesNavigationAndModeAvailability
     QVERIFY(!projection.twoPageModeActive);
     QVERIFY(!projection.rightToLeftReadingActive);
 
-    input.currentPageNumber = 5;
-    input.currentLastPageNumber = 5;
     input.twoPageModeEnabled = true;
     input.rightToLeftReadingEnabled = true;
     projection = imageActionAvailabilityProjection(input);
 
-    QVERIFY(projection.canOpenPreviousImage);
-    QVERIFY(!projection.canOpenNextImage);
-    QVERIFY(!projection.atKnownFirstImage);
-    QVERIFY(projection.atKnownLastImage);
     QVERIFY(projection.twoPageModeActive);
     QVERIFY(projection.rightToLeftReadingActive);
     QVERIFY(!projection.canUseRotateActions);
@@ -65,8 +51,6 @@ void TestImageActionAvailability::projectionDerivesShortcutGatesFromSnapshot()
 {
     ImageActionAvailabilityInput input;
     input.imageReady = true;
-    input.imageCount = 3;
-    input.currentPageNumber = 2;
     input.imagePannable = true;
     input.containerNavigationAvailable = true;
     input.twoPageModeEnabled = true;
@@ -79,10 +63,6 @@ void TestImageActionAvailability::projectionDerivesShortcutGatesFromSnapshot()
     QVERIFY(projection.viewerShortcutsEnabled);
     QVERIFY(projection.readyShortcutsEnabled);
     QVERIFY(projection.readyViewerShortcutsEnabled);
-    QVERIFY(projection.imageSelectionShortcutsEnabled);
-    QVERIFY(projection.imageSelectionViewerShortcutsEnabled);
-    QVERIFY(projection.pageShortcutsEnabled);
-    QVERIFY(projection.pageViewerShortcutsEnabled);
     QVERIFY(projection.twoPageViewerShortcutsEnabled);
     QVERIFY(projection.rightToLeftReadingShortcutsEnabled);
     QVERIFY(projection.rightToLeftReadingViewerShortcutsEnabled);
@@ -106,34 +86,23 @@ void TestImageActionAvailability::projectionDerivesShortcutGatesFromSnapshot()
     projection = imageActionAvailabilityProjection(input);
 
     QVERIFY(!projection.readyShortcutsEnabled);
-    QVERIFY(!projection.imageSelectionShortcutsEnabled);
     QVERIFY(!projection.pannableShortcutsEnabled);
     QVERIFY(!projection.containerShortcutsEnabled);
 }
 
-void TestImageActionAvailability::imageNavigationStateDrivesActionAvailability()
+void TestImageActionAvailability::scanBoundaryStateIsImageLocalAvailability()
 {
     ImageActionAvailability availability;
-    availability.setImageCount(5);
-    availability.setCurrentPageNumber(1);
-    availability.setCurrentLastPageNumber(1);
+    QSignalSpy spy(&availability, &ImageActionAvailability::availabilityChanged);
 
-    QVERIFY(availability.canUsePageActions());
-    QVERIFY(!availability.canOpenPreviousImage());
-    QVERIFY(availability.canOpenNextImage());
-    QVERIFY(availability.atKnownFirstImage());
-    QVERIFY(!availability.atKnownLastImage());
+    QVERIFY(!availability.scanBackwardAtFirstImageBoundary());
 
-    availability.setCurrentPageNumber(5);
-    availability.setCurrentLastPageNumber(5);
+    availability.setScanBackwardAtFirstImageBoundary(true);
+    QVERIFY(availability.scanBackwardAtFirstImageBoundary());
+    QCOMPARE(spy.count(), 1);
 
-    QVERIFY(availability.canOpenPreviousImage());
-    QVERIFY(!availability.canOpenNextImage());
-    QVERIFY(!availability.atKnownFirstImage());
-    QVERIFY(availability.atKnownLastImage());
-
-    availability.setFileDeletionInProgress(true);
-    QVERIFY(!availability.canUsePageActions());
+    availability.setScanBackwardAtFirstImageBoundary(true);
+    QCOMPARE(spy.count(), 1);
 }
 
 void TestImageActionAvailability::readyActionAvailabilityRejectsCompetingModes()
@@ -166,8 +135,6 @@ void TestImageActionAvailability::shortcutAvailabilityUsesViewerAndRuntimeGates(
 {
     ImageActionAvailability availability;
     availability.setImageReady(true);
-    availability.setImageCount(5);
-    availability.setCurrentPageNumber(2);
     availability.setImagePannable(true);
     availability.setImageHorizontallyPannable(true);
     availability.setContainerNavigationAvailable(true);
@@ -179,10 +146,6 @@ void TestImageActionAvailability::shortcutAvailabilityUsesViewerAndRuntimeGates(
     QVERIFY(availability.viewerShortcutsEnabled());
     QVERIFY(availability.readyShortcutsEnabled());
     QVERIFY(availability.readyViewerShortcutsEnabled());
-    QVERIFY(availability.imageSelectionShortcutsEnabled());
-    QVERIFY(availability.imageSelectionViewerShortcutsEnabled());
-    QVERIFY(availability.pageShortcutsEnabled());
-    QVERIFY(availability.pageViewerShortcutsEnabled());
     QVERIFY(availability.twoPageViewerShortcutsEnabled());
     QVERIFY(availability.rightToLeftReadingShortcutsEnabled());
     QVERIFY(availability.rightToLeftReadingViewerShortcutsEnabled());
@@ -203,7 +166,6 @@ void TestImageActionAvailability::shortcutAvailabilityUsesViewerAndRuntimeGates(
 
     availability.setFileDeletionInProgress(true);
     QVERIFY(!availability.readyShortcutsEnabled());
-    QVERIFY(!availability.imageSelectionShortcutsEnabled());
     QVERIFY(!availability.pannableShortcutsEnabled());
     QVERIFY(!availability.containerShortcutsEnabled());
 }
@@ -222,6 +184,10 @@ void TestImageActionAvailability::policyScopeLookupUsesApplicationScope()
         projection, Scope::ReadyViewerShortcutScope));
     QVERIFY(
         imageActionAvailabilityShortcutsEnabledForScope(projection, Scope::ContainerShortcutScope));
+    QVERIFY(!imageActionAvailabilityShortcutsEnabledForScope(
+        projection, Scope::ImageSelectionShortcutScope));
+    QVERIFY(!imageActionAvailabilityShortcutsEnabledForScope(
+        projection, Scope::PageViewerShortcutScope));
     QVERIFY(
         !imageActionAvailabilityShortcutsEnabledForScope(projection, Scope::ViewerShortcutScope));
 }
@@ -230,8 +196,6 @@ void TestImageActionAvailability::shortcutScopeLookupUsesProjectionFields()
 {
     ImageActionAvailability availability;
     availability.setImageReady(true);
-    availability.setImageCount(5);
-    availability.setCurrentPageNumber(2);
     availability.setImagePannable(true);
     availability.setContainerNavigationAvailable(true);
     availability.setTwoPageModeAvailable(true);
@@ -246,17 +210,13 @@ void TestImageActionAvailability::shortcutScopeLookupUsesProjectionFields()
     QCOMPARE(
         availability.shortcutsEnabledForScope(ImageActionAvailability::ReadyViewerShortcutScope),
         availability.readyViewerShortcutsEnabled());
-    QCOMPARE(
-        availability.shortcutsEnabledForScope(ImageActionAvailability::ImageSelectionShortcutScope),
-        availability.imageSelectionShortcutsEnabled());
-    QCOMPARE(availability.shortcutsEnabledForScope(
-                 ImageActionAvailability::ImageSelectionViewerShortcutScope),
-        availability.imageSelectionViewerShortcutsEnabled());
-    QCOMPARE(availability.shortcutsEnabledForScope(ImageActionAvailability::PageShortcutScope),
-        availability.pageShortcutsEnabled());
-    QCOMPARE(
-        availability.shortcutsEnabledForScope(ImageActionAvailability::PageViewerShortcutScope),
-        availability.pageViewerShortcutsEnabled());
+    QVERIFY(!availability.shortcutsEnabledForScope(
+        ImageActionAvailability::ImageSelectionShortcutScope));
+    QVERIFY(!availability.shortcutsEnabledForScope(
+        ImageActionAvailability::ImageSelectionViewerShortcutScope));
+    QVERIFY(!availability.shortcutsEnabledForScope(ImageActionAvailability::PageShortcutScope));
+    QVERIFY(
+        !availability.shortcutsEnabledForScope(ImageActionAvailability::PageViewerShortcutScope));
     QCOMPARE(availability.shortcutsEnabledForScope(
                  ImageActionAvailability::RightToLeftReadingShortcutScope),
         availability.rightToLeftReadingShortcutsEnabled());
@@ -300,7 +260,7 @@ void TestImageActionAvailability::settersNotifyOnlyWhenInputsChange()
     QCOMPARE(spy.count(), 1);
     QCOMPARE(availability.availabilityRevision(), 1);
 
-    availability.setCurrentPageNumber(1);
+    availability.setScanBackwardAtFirstImageBoundary(true);
     QCOMPARE(spy.count(), 2);
     QCOMPARE(availability.availabilityRevision(), 2);
 }

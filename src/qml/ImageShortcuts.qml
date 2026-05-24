@@ -162,7 +162,7 @@ Item {
     }
 
     function scanBackward() {
-        const action = navigationPolicy.scanBackwardAction(root.actionAvailability.imagePannable, root.actionAvailability.imagePannable && root.imageViewport.scanBackward(), root.actionAvailability.atKnownFirstImage, root.imageDocument.currentPageNumber);
+        const action = navigationPolicy.scanBackwardAction(root.actionAvailability.imagePannable, root.actionAvailability.imagePannable && root.imageViewport.scanBackward(), root.actionAvailability.scanBackwardAtFirstImageBoundary, root.imageDocument.currentPageNumber);
         root.applyScanAction(action);
     }
 

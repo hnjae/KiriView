@@ -265,10 +265,7 @@ void TestMainWindowVideoIntegration::imageActionAvailabilityDoesNotDriveSharedAc
     QVERIFY2(!imageActionsQml.isEmpty(), "ImageActions.qml should be readable");
     QVERIFY2(!imageShortcutsQml.isEmpty(), "ImageShortcuts.qml should be readable");
 
-    QVERIFY(mainQml.contains(QStringLiteral(
-        "Raw image page inputs are limited to image-internal scan/presentation availability")));
-    QVERIFY(mainQml.contains(QStringLiteral("Shared toolbar, QAction, menu, and shortcut "
-                                            "navigation use documentSession.activeNavigation*")));
+    QVERIFY(mainQml.contains(QStringLiteral("scanBackwardAtFirstImageBoundary")));
     verifySourceOmits(mainQml,
         {
             QStringLiteral("activeNavigationAvailable: actionAvailability"),
@@ -276,6 +273,9 @@ void TestMainWindowVideoIntegration::imageActionAvailabilityDoesNotDriveSharedAc
             QStringLiteral("activeNavigationEditable: actionAvailability"),
             QStringLiteral("activeNavigationCurrentNumber: actionAvailability"),
             QStringLiteral("activeNavigationCount: actionAvailability"),
+            QStringLiteral("currentLastPageNumber: page.imageDocument"),
+            QStringLiteral("currentPageNumber: page.imageDocument"),
+            QStringLiteral("imageCount: page.imageDocument"),
         });
     verifySourceOmits(imageActionsQml,
         {
@@ -288,6 +288,8 @@ void TestMainWindowVideoIntegration::imageActionAvailabilityDoesNotDriveSharedAc
         });
     QVERIFY(imageShortcutsQml.contains(QStringLiteral("activeNavigationShortcutsEnabledForScope")));
     QVERIFY(imageShortcutsQml.contains(QStringLiteral("Image-internal scan fallback")));
+    QVERIFY(imageShortcutsQml.contains(
+        QStringLiteral("actionAvailability.scanBackwardAtFirstImageBoundary")));
 }
 
 void TestMainWindowVideoIntegration::

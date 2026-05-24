@@ -11,9 +11,6 @@ KiriView::RustImageActionAvailabilityInput rustImageActionAvailabilityInput(
 {
     return KiriView::RustImageActionAvailabilityInput {
         input.imageReady,
-        input.imageCount,
-        input.currentPageNumber,
-        input.currentLastPageNumber,
         input.fileDeletionInProgress,
         input.helpDialogOpen,
         input.textInputFocused,
@@ -84,11 +81,6 @@ ImageActionAvailabilityProjection imageActionAvailabilityProjection(
     const KiriView::RustImageActionAvailabilityProjection &projection)
 {
     return ImageActionAvailabilityProjection {
-        projection.can_open_next_image,
-        projection.can_open_previous_image,
-        projection.at_known_first_image,
-        projection.at_known_last_image,
-        projection.can_use_page_actions,
         projection.can_use_ready_actions,
         projection.can_use_rotate_actions,
         projection.can_use_two_page_mode_actions,
@@ -99,10 +91,6 @@ ImageActionAvailabilityProjection imageActionAvailabilityProjection(
         projection.viewer_shortcuts_enabled,
         projection.ready_shortcuts_enabled,
         projection.ready_viewer_shortcuts_enabled,
-        projection.image_selection_shortcuts_enabled,
-        projection.image_selection_viewer_shortcuts_enabled,
-        projection.page_shortcuts_enabled,
-        projection.page_viewer_shortcuts_enabled,
         projection.two_page_viewer_shortcuts_enabled,
         projection.right_to_left_reading_shortcuts_enabled,
         projection.right_to_left_reading_viewer_shortcuts_enabled,
@@ -139,13 +127,10 @@ bool imageActionAvailabilityShortcutsEnabledForScope(
     case ImageShortcutScope::ReadyViewerShortcutScope:
         return projection.readyViewerShortcutsEnabled;
     case ImageShortcutScope::ImageSelectionShortcutScope:
-        return projection.imageSelectionShortcutsEnabled;
     case ImageShortcutScope::ImageSelectionViewerShortcutScope:
-        return projection.imageSelectionViewerShortcutsEnabled;
     case ImageShortcutScope::PageShortcutScope:
-        return projection.pageShortcutsEnabled;
     case ImageShortcutScope::PageViewerShortcutScope:
-        return projection.pageViewerShortcutsEnabled;
+        return false;
     case ImageShortcutScope::RightToLeftReadingShortcutScope:
         return projection.rightToLeftReadingShortcutsEnabled;
     case ImageShortcutScope::RightToLeftReadingViewerShortcutScope:

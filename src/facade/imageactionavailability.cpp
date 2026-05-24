@@ -24,27 +24,6 @@ void ImageActionAvailability::setImageReady(bool imageReady)
     setBool(m_input.imageReady, imageReady);
 }
 
-int ImageActionAvailability::imageCount() const { return m_input.imageCount; }
-
-void ImageActionAvailability::setImageCount(int imageCount)
-{
-    setInt(m_input.imageCount, imageCount);
-}
-
-int ImageActionAvailability::currentPageNumber() const { return m_input.currentPageNumber; }
-
-void ImageActionAvailability::setCurrentPageNumber(int currentPageNumber)
-{
-    setInt(m_input.currentPageNumber, currentPageNumber);
-}
-
-int ImageActionAvailability::currentLastPageNumber() const { return m_input.currentLastPageNumber; }
-
-void ImageActionAvailability::setCurrentLastPageNumber(int currentLastPageNumber)
-{
-    setInt(m_input.currentLastPageNumber, currentLastPageNumber);
-}
-
 bool ImageActionAvailability::fileDeletionInProgress() const
 {
     return m_input.fileDeletionInProgress;
@@ -130,18 +109,16 @@ void ImageActionAvailability::setRightToLeftReadingAvailable(bool rightToLeftRea
     setBool(m_input.rightToLeftReadingAvailable, rightToLeftReadingAvailable);
 }
 
-bool ImageActionAvailability::canOpenNextImage() const { return m_projection.canOpenNextImage; }
-
-bool ImageActionAvailability::canOpenPreviousImage() const
+bool ImageActionAvailability::scanBackwardAtFirstImageBoundary() const
 {
-    return m_projection.canOpenPreviousImage;
+    return m_scanBackwardAtFirstImageBoundary;
 }
 
-bool ImageActionAvailability::atKnownFirstImage() const { return m_projection.atKnownFirstImage; }
-
-bool ImageActionAvailability::atKnownLastImage() const { return m_projection.atKnownLastImage; }
-
-bool ImageActionAvailability::canUsePageActions() const { return m_projection.canUsePageActions; }
+void ImageActionAvailability::setScanBackwardAtFirstImageBoundary(
+    bool scanBackwardAtFirstImageBoundary)
+{
+    setBool(m_scanBackwardAtFirstImageBoundary, scanBackwardAtFirstImageBoundary);
+}
 
 bool ImageActionAvailability::canUseReadyActions() const { return m_projection.canUseReadyActions; }
 
@@ -185,26 +162,6 @@ bool ImageActionAvailability::readyShortcutsEnabled() const
 bool ImageActionAvailability::readyViewerShortcutsEnabled() const
 {
     return m_projection.readyViewerShortcutsEnabled;
-}
-
-bool ImageActionAvailability::imageSelectionShortcutsEnabled() const
-{
-    return m_projection.imageSelectionShortcutsEnabled;
-}
-
-bool ImageActionAvailability::imageSelectionViewerShortcutsEnabled() const
-{
-    return m_projection.imageSelectionViewerShortcutsEnabled;
-}
-
-bool ImageActionAvailability::pageShortcutsEnabled() const
-{
-    return m_projection.pageShortcutsEnabled;
-}
-
-bool ImageActionAvailability::pageViewerShortcutsEnabled() const
-{
-    return m_projection.pageViewerShortcutsEnabled;
 }
 
 bool ImageActionAvailability::twoPageViewerShortcutsEnabled() const
@@ -262,15 +219,6 @@ bool ImageActionAvailability::shortcutsEnabledForScope(
 }
 
 void ImageActionAvailability::setBool(bool &target, bool value)
-{
-    if (target == value) {
-        return;
-    }
-    target = value;
-    publishInputChange();
-}
-
-void ImageActionAvailability::setInt(int &target, int value)
 {
     if (target == value) {
         return;

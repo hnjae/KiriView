@@ -176,10 +176,7 @@ Item {
         id: actionAvailability
 
         containerNavigationAvailable: documentSession.documentKind === KiriDocumentSession.Image && documentSession.imageDocument.containerNavigationAvailable
-        currentLastPageNumber: documentSession.documentKind === KiriDocumentSession.Image ? documentSession.imageDocument.currentLastPageNumber : 0
-        currentPageNumber: documentSession.documentKind === KiriDocumentSession.Image ? documentSession.imageDocument.currentPageNumber : 0
         fileDeletionInProgress: documentSession.fileDeletionInProgress
-        imageCount: documentSession.documentKind === KiriDocumentSession.Image ? documentSession.imageDocument.imageCount : 0
         imageReady: documentSession.documentKind === KiriDocumentSession.Image && documentSession.imageDocument.status === KiriImageDocument.Ready
     }
 

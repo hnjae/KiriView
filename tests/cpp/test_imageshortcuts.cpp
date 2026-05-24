@@ -298,16 +298,14 @@ Item {
         id: actionAvailability
 
         containerNavigationAvailable: imageDocument.containerNavigationAvailable
-        currentLastPageNumber: imageDocument.currentLastPageNumber
-        currentPageNumber: imageDocument.currentPageNumber
         fileDeletionInProgress: imageDocument.fileDeletionInProgress
         helpDialogOpen: root.helpDialogOpen
-        imageCount: imageDocument.imageCount
         imageHorizontallyPannable: imageViewport.imageHorizontallyPannable
         imagePannable: imageViewport.imagePannable
         imageReady: imageDocument.status === KiriImageDocument.Ready
         rightToLeftReadingAvailable: imageDocument.rightToLeftReadingAvailable
         rightToLeftReadingEnabled: imageDocument.rightToLeftReadingEnabled
+        scanBackwardAtFirstImageBoundary: imageDocument.imageCount > 0 && imageDocument.currentPageNumber === 1
         textInputFocused: imageToolBar.textInputFocused()
         twoPageModeAvailable: imageDocument.twoPageModeAvailable
         twoPageModeEnabled: imageDocument.twoPageModeEnabled

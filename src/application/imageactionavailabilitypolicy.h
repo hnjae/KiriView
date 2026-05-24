@@ -34,9 +34,6 @@ struct VideoShortcutAvailabilityInput {
 
 struct ImageActionAvailabilityInput {
     bool imageReady = false;
-    int imageCount = 0;
-    int currentPageNumber = 0;
-    int currentLastPageNumber = 0;
     bool fileDeletionInProgress = false;
     bool helpDialogOpen = false;
     bool textInputFocused = false;
@@ -50,11 +47,6 @@ struct ImageActionAvailabilityInput {
 };
 
 struct ImageActionAvailabilityProjection {
-    bool canOpenNextImage = false;
-    bool canOpenPreviousImage = false;
-    bool atKnownFirstImage = false;
-    bool atKnownLastImage = false;
-    bool canUsePageActions = false;
     bool canUseReadyActions = false;
     bool canUseRotateActions = false;
     bool canUseTwoPageModeActions = false;
@@ -65,10 +57,6 @@ struct ImageActionAvailabilityProjection {
     bool viewerShortcutsEnabled = false;
     bool readyShortcutsEnabled = false;
     bool readyViewerShortcutsEnabled = false;
-    bool imageSelectionShortcutsEnabled = false;
-    bool imageSelectionViewerShortcutsEnabled = false;
-    bool pageShortcutsEnabled = false;
-    bool pageViewerShortcutsEnabled = false;
     bool twoPageViewerShortcutsEnabled = false;
     bool rightToLeftReadingShortcutsEnabled = false;
     bool rightToLeftReadingViewerShortcutsEnabled = false;

@@ -291,18 +291,14 @@ StatefulApp.StatefulWindow {
             id: actionAvailability
 
             containerNavigationAvailable: page.imageMode && page.imageDocument.containerNavigationAvailable
-            // Raw image page inputs are limited to image-internal scan/presentation availability.
-            // Shared toolbar, QAction, menu, and shortcut navigation use documentSession.activeNavigation*.
-            currentLastPageNumber: page.imageMode ? page.imageDocument.currentLastPageNumber : 0
-            currentPageNumber: page.imageMode ? page.imageDocument.currentPageNumber : 0
             fileDeletionInProgress: documentSession.fileDeletionInProgress
             helpDialogOpen: root.helpDialogOpen
-            imageCount: page.imageMode ? page.imageDocument.imageCount : 0
             imageHorizontallyPannable: page.imageMode && imageViewport.imageHorizontallyPannable
             imagePannable: page.imageMode && imageViewport.imagePannable
             imageReady: page.imageReady
             rightToLeftReadingAvailable: page.imageMode && page.imageDocument.rightToLeftReadingAvailable
             rightToLeftReadingEnabled: page.imageMode && page.imageDocument.rightToLeftReadingEnabled
+            scanBackwardAtFirstImageBoundary: page.imageMode && page.imageDocument.imageCount > 0 && page.imageDocument.currentPageNumber === 1
             twoPageModeAvailable: page.imageMode && page.imageDocument.twoPageModeAvailable
             twoPageModeEnabled: page.imageMode && page.imageDocument.twoPageModeEnabled
         }

@@ -15,11 +15,6 @@ class ImageActionAvailability : public QObject
     QML_ELEMENT
 
     Q_PROPERTY(bool imageReady READ imageReady WRITE setImageReady NOTIFY availabilityChanged)
-    Q_PROPERTY(int imageCount READ imageCount WRITE setImageCount NOTIFY availabilityChanged)
-    Q_PROPERTY(int currentPageNumber READ currentPageNumber WRITE setCurrentPageNumber NOTIFY
-            availabilityChanged)
-    Q_PROPERTY(int currentLastPageNumber READ currentLastPageNumber WRITE setCurrentLastPageNumber
-            NOTIFY availabilityChanged)
     Q_PROPERTY(bool fileDeletionInProgress READ fileDeletionInProgress WRITE
             setFileDeletionInProgress NOTIFY availabilityChanged)
     Q_PROPERTY(
@@ -40,12 +35,9 @@ class ImageActionAvailability : public QObject
             setRightToLeftReadingEnabled NOTIFY availabilityChanged)
     Q_PROPERTY(bool rightToLeftReadingAvailable READ rightToLeftReadingAvailable WRITE
             setRightToLeftReadingAvailable NOTIFY availabilityChanged)
+    Q_PROPERTY(bool scanBackwardAtFirstImageBoundary READ scanBackwardAtFirstImageBoundary WRITE
+            setScanBackwardAtFirstImageBoundary NOTIFY availabilityChanged)
 
-    Q_PROPERTY(bool canOpenNextImage READ canOpenNextImage NOTIFY availabilityChanged)
-    Q_PROPERTY(bool canOpenPreviousImage READ canOpenPreviousImage NOTIFY availabilityChanged)
-    Q_PROPERTY(bool atKnownFirstImage READ atKnownFirstImage NOTIFY availabilityChanged)
-    Q_PROPERTY(bool atKnownLastImage READ atKnownLastImage NOTIFY availabilityChanged)
-    Q_PROPERTY(bool canUsePageActions READ canUsePageActions NOTIFY availabilityChanged)
     Q_PROPERTY(bool canUseReadyActions READ canUseReadyActions NOTIFY availabilityChanged)
     Q_PROPERTY(bool canUseRotateActions READ canUseRotateActions NOTIFY availabilityChanged)
     Q_PROPERTY(
@@ -60,13 +52,6 @@ class ImageActionAvailability : public QObject
     Q_PROPERTY(bool readyShortcutsEnabled READ readyShortcutsEnabled NOTIFY availabilityChanged)
     Q_PROPERTY(bool readyViewerShortcutsEnabled READ readyViewerShortcutsEnabled NOTIFY
             availabilityChanged)
-    Q_PROPERTY(bool imageSelectionShortcutsEnabled READ imageSelectionShortcutsEnabled NOTIFY
-            availabilityChanged)
-    Q_PROPERTY(bool imageSelectionViewerShortcutsEnabled READ imageSelectionViewerShortcutsEnabled
-            NOTIFY availabilityChanged)
-    Q_PROPERTY(bool pageShortcutsEnabled READ pageShortcutsEnabled NOTIFY availabilityChanged)
-    Q_PROPERTY(
-        bool pageViewerShortcutsEnabled READ pageViewerShortcutsEnabled NOTIFY availabilityChanged)
     Q_PROPERTY(bool twoPageViewerShortcutsEnabled READ twoPageViewerShortcutsEnabled NOTIFY
             availabilityChanged)
     Q_PROPERTY(bool rightToLeftReadingShortcutsEnabled READ rightToLeftReadingShortcutsEnabled
@@ -111,12 +96,6 @@ public:
 
     bool imageReady() const;
     void setImageReady(bool imageReady);
-    int imageCount() const;
-    void setImageCount(int imageCount);
-    int currentPageNumber() const;
-    void setCurrentPageNumber(int currentPageNumber);
-    int currentLastPageNumber() const;
-    void setCurrentLastPageNumber(int currentLastPageNumber);
     bool fileDeletionInProgress() const;
     void setFileDeletionInProgress(bool fileDeletionInProgress);
     bool helpDialogOpen() const;
@@ -137,12 +116,9 @@ public:
     void setRightToLeftReadingEnabled(bool rightToLeftReadingEnabled);
     bool rightToLeftReadingAvailable() const;
     void setRightToLeftReadingAvailable(bool rightToLeftReadingAvailable);
+    bool scanBackwardAtFirstImageBoundary() const;
+    void setScanBackwardAtFirstImageBoundary(bool scanBackwardAtFirstImageBoundary);
 
-    bool canOpenNextImage() const;
-    bool canOpenPreviousImage() const;
-    bool atKnownFirstImage() const;
-    bool atKnownLastImage() const;
-    bool canUsePageActions() const;
     bool canUseReadyActions() const;
     bool canUseRotateActions() const;
     bool canUseTwoPageModeActions() const;
@@ -153,10 +129,6 @@ public:
     bool viewerShortcutsEnabled() const;
     bool readyShortcutsEnabled() const;
     bool readyViewerShortcutsEnabled() const;
-    bool imageSelectionShortcutsEnabled() const;
-    bool imageSelectionViewerShortcutsEnabled() const;
-    bool pageShortcutsEnabled() const;
-    bool pageViewerShortcutsEnabled() const;
     bool twoPageViewerShortcutsEnabled() const;
     bool rightToLeftReadingShortcutsEnabled() const;
     bool rightToLeftReadingViewerShortcutsEnabled() const;
@@ -175,11 +147,11 @@ Q_SIGNALS:
 
 private:
     void setBool(bool &target, bool value);
-    void setInt(int &target, int value);
     void publishInputChange();
 
     ImageActionAvailabilityInput m_input;
     ImageActionAvailabilityProjection m_projection;
+    bool m_scanBackwardAtFirstImageBoundary = false;
     int m_availabilityRevision = 0;
 };
 

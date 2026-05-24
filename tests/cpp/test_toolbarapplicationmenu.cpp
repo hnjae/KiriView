@@ -531,11 +531,8 @@ Item {
         id: actionAvailability
 
         containerNavigationAvailable: imageDocument.containerNavigationAvailable
-        currentLastPageNumber: imageDocument.currentLastPageNumber
-        currentPageNumber: imageDocument.currentPageNumber
         fileDeletionInProgress: imageDocument.fileDeletionInProgress
         helpDialogOpen: false
-        imageCount: imageDocument.imageCount
         imageReady: imageDocument.status === KiriImageDocument.Ready
         rightToLeftReadingAvailable: imageDocument.rightToLeftReadingAvailable
         rightToLeftReadingEnabled: imageDocument.rightToLeftReadingEnabled
