@@ -10,14 +10,32 @@
 #include <QImage>
 #include <QString>
 #include <memory>
-#include <optional>
 
 namespace KiriView {
+enum class ImageAnimationPlaybackOpenStatus {
+    Success,
+    Error,
+};
+
 struct ImageAnimationPlaybackOpenResult {
+    ImageAnimationPlaybackOpenStatus status = ImageAnimationPlaybackOpenStatus::Error;
     QImage firstFrame;
     int firstFrameDelay = 0;
     int loopCount = 0;
     bool sourceHasMoreFrames = false;
+    QString errorString;
+};
+
+enum class ImageAnimationPlaybackReadStatus {
+    Frame,
+    End,
+    Error,
+};
+
+struct ImageAnimationPlaybackReadResult {
+    ImageAnimationPlaybackReadStatus status = ImageAnimationPlaybackReadStatus::End;
+    AnimationFrame frame;
+    QString errorString;
 };
 
 class ImageAnimationPlaybackSource
@@ -25,8 +43,8 @@ class ImageAnimationPlaybackSource
 public:
     virtual ~ImageAnimationPlaybackSource() = default;
 
-    virtual std::optional<ImageAnimationPlaybackOpenResult> open(QString *errorString) = 0;
-    virtual std::optional<AnimationFrame> readNextFrame(QString *errorString) = 0;
+    virtual ImageAnimationPlaybackOpenResult open() = 0;
+    virtual ImageAnimationPlaybackReadResult readNextFrame() = 0;
     virtual bool hasMoreFrames() const = 0;
     virtual bool restartable() const = 0;
 };

@@ -7,8 +7,8 @@
 #include <QSize>
 #include <QString>
 #include <QTest>
+#include <algorithm>
 #include <memory>
-#include <optional>
 #include <utility>
 #include <vector>
 
@@ -22,60 +22,125 @@ QImage frameImage(const QSize &size)
 
 struct FakePlaybackSourceStats {
     int openCount = 0;
+    int readCount = 0;
 };
+
+KiriView::ImageAnimationPlaybackOpenResult openResult(
+    QSize firstFrameSize, int loopCount, bool sourceHasMoreFrames)
+{
+    return KiriView::ImageAnimationPlaybackOpenResult {
+        KiriView::ImageAnimationPlaybackOpenStatus::Success,
+        frameImage(firstFrameSize),
+        0,
+        loopCount,
+        sourceHasMoreFrames,
+        {},
+    };
+}
+
+KiriView::ImageAnimationPlaybackOpenResult openError(const QString &errorString)
+{
+    KiriView::ImageAnimationPlaybackOpenResult result;
+    result.errorString = errorString;
+    return result;
+}
+
+KiriView::ImageAnimationPlaybackReadResult readFrame(QSize frameSize)
+{
+    return KiriView::ImageAnimationPlaybackReadResult {
+        KiriView::ImageAnimationPlaybackReadStatus::Frame,
+        KiriView::AnimationFrame {
+            frameImage(frameSize),
+            0,
+        },
+        {},
+    };
+}
+
+KiriView::ImageAnimationPlaybackReadResult readEnd()
+{
+    return KiriView::ImageAnimationPlaybackReadResult {
+        KiriView::ImageAnimationPlaybackReadStatus::End,
+        {},
+        {},
+    };
+}
+
+KiriView::ImageAnimationPlaybackReadResult readError(const QString &errorString)
+{
+    return KiriView::ImageAnimationPlaybackReadResult {
+        KiriView::ImageAnimationPlaybackReadStatus::Error,
+        {},
+        errorString,
+    };
+}
 
 class FakePlaybackSource final : public KiriView::ImageAnimationPlaybackSource
 {
 public:
     FakePlaybackSource(QSize firstFrameSize, std::vector<QSize> frameSizes, int loopCount,
         bool restartable, std::shared_ptr<FakePlaybackSourceStats> stats)
-        : m_firstFrameSize(firstFrameSize)
-        , m_frameSizes(std::move(frameSizes))
-        , m_loopCount(loopCount)
+        : m_openResults({ openResult(firstFrameSize, loopCount, !frameSizes.empty()) })
         , m_restartable(restartable)
+        , m_stats(std::move(stats))
+    {
+        m_readResults.reserve(frameSizes.size());
+        for (const QSize &frameSize : frameSizes) {
+            m_readResults.push_back(readFrame(frameSize));
+        }
+    }
+
+    FakePlaybackSource(std::vector<KiriView::ImageAnimationPlaybackOpenResult> openResults,
+        std::vector<KiriView::ImageAnimationPlaybackReadResult> readResults, bool restartable,
+        bool optimisticHasMoreFrames, std::shared_ptr<FakePlaybackSourceStats> stats)
+        : m_openResults(std::move(openResults))
+        , m_readResults(std::move(readResults))
+        , m_restartable(restartable)
+        , m_optimisticHasMoreFrames(optimisticHasMoreFrames)
         , m_stats(std::move(stats))
     {
     }
 
-    std::optional<KiriView::ImageAnimationPlaybackOpenResult> open(QString *errorString) override
+    KiriView::ImageAnimationPlaybackOpenResult open() override
     {
-        if (errorString != nullptr) {
-            errorString->clear();
-        }
         m_nextFrameIndex = 0;
-        ++m_stats->openCount;
-        return KiriView::ImageAnimationPlaybackOpenResult {
-            frameImage(m_firstFrameSize),
-            0,
-            m_loopCount,
-            hasMoreFrames(),
-        };
+        const int openIndex = m_stats->openCount++;
+        if (m_openResults.empty()) {
+            return openError(QStringLiteral("missing open result"));
+        }
+
+        return m_openResults.at(
+            std::min<std::size_t>(static_cast<std::size_t>(openIndex), m_openResults.size() - 1));
     }
 
-    std::optional<KiriView::AnimationFrame> readNextFrame(QString *errorString) override
+    KiriView::ImageAnimationPlaybackReadResult readNextFrame() override
     {
-        if (errorString != nullptr) {
-            errorString->clear();
-        }
-        if (!hasMoreFrames()) {
-            return std::nullopt;
+        ++m_stats->readCount;
+        if (m_nextFrameIndex >= m_readResults.size()) {
+            return readEnd();
         }
 
-        return KiriView::AnimationFrame {
-            frameImage(m_frameSizes.at(m_nextFrameIndex++)),
-            0,
-        };
+        return m_readResults.at(m_nextFrameIndex++);
     }
 
-    bool hasMoreFrames() const override { return m_nextFrameIndex < m_frameSizes.size(); }
+    bool hasMoreFrames() const override
+    {
+        if (m_nextFrameIndex >= m_readResults.size()) {
+            return false;
+        }
+
+        return m_optimisticHasMoreFrames
+            || m_readResults.at(m_nextFrameIndex).status
+            != KiriView::ImageAnimationPlaybackReadStatus::End;
+    }
 
     bool restartable() const override { return m_restartable; }
 
 private:
-    QSize m_firstFrameSize;
-    std::vector<QSize> m_frameSizes;
-    int m_loopCount = 0;
+    std::vector<KiriView::ImageAnimationPlaybackOpenResult> m_openResults;
+    std::vector<KiriView::ImageAnimationPlaybackReadResult> m_readResults;
     bool m_restartable = false;
+    bool m_optimisticHasMoreFrames = false;
     std::shared_ptr<FakePlaybackSourceStats> m_stats;
     std::size_t m_nextFrameIndex = 0;
 };
@@ -89,6 +154,10 @@ private Q_SLOTS:
     void startConsumesFirstFrameAndEmitsSubsequentFrames();
     void restartableSourcesEmitFirstFrameOnLoopRestart();
     void nonRestartableSourcesDoNotReopenAtSequenceEnd();
+    void startReportsOpenErrors();
+    void readFrameErrorsAreReportedWithoutSequenceRestart();
+    void readEndStopsOptimisticSourceWithoutError();
+    void restartOpenErrorsAreReported();
 };
 
 void TestImageAnimationPlayer::startConsumesFirstFrameAndEmitsSubsequentFrames()
@@ -146,6 +215,97 @@ void TestImageAnimationPlayer::nonRestartableSourcesDoNotReopenAtSequenceEnd()
     QTest::qWait(40);
     QCOMPARE(stats->openCount, 1);
     QCOMPARE(emittedFrameSizes.size(), std::size_t(1));
+}
+
+void TestImageAnimationPlayer::startReportsOpenErrors()
+{
+    std::vector<QSize> emittedFrameSizes;
+    QString errorString;
+    KiriView::ImageAnimationPlayer player(
+        this,
+        [&emittedFrameSizes](const QImage &image) { emittedFrameSizes.push_back(image.size()); },
+        [&errorString](const QString &error) { errorString = error; });
+
+    auto stats = std::make_shared<FakePlaybackSourceStats>();
+    player.start(std::make_unique<FakePlaybackSource>(
+        std::vector<KiriView::ImageAnimationPlaybackOpenResult> {
+            openError(QStringLiteral("open failed")),
+        },
+        std::vector<KiriView::ImageAnimationPlaybackReadResult> {}, true, false, stats));
+
+    QCOMPARE(stats->openCount, 1);
+    QCOMPARE(errorString, QStringLiteral("open failed"));
+    QVERIFY(emittedFrameSizes.empty());
+}
+
+void TestImageAnimationPlayer::readFrameErrorsAreReportedWithoutSequenceRestart()
+{
+    QString errorString;
+    KiriView::ImageAnimationPlayer player(
+        this, [](const QImage &) {}, [&errorString](const QString &error) { errorString = error; });
+
+    auto stats = std::make_shared<FakePlaybackSourceStats>();
+    player.start(std::make_unique<FakePlaybackSource>(
+        std::vector<KiriView::ImageAnimationPlaybackOpenResult> {
+            openResult(QSize(1, 1), 1, true),
+        },
+        std::vector<KiriView::ImageAnimationPlaybackReadResult> {
+            readError(QStringLiteral("read failed")),
+        },
+        true, false, stats));
+
+    QTRY_COMPARE_WITH_TIMEOUT(errorString, QStringLiteral("read failed"), 100);
+    QCOMPARE(stats->openCount, 1);
+    QCOMPARE(stats->readCount, 1);
+}
+
+void TestImageAnimationPlayer::readEndStopsOptimisticSourceWithoutError()
+{
+    QString errorString;
+    KiriView::ImageAnimationPlayer player(
+        this, [](const QImage &) {}, [&errorString](const QString &error) { errorString = error; });
+
+    auto stats = std::make_shared<FakePlaybackSourceStats>();
+    player.start(std::make_unique<FakePlaybackSource>(
+        std::vector<KiriView::ImageAnimationPlaybackOpenResult> {
+            openResult(QSize(1, 1), -1, true),
+        },
+        std::vector<KiriView::ImageAnimationPlaybackReadResult> {
+            readEnd(),
+        },
+        false, true, stats));
+
+    QTRY_COMPARE_WITH_TIMEOUT(stats->readCount, 1, 100);
+    QTest::qWait(40);
+    QCOMPARE(stats->openCount, 1);
+    QCOMPARE(stats->readCount, 1);
+    QVERIFY(errorString.isEmpty());
+}
+
+void TestImageAnimationPlayer::restartOpenErrorsAreReported()
+{
+    std::vector<QSize> emittedFrameSizes;
+    QString errorString;
+    KiriView::ImageAnimationPlayer player(
+        this,
+        [&emittedFrameSizes](const QImage &image) { emittedFrameSizes.push_back(image.size()); },
+        [&errorString](const QString &error) { errorString = error; });
+
+    auto stats = std::make_shared<FakePlaybackSourceStats>();
+    player.start(std::make_unique<FakePlaybackSource>(
+        std::vector<KiriView::ImageAnimationPlaybackOpenResult> {
+            openResult(QSize(1, 1), 1, true),
+            openError(QStringLiteral("restart failed")),
+        },
+        std::vector<KiriView::ImageAnimationPlaybackReadResult> {
+            readFrame(QSize(2, 1)),
+        },
+        true, false, stats));
+
+    QTRY_COMPARE_WITH_TIMEOUT(errorString, QStringLiteral("restart failed"), 200);
+    QCOMPARE(stats->openCount, 2);
+    QCOMPARE(emittedFrameSizes.size(), std::size_t(1));
+    QCOMPARE(emittedFrameSizes.front(), QSize(2, 1));
 }
 
 QTEST_GUILESS_MAIN(TestImageAnimationPlayer)

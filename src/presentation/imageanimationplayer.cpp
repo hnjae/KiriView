@@ -7,7 +7,6 @@
 
 #include <QObject>
 #include <memory>
-#include <optional>
 #include <utility>
 
 namespace KiriView {
@@ -44,17 +43,16 @@ void ImageAnimationPlayer::start(std::unique_ptr<ImageAnimationPlaybackSource> s
         return;
     }
 
-    QString errorString;
-    const std::optional<ImageAnimationPlaybackOpenResult> openResult = source->open(&errorString);
-    if (!openResult.has_value()) {
-        finishWithError(errorString);
+    const ImageAnimationPlaybackOpenResult openResult = source->open();
+    if (openResult.status == ImageAnimationPlaybackOpenStatus::Error) {
+        finishWithError(openResult.errorString);
         return;
     }
 
-    m_playbackState.startLoop(openResult->loopCount);
+    m_playbackState.startLoop(openResult.loopCount);
     m_source = std::move(source);
-    if (openResult->sourceHasMoreFrames) {
-        scheduleNextFrame(openResult->firstFrameDelay);
+    if (openResult.sourceHasMoreFrames) {
+        scheduleNextFrame(openResult.firstFrameDelay);
     }
 }
 
@@ -71,20 +69,20 @@ void ImageAnimationPlayer::advanceFrame()
         return;
     }
 
-    QString errorString;
-    std::optional<AnimationFrame> frame = m_source->readNextFrame(&errorString);
-    if (!frame.has_value() && errorString.isEmpty()) {
+    const ImageAnimationPlaybackReadResult readResult = m_source->readNextFrame();
+    if (readResult.status == ImageAnimationPlaybackReadStatus::End) {
         handleSequenceEnd();
         return;
     }
 
-    if (!frame.has_value()) {
-        finishWithError(errorString);
+    if (readResult.status == ImageAnimationPlaybackReadStatus::Error) {
+        finishWithError(readResult.errorString);
         return;
     }
 
-    invokeIfSet(m_frameReady, frame->image);
-    applyFramePlan(m_playbackState.planAfterFrame(m_source->hasMoreFrames()), frame->delay);
+    invokeIfSet(m_frameReady, readResult.frame.image);
+    applyFramePlan(
+        m_playbackState.planAfterFrame(m_source->hasMoreFrames()), readResult.frame.delay);
 }
 
 void ImageAnimationPlayer::scheduleNextFrame(int delay)
@@ -117,16 +115,15 @@ void ImageAnimationPlayer::handleSequenceEnd()
         return;
     }
 
-    QString errorString;
-    const std::optional<ImageAnimationPlaybackOpenResult> openResult = m_source->open(&errorString);
-    if (!openResult.has_value()) {
-        finishWithError(errorString);
+    const ImageAnimationPlaybackOpenResult openResult = m_source->open();
+    if (openResult.status == ImageAnimationPlaybackOpenStatus::Error) {
+        finishWithError(openResult.errorString);
         return;
     }
 
-    invokeIfSet(m_frameReady, openResult->firstFrame);
-    applyFramePlan(m_playbackState.planAfterFrame(openResult->sourceHasMoreFrames),
-        openResult->firstFrameDelay);
+    invokeIfSet(m_frameReady, openResult.firstFrame);
+    applyFramePlan(
+        m_playbackState.planAfterFrame(openResult.sourceHasMoreFrames), openResult.firstFrameDelay);
 }
 
 void ImageAnimationPlayer::clearPlaybackState()

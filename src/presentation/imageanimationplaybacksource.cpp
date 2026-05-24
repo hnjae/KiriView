@@ -18,25 +18,47 @@ KiriView::ImageAnimationPlaybackOpenResult playbackOpenResult(
     QImage firstFrame, int firstFrameDelay, int loopCount, bool sourceHasMoreFrames)
 {
     return KiriView::ImageAnimationPlaybackOpenResult {
+        KiriView::ImageAnimationPlaybackOpenStatus::Success,
         std::move(firstFrame),
         firstFrameDelay,
         loopCount,
         sourceHasMoreFrames,
+        {},
     };
 }
 
-void clearError(QString *errorString)
+KiriView::ImageAnimationPlaybackOpenResult playbackOpenError(QString errorString)
 {
-    if (errorString != nullptr) {
-        errorString->clear();
-    }
+    KiriView::ImageAnimationPlaybackOpenResult result;
+    result.errorString = std::move(errorString);
+    return result;
 }
 
-void setError(QString *errorString, const QString &message)
+KiriView::ImageAnimationPlaybackReadResult playbackReadFrame(KiriView::AnimationFrame frame)
 {
-    if (errorString != nullptr) {
-        *errorString = message;
-    }
+    return KiriView::ImageAnimationPlaybackReadResult {
+        KiriView::ImageAnimationPlaybackReadStatus::Frame,
+        std::move(frame),
+        {},
+    };
+}
+
+KiriView::ImageAnimationPlaybackReadResult playbackReadEnd()
+{
+    return KiriView::ImageAnimationPlaybackReadResult {
+        KiriView::ImageAnimationPlaybackReadStatus::End,
+        {},
+        {},
+    };
+}
+
+KiriView::ImageAnimationPlaybackReadResult playbackReadError(QString errorString)
+{
+    return KiriView::ImageAnimationPlaybackReadResult {
+        KiriView::ImageAnimationPlaybackReadStatus::Error,
+        {},
+        std::move(errorString),
+    };
 }
 
 class ReaderAnimationPlaybackSource final : public KiriView::ImageAnimationPlaybackSource
@@ -48,27 +70,23 @@ public:
     {
     }
 
-    std::optional<KiriView::ImageAnimationPlaybackOpenResult> open(QString *errorString) override
+    KiriView::ImageAnimationPlaybackOpenResult open() override
     {
-        clearError(errorString);
         m_reader.reset();
 
         auto reader = std::make_unique<KiriView::BufferedImageReader>(m_data, m_format);
         if (!*reader) {
-            setError(
-                errorString, KiriView::imageErrorText(KiriView::ImageErrorTextId::ReadImageData));
-            return std::nullopt;
+            return playbackOpenError(
+                KiriView::imageErrorText(KiriView::ImageErrorTextId::ReadImageData));
         }
 
         if (!reader->canRead()) {
-            setError(errorString, reader->errorString());
-            return std::nullopt;
+            return playbackOpenError(reader->errorString());
         }
 
         QImage firstFrame = reader->read();
         if (firstFrame.isNull()) {
-            setError(errorString, reader->errorString());
-            return std::nullopt;
+            return playbackOpenError(reader->errorString());
         }
 
         const int firstFrameDelay = reader->nextImageDelay();
@@ -79,23 +97,21 @@ public:
             std::move(firstFrame), firstFrameDelay, loopCount, sourceHasMoreFrames);
     }
 
-    std::optional<KiriView::AnimationFrame> readNextFrame(QString *errorString) override
+    KiriView::ImageAnimationPlaybackReadResult readNextFrame() override
     {
-        clearError(errorString);
         if (m_reader == nullptr || !m_reader->canRead()) {
-            return std::nullopt;
+            return playbackReadEnd();
         }
 
         QImage frame = m_reader->read();
         if (frame.isNull()) {
-            setError(errorString, m_reader->errorString());
-            return std::nullopt;
+            return playbackReadError(m_reader->errorString());
         }
 
-        return KiriView::AnimationFrame {
+        return playbackReadFrame(KiriView::AnimationFrame {
             std::move(frame),
             m_reader->nextImageDelay(),
-        };
+        });
     }
 
     bool hasMoreFrames() const override { return m_reader != nullptr && m_reader->canRead(); }
@@ -116,9 +132,8 @@ public:
     {
     }
 
-    std::optional<KiriView::ImageAnimationPlaybackOpenResult> open(QString *errorString) override
+    KiriView::ImageAnimationPlaybackOpenResult open() override
     {
-        clearError(errorString);
         m_reader = std::make_unique<KiriView::ApngAnimationReader>();
         KiriView::ApngOpenResult openResult = m_reader->open(m_data);
         switch (openResult.status) {
@@ -126,26 +141,34 @@ public:
             return playbackOpenResult(std::move(openResult.firstFrame), openResult.firstFrameDelay,
                 openResult.loopCount, openResult.frameCount > 1);
         case KiriView::ApngOpenStatus::Error:
-            setError(errorString, openResult.errorString);
             m_reader.reset();
-            return std::nullopt;
+            return playbackOpenError(openResult.errorString);
         case KiriView::ApngOpenStatus::NotApng:
-            setError(errorString,
-                KiriView::imageErrorText(KiriView::ImageErrorTextId::DecodeApngAnimation));
             m_reader.reset();
-            return std::nullopt;
+            return playbackOpenError(
+                KiriView::imageErrorText(KiriView::ImageErrorTextId::DecodeApngAnimation));
         }
 
-        setError(
-            errorString, KiriView::imageErrorText(KiriView::ImageErrorTextId::DecodeApngAnimation));
         m_reader.reset();
-        return std::nullopt;
+        return playbackOpenError(
+            KiriView::imageErrorText(KiriView::ImageErrorTextId::DecodeApngAnimation));
     }
 
-    std::optional<KiriView::AnimationFrame> readNextFrame(QString *errorString) override
+    KiriView::ImageAnimationPlaybackReadResult readNextFrame() override
     {
-        clearError(errorString);
-        return m_reader == nullptr ? std::nullopt : m_reader->readNextFrame(errorString);
+        if (m_reader == nullptr) {
+            return playbackReadEnd();
+        }
+
+        QString errorString;
+        std::optional<KiriView::AnimationFrame> frame = m_reader->readNextFrame(&errorString);
+        if (frame.has_value()) {
+            return playbackReadFrame(std::move(*frame));
+        }
+        if (!errorString.isEmpty()) {
+            return playbackReadError(std::move(errorString));
+        }
+        return playbackReadEnd();
     }
 
     bool hasMoreFrames() const override { return m_reader != nullptr && m_reader->hasMoreFrames(); }
@@ -165,35 +188,43 @@ public:
     {
     }
 
-    std::optional<KiriView::ImageAnimationPlaybackOpenResult> open(QString *errorString) override
+    KiriView::ImageAnimationPlaybackOpenResult open() override
     {
-        clearError(errorString);
         m_reader = std::make_unique<KiriView::HeifSequenceReader>();
         const KiriView::HeifSequenceOpenResult openResult = m_reader->open(m_data);
         if (openResult.status != KiriView::HeifSequenceOpenStatus::Success) {
-            setError(errorString,
-                openResult.errorString.isEmpty() ? KiriView::heifSequenceDecodeErrorString()
-                                                 : openResult.errorString);
             m_reader.reset();
-            return std::nullopt;
+            return playbackOpenError(openResult.errorString.isEmpty()
+                    ? KiriView::heifSequenceDecodeErrorString()
+                    : openResult.errorString);
         }
 
-        std::optional<KiriView::AnimationFrame> firstFrame = m_reader->readNextFrame(errorString);
+        QString errorString;
+        std::optional<KiriView::AnimationFrame> firstFrame = m_reader->readNextFrame(&errorString);
         if (!firstFrame.has_value()) {
-            if (errorString != nullptr && errorString->isEmpty()) {
-                *errorString = KiriView::heifSequenceDecodeErrorString();
-            }
             m_reader.reset();
-            return std::nullopt;
+            return playbackOpenError(
+                errorString.isEmpty() ? KiriView::heifSequenceDecodeErrorString() : errorString);
         }
 
         return playbackOpenResult(std::move(firstFrame->image), firstFrame->delay, 0, true);
     }
 
-    std::optional<KiriView::AnimationFrame> readNextFrame(QString *errorString) override
+    KiriView::ImageAnimationPlaybackReadResult readNextFrame() override
     {
-        clearError(errorString);
-        return m_reader == nullptr ? std::nullopt : m_reader->readNextFrame(errorString);
+        if (m_reader == nullptr) {
+            return playbackReadEnd();
+        }
+
+        QString errorString;
+        std::optional<KiriView::AnimationFrame> frame = m_reader->readNextFrame(&errorString);
+        if (frame.has_value()) {
+            return playbackReadFrame(std::move(*frame));
+        }
+        if (!errorString.isEmpty()) {
+            return playbackReadError(std::move(errorString));
+        }
+        return playbackReadEnd();
     }
 
     bool hasMoreFrames() const override { return m_reader != nullptr; }
