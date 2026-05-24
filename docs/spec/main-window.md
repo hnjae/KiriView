@@ -88,13 +88,19 @@ KiriView permits compact window sizes down to 14 by 12 Kirigami grid units.
 
 When no saved window geometry overrides the launch size, KiriView opens at 24 by 20 Kirigami grid units.
 
-When an image file is displayed, the main window title is the displayed image file name, a spaced em dash, and `KiriView`.
+When a direct image file is displayed and its intrinsic image size is known, the main window title is the displayed image file name, a spaced en dash, the intrinsic size as `width×height` using the multiplication sign with no spaces, a spaced em dash, and `KiriView`.
 
-When a direct video file is displayed, the main window title is the original direct media URL's file name, a spaced em dash, and `KiriView`.
+When a direct image file is displayed and its intrinsic image size is unknown, the title omits the size and uses the displayed image file name, a spaced em dash, and `KiriView`.
 
-When a CBZ, CBT, CB7, CBR, ZIP, TAR, 7Z, or RAR archive opened by KiriView is displayed, the title is the archive file name, a spaced em dash, and `KiriView`.
+When a direct video file is displayed and its intrinsic video frame size is known, the main window title is the original direct media URL's file name, a spaced en dash, the intrinsic size as `width×height` using the multiplication sign with no spaces, a spaced em dash, and `KiriView`.
 
-When a directly opened local directory is displayed, the title is the directory name, a spaced em dash, and `KiriView`.
+When a direct video file is displayed and its intrinsic video frame size is unknown, the title omits the size and uses the original direct media URL's file name, a spaced em dash, and `KiriView`.
+
+When a CBZ, CBT, CB7, CBR, ZIP, TAR, 7Z, or RAR archive opened by KiriView is displayed and the active document page position is known, the title is the archive file name, a spaced en dash, the current primary page number, `/`, the total image count, a spaced em dash, and `KiriView`.
+
+When a directly opened local directory is displayed and the active document page position is known, the title is the directory name, a spaced en dash, the current primary page number, `/`, the total image count, a spaced em dash, and `KiriView`.
+
+When an archive or directly opened local directory is displayed and the active document page position is unknown, the title omits the page counter and uses the archive file name or directory name, a spaced em dash, and `KiriView`.
 
 KiriView does not show file paths in the window title.
 
