@@ -48,6 +48,8 @@ When an ordinary direct image or video is open, Page Up opens the previous suppo
 
 For direct media, sibling discovery may be asynchronous. The cursor used for the eventual active navigation readout is the session-owned direct media URL requested for the active open operation, not an image-document displayed URL observed before image replacement has completed.
 
+After sibling discovery succeeds for the active ordinary direct media scope, the toolbar readout becomes known and shows the current supported media item number and total supported media item count for that scope. Confirming that a pending direct image request is now displayed does not make an already-started sibling discovery result stale when the effective direct media URL and parent scope are unchanged.
+
 If the current media item is the first supported media item, pressing Page Up keeps the current item open and notifies the user that it is the first media item.
 
 If the current media item is the last supported media item, pressing Page Down keeps the current item open and notifies the user that it is the last media item.

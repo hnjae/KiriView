@@ -39,12 +39,12 @@ When a public value has mode-specific ownership, only the active mode owns that 
 
 The active navigation projection must clear or mark unknown values during empty startup, loading intervals without a confirmed same-scope selection, mode switches, and replacement failures before publishing any current/count pair. Unknown navigation disables entry and shared dispatch, and must not display stale current/count values from a previous document.
 
-Direct media sibling discovery may complete asynchronously, but the cursor used for the eventual public readout is the session-owned requested direct media URL for that open request. It must not be derived from a stale or empty image-document displayed URL.
+Direct media sibling discovery may complete asynchronously, but the cursor used for the eventual public readout is the session-owned requested direct media URL for that open request. It must not be derived from a stale or empty image-document displayed URL. The session-owned direct media scope snapshot contains the effective cursor URL, parent scope URL, and generation used to accept or reject sibling-list completions; pending-image-to-stable-image confirmation is a phase change, not a new scope, when those URLs are unchanged.
 
 `ImageActionAvailability` may keep image-internal, viewport, shortcut-gating, and presentation-only availability. It must not be a second public active-navigation projection fed from raw image page numbers; shared Previous, Next, First, and Last availability comes from the session active navigation projection.
 
 Extracting active navigation helpers must not move authoritative state to Rust. Rust may later compute pure projections from plain snapshots, but C++ applies and publishes the result through the document session.
 
-Direct media cursor generation is part of stale async-completion rejection. Future helper extraction must preserve idempotent cursor operations and reject candidate results unless the cursor URL, scope URL, and generation still match the accepted session request.
+Direct media cursor generation is part of stale async-completion rejection. Future helper extraction must preserve idempotent cursor operations and reject candidate results unless the cursor URL, scope URL, and generation still match the accepted session request. Cursor generation changes when the effective direct media identity or parent scope changes, not merely when ownership transitions from pending to confirmed for the same direct media URL.
 
 Mixed-media deletion fallback remains session-owned for ordinary direct media scopes. Archive and directory document deletion remains image-document owned unless a later ADR changes that ownership.
