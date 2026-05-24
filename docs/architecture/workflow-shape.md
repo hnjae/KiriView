@@ -25,4 +25,10 @@ When multiple C++ policy adapters emit runtime operations for the same workflow,
 
 Image-open workflow transitions apply C++-owned document state and return `ImageDocumentRuntimePlan` follow-up operations. Controllers should dispatch those plans directly instead of reporting a second layer of document effects for the same runtime work.
 
+Direct media routing should evolve toward an explicit document-session plan boundary. A routing plan may classify a requested source as empty, direct video, direct image, or image-document input, but C++ still executes the Qt/KDE side effects by setting `KiriImageDocument`, `KiriVideoDocument`, the session cursor, candidate refresh, and predecode state.
+
+Document-session plans may compute active navigation projections, action-availability gates, direct media routing, deletion fallback, and predecode eligibility from plain snapshots. They must not publish QML-facing values directly, store independent workflow state, or bypass the session-owned stale-completion identity checks.
+
+Shared Previous, Next, First, and Last dispatch belongs to the document session. QML actions and shortcuts may combine the session projection with local UI gates, but route selection and boundary dispatch policy stay behind session methods.
+
 Existing controllers do not need immediate rewrites. Move logic when the workflow is already changing and the new boundary reduces complexity.
