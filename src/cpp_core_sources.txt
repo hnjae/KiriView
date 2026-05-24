@@ -178,6 +178,7 @@ src/system/systemmemory.cpp
 src/rendering/svgtilesource.cpp
 src/video/videooutputrendercontextobserver.cpp
 src/video/videodocumentruntime.cpp
+src/video/videodocumentstatusplan.cpp
 src/video/videodocumentstate.cpp
 src/video/videodocumentpublicsignals.cpp
 src/video/videomediabackend.cpp

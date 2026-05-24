@@ -3,34 +3,13 @@
 
 #include "video/videodocumentruntime.h"
 
+#include "video/videodocumentstatusplan.h"
 #include "video/videooutputrendercontextobserver.h"
 #include "video/videozoomstate.h"
 
 #include <QObject>
 #include <algorithm>
 #include <utility>
-
-namespace {
-KiriView::VideoDocumentStatus documentStatusForMediaStatus(KiriView::VideoMediaStatus status)
-{
-    switch (status) {
-    case KiriView::VideoMediaStatus::Null:
-        return KiriView::VideoDocumentStatus::Null;
-    case KiriView::VideoMediaStatus::Loading:
-    case KiriView::VideoMediaStatus::Stalled:
-        return KiriView::VideoDocumentStatus::Loading;
-    case KiriView::VideoMediaStatus::Loaded:
-    case KiriView::VideoMediaStatus::Buffering:
-    case KiriView::VideoMediaStatus::Buffered:
-    case KiriView::VideoMediaStatus::EndOfMedia:
-        return KiriView::VideoDocumentStatus::Ready;
-    case KiriView::VideoMediaStatus::Invalid:
-        return KiriView::VideoDocumentStatus::Error;
-    }
-
-    return KiriView::VideoDocumentStatus::Null;
-}
-}
 
 namespace KiriView {
 VideoDocumentRuntime::VideoDocumentRuntime(QObject *documentObject, ChangeCallback changeCallback,
@@ -322,37 +301,17 @@ void VideoDocumentRuntime::disconnectVideoOutputDestroyed()
 
 void VideoDocumentRuntime::updateStatusFromBackend()
 {
-    if (m_state.sourceUrl().isEmpty()) {
-        m_state.setEnded(false);
-        m_state.setStatus(VideoDocumentStatus::Null);
-        updateZoomPercent();
-        return;
-    }
-    if (m_sourceLoadRuntime.active()) {
-        m_state.setEnded(false);
-        m_state.setStatus(VideoDocumentStatus::Loading);
-        updateZoomPercent();
-        return;
-    }
-    if (m_mediaBackend == nullptr) {
-        m_state.setEnded(false);
-        m_state.setStatus(VideoDocumentStatus::Loading);
-        updateZoomPercent();
-        return;
-    }
-
-    const VideoMediaStatus mediaStatus = m_mediaBackend->mediaStatus();
-    if (mediaStatus == VideoMediaStatus::Null) {
-        m_state.setEnded(false);
-        m_state.setStatus(VideoDocumentStatus::Loading);
-        updateZoomPercent();
-        return;
-    }
-    m_state.setEnded(mediaStatus == VideoMediaStatus::EndOfMedia);
-    if (m_state.ended()) {
+    const VideoDocumentStatusPlan plan = videoDocumentStatusPlan(VideoDocumentStatusSnapshot {
+        m_state.sourceUrl().isEmpty(),
+        m_sourceLoadRuntime.active(),
+        m_mediaBackend != nullptr,
+        m_mediaBackend != nullptr ? m_mediaBackend->mediaStatus() : VideoMediaStatus::Null,
+    });
+    m_state.setEnded(plan.ended);
+    if (plan.stopPublicPlayback) {
         m_state.setPlaying(false);
     }
-    m_state.setStatus(documentStatusForMediaStatus(mediaStatus));
+    m_state.setStatus(plan.status);
     updateZoomPercent();
 }
 
