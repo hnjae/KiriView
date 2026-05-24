@@ -3,11 +3,9 @@
 
 #include "documentsessionruntime.h"
 
-#include "decoding/imageformatregistry.h"
 #include "facade/kiriimagedocument.h"
 #include "facade/kirivideodocument.h"
 #include "localization/imageerrortext.h"
-#include "navigation/mediaformatregistry.h"
 #include "predecode/mediapredecodecoordinator.h"
 
 #include <QObject>
@@ -17,26 +15,6 @@
 #include <utility>
 
 namespace {
-bool isDirectVideoUrl(const QUrl &url)
-{
-    const QString fileName = url.fileName(QUrl::PrettyDecoded);
-    if (KiriView::isSupportedDirectVideoFileName(fileName)) {
-        return true;
-    }
-
-    return KiriView::isSupportedDirectVideoFileName(url.toString(QUrl::PrettyDecoded));
-}
-
-bool isDirectImageUrl(const QUrl &url)
-{
-    const QString fileName = url.fileName(QUrl::PrettyDecoded);
-    if (KiriView::isSupportedImageFileName(fileName)) {
-        return true;
-    }
-
-    return KiriView::isSupportedImageFileName(url.toString(QUrl::PrettyDecoded));
-}
-
 QString genericFileDeletionErrorMessage()
 {
     return KiriView::imageErrorText(KiriView::ImageErrorTextId::DeleteFile);
@@ -486,59 +464,94 @@ void DocumentSessionRuntime::publishActiveNavigationForImagePages()
 
 void DocumentSessionRuntime::routeSourceUrl(const QUrl &sourceUrl)
 {
+    const DocumentSessionRoutePlan plan
+        = documentSessionRoutePlanForSourceUrl(sourceUrl, m_state.documentKind());
     m_state.setSessionErrorString(QString());
     m_mediaCandidateJob.cancel();
     m_mediaCandidateLoadState.cancel();
     cancelMediaDeletion();
-    m_state.setMediaNavigationState({}, false);
 
-    if (sourceUrl.isEmpty()) {
-        m_routingSource = true;
-        leaveVideoMode();
-        m_imageDocument.setSourceUrl(QUrl());
-        m_routingSource = false;
-        m_state.clearDirectMediaCursor();
-        m_state.setSourceIdentity(QUrl());
-        m_state.setDocumentKind(DocumentSessionKind::Empty);
-        m_state.setMediaNavigationState({}, false);
-        m_mediaPredecodeCoordinator->clear();
-        return;
-    }
-
-    openMediaUrl(sourceUrl);
+    executeRoutePlan(plan);
 }
 
 void DocumentSessionRuntime::openMediaUrl(const QUrl &url)
 {
-    if (isDirectVideoUrl(url)) {
-        m_state.setDirectVideoCursor(url);
-        m_routingSource = true;
-        m_imageDocument.setSourceUrl(QUrl());
-        m_videoDocument.setSourceUrl(url);
-        m_state.setDocumentKind(DocumentSessionKind::Video);
-        m_routingSource = false;
-        m_state.setSourceIdentity(url);
-        refreshMediaNavigation();
-        return;
+    executeRoutePlan(documentSessionRoutePlanForMediaUrl(url, m_state.documentKind()));
+}
+
+void DocumentSessionRuntime::executeRoutePlan(const DocumentSessionRoutePlan &plan)
+{
+    if (plan.clearMediaNavigation) {
+        m_state.setMediaNavigationState({}, false);
     }
 
-    if (isDirectImageUrl(url)) {
-        if (m_state.documentKind() != DocumentSessionKind::Image) {
-            m_state.clearDirectMediaCursor();
-        }
-        m_state.requestDirectImageCursor(url);
-    } else {
+    switch (plan.cursorAction) {
+    case DocumentSessionRouteCursorAction::None:
+        break;
+    case DocumentSessionRouteCursorAction::Clear:
         m_state.clearDirectMediaCursor();
+        break;
+    case DocumentSessionRouteCursorAction::SetDirectVideo:
+        m_state.setDirectVideoCursor(plan.sourceUrl);
+        break;
+    case DocumentSessionRouteCursorAction::RequestDirectImage:
+        m_state.requestDirectImageCursor(plan.sourceUrl);
+        break;
+    case DocumentSessionRouteCursorAction::ClearThenRequestDirectImage:
+        m_state.clearDirectMediaCursor();
+        m_state.requestDirectImageCursor(plan.sourceUrl);
+        break;
     }
 
     m_routingSource = true;
-    leaveVideoMode();
-    m_imageDocument.setSourceUrl(url);
-    m_state.setDocumentKind(DocumentSessionKind::Image);
+    if (plan.clearVideo) {
+        leaveVideoMode();
+    }
+    if (plan.clearImageDocument) {
+        m_imageDocument.setSourceUrl(QUrl());
+    }
+    if (plan.enterVideo) {
+        m_videoDocument.setSourceUrl(plan.sourceUrl);
+        m_state.setDocumentKind(DocumentSessionKind::Video);
+    }
+    if (plan.enterImage) {
+        m_imageDocument.setSourceUrl(plan.sourceUrl);
+        m_state.setDocumentKind(DocumentSessionKind::Image);
+    }
+    if (plan.enterEmpty) {
+        m_state.setDocumentKind(DocumentSessionKind::Empty);
+    }
     m_routingSource = false;
-    syncDirectImageCursorFromDocument();
-    m_state.setSourceIdentity(m_imageDocument.sourceUrl());
-    refreshMediaNavigation();
+
+    if (plan.syncDirectImageCursorFromDocument) {
+        syncDirectImageCursorFromDocument();
+    }
+
+    switch (plan.sourceIdentityAction) {
+    case DocumentSessionRouteSourceIdentityAction::None:
+        break;
+    case DocumentSessionRouteSourceIdentityAction::Clear:
+        m_state.setSourceIdentity(QUrl());
+        break;
+    case DocumentSessionRouteSourceIdentityAction::UseOriginalUrl:
+        m_state.setSourceIdentity(plan.sourceUrl);
+        break;
+    case DocumentSessionRouteSourceIdentityAction::UseImageDocumentSourceUrl:
+        m_state.setSourceIdentity(m_imageDocument.sourceUrl());
+        break;
+    }
+
+    if (plan.refreshMediaNavigation) {
+        refreshMediaNavigation();
+    }
+    if (plan.clearPredecode) {
+        if (plan.clearMediaNavigation) {
+            m_state.setMediaNavigationState({}, false);
+        }
+        if (m_mediaPredecodeCoordinator != nullptr) {
+            m_mediaPredecodeCoordinator->clear();
+        }
+    }
 }
 
 void DocumentSessionRuntime::leaveVideoMode()
@@ -844,7 +857,7 @@ ActiveNavigationSourceKind DocumentSessionRuntime::activeNavigationSourceKind() 
         }
         if (m_imageDocument.currentPageNumber() > 0 || m_imageDocument.imageCount() > 0
             || (!m_imageDocument.sourceUrl().isEmpty()
-                && !isDirectImageUrl(m_imageDocument.sourceUrl()))) {
+                && !isDocumentSessionDirectImageUrl(m_imageDocument.sourceUrl()))) {
             return ActiveNavigationSourceKind::ImageDocumentPages;
         }
         return ActiveNavigationSourceKind::None;

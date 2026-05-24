@@ -12,6 +12,7 @@
 #include "navigation/medianavigationmodel.h"
 #include "session/activenavigationprojection.h"
 #include "session/documentsessionmediacandidateloadstate.h"
+#include "session/documentsessionrouteplan.h"
 #include "session/documentsessionstate.h"
 
 #include <QUrl>
@@ -93,6 +94,7 @@ private:
     void publishActiveNavigationForImagePages();
     void routeSourceUrl(const QUrl &sourceUrl);
     void openMediaUrl(const QUrl &url);
+    void executeRoutePlan(const DocumentSessionRoutePlan &plan);
     void leaveVideoMode();
     void syncFromImageDocument();
     void syncFromVideoDocument();
