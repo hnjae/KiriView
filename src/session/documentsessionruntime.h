@@ -12,6 +12,7 @@
 #include "navigation/medianavigationmodel.h"
 #include "session/activenavigationprojection.h"
 #include "session/documentsessionmediacandidateloadstate.h"
+#include "session/documentsessionmediadeletionplan.h"
 #include "session/documentsessionrouteplan.h"
 #include "session/documentsessionstate.h"
 
@@ -123,6 +124,8 @@ private:
         FileDeletionMode mode, std::vector<MediaNavigationCandidate> candidates = {});
     void finishMediaDeletion(quint64 operationId, const MediaDeletionFallbackPlan &fallbackPlan,
         FileDeletionResult result, const QString &errorString);
+    void executeMediaDeletionCompletionPlan(
+        const DocumentSessionMediaDeletionCompletionPlan &plan, const QString &errorString);
     QUrl activeDirectMediaCursorUrl() const;
     QUrl activeDirectMediaScopeUrl() const;
     bool directMediaCursorMatches(const DocumentSessionMediaCandidateLoad &load) const;

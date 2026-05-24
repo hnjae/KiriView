@@ -767,19 +767,19 @@ void DocumentSessionRuntime::cancelMediaDeletion()
 void DocumentSessionRuntime::startMediaDeletion(
     FileDeletionMode mode, std::vector<MediaNavigationCandidate> candidates)
 {
-    const QUrl targetUrl = activeDirectMediaCursorUrl();
-    if (targetUrl.isEmpty()) {
+    const DocumentSessionMediaDeletionStartPlan plan = documentSessionMediaDeletionStartPlan(
+        mode, std::move(candidates), activeDirectMediaCursorUrl());
+    if (!plan.shouldStartDeletion) {
         m_state.setFileDeletionInProgress(false);
         recomputeActiveNavigation();
         return;
     }
 
-    const MediaDeletionFallbackPlan fallbackPlan
-        = mediaDeletionFallbackPlan(std::move(candidates), targetUrl);
     m_fileDeletionJob.cancel();
     const quint64 operationId = m_fileDeletionOperation.start();
-    m_fileDeletionJob = m_fileOperationProvider(m_owner, FileDeletionRequest { targetUrl, mode },
-        [this, operationId, fallbackPlan](FileDeletionResult result, const QString &errorString) {
+    m_fileDeletionJob = m_fileOperationProvider(m_owner, plan.request,
+        [this, operationId, fallbackPlan = plan.fallbackPlan](
+            FileDeletionResult result, const QString &errorString) {
             finishMediaDeletion(operationId, fallbackPlan, result, errorString);
         });
 }
@@ -795,29 +795,45 @@ void DocumentSessionRuntime::finishMediaDeletion(quint64 operationId,
     m_state.setFileDeletionInProgress(false);
     recomputeActiveNavigation();
 
-    switch (fileDeletionCompletionAction(result)) {
-    case FileDeletionCompletionAction::ClearDeletedImageAndOpenFallback:
-        if (m_state.documentKind() == DocumentSessionKind::Video) {
-            leaveVideoMode();
-        } else if (m_state.documentKind() == DocumentSessionKind::Image) {
-            m_imageDocument.setSourceUrl(QUrl());
-        }
+    executeMediaDeletionCompletionPlan(
+        documentSessionMediaDeletionCompletionPlan(m_state.documentKind(), fallbackPlan, result),
+        errorString);
+}
 
-        if (fallbackPlan.preferredFallbackUrl.has_value()) {
-            openMediaUrl(*fallbackPlan.preferredFallbackUrl);
-        } else if (fallbackPlan.fallbackUrl.has_value()) {
-            openMediaUrl(*fallbackPlan.fallbackUrl);
-        } else {
-            m_state.setSourceIdentity(QUrl());
-            m_state.setDocumentKind(DocumentSessionKind::Empty);
+void DocumentSessionRuntime::executeMediaDeletionCompletionPlan(
+    const DocumentSessionMediaDeletionCompletionPlan &plan, const QString &errorString)
+{
+    switch (plan.clearDocument) {
+    case DocumentSessionMediaDeletionDocumentClear::None:
+        break;
+    case DocumentSessionMediaDeletionDocumentClear::Image:
+        m_imageDocument.setSourceUrl(QUrl());
+        break;
+    case DocumentSessionMediaDeletionDocumentClear::Video:
+        leaveVideoMode();
+        break;
+    }
+
+    switch (plan.followUp) {
+    case DocumentSessionMediaDeletionFollowUp::None:
+        return;
+    case DocumentSessionMediaDeletionFollowUp::OpenFallback:
+        if (!plan.fallbackUrl.isEmpty()) {
+            openMediaUrl(plan.fallbackUrl);
+        }
+        return;
+    case DocumentSessionMediaDeletionFollowUp::ClearSession:
+        m_state.setSourceIdentity(QUrl());
+        m_state.setDocumentKind(DocumentSessionKind::Empty);
+        if (plan.clearMediaNavigation) {
             m_state.setMediaNavigationState({}, false);
             recomputeActiveNavigation();
+        }
+        if (plan.clearPredecode && m_mediaPredecodeCoordinator != nullptr) {
             m_mediaPredecodeCoordinator->clear();
         }
         return;
-    case FileDeletionCompletionAction::Ignore:
-        return;
-    case FileDeletionCompletionAction::ReportFailure:
+    case DocumentSessionMediaDeletionFollowUp::ReportFailure:
         m_state.setSessionErrorString(
             errorString.isEmpty() ? genericFileDeletionErrorMessage() : errorString);
         return;
