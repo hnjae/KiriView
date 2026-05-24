@@ -16,8 +16,10 @@ private Q_SLOTS:
     void sourceIdentityOnlyNotifiesWhenChanged();
     void documentKindPublishesDerivedPublicChanges();
     void fileDeletionProgressPublishesProgressAndAvailability();
-    void mediaNavigationStateOnlyNotifiesWhenBoundaryChanges();
+    void mediaNavigationStateOnlyUpdatesWhenBoundaryChanges();
+    void activeNavigationSnapshotOnlyNotifiesWhenProjectionChanges();
     void directMediaCursorGenerationChangesOnlyWithEffectiveIdentity();
+    void directMediaCursorGenerationUsesNormalizedEffectiveIdentity();
     void publishDeduplicatesChangesInOrder();
 };
 
@@ -52,13 +54,12 @@ void TestDocumentSessionState::documentKindPublishesDerivedPublicChanges()
 
     QCOMPARE(state.documentKind(), KiriView::DocumentSessionKind::Video);
     QCOMPARE(batches.size(), std::size_t(1));
-    QCOMPARE(batches.back().size(), std::size_t(6));
+    QCOMPARE(batches.back().size(), std::size_t(5));
     QCOMPARE(batches.back().at(0), KiriView::DocumentSessionChange::DocumentKind);
     QCOMPARE(batches.back().at(1), KiriView::DocumentSessionChange::ActiveZoomReadout);
     QCOMPARE(batches.back().at(2), KiriView::DocumentSessionChange::WindowTitleFileName);
     QCOMPARE(batches.back().at(3), KiriView::DocumentSessionChange::ErrorString);
     QCOMPARE(batches.back().at(4), KiriView::DocumentSessionChange::FileDeletionAvailability);
-    QCOMPARE(batches.back().at(5), KiriView::DocumentSessionChange::ActiveNavigation);
 
     state.setDocumentKind(KiriView::DocumentSessionKind::Video);
     QCOMPARE(batches.size(), std::size_t(1));
@@ -76,16 +77,15 @@ void TestDocumentSessionState::fileDeletionProgressPublishesProgressAndAvailabil
 
     QVERIFY(state.fileDeletionInProgress());
     QCOMPARE(batches.size(), std::size_t(1));
-    QCOMPARE(batches.back().size(), std::size_t(3));
+    QCOMPARE(batches.back().size(), std::size_t(2));
     QCOMPARE(batches.back().at(0), KiriView::DocumentSessionChange::FileDeletionInProgress);
     QCOMPARE(batches.back().at(1), KiriView::DocumentSessionChange::FileDeletionAvailability);
-    QCOMPARE(batches.back().at(2), KiriView::DocumentSessionChange::ActiveNavigation);
 
     state.setFileDeletionInProgress(true);
     QCOMPARE(batches.size(), std::size_t(1));
 }
 
-void TestDocumentSessionState::mediaNavigationStateOnlyNotifiesWhenBoundaryChanges()
+void TestDocumentSessionState::mediaNavigationStateOnlyUpdatesWhenBoundaryChanges()
 {
     std::vector<KiriView::DocumentSessionChange> changes;
     KiriView::DocumentSessionState state(
@@ -105,15 +105,43 @@ void TestDocumentSessionState::mediaNavigationStateOnlyNotifiesWhenBoundaryChang
 
     QVERIFY(state.mediaNavigationKnown());
     QCOMPARE(state.mediaNavigationState().currentNumber, 2);
-    QCOMPARE(changes.size(), std::size_t(1));
-    QCOMPARE(changes.at(0), KiriView::DocumentSessionChange::ActiveNavigation);
+    QCOMPARE(changes.size(), std::size_t(0));
 
     state.setMediaNavigationState(boundary, true);
-    QCOMPARE(changes.size(), std::size_t(1));
+    QCOMPARE(changes.size(), std::size_t(0));
 
     boundary.canOpenNext = true;
     state.setMediaNavigationState(boundary, true);
+    QCOMPARE(state.mediaNavigationState().canOpenNext, true);
+    QCOMPARE(changes.size(), std::size_t(0));
+}
+
+void TestDocumentSessionState::activeNavigationSnapshotOnlyNotifiesWhenProjectionChanges()
+{
+    std::vector<KiriView::DocumentSessionChange> changes;
+    KiriView::DocumentSessionState state(
+        [&changes](const std::vector<KiriView::DocumentSessionChange> &publishedChanges) {
+            changes.insert(changes.end(), publishedChanges.cbegin(), publishedChanges.cend());
+        });
+
+    KiriView::ActiveNavigationSnapshot snapshot;
+    snapshot.available = true;
+    state.setActiveNavigationSnapshot(snapshot);
+
+    QVERIFY(state.activeNavigationSnapshot().available);
+    QCOMPARE(changes.size(), std::size_t(1));
+    QCOMPARE(changes.at(0), KiriView::DocumentSessionChange::ActiveNavigation);
+
+    state.setActiveNavigationSnapshot(snapshot);
+    QCOMPARE(changes.size(), std::size_t(1));
+
+    snapshot.known = true;
+    snapshot.editable = true;
+    snapshot.currentNumber = 1;
+    snapshot.count = 1;
+    state.setActiveNavigationSnapshot(snapshot);
     QCOMPARE(changes.size(), std::size_t(2));
+    QVERIFY(state.activeNavigationSnapshot().known);
 }
 
 void TestDocumentSessionState::directMediaCursorGenerationChangesOnlyWithEffectiveIdentity()
@@ -141,7 +169,7 @@ void TestDocumentSessionState::directMediaCursorGenerationChangesOnlyWithEffecti
     QCOMPARE(state.directMediaCursor().pendingUrl, QUrl());
     QCOMPARE(state.directMediaCursor().stableUrl, firstImage);
     const quint64 confirmedGeneration = state.directMediaCursor().generation;
-    QVERIFY(confirmedGeneration > requestedGeneration);
+    QCOMPARE(confirmedGeneration, requestedGeneration);
 
     state.confirmDirectImageCursor(firstImage);
     QCOMPARE(state.directMediaCursorUrl(), firstImage);
@@ -188,6 +216,24 @@ void TestDocumentSessionState::directMediaCursorGenerationChangesOnlyWithEffecti
     state.clearDirectMediaCursor();
     QCOMPARE(state.directMediaCursorUrl(), QUrl());
     QCOMPARE(state.directMediaCursor().generation, clearedGeneration);
+}
+
+void TestDocumentSessionState::directMediaCursorGenerationUsesNormalizedEffectiveIdentity()
+{
+    KiriView::DocumentSessionState state;
+    const QUrl requestedImage(QStringLiteral("file:///media/chapter/../01.png"));
+    const QUrl displayedImage(QStringLiteral("file:///media/01.png"));
+    const QUrl replacementImage(QStringLiteral("file:///media/02.png"));
+
+    state.requestDirectImageCursor(requestedImage);
+    const quint64 requestedGeneration = state.directMediaCursor().generation;
+
+    state.confirmDirectImageCursor(displayedImage);
+    QCOMPARE(state.directMediaCursorUrl(), displayedImage);
+    QCOMPARE(state.directMediaCursor().generation, requestedGeneration);
+
+    state.requestDirectImageCursor(replacementImage);
+    QVERIFY(state.directMediaCursor().generation > requestedGeneration);
 }
 
 void TestDocumentSessionState::publishDeduplicatesChangesInOrder()

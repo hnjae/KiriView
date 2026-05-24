@@ -5,6 +5,7 @@
 #define KIRIVIEW_DOCUMENTSESSIONSTATE_H
 
 #include "navigation/medianavigationmodel.h"
+#include "session/activenavigationprojection.h"
 
 #include <QString>
 #include <QUrl>
@@ -48,6 +49,7 @@ public:
     bool fileDeletionInProgress() const;
     const MediaNavigationBoundaryState &mediaNavigationState() const;
     bool mediaNavigationKnown() const;
+    const ActiveNavigationSnapshot &activeNavigationSnapshot() const;
     const DirectMediaCursor &directMediaCursor() const;
     QUrl directMediaCursorUrl() const;
 
@@ -55,12 +57,13 @@ public:
     void setDocumentKind(DocumentSessionKind kind);
     void setFileDeletionInProgress(bool inProgress);
     void setMediaNavigationState(MediaNavigationBoundaryState state, bool known);
+    void setActiveNavigationSnapshot(ActiveNavigationSnapshot snapshot);
     void setSessionErrorString(const QString &errorString);
-    void clearDirectMediaCursor();
-    void requestDirectImageCursor(const QUrl &url);
-    void confirmDirectImageCursor(const QUrl &url);
-    void restoreDirectImageCursorAfterFailure();
-    void setDirectVideoCursor(const QUrl &url);
+    bool clearDirectMediaCursor();
+    bool requestDirectImageCursor(const QUrl &url);
+    bool confirmDirectImageCursor(const QUrl &url);
+    bool restoreDirectImageCursorAfterFailure();
+    bool setDirectVideoCursor(const QUrl &url);
 
     void publish(DocumentSessionChange change);
     void publish(std::vector<DocumentSessionChange> changes);
@@ -71,6 +74,7 @@ private:
     DocumentSessionKind m_documentKind = DocumentSessionKind::Empty;
     DirectMediaCursor m_directMediaCursor;
     MediaNavigationBoundaryState m_mediaNavigationState;
+    ActiveNavigationSnapshot m_activeNavigationSnapshot;
     bool m_mediaNavigationKnown = false;
     bool m_fileDeletionInProgress = false;
     QString m_sessionErrorString;

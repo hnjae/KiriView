@@ -12,6 +12,7 @@
 #include "navigation/imagecandidateprovider.h"
 #include "navigation/medianavigationmodel.h"
 
+#include <QFile>
 #include <QImage>
 #include <QObject>
 #include <QSignalSpy>
@@ -173,6 +174,12 @@ bool writeTestImage(const QString &path)
     image.fill(Qt::red);
     return image.save(path, "PNG");
 }
+
+bool writeEmptyFile(const QString &path)
+{
+    QFile file(path);
+    return file.open(QIODevice::WriteOnly);
+}
 }
 
 class TestKiriDocumentSession : public QObject
@@ -186,8 +193,9 @@ private Q_SLOTS:
     void archiveAndDirectoryInputsRouteToImageDocument();
     void directImageAfterVideoRestoresImageDocument();
     void directImageMediaNavigationIncludesSiblingVideos();
+    void defaultMediaProviderListsLocalDirectImageSiblings();
     void freshDirectImageReadoutUsesRequestedCursorBeforeDisplayedUrl();
-    void directImageStaleCandidateCompletionAfterCursorConfirmationCannotPublish();
+    void directImageCandidateCompletionSurvivesCursorConfirmation();
     void directImageReplacementFailureRestoresPreviousMediaCursor();
     void stalePendingDirectImageCandidateCompletionCannotPublishForNewCursor();
     void freshDirectImageFailureLeavesNavigationUnknown();
@@ -363,6 +371,35 @@ void TestKiriDocumentSession::directImageMediaNavigationIncludesSiblingVideos()
     QVERIFY(session->atKnownLastActiveNavigation());
 }
 
+void TestKiriDocumentSession::defaultMediaProviderListsLocalDirectImageSiblings()
+{
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+
+    const QString firstImagePath = directory.filePath(QStringLiteral("01.png"));
+    const QString videoPath = directory.filePath(QStringLiteral("02.mp4"));
+    const QString currentImagePath = directory.filePath(QStringLiteral("03.png"));
+    QVERIFY(writeTestImage(firstImagePath));
+    QVERIFY(writeEmptyFile(videoPath));
+    QVERIFY(writeTestImage(currentImagePath));
+
+    std::unique_ptr<KiriDocumentSession> session
+        = createSessionWithProvider(KiriView::MediaNavigationCandidateProvider {});
+
+    session->setSourceUrl(localUrl(currentImagePath));
+
+    QTRY_COMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Image);
+    QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Ready);
+    QTRY_VERIFY(session->activeNavigationKnown());
+    QVERIFY(session->activeNavigationEditable());
+    QCOMPARE(session->activeNavigationCurrentNumber(), 3);
+    QCOMPARE(session->activeNavigationCount(), 3);
+    QVERIFY(session->canOpenPreviousActiveNavigation());
+    QVERIFY(!session->canOpenNextActiveNavigation());
+    QVERIFY(!session->atKnownFirstActiveNavigation());
+    QVERIFY(session->atKnownLastActiveNavigation());
+}
+
 void TestKiriDocumentSession::freshDirectImageReadoutUsesRequestedCursorBeforeDisplayedUrl()
 {
     FakeMediaCandidateProvider mediaProvider;
@@ -386,8 +423,7 @@ void TestKiriDocumentSession::freshDirectImageReadoutUsesRequestedCursorBeforeDi
     QCOMPARE(session->activeNavigationCount(), 2);
 }
 
-void TestKiriDocumentSession::
-    directImageStaleCandidateCompletionAfterCursorConfirmationCannotPublish()
+void TestKiriDocumentSession::directImageCandidateCompletionSurvivesCursorConfirmation()
 {
     ManualMediaCandidateProvider mediaProvider;
     KiriView::TestSupport::ManualImageDataLoader imageDataLoader;
@@ -409,24 +445,13 @@ void TestKiriDocumentSession::
 
     QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Ready);
     QCOMPARE(session->imageDocument()->displayedUrl(), imageUrl);
-    QTRY_VERIFY(mediaProvider.loadCount() >= std::size_t(2));
-    const std::size_t freshLoadIndex = mediaProvider.loadCount() - 1;
-    QCOMPARE(mediaProvider.loadAt(freshLoadIndex).parentUrl, localUrl(QStringLiteral("/media/")));
-    QVERIFY(mediaProvider.loadAt(0).canceled);
+    QCOMPARE(mediaProvider.loadCount(), std::size_t(1));
+    QVERIFY(!mediaProvider.loadAt(0).canceled);
     QVERIFY(session->activeNavigationAvailable());
     QVERIFY(!session->activeNavigationKnown());
     QVERIFY(!session->activeNavigationEditable());
 
-    mediaProvider.deliverIgnoringCancellation(
-        0, { mediaCandidate(imageUrl), mediaCandidate(siblingUrl) });
-
-    QVERIFY(session->activeNavigationAvailable());
-    QVERIFY(!session->activeNavigationKnown());
-    QCOMPARE(session->activeNavigationCurrentNumber(), 0);
-    QCOMPARE(session->activeNavigationCount(), 0);
-
-    mediaProvider.finishLoad(
-        freshLoadIndex, { mediaCandidate(imageUrl), mediaCandidate(siblingUrl) });
+    mediaProvider.finishLoad(0, { mediaCandidate(imageUrl), mediaCandidate(siblingUrl) });
 
     QVERIFY(session->activeNavigationKnown());
     QVERIFY(session->activeNavigationEditable());

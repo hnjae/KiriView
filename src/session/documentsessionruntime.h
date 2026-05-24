@@ -15,6 +15,7 @@
 #include "session/documentsessionrouteplan.h"
 #include "session/documentsessionstate.h"
 
+#include <QString>
 #include <QUrl>
 #include <QtGlobal>
 #include <functional>
@@ -34,6 +35,12 @@ struct DocumentSessionRuntimeDependencies {
     MediaNavigationCandidateProvider mediaCandidateProvider;
     FileOperationProvider fileOperationProvider;
     ImageDocumentRuntimeDependencyOverrides imageDocumentDependencies;
+};
+
+struct MediaCandidateLoadResult {
+    std::vector<MediaNavigationCandidate> candidates;
+    bool succeeded = false;
+    QString errorString;
 };
 
 class DocumentSessionRuntime final
@@ -92,6 +99,7 @@ private:
     void syncImageDocumentFileDeletionProgress();
     void publishActiveZoomReadoutForKind(DocumentSessionKind kind);
     void publishActiveNavigationForImagePages();
+    void recomputeActiveNavigation();
     void routeSourceUrl(const QUrl &sourceUrl);
     void openMediaUrl(const QUrl &url);
     void executeRoutePlan(const DocumentSessionRoutePlan &plan);
@@ -99,14 +107,12 @@ private:
     void syncFromImageDocument();
     void syncFromVideoDocument();
     void refreshMediaNavigation();
-    void loadMediaCandidates(std::function<void(std::vector<MediaNavigationCandidate>)> callback);
+    void loadMediaCandidates(std::function<void(MediaCandidateLoadResult)> callback);
     void finishMediaCandidateLoad(DocumentSessionMediaCandidateLoad load,
-        std::vector<MediaNavigationCandidate> candidates,
-        const std::shared_ptr<std::function<void(std::vector<MediaNavigationCandidate>)>>
-            &callback);
-    void finishMediaNavigation(
-        std::vector<MediaNavigationCandidate> candidates, MediaNavigationOpenRequest request);
-    void updateMediaBoundaryState(const std::vector<MediaNavigationCandidate> &candidates);
+        MediaCandidateLoadResult result,
+        const std::shared_ptr<std::function<void(MediaCandidateLoadResult)>> &callback);
+    void finishMediaNavigation(MediaCandidateLoadResult result, MediaNavigationOpenRequest request);
+    void updateMediaBoundaryState(MediaCandidateLoadResult result);
     void scheduleMediaPredecode(const std::vector<MediaNavigationCandidate> &candidates);
     std::vector<DisplayedPredecodeImage> displayedPredecodeImages() const;
     ImageFirstDisplayDecodeContext firstDisplayDecodeContext() const;
@@ -120,9 +126,9 @@ private:
     bool directMediaCursorMatches(const DocumentSessionMediaCandidateLoad &load) const;
     bool activeImageUsesMediaScope() const;
     bool directImageLoadMayUseMediaScope() const;
-    void syncDirectImageCursorFromDocument();
+    bool syncDirectImageCursorFromDocument();
     ActiveNavigationSourceKind activeNavigationSourceKind() const;
-    ActiveNavigationSnapshot activeNavigationSnapshot() const;
+    ActiveNavigationSnapshot projectedActiveNavigationSnapshot() const;
     MediaActiveNavigationInput mediaActiveNavigationInput() const;
     ImageDocumentActiveNavigationInput imageDocumentActiveNavigationInput() const;
 

@@ -25,6 +25,33 @@ bool sameMediaNavigationState(const KiriView::MediaNavigationBoundaryState &left
         && left.currentNumber == right.currentNumber && left.count == right.count;
 }
 
+bool sameActiveNavigationSnapshot(
+    const KiriView::ActiveNavigationSnapshot &left, const KiriView::ActiveNavigationSnapshot &right)
+{
+    return left.available == right.available && left.known == right.known
+        && left.editable == right.editable && left.canOpenPrevious == right.canOpenPrevious
+        && left.canOpenNext == right.canOpenNext && left.atKnownFirst == right.atKnownFirst
+        && left.atKnownLast == right.atKnownLast && left.currentNumber == right.currentNumber
+        && left.count == right.count;
+}
+
+QUrl effectiveDirectMediaCursorUrl(const KiriView::DirectMediaCursor &cursor)
+{
+    return !cursor.pendingUrl.isEmpty() ? cursor.pendingUrl : cursor.stableUrl;
+}
+
+bool sameEffectiveDirectMediaCursorUrl(
+    const KiriView::DirectMediaCursor &left, const KiriView::DirectMediaCursor &right)
+{
+    const QUrl leftUrl = effectiveDirectMediaCursorUrl(left);
+    const QUrl rightUrl = effectiveDirectMediaCursorUrl(right);
+    if (leftUrl.isEmpty() || rightUrl.isEmpty()) {
+        return leftUrl.isEmpty() && rightUrl.isEmpty();
+    }
+
+    return leftUrl.matches(rightUrl, QUrl::NormalizePathSegments);
+}
+
 bool replaceDirectMediaCursor(
     KiriView::DirectMediaCursor &current, KiriView::DirectMediaCursor next)
 {
@@ -32,9 +59,10 @@ bool replaceDirectMediaCursor(
         return false;
     }
 
-    next.generation = current.generation + 1;
+    const bool effectiveUrlChanged = !sameEffectiveDirectMediaCursorUrl(current, next);
+    next.generation = effectiveUrlChanged ? current.generation + 1 : current.generation;
     current = std::move(next);
-    return true;
+    return effectiveUrlChanged;
 }
 }
 
@@ -59,6 +87,11 @@ const MediaNavigationBoundaryState &DocumentSessionState::mediaNavigationState()
 
 bool DocumentSessionState::mediaNavigationKnown() const { return m_mediaNavigationKnown; }
 
+const ActiveNavigationSnapshot &DocumentSessionState::activeNavigationSnapshot() const
+{
+    return m_activeNavigationSnapshot;
+}
+
 const DirectMediaCursor &DocumentSessionState::directMediaCursor() const
 {
     return m_directMediaCursor;
@@ -66,8 +99,7 @@ const DirectMediaCursor &DocumentSessionState::directMediaCursor() const
 
 QUrl DocumentSessionState::directMediaCursorUrl() const
 {
-    return !m_directMediaCursor.pendingUrl.isEmpty() ? m_directMediaCursor.pendingUrl
-                                                     : m_directMediaCursor.stableUrl;
+    return effectiveDirectMediaCursorUrl(m_directMediaCursor);
 }
 
 void DocumentSessionState::setSourceIdentity(const QUrl &url)
@@ -85,7 +117,7 @@ void DocumentSessionState::setDocumentKind(DocumentSessionKind kind)
 
     publish({ DocumentSessionChange::DocumentKind, DocumentSessionChange::ActiveZoomReadout,
         DocumentSessionChange::WindowTitleFileName, DocumentSessionChange::ErrorString,
-        DocumentSessionChange::FileDeletionAvailability, DocumentSessionChange::ActiveNavigation });
+        DocumentSessionChange::FileDeletionAvailability });
 }
 
 void DocumentSessionState::setFileDeletionInProgress(bool inProgress)
@@ -95,7 +127,7 @@ void DocumentSessionState::setFileDeletionInProgress(bool inProgress)
     }
 
     publish({ DocumentSessionChange::FileDeletionInProgress,
-        DocumentSessionChange::FileDeletionAvailability, DocumentSessionChange::ActiveNavigation });
+        DocumentSessionChange::FileDeletionAvailability });
 }
 
 void DocumentSessionState::setMediaNavigationState(MediaNavigationBoundaryState state, bool known)
@@ -107,6 +139,15 @@ void DocumentSessionState::setMediaNavigationState(MediaNavigationBoundaryState 
 
     m_mediaNavigationKnown = known;
     m_mediaNavigationState = state;
+}
+
+void DocumentSessionState::setActiveNavigationSnapshot(ActiveNavigationSnapshot snapshot)
+{
+    if (sameActiveNavigationSnapshot(m_activeNavigationSnapshot, snapshot)) {
+        return;
+    }
+
+    m_activeNavigationSnapshot = snapshot;
     publish(DocumentSessionChange::ActiveNavigation);
 }
 
@@ -117,41 +158,41 @@ void DocumentSessionState::setSessionErrorString(const QString &errorString)
     }
 }
 
-void DocumentSessionState::clearDirectMediaCursor()
+bool DocumentSessionState::clearDirectMediaCursor()
 {
     DirectMediaCursor next;
     next.generation = m_directMediaCursor.generation;
-    replaceDirectMediaCursor(m_directMediaCursor, std::move(next));
+    return replaceDirectMediaCursor(m_directMediaCursor, std::move(next));
 }
 
-void DocumentSessionState::requestDirectImageCursor(const QUrl &url)
+bool DocumentSessionState::requestDirectImageCursor(const QUrl &url)
 {
     DirectMediaCursor next = m_directMediaCursor;
     next.pendingUrl = url;
-    replaceDirectMediaCursor(m_directMediaCursor, std::move(next));
+    return replaceDirectMediaCursor(m_directMediaCursor, std::move(next));
 }
 
-void DocumentSessionState::confirmDirectImageCursor(const QUrl &url)
+bool DocumentSessionState::confirmDirectImageCursor(const QUrl &url)
 {
     DirectMediaCursor next = m_directMediaCursor;
     next.stableUrl = url;
     next.pendingUrl = QUrl();
-    replaceDirectMediaCursor(m_directMediaCursor, std::move(next));
+    return replaceDirectMediaCursor(m_directMediaCursor, std::move(next));
 }
 
-void DocumentSessionState::restoreDirectImageCursorAfterFailure()
+bool DocumentSessionState::restoreDirectImageCursorAfterFailure()
 {
     DirectMediaCursor next = m_directMediaCursor;
     next.pendingUrl = QUrl();
-    replaceDirectMediaCursor(m_directMediaCursor, std::move(next));
+    return replaceDirectMediaCursor(m_directMediaCursor, std::move(next));
 }
 
-void DocumentSessionState::setDirectVideoCursor(const QUrl &url)
+bool DocumentSessionState::setDirectVideoCursor(const QUrl &url)
 {
     DirectMediaCursor next = m_directMediaCursor;
     next.stableUrl = url;
     next.pendingUrl = QUrl();
-    replaceDirectMediaCursor(m_directMediaCursor, std::move(next));
+    return replaceDirectMediaCursor(m_directMediaCursor, std::move(next));
 }
 
 void DocumentSessionState::publish(DocumentSessionChange change)
