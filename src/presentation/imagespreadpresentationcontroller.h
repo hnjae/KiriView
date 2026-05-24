@@ -13,9 +13,11 @@
 #include "presentation/imagespreadmodepolicy.h"
 #include "presentation/imagespreadnavigation.h"
 #include "presentation/imagespreadsecondarypagerefresh.h"
+#include "presentation/imageviewportframe.h"
 #include "presentation/imagezoomstate.h"
 #include "rendering/imagesurface.h"
 
+#include <QPointF>
 #include <QRectF>
 #include <QSize>
 #include <QSizeF>
@@ -66,6 +68,13 @@ public:
     QSizeF displaySize() const;
     QSizeF primaryDisplaySize() const;
     QSizeF secondaryDisplaySize() const;
+    QPointF viewportContentPosition() const;
+    void setViewportContentPosition(const QPointF &viewportContentPosition);
+    QSizeF viewportContentSize() const;
+    QRectF viewportImageRect() const;
+    bool viewportHorizontallyPannable() const;
+    bool viewportVerticallyPannable() const;
+    bool viewportPannable() const;
     QRectF visibleItemRect() const;
     void setVisibleItemRect(const QRectF &visibleItemRect);
     qreal zoomPercent() const;
@@ -123,7 +132,12 @@ private:
     void scheduleAdjacentPredecode();
     ImagePageNavigationSnapshot pageNavigationSnapshot() const;
     void notifyTwoPageModeChanged();
+    void applySpreadZoomChanges(const ImageZoomChangeSet &changes, bool notifyPublicChanges = true);
     void notifySpreadZoomChanged(const ImageZoomChangeSet &changes);
+    bool refreshViewportFrame(bool forceApplyVisibleItemRect = false);
+    bool refreshViewportFrameForContentPosition(
+        const QPointF &contentPosition, bool forceApplyVisibleItemRect = false);
+    void applyViewportFrameVisibleItemRect(bool force = false);
     void notifyChanges(const std::vector<ImageDocumentChange> &changes);
     void notify(ImageDocumentChange change);
 
@@ -134,6 +148,7 @@ private:
     std::unique_ptr<ImageSpreadModeController> m_modeController;
     std::unique_ptr<ImageSpreadZoomController> m_zoomController;
     ImageSpreadSecondaryPageRefresh m_secondaryPageRefresh;
+    ImageViewportFrame m_viewportFrame;
 };
 }
 

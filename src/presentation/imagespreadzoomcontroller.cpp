@@ -9,11 +9,13 @@
 #include <utility>
 
 namespace {
-bool hasZoomStateChange(const KiriView::ImageZoomChangeSet &changes)
+void applyPageVisibleItemRect(
+    KiriView::ImagePresentationController &presentation, const QRectF &visibleItemRect)
 {
-    return changes.imageSizeChanged || changes.viewportSizeChanged || changes.zoomModeChanged
-        || changes.zoomPercentChanged || changes.displaySizeChanged
-        || changes.maximumManualZoomPercentChanged;
+    presentation.setVisibleItemRect(visibleItemRect);
+    if (visibleItemRect.isEmpty()) {
+        presentation.discardDecodedTiles();
+    }
 }
 }
 
@@ -85,38 +87,32 @@ QSize ImageSpreadZoomController::spreadImageSize() const
 
 void ImageSpreadZoomController::clearZoomState() { m_zoomWorkflowState.clear(); }
 
-ImageZoomChangeSet ImageSpreadZoomController::setZoomPercent(
-    qreal zoomPercent, bool rightToLeftReading)
+ImageZoomChangeSet ImageSpreadZoomController::setZoomPercent(qreal zoomPercent)
 {
-    return mutateZoomState(
-        [zoomPercent](ImageZoomState &zoomState, qreal devicePixelRatio) {
-            zoomState.setManualZoomPercent(zoomPercent, devicePixelRatio);
-        },
-        rightToLeftReading);
+    return mutateZoomState([zoomPercent](ImageZoomState &zoomState, qreal devicePixelRatio) {
+        zoomState.setManualZoomPercent(zoomPercent, devicePixelRatio);
+    });
 }
 
-ImageZoomChangeSet ImageSpreadZoomController::setFitMode(
-    ImageZoomMode zoomMode, bool rightToLeftReading)
+ImageZoomChangeSet ImageSpreadZoomController::setFitMode(ImageZoomMode zoomMode)
 {
     if (zoomMode == ImageZoomMode::Manual) {
         return {};
     }
 
-    return mutateZoomState(
-        [zoomMode](ImageZoomState &zoomState, qreal devicePixelRatio) {
-            zoomState.setFitMode(zoomMode, devicePixelRatio);
-        },
-        rightToLeftReading);
+    return mutateZoomState([zoomMode](ImageZoomState &zoomState, qreal devicePixelRatio) {
+        zoomState.setFitMode(zoomMode, devicePixelRatio);
+    });
 }
 
-ImageZoomChangeSet ImageSpreadZoomController::resetZoom(bool rightToLeftReading)
+ImageZoomChangeSet ImageSpreadZoomController::resetZoom()
 {
-    return mutateZoomState([](ImageZoomState &zoomState,
-                               qreal devicePixelRatio) { zoomState.resetZoom(devicePixelRatio); },
-        rightToLeftReading);
+    return mutateZoomState([](ImageZoomState &zoomState, qreal devicePixelRatio) {
+        zoomState.resetZoom(devicePixelRatio);
+    });
 }
 
-ImageZoomChangeSet ImageSpreadZoomController::updateFromPrimaryPresentation(bool rightToLeftReading)
+ImageZoomChangeSet ImageSpreadZoomController::updateFromPrimaryPresentation()
 {
     const QSize nextSpreadImageSize = spreadImageSize();
     const ImageZoomState &zoomState = m_zoomWorkflowState.zoomState();
@@ -126,36 +122,40 @@ ImageZoomChangeSet ImageSpreadZoomController::updateFromPrimaryPresentation(bool
         ? m_primaryPresentation.zoomPercent()
         : zoomState.zoomPercent();
 
-    return mutateZoomState(
-        [this, nextSpreadImageSize, activeZoomMode, activeZoomPercent](
-            ImageZoomState &zoomState, qreal devicePixelRatio) {
-            zoomState.setViewportSize(m_primaryPresentation.viewportSize(), devicePixelRatio);
-            zoomState.setImageSize(nextSpreadImageSize, devicePixelRatio);
-            if (activeZoomMode == ImageZoomMode::Manual) {
-                zoomState.setManualZoomPercent(activeZoomPercent, devicePixelRatio);
-                return;
-            }
+    return mutateZoomState([this, nextSpreadImageSize, activeZoomMode, activeZoomPercent](
+                               ImageZoomState &zoomState, qreal devicePixelRatio) {
+        zoomState.setViewportSize(m_primaryPresentation.viewportSize(), devicePixelRatio);
+        zoomState.setImageSize(nextSpreadImageSize, devicePixelRatio);
+        if (activeZoomMode == ImageZoomMode::Manual) {
+            zoomState.setManualZoomPercent(activeZoomPercent, devicePixelRatio);
+            return;
+        }
 
-            zoomState.setFitMode(activeZoomMode, devicePixelRatio);
-        },
-        rightToLeftReading);
+        zoomState.setFitMode(activeZoomMode, devicePixelRatio);
+    });
 }
 
-ImageZoomChangeSet ImageSpreadZoomController::updateRenderContext(bool rightToLeftReading)
+ImageZoomChangeSet ImageSpreadZoomController::updateRenderContext()
 {
-    return mutateZoomState([](ImageZoomState &zoomState,
-                               qreal devicePixelRatio) { zoomState.update(devicePixelRatio); },
-        rightToLeftReading);
+    return mutateZoomState([](ImageZoomState &zoomState, qreal devicePixelRatio) {
+        zoomState.update(devicePixelRatio);
+    });
+}
+
+void ImageSpreadZoomController::applyZoomStateToPages(bool rightToLeftReading)
+{
+    applyVisibleItemRects(rightToLeftReading);
+    applyZoomPercentToPages();
 }
 
 void ImageSpreadZoomController::applyVisibleItemRects(bool rightToLeftReading)
 {
     const QRectF primaryRect = primaryPageRect(rightToLeftReading);
     const QRectF secondaryRect = secondaryPageRect(rightToLeftReading);
-    m_primaryPresentation.setVisibleItemRect(
-        imageSpreadVisiblePageRect(m_visibleItemRect, primaryRect));
-    m_secondaryPresentation.setVisibleItemRect(
-        imageSpreadVisiblePageRect(m_visibleItemRect, secondaryRect));
+    applyPageVisibleItemRect(
+        m_primaryPresentation, imageSpreadVisiblePageRect(m_visibleItemRect, primaryRect));
+    applyPageVisibleItemRect(
+        m_secondaryPresentation, imageSpreadVisiblePageRect(m_visibleItemRect, secondaryRect));
 }
 
 void ImageSpreadZoomController::applyZoomToPrimaryPage(ImageZoomMode zoomMode, qreal zoomPercent)
@@ -198,18 +198,10 @@ void ImageSpreadZoomController::applyZoomPercentToPages()
     m_secondaryPresentation.setZoomPercent(nextZoomPercent);
 }
 
-ImageZoomChangeSet ImageSpreadZoomController::mutateZoomState(
-    const ZoomStateMutation &mutation, bool rightToLeftReading)
+ImageZoomChangeSet ImageSpreadZoomController::mutateZoomState(const ZoomStateMutation &mutation)
 {
     const ImageZoomWorkflowMutationResult result = m_zoomWorkflowState.mutate(mutation);
-    const ImageZoomChangeSet changes = result.changes;
-    if (!hasZoomStateChange(changes)) {
-        return changes;
-    }
-
-    applyZoomPercentToPages();
-    applyVisibleItemRects(rightToLeftReading);
-    return changes;
+    return result.changes;
 }
 
 qreal ImageSpreadZoomController::devicePixelRatio() const

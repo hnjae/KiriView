@@ -40,6 +40,8 @@ KiriView::ImageDocumentPublicSignalOperations recordingOperations(QStringList &e
     operations.displayedUrlChanged = [&events]() { events.append(QStringLiteral("displayedUrl")); };
     operations.imageSizeChanged = [&events]() { events.append(QStringLiteral("imageSize")); };
     operations.viewportSizeChanged = [&events]() { events.append(QStringLiteral("viewportSize")); };
+    operations.viewportFrameChanged
+        = [&events]() { events.append(QStringLiteral("viewportFrame")); };
     operations.visibleItemRectChanged
         = [&events]() { events.append(QStringLiteral("visibleItemRect")); };
     operations.displaySizeChanged = [&events]() { events.append(QStringLiteral("displaySize")); };
@@ -88,6 +90,8 @@ void TestImageDocumentPublicSignals::publicSignalPlansReturnSignalsInEmissionOrd
         { Signal::ImageSize, Signal::ZoomPercentKnown });
     comparePublicSignals(
         KiriView::imageDocumentPublicSignals(Change::ViewportSize), { Signal::ViewportSize });
+    comparePublicSignals(
+        KiriView::imageDocumentPublicSignals(Change::ViewportFrame), { Signal::ViewportFrame });
     comparePublicSignals(
         KiriView::imageDocumentPublicSignals(Change::VisibleItemRect), { Signal::VisibleItemRect });
     comparePublicSignals(KiriView::imageDocumentPublicSignals(Change::DisplaySize),

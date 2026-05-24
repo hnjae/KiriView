@@ -10,6 +10,7 @@
 #include "rendering/imagesurface.h"
 
 #include <QObject>
+#include <QPointF>
 #include <QRectF>
 #include <QSize>
 #include <QSizeF>
@@ -43,6 +44,15 @@ class KiriImageDocument : public QObject
     Q_PROPERTY(QSize secondaryImageSize READ secondaryImageSize NOTIFY twoPageModeChanged)
     Q_PROPERTY(
         QSizeF viewportSize READ viewportSize WRITE setViewportSize NOTIFY viewportSizeChanged)
+    Q_PROPERTY(QPointF viewportContentPosition READ viewportContentPosition WRITE
+            setViewportContentPosition NOTIFY viewportFrameChanged)
+    Q_PROPERTY(QSizeF viewportContentSize READ viewportContentSize NOTIFY viewportFrameChanged)
+    Q_PROPERTY(QRectF viewportImageRect READ viewportImageRect NOTIFY viewportFrameChanged)
+    Q_PROPERTY(bool viewportHorizontallyPannable READ viewportHorizontallyPannable NOTIFY
+            viewportFrameChanged)
+    Q_PROPERTY(
+        bool viewportVerticallyPannable READ viewportVerticallyPannable NOTIFY viewportFrameChanged)
+    Q_PROPERTY(bool viewportPannable READ viewportPannable NOTIFY viewportFrameChanged)
     Q_PROPERTY(QRectF visibleItemRect READ visibleItemRect WRITE setVisibleItemRect NOTIFY
             visibleItemRectChanged)
     Q_PROPERTY(QSizeF displaySize READ displaySize NOTIFY displaySizeChanged)
@@ -118,6 +128,13 @@ public:
     QSize secondaryImageSize() const;
     QSizeF viewportSize() const;
     void setViewportSize(const QSizeF &viewportSize);
+    QPointF viewportContentPosition() const;
+    void setViewportContentPosition(const QPointF &viewportContentPosition);
+    QSizeF viewportContentSize() const;
+    QRectF viewportImageRect() const;
+    bool viewportHorizontallyPannable() const;
+    bool viewportVerticallyPannable() const;
+    bool viewportPannable() const;
     QRectF visibleItemRect() const;
     void setVisibleItemRect(const QRectF &visibleItemRect);
     QSizeF displaySize() const;
@@ -177,6 +194,7 @@ Q_SIGNALS:
     void displayedUrlChanged();
     void imageSizeChanged();
     void viewportSizeChanged();
+    void viewportFrameChanged();
     void visibleItemRectChanged();
     void displaySizeChanged();
     void zoomPercentKnownChanged();

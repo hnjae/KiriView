@@ -38,7 +38,26 @@ mod ffi {
         height: f64,
     }
 
+    #[derive(Clone, Copy)]
+    struct RustImageViewportFrame {
+        image_rect: RustRectF,
+        content_size: RustSizeF,
+        maximum_content_position: RustPointF,
+        content_position: RustPointF,
+        visible_item_rect: RustRectF,
+        horizontal_pannable: bool,
+        vertical_pannable: bool,
+        pannable: bool,
+    }
+
     extern "Rust" {
+        #[cxx_name = "rustImageViewportFrame"]
+        fn rust_image_viewport_frame(
+            viewport_size: RustSizeF,
+            display_size: RustSizeF,
+            content_position: RustPointF,
+        ) -> RustImageViewportFrame;
+
         #[cxx_name = "rustImageViewportImageRect"]
         fn rust_image_viewport_image_rect(
             viewport_size: RustSizeF,
@@ -121,7 +140,7 @@ mod ffi {
     }
 }
 
-use ffi::{RustPointF, RustRectF, RustSize, RustSizeF};
+use ffi::{RustImageViewportFrame, RustPointF, RustRectF, RustSize, RustSizeF};
 
 fn normalized_length(length: f64) -> f64 {
     if length.is_finite() {
@@ -160,6 +179,17 @@ fn clamped_value(value: f64, minimum: f64, maximum: f64) -> f64 {
 
 fn axis_pannable(maximum: f64) -> bool {
     maximum > POSITION_EPSILON
+}
+
+fn effective_axis_maximum(maximum: f64) -> f64 {
+    if axis_pannable(maximum) { maximum } else { 0.0 }
+}
+
+fn effective_maximum_content_position(maximum: RustPointF) -> RustPointF {
+    RustPointF {
+        x: effective_axis_maximum(maximum.x),
+        y: effective_axis_maximum(maximum.y),
+    }
 }
 
 fn scan_step_length(viewport_length: f64) -> f64 {
@@ -203,6 +233,42 @@ fn rust_image_viewport_image_rect(viewport_size: RustSizeF, display_size: RustSi
     }
 }
 
+fn rust_image_viewport_frame(
+    viewport_size: RustSizeF,
+    display_size: RustSizeF,
+    content_position: RustPointF,
+) -> RustImageViewportFrame {
+    let viewport = normalized_size(viewport_size);
+    let image_rect = rust_image_viewport_image_rect(viewport, display_size);
+    let raw_maximum = rust_image_viewport_maximum_content_position(viewport, image_rect);
+    let maximum_content_position = effective_maximum_content_position(raw_maximum);
+    let clamped_content_position = RustPointF {
+        x: clamped_value(content_position.x, 0.0, maximum_content_position.x),
+        y: clamped_value(content_position.y, 0.0, maximum_content_position.y),
+    };
+    let visible_item_rect = RustRectF {
+        x: clamped_content_position.x - image_rect.x,
+        y: clamped_content_position.y - image_rect.y,
+        width: viewport.width,
+        height: viewport.height,
+    };
+    let horizontal_pannable = axis_pannable(maximum_content_position.x);
+    let vertical_pannable = axis_pannable(maximum_content_position.y);
+    RustImageViewportFrame {
+        image_rect,
+        content_size: RustSizeF {
+            width: viewport.width + maximum_content_position.x,
+            height: viewport.height + maximum_content_position.y,
+        },
+        maximum_content_position,
+        content_position: clamped_content_position,
+        visible_item_rect,
+        horizontal_pannable,
+        vertical_pannable,
+        pannable: horizontal_pannable || vertical_pannable,
+    }
+}
+
 fn rust_image_viewport_maximum_content_position(
     viewport_size: RustSizeF,
     image_rect: RustRectF,
@@ -219,7 +285,10 @@ fn rust_image_viewport_clamped_content_position(
     image_rect: RustRectF,
     content_position: RustPointF,
 ) -> RustPointF {
-    let maximum = rust_image_viewport_maximum_content_position(viewport_size, image_rect);
+    let maximum = effective_maximum_content_position(rust_image_viewport_maximum_content_position(
+        viewport_size,
+        image_rect,
+    ));
     RustPointF {
         x: clamped_value(content_position.x, 0.0, maximum.x),
         y: clamped_value(content_position.y, 0.0, maximum.y),
@@ -280,7 +349,9 @@ fn rust_image_viewport_z_scan_position(
     right_to_left_reading: bool,
 ) -> RustPointF {
     let viewport = normalized_size(viewport_size);
-    let maximum = rust_image_viewport_maximum_content_position(viewport, image_rect);
+    let maximum = effective_maximum_content_position(rust_image_viewport_maximum_content_position(
+        viewport, image_rect,
+    ));
     let current =
         rust_image_viewport_clamped_content_position(viewport, image_rect, content_position);
 
@@ -352,7 +423,10 @@ fn rust_image_viewport_initial_z_scan_position(
     image_rect: RustRectF,
     right_to_left_reading: bool,
 ) -> RustPointF {
-    let maximum = rust_image_viewport_maximum_content_position(viewport_size, image_rect);
+    let maximum = effective_maximum_content_position(rust_image_viewport_maximum_content_position(
+        viewport_size,
+        image_rect,
+    ));
     RustPointF {
         x: if right_to_left_reading {
             maximum.x
@@ -368,7 +442,10 @@ fn rust_image_viewport_final_z_scan_position(
     image_rect: RustRectF,
     right_to_left_reading: bool,
 ) -> RustPointF {
-    let maximum = rust_image_viewport_maximum_content_position(viewport_size, image_rect);
+    let maximum = effective_maximum_content_position(rust_image_viewport_maximum_content_position(
+        viewport_size,
+        image_rect,
+    ));
     RustPointF {
         x: if right_to_left_reading {
             0.0

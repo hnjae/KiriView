@@ -84,6 +84,21 @@ std::optional<DisplayedImageStateChange> DisplayedImageState::insertTile(Decoded
     return finishImageChange();
 }
 
+std::optional<DisplayedImageStateChange> DisplayedImageState::clearTiles()
+{
+    if (m_surface == nullptr) {
+        return std::nullopt;
+    }
+
+    auto *surface = m_surface->staticTileSurface();
+    if (surface == nullptr || surface->tiles().empty()) {
+        return std::nullopt;
+    }
+
+    surface->clearTiles();
+    return finishImageChange();
+}
+
 std::optional<DisplayedImageStateChange> DisplayedImageState::clear()
 {
     if (m_surface == nullptr) {

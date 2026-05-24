@@ -74,6 +74,7 @@ public:
     void prepareFailedContainer(const QUrl &containerUrl);
     void setImage(const QImage &image, bool predecodeCacheable);
     void setStaticImage(StaticImagePayload staticImage, bool predecodeCacheable);
+    void discardDecodedTiles();
     void clearImage();
 
     void startAnimation(const QByteArray &data, const QByteArray &format);

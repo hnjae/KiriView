@@ -14,6 +14,20 @@
 
 #include <utility>
 
+namespace {
+bool hasSpreadZoomStateChange(const KiriView::ImageZoomChangeSet &changes)
+{
+    return changes.imageSizeChanged || changes.viewportSizeChanged || changes.zoomModeChanged
+        || changes.zoomPercentChanged || changes.displaySizeChanged
+        || changes.maximumManualZoomPercentChanged || changes.scheduleVisibleTileDecode;
+}
+
+bool spreadZoomChangesAffectViewportFrame(const KiriView::ImageZoomChangeSet &changes)
+{
+    return changes.imageSizeChanged || changes.viewportSizeChanged || changes.displaySizeChanged;
+}
+}
+
 namespace KiriView {
 ImageSpreadPresentationController::ImageSpreadPresentationController(QObject *parent,
     RenderContextProvider renderContextProvider, ImageDocumentState &state,
@@ -105,22 +119,53 @@ QSizeF ImageSpreadPresentationController::secondaryDisplaySize() const
     return m_zoomController->secondaryDisplaySize();
 }
 
+QPointF ImageSpreadPresentationController::viewportContentPosition() const
+{
+    return m_viewportFrame.contentPosition;
+}
+
+void ImageSpreadPresentationController::setViewportContentPosition(
+    const QPointF &viewportContentPosition)
+{
+    refreshViewportFrameForContentPosition(viewportContentPosition);
+}
+
+QSizeF ImageSpreadPresentationController::viewportContentSize() const
+{
+    return m_viewportFrame.contentSize;
+}
+
+QRectF ImageSpreadPresentationController::viewportImageRect() const
+{
+    return m_viewportFrame.imageRect;
+}
+
+bool ImageSpreadPresentationController::viewportHorizontallyPannable() const
+{
+    return m_viewportFrame.horizontalPannable;
+}
+
+bool ImageSpreadPresentationController::viewportVerticallyPannable() const
+{
+    return m_viewportFrame.verticalPannable;
+}
+
+bool ImageSpreadPresentationController::viewportPannable() const
+{
+    return m_viewportFrame.pannable;
+}
+
 QRectF ImageSpreadPresentationController::visibleItemRect() const
 {
-    return secondaryPageVisible() ? m_zoomController->visibleItemRect()
-                                  : m_primaryPresentation.visibleItemRect();
+    return m_viewportFrame.visibleItemRect;
 }
 
 void ImageSpreadPresentationController::setVisibleItemRect(const QRectF &visibleItemRect)
 {
-    m_zoomController->setVisibleItemRect(visibleItemRect);
-    if (secondaryPageVisible()) {
-        m_zoomController->applyVisibleItemRects(rightToLeftReadingActive());
-        notify(ImageDocumentChange::VisibleItemRect);
-        return;
-    }
-
-    m_primaryPresentation.setVisibleItemRect(visibleItemRect);
+    refreshViewportFrameForContentPosition(
+        QPointF(visibleItemRect.x() + m_viewportFrame.imageRect.x(),
+            visibleItemRect.y() + m_viewportFrame.imageRect.y()),
+        true);
 }
 
 qreal ImageSpreadPresentationController::zoomPercent() const
@@ -135,8 +180,7 @@ qreal ImageSpreadPresentationController::zoomPercent() const
 void ImageSpreadPresentationController::setZoomPercent(qreal zoomPercent)
 {
     if (secondaryPageVisible()) {
-        notifySpreadZoomChanged(
-            m_zoomController->setZoomPercent(zoomPercent, rightToLeftReadingActive()));
+        applySpreadZoomChanges(m_zoomController->setZoomPercent(zoomPercent));
         return;
     }
 
@@ -265,7 +309,7 @@ void ImageSpreadPresentationController::setRightToLeftReadingEnabled(bool enable
     }
 
     if (secondaryPageVisible()) {
-        m_zoomController->applyVisibleItemRects(rightToLeftReadingActive());
+        applyViewportFrameVisibleItemRect(true);
     }
     notifyRightToLeftReadingChanged();
 }
@@ -325,14 +369,14 @@ void ImageSpreadPresentationController::setViewportSize(const QSizeF &viewportSi
     m_primaryPresentation.setViewportSize(viewportSize);
     m_secondaryPageController->setViewportSize(viewportSize);
     if (secondaryPageVisible()) {
-        notifySpreadZoomChanged(updateZoomState());
+        applySpreadZoomChanges(updateZoomState());
     }
 }
 
 void ImageSpreadPresentationController::resetZoom()
 {
     if (secondaryPageVisible()) {
-        notifySpreadZoomChanged(m_zoomController->resetZoom(rightToLeftReadingActive()));
+        applySpreadZoomChanges(m_zoomController->resetZoom());
         return;
     }
 
@@ -342,7 +386,7 @@ void ImageSpreadPresentationController::resetZoom()
 void ImageSpreadPresentationController::setFitMode(ImageZoomMode zoomMode)
 {
     if (secondaryPageVisible()) {
-        notifySpreadZoomChanged(m_zoomController->setFitMode(zoomMode, rightToLeftReadingActive()));
+        applySpreadZoomChanges(m_zoomController->setFitMode(zoomMode));
         return;
     }
 
@@ -372,7 +416,7 @@ void ImageSpreadPresentationController::updateRenderContext()
     m_primaryPresentation.updateRenderContext();
     m_secondaryPageController->updateRenderContext();
     if (secondaryPageVisible()) {
-        notifySpreadZoomChanged(m_zoomController->updateRenderContext(rightToLeftReadingActive()));
+        applySpreadZoomChanges(m_zoomController->updateRenderContext());
     }
 }
 
@@ -419,6 +463,12 @@ void ImageSpreadPresentationController::handleDocumentChange(ImageDocumentChange
 {
     if (change == ImageDocumentChange::ErrorString && !m_state.errorString().isEmpty()) {
         finishTransition();
+    }
+
+    if (change == ImageDocumentChange::ImageSize || change == ImageDocumentChange::ViewportSize
+        || change == ImageDocumentChange::DisplaySize || change == ImageDocumentChange::Rotation
+        || change == ImageDocumentChange::TwoPageMode) {
+        refreshViewportFrame(change == ImageDocumentChange::TwoPageMode);
     }
 
     if (change == ImageDocumentChange::PageNavigation) {
@@ -511,7 +561,7 @@ void ImageSpreadPresentationController::finishSecondaryPageAsPrimaryOnly()
 
 void ImageSpreadPresentationController::finishSecondaryPageVisible()
 {
-    updateZoomState();
+    applySpreadZoomChanges(updateZoomState(), false);
     finishTransition();
     notifyTwoPageModeChanged();
     scheduleAdjacentPredecode();
@@ -528,7 +578,7 @@ ImageZoomChangeSet ImageSpreadPresentationController::updateZoomState()
         return {};
     }
 
-    return m_zoomController->updateFromPrimaryPresentation(rightToLeftReadingActive());
+    return m_zoomController->updateFromPrimaryPresentation();
 }
 
 QSize ImageSpreadPresentationController::spreadImageSize() const
@@ -570,9 +620,66 @@ void ImageSpreadPresentationController::notifyTwoPageModeChanged()
     notifyChanges(imageDocumentTwoPageModeNotifications());
 }
 
+void ImageSpreadPresentationController::applySpreadZoomChanges(
+    const ImageZoomChangeSet &changes, bool notifyPublicChanges)
+{
+    if (hasSpreadZoomStateChange(changes)) {
+        if (spreadZoomChangesAffectViewportFrame(changes)) {
+            refreshViewportFrame();
+        }
+        m_zoomController->applyZoomStateToPages(rightToLeftReadingActive());
+    }
+
+    if (notifyPublicChanges) {
+        notifySpreadZoomChanged(changes);
+    }
+}
+
 void ImageSpreadPresentationController::notifySpreadZoomChanged(const ImageZoomChangeSet &changes)
 {
     notifyChanges(imageDocumentSpreadZoomNotifications(changes));
+}
+
+bool ImageSpreadPresentationController::refreshViewportFrame(bool forceApplyVisibleItemRect)
+{
+    return refreshViewportFrameForContentPosition(
+        m_viewportFrame.contentPosition, forceApplyVisibleItemRect);
+}
+
+bool ImageSpreadPresentationController::refreshViewportFrameForContentPosition(
+    const QPointF &contentPosition, bool forceApplyVisibleItemRect)
+{
+    const QRectF previousVisibleItemRect = m_viewportFrame.visibleItemRect;
+    const ImageViewportFrame nextFrame = projectImageViewportFrame(
+        m_primaryPresentation.viewportSize(), displaySize(), contentPosition);
+    if (nextFrame == m_viewportFrame && !forceApplyVisibleItemRect) {
+        return false;
+    }
+
+    const bool frameChanged = nextFrame != m_viewportFrame;
+    m_viewportFrame = nextFrame;
+    applyViewportFrameVisibleItemRect(
+        forceApplyVisibleItemRect || previousVisibleItemRect != m_viewportFrame.visibleItemRect);
+    if (frameChanged) {
+        notify(ImageDocumentChange::ViewportFrame);
+    }
+    return frameChanged;
+}
+
+void ImageSpreadPresentationController::applyViewportFrameVisibleItemRect(bool force)
+{
+    if (!force) {
+        return;
+    }
+
+    if (secondaryPageVisible()) {
+        m_zoomController->setVisibleItemRect(m_viewportFrame.visibleItemRect);
+        m_zoomController->applyVisibleItemRects(rightToLeftReadingActive());
+        notify(ImageDocumentChange::VisibleItemRect);
+        return;
+    }
+
+    m_primaryPresentation.setVisibleItemRect(m_viewportFrame.visibleItemRect);
 }
 
 void ImageSpreadPresentationController::notifyChanges(

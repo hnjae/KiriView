@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+#include "presentation/imageviewportframe.h"
 #include "presentation/imageviewportgeometry.h"
 
 #include <QObject>
@@ -37,6 +38,9 @@ private Q_SLOTS:
     void zScanStartAndEndUseReadingDirection();
     void zScanHandlesSingleAxisPanning();
     void smallImagesAreCenteredAndNotPannable();
+    void viewportFrameTreatsFitToleranceAsNotPannable();
+    void subEpsilonAxesUseViewportFrameClampRules();
+    void viewportFrameClampsContentPosition();
 };
 
 void TestImageViewportGeometry::anchoredZoomKeepsViewportPointOnSameImageRatio()
@@ -180,6 +184,51 @@ void TestImageViewportGeometry::smallImagesAreCenteredAndNotPannable()
         QPointF(0.0, 0.0), QPointF(100.0, 100.0), imageRect));
     QVERIFY(!KiriView::imageViewportPointInsideImage(
         QPointF(0.0, 0.0), QPointF(20.0, 20.0), imageRect));
+}
+
+void TestImageViewportGeometry::viewportFrameTreatsFitToleranceAsNotPannable()
+{
+    const KiriView::ImageViewportFrame frame = KiriView::projectImageViewportFrame(
+        QSizeF(200.0, 160.0), QSizeF(200.0005, 160.0005), QPointF(10.0, 10.0));
+
+    QVERIFY(!frame.horizontalPannable);
+    QVERIFY(!frame.verticalPannable);
+    QVERIFY(!frame.pannable);
+    QCOMPARE(frame.contentSize, QSizeF(200.0, 160.0));
+    comparePoint(frame.maximumContentPosition, QPointF(0.0, 0.0));
+    comparePoint(frame.contentPosition, QPointF(0.0, 0.0));
+}
+
+void TestImageViewportGeometry::subEpsilonAxesUseViewportFrameClampRules()
+{
+    const QSizeF viewportSize(200.0, 160.0);
+    const QSizeF displaySize(200.0005, 160.0005);
+    const QRectF imageRect = KiriView::imageViewportImageRect(viewportSize, displaySize);
+    const KiriView::ImageViewportFrame frame
+        = KiriView::projectImageViewportFrame(viewportSize, displaySize, QPointF(10.0, 10.0));
+
+    comparePoint(KiriView::imageViewportPanPosition(
+                     viewportSize, imageRect, QPointF(0.0, 0.0), QPointF(10.0, 10.0)),
+        frame.contentPosition);
+    comparePoint(KiriView::imageViewportFinalZScanPosition(viewportSize, imageRect, true),
+        frame.contentPosition);
+    comparePoint(KiriView::imageViewportContentPositionForZoom(viewportSize, viewportSize,
+                     displaySize, QPointF(10.0, 10.0), QPointF(100.0, 80.0)),
+        frame.contentPosition);
+}
+
+void TestImageViewportGeometry::viewportFrameClampsContentPosition()
+{
+    const KiriView::ImageViewportFrame frame = KiriView::projectImageViewportFrame(
+        QSizeF(200.0, 160.0), QSizeF(400.0, 240.0), QPointF(500.0, 500.0));
+
+    QVERIFY(frame.horizontalPannable);
+    QVERIFY(frame.verticalPannable);
+    QVERIFY(frame.pannable);
+    QCOMPARE(frame.contentSize, QSizeF(400.0, 240.0));
+    comparePoint(frame.maximumContentPosition, QPointF(200.0, 80.0));
+    comparePoint(frame.contentPosition, QPointF(200.0, 80.0));
+    QCOMPARE(frame.visibleItemRect, QRectF(200.0, 80.0, 200.0, 160.0));
 }
 
 QTEST_GUILESS_MAIN(TestImageViewportGeometry)

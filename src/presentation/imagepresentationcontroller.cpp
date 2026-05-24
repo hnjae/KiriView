@@ -207,6 +207,15 @@ void ImagePresentationController::setStaticImage(
     }
 }
 
+void ImagePresentationController::discardDecodedTiles()
+{
+    m_viewportController->invalidateTiles();
+    const std::optional<DisplayedImageStateChange> change = m_displayedImageState->clearTiles();
+    if (change.has_value()) {
+        applyDisplayedImageTileChange(*change);
+    }
+}
+
 void ImagePresentationController::clearImage()
 {
     stopAnimation();

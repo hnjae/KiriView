@@ -99,6 +99,41 @@ void ImageDocumentRuntime::setViewportSize(const QSizeF &viewportSize)
     controllers->spreadController().setViewportSize(viewportSize);
 }
 
+QPointF ImageDocumentRuntime::viewportContentPosition() const
+{
+    return controllers->spreadController().viewportContentPosition();
+}
+
+void ImageDocumentRuntime::setViewportContentPosition(const QPointF &viewportContentPosition)
+{
+    controllers->spreadController().setViewportContentPosition(viewportContentPosition);
+}
+
+QSizeF ImageDocumentRuntime::viewportContentSize() const
+{
+    return controllers->spreadController().viewportContentSize();
+}
+
+QRectF ImageDocumentRuntime::viewportImageRect() const
+{
+    return controllers->spreadController().viewportImageRect();
+}
+
+bool ImageDocumentRuntime::viewportHorizontallyPannable() const
+{
+    return controllers->spreadController().viewportHorizontallyPannable();
+}
+
+bool ImageDocumentRuntime::viewportVerticallyPannable() const
+{
+    return controllers->spreadController().viewportVerticallyPannable();
+}
+
+bool ImageDocumentRuntime::viewportPannable() const
+{
+    return controllers->spreadController().viewportPannable();
+}
+
 QRectF ImageDocumentRuntime::visibleItemRect() const
 {
     return controllers->spreadController().visibleItemRect();

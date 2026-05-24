@@ -69,8 +69,7 @@ void TestImageSpreadZoomController::updateFromPrimaryOwnsSpreadZoomState()
 {
     SpreadZoomFixture fixture;
 
-    const KiriView::ImageZoomChangeSet changes
-        = fixture.controller.updateFromPrimaryPresentation(false);
+    const KiriView::ImageZoomChangeSet changes = fixture.controller.updateFromPrimaryPresentation();
 
     QVERIFY(changes.imageSizeChanged);
     QVERIFY(changes.viewportSizeChanged);
@@ -85,6 +84,8 @@ void TestImageSpreadZoomController::updateFromPrimaryOwnsSpreadZoomState()
         fixture.controller.primaryDisplaySize(), QSizeF(400.0, 600.0)));
     QVERIFY(KiriView::imageZoomApproximatelyEqual(
         fixture.controller.secondaryDisplaySize(), QSizeF(400.0, 600.0)));
+
+    fixture.controller.applyZoomStateToPages(false);
     QCOMPARE(fixture.primary.zoomMode(), KiriView::ImageZoomMode::Manual);
     QCOMPARE(fixture.secondary.zoomMode(), KiriView::ImageZoomMode::Manual);
 }
@@ -92,9 +93,10 @@ void TestImageSpreadZoomController::updateFromPrimaryOwnsSpreadZoomState()
 void TestImageSpreadZoomController::manualZoomReportsOnlyActualSpreadZoomChanges()
 {
     SpreadZoomFixture fixture;
-    fixture.controller.updateFromPrimaryPresentation(false);
+    fixture.controller.updateFromPrimaryPresentation();
+    fixture.controller.applyZoomStateToPages(false);
 
-    const KiriView::ImageZoomChangeSet changes = fixture.controller.setZoomPercent(125.0, false);
+    const KiriView::ImageZoomChangeSet changes = fixture.controller.setZoomPercent(125.0);
 
     QVERIFY(!changes.imageSizeChanged);
     QVERIFY(!changes.viewportSizeChanged);
@@ -103,11 +105,12 @@ void TestImageSpreadZoomController::manualZoomReportsOnlyActualSpreadZoomChanges
     QVERIFY(changes.displaySizeChanged);
     QVERIFY(changes.scheduleVisibleTileDecode);
     QVERIFY(KiriView::imageZoomApproximatelyEqual(fixture.controller.zoomPercent(), 125.0));
+    fixture.controller.applyZoomStateToPages(false);
     QVERIFY(KiriView::imageZoomApproximatelyEqual(fixture.primary.zoomPercent(), 125.0));
     QVERIFY(KiriView::imageZoomApproximatelyEqual(fixture.secondary.zoomPercent(), 125.0));
 
     const KiriView::ImageZoomChangeSet invalidChanges
-        = fixture.controller.setZoomPercent(std::numeric_limits<qreal>::quiet_NaN(), false);
+        = fixture.controller.setZoomPercent(std::numeric_limits<qreal>::quiet_NaN());
     QVERIFY(!hasZoomChange(invalidChanges));
     QVERIFY(KiriView::imageZoomApproximatelyEqual(fixture.controller.zoomPercent(), 125.0));
 }
@@ -115,10 +118,10 @@ void TestImageSpreadZoomController::manualZoomReportsOnlyActualSpreadZoomChanges
 void TestImageSpreadZoomController::renderContextChangesReportDerivedZoomChanges()
 {
     SpreadZoomFixture fixture;
-    fixture.controller.updateFromPrimaryPresentation(false);
+    fixture.controller.updateFromPrimaryPresentation();
 
     fixture.devicePixelRatio = 2.0;
-    const KiriView::ImageZoomChangeSet changes = fixture.controller.updateRenderContext(false);
+    const KiriView::ImageZoomChangeSet changes = fixture.controller.updateRenderContext();
 
     QVERIFY(!changes.imageSizeChanged);
     QVERIFY(!changes.viewportSizeChanged);

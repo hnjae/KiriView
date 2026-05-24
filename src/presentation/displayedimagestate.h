@@ -32,6 +32,7 @@ public:
     DisplayedImageStateChange setStaticImage(StaticImagePayload staticImage,
         bool useFullImageSurface, bool predecodeCacheable, qsizetype tileCacheByteBudget);
     std::optional<DisplayedImageStateChange> insertTile(DecodedTile tile);
+    std::optional<DisplayedImageStateChange> clearTiles();
     std::optional<DisplayedImageStateChange> clear();
 
 private:

@@ -62,6 +62,9 @@ void ImageDocumentPublicSignalEmitter::emitSignal(ImageDocumentPublicSignal sign
     case ImageDocumentPublicSignal::ViewportSize:
         run(m_operations.viewportSizeChanged);
         return;
+    case ImageDocumentPublicSignal::ViewportFrame:
+        run(m_operations.viewportFrameChanged);
+        return;
     case ImageDocumentPublicSignal::VisibleItemRect:
         run(m_operations.visibleItemRectChanged);
         return;
@@ -127,6 +130,8 @@ std::vector<ImageDocumentPublicSignal> imageDocumentPublicSignals(ImageDocumentC
             ImageDocumentPublicSignal::ZoomPercentKnown };
     case ImageDocumentChange::ViewportSize:
         return { ImageDocumentPublicSignal::ViewportSize };
+    case ImageDocumentChange::ViewportFrame:
+        return { ImageDocumentPublicSignal::ViewportFrame };
     case ImageDocumentChange::VisibleItemRect:
         return { ImageDocumentPublicSignal::VisibleItemRect };
     case ImageDocumentChange::DisplaySize:

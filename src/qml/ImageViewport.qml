@@ -13,12 +13,15 @@ Item {
     property alias imageView: primaryImageView
     property alias flickable: imageFlickable
     property bool presentationActive: true
+    property bool applyingViewportFrameContentPosition: false
+    property bool publishingViewportContentPosition: false
+    property int viewportFrameApplyGeneration: 0
     property bool imageReady: root.presentationActive && root.imageDocument.status === KiriImageDocument.Ready
     readonly property int minimumManualZoomPercent: root.imageDocument.minimumManualZoomPercent
     readonly property int maximumManualZoomPercent: root.imageDocument.maximumManualZoomPercent
     readonly property int wheelAngleDeltaPerStep: 120
-    readonly property bool imageHorizontallyPannable: imageFlickable.contentWidth > imageFlickable.width
-    readonly property bool imagePannable: imageFlickable.contentWidth > imageFlickable.width || imageFlickable.contentHeight > imageFlickable.height
+    readonly property bool imageHorizontallyPannable: root.presentationActive && root.imageDocument.viewportHorizontallyPannable
+    readonly property bool imagePannable: root.presentationActive && root.imageDocument.viewportPannable
     readonly property real viewportWidth: imageFlickable.width
     readonly property real viewportHeight: imageFlickable.height
 
@@ -48,6 +51,39 @@ Item {
         const moved = contentPositionChanged(contentPosition);
         setContentPosition(contentPosition);
         return moved;
+    }
+
+    function publishViewportContentPosition() {
+        if (!root.presentationActive || root.imageDocument === null || root.applyingViewportFrameContentPosition) {
+            return;
+        }
+
+        root.viewportFrameApplyGeneration += 1;
+        root.publishingViewportContentPosition = true;
+        root.imageDocument.viewportContentPosition = Qt.point(imageFlickable.contentX, imageFlickable.contentY);
+        root.publishingViewportContentPosition = false;
+    }
+
+    function scheduleViewportFrameContentPositionApply() {
+        if (root.publishingViewportContentPosition) {
+            return;
+        }
+
+        const generation = root.viewportFrameApplyGeneration + 1;
+        root.viewportFrameApplyGeneration = generation;
+        Qt.callLater(function () {
+            root.applyViewportFrameContentPosition(generation);
+        });
+    }
+
+    function applyViewportFrameContentPosition(generation) {
+        if (generation !== root.viewportFrameApplyGeneration || !root.presentationActive || root.imageDocument === null) {
+            return;
+        }
+
+        root.applyingViewportFrameContentPosition = true;
+        setContentPosition(root.imageDocument.viewportContentPosition);
+        root.applyingViewportFrameContentPosition = false;
     }
 
     function setNextDisplayedImageStartToFinalScanPosition() {
@@ -137,16 +173,17 @@ Item {
 
     Binding {
         target: root.imageDocument
-        property: "visibleItemRect"
-        value: Qt.rect(imageFlickable.contentX - spreadItem.x, imageFlickable.contentY - spreadItem.y, imageFlickable.width, imageFlickable.height)
-        when: root.presentationActive && root.imageDocument !== null
-    }
-
-    Binding {
-        target: root.imageDocument
         property: "viewportSize"
         value: Qt.size(imageFlickable.width, imageFlickable.height)
         when: root.presentationActive && root.imageDocument !== null
+    }
+
+    Connections {
+        target: root.presentationActive ? root.imageDocument : null
+
+        function onViewportFrameChanged() {
+            root.scheduleViewportFrameContentPositionApply();
+        }
     }
 
     Flickable {
@@ -155,16 +192,19 @@ Item {
         anchors.fill: parent
         boundsBehavior: Flickable.StopAtBounds
         clip: true
-        contentHeight: Math.max(height, spreadItem.y + spreadItem.height)
-        contentWidth: Math.max(width, spreadItem.x + spreadItem.width)
-        interactive: root.imageDocument.status === KiriImageDocument.Ready && (contentWidth > width || contentHeight > height)
+        contentHeight: root.presentationActive ? root.imageDocument.viewportContentSize.height : height
+        contentWidth: root.presentationActive ? root.imageDocument.viewportContentSize.width : width
+        interactive: root.imageDocument.status === KiriImageDocument.Ready && root.imagePannable
+
+        onContentXChanged: root.publishViewportContentPosition()
+        onContentYChanged: root.publishViewportContentPosition()
 
         Controls.ScrollBar.horizontal: Controls.ScrollBar {
-            policy: imageFlickable.contentWidth > imageFlickable.width ? Controls.ScrollBar.AsNeeded : Controls.ScrollBar.AlwaysOff
+            policy: root.imageHorizontallyPannable ? Controls.ScrollBar.AsNeeded : Controls.ScrollBar.AlwaysOff
         }
 
         Controls.ScrollBar.vertical: Controls.ScrollBar {
-            policy: imageFlickable.contentHeight > imageFlickable.height ? Controls.ScrollBar.AsNeeded : Controls.ScrollBar.AlwaysOff
+            policy: root.presentationActive && root.imageDocument.viewportVerticallyPannable ? Controls.ScrollBar.AsNeeded : Controls.ScrollBar.AlwaysOff
         }
 
         WheelHandler {
@@ -202,8 +242,8 @@ Item {
 
             height: root.presentationActive ? root.imageDocument.displaySize.height : 0
             width: root.presentationActive ? root.imageDocument.displaySize.width : 0
-            x: Math.max(0, (imageFlickable.width - width) / 2)
-            y: Math.max(0, (imageFlickable.height - height) / 2)
+            x: root.presentationActive ? root.imageDocument.viewportImageRect.x : 0
+            y: root.presentationActive ? root.imageDocument.viewportImageRect.y : 0
 
             KiriImageView {
                 id: primaryImageView

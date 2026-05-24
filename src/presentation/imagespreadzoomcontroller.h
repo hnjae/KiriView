@@ -38,11 +38,12 @@ public:
     QSize spreadImageSize() const;
 
     void clearZoomState();
-    ImageZoomChangeSet setZoomPercent(qreal zoomPercent, bool rightToLeftReading);
-    ImageZoomChangeSet setFitMode(ImageZoomMode zoomMode, bool rightToLeftReading);
-    ImageZoomChangeSet resetZoom(bool rightToLeftReading);
-    ImageZoomChangeSet updateFromPrimaryPresentation(bool rightToLeftReading);
-    ImageZoomChangeSet updateRenderContext(bool rightToLeftReading);
+    ImageZoomChangeSet setZoomPercent(qreal zoomPercent);
+    ImageZoomChangeSet setFitMode(ImageZoomMode zoomMode);
+    ImageZoomChangeSet resetZoom();
+    ImageZoomChangeSet updateFromPrimaryPresentation();
+    ImageZoomChangeSet updateRenderContext();
+    void applyZoomStateToPages(bool rightToLeftReading);
     void applyVisibleItemRects(bool rightToLeftReading);
     void applyZoomToPrimaryPage(ImageZoomMode zoomMode, qreal zoomPercent);
     void applyStoredZoomToPrimaryPage();
@@ -53,7 +54,7 @@ private:
     QRectF primaryPageRect(bool rightToLeftReading) const;
     QRectF secondaryPageRect(bool rightToLeftReading) const;
     void applyZoomPercentToPages();
-    ImageZoomChangeSet mutateZoomState(const ZoomStateMutation &mutation, bool rightToLeftReading);
+    ImageZoomChangeSet mutateZoomState(const ZoomStateMutation &mutation);
     qreal devicePixelRatio() const;
 
     ImageZoomWorkflowState m_zoomWorkflowState;

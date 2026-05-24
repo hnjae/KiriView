@@ -13,6 +13,7 @@
 #include "presentation/imagezoomstate.h"
 #include "rendering/imagesurface.h"
 
+#include <QPointF>
 #include <QRectF>
 #include <QSize>
 #include <QSizeF>
@@ -54,6 +55,13 @@ public:
     QSize secondaryImageSize() const;
     QSizeF viewportSize() const;
     void setViewportSize(const QSizeF &viewportSize);
+    QPointF viewportContentPosition() const;
+    void setViewportContentPosition(const QPointF &viewportContentPosition);
+    QSizeF viewportContentSize() const;
+    QRectF viewportImageRect() const;
+    bool viewportHorizontallyPannable() const;
+    bool viewportVerticallyPannable() const;
+    bool viewportPannable() const;
     QRectF visibleItemRect() const;
     void setVisibleItemRect(const QRectF &visibleItemRect);
     QSizeF displaySize() const;

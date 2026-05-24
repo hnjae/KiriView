@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+#include "presentation/imageviewportframe.h"
 #include "presentation/imageviewportgeometry.h"
 
 #include <QCoreApplication>
@@ -32,6 +33,7 @@ private Q_SLOTS:
     void ctrlWheelZoomsWhileImageIsPannable();
     void ctrlWheelZoomsWhileImageIsPanned();
     void plainWheelStillPansWhileImageIsPannable();
+    void fittedFractionalDisplayDoesNotEnableHorizontalPanning();
 };
 
 namespace {
@@ -43,6 +45,15 @@ class FakeKiriImageDocument : public QObject
     Q_PROPERTY(Status status READ status NOTIFY statusChanged)
     Q_PROPERTY(
         QSizeF viewportSize READ viewportSize WRITE setViewportSize NOTIFY viewportSizeChanged)
+    Q_PROPERTY(QPointF viewportContentPosition READ viewportContentPosition WRITE
+            setViewportContentPosition NOTIFY viewportFrameChanged)
+    Q_PROPERTY(QSizeF viewportContentSize READ viewportContentSize NOTIFY viewportFrameChanged)
+    Q_PROPERTY(QRectF viewportImageRect READ viewportImageRect NOTIFY viewportFrameChanged)
+    Q_PROPERTY(bool viewportHorizontallyPannable READ viewportHorizontallyPannable NOTIFY
+            viewportFrameChanged)
+    Q_PROPERTY(
+        bool viewportVerticallyPannable READ viewportVerticallyPannable NOTIFY viewportFrameChanged)
+    Q_PROPERTY(bool viewportPannable READ viewportPannable NOTIFY viewportFrameChanged)
     Q_PROPERTY(QRectF visibleItemRect READ visibleItemRect WRITE setVisibleItemRect NOTIFY
             visibleItemRectChanged)
     Q_PROPERTY(QSizeF displaySize READ displaySize NOTIFY displaySizeChanged)
@@ -91,7 +102,26 @@ public:
 
         m_viewportSize = viewportSize;
         Q_EMIT viewportSizeChanged();
+        Q_EMIT viewportFrameChanged();
     }
+
+    QPointF viewportContentPosition() const { return viewportFrame().contentPosition; }
+    void setViewportContentPosition(const QPointF &viewportContentPosition)
+    {
+        const KiriView::ImageViewportFrame previousFrame = viewportFrame();
+        m_viewportContentPosition = viewportContentPosition;
+        const KiriView::ImageViewportFrame nextFrame = viewportFrame();
+        m_viewportContentPosition = nextFrame.contentPosition;
+        if (previousFrame != nextFrame) {
+            Q_EMIT viewportFrameChanged();
+        }
+    }
+
+    QSizeF viewportContentSize() const { return viewportFrame().contentSize; }
+    QRectF viewportImageRect() const { return viewportFrame().imageRect; }
+    bool viewportHorizontallyPannable() const { return viewportFrame().horizontalPannable; }
+    bool viewportVerticallyPannable() const { return viewportFrame().verticalPannable; }
+    bool viewportPannable() const { return viewportFrame().pannable; }
 
     QRectF visibleItemRect() const { return m_visibleItemRect; }
     void setVisibleItemRect(const QRectF &visibleItemRect)
@@ -122,6 +152,7 @@ public:
         m_zoomPercent = zoomPercent;
         Q_EMIT zoomPercentChanged();
         Q_EMIT displaySizeChanged();
+        Q_EMIT viewportFrameChanged();
     }
 
     int minimumManualZoomPercent() const { return 10; }
@@ -143,13 +174,21 @@ Q_SIGNALS:
     void sourceUrlChanged();
     void statusChanged();
     void viewportSizeChanged();
+    void viewportFrameChanged();
     void visibleItemRectChanged();
     void displaySizeChanged();
     void zoomPercentChanged();
 
 private:
+    KiriView::ImageViewportFrame viewportFrame() const
+    {
+        return KiriView::projectImageViewportFrame(
+            m_viewportSize, displaySize(), m_viewportContentPosition);
+    }
+
     QUrl m_sourceUrl;
     QSizeF m_viewportSize;
+    QPointF m_viewportContentPosition;
     QRectF m_visibleItemRect;
     double m_zoomPercent = 100.0;
 };
@@ -307,6 +346,7 @@ QString fixtureQml()
 {
     return QStringLiteral(R"(
 import QtQuick
+import QtQuick.Controls as Controls
 import io.github.hnjae.kiriview
 import "%1" as KiriViewQml
 
@@ -330,6 +370,14 @@ Item {
 
     function imagePannable() {
         return imageViewport.imagePannable;
+    }
+
+    function imageHorizontallyPannable() {
+        return imageViewport.imageHorizontallyPannable;
+    }
+
+    function horizontalContentFitsViewport() {
+        return imageViewport.flickable.contentWidth <= imageViewport.flickable.width;
     }
 
     function setContentY(contentY) {
@@ -486,6 +534,19 @@ void TestImageViewport::plainWheelStillPansWhileImageIsPannable()
 
     QTRY_VERIFY(std::abs(invokeReal(fixture.root, "contentY") - 400.0) > 0.001);
     QCOMPARE(invokeReal(fixture.root, "zoomPercent"), initialZoomPercent);
+}
+
+void TestImageViewport::fittedFractionalDisplayDoesNotEnableHorizontalPanning()
+{
+    ImageViewportFixture fixture = createFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    QTRY_VERIFY(invokeBool(fixture.root, "documentReady"));
+
+    invokeSetReal(fixture.root, "setManualZoom", 20.00005);
+
+    QTRY_VERIFY(!invokeBool(fixture.root, "imageHorizontallyPannable"));
+    QCOMPARE(invokeReal(fixture.root, "contentX"), 0.0);
+    QTRY_VERIFY(invokeBool(fixture.root, "horizontalContentFitsViewport"));
 }
 
 QTEST_MAIN(TestImageViewport)

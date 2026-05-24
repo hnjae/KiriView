@@ -88,6 +88,7 @@ KiriView::ImageDocumentPublicSignalOperations publicSignalOperations(KiriImageDo
     operations.displayedUrlChanged = [&document]() { Q_EMIT document.displayedUrlChanged(); };
     operations.imageSizeChanged = [&document]() { Q_EMIT document.imageSizeChanged(); };
     operations.viewportSizeChanged = [&document]() { Q_EMIT document.viewportSizeChanged(); };
+    operations.viewportFrameChanged = [&document]() { Q_EMIT document.viewportFrameChanged(); };
     operations.visibleItemRectChanged = [&document]() { Q_EMIT document.visibleItemRectChanged(); };
     operations.displaySizeChanged = [&document]() { Q_EMIT document.displaySizeChanged(); };
     operations.zoomPercentKnownChanged
@@ -158,6 +159,32 @@ void KiriImageDocument::setViewportSize(const QSizeF &viewportSize)
 {
     m_runtime->setViewportSize(viewportSize);
 }
+
+QPointF KiriImageDocument::viewportContentPosition() const
+{
+    return m_runtime->viewportContentPosition();
+}
+
+void KiriImageDocument::setViewportContentPosition(const QPointF &viewportContentPosition)
+{
+    m_runtime->setViewportContentPosition(viewportContentPosition);
+}
+
+QSizeF KiriImageDocument::viewportContentSize() const { return m_runtime->viewportContentSize(); }
+
+QRectF KiriImageDocument::viewportImageRect() const { return m_runtime->viewportImageRect(); }
+
+bool KiriImageDocument::viewportHorizontallyPannable() const
+{
+    return m_runtime->viewportHorizontallyPannable();
+}
+
+bool KiriImageDocument::viewportVerticallyPannable() const
+{
+    return m_runtime->viewportVerticallyPannable();
+}
+
+bool KiriImageDocument::viewportPannable() const { return m_runtime->viewportPannable(); }
 
 QRectF KiriImageDocument::visibleItemRect() const { return m_runtime->visibleItemRect(); }
 
