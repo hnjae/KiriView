@@ -4,6 +4,8 @@
 #ifndef KIRIVIEW_KIRIVIEWAPPLICATION_H
 #define KIRIVIEW_KIRIVIEWAPPLICATION_H
 
+#include "application/applicationtypes.h"
+
 #include <AbstractKirigamiApplication>
 #include <QAbstractListModel>
 #include <QAction>
@@ -76,6 +78,15 @@ public:
     void setMenuPresentation(MenuPresentation presentation);
     int shortcutRevision() const;
     QAbstractListModel *shortcutHelpModel() const;
+
+    static KiriView::ApplicationActions::MenuPresentation domainMenuPresentation(
+        KiriViewApplication::MenuPresentation presentation);
+    static KiriViewApplication::MenuPresentation facadeMenuPresentation(
+        KiriView::ApplicationActions::MenuPresentation presentation);
+    static KiriView::ApplicationActions::ActionId domainActionId(
+        KiriViewApplication::ActionId actionId);
+    static KiriViewApplication::ActionId facadeActionId(
+        KiriView::ApplicationActions::ActionId actionId);
 
     Q_INVOKABLE QAction *action(const QString &actionName);
     Q_INVOKABLE QAction *actionForId(KiriViewApplication::ActionId actionId);

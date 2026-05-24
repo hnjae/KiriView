@@ -24,6 +24,7 @@ namespace {
 namespace Actions = KiriView::ApplicationActions;
 
 using Scope = KiriView::ApplicationActions::ImageShortcutScope;
+using DomainActionId = KiriView::ApplicationActions::ActionId;
 
 constexpr const char *interfaceConfigGroup = "Interface";
 constexpr const char *menuPresentationConfigKey = "menuPresentation";
@@ -51,6 +52,11 @@ QString definitionActionName(const Actions::ActionDefinition &definition)
 bool actionDefaultShortcutsAreManagedByKiriView(const Actions::ActionDefinition &definition)
 {
     return definition.kind != Actions::RegistrationKind::Inherited;
+}
+
+KiriViewApplication::ActionId facadeActionId(DomainActionId actionId)
+{
+    return KiriViewApplication::facadeActionId(actionId);
 }
 
 KConfigGroup stateInterfaceGroup()
@@ -109,6 +115,7 @@ private Q_SLOTS:
     void actionsAreRegisteredWithDefaultShortcuts();
     void generalSettingsActionIsNotRegistered();
     void actionDefinitionTableIsCanonicalIdentitySource();
+    void facadeActionIdsConvertAtApplicationBoundary();
     void actionIdsResolveActionNamesAndShortcuts();
     void shortcutRoutesExposeApplicationPolicy();
     void videoShortcutPolicyApiExposesApplicationPolicy();
@@ -167,7 +174,7 @@ void TestKiriViewApplication::actionDefinitionTableIsCanonicalIdentitySource()
     QCOMPARE(definitions.size(), Actions::actionDefinitionCount);
 
     for (std::size_t index = 0; index < definitions.size(); ++index) {
-        const auto actionId = static_cast<KiriViewApplication::ActionId>(index);
+        const auto actionId = static_cast<DomainActionId>(index);
         const Actions::ActionDefinition *definition = Actions::definitionForId(actionId);
 
         QVERIFY(definition != nullptr);
@@ -176,10 +183,30 @@ void TestKiriViewApplication::actionDefinitionTableIsCanonicalIdentitySource()
         QCOMPARE(Actions::actionName(actionId), definitionActionName(*definition));
     }
 
-    QVERIFY(Actions::definitionForId(static_cast<KiriViewApplication::ActionId>(-1)) == nullptr);
-    QVERIFY(Actions::definitionForId(KiriViewApplication::ActionCount) == nullptr);
-    QVERIFY(Actions::actionName(static_cast<KiriViewApplication::ActionId>(-1)).isEmpty());
-    QVERIFY(Actions::actionName(KiriViewApplication::ActionCount).isEmpty());
+    QVERIFY(Actions::definitionForId(static_cast<DomainActionId>(-1)) == nullptr);
+    QVERIFY(Actions::definitionForId(DomainActionId::ActionCount) == nullptr);
+    QVERIFY(Actions::actionName(static_cast<DomainActionId>(-1)).isEmpty());
+    QVERIFY(Actions::actionName(DomainActionId::ActionCount).isEmpty());
+}
+
+void TestKiriViewApplication::facadeActionIdsConvertAtApplicationBoundary()
+{
+    QCOMPARE(KiriViewApplication::domainActionId(KiriViewApplication::FileOpenAction),
+        DomainActionId::FileOpenAction);
+    QCOMPARE(KiriViewApplication::facadeActionId(DomainActionId::ViewRotateClockwiseAction),
+        KiriViewApplication::ViewRotateClockwiseAction);
+    QCOMPARE(KiriViewApplication::domainActionId(KiriViewApplication::ActionCount),
+        DomainActionId::ActionCount);
+    QCOMPARE(KiriViewApplication::facadeActionId(static_cast<DomainActionId>(999)),
+        static_cast<KiriViewApplication::ActionId>(999));
+
+    QCOMPARE(KiriViewApplication::domainMenuPresentation(KiriViewApplication::MenuBar),
+        Actions::MenuPresentation::MenuBar);
+    QCOMPARE(KiriViewApplication::facadeMenuPresentation(Actions::MenuPresentation::HamburgerMenu),
+        KiriViewApplication::HamburgerMenu);
+    QCOMPARE(KiriViewApplication::domainMenuPresentation(
+                 static_cast<KiriViewApplication::MenuPresentation>(99)),
+        Actions::MenuPresentation::HamburgerMenu);
 }
 
 void TestKiriViewApplication::actionIdsResolveActionNamesAndShortcuts()
@@ -188,22 +215,20 @@ void TestKiriViewApplication::actionIdsResolveActionNamesAndShortcuts()
 
     for (const Actions::ActionDefinition &definition : Actions::definitions()) {
         const QString actionName = definitionActionName(definition);
-        QCOMPARE(application.actionName(definition.actionId), actionName);
-        QCOMPARE(application.actionForId(definition.actionId), application.action(actionName));
-        QCOMPARE(
-            application.shortcutsForId(definition.actionId), application.shortcuts(actionName));
-        QCOMPARE(application.shortcutsWithCommandModifierForId(definition.actionId),
+        const KiriViewApplication::ActionId actionId = facadeActionId(definition.actionId);
+        QCOMPARE(application.actionName(actionId), actionName);
+        QCOMPARE(application.actionForId(actionId), application.action(actionName));
+        QCOMPARE(application.shortcutsForId(actionId), application.shortcuts(actionName));
+        QCOMPARE(application.shortcutsWithCommandModifierForId(actionId),
             application.shortcutsWithCommandModifier(actionName));
-        QCOMPARE(application.shortcutsWithoutCommandModifierForId(definition.actionId),
+        QCOMPARE(application.shortcutsWithoutCommandModifierForId(actionId),
             application.shortcutsWithoutCommandModifier(actionName));
-        QCOMPARE(application.shortcutAliasesForId(definition.actionId),
-            application.shortcutAliases(actionName));
-        QCOMPARE(application.shortcutTextForId(definition.actionId),
-            application.shortcutText(actionName));
-        QCOMPARE(application.menuShortcutForId(definition.actionId),
-            application.menuShortcut(actionName));
-        QCOMPARE(application.menuShortcutTextForId(definition.actionId),
-            application.menuShortcutText(actionName));
+        QCOMPARE(
+            application.shortcutAliasesForId(actionId), application.shortcutAliases(actionName));
+        QCOMPARE(application.shortcutTextForId(actionId), application.shortcutText(actionName));
+        QCOMPARE(application.menuShortcutForId(actionId), application.menuShortcut(actionName));
+        QCOMPARE(
+            application.menuShortcutTextForId(actionId), application.menuShortcutText(actionName));
     }
 
     const auto invalidActionId = static_cast<KiriViewApplication::ActionId>(-1);

@@ -3,16 +3,19 @@
 
 #include "applicationshortcutruntime.h"
 
+#include "facade/kiriviewapplication.h"
 #include "shortcuthelpmodel.h"
 
 #include <KLocalizedString>
 #include <KirigamiActionCollection>
+#include <utility>
 
 namespace KiriView::ApplicationActions {
-ApplicationShortcutRuntime::ApplicationShortcutRuntime(
-    KiriViewApplication &application, const ApplicationActionRegistry &actionRegistry)
+ApplicationShortcutRuntime::ApplicationShortcutRuntime(KiriViewApplication &application,
+    const ApplicationActionRegistry &actionRegistry, ChangeCallback changeCallback)
     : m_application(application)
     , m_actionRegistry(actionRegistry)
+    , m_changeCallback(std::move(changeCallback))
 {
 }
 
@@ -39,7 +42,9 @@ void ApplicationShortcutRuntime::handleActionChanged(QAction *changedAction)
         m_shortcutHelpModel->handleRowsChanged();
     }
     ++m_shortcutRevision;
-    Q_EMIT m_application.shortcutRevisionChanged();
+    if (m_changeCallback) {
+        m_changeCallback();
+    }
 }
 
 int ApplicationShortcutRuntime::shortcutRevision() const { return m_shortcutRevision; }
@@ -88,7 +93,7 @@ ApplicationShortcutProjection ApplicationShortcutRuntime::shortcutProjection(
 }
 
 ApplicationShortcutProjection ApplicationShortcutRuntime::shortcutProjectionForId(
-    KiriViewApplication::ActionId actionId) const
+    ActionId actionId) const
 {
     return shortcutProjectionForAction(m_actionRegistry.actionForId(actionId));
 }

@@ -3,29 +3,31 @@
 
 #include "applicationmenupresentationruntime.h"
 
+#include "facade/kiriviewapplication.h"
 #include "kiriviewstate.h"
 
 #include <KirigamiActionCollection>
 #include <QAction>
 #include <QObject>
 #include <QSignalBlocker>
+#include <utility>
 
 namespace KiriView::ApplicationActions {
 ApplicationMenuPresentationRuntime::ApplicationMenuPresentationRuntime(
-    KiriViewApplication &application)
+    KiriViewApplication &application, ChangeCallback changeCallback)
     : m_application(application)
+    , m_changeCallback(std::move(changeCallback))
     , m_state(ApplicationMenuPresentationState::presentationForStoredValue(
           KiriViewState::menuPresentation()))
 {
 }
 
-KiriViewApplication::MenuPresentation ApplicationMenuPresentationRuntime::menuPresentation() const
+MenuPresentation ApplicationMenuPresentationRuntime::menuPresentation() const
 {
     return m_state.presentation();
 }
 
-void ApplicationMenuPresentationRuntime::setMenuPresentation(
-    KiriViewApplication::MenuPresentation presentation)
+void ApplicationMenuPresentationRuntime::setMenuPresentation(MenuPresentation presentation)
 {
     if (!m_state.setPresentation(presentation)) {
         return;
@@ -34,7 +36,9 @@ void ApplicationMenuPresentationRuntime::setMenuPresentation(
     KiriViewState::setMenuPresentation(m_state.storedValue());
     KiriViewState::self()->save();
     syncShowMenuBarAction();
-    Q_EMIT m_application.menuPresentationChanged();
+    if (m_changeCallback) {
+        m_changeCallback();
+    }
 }
 
 void ApplicationMenuPresentationRuntime::bindShowMenuBarAction(QAction *action)
@@ -49,7 +53,7 @@ void ApplicationMenuPresentationRuntime::bindShowMenuBarAction(QAction *action)
     QObject::connect(
         m_showMenuBarAction, &QAction::triggered, &m_application, [this](bool checked) {
             setMenuPresentation(
-                checked ? KiriViewApplication::MenuBar : KiriViewApplication::HamburgerMenu);
+                checked ? MenuPresentation::MenuBar : MenuPresentation::HamburgerMenu);
         });
     syncShowMenuBarAction();
 }
@@ -59,7 +63,9 @@ void ApplicationMenuPresentationRuntime::syncFromSettings()
     const bool changed = m_state.setStoredValue(KiriViewState::menuPresentation());
     syncShowMenuBarAction();
     if (changed) {
-        Q_EMIT m_application.menuPresentationChanged();
+        if (m_changeCallback) {
+            m_changeCallback();
+        }
     }
 }
 
@@ -70,6 +76,6 @@ void ApplicationMenuPresentationRuntime::syncShowMenuBarAction()
     }
 
     const QSignalBlocker blocker(m_showMenuBarAction);
-    m_showMenuBarAction->setChecked(menuPresentation() == KiriViewApplication::MenuBar);
+    m_showMenuBarAction->setChecked(menuPresentation() == MenuPresentation::MenuBar);
 }
 }

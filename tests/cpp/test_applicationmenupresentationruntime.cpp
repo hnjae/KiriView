@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 #include "application/applicationmenupresentationruntime.h"
+#include "facade/kiriviewapplication.h"
 #include "kiriviewstate.h"
 
 #include <KConfigGroup>
@@ -15,6 +16,7 @@
 #include <QTest>
 
 namespace {
+using MenuPresentation = KiriView::ApplicationActions::MenuPresentation;
 constexpr const char *interfaceConfigGroup = "Interface";
 constexpr const char *menuPresentationConfigKey = "menuPresentation";
 
@@ -35,6 +37,13 @@ void resetConfig()
     appConfig->deleteGroup(QStringLiteral("Shortcuts"));
     appConfig->sync();
     appConfig->reparseConfiguration();
+}
+
+KiriView::ApplicationActions::ApplicationMenuPresentationRuntime createRuntime(
+    KiriViewApplication &application)
+{
+    return KiriView::ApplicationActions::ApplicationMenuPresentationRuntime(
+        application, [&application]() { Q_EMIT application.menuPresentationChanged(); });
 }
 }
 
@@ -66,34 +75,37 @@ void TestApplicationMenuPresentationRuntime::invalidStoredValueFallsBackToHambur
 {
     KiriViewState::setMenuPresentation(99);
     KiriViewApplication application;
-    KiriView::ApplicationActions::ApplicationMenuPresentationRuntime runtime(application);
+    KiriView::ApplicationActions::ApplicationMenuPresentationRuntime runtime
+        = createRuntime(application);
 
-    QCOMPARE(runtime.menuPresentation(), KiriViewApplication::HamburgerMenu);
+    QCOMPARE(runtime.menuPresentation(), MenuPresentation::HamburgerMenu);
 }
 
 void TestApplicationMenuPresentationRuntime::setMenuPresentationPersistsAndSignalsChanges()
 {
     KiriViewApplication application;
-    KiriView::ApplicationActions::ApplicationMenuPresentationRuntime runtime(application);
+    KiriView::ApplicationActions::ApplicationMenuPresentationRuntime runtime
+        = createRuntime(application);
     QSignalSpy changedSpy(&application, &KiriViewApplication::menuPresentationChanged);
 
-    runtime.setMenuPresentation(KiriViewApplication::MenuBar);
+    runtime.setMenuPresentation(MenuPresentation::MenuBar);
 
     QCOMPARE(changedSpy.count(), 1);
-    QCOMPARE(runtime.menuPresentation(), KiriViewApplication::MenuBar);
+    QCOMPARE(runtime.menuPresentation(), MenuPresentation::MenuBar);
     QCOMPARE(KiriViewState::menuPresentation(),
         static_cast<int>(KiriViewState::EnumMenuPresentation::MenuBar));
     QCOMPARE(stateInterfaceGroup().readEntry(QLatin1String(menuPresentationConfigKey), QString()),
         QStringLiteral("MenuBar"));
 
-    runtime.setMenuPresentation(KiriViewApplication::MenuBar);
+    runtime.setMenuPresentation(MenuPresentation::MenuBar);
     QCOMPARE(changedSpy.count(), 1);
 }
 
 void TestApplicationMenuPresentationRuntime::syncFromSettingsUpdatesRuntimeStateAndAction()
 {
     KiriViewApplication application;
-    KiriView::ApplicationActions::ApplicationMenuPresentationRuntime runtime(application);
+    KiriView::ApplicationActions::ApplicationMenuPresentationRuntime runtime
+        = createRuntime(application);
     QAction action;
     QSignalSpy changedSpy(&application, &KiriViewApplication::menuPresentationChanged);
 
@@ -104,7 +116,7 @@ void TestApplicationMenuPresentationRuntime::syncFromSettingsUpdatesRuntimeState
     runtime.syncFromSettings();
 
     QCOMPARE(changedSpy.count(), 1);
-    QCOMPARE(runtime.menuPresentation(), KiriViewApplication::MenuBar);
+    QCOMPARE(runtime.menuPresentation(), MenuPresentation::MenuBar);
     QVERIFY(action.isChecked());
 
     runtime.syncFromSettings();
@@ -116,7 +128,8 @@ void TestApplicationMenuPresentationRuntime::showMenuBarActionMirrorsAndUpdatesP
 {
     KiriViewState::setMenuPresentation(KiriViewState::EnumMenuPresentation::MenuBar);
     KiriViewApplication application;
-    KiriView::ApplicationActions::ApplicationMenuPresentationRuntime runtime(application);
+    KiriView::ApplicationActions::ApplicationMenuPresentationRuntime runtime
+        = createRuntime(application);
     QAction action;
 
     runtime.bindShowMenuBarAction(&action);
@@ -125,11 +138,11 @@ void TestApplicationMenuPresentationRuntime::showMenuBarActionMirrorsAndUpdatesP
     QVERIFY(action.isChecked());
 
     action.trigger();
-    QCOMPARE(runtime.menuPresentation(), KiriViewApplication::HamburgerMenu);
+    QCOMPARE(runtime.menuPresentation(), MenuPresentation::HamburgerMenu);
     QVERIFY(!action.isChecked());
 
     action.trigger();
-    QCOMPARE(runtime.menuPresentation(), KiriViewApplication::MenuBar);
+    QCOMPARE(runtime.menuPresentation(), MenuPresentation::MenuBar);
     QVERIFY(action.isChecked());
 }
 

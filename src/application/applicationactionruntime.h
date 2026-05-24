@@ -7,7 +7,6 @@
 #include "applicationactionregistry.h"
 #include "applicationmenupresentationruntime.h"
 #include "applicationshortcutpolicy.h"
-#include "facade/kiriviewapplication.h"
 
 #include <KStandardActions>
 #include <QAbstractListModel>
@@ -15,7 +14,10 @@
 #include <QList>
 #include <QString>
 #include <QVariantList>
+#include <functional>
 #include <memory>
+
+class KiriViewApplication;
 
 namespace KiriView::ApplicationActions {
 struct ActionDefinition;
@@ -24,25 +26,29 @@ class ApplicationShortcutRuntime;
 class ApplicationActionRuntime final
 {
 public:
-    explicit ApplicationActionRuntime(KiriViewApplication &application);
+    struct Callbacks {
+        std::function<void()> menuPresentationChanged;
+        std::function<void()> shortcutRevisionChanged;
+    };
+
+    explicit ApplicationActionRuntime(KiriViewApplication &application, Callbacks callbacks = {});
     ~ApplicationActionRuntime();
 
-    KiriViewApplication::MenuPresentation menuPresentation() const;
-    void setMenuPresentation(KiriViewApplication::MenuPresentation presentation);
+    MenuPresentation menuPresentation() const;
+    void setMenuPresentation(MenuPresentation presentation);
     int shortcutRevision() const;
     QAbstractListModel *shortcutHelpModel() const;
 
     QAction *action(const QString &actionName);
-    QAction *actionForId(KiriViewApplication::ActionId actionId);
-    QString actionName(KiriViewApplication::ActionId actionId) const;
+    QAction *actionForId(ActionId actionId);
+    QString actionName(ActionId actionId) const;
     ApplicationShortcutProjection shortcutProjection(const QString &actionName) const;
-    ApplicationShortcutProjection shortcutProjectionForId(
-        KiriViewApplication::ActionId actionId) const;
+    ApplicationShortcutProjection shortcutProjectionForId(ActionId actionId) const;
     QVariantList shortcutRoutes() const;
     bool videoShortcutsEnabledForScope(int shortcutScope, bool helpShortcutsEnabled,
         bool viewerShortcutsEnabled, bool videoFileDeletionInProgress,
         bool videoMediaNavigationActive) const;
-    bool videoActionUnsupported(KiriViewApplication::ActionId actionId) const;
+    bool videoActionUnsupported(ActionId actionId) const;
     bool mediaHorizontalArrowShortcutsEnabled(bool videoMode, bool imageReadyViewerShortcutsEnabled,
         bool videoViewerShortcutsEnabled, bool videoMediaNavigationActive,
         bool videoFileDeletionInProgress) const;

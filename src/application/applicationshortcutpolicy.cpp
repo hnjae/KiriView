@@ -9,7 +9,7 @@
 namespace {
 using Route = KiriView::ApplicationActions::ApplicationShortcutRoute;
 using Filter = KiriView::ApplicationActions::ApplicationShortcutFilter;
-using ActionId = KiriViewApplication::ActionId;
+using ActionId = KiriView::ApplicationActions::ActionId;
 using Scope = KiriView::ApplicationActions::ImageShortcutScope;
 
 bool shortcutHasCommandModifier(const QKeySequence &shortcut)
@@ -328,25 +328,25 @@ std::optional<ImageShortcutScope> imageShortcutScopeFromValue(int value)
     return std::nullopt;
 }
 
-bool videoActionUnsupported(KiriViewApplication::ActionId actionId)
+bool videoActionUnsupported(ActionId actionId)
 {
     switch (actionId) {
-    case KiriViewApplication::GoPreviousArchiveAction:
-    case KiriViewApplication::GoNextArchiveAction:
-    case KiriViewApplication::ViewZoomInAction:
-    case KiriViewApplication::ViewZoomOutAction:
-    case KiriViewApplication::ViewFitAction:
-    case KiriViewApplication::ViewFitHeightAction:
-    case KiriViewApplication::ViewFitWidthAction:
-    case KiriViewApplication::ViewActualSizeAction:
-    case KiriViewApplication::ViewRotateClockwiseAction:
-    case KiriViewApplication::ViewRotateCounterclockwiseAction:
-    case KiriViewApplication::ViewToggleTwoPageModeAction:
-    case KiriViewApplication::ViewToggleRightToLeftReadingAction:
-    case KiriViewApplication::ViewPanTopLeftAction:
-    case KiriViewApplication::ViewPanBottomRightAction:
-    case KiriViewApplication::ViewScanForwardAction:
-    case KiriViewApplication::ViewScanBackwardAction:
+    case ActionId::GoPreviousArchiveAction:
+    case ActionId::GoNextArchiveAction:
+    case ActionId::ViewZoomInAction:
+    case ActionId::ViewZoomOutAction:
+    case ActionId::ViewFitAction:
+    case ActionId::ViewFitHeightAction:
+    case ActionId::ViewFitWidthAction:
+    case ActionId::ViewActualSizeAction:
+    case ActionId::ViewRotateClockwiseAction:
+    case ActionId::ViewRotateCounterclockwiseAction:
+    case ActionId::ViewToggleTwoPageModeAction:
+    case ActionId::ViewToggleRightToLeftReadingAction:
+    case ActionId::ViewPanTopLeftAction:
+    case ActionId::ViewPanBottomRightAction:
+    case ActionId::ViewScanForwardAction:
+    case ActionId::ViewScanBackwardAction:
         return true;
     default:
         return false;

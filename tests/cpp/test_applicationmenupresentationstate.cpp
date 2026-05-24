@@ -6,6 +6,10 @@
 #include <QObject>
 #include <QTest>
 
+namespace {
+using MenuPresentation = KiriView::ApplicationActions::MenuPresentation;
+}
+
 class TestApplicationMenuPresentationState : public QObject
 {
     Q_OBJECT
@@ -21,38 +25,37 @@ void TestApplicationMenuPresentationState::invalidStoredValuesNormalizeToHamburg
     QCOMPARE(
         KiriView::ApplicationActions::ApplicationMenuPresentationState::presentationForStoredValue(
             -1),
-        KiriViewApplication::HamburgerMenu);
+        MenuPresentation::HamburgerMenu);
     QCOMPARE(
         KiriView::ApplicationActions::ApplicationMenuPresentationState::presentationForStoredValue(
             99),
-        KiriViewApplication::HamburgerMenu);
+        MenuPresentation::HamburgerMenu);
     QCOMPARE(
         KiriView::ApplicationActions::ApplicationMenuPresentationState::storedValueForPresentation(
-            static_cast<KiriViewApplication::MenuPresentation>(99)),
-        static_cast<int>(KiriViewApplication::HamburgerMenu));
+            static_cast<MenuPresentation>(99)),
+        static_cast<int>(MenuPresentation::HamburgerMenu));
 }
 
 void TestApplicationMenuPresentationState::presentationChangesReportOnlyActualStateChanges()
 {
     KiriView::ApplicationActions::ApplicationMenuPresentationState state;
 
-    QCOMPARE(state.presentation(), KiriViewApplication::HamburgerMenu);
-    QVERIFY(!state.setPresentation(KiriViewApplication::HamburgerMenu));
-    QVERIFY(state.setPresentation(KiriViewApplication::MenuBar));
-    QCOMPARE(state.presentation(), KiriViewApplication::MenuBar);
-    QCOMPARE(state.storedValue(), static_cast<int>(KiriViewApplication::MenuBar));
-    QVERIFY(!state.setPresentation(KiriViewApplication::MenuBar));
+    QCOMPARE(state.presentation(), MenuPresentation::HamburgerMenu);
+    QVERIFY(!state.setPresentation(MenuPresentation::HamburgerMenu));
+    QVERIFY(state.setPresentation(MenuPresentation::MenuBar));
+    QCOMPARE(state.presentation(), MenuPresentation::MenuBar);
+    QCOMPARE(state.storedValue(), static_cast<int>(MenuPresentation::MenuBar));
+    QVERIFY(!state.setPresentation(MenuPresentation::MenuBar));
 }
 
 void TestApplicationMenuPresentationState::storedValueChangesNormalizeAndReportOnlyActualChanges()
 {
-    KiriView::ApplicationActions::ApplicationMenuPresentationState state(
-        KiriViewApplication::MenuBar);
+    KiriView::ApplicationActions::ApplicationMenuPresentationState state(MenuPresentation::MenuBar);
 
-    QVERIFY(!state.setStoredValue(static_cast<int>(KiriViewApplication::MenuBar)));
+    QVERIFY(!state.setStoredValue(static_cast<int>(MenuPresentation::MenuBar)));
     QVERIFY(state.setStoredValue(99));
-    QCOMPARE(state.presentation(), KiriViewApplication::HamburgerMenu);
-    QCOMPARE(state.storedValue(), static_cast<int>(KiriViewApplication::HamburgerMenu));
+    QCOMPARE(state.presentation(), MenuPresentation::HamburgerMenu);
+    QCOMPARE(state.storedValue(), static_cast<int>(MenuPresentation::HamburgerMenu));
     QVERIFY(!state.setStoredValue(-1));
 }
 

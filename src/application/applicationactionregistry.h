@@ -4,7 +4,6 @@
 #ifndef KIRIVIEW_APPLICATIONACTIONREGISTRY_H
 #define KIRIVIEW_APPLICATIONACTIONREGISTRY_H
 
-#include "facade/kiriviewapplication.h"
 #include "kiriviewapplicationactions.h"
 
 #include <QAction>
@@ -17,9 +16,15 @@
 namespace KiriView::ApplicationActions {
 struct RegisteredApplicationAction {
     QAction *action = nullptr;
-    KiriViewApplication::ActionId actionId = KiriViewApplication::ActionCount;
+    ActionId actionId = ActionId::ActionCount;
     QString actionName;
 };
+
+}
+
+class KiriViewApplication;
+
+namespace KiriView::ApplicationActions {
 
 class ApplicationActionRegistry final
 {
@@ -30,13 +35,13 @@ public:
     QAction *collectionAction(const ActionDefinition &definition) const;
     void registerAction(const ActionDefinition &definition, QAction *action);
     QAction *action(const QString &actionName) const;
-    QAction *actionForId(KiriViewApplication::ActionId actionId) const;
-    QString actionName(KiriViewApplication::ActionId actionId) const;
+    QAction *actionForId(ActionId actionId) const;
+    QString actionName(ActionId actionId) const;
     QList<RegisteredApplicationAction> registeredActions() const;
 
 private:
     static QString definitionName(const ActionDefinition &definition);
-    static std::size_t actionIndex(KiriViewApplication::ActionId actionId);
+    static std::size_t actionIndex(ActionId actionId);
 
     KiriViewApplication &m_application;
     std::array<QAction *, actionDefinitionCount> m_actionsById {};

@@ -4,26 +4,26 @@
 #ifndef KIRIVIEW_APPLICATIONMENUPRESENTATIONSTATE_H
 #define KIRIVIEW_APPLICATIONMENUPRESENTATIONSTATE_H
 
-#include "facade/kiriviewapplication.h"
+#include "application/applicationtypes.h"
 
 namespace KiriView::ApplicationActions {
 class ApplicationMenuPresentationState final
 {
 public:
     explicit ApplicationMenuPresentationState(
-        KiriViewApplication::MenuPresentation presentation = KiriViewApplication::HamburgerMenu);
+        MenuPresentation presentation = MenuPresentation::HamburgerMenu);
 
-    KiriViewApplication::MenuPresentation presentation() const;
+    MenuPresentation presentation() const;
     int storedValue() const;
 
-    bool setPresentation(KiriViewApplication::MenuPresentation presentation);
+    bool setPresentation(MenuPresentation presentation);
     bool setStoredValue(int value);
 
-    static KiriViewApplication::MenuPresentation presentationForStoredValue(int value);
-    static int storedValueForPresentation(KiriViewApplication::MenuPresentation presentation);
+    static MenuPresentation presentationForStoredValue(int value);
+    static int storedValueForPresentation(MenuPresentation presentation);
 
 private:
-    KiriViewApplication::MenuPresentation m_presentation = KiriViewApplication::HamburgerMenu;
+    MenuPresentation m_presentation = MenuPresentation::HamburgerMenu;
 };
 }
 

@@ -3,6 +3,8 @@
 
 #include "applicationactionregistry.h"
 
+#include "facade/kiriviewapplication.h"
+
 #include <cstddef>
 
 namespace KiriView::ApplicationActions {
@@ -37,7 +39,7 @@ QAction *ApplicationActionRegistry::action(const QString &actionName) const
     return m_actionsByName.value(actionName, nullptr);
 }
 
-QAction *ApplicationActionRegistry::actionForId(KiriViewApplication::ActionId actionId) const
+QAction *ApplicationActionRegistry::actionForId(ActionId actionId) const
 {
     const ActionDefinition *definition = definitionForId(actionId);
     if (definition == nullptr) {
@@ -47,7 +49,7 @@ QAction *ApplicationActionRegistry::actionForId(KiriViewApplication::ActionId ac
     return m_actionsById[actionIndex(definition->actionId)];
 }
 
-QString ApplicationActionRegistry::actionName(KiriViewApplication::ActionId actionId) const
+QString ApplicationActionRegistry::actionName(ActionId actionId) const
 {
     return KiriView::ApplicationActions::actionName(actionId);
 }
@@ -78,7 +80,7 @@ QString ApplicationActionRegistry::definitionName(const ActionDefinition &defini
     return QString::fromLatin1(definition.name);
 }
 
-std::size_t ApplicationActionRegistry::actionIndex(KiriViewApplication::ActionId actionId)
+std::size_t ApplicationActionRegistry::actionIndex(ActionId actionId)
 {
     return static_cast<std::size_t>(actionId);
 }

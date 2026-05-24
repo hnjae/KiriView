@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_KIRIVIEWAPPLICATIONACTIONS_H
 #define KIRIVIEW_KIRIVIEWAPPLICATIONACTIONS_H
 
-#include "facade/kiriviewapplication.h"
+#include "application/applicationtypes.h"
 
 #include <KLazyLocalizedString>
 #include <KStandardActions>
@@ -30,8 +30,6 @@ enum class ShortcutSpecKind {
 };
 
 inline constexpr std::size_t maxPortableShortcutCount = 4;
-inline constexpr std::size_t actionDefinitionCount
-    = static_cast<std::size_t>(KiriViewApplication::ActionCount);
 
 struct DefaultShortcutSpec {
     ShortcutSpecKind kind = ShortcutSpecKind::None;
@@ -41,7 +39,7 @@ struct DefaultShortcutSpec {
 };
 
 struct ActionDefinition {
-    KiriViewApplication::ActionId actionId;
+    ActionId actionId;
     const char *name;
     RegistrationKind kind;
     KStandardActions::StandardAction actionType;
@@ -51,8 +49,8 @@ struct ActionDefinition {
 };
 
 const std::array<ActionDefinition, actionDefinitionCount> &definitions();
-const ActionDefinition *definitionForId(KiriViewApplication::ActionId actionId);
-QString actionName(KiriViewApplication::ActionId actionId);
+const ActionDefinition *definitionForId(ActionId actionId);
+QString actionName(ActionId actionId);
 QString latin1String(const char *text);
 QString localizedString(const KLazyLocalizedString &text);
 QList<QKeySequence> defaultShortcuts(const DefaultShortcutSpec &spec);

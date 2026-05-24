@@ -7,9 +7,22 @@
 
 namespace Actions = KiriView::ApplicationActions;
 
+static_assert(static_cast<int>(Actions::MenuPresentation::HamburgerMenu)
+    == static_cast<int>(KiriViewApplication::HamburgerMenu));
+static_assert(static_cast<int>(Actions::MenuPresentation::MenuBar)
+    == static_cast<int>(KiriViewApplication::MenuBar));
+static_assert(static_cast<int>(Actions::ActionId::FileOpenAction)
+    == static_cast<int>(KiriViewApplication::FileOpenAction));
+static_assert(static_cast<int>(Actions::ActionId::ActionCount)
+    == static_cast<int>(KiriViewApplication::ActionCount));
+
 KiriViewApplication::KiriViewApplication(QObject *parent)
     : AbstractKirigamiApplication(parent)
-    , m_actionRuntime(std::make_unique<Actions::ApplicationActionRuntime>(*this))
+    , m_actionRuntime(std::make_unique<Actions::ApplicationActionRuntime>(*this,
+          Actions::ApplicationActionRuntime::Callbacks {
+              [this]() { Q_EMIT menuPresentationChanged(); },
+              [this]() { Q_EMIT shortcutRevisionChanged(); },
+          }))
 {
     KiriViewApplication::setupActions();
 }
@@ -18,12 +31,12 @@ KiriViewApplication::~KiriViewApplication() = default;
 
 KiriViewApplication::MenuPresentation KiriViewApplication::menuPresentation() const
 {
-    return m_actionRuntime->menuPresentation();
+    return facadeMenuPresentation(m_actionRuntime->menuPresentation());
 }
 
 void KiriViewApplication::setMenuPresentation(MenuPresentation presentation)
 {
-    m_actionRuntime->setMenuPresentation(presentation);
+    m_actionRuntime->setMenuPresentation(domainMenuPresentation(presentation));
 }
 
 int KiriViewApplication::shortcutRevision() const { return m_actionRuntime->shortcutRevision(); }
@@ -33,6 +46,35 @@ QAbstractListModel *KiriViewApplication::shortcutHelpModel() const
     return m_actionRuntime->shortcutHelpModel();
 }
 
+Actions::MenuPresentation KiriViewApplication::domainMenuPresentation(MenuPresentation presentation)
+{
+    if (presentation == MenuBar) {
+        return Actions::MenuPresentation::MenuBar;
+    }
+
+    return Actions::MenuPresentation::HamburgerMenu;
+}
+
+KiriViewApplication::MenuPresentation KiriViewApplication::facadeMenuPresentation(
+    Actions::MenuPresentation presentation)
+{
+    if (presentation == Actions::MenuPresentation::MenuBar) {
+        return MenuBar;
+    }
+
+    return HamburgerMenu;
+}
+
+Actions::ActionId KiriViewApplication::domainActionId(ActionId actionId)
+{
+    return static_cast<Actions::ActionId>(static_cast<int>(actionId));
+}
+
+KiriViewApplication::ActionId KiriViewApplication::facadeActionId(Actions::ActionId actionId)
+{
+    return static_cast<ActionId>(static_cast<int>(actionId));
+}
+
 QAction *KiriViewApplication::action(const QString &actionName)
 {
     return m_actionRuntime->action(actionName);
@@ -40,12 +82,12 @@ QAction *KiriViewApplication::action(const QString &actionName)
 
 QAction *KiriViewApplication::actionForId(ActionId actionId)
 {
-    return m_actionRuntime->actionForId(actionId);
+    return m_actionRuntime->actionForId(domainActionId(actionId));
 }
 
 QString KiriViewApplication::actionName(ActionId actionId) const
 {
-    return m_actionRuntime->actionName(actionId);
+    return m_actionRuntime->actionName(domainActionId(actionId));
 }
 
 QList<QKeySequence> KiriViewApplication::shortcuts(const QString &actionName) const
@@ -55,7 +97,7 @@ QList<QKeySequence> KiriViewApplication::shortcuts(const QString &actionName) co
 
 QList<QKeySequence> KiriViewApplication::shortcutsForId(ActionId actionId) const
 {
-    return m_actionRuntime->shortcutProjectionForId(actionId).shortcuts;
+    return m_actionRuntime->shortcutProjectionForId(domainActionId(actionId)).shortcuts;
 }
 
 QList<QKeySequence> KiriViewApplication::shortcutsWithCommandModifier(
@@ -66,7 +108,8 @@ QList<QKeySequence> KiriViewApplication::shortcutsWithCommandModifier(
 
 QList<QKeySequence> KiriViewApplication::shortcutsWithCommandModifierForId(ActionId actionId) const
 {
-    return m_actionRuntime->shortcutProjectionForId(actionId).shortcutsWithCommandModifier;
+    return m_actionRuntime->shortcutProjectionForId(domainActionId(actionId))
+        .shortcutsWithCommandModifier;
 }
 
 QList<QKeySequence> KiriViewApplication::shortcutsWithoutCommandModifier(
@@ -78,7 +121,8 @@ QList<QKeySequence> KiriViewApplication::shortcutsWithoutCommandModifier(
 QList<QKeySequence> KiriViewApplication::shortcutsWithoutCommandModifierForId(
     ActionId actionId) const
 {
-    return m_actionRuntime->shortcutProjectionForId(actionId).shortcutsWithoutCommandModifier;
+    return m_actionRuntime->shortcutProjectionForId(domainActionId(actionId))
+        .shortcutsWithoutCommandModifier;
 }
 
 QList<QKeySequence> KiriViewApplication::shortcutAliases(const QString &actionName) const
@@ -88,7 +132,7 @@ QList<QKeySequence> KiriViewApplication::shortcutAliases(const QString &actionNa
 
 QList<QKeySequence> KiriViewApplication::shortcutAliasesForId(ActionId actionId) const
 {
-    return m_actionRuntime->shortcutProjectionForId(actionId).shortcutAliases;
+    return m_actionRuntime->shortcutProjectionForId(domainActionId(actionId)).shortcutAliases;
 }
 
 QString KiriViewApplication::shortcutText(const QString &actionName) const
@@ -98,7 +142,7 @@ QString KiriViewApplication::shortcutText(const QString &actionName) const
 
 QString KiriViewApplication::shortcutTextForId(ActionId actionId) const
 {
-    return m_actionRuntime->shortcutProjectionForId(actionId).shortcutText;
+    return m_actionRuntime->shortcutProjectionForId(domainActionId(actionId)).shortcutText;
 }
 
 QKeySequence KiriViewApplication::menuShortcut(const QString &actionName) const
@@ -108,7 +152,7 @@ QKeySequence KiriViewApplication::menuShortcut(const QString &actionName) const
 
 QKeySequence KiriViewApplication::menuShortcutForId(ActionId actionId) const
 {
-    return m_actionRuntime->shortcutProjectionForId(actionId).menuShortcut;
+    return m_actionRuntime->shortcutProjectionForId(domainActionId(actionId)).menuShortcut;
 }
 
 QString KiriViewApplication::menuShortcutText(const QString &actionName) const
@@ -118,7 +162,7 @@ QString KiriViewApplication::menuShortcutText(const QString &actionName) const
 
 QString KiriViewApplication::menuShortcutTextForId(ActionId actionId) const
 {
-    return m_actionRuntime->shortcutProjectionForId(actionId).menuShortcutText;
+    return m_actionRuntime->shortcutProjectionForId(domainActionId(actionId)).menuShortcutText;
 }
 
 QVariantList KiriViewApplication::shortcutRoutes() const
@@ -136,7 +180,7 @@ bool KiriViewApplication::videoShortcutsEnabledForScope(int shortcutScope,
 
 bool KiriViewApplication::videoActionUnsupported(ActionId actionId) const
 {
-    return m_actionRuntime->videoActionUnsupported(actionId);
+    return m_actionRuntime->videoActionUnsupported(domainActionId(actionId));
 }
 
 bool KiriViewApplication::mediaHorizontalArrowShortcutsEnabled(bool videoMode,

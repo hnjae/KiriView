@@ -16,6 +16,7 @@
 
 namespace {
 namespace Actions = KiriView::ApplicationActions;
+using ActionId = KiriView::ApplicationActions::ActionId;
 
 QString definitionActionName(const Actions::ActionDefinition &definition)
 {
@@ -70,11 +71,11 @@ void TestApplicationActionRegistry::registeredActionsResolveThroughDefinitionIde
         QCOMPARE(registry.actionName(definition.actionId), actionName);
     }
 
-    const auto invalidActionId = static_cast<KiriViewApplication::ActionId>(-1);
+    const auto invalidActionId = static_cast<ActionId>(-1);
     QCOMPARE(registry.actionForId(invalidActionId), nullptr);
     QVERIFY(registry.actionName(invalidActionId).isEmpty());
-    QCOMPARE(registry.actionForId(KiriViewApplication::ActionCount), nullptr);
-    QVERIFY(registry.actionName(KiriViewApplication::ActionCount).isEmpty());
+    QCOMPARE(registry.actionForId(ActionId::ActionCount), nullptr);
+    QVERIFY(registry.actionName(ActionId::ActionCount).isEmpty());
     QCOMPARE(registry.action(QStringLiteral("missing_action")), nullptr);
 }
 

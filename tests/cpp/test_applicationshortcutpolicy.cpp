@@ -9,7 +9,7 @@
 #include <optional>
 
 namespace {
-using ActionId = KiriViewApplication::ActionId;
+using ActionId = KiriView::ApplicationActions::ActionId;
 using Filter = KiriView::ApplicationActions::ApplicationShortcutFilter;
 using Scope = KiriView::ApplicationActions::ImageShortcutScope;
 

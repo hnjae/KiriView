@@ -4,12 +4,14 @@
 #include "applicationactionruntime.h"
 
 #include "applicationshortcutruntime.h"
+#include "facade/kiriviewapplication.h"
 #include "kiriviewapplicationactions.h"
 
 #include <KirigamiActionCollection>
 #include <QIcon>
 
 #include <optional>
+#include <utility>
 
 namespace {
 namespace Actions = KiriView::ApplicationActions;
@@ -27,24 +29,24 @@ Actions::VideoShortcutAvailabilityInput videoShortcutInput(bool helpShortcutsEna
 }
 
 namespace KiriView::ApplicationActions {
-ApplicationActionRuntime::ApplicationActionRuntime(KiriViewApplication &application)
+ApplicationActionRuntime::ApplicationActionRuntime(
+    KiriViewApplication &application, Callbacks callbacks)
     : m_application(application)
     , m_actionRegistry(application)
-    , m_menuPresentationRuntime(application)
-    , m_shortcutRuntime(
-          std::make_unique<ApplicationShortcutRuntime>(m_application, m_actionRegistry))
+    , m_menuPresentationRuntime(application, std::move(callbacks.menuPresentationChanged))
+    , m_shortcutRuntime(std::make_unique<ApplicationShortcutRuntime>(
+          m_application, m_actionRegistry, std::move(callbacks.shortcutRevisionChanged)))
 {
 }
 
 ApplicationActionRuntime::~ApplicationActionRuntime() = default;
 
-KiriViewApplication::MenuPresentation ApplicationActionRuntime::menuPresentation() const
+MenuPresentation ApplicationActionRuntime::menuPresentation() const
 {
     return m_menuPresentationRuntime.menuPresentation();
 }
 
-void ApplicationActionRuntime::setMenuPresentation(
-    KiriViewApplication::MenuPresentation presentation)
+void ApplicationActionRuntime::setMenuPresentation(MenuPresentation presentation)
 {
     m_menuPresentationRuntime.setMenuPresentation(presentation);
 }
@@ -64,12 +66,12 @@ QAction *ApplicationActionRuntime::action(const QString &actionName)
     return m_actionRegistry.action(actionName);
 }
 
-QAction *ApplicationActionRuntime::actionForId(KiriViewApplication::ActionId actionId)
+QAction *ApplicationActionRuntime::actionForId(ActionId actionId)
 {
     return m_actionRegistry.actionForId(actionId);
 }
 
-QString ApplicationActionRuntime::actionName(KiriViewApplication::ActionId actionId) const
+QString ApplicationActionRuntime::actionName(ActionId actionId) const
 {
     return m_actionRegistry.actionName(actionId);
 }
@@ -81,7 +83,7 @@ ApplicationShortcutProjection ApplicationActionRuntime::shortcutProjection(
 }
 
 ApplicationShortcutProjection ApplicationActionRuntime::shortcutProjectionForId(
-    KiriViewApplication::ActionId actionId) const
+    ActionId actionId) const
 {
     return m_shortcutRuntime->shortcutProjectionForId(actionId);
 }
@@ -106,7 +108,7 @@ bool ApplicationActionRuntime::videoShortcutsEnabledForScope(int shortcutScope,
         *scope);
 }
 
-bool ApplicationActionRuntime::videoActionUnsupported(KiriViewApplication::ActionId actionId) const
+bool ApplicationActionRuntime::videoActionUnsupported(ActionId actionId) const
 {
     return ApplicationActions::videoActionUnsupported(actionId);
 }
