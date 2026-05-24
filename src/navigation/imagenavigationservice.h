@@ -7,6 +7,7 @@
 #include "imagecandidatelistsource.h"
 #include "imagecandidaterepository.h"
 #include "imagecontainernavigationcontroller.h"
+#include "imagenavigationplan.h"
 #include "imagenavigationtypes.h"
 #include "imagepagenavigationcontroller.h"
 
@@ -20,20 +21,13 @@ namespace KiriView {
 class ImageNavigationService final : public QObject
 {
 public:
-    using OpenUrlCallback = std::function<void(const QUrl &)>;
-    using OpenContainerImageCallback = std::function<void(const QUrl &, const QUrl &)>;
-    using ContainerNavigationErrorCallback
-        = std::function<void(const QUrl &, ContainerNavigationError, const QString &)>;
+    using NavigationPlanCallback = std::function<void(ImageNavigationPlan)>;
     using PageNavigationChangedCallback = std::function<void()>;
-    using ClearCurrentImageCallback = std::function<void()>;
     using DeletionInProgressCallback = std::function<bool()>;
 
     struct Callbacks {
-        OpenUrlCallback openUrl;
-        OpenContainerImageCallback openContainerImage;
-        ContainerNavigationErrorCallback containerNavigationError;
+        NavigationPlanCallback navigationPlan;
         PageNavigationChangedCallback pageNavigationChanged;
-        ClearCurrentImageCallback clearCurrentImage;
         DeletionInProgressCallback deletionInProgress;
     };
 

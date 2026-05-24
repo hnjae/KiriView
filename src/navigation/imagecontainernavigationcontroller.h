@@ -7,6 +7,7 @@
 #include "async/imageiojob.h"
 #include "imagecontainernavigationstate.h"
 #include "imagecontaineropenplan.h"
+#include "imagenavigationplan.h"
 #include "imagenavigationtypes.h"
 
 #include <QObject>
@@ -18,18 +19,13 @@
 namespace KiriView {
 class ImageCandidateRepository;
 
-using ContainerNavigationError = ImageContainerOpenError;
-
 class ImageContainerNavigationController final : public QObject
 {
 public:
-    using OpenContainerImageCallback = std::function<void(const QUrl &, const QUrl &)>;
-    using ContainerNavigationErrorCallback
-        = std::function<void(const QUrl &, ContainerNavigationError, const QString &)>;
+    using NavigationPlanCallback = std::function<void(ImageNavigationPlan)>;
 
     struct Callbacks {
-        OpenContainerImageCallback openContainerImage;
-        ContainerNavigationErrorCallback containerNavigationError;
+        NavigationPlanCallback navigationPlan;
     };
 
     ImageContainerNavigationController(
@@ -53,6 +49,7 @@ private:
         quint64 operationId, const QUrl &imageUrl, const QUrl &containerUrl);
     void finishContainerNavigationLoadWithError(quint64 operationId, const QUrl &containerUrl,
         ContainerNavigationError error, const QString &errorString);
+    void reportNavigationPlan(ImageNavigationPlan plan);
 
     const ImageCandidateRepository &m_candidateRepository;
     Callbacks m_callbacks;

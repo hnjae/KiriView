@@ -6,6 +6,7 @@
 
 #include "async/imageiojob.h"
 #include "imagecandidaterepository.h"
+#include "imagenavigationplan.h"
 #include "imagenavigationtypes.h"
 #include "imagepagenavigationmodel.h"
 
@@ -19,15 +20,13 @@ namespace KiriView {
 class ImagePageNavigationController final : public QObject
 {
 public:
-    using OpenUrlCallback = std::function<void(const QUrl &)>;
+    using NavigationPlanCallback = std::function<void(ImageNavigationPlan)>;
     using PageNavigationChangedCallback = std::function<void()>;
-    using ClearCurrentImageCallback = std::function<void()>;
     using DeletionInProgressCallback = std::function<bool()>;
 
     struct Callbacks {
-        OpenUrlCallback openUrl;
+        NavigationPlanCallback navigationPlan;
         PageNavigationChangedCallback pageNavigationChanged;
-        ClearCurrentImageCallback clearCurrentImage;
         DeletionInProgressCallback deletionInProgress;
     };
 
@@ -55,6 +54,7 @@ private:
     void updateFromChangedCandidates(
         std::vector<ImageNavigationCandidate> candidates, ImageCandidateListSource source);
     void notifyChanged();
+    void reportNavigationPlan(ImageNavigationPlan plan);
     void recoverFromCurrentImageRemoved(
         std::vector<ImageNavigationCandidate> candidates, ImageCandidateListContext context);
     bool deletionInProgress() const;

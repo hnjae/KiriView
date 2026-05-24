@@ -14,13 +14,16 @@
 #include "imagedocumentstate.h"
 #include "imageopencontroller.h"
 #include "localization/imageerrortext.h"
+#include "navigation/imagenavigationplan.h"
 #include "navigation/imagenavigationservice.h"
 #include "presentation/imagepresentationcontroller.h"
 #include "presentation/imagespreadpresentationcontroller.h"
 
 #include <QObject>
 #include <QUrl>
+#include <iterator>
 #include <optional>
+#include <type_traits>
 #include <utility>
 
 namespace KiriView {
@@ -29,6 +32,59 @@ namespace {
         const std::function<ImageDocumentRenderContext()> &renderContext)
     {
         return renderContext ? renderContext() : ImageDocumentRenderContext {};
+    }
+
+    template <typename> inline constexpr bool alwaysFalse = false;
+
+    void appendNavigationEffectRuntimeOperation(
+        ImageDocumentRuntimePlan &plan, const ImageNavigationEffect &effect)
+    {
+        std::visit(
+            [&plan](const auto &payload) {
+                using Effect = std::decay_t<decltype(payload)>;
+                if constexpr (std::is_same_v<Effect, OpenImageNavigationUrlEffect>) {
+                    plan.push_back(LoadUrlOperation { payload.url });
+                } else if constexpr (std::is_same_v<Effect, OpenContainerImageNavigationEffect>) {
+                    plan.push_back(
+                        LoadContainerImageOperation { payload.imageUrl, payload.containerUrl });
+                } else if constexpr (std::is_same_v<Effect, ReportContainerNavigationErrorEffect>) {
+                    if (payload.error == ContainerNavigationError::EmptyContainer) {
+                        plan.push_back(
+                            FinishEmptyContainerNavigationOperation { payload.containerUrl });
+                        return;
+                    }
+
+                    if (payload.error == ContainerNavigationError::InvalidComicBookArchive) {
+                        plan.push_back(FinishContainerNavigationLoadWithErrorOperation {
+                            payload.containerUrl,
+                            imageErrorText(ImageErrorTextId::OpenComicBookArchive),
+                        });
+                        return;
+                    }
+
+                    plan.push_back(FinishContainerNavigationLoadWithErrorOperation {
+                        payload.containerUrl,
+                        payload.errorString,
+                    });
+                } else if constexpr (std::is_same_v<Effect, ClearCurrentImageNavigationEffect>) {
+                    ImageDocumentRuntimePlan clearPlan = imageDocumentClearDeletedImagePlan();
+                    plan.insert(plan.end(), std::make_move_iterator(clearPlan.begin()),
+                        std::make_move_iterator(clearPlan.end()));
+                } else {
+                    static_assert(alwaysFalse<Effect>, "Unhandled image navigation effect");
+                }
+            },
+            effect);
+    }
+
+    ImageDocumentRuntimePlan runtimePlanForNavigationPlan(const ImageNavigationPlan &navigationPlan)
+    {
+        ImageDocumentRuntimePlan runtimePlan;
+        runtimePlan.reserve(navigationPlan.size());
+        for (const ImageNavigationEffect &effect : navigationPlan) {
+            appendNavigationEffectRuntimeOperation(runtimePlan, effect);
+        }
+        return runtimePlan;
     }
 }
 
@@ -80,38 +136,8 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject *docume
     m_navigationService = std::make_unique<ImageNavigationService>(documentObject,
         runtimeDependencies.candidateProvider,
         ImageNavigationService::Callbacks {
-            [this](const QUrl &url) {
-                dispatchPlan(ImageDocumentRuntimePlan { LoadUrlOperation { url } });
-            },
-            [this](const QUrl &imageUrl, const QUrl &containerUrl) {
-                dispatchPlan(ImageDocumentRuntimePlan {
-                    LoadContainerImageOperation { imageUrl, containerUrl },
-                });
-            },
-            [this](const QUrl &url, ContainerNavigationError error, const QString &message) {
-                if (error == ContainerNavigationError::EmptyContainer) {
-                    dispatchPlan(ImageDocumentRuntimePlan {
-                        FinishEmptyContainerNavigationOperation { url },
-                    });
-                    return;
-                }
-
-                if (error == ContainerNavigationError::InvalidComicBookArchive) {
-                    dispatchPlan(ImageDocumentRuntimePlan {
-                        FinishContainerNavigationLoadWithErrorOperation {
-                            url,
-                            imageErrorText(ImageErrorTextId::OpenComicBookArchive),
-                        },
-                    });
-                    return;
-                }
-
-                dispatchPlan(ImageDocumentRuntimePlan {
-                    FinishContainerNavigationLoadWithErrorOperation { url, message },
-                });
-            },
+            [this](ImageNavigationPlan plan) { dispatchPlan(runtimePlanForNavigationPlan(plan)); },
             [this]() { invokeIfSet(m_callbacks.notify, ImageDocumentChange::PageNavigation); },
-            [this]() { dispatchPlan(imageDocumentClearDeletedImagePlan()); },
             [this]() { return m_deletionController->inProgress(); },
         });
     m_predecodeController = std::make_unique<ImageDocumentPredecodeController>(

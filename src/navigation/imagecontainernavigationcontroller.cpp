@@ -128,7 +128,10 @@ void ImageContainerNavigationController::openImageFromContainerNavigation(
         return;
     }
 
-    invokeIfSet(m_callbacks.openContainerImage, imageUrl, containerUrl);
+    reportNavigationPlan(ImageNavigationPlan { OpenContainerImageNavigationEffect {
+        imageUrl,
+        containerUrl,
+    } });
 }
 
 void ImageContainerNavigationController::finishContainerNavigationLoadWithError(quint64 operationId,
@@ -138,6 +141,15 @@ void ImageContainerNavigationController::finishContainerNavigationLoadWithError(
         return;
     }
 
-    invokeIfSet(m_callbacks.containerNavigationError, containerUrl, error, errorString);
+    reportNavigationPlan(ImageNavigationPlan { ReportContainerNavigationErrorEffect {
+        containerUrl,
+        error,
+        errorString,
+    } });
+}
+
+void ImageContainerNavigationController::reportNavigationPlan(ImageNavigationPlan plan)
+{
+    invokeIfSet(m_callbacks.navigationPlan, std::move(plan));
 }
 }

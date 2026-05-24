@@ -16,14 +16,12 @@ ImageNavigationService::ImageNavigationService(
     , m_candidateRepository(std::move(candidateProvider))
     , m_containerNavigation(this, m_candidateRepository,
           ImageContainerNavigationController::Callbacks {
-              m_callbacks.openContainerImage,
-              m_callbacks.containerNavigationError,
+              m_callbacks.navigationPlan,
           })
     , m_pageNavigation(this, m_candidateRepository,
           ImagePageNavigationController::Callbacks {
-              m_callbacks.openUrl,
+              m_callbacks.navigationPlan,
               m_callbacks.pageNavigationChanged,
-              m_callbacks.clearCurrentImage,
               m_callbacks.deletionInProgress,
           })
 {

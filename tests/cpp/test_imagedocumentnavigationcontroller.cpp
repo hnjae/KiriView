@@ -59,14 +59,15 @@ public:
         : presentation(&context, renderContext, {})
         , navigation(&context, candidateProvider.provider(),
               KiriView::ImageNavigationService::Callbacks {
-                  [this](const QUrl &url) {
-                      runtimePlans.push_back(KiriView::ImageDocumentRuntimePlan {
-                          KiriView::LoadUrlOperation { url } });
+                  [this](KiriView::ImageNavigationPlan plan) {
+                      for (const KiriView::ImageNavigationEffect &effect : plan) {
+                          if (const auto *openEffect
+                              = std::get_if<KiriView::OpenImageNavigationUrlEffect>(&effect)) {
+                              runtimePlans.push_back(KiriView::ImageDocumentRuntimePlan {
+                                  KiriView::LoadUrlOperation { openEffect->url } });
+                          }
+                      }
                   },
-                  {},
-                  {},
-                  {},
-                  {},
                   {},
               })
         , spread(&context, renderContext, state, presentation,

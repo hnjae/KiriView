@@ -12,9 +12,11 @@
 
 #include <QByteArray>
 #include <QTest>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <utility>
+#include <variant>
 #include <vector>
 
 namespace {
@@ -52,15 +54,19 @@ KiriView::ImageNavigationCandidateProvider archiveOnlyProvider()
 }
 
 KiriView::ImageNavigationService::Callbacks navigationCallbacks(
-    KiriView::ImageNavigationService::OpenUrlCallback openUrl = {},
+    std::function<void(const QUrl &)> openUrl = {},
     KiriView::ImageNavigationService::PageNavigationChangedCallback pageNavigationChanged = {})
 {
     return KiriView::ImageNavigationService::Callbacks {
-        std::move(openUrl),
-        {},
-        {},
+        [openUrl = std::move(openUrl)](KiriView::ImageNavigationPlan plan) mutable {
+            for (const KiriView::ImageNavigationEffect &effect : plan) {
+                if (const auto *openEffect
+                    = std::get_if<KiriView::OpenImageNavigationUrlEffect>(&effect)) {
+                    KiriView::invokeIfSet(openUrl, openEffect->url);
+                }
+            }
+        },
         std::move(pageNavigationChanged),
-        {},
         {},
     };
 }

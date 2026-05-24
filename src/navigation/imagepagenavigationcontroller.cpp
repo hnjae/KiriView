@@ -52,7 +52,9 @@ void ImagePageNavigationController::openAdjacentImage(
         const std::optional<QUrl> targetUrl = m_model.selectAdjacentPage(direction);
         if (targetUrl.has_value()) {
             notifyChanged();
-            invokeIfSet(m_callbacks.openUrl, *targetUrl);
+            reportNavigationPlan(ImageNavigationPlan { OpenImageNavigationUrlEffect {
+                *targetUrl,
+            } });
         }
         return;
     }
@@ -129,7 +131,7 @@ void ImagePageNavigationController::finishNavigation(
     if (m_model.completeRefresh(candidates, *targetUrl, std::move(candidateSource))) {
         notifyChanged();
     }
-    invokeIfSet(m_callbacks.openUrl, *targetUrl);
+    reportNavigationPlan(ImageNavigationPlan { OpenImageNavigationUrlEffect { *targetUrl } });
 }
 
 void ImagePageNavigationController::watchChanges(const ImageCandidateListContext &context)
@@ -171,6 +173,11 @@ void ImagePageNavigationController::notifyChanged()
     invokeIfSet(m_callbacks.pageNavigationChanged);
 }
 
+void ImagePageNavigationController::reportNavigationPlan(ImageNavigationPlan plan)
+{
+    invokeIfSet(m_callbacks.navigationPlan, std::move(plan));
+}
+
 void ImagePageNavigationController::recoverFromCurrentImageRemoved(
     std::vector<ImageNavigationCandidate> candidates, ImageCandidateListContext context)
 {
@@ -181,10 +188,11 @@ void ImagePageNavigationController::recoverFromCurrentImageRemoved(
     const ImageRemovalFallback fallback = imageRemovalFallbackForImageContext(context);
     const std::optional<QUrl> fallbackUrl
         = imageRemovalFallbackUrl(std::move(candidates), fallback);
-    invokeIfSet(m_callbacks.clearCurrentImage);
+    ImageNavigationPlan plan { ClearCurrentImageNavigationEffect {} };
     if (fallbackUrl.has_value()) {
-        invokeIfSet(m_callbacks.openUrl, *fallbackUrl);
+        plan.push_back(OpenImageNavigationUrlEffect { *fallbackUrl });
     }
+    reportNavigationPlan(std::move(plan));
 }
 
 bool ImagePageNavigationController::deletionInProgress() const

@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+#include "async/imagecallback.h"
 #include "image_test_support.h"
 #include "location/imagedocumentlocation.h"
 #include "navigation/imagenavigationservice.h"
@@ -8,9 +9,11 @@
 #include <QObject>
 #include <QTest>
 #include <QUrl>
+#include <functional>
 #include <memory>
 #include <optional>
 #include <utility>
+#include <variant>
 #include <vector>
 
 namespace {
@@ -25,18 +28,40 @@ using KiriView::TestSupport::localUrl;
 using FakeCandidateProvider = KiriView::TestSupport::FakeImageNavigationCandidateProvider;
 
 KiriView::ImageNavigationService::Callbacks navigationCallbacks(
-    KiriView::ImageNavigationService::OpenUrlCallback openUrl = {},
-    KiriView::ImageNavigationService::OpenContainerImageCallback openContainerImage = {},
-    KiriView::ImageNavigationService::ContainerNavigationErrorCallback containerNavigationError
+    std::function<void(const QUrl &)> openUrl = {},
+    std::function<void(const QUrl &, const QUrl &)> openContainerImage = {},
+    std::function<void(const QUrl &, KiriView::ContainerNavigationError, const QString &)>
+        containerNavigationError
     = {},
     KiriView::ImageNavigationService::PageNavigationChangedCallback pageNavigationChanged = {},
-    KiriView::ImageNavigationService::ClearCurrentImageCallback clearCurrentImage = {},
+    std::function<void()> clearCurrentImage = {},
     KiriView::ImageNavigationService::DeletionInProgressCallback deletionInProgress = {})
 {
-    return KiriView::ImageNavigationService::Callbacks { std::move(openUrl),
-        std::move(openContainerImage), std::move(containerNavigationError),
-        std::move(pageNavigationChanged), std::move(clearCurrentImage),
-        std::move(deletionInProgress) };
+    return KiriView::ImageNavigationService::Callbacks {
+        [openUrl = std::move(openUrl), openContainerImage = std::move(openContainerImage),
+            containerNavigationError = std::move(containerNavigationError),
+            clearCurrentImage = std::move(clearCurrentImage)](
+            KiriView::ImageNavigationPlan plan) mutable {
+            for (const KiriView::ImageNavigationEffect &effect : plan) {
+                if (const auto *openEffect
+                    = std::get_if<KiriView::OpenImageNavigationUrlEffect>(&effect)) {
+                    KiriView::invokeIfSet(openUrl, openEffect->url);
+                } else if (const auto *containerEffect
+                    = std::get_if<KiriView::OpenContainerImageNavigationEffect>(&effect)) {
+                    KiriView::invokeIfSet(openContainerImage, containerEffect->imageUrl,
+                        containerEffect->containerUrl);
+                } else if (const auto *errorEffect
+                    = std::get_if<KiriView::ReportContainerNavigationErrorEffect>(&effect)) {
+                    KiriView::invokeIfSet(containerNavigationError, errorEffect->containerUrl,
+                        errorEffect->error, errorEffect->errorString);
+                } else if (std::holds_alternative<KiriView::ClearCurrentImageNavigationEffect>(
+                               effect)) {
+                    KiriView::invokeIfSet(clearCurrentImage);
+                }
+            }
+        },
+        std::move(pageNavigationChanged), std::move(deletionInProgress)
+    };
 }
 
 std::optional<KiriView::ImageCandidateListContext> navigationContext(

@@ -1,6 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+#include "async/imagecallback.h"
 #include "candidate_test_support.h"
 #include "navigation/imagepagenavigationcontroller.h"
 
@@ -8,7 +9,9 @@
 #include <QTest>
 #include <QUrl>
 #include <cstddef>
+#include <functional>
 #include <utility>
+#include <variant>
 #include <vector>
 
 namespace {
@@ -66,15 +69,25 @@ private:
 };
 
 ImagePageNavigationController::Callbacks controllerCallbacks(
-    ImagePageNavigationController::OpenUrlCallback openUrl = {},
+    std::function<void(const QUrl &)> openUrl = {},
     ImagePageNavigationController::PageNavigationChangedCallback pageNavigationChanged = {},
-    ImagePageNavigationController::ClearCurrentImageCallback clearCurrentImage = {},
+    std::function<void()> clearCurrentImage = {},
     ImagePageNavigationController::DeletionInProgressCallback deletionInProgress = {})
 {
     return ImagePageNavigationController::Callbacks {
-        std::move(openUrl),
+        [openUrl = std::move(openUrl), clearCurrentImage = std::move(clearCurrentImage)](
+            KiriView::ImageNavigationPlan plan) mutable {
+            for (const KiriView::ImageNavigationEffect &effect : plan) {
+                if (const auto *openEffect
+                    = std::get_if<KiriView::OpenImageNavigationUrlEffect>(&effect)) {
+                    KiriView::invokeIfSet(openUrl, openEffect->url);
+                } else if (std::holds_alternative<KiriView::ClearCurrentImageNavigationEffect>(
+                               effect)) {
+                    KiriView::invokeIfSet(clearCurrentImage);
+                }
+            }
+        },
         std::move(pageNavigationChanged),
-        std::move(clearCurrentImage),
         std::move(deletionInProgress),
     };
 }
