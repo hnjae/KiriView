@@ -4,7 +4,7 @@
 #include "mediapredecodecoordinator.h"
 
 #include "mediapredecodescheduleplan.h"
-#include "predecodewindowplan.h"
+#include "mediapredecodewindowplan.h"
 
 #include <QThread>
 #include <memory>
@@ -61,7 +61,7 @@ void MediaPredecodeCoordinator::startPredecodeWindow(const PredecodePendingSched
         return;
     }
 
-    const PredecodeWindowPlan plan = predecodeWindowPlanForMediaCandidates(
+    const PredecodeWindowPlan plan = mediaPredecodeWindowPlan(
         schedule.context.currentLocation.imageUrl(), *candidates, policyInput());
     m_loadController.startWindowLoads(PredecodeLoadWindow {
         schedule.context.currentLocation.imageUrl(),

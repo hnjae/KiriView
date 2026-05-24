@@ -121,6 +121,7 @@ src/navigation/medianavigationmodel.cpp
 src/predecode/imagepredecodecoordinator.cpp
 src/predecode/mediapredecodecoordinator.cpp
 src/predecode/mediapredecodescheduleplan.cpp
+src/predecode/mediapredecodewindowplan.cpp
 src/presentation/imagepresentationcontroller.cpp
 src/presentation/imagepresentationload.cpp
 src/presentation/imagepresentationviewportcontroller.cpp

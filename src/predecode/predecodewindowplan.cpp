@@ -3,7 +3,6 @@
 
 #include "predecodewindowplan.h"
 
-#include "decoding/imageformatregistry.h"
 #include "navigation/imagenavigationmodel.h"
 
 #include <optional>
@@ -24,26 +23,6 @@ std::vector<QUrl> predecodeWindowImageUrls(
     return urls;
 }
 
-bool isPredecodeSupportedMediaImage(const KiriView::MediaNavigationCandidate &candidate)
-{
-    return KiriView::isSupportedImageFileName(candidate.name)
-        || KiriView::isSupportedImageFileName(candidate.url.fileName(QUrl::PrettyDecoded))
-        || KiriView::isSupportedImageFileName(candidate.url.toString(QUrl::PrettyDecoded));
-}
-
-std::vector<QUrl> predecodeWindowImageUrls(
-    const std::vector<KiriView::MediaNavigationCandidate> &candidates,
-    const std::vector<std::size_t> &indices)
-{
-    std::vector<QUrl> urls;
-    urls.reserve(indices.size());
-    for (std::size_t index : indices) {
-        if (index < candidates.size() && isPredecodeSupportedMediaImage(candidates.at(index))) {
-            urls.push_back(candidates.at(index).url);
-        }
-    }
-    return urls;
-}
 }
 
 namespace KiriView {
@@ -91,15 +70,4 @@ PredecodeWindowPlan predecodeWindowPlanForCandidates(
     };
 }
 
-PredecodeWindowPlan predecodeWindowPlanForMediaCandidates(const QUrl &currentUrl,
-    const std::vector<MediaNavigationCandidate> &candidates, PredecodePolicyInput policyInput)
-{
-    const PredecodeSchedulePlan schedule = predecodeSchedulePlan(
-        candidates.size(), mediaNavigationCandidateIndex(candidates, currentUrl), policyInput);
-    return PredecodeWindowPlan {
-        ArchiveDocumentLocation {},
-        predecodeWindowImageUrls(candidates, schedule.targetIndices),
-        schedule.parallelLimit,
-    };
-}
 }

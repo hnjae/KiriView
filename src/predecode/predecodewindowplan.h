@@ -7,7 +7,6 @@
 #include "location/imagelocation.h"
 #include "navigation/imagecandidatelistsource.h"
 #include "navigation/imagenavigationtypes.h"
-#include "navigation/medianavigationmodel.h"
 #include "predecodepolicy.h"
 
 #include <QUrl>
@@ -44,8 +43,6 @@ struct PredecodeWindowStartPlan {
 PredecodeWindowStartPlan predecodeWindowStartPlan(const PredecodeWindowPlanRequest &request);
 PredecodeWindowPlan predecodeWindowPlanForCandidates(
     const PredecodeWindowStartPlan &plan, const std::vector<ImageNavigationCandidate> &candidates);
-PredecodeWindowPlan predecodeWindowPlanForMediaCandidates(const QUrl &currentUrl,
-    const std::vector<MediaNavigationCandidate> &candidates, PredecodePolicyInput policyInput);
 }
 
 #endif
