@@ -41,26 +41,6 @@ QString genericFileDeletionErrorMessage()
 {
     return KiriView::imageErrorText(KiriView::ImageErrorTextId::DeleteFile);
 }
-
-KiriView::ActiveNavigationSnapshot unavailableActiveNavigation() { return {}; }
-
-KiriView::ActiveNavigationSnapshot unknownActiveNavigation()
-{
-    return KiriView::ActiveNavigationSnapshot { true };
-}
-
-KiriView::ActiveNavigationSnapshot normalizedActiveNavigation(
-    KiriView::ActiveNavigationSnapshot snapshot)
-{
-    if (!snapshot.available || !snapshot.known || snapshot.currentNumber < 1 || snapshot.count < 1
-        || snapshot.currentNumber > snapshot.count) {
-        return snapshot.available ? unknownActiveNavigation() : unavailableActiveNavigation();
-    }
-
-    snapshot.known = true;
-    snapshot.editable = true;
-    return snapshot;
-}
 }
 
 namespace KiriView {
@@ -300,16 +280,7 @@ bool DocumentSessionRuntime::atKnownLastActiveNavigation() const
 
 ActiveNavigationBoundaryScope DocumentSessionRuntime::activeNavigationBoundaryScope() const
 {
-    switch (activeNavigationSourceKind()) {
-    case ActiveNavigationSourceKind::OrdinaryDirectMedia:
-        return ActiveNavigationBoundaryScope::Media;
-    case ActiveNavigationSourceKind::ImageDocumentPages:
-        return ActiveNavigationBoundaryScope::ImageDocument;
-    case ActiveNavigationSourceKind::None:
-        return ActiveNavigationBoundaryScope::None;
-    }
-
-    return ActiveNavigationBoundaryScope::None;
+    return activeNavigationBoundaryScopeForSource(activeNavigationSourceKind());
 }
 
 std::optional<PredecodedImage> DocumentSessionRuntime::findPredecodedImage(const QUrl &url) const
@@ -862,8 +833,7 @@ void DocumentSessionRuntime::syncDirectImageCursorFromDocument()
     }
 }
 
-DocumentSessionRuntime::ActiveNavigationSourceKind
-DocumentSessionRuntime::activeNavigationSourceKind() const
+ActiveNavigationSourceKind DocumentSessionRuntime::activeNavigationSourceKind() const
 {
     switch (m_state.documentKind()) {
     case DocumentSessionKind::Video:
@@ -887,68 +857,20 @@ DocumentSessionRuntime::activeNavigationSourceKind() const
 
 ActiveNavigationSnapshot DocumentSessionRuntime::activeNavigationSnapshot() const
 {
-    ActiveNavigationSnapshot snapshot;
-    switch (activeNavigationSourceKind()) {
-    case ActiveNavigationSourceKind::OrdinaryDirectMedia:
-        snapshot = mediaActiveNavigationSnapshot();
-        break;
-    case ActiveNavigationSourceKind::ImageDocumentPages:
-        snapshot = imageDocumentActiveNavigationSnapshot();
-        break;
-    case ActiveNavigationSourceKind::None:
-        snapshot = unavailableActiveNavigation();
-        break;
-    }
-
-    if (m_state.fileDeletionInProgress()) {
-        snapshot.editable = false;
-        snapshot.canOpenPrevious = false;
-        snapshot.canOpenNext = false;
-    }
-
-    return snapshot;
+    return projectActiveNavigation(activeNavigationSourceKind(), mediaActiveNavigationInput(),
+        imageDocumentActiveNavigationInput(), m_state.fileDeletionInProgress());
 }
 
-ActiveNavigationSnapshot DocumentSessionRuntime::mediaActiveNavigationSnapshot() const
+MediaActiveNavigationInput DocumentSessionRuntime::mediaActiveNavigationInput() const
 {
-    if (!m_state.mediaNavigationKnown()) {
-        return unknownActiveNavigation();
-    }
-
-    const MediaNavigationBoundaryState &state = m_state.mediaNavigationState();
-    return normalizedActiveNavigation(ActiveNavigationSnapshot {
-        true,
-        true,
-        true,
-        state.canOpenPrevious,
-        state.canOpenNext,
-        state.atKnownFirst,
-        state.atKnownLast,
-        state.currentNumber,
-        state.count,
-    });
+    return MediaActiveNavigationInput { m_state.mediaNavigationState(),
+        m_state.mediaNavigationKnown() };
 }
 
-ActiveNavigationSnapshot DocumentSessionRuntime::imageDocumentActiveNavigationSnapshot() const
+ImageDocumentActiveNavigationInput
+DocumentSessionRuntime::imageDocumentActiveNavigationInput() const
 {
-    const int currentNumber = m_imageDocument.currentPageNumber();
-    const int currentLastNumber = m_imageDocument.currentLastPageNumber();
-    const int count = m_imageDocument.imageCount();
-    if (currentNumber < 1 || currentLastNumber < currentNumber || count < 1
-        || currentLastNumber > count) {
-        return unknownActiveNavigation();
-    }
-
-    return normalizedActiveNavigation(ActiveNavigationSnapshot {
-        true,
-        true,
-        true,
-        currentNumber > 1,
-        currentLastNumber < count,
-        currentNumber == 1,
-        currentLastNumber >= count,
-        currentNumber,
-        count,
-    });
+    return ImageDocumentActiveNavigationInput { m_imageDocument.currentPageNumber(),
+        m_imageDocument.currentLastPageNumber(), m_imageDocument.imageCount() };
 }
 }

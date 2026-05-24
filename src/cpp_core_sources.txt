@@ -163,6 +163,7 @@ src/rendering/qimagereaderscaledlevelcache.cpp
 src/rendering/qimagereadertilesource.cpp
 src/decoding/rawdecoder.cpp
 src/application/shortcuthelpmodel.cpp
+src/session/activenavigationprojection.cpp
 src/session/documentsessionruntime.cpp
 src/session/documentsessionmediacandidateloadstate.cpp
 src/session/documentsessionpublicsignals.cpp

@@ -10,6 +10,7 @@
 #include "document/imagedocumentruntimedependencies.h"
 #include "navigation/mediacandidateprovider.h"
 #include "navigation/medianavigationmodel.h"
+#include "session/activenavigationprojection.h"
 #include "session/documentsessionmediacandidateloadstate.h"
 #include "session/documentsessionstate.h"
 
@@ -32,24 +33,6 @@ struct DocumentSessionRuntimeDependencies {
     MediaNavigationCandidateProvider mediaCandidateProvider;
     FileOperationProvider fileOperationProvider;
     ImageDocumentRuntimeDependencyOverrides imageDocumentDependencies;
-};
-
-enum class ActiveNavigationBoundaryScope {
-    None,
-    Media,
-    ImageDocument,
-};
-
-struct ActiveNavigationSnapshot {
-    bool available = false;
-    bool known = false;
-    bool editable = false;
-    bool canOpenPrevious = false;
-    bool canOpenNext = false;
-    bool atKnownFirst = false;
-    bool atKnownLast = false;
-    int currentNumber = 0;
-    int count = 0;
 };
 
 class DocumentSessionRuntime final
@@ -104,12 +87,6 @@ public:
     void deleteDisplayedFile(FileDeletionMode mode);
 
 private:
-    enum class ActiveNavigationSourceKind {
-        None,
-        OrdinaryDirectMedia,
-        ImageDocumentPages,
-    };
-
     void connectDocuments();
     void syncImageDocumentFileDeletionProgress();
     void publishActiveZoomReadoutForKind(DocumentSessionKind kind);
@@ -144,8 +121,8 @@ private:
     void syncDirectImageCursorFromDocument();
     ActiveNavigationSourceKind activeNavigationSourceKind() const;
     ActiveNavigationSnapshot activeNavigationSnapshot() const;
-    ActiveNavigationSnapshot mediaActiveNavigationSnapshot() const;
-    ActiveNavigationSnapshot imageDocumentActiveNavigationSnapshot() const;
+    MediaActiveNavigationInput mediaActiveNavigationInput() const;
+    ImageDocumentActiveNavigationInput imageDocumentActiveNavigationInput() const;
 
     QObject *m_owner = nullptr;
     KiriImageDocument &m_imageDocument;
