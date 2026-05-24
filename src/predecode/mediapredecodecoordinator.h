@@ -41,7 +41,6 @@ public:
 
 private:
     void startPredecodeWindow(const PredecodePendingSchedule &schedule);
-    PredecodeScheduleContext scheduleContext(const Context &context) const;
     PredecodePolicyInput policyInput() const;
 
     PredecodeLoadController m_loadController;
