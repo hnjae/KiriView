@@ -80,6 +80,8 @@ KiriView starts in Fit mode.
 
 Fit mode scales the image as large as possible while keeping the full image visible in the viewport, including upscaling small images when space is available.
 
+Fit mode's displayed image is interpreted by the active viewport geometry frame. If a fitted axis is equal to the viewport within KiriView's geometry tolerance, that axis is not pannable and does not show a scrollbar.
+
 Fit Height mode scales the image height to the viewport height while preserving aspect ratio.
 
 Fit Width mode scales the image width to the viewport width while preserving aspect ratio.

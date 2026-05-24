@@ -102,6 +102,8 @@ When a ready image is larger than the viewport at the current zoom, horizontal a
 
 When the image is smaller than the viewport, it remains centered.
 
+KiriView derives scrollbar visibility, drag-panning availability, scan availability, and Left/Right panning fallback from the active viewport geometry frame. QML layout measurements must not independently decide whether an image is pannable.
+
 While the page number or zoom input is not focused, the plain arrow keys are fixed viewer-only shortcuts for keyboard panning and physical adjacent navigation. They are not user-configurable actions and are not listed in Keyboard Shortcuts configuration, shortcut help, or menus.
 
 When an image is horizontally pannable at the current zoom, Left and Right pan the image within the available horizontal scroll bounds.
