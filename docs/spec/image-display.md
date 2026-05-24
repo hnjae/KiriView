@@ -38,13 +38,15 @@ Larger JPEG images may first appear quickly at a lower level of detail. The visi
 
 Newly visible areas may briefly show lower detail until sharper data is ready, but routine panning should avoid blank regions.
 
+Panning a tiled static image updates the current render frame as well as tile decode scheduling. Tiles that belonged only to a previous visible area must not remain composited after the viewport position changes.
+
 For tiled static images, KiriView composites only the active tile layer for the current display scale. Cached tiles from other raster levels or SVG scale buckets may remain available for reuse, but they are not drawn over the current view.
 
 For SVG files, the active tile layer is the selected SVG raster scale bucket rather than a bitmap pyramid level.
 
 SVG tile decoding may use integer raster texture rectangles. Display placement preserves the exact fractional intrinsic SVG coverage represented by each bucket tile so adjacent tiles meet without visible gaps or overlaps at high zoom.
 
-SVG preview images are placeholders. They may be visible while current-detail tiles are missing, but stale low-resolution SVG bucket tiles do not substitute for the active bucket after zoom, viewport, rotation, or device-pixel-ratio changes.
+SVG preview images are placeholders. They may be visible while current-detail tiles are missing, but stale low-resolution SVG bucket tiles do not substitute for the active bucket after zoom, viewport, rotation, pan position, or device-pixel-ratio changes.
 
 After zooming far out and then back in, the visible SVG area eventually returns to current-detail rendering. Stale lower-detail tiles do not remain composited once KiriView can decide the active layer for the current view.
 
