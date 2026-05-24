@@ -6,6 +6,7 @@
 
 #include <QObject>
 #include <QRectF>
+#include <QSize>
 #include <QString>
 #include <QUrl>
 #include <QtGlobal>
@@ -34,6 +35,7 @@ class KiriVideoDocument : public QObject
     Q_PROPERTY(bool seekable READ seekable NOTIFY seekableChanged)
     Q_PROPERTY(bool hasVideo READ hasVideo NOTIFY hasVideoChanged)
     Q_PROPERTY(bool hasAudio READ hasAudio NOTIFY hasAudioChanged)
+    Q_PROPERTY(QSize videoSize READ videoSize NOTIFY videoSizeChanged)
     Q_PROPERTY(bool zoomPercentKnown READ zoomPercentKnown NOTIFY zoomPercentKnownChanged)
     Q_PROPERTY(int zoomPercent READ zoomPercent NOTIFY zoomPercentChanged)
     Q_PROPERTY(QObject *videoOutput READ videoOutput WRITE setVideoOutput NOTIFY videoOutputChanged)
@@ -61,6 +63,7 @@ public:
     bool seekable() const;
     bool hasVideo() const;
     bool hasAudio() const;
+    QSize videoSize() const;
     bool zoomPercentKnown() const;
     int zoomPercent() const;
     QObject *videoOutput() const;
@@ -87,6 +90,7 @@ Q_SIGNALS:
     void seekableChanged();
     void hasVideoChanged();
     void hasAudioChanged();
+    void videoSizeChanged();
     void zoomPercentKnownChanged();
     void zoomPercentChanged();
     void videoOutputChanged();

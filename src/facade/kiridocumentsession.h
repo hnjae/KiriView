@@ -24,8 +24,7 @@ class KiriDocumentSession : public QObject
     Q_PROPERTY(QUrl sourceUrl READ sourceUrl WRITE setSourceUrl NOTIFY sourceUrlChanged)
     Q_PROPERTY(DocumentKind documentKind READ documentKind NOTIFY documentKindChanged)
     Q_PROPERTY(QString errorString READ errorString NOTIFY errorStringChanged)
-    Q_PROPERTY(
-        QString windowTitleFileName READ windowTitleFileName NOTIFY windowTitleFileNameChanged)
+    Q_PROPERTY(QString windowTitleSubject READ windowTitleSubject NOTIFY windowTitleSubjectChanged)
     Q_PROPERTY(QStringList openDialogNameFilters READ openDialogNameFilters CONSTANT)
     Q_PROPERTY(bool displayedFileDeletionAvailable READ displayedFileDeletionAvailable NOTIFY
             displayedFileDeletionAvailabilityChanged)
@@ -88,7 +87,7 @@ public:
     void setSourceUrl(const QUrl &sourceUrl);
     DocumentKind documentKind() const;
     QString errorString() const;
-    QString windowTitleFileName() const;
+    QString windowTitleSubject() const;
     QStringList openDialogNameFilters() const;
     bool displayedFileDeletionAvailable() const;
     bool fileDeletionInProgress() const;
@@ -120,7 +119,7 @@ Q_SIGNALS:
     void sourceUrlChanged();
     void documentKindChanged();
     void errorStringChanged();
-    void windowTitleFileNameChanged();
+    void windowTitleSubjectChanged();
     void displayedFileDeletionAvailabilityChanged();
     void fileDeletionInProgressChanged();
     void activeZoomReadoutChanged();

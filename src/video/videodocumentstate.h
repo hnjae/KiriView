@@ -6,6 +6,7 @@
 
 #include "video/videodocumenttypes.h"
 
+#include <QSize>
 #include <QString>
 #include <QUrl>
 #include <QtGlobal>
@@ -31,6 +32,7 @@ public:
     bool seekable() const;
     bool hasVideo() const;
     bool hasAudio() const;
+    QSize videoSize() const;
     bool zoomPercentKnown() const;
     int zoomPercent() const;
     bool ended() const;
@@ -45,6 +47,7 @@ public:
     void setSeekable(bool seekable);
     void setHasVideo(bool hasVideo);
     void setHasAudio(bool hasAudio);
+    void setVideoSize(QSize size);
     void setZoomPercent(std::optional<int> zoomPercent);
     void setEnded(bool ended);
 
@@ -65,6 +68,7 @@ private:
     void appendIfSeekableChanged(std::vector<VideoDocumentChange> &changes, bool seekable);
     void appendIfHasVideoChanged(std::vector<VideoDocumentChange> &changes, bool hasVideo);
     void appendIfHasAudioChanged(std::vector<VideoDocumentChange> &changes, bool hasAudio);
+    void appendIfVideoSizeChanged(std::vector<VideoDocumentChange> &changes, QSize size);
     void appendIfZoomPercentKnownChanged(std::vector<VideoDocumentChange> &changes, bool known);
     void appendIfZoomPercentChanged(std::vector<VideoDocumentChange> &changes, int zoomPercent);
 
@@ -79,6 +83,7 @@ private:
     bool m_seekable = false;
     bool m_hasVideo = false;
     bool m_hasAudio = false;
+    QSize m_videoSize;
     bool m_zoomPercentKnown = false;
     int m_zoomPercent = 0;
     bool m_ended = false;

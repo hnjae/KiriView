@@ -5,6 +5,7 @@
 #define KIRIVIEW_VIDEOMEDIABACKEND_H
 
 #include <QObject>
+#include <QSize>
 #include <QString>
 #include <QUrl>
 #include <QtGlobal>
@@ -32,6 +33,7 @@ struct VideoMediaBackendCallbacks {
     std::function<void()> seekableChanged;
     std::function<void()> hasVideoChanged;
     std::function<void()> hasAudioChanged;
+    std::function<void()> videoSizeChanged;
     std::function<void()> videoOutputChanged;
 };
 
@@ -56,6 +58,7 @@ public:
     virtual bool seekable() const = 0;
     virtual bool hasVideo() const = 0;
     virtual bool hasAudio() const = 0;
+    virtual QSize videoSize() const = 0;
 };
 
 std::unique_ptr<VideoMediaBackend> createDefaultVideoMediaBackend(QObject *parent);

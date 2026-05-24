@@ -242,6 +242,7 @@ void TestKiriDocumentSession::directVideoRoutesToVideoDocumentWithOriginalSource
     QCOMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Video);
     QCOMPARE(session->sourceUrl(), clip);
     QCOMPARE(session->videoDocument()->sourceUrl(), clip);
+    QCOMPARE(session->windowTitleSubject(), QStringLiteral("clip.mp4"));
     QCOMPARE(session->imageDocument()->sourceUrl(), QUrl());
     QVERIFY(session->activeNavigationAvailable());
     QVERIFY(session->activeNavigationKnown());
@@ -352,6 +353,7 @@ void TestKiriDocumentSession::directImageMediaNavigationIncludesSiblingVideos()
 
     QTRY_COMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Image);
     QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Ready);
+    QCOMPARE(session->windowTitleSubject(), QStringLiteral("01.png – 2×2"));
     QVERIFY(session->activeNavigationAvailable());
     QVERIFY(session->activeNavigationKnown());
     QCOMPARE(session->activeNavigationCurrentNumber(), 1);
@@ -366,6 +368,7 @@ void TestKiriDocumentSession::directImageMediaNavigationIncludesSiblingVideos()
     QCOMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Video);
     QCOMPARE(session->sourceUrl(), videoUrl);
     QCOMPARE(session->videoDocument()->sourceUrl(), videoUrl);
+    QCOMPARE(session->windowTitleSubject(), QStringLiteral("02.mp4"));
     QCOMPARE(session->activeNavigationCurrentNumber(), 2);
     QCOMPARE(session->activeNavigationCount(), 2);
     QVERIFY(session->atKnownLastActiveNavigation());
@@ -603,6 +606,7 @@ void TestKiriDocumentSession::archiveImageDocumentProjectsActiveNavigationFromPa
     QVERIFY(session->activeNavigationEditable());
     QCOMPARE(session->activeNavigationCurrentNumber(), 1);
     QCOMPARE(session->activeNavigationCount(), 2);
+    QCOMPARE(session->windowTitleSubject(), QStringLiteral("book.cbz – 1/2"));
     QVERIFY(!session->canOpenPreviousActiveNavigation());
     QVERIFY(session->canOpenNextActiveNavigation());
     QVERIFY(session->atKnownFirstActiveNavigation());
@@ -757,6 +761,7 @@ void TestKiriDocumentSession::activeNavigationClearsWhenSwitchingFromKnownDirect
     QVERIFY(session->activeNavigationKnown());
     QCOMPARE(session->activeNavigationCurrentNumber(), 2);
     QCOMPARE(session->activeNavigationCount(), 3);
+    QCOMPARE(session->windowTitleSubject(), QStringLiteral("02.mp4"));
 
     session->setSourceUrl(archiveUrl);
 
@@ -767,6 +772,7 @@ void TestKiriDocumentSession::activeNavigationClearsWhenSwitchingFromKnownDirect
     QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Ready);
     QCOMPARE(session->activeNavigationCurrentNumber(), 1);
     QCOMPARE(session->activeNavigationCount(), 1);
+    QCOMPARE(session->windowTitleSubject(), QStringLiteral("clear.cbz – 1/1"));
 
     session->setSourceUrl(nextClip);
     QVERIFY(session->activeNavigationKnown());
@@ -776,6 +782,7 @@ void TestKiriDocumentSession::activeNavigationClearsWhenSwitchingFromKnownDirect
     session->setSourceUrl(QUrl());
 
     QCOMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Empty);
+    QCOMPARE(session->windowTitleSubject(), QString());
     compareUnavailableActiveNavigation(*session);
 }
 

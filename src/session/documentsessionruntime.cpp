@@ -8,6 +8,7 @@
 #include "localization/imageerrortext.h"
 #include "location/imageurl.h"
 #include "predecode/mediapredecodecoordinator.h"
+#include "session/windowtitleprojection.h"
 
 #include <QObject>
 #include <QString>
@@ -72,19 +73,7 @@ QString DocumentSessionRuntime::errorString() const
     return QString();
 }
 
-QString DocumentSessionRuntime::windowTitleFileName() const
-{
-    switch (m_state.documentKind()) {
-    case DocumentSessionKind::Image:
-        return m_imageDocument.windowTitleFileName();
-    case DocumentSessionKind::Video:
-        return m_videoDocument.windowTitleFileName();
-    case DocumentSessionKind::Empty:
-        return QString();
-    }
-
-    return QString();
-}
+QString DocumentSessionRuntime::windowTitleSubject() const { return m_state.windowTitleSubject(); }
 
 bool DocumentSessionRuntime::displayedFileDeletionAvailable() const
 {
@@ -405,7 +394,9 @@ void DocumentSessionRuntime::connectDocuments()
     QObject::connect(&m_imageDocument, &KiriImageDocument::statusChanged, m_owner,
         [this]() { syncFromImageDocument(); });
     QObject::connect(&m_imageDocument, &KiriImageDocument::windowTitleFileNameChanged, m_owner,
-        [this]() { m_state.publish(DocumentSessionChange::WindowTitleFileName); });
+        [this]() { recomputeWindowTitleSubject(); });
+    QObject::connect(&m_imageDocument, &KiriImageDocument::imageSizeChanged, m_owner,
+        [this]() { recomputeWindowTitleSubject(); });
     QObject::connect(&m_imageDocument, &KiriImageDocument::errorStringChanged, m_owner,
         [this]() { m_state.publish(DocumentSessionChange::ErrorString); });
     QObject::connect(&m_imageDocument, &KiriImageDocument::documentScopeChanged, m_owner, [this]() {
@@ -434,7 +425,9 @@ void DocumentSessionRuntime::connectDocuments()
     QObject::connect(&m_videoDocument, &KiriVideoDocument::statusChanged, m_owner,
         [this]() { syncFromVideoDocument(); });
     QObject::connect(&m_videoDocument, &KiriVideoDocument::windowTitleFileNameChanged, m_owner,
-        [this]() { m_state.publish(DocumentSessionChange::WindowTitleFileName); });
+        [this]() { recomputeWindowTitleSubject(); });
+    QObject::connect(&m_videoDocument, &KiriVideoDocument::videoSizeChanged, m_owner,
+        [this]() { recomputeWindowTitleSubject(); });
     QObject::connect(&m_videoDocument, &KiriVideoDocument::errorStringChanged, m_owner,
         [this]() { m_state.publish(DocumentSessionChange::ErrorString); });
     QObject::connect(&m_videoDocument, &KiriVideoDocument::zoomPercentKnownChanged, m_owner,
@@ -470,6 +463,12 @@ void DocumentSessionRuntime::publishActiveNavigationForImagePages()
 void DocumentSessionRuntime::recomputeActiveNavigation()
 {
     m_state.setActiveNavigationSnapshot(projectedActiveNavigationSnapshot());
+    recomputeWindowTitleSubject();
+}
+
+void DocumentSessionRuntime::recomputeWindowTitleSubject()
+{
+    m_state.setWindowTitleSubject(projectedWindowTitleSubject());
 }
 
 void DocumentSessionRuntime::routeSourceUrl(const QUrl &sourceUrl)
@@ -912,6 +911,50 @@ ActiveNavigationSnapshot DocumentSessionRuntime::projectedActiveNavigationSnapsh
 {
     return projectActiveNavigation(activeNavigationSourceKind(), mediaActiveNavigationInput(),
         imageDocumentActiveNavigationInput(), m_state.fileDeletionInProgress());
+}
+
+QString DocumentSessionRuntime::projectedWindowTitleSubject() const
+{
+    const ActiveNavigationSourceKind sourceKind = activeNavigationSourceKind();
+    switch (m_state.documentKind()) {
+    case DocumentSessionKind::Image:
+        return projectWindowTitleSubject(WindowTitleSubjectInput {
+            m_imageDocument.windowTitleFileName(),
+            sourceKind,
+            directMediaWindowTitleSizeForKind(DocumentSessionKind::Image, sourceKind),
+            m_state.activeNavigationSnapshot(),
+        });
+    case DocumentSessionKind::Video:
+        return projectWindowTitleSubject(WindowTitleSubjectInput {
+            m_videoDocument.windowTitleFileName(),
+            sourceKind,
+            directMediaWindowTitleSizeForKind(DocumentSessionKind::Video, sourceKind),
+            m_state.activeNavigationSnapshot(),
+        });
+    case DocumentSessionKind::Empty:
+        return {};
+    }
+
+    return {};
+}
+
+QSize DocumentSessionRuntime::directMediaWindowTitleSizeForKind(
+    DocumentSessionKind kind, ActiveNavigationSourceKind sourceKind) const
+{
+    if (sourceKind != ActiveNavigationSourceKind::OrdinaryDirectMedia) {
+        return {};
+    }
+
+    switch (kind) {
+    case DocumentSessionKind::Image:
+        return m_imageDocument.primaryImageSize();
+    case DocumentSessionKind::Video:
+        return m_videoDocument.videoSize();
+    case DocumentSessionKind::Empty:
+        return {};
+    }
+
+    return {};
 }
 
 MediaActiveNavigationInput DocumentSessionRuntime::mediaActiveNavigationInput() const

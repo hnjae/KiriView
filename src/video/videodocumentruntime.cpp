@@ -84,6 +84,7 @@ void VideoDocumentRuntime::installMediaBackendCallbacks()
             updateZoomPercent();
         },
         [this]() { m_state.setHasAudio(m_mediaBackend->hasAudio()); },
+        [this]() { m_state.setVideoSize(m_mediaBackend->videoSize()); },
         {},
     });
 }
@@ -139,6 +140,8 @@ bool VideoDocumentRuntime::seekable() const { return m_state.seekable(); }
 bool VideoDocumentRuntime::hasVideo() const { return m_state.hasVideo(); }
 
 bool VideoDocumentRuntime::hasAudio() const { return m_state.hasAudio(); }
+
+QSize VideoDocumentRuntime::videoSize() const { return m_state.videoSize(); }
 
 bool VideoDocumentRuntime::zoomPercentKnown() const { return m_state.zoomPercentKnown(); }
 
@@ -279,6 +282,7 @@ void VideoDocumentRuntime::applyResolvedPlaybackUrl(const VideoPlaybackUrlResolu
 {
     VideoMediaBackend *mediaBackend = ensureMediaBackend();
     mediaBackend->setSource(resolution.playbackUrl);
+    m_state.setVideoSize(mediaBackend->videoSize());
     updateStatusFromBackend();
     play();
 }

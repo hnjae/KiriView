@@ -42,8 +42,8 @@ void DocumentSessionPublicSignalEmitter::emitSignal(DocumentSessionPublicSignal 
     case DocumentSessionPublicSignal::ErrorString:
         run(m_operations.errorStringChanged);
         return;
-    case DocumentSessionPublicSignal::WindowTitleFileName:
-        run(m_operations.windowTitleFileNameChanged);
+    case DocumentSessionPublicSignal::WindowTitleSubject:
+        run(m_operations.windowTitleSubjectChanged);
         return;
     case DocumentSessionPublicSignal::ActiveZoomReadout:
         run(m_operations.activeZoomReadoutChanged);
@@ -69,8 +69,8 @@ std::vector<DocumentSessionPublicSignal> documentSessionPublicSignals(DocumentSe
         return { DocumentSessionPublicSignal::DocumentKind };
     case DocumentSessionChange::ErrorString:
         return { DocumentSessionPublicSignal::ErrorString };
-    case DocumentSessionChange::WindowTitleFileName:
-        return { DocumentSessionPublicSignal::WindowTitleFileName };
+    case DocumentSessionChange::WindowTitleSubject:
+        return { DocumentSessionPublicSignal::WindowTitleSubject };
     case DocumentSessionChange::ActiveZoomReadout:
         return { DocumentSessionPublicSignal::ActiveZoomReadout };
     case DocumentSessionChange::FileDeletionAvailability:

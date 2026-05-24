@@ -4,6 +4,7 @@
 #include "video/videodocumentstate.h"
 
 #include <QObject>
+#include <QSize>
 #include <QTest>
 #include <QUrl>
 #include <optional>
@@ -60,6 +61,7 @@ void TestVideoDocumentState::sourceLoadResetsPublicPlaybackStateInOrder()
     state.setSeekable(true);
     state.setHasVideo(true);
     state.setHasAudio(true);
+    state.setVideoSize(QSize(1920, 1080));
     state.setZoomPercent(std::optional<int>(125));
     batches.clear();
 
@@ -75,12 +77,13 @@ void TestVideoDocumentState::sourceLoadResetsPublicPlaybackStateInOrder()
     QVERIFY(!state.seekable());
     QVERIFY(!state.hasVideo());
     QVERIFY(!state.hasAudio());
+    QCOMPARE(state.videoSize(), QSize());
     QVERIFY(!state.zoomPercentKnown());
     QCOMPARE(state.zoomPercent(), 0);
     compareChanges(batches.front(),
         { Change::SourceUrl, Change::WindowTitleFileName, Change::ErrorString, Change::Status,
             Change::Duration, Change::Position, Change::Playing, Change::Seekable, Change::HasVideo,
-            Change::HasAudio, Change::ZoomPercentKnown, Change::ZoomPercent });
+            Change::HasAudio, Change::VideoSize, Change::ZoomPercentKnown, Change::ZoomPercent });
 }
 
 void TestVideoDocumentState::clearedSourceResetsPublicStateInOrder()
@@ -98,6 +101,7 @@ void TestVideoDocumentState::clearedSourceResetsPublicStateInOrder()
     state.setSeekable(true);
     state.setHasVideo(true);
     state.setHasAudio(true);
+    state.setVideoSize(QSize(1920, 1080));
     state.setZoomPercent(std::optional<int>(125));
     batches.clear();
 
@@ -113,12 +117,13 @@ void TestVideoDocumentState::clearedSourceResetsPublicStateInOrder()
     QVERIFY(!state.seekable());
     QVERIFY(!state.hasVideo());
     QVERIFY(!state.hasAudio());
+    QCOMPARE(state.videoSize(), QSize());
     QVERIFY(!state.zoomPercentKnown());
     QCOMPARE(state.zoomPercent(), 0);
     compareChanges(batches.front(),
         { Change::SourceUrl, Change::Status, Change::ErrorString, Change::WindowTitleFileName,
             Change::Duration, Change::Position, Change::Playing, Change::Seekable, Change::HasVideo,
-            Change::HasAudio, Change::ZoomPercentKnown, Change::ZoomPercent });
+            Change::HasAudio, Change::VideoSize, Change::ZoomPercentKnown, Change::ZoomPercent });
 }
 
 void TestVideoDocumentState::scalarSettersOnlyNotifyOnChangedValues()
@@ -129,6 +134,7 @@ void TestVideoDocumentState::scalarSettersOnlyNotifyOnChangedValues()
 
     state.setDuration(-10);
     state.setPosition(-10);
+    state.setVideoSize(QSize(-1, 1080));
     QVERIFY(batches.empty());
 
     state.setDuration(5000);
@@ -141,15 +147,18 @@ void TestVideoDocumentState::scalarSettersOnlyNotifyOnChangedValues()
     state.setHasVideo(true);
     state.setHasAudio(true);
     state.setHasAudio(true);
+    state.setVideoSize(QSize(1920, 1080));
+    state.setVideoSize(QSize(1920, 1080));
 
     QCOMPARE(state.duration(), 5000);
     QCOMPARE(state.position(), 2500);
     QVERIFY(state.seekable());
     QVERIFY(state.hasVideo());
     QVERIFY(state.hasAudio());
+    QCOMPARE(state.videoSize(), QSize(1920, 1080));
     compareChanges(flatten(batches),
-        { Change::Duration, Change::Position, Change::Seekable, Change::HasVideo,
-            Change::HasAudio });
+        { Change::Duration, Change::Position, Change::Seekable, Change::HasVideo, Change::HasAudio,
+            Change::VideoSize });
 }
 
 void TestVideoDocumentState::zoomPercentStatePublishesKnownValuePair()

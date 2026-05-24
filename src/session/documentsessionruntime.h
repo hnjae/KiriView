@@ -15,6 +15,7 @@
 #include "session/documentsessionrouteplan.h"
 #include "session/documentsessionstate.h"
 
+#include <QSize>
 #include <QString>
 #include <QUrl>
 #include <QtGlobal>
@@ -57,7 +58,7 @@ public:
     void setSourceUrl(const QUrl &sourceUrl);
     DocumentSessionKind documentKind() const;
     QString errorString() const;
-    QString windowTitleFileName() const;
+    QString windowTitleSubject() const;
     bool displayedFileDeletionAvailable() const;
     bool fileDeletionInProgress() const;
     bool activeZoomPercentAvailable() const;
@@ -100,6 +101,7 @@ private:
     void publishActiveZoomReadoutForKind(DocumentSessionKind kind);
     void publishActiveNavigationForImagePages();
     void recomputeActiveNavigation();
+    void recomputeWindowTitleSubject();
     void routeSourceUrl(const QUrl &sourceUrl);
     void openMediaUrl(const QUrl &url);
     void executeRoutePlan(const DocumentSessionRoutePlan &plan);
@@ -129,6 +131,9 @@ private:
     bool syncDirectImageCursorFromDocument();
     ActiveNavigationSourceKind activeNavigationSourceKind() const;
     ActiveNavigationSnapshot projectedActiveNavigationSnapshot() const;
+    QString projectedWindowTitleSubject() const;
+    QSize directMediaWindowTitleSizeForKind(
+        DocumentSessionKind kind, ActiveNavigationSourceKind sourceKind) const;
     MediaActiveNavigationInput mediaActiveNavigationInput() const;
     ImageDocumentActiveNavigationInput imageDocumentActiveNavigationInput() const;
 

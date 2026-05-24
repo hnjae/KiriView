@@ -11,6 +11,7 @@
 #include <QObject>
 #include <QPointer>
 #include <QRectF>
+#include <QSize>
 #include <QString>
 #include <QUrl>
 #include <functional>
@@ -44,6 +45,7 @@ public:
     bool seekable() const;
     bool hasVideo() const;
     bool hasAudio() const;
+    QSize videoSize() const;
     bool zoomPercentKnown() const;
     int zoomPercent() const;
     QObject *videoOutput() const;

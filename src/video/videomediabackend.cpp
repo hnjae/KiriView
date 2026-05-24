@@ -6,7 +6,9 @@
 #include "async/imagecallback.h"
 
 #include <QAudioOutput>
+#include <QMediaMetaData>
 #include <QMediaPlayer>
+#include <QVariant>
 #include <algorithm>
 #include <utility>
 
@@ -36,6 +38,8 @@ public:
             [this]() { KiriView::invokeIfSet(m_callbacks.hasVideoChanged); });
         QObject::connect(&m_player, &QMediaPlayer::hasAudioChanged, this,
             [this]() { KiriView::invokeIfSet(m_callbacks.hasAudioChanged); });
+        QObject::connect(&m_player, &QMediaPlayer::metaDataChanged, this,
+            [this]() { KiriView::invokeIfSet(m_callbacks.videoSizeChanged); });
         QObject::connect(&m_player, &QMediaPlayer::videoOutputChanged, this,
             [this]() { KiriView::invokeIfSet(m_callbacks.videoOutputChanged); });
     }
@@ -84,6 +88,10 @@ public:
     bool seekable() const override { return m_player.isSeekable(); }
     bool hasVideo() const override { return m_player.hasVideo(); }
     bool hasAudio() const override { return m_player.hasAudio(); }
+    QSize videoSize() const override
+    {
+        return m_player.metaData().value(QMediaMetaData::Resolution).toSize();
+    }
 
 private:
     QMediaPlayer m_player;

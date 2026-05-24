@@ -8,6 +8,7 @@
 #include <QQuickItem>
 #include <QQuickWindow>
 #include <QRectF>
+#include <QSize>
 #include <QTest>
 #include <memory>
 #include <utility>
@@ -61,6 +62,7 @@ public:
     bool seekable() const override { return false; }
     bool hasVideo() const override { return videoAvailable; }
     bool hasAudio() const override { return false; }
+    QSize videoSize() const override { return {}; }
 
     void emitStatus(KiriView::VideoMediaStatus status)
     {

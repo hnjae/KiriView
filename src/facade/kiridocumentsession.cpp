@@ -68,8 +68,8 @@ KiriView::DocumentSessionPublicSignalOperations publicSignalOperations(KiriDocum
     operations.sourceUrlChanged = [&session]() { Q_EMIT session.sourceUrlChanged(); };
     operations.documentKindChanged = [&session]() { Q_EMIT session.documentKindChanged(); };
     operations.errorStringChanged = [&session]() { Q_EMIT session.errorStringChanged(); };
-    operations.windowTitleFileNameChanged
-        = [&session]() { Q_EMIT session.windowTitleFileNameChanged(); };
+    operations.windowTitleSubjectChanged
+        = [&session]() { Q_EMIT session.windowTitleSubjectChanged(); };
     operations.displayedFileDeletionAvailabilityChanged
         = [&session]() { Q_EMIT session.displayedFileDeletionAvailabilityChanged(); };
     operations.fileDeletionInProgressChanged
@@ -122,10 +122,7 @@ KiriDocumentSession::DocumentKind KiriDocumentSession::documentKind() const
 
 QString KiriDocumentSession::errorString() const { return m_runtime->errorString(); }
 
-QString KiriDocumentSession::windowTitleFileName() const
-{
-    return m_runtime->windowTitleFileName();
-}
+QString KiriDocumentSession::windowTitleSubject() const { return m_runtime->windowTitleSubject(); }
 
 QStringList KiriDocumentSession::openDialogNameFilters() const
 {

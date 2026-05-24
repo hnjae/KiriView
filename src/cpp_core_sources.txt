@@ -169,6 +169,7 @@ src/session/documentsessionruntime.cpp
 src/session/documentsessionmediacandidateloadstate.cpp
 src/session/documentsessionpublicsignals.cpp
 src/session/documentsessionstate.cpp
+src/session/windowtitleprojection.cpp
 src/rendering/staticimage.cpp
 src/decoding/staticimagedecode.cpp
 src/system/systemmemory.cpp

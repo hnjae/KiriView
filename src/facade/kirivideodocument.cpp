@@ -39,6 +39,7 @@ KiriView::VideoDocumentPublicSignalOperations publicSignalOperations(KiriVideoDo
     operations.seekableChanged = [&document]() { Q_EMIT document.seekableChanged(); };
     operations.hasVideoChanged = [&document]() { Q_EMIT document.hasVideoChanged(); };
     operations.hasAudioChanged = [&document]() { Q_EMIT document.hasAudioChanged(); };
+    operations.videoSizeChanged = [&document]() { Q_EMIT document.videoSizeChanged(); };
     operations.zoomPercentKnownChanged
         = [&document]() { Q_EMIT document.zoomPercentKnownChanged(); };
     operations.zoomPercentChanged = [&document]() { Q_EMIT document.zoomPercentChanged(); };
@@ -82,6 +83,8 @@ bool KiriVideoDocument::seekable() const { return m_runtime->seekable(); }
 bool KiriVideoDocument::hasVideo() const { return m_runtime->hasVideo(); }
 
 bool KiriVideoDocument::hasAudio() const { return m_runtime->hasAudio(); }
+
+QSize KiriVideoDocument::videoSize() const { return m_runtime->videoSize(); }
 
 bool KiriVideoDocument::zoomPercentKnown() const { return m_runtime->zoomPercentKnown(); }
 

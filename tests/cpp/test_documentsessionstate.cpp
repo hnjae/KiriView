@@ -15,6 +15,7 @@ class TestDocumentSessionState : public QObject
 private Q_SLOTS:
     void sourceIdentityOnlyNotifiesWhenChanged();
     void documentKindPublishesDerivedPublicChanges();
+    void windowTitleSubjectOnlyNotifiesWhenChanged();
     void fileDeletionProgressPublishesProgressAndAvailability();
     void mediaNavigationStateOnlyUpdatesWhenBoundaryChanges();
     void activeNavigationSnapshotOnlyNotifiesWhenProjectionChanges();
@@ -54,15 +55,32 @@ void TestDocumentSessionState::documentKindPublishesDerivedPublicChanges()
 
     QCOMPARE(state.documentKind(), KiriView::DocumentSessionKind::Video);
     QCOMPARE(batches.size(), std::size_t(1));
-    QCOMPARE(batches.back().size(), std::size_t(5));
+    QCOMPARE(batches.back().size(), std::size_t(4));
     QCOMPARE(batches.back().at(0), KiriView::DocumentSessionChange::DocumentKind);
     QCOMPARE(batches.back().at(1), KiriView::DocumentSessionChange::ActiveZoomReadout);
-    QCOMPARE(batches.back().at(2), KiriView::DocumentSessionChange::WindowTitleFileName);
-    QCOMPARE(batches.back().at(3), KiriView::DocumentSessionChange::ErrorString);
-    QCOMPARE(batches.back().at(4), KiriView::DocumentSessionChange::FileDeletionAvailability);
+    QCOMPARE(batches.back().at(2), KiriView::DocumentSessionChange::ErrorString);
+    QCOMPARE(batches.back().at(3), KiriView::DocumentSessionChange::FileDeletionAvailability);
 
     state.setDocumentKind(KiriView::DocumentSessionKind::Video);
     QCOMPARE(batches.size(), std::size_t(1));
+}
+
+void TestDocumentSessionState::windowTitleSubjectOnlyNotifiesWhenChanged()
+{
+    std::vector<KiriView::DocumentSessionChange> changes;
+    KiriView::DocumentSessionState state(
+        [&changes](const std::vector<KiriView::DocumentSessionChange> &publishedChanges) {
+            changes.insert(changes.end(), publishedChanges.cbegin(), publishedChanges.cend());
+        });
+
+    state.setWindowTitleSubject(QStringLiteral("clip.mp4 – 1920×1080"));
+
+    QCOMPARE(state.windowTitleSubject(), QStringLiteral("clip.mp4 – 1920×1080"));
+    QCOMPARE(changes.size(), std::size_t(1));
+    QCOMPARE(changes.at(0), KiriView::DocumentSessionChange::WindowTitleSubject);
+
+    state.setWindowTitleSubject(QStringLiteral("clip.mp4 – 1920×1080"));
+    QCOMPARE(changes.size(), std::size_t(1));
 }
 
 void TestDocumentSessionState::fileDeletionProgressPublishesProgressAndAvailability()

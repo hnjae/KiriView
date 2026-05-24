@@ -5,6 +5,7 @@
 
 #include <QObject>
 #include <QPointer>
+#include <QSize>
 #include <QTest>
 #include <memory>
 #include <utility>
@@ -24,6 +25,7 @@ private Q_SLOTS:
     void resolverFailureSurfacesErrorWithoutChangingSourceUrl();
     void staleResolverCompletionsAreIgnored();
     void resolverCleanupRunsOnSourceChangeAndDestruction();
+    void videoSizeFollowsBackendMetadata();
     void naturalPlaybackEndKeepsFinalPositionWithoutStopping();
     void playAfterNaturalEndRestartsFromBeginningWhenSeekable();
     void seekByClampsToKnownDuration();
@@ -89,6 +91,7 @@ public:
     bool seekable() const override { return isSeekable; }
     bool hasVideo() const override { return videoAvailable; }
     bool hasAudio() const override { return audioAvailable; }
+    QSize videoSize() const override { return currentVideoSize; }
 
     void emitStatus(KiriView::VideoMediaStatus status)
     {
@@ -114,6 +117,12 @@ public:
         callbacks.seekableChanged();
     }
 
+    void emitVideoSize(QSize size)
+    {
+        currentVideoSize = size;
+        callbacks.videoSizeChanged();
+    }
+
     QUrl sourceUrl;
     QPointer<QObject> output;
     KiriView::VideoMediaBackendCallbacks callbacks;
@@ -125,6 +134,7 @@ public:
     bool isSeekable = false;
     bool videoAvailable = false;
     bool audioAvailable = false;
+    QSize currentVideoSize;
     int setSourceCount = 0;
     int setPositionCount = 0;
     int setVideoOutputCount = 0;
@@ -220,6 +230,7 @@ void TestVideoDocumentRuntime::initialStateIsNull()
     QVERIFY(!fixture.runtime->seekable());
     QVERIFY(!fixture.runtime->hasVideo());
     QVERIFY(!fixture.runtime->hasAudio());
+    QCOMPARE(fixture.runtime->videoSize(), QSize());
     QCOMPARE(fixture.runtime->videoOutput(), nullptr);
 }
 
@@ -386,6 +397,21 @@ void TestVideoDocumentRuntime::resolverCleanupRunsOnSourceChangeAndDestruction()
 
     QCOMPARE(resolverState->cancelCount, 3);
     QCOMPARE(resolverState->cleanupCount, 3);
+}
+
+void TestVideoDocumentRuntime::videoSizeFollowsBackendMetadata()
+{
+    RuntimeFixture fixture;
+    const QUrl sourceUrl = QUrl::fromLocalFile(QStringLiteral("/home/me/clip.mp4"));
+
+    fixture.runtime->setSourceUrl(sourceUrl);
+    fixture.resolveLatest(sourceUrl);
+
+    fixture.backend->emitVideoSize(QSize(1920, 1080));
+    QCOMPARE(fixture.runtime->videoSize(), QSize(1920, 1080));
+
+    fixture.backend->emitVideoSize(QSize());
+    QCOMPARE(fixture.runtime->videoSize(), QSize());
 }
 
 void TestVideoDocumentRuntime::naturalPlaybackEndKeepsFinalPositionWithoutStopping()

@@ -23,6 +23,7 @@ enum class VideoDocumentChange {
     Seekable,
     HasVideo,
     HasAudio,
+    VideoSize,
     ZoomPercentKnown,
     ZoomPercent,
     VideoOutput,

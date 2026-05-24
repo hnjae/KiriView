@@ -13,6 +13,15 @@ QString fileNameForWindowTitle(const QUrl &sourceUrl)
 }
 
 qint64 nonNegative(qint64 value) { return std::max<qint64>(0, value); }
+
+QSize normalizedVideoSize(QSize size)
+{
+    if (size.width() <= 0 || size.height() <= 0) {
+        return {};
+    }
+
+    return size;
+}
 }
 
 namespace KiriView {
@@ -41,6 +50,8 @@ bool VideoDocumentState::hasVideo() const { return m_hasVideo; }
 
 bool VideoDocumentState::hasAudio() const { return m_hasAudio; }
 
+QSize VideoDocumentState::videoSize() const { return m_videoSize; }
+
 bool VideoDocumentState::zoomPercentKnown() const { return m_zoomPercentKnown; }
 
 int VideoDocumentState::zoomPercent() const { return m_zoomPercent; }
@@ -62,6 +73,7 @@ void VideoDocumentState::resetForClearedSource()
     appendIfSeekableChanged(changes, false);
     appendIfHasVideoChanged(changes, false);
     appendIfHasAudioChanged(changes, false);
+    appendIfVideoSizeChanged(changes, {});
     appendIfZoomPercentKnownChanged(changes, false);
     appendIfZoomPercentChanged(changes, 0);
     publish(std::move(changes));
@@ -82,6 +94,7 @@ void VideoDocumentState::resetForSourceLoad(const QUrl &sourceUrl)
     appendIfSeekableChanged(changes, false);
     appendIfHasVideoChanged(changes, false);
     appendIfHasAudioChanged(changes, false);
+    appendIfVideoSizeChanged(changes, {});
     appendIfZoomPercentKnownChanged(changes, false);
     appendIfZoomPercentChanged(changes, 0);
     publish(std::move(changes));
@@ -144,6 +157,13 @@ void VideoDocumentState::setHasAudio(bool hasAudio)
 {
     std::vector<VideoDocumentChange> changes;
     appendIfHasAudioChanged(changes, hasAudio);
+    publish(std::move(changes));
+}
+
+void VideoDocumentState::setVideoSize(QSize size)
+{
+    std::vector<VideoDocumentChange> changes;
+    appendIfVideoSizeChanged(changes, size);
     publish(std::move(changes));
 }
 
@@ -295,6 +315,18 @@ void VideoDocumentState::appendIfHasAudioChanged(
 
     m_hasAudio = hasAudio;
     changes.push_back(VideoDocumentChange::HasAudio);
+}
+
+void VideoDocumentState::appendIfVideoSizeChanged(
+    std::vector<VideoDocumentChange> &changes, QSize size)
+{
+    const QSize normalizedSize = normalizedVideoSize(size);
+    if (m_videoSize == normalizedSize) {
+        return;
+    }
+
+    m_videoSize = normalizedSize;
+    changes.push_back(VideoDocumentChange::VideoSize);
 }
 
 void VideoDocumentState::appendIfZoomPercentKnownChanged(

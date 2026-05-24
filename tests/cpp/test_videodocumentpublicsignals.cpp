@@ -42,6 +42,7 @@ KiriView::VideoDocumentPublicSignalOperations recordingOperations(QStringList &e
     operations.seekableChanged = [&events]() { events.append(QStringLiteral("seekable")); };
     operations.hasVideoChanged = [&events]() { events.append(QStringLiteral("hasVideo")); };
     operations.hasAudioChanged = [&events]() { events.append(QStringLiteral("hasAudio")); };
+    operations.videoSizeChanged = [&events]() { events.append(QStringLiteral("videoSize")); };
     operations.zoomPercentKnownChanged
         = [&events]() { events.append(QStringLiteral("zoomPercentKnown")); };
     operations.zoomPercentChanged = [&events]() { events.append(QStringLiteral("zoomPercent")); };
@@ -74,6 +75,8 @@ void TestVideoDocumentPublicSignals::publicSignalPlansReturnSignalsInEmissionOrd
         KiriView::videoDocumentPublicSignals(Change::HasVideo), { Signal::HasVideo });
     comparePublicSignals(
         KiriView::videoDocumentPublicSignals(Change::HasAudio), { Signal::HasAudio });
+    comparePublicSignals(
+        KiriView::videoDocumentPublicSignals(Change::VideoSize), { Signal::VideoSize });
     comparePublicSignals(KiriView::videoDocumentPublicSignals(Change::ZoomPercentKnown),
         { Signal::ZoomPercentKnown });
     comparePublicSignals(

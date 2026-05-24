@@ -23,7 +23,7 @@ enum class DocumentSessionChange {
     SourceUrl,
     DocumentKind,
     ErrorString,
-    WindowTitleFileName,
+    WindowTitleSubject,
     ActiveZoomReadout,
     FileDeletionAvailability,
     FileDeletionInProgress,
@@ -46,6 +46,7 @@ public:
     const QUrl &sourceUrl() const;
     DocumentSessionKind documentKind() const;
     const QString &sessionErrorString() const;
+    const QString &windowTitleSubject() const;
     bool fileDeletionInProgress() const;
     const MediaNavigationBoundaryState &mediaNavigationState() const;
     bool mediaNavigationKnown() const;
@@ -59,6 +60,7 @@ public:
     void setMediaNavigationState(MediaNavigationBoundaryState state, bool known);
     void setActiveNavigationSnapshot(ActiveNavigationSnapshot snapshot);
     void setSessionErrorString(const QString &errorString);
+    void setWindowTitleSubject(const QString &subject);
     bool clearDirectMediaCursor();
     bool requestDirectImageCursor(const QUrl &url);
     bool confirmDirectImageCursor(const QUrl &url);
@@ -78,6 +80,7 @@ private:
     bool m_mediaNavigationKnown = false;
     bool m_fileDeletionInProgress = false;
     QString m_sessionErrorString;
+    QString m_windowTitleSubject;
 };
 }
 

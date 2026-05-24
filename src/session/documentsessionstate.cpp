@@ -78,6 +78,8 @@ DocumentSessionKind DocumentSessionState::documentKind() const { return m_docume
 
 const QString &DocumentSessionState::sessionErrorString() const { return m_sessionErrorString; }
 
+const QString &DocumentSessionState::windowTitleSubject() const { return m_windowTitleSubject; }
+
 bool DocumentSessionState::fileDeletionInProgress() const { return m_fileDeletionInProgress; }
 
 const MediaNavigationBoundaryState &DocumentSessionState::mediaNavigationState() const
@@ -116,8 +118,7 @@ void DocumentSessionState::setDocumentKind(DocumentSessionKind kind)
     }
 
     publish({ DocumentSessionChange::DocumentKind, DocumentSessionChange::ActiveZoomReadout,
-        DocumentSessionChange::WindowTitleFileName, DocumentSessionChange::ErrorString,
-        DocumentSessionChange::FileDeletionAvailability });
+        DocumentSessionChange::ErrorString, DocumentSessionChange::FileDeletionAvailability });
 }
 
 void DocumentSessionState::setFileDeletionInProgress(bool inProgress)
@@ -155,6 +156,13 @@ void DocumentSessionState::setSessionErrorString(const QString &errorString)
 {
     if (replaceIfChanged(m_sessionErrorString, errorString)) {
         publish(DocumentSessionChange::ErrorString);
+    }
+}
+
+void DocumentSessionState::setWindowTitleSubject(const QString &subject)
+{
+    if (replaceIfChanged(m_windowTitleSubject, subject)) {
+        publish(DocumentSessionChange::WindowTitleSubject);
     }
 }
 

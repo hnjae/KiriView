@@ -62,7 +62,7 @@ void TestMainWindowVideoIntegration::mainWindowRoutesExternalInputsThroughDocume
     QVERIFY(mainQml.contains(QStringLiteral("sourceUrl = root.initialSourceUrl")));
     QVERIFY(!mainQml.contains(QStringLiteral("imageDocument.sourceUrl =")));
     QVERIFY(mainQml.contains(QStringLiteral("nameFilters: documentSession.openDialogNameFilters")));
-    QVERIFY(mainQml.contains(QStringLiteral("title: documentSession.windowTitleFileName")));
+    QVERIFY(mainQml.contains(QStringLiteral("title: documentSession.windowTitleSubject")));
 }
 
 void TestMainWindowVideoIntegration::imageViewportUsesExternallyOwnedImageDocument()

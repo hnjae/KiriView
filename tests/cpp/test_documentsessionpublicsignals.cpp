@@ -34,8 +34,8 @@ KiriView::DocumentSessionPublicSignalOperations recordingOperations(QStringList 
     operations.sourceUrlChanged = [&events]() { events.append(QStringLiteral("sourceUrl")); };
     operations.documentKindChanged = [&events]() { events.append(QStringLiteral("documentKind")); };
     operations.errorStringChanged = [&events]() { events.append(QStringLiteral("errorString")); };
-    operations.windowTitleFileNameChanged
-        = [&events]() { events.append(QStringLiteral("windowTitleFileName")); };
+    operations.windowTitleSubjectChanged
+        = [&events]() { events.append(QStringLiteral("windowTitleSubject")); };
     operations.activeZoomReadoutChanged
         = [&events]() { events.append(QStringLiteral("activeZoomReadout")); };
     operations.displayedFileDeletionAvailabilityChanged
@@ -59,8 +59,8 @@ void TestDocumentSessionPublicSignals::publicSignalPlansReturnSignalsInEmissionO
         KiriView::documentSessionPublicSignals(Change::DocumentKind), { Signal::DocumentKind });
     comparePublicSignals(
         KiriView::documentSessionPublicSignals(Change::ErrorString), { Signal::ErrorString });
-    comparePublicSignals(KiriView::documentSessionPublicSignals(Change::WindowTitleFileName),
-        { Signal::WindowTitleFileName });
+    comparePublicSignals(KiriView::documentSessionPublicSignals(Change::WindowTitleSubject),
+        { Signal::WindowTitleSubject });
     comparePublicSignals(KiriView::documentSessionPublicSignals(Change::ActiveZoomReadout),
         { Signal::ActiveZoomReadout });
     comparePublicSignals(KiriView::documentSessionPublicSignals(Change::FileDeletionAvailability),
