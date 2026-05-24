@@ -5,6 +5,7 @@
 #define KIRIVIEW_IMAGESURFACE_H
 
 #include "decodedtilecache.h"
+#include "document/imagedocumenttypes.h"
 #include "staticimage.h"
 
 #include <QImage>
@@ -53,10 +54,15 @@ struct LegacyFrameSurface {
 class DisplayedImageSurface
 {
 public:
-    DisplayedImageSurface() = default;
+    DisplayedImageSurface();
     explicit DisplayedImageSurface(LegacyFrameSurface surface);
     explicit DisplayedImageSurface(StaticTileSurface surface);
+    DisplayedImageSurface(const DisplayedImageSurface &other);
+    DisplayedImageSurface &operator=(const DisplayedImageSurface &other);
+    DisplayedImageSurface(DisplayedImageSurface &&other) noexcept = default;
+    DisplayedImageSurface &operator=(DisplayedImageSurface &&other) noexcept = default;
 
+    quint64 identity() const;
     QSize imageSize() const;
     bool isNull() const;
     LegacyFrameSurface *legacyFrameSurface();
@@ -67,6 +73,9 @@ public:
 private:
     using Payload = std::variant<LegacyFrameSurface, StaticTileSurface>;
 
+    static quint64 nextIdentity();
+
+    quint64 m_identity;
     Payload m_payload;
 };
 
@@ -78,6 +87,7 @@ struct DisplayedImageRenderSnapshot {
     QRectF visibleItemRect;
     qreal devicePixelRatio = 1.0;
     int rotationDegrees = 0;
+    DisplayedPageRole pageRole = DisplayedPageRole::Primary;
 
     bool isRenderable() const { return surface != nullptr && !surface->isNull(); }
 };

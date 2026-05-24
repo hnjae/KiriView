@@ -112,6 +112,7 @@ void TestImagePresentationViewportController::visibleRectSchedulesTilesThroughOw
 
     QTRY_VERIFY(tileCount(surface) > std::size_t(0));
     QVERIFY(containsChange(changes, KiriView::ImageDocumentChange::VisibleItemRect));
+    QVERIFY(containsChange(changes, KiriView::ImageDocumentChange::RenderFrame));
 }
 
 QTEST_GUILESS_MAIN(TestImagePresentationViewportController)

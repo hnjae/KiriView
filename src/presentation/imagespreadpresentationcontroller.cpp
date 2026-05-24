@@ -311,10 +311,13 @@ DisplayedImageRenderSnapshot ImageSpreadPresentationController::renderSnapshot(
     if (role == DisplayedPageRole::Secondary) {
         DisplayedImageRenderSnapshot snapshot = m_secondaryPageController->renderSnapshot();
         snapshot.rotationDegrees = 0;
+        snapshot.pageRole = DisplayedPageRole::Secondary;
         return snapshot;
     }
 
-    return m_primaryPresentation.renderSnapshot();
+    DisplayedImageRenderSnapshot snapshot = m_primaryPresentation.renderSnapshot();
+    snapshot.pageRole = DisplayedPageRole::Primary;
+    return snapshot;
 }
 
 void ImageSpreadPresentationController::setViewportSize(const QSizeF &viewportSize)

@@ -21,7 +21,8 @@ ImageSecondaryPageController::ImageSecondaryPageController(QObject *parent,
         = std::make_unique<ImagePresentationController>(parent, std::move(renderContextProvider),
             ImagePresentationController::Callbacks {
                 [this](ImageDocumentChange change) {
-                    if (change == ImageDocumentChange::Repaint) {
+                    if (change == ImageDocumentChange::RenderFrame
+                        || change == ImageDocumentChange::Repaint) {
                         notify(change);
                     }
                 },

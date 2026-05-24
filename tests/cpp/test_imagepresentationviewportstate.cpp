@@ -117,8 +117,9 @@ void TestImagePresentationViewportState::visibleRectPlansTileRefreshWithoutDupli
         = state.setVisibleItemRect(QRectF(1.0, 2.0, 3.0, 4.0));
 
     QCOMPARE(state.visibleItemRect(), QRectF(1.0, 2.0, 3.0, 4.0));
-    QCOMPARE(plan.changes.size(), std::size_t(1));
+    QCOMPARE(plan.changes.size(), std::size_t(2));
     QCOMPARE(plan.changes.front(), KiriView::ImageDocumentChange::VisibleItemRect);
+    QVERIFY(containsChange(plan.changes, KiriView::ImageDocumentChange::RenderFrame));
     QVERIFY(plan.scheduleVisibleTileDecode);
 
     plan = state.setVisibleItemRect(QRectF(1.0, 2.0, 3.0, 4.0));
@@ -143,6 +144,7 @@ void TestImagePresentationViewportState::renderContextRefreshPlansForcedTileRefr
     const KiriView::ImagePresentationViewportPlan plan = state.updateRenderContext();
 
     QCOMPARE(state.renderContext().devicePixelRatio, 2.0);
+    QVERIFY(containsChange(plan.changes, KiriView::ImageDocumentChange::RenderFrame));
     QVERIFY(plan.scheduleVisibleTileDecode);
 }
 

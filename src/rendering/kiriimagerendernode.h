@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_KIRIIMAGERENDERNODE_H
 #define KIRIVIEW_KIRIIMAGERENDERNODE_H
 
-#include "imagerendering.h"
+#include "imagerenderframe.h"
 #include "imagerendernodestate.h"
 
 #include <QRectF>
@@ -30,10 +30,7 @@ public:
     ~KiriImageRenderNode() override;
 
     void setRhi(QRhi *rhi);
-    void setSurface(std::shared_ptr<DisplayedImageSurface> surface, quint64 revision);
-    void setDrawContext(const ImageSurfaceDrawContext &context);
-    void setTargetRect(const QRectF &targetRect);
-    void setRotationDegrees(int rotationDegrees);
+    void setFrame(ImageRenderFrame frame);
 
     StateFlags changedStates() const override;
     RenderingFlags flags() const override;
@@ -56,7 +53,7 @@ private:
         const QRectF &targetRect, const ImageTextureCoordinateTransform &textureTransform);
 
     QRhi *m_rhi = nullptr;
-    std::shared_ptr<DisplayedImageSurface> m_surface;
+    ImageRenderFrame m_frame;
     ImageRenderNodeState m_state;
     QRhiRenderPassDescriptor *m_renderPassDescriptor = nullptr;
     std::unique_ptr<QRhiBuffer> m_vertexBuffer;

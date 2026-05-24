@@ -151,6 +151,8 @@ std::vector<ImageDocumentPublicSignal> imageDocumentPublicSignals(ImageDocumentC
         return { ImageDocumentPublicSignal::RightToLeftReading };
     case ImageDocumentChange::Rotation:
         return { ImageDocumentPublicSignal::RotationDegrees };
+    case ImageDocumentChange::RenderFrame:
+        return { ImageDocumentPublicSignal::Repaint };
     case ImageDocumentChange::Repaint:
         return { ImageDocumentPublicSignal::Repaint };
     }

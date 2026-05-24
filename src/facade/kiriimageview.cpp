@@ -127,16 +127,23 @@ QSGNode *KiriImageView::updatePaintNode(QSGNode *oldNode, UpdatePaintNodeData *)
         node = new KiriView::KiriImageRenderNode;
     }
 
-    node->setRhi(window() == nullptr ? nullptr : window()->rhi());
-    node->setSurface(std::move(snapshot.surface), snapshot.revision);
     const QRectF targetRect = KiriView::imageTargetRect(snapshot.imageSize, boundsSize);
-    node->setDrawContext(KiriView::ImageSurfaceDrawContext {
-        targetRect,
-        snapshot.displaySize.isEmpty() ? targetRect.size() : snapshot.displaySize,
-        snapshot.visibleItemRect,
-        snapshot.devicePixelRatio,
-        snapshot.rotationDegrees,
-    });
+    KiriView::ImageRenderFrame frame
+        = KiriView::projectImageRenderFrame(KiriView::ImageRenderFrameInput {
+            snapshot.surface.get(),
+            snapshot.revision,
+            KiriView::ImageSurfaceDrawContext {
+                targetRect,
+                snapshot.displaySize.isEmpty() ? targetRect.size() : snapshot.displaySize,
+                snapshot.visibleItemRect,
+                snapshot.devicePixelRatio,
+                snapshot.rotationDegrees,
+            },
+            snapshot.pageRole,
+            {},
+        });
+    node->setRhi(window() == nullptr ? nullptr : window()->rhi());
+    node->setFrame(std::move(frame));
     node->markDirty(QSGNode::DirtyGeometry | QSGNode::DirtyMaterial);
     return node;
 }

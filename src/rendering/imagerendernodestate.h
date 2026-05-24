@@ -29,6 +29,7 @@ public:
     const QRectF &targetRect() const;
     int rotationDegrees() const;
 
+    void setFrame(bool sameSurface, quint64 revision, const ImageSurfaceDrawContext &context);
     ImageRenderNodeSurfaceUpdate setSurface(bool sameSurface, quint64 revision);
     bool setDrawContext(const ImageSurfaceDrawContext &context);
     bool setTargetRect(const QRectF &targetRect);

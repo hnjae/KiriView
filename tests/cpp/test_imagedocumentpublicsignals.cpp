@@ -111,6 +111,8 @@ void TestImageDocumentPublicSignals::publicSignalPlansReturnSignalsInEmissionOrd
     comparePublicSignals(
         KiriView::imageDocumentPublicSignals(Change::Rotation), { Signal::RotationDegrees });
     comparePublicSignals(
+        KiriView::imageDocumentPublicSignals(Change::RenderFrame), { Signal::Repaint });
+    comparePublicSignals(
         KiriView::imageDocumentPublicSignals(Change::Repaint), { Signal::Repaint });
 }
 

@@ -8,6 +8,7 @@
 #include "rendering/imagerendering.h"
 
 #include <utility>
+#include <vector>
 
 namespace KiriView {
 ImagePresentationViewportState::ImagePresentationViewportState(
@@ -87,7 +88,10 @@ ImagePresentationViewportPlan ImagePresentationViewportState::setVisibleItemRect
     }
 
     m_visibleItemRect = visibleItemRect;
-    return ImagePresentationViewportPlan { { ImageDocumentChange::VisibleItemRect }, true };
+    return ImagePresentationViewportPlan {
+        { ImageDocumentChange::VisibleItemRect, ImageDocumentChange::RenderFrame },
+        true,
+    };
 }
 
 ImagePresentationViewportPlan ImagePresentationViewportState::setZoomPercent(qreal zoomPercent)
@@ -247,8 +251,13 @@ ImagePresentationViewportPlan ImagePresentationViewportState::mutateZoomState(
 {
     const ImageZoomWorkflowMutationResult result
         = m_zoomWorkflowState.mutate(mutation, tileRefresh == TileRefresh::Always);
+    std::vector<ImageDocumentChange> changes
+        = imageDocumentPresentationZoomNotifications(result.changes);
+    if (result.changes.scheduleVisibleTileDecode) {
+        changes.push_back(ImageDocumentChange::RenderFrame);
+    }
     return ImagePresentationViewportPlan {
-        imageDocumentPresentationZoomNotifications(result.changes),
+        std::move(changes),
         result.changes.scheduleVisibleTileDecode,
     };
 }

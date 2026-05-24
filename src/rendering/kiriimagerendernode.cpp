@@ -145,30 +145,11 @@ void KiriImageRenderNode::setRhi(QRhi *rhi)
     m_state.resetUploadedResources();
 }
 
-void KiriImageRenderNode::setSurface(
-    std::shared_ptr<DisplayedImageSurface> surface, quint64 revision)
+void KiriImageRenderNode::setFrame(ImageRenderFrame frame)
 {
-    const ImageRenderNodeSurfaceUpdate update = m_state.setSurface(m_surface == surface, revision);
-    if (!update.acceptSurface) {
-        return;
-    }
-
-    m_surface = std::move(surface);
-}
-
-void KiriImageRenderNode::setDrawContext(const ImageSurfaceDrawContext &context)
-{
-    m_state.setDrawContext(context);
-}
-
-void KiriImageRenderNode::setTargetRect(const QRectF &targetRect)
-{
-    m_state.setTargetRect(targetRect);
-}
-
-void KiriImageRenderNode::setRotationDegrees(int rotationDegrees)
-{
-    m_state.setRotationDegrees(rotationDegrees);
+    const bool sameSurface = m_frame.surfaceIdentity == frame.surfaceIdentity;
+    m_state.setFrame(sameSurface, frame.surfaceRevision, frame.drawContext);
+    m_frame = std::move(frame);
 }
 
 QSGRenderNode::StateFlags KiriImageRenderNode::changedStates() const
@@ -185,7 +166,7 @@ QRectF KiriImageRenderNode::rect() const { return m_state.targetRect(); }
 
 void KiriImageRenderNode::prepare()
 {
-    if (m_rhi == nullptr || m_surface == nullptr || m_surface->isNull()) {
+    if (m_rhi == nullptr || !m_frame.isRenderable()) {
         return;
     }
 
@@ -359,39 +340,31 @@ bool KiriImageRenderNode::rebuildDrawTextures(QRhiResourceUpdateBatch *&resource
 {
     m_pipeline.reset();
     m_drawTextures.clear();
-    const std::vector<ImageSurfaceDrawEntry> entries
-        = imageSurfaceDrawEntries(*m_surface, m_state.drawContext());
-    for (const ImageSurfaceDrawEntry &entry : entries) {
+    for (const ImageSurfaceDrawEntry &entry : m_frame.drawEntries) {
         if (!addDrawTexture(resourceUpdates, entry)) {
             m_drawTextures.clear();
             return false;
         }
     }
 
-    m_state.markTexturesUploaded(imageSurfaceDrawIdentities(entries));
+    m_state.markTexturesUploaded(m_frame.drawIdentities);
     return true;
 }
 
 bool KiriImageRenderNode::syncDrawTextureEntries()
 {
-    if (m_surface == nullptr) {
+    if (m_frame.drawEntries.size() != m_drawTextures.size()) {
+        return false;
+    }
+    if (!m_state.drawEntryIdentitiesMatch(m_frame.drawIdentities)) {
         return false;
     }
 
-    const std::vector<ImageSurfaceDrawEntry> entries
-        = imageSurfaceDrawEntries(*m_surface, m_state.drawContext());
-    if (entries.size() != m_drawTextures.size()) {
-        return false;
-    }
-    if (!m_state.drawEntryIdentitiesMatch(imageSurfaceDrawIdentities(entries))) {
-        return false;
-    }
-
-    for (std::size_t index = 0; index < entries.size(); ++index) {
-        m_drawTextures[index].identity = entries[index].identity;
-        m_drawTextures[index].targetRect = entries[index].targetRect;
-        m_drawTextures[index].textureRect = entries[index].textureRect;
-        m_drawTextures[index].textureTransform = entries[index].textureTransform;
+    for (std::size_t index = 0; index < m_frame.drawEntries.size(); ++index) {
+        m_drawTextures[index].identity = m_frame.drawEntries[index].identity;
+        m_drawTextures[index].targetRect = m_frame.drawEntries[index].targetRect;
+        m_drawTextures[index].textureRect = m_frame.drawEntries[index].textureRect;
+        m_drawTextures[index].textureTransform = m_frame.drawEntries[index].textureTransform;
     }
     return true;
 }

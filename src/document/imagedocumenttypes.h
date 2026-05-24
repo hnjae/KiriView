@@ -39,6 +39,7 @@ enum class ImageDocumentChange {
     TwoPageMode,
     RightToLeftReading,
     Rotation,
+    RenderFrame,
     Repaint,
 };
 

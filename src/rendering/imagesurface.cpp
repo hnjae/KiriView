@@ -8,6 +8,7 @@
 #include "kiriview/src/policy/imagerendergeometry.cxx.h"
 #include "system/systemmemory.h"
 
+#include <atomic>
 #include <optional>
 #include <utility>
 
@@ -84,15 +85,41 @@ bool staticImageFitsFullImageSurface(const StaticImagePayload &image, int maximu
         rustImageRenderSize(image.preview.size()), maximumTextureSize);
 }
 
+DisplayedImageSurface::DisplayedImageSurface()
+    : m_identity(nextIdentity())
+{
+}
+
 DisplayedImageSurface::DisplayedImageSurface(LegacyFrameSurface surface)
-    : m_payload(std::move(surface))
+    : m_identity(nextIdentity())
+    , m_payload(std::move(surface))
 {
 }
 
 DisplayedImageSurface::DisplayedImageSurface(StaticTileSurface surface)
-    : m_payload(std::move(surface))
+    : m_identity(nextIdentity())
+    , m_payload(std::move(surface))
 {
 }
+
+DisplayedImageSurface::DisplayedImageSurface(const DisplayedImageSurface &other)
+    : m_identity(nextIdentity())
+    , m_payload(other.m_payload)
+{
+}
+
+DisplayedImageSurface &DisplayedImageSurface::operator=(const DisplayedImageSurface &other)
+{
+    if (this == &other) {
+        return *this;
+    }
+
+    m_identity = nextIdentity();
+    m_payload = other.m_payload;
+    return *this;
+}
+
+quint64 DisplayedImageSurface::identity() const { return m_identity; }
 
 QSize DisplayedImageSurface::imageSize() const
 {
@@ -136,6 +163,12 @@ StaticTileSurface *DisplayedImageSurface::staticTileSurface()
 const StaticTileSurface *DisplayedImageSurface::staticTileSurface() const
 {
     return std::get_if<StaticTileSurface>(&m_payload);
+}
+
+quint64 DisplayedImageSurface::nextIdentity()
+{
+    static std::atomic<quint64> next { 1 };
+    return next.fetch_add(1, std::memory_order_relaxed);
 }
 
 }

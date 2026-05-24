@@ -14,6 +14,13 @@ const QRectF &ImageRenderNodeState::targetRect() const { return m_drawContext.ta
 
 int ImageRenderNodeState::rotationDegrees() const { return m_drawContext.rotationDegrees; }
 
+void ImageRenderNodeState::setFrame(
+    bool sameSurface, quint64 revision, const ImageSurfaceDrawContext &context)
+{
+    setSurface(sameSurface, revision);
+    setDrawContext(context);
+}
+
 ImageRenderNodeSurfaceUpdate ImageRenderNodeState::setSurface(bool sameSurface, quint64 revision)
 {
     const bool revisionChanged = setSurfaceRevision(revision);

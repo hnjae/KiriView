@@ -45,6 +45,7 @@ private Q_SLOTS:
     void tileCacheByteBudgetUsesFullDecodeLimitAndSystemMemoryCap();
     void fullImageSurfacePolicyRequiresMatchingPreviewWithinTextureLimit();
     void displayedImageSurfaceExposesOnlyActivePayload();
+    void displayedImageSurfaceUsesStableUniqueIdentity();
 };
 
 void TestImageSurface::staticImagePayloadReportsByteCostWithinBudget()
@@ -140,6 +141,23 @@ void TestImageSurface::displayedImageSurfaceExposesOnlyActivePayload()
     QCOMPARE(staticSurface.imageSize(), QSize(3, 2));
     QVERIFY(staticSurface.legacyFrameSurface() == nullptr);
     QVERIFY(staticSurface.staticTileSurface() != nullptr);
+}
+
+void TestImageSurface::displayedImageSurfaceUsesStableUniqueIdentity()
+{
+    KiriView::DisplayedImageSurface first;
+    const KiriView::DisplayedImageSurface second;
+    const quint64 firstIdentity = first.identity();
+
+    QVERIFY(firstIdentity != 0);
+    QVERIFY(second.identity() != 0);
+    QVERIFY(firstIdentity != second.identity());
+
+    const KiriView::DisplayedImageSurface moved(std::move(first));
+    QCOMPARE(moved.identity(), firstIdentity);
+
+    const KiriView::DisplayedImageSurface copied(moved);
+    QVERIFY(copied.identity() != moved.identity());
 }
 
 QTEST_GUILESS_MAIN(TestImageSurface)

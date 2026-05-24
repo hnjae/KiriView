@@ -5,6 +5,7 @@
 
 #include <QObject>
 #include <QRectF>
+#include <QSizeF>
 #include <QTest>
 
 class TestImageRenderNodeState : public QObject
@@ -16,6 +17,7 @@ private Q_SLOTS:
     void targetGeometryOnlyRequestsDrawGeometrySync();
     void drawGeometrySyncFailurePromotesTextureRebuild();
     void changedDrawEntryIdentityPromotesTextureRebuild();
+    void frameUpdateCombinesSurfaceRevisionAndDrawContext();
     void rotationIsNormalizedBeforeComparison();
     void resetUploadedResourcesKeepsPublicInputs();
 };
@@ -153,6 +155,44 @@ void TestImageRenderNodeState::changedDrawEntryIdentityPromotesTextureRebuild()
 
     state.applyDrawGeometrySyncResult(false);
 
+    expectTextureUpdatePlan(state, KiriView::ImageRenderNodeTextureUpdatePlan::RebuildTextures);
+}
+
+void TestImageRenderNodeState::frameUpdateCombinesSurfaceRevisionAndDrawContext()
+{
+    KiriView::ImageRenderNodeState state;
+    const KiriView::ImageSurfaceDrawContext initialContext {
+        QRectF(0.0, 0.0, 100.0, 100.0),
+        QSizeF(100.0, 100.0),
+        QRectF(0.0, 0.0, 100.0, 100.0),
+        1.0,
+        0,
+    };
+    const KiriView::ImageSurfaceDrawContext pannedContext {
+        QRectF(0.0, 0.0, 100.0, 100.0),
+        QSizeF(100.0, 100.0),
+        QRectF(50.0, 0.0, 100.0, 100.0),
+        1.0,
+        0,
+    };
+
+    state.setFrame(false, 1, initialContext);
+    expectTextureUpdatePlan(state, KiriView::ImageRenderNodeTextureUpdatePlan::RebuildTextures);
+    state.markTexturesUploaded({
+        KiriView::ImageSurfaceDrawIdentity {
+            KiriView::ImageSurfaceDrawIdentityKind::Preview,
+            {},
+            false,
+        },
+    });
+    expectTextureUpdatePlan(state, KiriView::ImageRenderNodeTextureUpdatePlan::ReuseTextures);
+
+    state.setFrame(true, 1, pannedContext);
+    expectTextureUpdatePlan(
+        state, KiriView::ImageRenderNodeTextureUpdatePlan::SynchronizeDrawGeometry);
+    state.applyDrawGeometrySyncResult(true);
+
+    state.setFrame(true, 2, pannedContext);
     expectTextureUpdatePlan(state, KiriView::ImageRenderNodeTextureUpdatePlan::RebuildTextures);
 }
 

@@ -55,6 +55,7 @@ src/navigation/imagecandidatelistsource.cpp
 src/navigation/imagecontainernavigationcontroller.cpp
 src/navigation/imagecontainernavigationstate.cpp
 src/location/imagedocumentlocation.cpp
+src/rendering/imagerenderframe.cpp
 src/rendering/imagerendering.cpp
 src/presentation/imagerotation.cpp
 src/document/imagedocumentchangebatcher.cpp

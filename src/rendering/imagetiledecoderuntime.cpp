@@ -3,7 +3,7 @@
 
 #include "imagetiledecoderuntime.h"
 
-#include "imagetiledecodeplan.h"
+#include "imagerenderframe.h"
 
 #include <utility>
 
@@ -15,21 +15,32 @@ ImageTileDecodeRuntimePlan ImageTileDecodeRuntime::schedule(
     const QRectF &visibleItemRect, const ImageDocumentRenderContext &context, int rotationDegrees)
 {
     const ImageTileDecodeScheduleState schedule = m_decodeState.beginSchedule(displayedSurface);
-    ImageTileDecodePlan candidatePlan = imageTileDecodePlan(displayedSurface, displaySize,
-        visibleItemRect, context, rotationDegrees, schedule.exclusions);
-    if (candidatePlan.isEmpty()) {
+    ImageRenderFrame frame = projectImageRenderFrame(ImageRenderFrameInput {
+        displayedSurface.get(),
+        schedule.generation,
+        ImageSurfaceDrawContext {
+            QRectF(0.0, 0.0, displaySize.width(), displaySize.height()),
+            displaySize,
+            visibleItemRect,
+            context.devicePixelRatio,
+            rotationDegrees,
+        },
+        DisplayedPageRole::Primary,
+        schedule.exclusions,
+    });
+    if (frame.tileRequestSource == nullptr || frame.missingTileRequests.empty()) {
         return {};
     }
 
     std::vector<TileRequest> requests
-        = m_decodeState.commitScheduleRequests(schedule, std::move(candidatePlan.requests));
+        = m_decodeState.commitScheduleRequests(schedule, std::move(frame.missingTileRequests));
     if (requests.empty()) {
         return {};
     }
 
     return ImageTileDecodeRuntimePlan {
         schedule.generation,
-        std::move(candidatePlan.source),
+        std::move(frame.tileRequestSource),
         std::move(requests),
     };
 }
