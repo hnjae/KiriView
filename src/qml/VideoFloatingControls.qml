@@ -22,6 +22,11 @@ KirigamiAddons.FloatingToolBar {
     readonly property string positionText: formatTimestamp(timelineSlider.pressed ? timelineSlider.sliderPosition : positionMs)
     readonly property string durationText: validDuration ? formatTimestamp(durationMs) : "--:--"
     readonly property bool interactionActive: controlsHoverHandler.hovered || activeFocus
+    readonly property real horizontalViewportMargin: Kirigami.Units.largeSpacing * 2
+    readonly property real availableResponsiveWidth: parent ? Math.max(0, parent.width - horizontalViewportMargin) : implicitWidth
+    readonly property real minimumResponsiveWidth: Math.max(implicitWidth, Kirigami.Units.gridUnit * 24)
+    readonly property real preferredResponsiveWidth: parent ? parent.width * 0.65 : implicitWidth
+    readonly property real maximumResponsiveWidth: Kirigami.Units.gridUnit * 44
 
     function documentMilliseconds(propertyName) {
         const value = Number(root.videoDocument[propertyName]);
@@ -87,7 +92,7 @@ KirigamiAddons.FloatingToolBar {
     rightPadding: Kirigami.Units.smallSpacing
     topPadding: Math.max(1, Math.round(Kirigami.Units.smallSpacing / 2))
     bottomPadding: Math.max(1, Math.round(Kirigami.Units.smallSpacing / 2))
-    width: parent ? Math.min(parent.width - Kirigami.Units.largeSpacing * 2, implicitWidth) : implicitWidth
+    width: parent ? Math.min(availableResponsiveWidth, Math.max(minimumResponsiveWidth, Math.min(preferredResponsiveWidth, maximumResponsiveWidth))) : implicitWidth
 
     onPositionMsChanged: syncTimelineToDocument()
     onTimelineInteractiveChanged: syncTimelineToDocument()

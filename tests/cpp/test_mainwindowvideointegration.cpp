@@ -23,6 +23,7 @@ private Q_SLOTS:
     void imageActionAvailabilityDoesNotDriveSharedActiveNavigation();
     void pageNavigationComponentDoesNotChooseBetweenRawNavigationSources();
     void documentSessionFacadeDoesNotExposeRawMediaNavigation();
+    void videoFloatingControlsUsesViewportResponsiveWidth();
 };
 
 namespace {
@@ -386,6 +387,22 @@ void TestMainWindowVideoIntegration::videoModeExposesReadOnlyZoomReadout()
         QStringLiteral("zoomPercentKnown: documentSession.activeZoomPercentKnown")));
     QVERIFY(!mainQml.contains(QStringLiteral("videoZoomPercent:")));
     QVERIFY(!mainQml.contains(QStringLiteral("videoZoomReady:")));
+}
+
+void TestMainWindowVideoIntegration::videoFloatingControlsUsesViewportResponsiveWidth()
+{
+    const QString videoControlsQml
+        = readSource(QStringLiteral("src/qml/VideoFloatingControls.qml"));
+    QVERIFY2(!videoControlsQml.isEmpty(), "VideoFloatingControls.qml should be readable");
+
+    QVERIFY(videoControlsQml.contains(QStringLiteral("parent.width * 0.65")));
+    QVERIFY(videoControlsQml.contains(QStringLiteral("Kirigami.Units.gridUnit * 24")));
+    QVERIFY(videoControlsQml.contains(QStringLiteral("Kirigami.Units.gridUnit * 44")));
+    QVERIFY(videoControlsQml.contains(QStringLiteral("parent.width - horizontalViewportMargin")));
+    QVERIFY(videoControlsQml.contains(
+        QStringLiteral("Math.min(availableResponsiveWidth, Math.max(minimumResponsiveWidth")));
+    QVERIFY(!videoControlsQml.contains(
+        QStringLiteral("Math.min(parent.width - Kirigami.Units.largeSpacing * 2, implicitWidth)")));
 }
 
 QTEST_GUILESS_MAIN(TestMainWindowVideoIntegration)
