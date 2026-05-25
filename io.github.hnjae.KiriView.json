@@ -42,7 +42,7 @@
     "--filesystem=/media",
     "--filesystem=/mnt",
     "--filesystem=/run/media",
-    "--filesystem=xdg-run",
+    "--filesystem=/run/user",
     "--filesystem=xdg-run/pipewire-0",
     "--filesystem=xdg-run/gvfs",
     "--talk-name=org.freedesktop.portal.Desktop",

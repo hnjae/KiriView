@@ -64,7 +64,7 @@ run:
         --filesystem=/media \
         --filesystem=/mnt \
         --filesystem=/run/media \
-        --filesystem=xdg-run \
+        --filesystem="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}" \
         --filesystem=xdg-run/pipewire-0 \
         --filesystem=xdg-run/gvfs \
         --bind-mount="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/doc=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/doc" \

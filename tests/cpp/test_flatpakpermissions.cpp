@@ -62,9 +62,10 @@ void TestFlatpakPermissions::manifestKeepsKioFuseRuntimeWritable()
     const QStringList finishArgs = manifestFinishArgs();
     QVERIFY2(!finishArgs.isEmpty(), "Flatpak manifest finish-args should be readable");
 
-    QVERIFY(finishArgs.contains(QStringLiteral("--filesystem=xdg-run")));
+    QVERIFY(finishArgs.contains(QStringLiteral("--filesystem=/run/user")));
     QVERIFY(finishArgs.contains(QStringLiteral("--talk-name=org.kde.KIOFuse")));
     QVERIFY(!finishArgs.contains(QStringLiteral("--filesystem=/run/user:ro")));
+    QVERIFY(!finishArgs.contains(QStringLiteral("--filesystem=xdg-run")));
 }
 
 void TestFlatpakPermissions::developmentRunKeepsKioFuseRuntimeWritable()
@@ -72,9 +73,11 @@ void TestFlatpakPermissions::developmentRunKeepsKioFuseRuntimeWritable()
     const QString justfile = QString::fromUtf8(readProjectFile(QStringLiteral("justfile")));
     QVERIFY2(!justfile.isEmpty(), "justfile should be readable");
 
-    QVERIFY(justfile.contains(QStringLiteral("--filesystem=xdg-run")));
+    QVERIFY(justfile.contains(
+        QStringLiteral("--filesystem=\"${XDG_RUNTIME_DIR:-/run/user/$(id -u)}\"")));
     QVERIFY(justfile.contains(QStringLiteral("--talk-name=org.kde.KIOFuse")));
     QVERIFY(!justfile.contains(QStringLiteral("--filesystem=/run/user:ro")));
+    QVERIFY(!justfile.contains(QStringLiteral("--filesystem=xdg-run \\")));
     QVERIFY(!justfile.contains(QStringLiteral("XDG_RUNTIME_DIR:-/run/user/$(id -u)}:ro")));
 }
 
