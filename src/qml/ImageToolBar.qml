@@ -230,7 +230,7 @@ Controls.ToolBar {
 
     readonly property Kirigami.Action fitMenuAction: Kirigami.Action {
         children: [root.actions.fitAction, root.actions.fitHeightAction, root.actions.fitWidthAction]
-        displayHint: Kirigami.DisplayHint.KeepVisible
+        displayHint: Kirigami.DisplayHint.IconOnly | Kirigami.DisplayHint.KeepVisible
         enabled: root.actions.fitAction.enabled
         icon.name: "zoom-fit-best-symbolic"
         text: root.actions.fitAction.text
@@ -403,7 +403,7 @@ Controls.ToolBar {
 
             actions: root.toolbarActions
             alignment: Qt.AlignRight
-            display: Controls.AbstractButton.IconOnly
+            display: Controls.AbstractButton.TextBesideIcon
         }
     }
 }

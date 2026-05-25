@@ -377,6 +377,7 @@ Item {
         menuText: KI18n.i18nc("@action:inmenu", "Two-Page &Spread")
         proxyCheckable: true
         proxyChecked: root.actionAvailability.twoPageModeActive
+        toolbarText: KI18n.i18nc("@action:button", "Two-Page &Spread")
 
         onTriggered: root.imageDocument.twoPageModeEnabled = !root.imageDocument.twoPageModeEnabled
     }
@@ -394,6 +395,7 @@ Item {
         menuText: KI18n.i18nc("@action:inmenu", "&Right-to-Left Reading")
         proxyCheckable: true
         proxyChecked: root.actionAvailability.rightToLeftReadingActive
+        toolbarText: KI18n.i18nc("@action:button", "&Right-to-Left")
 
         onTriggered: root.imageDocument.rightToLeftReadingEnabled = !root.imageDocument.rightToLeftReadingEnabled
     }

@@ -29,6 +29,7 @@
 #include <QTest>
 #include <QUrl>
 #include <QVariant>
+#include <QVariantMap>
 #include <QtQml/qqml.h>
 #include <memory>
 
@@ -42,6 +43,8 @@ private Q_SLOTS:
     void outsideClickClosesMenu();
     void openApplicationMenuOnlyOpens();
     void mnemonicRoutingStillTriggersMenuAction();
+    void toolbarReadingControlsUseTextButtons();
+    void toolbarReadingControlMnemonicsTriggerActions();
     void toolbarActionOrderKeepsReadingDirectionBesideSpread();
     void videoToolbarKeepsImageControlOrderDisabled();
     void pageNavigationButtonsUseSemanticActionsForReadingDirection();
@@ -158,6 +161,7 @@ QString fixtureQml(const QString &sourceUrl = QString(), bool navigationActionsE
 {
     return QStringLiteral(R"(
 import QtQuick
+import QtQuick.Controls as Controls
 import io.github.hnjae.kiriview
 import "%1" as KiriViewQml
 import org.kde.kirigami as Kirigami
@@ -171,6 +175,8 @@ Item {
     property int openTriggerCount: 0
     property int previousTriggerCount: 0
     property int nextTriggerCount: 0
+    property int rightToLeftTriggerCount: 0
+    property int twoPageTriggerCount: 0
     property bool navigationActionsEnabled: %3
     property bool rightToLeftReadingActive: false
     property bool videoMode: false
@@ -208,12 +214,65 @@ Item {
         return Qt.point(root.width / 2, root.height - 12);
     }
 
+    function sanitizedText(text) {
+        return String(text).replace(/&/g, "");
+    }
+
     function toolbarControlTexts() {
-        return toolbar.toolbarControls.map(action => action.text);
+        return toolbar.toolbarControls.map(action => sanitizedText(action.text));
     }
 
     function toolbarControlEnabledStates() {
         return toolbar.toolbarControls.map(action => action.enabled);
+    }
+
+    function toolbarButtonForAction(action) {
+        let fallback = null;
+        function visit(item) {
+            if (!item) {
+                return null;
+            }
+            if ("action" in item && item.action === action) {
+                if (item.visible && item.width > 0 && item.height > 0) {
+                    return item;
+                }
+                fallback = fallback ?? item;
+            }
+            const children = item.children ?? [];
+            for (let index = 0; index < children.length; ++index) {
+                const found = visit(children[index]);
+                if (found !== null) {
+                    return found;
+                }
+            }
+            return null;
+        }
+        return visit(toolbar) ?? fallback;
+    }
+
+    function toolbarButtonStateForAction(action) {
+        const button = toolbarButtonForAction(action);
+        return {
+            found: button !== null,
+            iconOnly: button !== null && button.display === Controls.AbstractButton.IconOnly,
+            label: button !== null ? sanitizedText(button.text) : "",
+            text: button !== null ? button.text : "",
+            textBesideIcon: button !== null && button.display === Controls.AbstractButton.TextBesideIcon,
+            tooltip: action.tooltip,
+            visible: button !== null && button.visible && button.width > 0 && button.height > 0,
+        };
+    }
+
+    function rightToLeftToolbarButtonState() {
+        return toolbarButtonStateForAction(rightToLeftReadingKirigamiAction);
+    }
+
+    function twoPageToolbarButtonState() {
+        return toolbarButtonStateForAction(twoPageModeKirigamiAction);
+    }
+
+    function fitToolbarButtonState() {
+        return toolbarButtonStateForAction(toolbar.fitMenuAction);
     }
 
     function resetNavigationTriggerCounts() {
@@ -252,7 +311,10 @@ Item {
 
         enabled: !root.videoMode
         icon.name: "view-split-left-right-symbolic"
-        text: "Two-Page Spread"
+        text: "Two-Page &Spread"
+        tooltip: "Two-Page Spread"
+
+        onTriggered: root.twoPageTriggerCount += 1
     }
 
     Kirigami.Action {
@@ -260,7 +322,10 @@ Item {
 
         enabled: !root.videoMode
         icon.name: "format-text-direction-rtl-symbolic"
-        text: "Right-to-Left Reading"
+        text: "&Right-to-Left"
+        tooltip: "Right-to-Left Reading"
+
+        onTriggered: root.rightToLeftTriggerCount += 1
     }
 
     Kirigami.Action {
@@ -626,6 +691,17 @@ QVariant invokeVariant(QObject *root, const char *method, bool *invoked = nullpt
     return result;
 }
 
+QVariantMap invokeVariantMap(QObject *root, const char *method, bool *ok = nullptr)
+{
+    bool invoked = false;
+    const QVariant result = invokeVariant(root, method, &invoked);
+    const bool converted = result.canConvert<QVariantMap>();
+    if (ok != nullptr) {
+        *ok = invoked && converted;
+    }
+    return result.toMap();
+}
+
 bool invokeBool(QObject *root, const char *method, bool *invoked = nullptr)
 {
     bool ok = false;
@@ -791,6 +867,73 @@ void TestToolBarApplicationMenu::mnemonicRoutingStillTriggersMenuAction()
     QTRY_COMPARE(fixture.root->property("openTriggerCount").toInt(), 1);
 }
 
+void TestToolBarApplicationMenu::toolbarReadingControlsUseTextButtons()
+{
+    ToolBarMenuFixture fixture = createFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+
+    bool ok = false;
+    const QVariantMap rightToLeftState
+        = invokeVariantMap(fixture.root, "rightToLeftToolbarButtonState", &ok);
+    QVERIFY(ok);
+    QVERIFY(rightToLeftState.value(QStringLiteral("found")).toBool());
+    QVERIFY(rightToLeftState.value(QStringLiteral("visible")).toBool());
+    QVERIFY(rightToLeftState.value(QStringLiteral("textBesideIcon")).toBool());
+    QCOMPARE(rightToLeftState.value(QStringLiteral("text")).toString(),
+        QStringLiteral("&Right-to-Left"));
+    QCOMPARE(rightToLeftState.value(QStringLiteral("label")).toString(),
+        QStringLiteral("Right-to-Left"));
+    QCOMPARE(rightToLeftState.value(QStringLiteral("tooltip")).toString(),
+        QStringLiteral("Right-to-Left Reading"));
+
+    const QVariantMap twoPageState
+        = invokeVariantMap(fixture.root, "twoPageToolbarButtonState", &ok);
+    QVERIFY(ok);
+    QVERIFY(twoPageState.value(QStringLiteral("found")).toBool());
+    QVERIFY(twoPageState.value(QStringLiteral("visible")).toBool());
+    QVERIFY(twoPageState.value(QStringLiteral("textBesideIcon")).toBool());
+    QCOMPARE(
+        twoPageState.value(QStringLiteral("text")).toString(), QStringLiteral("Two-Page &Spread"));
+    QCOMPARE(
+        twoPageState.value(QStringLiteral("label")).toString(), QStringLiteral("Two-Page Spread"));
+    QCOMPARE(twoPageState.value(QStringLiteral("tooltip")).toString(),
+        QStringLiteral("Two-Page Spread"));
+
+    const QVariantMap fitState = invokeVariantMap(fixture.root, "fitToolbarButtonState", &ok);
+    QVERIFY(ok);
+    QVERIFY(fitState.value(QStringLiteral("found")).toBool());
+    QVERIFY(fitState.value(QStringLiteral("visible")).toBool());
+    QVERIFY(fitState.value(QStringLiteral("iconOnly")).toBool());
+    QVERIFY(!fitState.value(QStringLiteral("textBesideIcon")).toBool());
+    QCOMPARE(fitState.value(QStringLiteral("label")).toString(), QStringLiteral("Fit"));
+}
+
+void TestToolBarApplicationMenu::toolbarReadingControlMnemonicsTriggerActions()
+{
+    ToolBarMenuFixture fixture = createFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+
+    bool ok = false;
+    QTRY_VERIFY(invokeVariantMap(fixture.root, "rightToLeftToolbarButtonState", &ok)
+            .value(QStringLiteral("visible"))
+            .toBool());
+    QVERIFY(ok);
+    QTRY_VERIFY(invokeVariantMap(fixture.root, "twoPageToolbarButtonState", &ok)
+            .value(QStringLiteral("visible"))
+            .toBool());
+    QVERIFY(ok);
+
+    QTest::keyClick(fixture.view.get(), Qt::Key_R, Qt::AltModifier);
+    QCoreApplication::processEvents();
+    QTRY_COMPARE(fixture.root->property("rightToLeftTriggerCount").toInt(), 1);
+    QCOMPARE(fixture.root->property("twoPageTriggerCount").toInt(), 0);
+
+    QTest::keyClick(fixture.view.get(), Qt::Key_S, Qt::AltModifier);
+    QCoreApplication::processEvents();
+    QTRY_COMPARE(fixture.root->property("twoPageTriggerCount").toInt(), 1);
+    QCOMPARE(fixture.root->property("rightToLeftTriggerCount").toInt(), 1);
+}
+
 void TestToolBarApplicationMenu::toolbarActionOrderKeepsReadingDirectionBesideSpread()
 {
     ToolBarMenuFixture fixture = createFixture();
@@ -800,7 +943,7 @@ void TestToolBarApplicationMenu::toolbarActionOrderKeepsReadingDirectionBesideSp
     const QStringList texts = invokeStringList(fixture.root, "toolbarControlTexts", &ok);
     QVERIFY(ok);
     QCOMPARE(texts,
-        QStringList({ QStringLiteral("Right-to-Left Reading"), QStringLiteral("Two-Page Spread"),
+        QStringList({ QStringLiteral("Right-to-Left"), QStringLiteral("Two-Page Spread"),
             QStringLiteral("Zoom"), QStringLiteral("Fit") }));
 }
 
@@ -815,7 +958,7 @@ void TestToolBarApplicationMenu::videoToolbarKeepsImageControlOrderDisabled()
     const QStringList texts = invokeStringList(fixture.root, "toolbarControlTexts", &ok);
     QVERIFY(ok);
     QCOMPARE(texts,
-        QStringList({ QStringLiteral("Right-to-Left Reading"), QStringLiteral("Two-Page Spread"),
+        QStringList({ QStringLiteral("Right-to-Left"), QStringLiteral("Two-Page Spread"),
             QStringLiteral("Zoom"), QStringLiteral("Fit") }));
 
     bool invoked = false;
