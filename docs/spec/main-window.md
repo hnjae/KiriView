@@ -148,6 +148,8 @@ Video mode shows a video viewport with a Kirigami floating playback panel over t
 
 The panel includes play/pause, timeline position selection and scrubbing, duration and position display, and a disabled non-interactive timeline state when the media is not seekable.
 
+The floating panel uses a responsive width based on the video viewport, targets 65% of that width, keeps enough minimum width for its controls, caps at a moderate desktop width, and preserves side margins on narrow viewports.
+
 The floating panel does not reserve page layout height.
 
 The floating panel remains usable in fullscreen and remains visible while video mode is active in the MVP.
