@@ -72,7 +72,7 @@ run:
         --env=QSG_RHI_BACKEND="${QSG_RHI_BACKEND:-vulkan}" \
         --env=WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-wayland-0}" \
         --env=QT_QPA_PLATFORM=wayland \
-        --env=QT_LOGGING_RULES="${QT_LOGGING_RULES:-io.github.hnjae.kiriview.input.debug=true}" \
+        --env=QT_LOGGING_RULES="${QT_LOGGING_RULES:-io.github.hnjae.kiriview.input.debug=true;io.github.hnjae.kiriview.predecode.debug=true;io.github.hnjae.kiriview.decode.debug=true}" \
         build-dir \
         kiriview
 

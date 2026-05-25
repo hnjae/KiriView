@@ -6,8 +6,10 @@
 #include "mediapredecodescheduleplan.h"
 #include "mediapredecodewindowplan.h"
 #include "predecodecache.h"
+#include "predecodelogging.h"
 #include "system/systemmemory.h"
 
+#include <QDebug>
 #include <QThread>
 #include <memory>
 #include <optional>
@@ -41,12 +43,21 @@ MediaPredecodeCoordinator::MediaPredecodeCoordinator(QObject *parent,
 
 void MediaPredecodeCoordinator::schedule(Context context)
 {
+    qCDebug(kiriviewPredecodeLog) << "media predecode schedule"
+                                  << "url" << context.currentUrl << "candidates"
+                                  << context.candidates.size() << "displayedImages"
+                                  << context.displayedImages.size();
     MediaPredecodeSchedulePlan plan = mediaPredecodeSchedulePlan(MediaPredecodeScheduleRequest {
         context.currentUrl,
         std::move(context.candidates),
         std::move(context.displayedImages),
         context.firstDisplayContext,
     });
+    if (!plan.shouldSchedule()) {
+        qCDebug(kiriviewPredecodeLog) << "media predecode schedule ignored"
+                                      << "reason"
+                                      << "invalid-current-url";
+    }
     m_scheduleRuntime.schedule(std::move(plan.context));
 }
 
@@ -63,17 +74,30 @@ bool MediaPredecodeCoordinator::powerSaverEnabled() const
 void MediaPredecodeCoordinator::startPredecodeWindow(const PredecodePendingSchedule &schedule)
 {
     if (!m_scheduleRuntime.accepts(schedule.generation)) {
+        qCDebug(kiriviewPredecodeLog) << "media predecode window ignored"
+                                      << "reason"
+                                      << "stale-generation"
+                                      << "generation" << schedule.generation;
         return;
     }
 
     const std::vector<MediaNavigationCandidate> *candidates
         = mediaPredecodeScheduleCandidates(schedule);
     if (candidates == nullptr) {
+        qCDebug(kiriviewPredecodeLog) << "media predecode window ignored"
+                                      << "reason"
+                                      << "missing-candidates"
+                                      << "generation" << schedule.generation;
         return;
     }
 
     const PredecodeWindowPlan plan = mediaPredecodeWindowPlan(
         schedule.context.currentLocation.imageUrl(), *candidates, policyInput());
+    qCDebug(kiriviewPredecodeLog) << "media predecode window start"
+                                  << "generation" << schedule.generation << "primaryUrl"
+                                  << schedule.context.currentLocation.imageUrl() << "candidates"
+                                  << candidates->size() << "stillUrls" << plan.urls.size()
+                                  << "parallelLimit" << plan.parallelLimit;
     m_loadController.startWindowLoads(PredecodeLoadWindow {
         schedule.context.currentLocation.imageUrl(),
         plan.archiveDocument,

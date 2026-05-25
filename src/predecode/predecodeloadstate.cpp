@@ -3,6 +3,9 @@
 
 #include "predecodeloadstate.h"
 
+#include "predecodelogging.h"
+
+#include <QDebug>
 #include <utility>
 
 namespace {
@@ -29,9 +32,15 @@ PredecodeLoadState::PredecodeLoadState(qsizetype cacheByteBudget)
 
 void PredecodeLoadState::cacheDisplayedImages(const std::vector<DisplayedPredecodeImage> &images)
 {
+    qCDebug(kiriviewPredecodeLog) << "cache displayed images"
+                                  << "count" << images.size();
     m_cache.setDisplayedUrls(displayedPredecodeImageUrls(images));
     for (const DisplayedPredecodeImage &image : images) {
         if (!image.isCacheable()) {
+            qCDebug(kiriviewPredecodeLog) << "displayed image cache skipped"
+                                          << "reason"
+                                          << "not-cacheable"
+                                          << "url" << image.location.imageUrl();
             continue;
         }
 
@@ -44,6 +53,11 @@ void PredecodeLoadState::clearWindowUrls() { m_cache.setWindowUrls({}); }
 
 void PredecodeLoadState::startWindow(PredecodeLoadWindow window)
 {
+    qCDebug(kiriviewPredecodeLog) << "predecode load window"
+                                  << "generation" << window.generation << "primaryUrl"
+                                  << window.primaryDisplayedUrl << "urls" << window.urls.size()
+                                  << "displayedImages" << window.displayedImages.size()
+                                  << "parallelLimit" << window.parallelLimit;
     cancelBackgroundWork();
     m_activeWindow = ActiveWindow {
         window.firstDisplayContext,
@@ -71,9 +85,14 @@ std::optional<PredecodeLoadStart> PredecodeLoadState::takeNextLoad(
 
     const std::optional<PredecodeRequest> request = m_cache.takeNextRequest(activeLoads);
     if (!request.has_value()) {
+        qCDebug(kiriviewPredecodeLog) << "predecode next load unavailable"
+                                      << "activeLoads" << activeLoads.size();
         return std::nullopt;
     }
 
+    qCDebug(kiriviewPredecodeLog) << "predecode next load selected"
+                                  << "generation" << m_activeWindow->generation << "url"
+                                  << request->url << "activeLoads" << activeLoads.size();
     return PredecodeLoadStart {
         ImageDecodeRequest::fromLocation(m_activeWindow->generation,
             DisplayedImageLocation::fromUrl(request->url, request->archiveDocument),
@@ -84,11 +103,14 @@ std::optional<PredecodeLoadStart> PredecodeLoadState::takeNextLoad(
 void PredecodeLoadState::cacheDecodedImage(
     const ImageDecodeRequest &request, StaticImagePayload staticImage)
 {
+    qCDebug(kiriviewPredecodeLog) << "cache decoded predecode image"
+                                  << "generation" << request.id() << "url" << request.imageUrl();
     m_cache.cacheImage(request.imageUrl(), request.archiveDocument(), std::move(staticImage));
 }
 
 void PredecodeLoadState::cancelBackgroundWork()
 {
+    qCDebug(kiriviewPredecodeLog) << "predecode load state cancel background";
     m_cache.clearQueuedLoads();
     m_activeWindow.reset();
 }

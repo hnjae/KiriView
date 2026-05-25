@@ -13,12 +13,94 @@
 #include "rendering/svgtilesource.h"
 #include "staticimagedecode.h"
 
+#include <QDebug>
+#include <QLoggingCategory>
 #include <QString>
 #include <memory>
 #include <optional>
 #include <utility>
 
+Q_LOGGING_CATEGORY(kiriviewDecodeLog, "io.github.hnjae.kiriview.decode", QtWarningMsg)
+
 namespace {
+const char *imageInputKindName(KiriView::ImageInputKind kind)
+{
+    switch (kind) {
+    case KiriView::ImageInputKind::Unknown:
+        return "Unknown";
+    case KiriView::ImageInputKind::Svg:
+        return "Svg";
+    case KiriView::ImageInputKind::Apng:
+        return "Apng";
+    case KiriView::ImageInputKind::HeifFamily:
+        return "HeifFamily";
+    case KiriView::ImageInputKind::Raw:
+        return "Raw";
+    case KiriView::ImageInputKind::QtRaster:
+        return "QtRaster";
+    }
+
+    return "Unknown";
+}
+
+const char *imageDecodeHandlerKindName(KiriView::ImageDecodeHandlerKind kind)
+{
+    switch (kind) {
+    case KiriView::ImageDecodeHandlerKind::None:
+        return "None";
+    case KiriView::ImageDecodeHandlerKind::Svg:
+        return "Svg";
+    case KiriView::ImageDecodeHandlerKind::Apng:
+        return "Apng";
+    case KiriView::ImageDecodeHandlerKind::HeifFamily:
+        return "HeifFamily";
+    case KiriView::ImageDecodeHandlerKind::Raw:
+        return "Raw";
+    case KiriView::ImageDecodeHandlerKind::QtRaster:
+        return "QtRaster";
+    }
+
+    return "None";
+}
+
+const char *imageDecodeDataSourceName(KiriView::ImageDecodeDataSource source)
+{
+    switch (source) {
+    case KiriView::ImageDecodeDataSource::Original:
+        return "Original";
+    case KiriView::ImageDecodeDataSource::AvifCompatible:
+        return "AvifCompatible";
+    }
+
+    return "Original";
+}
+
+const char *qtRasterFormatName(KiriView::QtRasterFormat format)
+{
+    switch (format) {
+    case KiriView::QtRasterFormat::None:
+        return "None";
+    case KiriView::QtRasterFormat::Png:
+        return "Png";
+    case KiriView::QtRasterFormat::Jpeg:
+        return "Jpeg";
+    case KiriView::QtRasterFormat::Gif:
+        return "Gif";
+    case KiriView::QtRasterFormat::Webp:
+        return "Webp";
+    case KiriView::QtRasterFormat::Bmp:
+        return "Bmp";
+    case KiriView::QtRasterFormat::Tiff:
+        return "Tiff";
+    case KiriView::QtRasterFormat::Jxl:
+        return "Jxl";
+    case KiriView::QtRasterFormat::Jp2:
+        return "Jp2";
+    }
+
+    return "None";
+}
+
 QByteArray avifCompatibleImageData(const QByteArray &data)
 {
     return KiriView::Bridge::qtByteArray(
@@ -280,6 +362,13 @@ DecodedImageResult ImageDecodeRouter::decode(
     const ImageInputClassification classification
         = m_classifier(data, request.imageUrl().fileName());
     const ImageDecodeRoute route = imageDecodeRouteForClassification(classification);
+    qCDebug(kiriviewDecodeLog) << "image decode route"
+                               << "generation" << request.id() << "url" << request.imageUrl()
+                               << "inputKind" << imageInputKindName(classification.kind)
+                               << "handler" << imageDecodeHandlerKindName(route.handlerKind)
+                               << "dataSource" << imageDecodeDataSourceName(route.dataSource)
+                               << "qtFormat" << qtRasterFormatName(route.qtRasterFormat) << "bytes"
+                               << data.size();
     return m_runtime.execute(route, data, request);
 }
 

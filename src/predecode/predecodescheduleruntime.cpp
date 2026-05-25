@@ -3,6 +3,9 @@
 
 #include "predecodescheduleruntime.h"
 
+#include "predecodelogging.h"
+
+#include <QDebug>
 #include <type_traits>
 #include <utility>
 
@@ -49,11 +52,18 @@ PredecodeScheduleRuntime::PredecodeScheduleRuntime(QObject *owner,
 
 void PredecodeScheduleRuntime::schedule(PredecodeScheduleContext context)
 {
+    qCDebug(kiriviewPredecodeLog) << "schedule requested"
+                                  << "url" << context.currentLocation.imageUrl() << "pageIndex"
+                                  << context.pageIndex << "displayedImages"
+                                  << context.displayedImages.size() << "powerSaver"
+                                  << m_scheduleState.powerSaverEnabled();
     dispatchSchedulePlan(m_scheduleState.schedule(std::move(context), currentMonotonicMsec()));
 }
 
 void PredecodeScheduleRuntime::setPowerSaverEnabled(bool enabled)
 {
+    qCDebug(kiriviewPredecodeLog) << "power saver changed"
+                                  << "enabled" << enabled;
     dispatchSchedulePlan(m_scheduleState.setPowerSaverEnabled(enabled, currentMonotonicMsec()));
 }
 
@@ -86,16 +96,28 @@ void PredecodeScheduleRuntime::dispatchScheduleOperation(
         [this](const auto &payload) {
             using Operation = std::decay_t<decltype(payload)>;
             if constexpr (std::is_same_v<Operation, CancelBackgroundPredecodeOperation>) {
+                qCDebug(kiriviewPredecodeLog) << "cancel background predecode";
                 cancelBackgroundRuntime();
             } else if constexpr (std::is_same_v<Operation,
                                      CacheDisplayedPredecodeContextOperation>) {
+                qCDebug(kiriviewPredecodeLog) << "cache displayed predecode context"
+                                              << "images" << payload.images.size();
                 m_loadController.cacheDisplayedImages(payload.images);
             } else if constexpr (std::is_same_v<Operation, ClearPredecodeWindowUrlsOperation>) {
+                qCDebug(kiriviewPredecodeLog) << "clear predecode window urls";
                 m_loadController.clearWindowUrls();
             } else if constexpr (std::is_same_v<Operation, StartPredecodeDebounceOperation>) {
+                qCDebug(kiriviewPredecodeLog)
+                    << "start predecode debounce"
+                    << "generation" << payload.schedule.generation << "url"
+                    << payload.schedule.context.currentLocation.imageUrl();
                 m_debounceTimer.start();
                 m_neutralTimer.start();
             } else if constexpr (std::is_same_v<Operation, StartAdjacentPredecodeOperation>) {
+                qCDebug(kiriviewPredecodeLog)
+                    << "start adjacent predecode"
+                    << "generation" << payload.schedule.generation << "url"
+                    << payload.schedule.context.currentLocation.imageUrl();
                 m_startAdjacentPredecode(payload.schedule);
             } else {
                 static_assert(alwaysFalse<Operation>, "Unhandled predecode schedule operation");
@@ -109,14 +131,21 @@ void PredecodeScheduleRuntime::startDebouncedPredecode()
     const std::optional<PredecodePendingSchedule> pendingSchedule
         = m_scheduleState.pendingDebouncedSchedule();
     if (!pendingSchedule.has_value()) {
+        qCDebug(kiriviewPredecodeLog) << "debounced predecode skipped"
+                                      << "reason"
+                                      << "no-pending-schedule";
         return;
     }
 
+    qCDebug(kiriviewPredecodeLog) << "debounced predecode fired"
+                                  << "generation" << pendingSchedule->generation << "url"
+                                  << pendingSchedule->context.currentLocation.imageUrl();
     m_startAdjacentPredecode(*pendingSchedule);
 }
 
 void PredecodeScheduleRuntime::scheduleSettledNeutralPredecode()
 {
+    qCDebug(kiriviewPredecodeLog) << "settle predecode momentum";
     dispatchSchedulePlan(m_scheduleState.settlePendingScheduleToNeutral());
 }
 
@@ -137,6 +166,7 @@ qint64 PredecodeScheduleRuntime::currentMonotonicMsec() const
 
 void PredecodeScheduleRuntime::cancel()
 {
+    qCDebug(kiriviewPredecodeLog) << "predecode runtime cancel";
     cancelBackgroundRuntime();
     m_scheduleState.cancel();
 }
