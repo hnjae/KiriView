@@ -261,74 +261,75 @@ void DocumentSessionRuntime::openMediaAtNumber(int mediaNumber)
 
 void DocumentSessionRuntime::openPreviousActiveNavigation()
 {
-    if (!canOpenPreviousActiveNavigation()) {
-        return;
-    }
-
-    switch (activeNavigationSourceKind()) {
-    case ActiveNavigationSourceKind::OrdinaryDirectMedia:
-        openPreviousMedia();
-        return;
-    case ActiveNavigationSourceKind::ImageDocumentPages:
-        m_imageDocument.openPreviousImage();
-        return;
-    case ActiveNavigationSourceKind::None:
-        return;
-    }
+    executeActiveNavigationDispatchRequest(previousActiveNavigationDispatchRequest());
 }
 
 void DocumentSessionRuntime::openNextActiveNavigation()
 {
-    if (!canOpenNextActiveNavigation()) {
-        return;
-    }
-
-    switch (activeNavigationSourceKind()) {
-    case ActiveNavigationSourceKind::OrdinaryDirectMedia:
-        openNextMedia();
-        return;
-    case ActiveNavigationSourceKind::ImageDocumentPages:
-        m_imageDocument.openNextImage();
-        return;
-    case ActiveNavigationSourceKind::None:
-        return;
-    }
+    executeActiveNavigationDispatchRequest(nextActiveNavigationDispatchRequest());
 }
 
 void DocumentSessionRuntime::openFirstActiveNavigation()
 {
-    if (!activeNavigationKnown() || atKnownFirstActiveNavigation()) {
-        return;
-    }
-
-    openActiveNavigationAtNumber(1);
+    executeActiveNavigationDispatchRequest(firstActiveNavigationDispatchRequest());
 }
 
 void DocumentSessionRuntime::openLastActiveNavigation()
 {
-    const ActiveNavigationSnapshot snapshot = m_state.activeNavigationSnapshot();
-    if (!snapshot.known || snapshot.atKnownLast) {
-        return;
-    }
-
-    openActiveNavigationAtNumber(snapshot.count);
+    executeActiveNavigationDispatchRequest(lastActiveNavigationDispatchRequest());
 }
 
 void DocumentSessionRuntime::openActiveNavigationAtNumber(int number)
 {
-    const ActiveNavigationSnapshot snapshot = m_state.activeNavigationSnapshot();
-    if (!snapshot.known || !snapshot.editable) {
+    executeActiveNavigationDispatchRequest(numberedActiveNavigationDispatchRequest(number));
+}
+
+void DocumentSessionRuntime::executeActiveNavigationDispatchRequest(
+    ActiveNavigationDispatchRequest request)
+{
+    executeActiveNavigationDispatchPlan(activeNavigationDispatchPlan(
+        activeNavigationSourceKind(), m_state.activeNavigationSnapshot(), request));
+}
+
+void DocumentSessionRuntime::executeActiveNavigationDispatchPlan(
+    const ActiveNavigationDispatchPlan &plan)
+{
+    if (!plan.shouldDispatch()) {
         return;
     }
 
-    switch (activeNavigationSourceKind()) {
-    case ActiveNavigationSourceKind::OrdinaryDirectMedia:
-        openMediaAtNumber(number);
+    switch (plan.target) {
+    case ActiveNavigationDispatchTarget::OrdinaryDirectMedia:
+        switch (plan.operation) {
+        case ActiveNavigationDispatchOperation::OpenPrevious:
+            openPreviousMedia();
+            return;
+        case ActiveNavigationDispatchOperation::OpenNext:
+            openNextMedia();
+            return;
+        case ActiveNavigationDispatchOperation::OpenNumber:
+            openMediaAtNumber(plan.number);
+            return;
+        case ActiveNavigationDispatchOperation::None:
+            return;
+        }
         return;
-    case ActiveNavigationSourceKind::ImageDocumentPages:
-        m_imageDocument.openImageAtPage(number);
+    case ActiveNavigationDispatchTarget::ImageDocumentPages:
+        switch (plan.operation) {
+        case ActiveNavigationDispatchOperation::OpenPrevious:
+            m_imageDocument.openPreviousImage();
+            return;
+        case ActiveNavigationDispatchOperation::OpenNext:
+            m_imageDocument.openNextImage();
+            return;
+        case ActiveNavigationDispatchOperation::OpenNumber:
+            m_imageDocument.openImageAtPage(plan.number);
+            return;
+        case ActiveNavigationDispatchOperation::None:
+            return;
+        }
         return;
-    case ActiveNavigationSourceKind::None:
+    case ActiveNavigationDispatchTarget::None:
         return;
     }
 }

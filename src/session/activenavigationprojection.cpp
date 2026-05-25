@@ -64,9 +64,41 @@ KiriView::ActiveNavigationSnapshot imageDocumentActiveNavigationSnapshot(
         input.count,
     });
 }
+
+KiriView::ActiveNavigationDispatchTarget dispatchTargetForSource(
+    KiriView::ActiveNavigationSourceKind sourceKind)
+{
+    switch (sourceKind) {
+    case KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia:
+        return KiriView::ActiveNavigationDispatchTarget::OrdinaryDirectMedia;
+    case KiriView::ActiveNavigationSourceKind::ImageDocumentPages:
+        return KiriView::ActiveNavigationDispatchTarget::ImageDocumentPages;
+    case KiriView::ActiveNavigationSourceKind::None:
+        return KiriView::ActiveNavigationDispatchTarget::None;
+    }
+
+    return KiriView::ActiveNavigationDispatchTarget::None;
+}
+
+KiriView::ActiveNavigationDispatchPlan dispatchToSource(
+    KiriView::ActiveNavigationSourceKind sourceKind,
+    KiriView::ActiveNavigationDispatchOperation operation, int number)
+{
+    return KiriView::ActiveNavigationDispatchPlan {
+        dispatchTargetForSource(sourceKind),
+        operation,
+        number,
+    };
+}
 }
 
 namespace KiriView {
+bool ActiveNavigationDispatchPlan::shouldDispatch() const
+{
+    return target != ActiveNavigationDispatchTarget::None
+        && operation != ActiveNavigationDispatchOperation::None;
+}
+
 ActiveNavigationSnapshot projectActiveNavigation(ActiveNavigationSourceKind sourceKind,
     MediaActiveNavigationInput mediaInput, ImageDocumentActiveNavigationInput imageInput,
     bool fileDeletionInProgress)
@@ -108,5 +140,66 @@ ActiveNavigationBoundaryScope activeNavigationBoundaryScopeForSource(
     }
 
     return ActiveNavigationBoundaryScope::None;
+}
+
+ActiveNavigationDispatchRequest previousActiveNavigationDispatchRequest()
+{
+    return ActiveNavigationDispatchRequest { ActiveNavigationDispatchRequestKind::Previous, 0 };
+}
+
+ActiveNavigationDispatchRequest nextActiveNavigationDispatchRequest()
+{
+    return ActiveNavigationDispatchRequest { ActiveNavigationDispatchRequestKind::Next, 0 };
+}
+
+ActiveNavigationDispatchRequest firstActiveNavigationDispatchRequest()
+{
+    return ActiveNavigationDispatchRequest { ActiveNavigationDispatchRequestKind::First, 1 };
+}
+
+ActiveNavigationDispatchRequest lastActiveNavigationDispatchRequest()
+{
+    return ActiveNavigationDispatchRequest { ActiveNavigationDispatchRequestKind::Last, 0 };
+}
+
+ActiveNavigationDispatchRequest numberedActiveNavigationDispatchRequest(int number)
+{
+    return ActiveNavigationDispatchRequest { ActiveNavigationDispatchRequestKind::Number, number };
+}
+
+ActiveNavigationDispatchPlan activeNavigationDispatchPlan(ActiveNavigationSourceKind sourceKind,
+    ActiveNavigationSnapshot snapshot, ActiveNavigationDispatchRequest request)
+{
+    if (!snapshot.available) {
+        return {};
+    }
+
+    switch (request.kind) {
+    case ActiveNavigationDispatchRequestKind::Previous:
+        return snapshot.canOpenPrevious
+            ? dispatchToSource(sourceKind, ActiveNavigationDispatchOperation::OpenPrevious, 0)
+            : ActiveNavigationDispatchPlan {};
+    case ActiveNavigationDispatchRequestKind::Next:
+        return snapshot.canOpenNext
+            ? dispatchToSource(sourceKind, ActiveNavigationDispatchOperation::OpenNext, 0)
+            : ActiveNavigationDispatchPlan {};
+    case ActiveNavigationDispatchRequestKind::First:
+        return snapshot.known && snapshot.editable && !snapshot.atKnownFirst
+            ? dispatchToSource(
+                  sourceKind, ActiveNavigationDispatchOperation::OpenNumber, request.number)
+            : ActiveNavigationDispatchPlan {};
+    case ActiveNavigationDispatchRequestKind::Last:
+        return snapshot.known && snapshot.editable && !snapshot.atKnownLast
+            ? dispatchToSource(
+                  sourceKind, ActiveNavigationDispatchOperation::OpenNumber, snapshot.count)
+            : ActiveNavigationDispatchPlan {};
+    case ActiveNavigationDispatchRequestKind::Number:
+        return snapshot.known && snapshot.editable
+            ? dispatchToSource(
+                  sourceKind, ActiveNavigationDispatchOperation::OpenNumber, request.number)
+            : ActiveNavigationDispatchPlan {};
+    }
+
+    return {};
 }
 }

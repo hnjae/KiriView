@@ -47,6 +47,9 @@ private Q_SLOTS:
     void invalidImagePageValuesNormalizeToUnknown();
     void deletionMaskingDisablesDispatchButKeepsKnownReadout();
     void boundaryScopeMapsSourceKind();
+    void directMediaDispatchPlanFollowsProjectedBoundaryGates();
+    void imageDocumentDispatchPlanUsesNumberedPageTargets();
+    void dispatchPlanRejectsUnknownMaskedAndUnavailableNavigation();
 };
 
 void TestActiveNavigationProjection::unavailableSourceProjectsUnavailable()
@@ -170,6 +173,101 @@ void TestActiveNavigationProjection::boundaryScopeMapsSourceKind()
     QVERIFY(KiriView::activeNavigationBoundaryScopeForSource(
                 KiriView::ActiveNavigationSourceKind::ImageDocumentPages)
         == KiriView::ActiveNavigationBoundaryScope::ImageDocument);
+}
+
+void TestActiveNavigationProjection::directMediaDispatchPlanFollowsProjectedBoundaryGates()
+{
+    const KiriView::ActiveNavigationSnapshot snapshot = KiriView::projectActiveNavigation(
+        KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia,
+        KiriView::MediaActiveNavigationInput {
+            KiriView::MediaNavigationBoundaryState { true, true, false, false, 2, 4 }, true },
+        {}, false);
+
+    const KiriView::ActiveNavigationDispatchPlan previous = KiriView::activeNavigationDispatchPlan(
+        KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia, snapshot,
+        KiriView::previousActiveNavigationDispatchRequest());
+    QVERIFY(previous.shouldDispatch());
+    QCOMPARE(previous.target, KiriView::ActiveNavigationDispatchTarget::OrdinaryDirectMedia);
+    QCOMPARE(previous.operation, KiriView::ActiveNavigationDispatchOperation::OpenPrevious);
+    QCOMPARE(previous.number, 0);
+
+    const KiriView::ActiveNavigationDispatchPlan next = KiriView::activeNavigationDispatchPlan(
+        KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia, snapshot,
+        KiriView::nextActiveNavigationDispatchRequest());
+    QVERIFY(next.shouldDispatch());
+    QCOMPARE(next.target, KiriView::ActiveNavigationDispatchTarget::OrdinaryDirectMedia);
+    QCOMPARE(next.operation, KiriView::ActiveNavigationDispatchOperation::OpenNext);
+
+    const KiriView::ActiveNavigationSnapshot firstSnapshot = KiriView::projectActiveNavigation(
+        KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia,
+        KiriView::MediaActiveNavigationInput {
+            KiriView::MediaNavigationBoundaryState { false, true, true, false, 1, 4 }, true },
+        {}, false);
+    QVERIFY(!KiriView::activeNavigationDispatchPlan(
+        KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia, firstSnapshot,
+        KiriView::previousActiveNavigationDispatchRequest())
+            .shouldDispatch());
+}
+
+void TestActiveNavigationProjection::imageDocumentDispatchPlanUsesNumberedPageTargets()
+{
+    const KiriView::ActiveNavigationSnapshot snapshot = KiriView::projectActiveNavigation(
+        KiriView::ActiveNavigationSourceKind::ImageDocumentPages, {},
+        KiriView::ImageDocumentActiveNavigationInput { 2, 3, 5 }, false);
+
+    const KiriView::ActiveNavigationDispatchPlan first = KiriView::activeNavigationDispatchPlan(
+        KiriView::ActiveNavigationSourceKind::ImageDocumentPages, snapshot,
+        KiriView::firstActiveNavigationDispatchRequest());
+    QVERIFY(first.shouldDispatch());
+    QCOMPARE(first.target, KiriView::ActiveNavigationDispatchTarget::ImageDocumentPages);
+    QCOMPARE(first.operation, KiriView::ActiveNavigationDispatchOperation::OpenNumber);
+    QCOMPARE(first.number, 1);
+
+    const KiriView::ActiveNavigationDispatchPlan last = KiriView::activeNavigationDispatchPlan(
+        KiriView::ActiveNavigationSourceKind::ImageDocumentPages, snapshot,
+        KiriView::lastActiveNavigationDispatchRequest());
+    QVERIFY(last.shouldDispatch());
+    QCOMPARE(last.target, KiriView::ActiveNavigationDispatchTarget::ImageDocumentPages);
+    QCOMPARE(last.operation, KiriView::ActiveNavigationDispatchOperation::OpenNumber);
+    QCOMPARE(last.number, 5);
+
+    const KiriView::ActiveNavigationDispatchPlan numbered = KiriView::activeNavigationDispatchPlan(
+        KiriView::ActiveNavigationSourceKind::ImageDocumentPages, snapshot,
+        KiriView::numberedActiveNavigationDispatchRequest(4));
+    QVERIFY(numbered.shouldDispatch());
+    QCOMPARE(numbered.target, KiriView::ActiveNavigationDispatchTarget::ImageDocumentPages);
+    QCOMPARE(numbered.operation, KiriView::ActiveNavigationDispatchOperation::OpenNumber);
+    QCOMPARE(numbered.number, 4);
+}
+
+void TestActiveNavigationProjection::dispatchPlanRejectsUnknownMaskedAndUnavailableNavigation()
+{
+    const KiriView::ActiveNavigationSnapshot unknown = KiriView::projectActiveNavigation(
+        KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia, {}, {}, false);
+    QVERIFY(!KiriView::activeNavigationDispatchPlan(
+        KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia, unknown,
+        KiriView::numberedActiveNavigationDispatchRequest(1))
+            .shouldDispatch());
+
+    const KiriView::ActiveNavigationSnapshot masked = KiriView::projectActiveNavigation(
+        KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia,
+        KiriView::MediaActiveNavigationInput {
+            KiriView::MediaNavigationBoundaryState { true, true, false, false, 2, 4 }, true },
+        {}, true);
+    QVERIFY(!KiriView::activeNavigationDispatchPlan(
+        KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia, masked,
+        KiriView::previousActiveNavigationDispatchRequest())
+            .shouldDispatch());
+    QVERIFY(!KiriView::activeNavigationDispatchPlan(
+        KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia, masked,
+        KiriView::numberedActiveNavigationDispatchRequest(1))
+            .shouldDispatch());
+
+    KiriView::ActiveNavigationSnapshot unavailable;
+    unavailable.canOpenPrevious = true;
+    QVERIFY(!KiriView::activeNavigationDispatchPlan(KiriView::ActiveNavigationSourceKind::None,
+        unavailable, KiriView::previousActiveNavigationDispatchRequest())
+            .shouldDispatch());
 }
 
 QTEST_GUILESS_MAIN(TestActiveNavigationProjection)

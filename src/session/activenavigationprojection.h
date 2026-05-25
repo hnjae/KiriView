@@ -19,6 +19,27 @@ enum class ActiveNavigationBoundaryScope {
     ImageDocument,
 };
 
+enum class ActiveNavigationDispatchRequestKind {
+    Previous,
+    Next,
+    First,
+    Last,
+    Number,
+};
+
+enum class ActiveNavigationDispatchTarget {
+    None,
+    OrdinaryDirectMedia,
+    ImageDocumentPages,
+};
+
+enum class ActiveNavigationDispatchOperation {
+    None,
+    OpenPrevious,
+    OpenNext,
+    OpenNumber,
+};
+
 struct ActiveNavigationSnapshot {
     bool available = false;
     bool known = false;
@@ -42,12 +63,32 @@ struct ImageDocumentActiveNavigationInput {
     int count = 0;
 };
 
+struct ActiveNavigationDispatchRequest {
+    ActiveNavigationDispatchRequestKind kind = ActiveNavigationDispatchRequestKind::Next;
+    int number = 0;
+};
+
+struct ActiveNavigationDispatchPlan {
+    ActiveNavigationDispatchTarget target = ActiveNavigationDispatchTarget::None;
+    ActiveNavigationDispatchOperation operation = ActiveNavigationDispatchOperation::None;
+    int number = 0;
+
+    bool shouldDispatch() const;
+};
+
 ActiveNavigationSnapshot projectActiveNavigation(ActiveNavigationSourceKind sourceKind,
     MediaActiveNavigationInput mediaInput, ImageDocumentActiveNavigationInput imageInput,
     bool fileDeletionInProgress);
 ActiveNavigationSnapshot maskActiveNavigationDuringDeletion(ActiveNavigationSnapshot snapshot);
 ActiveNavigationBoundaryScope activeNavigationBoundaryScopeForSource(
     ActiveNavigationSourceKind sourceKind);
+ActiveNavigationDispatchRequest previousActiveNavigationDispatchRequest();
+ActiveNavigationDispatchRequest nextActiveNavigationDispatchRequest();
+ActiveNavigationDispatchRequest firstActiveNavigationDispatchRequest();
+ActiveNavigationDispatchRequest lastActiveNavigationDispatchRequest();
+ActiveNavigationDispatchRequest numberedActiveNavigationDispatchRequest(int number);
+ActiveNavigationDispatchPlan activeNavigationDispatchPlan(ActiveNavigationSourceKind sourceKind,
+    ActiveNavigationSnapshot snapshot, ActiveNavigationDispatchRequest request);
 }
 
 #endif

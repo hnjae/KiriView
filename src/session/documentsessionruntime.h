@@ -97,6 +97,8 @@ public:
     void deleteDisplayedFile(FileDeletionMode mode);
 
 private:
+    void executeActiveNavigationDispatchRequest(ActiveNavigationDispatchRequest request);
+    void executeActiveNavigationDispatchPlan(const ActiveNavigationDispatchPlan &plan);
     void connectDocuments();
     void syncImageDocumentFileDeletionProgress();
     void setDocumentKind(DocumentSessionKind kind);
