@@ -28,6 +28,8 @@ KiriView may internally resolve a KIO-backed direct video URL to a local playbac
 
 Internal playback URL resolution must not change the user-facing source URL. Window title, adjacent media navigation, deletion target, error context, and document-mode decisions remain based on the original direct media URL.
 
+Resolver-local playback URLs are video-only. Opening a direct image after a direct video must route the image through the image document with the original image URL, not through the previous video playback URL or another KIOFuse local playback URL.
+
 Opening a video after an image must not route the video through `KiriImageDocument`.
 
 Opening an image after a video restores image behavior.
