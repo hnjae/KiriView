@@ -46,8 +46,6 @@ mod imageopenworkflow;
 // Navigation policy.
 #[path = "policy/imagenavigationmodel.rs"]
 mod imagenavigationmodel;
-#[path = "policy/navigationindex.rs"]
-mod navigationindex;
 
 // Predecode policy.
 #[path = "policy/predecodepolicy.rs"]

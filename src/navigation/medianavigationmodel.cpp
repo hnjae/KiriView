@@ -5,7 +5,6 @@
 
 #include "location/imageurl.h"
 #include "navigationcandidateordering.h"
-#include "navigationindexpolicy.h"
 
 #include <algorithm>
 #include <cstddef>
@@ -24,6 +23,31 @@ std::optional<std::size_t> candidateIndex(
     }
 
     return static_cast<std::size_t>(std::distance(candidates.cbegin(), current));
+}
+
+std::optional<std::size_t> adjacentCandidateIndex(std::size_t candidateCount,
+    std::optional<std::size_t> currentIndex, KiriView::NavigationDirection direction)
+{
+    if (!currentIndex.has_value() || *currentIndex >= candidateCount) {
+        return std::nullopt;
+    }
+
+    switch (direction) {
+    case KiriView::NavigationDirection::Previous:
+        if (*currentIndex == 0) {
+            return std::nullopt;
+        }
+        return *currentIndex - 1;
+    case KiriView::NavigationDirection::Next: {
+        const std::size_t nextIndex = *currentIndex + 1;
+        if (nextIndex >= candidateCount) {
+            return std::nullopt;
+        }
+        return nextIndex;
+    }
+    }
+
+    return std::nullopt;
 }
 
 void appendRemovedCandidate(
@@ -110,7 +134,7 @@ std::optional<QUrl> adjacentMediaNavigationUrl(
     const std::optional<std::size_t> currentIndex
         = mediaNavigationCandidateIndex(candidates, currentUrl);
     const std::optional<std::size_t> targetIndex
-        = adjacentNavigationCandidateIndex(candidates.size(), currentIndex, direction);
+        = adjacentCandidateIndex(candidates.size(), currentIndex, direction);
     if (!targetIndex.has_value()) {
         return std::nullopt;
     }

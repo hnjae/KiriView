@@ -103,7 +103,6 @@ src/document/imageloadtypes.cpp
 src/document/imageloadsessiontracker.cpp
 src/navigation/imagenavigationmodel.cpp
 src/navigation/imagenavigationservice.cpp
-src/navigation/navigationindexpolicy.cpp
 src/navigation/imagepagenavigationcontroller.cpp
 src/localization/localization.cpp
 src/application/menuaccesskeymenuruntime.cpp

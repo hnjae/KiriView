@@ -1,11 +1,6 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-use crate::navigationindex::{
-    NavigationDirection as CoreNavigationDirection, NavigationIndex as CoreNavigationIndex,
-    adjacent_navigation_index as core_adjacent_navigation_index,
-};
-
 #[cxx::bridge(namespace = "KiriView")]
 mod ffi {
     #[derive(Clone, Copy, PartialEq, Eq)]
@@ -33,13 +28,6 @@ mod ffi {
     }
 
     extern "Rust" {
-        #[cxx_name = "rustAdjacentNavigationCandidateIndex"]
-        fn rust_adjacent_navigation_candidate_index(
-            candidate_count: usize,
-            current: RustNavigationIndex,
-            direction: RustNavigationDirection,
-        ) -> RustNavigationIndex;
-
         #[cxx_name = "rustPageNavigationStateUpdate"]
         fn rust_page_navigation_state_update(
             current: RustNavigationIndex,
@@ -75,20 +63,33 @@ use ffi::{
     RustPageNavigationUpdate,
 };
 
-fn rust_adjacent_navigation_candidate_index(
+fn adjacent_navigation_index(
     candidate_count: usize,
     current: RustNavigationIndex,
     direction: RustNavigationDirection,
 ) -> RustNavigationIndex {
-    let Some(direction) = core_navigation_direction(direction) else {
+    if !current.found || current.index >= candidate_count {
         return missing_index();
-    };
+    }
 
-    rust_navigation_index(core_adjacent_navigation_index(
-        candidate_count,
-        core_navigation_index(current),
-        direction,
-    ))
+    match direction {
+        RustNavigationDirection::Previous => {
+            if current.index == 0 {
+                missing_index()
+            } else {
+                found_index(current.index - 1)
+            }
+        }
+        RustNavigationDirection::Next => {
+            let next_index = current.index + 1;
+            if next_index == candidate_count {
+                missing_index()
+            } else {
+                found_index(next_index)
+            }
+        }
+        _ => missing_index(),
+    }
 }
 
 fn rust_page_navigation_state_update(
@@ -163,9 +164,6 @@ fn rust_page_navigation_adjacent_target_index(
     current_index: i32,
     direction: RustNavigationDirection,
 ) -> RustNavigationIndex {
-    let Some(direction) = core_navigation_direction(direction) else {
-        return missing_index();
-    };
     let Ok(index) = usize::try_from(current_index) else {
         return missing_index();
     };
@@ -173,11 +171,7 @@ fn rust_page_navigation_adjacent_target_index(
         return missing_index();
     }
 
-    rust_navigation_index(core_adjacent_navigation_index(
-        image_count,
-        core_navigation_index(found_index(index)),
-        direction,
-    ))
+    adjacent_navigation_index(image_count, found_index(index), direction)
 }
 
 fn found_index(index: usize) -> RustNavigationIndex {
@@ -201,30 +195,6 @@ fn page_navigation_preview_state(
     }
 }
 
-fn core_navigation_direction(
-    direction: RustNavigationDirection,
-) -> Option<CoreNavigationDirection> {
-    match direction {
-        RustNavigationDirection::Previous => Some(CoreNavigationDirection::Previous),
-        RustNavigationDirection::Next => Some(CoreNavigationDirection::Next),
-        _ => None,
-    }
-}
-
-fn core_navigation_index(index: RustNavigationIndex) -> CoreNavigationIndex {
-    CoreNavigationIndex {
-        found: index.found,
-        index: index.index,
-    }
-}
-
-fn rust_navigation_index(index: CoreNavigationIndex) -> RustNavigationIndex {
-    RustNavigationIndex {
-        found: index.found,
-        index: index.index,
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -232,35 +202,31 @@ mod tests {
     #[test]
     fn adjacent_navigation_candidate_index_moves_without_wrapping() {
         assert_eq!(
-            rust_adjacent_navigation_candidate_index(
-                3,
-                found_index(1),
-                RustNavigationDirection::Previous
-            ),
+            adjacent_navigation_index(3, found_index(1), RustNavigationDirection::Previous),
             found_index(0)
         );
         assert_eq!(
-            rust_adjacent_navigation_candidate_index(
-                3,
-                found_index(1),
-                RustNavigationDirection::Next
-            ),
+            adjacent_navigation_index(3, found_index(1), RustNavigationDirection::Next),
             found_index(2)
         );
         assert_eq!(
-            rust_adjacent_navigation_candidate_index(
-                3,
-                found_index(0),
-                RustNavigationDirection::Previous
-            ),
+            adjacent_navigation_index(3, found_index(0), RustNavigationDirection::Previous),
             missing_index()
         );
         assert_eq!(
-            rust_adjacent_navigation_candidate_index(
-                3,
-                found_index(2),
-                RustNavigationDirection::Next
-            ),
+            adjacent_navigation_index(3, found_index(2), RustNavigationDirection::Next),
+            missing_index()
+        );
+    }
+
+    #[test]
+    fn adjacent_navigation_candidate_index_rejects_missing_or_out_of_range_current() {
+        assert_eq!(
+            adjacent_navigation_index(3, missing_index(), RustNavigationDirection::Next),
+            missing_index()
+        );
+        assert_eq!(
+            adjacent_navigation_index(3, found_index(3), RustNavigationDirection::Previous),
             missing_index()
         );
     }
