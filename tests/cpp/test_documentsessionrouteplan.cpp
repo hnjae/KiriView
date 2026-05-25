@@ -3,6 +3,8 @@
 
 #include "session/documentsessionrouteplan.h"
 
+#include "navigation/mediaformatregistry.h"
+
 #include <QObject>
 #include <QTest>
 #include <QUrl>
@@ -56,7 +58,7 @@ void TestDocumentSessionRoutePlan::directVideoLocalAndKdeArchiveUrlsRouteToDirec
             = KiriView::documentSessionRoutePlanForSourceUrl(
                 url, KiriView::DocumentSessionKind::Image);
 
-        QVERIFY(KiriView::isDocumentSessionDirectVideoUrl(url));
+        QVERIFY(KiriView::isSupportedDirectVideoUrl(url));
         QCOMPARE(plan.kind, KiriView::DocumentSessionRouteKind::DirectVideo);
         QCOMPARE(plan.sourceUrl, url);
         QCOMPARE(plan.cursorAction, KiriView::DocumentSessionRouteCursorAction::SetDirectVideo);
@@ -81,7 +83,7 @@ void TestDocumentSessionRoutePlan::directImageLocalAndKdeArchiveUrlsRouteToDirec
             = KiriView::documentSessionRoutePlanForSourceUrl(
                 url, KiriView::DocumentSessionKind::Image);
 
-        QVERIFY(KiriView::isDocumentSessionDirectImageUrl(url));
+        QVERIFY(KiriView::isSupportedDirectImageUrl(url));
         QCOMPARE(plan.kind, KiriView::DocumentSessionRouteKind::DirectImage);
         QCOMPARE(plan.sourceUrl, url);
         QCOMPARE(plan.cursorAction, KiriView::DocumentSessionRouteCursorAction::RequestDirectImage);
@@ -123,8 +125,8 @@ void TestDocumentSessionRoutePlan::unsupportedExtensionRoutesToImageDocument()
     const KiriView::DocumentSessionRoutePlan plan = KiriView::documentSessionRoutePlanForSourceUrl(
         unsupported, KiriView::DocumentSessionKind::Image);
 
-    QVERIFY(!KiriView::isDocumentSessionDirectVideoUrl(unsupported));
-    QVERIFY(!KiriView::isDocumentSessionDirectImageUrl(unsupported));
+    QVERIFY(!KiriView::isSupportedDirectVideoUrl(unsupported));
+    QVERIFY(!KiriView::isSupportedDirectImageUrl(unsupported));
     QCOMPARE(plan.kind, KiriView::DocumentSessionRouteKind::ImageDocument);
     QCOMPARE(plan.cursorAction, KiriView::DocumentSessionRouteCursorAction::Clear);
     QVERIFY(plan.enterImage);

@@ -34,28 +34,9 @@ class TestMediaPredecodeWindowPlan : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
-    void stillImageEligibilityUsesCandidateNameAndUrlIdentity();
     void mediaWindowUsesVideoCursorAndQueuesOnlyImages();
     void missingCurrentCandidateYieldsEmptyWindow();
 };
-
-void TestMediaPredecodeWindowPlan::stillImageEligibilityUsesCandidateNameAndUrlIdentity()
-{
-    QVERIFY(KiriView::mediaPredecodeStillImageEligible(KiriView::MediaNavigationCandidate {
-        localUrl(QStringLiteral("/media/blob.bin")),
-        QStringLiteral("cover.png"),
-    }));
-    QVERIFY(KiriView::mediaPredecodeStillImageEligible(KiriView::MediaNavigationCandidate {
-        localUrl(QStringLiteral("/media/photo.avif")),
-        QString(),
-    }));
-    QVERIFY(KiriView::mediaPredecodeStillImageEligible(KiriView::MediaNavigationCandidate {
-        QUrl(QStringLiteral("file:///media/download?name=cover.webp")),
-        QString(),
-    }));
-    QVERIFY(!KiriView::mediaPredecodeStillImageEligible(
-        mediaCandidate(localUrl(QStringLiteral("/media/clip.mp4")))));
-}
 
 void TestMediaPredecodeWindowPlan::mediaWindowUsesVideoCursorAndQueuesOnlyImages()
 {

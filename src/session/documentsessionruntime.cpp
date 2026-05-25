@@ -7,6 +7,7 @@
 #include "facade/kirivideodocument.h"
 #include "localization/imageerrortext.h"
 #include "location/imageurl.h"
+#include "navigation/mediaformatregistry.h"
 #include "predecode/mediapredecodecoordinator.h"
 #include "session/windowtitleprojection.h"
 
@@ -919,7 +920,7 @@ ActiveNavigationSourceKind DocumentSessionRuntime::activeNavigationSourceKind() 
         }
         if (m_imageDocument.currentPageNumber() > 0 || m_imageDocument.imageCount() > 0
             || (!m_imageDocument.sourceUrl().isEmpty()
-                && !isDocumentSessionDirectImageUrl(m_imageDocument.sourceUrl()))) {
+                && !isSupportedDirectImageUrl(m_imageDocument.sourceUrl()))) {
             return ActiveNavigationSourceKind::ImageDocumentPages;
         }
         return ActiveNavigationSourceKind::None;

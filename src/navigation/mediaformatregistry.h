@@ -7,11 +7,18 @@
 #include <QString>
 #include <QStringList>
 
+class QUrl;
+
 namespace KiriView {
+struct MediaNavigationCandidate;
+
 QStringList supportedOrdinaryMediaExtensions();
 QStringList supportedOrdinaryMediaMimeTypes();
 bool isSupportedOrdinaryMediaFileName(const QString &name);
 bool isSupportedDirectVideoFileName(const QString &name);
+bool isSupportedDirectImageUrl(const QUrl &url);
+bool isSupportedDirectVideoUrl(const QUrl &url);
+bool isSupportedStillImageMediaCandidate(const MediaNavigationCandidate &candidate);
 QStringList ordinaryMediaOpenDialogNameFilters();
 }
 

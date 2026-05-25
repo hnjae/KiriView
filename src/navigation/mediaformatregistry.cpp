@@ -5,9 +5,24 @@
 
 #include "archive/archiveformat.h"
 #include "bridge/rustqtconversion.h"
+#include "decoding/imageformatregistry.h"
 #include "kiriview/src/policy/mediaformatregistry.cxx.h"
+#include "navigation/medianavigationmodel.h"
 
 #include <KLocalizedString>
+#include <QUrl>
+
+namespace {
+template <typename Predicate> bool matchesUrlFileNameOrString(const QUrl &url, Predicate predicate)
+{
+    const QString fileName = url.fileName(QUrl::PrettyDecoded);
+    if (predicate(fileName)) {
+        return true;
+    }
+
+    return predicate(url.toString(QUrl::PrettyDecoded));
+}
+}
 
 namespace KiriView {
 QStringList supportedOrdinaryMediaExtensions()
@@ -28,6 +43,21 @@ bool isSupportedOrdinaryMediaFileName(const QString &name)
 bool isSupportedDirectVideoFileName(const QString &name)
 {
     return Bridge::rustResultForQString(name, rustIsSupportedDirectVideoFileName);
+}
+
+bool isSupportedDirectImageUrl(const QUrl &url)
+{
+    return matchesUrlFileNameOrString(url, KiriView::isSupportedImageFileName);
+}
+
+bool isSupportedDirectVideoUrl(const QUrl &url)
+{
+    return matchesUrlFileNameOrString(url, KiriView::isSupportedDirectVideoFileName);
+}
+
+bool isSupportedStillImageMediaCandidate(const MediaNavigationCandidate &candidate)
+{
+    return isSupportedImageFileName(candidate.name) || isSupportedDirectImageUrl(candidate.url);
 }
 
 QStringList ordinaryMediaOpenDialogNameFilters()

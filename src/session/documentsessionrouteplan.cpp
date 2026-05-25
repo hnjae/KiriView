@@ -3,22 +3,9 @@
 
 #include "documentsessionrouteplan.h"
 
-#include "decoding/imageformatregistry.h"
 #include "navigation/mediaformatregistry.h"
 
-#include <QString>
-
 namespace {
-template <typename Predicate> bool matchesUrlFileNameOrString(const QUrl &url, Predicate predicate)
-{
-    const QString fileName = url.fileName(QUrl::PrettyDecoded);
-    if (predicate(fileName)) {
-        return true;
-    }
-
-    return predicate(url.toString(QUrl::PrettyDecoded));
-}
-
 KiriView::DocumentSessionRouteCursorAction directImageCursorActionFor(
     KiriView::DocumentSessionKind currentKind)
 {
@@ -43,7 +30,7 @@ KiriView::DocumentSessionRoutePlan baseRoutePlan(
         return plan;
     }
 
-    if (KiriView::isDocumentSessionDirectVideoUrl(sourceUrl)) {
+    if (KiriView::isSupportedDirectVideoUrl(sourceUrl)) {
         KiriView::DocumentSessionRoutePlan plan;
         plan.kind = KiriView::DocumentSessionRouteKind::DirectVideo;
         plan.sourceUrl = sourceUrl;
@@ -56,7 +43,7 @@ KiriView::DocumentSessionRoutePlan baseRoutePlan(
         return plan;
     }
 
-    if (KiriView::isDocumentSessionDirectImageUrl(sourceUrl)) {
+    if (KiriView::isSupportedDirectImageUrl(sourceUrl)) {
         KiriView::DocumentSessionRoutePlan plan;
         plan.kind = KiriView::DocumentSessionRouteKind::DirectImage;
         plan.sourceUrl = sourceUrl;
@@ -85,16 +72,6 @@ KiriView::DocumentSessionRoutePlan baseRoutePlan(
 }
 
 namespace KiriView {
-bool isDocumentSessionDirectVideoUrl(const QUrl &url)
-{
-    return matchesUrlFileNameOrString(url, KiriView::isSupportedDirectVideoFileName);
-}
-
-bool isDocumentSessionDirectImageUrl(const QUrl &url)
-{
-    return matchesUrlFileNameOrString(url, KiriView::isSupportedImageFileName);
-}
-
 DocumentSessionRoutePlan documentSessionRoutePlanForSourceUrl(
     const QUrl &sourceUrl, DocumentSessionKind currentKind)
 {

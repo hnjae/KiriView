@@ -4,19 +4,28 @@
 #include "navigation/mediaformatregistry.h"
 
 #include "archive/archiveformat.h"
+#include "navigation/medianavigationmodel.h"
 
 #include <QFile>
 #include <QObject>
 #include <QStringList>
 #include <QTest>
+#include <QUrl>
 
 namespace {
+QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
+
 QStringList sortedUnique(QStringList values)
 {
     values.removeAll(QString());
     values.sort();
     values.removeDuplicates();
     return values;
+}
+
+KiriView::MediaNavigationCandidate mediaCandidate(const QUrl &url)
+{
+    return KiriView::MediaNavigationCandidate { url, url.fileName(QUrl::PrettyDecoded) };
 }
 }
 
@@ -29,6 +38,8 @@ private Q_SLOTS:
     void ordinaryMediaMimeTypesIncludeImagesAndDirectVideos();
     void ordinaryMediaFileNamesIncludeImagesAndDirectVideos();
     void directVideoFileNamesStayExposedThroughMediaRegistry();
+    void directMediaUrlsClassifyImagesAndVideos();
+    void stillImageMediaCandidatesUseCandidateNameAndUrlIdentity();
     void openDialogFilterIncludesMediaAndArchives();
     void desktopMimeTypesMatchSupportedOpenMimeTypes();
 };
@@ -91,6 +102,43 @@ void TestMediaFormatRegistry::directVideoFileNamesStayExposedThroughMediaRegistr
     QVERIFY(!KiriView::isSupportedDirectVideoFileName(QStringLiteral("photo.png")));
     QVERIFY(!KiriView::isSupportedDirectVideoFileName(QStringLiteral("archive.zip")));
     QVERIFY(!KiriView::isSupportedDirectVideoFileName(QStringLiteral(".mov")));
+}
+
+void TestMediaFormatRegistry::directMediaUrlsClassifyImagesAndVideos()
+{
+    const QUrl localVideo = localUrl(QStringLiteral("/media/clip.mp4"));
+    const QUrl archiveVideo = QUrl(QStringLiteral("zip:///books/book.zip!/chapter/clip.mov"));
+    const QUrl localImage = localUrl(QStringLiteral("/media/page.png"));
+    const QUrl archiveImage = QUrl(QStringLiteral("zip:///books/book.zip!/chapter/page.avif"));
+    const QUrl unsupported = localUrl(QStringLiteral("/media/readme.txt"));
+
+    QVERIFY(KiriView::isSupportedDirectVideoUrl(localVideo));
+    QVERIFY(KiriView::isSupportedDirectVideoUrl(archiveVideo));
+    QVERIFY(!KiriView::isSupportedDirectVideoUrl(localImage));
+    QVERIFY(!KiriView::isSupportedDirectVideoUrl(unsupported));
+
+    QVERIFY(KiriView::isSupportedDirectImageUrl(localImage));
+    QVERIFY(KiriView::isSupportedDirectImageUrl(archiveImage));
+    QVERIFY(!KiriView::isSupportedDirectImageUrl(localVideo));
+    QVERIFY(!KiriView::isSupportedDirectImageUrl(unsupported));
+}
+
+void TestMediaFormatRegistry::stillImageMediaCandidatesUseCandidateNameAndUrlIdentity()
+{
+    QVERIFY(KiriView::isSupportedStillImageMediaCandidate(KiriView::MediaNavigationCandidate {
+        localUrl(QStringLiteral("/media/blob.bin")),
+        QStringLiteral("cover.png"),
+    }));
+    QVERIFY(KiriView::isSupportedStillImageMediaCandidate(KiriView::MediaNavigationCandidate {
+        localUrl(QStringLiteral("/media/photo.avif")),
+        QString(),
+    }));
+    QVERIFY(KiriView::isSupportedStillImageMediaCandidate(KiriView::MediaNavigationCandidate {
+        QUrl(QStringLiteral("file:///media/download?name=cover.webp")),
+        QString(),
+    }));
+    QVERIFY(!KiriView::isSupportedStillImageMediaCandidate(
+        mediaCandidate(localUrl(QStringLiteral("/media/clip.mp4")))));
 }
 
 void TestMediaFormatRegistry::openDialogFilterIncludesMediaAndArchives()

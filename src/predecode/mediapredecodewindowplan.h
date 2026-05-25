@@ -12,7 +12,6 @@
 #include <vector>
 
 namespace KiriView {
-bool mediaPredecodeStillImageEligible(const MediaNavigationCandidate &candidate);
 PredecodeWindowPlan mediaPredecodeWindowPlan(const QUrl &currentUrl,
     const std::vector<MediaNavigationCandidate> &candidates, PredecodePolicyInput policyInput);
 }

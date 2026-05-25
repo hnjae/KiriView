@@ -3,7 +3,7 @@
 
 #include "mediapredecodewindowplan.h"
 
-#include "decoding/imageformatregistry.h"
+#include "navigation/mediaformatregistry.h"
 
 #include <cstddef>
 #include <vector>
@@ -17,7 +17,7 @@ std::vector<QUrl> mediaPredecodeWindowImageUrls(
     urls.reserve(indices.size());
     for (std::size_t index : indices) {
         if (index < candidates.size()
-            && KiriView::mediaPredecodeStillImageEligible(candidates.at(index))) {
+            && KiriView::isSupportedStillImageMediaCandidate(candidates.at(index))) {
             urls.push_back(candidates.at(index).url);
         }
     }
@@ -26,13 +26,6 @@ std::vector<QUrl> mediaPredecodeWindowImageUrls(
 }
 
 namespace KiriView {
-bool mediaPredecodeStillImageEligible(const MediaNavigationCandidate &candidate)
-{
-    return isSupportedImageFileName(candidate.name)
-        || isSupportedImageFileName(candidate.url.fileName(QUrl::PrettyDecoded))
-        || isSupportedImageFileName(candidate.url.toString(QUrl::PrettyDecoded));
-}
-
 PredecodeWindowPlan mediaPredecodeWindowPlan(const QUrl &currentUrl,
     const std::vector<MediaNavigationCandidate> &candidates, PredecodePolicyInput policyInput)
 {

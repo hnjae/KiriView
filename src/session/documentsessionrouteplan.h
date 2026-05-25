@@ -48,8 +48,6 @@ struct DocumentSessionRoutePlan {
     bool clearPredecode = false;
 };
 
-bool isDocumentSessionDirectVideoUrl(const QUrl &url);
-bool isDocumentSessionDirectImageUrl(const QUrl &url);
 DocumentSessionRoutePlan documentSessionRoutePlanForSourceUrl(
     const QUrl &sourceUrl, DocumentSessionKind currentKind);
 DocumentSessionRoutePlan documentSessionRoutePlanForMediaUrl(
