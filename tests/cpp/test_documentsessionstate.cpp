@@ -14,7 +14,8 @@ class TestDocumentSessionState : public QObject
 
 private Q_SLOTS:
     void sourceIdentityOnlyNotifiesWhenChanged();
-    void documentKindPublishesDerivedPublicChanges();
+    void documentKindPublishesConsistentActiveZoomSnapshot();
+    void activeZoomSnapshotOnlyNotifiesWhenProjectionChanges();
     void windowTitleSubjectOnlyNotifiesWhenChanged();
     void fileDeletionProgressPublishesProgressAndAvailability();
     void mediaNavigationStateOnlyUpdatesWhenBoundaryChanges();
@@ -43,7 +44,7 @@ void TestDocumentSessionState::sourceIdentityOnlyNotifiesWhenChanged()
     QCOMPARE(changes.size(), std::size_t(1));
 }
 
-void TestDocumentSessionState::documentKindPublishesDerivedPublicChanges()
+void TestDocumentSessionState::documentKindPublishesConsistentActiveZoomSnapshot()
 {
     std::vector<std::vector<KiriView::DocumentSessionChange>> batches;
     KiriView::DocumentSessionState state(
@@ -51,9 +52,14 @@ void TestDocumentSessionState::documentKindPublishesDerivedPublicChanges()
             batches.push_back(changes);
         });
 
-    state.setDocumentKind(KiriView::DocumentSessionKind::Video);
+    state.setDocumentKindAndActiveZoomSnapshot(KiriView::DocumentSessionKind::Video,
+        KiriView::ActiveZoomSnapshot { true, true, 67, false });
 
     QCOMPARE(state.documentKind(), KiriView::DocumentSessionKind::Video);
+    QCOMPARE(state.activeZoomSnapshot().available, true);
+    QCOMPARE(state.activeZoomSnapshot().known, true);
+    QCOMPARE(state.activeZoomSnapshot().percent, 67.0);
+    QCOMPARE(state.activeZoomSnapshot().editable, false);
     QCOMPARE(batches.size(), std::size_t(1));
     QCOMPARE(batches.back().size(), std::size_t(4));
     QCOMPARE(batches.back().at(0), KiriView::DocumentSessionChange::DocumentKind);
@@ -61,8 +67,37 @@ void TestDocumentSessionState::documentKindPublishesDerivedPublicChanges()
     QCOMPARE(batches.back().at(2), KiriView::DocumentSessionChange::ErrorString);
     QCOMPARE(batches.back().at(3), KiriView::DocumentSessionChange::FileDeletionAvailability);
 
-    state.setDocumentKind(KiriView::DocumentSessionKind::Video);
+    state.setDocumentKindAndActiveZoomSnapshot(KiriView::DocumentSessionKind::Video,
+        KiriView::ActiveZoomSnapshot { true, true, 67, false });
     QCOMPARE(batches.size(), std::size_t(1));
+}
+
+void TestDocumentSessionState::activeZoomSnapshotOnlyNotifiesWhenProjectionChanges()
+{
+    std::vector<KiriView::DocumentSessionChange> changes;
+    KiriView::DocumentSessionState state(
+        [&changes](const std::vector<KiriView::DocumentSessionChange> &publishedChanges) {
+            changes.insert(changes.end(), publishedChanges.cbegin(), publishedChanges.cend());
+        });
+
+    KiriView::ActiveZoomSnapshot snapshot { true, false, 0.0, false };
+    state.setActiveZoomSnapshot(snapshot);
+
+    QVERIFY(state.activeZoomSnapshot().available);
+    QVERIFY(!state.activeZoomSnapshot().known);
+    QCOMPARE(changes.size(), std::size_t(1));
+    QCOMPARE(changes.at(0), KiriView::DocumentSessionChange::ActiveZoomReadout);
+
+    state.setActiveZoomSnapshot(snapshot);
+    QCOMPARE(changes.size(), std::size_t(1));
+
+    snapshot.known = true;
+    snapshot.percent = 125.0;
+    snapshot.editable = true;
+    state.setActiveZoomSnapshot(snapshot);
+    QCOMPARE(changes.size(), std::size_t(2));
+    QCOMPARE(state.activeZoomSnapshot().percent, 125.0);
+    QVERIFY(state.activeZoomSnapshot().editable);
 }
 
 void TestDocumentSessionState::windowTitleSubjectOnlyNotifiesWhenChanged()

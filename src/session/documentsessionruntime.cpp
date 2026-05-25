@@ -105,54 +105,22 @@ bool DocumentSessionRuntime::fileDeletionInProgress() const
 
 bool DocumentSessionRuntime::activeZoomPercentAvailable() const
 {
-    switch (m_state.documentKind()) {
-    case DocumentSessionKind::Image:
-        return m_imageDocument.zoomPercentKnown();
-    case DocumentSessionKind::Video:
-        return true;
-    case DocumentSessionKind::Empty:
-        return false;
-    }
-
-    return false;
+    return m_state.activeZoomSnapshot().available;
 }
 
 bool DocumentSessionRuntime::activeZoomPercentKnown() const
 {
-    switch (m_state.documentKind()) {
-    case DocumentSessionKind::Image:
-        return m_imageDocument.zoomPercentKnown();
-    case DocumentSessionKind::Video:
-        return m_videoDocument.zoomPercentKnown();
-    case DocumentSessionKind::Empty:
-        return false;
-    }
-
-    return false;
+    return m_state.activeZoomSnapshot().known;
 }
 
 qreal DocumentSessionRuntime::activeZoomPercent() const
 {
-    if (!activeZoomPercentKnown()) {
-        return 0.0;
-    }
-
-    switch (m_state.documentKind()) {
-    case DocumentSessionKind::Image:
-        return m_imageDocument.zoomPercent();
-    case DocumentSessionKind::Video:
-        return m_videoDocument.zoomPercent();
-    case DocumentSessionKind::Empty:
-        return 0.0;
-    }
-
-    return 0.0;
+    return m_state.activeZoomSnapshot().percent;
 }
 
 bool DocumentSessionRuntime::activeZoomEditable() const
 {
-    return m_state.documentKind() == DocumentSessionKind::Image
-        && m_imageDocument.zoomPercentKnown();
+    return m_state.activeZoomSnapshot().editable;
 }
 
 bool DocumentSessionRuntime::mediaNavigationActive() const
@@ -414,9 +382,9 @@ void DocumentSessionRuntime::connectDocuments()
     QObject::connect(&m_imageDocument, &KiriImageDocument::fileDeletionInProgressChanged, m_owner,
         [this]() { syncImageDocumentFileDeletionProgress(); });
     QObject::connect(&m_imageDocument, &KiriImageDocument::zoomPercentKnownChanged, m_owner,
-        [this]() { publishActiveZoomReadoutForKind(DocumentSessionKind::Image); });
+        [this]() { recomputeActiveZoomReadoutForKind(DocumentSessionKind::Image); });
     QObject::connect(&m_imageDocument, &KiriImageDocument::zoomPercentChanged, m_owner,
-        [this]() { publishActiveZoomReadoutForKind(DocumentSessionKind::Image); });
+        [this]() { recomputeActiveZoomReadoutForKind(DocumentSessionKind::Image); });
     QObject::connect(&m_imageDocument, &KiriImageDocument::pageNavigationChanged, m_owner,
         [this]() { publishActiveNavigationForImagePages(); });
 
@@ -431,9 +399,9 @@ void DocumentSessionRuntime::connectDocuments()
     QObject::connect(&m_videoDocument, &KiriVideoDocument::errorStringChanged, m_owner,
         [this]() { m_state.publish(DocumentSessionChange::ErrorString); });
     QObject::connect(&m_videoDocument, &KiriVideoDocument::zoomPercentKnownChanged, m_owner,
-        [this]() { publishActiveZoomReadoutForKind(DocumentSessionKind::Video); });
+        [this]() { recomputeActiveZoomReadoutForKind(DocumentSessionKind::Video); });
     QObject::connect(&m_videoDocument, &KiriVideoDocument::zoomPercentChanged, m_owner,
-        [this]() { publishActiveZoomReadoutForKind(DocumentSessionKind::Video); });
+        [this]() { recomputeActiveZoomReadoutForKind(DocumentSessionKind::Video); });
 }
 
 void DocumentSessionRuntime::syncImageDocumentFileDeletionProgress()
@@ -446,10 +414,24 @@ void DocumentSessionRuntime::syncImageDocumentFileDeletionProgress()
     recomputeActiveNavigation();
 }
 
-void DocumentSessionRuntime::publishActiveZoomReadoutForKind(DocumentSessionKind kind)
+void DocumentSessionRuntime::setDocumentKind(DocumentSessionKind kind)
 {
+    m_state.setDocumentKindAndActiveZoomSnapshot(kind, activeZoomSnapshotForKind(kind));
+}
+
+void DocumentSessionRuntime::recomputeActiveZoomReadout()
+{
+    m_state.setActiveZoomSnapshot(activeZoomSnapshotForKind(m_state.documentKind()));
+}
+
+void DocumentSessionRuntime::recomputeActiveZoomReadoutForKind(DocumentSessionKind kind)
+{
+    if (m_routingSource) {
+        return;
+    }
+
     if (m_state.documentKind() == kind) {
-        m_state.publish(DocumentSessionChange::ActiveZoomReadout);
+        recomputeActiveZoomReadout();
     }
 }
 
@@ -523,14 +505,14 @@ void DocumentSessionRuntime::executeRoutePlan(const DocumentSessionRoutePlan &pl
     }
     if (plan.enterVideo) {
         m_videoDocument.setSourceUrl(plan.sourceUrl);
-        m_state.setDocumentKind(DocumentSessionKind::Video);
+        setDocumentKind(DocumentSessionKind::Video);
     }
     if (plan.enterImage) {
         m_imageDocument.setSourceUrl(plan.sourceUrl);
-        m_state.setDocumentKind(DocumentSessionKind::Image);
+        setDocumentKind(DocumentSessionKind::Image);
     }
     if (plan.enterEmpty) {
-        m_state.setDocumentKind(DocumentSessionKind::Empty);
+        setDocumentKind(DocumentSessionKind::Empty);
     }
     m_routingSource = false;
 
@@ -588,6 +570,7 @@ void DocumentSessionRuntime::syncFromImageDocument()
 
     const bool directMediaScopeChanged = syncDirectImageCursorFromDocument();
     m_state.setSourceIdentity(m_imageDocument.sourceUrl());
+    recomputeActiveZoomReadout();
     recomputeActiveNavigation();
     m_state.publish(
         { DocumentSessionChange::ErrorString, DocumentSessionChange::FileDeletionAvailability });
@@ -605,7 +588,7 @@ void DocumentSessionRuntime::syncFromVideoDocument()
     if (m_videoDocument.sourceUrl().isEmpty()) {
         m_state.clearDirectMediaCursor();
         m_state.setSourceIdentity(QUrl());
-        m_state.setDocumentKind(DocumentSessionKind::Empty);
+        setDocumentKind(DocumentSessionKind::Empty);
         m_state.setMediaNavigationState({}, false);
     } else {
         m_state.setDirectVideoCursor(m_videoDocument.sourceUrl());
@@ -614,6 +597,7 @@ void DocumentSessionRuntime::syncFromVideoDocument()
     }
 
     recomputeActiveNavigation();
+    recomputeActiveZoomReadout();
     m_state.publish(
         { DocumentSessionChange::ErrorString, DocumentSessionChange::FileDeletionAvailability });
 }
@@ -824,7 +808,7 @@ void DocumentSessionRuntime::executeMediaDeletionCompletionPlan(
         return;
     case DocumentSessionMediaDeletionFollowUp::ClearSession:
         m_state.setSourceIdentity(QUrl());
-        m_state.setDocumentKind(DocumentSessionKind::Empty);
+        setDocumentKind(DocumentSessionKind::Empty);
         if (plan.clearMediaNavigation) {
             m_state.setMediaNavigationState({}, false);
             recomputeActiveNavigation();
@@ -899,6 +883,28 @@ bool DocumentSessionRuntime::syncDirectImageCursorFromDocument()
     }
 
     return false;
+}
+
+ActiveZoomSnapshot DocumentSessionRuntime::activeZoomSnapshotForKind(DocumentSessionKind kind) const
+{
+    switch (kind) {
+    case DocumentSessionKind::Image:
+        if (!m_imageDocument.zoomPercentKnown()) {
+            return {};
+        }
+        return ActiveZoomSnapshot { true, true, m_imageDocument.zoomPercent(), true };
+    case DocumentSessionKind::Video:
+        return ActiveZoomSnapshot {
+            true,
+            m_videoDocument.zoomPercentKnown(),
+            m_videoDocument.zoomPercentKnown() ? qreal(m_videoDocument.zoomPercent()) : 0.0,
+            false,
+        };
+    case DocumentSessionKind::Empty:
+        return {};
+    }
+
+    return {};
 }
 
 ActiveNavigationSourceKind DocumentSessionRuntime::activeNavigationSourceKind() const

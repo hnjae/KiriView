@@ -99,7 +99,9 @@ public:
 private:
     void connectDocuments();
     void syncImageDocumentFileDeletionProgress();
-    void publishActiveZoomReadoutForKind(DocumentSessionKind kind);
+    void setDocumentKind(DocumentSessionKind kind);
+    void recomputeActiveZoomReadout();
+    void recomputeActiveZoomReadoutForKind(DocumentSessionKind kind);
     void publishActiveNavigationForImagePages();
     void recomputeActiveNavigation();
     void recomputeWindowTitleSubject();
@@ -132,6 +134,7 @@ private:
     bool activeImageUsesMediaScope() const;
     bool directImageLoadMayUseMediaScope() const;
     bool syncDirectImageCursorFromDocument();
+    ActiveZoomSnapshot activeZoomSnapshotForKind(DocumentSessionKind kind) const;
     ActiveNavigationSourceKind activeNavigationSourceKind() const;
     ActiveNavigationSnapshot projectedActiveNavigationSnapshot() const;
     QString projectedWindowTitleSubject() const;

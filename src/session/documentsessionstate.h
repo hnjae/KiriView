@@ -9,6 +9,7 @@
 
 #include <QString>
 #include <QUrl>
+#include <QtGlobal>
 #include <functional>
 #include <vector>
 
@@ -30,6 +31,13 @@ enum class DocumentSessionChange {
     ActiveNavigation,
 };
 
+struct ActiveZoomSnapshot {
+    bool available = false;
+    bool known = false;
+    qreal percent = 0.0;
+    bool editable = false;
+};
+
 struct DirectMediaCursor {
     QUrl stableUrl;
     QUrl pendingUrl;
@@ -48,6 +56,7 @@ public:
     const QString &sessionErrorString() const;
     const QString &windowTitleSubject() const;
     bool fileDeletionInProgress() const;
+    const ActiveZoomSnapshot &activeZoomSnapshot() const;
     const MediaNavigationBoundaryState &mediaNavigationState() const;
     bool mediaNavigationKnown() const;
     const ActiveNavigationSnapshot &activeNavigationSnapshot() const;
@@ -56,7 +65,10 @@ public:
 
     void setSourceIdentity(const QUrl &url);
     void setDocumentKind(DocumentSessionKind kind);
+    void setDocumentKindAndActiveZoomSnapshot(
+        DocumentSessionKind kind, ActiveZoomSnapshot activeZoomSnapshot);
     void setFileDeletionInProgress(bool inProgress);
+    void setActiveZoomSnapshot(ActiveZoomSnapshot snapshot);
     void setMediaNavigationState(MediaNavigationBoundaryState state, bool known);
     void setActiveNavigationSnapshot(ActiveNavigationSnapshot snapshot);
     void setSessionErrorString(const QString &errorString);
@@ -77,6 +89,7 @@ private:
     DirectMediaCursor m_directMediaCursor;
     MediaNavigationBoundaryState m_mediaNavigationState;
     ActiveNavigationSnapshot m_activeNavigationSnapshot;
+    ActiveZoomSnapshot m_activeZoomSnapshot;
     bool m_mediaNavigationKnown = false;
     bool m_fileDeletionInProgress = false;
     QString m_sessionErrorString;

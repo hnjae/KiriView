@@ -5,6 +5,7 @@
 
 #include "location/imageurl.h"
 
+#include <QtGlobal>
 #include <algorithm>
 #include <utility>
 
@@ -35,6 +36,13 @@ bool sameActiveNavigationSnapshot(
         && left.canOpenNext == right.canOpenNext && left.atKnownFirst == right.atKnownFirst
         && left.atKnownLast == right.atKnownLast && left.currentNumber == right.currentNumber
         && left.count == right.count;
+}
+
+bool sameActiveZoomSnapshot(
+    const KiriView::ActiveZoomSnapshot &left, const KiriView::ActiveZoomSnapshot &right)
+{
+    return left.available == right.available && left.known == right.known
+        && qAbs(left.percent - right.percent) < 0.000001 && left.editable == right.editable;
 }
 
 QUrl effectiveDirectMediaCursorUrl(const KiriView::DirectMediaCursor &cursor)
@@ -79,6 +87,11 @@ const QString &DocumentSessionState::windowTitleSubject() const { return m_windo
 
 bool DocumentSessionState::fileDeletionInProgress() const { return m_fileDeletionInProgress; }
 
+const ActiveZoomSnapshot &DocumentSessionState::activeZoomSnapshot() const
+{
+    return m_activeZoomSnapshot;
+}
+
 const MediaNavigationBoundaryState &DocumentSessionState::mediaNavigationState() const
 {
     return m_mediaNavigationState;
@@ -110,12 +123,28 @@ void DocumentSessionState::setSourceIdentity(const QUrl &url)
 
 void DocumentSessionState::setDocumentKind(DocumentSessionKind kind)
 {
+    setDocumentKindAndActiveZoomSnapshot(kind, m_activeZoomSnapshot);
+}
+
+void DocumentSessionState::setDocumentKindAndActiveZoomSnapshot(
+    DocumentSessionKind kind, ActiveZoomSnapshot activeZoomSnapshot)
+{
     if (!replaceIfChanged(m_documentKind, kind)) {
+        setActiveZoomSnapshot(activeZoomSnapshot);
         return;
     }
 
-    publish({ DocumentSessionChange::DocumentKind, DocumentSessionChange::ActiveZoomReadout,
-        DocumentSessionChange::ErrorString, DocumentSessionChange::FileDeletionAvailability });
+    const bool activeZoomChanged
+        = !sameActiveZoomSnapshot(m_activeZoomSnapshot, activeZoomSnapshot);
+    m_activeZoomSnapshot = activeZoomSnapshot;
+
+    std::vector<DocumentSessionChange> changes { DocumentSessionChange::DocumentKind };
+    if (activeZoomChanged) {
+        changes.push_back(DocumentSessionChange::ActiveZoomReadout);
+    }
+    changes.push_back(DocumentSessionChange::ErrorString);
+    changes.push_back(DocumentSessionChange::FileDeletionAvailability);
+    publish(std::move(changes));
 }
 
 void DocumentSessionState::setFileDeletionInProgress(bool inProgress)
@@ -126,6 +155,16 @@ void DocumentSessionState::setFileDeletionInProgress(bool inProgress)
 
     publish({ DocumentSessionChange::FileDeletionInProgress,
         DocumentSessionChange::FileDeletionAvailability });
+}
+
+void DocumentSessionState::setActiveZoomSnapshot(ActiveZoomSnapshot snapshot)
+{
+    if (sameActiveZoomSnapshot(m_activeZoomSnapshot, snapshot)) {
+        return;
+    }
+
+    m_activeZoomSnapshot = snapshot;
+    publish(DocumentSessionChange::ActiveZoomReadout);
 }
 
 void DocumentSessionState::setMediaNavigationState(MediaNavigationBoundaryState state, bool known)
