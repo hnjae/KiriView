@@ -312,11 +312,17 @@ ImageOpenApplicationPlan imageOpenApplicationPlan(
     };
 }
 
+ImageDocumentRuntimePlan applyImageOpenApplicationPlan(
+    ImageDocumentState &state, ImageOpenApplicationPlan plan)
+{
+    ImageOpenTransitionApplier applier(state);
+    applier.apply(std::move(plan));
+    return applier.takeRuntimePlan();
+}
+
 ImageDocumentRuntimePlan applyImageOpenTransition(ImageDocumentState &state,
     const ImageOpenTransition &transition, const ImageOpenTransitionContext &context)
 {
-    ImageOpenTransitionApplier applier(state);
-    applier.apply(imageOpenApplicationPlan(transition, context));
-    return applier.takeRuntimePlan();
+    return applyImageOpenApplicationPlan(state, imageOpenApplicationPlan(transition, context));
 }
 }

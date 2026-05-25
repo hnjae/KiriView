@@ -69,8 +69,8 @@ bool transitionHasEffect(
 KiriView::ImageDocumentRuntimePlan beginSourceLoad(
     KiriView::ImageDocumentState &state, bool hasImage)
 {
-    return KiriView::applyImageOpenTransition(state,
-        KiriView::ImageOpenWorkflow::beginSourceLoadTransition(
+    return KiriView::applyImageOpenApplicationPlan(state,
+        KiriView::ImageOpenWorkflow::beginSourceLoadPlan(
             KiriView::ImageOpenBeginSourceLoadSnapshot {
                 hasImage,
                 !state.loadingContainerNavigationUrl().isEmpty(),
@@ -79,57 +79,55 @@ KiriView::ImageDocumentRuntimePlan beginSourceLoad(
 
 KiriView::ImageDocumentRuntimePlan finishEmptySourceLoad(KiriView::ImageDocumentState &state)
 {
-    return KiriView::applyImageOpenTransition(
-        state, KiriView::ImageOpenWorkflow::finishEmptySourceLoadTransition());
+    return KiriView::applyImageOpenApplicationPlan(
+        state, KiriView::ImageOpenWorkflow::finishEmptySourceLoadPlan());
 }
 
 KiriView::ImageDocumentRuntimePlan resolveSourceImage(
     KiriView::ImageDocumentState &state, const KiriView::ImageLoadSession &session)
 {
-    return KiriView::applyImageOpenTransition(state,
-        KiriView::ImageOpenWorkflow::resolveSourceImageTransition(),
-        KiriView::ImageOpenTransitionContext::sourceResolved(session));
+    return KiriView::applyImageOpenApplicationPlan(
+        state, KiriView::ImageOpenWorkflow::resolveSourceImagePlan(session));
 }
 
 KiriView::ImageDocumentRuntimePlan finishSuccessfulImageLoad(
     KiriView::ImageDocumentState &state, const KiriView::ImageLoadSession &session)
 {
-    return KiriView::applyImageOpenTransition(state,
-        KiriView::ImageOpenWorkflow::finishSuccessfulImageLoadTransition(
+    return KiriView::applyImageOpenApplicationPlan(state,
+        KiriView::ImageOpenWorkflow::finishSuccessfulImageLoadPlan(
             KiriView::ImageOpenSuccessfulImageLoadSnapshot {
                 session.hasContainerNavigationTarget(),
-            }),
-        KiriView::ImageOpenTransitionContext::successfulImageLoad(session));
+            },
+            session));
 }
 
 KiriView::ImageDocumentRuntimePlan finishLoadWithError(KiriView::ImageDocumentState &state,
     const KiriView::ImageLoadSession &session, bool hasImage, const QString &errorString)
 {
     const QUrl displayedUrl = state.displayedUrl();
-    return KiriView::applyImageOpenTransition(state,
-        KiriView::ImageOpenWorkflow::finishLoadWithErrorTransition(
+    return KiriView::applyImageOpenApplicationPlan(state,
+        KiriView::ImageOpenWorkflow::finishLoadWithErrorPlan(
             KiriView::ImageOpenLoadErrorSnapshot {
                 session.hasContainerNavigationTarget(),
                 hasImage,
                 !displayedUrl.isEmpty(),
-            }),
-        KiriView::ImageOpenTransitionContext::sourceLoadError(session, displayedUrl, errorString));
+            },
+            session, displayedUrl, errorString));
 }
 
 KiriView::ImageDocumentRuntimePlan finishContainerNavigationLoadWithError(
     KiriView::ImageDocumentState &state, const QUrl &containerUrl, const QString &errorString)
 {
-    return KiriView::applyImageOpenTransition(state,
-        KiriView::ImageOpenWorkflow::finishContainerNavigationLoadWithErrorTransition(),
-        KiriView::ImageOpenTransitionContext::containerNavigationError(containerUrl, errorString));
+    return KiriView::applyImageOpenApplicationPlan(state,
+        KiriView::ImageOpenWorkflow::finishContainerNavigationLoadWithErrorPlan(
+            containerUrl, errorString));
 }
 
 KiriView::ImageDocumentRuntimePlan finishAnimationLoadWithError(
     KiriView::ImageDocumentState &state, const QString &errorString)
 {
-    return KiriView::applyImageOpenTransition(state,
-        KiriView::ImageOpenWorkflow::finishAnimationLoadWithErrorTransition(),
-        KiriView::ImageOpenTransitionContext::animationError(errorString));
+    return KiriView::applyImageOpenApplicationPlan(
+        state, KiriView::ImageOpenWorkflow::finishAnimationLoadWithErrorPlan(errorString));
 }
 
 }

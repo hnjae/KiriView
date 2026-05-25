@@ -4,6 +4,7 @@
 #include "imageopenworkflow.h"
 
 #include "bridge/imageopenworkflowconversion.h"
+#include "imageopentransitionapplier.h"
 #include "location/imagedocumentlocation.h"
 
 namespace {
@@ -49,6 +50,49 @@ ImageDocumentRuntimePlan sourceLoadPlan(
         = sourceLoadPolicyInput(snapshot, request);
     return imageDocumentRuntimePlanFromBridge(
         rustImageDocumentSourceLoadPlan(rustImageDocumentSourceLoadPolicyInput(input)), request);
+}
+
+ImageOpenApplicationPlan beginSourceLoadPlan(ImageOpenBeginSourceLoadSnapshot snapshot)
+{
+    return imageOpenApplicationPlan(beginSourceLoadTransition(snapshot));
+}
+
+ImageOpenApplicationPlan finishEmptySourceLoadPlan()
+{
+    return imageOpenApplicationPlan(finishEmptySourceLoadTransition());
+}
+
+ImageOpenApplicationPlan resolveSourceImagePlan(const ImageLoadSession &session)
+{
+    return imageOpenApplicationPlan(
+        resolveSourceImageTransition(), ImageOpenTransitionContext::sourceResolved(session));
+}
+
+ImageOpenApplicationPlan finishSuccessfulImageLoadPlan(
+    ImageOpenSuccessfulImageLoadSnapshot snapshot, const ImageLoadSession &session)
+{
+    return imageOpenApplicationPlan(finishSuccessfulImageLoadTransition(snapshot),
+        ImageOpenTransitionContext::successfulImageLoad(session));
+}
+
+ImageOpenApplicationPlan finishLoadWithErrorPlan(ImageOpenLoadErrorSnapshot snapshot,
+    const ImageLoadSession &session, const QUrl &displayedUrl, const QString &errorString)
+{
+    return imageOpenApplicationPlan(finishLoadWithErrorTransition(snapshot),
+        ImageOpenTransitionContext::sourceLoadError(session, displayedUrl, errorString));
+}
+
+ImageOpenApplicationPlan finishContainerNavigationLoadWithErrorPlan(
+    const QUrl &containerUrl, const QString &errorString)
+{
+    return imageOpenApplicationPlan(finishContainerNavigationLoadWithErrorTransition(),
+        ImageOpenTransitionContext::containerNavigationError(containerUrl, errorString));
+}
+
+ImageOpenApplicationPlan finishAnimationLoadWithErrorPlan(const QString &errorString)
+{
+    return imageOpenApplicationPlan(finishAnimationLoadWithErrorTransition(),
+        ImageOpenTransitionContext::animationError(errorString));
 }
 
 ImageOpenTransition beginSourceLoadTransition(ImageOpenBeginSourceLoadSnapshot snapshot)

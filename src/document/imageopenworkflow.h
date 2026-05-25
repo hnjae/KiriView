@@ -6,6 +6,7 @@
 
 #include "imagedocumentruntimeplan.h"
 #include "imagedocumentsourceloadrequest.h"
+#include "imageopenapplicationplan.h"
 #include "imageopentransition.h"
 #include "location/imagelocation.h"
 
@@ -34,6 +35,16 @@ struct ImageOpenLoadErrorSnapshot {
 namespace ImageOpenWorkflow {
     ImageDocumentRuntimePlan sourceLoadPlan(const ImageDocumentSourceLoadSnapshot &snapshot,
         const ImageDocumentSourceLoadRequest &request);
+    ImageOpenApplicationPlan beginSourceLoadPlan(ImageOpenBeginSourceLoadSnapshot snapshot);
+    ImageOpenApplicationPlan finishEmptySourceLoadPlan();
+    ImageOpenApplicationPlan resolveSourceImagePlan(const ImageLoadSession &session);
+    ImageOpenApplicationPlan finishSuccessfulImageLoadPlan(
+        ImageOpenSuccessfulImageLoadSnapshot snapshot, const ImageLoadSession &session);
+    ImageOpenApplicationPlan finishLoadWithErrorPlan(ImageOpenLoadErrorSnapshot snapshot,
+        const ImageLoadSession &session, const QUrl &displayedUrl, const QString &errorString);
+    ImageOpenApplicationPlan finishContainerNavigationLoadWithErrorPlan(
+        const QUrl &containerUrl, const QString &errorString);
+    ImageOpenApplicationPlan finishAnimationLoadWithErrorPlan(const QString &errorString);
     ImageOpenTransition beginSourceLoadTransition(ImageOpenBeginSourceLoadSnapshot snapshot);
     ImageOpenTransition finishEmptySourceLoadTransition();
     ImageOpenTransition resolveSourceImageTransition();

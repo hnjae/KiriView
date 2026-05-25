@@ -95,21 +95,20 @@ void ImageOpenController::cancel() { m_imageLoader->cancel(); }
 void ImageOpenController::finishAnimationLoadWithError(const QString &errorString)
 {
     const QString message = animationLoadErrorMessage(errorString);
-    reportRuntimePlan(applyImageOpenTransition(m_state,
-        ImageOpenWorkflow::finishAnimationLoadWithErrorTransition(),
-        ImageOpenTransitionContext::animationError(message)));
+    reportRuntimePlan(applyImageOpenApplicationPlan(
+        m_state, ImageOpenWorkflow::finishAnimationLoadWithErrorPlan(message)));
 }
 
 void ImageOpenController::finishEmptySourceLoad()
 {
     reportRuntimePlan(
-        applyImageOpenTransition(m_state, ImageOpenWorkflow::finishEmptySourceLoadTransition()));
+        applyImageOpenApplicationPlan(m_state, ImageOpenWorkflow::finishEmptySourceLoadPlan()));
 }
 
 void ImageOpenController::beginSourceLoad()
 {
-    reportRuntimePlan(applyImageOpenTransition(m_state,
-        ImageOpenWorkflow::beginSourceLoadTransition(ImageOpenBeginSourceLoadSnapshot {
+    reportRuntimePlan(applyImageOpenApplicationPlan(m_state,
+        ImageOpenWorkflow::beginSourceLoadPlan(ImageOpenBeginSourceLoadSnapshot {
             m_presentationController.hasImage(),
             !m_state.loadingContainerNavigationUrl().isEmpty(),
         })));
@@ -126,16 +125,14 @@ void ImageOpenController::finishContainerNavigationLoadWithError(
     cancel();
 
     const QString message = archiveOpenErrorMessage(errorString);
-    reportRuntimePlan(applyImageOpenTransition(m_state,
-        ImageOpenWorkflow::finishContainerNavigationLoadWithErrorTransition(),
-        ImageOpenTransitionContext::containerNavigationError(containerUrl, message)));
+    reportRuntimePlan(applyImageOpenApplicationPlan(m_state,
+        ImageOpenWorkflow::finishContainerNavigationLoadWithErrorPlan(containerUrl, message)));
 }
 
 void ImageOpenController::finishSourceResolved(ImageLoadSession session)
 {
     reportRuntimePlan(
-        applyImageOpenTransition(m_state, ImageOpenWorkflow::resolveSourceImageTransition(),
-            ImageOpenTransitionContext::sourceResolved(session)));
+        applyImageOpenApplicationPlan(m_state, ImageOpenWorkflow::resolveSourceImagePlan(session)));
 }
 
 void ImageOpenController::finishPredecodedImageLoad(ImageLoadSession session, PredecodedImage image)
@@ -168,23 +165,24 @@ void ImageOpenController::finishLoadWithError(
 {
     const QString message = loadErrorMessage(error, errorString);
     const QUrl displayedUrl = m_state.displayedUrl();
-    reportRuntimePlan(applyImageOpenTransition(m_state,
-        ImageOpenWorkflow::finishLoadWithErrorTransition(ImageOpenLoadErrorSnapshot {
-            session.hasContainerNavigationTarget(),
-            m_presentationController.hasImage(),
-            !displayedUrl.isEmpty(),
-        }),
-        ImageOpenTransitionContext::sourceLoadError(session, displayedUrl, message)));
+    reportRuntimePlan(applyImageOpenApplicationPlan(m_state,
+        ImageOpenWorkflow::finishLoadWithErrorPlan(
+            ImageOpenLoadErrorSnapshot {
+                session.hasContainerNavigationTarget(),
+                m_presentationController.hasImage(),
+                !displayedUrl.isEmpty(),
+            },
+            session, displayedUrl, message)));
 }
 
 void ImageOpenController::finishSuccessfulImageLoad(const ImageLoadSession &session)
 {
-    reportRuntimePlan(applyImageOpenTransition(m_state,
-        ImageOpenWorkflow::finishSuccessfulImageLoadTransition(
+    reportRuntimePlan(applyImageOpenApplicationPlan(m_state,
+        ImageOpenWorkflow::finishSuccessfulImageLoadPlan(
             ImageOpenSuccessfulImageLoadSnapshot {
                 session.hasContainerNavigationTarget(),
-            }),
-        ImageOpenTransitionContext::successfulImageLoad(session)));
+            },
+            session)));
 }
 
 void ImageOpenController::reportRuntimePlan(ImageDocumentRuntimePlan plan)

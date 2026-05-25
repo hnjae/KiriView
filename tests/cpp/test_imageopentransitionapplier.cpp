@@ -134,8 +134,10 @@ void TestImageOpenTransitionApplier::successfulTransitionAppliesSessionStateAndE
     transition.effects.push_back(KiriView::ImageOpenEffect::UpdatePageNavigation);
     transition.effects.push_back(KiriView::ImageOpenEffect::ScheduleAdjacentImagePredecode);
 
-    const KiriView::ImageDocumentRuntimePlan plan = KiriView::applyImageOpenTransition(
-        state, transition, KiriView::ImageOpenTransitionContext::successfulImageLoad(session));
+    const KiriView::ImageOpenApplicationPlan applicationPlan = KiriView::imageOpenApplicationPlan(
+        transition, KiriView::ImageOpenTransitionContext::successfulImageLoad(session));
+    const KiriView::ImageDocumentRuntimePlan plan
+        = KiriView::applyImageOpenApplicationPlan(state, applicationPlan);
 
     QCOMPARE(state.sourceUrl(), imageUrl);
     QCOMPARE(state.displayedImageLocation(), location);
@@ -179,10 +181,12 @@ void TestImageOpenTransitionApplier::errorTransitionUsesDisplayedFallbackAndProv
     transition.effects.push_back(KiriView::ImageOpenEffect::UpdatePageNavigation);
     transition.effects.push_back(KiriView::ImageOpenEffect::ScheduleAdjacentImagePredecode);
 
-    const KiriView::ImageDocumentRuntimePlan plan
-        = KiriView::applyImageOpenTransition(state, transition,
+    const KiriView::ImageOpenApplicationPlan applicationPlan
+        = KiriView::imageOpenApplicationPlan(transition,
             KiriView::ImageOpenTransitionContext::sourceLoadError(
                 session, previousImageUrl, QStringLiteral("missing")));
+    const KiriView::ImageDocumentRuntimePlan plan
+        = KiriView::applyImageOpenApplicationPlan(state, applicationPlan);
 
     QCOMPARE(state.sourceUrl(), previousImageUrl);
     QCOMPARE(state.displayedUrl(), previousImageUrl);
