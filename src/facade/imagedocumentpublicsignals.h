@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGEDOCUMENTPUBLICSIGNALS_H
 #define KIRIVIEW_IMAGEDOCUMENTPUBLICSIGNALS_H
 
-#include "imagedocumenttypes.h"
+#include "document/imagedocumenttypes.h"
 
 #include <functional>
 #include <vector>

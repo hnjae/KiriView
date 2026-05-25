@@ -3,11 +3,11 @@
 
 #include "facade/kiridocumentsession.h"
 
+#include "facade/documentsessionpublicsignals.h"
 #include "facade/kiriimagedocument.h"
 #include "facade/kirivideodocument.h"
 #include "navigation/mediaformatregistry.h"
 #include "predecode/predecodecache.h"
-#include "session/documentsessionpublicsignals.h"
 #include "system/systemmemory.h"
 
 #include <memory>

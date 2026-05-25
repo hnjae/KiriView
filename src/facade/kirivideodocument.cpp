@@ -3,7 +3,7 @@
 
 #include "facade/kirivideodocument.h"
 
-#include "video/videodocumentpublicsignals.h"
+#include "facade/videodocumentpublicsignals.h"
 #include "video/videodocumentruntime.h"
 
 #include <memory>
