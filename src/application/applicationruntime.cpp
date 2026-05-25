@@ -3,6 +3,7 @@
 
 #include "applicationruntime.h"
 
+#include "applicationstartupsource.h"
 #include "localization/localization.h"
 
 #include <QApplication>
@@ -38,7 +39,7 @@ void initializeApplicationRuntime()
 }
 
 void loadApplicationMainQml(
-    QQmlApplicationEngine &engine, const ApplicationInitialSource &startupSource)
+    QQmlApplicationEngine &engine, const ApplicationStartupSource &startupSource)
 {
     setupLocalizedContext(engine);
 
@@ -52,7 +53,7 @@ void loadApplicationMainQml(
     engine.load(QUrl(QStringLiteral("qrc:/qt/qml/io/github/hnjae/kiriview/src/qml/Main.qml")));
 }
 
-int runApplication(const ApplicationInitialSource &startupSource)
+int runApplication(const ApplicationStartupSource &startupSource)
 {
     std::array<char, 9> applicationName { 'k', 'i', 'r', 'i', 'v', 'i', 'e', 'w', '\0' };
     char *arguments[] = { applicationName.data() };

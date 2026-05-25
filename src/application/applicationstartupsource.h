@@ -4,22 +4,12 @@
 #ifndef KIRIVIEW_APPLICATIONSTARTUPSOURCE_H
 #define KIRIVIEW_APPLICATIONSTARTUPSOURCE_H
 
-#include <QString>
 #include <QUrl>
 
 namespace KiriView {
-enum class ApplicationInitialSourceKind {
-    None,
-    LocalFilePath,
-    UrlText,
-};
+struct ApplicationStartupSource;
 
-struct ApplicationInitialSource {
-    ApplicationInitialSourceKind kind = ApplicationInitialSourceKind::None;
-    QString text;
-};
-
-QUrl initialSourceUrlFromStartupSource(const ApplicationInitialSource &source);
+QUrl initialSourceUrlFromStartupSource(const ApplicationStartupSource &source);
 }
 
 #endif

@@ -3,7 +3,15 @@
 
 #include "applicationstartupsource.h"
 
+#include "bridge/rustqtconversion.h"
+#include "kiriview/src/policy/applicationruntime.cxx.h"
+
 namespace {
+QString startupSourceText(const KiriView::ApplicationStartupSource &source)
+{
+    return KiriView::Bridge::qtString(source.text);
+}
+
 QUrl validInitialSourceUrl(const QUrl &url)
 {
     if (url.isEmpty() || !url.isValid()) {
@@ -15,15 +23,15 @@ QUrl validInitialSourceUrl(const QUrl &url)
 }
 
 namespace KiriView {
-QUrl initialSourceUrlFromStartupSource(const ApplicationInitialSource &source)
+QUrl initialSourceUrlFromStartupSource(const ApplicationStartupSource &source)
 {
     switch (source.kind) {
-    case ApplicationInitialSourceKind::None:
+    case ApplicationStartupSourceKind::None:
         return QUrl();
-    case ApplicationInitialSourceKind::LocalFilePath:
-        return validInitialSourceUrl(QUrl::fromLocalFile(source.text));
-    case ApplicationInitialSourceKind::UrlText:
-        return validInitialSourceUrl(QUrl(source.text));
+    case ApplicationStartupSourceKind::LocalFilePath:
+        return validInitialSourceUrl(QUrl::fromLocalFile(startupSourceText(source)));
+    case ApplicationStartupSourceKind::UrlText:
+        return validInitialSourceUrl(QUrl(startupSourceText(source)));
     }
 
     return QUrl();

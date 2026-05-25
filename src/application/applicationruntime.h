@@ -4,15 +4,15 @@
 #ifndef KIRIVIEW_APPLICATIONRUNTIME_H
 #define KIRIVIEW_APPLICATIONRUNTIME_H
 
-#include "applicationstartupsource.h"
-
 class QQmlApplicationEngine;
 
 namespace KiriView {
+struct ApplicationStartupSource;
+
 void initializeApplicationRuntime();
 void loadApplicationMainQml(
-    QQmlApplicationEngine &engine, const ApplicationInitialSource &startupSource);
-int runApplication(const ApplicationInitialSource &startupSource);
+    QQmlApplicationEngine &engine, const ApplicationStartupSource &startupSource);
+int runApplication(const ApplicationStartupSource &startupSource);
 }
 
 #endif
