@@ -166,6 +166,7 @@ src/rendering/qimagereaderscaledlevelcache.cpp
 src/rendering/qimagereadertilesource.cpp
 src/decoding/rawdecoder.cpp
 src/application/shortcuthelpmodel.cpp
+src/application/shortcutroutemodel.cpp
 src/session/activenavigationprojection.cpp
 src/session/documentsessionmediacandidateloadstate.cpp
 src/session/documentsessionmediacandidateruntime.cpp

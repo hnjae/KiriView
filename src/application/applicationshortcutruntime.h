@@ -18,6 +18,7 @@
 class KiriViewApplication;
 
 namespace KiriView::ApplicationActions {
+class ShortcutRouteModel;
 class ShortcutHelpModel;
 struct ShortcutHelpRow;
 
@@ -35,6 +36,7 @@ public:
 
     int shortcutRevision() const;
     QAbstractListModel *shortcutHelpModel() const;
+    QAbstractListModel *shortcutRouteModel() const;
     ApplicationShortcutProjection shortcutProjection(const QString &actionName) const;
     ApplicationShortcutProjection shortcutProjectionForId(ActionId actionId) const;
 
@@ -50,6 +52,7 @@ private:
     const ApplicationActionRegistry &m_actionRegistry;
     ChangeCallback m_changeCallback;
     std::unique_ptr<ShortcutHelpModel> m_shortcutHelpModel;
+    std::unique_ptr<ShortcutRouteModel> m_shortcutRouteModel;
     int m_shortcutRevision = 0;
     bool m_sanitizingShortcuts = false;
 };

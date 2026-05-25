@@ -9,11 +9,11 @@ Item {
     id: root
 
     required property var actionIds
+    required property int shortcutFilter
     required property var application
     property var interceptShortcut: function (actionId) {
         return false;
     }
-    property int shortcutFilter: ConfiguredActionShortcut.AllShortcuts
     property bool shortcutsEnabled: true
 
     signal shortcutIntercepted(int actionId)

@@ -13,7 +13,6 @@
 #include <QAction>
 #include <QList>
 #include <QString>
-#include <QVariantList>
 #include <functional>
 #include <memory>
 
@@ -38,13 +37,13 @@ public:
     void setMenuPresentation(MenuPresentation presentation);
     int shortcutRevision() const;
     QAbstractListModel *shortcutHelpModel() const;
+    QAbstractListModel *shortcutRouteModel() const;
 
     QAction *action(const QString &actionName);
     QAction *actionForId(ActionId actionId);
     QString actionName(ActionId actionId) const;
     ApplicationShortcutProjection shortcutProjection(const QString &actionName) const;
     ApplicationShortcutProjection shortcutProjectionForId(ActionId actionId) const;
-    QVariantList shortcutRoutes() const;
     bool videoShortcutsEnabledForScope(int shortcutScope, bool helpShortcutsEnabled,
         bool viewerShortcutsEnabled, bool videoFileDeletionInProgress,
         bool videoMediaNavigationActive) const;

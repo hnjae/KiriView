@@ -5,7 +5,7 @@
 
 #include <QObject>
 #include <QTest>
-#include <QVariantMap>
+#include <QVariantList>
 #include <optional>
 
 namespace {
@@ -48,7 +48,6 @@ private Q_SLOTS:
     void shortcutProjectionDerivesPublicViewsFromOneShortcutList();
     void sanitizeShortcutsRemovesUnmodifiedTextInputShortcuts();
     void shortcutRoutesOwnApplicationShortcutScopes();
-    void shortcutRouteVariantsExposeQmlShape();
     void shortcutScopeValuesMapOnlyKnownScopes();
     void videoShortcutScopesUseViewerDeletionAndNavigationGates();
     void videoUnsupportedActionPolicyRejectsImageOnlyCommands();
@@ -219,25 +218,6 @@ void TestApplicationShortcutPolicy::shortcutRoutesOwnApplicationShortcutScopes()
         static_cast<int>(routes.at(33).shortcutFilter), static_cast<int>(Filter::AllShortcuts));
     QCOMPARE(
         static_cast<int>(routes.at(33).shortcutScope), static_cast<int>(Scope::HelpShortcutScope));
-}
-
-void TestApplicationShortcutPolicy::shortcutRouteVariantsExposeQmlShape()
-{
-    const QList<KiriView::ApplicationActions::ApplicationShortcutRoute> &routes
-        = KiriView::ApplicationActions::shortcutRoutes();
-    const QVariantList variants = KiriView::ApplicationActions::shortcutRouteVariants();
-
-    QCOMPARE(variants.size(), routes.size());
-
-    for (qsizetype index = 0; index < variants.size(); ++index) {
-        const QVariantMap route = variants.at(index).toMap();
-        QCOMPARE(route.value(QStringLiteral("actionIds")).toList(),
-            actionIdVariants(routes.at(index).actionIds));
-        QCOMPARE(route.value(QStringLiteral("shortcutFilter")).toInt(),
-            static_cast<int>(routes.at(index).shortcutFilter));
-        QCOMPARE(route.value(QStringLiteral("shortcutScope")).toInt(),
-            static_cast<int>(routes.at(index).shortcutScope));
-    }
 }
 
 void TestApplicationShortcutPolicy::shortcutScopeValuesMapOnlyKnownScopes()

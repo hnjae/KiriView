@@ -10,7 +10,6 @@
 #include <QKeySequence>
 #include <QList>
 #include <QString>
-#include <QVariantList>
 #include <optional>
 
 namespace KiriView::ApplicationActions {
@@ -45,7 +44,6 @@ QString shortcutListText(const QList<QKeySequence> &shortcuts);
 QList<QKeySequence> sanitizeShortcuts(const QList<QKeySequence> &shortcuts);
 ApplicationShortcutProjection shortcutProjection(const QList<QKeySequence> &shortcuts);
 const QList<ApplicationShortcutRoute> &shortcutRoutes();
-QVariantList shortcutRouteVariants();
 std::optional<ImageShortcutScope> imageShortcutScopeFromValue(int value);
 bool videoActionUnsupported(ActionId actionId);
 }

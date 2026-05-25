@@ -32,8 +32,6 @@ Item {
     readonly property var scanForwardQAction: root.application.actionForId(KiriViewApplication.ViewScanForwardAction)
     readonly property var scanBackwardQAction: root.application.actionForId(KiriViewApplication.ViewScanBackwardAction)
     readonly property var showMenubarQAction: root.application.actionForId(KiriViewApplication.OptionsShowMenubarAction)
-    readonly property var actionShortcutRoutes: root.application.shortcutRoutes()
-
     signal imageBoundaryReached(string message)
     signal unsupportedVideoActionRequested
 
@@ -179,16 +177,14 @@ Item {
     }
 
     Repeater {
-        model: root.actionShortcutRoutes
+        model: root.application.shortcutRouteModel
 
         ActionShortcutGroup {
-            required property var modelData
+            required property int shortcutScope
 
-            actionIds: modelData.actionIds
             application: root.application
             interceptShortcut: actionId => root.videoMode && root.unsupportedVideoAction(actionId)
-            shortcutFilter: modelData.shortcutFilter
-            shortcutsEnabled: root.shortcutsEnabledForScope(modelData.shortcutScope, root.actionAvailability.availabilityRevision)
+            shortcutsEnabled: root.shortcutsEnabledForScope(shortcutScope, root.actionAvailability.availabilityRevision)
 
             onShortcutIntercepted: root.unsupportedVideoActionRequested()
         }

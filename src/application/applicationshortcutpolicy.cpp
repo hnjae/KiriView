@@ -4,12 +4,10 @@
 #include "applicationshortcutpolicy.h"
 
 #include <QStringList>
-#include <QVariantMap>
 
 namespace {
 using Route = KiriView::ApplicationActions::ApplicationShortcutRoute;
 using Filter = KiriView::ApplicationActions::ApplicationShortcutFilter;
-using ActionId = KiriView::ApplicationActions::ActionId;
 using Scope = KiriView::ApplicationActions::ImageShortcutScope;
 
 bool shortcutHasCommandModifier(const QKeySequence &shortcut)
@@ -110,17 +108,6 @@ QKeySequence shortcutAlias(const QKeySequence &shortcut)
     return QKeySequence(QKeyCombination(modifiers & ~Qt::ControlModifier, combination.key()));
 }
 
-QVariantList actionIdVariants(const QList<ActionId> &actionIds)
-{
-    QVariantList variants;
-    variants.reserve(actionIds.size());
-
-    for (ActionId actionId : actionIds) {
-        variants.push_back(static_cast<int>(actionId));
-    }
-
-    return variants;
-}
 }
 
 namespace KiriView::ApplicationActions {
@@ -284,23 +271,6 @@ const QList<ApplicationShortcutRoute> &shortcutRoutes()
             Filter::AllShortcuts, Scope::HelpShortcutScope },
     };
     return routes;
-}
-
-QVariantList shortcutRouteVariants()
-{
-    const QList<ApplicationShortcutRoute> &routes = shortcutRoutes();
-    QVariantList variants;
-    variants.reserve(routes.size());
-
-    for (const ApplicationShortcutRoute &route : routes) {
-        variants.push_back(QVariantMap {
-            { QStringLiteral("actionIds"), actionIdVariants(route.actionIds) },
-            { QStringLiteral("shortcutFilter"), static_cast<int>(route.shortcutFilter) },
-            { QStringLiteral("shortcutScope"), static_cast<int>(route.shortcutScope) },
-        });
-    }
-
-    return variants;
 }
 
 std::optional<ImageShortcutScope> imageShortcutScopeFromValue(int value)

@@ -46,6 +46,11 @@ QAbstractListModel *KiriViewApplication::shortcutHelpModel() const
     return m_actionRuntime->shortcutHelpModel();
 }
 
+QAbstractListModel *KiriViewApplication::shortcutRouteModel() const
+{
+    return m_actionRuntime->shortcutRouteModel();
+}
+
 Actions::MenuPresentation KiriViewApplication::domainMenuPresentation(MenuPresentation presentation)
 {
     if (presentation == MenuBar) {
@@ -163,11 +168,6 @@ QString KiriViewApplication::menuShortcutText(const QString &actionName) const
 QString KiriViewApplication::menuShortcutTextForId(ActionId actionId) const
 {
     return m_actionRuntime->shortcutProjectionForId(domainActionId(actionId)).menuShortcutText;
-}
-
-QVariantList KiriViewApplication::shortcutRoutes() const
-{
-    return m_actionRuntime->shortcutRoutes();
 }
 
 bool KiriViewApplication::videoShortcutsEnabledForScope(int shortcutScope,

@@ -12,7 +12,6 @@
 #include <QKeySequence>
 #include <QList>
 #include <QString>
-#include <QVariantList>
 #include <QtQml/qqmlregistration.h>
 #include <memory>
 
@@ -30,6 +29,7 @@ class KiriViewApplication : public AbstractKirigamiApplication
             NOTIFY menuPresentationChanged)
     Q_PROPERTY(int shortcutRevision READ shortcutRevision NOTIFY shortcutRevisionChanged)
     Q_PROPERTY(QAbstractListModel *shortcutHelpModel READ shortcutHelpModel CONSTANT)
+    Q_PROPERTY(QAbstractListModel *shortcutRouteModel READ shortcutRouteModel CONSTANT)
 
 public:
     enum MenuPresentation {
@@ -78,6 +78,7 @@ public:
     void setMenuPresentation(MenuPresentation presentation);
     int shortcutRevision() const;
     QAbstractListModel *shortcutHelpModel() const;
+    QAbstractListModel *shortcutRouteModel() const;
 
     static KiriView::ApplicationActions::MenuPresentation domainMenuPresentation(
         KiriViewApplication::MenuPresentation presentation);
@@ -109,7 +110,6 @@ public:
     Q_INVOKABLE QKeySequence menuShortcutForId(KiriViewApplication::ActionId actionId) const;
     Q_INVOKABLE QString menuShortcutText(const QString &actionName) const;
     Q_INVOKABLE QString menuShortcutTextForId(KiriViewApplication::ActionId actionId) const;
-    Q_INVOKABLE QVariantList shortcutRoutes() const;
     Q_INVOKABLE bool videoShortcutsEnabledForScope(int shortcutScope, bool helpShortcutsEnabled,
         bool viewerShortcutsEnabled, bool videoFileDeletionInProgress,
         bool videoMediaNavigationActive) const;

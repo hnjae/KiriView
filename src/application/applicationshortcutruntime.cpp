@@ -5,6 +5,7 @@
 
 #include "facade/kiriviewapplication.h"
 #include "shortcuthelpmodel.h"
+#include "shortcutroutemodel.h"
 
 #include <KLocalizedString>
 #include <KirigamiActionCollection>
@@ -16,6 +17,7 @@ ApplicationShortcutRuntime::ApplicationShortcutRuntime(KiriViewApplication &appl
     : m_application(application)
     , m_actionRegistry(actionRegistry)
     , m_changeCallback(std::move(changeCallback))
+    , m_shortcutRouteModel(std::make_unique<ShortcutRouteModel>(&m_application))
 {
 }
 
@@ -52,6 +54,11 @@ int ApplicationShortcutRuntime::shortcutRevision() const { return m_shortcutRevi
 QAbstractListModel *ApplicationShortcutRuntime::shortcutHelpModel() const
 {
     return m_shortcutHelpModel.get();
+}
+
+QAbstractListModel *ApplicationShortcutRuntime::shortcutRouteModel() const
+{
+    return m_shortcutRouteModel.get();
 }
 
 void ApplicationShortcutRuntime::sanitizeActionShortcuts()

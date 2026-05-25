@@ -3,6 +3,7 @@
 
 #include "application/applicationshortcutpolicy.h"
 #include "application/kiriviewapplicationactions.h"
+#include "application/shortcutroutemodel.h"
 #include "facade/kiriviewapplication.h"
 #include "kiriviewstate.h"
 
@@ -18,6 +19,7 @@
 #include <QSignalSpy>
 #include <QStandardPaths>
 #include <QTest>
+#include <QVariantList>
 #include <cstddef>
 
 namespace {
@@ -37,6 +39,18 @@ constexpr int shortcutHelpShortcutTextRole = Qt::UserRole + 4;
 QKeySequence shortcut(const QString &sequence)
 {
     return QKeySequence::fromString(sequence, QKeySequence::PortableText);
+}
+
+QVariantList actionIdVariants(const QList<DomainActionId> &actionIds)
+{
+    QVariantList variants;
+    variants.reserve(actionIds.size());
+
+    for (DomainActionId actionId : actionIds) {
+        variants.push_back(static_cast<int>(actionId));
+    }
+
+    return variants;
 }
 
 QString nativeText(const QKeySequence &sequence)
@@ -117,7 +131,7 @@ private Q_SLOTS:
     void actionDefinitionTableIsCanonicalIdentitySource();
     void facadeActionIdsConvertAtApplicationBoundary();
     void actionIdsResolveActionNamesAndShortcuts();
-    void shortcutRoutesExposeApplicationPolicy();
+    void shortcutRouteModelExposesApplicationPolicy();
     void videoShortcutPolicyApiExposesApplicationPolicy();
     void shortcutsApiReturnsCurrentShortcuts();
     void shortcutModifierPartitionsTextInputShortcuts();
@@ -259,11 +273,25 @@ void TestKiriViewApplication::actionIdsResolveActionNamesAndShortcuts()
     QVERIFY(application.menuShortcutTextForId(KiriViewApplication::ActionCount).isEmpty());
 }
 
-void TestKiriViewApplication::shortcutRoutesExposeApplicationPolicy()
+void TestKiriViewApplication::shortcutRouteModelExposesApplicationPolicy()
 {
     KiriViewApplication application;
+    QAbstractItemModel *model = application.shortcutRouteModel();
+    QVERIFY(model != nullptr);
 
-    QCOMPARE(application.shortcutRoutes(), Actions::shortcutRouteVariants());
+    const QList<Actions::ApplicationShortcutRoute> &routes = Actions::shortcutRoutes();
+    QCOMPARE(model->rowCount(), static_cast<int>(routes.size()));
+
+    for (int row = 0; row < model->rowCount(); ++row) {
+        const QModelIndex index = model->index(row, 0);
+        const Actions::ApplicationShortcutRoute &route = routes.at(row);
+        QCOMPARE(model->data(index, Actions::ShortcutRouteModel::ActionIdsRole).toList(),
+            actionIdVariants(route.actionIds));
+        QCOMPARE(model->data(index, Actions::ShortcutRouteModel::ShortcutFilterRole).toInt(),
+            static_cast<int>(route.shortcutFilter));
+        QCOMPARE(model->data(index, Actions::ShortcutRouteModel::ShortcutScopeRole).toInt(),
+            static_cast<int>(route.shortcutScope));
+    }
 }
 
 void TestKiriViewApplication::videoShortcutPolicyApiExposesApplicationPolicy()

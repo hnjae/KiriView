@@ -61,6 +61,11 @@ QAbstractListModel *ApplicationActionRuntime::shortcutHelpModel() const
     return m_shortcutRuntime->shortcutHelpModel();
 }
 
+QAbstractListModel *ApplicationActionRuntime::shortcutRouteModel() const
+{
+    return m_shortcutRuntime->shortcutRouteModel();
+}
+
 QAction *ApplicationActionRuntime::action(const QString &actionName)
 {
     return m_actionRegistry.action(actionName);
@@ -86,11 +91,6 @@ ApplicationShortcutProjection ApplicationActionRuntime::shortcutProjectionForId(
     ActionId actionId) const
 {
     return m_shortcutRuntime->shortcutProjectionForId(actionId);
-}
-
-QVariantList ApplicationActionRuntime::shortcutRoutes() const
-{
-    return ApplicationActions::shortcutRouteVariants();
 }
 
 bool ApplicationActionRuntime::videoShortcutsEnabledForScope(int shortcutScope,
