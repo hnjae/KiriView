@@ -187,6 +187,7 @@ src/video/videodocumentstatusplan.cpp
 src/video/videodocumentstate.cpp
 src/video/videodocumentpublicsignals.cpp
 src/video/videomediabackend.cpp
+src/video/videoplaybackcontrolplan.cpp
 src/video/videoplaybackurlresolver.cpp
 src/video/videosourceloadruntime.cpp
 src/video/videozoomstate.cpp
