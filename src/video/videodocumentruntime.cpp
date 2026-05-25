@@ -8,7 +8,6 @@
 #include "video/videozoomstate.h"
 
 #include <QObject>
-#include <algorithm>
 #include <utility>
 
 namespace KiriView {
@@ -101,15 +100,7 @@ qint64 VideoDocumentRuntime::position() const { return m_state.position(); }
 
 void VideoDocumentRuntime::setPosition(qint64 position)
 {
-    if (!m_state.seekable()) {
-        return;
-    }
-
-    m_state.setEnded(false);
-    const qint64 upperBound = m_state.duration() > 0 ? m_state.duration() : position;
-    const qint64 clamped = std::clamp(position, qint64(0), upperBound);
-    ensureMediaBackend()->setPosition(clamped);
-    m_state.setPosition(clamped);
+    executePlaybackControlPlan(videoPlaybackSetPositionPlan(playbackControlSnapshot(), position));
 }
 
 bool VideoDocumentRuntime::playing() const { return m_state.playing(); }
@@ -160,79 +151,94 @@ void VideoDocumentRuntime::setVideoOutputGeometry(
 
 void VideoDocumentRuntime::play()
 {
-    if (m_state.sourceUrl().isEmpty()) {
-        return;
-    }
-
-    VideoMediaBackend *mediaBackend = ensureMediaBackend();
-    if (m_state.ended() && m_state.seekable()) {
-        mediaBackend->setPosition(0);
-        m_state.setPosition(0);
-    }
-    m_state.setEnded(false);
-    mediaBackend->play();
+    executePlaybackControlPlan(videoPlaybackPlayPlan(playbackControlSnapshot()));
 }
 
 void VideoDocumentRuntime::pause()
 {
-    if (m_mediaBackend == nullptr) {
-        return;
-    }
-
-    m_mediaBackend->pause();
+    executePlaybackControlPlan(videoPlaybackPausePlan(playbackControlSnapshot()));
 }
 
 void VideoDocumentRuntime::stop()
 {
-    m_state.setEnded(false);
-    if (m_mediaBackend != nullptr) {
-        m_mediaBackend->stop();
-    }
-    m_state.setPlaying(false);
-    if (m_state.seekable()) {
-        if (m_mediaBackend != nullptr) {
-            m_mediaBackend->setPosition(0);
-        }
-        m_state.setPosition(0);
-    }
+    executePlaybackControlPlan(videoPlaybackStopPlan(playbackControlSnapshot()));
 }
 
 void VideoDocumentRuntime::togglePlayback()
 {
-    if (m_state.playing()) {
-        pause();
-        return;
-    }
-
-    play();
+    executePlaybackControlPlan(videoPlaybackTogglePlan(playbackControlSnapshot()));
 }
 
 void VideoDocumentRuntime::seekBy(qint64 deltaMilliseconds)
 {
-    const qint64 nextPosition = clampedSeekPosition(
-        m_state.position(), deltaMilliseconds, m_state.duration(), m_state.seekable());
-    if (!m_state.seekable() || nextPosition == m_state.position()) {
-        return;
-    }
-
-    m_state.setEnded(false);
-    ensureMediaBackend()->setPosition(nextPosition);
-    m_state.setPosition(nextPosition);
+    executePlaybackControlPlan(
+        videoPlaybackSeekByPlan(playbackControlSnapshot(), deltaMilliseconds));
 }
 
 qint64 VideoDocumentRuntime::clampedSeekPosition(
     qint64 currentPosition, qint64 deltaMilliseconds, qint64 duration, bool seekable)
 {
-    if (!seekable) {
-        return currentPosition;
+    return videoPlaybackClampedSeekPosition(currentPosition, deltaMilliseconds, duration, seekable);
+}
+
+VideoPlaybackControlSnapshot VideoDocumentRuntime::playbackControlSnapshot() const
+{
+    return VideoPlaybackControlSnapshot {
+        m_state.sourceUrl().isEmpty(),
+        m_mediaBackend != nullptr,
+        m_state.playing(),
+        m_state.ended(),
+        m_state.seekable(),
+        m_state.position(),
+        m_state.duration(),
+    };
+}
+
+void VideoDocumentRuntime::executePlaybackControlPlan(const VideoPlaybackControlPlan &plan)
+{
+    VideoMediaBackend *mediaBackend = m_mediaBackend.get();
+    for (const VideoPlaybackBackendOperation &operation : plan.backendOperations) {
+        switch (operation.kind) {
+        case VideoPlaybackBackendOperationKind::EnsureBackend:
+            mediaBackend = ensureMediaBackend();
+            break;
+        case VideoPlaybackBackendOperationKind::Play:
+            if (mediaBackend != nullptr) {
+                mediaBackend->play();
+            }
+            break;
+        case VideoPlaybackBackendOperationKind::Pause:
+            if (mediaBackend != nullptr) {
+                mediaBackend->pause();
+            }
+            break;
+        case VideoPlaybackBackendOperationKind::Stop:
+            if (mediaBackend != nullptr) {
+                mediaBackend->stop();
+            }
+            break;
+        case VideoPlaybackBackendOperationKind::SetPosition:
+            if (mediaBackend != nullptr) {
+                mediaBackend->setPosition(operation.position);
+            }
+            break;
+        }
     }
 
-    const qint64 target = currentPosition + deltaMilliseconds;
-    if (duration > 0) {
-        return std::clamp(target, qint64(0), duration);
-    }
+    applyPlaybackStateDelta(plan.stateDelta);
+}
 
-    return std::max<qint64>(0, target);
+void VideoDocumentRuntime::applyPlaybackStateDelta(const VideoPlaybackStateDelta &delta)
+{
+    if (delta.ended.has_value()) {
+        m_state.setEnded(delta.ended.value());
+    }
+    if (delta.playing.has_value()) {
+        m_state.setPlaying(delta.playing.value());
+    }
+    if (delta.position.has_value()) {
+        m_state.setPosition(delta.position.value());
+    }
 }
 
 VideoSourceLoadOperations VideoDocumentRuntime::sourceLoadOperations()

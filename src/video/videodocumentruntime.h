@@ -6,6 +6,7 @@
 
 #include "video/videodocumentstate.h"
 #include "video/videomediabackend.h"
+#include "video/videoplaybackcontrolplan.h"
 #include "video/videosourceloadruntime.h"
 
 #include <QObject>
@@ -62,6 +63,9 @@ public:
         qint64 currentPosition, qint64 deltaMilliseconds, qint64 duration, bool seekable);
 
 private:
+    VideoPlaybackControlSnapshot playbackControlSnapshot() const;
+    void executePlaybackControlPlan(const VideoPlaybackControlPlan &plan);
+    void applyPlaybackStateDelta(const VideoPlaybackStateDelta &delta);
     VideoMediaBackend *ensureMediaBackend();
     void installMediaBackendCallbacks();
     VideoSourceLoadOperations sourceLoadOperations();
