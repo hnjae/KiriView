@@ -38,14 +38,12 @@ void TestDocumentSessionRoutePlan::emptyUrlProducesEmptyClearPlan()
     QVERIFY(plan.sourceUrl.isEmpty());
     QCOMPARE(plan.cursorAction, KiriView::DocumentSessionRouteCursorAction::Clear);
     QCOMPARE(plan.sourceIdentityAction, KiriView::DocumentSessionRouteSourceIdentityAction::Clear);
-    QVERIFY(plan.clearMediaNavigation);
-    QVERIFY(plan.clearImageDocument);
-    QVERIFY(plan.clearVideo);
-    QVERIFY(plan.enterEmpty);
-    QVERIFY(plan.clearPredecode);
-    QVERIFY(!plan.enterImage);
-    QVERIFY(!plan.enterVideo);
-    QVERIFY(!plan.refreshMediaNavigation);
+    QVERIFY(plan.mediaNavigation.clearBeforeRouting);
+    QVERIFY(!plan.mediaNavigation.refreshAfterRouting);
+    QCOMPARE(plan.document.clear, KiriView::DocumentSessionRouteDocumentClear::ImageAndVideo);
+    QCOMPARE(plan.document.enter, KiriView::DocumentSessionRouteDocumentEnter::Empty);
+    QVERIFY(!plan.document.syncDirectImageCursorFromDocument);
+    QVERIFY(plan.predecode.clear);
 }
 
 void TestDocumentSessionRoutePlan::directVideoLocalAndKdeArchiveUrlsRouteToDirectVideo()
@@ -64,12 +62,10 @@ void TestDocumentSessionRoutePlan::directVideoLocalAndKdeArchiveUrlsRouteToDirec
         QCOMPARE(plan.cursorAction, KiriView::DocumentSessionRouteCursorAction::SetDirectVideo);
         QCOMPARE(plan.sourceIdentityAction,
             KiriView::DocumentSessionRouteSourceIdentityAction::UseOriginalUrl);
-        QVERIFY(plan.clearImageDocument);
-        QVERIFY(plan.enterVideo);
-        QVERIFY(plan.refreshMediaNavigation);
-        QVERIFY(!plan.clearVideo);
-        QVERIFY(!plan.enterImage);
-        QVERIFY(!plan.clearPredecode);
+        QCOMPARE(plan.document.clear, KiriView::DocumentSessionRouteDocumentClear::Image);
+        QCOMPARE(plan.document.enter, KiriView::DocumentSessionRouteDocumentEnter::Video);
+        QVERIFY(plan.mediaNavigation.refreshAfterRouting);
+        QVERIFY(!plan.predecode.clear);
     }
 }
 
@@ -89,13 +85,11 @@ void TestDocumentSessionRoutePlan::directImageLocalAndKdeArchiveUrlsRouteToDirec
         QCOMPARE(plan.cursorAction, KiriView::DocumentSessionRouteCursorAction::RequestDirectImage);
         QCOMPARE(plan.sourceIdentityAction,
             KiriView::DocumentSessionRouteSourceIdentityAction::UseImageDocumentSourceUrl);
-        QVERIFY(plan.clearVideo);
-        QVERIFY(plan.enterImage);
-        QVERIFY(plan.syncDirectImageCursorFromDocument);
-        QVERIFY(plan.refreshMediaNavigation);
-        QVERIFY(!plan.clearImageDocument);
-        QVERIFY(!plan.enterVideo);
-        QVERIFY(!plan.clearPredecode);
+        QCOMPARE(plan.document.clear, KiriView::DocumentSessionRouteDocumentClear::Video);
+        QCOMPARE(plan.document.enter, KiriView::DocumentSessionRouteDocumentEnter::Image);
+        QVERIFY(plan.document.syncDirectImageCursorFromDocument);
+        QVERIFY(plan.mediaNavigation.refreshAfterRouting);
+        QVERIFY(!plan.predecode.clear);
     }
 }
 
@@ -111,11 +105,10 @@ void TestDocumentSessionRoutePlan::localDirectoryAndGeneralArchiveNamesRouteToIm
 
         QCOMPARE(plan.kind, KiriView::DocumentSessionRouteKind::ImageDocument);
         QCOMPARE(plan.cursorAction, KiriView::DocumentSessionRouteCursorAction::Clear);
-        QVERIFY(plan.clearVideo);
-        QVERIFY(plan.enterImage);
-        QVERIFY(plan.syncDirectImageCursorFromDocument);
-        QVERIFY(plan.refreshMediaNavigation);
-        QVERIFY(!plan.enterVideo);
+        QCOMPARE(plan.document.clear, KiriView::DocumentSessionRouteDocumentClear::Video);
+        QCOMPARE(plan.document.enter, KiriView::DocumentSessionRouteDocumentEnter::Image);
+        QVERIFY(plan.document.syncDirectImageCursorFromDocument);
+        QVERIFY(plan.mediaNavigation.refreshAfterRouting);
     }
 }
 
@@ -129,8 +122,7 @@ void TestDocumentSessionRoutePlan::unsupportedExtensionRoutesToImageDocument()
     QVERIFY(!KiriView::isSupportedDirectImageUrl(unsupported));
     QCOMPARE(plan.kind, KiriView::DocumentSessionRouteKind::ImageDocument);
     QCOMPARE(plan.cursorAction, KiriView::DocumentSessionRouteCursorAction::Clear);
-    QVERIFY(plan.enterImage);
-    QVERIFY(!plan.enterVideo);
+    QCOMPARE(plan.document.enter, KiriView::DocumentSessionRouteDocumentEnter::Image);
 }
 
 void TestDocumentSessionRoutePlan::fileNamesMatchCaseInsensitively()
@@ -159,7 +151,7 @@ void TestDocumentSessionRoutePlan::routePlanDoesNotAdvertiseVideoBeyondDirectUrl
             = KiriView::documentSessionRoutePlanForSourceUrl(
                 url, KiriView::DocumentSessionKind::Image);
         QCOMPARE(plan.kind, KiriView::DocumentSessionRouteKind::ImageDocument);
-        QVERIFY(!plan.enterVideo);
+        QVERIFY(plan.document.enter != KiriView::DocumentSessionRouteDocumentEnter::Video);
     }
 
     QCOMPARE(KiriView::documentSessionRoutePlanForSourceUrl(
@@ -175,10 +167,10 @@ void TestDocumentSessionRoutePlan::
 
     QVERIFY(
         KiriView::documentSessionRoutePlanForSourceUrl(image, KiriView::DocumentSessionKind::Image)
-            .clearMediaNavigation);
+            .mediaNavigation.clearBeforeRouting);
     QVERIFY(
         !KiriView::documentSessionRoutePlanForMediaUrl(image, KiriView::DocumentSessionKind::Image)
-            .clearMediaNavigation);
+            .mediaNavigation.clearBeforeRouting);
 }
 
 void TestDocumentSessionRoutePlan::

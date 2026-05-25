@@ -486,7 +486,7 @@ void DocumentSessionRuntime::openMediaUrl(const QUrl &url)
 
 void DocumentSessionRuntime::executeRoutePlan(const DocumentSessionRoutePlan &plan)
 {
-    if (plan.clearMediaNavigation) {
+    if (plan.mediaNavigation.clearBeforeRouting) {
         m_state.setMediaNavigationState({}, false);
     }
 
@@ -511,26 +511,39 @@ void DocumentSessionRuntime::executeRoutePlan(const DocumentSessionRoutePlan &pl
     }
 
     m_routingSource = true;
-    if (plan.clearVideo) {
-        leaveVideoMode();
-    }
-    if (plan.clearImageDocument) {
+    switch (plan.document.clear) {
+    case DocumentSessionRouteDocumentClear::None:
+        break;
+    case DocumentSessionRouteDocumentClear::Image:
         m_imageDocument.setSourceUrl(QUrl());
+        break;
+    case DocumentSessionRouteDocumentClear::Video:
+        leaveVideoMode();
+        break;
+    case DocumentSessionRouteDocumentClear::ImageAndVideo:
+        leaveVideoMode();
+        m_imageDocument.setSourceUrl(QUrl());
+        break;
     }
-    if (plan.enterVideo) {
+
+    switch (plan.document.enter) {
+    case DocumentSessionRouteDocumentEnter::None:
+        break;
+    case DocumentSessionRouteDocumentEnter::Video:
         m_videoDocument.setSourceUrl(plan.sourceUrl);
         setDocumentKind(DocumentSessionKind::Video);
-    }
-    if (plan.enterImage) {
+        break;
+    case DocumentSessionRouteDocumentEnter::Image:
         m_imageDocument.setSourceUrl(plan.sourceUrl);
         setDocumentKind(DocumentSessionKind::Image);
-    }
-    if (plan.enterEmpty) {
+        break;
+    case DocumentSessionRouteDocumentEnter::Empty:
         setDocumentKind(DocumentSessionKind::Empty);
+        break;
     }
     m_routingSource = false;
 
-    if (plan.syncDirectImageCursorFromDocument) {
+    if (plan.document.syncDirectImageCursorFromDocument) {
         directMediaScopeChanged = syncDirectImageCursorFromDocument() || directMediaScopeChanged;
     }
 
@@ -550,12 +563,13 @@ void DocumentSessionRuntime::executeRoutePlan(const DocumentSessionRoutePlan &pl
 
     recomputeActiveNavigation();
 
-    if (plan.refreshMediaNavigation
-        && (directMediaScopeChanged || plan.clearMediaNavigation || mediaNavigationActive())) {
+    if (plan.mediaNavigation.refreshAfterRouting
+        && (directMediaScopeChanged || plan.mediaNavigation.clearBeforeRouting
+            || mediaNavigationActive())) {
         refreshMediaNavigation();
     }
-    if (plan.clearPredecode) {
-        if (plan.clearMediaNavigation) {
+    if (plan.predecode.clear) {
+        if (plan.mediaNavigation.clearBeforeRouting) {
             m_state.setMediaNavigationState({}, false);
             recomputeActiveNavigation();
         }

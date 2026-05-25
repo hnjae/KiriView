@@ -23,10 +23,9 @@ KiriView::DocumentSessionRoutePlan baseRoutePlan(
         plan.sourceUrl = sourceUrl;
         plan.cursorAction = KiriView::DocumentSessionRouteCursorAction::Clear;
         plan.sourceIdentityAction = KiriView::DocumentSessionRouteSourceIdentityAction::Clear;
-        plan.clearImageDocument = true;
-        plan.clearVideo = true;
-        plan.enterEmpty = true;
-        plan.clearPredecode = true;
+        plan.document.clear = KiriView::DocumentSessionRouteDocumentClear::ImageAndVideo;
+        plan.document.enter = KiriView::DocumentSessionRouteDocumentEnter::Empty;
+        plan.predecode.clear = true;
         return plan;
     }
 
@@ -37,9 +36,9 @@ KiriView::DocumentSessionRoutePlan baseRoutePlan(
         plan.cursorAction = KiriView::DocumentSessionRouteCursorAction::SetDirectVideo;
         plan.sourceIdentityAction
             = KiriView::DocumentSessionRouteSourceIdentityAction::UseOriginalUrl;
-        plan.clearImageDocument = true;
-        plan.enterVideo = true;
-        plan.refreshMediaNavigation = true;
+        plan.document.clear = KiriView::DocumentSessionRouteDocumentClear::Image;
+        plan.document.enter = KiriView::DocumentSessionRouteDocumentEnter::Video;
+        plan.mediaNavigation.refreshAfterRouting = true;
         return plan;
     }
 
@@ -50,10 +49,10 @@ KiriView::DocumentSessionRoutePlan baseRoutePlan(
         plan.cursorAction = directImageCursorActionFor(currentKind);
         plan.sourceIdentityAction
             = KiriView::DocumentSessionRouteSourceIdentityAction::UseImageDocumentSourceUrl;
-        plan.clearVideo = true;
-        plan.enterImage = true;
-        plan.syncDirectImageCursorFromDocument = true;
-        plan.refreshMediaNavigation = true;
+        plan.document.clear = KiriView::DocumentSessionRouteDocumentClear::Video;
+        plan.document.enter = KiriView::DocumentSessionRouteDocumentEnter::Image;
+        plan.document.syncDirectImageCursorFromDocument = true;
+        plan.mediaNavigation.refreshAfterRouting = true;
         return plan;
     }
 
@@ -63,10 +62,10 @@ KiriView::DocumentSessionRoutePlan baseRoutePlan(
     plan.cursorAction = KiriView::DocumentSessionRouteCursorAction::Clear;
     plan.sourceIdentityAction
         = KiriView::DocumentSessionRouteSourceIdentityAction::UseImageDocumentSourceUrl;
-    plan.clearVideo = true;
-    plan.enterImage = true;
-    plan.syncDirectImageCursorFromDocument = true;
-    plan.refreshMediaNavigation = true;
+    plan.document.clear = KiriView::DocumentSessionRouteDocumentClear::Video;
+    plan.document.enter = KiriView::DocumentSessionRouteDocumentEnter::Image;
+    plan.document.syncDirectImageCursorFromDocument = true;
+    plan.mediaNavigation.refreshAfterRouting = true;
     return plan;
 }
 }
@@ -76,7 +75,7 @@ DocumentSessionRoutePlan documentSessionRoutePlanForSourceUrl(
     const QUrl &sourceUrl, DocumentSessionKind currentKind)
 {
     DocumentSessionRoutePlan plan = baseRoutePlan(sourceUrl, currentKind);
-    plan.clearMediaNavigation = true;
+    plan.mediaNavigation.clearBeforeRouting = true;
     return plan;
 }
 

@@ -31,21 +31,44 @@ enum class DocumentSessionRouteSourceIdentityAction {
     UseImageDocumentSourceUrl,
 };
 
+enum class DocumentSessionRouteDocumentClear {
+    None,
+    Image,
+    Video,
+    ImageAndVideo,
+};
+
+enum class DocumentSessionRouteDocumentEnter {
+    None,
+    Empty,
+    Image,
+    Video,
+};
+
+struct DocumentSessionRouteMediaNavigationPlan {
+    bool clearBeforeRouting = false;
+    bool refreshAfterRouting = false;
+};
+
+struct DocumentSessionRouteDocumentPlan {
+    DocumentSessionRouteDocumentClear clear = DocumentSessionRouteDocumentClear::None;
+    DocumentSessionRouteDocumentEnter enter = DocumentSessionRouteDocumentEnter::None;
+    bool syncDirectImageCursorFromDocument = false;
+};
+
+struct DocumentSessionRoutePredecodePlan {
+    bool clear = false;
+};
+
 struct DocumentSessionRoutePlan {
     DocumentSessionRouteKind kind = DocumentSessionRouteKind::Empty;
     QUrl sourceUrl;
     DocumentSessionRouteCursorAction cursorAction = DocumentSessionRouteCursorAction::None;
     DocumentSessionRouteSourceIdentityAction sourceIdentityAction
         = DocumentSessionRouteSourceIdentityAction::None;
-    bool clearMediaNavigation = false;
-    bool clearImageDocument = false;
-    bool clearVideo = false;
-    bool enterVideo = false;
-    bool enterImage = false;
-    bool enterEmpty = false;
-    bool syncDirectImageCursorFromDocument = false;
-    bool refreshMediaNavigation = false;
-    bool clearPredecode = false;
+    DocumentSessionRouteMediaNavigationPlan mediaNavigation;
+    DocumentSessionRouteDocumentPlan document;
+    DocumentSessionRoutePredecodePlan predecode;
 };
 
 DocumentSessionRoutePlan documentSessionRoutePlanForSourceUrl(
