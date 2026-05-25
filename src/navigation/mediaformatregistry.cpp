@@ -15,6 +15,11 @@ QStringList supportedOrdinaryMediaExtensions()
     return Bridge::qtStringList(rustSupportedOrdinaryMediaExtensions());
 }
 
+QStringList supportedOrdinaryMediaMimeTypes()
+{
+    return Bridge::qtStringList(rustSupportedOrdinaryMediaMimeTypes());
+}
+
 bool isSupportedOrdinaryMediaFileName(const QString &name)
 {
     return Bridge::rustResultForQString(name, rustIsSupportedOrdinaryMediaFileName);

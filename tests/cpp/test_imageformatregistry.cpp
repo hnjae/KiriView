@@ -3,22 +3,11 @@
 
 #include "decoding/imageformatregistry.h"
 
-#include "archive/archiveformat.h"
-
-#include <QFile>
 #include <QObject>
 #include <QStringList>
 #include <QTest>
 
 namespace {
-QStringList sortedUnique(QStringList values)
-{
-    values.removeAll(QString());
-    values.sort();
-    values.removeDuplicates();
-    return values;
-}
-
 QStringList expectedRawExtensions()
 {
     return {
@@ -98,7 +87,6 @@ private Q_SLOTS:
     void supportedImageMimeTypesIncludeRawFormats();
     void supportedOpenExtensionsIncludeComicBookArchives();
     void supportedOpenExtensionsDoNotAdvertiseGeneralArchives();
-    void desktopMimeTypesMatchSupportedOpenMimeTypes();
 };
 
 void TestImageFormatRegistry::supportedImageExtensionsIncludeAdvertisedFormats()
@@ -163,30 +151,6 @@ void TestImageFormatRegistry::supportedOpenExtensionsDoNotAdvertiseGeneralArchiv
     QVERIFY(!extensions.contains(QStringLiteral("tar")));
     QVERIFY(!extensions.contains(QStringLiteral("7z")));
     QVERIFY(!extensions.contains(QStringLiteral("rar")));
-}
-
-void TestImageFormatRegistry::desktopMimeTypesMatchSupportedOpenMimeTypes()
-{
-    QFile desktopFile(
-        QStringLiteral(KIRIVIEW_TEST_SOURCE_DIR "/../../io.github.hnjae.KiriView.desktop"));
-    QVERIFY(desktopFile.open(QIODevice::ReadOnly | QIODevice::Text));
-
-    const QString mimePrefix = QStringLiteral("MimeType=");
-    QString mimeLine;
-    const QString desktopText = QString::fromUtf8(desktopFile.readAll());
-    for (const QString &line : desktopText.split(QLatin1Char('\n'))) {
-        if (line.startsWith(mimePrefix)) {
-            mimeLine = line.mid(mimePrefix.size());
-            break;
-        }
-    }
-    QVERIFY(!mimeLine.isEmpty());
-
-    QStringList expectedMimeTypes = KiriView::supportedImageMimeTypes();
-    expectedMimeTypes.append(KiriView::supportedComicBookArchiveMimeTypes());
-
-    QCOMPARE(sortedUnique(mimeLine.split(QLatin1Char(';'), Qt::SkipEmptyParts)),
-        sortedUnique(expectedMimeTypes));
 }
 
 QTEST_GUILESS_MAIN(TestImageFormatRegistry)

@@ -135,6 +135,10 @@ pub(crate) fn supported_image_extensions() -> Vec<String> {
 }
 
 fn rust_supported_image_mime_types() -> Vec<String> {
+    supported_image_mime_types()
+}
+
+pub(crate) fn supported_image_mime_types() -> Vec<String> {
     unique_sorted_strings(
         SUPPORTED_IMAGE_FORMATS
             .iter()

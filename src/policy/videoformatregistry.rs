@@ -5,17 +5,17 @@ use crate::imageinputclassification::extension_for_file_name;
 
 struct VideoFormat {
     extensions: &'static [&'static str],
+    mime_types: &'static [&'static str],
 }
 
 const SUPPORTED_DIRECT_VIDEO_FORMATS: &[VideoFormat] = &[
     VideoFormat {
-        extensions: &["mp4"],
-    },
-    VideoFormat {
-        extensions: &["m4v"],
+        extensions: &["mp4", "m4v"],
+        mime_types: &["video/mp4"],
     },
     VideoFormat {
         extensions: &["mov"],
+        mime_types: &["video/quicktime"],
     },
 ];
 
@@ -24,6 +24,14 @@ pub(crate) fn supported_direct_video_extensions() -> Vec<String> {
         SUPPORTED_DIRECT_VIDEO_FORMATS
             .iter()
             .flat_map(|format| format.extensions.iter().copied()),
+    )
+}
+
+pub(crate) fn supported_direct_video_mime_types() -> Vec<String> {
+    unique_sorted_strings(
+        SUPPORTED_DIRECT_VIDEO_FORMATS
+            .iter()
+            .flat_map(|format| format.mime_types.iter().copied()),
     )
 }
 
@@ -52,6 +60,14 @@ mod tests {
     #[test]
     fn supported_direct_video_extensions_are_sorted_and_unique() {
         assert_eq!(supported_direct_video_extensions(), ["m4v", "mov", "mp4"]);
+    }
+
+    #[test]
+    fn supported_direct_video_mime_types_are_sorted_and_unique() {
+        assert_eq!(
+            supported_direct_video_mime_types(),
+            ["video/mp4", "video/quicktime"]
+        );
     }
 
     #[test]

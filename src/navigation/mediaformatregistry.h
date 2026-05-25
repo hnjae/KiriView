@@ -9,6 +9,7 @@
 
 namespace KiriView {
 QStringList supportedOrdinaryMediaExtensions();
+QStringList supportedOrdinaryMediaMimeTypes();
 bool isSupportedOrdinaryMediaFileName(const QString &name);
 bool isSupportedDirectVideoFileName(const QString &name);
 QStringList ordinaryMediaOpenDialogNameFilters();
