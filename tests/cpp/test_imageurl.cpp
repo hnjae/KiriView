@@ -30,6 +30,7 @@ private Q_SLOTS:
     void normalizedContainerUrlsStripQueryFragmentsAndCleanLocalPaths();
     void normalizedUrlIdentityHelpersRejectInvalidImageUrlsAndPreserveKeyFormatting();
     void directoryNavigationHelpersOwnParentAndIdentityRules();
+    void normalizedUrlIdentityComparisonHandlesEmptyAndPathEquivalentUrls();
     void sameNormalizedUrlMatchesPathSegments();
     void sameContainerNavigationUrlMatchesNormalizedPaths();
     void parentUrlForContainerNavigationHandlesContainers();
@@ -91,6 +92,20 @@ void TestImageUrl::directoryNavigationHelpersOwnParentAndIdentityRules()
     QVERIFY(KiriView::sameNormalizedUrl(
         navigationLocation.fileUrl, QUrl::fromLocalFile(QStringLiteral("/images/b/page.png"))));
     QCOMPARE(navigationLocation.directoryUrl, QUrl::fromLocalFile(QStringLiteral("/images/b/")));
+}
+
+void TestImageUrl::normalizedUrlIdentityComparisonHandlesEmptyAndPathEquivalentUrls()
+{
+    const QUrl rawUrl = QUrl::fromLocalFile(QStringLiteral("/images/chapter/../page.png"));
+    const QUrl normalizedUrl = QUrl::fromLocalFile(QStringLiteral("/images/page.png"));
+
+    const std::optional<QUrl> validUrl = KiriView::normalizedValidUrlForIdentity(rawUrl);
+    QVERIFY(validUrl.has_value());
+    QCOMPARE(*validUrl, normalizedUrl);
+    QVERIFY(!KiriView::normalizedValidUrlForIdentity(QUrl()).has_value());
+    QVERIFY(KiriView::sameNormalizedUrlOrEmpty(rawUrl, normalizedUrl));
+    QVERIFY(KiriView::sameNormalizedUrlOrEmpty(QUrl(), QUrl()));
+    QVERIFY(!KiriView::sameNormalizedUrlOrEmpty(rawUrl, QUrl()));
 }
 
 void TestImageUrl::sameNormalizedUrlMatchesPathSegments()

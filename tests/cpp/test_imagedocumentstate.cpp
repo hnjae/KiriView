@@ -22,6 +22,7 @@ class TestImageDocumentState : public QObject
 
 private Q_SLOTS:
     void displayedUrlAndWindowTitleFollowDisplayedImageLocation();
+    void displayedImageLocationUsesCanonicalIdentity();
     void containerNavigationAvailabilityFollowsContainerUrl();
     void statusAndLoadingReducersOnlyNotifyWhenChanged();
     void changeBatchQueuesUniqueChangesUntilDestroyed();
@@ -71,6 +72,23 @@ void TestImageDocumentState::displayedUrlAndWindowTitleFollowDisplayedImageLocat
     QCOMPARE(state.displayedUrl(), QUrl());
     QCOMPARE(state.windowTitleFileName(), QString());
     QCOMPARE(changes.back(), KiriView::ImageDocumentChange::WindowTitleFileName);
+}
+
+void TestImageDocumentState::displayedImageLocationUsesCanonicalIdentity()
+{
+    std::vector<KiriView::ImageDocumentChange> changes;
+    KiriView::ImageDocumentState state(
+        [&changes](KiriView::ImageDocumentChange change) { changes.push_back(change); });
+
+    const QUrl rawUrl = localUrl(QStringLiteral("/images/chapter/../page.png"));
+    const QUrl normalizedUrl = localUrl(QStringLiteral("/images/page.png"));
+    state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromUrl(rawUrl));
+    QCOMPARE(state.displayedUrl(), normalizedUrl);
+
+    const std::size_t changeCount = changes.size();
+    state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromUrl(normalizedUrl));
+    QCOMPARE(state.displayedUrl(), normalizedUrl);
+    QCOMPARE(changes.size(), changeCount);
 }
 
 void TestImageDocumentState::containerNavigationAvailabilityFollowsContainerUrl()

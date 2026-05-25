@@ -19,6 +19,7 @@ struct DirectoryNavigationLocation {
 QUrl normalizedUrlForIdentity(const QUrl &url);
 QString normalizedUrlIdentityKey(
     const QUrl &url, QUrl::ComponentFormattingOptions options = QUrl::PrettyDecoded);
+std::optional<QUrl> normalizedValidUrlForIdentity(const QUrl &url);
 QUrl normalizedImageUrl(const QUrl &url);
 std::optional<QUrl> normalizedValidImageUrl(const QUrl &url);
 QUrl normalizedDirectoryUrlForIdentity(const QUrl &url);
@@ -31,6 +32,7 @@ QUrl parentUrlForContainerNavigation(const QUrl &containerUrl);
 QUrl navigationSourceUrl(const QUrl &url);
 DirectoryNavigationLocation directoryNavigationLocationForFileUrl(const QUrl &url);
 bool sameNormalizedUrl(const QUrl &left, const QUrl &right);
+bool sameNormalizedUrlOrEmpty(const QUrl &left, const QUrl &right);
 bool sameContainerNavigationUrl(const QUrl &left, const QUrl &right);
 }
 

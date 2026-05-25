@@ -13,8 +13,45 @@ class TestImageLocation : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
+    void locationValuesStoreCanonicalUrlIdentity();
     void archiveDocumentIdentityComparesNormalizedUrlsAndKind();
 };
+
+void TestImageLocation::locationValuesStoreCanonicalUrlIdentity()
+{
+    const QUrl rawImageUrl
+        = KiriView::TestSupport::localUrl(QStringLiteral("/images/chapter/../page.png"));
+    const QUrl normalizedImageUrl
+        = KiriView::TestSupport::localUrl(QStringLiteral("/images/page.png"));
+    const QUrl rawArchiveRootUrl(QStringLiteral("zip:///books/./book.cbz/"));
+    const QUrl normalizedArchiveRootUrl(QStringLiteral("zip:///books/book.cbz/"));
+
+    const KiriView::ImageLocation imageLocation = KiriView::ImageLocation::fromUrl(rawImageUrl);
+    QCOMPARE(imageLocation.url(), normalizedImageUrl);
+    QVERIFY(imageLocation == KiriView::ImageLocation::fromUrl(normalizedImageUrl));
+
+    const KiriView::ContainerLocation containerLocation
+        = KiriView::ContainerLocation::fromUrl(rawImageUrl);
+    QCOMPARE(containerLocation.url(), normalizedImageUrl);
+    QVERIFY(containerLocation == KiriView::ContainerLocation::fromUrl(normalizedImageUrl));
+    QVERIFY(KiriView::ContainerLocation::none() == KiriView::ContainerLocation::none());
+
+    const KiriView::ArchiveDocumentLocation archiveDocument
+        = KiriView::ArchiveDocumentLocation::fromUrls(
+            rawImageUrl, rawArchiveRootUrl, KiriView::ArchiveDocumentKind::ComicBook);
+    QCOMPARE(archiveDocument.fileUrl(), normalizedImageUrl);
+    QCOMPARE(archiveDocument.rootUrl(), normalizedArchiveRootUrl);
+    QVERIFY(archiveDocument
+        == KiriView::ArchiveDocumentLocation::fromUrls(normalizedImageUrl, normalizedArchiveRootUrl,
+            KiriView::ArchiveDocumentKind::ComicBook));
+
+    const KiriView::DisplayedImageLocation displayedLocation
+        = KiriView::DisplayedImageLocation::fromArchiveDocument(rawImageUrl, archiveDocument);
+    QCOMPARE(displayedLocation.imageUrl(), normalizedImageUrl);
+    QVERIFY(displayedLocation
+        == KiriView::DisplayedImageLocation::fromArchiveDocument(
+            normalizedImageUrl, archiveDocument));
+}
 
 void TestImageLocation::archiveDocumentIdentityComparesNormalizedUrlsAndKind()
 {

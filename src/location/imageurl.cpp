@@ -97,16 +97,21 @@ QString normalizedUrlIdentityKey(const QUrl &url, QUrl::ComponentFormattingOptio
     return normalizedUrlForIdentity(url).toString(options);
 }
 
-QUrl normalizedImageUrl(const QUrl &url) { return normalizedUrlForIdentity(url); }
-
-std::optional<QUrl> normalizedValidImageUrl(const QUrl &url)
+std::optional<QUrl> normalizedValidUrlForIdentity(const QUrl &url)
 {
-    const QUrl normalizedUrl = normalizedImageUrl(url);
+    const QUrl normalizedUrl = normalizedUrlForIdentity(url);
     if (!normalizedUrl.isValid() || normalizedUrl.isEmpty()) {
         return std::nullopt;
     }
 
     return normalizedUrl;
+}
+
+QUrl normalizedImageUrl(const QUrl &url) { return normalizedUrlForIdentity(url); }
+
+std::optional<QUrl> normalizedValidImageUrl(const QUrl &url)
+{
+    return normalizedValidUrlForIdentity(url);
 }
 
 QUrl normalizedDirectoryUrlForIdentity(const QUrl &url) { return normalizedUrlForIdentity(url); }
@@ -184,6 +189,15 @@ DirectoryNavigationLocation directoryNavigationLocationForFileUrl(const QUrl &ur
 bool sameNormalizedUrl(const QUrl &left, const QUrl &right)
 {
     return left.matches(right, QUrl::NormalizePathSegments);
+}
+
+bool sameNormalizedUrlOrEmpty(const QUrl &left, const QUrl &right)
+{
+    if (left.isEmpty() || right.isEmpty()) {
+        return left.isEmpty() && right.isEmpty();
+    }
+
+    return sameNormalizedUrl(left, right);
 }
 
 bool sameContainerNavigationUrl(const QUrl &left, const QUrl &right)

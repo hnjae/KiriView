@@ -4,6 +4,8 @@
 #ifndef KIRIVIEW_IMAGELOCATION_H
 #define KIRIVIEW_IMAGELOCATION_H
 
+#include "location/imageurl.h"
+
 #include <QUrl>
 #include <utility>
 
@@ -13,7 +15,7 @@ class ImageLocation
 public:
     ImageLocation() = default;
     explicit ImageLocation(QUrl url)
-        : m_url(std::move(url))
+        : m_url(normalizedUrlForIdentity(url))
     {
     }
 
@@ -40,7 +42,7 @@ class ContainerLocation
 public:
     ContainerLocation() = default;
     explicit ContainerLocation(QUrl url)
-        : m_url(std::move(url))
+        : m_url(normalizedUrlForIdentity(url))
     {
     }
 
@@ -74,8 +76,8 @@ class ArchiveDocumentLocation
 public:
     ArchiveDocumentLocation() = default;
     ArchiveDocumentLocation(QUrl fileUrl, QUrl rootUrl, ArchiveDocumentKind kind)
-        : m_fileUrl(std::move(fileUrl))
-        , m_rootUrl(std::move(rootUrl))
+        : m_fileUrl(normalizedUrlForIdentity(fileUrl))
+        , m_rootUrl(normalizedUrlForIdentity(rootUrl))
         , m_kind(kind)
     {
     }

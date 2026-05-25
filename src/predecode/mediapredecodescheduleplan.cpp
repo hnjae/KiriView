@@ -22,15 +22,6 @@ public:
     std::vector<KiriView::MediaNavigationCandidate> mediaCandidates;
 };
 
-std::optional<QUrl> normalizedValidMediaCursorUrl(const QUrl &url)
-{
-    const QUrl normalizedUrl = KiriView::normalizedUrlForIdentity(url);
-    if (!normalizedUrl.isValid() || normalizedUrl.isEmpty()) {
-        return std::nullopt;
-    }
-
-    return normalizedUrl;
-}
 }
 
 namespace KiriView {
@@ -41,7 +32,7 @@ bool MediaPredecodeSchedulePlan::shouldSchedule() const
 
 MediaPredecodeSchedulePlan mediaPredecodeSchedulePlan(MediaPredecodeScheduleRequest request)
 {
-    const std::optional<QUrl> cursorUrl = normalizedValidMediaCursorUrl(request.currentUrl);
+    const std::optional<QUrl> cursorUrl = normalizedValidUrlForIdentity(request.currentUrl);
     if (!cursorUrl.has_value()) {
         return {};
     }

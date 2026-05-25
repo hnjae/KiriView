@@ -3,6 +3,8 @@
 
 #include "documentsessionstate.h"
 
+#include "location/imageurl.h"
+
 #include <algorithm>
 #include <utility>
 
@@ -43,13 +45,8 @@ QUrl effectiveDirectMediaCursorUrl(const KiriView::DirectMediaCursor &cursor)
 bool sameEffectiveDirectMediaCursorUrl(
     const KiriView::DirectMediaCursor &left, const KiriView::DirectMediaCursor &right)
 {
-    const QUrl leftUrl = effectiveDirectMediaCursorUrl(left);
-    const QUrl rightUrl = effectiveDirectMediaCursorUrl(right);
-    if (leftUrl.isEmpty() || rightUrl.isEmpty()) {
-        return leftUrl.isEmpty() && rightUrl.isEmpty();
-    }
-
-    return leftUrl.matches(rightUrl, QUrl::NormalizePathSegments);
+    return KiriView::sameNormalizedUrlOrEmpty(
+        effectiveDirectMediaCursorUrl(left), effectiveDirectMediaCursorUrl(right));
 }
 
 bool replaceDirectMediaCursor(
