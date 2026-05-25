@@ -37,10 +37,14 @@ void TestImageShortcutNavigationPolicy::horizontalNavigationFollowsReadingDirect
 {
     Policy policy;
 
-    QCOMPARE(policy.horizontalArrowAction(true, false, false), HorizontalAction::OpenPreviousImage);
-    QCOMPARE(policy.horizontalArrowAction(false, false, false), HorizontalAction::OpenNextImage);
-    QCOMPARE(policy.horizontalArrowAction(true, false, true), HorizontalAction::OpenNextImage);
-    QCOMPARE(policy.horizontalArrowAction(false, false, true), HorizontalAction::OpenPreviousImage);
+    QCOMPARE(policy.horizontalArrowAction(true, false, false),
+        HorizontalAction::RequestPreviousActiveNavigation);
+    QCOMPARE(policy.horizontalArrowAction(false, false, false),
+        HorizontalAction::RequestNextActiveNavigation);
+    QCOMPARE(policy.horizontalArrowAction(true, false, true),
+        HorizontalAction::RequestNextActiveNavigation);
+    QCOMPARE(policy.horizontalArrowAction(false, false, true),
+        HorizontalAction::RequestPreviousActiveNavigation);
 }
 
 void TestImageShortcutNavigationPolicy::singlePageArrowsFollowReadingDirection()
@@ -57,23 +61,25 @@ void TestImageShortcutNavigationPolicy::scanForwardFallsThroughToNextImageOnlyAt
 {
     Policy policy;
 
-    QCOMPARE(policy.scanForwardAction(false, false), ScanAction::OpenNextImageFromScan);
+    QCOMPARE(
+        policy.scanForwardAction(false, false), ScanAction::RequestNextActiveNavigationFromScan);
     QCOMPARE(policy.scanForwardAction(true, true), ScanAction::NoScanAction);
-    QCOMPARE(policy.scanForwardAction(true, false), ScanAction::OpenNextImageFromScan);
+    QCOMPARE(
+        policy.scanForwardAction(true, false), ScanAction::RequestNextActiveNavigationFromScan);
 }
 
 void TestImageShortcutNavigationPolicy::scanBackwardSelectsBoundaryPageOrPreviousImage()
 {
     Policy policy;
 
-    QCOMPARE(
-        policy.scanBackwardAction(false, false, false, 3), ScanAction::OpenPreviousImageFromScan);
+    QCOMPARE(policy.scanBackwardAction(false, false, false, 3),
+        ScanAction::RequestPreviousActiveNavigationFromScan);
     QCOMPARE(policy.scanBackwardAction(true, true, false, 3), ScanAction::NoScanAction);
     QCOMPARE(policy.scanBackwardAction(true, false, true, 1), ScanAction::ShowFirstImageBoundary);
     QCOMPARE(policy.scanBackwardAction(true, false, false, 3),
         ScanAction::OpenPreviousPageFromFinalScanStart);
-    QCOMPARE(
-        policy.scanBackwardAction(true, false, false, 0), ScanAction::OpenPreviousImageFromScan);
+    QCOMPARE(policy.scanBackwardAction(true, false, false, 0),
+        ScanAction::RequestPreviousActiveNavigationFromScan);
 }
 
 QTEST_GUILESS_MAIN(TestImageShortcutNavigationPolicy)

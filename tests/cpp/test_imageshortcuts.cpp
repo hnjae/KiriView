@@ -197,6 +197,8 @@ Item {
     property bool videoMode: false
     property int panCount: 0
     property int unsupportedVideoActionCount: 0
+    property string lastBoundaryMessage: ""
+    property alias activeNavigationKnown: documentSession.activeNavigationKnown
     property real lastPanX: 0
     property real lastPanY: 0
     property alias currentPageNumber: imageDocument.currentPageNumber
@@ -319,6 +321,10 @@ Item {
         imageViewport: imageViewport
         videoFileDeletionInProgress: root.videoFileDeletionInProgress
         videoMode: root.videoMode
+
+        onImageBoundaryReached: function (message) {
+            root.lastBoundaryMessage = message;
+        }
 
         onUnsupportedVideoActionRequested: root.unsupportedVideoActionCount += 1
     }
@@ -507,21 +513,16 @@ void TestImageShortcuts::leftAndRightArrowKeysUseNavigationFallback()
     ImageShortcutsFixture fixture = createReadyFixture();
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
     QTRY_VERIFY(documentReady(fixture.root));
-
-    QAction *previousAction = fixture.application->action(QStringLiteral("go_previous_image"));
-    QAction *nextAction = fixture.application->action(QStringLiteral("go_next_image"));
-    QVERIFY(previousAction != nullptr);
-    QVERIFY(nextAction != nullptr);
-    QSignalSpy previousSpy(previousAction, &QAction::triggered);
-    QSignalSpy nextSpy(nextAction, &QAction::triggered);
+    QTRY_VERIFY(fixture.root->property("activeNavigationKnown").toBool());
 
     pressKey(fixture.view.get(), Qt::Key_Left);
-    QCOMPARE(previousSpy.count(), 1);
-    QCOMPARE(nextSpy.count(), 0);
+    QCOMPARE(fixture.root->property("lastBoundaryMessage").toString(),
+        QStringLiteral("First media item"));
 
+    fixture.root->setProperty("lastBoundaryMessage", QString());
     pressKey(fixture.view.get(), Qt::Key_Right);
-    QCOMPARE(previousSpy.count(), 1);
-    QCOMPARE(nextSpy.count(), 1);
+    QCOMPARE(fixture.root->property("lastBoundaryMessage").toString(),
+        QStringLiteral("Last media item"));
 }
 
 void TestImageShortcuts::arrowKeysAreIgnoredWhileViewerShortcutsAreSuppressed()

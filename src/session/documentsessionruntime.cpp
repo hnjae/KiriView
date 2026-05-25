@@ -273,15 +273,9 @@ void DocumentSessionRuntime::openMediaAtNumber(int mediaNumber)
     });
 }
 
-void DocumentSessionRuntime::openPreviousActiveNavigation()
-{
-    executeActiveNavigationDispatchRequest(previousActiveNavigationDispatchRequest());
-}
+void DocumentSessionRuntime::openPreviousActiveNavigation() { requestPreviousActiveNavigation(); }
 
-void DocumentSessionRuntime::openNextActiveNavigation()
-{
-    executeActiveNavigationDispatchRequest(nextActiveNavigationDispatchRequest());
-}
+void DocumentSessionRuntime::openNextActiveNavigation() { requestNextActiveNavigation(); }
 
 void DocumentSessionRuntime::openFirstActiveNavigation()
 {
@@ -298,11 +292,23 @@ void DocumentSessionRuntime::openActiveNavigationAtNumber(int number)
     executeActiveNavigationDispatchRequest(numberedActiveNavigationDispatchRequest(number));
 }
 
-void DocumentSessionRuntime::executeActiveNavigationDispatchRequest(
+ActiveNavigationDispatchOutcome DocumentSessionRuntime::requestPreviousActiveNavigation()
+{
+    return executeActiveNavigationDispatchRequest(previousActiveNavigationDispatchRequest());
+}
+
+ActiveNavigationDispatchOutcome DocumentSessionRuntime::requestNextActiveNavigation()
+{
+    return executeActiveNavigationDispatchRequest(nextActiveNavigationDispatchRequest());
+}
+
+ActiveNavigationDispatchOutcome DocumentSessionRuntime::executeActiveNavigationDispatchRequest(
     ActiveNavigationDispatchRequest request)
 {
-    executeActiveNavigationDispatchPlan(activeNavigationDispatchPlan(
-        activeNavigationSourceKind(), m_state.activeNavigationSnapshot(), request));
+    const ActiveNavigationDispatchPlan plan = activeNavigationDispatchPlan(
+        activeNavigationSourceKind(), m_state.activeNavigationSnapshot(), request);
+    executeActiveNavigationDispatchPlan(plan);
+    return plan.outcome;
 }
 
 void DocumentSessionRuntime::executeActiveNavigationDispatchPlan(

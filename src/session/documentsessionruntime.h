@@ -88,10 +88,13 @@ public:
     void openFirstActiveNavigation();
     void openLastActiveNavigation();
     void openActiveNavigationAtNumber(int number);
+    ActiveNavigationDispatchOutcome requestPreviousActiveNavigation();
+    ActiveNavigationDispatchOutcome requestNextActiveNavigation();
     void deleteDisplayedFile(FileDeletionMode mode);
 
 private:
-    void executeActiveNavigationDispatchRequest(ActiveNavigationDispatchRequest request);
+    ActiveNavigationDispatchOutcome executeActiveNavigationDispatchRequest(
+        ActiveNavigationDispatchRequest request);
     void executeActiveNavigationDispatchPlan(const ActiveNavigationDispatchPlan &plan);
     void connectDocuments();
     void syncImageDocumentFileDeletionProgress();

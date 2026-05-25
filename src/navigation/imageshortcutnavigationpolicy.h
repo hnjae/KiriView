@@ -11,8 +11,8 @@ public:
     enum class HorizontalArrowAction {
         PanLeft = 0,
         PanRight,
-        OpenPreviousImage,
-        OpenNextImage,
+        RequestPreviousActiveNavigation,
+        RequestNextActiveNavigation,
     };
 
     enum class SinglePageArrowAction {
@@ -22,8 +22,8 @@ public:
 
     enum class ScanAction {
         NoScanAction = 0,
-        OpenPreviousImageFromScan,
-        OpenNextImageFromScan,
+        RequestPreviousActiveNavigationFromScan,
+        RequestNextActiveNavigationFromScan,
         OpenPreviousPageFromFinalScanStart,
         ShowFirstImageBoundary,
     };

@@ -49,6 +49,7 @@ private Q_SLOTS:
     void boundaryScopeMapsSourceKind();
     void directMediaDispatchPlanFollowsProjectedBoundaryGates();
     void imageDocumentDispatchPlanUsesNumberedPageTargets();
+    void previousNextDispatchPlanReportsEditableBoundaries();
     void dispatchPlanRejectsUnknownMaskedAndUnavailableNavigation();
 };
 
@@ -187,6 +188,7 @@ void TestActiveNavigationProjection::directMediaDispatchPlanFollowsProjectedBoun
         KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia, snapshot,
         KiriView::previousActiveNavigationDispatchRequest());
     QVERIFY(previous.shouldDispatch());
+    QCOMPARE(previous.outcome, KiriView::ActiveNavigationDispatchOutcome::Dispatch);
     QCOMPARE(previous.target, KiriView::ActiveNavigationDispatchTarget::OrdinaryDirectMedia);
     QCOMPARE(previous.operation, KiriView::ActiveNavigationDispatchOperation::OpenPrevious);
     QCOMPARE(previous.number, 0);
@@ -195,6 +197,7 @@ void TestActiveNavigationProjection::directMediaDispatchPlanFollowsProjectedBoun
         KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia, snapshot,
         KiriView::nextActiveNavigationDispatchRequest());
     QVERIFY(next.shouldDispatch());
+    QCOMPARE(next.outcome, KiriView::ActiveNavigationDispatchOutcome::Dispatch);
     QCOMPARE(next.target, KiriView::ActiveNavigationDispatchTarget::OrdinaryDirectMedia);
     QCOMPARE(next.operation, KiriView::ActiveNavigationDispatchOperation::OpenNext);
 
@@ -219,6 +222,7 @@ void TestActiveNavigationProjection::imageDocumentDispatchPlanUsesNumberedPageTa
         KiriView::ActiveNavigationSourceKind::ImageDocumentPages, snapshot,
         KiriView::firstActiveNavigationDispatchRequest());
     QVERIFY(first.shouldDispatch());
+    QCOMPARE(first.outcome, KiriView::ActiveNavigationDispatchOutcome::Dispatch);
     QCOMPARE(first.target, KiriView::ActiveNavigationDispatchTarget::ImageDocumentPages);
     QCOMPARE(first.operation, KiriView::ActiveNavigationDispatchOperation::OpenNumber);
     QCOMPARE(first.number, 1);
@@ -227,6 +231,7 @@ void TestActiveNavigationProjection::imageDocumentDispatchPlanUsesNumberedPageTa
         KiriView::ActiveNavigationSourceKind::ImageDocumentPages, snapshot,
         KiriView::lastActiveNavigationDispatchRequest());
     QVERIFY(last.shouldDispatch());
+    QCOMPARE(last.outcome, KiriView::ActiveNavigationDispatchOutcome::Dispatch);
     QCOMPARE(last.target, KiriView::ActiveNavigationDispatchTarget::ImageDocumentPages);
     QCOMPARE(last.operation, KiriView::ActiveNavigationDispatchOperation::OpenNumber);
     QCOMPARE(last.number, 5);
@@ -235,9 +240,31 @@ void TestActiveNavigationProjection::imageDocumentDispatchPlanUsesNumberedPageTa
         KiriView::ActiveNavigationSourceKind::ImageDocumentPages, snapshot,
         KiriView::numberedActiveNavigationDispatchRequest(4));
     QVERIFY(numbered.shouldDispatch());
+    QCOMPARE(numbered.outcome, KiriView::ActiveNavigationDispatchOutcome::Dispatch);
     QCOMPARE(numbered.target, KiriView::ActiveNavigationDispatchTarget::ImageDocumentPages);
     QCOMPARE(numbered.operation, KiriView::ActiveNavigationDispatchOperation::OpenNumber);
     QCOMPARE(numbered.number, 4);
+}
+
+void TestActiveNavigationProjection::previousNextDispatchPlanReportsEditableBoundaries()
+{
+    const KiriView::ActiveNavigationSnapshot firstSnapshot = KiriView::projectActiveNavigation(
+        KiriView::ActiveNavigationSourceKind::ImageDocumentPages, {},
+        KiriView::ImageDocumentActiveNavigationInput { 1, 1, 3 }, false);
+    const KiriView::ActiveNavigationDispatchPlan previous = KiriView::activeNavigationDispatchPlan(
+        KiriView::ActiveNavigationSourceKind::ImageDocumentPages, firstSnapshot,
+        KiriView::previousActiveNavigationDispatchRequest());
+    QVERIFY(!previous.shouldDispatch());
+    QCOMPARE(previous.outcome, KiriView::ActiveNavigationDispatchOutcome::FirstBoundary);
+
+    const KiriView::ActiveNavigationSnapshot lastSnapshot = KiriView::projectActiveNavigation(
+        KiriView::ActiveNavigationSourceKind::ImageDocumentPages, {},
+        KiriView::ImageDocumentActiveNavigationInput { 3, 3, 3 }, false);
+    const KiriView::ActiveNavigationDispatchPlan next = KiriView::activeNavigationDispatchPlan(
+        KiriView::ActiveNavigationSourceKind::ImageDocumentPages, lastSnapshot,
+        KiriView::nextActiveNavigationDispatchRequest());
+    QVERIFY(!next.shouldDispatch());
+    QCOMPARE(next.outcome, KiriView::ActiveNavigationDispatchOutcome::LastBoundary);
 }
 
 void TestActiveNavigationProjection::dispatchPlanRejectsUnknownMaskedAndUnavailableNavigation()
@@ -258,6 +285,11 @@ void TestActiveNavigationProjection::dispatchPlanRejectsUnknownMaskedAndUnavaila
         KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia, masked,
         KiriView::previousActiveNavigationDispatchRequest())
             .shouldDispatch());
+    QCOMPARE(KiriView::activeNavigationDispatchPlan(
+                 KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia, masked,
+                 KiriView::previousActiveNavigationDispatchRequest())
+                 .outcome,
+        KiriView::ActiveNavigationDispatchOutcome::NoOp);
     QVERIFY(!KiriView::activeNavigationDispatchPlan(
         KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia, masked,
         KiriView::numberedActiveNavigationDispatchRequest(1))

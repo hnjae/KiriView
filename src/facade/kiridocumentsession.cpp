@@ -56,6 +56,24 @@ KiriDocumentSession::ActiveNavigationBoundaryScope fromRuntimeBoundaryScope(
     return KiriDocumentSession::ActiveNavigationBoundaryScope::NoNavigationBoundary;
 }
 
+KiriDocumentSession::ActiveNavigationRequestResult fromRuntimeRequestOutcome(
+    KiriView::ActiveNavigationDispatchOutcome outcome)
+{
+    switch (outcome) {
+    case KiriView::ActiveNavigationDispatchOutcome::NoOp:
+        return KiriDocumentSession::ActiveNavigationRequestResult::NoActiveNavigationRequestResult;
+    case KiriView::ActiveNavigationDispatchOutcome::Dispatch:
+        return KiriDocumentSession::ActiveNavigationRequestResult::
+            ActiveNavigationRequestDispatched;
+    case KiriView::ActiveNavigationDispatchOutcome::FirstBoundary:
+        return KiriDocumentSession::ActiveNavigationRequestResult::FirstActiveNavigationBoundary;
+    case KiriView::ActiveNavigationDispatchOutcome::LastBoundary:
+        return KiriDocumentSession::ActiveNavigationRequestResult::LastActiveNavigationBoundary;
+    }
+
+    return KiriDocumentSession::ActiveNavigationRequestResult::NoActiveNavigationRequestResult;
+}
+
 KiriView::ImageDocumentRuntimeDependencyOverrides imageDocumentDependenciesWithPredecodeFinder(
     KiriView::ImageDocumentRuntimeDependencyOverrides dependencies,
     KiriView::ExternalPredecodedImageFinder predecodedImageFinder)
@@ -249,6 +267,18 @@ void KiriDocumentSession::openLastActiveNavigation() { m_runtime->openLastActive
 void KiriDocumentSession::openActiveNavigationAtNumber(int number)
 {
     m_runtime->openActiveNavigationAtNumber(number);
+}
+
+KiriDocumentSession::ActiveNavigationRequestResult
+KiriDocumentSession::requestPreviousActiveNavigation()
+{
+    return fromRuntimeRequestOutcome(m_runtime->requestPreviousActiveNavigation());
+}
+
+KiriDocumentSession::ActiveNavigationRequestResult
+KiriDocumentSession::requestNextActiveNavigation()
+{
+    return fromRuntimeRequestOutcome(m_runtime->requestNextActiveNavigation());
 }
 
 void KiriDocumentSession::deleteDisplayedFile(DeletionMode mode)

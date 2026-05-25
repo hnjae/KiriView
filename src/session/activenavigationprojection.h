@@ -40,6 +40,13 @@ enum class ActiveNavigationDispatchOperation {
     OpenNumber,
 };
 
+enum class ActiveNavigationDispatchOutcome {
+    NoOp,
+    Dispatch,
+    FirstBoundary,
+    LastBoundary,
+};
+
 struct ActiveNavigationSnapshot {
     bool available = false;
     bool known = false;
@@ -71,6 +78,7 @@ struct ActiveNavigationDispatchRequest {
 struct ActiveNavigationDispatchPlan {
     ActiveNavigationDispatchTarget target = ActiveNavigationDispatchTarget::None;
     ActiveNavigationDispatchOperation operation = ActiveNavigationDispatchOperation::None;
+    ActiveNavigationDispatchOutcome outcome = ActiveNavigationDispatchOutcome::NoOp;
     int number = 0;
 
     bool shouldDispatch() const;

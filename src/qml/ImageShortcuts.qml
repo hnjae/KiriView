@@ -23,8 +23,6 @@ Item {
     readonly property bool activeNavigationActionsAvailable: root.documentSession.activeNavigationAvailable && root.documentSession.activeNavigationKnown && !root.documentSession.fileDeletionInProgress && root.actionAvailability.helpShortcutsEnabled
     readonly property bool horizontalArrowShortcutsEnabled: root.application.mediaHorizontalArrowShortcutsEnabled(root.videoMode, root.actionAvailability.readyViewerShortcutsEnabled, root.actionAvailability.viewerShortcutsEnabled, root.activeNavigationActionsAvailable, root.videoFileDeletionInProgress)
 
-    readonly property var previousImageQAction: root.application.actionForId(KiriViewApplication.GoPreviousImageAction)
-    readonly property var nextImageQAction: root.application.actionForId(KiriViewApplication.GoNextImageAction)
     readonly property var zoomInQAction: root.application.actionForId(KiriViewApplication.ViewZoomInAction)
     readonly property var zoomOutQAction: root.application.actionForId(KiriViewApplication.ViewZoomOutAction)
     readonly property var panTopLeftQAction: root.application.actionForId(KiriViewApplication.ViewPanTopLeftAction)
@@ -80,6 +78,53 @@ Item {
         return imageViewport.panToTopLeft();
     }
 
+    function firstBoundaryText() {
+        switch (root.documentSession.activeNavigationBoundaryScope) {
+        case KiriDocumentSession.MediaNavigationBoundary:
+            return KI18n.i18nc("@info:status", "First media item");
+        case KiriDocumentSession.ImageNavigationBoundary:
+            return KI18n.i18nc("@info:status", "First image");
+        case KiriDocumentSession.NoNavigationBoundary:
+        default:
+            return "";
+        }
+    }
+
+    function lastBoundaryText() {
+        switch (root.documentSession.activeNavigationBoundaryScope) {
+        case KiriDocumentSession.MediaNavigationBoundary:
+            return KI18n.i18nc("@info:status", "Last media item");
+        case KiriDocumentSession.ImageNavigationBoundary:
+            return KI18n.i18nc("@info:status", "Last image");
+        case KiriDocumentSession.NoNavigationBoundary:
+        default:
+            return "";
+        }
+    }
+
+    function handleActiveNavigationRequestResult(result) {
+        switch (result) {
+        case KiriDocumentSession.FirstActiveNavigationBoundary:
+            root.imageBoundaryReached(root.firstBoundaryText());
+            return;
+        case KiriDocumentSession.LastActiveNavigationBoundary:
+            root.imageBoundaryReached(root.lastBoundaryText());
+            return;
+        case KiriDocumentSession.ActiveNavigationRequestDispatched:
+        case KiriDocumentSession.NoActiveNavigationRequestResult:
+        default:
+            return;
+        }
+    }
+
+    function requestPreviousActiveNavigation() {
+        root.handleActiveNavigationRequestResult(root.documentSession.requestPreviousActiveNavigation());
+    }
+
+    function requestNextActiveNavigation() {
+        root.handleActiveNavigationRequestResult(root.documentSession.requestNextActiveNavigation());
+    }
+
     function applyHorizontalArrowAction(action) {
         switch (action) {
         case ImageShortcutNavigationPolicy.PanLeft:
@@ -88,11 +133,11 @@ Item {
         case ImageShortcutNavigationPolicy.PanRight:
             root.panBy(root.keyboardPanDistance, 0);
             return;
-        case ImageShortcutNavigationPolicy.OpenPreviousImage:
-            root.previousImageQAction.trigger();
+        case ImageShortcutNavigationPolicy.RequestPreviousActiveNavigation:
+            root.requestPreviousActiveNavigation();
             return;
-        case ImageShortcutNavigationPolicy.OpenNextImage:
-            root.nextImageQAction.trigger();
+        case ImageShortcutNavigationPolicy.RequestNextActiveNavigation:
+            root.requestNextActiveNavigation();
             return;
         }
     }
@@ -116,15 +161,15 @@ Item {
         switch (action) {
         case ImageShortcutNavigationPolicy.NoScanAction:
             return;
-        case ImageShortcutNavigationPolicy.OpenPreviousImageFromScan:
-            root.previousImageQAction.trigger();
+        case ImageShortcutNavigationPolicy.RequestPreviousActiveNavigationFromScan:
+            root.requestPreviousActiveNavigation();
             return;
-        case ImageShortcutNavigationPolicy.OpenNextImageFromScan:
-            root.nextImageQAction.trigger();
+        case ImageShortcutNavigationPolicy.RequestNextActiveNavigationFromScan:
+            root.requestNextActiveNavigation();
             return;
         case ImageShortcutNavigationPolicy.OpenPreviousPageFromFinalScanStart:
             // Image-internal scan fallback intentionally opens the previous document page and
-            // hands off the viewport start. Shared active Previous/Next routing uses QActions.
+            // hands off the viewport start. Shared active Previous/Next routing uses the session.
             root.imageViewport.setNextDisplayedImageStartToFinalScanPosition();
             root.imageDocument.openImageAtPage(root.imageDocument.currentPageNumber - 1);
             return;
@@ -137,11 +182,11 @@ Item {
     function handleHorizontalArrow(leftArrow) {
         if (root.videoMode) {
             if (leftArrow) {
-                root.previousImageQAction.trigger();
+                root.requestPreviousActiveNavigation();
                 return;
             }
 
-            root.nextImageQAction.trigger();
+            root.requestNextActiveNavigation();
             return;
         }
 

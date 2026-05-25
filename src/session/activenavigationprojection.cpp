@@ -87,7 +87,19 @@ KiriView::ActiveNavigationDispatchPlan dispatchToSource(
     return KiriView::ActiveNavigationDispatchPlan {
         dispatchTargetForSource(sourceKind),
         operation,
+        KiriView::ActiveNavigationDispatchOutcome::Dispatch,
         number,
+    };
+}
+
+KiriView::ActiveNavigationDispatchPlan boundaryOutcome(
+    KiriView::ActiveNavigationDispatchOutcome outcome)
+{
+    return KiriView::ActiveNavigationDispatchPlan {
+        KiriView::ActiveNavigationDispatchTarget::None,
+        KiriView::ActiveNavigationDispatchOperation::None,
+        outcome,
+        0,
     };
 }
 }
@@ -95,7 +107,8 @@ KiriView::ActiveNavigationDispatchPlan dispatchToSource(
 namespace KiriView {
 bool ActiveNavigationDispatchPlan::shouldDispatch() const
 {
-    return target != ActiveNavigationDispatchTarget::None
+    return outcome == ActiveNavigationDispatchOutcome::Dispatch
+        && target != ActiveNavigationDispatchTarget::None
         && operation != ActiveNavigationDispatchOperation::None;
 }
 
@@ -176,12 +189,18 @@ ActiveNavigationDispatchPlan activeNavigationDispatchPlan(ActiveNavigationSource
 
     switch (request.kind) {
     case ActiveNavigationDispatchRequestKind::Previous:
-        return snapshot.canOpenPrevious
-            ? dispatchToSource(sourceKind, ActiveNavigationDispatchOperation::OpenPrevious, 0)
+        if (snapshot.canOpenPrevious) {
+            return dispatchToSource(sourceKind, ActiveNavigationDispatchOperation::OpenPrevious, 0);
+        }
+        return snapshot.known && snapshot.editable && snapshot.atKnownFirst
+            ? boundaryOutcome(ActiveNavigationDispatchOutcome::FirstBoundary)
             : ActiveNavigationDispatchPlan {};
     case ActiveNavigationDispatchRequestKind::Next:
-        return snapshot.canOpenNext
-            ? dispatchToSource(sourceKind, ActiveNavigationDispatchOperation::OpenNext, 0)
+        if (snapshot.canOpenNext) {
+            return dispatchToSource(sourceKind, ActiveNavigationDispatchOperation::OpenNext, 0);
+        }
+        return snapshot.known && snapshot.editable && snapshot.atKnownLast
+            ? boundaryOutcome(ActiveNavigationDispatchOutcome::LastBoundary)
             : ActiveNavigationDispatchPlan {};
     case ActiveNavigationDispatchRequestKind::First:
         return snapshot.known && snapshot.editable && !snapshot.atKnownFirst

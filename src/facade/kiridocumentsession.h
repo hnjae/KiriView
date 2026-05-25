@@ -78,6 +78,14 @@ public:
     };
     Q_ENUM(ActiveNavigationBoundaryScope)
 
+    enum class ActiveNavigationRequestResult {
+        NoActiveNavigationRequestResult,
+        ActiveNavigationRequestDispatched,
+        FirstActiveNavigationBoundary,
+        LastActiveNavigationBoundary,
+    };
+    Q_ENUM(ActiveNavigationRequestResult)
+
     explicit KiriDocumentSession(QObject *parent = nullptr);
     explicit KiriDocumentSession(
         KiriView::DocumentSessionRuntimeDependencies dependencies, QObject *parent = nullptr);
@@ -113,6 +121,9 @@ public:
     Q_INVOKABLE void openFirstActiveNavigation();
     Q_INVOKABLE void openLastActiveNavigation();
     Q_INVOKABLE void openActiveNavigationAtNumber(int number);
+    Q_INVOKABLE KiriDocumentSession::ActiveNavigationRequestResult
+    requestPreviousActiveNavigation();
+    Q_INVOKABLE KiriDocumentSession::ActiveNavigationRequestResult requestNextActiveNavigation();
     Q_INVOKABLE void deleteDisplayedFile(KiriDocumentSession::DeletionMode mode);
 
 Q_SIGNALS:

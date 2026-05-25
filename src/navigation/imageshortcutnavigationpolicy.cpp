@@ -13,10 +13,10 @@ ImageShortcutNavigationPolicy::horizontalArrowAction(
     }
 
     if (leftArrow == rightToLeftReadingActive) {
-        return HorizontalArrowAction::OpenNextImage;
+        return HorizontalArrowAction::RequestNextActiveNavigation;
     }
 
-    return HorizontalArrowAction::OpenPreviousImage;
+    return HorizontalArrowAction::RequestPreviousActiveNavigation;
 }
 
 ImageShortcutNavigationPolicy::SinglePageArrowAction
@@ -37,14 +37,14 @@ ImageShortcutNavigationPolicy::ScanAction ImageShortcutNavigationPolicy::scanFor
         return ScanAction::NoScanAction;
     }
 
-    return ScanAction::OpenNextImageFromScan;
+    return ScanAction::RequestNextActiveNavigationFromScan;
 }
 
 ImageShortcutNavigationPolicy::ScanAction ImageShortcutNavigationPolicy::scanBackwardAction(
     bool imagePannable, bool viewportMoved, bool atFirstImage, int currentPageNumber) const
 {
     if (!imagePannable) {
-        return ScanAction::OpenPreviousImageFromScan;
+        return ScanAction::RequestPreviousActiveNavigationFromScan;
     }
 
     if (viewportMoved) {
@@ -59,6 +59,6 @@ ImageShortcutNavigationPolicy::ScanAction ImageShortcutNavigationPolicy::scanBac
         return ScanAction::OpenPreviousPageFromFinalScanStart;
     }
 
-    return ScanAction::OpenPreviousImageFromScan;
+    return ScanAction::RequestPreviousActiveNavigationFromScan;
 }
 }

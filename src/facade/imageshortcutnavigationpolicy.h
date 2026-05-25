@@ -18,8 +18,8 @@ public:
     enum HorizontalArrowAction {
         PanLeft = 0,
         PanRight,
-        OpenPreviousImage,
-        OpenNextImage,
+        RequestPreviousActiveNavigation,
+        RequestNextActiveNavigation,
     };
     Q_ENUM(HorizontalArrowAction)
 
@@ -31,8 +31,8 @@ public:
 
     enum ScanAction {
         NoScanAction = 0,
-        OpenPreviousImageFromScan,
-        OpenNextImageFromScan,
+        RequestPreviousActiveNavigationFromScan,
+        RequestNextActiveNavigationFromScan,
         OpenPreviousPageFromFinalScanStart,
         ShowFirstImageBoundary,
     };

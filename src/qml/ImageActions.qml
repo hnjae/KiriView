@@ -125,22 +125,27 @@ Item {
         root.documentSession.openLastActiveNavigation();
     }
 
-    function openNextImage() {
-        if (root.documentSession.atKnownLastActiveNavigation) {
+    function handleActiveNavigationRequestResult(result) {
+        switch (result) {
+        case KiriDocumentSession.FirstActiveNavigationBoundary:
+            root.imageBoundaryReached(firstBoundaryText());
+            return;
+        case KiriDocumentSession.LastActiveNavigationBoundary:
             root.imageBoundaryReached(lastBoundaryText());
             return;
+        case KiriDocumentSession.ActiveNavigationRequestDispatched:
+        case KiriDocumentSession.NoActiveNavigationRequestResult:
+        default:
+            return;
         }
+    }
 
-        root.documentSession.openNextActiveNavigation();
+    function openNextImage() {
+        root.handleActiveNavigationRequestResult(root.documentSession.requestNextActiveNavigation());
     }
 
     function openPreviousImage() {
-        if (root.documentSession.atKnownFirstActiveNavigation) {
-            root.imageBoundaryReached(firstBoundaryText());
-            return;
-        }
-
-        root.documentSession.openPreviousActiveNavigation();
+        root.handleActiveNavigationRequestResult(root.documentSession.requestPreviousActiveNavigation());
     }
 
     property Kirigami.Action applicationMenuFileSeparator: Kirigami.Action {

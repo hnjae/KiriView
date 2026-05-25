@@ -204,6 +204,7 @@ private Q_SLOTS:
     void imagePageNavigationChangesEmitActiveNavigationWhenRelevant();
     void activeNavigationNumberDispatchRoutesDirectMedia();
     void activeNavigationNumberDispatchRoutesImageDocumentPages();
+    void activeNavigationRequestReportsDispatchAndBoundaryResults();
     void activeNavigationNumberDispatchIgnoresUnknownNavigation();
     void activeNavigationClearsWhenSwitchingFromKnownDirectMedia();
     void activeNavigationAvailabilityUsesSameSnapshotAsCurrentAndCount();
@@ -735,6 +736,46 @@ void TestKiriDocumentSession::activeNavigationNumberDispatchRoutesImageDocumentP
     QCOMPARE(session->activeNavigationCurrentNumber(), 2);
 }
 
+void TestKiriDocumentSession::activeNavigationRequestReportsDispatchAndBoundaryResults()
+{
+    FakeMediaCandidateProvider mediaProvider;
+    KiriView::TestSupport::FakeImageNavigationCandidateProvider imageCandidates;
+    KiriView::TestSupport::ManualImageDataLoader dataLoader;
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/request-results.cbz"));
+    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveDocument.has_value());
+    const QUrl firstPage = KiriView::TestSupport::archivePageUrl(
+        archiveDocument->rootUrl(), QStringLiteral("01.png"));
+    const QUrl secondPage = KiriView::TestSupport::archivePageUrl(
+        archiveDocument->rootUrl(), QStringLiteral("02.png"));
+    imageCandidates.setArchiveImages(archiveDocument->rootUrl(),
+        { KiriView::TestSupport::imageCandidate(firstPage),
+            KiriView::TestSupport::imageCandidate(secondPage) });
+    std::unique_ptr<KiriDocumentSession> session = createSessionWithProvider(
+        mediaProvider.provider(), nullptr, &dataLoader, imageCandidates.provider());
+
+    session->setSourceUrl(archiveUrl);
+    QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
+    dataLoader.finishBackLoad(QByteArrayLiteral("first"));
+    QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Ready);
+    QVERIFY(session->activeNavigationKnown());
+    QVERIFY(session->atKnownFirstActiveNavigation());
+
+    QCOMPARE(session->requestPreviousActiveNavigation(),
+        KiriDocumentSession::ActiveNavigationRequestResult::FirstActiveNavigationBoundary);
+
+    QCOMPARE(session->requestNextActiveNavigation(),
+        KiriDocumentSession::ActiveNavigationRequestResult::ActiveNavigationRequestDispatched);
+    QTRY_COMPARE(dataLoader.backLoad().url, secondPage);
+    dataLoader.finishBackLoad(QByteArrayLiteral("second"));
+    QTRY_COMPARE(session->activeNavigationCurrentNumber(), 2);
+    QVERIFY(session->atKnownLastActiveNavigation());
+
+    QCOMPARE(session->requestNextActiveNavigation(),
+        KiriDocumentSession::ActiveNavigationRequestResult::LastActiveNavigationBoundary);
+}
+
 void TestKiriDocumentSession::activeNavigationNumberDispatchIgnoresUnknownNavigation()
 {
     ManualMediaCandidateProvider mediaProvider;
@@ -753,6 +794,10 @@ void TestKiriDocumentSession::activeNavigationNumberDispatchIgnoresUnknownNaviga
     QCOMPARE(session->activeNavigationCount(), 0);
     QVERIFY(!session->canOpenPreviousActiveNavigation());
     QVERIFY(!session->canOpenNextActiveNavigation());
+    QCOMPARE(session->requestPreviousActiveNavigation(),
+        KiriDocumentSession::ActiveNavigationRequestResult::NoActiveNavigationRequestResult);
+    QCOMPARE(session->requestNextActiveNavigation(),
+        KiriDocumentSession::ActiveNavigationRequestResult::NoActiveNavigationRequestResult);
 
     session->openActiveNavigationAtNumber(2);
 
@@ -1155,6 +1200,10 @@ void TestKiriDocumentSession::directMediaDeletionInProgressDisablesActiveNavigat
     QVERIFY(!session->canOpenNextActiveNavigation());
     QVERIFY(!session->atKnownFirstActiveNavigation());
     QVERIFY(!session->atKnownLastActiveNavigation());
+    QCOMPARE(session->requestPreviousActiveNavigation(),
+        KiriDocumentSession::ActiveNavigationRequestResult::NoActiveNavigationRequestResult);
+    QCOMPARE(session->requestNextActiveNavigation(),
+        KiriDocumentSession::ActiveNavigationRequestResult::NoActiveNavigationRequestResult);
 
     session->openPreviousActiveNavigation();
     session->openNextActiveNavigation();

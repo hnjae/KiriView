@@ -45,13 +45,13 @@ ImageShortcutNavigationPolicy::HorizontalArrowAction ImageShortcutNavigationPoli
         return PanLeft;
     case DomainAction::PanRight:
         return PanRight;
-    case DomainAction::OpenPreviousImage:
-        return OpenPreviousImage;
-    case DomainAction::OpenNextImage:
-        return OpenNextImage;
+    case DomainAction::RequestPreviousActiveNavigation:
+        return RequestPreviousActiveNavigation;
+    case DomainAction::RequestNextActiveNavigation:
+        return RequestNextActiveNavigation;
     }
 
-    return OpenPreviousImage;
+    return RequestPreviousActiveNavigation;
 }
 
 ImageShortcutNavigationPolicy::SinglePageArrowAction ImageShortcutNavigationPolicy::facadeAction(
@@ -75,10 +75,10 @@ ImageShortcutNavigationPolicy::ScanAction ImageShortcutNavigationPolicy::facadeA
     switch (action) {
     case DomainAction::NoScanAction:
         return NoScanAction;
-    case DomainAction::OpenPreviousImageFromScan:
-        return OpenPreviousImageFromScan;
-    case DomainAction::OpenNextImageFromScan:
-        return OpenNextImageFromScan;
+    case DomainAction::RequestPreviousActiveNavigationFromScan:
+        return RequestPreviousActiveNavigationFromScan;
+    case DomainAction::RequestNextActiveNavigationFromScan:
+        return RequestNextActiveNavigationFromScan;
     case DomainAction::OpenPreviousPageFromFinalScanStart:
         return OpenPreviousPageFromFinalScanStart;
     case DomainAction::ShowFirstImageBoundary:

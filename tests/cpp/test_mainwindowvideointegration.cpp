@@ -19,7 +19,7 @@ private Q_SLOTS:
     void videoModeExposesReadOnlyZoomReadout();
     void toolbarPageNavigationUsesSessionActiveProjection();
     void activeNavigationActionsUseSessionSnapshotAndBoundaryScope();
-    void shortcutsRouteSharedActiveNavigationThroughActions();
+    void shortcutsRouteSharedActiveNavigationThroughSessionRequests();
     void imageActionAvailabilityDoesNotDriveSharedActiveNavigation();
     void pageNavigationComponentDoesNotChooseBetweenRawNavigationSources();
     void documentSessionFacadeDoesNotExposeRawMediaNavigation();
@@ -111,9 +111,9 @@ void TestMainWindowVideoIntegration::mainWindowUsesSessionModeAndMediaDispatch()
     QVERIFY(
         imageActionsQml.contains(QStringLiteral("root.documentSession.activeNavigationAvailable")));
     QVERIFY(imageActionsQml.contains(
-        QStringLiteral("root.documentSession.openPreviousActiveNavigation()")));
+        QStringLiteral("root.documentSession.requestPreviousActiveNavigation()")));
     QVERIFY(imageActionsQml.contains(
-        QStringLiteral("root.documentSession.openNextActiveNavigation()")));
+        QStringLiteral("root.documentSession.requestNextActiveNavigation()")));
     QVERIFY(imageActionsQml.contains(
         QStringLiteral("root.documentSession.openFirstActiveNavigation()")));
     QVERIFY(imageActionsQml.contains(
@@ -186,8 +186,10 @@ void TestMainWindowVideoIntegration::activeNavigationActionsUseSessionSnapshotAn
 
     QVERIFY(imageActionsQml.contains(QStringLiteral("canOpenPreviousActiveNavigation")));
     QVERIFY(imageActionsQml.contains(QStringLiteral("canOpenNextActiveNavigation")));
-    QVERIFY(imageActionsQml.contains(QStringLiteral("atKnownFirstActiveNavigation")));
-    QVERIFY(imageActionsQml.contains(QStringLiteral("atKnownLastActiveNavigation")));
+    QVERIFY(imageActionsQml.contains(QStringLiteral("requestPreviousActiveNavigation")));
+    QVERIFY(imageActionsQml.contains(QStringLiteral("requestNextActiveNavigation")));
+    QVERIFY(imageActionsQml.contains(QStringLiteral("FirstActiveNavigationBoundary")));
+    QVERIFY(imageActionsQml.contains(QStringLiteral("LastActiveNavigationBoundary")));
     QVERIFY(imageActionsQml.contains(QStringLiteral("activeNavigationBoundaryScope")));
     QVERIFY(
         imageActionsQml.contains(QStringLiteral("KiriDocumentSession.MediaNavigationBoundary")));
@@ -214,6 +216,8 @@ void TestMainWindowVideoIntegration::activeNavigationActionsUseSessionSnapshotAn
             QStringLiteral("canOpenNextImage"),
             QStringLiteral("atKnownFirstImage"),
             QStringLiteral("atKnownLastImage"),
+            QStringLiteral("atKnownFirstActiveNavigation"),
+            QStringLiteral("atKnownLastActiveNavigation"),
             QStringLiteral("canUsePageActions"),
             QStringLiteral("pageShortcutsEnabled"),
             QStringLiteral("openImageAtPage"),
@@ -222,7 +226,7 @@ void TestMainWindowVideoIntegration::activeNavigationActionsUseSessionSnapshotAn
         QStringLiteral("mediaNavigationActive: documentSession.mediaNavigationActive")));
 }
 
-void TestMainWindowVideoIntegration::shortcutsRouteSharedActiveNavigationThroughActions()
+void TestMainWindowVideoIntegration::shortcutsRouteSharedActiveNavigationThroughSessionRequests()
 {
     const QString mainQml = readSource(QStringLiteral("src/qml/Main.qml"));
     const QString imageShortcutsQml = readSource(QStringLiteral("src/qml/ImageShortcuts.qml"));
@@ -234,8 +238,10 @@ void TestMainWindowVideoIntegration::shortcutsRouteSharedActiveNavigationThrough
 
     QVERIFY(imageShortcutsQml.contains(
         QStringLiteral("required property KiriDocumentSession documentSession")));
-    QVERIFY(imageShortcutsQml.contains(QStringLiteral("root.previousImageQAction.trigger()")));
-    QVERIFY(imageShortcutsQml.contains(QStringLiteral("root.nextImageQAction.trigger()")));
+    QVERIFY(imageShortcutsQml.contains(
+        QStringLiteral("root.documentSession.requestPreviousActiveNavigation()")));
+    QVERIFY(imageShortcutsQml.contains(
+        QStringLiteral("root.documentSession.requestNextActiveNavigation()")));
     QVERIFY(imageShortcutsQml.contains(QStringLiteral("activeNavigationShortcutsEnabledForScope")));
     verifySourceOmits(imageShortcutsQml,
         {

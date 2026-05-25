@@ -41,6 +41,8 @@ For tiled static images, the current render frame is the projection boundary bet
 
 The active navigation projection must clear or mark unknown values during empty startup, loading intervals without a confirmed same-scope selection, mode switches, and replacement failures before publishing any current/count pair. Unknown navigation disables entry and shared dispatch, and must not display stale current/count values from a previous document.
 
+Shared Previous and Next requests return their dispatch or boundary outcome from the document-session owner. QML may turn a first/last boundary outcome into user-facing feedback, but it must not decide boundary-vs-dispatch from raw current/count or mode-specific document values.
+
 The main window title subject is a document-session-owned derived public value. Leaf image and video documents may own file-name-only title inputs and intrinsic media metadata, and image documents own page-navigation state, but the session combines those inputs into the public title subject. QML may append the application name around that subject, but it must not recompute direct-media size, document page counters, or mode-specific title fallback policy from raw document properties.
 
 Direct media sibling discovery may complete asynchronously, but the cursor used for the eventual public readout is the session-owned requested direct media URL for that open request. It must not be derived from a stale or empty image-document displayed URL. The session-owned direct media scope snapshot contains the effective cursor URL, parent scope URL, and generation used to accept or reject sibling-list completions; pending-image-to-stable-image confirmation is a phase change, not a new scope, when those URLs are unchanged.
