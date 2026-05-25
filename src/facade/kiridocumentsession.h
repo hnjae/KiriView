@@ -126,6 +126,12 @@ Q_SIGNALS:
     void activeNavigationChanged();
 
 private:
+    struct ResolvedDependenciesTag {
+    };
+
+    KiriDocumentSession(KiriView::DocumentSessionRuntimeDependencies dependencies,
+        ResolvedDependenciesTag, QObject *parent = nullptr);
+
     void handleSessionChanges(const std::vector<KiriView::DocumentSessionChange> &changes);
 
     std::unique_ptr<KiriImageDocument> m_imageDocument;

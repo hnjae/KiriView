@@ -10,6 +10,7 @@
 #include "predecodeloadstate.h"
 
 #include <QUrl>
+#include <QtGlobal>
 #include <optional>
 
 class QObject;
@@ -18,8 +19,8 @@ namespace KiriView {
 class PredecodeLoadController final
 {
 public:
-    explicit PredecodeLoadController(QObject *parent = nullptr);
-    PredecodeLoadController(QObject *parent, ImageDecodeDependencies decodeDependencies);
+    PredecodeLoadController(
+        QObject *parent, ImageDecodeDependencies decodeDependencies, qsizetype cacheByteBudget);
     ~PredecodeLoadController();
 
     void cacheDisplayedImages(const std::vector<DisplayedPredecodeImage> &images);

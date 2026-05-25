@@ -31,6 +31,8 @@ using KiriView::TestSupport::testImage;
 
 using FakeCandidateProvider = KiriView::TestSupport::FakeImageNavigationCandidateProvider;
 
+constexpr qsizetype testCacheByteBudget = 1024 * 1024;
+
 KiriView::PowerSaverProvider noOpPowerSaverProvider()
 {
     return KiriView::PowerSaverProvider {
@@ -46,7 +48,7 @@ KiriView::ImagePredecodeCoordinator createCoordinator(QObject *parent,
 {
     return KiriView::ImagePredecodeCoordinator(parent, candidateProvider.provider(),
         imageDecodeDependenciesFor(dataLoader, staticImageDataDecoder()),
-        std::move(powerSaverProvider));
+        std::move(powerSaverProvider), testCacheByteBudget);
 }
 
 KiriView::ImagePredecodeCoordinator createCoordinator(

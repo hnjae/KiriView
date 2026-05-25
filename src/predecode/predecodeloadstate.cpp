@@ -22,6 +22,11 @@ std::vector<QUrl> displayedPredecodeImageUrls(
 }
 
 namespace KiriView {
+PredecodeLoadState::PredecodeLoadState(qsizetype cacheByteBudget)
+    : m_cache(cacheByteBudget)
+{
+}
+
 void PredecodeLoadState::cacheDisplayedImages(const std::vector<DisplayedPredecodeImage> &images)
 {
     m_cache.setDisplayedUrls(displayedPredecodeImageUrls(images));

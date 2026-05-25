@@ -21,6 +21,8 @@ using KiriView::TestSupport::localUrl;
 using KiriView::TestSupport::staticTestImagePayload;
 using KiriView::TestSupport::testImage;
 
+constexpr qsizetype testPredecodeCacheByteBudget = 1024 * 1024;
+
 KiriView::ImageLoadSession loadSession(const QUrl &url)
 {
     return KiriView::ImageLoadSession(1, KiriView::ImageLoadRequest::fromUrl(url),
@@ -52,6 +54,7 @@ class TestImagePresentationLoad : public QObject
 private Q_SLOTS:
     void predecodedImagesPlanStaticCacheablePresentation();
     void decodedImagesPlanPresentationActions();
+    void staticDecodedPredecodeCacheabilityUsesInjectedBudget();
     void animationHandlingControlsPlannedEffects();
     void staticDecodedImagesAreAppliedToPresentation();
     void unpresentableDecodedImagesLeaveExistingPresentationUntouched();
@@ -83,7 +86,8 @@ void TestImagePresentationLoad::decodedImagesPlanPresentationActions()
         KiriView::DecodedImage decoded
             = KiriView::StaticDecodedImage { staticTestImagePayload(testImage(QSize(12, 8))) };
         const KiriView::ImagePresentationLoadPlan plan = KiriView::planDecodedImagePresentationLoad(
-            std::move(decoded), KiriView::ImagePresentationAnimationHandling::StartAnimation);
+            std::move(decoded), KiriView::ImagePresentationAnimationHandling::StartAnimation,
+            testPredecodeCacheByteBudget);
 
         QVERIFY(plan.hasPresentation());
         const auto *load = planPayload<KiriView::ImagePresentationStaticImageLoad>(plan);
@@ -95,11 +99,24 @@ void TestImagePresentationLoad::decodedImagesPlanPresentationActions()
     {
         KiriView::DecodedImage decoded = KiriView::ApngAnimationImage {};
         const KiriView::ImagePresentationLoadPlan plan = KiriView::planDecodedImagePresentationLoad(
-            std::move(decoded), KiriView::ImagePresentationAnimationHandling::StartAnimation);
+            std::move(decoded), KiriView::ImagePresentationAnimationHandling::StartAnimation,
+            testPredecodeCacheByteBudget);
 
         QVERIFY(!plan.hasPresentation());
         QVERIFY(std::holds_alternative<std::monostate>(plan.payload));
     }
+}
+
+void TestImagePresentationLoad::staticDecodedPredecodeCacheabilityUsesInjectedBudget()
+{
+    KiriView::DecodedImage decoded
+        = KiriView::StaticDecodedImage { staticTestImagePayload(testImage(QSize(12, 8))) };
+    const KiriView::ImagePresentationLoadPlan plan = KiriView::planDecodedImagePresentationLoad(
+        std::move(decoded), KiriView::ImagePresentationAnimationHandling::StartAnimation, 1);
+
+    const auto *load = planPayload<KiriView::ImagePresentationStaticImageLoad>(plan);
+    QVERIFY(load != nullptr);
+    QVERIFY(!load->predecodeCacheable);
 }
 
 void TestImagePresentationLoad::animationHandlingControlsPlannedEffects()
@@ -110,7 +127,8 @@ void TestImagePresentationLoad::animationHandlingControlsPlannedEffects()
             QByteArrayLiteral("apng-data"),
         };
         const KiriView::ImagePresentationLoadPlan plan = KiriView::planDecodedImagePresentationLoad(
-            std::move(decoded), KiriView::ImagePresentationAnimationHandling::FirstFrameOnly);
+            std::move(decoded), KiriView::ImagePresentationAnimationHandling::FirstFrameOnly,
+            testPredecodeCacheByteBudget);
 
         const auto *load = planPayload<KiriView::ImagePresentationFrameLoad>(plan);
         QVERIFY(load != nullptr);
@@ -124,7 +142,8 @@ void TestImagePresentationLoad::animationHandlingControlsPlannedEffects()
             QByteArrayLiteral("gif"),
         };
         const KiriView::ImagePresentationLoadPlan plan = KiriView::planDecodedImagePresentationLoad(
-            std::move(decoded), KiriView::ImagePresentationAnimationHandling::StartAnimation);
+            std::move(decoded), KiriView::ImagePresentationAnimationHandling::StartAnimation,
+            testPredecodeCacheByteBudget);
 
         const auto *load = planPayload<KiriView::ImagePresentationReaderAnimationLoad>(plan);
         QVERIFY(load != nullptr);
@@ -139,7 +158,8 @@ void TestImagePresentationLoad::animationHandlingControlsPlannedEffects()
             QByteArrayLiteral("heif-data"),
         };
         const KiriView::ImagePresentationLoadPlan plan = KiriView::planDecodedImagePresentationLoad(
-            std::move(decoded), KiriView::ImagePresentationAnimationHandling::StartAnimation);
+            std::move(decoded), KiriView::ImagePresentationAnimationHandling::StartAnimation,
+            testPredecodeCacheByteBudget);
 
         const auto *load = planPayload<KiriView::ImagePresentationHeifSequenceAnimationLoad>(plan);
         QVERIFY(load != nullptr);

@@ -39,8 +39,8 @@ public:
         AnimationErrorCallback animationError;
     };
 
-    ImagePresentationController(
-        QObject *context, RenderContextProvider renderContextProvider, Callbacks callbacks);
+    ImagePresentationController(QObject *context, RenderContextProvider renderContextProvider,
+        Callbacks callbacks, qsizetype predecodeCacheByteBudget = 0);
     ~ImagePresentationController();
 
     QSize imageSize() const;
@@ -61,6 +61,7 @@ public:
     quint64 imageRevision() const;
     bool hasImage() const;
     bool isPredecodeCacheable() const;
+    qsizetype predecodeCacheByteBudget() const;
     std::optional<StaticImagePayload> staticImage() const;
     ImageFirstDisplayDecodeContext firstDisplayDecodeContext() const;
 
@@ -89,6 +90,7 @@ private:
     void notify(ImageDocumentChange change);
 
     Callbacks m_callbacks;
+    qsizetype m_predecodeCacheByteBudget = 0;
     qsizetype m_staticTileCacheByteBudget = 0;
     std::unique_ptr<DisplayedImageState> m_displayedImageState;
     std::unique_ptr<ImagePresentationViewportController> m_viewportController;

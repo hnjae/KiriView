@@ -20,6 +20,8 @@ using KiriView::TestSupport::staticImageDataDecoder;
 using KiriView::TestSupport::staticTestImagePayload;
 using KiriView::TestSupport::testImage;
 
+constexpr qsizetype testCacheByteBudget = 1024 * 1024;
+
 KiriView::DisplayedPredecodeImage displayedImage(
     const QUrl &url, KiriView::StaticImageDisplayHints displayHints = {})
 {
@@ -59,8 +61,8 @@ private Q_SLOTS:
 void TestPredecodeLoadController::windowLoadsCacheDisplayedImageAndPumpQueuedDecodes()
 {
     ManualImageDataLoader dataLoader;
-    KiriView::PredecodeLoadController controller(
-        this, imageDecodeDependenciesFor(dataLoader, staticImageDataDecoder()));
+    KiriView::PredecodeLoadController controller(this,
+        imageDecodeDependenciesFor(dataLoader, staticImageDataDecoder()), testCacheByteBudget);
     const QUrl displayedUrl = indexedImageUrl(1);
     const QUrl nextUrl = indexedImageUrl(2);
     const QUrl previousUrl = indexedImageUrl(0);
@@ -85,8 +87,8 @@ void TestPredecodeLoadController::windowLoadsCacheDisplayedImageAndPumpQueuedDec
 void TestPredecodeLoadController::parallelLimitStartsMultipleWindowLoads()
 {
     ManualImageDataLoader dataLoader;
-    KiriView::PredecodeLoadController controller(
-        this, imageDecodeDependenciesFor(dataLoader, staticImageDataDecoder()));
+    KiriView::PredecodeLoadController controller(this,
+        imageDecodeDependenciesFor(dataLoader, staticImageDataDecoder()), testCacheByteBudget);
     const QUrl displayedUrl = indexedImageUrl(1);
     const QUrl nextUrl = indexedImageUrl(2);
     const QUrl previousUrl = indexedImageUrl(0);
@@ -104,8 +106,8 @@ void TestPredecodeLoadController::parallelLimitStartsMultipleWindowLoads()
 void TestPredecodeLoadController::startWindowLoadsReplacesActiveGeneration()
 {
     ManualImageDataLoader dataLoader;
-    KiriView::PredecodeLoadController controller(
-        this, imageDecodeDependenciesFor(dataLoader, staticImageDataDecoder()));
+    KiriView::PredecodeLoadController controller(this,
+        imageDecodeDependenciesFor(dataLoader, staticImageDataDecoder()), testCacheByteBudget);
     const QUrl staleDisplayedUrl = indexedImageUrl(1);
     const QUrl staleNextUrl = indexedImageUrl(2);
     const QUrl displayedUrl = indexedImageUrl(3);
@@ -132,8 +134,8 @@ void TestPredecodeLoadController::startWindowLoadsReplacesActiveGeneration()
 void TestPredecodeLoadController::cancelBackgroundWorkSuppressesStaleDecode()
 {
     ManualImageDataLoader dataLoader;
-    KiriView::PredecodeLoadController controller(
-        this, imageDecodeDependenciesFor(dataLoader, staticImageDataDecoder()));
+    KiriView::PredecodeLoadController controller(this,
+        imageDecodeDependenciesFor(dataLoader, staticImageDataDecoder()), testCacheByteBudget);
     const QUrl displayedUrl = indexedImageUrl(1);
     const QUrl nextUrl = indexedImageUrl(2);
 

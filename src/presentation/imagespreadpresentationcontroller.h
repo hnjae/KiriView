@@ -56,7 +56,7 @@ public:
     ImageSpreadPresentationController(QObject *parent, RenderContextProvider renderContextProvider,
         ImageDocumentState &state, ImagePresentationController &primaryPresentation,
         Callbacks callbacks, ImageNavigationCandidateProvider candidateProvider,
-        ImageDecodeDependencies decodeDependencies);
+        ImageDecodeDependencies decodeDependencies, qsizetype predecodeCacheByteBudget = 0);
     ~ImageSpreadPresentationController();
 
     bool transitionInProgress() const;

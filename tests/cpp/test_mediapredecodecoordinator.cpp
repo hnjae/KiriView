@@ -23,6 +23,8 @@ using KiriView::TestSupport::staticImageDataDecoder;
 using KiriView::TestSupport::staticTestImagePayload;
 using KiriView::TestSupport::testImage;
 
+constexpr qsizetype testCacheByteBudget = 1024 * 1024;
+
 KiriView::MediaNavigationCandidate mediaCandidate(const QUrl &url)
 {
     return KiriView::MediaNavigationCandidate { url, url.fileName(QUrl::PrettyDecoded) };
@@ -61,7 +63,7 @@ KiriView::MediaPredecodeCoordinator createCoordinator(QObject *parent,
 {
     return KiriView::MediaPredecodeCoordinator(parent,
         imageDecodeDependenciesFor(dataLoader, staticImageDataDecoder()),
-        std::move(powerSaverProvider));
+        std::move(powerSaverProvider), testCacheByteBudget);
 }
 
 KiriView::MediaPredecodeCoordinator createCoordinator(

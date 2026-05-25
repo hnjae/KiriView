@@ -249,7 +249,8 @@ void TestArchiveDocumentSessionStore::predecodeLoadsAdjacentArchiveImagesThrough
         store.wrapDecodeDependencies(KiriView::ImageDecodeDependencies {
             {},
             staticImageDataDecoder(),
-        }));
+        }),
+        KiriView::PowerSaverProvider {}, 1024 * 1024);
 
     KiriView::DisplayedPredecodeImage displayedImage {
         KiriView::DisplayedImageLocation::fromArchiveDocument(displayedUrl, *archiveDocument),

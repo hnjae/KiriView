@@ -45,6 +45,8 @@ KiriView::PredecodeActiveLoads activeLoads(std::vector<QUrl> urls)
 {
     return KiriView::PredecodeActiveLoads::fromUrls(std::move(urls));
 }
+
+KiriView::PredecodeLoadState loadState() { return KiriView::PredecodeLoadState(1024 * 1024); }
 }
 
 class TestPredecodeLoadState : public QObject
@@ -61,7 +63,7 @@ private Q_SLOTS:
 
 void TestPredecodeLoadState::activeWindowBuildsDecodeRequestsFromCanonicalContext()
 {
-    KiriView::PredecodeLoadState state;
+    KiriView::PredecodeLoadState state = loadState();
     const QUrl displayedUrl = indexedImageUrl(1);
     const QUrl nextUrl = indexedImageUrl(2);
 
@@ -83,7 +85,7 @@ void TestPredecodeLoadState::activeWindowBuildsDecodeRequestsFromCanonicalContex
 
 void TestPredecodeLoadState::activeLoadSnapshotIsTheAdmissionInput()
 {
-    KiriView::PredecodeLoadState state;
+    KiriView::PredecodeLoadState state = loadState();
     const QUrl displayedUrl = indexedImageUrl(1);
     const QUrl nextUrl = indexedImageUrl(2);
     const QUrl previousUrl = indexedImageUrl(0);
@@ -102,7 +104,7 @@ void TestPredecodeLoadState::activeLoadSnapshotIsTheAdmissionInput()
 
 void TestPredecodeLoadState::replacingWindowClearsQueuedLoadsAndUsesNextGeneration()
 {
-    KiriView::PredecodeLoadState state;
+    KiriView::PredecodeLoadState state = loadState();
     const QUrl staleDisplayedUrl = indexedImageUrl(1);
     const QUrl staleNextUrl = indexedImageUrl(2);
     const QUrl displayedUrl = indexedImageUrl(3);
@@ -122,7 +124,7 @@ void TestPredecodeLoadState::replacingWindowClearsQueuedLoadsAndUsesNextGenerati
 
 void TestPredecodeLoadState::cancelBackgroundWorkKeepsDisplayedCacheButDropsQueuedLoads()
 {
-    KiriView::PredecodeLoadState state;
+    KiriView::PredecodeLoadState state = loadState();
     const QUrl displayedUrl = indexedImageUrl(1);
     const QUrl nextUrl = indexedImageUrl(2);
 
@@ -135,7 +137,7 @@ void TestPredecodeLoadState::cancelBackgroundWorkKeepsDisplayedCacheButDropsQueu
 
 void TestPredecodeLoadState::findPredecodedImageDoesNotConsumeCachedImage()
 {
-    KiriView::PredecodeLoadState state;
+    KiriView::PredecodeLoadState state = loadState();
     const QUrl displayedUrl = indexedImageUrl(1);
 
     state.startWindow(loadWindow(displayedUrl, { displayedUrl }));

@@ -14,7 +14,8 @@
 namespace KiriView {
 ImageSecondaryPageController::ImageSecondaryPageController(QObject *parent,
     RenderContextProvider renderContextProvider, ImageSecondaryPageController::Callbacks callbacks,
-    ImageNavigationCandidateProvider candidateProvider, ImageDecodeDependencies decodeDependencies)
+    ImageNavigationCandidateProvider candidateProvider, ImageDecodeDependencies decodeDependencies,
+    qsizetype predecodeCacheByteBudget)
     : m_callbacks(std::move(callbacks))
 {
     m_presentationController
@@ -33,7 +34,8 @@ ImageSecondaryPageController::ImageSecondaryPageController(QObject *parent,
                         invokeIfSet(m_callbacks.visibilityChanged);
                     }
                 },
-            });
+            },
+            predecodeCacheByteBudget);
     m_imageLoader = std::make_unique<ImageLoader>(parent, std::move(candidateProvider),
         std::move(decodeDependencies),
         ImageLoader::Callbacks {

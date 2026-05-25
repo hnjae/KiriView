@@ -13,6 +13,7 @@
 
 #include <QObject>
 #include <QUrl>
+#include <QtGlobal>
 #include <memory>
 #include <optional>
 #include <vector>
@@ -30,7 +31,7 @@ public:
 
     explicit MediaPredecodeCoordinator(QObject *parent = nullptr);
     MediaPredecodeCoordinator(QObject *parent, ImageDecodeDependencies decodeDependencies,
-        PowerSaverProvider powerSaverProvider = {});
+        PowerSaverProvider powerSaverProvider, qsizetype cacheByteBudget);
 
     void schedule(Context context);
     void setPowerSaverEnabled(bool enabled);

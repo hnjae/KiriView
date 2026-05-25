@@ -30,6 +30,8 @@ using KiriView::TestSupport::testImage;
 
 using FakeCandidateProvider = KiriView::TestSupport::FakeImageNavigationCandidateProvider;
 
+constexpr qsizetype testCacheByteBudget = 1024 * 1024;
+
 KiriView::ImagePresentationController createPresentationController(QObject *parent)
 {
     return KiriView::ImagePresentationController(parent,
@@ -61,7 +63,7 @@ void TestImageDocumentPredecodeController::scheduleAdjacentImagePredecodeUsesPre
     KiriView::ImagePresentationController presentation = createPresentationController(this);
     KiriView::ImageDocumentPredecodeController controller(this, state, presentation,
         candidateProvider.provider(),
-        imageDecodeDependenciesFor(dataLoader, staticImageDataDecoder()));
+        imageDecodeDependenciesFor(dataLoader, staticImageDataDecoder()), testCacheByteBudget);
 
     const QUrl displayedUrl = indexedImageUrl(1);
     const QUrl nextUrl = indexedImageUrl(2);
@@ -98,7 +100,7 @@ void TestImageDocumentPredecodeController::
     KiriView::ImagePresentationController presentation = createPresentationController(this);
     KiriView::ImageDocumentPredecodeController controller(this, state, presentation,
         candidateProvider.provider(),
-        imageDecodeDependenciesFor(dataLoader, staticImageDataDecoder()));
+        imageDecodeDependenciesFor(dataLoader, staticImageDataDecoder()), testCacheByteBudget);
 
     const QUrl displayedUrl = indexedImageUrl(1);
     const QUrl nextUrl = indexedImageUrl(2);
@@ -131,7 +133,7 @@ void TestImageDocumentPredecodeController::
     KiriView::ImagePresentationController presentation = createPresentationController(this);
     KiriView::ImageDocumentPredecodeController controller(this, state, presentation,
         candidateProvider.provider(),
-        imageDecodeDependenciesFor(dataLoader, staticImageDataDecoder()), {},
+        imageDecodeDependenciesFor(dataLoader, staticImageDataDecoder()), testCacheByteBudget, {},
         powerSaverProviderFor(powerSaverMonitor, true));
     QVERIFY(powerSaverMonitor != nullptr);
 

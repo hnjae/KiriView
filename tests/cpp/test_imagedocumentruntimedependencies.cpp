@@ -3,6 +3,8 @@
 
 #include "document/imagedocumentruntimedependencies.h"
 
+#include "predecode/predecodecache.h"
+
 #include <QByteArray>
 #include <QObject>
 #include <QTest>
@@ -50,6 +52,8 @@ void TestImageDocumentRuntimeDependencies::defaultDependenciesUseArchiveSessionS
     QVERIFY(resolved.imageDecode.dataDecoder);
     QVERIFY(resolved.fileOperations);
     QVERIFY(resolved.powerSaver.monitor);
+    QVERIFY(resolved.predecodeCacheByteBudget > 0);
+    QVERIFY(resolved.predecodeCacheByteBudget <= KiriView::PredecodeCache::preferredByteBudget());
 }
 
 void TestImageDocumentRuntimeDependencies::partialNonArchiveOverridesStillUseArchiveSessionStore()
@@ -142,6 +146,7 @@ void TestImageDocumentRuntimeDependencies::explicitArchiveProvidersAvoidSessionS
               ++powerSaverMonitorCount;
               return std::make_unique<FakePowerSaverMonitor>();
           };
+    dependencies.predecodeCacheByteBudget = 4096;
 
     KiriView::ImageDocumentRuntimeDependencies resolved
         = KiriView::resolveImageDocumentRuntimeDependencies(std::move(dependencies), this);
@@ -155,6 +160,7 @@ void TestImageDocumentRuntimeDependencies::explicitArchiveProvidersAvoidSessionS
     QVERIFY(resolved.imageDecode.dataDecoder);
     QVERIFY(resolved.fileOperations);
     QVERIFY(resolved.powerSaver.monitor);
+    QCOMPARE(resolved.predecodeCacheByteBudget, qsizetype(4096));
 
     bool candidatesReported = false;
     QByteArray loadedData;

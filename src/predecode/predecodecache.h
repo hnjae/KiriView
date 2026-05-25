@@ -27,13 +27,10 @@ class PredecodeCache
 {
 public:
     static qsizetype preferredByteBudget();
-    static qsizetype defaultByteBudget();
-    static qsizetype byteBudget() { return defaultByteBudget(); }
     static qsizetype byteBudgetForSystemMemory(qsizetype systemMemoryByteSize);
-    static bool canCacheImage(const StaticImagePayload &staticImage);
     static bool canCacheImage(const StaticImagePayload &staticImage, qsizetype byteBudget);
 
-    explicit PredecodeCache(qsizetype byteBudget = defaultByteBudget());
+    explicit PredecodeCache(qsizetype byteBudget);
 
     void clear();
     void clearQueuedLoads();
@@ -72,7 +69,7 @@ private:
     PredecodeDisplayedHistory m_displayedHistory;
     std::deque<PredecodeRequest> m_queue;
     std::vector<CachedImage> m_images;
-    qsizetype m_byteBudget = defaultByteBudget();
+    qsizetype m_byteBudget = 0;
 };
 }
 

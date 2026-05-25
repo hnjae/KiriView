@@ -5,7 +5,6 @@
 
 #include "location/imageurl.h"
 #include "predecodepolicy.h"
-#include "system/systemmemory.h"
 
 #include <algorithm>
 #include <cstddef>
@@ -16,19 +15,9 @@
 namespace KiriView {
 qsizetype PredecodeCache::preferredByteBudget() { return predecodePreferredByteBudget(); }
 
-qsizetype PredecodeCache::defaultByteBudget()
-{
-    return byteBudgetForSystemMemory(systemMemorySnapshot().physicalByteSize);
-}
-
 qsizetype PredecodeCache::byteBudgetForSystemMemory(qsizetype systemMemoryByteSize)
 {
     return predecodeByteBudgetForSystemMemory(systemMemoryByteSize);
-}
-
-bool PredecodeCache::canCacheImage(const StaticImagePayload &staticImage)
-{
-    return canCacheImage(staticImage, defaultByteBudget());
 }
 
 bool PredecodeCache::canCacheImage(const StaticImagePayload &staticImage, qsizetype byteBudget)
@@ -37,7 +26,7 @@ bool PredecodeCache::canCacheImage(const StaticImagePayload &staticImage, qsizet
 }
 
 PredecodeCache::PredecodeCache(qsizetype byteBudget)
-    : m_byteBudget(byteBudget > 0 ? byteBudget : defaultByteBudget())
+    : m_byteBudget(byteBudget)
 {
 }
 

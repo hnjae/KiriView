@@ -6,7 +6,9 @@
 #include "facade/kiriimagedocument.h"
 #include "facade/kirivideodocument.h"
 #include "navigation/mediaformatregistry.h"
+#include "predecode/predecodecache.h"
 #include "session/documentsessionpublicsignals.h"
+#include "system/systemmemory.h"
 
 #include <memory>
 #include <optional>
@@ -62,6 +64,23 @@ KiriView::ImageDocumentRuntimeDependencyOverrides imageDocumentDependenciesWithP
     return dependencies;
 }
 
+qsizetype defaultPredecodeCacheByteBudget()
+{
+    return KiriView::PredecodeCache::byteBudgetForSystemMemory(
+        KiriView::systemMemorySnapshot().physicalByteSize);
+}
+
+KiriView::DocumentSessionRuntimeDependencies documentSessionDependenciesWithPredecodeCacheBudget(
+    KiriView::DocumentSessionRuntimeDependencies dependencies)
+{
+    if (dependencies.imageDocumentDependencies.predecodeCacheByteBudget <= 0) {
+        dependencies.imageDocumentDependencies.predecodeCacheByteBudget
+            = defaultPredecodeCacheByteBudget();
+    }
+
+    return dependencies;
+}
+
 KiriView::DocumentSessionPublicSignalOperations publicSignalOperations(KiriDocumentSession &session)
 {
     KiriView::DocumentSessionPublicSignalOperations operations;
@@ -88,6 +107,14 @@ KiriDocumentSession::KiriDocumentSession(QObject *parent)
 
 KiriDocumentSession::KiriDocumentSession(
     KiriView::DocumentSessionRuntimeDependencies dependencies, QObject *parent)
+    : KiriDocumentSession(
+          documentSessionDependenciesWithPredecodeCacheBudget(std::move(dependencies)),
+          ResolvedDependenciesTag {}, parent)
+{
+}
+
+KiriDocumentSession::KiriDocumentSession(KiriView::DocumentSessionRuntimeDependencies dependencies,
+    ResolvedDependenciesTag, QObject *parent)
     : QObject(parent)
     , m_imageDocument(std::make_unique<KiriImageDocument>(
           imageDocumentDependenciesWithPredecodeFinder(dependencies.imageDocumentDependencies,

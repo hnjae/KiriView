@@ -5,6 +5,8 @@
 
 #include "mediapredecodescheduleplan.h"
 #include "mediapredecodewindowplan.h"
+#include "predecodecache.h"
+#include "system/systemmemory.h"
 
 #include <QThread>
 #include <memory>
@@ -12,15 +14,24 @@
 #include <utility>
 
 namespace KiriView {
+namespace {
+    qsizetype defaultPredecodeCacheByteBudget()
+    {
+        return PredecodeCache::byteBudgetForSystemMemory(systemMemorySnapshot().physicalByteSize);
+    }
+}
+
 MediaPredecodeCoordinator::MediaPredecodeCoordinator(QObject *parent)
-    : MediaPredecodeCoordinator(parent, ImageDecodeDependencies {})
+    : MediaPredecodeCoordinator(parent, ImageDecodeDependencies {}, PowerSaverProvider {},
+          defaultPredecodeCacheByteBudget())
 {
 }
 
 MediaPredecodeCoordinator::MediaPredecodeCoordinator(QObject *parent,
-    ImageDecodeDependencies decodeDependencies, PowerSaverProvider powerSaverProvider)
+    ImageDecodeDependencies decodeDependencies, PowerSaverProvider powerSaverProvider,
+    qsizetype cacheByteBudget)
     : QObject(parent)
-    , m_loadController(this, std::move(decodeDependencies))
+    , m_loadController(this, std::move(decodeDependencies), cacheByteBudget)
     , m_scheduleRuntime(
           this, m_loadController,
           [this](const PredecodePendingSchedule &schedule) { startPredecodeWindow(schedule); },

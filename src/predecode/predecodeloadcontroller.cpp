@@ -10,15 +10,11 @@
 #include <utility>
 
 namespace KiriView {
-PredecodeLoadController::PredecodeLoadController(QObject *parent)
-    : PredecodeLoadController(parent, ImageDecodeDependencies {})
-{
-}
-
 PredecodeLoadController::PredecodeLoadController(
-    QObject *parent, ImageDecodeDependencies decodeDependencies)
+    QObject *parent, ImageDecodeDependencies decodeDependencies, qsizetype cacheByteBudget)
     : m_parent(parent)
     , m_decodeDependencies(imageDecodeDependenciesWithDefaults(std::move(decodeDependencies)))
+    , m_loadState(cacheByteBudget)
 {
 }
 

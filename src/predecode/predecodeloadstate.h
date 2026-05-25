@@ -34,6 +34,8 @@ struct PredecodeLoadStart {
 class PredecodeLoadState final
 {
 public:
+    explicit PredecodeLoadState(qsizetype cacheByteBudget);
+
     void cacheDisplayedImages(const std::vector<DisplayedPredecodeImage> &images);
     void clearWindowUrls();
     void startWindow(PredecodeLoadWindow window);

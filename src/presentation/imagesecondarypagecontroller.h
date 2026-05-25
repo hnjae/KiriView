@@ -18,6 +18,7 @@
 #include <QSizeF>
 #include <QString>
 #include <QUrl>
+#include <QtGlobal>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -47,7 +48,7 @@ public:
 
     ImageSecondaryPageController(QObject *parent, RenderContextProvider renderContextProvider,
         Callbacks callbacks, ImageNavigationCandidateProvider candidateProvider,
-        ImageDecodeDependencies decodeDependencies);
+        ImageDecodeDependencies decodeDependencies, qsizetype predecodeCacheByteBudget = 0);
     ~ImageSecondaryPageController();
 
     ImagePresentationController &presentationController();

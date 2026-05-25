@@ -12,6 +12,7 @@
 #include "system/powersaverprovider.h"
 
 #include <QUrl>
+#include <QtGlobal>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -30,6 +31,7 @@ struct ImageDocumentRuntimeDependencyOverrides {
     ArchiveDocumentSessionFactory archiveDocumentSessions;
     PowerSaverProvider powerSaver;
     ExternalPredecodedImageFinder externalPredecodedImageFinder;
+    qsizetype predecodeCacheByteBudget = 0;
 };
 
 struct ImageDocumentRuntimeDependencies {
@@ -37,6 +39,7 @@ struct ImageDocumentRuntimeDependencies {
     ImageDecodeDependencies imageDecode;
     FileOperationProvider fileOperations;
     PowerSaverProvider powerSaver;
+    qsizetype predecodeCacheByteBudget = 0;
     std::unique_ptr<ArchiveDocumentSessionStore> archiveSessionStore;
     ExternalPredecodedImageFinder externalPredecodedImageFinder;
 

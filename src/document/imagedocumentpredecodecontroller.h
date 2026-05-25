@@ -10,6 +10,7 @@
 #include "system/powersaverprovider.h"
 
 #include <QUrl>
+#include <QtGlobal>
 #include <functional>
 #include <memory>
 #include <optional>
@@ -29,7 +30,7 @@ public:
     ImageDocumentPredecodeController(QObject *parent, ImageDocumentState &state,
         ImagePresentationController &presentationController,
         ImageNavigationCandidateProvider candidateProvider,
-        ImageDecodeDependencies decodeDependencies,
+        ImageDecodeDependencies decodeDependencies, qsizetype cacheByteBudget,
         CurrentPageNumberCallback currentPageNumber = {},
         PowerSaverProvider powerSaverProvider = {});
     ~ImageDocumentPredecodeController();

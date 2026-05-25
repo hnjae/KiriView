@@ -33,7 +33,8 @@ ImageSpreadPresentationController::ImageSpreadPresentationController(QObject *pa
     RenderContextProvider renderContextProvider, ImageDocumentState &state,
     ImagePresentationController &primaryPresentation,
     ImageSpreadPresentationController::Callbacks callbacks,
-    ImageNavigationCandidateProvider candidateProvider, ImageDecodeDependencies decodeDependencies)
+    ImageNavigationCandidateProvider candidateProvider, ImageDecodeDependencies decodeDependencies,
+    qsizetype predecodeCacheByteBudget)
     : m_state(state)
     , m_primaryPresentation(primaryPresentation)
     , m_callbacks(std::move(callbacks))
@@ -57,7 +58,7 @@ ImageSpreadPresentationController::ImageSpreadPresentationController(QObject *pa
                 return m_callbacks.findPredecodedImage(url);
             },
         },
-        std::move(candidateProvider), std::move(decodeDependencies));
+        std::move(candidateProvider), std::move(decodeDependencies), predecodeCacheByteBudget);
     m_modeController = std::make_unique<ImageSpreadModeController>();
     m_zoomController
         = std::make_unique<ImageSpreadZoomController>(std::move(spreadRenderContextProvider),

@@ -17,6 +17,8 @@ using KiriView::TestSupport::powerSaverProviderFor;
 using KiriView::TestSupport::staticTestImagePayload;
 using KiriView::TestSupport::testImage;
 
+constexpr qsizetype testCacheByteBudget = 1024 * 1024;
+
 KiriView::DisplayedPredecodeImage displayedImage(const QUrl &url)
 {
     return KiriView::DisplayedPredecodeImage {
@@ -59,7 +61,8 @@ private Q_SLOTS:
 
 void TestPredecodeScheduleRuntime::scheduleCachesDisplayedImagesAndStartsAdjacentAfterDebounce()
 {
-    KiriView::PredecodeLoadController loadController(this);
+    KiriView::PredecodeLoadController loadController(
+        this, KiriView::ImageDecodeDependencies {}, testCacheByteBudget);
     int startCount = 0;
     std::optional<KiriView::PredecodePendingSchedule> capturedSchedule;
     KiriView::PredecodeScheduleRuntime runtime(
@@ -82,7 +85,8 @@ void TestPredecodeScheduleRuntime::scheduleCachesDisplayedImagesAndStartsAdjacen
 
 void TestPredecodeScheduleRuntime::invalidScheduleCancelsDomainBackgroundWork()
 {
-    KiriView::PredecodeLoadController loadController(this);
+    KiriView::PredecodeLoadController loadController(
+        this, KiriView::ImageDecodeDependencies {}, testCacheByteBudget);
     int cancelCount = 0;
     KiriView::PredecodeScheduleRuntime runtime(
         this, loadController, [](const KiriView::PredecodePendingSchedule &) {},
@@ -95,7 +99,8 @@ void TestPredecodeScheduleRuntime::invalidScheduleCancelsDomainBackgroundWork()
 
 void TestPredecodeScheduleRuntime::powerSaverSuppressesAndReschedulesPendingPredecode()
 {
-    KiriView::PredecodeLoadController loadController(this);
+    KiriView::PredecodeLoadController loadController(
+        this, KiriView::ImageDecodeDependencies {}, testCacheByteBudget);
     ManualPowerSaverMonitor *powerSaverMonitor = nullptr;
     int startCount = 0;
     std::optional<KiriView::PredecodePendingSchedule> capturedSchedule;

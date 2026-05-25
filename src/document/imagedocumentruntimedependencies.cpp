@@ -4,6 +4,8 @@
 #include "imagedocumentruntimedependencies.h"
 
 #include "archive/archivedocumentsessionstore.h"
+#include "predecode/predecodecache.h"
+#include "system/systemmemory.h"
 
 #include <utility>
 
@@ -13,6 +15,16 @@ bool shouldUseArchiveSessionStore(
 {
     return overrides.archiveDocumentSessions
         || (!overrides.candidateProvider.archiveImages && !overrides.imageDecode.dataLoader);
+}
+
+qsizetype resolvedPredecodeCacheByteBudget(qsizetype byteBudget)
+{
+    if (byteBudget > 0) {
+        return byteBudget;
+    }
+
+    return KiriView::PredecodeCache::byteBudgetForSystemMemory(
+        KiriView::systemMemorySnapshot().physicalByteSize);
 }
 }
 
@@ -32,6 +44,8 @@ ImageDocumentRuntimeDependencies resolveImageDocumentRuntimeDependencies(
     overrides.fileOperations
         = fileOperationProviderWithDefault(std::move(overrides.fileOperations));
     overrides.powerSaver = powerSaverProviderWithDefault(std::move(overrides.powerSaver));
+    overrides.predecodeCacheByteBudget
+        = resolvedPredecodeCacheByteBudget(overrides.predecodeCacheByteBudget);
 
     std::unique_ptr<ArchiveDocumentSessionStore> archiveSessionStore;
     if (useArchiveSessionStore) {
@@ -48,6 +62,7 @@ ImageDocumentRuntimeDependencies resolveImageDocumentRuntimeDependencies(
         std::move(overrides.imageDecode),
         std::move(overrides.fileOperations),
         std::move(overrides.powerSaver),
+        overrides.predecodeCacheByteBudget,
         std::move(archiveSessionStore),
         std::move(overrides.externalPredecodedImageFinder),
     };

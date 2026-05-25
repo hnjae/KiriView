@@ -42,6 +42,11 @@ KiriView::PredecodeActiveLoads activeLoads(std::vector<QUrl> urls)
 {
     return KiriView::PredecodeActiveLoads::fromUrls(std::move(urls));
 }
+
+KiriView::PredecodeCache defaultCache()
+{
+    return KiriView::PredecodeCache(KiriView::PredecodeCache::preferredByteBudget());
+}
 }
 
 class TestPredecodeCache : public QObject
@@ -64,7 +69,7 @@ private Q_SLOTS:
 
 void TestPredecodeCache::queueContainsOnlyMissingWindowImages()
 {
-    KiriView::PredecodeCache cache;
+    KiriView::PredecodeCache cache = defaultCache();
     const QUrl displayedUrl = indexedImageUrl(0);
     const QUrl firstQueuedUrl = indexedImageUrl(1);
     const QUrl secondQueuedUrl = indexedImageUrl(2);
@@ -88,7 +93,7 @@ void TestPredecodeCache::queueContainsOnlyMissingWindowImages()
 
 void TestPredecodeCache::queueSkipsAllDisplayedWindowImages()
 {
-    KiriView::PredecodeCache cache;
+    KiriView::PredecodeCache cache = defaultCache();
     const QUrl primaryDisplayedUrl = indexedImageUrl(0);
     const QUrl secondaryDisplayedUrl = indexedImageUrl(1);
     const QUrl queuedUrl = indexedImageUrl(2);
@@ -108,7 +113,7 @@ void TestPredecodeCache::queueSkipsAllDisplayedWindowImages()
 
 void TestPredecodeCache::takeNextRequestDiscardsSkippedQueuePrefix()
 {
-    KiriView::PredecodeCache cache;
+    KiriView::PredecodeCache cache = defaultCache();
     const QUrl cachedQueuedUrl = indexedImageUrl(0);
     const QUrl firstRequestUrl = indexedImageUrl(1);
     const QUrl secondRequestUrl = indexedImageUrl(2);
@@ -140,8 +145,6 @@ void TestPredecodeCache::byteBudgetUsesPreferredLimitAndSystemMemoryCap()
         preferredByteBudget / 8);
     QCOMPARE(KiriView::PredecodeCache::byteBudgetForSystemMemory(preferredByteBudget * 16),
         preferredByteBudget);
-    QVERIFY(KiriView::PredecodeCache::defaultByteBudget() > 0);
-    QVERIFY(KiriView::PredecodeCache::defaultByteBudget() <= preferredByteBudget);
 }
 
 void TestPredecodeCache::cacheEligibilityUsesByteBudgetPolicy()
@@ -149,7 +152,8 @@ void TestPredecodeCache::cacheEligibilityUsesByteBudgetPolicy()
     const KiriView::StaticImagePayload image = staticTestImagePayload(cacheImage());
     const qsizetype byteCost = image.byteCost();
 
-    QVERIFY(KiriView::PredecodeCache::canCacheImage(image));
+    QVERIFY(KiriView::PredecodeCache::canCacheImage(
+        image, KiriView::PredecodeCache::preferredByteBudget()));
     QVERIFY(KiriView::PredecodeCache::canCacheImage(image, byteCost));
     QVERIFY(!KiriView::PredecodeCache::canCacheImage(image, byteCost - 1));
     QVERIFY(!KiriView::PredecodeCache::canCacheImage(KiriView::StaticImagePayload {}, byteCost));

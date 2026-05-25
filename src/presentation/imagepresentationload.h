@@ -11,6 +11,7 @@
 #include <QByteArray>
 #include <QImage>
 #include <QSize>
+#include <QtGlobal>
 #include <variant>
 
 namespace KiriView {
@@ -62,8 +63,8 @@ struct ImagePresentationLoadPlan {
 };
 
 ImagePresentationLoadPlan planPredecodedImagePresentationLoad(PredecodedImage image);
-ImagePresentationLoadPlan planDecodedImagePresentationLoad(
-    DecodedImage image, ImagePresentationAnimationHandling animationHandling);
+ImagePresentationLoadPlan planDecodedImagePresentationLoad(DecodedImage image,
+    ImagePresentationAnimationHandling animationHandling, qsizetype predecodeCacheByteBudget);
 ImagePresentationLoadResult executeImagePresentationLoadPlan(
     ImagePresentationController &presentation, const ImageLoadSession &session,
     ImagePresentationLoadPlan plan);

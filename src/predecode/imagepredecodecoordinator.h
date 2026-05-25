@@ -30,7 +30,8 @@ public:
 
     explicit ImagePredecodeCoordinator(QObject *parent = nullptr);
     ImagePredecodeCoordinator(QObject *parent, ImageNavigationCandidateProvider candidateProvider,
-        ImageDecodeDependencies decodeDependencies, PowerSaverProvider powerSaverProvider = {});
+        ImageDecodeDependencies decodeDependencies, PowerSaverProvider powerSaverProvider,
+        qsizetype cacheByteBudget);
 
     void schedule(Context context);
     void setPowerSaverEnabled(bool enabled);
