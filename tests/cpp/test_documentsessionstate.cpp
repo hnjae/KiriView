@@ -20,6 +20,7 @@ private Q_SLOTS:
     void fileDeletionProgressPublishesProgressAndAvailability();
     void mediaNavigationStateOnlyUpdatesWhenBoundaryChanges();
     void activeNavigationSnapshotOnlyNotifiesWhenProjectionChanges();
+    void activeNavigationProjectionCommitsTitleBeforePublishing();
     void publishDeduplicatesChangesInOrder();
 };
 
@@ -193,6 +194,41 @@ void TestDocumentSessionState::activeNavigationSnapshotOnlyNotifiesWhenProjectio
     state.setActiveNavigationSnapshot(snapshot);
     QCOMPARE(changes.size(), std::size_t(2));
     QVERIFY(state.activeNavigationSnapshot().known);
+}
+
+void TestDocumentSessionState::activeNavigationProjectionCommitsTitleBeforePublishing()
+{
+    std::vector<std::vector<KiriView::DocumentSessionChange>> batches;
+    KiriView::DocumentSessionState *stateDuringCallback = nullptr;
+    KiriView::DocumentSessionState state(
+        [&batches, &stateDuringCallback](
+            const std::vector<KiriView::DocumentSessionChange> &publishedChanges) {
+            batches.push_back(publishedChanges);
+            QVERIFY(stateDuringCallback != nullptr);
+            QCOMPARE(stateDuringCallback->activeNavigationSnapshot().currentNumber, 2);
+            QCOMPARE(stateDuringCallback->activeNavigationSnapshot().count, 4);
+            QCOMPARE(stateDuringCallback->windowTitleSubject(), QStringLiteral("book.cbz – 2/4"));
+        });
+    stateDuringCallback = &state;
+
+    KiriView::ActiveNavigationSnapshot snapshot;
+    snapshot.available = true;
+    snapshot.known = true;
+    snapshot.editable = true;
+    snapshot.canOpenPrevious = true;
+    snapshot.canOpenNext = true;
+    snapshot.currentNumber = 2;
+    snapshot.count = 4;
+
+    state.setActiveNavigationProjection(snapshot, QStringLiteral("book.cbz – 2/4"));
+
+    QCOMPARE(batches.size(), std::size_t(1));
+    QCOMPARE(batches.back().size(), std::size_t(2));
+    QCOMPARE(batches.back().at(0), KiriView::DocumentSessionChange::ActiveNavigation);
+    QCOMPARE(batches.back().at(1), KiriView::DocumentSessionChange::WindowTitleSubject);
+
+    state.setActiveNavigationProjection(snapshot, QStringLiteral("book.cbz – 2/4"));
+    QCOMPARE(batches.size(), std::size_t(1));
 }
 
 void TestDocumentSessionState::publishDeduplicatesChangesInOrder()

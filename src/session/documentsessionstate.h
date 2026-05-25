@@ -66,6 +66,8 @@ public:
     void setActiveZoomSnapshot(ActiveZoomSnapshot snapshot);
     void setMediaNavigationState(MediaNavigationBoundaryState state, bool known);
     void setActiveNavigationSnapshot(ActiveNavigationSnapshot snapshot);
+    void setActiveNavigationProjection(
+        ActiveNavigationSnapshot snapshot, const QString &windowTitleSubject);
     void setSessionErrorString(const QString &errorString);
     void setWindowTitleSubject(const QString &subject);
     bool clearDirectMediaCursor();

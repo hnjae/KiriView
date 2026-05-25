@@ -11,6 +11,7 @@
 #include "session/activenavigationprojection.h"
 #include "session/documentsessionmediacandidateruntime.h"
 #include "session/documentsessionmediadeletionruntime.h"
+#include "session/documentsessionpublicprojection.h"
 #include "session/documentsessionrouteplan.h"
 #include "session/documentsessionstate.h"
 
@@ -128,11 +129,8 @@ private:
     bool directImageLoadMayUseMediaScope() const;
     bool syncDirectImageCursorFromDocument();
     ActiveZoomSnapshot activeZoomSnapshotForKind(DocumentSessionKind kind) const;
-    ActiveNavigationSourceKind activeNavigationSourceKind() const;
-    ActiveNavigationSnapshot projectedActiveNavigationSnapshot() const;
-    QString projectedWindowTitleSubject() const;
-    QSize directMediaWindowTitleSizeForKind(
-        DocumentSessionKind kind, ActiveNavigationSourceKind sourceKind) const;
+    DocumentSessionPublicProjectionInput publicProjectionInput() const;
+    DocumentSessionPublicProjection projectedPublicState() const;
     MediaActiveNavigationInput mediaActiveNavigationInput() const;
     ImageDocumentActiveNavigationInput imageDocumentActiveNavigationInput() const;
 

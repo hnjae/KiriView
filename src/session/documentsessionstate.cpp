@@ -162,6 +162,22 @@ void DocumentSessionState::setActiveNavigationSnapshot(ActiveNavigationSnapshot 
     publish(DocumentSessionChange::ActiveNavigation);
 }
 
+void DocumentSessionState::setActiveNavigationProjection(
+    ActiveNavigationSnapshot snapshot, const QString &windowTitleSubject)
+{
+    std::vector<DocumentSessionChange> changes;
+    if (!sameActiveNavigationSnapshot(m_activeNavigationSnapshot, snapshot)) {
+        m_activeNavigationSnapshot = snapshot;
+        changes.push_back(DocumentSessionChange::ActiveNavigation);
+    }
+    if (m_windowTitleSubject != windowTitleSubject) {
+        m_windowTitleSubject = windowTitleSubject;
+        changes.push_back(DocumentSessionChange::WindowTitleSubject);
+    }
+
+    publish(std::move(changes));
+}
+
 void DocumentSessionState::setSessionErrorString(const QString &errorString)
 {
     if (replaceIfChanged(m_sessionErrorString, errorString)) {

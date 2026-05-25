@@ -10,7 +10,6 @@
 #include "navigation/mediaformatregistry.h"
 #include "predecode/mediapredecodecoordinator.h"
 #include "predecode/predecodecache.h"
-#include "session/windowtitleprojection.h"
 #include "system/systemmemory.h"
 
 #include <QObject>
@@ -228,7 +227,7 @@ bool DocumentSessionRuntime::atKnownLastActiveNavigation() const
 
 ActiveNavigationBoundaryScope DocumentSessionRuntime::activeNavigationBoundaryScope() const
 {
-    return activeNavigationBoundaryScopeForSource(activeNavigationSourceKind());
+    return projectedPublicState().boundaryScope;
 }
 
 std::optional<PredecodedImage> DocumentSessionRuntime::findPredecodedImage(const QUrl &url) const
@@ -304,7 +303,7 @@ ActiveNavigationDispatchOutcome DocumentSessionRuntime::executeActiveNavigationD
     ActiveNavigationDispatchRequest request)
 {
     const ActiveNavigationDispatchPlan plan = activeNavigationDispatchPlan(
-        activeNavigationSourceKind(), m_state.activeNavigationSnapshot(), request);
+        projectedPublicState().sourceKind, m_state.activeNavigationSnapshot(), request);
     executeActiveNavigationDispatchPlan(plan);
     return plan.outcome;
 }
@@ -456,20 +455,21 @@ void DocumentSessionRuntime::recomputeActiveZoomReadoutForKind(DocumentSessionKi
 
 void DocumentSessionRuntime::publishActiveNavigationForImagePages()
 {
-    if (activeNavigationSourceKind() == ActiveNavigationSourceKind::ImageDocumentPages) {
+    if (projectedPublicState().sourceKind == ActiveNavigationSourceKind::ImageDocumentPages) {
         recomputeActiveNavigation();
     }
 }
 
 void DocumentSessionRuntime::recomputeActiveNavigation()
 {
-    m_state.setActiveNavigationSnapshot(projectedActiveNavigationSnapshot());
-    recomputeWindowTitleSubject();
+    const DocumentSessionPublicProjection projection = projectedPublicState();
+    m_state.setActiveNavigationProjection(
+        projection.activeNavigation, projection.windowTitleSubject);
 }
 
 void DocumentSessionRuntime::recomputeWindowTitleSubject()
 {
-    m_state.setWindowTitleSubject(projectedWindowTitleSubject());
+    m_state.setWindowTitleSubject(projectedPublicState().windowTitleSubject);
 }
 
 void DocumentSessionRuntime::routeSourceUrl(const QUrl &sourceUrl)
@@ -897,76 +897,26 @@ ActiveZoomSnapshot DocumentSessionRuntime::activeZoomSnapshotForKind(DocumentSes
     return {};
 }
 
-ActiveNavigationSourceKind DocumentSessionRuntime::activeNavigationSourceKind() const
+DocumentSessionPublicProjectionInput DocumentSessionRuntime::publicProjectionInput() const
 {
-    switch (m_state.documentKind()) {
-    case DocumentSessionKind::Video:
-        return ActiveNavigationSourceKind::OrdinaryDirectMedia;
-    case DocumentSessionKind::Image:
-        if (directImageLoadMayUseMediaScope()) {
-            return ActiveNavigationSourceKind::OrdinaryDirectMedia;
-        }
-        if (m_imageDocument.currentPageNumber() > 0 || m_imageDocument.imageCount() > 0
-            || (!m_imageDocument.sourceUrl().isEmpty()
-                && !isSupportedDirectImageUrl(m_imageDocument.sourceUrl()))) {
-            return ActiveNavigationSourceKind::ImageDocumentPages;
-        }
-        return ActiveNavigationSourceKind::None;
-    case DocumentSessionKind::Empty:
-        return ActiveNavigationSourceKind::None;
-    }
-
-    return ActiveNavigationSourceKind::None;
+    return DocumentSessionPublicProjectionInput {
+        m_state.documentKind(),
+        directImageLoadMayUseMediaScope(),
+        !m_imageDocument.sourceUrl().isEmpty()
+            && !isSupportedDirectImageUrl(m_imageDocument.sourceUrl()),
+        m_state.fileDeletionInProgress(),
+        mediaActiveNavigationInput(),
+        imageDocumentActiveNavigationInput(),
+        m_imageDocument.windowTitleFileName(),
+        m_imageDocument.primaryImageSize(),
+        m_videoDocument.windowTitleFileName(),
+        m_videoDocument.videoSize(),
+    };
 }
 
-ActiveNavigationSnapshot DocumentSessionRuntime::projectedActiveNavigationSnapshot() const
+DocumentSessionPublicProjection DocumentSessionRuntime::projectedPublicState() const
 {
-    return projectActiveNavigation(activeNavigationSourceKind(), mediaActiveNavigationInput(),
-        imageDocumentActiveNavigationInput(), m_state.fileDeletionInProgress());
-}
-
-QString DocumentSessionRuntime::projectedWindowTitleSubject() const
-{
-    const ActiveNavigationSourceKind sourceKind = activeNavigationSourceKind();
-    switch (m_state.documentKind()) {
-    case DocumentSessionKind::Image:
-        return projectWindowTitleSubject(WindowTitleSubjectInput {
-            m_imageDocument.windowTitleFileName(),
-            sourceKind,
-            directMediaWindowTitleSizeForKind(DocumentSessionKind::Image, sourceKind),
-            m_state.activeNavigationSnapshot(),
-        });
-    case DocumentSessionKind::Video:
-        return projectWindowTitleSubject(WindowTitleSubjectInput {
-            m_videoDocument.windowTitleFileName(),
-            sourceKind,
-            directMediaWindowTitleSizeForKind(DocumentSessionKind::Video, sourceKind),
-            m_state.activeNavigationSnapshot(),
-        });
-    case DocumentSessionKind::Empty:
-        return {};
-    }
-
-    return {};
-}
-
-QSize DocumentSessionRuntime::directMediaWindowTitleSizeForKind(
-    DocumentSessionKind kind, ActiveNavigationSourceKind sourceKind) const
-{
-    if (sourceKind != ActiveNavigationSourceKind::OrdinaryDirectMedia) {
-        return {};
-    }
-
-    switch (kind) {
-    case DocumentSessionKind::Image:
-        return m_imageDocument.primaryImageSize();
-    case DocumentSessionKind::Video:
-        return m_videoDocument.videoSize();
-    case DocumentSessionKind::Empty:
-        return {};
-    }
-
-    return {};
+    return projectDocumentSessionPublicState(publicProjectionInput());
 }
 
 MediaActiveNavigationInput DocumentSessionRuntime::mediaActiveNavigationInput() const

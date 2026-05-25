@@ -176,6 +176,7 @@ src/session/documentsessionmediacandidateloadstate.cpp
 src/session/documentsessionmediacandidateruntime.cpp
 src/session/documentsessionmediadeletionplan.cpp
 src/session/documentsessionmediadeletionruntime.cpp
+src/session/documentsessionpublicprojection.cpp
 src/session/documentsessionrouteplan.cpp
 src/session/documentsessionruntime.cpp
 src/facade/documentsessionpublicsignals.cpp
