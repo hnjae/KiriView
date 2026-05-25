@@ -4,15 +4,13 @@
 #ifndef KIRIVIEW_DOCUMENTSESSIONRUNTIME_H
 #define KIRIVIEW_DOCUMENTSESSIONRUNTIME_H
 
-#include "async/imageasyncoperationstate.h"
-#include "async/imageiojob.h"
 #include "document/filedeletion.h"
 #include "document/imagedocumentruntimedependencies.h"
 #include "navigation/mediacandidateprovider.h"
 #include "navigation/medianavigationmodel.h"
 #include "session/activenavigationprojection.h"
 #include "session/documentsessionmediacandidateruntime.h"
-#include "session/documentsessionmediadeletionplan.h"
+#include "session/documentsessionmediadeletionruntime.h"
 #include "session/documentsessionrouteplan.h"
 #include "session/documentsessionstate.h"
 
@@ -120,8 +118,7 @@ private:
     void cancelMediaDeletion();
     void startMediaDeletion(
         FileDeletionMode mode, std::vector<MediaNavigationCandidate> candidates = {});
-    void finishMediaDeletion(quint64 operationId, const MediaDeletionFallbackPlan &fallbackPlan,
-        FileDeletionResult result, const QString &errorString);
+    void finishMediaDeletion(DocumentSessionMediaDeletionCompletion completion);
     void executeMediaDeletionCompletionPlan(
         const DocumentSessionMediaDeletionCompletionPlan &plan, const QString &errorString);
     QUrl activeDirectMediaCursorUrl() const;
@@ -144,10 +141,8 @@ private:
     KiriVideoDocument &m_videoDocument;
     DocumentSessionState m_state;
     DocumentSessionMediaCandidateRuntime m_mediaCandidateRuntime;
-    FileOperationProvider m_fileOperationProvider;
+    DocumentSessionMediaDeletionRuntime m_mediaDeletionRuntime;
     std::unique_ptr<MediaPredecodeCoordinator> m_mediaPredecodeCoordinator;
-    ImageIoJob m_fileDeletionJob;
-    ImageAsyncOperationState m_fileDeletionOperation;
     bool m_routingSource = false;
 };
 }

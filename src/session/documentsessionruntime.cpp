@@ -45,8 +45,7 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner, KiriImageDocument
     , m_videoDocument(videoDocument)
     , m_state(std::move(changeCallback))
     , m_mediaCandidateRuntime(std::move(dependencies.mediaCandidateProvider))
-    , m_fileOperationProvider(
-          fileOperationProviderWithDefault(std::move(dependencies.fileOperationProvider)))
+    , m_mediaDeletionRuntime(std::move(dependencies.fileOperationProvider))
     , m_mediaPredecodeCoordinator(std::make_unique<MediaPredecodeCoordinator>(owner,
           std::move(dependencies.imageDocumentDependencies.imageDecode),
           std::move(dependencies.imageDocumentDependencies.powerSaver),
@@ -59,8 +58,7 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner, KiriImageDocument
 DocumentSessionRuntime::~DocumentSessionRuntime()
 {
     m_mediaCandidateRuntime.cancel();
-    m_fileDeletionJob.cancel();
-    m_fileDeletionOperation.cancel();
+    m_mediaDeletionRuntime.cancel();
 }
 
 QUrl DocumentSessionRuntime::sourceUrl() const { return m_state.sourceUrl(); }
@@ -745,12 +743,11 @@ void DocumentSessionRuntime::cancelMediaDeletion()
 {
     const bool sessionMediaDeletionInProgress
         = m_state.fileDeletionInProgress() && mediaNavigationActive();
-    if (!m_fileDeletionOperation.active() && !sessionMediaDeletionInProgress) {
+    if (!m_mediaDeletionRuntime.active() && !sessionMediaDeletionInProgress) {
         return;
     }
 
-    m_fileDeletionJob.cancel();
-    m_fileDeletionOperation.cancel();
+    m_mediaDeletionRuntime.cancel();
     m_state.setFileDeletionInProgress(false);
     recomputeActiveNavigation();
 }
@@ -758,37 +755,23 @@ void DocumentSessionRuntime::cancelMediaDeletion()
 void DocumentSessionRuntime::startMediaDeletion(
     FileDeletionMode mode, std::vector<MediaNavigationCandidate> candidates)
 {
-    const DocumentSessionMediaDeletionStartPlan plan = documentSessionMediaDeletionStartPlan(
-        mode, std::move(candidates), activeDirectMediaCursorUrl());
+    const DocumentSessionMediaDeletionStartPlan plan = m_mediaDeletionRuntime.start(m_owner, mode,
+        std::move(candidates), activeDirectMediaCursorUrl(), m_state.documentKind(),
+        [this](DocumentSessionMediaDeletionCompletion completion) {
+            finishMediaDeletion(std::move(completion));
+        });
     if (!plan.shouldStartDeletion) {
         m_state.setFileDeletionInProgress(false);
         recomputeActiveNavigation();
-        return;
     }
-
-    m_fileDeletionJob.cancel();
-    const quint64 operationId = m_fileDeletionOperation.start();
-    m_fileDeletionJob = m_fileOperationProvider(m_owner, plan.request,
-        [this, operationId, fallbackPlan = plan.fallbackPlan](
-            FileDeletionResult result, const QString &errorString) {
-            finishMediaDeletion(operationId, fallbackPlan, result, errorString);
-        });
 }
 
-void DocumentSessionRuntime::finishMediaDeletion(quint64 operationId,
-    const MediaDeletionFallbackPlan &fallbackPlan, FileDeletionResult result,
-    const QString &errorString)
+void DocumentSessionRuntime::finishMediaDeletion(DocumentSessionMediaDeletionCompletion completion)
 {
-    if (!m_fileDeletionOperation.finish(operationId)) {
-        return;
-    }
-
     m_state.setFileDeletionInProgress(false);
     recomputeActiveNavigation();
 
-    executeMediaDeletionCompletionPlan(
-        documentSessionMediaDeletionCompletionPlan(m_state.documentKind(), fallbackPlan, result),
-        errorString);
+    executeMediaDeletionCompletionPlan(completion.plan, completion.errorString);
 }
 
 void DocumentSessionRuntime::executeMediaDeletionCompletionPlan(

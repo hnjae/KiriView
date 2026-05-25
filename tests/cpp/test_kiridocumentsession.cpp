@@ -219,6 +219,7 @@ private Q_SLOTS:
     void directMediaDeletionInProgressDisablesActiveNavigationDispatch();
     void directImageDeletionCanOpenVideoFallback();
     void pendingDirectImageReplacementDoesNotDeletePreviousDisplayedFile();
+    void pendingDirectMediaDeletionCandidateLoadIsCanceledBySourceChange();
     void videoDeletionUsesOriginalUrlAndOpensMediaFallback();
     void canceledVideoDeletionKeepsCurrentVideo();
     void staleVideoDeletionCompletionAfterSourceChangeIsIgnored();
@@ -1294,6 +1295,41 @@ void TestKiriDocumentSession::pendingDirectImageReplacementDoesNotDeletePrevious
 
     QCOMPARE(fileOperations.operationCount(), std::size_t(1));
     QCOMPARE(fileOperations.backOperation().request.targetUrl, firstImage);
+}
+
+void TestKiriDocumentSession::pendingDirectMediaDeletionCandidateLoadIsCanceledBySourceChange()
+{
+    ManualMediaCandidateProvider mediaProvider;
+    KiriView::TestSupport::ManualFileOperationProvider fileOperations;
+    const QUrl firstClip = localUrl(QStringLiteral("/first/01.mp4"));
+    const QUrl firstFallback = localUrl(QStringLiteral("/first/02.png"));
+    const QUrl secondClip = localUrl(QStringLiteral("/second/01.mp4"));
+    std::unique_ptr<KiriDocumentSession> session
+        = createSessionWithProvider(mediaProvider.provider(), &fileOperations);
+
+    session->setSourceUrl(firstClip);
+    QCOMPARE(mediaProvider.loadCount(), std::size_t(1));
+    mediaProvider.finishLoad(0, { mediaCandidate(firstClip), mediaCandidate(firstFallback) });
+
+    session->deleteDisplayedFile(KiriDocumentSession::DeletionMode::MoveToTrash);
+
+    QCOMPARE(mediaProvider.loadCount(), std::size_t(2));
+    QVERIFY(session->fileDeletionInProgress());
+    QCOMPARE(fileOperations.operationCount(), std::size_t(0));
+
+    session->setSourceUrl(secondClip);
+
+    QCOMPARE(session->sourceUrl(), secondClip);
+    QCOMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Video);
+    QVERIFY(!session->fileDeletionInProgress());
+    QVERIFY(mediaProvider.loadAt(1).canceled);
+
+    mediaProvider.deliverIgnoringCancellation(
+        1, { mediaCandidate(firstClip), mediaCandidate(firstFallback) });
+
+    QCOMPARE(fileOperations.operationCount(), std::size_t(0));
+    QCOMPARE(session->sourceUrl(), secondClip);
+    QVERIFY(!session->fileDeletionInProgress());
 }
 
 void TestKiriDocumentSession::videoDeletionUsesOriginalUrlAndOpensMediaFallback()
