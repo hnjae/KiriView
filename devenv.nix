@@ -49,6 +49,8 @@ in
     kdePackages.kirigami
     kdePackages.kirigami-addons
     kdePackages.kio
+    kdePackages.kio-extras
+    kdePackages.kio-fuse
     kdePackages.qqc2-desktop-style
     kdePackages.qtbase
     kdePackages.qtdeclarative

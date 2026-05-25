@@ -42,9 +42,11 @@
     "--filesystem=/media",
     "--filesystem=/mnt",
     "--filesystem=/run/media",
+    "--filesystem=/run/user:ro",
     "--filesystem=xdg-run/pipewire-0",
     "--filesystem=xdg-run/gvfs",
     "--talk-name=org.freedesktop.portal.Desktop",
+    "--talk-name=org.kde.KIOFuse",
     "--env=LIBHEIF_PLUGIN_PATH=/app/lib/libheif"
   ],
   "modules": [

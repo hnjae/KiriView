@@ -6,22 +6,27 @@
 #include "async/imagecallback.h"
 #include "async/imageiojob.h"
 
-#include <KIO/Job>
-#include <KIO/StatJob>
-#include <KJob>
+#include <KProtocolInfo>
+#include <QDBusConnection>
+#include <QDBusInterface>
+#include <QDBusPendingCallWatcher>
+#include <QDBusPendingReply>
 #include <QObject>
 #include <QString>
 #include <utility>
 
 namespace {
-void cancelKJob(QObject *object)
+constexpr auto kioFuseService = "org.kde.KIOFuse";
+constexpr auto kioFusePath = "/org/kde/KIOFuse";
+constexpr auto kioFuseInterface = "org.kde.KIOFuse.VFS";
+
+void deleteQObjectLater(QObject *object)
 {
-    auto *job = qobject_cast<KJob *>(object);
-    if (job == nullptr) {
+    if (object == nullptr) {
         return;
     }
 
-    job->kill(KJob::Quietly);
+    object->deleteLater();
 }
 
 bool isDirectBackendScheme(const QString &scheme)
@@ -31,7 +36,12 @@ bool isDirectBackendScheme(const QString &scheme)
         || scheme == QLatin1String("data");
 }
 
-class KioMostLocalVideoPlaybackUrlResolver final : public KiriView::VideoPlaybackUrlResolver
+bool kioProtocolMayProvideLocalPath(const QUrl &url)
+{
+    return KProtocolInfo::protocolClass(url.scheme()) == QLatin1String(":local");
+}
+
+class KioFuseVideoPlaybackUrlResolver final : public KiriView::VideoPlaybackUrlResolver
 {
 public:
     void resolve(quint64 operationId, const QUrl &sourceUrl, QObject *receiver,
@@ -53,24 +63,34 @@ public:
             return;
         }
 
-        auto *job = KIO::mostLocalUrl(sourceUrl, KIO::HideProgressInfo);
-        m_job = KiriView::ImageIoJob(job, cancelKJob);
-        const KiriView::ImageIoJobCompletion completion = m_job.completion();
-        QObject *context = receiver == nullptr ? job : receiver;
+        if (!kioProtocolMayProvideLocalPath(sourceUrl)) {
+            KiriView::invokeIfSet(failedCallback, operationId, sourceUrl,
+                QStringLiteral("This video URL cannot be resolved to a local playback URL."));
+            return;
+        }
 
-        QObject::connect(job, &KJob::result, context,
-            [completion, job, operationId, sourceUrl,
-                resolvedCallback = std::move(resolvedCallback),
-                failedCallback = std::move(failedCallback)](KJob *finishedJob) mutable {
-                completion.claimAndRun([&]() {
-                    if (finishedJob->error() != KJob::NoError) {
+        QDBusInterface kioFuse(
+            kioFuseService, kioFusePath, kioFuseInterface, QDBusConnection::sessionBus());
+        auto *watcher = new QDBusPendingCallWatcher(
+            kioFuse.asyncCall(QStringLiteral("mountUrl"), sourceUrl.toString(QUrl::FullyEncoded)));
+        m_job = KiriView::ImageIoJob(watcher, deleteQObjectLater);
+        const KiriView::ImageIoJobCompletion completion = m_job.completion();
+        QObject *context = receiver == nullptr ? watcher : receiver;
+
+        QObject::connect(watcher, &QDBusPendingCallWatcher::finished, context,
+            [completion, operationId, sourceUrl, resolvedCallback = std::move(resolvedCallback),
+                failedCallback = std::move(failedCallback)](
+                QDBusPendingCallWatcher *finishedWatcher) mutable {
+                completion.claimAndDelete([&]() {
+                    const QDBusPendingReply<QString> reply(*finishedWatcher);
+                    if (reply.isError()) {
                         KiriView::invokeIfSet(
-                            failedCallback, operationId, sourceUrl, finishedJob->errorString());
+                            failedCallback, operationId, sourceUrl, reply.error().message());
                         return;
                     }
 
-                    const QUrl playbackUrl = job->mostLocalUrl();
-                    if (playbackUrl.isEmpty() || !playbackUrl.isValid()) {
+                    const QUrl playbackUrl = QUrl::fromLocalFile(reply.value());
+                    if (!KiriView::videoPlaybackBackendCanConsumeUrl(playbackUrl)) {
                         KiriView::invokeIfSet(failedCallback, operationId, sourceUrl,
                             QStringLiteral("Could not resolve a local video playback URL."));
                         return;
@@ -87,7 +107,7 @@ public:
 
     void cleanup() override
     {
-        // This resolver uses KIOFuse/mostLocalUrl only. It does not create temporary copies.
+        // KIOFuse owns the mount lifetime. This resolver does not create temporary copies.
     }
 
 private:
@@ -103,6 +123,6 @@ bool videoPlaybackBackendCanConsumeUrl(const QUrl &url)
 
 std::unique_ptr<VideoPlaybackUrlResolver> createDefaultVideoPlaybackUrlResolver()
 {
-    return std::make_unique<KioMostLocalVideoPlaybackUrlResolver>();
+    return std::make_unique<KioFuseVideoPlaybackUrlResolver>();
 }
 }
