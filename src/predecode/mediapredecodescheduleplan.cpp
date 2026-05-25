@@ -13,13 +13,15 @@ namespace {
 class MediaPredecodeSchedulePayload final : public KiriView::PredecodeSchedulePayload
 {
 public:
-    explicit MediaPredecodeSchedulePayload(
-        std::vector<KiriView::MediaNavigationCandidate> candidates)
+    MediaPredecodeSchedulePayload(std::vector<KiriView::MediaNavigationCandidate> candidates,
+        KiriView::MediaPredecodeEligibilitySnapshot eligibility)
         : mediaCandidates(std::move(candidates))
+        , eligibleImages(std::move(eligibility))
     {
     }
 
     std::vector<KiriView::MediaNavigationCandidate> mediaCandidates;
+    KiriView::MediaPredecodeEligibilitySnapshot eligibleImages;
 };
 
 }
@@ -37,14 +39,16 @@ MediaPredecodeSchedulePlan mediaPredecodeSchedulePlan(MediaPredecodeScheduleRequ
         return {};
     }
 
-    const std::optional<std::size_t> currentIndex
-        = mediaNavigationCandidateIndex(request.candidates, *cursorUrl);
+    MediaPredecodeEligibilitySnapshot eligibility
+        = mediaPredecodeEligibilitySnapshot(request.candidates, *cursorUrl);
     PredecodeScheduleContext context {
         DisplayedImageLocation::fromUrl(*cursorUrl),
         std::move(request.displayedImages),
         request.firstDisplayContext,
-        currentIndex.has_value() ? static_cast<int>(*currentIndex) : -1,
-        std::make_shared<MediaPredecodeSchedulePayload>(std::move(request.candidates)),
+        eligibility.currentMediaIndex.has_value() ? static_cast<int>(*eligibility.currentMediaIndex)
+                                                  : -1,
+        std::make_shared<MediaPredecodeSchedulePayload>(
+            std::move(request.candidates), std::move(eligibility)),
     };
     return MediaPredecodeSchedulePlan { std::move(context) };
 }
@@ -55,5 +59,13 @@ const std::vector<MediaNavigationCandidate> *mediaPredecodeScheduleCandidates(
     const auto *payload
         = dynamic_cast<const MediaPredecodeSchedulePayload *>(schedule.context.payload.get());
     return payload != nullptr ? &payload->mediaCandidates : nullptr;
+}
+
+const MediaPredecodeEligibilitySnapshot *mediaPredecodeScheduleEligibility(
+    const PredecodePendingSchedule &schedule)
+{
+    const auto *payload
+        = dynamic_cast<const MediaPredecodeSchedulePayload *>(schedule.context.payload.get());
+    return payload != nullptr ? &payload->eligibleImages : nullptr;
 }
 }

@@ -5,6 +5,7 @@
 #define KIRIVIEW_MEDIAPREDECODESCHEDULEPLAN_H
 
 #include "navigation/medianavigationmodel.h"
+#include "predecode/mediapredecodeeligibility.h"
 #include "predecodeschedulestate.h"
 
 #include <QUrl>
@@ -26,6 +27,8 @@ struct MediaPredecodeSchedulePlan {
 
 MediaPredecodeSchedulePlan mediaPredecodeSchedulePlan(MediaPredecodeScheduleRequest request);
 const std::vector<MediaNavigationCandidate> *mediaPredecodeScheduleCandidates(
+    const PredecodePendingSchedule &schedule);
+const MediaPredecodeEligibilitySnapshot *mediaPredecodeScheduleEligibility(
     const PredecodePendingSchedule &schedule);
 }
 

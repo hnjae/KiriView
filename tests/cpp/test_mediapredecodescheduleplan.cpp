@@ -35,6 +35,13 @@ const std::vector<KiriView::MediaNavigationCandidate> *scheduleCandidates(
     return KiriView::mediaPredecodeScheduleCandidates(
         KiriView::PredecodePendingSchedule { plan.context, 1 });
 }
+
+const KiriView::MediaPredecodeEligibilitySnapshot *scheduleEligibility(
+    const KiriView::MediaPredecodeSchedulePlan &plan)
+{
+    return KiriView::mediaPredecodeScheduleEligibility(
+        KiriView::PredecodePendingSchedule { plan.context, 1 });
+}
 }
 
 class TestMediaPredecodeSchedulePlan : public QObject
@@ -76,6 +83,16 @@ void TestMediaPredecodeSchedulePlan::videoCursorBuildsScheduleContextAndCarriesC
     QVERIFY(candidates != nullptr);
     QCOMPARE(candidates->size(), std::size_t(3));
     QCOMPARE(candidates->at(1).url, normalizedVideoUrl);
+    const KiriView::MediaPredecodeEligibilitySnapshot *eligibility = scheduleEligibility(plan);
+    QVERIFY(eligibility != nullptr);
+    QCOMPARE(eligibility->mediaCandidateCount, std::size_t(3));
+    QVERIFY(eligibility->currentMediaIndex.has_value());
+    QCOMPARE(*eligibility->currentMediaIndex, std::size_t(1));
+    QCOMPARE(eligibility->images.size(), std::size_t(2));
+    QCOMPARE(eligibility->images.at(0).url, displayedUrl);
+    QCOMPARE(eligibility->images.at(0).mediaIndex, std::size_t(0));
+    QCOMPARE(eligibility->images.at(1).url, nextUrl);
+    QCOMPARE(eligibility->images.at(1).mediaIndex, std::size_t(2));
 }
 
 void TestMediaPredecodeSchedulePlan::missingCurrentCandidateKeepsUnknownPageIndex()
@@ -96,6 +113,10 @@ void TestMediaPredecodeSchedulePlan::missingCurrentCandidateKeepsUnknownPageInde
     QCOMPARE(plan.context.currentLocation.imageUrl(), videoUrl);
     QCOMPARE(plan.context.pageIndex, -1);
     QVERIFY(scheduleCandidates(plan) != nullptr);
+    const KiriView::MediaPredecodeEligibilitySnapshot *eligibility = scheduleEligibility(plan);
+    QVERIFY(eligibility != nullptr);
+    QCOMPARE(eligibility->mediaCandidateCount, std::size_t(2));
+    QVERIFY(!eligibility->currentMediaIndex.has_value());
 }
 
 void TestMediaPredecodeSchedulePlan::invalidCursorYieldsEmptyScheduleContext()
@@ -111,6 +132,7 @@ void TestMediaPredecodeSchedulePlan::invalidCursorYieldsEmptyScheduleContext()
     QVERIFY(!plan.shouldSchedule());
     QVERIFY(plan.context.currentLocation.isEmpty());
     QVERIFY(scheduleCandidates(plan) == nullptr);
+    QVERIFY(scheduleEligibility(plan) == nullptr);
 }
 
 QTEST_GUILESS_MAIN(TestMediaPredecodeSchedulePlan)

@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 #include "image_test_support.h"
+#include "predecode/mediapredecodeeligibility.h"
 #include "predecode/mediapredecodewindowplan.h"
 
 #include <QObject>
@@ -27,6 +28,12 @@ KiriView::PredecodePolicyInput regularPolicyInput()
         4,
     };
 }
+
+KiriView::MediaPredecodeEligibilitySnapshot eligibilitySnapshot(
+    const std::vector<KiriView::MediaNavigationCandidate> &candidates, const QUrl &currentUrl)
+{
+    return KiriView::mediaPredecodeEligibilitySnapshot(candidates, currentUrl);
+}
 }
 
 class TestMediaPredecodeWindowPlan : public QObject
@@ -45,13 +52,14 @@ void TestMediaPredecodeWindowPlan::mediaWindowUsesVideoCursorAndQueuesOnlyImages
     const QUrl nextImage = localUrl(QStringLiteral("/media/02.png"));
     const QUrl nextVideo = localUrl(QStringLiteral("/media/03.mov"));
     const KiriView::PredecodeWindowPlan windowPlan
-        = KiriView::mediaPredecodeWindowPlan(currentVideo,
-            {
-                mediaCandidate(previousImage),
-                mediaCandidate(currentVideo),
-                mediaCandidate(nextImage),
-                mediaCandidate(nextVideo),
-            },
+        = KiriView::mediaPredecodeWindowPlan(eligibilitySnapshot(
+                                                 {
+                                                     mediaCandidate(previousImage),
+                                                     mediaCandidate(currentVideo),
+                                                     mediaCandidate(nextImage),
+                                                     mediaCandidate(nextVideo),
+                                                 },
+                                                 currentVideo),
             regularPolicyInput());
 
     QCOMPARE(windowPlan.archiveDocument, KiriView::ArchiveDocumentLocation {});
@@ -63,14 +71,15 @@ void TestMediaPredecodeWindowPlan::mediaWindowUsesVideoCursorAndQueuesOnlyImages
 
 void TestMediaPredecodeWindowPlan::missingCurrentCandidateYieldsEmptyWindow()
 {
-    const KiriView::PredecodeWindowPlan windowPlan
-        = KiriView::mediaPredecodeWindowPlan(localUrl(QStringLiteral("/media/99.mp4")),
+    const KiriView::PredecodeWindowPlan windowPlan = KiriView::mediaPredecodeWindowPlan(
+        eligibilitySnapshot(
             {
                 mediaCandidate(localUrl(QStringLiteral("/media/00.png"))),
                 mediaCandidate(localUrl(QStringLiteral("/media/01.mp4"))),
                 mediaCandidate(localUrl(QStringLiteral("/media/02.png"))),
             },
-            regularPolicyInput());
+            localUrl(QStringLiteral("/media/99.mp4"))),
+        regularPolicyInput());
 
     QCOMPARE(windowPlan.parallelLimit, std::size_t(1));
     QVERIFY(windowPlan.urls.empty());

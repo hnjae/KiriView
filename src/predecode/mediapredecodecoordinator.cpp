@@ -83,16 +83,17 @@ void MediaPredecodeCoordinator::startPredecodeWindow(const PredecodePendingSched
 
     const std::vector<MediaNavigationCandidate> *candidates
         = mediaPredecodeScheduleCandidates(schedule);
-    if (candidates == nullptr) {
+    const MediaPredecodeEligibilitySnapshot *eligibility
+        = mediaPredecodeScheduleEligibility(schedule);
+    if (candidates == nullptr || eligibility == nullptr) {
         qCDebug(kiriviewPredecodeLog) << "media predecode window ignored"
                                       << "reason"
-                                      << "missing-candidates"
+                                      << "missing-payload"
                                       << "generation" << schedule.generation;
         return;
     }
 
-    const PredecodeWindowPlan plan = mediaPredecodeWindowPlan(
-        schedule.context.currentLocation.imageUrl(), *candidates, policyInput());
+    const PredecodeWindowPlan plan = mediaPredecodeWindowPlan(*eligibility, policyInput());
     qCDebug(kiriviewPredecodeLog) << "media predecode window start"
                                   << "generation" << schedule.generation << "primaryUrl"
                                   << schedule.context.currentLocation.imageUrl() << "candidates"
