@@ -11,7 +11,7 @@
 #include "navigation/mediacandidateprovider.h"
 #include "navigation/medianavigationmodel.h"
 #include "session/activenavigationprojection.h"
-#include "session/documentsessionmediacandidateloadstate.h"
+#include "session/documentsessionmediacandidateruntime.h"
 #include "session/documentsessionmediadeletionplan.h"
 #include "session/documentsessionrouteplan.h"
 #include "session/documentsessionstate.h"
@@ -37,12 +37,6 @@ struct DocumentSessionRuntimeDependencies {
     MediaNavigationCandidateProvider mediaCandidateProvider;
     FileOperationProvider fileOperationProvider;
     ImageDocumentRuntimeDependencyOverrides imageDocumentDependencies;
-};
-
-struct MediaCandidateLoadResult {
-    std::vector<MediaNavigationCandidate> candidates;
-    bool succeeded = false;
-    QString errorString;
 };
 
 class DocumentSessionRuntime final
@@ -115,9 +109,6 @@ private:
     void syncFromVideoDocument();
     void refreshMediaNavigation();
     void loadMediaCandidates(std::function<void(MediaCandidateLoadResult)> callback);
-    void finishMediaCandidateLoad(DocumentSessionMediaCandidateLoad load,
-        MediaCandidateLoadResult result,
-        const std::shared_ptr<std::function<void(MediaCandidateLoadResult)>> &callback);
     void finishMediaNavigation(MediaCandidateLoadResult result, MediaNavigationOpenRequest request);
     void updateMediaBoundaryState(MediaCandidateLoadResult result);
     void scheduleMediaPredecode(const std::vector<MediaNavigationCandidate> &candidates);
@@ -132,7 +123,7 @@ private:
         const DocumentSessionMediaDeletionCompletionPlan &plan, const QString &errorString);
     QUrl activeDirectMediaCursorUrl() const;
     QUrl activeDirectMediaScopeUrl() const;
-    bool directMediaCursorMatches(const DocumentSessionMediaCandidateLoad &load) const;
+    bool directMediaCursorMatches(const DocumentSessionMediaCandidateLoadScope &scope) const;
     bool activeImageUsesMediaScope() const;
     bool directImageLoadMayUseMediaScope() const;
     bool syncDirectImageCursorFromDocument();
@@ -149,11 +140,9 @@ private:
     KiriImageDocument &m_imageDocument;
     KiriVideoDocument &m_videoDocument;
     DocumentSessionState m_state;
-    MediaNavigationCandidateProvider m_mediaCandidateProvider;
+    DocumentSessionMediaCandidateRuntime m_mediaCandidateRuntime;
     FileOperationProvider m_fileOperationProvider;
     std::unique_ptr<MediaPredecodeCoordinator> m_mediaPredecodeCoordinator;
-    ImageIoJob m_mediaCandidateJob;
-    DocumentSessionMediaCandidateLoadState m_mediaCandidateLoadState;
     ImageIoJob m_fileDeletionJob;
     ImageAsyncOperationState m_fileDeletionOperation;
     bool m_routingSource = false;

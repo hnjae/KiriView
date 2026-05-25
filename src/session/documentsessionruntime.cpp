@@ -32,8 +32,7 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner, KiriImageDocument
     , m_imageDocument(imageDocument)
     , m_videoDocument(videoDocument)
     , m_state(std::move(changeCallback))
-    , m_mediaCandidateProvider(mediaNavigationCandidateProviderWithDefault(
-          std::move(dependencies.mediaCandidateProvider)))
+    , m_mediaCandidateRuntime(std::move(dependencies.mediaCandidateProvider))
     , m_fileOperationProvider(
           fileOperationProviderWithDefault(std::move(dependencies.fileOperationProvider)))
     , m_mediaPredecodeCoordinator(std::make_unique<MediaPredecodeCoordinator>(owner,
@@ -45,7 +44,7 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner, KiriImageDocument
 
 DocumentSessionRuntime::~DocumentSessionRuntime()
 {
-    m_mediaCandidateJob.cancel();
+    m_mediaCandidateRuntime.cancel();
     m_fileDeletionJob.cancel();
     m_fileDeletionOperation.cancel();
 }
@@ -460,8 +459,7 @@ void DocumentSessionRuntime::routeSourceUrl(const QUrl &sourceUrl)
     const DocumentSessionRoutePlan plan
         = documentSessionRoutePlanForSourceUrl(sourceUrl, m_state.documentKind());
     m_state.setSessionErrorString(QString());
-    m_mediaCandidateJob.cancel();
-    m_mediaCandidateLoadState.cancel();
+    m_mediaCandidateRuntime.cancel();
     cancelMediaDeletion();
 
     executeRoutePlan(plan);
@@ -622,44 +620,17 @@ void DocumentSessionRuntime::refreshMediaNavigation()
 void DocumentSessionRuntime::loadMediaCandidates(
     std::function<void(MediaCandidateLoadResult)> callback)
 {
-    const QUrl currentUrl = activeDirectMediaCursorUrl();
-    const QUrl parentUrl = activeDirectMediaScopeUrl();
-    m_mediaCandidateJob.cancel();
-    m_mediaCandidateLoadState.cancel();
-
-    if (currentUrl.isEmpty() || parentUrl.isEmpty() || !parentUrl.isValid()
-        || !m_mediaCandidateProvider.directoryMedia) {
-        callback(MediaCandidateLoadResult {});
-        return;
-    }
-
-    const DocumentSessionMediaCandidateLoad load = m_mediaCandidateLoadState.start(
-        currentUrl, parentUrl, m_state.directMediaCursor().generation);
-    auto sharedCallback
-        = std::make_shared<std::function<void(MediaCandidateLoadResult)>>(std::move(callback));
-    m_mediaCandidateJob = m_mediaCandidateProvider.directoryMedia(
-        m_owner, parentUrl,
-        [this, load, sharedCallback](std::vector<MediaNavigationCandidate> candidates) mutable {
-            finishMediaCandidateLoad(load,
-                MediaCandidateLoadResult { std::move(candidates), true, QString() },
-                sharedCallback);
+    m_mediaCandidateRuntime.load(
+        m_owner,
+        DocumentSessionMediaCandidateLoadScope {
+            activeDirectMediaCursorUrl(),
+            activeDirectMediaScopeUrl(),
+            m_state.directMediaCursor().generation,
         },
-        [this, load, sharedCallback](const QString &errorString) mutable {
-            finishMediaCandidateLoad(
-                load, MediaCandidateLoadResult { {}, false, errorString }, sharedCallback);
-        });
-}
-
-void DocumentSessionRuntime::finishMediaCandidateLoad(DocumentSessionMediaCandidateLoad load,
-    MediaCandidateLoadResult result,
-    const std::shared_ptr<std::function<void(MediaCandidateLoadResult)>> &callback)
-{
-    if (!m_mediaCandidateLoadState.finish(load) || !directMediaCursorMatches(load) || !callback
-        || !*callback) {
-        return;
-    }
-
-    (*callback)(std::move(result));
+        [this](const DocumentSessionMediaCandidateLoadScope &scope) {
+            return directMediaCursorMatches(scope);
+        },
+        std::move(callback));
 }
 
 void DocumentSessionRuntime::finishMediaNavigation(
@@ -837,11 +808,11 @@ QUrl DocumentSessionRuntime::activeDirectMediaScopeUrl() const
 }
 
 bool DocumentSessionRuntime::directMediaCursorMatches(
-    const DocumentSessionMediaCandidateLoad &load) const
+    const DocumentSessionMediaCandidateLoadScope &scope) const
 {
-    return sameNormalizedUrl(activeDirectMediaCursorUrl(), load.currentUrl)
-        && sameNormalizedUrl(activeDirectMediaScopeUrl(), load.parentUrl)
-        && m_state.directMediaCursor().generation == load.cursorGeneration;
+    return sameNormalizedUrl(activeDirectMediaCursorUrl(), scope.currentUrl)
+        && sameNormalizedUrl(activeDirectMediaScopeUrl(), scope.parentUrl)
+        && m_state.directMediaCursor().generation == scope.cursorGeneration;
 }
 
 bool DocumentSessionRuntime::activeImageUsesMediaScope() const

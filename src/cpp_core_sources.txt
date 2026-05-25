@@ -167,10 +167,11 @@ src/rendering/qimagereadertilesource.cpp
 src/decoding/rawdecoder.cpp
 src/application/shortcuthelpmodel.cpp
 src/session/activenavigationprojection.cpp
+src/session/documentsessionmediacandidateloadstate.cpp
+src/session/documentsessionmediacandidateruntime.cpp
 src/session/documentsessionmediadeletionplan.cpp
 src/session/documentsessionrouteplan.cpp
 src/session/documentsessionruntime.cpp
-src/session/documentsessionmediacandidateloadstate.cpp
 src/session/documentsessionpublicsignals.cpp
 src/session/documentsessionstate.cpp
 src/session/windowtitleprojection.cpp
