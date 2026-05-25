@@ -171,6 +171,7 @@ src/decoding/rawdecoder.cpp
 src/application/shortcuthelpmodel.cpp
 src/application/shortcutroutemodel.cpp
 src/session/activenavigationprojection.cpp
+src/session/directmediacursor.cpp
 src/session/documentsessionmediacandidateloadstate.cpp
 src/session/documentsessionmediacandidateruntime.cpp
 src/session/documentsessionmediadeletionplan.cpp

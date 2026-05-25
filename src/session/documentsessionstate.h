@@ -6,6 +6,7 @@
 
 #include "navigation/medianavigationmodel.h"
 #include "session/activenavigationprojection.h"
+#include "session/directmediacursor.h"
 
 #include <QString>
 #include <QUrl>
@@ -36,12 +37,6 @@ struct ActiveZoomSnapshot {
     bool known = false;
     qreal percent = 0.0;
     bool editable = false;
-};
-
-struct DirectMediaCursor {
-    QUrl stableUrl;
-    QUrl pendingUrl;
-    quint64 generation = 0;
 };
 
 class DocumentSessionState final

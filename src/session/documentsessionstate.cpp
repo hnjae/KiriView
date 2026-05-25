@@ -3,8 +3,6 @@
 
 #include "documentsessionstate.h"
 
-#include "location/imageurl.h"
-
 #include <QtGlobal>
 #include <algorithm>
 #include <utility>
@@ -45,30 +43,6 @@ bool sameActiveZoomSnapshot(
         && qAbs(left.percent - right.percent) < 0.000001 && left.editable == right.editable;
 }
 
-QUrl effectiveDirectMediaCursorUrl(const KiriView::DirectMediaCursor &cursor)
-{
-    return !cursor.pendingUrl.isEmpty() ? cursor.pendingUrl : cursor.stableUrl;
-}
-
-bool sameEffectiveDirectMediaCursorUrl(
-    const KiriView::DirectMediaCursor &left, const KiriView::DirectMediaCursor &right)
-{
-    return KiriView::sameNormalizedUrlOrEmpty(
-        effectiveDirectMediaCursorUrl(left), effectiveDirectMediaCursorUrl(right));
-}
-
-bool replaceDirectMediaCursor(
-    KiriView::DirectMediaCursor &current, KiriView::DirectMediaCursor next)
-{
-    if (current.stableUrl == next.stableUrl && current.pendingUrl == next.pendingUrl) {
-        return false;
-    }
-
-    const bool effectiveUrlChanged = !sameEffectiveDirectMediaCursorUrl(current, next);
-    next.generation = effectiveUrlChanged ? current.generation + 1 : current.generation;
-    current = std::move(next);
-    return effectiveUrlChanged;
-}
 }
 
 namespace KiriView {
@@ -204,39 +178,27 @@ void DocumentSessionState::setWindowTitleSubject(const QString &subject)
 
 bool DocumentSessionState::clearDirectMediaCursor()
 {
-    DirectMediaCursor next;
-    next.generation = m_directMediaCursor.generation;
-    return replaceDirectMediaCursor(m_directMediaCursor, std::move(next));
+    return KiriView::clearDirectMediaCursor(m_directMediaCursor);
 }
 
 bool DocumentSessionState::requestDirectImageCursor(const QUrl &url)
 {
-    DirectMediaCursor next = m_directMediaCursor;
-    next.pendingUrl = url;
-    return replaceDirectMediaCursor(m_directMediaCursor, std::move(next));
+    return KiriView::requestDirectImageCursor(m_directMediaCursor, url);
 }
 
 bool DocumentSessionState::confirmDirectImageCursor(const QUrl &url)
 {
-    DirectMediaCursor next = m_directMediaCursor;
-    next.stableUrl = url;
-    next.pendingUrl = QUrl();
-    return replaceDirectMediaCursor(m_directMediaCursor, std::move(next));
+    return KiriView::confirmDirectImageCursor(m_directMediaCursor, url);
 }
 
 bool DocumentSessionState::restoreDirectImageCursorAfterFailure()
 {
-    DirectMediaCursor next = m_directMediaCursor;
-    next.pendingUrl = QUrl();
-    return replaceDirectMediaCursor(m_directMediaCursor, std::move(next));
+    return KiriView::restoreDirectImageCursorAfterFailure(m_directMediaCursor);
 }
 
 bool DocumentSessionState::setDirectVideoCursor(const QUrl &url)
 {
-    DirectMediaCursor next = m_directMediaCursor;
-    next.stableUrl = url;
-    next.pendingUrl = QUrl();
-    return replaceDirectMediaCursor(m_directMediaCursor, std::move(next));
+    return KiriView::setDirectVideoCursor(m_directMediaCursor, url);
 }
 
 void DocumentSessionState::publish(DocumentSessionChange change)
