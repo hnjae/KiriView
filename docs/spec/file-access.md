@@ -36,7 +36,7 @@ When an image is opened from a KDE-supported archive URL such as `zip://`, `tar:
 
 In Flatpak, adjacent media navigation can list neighboring files under `home`, `/media`, `/mnt`, `/run/media`, and `$XDG_RUNTIME_DIR/gvfs`.
 
-In Flatpak, KiriView exposes the user runtime filesystem for KIOFuse direct-video playback paths while keeping direct image loads on their original KDE/KIO URLs such as `zip://`, `tar://`, and `sevenz://`.
+In Flatpak, KiriView may use KIOFuse direct-video playback paths when the sandbox has access to the specific session KIOFuse mount path. KiriView does not expose the entire user runtime filesystem for KIOFuse playback.
 
 Files outside those paths remain available only when explicitly provided by the XDG portal.
 
