@@ -42,11 +42,10 @@ public:
 
     MenuAccessKeySessionTransition beginSession();
     MenuAccessKeySessionTransition releaseAltKey();
-    MenuAccessKeySessionTransition menuUnavailable() const;
-    MenuAccessKeySessionTransition clearVisuals() const;
+    MenuAccessKeySessionTransition menuUnavailable();
+    MenuAccessKeySessionTransition clearSession();
     MenuAccessKeyRoutePlan routeOpenMenuKey(
         MenuAccessKeyInputKind input, MenuAccessKeyRoutingPhase phase);
-    void reset();
 
 private:
     bool m_active = false;

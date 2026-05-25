@@ -18,7 +18,6 @@ bool MenuAccessKeyMenuRuntime::setMenu(QObject *menu)
         return false;
     }
 
-    setAccessKeysActive(false);
     m_menu = menu;
     return true;
 }

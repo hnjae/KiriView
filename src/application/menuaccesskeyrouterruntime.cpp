@@ -20,13 +20,14 @@ QObject *MenuAccessKeyRouterRuntime::menu() const { return m_menuRuntime.menu();
 
 void MenuAccessKeyRouterRuntime::setMenu(QObject *menu)
 {
-    if (!m_menuRuntime.setMenu(menu)) {
+    if (m_menuRuntime.menu() == menu) {
         return;
     }
 
     QObject::disconnect(m_menuClosedConnection);
     m_menuClosedConnection = {};
-    resetAltTracking();
+    applySessionTransition(m_accessKeySession.clearSession());
+    m_menuRuntime.setMenu(menu);
     if (m_menuRuntime.menu() != nullptr && m_owner != nullptr) {
         m_menuClosedConnection = QObject::connect(
             m_menuRuntime.menu(), SIGNAL(closed()), m_owner, SLOT(clearMenuAccessKeys()));
@@ -43,10 +44,9 @@ void MenuAccessKeyRouterRuntime::setEnabled(bool enabled)
     }
 
     if (!enabled) {
-        m_menuRuntime.setAccessKeysActive(false);
+        applySessionTransition(m_accessKeySession.clearSession());
     }
     m_enabled = enabled;
-    resetAltTracking();
     notify(MenuAccessKeyRouterChange::Enabled);
 }
 
@@ -159,10 +159,8 @@ void MenuAccessKeyRouterRuntime::applySessionTransition(MenuAccessKeySessionTran
 
 void MenuAccessKeyRouterRuntime::clearMenuAccessKeys()
 {
-    applySessionTransition(m_accessKeySession.clearVisuals());
+    applySessionTransition(m_accessKeySession.clearSession());
 }
-
-void MenuAccessKeyRouterRuntime::resetAltTracking() { m_accessKeySession.reset(); }
 
 void MenuAccessKeyRouterRuntime::notify(MenuAccessKeyRouterChange change) const
 {

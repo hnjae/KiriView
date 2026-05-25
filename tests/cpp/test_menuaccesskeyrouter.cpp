@@ -24,6 +24,9 @@ private Q_SLOTS:
     void altPressReleaseKeepsPopupOpen_data();
     void altPressReleaseKeepsPopupOpen();
     void altPressShowsMnemonicUnderline();
+    void menuCloseClearsActiveSessionBeforeAltRelease();
+    void menuReplacementClearsActiveSessionAndVisuals();
+    void disableClearsActiveSessionAndVisuals();
     void shortcutOverrideClaimsAltMnemonicWithoutTriggeringItem();
     void altMnemonicTriggersEnabledItem_data();
     void altMnemonicTriggersEnabledItem();
@@ -390,6 +393,12 @@ void openTargetMenu(QObject *root)
     QVERIFY(QMetaObject::invokeMethod(root, "openTargetMenu", Qt::DirectConnection));
 }
 
+void closeMenu(QObject *menu)
+{
+    QVERIFY(QMetaObject::invokeMethod(menu, "close", Qt::DirectConnection));
+    QCoreApplication::processEvents();
+}
+
 QObject *findObject(QObject *root, const QString &objectName)
 {
     return root->findChild<QObject *>(objectName, Qt::FindChildrenRecursively);
@@ -440,6 +449,72 @@ void TestMenuAccessKeyRouter::altPressShowsMnemonicUnderline()
     keyRelease(fixture.view.get(), Qt::Key_Alt);
     QVERIFY(isMenuOpen(fixture.menu));
     QTRY_COMPARE(label->property("text").toString(), initialText);
+}
+
+void TestMenuAccessKeyRouter::menuCloseClearsActiveSessionBeforeAltRelease()
+{
+    MenuFixture fixture = createPopupMenuFixture(false, true);
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+
+    MenuAccessKeyRouter router;
+    router.setMenu(fixture.menu);
+
+    openTargetMenu(fixture.root);
+    QTRY_VERIFY(isMenuOpen(fixture.menu));
+
+    QObject *label = findObject(fixture.root, QStringLiteral("menuActionItemTextLabel"));
+    QVERIFY2(label != nullptr, "menu action item text label was not created");
+
+    keyPress(fixture.view.get(), Qt::Key_Alt, Qt::AltModifier);
+    QTRY_VERIFY(label->property("text").toString().contains(QStringLiteral("<u>")));
+
+    closeMenu(fixture.menu);
+    QTRY_VERIFY(!isMenuOpen(fixture.menu));
+    QTRY_VERIFY(!label->property("text").toString().contains(QStringLiteral("<u>")));
+
+    QVERIFY(!sendKey(fixture.view.get(), QEvent::KeyRelease, Qt::Key_Alt, Qt::NoModifier));
+}
+
+void TestMenuAccessKeyRouter::menuReplacementClearsActiveSessionAndVisuals()
+{
+    MenuFixture fixture = createPopupMenuFixture(false, true);
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+
+    MenuAccessKeyRouter router;
+    router.setMenu(fixture.menu);
+
+    openTargetMenu(fixture.root);
+    QTRY_VERIFY(isMenuOpen(fixture.menu));
+
+    QObject *label = findObject(fixture.root, QStringLiteral("menuActionItemTextLabel"));
+    QVERIFY2(label != nullptr, "menu action item text label was not created");
+
+    keyPress(fixture.view.get(), Qt::Key_Alt, Qt::AltModifier);
+    QTRY_VERIFY(label->property("text").toString().contains(QStringLiteral("<u>")));
+
+    router.setMenu(nullptr);
+    QTRY_VERIFY(!label->property("text").toString().contains(QStringLiteral("<u>")));
+}
+
+void TestMenuAccessKeyRouter::disableClearsActiveSessionAndVisuals()
+{
+    MenuFixture fixture = createPopupMenuFixture(false, true);
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+
+    MenuAccessKeyRouter router;
+    router.setMenu(fixture.menu);
+
+    openTargetMenu(fixture.root);
+    QTRY_VERIFY(isMenuOpen(fixture.menu));
+
+    QObject *label = findObject(fixture.root, QStringLiteral("menuActionItemTextLabel"));
+    QVERIFY2(label != nullptr, "menu action item text label was not created");
+
+    keyPress(fixture.view.get(), Qt::Key_Alt, Qt::AltModifier);
+    QTRY_VERIFY(label->property("text").toString().contains(QStringLiteral("<u>")));
+
+    router.setEnabled(false);
+    QTRY_VERIFY(!label->property("text").toString().contains(QStringLiteral("<u>")));
 }
 
 void TestMenuAccessKeyRouter::shortcutOverrideClaimsAltMnemonicWithoutTriggeringItem()

@@ -15,20 +15,21 @@ MenuAccessKeySessionTransition MenuAccessKeySessionState::beginSession()
 MenuAccessKeySessionTransition MenuAccessKeySessionState::releaseAltKey()
 {
     if (!m_active) {
-        return clearVisuals();
+        return clearSession();
     }
 
     m_active = false;
     return { MenuAccessKeyVisualEffect::Clear, true };
 }
 
-MenuAccessKeySessionTransition MenuAccessKeySessionState::menuUnavailable() const
+MenuAccessKeySessionTransition MenuAccessKeySessionState::menuUnavailable()
 {
-    return clearVisuals();
+    return clearSession();
 }
 
-MenuAccessKeySessionTransition MenuAccessKeySessionState::clearVisuals() const
+MenuAccessKeySessionTransition MenuAccessKeySessionState::clearSession()
 {
+    m_active = false;
     return { MenuAccessKeyVisualEffect::Clear, false };
 }
 
@@ -59,5 +60,4 @@ MenuAccessKeyRoutePlan MenuAccessKeySessionState::routeOpenMenuKey(
     return {};
 }
 
-void MenuAccessKeySessionState::reset() { m_active = false; }
 }

@@ -44,7 +44,6 @@ private:
     QObject *openMenuOrClearAccessKeys();
     void applySessionTransition(MenuAccessKeySessionTransition transition);
     bool executeRoutePlan(QKeyEvent *event, MenuAccessKeyRoutePlan plan);
-    void resetAltTracking();
     void notify(MenuAccessKeyRouterChange change) const;
 
     QObject *m_owner = nullptr;
