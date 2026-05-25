@@ -28,9 +28,7 @@ Directly opened directories are not advertised through the desktop file's file a
 
 KiriView's open dialog default filter includes supported image files, supported direct video files, and supported comic book archive files.
 
-KiriView's desktop file advertises file-manager Open With handling for supported image and comic book archive MIME types only.
-
-For the MVP, KiriView does not advertise video MIME types through the desktop file.
+KiriView's desktop file advertises file-manager Open With handling for supported image, supported direct video, and comic book archive MIME types. For direct videos, the advertised MIME types are `video/mp4` and `video/quicktime`.
 
 When an image is opened from a KDE-supported archive URL such as `zip://`, `tar://`, or `sevenz://`, KiriView treats it as a single image URL rather than opening the whole archive as an archive document.
 

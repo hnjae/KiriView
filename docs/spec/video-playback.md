@@ -20,7 +20,7 @@ In ordinary direct media URL scopes, showing a video must not clear or stop the 
 
 Archive-document-internal video, directly opened directory-document video, recursive directory video, playlists, subtitles, track selection, metadata panels, frame stepping, and timeline preview thumbnails are out of scope.
 
-For the MVP, KiriView does not advertise video MIME types through the desktop file. Videos open through startup, drop, the open dialog, and ordinary media navigation only.
+KiriView advertises direct video support through the desktop file for the MIME types that cover the MVP MP4, M4V, and MOV format list: `video/mp4` and `video/quicktime`.
 
 ## Source URL Identity
 
