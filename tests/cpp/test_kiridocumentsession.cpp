@@ -192,6 +192,7 @@ private Q_SLOTS:
     void activeZoomReadoutFollowsSessionDocumentKind();
     void archiveAndDirectoryInputsRouteToImageDocument();
     void directImageAfterVideoRestoresImageDocument();
+    void kioArchiveImageAfterKioArchiveVideoUsesOriginalImageUrl();
     void directImageMediaNavigationIncludesSiblingVideos();
     void defaultMediaProviderListsLocalDirectImageSiblings();
     void freshDirectImageReadoutUsesRequestedCursorBeforeDisplayedUrl();
@@ -332,6 +333,36 @@ void TestKiriDocumentSession::directImageAfterVideoRestoresImageDocument()
     QCOMPARE(session->sourceUrl(), image);
     QCOMPARE(session->imageDocument()->sourceUrl(), image);
     QCOMPARE(session->videoDocument()->sourceUrl(), QUrl());
+}
+
+void TestKiriDocumentSession::kioArchiveImageAfterKioArchiveVideoUsesOriginalImageUrl()
+{
+    FakeMediaCandidateProvider mediaProvider;
+    KiriView::TestSupport::ManualImageDataLoader dataLoader;
+    const QUrl parentUrl(QStringLiteral("zip:///books/book.zip!/chapter/"));
+    const QUrl videoUrl(QStringLiteral("zip:///books/book.zip!/chapter/clip.mp4"));
+    const QUrl imageUrl(QStringLiteral("zip:///books/book.zip!/chapter/page.png"));
+    mediaProvider.setMedia(parentUrl, { mediaCandidate(videoUrl) });
+    std::unique_ptr<KiriDocumentSession> session
+        = createSessionWithProvider(mediaProvider.provider(), nullptr, &dataLoader);
+
+    session->setSourceUrl(videoUrl);
+    QCOMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Video);
+    QCOMPARE(session->sourceUrl(), videoUrl);
+    QCOMPARE(session->videoDocument()->sourceUrl(), videoUrl);
+
+    mediaProvider.setMedia(parentUrl, { mediaCandidate(imageUrl) });
+    session->setSourceUrl(imageUrl);
+
+    QCOMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Image);
+    QCOMPARE(session->sourceUrl(), imageUrl);
+    QCOMPARE(session->imageDocument()->sourceUrl(), imageUrl);
+    QCOMPARE(session->videoDocument()->sourceUrl(), QUrl());
+    QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
+    QCOMPARE(dataLoader.backLoad().url, imageUrl);
+    QVERIFY(dataLoader.backLoad().archiveDocument.isEmpty());
+    QVERIFY(!dataLoader.backLoad().url.isLocalFile());
+    QVERIFY(!dataLoader.backLoad().url.toString().contains(QStringLiteral("kio-fuse")));
 }
 
 void TestKiriDocumentSession::directImageMediaNavigationIncludesSiblingVideos()
