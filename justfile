@@ -54,7 +54,12 @@ build-with-tests: (_flatpak-builder "build-with-tests")
 
 [group('build')]
 run:
-    flatpak build \
+    #!/bin/sh
+    set -eu
+
+    runtime_dir="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}"
+
+    set -- \
         --socket=wayland \
         --socket=pulseaudio \
         --device=dri \
@@ -64,15 +69,26 @@ run:
         --filesystem=/media \
         --filesystem=/mnt \
         --filesystem=/run/media \
-        --filesystem="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}" \
+        --nofilesystem=/run/user \
         --filesystem=xdg-run/pipewire-0 \
         --filesystem=xdg-run/gvfs \
-        --bind-mount="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/doc=${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/doc" \
         --env=LIBHEIF_PLUGIN_PATH=/app/lib/libheif \
         --env=QSG_RHI_BACKEND="${QSG_RHI_BACKEND:-vulkan}" \
         --env=WAYLAND_DISPLAY="${WAYLAND_DISPLAY:-wayland-0}" \
         --env=QT_QPA_PLATFORM=wayland \
-        --env=QT_LOGGING_RULES="${QT_LOGGING_RULES:-io.github.hnjae.kiriview.input.debug=true;io.github.hnjae.kiriview.predecode.debug=true;io.github.hnjae.kiriview.decode.debug=true}" \
+        --env=QT_LOGGING_RULES="${QT_LOGGING_RULES:-io.github.hnjae.kiriview.input.debug=true;io.github.hnjae.kiriview.predecode.debug=true;io.github.hnjae.kiriview.decode.debug=true}"
+
+    if [ -d "$runtime_dir/doc" ]; then
+        set -- "$@" --bind-mount="$runtime_dir/doc=$runtime_dir/doc"
+    fi
+
+    for kio_fuse_path in "$runtime_dir"/kio-fuse-*; do
+        [ -d "$kio_fuse_path" ] || continue
+        set -- "$@" "--filesystem=xdg-run/$(basename "$kio_fuse_path")"
+    done
+
+    flatpak build \
+        "$@" \
         build-dir \
         kiriview
 
