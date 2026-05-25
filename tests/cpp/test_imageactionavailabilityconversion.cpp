@@ -1,0 +1,129 @@
+// SPDX-FileCopyrightText: 2026 KIM Hyunjae
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+#include "bridge/imageactionavailabilityconversion.h"
+
+#include <QObject>
+#include <QTest>
+
+class TestImageActionAvailabilityConversion : public QObject
+{
+    Q_OBJECT
+
+private Q_SLOTS:
+    void imageAvailabilityInputMapsPlainFields();
+    void projectionMapsPlainFields();
+    void shortcutScopeMapsApplicationScopeValues();
+    void videoAvailabilityInputMapsPlainFields();
+};
+
+void TestImageActionAvailabilityConversion::imageAvailabilityInputMapsPlainFields()
+{
+    ImageActionAvailabilityInput input;
+    input.imageReady = true;
+    input.fileDeletionInProgress = true;
+    input.helpDialogOpen = true;
+    input.textInputFocused = true;
+    input.imagePannable = true;
+    input.containerNavigationAvailable = true;
+    input.twoPageModeEnabled = true;
+    input.twoPageModeAvailable = true;
+    input.rightToLeftReadingEnabled = true;
+    input.rightToLeftReadingAvailable = true;
+
+    const KiriView::RustImageActionAvailabilityInput converted
+        = KiriView::Bridge::rustImageActionAvailabilityInput(input);
+
+    QVERIFY(converted.image_ready);
+    QVERIFY(converted.file_deletion_in_progress);
+    QVERIFY(converted.help_dialog_open);
+    QVERIFY(converted.text_input_focused);
+    QVERIFY(converted.image_pannable);
+    QVERIFY(converted.container_navigation_available);
+    QVERIFY(converted.two_page_mode_enabled);
+    QVERIFY(converted.two_page_mode_available);
+    QVERIFY(converted.right_to_left_reading_enabled);
+    QVERIFY(converted.right_to_left_reading_available);
+}
+
+void TestImageActionAvailabilityConversion::projectionMapsPlainFields()
+{
+    KiriView::RustImageActionAvailabilityProjection projection {};
+    projection.can_use_ready_actions = true;
+    projection.can_use_rotate_actions = true;
+    projection.can_use_two_page_mode_actions = true;
+    projection.can_use_right_to_left_reading_actions = true;
+    projection.right_to_left_reading_active = true;
+    projection.two_page_mode_active = true;
+    projection.help_shortcuts_enabled = true;
+    projection.viewer_shortcuts_enabled = true;
+    projection.ready_shortcuts_enabled = true;
+    projection.ready_viewer_shortcuts_enabled = true;
+    projection.two_page_viewer_shortcuts_enabled = true;
+    projection.right_to_left_reading_shortcuts_enabled = true;
+    projection.right_to_left_reading_viewer_shortcuts_enabled = true;
+    projection.rotate_shortcuts_enabled = true;
+    projection.rotate_viewer_shortcuts_enabled = true;
+    projection.pannable_shortcuts_enabled = true;
+    projection.pannable_viewer_shortcuts_enabled = true;
+    projection.container_shortcuts_enabled = true;
+    projection.container_viewer_shortcuts_enabled = true;
+
+    const ImageActionAvailabilityProjection converted
+        = KiriView::Bridge::imageActionAvailabilityProjectionFromRust(projection);
+
+    QVERIFY(converted.canUseReadyActions);
+    QVERIFY(converted.canUseRotateActions);
+    QVERIFY(converted.canUseTwoPageModeActions);
+    QVERIFY(converted.canUseRightToLeftReadingActions);
+    QVERIFY(converted.rightToLeftReadingActive);
+    QVERIFY(converted.twoPageModeActive);
+    QVERIFY(converted.helpShortcutsEnabled);
+    QVERIFY(converted.viewerShortcutsEnabled);
+    QVERIFY(converted.readyShortcutsEnabled);
+    QVERIFY(converted.readyViewerShortcutsEnabled);
+    QVERIFY(converted.twoPageViewerShortcutsEnabled);
+    QVERIFY(converted.rightToLeftReadingShortcutsEnabled);
+    QVERIFY(converted.rightToLeftReadingViewerShortcutsEnabled);
+    QVERIFY(converted.rotateShortcutsEnabled);
+    QVERIFY(converted.rotateViewerShortcutsEnabled);
+    QVERIFY(converted.pannableShortcutsEnabled);
+    QVERIFY(converted.pannableViewerShortcutsEnabled);
+    QVERIFY(converted.containerShortcutsEnabled);
+    QVERIFY(converted.containerViewerShortcutsEnabled);
+}
+
+void TestImageActionAvailabilityConversion::shortcutScopeMapsApplicationScopeValues()
+{
+    using Scope = KiriView::ApplicationActions::ImageShortcutScope;
+
+    QVERIFY(KiriView::Bridge::rustImageShortcutScope(Scope::HelpShortcutScope)
+        == KiriView::RustImageShortcutScope::HelpShortcutScope);
+    QVERIFY(KiriView::Bridge::rustImageShortcutScope(Scope::ReadyViewerShortcutScope)
+        == KiriView::RustImageShortcutScope::ReadyViewerShortcutScope);
+    QVERIFY(KiriView::Bridge::rustImageShortcutScope(Scope::RightToLeftReadingViewerShortcutScope)
+        == KiriView::RustImageShortcutScope::RightToLeftReadingViewerShortcutScope);
+    QVERIFY(KiriView::Bridge::rustImageShortcutScope(Scope::ContainerViewerShortcutScope)
+        == KiriView::RustImageShortcutScope::ContainerViewerShortcutScope);
+}
+
+void TestImageActionAvailabilityConversion::videoAvailabilityInputMapsPlainFields()
+{
+    KiriView::ApplicationActions::VideoShortcutAvailabilityInput input;
+    input.helpShortcutsEnabled = true;
+    input.viewerShortcutsEnabled = true;
+    input.fileDeletionInProgress = true;
+    input.mediaNavigationActive = true;
+
+    const KiriView::RustVideoShortcutAvailabilityInput converted
+        = KiriView::Bridge::rustVideoShortcutAvailabilityInput(input);
+
+    QVERIFY(converted.help_shortcuts_enabled);
+    QVERIFY(converted.viewer_shortcuts_enabled);
+    QVERIFY(converted.file_deletion_in_progress);
+    QVERIFY(converted.media_navigation_active);
+}
+
+QTEST_GUILESS_MAIN(TestImageActionAvailabilityConversion)
+
+#include "test_imageactionavailabilityconversion.moc"
