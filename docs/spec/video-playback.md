@@ -24,7 +24,7 @@ For the MVP, KiriView does not advertise video MIME types through the desktop fi
 
 ## Source URL Identity
 
-KiriView may internally resolve a KIO-backed direct video URL to a local playback URL before handing it to the video backend, such as through KIOFuse or another KIO-backed resolver.
+KiriView may internally resolve a KIO-backed direct video URL to a local playback URL before handing it to the video backend, such as through KIOFuse or another KIO-backed resolver. Resolution succeeds only when the resolved playback URL can be consumed by the video backend; otherwise the video load fails while keeping the original direct media URL as the public source and error context.
 
 Internal playback URL resolution must not change the user-facing source URL. Window title, adjacent media navigation, deletion target, error context, and document-mode decisions remain based on the original direct media URL.
 
