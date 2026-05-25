@@ -62,6 +62,7 @@ src/document/imagedocumentchangebatcher.cpp
 src/document/imagedocumentdeletioncontroller.cpp
 src/document/imagedocumentdeletionfallbackcontroller.cpp
 src/document/imagedocumentdeletionstate.cpp
+src/document/imagedocumentnavigationruntimeplan.cpp
 src/document/imagedocumentnavigationcontroller.cpp
 src/document/imagedocumentnotifications.cpp
 src/document/imagedocumentpredecodecontroller.cpp

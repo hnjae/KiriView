@@ -1,0 +1,162 @@
+// SPDX-FileCopyrightText: 2026 KIM Hyunjae
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+#include "document/imagedocumentnavigationruntimeplan.h"
+
+#include "image_document_plan_test_support.h"
+#include "localization/imageerrortext.h"
+
+#include <QObject>
+#include <QTest>
+#include <QUrl>
+#include <cstddef>
+
+namespace {
+using KiriView::ImageDocumentRuntimePlan;
+using KiriView::TestSupport::hasOperationTypes;
+using KiriView::TestSupport::operationAt;
+using KiriView::TestSupport::operationTypes;
+
+QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
+}
+
+class TestImageDocumentNavigationRuntimePlan : public QObject
+{
+    Q_OBJECT
+
+private Q_SLOTS:
+    void openImageNavigationMapsToLoadUrl();
+    void openContainerImageNavigationMapsToContainerLoad();
+    void emptyContainerErrorMapsToEmptyContainerCompletion();
+    void invalidComicArchiveErrorMapsToLocalizedOpenError();
+    void genericContainerErrorKeepsReportedErrorString();
+    void clearCurrentImageNavigationExpandsDeletedImageClearPlan();
+    void mixedNavigationPlanPreservesOperationOrder();
+};
+
+void TestImageDocumentNavigationRuntimePlan::openImageNavigationMapsToLoadUrl()
+{
+    const QUrl url = localUrl(QStringLiteral("/images/02.png"));
+    const ImageDocumentRuntimePlan plan = KiriView::imageDocumentRuntimePlanForNavigationPlan({
+        KiriView::OpenImageNavigationUrlEffect { url },
+    });
+
+    QVERIFY(hasOperationTypes(plan, operationTypes<KiriView::LoadUrlOperation>()));
+    QCOMPARE(operationAt<KiriView::LoadUrlOperation>(plan, 0).url, url);
+}
+
+void TestImageDocumentNavigationRuntimePlan::openContainerImageNavigationMapsToContainerLoad()
+{
+    const QUrl imageUrl = localUrl(QStringLiteral("/books/book/01.png"));
+    const QUrl containerUrl = localUrl(QStringLiteral("/books/book.cbz"));
+    const ImageDocumentRuntimePlan plan = KiriView::imageDocumentRuntimePlanForNavigationPlan({
+        KiriView::OpenContainerImageNavigationEffect { imageUrl, containerUrl },
+    });
+
+    QVERIFY(hasOperationTypes(plan, operationTypes<KiriView::LoadContainerImageOperation>()));
+    QCOMPARE(operationAt<KiriView::LoadContainerImageOperation>(plan, 0).imageUrl, imageUrl);
+    QCOMPARE(
+        operationAt<KiriView::LoadContainerImageOperation>(plan, 0).containerUrl, containerUrl);
+}
+
+void TestImageDocumentNavigationRuntimePlan::emptyContainerErrorMapsToEmptyContainerCompletion()
+{
+    const QUrl containerUrl = localUrl(QStringLiteral("/books/empty.cbz"));
+    const ImageDocumentRuntimePlan plan = KiriView::imageDocumentRuntimePlanForNavigationPlan({
+        KiriView::ReportContainerNavigationErrorEffect {
+            containerUrl,
+            KiriView::ContainerNavigationError::EmptyContainer,
+            QStringLiteral("ignored"),
+        },
+    });
+
+    QVERIFY(hasOperationTypes(
+        plan, operationTypes<KiriView::FinishEmptyContainerNavigationOperation>()));
+    QCOMPARE(operationAt<KiriView::FinishEmptyContainerNavigationOperation>(plan, 0).containerUrl,
+        containerUrl);
+}
+
+void TestImageDocumentNavigationRuntimePlan::invalidComicArchiveErrorMapsToLocalizedOpenError()
+{
+    const QUrl containerUrl = localUrl(QStringLiteral("/books/broken.cbz"));
+    const ImageDocumentRuntimePlan plan = KiriView::imageDocumentRuntimePlanForNavigationPlan({
+        KiriView::ReportContainerNavigationErrorEffect {
+            containerUrl,
+            KiriView::ContainerNavigationError::InvalidComicBookArchive,
+            QStringLiteral("ignored"),
+        },
+    });
+
+    QVERIFY(hasOperationTypes(
+        plan, operationTypes<KiriView::FinishContainerNavigationLoadWithErrorOperation>()));
+    QCOMPARE(operationAt<KiriView::FinishContainerNavigationLoadWithErrorOperation>(plan, 0)
+                 .containerUrl,
+        containerUrl);
+    QCOMPARE(
+        operationAt<KiriView::FinishContainerNavigationLoadWithErrorOperation>(plan, 0).errorString,
+        KiriView::imageErrorText(KiriView::ImageErrorTextId::OpenComicBookArchive));
+}
+
+void TestImageDocumentNavigationRuntimePlan::genericContainerErrorKeepsReportedErrorString()
+{
+    const QUrl containerUrl = localUrl(QStringLiteral("/books/broken.zip"));
+    const QString errorString = QStringLiteral("provider failure");
+    const ImageDocumentRuntimePlan plan = KiriView::imageDocumentRuntimePlanForNavigationPlan({
+        KiriView::ReportContainerNavigationErrorEffect {
+            containerUrl,
+            KiriView::ContainerNavigationError::Generic,
+            errorString,
+        },
+    });
+
+    QVERIFY(hasOperationTypes(
+        plan, operationTypes<KiriView::FinishContainerNavigationLoadWithErrorOperation>()));
+    QCOMPARE(operationAt<KiriView::FinishContainerNavigationLoadWithErrorOperation>(plan, 0)
+                 .containerUrl,
+        containerUrl);
+    QCOMPARE(
+        operationAt<KiriView::FinishContainerNavigationLoadWithErrorOperation>(plan, 0).errorString,
+        errorString);
+}
+
+void TestImageDocumentNavigationRuntimePlan::
+    clearCurrentImageNavigationExpandsDeletedImageClearPlan()
+{
+    const ImageDocumentRuntimePlan plan = KiriView::imageDocumentRuntimePlanForNavigationPlan({
+        KiriView::ClearCurrentImageNavigationEffect {},
+    });
+    const ImageDocumentRuntimePlan expected = KiriView::imageDocumentClearDeletedImagePlan();
+
+    QCOMPARE(plan.size(), expected.size());
+    for (std::size_t index = 0; index < expected.size(); ++index) {
+        QCOMPARE(plan.at(index).index(), expected.at(index).index());
+    }
+}
+
+void TestImageDocumentNavigationRuntimePlan::mixedNavigationPlanPreservesOperationOrder()
+{
+    const QUrl firstUrl = localUrl(QStringLiteral("/images/01.png"));
+    const QUrl imageUrl = localUrl(QStringLiteral("/books/book/01.png"));
+    const QUrl containerUrl = localUrl(QStringLiteral("/books/book.cbz"));
+    const ImageDocumentRuntimePlan plan = KiriView::imageDocumentRuntimePlanForNavigationPlan({
+        KiriView::OpenImageNavigationUrlEffect { firstUrl },
+        KiriView::OpenContainerImageNavigationEffect { imageUrl, containerUrl },
+        KiriView::ReportContainerNavigationErrorEffect {
+            containerUrl,
+            KiriView::ContainerNavigationError::EmptyContainer,
+            QString(),
+        },
+    });
+
+    QVERIFY(hasOperationTypes(plan,
+        operationTypes<KiriView::LoadUrlOperation, KiriView::LoadContainerImageOperation,
+            KiriView::FinishEmptyContainerNavigationOperation>()));
+    QCOMPARE(operationAt<KiriView::LoadUrlOperation>(plan, 0).url, firstUrl);
+    QCOMPARE(operationAt<KiriView::LoadContainerImageOperation>(plan, 1).imageUrl, imageUrl);
+    QCOMPARE(operationAt<KiriView::FinishEmptyContainerNavigationOperation>(plan, 2).containerUrl,
+        containerUrl);
+}
+
+QTEST_GUILESS_MAIN(TestImageDocumentNavigationRuntimePlan)
+
+#include "test_imagedocumentnavigationruntimeplan.moc"
