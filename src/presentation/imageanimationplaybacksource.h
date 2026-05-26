@@ -35,6 +35,7 @@ enum class ImageAnimationPlaybackReadStatus {
 struct ImageAnimationPlaybackReadResult {
     ImageAnimationPlaybackReadStatus status = ImageAnimationPlaybackReadStatus::End;
     AnimationFrame frame;
+    bool sourceHasMoreFrames = false;
     QString errorString;
 };
 
@@ -45,7 +46,6 @@ public:
 
     virtual ImageAnimationPlaybackOpenResult open() = 0;
     virtual ImageAnimationPlaybackReadResult readNextFrame() = 0;
-    virtual bool hasMoreFrames() const = 0;
     virtual bool restartable() const = 0;
 };
 

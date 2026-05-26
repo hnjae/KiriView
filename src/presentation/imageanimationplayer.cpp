@@ -64,11 +64,6 @@ void ImageAnimationPlayer::advanceFrame()
         return;
     }
 
-    if (!m_source->hasMoreFrames()) {
-        handleSequenceEnd();
-        return;
-    }
-
     const ImageAnimationPlaybackReadResult readResult = m_source->readNextFrame();
     if (readResult.status == ImageAnimationPlaybackReadStatus::End) {
         handleSequenceEnd();
@@ -82,7 +77,7 @@ void ImageAnimationPlayer::advanceFrame()
 
     invokeIfSet(m_frameReady, readResult.frame.image);
     applyFramePlan(
-        m_playbackState.planAfterFrame(m_source->hasMoreFrames()), readResult.frame.delay);
+        m_playbackState.planAfterFrame(readResult.sourceHasMoreFrames), readResult.frame.delay);
 }
 
 void ImageAnimationPlayer::scheduleNextFrame(int delay)
@@ -135,6 +130,7 @@ void ImageAnimationPlayer::clearPlaybackState()
 
 void ImageAnimationPlayer::finishWithError(const QString &errorString)
 {
+    clearPlaybackState();
     invokeIfSet(m_animationError, errorString);
 }
 }
