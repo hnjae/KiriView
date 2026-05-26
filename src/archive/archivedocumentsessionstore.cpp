@@ -12,18 +12,18 @@
 #include <utility>
 
 namespace {
-std::optional<KiriView::ArchiveDocumentLocation> archiveDocumentForSourceLoad(
+std::optional<KiriView::ImagePageScopeLocation> archiveDocumentForSourceLoad(
     const KiriView::ImageDocumentSourceLoadRequest &request,
-    const KiriView::ArchiveDocumentLocation &displayedArchiveDocument)
+    const KiriView::ImagePageScopeLocation &displayedImagePageScope)
 {
-    const KiriView::ImageArchiveLoadPlan plan
-        = KiriView::imageArchiveLoadPlan(KiriView::ImageLoadRequest::fromLocation(
-            request.sourceUrl, displayedArchiveDocument, request.containerNavigationUrl));
-    if (plan.archiveDocument.isEmpty()) {
+    const KiriView::ImagePageScopeLoadPlan plan
+        = KiriView::imagePageScopeLoadPlan(KiriView::ImageLoadRequest::fromLocation(
+            request.sourceUrl, displayedImagePageScope, request.containerNavigationUrl));
+    if (plan.imagePageScope.isEmpty()) {
         return std::nullopt;
     }
 
-    return plan.archiveDocument;
+    return plan.imagePageScope;
 }
 }
 
@@ -40,7 +40,7 @@ ArchiveDocumentSessionStore::~ArchiveDocumentSessionStore() { clear(); }
 ImageNavigationCandidateProvider ArchiveDocumentSessionStore::wrapCandidateProvider(
     ImageNavigationCandidateProvider provider)
 {
-    provider.archiveImages = [this](QObject *receiver, ArchiveDocumentLocation archiveDocument,
+    provider.archiveImages = [this](QObject *receiver, ImagePageScopeLocation archiveDocument,
                                  ImageCandidatesCallback callback, ErrorCallback errorCallback) {
         return loadArchiveImages(
             receiver, std::move(archiveDocument), std::move(callback), std::move(errorCallback));
@@ -55,7 +55,7 @@ ImageDecodeDependencies ArchiveDocumentSessionStore::wrapDecodeDependencies(
     dependencies.dataLoader
         = [this, upstreamDataLoader = std::move(upstreamDataLoader)](QObject *receiver,
               ImageDecodeRequest request, ImageDataCallback callback, ErrorCallback errorCallback) {
-              if (archiveDocumentContainsUrl(request.archiveDocument(), request.imageUrl())) {
+              if (imagePageScopeContainsUrl(request.imagePageScope(), request.imageUrl())) {
                   return loadArchiveImageData(
                       receiver, std::move(request), std::move(callback), std::move(errorCallback));
               }
@@ -73,10 +73,10 @@ ImageDecodeDependencies ArchiveDocumentSessionStore::wrapDecodeDependencies(
 
 void ArchiveDocumentSessionStore::prepareForSourceLoad(
     const ImageDocumentSourceLoadRequest &request,
-    const ArchiveDocumentLocation &displayedArchiveDocument)
+    const ImagePageScopeLocation &displayedImagePageScope)
 {
-    const std::optional<ArchiveDocumentLocation> archiveDocument
-        = archiveDocumentForSourceLoad(request, displayedArchiveDocument);
+    const std::optional<ImagePageScopeLocation> archiveDocument
+        = archiveDocumentForSourceLoad(request, displayedImagePageScope);
     if (archiveDocument.has_value()) {
         m_runtime.switchToArchiveDocument(*archiveDocument);
         return;
@@ -93,13 +93,13 @@ bool ArchiveDocumentSessionStore::hasCurrentArchiveDocument() const
 }
 
 bool ArchiveDocumentSessionStore::hasCurrentArchiveDocument(
-    const ArchiveDocumentLocation &archiveDocument) const
+    const ImagePageScopeLocation &archiveDocument) const
 {
     return m_runtime.hasCurrentArchiveDocument(archiveDocument);
 }
 
 ImageIoJob ArchiveDocumentSessionStore::loadArchiveImages(QObject *receiver,
-    ArchiveDocumentLocation archiveDocument, ImageCandidatesCallback callback,
+    ImagePageScopeLocation archiveDocument, ImageCandidatesCallback callback,
     ErrorCallback errorCallback)
 {
     return m_runtime.loadArchiveImages(

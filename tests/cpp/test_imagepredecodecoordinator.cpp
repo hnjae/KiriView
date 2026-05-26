@@ -97,7 +97,7 @@ private Q_SLOTS:
     void scheduleCachesDisplayedImageAndPredecodesWindow();
     void scheduleCachesVisibleSpreadPagesAndSkipsSecondaryPredecode();
     void scheduleRejectsInvalidDisplayedContext();
-    void archivePredecodeKeepsArchiveDocumentContext();
+    void archivePredecodeKeepsImagePageScopeContext();
     void regularPredecodeWindowKeepsOnePreviousAndTwoNextPages();
     void directoryDocumentStartsTwoBackgroundDecodes();
     void candidateListingFailureStartsEmptyFallbackWindow();
@@ -204,7 +204,7 @@ void TestImagePredecodeCoordinator::scheduleRejectsInvalidDisplayedContext()
     QCOMPARE(dataLoader.loadCount(), std::size_t(0));
 }
 
-void TestImagePredecodeCoordinator::archivePredecodeKeepsArchiveDocumentContext()
+void TestImagePredecodeCoordinator::archivePredecodeKeepsImagePageScopeContext()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -212,33 +212,33 @@ void TestImagePredecodeCoordinator::archivePredecodeKeepsArchiveDocumentContext(
         = createCoordinator(this, candidateProvider, dataLoader);
 
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
-        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
-    QVERIFY(archiveDocument.has_value());
-    const QUrl displayedUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
-    const QUrl nextUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("02.png"));
-    candidateProvider.setArchiveImages(archiveDocument->rootUrl(),
+    const std::optional<KiriView::ImagePageScopeLocation> imagePageScope
+        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(imagePageScope.has_value());
+    const QUrl displayedUrl = archivePageUrl(imagePageScope->rootUrl(), QStringLiteral("01.png"));
+    const QUrl nextUrl = archivePageUrl(imagePageScope->rootUrl(), QStringLiteral("02.png"));
+    candidateProvider.setArchiveImages(imagePageScope->rootUrl(),
         {
             imageCandidate(displayedUrl),
             imageCandidate(nextUrl),
         });
 
     coordinator.schedule(predecodeContext(KiriView::DisplayedPredecodeImage {
-        KiriView::DisplayedImageLocation::fromArchiveDocument(displayedUrl, *archiveDocument),
+        KiriView::DisplayedImageLocation::fromImagePageScope(displayedUrl, *imagePageScope),
         false,
         staticTestImagePayload(testImage()),
     }));
 
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
     QCOMPARE(dataLoader.frontLoad().url, nextUrl);
-    QCOMPARE(dataLoader.frontLoad().archiveDocument.rootUrl(), archiveDocument->rootUrl());
+    QCOMPARE(dataLoader.frontLoad().imagePageScope.rootUrl(), imagePageScope->rootUrl());
     dataLoader.finishFrontLoad(QByteArrayLiteral("next"));
 
     QTRY_VERIFY(coordinator.findPredecodedImage(nextUrl).has_value());
     const std::optional<KiriView::PredecodedImage> predecoded
         = coordinator.findPredecodedImage(nextUrl);
     QVERIFY(predecoded.has_value());
-    QCOMPARE(predecoded->location.archiveDocumentRootUrl(), archiveDocument->rootUrl());
+    QCOMPARE(predecoded->location.imagePageScopeRootUrl(), imagePageScope->rootUrl());
 }
 
 void TestImagePredecodeCoordinator::regularPredecodeWindowKeepsOnePreviousAndTwoNextPages()
@@ -282,14 +282,14 @@ void TestImagePredecodeCoordinator::directoryDocumentStartsTwoBackgroundDecodes(
     KiriView::ImagePredecodeCoordinator coordinator
         = createCoordinator(this, candidateProvider, dataLoader);
 
-    const KiriView::ArchiveDocumentLocation directoryDocument
-        = KiriView::ArchiveDocumentLocation::fromUrls(
-            imagesDirectoryUrl(), imagesDirectoryUrl(), KiriView::ArchiveDocumentKind::Directory);
+    const KiriView::ImagePageScopeLocation directoryDocument
+        = KiriView::ImagePageScopeLocation::fromUrls(
+            imagesDirectoryUrl(), imagesDirectoryUrl(), KiriView::ImagePageScopeKind::Directory);
     const QUrl displayedUrl = indexedImageUrl(5);
     candidateProvider.setArchiveImages(directoryDocument.rootUrl(), imageCandidates(15));
 
     coordinator.schedule(predecodeContext(KiriView::DisplayedPredecodeImage {
-        KiriView::DisplayedImageLocation::fromArchiveDocument(displayedUrl, directoryDocument),
+        KiriView::DisplayedImageLocation::fromImagePageScope(displayedUrl, directoryDocument),
         false,
         staticTestImagePayload(testImage()),
     }));

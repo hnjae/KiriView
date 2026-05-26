@@ -13,7 +13,7 @@
 namespace KiriView {
 struct ImageDocumentSourceLoadSnapshot {
     QUrl currentSourceUrl;
-    ArchiveDocumentLocation displayedArchiveDocument;
+    ImagePageScopeLocation displayedImagePageScope;
     bool rightToLeftReadingEnabled = false;
 };
 

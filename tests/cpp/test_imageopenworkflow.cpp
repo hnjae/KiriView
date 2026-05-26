@@ -22,8 +22,8 @@ using KiriView::TestSupport::archivePageUrl;
 using KiriView::TestSupport::localUrl;
 
 KiriView::ImageLoadSession loadSession(const QUrl &sourceUrl, const QUrl &imageUrl,
-    const KiriView::ArchiveDocumentLocation &archiveDocument
-    = KiriView::ArchiveDocumentLocation::none(),
+    const KiriView::ImagePageScopeLocation &archiveDocument
+    = KiriView::ImagePageScopeLocation::none(),
     const QUrl &containerNavigationUrl = QUrl())
 {
     return KiriView::ImageLoadSession(1,
@@ -178,8 +178,8 @@ void TestImageOpenWorkflow::sourceResolutionUsesCanonicalSessionImageUrl()
 {
     KiriView::ImageDocumentState state;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.zip"));
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
-        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
+        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveDocument.has_value());
     const QUrl imageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
     state.setSourceUrl(archiveUrl);
@@ -230,8 +230,8 @@ void TestImageOpenWorkflow::directArchiveImageLoadSuccessDisablesContainerNaviga
 {
     KiriView::ImageDocumentState state;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.zip"));
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
-        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
+        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveDocument.has_value());
     const QUrl imageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
 
@@ -317,7 +317,7 @@ void TestImageOpenWorkflow::routedLoadFailureAppliesErrorTransitions()
     const QUrl imageUrl = localUrl(QStringLiteral("/images/page.png"));
     const QUrl containerUrl = localUrl(QStringLiteral("/books/book.cbz"));
     const KiriView::ImageLoadSession containerNavigationSession = loadSession(
-        containerUrl, imageUrl, KiriView::ArchiveDocumentLocation::none(), containerUrl);
+        containerUrl, imageUrl, KiriView::ImagePageScopeLocation::none(), containerUrl);
     const KiriView::ImageLoadSession imageSession = loadSession(imageUrl, imageUrl);
 
     {

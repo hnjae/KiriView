@@ -18,10 +18,10 @@ ImageContainerOpenPlan imageContainerOpenPlanForCandidate(
         return { ImageCandidateListSource::forDirectory(container.url),
             ImageContainerOpenError::Generic };
     case ContainerNavigationCandidateType::ComicBookArchive: {
-        const std::optional<ArchiveDocumentLocation> archiveDocument
-            = archiveDocumentLocationForLocalArchiveUrl(container.url);
-        if (archiveDocument.has_value() && archiveDocument->isComicBook()) {
-            return { ImageCandidateListSource::forArchiveDocument(*archiveDocument),
+        const std::optional<ImagePageScopeLocation> imagePageScope
+            = imagePageScopeLocationForLocalArchiveUrl(container.url);
+        if (imagePageScope.has_value() && imagePageScope->isComicBook()) {
+            return { ImageCandidateListSource::forImagePageScope(*imagePageScope),
                 ImageContainerOpenError::Generic };
         }
 

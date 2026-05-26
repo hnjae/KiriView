@@ -28,7 +28,7 @@ struct PredecodeCandidateListLoadPlan {
 };
 
 struct PredecodeWindowPlan {
-    ArchiveDocumentLocation archiveDocument;
+    ImagePageScopeLocation imagePageScope;
     std::vector<QUrl> urls;
     std::size_t parallelLimit = 0;
 };

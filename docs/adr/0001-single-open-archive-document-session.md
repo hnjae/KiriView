@@ -8,7 +8,7 @@ The older dependency shape exposed archive listing and archive image reads as in
 
 ## Decision
 
-The C++ document runtime owns an `ArchiveDocumentSessionStore` for default archive access. The store tracks the current `ArchiveDocumentLocation`, caches the sorted candidate list, and routes archive image reads through one serialized session runner.
+The C++ document runtime owns an `ArchiveDocumentSessionStore` for default archive access. The store tracks the current `ImagePageScopeLocation`, caches the sorted candidate list, and routes archive image reads through one serialized session runner.
 
 Backend sessions are owned below `archivebackend`:
 

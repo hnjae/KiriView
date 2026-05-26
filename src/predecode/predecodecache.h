@@ -20,7 +20,7 @@
 namespace KiriView {
 struct PredecodeRequest {
     QUrl url;
-    ArchiveDocumentLocation archiveDocument;
+    ImagePageScopeLocation imagePageScope;
 };
 
 class PredecodeCache
@@ -37,21 +37,21 @@ public:
     void setWindowUrls(const std::vector<QUrl> &urls);
     void setDisplayedUrls(const std::vector<QUrl> &urls);
     void enqueueMissingWindowLoads(const QUrl &displayedUrl,
-        const ArchiveDocumentLocation &archiveDocument, const PredecodeActiveLoads &activeLoads);
+        const ImagePageScopeLocation &imagePageScope, const PredecodeActiveLoads &activeLoads);
     std::optional<PredecodeRequest> takeNextRequest(const PredecodeActiveLoads &activeLoads);
     bool windowContains(const QUrl &url) const;
     bool hasImage(const QUrl &url) const;
     bool isInFlight(const QUrl &url, const PredecodeActiveLoads &activeLoads) const;
     std::optional<PredecodedImage> findImage(const QUrl &url) const;
-    void cacheImage(const QUrl &url, const ArchiveDocumentLocation &archiveDocument,
+    void cacheImage(const QUrl &url, const ImagePageScopeLocation &imagePageScope,
         StaticImagePayload staticImage);
     void cacheDisplayedImage(bool cacheable, const QUrl &url,
-        const ArchiveDocumentLocation &archiveDocument, StaticImagePayload staticImage);
+        const ImagePageScopeLocation &imagePageScope, StaticImagePayload staticImage);
 
 private:
     struct CachedImage {
         QUrl url;
-        ArchiveDocumentLocation archiveDocument;
+        ImagePageScopeLocation imagePageScope;
         StaticImagePayload staticImage;
         qsizetype byteCost = 0;
     };

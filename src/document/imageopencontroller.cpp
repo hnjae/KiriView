@@ -85,7 +85,7 @@ void ImageOpenController::open()
 
     beginSourceLoad();
     m_imageLoader->start(
-        ImageLoadRequest::fromLocation(m_state.sourceUrl(), m_state.displayedArchiveDocument(),
+        ImageLoadRequest::fromLocation(m_state.sourceUrl(), m_state.displayedImagePageScope(),
             m_state.loadingContainerNavigationUrl()),
         m_presentationController.firstDisplayDecodeContext());
 }

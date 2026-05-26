@@ -44,7 +44,7 @@ struct InstrumentedArchiveSessionState {
 class InstrumentedArchiveSession final : public ArchiveDocumentSession
 {
 public:
-    InstrumentedArchiveSession(ArchiveDocumentLocation archiveDocument,
+    InstrumentedArchiveSession(ImagePageScopeLocation archiveDocument,
         std::shared_ptr<InstrumentedArchiveSessionState> state)
         : m_archiveDocument(std::move(archiveDocument))
         , m_state(std::move(state))
@@ -104,7 +104,7 @@ private:
         return m_state->fixturesByRootUrl.at(keyForUrl(m_archiveDocument.rootUrl()));
     }
 
-    ArchiveDocumentLocation m_archiveDocument;
+    ImagePageScopeLocation m_archiveDocument;
     std::shared_ptr<InstrumentedArchiveSessionState> m_state;
 };
 
@@ -112,7 +112,7 @@ inline ArchiveDocumentSessionFactory instrumentedArchiveSessionFactory(
     std::shared_ptr<InstrumentedArchiveSessionState> state)
 {
     return [state = std::move(state)](
-               const ArchiveDocumentLocation &archiveDocument) -> ArchiveDocumentSessionOpenResult {
+               const ImagePageScopeLocation &archiveDocument) -> ArchiveDocumentSessionOpenResult {
         ++state->openCount;
         std::lock_guard<std::mutex> lock(state->mutex);
         if (!state->fixturesByRootUrl.count(keyForUrl(archiveDocument.rootUrl()))) {
@@ -150,15 +150,14 @@ inline void releaseInstrumentedArchiveLoads(
     state->loadBlockChanged.notify_all();
 }
 
-inline std::optional<ArchiveDocumentLocation> archiveDocumentForLocalArchiveUrl(
+inline std::optional<ImagePageScopeLocation> archiveDocumentForLocalArchiveUrl(
     const QUrl &archiveUrl)
 {
-    return archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    return imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
 }
 
 inline void addInstrumentedArchiveFixture(std::shared_ptr<InstrumentedArchiveSessionState> state,
-    const ArchiveDocumentLocation &archiveDocument,
-    std::vector<ImageNavigationCandidate> candidates)
+    const ImagePageScopeLocation &archiveDocument, std::vector<ImageNavigationCandidate> candidates)
 {
     InstrumentedArchiveFixture fixture;
     fixture.candidates = std::move(candidates);

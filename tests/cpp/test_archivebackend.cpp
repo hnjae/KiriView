@@ -75,9 +75,9 @@ void writeFile(const QString &path, const QByteArray &data)
     file.close();
 }
 
-std::optional<KiriView::ArchiveDocumentLocation> archiveDocumentForPath(const QString &path)
+std::optional<KiriView::ImagePageScopeLocation> archiveDocumentForPath(const QString &path)
 {
-    return KiriView::archiveDocumentLocationForLocalArchiveUrl(localUrl(path));
+    return KiriView::imagePageScopeLocationForLocalArchiveUrl(localUrl(path));
 }
 
 const KiriView::ArchiveImageCandidates *archiveImageCandidates(
@@ -150,7 +150,7 @@ void TestArchiveBackend::zipListingIncludesNestedSupportedImages()
             { QStringLiteral("chapter/01.png"), QByteArrayLiteral("one") },
         });
 
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
         = archiveDocumentForPath(archivePath);
     QVERIFY(archiveDocument.has_value());
     const KiriView::ArchiveImageCandidatesResult result
@@ -175,10 +175,10 @@ void TestArchiveBackend::directoryListingIncludesNestedSupportedImages()
     writeFile(dir.filePath(QStringLiteral("notes.txt")), QByteArrayLiteral("skip"));
     writeFile(dir.filePath(QStringLiteral("chapter/01.png")), QByteArrayLiteral("one"));
 
-    const std::optional<KiriView::ArchiveDocumentLocation> directoryDocument
-        = KiriView::directOpenDocumentLocationForLocalUrl(localUrl(dir.path()));
+    const std::optional<KiriView::ImagePageScopeLocation> directoryDocument
+        = KiriView::directOpenImagePageScopeLocationForLocalUrl(localUrl(dir.path()));
     QVERIFY(directoryDocument.has_value());
-    QCOMPARE(directoryDocument->kind(), KiriView::ArchiveDocumentKind::Directory);
+    QCOMPARE(directoryDocument->kind(), KiriView::ImagePageScopeKind::Directory);
     const KiriView::ArchiveImageCandidatesResult result
         = KiriView::loadArchiveDocumentImageCandidates(*directoryDocument);
     const KiriView::ArchiveImageCandidates *success = archiveImageCandidates(result);
@@ -203,7 +203,7 @@ void TestArchiveBackend::tarListingUsesSameOrdering()
             { QStringLiteral("pages/readme.md"), QByteArrayLiteral("skip") },
         });
 
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
         = archiveDocumentForPath(archivePath);
     QVERIFY(archiveDocument.has_value());
     const KiriView::ArchiveImageCandidatesResult result
@@ -223,7 +223,7 @@ void TestArchiveBackend::rarListingUsesLibArchive()
     const QString archivePath = dir.filePath(QStringLiteral("book.cbr"));
     writeRarArchive(archivePath);
 
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
         = archiveDocumentForPath(archivePath);
     QVERIFY(archiveDocument.has_value());
     QCOMPARE(archiveDocument->rootUrl().scheme(), QStringLiteral("rar"));
@@ -250,7 +250,7 @@ void TestArchiveBackend::readingArchiveEntryReturnsOriginalBytes()
             { QStringLiteral("page.png"), expected },
         });
 
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
         = archiveDocumentForPath(archivePath);
     QVERIFY(archiveDocument.has_value());
     const KiriView::ArchiveImageDataResult result = KiriView::loadArchiveDocumentImageData(
@@ -270,8 +270,8 @@ void TestArchiveBackend::readingDirectoryEntryReturnsOriginalBytes()
     const QByteArray expected = QByteArrayLiteral("image-bytes");
     writeFile(dir.filePath(QStringLiteral("pages/page.png")), expected);
 
-    const std::optional<KiriView::ArchiveDocumentLocation> directoryDocument
-        = KiriView::directOpenDocumentLocationForLocalUrl(localUrl(dir.path()));
+    const std::optional<KiriView::ImagePageScopeLocation> directoryDocument
+        = KiriView::directOpenImagePageScopeLocationForLocalUrl(localUrl(dir.path()));
     QVERIFY(directoryDocument.has_value());
     const KiriView::ArchiveImageDataResult result
         = KiriView::loadArchiveDocumentImageData(*directoryDocument,
@@ -289,10 +289,10 @@ void TestArchiveBackend::readingRarEntryReturnsOriginalBytes()
     const QString archivePath = dir.filePath(QStringLiteral("book.rar"));
     writeRarArchive(archivePath);
 
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
         = archiveDocumentForPath(archivePath);
     QVERIFY(archiveDocument.has_value());
-    QCOMPARE(archiveDocument->kind(), KiriView::ArchiveDocumentKind::General);
+    QCOMPARE(archiveDocument->kind(), KiriView::ImagePageScopeKind::GeneralArchive);
     const KiriView::ArchiveImageDataResult result
         = KiriView::loadArchiveDocumentImageData(*archiveDocument,
             archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("chapter/02.jpg")));
@@ -313,7 +313,7 @@ void TestArchiveBackend::standaloneHelpersMatchSessionResults()
             { QStringLiteral("pages/01.png"), QByteArrayLiteral("one") },
         });
 
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
         = archiveDocumentForPath(archivePath);
     QVERIFY(archiveDocument.has_value());
     KiriView::ArchiveDocumentSessionOpenResult opened
@@ -390,7 +390,7 @@ void TestArchiveBackend::archiveSessionListsAndReadsKArchiveEntries()
             { QStringLiteral("pages/01.png"), QByteArrayLiteral("one") },
         });
 
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
         = archiveDocumentForPath(archivePath);
     QVERIFY(archiveDocument.has_value());
     KiriView::ArchiveDocumentSessionOpenResult opened
@@ -428,8 +428,8 @@ void TestArchiveBackend::directorySessionListsAndReadsEntries()
     writeFile(dir.filePath(QStringLiteral("pages/02.jpg")), QByteArrayLiteral("two"));
     writeFile(dir.filePath(QStringLiteral("pages/01.png")), QByteArrayLiteral("one"));
 
-    const std::optional<KiriView::ArchiveDocumentLocation> directoryDocument
-        = KiriView::directOpenDocumentLocationForLocalUrl(localUrl(dir.path()));
+    const std::optional<KiriView::ImagePageScopeLocation> directoryDocument
+        = KiriView::directOpenImagePageScopeLocationForLocalUrl(localUrl(dir.path()));
     QVERIFY(directoryDocument.has_value());
     KiriView::ArchiveDocumentSessionOpenResult opened
         = KiriView::openArchiveDocumentSession(*directoryDocument);
@@ -458,7 +458,7 @@ void TestArchiveBackend::libArchiveSessionScansOnceAndServesRandomReads()
     const QString archivePath = dir.filePath(QStringLiteral("book.rar"));
     writeRarArchive(archivePath);
 
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
         = archiveDocumentForPath(archivePath);
     QVERIFY(archiveDocument.has_value());
     KiriView::ArchiveDocumentSessionOpenResult opened
@@ -496,7 +496,7 @@ void TestArchiveBackend::libArchiveSessionReadsFromHeldFileDescriptorAfterPathRe
     const QString archivePath = dir.filePath(QStringLiteral("book.rar"));
     writeRarArchive(archivePath);
 
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
         = archiveDocumentForPath(archivePath);
     QVERIFY(archiveDocument.has_value());
     KiriView::ArchiveDocumentSessionOpenResult opened
@@ -543,7 +543,7 @@ void TestArchiveBackend::readingUrlOutsideArchiveReturnsNotFound()
             { QStringLiteral("page.png"), QByteArrayLiteral("image-bytes") },
         });
 
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
         = archiveDocumentForPath(archivePath);
     QVERIFY(archiveDocument.has_value());
     const KiriView::ArchiveImageDataResult result = KiriView::loadArchiveDocumentImageData(
@@ -559,10 +559,11 @@ void TestArchiveBackend::missingEmptyAndInvalidArchivesReportExpectedResults()
     QTemporaryDir dir;
     QVERIFY(dir.isValid());
 
-    const KiriView::ArchiveDocumentLocation missingArchive
-        = KiriView::ArchiveDocumentLocation::fromUrls(
+    const KiriView::ImagePageScopeLocation missingArchive
+        = KiriView::ImagePageScopeLocation::fromUrls(
             localUrl(dir.filePath(QStringLiteral("missing.cbz"))),
-            QUrl(QStringLiteral("zip:///missing.cbz/")), KiriView::ArchiveDocumentKind::ComicBook);
+            QUrl(QStringLiteral("zip:///missing.cbz/")),
+            KiriView::ImagePageScopeKind::ComicBookArchive);
     const KiriView::ArchiveImageCandidatesResult missingResult
         = KiriView::loadArchiveDocumentImageCandidates(missingArchive);
     const KiriView::ArchiveError *missingError = archiveError(missingResult);
@@ -571,7 +572,7 @@ void TestArchiveBackend::missingEmptyAndInvalidArchivesReportExpectedResults()
 
     const QString emptyArchivePath = dir.filePath(QStringLiteral("empty.cbz"));
     writeZipArchive(emptyArchivePath, {});
-    const std::optional<KiriView::ArchiveDocumentLocation> emptyArchiveDocument
+    const std::optional<KiriView::ImagePageScopeLocation> emptyArchiveDocument
         = archiveDocumentForPath(emptyArchivePath);
     QVERIFY(emptyArchiveDocument.has_value());
     const KiriView::ArchiveImageCandidatesResult emptyResult
@@ -587,7 +588,7 @@ void TestArchiveBackend::missingEmptyAndInvalidArchivesReportExpectedResults()
         qsizetype(QByteArrayLiteral("not an archive").size()));
     invalidArchive.close();
 
-    const std::optional<KiriView::ArchiveDocumentLocation> invalidArchiveDocument
+    const std::optional<KiriView::ImagePageScopeLocation> invalidArchiveDocument
         = archiveDocumentForPath(invalidArchivePath);
     QVERIFY(invalidArchiveDocument.has_value());
     const KiriView::ArchiveImageCandidatesResult invalidResult

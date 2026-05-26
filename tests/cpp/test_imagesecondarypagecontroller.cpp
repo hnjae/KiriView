@@ -66,7 +66,7 @@ public:
 
     void startLoad(const QUrl &url)
     {
-        controller.startLoad(url, KiriView::ArchiveDocumentLocation::none(), {});
+        controller.startLoad(url, KiriView::ImagePageScopeLocation::none(), {});
     }
 
     std::optional<KiriView::PredecodedImage> findPredecodedImage(const QUrl &url) const

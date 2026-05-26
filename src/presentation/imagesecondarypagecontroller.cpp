@@ -100,12 +100,12 @@ void ImageSecondaryPageController::updateRenderContext()
 }
 
 void ImageSecondaryPageController::startLoad(const QUrl &url,
-    const ArchiveDocumentLocation &displayedArchiveDocument,
+    const ImagePageScopeLocation &displayedImagePageScope,
     const ImageFirstDisplayDecodeContext &firstDisplayContext)
 {
     clear();
     m_imageLoader->start(
-        ImageLoadRequest::fromLocation(url, displayedArchiveDocument), firstDisplayContext);
+        ImageLoadRequest::fromLocation(url, displayedImagePageScope), firstDisplayContext);
 }
 
 void ImageSecondaryPageController::clear()

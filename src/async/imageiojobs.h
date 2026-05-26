@@ -20,9 +20,8 @@ ImageIoJob startDirectoryImageCandidateList(QObject *receiver, QUrl directoryUrl
     ImageCandidatesCallback callback, ErrorCallback errorCallback);
 ImageIoJob startDirectoryContainerCandidateList(QObject *receiver, QUrl directoryUrl,
     ContainerCandidatesCallback callback, ErrorCallback errorCallback);
-ImageIoJob startArchiveImageCandidateList(QObject *receiver,
-    ArchiveDocumentLocation archiveDocument, ImageCandidatesCallback callback,
-    ErrorCallback errorCallback);
+ImageIoJob startArchiveImageCandidateList(QObject *receiver, ImagePageScopeLocation archiveDocument,
+    ImageCandidatesCallback callback, ErrorCallback errorCallback);
 ImageIoJob startStoredImageDataLoad(QObject *receiver, ImageDecodeRequest request,
     ImageDataCallback callback, ErrorCallback errorCallback);
 }

@@ -92,9 +92,8 @@ ImageIoJob startDirectoryContainerCandidateList(QObject *receiver, QUrl director
         std::move(errorCallback), containerNavigationCandidates);
 }
 
-ImageIoJob startArchiveImageCandidateList(QObject *receiver,
-    ArchiveDocumentLocation archiveDocument, ImageCandidatesCallback callback,
-    ErrorCallback errorCallback)
+ImageIoJob startArchiveImageCandidateList(QObject *receiver, ImagePageScopeLocation archiveDocument,
+    ImageCandidatesCallback callback, ErrorCallback errorCallback)
 {
     return startArchiveWorkerJob(
         receiver,
@@ -114,11 +113,11 @@ ImageIoJob startArchiveImageCandidateList(QObject *receiver,
 ImageIoJob startStoredImageDataLoad(QObject *receiver, ImageDecodeRequest request,
     ImageDataCallback callback, ErrorCallback errorCallback)
 {
-    if (archiveDocumentContainsUrl(request.archiveDocument(), request.imageUrl())) {
+    if (imagePageScopeContainsUrl(request.imagePageScope(), request.imageUrl())) {
         return startArchiveWorkerJob(
             receiver,
             [request = std::move(request)]() {
-                return loadArchiveDocumentImageData(request.archiveDocument(), request.imageUrl());
+                return loadArchiveDocumentImageData(request.imagePageScope(), request.imageUrl());
             },
             [callback = std::move(callback), errorCallback = std::move(errorCallback)](
                 ArchiveImageDataResult result) mutable {

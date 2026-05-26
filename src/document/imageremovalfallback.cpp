@@ -79,9 +79,9 @@ QUrl removalTargetUrlForDisplayedLocation(const KiriView::DisplayedImageLocation
         return {};
     }
 
-    if (!location.archiveDocument().isEmpty()
-        && KiriView::displayedLocationIsInsideArchiveDocument(location)) {
-        return location.archiveDocumentFileUrl();
+    if (!location.imagePageScope().isEmpty()
+        && KiriView::displayedLocationIsInsideImagePageScope(location)) {
+        return location.imagePageScopeSourceUrl();
     }
 
     return location.imageUrl();
@@ -93,8 +93,8 @@ KiriView::ImageRemovalFallbackPlan removalFallbackPlanForDisplayedLocation(
     const std::optional<KiriView::ImageCandidateListContext> imageContext
         = KiriView::imageCandidateListContextForDisplayedImage(location);
 
-    if (KiriView::displayedLocationIsInsideArchiveDocument(location)) {
-        if (location.archiveDocument().kind() == KiriView::ArchiveDocumentKind::ComicBook) {
+    if (KiriView::displayedLocationIsInsideImagePageScope(location)) {
+        if (location.imagePageScope().kind() == KiriView::ImagePageScopeKind::ComicBookArchive) {
             const QUrl currentContainerUrl = KiriView::containerNavigationUrlForLocation(location);
             return KiriView::ComicBookRemovalFallback { currentContainerUrl,
                 KiriView::parentUrlForContainerNavigation(currentContainerUrl),

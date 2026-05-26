@@ -47,12 +47,12 @@ void TestImageDocumentState::displayedUrlAndWindowTitleFollowDisplayedImageLocat
     QCOMPARE(changes.size(), localChangeCount);
 
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
-        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
+        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveDocument.has_value());
     const QUrl firstArchivePageUrl
         = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("page001.png"));
-    state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromArchiveDocument(
+    state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromImagePageScope(
         firstArchivePageUrl, *archiveDocument));
     QCOMPARE(state.displayedUrl(), firstArchivePageUrl);
     QCOMPARE(state.windowTitleFileName(), QStringLiteral("book.cbz"));
@@ -61,7 +61,7 @@ void TestImageDocumentState::displayedUrlAndWindowTitleFollowDisplayedImageLocat
     const std::size_t changeCount = changes.size();
     const QUrl secondArchivePageUrl
         = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("page002.png"));
-    state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromArchiveDocument(
+    state.setDisplayedImageLocation(KiriView::DisplayedImageLocation::fromImagePageScope(
         secondArchivePageUrl, *archiveDocument));
     QCOMPARE(state.displayedUrl(), secondArchivePageUrl);
     QCOMPARE(state.windowTitleFileName(), QStringLiteral("book.cbz"));

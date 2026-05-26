@@ -11,11 +11,12 @@
 #include <optional>
 
 namespace {
-KiriView::ArchiveDocumentLocation archiveDocument()
+KiriView::ImagePageScopeLocation imagePageScope()
 {
-    return KiriView::ArchiveDocumentLocation::fromUrls(
+    return KiriView::ImagePageScopeLocation::fromUrls(
         QUrl::fromLocalFile(QStringLiteral("/books/book.cbz")),
-        QUrl(QStringLiteral("zip:///books/book.cbz/")), KiriView::ArchiveDocumentKind::ComicBook);
+        QUrl(QStringLiteral("zip:///books/book.cbz/")),
+        KiriView::ImagePageScopeKind::ComicBookArchive);
 }
 }
 
@@ -33,12 +34,12 @@ private Q_SLOTS:
 
 void TestArchivePath::entryUrlsNormalizePathsAndClearUrlMetadata()
 {
-    KiriView::ArchiveDocumentLocation archive = archiveDocument();
+    KiriView::ImagePageScopeLocation archive = imagePageScope();
     QUrl rootUrl = archive.rootUrl();
     rootUrl.setQuery(QStringLiteral("token=ignored"));
     rootUrl.setFragment(QStringLiteral("ignored"));
     archive
-        = KiriView::ArchiveDocumentLocation::fromUrls(archive.fileUrl(), rootUrl, archive.kind());
+        = KiriView::ImagePageScopeLocation::fromUrls(archive.fileUrl(), rootUrl, archive.kind());
 
     const QUrl url = KiriView::archiveEntryUrl(archive, QStringLiteral("./chapter/./page001.png"));
 
@@ -49,18 +50,18 @@ void TestArchivePath::entryUrlsNormalizePathsAndClearUrlMetadata()
 
 void TestArchivePath::entryUrlsRejectUnsafePaths()
 {
-    const KiriView::ArchiveDocumentLocation archive = archiveDocument();
+    const KiriView::ImagePageScopeLocation archive = imagePageScope();
 
     QVERIFY(KiriView::archiveEntryUrl(archive, QStringLiteral("../page001.png")).isEmpty());
     QVERIFY(KiriView::archiveEntryUrl(archive, QStringLiteral("/tmp/page001.png")).isEmpty());
     QVERIFY(KiriView::archiveEntryUrl(
-        KiriView::ArchiveDocumentLocation::none(), QStringLiteral("page001.png"))
+        KiriView::ImagePageScopeLocation::none(), QStringLiteral("page001.png"))
             .isEmpty());
 }
 
 void TestArchivePath::entryPathsResolveOnlyInsideArchiveRoot()
 {
-    const KiriView::ArchiveDocumentLocation archive = archiveDocument();
+    const KiriView::ImagePageScopeLocation archive = imagePageScope();
 
     QCOMPARE(KiriView::archiveEntryPathForUrl(
                  archive, QUrl(QStringLiteral("zip:///books/book.cbz/chapter/page001.png"))),

@@ -19,7 +19,7 @@
 namespace KiriView {
 struct PredecodeLoadWindow {
     QUrl primaryDisplayedUrl;
-    ArchiveDocumentLocation archiveDocument;
+    ImagePageScopeLocation imagePageScope;
     std::vector<QUrl> urls;
     std::vector<DisplayedPredecodeImage> displayedImages;
     ImageFirstDisplayDecodeContext firstDisplayContext;

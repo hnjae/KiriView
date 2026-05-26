@@ -133,18 +133,18 @@ void TestImageLoadSessionTracker::predecodedLocationReplacementUpdatesCanonicalC
     KiriView::ImageLoadSessionTracker tracker;
     const QUrl imageUrl = localUrl(QStringLiteral("/images/01.png"));
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
-        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
+        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveDocument.has_value());
 
     const KiriView::ImageLoadSession session
         = tracker.start(KiriView::ImageLoadRequest::fromUrl(imageUrl)).session;
     const std::optional<KiriView::ImageLoadSession> replacedSession = tracker.claimPredecodedImage(
-        session, KiriView::DisplayedImageLocation::fromArchiveDocument(imageUrl, *archiveDocument));
+        session, KiriView::DisplayedImageLocation::fromImagePageScope(imageUrl, *archiveDocument));
 
     QVERIFY(replacedSession.has_value());
     QCOMPARE(replacedSession->imageUrl(), imageUrl);
-    QCOMPARE(replacedSession->location().archiveDocumentRootUrl(), archiveDocument->rootUrl());
+    QCOMPARE(replacedSession->location().imagePageScopeRootUrl(), archiveDocument->rootUrl());
     QVERIFY(!tracker.isCurrent(session));
 }
 

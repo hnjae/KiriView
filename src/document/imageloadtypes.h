@@ -15,26 +15,26 @@
 namespace KiriView {
 struct ImageLoadRequest {
     ImageLocation source;
-    ArchiveDocumentLocation displayedArchiveDocument;
+    ImagePageScopeLocation displayedImagePageScope;
     ContainerLocation containerNavigation;
 
     static ImageLoadRequest fromUrl(QUrl sourceUrl, QUrl containerNavigationUrl = QUrl())
     {
         return ImageLoadRequest { ImageLocation::fromUrl(std::move(sourceUrl)),
-            ArchiveDocumentLocation::none(),
+            ImagePageScopeLocation::none(),
             ContainerLocation::fromUrl(std::move(containerNavigationUrl)) };
     }
 
     static ImageLoadRequest fromLocation(QUrl sourceUrl,
-        ArchiveDocumentLocation displayedArchiveDocument, QUrl containerNavigationUrl = QUrl())
+        ImagePageScopeLocation displayedImagePageScope, QUrl containerNavigationUrl = QUrl())
     {
         return ImageLoadRequest { ImageLocation::fromUrl(std::move(sourceUrl)),
-            std::move(displayedArchiveDocument),
+            std::move(displayedImagePageScope),
             ContainerLocation::fromUrl(std::move(containerNavigationUrl)) };
     }
 
     const QUrl &sourceUrl() const { return source.url(); }
-    const ArchiveDocumentLocation &archiveDocument() const { return displayedArchiveDocument; }
+    const ImagePageScopeLocation &imagePageScope() const { return displayedImagePageScope; }
     const QUrl &containerNavigationUrl() const { return containerNavigation.url(); }
     bool isEmpty() const { return source.isEmpty(); }
     bool isContainerNavigation() const { return !containerNavigation.isEmpty(); }
@@ -52,7 +52,7 @@ public:
     const DisplayedImageLocation &location() const;
     const ImageFirstDisplayDecodeContext &firstDisplay() const;
     const QUrl &imageUrl() const;
-    const ArchiveDocumentLocation &archiveDocument() const;
+    const ImagePageScopeLocation &imagePageScope() const;
     const QUrl &containerNavigationUrl() const;
     bool hasContainerNavigationTarget() const;
     ImageDecodeRequest decodeRequest() const;

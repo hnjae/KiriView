@@ -14,10 +14,11 @@
 #include <vector>
 
 namespace {
-KiriView::ArchiveDocumentLocation testArchiveDocument()
+KiriView::ImagePageScopeLocation testArchiveDocument()
 {
-    return KiriView::ArchiveDocumentLocation::fromUrls(QUrl(QStringLiteral("file:///tmp/book.cbz")),
-        QUrl(QStringLiteral("file:///tmp/book.cbz#/")), KiriView::ArchiveDocumentKind::ComicBook);
+    return KiriView::ImagePageScopeLocation::fromUrls(QUrl(QStringLiteral("file:///tmp/book.cbz")),
+        QUrl(QStringLiteral("file:///tmp/book.cbz#/")),
+        KiriView::ImagePageScopeKind::ComicBookArchive);
 }
 
 class FakePowerSaverMonitor final : public KiriView::PowerSaverStateMonitor
@@ -90,7 +91,7 @@ void TestImageDocumentRuntimeDependencies::customSessionFactoryWrapsArchiveProvi
 {
     int openCount = 0;
     KiriView::ImageDocumentRuntimeDependencyOverrides dependencies;
-    dependencies.archiveDocumentSessions = [&openCount](const KiriView::ArchiveDocumentLocation &)
+    dependencies.archiveDocumentSessions = [&openCount](const KiriView::ImagePageScopeLocation &)
         -> KiriView::ArchiveDocumentSessionOpenResult {
         ++openCount;
         return KiriView::ArchiveError { QStringLiteral("session failed") };
@@ -123,7 +124,7 @@ void TestImageDocumentRuntimeDependencies::explicitArchiveProvidersAvoidSessionS
 
     KiriView::ImageDocumentRuntimeDependencyOverrides dependencies;
     dependencies.candidateProvider.archiveImages
-        = [&archiveLoadCount](QObject *, KiriView::ArchiveDocumentLocation,
+        = [&archiveLoadCount](QObject *, KiriView::ImagePageScopeLocation,
               KiriView::ImageCandidatesCallback callback, KiriView::ErrorCallback) {
               ++archiveLoadCount;
               callback({});

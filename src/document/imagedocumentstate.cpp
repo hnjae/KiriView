@@ -44,9 +44,9 @@ const DisplayedImageLocation &ImageDocumentState::displayedImageLocation() const
     return m_displayedImageLocation;
 }
 
-const ArchiveDocumentLocation &ImageDocumentState::displayedArchiveDocument() const
+const ImagePageScopeLocation &ImageDocumentState::displayedImagePageScope() const
 {
-    return m_displayedImageLocation.archiveDocument();
+    return m_displayedImageLocation.imagePageScope();
 }
 
 const QUrl &ImageDocumentState::displayedUrl() const { return m_displayedImageLocation.imageUrl(); }

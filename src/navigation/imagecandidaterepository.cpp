@@ -35,11 +35,11 @@ KiriView::ImageIoJob loadImagesForSource(const KiriView::ImageCandidateRepositor
 }
 
 KiriView::ImageIoJob loadImagesForSource(const KiriView::ImageCandidateRepository &repository,
-    QObject *receiver, const KiriView::ImageCandidateListSource::ArchiveDocument &source,
+    QObject *receiver, const KiriView::ImageCandidateListSource::ImagePageScope &source,
     KiriView::ImageCandidatesCallback callback, KiriView::ErrorCallback errorCallback)
 {
     return repository.loadArchiveImages(
-        receiver, source.archiveDocument, std::move(callback), std::move(errorCallback));
+        receiver, source.imagePageScope, std::move(callback), std::move(errorCallback));
 }
 
 KiriView::ImageIoJob watchChangesForSource(const KiriView::ImageCandidateRepository &repository,
@@ -51,7 +51,7 @@ KiriView::ImageIoJob watchChangesForSource(const KiriView::ImageCandidateReposit
 }
 
 KiriView::ImageIoJob watchChangesForSource(const KiriView::ImageCandidateRepository &, QObject *,
-    const KiriView::ImageCandidateListSource::ArchiveDocument &, KiriView::ImageCandidatesCallback,
+    const KiriView::ImageCandidateListSource::ImagePageScope &, KiriView::ImageCandidatesCallback,
     KiriView::ErrorCallback)
 {
     return KiriView::ImageIoJob();
@@ -92,11 +92,11 @@ ImageIoJob ImageCandidateRepository::loadDirectoryImages(QObject *receiver,
 }
 
 ImageIoJob ImageCandidateRepository::loadArchiveImages(QObject *receiver,
-    ArchiveDocumentLocation archiveDocument, ImageCandidatesCallback callback,
+    ImagePageScopeLocation imagePageScope, ImageCandidatesCallback callback,
     ErrorCallback errorCallback) const
 {
     return loadWithProvider(m_provider.archiveImages, std::move(errorCallback), receiver,
-        std::move(archiveDocument), std::move(callback));
+        std::move(imagePageScope), std::move(callback));
 }
 
 ImageIoJob ImageCandidateRepository::loadContainers(QObject *receiver, const QUrl &directoryUrl,

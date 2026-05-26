@@ -60,7 +60,7 @@ namespace Detail {
 struct ManualImageDataLoad {
     QObject *object = nullptr;
     QUrl url;
-    ArchiveDocumentLocation archiveDocument;
+    ImagePageScopeLocation imagePageScope;
     ImageFirstDisplayDecodeContext firstDisplay;
     ImageDataCallback dataCallback;
     ErrorCallback errorCallback;
@@ -76,7 +76,7 @@ public:
     {
         auto load = std::make_shared<ManualImageDataLoad>();
         load->url = request.imageUrl();
-        load->archiveDocument = request.archiveDocument();
+        load->imagePageScope = request.imagePageScope();
         load->firstDisplay = request.firstDisplay();
         load->dataCallback = std::move(callback);
         load->errorCallback = std::move(errorCallback);

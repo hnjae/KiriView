@@ -43,14 +43,14 @@ public:
 using ArchiveDocumentSessionPtr = std::shared_ptr<ArchiveDocumentSession>;
 using ArchiveDocumentSessionOpenResult = ArchiveResult<ArchiveDocumentSessionPtr>;
 using ArchiveDocumentSessionFactory
-    = std::function<ArchiveDocumentSessionOpenResult(const ArchiveDocumentLocation &)>;
+    = std::function<ArchiveDocumentSessionOpenResult(const ImagePageScopeLocation &)>;
 
 ArchiveImageCandidatesResult loadArchiveDocumentImageCandidates(
-    const ArchiveDocumentLocation &archiveDocument);
+    const ImagePageScopeLocation &archiveDocument);
 ArchiveImageDataResult loadArchiveDocumentImageData(
-    const ArchiveDocumentLocation &archiveDocument, const QUrl &imageUrl);
+    const ImagePageScopeLocation &archiveDocument, const QUrl &imageUrl);
 ArchiveDocumentSessionOpenResult openArchiveDocumentSession(
-    const ArchiveDocumentLocation &archiveDocument);
+    const ImagePageScopeLocation &archiveDocument);
 }
 
 #endif

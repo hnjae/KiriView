@@ -82,7 +82,7 @@ void ImageLoader::start(
     switch (plan.startEffect) {
     case ImageLoadStartEffect::DecodeImage:
         break;
-    case ImageLoadStartEffect::LoadArchiveImageCandidates:
+    case ImageLoadStartEffect::LoadImagePageScopeCandidates:
         startArchiveLoad(session);
         return;
     }
@@ -106,7 +106,7 @@ void ImageLoader::startImageLoad(ImageLoadSession session)
 void ImageLoader::startArchiveLoad(ImageLoadSession session)
 {
     const ImageCandidateListSource candidateSource
-        = ImageCandidateListSource::forArchiveDocument(session.archiveDocument());
+        = ImageCandidateListSource::forImagePageScope(session.imagePageScope());
     m_archiveListJob = m_candidateRepository.loadImages(
         this, candidateSource,
         [this, session](std::vector<ImageNavigationCandidate> candidates) mutable {

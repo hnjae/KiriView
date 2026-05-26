@@ -39,7 +39,7 @@ public:
             [](QObject *, QUrl, KiriView::ContainerCandidatesCallback, KiriView::ErrorCallback) {
                 return KiriView::ImageIoJob();
             },
-            [](QObject *, KiriView::ArchiveDocumentLocation, KiriView::ImageCandidatesCallback,
+            [](QObject *, KiriView::ImagePageScopeLocation, KiriView::ImageCandidatesCallback,
                 KiriView::ErrorCallback) { return KiriView::ImageIoJob(); },
             [](QObject *, QUrl, KiriView::ImageCandidatesCallback, KiriView::ErrorCallback) {
                 return KiriView::ImageIoJob();

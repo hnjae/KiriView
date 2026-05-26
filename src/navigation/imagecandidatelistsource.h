@@ -19,14 +19,14 @@ public:
         QUrl directoryUrl;
     };
 
-    struct ArchiveDocument {
-        ArchiveDocumentLocation archiveDocument;
+    struct ImagePageScope {
+        ImagePageScopeLocation imagePageScope;
     };
 
     static ImageCandidateListSource forDirectory(QUrl directoryUrl);
-    static ImageCandidateListSource forArchiveDocument(ArchiveDocumentLocation archiveDocument);
+    static ImageCandidateListSource forImagePageScope(ImagePageScopeLocation imagePageScope);
 
-    ArchiveDocumentLocation archiveDocument() const;
+    ImagePageScopeLocation imagePageScope() const;
 
     template <typename Visitor> decltype(auto) visit(Visitor &&visitor) const
     {
@@ -34,7 +34,7 @@ public:
     }
 
 private:
-    using Payload = std::variant<Directory, ArchiveDocument>;
+    using Payload = std::variant<Directory, ImagePageScope>;
 
     explicit ImageCandidateListSource(Payload source);
 
@@ -48,16 +48,16 @@ class ImageCandidateListContext
 {
 public:
     using DirectoryContext = ImageCandidateListSource::Directory;
-    using ArchiveDocumentContext = ImageCandidateListSource::ArchiveDocument;
+    using ImagePageScopeContext = ImageCandidateListSource::ImagePageScope;
 
     static ImageCandidateListContext forDirectory(QUrl currentUrl, QUrl directoryUrl);
-    static ImageCandidateListContext forArchiveDocument(
-        QUrl currentUrl, ArchiveDocumentLocation archiveDocument);
+    static ImageCandidateListContext forImagePageScope(
+        QUrl currentUrl, ImagePageScopeLocation imagePageScope);
     static ImageCandidateListContext forSource(QUrl currentUrl, ImageCandidateListSource source);
 
     const QUrl &currentUrl() const;
     const ImageCandidateListSource &source() const;
-    ArchiveDocumentLocation archiveDocument() const;
+    ImagePageScopeLocation imagePageScope() const;
 
     template <typename Visitor> decltype(auto) visit(Visitor &&visitor) const
     {

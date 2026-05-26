@@ -85,7 +85,7 @@ LibArchiveReader makeLibArchiveReader()
 }
 
 OpenArchiveFileResult openArchiveFileDescriptor(
-    const KiriView::ArchiveDocumentLocation &archiveDocument)
+    const KiriView::ImagePageScopeLocation &archiveDocument)
 {
     const QString filePath = archiveDocument.fileUrl().toLocalFile();
     if (filePath.isEmpty()) {
@@ -108,7 +108,7 @@ OpenArchiveFileResult openArchiveFileDescriptor(
 }
 
 bool configureLibArchiveReader(
-    archive *reader, const KiriView::ArchiveDocumentLocation &archiveDocument, QString *errorString)
+    archive *reader, const KiriView::ImagePageScopeLocation &archiveDocument, QString *errorString)
 {
     if (archive_read_support_filter_all(reader) != ARCHIVE_OK
         || archive_read_support_format_rar(reader) != ARCHIVE_OK
@@ -121,7 +121,7 @@ bool configureLibArchiveReader(
     return true;
 }
 
-LibArchiveReader openLibArchiveReaderOnFd(const KiriView::ArchiveDocumentLocation &archiveDocument,
+LibArchiveReader openLibArchiveReaderOnFd(const KiriView::ImagePageScopeLocation &archiveDocument,
     int fileDescriptor, QString *errorString)
 {
     if (fileDescriptor < 0 || ::lseek(fileDescriptor, 0, SEEK_SET) < 0) {
@@ -207,7 +207,7 @@ struct LibArchiveSessionMetadata {
 };
 
 std::optional<LibArchiveSessionMetadata> scanLibArchiveSessionMetadata(
-    const KiriView::ArchiveDocumentLocation &archiveDocument, archive *reader, QString *errorString)
+    const KiriView::ImagePageScopeLocation &archiveDocument, archive *reader, QString *errorString)
 {
     LibArchiveSessionMetadata metadata;
     archive_entry *entry = nullptr;
@@ -246,7 +246,7 @@ class LibArchiveDocumentSession final : public Backend::ArchiveDocumentSessionWi
 {
 public:
     static KiriView::ArchiveDocumentSessionOpenResult create(
-        const KiriView::ArchiveDocumentLocation &archiveDocument)
+        const KiriView::ImagePageScopeLocation &archiveDocument)
     {
         OpenArchiveFileResult opened = openArchiveFileDescriptor(archiveDocument);
         if (!opened.fileDescriptor) {
@@ -296,7 +296,7 @@ public:
 
 private:
     LibArchiveDocumentSession(
-        KiriView::ArchiveDocumentLocation archiveDocument, ScopedFileDescriptor archiveFile)
+        KiriView::ImagePageScopeLocation archiveDocument, ScopedFileDescriptor archiveFile)
         : Backend::ArchiveDocumentSessionWithCandidateSnapshot({})
         , m_archiveDocument(std::move(archiveDocument))
         , m_archiveFile(std::move(archiveFile))
@@ -367,7 +367,7 @@ private:
         return true;
     }
 
-    KiriView::ArchiveDocumentLocation m_archiveDocument;
+    KiriView::ImagePageScopeLocation m_archiveDocument;
     ScopedFileDescriptor m_archiveFile;
     std::map<QString, int> m_entryOrderByPath;
     LibArchiveReader m_reader { nullptr, archive_read_free };
@@ -376,7 +376,7 @@ private:
 };
 
 KiriView::ArchiveDocumentSessionOpenResult openLibArchiveDocumentSession(
-    const KiriView::ArchiveDocumentLocation &archiveDocument)
+    const KiriView::ImagePageScopeLocation &archiveDocument)
 {
     return LibArchiveDocumentSession::create(archiveDocument);
 }

@@ -84,8 +84,8 @@ qsizetype predecodePreferredByteBudget();
 int predecodeDebounceMsec();
 int predecodeNeutralRefreshMsec();
 qsizetype predecodeByteBudgetForSystemMemory(qsizetype systemMemoryByteSize);
-PredecodePolicyInput predecodePolicyInputForArchiveDocument(
-    const ArchiveDocumentLocation &archiveDocument, PredecodeMomentumMode momentumMode,
+PredecodePolicyInput predecodePolicyInputForImagePageScope(
+    const ImagePageScopeLocation &imagePageScope, PredecodeMomentumMode momentumMode,
     bool powerSaverEnabled, int idealThreadCount);
 std::vector<std::size_t> predecodeRetainedCachedImageIndices(
     const std::vector<PredecodeCachedImageState> &states, std::size_t windowCount,

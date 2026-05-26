@@ -119,17 +119,17 @@ qsizetype predecodeByteBudgetForSystemMemory(qsizetype systemMemoryByteSize)
         rustPredecodeByteBudgetForSystemMemory(Bridge::rustByteSize(systemMemoryByteSize)));
 }
 
-PredecodePolicyInput predecodePolicyInputForArchiveDocument(
-    const ArchiveDocumentLocation &archiveDocument, PredecodeMomentumMode momentumMode,
+PredecodePolicyInput predecodePolicyInputForImagePageScope(
+    const ImagePageScopeLocation &imagePageScope, PredecodeMomentumMode momentumMode,
     bool powerSaverEnabled, int idealThreadCount)
 {
     PredecodePolicyInput input {};
     input.momentumMode = momentumMode;
     input.powerSaverEnabled = powerSaverEnabled;
     input.idealThreadCount = idealThreadCount;
-    if (archiveDocument.isEmpty()) {
+    if (imagePageScope.isEmpty()) {
         input.documentKind = PredecodeDocumentKind::Regular;
-    } else if (archiveDocument.isDirectory()) {
+    } else if (imagePageScope.isDirectory()) {
         input.documentKind = PredecodeDocumentKind::DirectoryDocument;
     } else {
         input.documentKind = PredecodeDocumentKind::ArchiveDocument;

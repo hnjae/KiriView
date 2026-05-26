@@ -9,19 +9,19 @@
 #include <QtGlobal>
 
 namespace KiriView {
-enum class ImageArchiveLoadEffect {
+enum class ImagePageScopeLoadEffect {
     ReadImage,
     LoadImageCandidates,
 };
 
 enum class ImageLoadStartEffect {
     DecodeImage,
-    LoadArchiveImageCandidates,
+    LoadImagePageScopeCandidates,
 };
 
-struct ImageArchiveLoadPlan {
-    ArchiveDocumentLocation archiveDocument;
-    ImageArchiveLoadEffect effect = ImageArchiveLoadEffect::ReadImage;
+struct ImagePageScopeLoadPlan {
+    ImagePageScopeLocation imagePageScope;
+    ImagePageScopeLoadEffect effect = ImagePageScopeLoadEffect::ReadImage;
 };
 
 struct ImageLoadPlan {
@@ -29,7 +29,7 @@ struct ImageLoadPlan {
     ImageLoadStartEffect startEffect = ImageLoadStartEffect::DecodeImage;
 };
 
-ImageArchiveLoadPlan imageArchiveLoadPlan(const ImageLoadRequest &request);
+ImagePageScopeLoadPlan imagePageScopeLoadPlan(const ImageLoadRequest &request);
 ImageLoadPlan imageLoadPlan(
     quint64 id, ImageLoadRequest request, ImageFirstDisplayDecodeContext firstDisplayContext = {});
 }

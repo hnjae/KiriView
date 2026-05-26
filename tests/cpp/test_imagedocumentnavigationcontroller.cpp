@@ -92,10 +92,10 @@ public:
         presentation.setStaticImage(staticTestImagePayload(testImage()), false);
     }
 
-    void displayComicPage(const QUrl &url, const KiriView::ArchiveDocumentLocation &archiveDocument)
+    void displayComicPage(const QUrl &url, const KiriView::ImagePageScopeLocation &archiveDocument)
     {
         state.setDisplayedImageLocation(
-            KiriView::DisplayedImageLocation::fromArchiveDocument(url, archiveDocument));
+            KiriView::DisplayedImageLocation::fromImagePageScope(url, archiveDocument));
         presentation.setStaticImage(staticTestImagePayload(testImage(QSize(800, 1200))), false);
     }
 
@@ -209,8 +209,8 @@ void TestImageDocumentNavigationController::spreadPageSelectionStartsTrackedTran
 {
     DocumentNavigationFixture fixture;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
-        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
+        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveDocument.has_value());
     const QUrl firstUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
     const QUrl secondUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("02.png"));

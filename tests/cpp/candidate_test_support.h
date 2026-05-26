@@ -192,10 +192,10 @@ public:
                     std::move(directoryUrl), std::move(callback), std::move(errorCallback));
                 return ImageIoJob();
             },
-            [this](QObject *, ArchiveDocumentLocation archiveDocument,
+            [this](QObject *, ImagePageScopeLocation imagePageScope,
                 ImageCandidatesCallback callback, ErrorCallback errorCallback) {
                 m_archiveImages.load(
-                    archiveDocument.rootUrl(), std::move(callback), std::move(errorCallback));
+                    imagePageScope.rootUrl(), std::move(callback), std::move(errorCallback));
                 return ImageIoJob();
             },
             [this](QObject *receiver, QUrl directoryUrl, ImageCandidatesCallback callback,

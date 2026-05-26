@@ -12,19 +12,19 @@
 
 namespace {
 QString archivePageWindowTitle(const QUrl &pageUrl, const QUrl &archiveFileUrl,
-    const QUrl &archiveRootUrl, KiriView::ArchiveDocumentKind kind)
+    const QUrl &archiveRootUrl, KiriView::ImagePageScopeKind kind)
 {
-    const KiriView::ArchiveDocumentLocation archiveDocument
-        = KiriView::ArchiveDocumentLocation::fromUrls(archiveFileUrl, archiveRootUrl, kind);
+    const KiriView::ImagePageScopeLocation archiveDocument
+        = KiriView::ImagePageScopeLocation::fromUrls(archiveFileUrl, archiveRootUrl, kind);
     const KiriView::DisplayedImageLocation location
-        = KiriView::DisplayedImageLocation::fromArchiveDocument(pageUrl, archiveDocument);
+        = KiriView::DisplayedImageLocation::fromImagePageScope(pageUrl, archiveDocument);
     return KiriView::windowTitleFileNameForDisplayedLocation(location);
 }
 
 struct ArchiveInteriorCase {
     QString scheme;
     QString extension;
-    KiriView::ArchiveDocumentKind kind;
+    KiriView::ImagePageScopeKind kind;
 };
 
 QUrl archiveRootUrl(const QString &scheme, const QString &archiveName)
@@ -35,10 +35,9 @@ QUrl archiveRootUrl(const QString &scheme, const QString &archiveName)
     return rootUrl;
 }
 
-std::optional<QUrl> containingArchiveRootUrl(
-    const QUrl &pageUrl, KiriView::ArchiveDocumentKind kind)
+std::optional<QUrl> containingArchiveRootUrl(const QUrl &pageUrl, KiriView::ImagePageScopeKind kind)
 {
-    if (kind == KiriView::ArchiveDocumentKind::ComicBook) {
+    if (kind == KiriView::ImagePageScopeKind::ComicBookArchive) {
         return KiriView::containingComicBookArchiveRootUrl(pageUrl);
     }
 
@@ -148,15 +147,22 @@ void TestImageDocumentLocation::directArchiveRootUrlsUseFormatSpecificKioSchemes
 void TestImageDocumentLocation::archiveInteriorUrlsResolveToTheirRootAndTitle()
 {
     const std::vector<ArchiveInteriorCase> cases = {
-        { QStringLiteral("zip"), QStringLiteral("cbz"), KiriView::ArchiveDocumentKind::ComicBook },
-        { QStringLiteral("tar"), QStringLiteral("cbt"), KiriView::ArchiveDocumentKind::ComicBook },
+        { QStringLiteral("zip"), QStringLiteral("cbz"),
+            KiriView::ImagePageScopeKind::ComicBookArchive },
+        { QStringLiteral("tar"), QStringLiteral("cbt"),
+            KiriView::ImagePageScopeKind::ComicBookArchive },
         { QStringLiteral("sevenz"), QStringLiteral("cb7"),
-            KiriView::ArchiveDocumentKind::ComicBook },
-        { QStringLiteral("rar"), QStringLiteral("cbr"), KiriView::ArchiveDocumentKind::ComicBook },
-        { QStringLiteral("zip"), QStringLiteral("zip"), KiriView::ArchiveDocumentKind::General },
-        { QStringLiteral("tar"), QStringLiteral("tar"), KiriView::ArchiveDocumentKind::General },
-        { QStringLiteral("sevenz"), QStringLiteral("7z"), KiriView::ArchiveDocumentKind::General },
-        { QStringLiteral("rar"), QStringLiteral("rar"), KiriView::ArchiveDocumentKind::General },
+            KiriView::ImagePageScopeKind::ComicBookArchive },
+        { QStringLiteral("rar"), QStringLiteral("cbr"),
+            KiriView::ImagePageScopeKind::ComicBookArchive },
+        { QStringLiteral("zip"), QStringLiteral("zip"),
+            KiriView::ImagePageScopeKind::GeneralArchive },
+        { QStringLiteral("tar"), QStringLiteral("tar"),
+            KiriView::ImagePageScopeKind::GeneralArchive },
+        { QStringLiteral("sevenz"), QStringLiteral("7z"),
+            KiriView::ImagePageScopeKind::GeneralArchive },
+        { QStringLiteral("rar"), QStringLiteral("rar"),
+            KiriView::ImagePageScopeKind::GeneralArchive },
     };
 
     for (const ArchiveInteriorCase &testCase : cases) {
@@ -167,14 +173,14 @@ void TestImageDocumentLocation::archiveInteriorUrlsResolveToTheirRootAndTitle()
 void TestImageDocumentLocation::archiveDocumentPagesResolveToArchiveZoomScope()
 {
     const QUrl archiveUrl = QUrl::fromLocalFile(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
-        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
+        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveDocument.has_value());
 
     QUrl pageUrl = archiveDocument->rootUrl();
     pageUrl.setPath(archiveDocument->rootUrl().path() + QStringLiteral("chapter/page001.png"));
     const KiriView::DisplayedImageLocation location
-        = KiriView::DisplayedImageLocation::fromArchiveDocument(pageUrl, *archiveDocument);
+        = KiriView::DisplayedImageLocation::fromImagePageScope(pageUrl, *archiveDocument);
 
     QCOMPARE(KiriView::containerNavigationUrlForLocation(location), archiveUrl);
     QCOMPARE(KiriView::zoomScopeUrlForLocation(location), archiveUrl);
@@ -183,14 +189,14 @@ void TestImageDocumentLocation::archiveDocumentPagesResolveToArchiveZoomScope()
 void TestImageDocumentLocation::directArchivePagesResolveToZoomScopeOnly()
 {
     const QUrl archiveUrl = QUrl::fromLocalFile(QStringLiteral("/books/book.zip"));
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
-        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
+        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveDocument.has_value());
 
     QUrl pageUrl = archiveDocument->rootUrl();
     pageUrl.setPath(archiveDocument->rootUrl().path() + QStringLiteral("chapter/page001.png"));
     const KiriView::DisplayedImageLocation location
-        = KiriView::DisplayedImageLocation::fromArchiveDocument(pageUrl, *archiveDocument);
+        = KiriView::DisplayedImageLocation::fromImagePageScope(pageUrl, *archiveDocument);
 
     QVERIFY(KiriView::containerNavigationUrlForLocation(location).isEmpty());
     QCOMPARE(KiriView::zoomScopeUrlForLocation(location), archiveUrl);
@@ -202,10 +208,10 @@ void TestImageDocumentLocation::directDirectoryPagesResolveToDirectoryDocumentSc
     QVERIFY(directory.isValid());
 
     const QUrl directoryUrl = QUrl::fromLocalFile(directory.path());
-    const std::optional<KiriView::ArchiveDocumentLocation> directoryDocument
-        = KiriView::directOpenDocumentLocationForLocalUrl(directoryUrl);
+    const std::optional<KiriView::ImagePageScopeLocation> directoryDocument
+        = KiriView::directOpenImagePageScopeLocationForLocalUrl(directoryUrl);
     QVERIFY(directoryDocument.has_value());
-    QCOMPARE(directoryDocument->kind(), KiriView::ArchiveDocumentKind::Directory);
+    QCOMPARE(directoryDocument->kind(), KiriView::ImagePageScopeKind::Directory);
     QCOMPARE(directoryDocument->fileUrl(), directoryUrl);
     QCOMPARE(directoryDocument->rootUrl().scheme(), QStringLiteral("file"));
     QVERIFY(directoryDocument->rootUrl().path().endsWith(QLatin1Char('/')));
@@ -213,7 +219,7 @@ void TestImageDocumentLocation::directDirectoryPagesResolveToDirectoryDocumentSc
     QUrl pageUrl = directoryDocument->rootUrl();
     pageUrl.setPath(directoryDocument->rootUrl().path() + QStringLiteral("chapter/page001.png"));
     const KiriView::DisplayedImageLocation location
-        = KiriView::DisplayedImageLocation::fromArchiveDocument(pageUrl, *directoryDocument);
+        = KiriView::DisplayedImageLocation::fromImagePageScope(pageUrl, *directoryDocument);
 
     QVERIFY(KiriView::containerNavigationUrlForLocation(location).isEmpty());
     QCOMPARE(KiriView::zoomScopeUrlForLocation(location), directoryUrl);

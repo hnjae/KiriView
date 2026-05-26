@@ -30,9 +30,9 @@ bool PredecodeWindowStartPlan::shouldLoadCandidates() const { return candidateLi
 
 PredecodeWindowStartPlan predecodeWindowStartPlan(const PredecodeWindowPlanRequest &request)
 {
-    const ArchiveDocumentLocation archiveDocument = request.displayedLocation.archiveDocument();
-    const PredecodePolicyInput policyInput = predecodePolicyInputForArchiveDocument(
-        archiveDocument, request.momentumMode, request.powerSaverEnabled, request.idealThreadCount);
+    const ImagePageScopeLocation imagePageScope = request.displayedLocation.imagePageScope();
+    const PredecodePolicyInput policyInput = predecodePolicyInputForImagePageScope(
+        imagePageScope, request.momentumMode, request.powerSaverEnabled, request.idealThreadCount);
     const PredecodeSchedulePlan initialSchedule
         = predecodeSchedulePlan(0, std::nullopt, policyInput);
     const std::optional<ImageCandidateListContext> candidateContext
@@ -40,7 +40,7 @@ PredecodeWindowStartPlan predecodeWindowStartPlan(const PredecodeWindowPlanReque
 
     PredecodeWindowStartPlan plan {
         PredecodeWindowPlan {
-            archiveDocument,
+            imagePageScope,
             {},
             initialSchedule.parallelLimit,
         },
@@ -64,7 +64,7 @@ PredecodeWindowPlan predecodeWindowPlanForCandidates(
         imageNavigationCandidateIndex(candidates, plan.candidateList->context.currentUrl()),
         plan.candidateList->policyInput);
     return PredecodeWindowPlan {
-        plan.fallbackWindow.archiveDocument,
+        plan.fallbackWindow.imagePageScope,
         predecodeWindowImageUrls(candidates, schedule.targetIndices),
         schedule.parallelLimit,
     };

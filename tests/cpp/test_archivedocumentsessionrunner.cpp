@@ -41,20 +41,20 @@ private Q_SLOTS:
 void TestArchiveDocumentSessionRunner::ownsArchiveIdentity()
 {
     auto state = std::make_shared<InstrumentedArchiveSessionState>();
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
         = archiveDocumentForLocalArchiveUrl(localUrl(QStringLiteral("/books/book.cbz")));
     QVERIFY(archiveDocument.has_value());
 
     KiriView::ArchiveDocumentSessionRunner runner(
         *archiveDocument, instrumentedArchiveSessionFactory(state));
 
-    QVERIFY(KiriView::sameArchiveDocumentLocation(runner.archiveDocument(), *archiveDocument));
+    QVERIFY(KiriView::sameImagePageScopeLocation(runner.imagePageScope(), *archiveDocument));
 }
 
 void TestArchiveDocumentSessionRunner::candidateLoadsAreCachedAfterLazyOpen()
 {
     auto state = std::make_shared<InstrumentedArchiveSessionState>();
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
         = archiveDocumentForLocalArchiveUrl(localUrl(QStringLiteral("/books/book.cbz")));
     QVERIFY(archiveDocument.has_value());
     const QUrl firstUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
@@ -86,7 +86,7 @@ void TestArchiveDocumentSessionRunner::candidateLoadsAreCachedAfterLazyOpen()
 void TestArchiveDocumentSessionRunner::dataLoadsReuseLazyOpenSession()
 {
     auto state = std::make_shared<InstrumentedArchiveSessionState>();
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
         = archiveDocumentForLocalArchiveUrl(localUrl(QStringLiteral("/books/book.cbz")));
     QVERIFY(archiveDocument.has_value());
     const QUrl pageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
@@ -111,7 +111,7 @@ void TestArchiveDocumentSessionRunner::dataLoadsReuseLazyOpenSession()
 void TestArchiveDocumentSessionRunner::failedOpenIsMemoized()
 {
     auto state = std::make_shared<InstrumentedArchiveSessionState>();
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
         = archiveDocumentForLocalArchiveUrl(localUrl(QStringLiteral("/books/missing.cbz")));
     QVERIFY(archiveDocument.has_value());
 

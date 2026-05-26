@@ -34,7 +34,7 @@ class TestPredecodePolicy : public QObject
 
 private Q_SLOTS:
     void schedulePlanUsesCppCandidateSnapshot();
-    void archiveDocumentInputClassifiesRuntimeLocation();
+    void imagePageScopeInputClassifiesRuntimeLocation();
     void momentumStateRoundTripsThroughPolicyBoundary();
 };
 
@@ -52,21 +52,20 @@ void TestPredecodePolicy::schedulePlanUsesCppCandidateSnapshot()
     QVERIFY(missingCurrent.targetIndices.empty());
 }
 
-void TestPredecodePolicy::archiveDocumentInputClassifiesRuntimeLocation()
+void TestPredecodePolicy::imagePageScopeInputClassifiesRuntimeLocation()
 {
-    const KiriView::ArchiveDocumentLocation directoryDocument
-        = KiriView::ArchiveDocumentLocation::fromUrls(
-            imagesDirectoryUrl(), imagesDirectoryUrl(), KiriView::ArchiveDocumentKind::Directory);
-    const PredecodePolicyInput directoryInput = KiriView::predecodePolicyInputForArchiveDocument(
+    const KiriView::ImagePageScopeLocation directoryDocument
+        = KiriView::ImagePageScopeLocation::fromUrls(
+            imagesDirectoryUrl(), imagesDirectoryUrl(), KiriView::ImagePageScopeKind::Directory);
+    const PredecodePolicyInput directoryInput = KiriView::predecodePolicyInputForImagePageScope(
         directoryDocument, PredecodeMomentumMode::Neutral, false, 8);
     QVERIFY(directoryInput.documentKind == PredecodeDocumentKind::DirectoryDocument);
 
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
-        = KiriView::archiveDocumentLocationForLocalArchiveUrl(
-            localUrl(QStringLiteral("/book.cbz")));
-    QVERIFY(archiveDocument.has_value());
-    const PredecodePolicyInput archiveInput = KiriView::predecodePolicyInputForArchiveDocument(
-        *archiveDocument, PredecodeMomentumMode::Neutral, false, 8);
+    const std::optional<KiriView::ImagePageScopeLocation> imagePageScope
+        = KiriView::imagePageScopeLocationForLocalArchiveUrl(localUrl(QStringLiteral("/book.cbz")));
+    QVERIFY(imagePageScope.has_value());
+    const PredecodePolicyInput archiveInput = KiriView::predecodePolicyInputForImagePageScope(
+        *imagePageScope, PredecodeMomentumMode::Neutral, false, 8);
     QVERIFY(archiveInput.documentKind == PredecodeDocumentKind::ArchiveDocument);
 }
 

@@ -15,7 +15,7 @@
 namespace {
 struct ArchiveDocumentRoot {
     QUrl rootUrl;
-    KiriView::ArchiveDocumentKind kind = KiriView::ArchiveDocumentKind::General;
+    KiriView::ImagePageScopeKind kind = KiriView::ImagePageScopeKind::GeneralArchive;
 };
 
 struct UrlParts {
@@ -50,16 +50,16 @@ std::optional<QUrl> archiveRootUrlForLocalArchive(const QUrl &url, const QString
     return archiveRootUrl;
 }
 
-KiriView::ArchiveDocumentKind archiveDocumentKindForMatch(const KiriView::ArchiveOpenMatch &match)
+KiriView::ImagePageScopeKind archiveDocumentKindForMatch(const KiriView::ArchiveOpenMatch &match)
 {
     switch (match.kind) {
     case KiriView::ArchiveOpenMatchKind::ComicBook:
-        return KiriView::ArchiveDocumentKind::ComicBook;
+        return KiriView::ImagePageScopeKind::ComicBookArchive;
     case KiriView::ArchiveOpenMatchKind::GeneralArchive:
-        return KiriView::ArchiveDocumentKind::General;
+        return KiriView::ImagePageScopeKind::GeneralArchive;
     }
 
-    return KiriView::ArchiveDocumentKind::General;
+    return KiriView::ImagePageScopeKind::GeneralArchive;
 }
 
 std::optional<ArchiveDocumentRoot> archiveDocumentRootForLocalArchive(
@@ -82,7 +82,7 @@ std::optional<ArchiveDocumentRoot> directArchiveDocumentRootForLocalArchive(cons
     return archiveDocumentRootForLocalArchive(url, KiriView::directArchiveOpenMatchForUrl(url));
 }
 
-std::optional<KiriView::ArchiveDocumentLocation> directoryDocumentLocationForLocalUrl(
+std::optional<KiriView::ImagePageScopeLocation> directoryImagePageScopeLocationForLocalUrl(
     const QUrl &url)
 {
     if (!url.isLocalFile()) {
@@ -95,9 +95,9 @@ std::optional<KiriView::ArchiveDocumentLocation> directoryDocumentLocationForLoc
         return std::nullopt;
     }
 
-    return KiriView::ArchiveDocumentLocation::fromUrls(fileUrl,
+    return KiriView::ImagePageScopeLocation::fromUrls(fileUrl,
         KiriView::normalizedDirectoryContainerUrl(fileUrl),
-        KiriView::ArchiveDocumentKind::Directory);
+        KiriView::ImagePageScopeKind::Directory);
 }
 
 std::optional<QUrl> containingArchiveRootUrl(
@@ -122,18 +122,18 @@ std::optional<QUrl> containingArchiveRootUrl(
     return archiveRootUrl;
 }
 
-QUrl archiveDocumentFileNavigationUrl(const KiriView::DisplayedImageLocation &location)
+QUrl imagePageScopeSourceNavigationUrl(const KiriView::DisplayedImageLocation &location)
 {
     return KiriView::normalizedFileContainerUrl(
-        KiriView::navigationSourceUrl(location.archiveDocumentFileUrl()));
+        KiriView::navigationSourceUrl(location.imagePageScopeSourceUrl()));
 }
 
-bool archiveDocumentContainsUrlInRust(
-    const KiriView::ArchiveDocumentLocation &archiveDocument, const QUrl &url)
+bool imagePageScopeContainsUrlInRust(
+    const KiriView::ImagePageScopeLocation &imagePageScope, const QUrl &url)
 {
-    const UrlParts root = urlParts(archiveDocument.rootUrl());
+    const UrlParts root = urlParts(imagePageScope.rootUrl());
     const UrlParts candidate = urlParts(url);
-    return KiriView::rustArchiveDocumentContainsUrl(archiveDocument.isEmpty(), root.empty,
+    return KiriView::rustArchiveDocumentContainsUrl(imagePageScope.isEmpty(), root.empty,
         KiriView::Bridge::rustStr(root.scheme), KiriView::Bridge::rustStr(root.path),
         candidate.empty, KiriView::Bridge::rustStr(candidate.scheme),
         KiriView::Bridge::rustStr(candidate.path));
@@ -163,27 +163,27 @@ std::optional<QUrl> directArchiveOpenRootUrl(const QUrl &url)
     return root->rootUrl;
 }
 
-std::optional<ArchiveDocumentLocation> archiveDocumentLocationForLocalArchiveUrl(const QUrl &url)
+std::optional<ImagePageScopeLocation> imagePageScopeLocationForLocalArchiveUrl(const QUrl &url)
 {
     const std::optional<ArchiveDocumentRoot> root = directArchiveDocumentRootForLocalArchive(url);
     if (!root.has_value()) {
         return std::nullopt;
     }
 
-    return ArchiveDocumentLocation::fromUrls(
+    return ImagePageScopeLocation::fromUrls(
         normalizedFileContainerUrl(url), root->rootUrl, root->kind);
 }
 
-std::optional<ArchiveDocumentLocation> directOpenDocumentLocationForLocalUrl(const QUrl &url)
+std::optional<ImagePageScopeLocation> directOpenImagePageScopeLocationForLocalUrl(const QUrl &url)
 {
-    const std::optional<ArchiveDocumentLocation> directoryDocument
-        = directoryDocumentLocationForLocalUrl(url);
+    const std::optional<ImagePageScopeLocation> directoryDocument
+        = directoryImagePageScopeLocationForLocalUrl(url);
     if (directoryDocument.has_value()) {
         return directoryDocument;
     }
 
-    const std::optional<ArchiveDocumentLocation> archiveDocument
-        = archiveDocumentLocationForLocalArchiveUrl(url);
+    const std::optional<ImagePageScopeLocation> archiveDocument
+        = imagePageScopeLocationForLocalArchiveUrl(url);
     if (archiveDocument.has_value()) {
         return archiveDocument;
     }
@@ -200,14 +200,14 @@ bool isUrlInsideArchiveRoot(const QUrl &url, const QUrl &archiveRootUrl)
         Bridge::rustStr(candidate.path));
 }
 
-bool archiveDocumentContainsUrl(const ArchiveDocumentLocation &archiveDocument, const QUrl &url)
+bool imagePageScopeContainsUrl(const ImagePageScopeLocation &imagePageScope, const QUrl &url)
 {
-    return archiveDocumentContainsUrlInRust(archiveDocument, url);
+    return imagePageScopeContainsUrlInRust(imagePageScope, url);
 }
 
-bool displayedLocationIsInsideArchiveDocument(const DisplayedImageLocation &location)
+bool displayedLocationIsInsideImagePageScope(const DisplayedImageLocation &location)
 {
-    return archiveDocumentContainsUrl(location.archiveDocument(), location.imageUrl());
+    return imagePageScopeContainsUrl(location.imagePageScope(), location.imageUrl());
 }
 
 std::optional<QUrl> containingComicBookArchiveRootUrl(const QUrl &url)
@@ -226,9 +226,9 @@ QString windowTitleFileNameForDisplayedLocation(const DisplayedImageLocation &lo
         return QString();
     }
 
-    if (displayedLocationIsInsideArchiveDocument(location)
-        && !location.archiveDocumentFileUrl().fileName().isEmpty()) {
-        return location.archiveDocumentFileUrl().fileName();
+    if (displayedLocationIsInsideImagePageScope(location)
+        && !location.imagePageScopeSourceUrl().fileName().isEmpty()) {
+        return location.imagePageScopeSourceUrl().fileName();
     }
 
     return location.imageUrl().fileName();
@@ -236,8 +236,8 @@ QString windowTitleFileNameForDisplayedLocation(const DisplayedImageLocation &lo
 
 QUrl zoomScopeUrlForLocation(const DisplayedImageLocation &location)
 {
-    if (displayedLocationIsInsideArchiveDocument(location)) {
-        return archiveDocumentFileNavigationUrl(location);
+    if (displayedLocationIsInsideImagePageScope(location)) {
+        return imagePageScopeSourceNavigationUrl(location);
     }
 
     return {};
@@ -245,12 +245,12 @@ QUrl zoomScopeUrlForLocation(const DisplayedImageLocation &location)
 
 QUrl containerNavigationUrlForLocation(const DisplayedImageLocation &location)
 {
-    if (!location.archiveDocument().isComicBook()
-        || !displayedLocationIsInsideArchiveDocument(location)) {
+    if (!location.imagePageScope().isComicBook()
+        || !displayedLocationIsInsideImagePageScope(location)) {
         return {};
     }
 
-    return archiveDocumentFileNavigationUrl(location);
+    return imagePageScopeSourceNavigationUrl(location);
 }
 
 }

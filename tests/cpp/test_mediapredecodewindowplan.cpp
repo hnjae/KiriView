@@ -62,7 +62,7 @@ void TestMediaPredecodeWindowPlan::mediaWindowUsesVideoCursorAndQueuesOnlyImages
                                                  currentVideo),
             regularPolicyInput());
 
-    QCOMPARE(windowPlan.archiveDocument, KiriView::ArchiveDocumentLocation {});
+    QCOMPARE(windowPlan.imagePageScope, KiriView::ImagePageScopeLocation {});
     QCOMPARE(windowPlan.parallelLimit, std::size_t(1));
     QCOMPARE(windowPlan.urls.size(), std::size_t(2));
     QCOMPARE(windowPlan.urls.at(0), nextImage);

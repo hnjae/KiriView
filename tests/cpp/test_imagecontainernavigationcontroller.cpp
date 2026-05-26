@@ -131,7 +131,7 @@ public:
                 return startContainerList(receiver, std::move(directoryUrl), std::move(callback),
                     std::move(errorCallback));
             },
-            [](QObject *, KiriView::ArchiveDocumentLocation, KiriView::ImageCandidatesCallback,
+            [](QObject *, KiriView::ImagePageScopeLocation, KiriView::ImageCandidatesCallback,
                 KiriView::ErrorCallback errorCallback) {
                 if (errorCallback) {
                     errorCallback(QStringLiteral("unexpected archive image listing"));
@@ -226,8 +226,8 @@ void TestImageContainerNavigationController::opensFirstImageFromAdjacentArchiveC
     const QUrl parentUrl = localUrl(QStringLiteral("/books/"));
     const QUrl currentContainerUrl = localUrl(QStringLiteral("/books/a/"));
     const QUrl targetContainerUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
-        = KiriView::archiveDocumentLocationForLocalArchiveUrl(targetContainerUrl);
+    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
+        = KiriView::imagePageScopeLocationForLocalArchiveUrl(targetContainerUrl);
     QVERIFY(archiveDocument.has_value());
     const QUrl targetImageUrl
         = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));

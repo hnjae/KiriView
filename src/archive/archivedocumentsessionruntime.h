@@ -25,12 +25,12 @@ public:
     ~ArchiveDocumentSessionRuntime();
 
     void clear();
-    void switchToArchiveDocument(ArchiveDocumentLocation archiveDocument);
+    void switchToArchiveDocument(ImagePageScopeLocation archiveDocument);
 
     bool hasCurrentArchiveDocument() const;
-    bool hasCurrentArchiveDocument(const ArchiveDocumentLocation &archiveDocument) const;
+    bool hasCurrentArchiveDocument(const ImagePageScopeLocation &archiveDocument) const;
 
-    ImageIoJob loadArchiveImages(QObject *receiver, ArchiveDocumentLocation archiveDocument,
+    ImageIoJob loadArchiveImages(QObject *receiver, ImagePageScopeLocation archiveDocument,
         ImageCandidatesCallback callback, ErrorCallback errorCallback);
     ImageIoJob loadArchiveImageData(QObject *receiver, ImageDecodeRequest request,
         ImageDataCallback callback, ErrorCallback errorCallback);

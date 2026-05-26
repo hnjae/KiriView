@@ -10,37 +10,37 @@
 #include <utility>
 
 namespace {
-using KiriView::archiveDocumentContainsUrl;
-using KiriView::ArchiveDocumentLocation;
-using KiriView::archiveDocumentLocationForLocalArchiveUrl;
-using KiriView::directOpenDocumentLocationForLocalUrl;
-using KiriView::ImageArchiveLoadEffect;
+using KiriView::directOpenImagePageScopeLocationForLocalUrl;
 using KiriView::ImageLoadStartEffect;
+using KiriView::imagePageScopeContainsUrl;
+using KiriView::ImagePageScopeLoadEffect;
+using KiriView::ImagePageScopeLocation;
+using KiriView::imagePageScopeLocationForLocalArchiveUrl;
 
-std::optional<ArchiveDocumentLocation> containerArchiveDocumentForImageLoadRequest(
+std::optional<ImagePageScopeLocation> containerImagePageScopeForImageLoadRequest(
     const KiriView::ImageLoadRequest &request)
 {
     if (!request.isContainerNavigation()) {
         return std::nullopt;
     }
 
-    const std::optional<ArchiveDocumentLocation> containerArchive
-        = archiveDocumentLocationForLocalArchiveUrl(request.containerNavigationUrl());
-    if (containerArchive.has_value()
-        && archiveDocumentContainsUrl(*containerArchive, request.sourceUrl())) {
-        return containerArchive;
+    const std::optional<ImagePageScopeLocation> containerImagePageScope
+        = imagePageScopeLocationForLocalArchiveUrl(request.containerNavigationUrl());
+    if (containerImagePageScope.has_value()
+        && imagePageScopeContainsUrl(*containerImagePageScope, request.sourceUrl())) {
+        return containerImagePageScope;
     }
 
     return std::nullopt;
 }
 
-ImageLoadStartEffect imageLoadStartEffectForArchiveEffect(ImageArchiveLoadEffect effect)
+ImageLoadStartEffect imageLoadStartEffectForPageScopeEffect(ImagePageScopeLoadEffect effect)
 {
     switch (effect) {
-    case ImageArchiveLoadEffect::ReadImage:
+    case ImagePageScopeLoadEffect::ReadImage:
         return ImageLoadStartEffect::DecodeImage;
-    case ImageArchiveLoadEffect::LoadImageCandidates:
-        return ImageLoadStartEffect::LoadArchiveImageCandidates;
+    case ImagePageScopeLoadEffect::LoadImageCandidates:
+        return ImageLoadStartEffect::LoadImagePageScopeCandidates;
     }
 
     return ImageLoadStartEffect::DecodeImage;
@@ -48,37 +48,37 @@ ImageLoadStartEffect imageLoadStartEffectForArchiveEffect(ImageArchiveLoadEffect
 }
 
 namespace KiriView {
-ImageArchiveLoadPlan imageArchiveLoadPlan(const ImageLoadRequest &request)
+ImagePageScopeLoadPlan imagePageScopeLoadPlan(const ImageLoadRequest &request)
 {
-    const std::optional<ArchiveDocumentLocation> sourceArchiveDocument
-        = directOpenDocumentLocationForLocalUrl(request.sourceUrl());
-    if (sourceArchiveDocument.has_value()) {
-        return { *sourceArchiveDocument, ImageArchiveLoadEffect::LoadImageCandidates };
+    const std::optional<ImagePageScopeLocation> sourceImagePageScope
+        = directOpenImagePageScopeLocationForLocalUrl(request.sourceUrl());
+    if (sourceImagePageScope.has_value()) {
+        return { *sourceImagePageScope, ImagePageScopeLoadEffect::LoadImageCandidates };
     }
 
-    const std::optional<ArchiveDocumentLocation> containerArchiveDocument
-        = containerArchiveDocumentForImageLoadRequest(request);
-    if (containerArchiveDocument.has_value()) {
-        return { *containerArchiveDocument, ImageArchiveLoadEffect::ReadImage };
+    const std::optional<ImagePageScopeLocation> containerImagePageScope
+        = containerImagePageScopeForImageLoadRequest(request);
+    if (containerImagePageScope.has_value()) {
+        return { *containerImagePageScope, ImagePageScopeLoadEffect::ReadImage };
     }
 
-    if (archiveDocumentContainsUrl(request.archiveDocument(), request.sourceUrl())) {
-        return { request.archiveDocument(), ImageArchiveLoadEffect::ReadImage };
+    if (imagePageScopeContainsUrl(request.imagePageScope(), request.sourceUrl())) {
+        return { request.imagePageScope(), ImagePageScopeLoadEffect::ReadImage };
     }
 
-    return { ArchiveDocumentLocation::none(), ImageArchiveLoadEffect::ReadImage };
+    return { ImagePageScopeLocation::none(), ImagePageScopeLoadEffect::ReadImage };
 }
 
 ImageLoadPlan imageLoadPlan(
     quint64 id, ImageLoadRequest request, ImageFirstDisplayDecodeContext firstDisplayContext)
 {
     QUrl sourceUrl = request.sourceUrl();
-    ImageArchiveLoadPlan archivePlan = imageArchiveLoadPlan(request);
+    ImagePageScopeLoadPlan pageScopePlan = imagePageScopeLoadPlan(request);
     const ImageLoadStartEffect startEffect
-        = imageLoadStartEffectForArchiveEffect(archivePlan.effect);
+        = imageLoadStartEffectForPageScopeEffect(pageScopePlan.effect);
     ImageLoadSession session(id, std::move(request),
         DisplayedImageLocation::fromUrl(
-            std::move(sourceUrl), std::move(archivePlan.archiveDocument)),
+            std::move(sourceUrl), std::move(pageScopePlan.imagePageScope)),
         firstDisplayContext);
 
     return ImageLoadPlan { std::move(session), startEffect };

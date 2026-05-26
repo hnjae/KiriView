@@ -17,10 +17,10 @@ bool sameImageCandidateListSourcePayload(const KiriView::ImageCandidateListSourc
 }
 
 bool sameImageCandidateListSourcePayload(
-    const KiriView::ImageCandidateListSource::ArchiveDocument &left,
-    const KiriView::ImageCandidateListSource::ArchiveDocument &right)
+    const KiriView::ImageCandidateListSource::ImagePageScope &left,
+    const KiriView::ImageCandidateListSource::ImagePageScope &right)
 {
-    return KiriView::sameArchiveDocumentLocation(left.archiveDocument, right.archiveDocument);
+    return KiriView::sameImagePageScopeLocation(left.imagePageScope, right.imagePageScope);
 }
 
 template <typename Left, typename Right>
@@ -36,17 +36,17 @@ ImageCandidateListSource ImageCandidateListSource::forDirectory(QUrl directoryUr
     return ImageCandidateListSource { Directory { std::move(directoryUrl) } };
 }
 
-ImageCandidateListSource ImageCandidateListSource::forArchiveDocument(
-    ArchiveDocumentLocation archiveDocument)
+ImageCandidateListSource ImageCandidateListSource::forImagePageScope(
+    ImagePageScopeLocation imagePageScope)
 {
-    return ImageCandidateListSource { ArchiveDocument { std::move(archiveDocument) } };
+    return ImageCandidateListSource { ImagePageScope { std::move(imagePageScope) } };
 }
 
-ArchiveDocumentLocation ImageCandidateListSource::archiveDocument() const
+ImagePageScopeLocation ImageCandidateListSource::imagePageScope() const
 {
-    const auto *archiveSource = std::get_if<ArchiveDocument>(&m_source);
-    return archiveSource == nullptr ? ArchiveDocumentLocation::none()
-                                    : archiveSource->archiveDocument;
+    const auto *archiveSource = std::get_if<ImagePageScope>(&m_source);
+    return archiveSource == nullptr ? ImagePageScopeLocation::none()
+                                    : archiveSource->imagePageScope;
 }
 
 ImageCandidateListSource::ImageCandidateListSource(Payload source)
@@ -73,12 +73,12 @@ ImageCandidateListContext ImageCandidateListContext::forDirectory(
     };
 }
 
-ImageCandidateListContext ImageCandidateListContext::forArchiveDocument(
-    QUrl currentUrl, ArchiveDocumentLocation archiveDocument)
+ImageCandidateListContext ImageCandidateListContext::forImagePageScope(
+    QUrl currentUrl, ImagePageScopeLocation imagePageScope)
 {
     return ImageCandidateListContext {
         std::move(currentUrl),
-        ImageCandidateListSource::forArchiveDocument(std::move(archiveDocument)),
+        ImageCandidateListSource::forImagePageScope(std::move(imagePageScope)),
     };
 }
 
@@ -95,9 +95,9 @@ const QUrl &ImageCandidateListContext::currentUrl() const { return m_currentUrl;
 
 const ImageCandidateListSource &ImageCandidateListContext::source() const { return m_source; }
 
-ArchiveDocumentLocation ImageCandidateListContext::archiveDocument() const
+ImagePageScopeLocation ImageCandidateListContext::imagePageScope() const
 {
-    return m_source.archiveDocument();
+    return m_source.imagePageScope();
 }
 
 ImageCandidateListContext::ImageCandidateListContext(
@@ -122,14 +122,13 @@ std::optional<ImageCandidateListContext> imageCandidateListContextForDisplayedIm
         return std::nullopt;
     }
 
-    if (displayedLocationIsInsideArchiveDocument(location)) {
+    if (displayedLocationIsInsideImagePageScope(location)) {
         const QUrl currentUrl = normalizedImageUrl(displayedUrl);
         if (!currentUrl.isValid()) {
             return std::nullopt;
         }
 
-        return ImageCandidateListContext::forArchiveDocument(
-            currentUrl, location.archiveDocument());
+        return ImageCandidateListContext::forImagePageScope(currentUrl, location.imagePageScope());
     }
 
     const DirectoryNavigationLocation navigationLocation

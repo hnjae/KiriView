@@ -62,7 +62,7 @@ void ArchiveDocumentSessionRuntime::clear()
     m_runner.reset();
 }
 
-void ArchiveDocumentSessionRuntime::switchToArchiveDocument(ArchiveDocumentLocation archiveDocument)
+void ArchiveDocumentSessionRuntime::switchToArchiveDocument(ImagePageScopeLocation archiveDocument)
 {
     if (archiveDocument.isEmpty()) {
         clear();
@@ -80,21 +80,21 @@ void ArchiveDocumentSessionRuntime::switchToArchiveDocument(ArchiveDocumentLocat
 
 bool ArchiveDocumentSessionRuntime::hasCurrentArchiveDocument() const
 {
-    return m_runner != nullptr && !m_runner->archiveDocument().isEmpty();
+    return m_runner != nullptr && !m_runner->imagePageScope().isEmpty();
 }
 
 bool ArchiveDocumentSessionRuntime::hasCurrentArchiveDocument(
-    const ArchiveDocumentLocation &archiveDocument) const
+    const ImagePageScopeLocation &archiveDocument) const
 {
     return hasCurrentArchiveDocument()
-        && sameArchiveDocumentLocation(m_runner->archiveDocument(), archiveDocument);
+        && sameImagePageScopeLocation(m_runner->imagePageScope(), archiveDocument);
 }
 
 ImageIoJob ArchiveDocumentSessionRuntime::loadArchiveImages(QObject *receiver,
-    ArchiveDocumentLocation archiveDocument, ImageCandidatesCallback callback,
+    ImagePageScopeLocation archiveDocument, ImageCandidatesCallback callback,
     ErrorCallback errorCallback)
 {
-    const ArchiveDocumentLocation requestedArchiveDocument = archiveDocument;
+    const ImagePageScopeLocation requestedArchiveDocument = archiveDocument;
     switchToArchiveDocument(std::move(archiveDocument));
     if (m_runner == nullptr) {
         invokeIfSet(errorCallback, Backend::fallbackArchiveOpenError(requestedArchiveDocument));
@@ -130,8 +130,8 @@ ImageIoJob ArchiveDocumentSessionRuntime::loadArchiveImages(QObject *receiver,
 ImageIoJob ArchiveDocumentSessionRuntime::loadArchiveImageData(QObject *receiver,
     ImageDecodeRequest request, ImageDataCallback callback, ErrorCallback errorCallback)
 {
-    const ArchiveDocumentLocation requestedArchiveDocument = request.archiveDocument();
-    switchToArchiveDocument(request.archiveDocument());
+    const ImagePageScopeLocation requestedArchiveDocument = request.imagePageScope();
+    switchToArchiveDocument(request.imagePageScope());
     if (m_runner == nullptr) {
         invokeIfSet(errorCallback, Backend::fallbackArchiveOpenError(requestedArchiveDocument));
         return ImageIoJob();

@@ -168,30 +168,30 @@ void TestImageUrl::imageLocationTypesExposeExplicitState()
     const KiriView::DisplayedImageLocation emptyLocation;
     QVERIFY(emptyLocation.isEmpty());
 
-    const KiriView::ArchiveDocumentLocation archiveDocument
-        = KiriView::ArchiveDocumentLocation::fromUrls(
+    const KiriView::ImagePageScopeLocation archiveDocument
+        = KiriView::ImagePageScopeLocation::fromUrls(
             QUrl::fromLocalFile(QStringLiteral("/books/book.cbz")),
             QUrl(QStringLiteral("zip:///books/book.cbz/")),
-            KiriView::ArchiveDocumentKind::ComicBook);
+            KiriView::ImagePageScopeKind::ComicBookArchive);
     const KiriView::DisplayedImageLocation location
-        = KiriView::DisplayedImageLocation::fromArchiveDocument(
+        = KiriView::DisplayedImageLocation::fromImagePageScope(
             QUrl(QStringLiteral("zip:///books/book.cbz/page.png")), archiveDocument);
     QVERIFY(!location.isEmpty());
-    QCOMPARE(location.archiveDocumentFileUrl(), archiveDocument.fileUrl());
-    QCOMPARE(location.archiveDocumentRootUrl(), archiveDocument.rootUrl());
+    QCOMPARE(location.imagePageScopeSourceUrl(), archiveDocument.fileUrl());
+    QCOMPARE(location.imagePageScopeRootUrl(), archiveDocument.rootUrl());
 
     const KiriView::ImageLoadRequest plainOpen
         = KiriView::ImageLoadRequest::fromUrl(location.imageUrl());
     QVERIFY(!plainOpen.isEmpty());
     QVERIFY(!plainOpen.isContainerNavigation());
     QCOMPARE(plainOpen.sourceUrl(), location.imageUrl());
-    QVERIFY(plainOpen.archiveDocument().rootUrl().isEmpty());
+    QVERIFY(plainOpen.imagePageScope().rootUrl().isEmpty());
 
     const QUrl containerUrl = QUrl::fromLocalFile(QStringLiteral("/images/"));
     const KiriView::ImageLoadRequest containerOpen = KiriView::ImageLoadRequest::fromLocation(
-        location.imageUrl(), location.archiveDocument(), containerUrl);
+        location.imageUrl(), location.imagePageScope(), containerUrl);
     QVERIFY(containerOpen.isContainerNavigation());
-    QCOMPARE(containerOpen.archiveDocument().rootUrl(), location.archiveDocumentRootUrl());
+    QCOMPARE(containerOpen.imagePageScope().rootUrl(), location.imagePageScopeRootUrl());
     QCOMPARE(containerOpen.containerNavigationUrl(), containerUrl);
 }
 

@@ -39,7 +39,7 @@ QString archiveRelativePathForUrl(const QUrl &archiveRootUrl, const QUrl &url)
         Bridge::rustStr(urlScheme), Bridge::rustStr(urlPath)));
 }
 
-QString archiveEntryPathForUrl(const ArchiveDocumentLocation &archiveDocument, const QUrl &imageUrl)
+QString archiveEntryPathForUrl(const ImagePageScopeLocation &archiveDocument, const QUrl &imageUrl)
 {
     if (archiveDocument.isEmpty()) {
         return {};
@@ -49,7 +49,7 @@ QString archiveEntryPathForUrl(const ArchiveDocumentLocation &archiveDocument, c
         archiveRelativePathForUrl(archiveDocument.rootUrl(), imageUrl));
 }
 
-QUrl archiveEntryUrl(const ArchiveDocumentLocation &archiveDocument, const QString &entryPath)
+QUrl archiveEntryUrl(const ImagePageScopeLocation &archiveDocument, const QString &entryPath)
 {
     const QString cleanEntryPath = normalizedArchiveEntryPath(entryPath);
     if (archiveDocument.isEmpty() || cleanEntryPath.isEmpty()) {

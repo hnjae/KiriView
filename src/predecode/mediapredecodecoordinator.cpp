@@ -101,7 +101,7 @@ void MediaPredecodeCoordinator::startPredecodeWindow(const PredecodePendingSched
                                   << "parallelLimit" << plan.parallelLimit;
     m_loadController.startWindowLoads(PredecodeLoadWindow {
         schedule.context.currentLocation.imageUrl(),
-        plan.archiveDocument,
+        plan.imagePageScope,
         plan.urls,
         schedule.context.displayedImages,
         schedule.context.firstDisplayContext,

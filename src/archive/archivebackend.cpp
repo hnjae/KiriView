@@ -18,7 +18,7 @@ namespace {
 namespace Backend = KiriView::ArchiveBackendDetail;
 
 const Backend::ArchiveBackendOperations *archiveBackendOperationsForDocument(
-    const KiriView::ArchiveDocumentLocation &archiveDocument)
+    const KiriView::ImagePageScopeLocation &archiveDocument)
 {
     if (archiveDocument.isDirectory()) {
         return Backend::directoryBackendOperations();
@@ -39,7 +39,7 @@ const Backend::ArchiveBackendOperations *archiveBackendOperationsForDocument(
 }
 
 KiriView::ArchiveDocumentSessionOpenResult openWithArchiveBackend(
-    const KiriView::ArchiveDocumentLocation &archiveDocument)
+    const KiriView::ImagePageScopeLocation &archiveDocument)
 {
     const Backend::ArchiveBackendOperations *backend
         = archiveBackendOperationsForDocument(archiveDocument);
@@ -72,7 +72,7 @@ void ArchiveDocumentSessionWithCandidateSnapshot::replaceCandidateSnapshot(
 }
 
 std::optional<ImageNavigationCandidate> archiveImageCandidate(
-    const ArchiveDocumentLocation &archiveDocument, const QString &entryPath)
+    const ImagePageScopeLocation &archiveDocument, const QString &entryPath)
 {
     const QString candidateName = normalizedArchiveEntryPath(entryPath);
     if (candidateName.isEmpty() || !isSupportedImageFileName(candidateName)) {
@@ -88,7 +88,7 @@ std::optional<ImageNavigationCandidate> archiveImageCandidate(
 }
 
 std::optional<QString> archiveImageEntryPathForRead(
-    const ArchiveDocumentLocation &archiveDocument, const QUrl &imageUrl)
+    const ImagePageScopeLocation &archiveDocument, const QUrl &imageUrl)
 {
     const QString entryPath = archiveEntryPathForUrl(archiveDocument, imageUrl);
     if (archiveDocument.isEmpty() || entryPath.isEmpty()) {
@@ -98,7 +98,7 @@ std::optional<QString> archiveImageEntryPathForRead(
     return entryPath;
 }
 
-QString fallbackArchiveOpenError(const ArchiveDocumentLocation &archiveDocument)
+QString fallbackArchiveOpenError(const ImagePageScopeLocation &archiveDocument)
 {
     const QString fileName = archiveDocument.fileUrl().fileName();
     if (fileName.isEmpty()) {
@@ -133,7 +133,7 @@ ArchiveImageDataResult archiveImageDataResult(QByteArray data)
 
 namespace KiriView {
 ArchiveImageCandidatesResult loadArchiveDocumentImageCandidates(
-    const ArchiveDocumentLocation &archiveDocument)
+    const ImagePageScopeLocation &archiveDocument)
 {
     ArchiveDocumentSessionOpenResult opened = openArchiveDocumentSession(archiveDocument);
     if (const auto *error = std::get_if<ArchiveError>(&opened)) {
@@ -150,7 +150,7 @@ ArchiveImageCandidatesResult loadArchiveDocumentImageCandidates(
 }
 
 ArchiveImageDataResult loadArchiveDocumentImageData(
-    const ArchiveDocumentLocation &archiveDocument, const QUrl &imageUrl)
+    const ImagePageScopeLocation &archiveDocument, const QUrl &imageUrl)
 {
     ArchiveDocumentSessionOpenResult opened = openArchiveDocumentSession(archiveDocument);
     if (const auto *error = std::get_if<ArchiveError>(&opened)) {
@@ -167,7 +167,7 @@ ArchiveImageDataResult loadArchiveDocumentImageData(
 }
 
 ArchiveDocumentSessionOpenResult openArchiveDocumentSession(
-    const ArchiveDocumentLocation &archiveDocument)
+    const ImagePageScopeLocation &archiveDocument)
 {
     if (archiveDocument.isEmpty()) {
         return Backend::archiveErrorResult<ArchiveDocumentSessionOpenResult>(

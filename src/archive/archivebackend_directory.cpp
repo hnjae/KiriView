@@ -18,7 +18,7 @@ namespace {
 namespace Backend = KiriView::ArchiveBackendDetail;
 
 std::optional<QString> directoryPathForDocument(
-    const KiriView::ArchiveDocumentLocation &archiveDocument)
+    const KiriView::ImagePageScopeLocation &archiveDocument)
 {
     if (!archiveDocument.isDirectory()) {
         return std::nullopt;
@@ -33,7 +33,7 @@ std::optional<QString> directoryPathForDocument(
 }
 
 KiriView::ArchiveImageCandidatesResult loadDirectoryDocumentImageCandidates(
-    const KiriView::ArchiveDocumentLocation &archiveDocument)
+    const KiriView::ImagePageScopeLocation &archiveDocument)
 {
     const std::optional<QString> directoryPath = directoryPathForDocument(archiveDocument);
     if (!directoryPath.has_value()) {
@@ -66,7 +66,7 @@ KiriView::ArchiveImageCandidatesResult loadDirectoryDocumentImageCandidates(
 }
 
 KiriView::ArchiveImageDataResult loadDirectoryDocumentImageData(
-    const KiriView::ArchiveDocumentLocation &archiveDocument, const QString &entryPath)
+    const KiriView::ImagePageScopeLocation &archiveDocument, const QString &entryPath)
 {
     const std::optional<QString> directoryPath = directoryPathForDocument(archiveDocument);
     if (!directoryPath.has_value()) {
@@ -98,7 +98,7 @@ KiriView::ArchiveImageDataResult loadDirectoryDocumentImageData(
 class DirectoryDocumentSession final : public Backend::ArchiveDocumentSessionWithCandidateSnapshot
 {
 public:
-    DirectoryDocumentSession(KiriView::ArchiveDocumentLocation archiveDocument,
+    DirectoryDocumentSession(KiriView::ImagePageScopeLocation archiveDocument,
         std::vector<KiriView::ImageNavigationCandidate> candidates)
         : Backend::ArchiveDocumentSessionWithCandidateSnapshot(std::move(candidates))
         , m_archiveDocument(std::move(archiveDocument))
@@ -118,11 +118,11 @@ public:
     }
 
 private:
-    KiriView::ArchiveDocumentLocation m_archiveDocument;
+    KiriView::ImagePageScopeLocation m_archiveDocument;
 };
 
 KiriView::ArchiveDocumentSessionOpenResult openDirectoryDocumentSession(
-    const KiriView::ArchiveDocumentLocation &archiveDocument)
+    const KiriView::ImagePageScopeLocation &archiveDocument)
 {
     KiriView::ArchiveImageCandidatesResult candidatesResult
         = loadDirectoryDocumentImageCandidates(archiveDocument);

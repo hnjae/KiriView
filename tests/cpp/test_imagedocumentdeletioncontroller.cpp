@@ -53,7 +53,7 @@ public:
                   return KiriView::ImageIoJob();
               };
         provider.archiveImages
-            = [](QObject *, KiriView::ArchiveDocumentLocation, KiriView::ImageCandidatesCallback,
+            = [](QObject *, KiriView::ImagePageScopeLocation, KiriView::ImageCandidatesCallback,
                   KiriView::ErrorCallback) { return KiriView::ImageIoJob(); };
         provider.directoryImageChanges
             = [](QObject *, QUrl, KiriView::ImageCandidatesCallback, KiriView::ErrorCallback) {

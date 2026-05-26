@@ -30,7 +30,7 @@ using FakeCandidateProvider = KiriView::TestSupport::FakeImageNavigationCandidat
 
 struct ManualArchiveCandidateLoad {
     QObject *object = nullptr;
-    KiriView::ArchiveDocumentLocation archiveDocument;
+    KiriView::ImagePageScopeLocation archiveDocument;
     KiriView::ImageCandidatesCallback callback;
     KiriView::ErrorCallback errorCallback;
     KiriView::ImageIoJobCompletion completion;
@@ -40,7 +40,7 @@ struct ManualArchiveCandidateLoad {
 class ManualArchiveCandidateProvider
 {
 public:
-    KiriView::ImageIoJob start(QObject *receiver, KiriView::ArchiveDocumentLocation archiveDocument,
+    KiriView::ImageIoJob start(QObject *receiver, KiriView::ImagePageScopeLocation archiveDocument,
         KiriView::ImageCandidatesCallback callback, KiriView::ErrorCallback errorCallback)
     {
         auto load = std::make_shared<ManualArchiveCandidateLoad>();
@@ -84,7 +84,7 @@ public:
                 }
                 return KiriView::ImageIoJob();
             },
-            [this](QObject *receiver, KiriView::ArchiveDocumentLocation archiveDocument,
+            [this](QObject *receiver, KiriView::ImagePageScopeLocation archiveDocument,
                 KiriView::ImageCandidatesCallback callback, KiriView::ErrorCallback errorCallback) {
                 return start(receiver, std::move(archiveDocument), std::move(callback),
                     std::move(errorCallback));
@@ -191,8 +191,8 @@ void TestImageLoader::predecodedImageBypassesDataLoad()
     ManualImageDataLoader dataLoader;
     const QUrl imageUrl = localUrl(QStringLiteral("/images/02.png"));
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
-        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
+        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveDocument.has_value());
     std::optional<KiriView::ImageLoadSession> predecodedSession;
     QSize imageSize;
@@ -203,9 +203,9 @@ void TestImageLoader::predecodedImageBypassesDataLoad()
         }
 
         const QImage image = testImage();
-        return std::optional<KiriView::PredecodedImage>(KiriView::PredecodedImage {
-            staticTestImagePayload(image),
-            KiriView::DisplayedImageLocation::fromArchiveDocument(imageUrl, *archiveDocument) });
+        return std::optional<KiriView::PredecodedImage>(
+            KiriView::PredecodedImage { staticTestImagePayload(image),
+                KiriView::DisplayedImageLocation::fromImagePageScope(imageUrl, *archiveDocument) });
     };
     callbacks.predecodedImage = [&predecodedSession, &imageSize](KiriView::ImageLoadSession session,
                                     KiriView::PredecodedImage image) {
@@ -219,7 +219,7 @@ void TestImageLoader::predecodedImageBypassesDataLoad()
 
     QVERIFY(predecodedSession.has_value());
     QCOMPARE(predecodedSession->imageUrl(), imageUrl);
-    QCOMPARE(predecodedSession->location().archiveDocumentRootUrl(), archiveDocument->rootUrl());
+    QCOMPARE(predecodedSession->location().imagePageScopeRootUrl(), archiveDocument->rootUrl());
     QCOMPARE(imageSize, QSize(1, 1));
     QVERIFY(dataLoader.empty());
 }
@@ -292,8 +292,8 @@ void TestImageLoader::directArchiveResolvesFirstImage()
 
     QTRY_VERIFY(decodedSession.has_value());
     QCOMPARE(decodedSession->imageUrl(), firstImageUrl);
-    QCOMPARE(decodedSession->location().archiveDocumentRootUrl(), *archiveRootUrl);
-    QCOMPARE(decodedSession->archiveDocument().kind(), KiriView::ArchiveDocumentKind::General);
+    QCOMPARE(decodedSession->location().imagePageScopeRootUrl(), *archiveRootUrl);
+    QCOMPARE(decodedSession->imagePageScope().kind(), KiriView::ImagePageScopeKind::GeneralArchive);
 }
 
 void TestImageLoader::directDirectoryResolvesFirstImage()
@@ -304,8 +304,8 @@ void TestImageLoader::directDirectoryResolvesFirstImage()
     QVERIFY(directory.isValid());
 
     const QUrl directoryUrl = localUrl(directory.path());
-    const std::optional<KiriView::ArchiveDocumentLocation> directoryDocument
-        = KiriView::directOpenDocumentLocationForLocalUrl(directoryUrl);
+    const std::optional<KiriView::ImagePageScopeLocation> directoryDocument
+        = KiriView::directOpenImagePageScopeLocationForLocalUrl(directoryUrl);
     QVERIFY(directoryDocument.has_value());
     const QUrl firstImageUrl
         = archivePageUrl(directoryDocument->rootUrl(), QStringLiteral("01.png"));
@@ -336,8 +336,8 @@ void TestImageLoader::directDirectoryResolvesFirstImage()
 
     QTRY_VERIFY(decodedSession.has_value());
     QCOMPARE(decodedSession->imageUrl(), firstImageUrl);
-    QCOMPARE(decodedSession->location().archiveDocumentRootUrl(), directoryDocument->rootUrl());
-    QCOMPARE(decodedSession->archiveDocument().kind(), KiriView::ArchiveDocumentKind::Directory);
+    QCOMPARE(decodedSession->location().imagePageScopeRootUrl(), directoryDocument->rootUrl());
+    QCOMPARE(decodedSession->imagePageScope().kind(), KiriView::ImagePageScopeKind::Directory);
 }
 
 void TestImageLoader::explicitKioArchiveImageStaysImageUrlMode()
@@ -357,12 +357,12 @@ void TestImageLoader::explicitKioArchiveImageStaysImageUrlMode()
 
     QCOMPARE(dataLoader.loadCount(), std::size_t(1));
     QCOMPARE(dataLoader.frontLoad().url, imageUrl);
-    QVERIFY(dataLoader.frontLoad().archiveDocument.isEmpty());
+    QVERIFY(dataLoader.frontLoad().imagePageScope.isEmpty());
     dataLoader.finishFrontLoad(QByteArrayLiteral("ok"));
 
     QTRY_VERIFY(decodedSession.has_value());
     QCOMPARE(decodedSession->imageUrl(), imageUrl);
-    QVERIFY(decodedSession->archiveDocument().isEmpty());
+    QVERIFY(decodedSession->imagePageScope().isEmpty());
 }
 
 void TestImageLoader::archiveInteriorImageKeepsComicBookRoot()
@@ -382,8 +382,8 @@ void TestImageLoader::archiveInteriorImageKeepsComicBookRoot()
     QVERIFY(archiveRootUrl.has_value());
     const QUrl imageUrl = archivePageUrl(*archiveRootUrl, QStringLiteral("02.png"));
 
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
-        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
+        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveDocument.has_value());
     loader.start(KiriView::ImageLoadRequest::fromLocation(imageUrl, *archiveDocument));
 
@@ -393,7 +393,7 @@ void TestImageLoader::archiveInteriorImageKeepsComicBookRoot()
 
     QTRY_VERIFY(decodedSession.has_value());
     QCOMPARE(decodedSession->location().imageUrl(), imageUrl);
-    QCOMPARE(decodedSession->location().archiveDocumentRootUrl(), *archiveRootUrl);
+    QCOMPARE(decodedSession->location().imagePageScopeRootUrl(), *archiveRootUrl);
 }
 
 void TestImageLoader::staleLoadResultIsIgnored()

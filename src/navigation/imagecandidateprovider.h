@@ -19,7 +19,7 @@ struct ImageNavigationCandidateProvider {
     using ImageCandidateLoader
         = std::function<ImageIoJob(QObject *, QUrl, ImageCandidatesCallback, ErrorCallback)>;
     using ArchiveImageCandidateLoader = std::function<ImageIoJob(
-        QObject *, ArchiveDocumentLocation, ImageCandidatesCallback, ErrorCallback)>;
+        QObject *, ImagePageScopeLocation, ImageCandidatesCallback, ErrorCallback)>;
     using ContainerCandidateLoader
         = std::function<ImageIoJob(QObject *, QUrl, ContainerCandidatesCallback, ErrorCallback)>;
     using ImageCandidateChangeSubscriber

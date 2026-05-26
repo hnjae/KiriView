@@ -26,7 +26,7 @@ public:
 
     const QUrl &sourceUrl() const;
     const DisplayedImageLocation &displayedImageLocation() const;
-    const ArchiveDocumentLocation &displayedArchiveDocument() const;
+    const ImagePageScopeLocation &displayedImagePageScope() const;
     const QUrl &displayedUrl() const;
     ImageDocumentStatus status() const;
     bool loading() const;

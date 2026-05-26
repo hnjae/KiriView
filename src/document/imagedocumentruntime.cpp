@@ -23,7 +23,7 @@ namespace {
     {
         return ImageDocumentSourceLoadSnapshot {
             state.sourceUrl(),
-            state.displayedArchiveDocument(),
+            state.displayedImagePageScope(),
             spreadController.rightToLeftReadingEnabled(),
         };
     }
@@ -222,12 +222,12 @@ bool ImageDocumentRuntime::containerNavigationAvailable() const
 
 bool ImageDocumentRuntime::ordinaryDirectMediaScopeActive() const
 {
-    return !state.displayedUrl().isEmpty() && state.displayedArchiveDocument().isEmpty();
+    return !state.displayedUrl().isEmpty() && state.displayedImagePageScope().isEmpty();
 }
 
 bool ImageDocumentRuntime::archiveOrDirectoryDocumentScopeActive() const
 {
-    return !state.displayedArchiveDocument().isEmpty();
+    return !state.displayedImagePageScope().isEmpty();
 }
 
 bool ImageDocumentRuntime::fileDeletionInProgress() const

@@ -60,19 +60,19 @@ void TestImageContainerOpenPlan::directoryContainerPlansDirectoryListing()
 void TestImageContainerOpenPlan::comicBookArchiveContainerPlansArchiveListing()
 {
     const QUrl containerUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
-        = KiriView::archiveDocumentLocationForLocalArchiveUrl(containerUrl);
-    QVERIFY(archiveDocument.has_value());
+    const std::optional<KiriView::ImagePageScopeLocation> imagePageScope
+        = KiriView::imagePageScopeLocationForLocalArchiveUrl(containerUrl);
+    QVERIFY(imagePageScope.has_value());
 
     const KiriView::ImageContainerOpenPlan plan = KiriView::imageContainerOpenPlanForCandidate(
         KiriView::ContainerNavigationCandidate { containerUrl, QStringLiteral("book.cbz"),
             ContainerNavigationCandidateType::ComicBookArchive });
 
     QVERIFY(plan.shouldLoadCandidates());
-    const auto *archive = typedSource<ImageCandidateListSource::ArchiveDocument>(*plan.source);
+    const auto *archive = typedSource<ImageCandidateListSource::ImagePageScope>(*plan.source);
     QVERIFY(archive != nullptr);
-    QCOMPARE(archive->archiveDocument.rootUrl(), archiveDocument->rootUrl());
-    QVERIFY(archive->archiveDocument.isComicBook());
+    QCOMPARE(archive->imagePageScope.rootUrl(), imagePageScope->rootUrl());
+    QVERIFY(archive->imagePageScope.isComicBook());
 }
 
 void TestImageContainerOpenPlan::invalidArchiveContainerReportsTypedError()

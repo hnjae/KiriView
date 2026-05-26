@@ -20,13 +20,13 @@ KiriView::ArchiveDocumentSessionFactory defaultSessionFactory(
 
 namespace KiriView {
 ArchiveDocumentSessionRunner::ArchiveDocumentSessionRunner(
-    ArchiveDocumentLocation archiveDocument, ArchiveDocumentSessionFactory sessionFactory)
+    ImagePageScopeLocation archiveDocument, ArchiveDocumentSessionFactory sessionFactory)
     : m_archiveDocument(std::move(archiveDocument))
     , m_sessionFactory(defaultSessionFactory(std::move(sessionFactory)))
 {
 }
 
-const ArchiveDocumentLocation &ArchiveDocumentSessionRunner::archiveDocument() const
+const ImagePageScopeLocation &ArchiveDocumentSessionRunner::imagePageScope() const
 {
     return m_archiveDocument;
 }

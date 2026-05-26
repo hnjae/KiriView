@@ -228,7 +228,7 @@ ImageDocumentRuntimeOperations ImageDocumentRuntimeControllers::runtimeOperation
         = [this, stateOwner](const ImageDocumentSourceLoadRequest &request) {
               if (m_archiveSessionStore != nullptr) {
                   m_archiveSessionStore->prepareForSourceLoad(
-                      request, stateOwner->displayedArchiveDocument());
+                      request, stateOwner->displayedImagePageScope());
               }
           };
     operations.open.setSourceUrl = [stateOwner](const QUrl &url) { stateOwner->setSourceUrl(url); };

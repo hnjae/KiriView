@@ -15,9 +15,9 @@ class ArchiveDocumentSessionRunner final
 {
 public:
     ArchiveDocumentSessionRunner(
-        ArchiveDocumentLocation archiveDocument, ArchiveDocumentSessionFactory sessionFactory);
+        ImagePageScopeLocation archiveDocument, ArchiveDocumentSessionFactory sessionFactory);
 
-    const ArchiveDocumentLocation &archiveDocument() const;
+    const ImagePageScopeLocation &imagePageScope() const;
 
     ArchiveImageCandidatesResult loadImageCandidates();
     ArchiveImageDataResult loadImageData(const QUrl &imageUrl);
@@ -26,7 +26,7 @@ public:
 private:
     std::optional<QString> ensureSession();
 
-    ArchiveDocumentLocation m_archiveDocument;
+    ImagePageScopeLocation m_archiveDocument;
     ArchiveDocumentSessionFactory m_sessionFactory;
     ArchiveDocumentSessionPtr m_session;
     QString m_openErrorString;

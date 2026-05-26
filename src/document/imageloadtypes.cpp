@@ -28,9 +28,9 @@ const ImageFirstDisplayDecodeContext &ImageLoadSession::firstDisplay() const
 
 const QUrl &ImageLoadSession::imageUrl() const { return m_location.imageUrl(); }
 
-const ArchiveDocumentLocation &ImageLoadSession::archiveDocument() const
+const ImagePageScopeLocation &ImageLoadSession::imagePageScope() const
 {
-    return m_location.archiveDocument();
+    return m_location.imagePageScope();
 }
 
 const QUrl &ImageLoadSession::containerNavigationUrl() const

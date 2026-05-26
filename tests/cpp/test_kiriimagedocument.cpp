@@ -73,8 +73,8 @@ void TestKiriImageDocument::archiveOrDirectoryDocumentScopeActiveFollowsDisplaye
     QVERIFY(!directImageDocument->archiveOrDirectoryDocumentScopeActive());
 
     const QUrl comicArchiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::ArchiveDocumentLocation> comicArchiveDocument
-        = KiriView::archiveDocumentLocationForLocalArchiveUrl(comicArchiveUrl);
+    const std::optional<KiriView::ImagePageScopeLocation> comicArchiveDocument
+        = KiriView::imagePageScopeLocationForLocalArchiveUrl(comicArchiveUrl);
     QVERIFY(comicArchiveDocument.has_value());
     const QUrl comicArchivePage
         = archivePageUrl(comicArchiveDocument->rootUrl(), QStringLiteral("01.png"));
@@ -87,8 +87,8 @@ void TestKiriImageDocument::archiveOrDirectoryDocumentScopeActiveFollowsDisplaye
     QVERIFY(comicDocument->archiveOrDirectoryDocumentScopeActive());
 
     const QUrl generalArchiveUrl = localUrl(QStringLiteral("/books/book.zip"));
-    const std::optional<KiriView::ArchiveDocumentLocation> generalArchiveDocument
-        = KiriView::archiveDocumentLocationForLocalArchiveUrl(generalArchiveUrl);
+    const std::optional<KiriView::ImagePageScopeLocation> generalArchiveDocument
+        = KiriView::imagePageScopeLocationForLocalArchiveUrl(generalArchiveUrl);
     QVERIFY(generalArchiveDocument.has_value());
     const QUrl generalArchivePage
         = archivePageUrl(generalArchiveDocument->rootUrl(), QStringLiteral("01.png"));
@@ -103,8 +103,8 @@ void TestKiriImageDocument::archiveOrDirectoryDocumentScopeActiveFollowsDisplaye
     QTemporaryDir directory;
     QVERIFY(directory.isValid());
     const QUrl directoryUrl = localUrl(directory.path());
-    const std::optional<KiriView::ArchiveDocumentLocation> directoryDocument
-        = KiriView::directOpenDocumentLocationForLocalUrl(directoryUrl);
+    const std::optional<KiriView::ImagePageScopeLocation> directoryDocument
+        = KiriView::directOpenImagePageScopeLocationForLocalUrl(directoryUrl);
     QVERIFY(directoryDocument.has_value());
     const QUrl directoryPage
         = archivePageUrl(directoryDocument->rootUrl(), QStringLiteral("01.png"));

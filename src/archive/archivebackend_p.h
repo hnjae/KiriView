@@ -16,7 +16,7 @@
 
 namespace KiriView::ArchiveBackendDetail {
 using ArchiveDocumentSessionOpener
-    = ArchiveDocumentSessionOpenResult (*)(const ArchiveDocumentLocation &);
+    = ArchiveDocumentSessionOpenResult (*)(const ImagePageScopeLocation &);
 
 struct ArchiveBackendOperations {
     ArchiveDocumentSessionOpener openSession;
@@ -38,10 +38,10 @@ private:
 };
 
 std::optional<ImageNavigationCandidate> archiveImageCandidate(
-    const ArchiveDocumentLocation &archiveDocument, const QString &entryPath);
+    const ImagePageScopeLocation &archiveDocument, const QString &entryPath);
 std::optional<QString> archiveImageEntryPathForRead(
-    const ArchiveDocumentLocation &archiveDocument, const QUrl &imageUrl);
-QString fallbackArchiveOpenError(const ArchiveDocumentLocation &archiveDocument);
+    const ImagePageScopeLocation &archiveDocument, const QUrl &imageUrl);
+QString fallbackArchiveOpenError(const ImagePageScopeLocation &archiveDocument);
 QString archiveImageNotFoundError();
 QString archiveImageReadError();
 

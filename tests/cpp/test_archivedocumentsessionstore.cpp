@@ -95,7 +95,7 @@ void TestArchiveDocumentSessionStore::candidateAndDataLoadsShareOneArchiveOpen()
 {
     auto state = std::make_shared<InstrumentedArchiveSessionState>();
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
         = archiveDocumentForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveDocument.has_value());
     const QUrl firstUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
@@ -114,11 +114,11 @@ void TestArchiveDocumentSessionStore::candidateAndDataLoadsShareOneArchiveOpen()
     store.loadArchiveImages(nullptr, *archiveDocument, [](auto) { }, {});
     store.loadArchiveImageData(nullptr,
         KiriView::ImageDecodeRequest::fromLocation(
-            1, KiriView::DisplayedImageLocation::fromArchiveDocument(firstUrl, *archiveDocument)),
+            1, KiriView::DisplayedImageLocation::fromImagePageScope(firstUrl, *archiveDocument)),
         [&firstData](QByteArray data) { firstData = std::move(data); }, {});
     store.loadArchiveImageData(nullptr,
         KiriView::ImageDecodeRequest::fromLocation(
-            2, KiriView::DisplayedImageLocation::fromArchiveDocument(secondUrl, *archiveDocument)),
+            2, KiriView::DisplayedImageLocation::fromImagePageScope(secondUrl, *archiveDocument)),
         [&secondData](QByteArray data) { secondData = std::move(data); }, {});
 
     QCOMPARE(candidates.size(), std::size_t(2));
@@ -133,7 +133,7 @@ void TestArchiveDocumentSessionStore::simultaneousCandidateLoadsSharePendingSess
 {
     auto state = std::make_shared<InstrumentedArchiveSessionState>();
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
         = archiveDocumentForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveDocument.has_value());
     const QUrl pageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
@@ -156,9 +156,9 @@ void TestArchiveDocumentSessionStore::staleDataLoadCompletionIsIgnoredAfterArchi
     auto state = std::make_shared<InstrumentedArchiveSessionState>();
     const QUrl firstArchiveUrl = localUrl(QStringLiteral("/books/a.cbz"));
     const QUrl secondArchiveUrl = localUrl(QStringLiteral("/books/b.cbz"));
-    const std::optional<KiriView::ArchiveDocumentLocation> firstArchiveDocument
+    const std::optional<KiriView::ImagePageScopeLocation> firstArchiveDocument
         = archiveDocumentForLocalArchiveUrl(firstArchiveUrl);
-    const std::optional<KiriView::ArchiveDocumentLocation> secondArchiveDocument
+    const std::optional<KiriView::ImagePageScopeLocation> secondArchiveDocument
         = archiveDocumentForLocalArchiveUrl(secondArchiveUrl);
     QVERIFY(firstArchiveDocument.has_value());
     QVERIFY(secondArchiveDocument.has_value());
@@ -174,7 +174,7 @@ void TestArchiveDocumentSessionStore::staleDataLoadCompletionIsIgnoredAfterArchi
     int staleCallbackCount = 0;
     KiriView::ImageIoJob staleJob = store.loadArchiveImageData(this,
         KiriView::ImageDecodeRequest::fromLocation(1,
-            KiriView::DisplayedImageLocation::fromArchiveDocument(
+            KiriView::DisplayedImageLocation::fromImagePageScope(
                 firstPageUrl, *firstArchiveDocument)),
         [&staleCallbackCount](QByteArray) { ++staleCallbackCount; }, {});
     QTRY_COMPARE(state->waitingDataLoadCount.load(), 1);
@@ -192,7 +192,7 @@ void TestArchiveDocumentSessionStore::navigationReusesCachedArchiveCandidates()
 {
     auto state = std::make_shared<InstrumentedArchiveSessionState>();
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
         = archiveDocumentForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveDocument.has_value());
     const QUrl firstUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
@@ -208,7 +208,7 @@ void TestArchiveDocumentSessionStore::navigationReusesCachedArchiveCandidates()
         navigationCallbacks([&openedUrl](const QUrl &url) { openedUrl = url; }));
 
     service.updatePageNavigation(navigationContext(
-        KiriView::DisplayedImageLocation::fromArchiveDocument(firstUrl, *archiveDocument)));
+        KiriView::DisplayedImageLocation::fromImagePageScope(firstUrl, *archiveDocument)));
     QTRY_COMPARE(service.imageCount(), 3);
     QCOMPARE(service.currentPageNumber(), 1);
     QCOMPARE(state->openCount.load(), 1);
@@ -216,14 +216,14 @@ void TestArchiveDocumentSessionStore::navigationReusesCachedArchiveCandidates()
 
     service.openAdjacentImage(
         navigationContext(
-            KiriView::DisplayedImageLocation::fromArchiveDocument(firstUrl, *archiveDocument)),
+            KiriView::DisplayedImageLocation::fromImagePageScope(firstUrl, *archiveDocument)),
         NavigationDirection::Next);
     QCOMPARE(openedUrl, secondUrl);
     QCOMPARE(state->openCount.load(), 1);
     QCOMPARE(state->candidateLoadCount.load(), 1);
 
     service.updatePageNavigation(navigationContext(
-        KiriView::DisplayedImageLocation::fromArchiveDocument(secondUrl, *archiveDocument)));
+        KiriView::DisplayedImageLocation::fromImagePageScope(secondUrl, *archiveDocument)));
     QCOMPARE(service.currentPageNumber(), 2);
     QCOMPARE(service.imageCount(), 3);
     QCOMPARE(state->openCount.load(), 1);
@@ -234,7 +234,7 @@ void TestArchiveDocumentSessionStore::predecodeLoadsAdjacentArchiveImagesThrough
 {
     auto state = std::make_shared<InstrumentedArchiveSessionState>();
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
+    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
         = archiveDocumentForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveDocument.has_value());
     const QUrl firstUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
@@ -253,7 +253,7 @@ void TestArchiveDocumentSessionStore::predecodeLoadsAdjacentArchiveImagesThrough
         KiriView::PowerSaverProvider {}, 1024 * 1024);
 
     KiriView::DisplayedPredecodeImage displayedImage {
-        KiriView::DisplayedImageLocation::fromArchiveDocument(displayedUrl, *archiveDocument),
+        KiriView::DisplayedImageLocation::fromImagePageScope(displayedUrl, *archiveDocument),
         true,
         staticTestImagePayload(testImage()),
     };
@@ -277,9 +277,9 @@ void TestArchiveDocumentSessionStore::lifecycleClearsSessionForDifferentArchiveN
     auto state = std::make_shared<InstrumentedArchiveSessionState>();
     const QUrl firstArchiveUrl = localUrl(QStringLiteral("/books/a.cbz"));
     const QUrl secondArchiveUrl = localUrl(QStringLiteral("/books/b.cbz"));
-    const std::optional<KiriView::ArchiveDocumentLocation> firstArchiveDocument
+    const std::optional<KiriView::ImagePageScopeLocation> firstArchiveDocument
         = archiveDocumentForLocalArchiveUrl(firstArchiveUrl);
-    const std::optional<KiriView::ArchiveDocumentLocation> secondArchiveDocument
+    const std::optional<KiriView::ImagePageScopeLocation> secondArchiveDocument
         = archiveDocumentForLocalArchiveUrl(secondArchiveUrl);
     QVERIFY(firstArchiveDocument.has_value());
     QVERIFY(secondArchiveDocument.has_value());

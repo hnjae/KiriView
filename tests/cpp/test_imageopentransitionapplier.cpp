@@ -65,12 +65,12 @@ private Q_SLOTS:
 void TestImageOpenTransitionApplier::applicationPlanResolvesRuntimeTargetsBeforeStateMutation()
 {
     const QUrl containerUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
-        = KiriView::archiveDocumentLocationForLocalArchiveUrl(containerUrl);
+    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
+        = KiriView::imagePageScopeLocationForLocalArchiveUrl(containerUrl);
     QVERIFY(archiveDocument.has_value());
     const QUrl imageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
     const KiriView::DisplayedImageLocation location
-        = KiriView::DisplayedImageLocation::fromArchiveDocument(imageUrl, *archiveDocument);
+        = KiriView::DisplayedImageLocation::fromImagePageScope(imageUrl, *archiveDocument);
     const KiriView::ImageLoadSession session {
         5,
         KiriView::ImageLoadRequest::fromUrl(imageUrl, containerUrl),
@@ -114,12 +114,12 @@ void TestImageOpenTransitionApplier::successfulTransitionAppliesSessionStateAndE
     changes.clear();
 
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
-        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
+        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveDocument.has_value());
     const QUrl imageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
     const KiriView::DisplayedImageLocation location
-        = KiriView::DisplayedImageLocation::fromArchiveDocument(imageUrl, *archiveDocument);
+        = KiriView::DisplayedImageLocation::fromImagePageScope(imageUrl, *archiveDocument);
     const KiriView::ImageLoadSession session {
         7,
         KiriView::ImageLoadRequest::fromUrl(archiveUrl),

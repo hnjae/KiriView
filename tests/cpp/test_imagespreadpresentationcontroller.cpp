@@ -29,15 +29,16 @@ KiriView::ImageDocumentRenderContext renderContext()
     };
 }
 
-KiriView::ArchiveDocumentLocation archiveDocument()
+KiriView::ImagePageScopeLocation imagePageScope()
 {
-    return KiriView::ArchiveDocumentLocation::fromUrls(localUrl(QStringLiteral("/books/book.cbz")),
-        localUrl(QStringLiteral("/books/book.cbz/")), KiriView::ArchiveDocumentKind::ComicBook);
+    return KiriView::ImagePageScopeLocation::fromUrls(localUrl(QStringLiteral("/books/book.cbz")),
+        localUrl(QStringLiteral("/books/book.cbz/")),
+        KiriView::ImagePageScopeKind::ComicBookArchive);
 }
 
 KiriView::DisplayedImageLocation displayedLocation(const QUrl &url)
 {
-    return KiriView::DisplayedImageLocation::fromArchiveDocument(url, archiveDocument());
+    return KiriView::DisplayedImageLocation::fromImagePageScope(url, imagePageScope());
 }
 
 KiriView::ImagePageNavigationSnapshot navigationSnapshot(

@@ -59,8 +59,8 @@ void TestImageOpenSourceLoadWorkflow::displayedComicBookScopeSuppressesRightToLe
     QVERIFY(archiveRootUrl.has_value());
     const QUrl imageUrl(QStringLiteral("%1/01.png").arg(archiveRootUrl->toString()));
     const QUrl replacementUrl = localUrl(QStringLiteral("/images/page.png"));
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
-        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
+        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveDocument.has_value());
 
     const KiriView::ImageDocumentSourceLoadSnapshot snapshot {

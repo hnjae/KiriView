@@ -65,44 +65,45 @@ private:
     QUrl m_url;
 };
 
-enum class ArchiveDocumentKind {
-    ComicBook,
-    General,
+enum class ImagePageScopeKind {
+    ComicBookArchive,
+    GeneralArchive,
     Directory,
 };
 
-class ArchiveDocumentLocation
+class ImagePageScopeLocation
 {
 public:
-    ArchiveDocumentLocation() = default;
-    ArchiveDocumentLocation(QUrl fileUrl, QUrl rootUrl, ArchiveDocumentKind kind)
+    ImagePageScopeLocation() = default;
+    ImagePageScopeLocation(QUrl fileUrl, QUrl rootUrl, ImagePageScopeKind kind)
         : m_fileUrl(normalizedUrlForIdentity(fileUrl))
         , m_rootUrl(normalizedUrlForIdentity(rootUrl))
         , m_kind(kind)
     {
     }
 
-    static ArchiveDocumentLocation none() { return ArchiveDocumentLocation(); }
-    static ArchiveDocumentLocation fromUrls(QUrl fileUrl, QUrl rootUrl, ArchiveDocumentKind kind)
+    static ImagePageScopeLocation none() { return ImagePageScopeLocation(); }
+    static ImagePageScopeLocation fromUrls(QUrl fileUrl, QUrl rootUrl, ImagePageScopeKind kind)
     {
-        return ArchiveDocumentLocation(std::move(fileUrl), std::move(rootUrl), kind);
+        return ImagePageScopeLocation(std::move(fileUrl), std::move(rootUrl), kind);
     }
 
     const QUrl &fileUrl() const { return m_fileUrl; }
     const QUrl &rootUrl() const { return m_rootUrl; }
-    ArchiveDocumentKind kind() const { return m_kind; }
+    ImagePageScopeKind kind() const { return m_kind; }
     bool isEmpty() const { return m_fileUrl.isEmpty() || m_rootUrl.isEmpty(); }
-    bool isComicBook() const { return !isEmpty() && m_kind == ArchiveDocumentKind::ComicBook; }
-    bool isDirectory() const { return !isEmpty() && m_kind == ArchiveDocumentKind::Directory; }
+    bool isComicBook() const
+    {
+        return !isEmpty() && m_kind == ImagePageScopeKind::ComicBookArchive;
+    }
+    bool isDirectory() const { return !isEmpty() && m_kind == ImagePageScopeKind::Directory; }
 
-    friend bool operator==(
-        const ArchiveDocumentLocation &left, const ArchiveDocumentLocation &right)
+    friend bool operator==(const ImagePageScopeLocation &left, const ImagePageScopeLocation &right)
     {
         return left.m_fileUrl == right.m_fileUrl && left.m_rootUrl == right.m_rootUrl
             && left.m_kind == right.m_kind;
     }
-    friend bool operator!=(
-        const ArchiveDocumentLocation &left, const ArchiveDocumentLocation &right)
+    friend bool operator!=(const ImagePageScopeLocation &left, const ImagePageScopeLocation &right)
     {
         return !(left == right);
     }
@@ -110,55 +111,55 @@ public:
 private:
     QUrl m_fileUrl;
     QUrl m_rootUrl;
-    ArchiveDocumentKind m_kind = ArchiveDocumentKind::General;
+    ImagePageScopeKind m_kind = ImagePageScopeKind::GeneralArchive;
 };
 
-bool sameArchiveDocumentLocation(
-    const ArchiveDocumentLocation &left, const ArchiveDocumentLocation &right);
+bool sameImagePageScopeLocation(
+    const ImagePageScopeLocation &left, const ImagePageScopeLocation &right);
 
 class DisplayedImageLocation
 {
 public:
     DisplayedImageLocation() = default;
-    DisplayedImageLocation(ImageLocation image, ArchiveDocumentLocation archiveDocument)
+    DisplayedImageLocation(ImageLocation image, ImagePageScopeLocation imagePageScope)
         : m_image(std::move(image))
-        , m_archiveDocument(std::move(archiveDocument))
+        , m_imagePageScope(std::move(imagePageScope))
     {
     }
 
     static DisplayedImageLocation fromUrl(QUrl imageUrl)
     {
         return DisplayedImageLocation { ImageLocation::fromUrl(std::move(imageUrl)),
-            ArchiveDocumentLocation::none() };
+            ImagePageScopeLocation::none() };
     }
 
-    static DisplayedImageLocation fromUrl(QUrl imageUrl, ArchiveDocumentLocation archiveDocument)
+    static DisplayedImageLocation fromUrl(QUrl imageUrl, ImagePageScopeLocation imagePageScope)
     {
         return DisplayedImageLocation { ImageLocation::fromUrl(std::move(imageUrl)),
-            std::move(archiveDocument) };
+            std::move(imagePageScope) };
     }
 
-    static DisplayedImageLocation fromArchiveDocument(
-        QUrl imageUrl, ArchiveDocumentLocation archiveDocument)
+    static DisplayedImageLocation fromImagePageScope(
+        QUrl imageUrl, ImagePageScopeLocation imagePageScope)
     {
-        return fromUrl(std::move(imageUrl), std::move(archiveDocument));
+        return fromUrl(std::move(imageUrl), std::move(imagePageScope));
     }
 
     const QUrl &imageUrl() const { return m_image.url(); }
-    const ArchiveDocumentLocation &archiveDocument() const { return m_archiveDocument; }
-    const QUrl &archiveDocumentFileUrl() const { return m_archiveDocument.fileUrl(); }
-    const QUrl &archiveDocumentRootUrl() const { return m_archiveDocument.rootUrl(); }
+    const ImagePageScopeLocation &imagePageScope() const { return m_imagePageScope; }
+    const QUrl &imagePageScopeSourceUrl() const { return m_imagePageScope.fileUrl(); }
+    const QUrl &imagePageScopeRootUrl() const { return m_imagePageScope.rootUrl(); }
     bool isEmpty() const { return m_image.isEmpty(); }
     void setImageUrl(QUrl url) { m_image = ImageLocation::fromUrl(std::move(url)); }
-    void setArchiveDocument(ArchiveDocumentLocation archiveDocument)
+    void setImagePageScope(ImagePageScopeLocation imagePageScope)
     {
-        m_archiveDocument = std::move(archiveDocument);
+        m_imagePageScope = std::move(imagePageScope);
     }
-    void clearArchiveDocument() { m_archiveDocument = ArchiveDocumentLocation::none(); }
+    void clearImagePageScope() { m_imagePageScope = ImagePageScopeLocation::none(); }
 
     friend bool operator==(const DisplayedImageLocation &left, const DisplayedImageLocation &right)
     {
-        return left.m_image == right.m_image && left.m_archiveDocument == right.m_archiveDocument;
+        return left.m_image == right.m_image && left.m_imagePageScope == right.m_imagePageScope;
     }
     friend bool operator!=(const DisplayedImageLocation &left, const DisplayedImageLocation &right)
     {
@@ -167,7 +168,7 @@ public:
 
 private:
     ImageLocation m_image;
-    ArchiveDocumentLocation m_archiveDocument;
+    ImagePageScopeLocation m_imagePageScope;
 };
 
 }

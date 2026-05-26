@@ -362,7 +362,7 @@ void TestKiriDocumentSession::kioArchiveImageAfterKioArchiveVideoUsesOriginalIma
     QCOMPARE(session->videoDocument()->sourceUrl(), QUrl());
     QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
     QCOMPARE(dataLoader.backLoad().url, imageUrl);
-    QVERIFY(dataLoader.backLoad().archiveDocument.isEmpty());
+    QVERIFY(dataLoader.backLoad().imagePageScope.isEmpty());
     QVERIFY(!dataLoader.backLoad().url.isLocalFile());
     QVERIFY(!dataLoader.backLoad().url.toString().contains(QStringLiteral("kio-fuse")));
 }
@@ -610,8 +610,8 @@ void TestKiriDocumentSession::archiveImageDocumentProjectsActiveNavigationFromPa
     KiriView::TestSupport::FakeImageNavigationCandidateProvider imageCandidates;
     KiriView::TestSupport::ManualImageDataLoader dataLoader;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
-        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
+        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveDocument.has_value());
     const QUrl firstPage = KiriView::TestSupport::archivePageUrl(
         archiveDocument->rootUrl(), QStringLiteral("01.png"));
@@ -652,8 +652,8 @@ void TestKiriDocumentSession::imagePageNavigationChangesEmitActiveNavigationWhen
     KiriView::TestSupport::FakeImageNavigationCandidateProvider imageCandidates;
     KiriView::TestSupport::ManualImageDataLoader dataLoader;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/signals.cbz"));
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
-        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
+        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveDocument.has_value());
     const QUrl firstPage = KiriView::TestSupport::archivePageUrl(
         archiveDocument->rootUrl(), QStringLiteral("01.png"));
@@ -709,8 +709,8 @@ void TestKiriDocumentSession::activeNavigationNumberDispatchRoutesImageDocumentP
     KiriView::TestSupport::FakeImageNavigationCandidateProvider imageCandidates;
     KiriView::TestSupport::ManualImageDataLoader dataLoader;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/number-dispatch.cbz"));
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
-        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
+        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveDocument.has_value());
     const QUrl firstPage = KiriView::TestSupport::archivePageUrl(
         archiveDocument->rootUrl(), QStringLiteral("01.png"));
@@ -743,8 +743,8 @@ void TestKiriDocumentSession::activeNavigationRequestReportsDispatchAndBoundaryR
     KiriView::TestSupport::FakeImageNavigationCandidateProvider imageCandidates;
     KiriView::TestSupport::ManualImageDataLoader dataLoader;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/request-results.cbz"));
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
-        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
+        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveDocument.has_value());
     const QUrl firstPage = KiriView::TestSupport::archivePageUrl(
         archiveDocument->rootUrl(), QStringLiteral("01.png"));
@@ -819,8 +819,8 @@ void TestKiriDocumentSession::activeNavigationClearsWhenSwitchingFromKnownDirect
     KiriView::TestSupport::FakeImageNavigationCandidateProvider imageCandidates;
     KiriView::TestSupport::ManualImageDataLoader dataLoader;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/clear.cbz"));
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
-        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
+        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveDocument.has_value());
     const QUrl page = KiriView::TestSupport::archivePageUrl(
         archiveDocument->rootUrl(), QStringLiteral("01.png"));
@@ -912,8 +912,8 @@ void TestKiriDocumentSession::activeNavigationBoundaryScopeFollowsSessionSource(
     const QUrl clip = localUrl(QStringLiteral("/media/01.mp4"));
     mediaProvider.setMedia(localUrl(QStringLiteral("/media/")), { mediaCandidate(clip) });
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/boundary.cbz"));
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
-        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
+        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveDocument.has_value());
     const QUrl page = KiriView::TestSupport::archivePageUrl(
         archiveDocument->rootUrl(), QStringLiteral("01.png"));
@@ -946,8 +946,8 @@ void TestKiriDocumentSession::twoPageSpreadLastBoundaryProjectsThroughActiveNavi
     KiriView::TestSupport::FakeImageNavigationCandidateProvider imageCandidates;
     KiriView::TestSupport::ManualImageDataLoader dataLoader;
     const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
-    const std::optional<KiriView::ArchiveDocumentLocation> archiveDocument
-        = KiriView::archiveDocumentLocationForLocalArchiveUrl(archiveUrl);
+    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
+        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveDocument.has_value());
     const QUrl firstPage = KiriView::TestSupport::archivePageUrl(
         archiveDocument->rootUrl(), QStringLiteral("01.png"));
