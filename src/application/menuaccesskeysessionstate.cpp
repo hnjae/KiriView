@@ -6,47 +6,61 @@
 namespace KiriView {
 bool MenuAccessKeySessionState::isActive() const { return m_active; }
 
-MenuAccessKeySessionTransition MenuAccessKeySessionState::beginSession()
+MenuAccessKeySessionPlan MenuAccessKeySessionState::handleSessionEvent(
+    MenuAccessKeySessionEvent event)
 {
-    m_active = true;
-    return { MenuAccessKeyVisualEffect::Activate, false };
+    switch (event) {
+    case MenuAccessKeySessionEvent::Begin:
+        return beginSession();
+    case MenuAccessKeySessionEvent::ReleaseAltKey:
+        return releaseAltKey();
+    case MenuAccessKeySessionEvent::MenuUnavailable:
+    case MenuAccessKeySessionEvent::Clear:
+        return clearSession();
+    }
+
+    return {};
 }
 
-MenuAccessKeySessionTransition MenuAccessKeySessionState::releaseAltKey()
+MenuAccessKeySessionPlan MenuAccessKeySessionState::beginSession()
+{
+    m_active = true;
+    return { MenuAccessKeyVisualEffect::Activate, false, false, m_active };
+}
+
+MenuAccessKeySessionPlan MenuAccessKeySessionState::releaseAltKey()
 {
     if (!m_active) {
         return clearSession();
     }
 
     m_active = false;
-    return { MenuAccessKeyVisualEffect::Clear, true };
+    return { MenuAccessKeyVisualEffect::Clear, true, false, m_active };
 }
 
-MenuAccessKeySessionTransition MenuAccessKeySessionState::menuUnavailable()
-{
-    return clearSession();
-}
-
-MenuAccessKeySessionTransition MenuAccessKeySessionState::clearSession()
+MenuAccessKeySessionPlan MenuAccessKeySessionState::clearSession()
 {
     m_active = false;
-    return { MenuAccessKeyVisualEffect::Clear, false };
+    return { MenuAccessKeyVisualEffect::Clear, false, false, m_active };
 }
 
-MenuAccessKeyRoutePlan MenuAccessKeySessionState::routeOpenMenuKey(
+MenuAccessKeySessionPlan MenuAccessKeySessionState::routeOpenMenuKey(
     MenuAccessKeyInputKind input, MenuAccessKeyRoutingPhase phase)
 {
     switch (input) {
     case MenuAccessKeyInputKind::AltKey: {
-        const MenuAccessKeySessionTransition transition = beginSession();
-        return { transition.visualEffect, true, false, m_active };
+        MenuAccessKeySessionPlan plan = beginSession();
+        plan.consumeEvent = true;
+        return plan;
     }
     case MenuAccessKeyInputKind::AltMnemonic: {
-        const MenuAccessKeySessionTransition transition = beginSession();
+        MenuAccessKeySessionPlan plan = beginSession();
         if (phase == MenuAccessKeyRoutingPhase::ShortcutOverride) {
-            return { transition.visualEffect, true, false, m_active };
+            plan.consumeEvent = true;
+            return plan;
         }
-        return { transition.visualEffect, false, true, m_active };
+        plan.triggerMnemonic = true;
+        return plan;
     }
     case MenuAccessKeyInputKind::Mnemonic:
         if (phase == MenuAccessKeyRoutingPhase::ShortcutOverride) {

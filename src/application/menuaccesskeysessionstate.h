@@ -23,12 +23,14 @@ enum class MenuAccessKeyRoutingPhase {
     ShortcutOverride,
 };
 
-struct MenuAccessKeySessionTransition {
-    MenuAccessKeyVisualEffect visualEffect = MenuAccessKeyVisualEffect::None;
-    bool consumeEvent = false;
+enum class MenuAccessKeySessionEvent {
+    Begin,
+    ReleaseAltKey,
+    MenuUnavailable,
+    Clear,
 };
 
-struct MenuAccessKeyRoutePlan {
+struct MenuAccessKeySessionPlan {
     MenuAccessKeyVisualEffect visualEffect = MenuAccessKeyVisualEffect::None;
     bool consumeEvent = false;
     bool triggerMnemonic = false;
@@ -40,14 +42,15 @@ class MenuAccessKeySessionState final
 public:
     bool isActive() const;
 
-    MenuAccessKeySessionTransition beginSession();
-    MenuAccessKeySessionTransition releaseAltKey();
-    MenuAccessKeySessionTransition menuUnavailable();
-    MenuAccessKeySessionTransition clearSession();
-    MenuAccessKeyRoutePlan routeOpenMenuKey(
+    MenuAccessKeySessionPlan handleSessionEvent(MenuAccessKeySessionEvent event);
+    MenuAccessKeySessionPlan routeOpenMenuKey(
         MenuAccessKeyInputKind input, MenuAccessKeyRoutingPhase phase);
 
 private:
+    MenuAccessKeySessionPlan beginSession();
+    MenuAccessKeySessionPlan releaseAltKey();
+    MenuAccessKeySessionPlan clearSession();
+
     bool m_active = false;
 };
 }

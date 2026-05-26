@@ -26,7 +26,7 @@ void MenuAccessKeyRouterRuntime::setMenu(QObject *menu)
 
     QObject::disconnect(m_menuClosedConnection);
     m_menuClosedConnection = {};
-    applySessionTransition(m_accessKeySession.clearSession());
+    applySessionPlan(m_accessKeySession.handleSessionEvent(MenuAccessKeySessionEvent::Clear));
     m_menuRuntime.setMenu(menu);
     if (m_menuRuntime.menu() != nullptr && m_owner != nullptr) {
         m_menuClosedConnection = QObject::connect(
@@ -44,7 +44,7 @@ void MenuAccessKeyRouterRuntime::setEnabled(bool enabled)
     }
 
     if (!enabled) {
-        applySessionTransition(m_accessKeySession.clearSession());
+        applySessionPlan(m_accessKeySession.handleSessionEvent(MenuAccessKeySessionEvent::Clear));
     }
     m_enabled = enabled;
     notify(MenuAccessKeyRouterChange::Enabled);
@@ -79,12 +79,13 @@ bool MenuAccessKeyRouterRuntime::handleKeyRelease(QKeyEvent *event)
         return false;
     }
 
-    const MenuAccessKeySessionTransition transition = m_accessKeySession.releaseAltKey();
-    applySessionTransition(transition);
-    if (transition.consumeEvent) {
+    const MenuAccessKeySessionPlan plan
+        = m_accessKeySession.handleSessionEvent(MenuAccessKeySessionEvent::ReleaseAltKey);
+    applySessionPlan(plan);
+    if (plan.consumeEvent) {
         event->accept();
     }
-    return transition.consumeEvent;
+    return plan.consumeEvent;
 }
 
 bool MenuAccessKeyRouterRuntime::handleShortcutOverride(QKeyEvent *event)
@@ -98,7 +99,7 @@ bool MenuAccessKeyRouterRuntime::routeOpenMenuKey(QKeyEvent *event, MenuAccessKe
         return false;
     }
 
-    return executeRoutePlan(event, m_accessKeySession.routeOpenMenuKey(inputKind(*event), phase));
+    return executeSessionPlan(event, m_accessKeySession.routeOpenMenuKey(inputKind(*event), phase));
 }
 
 MenuAccessKeyInputKind MenuAccessKeyRouterRuntime::inputKind(const QKeyEvent &event) const
@@ -122,16 +123,14 @@ QObject *MenuAccessKeyRouterRuntime::openMenuOrClearAccessKeys()
         return menu;
     }
 
-    applySessionTransition(m_accessKeySession.menuUnavailable());
+    applySessionPlan(
+        m_accessKeySession.handleSessionEvent(MenuAccessKeySessionEvent::MenuUnavailable));
     return nullptr;
 }
 
-bool MenuAccessKeyRouterRuntime::executeRoutePlan(QKeyEvent *event, MenuAccessKeyRoutePlan plan)
+bool MenuAccessKeyRouterRuntime::executeSessionPlan(QKeyEvent *event, MenuAccessKeySessionPlan plan)
 {
-    applySessionTransition(MenuAccessKeySessionTransition {
-        plan.visualEffect,
-        false,
-    });
+    applySessionPlan(plan);
 
     bool handled = plan.consumeEvent;
     if (plan.triggerMnemonic) {
@@ -143,9 +142,9 @@ bool MenuAccessKeyRouterRuntime::executeRoutePlan(QKeyEvent *event, MenuAccessKe
     return handled;
 }
 
-void MenuAccessKeyRouterRuntime::applySessionTransition(MenuAccessKeySessionTransition transition)
+void MenuAccessKeyRouterRuntime::applySessionPlan(MenuAccessKeySessionPlan plan)
 {
-    switch (transition.visualEffect) {
+    switch (plan.visualEffect) {
     case MenuAccessKeyVisualEffect::None:
         return;
     case MenuAccessKeyVisualEffect::Activate:
@@ -159,7 +158,7 @@ void MenuAccessKeyRouterRuntime::applySessionTransition(MenuAccessKeySessionTran
 
 void MenuAccessKeyRouterRuntime::clearMenuAccessKeys()
 {
-    applySessionTransition(m_accessKeySession.clearSession());
+    applySessionPlan(m_accessKeySession.handleSessionEvent(MenuAccessKeySessionEvent::Clear));
 }
 
 void MenuAccessKeyRouterRuntime::notify(MenuAccessKeyRouterChange change) const

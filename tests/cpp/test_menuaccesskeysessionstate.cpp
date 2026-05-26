@@ -11,12 +11,13 @@ class TestMenuAccessKeySessionState : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
-    void beginSessionActivatesAccessKeyVisuals();
-    void activeAltReleaseClearsVisualsConsumesEventAndResetsSession();
-    void inactiveAltReleaseOnlyClearsVisuals();
-    void unavailableMenuClearsVisualsAndResetsSession();
-    void clearSessionClearsVisualsWithoutConsuming();
-    void clearSessionIsIdempotent();
+    void beginSessionEventActivatesAccessKeyVisuals();
+    void activeAltReleaseEventClearsAndConsumes();
+    void inactiveAltReleaseEventOnlyClearsVisuals();
+    void unavailableMenuEventClearsVisualsAndResetsSession();
+    void clearSessionEventClearsVisualsWithoutConsuming();
+    void clearSessionEventIsIdempotent();
+    void clearSessionEventResetsPlainMnemonicSessionSnapshot();
     void altKeyRouteActivatesVisualsConsumesAndStartsSession();
     void altMnemonicRouteActivatesVisualsAndTriggersFromKeyPress();
     void shortcutOverrideClaimsAltMnemonicWithoutTriggering();
@@ -25,14 +26,7 @@ private Q_SLOTS:
 };
 
 namespace {
-void compareTransition(const KiriView::MenuAccessKeySessionTransition &transition,
-    KiriView::MenuAccessKeyVisualEffect visualEffect, bool consumeEvent)
-{
-    QVERIFY(transition.visualEffect == visualEffect);
-    QCOMPARE(transition.consumeEvent, consumeEvent);
-}
-
-void compareRoutePlan(const KiriView::MenuAccessKeyRoutePlan &plan,
+void comparePlan(const KiriView::MenuAccessKeySessionPlan &plan,
     KiriView::MenuAccessKeyVisualEffect visualEffect, bool consumeEvent, bool triggerMnemonic,
     bool accessKeySessionActive)
 {
@@ -43,63 +37,80 @@ void compareRoutePlan(const KiriView::MenuAccessKeyRoutePlan &plan,
 }
 }
 
-void TestMenuAccessKeySessionState::beginSessionActivatesAccessKeyVisuals()
+void TestMenuAccessKeySessionState::beginSessionEventActivatesAccessKeyVisuals()
 {
     KiriView::MenuAccessKeySessionState state;
 
-    compareTransition(state.beginSession(), KiriView::MenuAccessKeyVisualEffect::Activate, false);
+    comparePlan(state.handleSessionEvent(KiriView::MenuAccessKeySessionEvent::Begin),
+        KiriView::MenuAccessKeyVisualEffect::Activate, false, false, true);
     QVERIFY(state.isActive());
 }
 
-void TestMenuAccessKeySessionState::activeAltReleaseClearsVisualsConsumesEventAndResetsSession()
+void TestMenuAccessKeySessionState::activeAltReleaseEventClearsAndConsumes()
 {
     KiriView::MenuAccessKeySessionState state;
-    state.beginSession();
+    state.handleSessionEvent(KiriView::MenuAccessKeySessionEvent::Begin);
 
-    compareTransition(state.releaseAltKey(), KiriView::MenuAccessKeyVisualEffect::Clear, true);
+    comparePlan(state.handleSessionEvent(KiriView::MenuAccessKeySessionEvent::ReleaseAltKey),
+        KiriView::MenuAccessKeyVisualEffect::Clear, true, false, false);
     QVERIFY(!state.isActive());
 }
 
-void TestMenuAccessKeySessionState::inactiveAltReleaseOnlyClearsVisuals()
+void TestMenuAccessKeySessionState::inactiveAltReleaseEventOnlyClearsVisuals()
 {
     KiriView::MenuAccessKeySessionState state;
 
-    compareTransition(state.releaseAltKey(), KiriView::MenuAccessKeyVisualEffect::Clear, false);
+    comparePlan(state.handleSessionEvent(KiriView::MenuAccessKeySessionEvent::ReleaseAltKey),
+        KiriView::MenuAccessKeyVisualEffect::Clear, false, false, false);
     QVERIFY(!state.isActive());
 }
 
-void TestMenuAccessKeySessionState::unavailableMenuClearsVisualsAndResetsSession()
+void TestMenuAccessKeySessionState::unavailableMenuEventClearsVisualsAndResetsSession()
 {
     KiriView::MenuAccessKeySessionState state;
-    state.beginSession();
+    state.handleSessionEvent(KiriView::MenuAccessKeySessionEvent::Begin);
 
-    compareTransition(state.menuUnavailable(), KiriView::MenuAccessKeyVisualEffect::Clear, false);
+    comparePlan(state.handleSessionEvent(KiriView::MenuAccessKeySessionEvent::MenuUnavailable),
+        KiriView::MenuAccessKeyVisualEffect::Clear, false, false, false);
     QVERIFY(!state.isActive());
 }
 
-void TestMenuAccessKeySessionState::clearSessionClearsVisualsWithoutConsuming()
+void TestMenuAccessKeySessionState::clearSessionEventClearsVisualsWithoutConsuming()
 {
     KiriView::MenuAccessKeySessionState state;
-    state.beginSession();
+    state.handleSessionEvent(KiriView::MenuAccessKeySessionEvent::Begin);
 
-    compareTransition(state.clearSession(), KiriView::MenuAccessKeyVisualEffect::Clear, false);
+    comparePlan(state.handleSessionEvent(KiriView::MenuAccessKeySessionEvent::Clear),
+        KiriView::MenuAccessKeyVisualEffect::Clear, false, false, false);
     QVERIFY(!state.isActive());
 }
 
-void TestMenuAccessKeySessionState::clearSessionIsIdempotent()
+void TestMenuAccessKeySessionState::clearSessionEventIsIdempotent()
 {
     KiriView::MenuAccessKeySessionState state;
 
-    compareTransition(state.clearSession(), KiriView::MenuAccessKeyVisualEffect::Clear, false);
+    comparePlan(state.handleSessionEvent(KiriView::MenuAccessKeySessionEvent::Clear),
+        KiriView::MenuAccessKeyVisualEffect::Clear, false, false, false);
     QVERIFY(!state.isActive());
+}
+
+void TestMenuAccessKeySessionState::clearSessionEventResetsPlainMnemonicSessionSnapshot()
+{
+    KiriView::MenuAccessKeySessionState state;
+    state.handleSessionEvent(KiriView::MenuAccessKeySessionEvent::Begin);
+    state.handleSessionEvent(KiriView::MenuAccessKeySessionEvent::Clear);
+
+    comparePlan(state.routeOpenMenuKey(KiriView::MenuAccessKeyInputKind::Mnemonic,
+                    KiriView::MenuAccessKeyRoutingPhase::KeyPress),
+        KiriView::MenuAccessKeyVisualEffect::None, false, true, false);
 }
 
 void TestMenuAccessKeySessionState::altKeyRouteActivatesVisualsConsumesAndStartsSession()
 {
     KiriView::MenuAccessKeySessionState state;
 
-    compareRoutePlan(state.routeOpenMenuKey(KiriView::MenuAccessKeyInputKind::AltKey,
-                         KiriView::MenuAccessKeyRoutingPhase::KeyPress),
+    comparePlan(state.routeOpenMenuKey(KiriView::MenuAccessKeyInputKind::AltKey,
+                    KiriView::MenuAccessKeyRoutingPhase::KeyPress),
         KiriView::MenuAccessKeyVisualEffect::Activate, true, false, true);
     QVERIFY(state.isActive());
 }
@@ -108,8 +119,8 @@ void TestMenuAccessKeySessionState::altMnemonicRouteActivatesVisualsAndTriggersF
 {
     KiriView::MenuAccessKeySessionState state;
 
-    compareRoutePlan(state.routeOpenMenuKey(KiriView::MenuAccessKeyInputKind::AltMnemonic,
-                         KiriView::MenuAccessKeyRoutingPhase::KeyPress),
+    comparePlan(state.routeOpenMenuKey(KiriView::MenuAccessKeyInputKind::AltMnemonic,
+                    KiriView::MenuAccessKeyRoutingPhase::KeyPress),
         KiriView::MenuAccessKeyVisualEffect::Activate, false, true, true);
     QVERIFY(state.isActive());
 }
@@ -118,8 +129,8 @@ void TestMenuAccessKeySessionState::shortcutOverrideClaimsAltMnemonicWithoutTrig
 {
     KiriView::MenuAccessKeySessionState state;
 
-    compareRoutePlan(state.routeOpenMenuKey(KiriView::MenuAccessKeyInputKind::AltMnemonic,
-                         KiriView::MenuAccessKeyRoutingPhase::ShortcutOverride),
+    comparePlan(state.routeOpenMenuKey(KiriView::MenuAccessKeyInputKind::AltMnemonic,
+                    KiriView::MenuAccessKeyRoutingPhase::ShortcutOverride),
         KiriView::MenuAccessKeyVisualEffect::Activate, true, false, true);
     QVERIFY(state.isActive());
 }
@@ -128,11 +139,11 @@ void TestMenuAccessKeySessionState::shortcutOverrideIgnoresPlainMnemonicsAndOthe
 {
     KiriView::MenuAccessKeySessionState state;
 
-    compareRoutePlan(state.routeOpenMenuKey(KiriView::MenuAccessKeyInputKind::Mnemonic,
-                         KiriView::MenuAccessKeyRoutingPhase::ShortcutOverride),
+    comparePlan(state.routeOpenMenuKey(KiriView::MenuAccessKeyInputKind::Mnemonic,
+                    KiriView::MenuAccessKeyRoutingPhase::ShortcutOverride),
         KiriView::MenuAccessKeyVisualEffect::None, false, false, false);
-    compareRoutePlan(state.routeOpenMenuKey(KiriView::MenuAccessKeyInputKind::Other,
-                         KiriView::MenuAccessKeyRoutingPhase::ShortcutOverride),
+    comparePlan(state.routeOpenMenuKey(KiriView::MenuAccessKeyInputKind::Other,
+                    KiriView::MenuAccessKeyRoutingPhase::ShortcutOverride),
         KiriView::MenuAccessKeyVisualEffect::None, false, false, false);
     QVERIFY(!state.isActive());
 }
@@ -141,13 +152,13 @@ void TestMenuAccessKeySessionState::plainMnemonicRouteUsesCurrentSessionState()
 {
     KiriView::MenuAccessKeySessionState state;
 
-    compareRoutePlan(state.routeOpenMenuKey(KiriView::MenuAccessKeyInputKind::Mnemonic,
-                         KiriView::MenuAccessKeyRoutingPhase::KeyPress),
+    comparePlan(state.routeOpenMenuKey(KiriView::MenuAccessKeyInputKind::Mnemonic,
+                    KiriView::MenuAccessKeyRoutingPhase::KeyPress),
         KiriView::MenuAccessKeyVisualEffect::None, false, true, false);
 
-    state.beginSession();
-    compareRoutePlan(state.routeOpenMenuKey(KiriView::MenuAccessKeyInputKind::Mnemonic,
-                         KiriView::MenuAccessKeyRoutingPhase::KeyPress),
+    state.handleSessionEvent(KiriView::MenuAccessKeySessionEvent::Begin);
+    comparePlan(state.routeOpenMenuKey(KiriView::MenuAccessKeyInputKind::Mnemonic,
+                    KiriView::MenuAccessKeyRoutingPhase::KeyPress),
         KiriView::MenuAccessKeyVisualEffect::None, false, true, true);
 }
 

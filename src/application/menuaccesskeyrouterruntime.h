@@ -42,8 +42,8 @@ private:
     bool routeOpenMenuKey(QKeyEvent *event, MenuAccessKeyRoutingPhase phase);
     MenuAccessKeyInputKind inputKind(const QKeyEvent &event) const;
     QObject *openMenuOrClearAccessKeys();
-    void applySessionTransition(MenuAccessKeySessionTransition transition);
-    bool executeRoutePlan(QKeyEvent *event, MenuAccessKeyRoutePlan plan);
+    void applySessionPlan(MenuAccessKeySessionPlan plan);
+    bool executeSessionPlan(QKeyEvent *event, MenuAccessKeySessionPlan plan);
     void notify(MenuAccessKeyRouterChange change) const;
 
     QObject *m_owner = nullptr;
