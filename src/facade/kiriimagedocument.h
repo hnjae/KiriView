@@ -7,6 +7,7 @@
 #include "document/imagedocumentruntimedependencies.h"
 #include "document/imagedocumenttypes.h"
 #include "predecode/predecodedimage.h"
+#include "rendering/imagerendercontext.h"
 #include "rendering/imagesurface.h"
 
 #include <QObject>

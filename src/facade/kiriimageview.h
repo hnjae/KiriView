@@ -4,10 +4,10 @@
 #ifndef KIRIVIEW_KIRIIMAGEVIEW_H
 #define KIRIVIEW_KIRIIMAGEVIEW_H
 
-#include "document/imagedocumenttypes.h"
 #include "facade/kiriimagedocument.h"
 #include "presentation/imageviewportinteraction.h"
 #include "presentation/imageviewrendercontextbinding.h"
+#include "rendering/imagerendercontext.h"
 #include "rendering/imagesurface.h"
 
 #include <QMetaObject>

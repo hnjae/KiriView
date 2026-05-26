@@ -7,6 +7,7 @@
 #include "imagedocumentruntimedependencies.h"
 #include "imagedocumentruntimeplan.h"
 #include "imagedocumenttypes.h"
+#include "rendering/imagerendercontext.h"
 
 #include <QString>
 #include <functional>

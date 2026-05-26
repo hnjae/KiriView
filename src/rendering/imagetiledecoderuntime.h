@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_IMAGETILEDECODERUNTIME_H
 #define KIRIVIEW_IMAGETILEDECODERUNTIME_H
 
-#include "document/imagedocumenttypes.h"
+#include "imagerendercontext.h"
 #include "imagesurface.h"
 #include "imagetile.h"
 #include "imagetiledecodestate.h"

@@ -6,6 +6,7 @@
 
 #include "document/imagedocumenttypes.h"
 #include "presentation/imagepresentationviewportstate.h"
+#include "rendering/imagerendercontext.h"
 #include "rendering/imagesurface.h"
 
 #include <QRectF>

@@ -4,7 +4,6 @@
 #ifndef KIRIVIEW_IMAGERENDERFRAME_H
 #define KIRIVIEW_IMAGERENDERFRAME_H
 
-#include "document/imagedocumenttypes.h"
 #include "imagerendering.h"
 #include "imagetiledecodestate.h"
 

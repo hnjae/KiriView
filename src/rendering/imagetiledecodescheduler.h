@@ -4,7 +4,6 @@
 #ifndef KIRIVIEW_IMAGETILEDECODESCHEDULER_H
 #define KIRIVIEW_IMAGETILEDECODESCHEDULER_H
 
-#include "document/imagedocumenttypes.h"
 #include "imagesurface.h"
 #include "imagetiledecoderuntime.h"
 

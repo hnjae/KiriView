@@ -12,6 +12,7 @@
 #include "predecode/predecodedimage.h"
 #include "presentation/imagepresentationload.h"
 #include "presentation/imagesecondarypagestate.h"
+#include "rendering/imagerendercontext.h"
 #include "rendering/imagesurface.h"
 
 #include <QSize>

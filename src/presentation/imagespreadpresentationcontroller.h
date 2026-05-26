@@ -15,6 +15,7 @@
 #include "presentation/imagespreadsecondarypagerefresh.h"
 #include "presentation/imageviewportframe.h"
 #include "presentation/imagezoomstate.h"
+#include "rendering/imagerendercontext.h"
 #include "rendering/imagesurface.h"
 
 #include <QPointF>

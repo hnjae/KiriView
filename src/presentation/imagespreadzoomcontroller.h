@@ -4,7 +4,6 @@
 #ifndef KIRIVIEW_IMAGESPREADZOOMCONTROLLER_H
 #define KIRIVIEW_IMAGESPREADZOOMCONTROLLER_H
 
-#include "document/imagedocumenttypes.h"
 #include "presentation/imagezoomworkflowstate.h"
 
 #include <QRectF>

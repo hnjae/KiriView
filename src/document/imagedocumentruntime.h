@@ -11,6 +11,7 @@
 #include "navigation/imagenavigationtypes.h"
 #include "predecode/predecodedimage.h"
 #include "presentation/imagezoomstate.h"
+#include "rendering/imagerendercontext.h"
 #include "rendering/imagesurface.h"
 
 #include <QPointF>

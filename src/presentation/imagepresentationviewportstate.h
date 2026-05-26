@@ -6,6 +6,7 @@
 
 #include "document/imagedocumenttypes.h"
 #include "presentation/imagezoomworkflowstate.h"
+#include "rendering/imagerendercontext.h"
 #include "rendering/staticimage.h"
 
 #include <QRectF>

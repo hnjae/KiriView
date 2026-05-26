@@ -5,7 +5,7 @@
 #define KIRIVIEW_IMAGESURFACE_H
 
 #include "decodedtilecache.h"
-#include "document/imagedocumenttypes.h"
+#include "imagerendercontext.h"
 #include "staticimage.h"
 
 #include <QImage>
