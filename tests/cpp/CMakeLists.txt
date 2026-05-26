@@ -281,6 +281,12 @@ if(TARGET test_videodocumentruntimezoom)
     )
 endif()
 
+if(TARGET test_videooutputruntime)
+    set_tests_properties(test_videooutputruntime PROPERTIES
+        ENVIRONMENT "QT_QPA_PLATFORM=offscreen"
+    )
+endif()
+
 if(TARGET test_shortcuthelpdialog)
     set_tests_properties(test_shortcuthelpdialog PROPERTIES
         ENVIRONMENT "QT_QPA_PLATFORM=offscreen"

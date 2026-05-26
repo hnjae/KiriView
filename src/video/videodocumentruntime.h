@@ -6,11 +6,11 @@
 
 #include "video/videodocumentstate.h"
 #include "video/videomediabackend.h"
+#include "video/videooutputruntime.h"
 #include "video/videoplaybackcontrolplan.h"
 #include "video/videosourceloadruntime.h"
 
 #include <QObject>
-#include <QPointer>
 #include <QRectF>
 #include <QSize>
 #include <QString>
@@ -21,7 +21,6 @@
 #include <vector>
 
 namespace KiriView {
-class VideoOutputRenderContextObserver;
 class VideoDocumentRuntime final
 {
 public:
@@ -73,8 +72,6 @@ private:
     void clearPlaybackSource();
     void applyResolvedPlaybackUrl(const QUrl &playbackUrl);
     void publishSourceLoadFailure(const QUrl &sourceUrl, const QString &errorString);
-    void connectVideoOutputDestroyed(QObject *videoOutput);
-    void disconnectVideoOutputDestroyed();
     void updateStatusFromBackend();
     void updateErrorFromBackend();
     void updateZoomPercent();
@@ -85,11 +82,7 @@ private:
     std::unique_ptr<VideoMediaBackend> m_mediaBackend;
     MediaBackendFactory m_mediaBackendFactory;
     VideoSourceLoadRuntime m_sourceLoadRuntime;
-    std::unique_ptr<VideoOutputRenderContextObserver> m_renderContextObserver;
-    QPointer<QObject> m_videoOutput;
-    QRectF m_videoOutputContentRect;
-    QRectF m_videoOutputSourceRect;
-    QMetaObject::Connection m_videoOutputDestroyedConnection;
+    VideoOutputRuntime m_outputRuntime;
 };
 }
 
