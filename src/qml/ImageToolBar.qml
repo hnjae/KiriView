@@ -37,6 +37,8 @@ Controls.ToolBar {
     property bool activeNavigationKnown: false
     property var openActiveNavigationAtNumber: function (number) {}
     property bool rightToLeftReadingActive: false
+    property bool rightToLeftReadingVisible: false
+    property bool twoPageModeVisible: false
     property bool pageNavigationInputFocused: false
     property bool zoomInputFocused: false
     property Item applicationMenuButtonAnchor: null
@@ -46,7 +48,7 @@ Controls.ToolBar {
     readonly property int edgeMargin: controlSpacing
     readonly property bool interactionActive: toolbarHoverHandler.hovered || textInputFocused()
     readonly property int toolbarVerticalPadding: controlSpacing
-    readonly property var imageToolbarControls: [root.actions.rightToLeftReadingAction, root.actions.twoPageModeAction, zoomLevelAction, fitMenuAction]
+    readonly property var imageToolbarControls: (root.rightToLeftReadingVisible ? [root.actions.rightToLeftReadingAction] : []).concat(root.twoPageModeVisible ? [root.actions.twoPageModeAction] : [], [zoomLevelAction, fitMenuAction])
     readonly property var toolbarControls: imageToolbarControls
     readonly property var toolbarActions: showApplicationMenuActions ? toolbarControls.concat([applicationMenuAction]) : toolbarControls
 

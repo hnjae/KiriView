@@ -225,6 +225,11 @@ bool ImageDocumentRuntime::ordinaryDirectMediaScopeActive() const
     return !state.displayedUrl().isEmpty() && state.displayedArchiveDocument().isEmpty();
 }
 
+bool ImageDocumentRuntime::openedDocumentScopeActive() const
+{
+    return !state.displayedArchiveDocument().isEmpty();
+}
+
 bool ImageDocumentRuntime::fileDeletionInProgress() const
 {
     return controllers->deletionController().inProgress();

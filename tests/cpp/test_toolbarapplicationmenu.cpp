@@ -46,7 +46,12 @@ private Q_SLOTS:
     void toolbarReadingControlsUseTextButtons();
     void toolbarReadingControlMnemonicsTriggerActions();
     void toolbarActionOrderKeepsReadingDirectionBesideSpread();
-    void videoToolbarKeepsImageControlOrderDisabled();
+    void emptyToolbarHidesReadingControls();
+    void directImageToolbarHidesReadingControls();
+    void videoToolbarHidesReadingControlsAndDisablesImageControls();
+    void comicArchiveToolbarShowsEnabledReadingControls();
+    void generalArchiveToolbarShowsDisabledReadingControls();
+    void directoryDocumentToolbarShowsDisabledReadingControls();
     void pageNavigationButtonsUseSemanticActionsForReadingDirection();
     void menubarGoMenuOrderFollowsReadingDirection();
     void menubarGoMenuIconsFollowReadingDirection();
@@ -124,6 +129,60 @@ std::unique_ptr<QTemporaryDir> createImageDirectory(QString *sourcePath, QString
     return directory;
 }
 
+std::unique_ptr<QTemporaryDir> createDirectoryDocument(QString *sourcePath, QString *errorString)
+{
+    auto directory = std::make_unique<QTemporaryDir>();
+    if (!directory->isValid()) {
+        *errorString = QStringLiteral("temporary directory document was not created");
+        return nullptr;
+    }
+
+    for (int index = 1; index <= 3; ++index) {
+        const QString path
+            = directory->filePath(QStringLiteral("%1.png").arg(index, 2, 10, QLatin1Char('0')));
+        if (!writeTestPng(path)) {
+            *errorString = QStringLiteral("failed to write test image %1").arg(path);
+            return nullptr;
+        }
+    }
+
+    *sourcePath = directory->path();
+    return directory;
+}
+
+std::unique_ptr<QTemporaryDir> createZipArchive(QString *sourcePath, QString *errorString)
+{
+    auto directory = std::make_unique<QTemporaryDir>();
+    if (!directory->isValid()) {
+        *errorString = QStringLiteral("temporary archive directory was not created");
+        return nullptr;
+    }
+
+    QImage image(QSize(2, 2), QImage::Format_RGBA8888);
+    image.fill(Qt::green);
+    QByteArray imageData;
+    QBuffer imageBuffer(&imageData);
+    if (!imageBuffer.open(QIODevice::WriteOnly) || !image.save(&imageBuffer, "PNG")) {
+        *errorString = QStringLiteral("failed to encode test archive image");
+        return nullptr;
+    }
+
+    const QString archivePath = directory->filePath(QStringLiteral("book.zip"));
+    KZip archive(archivePath);
+    if (!archive.open(QIODevice::WriteOnly)) {
+        *errorString = QStringLiteral("failed to open test archive for writing");
+        return nullptr;
+    }
+    if (!archive.writeFile(QStringLiteral("01.png"), imageData)) {
+        *errorString = QStringLiteral("failed to write test archive entry");
+        return nullptr;
+    }
+    archive.close();
+
+    *sourcePath = archivePath;
+    return directory;
+}
+
 std::unique_ptr<QTemporaryDir> createComicBookArchive(QString *sourcePath, QString *errorString)
 {
     auto directory = std::make_unique<QTemporaryDir>();
@@ -157,7 +216,9 @@ std::unique_ptr<QTemporaryDir> createComicBookArchive(QString *sourcePath, QStri
     return directory;
 }
 
-QString fixtureQml(const QString &sourceUrl = QString(), bool navigationActionsEnabled = false)
+QString fixtureQml(const QString &sourceUrl = QString(), bool navigationActionsEnabled = false,
+    const QString &readingControlsVisibleExpression = QStringLiteral("true"),
+    const QString &readingControlsEnabledExpression = QStringLiteral("!root.videoMode"))
 {
     return QStringLiteral(R"(
 import QtQuick
@@ -180,6 +241,7 @@ Item {
     property bool navigationActionsEnabled: %3
     property bool rightToLeftReadingActive: false
     property bool videoMode: false
+    readonly property bool readingControlsVisible: %4
 
     function documentReady() {
         return imageDocument.status === KiriImageDocument.Ready;
@@ -309,7 +371,7 @@ Item {
     Kirigami.Action {
         id: twoPageModeKirigamiAction
 
-        enabled: !root.videoMode
+        enabled: %5
         icon.name: "view-split-left-right-symbolic"
         text: "Two-Page &Spread"
         tooltip: "Two-Page Spread"
@@ -320,7 +382,7 @@ Item {
     Kirigami.Action {
         id: rightToLeftReadingKirigamiAction
 
-        enabled: !root.videoMode
+        enabled: %5
         icon.name: "format-text-direction-rtl-symbolic"
         text: "&Right-to-Left"
         tooltip: "Right-to-Left Reading"
@@ -401,7 +463,9 @@ Item {
         maximumManualZoomPercent: imageDocument.maximumManualZoomPercent
         minimumManualZoomPercent: imageDocument.minimumManualZoomPercent
         rightToLeftReadingActive: root.rightToLeftReadingActive
+        rightToLeftReadingVisible: root.readingControlsVisible
         showApplicationMenuActions: true
+        twoPageModeVisible: root.readingControlsVisible
         videoMode: root.videoMode
         zoomEditable: !root.videoMode && imageDocument.zoomPercentKnown
         zoomPercent: root.videoMode ? 67 : (imageDocument.zoomPercentKnown ? imageDocument.zoomPercent : 0)
@@ -412,7 +476,15 @@ Item {
 }
 )")
         .arg(qmlSourceImport(), sourceUrl,
-            navigationActionsEnabled ? QStringLiteral("true") : QStringLiteral("false"));
+            navigationActionsEnabled ? QStringLiteral("true") : QStringLiteral("false"),
+            readingControlsVisibleExpression, readingControlsEnabledExpression);
+}
+
+QString documentScopeFixtureQml(const QString &sourceUrl = QString())
+{
+    return fixtureQml(sourceUrl, false,
+        QStringLiteral("!root.videoMode && imageDocument.openedDocumentScopeActive"),
+        QStringLiteral("!root.videoMode && imageDocument.rightToLeftReadingAvailable"));
 }
 
 QString menuBarFixtureQml()
@@ -666,6 +738,12 @@ ToolBarMenuFixture createFixture(
 {
     return createFixtureFromQml(fixtureQml(sourceUrl, navigationActionsEnabled),
         QUrl(QStringLiteral("memory:test_toolbarapplicationmenu.qml")));
+}
+
+ToolBarMenuFixture createDocumentScopeFixture(const QString &sourceUrl = QString())
+{
+    return createFixtureFromQml(documentScopeFixtureQml(sourceUrl),
+        QUrl(QStringLiteral("memory:test_toolbar_document_scope.qml")));
 }
 
 ToolBarMenuFixture createMenuBarFixture()
@@ -947,12 +1025,71 @@ void TestToolBarApplicationMenu::toolbarActionOrderKeepsReadingDirectionBesideSp
             QStringLiteral("Zoom"), QStringLiteral("Fit") }));
 }
 
-void TestToolBarApplicationMenu::videoToolbarKeepsImageControlOrderDisabled()
+void TestToolBarApplicationMenu::emptyToolbarHidesReadingControls()
 {
-    ToolBarMenuFixture fixture = createFixture();
+    ToolBarMenuFixture fixture = createDocumentScopeFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+
+    bool ok = false;
+    const QStringList texts = invokeStringList(fixture.root, "toolbarControlTexts", &ok);
+    QVERIFY(ok);
+    QCOMPARE(texts, QStringList({ QStringLiteral("Zoom"), QStringLiteral("Fit") }));
+}
+
+void TestToolBarApplicationMenu::directImageToolbarHidesReadingControls()
+{
+    QString sourcePath;
+    QString errorString;
+    std::unique_ptr<QTemporaryDir> imageDirectory = createImageDirectory(&sourcePath, &errorString);
+    QVERIFY2(imageDirectory != nullptr, qPrintable(errorString));
+
+    ToolBarMenuFixture fixture
+        = createDocumentScopeFixture(QUrl::fromLocalFile(sourcePath).toString());
+    fixture.temporaryDirectory = std::move(imageDirectory);
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    QTRY_VERIFY(invokeBool(fixture.root, "documentReady"));
+
+    bool ok = false;
+    const QStringList texts = invokeStringList(fixture.root, "toolbarControlTexts", &ok);
+    QVERIFY(ok);
+    QCOMPARE(texts, QStringList({ QStringLiteral("Zoom"), QStringLiteral("Fit") }));
+}
+
+void TestToolBarApplicationMenu::videoToolbarHidesReadingControlsAndDisablesImageControls()
+{
+    ToolBarMenuFixture fixture = createDocumentScopeFixture();
     QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
     QVERIFY(fixture.root->setProperty("videoMode", true));
     QCoreApplication::processEvents();
+
+    bool ok = false;
+    const QStringList texts = invokeStringList(fixture.root, "toolbarControlTexts", &ok);
+    QVERIFY(ok);
+    QCOMPARE(texts, QStringList({ QStringLiteral("Zoom"), QStringLiteral("Fit") }));
+
+    bool invoked = false;
+    const QVariantList enabledStates
+        = invokeVariant(fixture.root, "toolbarControlEnabledStates", &invoked).toList();
+    QVERIFY(invoked);
+    QCOMPARE(enabledStates.size(), 2);
+    for (const QVariant &enabledState : enabledStates) {
+        QVERIFY(!enabledState.toBool());
+    }
+}
+
+void TestToolBarApplicationMenu::comicArchiveToolbarShowsEnabledReadingControls()
+{
+    QString sourcePath;
+    QString errorString;
+    std::unique_ptr<QTemporaryDir> archiveDirectory
+        = createComicBookArchive(&sourcePath, &errorString);
+    QVERIFY2(archiveDirectory != nullptr, qPrintable(errorString));
+
+    ToolBarMenuFixture fixture
+        = createDocumentScopeFixture(QUrl::fromLocalFile(sourcePath).toString());
+    fixture.temporaryDirectory = std::move(archiveDirectory);
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    QTRY_VERIFY(invokeBool(fixture.root, "documentReady"));
 
     bool ok = false;
     const QStringList texts = invokeStringList(fixture.root, "toolbarControlTexts", &ok);
@@ -966,9 +1103,67 @@ void TestToolBarApplicationMenu::videoToolbarKeepsImageControlOrderDisabled()
         = invokeVariant(fixture.root, "toolbarControlEnabledStates", &invoked).toList();
     QVERIFY(invoked);
     QCOMPARE(enabledStates.size(), 4);
-    for (const QVariant &enabledState : enabledStates) {
-        QVERIFY(!enabledState.toBool());
-    }
+    QVERIFY(enabledStates.at(0).toBool());
+    QVERIFY(enabledStates.at(1).toBool());
+}
+
+void TestToolBarApplicationMenu::generalArchiveToolbarShowsDisabledReadingControls()
+{
+    QString sourcePath;
+    QString errorString;
+    std::unique_ptr<QTemporaryDir> archiveDirectory = createZipArchive(&sourcePath, &errorString);
+    QVERIFY2(archiveDirectory != nullptr, qPrintable(errorString));
+
+    ToolBarMenuFixture fixture
+        = createDocumentScopeFixture(QUrl::fromLocalFile(sourcePath).toString());
+    fixture.temporaryDirectory = std::move(archiveDirectory);
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    QTRY_VERIFY(invokeBool(fixture.root, "documentReady"));
+
+    bool ok = false;
+    const QStringList texts = invokeStringList(fixture.root, "toolbarControlTexts", &ok);
+    QVERIFY(ok);
+    QCOMPARE(texts,
+        QStringList({ QStringLiteral("Right-to-Left"), QStringLiteral("Two-Page Spread"),
+            QStringLiteral("Zoom"), QStringLiteral("Fit") }));
+
+    bool invoked = false;
+    const QVariantList enabledStates
+        = invokeVariant(fixture.root, "toolbarControlEnabledStates", &invoked).toList();
+    QVERIFY(invoked);
+    QCOMPARE(enabledStates.size(), 4);
+    QVERIFY(!enabledStates.at(0).toBool());
+    QVERIFY(!enabledStates.at(1).toBool());
+}
+
+void TestToolBarApplicationMenu::directoryDocumentToolbarShowsDisabledReadingControls()
+{
+    QString sourcePath;
+    QString errorString;
+    std::unique_ptr<QTemporaryDir> imageDirectory
+        = createDirectoryDocument(&sourcePath, &errorString);
+    QVERIFY2(imageDirectory != nullptr, qPrintable(errorString));
+
+    ToolBarMenuFixture fixture
+        = createDocumentScopeFixture(QUrl::fromLocalFile(sourcePath).toString());
+    fixture.temporaryDirectory = std::move(imageDirectory);
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    QTRY_VERIFY(invokeBool(fixture.root, "documentReady"));
+
+    bool ok = false;
+    const QStringList texts = invokeStringList(fixture.root, "toolbarControlTexts", &ok);
+    QVERIFY(ok);
+    QCOMPARE(texts,
+        QStringList({ QStringLiteral("Right-to-Left"), QStringLiteral("Two-Page Spread"),
+            QStringLiteral("Zoom"), QStringLiteral("Fit") }));
+
+    bool invoked = false;
+    const QVariantList enabledStates
+        = invokeVariant(fixture.root, "toolbarControlEnabledStates", &invoked).toList();
+    QVERIFY(invoked);
+    QCOMPARE(enabledStates.size(), 4);
+    QVERIFY(!enabledStates.at(0).toBool());
+    QVERIFY(!enabledStates.at(1).toBool());
 }
 
 void TestToolBarApplicationMenu::pageNavigationButtonsUseSemanticActionsForReadingDirection()
