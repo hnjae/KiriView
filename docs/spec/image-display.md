@@ -46,7 +46,7 @@ For SVG files, the active tile layer is the selected SVG raster scale bucket rat
 
 SVG tile decoding may use integer raster texture rectangles. Display placement preserves the exact fractional intrinsic SVG coverage represented by each bucket tile so adjacent tiles meet without visible gaps or overlaps at high zoom.
 
-SVG preview images are placeholders. They may be visible while current-detail tiles are missing, but stale low-resolution SVG bucket tiles do not substitute for the active bucket after zoom, viewport, rotation, pan position, or device-pixel-ratio changes.
+SVG preview images are placeholders. KiriView may pre-render an SVG preview capped to the current physical viewport size so adjacent SVG images can appear immediately from the still-image cache. That preview may be visible while current-detail tiles are missing, but stale low-resolution SVG bucket tiles do not substitute for the active bucket after zoom, viewport, rotation, pan position, or device-pixel-ratio changes.
 
 After zooming far out and then back in, the visible SVG area eventually returns to current-detail rendering. Stale lower-detail tiles do not remain composited once KiriView can decide the active layer for the current view.
 
