@@ -38,6 +38,11 @@ struct DefaultShortcutSpec {
     std::size_t portableTextCount = 0;
 };
 
+struct DefaultShortcutRouteSpec {
+    std::array<ShortcutRouteSpec, maxShortcutRouteSpecCount> specs {};
+    std::size_t count = 0;
+};
+
 struct ActionDefinition {
     ActionId actionId;
     const char *name;
@@ -46,6 +51,7 @@ struct ActionDefinition {
     KLazyLocalizedString text;
     const char *iconName;
     DefaultShortcutSpec defaultShortcuts;
+    DefaultShortcutRouteSpec shortcutRoutes;
 };
 
 const std::array<ActionDefinition, actionDefinitionCount> &definitions();

@@ -4,26 +4,9 @@
 #ifndef KIRIVIEW_APPLICATION_IMAGEACTIONAVAILABILITYPOLICY_H
 #define KIRIVIEW_APPLICATION_IMAGEACTIONAVAILABILITYPOLICY_H
 
-namespace KiriView::ApplicationActions {
-enum class ImageShortcutScope {
-    HelpShortcutScope = 0,
-    ViewerShortcutScope,
-    ReadyShortcutScope,
-    ReadyViewerShortcutScope,
-    ImageSelectionShortcutScope,
-    ImageSelectionViewerShortcutScope,
-    PageShortcutScope,
-    PageViewerShortcutScope,
-    RightToLeftReadingShortcutScope,
-    RightToLeftReadingViewerShortcutScope,
-    RotateShortcutScope,
-    RotateViewerShortcutScope,
-    PannableShortcutScope,
-    PannableViewerShortcutScope,
-    ContainerShortcutScope,
-    ContainerViewerShortcutScope,
-};
+#include "application/applicationtypes.h"
 
+namespace KiriView::ApplicationActions {
 struct VideoShortcutAvailabilityInput {
     bool helpShortcutsEnabled = false;
     bool viewerShortcutsEnabled = false;

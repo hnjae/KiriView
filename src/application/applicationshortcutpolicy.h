@@ -13,13 +13,6 @@
 #include <optional>
 
 namespace KiriView::ApplicationActions {
-enum class ApplicationShortcutFilter {
-    AllShortcuts = 0,
-    WithCommandModifier,
-    WithoutCommandModifier,
-    ShortcutAliases,
-};
-
 struct ApplicationShortcutRoute {
     QList<ActionId> actionIds;
     ApplicationShortcutFilter shortcutFilter = ApplicationShortcutFilter::AllShortcuts;

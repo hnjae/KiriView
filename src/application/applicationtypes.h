@@ -46,6 +46,39 @@ enum class ActionId {
 
 inline constexpr std::size_t actionDefinitionCount
     = static_cast<std::size_t>(ActionId::ActionCount);
+
+enum class ApplicationShortcutFilter {
+    AllShortcuts = 0,
+    WithCommandModifier,
+    WithoutCommandModifier,
+    ShortcutAliases,
+};
+
+enum class ImageShortcutScope {
+    HelpShortcutScope = 0,
+    ViewerShortcutScope,
+    ReadyShortcutScope,
+    ReadyViewerShortcutScope,
+    ImageSelectionShortcutScope,
+    ImageSelectionViewerShortcutScope,
+    PageShortcutScope,
+    PageViewerShortcutScope,
+    RightToLeftReadingShortcutScope,
+    RightToLeftReadingViewerShortcutScope,
+    RotateShortcutScope,
+    RotateViewerShortcutScope,
+    PannableShortcutScope,
+    PannableViewerShortcutScope,
+    ContainerShortcutScope,
+    ContainerViewerShortcutScope,
+};
+
+struct ShortcutRouteSpec {
+    ApplicationShortcutFilter shortcutFilter = ApplicationShortcutFilter::AllShortcuts;
+    ImageShortcutScope shortcutScope = ImageShortcutScope::HelpShortcutScope;
+};
+
+inline constexpr std::size_t maxShortcutRouteSpecCount = 3;
 }
 
 #endif
