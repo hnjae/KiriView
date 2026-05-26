@@ -3,9 +3,52 @@
 
 #include "video/videosourceloadruntime.h"
 
-#include "async/imagecallback.h"
-
 #include <utility>
+
+namespace {
+KiriView::VideoSourceLoadOperation videoSourceLoadOperation(
+    KiriView::VideoSourceLoadOperationKind kind)
+{
+    return KiriView::VideoSourceLoadOperation { kind, {}, {}, {} };
+}
+
+KiriView::VideoSourceLoadOperation resetSourceLoadOperation(const QUrl &sourceUrl)
+{
+    return KiriView::VideoSourceLoadOperation {
+        KiriView::VideoSourceLoadOperationKind::ResetSourceLoad, sourceUrl, {}, {}
+    };
+}
+
+KiriView::VideoSourceLoadOperation applyPlaybackUrlOperation(
+    const KiriView::VideoPlaybackUrlResolution &resolution)
+{
+    return KiriView::VideoSourceLoadOperation {
+        KiriView::VideoSourceLoadOperationKind::ApplyPlaybackUrl,
+        resolution.sourceUrl,
+        resolution.playbackUrl,
+        {},
+    };
+}
+
+KiriView::VideoSourceLoadOperation sourceLoadFailureOperation(
+    const QUrl &sourceUrl, const QString &errorString)
+{
+    return KiriView::VideoSourceLoadOperation {
+        KiriView::VideoSourceLoadOperationKind::PublishSourceLoadFailure,
+        sourceUrl,
+        {},
+        errorString,
+    };
+}
+
+void dispatchPlan(
+    const KiriView::VideoSourceLoadPlanCallback &callback, KiriView::VideoSourceLoadPlan plan)
+{
+    if (callback) {
+        callback(std::move(plan));
+    }
+}
+}
 
 namespace KiriView {
 VideoSourceLoadRuntime::VideoSourceLoadRuntime(std::unique_ptr<VideoPlaybackUrlResolver> resolver)
@@ -19,27 +62,34 @@ VideoSourceLoadRuntime::~VideoSourceLoadRuntime() { shutdown(); }
 bool VideoSourceLoadRuntime::active() const { return m_resolution.active(); }
 
 void VideoSourceLoadRuntime::setSourceUrl(
-    const QUrl &sourceUrl, QObject *receiver, VideoSourceLoadOperations operations)
+    const QUrl &sourceUrl, QObject *receiver, VideoSourceLoadPlanCallback planCallback)
 {
     m_shutdown = false;
     cancelAndCleanup();
-    invokeIfSet(operations.clearPlaybackSource);
 
     if (sourceUrl.isEmpty()) {
-        invokeIfSet(operations.sourceCleared);
+        dispatchPlan(planCallback,
+            {
+                videoSourceLoadOperation(VideoSourceLoadOperationKind::ClearPlaybackSource),
+                videoSourceLoadOperation(VideoSourceLoadOperationKind::ResetClearedSource),
+            });
         return;
     }
 
     const ImageAsyncScopedOperation<QUrl> operation = m_resolution.start(sourceUrl);
-    invokeIfSet(operations.sourceLoadStarted, sourceUrl);
+    dispatchPlan(planCallback,
+        {
+            videoSourceLoadOperation(VideoSourceLoadOperationKind::ClearPlaybackSource),
+            resetSourceLoadOperation(sourceUrl),
+        });
 
     m_resolver->resolve(
         operation.operationId, sourceUrl, receiver,
-        [this, operations](VideoPlaybackUrlResolution resolution) {
-            completePlaybackUrlResolution(resolution, operations);
+        [this, planCallback](VideoPlaybackUrlResolution resolution) {
+            completePlaybackUrlResolution(resolution, planCallback);
         },
-        [this, operations](quint64 operationId, QUrl failedSourceUrl, QString errorString) {
-            failPlaybackUrlResolution(operationId, failedSourceUrl, errorString, operations);
+        [this, planCallback](quint64 operationId, QUrl failedSourceUrl, QString errorString) {
+            failPlaybackUrlResolution(operationId, failedSourceUrl, errorString, planCallback);
         });
 }
 
@@ -63,22 +113,22 @@ void VideoSourceLoadRuntime::cancelAndCleanup()
 }
 
 void VideoSourceLoadRuntime::completePlaybackUrlResolution(
-    const VideoPlaybackUrlResolution &resolution, const VideoSourceLoadOperations &operations)
+    const VideoPlaybackUrlResolution &resolution, const VideoSourceLoadPlanCallback &callback)
 {
     if (!m_resolution.finish(resolution.operationId, resolution.sourceUrl)) {
         return;
     }
 
-    invokeIfSet(operations.playbackUrlReady, resolution);
+    dispatchPlan(callback, { applyPlaybackUrlOperation(resolution) });
 }
 
 void VideoSourceLoadRuntime::failPlaybackUrlResolution(quint64 operationId, const QUrl &sourceUrl,
-    const QString &errorString, const VideoSourceLoadOperations &operations)
+    const QString &errorString, const VideoSourceLoadPlanCallback &callback)
 {
     if (!m_resolution.finish(operationId, sourceUrl)) {
         return;
     }
 
-    invokeIfSet(operations.sourceLoadFailed, sourceUrl, errorString);
+    dispatchPlan(callback, { sourceLoadFailureOperation(sourceUrl, errorString) });
 }
 }

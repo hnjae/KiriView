@@ -7,20 +7,32 @@
 #include "async/imageasyncoperationstate.h"
 #include "video/videoplaybackurlresolver.h"
 
+#include <QString>
 #include <QUrl>
 #include <functional>
 #include <memory>
+#include <vector>
 
 class QObject;
 
 namespace KiriView {
-struct VideoSourceLoadOperations {
-    std::function<void()> clearPlaybackSource;
-    std::function<void()> sourceCleared;
-    std::function<void(const QUrl &)> sourceLoadStarted;
-    std::function<void(const VideoPlaybackUrlResolution &)> playbackUrlReady;
-    std::function<void(const QUrl &, const QString &)> sourceLoadFailed;
+enum class VideoSourceLoadOperationKind {
+    ClearPlaybackSource,
+    ResetClearedSource,
+    ResetSourceLoad,
+    ApplyPlaybackUrl,
+    PublishSourceLoadFailure,
 };
+
+struct VideoSourceLoadOperation {
+    VideoSourceLoadOperationKind kind = VideoSourceLoadOperationKind::ClearPlaybackSource;
+    QUrl sourceUrl;
+    QUrl playbackUrl;
+    QString errorString;
+};
+
+using VideoSourceLoadPlan = std::vector<VideoSourceLoadOperation>;
+using VideoSourceLoadPlanCallback = std::function<void(VideoSourceLoadPlan)>;
 
 class VideoSourceLoadRuntime final
 {
@@ -30,15 +42,15 @@ public:
 
     bool active() const;
     void setSourceUrl(
-        const QUrl &sourceUrl, QObject *receiver, VideoSourceLoadOperations operations);
+        const QUrl &sourceUrl, QObject *receiver, VideoSourceLoadPlanCallback planCallback);
     void shutdown();
 
 private:
     void cancelAndCleanup();
     void completePlaybackUrlResolution(
-        const VideoPlaybackUrlResolution &resolution, const VideoSourceLoadOperations &operations);
+        const VideoPlaybackUrlResolution &resolution, const VideoSourceLoadPlanCallback &callback);
     void failPlaybackUrlResolution(quint64 operationId, const QUrl &sourceUrl,
-        const QString &errorString, const VideoSourceLoadOperations &operations);
+        const QString &errorString, const VideoSourceLoadPlanCallback &callback);
 
     std::unique_ptr<VideoPlaybackUrlResolver> m_resolver;
     ImageAsyncScopedOperationState<QUrl> m_resolution;

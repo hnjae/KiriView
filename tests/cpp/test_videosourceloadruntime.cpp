@@ -71,31 +71,44 @@ struct SourceLoadFixture {
     QUrl failedSourceUrl;
     QString failedErrorString;
 
-    KiriView::VideoSourceLoadOperations operations()
+    KiriView::VideoSourceLoadPlanCallback planCallback()
     {
-        return KiriView::VideoSourceLoadOperations {
-            [this]() { events.push_back(QStringLiteral("clear-playback")); },
-            [this]() { events.push_back(QStringLiteral("source-cleared")); },
-            [this](const QUrl &sourceUrl) {
-                events.push_back(
-                    QStringLiteral("source-load-started:%1").arg(sourceUrl.toString()));
-            },
-            [this](const KiriView::VideoPlaybackUrlResolution &resolution) {
-                events.push_back(QStringLiteral("playback-ready"));
-                readySourceUrl = resolution.sourceUrl;
-                readyPlaybackUrl = resolution.playbackUrl;
-            },
-            [this](const QUrl &sourceUrl, const QString &errorString) {
-                events.push_back(QStringLiteral("source-load-failed"));
-                failedSourceUrl = sourceUrl;
-                failedErrorString = errorString;
-            },
+        return [this](KiriView::VideoSourceLoadPlan plan) {
+            for (const KiriView::VideoSourceLoadOperation &operation : plan) {
+                recordOperation(operation);
+            }
         };
+    }
+
+    void recordOperation(const KiriView::VideoSourceLoadOperation &operation)
+    {
+        switch (operation.kind) {
+        case KiriView::VideoSourceLoadOperationKind::ClearPlaybackSource:
+            events.push_back(QStringLiteral("clear-playback"));
+            break;
+        case KiriView::VideoSourceLoadOperationKind::ResetClearedSource:
+            events.push_back(QStringLiteral("source-cleared"));
+            break;
+        case KiriView::VideoSourceLoadOperationKind::ResetSourceLoad:
+            events.push_back(
+                QStringLiteral("source-load-started:%1").arg(operation.sourceUrl.toString()));
+            break;
+        case KiriView::VideoSourceLoadOperationKind::ApplyPlaybackUrl:
+            events.push_back(QStringLiteral("playback-ready"));
+            readySourceUrl = operation.sourceUrl;
+            readyPlaybackUrl = operation.playbackUrl;
+            break;
+        case KiriView::VideoSourceLoadOperationKind::PublishSourceLoadFailure:
+            events.push_back(QStringLiteral("source-load-failed"));
+            failedSourceUrl = operation.sourceUrl;
+            failedErrorString = operation.errorString;
+            break;
+        }
     }
 
     void setSourceUrl(const QUrl &sourceUrl)
     {
-        runtime.setSourceUrl(sourceUrl, &receiver, operations());
+        runtime.setSourceUrl(sourceUrl, &receiver, planCallback());
     }
 };
 }

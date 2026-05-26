@@ -68,9 +68,10 @@ private:
     void applyPlaybackStateDelta(const VideoPlaybackStateDelta &delta);
     VideoMediaBackend *ensureMediaBackend();
     void installMediaBackendCallbacks();
-    VideoSourceLoadOperations sourceLoadOperations();
+    void executeSourceLoadPlan(const VideoSourceLoadPlan &plan);
+    void executeSourceLoadOperation(const VideoSourceLoadOperation &operation);
     void clearPlaybackSource();
-    void applyResolvedPlaybackUrl(const VideoPlaybackUrlResolution &resolution);
+    void applyResolvedPlaybackUrl(const QUrl &playbackUrl);
     void publishSourceLoadFailure(const QUrl &sourceUrl, const QString &errorString);
     void connectVideoOutputDestroyed(QObject *videoOutput);
     void disconnectVideoOutputDestroyed();
