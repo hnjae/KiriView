@@ -33,7 +33,7 @@ flowchart TD
     Presentation["src/presentation/\nZoom, viewport, spread, animation"]
     Rendering["src/rendering/\nSurfaces, tiles, scene graph"]
     Decoding["src/decoding/\nDecode pipeline"]
-    Archive["src/archive/\nArchive document sessions"]
+    Archive["src/archive/\nArchive and directory page sessions"]
     Predecode["src/predecode/\nAdjacent still-image cache"]
     RuntimeSupport["src/async/, src/location/,\nsrc/cache/, src/system/, src/localization/"]
     Bridge["src/bridge/\nC++/Rust value conversion"]
@@ -76,7 +76,7 @@ The diagram is directory-level, not a complete call graph. Update it when a long
 
 - `src/qml/` binds to facade types; `src/facade/` is the QML API boundary.
 - `KiriDocumentSession` in `src/session/` routes top-level image/video state; image and video document internals remain below `KiriImageDocument` and `KiriVideoDocument`.
-- Image work is split by durable domains: lifecycle in `src/document/`, navigation in `src/navigation/`, presentation in `src/presentation/`, rendering in `src/rendering/`, decoding in `src/decoding/`, archive access in `src/archive/`, and predecode in `src/predecode/`.
+- Image work is split by durable domains: lifecycle in `src/document/`, navigation in `src/navigation/`, presentation in `src/presentation/`, rendering in `src/rendering/`, decoding in `src/decoding/`, archive and directory page access in `src/archive/`, and predecode in `src/predecode/`.
 - `src/policy/` is Rust value policy and `src/bridge/` converts boundary values. C++ remains the owner of Qt/KDE objects, side effects, async lifetimes, and authoritative runtime state.
 
 ## Source Manifests
