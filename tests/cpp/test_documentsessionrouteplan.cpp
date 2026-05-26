@@ -24,6 +24,7 @@ private Q_SLOTS:
     void localDirectoryAndGeneralArchiveNamesRouteToImageDocument();
     void unsupportedExtensionRoutesToImageDocument();
     void fileNamesMatchCaseInsensitively();
+    void sourceRoutesPrepareSessionForTopLevelRouting();
     void routePlanDoesNotAdvertiseVideoBeyondDirectUrlClassification();
     void sourceRoutesClearMediaNavigationButMediaRoutesKeepRequestedReadout();
     void directImageCursorActionPreservesStableCursorOnlyForImageReplacement();
@@ -138,6 +139,25 @@ void TestDocumentSessionRoutePlan::fileNamesMatchCaseInsensitively()
         KiriView::documentSessionRoutePlanForSourceUrl(image, KiriView::DocumentSessionKind::Empty)
             .kind,
         KiriView::DocumentSessionRouteKind::DirectImage);
+}
+
+void TestDocumentSessionRoutePlan::sourceRoutesPrepareSessionForTopLevelRouting()
+{
+    const QUrl image = localUrl(QStringLiteral("/media/page.png"));
+
+    const KiriView::DocumentSessionRoutePlan sourcePlan
+        = KiriView::documentSessionRoutePlanForSourceUrl(
+            image, KiriView::DocumentSessionKind::Image);
+    QVERIFY(sourcePlan.preparation.clearSessionErrorString);
+    QVERIFY(sourcePlan.preparation.cancelMediaNavigation);
+    QVERIFY(sourcePlan.preparation.cancelMediaDeletion);
+
+    const KiriView::DocumentSessionRoutePlan mediaPlan
+        = KiriView::documentSessionRoutePlanForMediaUrl(
+            image, KiriView::DocumentSessionKind::Image);
+    QVERIFY(!mediaPlan.preparation.clearSessionErrorString);
+    QVERIFY(!mediaPlan.preparation.cancelMediaNavigation);
+    QVERIFY(!mediaPlan.preparation.cancelMediaDeletion);
 }
 
 void TestDocumentSessionRoutePlan::routePlanDoesNotAdvertiseVideoBeyondDirectUrlClassification()

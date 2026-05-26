@@ -50,6 +50,12 @@ struct DocumentSessionRouteMediaNavigationPlan {
     bool refreshAfterRouting = false;
 };
 
+struct DocumentSessionRoutePreparationPlan {
+    bool clearSessionErrorString = false;
+    bool cancelMediaNavigation = false;
+    bool cancelMediaDeletion = false;
+};
+
 struct DocumentSessionRouteDocumentPlan {
     DocumentSessionRouteDocumentClear clear = DocumentSessionRouteDocumentClear::None;
     DocumentSessionRouteDocumentEnter enter = DocumentSessionRouteDocumentEnter::None;
@@ -63,6 +69,7 @@ struct DocumentSessionRoutePredecodePlan {
 struct DocumentSessionRoutePlan {
     DocumentSessionRouteKind kind = DocumentSessionRouteKind::Empty;
     QUrl sourceUrl;
+    DocumentSessionRoutePreparationPlan preparation;
     DocumentSessionRouteCursorAction cursorAction = DocumentSessionRouteCursorAction::None;
     DocumentSessionRouteSourceIdentityAction sourceIdentityAction
         = DocumentSessionRouteSourceIdentityAction::None;

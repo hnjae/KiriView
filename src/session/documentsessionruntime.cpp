@@ -436,10 +436,6 @@ void DocumentSessionRuntime::routeSourceUrl(const QUrl &sourceUrl)
 {
     const DocumentSessionRoutePlan plan
         = documentSessionRoutePlanForSourceUrl(sourceUrl, m_state.documentKind());
-    m_state.setSessionErrorString(QString());
-    m_mediaNavigationRuntime.cancel();
-    cancelMediaDeletion();
-
     executeRoutePlan(plan);
 }
 
@@ -450,6 +446,16 @@ void DocumentSessionRuntime::openMediaUrl(const QUrl &url)
 
 void DocumentSessionRuntime::executeRoutePlan(const DocumentSessionRoutePlan &plan)
 {
+    if (plan.preparation.clearSessionErrorString) {
+        m_state.setSessionErrorString(QString());
+    }
+    if (plan.preparation.cancelMediaNavigation) {
+        m_mediaNavigationRuntime.cancel();
+    }
+    if (plan.preparation.cancelMediaDeletion) {
+        cancelMediaDeletion();
+    }
+
     if (plan.mediaNavigation.clearBeforeRouting) {
         m_state.setMediaNavigationState({}, false);
     }

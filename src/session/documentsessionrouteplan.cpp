@@ -75,6 +75,9 @@ DocumentSessionRoutePlan documentSessionRoutePlanForSourceUrl(
     const QUrl &sourceUrl, DocumentSessionKind currentKind)
 {
     DocumentSessionRoutePlan plan = baseRoutePlan(sourceUrl, currentKind);
+    plan.preparation.clearSessionErrorString = true;
+    plan.preparation.cancelMediaNavigation = true;
+    plan.preparation.cancelMediaDeletion = true;
     plan.mediaNavigation.clearBeforeRouting = true;
     return plan;
 }
