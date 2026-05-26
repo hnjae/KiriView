@@ -101,8 +101,8 @@ void ImageDocumentPublicSignalEmitter::emitSignal(ImageDocumentPublicSignal sign
     case ImageDocumentPublicSignal::RotationDegrees:
         run(m_operations.rotationDegreesChanged);
         return;
-    case ImageDocumentPublicSignal::DocumentScope:
-        run(m_operations.documentScopeChanged);
+    case ImageDocumentPublicSignal::MediaScope:
+        run(m_operations.mediaScopeChanged);
         return;
     case ImageDocumentPublicSignal::Repaint:
         run(m_operations.repaintRequested);
@@ -169,9 +169,9 @@ std::vector<ImageDocumentPublicSignal> imageDocumentPublicSignalsForChanges(
     const std::vector<ImageDocumentChange> &changes)
 {
     std::vector<ImageDocumentPublicSignal> plannedSignals;
-    bool documentScopeChanged = false;
+    bool mediaScopeChanged = false;
     for (ImageDocumentChange change : changes) {
-        documentScopeChanged = documentScopeChanged || change == ImageDocumentChange::DisplayedUrl
+        mediaScopeChanged = mediaScopeChanged || change == ImageDocumentChange::DisplayedUrl
             || change == ImageDocumentChange::Status;
         for (ImageDocumentPublicSignal signal : imageDocumentPublicSignals(change)) {
             const bool alreadyPlanned
@@ -182,8 +182,8 @@ std::vector<ImageDocumentPublicSignal> imageDocumentPublicSignalsForChanges(
             }
         }
     }
-    if (documentScopeChanged) {
-        plannedSignals.push_back(ImageDocumentPublicSignal::DocumentScope);
+    if (mediaScopeChanged) {
+        plannedSignals.push_back(ImageDocumentPublicSignal::MediaScope);
     }
     return plannedSignals;
 }

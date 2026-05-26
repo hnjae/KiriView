@@ -73,9 +73,9 @@ class KiriImageDocument : public QObject
     Q_PROPERTY(bool containerNavigationAvailable READ containerNavigationAvailable NOTIFY
             containerNavigationChanged)
     Q_PROPERTY(bool ordinaryDirectMediaScopeActive READ ordinaryDirectMediaScopeActive NOTIFY
-            documentScopeChanged)
+            mediaScopeChanged)
     Q_PROPERTY(bool archiveOrDirectoryDocumentScopeActive READ archiveOrDirectoryDocumentScopeActive
-            NOTIFY documentScopeChanged)
+            NOTIFY mediaScopeChanged)
     Q_PROPERTY(bool fileDeletionInProgress READ fileDeletionInProgress NOTIFY
             fileDeletionInProgressChanged)
     Q_PROPERTY(bool twoPageModeEnabled READ twoPageModeEnabled WRITE setTwoPageModeEnabled NOTIFY
@@ -207,7 +207,7 @@ Q_SIGNALS:
     void maximumManualZoomPercentChanged();
     void pageNavigationChanged();
     void containerNavigationChanged();
-    void documentScopeChanged();
+    void mediaScopeChanged();
     void fileDeletionInProgressChanged();
     void twoPageModeChanged();
     void rightToLeftReadingChanged();

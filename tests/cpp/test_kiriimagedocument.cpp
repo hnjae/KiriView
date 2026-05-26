@@ -47,7 +47,7 @@ std::unique_ptr<KiriImageDocument> createDocument(
 void loadReady(KiriImageDocument &document, ManualImageDataLoader &dataLoader,
     const QUrl &sourceUrl, const QUrl &loadUrl)
 {
-    QSignalSpy scopeSpy(&document, &KiriImageDocument::documentScopeChanged);
+    QSignalSpy scopeSpy(&document, &KiriImageDocument::mediaScopeChanged);
 
     document.setSourceUrl(sourceUrl);
     QVERIFY(dataLoader.finishOldestActiveLoadForUrl(loadUrl, QByteArrayLiteral("ok")));

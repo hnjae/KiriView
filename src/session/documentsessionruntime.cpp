@@ -385,7 +385,7 @@ void DocumentSessionRuntime::connectDocuments()
         [this]() { recomputeWindowTitleSubject(); });
     QObject::connect(&m_imageDocument, &KiriImageDocument::errorStringChanged, m_owner,
         [this]() { m_state.publish(DocumentSessionChange::ErrorString); });
-    QObject::connect(&m_imageDocument, &KiriImageDocument::documentScopeChanged, m_owner, [this]() {
+    QObject::connect(&m_imageDocument, &KiriImageDocument::mediaScopeChanged, m_owner, [this]() {
         if (m_routingSource) {
             return;
         }

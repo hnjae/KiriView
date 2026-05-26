@@ -106,7 +106,7 @@ KiriView::ImageDocumentPublicSignalOperations publicSignalOperations(KiriImageDo
     operations.rightToLeftReadingChanged
         = [&document]() { Q_EMIT document.rightToLeftReadingChanged(); };
     operations.rotationDegreesChanged = [&document]() { Q_EMIT document.rotationDegreesChanged(); };
-    operations.documentScopeChanged = [&document]() { Q_EMIT document.documentScopeChanged(); };
+    operations.mediaScopeChanged = [&document]() { Q_EMIT document.mediaScopeChanged(); };
     operations.repaintRequested = [&document]() { Q_EMIT document.repaintRequested(); };
     return operations;
 }
