@@ -25,21 +25,6 @@ KiriView::RustNavigationDirection rustNavigationDirection(KiriView::NavigationDi
     return KiriView::RustNavigationDirection::Next;
 }
 
-template <typename Candidate>
-std::optional<std::size_t> currentCandidateIndex(
-    const std::vector<Candidate> &candidates, const QUrl &currentUrl)
-{
-    const auto currentCandidate = std::find_if(
-        candidates.cbegin(), candidates.cend(), [&currentUrl](const Candidate &candidate) {
-            return KiriView::sameNormalizedUrl(candidate.url, currentUrl);
-        });
-    if (currentCandidate == candidates.cend()) {
-        return std::nullopt;
-    }
-
-    return static_cast<std::size_t>(std::distance(candidates.cbegin(), currentCandidate));
-}
-
 std::optional<std::size_t> currentUrlIndex(const std::vector<QUrl> &urls, const QUrl &currentUrl)
 {
     const auto current = std::find_if(urls.cbegin(), urls.cend(),
@@ -49,31 +34,6 @@ std::optional<std::size_t> currentUrlIndex(const std::vector<QUrl> &urls, const 
     }
 
     return static_cast<std::size_t>(std::distance(urls.cbegin(), current));
-}
-
-std::optional<std::size_t> adjacentCandidateIndex(std::size_t candidateCount,
-    std::optional<std::size_t> currentIndex, KiriView::NavigationDirection direction)
-{
-    if (!currentIndex.has_value() || *currentIndex >= candidateCount) {
-        return std::nullopt;
-    }
-
-    switch (direction) {
-    case KiriView::NavigationDirection::Previous:
-        if (*currentIndex == 0) {
-            return std::nullopt;
-        }
-        return *currentIndex - 1;
-    case KiriView::NavigationDirection::Next: {
-        const std::size_t nextIndex = *currentIndex + 1;
-        if (nextIndex >= candidateCount) {
-            return std::nullopt;
-        }
-        return nextIndex;
-    }
-    }
-
-    return std::nullopt;
 }
 
 std::optional<std::size_t> pageNavigationIndexValue(KiriView::RustNavigationIndex index)
@@ -119,7 +79,7 @@ std::vector<QUrl> imageNavigationCandidateUrls(
 std::optional<std::size_t> imageNavigationCandidateIndex(
     const std::vector<ImageNavigationCandidate> &candidates, const QUrl &currentUrl)
 {
-    return currentCandidateIndex(candidates, currentUrl);
+    return navigationCandidateIndex(candidates, currentUrl);
 }
 
 bool imageNavigationCandidatesContainUrl(
@@ -132,26 +92,14 @@ std::optional<QUrl> adjacentImageNavigationUrl(
     const std::vector<ImageNavigationCandidate> &candidates, const QUrl &currentUrl,
     NavigationDirection direction)
 {
-    const std::optional<std::size_t> targetIndex = adjacentCandidateIndex(
-        candidates.size(), currentCandidateIndex(candidates, currentUrl), direction);
-    if (!targetIndex.has_value()) {
-        return std::nullopt;
-    }
-
-    return candidates.at(*targetIndex).url;
+    return adjacentNavigationCandidateUrl(candidates, currentUrl, direction);
 }
 
 std::optional<ContainerNavigationCandidate> adjacentContainerNavigationCandidate(
     const std::vector<ContainerNavigationCandidate> &candidates, const QUrl &currentContainerUrl,
     NavigationDirection direction)
 {
-    const std::optional<std::size_t> targetIndex = adjacentCandidateIndex(
-        candidates.size(), currentCandidateIndex(candidates, currentContainerUrl), direction);
-    if (!targetIndex.has_value()) {
-        return std::nullopt;
-    }
-
-    return candidates.at(*targetIndex);
+    return adjacentNavigationCandidate(candidates, currentContainerUrl, direction);
 }
 
 int pageNavigationCurrentPageNumber(const PageNavigationState &state)

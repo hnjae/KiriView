@@ -11,45 +11,6 @@
 #include <utility>
 
 namespace {
-std::optional<std::size_t> candidateIndex(
-    const std::vector<KiriView::MediaNavigationCandidate> &candidates, const QUrl &currentUrl)
-{
-    const auto current = std::find_if(candidates.cbegin(), candidates.cend(),
-        [&currentUrl](const KiriView::MediaNavigationCandidate &candidate) {
-            return KiriView::sameNormalizedUrl(candidate.url, currentUrl);
-        });
-    if (current == candidates.cend()) {
-        return std::nullopt;
-    }
-
-    return static_cast<std::size_t>(std::distance(candidates.cbegin(), current));
-}
-
-std::optional<std::size_t> adjacentCandidateIndex(std::size_t candidateCount,
-    std::optional<std::size_t> currentIndex, KiriView::NavigationDirection direction)
-{
-    if (!currentIndex.has_value() || *currentIndex >= candidateCount) {
-        return std::nullopt;
-    }
-
-    switch (direction) {
-    case KiriView::NavigationDirection::Previous:
-        if (*currentIndex == 0) {
-            return std::nullopt;
-        }
-        return *currentIndex - 1;
-    case KiriView::NavigationDirection::Next: {
-        const std::size_t nextIndex = *currentIndex + 1;
-        if (nextIndex >= candidateCount) {
-            return std::nullopt;
-        }
-        return nextIndex;
-    }
-    }
-
-    return std::nullopt;
-}
-
 void appendRemovedCandidate(
     std::vector<KiriView::MediaNavigationCandidate> *candidates, const QUrl &currentUrl)
 {
@@ -124,17 +85,15 @@ QUrl mediaNavigationParentUrl(const QUrl &url)
 std::optional<std::size_t> mediaNavigationCandidateIndex(
     const std::vector<MediaNavigationCandidate> &candidates, const QUrl &currentUrl)
 {
-    return candidateIndex(candidates, mediaNavigationSourceUrl(currentUrl));
+    return navigationCandidateIndex(candidates, mediaNavigationSourceUrl(currentUrl));
 }
 
 std::optional<QUrl> adjacentMediaNavigationUrl(
     const std::vector<MediaNavigationCandidate> &candidates, const QUrl &currentUrl,
     NavigationDirection direction)
 {
-    const std::optional<std::size_t> currentIndex
-        = mediaNavigationCandidateIndex(candidates, currentUrl);
-    const std::optional<std::size_t> targetIndex
-        = adjacentCandidateIndex(candidates.size(), currentIndex, direction);
+    const std::optional<std::size_t> targetIndex = adjacentNavigationIndex(
+        candidates.size(), mediaNavigationCandidateIndex(candidates, currentUrl), direction);
     if (!targetIndex.has_value()) {
         return std::nullopt;
     }
