@@ -178,7 +178,7 @@ class TestImageDocumentRuntime : public QObject
 
 private Q_SLOTS:
     void initialLoadSuccessUpdatesDocumentState();
-    void documentScopeProjectionsFollowDisplayedImageScope();
+    void archiveOrDirectoryDocumentScopeProjectionsFollowDisplayedImageScope();
     void imageLoadsUsePhysicalViewportForFirstDisplayDecode();
     void renderContextProviderCanBeReplacedAfterConstruction();
     void maximumManualZoomChangesAfterViewportImageAndRenderContextUpdates();
@@ -248,7 +248,7 @@ void TestImageDocumentRuntime::initialLoadSuccessUpdatesDocumentState()
     QVERIFY(runtime->renderSnapshot().isRenderable());
 }
 
-void TestImageDocumentRuntime::documentScopeProjectionsFollowDisplayedImageScope()
+void TestImageDocumentRuntime::archiveOrDirectoryDocumentScopeProjectionsFollowDisplayedImageScope()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;

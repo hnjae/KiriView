@@ -48,7 +48,7 @@ Opening a directory URL creates the existing directory document and does not cre
 
 The ordinary direct media URL parent follows KiriView's existing direct image candidate context rule rather than a new URL-scheme-specific parser: KiriView normalizes the original direct URL through the same `navigationSourceUrl(...)` path used for displayed direct images, then derives the parent with `QUrl::RemoveFilename | QUrl::NormalizePathSegments`.
 
-Direct KDE archive-entry URLs use this direct URL branch unless KiriView has explicitly opened an archive document scope.
+Direct KDE archive-entry URLs use this direct URL branch unless KiriView has explicitly opened an archive or directory document scope.
 
 Supported image files and supported direct video files share one locale-aware sibling order in ordinary direct media URL scopes.
 
