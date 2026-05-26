@@ -7,7 +7,7 @@
 #include "imagerendercontext.h"
 #include "imagesurface.h"
 #include "imagesurfacedrawcontext.h"
-#include "presentation/imagerotation.h"
+#include "rendering/imagerotation.h"
 #include "staticimage.h"
 
 #include <QImage>

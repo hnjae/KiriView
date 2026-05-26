@@ -58,7 +58,7 @@ src/navigation/imagecontainernavigationstate.cpp
 src/location/imagedocumentlocation.cpp
 src/rendering/imagerenderframe.cpp
 src/rendering/imagerendering.cpp
-src/presentation/imagerotation.cpp
+src/rendering/imagerotation.cpp
 src/document/imagedocumentchangebatcher.cpp
 src/document/imagedocumentdeletioncontroller.cpp
 src/document/imagedocumentdeletionfallbackcontroller.cpp

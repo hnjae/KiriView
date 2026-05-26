@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "presentation/imagerotation.h"
+#include "rendering/imagerotation.h"
 
 #include "bridge/qtgeometryconversion.h"
 #include "kiriview/src/policy/imagerendergeometry.cxx.h"

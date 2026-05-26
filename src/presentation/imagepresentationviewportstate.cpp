@@ -4,8 +4,8 @@
 #include "presentation/imagepresentationviewportstate.h"
 
 #include "document/imagedocumentnotifications.h"
-#include "presentation/imagerotation.h"
 #include "rendering/imagerendering.h"
+#include "rendering/imagerotation.h"
 
 #include <utility>
 #include <vector>

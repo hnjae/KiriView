@@ -7,7 +7,7 @@
 #include "imagetilegeometrypolicy.h"
 #include "imagetilevisibility.h"
 #include "kiriview/src/policy/imagerendergeometry.cxx.h"
-#include "presentation/imagerotation.h"
+#include "rendering/imagerotation.h"
 
 #include <QRect>
 #include <QRectF>

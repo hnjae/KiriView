@@ -3,7 +3,7 @@
 
 #include "imagerendernodestate.h"
 
-#include "presentation/imagerotation.h"
+#include "rendering/imagerotation.h"
 
 #include <utility>
 
