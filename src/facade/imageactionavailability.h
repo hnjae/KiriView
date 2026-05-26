@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_FACADE_IMAGEACTIONAVAILABILITY_H
 #define KIRIVIEW_FACADE_IMAGEACTIONAVAILABILITY_H
 
-#include "application/imageactionavailabilitypolicy.h"
+#include "application/imageactionavailabilityruntime.h"
 
 #include <QObject>
 #include <QtQml/qqmlregistration.h>
@@ -146,13 +146,7 @@ Q_SIGNALS:
     void availabilityChanged();
 
 private:
-    void setBool(bool &target, bool value);
-    void publishInputChange();
-
-    ImageActionAvailabilityInput m_input;
-    ImageActionAvailabilityProjection m_projection;
-    bool m_scanBackwardAtFirstImageBoundary = false;
-    int m_availabilityRevision = 0;
+    KiriView::ApplicationActions::ImageActionAvailabilityRuntime m_runtime;
 };
 
 static_assert(static_cast<int>(ImageActionAvailability::ContainerViewerShortcutScope)

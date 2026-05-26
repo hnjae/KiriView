@@ -13,223 +13,212 @@ KiriView::ApplicationActions::ImageShortcutScope applicationShortcutScope(
 
 ImageActionAvailability::ImageActionAvailability(QObject *parent)
     : QObject(parent)
-    , m_projection(imageActionAvailabilityProjection(m_input))
+    , m_runtime([this]() { Q_EMIT availabilityChanged(); })
 {
 }
 
-bool ImageActionAvailability::imageReady() const { return m_input.imageReady; }
+bool ImageActionAvailability::imageReady() const { return m_runtime.imageReady(); }
 
 void ImageActionAvailability::setImageReady(bool imageReady)
 {
-    setBool(m_input.imageReady, imageReady);
+    m_runtime.setImageReady(imageReady);
 }
 
 bool ImageActionAvailability::fileDeletionInProgress() const
 {
-    return m_input.fileDeletionInProgress;
+    return m_runtime.fileDeletionInProgress();
 }
 
 void ImageActionAvailability::setFileDeletionInProgress(bool fileDeletionInProgress)
 {
-    setBool(m_input.fileDeletionInProgress, fileDeletionInProgress);
+    m_runtime.setFileDeletionInProgress(fileDeletionInProgress);
 }
 
-bool ImageActionAvailability::helpDialogOpen() const { return m_input.helpDialogOpen; }
+bool ImageActionAvailability::helpDialogOpen() const { return m_runtime.helpDialogOpen(); }
 
 void ImageActionAvailability::setHelpDialogOpen(bool helpDialogOpen)
 {
-    setBool(m_input.helpDialogOpen, helpDialogOpen);
+    m_runtime.setHelpDialogOpen(helpDialogOpen);
 }
 
-bool ImageActionAvailability::textInputFocused() const { return m_input.textInputFocused; }
+bool ImageActionAvailability::textInputFocused() const { return m_runtime.textInputFocused(); }
 
 void ImageActionAvailability::setTextInputFocused(bool textInputFocused)
 {
-    setBool(m_input.textInputFocused, textInputFocused);
+    m_runtime.setTextInputFocused(textInputFocused);
 }
 
-bool ImageActionAvailability::imagePannable() const { return m_input.imagePannable; }
+bool ImageActionAvailability::imagePannable() const { return m_runtime.imagePannable(); }
 
 void ImageActionAvailability::setImagePannable(bool imagePannable)
 {
-    setBool(m_input.imagePannable, imagePannable);
+    m_runtime.setImagePannable(imagePannable);
 }
 
 bool ImageActionAvailability::imageHorizontallyPannable() const
 {
-    return m_input.imageHorizontallyPannable;
+    return m_runtime.imageHorizontallyPannable();
 }
 
 void ImageActionAvailability::setImageHorizontallyPannable(bool imageHorizontallyPannable)
 {
-    setBool(m_input.imageHorizontallyPannable, imageHorizontallyPannable);
+    m_runtime.setImageHorizontallyPannable(imageHorizontallyPannable);
 }
 
 bool ImageActionAvailability::containerNavigationAvailable() const
 {
-    return m_input.containerNavigationAvailable;
+    return m_runtime.containerNavigationAvailable();
 }
 
 void ImageActionAvailability::setContainerNavigationAvailable(bool containerNavigationAvailable)
 {
-    setBool(m_input.containerNavigationAvailable, containerNavigationAvailable);
+    m_runtime.setContainerNavigationAvailable(containerNavigationAvailable);
 }
 
-bool ImageActionAvailability::twoPageModeEnabled() const { return m_input.twoPageModeEnabled; }
+bool ImageActionAvailability::twoPageModeEnabled() const { return m_runtime.twoPageModeEnabled(); }
 
 void ImageActionAvailability::setTwoPageModeEnabled(bool twoPageModeEnabled)
 {
-    setBool(m_input.twoPageModeEnabled, twoPageModeEnabled);
+    m_runtime.setTwoPageModeEnabled(twoPageModeEnabled);
 }
 
-bool ImageActionAvailability::twoPageModeAvailable() const { return m_input.twoPageModeAvailable; }
+bool ImageActionAvailability::twoPageModeAvailable() const
+{
+    return m_runtime.twoPageModeAvailable();
+}
 
 void ImageActionAvailability::setTwoPageModeAvailable(bool twoPageModeAvailable)
 {
-    setBool(m_input.twoPageModeAvailable, twoPageModeAvailable);
+    m_runtime.setTwoPageModeAvailable(twoPageModeAvailable);
 }
 
 bool ImageActionAvailability::rightToLeftReadingEnabled() const
 {
-    return m_input.rightToLeftReadingEnabled;
+    return m_runtime.rightToLeftReadingEnabled();
 }
 
 void ImageActionAvailability::setRightToLeftReadingEnabled(bool rightToLeftReadingEnabled)
 {
-    setBool(m_input.rightToLeftReadingEnabled, rightToLeftReadingEnabled);
+    m_runtime.setRightToLeftReadingEnabled(rightToLeftReadingEnabled);
 }
 
 bool ImageActionAvailability::rightToLeftReadingAvailable() const
 {
-    return m_input.rightToLeftReadingAvailable;
+    return m_runtime.rightToLeftReadingAvailable();
 }
 
 void ImageActionAvailability::setRightToLeftReadingAvailable(bool rightToLeftReadingAvailable)
 {
-    setBool(m_input.rightToLeftReadingAvailable, rightToLeftReadingAvailable);
+    m_runtime.setRightToLeftReadingAvailable(rightToLeftReadingAvailable);
 }
 
 bool ImageActionAvailability::scanBackwardAtFirstImageBoundary() const
 {
-    return m_scanBackwardAtFirstImageBoundary;
+    return m_runtime.scanBackwardAtFirstImageBoundary();
 }
 
 void ImageActionAvailability::setScanBackwardAtFirstImageBoundary(
     bool scanBackwardAtFirstImageBoundary)
 {
-    setBool(m_scanBackwardAtFirstImageBoundary, scanBackwardAtFirstImageBoundary);
+    m_runtime.setScanBackwardAtFirstImageBoundary(scanBackwardAtFirstImageBoundary);
 }
 
-bool ImageActionAvailability::canUseReadyActions() const { return m_projection.canUseReadyActions; }
+bool ImageActionAvailability::canUseReadyActions() const { return m_runtime.canUseReadyActions(); }
 
 bool ImageActionAvailability::canUseRotateActions() const
 {
-    return m_projection.canUseRotateActions;
+    return m_runtime.canUseRotateActions();
 }
 
 bool ImageActionAvailability::canUseTwoPageModeActions() const
 {
-    return m_projection.canUseTwoPageModeActions;
+    return m_runtime.canUseTwoPageModeActions();
 }
 
 bool ImageActionAvailability::canUseRightToLeftReadingActions() const
 {
-    return m_projection.canUseRightToLeftReadingActions;
+    return m_runtime.canUseRightToLeftReadingActions();
 }
 
 bool ImageActionAvailability::rightToLeftReadingActive() const
 {
-    return m_projection.rightToLeftReadingActive;
+    return m_runtime.rightToLeftReadingActive();
 }
 
-bool ImageActionAvailability::twoPageModeActive() const { return m_projection.twoPageModeActive; }
+bool ImageActionAvailability::twoPageModeActive() const { return m_runtime.twoPageModeActive(); }
 
 bool ImageActionAvailability::helpShortcutsEnabled() const
 {
-    return m_projection.helpShortcutsEnabled;
+    return m_runtime.helpShortcutsEnabled();
 }
 
 bool ImageActionAvailability::viewerShortcutsEnabled() const
 {
-    return m_projection.viewerShortcutsEnabled;
+    return m_runtime.viewerShortcutsEnabled();
 }
 
 bool ImageActionAvailability::readyShortcutsEnabled() const
 {
-    return m_projection.readyShortcutsEnabled;
+    return m_runtime.readyShortcutsEnabled();
 }
 
 bool ImageActionAvailability::readyViewerShortcutsEnabled() const
 {
-    return m_projection.readyViewerShortcutsEnabled;
+    return m_runtime.readyViewerShortcutsEnabled();
 }
 
 bool ImageActionAvailability::twoPageViewerShortcutsEnabled() const
 {
-    return m_projection.twoPageViewerShortcutsEnabled;
+    return m_runtime.twoPageViewerShortcutsEnabled();
 }
 
 bool ImageActionAvailability::rightToLeftReadingShortcutsEnabled() const
 {
-    return m_projection.rightToLeftReadingShortcutsEnabled;
+    return m_runtime.rightToLeftReadingShortcutsEnabled();
 }
 
 bool ImageActionAvailability::rightToLeftReadingViewerShortcutsEnabled() const
 {
-    return m_projection.rightToLeftReadingViewerShortcutsEnabled;
+    return m_runtime.rightToLeftReadingViewerShortcutsEnabled();
 }
 
 bool ImageActionAvailability::rotateShortcutsEnabled() const
 {
-    return m_projection.rotateShortcutsEnabled;
+    return m_runtime.rotateShortcutsEnabled();
 }
 
 bool ImageActionAvailability::rotateViewerShortcutsEnabled() const
 {
-    return m_projection.rotateViewerShortcutsEnabled;
+    return m_runtime.rotateViewerShortcutsEnabled();
 }
 
 bool ImageActionAvailability::pannableShortcutsEnabled() const
 {
-    return m_projection.pannableShortcutsEnabled;
+    return m_runtime.pannableShortcutsEnabled();
 }
 
 bool ImageActionAvailability::pannableViewerShortcutsEnabled() const
 {
-    return m_projection.pannableViewerShortcutsEnabled;
+    return m_runtime.pannableViewerShortcutsEnabled();
 }
 
 bool ImageActionAvailability::containerShortcutsEnabled() const
 {
-    return m_projection.containerShortcutsEnabled;
+    return m_runtime.containerShortcutsEnabled();
 }
 
 bool ImageActionAvailability::containerViewerShortcutsEnabled() const
 {
-    return m_projection.containerViewerShortcutsEnabled;
+    return m_runtime.containerViewerShortcutsEnabled();
 }
 
-int ImageActionAvailability::availabilityRevision() const { return m_availabilityRevision; }
+int ImageActionAvailability::availabilityRevision() const
+{
+    return m_runtime.availabilityRevision();
+}
 
 bool ImageActionAvailability::shortcutsEnabledForScope(
     ImageActionAvailability::ShortcutScope scope) const
 {
-    return imageActionAvailabilityShortcutsEnabledForScope(
-        m_projection, applicationShortcutScope(scope));
-}
-
-void ImageActionAvailability::setBool(bool &target, bool value)
-{
-    if (target == value) {
-        return;
-    }
-    target = value;
-    publishInputChange();
-}
-
-void ImageActionAvailability::publishInputChange()
-{
-    m_projection = imageActionAvailabilityProjection(m_input);
-    ++m_availabilityRevision;
-    Q_EMIT availabilityChanged();
+    return m_runtime.shortcutsEnabledForScope(applicationShortcutScope(scope));
 }
