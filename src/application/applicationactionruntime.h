@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_APPLICATIONACTIONRUNTIME_H
 #define KIRIVIEW_APPLICATIONACTIONRUNTIME_H
 
+#include "applicationactionhost.h"
 #include "applicationactionregistry.h"
 #include "applicationmenupresentationruntime.h"
 #include "applicationshortcutpolicy.h"
@@ -15,8 +16,6 @@
 #include <QString>
 #include <functional>
 #include <memory>
-
-class KiriViewApplication;
 
 namespace KiriView::ApplicationActions {
 struct ActionDefinition;
@@ -30,7 +29,7 @@ public:
         std::function<void()> shortcutRevisionChanged;
     };
 
-    explicit ApplicationActionRuntime(KiriViewApplication &application, Callbacks callbacks = {});
+    explicit ApplicationActionRuntime(ApplicationActionHost &host, Callbacks callbacks = {});
     ~ApplicationActionRuntime();
 
     MenuPresentation menuPresentation() const;
@@ -63,7 +62,7 @@ private:
         const QList<QKeySequence> &defaultShortcuts);
     void handleActionChanged(QAction *changedAction);
 
-    KiriViewApplication &m_application;
+    ApplicationActionHost &m_host;
     ApplicationActionRegistry m_actionRegistry;
     ApplicationMenuPresentationRuntime m_menuPresentationRuntime;
     std::unique_ptr<ApplicationShortcutRuntime> m_shortcutRuntime;

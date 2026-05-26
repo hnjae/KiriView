@@ -3,20 +3,17 @@
 
 #include "applicationactionregistry.h"
 
-#include "facade/kiriviewapplication.h"
-
 #include <cstddef>
 
 namespace KiriView::ApplicationActions {
-ApplicationActionRegistry::ApplicationActionRegistry(KiriViewApplication &application)
-    : m_application(application)
+ApplicationActionRegistry::ApplicationActionRegistry(ApplicationActionHost &host)
+    : m_host(host)
 {
 }
 
 QAction *ApplicationActionRegistry::collectionAction(const QString &actionName) const
 {
-    return const_cast<KiriViewApplication &>(m_application)
-        .AbstractKirigamiApplication::action(actionName);
+    return m_host.inheritedAction(actionName);
 }
 
 QAction *ApplicationActionRegistry::collectionAction(const ActionDefinition &definition) const

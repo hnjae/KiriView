@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_APPLICATIONACTIONREGISTRY_H
 #define KIRIVIEW_APPLICATIONACTIONREGISTRY_H
 
+#include "applicationactionhost.h"
 #include "kiriviewapplicationactions.h"
 
 #include <QAction>
@@ -22,14 +23,12 @@ struct RegisteredApplicationAction {
 
 }
 
-class KiriViewApplication;
-
 namespace KiriView::ApplicationActions {
 
 class ApplicationActionRegistry final
 {
 public:
-    explicit ApplicationActionRegistry(KiriViewApplication &application);
+    explicit ApplicationActionRegistry(ApplicationActionHost &host);
 
     QAction *collectionAction(const QString &actionName) const;
     QAction *collectionAction(const ActionDefinition &definition) const;
@@ -43,7 +42,7 @@ private:
     static QString definitionName(const ActionDefinition &definition);
     static std::size_t actionIndex(ActionId actionId);
 
-    KiriViewApplication &m_application;
+    ApplicationActionHost &m_host;
     std::array<QAction *, actionDefinitionCount> m_actionsById {};
     QHash<QString, QAction *> m_actionsByName;
 };

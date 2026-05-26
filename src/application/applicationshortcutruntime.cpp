@@ -3,7 +3,6 @@
 
 #include "applicationshortcutruntime.h"
 
-#include "facade/kiriviewapplication.h"
 #include "shortcuthelpmodel.h"
 #include "shortcutroutemodel.h"
 
@@ -12,12 +11,12 @@
 #include <utility>
 
 namespace KiriView::ApplicationActions {
-ApplicationShortcutRuntime::ApplicationShortcutRuntime(KiriViewApplication &application,
+ApplicationShortcutRuntime::ApplicationShortcutRuntime(ApplicationActionHost &host,
     const ApplicationActionRegistry &actionRegistry, ChangeCallback changeCallback)
-    : m_application(application)
+    : m_host(host)
     , m_actionRegistry(actionRegistry)
     , m_changeCallback(std::move(changeCallback))
-    , m_shortcutRouteModel(std::make_unique<ShortcutRouteModel>(&m_application))
+    , m_shortcutRouteModel(std::make_unique<ShortcutRouteModel>(m_host.actionContext()))
 {
 }
 
@@ -27,7 +26,7 @@ void ApplicationShortcutRuntime::setup()
 {
     sanitizeActionShortcuts();
     m_shortcutHelpModel = std::make_unique<ShortcutHelpModel>(
-        [this]() { return shortcutHelpRows(); }, &m_application);
+        [this]() { return shortcutHelpRows(); }, m_host.actionContext());
 }
 
 void ApplicationShortcutRuntime::handleActionChanged(QAction *changedAction)
@@ -63,7 +62,7 @@ QAbstractListModel *ApplicationShortcutRuntime::shortcutRouteModel() const
 
 void ApplicationShortcutRuntime::sanitizeActionShortcuts()
 {
-    for (QAction *action : m_application.mainCollection()->actions()) {
+    for (QAction *action : m_host.mainActionCollection()->actions()) {
         sanitizeActionShortcuts(action);
     }
 }
@@ -82,7 +81,7 @@ void ApplicationShortcutRuntime::sanitizeActionShortcuts(QAction *action)
 
     m_sanitizingShortcuts = true;
     action->setShortcuts(sanitizedShortcuts);
-    m_application.mainCollection()->writeSettings(nullptr, false, action);
+    m_host.mainActionCollection()->writeSettings(nullptr, false, action);
     m_sanitizingShortcuts = false;
 }
 

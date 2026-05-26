@@ -2,11 +2,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
 #include "application/applicationmenupresentationruntime.h"
-#include "facade/kiriviewapplication.h"
 #include "kiriviewstate.h"
 
 #include <KConfigGroup>
 #include <KSharedConfig>
+#include <KirigamiActionCollection>
 #include <QAction>
 #include <QApplication>
 #include <QByteArray>
@@ -39,11 +39,36 @@ void resetConfig()
     appConfig->reparseConfiguration();
 }
 
+class FakeApplicationActionHost final : public QObject,
+                                        public KiriView::ApplicationActions::ApplicationActionHost
+{
+    Q_OBJECT
+
+public:
+    FakeApplicationActionHost()
+        : collection(this)
+    {
+    }
+
+    QObject *actionContext() override { return this; }
+    KirigamiActionCollection *mainActionCollection() override { return &collection; }
+    QAction *inheritedAction(const QString &actionName) override
+    {
+        return collection.action(actionName);
+    }
+    void readActionSettings() override { }
+
+    KirigamiActionCollection collection;
+
+Q_SIGNALS:
+    void menuPresentationChanged();
+};
+
 KiriView::ApplicationActions::ApplicationMenuPresentationRuntime createRuntime(
-    KiriViewApplication &application)
+    FakeApplicationActionHost &host)
 {
     return KiriView::ApplicationActions::ApplicationMenuPresentationRuntime(
-        application, [&application]() { Q_EMIT application.menuPresentationChanged(); });
+        host, [&host]() { Q_EMIT host.menuPresentationChanged(); });
 }
 }
 
@@ -74,19 +99,17 @@ void TestApplicationMenuPresentationRuntime::cleanup() { resetConfig(); }
 void TestApplicationMenuPresentationRuntime::invalidStoredValueFallsBackToHamburgerMenu()
 {
     KiriViewState::setMenuPresentation(99);
-    KiriViewApplication application;
-    KiriView::ApplicationActions::ApplicationMenuPresentationRuntime runtime
-        = createRuntime(application);
+    FakeApplicationActionHost host;
+    KiriView::ApplicationActions::ApplicationMenuPresentationRuntime runtime = createRuntime(host);
 
     QCOMPARE(runtime.menuPresentation(), MenuPresentation::HamburgerMenu);
 }
 
 void TestApplicationMenuPresentationRuntime::setMenuPresentationPersistsAndSignalsChanges()
 {
-    KiriViewApplication application;
-    KiriView::ApplicationActions::ApplicationMenuPresentationRuntime runtime
-        = createRuntime(application);
-    QSignalSpy changedSpy(&application, &KiriViewApplication::menuPresentationChanged);
+    FakeApplicationActionHost host;
+    KiriView::ApplicationActions::ApplicationMenuPresentationRuntime runtime = createRuntime(host);
+    QSignalSpy changedSpy(&host, &FakeApplicationActionHost::menuPresentationChanged);
 
     runtime.setMenuPresentation(MenuPresentation::MenuBar);
 
@@ -103,11 +126,10 @@ void TestApplicationMenuPresentationRuntime::setMenuPresentationPersistsAndSigna
 
 void TestApplicationMenuPresentationRuntime::syncFromSettingsUpdatesRuntimeStateAndAction()
 {
-    KiriViewApplication application;
-    KiriView::ApplicationActions::ApplicationMenuPresentationRuntime runtime
-        = createRuntime(application);
+    FakeApplicationActionHost host;
+    KiriView::ApplicationActions::ApplicationMenuPresentationRuntime runtime = createRuntime(host);
     QAction action;
-    QSignalSpy changedSpy(&application, &KiriViewApplication::menuPresentationChanged);
+    QSignalSpy changedSpy(&host, &FakeApplicationActionHost::menuPresentationChanged);
 
     runtime.bindShowMenuBarAction(&action);
     QVERIFY(!action.isChecked());
@@ -127,9 +149,8 @@ void TestApplicationMenuPresentationRuntime::syncFromSettingsUpdatesRuntimeState
 void TestApplicationMenuPresentationRuntime::showMenuBarActionMirrorsAndUpdatesPresentation()
 {
     KiriViewState::setMenuPresentation(KiriViewState::EnumMenuPresentation::MenuBar);
-    KiriViewApplication application;
-    KiriView::ApplicationActions::ApplicationMenuPresentationRuntime runtime
-        = createRuntime(application);
+    FakeApplicationActionHost host;
+    KiriView::ApplicationActions::ApplicationMenuPresentationRuntime runtime = createRuntime(host);
     QAction action;
 
     runtime.bindShowMenuBarAction(&action);

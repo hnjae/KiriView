@@ -3,9 +3,35 @@
 
 #include "facade/kiriviewapplication.h"
 
+#include "application/applicationactionhost.h"
 #include "application/applicationactionruntime.h"
 
 namespace Actions = KiriView::ApplicationActions;
+
+namespace KiriView::ApplicationActions {
+class KiriViewApplicationActionHost final : public ApplicationActionHost
+{
+public:
+    explicit KiriViewApplicationActionHost(KiriViewApplication &application)
+        : m_application(application)
+    {
+    }
+
+    QObject *actionContext() override { return &m_application; }
+    KirigamiActionCollection *mainActionCollection() override
+    {
+        return m_application.applicationMainActionCollection();
+    }
+    QAction *inheritedAction(const QString &actionName) override
+    {
+        return m_application.inheritedApplicationAction(actionName);
+    }
+    void readActionSettings() override { m_application.readApplicationActionSettings(); }
+
+private:
+    KiriViewApplication &m_application;
+};
+}
 
 static_assert(static_cast<int>(Actions::MenuPresentation::HamburgerMenu)
     == static_cast<int>(KiriViewApplication::HamburgerMenu));
@@ -18,7 +44,8 @@ static_assert(static_cast<int>(Actions::ActionId::ActionCount)
 
 KiriViewApplication::KiriViewApplication(QObject *parent)
     : AbstractKirigamiApplication(parent)
-    , m_actionRuntime(std::make_unique<Actions::ApplicationActionRuntime>(*this,
+    , m_actionHost(std::make_unique<Actions::KiriViewApplicationActionHost>(*this))
+    , m_actionRuntime(std::make_unique<Actions::ApplicationActionRuntime>(*m_actionHost,
           Actions::ApplicationActionRuntime::Callbacks {
               [this]() { Q_EMIT menuPresentationChanged(); },
               [this]() { Q_EMIT shortcutRevisionChanged(); },
@@ -199,3 +226,15 @@ void KiriViewApplication::setupActions()
         m_actionRuntime->setupActions();
     }
 }
+
+KirigamiActionCollection *KiriViewApplication::applicationMainActionCollection()
+{
+    return mainCollection();
+}
+
+QAction *KiriViewApplication::inheritedApplicationAction(const QString &actionName)
+{
+    return AbstractKirigamiApplication::action(actionName);
+}
+
+void KiriViewApplication::readApplicationActionSettings() { readSettings(); }

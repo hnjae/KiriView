@@ -16,6 +16,7 @@
 #include <memory>
 
 namespace KiriView::ApplicationActions {
+class KiriViewApplicationActionHost;
 class ApplicationActionRuntime;
 class ApplicationShortcutRuntime;
 }
@@ -126,9 +127,13 @@ protected:
     void setupActions() override;
 
 private:
-    friend class KiriView::ApplicationActions::ApplicationActionRuntime;
-    friend class KiriView::ApplicationActions::ApplicationShortcutRuntime;
+    friend class KiriView::ApplicationActions::KiriViewApplicationActionHost;
 
+    KirigamiActionCollection *applicationMainActionCollection();
+    QAction *inheritedApplicationAction(const QString &actionName);
+    void readApplicationActionSettings();
+
+    std::unique_ptr<KiriView::ApplicationActions::KiriViewApplicationActionHost> m_actionHost;
     std::unique_ptr<KiriView::ApplicationActions::ApplicationActionRuntime> m_actionRuntime;
 };
 

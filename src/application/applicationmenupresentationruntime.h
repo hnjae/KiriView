@@ -4,12 +4,12 @@
 #ifndef KIRIVIEW_APPLICATIONMENUPRESENTATIONRUNTIME_H
 #define KIRIVIEW_APPLICATIONMENUPRESENTATIONRUNTIME_H
 
+#include "application/applicationactionhost.h"
 #include "application/applicationmenupresentationstate.h"
 
 #include <functional>
 
 class QAction;
-class KiriViewApplication;
 
 namespace KiriView::ApplicationActions {
 class ApplicationMenuPresentationRuntime final
@@ -18,7 +18,7 @@ public:
     using ChangeCallback = std::function<void()>;
 
     explicit ApplicationMenuPresentationRuntime(
-        KiriViewApplication &application, ChangeCallback changeCallback = {});
+        ApplicationActionHost &host, ChangeCallback changeCallback = {});
 
     MenuPresentation menuPresentation() const;
     void setMenuPresentation(MenuPresentation presentation);
@@ -27,7 +27,7 @@ public:
     void syncShowMenuBarAction();
 
 private:
-    KiriViewApplication &m_application;
+    ApplicationActionHost &m_host;
     ChangeCallback m_changeCallback;
     ApplicationMenuPresentationState m_state;
     QAction *m_showMenuBarAction = nullptr;

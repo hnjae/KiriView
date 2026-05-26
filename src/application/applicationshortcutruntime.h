@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_APPLICATIONSHORTCUTRUNTIME_H
 #define KIRIVIEW_APPLICATIONSHORTCUTRUNTIME_H
 
+#include "applicationactionhost.h"
 #include "applicationactionregistry.h"
 #include "applicationshortcutpolicy.h"
 
@@ -15,8 +16,6 @@
 #include <functional>
 #include <memory>
 
-class KiriViewApplication;
-
 namespace KiriView::ApplicationActions {
 class ShortcutRouteModel;
 class ShortcutHelpModel;
@@ -27,7 +26,7 @@ class ApplicationShortcutRuntime final
 public:
     using ChangeCallback = std::function<void()>;
 
-    ApplicationShortcutRuntime(KiriViewApplication &application,
+    ApplicationShortcutRuntime(ApplicationActionHost &host,
         const ApplicationActionRegistry &actionRegistry, ChangeCallback changeCallback = {});
     ~ApplicationShortcutRuntime();
 
@@ -48,7 +47,7 @@ private:
     static QString shortcutDisplayText(const QAction *action);
     QList<ShortcutHelpRow> shortcutHelpRows() const;
 
-    KiriViewApplication &m_application;
+    ApplicationActionHost &m_host;
     const ApplicationActionRegistry &m_actionRegistry;
     ChangeCallback m_changeCallback;
     std::unique_ptr<ShortcutHelpModel> m_shortcutHelpModel;

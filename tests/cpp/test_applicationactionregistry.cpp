@@ -1,11 +1,12 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
+#include "application/applicationactionhost.h"
 #include "application/applicationactionregistry.h"
 #include "application/kiriviewapplicationactions.h"
-#include "facade/kiriviewapplication.h"
 #include "kiriviewstate.h"
 
+#include <KirigamiActionCollection>
 #include <QAction>
 #include <QApplication>
 #include <QByteArray>
@@ -13,6 +14,8 @@
 #include <QStandardPaths>
 #include <QTest>
 #include <cstddef>
+#include <memory>
+#include <vector>
 
 namespace {
 namespace Actions = KiriView::ApplicationActions;
@@ -31,6 +34,46 @@ void resetConfig()
     state->config()->reparseConfiguration();
     state->read();
 }
+
+class FakeApplicationActionHost final : public KiriView::ApplicationActions::ApplicationActionHost
+{
+public:
+    FakeApplicationActionHost()
+        : collection(&object)
+    {
+    }
+
+    QObject *actionContext() override { return &object; }
+    KirigamiActionCollection *mainActionCollection() override { return &collection; }
+    QAction *inheritedAction(const QString &actionName) override
+    {
+        ++inheritedActionLookupCount;
+        return collection.action(actionName);
+    }
+    void readActionSettings() override { ++readActionSettingsCount; }
+
+    QObject object;
+    std::vector<std::unique_ptr<QAction>> actions;
+    KirigamiActionCollection collection;
+    int inheritedActionLookupCount = 0;
+    int readActionSettingsCount = 0;
+};
+
+void addHostAction(FakeApplicationActionHost &host, const Actions::ActionDefinition &definition)
+{
+    const QString actionName = definitionActionName(definition);
+    auto action = std::make_unique<QAction>(&host.object);
+    action->setObjectName(actionName);
+    host.collection.addAction(actionName, action.get());
+    host.actions.push_back(std::move(action));
+}
+
+void addHostActions(FakeApplicationActionHost &host)
+{
+    for (const Actions::ActionDefinition &definition : Actions::definitions()) {
+        addHostAction(host, definition);
+    }
+}
 }
 
 class TestApplicationActionRegistry : public QObject
@@ -42,6 +85,7 @@ private Q_SLOTS:
     void init();
     void registeredActionsResolveThroughDefinitionIdentity();
     void registeredActionsFollowDefinitionOrder();
+    void registryUsesHostInheritedActionLookup();
 };
 
 void TestApplicationActionRegistry::initTestCase()
@@ -54,8 +98,9 @@ void TestApplicationActionRegistry::init() { resetConfig(); }
 
 void TestApplicationActionRegistry::registeredActionsResolveThroughDefinitionIdentity()
 {
-    KiriViewApplication application;
-    Actions::ApplicationActionRegistry registry(application);
+    FakeApplicationActionHost host;
+    addHostActions(host);
+    Actions::ApplicationActionRegistry registry(host);
 
     for (const Actions::ActionDefinition &definition : Actions::definitions()) {
         registry.registerAction(definition, registry.collectionAction(definition));
@@ -81,8 +126,9 @@ void TestApplicationActionRegistry::registeredActionsResolveThroughDefinitionIde
 
 void TestApplicationActionRegistry::registeredActionsFollowDefinitionOrder()
 {
-    KiriViewApplication application;
-    Actions::ApplicationActionRegistry registry(application);
+    FakeApplicationActionHost host;
+    addHostActions(host);
+    Actions::ApplicationActionRegistry registry(host);
 
     for (const Actions::ActionDefinition &definition : Actions::definitions()) {
         registry.registerAction(definition, registry.collectionAction(definition));
@@ -99,6 +145,24 @@ void TestApplicationActionRegistry::registeredActionsFollowDefinitionOrder()
         QCOMPARE(registeredActions.at(index).actionName, definitionActionName(definition));
         QCOMPARE(registeredActions.at(index).action, registry.actionForId(definition.actionId));
     }
+}
+
+void TestApplicationActionRegistry::registryUsesHostInheritedActionLookup()
+{
+    FakeApplicationActionHost host;
+    const Actions::ActionDefinition &definition = Actions::definitions().front();
+    const QString actionName = definitionActionName(definition);
+    addHostAction(host, definition);
+
+    Actions::ApplicationActionRegistry registry(host);
+
+    QAction *action = host.collection.action(actionName);
+    QCOMPARE(registry.collectionAction(definition), action);
+    QCOMPARE(host.inheritedActionLookupCount, 1);
+
+    registry.registerAction(definition, registry.collectionAction(definition));
+    QCOMPARE(registry.action(actionName), action);
+    QCOMPARE(registry.actionForId(definition.actionId), action);
 }
 
 int main(int argc, char **argv)

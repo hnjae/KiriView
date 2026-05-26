@@ -3,7 +3,6 @@
 
 #include "applicationmenupresentationruntime.h"
 
-#include "facade/kiriviewapplication.h"
 #include "kiriviewstate.h"
 
 #include <KirigamiActionCollection>
@@ -14,8 +13,8 @@
 
 namespace KiriView::ApplicationActions {
 ApplicationMenuPresentationRuntime::ApplicationMenuPresentationRuntime(
-    KiriViewApplication &application, ChangeCallback changeCallback)
-    : m_application(application)
+    ApplicationActionHost &host, ChangeCallback changeCallback)
+    : m_host(host)
     , m_changeCallback(std::move(changeCallback))
     , m_state(ApplicationMenuPresentationState::presentationForStoredValue(
           KiriViewState::menuPresentation()))
@@ -51,7 +50,7 @@ void ApplicationMenuPresentationRuntime::bindShowMenuBarAction(QAction *action)
     KirigamiActionCollection::setShortcutsConfigurable(m_showMenuBarAction, false);
     m_showMenuBarAction->setCheckable(true);
     QObject::connect(
-        m_showMenuBarAction, &QAction::triggered, &m_application, [this](bool checked) {
+        m_showMenuBarAction, &QAction::triggered, m_host.actionContext(), [this](bool checked) {
             setMenuPresentation(
                 checked ? MenuPresentation::MenuBar : MenuPresentation::HamburgerMenu);
         });

@@ -4,7 +4,6 @@
 #include "applicationactionruntime.h"
 
 #include "applicationshortcutruntime.h"
-#include "facade/kiriviewapplication.h"
 #include "kiriviewapplicationactions.h"
 
 #include <KirigamiActionCollection>
@@ -29,13 +28,12 @@ Actions::VideoShortcutAvailabilityInput videoShortcutInput(bool helpShortcutsEna
 }
 
 namespace KiriView::ApplicationActions {
-ApplicationActionRuntime::ApplicationActionRuntime(
-    KiriViewApplication &application, Callbacks callbacks)
-    : m_application(application)
-    , m_actionRegistry(application)
-    , m_menuPresentationRuntime(application, std::move(callbacks.menuPresentationChanged))
+ApplicationActionRuntime::ApplicationActionRuntime(ApplicationActionHost &host, Callbacks callbacks)
+    : m_host(host)
+    , m_actionRegistry(host)
+    , m_menuPresentationRuntime(host, std::move(callbacks.menuPresentationChanged))
     , m_shortcutRuntime(std::make_unique<ApplicationShortcutRuntime>(
-          m_application, m_actionRegistry, std::move(callbacks.shortcutRevisionChanged)))
+          m_host, m_actionRegistry, std::move(callbacks.shortcutRevisionChanged)))
 {
 }
 
@@ -125,7 +123,7 @@ bool ApplicationActionRuntime::mediaHorizontalArrowShortcutsEnabled(bool videoMo
 
 void ApplicationActionRuntime::setupActions()
 {
-    m_application.mainCollection()->setComponentDisplayName(QStringLiteral("KiriView"));
+    m_host.mainActionCollection()->setComponentDisplayName(QStringLiteral("KiriView"));
 
     const auto addAction = [this](const Actions::ActionDefinition &definition) {
         const QString name = QString::fromLatin1(definition.name);
@@ -164,7 +162,7 @@ void ApplicationActionRuntime::setupActions()
         addAction(definition);
     }
 
-    m_application.readSettings();
+    m_host.readActionSettings();
     m_menuPresentationRuntime.syncFromSettings();
     m_shortcutRuntime->setup();
 }
@@ -172,16 +170,16 @@ void ApplicationActionRuntime::setupActions()
 QAction *ApplicationActionRuntime::addRegisteredAction(const QString &name, const QString &text,
     const QString &iconName, const QList<QKeySequence> &defaultShortcuts)
 {
-    auto *action = new QAction(&m_application);
+    auto *action = new QAction(m_host.actionContext());
     action->setObjectName(name);
     action->setText(text);
     if (!iconName.isEmpty()) {
         action->setIcon(QIcon::fromTheme(iconName));
     }
 
-    m_application.mainCollection()->addAction(name, action);
+    m_host.mainActionCollection()->addAction(name, action);
     KirigamiActionCollection::setDefaultShortcuts(action, defaultShortcuts);
-    QObject::connect(action, &QAction::changed, &m_application,
+    QObject::connect(action, &QAction::changed, m_host.actionContext(),
         [this, action]() { handleActionChanged(action); });
     return action;
 }
@@ -189,8 +187,8 @@ QAction *ApplicationActionRuntime::addRegisteredAction(const QString &name, cons
 QAction *ApplicationActionRuntime::addStandardAction(KStandardActions::StandardAction actionType,
     const QString &name, const QString &text, const QList<QKeySequence> &defaultShortcuts)
 {
-    QAction *action
-        = m_application.mainCollection()->addAction(actionType, name, &m_application, [](bool) { });
+    QAction *action = m_host.mainActionCollection()->addAction(
+        actionType, name, m_host.actionContext(), [](bool) { });
     return finishRegisteredAction(action, text, defaultShortcuts);
 }
 
@@ -199,7 +197,7 @@ QAction *ApplicationActionRuntime::finishRegisteredAction(
 {
     action->setText(text);
     KirigamiActionCollection::setDefaultShortcuts(action, defaultShortcuts);
-    QObject::connect(action, &QAction::changed, &m_application,
+    QObject::connect(action, &QAction::changed, m_host.actionContext(),
         [this, action]() { handleActionChanged(action); });
     return action;
 }
