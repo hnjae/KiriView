@@ -16,6 +16,9 @@ private Q_SLOTS:
     void directImageProjectsMediaNavigationAndIntrinsicSizeTitle();
     void archiveImageProjectsPageNavigationAndCounterTitle();
     void deletionMasksNavigationDispatchWithoutDroppingTitleCounter();
+    void imageDeletionAvailabilityRequiresReadyImageWithoutPendingReplacement();
+    void videoDeletionAvailabilityRequiresSourceWithoutError();
+    void deletionProgressSuppressesDeletionAvailability();
 };
 
 void TestDocumentSessionPublicProjection::emptySessionProjectsUnavailableNavigationAndEmptyTitle()
@@ -27,6 +30,7 @@ void TestDocumentSessionPublicProjection::emptySessionProjectsUnavailableNavigat
     QCOMPARE(projection.boundaryScope, KiriView::ActiveNavigationBoundaryScope::None);
     QVERIFY(!projection.activeNavigation.available);
     QCOMPARE(projection.windowTitleSubject, QString());
+    QVERIFY(!projection.displayedFileDeletionAvailable);
 }
 
 void TestDocumentSessionPublicProjection::directImageProjectsMediaNavigationAndIntrinsicSizeTitle()
@@ -47,6 +51,10 @@ void TestDocumentSessionPublicProjection::directImageProjectsMediaNavigationAndI
                 QSize(640, 480),
                 {},
                 {},
+                true,
+                false,
+                false,
+                false,
             });
 
     QCOMPARE(projection.sourceKind, KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia);
@@ -56,6 +64,7 @@ void TestDocumentSessionPublicProjection::directImageProjectsMediaNavigationAndI
     QCOMPARE(projection.activeNavigation.currentNumber, 1);
     QCOMPARE(projection.activeNavigation.count, 3);
     QCOMPARE(projection.windowTitleSubject, QStringLiteral("01.png – 640×480"));
+    QVERIFY(projection.displayedFileDeletionAvailable);
 }
 
 void TestDocumentSessionPublicProjection::archiveImageProjectsPageNavigationAndCounterTitle()
@@ -73,6 +82,10 @@ void TestDocumentSessionPublicProjection::archiveImageProjectsPageNavigationAndC
                 QSize(640, 480),
                 {},
                 {},
+                true,
+                false,
+                false,
+                false,
             });
 
     QCOMPARE(projection.sourceKind, KiriView::ActiveNavigationSourceKind::ImageDocumentPages);
@@ -83,6 +96,7 @@ void TestDocumentSessionPublicProjection::archiveImageProjectsPageNavigationAndC
     QCOMPARE(projection.activeNavigation.currentNumber, 2);
     QCOMPARE(projection.activeNavigation.count, 5);
     QCOMPARE(projection.windowTitleSubject, QStringLiteral("book.cbz – 2/5"));
+    QVERIFY(projection.displayedFileDeletionAvailable);
 }
 
 void TestDocumentSessionPublicProjection::
@@ -104,6 +118,10 @@ void TestDocumentSessionPublicProjection::
                 {},
                 QStringLiteral("clip.mp4"),
                 QSize(1920, 1080),
+                false,
+                false,
+                true,
+                false,
             });
 
     QCOMPARE(projection.sourceKind, KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia);
@@ -114,6 +132,61 @@ void TestDocumentSessionPublicProjection::
     QCOMPARE(projection.activeNavigation.currentNumber, 2);
     QCOMPARE(projection.activeNavigation.count, 4);
     QCOMPARE(projection.windowTitleSubject, QStringLiteral("clip.mp4 – 1920×1080"));
+    QVERIFY(!projection.displayedFileDeletionAvailable);
+}
+
+void TestDocumentSessionPublicProjection::
+    imageDeletionAvailabilityRequiresReadyImageWithoutPendingReplacement()
+{
+    KiriView::DocumentSessionPublicProjectionInput input;
+    input.documentKind = KiriView::DocumentSessionKind::Image;
+    input.imageReadyForDeletion = true;
+
+    KiriView::DocumentSessionPublicProjection projection
+        = KiriView::projectDocumentSessionPublicState(input);
+    QVERIFY(projection.displayedFileDeletionAvailable);
+
+    input.imageReadyForDeletion = false;
+    projection = KiriView::projectDocumentSessionPublicState(input);
+    QVERIFY(!projection.displayedFileDeletionAvailable);
+
+    input.directImageLoadMayUseMediaScope = true;
+    input.imageReadyForDeletion = true;
+    input.directImageReplacementPending = true;
+    projection = KiriView::projectDocumentSessionPublicState(input);
+    QVERIFY(!projection.displayedFileDeletionAvailable);
+}
+
+void TestDocumentSessionPublicProjection::videoDeletionAvailabilityRequiresSourceWithoutError()
+{
+    KiriView::DocumentSessionPublicProjectionInput input;
+    input.documentKind = KiriView::DocumentSessionKind::Video;
+    input.videoSourcePresent = true;
+
+    KiriView::DocumentSessionPublicProjection projection
+        = KiriView::projectDocumentSessionPublicState(input);
+    QVERIFY(projection.displayedFileDeletionAvailable);
+
+    input.videoSourcePresent = false;
+    projection = KiriView::projectDocumentSessionPublicState(input);
+    QVERIFY(!projection.displayedFileDeletionAvailable);
+
+    input.videoSourcePresent = true;
+    input.videoError = true;
+    projection = KiriView::projectDocumentSessionPublicState(input);
+    QVERIFY(!projection.displayedFileDeletionAvailable);
+}
+
+void TestDocumentSessionPublicProjection::deletionProgressSuppressesDeletionAvailability()
+{
+    KiriView::DocumentSessionPublicProjectionInput input;
+    input.documentKind = KiriView::DocumentSessionKind::Image;
+    input.imageReadyForDeletion = true;
+    input.fileDeletionInProgress = true;
+
+    KiriView::DocumentSessionPublicProjection projection
+        = KiriView::projectDocumentSessionPublicState(input);
+    QVERIFY(!projection.displayedFileDeletionAvailable);
 }
 
 QTEST_GUILESS_MAIN(TestDocumentSessionPublicProjection)

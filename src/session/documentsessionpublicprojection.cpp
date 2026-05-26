@@ -65,6 +65,28 @@ QString windowTitleFileNameForInput(const KiriView::DocumentSessionPublicProject
 
     return {};
 }
+
+bool displayedFileDeletionAvailableForInput(
+    const KiriView::DocumentSessionPublicProjectionInput &input)
+{
+    if (input.fileDeletionInProgress) {
+        return false;
+    }
+
+    switch (input.documentKind) {
+    case KiriView::DocumentSessionKind::Image:
+        if (input.directImageLoadMayUseMediaScope && input.directImageReplacementPending) {
+            return false;
+        }
+        return input.imageReadyForDeletion;
+    case KiriView::DocumentSessionKind::Video:
+        return input.videoSourcePresent && !input.videoError;
+    case KiriView::DocumentSessionKind::Empty:
+        return false;
+    }
+
+    return false;
+}
 }
 
 namespace KiriView {
@@ -82,6 +104,7 @@ DocumentSessionPublicProjection projectDocumentSessionPublicState(
         directMediaSizeForInput(input, projection.sourceKind),
         projection.activeNavigation,
     });
+    projection.displayedFileDeletionAvailable = displayedFileDeletionAvailableForInput(input);
     return projection;
 }
 }

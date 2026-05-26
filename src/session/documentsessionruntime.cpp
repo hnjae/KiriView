@@ -88,25 +88,7 @@ QString DocumentSessionRuntime::windowTitleSubject() const { return m_state.wind
 
 bool DocumentSessionRuntime::displayedFileDeletionAvailable() const
 {
-    if (fileDeletionInProgress()) {
-        return false;
-    }
-
-    switch (m_state.documentKind()) {
-    case DocumentSessionKind::Image:
-        if (directImageLoadMayUseMediaScope()
-            && !m_state.directMediaCursor().pendingUrl.isEmpty()) {
-            return false;
-        }
-        return m_imageDocument.status() == KiriImageDocument::Status::Ready;
-    case DocumentSessionKind::Video:
-        return !m_videoDocument.sourceUrl().isEmpty()
-            && m_videoDocument.status() != KiriVideoDocument::Status::Error;
-    case DocumentSessionKind::Empty:
-        return false;
-    }
-
-    return false;
+    return projectedPublicState().displayedFileDeletionAvailable;
 }
 
 bool DocumentSessionRuntime::fileDeletionInProgress() const
@@ -911,6 +893,10 @@ DocumentSessionPublicProjectionInput DocumentSessionRuntime::publicProjectionInp
         m_imageDocument.primaryImageSize(),
         m_videoDocument.windowTitleFileName(),
         m_videoDocument.videoSize(),
+        m_imageDocument.status() == KiriImageDocument::Status::Ready,
+        !m_state.directMediaCursor().pendingUrl.isEmpty(),
+        !m_videoDocument.sourceUrl().isEmpty(),
+        m_videoDocument.status() == KiriVideoDocument::Status::Error,
     };
 }
 

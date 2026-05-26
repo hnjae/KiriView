@@ -22,6 +22,10 @@ struct DocumentSessionPublicProjectionInput {
     QSize imageDirectMediaSize;
     QString videoWindowTitleFileName;
     QSize videoDirectMediaSize;
+    bool imageReadyForDeletion = false;
+    bool directImageReplacementPending = false;
+    bool videoSourcePresent = false;
+    bool videoError = false;
 };
 
 struct DocumentSessionPublicProjection {
@@ -29,6 +33,7 @@ struct DocumentSessionPublicProjection {
     ActiveNavigationBoundaryScope boundaryScope = ActiveNavigationBoundaryScope::None;
     ActiveNavigationSnapshot activeNavigation;
     QString windowTitleSubject;
+    bool displayedFileDeletionAvailable = false;
 };
 
 DocumentSessionPublicProjection projectDocumentSessionPublicState(
