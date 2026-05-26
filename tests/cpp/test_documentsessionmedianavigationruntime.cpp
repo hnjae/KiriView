@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "session/documentsessionmediacandidateruntime.h"
+#include "session/documentsessionmedianavigationruntime.h"
 
 #include "image_async_test_support.h"
 #include "location/imageurl.h"
@@ -12,13 +12,16 @@
 #include <utility>
 #include <vector>
 
-class TestDocumentSessionMediaCandidateRuntime : public QObject
+class TestDocumentSessionMediaNavigationRuntime : public QObject
 {
     Q_OBJECT
 
 private Q_SLOTS:
     void invalidScopeCompletesWithoutStartingProvider();
     void successfulLoadPublishesCandidates();
+    void refreshPublishesBoundaryPlanAndCandidates();
+    void openPublishesTargetPlanAndCandidates();
+    void failedOpenPublishesUnknownResult();
     void cancelRejectsLateCompletion();
     void cancelRejectsLateError();
     void predicateRejectionDropsCurrentCompletion();
@@ -91,27 +94,27 @@ private:
 struct RuntimeFixture {
     QObject receiver;
     ManualMediaCandidateProvider provider;
-    KiriView::DocumentSessionMediaCandidateRuntime runtime { provider.provider() };
+    KiriView::DocumentSessionMediaNavigationRuntime runtime { provider.provider() };
     int completionCount = 0;
-    KiriView::MediaCandidateLoadResult result;
+    KiriView::DocumentSessionMediaNavigationCandidatesResult result;
     bool acceptScope = true;
 
-    void load(const KiriView::DocumentSessionMediaCandidateLoadScope &scope)
+    void load(const KiriView::DocumentSessionMediaNavigationLoadScope &scope)
     {
-        runtime.load(
+        runtime.loadCandidates(
             &receiver, scope,
             [this](
-                const KiriView::DocumentSessionMediaCandidateLoadScope &) { return acceptScope; },
-            [this](KiriView::MediaCandidateLoadResult loadResult) {
+                const KiriView::DocumentSessionMediaNavigationLoadScope &) { return acceptScope; },
+            [this](KiriView::DocumentSessionMediaNavigationCandidatesResult loadResult) {
                 ++completionCount;
                 result = std::move(loadResult);
             });
     }
 };
 
-KiriView::DocumentSessionMediaCandidateLoadScope mediaScope(const QUrl &currentUrl)
+KiriView::DocumentSessionMediaNavigationLoadScope mediaScope(const QUrl &currentUrl)
 {
-    return KiriView::DocumentSessionMediaCandidateLoadScope {
+    return KiriView::DocumentSessionMediaNavigationLoadScope {
         currentUrl,
         localUrl(QStringLiteral("/media/")),
         7,
@@ -119,11 +122,11 @@ KiriView::DocumentSessionMediaCandidateLoadScope mediaScope(const QUrl &currentU
 }
 }
 
-void TestDocumentSessionMediaCandidateRuntime::invalidScopeCompletesWithoutStartingProvider()
+void TestDocumentSessionMediaNavigationRuntime::invalidScopeCompletesWithoutStartingProvider()
 {
     RuntimeFixture fixture;
 
-    fixture.load(KiriView::DocumentSessionMediaCandidateLoadScope {});
+    fixture.load(KiriView::DocumentSessionMediaNavigationLoadScope {});
 
     QCOMPARE(fixture.provider.loadCount(), std::size_t(0));
     QCOMPARE(fixture.completionCount, 1);
@@ -131,7 +134,7 @@ void TestDocumentSessionMediaCandidateRuntime::invalidScopeCompletesWithoutStart
     QVERIFY(fixture.result.candidates.empty());
 }
 
-void TestDocumentSessionMediaCandidateRuntime::successfulLoadPublishesCandidates()
+void TestDocumentSessionMediaNavigationRuntime::successfulLoadPublishesCandidates()
 {
     RuntimeFixture fixture;
     const QUrl currentUrl = localUrl(QStringLiteral("/media/01.mp4"));
@@ -147,7 +150,81 @@ void TestDocumentSessionMediaCandidateRuntime::successfulLoadPublishesCandidates
     QCOMPARE(fixture.result.candidates.at(1).url, nextUrl);
 }
 
-void TestDocumentSessionMediaCandidateRuntime::cancelRejectsLateCompletion()
+void TestDocumentSessionMediaNavigationRuntime::refreshPublishesBoundaryPlanAndCandidates()
+{
+    RuntimeFixture fixture;
+    const QUrl previousUrl = localUrl(QStringLiteral("/media/00.mp4"));
+    const QUrl currentUrl = localUrl(QStringLiteral("/media/01.mp4"));
+    const QUrl nextUrl = localUrl(QStringLiteral("/media/02.png"));
+    KiriView::DocumentSessionMediaNavigationRefreshResult result;
+
+    fixture.runtime.refresh(
+        &fixture.receiver, mediaScope(currentUrl),
+        [](const KiriView::DocumentSessionMediaNavigationLoadScope &) { return true; },
+        [&fixture, &result](KiriView::DocumentSessionMediaNavigationRefreshResult loadResult) {
+            ++fixture.completionCount;
+            result = std::move(loadResult);
+        });
+    fixture.provider.deliverIgnoringCancellation(
+        0, { mediaCandidate(previousUrl), mediaCandidate(currentUrl), mediaCandidate(nextUrl) });
+
+    QCOMPARE(fixture.completionCount, 1);
+    QVERIFY(result.succeeded);
+    QCOMPARE(result.candidates.size(), std::size_t(3));
+    QCOMPARE(result.boundaryState.currentNumber, 2);
+    QCOMPARE(result.boundaryState.count, 3);
+    QVERIFY(result.boundaryState.canOpenPrevious);
+    QVERIFY(result.boundaryState.canOpenNext);
+}
+
+void TestDocumentSessionMediaNavigationRuntime::openPublishesTargetPlanAndCandidates()
+{
+    RuntimeFixture fixture;
+    const QUrl currentUrl = localUrl(QStringLiteral("/media/01.mp4"));
+    const QUrl nextUrl = localUrl(QStringLiteral("/media/02.png"));
+    KiriView::DocumentSessionMediaNavigationOpenResult result;
+
+    fixture.runtime.open(
+        &fixture.receiver, mediaScope(currentUrl), KiriView::nextMediaNavigationOpenRequest(),
+        [](const KiriView::DocumentSessionMediaNavigationLoadScope &) { return true; },
+        [&fixture, &result](KiriView::DocumentSessionMediaNavigationOpenResult loadResult) {
+            ++fixture.completionCount;
+            result = std::move(loadResult);
+        });
+    fixture.provider.deliverIgnoringCancellation(
+        0, { mediaCandidate(currentUrl), mediaCandidate(nextUrl) });
+
+    QCOMPARE(fixture.completionCount, 1);
+    QVERIFY(result.succeeded);
+    QCOMPARE(result.candidates.size(), std::size_t(2));
+    QVERIFY(result.plan.targetUrl.has_value());
+    QCOMPARE(*result.plan.targetUrl, nextUrl);
+    QCOMPARE(result.plan.boundaryState.currentNumber, 1);
+    QCOMPARE(result.plan.boundaryState.count, 2);
+}
+
+void TestDocumentSessionMediaNavigationRuntime::failedOpenPublishesUnknownResult()
+{
+    RuntimeFixture fixture;
+    const QUrl currentUrl = localUrl(QStringLiteral("/media/01.mp4"));
+    KiriView::DocumentSessionMediaNavigationOpenResult result;
+
+    fixture.runtime.open(
+        &fixture.receiver, mediaScope(currentUrl), KiriView::nextMediaNavigationOpenRequest(),
+        [](const KiriView::DocumentSessionMediaNavigationLoadScope &) { return true; },
+        [&fixture, &result](KiriView::DocumentSessionMediaNavigationOpenResult loadResult) {
+            ++fixture.completionCount;
+            result = std::move(loadResult);
+        });
+    fixture.provider.deliverErrorIgnoringCancellation(0, QStringLiteral("missing media"));
+
+    QCOMPARE(fixture.completionCount, 1);
+    QVERIFY(!result.succeeded);
+    QVERIFY(!result.plan.targetUrl.has_value());
+    QCOMPARE(result.errorString, QStringLiteral("missing media"));
+}
+
+void TestDocumentSessionMediaNavigationRuntime::cancelRejectsLateCompletion()
 {
     RuntimeFixture fixture;
     const QUrl currentUrl = localUrl(QStringLiteral("/media/01.mp4"));
@@ -160,7 +237,7 @@ void TestDocumentSessionMediaCandidateRuntime::cancelRejectsLateCompletion()
     QCOMPARE(fixture.completionCount, 0);
 }
 
-void TestDocumentSessionMediaCandidateRuntime::cancelRejectsLateError()
+void TestDocumentSessionMediaNavigationRuntime::cancelRejectsLateError()
 {
     RuntimeFixture fixture;
     const QUrl currentUrl = localUrl(QStringLiteral("/media/01.mp4"));
@@ -173,7 +250,7 @@ void TestDocumentSessionMediaCandidateRuntime::cancelRejectsLateError()
     QCOMPARE(fixture.completionCount, 0);
 }
 
-void TestDocumentSessionMediaCandidateRuntime::predicateRejectionDropsCurrentCompletion()
+void TestDocumentSessionMediaNavigationRuntime::predicateRejectionDropsCurrentCompletion()
 {
     RuntimeFixture fixture;
     const QUrl currentUrl = localUrl(QStringLiteral("/media/01.mp4"));
@@ -185,19 +262,19 @@ void TestDocumentSessionMediaCandidateRuntime::predicateRejectionDropsCurrentCom
     QCOMPARE(fixture.completionCount, 0);
 }
 
-void TestDocumentSessionMediaCandidateRuntime::acceptedScopeAllowsEquivalentCursorConfirmation()
+void TestDocumentSessionMediaNavigationRuntime::acceptedScopeAllowsEquivalentCursorConfirmation()
 {
     RuntimeFixture fixture;
     const QUrl currentUrl(QStringLiteral("file:///media/./01.mp4"));
     const QUrl confirmedUrl = localUrl(QStringLiteral("/media/01.mp4"));
 
-    fixture.runtime.load(
+    fixture.runtime.loadCandidates(
         &fixture.receiver, mediaScope(currentUrl),
-        [confirmedUrl](const KiriView::DocumentSessionMediaCandidateLoadScope &scope) {
+        [confirmedUrl](const KiriView::DocumentSessionMediaNavigationLoadScope &scope) {
             return KiriView::sameNormalizedUrl(scope.currentUrl, confirmedUrl)
                 && scope.cursorGeneration == 7;
         },
-        [&fixture](KiriView::MediaCandidateLoadResult loadResult) {
+        [&fixture](KiriView::DocumentSessionMediaNavigationCandidatesResult loadResult) {
             ++fixture.completionCount;
             fixture.result = std::move(loadResult);
         });
@@ -207,6 +284,6 @@ void TestDocumentSessionMediaCandidateRuntime::acceptedScopeAllowsEquivalentCurs
     QVERIFY(fixture.result.succeeded);
 }
 
-QTEST_GUILESS_MAIN(TestDocumentSessionMediaCandidateRuntime)
+QTEST_GUILESS_MAIN(TestDocumentSessionMediaNavigationRuntime)
 
-#include "test_documentsessionmediacandidateruntime.moc"
+#include "test_documentsessionmedianavigationruntime.moc"

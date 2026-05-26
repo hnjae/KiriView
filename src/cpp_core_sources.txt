@@ -172,8 +172,8 @@ src/application/shortcuthelpmodel.cpp
 src/application/shortcutroutemodel.cpp
 src/session/activenavigationprojection.cpp
 src/session/directmediacursor.cpp
-src/session/documentsessionmediacandidateloadstate.cpp
-src/session/documentsessionmediacandidateruntime.cpp
+src/session/documentsessionmedianavigationloadstate.cpp
+src/session/documentsessionmedianavigationruntime.cpp
 src/session/documentsessionmediadeletionplan.cpp
 src/session/documentsessionmediadeletionruntime.cpp
 src/session/documentsessionpublicprojection.cpp

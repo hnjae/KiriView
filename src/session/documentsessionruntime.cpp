@@ -43,7 +43,7 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner, KiriImageDocument
     , m_imageDocument(imageDocument)
     , m_videoDocument(videoDocument)
     , m_state(std::move(changeCallback))
-    , m_mediaCandidateRuntime(std::move(dependencies.mediaCandidateProvider))
+    , m_mediaNavigationRuntime(std::move(dependencies.mediaCandidateProvider))
     , m_mediaDeletionRuntime(std::move(dependencies.fileOperationProvider))
     , m_mediaPredecodeCoordinator(std::make_unique<MediaPredecodeCoordinator>(owner,
           std::move(dependencies.imageDocumentDependencies.imageDecode),
@@ -56,7 +56,7 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner, KiriImageDocument
 
 DocumentSessionRuntime::~DocumentSessionRuntime()
 {
-    m_mediaCandidateRuntime.cancel();
+    m_mediaNavigationRuntime.cancel();
     m_mediaDeletionRuntime.cancel();
 }
 
@@ -221,35 +221,30 @@ std::optional<PredecodedImage> DocumentSessionRuntime::findPredecodedImage(const
 
 void DocumentSessionRuntime::openPreviousMedia()
 {
-    if (!mediaNavigationActive()) {
-        return;
-    }
-
-    loadMediaCandidates([this](MediaCandidateLoadResult result) {
-        finishMediaNavigation(std::move(result), previousMediaNavigationOpenRequest());
-    });
+    openMedia(previousMediaNavigationOpenRequest());
 }
 
-void DocumentSessionRuntime::openNextMedia()
-{
-    if (!mediaNavigationActive()) {
-        return;
-    }
-
-    loadMediaCandidates([this](MediaCandidateLoadResult result) {
-        finishMediaNavigation(std::move(result), nextMediaNavigationOpenRequest());
-    });
-}
+void DocumentSessionRuntime::openNextMedia() { openMedia(nextMediaNavigationOpenRequest()); }
 
 void DocumentSessionRuntime::openMediaAtNumber(int mediaNumber)
 {
+    openMedia(numberedMediaNavigationOpenRequest(mediaNumber));
+}
+
+void DocumentSessionRuntime::openMedia(MediaNavigationOpenRequest request)
+{
     if (!mediaNavigationActive()) {
         return;
     }
 
-    loadMediaCandidates([this, mediaNumber](MediaCandidateLoadResult result) {
-        finishMediaNavigation(std::move(result), numberedMediaNavigationOpenRequest(mediaNumber));
-    });
+    m_mediaNavigationRuntime.open(
+        m_owner, mediaNavigationLoadScope(), request,
+        [this](const DocumentSessionMediaNavigationLoadScope &scope) {
+            return directMediaCursorMatches(scope);
+        },
+        [this](DocumentSessionMediaNavigationOpenResult result) {
+            finishMediaNavigation(std::move(result));
+        });
 }
 
 void DocumentSessionRuntime::openPreviousActiveNavigation() { requestPreviousActiveNavigation(); }
@@ -350,9 +345,10 @@ void DocumentSessionRuntime::deleteDisplayedFile(FileDeletionMode mode)
 
     m_state.setFileDeletionInProgress(true);
     recomputeActiveNavigation();
-    loadMediaCandidates([this, mode](MediaCandidateLoadResult result) mutable {
-        startMediaDeletion(mode, std::move(result.candidates));
-    });
+    loadMediaCandidates(
+        [this, mode](DocumentSessionMediaNavigationCandidatesResult result) mutable {
+            startMediaDeletion(mode, std::move(result.candidates));
+        });
 }
 
 void DocumentSessionRuntime::connectDocuments()
@@ -459,7 +455,7 @@ void DocumentSessionRuntime::routeSourceUrl(const QUrl &sourceUrl)
     const DocumentSessionRoutePlan plan
         = documentSessionRoutePlanForSourceUrl(sourceUrl, m_state.documentKind());
     m_state.setSessionErrorString(QString());
-    m_mediaCandidateRuntime.cancel();
+    m_mediaNavigationRuntime.cancel();
     cancelMediaDeletion();
 
     executeRoutePlan(plan);
@@ -627,28 +623,28 @@ void DocumentSessionRuntime::refreshMediaNavigation()
         return;
     }
 
-    loadMediaCandidates(
-        [this](MediaCandidateLoadResult result) { updateMediaBoundaryState(std::move(result)); });
+    m_mediaNavigationRuntime.refresh(
+        m_owner, mediaNavigationLoadScope(),
+        [this](const DocumentSessionMediaNavigationLoadScope &scope) {
+            return directMediaCursorMatches(scope);
+        },
+        [this](DocumentSessionMediaNavigationRefreshResult result) {
+            updateMediaBoundaryState(std::move(result));
+        });
 }
 
 void DocumentSessionRuntime::loadMediaCandidates(
-    std::function<void(MediaCandidateLoadResult)> callback)
+    DocumentSessionMediaNavigationRuntime::CandidatesCallback callback)
 {
-    m_mediaCandidateRuntime.load(
-        m_owner,
-        DocumentSessionMediaCandidateLoadScope {
-            activeDirectMediaCursorUrl(),
-            activeDirectMediaScopeUrl(),
-            m_state.directMediaCursor().generation,
-        },
-        [this](const DocumentSessionMediaCandidateLoadScope &scope) {
+    m_mediaNavigationRuntime.loadCandidates(
+        m_owner, mediaNavigationLoadScope(),
+        [this](const DocumentSessionMediaNavigationLoadScope &scope) {
             return directMediaCursorMatches(scope);
         },
         std::move(callback));
 }
 
-void DocumentSessionRuntime::finishMediaNavigation(
-    MediaCandidateLoadResult result, MediaNavigationOpenRequest request)
+void DocumentSessionRuntime::finishMediaNavigation(DocumentSessionMediaNavigationOpenResult result)
 {
     if (!result.succeeded) {
         m_state.setMediaNavigationState({}, false);
@@ -656,17 +652,16 @@ void DocumentSessionRuntime::finishMediaNavigation(
         return;
     }
 
-    const MediaNavigationOpenPlan plan
-        = mediaNavigationOpenPlan(result.candidates, activeDirectMediaCursorUrl(), request);
-    m_state.setMediaNavigationState(plan.boundaryState, true);
+    m_state.setMediaNavigationState(result.plan.boundaryState, true);
     recomputeActiveNavigation();
     scheduleMediaPredecode(result.candidates);
-    if (plan.targetUrl.has_value()) {
-        openMediaUrl(*plan.targetUrl);
+    if (result.plan.targetUrl.has_value()) {
+        openMediaUrl(*result.plan.targetUrl);
     }
 }
 
-void DocumentSessionRuntime::updateMediaBoundaryState(MediaCandidateLoadResult result)
+void DocumentSessionRuntime::updateMediaBoundaryState(
+    DocumentSessionMediaNavigationRefreshResult result)
 {
     if (!result.succeeded) {
         m_state.setMediaNavigationState({}, false);
@@ -674,8 +669,7 @@ void DocumentSessionRuntime::updateMediaBoundaryState(MediaCandidateLoadResult r
         return;
     }
 
-    m_state.setMediaNavigationState(
-        mediaNavigationBoundaryState(result.candidates, activeDirectMediaCursorUrl()), true);
+    m_state.setMediaNavigationState(result.boundaryState, true);
     recomputeActiveNavigation();
     scheduleMediaPredecode(result.candidates);
 }
@@ -796,6 +790,15 @@ void DocumentSessionRuntime::executeMediaDeletionCompletionPlan(
     }
 }
 
+DocumentSessionMediaNavigationLoadScope DocumentSessionRuntime::mediaNavigationLoadScope() const
+{
+    return DocumentSessionMediaNavigationLoadScope {
+        activeDirectMediaCursorUrl(),
+        activeDirectMediaScopeUrl(),
+        m_state.directMediaCursor().generation,
+    };
+}
+
 QUrl DocumentSessionRuntime::activeDirectMediaCursorUrl() const
 {
     return m_state.directMediaCursorUrl();
@@ -807,7 +810,7 @@ QUrl DocumentSessionRuntime::activeDirectMediaScopeUrl() const
 }
 
 bool DocumentSessionRuntime::directMediaCursorMatches(
-    const DocumentSessionMediaCandidateLoadScope &scope) const
+    const DocumentSessionMediaNavigationLoadScope &scope) const
 {
     return sameNormalizedUrl(activeDirectMediaCursorUrl(), scope.currentUrl)
         && sameNormalizedUrl(activeDirectMediaScopeUrl(), scope.parentUrl)

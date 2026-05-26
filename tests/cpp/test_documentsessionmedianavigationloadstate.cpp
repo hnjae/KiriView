@@ -1,13 +1,13 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "session/documentsessionmediacandidateloadstate.h"
+#include "session/documentsessionmedianavigationloadstate.h"
 
 #include <QObject>
 #include <QTest>
 #include <QUrl>
 
-class TestDocumentSessionMediaCandidateLoadState : public QObject
+class TestDocumentSessionMediaNavigationLoadState : public QObject
 {
     Q_OBJECT
 
@@ -17,14 +17,14 @@ private Q_SLOTS:
     void cancelRejectsPendingLoad();
 };
 
-void TestDocumentSessionMediaCandidateLoadState::onlyCurrentLoadCanFinish()
+void TestDocumentSessionMediaNavigationLoadState::onlyCurrentLoadCanFinish()
 {
-    KiriView::DocumentSessionMediaCandidateLoadState state;
+    KiriView::DocumentSessionMediaNavigationLoadState state;
 
-    const KiriView::DocumentSessionMediaCandidateLoad stale
+    const KiriView::DocumentSessionMediaNavigationLoad stale
         = state.start(QUrl::fromLocalFile(QStringLiteral("/media/01.mp4")),
             QUrl::fromLocalFile(QStringLiteral("/media/")), 1);
-    const KiriView::DocumentSessionMediaCandidateLoad current
+    const KiriView::DocumentSessionMediaNavigationLoad current
         = state.start(QUrl::fromLocalFile(QStringLiteral("/media/02.mp4")),
             QUrl::fromLocalFile(QStringLiteral("/media/")), 2);
 
@@ -38,20 +38,20 @@ void TestDocumentSessionMediaCandidateLoadState::onlyCurrentLoadCanFinish()
     QVERIFY(!state.accepts(current));
 }
 
-void TestDocumentSessionMediaCandidateLoadState::cursorScopeMustMatchCurrentLoad()
+void TestDocumentSessionMediaNavigationLoadState::cursorScopeMustMatchCurrentLoad()
 {
-    KiriView::DocumentSessionMediaCandidateLoadState state;
+    KiriView::DocumentSessionMediaNavigationLoadState state;
 
-    const KiriView::DocumentSessionMediaCandidateLoad first
+    const KiriView::DocumentSessionMediaNavigationLoad first
         = state.start(QUrl::fromLocalFile(QStringLiteral("/first/01.mp4")),
             QUrl::fromLocalFile(QStringLiteral("/first/")), 1);
-    const KiriView::DocumentSessionMediaCandidateLoad second
+    const KiriView::DocumentSessionMediaNavigationLoad second
         = state.start(QUrl::fromLocalFile(QStringLiteral("/second/01.mp4")),
             QUrl::fromLocalFile(QStringLiteral("/second/")), 2);
 
-    KiriView::DocumentSessionMediaCandidateLoad wrongScope = second;
+    KiriView::DocumentSessionMediaNavigationLoad wrongScope = second;
     wrongScope.parentUrl = first.parentUrl;
-    KiriView::DocumentSessionMediaCandidateLoad wrongGeneration = second;
+    KiriView::DocumentSessionMediaNavigationLoad wrongGeneration = second;
     wrongGeneration.cursorGeneration = first.cursorGeneration;
 
     QVERIFY(!state.accepts(first));
@@ -64,10 +64,10 @@ void TestDocumentSessionMediaCandidateLoadState::cursorScopeMustMatchCurrentLoad
     QVERIFY(state.finish(second));
 }
 
-void TestDocumentSessionMediaCandidateLoadState::cancelRejectsPendingLoad()
+void TestDocumentSessionMediaNavigationLoadState::cancelRejectsPendingLoad()
 {
-    KiriView::DocumentSessionMediaCandidateLoadState state;
-    const KiriView::DocumentSessionMediaCandidateLoad load
+    KiriView::DocumentSessionMediaNavigationLoadState state;
+    const KiriView::DocumentSessionMediaNavigationLoad load
         = state.start(QUrl::fromLocalFile(QStringLiteral("/media/01.mp4")),
             QUrl::fromLocalFile(QStringLiteral("/media/")), 1);
 
@@ -77,6 +77,6 @@ void TestDocumentSessionMediaCandidateLoadState::cancelRejectsPendingLoad()
     QVERIFY(!state.finish(load));
 }
 
-QTEST_GUILESS_MAIN(TestDocumentSessionMediaCandidateLoadState)
+QTEST_GUILESS_MAIN(TestDocumentSessionMediaNavigationLoadState)
 
-#include "test_documentsessionmediacandidateloadstate.moc"
+#include "test_documentsessionmedianavigationloadstate.moc"
