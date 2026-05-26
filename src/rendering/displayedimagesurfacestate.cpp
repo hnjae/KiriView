@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "presentation/displayedimagestate.h"
+#include "rendering/displayedimagesurfacestate.h"
 
 #include "rendering/imagerendering.h"
 
@@ -10,14 +10,17 @@
 #include <utility>
 
 namespace KiriView {
-bool DisplayedImageState::hasImage() const { return m_surface != nullptr && !m_surface->isNull(); }
+bool DisplayedImageSurfaceState::hasImage() const
+{
+    return m_surface != nullptr && !m_surface->isNull();
+}
 
-std::shared_ptr<DisplayedImageSurface> DisplayedImageState::imageSurface() const
+std::shared_ptr<DisplayedImageSurface> DisplayedImageSurfaceState::imageSurface() const
 {
     return m_surface;
 }
 
-QSize DisplayedImageState::imageSize() const
+QSize DisplayedImageSurfaceState::imageSize() const
 {
     if (m_surface != nullptr) {
         return m_surface->imageSize();
@@ -26,11 +29,14 @@ QSize DisplayedImageState::imageSize() const
     return {};
 }
 
-quint64 DisplayedImageState::revision() const { return m_imageRevision; }
+quint64 DisplayedImageSurfaceState::revision() const { return m_imageRevision; }
 
-bool DisplayedImageState::isPredecodeCacheable() const { return m_imageIsPredecodeCacheable; }
+bool DisplayedImageSurfaceState::isPredecodeCacheable() const
+{
+    return m_imageIsPredecodeCacheable;
+}
 
-std::optional<StaticImagePayload> DisplayedImageState::staticImage() const
+std::optional<StaticImagePayload> DisplayedImageSurfaceState::staticImage() const
 {
     if (!m_staticImage.has_value() || !m_staticImage->isValid()) {
         return std::nullopt;
@@ -39,7 +45,7 @@ std::optional<StaticImagePayload> DisplayedImageState::staticImage() const
     return m_staticImage;
 }
 
-DisplayedImageStateChange DisplayedImageState::setImage(
+DisplayedImageSurfaceStateChange DisplayedImageSurfaceState::setImage(
     const QImage &image, bool predecodeCacheable)
 {
     QImage displayImage = displayReadyImage(image);
@@ -48,8 +54,9 @@ DisplayedImageStateChange DisplayedImageState::setImage(
         std::nullopt, predecodeCacheable);
 }
 
-DisplayedImageStateChange DisplayedImageState::setStaticImage(StaticImagePayload staticImage,
-    bool useFullImageSurface, bool predecodeCacheable, qsizetype tileCacheByteBudget)
+DisplayedImageSurfaceStateChange DisplayedImageSurfaceState::setStaticImage(
+    StaticImagePayload staticImage, bool useFullImageSurface, bool predecodeCacheable,
+    qsizetype tileCacheByteBudget)
 {
     QImage displayImage = displayReadyImage(staticImage.preview);
     staticImage.preview = displayImage;
@@ -67,7 +74,8 @@ DisplayedImageStateChange DisplayedImageState::setStaticImage(StaticImagePayload
         std::move(surface), std::move(storedStaticImage), predecodeCacheable);
 }
 
-std::optional<DisplayedImageStateChange> DisplayedImageState::insertTile(DecodedTile tile)
+std::optional<DisplayedImageSurfaceStateChange> DisplayedImageSurfaceState::insertTile(
+    DecodedTile tile)
 {
     if (m_surface == nullptr) {
         return std::nullopt;
@@ -84,7 +92,7 @@ std::optional<DisplayedImageStateChange> DisplayedImageState::insertTile(Decoded
     return finishImageChange();
 }
 
-std::optional<DisplayedImageStateChange> DisplayedImageState::clearTiles()
+std::optional<DisplayedImageSurfaceStateChange> DisplayedImageSurfaceState::clearTiles()
 {
     if (m_surface == nullptr) {
         return std::nullopt;
@@ -99,7 +107,7 @@ std::optional<DisplayedImageStateChange> DisplayedImageState::clearTiles()
     return finishImageChange();
 }
 
-std::optional<DisplayedImageStateChange> DisplayedImageState::clear()
+std::optional<DisplayedImageSurfaceStateChange> DisplayedImageSurfaceState::clear()
 {
     if (m_surface == nullptr) {
         return std::nullopt;
@@ -108,7 +116,7 @@ std::optional<DisplayedImageStateChange> DisplayedImageState::clear()
     return replaceDisplayedImage(nullptr, std::nullopt, false);
 }
 
-DisplayedImageStateChange DisplayedImageState::replaceDisplayedImage(
+DisplayedImageSurfaceStateChange DisplayedImageSurfaceState::replaceDisplayedImage(
     std::shared_ptr<DisplayedImageSurface> surface, std::optional<StaticImagePayload> staticImage,
     bool predecodeCacheable)
 {
@@ -118,10 +126,10 @@ DisplayedImageStateChange DisplayedImageState::replaceDisplayedImage(
     return finishImageChange();
 }
 
-DisplayedImageStateChange DisplayedImageState::finishImageChange()
+DisplayedImageSurfaceStateChange DisplayedImageSurfaceState::finishImageChange()
 {
     ++m_imageRevision;
-    return DisplayedImageStateChange {
+    return DisplayedImageSurfaceStateChange {
         imageSize(),
         m_imageRevision,
     };

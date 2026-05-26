@@ -1,7 +1,7 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#include "presentation/displayedimagestate.h"
+#include "rendering/displayedimagesurfacestate.h"
 
 #include "image_test_support.h"
 
@@ -11,7 +11,7 @@
 #include <QTest>
 #include <optional>
 
-class TestDisplayedImageState : public QObject
+class TestDisplayedImageSurfaceState : public QObject
 {
     Q_OBJECT
 
@@ -20,12 +20,12 @@ private Q_SLOTS:
     void nonStaticSurfacesRejectTilesWithoutAdvancingRevision();
 };
 
-void TestDisplayedImageState::imageSurfaceChangesAdvanceRevisionAndExposeImageSize()
+void TestDisplayedImageSurfaceState::imageSurfaceChangesAdvanceRevisionAndExposeImageSize()
 {
     constexpr qsizetype tileCacheByteBudget = KiriView::imageFullDecodeFallbackByteLimit;
-    KiriView::DisplayedImageState state;
+    KiriView::DisplayedImageSurfaceState state;
 
-    KiriView::DisplayedImageStateChange change
+    KiriView::DisplayedImageSurfaceStateChange change
         = state.setImage(KiriView::TestSupport::testImage(2, 1), false);
 
     QCOMPARE(state.revision(), quint64(1));
@@ -50,7 +50,7 @@ void TestDisplayedImageState::imageSurfaceChangesAdvanceRevisionAndExposeImageSi
     QCOMPARE(state.imageSurface()->staticTileSurface()->tileCacheByteBudget(), tileCacheByteBudget);
     QVERIFY(state.staticImage().has_value());
 
-    std::optional<KiriView::DisplayedImageStateChange> optionalChange
+    std::optional<KiriView::DisplayedImageSurfaceStateChange> optionalChange
         = state.insertTile(KiriView::DecodedTile {
             KiriView::TileKey { 0, 0, 0 },
             QSize(3, 2),
@@ -87,9 +87,9 @@ void TestDisplayedImageState::imageSurfaceChangesAdvanceRevisionAndExposeImageSi
     QCOMPARE(state.revision(), quint64(5));
 }
 
-void TestDisplayedImageState::nonStaticSurfacesRejectTilesWithoutAdvancingRevision()
+void TestDisplayedImageSurfaceState::nonStaticSurfacesRejectTilesWithoutAdvancingRevision()
 {
-    KiriView::DisplayedImageState state;
+    KiriView::DisplayedImageSurfaceState state;
 
     QVERIFY(!state.insertTile(KiriView::DecodedTile {}).has_value());
     QCOMPARE(state.revision(), quint64(0));
@@ -109,6 +109,6 @@ void TestDisplayedImageState::nonStaticSurfacesRejectTilesWithoutAdvancingRevisi
     QCOMPARE(state.revision(), quint64(1));
 }
 
-QTEST_GUILESS_MAIN(TestDisplayedImageState)
+QTEST_GUILESS_MAIN(TestDisplayedImageSurfaceState)
 
-#include "test_displayedimagestate.moc"
+#include "test_displayedimagesurfacestate.moc"

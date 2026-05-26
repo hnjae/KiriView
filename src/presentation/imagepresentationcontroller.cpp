@@ -5,9 +5,9 @@
 
 #include "async/imagecallback.h"
 #include "predecode/predecodecache.h"
-#include "presentation/displayedimagestate.h"
 #include "presentation/imageanimationplayer.h"
 #include "presentation/imagepresentationviewportcontroller.h"
+#include "rendering/displayedimagesurfacestate.h"
 #include "rendering/imagerendering.h"
 
 #include <memory>
@@ -23,13 +23,13 @@ ImagePresentationController::ImagePresentationController(QObject *context,
               : PredecodeCache::preferredByteBudget())
     , m_staticTileCacheByteBudget(StaticTileSurface::defaultTileCacheByteBudget())
 {
-    m_displayedImageState = std::make_unique<DisplayedImageState>();
+    m_displayedSurfaceState = std::make_unique<DisplayedImageSurfaceState>();
     m_viewportController = std::make_unique<ImagePresentationViewportController>(
         context, std::move(renderContextProvider),
-        [this]() { return m_displayedImageState->imageSurface(); },
+        [this]() { return m_displayedSurfaceState->imageSurface(); },
         [this](DecodedTile tile) {
-            const std::optional<DisplayedImageStateChange> change
-                = m_displayedImageState->insertTile(std::move(tile));
+            const std::optional<DisplayedImageSurfaceStateChange> change
+                = m_displayedSurfaceState->insertTile(std::move(tile));
             if (change.has_value()) {
                 applyDisplayedImageTileChange(*change);
             }
@@ -107,7 +107,7 @@ int ImagePresentationController::rotationDegrees() const
 
 std::shared_ptr<DisplayedImageSurface> ImagePresentationController::imageSurface() const
 {
-    return m_displayedImageState->imageSurface();
+    return m_displayedSurfaceState->imageSurface();
 }
 
 DisplayedImageRenderSnapshot ImagePresentationController::renderSnapshot() const
@@ -125,14 +125,14 @@ DisplayedImageRenderSnapshot ImagePresentationController::renderSnapshot() const
 
 quint64 ImagePresentationController::imageRevision() const
 {
-    return m_displayedImageState->revision();
+    return m_displayedSurfaceState->revision();
 }
 
-bool ImagePresentationController::hasImage() const { return m_displayedImageState->hasImage(); }
+bool ImagePresentationController::hasImage() const { return m_displayedSurfaceState->hasImage(); }
 
 bool ImagePresentationController::isPredecodeCacheable() const
 {
-    return m_displayedImageState->isPredecodeCacheable();
+    return m_displayedSurfaceState->isPredecodeCacheable();
 }
 
 qsizetype ImagePresentationController::predecodeCacheByteBudget() const
@@ -142,7 +142,7 @@ qsizetype ImagePresentationController::predecodeCacheByteBudget() const
 
 std::optional<StaticImagePayload> ImagePresentationController::staticImage() const
 {
-    return m_displayedImageState->staticImage();
+    return m_displayedSurfaceState->staticImage();
 }
 
 ImageFirstDisplayDecodeContext ImagePresentationController::firstDisplayDecodeContext() const
@@ -196,7 +196,7 @@ void ImagePresentationController::setImage(const QImage &image, bool predecodeCa
 {
     resetRotationForNewImage();
     m_viewportController->invalidateTiles();
-    applyDisplayedImageChange(m_displayedImageState->setImage(image, predecodeCacheable));
+    applyDisplayedImageChange(m_displayedSurfaceState->setImage(image, predecodeCacheable));
 }
 
 void ImagePresentationController::setStaticImage(
@@ -208,8 +208,8 @@ void ImagePresentationController::setStaticImage(
     m_viewportController->invalidateTiles();
     const bool useFullImageSurface
         = staticImageFitsFullImageSurface(staticImage, context.maximumTextureSize);
-    const DisplayedImageStateChange change
-        = m_displayedImageState->setStaticImage(std::move(staticImage), useFullImageSurface,
+    const DisplayedImageSurfaceStateChange change
+        = m_displayedSurfaceState->setStaticImage(std::move(staticImage), useFullImageSurface,
             predecodeCacheable, m_staticTileCacheByteBudget);
     applyDisplayedImageChange(change);
     if (!useFullImageSurface) {
@@ -220,7 +220,8 @@ void ImagePresentationController::setStaticImage(
 void ImagePresentationController::discardDecodedTiles()
 {
     m_viewportController->invalidateTiles();
-    const std::optional<DisplayedImageStateChange> change = m_displayedImageState->clearTiles();
+    const std::optional<DisplayedImageSurfaceStateChange> change
+        = m_displayedSurfaceState->clearTiles();
     if (change.has_value()) {
         applyDisplayedImageTileChange(*change);
     }
@@ -232,7 +233,7 @@ void ImagePresentationController::clearImage()
     resetRotationForNewImage();
     m_viewportController->invalidateTiles();
     m_viewportController->clearContainer();
-    const std::optional<DisplayedImageStateChange> change = m_displayedImageState->clear();
+    const std::optional<DisplayedImageSurfaceStateChange> change = m_displayedSurfaceState->clear();
     if (change.has_value()) {
         applyDisplayedImageChange(*change);
     }
@@ -255,13 +256,15 @@ void ImagePresentationController::startHeifSequenceAnimation(const QByteArray &d
 
 void ImagePresentationController::stopAnimation() { m_animationPlayer->stop(); }
 
-void ImagePresentationController::applyDisplayedImageChange(const DisplayedImageStateChange &change)
+void ImagePresentationController::applyDisplayedImageChange(
+    const DisplayedImageSurfaceStateChange &change)
 {
     m_viewportController->setDisplayedImageSize(change.imageSize);
     notify(ImageDocumentChange::Repaint);
 }
 
-void ImagePresentationController::applyDisplayedImageTileChange(const DisplayedImageStateChange &)
+void ImagePresentationController::applyDisplayedImageTileChange(
+    const DisplayedImageSurfaceStateChange &)
 {
     notify(ImageDocumentChange::Repaint);
 }

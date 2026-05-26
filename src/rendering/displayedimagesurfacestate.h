@@ -1,10 +1,10 @@
 // SPDX-FileCopyrightText: 2026 KIM Hyunjae
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-#ifndef KIRIVIEW_DISPLAYEDIMAGESTATE_H
-#define KIRIVIEW_DISPLAYEDIMAGESTATE_H
+#ifndef KIRIVIEW_DISPLAYEDIMAGESURFACESTATE_H
+#define KIRIVIEW_DISPLAYEDIMAGESURFACESTATE_H
 
-#include "rendering/imagesurface.h"
+#include "imagesurface.h"
 
 #include <QImage>
 #include <QSize>
@@ -13,12 +13,12 @@
 #include <optional>
 
 namespace KiriView {
-struct DisplayedImageStateChange {
+struct DisplayedImageSurfaceStateChange {
     QSize imageSize;
     quint64 revision = 0;
 };
 
-class DisplayedImageState
+class DisplayedImageSurfaceState
 {
 public:
     bool hasImage() const;
@@ -28,17 +28,18 @@ public:
     bool isPredecodeCacheable() const;
     std::optional<StaticImagePayload> staticImage() const;
 
-    DisplayedImageStateChange setImage(const QImage &image, bool predecodeCacheable);
-    DisplayedImageStateChange setStaticImage(StaticImagePayload staticImage,
+    DisplayedImageSurfaceStateChange setImage(const QImage &image, bool predecodeCacheable);
+    DisplayedImageSurfaceStateChange setStaticImage(StaticImagePayload staticImage,
         bool useFullImageSurface, bool predecodeCacheable, qsizetype tileCacheByteBudget);
-    std::optional<DisplayedImageStateChange> insertTile(DecodedTile tile);
-    std::optional<DisplayedImageStateChange> clearTiles();
-    std::optional<DisplayedImageStateChange> clear();
+    std::optional<DisplayedImageSurfaceStateChange> insertTile(DecodedTile tile);
+    std::optional<DisplayedImageSurfaceStateChange> clearTiles();
+    std::optional<DisplayedImageSurfaceStateChange> clear();
 
 private:
-    DisplayedImageStateChange replaceDisplayedImage(std::shared_ptr<DisplayedImageSurface> surface,
+    DisplayedImageSurfaceStateChange replaceDisplayedImage(
+        std::shared_ptr<DisplayedImageSurface> surface,
         std::optional<StaticImagePayload> staticImage, bool predecodeCacheable);
-    DisplayedImageStateChange finishImageChange();
+    DisplayedImageSurfaceStateChange finishImageChange();
 
     std::shared_ptr<DisplayedImageSurface> m_surface;
     std::optional<StaticImagePayload> m_staticImage;

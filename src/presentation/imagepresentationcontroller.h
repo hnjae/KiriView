@@ -23,8 +23,8 @@
 class QObject;
 
 namespace KiriView {
-class DisplayedImageState;
-struct DisplayedImageStateChange;
+class DisplayedImageSurfaceState;
+struct DisplayedImageSurfaceStateChange;
 class ImageAnimationPlayer;
 class ImagePresentationViewportController;
 
@@ -85,15 +85,15 @@ public:
     void stopAnimation();
 
 private:
-    void applyDisplayedImageChange(const DisplayedImageStateChange &change);
-    void applyDisplayedImageTileChange(const DisplayedImageStateChange &change);
+    void applyDisplayedImageChange(const DisplayedImageSurfaceStateChange &change);
+    void applyDisplayedImageTileChange(const DisplayedImageSurfaceStateChange &change);
     void resetRotationForNewImage();
     void notify(ImageDocumentChange change);
 
     Callbacks m_callbacks;
     qsizetype m_predecodeCacheByteBudget = 0;
     qsizetype m_staticTileCacheByteBudget = 0;
-    std::unique_ptr<DisplayedImageState> m_displayedImageState;
+    std::unique_ptr<DisplayedImageSurfaceState> m_displayedSurfaceState;
     std::unique_ptr<ImagePresentationViewportController> m_viewportController;
     std::unique_ptr<ImageAnimationPlayer> m_animationPlayer;
 };
