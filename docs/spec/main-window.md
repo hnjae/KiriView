@@ -10,17 +10,19 @@ The leading side of the toolbar contains Previous, the current page number, `of`
 
 The toolbar page navigation readout and page-number entry use the document session's active navigation projection. The toolbar does not combine raw image-document page state with separate media-navigation state.
 
-When an image or direct video is displayed, the trailing action toolbar contains Right-to-Left Reading, Two-Page Spread, zoom, Fit, and, when Hamburger Menu presentation is active outside fullscreen, a toolbar application menu button.
+When an image from a directly opened CBZ, CBT, CB7, CBR, ZIP, TAR, 7Z, RAR, or local directory document is displayed, the trailing action toolbar contains Right-to-Left Reading, Two-Page Spread, zoom, Fit, and, when Hamburger Menu presentation is active outside fullscreen, a toolbar application menu button.
 
-When a video is displayed, image-only toolbar controls such as Right-to-Left Reading, Two-Page Spread, editable zoom, and Fit remain in the same positions but are disabled or read-only.
+When no archive or directory document is open, including empty state, ordinary direct image files, direct video files, and direct KDE archive-entry URLs, the trailing action toolbar does not show Right-to-Left Reading or Two-Page Spread.
+
+When a video is displayed, image-only toolbar controls such as editable zoom and Fit remain in the same positions but are disabled or read-only.
 
 The trailing action toolbar shows as many trailing controls as fit and moves the rest into an overflow menu. When it runs out of horizontal space, KiriView keeps the zoom percentage visible the longest, then Fit.
 
-When full trailing toolbar controls fit, Right-to-Left Reading and Two-Page Spread are text-beside-icon buttons with the toolbar labels `Right-to-Left` and `Two-Page Spread`. If the toolbar cannot fit the text-bearing controls, KiriView may collapse them to icon-only controls or move them into overflow according to Kirigami toolbar layout behavior.
+When full trailing toolbar controls fit and Right-to-Left Reading and Two-Page Spread are visible, they are text-beside-icon buttons with the toolbar labels `Right-to-Left` and `Two-Page Spread`. If the toolbar cannot fit the text-bearing controls, KiriView may collapse them to icon-only controls or move them into overflow according to Kirigami toolbar layout behavior.
 
 Visible text-bearing Right-to-Left Reading and Two-Page Spread toolbar buttons expose KDE/Qt control mnemonics through the toolbar button labels. Their menu labels, tooltips, action identity, shortcut configuration, checked state, and enabled state remain unchanged.
 
-The Right-to-Left Reading control is immediately to the left of the Two-Page Spread control. It toggles archive binding between left-to-right and right-to-left reading when that option is available.
+When visible, the Right-to-Left Reading control is immediately to the left of the Two-Page Spread control. It toggles archive binding between left-to-right and right-to-left reading when that option is available.
 
 Outside fullscreen, the toolbar uses normal application header placement, reserves layout space above the image viewing area, and remains visible even when no image or video is open.
 

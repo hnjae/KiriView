@@ -14,9 +14,13 @@ If the next page after the current page is wide, the current page is displayed a
 
 Two-Page Spread is unavailable for ordinary image files, direct video files, KDE-supported archive URLs, directly opened ZIP, TAR, 7Z, or RAR archives, and directly opened directories.
 
+Showing a disabled Two-Page Spread toolbar control while a directly opened ZIP, TAR, 7Z, RAR, or directory document is active does not make Two-Page Spread available.
+
 When a directly opened local CBZ, CBT, CB7, or CBR comic book archive is displayed, Ctrl+B toggles Right-to-Left Reading mode.
 
 Right-to-Left Reading mode is off by default, is unavailable for ordinary image files, direct video files, KDE-supported archive URLs, directly opened ZIP, TAR, 7Z, or RAR archives, and directly opened directories, and is not saved as a global setting.
+
+Showing a disabled Right-to-Left Reading toolbar control while a directly opened ZIP, TAR, 7Z, RAR, or directory document is active does not make Right-to-Left Reading available.
 
 Moving to a sibling comic book archive with Previous Archive or Next Archive preserves the current Right-to-Left Reading mode state.
 
