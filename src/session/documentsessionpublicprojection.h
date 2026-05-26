@@ -5,7 +5,7 @@
 #define KIRIVIEW_DOCUMENTSESSIONPUBLICPROJECTION_H
 
 #include "session/activenavigationprojection.h"
-#include "session/documentsessionstate.h"
+#include "session/documentsessiontypes.h"
 
 #include <QSize>
 #include <QString>

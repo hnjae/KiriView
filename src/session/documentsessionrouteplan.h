@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_DOCUMENTSESSIONROUTEPLAN_H
 #define KIRIVIEW_DOCUMENTSESSIONROUTEPLAN_H
 
-#include "session/documentsessionstate.h"
+#include "session/documentsessiontypes.h"
 
 #include <QUrl>
 

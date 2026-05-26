@@ -4,7 +4,7 @@
 #ifndef KIRIVIEW_DOCUMENTSESSIONPUBLICSIGNALS_H
 #define KIRIVIEW_DOCUMENTSESSIONPUBLICSIGNALS_H
 
-#include "session/documentsessionstate.h"
+#include "session/documentsessiontypes.h"
 
 #include <functional>
 #include <vector>

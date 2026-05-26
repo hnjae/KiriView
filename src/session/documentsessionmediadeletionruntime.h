@@ -9,7 +9,7 @@
 #include "document/filedeletion.h"
 #include "navigation/medianavigationmodel.h"
 #include "session/documentsessionmediadeletionplan.h"
-#include "session/documentsessionstate.h"
+#include "session/documentsessiontypes.h"
 
 #include <QString>
 #include <QUrl>

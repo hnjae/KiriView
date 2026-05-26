@@ -16,10 +16,8 @@ private Q_SLOTS:
     void sourceIdentityOnlyNotifiesWhenChanged();
     void documentKindPublishesConsistentActiveZoomSnapshot();
     void activeZoomSnapshotOnlyNotifiesWhenProjectionChanges();
-    void windowTitleSubjectOnlyNotifiesWhenChanged();
     void fileDeletionProgressOnlyPublishesProgress();
     void mediaNavigationStateOnlyUpdatesWhenBoundaryChanges();
-    void activeNavigationSnapshotOnlyNotifiesWhenProjectionChanges();
     void publicProjectionCommitsValuesBeforePublishing();
     void publicProjectionOnlyNotifiesChangedOutputs();
     void publishDeduplicatesChangesInOrder();
@@ -99,24 +97,6 @@ void TestDocumentSessionState::activeZoomSnapshotOnlyNotifiesWhenProjectionChang
     QVERIFY(state.activeZoomSnapshot().editable);
 }
 
-void TestDocumentSessionState::windowTitleSubjectOnlyNotifiesWhenChanged()
-{
-    std::vector<KiriView::DocumentSessionChange> changes;
-    KiriView::DocumentSessionState state(
-        [&changes](const std::vector<KiriView::DocumentSessionChange> &publishedChanges) {
-            changes.insert(changes.end(), publishedChanges.cbegin(), publishedChanges.cend());
-        });
-
-    state.setWindowTitleSubject(QStringLiteral("clip.mp4 – 1920×1080"));
-
-    QCOMPARE(state.windowTitleSubject(), QStringLiteral("clip.mp4 – 1920×1080"));
-    QCOMPARE(changes.size(), std::size_t(1));
-    QCOMPARE(changes.at(0), KiriView::DocumentSessionChange::WindowTitleSubject);
-
-    state.setWindowTitleSubject(QStringLiteral("clip.mp4 – 1920×1080"));
-    QCOMPARE(changes.size(), std::size_t(1));
-}
-
 void TestDocumentSessionState::fileDeletionProgressOnlyPublishesProgress()
 {
     std::vector<std::vector<KiriView::DocumentSessionChange>> batches;
@@ -165,34 +145,6 @@ void TestDocumentSessionState::mediaNavigationStateOnlyUpdatesWhenBoundaryChange
     state.setMediaNavigationState(boundary, true);
     QCOMPARE(state.mediaNavigationState().canOpenNext, true);
     QCOMPARE(changes.size(), std::size_t(0));
-}
-
-void TestDocumentSessionState::activeNavigationSnapshotOnlyNotifiesWhenProjectionChanges()
-{
-    std::vector<KiriView::DocumentSessionChange> changes;
-    KiriView::DocumentSessionState state(
-        [&changes](const std::vector<KiriView::DocumentSessionChange> &publishedChanges) {
-            changes.insert(changes.end(), publishedChanges.cbegin(), publishedChanges.cend());
-        });
-
-    KiriView::ActiveNavigationSnapshot snapshot;
-    snapshot.available = true;
-    state.setActiveNavigationSnapshot(snapshot);
-
-    QVERIFY(state.activeNavigationSnapshot().available);
-    QCOMPARE(changes.size(), std::size_t(1));
-    QCOMPARE(changes.at(0), KiriView::DocumentSessionChange::ActiveNavigation);
-
-    state.setActiveNavigationSnapshot(snapshot);
-    QCOMPARE(changes.size(), std::size_t(1));
-
-    snapshot.known = true;
-    snapshot.editable = true;
-    snapshot.currentNumber = 1;
-    snapshot.count = 1;
-    state.setActiveNavigationSnapshot(snapshot);
-    QCOMPARE(changes.size(), std::size_t(2));
-    QVERIFY(state.activeNavigationSnapshot().known);
 }
 
 void TestDocumentSessionState::publicProjectionCommitsValuesBeforePublishing()

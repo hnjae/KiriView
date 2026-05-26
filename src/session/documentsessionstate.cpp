@@ -173,16 +173,6 @@ void DocumentSessionState::setMediaNavigationState(MediaNavigationBoundaryState 
     m_mediaNavigationState = state;
 }
 
-void DocumentSessionState::setActiveNavigationSnapshot(ActiveNavigationSnapshot snapshot)
-{
-    if (sameActiveNavigationSnapshot(m_publicProjection.activeNavigation, snapshot)) {
-        return;
-    }
-
-    m_publicProjection.activeNavigation = snapshot;
-    publish(DocumentSessionChange::ActiveNavigation);
-}
-
 void DocumentSessionState::setPublicProjection(DocumentSessionPublicProjection projection)
 {
     const bool activeNavigationChanged
@@ -221,13 +211,6 @@ void DocumentSessionState::setSessionErrorString(const QString &errorString)
 {
     if (replaceIfChanged(m_sessionErrorString, errorString)) {
         publish(DocumentSessionChange::ErrorString);
-    }
-}
-
-void DocumentSessionState::setWindowTitleSubject(const QString &subject)
-{
-    if (replaceIfChanged(m_publicProjection.windowTitleSubject, subject)) {
-        publish(DocumentSessionChange::WindowTitleSubject);
     }
 }
 

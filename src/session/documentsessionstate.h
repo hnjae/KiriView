@@ -4,49 +4,16 @@
 #ifndef KIRIVIEW_DOCUMENTSESSIONSTATE_H
 #define KIRIVIEW_DOCUMENTSESSIONSTATE_H
 
-#include "navigation/medianavigationmodel.h"
-#include "session/activenavigationprojection.h"
 #include "session/directmediacursor.h"
+#include "session/documentsessiontypes.h"
 
-#include <QString>
+#include "navigation/medianavigationmodel.h"
+
 #include <QUrl>
-#include <QtGlobal>
 #include <functional>
 #include <vector>
 
 namespace KiriView {
-enum class DocumentSessionKind {
-    Empty,
-    Image,
-    Video,
-};
-
-enum class DocumentSessionChange {
-    SourceUrl,
-    DocumentKind,
-    ErrorString,
-    WindowTitleSubject,
-    ActiveZoomReadout,
-    FileDeletionAvailability,
-    FileDeletionInProgress,
-    ActiveNavigation,
-};
-
-struct ActiveZoomSnapshot {
-    bool available = false;
-    bool known = false;
-    qreal percent = 0.0;
-    bool editable = false;
-};
-
-struct DocumentSessionPublicProjection {
-    ActiveNavigationSourceKind sourceKind = ActiveNavigationSourceKind::None;
-    ActiveNavigationBoundaryScope boundaryScope = ActiveNavigationBoundaryScope::None;
-    ActiveNavigationSnapshot activeNavigation;
-    QString windowTitleSubject;
-    bool displayedFileDeletionAvailable = false;
-};
-
 class DocumentSessionState final
 {
 public:
@@ -77,10 +44,8 @@ public:
     void setFileDeletionInProgress(bool inProgress);
     void setActiveZoomSnapshot(ActiveZoomSnapshot snapshot);
     void setMediaNavigationState(MediaNavigationBoundaryState state, bool known);
-    void setActiveNavigationSnapshot(ActiveNavigationSnapshot snapshot);
     void setPublicProjection(DocumentSessionPublicProjection projection);
     void setSessionErrorString(const QString &errorString);
-    void setWindowTitleSubject(const QString &subject);
     bool clearDirectMediaCursor();
     bool requestDirectImageCursor(const QUrl &url);
     bool confirmDirectImageCursor(const QUrl &url);
