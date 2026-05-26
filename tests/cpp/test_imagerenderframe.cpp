@@ -59,7 +59,8 @@ QByteArray svgData(const QSize &imageSize)
         .toUtf8();
 }
 
-KiriView::StaticTileSurface svgTileSurface(const QSize &imageSize)
+KiriView::StaticTileSurface svgTileSurface(
+    const QSize &imageSize, KiriView::StaticImageDisplayHints displayHints = {})
 {
     QString errorString;
     std::shared_ptr<KiriView::SvgTileSource> source
@@ -70,7 +71,7 @@ KiriView::StaticTileSurface svgTileSurface(const QSize &imageSize)
         KiriView::StaticImagePayload {
             std::move(source),
             testImage(imageSize),
-            {},
+            displayHints,
         },
         testTileCacheByteBudget,
     };
@@ -129,6 +130,7 @@ private Q_SLOTS:
     void existingPendingAndFailedTilesAreFiltered();
     void visibleRectChangesCurrentDrawEntries();
     void svgScaleBucketRequestsChangeOnlyAcrossBucketBoundary();
+    void svgFirstDisplayHintDoesNotSuppressCurrentDetailRequests();
     void svgHighZoomFrameDoesNotDrawCachedLowBucketTile();
     void devicePixelRatioChangeRecomputesSvgBucket();
 };
@@ -247,6 +249,20 @@ void TestImageRenderFrame::svgScaleBucketRequestsChangeOnlyAcrossBucketBoundary(
         QCOMPARE(request.key.scaleBucket, 2);
         QCOMPARE(request.levelSize, QSize(2250, 2250));
     }
+}
+
+void TestImageRenderFrame::svgFirstDisplayHintDoesNotSuppressCurrentDetailRequests()
+{
+    KiriView::StaticTileSurface surface
+        = svgTileSurface(QSize(1000, 1000), KiriView::StaticImageDisplayHints { 2.0 });
+    KiriView::DisplayedImageSurface displayedSurface(std::move(surface));
+
+    const KiriView::ImageRenderFrame frame
+        = projectFrame(displayedSurface, QSizeF(1000.0, 1000.0), QRectF(0.0, 0.0, 1000.0, 1000.0));
+
+    QVERIFY(frame.tileRequestSource != nullptr);
+    QVERIFY(!frame.missingTileRequests.empty());
+    QVERIFY(allMissingRequestsUseBucket(frame, 1));
 }
 
 void TestImageRenderFrame::svgHighZoomFrameDoesNotDrawCachedLowBucketTile()

@@ -167,7 +167,8 @@ KiriView::DecodedImageResult decodeSvgImageData(const KiriView::ImageDecodeRoute
         return failedImageDataResult(std::move(errorString));
     }
 
-    return KiriView::staticDecodedImageResult(std::move(source), {}, &errorString);
+    return KiriView::staticDecodedImageResult(
+        std::move(source), input.request.firstDisplay(), &errorString);
 }
 
 KiriView::DecodedImageResult decodeApngImageData(const KiriView::ImageDecodeRouterInput &input)

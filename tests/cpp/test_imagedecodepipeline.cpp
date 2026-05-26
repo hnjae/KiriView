@@ -9,6 +9,7 @@
 #include <QByteArrayList>
 #include <QList>
 #include <QObject>
+#include <QSize>
 #include <QStringList>
 #include <QTest>
 #include <QUrl>
@@ -68,6 +69,7 @@ private Q_SLOTS:
     void selectedDecoderFailureDoesNotFallback();
     void compatibleDataIsComputedOnlyWhenClassificationRequestsIt();
     void qtRasterClassificationCarriesExplicitFormat();
+    void defaultSvgDecodeUsesFirstDisplayContext();
     void unknownClassificationFailsWithoutDecoder();
 };
 
@@ -249,6 +251,22 @@ void TestImageDecodePipeline::qtRasterClassificationCarriesExplicitFormat()
 
     QCOMPARE(calls, QStringList({ QStringLiteral("qt") }));
     QCOMPARE(qtFormats, QList<KiriView::QtRasterFormat>({ KiriView::QtRasterFormat::Tiff }));
+}
+
+void TestImageDecodePipeline::defaultSvgDecodeUsesFirstDisplayContext()
+{
+    const QByteArray data
+        = QByteArrayLiteral("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"80\" height=\"40\">"
+                            "<rect width=\"80\" height=\"40\" fill=\"red\"/>"
+                            "</svg>");
+    const KiriView::DecodedImageResult result = KiriView::decodeImageDataWithDefaultRouter(data,
+        KiriView::ImageDecodeRequest::fromUrl(7, QUrl(QStringLiteral("file:///tmp/vector.svg")),
+            KiriView::ImageFirstDisplayDecodeContext { QSize(200, 200) }));
+
+    const auto *image = KiriView::decodedImageResultImageAs<KiriView::StaticDecodedImage>(result);
+    QVERIFY(image != nullptr);
+    QCOMPARE(image->staticImage.preview.size(), QSize(200, 100));
+    QCOMPARE(image->staticImage.displayHints.firstDisplayPixelsPerSourcePixel, 2.5);
 }
 
 void TestImageDecodePipeline::unknownClassificationFailsWithoutDecoder()

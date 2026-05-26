@@ -4,13 +4,17 @@
 #include "svgtilesource.h"
 
 #include "bridge/rustqtconversion.h"
+#include "imagerendering.h"
 #include "imagetilesourcehelpers_p.h"
 #include "kiriview/src/policy/svgrenderer.cxx.h"
 #include "localization/imageerrortext.h"
 
 #include <QByteArray>
 #include <QImage>
+#include <QRectF>
 #include <QSize>
+#include <QtMath>
+#include <algorithm>
 #include <cstdint>
 #include <limits>
 #include <memory>
@@ -34,6 +38,38 @@ QImage imageFromPremultipliedRgbaBytes(const QByteArray &bytes, const QSize &siz
     const QImage image(reinterpret_cast<const uchar *>(bytes.constData()), size.width(),
         size.height(), QImage::Format_RGBA8888_Premultiplied);
     return image.copy();
+}
+
+QByteArray renderSvgImageBytes(const QByteArray &data, const QSize &size)
+{
+    if (size.isEmpty()) {
+        return {};
+    }
+
+    return KiriView::Bridge::qtByteArray(KiriView::rustRenderSvgImage(
+        KiriView::Bridge::rustBytes(data), size.width(), size.height()));
+}
+
+QImage renderSvgImage(const QByteArray &data, const QSize &size)
+{
+    return imageFromPremultipliedRgbaBytes(renderSvgImageBytes(data, size), size);
+}
+
+QSize svgFirstDisplayPreviewSize(const QSize &imageSize, const QSize &physicalViewportSize)
+{
+    if (imageSize.isEmpty() || physicalViewportSize.isEmpty()) {
+        return {};
+    }
+
+    const QRectF targetRect = KiriView::imageTargetRect(imageSize, QSizeF(physicalViewportSize));
+    if (targetRect.isEmpty()) {
+        return {};
+    }
+
+    return QSize {
+        std::clamp(qCeil(targetRect.width()), 1, physicalViewportSize.width()),
+        std::clamp(qCeil(targetRect.height()), 1, physicalViewportSize.height()),
+    };
 }
 }
 
@@ -82,12 +118,39 @@ std::optional<DecodedTile> SvgTileSource::decodeTile(
     return decodedTileFromImage(request, std::move(image));
 }
 
+FirstDisplayImageDecodeResult SvgTileSource::decodeFirstDisplayImage(
+    const ImageFirstDisplayDecodeContext &context, QString *errorString) const
+{
+    if (!context.isValid()) {
+        return {};
+    }
+
+    const QSize previewSize = svgFirstDisplayPreviewSize(m_imageSize, context.physicalViewportSize);
+    if (previewSize.isEmpty()) {
+        return {};
+    }
+
+    QImage preview = renderSvgImage(m_data, previewSize);
+    if (preview.isNull()) {
+        setTileSourceError(errorString, imageErrorText(ImageErrorTextId::RenderSvgImage));
+        return { FirstDisplayImageDecodeStatus::Error, {}, 0.0 };
+    }
+
+    const qreal displayPixelsPerSourcePixel
+        = imagePixelsPerSourcePixel(m_imageSize, preview.size());
+    if (displayPixelsPerSourcePixel <= 0.0) {
+        setTileSourceError(errorString, imageErrorText(ImageErrorTextId::RenderSvgImage));
+        return { FirstDisplayImageDecodeStatus::Error, {}, 0.0 };
+    }
+
+    return { FirstDisplayImageDecodeStatus::Ready, std::move(preview),
+        displayPixelsPerSourcePixel };
+}
+
 QImage SvgTileSource::decodeBlockingDisplayImage(int maximumLongEdge, QString *errorString) const
 {
     const QSize previewSize = boundedPreviewSize(m_imageSize, maximumLongEdge);
-    const QByteArray bytes = Bridge::qtByteArray(
-        rustRenderSvgImage(Bridge::rustBytes(m_data), previewSize.width(), previewSize.height()));
-    const QImage preview = imageFromPremultipliedRgbaBytes(bytes, previewSize);
+    const QImage preview = renderSvgImage(m_data, previewSize);
     if (preview.isNull()) {
         setTileSourceError(errorString, imageErrorText(ImageErrorTextId::RenderSvgImage));
         return {};

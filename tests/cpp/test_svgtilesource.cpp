@@ -33,6 +33,9 @@ class TestSvgTileSource : public QObject
 
 private Q_SLOTS:
     void sourceRendersIntrinsicPreviewAndTile();
+    void sourceRendersUpscaledFirstDisplayPreview();
+    void sourceSkipsFirstDisplayPreviewWithoutValidViewport();
+    void sourceReportsFirstDisplayRenderFailure();
     void sourceAppliesClipPathToPreviewAndTile();
     void sourceRendersOversampledBucketTile();
     void sourceRejectsEmptyTileRequest();
@@ -53,7 +56,9 @@ void TestSvgTileSource::sourceRendersIntrinsicPreviewAndTile()
 
     const KiriView::FirstDisplayImageDecodeResult firstDisplay = source->decodeFirstDisplayImage(
         KiriView::ImageFirstDisplayDecodeContext { QSize(20, 20) }, &errorString);
-    QCOMPARE(firstDisplay.status, KiriView::FirstDisplayImageDecodeStatus::NotImplemented);
+    QCOMPARE(firstDisplay.status, KiriView::FirstDisplayImageDecodeStatus::Ready);
+    QCOMPARE(firstDisplay.image.size(), QSize(20, 10));
+    QCOMPARE(firstDisplay.displayPixelsPerSourcePixel, 0.25);
 
     const QImage preview = source->decodeBlockingDisplayImage(20, &errorString);
     QVERIFY2(!preview.isNull(), qPrintable(errorString));
@@ -65,6 +70,58 @@ void TestSvgTileSource::sourceRendersIntrinsicPreviewAndTile()
     QVERIFY2(tile.has_value(), qPrintable(errorString));
     QCOMPARE(tile->image.size(), QSize(80, 40));
     QVERIFY(qRed(tile->image.pixel(10, 10)) > 0);
+}
+
+void TestSvgTileSource::sourceRendersUpscaledFirstDisplayPreview()
+{
+    const QByteArray data
+        = QByteArrayLiteral("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"80\" height=\"40\">"
+                            "<rect width=\"80\" height=\"40\" fill=\"red\"/>"
+                            "</svg>");
+
+    QString errorString;
+    std::shared_ptr<KiriView::SvgTileSource> source
+        = KiriView::SvgTileSource::open(data, &errorString);
+    QVERIFY2(source != nullptr, qPrintable(errorString));
+
+    const KiriView::FirstDisplayImageDecodeResult firstDisplay = source->decodeFirstDisplayImage(
+        KiriView::ImageFirstDisplayDecodeContext { QSize(200, 200) }, &errorString);
+
+    QCOMPARE(firstDisplay.status, KiriView::FirstDisplayImageDecodeStatus::Ready);
+    QCOMPARE(firstDisplay.image.size(), QSize(200, 100));
+    QCOMPARE(firstDisplay.displayPixelsPerSourcePixel, 2.5);
+}
+
+void TestSvgTileSource::sourceSkipsFirstDisplayPreviewWithoutValidViewport()
+{
+    const QByteArray data
+        = QByteArrayLiteral("<svg xmlns=\"http://www.w3.org/2000/svg\" width=\"80\" height=\"40\">"
+                            "<rect width=\"80\" height=\"40\" fill=\"red\"/>"
+                            "</svg>");
+
+    QString errorString;
+    std::shared_ptr<KiriView::SvgTileSource> source
+        = KiriView::SvgTileSource::open(data, &errorString);
+    QVERIFY2(source != nullptr, qPrintable(errorString));
+
+    const KiriView::FirstDisplayImageDecodeResult firstDisplay = source->decodeFirstDisplayImage(
+        KiriView::ImageFirstDisplayDecodeContext {}, &errorString);
+
+    QCOMPARE(firstDisplay.status, KiriView::FirstDisplayImageDecodeStatus::NotImplemented);
+    QVERIFY(firstDisplay.image.isNull());
+}
+
+void TestSvgTileSource::sourceReportsFirstDisplayRenderFailure()
+{
+    KiriView::SvgTileSource source(QByteArrayLiteral("not svg"), QSize(80, 40));
+
+    QString errorString;
+    const KiriView::FirstDisplayImageDecodeResult firstDisplay = source.decodeFirstDisplayImage(
+        KiriView::ImageFirstDisplayDecodeContext { QSize(20, 20) }, &errorString);
+
+    QCOMPARE(firstDisplay.status, KiriView::FirstDisplayImageDecodeStatus::Error);
+    QVERIFY(firstDisplay.image.isNull());
+    QVERIFY(!errorString.isEmpty());
 }
 
 void TestSvgTileSource::sourceAppliesClipPathToPreviewAndTile()
