@@ -463,9 +463,9 @@ Item {
         maximumManualZoomPercent: imageDocument.maximumManualZoomPercent
         minimumManualZoomPercent: imageDocument.minimumManualZoomPercent
         rightToLeftReadingActive: root.rightToLeftReadingActive
-        rightToLeftReadingVisible: root.readingControlsVisible
+        rightToLeftReadingControlVisible: root.readingControlsVisible
         showApplicationMenuActions: true
-        twoPageModeVisible: root.readingControlsVisible
+        twoPageModeControlVisible: root.readingControlsVisible
         videoMode: root.videoMode
         zoomEditable: !root.videoMode && imageDocument.zoomPercentKnown
         zoomPercent: root.videoMode ? 67 : (imageDocument.zoomPercentKnown ? imageDocument.zoomPercent : 0)
@@ -483,7 +483,7 @@ Item {
 QString documentScopeFixtureQml(const QString &sourceUrl = QString())
 {
     return fixtureQml(sourceUrl, false,
-        QStringLiteral("!root.videoMode && imageDocument.openedDocumentScopeActive"),
+        QStringLiteral("!root.videoMode && imageDocument.archiveOrDirectoryDocumentScopeActive"),
         QStringLiteral("!root.videoMode && imageDocument.rightToLeftReadingAvailable"));
 }
 

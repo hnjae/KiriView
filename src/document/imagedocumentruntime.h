@@ -80,7 +80,7 @@ public:
     int imageCount() const;
     bool containerNavigationAvailable() const;
     bool ordinaryDirectMediaScopeActive() const;
-    bool openedDocumentScopeActive() const;
+    bool archiveOrDirectoryDocumentScopeActive() const;
     bool fileDeletionInProgress() const;
     bool twoPageModeEnabled() const;
     void setTwoPageModeEnabled(bool enabled);

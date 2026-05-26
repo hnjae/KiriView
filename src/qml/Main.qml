@@ -442,10 +442,10 @@ StatefulApp.StatefulWindow {
                 documentSession.openActiveNavigationAtNumber(number);
             }
             rightToLeftReadingActive: imageActions.rightToLeftReadingActive
-            rightToLeftReadingVisible: page.imageMode && page.imageDocument.openedDocumentScopeActive
+            rightToLeftReadingControlVisible: page.imageMode && page.imageDocument.archiveOrDirectoryDocumentScopeActive
             showApplicationMenuActions: !root.menuBarMode && !root.fullscreen
             transientOverlay: root.fullscreen
-            twoPageModeVisible: page.imageMode && page.imageDocument.openedDocumentScopeActive
+            twoPageModeControlVisible: page.imageMode && page.imageDocument.archiveOrDirectoryDocumentScopeActive
             videoMode: page.videoMode
             visible: !root.fullscreen || root.fullscreenToolBarRevealed
             zoomEditable: documentSession.activeZoomEditable

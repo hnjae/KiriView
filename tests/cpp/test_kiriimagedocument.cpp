@@ -20,7 +20,7 @@ class TestKiriImageDocument : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
-    void openedDocumentScopeActiveFollowsDisplayedLocation();
+    void archiveOrDirectoryDocumentScopeActiveFollowsDisplayedLocation();
 };
 
 namespace {
@@ -57,7 +57,7 @@ void loadReady(KiriImageDocument &document, ManualImageDataLoader &dataLoader,
 }
 }
 
-void TestKiriImageDocument::openedDocumentScopeActiveFollowsDisplayedLocation()
+void TestKiriImageDocument::archiveOrDirectoryDocumentScopeActiveFollowsDisplayedLocation()
 {
     FakeCandidateProvider candidateProvider;
     ManualImageDataLoader dataLoader;
@@ -68,9 +68,9 @@ void TestKiriImageDocument::openedDocumentScopeActiveFollowsDisplayedLocation()
     std::unique_ptr<KiriImageDocument> directImageDocument
         = createDocument(this, candidateProvider, dataLoader);
 
-    QVERIFY(!directImageDocument->openedDocumentScopeActive());
+    QVERIFY(!directImageDocument->archiveOrDirectoryDocumentScopeActive());
     loadReady(*directImageDocument, dataLoader, imageUrl, imageUrl);
-    QVERIFY(!directImageDocument->openedDocumentScopeActive());
+    QVERIFY(!directImageDocument->archiveOrDirectoryDocumentScopeActive());
 
     const QUrl comicArchiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
     const std::optional<KiriView::ArchiveDocumentLocation> comicArchiveDocument
@@ -84,7 +84,7 @@ void TestKiriImageDocument::openedDocumentScopeActiveFollowsDisplayedLocation()
         = createDocument(this, candidateProvider, dataLoader);
 
     loadReady(*comicDocument, dataLoader, comicArchiveUrl, comicArchivePage);
-    QVERIFY(comicDocument->openedDocumentScopeActive());
+    QVERIFY(comicDocument->archiveOrDirectoryDocumentScopeActive());
 
     const QUrl generalArchiveUrl = localUrl(QStringLiteral("/books/book.zip"));
     const std::optional<KiriView::ArchiveDocumentLocation> generalArchiveDocument
@@ -98,7 +98,7 @@ void TestKiriImageDocument::openedDocumentScopeActiveFollowsDisplayedLocation()
         = createDocument(this, candidateProvider, dataLoader);
 
     loadReady(*generalDocument, dataLoader, generalArchiveUrl, generalArchivePage);
-    QVERIFY(generalDocument->openedDocumentScopeActive());
+    QVERIFY(generalDocument->archiveOrDirectoryDocumentScopeActive());
 
     QTemporaryDir directory;
     QVERIFY(directory.isValid());
@@ -114,7 +114,7 @@ void TestKiriImageDocument::openedDocumentScopeActiveFollowsDisplayedLocation()
         = createDocument(this, candidateProvider, dataLoader);
 
     loadReady(*openedDirectoryDocument, dataLoader, directoryUrl, directoryPage);
-    QVERIFY(openedDirectoryDocument->openedDocumentScopeActive());
+    QVERIFY(openedDirectoryDocument->archiveOrDirectoryDocumentScopeActive());
 
     const QUrl archiveEntryUrl(QStringLiteral("zip:///books/book.zip!/page.png"));
     candidateProvider.setDirectoryImages(
@@ -123,7 +123,7 @@ void TestKiriImageDocument::openedDocumentScopeActiveFollowsDisplayedLocation()
         = createDocument(this, candidateProvider, dataLoader);
 
     loadReady(*archiveEntryDocument, dataLoader, archiveEntryUrl, archiveEntryUrl);
-    QVERIFY(!archiveEntryDocument->openedDocumentScopeActive());
+    QVERIFY(!archiveEntryDocument->archiveOrDirectoryDocumentScopeActive());
 }
 
 QTEST_GUILESS_MAIN(TestKiriImageDocument)

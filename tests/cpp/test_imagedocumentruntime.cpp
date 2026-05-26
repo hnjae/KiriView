@@ -260,14 +260,14 @@ void TestImageDocumentRuntime::documentScopeProjectionsFollowDisplayedImageScope
 
     RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader);
     QVERIFY(!runtime->ordinaryDirectMediaScopeActive());
-    QVERIFY(!runtime->openedDocumentScopeActive());
+    QVERIFY(!runtime->archiveOrDirectoryDocumentScopeActive());
     runtime->setViewportSize(QSizeF(400.0, 300.0));
     runtime->setSourceUrl(imageUrl);
     finishLoad(dataLoader);
 
     QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
     QVERIFY(runtime->ordinaryDirectMediaScopeActive());
-    QVERIFY(!runtime->openedDocumentScopeActive());
+    QVERIFY(!runtime->archiveOrDirectoryDocumentScopeActive());
 
     const QUrl comicArchiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
     const std::optional<KiriView::ArchiveDocumentLocation> comicArchiveDocument
@@ -286,7 +286,7 @@ void TestImageDocumentRuntime::documentScopeProjectionsFollowDisplayedImageScope
     QTRY_COMPARE(archiveRuntime->status(), KiriView::ImageDocumentStatus::Ready);
     QCOMPARE(archiveRuntime->displayedUrl(), comicArchivePage);
     QVERIFY(!archiveRuntime->ordinaryDirectMediaScopeActive());
-    QVERIFY(archiveRuntime->openedDocumentScopeActive());
+    QVERIFY(archiveRuntime->archiveOrDirectoryDocumentScopeActive());
 
     const QUrl generalArchiveUrl = localUrl(QStringLiteral("/books/book.zip"));
     const std::optional<KiriView::ArchiveDocumentLocation> generalArchiveDocument
@@ -305,7 +305,7 @@ void TestImageDocumentRuntime::documentScopeProjectionsFollowDisplayedImageScope
     QTRY_COMPARE(generalArchiveRuntime->status(), KiriView::ImageDocumentStatus::Ready);
     QCOMPARE(generalArchiveRuntime->displayedUrl(), generalArchivePage);
     QVERIFY(!generalArchiveRuntime->ordinaryDirectMediaScopeActive());
-    QVERIFY(generalArchiveRuntime->openedDocumentScopeActive());
+    QVERIFY(generalArchiveRuntime->archiveOrDirectoryDocumentScopeActive());
 
     QTemporaryDir directory;
     QVERIFY(directory.isValid());
@@ -326,7 +326,7 @@ void TestImageDocumentRuntime::documentScopeProjectionsFollowDisplayedImageScope
     QTRY_COMPARE(directoryRuntime->status(), KiriView::ImageDocumentStatus::Ready);
     QCOMPARE(directoryRuntime->displayedUrl(), directoryPage);
     QVERIFY(!directoryRuntime->ordinaryDirectMediaScopeActive());
-    QVERIFY(directoryRuntime->openedDocumentScopeActive());
+    QVERIFY(directoryRuntime->archiveOrDirectoryDocumentScopeActive());
 
     const QUrl archiveEntryUrl(QStringLiteral("zip:///books/book.zip!/page.png"));
     candidateProvider.setDirectoryImages(
@@ -340,7 +340,7 @@ void TestImageDocumentRuntime::documentScopeProjectionsFollowDisplayedImageScope
     QTRY_COMPARE(archiveEntryRuntime->status(), KiriView::ImageDocumentStatus::Ready);
     QCOMPARE(archiveEntryRuntime->displayedUrl(), archiveEntryUrl);
     QVERIFY(archiveEntryRuntime->ordinaryDirectMediaScopeActive());
-    QVERIFY(!archiveEntryRuntime->openedDocumentScopeActive());
+    QVERIFY(!archiveEntryRuntime->archiveOrDirectoryDocumentScopeActive());
 }
 
 void TestImageDocumentRuntime::imageLoadsUsePhysicalViewportForFirstDisplayDecode()

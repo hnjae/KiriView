@@ -225,7 +225,7 @@ bool ImageDocumentRuntime::ordinaryDirectMediaScopeActive() const
     return !state.displayedUrl().isEmpty() && state.displayedArchiveDocument().isEmpty();
 }
 
-bool ImageDocumentRuntime::openedDocumentScopeActive() const
+bool ImageDocumentRuntime::archiveOrDirectoryDocumentScopeActive() const
 {
     return !state.displayedArchiveDocument().isEmpty();
 }

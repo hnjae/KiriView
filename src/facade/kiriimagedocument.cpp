@@ -252,9 +252,9 @@ bool KiriImageDocument::ordinaryDirectMediaScopeActive() const
     return m_runtime->ordinaryDirectMediaScopeActive();
 }
 
-bool KiriImageDocument::openedDocumentScopeActive() const
+bool KiriImageDocument::archiveOrDirectoryDocumentScopeActive() const
 {
-    return m_runtime->openedDocumentScopeActive();
+    return m_runtime->archiveOrDirectoryDocumentScopeActive();
 }
 
 bool KiriImageDocument::fileDeletionInProgress() const
