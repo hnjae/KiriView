@@ -5,6 +5,7 @@
 #define KIRIVIEW_PREDECODESCHEDULESTATE_H
 
 #include "async/imageasyncticket.h"
+#include "predecode/mediapredecodeeligibility.h"
 #include "predecodedimage.h"
 #include "predecodepolicy.h"
 
@@ -15,11 +16,12 @@
 #include <vector>
 
 namespace KiriView {
-class PredecodeSchedulePayload
-{
-public:
-    virtual ~PredecodeSchedulePayload() = default;
+struct MediaPredecodeSchedulePayload {
+    std::vector<MediaNavigationCandidate> mediaCandidates;
+    MediaPredecodeEligibilitySnapshot eligibleImages;
 };
+
+using PredecodeSchedulePayload = std::variant<std::monostate, MediaPredecodeSchedulePayload>;
 
 struct PredecodeScheduleContext {
     DisplayedImageLocation currentLocation;
