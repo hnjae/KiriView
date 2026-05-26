@@ -8,12 +8,17 @@
 #include <QTest>
 #include <QUrl>
 #include <cstddef>
+#include <memory>
+#include <utility>
 #include <vector>
 
 namespace {
 using KiriView::TestSupport::localUrl;
 using KiriView::TestSupport::staticTestImagePayload;
 using KiriView::TestSupport::testImage;
+
+struct UnrelatedPredecodeSchedulePayload final : KiriView::PredecodeSchedulePayload {
+};
 
 KiriView::MediaNavigationCandidate mediaCandidate(const QUrl &url)
 {
@@ -52,6 +57,7 @@ private Q_SLOTS:
     void videoCursorBuildsScheduleContextAndCarriesCandidates();
     void missingCurrentCandidateKeepsUnknownPageIndex();
     void invalidCursorYieldsEmptyScheduleContext();
+    void mediaPayloadAccessorsRejectWrongPayloadType();
 };
 
 void TestMediaPredecodeSchedulePlan::videoCursorBuildsScheduleContextAndCarriesCandidates()
@@ -133,6 +139,18 @@ void TestMediaPredecodeSchedulePlan::invalidCursorYieldsEmptyScheduleContext()
     QVERIFY(plan.context.currentLocation.isEmpty());
     QVERIFY(scheduleCandidates(plan) == nullptr);
     QVERIFY(scheduleEligibility(plan) == nullptr);
+}
+
+void TestMediaPredecodeSchedulePlan::mediaPayloadAccessorsRejectWrongPayloadType()
+{
+    KiriView::PredecodeScheduleContext context;
+    context.currentLocation
+        = KiriView::DisplayedImageLocation::fromUrl(localUrl(QStringLiteral("/media/01.mp4")));
+    context.payload = std::make_shared<UnrelatedPredecodeSchedulePayload>();
+    const KiriView::PredecodePendingSchedule schedule { std::move(context), 1 };
+
+    QVERIFY(KiriView::mediaPredecodeScheduleCandidates(schedule) == nullptr);
+    QVERIFY(KiriView::mediaPredecodeScheduleEligibility(schedule) == nullptr);
 }
 
 QTEST_GUILESS_MAIN(TestMediaPredecodeSchedulePlan)

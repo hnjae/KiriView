@@ -8,7 +8,6 @@
 #include <memory>
 #include <optional>
 #include <utility>
-#include <variant>
 
 namespace KiriView {
 bool MediaPredecodeSchedulePlan::shouldSchedule() const
@@ -25,14 +24,17 @@ MediaPredecodeSchedulePlan mediaPredecodeSchedulePlan(MediaPredecodeScheduleRequ
 
     MediaPredecodeEligibilitySnapshot eligibility
         = mediaPredecodeEligibilitySnapshot(request.candidates, *cursorUrl);
+    auto payload = std::make_shared<MediaPredecodeSchedulePayload>();
+    payload->mediaCandidates = std::move(request.candidates);
+    payload->eligibleImages = std::move(eligibility);
     PredecodeScheduleContext context {
         DisplayedImageLocation::fromUrl(*cursorUrl),
         std::move(request.displayedImages),
         request.firstDisplayContext,
-        eligibility.currentMediaIndex.has_value() ? static_cast<int>(*eligibility.currentMediaIndex)
-                                                  : -1,
-        std::make_shared<PredecodeSchedulePayload>(MediaPredecodeSchedulePayload {
-            std::move(request.candidates), std::move(eligibility) }),
+        payload->eligibleImages.currentMediaIndex.has_value()
+            ? static_cast<int>(*payload->eligibleImages.currentMediaIndex)
+            : -1,
+        std::move(payload),
     };
     return MediaPredecodeSchedulePlan { std::move(context) };
 }
@@ -40,18 +42,14 @@ MediaPredecodeSchedulePlan mediaPredecodeSchedulePlan(MediaPredecodeScheduleRequ
 const std::vector<MediaNavigationCandidate> *mediaPredecodeScheduleCandidates(
     const PredecodePendingSchedule &schedule)
 {
-    const auto *payload = schedule.context.payload == nullptr
-        ? nullptr
-        : std::get_if<MediaPredecodeSchedulePayload>(schedule.context.payload.get());
+    const auto *payload = predecodeSchedulePayload<MediaPredecodeSchedulePayload>(schedule);
     return payload != nullptr ? &payload->mediaCandidates : nullptr;
 }
 
 const MediaPredecodeEligibilitySnapshot *mediaPredecodeScheduleEligibility(
     const PredecodePendingSchedule &schedule)
 {
-    const auto *payload = schedule.context.payload == nullptr
-        ? nullptr
-        : std::get_if<MediaPredecodeSchedulePayload>(schedule.context.payload.get());
+    const auto *payload = predecodeSchedulePayload<MediaPredecodeSchedulePayload>(schedule);
     return payload != nullptr ? &payload->eligibleImages : nullptr;
 }
 }
