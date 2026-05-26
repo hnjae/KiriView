@@ -9,8 +9,7 @@
 #include "location/imageurl.h"
 #include "navigation/mediaformatregistry.h"
 #include "predecode/mediapredecodecoordinator.h"
-#include "predecode/predecodecache.h"
-#include "system/systemmemory.h"
+#include "predecode/predecodecachebudget.h"
 
 #include <QObject>
 #include <QString>
@@ -22,16 +21,6 @@ namespace {
 QString genericFileDeletionErrorMessage()
 {
     return KiriView::imageErrorText(KiriView::ImageErrorTextId::DeleteFile);
-}
-
-qsizetype resolvedPredecodeCacheByteBudget(qsizetype byteBudget)
-{
-    if (byteBudget > 0) {
-        return byteBudget;
-    }
-
-    return KiriView::PredecodeCache::byteBudgetForSystemMemory(
-        KiriView::systemMemorySnapshot().physicalByteSize);
 }
 }
 
@@ -48,7 +37,7 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner, KiriImageDocument
     , m_mediaPredecodeCoordinator(std::make_unique<MediaPredecodeCoordinator>(owner,
           std::move(dependencies.imageDocumentDependencies.imageDecode),
           std::move(dependencies.imageDocumentDependencies.powerSaver),
-          resolvedPredecodeCacheByteBudget(
+          KiriView::resolvedPredecodeCacheByteBudget(
               dependencies.imageDocumentDependencies.predecodeCacheByteBudget)))
 {
     connectDocuments();

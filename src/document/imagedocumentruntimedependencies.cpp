@@ -4,8 +4,7 @@
 #include "imagedocumentruntimedependencies.h"
 
 #include "archive/archivedocumentsessionstore.h"
-#include "predecode/predecodecache.h"
-#include "system/systemmemory.h"
+#include "predecode/predecodecachebudget.h"
 
 #include <utility>
 
@@ -17,15 +16,6 @@ bool shouldUseArchiveSessionStore(
         || (!overrides.candidateProvider.archiveImages && !overrides.imageDecode.dataLoader);
 }
 
-qsizetype resolvedPredecodeCacheByteBudget(qsizetype byteBudget)
-{
-    if (byteBudget > 0) {
-        return byteBudget;
-    }
-
-    return KiriView::PredecodeCache::byteBudgetForSystemMemory(
-        KiriView::systemMemorySnapshot().physicalByteSize);
-}
 }
 
 namespace KiriView {
@@ -45,7 +35,7 @@ ImageDocumentRuntimeDependencies resolveImageDocumentRuntimeDependencies(
         = fileOperationProviderWithDefault(std::move(overrides.fileOperations));
     overrides.powerSaver = powerSaverProviderWithDefault(std::move(overrides.powerSaver));
     overrides.predecodeCacheByteBudget
-        = resolvedPredecodeCacheByteBudget(overrides.predecodeCacheByteBudget);
+        = KiriView::resolvedPredecodeCacheByteBudget(overrides.predecodeCacheByteBudget);
 
     std::unique_ptr<ArchiveDocumentSessionStore> archiveSessionStore;
     if (useArchiveSessionStore) {

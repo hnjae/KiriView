@@ -7,8 +7,7 @@
 #include "facade/kiriimagedocument.h"
 #include "facade/kirivideodocument.h"
 #include "navigation/mediaformatregistry.h"
-#include "predecode/predecodecache.h"
-#include "system/systemmemory.h"
+#include "predecode/predecodecachebudget.h"
 
 #include <memory>
 #include <optional>
@@ -82,20 +81,12 @@ KiriView::ImageDocumentRuntimeDependencyOverrides imageDocumentDependenciesWithP
     return dependencies;
 }
 
-qsizetype defaultPredecodeCacheByteBudget()
-{
-    return KiriView::PredecodeCache::byteBudgetForSystemMemory(
-        KiriView::systemMemorySnapshot().physicalByteSize);
-}
-
 KiriView::DocumentSessionRuntimeDependencies documentSessionDependenciesWithPredecodeCacheBudget(
     KiriView::DocumentSessionRuntimeDependencies dependencies)
 {
-    if (dependencies.imageDocumentDependencies.predecodeCacheByteBudget <= 0) {
-        dependencies.imageDocumentDependencies.predecodeCacheByteBudget
-            = defaultPredecodeCacheByteBudget();
-    }
-
+    dependencies.imageDocumentDependencies.predecodeCacheByteBudget
+        = KiriView::resolvedPredecodeCacheByteBudget(
+            dependencies.imageDocumentDependencies.predecodeCacheByteBudget);
     return dependencies;
 }
 

@@ -5,9 +5,8 @@
 
 #include "mediapredecodescheduleplan.h"
 #include "mediapredecodewindowplan.h"
-#include "predecodecache.h"
+#include "predecodecachebudget.h"
 #include "predecodelogging.h"
-#include "system/systemmemory.h"
 
 #include <QDebug>
 #include <QThread>
@@ -16,13 +15,6 @@
 #include <utility>
 
 namespace KiriView {
-namespace {
-    qsizetype defaultPredecodeCacheByteBudget()
-    {
-        return PredecodeCache::byteBudgetForSystemMemory(systemMemorySnapshot().physicalByteSize);
-    }
-}
-
 MediaPredecodeCoordinator::MediaPredecodeCoordinator(QObject *parent)
     : MediaPredecodeCoordinator(parent, ImageDecodeDependencies {}, PowerSaverProvider {},
           defaultPredecodeCacheByteBudget())

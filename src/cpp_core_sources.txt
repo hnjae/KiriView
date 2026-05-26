@@ -156,6 +156,7 @@ src/system/powerprofilemonitor.cpp
 src/system/powersaverprovider.cpp
 src/predecode/predecodeactivedecodestore.cpp
 src/predecode/predecodecache.cpp
+src/predecode/predecodecachebudget.cpp
 src/predecode/predecodelogging.cpp
 src/predecode/predecodedisplayedhistory.cpp
 src/predecode/predecodeloadcontroller.cpp
