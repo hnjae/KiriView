@@ -5,6 +5,7 @@ This directory records the long-term architecture direction for KiriView. It is 
 Use these documents when changing module ownership, crossing the Rust/C++/QML boundary, introducing new runtime workflow shape, or adjusting test strategy. Architecture decision records with dated rationale live in `../adr/`.
 
 - [Overview](overview.md)
+- [Terminology](terminology.md)
 - [Layer Ownership](layer-ownership.md)
 - [Language Boundary](language-boundary.md)
 - [State Ownership](state-ownership.md)

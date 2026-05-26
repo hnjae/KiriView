@@ -1,0 +1,30 @@
+# Terminology
+
+This document defines recurring runtime terms so architecture, code, tests, and specifications use `document` consistently. Product behavior remains specified under `../spec/`.
+
+## Core Terms
+
+| Term | Meaning | Primary owner or current names | Usage guidance |
+| --- | --- | --- | --- |
+| Document session | The top-level open state for the window: empty, image mode, or video mode. It owns public mixed-media projections such as active navigation, title subject, zoom readout, and direct media cursor. | `KiriDocumentSession`, `src/session/`, `DocumentSessionState` | Use `document session` when behavior spans image and video modes or decides which leaf runtime is active. |
+| Image document | The image-mode leaf runtime and QML facade. It owns image loading, image-internal page navigation, archive or directory page lists, presentation state, rendering inputs, and image deletion behavior. | `KiriImageDocument`, `src/document/`, `ImageDocumentRuntime` | Use `image document` for image-mode internals even when the source is an ordinary direct image. Do not use it to mean only archives. |
+| Video document | The video-mode leaf runtime and QML facade. It owns video source resolution, playback state, video status, and video zoom. | `KiriVideoDocument`, `src/video/`, `VideoDocumentRuntime` | Use `video document` for video-mode internals only. |
+| Direct media scope | A navigation and source scope for ordinary direct image and direct video URLs, including KDE archive-entry URLs opened as individual media items. | `DirectMediaCursor`, media candidate runtimes, direct image/video route plans | Use `direct media` when sibling navigation may include both images and videos and the user did not directly open an archive or directory as a document. |
+| Archive document | A page-oriented image document scope created by directly opening a supported local archive file. Candidate pages are supported images inside that archive. | `ArchiveDocumentLocation` with `ArchiveDocumentKind::ComicBook` or `ArchiveDocumentKind::General`, `ArchiveDocumentSession*` | Use `archive document` only for directly opened archives, not for KDE archive-entry URLs such as `zip://...!/page.png`. |
+| Directory document | A page-oriented image document scope created by directly opening a local directory. Candidate pages are supported images inside that directory tree. | `ArchiveDocumentLocation` with `ArchiveDocumentKind::Directory` | Use `directory document` when the source is a directory treated like a page set. Avoid calling this an archive in new user-facing text. |
+| Archive or directory document scope | The shared concept for archive documents and directory documents when the behavior applies to both. | Currently represented by a non-empty `ArchiveDocumentLocation`; public QML should prefer explicit names such as `archiveOrDirectoryDocumentScopeActive` | Use this phrase when visibility, navigation, or loading behavior applies to directly opened archives and directories together. Avoid bare `document scope`. |
+| Comic book archive | A directly opened archive with comic-book semantics, such as CBZ, CBT, CB7, or CBR. It enables comic-only behavior such as Two-Page Spread and Right-to-Left Reading availability. | `ArchiveDocumentKind::ComicBook`, comic archive policies | Use `comic book archive` when feature availability is intentionally narrower than all archive documents. |
+| General archive | A directly opened ZIP, TAR, 7Z, RAR, or similar non-comic archive treated as an image page set without comic-only feature availability. | `ArchiveDocumentKind::General` | Use `general archive` when archive page navigation is active but comic-only controls remain unavailable. |
+| Displayed image location | The normalized identity of the currently displayed image plus optional archive or directory document context. | `DisplayedImageLocation` | Use `displayed image location` for the specific image being shown. Do not use it as the source of top-level direct media session identity. |
+| Source URL | The URL requested by the user, command line, action, or routing operation. It may be a direct media URL, archive file URL, directory URL, or empty URL. | `sourceUrl`, route plans, source-load requests | Use `source URL` for the requested input before routing and resolution decide the active runtime context. |
+| Displayed URL | The concrete image URL currently displayed by the image document. For directly opened archive or directory documents, this is an internal page URL, not necessarily the original source URL. | `displayedUrl`, `DisplayedImageLocation::imageUrl()` | Use `displayed URL` only for the active image payload. |
+| Container navigation | Navigation between sibling comic book archive files, not navigation inside the current archive or directory document. | `containerNavigation*`, Previous Archive, Next Archive | Keep this separate from archive or directory document page navigation. |
+
+## Naming Rules
+
+- Avoid unqualified `document` in new identifiers unless the surrounding type is already unambiguous. Prefer `documentSession`, `imageDocument`, `videoDocument`, `archiveDocument`, `directoryDocument`, or `archiveOrDirectoryDocumentScope`.
+- Use `session` for the top-level open state and cross-mode public projections.
+- Use `scope` for the set of URLs or pages that navigation, zoom reset, predecode, or toolbar visibility is derived from.
+- Use `location` for normalized identity value objects and avoid adding workflow state to location types.
+- Do not call KDE archive-entry URLs archive documents. They are direct media URLs unless the user opened the archive file itself.
+- Treat `ArchiveDocumentLocation` as a historical implementation name that currently covers archive and directory document scopes. New public API names should spell out archive-or-directory behavior instead of extending the ambiguity.
