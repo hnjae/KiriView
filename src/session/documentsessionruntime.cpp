@@ -77,7 +77,7 @@ QString DocumentSessionRuntime::windowTitleSubject() const { return m_state.wind
 
 bool DocumentSessionRuntime::displayedFileDeletionAvailable() const
 {
-    return projectedPublicState().displayedFileDeletionAvailable;
+    return m_state.displayedFileDeletionAvailable();
 }
 
 bool DocumentSessionRuntime::fileDeletionInProgress() const
@@ -198,7 +198,7 @@ bool DocumentSessionRuntime::atKnownLastActiveNavigation() const
 
 ActiveNavigationBoundaryScope DocumentSessionRuntime::activeNavigationBoundaryScope() const
 {
-    return projectedPublicState().boundaryScope;
+    return m_state.activeNavigationBoundaryScope();
 }
 
 std::optional<PredecodedImage> DocumentSessionRuntime::findPredecodedImage(const QUrl &url) const
@@ -269,7 +269,7 @@ ActiveNavigationDispatchOutcome DocumentSessionRuntime::executeActiveNavigationD
     ActiveNavigationDispatchRequest request)
 {
     const ActiveNavigationDispatchPlan plan = activeNavigationDispatchPlan(
-        projectedPublicState().sourceKind, m_state.activeNavigationSnapshot(), request);
+        m_state.activeNavigationSourceKind(), m_state.activeNavigationSnapshot(), request);
     executeActiveNavigationDispatchPlan(plan);
     return plan.outcome;
 }
@@ -333,7 +333,7 @@ void DocumentSessionRuntime::deleteDisplayedFile(FileDeletionMode mode)
     }
 
     m_state.setFileDeletionInProgress(true);
-    recomputeActiveNavigation();
+    recomputePublicProjection();
     loadMediaCandidates(
         [this, mode](DocumentSessionMediaNavigationCandidatesResult result) mutable {
             startMediaDeletion(mode, std::move(result.candidates));
@@ -347,9 +347,9 @@ void DocumentSessionRuntime::connectDocuments()
     QObject::connect(&m_imageDocument, &KiriImageDocument::statusChanged, m_owner,
         [this]() { syncFromImageDocument(); });
     QObject::connect(&m_imageDocument, &KiriImageDocument::windowTitleFileNameChanged, m_owner,
-        [this]() { recomputeWindowTitleSubject(); });
+        [this]() { recomputePublicProjection(); });
     QObject::connect(&m_imageDocument, &KiriImageDocument::imageSizeChanged, m_owner,
-        [this]() { recomputeWindowTitleSubject(); });
+        [this]() { recomputePublicProjection(); });
     QObject::connect(&m_imageDocument, &KiriImageDocument::errorStringChanged, m_owner,
         [this]() { m_state.publish(DocumentSessionChange::ErrorString); });
     QObject::connect(&m_imageDocument, &KiriImageDocument::mediaScopeChanged, m_owner, [this]() {
@@ -361,8 +361,7 @@ void DocumentSessionRuntime::connectDocuments()
         if (directMediaScopeChanged || !mediaNavigationActive()) {
             refreshMediaNavigation();
         }
-        recomputeActiveNavigation();
-        m_state.publish(DocumentSessionChange::FileDeletionAvailability);
+        recomputePublicProjection();
     });
     QObject::connect(&m_imageDocument, &KiriImageDocument::fileDeletionInProgressChanged, m_owner,
         [this]() { syncImageDocumentFileDeletionProgress(); });
@@ -378,9 +377,9 @@ void DocumentSessionRuntime::connectDocuments()
     QObject::connect(&m_videoDocument, &KiriVideoDocument::statusChanged, m_owner,
         [this]() { syncFromVideoDocument(); });
     QObject::connect(&m_videoDocument, &KiriVideoDocument::windowTitleFileNameChanged, m_owner,
-        [this]() { recomputeWindowTitleSubject(); });
+        [this]() { recomputePublicProjection(); });
     QObject::connect(&m_videoDocument, &KiriVideoDocument::videoSizeChanged, m_owner,
-        [this]() { recomputeWindowTitleSubject(); });
+        [this]() { recomputePublicProjection(); });
     QObject::connect(&m_videoDocument, &KiriVideoDocument::errorStringChanged, m_owner,
         [this]() { m_state.publish(DocumentSessionChange::ErrorString); });
     QObject::connect(&m_videoDocument, &KiriVideoDocument::zoomPercentKnownChanged, m_owner,
@@ -396,7 +395,7 @@ void DocumentSessionRuntime::syncImageDocumentFileDeletionProgress()
     }
 
     m_state.setFileDeletionInProgress(m_imageDocument.fileDeletionInProgress());
-    recomputeActiveNavigation();
+    recomputePublicProjection();
 }
 
 void DocumentSessionRuntime::setDocumentKind(DocumentSessionKind kind)
@@ -422,21 +421,15 @@ void DocumentSessionRuntime::recomputeActiveZoomReadoutForKind(DocumentSessionKi
 
 void DocumentSessionRuntime::publishActiveNavigationForImagePages()
 {
-    if (projectedPublicState().sourceKind == ActiveNavigationSourceKind::ImageDocumentPages) {
-        recomputeActiveNavigation();
+    DocumentSessionPublicProjection projection = projectedPublicState();
+    if (projection.sourceKind == ActiveNavigationSourceKind::ImageDocumentPages) {
+        m_state.setPublicProjection(std::move(projection));
     }
 }
 
-void DocumentSessionRuntime::recomputeActiveNavigation()
+void DocumentSessionRuntime::recomputePublicProjection()
 {
-    const DocumentSessionPublicProjection projection = projectedPublicState();
-    m_state.setActiveNavigationProjection(
-        projection.activeNavigation, projection.windowTitleSubject);
-}
-
-void DocumentSessionRuntime::recomputeWindowTitleSubject()
-{
-    m_state.setWindowTitleSubject(projectedPublicState().windowTitleSubject);
+    m_state.setPublicProjection(projectedPublicState());
 }
 
 void DocumentSessionRuntime::routeSourceUrl(const QUrl &sourceUrl)
@@ -532,7 +525,7 @@ void DocumentSessionRuntime::executeRoutePlan(const DocumentSessionRoutePlan &pl
         break;
     }
 
-    recomputeActiveNavigation();
+    recomputePublicProjection();
 
     if (plan.mediaNavigation.refreshAfterRouting
         && (directMediaScopeChanged || plan.mediaNavigation.clearBeforeRouting
@@ -542,7 +535,7 @@ void DocumentSessionRuntime::executeRoutePlan(const DocumentSessionRoutePlan &pl
     if (plan.predecode.clear) {
         if (plan.mediaNavigation.clearBeforeRouting) {
             m_state.setMediaNavigationState({}, false);
-            recomputeActiveNavigation();
+            recomputePublicProjection();
         }
         if (m_mediaPredecodeCoordinator != nullptr) {
             m_mediaPredecodeCoordinator->clear();
@@ -570,9 +563,8 @@ void DocumentSessionRuntime::syncFromImageDocument()
     const bool directMediaScopeChanged = syncDirectImageCursorFromDocument();
     m_state.setSourceIdentity(m_imageDocument.sourceUrl());
     recomputeActiveZoomReadout();
-    recomputeActiveNavigation();
-    m_state.publish(
-        { DocumentSessionChange::ErrorString, DocumentSessionChange::FileDeletionAvailability });
+    recomputePublicProjection();
+    m_state.publish(DocumentSessionChange::ErrorString);
     if (directMediaScopeChanged) {
         refreshMediaNavigation();
     }
@@ -595,17 +587,16 @@ void DocumentSessionRuntime::syncFromVideoDocument()
         refreshMediaNavigation();
     }
 
-    recomputeActiveNavigation();
+    recomputePublicProjection();
     recomputeActiveZoomReadout();
-    m_state.publish(
-        { DocumentSessionChange::ErrorString, DocumentSessionChange::FileDeletionAvailability });
+    m_state.publish(DocumentSessionChange::ErrorString);
 }
 
 void DocumentSessionRuntime::refreshMediaNavigation()
 {
     if (!mediaNavigationActive()) {
         m_state.setMediaNavigationState({}, false);
-        recomputeActiveNavigation();
+        recomputePublicProjection();
         if (!directImageLoadMayUseMediaScope()) {
             m_mediaPredecodeCoordinator->clear();
         }
@@ -637,12 +628,12 @@ void DocumentSessionRuntime::finishMediaNavigation(DocumentSessionMediaNavigatio
 {
     if (!result.succeeded) {
         m_state.setMediaNavigationState({}, false);
-        recomputeActiveNavigation();
+        recomputePublicProjection();
         return;
     }
 
     m_state.setMediaNavigationState(result.plan.boundaryState, true);
-    recomputeActiveNavigation();
+    recomputePublicProjection();
     scheduleMediaPredecode(result.candidates);
     if (result.plan.targetUrl.has_value()) {
         openMediaUrl(*result.plan.targetUrl);
@@ -654,12 +645,12 @@ void DocumentSessionRuntime::updateMediaBoundaryState(
 {
     if (!result.succeeded) {
         m_state.setMediaNavigationState({}, false);
-        recomputeActiveNavigation();
+        recomputePublicProjection();
         return;
     }
 
     m_state.setMediaNavigationState(result.boundaryState, true);
-    recomputeActiveNavigation();
+    recomputePublicProjection();
     scheduleMediaPredecode(result.candidates);
 }
 
@@ -714,7 +705,7 @@ void DocumentSessionRuntime::cancelMediaDeletion()
 
     m_mediaDeletionRuntime.cancel();
     m_state.setFileDeletionInProgress(false);
-    recomputeActiveNavigation();
+    recomputePublicProjection();
 }
 
 void DocumentSessionRuntime::startMediaDeletion(
@@ -727,14 +718,14 @@ void DocumentSessionRuntime::startMediaDeletion(
         });
     if (!plan.shouldStartDeletion) {
         m_state.setFileDeletionInProgress(false);
-        recomputeActiveNavigation();
+        recomputePublicProjection();
     }
 }
 
 void DocumentSessionRuntime::finishMediaDeletion(DocumentSessionMediaDeletionCompletion completion)
 {
     m_state.setFileDeletionInProgress(false);
-    recomputeActiveNavigation();
+    recomputePublicProjection();
 
     executeMediaDeletionCompletionPlan(completion.plan, completion.errorString);
 }
@@ -766,7 +757,7 @@ void DocumentSessionRuntime::executeMediaDeletionCompletionPlan(
         setDocumentKind(DocumentSessionKind::Empty);
         if (plan.clearMediaNavigation) {
             m_state.setMediaNavigationState({}, false);
-            recomputeActiveNavigation();
+            recomputePublicProjection();
         }
         if (plan.clearPredecode && m_mediaPredecodeCoordinator != nullptr) {
             m_mediaPredecodeCoordinator->clear();

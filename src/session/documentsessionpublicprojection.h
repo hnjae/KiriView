@@ -28,14 +28,6 @@ struct DocumentSessionPublicProjectionInput {
     bool videoError = false;
 };
 
-struct DocumentSessionPublicProjection {
-    ActiveNavigationSourceKind sourceKind = ActiveNavigationSourceKind::None;
-    ActiveNavigationBoundaryScope boundaryScope = ActiveNavigationBoundaryScope::None;
-    ActiveNavigationSnapshot activeNavigation;
-    QString windowTitleSubject;
-    bool displayedFileDeletionAvailable = false;
-};
-
 DocumentSessionPublicProjection projectDocumentSessionPublicState(
     DocumentSessionPublicProjectionInput input);
 }

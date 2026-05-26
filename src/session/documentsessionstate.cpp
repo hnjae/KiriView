@@ -57,7 +57,10 @@ DocumentSessionKind DocumentSessionState::documentKind() const { return m_docume
 
 const QString &DocumentSessionState::sessionErrorString() const { return m_sessionErrorString; }
 
-const QString &DocumentSessionState::windowTitleSubject() const { return m_windowTitleSubject; }
+const QString &DocumentSessionState::windowTitleSubject() const
+{
+    return m_publicProjection.windowTitleSubject;
+}
 
 bool DocumentSessionState::fileDeletionInProgress() const { return m_fileDeletionInProgress; }
 
@@ -75,7 +78,27 @@ bool DocumentSessionState::mediaNavigationKnown() const { return m_mediaNavigati
 
 const ActiveNavigationSnapshot &DocumentSessionState::activeNavigationSnapshot() const
 {
-    return m_activeNavigationSnapshot;
+    return m_publicProjection.activeNavigation;
+}
+
+ActiveNavigationSourceKind DocumentSessionState::activeNavigationSourceKind() const
+{
+    return m_publicProjection.sourceKind;
+}
+
+ActiveNavigationBoundaryScope DocumentSessionState::activeNavigationBoundaryScope() const
+{
+    return m_publicProjection.boundaryScope;
+}
+
+bool DocumentSessionState::displayedFileDeletionAvailable() const
+{
+    return m_publicProjection.displayedFileDeletionAvailable;
+}
+
+const DocumentSessionPublicProjection &DocumentSessionState::publicProjection() const
+{
+    return m_publicProjection;
 }
 
 const DirectMediaCursor &DocumentSessionState::directMediaCursor() const
@@ -117,7 +140,6 @@ void DocumentSessionState::setDocumentKindAndActiveZoomSnapshot(
         changes.push_back(DocumentSessionChange::ActiveZoomReadout);
     }
     changes.push_back(DocumentSessionChange::ErrorString);
-    changes.push_back(DocumentSessionChange::FileDeletionAvailability);
     publish(std::move(changes));
 }
 
@@ -127,8 +149,7 @@ void DocumentSessionState::setFileDeletionInProgress(bool inProgress)
         return;
     }
 
-    publish({ DocumentSessionChange::FileDeletionInProgress,
-        DocumentSessionChange::FileDeletionAvailability });
+    publish(DocumentSessionChange::FileDeletionInProgress);
 }
 
 void DocumentSessionState::setActiveZoomSnapshot(ActiveZoomSnapshot snapshot)
@@ -154,25 +175,43 @@ void DocumentSessionState::setMediaNavigationState(MediaNavigationBoundaryState 
 
 void DocumentSessionState::setActiveNavigationSnapshot(ActiveNavigationSnapshot snapshot)
 {
-    if (sameActiveNavigationSnapshot(m_activeNavigationSnapshot, snapshot)) {
+    if (sameActiveNavigationSnapshot(m_publicProjection.activeNavigation, snapshot)) {
         return;
     }
 
-    m_activeNavigationSnapshot = snapshot;
+    m_publicProjection.activeNavigation = snapshot;
     publish(DocumentSessionChange::ActiveNavigation);
 }
 
-void DocumentSessionState::setActiveNavigationProjection(
-    ActiveNavigationSnapshot snapshot, const QString &windowTitleSubject)
+void DocumentSessionState::setPublicProjection(DocumentSessionPublicProjection projection)
 {
+    const bool activeNavigationChanged
+        = !sameActiveNavigationSnapshot(
+              m_publicProjection.activeNavigation, projection.activeNavigation)
+        || m_publicProjection.sourceKind != projection.sourceKind
+        || m_publicProjection.boundaryScope != projection.boundaryScope;
+    const bool windowTitleSubjectChanged
+        = m_publicProjection.windowTitleSubject != projection.windowTitleSubject;
+    const bool displayedFileDeletionAvailabilityChanged
+        = m_publicProjection.displayedFileDeletionAvailable
+        != projection.displayedFileDeletionAvailable;
+
+    if (!activeNavigationChanged && !windowTitleSubjectChanged
+        && !displayedFileDeletionAvailabilityChanged) {
+        return;
+    }
+
+    m_publicProjection = std::move(projection);
+
     std::vector<DocumentSessionChange> changes;
-    if (!sameActiveNavigationSnapshot(m_activeNavigationSnapshot, snapshot)) {
-        m_activeNavigationSnapshot = snapshot;
+    if (activeNavigationChanged) {
         changes.push_back(DocumentSessionChange::ActiveNavigation);
     }
-    if (m_windowTitleSubject != windowTitleSubject) {
-        m_windowTitleSubject = windowTitleSubject;
+    if (windowTitleSubjectChanged) {
         changes.push_back(DocumentSessionChange::WindowTitleSubject);
+    }
+    if (displayedFileDeletionAvailabilityChanged) {
+        changes.push_back(DocumentSessionChange::FileDeletionAvailability);
     }
 
     publish(std::move(changes));
@@ -187,7 +226,7 @@ void DocumentSessionState::setSessionErrorString(const QString &errorString)
 
 void DocumentSessionState::setWindowTitleSubject(const QString &subject)
 {
-    if (replaceIfChanged(m_windowTitleSubject, subject)) {
+    if (replaceIfChanged(m_publicProjection.windowTitleSubject, subject)) {
         publish(DocumentSessionChange::WindowTitleSubject);
     }
 }

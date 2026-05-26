@@ -101,8 +101,7 @@ private:
     void recomputeActiveZoomReadout();
     void recomputeActiveZoomReadoutForKind(DocumentSessionKind kind);
     void publishActiveNavigationForImagePages();
-    void recomputeActiveNavigation();
-    void recomputeWindowTitleSubject();
+    void recomputePublicProjection();
     void routeSourceUrl(const QUrl &sourceUrl);
     void openMediaUrl(const QUrl &url);
     void openMedia(MediaNavigationOpenRequest request);

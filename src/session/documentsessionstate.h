@@ -39,6 +39,14 @@ struct ActiveZoomSnapshot {
     bool editable = false;
 };
 
+struct DocumentSessionPublicProjection {
+    ActiveNavigationSourceKind sourceKind = ActiveNavigationSourceKind::None;
+    ActiveNavigationBoundaryScope boundaryScope = ActiveNavigationBoundaryScope::None;
+    ActiveNavigationSnapshot activeNavigation;
+    QString windowTitleSubject;
+    bool displayedFileDeletionAvailable = false;
+};
+
 class DocumentSessionState final
 {
 public:
@@ -55,6 +63,10 @@ public:
     const MediaNavigationBoundaryState &mediaNavigationState() const;
     bool mediaNavigationKnown() const;
     const ActiveNavigationSnapshot &activeNavigationSnapshot() const;
+    ActiveNavigationSourceKind activeNavigationSourceKind() const;
+    ActiveNavigationBoundaryScope activeNavigationBoundaryScope() const;
+    bool displayedFileDeletionAvailable() const;
+    const DocumentSessionPublicProjection &publicProjection() const;
     const DirectMediaCursor &directMediaCursor() const;
     QUrl directMediaCursorUrl() const;
 
@@ -66,8 +78,7 @@ public:
     void setActiveZoomSnapshot(ActiveZoomSnapshot snapshot);
     void setMediaNavigationState(MediaNavigationBoundaryState state, bool known);
     void setActiveNavigationSnapshot(ActiveNavigationSnapshot snapshot);
-    void setActiveNavigationProjection(
-        ActiveNavigationSnapshot snapshot, const QString &windowTitleSubject);
+    void setPublicProjection(DocumentSessionPublicProjection projection);
     void setSessionErrorString(const QString &errorString);
     void setWindowTitleSubject(const QString &subject);
     bool clearDirectMediaCursor();
@@ -85,12 +96,11 @@ private:
     DocumentSessionKind m_documentKind = DocumentSessionKind::Empty;
     DirectMediaCursor m_directMediaCursor;
     MediaNavigationBoundaryState m_mediaNavigationState;
-    ActiveNavigationSnapshot m_activeNavigationSnapshot;
+    DocumentSessionPublicProjection m_publicProjection;
     ActiveZoomSnapshot m_activeZoomSnapshot;
     bool m_mediaNavigationKnown = false;
     bool m_fileDeletionInProgress = false;
     QString m_sessionErrorString;
-    QString m_windowTitleSubject;
 };
 }
 
