@@ -51,10 +51,19 @@ struct ImageActionAvailabilityProjection {
     bool containerViewerShortcutsEnabled = false;
 };
 
+struct ActiveMediaShortcutAvailabilityInput {
+    ImageActionAvailabilityProjection imageProjection;
+    bool videoMode = false;
+    bool activeNavigationActionsAvailable = false;
+    bool videoFileDeletionInProgress = false;
+};
+
 ImageActionAvailabilityProjection imageActionAvailabilityProjection(
     const ImageActionAvailabilityInput &input);
 bool imageActionAvailabilityShortcutsEnabledForScope(
     const ImageActionAvailabilityProjection &projection,
+    KiriView::ApplicationActions::ImageShortcutScope scope);
+bool activeMediaShortcutsEnabledForScope(const ActiveMediaShortcutAvailabilityInput &input,
     KiriView::ApplicationActions::ImageShortcutScope scope);
 
 namespace KiriView::ApplicationActions {

@@ -10,6 +10,8 @@
 namespace KiriView::Bridge {
 RustImageActionAvailabilityInput rustImageActionAvailabilityInput(
     const ::ImageActionAvailabilityInput &input);
+RustImageActionAvailabilityProjection rustImageActionAvailabilityProjection(
+    const ::ImageActionAvailabilityProjection &projection);
 RustImageShortcutScope rustImageShortcutScope(ApplicationActions::ImageShortcutScope scope);
 RustVideoShortcutAvailabilityInput rustVideoShortcutAvailabilityInput(
     const ApplicationActions::VideoShortcutAvailabilityInput &input);

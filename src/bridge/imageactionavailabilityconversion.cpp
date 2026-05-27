@@ -21,6 +21,32 @@ RustImageActionAvailabilityInput rustImageActionAvailabilityInput(
     };
 }
 
+RustImageActionAvailabilityProjection rustImageActionAvailabilityProjection(
+    const ::ImageActionAvailabilityProjection &projection)
+{
+    return RustImageActionAvailabilityProjection {
+        projection.canUseReadyActions,
+        projection.canUseRotateActions,
+        projection.canUseTwoPageModeActions,
+        projection.canUseRightToLeftReadingActions,
+        projection.rightToLeftReadingActive,
+        projection.twoPageModeActive,
+        projection.helpShortcutsEnabled,
+        projection.viewerShortcutsEnabled,
+        projection.readyShortcutsEnabled,
+        projection.readyViewerShortcutsEnabled,
+        projection.twoPageViewerShortcutsEnabled,
+        projection.rightToLeftReadingShortcutsEnabled,
+        projection.rightToLeftReadingViewerShortcutsEnabled,
+        projection.rotateShortcutsEnabled,
+        projection.rotateViewerShortcutsEnabled,
+        projection.pannableShortcutsEnabled,
+        projection.pannableViewerShortcutsEnabled,
+        projection.containerShortcutsEnabled,
+        projection.containerViewerShortcutsEnabled,
+    };
+}
+
 RustImageShortcutScope rustImageShortcutScope(ApplicationActions::ImageShortcutScope scope)
 {
     using Scope = ApplicationActions::ImageShortcutScope;

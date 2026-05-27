@@ -141,6 +141,9 @@ public:
     int availabilityRevision() const;
 
     Q_INVOKABLE bool shortcutsEnabledForScope(ImageActionAvailability::ShortcutScope scope) const;
+    Q_INVOKABLE bool mediaShortcutsEnabledForScope(ImageActionAvailability::ShortcutScope scope,
+        bool videoMode, bool activeNavigationActionsAvailable,
+        bool videoFileDeletionInProgress) const;
 
 Q_SIGNALS:
     void availabilityChanged();

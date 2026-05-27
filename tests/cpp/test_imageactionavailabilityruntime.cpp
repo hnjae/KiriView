@@ -16,6 +16,7 @@ private Q_SLOTS:
     void unchangedInputsDoNotNotifyOrRevise();
     void scanBoundaryIsImageLocalRuntimeState();
     void shortcutScopeLookupUsesProjectionFields();
+    void mediaShortcutScopeLookupCombinesSessionAndVideoInputs();
 };
 
 void TestImageActionAvailabilityRuntime::defaultProjectionStartsDisabledAndUnrevised()
@@ -96,6 +97,25 @@ void TestImageActionAvailabilityRuntime::shortcutScopeLookupUsesProjectionFields
         runtime.containerShortcutsEnabled());
     QVERIFY(!runtime.shortcutsEnabledForScope(Scope::ImageSelectionShortcutScope));
     QVERIFY(!runtime.shortcutsEnabledForScope(Scope::PageViewerShortcutScope));
+}
+
+void TestImageActionAvailabilityRuntime::mediaShortcutScopeLookupCombinesSessionAndVideoInputs()
+{
+    using Scope = KiriView::ApplicationActions::ImageShortcutScope;
+
+    KiriView::ApplicationActions::ImageActionAvailabilityRuntime runtime;
+    runtime.setImageReady(true);
+
+    QVERIFY(runtime.mediaShortcutsEnabledForScope(
+        Scope::ImageSelectionShortcutScope, false, true, false));
+    QVERIFY(
+        runtime.mediaShortcutsEnabledForScope(Scope::PageViewerShortcutScope, true, true, false));
+    QVERIFY(
+        !runtime.mediaShortcutsEnabledForScope(Scope::PageViewerShortcutScope, true, false, false));
+    QVERIFY(
+        runtime.mediaShortcutsEnabledForScope(Scope::ReadyViewerShortcutScope, true, true, false));
+    QVERIFY(
+        !runtime.mediaShortcutsEnabledForScope(Scope::ReadyViewerShortcutScope, true, true, true));
 }
 
 QTEST_GUILESS_MAIN(TestImageActionAvailabilityRuntime)

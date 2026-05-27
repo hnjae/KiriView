@@ -18,7 +18,9 @@ private Q_SLOTS:
     void readyActionAvailabilityRejectsCompetingModes();
     void shortcutAvailabilityUsesViewerAndRuntimeGates();
     void policyScopeLookupUsesApplicationScope();
+    void activeMediaScopeLookupUsesSessionNavigationInput();
     void shortcutScopeLookupUsesProjectionFields();
+    void facadeMediaScopeLookupUsesRuntimePolicy();
     void settersNotifyOnlyWhenInputsChange();
 };
 
@@ -192,6 +194,35 @@ void TestImageActionAvailability::policyScopeLookupUsesApplicationScope()
         !imageActionAvailabilityShortcutsEnabledForScope(projection, Scope::ViewerShortcutScope));
 }
 
+void TestImageActionAvailability::activeMediaScopeLookupUsesSessionNavigationInput()
+{
+    using Scope = KiriView::ApplicationActions::ImageShortcutScope;
+
+    ImageActionAvailabilityProjection projection;
+    projection.helpShortcutsEnabled = true;
+    projection.viewerShortcutsEnabled = true;
+    projection.readyViewerShortcutsEnabled = true;
+
+    ActiveMediaShortcutAvailabilityInput input;
+    input.imageProjection = projection;
+    input.activeNavigationActionsAvailable = true;
+
+    QVERIFY(activeMediaShortcutsEnabledForScope(input, Scope::ImageSelectionShortcutScope));
+    QVERIFY(activeMediaShortcutsEnabledForScope(input, Scope::PageViewerShortcutScope));
+
+    input.activeNavigationActionsAvailable = false;
+    QVERIFY(!activeMediaShortcutsEnabledForScope(input, Scope::ImageSelectionShortcutScope));
+    QVERIFY(!activeMediaShortcutsEnabledForScope(input, Scope::PageViewerShortcutScope));
+
+    input.activeNavigationActionsAvailable = true;
+    input.videoMode = true;
+    input.videoFileDeletionInProgress = true;
+    QVERIFY(activeMediaShortcutsEnabledForScope(input, Scope::PageShortcutScope));
+    QVERIFY(!activeMediaShortcutsEnabledForScope(input, Scope::ReadyViewerShortcutScope));
+
+    QVERIFY(!activeMediaShortcutsEnabledForScope(input, static_cast<Scope>(999)));
+}
+
 void TestImageActionAvailability::shortcutScopeLookupUsesProjectionFields()
 {
     ImageActionAvailability availability;
@@ -240,6 +271,23 @@ void TestImageActionAvailability::shortcutScopeLookupUsesProjectionFields()
         availability.containerViewerShortcutsEnabled());
     QVERIFY(!availability.shortcutsEnabledForScope(
         static_cast<ImageActionAvailability::ShortcutScope>(999)));
+}
+
+void TestImageActionAvailability::facadeMediaScopeLookupUsesRuntimePolicy()
+{
+    ImageActionAvailability availability;
+    availability.setImageReady(true);
+
+    QVERIFY(availability.mediaShortcutsEnabledForScope(
+        ImageActionAvailability::ImageSelectionShortcutScope, false, true, false));
+    QVERIFY(availability.mediaShortcutsEnabledForScope(
+        ImageActionAvailability::ImageSelectionViewerShortcutScope, true, true, false));
+    QVERIFY(!availability.mediaShortcutsEnabledForScope(
+        ImageActionAvailability::ImageSelectionViewerShortcutScope, true, false, false));
+    QVERIFY(availability.mediaShortcutsEnabledForScope(
+        ImageActionAvailability::ReadyViewerShortcutScope, true, true, false));
+    QVERIFY(!availability.mediaShortcutsEnabledForScope(
+        ImageActionAvailability::ReadyViewerShortcutScope, true, true, true));
 }
 
 void TestImageActionAvailability::settersNotifyOnlyWhenInputsChange()

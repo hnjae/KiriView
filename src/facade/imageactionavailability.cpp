@@ -222,3 +222,11 @@ bool ImageActionAvailability::shortcutsEnabledForScope(
 {
     return m_runtime.shortcutsEnabledForScope(applicationShortcutScope(scope));
 }
+
+bool ImageActionAvailability::mediaShortcutsEnabledForScope(
+    ImageActionAvailability::ShortcutScope scope, bool videoMode,
+    bool activeNavigationActionsAvailable, bool videoFileDeletionInProgress) const
+{
+    return m_runtime.mediaShortcutsEnabledForScope(applicationShortcutScope(scope), videoMode,
+        activeNavigationActionsAvailable, videoFileDeletionInProgress);
+}

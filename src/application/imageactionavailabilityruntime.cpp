@@ -225,6 +225,19 @@ bool ImageActionAvailabilityRuntime::shortcutsEnabledForScope(ImageShortcutScope
     return imageActionAvailabilityShortcutsEnabledForScope(m_projection, scope);
 }
 
+bool ImageActionAvailabilityRuntime::mediaShortcutsEnabledForScope(ImageShortcutScope scope,
+    bool videoMode, bool activeNavigationActionsAvailable, bool videoFileDeletionInProgress) const
+{
+    return activeMediaShortcutsEnabledForScope(
+        ActiveMediaShortcutAvailabilityInput {
+            m_projection,
+            videoMode,
+            activeNavigationActionsAvailable,
+            videoFileDeletionInProgress,
+        },
+        scope);
+}
+
 void ImageActionAvailabilityRuntime::setBool(bool &target, bool value)
 {
     if (target == value) {

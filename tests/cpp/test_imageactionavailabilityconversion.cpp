@@ -12,6 +12,7 @@ class TestImageActionAvailabilityConversion : public QObject
 
 private Q_SLOTS:
     void imageAvailabilityInputMapsPlainFields();
+    void imageAvailabilityProjectionMapsPlainFieldsToRust();
     void projectionMapsPlainFields();
     void shortcutScopeMapsApplicationScopeValues();
     void videoAvailabilityInputMapsPlainFields();
@@ -44,6 +45,53 @@ void TestImageActionAvailabilityConversion::imageAvailabilityInputMapsPlainField
     QVERIFY(converted.two_page_mode_available);
     QVERIFY(converted.right_to_left_reading_enabled);
     QVERIFY(converted.right_to_left_reading_available);
+}
+
+void TestImageActionAvailabilityConversion::imageAvailabilityProjectionMapsPlainFieldsToRust()
+{
+    ImageActionAvailabilityProjection projection;
+    projection.canUseReadyActions = true;
+    projection.canUseRotateActions = true;
+    projection.canUseTwoPageModeActions = true;
+    projection.canUseRightToLeftReadingActions = true;
+    projection.rightToLeftReadingActive = true;
+    projection.twoPageModeActive = true;
+    projection.helpShortcutsEnabled = true;
+    projection.viewerShortcutsEnabled = true;
+    projection.readyShortcutsEnabled = true;
+    projection.readyViewerShortcutsEnabled = true;
+    projection.twoPageViewerShortcutsEnabled = true;
+    projection.rightToLeftReadingShortcutsEnabled = true;
+    projection.rightToLeftReadingViewerShortcutsEnabled = true;
+    projection.rotateShortcutsEnabled = true;
+    projection.rotateViewerShortcutsEnabled = true;
+    projection.pannableShortcutsEnabled = true;
+    projection.pannableViewerShortcutsEnabled = true;
+    projection.containerShortcutsEnabled = true;
+    projection.containerViewerShortcutsEnabled = true;
+
+    const KiriView::RustImageActionAvailabilityProjection converted
+        = KiriView::Bridge::rustImageActionAvailabilityProjection(projection);
+
+    QVERIFY(converted.can_use_ready_actions);
+    QVERIFY(converted.can_use_rotate_actions);
+    QVERIFY(converted.can_use_two_page_mode_actions);
+    QVERIFY(converted.can_use_right_to_left_reading_actions);
+    QVERIFY(converted.right_to_left_reading_active);
+    QVERIFY(converted.two_page_mode_active);
+    QVERIFY(converted.help_shortcuts_enabled);
+    QVERIFY(converted.viewer_shortcuts_enabled);
+    QVERIFY(converted.ready_shortcuts_enabled);
+    QVERIFY(converted.ready_viewer_shortcuts_enabled);
+    QVERIFY(converted.two_page_viewer_shortcuts_enabled);
+    QVERIFY(converted.right_to_left_reading_shortcuts_enabled);
+    QVERIFY(converted.right_to_left_reading_viewer_shortcuts_enabled);
+    QVERIFY(converted.rotate_shortcuts_enabled);
+    QVERIFY(converted.rotate_viewer_shortcuts_enabled);
+    QVERIFY(converted.pannable_shortcuts_enabled);
+    QVERIFY(converted.pannable_viewer_shortcuts_enabled);
+    QVERIFY(converted.container_shortcuts_enabled);
+    QVERIFY(converted.container_viewer_shortcuts_enabled);
 }
 
 void TestImageActionAvailabilityConversion::projectionMapsPlainFields()

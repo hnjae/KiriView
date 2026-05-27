@@ -83,6 +83,21 @@ mod ffi {
             input: RustImageActionAvailabilityInput,
         ) -> RustImageActionAvailabilityProjection;
 
+        #[cxx_name = "rustImageActionAvailabilityShortcutsEnabledForScope"]
+        fn rust_image_action_availability_shortcuts_enabled_for_scope(
+            projection: RustImageActionAvailabilityProjection,
+            scope: RustImageShortcutScope,
+        ) -> bool;
+
+        #[cxx_name = "rustActiveMediaShortcutsEnabledForScope"]
+        fn rust_active_media_shortcuts_enabled_for_scope(
+            projection: RustImageActionAvailabilityProjection,
+            scope: RustImageShortcutScope,
+            video_mode: bool,
+            active_navigation_actions_available: bool,
+            video_file_deletion_in_progress: bool,
+        ) -> bool;
+
         #[cxx_name = "rustVideoShortcutsEnabledForScope"]
         fn rust_video_shortcuts_enabled_for_scope(
             input: RustVideoShortcutAvailabilityInput,
@@ -148,6 +163,93 @@ fn rust_image_action_availability_projection(
         container_viewer_shortcuts_enabled: input.container_navigation_available
             && !input.file_deletion_in_progress
             && viewer_shortcuts_enabled,
+    }
+}
+
+fn rust_image_action_availability_shortcuts_enabled_for_scope(
+    projection: RustImageActionAvailabilityProjection,
+    scope: RustImageShortcutScope,
+) -> bool {
+    image_shortcuts_enabled_for_scope(projection, scope)
+}
+
+fn rust_active_media_shortcuts_enabled_for_scope(
+    projection: RustImageActionAvailabilityProjection,
+    scope: RustImageShortcutScope,
+    video_mode: bool,
+    active_navigation_actions_available: bool,
+    video_file_deletion_in_progress: bool,
+) -> bool {
+    active_media_shortcuts_enabled_for_scope(
+        projection,
+        scope,
+        video_mode,
+        active_navigation_actions_available,
+        video_file_deletion_in_progress,
+    )
+}
+
+fn image_shortcuts_enabled_for_scope(
+    projection: RustImageActionAvailabilityProjection,
+    scope: RustImageShortcutScope,
+) -> bool {
+    match scope {
+        RustImageShortcutScope::HelpShortcutScope => projection.help_shortcuts_enabled,
+        RustImageShortcutScope::ViewerShortcutScope => projection.viewer_shortcuts_enabled,
+        RustImageShortcutScope::ReadyShortcutScope => projection.ready_shortcuts_enabled,
+        RustImageShortcutScope::ReadyViewerShortcutScope => {
+            projection.ready_viewer_shortcuts_enabled
+        }
+        RustImageShortcutScope::ImageSelectionShortcutScope
+        | RustImageShortcutScope::ImageSelectionViewerShortcutScope
+        | RustImageShortcutScope::PageShortcutScope
+        | RustImageShortcutScope::PageViewerShortcutScope => false,
+        RustImageShortcutScope::RightToLeftReadingShortcutScope => {
+            projection.right_to_left_reading_shortcuts_enabled
+        }
+        RustImageShortcutScope::RightToLeftReadingViewerShortcutScope => {
+            projection.right_to_left_reading_viewer_shortcuts_enabled
+        }
+        RustImageShortcutScope::RotateShortcutScope => projection.rotate_shortcuts_enabled,
+        RustImageShortcutScope::RotateViewerShortcutScope => {
+            projection.rotate_viewer_shortcuts_enabled
+        }
+        RustImageShortcutScope::PannableShortcutScope => projection.pannable_shortcuts_enabled,
+        RustImageShortcutScope::PannableViewerShortcutScope => {
+            projection.pannable_viewer_shortcuts_enabled
+        }
+        RustImageShortcutScope::ContainerShortcutScope => projection.container_shortcuts_enabled,
+        RustImageShortcutScope::ContainerViewerShortcutScope => {
+            projection.container_viewer_shortcuts_enabled
+        }
+        _ => false,
+    }
+}
+
+fn active_media_shortcuts_enabled_for_scope(
+    projection: RustImageActionAvailabilityProjection,
+    scope: RustImageShortcutScope,
+    video_mode: bool,
+    active_navigation_actions_available: bool,
+    video_file_deletion_in_progress: bool,
+) -> bool {
+    match scope {
+        RustImageShortcutScope::ImageSelectionShortcutScope
+        | RustImageShortcutScope::PageShortcutScope => active_navigation_actions_available,
+        RustImageShortcutScope::ImageSelectionViewerShortcutScope
+        | RustImageShortcutScope::PageViewerShortcutScope => {
+            active_navigation_actions_available && projection.viewer_shortcuts_enabled
+        }
+        _ if video_mode => rust_video_shortcuts_enabled_for_scope(
+            RustVideoShortcutAvailabilityInput {
+                help_shortcuts_enabled: projection.help_shortcuts_enabled,
+                viewer_shortcuts_enabled: projection.viewer_shortcuts_enabled,
+                file_deletion_in_progress: video_file_deletion_in_progress,
+                media_navigation_active: active_navigation_actions_available,
+            },
+            scope,
+        ),
+        _ => image_shortcuts_enabled_for_scope(projection, scope),
     }
 }
 
@@ -360,6 +462,97 @@ mod tests {
         assert!(!rust_video_shortcuts_enabled_for_scope(
             input,
             RustImageShortcutScope::ContainerViewerShortcutScope
+        ));
+    }
+
+    #[test]
+    fn image_shortcut_scope_lookup_uses_projection_fields() {
+        let mut input = image_action_availability_input();
+        input.image_ready = true;
+        input.image_pannable = true;
+        input.container_navigation_available = true;
+        input.right_to_left_reading_available = true;
+
+        let projection = rust_image_action_availability_projection(input);
+
+        assert!(image_shortcuts_enabled_for_scope(
+            projection,
+            RustImageShortcutScope::HelpShortcutScope
+        ));
+        assert!(image_shortcuts_enabled_for_scope(
+            projection,
+            RustImageShortcutScope::ReadyViewerShortcutScope
+        ));
+        assert!(image_shortcuts_enabled_for_scope(
+            projection,
+            RustImageShortcutScope::RightToLeftReadingShortcutScope
+        ));
+        assert!(image_shortcuts_enabled_for_scope(
+            projection,
+            RustImageShortcutScope::PannableViewerShortcutScope
+        ));
+        assert!(image_shortcuts_enabled_for_scope(
+            projection,
+            RustImageShortcutScope::ContainerShortcutScope
+        ));
+        assert!(!image_shortcuts_enabled_for_scope(
+            projection,
+            RustImageShortcutScope::ImageSelectionShortcutScope
+        ));
+        assert!(!image_shortcuts_enabled_for_scope(
+            projection,
+            RustImageShortcutScope::PageViewerShortcutScope
+        ));
+    }
+
+    #[test]
+    fn active_media_shortcuts_own_navigation_scopes_for_image_and_video() {
+        let mut input = image_action_availability_input();
+        input.image_ready = true;
+        let projection = rust_image_action_availability_projection(input);
+
+        assert!(active_media_shortcuts_enabled_for_scope(
+            projection,
+            RustImageShortcutScope::ImageSelectionShortcutScope,
+            false,
+            true,
+            false
+        ));
+        assert!(active_media_shortcuts_enabled_for_scope(
+            projection,
+            RustImageShortcutScope::PageViewerShortcutScope,
+            true,
+            true,
+            false
+        ));
+        assert!(!active_media_shortcuts_enabled_for_scope(
+            projection,
+            RustImageShortcutScope::PageViewerShortcutScope,
+            true,
+            false,
+            false
+        ));
+    }
+
+    #[test]
+    fn active_media_shortcuts_use_video_gates_outside_navigation_scopes() {
+        let mut input = image_action_availability_input();
+        input.image_ready = true;
+        let projection = rust_image_action_availability_projection(input);
+
+        assert!(active_media_shortcuts_enabled_for_scope(
+            projection,
+            RustImageShortcutScope::ReadyViewerShortcutScope,
+            true,
+            true,
+            false
+        ));
+        assert!(!active_media_shortcuts_enabled_for_scope(
+            projection,
+            RustImageShortcutScope::ReadyViewerShortcutScope,
+            true,
+            true,
+            true
         ));
     }
 

@@ -63,6 +63,8 @@ public:
     int availabilityRevision() const;
 
     bool shortcutsEnabledForScope(ImageShortcutScope scope) const;
+    bool mediaShortcutsEnabledForScope(ImageShortcutScope scope, bool videoMode,
+        bool activeNavigationActionsAvailable, bool videoFileDeletionInProgress) const;
 
 private:
     void setBool(bool &target, bool value);

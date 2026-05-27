@@ -6,6 +6,35 @@
 #include "bridge/imageactionavailabilityconversion.h"
 #include "kiriview/src/policy/imageactionavailability.cxx.h"
 
+namespace {
+bool imageShortcutScopeKnown(KiriView::ApplicationActions::ImageShortcutScope scope)
+{
+    using KiriView::ApplicationActions::ImageShortcutScope;
+
+    switch (scope) {
+    case ImageShortcutScope::HelpShortcutScope:
+    case ImageShortcutScope::ViewerShortcutScope:
+    case ImageShortcutScope::ReadyShortcutScope:
+    case ImageShortcutScope::ReadyViewerShortcutScope:
+    case ImageShortcutScope::ImageSelectionShortcutScope:
+    case ImageShortcutScope::ImageSelectionViewerShortcutScope:
+    case ImageShortcutScope::PageShortcutScope:
+    case ImageShortcutScope::PageViewerShortcutScope:
+    case ImageShortcutScope::RightToLeftReadingShortcutScope:
+    case ImageShortcutScope::RightToLeftReadingViewerShortcutScope:
+    case ImageShortcutScope::RotateShortcutScope:
+    case ImageShortcutScope::RotateViewerShortcutScope:
+    case ImageShortcutScope::PannableShortcutScope:
+    case ImageShortcutScope::PannableViewerShortcutScope:
+    case ImageShortcutScope::ContainerShortcutScope:
+    case ImageShortcutScope::ContainerViewerShortcutScope:
+        return true;
+    }
+
+    return false;
+}
+}
+
 ImageActionAvailabilityProjection imageActionAvailabilityProjection(
     const ImageActionAvailabilityInput &input)
 {
@@ -18,41 +47,26 @@ bool imageActionAvailabilityShortcutsEnabledForScope(
     const ImageActionAvailabilityProjection &projection,
     KiriView::ApplicationActions::ImageShortcutScope scope)
 {
-    using KiriView::ApplicationActions::ImageShortcutScope;
-
-    switch (scope) {
-    case ImageShortcutScope::HelpShortcutScope:
-        return projection.helpShortcutsEnabled;
-    case ImageShortcutScope::ViewerShortcutScope:
-        return projection.viewerShortcutsEnabled;
-    case ImageShortcutScope::ReadyShortcutScope:
-        return projection.readyShortcutsEnabled;
-    case ImageShortcutScope::ReadyViewerShortcutScope:
-        return projection.readyViewerShortcutsEnabled;
-    case ImageShortcutScope::ImageSelectionShortcutScope:
-    case ImageShortcutScope::ImageSelectionViewerShortcutScope:
-    case ImageShortcutScope::PageShortcutScope:
-    case ImageShortcutScope::PageViewerShortcutScope:
+    if (!imageShortcutScopeKnown(scope)) {
         return false;
-    case ImageShortcutScope::RightToLeftReadingShortcutScope:
-        return projection.rightToLeftReadingShortcutsEnabled;
-    case ImageShortcutScope::RightToLeftReadingViewerShortcutScope:
-        return projection.rightToLeftReadingViewerShortcutsEnabled;
-    case ImageShortcutScope::RotateShortcutScope:
-        return projection.rotateShortcutsEnabled;
-    case ImageShortcutScope::RotateViewerShortcutScope:
-        return projection.rotateViewerShortcutsEnabled;
-    case ImageShortcutScope::PannableShortcutScope:
-        return projection.pannableShortcutsEnabled;
-    case ImageShortcutScope::PannableViewerShortcutScope:
-        return projection.pannableViewerShortcutsEnabled;
-    case ImageShortcutScope::ContainerShortcutScope:
-        return projection.containerShortcutsEnabled;
-    case ImageShortcutScope::ContainerViewerShortcutScope:
-        return projection.containerViewerShortcutsEnabled;
     }
 
-    return false;
+    return KiriView::rustImageActionAvailabilityShortcutsEnabledForScope(
+        KiriView::Bridge::rustImageActionAvailabilityProjection(projection),
+        KiriView::Bridge::rustImageShortcutScope(scope));
+}
+
+bool activeMediaShortcutsEnabledForScope(const ActiveMediaShortcutAvailabilityInput &input,
+    KiriView::ApplicationActions::ImageShortcutScope scope)
+{
+    if (!imageShortcutScopeKnown(scope)) {
+        return false;
+    }
+
+    return KiriView::rustActiveMediaShortcutsEnabledForScope(
+        KiriView::Bridge::rustImageActionAvailabilityProjection(input.imageProjection),
+        KiriView::Bridge::rustImageShortcutScope(scope), input.videoMode,
+        input.activeNavigationActionsAvailable, input.videoFileDeletionInProgress);
 }
 
 namespace KiriView::ApplicationActions {
