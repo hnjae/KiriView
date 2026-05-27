@@ -182,11 +182,19 @@ The floating panel remains usable in fullscreen and remains visible while video 
 
 ## Side and Thumbnail Panels
 
-KiriView provides empty shell panels for future media information and thumbnail navigation content.
+KiriView provides an empty shell Info Panel for future media information content.
 
 The Info Panel is a layout-reserving right-side panel that spans the full content height below the normal toolbar outside fullscreen, or the full window content height in fullscreen.
 
 The Thumbnail Panel is a layout-reserving bottom panel in the remaining media area to the left of the Info Panel.
+
+The Thumbnail Panel shows a horizontal, scrollable active-navigation strip when the active navigation list is known. Each strip item shows a media-type icon, not a generated preview thumbnail, above the existing active-navigation candidate name.
+
+The Thumbnail Panel uses image and video icons to distinguish supported still images from supported videos.
+
+The number of visible strip items matches the active navigation total count. When active navigation is unavailable or unknown, the strip is empty.
+
+Activating a Thumbnail Panel strip item opens the item at that active navigation number, using the same document-session dispatch path as the toolbar page-number entry.
 
 When both panels are visible, the Info Panel occupies the right side for the full content height, and the Thumbnail Panel occupies only the bottom of the media area that remains to its left.
 

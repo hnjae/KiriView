@@ -6,6 +6,8 @@ The toolbar provides page navigation with Previous and Next actions, the current
 
 The document session owns the active navigation projection used by the toolbar readout, page-number entry, shared Previous, Next, First, and Last actions, menus, and shortcuts. QML renders that projection and calls session dispatch; it does not decide whether the active item is backed by direct media siblings or image-document pages.
 
+The document session also owns the active navigation thumbnail-strip projection. When the active navigation list is known, the strip exposes one item per supported active navigation item with the same ordering and 1-based numbering as the toolbar readout and page-number entry.
+
 For ordinary direct media URL scopes, archive document scopes, and directly opened directory document scopes, the page navigation controls count and select supported images and supported videos together.
 
 First and Last are page navigation actions available through their configured shortcuts and menus. They open the first or last known page or media item in the current scope.
@@ -18,7 +20,11 @@ The active navigation projection has these user-visible invariants: `available` 
 
 For image-document scopes, the active navigation projection consumes the image document's full page-navigation snapshot rather than a single raw current page number. The snapshot includes the current first and last visible page for spread-aware display, total count, previous and next availability, and first and last boundary state, so QML does not recompute spread boundaries.
 
+For image-document scopes, the thumbnail strip uses the image document page-navigation candidate names. Directory and archive document names may be document-relative paths so that same-basename items in different folders remain distinguishable.
+
 When a new directory, archive, or ordinary direct media scope is being listed and KiriView has no confirmed supported item list for that same scope yet, the current page number and total item count are unknown, and KiriView does not treat the current item as the first or last item.
+
+During that unknown interval, KiriView also exposes an empty thumbnail strip rather than a partial or stale item list.
 
 Entering a page number and pressing Enter or clicking the image viewing area opens the nearest valid page, returns focus to the image viewing area, and restores viewer keyboard shortcuts.
 
