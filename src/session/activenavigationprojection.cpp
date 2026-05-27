@@ -3,6 +3,8 @@
 
 #include "activenavigationprojection.h"
 
+#include <utility>
+
 namespace {
 KiriView::ActiveNavigationSnapshot unavailableActiveNavigation() { return {}; }
 
@@ -65,30 +67,61 @@ KiriView::ActiveNavigationSnapshot imageDocumentActiveNavigationSnapshot(
     });
 }
 
-KiriView::ActiveNavigationDispatchTarget dispatchTargetForSource(
+KiriView::ActiveNavigationDispatchOperation previousOperationForSource(
     KiriView::ActiveNavigationSourceKind sourceKind)
 {
     switch (sourceKind) {
     case KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia:
-        return KiriView::ActiveNavigationDispatchTarget::OrdinaryDirectMedia;
+        return KiriView::OpenPreviousDirectMediaNavigationOperation {};
     case KiriView::ActiveNavigationSourceKind::ImageDocumentPages:
-        return KiriView::ActiveNavigationDispatchTarget::ImageDocumentPages;
+        return KiriView::OpenPreviousImageDocumentPageOperation {};
     case KiriView::ActiveNavigationSourceKind::None:
-        return KiriView::ActiveNavigationDispatchTarget::None;
+        return std::monostate {};
     }
 
-    return KiriView::ActiveNavigationDispatchTarget::None;
+    return std::monostate {};
 }
 
-KiriView::ActiveNavigationDispatchPlan dispatchToSource(
-    KiriView::ActiveNavigationSourceKind sourceKind,
-    KiriView::ActiveNavigationDispatchOperation operation, int number)
+KiriView::ActiveNavigationDispatchOperation nextOperationForSource(
+    KiriView::ActiveNavigationSourceKind sourceKind)
 {
+    switch (sourceKind) {
+    case KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia:
+        return KiriView::OpenNextDirectMediaNavigationOperation {};
+    case KiriView::ActiveNavigationSourceKind::ImageDocumentPages:
+        return KiriView::OpenNextImageDocumentPageOperation {};
+    case KiriView::ActiveNavigationSourceKind::None:
+        return std::monostate {};
+    }
+
+    return std::monostate {};
+}
+
+KiriView::ActiveNavigationDispatchOperation numberedOperationForSource(
+    KiriView::ActiveNavigationSourceKind sourceKind, int number)
+{
+    switch (sourceKind) {
+    case KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia:
+        return KiriView::OpenDirectMediaNavigationAtNumberOperation { number };
+    case KiriView::ActiveNavigationSourceKind::ImageDocumentPages:
+        return KiriView::OpenImageDocumentPageAtNumberOperation { number };
+    case KiriView::ActiveNavigationSourceKind::None:
+        return std::monostate {};
+    }
+
+    return std::monostate {};
+}
+
+KiriView::ActiveNavigationDispatchPlan dispatchOperation(
+    KiriView::ActiveNavigationDispatchOperation operation)
+{
+    if (std::holds_alternative<std::monostate>(operation)) {
+        return {};
+    }
+
     return KiriView::ActiveNavigationDispatchPlan {
-        dispatchTargetForSource(sourceKind),
-        operation,
+        std::move(operation),
         KiriView::ActiveNavigationDispatchOutcome::Dispatch,
-        number,
     };
 }
 
@@ -96,10 +129,8 @@ KiriView::ActiveNavigationDispatchPlan boundaryOutcome(
     KiriView::ActiveNavigationDispatchOutcome outcome)
 {
     return KiriView::ActiveNavigationDispatchPlan {
-        KiriView::ActiveNavigationDispatchTarget::None,
-        KiriView::ActiveNavigationDispatchOperation::None,
+        std::monostate {},
         outcome,
-        0,
     };
 }
 }
@@ -108,8 +139,7 @@ namespace KiriView {
 bool ActiveNavigationDispatchPlan::shouldDispatch() const
 {
     return outcome == ActiveNavigationDispatchOutcome::Dispatch
-        && target != ActiveNavigationDispatchTarget::None
-        && operation != ActiveNavigationDispatchOperation::None;
+        && !std::holds_alternative<std::monostate>(operation);
 }
 
 ActiveNavigationSnapshot projectActiveNavigation(ActiveNavigationSourceKind sourceKind,
@@ -190,32 +220,29 @@ ActiveNavigationDispatchPlan activeNavigationDispatchPlan(ActiveNavigationSource
     switch (request.kind) {
     case ActiveNavigationDispatchRequestKind::Previous:
         if (snapshot.canOpenPrevious) {
-            return dispatchToSource(sourceKind, ActiveNavigationDispatchOperation::OpenPrevious, 0);
+            return dispatchOperation(previousOperationForSource(sourceKind));
         }
         return snapshot.known && snapshot.editable && snapshot.atKnownFirst
             ? boundaryOutcome(ActiveNavigationDispatchOutcome::FirstBoundary)
             : ActiveNavigationDispatchPlan {};
     case ActiveNavigationDispatchRequestKind::Next:
         if (snapshot.canOpenNext) {
-            return dispatchToSource(sourceKind, ActiveNavigationDispatchOperation::OpenNext, 0);
+            return dispatchOperation(nextOperationForSource(sourceKind));
         }
         return snapshot.known && snapshot.editable && snapshot.atKnownLast
             ? boundaryOutcome(ActiveNavigationDispatchOutcome::LastBoundary)
             : ActiveNavigationDispatchPlan {};
     case ActiveNavigationDispatchRequestKind::First:
         return snapshot.known && snapshot.editable && !snapshot.atKnownFirst
-            ? dispatchToSource(
-                  sourceKind, ActiveNavigationDispatchOperation::OpenNumber, request.number)
+            ? dispatchOperation(numberedOperationForSource(sourceKind, request.number))
             : ActiveNavigationDispatchPlan {};
     case ActiveNavigationDispatchRequestKind::Last:
         return snapshot.known && snapshot.editable && !snapshot.atKnownLast
-            ? dispatchToSource(
-                  sourceKind, ActiveNavigationDispatchOperation::OpenNumber, snapshot.count)
+            ? dispatchOperation(numberedOperationForSource(sourceKind, snapshot.count))
             : ActiveNavigationDispatchPlan {};
     case ActiveNavigationDispatchRequestKind::Number:
         return snapshot.known && snapshot.editable
-            ? dispatchToSource(
-                  sourceKind, ActiveNavigationDispatchOperation::OpenNumber, request.number)
+            ? dispatchOperation(numberedOperationForSource(sourceKind, request.number))
             : ActiveNavigationDispatchPlan {};
     }
 

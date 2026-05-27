@@ -5,6 +5,7 @@
 
 #include <QObject>
 #include <QTest>
+#include <variant>
 
 namespace {
 void compareUnavailable(const KiriView::ActiveNavigationSnapshot &snapshot)
@@ -31,6 +32,12 @@ void compareUnknown(const KiriView::ActiveNavigationSnapshot &snapshot)
     QVERIFY(!snapshot.atKnownLast);
     QCOMPARE(snapshot.currentNumber, 0);
     QCOMPARE(snapshot.count, 0);
+}
+
+template <typename Operation>
+const Operation *dispatchOperation(const KiriView::ActiveNavigationDispatchPlan &plan)
+{
+    return std::get_if<Operation>(&plan.operation);
 }
 }
 
@@ -189,17 +196,25 @@ void TestActiveNavigationProjection::directMediaDispatchPlanFollowsProjectedBoun
         KiriView::previousActiveNavigationDispatchRequest());
     QVERIFY(previous.shouldDispatch());
     QCOMPARE(previous.outcome, KiriView::ActiveNavigationDispatchOutcome::Dispatch);
-    QCOMPARE(previous.target, KiriView::ActiveNavigationDispatchTarget::OrdinaryDirectMedia);
-    QCOMPARE(previous.operation, KiriView::ActiveNavigationDispatchOperation::OpenPrevious);
-    QCOMPARE(previous.number, 0);
+    QVERIFY(dispatchOperation<KiriView::OpenPreviousDirectMediaNavigationOperation>(previous)
+        != nullptr);
 
     const KiriView::ActiveNavigationDispatchPlan next = KiriView::activeNavigationDispatchPlan(
         KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia, snapshot,
         KiriView::nextActiveNavigationDispatchRequest());
     QVERIFY(next.shouldDispatch());
     QCOMPARE(next.outcome, KiriView::ActiveNavigationDispatchOutcome::Dispatch);
-    QCOMPARE(next.target, KiriView::ActiveNavigationDispatchTarget::OrdinaryDirectMedia);
-    QCOMPARE(next.operation, KiriView::ActiveNavigationDispatchOperation::OpenNext);
+    QVERIFY(dispatchOperation<KiriView::OpenNextDirectMediaNavigationOperation>(next) != nullptr);
+
+    const KiriView::ActiveNavigationDispatchPlan numbered = KiriView::activeNavigationDispatchPlan(
+        KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia, snapshot,
+        KiriView::numberedActiveNavigationDispatchRequest(3));
+    QVERIFY(numbered.shouldDispatch());
+    QCOMPARE(numbered.outcome, KiriView::ActiveNavigationDispatchOutcome::Dispatch);
+    const auto *numberedOperation
+        = dispatchOperation<KiriView::OpenDirectMediaNavigationAtNumberOperation>(numbered);
+    QVERIFY(numberedOperation != nullptr);
+    QCOMPARE(numberedOperation->number, 3);
 
     const KiriView::ActiveNavigationSnapshot firstSnapshot = KiriView::projectActiveNavigation(
         KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia,
@@ -223,27 +238,30 @@ void TestActiveNavigationProjection::imageDocumentDispatchPlanUsesNumberedPageTa
         KiriView::firstActiveNavigationDispatchRequest());
     QVERIFY(first.shouldDispatch());
     QCOMPARE(first.outcome, KiriView::ActiveNavigationDispatchOutcome::Dispatch);
-    QCOMPARE(first.target, KiriView::ActiveNavigationDispatchTarget::ImageDocumentPages);
-    QCOMPARE(first.operation, KiriView::ActiveNavigationDispatchOperation::OpenNumber);
-    QCOMPARE(first.number, 1);
+    const auto *firstOperation
+        = dispatchOperation<KiriView::OpenImageDocumentPageAtNumberOperation>(first);
+    QVERIFY(firstOperation != nullptr);
+    QCOMPARE(firstOperation->number, 1);
 
     const KiriView::ActiveNavigationDispatchPlan last = KiriView::activeNavigationDispatchPlan(
         KiriView::ActiveNavigationSourceKind::ImageDocumentPages, snapshot,
         KiriView::lastActiveNavigationDispatchRequest());
     QVERIFY(last.shouldDispatch());
     QCOMPARE(last.outcome, KiriView::ActiveNavigationDispatchOutcome::Dispatch);
-    QCOMPARE(last.target, KiriView::ActiveNavigationDispatchTarget::ImageDocumentPages);
-    QCOMPARE(last.operation, KiriView::ActiveNavigationDispatchOperation::OpenNumber);
-    QCOMPARE(last.number, 5);
+    const auto *lastOperation
+        = dispatchOperation<KiriView::OpenImageDocumentPageAtNumberOperation>(last);
+    QVERIFY(lastOperation != nullptr);
+    QCOMPARE(lastOperation->number, 5);
 
     const KiriView::ActiveNavigationDispatchPlan numbered = KiriView::activeNavigationDispatchPlan(
         KiriView::ActiveNavigationSourceKind::ImageDocumentPages, snapshot,
         KiriView::numberedActiveNavigationDispatchRequest(4));
     QVERIFY(numbered.shouldDispatch());
     QCOMPARE(numbered.outcome, KiriView::ActiveNavigationDispatchOutcome::Dispatch);
-    QCOMPARE(numbered.target, KiriView::ActiveNavigationDispatchTarget::ImageDocumentPages);
-    QCOMPARE(numbered.operation, KiriView::ActiveNavigationDispatchOperation::OpenNumber);
-    QCOMPARE(numbered.number, 4);
+    const auto *numberedOperation
+        = dispatchOperation<KiriView::OpenImageDocumentPageAtNumberOperation>(numbered);
+    QVERIFY(numberedOperation != nullptr);
+    QCOMPARE(numberedOperation->number, 4);
 }
 
 void TestActiveNavigationProjection::previousNextDispatchPlanReportsEditableBoundaries()

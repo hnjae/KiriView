@@ -21,6 +21,7 @@
 #include <optional>
 #include <type_traits>
 #include <utility>
+#include <variant>
 
 namespace {
 QString genericFileDeletionErrorMessage()
@@ -259,40 +260,28 @@ void DocumentSessionRuntime::executeActiveNavigationDispatchPlan(
         return;
     }
 
-    switch (plan.target) {
-    case ActiveNavigationDispatchTarget::OrdinaryDirectMedia:
-        switch (plan.operation) {
-        case ActiveNavigationDispatchOperation::OpenPrevious:
-            openPreviousMedia();
-            return;
-        case ActiveNavigationDispatchOperation::OpenNext:
-            openNextMedia();
-            return;
-        case ActiveNavigationDispatchOperation::OpenNumber:
-            openMediaAtNumber(plan.number);
-            return;
-        case ActiveNavigationDispatchOperation::None:
-            return;
-        }
-        return;
-    case ActiveNavigationDispatchTarget::ImageDocumentPages:
-        switch (plan.operation) {
-        case ActiveNavigationDispatchOperation::OpenPrevious:
-            m_imageDocument.openPreviousImage();
-            return;
-        case ActiveNavigationDispatchOperation::OpenNext:
-            m_imageDocument.openNextImage();
-            return;
-        case ActiveNavigationDispatchOperation::OpenNumber:
-            m_imageDocument.openImageAtPage(plan.number);
-            return;
-        case ActiveNavigationDispatchOperation::None:
-            return;
-        }
-        return;
-    case ActiveNavigationDispatchTarget::None:
-        return;
-    }
+    std::visit(
+        [this](const auto &operation) {
+            using Operation = std::decay_t<decltype(operation)>;
+            if constexpr (std::is_same_v<Operation, OpenPreviousDirectMediaNavigationOperation>) {
+                openPreviousMedia();
+            } else if constexpr (std::is_same_v<Operation,
+                                     OpenNextDirectMediaNavigationOperation>) {
+                openNextMedia();
+            } else if constexpr (std::is_same_v<Operation,
+                                     OpenDirectMediaNavigationAtNumberOperation>) {
+                openMediaAtNumber(operation.number);
+            } else if constexpr (std::is_same_v<Operation,
+                                     OpenPreviousImageDocumentPageOperation>) {
+                m_imageDocument.openPreviousImage();
+            } else if constexpr (std::is_same_v<Operation, OpenNextImageDocumentPageOperation>) {
+                m_imageDocument.openNextImage();
+            } else if constexpr (std::is_same_v<Operation,
+                                     OpenImageDocumentPageAtNumberOperation>) {
+                m_imageDocument.openImageAtPage(operation.number);
+            }
+        },
+        plan.operation);
 }
 
 void DocumentSessionRuntime::deleteDisplayedFile(FileDeletionMode mode)

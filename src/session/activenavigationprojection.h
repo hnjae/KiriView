@@ -6,6 +6,8 @@
 
 #include "navigation/medianavigationmodel.h"
 
+#include <variant>
+
 namespace KiriView {
 enum class ActiveNavigationSourceKind {
     None,
@@ -27,25 +29,32 @@ enum class ActiveNavigationDispatchRequestKind {
     Number,
 };
 
-enum class ActiveNavigationDispatchTarget {
-    None,
-    OrdinaryDirectMedia,
-    ImageDocumentPages,
-};
-
-enum class ActiveNavigationDispatchOperation {
-    None,
-    OpenPrevious,
-    OpenNext,
-    OpenNumber,
-};
-
 enum class ActiveNavigationDispatchOutcome {
     NoOp,
     Dispatch,
     FirstBoundary,
     LastBoundary,
 };
+
+struct OpenPreviousDirectMediaNavigationOperation {
+};
+struct OpenNextDirectMediaNavigationOperation {
+};
+struct OpenDirectMediaNavigationAtNumberOperation {
+    int number = 0;
+};
+struct OpenPreviousImageDocumentPageOperation {
+};
+struct OpenNextImageDocumentPageOperation {
+};
+struct OpenImageDocumentPageAtNumberOperation {
+    int number = 0;
+};
+
+using ActiveNavigationDispatchOperation = std::variant<std::monostate,
+    OpenPreviousDirectMediaNavigationOperation, OpenNextDirectMediaNavigationOperation,
+    OpenDirectMediaNavigationAtNumberOperation, OpenPreviousImageDocumentPageOperation,
+    OpenNextImageDocumentPageOperation, OpenImageDocumentPageAtNumberOperation>;
 
 struct ActiveNavigationSnapshot {
     bool available = false;
@@ -76,10 +85,8 @@ struct ActiveNavigationDispatchRequest {
 };
 
 struct ActiveNavigationDispatchPlan {
-    ActiveNavigationDispatchTarget target = ActiveNavigationDispatchTarget::None;
-    ActiveNavigationDispatchOperation operation = ActiveNavigationDispatchOperation::None;
+    ActiveNavigationDispatchOperation operation;
     ActiveNavigationDispatchOutcome outcome = ActiveNavigationDispatchOutcome::NoOp;
-    int number = 0;
 
     bool shouldDispatch() const;
 };
