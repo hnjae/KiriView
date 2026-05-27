@@ -44,6 +44,11 @@ Controls.MenuBar {
             text: KI18n.i18nc("@action:inmenu", "&Open")
         }
 
+        MenuActionItem {
+            action: root.actions.openWithMenuAction
+            text: KI18n.i18nc("@action:inmenu", "Open &With...")
+        }
+
         Controls.MenuSeparator {}
 
         MenuActionItem {

@@ -96,6 +96,11 @@ bool DocumentSessionState::displayedFileDeletionAvailable() const
     return m_publicProjection.displayedFileDeletionAvailable;
 }
 
+bool DocumentSessionState::displayedMediaOpenWithAvailable() const
+{
+    return m_publicProjection.displayedMediaOpenWithAvailable;
+}
+
 const DocumentSessionPublicProjection &DocumentSessionState::publicProjection() const
 {
     return m_publicProjection;
@@ -185,9 +190,13 @@ void DocumentSessionState::setPublicProjection(DocumentSessionPublicProjection p
     const bool displayedFileDeletionAvailabilityChanged
         = m_publicProjection.displayedFileDeletionAvailable
         != projection.displayedFileDeletionAvailable;
+    const bool displayedMediaOpenWithAvailabilityChanged
+        = m_publicProjection.displayedMediaOpenWithAvailable
+        != projection.displayedMediaOpenWithAvailable;
 
     if (!activeNavigationChanged && !windowTitleSubjectChanged
-        && !displayedFileDeletionAvailabilityChanged) {
+        && !displayedFileDeletionAvailabilityChanged
+        && !displayedMediaOpenWithAvailabilityChanged) {
         return;
     }
 
@@ -202,6 +211,9 @@ void DocumentSessionState::setPublicProjection(DocumentSessionPublicProjection p
     }
     if (displayedFileDeletionAvailabilityChanged) {
         changes.push_back(DocumentSessionChange::FileDeletionAvailability);
+    }
+    if (displayedMediaOpenWithAvailabilityChanged) {
+        changes.push_back(DocumentSessionChange::OpenWithAvailability);
     }
 
     publish(std::move(changes));

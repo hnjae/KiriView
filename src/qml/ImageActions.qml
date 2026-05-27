@@ -18,6 +18,7 @@ Item {
     property bool thumbnailPanelVisible: false
 
     readonly property var openAction: openManagedAction.proxy
+    readonly property var openWithAction: openWithManagedAction.proxy
     readonly property var moveToTrashAction: moveToTrashManagedAction.proxy
     readonly property var deleteFileAction: deleteFileManagedAction.proxy
     readonly property var previousContainerAction: previousContainerManagedAction.proxy
@@ -46,6 +47,7 @@ Item {
     readonly property var showMenubarAction: showMenubarManagedAction.proxy
     readonly property var quitAction: quitManagedAction.proxy
     readonly property var openMenuAction: openManagedAction.menuProxy
+    readonly property var openWithMenuAction: openWithManagedAction.menuProxy
     readonly property var moveToTrashMenuAction: moveToTrashManagedAction.menuProxy
     readonly property var deleteFileMenuAction: deleteFileManagedAction.menuProxy
     readonly property var previousContainerMenuAction: previousContainerManagedAction.menuProxy
@@ -73,6 +75,7 @@ Item {
     readonly property var quitMenuAction: quitManagedAction.menuProxy
     readonly property bool imageMode: root.documentSession.documentKind === KiriDocumentSession.Image
     readonly property bool videoMode: root.documentSession.documentKind === KiriDocumentSession.Video
+    readonly property bool openWithAvailable: root.documentSession.displayedMediaOpenWithAvailable && root.actionAvailability.helpShortcutsEnabled
     readonly property bool documentDeletionAvailable: root.documentSession.displayedFileDeletionAvailable && root.actionAvailability.helpShortcutsEnabled
     readonly property bool activeNavigationActionsAvailable: root.documentSession.activeNavigationAvailable && root.documentSession.activeNavigationKnown && !root.documentSession.fileDeletionInProgress && root.actionAvailability.helpShortcutsEnabled
     readonly property bool previousPageActionAvailable: root.activeNavigationActionsAvailable
@@ -84,8 +87,8 @@ Item {
     readonly property var applicationMenuNavigationActions: root.rightToLeftReadingActive ? [nextContainerManagedAction.menuProxy, previousContainerManagedAction.menuProxy] : [previousContainerManagedAction.menuProxy, nextContainerManagedAction.menuProxy]
     readonly property var applicationMenuDocumentActions: root.imageMode || root.videoMode ? [applicationMenuNavigationSeparator, previousImageManagedAction.menuProxy, nextImageManagedAction.menuProxy, firstImageManagedAction.menuProxy, lastImageManagedAction.menuProxy] : []
     readonly property var applicationMenuImageActions: root.imageMode ? root.applicationMenuNavigationActions.concat([rotateClockwiseManagedAction.menuProxy, rotateCounterclockwiseManagedAction.menuProxy, twoPageModeManagedAction.menuProxy, rightToLeftReadingManagedAction.menuProxy]) : []
-    readonly property var applicationMenuActions: [openManagedAction.menuProxy, applicationMenuFileSeparator, moveToTrashManagedAction.menuProxy, deleteFileManagedAction.menuProxy].concat(root.applicationMenuDocumentActions, root.applicationMenuImageActions, [applicationMenuViewSeparator, infoPanelManagedAction.menuProxy, thumbnailPanelManagedAction.menuProxy, fullscreenManagedAction.menuProxy, applicationMenuSettingsSeparator, showMenubarManagedAction.menuProxy, configureShortcutsManagedAction.menuProxy, applicationMenuHelpSeparator, shortcutHelpManagedAction.menuProxy, applicationMenuQuitSeparator, quitManagedAction.menuProxy])
-    readonly property var contextMenuActions: [openManagedAction.menuProxy, contextMenuNavigationSeparator, previousImageManagedAction.menuProxy, nextImageManagedAction.menuProxy, firstImageManagedAction.menuProxy, lastImageManagedAction.menuProxy, contextMenuImageSeparator, rotateClockwiseManagedAction.menuProxy, rotateCounterclockwiseManagedAction.menuProxy, zoomInManagedAction.menuProxy, zoomOutManagedAction.menuProxy, fitManagedAction.menuProxy, fitHeightManagedAction.menuProxy, fitWidthManagedAction.menuProxy, actualSizeManagedAction.menuProxy, contextMenuViewSeparator, infoPanelManagedAction.menuProxy, thumbnailPanelManagedAction.menuProxy, fullscreenManagedAction.menuProxy]
+    readonly property var applicationMenuActions: [openManagedAction.menuProxy, openWithManagedAction.menuProxy, applicationMenuFileSeparator, moveToTrashManagedAction.menuProxy, deleteFileManagedAction.menuProxy].concat(root.applicationMenuDocumentActions, root.applicationMenuImageActions, [applicationMenuViewSeparator, infoPanelManagedAction.menuProxy, thumbnailPanelManagedAction.menuProxy, fullscreenManagedAction.menuProxy, applicationMenuSettingsSeparator, showMenubarManagedAction.menuProxy, configureShortcutsManagedAction.menuProxy, applicationMenuHelpSeparator, shortcutHelpManagedAction.menuProxy, applicationMenuQuitSeparator, quitManagedAction.menuProxy])
+    readonly property var contextMenuActions: [openManagedAction.menuProxy, openWithManagedAction.menuProxy, contextMenuNavigationSeparator, previousImageManagedAction.menuProxy, nextImageManagedAction.menuProxy, firstImageManagedAction.menuProxy, lastImageManagedAction.menuProxy, contextMenuImageSeparator, rotateClockwiseManagedAction.menuProxy, rotateCounterclockwiseManagedAction.menuProxy, zoomInManagedAction.menuProxy, zoomOutManagedAction.menuProxy, fitManagedAction.menuProxy, fitHeightManagedAction.menuProxy, fitWidthManagedAction.menuProxy, actualSizeManagedAction.menuProxy, contextMenuViewSeparator, infoPanelManagedAction.menuProxy, thumbnailPanelManagedAction.menuProxy, fullscreenManagedAction.menuProxy]
 
     signal openDialogRequested
     signal imageBoundaryReached(string message)
@@ -180,6 +183,19 @@ Item {
         menuText: KI18n.i18nc("@action:inmenu", "&Open")
 
         onTriggered: root.openDialogRequested()
+    }
+
+    ManagedAction {
+        id: openWithManagedAction
+
+        actionEnabled: root.openWithAvailable
+        actionId: KiriViewApplication.FileOpenWithAction
+        application: root.application
+        bindEnabled: true
+        displayHint: Kirigami.DisplayHint.AlwaysHide
+        menuText: KI18n.i18nc("@action:inmenu", "Open &With...")
+
+        onTriggered: root.documentSession.openCurrentMediaWith()
     }
 
     ManagedAction {

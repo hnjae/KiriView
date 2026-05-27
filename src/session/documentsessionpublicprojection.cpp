@@ -104,6 +104,7 @@ DocumentSessionPublicProjection projectDocumentSessionPublicState(
         directMediaSizeForInput(input, projection.sourceKind),
         projection.activeNavigation,
     });
+    projection.displayedMediaOpenWithAvailable = input.displayedMediaOpenWithAvailable;
     projection.displayedFileDeletionAvailable = displayedFileDeletionAvailableForInput(input);
     return projection;
 }

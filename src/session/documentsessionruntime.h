@@ -6,6 +6,7 @@
 
 #include "document/filedeletion.h"
 #include "document/imagedocumentruntimedependencies.h"
+#include "document/mediaopenwith.h"
 #include "navigation/mediacandidateprovider.h"
 #include "navigation/medianavigationmodel.h"
 #include "session/activenavigationprojection.h"
@@ -35,6 +36,7 @@ class MediaPredecodeCoordinator;
 struct DocumentSessionRuntimeDependencies {
     MediaNavigationCandidateProvider mediaCandidateProvider;
     FileOperationProvider fileOperationProvider;
+    MediaOpenWithProvider mediaOpenWithProvider;
     ImageDocumentRuntimeDependencyOverrides imageDocumentDependencies;
 };
 
@@ -54,6 +56,7 @@ public:
     QString errorString() const;
     QString windowTitleSubject() const;
     bool displayedFileDeletionAvailable() const;
+    bool displayedMediaOpenWithAvailable() const;
     bool fileDeletionInProgress() const;
     bool activeZoomPercentAvailable() const;
     bool activeZoomPercentKnown() const;
@@ -90,6 +93,7 @@ public:
     ActiveNavigationDispatchOutcome requestPreviousActiveNavigation();
     ActiveNavigationDispatchOutcome requestNextActiveNavigation();
     void deleteDisplayedFile(FileDeletionMode mode);
+    void openCurrentMediaWith(MediaOpenWithCallback callback);
 
 private:
     ActiveNavigationDispatchOutcome executeActiveNavigationDispatchRequest(
@@ -119,6 +123,7 @@ private:
     void cancelMediaDeletion();
     void startMediaDeletion(
         FileDeletionMode mode, std::vector<MediaNavigationCandidate> candidates = {});
+    QUrl currentMediaOpenWithTargetUrl() const;
     void finishMediaDeletion(DocumentSessionMediaDeletionCompletion completion);
     void executeMediaDeletionCompletionPlan(
         const DocumentSessionMediaDeletionCompletionPlan &plan, const QString &errorString);
@@ -141,6 +146,8 @@ private:
     DocumentSessionState m_state;
     DocumentSessionMediaNavigationRuntime m_mediaNavigationRuntime;
     DocumentSessionMediaDeletionRuntime m_mediaDeletionRuntime;
+    MediaOpenWithProvider m_mediaOpenWithProvider;
+    ImageIoJob m_mediaOpenWithJob;
     std::unique_ptr<MediaPredecodeCoordinator> m_mediaPredecodeCoordinator;
     bool m_routingSource = false;
 };

@@ -16,6 +16,7 @@ enum class DocumentSessionPublicSignal {
     ErrorString,
     WindowTitleSubject,
     ActiveZoomReadout,
+    DisplayedMediaOpenWithAvailability,
     DisplayedFileDeletionAvailability,
     FileDeletionInProgress,
     ActiveNavigation,
@@ -27,6 +28,7 @@ struct DocumentSessionPublicSignalOperations {
     std::function<void()> errorStringChanged;
     std::function<void()> windowTitleSubjectChanged;
     std::function<void()> activeZoomReadoutChanged;
+    std::function<void()> displayedMediaOpenWithAvailabilityChanged;
     std::function<void()> displayedFileDeletionAvailabilityChanged;
     std::function<void()> fileDeletionInProgressChanged;
     std::function<void()> activeNavigationChanged;

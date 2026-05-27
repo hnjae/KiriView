@@ -74,6 +74,11 @@ QString ImageDocumentRuntime::windowTitleFileName() const { return state.windowT
 
 QUrl ImageDocumentRuntime::displayedUrl() const { return state.displayedUrl(); }
 
+ImagePageScopeLocation ImageDocumentRuntime::displayedImagePageScope() const
+{
+    return state.displayedImagePageScope();
+}
+
 QSize ImageDocumentRuntime::imageSize() const
 {
     return controllers->spreadController().imageSize();

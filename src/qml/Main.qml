@@ -362,6 +362,10 @@ StatefulApp.StatefulWindow {
                 });
             }
 
+            function onOpenWithFailed(errorString) {
+                toastNotification.show(errorString.length > 0 ? errorString : KI18n.i18nc("@info:status", "Could not open media with another application"), "general");
+            }
+
             function onSourceUrlChanged() {
                 toastNotification.dismissIfScope("image-boundary");
             }

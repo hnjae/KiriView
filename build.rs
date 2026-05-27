@@ -48,8 +48,23 @@ const NATIVE_LIBRARIES: &[NativeLibrary] = &[
         pkg_config_package: None,
     },
     NativeLibrary {
+        link_name: "KF6KIOGui",
+        file_name: "libKF6KIOGui.so",
+        pkg_config_package: None,
+    },
+    NativeLibrary {
         link_name: "KF6KIOWidgets",
         file_name: "libKF6KIOWidgets.so",
+        pkg_config_package: None,
+    },
+    NativeLibrary {
+        link_name: "KF6JobWidgets",
+        file_name: "libKF6JobWidgets.so",
+        pkg_config_package: None,
+    },
+    NativeLibrary {
+        link_name: "KF6Service",
+        file_name: "libKF6Service.so",
         pkg_config_package: None,
     },
     NativeLibrary {
@@ -632,8 +647,11 @@ fn add_kf6_include_dirs(dirs: &mut BTreeSet<PathBuf>, include_root: &Path) {
     for suffix in [
         "KF6/KArchive",
         "KF6/KIOCore",
+        "KF6/KIOGui",
         "KF6/KIOWidgets",
         "KF6/KIO",
+        "KF6/KJobWidgets",
+        "KF6/KService",
         "KF6/KCoreAddons",
         "KF6/KConfig",
         "KF6/KConfigCore",

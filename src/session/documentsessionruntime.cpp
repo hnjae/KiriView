@@ -10,6 +10,7 @@
 #include "navigation/mediaformatregistry.h"
 #include "predecode/mediapredecodecoordinator.h"
 #include "predecode/predecodecachebudget.h"
+#include "session/mediaopenwithtarget.h"
 
 #include <QObject>
 #include <QString>
@@ -34,6 +35,8 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner, KiriImageDocument
     , m_state(std::move(changeCallback))
     , m_mediaNavigationRuntime(std::move(dependencies.mediaCandidateProvider))
     , m_mediaDeletionRuntime(std::move(dependencies.fileOperationProvider))
+    , m_mediaOpenWithProvider(
+          mediaOpenWithProviderWithDefault(std::move(dependencies.mediaOpenWithProvider)))
     , m_mediaPredecodeCoordinator(std::make_unique<MediaPredecodeCoordinator>(owner,
           std::move(dependencies.imageDocumentDependencies.imageDecode),
           std::move(dependencies.imageDocumentDependencies.powerSaver),
@@ -47,6 +50,7 @@ DocumentSessionRuntime::~DocumentSessionRuntime()
 {
     m_mediaNavigationRuntime.cancel();
     m_mediaDeletionRuntime.cancel();
+    m_mediaOpenWithJob.cancel();
 }
 
 QUrl DocumentSessionRuntime::sourceUrl() const { return m_state.sourceUrl(); }
@@ -78,6 +82,11 @@ QString DocumentSessionRuntime::windowTitleSubject() const { return m_state.wind
 bool DocumentSessionRuntime::displayedFileDeletionAvailable() const
 {
     return m_state.displayedFileDeletionAvailable();
+}
+
+bool DocumentSessionRuntime::displayedMediaOpenWithAvailable() const
+{
+    return m_state.displayedMediaOpenWithAvailable();
 }
 
 bool DocumentSessionRuntime::fileDeletionInProgress() const
@@ -338,6 +347,20 @@ void DocumentSessionRuntime::deleteDisplayedFile(FileDeletionMode mode)
         [this, mode](DocumentSessionMediaNavigationCandidatesResult result) mutable {
             startMediaDeletion(mode, std::move(result.candidates));
         });
+}
+
+void DocumentSessionRuntime::openCurrentMediaWith(MediaOpenWithCallback callback)
+{
+    const QUrl targetUrl = currentMediaOpenWithTargetUrl();
+    if (targetUrl.isEmpty()) {
+        if (callback) {
+            callback(MediaOpenWithResult::Failed, QString());
+        }
+        return;
+    }
+
+    m_mediaOpenWithJob
+        = m_mediaOpenWithProvider(m_owner, MediaOpenWithRequest { targetUrl }, std::move(callback));
 }
 
 void DocumentSessionRuntime::connectDocuments()
@@ -728,6 +751,18 @@ void DocumentSessionRuntime::startMediaDeletion(
     }
 }
 
+QUrl DocumentSessionRuntime::currentMediaOpenWithTargetUrl() const
+{
+    return mediaOpenWithTargetUrl(MediaOpenWithTargetInput {
+        m_state.documentKind(),
+        m_imageDocument.status() == KiriImageDocument::Status::Ready,
+        m_imageDocument.displayedUrl(),
+        m_imageDocument.displayedImagePageScope(),
+        m_videoDocument.status() == KiriVideoDocument::Status::Ready,
+        m_videoDocument.sourceUrl(),
+    });
+}
+
 void DocumentSessionRuntime::finishMediaDeletion(DocumentSessionMediaDeletionCompletion completion)
 {
     m_state.setFileDeletionInProgress(false);
@@ -886,6 +921,7 @@ DocumentSessionPublicProjectionInput DocumentSessionRuntime::publicProjectionInp
         !m_state.directMediaCursor().pendingUrl.isEmpty(),
         !m_videoDocument.sourceUrl().isEmpty(),
         m_videoDocument.status() == KiriVideoDocument::Status::Error,
+        !currentMediaOpenWithTargetUrl().isEmpty(),
     };
 }
 

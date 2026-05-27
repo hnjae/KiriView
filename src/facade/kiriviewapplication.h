@@ -41,6 +41,7 @@ public:
 
     enum ActionId {
         FileOpenAction = 0,
+        FileOpenWithAction,
         FileMoveToTrashAction,
         FileDeleteAction,
         GoPreviousArchiveAction,

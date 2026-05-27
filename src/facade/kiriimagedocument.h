@@ -25,6 +25,7 @@
 #include <vector>
 
 namespace KiriView {
+class ImagePageScopeLocation;
 class ImageDocumentRuntime;
 }
 
@@ -126,6 +127,7 @@ public:
     QString errorString() const;
     QString windowTitleFileName() const;
     QUrl displayedUrl() const;
+    KiriView::ImagePageScopeLocation displayedImagePageScope() const;
     QSize imageSize() const;
     QSize primaryImageSize() const;
     QSize secondaryImageSize() const;

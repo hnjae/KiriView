@@ -26,6 +26,7 @@ struct DocumentSessionPublicProjectionInput {
     bool directImageReplacementPending = false;
     bool videoSourcePresent = false;
     bool videoError = false;
+    bool displayedMediaOpenWithAvailable = false;
 };
 
 DocumentSessionPublicProjection projectDocumentSessionPublicState(

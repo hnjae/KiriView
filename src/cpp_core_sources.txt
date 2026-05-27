@@ -33,6 +33,7 @@ src/bridge/imagespreadpolicyconversion.cpp
 src/bridge/imagezoomstateconversion.cpp
 src/rendering/displayedimagesurfacestate.cpp
 src/document/filedeletion.cpp
+src/document/mediaopenwith.cpp
 src/document/imageremovalfallback.cpp
 src/rendering/imagerendernodestate.cpp
 src/decoding/heifcontainer.cpp
@@ -182,6 +183,7 @@ src/session/documentsessionmediadeletionruntime.cpp
 src/session/documentsessionpublicprojection.cpp
 src/session/documentsessionrouteplan.cpp
 src/session/documentsessionruntime.cpp
+src/session/mediaopenwithtarget.cpp
 src/facade/documentsessionpublicsignals.cpp
 src/session/documentsessionstate.cpp
 src/session/windowtitleprojection.cpp

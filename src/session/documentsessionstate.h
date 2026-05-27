@@ -32,6 +32,7 @@ public:
     const ActiveNavigationSnapshot &activeNavigationSnapshot() const;
     ActiveNavigationSourceKind activeNavigationSourceKind() const;
     ActiveNavigationBoundaryScope activeNavigationBoundaryScope() const;
+    bool displayedMediaOpenWithAvailable() const;
     bool displayedFileDeletionAvailable() const;
     const DocumentSessionPublicProjection &publicProjection() const;
     const DirectMediaCursor &directMediaCursor() const;

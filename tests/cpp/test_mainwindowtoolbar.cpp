@@ -528,7 +528,7 @@ void TestMainWindowToolBar::viewerRightClickOpensContextMenuOnlyFromMediaViewpor
     QVERIFY(mediaViewportSlot != nullptr);
     QVERIFY(toolbar != nullptr);
     QVERIFY(!popupOpen(contextMenu));
-    QCOMPARE(contextMenu->property("actionCount").toInt(), 19);
+    QCOMPARE(contextMenu->property("actionCount").toInt(), 20);
 
     clickItem(fixture.window, toolbar, Qt::RightButton);
     QTRY_VERIFY(!popupOpen(contextMenu));

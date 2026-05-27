@@ -7,6 +7,7 @@
 #include "document/filedeletion.h"
 #include "document/imagedocumentruntime.h"
 #include "facade/imagedocumentpublicsignals.h"
+#include "location/imagelocation.h"
 
 #include <memory>
 #include <utility>
@@ -146,6 +147,11 @@ QString KiriImageDocument::errorString() const { return m_runtime->errorString()
 QString KiriImageDocument::windowTitleFileName() const { return m_runtime->windowTitleFileName(); }
 
 QUrl KiriImageDocument::displayedUrl() const { return m_runtime->displayedUrl(); }
+
+KiriView::ImagePageScopeLocation KiriImageDocument::displayedImagePageScope() const
+{
+    return m_runtime->displayedImagePageScope();
+}
 
 QSize KiriImageDocument::imageSize() const { return m_runtime->imageSize(); }
 

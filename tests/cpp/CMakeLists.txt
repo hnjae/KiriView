@@ -19,6 +19,8 @@ find_package(KF6CoreAddons CONFIG REQUIRED)
 find_package(KF6I18n CONFIG REQUIRED)
 find_package(KF6KirigamiAddons CONFIG REQUIRED)
 find_package(KF6KIO CONFIG REQUIRED)
+find_package(KF6JobWidgets CONFIG REQUIRED)
+find_package(KF6Service CONFIG REQUIRED)
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(LibArchive REQUIRED IMPORTED_TARGET libarchive)
 pkg_check_modules(LibHeif REQUIRED IMPORTED_TARGET libheif)
@@ -136,7 +138,10 @@ target_link_libraries(kiriview_test_core PUBLIC
     KF6::I18n
     KF6::I18nQml
     KF6::KIOCore
+    KF6::KIOGui
     KF6::KIOWidgets
+    KF6::JobWidgets
+    KF6::Service
     KirigamiAddonsStatefulApp
     PkgConfig::LibArchive
     PkgConfig::LibHeif

@@ -51,6 +51,7 @@ public:
     QString errorString() const;
     QString windowTitleFileName() const;
     QUrl displayedUrl() const;
+    ImagePageScopeLocation displayedImagePageScope() const;
     QSize imageSize() const;
     QSize primaryImageSize() const;
     QSize secondaryImageSize() const;

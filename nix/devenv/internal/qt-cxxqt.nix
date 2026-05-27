@@ -13,7 +13,9 @@ let
       kconfig
       kimageformats
       ki18n
+      kjobwidgets
       kirigami-addons
+      kservice
       qtbase
       qtdeclarative
       qtimageformats
@@ -65,8 +67,10 @@ let
   kconfigDev = pkgs.kdePackages.kconfig.dev or pkgs.kdePackages.kconfig;
   kcoreaddonsDev = pkgs.kdePackages.kcoreaddons.dev or pkgs.kdePackages.kcoreaddons;
   ki18nDev = pkgs.kdePackages.ki18n.dev or pkgs.kdePackages.ki18n;
+  kjobwidgetsDev = pkgs.kdePackages.kjobwidgets.dev or pkgs.kdePackages.kjobwidgets;
   kirigamiAddonsDev = pkgs.kdePackages.kirigami-addons.dev or pkgs.kdePackages.kirigami-addons;
   kioDev = pkgs.kdePackages.kio.dev or pkgs.kdePackages.kio;
+  kserviceDev = pkgs.kdePackages.kservice.dev or pkgs.kdePackages.kservice;
   qtmultimediaDev = pkgs.kdePackages.qtmultimedia.dev or pkgs.kdePackages.qtmultimedia;
   libpngDev = pkgs.libpng.dev or pkgs.libpng;
   appQmlRoot = "${config.devenv.root}/target/cxxqt/qml_modules";
@@ -134,7 +138,10 @@ let
     ".devenv/profile/include/KF6/KI18nQml"
     ".devenv/profile/include/KF6/KIO"
     ".devenv/profile/include/KF6/KIOCore"
+    ".devenv/profile/include/KF6/KIOGui"
     ".devenv/profile/include/KF6/KIOWidgets"
+    ".devenv/profile/include/KF6/KJobWidgets"
+    ".devenv/profile/include/KF6/KService"
     ".devenv/profile/include/KirigamiAddonsStatefulApp"
     ".devenv/profile/include/QtGui/${qtVersion}/QtGui"
     ".devenv/profile/mkspecs/linux-g++"
@@ -148,7 +155,10 @@ let
     "${kirigamiAddonsDev}/include/KirigamiAddonsStatefulApp"
     "${kioDev}/include/KF6/KIO"
     "${kioDev}/include/KF6/KIOCore"
+    "${kioDev}/include/KF6/KIOGui"
     "${kioDev}/include/KF6/KIOWidgets"
+    "${kjobwidgetsDev}/include/KF6/KJobWidgets"
+    "${kserviceDev}/include/KF6/KService"
     "${libpngDev}/include/libpng16"
     "${pkgs.kdePackages.qtmultimedia}/include"
     "${pkgs.kdePackages.qtmultimedia}/include/QtMultimedia"

@@ -14,6 +14,7 @@ enum class MenuPresentation {
 
 enum class ActionId {
     FileOpenAction = 0,
+    FileOpenWithAction,
     FileMoveToTrashAction,
     FileDeleteAction,
     GoPreviousArchiveAction,

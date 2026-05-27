@@ -544,6 +544,7 @@ Item {
     }
 
     Kirigami.Action { id: stubOpenMenuAction; text: "Open" }
+    Kirigami.Action { id: stubOpenWithMenuAction; text: "Open With..." }
     Kirigami.Action { id: stubMoveToTrashMenuAction; text: "Move to Trash" }
     Kirigami.Action { id: stubDeleteFileMenuAction; text: "Delete Permanently" }
     Kirigami.Action { id: stubQuitMenuAction; text: "Quit" }
@@ -572,6 +573,7 @@ Item {
         id: menuActions
 
         readonly property var openMenuAction: stubOpenMenuAction
+        readonly property var openWithMenuAction: stubOpenWithMenuAction
         readonly property var moveToTrashMenuAction: stubMoveToTrashMenuAction
         readonly property var deleteFileMenuAction: stubDeleteFileMenuAction
         readonly property var quitMenuAction: stubQuitMenuAction

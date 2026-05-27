@@ -22,6 +22,7 @@ enum class DocumentSessionChange {
     ErrorString,
     WindowTitleSubject,
     ActiveZoomReadout,
+    OpenWithAvailability,
     FileDeletionAvailability,
     FileDeletionInProgress,
     ActiveNavigation,
@@ -39,6 +40,7 @@ struct DocumentSessionPublicProjection {
     ActiveNavigationBoundaryScope boundaryScope = ActiveNavigationBoundaryScope::None;
     ActiveNavigationSnapshot activeNavigation;
     QString windowTitleSubject;
+    bool displayedMediaOpenWithAvailable = false;
     bool displayedFileDeletionAvailable = false;
 };
 }

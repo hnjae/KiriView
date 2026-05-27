@@ -38,6 +38,8 @@ KiriView::DocumentSessionPublicSignalOperations recordingOperations(QStringList 
         = [&events]() { events.append(QStringLiteral("windowTitleSubject")); };
     operations.activeZoomReadoutChanged
         = [&events]() { events.append(QStringLiteral("activeZoomReadout")); };
+    operations.displayedMediaOpenWithAvailabilityChanged
+        = [&events]() { events.append(QStringLiteral("displayedMediaOpenWithAvailability")); };
     operations.displayedFileDeletionAvailabilityChanged
         = [&events]() { events.append(QStringLiteral("displayedFileDeletionAvailability")); };
     operations.fileDeletionInProgressChanged
@@ -63,6 +65,8 @@ void TestDocumentSessionPublicSignals::publicSignalPlansReturnSignalsInEmissionO
         { Signal::WindowTitleSubject });
     comparePublicSignals(KiriView::documentSessionPublicSignals(Change::ActiveZoomReadout),
         { Signal::ActiveZoomReadout });
+    comparePublicSignals(KiriView::documentSessionPublicSignals(Change::OpenWithAvailability),
+        { Signal::DisplayedMediaOpenWithAvailability });
     comparePublicSignals(KiriView::documentSessionPublicSignals(Change::FileDeletionAvailability),
         { Signal::DisplayedFileDeletionAvailability });
     comparePublicSignals(KiriView::documentSessionPublicSignals(Change::FileDeletionInProgress),
@@ -86,12 +90,14 @@ void TestDocumentSessionPublicSignals::emitterDispatchesChangeSignalsInProjectio
     QStringList events;
     const KiriView::DocumentSessionPublicSignalEmitter emitter(recordingOperations(events));
 
-    emitter.emitChanges({ KiriView::DocumentSessionChange::FileDeletionAvailability,
+    emitter.emitChanges({ KiriView::DocumentSessionChange::OpenWithAvailability,
+        KiriView::DocumentSessionChange::FileDeletionAvailability,
         KiriView::DocumentSessionChange::FileDeletionInProgress });
     emitter.emitSignal(KiriView::DocumentSessionPublicSignal::SourceUrl);
 
     QCOMPARE(events,
         QStringList({
+            QStringLiteral("displayedMediaOpenWithAvailability"),
             QStringLiteral("displayedFileDeletionAvailability"),
             QStringLiteral("fileDeletionInProgress"),
             QStringLiteral("sourceUrl"),

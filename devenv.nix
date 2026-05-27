@@ -46,9 +46,11 @@ in
     kdePackages.kconfig
     kdePackages.kimageformats
     kdePackages.ki18n
+    kdePackages.kjobwidgets
     kdePackages.kirigami
     kdePackages.kirigami-addons
     kdePackages.kio
+    kdePackages.kservice
     kdePackages.kio-extras
     kdePackages.kio-fuse
     kdePackages.qqc2-desktop-style

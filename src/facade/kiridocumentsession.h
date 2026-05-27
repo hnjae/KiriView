@@ -28,6 +28,8 @@ class KiriDocumentSession : public QObject
     Q_PROPERTY(QStringList openDialogNameFilters READ openDialogNameFilters CONSTANT)
     Q_PROPERTY(bool displayedFileDeletionAvailable READ displayedFileDeletionAvailable NOTIFY
             displayedFileDeletionAvailabilityChanged)
+    Q_PROPERTY(bool displayedMediaOpenWithAvailable READ displayedMediaOpenWithAvailable NOTIFY
+            displayedMediaOpenWithAvailabilityChanged)
     Q_PROPERTY(bool fileDeletionInProgress READ fileDeletionInProgress NOTIFY
             fileDeletionInProgressChanged)
     Q_PROPERTY(bool activeZoomPercentAvailable READ activeZoomPercentAvailable NOTIFY
@@ -98,6 +100,7 @@ public:
     QString windowTitleSubject() const;
     QStringList openDialogNameFilters() const;
     bool displayedFileDeletionAvailable() const;
+    bool displayedMediaOpenWithAvailable() const;
     bool fileDeletionInProgress() const;
     bool activeZoomPercentAvailable() const;
     bool activeZoomPercentKnown() const;
@@ -127,6 +130,7 @@ public:
     Q_INVOKABLE QString requestPreviousActiveNavigationBoundaryText();
     Q_INVOKABLE QString requestNextActiveNavigationBoundaryText();
     Q_INVOKABLE void deleteDisplayedFile(KiriDocumentSession::DeletionMode mode);
+    Q_INVOKABLE void openCurrentMediaWith();
 
 Q_SIGNALS:
     void sourceUrlChanged();
@@ -134,9 +138,11 @@ Q_SIGNALS:
     void errorStringChanged();
     void windowTitleSubjectChanged();
     void displayedFileDeletionAvailabilityChanged();
+    void displayedMediaOpenWithAvailabilityChanged();
     void fileDeletionInProgressChanged();
     void activeZoomReadoutChanged();
     void activeNavigationChanged();
+    void openWithFailed(const QString &errorString);
 
 private:
     struct ResolvedDependenciesTag {

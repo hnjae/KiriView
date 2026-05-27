@@ -124,15 +124,37 @@ private:
     std::vector<std::shared_ptr<ManualMediaCandidateLoad>> m_loads;
 };
 
+class FakeMediaOpenWithProvider
+{
+public:
+    KiriView::MediaOpenWithProvider provider()
+    {
+        return [this](QObject *, KiriView::MediaOpenWithRequest request,
+                   KiriView::MediaOpenWithCallback callback) {
+            requests.push_back(std::move(request));
+            if (callback) {
+                callback(result, errorString);
+            }
+            return KiriView::ImageIoJob();
+        };
+    }
+
+    std::vector<KiriView::MediaOpenWithRequest> requests;
+    KiriView::MediaOpenWithResult result = KiriView::MediaOpenWithResult::Succeeded;
+    QString errorString;
+};
+
 std::unique_ptr<KiriDocumentSession> createSessionWithProvider(
     KiriView::MediaNavigationCandidateProvider mediaCandidateProvider,
     KiriView::TestSupport::ManualFileOperationProvider *fileOperations = nullptr,
     KiriView::TestSupport::ManualImageDataLoader *imageDataLoader = nullptr,
     KiriView::ImageNavigationCandidateProvider imageCandidateProvider = {},
-    KiriView::ImageDataDecoder imageDataDecoder = KiriView::TestSupport::staticImageDataDecoder())
+    KiriView::ImageDataDecoder imageDataDecoder = KiriView::TestSupport::staticImageDataDecoder(),
+    KiriView::MediaOpenWithProvider mediaOpenWithProvider = {})
 {
     KiriView::DocumentSessionRuntimeDependencies dependencies;
     dependencies.mediaCandidateProvider = std::move(mediaCandidateProvider);
+    dependencies.mediaOpenWithProvider = std::move(mediaOpenWithProvider);
     dependencies.imageDocumentDependencies.candidateProvider = std::move(imageCandidateProvider);
     if (fileOperations != nullptr) {
         dependencies.fileOperationProvider
@@ -210,6 +232,9 @@ private Q_SLOTS:
     void activeNavigationClearsWhenSwitchingFromKnownDirectMedia();
     void activeNavigationAvailabilityUsesSameSnapshotAsCurrentAndCount();
     void activeNavigationBoundaryScopeFollowsSessionSource();
+    void openWithIsUnavailableInEmptySession();
+    void openWithUsesCurrentDirectImageUrl();
+    void openWithFailureEmitsToastSignal();
     void twoPageSpreadLastBoundaryProjectsThroughActiveNavigation();
     void videoNavigationKeepsStillImagePredecodeCache();
     void videoActiveNavigationExposesCurrentNumberAndCount();
@@ -976,6 +1001,80 @@ void TestKiriDocumentSession::activeNavigationBoundaryScopeFollowsSessionSource(
     QTRY_VERIFY(session->activeNavigationKnown());
     QCOMPARE(session->activeNavigationBoundaryScope(),
         KiriDocumentSession::ActiveNavigationBoundaryScope::ImageNavigationBoundary);
+}
+
+void TestKiriDocumentSession::openWithIsUnavailableInEmptySession()
+{
+    FakeMediaCandidateProvider mediaProvider;
+    FakeMediaOpenWithProvider openWithProvider;
+    std::unique_ptr<KiriDocumentSession> session
+        = createSessionWithProvider(mediaProvider.provider(), nullptr, nullptr, {},
+            KiriView::TestSupport::staticImageDataDecoder(), openWithProvider.provider());
+
+    QVERIFY(!session->displayedMediaOpenWithAvailable());
+
+    session->openCurrentMediaWith();
+
+    QVERIFY(openWithProvider.requests.empty());
+}
+
+void TestKiriDocumentSession::openWithUsesCurrentDirectImageUrl()
+{
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+
+    const QString imagePath = directory.filePath(QStringLiteral("01.png"));
+    QVERIFY(writeTestImage(imagePath));
+    const QUrl imageUrl = localUrl(imagePath);
+
+    FakeMediaCandidateProvider mediaProvider;
+    mediaProvider.setMedia(
+        localUrl(directory.path() + QStringLiteral("/")), { mediaCandidate(imageUrl) });
+    FakeMediaOpenWithProvider openWithProvider;
+    std::unique_ptr<KiriDocumentSession> session
+        = createSessionWithProvider(mediaProvider.provider(), nullptr, nullptr, {},
+            KiriView::TestSupport::staticImageDataDecoder(), openWithProvider.provider());
+
+    QSignalSpy availabilitySpy(
+        session.get(), &KiriDocumentSession::displayedMediaOpenWithAvailabilityChanged);
+    session->setSourceUrl(imageUrl);
+
+    QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Ready);
+    QVERIFY(session->displayedMediaOpenWithAvailable());
+    QVERIFY(availabilitySpy.count() > 0);
+
+    session->openCurrentMediaWith();
+
+    QCOMPARE(openWithProvider.requests.size(), std::size_t(1));
+    QCOMPARE(openWithProvider.requests.at(0).targetUrl, imageUrl);
+}
+
+void TestKiriDocumentSession::openWithFailureEmitsToastSignal()
+{
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+
+    const QString imagePath = directory.filePath(QStringLiteral("01.png"));
+    QVERIFY(writeTestImage(imagePath));
+    const QUrl imageUrl = localUrl(imagePath);
+
+    FakeMediaCandidateProvider mediaProvider;
+    mediaProvider.setMedia(
+        localUrl(directory.path() + QStringLiteral("/")), { mediaCandidate(imageUrl) });
+    FakeMediaOpenWithProvider openWithProvider;
+    openWithProvider.result = KiriView::MediaOpenWithResult::Failed;
+    openWithProvider.errorString = QStringLiteral("launcher failed");
+    std::unique_ptr<KiriDocumentSession> session
+        = createSessionWithProvider(mediaProvider.provider(), nullptr, nullptr, {},
+            KiriView::TestSupport::staticImageDataDecoder(), openWithProvider.provider());
+    QSignalSpy failureSpy(session.get(), &KiriDocumentSession::openWithFailed);
+
+    session->setSourceUrl(imageUrl);
+    QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Ready);
+    session->openCurrentMediaWith();
+
+    QCOMPARE(failureSpy.count(), 1);
+    QCOMPARE(failureSpy.at(0).at(0).toString(), QStringLiteral("launcher failed"));
 }
 
 void TestKiriDocumentSession::twoPageSpreadLastBoundaryProjectsThroughActiveNavigation()

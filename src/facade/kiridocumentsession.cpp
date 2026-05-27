@@ -101,6 +101,8 @@ KiriView::DocumentSessionPublicSignalOperations publicSignalOperations(KiriDocum
         = [&session]() { Q_EMIT session.windowTitleSubjectChanged(); };
     operations.displayedFileDeletionAvailabilityChanged
         = [&session]() { Q_EMIT session.displayedFileDeletionAvailabilityChanged(); };
+    operations.displayedMediaOpenWithAvailabilityChanged
+        = [&session]() { Q_EMIT session.displayedMediaOpenWithAvailabilityChanged(); };
     operations.fileDeletionInProgressChanged
         = [&session]() { Q_EMIT session.fileDeletionInProgressChanged(); };
     operations.activeZoomReadoutChanged
@@ -169,6 +171,11 @@ QStringList KiriDocumentSession::openDialogNameFilters() const
 bool KiriDocumentSession::displayedFileDeletionAvailable() const
 {
     return m_runtime->displayedFileDeletionAvailable();
+}
+
+bool KiriDocumentSession::displayedMediaOpenWithAvailable() const
+{
+    return m_runtime->displayedMediaOpenWithAvailable();
 }
 
 bool KiriDocumentSession::fileDeletionInProgress() const
@@ -288,6 +295,16 @@ QString KiriDocumentSession::requestNextActiveNavigationBoundaryText()
 void KiriDocumentSession::deleteDisplayedFile(DeletionMode mode)
 {
     m_runtime->deleteDisplayedFile(toFileDeletionMode(mode));
+}
+
+void KiriDocumentSession::openCurrentMediaWith()
+{
+    m_runtime->openCurrentMediaWith(
+        [this](KiriView::MediaOpenWithResult result, const QString &errorString) {
+            if (result == KiriView::MediaOpenWithResult::Failed) {
+                Q_EMIT openWithFailed(errorString);
+            }
+        });
 }
 
 void KiriDocumentSession::handleSessionChanges(
