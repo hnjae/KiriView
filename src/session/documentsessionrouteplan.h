@@ -7,6 +7,8 @@
 #include "session/documentsessiontypes.h"
 
 #include <QUrl>
+#include <variant>
+#include <vector>
 
 namespace KiriView {
 enum class DocumentSessionRouteKind {
@@ -16,66 +18,88 @@ enum class DocumentSessionRouteKind {
     ImageDocument,
 };
 
-enum class DocumentSessionRouteCursorAction {
-    None,
-    Clear,
-    SetDirectVideo,
-    RequestDirectImage,
-    ClearThenRequestDirectImage,
+struct ClearSessionErrorStringRouteOperation {
 };
 
-enum class DocumentSessionRouteSourceIdentityAction {
-    None,
-    Clear,
-    UseOriginalUrl,
-    UseImageDocumentSourceUrl,
+struct CancelMediaNavigationRouteOperation {
 };
 
-enum class DocumentSessionRouteDocumentClear {
-    None,
-    Image,
-    Video,
-    ImageAndVideo,
+struct CancelMediaDeletionRouteOperation {
 };
 
-enum class DocumentSessionRouteDocumentEnter {
-    None,
-    Empty,
-    Image,
-    Video,
+struct ClearMediaNavigationRouteOperation {
 };
 
-struct DocumentSessionRouteMediaNavigationPlan {
-    bool clearBeforeRouting = false;
-    bool refreshAfterRouting = false;
+struct ClearDirectMediaCursorRouteOperation {
 };
 
-struct DocumentSessionRoutePreparationPlan {
-    bool clearSessionErrorString = false;
-    bool cancelMediaNavigation = false;
-    bool cancelMediaDeletion = false;
+struct SetDirectVideoCursorRouteOperation {
+    QUrl url;
 };
 
-struct DocumentSessionRouteDocumentPlan {
-    DocumentSessionRouteDocumentClear clear = DocumentSessionRouteDocumentClear::None;
-    DocumentSessionRouteDocumentEnter enter = DocumentSessionRouteDocumentEnter::None;
-    bool syncDirectImageCursorFromDocument = false;
+struct RequestDirectImageCursorRouteOperation {
+    QUrl url;
 };
 
-struct DocumentSessionRoutePredecodePlan {
-    bool clear = false;
+struct ClearThenRequestDirectImageCursorRouteOperation {
+    QUrl url;
 };
+
+struct ClearImageDocumentRouteOperation {
+};
+
+struct LeaveVideoModeRouteOperation {
+};
+
+struct EnterEmptyDocumentRouteOperation {
+};
+
+struct EnterImageDocumentRouteOperation {
+    QUrl url;
+};
+
+struct EnterVideoDocumentRouteOperation {
+    QUrl url;
+};
+
+struct SyncDirectImageCursorFromDocumentRouteOperation {
+};
+
+struct ClearSourceIdentityRouteOperation {
+};
+
+struct UseOriginalSourceIdentityRouteOperation {
+    QUrl url;
+};
+
+struct UseImageDocumentSourceIdentityRouteOperation {
+};
+
+struct RecomputePublicProjectionRouteOperation {
+};
+
+struct RefreshMediaNavigationAfterRoutingRouteOperation {
+};
+
+struct ClearMediaPredecodeRouteOperation {
+};
+
+using DocumentSessionRouteOperation
+    = std::variant<ClearSessionErrorStringRouteOperation, CancelMediaNavigationRouteOperation,
+        CancelMediaDeletionRouteOperation, ClearMediaNavigationRouteOperation,
+        ClearDirectMediaCursorRouteOperation, SetDirectVideoCursorRouteOperation,
+        RequestDirectImageCursorRouteOperation, ClearThenRequestDirectImageCursorRouteOperation,
+        ClearImageDocumentRouteOperation, LeaveVideoModeRouteOperation,
+        EnterEmptyDocumentRouteOperation, EnterImageDocumentRouteOperation,
+        EnterVideoDocumentRouteOperation, SyncDirectImageCursorFromDocumentRouteOperation,
+        ClearSourceIdentityRouteOperation, UseOriginalSourceIdentityRouteOperation,
+        UseImageDocumentSourceIdentityRouteOperation, RecomputePublicProjectionRouteOperation,
+        RefreshMediaNavigationAfterRoutingRouteOperation, ClearMediaPredecodeRouteOperation>;
 
 struct DocumentSessionRoutePlan {
     DocumentSessionRouteKind kind = DocumentSessionRouteKind::Empty;
     QUrl sourceUrl;
-    DocumentSessionRoutePreparationPlan preparation;
-    DocumentSessionRouteCursorAction cursorAction = DocumentSessionRouteCursorAction::None;
-    DocumentSessionRouteSourceIdentityAction sourceIdentityAction
-        = DocumentSessionRouteSourceIdentityAction::None;
-    DocumentSessionRouteMediaNavigationPlan mediaNavigation;
-    DocumentSessionRouteDocumentPlan document;
-    DocumentSessionRoutePredecodePlan predecode;
+    std::vector<DocumentSessionRouteOperation> operations;
 };
 
 DocumentSessionRoutePlan documentSessionRoutePlanForSourceUrl(

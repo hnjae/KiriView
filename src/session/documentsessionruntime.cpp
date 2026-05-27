@@ -15,9 +15,11 @@
 
 #include <QAbstractListModel>
 #include <QObject>
+#include <QScopedValueRollback>
 #include <QString>
 #include <memory>
 #include <optional>
+#include <type_traits>
 #include <utility>
 
 namespace {
@@ -455,107 +457,102 @@ void DocumentSessionRuntime::openMediaUrl(const QUrl &url)
 
 void DocumentSessionRuntime::executeRoutePlan(const DocumentSessionRoutePlan &plan)
 {
-    if (plan.preparation.clearSessionErrorString) {
-        m_state.setSessionErrorString(QString());
-    }
-    if (plan.preparation.cancelMediaNavigation) {
-        m_mediaNavigationRuntime.cancel();
-    }
-    if (plan.preparation.cancelMediaDeletion) {
-        cancelMediaDeletion();
-    }
+    struct RouteExecutionState {
+        bool directMediaScopeChanged = false;
+        bool mediaNavigationCleared = false;
+    };
 
-    if (plan.mediaNavigation.clearBeforeRouting) {
-        m_state.setMediaNavigationState({}, false);
-        m_mediaNavigationCandidates.clear();
-    }
+    RouteExecutionState state;
+    const auto executeWithRoutingSuppressed = [this](auto &&mutation) {
+        QScopedValueRollback<bool> routingSource(m_routingSource, true);
+        mutation();
+    };
 
-    bool directMediaScopeChanged = false;
-    switch (plan.cursorAction) {
-    case DocumentSessionRouteCursorAction::None:
-        break;
-    case DocumentSessionRouteCursorAction::Clear:
-        directMediaScopeChanged = m_state.clearDirectMediaCursor();
-        break;
-    case DocumentSessionRouteCursorAction::SetDirectVideo:
-        directMediaScopeChanged = m_state.setDirectVideoCursor(plan.sourceUrl);
-        break;
-    case DocumentSessionRouteCursorAction::RequestDirectImage:
-        directMediaScopeChanged = m_state.requestDirectImageCursor(plan.sourceUrl);
-        break;
-    case DocumentSessionRouteCursorAction::ClearThenRequestDirectImage:
-        directMediaScopeChanged = m_state.clearDirectMediaCursor();
-        directMediaScopeChanged
-            = m_state.requestDirectImageCursor(plan.sourceUrl) || directMediaScopeChanged;
-        break;
-    }
+    for (const DocumentSessionRouteOperation &operation : plan.operations) {
+        std::visit(
+            [this, &state, &executeWithRoutingSuppressed](const auto &payload) {
+                using Operation = std::decay_t<decltype(payload)>;
 
-    m_routingSource = true;
-    switch (plan.document.clear) {
-    case DocumentSessionRouteDocumentClear::None:
-        break;
-    case DocumentSessionRouteDocumentClear::Image:
-        m_imageDocument.setSourceUrl(QUrl());
-        break;
-    case DocumentSessionRouteDocumentClear::Video:
-        leaveVideoMode();
-        break;
-    case DocumentSessionRouteDocumentClear::ImageAndVideo:
-        leaveVideoMode();
-        m_imageDocument.setSourceUrl(QUrl());
-        break;
-    }
-
-    switch (plan.document.enter) {
-    case DocumentSessionRouteDocumentEnter::None:
-        break;
-    case DocumentSessionRouteDocumentEnter::Video:
-        m_videoDocument.setSourceUrl(plan.sourceUrl);
-        setDocumentKind(DocumentSessionKind::Video);
-        break;
-    case DocumentSessionRouteDocumentEnter::Image:
-        m_imageDocument.setSourceUrl(plan.sourceUrl);
-        setDocumentKind(DocumentSessionKind::Image);
-        break;
-    case DocumentSessionRouteDocumentEnter::Empty:
-        setDocumentKind(DocumentSessionKind::Empty);
-        break;
-    }
-    m_routingSource = false;
-
-    if (plan.document.syncDirectImageCursorFromDocument) {
-        directMediaScopeChanged = syncDirectImageCursorFromDocument() || directMediaScopeChanged;
-    }
-
-    switch (plan.sourceIdentityAction) {
-    case DocumentSessionRouteSourceIdentityAction::None:
-        break;
-    case DocumentSessionRouteSourceIdentityAction::Clear:
-        m_state.setSourceIdentity(QUrl());
-        break;
-    case DocumentSessionRouteSourceIdentityAction::UseOriginalUrl:
-        m_state.setSourceIdentity(plan.sourceUrl);
-        break;
-    case DocumentSessionRouteSourceIdentityAction::UseImageDocumentSourceUrl:
-        m_state.setSourceIdentity(m_imageDocument.sourceUrl());
-        break;
-    }
-
-    recomputePublicProjection();
-
-    if (plan.mediaNavigation.refreshAfterRouting
-        && (directMediaScopeChanged || plan.mediaNavigation.clearBeforeRouting
-            || mediaNavigationActive())) {
-        refreshMediaNavigation();
-    }
-    if (plan.predecode.clear) {
-        if (plan.mediaNavigation.clearBeforeRouting) {
-            m_state.setMediaNavigationState({}, false);
-            recomputePublicProjection();
-        }
-        if (m_mediaPredecodeCoordinator != nullptr) {
-            m_mediaPredecodeCoordinator->clear();
-        }
+                if constexpr (std::is_same_v<Operation, ClearSessionErrorStringRouteOperation>) {
+                    m_state.setSessionErrorString(QString());
+                } else if constexpr (std::is_same_v<Operation,
+                                         CancelMediaNavigationRouteOperation>) {
+                    m_mediaNavigationRuntime.cancel();
+                } else if constexpr (std::is_same_v<Operation, CancelMediaDeletionRouteOperation>) {
+                    cancelMediaDeletion();
+                } else if constexpr (std::is_same_v<Operation,
+                                         ClearMediaNavigationRouteOperation>) {
+                    m_state.setMediaNavigationState({}, false);
+                    m_mediaNavigationCandidates.clear();
+                    state.mediaNavigationCleared = true;
+                } else if constexpr (std::is_same_v<Operation,
+                                         ClearDirectMediaCursorRouteOperation>) {
+                    state.directMediaScopeChanged
+                        = m_state.clearDirectMediaCursor() || state.directMediaScopeChanged;
+                } else if constexpr (std::is_same_v<Operation,
+                                         SetDirectVideoCursorRouteOperation>) {
+                    state.directMediaScopeChanged = m_state.setDirectVideoCursor(payload.url)
+                        || state.directMediaScopeChanged;
+                } else if constexpr (std::is_same_v<Operation,
+                                         RequestDirectImageCursorRouteOperation>) {
+                    state.directMediaScopeChanged = m_state.requestDirectImageCursor(payload.url)
+                        || state.directMediaScopeChanged;
+                } else if constexpr (std::is_same_v<Operation,
+                                         ClearThenRequestDirectImageCursorRouteOperation>) {
+                    state.directMediaScopeChanged
+                        = m_state.clearDirectMediaCursor() || state.directMediaScopeChanged;
+                    state.directMediaScopeChanged = m_state.requestDirectImageCursor(payload.url)
+                        || state.directMediaScopeChanged;
+                } else if constexpr (std::is_same_v<Operation, ClearImageDocumentRouteOperation>) {
+                    executeWithRoutingSuppressed(
+                        [this]() { m_imageDocument.setSourceUrl(QUrl()); });
+                } else if constexpr (std::is_same_v<Operation, LeaveVideoModeRouteOperation>) {
+                    executeWithRoutingSuppressed([this]() { leaveVideoMode(); });
+                } else if constexpr (std::is_same_v<Operation, EnterEmptyDocumentRouteOperation>) {
+                    executeWithRoutingSuppressed(
+                        [this]() { setDocumentKind(DocumentSessionKind::Empty); });
+                } else if constexpr (std::is_same_v<Operation, EnterImageDocumentRouteOperation>) {
+                    executeWithRoutingSuppressed([this, &payload]() {
+                        m_imageDocument.setSourceUrl(payload.url);
+                        setDocumentKind(DocumentSessionKind::Image);
+                    });
+                } else if constexpr (std::is_same_v<Operation, EnterVideoDocumentRouteOperation>) {
+                    executeWithRoutingSuppressed([this, &payload]() {
+                        m_videoDocument.setSourceUrl(payload.url);
+                        setDocumentKind(DocumentSessionKind::Video);
+                    });
+                } else if constexpr (std::is_same_v<Operation,
+                                         SyncDirectImageCursorFromDocumentRouteOperation>) {
+                    state.directMediaScopeChanged
+                        = syncDirectImageCursorFromDocument() || state.directMediaScopeChanged;
+                } else if constexpr (std::is_same_v<Operation, ClearSourceIdentityRouteOperation>) {
+                    m_state.setSourceIdentity(QUrl());
+                } else if constexpr (std::is_same_v<Operation,
+                                         UseOriginalSourceIdentityRouteOperation>) {
+                    m_state.setSourceIdentity(payload.url);
+                } else if constexpr (std::is_same_v<Operation,
+                                         UseImageDocumentSourceIdentityRouteOperation>) {
+                    m_state.setSourceIdentity(m_imageDocument.sourceUrl());
+                } else if constexpr (std::is_same_v<Operation,
+                                         RecomputePublicProjectionRouteOperation>) {
+                    recomputePublicProjection();
+                } else if constexpr (std::is_same_v<Operation,
+                                         RefreshMediaNavigationAfterRoutingRouteOperation>) {
+                    if (state.directMediaScopeChanged || state.mediaNavigationCleared
+                        || mediaNavigationActive()) {
+                        refreshMediaNavigation();
+                    }
+                } else if constexpr (std::is_same_v<Operation, ClearMediaPredecodeRouteOperation>) {
+                    if (state.mediaNavigationCleared) {
+                        m_state.setMediaNavigationState({}, false);
+                        recomputePublicProjection();
+                    }
+                    if (m_mediaPredecodeCoordinator != nullptr) {
+                        m_mediaPredecodeCoordinator->clear();
+                    }
+                }
+            },
+            operation);
     }
 }
 

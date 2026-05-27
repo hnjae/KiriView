@@ -6,67 +6,115 @@
 #include "navigation/mediaformatregistry.h"
 
 namespace {
-KiriView::DocumentSessionRouteCursorAction directImageCursorActionFor(
-    KiriView::DocumentSessionKind currentKind)
+void appendSourceRoutingPreparation(KiriView::DocumentSessionRoutePlan &plan)
 {
-    return currentKind == KiriView::DocumentSessionKind::Image
-        ? KiriView::DocumentSessionRouteCursorAction::RequestDirectImage
-        : KiriView::DocumentSessionRouteCursorAction::ClearThenRequestDirectImage;
+    plan.operations.insert(plan.operations.begin(),
+        {
+            KiriView::DocumentSessionRouteOperation {
+                KiriView::ClearSessionErrorStringRouteOperation {} },
+            KiriView::DocumentSessionRouteOperation {
+                KiriView::CancelMediaNavigationRouteOperation {} },
+            KiriView::DocumentSessionRouteOperation {
+                KiriView::CancelMediaDeletionRouteOperation {} },
+            KiriView::DocumentSessionRouteOperation {
+                KiriView::ClearMediaNavigationRouteOperation {} },
+        });
+}
+
+void appendDirectImageCursorOperation(
+    KiriView::DocumentSessionRoutePlan &plan, KiriView::DocumentSessionKind currentKind)
+{
+    if (currentKind == KiriView::DocumentSessionKind::Image) {
+        plan.operations.push_back(
+            KiriView::RequestDirectImageCursorRouteOperation { plan.sourceUrl });
+        return;
+    }
+
+    plan.operations.push_back(
+        KiriView::ClearThenRequestDirectImageCursorRouteOperation { plan.sourceUrl });
+}
+
+void appendEnterImageDocumentOperations(KiriView::DocumentSessionRoutePlan &plan)
+{
+    plan.operations.push_back(KiriView::LeaveVideoModeRouteOperation {});
+    plan.operations.push_back(KiriView::EnterImageDocumentRouteOperation { plan.sourceUrl });
+}
+
+void appendRefreshableImageDocumentOperations(KiriView::DocumentSessionRoutePlan &plan)
+{
+    appendEnterImageDocumentOperations(plan);
+    plan.operations.push_back(KiriView::SyncDirectImageCursorFromDocumentRouteOperation {});
+    plan.operations.push_back(KiriView::UseImageDocumentSourceIdentityRouteOperation {});
+    plan.operations.push_back(KiriView::RecomputePublicProjectionRouteOperation {});
+    plan.operations.push_back(KiriView::RefreshMediaNavigationAfterRoutingRouteOperation {});
+}
+
+KiriView::DocumentSessionRoutePlan emptyRoutePlan(const QUrl &sourceUrl)
+{
+    KiriView::DocumentSessionRoutePlan plan;
+    plan.kind = KiriView::DocumentSessionRouteKind::Empty;
+    plan.sourceUrl = sourceUrl;
+    plan.operations.push_back(KiriView::ClearDirectMediaCursorRouteOperation {});
+    plan.operations.push_back(KiriView::LeaveVideoModeRouteOperation {});
+    plan.operations.push_back(KiriView::ClearImageDocumentRouteOperation {});
+    plan.operations.push_back(KiriView::EnterEmptyDocumentRouteOperation {});
+    plan.operations.push_back(KiriView::ClearSourceIdentityRouteOperation {});
+    plan.operations.push_back(KiriView::RecomputePublicProjectionRouteOperation {});
+    plan.operations.push_back(KiriView::ClearMediaPredecodeRouteOperation {});
+    return plan;
+}
+
+KiriView::DocumentSessionRoutePlan directVideoRoutePlan(const QUrl &sourceUrl)
+{
+    KiriView::DocumentSessionRoutePlan plan;
+    plan.kind = KiriView::DocumentSessionRouteKind::DirectVideo;
+    plan.sourceUrl = sourceUrl;
+    plan.operations.push_back(KiriView::SetDirectVideoCursorRouteOperation { sourceUrl });
+    plan.operations.push_back(KiriView::ClearImageDocumentRouteOperation {});
+    plan.operations.push_back(KiriView::EnterVideoDocumentRouteOperation { sourceUrl });
+    plan.operations.push_back(KiriView::UseOriginalSourceIdentityRouteOperation { sourceUrl });
+    plan.operations.push_back(KiriView::RecomputePublicProjectionRouteOperation {});
+    plan.operations.push_back(KiriView::RefreshMediaNavigationAfterRoutingRouteOperation {});
+    return plan;
+}
+
+KiriView::DocumentSessionRoutePlan directImageRoutePlan(
+    const QUrl &sourceUrl, KiriView::DocumentSessionKind currentKind)
+{
+    KiriView::DocumentSessionRoutePlan plan;
+    plan.kind = KiriView::DocumentSessionRouteKind::DirectImage;
+    plan.sourceUrl = sourceUrl;
+    appendDirectImageCursorOperation(plan, currentKind);
+    appendRefreshableImageDocumentOperations(plan);
+    return plan;
+}
+
+KiriView::DocumentSessionRoutePlan imageDocumentRoutePlan(const QUrl &sourceUrl)
+{
+    KiriView::DocumentSessionRoutePlan plan;
+    plan.kind = KiriView::DocumentSessionRouteKind::ImageDocument;
+    plan.sourceUrl = sourceUrl;
+    plan.operations.push_back(KiriView::ClearDirectMediaCursorRouteOperation {});
+    appendRefreshableImageDocumentOperations(plan);
+    return plan;
 }
 
 KiriView::DocumentSessionRoutePlan baseRoutePlan(
     const QUrl &sourceUrl, KiriView::DocumentSessionKind currentKind)
 {
     if (sourceUrl.isEmpty()) {
-        KiriView::DocumentSessionRoutePlan plan;
-        plan.kind = KiriView::DocumentSessionRouteKind::Empty;
-        plan.sourceUrl = sourceUrl;
-        plan.cursorAction = KiriView::DocumentSessionRouteCursorAction::Clear;
-        plan.sourceIdentityAction = KiriView::DocumentSessionRouteSourceIdentityAction::Clear;
-        plan.document.clear = KiriView::DocumentSessionRouteDocumentClear::ImageAndVideo;
-        plan.document.enter = KiriView::DocumentSessionRouteDocumentEnter::Empty;
-        plan.predecode.clear = true;
-        return plan;
+        return emptyRoutePlan(sourceUrl);
     }
 
     if (KiriView::isSupportedDirectVideoUrl(sourceUrl)) {
-        KiriView::DocumentSessionRoutePlan plan;
-        plan.kind = KiriView::DocumentSessionRouteKind::DirectVideo;
-        plan.sourceUrl = sourceUrl;
-        plan.cursorAction = KiriView::DocumentSessionRouteCursorAction::SetDirectVideo;
-        plan.sourceIdentityAction
-            = KiriView::DocumentSessionRouteSourceIdentityAction::UseOriginalUrl;
-        plan.document.clear = KiriView::DocumentSessionRouteDocumentClear::Image;
-        plan.document.enter = KiriView::DocumentSessionRouteDocumentEnter::Video;
-        plan.mediaNavigation.refreshAfterRouting = true;
-        return plan;
+        return directVideoRoutePlan(sourceUrl);
     }
 
     if (KiriView::isSupportedDirectImageUrl(sourceUrl)) {
-        KiriView::DocumentSessionRoutePlan plan;
-        plan.kind = KiriView::DocumentSessionRouteKind::DirectImage;
-        plan.sourceUrl = sourceUrl;
-        plan.cursorAction = directImageCursorActionFor(currentKind);
-        plan.sourceIdentityAction
-            = KiriView::DocumentSessionRouteSourceIdentityAction::UseImageDocumentSourceUrl;
-        plan.document.clear = KiriView::DocumentSessionRouteDocumentClear::Video;
-        plan.document.enter = KiriView::DocumentSessionRouteDocumentEnter::Image;
-        plan.document.syncDirectImageCursorFromDocument = true;
-        plan.mediaNavigation.refreshAfterRouting = true;
-        return plan;
+        return directImageRoutePlan(sourceUrl, currentKind);
     }
 
-    KiriView::DocumentSessionRoutePlan plan;
-    plan.kind = KiriView::DocumentSessionRouteKind::ImageDocument;
-    plan.sourceUrl = sourceUrl;
-    plan.cursorAction = KiriView::DocumentSessionRouteCursorAction::Clear;
-    plan.sourceIdentityAction
-        = KiriView::DocumentSessionRouteSourceIdentityAction::UseImageDocumentSourceUrl;
-    plan.document.clear = KiriView::DocumentSessionRouteDocumentClear::Video;
-    plan.document.enter = KiriView::DocumentSessionRouteDocumentEnter::Image;
-    plan.document.syncDirectImageCursorFromDocument = true;
-    plan.mediaNavigation.refreshAfterRouting = true;
-    return plan;
+    return imageDocumentRoutePlan(sourceUrl);
 }
 }
 
@@ -75,10 +123,7 @@ DocumentSessionRoutePlan documentSessionRoutePlanForSourceUrl(
     const QUrl &sourceUrl, DocumentSessionKind currentKind)
 {
     DocumentSessionRoutePlan plan = baseRoutePlan(sourceUrl, currentKind);
-    plan.preparation.clearSessionErrorString = true;
-    plan.preparation.cancelMediaNavigation = true;
-    plan.preparation.cancelMediaDeletion = true;
-    plan.mediaNavigation.clearBeforeRouting = true;
+    appendSourceRoutingPreparation(plan);
     return plan;
 }
 
