@@ -25,6 +25,7 @@ private Q_SLOTS:
     void imageActionAvailabilityDoesNotDriveSharedActiveNavigation();
     void pageNavigationComponentDoesNotChooseBetweenRawNavigationSources();
     void documentSessionFacadeDoesNotExposeRawMediaNavigation();
+    void documentSessionRuntimePublicApiDoesNotExposeRawMediaNavigation();
     void videoFloatingControlsUsesViewportResponsiveWidth();
 };
 
@@ -51,6 +52,17 @@ void verifySourceOmits(const QString &source, const QStringList &needles)
         QVERIFY2(!source.contains(needle),
             qPrintable(QStringLiteral("unexpected source text: %1").arg(needle)));
     }
+}
+
+QString firstPublicSection(const QString &source)
+{
+    const qsizetype publicIndex = source.indexOf(QStringLiteral("public:"));
+    const qsizetype privateIndex = source.indexOf(QStringLiteral("private:"), publicIndex);
+    if (publicIndex < 0 || privateIndex < 0 || privateIndex <= publicIndex) {
+        return {};
+    }
+
+    return source.mid(publicIndex, privateIndex - publicIndex);
 }
 }
 
@@ -471,6 +483,35 @@ void TestMainWindowVideoIntegration::documentSessionFacadeDoesNotExposeRawMediaN
             QStringLiteral("openNextMedia"),
             QStringLiteral("openMediaAtNumber"),
             QStringLiteral("mediaNavigationAvailabilityChanged"),
+        });
+}
+
+void TestMainWindowVideoIntegration::
+    documentSessionRuntimePublicApiDoesNotExposeRawMediaNavigation()
+{
+    const QString documentSessionRuntimeHeader
+        = readSource(QStringLiteral("src/session/documentsessionruntime.h"));
+    QVERIFY2(
+        !documentSessionRuntimeHeader.isEmpty(), "documentsessionruntime.h should be readable");
+
+    const QString publicSection = firstPublicSection(documentSessionRuntimeHeader);
+    QVERIFY2(!publicSection.isEmpty(), "DocumentSessionRuntime public API should be detectable");
+    QVERIFY(publicSection.contains(QStringLiteral("activeNavigationAvailable")));
+    QVERIFY(publicSection.contains(QStringLiteral("openPreviousActiveNavigation")));
+
+    verifySourceOmits(publicSection,
+        {
+            QStringLiteral("mediaNavigationActive"),
+            QStringLiteral("mediaNavigationKnown"),
+            QStringLiteral("currentMediaNumber"),
+            QStringLiteral("mediaCount"),
+            QStringLiteral("canOpenPreviousMedia"),
+            QStringLiteral("canOpenNextMedia"),
+            QStringLiteral("atKnownFirstMedia"),
+            QStringLiteral("atKnownLastMedia"),
+            QStringLiteral("openPreviousMedia"),
+            QStringLiteral("openNextMedia"),
+            QStringLiteral("openMediaAtNumber"),
         });
 }
 

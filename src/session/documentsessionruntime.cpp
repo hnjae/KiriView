@@ -124,45 +124,6 @@ bool DocumentSessionRuntime::mediaNavigationActive() const
             && directImageLoadMayUseMediaScope());
 }
 
-bool DocumentSessionRuntime::mediaNavigationKnown() const
-{
-    return mediaNavigationActive() && m_state.mediaNavigationKnown();
-}
-
-int DocumentSessionRuntime::currentMediaNumber() const
-{
-    return mediaNavigationKnown() ? m_state.mediaNavigationState().currentNumber : 0;
-}
-
-int DocumentSessionRuntime::mediaCount() const
-{
-    return mediaNavigationKnown() ? m_state.mediaNavigationState().count : 0;
-}
-
-bool DocumentSessionRuntime::canOpenPreviousMedia() const
-{
-    return mediaNavigationActive() && m_state.mediaNavigationKnown()
-        && m_state.mediaNavigationState().canOpenPrevious;
-}
-
-bool DocumentSessionRuntime::canOpenNextMedia() const
-{
-    return mediaNavigationActive() && m_state.mediaNavigationKnown()
-        && m_state.mediaNavigationState().canOpenNext;
-}
-
-bool DocumentSessionRuntime::atKnownFirstMedia() const
-{
-    return mediaNavigationActive() && m_state.mediaNavigationKnown()
-        && m_state.mediaNavigationState().atKnownFirst;
-}
-
-bool DocumentSessionRuntime::atKnownLastMedia() const
-{
-    return mediaNavigationActive() && m_state.mediaNavigationKnown()
-        && m_state.mediaNavigationState().atKnownLast;
-}
-
 bool DocumentSessionRuntime::activeNavigationAvailable() const
 {
     return m_state.activeNavigationSnapshot().available;

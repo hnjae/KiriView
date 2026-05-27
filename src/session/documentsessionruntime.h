@@ -64,14 +64,6 @@ public:
     bool activeZoomPercentKnown() const;
     qreal activeZoomPercent() const;
     bool activeZoomEditable() const;
-    bool mediaNavigationActive() const;
-    bool mediaNavigationKnown() const;
-    int currentMediaNumber() const;
-    int mediaCount() const;
-    bool canOpenPreviousMedia() const;
-    bool canOpenNextMedia() const;
-    bool atKnownFirstMedia() const;
-    bool atKnownLastMedia() const;
     bool activeNavigationAvailable() const;
     bool activeNavigationKnown() const;
     bool activeNavigationEditable() const;
@@ -85,9 +77,6 @@ public:
     QAbstractListModel *activeNavigationThumbnailModel() const;
     std::optional<PredecodedImage> findPredecodedImage(const QUrl &url) const;
 
-    void openPreviousMedia();
-    void openNextMedia();
-    void openMediaAtNumber(int mediaNumber);
     void openPreviousActiveNavigation();
     void openNextActiveNavigation();
     void openFirstActiveNavigation();
@@ -112,6 +101,10 @@ private:
     void syncActiveNavigationThumbnailRows();
     void routeSourceUrl(const QUrl &sourceUrl);
     void openMediaUrl(const QUrl &url);
+    bool mediaNavigationActive() const;
+    void openPreviousMedia();
+    void openNextMedia();
+    void openMediaAtNumber(int mediaNumber);
     void openMedia(MediaNavigationOpenRequest request);
     void executeRoutePlan(const DocumentSessionRoutePlan &plan);
     void leaveVideoMode();
