@@ -243,13 +243,13 @@ Item {
         sourceUrl: "%2"
     }
 
-    QtObject {
-        id: mediaViewportHost
+    KiriViewQml.ImageViewportInteractionSurface {
+        id: imageInteractionSurface
 
-        property bool imageHorizontallyPannable: root.imageHorizontallyPannable
-        property bool imagePannable: root.imagePannable
-        property real imageViewportHeight: 100
-        property real imageViewportWidth: 100
+        imageHorizontallyPannable: root.imageHorizontallyPannable
+        imagePannable: root.imagePannable
+        viewportHeight: 100
+        viewportWidth: 100
 
         function panBy(deltaX, deltaY) {
             root.panCount += 1;
@@ -282,7 +282,7 @@ Item {
         }
 
         function zoomByStepAtCenter(stepCount) {
-            return zoomByStep(stepCount, imageViewportWidth / 2, imageViewportHeight / 2);
+            return zoomByStep(stepCount, viewportWidth / 2, viewportHeight / 2);
         }
     }
 
@@ -300,8 +300,8 @@ Item {
         containerNavigationAvailable: imageDocument.containerNavigationAvailable
         fileDeletionInProgress: imageDocument.fileDeletionInProgress
         helpDialogOpen: root.helpDialogOpen
-        imageHorizontallyPannable: mediaViewportHost.imageHorizontallyPannable
-        imagePannable: mediaViewportHost.imagePannable
+        imageHorizontallyPannable: imageInteractionSurface.imageHorizontallyPannable
+        imagePannable: imageInteractionSurface.imagePannable
         imageReady: imageDocument.status === KiriImageDocument.Ready
         rightToLeftReadingAvailable: imageDocument.rightToLeftReadingAvailable
         rightToLeftReadingEnabled: imageDocument.rightToLeftReadingEnabled
@@ -316,7 +316,7 @@ Item {
         actionAvailability: actionAvailability
         documentSession: documentSession
         imageDocument: root.testImageDocument
-        mediaViewportHost: mediaViewportHost
+        imageInteractionSurface: imageInteractionSurface
         videoFileDeletionInProgress: root.videoFileDeletionInProgress
         videoMode: root.videoMode
 

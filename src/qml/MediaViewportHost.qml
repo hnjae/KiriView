@@ -19,11 +19,7 @@ Item {
     readonly property bool imageReady: imageMode && imageDocument.status === KiriImageDocument.Ready
     readonly property url activeDelegateSource: imageMode ? Qt.resolvedUrl("ImageViewport.qml") : videoMode ? Qt.resolvedUrl("VideoViewport.qml") : ""
     readonly property var activeDelegate: mediaViewportDelegateLoader.item
-    readonly property var activeInteractionSurface: activeDelegate !== null && activeDelegate.interactionSurface !== null ? activeDelegate.interactionSurface : inactiveInteractionSurface
-    readonly property bool imageHorizontallyPannable: activeInteractionSurface.imageHorizontallyPannable
-    readonly property bool imagePannable: activeInteractionSurface.imagePannable
-    readonly property real imageViewportWidth: activeInteractionSurface.viewportWidth
-    readonly property real imageViewportHeight: activeInteractionSurface.viewportHeight
+    readonly property ImageViewportInteractionSurface imageInteractionSurface: imageMode && activeDelegate !== null && activeDelegate.imageInteractionSurface !== null ? activeDelegate.imageInteractionSurface : inactiveImageInteractionSurface
 
     signal viewerClicked
     signal viewerContextMenuRequested(var popupParent, point position)
@@ -34,45 +30,13 @@ Item {
         }
     }
 
-    function panBy(deltaX, deltaY) {
-        return root.activeInteractionSurface.panBy(deltaX, deltaY);
-    }
-
-    function panToBottomRight() {
-        return root.activeInteractionSurface.panToBottomRight();
-    }
-
-    function panToTopLeft() {
-        return root.activeInteractionSurface.panToTopLeft();
-    }
-
-    function scanForward() {
-        return root.activeInteractionSurface.scanForward();
-    }
-
-    function scanBackward() {
-        return root.activeInteractionSurface.scanBackward();
-    }
-
-    function setNextDisplayedImageStartToFinalScanPosition() {
-        root.activeInteractionSurface.setNextDisplayedImageStartToFinalScanPosition();
-    }
-
-    function zoomByStep(stepCount, viewportX, viewportY) {
-        return root.activeInteractionSurface.zoomByStep(stepCount, viewportX, viewportY);
-    }
-
-    function zoomByStepAtCenter(stepCount) {
-        return root.activeInteractionSurface.zoomByStepAtCenter(stepCount);
-    }
-
     objectName: "mediaViewportSlot"
     clip: true
     Controls.SplitView.fillHeight: true
     Controls.SplitView.minimumHeight: Kirigami.Units.gridUnit * 6
 
-    MediaViewportInteractionSurface {
-        id: inactiveInteractionSurface
+    ImageViewportInteractionSurface {
+        id: inactiveImageInteractionSurface
     }
 
     Loader {

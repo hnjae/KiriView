@@ -14,7 +14,7 @@ Item {
     required property ImageActionAvailability actionAvailability
     required property KiriDocumentSession documentSession
     required property KiriImageDocument imageDocument
-    required property var mediaViewportHost
+    required property ImageViewportInteractionSurface imageInteractionSurface
     property bool videoFileDeletionInProgress: false
     property bool videoMode: false
 
@@ -65,15 +65,15 @@ Item {
     }
 
     function panBy(deltaX, deltaY) {
-        return mediaViewportHost.panBy(deltaX, deltaY);
+        return imageInteractionSurface.panBy(deltaX, deltaY);
     }
 
     function panToBottomRight() {
-        return mediaViewportHost.panToBottomRight();
+        return imageInteractionSurface.panToBottomRight();
     }
 
     function panToTopLeft() {
-        return mediaViewportHost.panToTopLeft();
+        return imageInteractionSurface.panToTopLeft();
     }
 
     function requestPreviousActiveNavigation() {
@@ -135,7 +135,7 @@ Item {
         case ImageShortcutNavigationPolicy.OpenPreviousPageFromFinalScanStart:
             // Image-internal scan fallback intentionally opens the previous document page and
             // hands off the viewport start. Shared active Previous/Next routing uses the session.
-            root.mediaViewportHost.setNextDisplayedImageStartToFinalScanPosition();
+            root.imageInteractionSurface.setNextDisplayedImageStartToFinalScanPosition();
             root.imageDocument.openImageAtPage(root.imageDocument.currentPageNumber - 1);
             return;
         case ImageShortcutNavigationPolicy.ShowFirstImageBoundary:
@@ -165,21 +165,21 @@ Item {
     }
 
     function scanForward() {
-        const action = navigationPolicy.scanForwardAction(root.actionAvailability.imagePannable, root.actionAvailability.imagePannable && root.mediaViewportHost.scanForward());
+        const action = navigationPolicy.scanForwardAction(root.actionAvailability.imagePannable, root.actionAvailability.imagePannable && root.imageInteractionSurface.scanForward());
         root.applyScanAction(action);
     }
 
     function scanBackward() {
-        const action = navigationPolicy.scanBackwardAction(root.actionAvailability.imagePannable, root.actionAvailability.imagePannable && root.mediaViewportHost.scanBackward(), root.actionAvailability.scanBackwardAtFirstImageBoundary, root.imageDocument.currentPageNumber);
+        const action = navigationPolicy.scanBackwardAction(root.actionAvailability.imagePannable, root.actionAvailability.imagePannable && root.imageInteractionSurface.scanBackward(), root.actionAvailability.scanBackwardAtFirstImageBoundary, root.imageDocument.currentPageNumber);
         root.applyScanAction(action);
     }
 
     function zoomByStep(stepCount, viewportX, viewportY) {
-        return mediaViewportHost.zoomByStep(stepCount, viewportX, viewportY);
+        return imageInteractionSurface.zoomByStep(stepCount, viewportX, viewportY);
     }
 
     function zoomByStepAtCenter(stepCount) {
-        return root.mediaViewportHost.zoomByStepAtCenter(stepCount);
+        return root.imageInteractionSurface.zoomByStepAtCenter(stepCount);
     }
 
     ImageShortcutNavigationPolicy {

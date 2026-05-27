@@ -24,7 +24,7 @@ MediaViewportDelegate {
     readonly property real viewportWidth: imageFlickable.width
     readonly property real viewportHeight: imageFlickable.height
 
-    interactionSurface: MediaViewportInteractionSurface {
+    imageInteractionSurface: ImageViewportInteractionSurface {
         imageHorizontallyPannable: root.imageHorizontallyPannable
         imagePannable: root.imagePannable
         viewportHeight: root.viewportHeight

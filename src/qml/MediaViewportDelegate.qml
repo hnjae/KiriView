@@ -10,7 +10,7 @@ FocusScope {
 
     required property var documentSession
     property bool presentationActive: true
-    property MediaViewportInteractionSurface interactionSurface: defaultInteractionSurface
+    property ImageViewportInteractionSurface imageInteractionSurface: defaultImageInteractionSurface
     readonly property int documentKind: root.documentSession !== null && root.documentSession.documentKind !== undefined ? root.documentSession.documentKind : -1
 
     signal viewerClicked
@@ -23,8 +23,8 @@ FocusScope {
     activeFocusOnTab: true
     focus: true
 
-    MediaViewportInteractionSurface {
-        id: defaultInteractionSurface
+    ImageViewportInteractionSurface {
+        id: defaultImageInteractionSurface
     }
 
     TapHandler {
