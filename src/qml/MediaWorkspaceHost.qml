@@ -64,6 +64,7 @@ Item {
             ThumbnailPanel {
                 id: thumbnailPanel
 
+                documentSession: root.documentSession
                 objectName: "thumbnailPanel"
                 visible: false
                 Controls.SplitView.maximumHeight: Kirigami.Units.gridUnit * 8

@@ -12,6 +12,7 @@
 #include "predecode/predecodecachebudget.h"
 #include "session/mediaopenwithtarget.h"
 
+#include <QAbstractListModel>
 #include <QObject>
 #include <QString>
 #include <memory>
@@ -23,6 +24,70 @@ QString genericFileDeletionErrorMessage()
 {
     return KiriView::imageErrorText(KiriView::ImageErrorTextId::DeleteFile);
 }
+
+KiriView::ActiveNavigationThumbnailKind thumbnailKindForMediaCandidate(
+    const KiriView::MediaNavigationCandidate &candidate)
+{
+    return KiriView::isSupportedDirectVideoFileName(candidate.name)
+            || KiriView::isSupportedDirectVideoUrl(candidate.url)
+        ? KiriView::ActiveNavigationThumbnailKind::Video
+        : KiriView::ActiveNavigationThumbnailKind::Image;
+}
+
+KiriView::ActiveNavigationThumbnailKind thumbnailKindForImageNavigationTarget(
+    const KiriView::ImageNavigationTarget &target)
+{
+    return target.kind == KiriView::ImageNavigationCandidateKind::Video
+        ? KiriView::ActiveNavigationThumbnailKind::Video
+        : KiriView::ActiveNavigationThumbnailKind::Image;
+}
+
+QString thumbnailLabel(const QString &candidateName, const QUrl &url)
+{
+    return candidateName.isEmpty() ? url.fileName(QUrl::PrettyDecoded) : candidateName;
+}
+
+std::vector<KiriView::ActiveNavigationThumbnailRow> thumbnailRowsForMediaCandidates(
+    const std::vector<KiriView::MediaNavigationCandidate> &candidates, int currentNumber)
+{
+    std::vector<KiriView::ActiveNavigationThumbnailRow> rows;
+    rows.reserve(candidates.size());
+
+    int number = 1;
+    for (const KiriView::MediaNavigationCandidate &candidate : candidates) {
+        rows.push_back(KiriView::ActiveNavigationThumbnailRow {
+            number,
+            candidate.url,
+            thumbnailLabel(candidate.name, candidate.url),
+            thumbnailKindForMediaCandidate(candidate),
+            number == currentNumber,
+        });
+        ++number;
+    }
+
+    return rows;
+}
+
+std::vector<KiriView::ActiveNavigationThumbnailRow> thumbnailRowsForImageNavigationSnapshot(
+    const KiriView::ImagePageNavigationSnapshot &snapshot, int currentNumber)
+{
+    std::vector<KiriView::ActiveNavigationThumbnailRow> rows;
+    rows.reserve(snapshot.state.targets.size());
+
+    int number = 1;
+    for (const KiriView::ImageNavigationTarget &target : snapshot.state.targets) {
+        rows.push_back(KiriView::ActiveNavigationThumbnailRow {
+            number,
+            target.url,
+            thumbnailLabel(target.name, target.url),
+            thumbnailKindForImageNavigationTarget(target),
+            number == currentNumber,
+        });
+        ++number;
+    }
+
+    return rows;
+}
 }
 
 namespace KiriView {
@@ -33,6 +98,7 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner, KiriImageDocument
     , m_imageDocument(imageDocument)
     , m_videoDocument(videoDocument)
     , m_state(std::move(changeCallback))
+    , m_activeNavigationThumbnailModel(std::make_unique<ActiveNavigationThumbnailModel>(owner))
     , m_mediaNavigationRuntime(std::move(dependencies.mediaCandidateProvider))
     , m_mediaDeletionRuntime(std::move(dependencies.fileOperationProvider))
     , m_mediaOpenWithProvider(
@@ -208,6 +274,11 @@ bool DocumentSessionRuntime::atKnownLastActiveNavigation() const
 ActiveNavigationBoundaryScope DocumentSessionRuntime::activeNavigationBoundaryScope() const
 {
     return m_state.activeNavigationBoundaryScope();
+}
+
+QAbstractListModel *DocumentSessionRuntime::activeNavigationThumbnailModel() const
+{
+    return m_activeNavigationThumbnailModel.get();
 }
 
 std::optional<PredecodedImage> DocumentSessionRuntime::findPredecodedImage(const QUrl &url) const
@@ -447,12 +518,47 @@ void DocumentSessionRuntime::publishActiveNavigationForImagePages()
     DocumentSessionPublicProjection projection = projectedPublicState();
     if (projection.sourceKind == ActiveNavigationSourceKind::ImageDocumentPages) {
         m_state.setPublicProjection(std::move(projection));
+        syncActiveNavigationThumbnailRows();
     }
 }
 
 void DocumentSessionRuntime::recomputePublicProjection()
 {
     m_state.setPublicProjection(projectedPublicState());
+    syncActiveNavigationThumbnailRows();
+}
+
+void DocumentSessionRuntime::syncActiveNavigationThumbnailRows()
+{
+    const ActiveNavigationSnapshot &navigation = m_state.activeNavigationSnapshot();
+    if (!navigation.available || !navigation.known || navigation.count < 1
+        || m_activeNavigationThumbnailModel == nullptr) {
+        if (m_activeNavigationThumbnailModel != nullptr) {
+            m_activeNavigationThumbnailModel->clear();
+        }
+        return;
+    }
+
+    std::vector<ActiveNavigationThumbnailRow> rows;
+    switch (m_state.activeNavigationSourceKind()) {
+    case ActiveNavigationSourceKind::OrdinaryDirectMedia:
+        rows = thumbnailRowsForMediaCandidates(
+            m_mediaNavigationCandidates, navigation.currentNumber);
+        break;
+    case ActiveNavigationSourceKind::ImageDocumentPages:
+        rows = thumbnailRowsForImageNavigationSnapshot(
+            m_imageDocument.pageNavigationSnapshot(), navigation.currentNumber);
+        break;
+    case ActiveNavigationSourceKind::None:
+        break;
+    }
+
+    if (static_cast<int>(rows.size()) != navigation.count) {
+        m_activeNavigationThumbnailModel->clear();
+        return;
+    }
+
+    m_activeNavigationThumbnailModel->setRows(std::move(rows));
 }
 
 void DocumentSessionRuntime::routeSourceUrl(const QUrl &sourceUrl)
@@ -481,6 +587,7 @@ void DocumentSessionRuntime::executeRoutePlan(const DocumentSessionRoutePlan &pl
 
     if (plan.mediaNavigation.clearBeforeRouting) {
         m_state.setMediaNavigationState({}, false);
+        m_mediaNavigationCandidates.clear();
     }
 
     bool directMediaScopeChanged = false;
@@ -610,6 +717,7 @@ void DocumentSessionRuntime::syncFromVideoDocument()
         m_state.setSourceIdentity(QUrl());
         setDocumentKind(DocumentSessionKind::Empty);
         m_state.setMediaNavigationState({}, false);
+        m_mediaNavigationCandidates.clear();
     } else {
         m_state.setDirectVideoCursor(m_videoDocument.sourceUrl());
         m_state.setSourceIdentity(m_videoDocument.sourceUrl());
@@ -625,6 +733,7 @@ void DocumentSessionRuntime::refreshMediaNavigation()
 {
     if (!mediaNavigationActive()) {
         m_state.setMediaNavigationState({}, false);
+        m_mediaNavigationCandidates.clear();
         recomputePublicProjection();
         if (!directImageLoadMayUseMediaScope()) {
             m_mediaPredecodeCoordinator->clear();
@@ -657,10 +766,12 @@ void DocumentSessionRuntime::finishMediaNavigation(DocumentSessionMediaNavigatio
 {
     if (!result.succeeded) {
         m_state.setMediaNavigationState({}, false);
+        m_mediaNavigationCandidates.clear();
         recomputePublicProjection();
         return;
     }
 
+    m_mediaNavigationCandidates = result.candidates;
     m_state.setMediaNavigationState(result.plan.boundaryState, true);
     recomputePublicProjection();
     scheduleMediaPredecode(result.candidates);
@@ -674,10 +785,12 @@ void DocumentSessionRuntime::updateMediaBoundaryState(
 {
     if (!result.succeeded) {
         m_state.setMediaNavigationState({}, false);
+        m_mediaNavigationCandidates.clear();
         recomputePublicProjection();
         return;
     }
 
+    m_mediaNavigationCandidates = result.candidates;
     m_state.setMediaNavigationState(result.boundaryState, true);
     recomputePublicProjection();
     scheduleMediaPredecode(result.candidates);
@@ -798,6 +911,7 @@ void DocumentSessionRuntime::executeMediaDeletionCompletionPlan(
         setDocumentKind(DocumentSessionKind::Empty);
         if (plan.clearMediaNavigation) {
             m_state.setMediaNavigationState({}, false);
+            m_mediaNavigationCandidates.clear();
             recomputePublicProjection();
         }
         if (plan.clearPredecode && m_mediaPredecodeCoordinator != nullptr) {

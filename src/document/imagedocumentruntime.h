@@ -82,6 +82,7 @@ public:
     int currentPageNumber() const;
     int currentLastPageNumber() const;
     int imageCount() const;
+    ImagePageNavigationSnapshot pageNavigationSnapshot() const;
     bool containerNavigationAvailable() const;
     bool ordinaryDirectMediaScopeActive() const;
     bool archiveOrDirectoryDocumentScopeActive() const;

@@ -19,6 +19,7 @@ private Q_SLOTS:
     void mediaViewportDelegatesImplementSharedContract();
     void videoModeExposesReadOnlyZoomReadout();
     void toolbarPageNavigationUsesSessionActiveProjection();
+    void thumbnailPanelUsesSessionThumbnailModel();
     void activeNavigationActionsUseSessionSnapshotAndBoundaryScope();
     void shortcutsRouteSharedActiveNavigationThroughSessionRequests();
     void imageActionAvailabilityDoesNotDriveSharedActiveNavigation();
@@ -122,6 +123,8 @@ void TestMainWindowVideoIntegration::mainWindowUsesSessionModeAndMediaDispatch()
     QVERIFY(mediaWorkspaceHostQml.contains(QStringLiteral("MediaViewportHost {")));
     QVERIFY(mediaWorkspaceHostQml.contains(QStringLiteral("InfoPanel {")));
     QVERIFY(mediaWorkspaceHostQml.contains(QStringLiteral("ThumbnailPanel {")));
+    QVERIFY(
+        mediaWorkspaceHostQml.contains(QStringLiteral("documentSession: root.documentSession")));
     QVERIFY(mediaWorkspaceHostQml.contains(QStringLiteral("id: contentSplitView")));
     QVERIFY(mediaWorkspaceHostQml.contains(QStringLiteral("id: mediaPanelSplitView")));
     QVERIFY(mediaWorkspaceHostQml.contains(QStringLiteral("function toggleInfoPanel()")));
@@ -272,6 +275,29 @@ void TestMainWindowVideoIntegration::toolbarPageNavigationUsesSessionActiveProje
         QStringLiteral("activeNavigationCount: root.activeNavigationCount")));
     QVERIFY(imageToolBarQml.contains(
         QStringLiteral("openActiveNavigationAtNumber: root.openActiveNavigationAtNumber")));
+}
+
+void TestMainWindowVideoIntegration::thumbnailPanelUsesSessionThumbnailModel()
+{
+    const QString thumbnailPanelQml = readSource(QStringLiteral("src/qml/ThumbnailPanel.qml"));
+    QVERIFY2(!thumbnailPanelQml.isEmpty(), "ThumbnailPanel.qml should be readable");
+
+    QVERIFY(thumbnailPanelQml.contains(
+        QStringLiteral("required property KiriDocumentSession documentSession")));
+    QVERIFY(thumbnailPanelQml.contains(
+        QStringLiteral("model: root.documentSession.activeNavigationThumbnailModel")));
+    QVERIFY(thumbnailPanelQml.contains(QStringLiteral("orientation: ListView.Horizontal")));
+    QVERIFY(thumbnailPanelQml.contains(QStringLiteral("objectName: \"thumbnailStrip\"")));
+    QVERIFY(thumbnailPanelQml.contains(QStringLiteral("objectName: \"thumbnailStripItem\"")));
+    QVERIFY(thumbnailPanelQml.contains(QStringLiteral("required property int number")));
+    QVERIFY(thumbnailPanelQml.contains(QStringLiteral("required property string label")));
+    QVERIFY(thumbnailPanelQml.contains(QStringLiteral("required property string iconName")));
+    QVERIFY(thumbnailPanelQml.contains(QStringLiteral("required property bool current")));
+    QVERIFY(thumbnailPanelQml.contains(
+        QStringLiteral("root.documentSession.openActiveNavigationAtNumber(number)")));
+    QVERIFY(!thumbnailPanelQml.contains(QStringLiteral("imageDocument.openImageAtPage")));
+    QVERIFY(!thumbnailPanelQml.contains(QStringLiteral("openNextMedia")));
+    QVERIFY(!thumbnailPanelQml.contains(QStringLiteral("openPreviousMedia")));
 }
 
 void TestMainWindowVideoIntegration::activeNavigationActionsUseSessionSnapshotAndBoundaryScope()

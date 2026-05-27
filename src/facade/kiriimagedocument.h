@@ -6,6 +6,7 @@
 
 #include "document/imagedocumentruntimedependencies.h"
 #include "document/imagedocumenttypes.h"
+#include "navigation/imagenavigationtypes.h"
 #include "predecode/predecodedimage.h"
 #include "rendering/imagerendercontext.h"
 #include "rendering/imagesurface.h"
@@ -159,6 +160,7 @@ public:
     int currentPageNumber() const;
     int currentLastPageNumber() const;
     int imageCount() const;
+    KiriView::ImagePageNavigationSnapshot pageNavigationSnapshot() const;
     bool containerNavigationAvailable() const;
     bool ordinaryDirectMediaScopeActive() const;
     bool archiveOrDirectoryDocumentScopeActive() const;

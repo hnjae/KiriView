@@ -248,6 +248,11 @@ KiriDocumentSession::activeNavigationBoundaryScope() const
     return fromRuntimeBoundaryScope(m_runtime->activeNavigationBoundaryScope());
 }
 
+QAbstractListModel *KiriDocumentSession::activeNavigationThumbnailModel() const
+{
+    return m_runtime->activeNavigationThumbnailModel();
+}
+
 KiriImageDocument *KiriDocumentSession::imageDocument() const { return m_imageDocument.get(); }
 
 KiriVideoDocument *KiriDocumentSession::videoDocument() const { return m_videoDocument.get(); }

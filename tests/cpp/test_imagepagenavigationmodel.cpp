@@ -271,6 +271,7 @@ void TestImagePageNavigationModel::snapshotIsStableProjection()
     QCOMPARE(snapshot.imageCount(), 3);
     QVERIFY(snapshot.urlAtPage(1).has_value());
     QCOMPARE(*snapshot.urlAtPage(1), first);
+    QCOMPARE(snapshot.state.targets.at(0).name, QStringLiteral("00.png"));
     QVERIFY(snapshot.urlAtPage(3).has_value());
     QCOMPARE(*snapshot.urlAtPage(3), third);
     QVERIFY(!snapshot.urlAtPage(0).has_value());

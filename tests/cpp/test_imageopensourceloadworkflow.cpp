@@ -41,7 +41,11 @@ void TestImageOpenSourceLoadWorkflow::currentSourceLoadUsesRuntimeSnapshotAndReq
     };
     const KiriView::ImageDocumentSourceLoadRequest request
         = KiriView::ImageDocumentSourceLoadRequest::fromContainerTarget(
-            { sourceUrl, KiriView::ImageNavigationCandidateKind::Video }, containerUrl);
+            KiriView::ImageNavigationTarget {
+                sourceUrl,
+                KiriView::ImageNavigationCandidateKind::Video,
+            },
+            containerUrl);
     const KiriView::ImageDocumentRuntimePlan plan
         = KiriView::ImageOpenWorkflow::sourceLoadPlan(snapshot, request);
 
@@ -120,7 +124,11 @@ void TestImageOpenSourceLoadWorkflow::sourceLoadPlanResolvesRequestedRuntimePayl
     const QUrl containerUrl = localUrl(QStringLiteral("/books/book.cbz"));
     const KiriView::ImageDocumentSourceLoadRequest request
         = KiriView::ImageDocumentSourceLoadRequest::fromContainerTarget(
-            { sourceUrl, KiriView::ImageNavigationCandidateKind::Video }, containerUrl);
+            KiriView::ImageNavigationTarget {
+                sourceUrl,
+                KiriView::ImageNavigationCandidateKind::Video,
+            },
+            containerUrl);
     const KiriView::ImageDocumentSourceLoadSnapshot replacementSnapshot {
         localUrl(QStringLiteral("/images/current.png")),
         {},

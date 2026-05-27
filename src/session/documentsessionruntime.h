@@ -10,6 +10,7 @@
 #include "navigation/mediacandidateprovider.h"
 #include "navigation/medianavigationmodel.h"
 #include "session/activenavigationprojection.h"
+#include "session/activenavigationthumbnailmodel.h"
 #include "session/documentsessionmediadeletionruntime.h"
 #include "session/documentsessionmedianavigationruntime.h"
 #include "session/documentsessionpublicprojection.h"
@@ -27,6 +28,7 @@
 
 class KiriImageDocument;
 class KiriVideoDocument;
+class QAbstractListModel;
 class QObject;
 class QString;
 
@@ -80,6 +82,7 @@ public:
     bool atKnownFirstActiveNavigation() const;
     bool atKnownLastActiveNavigation() const;
     ActiveNavigationBoundaryScope activeNavigationBoundaryScope() const;
+    QAbstractListModel *activeNavigationThumbnailModel() const;
     std::optional<PredecodedImage> findPredecodedImage(const QUrl &url) const;
 
     void openPreviousMedia();
@@ -106,6 +109,7 @@ private:
     void recomputeActiveZoomReadoutForKind(DocumentSessionKind kind);
     void publishActiveNavigationForImagePages();
     void recomputePublicProjection();
+    void syncActiveNavigationThumbnailRows();
     void routeSourceUrl(const QUrl &sourceUrl);
     void openMediaUrl(const QUrl &url);
     void openMedia(MediaNavigationOpenRequest request);
@@ -144,7 +148,9 @@ private:
     KiriImageDocument &m_imageDocument;
     KiriVideoDocument &m_videoDocument;
     DocumentSessionState m_state;
+    std::unique_ptr<ActiveNavigationThumbnailModel> m_activeNavigationThumbnailModel;
     DocumentSessionMediaNavigationRuntime m_mediaNavigationRuntime;
+    std::vector<MediaNavigationCandidate> m_mediaNavigationCandidates;
     DocumentSessionMediaDeletionRuntime m_mediaDeletionRuntime;
     MediaOpenWithProvider m_mediaOpenWithProvider;
     ImageIoJob m_mediaOpenWithJob;

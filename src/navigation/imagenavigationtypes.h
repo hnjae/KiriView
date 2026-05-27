@@ -23,12 +23,25 @@ struct ImageNavigationCandidate {
 };
 
 struct ImageNavigationTarget {
+    ImageNavigationTarget() = default;
+    explicit ImageNavigationTarget(QUrl url,
+        ImageNavigationCandidateKind kind = ImageNavigationCandidateKind::Image, QString name = {})
+        : url(std::move(url))
+        , kind(kind)
+        , name(std::move(name))
+    {
+        if (this->name.isEmpty()) {
+            this->name = this->url.fileName(QUrl::PrettyDecoded);
+        }
+    }
+
     QUrl url;
     ImageNavigationCandidateKind kind = ImageNavigationCandidateKind::Image;
+    QString name;
 
     friend bool operator==(const ImageNavigationTarget &left, const ImageNavigationTarget &right)
     {
-        return left.url == right.url && left.kind == right.kind;
+        return left.url == right.url && left.kind == right.kind && left.name == right.name;
     }
 };
 

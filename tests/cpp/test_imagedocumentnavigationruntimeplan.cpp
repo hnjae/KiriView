@@ -39,7 +39,7 @@ void TestImageDocumentNavigationRuntimePlan::openImageNavigationMapsToLoadUrl()
     const QUrl url = localUrl(QStringLiteral("/images/02.png"));
     const ImageDocumentRuntimePlan plan = KiriView::imageDocumentRuntimePlanForNavigationPlan({
         KiriView::OpenImageNavigationUrlEffect {
-            { url, KiriView::ImageNavigationCandidateKind::Video },
+            KiriView::ImageNavigationTarget { url, KiriView::ImageNavigationCandidateKind::Video },
         },
     });
 
@@ -55,7 +55,10 @@ void TestImageDocumentNavigationRuntimePlan::openContainerImageNavigationMapsToC
     const QUrl containerUrl = localUrl(QStringLiteral("/books/book.cbz"));
     const ImageDocumentRuntimePlan plan = KiriView::imageDocumentRuntimePlanForNavigationPlan({
         KiriView::OpenContainerImageNavigationEffect {
-            { imageUrl, KiriView::ImageNavigationCandidateKind::Video },
+            KiriView::ImageNavigationTarget {
+                imageUrl,
+                KiriView::ImageNavigationCandidateKind::Video,
+            },
             containerUrl,
         },
     });
@@ -149,10 +152,16 @@ void TestImageDocumentNavigationRuntimePlan::mixedNavigationPlanPreservesOperati
     const QUrl containerUrl = localUrl(QStringLiteral("/books/book.cbz"));
     const ImageDocumentRuntimePlan plan = KiriView::imageDocumentRuntimePlanForNavigationPlan({
         KiriView::OpenImageNavigationUrlEffect {
-            { firstUrl, KiriView::ImageNavigationCandidateKind::Image },
+            KiriView::ImageNavigationTarget {
+                firstUrl,
+                KiriView::ImageNavigationCandidateKind::Image,
+            },
         },
         KiriView::OpenContainerImageNavigationEffect {
-            { imageUrl, KiriView::ImageNavigationCandidateKind::Image },
+            KiriView::ImageNavigationTarget {
+                imageUrl,
+                KiriView::ImageNavigationCandidateKind::Image,
+            },
             containerUrl,
         },
         KiriView::ReportContainerNavigationErrorEffect {

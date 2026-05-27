@@ -62,8 +62,11 @@ void TestImageNavigationModel::imageNavigationCandidateProjectionsUseNormalizedU
 {
     const std::vector<ImageNavigationCandidate> candidates = imageCandidates(3);
     const std::vector<QUrl> urls = KiriView::imageNavigationCandidateUrls(candidates);
+    const std::vector<KiriView::ImageNavigationTarget> targets
+        = KiriView::imageNavigationCandidateTargets(candidates);
 
     compareUrls(urls, { indexedImageUrl(0), indexedImageUrl(1), indexedImageUrl(2) });
+    QCOMPARE(targets.at(1).name, indexedImageFileName(1));
     const std::optional<std::size_t> secondIndex = KiriView::imageNavigationCandidateIndex(
         candidates, localUrl(QStringLiteral("/images/subdirectory/../01.png")));
     QVERIFY(secondIndex.has_value());

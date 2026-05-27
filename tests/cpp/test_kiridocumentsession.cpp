@@ -11,7 +11,9 @@
 #include "location/imagedocumentlocation.h"
 #include "navigation/imagecandidateprovider.h"
 #include "navigation/medianavigationmodel.h"
+#include "session/activenavigationthumbnailmodel.h"
 
+#include <QAbstractItemModel>
 #include <QFile>
 #include <QImage>
 #include <QObject>
@@ -32,6 +34,31 @@ QUrl localUrl(const QString &path) { return QUrl::fromLocalFile(path); }
 KiriView::MediaNavigationCandidate mediaCandidate(const QUrl &url)
 {
     return KiriView::MediaNavigationCandidate { url, url.fileName(QUrl::PrettyDecoded) };
+}
+
+QVariant thumbnailData(const KiriDocumentSession &session, int row, int role)
+{
+    QAbstractItemModel *model = session.activeNavigationThumbnailModel();
+    return model->data(model->index(row, 0), role);
+}
+
+void compareThumbnailRow(const KiriDocumentSession &session, int row, int number, const QUrl &url,
+    const QString &label, const QString &iconName, bool current)
+{
+    QCOMPARE(
+        thumbnailData(session, row, KiriView::ActiveNavigationThumbnailModel::NumberRole).toInt(),
+        number);
+    QCOMPARE(thumbnailData(session, row, KiriView::ActiveNavigationThumbnailModel::UrlRole).toUrl(),
+        url);
+    QCOMPARE(
+        thumbnailData(session, row, KiriView::ActiveNavigationThumbnailModel::LabelRole).toString(),
+        label);
+    QCOMPARE(thumbnailData(session, row, KiriView::ActiveNavigationThumbnailModel::IconNameRole)
+                 .toString(),
+        iconName);
+    QCOMPARE(
+        thumbnailData(session, row, KiriView::ActiveNavigationThumbnailModel::CurrentRole).toBool(),
+        current);
 }
 
 class FakeMediaCandidateProvider
@@ -216,6 +243,8 @@ private Q_SLOTS:
     void directImageAfterVideoRestoresImageDocument();
     void kioArchiveImageAfterKioArchiveVideoUsesOriginalImageUrl();
     void directImageMediaNavigationIncludesSiblingVideos();
+    void directMediaThumbnailModelTracksSiblingCandidates();
+    void directMediaThumbnailModelStaysEmptyUntilCandidatesAreKnown();
     void defaultMediaProviderListsLocalDirectImageSiblings();
     void freshDirectImageReadoutUsesRequestedCursorBeforeDisplayedUrl();
     void directImageCandidateCompletionSurvivesCursorConfirmation();
@@ -226,6 +255,7 @@ private Q_SLOTS:
     void imagePageNavigationChangesEmitActiveNavigationWhenRelevant();
     void activeNavigationNumberDispatchRoutesDirectMedia();
     void activeNavigationNumberDispatchRoutesImageDocumentPages();
+    void archiveDocumentThumbnailModelUsesPageCandidateNames();
     void activeNavigationRequestReportsDispatchAndBoundaryResults();
     void activeNavigationBoundaryTextFollowsSessionSource();
     void activeNavigationNumberDispatchIgnoresUnknownNavigation();
@@ -431,6 +461,56 @@ void TestKiriDocumentSession::directImageMediaNavigationIncludesSiblingVideos()
     QCOMPARE(session->activeNavigationCurrentNumber(), 2);
     QCOMPARE(session->activeNavigationCount(), 2);
     QVERIFY(session->atKnownLastActiveNavigation());
+}
+
+void TestKiriDocumentSession::directMediaThumbnailModelTracksSiblingCandidates()
+{
+    FakeMediaCandidateProvider mediaProvider;
+    const QUrl imageUrl = localUrl(QStringLiteral("/media/01.png"));
+    const QUrl videoUrl = localUrl(QStringLiteral("/media/02.mp4"));
+    mediaProvider.setMedia(localUrl(QStringLiteral("/media/")),
+        { mediaCandidate(imageUrl), mediaCandidate(videoUrl) });
+    std::unique_ptr<KiriDocumentSession> session = createSession(mediaProvider);
+
+    session->setSourceUrl(videoUrl);
+
+    QAbstractItemModel *model = session->activeNavigationThumbnailModel();
+    QVERIFY(model != nullptr);
+    QVERIFY(session->activeNavigationKnown());
+    QCOMPARE(session->activeNavigationCurrentNumber(), 2);
+    QCOMPARE(session->activeNavigationCount(), 2);
+    QCOMPARE(model->rowCount(), 2);
+    compareThumbnailRow(*session, 0, 1, imageUrl, QStringLiteral("01.png"),
+        QStringLiteral("image-x-generic-symbolic"), false);
+    compareThumbnailRow(*session, 1, 2, videoUrl, QStringLiteral("02.mp4"),
+        QStringLiteral("video-x-generic-symbolic"), true);
+}
+
+void TestKiriDocumentSession::directMediaThumbnailModelStaysEmptyUntilCandidatesAreKnown()
+{
+    ManualMediaCandidateProvider mediaProvider;
+    const QUrl imageUrl = localUrl(QStringLiteral("/media/01.png"));
+    const QUrl videoUrl = localUrl(QStringLiteral("/media/02.mp4"));
+    std::unique_ptr<KiriDocumentSession> session
+        = createSessionWithProvider(mediaProvider.provider());
+
+    session->setSourceUrl(videoUrl);
+
+    QAbstractItemModel *model = session->activeNavigationThumbnailModel();
+    QVERIFY(model != nullptr);
+    QCOMPARE(mediaProvider.loadCount(), std::size_t(1));
+    QVERIFY(session->activeNavigationAvailable());
+    QVERIFY(!session->activeNavigationKnown());
+    QCOMPARE(model->rowCount(), 0);
+
+    mediaProvider.finishLoad(0, { mediaCandidate(imageUrl), mediaCandidate(videoUrl) });
+
+    QVERIFY(session->activeNavigationKnown());
+    QCOMPARE(session->activeNavigationCurrentNumber(), 2);
+    QCOMPARE(session->activeNavigationCount(), 2);
+    QCOMPARE(model->rowCount(), 2);
+    compareThumbnailRow(*session, 1, 2, videoUrl, QStringLiteral("02.mp4"),
+        QStringLiteral("video-x-generic-symbolic"), true);
 }
 
 void TestKiriDocumentSession::defaultMediaProviderListsLocalDirectImageSiblings()
@@ -761,6 +841,45 @@ void TestKiriDocumentSession::activeNavigationNumberDispatchRoutesImageDocumentP
     dataLoader.finishBackLoad(QByteArrayLiteral("second"));
     QTRY_COMPARE(session->imageDocument()->currentPageNumber(), 2);
     QCOMPARE(session->activeNavigationCurrentNumber(), 2);
+}
+
+void TestKiriDocumentSession::archiveDocumentThumbnailModelUsesPageCandidateNames()
+{
+    FakeMediaCandidateProvider mediaProvider;
+    KiriView::TestSupport::FakeImageNavigationCandidateProvider imageCandidates;
+    KiriView::TestSupport::ManualImageDataLoader dataLoader;
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/thumbnails.cbz"));
+    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
+        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveDocument.has_value());
+    const QUrl firstPage = KiriView::TestSupport::archivePageUrl(
+        archiveDocument->rootUrl(), QStringLiteral("chapter/01.png"));
+    const QUrl secondPage = KiriView::TestSupport::archivePageUrl(
+        archiveDocument->rootUrl(), QStringLiteral("extras/clip.mp4"));
+    imageCandidates.setArchiveImages(archiveDocument->rootUrl(),
+        {
+            KiriView::ImageNavigationCandidate { firstPage, QStringLiteral("chapter/01.png"),
+                KiriView::ImageNavigationCandidateKind::Image },
+            KiriView::ImageNavigationCandidate { secondPage, QStringLiteral("extras/clip.mp4"),
+                KiriView::ImageNavigationCandidateKind::Video },
+        });
+    std::unique_ptr<KiriDocumentSession> session = createSessionWithProvider(
+        mediaProvider.provider(), nullptr, &dataLoader, imageCandidates.provider());
+
+    session->setSourceUrl(archiveUrl);
+    QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
+    dataLoader.finishBackLoad(QByteArrayLiteral("first"));
+
+    QAbstractItemModel *model = session->activeNavigationThumbnailModel();
+    QVERIFY(model != nullptr);
+    QTRY_COMPARE(session->imageDocument()->status(), KiriImageDocument::Status::Ready);
+    QCOMPARE(session->activeNavigationCurrentNumber(), 1);
+    QCOMPARE(session->activeNavigationCount(), 2);
+    QCOMPARE(model->rowCount(), 2);
+    compareThumbnailRow(*session, 0, 1, firstPage, QStringLiteral("chapter/01.png"),
+        QStringLiteral("image-x-generic-symbolic"), true);
+    compareThumbnailRow(*session, 1, 2, secondPage, QStringLiteral("extras/clip.mp4"),
+        QStringLiteral("video-x-generic-symbolic"), false);
 }
 
 void TestKiriDocumentSession::activeNavigationRequestReportsDispatchAndBoundaryResults()

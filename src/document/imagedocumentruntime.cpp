@@ -222,6 +222,11 @@ int ImageDocumentRuntime::imageCount() const
     return controllers->navigationController().imageCount();
 }
 
+ImagePageNavigationSnapshot ImageDocumentRuntime::pageNavigationSnapshot() const
+{
+    return controllers->navigationController().pageNavigationSnapshot();
+}
+
 bool ImageDocumentRuntime::containerNavigationAvailable() const
 {
     return state.containerNavigationAvailable();

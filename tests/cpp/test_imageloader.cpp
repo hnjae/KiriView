@@ -423,7 +423,11 @@ void TestImageLoader::archiveInteriorVideoReportsUnsupportedDocumentVideo()
     const QUrl videoUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("02.bin"));
 
     loader.start(KiriView::ImageLoadRequest::fromTarget(
-        { videoUrl, KiriView::ImageNavigationCandidateKind::Video }, *archiveDocument));
+        KiriView::ImageNavigationTarget {
+            videoUrl,
+            KiriView::ImageNavigationCandidateKind::Video,
+        },
+        *archiveDocument));
 
     QVERIFY(unsupportedSession.has_value());
     QCOMPARE(unsupportedSession->imageUrl(), videoUrl);

@@ -8,6 +8,7 @@
 #include "facade/kirivideodocument.h"
 #include "session/documentsessionruntime.h"
 
+#include <QAbstractListModel>
 #include <QObject>
 #include <QString>
 #include <QStringList>
@@ -56,6 +57,8 @@ class KiriDocumentSession : public QObject
             activeNavigationChanged)
     Q_PROPERTY(ActiveNavigationBoundaryScope activeNavigationBoundaryScope READ
             activeNavigationBoundaryScope NOTIFY activeNavigationChanged)
+    Q_PROPERTY(QAbstractListModel *activeNavigationThumbnailModel READ
+            activeNavigationThumbnailModel CONSTANT)
     Q_PROPERTY(KiriImageDocument *imageDocument READ imageDocument CONSTANT)
     Q_PROPERTY(KiriVideoDocument *videoDocument READ videoDocument CONSTANT)
 
@@ -116,6 +119,7 @@ public:
     bool atKnownFirstActiveNavigation() const;
     bool atKnownLastActiveNavigation() const;
     ActiveNavigationBoundaryScope activeNavigationBoundaryScope() const;
+    QAbstractListModel *activeNavigationThumbnailModel() const;
     KiriImageDocument *imageDocument() const;
     KiriVideoDocument *videoDocument() const;
 

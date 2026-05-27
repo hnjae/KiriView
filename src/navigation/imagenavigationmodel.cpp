@@ -58,8 +58,8 @@ PageNavigationState::PageNavigationState(std::vector<QUrl> urls, int currentInde
 {
     targets.reserve(urls.size());
     for (QUrl &url : urls) {
-        targets.push_back(
-            ImageNavigationTarget { std::move(url), ImageNavigationCandidateKind::Image });
+        targets.push_back(ImageNavigationTarget {
+            url, ImageNavigationCandidateKind::Image, url.fileName(QUrl::PrettyDecoded) });
     }
 }
 
@@ -87,7 +87,7 @@ std::vector<ImageNavigationTarget> imageNavigationCandidateTargets(
     std::vector<ImageNavigationTarget> targets;
     targets.reserve(candidates.size());
     for (const ImageNavigationCandidate &candidate : candidates) {
-        targets.push_back(ImageNavigationTarget { candidate.url, candidate.kind });
+        targets.push_back(ImageNavigationTarget { candidate.url, candidate.kind, candidate.name });
     }
 
     return targets;
@@ -244,9 +244,10 @@ PageNavigationState pageNavigationStateForTargets(
         = rustPageNavigationStateUpdate(pageRustNavigationIndex(currentUrlIndex(urls, currentUrl)),
             currentUrl.isValid() && !currentUrl.isEmpty(), state.targets.size());
     if (update.insert_current_url) {
+        const QUrl normalizedUrl = normalizedImageUrl(currentUrl);
         state.targets.insert(state.targets.begin(),
-            ImageNavigationTarget {
-                normalizedImageUrl(currentUrl), ImageNavigationCandidateKind::Image });
+            ImageNavigationTarget { normalizedUrl, ImageNavigationCandidateKind::Image,
+                normalizedUrl.fileName(QUrl::PrettyDecoded) });
     }
     state.currentIndex = update.current_index;
 

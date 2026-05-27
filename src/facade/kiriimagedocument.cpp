@@ -251,6 +251,11 @@ int KiriImageDocument::currentLastPageNumber() const { return m_runtime->current
 
 int KiriImageDocument::imageCount() const { return m_runtime->imageCount(); }
 
+KiriView::ImagePageNavigationSnapshot KiriImageDocument::pageNavigationSnapshot() const
+{
+    return m_runtime->pageNavigationSnapshot();
+}
+
 bool KiriImageDocument::containerNavigationAvailable() const
 {
     return m_runtime->containerNavigationAvailable();
