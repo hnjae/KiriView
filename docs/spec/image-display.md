@@ -138,6 +138,8 @@ Keyboard zoom uses the same dynamic manual zoom range as the toolbar zoom input.
 
 Holding Ctrl and using the mouse wheel, or holding the right mouse button and using the mouse wheel, over the image viewport zooms around the cursor when the cursor is over the image, or around the nearest displayed image point when the cursor is in the viewport outside the image. Wheel up zooms in by the same multiplicative step and wheel down zooms out by its reciprocal.
 
+Double-clicking the image viewport toggles between Fit mode and 100% manual zoom. If the current zoom mode is Fit, double-clicking switches to 100% manual zoom around the clicked viewport point when it is over the image, or around the nearest displayed image point when the click is inside the viewport outside the image. If the current zoom mode is Manual, Fit Height, or Fit Width, double-clicking switches to Fit mode.
+
 When an image is ready, Ctrl+1 selects Fit mode, Ctrl+2 selects Fit Height mode, Ctrl+3 selects Fit Width mode, and Ctrl+0 switches to 100% manual zoom.
 
 ## Animation
