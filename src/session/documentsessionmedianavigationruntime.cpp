@@ -18,15 +18,13 @@ DocumentSessionMediaNavigationRuntime::DocumentSessionMediaNavigationRuntime(
 DocumentSessionMediaNavigationRuntime::~DocumentSessionMediaNavigationRuntime() { cancel(); }
 
 void DocumentSessionMediaNavigationRuntime::loadCandidates(QObject *receiver,
-    const DocumentSessionMediaNavigationLoadScope &scope, ScopeAccepted scopeAccepted,
-    CandidatesCallback callback)
+    const DirectMediaScope &scope, ScopeAccepted scopeAccepted, CandidatesCallback callback)
 {
     startLoad(receiver, scope, std::move(scopeAccepted), std::move(callback));
 }
 
 void DocumentSessionMediaNavigationRuntime::refresh(QObject *receiver,
-    const DocumentSessionMediaNavigationLoadScope &scope, ScopeAccepted scopeAccepted,
-    RefreshCallback callback)
+    const DirectMediaScope &scope, ScopeAccepted scopeAccepted, RefreshCallback callback)
 {
     startLoad(receiver, scope, std::move(scopeAccepted),
         [callback = std::move(callback), currentUrl = scope.currentUrl](
@@ -45,9 +43,8 @@ void DocumentSessionMediaNavigationRuntime::refresh(QObject *receiver,
         });
 }
 
-void DocumentSessionMediaNavigationRuntime::open(QObject *receiver,
-    const DocumentSessionMediaNavigationLoadScope &scope, MediaNavigationOpenRequest request,
-    ScopeAccepted scopeAccepted, OpenCallback callback)
+void DocumentSessionMediaNavigationRuntime::open(QObject *receiver, const DirectMediaScope &scope,
+    MediaNavigationOpenRequest request, ScopeAccepted scopeAccepted, OpenCallback callback)
 {
     startLoad(receiver, scope, std::move(scopeAccepted),
         [callback = std::move(callback), currentUrl = scope.currentUrl, request](
@@ -67,8 +64,7 @@ void DocumentSessionMediaNavigationRuntime::open(QObject *receiver,
 }
 
 void DocumentSessionMediaNavigationRuntime::startLoad(QObject *receiver,
-    const DocumentSessionMediaNavigationLoadScope &scope, ScopeAccepted scopeAccepted,
-    CandidatesCallback callback)
+    const DirectMediaScope &scope, ScopeAccepted scopeAccepted, CandidatesCallback callback)
 {
     cancel();
 
@@ -78,8 +74,7 @@ void DocumentSessionMediaNavigationRuntime::startLoad(QObject *receiver,
         return;
     }
 
-    const DocumentSessionMediaNavigationLoad load
-        = m_loadState.start(scope.currentUrl, scope.parentUrl, scope.cursorGeneration);
+    const DocumentSessionMediaNavigationLoad load = m_loadState.start(scope);
     auto sharedScopeAccepted = std::make_shared<ScopeAccepted>(std::move(scopeAccepted));
     auto sharedCallback = std::make_shared<CandidatesCallback>(std::move(callback));
 
@@ -112,12 +107,7 @@ void DocumentSessionMediaNavigationRuntime::finish(DocumentSessionMediaNavigatio
         return;
     }
 
-    const DocumentSessionMediaNavigationLoadScope scope {
-        load.currentUrl,
-        load.parentUrl,
-        load.cursorGeneration,
-    };
-    if (scopeAccepted && !scopeAccepted(scope)) {
+    if (scopeAccepted && !scopeAccepted(load.scope)) {
         return;
     }
 

@@ -131,10 +131,9 @@ private:
     void finishMediaDeletion(DocumentSessionMediaDeletionCompletion completion);
     void executeMediaDeletionCompletionPlan(
         const DocumentSessionMediaDeletionCompletionPlan &plan, const QString &errorString);
-    DocumentSessionMediaNavigationLoadScope mediaNavigationLoadScope() const;
+    DirectMediaScope mediaNavigationLoadScope() const;
     QUrl activeDirectMediaCursorUrl() const;
-    QUrl activeDirectMediaScopeUrl() const;
-    bool directMediaCursorMatches(const DocumentSessionMediaNavigationLoadScope &scope) const;
+    bool directMediaCursorMatches(const DirectMediaScope &scope) const;
     bool activeImageUsesMediaScope() const;
     bool directImageLoadMayUseMediaScope() const;
     bool syncDirectImageCursorFromDocument();

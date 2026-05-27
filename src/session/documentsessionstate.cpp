@@ -116,6 +116,11 @@ QUrl DocumentSessionState::directMediaCursorUrl() const
     return effectiveDirectMediaCursorUrl(m_directMediaCursor);
 }
 
+DirectMediaScope DocumentSessionState::directMediaScope() const
+{
+    return directMediaScopeForCursor(m_directMediaCursor);
+}
+
 void DocumentSessionState::setSourceIdentity(const QUrl &url)
 {
     if (replaceIfChanged(m_sourceUrl, url)) {

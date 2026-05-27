@@ -37,6 +37,7 @@ public:
     const DocumentSessionPublicProjection &publicProjection() const;
     const DirectMediaCursor &directMediaCursor() const;
     QUrl directMediaCursorUrl() const;
+    DirectMediaScope directMediaScope() const;
 
     void setSourceIdentity(const QUrl &url);
     void setDocumentKind(DocumentSessionKind kind);

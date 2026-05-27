@@ -38,7 +38,7 @@ struct DocumentSessionMediaNavigationOpenResult {
 class DocumentSessionMediaNavigationRuntime final
 {
 public:
-    using ScopeAccepted = std::function<bool(const DocumentSessionMediaNavigationLoadScope &)>;
+    using ScopeAccepted = std::function<bool(const DirectMediaScope &)>;
     using CandidatesCallback = std::function<void(DocumentSessionMediaNavigationCandidatesResult)>;
     using RefreshCallback = std::function<void(DocumentSessionMediaNavigationRefreshResult)>;
     using OpenCallback = std::function<void(DocumentSessionMediaNavigationOpenResult)>;
@@ -46,17 +46,17 @@ public:
     explicit DocumentSessionMediaNavigationRuntime(MediaNavigationCandidateProvider provider = {});
     ~DocumentSessionMediaNavigationRuntime();
 
-    void loadCandidates(QObject *receiver, const DocumentSessionMediaNavigationLoadScope &scope,
+    void loadCandidates(QObject *receiver, const DirectMediaScope &scope,
         ScopeAccepted scopeAccepted, CandidatesCallback callback);
-    void refresh(QObject *receiver, const DocumentSessionMediaNavigationLoadScope &scope,
-        ScopeAccepted scopeAccepted, RefreshCallback callback);
-    void open(QObject *receiver, const DocumentSessionMediaNavigationLoadScope &scope,
-        MediaNavigationOpenRequest request, ScopeAccepted scopeAccepted, OpenCallback callback);
+    void refresh(QObject *receiver, const DirectMediaScope &scope, ScopeAccepted scopeAccepted,
+        RefreshCallback callback);
+    void open(QObject *receiver, const DirectMediaScope &scope, MediaNavigationOpenRequest request,
+        ScopeAccepted scopeAccepted, OpenCallback callback);
     void cancel();
 
 private:
-    void startLoad(QObject *receiver, const DocumentSessionMediaNavigationLoadScope &scope,
-        ScopeAccepted scopeAccepted, CandidatesCallback callback);
+    void startLoad(QObject *receiver, const DirectMediaScope &scope, ScopeAccepted scopeAccepted,
+        CandidatesCallback callback);
     void finish(DocumentSessionMediaNavigationLoad load,
         DocumentSessionMediaNavigationCandidatesResult result, const ScopeAccepted &scopeAccepted,
         const CandidatesCallback &callback);

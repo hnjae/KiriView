@@ -11,38 +11,24 @@ DocumentSessionMediaNavigationLoadState::DocumentSessionMediaNavigationLoadState
 }
 
 DocumentSessionMediaNavigationLoad DocumentSessionMediaNavigationLoadState::start(
-    const QUrl &currentUrl, const QUrl &parentUrl, quint64 cursorGeneration)
+    const DirectMediaScope &scope)
 {
-    const ImageAsyncScopedOperation<DocumentSessionMediaNavigationLoadScope> operation
-        = m_operation.start(
-            DocumentSessionMediaNavigationLoadScope { currentUrl, parentUrl, cursorGeneration });
+    const ImageAsyncScopedOperation<DirectMediaScope> operation = m_operation.start(scope);
     return DocumentSessionMediaNavigationLoad {
         operation.operationId,
-        operation.scope.currentUrl,
-        operation.scope.parentUrl,
-        operation.scope.cursorGeneration,
+        operation.scope,
     };
 }
 
 bool DocumentSessionMediaNavigationLoadState::accepts(
     const DocumentSessionMediaNavigationLoad &load) const
 {
-    return m_operation.accepts(load.operationId,
-        DocumentSessionMediaNavigationLoadScope {
-            load.currentUrl,
-            load.parentUrl,
-            load.cursorGeneration,
-        });
+    return m_operation.accepts(load.operationId, load.scope);
 }
 
 bool DocumentSessionMediaNavigationLoadState::finish(const DocumentSessionMediaNavigationLoad &load)
 {
-    return m_operation.finish(load.operationId,
-        DocumentSessionMediaNavigationLoadScope {
-            load.currentUrl,
-            load.parentUrl,
-            load.cursorGeneration,
-        });
+    return m_operation.finish(load.operationId, load.scope);
 }
 
 void DocumentSessionMediaNavigationLoadState::cancel() { m_operation.cancel(); }

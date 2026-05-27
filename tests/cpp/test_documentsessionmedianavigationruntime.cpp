@@ -99,12 +99,10 @@ struct RuntimeFixture {
     KiriView::DocumentSessionMediaNavigationCandidatesResult result;
     bool acceptScope = true;
 
-    void load(const KiriView::DocumentSessionMediaNavigationLoadScope &scope)
+    void load(const KiriView::DirectMediaScope &scope)
     {
         runtime.loadCandidates(
-            &receiver, scope,
-            [this](
-                const KiriView::DocumentSessionMediaNavigationLoadScope &) { return acceptScope; },
+            &receiver, scope, [this](const KiriView::DirectMediaScope &) { return acceptScope; },
             [this](KiriView::DocumentSessionMediaNavigationCandidatesResult loadResult) {
                 ++completionCount;
                 result = std::move(loadResult);
@@ -112,9 +110,9 @@ struct RuntimeFixture {
     }
 };
 
-KiriView::DocumentSessionMediaNavigationLoadScope mediaScope(const QUrl &currentUrl)
+KiriView::DirectMediaScope mediaScope(const QUrl &currentUrl)
 {
-    return KiriView::DocumentSessionMediaNavigationLoadScope {
+    return KiriView::DirectMediaScope {
         currentUrl,
         localUrl(QStringLiteral("/media/")),
         7,
@@ -126,7 +124,7 @@ void TestDocumentSessionMediaNavigationRuntime::invalidScopeCompletesWithoutStar
 {
     RuntimeFixture fixture;
 
-    fixture.load(KiriView::DocumentSessionMediaNavigationLoadScope {});
+    fixture.load(KiriView::DirectMediaScope {});
 
     QCOMPARE(fixture.provider.loadCount(), std::size_t(0));
     QCOMPARE(fixture.completionCount, 1);
@@ -160,7 +158,7 @@ void TestDocumentSessionMediaNavigationRuntime::refreshPublishesBoundaryPlanAndC
 
     fixture.runtime.refresh(
         &fixture.receiver, mediaScope(currentUrl),
-        [](const KiriView::DocumentSessionMediaNavigationLoadScope &) { return true; },
+        [](const KiriView::DirectMediaScope &) { return true; },
         [&fixture, &result](KiriView::DocumentSessionMediaNavigationRefreshResult loadResult) {
             ++fixture.completionCount;
             result = std::move(loadResult);
@@ -186,7 +184,7 @@ void TestDocumentSessionMediaNavigationRuntime::openPublishesTargetPlanAndCandid
 
     fixture.runtime.open(
         &fixture.receiver, mediaScope(currentUrl), KiriView::nextMediaNavigationOpenRequest(),
-        [](const KiriView::DocumentSessionMediaNavigationLoadScope &) { return true; },
+        [](const KiriView::DirectMediaScope &) { return true; },
         [&fixture, &result](KiriView::DocumentSessionMediaNavigationOpenResult loadResult) {
             ++fixture.completionCount;
             result = std::move(loadResult);
@@ -211,7 +209,7 @@ void TestDocumentSessionMediaNavigationRuntime::failedOpenPublishesUnknownResult
 
     fixture.runtime.open(
         &fixture.receiver, mediaScope(currentUrl), KiriView::nextMediaNavigationOpenRequest(),
-        [](const KiriView::DocumentSessionMediaNavigationLoadScope &) { return true; },
+        [](const KiriView::DirectMediaScope &) { return true; },
         [&fixture, &result](KiriView::DocumentSessionMediaNavigationOpenResult loadResult) {
             ++fixture.completionCount;
             result = std::move(loadResult);
@@ -270,9 +268,9 @@ void TestDocumentSessionMediaNavigationRuntime::acceptedScopeAllowsEquivalentCur
 
     fixture.runtime.loadCandidates(
         &fixture.receiver, mediaScope(currentUrl),
-        [confirmedUrl](const KiriView::DocumentSessionMediaNavigationLoadScope &scope) {
+        [confirmedUrl](const KiriView::DirectMediaScope &scope) {
             return KiriView::sameNormalizedUrl(scope.currentUrl, confirmedUrl)
-                && scope.cursorGeneration == 7;
+                && scope.generation == 7;
         },
         [&fixture](KiriView::DocumentSessionMediaNavigationCandidatesResult loadResult) {
             ++fixture.completionCount;

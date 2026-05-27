@@ -245,9 +245,7 @@ void DocumentSessionRuntime::openMedia(MediaNavigationOpenRequest request)
 
     m_mediaNavigationRuntime.open(
         m_owner, mediaNavigationLoadScope(), request,
-        [this](const DocumentSessionMediaNavigationLoadScope &scope) {
-            return directMediaCursorMatches(scope);
-        },
+        [this](const DirectMediaScope &scope) { return directMediaCursorMatches(scope); },
         [this](DocumentSessionMediaNavigationOpenResult result) {
             finishMediaNavigation(std::move(result));
         });
@@ -664,9 +662,7 @@ void DocumentSessionRuntime::refreshMediaNavigation()
 
     m_mediaNavigationRuntime.refresh(
         m_owner, mediaNavigationLoadScope(),
-        [this](const DocumentSessionMediaNavigationLoadScope &scope) {
-            return directMediaCursorMatches(scope);
-        },
+        [this](const DirectMediaScope &scope) { return directMediaCursorMatches(scope); },
         [this](DocumentSessionMediaNavigationRefreshResult result) {
             updateMediaBoundaryState(std::move(result));
         });
@@ -677,9 +673,7 @@ void DocumentSessionRuntime::loadMediaCandidates(
 {
     m_mediaNavigationRuntime.loadCandidates(
         m_owner, mediaNavigationLoadScope(),
-        [this](const DocumentSessionMediaNavigationLoadScope &scope) {
-            return directMediaCursorMatches(scope);
-        },
+        [this](const DirectMediaScope &scope) { return directMediaCursorMatches(scope); },
         std::move(callback));
 }
 
@@ -846,13 +840,9 @@ void DocumentSessionRuntime::executeMediaDeletionCompletionPlan(
     }
 }
 
-DocumentSessionMediaNavigationLoadScope DocumentSessionRuntime::mediaNavigationLoadScope() const
+DirectMediaScope DocumentSessionRuntime::mediaNavigationLoadScope() const
 {
-    return DocumentSessionMediaNavigationLoadScope {
-        activeDirectMediaCursorUrl(),
-        activeDirectMediaScopeUrl(),
-        m_state.directMediaCursor().generation,
-    };
+    return m_state.directMediaScope();
 }
 
 QUrl DocumentSessionRuntime::activeDirectMediaCursorUrl() const
@@ -860,17 +850,9 @@ QUrl DocumentSessionRuntime::activeDirectMediaCursorUrl() const
     return m_state.directMediaCursorUrl();
 }
 
-QUrl DocumentSessionRuntime::activeDirectMediaScopeUrl() const
+bool DocumentSessionRuntime::directMediaCursorMatches(const DirectMediaScope &scope) const
 {
-    return mediaNavigationParentUrl(activeDirectMediaCursorUrl());
-}
-
-bool DocumentSessionRuntime::directMediaCursorMatches(
-    const DocumentSessionMediaNavigationLoadScope &scope) const
-{
-    return sameNormalizedUrl(activeDirectMediaCursorUrl(), scope.currentUrl)
-        && sameNormalizedUrl(activeDirectMediaScopeUrl(), scope.parentUrl)
-        && m_state.directMediaCursor().generation == scope.cursorGeneration;
+    return directMediaScopeMatchesCursor(m_state.directMediaCursor(), scope);
 }
 
 bool DocumentSessionRuntime::activeImageUsesMediaScope() const

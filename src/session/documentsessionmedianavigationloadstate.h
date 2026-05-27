@@ -5,29 +5,14 @@
 #define KIRIVIEW_DOCUMENTSESSIONMEDIANAVIGATIONLOADSTATE_H
 
 #include "async/imageasyncoperationstate.h"
+#include "session/directmediacursor.h"
 
-#include <QUrl>
 #include <QtGlobal>
 
 namespace KiriView {
-struct DocumentSessionMediaNavigationLoadScope {
-    QUrl currentUrl;
-    QUrl parentUrl;
-    quint64 cursorGeneration = 0;
-
-    friend bool operator==(const DocumentSessionMediaNavigationLoadScope &left,
-        const DocumentSessionMediaNavigationLoadScope &right)
-    {
-        return left.currentUrl == right.currentUrl && left.parentUrl == right.parentUrl
-            && left.cursorGeneration == right.cursorGeneration;
-    }
-};
-
 struct DocumentSessionMediaNavigationLoad {
     quint64 operationId = 0;
-    QUrl currentUrl;
-    QUrl parentUrl;
-    quint64 cursorGeneration = 0;
+    DirectMediaScope scope;
 };
 
 class DocumentSessionMediaNavigationLoadState final
@@ -35,14 +20,13 @@ class DocumentSessionMediaNavigationLoadState final
 public:
     explicit DocumentSessionMediaNavigationLoadState(quint64 nextOperationId = 0);
 
-    DocumentSessionMediaNavigationLoad start(
-        const QUrl &currentUrl, const QUrl &parentUrl, quint64 cursorGeneration);
+    DocumentSessionMediaNavigationLoad start(const DirectMediaScope &scope);
     bool accepts(const DocumentSessionMediaNavigationLoad &load) const;
     bool finish(const DocumentSessionMediaNavigationLoad &load);
     void cancel();
 
 private:
-    ImageAsyncScopedOperationState<DocumentSessionMediaNavigationLoadScope> m_operation;
+    ImageAsyncScopedOperationState<DirectMediaScope> m_operation;
 };
 }
 

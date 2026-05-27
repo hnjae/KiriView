@@ -4,6 +4,7 @@
 #include "directmediacursor.h"
 
 #include "location/imageurl.h"
+#include "navigation/medianavigationmodel.h"
 
 #include <utility>
 
@@ -33,6 +34,24 @@ namespace KiriView {
 QUrl effectiveDirectMediaCursorUrl(const DirectMediaCursor &cursor)
 {
     return !cursor.pendingUrl.isEmpty() ? cursor.pendingUrl : cursor.stableUrl;
+}
+
+DirectMediaScope directMediaScopeForCursor(const DirectMediaCursor &cursor)
+{
+    const QUrl currentUrl = effectiveDirectMediaCursorUrl(cursor);
+    return DirectMediaScope {
+        currentUrl,
+        mediaNavigationParentUrl(currentUrl),
+        cursor.generation,
+    };
+}
+
+bool directMediaScopeMatchesCursor(const DirectMediaCursor &cursor, const DirectMediaScope &scope)
+{
+    const DirectMediaScope currentScope = directMediaScopeForCursor(cursor);
+    return sameNormalizedUrl(currentScope.currentUrl, scope.currentUrl)
+        && sameNormalizedUrl(currentScope.parentUrl, scope.parentUrl)
+        && currentScope.generation == scope.generation;
 }
 
 bool clearDirectMediaCursor(DirectMediaCursor &cursor)

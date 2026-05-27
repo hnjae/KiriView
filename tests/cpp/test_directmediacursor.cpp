@@ -14,6 +14,8 @@ class TestDirectMediaCursor : public QObject
 private Q_SLOTS:
     void generationChangesOnlyWithEffectiveIdentity();
     void generationUsesNormalizedEffectiveIdentity();
+    void scopeUsesEffectiveUrlParentAndGeneration();
+    void scopeMatchingAcceptsNormalizedConfirmation();
 };
 
 void TestDirectMediaCursor::generationChangesOnlyWithEffectiveIdentity()
@@ -106,6 +108,36 @@ void TestDirectMediaCursor::generationUsesNormalizedEffectiveIdentity()
 
     KiriView::requestDirectImageCursor(cursor, replacementImage);
     QVERIFY(cursor.generation > requestedGeneration);
+}
+
+void TestDirectMediaCursor::scopeUsesEffectiveUrlParentAndGeneration()
+{
+    KiriView::DirectMediaCursor cursor;
+    const QUrl requestedImage(QStringLiteral("file:///media/a/../b/01.png"));
+
+    KiriView::requestDirectImageCursor(cursor, requestedImage);
+
+    const KiriView::DirectMediaScope scope = KiriView::directMediaScopeForCursor(cursor);
+    QCOMPARE(scope.currentUrl, requestedImage);
+    QCOMPARE(scope.parentUrl, QUrl(QStringLiteral("file:///media/b/")));
+    QCOMPARE(scope.generation, cursor.generation);
+}
+
+void TestDirectMediaCursor::scopeMatchingAcceptsNormalizedConfirmation()
+{
+    KiriView::DirectMediaCursor cursor;
+    const QUrl requestedImage(QStringLiteral("file:///media/chapter/../01.png"));
+    const QUrl confirmedImage(QStringLiteral("file:///media/01.png"));
+
+    KiriView::requestDirectImageCursor(cursor, requestedImage);
+    const KiriView::DirectMediaScope requestedScope = KiriView::directMediaScopeForCursor(cursor);
+    QVERIFY(KiriView::directMediaScopeMatchesCursor(cursor, requestedScope));
+
+    KiriView::confirmDirectImageCursor(cursor, confirmedImage);
+    QVERIFY(KiriView::directMediaScopeMatchesCursor(cursor, requestedScope));
+
+    KiriView::requestDirectImageCursor(cursor, QUrl(QStringLiteral("file:///media/02.png")));
+    QVERIFY(!KiriView::directMediaScopeMatchesCursor(cursor, requestedScope));
 }
 
 QTEST_GUILESS_MAIN(TestDirectMediaCursor)
