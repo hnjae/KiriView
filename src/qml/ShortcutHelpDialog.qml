@@ -43,40 +43,27 @@ Kirigami.Dialog {
         onActivated: root.close()
     }
 
-    ColumnLayout {
+    Kirigami.FormLayout {
+        objectName: "shortcutHelpForm"
+
         implicitWidth: Kirigami.Units.gridUnit * 28
-        spacing: Kirigami.Units.smallSpacing
 
         Repeater {
             model: root.application.shortcutHelpModel
 
-            delegate: RowLayout {
+            delegate: Controls.Label {
                 id: shortcutRow
 
                 required property string actionText
                 required property string shortcutText
 
+                objectName: "shortcutActionLabel"
+
+                Kirigami.FormData.label: shortcutRow.shortcutText
                 Layout.fillWidth: true
-                spacing: Kirigami.Units.largeSpacing
-
-                Controls.Label {
-                    objectName: "shortcutTextLabel"
-
-                    Layout.preferredWidth: Kirigami.Units.gridUnit * 9
-                    font.family: "monospace"
-                    text: shortcutRow.shortcutText
-                    textFormat: Text.PlainText
-                    wrapMode: Text.Wrap
-                }
-
-                Controls.Label {
-                    objectName: "shortcutActionLabel"
-
-                    Layout.fillWidth: true
-                    text: shortcutRow.actionText
-                    textFormat: Text.PlainText
-                    wrapMode: Text.Wrap
-                }
+                text: shortcutRow.actionText
+                textFormat: Text.PlainText
+                wrapMode: Text.Wrap
             }
         }
     }
