@@ -76,6 +76,22 @@ When an access key opens a submenu, the parent menu remains open and the opened 
 
 Pressing and releasing Alt alone while the menubar or toolbar application menu is open keeps the menu open. Releasing Alt after an access-key interaction is not treated as a request to toggle or close the menu.
 
+## Viewer Context Menu
+
+Right-clicking the main media viewport opens a viewer context menu at the pointer position.
+
+The viewer context menu is available in image and video mode, including fullscreen.
+
+Right-clicking the toolbar, menubar, Info Panel, or Thumbnail Panel does not open the viewer context menu.
+
+The viewer context menu contains a concise set of viewer actions: Open, media navigation, image-only view actions such as zoom, fit, and rotation, panel toggles, and Fullscreen.
+
+The viewer context menu uses the same internal application actions as the toolbar application menu and menubar. Action identity, text, shortcut display, enabled state, and checked state remain consistent across all menus.
+
+Image-only actions remain visible but disabled when their normal availability rules disable them, including video mode and empty state.
+
+The right-click gesture is a fixed mouse gesture. It is not listed in Keyboard Shortcuts configuration or Keyboard Shortcuts help.
+
 ## Startup and Input
 
 When KiriView is launched with one or more file path or URL arguments, including from a file manager's Open With action, it processes only the first argument in the supplied order and opens it at startup.
