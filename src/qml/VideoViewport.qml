@@ -111,6 +111,7 @@ FocusScope {
             id: videoOutput
 
             anchors.fill: parent
+            endOfStreamPolicy: VideoOutput.KeepLastFrame
             fillMode: VideoOutput.PreserveAspectFit
             visible: root.videoReady && root.videoDocument.hasVideo
 

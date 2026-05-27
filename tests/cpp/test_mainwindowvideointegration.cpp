@@ -357,6 +357,8 @@ void TestMainWindowVideoIntegration::videoModeExposesReadOnlyZoomReadout()
     QVERIFY2(!imageToolBarQml.isEmpty(), "ImageToolBar.qml should be readable");
 
     QVERIFY(!videoViewportQml.contains(QStringLiteral("videoZoomPercentForRects")));
+    QVERIFY(
+        videoViewportQml.contains(QStringLiteral("endOfStreamPolicy: VideoOutput.KeepLastFrame")));
     QVERIFY(videoViewportQml.contains(QStringLiteral("videoOutput.contentRect")));
     QVERIFY(videoViewportQml.contains(QStringLiteral("videoOutput.sourceRect")));
     QVERIFY(videoViewportQml.contains(QStringLiteral("setVideoOutputGeometry")));
