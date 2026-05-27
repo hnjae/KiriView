@@ -9,20 +9,17 @@ import io.github.hnjae.kiriview
 import org.kde.ki18n
 import org.kde.kirigami as Kirigami
 
-FocusScope {
+MediaViewportDelegate {
     id: root
 
-    required property KiriVideoDocument videoDocument
-    property bool active: true
     property alias controls: floatingControls
     property alias videoOutput: videoOutput
+    readonly property var videoDocument: root.documentSession.videoDocument
     readonly property bool videoReady: videoDocument.status === KiriVideoDocument.Ready
     property KiriVideoDocument attachedVideoDocument: null
 
-    signal viewerClicked
-
     function shouldAttachVideoOutput() {
-        return root.active && root.visible && root.videoDocument !== null;
+        return root.presentationActive && root.visible && root.videoDocument !== null;
     }
 
     function detachVideoOutput(document) {
@@ -81,10 +78,7 @@ FocusScope {
         }
     }
 
-    activeFocusOnTab: true
-    focus: true
-
-    onActiveChanged: updateVideoOutputAttachment()
+    onPresentationActiveChanged: updateVideoOutputAttachment()
     onVideoDocumentChanged: updateVideoOutputAttachment()
     onVisibleChanged: updateVideoOutputAttachment()
 
@@ -124,7 +118,7 @@ FocusScope {
         acceptedButtons: Qt.LeftButton
 
         onTapped: {
-            root.forceActiveFocus();
+            root.requestViewportFocus();
             root.viewerClicked();
         }
     }

@@ -6,16 +6,15 @@ import QtQuick.Controls as Controls
 import QtQml
 import io.github.hnjae.kiriview
 
-Item {
+MediaViewportDelegate {
     id: root
 
-    required property KiriImageDocument imageDocument
     property alias imageView: primaryImageView
     property alias flickable: imageFlickable
-    property bool presentationActive: true
     property bool applyingViewportFrameContentPosition: false
     property bool publishingViewportContentPosition: false
     property int viewportFrameApplyGeneration: 0
+    readonly property var imageDocument: root.documentSession.imageDocument
     property bool imageReady: root.presentationActive && root.imageDocument.status === KiriImageDocument.Ready
     readonly property int minimumManualZoomPercent: root.imageDocument.minimumManualZoomPercent
     readonly property int maximumManualZoomPercent: root.imageDocument.maximumManualZoomPercent
@@ -25,7 +24,40 @@ Item {
     readonly property real viewportWidth: imageFlickable.width
     readonly property real viewportHeight: imageFlickable.height
 
-    signal viewerClicked
+    interactionSurface: MediaViewportInteractionSurface {
+        imageHorizontallyPannable: root.imageHorizontallyPannable
+        imagePannable: root.imagePannable
+        viewportHeight: root.viewportHeight
+        viewportWidth: root.viewportWidth
+
+        function panBy(deltaX, deltaY) {
+            return root.panBy(deltaX, deltaY);
+        }
+
+        function panToBottomRight() {
+            return root.panToBottomRight();
+        }
+
+        function panToTopLeft() {
+            return root.panToTopLeft();
+        }
+
+        function scanBackward() {
+            return root.scanBackward();
+        }
+
+        function scanForward() {
+            return root.scanForward();
+        }
+
+        function setNextDisplayedImageStartToFinalScanPosition() {
+            root.setNextDisplayedImageStartToFinalScanPosition();
+        }
+
+        function zoomByStep(stepCount, viewportX, viewportY) {
+            return root.zoomByStep(stepCount, viewportX, viewportY);
+        }
+    }
 
     LoggingCategory {
         id: inputLog

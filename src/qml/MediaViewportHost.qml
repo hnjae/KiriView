@@ -14,82 +14,56 @@ Item {
     required property KiriDocumentSession documentSession
     required property var openAction
     readonly property KiriImageDocument imageDocument: documentSession.imageDocument
-    readonly property KiriVideoDocument videoDocument: documentSession.videoDocument
     readonly property bool imageMode: documentSession.documentKind === KiriDocumentSession.Image
     readonly property bool videoMode: documentSession.documentKind === KiriDocumentSession.Video
     readonly property bool imageReady: imageMode && imageDocument.status === KiriImageDocument.Ready
-    readonly property bool imageHorizontallyPannable: imageViewportProperty("imageHorizontallyPannable", false)
-    readonly property bool imagePannable: imageViewportProperty("imagePannable", false)
-    readonly property real imageViewportWidth: imageViewportProperty("viewportWidth", 0)
-    readonly property real imageViewportHeight: imageViewportProperty("viewportHeight", 0)
+    readonly property url activeDelegateSource: imageMode ? Qt.resolvedUrl("ImageViewport.qml") : videoMode ? Qt.resolvedUrl("VideoViewport.qml") : ""
+    readonly property var activeDelegate: mediaViewportDelegateLoader.item
+    readonly property var activeInteractionSurface: activeDelegate !== null && activeDelegate.interactionSurface !== null ? activeDelegate.interactionSurface : inactiveInteractionSurface
+    readonly property bool imageHorizontallyPannable: activeInteractionSurface.imageHorizontallyPannable
+    readonly property bool imagePannable: activeInteractionSurface.imagePannable
+    readonly property real imageViewportWidth: activeInteractionSurface.viewportWidth
+    readonly property real imageViewportHeight: activeInteractionSurface.viewportHeight
 
     signal viewerClicked
     signal viewerContextMenuRequested(var popupParent, point position)
 
     function forceActiveViewportFocus() {
-        if (root.videoMode) {
-            videoViewportLoader.forceVideoViewportFocus();
-            return;
+        if (root.activeDelegate !== null) {
+            root.activeDelegate.requestViewportFocus();
         }
-
-        root.callImageViewport("forceActiveFocus", undefined, []);
-    }
-
-    function imageViewportProperty(propertyName, fallbackValue) {
-        if (imageViewportLoader.item === null) {
-            return fallbackValue;
-        }
-
-        return imageViewportLoader.item[propertyName];
-    }
-
-    function imageViewportFunction(functionName) {
-        if (imageViewportLoader.item === null) {
-            return null;
-        }
-
-        return imageViewportLoader.item[functionName];
-    }
-
-    function callImageViewport(functionName, fallbackValue, args) {
-        const fn = root.imageViewportFunction(functionName);
-        if (fn === null) {
-            return fallbackValue;
-        }
-
-        return fn.apply(imageViewportLoader.item, args);
     }
 
     function panBy(deltaX, deltaY) {
-        return root.callImageViewport("panBy", false, [deltaX, deltaY]);
+        return root.activeInteractionSurface.panBy(deltaX, deltaY);
     }
 
     function panToBottomRight() {
-        return root.callImageViewport("panToBottomRight", false, []);
+        return root.activeInteractionSurface.panToBottomRight();
     }
 
     function panToTopLeft() {
-        return root.callImageViewport("panToTopLeft", false, []);
+        return root.activeInteractionSurface.panToTopLeft();
     }
 
     function scanForward() {
-        return root.callImageViewport("scanForward", false, []);
+        return root.activeInteractionSurface.scanForward();
     }
 
     function scanBackward() {
-        return root.callImageViewport("scanBackward", false, []);
+        return root.activeInteractionSurface.scanBackward();
     }
 
     function setNextDisplayedImageStartToFinalScanPosition() {
-        root.callImageViewport("setNextDisplayedImageStartToFinalScanPosition", undefined, []);
+        root.activeInteractionSurface.setNextDisplayedImageStartToFinalScanPosition();
     }
 
     function zoomByStep(stepCount, viewportX, viewportY) {
-        return root.callImageViewport("zoomByStep", false, [stepCount, viewportX, viewportY]);
+        return root.activeInteractionSurface.zoomByStep(stepCount, viewportX, viewportY);
     }
 
     function zoomByStepAtCenter(stepCount) {
-        return root.zoomByStep(stepCount, root.imageViewportWidth / 2, root.imageViewportHeight / 2);
+        return root.activeInteractionSurface.zoomByStepAtCenter(stepCount);
     }
 
     objectName: "mediaViewportSlot"
@@ -97,70 +71,59 @@ Item {
     Controls.SplitView.fillHeight: true
     Controls.SplitView.minimumHeight: Kirigami.Units.gridUnit * 6
 
+    MediaViewportInteractionSurface {
+        id: inactiveInteractionSurface
+    }
+
     Loader {
-        id: imageViewportLoader
+        id: mediaViewportDelegateLoader
 
         anchors.fill: parent
-        active: root.imageMode
+        active: root.imageMode || root.videoMode
 
-        function ensureImageViewportLoaded() {
-            if (!active) {
-                source = "";
-                return;
+        function unloadActiveDelegate() {
+            if (root.activeDelegate !== null) {
+                root.activeDelegate.presentationActive = false;
             }
-
-            if (source.toString().length === 0) {
-                setSource(Qt.resolvedUrl("ImageViewport.qml"), {
-                    "imageDocument": root.imageDocument,
-                    "objectName": "imageViewport",
-                    "presentationActive": true
-                });
+            if (source.toString().length > 0) {
+                source = "";
             }
         }
 
-        Component.onCompleted: ensureImageViewportLoaded()
-        onActiveChanged: ensureImageViewportLoaded()
+        function ensureActiveDelegateLoaded() {
+            if (!active || root.activeDelegateSource.toString().length === 0) {
+                unloadActiveDelegate();
+                return;
+            }
+
+            if (source.toString() === root.activeDelegateSource.toString()) {
+                return;
+            }
+
+            unloadActiveDelegate();
+            setSource(root.activeDelegateSource, {
+                "documentSession": root.documentSession,
+                "objectName": root.imageMode ? "imageViewport" : "videoViewport",
+                "presentationActive": true
+            });
+        }
+
+        Component.onCompleted: ensureActiveDelegateLoaded()
+        onActiveChanged: ensureActiveDelegateLoaded()
     }
 
+    onActiveDelegateSourceChanged: mediaViewportDelegateLoader.ensureActiveDelegateLoaded()
+
     Connections {
-        target: imageViewportLoader.item
+        target: root.activeDelegate
 
         function onViewerClicked() {
             root.viewerClicked();
         }
-    }
 
-    Loader {
-        id: videoViewportLoader
-
-        anchors.fill: parent
-        active: root.videoMode
-
-        function ensureVideoViewportLoaded() {
-            if (!active) {
-                source = "";
-                return;
-            }
-
-            if (source.toString().length === 0) {
-                setSource(Qt.resolvedUrl("VideoViewport.qml"), {
-                    "objectName": "videoViewport",
-                    "videoDocument": root.videoDocument
-                });
-            }
+        function onViewerContextMenuRequested(popupParent, position) {
+            root.viewerContextMenuRequested(popupParent, position);
         }
-
-        function forceVideoViewportFocus() {
-            // Dynamic VideoViewport access keeps QtMultimedia out of image startup.
-            // qmllint disable missing-property
-            if (item !== null) {
-                item["forceActiveFocus"]();
-            }
-            // qmllint enable missing-property
-        }
-
-        Component.onCompleted: ensureVideoViewportLoaded()
-        onActiveChanged: ensureVideoViewportLoaded()
     }
 
     ImageStateOverlay {
@@ -169,14 +132,5 @@ Item {
         imageReady: root.imageReady
         openAction: root.openAction
         visible: !root.videoMode
-    }
-
-    TapHandler {
-        id: viewerContextMenuTapHandler
-
-        acceptedButtons: Qt.RightButton
-        enabled: root.imageMode || root.videoMode
-
-        onTapped: root.viewerContextMenuRequested(root, viewerContextMenuTapHandler.point.position)
     }
 }
