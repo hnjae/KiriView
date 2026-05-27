@@ -158,6 +158,28 @@ The floating panel does not reserve page layout height.
 
 The floating panel remains usable in fullscreen and remains visible while video mode is active in the MVP.
 
+## Side and Thumbnail Panels
+
+KiriView provides empty shell panels for future media information and thumbnail navigation content.
+
+The Info Panel is a layout-reserving right-side panel that spans the full content height below the normal toolbar outside fullscreen, or the full window content height in fullscreen.
+
+The Thumbnail Panel is a layout-reserving bottom panel in the remaining media area to the left of the Info Panel.
+
+When both panels are visible, the Info Panel occupies the right side for the full content height, and the Thumbnail Panel occupies only the bottom of the media area that remains to its left.
+
+The panels are resizable with splitters.
+
+Ctrl+I toggles the Info Panel, and Ctrl+T toggles the Thumbnail Panel.
+
+The panel toggle shortcuts are user-configurable application action shortcuts, not fixed shortcuts.
+
+The panel toggle actions are available from the application menu, menubar, Keyboard Shortcuts configuration, and Keyboard Shortcuts help.
+
+The panels are closed by default. Panel open state and splitter sizes are runtime-only and are not remembered across launches.
+
+The panels remain available in fullscreen.
+
 ## Menu Presentation
 
 Ctrl+M toggles the application menu presentation between Hamburger Menu and Menubar.
