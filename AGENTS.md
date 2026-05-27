@@ -10,7 +10,7 @@ For language boundaries, module ownership, FFI design, workflow structure, and o
 
 ## Compatibility Policy
 
-KiriView is pre-release. Do not preserve backward compatibility or write migrations for existing user data, configuration, APIs, or internal formats unless explicitly requested.
+KiriView is currently in pre-release. Backward compatibility for configurations, APIs, and internal formats should not be maintained unless explicitly requested.
 
 ## Spec-Driven Development
 

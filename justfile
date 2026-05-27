@@ -148,7 +148,6 @@ _flatpak-builder mode:
         --install-deps-from=flathub \
         --jobs="$flatpak_jobs" \
         --ccache \
-        --keep-build-dirs
 
     case "$mode" in
         build)
