@@ -6,6 +6,7 @@
 
 #include <QtGlobal>
 #include <optional>
+#include <variant>
 #include <vector>
 
 namespace KiriView {
@@ -19,24 +20,31 @@ struct VideoPlaybackControlSnapshot {
     qint64 duration = 0;
 };
 
-enum class VideoPlaybackBackendOperationKind {
-    EnsureBackend,
-    Play,
-    Pause,
-    Stop,
-    SetPosition,
-};
-
-struct VideoPlaybackBackendOperation {
-    VideoPlaybackBackendOperationKind kind = VideoPlaybackBackendOperationKind::EnsureBackend;
-    qint64 position = 0;
-};
-
 struct VideoPlaybackStateDelta {
     std::optional<bool> mediaEnded;
     std::optional<bool> playing;
     std::optional<qint64> position;
 };
+
+struct EnsureVideoPlaybackBackendOperation {
+};
+
+struct PlayVideoPlaybackOperation {
+};
+
+struct PauseVideoPlaybackOperation {
+};
+
+struct StopVideoPlaybackOperation {
+};
+
+struct SetVideoPlaybackPositionOperation {
+    qint64 position = 0;
+};
+
+using VideoPlaybackBackendOperation
+    = std::variant<EnsureVideoPlaybackBackendOperation, PlayVideoPlaybackOperation,
+        PauseVideoPlaybackOperation, StopVideoPlaybackOperation, SetVideoPlaybackPositionOperation>;
 
 struct VideoPlaybackControlPlan {
     VideoPlaybackStateDelta stateDelta;

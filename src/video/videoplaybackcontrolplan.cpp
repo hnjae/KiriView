@@ -6,26 +6,22 @@
 #include <algorithm>
 
 namespace {
-using KiriView::VideoPlaybackBackendOperation;
-using KiriView::VideoPlaybackBackendOperationKind;
+using KiriView::EnsureVideoPlaybackBackendOperation;
+using KiriView::PauseVideoPlaybackOperation;
+using KiriView::PlayVideoPlaybackOperation;
+using KiriView::SetVideoPlaybackPositionOperation;
+using KiriView::StopVideoPlaybackOperation;
 using KiriView::VideoPlaybackControlPlan;
 using KiriView::VideoPlaybackControlSnapshot;
 
-VideoPlaybackBackendOperation backendOperation(VideoPlaybackBackendOperationKind kind)
+SetVideoPlaybackPositionOperation setPositionOperation(qint64 position)
 {
-    return VideoPlaybackBackendOperation { kind, 0 };
-}
-
-VideoPlaybackBackendOperation setPositionOperation(qint64 position)
-{
-    return VideoPlaybackBackendOperation { VideoPlaybackBackendOperationKind::SetPosition,
-        position };
+    return SetVideoPlaybackPositionOperation { position };
 }
 
 void appendEnsureBackend(VideoPlaybackControlPlan &plan)
 {
-    plan.backendOperations.push_back(
-        backendOperation(VideoPlaybackBackendOperationKind::EnsureBackend));
+    plan.backendOperations.push_back(EnsureVideoPlaybackBackendOperation {});
 }
 
 qint64 clampedAbsolutePosition(qint64 position, qint64 duration)
@@ -58,7 +54,7 @@ VideoPlaybackControlPlan videoPlaybackPlayPlan(VideoPlaybackControlSnapshot snap
         plan.stateDelta.position = 0;
     }
     plan.stateDelta.mediaEnded = false;
-    plan.backendOperations.push_back(backendOperation(VideoPlaybackBackendOperationKind::Play));
+    plan.backendOperations.push_back(PlayVideoPlaybackOperation {});
     return plan;
 }
 
@@ -69,7 +65,7 @@ VideoPlaybackControlPlan videoPlaybackPausePlan(VideoPlaybackControlSnapshot sna
         return plan;
     }
 
-    plan.backendOperations.push_back(backendOperation(VideoPlaybackBackendOperationKind::Pause));
+    plan.backendOperations.push_back(PauseVideoPlaybackOperation {});
     return plan;
 }
 
@@ -78,7 +74,7 @@ VideoPlaybackControlPlan videoPlaybackStopPlan(VideoPlaybackControlSnapshot snap
     VideoPlaybackControlPlan plan;
     plan.stateDelta.mediaEnded = false;
     if (snapshot.mediaBackendAvailable) {
-        plan.backendOperations.push_back(backendOperation(VideoPlaybackBackendOperationKind::Stop));
+        plan.backendOperations.push_back(StopVideoPlaybackOperation {});
     }
     plan.stateDelta.playing = false;
     if (snapshot.seekable) {

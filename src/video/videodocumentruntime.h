@@ -64,6 +64,12 @@ public:
 private:
     VideoPlaybackControlSnapshot playbackControlSnapshot() const;
     void executePlaybackControlPlan(const VideoPlaybackControlPlan &plan);
+    void executePlaybackBackendOperation(const VideoPlaybackBackendOperation &operation);
+    void executePlaybackBackendOperation(const EnsureVideoPlaybackBackendOperation &operation);
+    void executePlaybackBackendOperation(const PlayVideoPlaybackOperation &operation);
+    void executePlaybackBackendOperation(const PauseVideoPlaybackOperation &operation);
+    void executePlaybackBackendOperation(const StopVideoPlaybackOperation &operation);
+    void executePlaybackBackendOperation(const SetVideoPlaybackPositionOperation &operation);
     void applyPlaybackStateDelta(const VideoPlaybackStateDelta &delta);
     VideoMediaBackend *ensureMediaBackend();
     void installMediaBackendCallbacks();

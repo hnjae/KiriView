@@ -184,36 +184,53 @@ VideoPlaybackControlSnapshot VideoDocumentRuntime::playbackControlSnapshot() con
 
 void VideoDocumentRuntime::executePlaybackControlPlan(const VideoPlaybackControlPlan &plan)
 {
-    VideoMediaBackend *mediaBackend = m_mediaBackend.get();
     for (const VideoPlaybackBackendOperation &operation : plan.backendOperations) {
-        switch (operation.kind) {
-        case VideoPlaybackBackendOperationKind::EnsureBackend:
-            mediaBackend = ensureMediaBackend();
-            break;
-        case VideoPlaybackBackendOperationKind::Play:
-            if (mediaBackend != nullptr) {
-                mediaBackend->play();
-            }
-            break;
-        case VideoPlaybackBackendOperationKind::Pause:
-            if (mediaBackend != nullptr) {
-                mediaBackend->pause();
-            }
-            break;
-        case VideoPlaybackBackendOperationKind::Stop:
-            if (mediaBackend != nullptr) {
-                mediaBackend->stop();
-            }
-            break;
-        case VideoPlaybackBackendOperationKind::SetPosition:
-            if (mediaBackend != nullptr) {
-                mediaBackend->setPosition(operation.position);
-            }
-            break;
-        }
+        executePlaybackBackendOperation(operation);
     }
 
     applyPlaybackStateDelta(plan.stateDelta);
+}
+
+void VideoDocumentRuntime::executePlaybackBackendOperation(
+    const VideoPlaybackBackendOperation &operation)
+{
+    std::visit(
+        [this](const auto &payload) { executePlaybackBackendOperation(payload); }, operation);
+}
+
+void VideoDocumentRuntime::executePlaybackBackendOperation(
+    const EnsureVideoPlaybackBackendOperation &)
+{
+    ensureMediaBackend();
+}
+
+void VideoDocumentRuntime::executePlaybackBackendOperation(const PlayVideoPlaybackOperation &)
+{
+    if (m_mediaBackend != nullptr) {
+        m_mediaBackend->play();
+    }
+}
+
+void VideoDocumentRuntime::executePlaybackBackendOperation(const PauseVideoPlaybackOperation &)
+{
+    if (m_mediaBackend != nullptr) {
+        m_mediaBackend->pause();
+    }
+}
+
+void VideoDocumentRuntime::executePlaybackBackendOperation(const StopVideoPlaybackOperation &)
+{
+    if (m_mediaBackend != nullptr) {
+        m_mediaBackend->stop();
+    }
+}
+
+void VideoDocumentRuntime::executePlaybackBackendOperation(
+    const SetVideoPlaybackPositionOperation &operation)
+{
+    if (m_mediaBackend != nullptr) {
+        m_mediaBackend->setPosition(operation.position);
+    }
 }
 
 void VideoDocumentRuntime::applyPlaybackStateDelta(const VideoPlaybackStateDelta &delta)
