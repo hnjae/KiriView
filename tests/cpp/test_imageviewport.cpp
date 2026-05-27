@@ -33,6 +33,8 @@ private Q_SLOTS:
     void ctrlWheelZoomsWhileImageIsPannable();
     void ctrlWheelZoomsWhileImageIsPanned();
     void ctrlWheelZoomsFromViewportMarginAroundNearestImagePoint();
+    void rightButtonWheelZoomsWhileImageIsPannable();
+    void rightButtonWheelZoomsFromViewportMarginAroundNearestImagePoint();
     void plainWheelStillPansWhileImageIsPannable();
     void fittedFractionalDisplayDoesNotEnableHorizontalPanning();
 };
@@ -492,11 +494,20 @@ void invokeSetReal(QObject *object, const char *method, qreal value)
 }
 
 void sendWheel(QQuickView *view, const QPointF &position, int angleDeltaY,
-    Qt::KeyboardModifiers modifiers = Qt::NoModifier)
+    Qt::KeyboardModifiers modifiers = Qt::NoModifier, Qt::MouseButtons buttons = Qt::NoButton)
 {
     QWheelEvent event(position, view->mapToGlobal(position.toPoint()), QPoint(),
-        QPoint(0, angleDeltaY), Qt::NoButton, modifiers, Qt::ScrollUpdate, false);
+        QPoint(0, angleDeltaY), buttons, modifiers, Qt::ScrollUpdate, false);
     QCoreApplication::sendEvent(view, &event);
+    QCoreApplication::processEvents();
+}
+
+void sendRightButtonWheel(QQuickView *view, const QPointF &position, int angleDeltaY)
+{
+    const QPoint point = position.toPoint();
+    QTest::mousePress(view, Qt::RightButton, Qt::NoModifier, point);
+    sendWheel(view, position, angleDeltaY, Qt::NoModifier, Qt::RightButton);
+    QTest::mouseRelease(view, Qt::RightButton, Qt::NoModifier, point);
     QCoreApplication::processEvents();
 }
 
@@ -547,6 +558,32 @@ void TestImageViewport::ctrlWheelZoomsFromViewportMarginAroundNearestImagePoint(
 
     const qreal initialZoomPercent = invokeReal(fixture.root, "zoomPercent");
     sendWheel(fixture.view.get(), QPointF(10.0, 10.0), 120, Qt::ControlModifier);
+
+    QTRY_VERIFY(invokeReal(fixture.root, "zoomPercent") > initialZoomPercent);
+}
+
+void TestImageViewport::rightButtonWheelZoomsWhileImageIsPannable()
+{
+    ImageViewportFixture fixture = createFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    preparePannableImage(fixture);
+
+    const qreal initialZoomPercent = invokeReal(fixture.root, "zoomPercent");
+    sendRightButtonWheel(fixture.view.get(), QPointF(100.0, 80.0), 120);
+
+    QTRY_VERIFY(invokeReal(fixture.root, "zoomPercent") > initialZoomPercent);
+}
+
+void TestImageViewport::rightButtonWheelZoomsFromViewportMarginAroundNearestImagePoint()
+{
+    ImageViewportFixture fixture = createFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    QTRY_VERIFY(invokeBool(fixture.root, "documentReady"));
+    invokeSetReal(fixture.root, "setManualZoom", 10.0);
+    QTRY_VERIFY(!invokeBool(fixture.root, "imagePannable"));
+
+    const qreal initialZoomPercent = invokeReal(fixture.root, "zoomPercent");
+    sendRightButtonWheel(fixture.view.get(), QPointF(10.0, 10.0), 120);
 
     QTRY_VERIFY(invokeReal(fixture.root, "zoomPercent") > initialZoomPercent);
 }

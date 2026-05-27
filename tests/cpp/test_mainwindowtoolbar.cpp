@@ -26,6 +26,7 @@
 #include <QTemporaryDir>
 #include <QTest>
 #include <QUrl>
+#include <QWheelEvent>
 #include <QtQml/qqml.h>
 #include <memory>
 
@@ -43,6 +44,7 @@ private Q_SLOTS:
     void panelActionsToggleResizablePanels();
     void commandFixedShortcutsUseApplicationActions();
     void viewerRightClickOpensContextMenuOnlyFromMediaViewport();
+    void rightButtonWheelSuppressesContextMenuTap();
     void fullscreenReusesSingleToolbarAndHidesApplicationMenuButton();
 };
 
@@ -277,6 +279,20 @@ void clickItem(QQuickWindow *window, QQuickItem *item, Qt::MouseButton button)
     QVERIFY(point.x() >= 0);
     QVERIFY(point.y() >= 0);
     QTest::mouseClick(window, button, Qt::NoModifier, point);
+    QCoreApplication::processEvents();
+}
+
+void rightButtonWheelItem(QQuickWindow *window, QQuickItem *item, int angleDeltaY)
+{
+    const QPoint point = itemCenter(item);
+    QVERIFY(point.x() >= 0);
+    QVERIFY(point.y() >= 0);
+
+    QTest::mousePress(window, Qt::RightButton, Qt::NoModifier, point);
+    QWheelEvent event(QPointF(point), window->mapToGlobal(point), QPoint(), QPoint(0, angleDeltaY),
+        Qt::RightButton, Qt::NoModifier, Qt::ScrollUpdate, false);
+    QCoreApplication::sendEvent(window, &event);
+    QTest::mouseRelease(window, Qt::RightButton, Qt::NoModifier, point);
     QCoreApplication::processEvents();
 }
 
@@ -547,6 +563,34 @@ void TestMainWindowToolBar::viewerRightClickOpensContextMenuOnlyFromMediaViewpor
 
     fixture.window->setVisibility(QWindow::FullScreen);
     QTRY_COMPARE(fixture.window->visibility(), QWindow::FullScreen);
+    clickItem(fixture.window, mediaViewportSlot, Qt::RightButton);
+    QTRY_VERIFY(popupOpen(contextMenu));
+}
+
+void TestMainWindowToolBar::rightButtonWheelSuppressesContextMenuTap()
+{
+    QString imageSourcePath;
+    QString videoSourcePath;
+    QString errorString;
+    std::unique_ptr<QTemporaryDir> mediaDirectory
+        = createMediaDirectory(&imageSourcePath, &videoSourcePath, &errorString);
+    QVERIFY2(mediaDirectory != nullptr, qPrintable(errorString));
+
+    MainWindowFixture fixture = createMainWindowFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    openSourceUrl(fixture, imageSourcePath);
+    compareToolbarPageReadout(fixture, QStringLiteral("3"), QStringLiteral("3"), true);
+
+    QObject *contextMenu = findObject(fixture.window, QStringLiteral("viewerContextMenu"));
+    QQuickItem *mediaViewportSlot
+        = findQuickItem(fixture.window, QStringLiteral("mediaViewportSlot"));
+    QVERIFY(contextMenu != nullptr);
+    QVERIFY(mediaViewportSlot != nullptr);
+    QVERIFY(!popupOpen(contextMenu));
+
+    rightButtonWheelItem(fixture.window, mediaViewportSlot, 120);
+    QTRY_VERIFY(!popupOpen(contextMenu));
+
     clickItem(fixture.window, mediaViewportSlot, Qt::RightButton);
     QTRY_VERIFY(popupOpen(contextMenu));
 }

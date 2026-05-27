@@ -212,6 +212,28 @@ MediaViewportDelegate {
         return Qt.point(wheel.x - imageFlickable.contentX, wheel.y - imageFlickable.contentY);
     }
 
+    function handleWheelZoom(wheel, inputGesture) {
+        const stepCount = root.wheelZoomStepCount(wheel);
+        const viewportPoint = root.wheelViewportPoint(wheel);
+        const insideImage = root.viewportPointInsideImage(viewportPoint.x, viewportPoint.y);
+        const anchorPoint = root.nearestImageViewportPoint(viewportPoint.x, viewportPoint.y);
+        console.debug(inputLog, "wheel zoom received", "gesture", inputGesture, "rawX", wheel.x, "rawY", wheel.y, "viewportX", viewportPoint.x, "viewportY", viewportPoint.y, "anchorX", anchorPoint === null ? NaN : anchorPoint.x, "anchorY", anchorPoint === null ? NaN : anchorPoint.y, "pixelDelta", wheel.pixelDelta, "angleDelta", wheel.angleDelta, "stepCount", stepCount, "insideImage", insideImage, "zoomPercent", root.imageDocument.zoomPercent, "contentX", imageFlickable.contentX, "contentY", imageFlickable.contentY, "contentWidth", imageFlickable.contentWidth, "contentHeight", imageFlickable.contentHeight, "viewportWidth", imageFlickable.width, "viewportHeight", imageFlickable.height);
+
+        if (stepCount === 0 || anchorPoint === null) {
+            console.debug(inputLog, "wheel zoom ignored", "gesture", inputGesture, "reason", stepCount === 0 ? "zero-step" : "missing-anchor", "rawX", wheel.x, "rawY", wheel.y, "viewportX", viewportPoint.x, "viewportY", viewportPoint.y);
+            wheel.accepted = false;
+            return false;
+        }
+
+        const previousZoomPercent = root.imageDocument.zoomPercent;
+        const previousContentX = imageFlickable.contentX;
+        const previousContentY = imageFlickable.contentY;
+        const zoomed = root.zoomByStep(stepCount, anchorPoint.x, anchorPoint.y);
+        console.debug(inputLog, "wheel zoom applied", "gesture", inputGesture, "applied", zoomed, "previousZoomPercent", previousZoomPercent, "nextZoomPercent", root.imageDocument.zoomPercent, "previousContentX", previousContentX, "previousContentY", previousContentY, "nextContentX", imageFlickable.contentX, "nextContentY", imageFlickable.contentY);
+        wheel.accepted = true;
+        return true;
+    }
+
     Binding {
         target: root.imageDocument
         property: "viewportSize"
@@ -249,7 +271,7 @@ MediaViewportDelegate {
         }
 
         WheelHandler {
-            id: zoomWheelHandler
+            id: ctrlZoomWheelHandler
 
             acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
             acceptedModifiers: Qt.ControlModifier
@@ -258,24 +280,29 @@ MediaViewportDelegate {
             target: null
 
             onWheel: wheel => {
-                const stepCount = root.wheelZoomStepCount(wheel);
-                const viewportPoint = root.wheelViewportPoint(wheel);
-                const insideImage = root.viewportPointInsideImage(viewportPoint.x, viewportPoint.y);
-                const anchorPoint = root.nearestImageViewportPoint(viewportPoint.x, viewportPoint.y);
-                console.debug(inputLog, "ctrl-wheel received", "rawX", wheel.x, "rawY", wheel.y, "viewportX", viewportPoint.x, "viewportY", viewportPoint.y, "anchorX", anchorPoint === null ? NaN : anchorPoint.x, "anchorY", anchorPoint === null ? NaN : anchorPoint.y, "pixelDelta", wheel.pixelDelta, "angleDelta", wheel.angleDelta, "stepCount", stepCount, "insideImage", insideImage, "zoomPercent", root.imageDocument.zoomPercent, "contentX", imageFlickable.contentX, "contentY", imageFlickable.contentY, "contentWidth", imageFlickable.contentWidth, "contentHeight", imageFlickable.contentHeight, "viewportWidth", imageFlickable.width, "viewportHeight", imageFlickable.height);
+                root.handleWheelZoom(wheel, "ctrl");
+            }
+        }
 
-                if (stepCount === 0 || anchorPoint === null) {
-                    console.debug(inputLog, "ctrl-wheel ignored", "reason", stepCount === 0 ? "zero-step" : "missing-anchor", "rawX", wheel.x, "rawY", wheel.y, "viewportX", viewportPoint.x, "viewportY", viewportPoint.y);
+        WheelHandler {
+            id: rightButtonZoomWheelHandler
+
+            acceptedButtons: Qt.RightButton
+            acceptedDevices: PointerDevice.Mouse | PointerDevice.TouchPad
+            acceptedModifiers: Qt.NoModifier
+            blocking: true
+            enabled: root.imageReady && root.contextMenuButtonPressed
+            target: null
+
+            onWheel: wheel => {
+                if ((wheel.buttons & Qt.RightButton) === 0) {
                     wheel.accepted = false;
                     return;
                 }
 
-                const previousZoomPercent = root.imageDocument.zoomPercent;
-                const previousContentX = imageFlickable.contentX;
-                const previousContentY = imageFlickable.contentY;
-                const zoomed = root.zoomByStep(stepCount, anchorPoint.x, anchorPoint.y);
-                console.debug(inputLog, "ctrl-wheel zoomed", "applied", zoomed, "previousZoomPercent", previousZoomPercent, "nextZoomPercent", root.imageDocument.zoomPercent, "previousContentX", previousContentX, "previousContentY", previousContentY, "nextContentX", imageFlickable.contentX, "nextContentY", imageFlickable.contentY);
-                wheel.accepted = true;
+                if (root.handleWheelZoom(wheel, "right-button")) {
+                    root.markContextMenuTapSuppressed();
+                }
             }
         }
 

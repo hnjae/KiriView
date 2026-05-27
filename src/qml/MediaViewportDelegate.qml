@@ -11,10 +11,16 @@ FocusScope {
     required property var documentSession
     property bool presentationActive: true
     property ImageViewportInteractionSurface imageInteractionSurface: defaultImageInteractionSurface
+    property bool contextMenuButtonPressed: false
+    property bool suppressNextContextMenuTap: false
     readonly property int documentKind: root.documentSession !== null && root.documentSession.documentKind !== undefined ? root.documentSession.documentKind : -1
 
     signal viewerClicked
     signal viewerContextMenuRequested(var popupParent, point position)
+
+    function markContextMenuTapSuppressed() {
+        root.suppressNextContextMenuTap = true;
+    }
 
     function requestViewportFocus() {
         root.forceActiveFocus();
@@ -33,6 +39,19 @@ FocusScope {
         acceptedButtons: Qt.RightButton
         enabled: root.presentationActive
 
-        onTapped: root.viewerContextMenuRequested(root, contextMenuTapHandler.point.position)
+        onPressedChanged: {
+            root.contextMenuButtonPressed = contextMenuTapHandler.pressed;
+            if (contextMenuTapHandler.pressed) {
+                root.suppressNextContextMenuTap = false;
+            }
+        }
+        onTapped: {
+            if (root.suppressNextContextMenuTap) {
+                root.suppressNextContextMenuTap = false;
+                return;
+            }
+
+            root.viewerContextMenuRequested(root, contextMenuTapHandler.point.position);
+        }
     }
 }
