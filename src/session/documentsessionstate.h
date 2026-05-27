@@ -5,6 +5,7 @@
 #define KIRIVIEW_DOCUMENTSESSIONSTATE_H
 
 #include "session/directmediacursor.h"
+#include "session/documentsessionpublicprojection.h"
 #include "session/documentsessiontypes.h"
 
 #include "navigation/medianavigationmodel.h"
@@ -46,7 +47,9 @@ public:
     void setFileDeletionInProgress(bool inProgress);
     void setActiveZoomSnapshot(ActiveZoomSnapshot snapshot);
     void setMediaNavigationState(MediaNavigationBoundaryState state, bool known);
-    void setPublicProjection(DocumentSessionPublicProjection projection);
+    bool updatePublicProjection(DocumentSessionPublicProjectionInput input);
+    bool updatePublicProjectionForSourceKind(
+        DocumentSessionPublicProjectionInput input, ActiveNavigationSourceKind sourceKind);
     void setSessionErrorString(const QString &errorString);
     bool clearDirectMediaCursor();
     bool requestDirectImageCursor(const QUrl &url);
@@ -58,6 +61,8 @@ public:
     void publish(std::vector<DocumentSessionChange> changes);
 
 private:
+    bool applyPublicProjection(DocumentSessionPublicProjection projection);
+
     ChangeCallback m_changeCallback;
     QUrl m_sourceUrl;
     DocumentSessionKind m_documentKind = DocumentSessionKind::Empty;

@@ -132,7 +132,6 @@ private:
     bool syncDirectImageCursorFromDocument();
     ActiveZoomSnapshot activeZoomSnapshotForKind(DocumentSessionKind kind) const;
     DocumentSessionPublicProjectionInput publicProjectionInput() const;
-    DocumentSessionPublicProjection projectedPublicState() const;
     MediaActiveNavigationInput mediaActiveNavigationInput() const;
     ImageDocumentActiveNavigationInput imageDocumentActiveNavigationInput() const;
 

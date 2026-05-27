@@ -183,7 +183,25 @@ void DocumentSessionState::setMediaNavigationState(MediaNavigationBoundaryState 
     m_mediaNavigationState = state;
 }
 
-void DocumentSessionState::setPublicProjection(DocumentSessionPublicProjection projection)
+bool DocumentSessionState::updatePublicProjection(DocumentSessionPublicProjectionInput input)
+{
+    return applyPublicProjection(projectDocumentSessionPublicState(std::move(input)));
+}
+
+bool DocumentSessionState::updatePublicProjectionForSourceKind(
+    DocumentSessionPublicProjectionInput input, ActiveNavigationSourceKind sourceKind)
+{
+    DocumentSessionPublicProjection projection
+        = projectDocumentSessionPublicState(std::move(input));
+    if (projection.sourceKind != sourceKind) {
+        return false;
+    }
+
+    applyPublicProjection(std::move(projection));
+    return true;
+}
+
+bool DocumentSessionState::applyPublicProjection(DocumentSessionPublicProjection projection)
 {
     const bool activeNavigationChanged
         = !sameActiveNavigationSnapshot(
@@ -202,7 +220,7 @@ void DocumentSessionState::setPublicProjection(DocumentSessionPublicProjection p
     if (!activeNavigationChanged && !windowTitleSubjectChanged
         && !displayedFileDeletionAvailabilityChanged
         && !displayedMediaOpenWithAvailabilityChanged) {
-        return;
+        return false;
     }
 
     m_publicProjection = std::move(projection);
@@ -222,6 +240,7 @@ void DocumentSessionState::setPublicProjection(DocumentSessionPublicProjection p
     }
 
     publish(std::move(changes));
+    return true;
 }
 
 void DocumentSessionState::setSessionErrorString(const QString &errorString)

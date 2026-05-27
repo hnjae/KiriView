@@ -168,23 +168,15 @@ void TestDocumentSessionState::publicProjectionCommitsValuesBeforePublishing()
         });
     stateDuringCallback = &state;
 
-    KiriView::ActiveNavigationSnapshot snapshot;
-    snapshot.available = true;
-    snapshot.known = true;
-    snapshot.editable = true;
-    snapshot.canOpenPrevious = true;
-    snapshot.canOpenNext = true;
-    snapshot.currentNumber = 2;
-    snapshot.count = 4;
+    KiriView::DocumentSessionPublicProjectionInput input;
+    input.documentKind = KiriView::DocumentSessionKind::Image;
+    input.imageSourceMayRepresentDocument = true;
+    input.imageDocumentNavigation = KiriView::ImageDocumentActiveNavigationInput { 2, 3, 4 };
+    input.imageWindowTitleFileName = QStringLiteral("book.cbz");
+    input.imageReadyForDeletion = true;
+    input.displayedMediaOpenWithAvailable = true;
 
-    state.setPublicProjection(KiriView::DocumentSessionPublicProjection {
-        KiriView::ActiveNavigationSourceKind::ImageDocumentPages,
-        KiriView::ActiveNavigationBoundaryScope::ImageDocument,
-        snapshot,
-        QStringLiteral("book.cbz – 2/4"),
-        true,
-        true,
-    });
+    state.updatePublicProjection(input);
 
     QCOMPARE(batches.size(), std::size_t(1));
     QCOMPARE(batches.back().size(), std::size_t(4));
@@ -193,14 +185,7 @@ void TestDocumentSessionState::publicProjectionCommitsValuesBeforePublishing()
     QCOMPARE(batches.back().at(2), KiriView::DocumentSessionChange::FileDeletionAvailability);
     QCOMPARE(batches.back().at(3), KiriView::DocumentSessionChange::OpenWithAvailability);
 
-    state.setPublicProjection(KiriView::DocumentSessionPublicProjection {
-        KiriView::ActiveNavigationSourceKind::ImageDocumentPages,
-        KiriView::ActiveNavigationBoundaryScope::ImageDocument,
-        snapshot,
-        QStringLiteral("book.cbz – 2/4"),
-        true,
-        true,
-    });
+    state.updatePublicProjection(input);
     QCOMPARE(batches.size(), std::size_t(1));
 }
 
@@ -212,28 +197,25 @@ void TestDocumentSessionState::publicProjectionOnlyNotifiesChangedOutputs()
             batches.push_back(changes);
         });
 
-    KiriView::ActiveNavigationSnapshot snapshot;
-    snapshot.available = true;
-    snapshot.known = true;
-    snapshot.editable = true;
-    snapshot.currentNumber = 1;
-    snapshot.count = 1;
-
-    KiriView::DocumentSessionPublicProjection projection {
-        KiriView::ActiveNavigationSourceKind::OrdinaryDirectMedia,
-        KiriView::ActiveNavigationBoundaryScope::Media,
-        snapshot,
-        QStringLiteral("clip.mp4 – 1920×1080"),
-        true,
+    KiriView::DocumentSessionPublicProjectionInput input;
+    input.documentKind = KiriView::DocumentSessionKind::Video;
+    input.mediaNavigation = KiriView::MediaActiveNavigationInput {
+        KiriView::MediaNavigationBoundaryState { false, false, true, true, 1, 1 },
         true,
     };
+    input.videoSourcePresent = true;
+    input.displayedMediaOpenWithAvailable = true;
 
-    state.setPublicProjection(projection);
+    state.updatePublicProjection(input);
     QCOMPARE(batches.size(), std::size_t(1));
 
-    projection.sourceKind = KiriView::ActiveNavigationSourceKind::ImageDocumentPages;
-    projection.boundaryScope = KiriView::ActiveNavigationBoundaryScope::ImageDocument;
-    state.setPublicProjection(projection);
+    input.documentKind = KiriView::DocumentSessionKind::Image;
+    input.mediaNavigation = {};
+    input.imageSourceMayRepresentDocument = true;
+    input.imageDocumentNavigation = KiriView::ImageDocumentActiveNavigationInput { 1, 1, 1 };
+    input.imageReadyForDeletion = true;
+    input.videoSourcePresent = false;
+    state.updatePublicProjection(input);
 
     QCOMPARE(batches.size(), std::size_t(2));
     QCOMPARE(batches.back().size(), std::size_t(1));
@@ -241,23 +223,23 @@ void TestDocumentSessionState::publicProjectionOnlyNotifiesChangedOutputs()
     QCOMPARE(state.activeNavigationBoundaryScope(),
         KiriView::ActiveNavigationBoundaryScope::ImageDocument);
 
-    projection.displayedFileDeletionAvailable = false;
-    state.setPublicProjection(projection);
+    input.imageReadyForDeletion = false;
+    state.updatePublicProjection(input);
 
     QCOMPARE(batches.size(), std::size_t(3));
     QCOMPARE(batches.back().size(), std::size_t(1));
     QCOMPARE(batches.back().at(0), KiriView::DocumentSessionChange::FileDeletionAvailability);
     QVERIFY(!state.displayedFileDeletionAvailable());
 
-    projection.displayedMediaOpenWithAvailable = false;
-    state.setPublicProjection(projection);
+    input.displayedMediaOpenWithAvailable = false;
+    state.updatePublicProjection(input);
 
     QCOMPARE(batches.size(), std::size_t(4));
     QCOMPARE(batches.back().size(), std::size_t(1));
     QCOMPARE(batches.back().at(0), KiriView::DocumentSessionChange::OpenWithAvailability);
     QVERIFY(!state.displayedMediaOpenWithAvailable());
 
-    state.setPublicProjection(projection);
+    state.updatePublicProjection(input);
     QCOMPARE(batches.size(), std::size_t(4));
 }
 

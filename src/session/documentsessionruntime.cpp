@@ -413,16 +413,15 @@ void DocumentSessionRuntime::recomputeActiveZoomReadoutForKind(DocumentSessionKi
 
 void DocumentSessionRuntime::publishActiveNavigationForImagePages()
 {
-    DocumentSessionPublicProjection projection = projectedPublicState();
-    if (projection.sourceKind == ActiveNavigationSourceKind::ImageDocumentPages) {
-        m_state.setPublicProjection(std::move(projection));
+    if (m_state.updatePublicProjectionForSourceKind(
+            publicProjectionInput(), ActiveNavigationSourceKind::ImageDocumentPages)) {
         syncActiveNavigationThumbnailRows();
     }
 }
 
 void DocumentSessionRuntime::recomputePublicProjection()
 {
-    m_state.setPublicProjection(projectedPublicState());
+    m_state.updatePublicProjection(publicProjectionInput());
     syncActiveNavigationThumbnailRows();
 }
 
@@ -898,11 +897,6 @@ DocumentSessionPublicProjectionInput DocumentSessionRuntime::publicProjectionInp
         m_videoDocument.status() == KiriVideoDocument::Status::Error,
         !currentMediaOpenWithTargetUrl().isEmpty(),
     };
-}
-
-DocumentSessionPublicProjection DocumentSessionRuntime::projectedPublicState() const
-{
-    return projectDocumentSessionPublicState(publicProjectionInput());
 }
 
 MediaActiveNavigationInput DocumentSessionRuntime::mediaActiveNavigationInput() const
