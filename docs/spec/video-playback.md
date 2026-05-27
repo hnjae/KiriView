@@ -72,7 +72,7 @@ The floating playback panel includes play/pause, timeline position selection and
 
 The floating playback panel uses a responsive width based on the video viewport, not the full window or only its implicit content width. It targets 65% of the viewport width, remains at least wide enough for its controls and about 24 grid units, caps at about 44 grid units, and preserves side margins on narrow viewports.
 
-When video playback reaches the natural end of the media, KiriView leaves the final decoded frame visible and stops playback at the final position. Pressing Play from that ended state restarts playback from the beginning when seeking is available.
+When video playback reaches the natural end of the media, KiriView keeps the direct video output as the active presentation and must not clear the video output into an empty or null-like visual state. Playback stops at the final position. Pressing Play from that ended state restarts playback from the beginning when seeking is available.
 
 The floating playback panel must not reserve page layout height and must remain usable in fullscreen.
 
