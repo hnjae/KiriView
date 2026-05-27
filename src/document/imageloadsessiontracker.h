@@ -20,6 +20,7 @@ enum class ImageArchiveCandidateCompletionAction {
     Ignored,
     ReportEmptyArchive,
     StartImageDecode,
+    ReportUnsupportedDocumentVideo,
 };
 
 struct ImageArchiveCandidateCompletion {

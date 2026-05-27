@@ -108,6 +108,8 @@ KiriView::ImageDocumentPublicSignalOperations publicSignalOperations(KiriImageDo
         = [&document]() { Q_EMIT document.rightToLeftReadingChanged(); };
     operations.rotationDegreesChanged = [&document]() { Q_EMIT document.rotationDegreesChanged(); };
     operations.mediaScopeChanged = [&document]() { Q_EMIT document.mediaScopeChanged(); };
+    operations.unsupportedDocumentVideoChanged
+        = [&document]() { Q_EMIT document.unsupportedDocumentVideoChanged(); };
     operations.repaintRequested = [&document]() { Q_EMIT document.repaintRequested(); };
     return operations;
 }
@@ -126,7 +128,8 @@ KiriImageDocument::KiriImageDocument(
         this, RenderContextProvider {},
         [this](const std::vector<ImageDocumentChange> &changes) { handleDocumentChanges(changes); },
         std::move(dependencies),
-        [this](const QString &errorString) { Q_EMIT fileDeletionFailed(errorString); });
+        [this](const QString &errorString) { Q_EMIT fileDeletionFailed(errorString); },
+        [this](const QString &message) { Q_EMIT unsupportedDocumentVideoEntered(message); });
 }
 
 KiriImageDocument::~KiriImageDocument() = default;
@@ -293,6 +296,11 @@ bool KiriImageDocument::rightToLeftReadingAvailable() const
 }
 
 bool KiriImageDocument::secondaryPageVisible() const { return m_runtime->secondaryPageVisible(); }
+
+bool KiriImageDocument::unsupportedDocumentVideo() const
+{
+    return m_runtime->unsupportedDocumentVideo();
+}
 
 std::optional<KiriView::DisplayedPredecodeImage>
 KiriImageDocument::primaryDisplayedPredecodeImage() const

@@ -13,6 +13,10 @@
 namespace KiriView {
 std::vector<QUrl> imageNavigationCandidateUrls(
     const std::vector<ImageNavigationCandidate> &candidates);
+std::vector<QUrl> imageNavigationImageCandidateUrls(
+    const std::vector<ImageNavigationCandidate> &candidates);
+bool imageNavigationCandidateIsImage(const ImageNavigationCandidate &candidate);
+bool imageNavigationCandidateIsVideo(const ImageNavigationCandidate &candidate);
 std::optional<std::size_t> imageNavigationCandidateIndex(
     const std::vector<ImageNavigationCandidate> &candidates, const QUrl &currentUrl);
 bool imageNavigationCandidatesContainUrl(

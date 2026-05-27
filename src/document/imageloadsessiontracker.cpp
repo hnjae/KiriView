@@ -3,6 +3,8 @@
 
 #include "imageloadsessiontracker.h"
 
+#include "navigation/mediaformatregistry.h"
+
 #include <utility>
 
 namespace KiriView {
@@ -56,6 +58,15 @@ ImageArchiveCandidateCompletion ImageLoadSessionTracker::completeArchiveCandidat
     }
 
     m_session->setImageUrl(candidates.front().url);
+    if (isSupportedDirectVideoFileName(candidates.front().name)
+        || isSupportedDirectVideoUrl(candidates.front().url)) {
+        std::optional<ImageLoadSession> claimedSession = claimCurrent(*m_session);
+        return ImageArchiveCandidateCompletion {
+            ImageArchiveCandidateCompletionAction::ReportUnsupportedDocumentVideo,
+            claimedSession.value_or(ImageLoadSession {}),
+        };
+    }
+
     return ImageArchiveCandidateCompletion {
         ImageArchiveCandidateCompletionAction::StartImageDecode,
         *m_session,

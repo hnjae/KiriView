@@ -21,6 +21,7 @@ RowLayout {
     readonly property int controlSpacing: compact ? Math.max(1, Math.round(Kirigami.Units.smallSpacing / 2)) : Kirigami.Units.smallSpacing
     readonly property int currentItemNumber: activeNavigationKnown ? activeNavigationCurrentNumber : 0
     readonly property int itemCount: activeNavigationKnown ? activeNavigationCount : 0
+    readonly property string unknownNavigationText: "–"
     property int pageNumberDigitCapacity: 1
     property bool rightToLeftReadingActive: false
     readonly property var leftNavigationAction: root.rightToLeftReadingActive ? root.actions.nextImageAction : root.actions.previousImageAction
@@ -46,7 +47,11 @@ RowLayout {
     }
 
     function pageNumberText() {
-        return currentItemNumber > 0 ? currentItemNumber.toString() : "0";
+        if (!root.pageNavigationAvailable) {
+            return root.unknownNavigationText;
+        }
+
+        return currentItemNumber > 0 ? currentItemNumber.toString() : root.unknownNavigationText;
     }
 
     function resetPageNumberText() {
@@ -200,7 +205,7 @@ RowLayout {
 
         Layout.preferredWidth: pageCountMetrics.advanceWidth
         horizontalAlignment: Text.AlignLeft
-        text: root.itemCount.toString()
+        text: root.pageNavigationAvailable && root.itemCount > 0 ? root.itemCount.toString() : root.unknownNavigationText
         textFormat: Text.PlainText
     }
 

@@ -38,10 +38,12 @@ public:
     using RenderContextProvider = std::function<ImageDocumentRenderContext()>;
     using ChangeCallback = std::function<void(const std::vector<ImageDocumentChange> &)>;
     using FileDeletionFailedCallback = std::function<void(const QString &)>;
+    using UnsupportedDocumentVideoEnteredCallback = std::function<void(const QString &)>;
 
     ImageDocumentRuntime(QObject *documentObject, RenderContextProvider renderContextProvider,
         ChangeCallback changeCallback, ImageDocumentRuntimeDependencyOverrides dependencies,
-        FileDeletionFailedCallback fileDeletionFailedCallback = {});
+        FileDeletionFailedCallback fileDeletionFailedCallback = {},
+        UnsupportedDocumentVideoEnteredCallback unsupportedDocumentVideoEnteredCallback = {});
     ~ImageDocumentRuntime();
 
     QUrl sourceUrl() const;
@@ -91,6 +93,7 @@ public:
     void setRightToLeftReadingEnabled(bool enabled);
     bool rightToLeftReadingAvailable() const;
     bool secondaryPageVisible() const;
+    bool unsupportedDocumentVideo() const;
     std::optional<DisplayedPredecodeImage> primaryDisplayedPredecodeImage() const;
     ImageFirstDisplayDecodeContext firstDisplayDecodeContext() const;
     DisplayedImageRenderSnapshot renderSnapshot(

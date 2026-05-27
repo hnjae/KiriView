@@ -229,7 +229,7 @@ std::optional<LibArchiveSessionMetadata> scanLibArchiveSessionMetadata(
 
         if (archive_entry_filetype(entry) == AE_IFREG) {
             std::optional<KiriView::ImageNavigationCandidate> candidate
-                = Backend::archiveImageCandidate(archiveDocument, libArchiveEntryPath(entry));
+                = Backend::archiveMediaCandidate(archiveDocument, libArchiveEntryPath(entry));
             if (candidate.has_value()) {
                 metadata.entryOrderByPath[candidate->name] = currentEntryOrder;
                 metadata.candidates.push_back(std::move(*candidate));

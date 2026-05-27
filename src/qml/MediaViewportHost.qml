@@ -16,7 +16,7 @@ Item {
     readonly property KiriImageDocument imageDocument: documentSession.imageDocument
     readonly property bool imageMode: documentSession.documentKind === KiriDocumentSession.Image
     readonly property bool videoMode: documentSession.documentKind === KiriDocumentSession.Video
-    readonly property bool imageReady: imageMode && imageDocument.status === KiriImageDocument.Ready
+    readonly property bool imageReady: imageMode && imageDocument.status === KiriImageDocument.Ready && !imageDocument.unsupportedDocumentVideo
     readonly property url activeDelegateSource: imageMode ? Qt.resolvedUrl("ImageViewport.qml") : videoMode ? Qt.resolvedUrl("VideoViewport.qml") : ""
     readonly property var activeDelegate: mediaViewportDelegateLoader.item
     readonly property ImageViewportInteractionSurface imageInteractionSurface: imageMode && activeDelegate !== null && activeDelegate.imageInteractionSurface !== null ? activeDelegate.imageInteractionSurface : inactiveImageInteractionSurface

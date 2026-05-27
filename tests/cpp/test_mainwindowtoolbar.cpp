@@ -334,7 +334,7 @@ void TestMainWindowToolBar::startupCreatesOneVisibleToolbarWithDisabledMediaCont
     QVERIFY(rightPageButton != nullptr);
     QVERIFY(!leftPageButton->isEnabled());
     QVERIFY(!rightPageButton->isEnabled());
-    compareToolbarPageReadout(fixture, QStringLiteral("0"), QStringLiteral("0"), false);
+    compareToolbarPageReadout(fixture, QStringLiteral("–"), QStringLiteral("–"), false);
 
     QQuickItem *zoomSpinBox = findQuickItem(fixture.window, QStringLiteral("zoomSpinBox"));
     QQuickItem *zoomTextInput = findQuickItem(fixture.window, QStringLiteral("zoomTextInput"));

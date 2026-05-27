@@ -104,6 +104,9 @@ void ImageDocumentPublicSignalEmitter::emitSignal(ImageDocumentPublicSignal sign
     case ImageDocumentPublicSignal::MediaScope:
         run(m_operations.mediaScopeChanged);
         return;
+    case ImageDocumentPublicSignal::UnsupportedDocumentVideo:
+        run(m_operations.unsupportedDocumentVideoChanged);
+        return;
     case ImageDocumentPublicSignal::Repaint:
         run(m_operations.repaintRequested);
         return;
@@ -156,6 +159,9 @@ std::vector<ImageDocumentPublicSignal> imageDocumentPublicSignals(ImageDocumentC
         return { ImageDocumentPublicSignal::RightToLeftReading };
     case ImageDocumentChange::Rotation:
         return { ImageDocumentPublicSignal::RotationDegrees };
+    case ImageDocumentChange::UnsupportedDocumentVideo:
+        return { ImageDocumentPublicSignal::UnsupportedDocumentVideo,
+            ImageDocumentPublicSignal::ZoomPercentKnown };
     case ImageDocumentChange::RenderFrame:
         return { ImageDocumentPublicSignal::Repaint };
     case ImageDocumentChange::Repaint:

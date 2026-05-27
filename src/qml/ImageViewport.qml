@@ -15,7 +15,7 @@ MediaViewportDelegate {
     property bool publishingViewportContentPosition: false
     property int viewportFrameApplyGeneration: 0
     readonly property var imageDocument: root.documentSession.imageDocument
-    property bool imageReady: root.presentationActive && root.imageDocument.status === KiriImageDocument.Ready
+    property bool imageReady: root.presentationActive && root.imageDocument.status === KiriImageDocument.Ready && !root.imageDocument.unsupportedDocumentVideo
     readonly property int minimumManualZoomPercent: root.imageDocument.minimumManualZoomPercent
     readonly property int maximumManualZoomPercent: root.imageDocument.maximumManualZoomPercent
     readonly property int wheelAngleDeltaPerStep: 120
@@ -365,7 +365,9 @@ MediaViewportDelegate {
     Timer {
         id: singleClickTimer
 
+        // qmllint disable missing-property
         interval: Qt.application.styleHints.mouseDoubleClickInterval
+        // qmllint enable missing-property
         repeat: false
 
         onTriggered: root.viewerClicked()

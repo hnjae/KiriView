@@ -18,6 +18,7 @@ using KiriView::TestSupport::imageCandidate;
 using KiriView::TestSupport::imagesDirectoryUrl;
 using KiriView::TestSupport::indexedImageUrl;
 using KiriView::TestSupport::localUrl;
+using KiriView::TestSupport::videoCandidate;
 
 std::vector<KiriView::ImageNavigationCandidate> imageCandidates(int count)
 {
@@ -40,6 +41,7 @@ private Q_SLOTS:
     void powerSaverSuppressesCandidateLoading();
     void missingCandidateContextStillCarriesFallbackWindow();
     void directoryDocumentUsesDocumentParallelLimit();
+    void predecodeWindowSkipsDocumentVideoCandidates();
     void archiveWindowPreservesImagePageScopeContext();
     void missingCurrentCandidateYieldsEmptyWindow();
     void candidateListingFailureUsesPlannedFallbackWindow();
@@ -134,6 +136,35 @@ void TestPredecodeWindowPlan::directoryDocumentUsesDocumentParallelLimit()
     QVERIFY(windowPlan.urls.size() >= 2);
     QCOMPARE(windowPlan.urls.at(0), indexedImageUrl(5));
     QCOMPARE(windowPlan.urls.at(1), indexedImageUrl(6));
+}
+
+void TestPredecodeWindowPlan::predecodeWindowSkipsDocumentVideoCandidates()
+{
+    const KiriView::ImagePageScopeLocation directoryDocument
+        = KiriView::ImagePageScopeLocation::fromUrls(
+            imagesDirectoryUrl(), imagesDirectoryUrl(), KiriView::ImagePageScopeKind::Directory);
+    const QUrl displayedUrl = indexedImageUrl(1);
+    const QUrl videoUrl = localUrl(QStringLiteral("/images/02.mp4"));
+    const QUrl nextImageUrl = indexedImageUrl(3);
+    const KiriView::PredecodeWindowStartPlan startPlan
+        = KiriView::predecodeWindowStartPlan(KiriView::PredecodeWindowPlanRequest {
+            KiriView::DisplayedImageLocation::fromImagePageScope(displayedUrl, directoryDocument),
+            KiriView::PredecodeMomentumMode::Neutral,
+            false,
+            4,
+        });
+
+    const KiriView::PredecodeWindowPlan windowPlan
+        = KiriView::predecodeWindowPlanForCandidates(startPlan,
+            {
+                imageCandidate(displayedUrl),
+                videoCandidate(videoUrl),
+                imageCandidate(nextImageUrl),
+            });
+
+    QCOMPARE(windowPlan.urls.size(), std::size_t(2));
+    QCOMPARE(windowPlan.urls.at(0), displayedUrl);
+    QCOMPARE(windowPlan.urls.at(1), nextImageUrl);
 }
 
 void TestPredecodeWindowPlan::archiveWindowPreservesImagePageScopeContext()

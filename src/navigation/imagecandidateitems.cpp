@@ -7,6 +7,7 @@
 #include "decoding/imageformatregistry.h"
 #include "imagenavigationmodel.h"
 #include "location/imageurl.h"
+#include "mediaformatregistry.h"
 
 #include <cstddef>
 
@@ -18,11 +19,13 @@ std::vector<ImageNavigationCandidate> imageNavigationCandidates(const KFileItemL
 
     for (const KFileItem &item : items) {
         const QString name = item.name();
-        if (!item.isFile() || !KiriView::isSupportedImageFileName(name)) {
+        if (!item.isFile() || !KiriView::isSupportedOrdinaryMediaFileName(name)) {
             continue;
         }
 
-        candidates.push_back(ImageNavigationCandidate { item.url(), name });
+        candidates.push_back(ImageNavigationCandidate { item.url(), name,
+            KiriView::isSupportedDirectVideoFileName(name) ? ImageNavigationCandidateKind::Video
+                                                           : ImageNavigationCandidateKind::Image });
     }
 
     sortImageNavigationCandidates(&candidates);

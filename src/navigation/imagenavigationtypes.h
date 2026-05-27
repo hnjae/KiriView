@@ -10,9 +10,15 @@
 #include <vector>
 
 namespace KiriView {
+enum class ImageNavigationCandidateKind {
+    Image,
+    Video,
+};
+
 struct ImageNavigationCandidate {
     QUrl url;
     QString name;
+    ImageNavigationCandidateKind kind = ImageNavigationCandidateKind::Image;
 };
 
 enum class NavigationDirection : int {

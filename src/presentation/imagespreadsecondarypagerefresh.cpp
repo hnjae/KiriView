@@ -4,6 +4,7 @@
 #include "presentation/imagespreadsecondarypagerefresh.h"
 
 #include "location/imageurl.h"
+#include "navigation/mediaformatregistry.h"
 #include "presentation/imagespreadsecondarypagerefreshpolicy.h"
 
 #include <limits>
@@ -41,7 +42,10 @@ ImageSpreadSecondaryPageRefreshResult ImageSpreadSecondaryPageRefresh::planRefre
 {
     const int currentPage = request.navigation.currentPageNumber();
     const int nextPageNumber = currentPage == std::numeric_limits<int>::max() ? 0 : currentPage + 1;
-    const std::optional<QUrl> nextUrl = request.navigation.urlAtPage(nextPageNumber);
+    std::optional<QUrl> nextUrl = request.navigation.urlAtPage(nextPageNumber);
+    if (nextUrl.has_value() && isSupportedDirectVideoUrl(*nextUrl)) {
+        nextUrl = std::nullopt;
+    }
     const bool nextPageIsWide = nextUrl.has_value() && cachedPageIsWide(*nextUrl).value_or(false);
     const bool currentSecondaryMatchesNext = nextUrl.has_value() && request.secondaryPageVisible
         && request.currentSecondaryUrl == *nextUrl;
@@ -138,6 +142,11 @@ bool ImageSpreadSecondaryPageRefresh::previousPageIsWideForNavigation(
     }
 
     const std::optional<QUrl> previousUrl = context.navigation.urlAtPage(pageNumber - 1);
-    return previousUrl.has_value() ? cachedPageIsWide(*previousUrl).value_or(false) : false;
+    if (!previousUrl.has_value()) {
+        return false;
+    }
+
+    return isSupportedDirectVideoUrl(*previousUrl)
+        || cachedPageIsWide(*previousUrl).value_or(false);
 }
 }

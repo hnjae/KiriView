@@ -31,6 +31,11 @@ msgstr ""
 
 #: src/application/kiriviewapplicationactions.cpp
 msgctxt "@action"
+msgid "Open With..."
+msgstr ""
+
+#: src/application/kiriviewapplicationactions.cpp
+msgctxt "@action"
 msgid "Move to Trash"
 msgstr ""
 
@@ -121,6 +126,16 @@ msgstr ""
 
 #: src/application/kiriviewapplicationactions.cpp
 msgctxt "@action"
+msgid "Show Info Panel"
+msgstr ""
+
+#: src/application/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Show Thumbnail Panel"
+msgstr ""
+
+#: src/application/kiriviewapplicationactions.cpp
+msgctxt "@action"
 msgid "Top Left"
 msgstr ""
 
@@ -152,6 +167,11 @@ msgstr ""
 #: src/application/kiriviewapplicationactions.cpp
 msgctxt "@action"
 msgid "Show Menubar"
+msgstr ""
+
+#: src/application/kiriviewapplicationactions.cpp
+msgctxt "@action"
+msgid "Open Application Menu"
 msgstr ""
 
 #: src/archive/archivebackend.cpp
@@ -188,6 +208,36 @@ msgstr ""
 #, kde-format
 msgctxt "@item:inlistbox"
 msgid "All files (*)"
+msgstr ""
+
+#: src/document/imageopencontroller.cpp
+#, kde-format
+msgctxt "@info:status"
+msgid "Video playback is not supported in archive or folder documents"
+msgstr ""
+
+#: src/localization/activenavigationboundarytext.cpp
+#, kde-format
+msgctxt "@info:status"
+msgid "First media item"
+msgstr ""
+
+#: src/localization/activenavigationboundarytext.cpp src/qml/ImageShortcuts.qml
+#, kde-format
+msgctxt "@info:status"
+msgid "First image"
+msgstr ""
+
+#: src/localization/activenavigationboundarytext.cpp
+#, kde-format
+msgctxt "@info:status"
+msgid "Last media item"
+msgstr ""
+
+#: src/localization/activenavigationboundarytext.cpp
+#, kde-format
+msgctxt "@info:status"
+msgid "Last image"
 msgstr ""
 
 #: src/localization/imageerrortext.cpp
@@ -469,6 +519,11 @@ msgstr ""
 
 #: src/qml/ApplicationMenuBar.qml src/qml/ImageActions.qml
 msgctxt "@action:inmenu"
+msgid "Open &With..."
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml src/qml/ImageActions.qml
+msgctxt "@action:inmenu"
 msgid "Move to &Trash"
 msgstr ""
 
@@ -492,9 +547,19 @@ msgctxt "@action:inmenu"
 msgid "&First Image"
 msgstr ""
 
+#: src/qml/ApplicationMenuBar.qml src/qml/ImageActions.qml
+msgctxt "@action:inmenu"
+msgid "&First Media Item"
+msgstr ""
+
 #: src/qml/ApplicationMenuBar.qml
 msgctxt "@action:inmenu"
 msgid "&Last Image"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml src/qml/ImageActions.qml
+msgctxt "@action:inmenu"
+msgid "&Last Media Item"
 msgstr ""
 
 #: src/qml/ApplicationMenuBar.qml
@@ -557,6 +622,16 @@ msgctxt "@action:inmenu"
 msgid "&Right-to-Left Reading"
 msgstr ""
 
+#: src/qml/ApplicationMenuBar.qml src/qml/ImageActions.qml
+msgctxt "@action:inmenu"
+msgid "Show &Info Panel"
+msgstr ""
+
+#: src/qml/ApplicationMenuBar.qml src/qml/ImageActions.qml
+msgctxt "@action:inmenu"
+msgid "Show &Thumbnail Panel"
+msgstr ""
+
 #: src/qml/ApplicationMenuBar.qml
 msgctxt "@action:inmenu"
 msgid "Full&screen"
@@ -598,26 +673,6 @@ msgid "Open menu"
 msgstr ""
 
 #: src/qml/ImageActions.qml
-msgctxt "@info:status"
-msgid "Last media item"
-msgstr ""
-
-#: src/qml/ImageActions.qml
-msgctxt "@info:status"
-msgid "Last image"
-msgstr ""
-
-#: src/qml/ImageActions.qml
-msgctxt "@info:status"
-msgid "First media item"
-msgstr ""
-
-#: src/qml/ImageActions.qml src/qml/ImageShortcuts.qml
-msgctxt "@info:status"
-msgid "First image"
-msgstr ""
-
-#: src/qml/ImageActions.qml
 msgctxt "@action:inmenu"
 msgid "&Delete Permanently"
 msgstr ""
@@ -630,6 +685,16 @@ msgstr ""
 #: src/qml/ImageActions.qml
 msgctxt "@action:inmenu"
 msgid "&Next Archive"
+msgstr ""
+
+#: src/qml/ImageActions.qml
+msgctxt "@action:button"
+msgid "Two-Page &Spread"
+msgstr ""
+
+#: src/qml/ImageActions.qml
+msgctxt "@action:button"
+msgid "&Right-to-Left"
 msgstr ""
 
 #: src/qml/ImageActions.qml
@@ -654,6 +719,11 @@ msgstr ""
 
 #: src/qml/ImageStateOverlay.qml
 msgctxt "@info:placeholder"
+msgid "Video playback is not supported in archive or folder documents"
+msgstr ""
+
+#: src/qml/ImageStateOverlay.qml
+msgctxt "@info:placeholder"
 msgid "No image selected"
 msgstr ""
 
@@ -667,9 +737,34 @@ msgctxt "@action"
 msgid "Zoom"
 msgstr ""
 
+#: src/qml/ImageToolBar.qml
+msgctxt "@info:tooltip"
+msgid "Fitted video zoom"
+msgstr ""
+
+#: src/qml/ImageToolBar.qml
+msgctxt "@info:tooltip"
+msgid "Video zoom unavailable"
+msgstr ""
+
+#: src/qml/InfoPanel.qml
+msgctxt "@title:group"
+msgid "Info"
+msgstr ""
+
 #: src/qml/Main.qml
 msgctxt "@title:window"
 msgid "%1 — KiriView"
+msgstr ""
+
+#: src/qml/Main.qml
+msgctxt "@info:status"
+msgid "Could not open media with another application"
+msgstr ""
+
+#: src/qml/Main.qml
+msgctxt "@info:status"
+msgid "This action is not available for videos"
 msgstr ""
 
 #: src/qml/Main.qml
@@ -680,6 +775,11 @@ msgstr ""
 #: src/qml/ShortcutHelpDialog.qml
 msgctxt "@title:window"
 msgid "Keyboard Shortcuts"
+msgstr ""
+
+#: src/qml/ThumbnailPanel.qml
+msgctxt "@title:group"
+msgid "Thumbnails"
 msgstr ""
 
 #: src/qml/VideoFloatingControls.qml

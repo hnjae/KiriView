@@ -34,6 +34,7 @@ struct ImageDocumentRuntimeControllerCallbacks {
     std::function<void(ImageDocumentChange)> notify;
     std::function<void(const ImageDocumentSourceLoadRequest &)> loadSource;
     std::function<void(const QString &)> fileDeletionFailed;
+    std::function<void(const QString &)> unsupportedDocumentVideoEntered;
 };
 
 class ImageDocumentRuntimeControllers final

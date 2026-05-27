@@ -17,6 +17,7 @@ namespace {
 using KiriView::TestSupport::archivePageUrl;
 using KiriView::TestSupport::imageCandidate;
 using KiriView::TestSupport::localUrl;
+using KiriView::TestSupport::videoCandidate;
 }
 
 class TestImageLoadSessionTracker : public QObject
@@ -27,6 +28,7 @@ private Q_SLOTS:
     void startOwnsSessionIdAndFirstDisplayContext();
     void staleSessionsCannotResolveOrFinishCurrentLoad();
     void archiveResolutionUpdatesCanonicalCurrentSession();
+    void archiveResolutionReportsUnsupportedDocumentVideo();
     void emptyArchiveResolutionClaimsCurrentSessionForError();
     void predecodedLocationReplacementUpdatesCanonicalCurrentSession();
     void decodeRequestClaimClearsTheActiveSession();
@@ -109,6 +111,25 @@ void TestImageLoadSessionTracker::archiveResolutionUpdatesCanonicalCurrentSessio
     QVERIFY(currentSession.has_value());
     QCOMPARE(currentSession->imageUrl(), imageUrl);
     QCOMPARE(currentSession->firstDisplay().physicalViewportSize, QSize(320, 240));
+}
+
+void TestImageLoadSessionTracker::archiveResolutionReportsUnsupportedDocumentVideo()
+{
+    KiriView::ImageLoadSessionTracker tracker;
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
+    const std::optional<QUrl> archiveRootUrl = KiriView::comicBookArchiveRootUrl(archiveUrl);
+    QVERIFY(archiveRootUrl.has_value());
+    const QUrl videoUrl = archivePageUrl(*archiveRootUrl, QStringLiteral("01.mp4"));
+
+    const KiriView::ImageLoadSession session
+        = tracker.start(KiriView::ImageLoadRequest::fromUrl(archiveUrl)).session;
+    const KiriView::ImageArchiveCandidateCompletion completion
+        = tracker.completeArchiveCandidates(session, { videoCandidate(videoUrl) });
+
+    QCOMPARE(completion.action,
+        KiriView::ImageArchiveCandidateCompletionAction::ReportUnsupportedDocumentVideo);
+    QCOMPARE(completion.session.imageUrl(), videoUrl);
+    QVERIFY(!tracker.isCurrent(session));
 }
 
 void TestImageLoadSessionTracker::emptyArchiveResolutionClaimsCurrentSessionForError()

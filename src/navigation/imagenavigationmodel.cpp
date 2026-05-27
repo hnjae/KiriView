@@ -76,6 +76,30 @@ std::vector<QUrl> imageNavigationCandidateUrls(
     return urls;
 }
 
+std::vector<QUrl> imageNavigationImageCandidateUrls(
+    const std::vector<ImageNavigationCandidate> &candidates)
+{
+    std::vector<QUrl> urls;
+    urls.reserve(candidates.size());
+    for (const ImageNavigationCandidate &candidate : candidates) {
+        if (imageNavigationCandidateIsImage(candidate)) {
+            urls.push_back(candidate.url);
+        }
+    }
+
+    return urls;
+}
+
+bool imageNavigationCandidateIsImage(const ImageNavigationCandidate &candidate)
+{
+    return candidate.kind == ImageNavigationCandidateKind::Image;
+}
+
+bool imageNavigationCandidateIsVideo(const ImageNavigationCandidate &candidate)
+{
+    return candidate.kind == ImageNavigationCandidateKind::Video;
+}
+
 std::optional<std::size_t> imageNavigationCandidateIndex(
     const std::vector<ImageNavigationCandidate> &candidates, const QUrl &currentUrl)
 {

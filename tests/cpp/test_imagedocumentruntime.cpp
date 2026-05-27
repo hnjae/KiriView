@@ -33,6 +33,7 @@ using KiriView::TestSupport::staticImageDataDecoderRejectingBadData;
 using KiriView::TestSupport::staticTestImagePayload;
 using KiriView::TestSupport::testImage;
 using KiriView::TestSupport::testImageDecodeFailureString;
+using KiriView::TestSupport::videoCandidate;
 
 using FakeCandidateProvider = KiriView::TestSupport::FakeImageNavigationCandidateProvider;
 
@@ -179,6 +180,7 @@ class TestImageDocumentRuntime : public QObject
 private Q_SLOTS:
     void initialLoadSuccessUpdatesDocumentState();
     void archiveOrDirectoryDocumentScopeProjectionsFollowDisplayedImageScope();
+    void documentVideoPlaceholderKeepsDocumentNavigation();
     void imageLoadsUsePhysicalViewportForFirstDisplayDecode();
     void renderContextProviderCanBeReplacedAfterConstruction();
     void maximumManualZoomChangesAfterViewportImageAndRenderContextUpdates();
@@ -341,6 +343,61 @@ void TestImageDocumentRuntime::archiveOrDirectoryDocumentScopeProjectionsFollowD
     QCOMPARE(archiveEntryRuntime->displayedUrl(), archiveEntryUrl);
     QVERIFY(archiveEntryRuntime->ordinaryDirectMediaScopeActive());
     QVERIFY(!archiveEntryRuntime->archiveOrDirectoryDocumentScopeActive());
+}
+
+void TestImageDocumentRuntime::documentVideoPlaceholderKeepsDocumentNavigation()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
+    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
+        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveDocument.has_value());
+    const QUrl firstPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("01.png"));
+    const QUrl videoUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("02.mp4"));
+    const QUrl thirdPageUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("03.png"));
+    candidateProvider.setArchiveImages(archiveDocument->rootUrl(),
+        {
+            imageCandidate(firstPageUrl),
+            videoCandidate(videoUrl),
+            imageCandidate(thirdPageUrl),
+        });
+
+    RuntimeHandle runtime = createRuntime(this, candidateProvider, dataLoader);
+    runtime->setViewportSize(QSizeF(400.0, 300.0));
+    runtime->setSourceUrl(archiveUrl);
+    finishLoad(dataLoader);
+
+    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QCOMPARE(runtime->displayedUrl(), firstPageUrl);
+    QCOMPARE(runtime->currentPageNumber(), 1);
+    QCOMPARE(runtime->imageCount(), 3);
+    QVERIFY(!runtime->unsupportedDocumentVideo());
+    QVERIFY(hasRenderableSnapshot(*runtime));
+
+    const std::size_t loadCountBeforeVideo = dataLoader.loadCount();
+    runtime->openNextImage();
+
+    QTRY_COMPARE(runtime->status(), KiriView::ImageDocumentStatus::Ready);
+    QCOMPARE(runtime->displayedUrl(), videoUrl);
+    QCOMPARE(runtime->currentPageNumber(), 2);
+    QCOMPARE(runtime->imageCount(), 3);
+    QVERIFY(runtime->unsupportedDocumentVideo());
+    QVERIFY(!hasRenderableSnapshot(*runtime));
+    QCOMPARE(dataLoader.loadCount(), loadCountBeforeVideo);
+
+    runtime->openNextImage();
+
+    QTRY_COMPARE(dataLoader.loadCount(), loadCountBeforeVideo + std::size_t(1));
+    QCOMPARE(dataLoader.backLoad().url, thirdPageUrl);
+    QVERIFY(!runtime->unsupportedDocumentVideo());
+    finishLoad(dataLoader);
+
+    QTRY_COMPARE(runtime->displayedUrl(), thirdPageUrl);
+    QTRY_COMPARE(runtime->currentPageNumber(), 3);
+    QCOMPARE(runtime->imageCount(), 3);
+    QVERIFY(!runtime->unsupportedDocumentVideo());
+    QVERIFY(hasRenderableSnapshot(*runtime));
 }
 
 void TestImageDocumentRuntime::imageLoadsUsePhysicalViewportForFirstDisplayDecode()

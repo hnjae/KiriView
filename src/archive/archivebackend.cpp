@@ -8,6 +8,7 @@
 #include "archivepath.h"
 #include "decoding/imageformatregistry.h"
 #include "navigation/imagenavigationmodel.h"
+#include "navigation/mediaformatregistry.h"
 
 #include <KLocalizedString>
 #include <optional>
@@ -71,11 +72,11 @@ void ArchiveDocumentSessionWithCandidateSnapshot::replaceCandidateSnapshot(
     m_candidates = std::move(candidates);
 }
 
-std::optional<ImageNavigationCandidate> archiveImageCandidate(
+std::optional<ImageNavigationCandidate> archiveMediaCandidate(
     const ImagePageScopeLocation &archiveDocument, const QString &entryPath)
 {
     const QString candidateName = normalizedArchiveEntryPath(entryPath);
-    if (candidateName.isEmpty() || !isSupportedImageFileName(candidateName)) {
+    if (candidateName.isEmpty() || !isSupportedOrdinaryMediaFileName(candidateName)) {
         return std::nullopt;
     }
 
@@ -84,7 +85,9 @@ std::optional<ImageNavigationCandidate> archiveImageCandidate(
         return std::nullopt;
     }
 
-    return ImageNavigationCandidate { url, candidateName };
+    return ImageNavigationCandidate { url, candidateName,
+        isSupportedDirectVideoFileName(candidateName) ? ImageNavigationCandidateKind::Video
+                                                      : ImageNavigationCandidateKind::Image };
 }
 
 std::optional<QString> archiveImageEntryPathForRead(

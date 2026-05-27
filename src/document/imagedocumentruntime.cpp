@@ -32,7 +32,8 @@ namespace {
 ImageDocumentRuntime::ImageDocumentRuntime(QObject *documentObject,
     RenderContextProvider renderContextProvider, ChangeCallback changeCallback,
     ImageDocumentRuntimeDependencyOverrides dependencies,
-    FileDeletionFailedCallback fileDeletionFailedCallback)
+    FileDeletionFailedCallback fileDeletionFailedCallback,
+    UnsupportedDocumentVideoEnteredCallback unsupportedDocumentVideoEnteredCallback)
     : changeBatcher(ImageDocumentChangeBatcher::ChangeBatchCallback(
           [this](const std::vector<ImageDocumentChange> &changes) { publishChanges(changes); }))
     , state(changeBatcher)
@@ -46,6 +47,7 @@ ImageDocumentRuntime::ImageDocumentRuntime(QObject *documentObject,
             [this](ImageDocumentChange change) { notify(change); },
             [this](const ImageDocumentSourceLoadRequest &request) { loadSource(request); },
             std::move(fileDeletionFailedCallback),
+            std::move(unsupportedDocumentVideoEnteredCallback),
         });
 }
 
@@ -273,6 +275,11 @@ bool ImageDocumentRuntime::rightToLeftReadingAvailable() const
 bool ImageDocumentRuntime::secondaryPageVisible() const
 {
     return controllers->spreadController().secondaryPageVisible();
+}
+
+bool ImageDocumentRuntime::unsupportedDocumentVideo() const
+{
+    return state.unsupportedDocumentVideo();
 }
 
 std::optional<DisplayedPredecodeImage> ImageDocumentRuntime::primaryDisplayedPredecodeImage() const

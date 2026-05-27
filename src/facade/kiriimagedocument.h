@@ -88,6 +88,8 @@ class KiriImageDocument : public QObject
     Q_PROPERTY(bool rightToLeftReadingAvailable READ rightToLeftReadingAvailable NOTIFY
             rightToLeftReadingChanged)
     Q_PROPERTY(bool secondaryPageVisible READ secondaryPageVisible NOTIFY twoPageModeChanged)
+    Q_PROPERTY(bool unsupportedDocumentVideo READ unsupportedDocumentVideo NOTIFY
+            unsupportedDocumentVideoChanged)
 
 public:
     using RenderContextProvider = std::function<KiriView::ImageDocumentRenderContext()>;
@@ -168,6 +170,7 @@ public:
     void setRightToLeftReadingEnabled(bool enabled);
     bool rightToLeftReadingAvailable() const;
     bool secondaryPageVisible() const;
+    bool unsupportedDocumentVideo() const;
     std::optional<KiriView::DisplayedPredecodeImage> primaryDisplayedPredecodeImage() const;
     KiriView::ImageFirstDisplayDecodeContext firstDisplayDecodeContext() const;
     KiriView::DisplayedImageRenderSnapshot renderSnapshot(
@@ -216,6 +219,8 @@ Q_SIGNALS:
     void rightToLeftReadingChanged();
     void fileDeletionFailed(const QString &errorString);
     void repaintRequested();
+    void unsupportedDocumentVideoChanged();
+    void unsupportedDocumentVideoEntered(const QString &message);
 
 private:
     void handleDocumentChanges(const std::vector<KiriView::ImageDocumentChange> &changes);

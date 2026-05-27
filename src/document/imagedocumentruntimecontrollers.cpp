@@ -77,6 +77,7 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject *docume
                 return m_predecodeController->findPredecodedImage(url);
             },
             [this](const ImageDocumentRuntimePlan &plan) { dispatchPlan(plan); },
+            std::move(m_callbacks.unsupportedDocumentVideoEntered),
         },
         runtimeDependencies.candidateProvider, runtimeDependencies.imageDecode);
     m_navigationService = std::make_unique<ImageNavigationService>(documentObject,

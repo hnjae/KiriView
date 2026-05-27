@@ -33,6 +33,7 @@ enum class ImageDocumentPublicSignal {
     RightToLeftReading,
     RotationDegrees,
     MediaScope,
+    UnsupportedDocumentVideo,
     Repaint,
 };
 
@@ -59,6 +60,7 @@ struct ImageDocumentPublicSignalOperations {
     std::function<void()> rightToLeftReadingChanged;
     std::function<void()> rotationDegreesChanged;
     std::function<void()> mediaScopeChanged;
+    std::function<void()> unsupportedDocumentVideoChanged;
     std::function<void()> repaintRequested;
 };
 

@@ -19,7 +19,7 @@ std::optional<KiriView::ImageCandidateListContext> navigationCandidateContext(
     const KiriView::ImageDocumentState &state,
     const KiriView::ImagePresentationController &presentationController)
 {
-    if (!presentationController.hasImage()) {
+    if (!presentationController.hasImage() && !state.unsupportedDocumentVideo()) {
         return std::nullopt;
     }
 

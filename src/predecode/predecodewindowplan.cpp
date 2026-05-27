@@ -16,7 +16,7 @@ std::vector<QUrl> predecodeWindowImageUrls(
     std::vector<QUrl> urls;
     urls.reserve(indices.size());
     for (std::size_t index : indices) {
-        if (index < candidates.size()) {
+        if (index < candidates.size() && imageNavigationCandidateIsImage(candidates.at(index))) {
             urls.push_back(candidates.at(index).url);
         }
     }

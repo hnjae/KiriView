@@ -37,7 +37,7 @@ private:
     std::vector<ImageNavigationCandidate> m_candidates;
 };
 
-std::optional<ImageNavigationCandidate> archiveImageCandidate(
+std::optional<ImageNavigationCandidate> archiveMediaCandidate(
     const ImagePageScopeLocation &archiveDocument, const QString &entryPath);
 std::optional<QString> archiveImageEntryPathForRead(
     const ImagePageScopeLocation &archiveDocument, const QUrl &imageUrl);

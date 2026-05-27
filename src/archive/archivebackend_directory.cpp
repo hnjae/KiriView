@@ -55,7 +55,7 @@ KiriView::ArchiveImageCandidatesResult loadDirectoryDocumentImageCandidates(
         }
 
         std::optional<KiriView::ImageNavigationCandidate> candidate
-            = Backend::archiveImageCandidate(
+            = Backend::archiveMediaCandidate(
                 archiveDocument, rootDirectory.relativeFilePath(fileInfo.filePath()));
         if (candidate.has_value()) {
             candidates.push_back(std::move(*candidate));

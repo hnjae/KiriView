@@ -9,9 +9,11 @@
 #include "imageopentransitionapplier.h"
 #include "imageopenworkflow.h"
 #include "localization/imageerrortext.h"
+#include "location/imagedocumentlocation.h"
 #include "presentation/imagepresentationcontroller.h"
 #include "presentation/imagepresentationload.h"
 
+#include <KLocalizedString>
 #include <memory>
 #include <utility>
 
@@ -39,6 +41,11 @@ QString animationLoadErrorMessage(const QString &errorString)
         ? KiriView::imageErrorText(KiriView::ImageErrorTextId::DecodeImageAnimation)
         : errorString;
 }
+
+QString unsupportedDocumentVideoMessage()
+{
+    return i18nc("@info:status", "Video playback is not supported in archive or folder documents");
+}
 }
 
 namespace KiriView {
@@ -59,6 +66,9 @@ ImageOpenController::ImageOpenController(QObject *parent, ImageDocumentState &st
             },
             [this](ImageLoadSession session, PredecodedImage image) {
                 finishPredecodedImageLoad(std::move(session), std::move(image));
+            },
+            [this](ImageLoadSession session) {
+                finishUnsupportedDocumentVideoLoad(std::move(session));
             },
             [this](const QUrl &url) {
                 if (!m_callbacks.findPredecodedImage) {
@@ -83,11 +93,10 @@ void ImageOpenController::open()
         return;
     }
 
+    const ImageLoadRequest request = ImageLoadRequest::fromLocation(m_state.sourceUrl(),
+        m_state.displayedImagePageScope(), m_state.loadingContainerNavigationUrl());
     beginSourceLoad();
-    m_imageLoader->start(
-        ImageLoadRequest::fromLocation(m_state.sourceUrl(), m_state.displayedImagePageScope(),
-            m_state.loadingContainerNavigationUrl()),
-        m_presentationController.firstDisplayDecodeContext());
+    m_imageLoader->start(request, m_presentationController.firstDisplayDecodeContext());
 }
 
 void ImageOpenController::cancel() { m_imageLoader->cancel(); }
@@ -101,12 +110,14 @@ void ImageOpenController::finishAnimationLoadWithError(const QString &errorStrin
 
 void ImageOpenController::finishEmptySourceLoad()
 {
+    m_state.setUnsupportedDocumentVideo(false);
     reportRuntimePlan(
         applyImageOpenApplicationPlan(m_state, ImageOpenWorkflow::finishEmptySourceLoadPlan()));
 }
 
 void ImageOpenController::beginSourceLoad()
 {
+    m_state.setUnsupportedDocumentVideo(false);
     reportRuntimePlan(applyImageOpenApplicationPlan(m_state,
         ImageOpenWorkflow::beginSourceLoadPlan(ImageOpenBeginSourceLoadSnapshot {
             m_presentationController.hasImage(),
@@ -127,12 +138,36 @@ void ImageOpenController::finishContainerNavigationLoadWithError(
     const QString message = archiveOpenErrorMessage(errorString);
     reportRuntimePlan(applyImageOpenApplicationPlan(m_state,
         ImageOpenWorkflow::finishContainerNavigationLoadWithErrorPlan(containerUrl, message)));
+    m_state.setUnsupportedDocumentVideo(false);
 }
 
 void ImageOpenController::finishSourceResolved(ImageLoadSession session)
 {
     reportRuntimePlan(
         applyImageOpenApplicationPlan(m_state, ImageOpenWorkflow::resolveSourceImagePlan(session)));
+}
+
+void ImageOpenController::finishUnsupportedDocumentVideoLoad(ImageLoadSession session)
+{
+    const QString message = unsupportedDocumentVideoMessage();
+    {
+        ImageDocumentState::ChangeBatch batch = m_state.beginChangeBatch();
+        m_presentationController.clearImage();
+        m_state.setSourceUrl(session.imageUrl());
+        m_state.setDisplayedImageLocation(session.location());
+        m_state.setContainerNavigationUrl(containerNavigationUrlForLocation(session.location()));
+        m_state.setErrorString(QString());
+        m_state.clearLoadingContainerNavigationUrl();
+        m_state.setLoading(false);
+        m_state.setStatus(ImageDocumentStatus::Ready);
+        m_state.setUnsupportedDocumentVideo(true);
+    }
+
+    invokeIfSet(m_callbacks.unsupportedDocumentVideoEntered, message);
+    reportRuntimePlan(ImageDocumentRuntimePlan {
+        ClearSecondaryPageOperation {},
+        UpdatePageNavigationOperation {},
+    });
 }
 
 void ImageOpenController::finishPredecodedImageLoad(ImageLoadSession session, PredecodedImage image)
@@ -173,10 +208,14 @@ void ImageOpenController::finishLoadWithError(
                 !displayedUrl.isEmpty(),
             },
             session, displayedUrl, message)));
+    if (m_state.status() == ImageDocumentStatus::Error) {
+        m_state.setUnsupportedDocumentVideo(false);
+    }
 }
 
 void ImageOpenController::finishSuccessfulImageLoad(const ImageLoadSession &session)
 {
+    m_state.setUnsupportedDocumentVideo(false);
     reportRuntimePlan(applyImageOpenApplicationPlan(m_state,
         ImageOpenWorkflow::finishSuccessfulImageLoadPlan(
             ImageOpenSuccessfulImageLoadSnapshot {

@@ -46,7 +46,9 @@ private Q_SLOTS:
     void plansNextPageLoadFromNavigationSnapshot();
     void keepsCurrentSecondaryWhenItAlreadyMatchesNextPage();
     void wideCachedNextPageFallsBackToPrimaryOnly();
+    void videoNextPageFallsBackToPrimaryOnly();
     void previousNavigationUsesCachedPreviousPageWidth();
+    void previousNavigationTreatsVideoAsSinglePage();
     void transitionPlanningUsesNavigationContext();
     void primarySelectionMatchingNormalizesDisplayedUrl();
     void pageWidthCacheNormalizesUrlKeys();
@@ -106,6 +108,23 @@ void TestImageSpreadSecondaryPageRefresh::wideCachedNextPageFallsBackToPrimaryOn
     QVERIFY(result.targetUrl.isEmpty());
 }
 
+void TestImageSpreadSecondaryPageRefresh::videoNextPageFallsBackToPrimaryOnly()
+{
+    const std::vector<QUrl> urls {
+        localUrl(QStringLiteral("/books/001.png")),
+        localUrl(QStringLiteral("/books/002.png")),
+        localUrl(QStringLiteral("/books/003.mp4")),
+        localUrl(QStringLiteral("/books/004.png")),
+    };
+    KiriView::ImageSpreadSecondaryPageRefresh refresh;
+
+    const KiriView::ImageSpreadSecondaryPageRefreshResult result
+        = refresh.planRefresh(refreshRequest(urls, 2));
+
+    QCOMPARE(result.action, KiriView::ImageSpreadSecondaryPageRefreshAction::PrimaryOnly);
+    QVERIFY(result.targetUrl.isEmpty());
+}
+
 void TestImageSpreadSecondaryPageRefresh::previousNavigationUsesCachedPreviousPageWidth()
 {
     const std::vector<QUrl> urls {
@@ -129,6 +148,29 @@ void TestImageSpreadSecondaryPageRefresh::previousNavigationUsesCachedPreviousPa
 
     refresh.cachePageSize(urls.at(3), QSize(1200, 800));
     target = refresh.pageNavigationTarget(KiriView::NavigationDirection::Previous, context);
+    QVERIFY(target.handledBySpread);
+    QCOMPARE(target.pageNumber, 4);
+}
+
+void TestImageSpreadSecondaryPageRefresh::previousNavigationTreatsVideoAsSinglePage()
+{
+    const std::vector<QUrl> urls {
+        localUrl(QStringLiteral("/books/001.png")),
+        localUrl(QStringLiteral("/books/002.png")),
+        localUrl(QStringLiteral("/books/003.png")),
+        localUrl(QStringLiteral("/books/004.mp4")),
+        localUrl(QStringLiteral("/books/005.png")),
+    };
+    KiriView::ImageSpreadSecondaryPageRefresh refresh;
+    const KiriView::ImageSpreadPageNavigationContext context {
+        true,
+        true,
+        navigationSnapshot(urls, 5),
+    };
+
+    const KiriView::ImageSpreadPageNavigationTarget target
+        = refresh.pageNavigationTarget(KiriView::NavigationDirection::Previous, context);
+
     QVERIFY(target.handledBySpread);
     QCOMPARE(target.pageNumber, 4);
 }

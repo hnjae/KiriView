@@ -5,6 +5,7 @@
 
 #include "async/imagecallback.h"
 #include "decoding/decodedimageresult.h"
+#include "navigation/mediaformatregistry.h"
 
 #include <optional>
 #include <utility>
@@ -87,6 +88,10 @@ void ImageLoader::start(
         return;
     }
 
+    if (tryReportUnsupportedDocumentVideo(session)) {
+        return;
+    }
+
     if (tryDisplayPredecodedImage(session)) {
         return;
     }
@@ -119,6 +124,10 @@ void ImageLoader::startArchiveLoad(ImageLoadSession session)
                 invokeIfSet(m_callbacks.error, std::move(completion.session),
                     ImageLoadError::EmptyArchive, QString());
                 return;
+            case ImageArchiveCandidateCompletionAction::ReportUnsupportedDocumentVideo:
+                invokeIfSet(m_callbacks.sourceResolved, completion.session);
+                invokeIfSet(m_callbacks.unsupportedDocumentVideo, std::move(completion.session));
+                return;
             case ImageArchiveCandidateCompletionAction::StartImageDecode:
                 break;
             }
@@ -142,6 +151,25 @@ void ImageLoader::cancel()
     m_sessionTracker.cancel();
     m_decodeJob.cancel();
     m_archiveListJob.cancel();
+}
+
+bool ImageLoader::tryReportUnsupportedDocumentVideo(ImageLoadSession session)
+{
+    if (session.imagePageScope().isEmpty()) {
+        return false;
+    }
+
+    if (!isSupportedDirectVideoUrl(session.imageUrl())) {
+        return false;
+    }
+
+    std::optional<ImageLoadSession> currentSession = m_sessionTracker.claimCurrent(session);
+    if (!currentSession.has_value()) {
+        return false;
+    }
+
+    invokeIfSet(m_callbacks.unsupportedDocumentVideo, std::move(*currentSession));
+    return true;
 }
 
 bool ImageLoader::tryDisplayPredecodedImage(ImageLoadSession session)

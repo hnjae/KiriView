@@ -25,6 +25,7 @@ using KiriView::TestSupport::staticImageDataDecoderRejectingBadData;
 using KiriView::TestSupport::staticTestImagePayload;
 using KiriView::TestSupport::testImage;
 using KiriView::TestSupport::testImageDecodeFailureString;
+using KiriView::TestSupport::videoCandidate;
 
 using FakeCandidateProvider = KiriView::TestSupport::FakeImageNavigationCandidateProvider;
 
@@ -117,9 +118,11 @@ private Q_SLOTS:
     void decodeFailureUsesErrorCallback();
     void predecodedImageBypassesDataLoad();
     void comicBookArchiveResolvesFirstImage();
+    void directArchiveResolvesFirstVideoAsUnsupportedDocumentVideo();
     void directArchiveResolvesFirstImage();
     void directDirectoryResolvesFirstImage();
     void explicitKioArchiveImageStaysImageUrlMode();
+    void archiveInteriorVideoReportsUnsupportedDocumentVideo();
     void archiveInteriorImageKeepsComicBookRoot();
     void staleLoadResultIsIgnored();
     void staleArchiveListingResultIsIgnored();
@@ -256,6 +259,42 @@ void TestImageLoader::comicBookArchiveResolvesFirstImage()
     QCOMPARE(dataLoader.frontLoad().firstDisplay.physicalViewportSize, QSize(320, 240));
 }
 
+void TestImageLoader::directArchiveResolvesFirstVideoAsUnsupportedDocumentVideo()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.zip"));
+    const std::optional<QUrl> archiveRootUrl = KiriView::directArchiveOpenRootUrl(archiveUrl);
+    QVERIFY(archiveRootUrl.has_value());
+    const QUrl firstVideoUrl = archivePageUrl(*archiveRootUrl, QStringLiteral("01.mp4"));
+    candidateProvider.setArchiveImages(*archiveRootUrl,
+        {
+            videoCandidate(firstVideoUrl),
+        });
+
+    std::optional<KiriView::ImageLoadSession> resolvedSession;
+    std::optional<KiriView::ImageLoadSession> unsupportedSession;
+    KiriView::ImageLoader::Callbacks callbacks;
+    callbacks.sourceResolved = [&resolvedSession](KiriView::ImageLoadSession session) {
+        resolvedSession = std::move(session);
+    };
+    callbacks.unsupportedDocumentVideo = [&unsupportedSession](KiriView::ImageLoadSession session) {
+        unsupportedSession = std::move(session);
+    };
+    KiriView::ImageLoader loader
+        = createLoader(this, candidateProvider, dataLoader, std::move(callbacks));
+
+    loader.start(KiriView::ImageLoadRequest::fromUrl(archiveUrl));
+
+    QVERIFY(resolvedSession.has_value());
+    QCOMPARE(resolvedSession->imageUrl(), firstVideoUrl);
+    QVERIFY(unsupportedSession.has_value());
+    QCOMPARE(unsupportedSession->imageUrl(), firstVideoUrl);
+    QCOMPARE(unsupportedSession->imagePageScope().rootUrl(), *archiveRootUrl);
+    QVERIFY(dataLoader.empty());
+}
+
 void TestImageLoader::directArchiveResolvesFirstImage()
 {
     FakeCandidateProvider candidateProvider;
@@ -363,6 +402,32 @@ void TestImageLoader::explicitKioArchiveImageStaysImageUrlMode()
     QTRY_VERIFY(decodedSession.has_value());
     QCOMPARE(decodedSession->imageUrl(), imageUrl);
     QVERIFY(decodedSession->imagePageScope().isEmpty());
+}
+
+void TestImageLoader::archiveInteriorVideoReportsUnsupportedDocumentVideo()
+{
+    FakeCandidateProvider candidateProvider;
+    ManualImageDataLoader dataLoader;
+    std::optional<KiriView::ImageLoadSession> unsupportedSession;
+    KiriView::ImageLoader::Callbacks callbacks;
+    callbacks.unsupportedDocumentVideo = [&unsupportedSession](KiriView::ImageLoadSession session) {
+        unsupportedSession = std::move(session);
+    };
+    KiriView::ImageLoader loader
+        = createLoader(this, candidateProvider, dataLoader, std::move(callbacks));
+
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/book.cbz"));
+    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
+        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveDocument.has_value());
+    const QUrl videoUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("02.mp4"));
+
+    loader.start(KiriView::ImageLoadRequest::fromLocation(videoUrl, *archiveDocument));
+
+    QVERIFY(unsupportedSession.has_value());
+    QCOMPARE(unsupportedSession->imageUrl(), videoUrl);
+    QCOMPARE(unsupportedSession->location().imagePageScopeRootUrl(), archiveDocument->rootUrl());
+    QVERIFY(dataLoader.empty());
 }
 
 void TestImageLoader::archiveInteriorImageKeepsComicBookRoot()

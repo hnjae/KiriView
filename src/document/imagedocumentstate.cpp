@@ -74,6 +74,8 @@ bool ImageDocumentState::containerNavigationAvailable() const
     return !m_containerNavigationUrl.isEmpty();
 }
 
+bool ImageDocumentState::unsupportedDocumentVideo() const { return m_unsupportedDocumentVideo; }
+
 void ImageDocumentState::setSourceUrl(const QUrl &sourceUrl)
 {
     if (replaceIfChanged(m_sourceUrl, sourceUrl)) {
@@ -139,6 +141,13 @@ void ImageDocumentState::setLoadingContainerNavigationUrl(const QUrl &containerU
 void ImageDocumentState::clearLoadingContainerNavigationUrl()
 {
     m_loadingContainerNavigationUrl = QUrl();
+}
+
+void ImageDocumentState::setUnsupportedDocumentVideo(bool unsupported)
+{
+    if (replaceIfChanged(m_unsupportedDocumentVideo, unsupported)) {
+        notify(ImageDocumentChange::UnsupportedDocumentVideo);
+    }
 }
 
 void ImageDocumentState::notify(ImageDocumentChange change) { m_changes->notify(change); }

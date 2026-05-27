@@ -121,8 +121,8 @@ class TestArchiveBackend : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
-    void zipListingIncludesNestedSupportedImages();
-    void directoryListingIncludesNestedSupportedImages();
+    void zipListingIncludesNestedSupportedMedia();
+    void directoryListingIncludesNestedSupportedMedia();
     void tarListingUsesSameOrdering();
     void rarListingUsesLibArchive();
     void readingArchiveEntryReturnsOriginalBytes();
@@ -138,7 +138,7 @@ private Q_SLOTS:
     void missingEmptyAndInvalidArchivesReportExpectedResults();
 };
 
-void TestArchiveBackend::zipListingIncludesNestedSupportedImages()
+void TestArchiveBackend::zipListingIncludesNestedSupportedMedia()
 {
     QTemporaryDir dir;
     QVERIFY(dir.isValid());
@@ -147,6 +147,7 @@ void TestArchiveBackend::zipListingIncludesNestedSupportedImages()
         {
             { QStringLiteral("chapter/02.jpg"), QByteArrayLiteral("two") },
             { QStringLiteral("notes.txt"), QByteArrayLiteral("skip") },
+            { QStringLiteral("chapter/03.mp4"), QByteArrayLiteral("video") },
             { QStringLiteral("chapter/01.png"), QByteArrayLiteral("one") },
         });
 
@@ -158,14 +159,18 @@ void TestArchiveBackend::zipListingIncludesNestedSupportedImages()
     const KiriView::ArchiveImageCandidates *success = archiveImageCandidates(result);
 
     QVERIFY(success != nullptr);
-    QCOMPARE(success->candidates.size(), std::size_t(2));
+    QCOMPARE(success->candidates.size(), std::size_t(3));
     QCOMPARE(success->candidates.at(0).name, QStringLiteral("chapter/01.png"));
     QCOMPARE(success->candidates.at(0).url,
         archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("chapter/01.png")));
+    QCOMPARE(success->candidates.at(0).kind, KiriView::ImageNavigationCandidateKind::Image);
     QCOMPARE(success->candidates.at(1).name, QStringLiteral("chapter/02.jpg"));
+    QCOMPARE(success->candidates.at(1).kind, KiriView::ImageNavigationCandidateKind::Image);
+    QCOMPARE(success->candidates.at(2).name, QStringLiteral("chapter/03.mp4"));
+    QCOMPARE(success->candidates.at(2).kind, KiriView::ImageNavigationCandidateKind::Video);
 }
 
-void TestArchiveBackend::directoryListingIncludesNestedSupportedImages()
+void TestArchiveBackend::directoryListingIncludesNestedSupportedMedia()
 {
     QTemporaryDir dir;
     QVERIFY(dir.isValid());
@@ -173,6 +178,7 @@ void TestArchiveBackend::directoryListingIncludesNestedSupportedImages()
     QVERIFY(root.mkpath(QStringLiteral("chapter")));
     writeFile(dir.filePath(QStringLiteral("chapter/02.jpg")), QByteArrayLiteral("two"));
     writeFile(dir.filePath(QStringLiteral("notes.txt")), QByteArrayLiteral("skip"));
+    writeFile(dir.filePath(QStringLiteral("chapter/03.m4v")), QByteArrayLiteral("video"));
     writeFile(dir.filePath(QStringLiteral("chapter/01.png")), QByteArrayLiteral("one"));
 
     const std::optional<KiriView::ImagePageScopeLocation> directoryDocument
@@ -184,11 +190,15 @@ void TestArchiveBackend::directoryListingIncludesNestedSupportedImages()
     const KiriView::ArchiveImageCandidates *success = archiveImageCandidates(result);
 
     QVERIFY(success != nullptr);
-    QCOMPARE(success->candidates.size(), std::size_t(2));
+    QCOMPARE(success->candidates.size(), std::size_t(3));
     QCOMPARE(success->candidates.at(0).name, QStringLiteral("chapter/01.png"));
     QCOMPARE(success->candidates.at(0).url,
         archivePageUrl(directoryDocument->rootUrl(), QStringLiteral("chapter/01.png")));
+    QCOMPARE(success->candidates.at(0).kind, KiriView::ImageNavigationCandidateKind::Image);
     QCOMPARE(success->candidates.at(1).name, QStringLiteral("chapter/02.jpg"));
+    QCOMPARE(success->candidates.at(1).kind, KiriView::ImageNavigationCandidateKind::Image);
+    QCOMPARE(success->candidates.at(2).name, QStringLiteral("chapter/03.m4v"));
+    QCOMPARE(success->candidates.at(2).kind, KiriView::ImageNavigationCandidateKind::Video);
 }
 
 void TestArchiveBackend::tarListingUsesSameOrdering()

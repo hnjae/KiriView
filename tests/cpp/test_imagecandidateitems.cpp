@@ -15,11 +15,11 @@ class TestImageCandidateItems : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
-    void imageCandidatesOnlyIncludeSupportedImageFiles();
+    void imageCandidatesOnlyIncludeSupportedMediaFiles();
     void containerCandidatesOnlyIncludeComicBookArchives();
 };
 
-void TestImageCandidateItems::imageCandidatesOnlyIncludeSupportedImageFiles()
+void TestImageCandidateItems::imageCandidatesOnlyIncludeSupportedMediaFiles()
 {
     KFileItemList items;
     items.append(KFileItem(QUrl::fromLocalFile(QStringLiteral("/images/a/")), QString(), S_IFDIR));
@@ -28,16 +28,23 @@ void TestImageCandidateItems::imageCandidatesOnlyIncludeSupportedImageFiles()
     items.append(
         KFileItem(QUrl::fromLocalFile(QStringLiteral("/images/02.png")), QString(), S_IFREG));
     items.append(
+        KFileItem(QUrl::fromLocalFile(QStringLiteral("/images/03.mp4")), QString(), S_IFREG));
+    items.append(
         KFileItem(QUrl::fromLocalFile(QStringLiteral("/images/01.jpg")), QString(), S_IFREG));
 
     const std::vector<KiriView::ImageNavigationCandidate> candidates
         = KiriView::imageNavigationCandidates(items);
 
-    QCOMPARE(candidates.size(), std::size_t(2));
+    QCOMPARE(candidates.size(), std::size_t(3));
     QCOMPARE(candidates.front().url, QUrl::fromLocalFile(QStringLiteral("/images/01.jpg")));
     QCOMPARE(candidates.front().name, QStringLiteral("01.jpg"));
-    QCOMPARE(candidates.back().url, QUrl::fromLocalFile(QStringLiteral("/images/02.png")));
-    QCOMPARE(candidates.back().name, QStringLiteral("02.png"));
+    QCOMPARE(candidates.front().kind, KiriView::ImageNavigationCandidateKind::Image);
+    QCOMPARE(candidates.at(1).url, QUrl::fromLocalFile(QStringLiteral("/images/02.png")));
+    QCOMPARE(candidates.at(1).name, QStringLiteral("02.png"));
+    QCOMPARE(candidates.at(1).kind, KiriView::ImageNavigationCandidateKind::Image);
+    QCOMPARE(candidates.back().url, QUrl::fromLocalFile(QStringLiteral("/images/03.mp4")));
+    QCOMPARE(candidates.back().name, QStringLiteral("03.mp4"));
+    QCOMPARE(candidates.back().kind, KiriView::ImageNavigationCandidateKind::Video);
 }
 
 void TestImageCandidateItems::containerCandidatesOnlyIncludeComicBookArchives()

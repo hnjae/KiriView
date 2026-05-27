@@ -49,6 +49,15 @@ inline ImageNavigationCandidate imageCandidate(const QUrl &url)
     return ImageNavigationCandidate { url, url.fileName() };
 }
 
+inline ImageNavigationCandidate videoCandidate(const QUrl &url)
+{
+    return ImageNavigationCandidate {
+        url,
+        url.fileName(),
+        ImageNavigationCandidateKind::Video,
+    };
+}
+
 inline ContainerNavigationCandidate containerCandidate(
     const QUrl &url, ContainerNavigationCandidateType type)
 {

@@ -224,7 +224,7 @@ StatefulApp.StatefulWindow {
         readonly property var videoDocument: documentSession.videoDocument
         readonly property bool imageMode: documentSession.documentKind === KiriDocumentSession.Image
         readonly property bool videoMode: documentSession.documentKind === KiriDocumentSession.Video
-        readonly property bool imageReady: imageMode && imageDocument.status === KiriImageDocument.Ready
+        readonly property bool imageReady: imageMode && imageDocument.status === KiriImageDocument.Ready && !imageDocument.unsupportedDocumentVideo
         readonly property point fullscreenPointerPosition: fullscreenRevealHandler.point.position
         property bool documentDeletionWasInProgress: false
 
@@ -336,6 +336,10 @@ StatefulApp.StatefulWindow {
 
             function onFileDeletionFailed(errorString) {
                 toastNotification.show(errorString, "general");
+            }
+
+            function onUnsupportedDocumentVideoEntered(message) {
+                toastNotification.show(message, "unsupported-document-video");
             }
         }
 

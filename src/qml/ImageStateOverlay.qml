@@ -49,10 +49,18 @@ Item {
 
     Kirigami.PlaceholderMessage {
         anchors.centerIn: parent
+        icon.name: "video-x-generic-symbolic"
+        text: KI18n.i18nc("@info:placeholder", "Video playback is not supported in archive or folder documents")
+        visible: root.imageDocument.unsupportedDocumentVideo
+        width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, Kirigami.Units.gridUnit * 24)
+    }
+
+    Kirigami.PlaceholderMessage {
+        anchors.centerIn: parent
         helpfulAction: root.openAction
         icon.name: "image-x-generic-symbolic"
         text: KI18n.i18nc("@info:placeholder", "No image selected")
-        visible: root.imageDocument.status === KiriImageDocument.Null
+        visible: root.imageDocument.status === KiriImageDocument.Null && !root.imageDocument.unsupportedDocumentVideo
         width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, Kirigami.Units.gridUnit * 18)
     }
 
@@ -62,7 +70,7 @@ Item {
         helpfulAction: root.openAction
         icon.name: "dialog-error-symbolic"
         text: KI18n.i18nc("@info:placeholder", "Unable to open image")
-        visible: root.imageDocument.status === KiriImageDocument.Error
+        visible: root.imageDocument.status === KiriImageDocument.Error && !root.imageDocument.unsupportedDocumentVideo
         width: Math.min(parent.width - Kirigami.Units.largeSpacing * 2, Kirigami.Units.gridUnit * 24)
     }
 }

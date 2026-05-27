@@ -92,7 +92,7 @@ std::unique_ptr<KArchive> createArchive(const KiriView::ImagePageScopeLocation &
     return nullptr;
 }
 
-void appendArchiveDirectoryImageCandidates(
+void appendArchiveDirectoryMediaCandidates(
     std::vector<KiriView::ImageNavigationCandidate> *candidates, const KArchiveDirectory *directory,
     const KiriView::ImagePageScopeLocation &archiveDocument, const QString &prefix)
 {
@@ -111,7 +111,7 @@ void appendArchiveDirectoryImageCandidates(
         }
 
         if (entry->isDirectory()) {
-            appendArchiveDirectoryImageCandidates(candidates,
+            appendArchiveDirectoryMediaCandidates(candidates,
                 static_cast<const KArchiveDirectory *>(entry), archiveDocument, entryPath);
             continue;
         }
@@ -121,7 +121,7 @@ void appendArchiveDirectoryImageCandidates(
         }
 
         std::optional<KiriView::ImageNavigationCandidate> candidate
-            = Backend::archiveImageCandidate(archiveDocument, entryPath);
+            = Backend::archiveMediaCandidate(archiveDocument, entryPath);
         if (candidate.has_value()) {
             candidates->push_back(std::move(*candidate));
         }
@@ -132,7 +132,7 @@ std::vector<KiriView::ImageNavigationCandidate> archiveDirectoryImageCandidates(
     const KArchiveDirectory *directory, const KiriView::ImagePageScopeLocation &archiveDocument)
 {
     std::vector<KiriView::ImageNavigationCandidate> candidates;
-    appendArchiveDirectoryImageCandidates(&candidates, directory, archiveDocument, QString());
+    appendArchiveDirectoryMediaCandidates(&candidates, directory, archiveDocument, QString());
     return candidates;
 }
 

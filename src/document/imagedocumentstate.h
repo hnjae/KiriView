@@ -35,6 +35,7 @@ public:
     const QUrl &containerNavigationUrl() const;
     const QUrl &loadingContainerNavigationUrl() const;
     bool containerNavigationAvailable() const;
+    bool unsupportedDocumentVideo() const;
 
     void setSourceUrl(const QUrl &sourceUrl);
     void setDisplayedImageLocation(const DisplayedImageLocation &location);
@@ -45,6 +46,7 @@ public:
     void setContainerNavigationUrl(const QUrl &containerUrl);
     void setLoadingContainerNavigationUrl(const QUrl &containerUrl);
     void clearLoadingContainerNavigationUrl();
+    void setUnsupportedDocumentVideo(bool unsupported);
 
 private:
     void replaceDisplayedImageLocation(DisplayedImageLocation location);
@@ -56,6 +58,7 @@ private:
     DisplayedImageLocation m_displayedImageLocation;
     ImageDocumentStatus m_status = ImageDocumentStatus::Null;
     bool m_loading = false;
+    bool m_unsupportedDocumentVideo = false;
     QString m_errorString;
     QUrl m_containerNavigationUrl;
     QUrl m_loadingContainerNavigationUrl;
