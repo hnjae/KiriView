@@ -32,6 +32,7 @@ class TestImageViewport : public QObject
 private Q_SLOTS:
     void ctrlWheelZoomsWhileImageIsPannable();
     void ctrlWheelZoomsWhileImageIsPanned();
+    void ctrlWheelZoomsFromViewportMarginAroundNearestImagePoint();
     void plainWheelStillPansWhileImageIsPannable();
     void fittedFractionalDisplayDoesNotEnableHorizontalPanning();
 };
@@ -270,6 +271,13 @@ public:
         const QPointF &contentPosition, const QPointF &viewportPoint) const
     {
         return KiriView::imageViewportPointInsideImage(
+            contentPosition, viewportPoint, viewportImageRect());
+    }
+
+    Q_INVOKABLE QPointF nearestImageViewportPoint(
+        const QPointF &contentPosition, const QPointF &viewportPoint) const
+    {
+        return KiriView::imageViewportNearestImagePoint(
             contentPosition, viewportPoint, viewportImageRect());
     }
 
@@ -525,6 +533,20 @@ void TestImageViewport::ctrlWheelZoomsWhileImageIsPanned()
 
     const qreal initialZoomPercent = invokeReal(fixture.root, "zoomPercent");
     sendWheel(fixture.view.get(), QPointF(100.0, 80.0), 120, Qt::ControlModifier);
+
+    QTRY_VERIFY(invokeReal(fixture.root, "zoomPercent") > initialZoomPercent);
+}
+
+void TestImageViewport::ctrlWheelZoomsFromViewportMarginAroundNearestImagePoint()
+{
+    ImageViewportFixture fixture = createFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    QTRY_VERIFY(invokeBool(fixture.root, "documentReady"));
+    invokeSetReal(fixture.root, "setManualZoom", 10.0);
+    QTRY_VERIFY(!invokeBool(fixture.root, "imagePannable"));
+
+    const qreal initialZoomPercent = invokeReal(fixture.root, "zoomPercent");
+    sendWheel(fixture.view.get(), QPointF(10.0, 10.0), 120, Qt::ControlModifier);
 
     QTRY_VERIFY(invokeReal(fixture.root, "zoomPercent") > initialZoomPercent);
 }

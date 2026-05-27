@@ -82,6 +82,14 @@ bool ImageViewportInteraction::viewportPointInsideImage(
         contentPosition, viewportPoint, viewportImageRect(snapshot));
 }
 
+QPointF ImageViewportInteraction::nearestImageViewportPoint(
+    const ImageViewportInteractionSnapshot &snapshot, const QPointF &contentPosition,
+    const QPointF &viewportPoint) const
+{
+    return imageViewportNearestImagePoint(
+        contentPosition, viewportPoint, viewportImageRect(snapshot));
+}
+
 QPointF ImageViewportInteraction::zoomContentPosition(
     const ImageViewportInteractionSnapshot &snapshot, const QPointF &contentPosition,
     const QPointF &viewportAnchorPoint, qreal nextZoomPercent) const

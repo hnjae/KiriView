@@ -46,6 +46,8 @@ public:
     Q_INVOKABLE QPointF displayedImageInitialContentPosition() const;
     Q_INVOKABLE bool viewportPointInsideImage(
         const QPointF &contentPosition, const QPointF &viewportPoint) const;
+    Q_INVOKABLE QPointF nearestImageViewportPoint(
+        const QPointF &contentPosition, const QPointF &viewportPoint) const;
     Q_INVOKABLE QPointF zoomContentPosition(const QPointF &contentPosition,
         const QPointF &viewportAnchorPoint, double nextZoomPercent) const;
 

@@ -122,6 +122,13 @@ mod ffi {
             image_rect: RustRectF,
         ) -> bool;
 
+        #[cxx_name = "rustImageViewportNearestImagePoint"]
+        fn rust_image_viewport_nearest_image_point(
+            content_position: RustPointF,
+            viewport_point: RustPointF,
+            image_rect: RustRectF,
+        ) -> RustPointF;
+
         #[cxx_name = "rustImageViewportContentPositionForZoom"]
         fn rust_image_viewport_content_position_for_zoom(
             viewport_size: RustSizeF,
@@ -471,6 +478,28 @@ fn rust_image_viewport_point_inside_image(
         && x <= image_rect.x + image_rect.width
         && y >= image_rect.y
         && y <= image_rect.y + image_rect.height
+}
+
+fn rust_image_viewport_nearest_image_point(
+    content_position: RustPointF,
+    viewport_point: RustPointF,
+    image_rect: RustRectF,
+) -> RustPointF {
+    if image_rect.width <= 0.0 || image_rect.height <= 0.0 {
+        return RustPointF {
+            x: f64::NAN,
+            y: f64::NAN,
+        };
+    }
+
+    let content_x = content_position.x + viewport_point.x;
+    let content_y = content_position.y + viewport_point.y;
+    RustPointF {
+        x: clamped_value(content_x, image_rect.x, image_rect.x + image_rect.width)
+            - content_position.x,
+        y: clamped_value(content_y, image_rect.y, image_rect.y + image_rect.height)
+            - content_position.y,
+    }
 }
 
 fn rust_image_viewport_content_position_for_zoom(

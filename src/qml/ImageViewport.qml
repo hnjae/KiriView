@@ -178,6 +178,15 @@ MediaViewportDelegate {
         return imageView.viewportPointInsideImage(currentContentPosition(), Qt.point(viewportX, viewportY));
     }
 
+    function nearestImageViewportPoint(viewportX, viewportY) {
+        if (!imageReady || imageView.width <= 0 || imageView.height <= 0) {
+            return null;
+        }
+
+        const point = imageView.nearestImageViewportPoint(currentContentPosition(), Qt.point(viewportX, viewportY));
+        return Number.isFinite(point.x) && Number.isFinite(point.y) ? point : null;
+    }
+
     function zoomByStep(stepCount, viewportX, viewportY) {
         if (!imageReady) {
             return false;
@@ -252,10 +261,11 @@ MediaViewportDelegate {
                 const stepCount = root.wheelZoomStepCount(wheel);
                 const viewportPoint = root.wheelViewportPoint(wheel);
                 const insideImage = root.viewportPointInsideImage(viewportPoint.x, viewportPoint.y);
-                console.debug(inputLog, "ctrl-wheel received", "rawX", wheel.x, "rawY", wheel.y, "viewportX", viewportPoint.x, "viewportY", viewportPoint.y, "pixelDelta", wheel.pixelDelta, "angleDelta", wheel.angleDelta, "stepCount", stepCount, "insideImage", insideImage, "zoomPercent", root.imageDocument.zoomPercent, "contentX", imageFlickable.contentX, "contentY", imageFlickable.contentY, "contentWidth", imageFlickable.contentWidth, "contentHeight", imageFlickable.contentHeight, "viewportWidth", imageFlickable.width, "viewportHeight", imageFlickable.height);
+                const anchorPoint = root.nearestImageViewportPoint(viewportPoint.x, viewportPoint.y);
+                console.debug(inputLog, "ctrl-wheel received", "rawX", wheel.x, "rawY", wheel.y, "viewportX", viewportPoint.x, "viewportY", viewportPoint.y, "anchorX", anchorPoint === null ? NaN : anchorPoint.x, "anchorY", anchorPoint === null ? NaN : anchorPoint.y, "pixelDelta", wheel.pixelDelta, "angleDelta", wheel.angleDelta, "stepCount", stepCount, "insideImage", insideImage, "zoomPercent", root.imageDocument.zoomPercent, "contentX", imageFlickable.contentX, "contentY", imageFlickable.contentY, "contentWidth", imageFlickable.contentWidth, "contentHeight", imageFlickable.contentHeight, "viewportWidth", imageFlickable.width, "viewportHeight", imageFlickable.height);
 
-                if (stepCount === 0 || !insideImage) {
-                    console.debug(inputLog, "ctrl-wheel ignored", "reason", stepCount === 0 ? "zero-step" : "outside-image", "rawX", wheel.x, "rawY", wheel.y, "viewportX", viewportPoint.x, "viewportY", viewportPoint.y);
+                if (stepCount === 0 || anchorPoint === null) {
+                    console.debug(inputLog, "ctrl-wheel ignored", "reason", stepCount === 0 ? "zero-step" : "missing-anchor", "rawX", wheel.x, "rawY", wheel.y, "viewportX", viewportPoint.x, "viewportY", viewportPoint.y);
                     wheel.accepted = false;
                     return;
                 }
@@ -263,7 +273,7 @@ MediaViewportDelegate {
                 const previousZoomPercent = root.imageDocument.zoomPercent;
                 const previousContentX = imageFlickable.contentX;
                 const previousContentY = imageFlickable.contentY;
-                const zoomed = root.zoomByStep(stepCount, viewportPoint.x, viewportPoint.y);
+                const zoomed = root.zoomByStep(stepCount, anchorPoint.x, anchorPoint.y);
                 console.debug(inputLog, "ctrl-wheel zoomed", "applied", zoomed, "previousZoomPercent", previousZoomPercent, "nextZoomPercent", root.imageDocument.zoomPercent, "previousContentX", previousContentX, "previousContentY", previousContentY, "nextContentX", imageFlickable.contentX, "nextContentY", imageFlickable.contentY);
                 wheel.accepted = true;
             }

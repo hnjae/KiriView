@@ -43,6 +43,7 @@ private Q_SLOTS:
     void scanStartStateOwnsDisplayedImageInitialPosition();
     void rightToLeftSnapshotChangesScanDirection();
     void anchoredZoomUsesSnapshotImageSize();
+    void nearestImageViewportPointUsesSnapshotGeometry();
 };
 
 void TestImageViewportInteraction::delegatesViewportGeometryFromSnapshot()
@@ -97,6 +98,16 @@ void TestImageViewportInteraction::anchoredZoomUsesSnapshotImageSize()
     comparePoint(
         interaction.zoomContentPosition(snapshot, QPointF(0.0, 0.0), QPointF(25.0, 25.0), 200.0),
         QPointF(25.0, 25.0));
+}
+
+void TestImageViewportInteraction::nearestImageViewportPointUsesSnapshotGeometry()
+{
+    KiriView::ImageViewportInteraction interaction;
+    const KiriView::ImageViewportInteractionSnapshot snapshot = interactionSnapshot();
+
+    comparePoint(
+        interaction.nearestImageViewportPoint(snapshot, QPointF(0.0, 0.0), QPointF(50.0, 320.0)),
+        QPointF(50.0, 300.0));
 }
 
 QTEST_GUILESS_MAIN(TestImageViewportInteraction)

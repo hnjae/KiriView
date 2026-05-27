@@ -96,6 +96,13 @@ bool KiriImageView::viewportPointInsideImage(
         viewportInteractionSnapshot(), contentPosition, viewportPoint);
 }
 
+QPointF KiriImageView::nearestImageViewportPoint(
+    const QPointF &contentPosition, const QPointF &viewportPoint) const
+{
+    return m_viewportInteraction.nearestImageViewportPoint(
+        viewportInteractionSnapshot(), contentPosition, viewportPoint);
+}
+
 QPointF KiriImageView::zoomContentPosition(const QPointF &contentPosition,
     const QPointF &viewportAnchorPoint, double nextZoomPercent) const
 {

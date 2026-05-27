@@ -74,6 +74,14 @@ bool imageViewportPointInsideImage(
         Bridge::rustPointF<RustPointF>(viewportPoint), Bridge::rustRectF<RustRectF>(imageRect));
 }
 
+QPointF imageViewportNearestImagePoint(
+    const QPointF &contentPosition, const QPointF &viewportPoint, const QRectF &imageRect)
+{
+    return Bridge::qtPointF(rustImageViewportNearestImagePoint(
+        Bridge::rustPointF<RustPointF>(contentPosition),
+        Bridge::rustPointF<RustPointF>(viewportPoint), Bridge::rustRectF<RustRectF>(imageRect)));
+}
+
 QPointF imageViewportContentPositionForZoom(const QSizeF &viewportSize,
     const QSizeF &currentDisplaySize, const QSizeF &nextDisplaySize, const QPointF &contentPosition,
     const QPointF &viewportAnchorPoint)

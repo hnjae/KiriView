@@ -26,6 +26,8 @@ QPointF imageViewportFinalZScanPosition(
     const QSizeF &viewportSize, const QRectF &imageRect, bool rightToLeftReading = false);
 bool imageViewportPointInsideImage(
     const QPointF &contentPosition, const QPointF &viewportPoint, const QRectF &imageRect);
+QPointF imageViewportNearestImagePoint(
+    const QPointF &contentPosition, const QPointF &viewportPoint, const QRectF &imageRect);
 QPointF imageViewportContentPositionForZoom(const QSizeF &viewportSize,
     const QSizeF &currentDisplaySize, const QSizeF &nextDisplaySize, const QPointF &contentPosition,
     const QPointF &viewportAnchorPoint);

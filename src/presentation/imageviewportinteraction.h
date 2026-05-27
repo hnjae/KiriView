@@ -38,6 +38,8 @@ public:
         const ImageViewportInteractionSnapshot &snapshot) const;
     bool viewportPointInsideImage(const ImageViewportInteractionSnapshot &snapshot,
         const QPointF &contentPosition, const QPointF &viewportPoint) const;
+    QPointF nearestImageViewportPoint(const ImageViewportInteractionSnapshot &snapshot,
+        const QPointF &contentPosition, const QPointF &viewportPoint) const;
     QPointF zoomContentPosition(const ImageViewportInteractionSnapshot &snapshot,
         const QPointF &contentPosition, const QPointF &viewportAnchorPoint,
         qreal nextZoomPercent) const;

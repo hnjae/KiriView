@@ -38,6 +38,9 @@ private Q_SLOTS:
     void zScanStartAndEndUseReadingDirection();
     void zScanHandlesSingleAxisPanning();
     void smallImagesAreCenteredAndNotPannable();
+    void nearestImagePointClampsViewportPointToImage();
+    void nearestImagePointHandlesPannedContent();
+    void nearestImagePointRejectsEmptyImageRect();
     void viewportFrameTreatsFitToleranceAsNotPannable();
     void subEpsilonAxesUseViewportFrameClampRules();
     void viewportFrameClampsContentPosition();
@@ -184,6 +187,40 @@ void TestImageViewportGeometry::smallImagesAreCenteredAndNotPannable()
         QPointF(0.0, 0.0), QPointF(100.0, 100.0), imageRect));
     QVERIFY(!KiriView::imageViewportPointInsideImage(
         QPointF(0.0, 0.0), QPointF(20.0, 20.0), imageRect));
+}
+
+void TestImageViewportGeometry::nearestImagePointClampsViewportPointToImage()
+{
+    const QSizeF viewportSize(200.0, 200.0);
+    const QRectF imageRect = KiriView::imageViewportImageRect(viewportSize, QSizeF(50.0, 50.0));
+
+    comparePoint(
+        KiriView::imageViewportNearestImagePoint(QPointF(0.0, 0.0), QPointF(20.0, 20.0), imageRect),
+        QPointF(75.0, 75.0));
+    comparePoint(KiriView::imageViewportNearestImagePoint(
+                     QPointF(0.0, 0.0), QPointF(180.0, 100.0), imageRect),
+        QPointF(125.0, 100.0));
+    comparePoint(KiriView::imageViewportNearestImagePoint(
+                     QPointF(0.0, 0.0), QPointF(100.0, 140.0), imageRect),
+        QPointF(100.0, 125.0));
+}
+
+void TestImageViewportGeometry::nearestImagePointHandlesPannedContent()
+{
+    const QRectF imageRect(50.0, 30.0, 100.0, 80.0);
+
+    comparePoint(KiriView::imageViewportNearestImagePoint(
+                     QPointF(40.0, 20.0), QPointF(200.0, 0.0), imageRect),
+        QPointF(110.0, 10.0));
+}
+
+void TestImageViewportGeometry::nearestImagePointRejectsEmptyImageRect()
+{
+    const QPointF point = KiriView::imageViewportNearestImagePoint(
+        QPointF(0.0, 0.0), QPointF(20.0, 20.0), QRectF(0.0, 0.0, 0.0, 50.0));
+
+    QVERIFY(std::isnan(point.x()));
+    QVERIFY(std::isnan(point.y()));
 }
 
 void TestImageViewportGeometry::viewportFrameTreatsFitToleranceAsNotPannable()
