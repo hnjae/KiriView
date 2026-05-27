@@ -6,7 +6,7 @@ The toolbar provides page navigation with Previous and Next actions, the current
 
 The document session owns the active navigation projection used by the toolbar readout, page-number entry, shared Previous, Next, First, and Last actions, menus, and shortcuts. QML renders that projection and calls session dispatch; it does not decide whether the active item is backed by direct media siblings or image-document pages.
 
-For ordinary direct media URL scopes, the page navigation controls count and select supported images and direct videos together. For archive document and directly opened directory document scopes, the page navigation controls keep their existing image-only document page behavior.
+For ordinary direct media URL scopes, archive document scopes, and directly opened directory document scopes, the page navigation controls count and select supported images and supported videos together.
 
 First and Last are page navigation actions available through their configured shortcuts and menus. They open the first or last known page or media item in the current scope.
 
@@ -66,13 +66,13 @@ The ordinary direct media URL parent follows KiriView's existing direct image ca
 
 When an image or video is opened from a KDE-supported archive URL such as `zip://`, `tar://`, or `sevenz://`, KiriView treats the opened item as a single direct media URL, and navigation moves between supported media files in the same directory inside that archive URL.
 
-When an image is displayed from a local CBZ, CBT, CB7, CBR, ZIP, TAR, 7Z, or RAR archive document opened directly by KiriView, navigation moves between all supported image files inside that archive document, including images in subdirectories.
+When an image or unsupported-video placeholder is displayed from a local CBZ, CBT, CB7, CBR, ZIP, TAR, 7Z, or RAR archive document opened directly by KiriView, navigation moves between all supported image and video files inside that archive document, including supported media in subdirectories.
 
-When an image is displayed from a local directory document opened directly by KiriView, navigation moves between all supported image files inside that directory tree, including images in subdirectories.
+When an image or unsupported-video placeholder is displayed from a local directory document opened directly by KiriView, navigation moves between all supported image and video files inside that directory tree, including supported media in subdirectories.
 
-After the archive or directory document has been listed, page navigation uses all supported image files inside that document as its navigation target set.
+After the archive or directory document has been listed, page navigation uses all supported image and video files inside that document as its navigation target set.
 
-Video entries inside directly opened archive documents and directly opened directory documents are out of scope and do not participate in document navigation.
+Supported video entries inside directly opened archive documents and directly opened directory documents are valid document navigation items. KiriView does not play those videos in document mode; selecting one keeps image document mode active and shows an unsupported-video placeholder with the message `Video playback is not supported in archive or folder documents`. Entering that placeholder also shows the same text as an in-app toast.
 
 If the parent URL cannot be listed, the current media item is not found, or no adjacent supported media item exists, the current media item remains open and the app remains ready for another open action.
 
@@ -84,7 +84,7 @@ For ordinary direct media navigation, the candidate name is the file name.
 
 For archive and directory documents opened directly by KiriView, candidate names are document-relative paths such as `foo/a.jpg` and `bar/a.jpg`.
 
-Navigation does not wrap. Pressing Page Up on the first candidate or Page Down on the last candidate keeps the current item open and notifies the user that it is the first or last media item in ordinary direct media scopes and the first or last image in archive or directory document scopes.
+Navigation does not wrap. Pressing Page Up on the first candidate or Page Down on the last candidate keeps the current item open and notifies the user that it is the first or last media item in ordinary direct media scopes and the first or last item in archive or directory document scopes.
 
 KiriView shows those first-item and last-item notifications only when the current supported list is known and the current item is at a known boundary.
 
@@ -158,7 +158,7 @@ When Two-Page Spread shows two pages, both the current primary page and the visi
 
 When users move quickly through pages, KiriView may briefly postpone this background work and then prioritize pages around the page where navigation settles, rather than every skipped page.
 
-Directly opened archive and directory documents may make more pages available in the current reading direction than ordinary image navigation.
+Directly opened archive and directory documents may make more pages available in the current reading direction than ordinary image navigation. Document video items are positions for navigation and predecode planning, but KiriView predecodes only nearby supported images.
 
 When the desktop Power Saver mode is enabled, KiriView does not newly schedule or run background work for adjacent pages.
 

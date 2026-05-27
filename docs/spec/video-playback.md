@@ -12,13 +12,13 @@ Direct video playback supports direct file-like URLs that KiriView can hand to K
 
 Direct KDE archive-entry URLs are not KiriView archive document mode. KiriView may open `zip:///path/archive.zip!/clip.mp4` as a direct media URL while still opening `/path/archive.zip` as an archive document when the archive itself is selected.
 
-The product boundary is based on KiriView's document-mode state, not on URL scheme alone. If KiriView has opened an archive or directory as a document, video entries inside that document are out of scope. If KiriView is handling a direct media URL without an active archive or directory document context, that URL remains eligible for video support even when its scheme is a KDE archive scheme.
+The product boundary is based on KiriView's document-mode state, not on URL scheme alone. If KiriView has opened an archive or directory as a document, supported video entries inside that document are document navigation items with an unsupported-video placeholder and are not played. If KiriView is handling a direct media URL without an active archive or directory document context, that URL remains eligible for video support even when its scheme is a KDE archive scheme.
 
-Video files do not participate in KiriView archive document navigation, comic book archive document handling, directly opened directory documents, video-frame predecode, video-frame image cache, editable image zoom, image pan, image rotate, two-page spread, or Right-to-Left Reading.
+Video files do not participate in video-frame predecode, video-frame image cache, editable image zoom, image pan, image rotate, two-page spread pairing, or Right-to-Left Reading.
 
 In ordinary direct media URL scopes, showing a video must not clear or stop the background predecode/cache lifecycle for nearby supported image files. KiriView may keep and continue predecoding adjacent still images around the current video cursor, but it must not attempt to predecode the video itself.
 
-Archive-document-internal video, directly opened directory-document video, recursive directory video, playlists, subtitles, track selection, metadata panels, frame stepping, and timeline preview thumbnails are out of scope.
+Archive-document-internal video playback, directly opened directory-document video playback, playlists, subtitles, track selection, metadata panels, frame stepping, and timeline preview thumbnails are out of scope.
 
 KiriView advertises direct video support through the desktop file for the MIME types that cover the MVP MP4, M4V, and MOV format list: `video/mp4` and `video/quicktime`.
 

@@ -10,6 +10,8 @@ The leading side of the toolbar contains Previous, the current page number, `of`
 
 The toolbar page navigation readout and page-number entry use the document session's active navigation projection. The toolbar does not combine raw image-document page state with separate media-navigation state.
 
+When the active navigation projection is unavailable or unknown, the toolbar page navigation readout displays `– of –` and keeps the page-number entry and navigation buttons disabled.
+
 When an image from a directly opened CBZ, CBT, CB7, CBR, ZIP, TAR, 7Z, RAR, or local directory document is displayed, the trailing action toolbar contains Right-to-Left Reading, Two-Page Spread, zoom, Fit, and, when Hamburger Menu presentation is active outside fullscreen, a toolbar application menu button.
 
 When no archive or directory document is open, including empty state, ordinary direct image files, direct video files, and direct KDE archive-entry URLs, the trailing action toolbar does not show Right-to-Left Reading or Two-Page Spread.
@@ -122,9 +124,9 @@ When a direct video file is displayed and its intrinsic video frame size is know
 
 When a direct video file is displayed and its intrinsic video frame size is unknown, the title omits the size and uses the original direct media URL's file name, a spaced em dash, and `KiriView`.
 
-When a CBZ, CBT, CB7, CBR, ZIP, TAR, 7Z, or RAR archive opened by KiriView is displayed and the active document page position is known, the title is the archive file name, a spaced en dash, the current primary page number, `/`, the total image count, a spaced em dash, and `KiriView`.
+When a CBZ, CBT, CB7, CBR, ZIP, TAR, 7Z, or RAR archive opened by KiriView is displayed and the active document page position is known, the title is the archive file name, a spaced en dash, the current primary page number, `/`, the total supported item count, a spaced em dash, and `KiriView`.
 
-When a directly opened local directory is displayed and the active document page position is known, the title is the directory name, a spaced en dash, the current primary page number, `/`, the total image count, a spaced em dash, and `KiriView`.
+When a directly opened local directory is displayed and the active document page position is known, the title is the directory name, a spaced en dash, the current primary page number, `/`, the total supported item count, a spaced em dash, and `KiriView`.
 
 When an archive or directly opened local directory is displayed and the active document page position is unknown, the title omits the page counter and uses the archive file name or directory name, a spaced em dash, and `KiriView`.
 

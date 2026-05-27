@@ -4,13 +4,15 @@
 
 When a directly opened local CBZ, CBT, CB7, or CBR comic book archive is displayed, Ctrl+S toggles Two-Page Spread.
 
-Two-Page Spread displays the current page on the left and the next page on the right when both pages are eligible.
+Two-Page Spread displays the current page on the left and the next page on the right when both pages are eligible images.
 
 The first archive page is treated as a cover and is always displayed alone.
 
 Any page whose pixel width is greater than its pixel height is treated as a wide page and is displayed alone.
 
 If the next page after the current page is wide, the current page is displayed alone and the next navigation action opens that wide page.
+
+If the next document item after the current image is a video, the current image is displayed alone and the next navigation action opens that video item as an unsupported-video placeholder.
 
 Two-Page Spread is unavailable for ordinary image files, direct video files, KDE-supported archive URLs, directly opened ZIP, TAR, 7Z, or RAR archives, and directly opened directories.
 
@@ -76,7 +78,7 @@ When the current item is a normal image file, direct video file, inside a KDE-su
 
 Previous Archive and Next Archive are also disabled inside directly opened directory documents.
 
-Video entries inside a comic book archive opened directly by KiriView do not participate in archive document navigation.
+Supported video entries inside a comic book archive opened directly by KiriView participate in archive document navigation, but KiriView shows them as unsupported-video placeholders instead of playing them.
 
 KDE archive URLs that point at individual video file entries remain direct media URLs and do not create comic book archive document context.
 
@@ -90,8 +92,8 @@ Navigation does not wrap. Pressing Previous Archive on the first candidate or Ne
 
 Ctrl+Home opens the first image in the current archive, and Ctrl+End opens the last image in the current archive.
 
-Opening a comic book archive displays the first supported image in that archive using the same archive image ordering as page navigation.
+Opening a comic book archive displays the first supported image or supported video in that archive using the same archive media ordering as page navigation. If the first supported item is a video, KiriView displays the unsupported-video placeholder.
 
-If a target sibling archive has no supported images, KiriView clears any displayed image and shows an error state explaining that the selected archive does not contain supported images.
+If a target sibling archive has no supported images or supported videos, KiriView clears any displayed image and shows an error state explaining that the selected archive does not contain supported images or videos.
 
 That empty archive remains the current archive navigation position, so Previous Archive and Next Archive can continue to move to neighboring archives.
