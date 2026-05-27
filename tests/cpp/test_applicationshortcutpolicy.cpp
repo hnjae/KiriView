@@ -221,9 +221,9 @@ void TestApplicationShortcutPolicy::actionDefinitionsOwnApplicationShortcutRoute
         Scope::HelpShortcutScope));
     QVERIFY(hasRouteSpec(ActionId::ViewToggleThumbnailPanelAction, Filter::WithCommandModifier,
         Scope::HelpShortcutScope));
-    QVERIFY(!hasRouteSpec(
+    QVERIFY(hasRouteSpec(
         ActionId::ViewToggleInfoPanelAction, Filter::ShortcutAliases, Scope::ViewerShortcutScope));
-    QVERIFY(!hasRouteSpec(ActionId::ViewToggleThumbnailPanelAction, Filter::ShortcutAliases,
+    QVERIFY(hasRouteSpec(ActionId::ViewToggleThumbnailPanelAction, Filter::ShortcutAliases,
         Scope::ViewerShortcutScope));
     QVERIFY(hasRouteSpec(ActionId::GoPreviousImageAction, Filter::WithCommandModifier,
         Scope::ImageSelectionShortcutScope));
@@ -253,6 +253,12 @@ void TestApplicationShortcutPolicy::shortcutRoutesGroupDefinitionOwnedSpecs()
     QVERIFY(containerRoute != nullptr);
     QCOMPARE(actionIdVariants(containerRoute->actionIds),
         actionIdVariants({ ActionId::GoPreviousArchiveAction, ActionId::GoNextArchiveAction }));
+
+    const KiriView::ApplicationActions::ApplicationShortcutRoute *viewerAliasRoute
+        = routeFor(Filter::ShortcutAliases, Scope::ViewerShortcutScope);
+    QVERIFY(viewerAliasRoute != nullptr);
+    QVERIFY(viewerAliasRoute->actionIds.contains(ActionId::ViewToggleInfoPanelAction));
+    QVERIFY(viewerAliasRoute->actionIds.contains(ActionId::ViewToggleThumbnailPanelAction));
 
     for (const KiriView::ApplicationActions::ApplicationShortcutRoute &route :
         KiriView::ApplicationActions::shortcutRoutes()) {

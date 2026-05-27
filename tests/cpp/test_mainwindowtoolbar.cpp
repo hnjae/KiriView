@@ -42,6 +42,7 @@ private Q_SLOTS:
     void directoryImageDocumentShowsPagePosition();
     void mediaViewportHostLoadsOnlyActiveDelegate();
     void panelActionsToggleResizablePanels();
+    void panelShortcutsToggleResizablePanels();
     void commandFixedShortcutsUseApplicationActions();
     void viewerRightClickOpensContextMenuOnlyFromMediaViewport();
     void rightButtonWheelSuppressesContextMenuTap();
@@ -458,6 +459,41 @@ void TestMainWindowToolBar::panelActionsToggleResizablePanels()
     infoPanelAction->trigger();
     thumbnailPanelAction->trigger();
     QTRY_VERIFY(!infoPanel->isVisible());
+    QTRY_VERIFY(!thumbnailPanel->isVisible());
+}
+
+void TestMainWindowToolBar::panelShortcutsToggleResizablePanels()
+{
+    QString imageSourcePath;
+    QString videoSourcePath;
+    QString errorString;
+    std::unique_ptr<QTemporaryDir> mediaDirectory
+        = createMediaDirectory(&imageSourcePath, &videoSourcePath, &errorString);
+    QVERIFY2(mediaDirectory != nullptr, qPrintable(errorString));
+
+    MainWindowFixture fixture = createMainWindowFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+
+    openSourceUrl(fixture, imageSourcePath);
+    QTRY_VERIFY(findQuickItem(fixture.window, QStringLiteral("imageViewport")) != nullptr);
+
+    QQuickItem *infoPanel = findQuickItem(fixture.window, QStringLiteral("infoPanel"));
+    QQuickItem *thumbnailPanel = findQuickItem(fixture.window, QStringLiteral("thumbnailPanel"));
+    QVERIFY(infoPanel != nullptr);
+    QVERIFY(thumbnailPanel != nullptr);
+    QVERIFY(!infoPanel->isVisible());
+    QVERIFY(!thumbnailPanel->isVisible());
+
+    QTest::keyClick(fixture.window, Qt::Key_I, Qt::ControlModifier);
+    QTRY_VERIFY(infoPanel->isVisible());
+
+    QTest::keyClick(fixture.window, Qt::Key_T, Qt::ControlModifier);
+    QTRY_VERIFY(thumbnailPanel->isVisible());
+
+    QTest::keyClick(fixture.window, Qt::Key_I);
+    QTRY_VERIFY(!infoPanel->isVisible());
+
+    QTest::keyClick(fixture.window, Qt::Key_T);
     QTRY_VERIFY(!thumbnailPanel->isVisible());
 }
 

@@ -415,6 +415,10 @@ void TestKiriViewApplication::shortcutAliasesDeriveFromCtrlShortcuts()
         QList<QKeySequence>({ shortcut(QStringLiteral("Shift+R")) }));
     QCOMPARE(application.shortcutAliases(QStringLiteral("view_zoom_in")),
         QList<QKeySequence>({ shortcut(QStringLiteral("=")), shortcut(QStringLiteral("+")) }));
+    QCOMPARE(application.shortcutAliases(QStringLiteral("view_toggle_info_panel")),
+        QList<QKeySequence>({ shortcut(QStringLiteral("I")) }));
+    QCOMPARE(application.shortcutAliases(QStringLiteral("view_toggle_thumbnail_panel")),
+        QList<QKeySequence>({ shortcut(QStringLiteral("T")) }));
     QCOMPARE(application.shortcutAliases(QStringLiteral("movetotrash")), QList<QKeySequence>());
     QCOMPARE(
         application.shortcutAliases(QStringLiteral("options_show_menubar")), QList<QKeySequence>());
