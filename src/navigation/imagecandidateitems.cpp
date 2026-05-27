@@ -32,6 +32,18 @@ std::vector<ImageNavigationCandidate> imageNavigationCandidates(const KFileItemL
     return candidates;
 }
 
+std::vector<MediaNavigationCandidate> mediaNavigationCandidates(const KFileItemList &items)
+{
+    const std::vector<ImageNavigationCandidate> imageCandidates = imageNavigationCandidates(items);
+    std::vector<MediaNavigationCandidate> candidates;
+    candidates.reserve(imageCandidates.size());
+    for (const ImageNavigationCandidate &candidate : imageCandidates) {
+        candidates.push_back(MediaNavigationCandidate { candidate.url, candidate.name });
+    }
+
+    return candidates;
+}
+
 std::vector<ContainerNavigationCandidate> containerNavigationCandidates(const KFileItemList &items)
 {
     std::vector<ContainerNavigationCandidate> candidates;

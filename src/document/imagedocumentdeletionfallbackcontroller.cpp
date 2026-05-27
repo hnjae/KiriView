@@ -52,11 +52,12 @@ void ImageDocumentDeletionFallbackController::openFallbackPlan(
                 return;
             }
 
-            const std::optional<QUrl> fallbackUrl
-                = imageRemovalFallbackUrl(std::move(candidates), fallback);
+            const std::optional<ImageNavigationTarget> fallbackTarget
+                = imageRemovalFallbackTarget(std::move(candidates), fallback);
             m_operation.finish(operationId);
-            if (fallbackUrl.has_value()) {
-                reportRuntimePlan(ImageDocumentRuntimePlan { LoadUrlOperation { *fallbackUrl } });
+            if (fallbackTarget.has_value()) {
+                reportRuntimePlan(
+                    ImageDocumentRuntimePlan { LoadUrlOperation { *fallbackTarget } });
             }
         },
         [this, operationId](const QString &) { m_operation.finish(operationId); });
@@ -142,8 +143,8 @@ void ImageDocumentDeletionFallbackController::finishComicBookFallbackImageLoad(q
     }
 
     m_operation.finish(operationId);
-    reportRuntimePlan(ImageDocumentRuntimePlan {
-        LoadContainerImageOperation { *result.imageUrl, containerUrl } });
+    reportRuntimePlan(
+        ImageDocumentRuntimePlan { LoadContainerImageOperation { *result.target, containerUrl } });
 }
 
 void ImageDocumentDeletionFallbackController::failComicBookFallbackImageLoad(

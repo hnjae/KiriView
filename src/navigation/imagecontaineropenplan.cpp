@@ -8,7 +8,7 @@
 namespace KiriView {
 bool ImageContainerOpenPlan::shouldLoadCandidates() const { return source.has_value(); }
 
-bool ImageContainerOpenResult::openedImage() const { return imageUrl.has_value(); }
+bool ImageContainerOpenResult::openedImage() const { return target.has_value(); }
 
 ImageContainerOpenPlan imageContainerOpenPlanForCandidate(
     const ContainerNavigationCandidate &container)
@@ -39,6 +39,8 @@ ImageContainerOpenResult imageContainerOpenResultForCandidates(
         return { std::nullopt, ImageContainerOpenError::EmptyContainer };
     }
 
-    return { candidates.front().url, ImageContainerOpenError::Generic };
+    const ImageNavigationCandidate &candidate = candidates.front();
+    return { ImageNavigationTarget { candidate.url, candidate.kind },
+        ImageContainerOpenError::Generic };
 }
 }

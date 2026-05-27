@@ -13,6 +13,9 @@
 namespace KiriView {
 std::vector<QUrl> imageNavigationCandidateUrls(
     const std::vector<ImageNavigationCandidate> &candidates);
+std::vector<ImageNavigationTarget> imageNavigationCandidateTargets(
+    const std::vector<ImageNavigationCandidate> &candidates);
+std::vector<QUrl> imageNavigationTargetUrls(const std::vector<ImageNavigationTarget> &targets);
 std::vector<QUrl> imageNavigationImageCandidateUrls(
     const std::vector<ImageNavigationCandidate> &candidates);
 bool imageNavigationCandidateIsImage(const ImageNavigationCandidate &candidate);
@@ -24,6 +27,9 @@ bool imageNavigationCandidatesContainUrl(
 std::optional<QUrl> adjacentImageNavigationUrl(
     const std::vector<ImageNavigationCandidate> &candidates, const QUrl &currentUrl,
     NavigationDirection direction);
+std::optional<ImageNavigationCandidate> adjacentImageNavigationCandidate(
+    const std::vector<ImageNavigationCandidate> &candidates, const QUrl &currentUrl,
+    NavigationDirection direction);
 std::optional<ContainerNavigationCandidate> adjacentContainerNavigationCandidate(
     const std::vector<ContainerNavigationCandidate> &candidates, const QUrl &currentContainerUrl,
     NavigationDirection direction);
@@ -31,12 +37,16 @@ int pageNavigationCurrentPageNumber(const PageNavigationState &state);
 int pageNavigationImageCount(const PageNavigationState &state);
 bool pageNavigationHasKnownSelection(const PageNavigationState &state);
 std::optional<QUrl> pageNavigationUrlAtPage(const PageNavigationState &state, int pageNumber);
+std::optional<ImageNavigationTarget> pageNavigationTargetAtPage(
+    const PageNavigationState &state, int pageNumber);
 std::optional<std::size_t> pageNavigationTargetIndex(
     const PageNavigationState &state, int pageNumber);
 std::optional<std::size_t> pageNavigationAdjacentTargetIndex(
     const PageNavigationState &state, NavigationDirection direction);
 PageNavigationState pageNavigationStateForCurrentUrl(
     const PageNavigationState &knownState, const QUrl &currentUrl);
+PageNavigationState pageNavigationStateForTargets(
+    std::vector<ImageNavigationTarget> targets, const QUrl &currentUrl);
 PageNavigationState pageNavigationStateForUrls(std::vector<QUrl> urls, const QUrl &currentUrl);
 bool samePageNavigationState(const PageNavigationState &left, const PageNavigationState &right);
 void sortImageNavigationCandidates(std::vector<ImageNavigationCandidate> *candidates);

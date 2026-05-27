@@ -34,13 +34,19 @@ std::optional<QUrl> ImagePageNavigationController::urlAtPage(int pageNumber) con
     return m_model.urlAtPage(pageNumber);
 }
 
-std::optional<QUrl> ImagePageNavigationController::selectPage(int pageNumber)
+std::optional<ImageNavigationTarget> ImagePageNavigationController::targetAtPage(
+    int pageNumber) const
 {
-    const std::optional<QUrl> targetUrl = m_model.selectPage(pageNumber);
-    if (targetUrl.has_value()) {
+    return m_model.targetAtPage(pageNumber);
+}
+
+std::optional<ImageNavigationTarget> ImagePageNavigationController::selectPage(int pageNumber)
+{
+    const std::optional<ImageNavigationTarget> target = m_model.selectPage(pageNumber);
+    if (target.has_value()) {
         notifyChanged();
     }
-    return targetUrl;
+    return target;
 }
 
 void ImagePageNavigationController::openAdjacentImage(
@@ -49,11 +55,11 @@ void ImagePageNavigationController::openAdjacentImage(
     cancelNavigation();
 
     if (m_model.hasKnownSelection()) {
-        const std::optional<QUrl> targetUrl = m_model.selectAdjacentPage(direction);
-        if (targetUrl.has_value()) {
+        const std::optional<ImageNavigationTarget> target = m_model.selectAdjacentPage(direction);
+        if (target.has_value()) {
             notifyChanged();
             reportNavigationPlan(ImageNavigationPlan { OpenImageNavigationUrlEffect {
-                *targetUrl,
+                *target,
             } });
         }
         return;
@@ -122,16 +128,17 @@ void ImagePageNavigationController::finishNavigation(
     std::vector<ImageNavigationCandidate> candidates, NavigationDirection direction,
     const QUrl &currentUrl, ImageCandidateListSource candidateSource)
 {
-    const std::optional<QUrl> targetUrl
-        = adjacentImageNavigationUrl(candidates, currentUrl, direction);
-    if (!targetUrl.has_value()) {
+    const std::optional<ImageNavigationCandidate> candidate
+        = adjacentImageNavigationCandidate(candidates, currentUrl, direction);
+    if (!candidate.has_value()) {
         return;
     }
 
-    if (m_model.completeRefresh(candidates, *targetUrl, std::move(candidateSource))) {
+    const ImageNavigationTarget target { candidate->url, candidate->kind };
+    if (m_model.completeRefresh(candidates, target.url, std::move(candidateSource))) {
         notifyChanged();
     }
-    reportNavigationPlan(ImageNavigationPlan { OpenImageNavigationUrlEffect { *targetUrl } });
+    reportNavigationPlan(ImageNavigationPlan { OpenImageNavigationUrlEffect { target } });
 }
 
 void ImagePageNavigationController::watchChanges(const ImageCandidateListContext &context)
@@ -186,11 +193,11 @@ void ImagePageNavigationController::recoverFromCurrentImageRemoved(
     }
 
     const ImageRemovalFallback fallback = imageRemovalFallbackForImageContext(context);
-    const std::optional<QUrl> fallbackUrl
-        = imageRemovalFallbackUrl(std::move(candidates), fallback);
+    const std::optional<ImageNavigationTarget> fallbackTarget
+        = imageRemovalFallbackTarget(std::move(candidates), fallback);
     ImageNavigationPlan plan { ClearCurrentImageNavigationEffect {} };
-    if (fallbackUrl.has_value()) {
-        plan.push_back(OpenImageNavigationUrlEffect { *fallbackUrl });
+    if (fallbackTarget.has_value()) {
+        plan.push_back(OpenImageNavigationUrlEffect { *fallbackTarget });
     }
     reportNavigationPlan(std::move(plan));
 }

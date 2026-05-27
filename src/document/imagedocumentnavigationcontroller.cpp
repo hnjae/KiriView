@@ -79,8 +79,8 @@ void ImageDocumentNavigationController::openAdjacentContainer(NavigationDirectio
 void ImageDocumentNavigationController::openImageAtPage(int pageNumber)
 {
     const bool spreadTransition = m_spreadController.shouldBeginTransition(pageNumber);
-    const std::optional<QUrl> pageUrl = m_navigationService.selectPage(pageNumber);
-    if (!pageUrl.has_value()) {
+    const std::optional<ImageNavigationTarget> target = m_navigationService.selectPage(pageNumber);
+    if (!target.has_value()) {
         return;
     }
 
@@ -90,7 +90,7 @@ void ImageDocumentNavigationController::openImageAtPage(int pageNumber)
 
     invokeIfSet(m_runtimePlanCallback,
         ImageDocumentRuntimePlan {
-            LoadPageNavigationUrlOperation { *pageUrl, spreadTransition },
+            LoadPageNavigationUrlOperation { *target, spreadTransition },
         });
 }
 

@@ -5,12 +5,14 @@
 #define KIRIVIEW_IMAGECANDIDATEITEMS_H
 
 #include "imagenavigationtypes.h"
+#include "medianavigationmodel.h"
 
 #include <KFileItem>
 #include <vector>
 
 namespace KiriView {
 std::vector<ImageNavigationCandidate> imageNavigationCandidates(const KFileItemList &items);
+std::vector<MediaNavigationCandidate> mediaNavigationCandidates(const KFileItemList &items);
 std::vector<ContainerNavigationCandidate> containerNavigationCandidates(const KFileItemList &items);
 }
 

@@ -62,7 +62,9 @@ void appendSourceLoadRuntimeOperation(KiriView::ImageDocumentRuntimePlan &runtim
         runtimePlan.push_back(KiriView::PrepareSourceLoadOperation { request });
         return;
     case RustOperation::SetSourceUrlToRequested:
-        runtimePlan.push_back(KiriView::SetSourceUrlOperation { request.sourceUrl });
+        runtimePlan.push_back(KiriView::SetSourceUrlOperation {
+            KiriView::ImageNavigationTarget { request.sourceUrl, request.sourceKind },
+        });
         return;
     case RustOperation::BeginOpen:
         runtimePlan.push_back(KiriView::BeginOpenOperation {});

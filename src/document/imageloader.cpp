@@ -5,8 +5,6 @@
 
 #include "async/imagecallback.h"
 #include "decoding/decodedimageresult.h"
-#include "navigation/mediaformatregistry.h"
-
 #include <optional>
 #include <utility>
 #include <vector>
@@ -159,7 +157,7 @@ bool ImageLoader::tryReportUnsupportedDocumentVideo(ImageLoadSession session)
         return false;
     }
 
-    if (!isSupportedDirectVideoUrl(session.imageUrl())) {
+    if (session.kind() != ImageNavigationCandidateKind::Video) {
         return false;
     }
 

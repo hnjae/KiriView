@@ -115,19 +115,21 @@ void TestImagePageNavigationModel::selectionUpdatesCurrentPageWithoutChangingKno
         { imageCandidate(first), imageCandidate(second), imageCandidate(third) }, second,
         ImageCandidateListSource::forDirectory(localUrl(QStringLiteral("/images/")))));
 
-    const std::optional<QUrl> selectedFirst = model.selectPage(1);
+    const std::optional<KiriView::ImageNavigationTarget> selectedFirst = model.selectPage(1);
     QVERIFY(selectedFirst.has_value());
-    QCOMPARE(*selectedFirst, first);
+    QCOMPARE(selectedFirst->url, first);
     comparePage(model, 1, 3);
     QVERIFY(!model.selectPage(1).has_value());
 
-    const std::optional<QUrl> selectedSecond = model.selectAdjacentPage(NavigationDirection::Next);
+    const std::optional<KiriView::ImageNavigationTarget> selectedSecond
+        = model.selectAdjacentPage(NavigationDirection::Next);
     QVERIFY(selectedSecond.has_value());
-    QCOMPARE(*selectedSecond, second);
+    QCOMPARE(selectedSecond->url, second);
     comparePage(model, 2, 3);
-    const std::optional<QUrl> selectedThird = model.selectAdjacentPage(NavigationDirection::Next);
+    const std::optional<KiriView::ImageNavigationTarget> selectedThird
+        = model.selectAdjacentPage(NavigationDirection::Next);
     QVERIFY(selectedThird.has_value());
-    QCOMPARE(*selectedThird, third);
+    QCOMPARE(selectedThird->url, third);
     QVERIFY(!model.selectAdjacentPage(NavigationDirection::Next).has_value());
 }
 

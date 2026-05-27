@@ -95,14 +95,14 @@ const Operation *findOperation(const KiriView::ImageDocumentRuntimePlan &plan)
 bool planLoadsUrl(const KiriView::ImageDocumentRuntimePlan &plan, const QUrl &url)
 {
     const auto *operation = findOperation<KiriView::LoadUrlOperation>(plan);
-    return operation != nullptr && operation->url == url;
+    return operation != nullptr && operation->target.url == url;
 }
 
 bool planLoadsContainerImage(
     const KiriView::ImageDocumentRuntimePlan &plan, const QUrl &imageUrl, const QUrl &containerUrl)
 {
     const auto *operation = findOperation<KiriView::LoadContainerImageOperation>(plan);
-    return operation != nullptr && operation->imageUrl == imageUrl
+    return operation != nullptr && operation->target.url == imageUrl
         && operation->containerUrl == containerUrl;
 }
 }

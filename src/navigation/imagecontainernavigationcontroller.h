@@ -46,7 +46,7 @@ private:
     void finishContainerNavigationImageLoad(quint64 operationId, const QUrl &containerUrl,
         std::vector<ImageNavigationCandidate> candidates);
     void openImageFromContainerNavigation(
-        quint64 operationId, const QUrl &imageUrl, const QUrl &containerUrl);
+        quint64 operationId, const ImageNavigationTarget &target, const QUrl &containerUrl);
     void finishContainerNavigationLoadWithError(quint64 operationId, const QUrl &containerUrl,
         ContainerNavigationError error, const QString &errorString);
     void reportNavigationPlan(ImageNavigationPlan plan);

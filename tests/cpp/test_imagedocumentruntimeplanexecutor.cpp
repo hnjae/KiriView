@@ -19,6 +19,7 @@ struct RecordedRuntimeOperations {
     QStringList events;
     QUrl url;
     QUrl secondaryUrl;
+    KiriView::ImageNavigationCandidateKind kind = KiriView::ImageNavigationCandidateKind::Image;
     QString errorString;
     bool flag = false;
 
@@ -63,13 +64,15 @@ struct RecordedRuntimeOperations {
             = [this]() { record(QStringLiteral("clearPageNavigation")); };
         operations.navigation.updatePageNavigation
             = [this]() { record(QStringLiteral("updatePageNavigation")); };
-        operations.navigation.loadUrl = [this](const QUrl &targetUrl) {
-            url = targetUrl;
+        operations.navigation.loadUrl = [this](const KiriView::ImageNavigationTarget &target) {
+            url = target.url;
+            kind = target.kind;
             record(QStringLiteral("loadUrl"));
         };
         operations.navigation.loadContainerImage
-            = [this](const QUrl &imageUrl, const QUrl &containerUrl) {
-                  url = imageUrl;
+            = [this](const KiriView::ImageNavigationTarget &target, const QUrl &containerUrl) {
+                  url = target.url;
+                  kind = target.kind;
                   secondaryUrl = containerUrl;
                   record(QStringLiteral("loadContainerImage"));
               };
@@ -84,8 +87,9 @@ struct RecordedRuntimeOperations {
                   record(QStringLiteral("finishContainerNavigationLoadWithError"));
               };
         operations.navigation.loadPageNavigationUrl
-            = [this](const QUrl &targetUrl, bool preserveTransition) {
-                  url = targetUrl;
+            = [this](const KiriView::ImageNavigationTarget &target, bool preserveTransition) {
+                  url = target.url;
+                  kind = target.kind;
                   flag = preserveTransition;
                   record(QStringLiteral("loadPageNavigationUrl"));
               };
@@ -111,8 +115,9 @@ struct RecordedRuntimeOperations {
                   flag = request.preserveTwoPageSpreadTransition;
                   record(QStringLiteral("prepareSourceLoad"));
               };
-        operations.open.setSourceUrl = [this](const QUrl &sourceUrl) {
-            url = sourceUrl;
+        operations.open.setSourceUrl = [this](const KiriView::ImageNavigationTarget &target) {
+            url = target.url;
+            kind = target.kind;
             record(QStringLiteral("setSourceUrl"));
         };
         operations.sourceLoad.beginOpen = [this]() { record(QStringLiteral("beginOpen")); };
@@ -129,6 +134,7 @@ struct RecordedRuntimeOperations {
         events.clear();
         url = QUrl();
         secondaryUrl = QUrl();
+        kind = KiriView::ImageNavigationCandidateKind::Image;
         errorString.clear();
         flag = false;
     }
@@ -220,18 +226,20 @@ void TestImageDocumentRuntimePlanExecutor::payloadRuntimePlansDispatchToOperatio
     KiriView::ImageDocumentRuntimePlanExecutor executor(recorded.operations);
 
     executor.dispatchPlan(ImageDocumentRuntimePlan { KiriView::LoadUrlOperation {
-        localUrl(QStringLiteral("/image.png")),
+        { localUrl(QStringLiteral("/image.png")), KiriView::ImageNavigationCandidateKind::Video },
     } });
     QCOMPARE(recorded.events, QStringList({ QStringLiteral("loadUrl") }));
     QCOMPARE(recorded.url, localUrl(QStringLiteral("/image.png")));
+    QCOMPARE(recorded.kind, KiriView::ImageNavigationCandidateKind::Video);
 
     recorded.clear();
     executor.dispatchPlan(ImageDocumentRuntimePlan { KiriView::LoadContainerImageOperation {
-        localUrl(QStringLiteral("/book/01.png")),
+        { localUrl(QStringLiteral("/book/01.png")), KiriView::ImageNavigationCandidateKind::Video },
         localUrl(QStringLiteral("/book.cbz")),
     } });
     QCOMPARE(recorded.events, QStringList({ QStringLiteral("loadContainerImage") }));
     QCOMPARE(recorded.url, localUrl(QStringLiteral("/book/01.png")));
+    QCOMPARE(recorded.kind, KiriView::ImageNavigationCandidateKind::Video);
     QCOMPARE(recorded.secondaryUrl, localUrl(QStringLiteral("/book.cbz")));
 
     recorded.clear();
@@ -255,11 +263,12 @@ void TestImageDocumentRuntimePlanExecutor::payloadRuntimePlansDispatchToOperatio
 
     recorded.clear();
     executor.dispatchPlan(ImageDocumentRuntimePlan { KiriView::LoadPageNavigationUrlOperation {
-        localUrl(QStringLiteral("/next.png")),
+        { localUrl(QStringLiteral("/next.png")), KiriView::ImageNavigationCandidateKind::Video },
         true,
     } });
     QCOMPARE(recorded.events, QStringList({ QStringLiteral("loadPageNavigationUrl") }));
     QCOMPARE(recorded.url, localUrl(QStringLiteral("/next.png")));
+    QCOMPARE(recorded.kind, KiriView::ImageNavigationCandidateKind::Video);
     QVERIFY(recorded.flag);
 
     recorded.clear();
@@ -301,7 +310,9 @@ void TestImageDocumentRuntimePlanExecutor::runtimePlansDispatchSourceLoadOperati
         KiriView::PrepareSourceLoadOperation {
             KiriView::ImageDocumentSourceLoadRequest::fromPageNavigation(sourceUrl, true),
         },
-        KiriView::SetSourceUrlOperation { sourceUrl },
+        KiriView::SetSourceUrlOperation {
+            { sourceUrl, KiriView::ImageNavigationCandidateKind::Video },
+        },
         KiriView::BeginOpenOperation {},
         KiriView::NotifyRightToLeftReadingChangedOperation {},
     });
@@ -323,6 +334,7 @@ void TestImageDocumentRuntimePlanExecutor::runtimePlansDispatchSourceLoadOperati
             QStringLiteral("notifyRightToLeftReadingChanged"),
         }));
     QCOMPARE(recorded.url, sourceUrl);
+    QCOMPARE(recorded.kind, KiriView::ImageNavigationCandidateKind::Video);
     QVERIFY(recorded.secondaryUrl.isEmpty());
     QVERIFY(recorded.flag);
 }
@@ -354,14 +366,20 @@ void TestImageDocumentRuntimePlanExecutor::runtimePlansDispatchEveryOperationExp
         KiriView::CancelAllNavigationOperation {},
         KiriView::ClearPageNavigationOperation {},
         KiriView::UpdatePageNavigationOperation {},
-        KiriView::LoadUrlOperation { sourceUrl },
-        KiriView::LoadContainerImageOperation { sourceUrl, containerUrl },
+        KiriView::LoadUrlOperation { { sourceUrl, KiriView::ImageNavigationCandidateKind::Image } },
+        KiriView::LoadContainerImageOperation {
+            { sourceUrl, KiriView::ImageNavigationCandidateKind::Image },
+            containerUrl,
+        },
         KiriView::FinishEmptyContainerNavigationOperation { containerUrl },
         KiriView::FinishContainerNavigationLoadWithErrorOperation {
             containerUrl,
             QStringLiteral("broken"),
         },
-        KiriView::LoadPageNavigationUrlOperation { sourceUrl, true },
+        KiriView::LoadPageNavigationUrlOperation {
+            { sourceUrl, KiriView::ImageNavigationCandidateKind::Image },
+            true,
+        },
         KiriView::CancelOpenOperation {},
         KiriView::ClearDisplayedImageLocationOperation {},
         KiriView::ClearPresentationImageOperation {},
@@ -371,7 +389,9 @@ void TestImageDocumentRuntimePlanExecutor::runtimePlansDispatchEveryOperationExp
         KiriView::PrepareSourceLoadOperation {
             KiriView::ImageDocumentSourceLoadRequest::fromContainerImage(sourceUrl, containerUrl),
         },
-        KiriView::SetSourceUrlOperation { sourceUrl },
+        KiriView::SetSourceUrlOperation {
+            { sourceUrl, KiriView::ImageNavigationCandidateKind::Image },
+        },
         KiriView::BeginOpenOperation {},
         KiriView::SetErrorStringOperation { QStringLiteral("failed") },
         KiriView::FinishEmptySourceLoadOperation {},

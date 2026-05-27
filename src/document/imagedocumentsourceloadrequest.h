@@ -4,30 +4,54 @@
 #ifndef KIRIVIEW_IMAGEDOCUMENTSOURCELOADREQUEST_H
 #define KIRIVIEW_IMAGEDOCUMENTSOURCELOADREQUEST_H
 
+#include "navigation/imagenavigationtypes.h"
+
 #include <QUrl>
 
 namespace KiriView {
 struct ImageDocumentSourceLoadRequest {
     QUrl sourceUrl;
+    ImageNavigationCandidateKind sourceKind = ImageNavigationCandidateKind::Image;
     QUrl containerNavigationUrl;
     bool preserveTwoPageSpreadTransition = false;
 
     static ImageDocumentSourceLoadRequest fromUrl(const QUrl &sourceUrl)
     {
-        return ImageDocumentSourceLoadRequest { sourceUrl, QUrl(), false };
+        return fromTarget(ImageNavigationTarget { sourceUrl, ImageNavigationCandidateKind::Image });
+    }
+
+    static ImageDocumentSourceLoadRequest fromTarget(const ImageNavigationTarget &target)
+    {
+        return ImageDocumentSourceLoadRequest { target.url, target.kind, QUrl(), false };
     }
 
     static ImageDocumentSourceLoadRequest fromContainerImage(
         const QUrl &imageUrl, const QUrl &containerUrl)
     {
-        return ImageDocumentSourceLoadRequest { imageUrl, containerUrl };
+        return fromContainerTarget(
+            ImageNavigationTarget { imageUrl, ImageNavigationCandidateKind::Image }, containerUrl);
+    }
+
+    static ImageDocumentSourceLoadRequest fromContainerTarget(
+        const ImageNavigationTarget &target, const QUrl &containerUrl)
+    {
+        return ImageDocumentSourceLoadRequest { target.url, target.kind, containerUrl, false };
     }
 
     static ImageDocumentSourceLoadRequest fromPageNavigation(
         const QUrl &sourceUrl, bool preserveTwoPageSpreadTransition)
     {
+        return fromPageNavigationTarget(
+            ImageNavigationTarget { sourceUrl, ImageNavigationCandidateKind::Image },
+            preserveTwoPageSpreadTransition);
+    }
+
+    static ImageDocumentSourceLoadRequest fromPageNavigationTarget(
+        const ImageNavigationTarget &target, bool preserveTwoPageSpreadTransition)
+    {
         return ImageDocumentSourceLoadRequest {
-            sourceUrl,
+            target.url,
+            target.kind,
             QUrl(),
             preserveTwoPageSpreadTransition,
         };

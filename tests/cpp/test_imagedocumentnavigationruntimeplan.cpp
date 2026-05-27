@@ -38,11 +38,15 @@ void TestImageDocumentNavigationRuntimePlan::openImageNavigationMapsToLoadUrl()
 {
     const QUrl url = localUrl(QStringLiteral("/images/02.png"));
     const ImageDocumentRuntimePlan plan = KiriView::imageDocumentRuntimePlanForNavigationPlan({
-        KiriView::OpenImageNavigationUrlEffect { url },
+        KiriView::OpenImageNavigationUrlEffect {
+            { url, KiriView::ImageNavigationCandidateKind::Video },
+        },
     });
 
     QVERIFY(hasOperationTypes(plan, operationTypes<KiriView::LoadUrlOperation>()));
-    QCOMPARE(operationAt<KiriView::LoadUrlOperation>(plan, 0).url, url);
+    QCOMPARE(operationAt<KiriView::LoadUrlOperation>(plan, 0).target.url, url);
+    QCOMPARE(operationAt<KiriView::LoadUrlOperation>(plan, 0).target.kind,
+        KiriView::ImageNavigationCandidateKind::Video);
 }
 
 void TestImageDocumentNavigationRuntimePlan::openContainerImageNavigationMapsToContainerLoad()
@@ -50,11 +54,16 @@ void TestImageDocumentNavigationRuntimePlan::openContainerImageNavigationMapsToC
     const QUrl imageUrl = localUrl(QStringLiteral("/books/book/01.png"));
     const QUrl containerUrl = localUrl(QStringLiteral("/books/book.cbz"));
     const ImageDocumentRuntimePlan plan = KiriView::imageDocumentRuntimePlanForNavigationPlan({
-        KiriView::OpenContainerImageNavigationEffect { imageUrl, containerUrl },
+        KiriView::OpenContainerImageNavigationEffect {
+            { imageUrl, KiriView::ImageNavigationCandidateKind::Video },
+            containerUrl,
+        },
     });
 
     QVERIFY(hasOperationTypes(plan, operationTypes<KiriView::LoadContainerImageOperation>()));
-    QCOMPARE(operationAt<KiriView::LoadContainerImageOperation>(plan, 0).imageUrl, imageUrl);
+    QCOMPARE(operationAt<KiriView::LoadContainerImageOperation>(plan, 0).target.url, imageUrl);
+    QCOMPARE(operationAt<KiriView::LoadContainerImageOperation>(plan, 0).target.kind,
+        KiriView::ImageNavigationCandidateKind::Video);
     QCOMPARE(
         operationAt<KiriView::LoadContainerImageOperation>(plan, 0).containerUrl, containerUrl);
 }
@@ -139,8 +148,13 @@ void TestImageDocumentNavigationRuntimePlan::mixedNavigationPlanPreservesOperati
     const QUrl imageUrl = localUrl(QStringLiteral("/books/book/01.png"));
     const QUrl containerUrl = localUrl(QStringLiteral("/books/book.cbz"));
     const ImageDocumentRuntimePlan plan = KiriView::imageDocumentRuntimePlanForNavigationPlan({
-        KiriView::OpenImageNavigationUrlEffect { firstUrl },
-        KiriView::OpenContainerImageNavigationEffect { imageUrl, containerUrl },
+        KiriView::OpenImageNavigationUrlEffect {
+            { firstUrl, KiriView::ImageNavigationCandidateKind::Image },
+        },
+        KiriView::OpenContainerImageNavigationEffect {
+            { imageUrl, KiriView::ImageNavigationCandidateKind::Image },
+            containerUrl,
+        },
         KiriView::ReportContainerNavigationErrorEffect {
             containerUrl,
             KiriView::ContainerNavigationError::EmptyContainer,
@@ -151,8 +165,8 @@ void TestImageDocumentNavigationRuntimePlan::mixedNavigationPlanPreservesOperati
     QVERIFY(hasOperationTypes(plan,
         operationTypes<KiriView::LoadUrlOperation, KiriView::LoadContainerImageOperation,
             KiriView::FinishEmptyContainerNavigationOperation>()));
-    QCOMPARE(operationAt<KiriView::LoadUrlOperation>(plan, 0).url, firstUrl);
-    QCOMPARE(operationAt<KiriView::LoadContainerImageOperation>(plan, 1).imageUrl, imageUrl);
+    QCOMPARE(operationAt<KiriView::LoadUrlOperation>(plan, 0).target.url, firstUrl);
+    QCOMPARE(operationAt<KiriView::LoadContainerImageOperation>(plan, 1).target.url, imageUrl);
     QCOMPARE(operationAt<KiriView::FinishEmptyContainerNavigationOperation>(plan, 2).containerUrl,
         containerUrl);
 }

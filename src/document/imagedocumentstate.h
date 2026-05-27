@@ -7,6 +7,7 @@
 #include "imagedocumentchangebatcher.h"
 #include "imagedocumenttypes.h"
 #include "location/imagelocation.h"
+#include "navigation/imagenavigationtypes.h"
 
 #include <QString>
 #include <QUrl>
@@ -25,6 +26,7 @@ public:
     ChangeBatch beginChangeBatch();
 
     const QUrl &sourceUrl() const;
+    ImageNavigationCandidateKind sourceKind() const;
     const DisplayedImageLocation &displayedImageLocation() const;
     const ImagePageScopeLocation &displayedImagePageScope() const;
     const QUrl &displayedUrl() const;
@@ -38,6 +40,7 @@ public:
     bool unsupportedDocumentVideo() const;
 
     void setSourceUrl(const QUrl &sourceUrl);
+    void setSourceKind(ImageNavigationCandidateKind sourceKind);
     void setDisplayedImageLocation(const DisplayedImageLocation &location);
     void clearDisplayedImageLocation();
     void setStatus(ImageDocumentStatus status);
@@ -55,6 +58,7 @@ private:
     std::unique_ptr<ImageDocumentChangeBatcher> m_ownedChanges;
     ImageDocumentChangeBatcher *m_changes = nullptr;
     QUrl m_sourceUrl;
+    ImageNavigationCandidateKind m_sourceKind = ImageNavigationCandidateKind::Image;
     DisplayedImageLocation m_displayedImageLocation;
     ImageDocumentStatus m_status = ImageDocumentStatus::Null;
     bool m_loading = false;

@@ -28,7 +28,7 @@ ImageDocumentRuntimePlan imageDocumentClearDeletedImagePlan()
         CancelOpenOperation {},
         FinishSpreadTransitionOperation {},
         ClearSecondaryPageOperation {},
-        SetSourceUrlOperation { QUrl() },
+        SetSourceUrlOperation { ImageNavigationTarget {} },
         SetErrorStringOperation { QString() },
         FinishEmptySourceLoadOperation {},
     };

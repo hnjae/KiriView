@@ -33,8 +33,9 @@ public:
     ImagePageNavigationSnapshot snapshot() const;
     bool hasKnownSelection() const;
     std::optional<QUrl> urlAtPage(int pageNumber) const;
-    std::optional<QUrl> selectPage(int pageNumber);
-    std::optional<QUrl> selectAdjacentPage(NavigationDirection direction);
+    std::optional<ImageNavigationTarget> targetAtPage(int pageNumber) const;
+    std::optional<ImageNavigationTarget> selectPage(int pageNumber);
+    std::optional<ImageNavigationTarget> selectAdjacentPage(NavigationDirection direction);
 
     bool shouldKeepExistingWatcherFor(const ImageCandidateListContext &context) const;
     ImagePageNavigationRefreshPlan beginRefresh(const ImageCandidateListContext &context);
@@ -54,7 +55,8 @@ private:
         quint64 refreshId, ImageCandidateListSource source) const;
     std::optional<ImageCandidateListContext> acceptedWatchedRefreshContext(
         ImageCandidateListSource source) const;
-    bool completeRefresh(std::vector<QUrl> urls, ImageCandidateListContext context);
+    bool completeRefresh(
+        std::vector<ImageNavigationTarget> targets, ImageCandidateListContext context);
     void finishRefresh(ImageCandidateListContext context);
     bool replaceState(PageNavigationState state, bool forceChanged = false);
 

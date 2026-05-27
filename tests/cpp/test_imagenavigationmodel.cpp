@@ -203,7 +203,7 @@ void TestImageNavigationModel::pageNavigationAdjacentTargetUsesKnownCurrentIndex
     target = KiriView::pageNavigationAdjacentTargetIndex(state, NavigationDirection::Next);
     QVERIFY(!target.has_value());
 
-    state.urls.clear();
+    state.targets.clear();
     state.currentIndex = 0;
     target = KiriView::pageNavigationAdjacentTargetIndex(state, NavigationDirection::Next);
     QVERIFY(!target.has_value());
@@ -219,19 +219,21 @@ void TestImageNavigationModel::pageNavigationPreviewReusesKnownList()
     PageNavigationState state
         = KiriView::pageNavigationStateForCurrentUrl(knownState, indexedImageUrl(2));
     QCOMPARE(state.currentIndex, 2);
-    compareUrls(state.urls, knownState.urls);
+    compareUrls(KiriView::imageNavigationTargetUrls(state.targets),
+        KiriView::imageNavigationTargetUrls(knownState.targets));
 
     state = KiriView::pageNavigationStateForCurrentUrl(knownState, indexedImageUrl(9));
     QCOMPARE(state.currentIndex, -1);
-    compareUrls(state.urls, knownState.urls);
+    compareUrls(KiriView::imageNavigationTargetUrls(state.targets),
+        KiriView::imageNavigationTargetUrls(knownState.targets));
 
     state = KiriView::pageNavigationStateForCurrentUrl(knownState, QUrl());
     QCOMPARE(state.currentIndex, -1);
-    QVERIFY(state.urls.empty());
+    QVERIFY(state.targets.empty());
 
     state = KiriView::pageNavigationStateForCurrentUrl(PageNavigationState {}, indexedImageUrl(9));
     QCOMPARE(state.currentIndex, -1);
-    QVERIFY(state.urls.empty());
+    QVERIFY(state.targets.empty());
 }
 
 void TestImageNavigationModel::pageNavigationPreviewKeepsKnownListWhenCurrentTemporarilyMissing()
@@ -244,13 +246,14 @@ void TestImageNavigationModel::pageNavigationPreviewKeepsKnownListWhenCurrentTem
     const PageNavigationState state
         = KiriView::pageNavigationStateForCurrentUrl(knownState, indexedImageUrl(9));
     QCOMPARE(state.currentIndex, -1);
-    compareUrls(state.urls, knownState.urls);
+    compareUrls(KiriView::imageNavigationTargetUrls(state.targets),
+        KiriView::imageNavigationTargetUrls(knownState.targets));
 
     PageNavigationState emptyState {};
     const PageNavigationState unknownState
         = KiriView::pageNavigationStateForCurrentUrl(emptyState, indexedImageUrl(9));
     QCOMPARE(unknownState.currentIndex, -1);
-    QVERIFY(unknownState.urls.empty());
+    QVERIFY(unknownState.targets.empty());
 }
 
 void TestImageNavigationModel::pageNavigationInsertsFallbackCurrentUrl()
@@ -258,12 +261,14 @@ void TestImageNavigationModel::pageNavigationInsertsFallbackCurrentUrl()
     PageNavigationState state = KiriView::pageNavigationStateForUrls(
         { indexedImageUrl(0), indexedImageUrl(1) }, indexedImageUrl(1));
     QCOMPARE(state.currentIndex, 1);
-    compareUrls(state.urls, { indexedImageUrl(0), indexedImageUrl(1) });
+    compareUrls(KiriView::imageNavigationTargetUrls(state.targets),
+        { indexedImageUrl(0), indexedImageUrl(1) });
 
     state = KiriView::pageNavigationStateForUrls(
         { indexedImageUrl(0), indexedImageUrl(1) }, indexedImageUrl(9));
     QCOMPARE(state.currentIndex, -1);
-    compareUrls(state.urls, { indexedImageUrl(0), indexedImageUrl(1) });
+    compareUrls(KiriView::imageNavigationTargetUrls(state.targets),
+        { indexedImageUrl(0), indexedImageUrl(1) });
 }
 
 void TestImageNavigationModel::pageNavigationUpdateKeepsCandidateListWhenCurrentMissing()
@@ -271,11 +276,12 @@ void TestImageNavigationModel::pageNavigationUpdateKeepsCandidateListWhenCurrent
     PageNavigationState state = KiriView::pageNavigationStateForUrls(
         { indexedImageUrl(0), indexedImageUrl(1) }, indexedImageUrl(9));
     QCOMPARE(state.currentIndex, -1);
-    compareUrls(state.urls, { indexedImageUrl(0), indexedImageUrl(1) });
+    compareUrls(KiriView::imageNavigationTargetUrls(state.targets),
+        { indexedImageUrl(0), indexedImageUrl(1) });
 
     state = KiriView::pageNavigationStateForUrls({}, indexedImageUrl(9));
     QCOMPARE(state.currentIndex, 0);
-    compareUrls(state.urls, { indexedImageUrl(9) });
+    compareUrls(KiriView::imageNavigationTargetUrls(state.targets), { indexedImageUrl(9) });
 }
 
 QTEST_GUILESS_MAIN(TestImageNavigationModel)

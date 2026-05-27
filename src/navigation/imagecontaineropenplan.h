@@ -26,7 +26,7 @@ struct ImageContainerOpenPlan {
 };
 
 struct ImageContainerOpenResult {
-    std::optional<QUrl> imageUrl;
+    std::optional<ImageNavigationTarget> target;
     ImageContainerOpenError error = ImageContainerOpenError::Generic;
 
     bool openedImage() const;

@@ -45,10 +45,10 @@ KiriView::ImageNavigationService::Callbacks navigationCallbacks(
             for (const KiriView::ImageNavigationEffect &effect : plan) {
                 if (const auto *openEffect
                     = std::get_if<KiriView::OpenImageNavigationUrlEffect>(&effect)) {
-                    KiriView::invokeIfSet(openUrl, openEffect->url);
+                    KiriView::invokeIfSet(openUrl, openEffect->target.url);
                 } else if (const auto *containerEffect
                     = std::get_if<KiriView::OpenContainerImageNavigationEffect>(&effect)) {
-                    KiriView::invokeIfSet(openContainerImage, containerEffect->imageUrl,
+                    KiriView::invokeIfSet(openContainerImage, containerEffect->target.url,
                         containerEffect->containerUrl);
                 } else if (const auto *errorEffect
                     = std::get_if<KiriView::ReportContainerNavigationErrorEffect>(&effect)) {
@@ -412,20 +412,20 @@ void TestImageNavigationService::selectPageUpdatesCurrentPageImmediately()
         navigationContext(KiriView::DisplayedImageLocation::fromUrl(firstUrl)));
 
     pageNavigationChangeCount = 0;
-    const std::optional<QUrl> selectedUrl = service.selectPage(3);
+    const std::optional<KiriView::ImageNavigationTarget> selectedUrl = service.selectPage(3);
 
     QVERIFY(selectedUrl.has_value());
-    QCOMPARE(*selectedUrl, thirdUrl);
+    QCOMPARE(selectedUrl->url, thirdUrl);
     QCOMPARE(service.currentPageNumber(), 3);
     QCOMPARE(service.imageCount(), 3);
     QCOMPARE(pageNavigationChangeCount, 1);
 
-    const std::optional<QUrl> samePageUrl = service.selectPage(3);
+    const std::optional<KiriView::ImageNavigationTarget> samePageUrl = service.selectPage(3);
     QVERIFY(!samePageUrl.has_value());
     QCOMPARE(service.currentPageNumber(), 3);
     QCOMPARE(pageNavigationChangeCount, 1);
 
-    const std::optional<QUrl> invalidUrl = service.selectPage(4);
+    const std::optional<KiriView::ImageNavigationTarget> invalidUrl = service.selectPage(4);
     QVERIFY(!invalidUrl.has_value());
     QCOMPARE(service.currentPageNumber(), 3);
     QCOMPARE(pageNavigationChangeCount, 1);

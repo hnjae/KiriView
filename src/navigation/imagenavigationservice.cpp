@@ -44,7 +44,12 @@ std::optional<QUrl> ImageNavigationService::urlAtPage(int pageNumber) const
     return m_pageNavigation.urlAtPage(pageNumber);
 }
 
-std::optional<QUrl> ImageNavigationService::selectPage(int pageNumber)
+std::optional<ImageNavigationTarget> ImageNavigationService::targetAtPage(int pageNumber) const
+{
+    return m_pageNavigation.targetAtPage(pageNumber);
+}
+
+std::optional<ImageNavigationTarget> ImageNavigationService::selectPage(int pageNumber)
 {
     return m_pageNavigation.selectPage(pageNumber);
 }

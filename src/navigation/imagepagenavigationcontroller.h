@@ -37,7 +37,8 @@ public:
     int imageCount() const;
     ImagePageNavigationSnapshot snapshot() const;
     std::optional<QUrl> urlAtPage(int pageNumber) const;
-    std::optional<QUrl> selectPage(int pageNumber);
+    std::optional<ImageNavigationTarget> targetAtPage(int pageNumber) const;
+    std::optional<ImageNavigationTarget> selectPage(int pageNumber);
 
     void openAdjacentImage(
         std::optional<ImageCandidateListContext> context, NavigationDirection direction);

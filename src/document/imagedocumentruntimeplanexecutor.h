@@ -43,18 +43,18 @@ struct ImageDocumentNavigationRuntimeOperations {
     std::function<void()> cancelAllNavigation;
     std::function<void()> clearPageNavigation;
     std::function<void()> updatePageNavigation;
-    std::function<void(const QUrl &)> loadUrl;
-    std::function<void(const QUrl &, const QUrl &)> loadContainerImage;
+    std::function<void(const ImageNavigationTarget &)> loadUrl;
+    std::function<void(const ImageNavigationTarget &, const QUrl &)> loadContainerImage;
     std::function<void(const QUrl &)> finishEmptyContainerNavigation;
     std::function<void(const QUrl &, const QString &)> finishContainerNavigationLoadWithError;
-    std::function<void(const QUrl &, bool)> loadPageNavigationUrl;
+    std::function<void(const ImageNavigationTarget &, bool)> loadPageNavigationUrl;
 };
 
 struct ImageDocumentOpenRuntimeOperations {
     std::function<void()> cancelOpen;
     std::function<void()> clearDisplayedImageLocation;
     std::function<void()> clearPresentationImage;
-    std::function<void(const QUrl &)> setSourceUrl;
+    std::function<void(const ImageNavigationTarget &)> setSourceUrl;
     std::function<void(const QString &)> setErrorString;
     std::function<void()> finishEmptySourceLoad;
 };

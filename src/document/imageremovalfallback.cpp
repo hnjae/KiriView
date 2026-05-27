@@ -45,17 +45,17 @@ std::vector<Candidate> removalFallbackCandidates(
     return candidates;
 }
 
-std::optional<QUrl> nextFallbackUrl(
+std::optional<KiriView::ImageNavigationCandidate> nextFallbackCandidate(
     const std::vector<KiriView::ImageNavigationCandidate> &candidates, const QUrl &currentUrl)
 {
-    return KiriView::adjacentImageNavigationUrl(
+    return KiriView::adjacentImageNavigationCandidate(
         candidates, currentUrl, KiriView::NavigationDirection::Next);
 }
 
-std::optional<QUrl> previousFallbackUrl(
+std::optional<KiriView::ImageNavigationCandidate> previousFallbackCandidate(
     const std::vector<KiriView::ImageNavigationCandidate> &candidates, const QUrl &currentUrl)
 {
-    return KiriView::adjacentImageNavigationUrl(
+    return KiriView::adjacentImageNavigationCandidate(
         candidates, currentUrl, KiriView::NavigationDirection::Previous);
 }
 
@@ -129,7 +129,7 @@ ImageRemovalFallback imageRemovalFallbackForImageContext(const ImageCandidateLis
     return ImageRemovalFallback { context, currentUrl, currentUrl.fileName() };
 }
 
-std::optional<QUrl> imageRemovalFallbackUrl(
+std::optional<ImageNavigationTarget> imageRemovalFallbackTarget(
     std::vector<ImageNavigationCandidate> candidates, const ImageRemovalFallback &fallback)
 {
     if (fallback.currentUrl.isEmpty()) {
@@ -139,12 +139,19 @@ std::optional<QUrl> imageRemovalFallbackUrl(
     const std::vector<ImageNavigationCandidate> fallbackCandidates = removalFallbackCandidates(
         std::move(candidates), fallback.currentUrl, fallback.currentName);
 
-    const std::optional<QUrl> preferred = nextFallbackUrl(fallbackCandidates, fallback.currentUrl);
+    const std::optional<ImageNavigationCandidate> preferred
+        = nextFallbackCandidate(fallbackCandidates, fallback.currentUrl);
     if (preferred.has_value()) {
-        return preferred;
+        return ImageNavigationTarget { preferred->url, preferred->kind };
     }
 
-    return previousFallbackUrl(fallbackCandidates, fallback.currentUrl);
+    const std::optional<ImageNavigationCandidate> fallbackCandidate
+        = previousFallbackCandidate(fallbackCandidates, fallback.currentUrl);
+    if (!fallbackCandidate.has_value()) {
+        return std::nullopt;
+    }
+
+    return ImageNavigationTarget { fallbackCandidate->url, fallbackCandidate->kind };
 }
 
 ComicBookRemovalFallbackCandidates comicBookRemovalFallbackCandidates(

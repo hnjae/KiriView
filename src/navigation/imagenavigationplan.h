@@ -5,6 +5,7 @@
 #define KIRIVIEW_IMAGENAVIGATIONPLAN_H
 
 #include "imagecontaineropenplan.h"
+#include "imagenavigationtypes.h"
 
 #include <QString>
 #include <QUrl>
@@ -15,11 +16,11 @@ namespace KiriView {
 using ContainerNavigationError = ImageContainerOpenError;
 
 struct OpenImageNavigationUrlEffect {
-    QUrl url;
+    ImageNavigationTarget target;
 };
 
 struct OpenContainerImageNavigationEffect {
-    QUrl imageUrl;
+    ImageNavigationTarget target;
     QUrl containerUrl;
 };
 

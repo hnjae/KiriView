@@ -420,12 +420,14 @@ void TestImageLoader::archiveInteriorVideoReportsUnsupportedDocumentVideo()
     const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
         = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
     QVERIFY(archiveDocument.has_value());
-    const QUrl videoUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("02.mp4"));
+    const QUrl videoUrl = archivePageUrl(archiveDocument->rootUrl(), QStringLiteral("02.bin"));
 
-    loader.start(KiriView::ImageLoadRequest::fromLocation(videoUrl, *archiveDocument));
+    loader.start(KiriView::ImageLoadRequest::fromTarget(
+        { videoUrl, KiriView::ImageNavigationCandidateKind::Video }, *archiveDocument));
 
     QVERIFY(unsupportedSession.has_value());
     QCOMPARE(unsupportedSession->imageUrl(), videoUrl);
+    QCOMPARE(unsupportedSession->kind(), KiriView::ImageNavigationCandidateKind::Video);
     QCOMPARE(unsupportedSession->location().imagePageScopeRootUrl(), archiveDocument->rootUrl());
     QVERIFY(dataLoader.empty());
 }

@@ -80,7 +80,7 @@ ImagePageNavigationController::Callbacks controllerCallbacks(
             for (const KiriView::ImageNavigationEffect &effect : plan) {
                 if (const auto *openEffect
                     = std::get_if<KiriView::OpenImageNavigationUrlEffect>(&effect)) {
-                    KiriView::invokeIfSet(openUrl, openEffect->url);
+                    KiriView::invokeIfSet(openUrl, openEffect->target.url);
                 } else if (std::holds_alternative<KiriView::ClearCurrentImageNavigationEffect>(
                                effect)) {
                     KiriView::invokeIfSet(clearCurrentImage);

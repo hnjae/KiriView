@@ -7,6 +7,7 @@
 #include <QString>
 #include <QUrl>
 #include <optional>
+#include <utility>
 #include <vector>
 
 namespace KiriView {
@@ -19,6 +20,16 @@ struct ImageNavigationCandidate {
     QUrl url;
     QString name;
     ImageNavigationCandidateKind kind = ImageNavigationCandidateKind::Image;
+};
+
+struct ImageNavigationTarget {
+    QUrl url;
+    ImageNavigationCandidateKind kind = ImageNavigationCandidateKind::Image;
+
+    friend bool operator==(const ImageNavigationTarget &left, const ImageNavigationTarget &right)
+    {
+        return left.url == right.url && left.kind == right.kind;
+    }
 };
 
 enum class NavigationDirection : int {
@@ -38,7 +49,15 @@ struct ContainerNavigationCandidate {
 };
 
 struct PageNavigationState {
-    std::vector<QUrl> urls;
+    PageNavigationState() = default;
+    PageNavigationState(std::vector<ImageNavigationTarget> targets, int currentIndex = -1)
+        : targets(std::move(targets))
+        , currentIndex(currentIndex)
+    {
+    }
+    PageNavigationState(std::vector<QUrl> urls, int currentIndex = -1);
+
+    std::vector<ImageNavigationTarget> targets;
     int currentIndex = -1;
 };
 

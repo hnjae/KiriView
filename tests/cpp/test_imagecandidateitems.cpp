@@ -45,6 +45,17 @@ void TestImageCandidateItems::imageCandidatesOnlyIncludeSupportedMediaFiles()
     QCOMPARE(candidates.back().url, QUrl::fromLocalFile(QStringLiteral("/images/03.mp4")));
     QCOMPARE(candidates.back().name, QStringLiteral("03.mp4"));
     QCOMPARE(candidates.back().kind, KiriView::ImageNavigationCandidateKind::Video);
+
+    const std::vector<KiriView::MediaNavigationCandidate> mediaCandidates
+        = KiriView::mediaNavigationCandidates(items);
+
+    QCOMPARE(mediaCandidates.size(), candidates.size());
+    QCOMPARE(mediaCandidates.front().url, candidates.front().url);
+    QCOMPARE(mediaCandidates.front().name, candidates.front().name);
+    QCOMPARE(mediaCandidates.at(1).url, candidates.at(1).url);
+    QCOMPARE(mediaCandidates.at(1).name, candidates.at(1).name);
+    QCOMPARE(mediaCandidates.back().url, candidates.back().url);
+    QCOMPARE(mediaCandidates.back().name, candidates.back().name);
 }
 
 void TestImageCandidateItems::containerCandidatesOnlyIncludeComicBookArchives()

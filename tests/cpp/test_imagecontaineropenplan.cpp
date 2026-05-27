@@ -90,11 +90,14 @@ void TestImageContainerOpenPlan::firstCandidateSelectionReportsImageOrEmptyConta
 {
     const QUrl firstImageUrl = localUrl(QStringLiteral("/books/a/01.png"));
     const KiriView::ImageContainerOpenResult opened
-        = KiriView::imageContainerOpenResultForCandidates({ imageCandidate(firstImageUrl),
-            imageCandidate(localUrl(QStringLiteral("/books/a/02.png"))) });
+        = KiriView::imageContainerOpenResultForCandidates(
+            { KiriView::ImageNavigationCandidate { firstImageUrl, QStringLiteral("01.bin"),
+                  KiriView::ImageNavigationCandidateKind::Video },
+                imageCandidate(localUrl(QStringLiteral("/books/a/02.png"))) });
 
     QVERIFY(opened.openedImage());
-    QCOMPARE(*opened.imageUrl, firstImageUrl);
+    QCOMPARE(opened.target->url, firstImageUrl);
+    QCOMPARE(opened.target->kind, KiriView::ImageNavigationCandidateKind::Video);
 
     const KiriView::ImageContainerOpenResult empty
         = KiriView::imageContainerOpenResultForCandidates({});

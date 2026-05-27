@@ -64,7 +64,7 @@ public:
                           if (const auto *openEffect
                               = std::get_if<KiriView::OpenImageNavigationUrlEffect>(&effect)) {
                               runtimePlans.push_back(KiriView::ImageDocumentRuntimePlan {
-                                  KiriView::LoadUrlOperation { openEffect->url } });
+                                  KiriView::LoadUrlOperation { openEffect->target } });
                           }
                       }
                   },
@@ -178,18 +178,19 @@ void TestImageDocumentNavigationController::adjacentImageNavigationUsesDisplayed
     QCOMPARE(fixture.runtimePlans.size(), std::size_t(1));
     const auto *operation = findOperation<KiriView::LoadUrlOperation>(fixture.runtimePlans.front());
     QVERIFY(operation != nullptr);
-    QCOMPARE(operation->url, secondUrl);
+    QCOMPARE(operation->target.url, secondUrl);
 }
 
 void TestImageDocumentNavigationController::pageSelectionDispatchesPageNavigationRuntimePlan()
 {
     DocumentNavigationFixture fixture;
     const QUrl firstUrl = localUrl(QStringLiteral("/images/01.png"));
-    const QUrl secondUrl = localUrl(QStringLiteral("/images/02.png"));
+    const QUrl secondUrl = localUrl(QStringLiteral("/images/02.bin"));
     fixture.candidateProvider.setDirectoryImages(localUrl(QStringLiteral("/images/")),
         {
             imageCandidate(firstUrl),
-            imageCandidate(secondUrl),
+            KiriView::ImageNavigationCandidate { secondUrl, QStringLiteral("02.bin"),
+                KiriView::ImageNavigationCandidateKind::Video },
         });
     fixture.displayImage(firstUrl);
     fixture.controller.updatePageNavigation();
@@ -200,7 +201,8 @@ void TestImageDocumentNavigationController::pageSelectionDispatchesPageNavigatio
     const auto *operation
         = findOperation<KiriView::LoadPageNavigationUrlOperation>(fixture.runtimePlans.front());
     QVERIFY(operation != nullptr);
-    QCOMPARE(operation->url, secondUrl);
+    QCOMPARE(operation->target.url, secondUrl);
+    QCOMPARE(operation->target.kind, KiriView::ImageNavigationCandidateKind::Video);
     QVERIFY(!operation->preserveTwoPageSpreadTransition);
     QCOMPARE(fixture.controller.currentPageNumber(), 2);
 }
@@ -229,7 +231,7 @@ void TestImageDocumentNavigationController::spreadPageSelectionStartsTrackedTran
     const auto *operation
         = findOperation<KiriView::LoadPageNavigationUrlOperation>(fixture.runtimePlans.front());
     QVERIFY(operation != nullptr);
-    QCOMPARE(operation->url, secondUrl);
+    QCOMPARE(operation->target.url, secondUrl);
     QVERIFY(operation->preserveTwoPageSpreadTransition);
     QVERIFY(fixture.spread.transitionInProgress());
 }

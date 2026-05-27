@@ -179,15 +179,18 @@ void TestImageRemovalFallback::imageFallbackPrefersNextImage()
         QStringLiteral("02.png"),
     };
 
-    const std::optional<QUrl> fallbackUrl = KiriView::imageRemovalFallbackUrl(
-        {
-            imageCandidate(localUrl(QStringLiteral("/images/01.png"))),
-            imageCandidate(localUrl(QStringLiteral("/images/03.png"))),
-        },
-        fallback);
+    const std::optional<KiriView::ImageNavigationTarget> fallbackTarget
+        = KiriView::imageRemovalFallbackTarget(
+            {
+                imageCandidate(localUrl(QStringLiteral("/images/01.png"))),
+                KiriView::ImageNavigationCandidate { localUrl(QStringLiteral("/images/03.bin")),
+                    QStringLiteral("03.bin"), KiriView::ImageNavigationCandidateKind::Video },
+            },
+            fallback);
 
-    QVERIFY(fallbackUrl.has_value());
-    QCOMPARE(*fallbackUrl, localUrl(QStringLiteral("/images/03.png")));
+    QVERIFY(fallbackTarget.has_value());
+    QCOMPARE(fallbackTarget->url, localUrl(QStringLiteral("/images/03.bin")));
+    QCOMPARE(fallbackTarget->kind, KiriView::ImageNavigationCandidateKind::Video);
 }
 
 void TestImageRemovalFallback::imageFallbackFallsBackToPreviousImage()
@@ -200,15 +203,17 @@ void TestImageRemovalFallback::imageFallbackFallsBackToPreviousImage()
         QStringLiteral("03.png"),
     };
 
-    const std::optional<QUrl> fallbackUrl = KiriView::imageRemovalFallbackUrl(
-        {
-            imageCandidate(localUrl(QStringLiteral("/images/01.png"))),
-            imageCandidate(localUrl(QStringLiteral("/images/02.png"))),
-        },
-        fallback);
+    const std::optional<KiriView::ImageNavigationTarget> fallbackTarget
+        = KiriView::imageRemovalFallbackTarget(
+            {
+                imageCandidate(localUrl(QStringLiteral("/images/01.png"))),
+                imageCandidate(localUrl(QStringLiteral("/images/02.png"))),
+            },
+            fallback);
 
-    QVERIFY(fallbackUrl.has_value());
-    QCOMPARE(*fallbackUrl, localUrl(QStringLiteral("/images/02.png")));
+    QVERIFY(fallbackTarget.has_value());
+    QCOMPARE(fallbackTarget->url, localUrl(QStringLiteral("/images/02.png")));
+    QCOMPARE(fallbackTarget->kind, KiriView::ImageNavigationCandidateKind::Image);
 }
 
 void TestImageRemovalFallback::imageFallbackReturnsNoUrlWithoutSiblingImages()
@@ -221,9 +226,10 @@ void TestImageRemovalFallback::imageFallbackReturnsNoUrlWithoutSiblingImages()
         QStringLiteral("03.png"),
     };
 
-    const std::optional<QUrl> fallbackUrl = KiriView::imageRemovalFallbackUrl({}, fallback);
+    const std::optional<KiriView::ImageNavigationTarget> fallbackTarget
+        = KiriView::imageRemovalFallbackTarget({}, fallback);
 
-    QVERIFY(!fallbackUrl.has_value());
+    QVERIFY(!fallbackTarget.has_value());
 }
 
 void TestImageRemovalFallback::comicBookFallbackKeepsNextAndPreviousCandidates()

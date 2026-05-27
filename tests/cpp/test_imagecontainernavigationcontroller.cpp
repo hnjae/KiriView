@@ -160,7 +160,7 @@ KiriView::ImageContainerNavigationController::Callbacks controllerCallbacks(
                 if (const auto *openEffect
                     = std::get_if<KiriView::OpenContainerImageNavigationEffect>(&effect)) {
                     KiriView::invokeIfSet(
-                        openContainerImage, openEffect->imageUrl, openEffect->containerUrl);
+                        openContainerImage, openEffect->target.url, openEffect->containerUrl);
                 } else if (const auto *errorEffect
                     = std::get_if<KiriView::ReportContainerNavigationErrorEffect>(&effect)) {
                     KiriView::invokeIfSet(containerNavigationError, errorEffect->containerUrl,

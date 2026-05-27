@@ -47,7 +47,7 @@ struct ImageRemovalPlan {
 
 ImageRemovalPlan imageRemovalPlanForDisplayedLocation(const DisplayedImageLocation &location);
 ImageRemovalFallback imageRemovalFallbackForImageContext(const ImageCandidateListContext &context);
-std::optional<QUrl> imageRemovalFallbackUrl(
+std::optional<ImageNavigationTarget> imageRemovalFallbackTarget(
     std::vector<ImageNavigationCandidate> candidates, const ImageRemovalFallback &fallback);
 ComicBookRemovalFallbackCandidates comicBookRemovalFallbackCandidates(
     std::vector<ContainerNavigationCandidate> candidates, const ComicBookRemovalFallback &fallback);

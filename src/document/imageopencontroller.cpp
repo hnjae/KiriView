@@ -93,7 +93,8 @@ void ImageOpenController::open()
         return;
     }
 
-    const ImageLoadRequest request = ImageLoadRequest::fromLocation(m_state.sourceUrl(),
+    const ImageLoadRequest request = ImageLoadRequest::fromTarget(
+        ImageNavigationTarget { m_state.sourceUrl(), m_state.sourceKind() },
         m_state.displayedImagePageScope(), m_state.loadingContainerNavigationUrl());
     beginSourceLoad();
     m_imageLoader->start(request, m_presentationController.firstDisplayDecodeContext());
@@ -145,6 +146,7 @@ void ImageOpenController::finishSourceResolved(ImageLoadSession session)
 {
     reportRuntimePlan(
         applyImageOpenApplicationPlan(m_state, ImageOpenWorkflow::resolveSourceImagePlan(session)));
+    m_state.setSourceKind(session.kind());
 }
 
 void ImageOpenController::finishUnsupportedDocumentVideoLoad(ImageLoadSession session)
@@ -153,6 +155,7 @@ void ImageOpenController::finishUnsupportedDocumentVideoLoad(ImageLoadSession se
     {
         ImageDocumentState::ChangeBatch batch = m_state.beginChangeBatch();
         m_presentationController.clearImage();
+        m_state.setSourceKind(session.kind());
         m_state.setSourceUrl(session.imageUrl());
         m_state.setDisplayedImageLocation(session.location());
         m_state.setContainerNavigationUrl(containerNavigationUrlForLocation(session.location()));

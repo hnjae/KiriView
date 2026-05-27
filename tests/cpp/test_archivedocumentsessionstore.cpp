@@ -62,7 +62,7 @@ KiriView::ImageNavigationService::Callbacks navigationCallbacks(
             for (const KiriView::ImageNavigationEffect &effect : plan) {
                 if (const auto *openEffect
                     = std::get_if<KiriView::OpenImageNavigationUrlEffect>(&effect)) {
-                    KiriView::invokeIfSet(openUrl, openEffect->url);
+                    KiriView::invokeIfSet(openUrl, openEffect->target.url);
                 }
             }
         },

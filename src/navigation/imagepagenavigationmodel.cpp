@@ -31,7 +31,12 @@ std::optional<QUrl> ImagePageNavigationModel::urlAtPage(int pageNumber) const
     return pageNavigationUrlAtPage(m_state, pageNumber);
 }
 
-std::optional<QUrl> ImagePageNavigationModel::selectPage(int pageNumber)
+std::optional<ImageNavigationTarget> ImagePageNavigationModel::targetAtPage(int pageNumber) const
+{
+    return pageNavigationTargetAtPage(m_state, pageNumber);
+}
+
+std::optional<ImageNavigationTarget> ImagePageNavigationModel::selectPage(int pageNumber)
 {
     const std::optional<std::size_t> targetIndex = pageNavigationTargetIndex(m_state, pageNumber);
     if (!targetIndex.has_value()) {
@@ -40,12 +45,13 @@ std::optional<QUrl> ImagePageNavigationModel::selectPage(int pageNumber)
 
     PageNavigationState state = m_state;
     state.currentIndex = static_cast<int>(*targetIndex);
-    const QUrl targetUrl = state.urls.at(*targetIndex);
+    const ImageNavigationTarget target = state.targets.at(*targetIndex);
     replaceState(std::move(state));
-    return targetUrl;
+    return target;
 }
 
-std::optional<QUrl> ImagePageNavigationModel::selectAdjacentPage(NavigationDirection direction)
+std::optional<ImageNavigationTarget> ImagePageNavigationModel::selectAdjacentPage(
+    NavigationDirection direction)
 {
     const std::optional<std::size_t> targetIndex
         = pageNavigationAdjacentTargetIndex(m_state, direction);
@@ -55,9 +61,9 @@ std::optional<QUrl> ImagePageNavigationModel::selectAdjacentPage(NavigationDirec
 
     PageNavigationState state = m_state;
     state.currentIndex = static_cast<int>(*targetIndex);
-    const QUrl targetUrl = state.urls.at(*targetIndex);
+    const ImageNavigationTarget target = state.targets.at(*targetIndex);
     replaceState(std::move(state));
-    return targetUrl;
+    return target;
 }
 
 bool ImagePageNavigationModel::shouldKeepExistingWatcherFor(
@@ -71,7 +77,7 @@ ImagePageNavigationRefreshPlan ImagePageNavigationModel::beginRefresh(
     const ImageCandidateListContext &context)
 {
     const quint64 refreshId = m_pendingRefresh.start();
-    const bool keepKnownUrls = m_knownRefreshContext.has_value() && !m_state.urls.empty()
+    const bool keepKnownUrls = m_knownRefreshContext.has_value() && !m_state.targets.empty()
         && sameImageCandidateListSource(m_knownRefreshContext->source(), context.source());
     if (!keepKnownUrls) {
         m_knownRefreshContext = std::nullopt;
@@ -94,7 +100,7 @@ bool ImagePageNavigationModel::completeRefresh(
     const std::vector<ImageNavigationCandidate> &candidates, const QUrl &currentUrl,
     ImageCandidateListSource source)
 {
-    return completeRefresh(imageNavigationCandidateUrls(candidates),
+    return completeRefresh(imageNavigationCandidateTargets(candidates),
         ImageCandidateListContext::forSource(currentUrl, std::move(source)));
 }
 
@@ -129,7 +135,7 @@ ImagePageNavigationRefreshResult ImagePageNavigationModel::completeRefreshFromCu
 {
     const bool currentImageRemoved
         = !imageNavigationCandidatesContainUrl(candidates, context.currentUrl());
-    const bool changed = completeRefresh(imageNavigationCandidateUrls(candidates), context);
+    const bool changed = completeRefresh(imageNavigationCandidateTargets(candidates), context);
     return ImagePageNavigationRefreshResult { true, changed, currentImageRemoved, context };
 }
 
@@ -156,11 +162,11 @@ std::optional<ImageCandidateListContext> ImagePageNavigationModel::acceptedWatch
 }
 
 bool ImagePageNavigationModel::completeRefresh(
-    std::vector<QUrl> urls, ImageCandidateListContext context)
+    std::vector<ImageNavigationTarget> targets, ImageCandidateListContext context)
 {
     const QUrl currentUrl = context.currentUrl();
     finishRefresh(std::move(context));
-    return replaceState(pageNavigationStateForUrls(std::move(urls), currentUrl));
+    return replaceState(pageNavigationStateForTargets(std::move(targets), currentUrl));
 }
 
 void ImagePageNavigationModel::finishRefresh(ImageCandidateListContext context)

@@ -53,7 +53,7 @@ void TestImageDocumentRuntimePlan::clearDeletedImagePlansDeletionClearAndEmptySo
             KiriView::CancelOpenOperation, KiriView::FinishSpreadTransitionOperation,
             KiriView::ClearSecondaryPageOperation, KiriView::SetSourceUrlOperation,
             KiriView::SetErrorStringOperation, KiriView::FinishEmptySourceLoadOperation>()));
-    QVERIFY(operationAt<KiriView::SetSourceUrlOperation>(plan, 6).url.isEmpty());
+    QVERIFY(operationAt<KiriView::SetSourceUrlOperation>(plan, 6).target.url.isEmpty());
     QVERIFY(operationAt<KiriView::SetErrorStringOperation>(plan, 7).errorString.isEmpty());
 }
 
@@ -71,17 +71,21 @@ void TestImageDocumentRuntimePlan::shutdownPlansOrderedRuntimeOperations()
 void TestImageDocumentRuntimePlan::payloadOperationsCarryRuntimeData()
 {
     ImageDocumentRuntimePlan plan { KiriView::LoadUrlOperation {
-        localUrl(QStringLiteral("/image.png")),
+        { localUrl(QStringLiteral("/image.png")), KiriView::ImageNavigationCandidateKind::Video },
     } };
-    QCOMPARE(operationAt<KiriView::LoadUrlOperation>(plan, 0).url,
+    QCOMPARE(operationAt<KiriView::LoadUrlOperation>(plan, 0).target.url,
         localUrl(QStringLiteral("/image.png")));
+    QCOMPARE(operationAt<KiriView::LoadUrlOperation>(plan, 0).target.kind,
+        KiriView::ImageNavigationCandidateKind::Video);
 
     plan = ImageDocumentRuntimePlan { KiriView::LoadContainerImageOperation {
-        localUrl(QStringLiteral("/book/01.png")),
+        { localUrl(QStringLiteral("/book/01.png")), KiriView::ImageNavigationCandidateKind::Video },
         localUrl(QStringLiteral("/book.cbz")),
     } };
-    QCOMPARE(operationAt<KiriView::LoadContainerImageOperation>(plan, 0).imageUrl,
+    QCOMPARE(operationAt<KiriView::LoadContainerImageOperation>(plan, 0).target.url,
         localUrl(QStringLiteral("/book/01.png")));
+    QCOMPARE(operationAt<KiriView::LoadContainerImageOperation>(plan, 0).target.kind,
+        KiriView::ImageNavigationCandidateKind::Video);
     QCOMPARE(operationAt<KiriView::LoadContainerImageOperation>(plan, 0).containerUrl,
         localUrl(QStringLiteral("/book.cbz")));
 
@@ -103,11 +107,13 @@ void TestImageDocumentRuntimePlan::payloadOperationsCarryRuntimeData()
         QStringLiteral("broken"));
 
     plan = ImageDocumentRuntimePlan { KiriView::LoadPageNavigationUrlOperation {
-        localUrl(QStringLiteral("/next.png")),
+        { localUrl(QStringLiteral("/next.png")), KiriView::ImageNavigationCandidateKind::Video },
         true,
     } };
-    QCOMPARE(operationAt<KiriView::LoadPageNavigationUrlOperation>(plan, 0).url,
+    QCOMPARE(operationAt<KiriView::LoadPageNavigationUrlOperation>(plan, 0).target.url,
         localUrl(QStringLiteral("/next.png")));
+    QCOMPARE(operationAt<KiriView::LoadPageNavigationUrlOperation>(plan, 0).target.kind,
+        KiriView::ImageNavigationCandidateKind::Video);
     QVERIFY(operationAt<KiriView::LoadPageNavigationUrlOperation>(plan, 0)
             .preserveTwoPageSpreadTransition);
 
@@ -142,14 +148,20 @@ void TestImageDocumentRuntimePlan::operationTypeAssertionsCoverEveryRuntimeOpera
         KiriView::CancelAllNavigationOperation {},
         KiriView::ClearPageNavigationOperation {},
         KiriView::UpdatePageNavigationOperation {},
-        KiriView::LoadUrlOperation { sourceUrl },
-        KiriView::LoadContainerImageOperation { sourceUrl, containerUrl },
+        KiriView::LoadUrlOperation { { sourceUrl, KiriView::ImageNavigationCandidateKind::Image } },
+        KiriView::LoadContainerImageOperation {
+            { sourceUrl, KiriView::ImageNavigationCandidateKind::Image },
+            containerUrl,
+        },
         KiriView::FinishEmptyContainerNavigationOperation { containerUrl },
         KiriView::FinishContainerNavigationLoadWithErrorOperation {
             containerUrl,
             QStringLiteral("broken"),
         },
-        KiriView::LoadPageNavigationUrlOperation { sourceUrl, true },
+        KiriView::LoadPageNavigationUrlOperation {
+            { sourceUrl, KiriView::ImageNavigationCandidateKind::Image },
+            true,
+        },
         KiriView::CancelOpenOperation {},
         KiriView::ClearDisplayedImageLocationOperation {},
         KiriView::ClearPresentationImageOperation {},
@@ -159,7 +171,9 @@ void TestImageDocumentRuntimePlan::operationTypeAssertionsCoverEveryRuntimeOpera
         KiriView::PrepareSourceLoadOperation {
             KiriView::ImageDocumentSourceLoadRequest::fromContainerImage(sourceUrl, containerUrl),
         },
-        KiriView::SetSourceUrlOperation { sourceUrl },
+        KiriView::SetSourceUrlOperation {
+            { sourceUrl, KiriView::ImageNavigationCandidateKind::Image },
+        },
         KiriView::BeginOpenOperation {},
         KiriView::SetErrorStringOperation { QStringLiteral("failed") },
         KiriView::FinishEmptySourceLoadOperation {},

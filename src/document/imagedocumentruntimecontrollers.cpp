@@ -194,13 +194,13 @@ ImageDocumentRuntimeOperations ImageDocumentRuntimeControllers::runtimeOperation
         = [this]() { m_navigationController->clearPageNavigation(); };
     operations.navigation.updatePageNavigation
         = [this]() { m_navigationController->updatePageNavigation(); };
-    operations.navigation.loadUrl = [this](const QUrl &url) {
-        invokeIfSet(m_callbacks.loadSource, ImageDocumentSourceLoadRequest::fromUrl(url));
+    operations.navigation.loadUrl = [this](const ImageNavigationTarget &target) {
+        invokeIfSet(m_callbacks.loadSource, ImageDocumentSourceLoadRequest::fromTarget(target));
     };
     operations.navigation.loadContainerImage
-        = [this](const QUrl &imageUrl, const QUrl &containerUrl) {
+        = [this](const ImageNavigationTarget &target, const QUrl &containerUrl) {
               invokeIfSet(m_callbacks.loadSource,
-                  ImageDocumentSourceLoadRequest::fromContainerImage(imageUrl, containerUrl));
+                  ImageDocumentSourceLoadRequest::fromContainerTarget(target, containerUrl));
           };
     operations.navigation.finishEmptyContainerNavigation = [this](const QUrl &containerUrl) {
         m_openController->finishContainerNavigationWithEmptyContainer(containerUrl);
@@ -210,10 +210,10 @@ ImageDocumentRuntimeOperations ImageDocumentRuntimeControllers::runtimeOperation
               m_openController->finishContainerNavigationLoadWithError(containerUrl, errorString);
           };
     operations.navigation.loadPageNavigationUrl
-        = [this](const QUrl &url, bool preserveTwoPageSpreadTransition) {
+        = [this](const ImageNavigationTarget &target, bool preserveTwoPageSpreadTransition) {
               invokeIfSet(m_callbacks.loadSource,
-                  ImageDocumentSourceLoadRequest::fromPageNavigation(
-                      url, preserveTwoPageSpreadTransition));
+                  ImageDocumentSourceLoadRequest::fromPageNavigationTarget(
+                      target, preserveTwoPageSpreadTransition));
           };
     operations.open.cancelOpen = [this]() { m_openController->cancel(); };
     operations.open.clearDisplayedImageLocation
@@ -232,7 +232,10 @@ ImageDocumentRuntimeOperations ImageDocumentRuntimeControllers::runtimeOperation
                       request, stateOwner->displayedImagePageScope());
               }
           };
-    operations.open.setSourceUrl = [stateOwner](const QUrl &url) { stateOwner->setSourceUrl(url); };
+    operations.open.setSourceUrl = [stateOwner](const ImageNavigationTarget &target) {
+        stateOwner->setSourceKind(target.kind);
+        stateOwner->setSourceUrl(target.url);
+    };
     operations.sourceLoad.beginOpen = [this]() { m_openController->open(); };
     operations.open.setErrorString
         = [stateOwner](const QString &errorString) { stateOwner->setErrorString(errorString); };

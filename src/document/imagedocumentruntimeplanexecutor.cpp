@@ -85,9 +85,9 @@ void ImageDocumentRuntimePlanExecutor::dispatchOperation(
             } else if constexpr (std::is_same_v<Operation, UpdatePageNavigationOperation>) {
                 run(m_operations.navigation.updatePageNavigation);
             } else if constexpr (std::is_same_v<Operation, LoadUrlOperation>) {
-                run(m_operations.navigation.loadUrl, payload.url);
+                run(m_operations.navigation.loadUrl, payload.target);
             } else if constexpr (std::is_same_v<Operation, LoadContainerImageOperation>) {
-                run(m_operations.navigation.loadContainerImage, payload.imageUrl,
+                run(m_operations.navigation.loadContainerImage, payload.target,
                     payload.containerUrl);
             } else if constexpr (std::is_same_v<Operation,
                                      FinishEmptyContainerNavigationOperation>) {
@@ -97,7 +97,7 @@ void ImageDocumentRuntimePlanExecutor::dispatchOperation(
                 run(m_operations.navigation.finishContainerNavigationLoadWithError,
                     payload.containerUrl, payload.errorString);
             } else if constexpr (std::is_same_v<Operation, LoadPageNavigationUrlOperation>) {
-                run(m_operations.navigation.loadPageNavigationUrl, payload.url,
+                run(m_operations.navigation.loadPageNavigationUrl, payload.target,
                     payload.preserveTwoPageSpreadTransition);
             } else if constexpr (std::is_same_v<Operation, CancelOpenOperation>) {
                 run(m_operations.open.cancelOpen);
@@ -116,7 +116,7 @@ void ImageDocumentRuntimePlanExecutor::dispatchOperation(
             } else if constexpr (std::is_same_v<Operation, PrepareSourceLoadOperation>) {
                 run(m_operations.sourceLoad.prepareSourceLoad, payload.request);
             } else if constexpr (std::is_same_v<Operation, SetSourceUrlOperation>) {
-                run(m_operations.open.setSourceUrl, payload.url);
+                run(m_operations.open.setSourceUrl, payload.target);
             } else if constexpr (std::is_same_v<Operation, BeginOpenOperation>) {
                 run(m_operations.sourceLoad.beginOpen);
             } else if constexpr (std::is_same_v<Operation, SetErrorStringOperation>) {

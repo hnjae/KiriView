@@ -19,11 +19,11 @@ void appendNavigationEffectRuntimeOperation(
         [&plan](const auto &payload) {
             using Effect = std::decay_t<decltype(payload)>;
             if constexpr (std::is_same_v<Effect, KiriView::OpenImageNavigationUrlEffect>) {
-                plan.push_back(KiriView::LoadUrlOperation { payload.url });
+                plan.push_back(KiriView::LoadUrlOperation { payload.target });
             } else if constexpr (std::is_same_v<Effect,
                                      KiriView::OpenContainerImageNavigationEffect>) {
                 plan.push_back(KiriView::LoadContainerImageOperation {
-                    payload.imageUrl,
+                    payload.target,
                     payload.containerUrl,
                 });
             } else if constexpr (std::is_same_v<Effect,

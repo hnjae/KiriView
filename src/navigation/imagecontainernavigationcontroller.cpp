@@ -114,7 +114,7 @@ void ImageContainerNavigationController::finishContainerNavigationImageLoad(
 {
     const ImageContainerOpenResult result = imageContainerOpenResultForCandidates(candidates);
     if (result.openedImage()) {
-        openImageFromContainerNavigation(operationId, *result.imageUrl, containerUrl);
+        openImageFromContainerNavigation(operationId, *result.target, containerUrl);
         return;
     }
 
@@ -122,14 +122,14 @@ void ImageContainerNavigationController::finishContainerNavigationImageLoad(
 }
 
 void ImageContainerNavigationController::openImageFromContainerNavigation(
-    quint64 operationId, const QUrl &imageUrl, const QUrl &containerUrl)
+    quint64 operationId, const ImageNavigationTarget &target, const QUrl &containerUrl)
 {
     if (!m_navigationState.finishNavigation(operationId)) {
         return;
     }
 
     reportNavigationPlan(ImageNavigationPlan { OpenContainerImageNavigationEffect {
-        imageUrl,
+        target,
         containerUrl,
     } });
 }

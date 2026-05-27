@@ -39,6 +39,8 @@ ImageDocumentState::ChangeBatch ImageDocumentState::beginChangeBatch()
 
 const QUrl &ImageDocumentState::sourceUrl() const { return m_sourceUrl; }
 
+ImageNavigationCandidateKind ImageDocumentState::sourceKind() const { return m_sourceKind; }
+
 const DisplayedImageLocation &ImageDocumentState::displayedImageLocation() const
 {
     return m_displayedImageLocation;
@@ -81,6 +83,11 @@ void ImageDocumentState::setSourceUrl(const QUrl &sourceUrl)
     if (replaceIfChanged(m_sourceUrl, sourceUrl)) {
         notify(ImageDocumentChange::SourceUrl);
     }
+}
+
+void ImageDocumentState::setSourceKind(ImageNavigationCandidateKind sourceKind)
+{
+    m_sourceKind = sourceKind;
 }
 
 void ImageDocumentState::setDisplayedImageLocation(const DisplayedImageLocation &location)

@@ -40,7 +40,8 @@ void TestImageOpenSourceLoadWorkflow::currentSourceLoadUsesRuntimeSnapshotAndReq
         true,
     };
     const KiriView::ImageDocumentSourceLoadRequest request
-        = KiriView::ImageDocumentSourceLoadRequest::fromContainerImage(sourceUrl, containerUrl);
+        = KiriView::ImageDocumentSourceLoadRequest::fromContainerTarget(
+            { sourceUrl, KiriView::ImageNavigationCandidateKind::Video }, containerUrl);
     const KiriView::ImageDocumentRuntimePlan plan
         = KiriView::ImageOpenWorkflow::sourceLoadPlan(snapshot, request);
 
@@ -118,7 +119,8 @@ void TestImageOpenSourceLoadWorkflow::sourceLoadPlanResolvesRequestedRuntimePayl
     const QUrl sourceUrl = localUrl(QStringLiteral("/books/page.png"));
     const QUrl containerUrl = localUrl(QStringLiteral("/books/book.cbz"));
     const KiriView::ImageDocumentSourceLoadRequest request
-        = KiriView::ImageDocumentSourceLoadRequest::fromContainerImage(sourceUrl, containerUrl);
+        = KiriView::ImageDocumentSourceLoadRequest::fromContainerTarget(
+            { sourceUrl, KiriView::ImageNavigationCandidateKind::Video }, containerUrl);
     const KiriView::ImageDocumentSourceLoadSnapshot replacementSnapshot {
         localUrl(QStringLiteral("/images/current.png")),
         {},
@@ -140,10 +142,16 @@ void TestImageOpenSourceLoadWorkflow::sourceLoadPlanResolvesRequestedRuntimePayl
     QCOMPARE(
         operationAt<KiriView::PrepareSourceLoadOperation>(replacementPlan, 6).request.sourceUrl,
         sourceUrl);
+    QCOMPARE(
+        operationAt<KiriView::PrepareSourceLoadOperation>(replacementPlan, 6).request.sourceKind,
+        KiriView::ImageNavigationCandidateKind::Video);
     QCOMPARE(operationAt<KiriView::PrepareSourceLoadOperation>(replacementPlan, 6)
                  .request.containerNavigationUrl,
         containerUrl);
-    QCOMPARE(operationAt<KiriView::SetSourceUrlOperation>(replacementPlan, 7).url, sourceUrl);
+    QCOMPARE(
+        operationAt<KiriView::SetSourceUrlOperation>(replacementPlan, 7).target.url, sourceUrl);
+    QCOMPARE(operationAt<KiriView::SetSourceUrlOperation>(replacementPlan, 7).target.kind,
+        KiriView::ImageNavigationCandidateKind::Video);
 
     const KiriView::ImageDocumentSourceLoadSnapshot currentSnapshot {
         sourceUrl,
