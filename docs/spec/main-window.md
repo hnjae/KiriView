@@ -80,6 +80,8 @@ Pressing and releasing Alt alone while the menubar or toolbar application menu i
 
 Right-clicking the main media viewport opens a viewer context menu at the pointer position.
 
+Holding the right mouse button and using the mouse wheel over an image viewport performs image zoom instead of opening the viewer context menu when the button is released.
+
 The viewer context menu is available in image and video mode, including fullscreen.
 
 Right-clicking the toolbar, menubar, Info Panel, or Thumbnail Panel does not open the viewer context menu.
