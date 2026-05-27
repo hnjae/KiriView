@@ -43,9 +43,6 @@ public:
     QString actionName(ActionId actionId) const;
     ApplicationShortcutProjection shortcutProjection(const QString &actionName) const;
     ApplicationShortcutProjection shortcutProjectionForId(ActionId actionId) const;
-    bool videoShortcutsEnabledForScope(int shortcutScope, bool helpShortcutsEnabled,
-        bool viewerShortcutsEnabled, bool videoFileDeletionInProgress,
-        bool videoMediaNavigationActive) const;
     bool videoActionUnsupported(ActionId actionId) const;
     bool mediaHorizontalArrowShortcutsEnabled(bool videoMode, bool imageReadyViewerShortcutsEnabled,
         bool videoViewerShortcutsEnabled, bool videoMediaNavigationActive,

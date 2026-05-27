@@ -25,7 +25,6 @@
 namespace {
 namespace Actions = KiriView::ApplicationActions;
 
-using Scope = KiriView::ApplicationActions::ImageShortcutScope;
 using DomainActionId = KiriView::ApplicationActions::ActionId;
 
 constexpr const char *interfaceConfigGroup = "Interface";
@@ -132,7 +131,7 @@ private Q_SLOTS:
     void facadeActionIdsConvertAtApplicationBoundary();
     void actionIdsResolveActionNamesAndShortcuts();
     void shortcutRouteModelExposesApplicationPolicy();
-    void videoShortcutPolicyApiExposesApplicationPolicy();
+    void mediaShortcutPolicyApiExposesApplicationPolicy();
     void shortcutsApiReturnsCurrentShortcuts();
     void shortcutModifierPartitionsTextInputShortcuts();
     void shortcutAliasesDeriveFromCtrlShortcuts();
@@ -294,17 +293,9 @@ void TestKiriViewApplication::shortcutRouteModelExposesApplicationPolicy()
     }
 }
 
-void TestKiriViewApplication::videoShortcutPolicyApiExposesApplicationPolicy()
+void TestKiriViewApplication::mediaShortcutPolicyApiExposesApplicationPolicy()
 {
     KiriViewApplication application;
-
-    QVERIFY(application.videoShortcutsEnabledForScope(
-        static_cast<int>(Scope::ReadyViewerShortcutScope), true, true, false, true));
-    QVERIFY(!application.videoShortcutsEnabledForScope(
-        static_cast<int>(Scope::ReadyViewerShortcutScope), true, false, false, true));
-    QVERIFY(!application.videoShortcutsEnabledForScope(
-        static_cast<int>(Scope::ImageSelectionShortcutScope), true, true, false, false));
-    QVERIFY(!application.videoShortcutsEnabledForScope(999, true, true, false, true));
 
     QVERIFY(application.videoActionUnsupported(KiriViewApplication::ViewZoomInAction));
     QVERIFY(!application.videoActionUnsupported(KiriViewApplication::WindowFullscreenAction));

@@ -31,33 +31,11 @@ Item {
     signal imageBoundaryReached(string message)
     signal unsupportedVideoActionRequested
 
-    function activeNavigationShortcutsEnabledForScope(shortcutScope) {
-        switch (shortcutScope) {
-        case ImageActionAvailability.ImageSelectionShortcutScope:
-        case ImageActionAvailability.PageShortcutScope:
-            return root.activeNavigationActionsAvailable;
-        case ImageActionAvailability.ImageSelectionViewerShortcutScope:
-        case ImageActionAvailability.PageViewerShortcutScope:
-            return root.activeNavigationActionsAvailable && root.actionAvailability.viewerShortcutsEnabled;
-        default:
-            return null;
-        }
-    }
-
     function shortcutsEnabledForScope(shortcutScope, availabilityRevision) {
-        const activeNavigationEnabled = root.activeNavigationShortcutsEnabledForScope(shortcutScope);
-        if (activeNavigationEnabled !== null) {
-            return activeNavigationEnabled;
-        }
-
-        if (root.videoMode) {
-            return root.application.videoShortcutsEnabledForScope(shortcutScope, root.actionAvailability.helpShortcutsEnabled, root.actionAvailability.viewerShortcutsEnabled, root.videoFileDeletionInProgress, root.activeNavigationActionsAvailable);
-        }
-
         if (availabilityRevision < 0) {
             return false;
         }
-        return root.actionAvailability.shortcutsEnabledForScope(shortcutScope);
+        return root.actionAvailability.mediaShortcutsEnabledForScope(shortcutScope, root.videoMode, root.activeNavigationActionsAvailable, root.videoFileDeletionInProgress);
     }
 
     function unsupportedVideoAction(actionId) {

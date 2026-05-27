@@ -115,9 +115,6 @@ public:
     Q_INVOKABLE QKeySequence menuShortcutForId(KiriViewApplication::ActionId actionId) const;
     Q_INVOKABLE QString menuShortcutText(const QString &actionName) const;
     Q_INVOKABLE QString menuShortcutTextForId(KiriViewApplication::ActionId actionId) const;
-    Q_INVOKABLE bool videoShortcutsEnabledForScope(int shortcutScope, bool helpShortcutsEnabled,
-        bool viewerShortcutsEnabled, bool videoFileDeletionInProgress,
-        bool videoMediaNavigationActive) const;
     Q_INVOKABLE bool videoActionUnsupported(KiriViewApplication::ActionId actionId) const;
     Q_INVOKABLE bool mediaHorizontalArrowShortcutsEnabled(bool videoMode,
         bool imageReadyViewerShortcutsEnabled, bool videoViewerShortcutsEnabled,

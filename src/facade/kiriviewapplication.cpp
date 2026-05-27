@@ -197,14 +197,6 @@ QString KiriViewApplication::menuShortcutTextForId(ActionId actionId) const
     return m_actionRuntime->shortcutProjectionForId(domainActionId(actionId)).menuShortcutText;
 }
 
-bool KiriViewApplication::videoShortcutsEnabledForScope(int shortcutScope,
-    bool helpShortcutsEnabled, bool viewerShortcutsEnabled, bool videoFileDeletionInProgress,
-    bool videoMediaNavigationActive) const
-{
-    return m_actionRuntime->videoShortcutsEnabledForScope(shortcutScope, helpShortcutsEnabled,
-        viewerShortcutsEnabled, videoFileDeletionInProgress, videoMediaNavigationActive);
-}
-
 bool KiriViewApplication::videoActionUnsupported(ActionId actionId) const
 {
     return m_actionRuntime->videoActionUnsupported(domainActionId(actionId));

@@ -364,9 +364,11 @@ void TestMainWindowVideoIntegration::shortcutsRouteSharedActiveNavigationThrough
         QStringLiteral("root.documentSession.requestPreviousActiveNavigationBoundaryText()")));
     QVERIFY(imageShortcutsQml.contains(
         QStringLiteral("root.documentSession.requestNextActiveNavigationBoundaryText()")));
-    QVERIFY(imageShortcutsQml.contains(QStringLiteral("activeNavigationShortcutsEnabledForScope")));
+    QVERIFY(imageShortcutsQml.contains(QStringLiteral("mediaShortcutsEnabledForScope")));
     verifySourceOmits(imageShortcutsQml,
         {
+            QStringLiteral("activeNavigationShortcutsEnabledForScope"),
+            QStringLiteral("videoShortcutsEnabledForScope"),
             QStringLiteral("videoMediaNavigationActive"),
             QStringLiteral("mediaNavigationActive"),
             QStringLiteral("mediaNavigationKnown"),
@@ -415,7 +417,9 @@ void TestMainWindowVideoIntegration::imageActionAvailabilityDoesNotDriveSharedAc
             QStringLiteral("actionAvailability.canUsePageActions"),
             QStringLiteral("actionAvailability.pageShortcutsEnabled"),
         });
-    QVERIFY(imageShortcutsQml.contains(QStringLiteral("activeNavigationShortcutsEnabledForScope")));
+    QVERIFY(imageShortcutsQml.contains(QStringLiteral("mediaShortcutsEnabledForScope")));
+    QVERIFY(
+        !imageShortcutsQml.contains(QStringLiteral("activeNavigationShortcutsEnabledForScope")));
     QVERIFY(imageShortcutsQml.contains(QStringLiteral("Image-internal scan fallback")));
     QVERIFY(imageShortcutsQml.contains(
         QStringLiteral("actionAvailability.scanBackwardAtFirstImageBoundary")));

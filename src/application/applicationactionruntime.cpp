@@ -9,7 +9,6 @@
 #include <KirigamiActionCollection>
 #include <QIcon>
 
-#include <optional>
 #include <utility>
 
 namespace {
@@ -89,21 +88,6 @@ ApplicationShortcutProjection ApplicationActionRuntime::shortcutProjectionForId(
     ActionId actionId) const
 {
     return m_shortcutRuntime->shortcutProjectionForId(actionId);
-}
-
-bool ApplicationActionRuntime::videoShortcutsEnabledForScope(int shortcutScope,
-    bool helpShortcutsEnabled, bool viewerShortcutsEnabled, bool videoFileDeletionInProgress,
-    bool videoMediaNavigationActive) const
-{
-    const std::optional<ImageShortcutScope> scope = imageShortcutScopeFromValue(shortcutScope);
-    if (!scope.has_value()) {
-        return false;
-    }
-
-    return ApplicationActions::videoShortcutsEnabledForScope(
-        videoShortcutInput(helpShortcutsEnabled, viewerShortcutsEnabled,
-            videoFileDeletionInProgress, videoMediaNavigationActive),
-        *scope);
 }
 
 bool ApplicationActionRuntime::videoActionUnsupported(ActionId actionId) const
