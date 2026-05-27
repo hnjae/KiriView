@@ -15,7 +15,6 @@ Item {
     required property KiriDocumentSession documentSession
     required property KiriImageDocument imageDocument
     required property var imageViewport
-    property bool handleMenuPresentationShortcut: true
     property bool videoFileDeletionInProgress: false
     property bool videoMode: false
 
@@ -29,7 +28,6 @@ Item {
     readonly property var panBottomRightQAction: root.application.actionForId(KiriViewApplication.ViewPanBottomRightAction)
     readonly property var scanForwardQAction: root.application.actionForId(KiriViewApplication.ViewScanForwardAction)
     readonly property var scanBackwardQAction: root.application.actionForId(KiriViewApplication.ViewScanBackwardAction)
-    readonly property var showMenubarQAction: root.application.actionForId(KiriViewApplication.OptionsShowMenubarAction)
     signal imageBoundaryReached(string message)
     signal unsupportedVideoActionRequested
 
@@ -200,14 +198,6 @@ Item {
 
             onShortcutIntercepted: root.unsupportedVideoActionRequested()
         }
-    }
-
-    Shortcut {
-        context: Qt.WindowShortcut
-        enabled: root.handleMenuPresentationShortcut && root.actionAvailability.helpShortcutsEnabled
-        sequence: "Ctrl+M"
-
-        onActivated: root.showMenubarQAction.trigger()
     }
 
     Shortcut {

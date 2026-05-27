@@ -29,6 +29,16 @@ enum class ShortcutSpecKind {
     StandardKey,
 };
 
+enum class ShortcutConfigurability {
+    Configurable,
+    NonConfigurable,
+};
+
+enum class ShortcutAliasPolicy {
+    DeriveViewerAlias,
+    NoAlias,
+};
+
 inline constexpr std::size_t maxPortableShortcutCount = 4;
 
 struct DefaultShortcutSpec {
@@ -52,10 +62,13 @@ struct ActionDefinition {
     const char *iconName;
     DefaultShortcutSpec defaultShortcuts;
     DefaultShortcutRouteSpec shortcutRoutes;
+    ShortcutConfigurability shortcutConfigurability = ShortcutConfigurability::Configurable;
+    ShortcutAliasPolicy shortcutAliasPolicy = ShortcutAliasPolicy::DeriveViewerAlias;
 };
 
 const std::array<ActionDefinition, actionDefinitionCount> &definitions();
 const ActionDefinition *definitionForId(ActionId actionId);
+const ActionDefinition *definitionForName(const QString &actionName);
 QString actionName(ActionId actionId);
 QString latin1String(const char *text);
 QString localizedString(const KLazyLocalizedString &text);

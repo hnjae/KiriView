@@ -81,7 +81,16 @@ constexpr Actions::ActionDefinition showMenubarAction(Actions::ActionId actionId
     Actions::DefaultShortcutSpec defaultShortcuts, Actions::DefaultShortcutRouteSpec shortcutRoutes)
 {
     return Actions::ActionDefinition { actionId, name, Actions::RegistrationKind::ShowMenubar,
-        actionType, text, nullptr, defaultShortcuts, shortcutRoutes };
+        actionType, text, nullptr, defaultShortcuts, shortcutRoutes,
+        Actions::ShortcutConfigurability::NonConfigurable, Actions::ShortcutAliasPolicy::NoAlias };
+}
+
+constexpr Actions::ActionDefinition fixedCommandAction(Actions::ActionId actionId, const char *name,
+    KLazyLocalizedString text, const char *iconName, Actions::DefaultShortcutSpec defaultShortcuts)
+{
+    return Actions::ActionDefinition { actionId, name, Actions::RegistrationKind::Registered,
+        KStandardActions::Open, text, iconName, defaultShortcuts, noShortcutRoutes(),
+        Actions::ShortcutConfigurability::NonConfigurable, Actions::ShortcutAliasPolicy::NoAlias };
 }
 
 constexpr std::array actionDefinitions {
@@ -231,8 +240,11 @@ constexpr std::array actionDefinitions {
         "options_configure_keybinding",
         shortcutRouteSpecs(route(Filter::AllShortcuts, Scope::HelpShortcutScope))),
     showMenubarAction(Actions::ActionId::OptionsShowMenubarAction, "options_show_menubar",
-        KStandardActions::ShowMenubar, kli18nc("@action", "Show Menubar"), noDefaultShortcuts(),
-        shortcutRouteSpecs(route(Filter::AllShortcuts, Scope::HelpShortcutScope))),
+        KStandardActions::ShowMenubar, kli18nc("@action", "Show Menubar"),
+        portableShortcutSpec("Ctrl+M"), noShortcutRoutes()),
+    fixedCommandAction(Actions::ActionId::OpenApplicationMenuAction, "open_application_menu",
+        kli18nc("@action", "Open Application Menu"), "application-menu-symbolic",
+        portableShortcutSpec("F10")),
     existingAction(Actions::ActionId::FileQuitAction, "file_quit", portableShortcutSpec("Ctrl+Q"),
         shortcutRouteSpecs(route(Filter::WithCommandModifier, Scope::HelpShortcutScope),
             route(Filter::WithoutCommandModifier, Scope::ViewerShortcutScope),
@@ -296,6 +308,17 @@ const ActionDefinition *definitionForId(Actions::ActionId actionId)
     }
 
     return &actionDefinitions[static_cast<std::size_t>(actionId)];
+}
+
+const ActionDefinition *definitionForName(const QString &actionName)
+{
+    for (const ActionDefinition &definition : actionDefinitions) {
+        if (actionName == QString::fromLatin1(definition.name)) {
+            return &definition;
+        }
+    }
+
+    return nullptr;
 }
 
 QString actionName(Actions::ActionId actionId)

@@ -155,6 +155,11 @@ void ApplicationActionRuntime::setupActions()
             break;
         }
 
+        if (registeredAction != nullptr
+            && definition.shortcutConfigurability
+                == Actions::ShortcutConfigurability::NonConfigurable) {
+            KirigamiActionCollection::setShortcutsConfigurable(registeredAction, false);
+        }
         m_actionRegistry.registerAction(definition, registeredAction);
     };
 

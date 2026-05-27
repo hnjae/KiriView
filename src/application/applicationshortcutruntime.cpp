@@ -86,22 +86,28 @@ void ApplicationShortcutRuntime::sanitizeActionShortcuts(QAction *action)
 }
 
 ApplicationShortcutProjection ApplicationShortcutRuntime::shortcutProjectionForAction(
-    const QAction *action) const
+    const QAction *action, ShortcutAliasPolicy aliasPolicy) const
 {
     return ApplicationActions::shortcutProjection(
-        action == nullptr ? QList<QKeySequence>() : action->shortcuts());
+        action == nullptr ? QList<QKeySequence>() : action->shortcuts(), aliasPolicy);
 }
 
 ApplicationShortcutProjection ApplicationShortcutRuntime::shortcutProjection(
     const QString &actionName) const
 {
-    return shortcutProjectionForAction(m_actionRegistry.action(actionName));
+    const ActionDefinition *definition = definitionForName(actionName);
+    return shortcutProjectionForAction(m_actionRegistry.action(actionName),
+        definition == nullptr ? ShortcutAliasPolicy::DeriveViewerAlias
+                              : definition->shortcutAliasPolicy);
 }
 
 ApplicationShortcutProjection ApplicationShortcutRuntime::shortcutProjectionForId(
     ActionId actionId) const
 {
-    return shortcutProjectionForAction(m_actionRegistry.actionForId(actionId));
+    const ActionDefinition *definition = definitionForId(actionId);
+    return shortcutProjectionForAction(m_actionRegistry.actionForId(actionId),
+        definition == nullptr ? ShortcutAliasPolicy::DeriveViewerAlias
+                              : definition->shortcutAliasPolicy);
 }
 
 QString ApplicationShortcutRuntime::actionDisplayText(const QAction *action)

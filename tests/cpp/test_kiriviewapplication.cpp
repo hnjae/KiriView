@@ -138,7 +138,7 @@ private Q_SLOTS:
     void shortcutAliasesDeriveFromCtrlShortcuts();
     void menuShortcutTextReturnsFirstDisplaySafeShortcut();
     void shortcutRevisionTracksShortcutChanges();
-    void showMenubarActionHasNoConfigurableShortcuts();
+    void fixedCommandShortcutsAreNonConfigurable();
     void shortcutHelpModelListsConfigurableActions();
     void shortcutHelpModelUpdatesShortcutText();
     void shortcutHelpModelResetsWhenConfigurableRowsChange();
@@ -332,6 +332,10 @@ void TestKiriViewApplication::shortcutsApiReturnsCurrentShortcuts()
         QList<QKeySequence>({ shortcut(QStringLiteral("Ctrl+I")) }));
     QCOMPARE(application.shortcuts(QStringLiteral("view_toggle_thumbnail_panel")),
         QList<QKeySequence>({ shortcut(QStringLiteral("Ctrl+T")) }));
+    QCOMPARE(application.shortcuts(QStringLiteral("options_show_menubar")),
+        QList<QKeySequence>({ shortcut(QStringLiteral("Ctrl+M")) }));
+    QCOMPARE(application.shortcuts(QStringLiteral("open_application_menu")),
+        QList<QKeySequence>({ shortcut(QStringLiteral("F10")) }));
     QCOMPARE(application.shortcuts(QStringLiteral("view_rotate_clockwise")),
         QList<QKeySequence>({ shortcut(QStringLiteral("Ctrl+R")) }));
     QCOMPARE(application.shortcuts(QStringLiteral("view_rotate_counterclockwise")),
@@ -414,6 +418,8 @@ void TestKiriViewApplication::shortcutAliasesDeriveFromCtrlShortcuts()
     QCOMPARE(application.shortcutAliases(QStringLiteral("movetotrash")), QList<QKeySequence>());
     QCOMPARE(
         application.shortcutAliases(QStringLiteral("options_show_menubar")), QList<QKeySequence>());
+    QCOMPARE(application.shortcutAliases(QStringLiteral("open_application_menu")),
+        QList<QKeySequence>());
     QCOMPARE(application.shortcutAliases(QStringLiteral("missing_action")), QList<QKeySequence>());
     QCOMPARE(application.shortcutAliasesForId(static_cast<KiriViewApplication::ActionId>(999)),
         QList<QKeySequence>());
@@ -466,10 +472,14 @@ void TestKiriViewApplication::menuShortcutTextReturnsFirstDisplaySafeShortcut()
                 nativeText(shortcut(QStringLiteral("Alt+O"))),
                 nativeText(shortcut(QStringLiteral("Ctrl+Shift+O")))));
 
-    QVERIFY(application.menuShortcutText(QStringLiteral("options_show_menubar")).isEmpty());
-    QVERIFY(application.menuShortcutForId(KiriViewApplication::OptionsShowMenubarAction).isEmpty());
-    QVERIFY(
-        application.menuShortcutTextForId(KiriViewApplication::OptionsShowMenubarAction).isEmpty());
+    QCOMPARE(application.menuShortcutText(QStringLiteral("options_show_menubar")),
+        nativeText(shortcut(QStringLiteral("Ctrl+M"))));
+    QCOMPARE(application.menuShortcutForId(KiriViewApplication::OptionsShowMenubarAction),
+        shortcut(QStringLiteral("Ctrl+M")));
+    QCOMPARE(application.menuShortcutTextForId(KiriViewApplication::OptionsShowMenubarAction),
+        nativeText(shortcut(QStringLiteral("Ctrl+M"))));
+    QCOMPARE(application.menuShortcutText(QStringLiteral("open_application_menu")),
+        nativeText(shortcut(QStringLiteral("F10"))));
     QVERIFY(application.menuShortcutText(QStringLiteral("missing_action")).isEmpty());
     QVERIFY(
         application.menuShortcutForId(static_cast<KiriViewApplication::ActionId>(999)).isEmpty());
@@ -501,15 +511,26 @@ void TestKiriViewApplication::shortcutRevisionTracksShortcutChanges()
     QCOMPARE(application.shortcuts(QStringLiteral("view_rotate_clockwise")), QList<QKeySequence>());
 }
 
-void TestKiriViewApplication::showMenubarActionHasNoConfigurableShortcuts()
+void TestKiriViewApplication::fixedCommandShortcutsAreNonConfigurable()
 {
     KiriViewApplication application;
 
     QAction *showMenubarAction = application.action(QStringLiteral("options_show_menubar"));
     QVERIFY(showMenubarAction != nullptr);
-    QCOMPARE(KirigamiActionCollection::defaultShortcuts(showMenubarAction), QList<QKeySequence>());
-    QCOMPARE(showMenubarAction->shortcuts(), QList<QKeySequence>());
+    QCOMPARE(KirigamiActionCollection::defaultShortcuts(showMenubarAction),
+        QList<QKeySequence>({ shortcut(QStringLiteral("Ctrl+M")) }));
+    QCOMPARE(showMenubarAction->shortcuts(),
+        QList<QKeySequence>({ shortcut(QStringLiteral("Ctrl+M")) }));
     QVERIFY(!KirigamiActionCollection::isShortcutsConfigurable(showMenubarAction));
+
+    QAction *openApplicationMenuAction
+        = application.action(QStringLiteral("open_application_menu"));
+    QVERIFY(openApplicationMenuAction != nullptr);
+    QCOMPARE(KirigamiActionCollection::defaultShortcuts(openApplicationMenuAction),
+        QList<QKeySequence>({ shortcut(QStringLiteral("F10")) }));
+    QCOMPARE(openApplicationMenuAction->shortcuts(),
+        QList<QKeySequence>({ shortcut(QStringLiteral("F10")) }));
+    QVERIFY(!KirigamiActionCollection::isShortcutsConfigurable(openApplicationMenuAction));
 }
 
 void TestKiriViewApplication::shortcutHelpModelListsConfigurableActions()
@@ -538,6 +559,7 @@ void TestKiriViewApplication::shortcutHelpModelListsConfigurableActions()
         !shortcutHelpIndexForAction(model, QStringLiteral("go_previous_single_page")).isValid());
     QVERIFY(!shortcutHelpIndexForAction(model, QStringLiteral("go_next_single_page")).isValid());
     QVERIFY(!shortcutHelpIndexForAction(model, QStringLiteral("options_show_menubar")).isValid());
+    QVERIFY(!shortcutHelpIndexForAction(model, QStringLiteral("open_application_menu")).isValid());
 }
 
 void TestKiriViewApplication::shortcutHelpModelUpdatesShortcutText()

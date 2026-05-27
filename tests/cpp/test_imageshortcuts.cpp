@@ -50,8 +50,6 @@ private Q_SLOTS:
     void configuredActionShortcutsTriggerActions();
     void videoViewerAliasTriggersFullscreenAction();
     void videoImageOnlyShortcutsShowUnsupportedToast();
-    void ctrlMTogglesMenubarThroughAction();
-    void ctrlMIgnoredWhileHelpDialogOpen();
 };
 
 namespace {
@@ -210,10 +208,6 @@ Item {
     property KiriImageDocument testImageDocument: imageDocument
     property alias twoPageModeAvailable: imageDocument.twoPageModeAvailable
     property alias twoPageModeEnabled: imageDocument.twoPageModeEnabled
-
-    function menuPresentation() {
-        return application.menuPresentation;
-    }
 
     function openImageAtPage(pageNumber) {
         imageDocument.openImageAtPage(pageNumber);
@@ -413,26 +407,12 @@ ImageShortcutsFixture createComicBookFixture()
     return fixture;
 }
 
-int menuPresentation(QObject *root)
-{
-    QVariant result;
-    const bool invoked = QMetaObject::invokeMethod(
-        root, "menuPresentation", Qt::DirectConnection, Q_RETURN_ARG(QVariant, result));
-    return invoked ? result.toInt() : -1;
-}
-
 bool documentReady(QObject *root)
 {
     QVariant result;
     const bool invoked = QMetaObject::invokeMethod(
         root, "documentReady", Qt::DirectConnection, Q_RETURN_ARG(QVariant, result));
     return invoked && result.toBool();
-}
-
-void pressCtrlM(QQuickView *view)
-{
-    QTest::keyClick(view, Qt::Key_M, Qt::ControlModifier);
-    QCoreApplication::processEvents();
 }
 
 void pressKey(QQuickView *view, Qt::Key key)
@@ -664,50 +644,6 @@ void TestImageShortcuts::videoImageOnlyShortcutsShowUnsupportedToast()
     pressKey(fixture.view.get(), Qt::Key_1, Qt::ControlModifier);
     QTRY_COMPARE(fixture.root->property("unsupportedVideoActionCount").toInt(), 4);
     QCOMPARE(fitSpy.count(), 0);
-}
-
-void TestImageShortcuts::ctrlMTogglesMenubarThroughAction()
-{
-    ImageShortcutsFixture fixture = createFixture();
-    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
-
-    QAction *showMenubarAction
-        = fixture.application->action(QStringLiteral("options_show_menubar"));
-    QVERIFY(showMenubarAction != nullptr);
-    QSignalSpy triggeredSpy(showMenubarAction, &QAction::triggered);
-
-    QCOMPARE(menuPresentation(fixture.root), static_cast<int>(KiriViewApplication::HamburgerMenu));
-    QVERIFY(!showMenubarAction->isChecked());
-
-    pressCtrlM(fixture.view.get());
-
-    QTRY_COMPARE(triggeredSpy.count(), 1);
-    QCOMPARE(menuPresentation(fixture.root), static_cast<int>(KiriViewApplication::MenuBar));
-    QVERIFY(showMenubarAction->isChecked());
-
-    pressCtrlM(fixture.view.get());
-
-    QTRY_COMPARE(triggeredSpy.count(), 2);
-    QCOMPARE(menuPresentation(fixture.root), static_cast<int>(KiriViewApplication::HamburgerMenu));
-    QVERIFY(!showMenubarAction->isChecked());
-}
-
-void TestImageShortcuts::ctrlMIgnoredWhileHelpDialogOpen()
-{
-    ImageShortcutsFixture fixture = createFixture();
-    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
-
-    QAction *showMenubarAction
-        = fixture.application->action(QStringLiteral("options_show_menubar"));
-    QVERIFY(showMenubarAction != nullptr);
-    QSignalSpy triggeredSpy(showMenubarAction, &QAction::triggered);
-
-    fixture.root->setProperty("helpDialogOpen", true);
-    pressCtrlM(fixture.view.get());
-
-    QCOMPARE(triggeredSpy.count(), 0);
-    QCOMPARE(menuPresentation(fixture.root), static_cast<int>(KiriViewApplication::HamburgerMenu));
-    QVERIFY(!showMenubarAction->isChecked());
 }
 
 QTEST_MAIN(TestImageShortcuts)

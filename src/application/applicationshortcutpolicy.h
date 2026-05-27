@@ -6,6 +6,7 @@
 
 #include "application/applicationtypes.h"
 #include "application/imageactionavailabilitypolicy.h"
+#include "application/kiriviewapplicationactions.h"
 
 #include <QKeySequence>
 #include <QList>
@@ -35,7 +36,8 @@ QKeySequence menuShortcut(const QList<QKeySequence> &shortcuts);
 QList<QKeySequence> shortcutAliases(const QList<QKeySequence> &shortcuts);
 QString shortcutListText(const QList<QKeySequence> &shortcuts);
 QList<QKeySequence> sanitizeShortcuts(const QList<QKeySequence> &shortcuts);
-ApplicationShortcutProjection shortcutProjection(const QList<QKeySequence> &shortcuts);
+ApplicationShortcutProjection shortcutProjection(const QList<QKeySequence> &shortcuts,
+    ShortcutAliasPolicy aliasPolicy = ShortcutAliasPolicy::DeriveViewerAlias);
 const QList<ApplicationShortcutRoute> &shortcutRoutes();
 std::optional<ImageShortcutScope> imageShortcutScopeFromValue(int value);
 bool videoActionUnsupported(ActionId actionId);

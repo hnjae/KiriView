@@ -26,6 +26,9 @@ StatefulApp.StatefulWindow {
     property int visibilityBeforeFullscreen: Window.Windowed
     readonly property bool fullscreen: visibility === Window.FullScreen
     readonly property bool menuBarMode: kiriApplication.menuPresentation === KiriViewApplication.MenuBar
+    readonly property bool applicationMenuShortcutEnabled: !root.menuBarMode && !root.fullscreen && !root.helpDialogOpen
+    readonly property var showMenubarAction: kiriApplication.actionForId(KiriViewApplication.OptionsShowMenubarAction)
+    readonly property var openApplicationMenuAction: kiriApplication.actionForId(KiriViewApplication.OpenApplicationMenuAction)
     property bool fullscreenToolBarRevealed: false
 
     function restoredVisibility(visibility) {
@@ -140,20 +143,37 @@ StatefulApp.StatefulWindow {
         onActivated: root.toggleFullScreen()
     }
 
-    Shortcut {
-        context: Qt.WindowShortcut
-        enabled: !root.menuBarMode && !root.fullscreen && !root.helpDialogOpen
-        sequence: "F10"
-
-        onActivated: root.openApplicationMenu()
+    Binding {
+        property: "enabled"
+        target: root.openApplicationMenuAction
+        value: root.applicationMenuShortcutEnabled
+        when: root.openApplicationMenuAction !== null && root.openApplicationMenuAction !== undefined
     }
 
-    Shortcut {
-        context: Qt.WindowShortcut
-        enabled: !root.helpDialogOpen
-        sequence: "Ctrl+M"
+    Binding {
+        property: "enabled"
+        target: root.showMenubarAction
+        value: !root.helpDialogOpen
+        when: root.showMenubarAction !== null && root.showMenubarAction !== undefined
+    }
 
-        onActivated: kiriApplication.actionForId(KiriViewApplication.OptionsShowMenubarAction).trigger()
+    ConfiguredActionShortcut {
+        actionId: KiriViewApplication.OpenApplicationMenuAction
+        application: kiriApplication
+        shortcutFilter: ConfiguredActionShortcut.AllShortcuts
+        shortcutsEnabled: root.applicationMenuShortcutEnabled
+    }
+
+    ConfiguredActionShortcut {
+        actionId: KiriViewApplication.OptionsShowMenubarAction
+        application: kiriApplication
+        shortcutFilter: ConfiguredActionShortcut.AllShortcuts
+        shortcutsEnabled: !root.helpDialogOpen
+    }
+
+    ActionTrigger {
+        action: root.openApplicationMenuAction
+        handler: () => root.openApplicationMenu()
     }
 
     Timer {
@@ -455,7 +475,6 @@ StatefulApp.StatefulWindow {
                 application: kiriApplication
                 actionAvailability: actionAvailability
                 documentSession: documentSession
-                handleMenuPresentationShortcut: false
                 imageDocument: page.imageDocument
                 imageViewport: imageViewport
                 videoFileDeletionInProgress: documentSession.fileDeletionInProgress

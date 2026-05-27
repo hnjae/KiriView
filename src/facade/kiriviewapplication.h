@@ -69,6 +69,7 @@ public:
         HelpShortcutsAction,
         OptionsConfigureKeybindingAction,
         OptionsShowMenubarAction,
+        OpenApplicationMenuAction,
         FileQuitAction,
         ActionCount,
     };

@@ -42,6 +42,7 @@ enum class ActionId {
     HelpShortcutsAction,
     OptionsConfigureKeybindingAction,
     OptionsShowMenubarAction,
+    OpenApplicationMenuAction,
     FileQuitAction,
     ActionCount,
 };

@@ -218,14 +218,16 @@ QList<QKeySequence> sanitizeShortcuts(const QList<QKeySequence> &shortcuts)
     return sanitizedShortcuts;
 }
 
-ApplicationShortcutProjection shortcutProjection(const QList<QKeySequence> &shortcuts)
+ApplicationShortcutProjection shortcutProjection(
+    const QList<QKeySequence> &shortcuts, ShortcutAliasPolicy aliasPolicy)
 {
     const QKeySequence menu = menuShortcut(shortcuts);
     return ApplicationShortcutProjection {
         shortcuts,
         filterShortcutsByCommandModifier(shortcuts, true),
         filterShortcutsByCommandModifier(shortcuts, false),
-        shortcutAliases(shortcuts),
+        aliasPolicy == ShortcutAliasPolicy::DeriveViewerAlias ? shortcutAliases(shortcuts)
+                                                              : QList<QKeySequence>(),
         menu,
         shortcutListText(shortcuts),
         menu.toString(QKeySequence::NativeText),

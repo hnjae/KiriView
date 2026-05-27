@@ -509,7 +509,6 @@ Item {
         actionId: KiriViewApplication.OptionsShowMenubarAction
         application: root.application
         displayHint: Kirigami.DisplayHint.AlwaysHide
-        fixedShortcutText: "Ctrl+M"
         menuText: KI18n.i18nc("@action:inmenu", "&Show Menubar")
     }
 

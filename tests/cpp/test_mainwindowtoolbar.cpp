@@ -22,6 +22,7 @@
 #include <QQuickStyle>
 #include <QQuickWindow>
 #include <QRegularExpression>
+#include <QSignalSpy>
 #include <QTemporaryDir>
 #include <QTest>
 #include <QUrl>
@@ -39,6 +40,7 @@ private Q_SLOTS:
     void directImageShowsMediaPositionAfterSiblingListing();
     void directoryImageDocumentShowsPagePosition();
     void panelActionsToggleResizablePanels();
+    void commandFixedShortcutsUseApplicationActions();
     void viewerRightClickOpensContextMenuOnlyFromMediaViewport();
     void fullscreenReusesSingleToolbarAndHidesApplicationMenuButton();
 };
@@ -251,6 +253,14 @@ bool popupOpen(QObject *popup)
     return popup->property("visible").toBool() || popup->property("opened").toBool();
 }
 
+bool invokeBool(QObject *object, const char *method)
+{
+    QVariant result;
+    const bool invoked = QMetaObject::invokeMethod(
+        object, method, Qt::DirectConnection, Q_RETURN_ARG(QVariant, result));
+    return invoked && result.toBool();
+}
+
 QPoint itemCenter(QQuickItem *item)
 {
     if (item == nullptr || item->width() <= 0 || item->height() <= 0) {
@@ -403,6 +413,51 @@ void TestMainWindowToolBar::panelActionsToggleResizablePanels()
     thumbnailPanelAction->trigger();
     QTRY_VERIFY(!infoPanel->isVisible());
     QTRY_VERIFY(!thumbnailPanel->isVisible());
+}
+
+void TestMainWindowToolBar::commandFixedShortcutsUseApplicationActions()
+{
+    MainWindowFixture fixture = createMainWindowFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+
+    KiriViewApplication *application = findApplication(fixture.window);
+    QQuickItem *toolbar = findQuickItem(fixture.window, QStringLiteral("mainImageToolBar"));
+    QVERIFY(application != nullptr);
+    QVERIFY(toolbar != nullptr);
+
+    QAction *showMenubarAction
+        = application->actionForId(KiriViewApplication::OptionsShowMenubarAction);
+    QAction *openApplicationMenuAction
+        = application->actionForId(KiriViewApplication::OpenApplicationMenuAction);
+    QVERIFY(showMenubarAction != nullptr);
+    QVERIFY(openApplicationMenuAction != nullptr);
+    QSignalSpy showMenubarSpy(showMenubarAction, &QAction::triggered);
+    QSignalSpy openApplicationMenuSpy(openApplicationMenuAction, &QAction::triggered);
+
+    QCOMPARE(application->menuPresentation(), KiriViewApplication::HamburgerMenu);
+    QVERIFY(!invokeBool(toolbar, "applicationMenuOpen"));
+
+    QTest::keyClick(fixture.window, Qt::Key_M);
+    QCoreApplication::processEvents();
+    QCOMPARE(showMenubarSpy.count(), 0);
+    QCOMPARE(application->menuPresentation(), KiriViewApplication::HamburgerMenu);
+
+    QTest::keyClick(fixture.window, Qt::Key_M, Qt::ControlModifier);
+    QTRY_COMPARE(showMenubarSpy.count(), 1);
+    QCOMPARE(application->menuPresentation(), KiriViewApplication::MenuBar);
+
+    QTest::keyClick(fixture.window, Qt::Key_F10);
+    QCoreApplication::processEvents();
+    QCOMPARE(openApplicationMenuSpy.count(), 0);
+    QVERIFY(!invokeBool(toolbar, "applicationMenuOpen"));
+
+    QTest::keyClick(fixture.window, Qt::Key_M, Qt::ControlModifier);
+    QTRY_COMPARE(showMenubarSpy.count(), 2);
+    QCOMPARE(application->menuPresentation(), KiriViewApplication::HamburgerMenu);
+
+    QTest::keyClick(fixture.window, Qt::Key_F10);
+    QTRY_COMPARE(openApplicationMenuSpy.count(), 1);
+    QTRY_VERIFY(invokeBool(toolbar, "applicationMenuOpen"));
 }
 
 void TestMainWindowToolBar::viewerRightClickOpensContextMenuOnlyFromMediaViewport()
