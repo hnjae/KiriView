@@ -174,7 +174,7 @@ VideoPlaybackControlSnapshot VideoDocumentRuntime::playbackControlSnapshot() con
         m_state.sourceUrl().isEmpty(),
         m_mediaBackend != nullptr,
         m_state.playing(),
-        m_state.ended(),
+        m_state.mediaEnded(),
         m_state.seekable(),
         m_state.position(),
         m_state.duration(),
@@ -217,8 +217,8 @@ void VideoDocumentRuntime::executePlaybackControlPlan(const VideoPlaybackControl
 
 void VideoDocumentRuntime::applyPlaybackStateDelta(const VideoPlaybackStateDelta &delta)
 {
-    if (delta.ended.has_value()) {
-        m_state.setEnded(delta.ended.value());
+    if (delta.mediaEnded.has_value()) {
+        m_state.setMediaEnded(delta.mediaEnded.value());
     }
     if (delta.playing.has_value()) {
         m_state.setPlaying(delta.playing.value());
@@ -288,7 +288,7 @@ void VideoDocumentRuntime::updateStatusFromBackend()
         m_mediaBackend != nullptr,
         m_mediaBackend != nullptr ? m_mediaBackend->mediaStatus() : VideoMediaStatus::Null,
     });
-    m_state.setEnded(plan.ended);
+    m_state.setMediaEnded(plan.mediaEnded);
     if (plan.clearPlaying) {
         m_state.setPlaying(false);
     }

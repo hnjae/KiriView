@@ -12,7 +12,7 @@ class TestVideoPlaybackControlPlan : public QObject
 
 private Q_SLOTS:
     void playNoopsWithoutSource();
-    void playRestartsEndedSeekableMediaBeforePlaying();
+    void playRestartsSeekableEndOfMediaBeforePlaying();
     void pauseRequiresExistingBackend();
     void toggleDispatchesFromCurrentPlaybackState();
     void stopDoesNotCreateBackend();
@@ -52,10 +52,10 @@ void TestVideoPlaybackControlPlan::playNoopsWithoutSource()
     QVERIFY(plan.isEmpty());
 }
 
-void TestVideoPlaybackControlPlan::playRestartsEndedSeekableMediaBeforePlaying()
+void TestVideoPlaybackControlPlan::playRestartsSeekableEndOfMediaBeforePlaying()
 {
     KiriView::VideoPlaybackControlSnapshot snapshot = playableSnapshot();
-    snapshot.ended = true;
+    snapshot.mediaEnded = true;
     snapshot.position = 10000;
 
     const KiriView::VideoPlaybackControlPlan plan = KiriView::videoPlaybackPlayPlan(snapshot);
@@ -64,8 +64,8 @@ void TestVideoPlaybackControlPlan::playRestartsEndedSeekableMediaBeforePlaying()
     compareOperation(plan.backendOperations.at(0), Kind::EnsureBackend);
     compareOperation(plan.backendOperations.at(1), Kind::SetPosition, 0);
     compareOperation(plan.backendOperations.at(2), Kind::Play);
-    QVERIFY(plan.stateDelta.ended.has_value());
-    QCOMPARE(plan.stateDelta.ended.value(), false);
+    QVERIFY(plan.stateDelta.mediaEnded.has_value());
+    QCOMPARE(plan.stateDelta.mediaEnded.value(), false);
     QVERIFY(plan.stateDelta.position.has_value());
     QCOMPARE(plan.stateDelta.position.value(), 0);
     QVERIFY(!plan.stateDelta.playing.has_value());
@@ -111,8 +111,8 @@ void TestVideoPlaybackControlPlan::stopDoesNotCreateBackend()
     const KiriView::VideoPlaybackControlPlan plan = KiriView::videoPlaybackStopPlan(snapshot);
 
     QVERIFY(plan.backendOperations.empty());
-    QVERIFY(plan.stateDelta.ended.has_value());
-    QCOMPARE(plan.stateDelta.ended.value(), false);
+    QVERIFY(plan.stateDelta.mediaEnded.has_value());
+    QCOMPARE(plan.stateDelta.mediaEnded.value(), false);
     QVERIFY(plan.stateDelta.playing.has_value());
     QCOMPARE(plan.stateDelta.playing.value(), false);
     QVERIFY(plan.stateDelta.position.has_value());
@@ -127,8 +127,8 @@ void TestVideoPlaybackControlPlan::setPositionClampsToKnownDuration()
     QCOMPARE(plan.backendOperations.size(), std::size_t(2));
     compareOperation(plan.backendOperations.at(0), Kind::EnsureBackend);
     compareOperation(plan.backendOperations.at(1), Kind::SetPosition, 10000);
-    QVERIFY(plan.stateDelta.ended.has_value());
-    QCOMPARE(plan.stateDelta.ended.value(), false);
+    QVERIFY(plan.stateDelta.mediaEnded.has_value());
+    QCOMPARE(plan.stateDelta.mediaEnded.value(), false);
     QVERIFY(plan.stateDelta.position.has_value());
     QCOMPARE(plan.stateDelta.position.value(), 10000);
 }

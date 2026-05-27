@@ -35,7 +35,7 @@ public:
     QSize videoSize() const;
     bool zoomPercentKnown() const;
     int zoomPercent() const;
-    bool ended() const;
+    bool mediaEnded() const;
 
     void resetForClearedSource();
     void resetForSourceLoad(const QUrl &sourceUrl);
@@ -49,7 +49,7 @@ public:
     void setHasAudio(bool hasAudio);
     void setVideoSize(QSize size);
     void setZoomPercent(std::optional<int> zoomPercent);
-    void setEnded(bool ended);
+    void setMediaEnded(bool mediaEnded);
 
     void publish(VideoDocumentChange change);
     void publish(std::vector<VideoDocumentChange> changes);
@@ -86,7 +86,7 @@ private:
     QSize m_videoSize;
     bool m_zoomPercentKnown = false;
     int m_zoomPercent = 0;
-    bool m_ended = false;
+    bool m_mediaEnded = false;
 };
 }
 

@@ -41,7 +41,7 @@ qint64 clampedAbsolutePosition(qint64 position, qint64 duration)
 namespace KiriView {
 bool VideoPlaybackControlPlan::isEmpty() const
 {
-    return !stateDelta.ended.has_value() && !stateDelta.playing.has_value()
+    return !stateDelta.mediaEnded.has_value() && !stateDelta.playing.has_value()
         && !stateDelta.position.has_value() && backendOperations.empty();
 }
 
@@ -53,11 +53,11 @@ VideoPlaybackControlPlan videoPlaybackPlayPlan(VideoPlaybackControlSnapshot snap
     }
 
     appendEnsureBackend(plan);
-    if (snapshot.ended && snapshot.seekable) {
+    if (snapshot.mediaEnded && snapshot.seekable) {
         plan.backendOperations.push_back(setPositionOperation(0));
         plan.stateDelta.position = 0;
     }
-    plan.stateDelta.ended = false;
+    plan.stateDelta.mediaEnded = false;
     plan.backendOperations.push_back(backendOperation(VideoPlaybackBackendOperationKind::Play));
     return plan;
 }
@@ -76,7 +76,7 @@ VideoPlaybackControlPlan videoPlaybackPausePlan(VideoPlaybackControlSnapshot sna
 VideoPlaybackControlPlan videoPlaybackStopPlan(VideoPlaybackControlSnapshot snapshot)
 {
     VideoPlaybackControlPlan plan;
-    plan.stateDelta.ended = false;
+    plan.stateDelta.mediaEnded = false;
     if (snapshot.mediaBackendAvailable) {
         plan.backendOperations.push_back(backendOperation(VideoPlaybackBackendOperationKind::Stop));
     }
@@ -108,7 +108,7 @@ VideoPlaybackControlPlan videoPlaybackSetPositionPlan(
     }
 
     const qint64 clampedPosition = clampedAbsolutePosition(position, snapshot.duration);
-    plan.stateDelta.ended = false;
+    plan.stateDelta.mediaEnded = false;
     appendEnsureBackend(plan);
     plan.backendOperations.push_back(setPositionOperation(clampedPosition));
     plan.stateDelta.position = clampedPosition;
@@ -125,7 +125,7 @@ VideoPlaybackControlPlan videoPlaybackSeekByPlan(
     }
 
     VideoPlaybackControlPlan plan;
-    plan.stateDelta.ended = false;
+    plan.stateDelta.mediaEnded = false;
     appendEnsureBackend(plan);
     plan.backendOperations.push_back(setPositionOperation(nextPosition));
     plan.stateDelta.position = nextPosition;

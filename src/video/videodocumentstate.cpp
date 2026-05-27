@@ -56,11 +56,11 @@ bool VideoDocumentState::zoomPercentKnown() const { return m_zoomPercentKnown; }
 
 int VideoDocumentState::zoomPercent() const { return m_zoomPercent; }
 
-bool VideoDocumentState::ended() const { return m_ended; }
+bool VideoDocumentState::mediaEnded() const { return m_mediaEnded; }
 
 void VideoDocumentState::resetForClearedSource()
 {
-    m_ended = false;
+    m_mediaEnded = false;
 
     std::vector<VideoDocumentChange> changes;
     appendIfSourceUrlChanged(changes, QUrl());
@@ -81,7 +81,7 @@ void VideoDocumentState::resetForClearedSource()
 
 void VideoDocumentState::resetForSourceLoad(const QUrl &sourceUrl)
 {
-    m_ended = false;
+    m_mediaEnded = false;
 
     std::vector<VideoDocumentChange> changes;
     appendIfSourceUrlChanged(changes, sourceUrl);
@@ -131,7 +131,7 @@ void VideoDocumentState::setPosition(qint64 position)
 void VideoDocumentState::setPlaying(bool playing)
 {
     if (playing) {
-        m_ended = false;
+        m_mediaEnded = false;
     }
 
     std::vector<VideoDocumentChange> changes;
@@ -180,7 +180,7 @@ void VideoDocumentState::setZoomPercent(std::optional<int> zoomPercent)
     publish(std::move(changes));
 }
 
-void VideoDocumentState::setEnded(bool ended) { m_ended = ended; }
+void VideoDocumentState::setMediaEnded(bool mediaEnded) { m_mediaEnded = mediaEnded; }
 
 void VideoDocumentState::publish(VideoDocumentChange change)
 {

@@ -44,11 +44,11 @@ VideoDocumentStatusPlan videoDocumentStatusPlan(VideoDocumentStatusSnapshot snap
         };
     }
 
-    const bool ended = snapshot.mediaStatus == VideoMediaStatus::EndOfMedia;
+    const bool mediaEnded = snapshot.mediaStatus == VideoMediaStatus::EndOfMedia;
     return VideoDocumentStatusPlan {
         documentStatusForMediaStatus(snapshot.mediaStatus),
-        ended,
-        ended,
+        mediaEnded,
+        mediaEnded,
     };
 }
 }

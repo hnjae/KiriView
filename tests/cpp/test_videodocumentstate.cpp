@@ -188,12 +188,12 @@ void TestVideoDocumentState::setPlayingClearsEndedState()
 {
     KiriView::VideoDocumentState state;
 
-    state.setEnded(true);
-    QVERIFY(state.ended());
+    state.setMediaEnded(true);
+    QVERIFY(state.mediaEnded());
 
     state.setPlaying(true);
     QVERIFY(state.playing());
-    QVERIFY(!state.ended());
+    QVERIFY(!state.mediaEnded());
 }
 
 void TestVideoDocumentState::publishDeduplicatesChangesInOrder()

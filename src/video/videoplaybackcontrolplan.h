@@ -13,7 +13,7 @@ struct VideoPlaybackControlSnapshot {
     bool sourceUrlEmpty = true;
     bool mediaBackendAvailable = false;
     bool playing = false;
-    bool ended = false;
+    bool mediaEnded = false;
     bool seekable = false;
     qint64 position = 0;
     qint64 duration = 0;
@@ -33,7 +33,7 @@ struct VideoPlaybackBackendOperation {
 };
 
 struct VideoPlaybackStateDelta {
-    std::optional<bool> ended;
+    std::optional<bool> mediaEnded;
     std::optional<bool> playing;
     std::optional<qint64> position;
 };
