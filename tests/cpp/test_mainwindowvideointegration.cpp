@@ -81,19 +81,36 @@ void TestMainWindowVideoIntegration::imageViewportUsesExternallyOwnedImageDocume
 void TestMainWindowVideoIntegration::mainWindowUsesSessionModeAndMediaDispatch()
 {
     const QString mainQml = readSource(QStringLiteral("src/qml/Main.qml"));
+    const QString mediaViewportHostQml
+        = readSource(QStringLiteral("src/qml/MediaViewportHost.qml"));
     const QString imageActionsQml = readSource(QStringLiteral("src/qml/ImageActions.qml"));
     QVERIFY2(!mainQml.isEmpty(), "Main.qml should be readable");
+    QVERIFY2(!mediaViewportHostQml.isEmpty(), "MediaViewportHost.qml should be readable");
     QVERIFY2(!imageActionsQml.isEmpty(), "ImageActions.qml should be readable");
 
     QVERIFY(mainQml.contains(
         QStringLiteral("documentSession.documentKind === KiriDocumentSession.Image")));
     QVERIFY(mainQml.contains(
         QStringLiteral("documentSession.documentKind === KiriDocumentSession.Video")));
-    QVERIFY(mainQml.contains(QStringLiteral("active: page.videoMode")));
-    QVERIFY(mainQml.contains(QStringLiteral("setSource(Qt.resolvedUrl(\"VideoViewport.qml\")")));
-    QVERIFY(!mainQml.contains(QStringLiteral("sourceComponent: VideoViewport")));
-    QVERIFY(!mainQml.contains(QStringLiteral("property VideoViewport")));
-    QVERIFY(mainQml.contains(QStringLiteral("active: page.imageMode")));
+    QVERIFY(mainQml.contains(QStringLiteral("MediaViewportHost {")));
+    QVERIFY(mainQml.contains(QStringLiteral("mediaViewportHost.forceActiveViewportFocus()")));
+    QVERIFY(mainQml.contains(QStringLiteral("imageViewport: mediaViewportHost.imageViewport")));
+    QVERIFY(!mainQml.contains(QStringLiteral("setSource(Qt.resolvedUrl(\"VideoViewport.qml\")")));
+    QVERIFY(!mainQml.contains(QStringLiteral("id: videoViewportLoader")));
+    QVERIFY(!mainQml.contains(QStringLiteral("ImageViewport {")));
+    QVERIFY(mediaViewportHostQml.contains(
+        QStringLiteral("documentSession.documentKind === KiriDocumentSession.Image")));
+    QVERIFY(mediaViewportHostQml.contains(
+        QStringLiteral("documentSession.documentKind === KiriDocumentSession.Video")));
+    QVERIFY(mediaViewportHostQml.contains(QStringLiteral("active: root.videoMode")));
+    QVERIFY(mediaViewportHostQml.contains(
+        QStringLiteral("setSource(Qt.resolvedUrl(\"VideoViewport.qml\")")));
+    QVERIFY(!mediaViewportHostQml.contains(QStringLiteral("sourceComponent: VideoViewport")));
+    QVERIFY(!mediaViewportHostQml.contains(QStringLiteral("property VideoViewport")));
+    QVERIFY(mediaViewportHostQml.contains(QStringLiteral("ImageViewport {")));
+    QVERIFY(mediaViewportHostQml.contains(QStringLiteral("presentationActive: root.imageMode")));
+    QVERIFY(mediaViewportHostQml.contains(QStringLiteral("ImageStateOverlay {")));
+    QVERIFY(mediaViewportHostQml.contains(QStringLiteral("viewerContextMenuRequested")));
     QVERIFY(mainQml.contains(QStringLiteral("sourceComponent: ImageShortcuts")));
     QVERIFY(mainQml.contains(QStringLiteral("active: page.imageMode || page.videoMode")));
     QVERIFY(mainQml.contains(QStringLiteral(

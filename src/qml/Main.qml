@@ -96,12 +96,7 @@ StatefulApp.StatefulWindow {
     }
 
     function focusActiveViewport() {
-        if (page.videoMode) {
-            videoViewportLoader.forceVideoViewportFocus();
-            return;
-        }
-
-        imageViewport.forceActiveFocus();
+        mediaViewportHost.forceActiveViewportFocus();
     }
 
     function openApplicationMenu() {
@@ -226,7 +221,7 @@ StatefulApp.StatefulWindow {
     pageStack.initialPage: Kirigami.Page {
         id: page
 
-        readonly property var imageDocument: imageViewport.imageDocument
+        readonly property var imageDocument: documentSession.imageDocument
         readonly property var videoDocument: documentSession.videoDocument
         readonly property bool imageMode: documentSession.documentKind === KiriDocumentSession.Image
         readonly property bool videoMode: documentSession.documentKind === KiriDocumentSession.Video
@@ -273,82 +268,23 @@ StatefulApp.StatefulWindow {
                 Controls.SplitView.fillWidth: true
                 Controls.SplitView.minimumWidth: Kirigami.Units.gridUnit * 8
 
-                Item {
-                    id: mediaViewportSlot
+                MediaViewportHost {
+                    id: mediaViewportHost
 
-                    objectName: "mediaViewportSlot"
-                    clip: true
-                    Controls.SplitView.fillHeight: true
-                    Controls.SplitView.minimumHeight: Kirigami.Units.gridUnit * 6
+                    documentSession: documentSession
+                    openAction: imageActions.openAction
 
-                    ImageViewport {
-                        id: imageViewport
-
-                        anchors.fill: parent
-                        imageDocument: documentSession.imageDocument
-                        presentationActive: page.imageMode
-                        visible: !page.videoMode
-
-                        onViewerClicked: {
-                            if (root.activeImageToolBar().commitTextInputEditing(true)) {
-                                return;
-                            }
-
-                            root.focusActiveViewport();
+                    onViewerClicked: {
+                        if (root.activeImageToolBar().commitTextInputEditing(true)) {
+                            return;
                         }
+
+                        root.focusActiveViewport();
                     }
-
-                    Loader {
-                        id: videoViewportLoader
-
-                        anchors.fill: parent
-                        active: page.videoMode
-
-                        function ensureVideoViewportLoaded() {
-                            if (!active) {
-                                source = "";
-                                return;
-                            }
-
-                            if (source.toString().length === 0) {
-                                setSource(Qt.resolvedUrl("VideoViewport.qml"), {
-                                    "videoDocument": page.videoDocument
-                                });
-                            }
-                        }
-
-                        function forceVideoViewportFocus() {
-                            // Dynamic VideoViewport access keeps QtMultimedia out of image startup.
-                            // qmllint disable missing-property
-                            if (item !== null) {
-                                item["forceActiveFocus"]();
-                            }
-                            // qmllint enable missing-property
-                        }
-
-                        Component.onCompleted: ensureVideoViewportLoaded()
-                        onActiveChanged: ensureVideoViewportLoaded()
-                    }
-
-                    ImageStateOverlay {
-                        anchors.fill: parent
-                        imageDocument: page.imageDocument
-                        imageReady: page.imageReady
-                        openAction: imageActions.openAction
-                        visible: !page.videoMode
-                    }
-
-                    TapHandler {
-                        id: viewerContextMenuTapHandler
-
-                        acceptedButtons: Qt.RightButton
-                        enabled: page.imageMode || page.videoMode
-
-                        onTapped: {
-                            root.activeImageToolBar().commitTextInputEditing(true);
-                            root.focusActiveViewport();
-                            viewerContextMenu.popup(mediaViewportSlot, viewerContextMenuTapHandler.point.position.x, viewerContextMenuTapHandler.point.position.y);
-                        }
+                    onViewerContextMenuRequested: function (popupParent, position) {
+                        root.activeImageToolBar().commitTextInputEditing(true);
+                        root.focusActiveViewport();
+                        viewerContextMenu.popup(popupParent, position.x, position.y);
                     }
                 }
 
@@ -380,8 +316,8 @@ StatefulApp.StatefulWindow {
             containerNavigationAvailable: page.imageMode && page.imageDocument.containerNavigationAvailable
             fileDeletionInProgress: documentSession.fileDeletionInProgress
             helpDialogOpen: root.helpDialogOpen
-            imageHorizontallyPannable: page.imageMode && imageViewport.imageHorizontallyPannable
-            imagePannable: page.imageMode && imageViewport.imagePannable
+            imageHorizontallyPannable: page.imageMode && mediaViewportHost.imageViewport.imageHorizontallyPannable
+            imagePannable: page.imageMode && mediaViewportHost.imageViewport.imagePannable
             imageReady: page.imageReady
             rightToLeftReadingAvailable: page.imageMode && page.imageDocument.rightToLeftReadingAvailable
             rightToLeftReadingEnabled: page.imageMode && page.imageDocument.rightToLeftReadingEnabled
@@ -476,7 +412,7 @@ StatefulApp.StatefulWindow {
                 actionAvailability: actionAvailability
                 documentSession: documentSession
                 imageDocument: page.imageDocument
-                imageViewport: imageViewport
+                imageViewport: mediaViewportHost.imageViewport
                 videoFileDeletionInProgress: documentSession.fileDeletionInProgress
                 videoMode: page.videoMode
 
