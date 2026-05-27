@@ -317,6 +317,19 @@ StatefulApp.StatefulWindow {
                         openAction: imageActions.openAction
                         visible: !page.videoMode
                     }
+
+                    TapHandler {
+                        id: viewerContextMenuTapHandler
+
+                        acceptedButtons: Qt.RightButton
+                        enabled: page.imageMode || page.videoMode
+
+                        onTapped: {
+                            root.activeImageToolBar().commitTextInputEditing(true);
+                            root.focusActiveViewport();
+                            viewerContextMenu.popup(mediaViewportSlot, viewerContextMenuTapHandler.point.position.x, viewerContextMenuTapHandler.point.position.y);
+                        }
+                    }
                 }
 
                 ThumbnailPanel {
@@ -464,6 +477,13 @@ StatefulApp.StatefulWindow {
             anchors.bottom: parent.bottom
             anchors.horizontalCenter: parent.horizontalCenter
             z: 999
+        }
+
+        ContextActionMenu {
+            id: viewerContextMenu
+
+            objectName: "viewerContextMenu"
+            actions: imageActions.contextMenuActions
         }
 
         ImageDocumentToolBar {

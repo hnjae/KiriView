@@ -39,6 +39,7 @@ private Q_SLOTS:
     void directImageShowsMediaPositionAfterSiblingListing();
     void directoryImageDocumentShowsPagePosition();
     void panelActionsToggleResizablePanels();
+    void viewerRightClickOpensContextMenuOnlyFromMediaViewport();
     void fullscreenReusesSingleToolbarAndHidesApplicationMenuButton();
 };
 
@@ -115,6 +116,11 @@ QList<QQuickItem *> visibleItemsByObjectName(QObject *root, const QString &objec
 QQuickItem *findQuickItem(QObject *root, const QString &objectName)
 {
     return root->findChild<QQuickItem *>(objectName, Qt::FindChildrenRecursively);
+}
+
+QObject *findObject(QObject *root, const QString &objectName)
+{
+    return root->findChild<QObject *>(objectName, Qt::FindChildrenRecursively);
 }
 
 KiriDocumentSession *findDocumentSession(QObject *root)
@@ -238,6 +244,35 @@ void compareToolbarPageReadout(
     QTRY_COMPARE(pageNumberField->property("text").toString(), currentText);
     QTRY_COMPARE(pageCountLabel->property("text").toString(), countText);
     QCOMPARE(pageNumberField->isEnabled(), enabled);
+}
+
+bool popupOpen(QObject *popup)
+{
+    return popup->property("visible").toBool() || popup->property("opened").toBool();
+}
+
+QPoint itemCenter(QQuickItem *item)
+{
+    if (item == nullptr || item->width() <= 0 || item->height() <= 0) {
+        return QPoint(-1, -1);
+    }
+
+    return item->mapToScene(QPointF(item->width() / 2, item->height() / 2)).toPoint();
+}
+
+void clickItem(QQuickWindow *window, QQuickItem *item, Qt::MouseButton button)
+{
+    const QPoint point = itemCenter(item);
+    QVERIFY(point.x() >= 0);
+    QVERIFY(point.y() >= 0);
+    QTest::mouseClick(window, button, Qt::NoModifier, point);
+    QCoreApplication::processEvents();
+}
+
+void closePopup(QObject *popup)
+{
+    popup->setProperty("visible", false);
+    QCoreApplication::processEvents();
 }
 }
 
@@ -368,6 +403,67 @@ void TestMainWindowToolBar::panelActionsToggleResizablePanels()
     thumbnailPanelAction->trigger();
     QTRY_VERIFY(!infoPanel->isVisible());
     QTRY_VERIFY(!thumbnailPanel->isVisible());
+}
+
+void TestMainWindowToolBar::viewerRightClickOpensContextMenuOnlyFromMediaViewport()
+{
+    QString imageSourcePath;
+    QString videoSourcePath;
+    QString errorString;
+    std::unique_ptr<QTemporaryDir> mediaDirectory
+        = createMediaDirectory(&imageSourcePath, &videoSourcePath, &errorString);
+    QVERIFY2(mediaDirectory != nullptr, qPrintable(errorString));
+
+    MainWindowFixture fixture = createMainWindowFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    openSourceUrl(fixture, imageSourcePath);
+    compareToolbarPageReadout(fixture, QStringLiteral("3"), QStringLiteral("3"), true);
+
+    QObject *contextMenu = findObject(fixture.window, QStringLiteral("viewerContextMenu"));
+    QQuickItem *mediaViewportSlot
+        = findQuickItem(fixture.window, QStringLiteral("mediaViewportSlot"));
+    QQuickItem *toolbar = findQuickItem(fixture.window, QStringLiteral("mainImageToolBar"));
+    QVERIFY(contextMenu != nullptr);
+    QVERIFY(mediaViewportSlot != nullptr);
+    QVERIFY(toolbar != nullptr);
+    QVERIFY(!popupOpen(contextMenu));
+    QCOMPARE(contextMenu->property("actionCount").toInt(), 19);
+
+    clickItem(fixture.window, toolbar, Qt::RightButton);
+    QTRY_VERIFY(!popupOpen(contextMenu));
+
+    clickItem(fixture.window, mediaViewportSlot, Qt::RightButton);
+    QTRY_VERIFY(popupOpen(contextMenu));
+    closePopup(contextMenu);
+    QTRY_VERIFY(!popupOpen(contextMenu));
+
+    KiriViewApplication *application = findApplication(fixture.window);
+    QVERIFY(application != nullptr);
+    QAction *infoPanelAction
+        = application->actionForId(KiriViewApplication::ViewToggleInfoPanelAction);
+    QAction *thumbnailPanelAction
+        = application->actionForId(KiriViewApplication::ViewToggleThumbnailPanelAction);
+    QVERIFY(infoPanelAction != nullptr);
+    QVERIFY(thumbnailPanelAction != nullptr);
+    infoPanelAction->trigger();
+    thumbnailPanelAction->trigger();
+
+    QQuickItem *infoPanel = findQuickItem(fixture.window, QStringLiteral("infoPanel"));
+    QQuickItem *thumbnailPanel = findQuickItem(fixture.window, QStringLiteral("thumbnailPanel"));
+    QVERIFY(infoPanel != nullptr);
+    QVERIFY(thumbnailPanel != nullptr);
+    QTRY_VERIFY(infoPanel->isVisible());
+    QTRY_VERIFY(thumbnailPanel->isVisible());
+
+    clickItem(fixture.window, infoPanel, Qt::RightButton);
+    QTRY_VERIFY(!popupOpen(contextMenu));
+    clickItem(fixture.window, thumbnailPanel, Qt::RightButton);
+    QTRY_VERIFY(!popupOpen(contextMenu));
+
+    fixture.window->setVisibility(QWindow::FullScreen);
+    QTRY_COMPARE(fixture.window->visibility(), QWindow::FullScreen);
+    clickItem(fixture.window, mediaViewportSlot, Qt::RightButton);
+    QTRY_VERIFY(popupOpen(contextMenu));
 }
 
 void TestMainWindowToolBar::fullscreenReusesSingleToolbarAndHidesApplicationMenuButton()

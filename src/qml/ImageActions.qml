@@ -85,6 +85,7 @@ Item {
     readonly property var applicationMenuDocumentActions: root.imageMode || root.videoMode ? [applicationMenuNavigationSeparator, previousImageManagedAction.menuProxy, nextImageManagedAction.menuProxy, firstImageManagedAction.menuProxy, lastImageManagedAction.menuProxy] : []
     readonly property var applicationMenuImageActions: root.imageMode ? root.applicationMenuNavigationActions.concat([rotateClockwiseManagedAction.menuProxy, rotateCounterclockwiseManagedAction.menuProxy, twoPageModeManagedAction.menuProxy, rightToLeftReadingManagedAction.menuProxy]) : []
     readonly property var applicationMenuActions: [openManagedAction.menuProxy, applicationMenuFileSeparator, moveToTrashManagedAction.menuProxy, deleteFileManagedAction.menuProxy].concat(root.applicationMenuDocumentActions, root.applicationMenuImageActions, [applicationMenuViewSeparator, infoPanelManagedAction.menuProxy, thumbnailPanelManagedAction.menuProxy, fullscreenManagedAction.menuProxy, applicationMenuSettingsSeparator, showMenubarManagedAction.menuProxy, configureShortcutsManagedAction.menuProxy, applicationMenuHelpSeparator, shortcutHelpManagedAction.menuProxy, applicationMenuQuitSeparator, quitManagedAction.menuProxy])
+    readonly property var contextMenuActions: [openManagedAction.menuProxy, contextMenuNavigationSeparator, previousImageManagedAction.menuProxy, nextImageManagedAction.menuProxy, firstImageManagedAction.menuProxy, lastImageManagedAction.menuProxy, contextMenuImageSeparator, rotateClockwiseManagedAction.menuProxy, rotateCounterclockwiseManagedAction.menuProxy, zoomInManagedAction.menuProxy, zoomOutManagedAction.menuProxy, fitManagedAction.menuProxy, fitHeightManagedAction.menuProxy, fitWidthManagedAction.menuProxy, actualSizeManagedAction.menuProxy, contextMenuViewSeparator, infoPanelManagedAction.menuProxy, thumbnailPanelManagedAction.menuProxy, fullscreenManagedAction.menuProxy]
 
     signal openDialogRequested
     signal imageBoundaryReached(string message)
@@ -149,6 +150,21 @@ Item {
     }
 
     property Kirigami.Action applicationMenuQuitSeparator: Kirigami.Action {
+        displayHint: Kirigami.DisplayHint.AlwaysHide
+        separator: true
+    }
+
+    property Kirigami.Action contextMenuNavigationSeparator: Kirigami.Action {
+        displayHint: Kirigami.DisplayHint.AlwaysHide
+        separator: true
+    }
+
+    property Kirigami.Action contextMenuImageSeparator: Kirigami.Action {
+        displayHint: Kirigami.DisplayHint.AlwaysHide
+        separator: true
+    }
+
+    property Kirigami.Action contextMenuViewSeparator: Kirigami.Action {
         displayHint: Kirigami.DisplayHint.AlwaysHide
         separator: true
     }
