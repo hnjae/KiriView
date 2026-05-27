@@ -347,6 +347,7 @@ QString fixtureQml()
     return QStringLiteral(R"(
 import QtQuick
 import QtQuick.Controls as Controls
+import QtQml
 import io.github.hnjae.kiriview
 import "%1" as KiriViewQml
 
@@ -355,6 +356,7 @@ Item {
 
     width: 200
     height: 160
+    property var testImageDocument: imageDocument
 
     function contentY() {
         return imageViewport.flickable.contentY;
@@ -400,11 +402,18 @@ Item {
         id: imageDocument
     }
 
+    QtObject {
+        id: documentSession
+
+        property var imageDocument: root.testImageDocument
+        property int documentKind: 0
+    }
+
     KiriViewQml.ImageViewport {
         id: imageViewport
 
         anchors.fill: parent
-        imageDocument: imageDocument
+        documentSession: documentSession
     }
 }
 )")
