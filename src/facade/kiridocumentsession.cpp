@@ -6,6 +6,7 @@
 #include "facade/documentsessionpublicsignals.h"
 #include "facade/kiriimagedocument.h"
 #include "facade/kirivideodocument.h"
+#include "localization/activenavigationboundarytext.h"
 #include "navigation/mediaformatregistry.h"
 #include "predecode/predecodecachebudget.h"
 
@@ -270,6 +271,18 @@ KiriDocumentSession::ActiveNavigationRequestResult
 KiriDocumentSession::requestNextActiveNavigation()
 {
     return fromRuntimeRequestOutcome(m_runtime->requestNextActiveNavigation());
+}
+
+QString KiriDocumentSession::requestPreviousActiveNavigationBoundaryText()
+{
+    return KiriView::activeNavigationBoundaryFeedbackText(
+        m_runtime->activeNavigationBoundaryScope(), m_runtime->requestPreviousActiveNavigation());
+}
+
+QString KiriDocumentSession::requestNextActiveNavigationBoundaryText()
+{
+    return KiriView::activeNavigationBoundaryFeedbackText(
+        m_runtime->activeNavigationBoundaryScope(), m_runtime->requestNextActiveNavigation());
 }
 
 void KiriDocumentSession::deleteDisplayedFile(DeletionMode mode)

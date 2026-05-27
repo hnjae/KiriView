@@ -124,6 +124,8 @@ public:
     Q_INVOKABLE KiriDocumentSession::ActiveNavigationRequestResult
     requestPreviousActiveNavigation();
     Q_INVOKABLE KiriDocumentSession::ActiveNavigationRequestResult requestNextActiveNavigation();
+    Q_INVOKABLE QString requestPreviousActiveNavigationBoundaryText();
+    Q_INVOKABLE QString requestNextActiveNavigationBoundaryText();
     Q_INVOKABLE void deleteDisplayedFile(KiriDocumentSession::DeletionMode mode);
 
 Q_SIGNALS:

@@ -205,6 +205,7 @@ private Q_SLOTS:
     void activeNavigationNumberDispatchRoutesDirectMedia();
     void activeNavigationNumberDispatchRoutesImageDocumentPages();
     void activeNavigationRequestReportsDispatchAndBoundaryResults();
+    void activeNavigationBoundaryTextFollowsSessionSource();
     void activeNavigationNumberDispatchIgnoresUnknownNavigation();
     void activeNavigationClearsWhenSwitchingFromKnownDirectMedia();
     void activeNavigationAvailabilityUsesSameSnapshotAsCurrentAndCount();
@@ -775,6 +776,43 @@ void TestKiriDocumentSession::activeNavigationRequestReportsDispatchAndBoundaryR
 
     QCOMPARE(session->requestNextActiveNavigation(),
         KiriDocumentSession::ActiveNavigationRequestResult::LastActiveNavigationBoundary);
+}
+
+void TestKiriDocumentSession::activeNavigationBoundaryTextFollowsSessionSource()
+{
+    KiriView::TestSupport::FakeImageNavigationCandidateProvider imageCandidates;
+    KiriView::TestSupport::ManualImageDataLoader dataLoader;
+    const QUrl archiveUrl = localUrl(QStringLiteral("/books/request-boundary-text.cbz"));
+    const std::optional<KiriView::ImagePageScopeLocation> archiveDocument
+        = KiriView::imagePageScopeLocationForLocalArchiveUrl(archiveUrl);
+    QVERIFY(archiveDocument.has_value());
+    const QUrl firstPage = KiriView::TestSupport::archivePageUrl(
+        archiveDocument->rootUrl(), QStringLiteral("01.png"));
+    const QUrl secondPage = KiriView::TestSupport::archivePageUrl(
+        archiveDocument->rootUrl(), QStringLiteral("02.png"));
+    imageCandidates.setArchiveImages(archiveDocument->rootUrl(),
+        { KiriView::TestSupport::imageCandidate(firstPage),
+            KiriView::TestSupport::imageCandidate(secondPage) });
+    FakeMediaCandidateProvider unusedMediaProvider;
+    std::unique_ptr<KiriDocumentSession> imageSession = createSessionWithProvider(
+        unusedMediaProvider.provider(), nullptr, &dataLoader, imageCandidates.provider());
+
+    imageSession->setSourceUrl(archiveUrl);
+    QTRY_COMPARE(dataLoader.loadCount(), std::size_t(1));
+    dataLoader.finishBackLoad(QByteArrayLiteral("first"));
+    QTRY_COMPARE(imageSession->imageDocument()->status(), KiriImageDocument::Status::Ready);
+    QVERIFY(imageSession->atKnownFirstActiveNavigation());
+
+    QCOMPARE(
+        imageSession->requestPreviousActiveNavigationBoundaryText(), QStringLiteral("First image"));
+    QCOMPARE(imageSession->requestNextActiveNavigationBoundaryText(), QString());
+
+    QTRY_COMPARE(dataLoader.backLoad().url, secondPage);
+    dataLoader.finishBackLoad(QByteArrayLiteral("second"));
+    QTRY_COMPARE(imageSession->activeNavigationCurrentNumber(), 2);
+    QVERIFY(imageSession->atKnownLastActiveNavigation());
+
+    QCOMPARE(imageSession->requestNextActiveNavigationBoundaryText(), QStringLiteral("Last image"));
 }
 
 void TestKiriDocumentSession::activeNavigationNumberDispatchIgnoresUnknownNavigation()

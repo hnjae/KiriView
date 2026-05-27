@@ -111,9 +111,9 @@ void TestMainWindowVideoIntegration::mainWindowUsesSessionModeAndMediaDispatch()
     QVERIFY(
         imageActionsQml.contains(QStringLiteral("root.documentSession.activeNavigationAvailable")));
     QVERIFY(imageActionsQml.contains(
-        QStringLiteral("root.documentSession.requestPreviousActiveNavigation()")));
+        QStringLiteral("root.documentSession.requestPreviousActiveNavigationBoundaryText()")));
     QVERIFY(imageActionsQml.contains(
-        QStringLiteral("root.documentSession.requestNextActiveNavigation()")));
+        QStringLiteral("root.documentSession.requestNextActiveNavigationBoundaryText()")));
     QVERIFY(imageActionsQml.contains(
         QStringLiteral("root.documentSession.openFirstActiveNavigation()")));
     QVERIFY(imageActionsQml.contains(
@@ -186,22 +186,21 @@ void TestMainWindowVideoIntegration::activeNavigationActionsUseSessionSnapshotAn
 
     QVERIFY(imageActionsQml.contains(QStringLiteral("canOpenPreviousActiveNavigation")));
     QVERIFY(imageActionsQml.contains(QStringLiteral("canOpenNextActiveNavigation")));
-    QVERIFY(imageActionsQml.contains(QStringLiteral("requestPreviousActiveNavigation")));
-    QVERIFY(imageActionsQml.contains(QStringLiteral("requestNextActiveNavigation")));
-    QVERIFY(imageActionsQml.contains(QStringLiteral("FirstActiveNavigationBoundary")));
-    QVERIFY(imageActionsQml.contains(QStringLiteral("LastActiveNavigationBoundary")));
+    QVERIFY(
+        imageActionsQml.contains(QStringLiteral("requestPreviousActiveNavigationBoundaryText")));
+    QVERIFY(imageActionsQml.contains(QStringLiteral("requestNextActiveNavigationBoundaryText")));
     QVERIFY(imageActionsQml.contains(QStringLiteral("activeNavigationBoundaryScope")));
     QVERIFY(
         imageActionsQml.contains(QStringLiteral("KiriDocumentSession.MediaNavigationBoundary")));
-    QVERIFY(
-        imageActionsQml.contains(QStringLiteral("KiriDocumentSession.ImageNavigationBoundary")));
-    QVERIFY(imageActionsQml.contains(QStringLiteral("First media item")));
-    QVERIFY(imageActionsQml.contains(QStringLiteral("Last media item")));
-    QVERIFY(imageActionsQml.contains(QStringLiteral("First image")));
-    QVERIFY(imageActionsQml.contains(QStringLiteral("Last image")));
 
     verifySourceOmits(imageActionsQml,
         {
+            QStringLiteral("FirstActiveNavigationBoundary"),
+            QStringLiteral("LastActiveNavigationBoundary"),
+            QStringLiteral("First media item"),
+            QStringLiteral("Last media item"),
+            QStringLiteral("First image"),
+            QStringLiteral("Last image"),
             QStringLiteral("mediaNavigationActive"),
             QStringLiteral("mediaNavigationKnown"),
             QStringLiteral("currentMediaNumber"),
@@ -239,9 +238,9 @@ void TestMainWindowVideoIntegration::shortcutsRouteSharedActiveNavigationThrough
     QVERIFY(imageShortcutsQml.contains(
         QStringLiteral("required property KiriDocumentSession documentSession")));
     QVERIFY(imageShortcutsQml.contains(
-        QStringLiteral("root.documentSession.requestPreviousActiveNavigation()")));
+        QStringLiteral("root.documentSession.requestPreviousActiveNavigationBoundaryText()")));
     QVERIFY(imageShortcutsQml.contains(
-        QStringLiteral("root.documentSession.requestNextActiveNavigation()")));
+        QStringLiteral("root.documentSession.requestNextActiveNavigationBoundaryText()")));
     QVERIFY(imageShortcutsQml.contains(QStringLiteral("activeNavigationShortcutsEnabledForScope")));
     verifySourceOmits(imageShortcutsQml,
         {

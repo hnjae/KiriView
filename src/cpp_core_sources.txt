@@ -82,6 +82,7 @@ src/document/imagedocumentstate.cpp
 src/rendering/imagesurface.cpp
 src/decoding/imageformatregistry.cpp
 src/decoding/imageinputclassification.cpp
+src/localization/activenavigationboundarytext.cpp
 src/localization/imageerrortext.cpp
 src/navigation/imagecandidateitems.cpp
 src/navigation/imagecandidaterepository.cpp

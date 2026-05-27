@@ -85,30 +85,6 @@ Item {
     signal shortcutHelpRequested
     signal toggleFullScreenRequested
 
-    function firstBoundaryText() {
-        switch (root.documentSession.activeNavigationBoundaryScope) {
-        case KiriDocumentSession.MediaNavigationBoundary:
-            return KI18n.i18nc("@info:status", "First media item");
-        case KiriDocumentSession.ImageNavigationBoundary:
-            return KI18n.i18nc("@info:status", "First image");
-        case KiriDocumentSession.NoNavigationBoundary:
-        default:
-            return "";
-        }
-    }
-
-    function lastBoundaryText() {
-        switch (root.documentSession.activeNavigationBoundaryScope) {
-        case KiriDocumentSession.MediaNavigationBoundary:
-            return KI18n.i18nc("@info:status", "Last media item");
-        case KiriDocumentSession.ImageNavigationBoundary:
-            return KI18n.i18nc("@info:status", "Last image");
-        case KiriDocumentSession.NoNavigationBoundary:
-        default:
-            return "";
-        }
-    }
-
     function activeFirstMenuText() {
         return root.documentSession.activeNavigationBoundaryScope === KiriDocumentSession.MediaNavigationBoundary ? KI18n.i18nc("@action:inmenu", "&First Media Item") : "";
     }
@@ -125,27 +101,18 @@ Item {
         root.documentSession.openLastActiveNavigation();
     }
 
-    function handleActiveNavigationRequestResult(result) {
-        switch (result) {
-        case KiriDocumentSession.FirstActiveNavigationBoundary:
-            root.imageBoundaryReached(firstBoundaryText());
-            return;
-        case KiriDocumentSession.LastActiveNavigationBoundary:
-            root.imageBoundaryReached(lastBoundaryText());
-            return;
-        case KiriDocumentSession.ActiveNavigationRequestDispatched:
-        case KiriDocumentSession.NoActiveNavigationRequestResult:
-        default:
-            return;
+    function openNextImage() {
+        const boundaryText = root.documentSession.requestNextActiveNavigationBoundaryText();
+        if (boundaryText.length > 0) {
+            root.imageBoundaryReached(boundaryText);
         }
     }
 
-    function openNextImage() {
-        root.handleActiveNavigationRequestResult(root.documentSession.requestNextActiveNavigation());
-    }
-
     function openPreviousImage() {
-        root.handleActiveNavigationRequestResult(root.documentSession.requestPreviousActiveNavigation());
+        const boundaryText = root.documentSession.requestPreviousActiveNavigationBoundaryText();
+        if (boundaryText.length > 0) {
+            root.imageBoundaryReached(boundaryText);
+        }
     }
 
     property Kirigami.Action applicationMenuFileSeparator: Kirigami.Action {
