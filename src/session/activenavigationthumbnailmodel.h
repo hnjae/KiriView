@@ -4,28 +4,16 @@
 #ifndef KIRIVIEW_ACTIVENAVIGATIONTHUMBNAILMODEL_H
 #define KIRIVIEW_ACTIVENAVIGATIONTHUMBNAILMODEL_H
 
+#include "session/activenavigationthumbnailprojection.h"
+
 #include <QAbstractListModel>
 #include <QByteArray>
 #include <QHash>
 #include <QString>
-#include <QUrl>
 #include <QVariant>
 #include <vector>
 
 namespace KiriView {
-enum class ActiveNavigationThumbnailKind {
-    Image,
-    Video,
-};
-
-struct ActiveNavigationThumbnailRow {
-    int number = 0;
-    QUrl url;
-    QString label;
-    ActiveNavigationThumbnailKind kind = ActiveNavigationThumbnailKind::Image;
-    bool current = false;
-};
-
 class ActiveNavigationThumbnailModel final : public QAbstractListModel
 {
 public:

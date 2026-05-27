@@ -10,6 +10,7 @@
 #include "navigation/mediaformatregistry.h"
 #include "predecode/mediapredecodecoordinator.h"
 #include "predecode/predecodecachebudget.h"
+#include "session/activenavigationthumbnailprojection.h"
 #include "session/mediaopenwithtarget.h"
 
 #include <QAbstractListModel>
@@ -23,70 +24,6 @@ namespace {
 QString genericFileDeletionErrorMessage()
 {
     return KiriView::imageErrorText(KiriView::ImageErrorTextId::DeleteFile);
-}
-
-KiriView::ActiveNavigationThumbnailKind thumbnailKindForMediaCandidate(
-    const KiriView::MediaNavigationCandidate &candidate)
-{
-    return KiriView::isSupportedDirectVideoFileName(candidate.name)
-            || KiriView::isSupportedDirectVideoUrl(candidate.url)
-        ? KiriView::ActiveNavigationThumbnailKind::Video
-        : KiriView::ActiveNavigationThumbnailKind::Image;
-}
-
-KiriView::ActiveNavigationThumbnailKind thumbnailKindForImageNavigationTarget(
-    const KiriView::ImageNavigationTarget &target)
-{
-    return target.kind == KiriView::ImageNavigationCandidateKind::Video
-        ? KiriView::ActiveNavigationThumbnailKind::Video
-        : KiriView::ActiveNavigationThumbnailKind::Image;
-}
-
-QString thumbnailLabel(const QString &candidateName, const QUrl &url)
-{
-    return candidateName.isEmpty() ? url.fileName(QUrl::PrettyDecoded) : candidateName;
-}
-
-std::vector<KiriView::ActiveNavigationThumbnailRow> thumbnailRowsForMediaCandidates(
-    const std::vector<KiriView::MediaNavigationCandidate> &candidates, int currentNumber)
-{
-    std::vector<KiriView::ActiveNavigationThumbnailRow> rows;
-    rows.reserve(candidates.size());
-
-    int number = 1;
-    for (const KiriView::MediaNavigationCandidate &candidate : candidates) {
-        rows.push_back(KiriView::ActiveNavigationThumbnailRow {
-            number,
-            candidate.url,
-            thumbnailLabel(candidate.name, candidate.url),
-            thumbnailKindForMediaCandidate(candidate),
-            number == currentNumber,
-        });
-        ++number;
-    }
-
-    return rows;
-}
-
-std::vector<KiriView::ActiveNavigationThumbnailRow> thumbnailRowsForImageNavigationSnapshot(
-    const KiriView::ImagePageNavigationSnapshot &snapshot, int currentNumber)
-{
-    std::vector<KiriView::ActiveNavigationThumbnailRow> rows;
-    rows.reserve(snapshot.state.targets.size());
-
-    int number = 1;
-    for (const KiriView::ImageNavigationTarget &target : snapshot.state.targets) {
-        rows.push_back(KiriView::ActiveNavigationThumbnailRow {
-            number,
-            target.url,
-            thumbnailLabel(target.name, target.url),
-            thumbnailKindForImageNavigationTarget(target),
-            number == currentNumber,
-        });
-        ++number;
-    }
-
-    return rows;
 }
 }
 
@@ -530,30 +467,14 @@ void DocumentSessionRuntime::recomputePublicProjection()
 
 void DocumentSessionRuntime::syncActiveNavigationThumbnailRows()
 {
-    const ActiveNavigationSnapshot &navigation = m_state.activeNavigationSnapshot();
-    if (!navigation.available || !navigation.known || navigation.count < 1
-        || m_activeNavigationThumbnailModel == nullptr) {
-        if (m_activeNavigationThumbnailModel != nullptr) {
-            m_activeNavigationThumbnailModel->clear();
-        }
+    if (m_activeNavigationThumbnailModel == nullptr) {
         return;
     }
 
-    std::vector<ActiveNavigationThumbnailRow> rows;
-    switch (m_state.activeNavigationSourceKind()) {
-    case ActiveNavigationSourceKind::OrdinaryDirectMedia:
-        rows = thumbnailRowsForMediaCandidates(
-            m_mediaNavigationCandidates, navigation.currentNumber);
-        break;
-    case ActiveNavigationSourceKind::ImageDocumentPages:
-        rows = thumbnailRowsForImageNavigationSnapshot(
-            m_imageDocument.pageNavigationSnapshot(), navigation.currentNumber);
-        break;
-    case ActiveNavigationSourceKind::None:
-        break;
-    }
-
-    if (static_cast<int>(rows.size()) != navigation.count) {
+    std::vector<ActiveNavigationThumbnailRow> rows = projectActiveNavigationThumbnailRows(
+        m_state.activeNavigationSourceKind(), m_state.activeNavigationSnapshot(),
+        m_mediaNavigationCandidates, m_imageDocument.pageNavigationSnapshot());
+    if (rows.empty()) {
         m_activeNavigationThumbnailModel->clear();
         return;
     }

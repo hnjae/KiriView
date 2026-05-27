@@ -176,6 +176,7 @@ src/application/shortcuthelpmodel.cpp
 src/application/shortcutroutemodel.cpp
 src/session/activenavigationprojection.cpp
 src/session/activenavigationthumbnailmodel.cpp
+src/session/activenavigationthumbnailprojection.cpp
 src/session/directmediacursor.cpp
 src/session/documentsessionmedianavigationloadstate.cpp
 src/session/documentsessionmedianavigationruntime.cpp
