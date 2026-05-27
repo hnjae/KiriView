@@ -244,12 +244,12 @@ Item {
     }
 
     QtObject {
-        id: imageViewport
+        id: mediaViewportHost
 
         property bool imageHorizontallyPannable: root.imageHorizontallyPannable
         property bool imagePannable: root.imagePannable
-        property real viewportHeight: 100
-        property real viewportWidth: 100
+        property real imageViewportHeight: 100
+        property real imageViewportWidth: 100
 
         function panBy(deltaX, deltaY) {
             root.panCount += 1;
@@ -280,6 +280,10 @@ Item {
         function zoomByStep(stepCount, viewportX, viewportY) {
             return false;
         }
+
+        function zoomByStepAtCenter(stepCount) {
+            return zoomByStep(stepCount, imageViewportWidth / 2, imageViewportHeight / 2);
+        }
     }
 
     QtObject {
@@ -296,8 +300,8 @@ Item {
         containerNavigationAvailable: imageDocument.containerNavigationAvailable
         fileDeletionInProgress: imageDocument.fileDeletionInProgress
         helpDialogOpen: root.helpDialogOpen
-        imageHorizontallyPannable: imageViewport.imageHorizontallyPannable
-        imagePannable: imageViewport.imagePannable
+        imageHorizontallyPannable: mediaViewportHost.imageHorizontallyPannable
+        imagePannable: mediaViewportHost.imagePannable
         imageReady: imageDocument.status === KiriImageDocument.Ready
         rightToLeftReadingAvailable: imageDocument.rightToLeftReadingAvailable
         rightToLeftReadingEnabled: imageDocument.rightToLeftReadingEnabled
@@ -312,7 +316,7 @@ Item {
         actionAvailability: actionAvailability
         documentSession: documentSession
         imageDocument: root.testImageDocument
-        imageViewport: imageViewport
+        mediaViewportHost: mediaViewportHost
         videoFileDeletionInProgress: root.videoFileDeletionInProgress
         videoMode: root.videoMode
 

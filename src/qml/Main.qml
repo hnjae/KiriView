@@ -316,8 +316,8 @@ StatefulApp.StatefulWindow {
             containerNavigationAvailable: page.imageMode && page.imageDocument.containerNavigationAvailable
             fileDeletionInProgress: documentSession.fileDeletionInProgress
             helpDialogOpen: root.helpDialogOpen
-            imageHorizontallyPannable: page.imageMode && mediaViewportHost.imageViewport.imageHorizontallyPannable
-            imagePannable: page.imageMode && mediaViewportHost.imageViewport.imagePannable
+            imageHorizontallyPannable: page.imageMode && mediaViewportHost.imageHorizontallyPannable
+            imagePannable: page.imageMode && mediaViewportHost.imagePannable
             imageReady: page.imageReady
             rightToLeftReadingAvailable: page.imageMode && page.imageDocument.rightToLeftReadingAvailable
             rightToLeftReadingEnabled: page.imageMode && page.imageDocument.rightToLeftReadingEnabled
@@ -412,7 +412,7 @@ StatefulApp.StatefulWindow {
                 actionAvailability: actionAvailability
                 documentSession: documentSession
                 imageDocument: page.imageDocument
-                imageViewport: mediaViewportHost.imageViewport
+                mediaViewportHost: mediaViewportHost
                 videoFileDeletionInProgress: documentSession.fileDeletionInProgress
                 videoMode: page.videoMode
 

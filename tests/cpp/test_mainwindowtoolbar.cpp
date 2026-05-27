@@ -39,6 +39,7 @@ private Q_SLOTS:
     void startupCreatesOneVisibleToolbarWithDisabledMediaControls();
     void directImageShowsMediaPositionAfterSiblingListing();
     void directoryImageDocumentShowsPagePosition();
+    void mediaViewportHostLoadsOnlyActiveDelegate();
     void panelActionsToggleResizablePanels();
     void commandFixedShortcutsUseApplicationActions();
     void viewerRightClickOpensContextMenuOnlyFromMediaViewport();
@@ -364,6 +365,35 @@ void TestMainWindowToolBar::directoryImageDocumentShowsPagePosition()
     openSourceUrl(fixture, sourcePath);
 
     compareToolbarPageReadout(fixture, QStringLiteral("1"), QStringLiteral("3"), true);
+}
+
+void TestMainWindowToolBar::mediaViewportHostLoadsOnlyActiveDelegate()
+{
+    QString imageSourcePath;
+    QString videoSourcePath;
+    QString errorString;
+    std::unique_ptr<QTemporaryDir> mediaDirectory
+        = createMediaDirectory(&imageSourcePath, &videoSourcePath, &errorString);
+    QVERIFY2(mediaDirectory != nullptr, qPrintable(errorString));
+
+    MainWindowFixture fixture = createMainWindowFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+
+    QVERIFY(findQuickItem(fixture.window, QStringLiteral("mediaViewportSlot")) != nullptr);
+    QVERIFY(findQuickItem(fixture.window, QStringLiteral("imageViewport")) == nullptr);
+    QVERIFY(findQuickItem(fixture.window, QStringLiteral("videoViewport")) == nullptr);
+
+    openSourceUrl(fixture, imageSourcePath);
+    QTRY_VERIFY(findQuickItem(fixture.window, QStringLiteral("imageViewport")) != nullptr);
+    QVERIFY(findQuickItem(fixture.window, QStringLiteral("videoViewport")) == nullptr);
+
+    openSourceUrl(fixture, videoSourcePath);
+    QTRY_VERIFY(findQuickItem(fixture.window, QStringLiteral("videoViewport")) != nullptr);
+    QTRY_VERIFY(findQuickItem(fixture.window, QStringLiteral("imageViewport")) == nullptr);
+
+    openSourceUrl(fixture, imageSourcePath);
+    QTRY_VERIFY(findQuickItem(fixture.window, QStringLiteral("imageViewport")) != nullptr);
+    QTRY_VERIFY(findQuickItem(fixture.window, QStringLiteral("videoViewport")) == nullptr);
 }
 
 void TestMainWindowToolBar::panelActionsToggleResizablePanels()
