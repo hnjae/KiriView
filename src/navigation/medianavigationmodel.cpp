@@ -11,12 +11,6 @@
 #include <utility>
 
 namespace {
-void appendRemovedCandidate(
-    std::vector<KiriView::MediaNavigationCandidate> *candidates, const QUrl &currentUrl)
-{
-    candidates->push_back(KiriView::MediaNavigationCandidate { currentUrl, currentUrl.fileName() });
-}
-
 std::optional<std::size_t> clampedMediaNumberIndex(int mediaNumber, std::size_t candidateCount)
 {
     if (candidateCount == 0) {
@@ -127,26 +121,6 @@ MediaNavigationOpenPlan mediaNavigationOpenPlan(
     return MediaNavigationOpenPlan {
         mediaNavigationBoundaryState(candidates, currentUrl),
         mediaNavigationTargetUrlForRequest(candidates, currentUrl, request),
-    };
-}
-
-MediaDeletionFallbackPlan mediaDeletionFallbackPlan(
-    std::vector<MediaNavigationCandidate> candidates, const QUrl &currentUrl)
-{
-    const QUrl identityUrl = mediaNavigationSourceUrl(currentUrl);
-    if (identityUrl.isEmpty()) {
-        return {};
-    }
-
-    if (!mediaNavigationCandidateIndex(candidates, identityUrl).has_value()) {
-        appendRemovedCandidate(&candidates, identityUrl);
-        sortMediaNavigationCandidates(&candidates);
-    }
-
-    return MediaDeletionFallbackPlan {
-        identityUrl,
-        adjacentMediaNavigationUrl(candidates, identityUrl, NavigationDirection::Next),
-        adjacentMediaNavigationUrl(candidates, identityUrl, NavigationDirection::Previous),
     };
 }
 

@@ -23,7 +23,6 @@ private Q_SLOTS:
     void parentUrlUsesDirectImageCandidateContextRule();
     void navigatesMixedMediaWithoutWrapping();
     void openPlanUpdatesBoundaryStateAndSelectsTargets();
-    void deletionFallbackUsesOriginalDirectMediaUrl();
     void sortingAndMatchingNormalizePathSegmentsAndPercentEncoding();
     void boundaryStateIsUnknownWhenCurrentMediaIsMissing();
 };
@@ -114,23 +113,6 @@ void TestMediaNavigationModel::openPlanUpdatesBoundaryStateAndSelectsTargets()
         localUrl(QStringLiteral("/media/02.mp4")), KiriView::numberedMediaNavigationOpenRequest(1));
     QVERIFY(!emptyPlan.targetUrl.has_value());
     QCOMPARE(emptyPlan.boundaryState.count, 0);
-}
-
-void TestMediaNavigationModel::deletionFallbackUsesOriginalDirectMediaUrl()
-{
-    std::vector<KiriView::MediaNavigationCandidate> candidates {
-        candidate(localUrl(QStringLiteral("/media/01.jpg"))),
-        candidate(localUrl(QStringLiteral("/media/03.png"))),
-    };
-    KiriView::sortMediaNavigationCandidates(&candidates);
-
-    const QUrl deletedUrl = localUrl(QStringLiteral("/media/02.mp4"));
-    const KiriView::MediaDeletionFallbackPlan plan
-        = KiriView::mediaDeletionFallbackPlan(candidates, deletedUrl);
-
-    QCOMPARE(plan.targetUrl, deletedUrl);
-    QCOMPARE(plan.preferredFallbackUrl.value(), localUrl(QStringLiteral("/media/03.png")));
-    QCOMPARE(plan.fallbackUrl.value(), localUrl(QStringLiteral("/media/01.jpg")));
 }
 
 void TestMediaNavigationModel::sortingAndMatchingNormalizePathSegmentsAndPercentEncoding()

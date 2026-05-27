@@ -17,10 +17,10 @@ KiriView::MediaNavigationCandidate mediaCandidate(const QUrl &url)
     return KiriView::MediaNavigationCandidate { url, url.fileName(QUrl::PrettyDecoded) };
 }
 
-KiriView::MediaDeletionFallbackPlan fallbackPlan(
+KiriView::DocumentSessionMediaDeletionFallbackPlan fallbackPlan(
     std::optional<QUrl> preferredFallback = {}, std::optional<QUrl> fallback = {})
 {
-    return KiriView::MediaDeletionFallbackPlan {
+    return KiriView::DocumentSessionMediaDeletionFallbackPlan {
         localUrl(QStringLiteral("/media/02.mp4")),
         std::move(preferredFallback),
         std::move(fallback),
@@ -34,6 +34,7 @@ class TestDocumentSessionMediaDeletionPlan : public QObject
 
 private Q_SLOTS:
     void startPlanRejectsEmptyCurrentUrl();
+    void fallbackPlanUsesOriginalDirectMediaUrl();
     void startPlanUsesDirectMediaTargetAndFallbacks();
     void completionOpensPreferredFallbackAfterClearingActiveDocument();
     void completionFallsBackToPreviousCandidateWhenNoNextCandidateExists();
@@ -51,6 +52,23 @@ void TestDocumentSessionMediaDeletionPlan::startPlanRejectsEmptyCurrentUrl()
     QVERIFY(!plan.shouldStartDeletion);
     QVERIFY(plan.request.targetUrl.isEmpty());
     QVERIFY(!plan.fallbackPlan.hasTarget());
+}
+
+void TestDocumentSessionMediaDeletionPlan::fallbackPlanUsesOriginalDirectMediaUrl()
+{
+    std::vector<KiriView::MediaNavigationCandidate> candidates {
+        mediaCandidate(localUrl(QStringLiteral("/media/01.jpg"))),
+        mediaCandidate(localUrl(QStringLiteral("/media/03.png"))),
+    };
+    KiriView::sortMediaNavigationCandidates(&candidates);
+
+    const QUrl deletedUrl = localUrl(QStringLiteral("/media/02.mp4"));
+    const KiriView::DocumentSessionMediaDeletionFallbackPlan plan
+        = KiriView::documentSessionMediaDeletionFallbackPlan(candidates, deletedUrl);
+
+    QCOMPARE(plan.targetUrl, deletedUrl);
+    QCOMPARE(plan.preferredFallbackUrl.value(), localUrl(QStringLiteral("/media/03.png")));
+    QCOMPARE(plan.fallbackUrl.value(), localUrl(QStringLiteral("/media/01.jpg")));
 }
 
 void TestDocumentSessionMediaDeletionPlan::startPlanUsesDirectMediaTargetAndFallbacks()

@@ -9,6 +9,7 @@
 #include "session/documentsessiontypes.h"
 
 #include <QUrl>
+#include <optional>
 #include <vector>
 
 namespace KiriView {
@@ -25,10 +26,18 @@ enum class DocumentSessionMediaDeletionFollowUp {
     ReportFailure,
 };
 
+struct DocumentSessionMediaDeletionFallbackPlan {
+    QUrl targetUrl;
+    std::optional<QUrl> preferredFallbackUrl;
+    std::optional<QUrl> fallbackUrl;
+
+    bool hasTarget() const { return !targetUrl.isEmpty(); }
+};
+
 struct DocumentSessionMediaDeletionStartPlan {
     bool shouldStartDeletion = false;
     FileDeletionRequest request;
-    MediaDeletionFallbackPlan fallbackPlan;
+    DocumentSessionMediaDeletionFallbackPlan fallbackPlan;
 };
 
 struct DocumentSessionMediaDeletionCompletionPlan {
@@ -42,8 +51,10 @@ struct DocumentSessionMediaDeletionCompletionPlan {
 
 DocumentSessionMediaDeletionStartPlan documentSessionMediaDeletionStartPlan(FileDeletionMode mode,
     std::vector<MediaNavigationCandidate> candidates, const QUrl &currentUrl);
+DocumentSessionMediaDeletionFallbackPlan documentSessionMediaDeletionFallbackPlan(
+    std::vector<MediaNavigationCandidate> candidates, const QUrl &currentUrl);
 DocumentSessionMediaDeletionCompletionPlan documentSessionMediaDeletionCompletionPlan(
-    DocumentSessionKind currentKind, const MediaDeletionFallbackPlan &fallbackPlan,
+    DocumentSessionKind currentKind, const DocumentSessionMediaDeletionFallbackPlan &fallbackPlan,
     FileDeletionResult result);
 }
 

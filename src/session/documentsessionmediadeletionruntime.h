@@ -40,7 +40,7 @@ public:
 
 private:
     void finish(quint64 operationId, DocumentSessionKind documentKind,
-        const MediaDeletionFallbackPlan &fallbackPlan, FileDeletionResult result,
+        const DocumentSessionMediaDeletionFallbackPlan &fallbackPlan, FileDeletionResult result,
         const QString &errorString, const CompletionCallback &callback);
 
     FileOperationProvider m_fileOperationProvider;

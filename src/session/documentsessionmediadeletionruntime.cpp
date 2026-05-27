@@ -47,7 +47,7 @@ void DocumentSessionMediaDeletionRuntime::cancel()
 bool DocumentSessionMediaDeletionRuntime::active() const { return m_operation.active(); }
 
 void DocumentSessionMediaDeletionRuntime::finish(quint64 operationId,
-    DocumentSessionKind documentKind, const MediaDeletionFallbackPlan &fallbackPlan,
+    DocumentSessionKind documentKind, const DocumentSessionMediaDeletionFallbackPlan &fallbackPlan,
     FileDeletionResult result, const QString &errorString, const CompletionCallback &callback)
 {
     if (!m_operation.finish(operationId)) {

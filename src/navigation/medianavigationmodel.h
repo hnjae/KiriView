@@ -26,14 +26,6 @@ struct MediaNavigationBoundaryState {
     int count = 0;
 };
 
-struct MediaDeletionFallbackPlan {
-    QUrl targetUrl;
-    std::optional<QUrl> preferredFallbackUrl;
-    std::optional<QUrl> fallbackUrl;
-
-    bool hasTarget() const { return !targetUrl.isEmpty(); }
-};
-
 enum class MediaNavigationOpenKind {
     Previous,
     Next,
@@ -65,8 +57,6 @@ MediaNavigationBoundaryState mediaNavigationBoundaryState(
 MediaNavigationOpenPlan mediaNavigationOpenPlan(
     const std::vector<MediaNavigationCandidate> &candidates, const QUrl &currentUrl,
     MediaNavigationOpenRequest request);
-MediaDeletionFallbackPlan mediaDeletionFallbackPlan(
-    std::vector<MediaNavigationCandidate> candidates, const QUrl &currentUrl);
 void sortMediaNavigationCandidates(std::vector<MediaNavigationCandidate> *candidates);
 }
 

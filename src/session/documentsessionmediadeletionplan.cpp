@@ -7,6 +7,12 @@
 #include <utility>
 
 namespace {
+void appendDeletedMediaCandidate(
+    std::vector<KiriView::MediaNavigationCandidate> *candidates, const QUrl &currentUrl)
+{
+    candidates->push_back(KiriView::MediaNavigationCandidate { currentUrl, currentUrl.fileName() });
+}
+
 KiriView::DocumentSessionMediaDeletionDocumentClear clearDocumentForKind(
     KiriView::DocumentSessionKind kind)
 {
@@ -23,7 +29,7 @@ KiriView::DocumentSessionMediaDeletionDocumentClear clearDocumentForKind(
 }
 
 std::optional<QUrl> preferredMediaDeletionFallback(
-    const KiriView::MediaDeletionFallbackPlan &fallbackPlan)
+    const KiriView::DocumentSessionMediaDeletionFallbackPlan &fallbackPlan)
 {
     if (fallbackPlan.preferredFallbackUrl.has_value()) {
         return fallbackPlan.preferredFallbackUrl;
@@ -37,8 +43,8 @@ namespace KiriView {
 DocumentSessionMediaDeletionStartPlan documentSessionMediaDeletionStartPlan(
     FileDeletionMode mode, std::vector<MediaNavigationCandidate> candidates, const QUrl &currentUrl)
 {
-    const MediaDeletionFallbackPlan fallbackPlan
-        = mediaDeletionFallbackPlan(std::move(candidates), currentUrl);
+    const DocumentSessionMediaDeletionFallbackPlan fallbackPlan
+        = documentSessionMediaDeletionFallbackPlan(std::move(candidates), currentUrl);
     if (!fallbackPlan.hasTarget()) {
         return {};
     }
@@ -50,8 +56,28 @@ DocumentSessionMediaDeletionStartPlan documentSessionMediaDeletionStartPlan(
     };
 }
 
+DocumentSessionMediaDeletionFallbackPlan documentSessionMediaDeletionFallbackPlan(
+    std::vector<MediaNavigationCandidate> candidates, const QUrl &currentUrl)
+{
+    const QUrl identityUrl = mediaNavigationSourceUrl(currentUrl);
+    if (identityUrl.isEmpty()) {
+        return {};
+    }
+
+    if (!mediaNavigationCandidateIndex(candidates, identityUrl).has_value()) {
+        appendDeletedMediaCandidate(&candidates, identityUrl);
+        sortMediaNavigationCandidates(&candidates);
+    }
+
+    return DocumentSessionMediaDeletionFallbackPlan {
+        identityUrl,
+        adjacentMediaNavigationUrl(candidates, identityUrl, NavigationDirection::Next),
+        adjacentMediaNavigationUrl(candidates, identityUrl, NavigationDirection::Previous),
+    };
+}
+
 DocumentSessionMediaDeletionCompletionPlan documentSessionMediaDeletionCompletionPlan(
-    DocumentSessionKind currentKind, const MediaDeletionFallbackPlan &fallbackPlan,
+    DocumentSessionKind currentKind, const DocumentSessionMediaDeletionFallbackPlan &fallbackPlan,
     FileDeletionResult result)
 {
     switch (fileDeletionCompletionAction(result)) {
