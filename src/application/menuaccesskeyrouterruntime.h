@@ -40,7 +40,6 @@ private:
     bool handleKeyRelease(QKeyEvent *event);
     bool handleShortcutOverride(QKeyEvent *event);
     bool routeOpenMenuKey(QKeyEvent *event, MenuAccessKeyRoutingPhase phase);
-    MenuAccessKeyInputKind inputKind(const QKeyEvent &event) const;
     QObject *openMenuOrClearAccessKeys();
     void applySessionPlan(MenuAccessKeySessionPlan plan);
     bool executeSessionPlan(QKeyEvent *event, MenuAccessKeySessionPlan plan);

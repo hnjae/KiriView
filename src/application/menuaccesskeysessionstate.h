@@ -4,18 +4,13 @@
 #ifndef KIRIVIEW_MENUACCESSKEYSESSIONSTATE_H
 #define KIRIVIEW_MENUACCESSKEYSESSIONSTATE_H
 
+#include "application/menuaccesskeyinput.h"
+
 namespace KiriView {
 enum class MenuAccessKeyVisualEffect {
     None,
     Activate,
     Clear,
-};
-
-enum class MenuAccessKeyInputKind {
-    AltKey,
-    AltMnemonic,
-    Mnemonic,
-    Other,
 };
 
 enum class MenuAccessKeyRoutingPhase {

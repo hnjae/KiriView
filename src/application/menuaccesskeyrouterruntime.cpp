@@ -3,6 +3,8 @@
 
 #include "menuaccesskeyrouterruntime.h"
 
+#include "application/menuaccesskeyinput.h"
+
 #include <QEvent>
 #include <QKeyEvent>
 #include <QObject>
@@ -99,21 +101,8 @@ bool MenuAccessKeyRouterRuntime::routeOpenMenuKey(QKeyEvent *event, MenuAccessKe
         return false;
     }
 
-    return executeSessionPlan(event, m_accessKeySession.routeOpenMenuKey(inputKind(*event), phase));
-}
-
-MenuAccessKeyInputKind MenuAccessKeyRouterRuntime::inputKind(const QKeyEvent &event) const
-{
-    if (event.key() == Qt::Key_Alt) {
-        return MenuAccessKeyInputKind::AltKey;
-    }
-    if (MenuAccessKeyMenuRuntime::isAltMnemonicKeyPress(event)) {
-        return MenuAccessKeyInputKind::AltMnemonic;
-    }
-    if (MenuAccessKeyMenuRuntime::isMnemonicKeyPress(event)) {
-        return MenuAccessKeyInputKind::Mnemonic;
-    }
-    return MenuAccessKeyInputKind::Other;
+    return executeSessionPlan(
+        event, m_accessKeySession.routeOpenMenuKey(menuAccessKeyInputKind(*event), phase));
 }
 
 QObject *MenuAccessKeyRouterRuntime::openMenuOrClearAccessKeys()

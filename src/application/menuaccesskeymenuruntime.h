@@ -21,9 +21,6 @@ public:
     bool triggerMnemonic(QKeyEvent *event, bool accessKeySessionActive);
     void setAccessKeysActive(bool active);
 
-    static bool isMnemonicKeyPress(const QKeyEvent &event);
-    static bool isAltMnemonicKeyPress(const QKeyEvent &event);
-
 private:
     static bool isMenu(QObject *object);
     static bool isOpenMenu(QObject *object);

@@ -3,6 +3,8 @@
 
 #include "menuaccesskeymenuruntime.h"
 
+#include "application/menuaccesskeyinput.h"
+
 #include <QKeyEvent>
 #include <QKeySequence>
 #include <QMetaObject>
@@ -34,13 +36,13 @@ QObject *MenuAccessKeyMenuRuntime::openMenu() const
 bool MenuAccessKeyMenuRuntime::triggerMnemonic(QKeyEvent *event, bool accessKeySessionActive)
 {
     QObject *menu = openMenu();
-    if (menu == nullptr || !isMnemonicKeyPress(*event)) {
+    if (menu == nullptr || !menuAccessKeyIsMnemonicKeyPress(*event)) {
         return false;
     }
 
     QObject *item = menuItemForMnemonic(menu, *event);
     if (item == nullptr) {
-        return isAltMnemonicKeyPress(*event);
+        return menuAccessKeyIsAltMnemonicKeyPress(*event);
     }
 
     QObject *subMenu = subMenuForItem(item);
@@ -84,23 +86,6 @@ bool MenuAccessKeyMenuRuntime::isEnabledMenuItem(QObject *object)
 {
     const QVariant enabled = object->property("enabled");
     return !enabled.isValid() || enabled.toBool();
-}
-
-bool MenuAccessKeyMenuRuntime::isMnemonicKeyPress(const QKeyEvent &event)
-{
-    if (event.key() == Qt::Key_Alt) {
-        return false;
-    }
-
-    Qt::KeyboardModifiers modifiers = event.modifiers();
-    modifiers
-        &= ~(Qt::AltModifier | Qt::ShiftModifier | Qt::KeypadModifier | Qt::GroupSwitchModifier);
-    return modifiers == Qt::NoModifier;
-}
-
-bool MenuAccessKeyMenuRuntime::isAltMnemonicKeyPress(const QKeyEvent &event)
-{
-    return isMnemonicKeyPress(event) && (event.modifiers() & Qt::AltModifier);
 }
 
 QQuickItem *MenuAccessKeyMenuRuntime::itemAt(QObject *menu, int index)

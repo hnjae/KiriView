@@ -111,6 +111,7 @@ src/navigation/imagenavigationmodel.cpp
 src/navigation/imagenavigationservice.cpp
 src/navigation/imagepagenavigationcontroller.cpp
 src/localization/localization.cpp
+src/application/menuaccesskeyinput.cpp
 src/application/menuaccesskeymenuruntime.cpp
 src/application/menuaccesskeyrouterruntime.cpp
 src/facade/menuaccesskeyrouter.cpp
