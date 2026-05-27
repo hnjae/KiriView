@@ -32,6 +32,8 @@ enum class ActionId {
     ViewRotateCounterclockwiseAction,
     ViewToggleTwoPageModeAction,
     ViewToggleRightToLeftReadingAction,
+    ViewToggleInfoPanelAction,
+    ViewToggleThumbnailPanelAction,
     ViewPanTopLeftAction,
     ViewPanBottomRightAction,
     ViewScanForwardAction,

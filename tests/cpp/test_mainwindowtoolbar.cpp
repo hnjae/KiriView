@@ -38,6 +38,7 @@ private Q_SLOTS:
     void startupCreatesOneVisibleToolbarWithDisabledMediaControls();
     void directImageShowsMediaPositionAfterSiblingListing();
     void directoryImageDocumentShowsPagePosition();
+    void panelActionsToggleResizablePanels();
     void fullscreenReusesSingleToolbarAndHidesApplicationMenuButton();
 };
 
@@ -120,6 +121,11 @@ KiriDocumentSession *findDocumentSession(QObject *root)
 {
     return root->findChild<KiriDocumentSession *>(
         QStringLiteral("documentSession"), Qt::FindChildrenRecursively);
+}
+
+KiriViewApplication *findApplication(QObject *root)
+{
+    return root->findChild<KiriViewApplication *>(QString(), Qt::FindChildrenRecursively);
 }
 
 bool writeTestPng(const QString &path)
@@ -313,6 +319,55 @@ void TestMainWindowToolBar::directoryImageDocumentShowsPagePosition()
     openSourceUrl(fixture, sourcePath);
 
     compareToolbarPageReadout(fixture, QStringLiteral("1"), QStringLiteral("3"), true);
+}
+
+void TestMainWindowToolBar::panelActionsToggleResizablePanels()
+{
+    MainWindowFixture fixture = createMainWindowFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+
+    KiriViewApplication *application = findApplication(fixture.window);
+    QVERIFY(application != nullptr);
+    QAction *infoPanelAction
+        = application->actionForId(KiriViewApplication::ViewToggleInfoPanelAction);
+    QAction *thumbnailPanelAction
+        = application->actionForId(KiriViewApplication::ViewToggleThumbnailPanelAction);
+    QVERIFY(infoPanelAction != nullptr);
+    QVERIFY(thumbnailPanelAction != nullptr);
+
+    QQuickItem *contentSplitView
+        = findQuickItem(fixture.window, QStringLiteral("contentSplitView"));
+    QQuickItem *mediaPanelSplitView
+        = findQuickItem(fixture.window, QStringLiteral("mediaPanelSplitView"));
+    QQuickItem *infoPanel = findQuickItem(fixture.window, QStringLiteral("infoPanel"));
+    QQuickItem *thumbnailPanel = findQuickItem(fixture.window, QStringLiteral("thumbnailPanel"));
+    QVERIFY(contentSplitView != nullptr);
+    QVERIFY(mediaPanelSplitView != nullptr);
+    QVERIFY(infoPanel != nullptr);
+    QVERIFY(thumbnailPanel != nullptr);
+    QVERIFY(!infoPanel->isVisible());
+    QVERIFY(!thumbnailPanel->isVisible());
+
+    infoPanelAction->trigger();
+    QTRY_VERIFY(infoPanel->isVisible());
+    QVERIFY(!thumbnailPanel->isVisible());
+    QVERIFY(infoPanel->width() > 0);
+    QTRY_VERIFY(qAbs(infoPanel->height() - contentSplitView->height()) <= 1.0);
+
+    thumbnailPanelAction->trigger();
+    QTRY_VERIFY(thumbnailPanel->isVisible());
+    QVERIFY(thumbnailPanel->height() > 0);
+    QVERIFY(thumbnailPanel->width() <= mediaPanelSplitView->width());
+
+    fixture.window->setVisibility(QWindow::FullScreen);
+    QTRY_COMPARE(fixture.window->visibility(), QWindow::FullScreen);
+    QTRY_VERIFY(infoPanel->isVisible());
+    QTRY_VERIFY(thumbnailPanel->isVisible());
+
+    infoPanelAction->trigger();
+    thumbnailPanelAction->trigger();
+    QTRY_VERIFY(!infoPanel->isVisible());
+    QTRY_VERIFY(!thumbnailPanel->isVisible());
 }
 
 void TestMainWindowToolBar::fullscreenReusesSingleToolbarAndHidesApplicationMenuButton()

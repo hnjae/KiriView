@@ -328,6 +328,10 @@ void TestKiriViewApplication::shortcutsApiReturnsCurrentShortcuts()
         QList<QKeySequence>({ shortcut(QStringLiteral("Ctrl+S")) }));
     QCOMPARE(application.shortcuts(QStringLiteral("view_toggle_right_to_left_reading")),
         QList<QKeySequence>({ shortcut(QStringLiteral("Ctrl+B")) }));
+    QCOMPARE(application.shortcuts(QStringLiteral("view_toggle_info_panel")),
+        QList<QKeySequence>({ shortcut(QStringLiteral("Ctrl+I")) }));
+    QCOMPARE(application.shortcuts(QStringLiteral("view_toggle_thumbnail_panel")),
+        QList<QKeySequence>({ shortcut(QStringLiteral("Ctrl+T")) }));
     QCOMPARE(application.shortcuts(QStringLiteral("view_rotate_clockwise")),
         QList<QKeySequence>({ shortcut(QStringLiteral("Ctrl+R")) }));
     QCOMPARE(application.shortcuts(QStringLiteral("view_rotate_counterclockwise")),

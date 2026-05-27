@@ -218,6 +218,26 @@ Controls.MenuBar {
         }
 
         MenuActionItem {
+            action: root.actions.infoPanelMenuAction ?? null
+            checkable: true
+            checked: root.actions.infoPanelMenuAction?.checked ?? false
+            text: KI18n.i18nc("@action:inmenu", "Show &Info Panel")
+            visible: root.actions.infoPanelMenuAction !== undefined
+        }
+
+        MenuActionItem {
+            action: root.actions.thumbnailPanelMenuAction ?? null
+            checkable: true
+            checked: root.actions.thumbnailPanelMenuAction?.checked ?? false
+            text: KI18n.i18nc("@action:inmenu", "Show &Thumbnail Panel")
+            visible: root.actions.thumbnailPanelMenuAction !== undefined
+        }
+
+        Controls.MenuSeparator {
+            visible: root.actions.infoPanelMenuAction !== undefined || root.actions.thumbnailPanelMenuAction !== undefined
+        }
+
+        MenuActionItem {
             action: root.actions.fullscreenMenuAction
             checkable: true
             checked: root.fullscreen

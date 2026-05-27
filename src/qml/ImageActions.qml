@@ -14,6 +14,8 @@ Item {
     required property KiriDocumentSession documentSession
     required property KiriImageDocument imageDocument
     required property bool fullscreen
+    property bool infoPanelVisible: false
+    property bool thumbnailPanelVisible: false
 
     readonly property var openAction: openManagedAction.proxy
     readonly property var moveToTrashAction: moveToTrashManagedAction.proxy
@@ -32,6 +34,8 @@ Item {
     readonly property var rotateCounterclockwiseAction: rotateCounterclockwiseManagedAction.proxy
     readonly property var twoPageModeAction: twoPageModeManagedAction.proxy
     readonly property var rightToLeftReadingAction: rightToLeftReadingManagedAction.proxy
+    readonly property var infoPanelAction: infoPanelManagedAction.proxy
+    readonly property var thumbnailPanelAction: thumbnailPanelManagedAction.proxy
     readonly property var zoomInAction: zoomInManagedAction.proxy
     readonly property var zoomOutAction: zoomOutManagedAction.proxy
     readonly property var scanForwardAction: scanForwardManagedAction.proxy
@@ -58,6 +62,8 @@ Item {
     readonly property var rotateCounterclockwiseMenuAction: rotateCounterclockwiseManagedAction.menuProxy
     readonly property var twoPageModeMenuAction: twoPageModeManagedAction.menuProxy
     readonly property var rightToLeftReadingMenuAction: rightToLeftReadingManagedAction.menuProxy
+    readonly property var infoPanelMenuAction: infoPanelManagedAction.menuProxy
+    readonly property var thumbnailPanelMenuAction: thumbnailPanelManagedAction.menuProxy
     readonly property var zoomInMenuAction: zoomInManagedAction.menuProxy
     readonly property var zoomOutMenuAction: zoomOutManagedAction.menuProxy
     readonly property var fullscreenMenuAction: fullscreenManagedAction.menuProxy
@@ -78,12 +84,14 @@ Item {
     readonly property var applicationMenuNavigationActions: root.rightToLeftReadingActive ? [nextContainerManagedAction.menuProxy, previousContainerManagedAction.menuProxy] : [previousContainerManagedAction.menuProxy, nextContainerManagedAction.menuProxy]
     readonly property var applicationMenuDocumentActions: root.imageMode || root.videoMode ? [applicationMenuNavigationSeparator, previousImageManagedAction.menuProxy, nextImageManagedAction.menuProxy, firstImageManagedAction.menuProxy, lastImageManagedAction.menuProxy] : []
     readonly property var applicationMenuImageActions: root.imageMode ? root.applicationMenuNavigationActions.concat([rotateClockwiseManagedAction.menuProxy, rotateCounterclockwiseManagedAction.menuProxy, twoPageModeManagedAction.menuProxy, rightToLeftReadingManagedAction.menuProxy]) : []
-    readonly property var applicationMenuActions: [openManagedAction.menuProxy, applicationMenuFileSeparator, moveToTrashManagedAction.menuProxy, deleteFileManagedAction.menuProxy].concat(root.applicationMenuDocumentActions, root.applicationMenuImageActions, [applicationMenuViewSeparator, fullscreenManagedAction.menuProxy, applicationMenuSettingsSeparator, showMenubarManagedAction.menuProxy, configureShortcutsManagedAction.menuProxy, applicationMenuHelpSeparator, shortcutHelpManagedAction.menuProxy, applicationMenuQuitSeparator, quitManagedAction.menuProxy])
+    readonly property var applicationMenuActions: [openManagedAction.menuProxy, applicationMenuFileSeparator, moveToTrashManagedAction.menuProxy, deleteFileManagedAction.menuProxy].concat(root.applicationMenuDocumentActions, root.applicationMenuImageActions, [applicationMenuViewSeparator, infoPanelManagedAction.menuProxy, thumbnailPanelManagedAction.menuProxy, fullscreenManagedAction.menuProxy, applicationMenuSettingsSeparator, showMenubarManagedAction.menuProxy, configureShortcutsManagedAction.menuProxy, applicationMenuHelpSeparator, shortcutHelpManagedAction.menuProxy, applicationMenuQuitSeparator, quitManagedAction.menuProxy])
 
     signal openDialogRequested
     signal imageBoundaryReached(string message)
     signal shortcutHelpRequested
     signal toggleFullScreenRequested
+    signal toggleInfoPanelRequested
+    signal toggleThumbnailPanelRequested
 
     function activeFirstMenuText() {
         return root.documentSession.activeNavigationBoundaryScope === KiriDocumentSession.MediaNavigationBoundary ? KI18n.i18nc("@action:inmenu", "&First Media Item") : "";
@@ -370,6 +378,38 @@ Item {
         toolbarText: KI18n.i18nc("@action:button", "&Right-to-Left")
 
         onTriggered: root.imageDocument.rightToLeftReadingEnabled = !root.imageDocument.rightToLeftReadingEnabled
+    }
+
+    ManagedAction {
+        id: infoPanelManagedAction
+
+        actionChecked: root.infoPanelVisible
+        actionEnabled: root.actionAvailability.helpShortcutsEnabled
+        actionId: KiriViewApplication.ViewToggleInfoPanelAction
+        application: root.application
+        bindChecked: true
+        bindEnabled: true
+        menuText: KI18n.i18nc("@action:inmenu", "Show &Info Panel")
+        proxyCheckable: true
+        proxyChecked: root.infoPanelVisible
+
+        onTriggered: root.toggleInfoPanelRequested()
+    }
+
+    ManagedAction {
+        id: thumbnailPanelManagedAction
+
+        actionChecked: root.thumbnailPanelVisible
+        actionEnabled: root.actionAvailability.helpShortcutsEnabled
+        actionId: KiriViewApplication.ViewToggleThumbnailPanelAction
+        application: root.application
+        bindChecked: true
+        bindEnabled: true
+        menuText: KI18n.i18nc("@action:inmenu", "Show &Thumbnail Panel")
+        proxyCheckable: true
+        proxyChecked: root.thumbnailPanelVisible
+
+        onTriggered: root.toggleThumbnailPanelRequested()
     }
 
     ManagedAction {

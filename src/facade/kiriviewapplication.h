@@ -59,6 +59,8 @@ public:
         ViewRotateCounterclockwiseAction,
         ViewToggleTwoPageModeAction,
         ViewToggleRightToLeftReadingAction,
+        ViewToggleInfoPanelAction,
+        ViewToggleThumbnailPanelAction,
         ViewPanTopLeftAction,
         ViewPanBottomRightAction,
         ViewScanForwardAction,

@@ -4,6 +4,7 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
+import QtQuick.Controls as Controls
 import QtQuick.Dialogs as Dialogs
 import io.github.hnjae.kiriview
 import org.kde.ki18n
@@ -212,6 +213,8 @@ StatefulApp.StatefulWindow {
         readonly property bool imageReady: imageMode && imageDocument.status === KiriImageDocument.Ready
         readonly property point fullscreenPointerPosition: fullscreenRevealHandler.point.position
         property bool documentDeletionWasInProgress: false
+        property bool infoPanelVisible: false
+        property bool thumbnailPanelVisible: false
 
         background: Rectangle {
             color: imageViewTheme.darkBackgroundColor
@@ -232,59 +235,110 @@ StatefulApp.StatefulWindow {
             readonly property color darkBackgroundColor: lightColorScheme ? viewTextColor : viewBackgroundColor
         }
 
-        ImageViewport {
-            id: imageViewport
+        Controls.SplitView {
+            id: contentSplitView
 
+            objectName: "contentSplitView"
             anchors.bottom: parent.bottom
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: root.fullscreen ? parent.top : mainImageToolBar.bottom
-            imageDocument: documentSession.imageDocument
-            presentationActive: page.imageMode
-            visible: !page.videoMode
+            orientation: Qt.Horizontal
 
-            onViewerClicked: {
-                if (root.activeImageToolBar().commitTextInputEditing(true)) {
-                    return;
+            Controls.SplitView {
+                id: mediaPanelSplitView
+
+                objectName: "mediaPanelSplitView"
+                orientation: Qt.Vertical
+                Controls.SplitView.fillWidth: true
+                Controls.SplitView.minimumWidth: Kirigami.Units.gridUnit * 8
+
+                Item {
+                    id: mediaViewportSlot
+
+                    objectName: "mediaViewportSlot"
+                    clip: true
+                    Controls.SplitView.fillHeight: true
+                    Controls.SplitView.minimumHeight: Kirigami.Units.gridUnit * 6
+
+                    ImageViewport {
+                        id: imageViewport
+
+                        anchors.fill: parent
+                        imageDocument: documentSession.imageDocument
+                        presentationActive: page.imageMode
+                        visible: !page.videoMode
+
+                        onViewerClicked: {
+                            if (root.activeImageToolBar().commitTextInputEditing(true)) {
+                                return;
+                            }
+
+                            root.focusActiveViewport();
+                        }
+                    }
+
+                    Loader {
+                        id: videoViewportLoader
+
+                        anchors.fill: parent
+                        active: page.videoMode
+
+                        function ensureVideoViewportLoaded() {
+                            if (!active) {
+                                source = "";
+                                return;
+                            }
+
+                            if (source.toString().length === 0) {
+                                setSource(Qt.resolvedUrl("VideoViewport.qml"), {
+                                    "videoDocument": page.videoDocument
+                                });
+                            }
+                        }
+
+                        function forceVideoViewportFocus() {
+                            // Dynamic VideoViewport access keeps QtMultimedia out of image startup.
+                            // qmllint disable missing-property
+                            if (item !== null) {
+                                item["forceActiveFocus"]();
+                            }
+                            // qmllint enable missing-property
+                        }
+
+                        Component.onCompleted: ensureVideoViewportLoaded()
+                        onActiveChanged: ensureVideoViewportLoaded()
+                    }
+
+                    ImageStateOverlay {
+                        anchors.fill: parent
+                        imageDocument: page.imageDocument
+                        imageReady: page.imageReady
+                        openAction: imageActions.openAction
+                        visible: !page.videoMode
+                    }
                 }
 
-                root.focusActiveViewport();
+                ThumbnailPanel {
+                    id: thumbnailPanel
+
+                    objectName: "thumbnailPanel"
+                    visible: page.thumbnailPanelVisible
+                    Controls.SplitView.maximumHeight: Kirigami.Units.gridUnit * 8
+                    Controls.SplitView.minimumHeight: Kirigami.Units.gridUnit * 4
+                    Controls.SplitView.preferredHeight: Math.min(Kirigami.Units.gridUnit * 8, Math.max(Kirigami.Units.gridUnit * 5, mediaPanelSplitView.height * 0.22))
+                }
             }
-        }
 
-        Loader {
-            id: videoViewportLoader
+            InfoPanel {
+                id: infoPanel
 
-            anchors.bottom: parent.bottom
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: root.fullscreen ? parent.top : mainImageToolBar.bottom
-            active: page.videoMode
-
-            function ensureVideoViewportLoaded() {
-                if (!active) {
-                    source = "";
-                    return;
-                }
-
-                if (source.toString().length === 0) {
-                    setSource(Qt.resolvedUrl("VideoViewport.qml"), {
-                        "videoDocument": page.videoDocument
-                    });
-                }
+                objectName: "infoPanel"
+                visible: page.infoPanelVisible
+                Controls.SplitView.maximumWidth: Kirigami.Units.gridUnit * 18
+                Controls.SplitView.minimumWidth: Kirigami.Units.gridUnit * 8
+                Controls.SplitView.preferredWidth: Math.min(Kirigami.Units.gridUnit * 18, Math.max(Kirigami.Units.gridUnit * 10, contentSplitView.width * 0.3))
             }
-
-            function forceVideoViewportFocus() {
-                // Dynamic VideoViewport access keeps QtMultimedia out of image startup.
-                // qmllint disable missing-property
-                if (item !== null) {
-                    item["forceActiveFocus"]();
-                }
-                // qmllint enable missing-property
-            }
-
-            Component.onCompleted: ensureVideoViewportLoaded()
-            onActiveChanged: ensureVideoViewportLoaded()
         }
 
         ImageActionAvailability {
@@ -311,6 +365,8 @@ StatefulApp.StatefulWindow {
             documentSession: documentSession
             fullscreen: root.fullscreen
             imageDocument: page.imageDocument
+            infoPanelVisible: page.infoPanelVisible
+            thumbnailPanelVisible: page.thumbnailPanelVisible
 
             onImageBoundaryReached: function (message) {
                 toastNotification.show(message, "image-boundary");
@@ -318,6 +374,8 @@ StatefulApp.StatefulWindow {
             onOpenDialogRequested: fileDialog.open()
             onShortcutHelpRequested: shortcutHelpDialog.open()
             onToggleFullScreenRequested: root.toggleFullScreen()
+            onToggleInfoPanelRequested: page.infoPanelVisible = !page.infoPanelVisible
+            onToggleThumbnailPanelRequested: page.thumbnailPanelVisible = !page.thumbnailPanelVisible
         }
 
         onFullscreenPointerPositionChanged: {
@@ -398,17 +456,6 @@ StatefulApp.StatefulWindow {
                     toastNotification.show(KI18n.i18nc("@info:status", "This action is not available for videos"), "unsupported-video-action");
                 }
             }
-        }
-
-        ImageStateOverlay {
-            anchors.bottom: parent.bottom
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.top: root.fullscreen ? parent.top : mainImageToolBar.bottom
-            imageDocument: page.imageDocument
-            imageReady: page.imageReady
-            openAction: imageActions.openAction
-            visible: !page.videoMode
         }
 
         ToastNotification {

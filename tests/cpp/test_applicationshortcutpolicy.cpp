@@ -217,6 +217,14 @@ void TestApplicationShortcutPolicy::actionDefinitionsOwnApplicationShortcutRoute
         Scope::ReadyViewerShortcutScope));
     QVERIFY(hasRouteSpec(ActionId::ViewToggleRightToLeftReadingAction, Filter::WithCommandModifier,
         Scope::RightToLeftReadingShortcutScope));
+    QVERIFY(hasRouteSpec(ActionId::ViewToggleInfoPanelAction, Filter::WithCommandModifier,
+        Scope::HelpShortcutScope));
+    QVERIFY(hasRouteSpec(ActionId::ViewToggleThumbnailPanelAction, Filter::WithCommandModifier,
+        Scope::HelpShortcutScope));
+    QVERIFY(!hasRouteSpec(
+        ActionId::ViewToggleInfoPanelAction, Filter::ShortcutAliases, Scope::ViewerShortcutScope));
+    QVERIFY(!hasRouteSpec(ActionId::ViewToggleThumbnailPanelAction, Filter::ShortcutAliases,
+        Scope::ViewerShortcutScope));
     QVERIFY(hasRouteSpec(ActionId::GoPreviousImageAction, Filter::WithCommandModifier,
         Scope::ImageSelectionShortcutScope));
     QVERIFY(hasRouteSpec(
