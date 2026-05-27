@@ -31,6 +31,7 @@ src/bridge/imageinputclassificationconversion.cpp
 src/bridge/imageopenworkflowconversion.cpp
 src/bridge/imagespreadpolicyconversion.cpp
 src/bridge/imagezoomstateconversion.cpp
+src/bridge/predecodepolicyconversion.cpp
 src/rendering/displayedimagesurfacestate.cpp
 src/document/filedeletion.cpp
 src/document/mediaopenwith.cpp

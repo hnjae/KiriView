@@ -1,0 +1,28 @@
+// SPDX-FileCopyrightText: 2026 KIM Hyunjae
+// SPDX-License-Identifier: AGPL-3.0-or-later
+
+#ifndef KIRIVIEW_BRIDGE_PREDECODEPOLICYCONVERSION_H
+#define KIRIVIEW_BRIDGE_PREDECODEPOLICYCONVERSION_H
+
+#include "kiriview/src/policy/predecodepolicy.cxx.h"
+#include "predecode/predecodepolicy.h"
+
+namespace KiriView::Bridge {
+RustPredecodeDocumentKind rustPredecodeDocumentKind(PredecodeDocumentKind kind);
+PredecodeDocumentKind predecodeDocumentKindFromRust(RustPredecodeDocumentKind kind);
+RustPredecodeMomentumMode rustPredecodeMomentumMode(PredecodeMomentumMode mode);
+PredecodeMomentumMode predecodeMomentumModeFromRust(RustPredecodeMomentumMode mode);
+RustPredecodeMomentumDirection rustPredecodeMomentumDirection(PredecodeMomentumDirection direction);
+PredecodeMomentumDirection predecodeMomentumDirectionFromRust(
+    RustPredecodeMomentumDirection direction);
+RustPredecodePolicyInput rustPredecodePolicyInput(PredecodePolicyInput input);
+RustPredecodeMomentumState rustPredecodeMomentumState(PredecodeMomentumState state);
+PredecodeMomentumState predecodeMomentumStateFromRust(const RustPredecodeMomentumState &state);
+RustPredecodeCachedImageState rustPredecodeCachedImageState(const PredecodeCachedImageState &state);
+RustPredecodeWindowLoadState rustPredecodeWindowLoadState(const PredecodeWindowLoadState &state);
+RustPredecodeQueuedLoadState rustPredecodeQueuedLoadState(const PredecodeQueuedLoadState &state);
+PredecodeSchedulePlan predecodeSchedulePlanFromRust(const RustPredecodeSchedulePlan &plan);
+PredecodeQueuedLoadPlan predecodeQueuedLoadPlanFromRust(const RustPredecodeQueuedLoadPlan &plan);
+}
+
+#endif
