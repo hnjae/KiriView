@@ -289,7 +289,7 @@ void VideoDocumentRuntime::updateStatusFromBackend()
         m_mediaBackend != nullptr ? m_mediaBackend->mediaStatus() : VideoMediaStatus::Null,
     });
     m_state.setEnded(plan.ended);
-    if (plan.stopPublicPlayback) {
+    if (plan.clearPlaying) {
         m_state.setPlaying(false);
     }
     m_state.setStatus(plan.status);

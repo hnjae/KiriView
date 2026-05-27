@@ -26,8 +26,8 @@ private Q_SLOTS:
     void staleResolverCompletionsAreIgnored();
     void resolverCleanupRunsOnSourceChangeAndDestruction();
     void videoSizeFollowsBackendMetadata();
-    void naturalPlaybackEndKeepsFinalPositionWithoutStopping();
-    void playAfterNaturalEndRestartsFromBeginningWhenSeekable();
+    void naturalPlaybackEndKeepsPresentationReadyWithoutBackendStop();
+    void playAfterEndedPresentationRestartsFromBeginningWhenSeekable();
     void seekByClampsToKnownDuration();
     void seekByNoopsWhenNotSeekable();
     void videoOutputDetachAndDestructionClearBackendOutput();
@@ -414,7 +414,7 @@ void TestVideoDocumentRuntime::videoSizeFollowsBackendMetadata()
     QCOMPARE(fixture.runtime->videoSize(), QSize());
 }
 
-void TestVideoDocumentRuntime::naturalPlaybackEndKeepsFinalPositionWithoutStopping()
+void TestVideoDocumentRuntime::naturalPlaybackEndKeepsPresentationReadyWithoutBackendStop()
 {
     RuntimeFixture fixture;
     const QUrl sourceUrl = QUrl::fromLocalFile(QStringLiteral("/home/me/clip.mp4"));
@@ -435,7 +435,7 @@ void TestVideoDocumentRuntime::naturalPlaybackEndKeepsFinalPositionWithoutStoppi
     QCOMPARE(fixture.backend->stopCount, stopCountBeforeEnd);
 }
 
-void TestVideoDocumentRuntime::playAfterNaturalEndRestartsFromBeginningWhenSeekable()
+void TestVideoDocumentRuntime::playAfterEndedPresentationRestartsFromBeginningWhenSeekable()
 {
     RuntimeFixture fixture;
     const QUrl sourceUrl = QUrl::fromLocalFile(QStringLiteral("/home/me/clip.mp4"));

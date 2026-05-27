@@ -14,7 +14,7 @@ class TestVideoDocumentStatusPlan : public QObject
 private Q_SLOTS:
     void sourceAndResolverStateTakePrecedenceOverBackendStatus();
     void mediaStatusMapsToPublicDocumentStatus();
-    void naturalEndStopsPublicPlaybackWithoutChangingReadyStatus();
+    void naturalEndClearsPlayingWithoutChangingReadyStatus();
 };
 
 namespace {
@@ -40,7 +40,7 @@ void TestVideoDocumentStatusPlan::sourceAndResolverStateTakePrecedenceOverBacken
         });
     QCOMPARE(noSourcePlan.status, KiriView::VideoDocumentStatus::Null);
     QVERIFY(!noSourcePlan.ended);
-    QVERIFY(!noSourcePlan.stopPublicPlayback);
+    QVERIFY(!noSourcePlan.clearPlaying);
 
     const KiriView::VideoDocumentStatusPlan sourceLoadPlan
         = KiriView::videoDocumentStatusPlan(KiriView::VideoDocumentStatusSnapshot {
@@ -51,7 +51,7 @@ void TestVideoDocumentStatusPlan::sourceAndResolverStateTakePrecedenceOverBacken
         });
     QCOMPARE(sourceLoadPlan.status, KiriView::VideoDocumentStatus::Loading);
     QVERIFY(!sourceLoadPlan.ended);
-    QVERIFY(!sourceLoadPlan.stopPublicPlayback);
+    QVERIFY(!sourceLoadPlan.clearPlaying);
 
     const KiriView::VideoDocumentStatusPlan missingBackendPlan
         = KiriView::videoDocumentStatusPlan(KiriView::VideoDocumentStatusSnapshot {
@@ -62,7 +62,7 @@ void TestVideoDocumentStatusPlan::sourceAndResolverStateTakePrecedenceOverBacken
         });
     QCOMPARE(missingBackendPlan.status, KiriView::VideoDocumentStatus::Loading);
     QVERIFY(!missingBackendPlan.ended);
-    QVERIFY(!missingBackendPlan.stopPublicPlayback);
+    QVERIFY(!missingBackendPlan.clearPlaying);
 }
 
 void TestVideoDocumentStatusPlan::mediaStatusMapsToPublicDocumentStatus()
@@ -86,18 +86,18 @@ void TestVideoDocumentStatusPlan::mediaStatusMapsToPublicDocumentStatus()
 
         QCOMPARE(plan.status, testCase.documentStatus);
         QVERIFY(!plan.ended);
-        QVERIFY(!plan.stopPublicPlayback);
+        QVERIFY(!plan.clearPlaying);
     }
 }
 
-void TestVideoDocumentStatusPlan::naturalEndStopsPublicPlaybackWithoutChangingReadyStatus()
+void TestVideoDocumentStatusPlan::naturalEndClearsPlayingWithoutChangingReadyStatus()
 {
     const KiriView::VideoDocumentStatusPlan plan
         = planForMediaStatus(KiriView::VideoMediaStatus::EndOfMedia);
 
     QCOMPARE(plan.status, KiriView::VideoDocumentStatus::Ready);
     QVERIFY(plan.ended);
-    QVERIFY(plan.stopPublicPlayback);
+    QVERIFY(plan.clearPlaying);
 }
 
 QTEST_GUILESS_MAIN(TestVideoDocumentStatusPlan)
