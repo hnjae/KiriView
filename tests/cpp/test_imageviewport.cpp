@@ -37,6 +37,11 @@ private Q_SLOTS:
     void rightButtonWheelZoomsFromViewportMarginAroundNearestImagePoint();
     void plainWheelStillPansWhileImageIsPannable();
     void fittedFractionalDisplayDoesNotEnableHorizontalPanning();
+    void doubleClickTogglesFitToActualSize();
+    void doubleClickTogglesManualZoomToFit();
+    void doubleClickTogglesFitHeightToFit();
+    void doubleClickFromViewportMarginZoomsAroundNearestImagePoint();
+    void singleClickStillEmitsViewerClicked();
 };
 
 namespace {
@@ -63,6 +68,7 @@ class FakeKiriImageDocument : public QObject
     Q_PROPERTY(QSizeF primaryDisplaySize READ primaryDisplaySize NOTIFY displaySizeChanged)
     Q_PROPERTY(QSizeF secondaryDisplaySize READ secondaryDisplaySize CONSTANT)
     Q_PROPERTY(double zoomPercent READ zoomPercent WRITE setZoomPercent NOTIFY zoomPercentChanged)
+    Q_PROPERTY(ZoomMode zoomMode READ zoomMode NOTIFY zoomModeChanged)
     Q_PROPERTY(int minimumManualZoomPercent READ minimumManualZoomPercent CONSTANT)
     Q_PROPERTY(int maximumManualZoomPercent READ maximumManualZoomPercent CONSTANT)
     Q_PROPERTY(bool secondaryPageVisible READ secondaryPageVisible CONSTANT)
@@ -77,6 +83,14 @@ public:
         Error,
     };
     Q_ENUM(Status)
+
+    enum class ZoomMode {
+        Fit,
+        FitHeight,
+        FitWidth,
+        Manual,
+    };
+    Q_ENUM(ZoomMode)
 
     explicit FakeKiriImageDocument(QObject *parent = nullptr)
         : QObject(parent)
@@ -148,16 +162,26 @@ public:
     double zoomPercent() const { return m_zoomPercent; }
     void setZoomPercent(double zoomPercent)
     {
-        if (std::abs(m_zoomPercent - zoomPercent) < 0.001) {
+        const double nextZoomPercent = clampedManualZoomPercent(zoomPercent);
+        const bool zoomChanged = std::abs(m_zoomPercent - nextZoomPercent) >= 0.001;
+        const bool modeChanged = m_zoomMode != ZoomMode::Manual;
+        if (!zoomChanged && !modeChanged) {
             return;
         }
 
-        m_zoomPercent = zoomPercent;
-        Q_EMIT zoomPercentChanged();
-        Q_EMIT displaySizeChanged();
+        m_zoomMode = ZoomMode::Manual;
+        m_zoomPercent = nextZoomPercent;
+        if (modeChanged) {
+            Q_EMIT zoomModeChanged();
+        }
+        if (zoomChanged) {
+            Q_EMIT zoomPercentChanged();
+            Q_EMIT displaySizeChanged();
+        }
         Q_EMIT viewportFrameChanged();
     }
 
+    ZoomMode zoomMode() const { return m_zoomMode; }
     int minimumManualZoomPercent() const { return 10; }
     int maximumManualZoomPercent() const { return 1000; }
     bool secondaryPageVisible() const { return false; }
@@ -171,6 +195,37 @@ public:
             static_cast<double>(maximumManualZoomPercent()));
     }
 
+    Q_INVOKABLE double clampedManualZoomPercent(double zoomPercent) const
+    {
+        return std::clamp(zoomPercent, static_cast<double>(minimumManualZoomPercent()),
+            static_cast<double>(maximumManualZoomPercent()));
+    }
+
+    Q_INVOKABLE void setFitMode(ZoomMode zoomMode)
+    {
+        if (zoomMode == ZoomMode::Manual) {
+            return;
+        }
+
+        const double nextZoomPercent = fitZoomPercent(zoomMode);
+        const bool modeChanged = m_zoomMode != zoomMode;
+        const bool zoomChanged = std::abs(m_zoomPercent - nextZoomPercent) >= 0.001;
+        if (!modeChanged && !zoomChanged) {
+            return;
+        }
+
+        m_zoomMode = zoomMode;
+        m_zoomPercent = nextZoomPercent;
+        if (modeChanged) {
+            Q_EMIT zoomModeChanged();
+        }
+        if (zoomChanged) {
+            Q_EMIT zoomPercentChanged();
+            Q_EMIT displaySizeChanged();
+        }
+        Q_EMIT viewportFrameChanged();
+    }
+
     static QSize imageSize() { return QSize(1000, 1000); }
 
 Q_SIGNALS:
@@ -181,8 +236,30 @@ Q_SIGNALS:
     void visibleItemRectChanged();
     void displaySizeChanged();
     void zoomPercentChanged();
+    void zoomModeChanged();
 
 private:
+    double fitZoomPercent(ZoomMode zoomMode) const
+    {
+        if (m_viewportSize.isEmpty()) {
+            return 100.0;
+        }
+
+        switch (zoomMode) {
+        case ZoomMode::Fit:
+            return std::min(m_viewportSize.width() * 100.0 / imageSize().width(),
+                m_viewportSize.height() * 100.0 / imageSize().height());
+        case ZoomMode::FitHeight:
+            return m_viewportSize.height() * 100.0 / imageSize().height();
+        case ZoomMode::FitWidth:
+            return m_viewportSize.width() * 100.0 / imageSize().width();
+        case ZoomMode::Manual:
+            return m_zoomPercent;
+        }
+
+        return 100.0;
+    }
+
     KiriView::ImageViewportFrame viewportFrame() const
     {
         return KiriView::projectImageViewportFrame(
@@ -194,6 +271,7 @@ private:
     QPointF m_viewportContentPosition;
     QRectF m_visibleItemRect;
     double m_zoomPercent = 100.0;
+    ZoomMode m_zoomMode = ZoomMode::Manual;
 };
 
 class FakeKiriImageView : public QQuickItem
@@ -367,6 +445,7 @@ Item {
     width: 200
     height: 160
     property var testImageDocument: imageDocument
+    property int viewerClickCount: 0
 
     function contentY() {
         return imageViewport.flickable.contentY;
@@ -404,8 +483,24 @@ Item {
         imageViewport.imageDocument.zoomPercent = zoomPercent;
     }
 
+    function setFitZoom() {
+        imageViewport.imageDocument.setFitMode(KiriImageDocument.Fit);
+    }
+
+    function setFitHeightZoom() {
+        imageViewport.imageDocument.setFitMode(KiriImageDocument.FitHeight);
+    }
+
+    function zoomMode() {
+        return imageViewport.imageDocument.zoomMode;
+    }
+
     function zoomPercent() {
         return imageViewport.imageDocument.zoomPercent;
+    }
+
+    function resetViewerClickCount() {
+        root.viewerClickCount = 0;
     }
 
     KiriImageDocument {
@@ -424,6 +519,8 @@ Item {
 
         anchors.fill: parent
         documentSession: documentSession
+
+        onViewerClicked: root.viewerClickCount += 1
     }
 }
 )")
@@ -488,9 +585,34 @@ qreal invokeReal(QObject *object, const char *method)
     return invoked ? result.toReal() : std::numeric_limits<qreal>::quiet_NaN();
 }
 
+int invokeInt(QObject *object, const char *method)
+{
+    QVariant result;
+    const bool invoked = QMetaObject::invokeMethod(
+        object, method, Qt::DirectConnection, Q_RETURN_ARG(QVariant, result));
+    return invoked ? result.toInt() : std::numeric_limits<int>::min();
+}
+
+void invokeVoid(QObject *object, const char *method)
+{
+    QVERIFY(QMetaObject::invokeMethod(object, method, Qt::DirectConnection));
+}
+
 void invokeSetReal(QObject *object, const char *method, qreal value)
 {
     QVERIFY(QMetaObject::invokeMethod(object, method, Q_ARG(QVariant, QVariant::fromValue(value))));
+}
+
+void sendLeftClick(QQuickView *view, const QPointF &position)
+{
+    QTest::mouseClick(view, Qt::LeftButton, Qt::NoModifier, position.toPoint());
+    QCoreApplication::processEvents();
+}
+
+void sendLeftDoubleClick(QQuickView *view, const QPointF &position)
+{
+    QTest::mouseDClick(view, Qt::LeftButton, Qt::NoModifier, position.toPoint());
+    QCoreApplication::processEvents();
 }
 
 void sendWheel(QQuickView *view, const QPointF &position, int angleDeltaY,
@@ -615,6 +737,82 @@ void TestImageViewport::fittedFractionalDisplayDoesNotEnableHorizontalPanning()
     QTRY_VERIFY(!invokeBool(fixture.root, "imageHorizontallyPannable"));
     QCOMPARE(invokeReal(fixture.root, "contentX"), 0.0);
     QTRY_VERIFY(invokeBool(fixture.root, "horizontalContentFitsViewport"));
+}
+
+void TestImageViewport::doubleClickTogglesFitToActualSize()
+{
+    ImageViewportFixture fixture = createFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    QTRY_VERIFY(invokeBool(fixture.root, "documentReady"));
+    invokeVoid(fixture.root, "setFitZoom");
+    QTRY_COMPARE(invokeInt(fixture.root, "zoomMode"),
+        static_cast<int>(FakeKiriImageDocument::ZoomMode::Fit));
+
+    sendLeftDoubleClick(fixture.view.get(), QPointF(100.0, 80.0));
+
+    QTRY_COMPARE(invokeInt(fixture.root, "zoomMode"),
+        static_cast<int>(FakeKiriImageDocument::ZoomMode::Manual));
+    QCOMPARE(invokeReal(fixture.root, "zoomPercent"), 100.0);
+    QTRY_VERIFY(invokeReal(fixture.root, "contentX") > 0.0);
+    QTRY_VERIFY(invokeReal(fixture.root, "contentY") > 0.0);
+    QCOMPARE(fixture.root->property("viewerClickCount").toInt(), 0);
+}
+
+void TestImageViewport::doubleClickTogglesManualZoomToFit()
+{
+    ImageViewportFixture fixture = createFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    preparePannableImage(fixture);
+
+    sendLeftDoubleClick(fixture.view.get(), QPointF(100.0, 80.0));
+
+    QTRY_COMPARE(invokeInt(fixture.root, "zoomMode"),
+        static_cast<int>(FakeKiriImageDocument::ZoomMode::Fit));
+    QVERIFY(invokeReal(fixture.root, "zoomPercent") < 100.0);
+}
+
+void TestImageViewport::doubleClickTogglesFitHeightToFit()
+{
+    ImageViewportFixture fixture = createFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    QTRY_VERIFY(invokeBool(fixture.root, "documentReady"));
+    invokeVoid(fixture.root, "setFitHeightZoom");
+    QTRY_COMPARE(invokeInt(fixture.root, "zoomMode"),
+        static_cast<int>(FakeKiriImageDocument::ZoomMode::FitHeight));
+
+    sendLeftDoubleClick(fixture.view.get(), QPointF(100.0, 80.0));
+
+    QTRY_COMPARE(invokeInt(fixture.root, "zoomMode"),
+        static_cast<int>(FakeKiriImageDocument::ZoomMode::Fit));
+}
+
+void TestImageViewport::doubleClickFromViewportMarginZoomsAroundNearestImagePoint()
+{
+    ImageViewportFixture fixture = createFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    QTRY_VERIFY(invokeBool(fixture.root, "documentReady"));
+    invokeVoid(fixture.root, "setFitZoom");
+    QTRY_VERIFY(!invokeBool(fixture.root, "imagePannable"));
+
+    sendLeftDoubleClick(fixture.view.get(), QPointF(10.0, 10.0));
+
+    QTRY_COMPARE(invokeInt(fixture.root, "zoomMode"),
+        static_cast<int>(FakeKiriImageDocument::ZoomMode::Manual));
+    QCOMPARE(invokeReal(fixture.root, "zoomPercent"), 100.0);
+    QCOMPARE(invokeReal(fixture.root, "contentX"), 0.0);
+    QTRY_VERIFY(invokeReal(fixture.root, "contentY") > 0.0);
+}
+
+void TestImageViewport::singleClickStillEmitsViewerClicked()
+{
+    ImageViewportFixture fixture = createFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    QTRY_VERIFY(invokeBool(fixture.root, "documentReady"));
+    invokeVoid(fixture.root, "resetViewerClickCount");
+
+    sendLeftClick(fixture.view.get(), QPointF(100.0, 80.0));
+
+    QTRY_COMPARE(fixture.root->property("viewerClickCount").toInt(), 1);
 }
 
 QTEST_MAIN(TestImageViewport)

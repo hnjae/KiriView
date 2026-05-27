@@ -203,6 +203,28 @@ MediaViewportDelegate {
         return true;
     }
 
+    function toggleFitOrActualSize(viewportX, viewportY) {
+        if (!imageReady) {
+            return false;
+        }
+
+        if (root.imageDocument.zoomMode !== KiriImageDocument.Fit) {
+            root.imageDocument.setFitMode(KiriImageDocument.Fit);
+            return true;
+        }
+
+        const anchorPoint = root.nearestImageViewportPoint(viewportX, viewportY);
+        if (anchorPoint === null) {
+            return false;
+        }
+
+        const nextZoomPercent = root.imageDocument.clampedManualZoomPercent(100);
+        const nextContentPosition = imageView.zoomContentPosition(currentContentPosition(), anchorPoint, nextZoomPercent);
+        root.imageDocument.zoomPercent = nextZoomPercent;
+        setContentPosition(nextContentPosition);
+        return true;
+    }
+
     function wheelZoomStepCount(wheel) {
         const verticalDelta = wheel.pixelDelta.y !== 0 ? wheel.pixelDelta.y : wheel.angleDelta.y;
         return verticalDelta / wheelAngleDeltaPerStep;
@@ -340,10 +362,38 @@ MediaViewportDelegate {
         }
     }
 
-    TapHandler {
-        acceptedButtons: Qt.LeftButton
+    Timer {
+        id: singleClickTimer
 
-        onTapped: root.viewerClicked()
+        interval: Qt.application.styleHints.mouseDoubleClickInterval
+        repeat: false
+
+        onTriggered: root.viewerClicked()
+    }
+
+    MouseArea {
+        id: leftClickMouseArea
+
+        property bool suppressNextSingleClick: false
+
+        acceptedButtons: Qt.LeftButton
+        anchors.fill: parent
+        preventStealing: false
+
+        onClicked: mouse => {
+            if (leftClickMouseArea.suppressNextSingleClick) {
+                leftClickMouseArea.suppressNextSingleClick = false;
+                mouse.accepted = true;
+                return;
+            }
+
+            singleClickTimer.restart();
+        }
+        onDoubleClicked: mouse => {
+            leftClickMouseArea.suppressNextSingleClick = true;
+            singleClickTimer.stop();
+            root.toggleFitOrActualSize(mouse.x, mouse.y);
+        }
     }
 
     HoverHandler {
