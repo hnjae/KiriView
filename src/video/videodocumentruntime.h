@@ -69,6 +69,11 @@ private:
     void installMediaBackendCallbacks();
     void executeSourceLoadPlan(const VideoSourceLoadPlan &plan);
     void executeSourceLoadOperation(const VideoSourceLoadOperation &operation);
+    void executeSourceLoadOperation(const ClearVideoPlaybackSourceOperation &operation);
+    void executeSourceLoadOperation(const ResetClearedVideoSourceOperation &operation);
+    void executeSourceLoadOperation(const ResetVideoSourceLoadOperation &operation);
+    void executeSourceLoadOperation(const ApplyVideoPlaybackUrlOperation &operation);
+    void executeSourceLoadOperation(const PublishVideoSourceLoadFailureOperation &operation);
     void clearPlaybackSource();
     void applyResolvedPlaybackUrl(const QUrl &playbackUrl);
     void publishSourceLoadFailure(const QUrl &sourceUrl, const QString &errorString);

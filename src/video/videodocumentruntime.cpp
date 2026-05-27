@@ -7,6 +7,7 @@
 
 #include <QObject>
 #include <utility>
+#include <variant>
 
 namespace KiriView {
 VideoDocumentRuntime::VideoDocumentRuntime(QObject *documentObject, ChangeCallback changeCallback,
@@ -245,23 +246,35 @@ void VideoDocumentRuntime::executeSourceLoadPlan(const VideoSourceLoadPlan &plan
 
 void VideoDocumentRuntime::executeSourceLoadOperation(const VideoSourceLoadOperation &operation)
 {
-    switch (operation.kind) {
-    case VideoSourceLoadOperationKind::ClearPlaybackSource:
-        clearPlaybackSource();
-        break;
-    case VideoSourceLoadOperationKind::ResetClearedSource:
-        m_state.resetForClearedSource();
-        break;
-    case VideoSourceLoadOperationKind::ResetSourceLoad:
-        m_state.resetForSourceLoad(operation.sourceUrl);
-        break;
-    case VideoSourceLoadOperationKind::ApplyPlaybackUrl:
-        applyResolvedPlaybackUrl(operation.playbackUrl);
-        break;
-    case VideoSourceLoadOperationKind::PublishSourceLoadFailure:
-        publishSourceLoadFailure(operation.sourceUrl, operation.errorString);
-        break;
-    }
+    std::visit([this](const auto &payload) { executeSourceLoadOperation(payload); }, operation);
+}
+
+void VideoDocumentRuntime::executeSourceLoadOperation(const ClearVideoPlaybackSourceOperation &)
+{
+    clearPlaybackSource();
+}
+
+void VideoDocumentRuntime::executeSourceLoadOperation(const ResetClearedVideoSourceOperation &)
+{
+    m_state.resetForClearedSource();
+}
+
+void VideoDocumentRuntime::executeSourceLoadOperation(
+    const ResetVideoSourceLoadOperation &operation)
+{
+    m_state.resetForSourceLoad(operation.sourceUrl);
+}
+
+void VideoDocumentRuntime::executeSourceLoadOperation(
+    const ApplyVideoPlaybackUrlOperation &operation)
+{
+    applyResolvedPlaybackUrl(operation.playbackUrl);
+}
+
+void VideoDocumentRuntime::executeSourceLoadOperation(
+    const PublishVideoSourceLoadFailureOperation &operation)
+{
+    publishSourceLoadFailure(operation.sourceUrl, operation.errorString);
 }
 
 void VideoDocumentRuntime::applyResolvedPlaybackUrl(const QUrl &playbackUrl)

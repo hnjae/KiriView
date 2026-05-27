@@ -7,7 +7,9 @@
 #include <QStringList>
 #include <QTest>
 #include <memory>
+#include <type_traits>
 #include <utility>
+#include <variant>
 #include <vector>
 
 class TestVideoSourceLoadRuntime : public QObject
@@ -24,6 +26,8 @@ private Q_SLOTS:
 };
 
 namespace {
+template <typename> inline constexpr bool alwaysFalse = false;
+
 struct FakeResolverState {
     struct Request {
         quint64 operationId = 0;
@@ -82,28 +86,34 @@ struct SourceLoadFixture {
 
     void recordOperation(const KiriView::VideoSourceLoadOperation &operation)
     {
-        switch (operation.kind) {
-        case KiriView::VideoSourceLoadOperationKind::ClearPlaybackSource:
-            events.push_back(QStringLiteral("clear-playback"));
-            break;
-        case KiriView::VideoSourceLoadOperationKind::ResetClearedSource:
-            events.push_back(QStringLiteral("source-cleared"));
-            break;
-        case KiriView::VideoSourceLoadOperationKind::ResetSourceLoad:
-            events.push_back(
-                QStringLiteral("source-load-started:%1").arg(operation.sourceUrl.toString()));
-            break;
-        case KiriView::VideoSourceLoadOperationKind::ApplyPlaybackUrl:
-            events.push_back(QStringLiteral("playback-ready"));
-            readySourceUrl = operation.sourceUrl;
-            readyPlaybackUrl = operation.playbackUrl;
-            break;
-        case KiriView::VideoSourceLoadOperationKind::PublishSourceLoadFailure:
-            events.push_back(QStringLiteral("source-load-failed"));
-            failedSourceUrl = operation.sourceUrl;
-            failedErrorString = operation.errorString;
-            break;
-        }
+        std::visit(
+            [this](const auto &payload) {
+                using Operation = std::decay_t<decltype(payload)>;
+                if constexpr (std::is_same_v<Operation,
+                                  KiriView::ClearVideoPlaybackSourceOperation>) {
+                    events.push_back(QStringLiteral("clear-playback"));
+                } else if constexpr (std::is_same_v<Operation,
+                                         KiriView::ResetClearedVideoSourceOperation>) {
+                    events.push_back(QStringLiteral("source-cleared"));
+                } else if constexpr (std::is_same_v<Operation,
+                                         KiriView::ResetVideoSourceLoadOperation>) {
+                    events.push_back(
+                        QStringLiteral("source-load-started:%1").arg(payload.sourceUrl.toString()));
+                } else if constexpr (std::is_same_v<Operation,
+                                         KiriView::ApplyVideoPlaybackUrlOperation>) {
+                    events.push_back(QStringLiteral("playback-ready"));
+                    readySourceUrl = payload.sourceUrl;
+                    readyPlaybackUrl = payload.playbackUrl;
+                } else if constexpr (std::is_same_v<Operation,
+                                         KiriView::PublishVideoSourceLoadFailureOperation>) {
+                    events.push_back(QStringLiteral("source-load-failed"));
+                    failedSourceUrl = payload.sourceUrl;
+                    failedErrorString = payload.errorString;
+                } else {
+                    static_assert(alwaysFalse<Operation>, "Unhandled video source load operation");
+                }
+            },
+            operation);
     }
 
     void setSourceUrl(const QUrl &sourceUrl)

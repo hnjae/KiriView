@@ -11,26 +11,35 @@
 #include <QUrl>
 #include <functional>
 #include <memory>
+#include <variant>
 #include <vector>
 
 class QObject;
 
 namespace KiriView {
-enum class VideoSourceLoadOperationKind {
-    ClearPlaybackSource,
-    ResetClearedSource,
-    ResetSourceLoad,
-    ApplyPlaybackUrl,
-    PublishSourceLoadFailure,
+struct ClearVideoPlaybackSourceOperation {
 };
 
-struct VideoSourceLoadOperation {
-    VideoSourceLoadOperationKind kind = VideoSourceLoadOperationKind::ClearPlaybackSource;
+struct ResetClearedVideoSourceOperation {
+};
+
+struct ResetVideoSourceLoadOperation {
+    QUrl sourceUrl;
+};
+
+struct ApplyVideoPlaybackUrlOperation {
     QUrl sourceUrl;
     QUrl playbackUrl;
+};
+
+struct PublishVideoSourceLoadFailureOperation {
+    QUrl sourceUrl;
     QString errorString;
 };
 
+using VideoSourceLoadOperation = std::variant<ClearVideoPlaybackSourceOperation,
+    ResetClearedVideoSourceOperation, ResetVideoSourceLoadOperation, ApplyVideoPlaybackUrlOperation,
+    PublishVideoSourceLoadFailureOperation>;
 using VideoSourceLoadPlan = std::vector<VideoSourceLoadOperation>;
 using VideoSourceLoadPlanCallback = std::function<void(VideoSourceLoadPlan)>;
 

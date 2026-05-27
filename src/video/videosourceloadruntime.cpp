@@ -6,37 +6,25 @@
 #include <utility>
 
 namespace {
-KiriView::VideoSourceLoadOperation videoSourceLoadOperation(
-    KiriView::VideoSourceLoadOperationKind kind)
+KiriView::ResetVideoSourceLoadOperation resetSourceLoadOperation(const QUrl &sourceUrl)
 {
-    return KiriView::VideoSourceLoadOperation { kind, {}, {}, {} };
+    return KiriView::ResetVideoSourceLoadOperation { sourceUrl };
 }
 
-KiriView::VideoSourceLoadOperation resetSourceLoadOperation(const QUrl &sourceUrl)
-{
-    return KiriView::VideoSourceLoadOperation {
-        KiriView::VideoSourceLoadOperationKind::ResetSourceLoad, sourceUrl, {}, {}
-    };
-}
-
-KiriView::VideoSourceLoadOperation applyPlaybackUrlOperation(
+KiriView::ApplyVideoPlaybackUrlOperation applyPlaybackUrlOperation(
     const KiriView::VideoPlaybackUrlResolution &resolution)
 {
-    return KiriView::VideoSourceLoadOperation {
-        KiriView::VideoSourceLoadOperationKind::ApplyPlaybackUrl,
+    return KiriView::ApplyVideoPlaybackUrlOperation {
         resolution.sourceUrl,
         resolution.playbackUrl,
-        {},
     };
 }
 
-KiriView::VideoSourceLoadOperation sourceLoadFailureOperation(
+KiriView::PublishVideoSourceLoadFailureOperation sourceLoadFailureOperation(
     const QUrl &sourceUrl, const QString &errorString)
 {
-    return KiriView::VideoSourceLoadOperation {
-        KiriView::VideoSourceLoadOperationKind::PublishSourceLoadFailure,
+    return KiriView::PublishVideoSourceLoadFailureOperation {
         sourceUrl,
-        {},
         errorString,
     };
 }
@@ -70,8 +58,8 @@ void VideoSourceLoadRuntime::setSourceUrl(
     if (sourceUrl.isEmpty()) {
         dispatchPlan(planCallback,
             {
-                videoSourceLoadOperation(VideoSourceLoadOperationKind::ClearPlaybackSource),
-                videoSourceLoadOperation(VideoSourceLoadOperationKind::ResetClearedSource),
+                ClearVideoPlaybackSourceOperation {},
+                ResetClearedVideoSourceOperation {},
             });
         return;
     }
@@ -79,7 +67,7 @@ void VideoSourceLoadRuntime::setSourceUrl(
     const ImageAsyncScopedOperation<QUrl> operation = m_resolution.start(sourceUrl);
     dispatchPlan(planCallback,
         {
-            videoSourceLoadOperation(VideoSourceLoadOperationKind::ClearPlaybackSource),
+            ClearVideoPlaybackSourceOperation {},
             resetSourceLoadOperation(sourceUrl),
         });
 
