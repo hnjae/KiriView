@@ -136,6 +136,8 @@ The Keyboard Shortcuts help is shown as a modal dialog over the main window.
 
 It lists user-configurable KiriView actions and their current configured shortcut text.
 
+Shortcut help is presented as a Kirigami form-style two-column list with the shortcut text as the leading label and the action text as the value.
+
 It does not list fixed shortcuts, mouse gestures, or mouse-wheel gestures.
 
 It can be dismissed with standard dialog dismissal actions such as Enter/OK, Escape, the close button, or clicking outside the dialog.
