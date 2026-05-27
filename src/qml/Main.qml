@@ -4,7 +4,6 @@
 pragma ComponentBehavior: Bound
 
 import QtQuick
-import QtQuick.Controls as Controls
 import QtQuick.Dialogs as Dialogs
 import io.github.hnjae.kiriview
 import org.kde.ki18n
@@ -96,7 +95,7 @@ StatefulApp.StatefulWindow {
     }
 
     function focusActiveViewport() {
-        mediaViewportHost.forceActiveViewportFocus();
+        mediaWorkspaceHost.forceActiveViewportFocus();
     }
 
     function openApplicationMenu() {
@@ -228,8 +227,6 @@ StatefulApp.StatefulWindow {
         readonly property bool imageReady: imageMode && imageDocument.status === KiriImageDocument.Ready
         readonly property point fullscreenPointerPosition: fullscreenRevealHandler.point.position
         property bool documentDeletionWasInProgress: false
-        property bool infoPanelVisible: false
-        property bool thumbnailPanelVisible: false
 
         background: Rectangle {
             color: imageViewTheme.darkBackgroundColor
@@ -250,63 +247,28 @@ StatefulApp.StatefulWindow {
             readonly property color darkBackgroundColor: lightColorScheme ? viewTextColor : viewBackgroundColor
         }
 
-        Controls.SplitView {
-            id: contentSplitView
+        MediaWorkspaceHost {
+            id: mediaWorkspaceHost
 
-            objectName: "contentSplitView"
             anchors.bottom: parent.bottom
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.top: root.fullscreen ? parent.top : mainImageToolBar.bottom
-            orientation: Qt.Horizontal
 
-            Controls.SplitView {
-                id: mediaPanelSplitView
+            documentSession: documentSession
+            openAction: imageActions.openAction
 
-                objectName: "mediaPanelSplitView"
-                orientation: Qt.Vertical
-                Controls.SplitView.fillWidth: true
-                Controls.SplitView.minimumWidth: Kirigami.Units.gridUnit * 8
-
-                MediaViewportHost {
-                    id: mediaViewportHost
-
-                    documentSession: documentSession
-                    openAction: imageActions.openAction
-
-                    onViewerClicked: {
-                        if (root.activeImageToolBar().commitTextInputEditing(true)) {
-                            return;
-                        }
-
-                        root.focusActiveViewport();
-                    }
-                    onViewerContextMenuRequested: function (popupParent, position) {
-                        root.activeImageToolBar().commitTextInputEditing(true);
-                        root.focusActiveViewport();
-                        viewerContextMenu.popup(popupParent, position.x, position.y);
-                    }
+            onViewerClicked: {
+                if (root.activeImageToolBar().commitTextInputEditing(true)) {
+                    return;
                 }
 
-                ThumbnailPanel {
-                    id: thumbnailPanel
-
-                    objectName: "thumbnailPanel"
-                    visible: page.thumbnailPanelVisible
-                    Controls.SplitView.maximumHeight: Kirigami.Units.gridUnit * 8
-                    Controls.SplitView.minimumHeight: Kirigami.Units.gridUnit * 4
-                    Controls.SplitView.preferredHeight: Math.min(Kirigami.Units.gridUnit * 8, Math.max(Kirigami.Units.gridUnit * 5, mediaPanelSplitView.height * 0.22))
-                }
+                root.focusActiveViewport();
             }
-
-            InfoPanel {
-                id: infoPanel
-
-                objectName: "infoPanel"
-                visible: page.infoPanelVisible
-                Controls.SplitView.maximumWidth: Kirigami.Units.gridUnit * 18
-                Controls.SplitView.minimumWidth: Kirigami.Units.gridUnit * 8
-                Controls.SplitView.preferredWidth: Math.min(Kirigami.Units.gridUnit * 18, Math.max(Kirigami.Units.gridUnit * 10, contentSplitView.width * 0.3))
+            onViewerContextMenuRequested: function (popupParent, position) {
+                root.activeImageToolBar().commitTextInputEditing(true);
+                root.focusActiveViewport();
+                viewerContextMenu.popup(popupParent, position.x, position.y);
             }
         }
 
@@ -316,8 +278,8 @@ StatefulApp.StatefulWindow {
             containerNavigationAvailable: page.imageMode && page.imageDocument.containerNavigationAvailable
             fileDeletionInProgress: documentSession.fileDeletionInProgress
             helpDialogOpen: root.helpDialogOpen
-            imageHorizontallyPannable: page.imageMode && mediaViewportHost.imageInteractionSurface.imageHorizontallyPannable
-            imagePannable: page.imageMode && mediaViewportHost.imageInteractionSurface.imagePannable
+            imageHorizontallyPannable: page.imageMode && mediaWorkspaceHost.imageInteractionSurface.imageHorizontallyPannable
+            imagePannable: page.imageMode && mediaWorkspaceHost.imageInteractionSurface.imagePannable
             imageReady: page.imageReady
             rightToLeftReadingAvailable: page.imageMode && page.imageDocument.rightToLeftReadingAvailable
             rightToLeftReadingEnabled: page.imageMode && page.imageDocument.rightToLeftReadingEnabled
@@ -334,8 +296,8 @@ StatefulApp.StatefulWindow {
             documentSession: documentSession
             fullscreen: root.fullscreen
             imageDocument: page.imageDocument
-            infoPanelVisible: page.infoPanelVisible
-            thumbnailPanelVisible: page.thumbnailPanelVisible
+            infoPanelVisible: mediaWorkspaceHost.infoPanelVisible
+            thumbnailPanelVisible: mediaWorkspaceHost.thumbnailPanelVisible
 
             onImageBoundaryReached: function (message) {
                 toastNotification.show(message, "image-boundary");
@@ -343,8 +305,8 @@ StatefulApp.StatefulWindow {
             onOpenDialogRequested: fileDialog.open()
             onShortcutHelpRequested: shortcutHelpDialog.open()
             onToggleFullScreenRequested: root.toggleFullScreen()
-            onToggleInfoPanelRequested: page.infoPanelVisible = !page.infoPanelVisible
-            onToggleThumbnailPanelRequested: page.thumbnailPanelVisible = !page.thumbnailPanelVisible
+            onToggleInfoPanelRequested: mediaWorkspaceHost.toggleInfoPanel()
+            onToggleThumbnailPanelRequested: mediaWorkspaceHost.toggleThumbnailPanel()
         }
 
         onFullscreenPointerPositionChanged: {
@@ -412,7 +374,7 @@ StatefulApp.StatefulWindow {
                 actionAvailability: actionAvailability
                 documentSession: documentSession
                 imageDocument: page.imageDocument
-                imageInteractionSurface: mediaViewportHost.imageInteractionSurface
+                imageInteractionSurface: mediaWorkspaceHost.imageInteractionSurface
                 videoFileDeletionInProgress: documentSession.fileDeletionInProgress
                 videoMode: page.videoMode
 

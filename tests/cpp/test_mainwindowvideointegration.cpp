@@ -87,10 +87,13 @@ void TestMainWindowVideoIntegration::imageViewportUsesExternallyOwnedImageDocume
 void TestMainWindowVideoIntegration::mainWindowUsesSessionModeAndMediaDispatch()
 {
     const QString mainQml = readSource(QStringLiteral("src/qml/Main.qml"));
+    const QString mediaWorkspaceHostQml
+        = readSource(QStringLiteral("src/qml/MediaWorkspaceHost.qml"));
     const QString mediaViewportHostQml
         = readSource(QStringLiteral("src/qml/MediaViewportHost.qml"));
     const QString imageActionsQml = readSource(QStringLiteral("src/qml/ImageActions.qml"));
     QVERIFY2(!mainQml.isEmpty(), "Main.qml should be readable");
+    QVERIFY2(!mediaWorkspaceHostQml.isEmpty(), "MediaWorkspaceHost.qml should be readable");
     QVERIFY2(!mediaViewportHostQml.isEmpty(), "MediaViewportHost.qml should be readable");
     QVERIFY2(!imageActionsQml.isEmpty(), "ImageActions.qml should be readable");
 
@@ -98,15 +101,36 @@ void TestMainWindowVideoIntegration::mainWindowUsesSessionModeAndMediaDispatch()
         QStringLiteral("documentSession.documentKind === KiriDocumentSession.Image")));
     QVERIFY(mainQml.contains(
         QStringLiteral("documentSession.documentKind === KiriDocumentSession.Video")));
-    QVERIFY(mainQml.contains(QStringLiteral("MediaViewportHost {")));
-    QVERIFY(mainQml.contains(QStringLiteral("mediaViewportHost.forceActiveViewportFocus()")));
+    QVERIFY(mainQml.contains(QStringLiteral("MediaWorkspaceHost {")));
+    QVERIFY(mainQml.contains(QStringLiteral("mediaWorkspaceHost.forceActiveViewportFocus()")));
     QVERIFY(mainQml.contains(
-        QStringLiteral("imageInteractionSurface: mediaViewportHost.imageInteractionSurface")));
-    QVERIFY(!mainQml.contains(QStringLiteral("mediaViewportHost: mediaViewportHost")));
-    QVERIFY(!mainQml.contains(QStringLiteral("mediaViewportHost.imageViewport")));
+        QStringLiteral("imageInteractionSurface: mediaWorkspaceHost.imageInteractionSurface")));
+    QVERIFY(
+        mainQml.contains(QStringLiteral("infoPanelVisible: mediaWorkspaceHost.infoPanelVisible")));
+    QVERIFY(mainQml.contains(
+        QStringLiteral("thumbnailPanelVisible: mediaWorkspaceHost.thumbnailPanelVisible")));
+    QVERIFY(mainQml.contains(QStringLiteral("mediaWorkspaceHost.toggleInfoPanel()")));
+    QVERIFY(mainQml.contains(QStringLiteral("mediaWorkspaceHost.toggleThumbnailPanel()")));
+    QVERIFY(!mainQml.contains(QStringLiteral("MediaViewportHost {")));
+    QVERIFY(!mainQml.contains(QStringLiteral("InfoPanel {")));
+    QVERIFY(!mainQml.contains(QStringLiteral("ThumbnailPanel {")));
+    QVERIFY(!mainQml.contains(QStringLiteral("id: contentSplitView")));
+    QVERIFY(!mainQml.contains(QStringLiteral("id: mediaPanelSplitView")));
     QVERIFY(!mainQml.contains(QStringLiteral("setSource(Qt.resolvedUrl(\"VideoViewport.qml\")")));
     QVERIFY(!mainQml.contains(QStringLiteral("id: videoViewportLoader")));
     QVERIFY(!mainQml.contains(QStringLiteral("ImageViewport {")));
+    QVERIFY(mediaWorkspaceHostQml.contains(QStringLiteral("MediaViewportHost {")));
+    QVERIFY(mediaWorkspaceHostQml.contains(QStringLiteral("InfoPanel {")));
+    QVERIFY(mediaWorkspaceHostQml.contains(QStringLiteral("ThumbnailPanel {")));
+    QVERIFY(mediaWorkspaceHostQml.contains(QStringLiteral("id: contentSplitView")));
+    QVERIFY(mediaWorkspaceHostQml.contains(QStringLiteral("id: mediaPanelSplitView")));
+    QVERIFY(mediaWorkspaceHostQml.contains(QStringLiteral("function toggleInfoPanel()")));
+    QVERIFY(mediaWorkspaceHostQml.contains(QStringLiteral("function toggleThumbnailPanel()")));
+    QVERIFY(mediaWorkspaceHostQml.contains(
+        QStringLiteral("mediaViewportHost.forceActiveViewportFocus()")));
+    QVERIFY(mediaWorkspaceHostQml.contains(
+        QStringLiteral("imageInteractionSurface: mediaViewportHost.imageInteractionSurface")));
+    QVERIFY(mediaWorkspaceHostQml.contains(QStringLiteral("viewerContextMenuRequested")));
     QVERIFY(mediaViewportHostQml.contains(
         QStringLiteral("documentSession.documentKind === KiriDocumentSession.Image")));
     QVERIFY(mediaViewportHostQml.contains(
