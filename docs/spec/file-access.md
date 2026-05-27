@@ -79,3 +79,15 @@ External additions and removals update the page number, total item count, and fi
 If the currently displayed local image or video is removed outside KiriView, KiriView immediately clears that image or stops playback for that video, opens the next supported media item in the same sorted directory order when possible, falls back to the previous supported media item when no next media item exists, and otherwise shows the empty state.
 
 Non-local URL scopes, explicit archive URL scopes such as `zip://`, directly opened archive documents, and directly opened recursive directory documents are snapshots and do not guarantee live external update handling.
+
+## Open With
+
+The Open With action opens the currently displayed media item with another application and delegates application selection and launching to KDE/KIO open-with handling.
+
+The Open With target is the current media item rather than the deletion target. For direct images, remote images, direct videos, and media opened directly from KDE-supported archive URLs such as `zip://`, the target is the displayed or original direct media URL. For a directly opened local directory document, the target is the currently displayed image file inside that directory.
+
+For images displayed inside a directly opened local CBZ, CBT, CB7, ZIP, TAR, or 7Z archive document, the Open With target is the currently displayed internal image URL when that URL uses a KDE-supported archive scheme such as `zip://`, `tar://`, or `sevenz://`.
+
+For images displayed inside a directly opened local CBR or RAR archive document, Open With is disabled because KiriView's internal RAR support is not treated as a KDE/KIO-openable media URL.
+
+Open With is disabled when no media item is ready, when the current document is empty, loading, or failed, or when KiriView cannot derive a KDE/KIO-openable current media URL. Canceling the KDE/KIO open-with flow leaves KiriView unchanged and does not show an in-app notification.

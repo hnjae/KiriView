@@ -34,7 +34,7 @@ The toolbar page navigation arrow buttons keep their physical affordance. The le
 
 The toolbar page navigation arrow buttons, page-number entry, shared Previous, Next, First, and Last actions, menus, and shortcuts dispatch through the document session's active navigation dispatch. Their enabled state comes from the same active navigation projection.
 
-Open, Previous Archive, and Next Archive are provided by the application menu and shortcuts rather than fixed toolbar buttons. Previous Archive and Next Archive use visually distinct previous/next-use icons so they are not confused with page Previous and Next navigation.
+Open, Open With, Previous Archive, and Next Archive are provided by the application menu and shortcuts rather than fixed toolbar buttons. Previous Archive and Next Archive use visually distinct previous/next-use icons so they are not confused with page Previous and Next navigation.
 
 ## Application Menu and Menubar
 
@@ -42,7 +42,7 @@ KiriView shows its application menu through a toolbar application menu button by
 
 Users can switch the application menu presentation between Hamburger Menu and a conventional menubar. KiriView remembers the selected presentation as application state across launches.
 
-In Hamburger Menu mode outside fullscreen, the toolbar application menu contains application actions such as Open, archive navigation, Full Screen, shortcut configuration, shortcut help, and Quit.
+In Hamburger Menu mode outside fullscreen, the toolbar application menu contains application actions such as Open, Open With, archive navigation, Full Screen, shortcut configuration, shortcut help, and Quit.
 
 In menubar mode outside fullscreen, those application actions are available from the menubar. Any toolbar overflow menu appears only when toolbar controls do not fit.
 
@@ -51,6 +51,8 @@ The conventional menubar is an in-window menubar. Native or global menubar integ
 In fullscreen, KiriView hides both the menubar and toolbar application menu button. Actions with configured shortcuts remain available through those shortcuts.
 
 The menubar and toolbar application menu keep each action's identity, text, shortcut, and enabled state unchanged.
+
+The Open With action is labeled `Open With...` in menus and delegates application selection and launching to KDE/KIO open-with handling. It is placed immediately after Open in the File menu and toolbar application menu.
 
 Adjacent navigation actions are projected in reading progression order. When Right-to-Left Reading is active, the adjacent page navigation pair is displayed as Next before Previous, and the adjacent archive navigation pair is displayed as Next Archive before Previous Archive. First and Last keep their normal order because their page-index meaning does not change with reading direction.
 
@@ -86,7 +88,7 @@ The viewer context menu is available in image and video mode, including fullscre
 
 Right-clicking the toolbar, menubar, Info Panel, or Thumbnail Panel does not open the viewer context menu.
 
-The viewer context menu contains a concise set of viewer actions: Open, media navigation, image-only view actions such as zoom, fit, and rotation, panel toggles, and Fullscreen.
+The viewer context menu contains a concise set of viewer actions: Open, Open With, media navigation, image-only view actions such as zoom, fit, and rotation, panel toggles, and Fullscreen.
 
 The viewer context menu uses the same internal application actions as the toolbar application menu and menubar. Action identity, text, shortcut display, enabled state, and checked state remain consistent across all menus.
 
