@@ -10,7 +10,7 @@ Examples of ADR-worthy decisions include changing the Rust/C++ ownership model f
 
 Existing ADRs:
 
-- `../adr/0001-single-open-media-entry-source.md`: directly opened archive collection media entry sources are owned by the C++ document runtime, including the archive location, sorted candidate list, and serialized archive image reads.
+- `../adr/0001-single-open-media-entry-source.md`: opened collection media entry sources are owned by the C++ document runtime, including the opened collection scope, sorted candidate list, and serialized image entry reads.
 - `../adr/0002-libpng-apng-streaming-decoder.md`: APNG playback is owned by the C++ runtime through APNG-patched libpng so frames can be decoded sequentially instead of materializing the full animation in memory.
 - `../adr/0003-resvg-svg-rendering.md`: static SVG parsing and rasterization are owned by Rust through resvg, while C++ keeps Qt image objects and tile-source integration.
 - `../adr/0004-explicit-image-input-classification.md`: image byte and file-name classification is owned by Rust, while C++ executes the selected decoder path and reports final decoder failures.
