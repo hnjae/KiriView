@@ -21,7 +21,6 @@ struct ImageActionAvailabilityInput {
     bool helpDialogOpen = false;
     bool textInputFocused = false;
     bool imagePannable = false;
-    bool imageHorizontallyPannable = false;
     bool containerNavigationAvailable = false;
     bool twoPageModeEnabled = false;
     bool twoPageModeAvailable = false;

@@ -131,7 +131,7 @@ Item {
             return;
         }
 
-        const action = navigationPolicy.horizontalArrowAction(leftArrow, root.actionAvailability.imageHorizontallyPannable, root.actionAvailability.rightToLeftReadingActive);
+        const action = navigationPolicy.horizontalArrowAction(leftArrow, root.imageInteractionSurface.imageHorizontallyPannable, root.actionAvailability.rightToLeftReadingActive);
         root.applyHorizontalArrowAction(action);
     }
 

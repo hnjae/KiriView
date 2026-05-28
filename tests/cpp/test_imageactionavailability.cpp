@@ -14,7 +14,6 @@ class TestImageActionAvailability : public QObject
 private Q_SLOTS:
     void projectionDerivesReadyAndModeAvailabilityFromSnapshot();
     void projectionDerivesShortcutGatesFromSnapshot();
-    void scanBoundaryStateIsImageLocalAvailability();
     void readyActionAvailabilityRejectsCompetingModes();
     void shortcutAvailabilityUsesViewerAndRuntimeGates();
     void policyScopeLookupUsesApplicationScope();
@@ -92,21 +91,6 @@ void TestImageActionAvailability::projectionDerivesShortcutGatesFromSnapshot()
     QVERIFY(!projection.containerShortcutsEnabled);
 }
 
-void TestImageActionAvailability::scanBoundaryStateIsImageLocalAvailability()
-{
-    ImageActionAvailability availability;
-    QSignalSpy spy(&availability, &ImageActionAvailability::availabilityChanged);
-
-    QVERIFY(!availability.scanBackwardAtFirstImageBoundary());
-
-    availability.setScanBackwardAtFirstImageBoundary(true);
-    QVERIFY(availability.scanBackwardAtFirstImageBoundary());
-    QCOMPARE(spy.count(), 1);
-
-    availability.setScanBackwardAtFirstImageBoundary(true);
-    QCOMPARE(spy.count(), 1);
-}
-
 void TestImageActionAvailability::readyActionAvailabilityRejectsCompetingModes()
 {
     ImageActionAvailability availability;
@@ -138,7 +122,6 @@ void TestImageActionAvailability::shortcutAvailabilityUsesViewerAndRuntimeGates(
     ImageActionAvailability availability;
     availability.setImageReady(true);
     availability.setImagePannable(true);
-    availability.setImageHorizontallyPannable(true);
     availability.setContainerNavigationAvailable(true);
     availability.setTwoPageModeAvailable(true);
     availability.setTwoPageModeEnabled(true);
@@ -157,7 +140,6 @@ void TestImageActionAvailability::shortcutAvailabilityUsesViewerAndRuntimeGates(
     QVERIFY(availability.containerViewerShortcutsEnabled());
     QVERIFY(!availability.rotateShortcutsEnabled());
     QVERIFY(!availability.rotateViewerShortcutsEnabled());
-    QVERIFY(availability.imageHorizontallyPannable());
 
     availability.setTextInputFocused(true);
     QVERIFY(!availability.viewerShortcutsEnabled());
@@ -308,7 +290,7 @@ void TestImageActionAvailability::settersNotifyOnlyWhenInputsChange()
     QCOMPARE(spy.count(), 1);
     QCOMPARE(availability.availabilityRevision(), 1);
 
-    availability.setScanBackwardAtFirstImageBoundary(true);
+    availability.setTextInputFocused(true);
     QCOMPARE(spy.count(), 2);
     QCOMPARE(availability.availabilityRevision(), 2);
 }

@@ -278,7 +278,6 @@ StatefulApp.StatefulWindow {
             containerNavigationAvailable: page.imageMode && page.imageDocument.containerNavigationAvailable
             fileDeletionInProgress: documentSession.fileDeletionInProgress
             helpDialogOpen: root.helpDialogOpen
-            imageHorizontallyPannable: page.imageMode && mediaWorkspaceHost.imageInteractionSurface.imageHorizontallyPannable
             imagePannable: page.imageMode && mediaWorkspaceHost.imageInteractionSurface.imagePannable
             imageReady: page.imageReady
             rightToLeftReadingAvailable: page.imageMode && page.imageDocument.rightToLeftReadingAvailable

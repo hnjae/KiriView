@@ -14,7 +14,6 @@ private Q_SLOTS:
     void defaultProjectionStartsDisabledAndUnrevised();
     void settersRecomputeProjectionAndNotifyOnce();
     void unchangedInputsDoNotNotifyOrRevise();
-    void scanBoundaryIsImageLocalRuntimeState();
     void shortcutScopeLookupUsesProjectionFields();
     void mediaShortcutScopeLookupCombinesSessionAndVideoInputs();
 };
@@ -58,20 +57,6 @@ void TestImageActionAvailabilityRuntime::unchangedInputsDoNotNotifyOrRevise()
 
     runtime.setImageReady(true);
     runtime.setImageReady(true);
-    QCOMPARE(runtime.availabilityRevision(), 1);
-    QCOMPARE(changeCount, 1);
-}
-
-void TestImageActionAvailabilityRuntime::scanBoundaryIsImageLocalRuntimeState()
-{
-    int changeCount = 0;
-    KiriView::ApplicationActions::ImageActionAvailabilityRuntime runtime(
-        [&changeCount]() { ++changeCount; });
-
-    runtime.setScanBackwardAtFirstImageBoundary(true);
-
-    QVERIFY(runtime.scanBackwardAtFirstImageBoundary());
-    QVERIFY(!runtime.canUseReadyActions());
     QCOMPARE(runtime.availabilityRevision(), 1);
     QCOMPARE(changeCount, 1);
 }

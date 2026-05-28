@@ -50,16 +50,6 @@ void ImageActionAvailabilityRuntime::setImagePannable(bool imagePannable)
     setBool(m_input.imagePannable, imagePannable);
 }
 
-bool ImageActionAvailabilityRuntime::imageHorizontallyPannable() const
-{
-    return m_input.imageHorizontallyPannable;
-}
-
-void ImageActionAvailabilityRuntime::setImageHorizontallyPannable(bool imageHorizontallyPannable)
-{
-    setBool(m_input.imageHorizontallyPannable, imageHorizontallyPannable);
-}
-
 bool ImageActionAvailabilityRuntime::containerNavigationAvailable() const
 {
     return m_input.containerNavigationAvailable;
@@ -110,17 +100,6 @@ void ImageActionAvailabilityRuntime::setRightToLeftReadingAvailable(
     bool rightToLeftReadingAvailable)
 {
     setBool(m_input.rightToLeftReadingAvailable, rightToLeftReadingAvailable);
-}
-
-bool ImageActionAvailabilityRuntime::scanBackwardAtFirstImageBoundary() const
-{
-    return m_scanBackwardAtFirstImageBoundary;
-}
-
-void ImageActionAvailabilityRuntime::setScanBackwardAtFirstImageBoundary(
-    bool scanBackwardAtFirstImageBoundary)
-{
-    setBool(m_scanBackwardAtFirstImageBoundary, scanBackwardAtFirstImageBoundary);
 }
 
 bool ImageActionAvailabilityRuntime::canUseReadyActions() const

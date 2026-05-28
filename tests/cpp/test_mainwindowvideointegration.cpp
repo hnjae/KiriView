@@ -440,6 +440,7 @@ void TestMainWindowVideoIntegration::imageActionAvailabilityDoesNotDriveSharedAc
             QStringLiteral("currentLastPageNumber: page.imageDocument"),
             QStringLiteral("currentPageNumber: page.imageDocument"),
             QStringLiteral("pageCount: page.imageDocument"),
+            QStringLiteral("imageHorizontallyPannable:"),
             QStringLiteral("scanBackwardAtFirstImageBoundary:"),
         });
     verifySourceOmits(imageActionsQml,
@@ -450,12 +451,17 @@ void TestMainWindowVideoIntegration::imageActionAvailabilityDoesNotDriveSharedAc
             QStringLiteral("actionAvailability.atKnownLastImage"),
             QStringLiteral("actionAvailability.canUsePageActions"),
             QStringLiteral("actionAvailability.pageShortcutsEnabled"),
+            QStringLiteral("actionAvailability.imageHorizontallyPannable"),
         });
     QVERIFY(imageShortcutsQml.contains(QStringLiteral("mediaShortcutsEnabledForScope")));
     QVERIFY(
         !imageShortcutsQml.contains(QStringLiteral("activeNavigationShortcutsEnabledForScope")));
     QVERIFY(!imageShortcutsQml.contains(
         QStringLiteral("actionAvailability.scanBackwardAtFirstImageBoundary")));
+    QVERIFY(!imageShortcutsQml.contains(
+        QStringLiteral("actionAvailability.imageHorizontallyPannable")));
+    QVERIFY(imageShortcutsQml.contains(
+        QStringLiteral("root.imageInteractionSurface.imageHorizontallyPannable")));
     QVERIFY(!imageShortcutsQml.contains(QStringLiteral("imageDocument.currentPageNumber")));
 }
 

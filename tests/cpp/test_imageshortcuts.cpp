@@ -300,12 +300,10 @@ Item {
         containerNavigationAvailable: imageDocument.containerNavigationAvailable
         fileDeletionInProgress: imageDocument.fileDeletionInProgress
         helpDialogOpen: root.helpDialogOpen
-        imageHorizontallyPannable: imageInteractionSurface.imageHorizontallyPannable
         imagePannable: imageInteractionSurface.imagePannable
         imageReady: imageDocument.status === KiriImageDocument.Ready
         rightToLeftReadingAvailable: imageDocument.rightToLeftReadingAvailable
         rightToLeftReadingEnabled: imageDocument.rightToLeftReadingEnabled
-        scanBackwardAtFirstImageBoundary: imageDocument.pageCount > 0 && imageDocument.currentPageNumber === 1
         textInputFocused: imageToolBar.textInputFocused()
         twoPageModeAvailable: imageDocument.twoPageModeAvailable
         twoPageModeEnabled: imageDocument.twoPageModeEnabled

@@ -26,8 +26,6 @@ public:
     void setTextInputFocused(bool textInputFocused);
     bool imagePannable() const;
     void setImagePannable(bool imagePannable);
-    bool imageHorizontallyPannable() const;
-    void setImageHorizontallyPannable(bool imageHorizontallyPannable);
     bool containerNavigationAvailable() const;
     void setContainerNavigationAvailable(bool containerNavigationAvailable);
     bool twoPageModeEnabled() const;
@@ -38,8 +36,6 @@ public:
     void setRightToLeftReadingEnabled(bool rightToLeftReadingEnabled);
     bool rightToLeftReadingAvailable() const;
     void setRightToLeftReadingAvailable(bool rightToLeftReadingAvailable);
-    bool scanBackwardAtFirstImageBoundary() const;
-    void setScanBackwardAtFirstImageBoundary(bool scanBackwardAtFirstImageBoundary);
 
     bool canUseReadyActions() const;
     bool canUseRotateActions() const;
@@ -74,7 +70,6 @@ private:
     ChangeCallback m_changeCallback;
     ImageActionAvailabilityInput m_input;
     ImageActionAvailabilityProjection m_projection;
-    bool m_scanBackwardAtFirstImageBoundary = false;
     int m_availabilityRevision = 0;
 };
 }

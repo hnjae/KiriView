@@ -23,8 +23,6 @@ class ImageActionAvailability : public QObject
             availabilityChanged)
     Q_PROPERTY(
         bool imagePannable READ imagePannable WRITE setImagePannable NOTIFY availabilityChanged)
-    Q_PROPERTY(bool imageHorizontallyPannable READ imageHorizontallyPannable WRITE
-            setImageHorizontallyPannable NOTIFY availabilityChanged)
     Q_PROPERTY(bool containerNavigationAvailable READ containerNavigationAvailable WRITE
             setContainerNavigationAvailable NOTIFY availabilityChanged)
     Q_PROPERTY(bool twoPageModeEnabled READ twoPageModeEnabled WRITE setTwoPageModeEnabled NOTIFY
@@ -35,8 +33,6 @@ class ImageActionAvailability : public QObject
             setRightToLeftReadingEnabled NOTIFY availabilityChanged)
     Q_PROPERTY(bool rightToLeftReadingAvailable READ rightToLeftReadingAvailable WRITE
             setRightToLeftReadingAvailable NOTIFY availabilityChanged)
-    Q_PROPERTY(bool scanBackwardAtFirstImageBoundary READ scanBackwardAtFirstImageBoundary WRITE
-            setScanBackwardAtFirstImageBoundary NOTIFY availabilityChanged)
 
     Q_PROPERTY(bool canUseReadyActions READ canUseReadyActions NOTIFY availabilityChanged)
     Q_PROPERTY(bool canUseRotateActions READ canUseRotateActions NOTIFY availabilityChanged)
@@ -104,8 +100,6 @@ public:
     void setTextInputFocused(bool textInputFocused);
     bool imagePannable() const;
     void setImagePannable(bool imagePannable);
-    bool imageHorizontallyPannable() const;
-    void setImageHorizontallyPannable(bool imageHorizontallyPannable);
     bool containerNavigationAvailable() const;
     void setContainerNavigationAvailable(bool containerNavigationAvailable);
     bool twoPageModeEnabled() const;
@@ -116,8 +110,6 @@ public:
     void setRightToLeftReadingEnabled(bool rightToLeftReadingEnabled);
     bool rightToLeftReadingAvailable() const;
     void setRightToLeftReadingAvailable(bool rightToLeftReadingAvailable);
-    bool scanBackwardAtFirstImageBoundary() const;
-    void setScanBackwardAtFirstImageBoundary(bool scanBackwardAtFirstImageBoundary);
 
     bool canUseReadyActions() const;
     bool canUseRotateActions() const;
