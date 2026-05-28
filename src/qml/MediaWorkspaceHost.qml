@@ -67,9 +67,9 @@ Item {
                 documentSession: root.documentSession
                 objectName: "thumbnailPanel"
                 visible: false
-                Controls.SplitView.maximumHeight: Kirigami.Units.gridUnit * 8
-                Controls.SplitView.minimumHeight: Kirigami.Units.gridUnit * 4
-                Controls.SplitView.preferredHeight: Math.min(Kirigami.Units.gridUnit * 8, Math.max(Kirigami.Units.gridUnit * 5, mediaPanelSplitView.height * 0.22))
+                Controls.SplitView.maximumHeight: Kirigami.Units.gridUnit * 12
+                Controls.SplitView.minimumHeight: Kirigami.Units.gridUnit * 10
+                Controls.SplitView.preferredHeight: Math.min(Kirigami.Units.gridUnit * 12, Math.max(Kirigami.Units.gridUnit * 10, mediaPanelSplitView.height * 0.28))
             }
         }
 

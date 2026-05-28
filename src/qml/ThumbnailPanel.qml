@@ -49,7 +49,7 @@ Controls.Pane {
             enabled: root.documentSession.activeNavigationEditable
             height: thumbnailStrip.height
             hoverEnabled: true
-            width: Kirigami.Units.gridUnit * 6
+            width: Kirigami.Units.gridUnit * 8
 
             Controls.ToolTip.text: label
             Controls.ToolTip.visible: hovered && label.length > 0 && !Kirigami.Settings.hasTransientTouchInput
@@ -65,8 +65,8 @@ Controls.Pane {
 
                 Kirigami.Icon {
                     Layout.alignment: Qt.AlignHCenter
-                    Layout.preferredHeight: Kirigami.Units.iconSizes.medium
-                    Layout.preferredWidth: Kirigami.Units.iconSizes.medium
+                    Layout.preferredHeight: Kirigami.Units.iconSizes.enormous
+                    Layout.preferredWidth: Kirigami.Units.iconSizes.enormous
                     source: thumbnailDelegate.iconName
                 }
 
@@ -74,12 +74,12 @@ Controls.Pane {
                     Layout.fillWidth: true
                     color: Kirigami.Theme.textColor
                     elide: Text.ElideRight
-                    font: Kirigami.Theme.smallFont
+                    font: Kirigami.Theme.fixedWidthFont
                     horizontalAlignment: Text.AlignHCenter
-                    maximumLineCount: 2
+                    maximumLineCount: 1
                     text: thumbnailDelegate.label
                     textFormat: Text.PlainText
-                    wrapMode: Text.Wrap
+                    wrapMode: Text.NoWrap
                 }
             }
 

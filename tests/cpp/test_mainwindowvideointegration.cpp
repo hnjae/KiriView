@@ -291,9 +291,18 @@ void TestMainWindowVideoIntegration::toolbarPageNavigationUsesSessionActiveProje
 
 void TestMainWindowVideoIntegration::thumbnailPanelUsesSessionThumbnailModel()
 {
+    const QString mediaWorkspaceHostQml
+        = readSource(QStringLiteral("src/qml/MediaWorkspaceHost.qml"));
     const QString thumbnailPanelQml = readSource(QStringLiteral("src/qml/ThumbnailPanel.qml"));
+    QVERIFY2(!mediaWorkspaceHostQml.isEmpty(), "MediaWorkspaceHost.qml should be readable");
     QVERIFY2(!thumbnailPanelQml.isEmpty(), "ThumbnailPanel.qml should be readable");
 
+    QVERIFY(mediaWorkspaceHostQml.contains(
+        QStringLiteral("Controls.SplitView.maximumHeight: Kirigami.Units.gridUnit * 12")));
+    QVERIFY(mediaWorkspaceHostQml.contains(
+        QStringLiteral("Controls.SplitView.minimumHeight: Kirigami.Units.gridUnit * 10")));
+    QVERIFY(
+        mediaWorkspaceHostQml.contains(QStringLiteral("Math.max(Kirigami.Units.gridUnit * 10")));
     QVERIFY(thumbnailPanelQml.contains(
         QStringLiteral("required property KiriDocumentSession documentSession")));
     QVERIFY(thumbnailPanelQml.contains(
@@ -301,6 +310,12 @@ void TestMainWindowVideoIntegration::thumbnailPanelUsesSessionThumbnailModel()
     QVERIFY(thumbnailPanelQml.contains(QStringLiteral("orientation: ListView.Horizontal")));
     QVERIFY(thumbnailPanelQml.contains(QStringLiteral("objectName: \"thumbnailStrip\"")));
     QVERIFY(thumbnailPanelQml.contains(QStringLiteral("objectName: \"thumbnailStripItem\"")));
+    QVERIFY(thumbnailPanelQml.contains(QStringLiteral("width: Kirigami.Units.gridUnit * 8")));
+    QVERIFY(thumbnailPanelQml.contains(QStringLiteral("Kirigami.Units.iconSizes.enormous")));
+    QVERIFY(thumbnailPanelQml.contains(QStringLiteral("font: Kirigami.Theme.fixedWidthFont")));
+    QVERIFY(thumbnailPanelQml.contains(QStringLiteral("maximumLineCount: 1")));
+    QVERIFY(thumbnailPanelQml.contains(QStringLiteral("wrapMode: Text.NoWrap")));
+    QVERIFY(thumbnailPanelQml.contains(QStringLiteral("elide: Text.ElideRight")));
     QVERIFY(thumbnailPanelQml.contains(QStringLiteral("required property int number")));
     QVERIFY(thumbnailPanelQml.contains(QStringLiteral("required property string label")));
     QVERIFY(thumbnailPanelQml.contains(QStringLiteral("required property string iconName")));
