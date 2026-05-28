@@ -3,34 +3,16 @@
 
 #include "video/videoplaybackcontrolplan.h"
 
-#include <algorithm>
+#include "bridge/videodocumentpolicyconversion.h"
+#include "kiriview/src/policy/videodocumentpolicy.cxx.h"
 
 namespace {
-using KiriView::EnsureVideoPlaybackBackendOperation;
-using KiriView::PauseVideoPlaybackOperation;
-using KiriView::PlayVideoPlaybackOperation;
-using KiriView::SetVideoPlaybackPositionOperation;
-using KiriView::StopVideoPlaybackOperation;
 using KiriView::VideoPlaybackControlPlan;
 using KiriView::VideoPlaybackControlSnapshot;
 
-SetVideoPlaybackPositionOperation setPositionOperation(qint64 position)
+KiriView::RustVideoPlaybackControlSnapshot rustSnapshot(VideoPlaybackControlSnapshot snapshot)
 {
-    return SetVideoPlaybackPositionOperation { position };
-}
-
-void appendEnsureBackend(VideoPlaybackControlPlan &plan)
-{
-    plan.backendOperations.push_back(EnsureVideoPlaybackBackendOperation {});
-}
-
-qint64 clampedAbsolutePosition(qint64 position, qint64 duration)
-{
-    if (duration > 0) {
-        return std::clamp(position, qint64(0), duration);
-    }
-
-    return std::max<qint64>(0, position);
+    return KiriView::Bridge::rustVideoPlaybackControlSnapshot(snapshot);
 }
 }
 
@@ -43,98 +25,46 @@ bool VideoPlaybackControlPlan::isEmpty() const
 
 VideoPlaybackControlPlan videoPlaybackPlayPlan(VideoPlaybackControlSnapshot snapshot)
 {
-    VideoPlaybackControlPlan plan;
-    if (snapshot.sourceUrlEmpty) {
-        return plan;
-    }
-
-    appendEnsureBackend(plan);
-    if (snapshot.mediaEnded && snapshot.seekable) {
-        plan.backendOperations.push_back(setPositionOperation(0));
-        plan.stateDelta.position = 0;
-    }
-    plan.stateDelta.mediaEnded = false;
-    plan.backendOperations.push_back(PlayVideoPlaybackOperation {});
-    return plan;
+    return Bridge::videoPlaybackControlPlanFromRust(
+        rustVideoPlaybackPlayPlan(rustSnapshot(snapshot)));
 }
 
 VideoPlaybackControlPlan videoPlaybackPausePlan(VideoPlaybackControlSnapshot snapshot)
 {
-    VideoPlaybackControlPlan plan;
-    if (!snapshot.mediaBackendAvailable) {
-        return plan;
-    }
-
-    plan.backendOperations.push_back(PauseVideoPlaybackOperation {});
-    return plan;
+    return Bridge::videoPlaybackControlPlanFromRust(
+        rustVideoPlaybackPausePlan(rustSnapshot(snapshot)));
 }
 
 VideoPlaybackControlPlan videoPlaybackStopPlan(VideoPlaybackControlSnapshot snapshot)
 {
-    VideoPlaybackControlPlan plan;
-    plan.stateDelta.mediaEnded = false;
-    if (snapshot.mediaBackendAvailable) {
-        plan.backendOperations.push_back(StopVideoPlaybackOperation {});
-    }
-    plan.stateDelta.playing = false;
-    if (snapshot.seekable) {
-        if (snapshot.mediaBackendAvailable) {
-            plan.backendOperations.push_back(setPositionOperation(0));
-        }
-        plan.stateDelta.position = 0;
-    }
-    return plan;
+    return Bridge::videoPlaybackControlPlanFromRust(
+        rustVideoPlaybackStopPlan(rustSnapshot(snapshot)));
 }
 
 VideoPlaybackControlPlan videoPlaybackTogglePlan(VideoPlaybackControlSnapshot snapshot)
 {
-    if (snapshot.playing) {
-        return videoPlaybackPausePlan(snapshot);
-    }
-
-    return videoPlaybackPlayPlan(snapshot);
+    return Bridge::videoPlaybackControlPlanFromRust(
+        rustVideoPlaybackTogglePlan(rustSnapshot(snapshot)));
 }
 
 VideoPlaybackControlPlan videoPlaybackSetPositionPlan(
     VideoPlaybackControlSnapshot snapshot, qint64 position)
 {
-    VideoPlaybackControlPlan plan;
-    if (!snapshot.seekable) {
-        return plan;
-    }
-
-    const qint64 clampedPosition = clampedAbsolutePosition(position, snapshot.duration);
-    plan.stateDelta.mediaEnded = false;
-    appendEnsureBackend(plan);
-    plan.backendOperations.push_back(setPositionOperation(clampedPosition));
-    plan.stateDelta.position = clampedPosition;
-    return plan;
+    return Bridge::videoPlaybackControlPlanFromRust(
+        rustVideoPlaybackSetPositionPlan(rustSnapshot(snapshot), position));
 }
 
 VideoPlaybackControlPlan videoPlaybackSeekByPlan(
     VideoPlaybackControlSnapshot snapshot, qint64 deltaMilliseconds)
 {
-    const qint64 nextPosition = videoPlaybackClampedSeekPosition(
-        snapshot.position, deltaMilliseconds, snapshot.duration, snapshot.seekable);
-    if (!snapshot.seekable || nextPosition == snapshot.position) {
-        return {};
-    }
-
-    VideoPlaybackControlPlan plan;
-    plan.stateDelta.mediaEnded = false;
-    appendEnsureBackend(plan);
-    plan.backendOperations.push_back(setPositionOperation(nextPosition));
-    plan.stateDelta.position = nextPosition;
-    return plan;
+    return Bridge::videoPlaybackControlPlanFromRust(
+        rustVideoPlaybackSeekByPlan(rustSnapshot(snapshot), deltaMilliseconds));
 }
 
 qint64 videoPlaybackClampedSeekPosition(
     qint64 currentPosition, qint64 deltaMilliseconds, qint64 duration, bool seekable)
 {
-    if (!seekable) {
-        return currentPosition;
-    }
-
-    return clampedAbsolutePosition(currentPosition + deltaMilliseconds, duration);
+    return rustVideoPlaybackClampedSeekPosition(
+        currentPosition, deltaMilliseconds, duration, seekable);
 }
 }

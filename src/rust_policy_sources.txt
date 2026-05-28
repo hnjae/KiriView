@@ -33,4 +33,5 @@ src/policy/predecodepolicy/momentum.rs
 src/policy/predecodepolicy/schedule.rs
 src/policy/startup_arguments.rs
 src/policy/svgrenderer.rs
+src/policy/videodocumentpolicy.rs
 src/policy/videoformatregistry.rs

@@ -3,52 +3,13 @@
 
 #include "video/videodocumentstatusplan.h"
 
-namespace {
-KiriView::VideoDocumentStatus documentStatusForMediaStatus(KiriView::VideoMediaStatus status)
-{
-    switch (status) {
-    case KiriView::VideoMediaStatus::Null:
-        return KiriView::VideoDocumentStatus::Loading;
-    case KiriView::VideoMediaStatus::Loading:
-    case KiriView::VideoMediaStatus::Stalled:
-        return KiriView::VideoDocumentStatus::Loading;
-    case KiriView::VideoMediaStatus::Loaded:
-    case KiriView::VideoMediaStatus::Buffering:
-    case KiriView::VideoMediaStatus::Buffered:
-    case KiriView::VideoMediaStatus::EndOfMedia:
-        return KiriView::VideoDocumentStatus::Ready;
-    case KiriView::VideoMediaStatus::Invalid:
-        return KiriView::VideoDocumentStatus::Error;
-    }
-
-    return KiriView::VideoDocumentStatus::Loading;
-}
-}
+#include "bridge/videodocumentpolicyconversion.h"
+#include "kiriview/src/policy/videodocumentpolicy.cxx.h"
 
 namespace KiriView {
 VideoDocumentStatusPlan videoDocumentStatusPlan(VideoDocumentStatusSnapshot snapshot)
 {
-    if (snapshot.sourceUrlEmpty) {
-        return VideoDocumentStatusPlan {
-            VideoDocumentStatus::Null,
-            false,
-            false,
-        };
-    }
-
-    if (snapshot.sourceLoadActive || !snapshot.mediaBackendAvailable) {
-        return VideoDocumentStatusPlan {
-            VideoDocumentStatus::Loading,
-            false,
-            false,
-        };
-    }
-
-    const bool mediaEnded = snapshot.mediaStatus == VideoMediaStatus::EndOfMedia;
-    return VideoDocumentStatusPlan {
-        documentStatusForMediaStatus(snapshot.mediaStatus),
-        mediaEnded,
-        mediaEnded,
-    };
+    return Bridge::videoDocumentStatusPlanFromRust(
+        rustVideoDocumentStatusPlan(Bridge::rustVideoDocumentStatusSnapshot(snapshot)));
 }
 }

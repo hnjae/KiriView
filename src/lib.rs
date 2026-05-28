@@ -43,6 +43,10 @@ mod videoformatregistry;
 #[path = "policy/imageopenworkflow.rs"]
 mod imageopenworkflow;
 
+// Video document policy.
+#[path = "policy/videodocumentpolicy.rs"]
+mod videodocumentpolicy;
+
 // Navigation policy.
 #[path = "policy/imagedocumentpagenavigation.rs"]
 mod imagedocumentpagenavigation;
