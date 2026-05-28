@@ -174,28 +174,28 @@ msgctxt "@action"
 msgid "Open Application Menu"
 msgstr ""
 
-#: src/archive/archivebackend.cpp
+#: src/archive/mediaentrysourcebackend.cpp
 #, kde-format
 msgctxt "@info:status"
-msgid "Could not open the selected archive."
+msgid "Could not open the selected collection."
 msgstr ""
 
-#: src/archive/archivebackend.cpp
+#: src/archive/mediaentrysourcebackend.cpp
 #, kde-format
 msgctxt "@info:status"
 msgid "Could not open %1."
 msgstr ""
 
-#: src/archive/archivebackend.cpp
+#: src/archive/mediaentrysourcebackend.cpp
 #, kde-format
 msgctxt "@info:status"
-msgid "Could not find the selected image in the archive."
+msgid "Could not find the selected image in the collection."
 msgstr ""
 
-#: src/archive/archivebackend.cpp
+#: src/archive/mediaentrysourcebackend.cpp
 #, kde-format
 msgctxt "@info:status"
-msgid "Could not read the selected archive image."
+msgid "Could not read the selected collection image."
 msgstr ""
 
 #: src/decoding/imageformatregistry.cpp
@@ -264,12 +264,12 @@ msgstr ""
 
 #: src/localization/imageerrortext.cpp
 #, kde-format
-msgid "The selected archive does not contain any supported images."
+msgid "The selected collection does not contain any supported media."
 msgstr ""
 
 #: src/localization/imageerrortext.cpp
 #, kde-format
-msgid "Could not open the selected archive."
+msgid "Could not open the selected collection."
 msgstr ""
 
 #: src/localization/imageerrortext.cpp
