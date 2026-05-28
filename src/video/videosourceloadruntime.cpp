@@ -6,29 +6,6 @@
 #include <utility>
 
 namespace {
-KiriView::ResetVideoSourceLoadOperation resetSourceLoadOperation(const QUrl &sourceUrl)
-{
-    return KiriView::ResetVideoSourceLoadOperation { sourceUrl };
-}
-
-KiriView::ApplyVideoPlaybackUrlOperation applyPlaybackUrlOperation(
-    const KiriView::VideoPlaybackUrlResolution &resolution)
-{
-    return KiriView::ApplyVideoPlaybackUrlOperation {
-        resolution.sourceUrl,
-        resolution.playbackUrl,
-    };
-}
-
-KiriView::PublishVideoSourceLoadFailureOperation sourceLoadFailureOperation(
-    const QUrl &sourceUrl, const QString &errorString)
-{
-    return KiriView::PublishVideoSourceLoadFailureOperation {
-        sourceUrl,
-        errorString,
-    };
-}
-
 void dispatchPlan(
     const KiriView::VideoSourceLoadPlanCallback &callback, KiriView::VideoSourceLoadPlan plan)
 {
@@ -56,20 +33,12 @@ void VideoSourceLoadRuntime::setSourceUrl(
     cancelAndCleanup();
 
     if (sourceUrl.isEmpty()) {
-        dispatchPlan(planCallback,
-            {
-                ClearVideoPlaybackSourceOperation {},
-                ResetClearedVideoSourceOperation {},
-            });
+        dispatchPlan(planCallback, videoSourceLoadClearPlan());
         return;
     }
 
     const ImageAsyncScopedOperation<QUrl> operation = m_resolution.start(sourceUrl);
-    dispatchPlan(planCallback,
-        {
-            ClearVideoPlaybackSourceOperation {},
-            resetSourceLoadOperation(sourceUrl),
-        });
+    dispatchPlan(planCallback, videoSourceLoadStartPlan(sourceUrl));
 
     m_resolver->resolve(
         operation.operationId, sourceUrl, receiver,
@@ -107,7 +76,7 @@ void VideoSourceLoadRuntime::completePlaybackUrlResolution(
         return;
     }
 
-    dispatchPlan(callback, { applyPlaybackUrlOperation(resolution) });
+    dispatchPlan(callback, videoSourceLoadReadyPlan(resolution.sourceUrl, resolution.playbackUrl));
 }
 
 void VideoSourceLoadRuntime::failPlaybackUrlResolution(quint64 operationId, const QUrl &sourceUrl,
@@ -117,6 +86,6 @@ void VideoSourceLoadRuntime::failPlaybackUrlResolution(quint64 operationId, cons
         return;
     }
 
-    dispatchPlan(callback, { sourceLoadFailureOperation(sourceUrl, errorString) });
+    dispatchPlan(callback, videoSourceLoadFailurePlan(sourceUrl, errorString));
 }
 }

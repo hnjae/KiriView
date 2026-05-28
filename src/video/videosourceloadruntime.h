@@ -6,41 +6,16 @@
 
 #include "async/imageasyncoperationstate.h"
 #include "video/videoplaybackurlresolver.h"
+#include "video/videosourceloadplan.h"
 
 #include <QString>
 #include <QUrl>
 #include <functional>
 #include <memory>
-#include <variant>
-#include <vector>
 
 class QObject;
 
 namespace KiriView {
-struct ClearVideoPlaybackSourceOperation {
-};
-
-struct ResetClearedVideoSourceOperation {
-};
-
-struct ResetVideoSourceLoadOperation {
-    QUrl sourceUrl;
-};
-
-struct ApplyVideoPlaybackUrlOperation {
-    QUrl sourceUrl;
-    QUrl playbackUrl;
-};
-
-struct PublishVideoSourceLoadFailureOperation {
-    QUrl sourceUrl;
-    QString errorString;
-};
-
-using VideoSourceLoadOperation = std::variant<ClearVideoPlaybackSourceOperation,
-    ResetClearedVideoSourceOperation, ResetVideoSourceLoadOperation, ApplyVideoPlaybackUrlOperation,
-    PublishVideoSourceLoadFailureOperation>;
-using VideoSourceLoadPlan = std::vector<VideoSourceLoadOperation>;
 using VideoSourceLoadPlanCallback = std::function<void(VideoSourceLoadPlan)>;
 
 class VideoSourceLoadRuntime final

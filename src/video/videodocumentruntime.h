@@ -8,6 +8,7 @@
 #include "video/videomediabackend.h"
 #include "video/videooutputruntime.h"
 #include "video/videoplaybackcontrolplan.h"
+#include "video/videosourceloadplan.h"
 #include "video/videosourceloadruntime.h"
 
 #include <QObject>
