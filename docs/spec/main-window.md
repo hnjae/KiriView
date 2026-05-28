@@ -188,7 +188,7 @@ The Info Panel is a layout-reserving right-side panel that spans the full conten
 
 The Thumbnail Panel is a layout-reserving bottom panel in the remaining media area to the left of the Info Panel.
 
-The Thumbnail Panel shows a horizontal, scrollable active-navigation strip when the active navigation list is known. Each strip item shows a media-type icon at Kirigami's enormous icon size, not a generated preview thumbnail, above the existing active-navigation candidate name. The candidate name is rendered in a fixed-width font on one elided line.
+The Thumbnail Panel shows a horizontal, scrollable active-navigation strip when the active navigation list is known. Each strip item shows a media-type icon at Kirigami's enormous icon size, not a generated preview thumbnail, above the existing active-navigation candidate name. The candidate name is rendered in a fixed-width font on one elided line. The horizontal scrollbar occupies a dedicated lane below the strip items and must not overlap or obscure candidate names.
 
 The Thumbnail Panel uses image and video icons to distinguish supported still images from supported videos.
 
@@ -198,7 +198,7 @@ Activating a Thumbnail Panel strip item opens the item at that active navigation
 
 When both panels are visible, the Info Panel occupies the right side for the full content height, and the Thumbnail Panel occupies only the bottom of the media area that remains to its left.
 
-The panels are resizable with splitters. The Thumbnail Panel minimum height is tall enough to show the enormous icon and one-line candidate name without clipping.
+The panels are resizable with splitters. The Thumbnail Panel minimum height is tall enough to show the enormous icon, one-line candidate name, and dedicated horizontal scrollbar lane without clipping.
 
 Ctrl+I toggles the Info Panel, and Ctrl+T toggles the Thumbnail Panel.
 
