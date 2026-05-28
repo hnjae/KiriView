@@ -86,6 +86,7 @@ public:
     qreal steppedManualZoomPercent(qreal stepCount) const;
     int rotationDegrees() const;
     int currentLastPageNumber() const;
+    ImageDocumentPageActiveNavigationSnapshot activeNavigationSnapshot() const;
     ImageSpreadPageNavigationTarget imageDocumentPageNavigationTarget(
         NavigationDirection direction) const;
     int relativePageNavigationTarget(int offset) const;

@@ -78,7 +78,8 @@ void TestDocumentSessionPublicProjection::archiveImageProjectsPageNavigationAndC
                 true,
                 false,
                 {},
-                KiriView::ImageDocumentPageActiveNavigationInput { 2, 3, 5 },
+                KiriView::ImageDocumentPageActiveNavigationSnapshot {
+                    true, true, true, false, false, 2, 5 },
                 QStringLiteral("book.cbz"),
                 QSize(640, 480),
                 {},

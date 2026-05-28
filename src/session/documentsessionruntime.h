@@ -135,7 +135,7 @@ private:
     ActiveZoomSnapshot activeZoomSnapshotForKind(DocumentSessionKind kind) const;
     DocumentSessionPublicProjectionInput publicProjectionInput() const;
     DirectMediaActiveNavigationInput directMediaActiveNavigationInput() const;
-    ImageDocumentPageActiveNavigationInput imageDocumentPageActiveNavigationInput() const;
+    ImageDocumentPageActiveNavigationSnapshot imageDocumentPageActiveNavigationSnapshot() const;
 
     QObject *m_owner = nullptr;
     KiriImageDocument &m_imageDocument;

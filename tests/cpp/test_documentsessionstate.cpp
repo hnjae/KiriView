@@ -171,8 +171,8 @@ void TestDocumentSessionState::publicProjectionCommitsValuesBeforePublishing()
     KiriView::DocumentSessionPublicProjectionInput input;
     input.documentKind = KiriView::DocumentSessionKind::Image;
     input.imageSourceMayRepresentDocument = true;
-    input.imageDocumentPageNavigation
-        = KiriView::ImageDocumentPageActiveNavigationInput { 2, 3, 4 };
+    input.imageDocumentPageNavigation = KiriView::ImageDocumentPageActiveNavigationSnapshot { true,
+        true, true, false, false, 2, 4 };
     input.imageWindowTitleFileName = QStringLiteral("book.cbz");
     input.imageReadyForDeletion = true;
     input.displayedMediaOpenWithAvailable = true;
@@ -213,8 +213,8 @@ void TestDocumentSessionState::publicProjectionOnlyNotifiesChangedOutputs()
     input.documentKind = KiriView::DocumentSessionKind::Image;
     input.directMediaNavigation = {};
     input.imageSourceMayRepresentDocument = true;
-    input.imageDocumentPageNavigation
-        = KiriView::ImageDocumentPageActiveNavigationInput { 1, 1, 1 };
+    input.imageDocumentPageNavigation = KiriView::ImageDocumentPageActiveNavigationSnapshot { true,
+        false, false, true, true, 1, 1 };
     input.imageReadyForDeletion = true;
     input.videoSourcePresent = false;
     state.updatePublicProjection(input);

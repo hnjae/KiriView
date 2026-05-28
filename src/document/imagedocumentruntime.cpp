@@ -227,6 +227,11 @@ ImageDocumentPageNavigationSnapshot ImageDocumentRuntime::pageNavigationSnapshot
     return controllers->navigationController().pageNavigationSnapshot();
 }
 
+ImageDocumentPageActiveNavigationSnapshot ImageDocumentRuntime::activeNavigationSnapshot() const
+{
+    return controllers->spreadController().activeNavigationSnapshot();
+}
+
 bool ImageDocumentRuntime::containerNavigationAvailable() const
 {
     return state.containerNavigationAvailable();

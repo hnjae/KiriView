@@ -41,6 +41,21 @@ const Operation *dispatchOperation(const KiriView::ActiveNavigationDispatchPlan 
 {
     return std::get_if<Operation>(&plan.operation);
 }
+
+KiriView::ImageDocumentPageActiveNavigationSnapshot imageDocumentActiveNavigationSnapshot(
+    bool canOpenPrevious, bool canOpenNext, bool atKnownFirst, bool atKnownLast, int currentNumber,
+    int count)
+{
+    return KiriView::ImageDocumentPageActiveNavigationSnapshot {
+        true,
+        canOpenPrevious,
+        canOpenNext,
+        atKnownFirst,
+        atKnownLast,
+        currentNumber,
+        count,
+    };
+}
 }
 
 class TestActiveNavigationProjection : public QObject
@@ -120,7 +135,7 @@ void TestActiveNavigationProjection::validImageDocumentSnapshotProjectsSpreadAwa
 {
     const KiriView::ActiveNavigationSnapshot firstSpread = KiriView::projectActiveNavigation(
         KiriView::ActiveNavigationSourceKind::ImageDocumentPages, {},
-        KiriView::ImageDocumentPageActiveNavigationInput { 1, 2, 5 }, false);
+        imageDocumentActiveNavigationSnapshot(false, true, true, false, 1, 5), false);
     QVERIFY(firstSpread.available);
     QVERIFY(firstSpread.known);
     QVERIFY(firstSpread.editable);
@@ -133,7 +148,7 @@ void TestActiveNavigationProjection::validImageDocumentSnapshotProjectsSpreadAwa
 
     const KiriView::ActiveNavigationSnapshot lastSpread = KiriView::projectActiveNavigation(
         KiriView::ActiveNavigationSourceKind::ImageDocumentPages, {},
-        KiriView::ImageDocumentPageActiveNavigationInput { 4, 5, 5 }, false);
+        imageDocumentActiveNavigationSnapshot(true, false, false, true, 4, 5), false);
     QVERIFY(lastSpread.canOpenPrevious);
     QVERIFY(!lastSpread.canOpenNext);
     QVERIFY(!lastSpread.atKnownFirst);
@@ -169,15 +184,15 @@ void TestActiveNavigationProjection::imageDocumentProjectionPreservesLeafOwnedSn
 
 void TestActiveNavigationProjection::invalidImagePageValuesNormalizeToUnknown()
 {
-    const KiriView::ActiveNavigationSnapshot reversedSpread = KiriView::projectActiveNavigation(
+    const KiriView::ActiveNavigationSnapshot zeroCurrent = KiriView::projectActiveNavigation(
         KiriView::ActiveNavigationSourceKind::ImageDocumentPages, {},
-        KiriView::ImageDocumentPageActiveNavigationInput { 3, 2, 5 }, false);
-    compareUnknown(reversedSpread);
+        imageDocumentActiveNavigationSnapshot(false, true, true, false, 0, 5), false);
+    compareUnknown(zeroCurrent);
 
-    const KiriView::ActiveNavigationSnapshot lastPastCount = KiriView::projectActiveNavigation(
+    const KiriView::ActiveNavigationSnapshot outOfRange = KiriView::projectActiveNavigation(
         KiriView::ActiveNavigationSourceKind::ImageDocumentPages, {},
-        KiriView::ImageDocumentPageActiveNavigationInput { 4, 6, 5 }, false);
-    compareUnknown(lastPastCount);
+        imageDocumentActiveNavigationSnapshot(true, false, false, true, 6, 5), false);
+    compareUnknown(outOfRange);
 }
 
 void TestActiveNavigationProjection::deletionMaskingDisablesDispatchButKeepsKnownReadout()
@@ -260,7 +275,7 @@ void TestActiveNavigationProjection::imageDocumentDispatchPlanUsesNumberedPageTa
 {
     const KiriView::ActiveNavigationSnapshot snapshot = KiriView::projectActiveNavigation(
         KiriView::ActiveNavigationSourceKind::ImageDocumentPages, {},
-        KiriView::ImageDocumentPageActiveNavigationInput { 2, 3, 5 }, false);
+        imageDocumentActiveNavigationSnapshot(true, true, false, false, 2, 5), false);
 
     const KiriView::ActiveNavigationDispatchPlan first = KiriView::activeNavigationDispatchPlan(
         KiriView::ActiveNavigationSourceKind::ImageDocumentPages, snapshot,
@@ -297,7 +312,7 @@ void TestActiveNavigationProjection::previousNextDispatchPlanReportsEditableBoun
 {
     const KiriView::ActiveNavigationSnapshot firstSnapshot = KiriView::projectActiveNavigation(
         KiriView::ActiveNavigationSourceKind::ImageDocumentPages, {},
-        KiriView::ImageDocumentPageActiveNavigationInput { 1, 1, 3 }, false);
+        imageDocumentActiveNavigationSnapshot(false, true, true, false, 1, 3), false);
     const KiriView::ActiveNavigationDispatchPlan previous = KiriView::activeNavigationDispatchPlan(
         KiriView::ActiveNavigationSourceKind::ImageDocumentPages, firstSnapshot,
         KiriView::previousActiveNavigationDispatchRequest());
@@ -306,7 +321,7 @@ void TestActiveNavigationProjection::previousNextDispatchPlanReportsEditableBoun
 
     const KiriView::ActiveNavigationSnapshot lastSnapshot = KiriView::projectActiveNavigation(
         KiriView::ActiveNavigationSourceKind::ImageDocumentPages, {},
-        KiriView::ImageDocumentPageActiveNavigationInput { 3, 3, 3 }, false);
+        imageDocumentActiveNavigationSnapshot(true, false, false, true, 3, 3), false);
     const KiriView::ActiveNavigationDispatchPlan next = KiriView::activeNavigationDispatchPlan(
         KiriView::ActiveNavigationSourceKind::ImageDocumentPages, lastSnapshot,
         KiriView::nextActiveNavigationDispatchRequest());

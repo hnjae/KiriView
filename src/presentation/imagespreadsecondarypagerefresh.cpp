@@ -86,6 +86,28 @@ int ImageSpreadSecondaryPageRefresh::currentLastPageNumber(
     return imageSpreadNavigationCurrentLastPageNumber(navigationState(context));
 }
 
+ImageDocumentPageActiveNavigationSnapshot ImageSpreadSecondaryPageRefresh::activeNavigationSnapshot(
+    const ImageSpreadPageNavigationContext &context) const
+{
+    const int currentPageNumber = context.navigation.currentPageNumber();
+    const int currentLastPageNumber = this->currentLastPageNumber(context);
+    const int pageCount = context.navigation.pageCount();
+    if (currentPageNumber < 1 || currentLastPageNumber < currentPageNumber || pageCount < 1
+        || currentLastPageNumber > pageCount) {
+        return {};
+    }
+
+    return ImageDocumentPageActiveNavigationSnapshot {
+        true,
+        currentPageNumber > 1,
+        currentLastPageNumber < pageCount,
+        currentPageNumber == 1,
+        currentLastPageNumber >= pageCount,
+        currentPageNumber,
+        pageCount,
+    };
+}
+
 ImageSpreadPageNavigationTarget ImageSpreadSecondaryPageRefresh::pageNavigationTarget(
     NavigationDirection direction, const ImageSpreadPageNavigationContext &context) const
 {

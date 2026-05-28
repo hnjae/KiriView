@@ -47,21 +47,16 @@ KiriView::ActiveNavigationSnapshot directMediaActiveNavigationSnapshot(
 }
 
 KiriView::ActiveNavigationSnapshot imageDocumentPageActiveNavigationSnapshot(
-    KiriView::ImageDocumentPageActiveNavigationInput input)
+    KiriView::ImageDocumentPageActiveNavigationSnapshot input)
 {
-    if (input.currentNumber < 1 || input.currentLastNumber < input.currentNumber || input.count < 1
-        || input.currentLastNumber > input.count) {
-        return unknownActiveNavigation();
-    }
-
     return normalizedActiveNavigation(KiriView::ActiveNavigationSnapshot {
         true,
+        input.known,
         true,
-        true,
-        input.currentNumber > 1,
-        input.currentLastNumber < input.count,
-        input.currentNumber == 1,
-        input.currentLastNumber >= input.count,
+        input.canOpenPrevious,
+        input.canOpenNext,
+        input.atKnownFirst,
+        input.atKnownLast,
         input.currentNumber,
         input.count,
     });
@@ -144,7 +139,8 @@ bool ActiveNavigationDispatchPlan::shouldDispatch() const
 
 ActiveNavigationSnapshot projectActiveNavigation(ActiveNavigationSourceKind sourceKind,
     DirectMediaActiveNavigationInput directMediaInput,
-    ImageDocumentPageActiveNavigationInput imageDocumentPageInput, bool fileDeletionInProgress)
+    ImageDocumentPageActiveNavigationSnapshot imageDocumentPageSnapshot,
+    bool fileDeletionInProgress)
 {
     ActiveNavigationSnapshot snapshot;
     switch (sourceKind) {
@@ -152,7 +148,7 @@ ActiveNavigationSnapshot projectActiveNavigation(ActiveNavigationSourceKind sour
         snapshot = directMediaActiveNavigationSnapshot(directMediaInput);
         break;
     case ActiveNavigationSourceKind::ImageDocumentPages:
-        snapshot = imageDocumentPageActiveNavigationSnapshot(imageDocumentPageInput);
+        snapshot = imageDocumentPageActiveNavigationSnapshot(imageDocumentPageSnapshot);
         break;
     case ActiveNavigationSourceKind::None:
         snapshot = unavailableActiveNavigation();

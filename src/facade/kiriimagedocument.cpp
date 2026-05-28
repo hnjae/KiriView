@@ -258,6 +258,12 @@ KiriView::ImageDocumentPageNavigationSnapshot KiriImageDocument::pageNavigationS
     return m_runtime->pageNavigationSnapshot();
 }
 
+KiriView::ImageDocumentPageActiveNavigationSnapshot
+KiriImageDocument::activeNavigationSnapshot() const
+{
+    return m_runtime->activeNavigationSnapshot();
+}
+
 bool KiriImageDocument::containerNavigationAvailable() const
 {
     return m_runtime->containerNavigationAvailable();

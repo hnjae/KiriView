@@ -978,7 +978,7 @@ DocumentSessionPublicProjectionInput DocumentSessionRuntime::publicProjectionInp
             && !isSupportedDirectImageUrl(m_imageDocument.sourceUrl()),
         m_state.fileDeletionInProgress(),
         directMediaActiveNavigationInput(),
-        imageDocumentPageActiveNavigationInput(),
+        imageDocumentPageActiveNavigationSnapshot(),
         m_imageDocument.windowTitleFileName(),
         m_imageDocument.primaryImageSize(),
         m_videoDocument.windowTitleFileName(),
@@ -997,10 +997,9 @@ DirectMediaActiveNavigationInput DocumentSessionRuntime::directMediaActiveNaviga
         m_state.directMediaNavigationKnown() };
 }
 
-ImageDocumentPageActiveNavigationInput
-DocumentSessionRuntime::imageDocumentPageActiveNavigationInput() const
+ImageDocumentPageActiveNavigationSnapshot
+DocumentSessionRuntime::imageDocumentPageActiveNavigationSnapshot() const
 {
-    return ImageDocumentPageActiveNavigationInput { m_imageDocument.currentPageNumber(),
-        m_imageDocument.currentLastPageNumber(), m_imageDocument.pageCount() };
+    return m_imageDocument.activeNavigationSnapshot();
 }
 }

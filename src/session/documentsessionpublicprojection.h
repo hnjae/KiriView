@@ -17,7 +17,7 @@ struct DocumentSessionPublicProjectionInput {
     bool imageSourceMayRepresentDocument = false;
     bool fileDeletionInProgress = false;
     DirectMediaActiveNavigationInput directMediaNavigation;
-    ImageDocumentPageActiveNavigationInput imageDocumentPageNavigation;
+    ImageDocumentPageActiveNavigationSnapshot imageDocumentPageNavigation;
     QString imageWindowTitleFileName;
     QSize imageDirectMediaSize;
     QString videoWindowTitleFileName;

@@ -234,6 +234,12 @@ int ImageSpreadPresentationController::currentLastPageNumber() const
     return m_secondaryPageRefresh.currentLastPageNumber(pageNavigationContext());
 }
 
+ImageDocumentPageActiveNavigationSnapshot
+ImageSpreadPresentationController::activeNavigationSnapshot() const
+{
+    return m_secondaryPageRefresh.activeNavigationSnapshot(pageNavigationContext());
+}
+
 ImageSpreadPageNavigationTarget
 ImageSpreadPresentationController::imageDocumentPageNavigationTarget(
     NavigationDirection direction) const

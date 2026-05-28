@@ -82,6 +82,16 @@ struct ImageDocumentPageNavigationSnapshot {
     int pageCount() const;
     std::optional<QUrl> urlAtPage(int pageNumber) const;
 };
+
+struct ImageDocumentPageActiveNavigationSnapshot {
+    bool known = false;
+    bool canOpenPrevious = false;
+    bool canOpenNext = false;
+    bool atKnownFirst = false;
+    bool atKnownLast = false;
+    int currentNumber = 0;
+    int count = 0;
+};
 }
 
 #endif

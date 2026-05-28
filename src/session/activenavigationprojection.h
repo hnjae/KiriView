@@ -5,6 +5,7 @@
 #define KIRIVIEW_ACTIVENAVIGATIONPROJECTION_H
 
 #include "navigation/directmedianavigationmodel.h"
+#include "navigation/imagedocumentpagenavigationtypes.h"
 
 #include <variant>
 
@@ -73,12 +74,6 @@ struct DirectMediaActiveNavigationInput {
     bool known = false;
 };
 
-struct ImageDocumentPageActiveNavigationInput {
-    int currentNumber = 0;
-    int currentLastNumber = 0;
-    int count = 0;
-};
-
 struct ActiveNavigationDispatchRequest {
     ActiveNavigationDispatchRequestKind kind = ActiveNavigationDispatchRequestKind::Next;
     int number = 0;
@@ -93,7 +88,8 @@ struct ActiveNavigationDispatchPlan {
 
 ActiveNavigationSnapshot projectActiveNavigation(ActiveNavigationSourceKind sourceKind,
     DirectMediaActiveNavigationInput directMediaInput,
-    ImageDocumentPageActiveNavigationInput imageDocumentPageInput, bool fileDeletionInProgress);
+    ImageDocumentPageActiveNavigationSnapshot imageDocumentPageSnapshot,
+    bool fileDeletionInProgress);
 ActiveNavigationSnapshot maskActiveNavigationDuringDeletion(ActiveNavigationSnapshot snapshot);
 ActiveNavigationBoundaryScope activeNavigationBoundaryScopeForSource(
     ActiveNavigationSourceKind sourceKind);

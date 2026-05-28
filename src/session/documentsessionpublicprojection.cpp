@@ -6,7 +6,7 @@
 #include "session/windowtitleprojection.h"
 
 namespace {
-bool imageDocumentPagesArePresent(const KiriView::ImageDocumentPageActiveNavigationInput &input)
+bool imageDocumentPagesArePresent(const KiriView::ImageDocumentPageActiveNavigationSnapshot &input)
 {
     return input.currentNumber > 0 || input.count > 0;
 }

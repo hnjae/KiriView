@@ -48,6 +48,8 @@ public:
     ImageSpreadSecondaryPageRefreshResult planRefresh(
         const ImageSpreadSecondaryPageRefreshRequest &request) const;
     int currentLastPageNumber(const ImageSpreadPageNavigationContext &context) const;
+    ImageDocumentPageActiveNavigationSnapshot activeNavigationSnapshot(
+        const ImageSpreadPageNavigationContext &context) const;
     ImageSpreadPageNavigationTarget pageNavigationTarget(
         NavigationDirection direction, const ImageSpreadPageNavigationContext &context) const;
     int relativePageNavigationTarget(
