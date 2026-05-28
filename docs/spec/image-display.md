@@ -130,7 +130,7 @@ Pressing Escape while editing the zoom input cancels the edit, restores the curr
 
 Editing the zoom input switches to manual zoom.
 
-A fit menu provides Fit, Fit Height, and Fit Width actions and shows the selected fit mode. The fit action returns the image to Fit mode.
+The toolbar fit control is a split button. The primary button applies the currently selected fit mode and starts with Fit to Window selected. Its adjacent menu offers Fit to Window, Fit Width, and Fit Height; selecting a menu item immediately applies that fit mode and updates the primary button's icon, label, and tooltip. Manual zoom does not replace the selected fit mode used by the primary button.
 
 When an image is ready, Ctrl+= or Ctrl++ zooms in by multiplying the current zoom by 1.1, and Ctrl+- zooms out by multiplying the current zoom by 1/1.1.
 
