@@ -45,6 +45,10 @@ private Q_SLOTS:
     void mnemonicRoutingStillTriggersMenuAction();
     void toolbarReadingControlsUseTextButtons();
     void toolbarReadingControlMnemonicsTriggerActions();
+    void fitSplitButtonPrimaryTriggersSelectedMode();
+    void fitSplitButtonMenuSelectionUpdatesPrimaryMode();
+    void fitSplitButtonKeepsLastFitSelectionAfterManualZoom();
+    void fitSplitButtonCollapsesLabelWhenConstrained();
     void toolbarActionOrderKeepsReadingDirectionBesideSpread();
     void emptyToolbarHidesReadingControls();
     void directImageToolbarHidesReadingControls();
@@ -238,6 +242,9 @@ Item {
     property int nextTriggerCount: 0
     property int rightToLeftTriggerCount: 0
     property int twoPageTriggerCount: 0
+    property int fitTriggerCount: 0
+    property int fitHeightTriggerCount: 0
+    property int fitWidthTriggerCount: 0
     property bool navigationActionsEnabled: %3
     property bool rightToLeftReadingActive: false
     property bool videoMode: false
@@ -316,6 +323,7 @@ Item {
         const button = toolbarButtonForAction(action);
         return {
             found: button !== null,
+            iconName: button !== null ? ("icon" in button ? button.icon.name : (button.iconName ?? "")) : "",
             iconOnly: button !== null && button.display === Controls.AbstractButton.IconOnly,
             label: button !== null ? sanitizedText(button.text) : "",
             text: button !== null ? button.text : "",
@@ -335,6 +343,27 @@ Item {
 
     function fitToolbarButtonState() {
         return toolbarButtonStateForAction(toolbar.fitMenuAction);
+    }
+
+    function selectedFitMode() {
+        return toolbar.selectedFitMode;
+    }
+
+    function setSelectedFitModeToFitWidth() {
+        toolbar.selectedFitMode = KiriImageDocument.FitWidth;
+    }
+
+    function setImageFitWidth() {
+        imageDocument.setFitMode(KiriImageDocument.FitWidth);
+    }
+
+    function setImageManualZoom() {
+        imageDocument.zoomPercent = 125;
+    }
+
+    function setToolbarWidth(width) {
+        root.width = width;
+        toolbar.width = width;
     }
 
     function resetNavigationTriggerCounts() {
@@ -396,20 +425,26 @@ Item {
         enabled: !root.videoMode
         icon.name: "zoom-fit-best-symbolic"
         text: "Fit"
+
+        onTriggered: root.fitTriggerCount += 1
     }
 
     Kirigami.Action {
         id: fitHeightKirigamiAction
 
-        enabled: false
+        enabled: !root.videoMode
         text: "Fit Height"
+
+        onTriggered: root.fitHeightTriggerCount += 1
     }
 
     Kirigami.Action {
         id: fitWidthKirigamiAction
 
-        enabled: false
+        enabled: !root.videoMode
         text: "Fit Width"
+
+        onTriggered: root.fitWidthTriggerCount += 1
     }
 
     Kirigami.Action {
@@ -797,6 +832,21 @@ bool invokeBool(QObject *root, const char *method, bool *invoked = nullptr)
 
 bool applicationMenuOpen(QObject *root) { return invokeBool(root, "applicationMenuOpen"); }
 
+int invokeInt(QObject *root, const char *method, bool *invoked = nullptr)
+{
+    bool ok = false;
+    const QVariant result = invokeVariant(root, method, &ok);
+    if (invoked != nullptr) {
+        *invoked = ok;
+    }
+    return ok ? result.toInt() : 0;
+}
+
+void invokeVoid(QObject *root, const char *method)
+{
+    QVERIFY(QMetaObject::invokeMethod(root, method, Qt::DirectConnection));
+}
+
 QStringList invokeStringList(QObject *root, const char *method, bool *ok = nullptr)
 {
     bool invoked = false;
@@ -986,9 +1036,10 @@ void TestToolBarApplicationMenu::toolbarReadingControlsUseTextButtons()
     QVERIFY(ok);
     QVERIFY(fitState.value(QStringLiteral("found")).toBool());
     QVERIFY(fitState.value(QStringLiteral("visible")).toBool());
-    QVERIFY(fitState.value(QStringLiteral("iconOnly")).toBool());
-    QVERIFY(!fitState.value(QStringLiteral("textBesideIcon")).toBool());
-    QCOMPARE(fitState.value(QStringLiteral("label")).toString(), QStringLiteral("Fit"));
+    QVERIFY(!fitState.value(QStringLiteral("iconOnly")).toBool());
+    QVERIFY(fitState.value(QStringLiteral("textBesideIcon")).toBool());
+    QCOMPARE(fitState.value(QStringLiteral("label")).toString(), QStringLiteral("Fit to Window"));
+    QCOMPARE(fitState.value(QStringLiteral("tooltip")).toString(), QStringLiteral("Fit to Window"));
 }
 
 void TestToolBarApplicationMenu::toolbarReadingControlMnemonicsTriggerActions()
@@ -1017,6 +1068,104 @@ void TestToolBarApplicationMenu::toolbarReadingControlMnemonicsTriggerActions()
     QCOMPARE(fixture.root->property("rightToLeftTriggerCount").toInt(), 1);
 }
 
+void TestToolBarApplicationMenu::fitSplitButtonPrimaryTriggersSelectedMode()
+{
+    ToolBarMenuFixture fixture = createFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+
+    QQuickItem *primaryButton = findQuickItem(fixture.root, QStringLiteral("fitPrimaryButton"));
+    QVERIFY2(primaryButton != nullptr, "fit primary button was not created");
+    QTRY_VERIFY(primaryButton->isEnabled());
+
+    clickItem(fixture, primaryButton);
+    QCOMPARE(fixture.root->property("fitTriggerCount").toInt(), 1);
+    QCOMPARE(fixture.root->property("fitWidthTriggerCount").toInt(), 0);
+    QCOMPARE(fixture.root->property("fitHeightTriggerCount").toInt(), 0);
+
+    invokeVoid(fixture.root, "setSelectedFitModeToFitWidth");
+    QCoreApplication::processEvents();
+
+    clickItem(fixture, primaryButton);
+    QCOMPARE(fixture.root->property("fitTriggerCount").toInt(), 1);
+    QCOMPARE(fixture.root->property("fitWidthTriggerCount").toInt(), 1);
+    QCOMPARE(fixture.root->property("fitHeightTriggerCount").toInt(), 0);
+}
+
+void TestToolBarApplicationMenu::fitSplitButtonMenuSelectionUpdatesPrimaryMode()
+{
+    ToolBarMenuFixture fixture = createFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+
+    QQuickItem *menuButton = findQuickItem(fixture.root, QStringLiteral("fitMenuButton"));
+    QVERIFY2(menuButton != nullptr, "fit menu button was not created");
+    QTRY_VERIFY(menuButton->isEnabled());
+
+    clickItem(fixture, menuButton);
+    QQuickItem *fitWidthMenuItem = findQuickItem(fixture.root, QStringLiteral("fitWidthMenuItem"));
+    QVERIFY2(fitWidthMenuItem != nullptr, "fit width menu item was not created");
+    QTRY_VERIFY(fitWidthMenuItem->isVisible());
+
+    clickItem(fixture, fitWidthMenuItem);
+    QTRY_COMPARE(fixture.root->property("fitWidthTriggerCount").toInt(), 1);
+    QCOMPARE(invokeInt(fixture.root, "selectedFitMode"),
+        static_cast<int>(KiriImageDocument::ZoomMode::FitWidth));
+
+    bool ok = false;
+    const QVariantMap fitState = invokeVariantMap(fixture.root, "fitToolbarButtonState", &ok);
+    QVERIFY(ok);
+    QCOMPARE(fitState.value(QStringLiteral("label")).toString(), QStringLiteral("Fit Width"));
+    QCOMPARE(
+        fitState.value(QStringLiteral("iconName")).toString(), QStringLiteral("zoom-fit-width"));
+}
+
+void TestToolBarApplicationMenu::fitSplitButtonKeepsLastFitSelectionAfterManualZoom()
+{
+    QString sourcePath;
+    QString errorString;
+    std::unique_ptr<QTemporaryDir> imageDirectory = createImageDirectory(&sourcePath, &errorString);
+    QVERIFY2(imageDirectory != nullptr, qPrintable(errorString));
+
+    ToolBarMenuFixture fixture
+        = createOpenedCollectionScopeFixture(QUrl::fromLocalFile(sourcePath).toString());
+    fixture.temporaryDirectory = std::move(imageDirectory);
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+    QTRY_VERIFY(invokeBool(fixture.root, "documentReady"));
+
+    invokeVoid(fixture.root, "setImageFitWidth");
+    QTRY_COMPARE(invokeInt(fixture.root, "selectedFitMode"),
+        static_cast<int>(KiriImageDocument::ZoomMode::FitWidth));
+
+    invokeVoid(fixture.root, "setImageManualZoom");
+    QCoreApplication::processEvents();
+
+    QCOMPARE(invokeInt(fixture.root, "selectedFitMode"),
+        static_cast<int>(KiriImageDocument::ZoomMode::FitWidth));
+    bool ok = false;
+    const QVariantMap fitState = invokeVariantMap(fixture.root, "fitToolbarButtonState", &ok);
+    QVERIFY(ok);
+    QCOMPARE(fitState.value(QStringLiteral("label")).toString(), QStringLiteral("Fit Width"));
+}
+
+void TestToolBarApplicationMenu::fitSplitButtonCollapsesLabelWhenConstrained()
+{
+    ToolBarMenuFixture fixture = createFixture();
+    QVERIFY2(fixture.isValid(), qPrintable(fixture.errorString));
+
+    bool ok = false;
+    QVariantMap fitState = invokeVariantMap(fixture.root, "fitToolbarButtonState", &ok);
+    QVERIFY(ok);
+    QVERIFY(fitState.value(QStringLiteral("textBesideIcon")).toBool());
+    QCOMPARE(fitState.value(QStringLiteral("label")).toString(), QStringLiteral("Fit to Window"));
+
+    fixture.view->resize(360, 420);
+    QCoreApplication::processEvents();
+
+    fitState = invokeVariantMap(fixture.root, "fitToolbarButtonState", &ok);
+    QVERIFY(ok);
+    QVERIFY(fitState.value(QStringLiteral("iconOnly")).toBool());
+    QCOMPARE(fitState.value(QStringLiteral("label")).toString(), QStringLiteral("Fit to Window"));
+}
+
 void TestToolBarApplicationMenu::toolbarActionOrderKeepsReadingDirectionBesideSpread()
 {
     ToolBarMenuFixture fixture = createFixture();
@@ -1027,7 +1176,7 @@ void TestToolBarApplicationMenu::toolbarActionOrderKeepsReadingDirectionBesideSp
     QVERIFY(ok);
     QCOMPARE(texts,
         QStringList({ QStringLiteral("Right-to-Left"), QStringLiteral("Two-Page Spread"),
-            QStringLiteral("Zoom"), QStringLiteral("Fit") }));
+            QStringLiteral("Zoom"), QStringLiteral("Fit to Window") }));
 }
 
 void TestToolBarApplicationMenu::emptyToolbarHidesReadingControls()
@@ -1038,7 +1187,7 @@ void TestToolBarApplicationMenu::emptyToolbarHidesReadingControls()
     bool ok = false;
     const QStringList texts = invokeStringList(fixture.root, "toolbarControlTexts", &ok);
     QVERIFY(ok);
-    QCOMPARE(texts, QStringList({ QStringLiteral("Zoom"), QStringLiteral("Fit") }));
+    QCOMPARE(texts, QStringList({ QStringLiteral("Zoom"), QStringLiteral("Fit to Window") }));
 }
 
 void TestToolBarApplicationMenu::directImageToolbarHidesReadingControls()
@@ -1057,7 +1206,7 @@ void TestToolBarApplicationMenu::directImageToolbarHidesReadingControls()
     bool ok = false;
     const QStringList texts = invokeStringList(fixture.root, "toolbarControlTexts", &ok);
     QVERIFY(ok);
-    QCOMPARE(texts, QStringList({ QStringLiteral("Zoom"), QStringLiteral("Fit") }));
+    QCOMPARE(texts, QStringList({ QStringLiteral("Zoom"), QStringLiteral("Fit to Window") }));
 }
 
 void TestToolBarApplicationMenu::videoToolbarHidesReadingControlsAndDisablesImageControls()
@@ -1070,7 +1219,7 @@ void TestToolBarApplicationMenu::videoToolbarHidesReadingControlsAndDisablesImag
     bool ok = false;
     const QStringList texts = invokeStringList(fixture.root, "toolbarControlTexts", &ok);
     QVERIFY(ok);
-    QCOMPARE(texts, QStringList({ QStringLiteral("Zoom"), QStringLiteral("Fit") }));
+    QCOMPARE(texts, QStringList({ QStringLiteral("Zoom"), QStringLiteral("Fit to Window") }));
 
     bool invoked = false;
     const QVariantList enabledStates
@@ -1101,7 +1250,7 @@ void TestToolBarApplicationMenu::comicArchiveToolbarShowsEnabledReadingControls(
     QVERIFY(ok);
     QCOMPARE(texts,
         QStringList({ QStringLiteral("Right-to-Left"), QStringLiteral("Two-Page Spread"),
-            QStringLiteral("Zoom"), QStringLiteral("Fit") }));
+            QStringLiteral("Zoom"), QStringLiteral("Fit to Window") }));
 
     bool invoked = false;
     const QVariantList enabledStates
@@ -1130,7 +1279,7 @@ void TestToolBarApplicationMenu::generalArchiveToolbarShowsDisabledReadingContro
     QVERIFY(ok);
     QCOMPARE(texts,
         QStringList({ QStringLiteral("Right-to-Left"), QStringLiteral("Two-Page Spread"),
-            QStringLiteral("Zoom"), QStringLiteral("Fit") }));
+            QStringLiteral("Zoom"), QStringLiteral("Fit to Window") }));
 
     bool invoked = false;
     const QVariantList enabledStates
@@ -1160,7 +1309,7 @@ void TestToolBarApplicationMenu::directoryCollectionToolbarShowsDisabledReadingC
     QVERIFY(ok);
     QCOMPARE(texts,
         QStringList({ QStringLiteral("Right-to-Left"), QStringLiteral("Two-Page Spread"),
-            QStringLiteral("Zoom"), QStringLiteral("Fit") }));
+            QStringLiteral("Zoom"), QStringLiteral("Fit to Window") }));
 
     bool invoked = false;
     const QVariantList enabledStates

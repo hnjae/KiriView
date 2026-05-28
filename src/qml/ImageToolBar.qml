@@ -46,6 +46,8 @@ Controls.ToolBar {
     property double applicationMenuClosedTimestamp: 0
     readonly property int controlSpacing: compact ? Math.max(1, Math.round(Kirigami.Units.smallSpacing / 2)) : Kirigami.Units.smallSpacing
     readonly property int edgeMargin: controlSpacing
+    property int selectedFitMode: KiriImageDocument.Fit
+    readonly property bool fitSplitButtonTextVisible: width >= Kirigami.Units.gridUnit * 40
     readonly property bool interactionActive: toolbarHoverHandler.hovered || textInputFocused()
     readonly property int toolbarVerticalPadding: controlSpacing
     readonly property var imageToolbarControls: (root.rightToLeftReadingControlVisible ? [root.actions.rightToLeftReadingAction] : []).concat(root.twoPageModeControlVisible ? [root.actions.twoPageModeAction] : [], [zoomLevelAction, fitMenuAction])
@@ -145,14 +147,75 @@ Controls.ToolBar {
         return pageNavigationInputFocused || zoomInputFocused;
     }
 
+    function fitModeIsSelectable(zoomMode) {
+        return zoomMode === KiriImageDocument.Fit || zoomMode === KiriImageDocument.FitHeight || zoomMode === KiriImageDocument.FitWidth;
+    }
+
+    function fitModeAction(zoomMode) {
+        if (zoomMode === KiriImageDocument.FitHeight) {
+            return root.actions.fitHeightAction;
+        }
+        if (zoomMode === KiriImageDocument.FitWidth) {
+            return root.actions.fitWidthAction;
+        }
+        return root.actions.fitAction;
+    }
+
+    function fitModeIconName(zoomMode) {
+        if (zoomMode === KiriImageDocument.FitHeight) {
+            return "zoom-fit-height";
+        }
+        if (zoomMode === KiriImageDocument.FitWidth) {
+            return "zoom-fit-width";
+        }
+        return "zoom-fit-best-symbolic";
+    }
+
+    function fitModeText(zoomMode) {
+        if (zoomMode === KiriImageDocument.FitHeight) {
+            return KI18n.i18nc("@action:button", "Fit Height");
+        }
+        if (zoomMode === KiriImageDocument.FitWidth) {
+            return KI18n.i18nc("@action:button", "Fit Width");
+        }
+        return KI18n.i18nc("@action:button", "Fit to Window");
+    }
+
+    function syncSelectedFitModeFromZoomMode() {
+        if (imageDocument !== null && fitModeIsSelectable(imageDocument.zoomMode)) {
+            selectedFitMode = imageDocument.zoomMode;
+        }
+    }
+
+    function triggerFitMode(zoomMode) {
+        if (!fitModeIsSelectable(zoomMode)) {
+            return;
+        }
+
+        selectedFitMode = zoomMode;
+        const action = fitModeAction(zoomMode);
+        if (action !== null && action !== undefined && action.enabled) {
+            action.trigger();
+        }
+    }
+
     leftPadding: edgeMargin
     rightPadding: edgeMargin
     topPadding: toolbarVerticalPadding
     bottomPadding: toolbarVerticalPadding
 
     Component.onCompleted: {
+        syncSelectedFitModeFromZoomMode();
         if (floating) {
             background = floatingBackgroundComponent.createObject(root);
+        }
+    }
+
+    Connections {
+        target: root.imageDocument
+
+        function onZoomModeChanged() {
+            root.syncSelectedFitModeFromZoomMode();
         }
     }
 
@@ -231,12 +294,28 @@ Controls.ToolBar {
     }
 
     readonly property Kirigami.Action fitMenuAction: Kirigami.Action {
-        children: [root.actions.fitAction, root.actions.fitHeightAction, root.actions.fitWidthAction]
-        displayHint: Kirigami.DisplayHint.IconOnly | Kirigami.DisplayHint.KeepVisible
-        enabled: root.actions.fitAction.enabled
-        icon.name: "zoom-fit-best-symbolic"
-        text: root.actions.fitAction.text
+        displayComponent: FitSplitButton {
+            action: root.fitMenuAction
+            fitAction: root.actions.fitAction
+            fitHeightAction: root.actions.fitHeightAction
+            fitHeightMode: KiriImageDocument.FitHeight
+            fitMode: KiriImageDocument.Fit
+            fitWidthAction: root.actions.fitWidthAction
+            fitWidthMode: KiriImageDocument.FitWidth
+            selectedFitMode: root.selectedFitMode
+            textVisible: root.fitSplitButtonTextVisible
+
+            onFitModeTriggered: function (zoomMode) {
+                root.triggerFitMode(zoomMode);
+            }
+        }
+        displayHint: Kirigami.DisplayHint.KeepVisible
+        enabled: root.fitModeAction(root.selectedFitMode).enabled
+        icon.name: root.fitModeIconName(root.selectedFitMode)
+        text: root.fitModeText(root.selectedFitMode)
         tooltip: text
+
+        onTriggered: root.triggerFitMode(root.selectedFitMode)
     }
 
     readonly property Kirigami.Action applicationMenuAction: Kirigami.Action {
