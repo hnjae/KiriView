@@ -7,6 +7,16 @@
 #include "rendering/imagerotation.h"
 
 namespace KiriView {
+TileSourceVisibilityContext tileSourceVisibilityContext(const TileVisibilityContext &context)
+{
+    const QSizeF sourceDisplaySize = rotatedImageSize(context.displaySize, context.rotationDegrees);
+    return TileSourceVisibilityContext {
+        sourceDisplaySize,
+        unrotatedVisibleRectForRotation(
+            sourceDisplaySize, context.visibleItemRect, context.rotationDegrees),
+    };
+}
+
 qreal tileDisplayPixelsPerSourcePixel(
     const TilePyramid &pyramid, const QSizeF &displaySize, qreal devicePixelRatio)
 {
@@ -38,10 +48,8 @@ QRect tileLevelRectForItemRect(
 std::vector<TileKey> visibleTileKeys(
     const TilePyramid &pyramid, const TileVisibilityContext &context)
 {
-    const QSizeF sourceDisplaySize = rotatedImageSize(context.displaySize, context.rotationDegrees);
-    const QRectF sourceVisibleItemRect = unrotatedVisibleRectForRotation(
-        sourceDisplaySize, context.visibleItemRect, context.rotationDegrees);
+    const TileSourceVisibilityContext sourceContext = tileSourceVisibilityContext(context);
     return ImageTileGeometryPolicy::visibleTileKeys(pyramid.imageSize(), pyramid.tileSize(),
-        sourceDisplaySize, sourceVisibleItemRect, context.devicePixelRatio);
+        sourceContext.displaySize, sourceContext.visibleItemRect, context.devicePixelRatio);
 }
 }

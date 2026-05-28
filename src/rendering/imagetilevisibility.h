@@ -20,6 +20,12 @@ struct TileVisibilityContext {
     int rotationDegrees = 0;
 };
 
+struct TileSourceVisibilityContext {
+    QSizeF displaySize;
+    QRectF visibleItemRect;
+};
+
+TileSourceVisibilityContext tileSourceVisibilityContext(const TileVisibilityContext &context);
 qreal tileDisplayPixelsPerSourcePixel(
     const TilePyramid &pyramid, const QSizeF &displaySize, qreal devicePixelRatio);
 ActiveTileLayer activeTileLayer(

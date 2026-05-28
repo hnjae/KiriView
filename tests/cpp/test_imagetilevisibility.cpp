@@ -18,12 +18,36 @@ class TestImageTileVisibility : public QObject
     Q_OBJECT
 
 private Q_SLOTS:
+    void sourceVisibilityContextMapsRotatedViewToSourceSpace();
     void displayScaleUsesPhysicalPixelsPerSourcePixel();
     void firstDisplaySufficiencyUsesCurrentDisplayScale();
     void itemRectMapsToClampedLevelRect();
     void visibleTileKeysSelectDisplayLevelAndPrefetchNeighbors();
     void visibleTileKeysMapRotatedViewToSourceTiles();
 };
+
+void TestImageTileVisibility::sourceVisibilityContextMapsRotatedViewToSourceSpace()
+{
+    const KiriView::TileSourceVisibilityContext unrotatedContext
+        = KiriView::tileSourceVisibilityContext(KiriView::TileVisibilityContext {
+            QSizeF(1000.0, 500.0),
+            QRectF(10.0, 20.0, 100.0, 200.0),
+            1.0,
+            0,
+        });
+    QCOMPARE(unrotatedContext.displaySize, QSizeF(1000.0, 500.0));
+    QCOMPARE(unrotatedContext.visibleItemRect, QRectF(10.0, 20.0, 100.0, 200.0));
+
+    const KiriView::TileSourceVisibilityContext clockwiseContext
+        = KiriView::tileSourceVisibilityContext(KiriView::TileVisibilityContext {
+            QSizeF(500.0, 1000.0),
+            QRectF(10.0, 20.0, 100.0, 200.0),
+            1.0,
+            90,
+        });
+    QCOMPARE(clockwiseContext.displaySize, QSizeF(1000.0, 500.0));
+    QCOMPARE(clockwiseContext.visibleItemRect, QRectF(20.0, 390.0, 200.0, 100.0));
+}
 
 void TestImageTileVisibility::displayScaleUsesPhysicalPixelsPerSourcePixel()
 {

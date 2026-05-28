@@ -4,8 +4,7 @@
 #include "imagerenderframe.h"
 
 #include "bridge/qtgeometryconversion.h"
-#include "imagetilegeometrypolicy.h"
-#include "imagetilevisibility.h"
+#include "imagetilerequestplan.h"
 #include "kiriview/src/policy/imagerendergeometry.cxx.h"
 #include "rendering/imagerotation.h"
 
@@ -99,55 +98,6 @@ void appendDrawIdentities(KiriView::ImageRenderFrame *frame)
     }
 }
 
-void appendRasterTileRequests(KiriView::ImageRenderFrame *frame,
-    const KiriView::StaticTileSurface &surface, const KiriView::ImageRenderFrameInput &input)
-{
-    const KiriView::TileVisibilityContext visibilityContext {
-        input.drawContext.displaySize,
-        input.drawContext.visibleItemRect,
-        input.drawContext.devicePixelRatio,
-        input.drawContext.rotationDegrees,
-    };
-    for (const KiriView::TileKey &key :
-        KiriView::visibleTileKeys(surface.pyramid(), visibilityContext)) {
-        if (surface.containsTile(key) || input.tileDecodeExclusions.contains(key)) {
-            continue;
-        }
-
-        KiriView::TileRequest request = surface.pyramid().requestForTile(key);
-        if (request.textureLevelRect.isEmpty() || request.sourceRect.isEmpty()
-            || request.displaySourceRect.isEmpty()) {
-            continue;
-        }
-
-        frame->missingTileRequests.push_back(std::move(request));
-    }
-}
-
-void appendSvgRasterBucketTileRequests(KiriView::ImageRenderFrame *frame,
-    const KiriView::StaticTileSurface &surface, const KiriView::ImageRenderFrameInput &input)
-{
-    const QSizeF sourceDisplaySize = KiriView::rotatedImageSize(
-        input.drawContext.displaySize, input.drawContext.rotationDegrees);
-    const QRectF sourceVisibleItemRect = KiriView::unrotatedVisibleRectForRotation(
-        sourceDisplaySize, input.drawContext.visibleItemRect, input.drawContext.rotationDegrees);
-    for (KiriView::TileRequest request :
-        KiriView::ImageTileGeometryPolicy::svgRasterTileRequests(surface.imageSize(),
-            surface.pyramid().tileSize(), surface.pyramid().apronSourcePixels(), sourceDisplaySize,
-            sourceVisibleItemRect, input.drawContext.devicePixelRatio)) {
-        if (surface.containsTile(request.key) || input.tileDecodeExclusions.contains(request.key)) {
-            continue;
-        }
-
-        if (request.textureLevelRect.isEmpty() || request.sourceRect.isEmpty()
-            || request.displaySourceRect.isEmpty()) {
-            continue;
-        }
-
-        frame->missingTileRequests.push_back(std::move(request));
-    }
-}
-
 void appendLegacyFrame(KiriView::ImageRenderFrame *frame,
     const KiriView::LegacyFrameSurface &surface, const KiriView::ImageRenderFrameInput &input)
 {
@@ -185,14 +135,14 @@ void appendStaticFrame(KiriView::ImageRenderFrame *frame,
     }
 
     const bool resolutionIndependent = frame->tileRequestSource->isResolutionIndependent();
-    frame->activeTileLayer = KiriView::activeTileLayer(surface.pyramid(),
-        KiriView::TileVisibilityContext {
-            input.drawContext.displaySize,
-            input.drawContext.visibleItemRect,
-            input.drawContext.devicePixelRatio,
-            input.drawContext.rotationDegrees,
-        },
-        resolutionIndependent);
+    KiriView::ImageTileRequestPlan requestPlan
+        = KiriView::planImageTileRequests(KiriView::ImageTileRequestPlanInput {
+            &surface,
+            input.drawContext,
+            input.tileDecodeExclusions,
+            resolutionIndependent,
+        });
+    frame->activeTileLayer = requestPlan.activeTileLayer;
 
     for (const KiriView::DecodedTile &tile : surface.tiles()) {
         if (!frame->activeTileLayer.contains(tile.key)) {
@@ -206,25 +156,13 @@ void appendStaticFrame(KiriView::ImageRenderFrame *frame,
         }
     }
 
-    const QSizeF sourceDisplaySize = KiriView::rotatedImageSize(
-        input.drawContext.displaySize, input.drawContext.rotationDegrees);
-    if (!resolutionIndependent
-        && KiriView::tileFirstDisplayIsSufficient(surface.pyramid(), sourceDisplaySize,
-            input.drawContext.devicePixelRatio,
-            surface.displayHints().firstDisplayPixelsPerSourcePixel)) {
+    if (!requestPlan.hasRequests()) {
         frame->tileRequestSource.reset();
         return;
     }
 
-    if (resolutionIndependent) {
-        appendSvgRasterBucketTileRequests(frame, surface, input);
-    } else {
-        appendRasterTileRequests(frame, surface, input);
-    }
-
-    if (frame->missingTileRequests.empty()) {
-        frame->tileRequestSource.reset();
-    }
+    frame->tileRequestSource = std::move(requestPlan.source);
+    frame->missingTileRequests = std::move(requestPlan.missingRequests);
 }
 }
 

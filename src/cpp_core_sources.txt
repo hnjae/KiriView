@@ -100,6 +100,7 @@ src/rendering/imagetile.cpp
 src/rendering/imagetiledecoderuntime.cpp
 src/rendering/imagetilegeometrypolicy.cpp
 src/rendering/imagetiledecodestate.cpp
+src/rendering/imagetilerequestplan.cpp
 src/rendering/imagetiledecodescheduler.cpp
 src/rendering/imagetilevisibility.cpp
 src/rendering/imagetilesourcehelpers.cpp
