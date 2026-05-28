@@ -21,6 +21,8 @@ Controls.Control {
     required property int fitWidthMode
     required property int selectedFitMode
     property bool textVisible: true
+    property int buttonSpacing: Kirigami.Units.smallSpacing
+    readonly property real buttonHeight: Math.max(primaryButton.implicitHeight, menuButton.implicitHeight)
 
     property alias display: primaryButton.display
     property alias text: primaryButton.text
@@ -37,11 +39,16 @@ Controls.Control {
     enabled: action?.enabled ?? false
     implicitHeight: buttonRow.implicitHeight
     implicitWidth: buttonRow.implicitWidth
+    Layout.alignment: Qt.AlignVCenter
+    bottomPadding: 0
+    leftPadding: 0
+    rightPadding: 0
+    topPadding: 0
 
     contentItem: RowLayout {
         id: buttonRow
 
-        spacing: 0
+        spacing: root.buttonSpacing
 
         Controls.ToolButton {
             id: primaryButton
@@ -49,6 +56,7 @@ Controls.Control {
             objectName: "fitPrimaryButton"
 
             Layout.alignment: Qt.AlignVCenter
+            Layout.preferredHeight: root.buttonHeight
 
             Accessible.name: root.action?.text ?? text
             Accessible.role: Accessible.Button
@@ -71,6 +79,7 @@ Controls.Control {
             objectName: "fitMenuButton"
 
             Layout.alignment: Qt.AlignVCenter
+            Layout.preferredHeight: root.buttonHeight
 
             readonly property string menuTooltip: KI18n.i18nc("@info:tooltip", "Choose fit mode")
 

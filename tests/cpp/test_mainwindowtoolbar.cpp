@@ -10,6 +10,7 @@
 #include "facade/kirivideodocument.h"
 #include "facade/kiriviewapplication.h"
 #include "facade/menuaccesskeyrouter.h"
+#include "kiriviewstate.h"
 #include "localization/localization.h"
 
 #include <KLocalizedQmlContext>
@@ -23,6 +24,7 @@
 #include <QQuickWindow>
 #include <QRegularExpression>
 #include <QSignalSpy>
+#include <QStandardPaths>
 #include <QTemporaryDir>
 #include <QTest>
 #include <QUrl>
@@ -85,6 +87,15 @@ void registerKiriViewQmlTypes()
     qmlRegisterType<KiriVideoDocument>("io.github.hnjae.kiriview", 1, 0, "KiriVideoDocument");
     qmlRegisterType<MenuAccessKeyRouter>("io.github.hnjae.kiriview", 1, 0, "MenuAccessKeyRouter");
     registered = true;
+}
+
+void resetConfig()
+{
+    KiriViewState *state = KiriViewState::self();
+    state->config()->deleteGroup(QStringLiteral("Interface"));
+    state->config()->sync();
+    state->config()->reparseConfiguration();
+    state->read();
 }
 
 QUrl mainQmlUrl()
@@ -306,6 +317,9 @@ void closePopup(QObject *popup)
 
 void TestMainWindowToolBar::initTestCase()
 {
+    QStandardPaths::setTestModeEnabled(true);
+    resetConfig();
+
     if (!qEnvironmentVariableIsSet("QT_QUICK_CONTROLS_STYLE")) {
         QQuickStyle::setStyle(QStringLiteral("org.kde.desktop"));
     }
@@ -313,6 +327,7 @@ void TestMainWindowToolBar::initTestCase()
 
 void TestMainWindowToolBar::init()
 {
+    resetConfig();
     QTest::failOnWarning(QRegularExpression(
         QStringLiteral(".*Created graphical object was not placed in the graphics scene.*")));
 }
