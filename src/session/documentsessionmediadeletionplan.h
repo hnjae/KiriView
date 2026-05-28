@@ -6,6 +6,7 @@
 
 #include "document/filedeletion.h"
 #include "navigation/directmedianavigationmodel.h"
+#include "session/documentsessionrouteplan.h"
 #include "session/documentsessiontypes.h"
 
 #include <QUrl>
@@ -13,19 +14,6 @@
 #include <vector>
 
 namespace KiriView {
-enum class DocumentSessionMediaDeletionDocumentClear {
-    None,
-    Image,
-    Video,
-};
-
-enum class DocumentSessionMediaDeletionFollowUp {
-    None,
-    OpenFallback,
-    ClearSession,
-    ReportFailure,
-};
-
 struct DocumentSessionMediaDeletionFallbackPlan {
     QUrl targetUrl;
     std::optional<QUrl> preferredFallbackUrl;
@@ -41,12 +29,10 @@ struct DocumentSessionMediaDeletionStartPlan {
 };
 
 struct DocumentSessionMediaDeletionCompletionPlan {
-    DocumentSessionMediaDeletionDocumentClear clearDocument
-        = DocumentSessionMediaDeletionDocumentClear::None;
-    DocumentSessionMediaDeletionFollowUp followUp = DocumentSessionMediaDeletionFollowUp::None;
-    QUrl fallbackUrl;
-    bool clearDirectMediaNavigation = false;
-    bool clearPredecode = false;
+    DocumentSessionRoutePlan routePlan;
+    bool reportFailure = false;
+
+    bool hasRoutePlan() const { return !routePlan.operations.empty(); }
 };
 
 DocumentSessionMediaDeletionStartPlan documentSessionMediaDeletionStartPlan(FileDeletionMode mode,

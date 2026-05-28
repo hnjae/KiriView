@@ -26,6 +26,17 @@ KiriView::DocumentSessionMediaDeletionFallbackPlan fallbackPlan(
         std::move(fallback),
     };
 }
+
+template <typename Operation>
+const Operation *operationAt(
+    const KiriView::DocumentSessionMediaDeletionCompletionPlan &plan, std::size_t index)
+{
+    if (index >= plan.routePlan.operations.size()) {
+        return nullptr;
+    }
+
+    return std::get_if<Operation>(&plan.routePlan.operations.at(index));
+}
 }
 
 class TestDocumentSessionMediaDeletionPlan : public QObject
@@ -101,19 +112,25 @@ void TestDocumentSessionMediaDeletionPlan::
                 localUrl(QStringLiteral("/media/01.jpg"))),
             KiriView::FileDeletionResult::Succeeded);
 
-    QCOMPARE(imagePlan.clearDocument, KiriView::DocumentSessionMediaDeletionDocumentClear::Image);
-    QCOMPARE(imagePlan.followUp, KiriView::DocumentSessionMediaDeletionFollowUp::OpenFallback);
-    QCOMPARE(imagePlan.fallbackUrl, localUrl(QStringLiteral("/media/03.png")));
-    QVERIFY(!imagePlan.clearDirectMediaNavigation);
-    QVERIFY(!imagePlan.clearPredecode);
+    QVERIFY(imagePlan.hasRoutePlan());
+    QVERIFY(!imagePlan.reportFailure);
+    QCOMPARE(imagePlan.routePlan.kind, KiriView::DocumentSessionRouteKind::DirectImage);
+    QCOMPARE(imagePlan.routePlan.sourceUrl, localUrl(QStringLiteral("/media/03.png")));
+    QVERIFY(operationAt<KiriView::ClearImageDocumentRouteOperation>(imagePlan, 0) != nullptr);
+    const auto *imageCursor
+        = operationAt<KiriView::RequestDirectImageCursorRouteOperation>(imagePlan, 1);
+    QVERIFY(imageCursor != nullptr);
+    QCOMPARE(imageCursor->url, localUrl(QStringLiteral("/media/03.png")));
 
     const KiriView::DocumentSessionMediaDeletionCompletionPlan videoPlan
         = KiriView::documentSessionMediaDeletionCompletionPlan(KiriView::DocumentSessionKind::Video,
             fallbackPlan(localUrl(QStringLiteral("/media/03.png"))),
             KiriView::FileDeletionResult::Succeeded);
 
-    QCOMPARE(videoPlan.clearDocument, KiriView::DocumentSessionMediaDeletionDocumentClear::Video);
-    QCOMPARE(videoPlan.followUp, KiriView::DocumentSessionMediaDeletionFollowUp::OpenFallback);
+    QVERIFY(videoPlan.hasRoutePlan());
+    QCOMPARE(videoPlan.routePlan.kind, KiriView::DocumentSessionRouteKind::DirectImage);
+    QVERIFY(operationAt<KiriView::LeaveVideoModeRouteOperation>(videoPlan, 0) != nullptr);
+    QVERIFY(operationAt<KiriView::EnterEmptyDocumentRouteOperation>(videoPlan, 1) != nullptr);
 }
 
 void TestDocumentSessionMediaDeletionPlan::
@@ -124,9 +141,9 @@ void TestDocumentSessionMediaDeletionPlan::
             fallbackPlan({}, localUrl(QStringLiteral("/media/01.jpg"))),
             KiriView::FileDeletionResult::Succeeded);
 
-    QCOMPARE(plan.clearDocument, KiriView::DocumentSessionMediaDeletionDocumentClear::Video);
-    QCOMPARE(plan.followUp, KiriView::DocumentSessionMediaDeletionFollowUp::OpenFallback);
-    QCOMPARE(plan.fallbackUrl, localUrl(QStringLiteral("/media/01.jpg")));
+    QVERIFY(plan.hasRoutePlan());
+    QCOMPARE(plan.routePlan.kind, KiriView::DocumentSessionRouteKind::DirectImage);
+    QCOMPARE(plan.routePlan.sourceUrl, localUrl(QStringLiteral("/media/01.jpg")));
 }
 
 void TestDocumentSessionMediaDeletionPlan::completionClearsSessionWhenNoFallbackExists()
@@ -135,11 +152,12 @@ void TestDocumentSessionMediaDeletionPlan::completionClearsSessionWhenNoFallback
         = KiriView::documentSessionMediaDeletionCompletionPlan(KiriView::DocumentSessionKind::Video,
             fallbackPlan(), KiriView::FileDeletionResult::Succeeded);
 
-    QCOMPARE(plan.clearDocument, KiriView::DocumentSessionMediaDeletionDocumentClear::Video);
-    QCOMPARE(plan.followUp, KiriView::DocumentSessionMediaDeletionFollowUp::ClearSession);
-    QVERIFY(plan.fallbackUrl.isEmpty());
-    QVERIFY(plan.clearDirectMediaNavigation);
-    QVERIFY(plan.clearPredecode);
+    QVERIFY(plan.hasRoutePlan());
+    QVERIFY(!plan.reportFailure);
+    QCOMPARE(plan.routePlan.kind, KiriView::DocumentSessionRouteKind::Empty);
+    QVERIFY(plan.routePlan.sourceUrl.isEmpty());
+    QVERIFY(operationAt<KiriView::ClearDirectMediaNavigationRouteOperation>(plan, 0) != nullptr);
+    QVERIFY(operationAt<KiriView::ClearMediaPredecodeRouteOperation>(plan, 7) != nullptr);
 }
 
 void TestDocumentSessionMediaDeletionPlan::canceledCompletionIsNoOp()
@@ -149,11 +167,8 @@ void TestDocumentSessionMediaDeletionPlan::canceledCompletionIsNoOp()
             fallbackPlan(localUrl(QStringLiteral("/media/03.png"))),
             KiriView::FileDeletionResult::Canceled);
 
-    QCOMPARE(plan.clearDocument, KiriView::DocumentSessionMediaDeletionDocumentClear::None);
-    QCOMPARE(plan.followUp, KiriView::DocumentSessionMediaDeletionFollowUp::None);
-    QVERIFY(plan.fallbackUrl.isEmpty());
-    QVERIFY(!plan.clearDirectMediaNavigation);
-    QVERIFY(!plan.clearPredecode);
+    QVERIFY(!plan.hasRoutePlan());
+    QVERIFY(!plan.reportFailure);
 }
 
 void TestDocumentSessionMediaDeletionPlan::failedCompletionReportsFailureWithoutClearingDocument()
@@ -163,11 +178,8 @@ void TestDocumentSessionMediaDeletionPlan::failedCompletionReportsFailureWithout
             fallbackPlan(localUrl(QStringLiteral("/media/03.png"))),
             KiriView::FileDeletionResult::Failed);
 
-    QCOMPARE(plan.clearDocument, KiriView::DocumentSessionMediaDeletionDocumentClear::None);
-    QCOMPARE(plan.followUp, KiriView::DocumentSessionMediaDeletionFollowUp::ReportFailure);
-    QVERIFY(plan.fallbackUrl.isEmpty());
-    QVERIFY(!plan.clearDirectMediaNavigation);
-    QVERIFY(!plan.clearPredecode);
+    QVERIFY(!plan.hasRoutePlan());
+    QVERIFY(plan.reportFailure);
 }
 
 QTEST_GUILESS_MAIN(TestDocumentSessionMediaDeletionPlan)

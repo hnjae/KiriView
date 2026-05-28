@@ -7,6 +7,7 @@
 #include "session/documentsessiontypes.h"
 
 #include <QUrl>
+#include <optional>
 #include <variant>
 #include <vector>
 
@@ -106,6 +107,8 @@ DocumentSessionRoutePlan documentSessionRoutePlanForSourceUrl(
     const QUrl &sourceUrl, DocumentSessionKind currentKind);
 DocumentSessionRoutePlan documentSessionRoutePlanForMediaUrl(
     const QUrl &url, DocumentSessionKind currentKind);
+DocumentSessionRoutePlan documentSessionRoutePlanAfterMediaDeletion(
+    DocumentSessionKind deletedKind, std::optional<QUrl> fallbackUrl);
 }
 
 #endif

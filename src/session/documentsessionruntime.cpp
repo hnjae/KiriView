@@ -859,39 +859,14 @@ void DocumentSessionRuntime::finishMediaDeletion(DocumentSessionMediaDeletionCom
 void DocumentSessionRuntime::executeMediaDeletionCompletionPlan(
     const DocumentSessionMediaDeletionCompletionPlan &plan, const QString &errorString)
 {
-    switch (plan.clearDocument) {
-    case DocumentSessionMediaDeletionDocumentClear::None:
-        break;
-    case DocumentSessionMediaDeletionDocumentClear::Image:
-        m_imageDocument.setSourceUrl(QUrl());
-        break;
-    case DocumentSessionMediaDeletionDocumentClear::Video:
-        leaveVideoMode();
-        break;
-    }
-
-    switch (plan.followUp) {
-    case DocumentSessionMediaDeletionFollowUp::None:
-        return;
-    case DocumentSessionMediaDeletionFollowUp::OpenFallback:
-        if (!plan.fallbackUrl.isEmpty()) {
-            openMediaUrl(plan.fallbackUrl);
-        }
-        return;
-    case DocumentSessionMediaDeletionFollowUp::ClearSession:
-        m_state.setSourceIdentity(QUrl());
-        setDocumentKind(DocumentSessionKind::Empty);
-        if (plan.clearDirectMediaNavigation) {
-            m_state.setDirectMediaNavigation({}, false, {});
-            recomputePublicProjection();
-        }
-        if (plan.clearPredecode && m_mediaPredecodeCoordinator != nullptr) {
-            m_mediaPredecodeCoordinator->clear();
-        }
-        return;
-    case DocumentSessionMediaDeletionFollowUp::ReportFailure:
+    if (plan.reportFailure) {
         m_state.setSessionErrorString(
             errorString.isEmpty() ? genericFileDeletionErrorMessage() : errorString);
+        return;
+    }
+
+    if (plan.hasRoutePlan()) {
+        executeRoutePlan(plan.routePlan);
         return;
     }
 }

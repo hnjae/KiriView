@@ -14,21 +14,6 @@ void appendDeletedDirectMediaNavigationCandidate(
         KiriView::DirectMediaNavigationCandidate { currentUrl, currentUrl.fileName() });
 }
 
-KiriView::DocumentSessionMediaDeletionDocumentClear clearDocumentForKind(
-    KiriView::DocumentSessionKind kind)
-{
-    switch (kind) {
-    case KiriView::DocumentSessionKind::Image:
-        return KiriView::DocumentSessionMediaDeletionDocumentClear::Image;
-    case KiriView::DocumentSessionKind::Video:
-        return KiriView::DocumentSessionMediaDeletionDocumentClear::Video;
-    case KiriView::DocumentSessionKind::Empty:
-        return KiriView::DocumentSessionMediaDeletionDocumentClear::None;
-    }
-
-    return KiriView::DocumentSessionMediaDeletionDocumentClear::None;
-}
-
 std::optional<QUrl> preferredMediaDeletionFallback(
     const KiriView::DocumentSessionMediaDeletionFallbackPlan &fallbackPlan)
 {
@@ -83,39 +68,18 @@ DocumentSessionMediaDeletionCompletionPlan documentSessionMediaDeletionCompletio
 {
     switch (fileDeletionCompletionAction(result)) {
     case FileDeletionCompletionAction::ClearDeletedImageAndOpenFallback: {
-        DocumentSessionMediaDeletionCompletionPlan plan;
-        plan.clearDocument = clearDocumentForKind(currentKind);
-
-        const std::optional<QUrl> fallbackUrl = preferredMediaDeletionFallback(fallbackPlan);
-        if (fallbackUrl.has_value()) {
-            plan.followUp = DocumentSessionMediaDeletionFollowUp::OpenFallback;
-            plan.fallbackUrl = *fallbackUrl;
-            return plan;
-        }
-
-        plan.followUp = DocumentSessionMediaDeletionFollowUp::ClearSession;
-        plan.clearDirectMediaNavigation = true;
-        plan.clearPredecode = true;
-        return plan;
+        return DocumentSessionMediaDeletionCompletionPlan {
+            documentSessionRoutePlanAfterMediaDeletion(
+                currentKind, preferredMediaDeletionFallback(fallbackPlan)),
+            false,
+        };
     }
     case FileDeletionCompletionAction::Ignore:
         return {};
     case FileDeletionCompletionAction::ReportFailure:
-        return DocumentSessionMediaDeletionCompletionPlan {
-            DocumentSessionMediaDeletionDocumentClear::None,
-            DocumentSessionMediaDeletionFollowUp::ReportFailure,
-            {},
-            false,
-            false,
-        };
+        return DocumentSessionMediaDeletionCompletionPlan { {}, true };
     }
 
-    return DocumentSessionMediaDeletionCompletionPlan {
-        DocumentSessionMediaDeletionDocumentClear::None,
-        DocumentSessionMediaDeletionFollowUp::ReportFailure,
-        {},
-        false,
-        false,
-    };
+    return DocumentSessionMediaDeletionCompletionPlan { {}, true };
 }
 }
