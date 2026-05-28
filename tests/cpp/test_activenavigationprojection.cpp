@@ -3,6 +3,8 @@
 
 #include "session/activenavigationprojection.h"
 
+#include "navigation/imagedocumentpagenavigationtypes.h"
+
 #include <QObject>
 #include <QTest>
 #include <variant>
@@ -51,6 +53,7 @@ private Q_SLOTS:
     void validDirectMediaNavigationBoundaryStateProjectsReadoutAndActions();
     void invalidMediaNumbersNormalizeToUnknown();
     void validImageDocumentSnapshotProjectsSpreadAwareBoundaries();
+    void imageDocumentProjectionPreservesLeafOwnedSnapshotBoundaries();
     void invalidImagePageValuesNormalizeToUnknown();
     void deletionMaskingDisablesDispatchButKeepsKnownReadout();
     void boundaryScopeMapsSourceKind();
@@ -137,6 +140,31 @@ void TestActiveNavigationProjection::validImageDocumentSnapshotProjectsSpreadAwa
     QVERIFY(lastSpread.atKnownLast);
     QCOMPARE(lastSpread.currentNumber, 4);
     QCOMPARE(lastSpread.count, 5);
+}
+
+void TestActiveNavigationProjection::imageDocumentProjectionPreservesLeafOwnedSnapshotBoundaries()
+{
+    KiriView::ImageDocumentPageActiveNavigationSnapshot leafSnapshot;
+    leafSnapshot.known = true;
+    leafSnapshot.canOpenPrevious = false;
+    leafSnapshot.canOpenNext = false;
+    leafSnapshot.atKnownFirst = false;
+    leafSnapshot.atKnownLast = false;
+    leafSnapshot.currentNumber = 2;
+    leafSnapshot.count = 5;
+
+    const KiriView::ActiveNavigationSnapshot snapshot = KiriView::projectActiveNavigation(
+        KiriView::ActiveNavigationSourceKind::ImageDocumentPages, {}, leafSnapshot, false);
+
+    QVERIFY(snapshot.available);
+    QVERIFY(snapshot.known);
+    QVERIFY(snapshot.editable);
+    QVERIFY(!snapshot.canOpenPrevious);
+    QVERIFY(!snapshot.canOpenNext);
+    QVERIFY(!snapshot.atKnownFirst);
+    QVERIFY(!snapshot.atKnownLast);
+    QCOMPARE(snapshot.currentNumber, 2);
+    QCOMPARE(snapshot.count, 5);
 }
 
 void TestActiveNavigationProjection::invalidImagePageValuesNormalizeToUnknown()

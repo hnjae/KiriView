@@ -50,6 +50,7 @@ private Q_SLOTS:
     void previousNavigationUsesCachedPreviousPageWidth();
     void previousNavigationTreatsVideoAsSinglePage();
     void transitionPlanningUsesNavigationContext();
+    void activeNavigationSnapshotUsesVisibleSpreadBoundary();
     void primarySelectionMatchingNormalizesDisplayedUrl();
     void pageWidthCacheNormalizesUrlKeys();
 };
@@ -198,6 +199,32 @@ void TestImageSpreadSecondaryPageRefresh::transitionPlanningUsesNavigationContex
     QCOMPARE(refresh.relativePageNavigationTarget(1, activeContext), 3);
     QVERIFY(refresh.shouldBeginNavigationTransition(3, activeContext));
     QVERIFY(!refresh.shouldBeginNavigationTransition(3, inactiveContext));
+}
+
+void TestImageSpreadSecondaryPageRefresh::activeNavigationSnapshotUsesVisibleSpreadBoundary()
+{
+    const std::vector<QUrl> urls {
+        localUrl(QStringLiteral("/books/001.png")),
+        localUrl(QStringLiteral("/books/002.png")),
+        localUrl(QStringLiteral("/books/003.png")),
+    };
+    const KiriView::ImageSpreadPageNavigationContext context {
+        true,
+        true,
+        navigationSnapshot(urls, 2),
+    };
+    KiriView::ImageSpreadSecondaryPageRefresh refresh;
+
+    const KiriView::ImageDocumentPageActiveNavigationSnapshot snapshot
+        = refresh.activeNavigationSnapshot(context);
+
+    QVERIFY(snapshot.known);
+    QVERIFY(snapshot.canOpenPrevious);
+    QVERIFY(!snapshot.canOpenNext);
+    QVERIFY(!snapshot.atKnownFirst);
+    QVERIFY(snapshot.atKnownLast);
+    QCOMPARE(snapshot.currentNumber, 2);
+    QCOMPARE(snapshot.count, 3);
 }
 
 void TestImageSpreadSecondaryPageRefresh::primarySelectionMatchingNormalizesDisplayedUrl()
