@@ -4,7 +4,9 @@
 #include "session/documentsessionmedianavigationruntime.h"
 
 #include "async/imagecallback.h"
+#include "navigation/navigationlogging.h"
 
+#include <QDebug>
 #include <memory>
 #include <utility>
 
@@ -70,11 +72,22 @@ void DocumentSessionMediaNavigationRuntime::startLoad(QObject *receiver,
 
     if (scope.currentUrl.isEmpty() || scope.parentUrl.isEmpty() || !scope.parentUrl.isValid()
         || !m_provider.directoryMedia) {
+        qCDebug(kiriviewNavigationLog)
+            << "media navigation candidate load skipped"
+            << "reason"
+            << "invalid-scope"
+            << "currentUrl" << scope.currentUrl << "parentUrl" << scope.parentUrl << "generation"
+            << scope.generation << "providerPresent"
+            << static_cast<bool>(m_provider.directoryMedia);
         invokeIfSet(callback, DocumentSessionMediaNavigationCandidatesResult {});
         return;
     }
 
     const DocumentSessionMediaNavigationLoad load = m_loadState.start(scope);
+    qCDebug(kiriviewNavigationLog)
+        << "media navigation candidate load started"
+        << "operationId" << load.operationId << "currentUrl" << scope.currentUrl << "parentUrl"
+        << scope.parentUrl << "generation" << scope.generation;
     auto sharedScopeAccepted = std::make_shared<ScopeAccepted>(std::move(scopeAccepted));
     auto sharedCallback = std::make_shared<CandidatesCallback>(std::move(callback));
 
@@ -104,13 +117,29 @@ void DocumentSessionMediaNavigationRuntime::finish(DocumentSessionMediaNavigatio
     const CandidatesCallback &callback)
 {
     if (!m_loadState.finish(load)) {
+        qCDebug(kiriviewNavigationLog)
+            << "media navigation candidate load ignored"
+            << "reason"
+            << "stale-load"
+            << "operationId" << load.operationId << "currentUrl" << load.scope.currentUrl
+            << "parentUrl" << load.scope.parentUrl << "generation" << load.scope.generation;
         return;
     }
 
     if (scopeAccepted && !scopeAccepted(load.scope)) {
+        qCDebug(kiriviewNavigationLog)
+            << "media navigation candidate load ignored"
+            << "reason"
+            << "scope-rejected"
+            << "operationId" << load.operationId << "currentUrl" << load.scope.currentUrl
+            << "parentUrl" << load.scope.parentUrl << "generation" << load.scope.generation;
         return;
     }
 
+    qCDebug(kiriviewNavigationLog)
+        << "media navigation candidate load finished"
+        << "operationId" << load.operationId << "succeeded" << result.succeeded << "candidates"
+        << result.candidates.size() << "error" << result.errorString;
     invokeIfSet(callback, std::move(result));
 }
 }

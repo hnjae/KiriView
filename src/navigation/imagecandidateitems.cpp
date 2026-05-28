@@ -8,7 +8,9 @@
 #include "imagenavigationmodel.h"
 #include "location/imageurl.h"
 #include "mediaformatregistry.h"
+#include "navigationlogging.h"
 
+#include <QDebug>
 #include <cstddef>
 
 namespace KiriView {
@@ -39,6 +41,19 @@ std::vector<MediaNavigationCandidate> mediaNavigationCandidates(const KFileItemL
     candidates.reserve(imageCandidates.size());
     for (const ImageNavigationCandidate &candidate : imageCandidates) {
         candidates.push_back(MediaNavigationCandidate { candidate.url, candidate.name });
+    }
+
+    qCDebug(kiriviewNavigationLog)
+        << "media navigation candidates projected"
+        << "items" << items.size() << "supportedCandidates" << candidates.size();
+    for (std::size_t index = 0; index < candidates.size() && index < 8; ++index) {
+        qCDebug(kiriviewNavigationLog) << "media navigation candidate"
+                                       << "index" << index << "name" << candidates.at(index).name
+                                       << "url" << candidates.at(index).url;
+    }
+    if (candidates.size() > 8) {
+        qCDebug(kiriviewNavigationLog) << "media navigation candidates omitted"
+                                       << "count" << candidates.size() - 8;
     }
 
     return candidates;

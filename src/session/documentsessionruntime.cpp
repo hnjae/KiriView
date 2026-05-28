@@ -8,12 +8,14 @@
 #include "localization/imageerrortext.h"
 #include "location/imageurl.h"
 #include "navigation/mediaformatregistry.h"
+#include "navigation/navigationlogging.h"
 #include "predecode/mediapredecodecoordinator.h"
 #include "predecode/predecodecachebudget.h"
 #include "session/activenavigationthumbnailprojection.h"
 #include "session/mediaopenwithtarget.h"
 
 #include <QAbstractListModel>
+#include <QDebug>
 #include <QObject>
 #include <QScopedValueRollback>
 #include <QString>
@@ -27,6 +29,42 @@ namespace {
 QString genericFileDeletionErrorMessage()
 {
     return KiriView::imageErrorText(KiriView::ImageErrorTextId::DeleteFile);
+}
+
+const char *documentKindName(KiriView::DocumentSessionKind kind)
+{
+    switch (kind) {
+    case KiriView::DocumentSessionKind::Empty:
+        return "Empty";
+    case KiriView::DocumentSessionKind::Image:
+        return "Image";
+    case KiriView::DocumentSessionKind::Video:
+        return "Video";
+    }
+
+    return "Unknown";
+}
+
+const char *routeKindName(KiriView::DocumentSessionRouteKind kind)
+{
+    switch (kind) {
+    case KiriView::DocumentSessionRouteKind::Empty:
+        return "Empty";
+    case KiriView::DocumentSessionRouteKind::DirectVideo:
+        return "DirectVideo";
+    case KiriView::DocumentSessionRouteKind::DirectImage:
+        return "DirectImage";
+    case KiriView::DocumentSessionRouteKind::ImageDocument:
+        return "ImageDocument";
+    }
+
+    return "Unknown";
+}
+
+void logDirectMediaScope(const char *message, const KiriView::DirectMediaScope &scope)
+{
+    qCDebug(kiriviewNavigationLog) << message << "currentUrl" << scope.currentUrl << "parentUrl"
+                                   << scope.parentUrl << "generation" << scope.generation;
 }
 }
 
@@ -54,6 +92,8 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner, KiriImageDocument
 
 DocumentSessionRuntime::~DocumentSessionRuntime()
 {
+    QObject::disconnect(&m_imageDocument, nullptr, m_owner, nullptr);
+    QObject::disconnect(&m_videoDocument, nullptr, m_owner, nullptr);
     m_mediaNavigationRuntime.cancel();
     m_mediaDeletionRuntime.cancel();
     m_mediaOpenWithJob.cancel();
@@ -435,12 +475,22 @@ void DocumentSessionRuntime::routeSourceUrl(const QUrl &sourceUrl)
 {
     const DocumentSessionRoutePlan plan
         = documentSessionRoutePlanForSourceUrl(sourceUrl, m_state.documentKind());
+    qCDebug(kiriviewNavigationLog)
+        << "route source url"
+        << "url" << sourceUrl << "currentKind" << documentKindName(m_state.documentKind())
+        << "routeKind" << routeKindName(plan.kind) << "operations" << plan.operations.size();
     executeRoutePlan(plan);
 }
 
 void DocumentSessionRuntime::openMediaUrl(const QUrl &url)
 {
-    executeRoutePlan(documentSessionRoutePlanForMediaUrl(url, m_state.documentKind()));
+    const DocumentSessionRoutePlan plan
+        = documentSessionRoutePlanForMediaUrl(url, m_state.documentKind());
+    qCDebug(kiriviewNavigationLog)
+        << "route media url"
+        << "url" << url << "currentKind" << documentKindName(m_state.documentKind()) << "routeKind"
+        << routeKindName(plan.kind) << "operations" << plan.operations.size();
+    executeRoutePlan(plan);
 }
 
 void DocumentSessionRuntime::executeRoutePlan(const DocumentSessionRoutePlan &plan)
@@ -451,6 +501,10 @@ void DocumentSessionRuntime::executeRoutePlan(const DocumentSessionRoutePlan &pl
     };
 
     RouteExecutionState state;
+    qCDebug(kiriviewNavigationLog)
+        << "execute route plan"
+        << "routeKind" << routeKindName(plan.kind) << "sourceUrl" << plan.sourceUrl
+        << "documentKindBefore" << documentKindName(m_state.documentKind());
     const auto executeWithRoutingSuppressed = [this](auto &&mutation) {
         QScopedValueRollback<bool> routingSource(m_routingSource, true);
         mutation();
@@ -477,20 +531,26 @@ void DocumentSessionRuntime::executeRoutePlan(const DocumentSessionRoutePlan &pl
                                          ClearDirectMediaCursorRouteOperation>) {
                     state.directMediaScopeChanged
                         = m_state.clearDirectMediaCursor() || state.directMediaScopeChanged;
+                    logDirectMediaScope("direct media cursor cleared", m_state.directMediaScope());
                 } else if constexpr (std::is_same_v<Operation,
                                          SetDirectVideoCursorRouteOperation>) {
                     state.directMediaScopeChanged = m_state.setDirectVideoCursor(payload.url)
                         || state.directMediaScopeChanged;
+                    logDirectMediaScope("direct video cursor set", m_state.directMediaScope());
                 } else if constexpr (std::is_same_v<Operation,
                                          RequestDirectImageCursorRouteOperation>) {
                     state.directMediaScopeChanged = m_state.requestDirectImageCursor(payload.url)
                         || state.directMediaScopeChanged;
+                    logDirectMediaScope(
+                        "direct image cursor requested", m_state.directMediaScope());
                 } else if constexpr (std::is_same_v<Operation,
                                          ClearThenRequestDirectImageCursorRouteOperation>) {
                     state.directMediaScopeChanged
                         = m_state.clearDirectMediaCursor() || state.directMediaScopeChanged;
                     state.directMediaScopeChanged = m_state.requestDirectImageCursor(payload.url)
                         || state.directMediaScopeChanged;
+                    logDirectMediaScope(
+                        "direct image cursor cleared and requested", m_state.directMediaScope());
                 } else if constexpr (std::is_same_v<Operation, ClearImageDocumentRouteOperation>) {
                     executeWithRoutingSuppressed(
                         [this]() { m_imageDocument.setSourceUrl(QUrl()); });
@@ -513,6 +573,8 @@ void DocumentSessionRuntime::executeRoutePlan(const DocumentSessionRoutePlan &pl
                                          SyncDirectImageCursorFromDocumentRouteOperation>) {
                     state.directMediaScopeChanged
                         = syncDirectImageCursorFromDocument() || state.directMediaScopeChanged;
+                    logDirectMediaScope(
+                        "direct image cursor synced from document", m_state.directMediaScope());
                 } else if constexpr (std::is_same_v<Operation, ClearSourceIdentityRouteOperation>) {
                     m_state.setSourceIdentity(QUrl());
                 } else if constexpr (std::is_same_v<Operation,
@@ -542,6 +604,14 @@ void DocumentSessionRuntime::executeRoutePlan(const DocumentSessionRoutePlan &pl
             },
             operation);
     }
+    qCDebug(kiriviewNavigationLog)
+        << "execute route plan complete"
+        << "routeKind" << routeKindName(plan.kind) << "documentKindAfter"
+        << documentKindName(m_state.documentKind()) << "sourceUrl" << m_state.sourceUrl()
+        << "activeNavigationAvailable" << m_state.activeNavigationSnapshot().available
+        << "activeNavigationKnown" << m_state.activeNavigationSnapshot().known
+        << "activeNavigationCurrent" << m_state.activeNavigationSnapshot().currentNumber
+        << "activeNavigationCount" << m_state.activeNavigationSnapshot().count;
 }
 
 void DocumentSessionRuntime::leaveVideoMode()
@@ -578,15 +648,21 @@ void DocumentSessionRuntime::syncFromVideoDocument()
     }
 
     if (m_videoDocument.sourceUrl().isEmpty()) {
+        qCDebug(kiriviewNavigationLog) << "sync from video document"
+                                       << "state" << "empty-source";
         m_state.clearDirectMediaCursor();
         m_state.setSourceIdentity(QUrl());
         setDocumentKind(DocumentSessionKind::Empty);
         m_state.setMediaNavigationState({}, false);
         m_mediaNavigationCandidates.clear();
     } else {
-        m_state.setDirectVideoCursor(m_videoDocument.sourceUrl());
+        const bool directMediaScopeChanged
+            = m_state.setDirectVideoCursor(m_videoDocument.sourceUrl());
+        logDirectMediaScope("sync from video document", m_state.directMediaScope());
         m_state.setSourceIdentity(m_videoDocument.sourceUrl());
-        refreshMediaNavigation();
+        if (directMediaScopeChanged) {
+            refreshMediaNavigation();
+        }
     }
 
     recomputePublicProjection();
@@ -597,6 +673,11 @@ void DocumentSessionRuntime::syncFromVideoDocument()
 void DocumentSessionRuntime::refreshMediaNavigation()
 {
     if (!mediaNavigationActive()) {
+        qCDebug(kiriviewNavigationLog) << "media navigation refresh skipped"
+                                       << "reason"
+                                       << "inactive"
+                                       << "documentKind" << documentKindName(m_state.documentKind())
+                                       << "cursorUrl" << activeDirectMediaCursorUrl();
         m_state.setMediaNavigationState({}, false);
         m_mediaNavigationCandidates.clear();
         recomputePublicProjection();
@@ -606,8 +687,10 @@ void DocumentSessionRuntime::refreshMediaNavigation()
         return;
     }
 
+    const DirectMediaScope scope = mediaNavigationLoadScope();
+    logDirectMediaScope("media navigation refresh requested", scope);
     m_mediaNavigationRuntime.refresh(
-        m_owner, mediaNavigationLoadScope(),
+        m_owner, scope,
         [this](const DirectMediaScope &scope) { return directMediaCursorMatches(scope); },
         [this](DocumentSessionMediaNavigationRefreshResult result) {
             updateMediaBoundaryState(std::move(result));
@@ -626,6 +709,8 @@ void DocumentSessionRuntime::loadMediaCandidates(
 void DocumentSessionRuntime::finishMediaNavigation(DocumentSessionMediaNavigationOpenResult result)
 {
     if (!result.succeeded) {
+        qCDebug(kiriviewNavigationLog) << "media navigation open failed"
+                                       << "error" << result.errorString;
         m_state.setMediaNavigationState({}, false);
         m_mediaNavigationCandidates.clear();
         recomputePublicProjection();
@@ -634,6 +719,11 @@ void DocumentSessionRuntime::finishMediaNavigation(DocumentSessionMediaNavigatio
 
     m_mediaNavigationCandidates = result.candidates;
     m_state.setMediaNavigationState(result.plan.boundaryState, true);
+    qCDebug(kiriviewNavigationLog)
+        << "media navigation open finished"
+        << "candidates" << result.candidates.size() << "currentNumber"
+        << result.plan.boundaryState.currentNumber << "count" << result.plan.boundaryState.count
+        << "targetUrl" << result.plan.targetUrl.value_or(QUrl());
     recomputePublicProjection();
     scheduleMediaPredecode(result.candidates);
     if (result.plan.targetUrl.has_value()) {
@@ -645,6 +735,8 @@ void DocumentSessionRuntime::updateMediaBoundaryState(
     DocumentSessionMediaNavigationRefreshResult result)
 {
     if (!result.succeeded) {
+        qCDebug(kiriviewNavigationLog) << "media navigation refresh failed"
+                                       << "error" << result.errorString;
         m_state.setMediaNavigationState({}, false);
         m_mediaNavigationCandidates.clear();
         recomputePublicProjection();
@@ -653,6 +745,12 @@ void DocumentSessionRuntime::updateMediaBoundaryState(
 
     m_mediaNavigationCandidates = result.candidates;
     m_state.setMediaNavigationState(result.boundaryState, true);
+    qCDebug(kiriviewNavigationLog)
+        << "media navigation refresh finished"
+        << "candidates" << result.candidates.size() << "currentNumber"
+        << result.boundaryState.currentNumber << "count" << result.boundaryState.count
+        << "canPrevious" << result.boundaryState.canOpenPrevious << "canNext"
+        << result.boundaryState.canOpenNext;
     recomputePublicProjection();
     scheduleMediaPredecode(result.candidates);
 }

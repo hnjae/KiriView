@@ -246,6 +246,7 @@ private Q_SLOTS:
     void directMediaThumbnailModelTracksSiblingCandidates();
     void directMediaThumbnailModelStaysEmptyUntilCandidatesAreKnown();
     void defaultMediaProviderListsLocalDirectImageSiblings();
+    void defaultMediaProviderListsLocalDirectVideoSiblings();
     void freshDirectImageReadoutUsesRequestedCursorBeforeDisplayedUrl();
     void directImageCandidateCompletionSurvivesCursorConfirmation();
     void directImageReplacementFailureRestoresPreviousMediaCursor();
@@ -540,6 +541,36 @@ void TestKiriDocumentSession::defaultMediaProviderListsLocalDirectImageSiblings(
     QVERIFY(!session->canOpenNextActiveNavigation());
     QVERIFY(!session->atKnownFirstActiveNavigation());
     QVERIFY(session->atKnownLastActiveNavigation());
+}
+
+void TestKiriDocumentSession::defaultMediaProviderListsLocalDirectVideoSiblings()
+{
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+
+    const QString firstImagePath = directory.filePath(QStringLiteral("01.png"));
+    const QString currentVideoPath = directory.filePath(QStringLiteral("02.mp4"));
+    const QString nextVideoPath = directory.filePath(QStringLiteral("03.mov"));
+    QVERIFY(writeTestImage(firstImagePath));
+    QVERIFY(writeEmptyFile(currentVideoPath));
+    QVERIFY(writeEmptyFile(nextVideoPath));
+
+    std::unique_ptr<KiriDocumentSession> session
+        = createSessionWithProvider(KiriView::MediaNavigationCandidateProvider {});
+
+    session->setSourceUrl(localUrl(currentVideoPath));
+
+    QCOMPARE(session->documentKind(), KiriDocumentSession::DocumentKind::Video);
+    QCOMPARE(session->videoDocument()->sourceUrl(), localUrl(currentVideoPath));
+    QVERIFY(session->activeNavigationAvailable());
+    QTRY_VERIFY(session->activeNavigationKnown());
+    QVERIFY(session->activeNavigationEditable());
+    QCOMPARE(session->activeNavigationCurrentNumber(), 2);
+    QCOMPARE(session->activeNavigationCount(), 3);
+    QVERIFY(session->canOpenPreviousActiveNavigation());
+    QVERIFY(session->canOpenNextActiveNavigation());
+    QVERIFY(!session->atKnownFirstActiveNavigation());
+    QVERIFY(!session->atKnownLastActiveNavigation());
 }
 
 void TestKiriDocumentSession::freshDirectImageReadoutUsesRequestedCursorBeforeDisplayedUrl()

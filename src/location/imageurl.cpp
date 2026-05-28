@@ -4,12 +4,15 @@
 #include "location/imageurl.h"
 
 #include "archive/archivepath.h"
+#include "navigation/navigationlogging.h"
 
 #include <QByteArray>
+#include <QDebug>
 #include <QDir>
 #include <QFile>
 #include <QString>
 #include <QtGlobal>
+#include <cerrno>
 #include <optional>
 #include <sys/types.h>
 #include <sys/xattr.h>
@@ -57,6 +60,8 @@ std::optional<QUrl> documentPortalHostUrl(const QUrl &url)
     const ssize_t valueSize
         = getxattr(encodedLocalPath.constData(), documentPortalHostPathAttribute, nullptr, 0);
     if (valueSize <= 0) {
+        qCDebug(kiriviewNavigationLog) << "document portal host path missing"
+                                       << "url" << url << "errno" << errno;
         return std::nullopt;
     }
 
@@ -66,6 +71,8 @@ std::optional<QUrl> documentPortalHostUrl(const QUrl &url)
     const ssize_t bytesRead = getxattr(encodedLocalPath.constData(),
         documentPortalHostPathAttribute, value.data(), static_cast<std::size_t>(value.size()));
     if (bytesRead <= 0) {
+        qCDebug(kiriviewNavigationLog) << "document portal host path read failed"
+                                       << "url" << url << "errno" << errno;
         return std::nullopt;
     }
 
@@ -76,10 +83,16 @@ std::optional<QUrl> documentPortalHostUrl(const QUrl &url)
 
     const QString hostPath = QFile::decodeName(value);
     if (hostPath.isEmpty() || hostPath == localPath) {
+        qCDebug(kiriviewNavigationLog) << "document portal host path ignored"
+                                       << "url" << url << "hostPath" << hostPath;
         return std::nullopt;
     }
 
-    return navigationUrlForLocalPath(hostPath);
+    const QUrl hostUrl = navigationUrlForLocalPath(hostPath);
+    qCDebug(kiriviewNavigationLog)
+        << "document portal host path resolved"
+        << "url" << url << "hostPath" << hostPath << "hostUrl" << hostUrl;
+    return hostUrl;
 }
 }
 
@@ -164,12 +177,16 @@ QUrl navigationSourceUrl(const QUrl &url)
 {
     const std::optional<QUrl> hostUrl = documentPortalHostUrl(url);
     if (hostUrl.has_value()) {
+        qCDebug(kiriviewNavigationLog) << "navigation source url uses document portal host"
+                                       << "url" << url << "navigationUrl" << hostUrl.value();
         return hostUrl.value();
     }
 
     if (url.isLocalFile()) {
         const std::optional<QUrl> kioUrl = kioFuseArchiveUrl(url.toLocalFile());
         if (kioUrl.has_value()) {
+            qCDebug(kiriviewNavigationLog) << "navigation source url uses kio-fuse archive"
+                                           << "url" << url << "navigationUrl" << kioUrl.value();
             return kioUrl.value();
         }
     }

@@ -5,7 +5,9 @@
 
 #include "location/imageurl.h"
 #include "navigation/medianavigationmodel.h"
+#include "navigation/navigationlogging.h"
 
+#include <QDebug>
 #include <utility>
 
 namespace {
@@ -27,6 +29,17 @@ bool replaceDirectMediaCursor(
     next.generation = effectiveUrlChanged ? current.generation + 1 : current.generation;
     current = std::move(next);
     return effectiveUrlChanged;
+}
+
+void logCursorOperation(
+    const char *operation, const KiriView::DirectMediaCursor &cursor, bool effectiveUrlChanged)
+{
+    const KiriView::DirectMediaScope scope = KiriView::directMediaScopeForCursor(cursor);
+    qCDebug(kiriviewNavigationLog)
+        << "direct media cursor operation"
+        << "operation" << operation << "effectiveUrlChanged" << effectiveUrlChanged << "stableUrl"
+        << cursor.stableUrl << "pendingUrl" << cursor.pendingUrl << "currentUrl" << scope.currentUrl
+        << "parentUrl" << scope.parentUrl << "generation" << scope.generation;
 }
 }
 
@@ -58,14 +71,18 @@ bool clearDirectMediaCursor(DirectMediaCursor &cursor)
 {
     DirectMediaCursor next;
     next.generation = cursor.generation;
-    return replaceDirectMediaCursor(cursor, std::move(next));
+    const bool effectiveUrlChanged = replaceDirectMediaCursor(cursor, std::move(next));
+    logCursorOperation("clear", cursor, effectiveUrlChanged);
+    return effectiveUrlChanged;
 }
 
 bool requestDirectImageCursor(DirectMediaCursor &cursor, const QUrl &url)
 {
     DirectMediaCursor next = cursor;
     next.pendingUrl = url;
-    return replaceDirectMediaCursor(cursor, std::move(next));
+    const bool effectiveUrlChanged = replaceDirectMediaCursor(cursor, std::move(next));
+    logCursorOperation("request-direct-image", cursor, effectiveUrlChanged);
+    return effectiveUrlChanged;
 }
 
 bool confirmDirectImageCursor(DirectMediaCursor &cursor, const QUrl &url)
@@ -73,14 +90,18 @@ bool confirmDirectImageCursor(DirectMediaCursor &cursor, const QUrl &url)
     DirectMediaCursor next = cursor;
     next.stableUrl = url;
     next.pendingUrl = QUrl();
-    return replaceDirectMediaCursor(cursor, std::move(next));
+    const bool effectiveUrlChanged = replaceDirectMediaCursor(cursor, std::move(next));
+    logCursorOperation("confirm-direct-image", cursor, effectiveUrlChanged);
+    return effectiveUrlChanged;
 }
 
 bool restoreDirectImageCursorAfterFailure(DirectMediaCursor &cursor)
 {
     DirectMediaCursor next = cursor;
     next.pendingUrl = QUrl();
-    return replaceDirectMediaCursor(cursor, std::move(next));
+    const bool effectiveUrlChanged = replaceDirectMediaCursor(cursor, std::move(next));
+    logCursorOperation("restore-direct-image-after-failure", cursor, effectiveUrlChanged);
+    return effectiveUrlChanged;
 }
 
 bool setDirectVideoCursor(DirectMediaCursor &cursor, const QUrl &url)
@@ -88,6 +109,8 @@ bool setDirectVideoCursor(DirectMediaCursor &cursor, const QUrl &url)
     DirectMediaCursor next = cursor;
     next.stableUrl = url;
     next.pendingUrl = QUrl();
-    return replaceDirectMediaCursor(cursor, std::move(next));
+    const bool effectiveUrlChanged = replaceDirectMediaCursor(cursor, std::move(next));
+    logCursorOperation("set-direct-video", cursor, effectiveUrlChanged);
+    return effectiveUrlChanged;
 }
 }

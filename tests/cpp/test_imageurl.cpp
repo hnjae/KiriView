@@ -6,11 +6,16 @@
 #include "location/imageurl.h"
 
 #include <QByteArray>
+#include <QDir>
+#include <QFile>
 #include <QObject>
+#include <QTemporaryDir>
 #include <QTest>
 #include <QUrl>
 #include <QtGlobal>
+#include <cstddef>
 #include <optional>
+#include <sys/xattr.h>
 
 namespace {
 QUrl archiveUrl(const QString &scheme, const QString &path)
@@ -19,6 +24,12 @@ QUrl archiveUrl(const QString &scheme, const QString &path)
     url.setScheme(scheme);
     url.setPath(path);
     return url;
+}
+
+bool writeEmptyFile(const QString &path)
+{
+    QFile file(path);
+    return file.open(QIODevice::WriteOnly);
 }
 }
 
@@ -34,6 +45,7 @@ private Q_SLOTS:
     void sameNormalizedUrlMatchesPathSegments();
     void sameContainerNavigationUrlMatchesNormalizedPaths();
     void parentUrlForContainerNavigationHandlesContainers();
+    void documentPortalHostPathOwnsNavigationScope();
     void kioFuseArchivePathsRestoreSupportedArchiveSchemes();
     void imageLocationTypesExposeExplicitState();
 };
@@ -134,6 +146,37 @@ void TestImageUrl::parentUrlForContainerNavigationHandlesContainers()
     const QUrl archiveUrl = QUrl::fromLocalFile(QStringLiteral("/books/book.cbz"));
     QCOMPARE(KiriView::parentUrlForContainerNavigation(archiveUrl),
         QUrl::fromLocalFile(QStringLiteral("/books/")));
+}
+
+void TestImageUrl::documentPortalHostPathOwnsNavigationScope()
+{
+    QTemporaryDir directory;
+    QVERIFY(directory.isValid());
+    QVERIFY(QDir().mkpath(directory.filePath(QStringLiteral("portal"))));
+    QVERIFY(QDir().mkpath(directory.filePath(QStringLiteral("host"))));
+
+    const QString portalPath = directory.filePath(QStringLiteral("portal/02.mp4"));
+    const QString hostPath = directory.filePath(QStringLiteral("host/02.mp4"));
+    QVERIFY(writeEmptyFile(portalPath));
+    QVERIFY(writeEmptyFile(hostPath));
+
+    const QByteArray encodedPortalPath = QFile::encodeName(portalPath);
+    const QByteArray encodedHostPath = QFile::encodeName(hostPath);
+    const int result = setxattr(encodedPortalPath.constData(), "user.document-portal.host-path",
+        encodedHostPath.constData(), static_cast<std::size_t>(encodedHostPath.size()), 0);
+    if (result != 0) {
+        QSKIP("extended attributes unavailable");
+    }
+
+    const QUrl portalUrl = QUrl::fromLocalFile(portalPath);
+    const QUrl hostUrl = QUrl::fromLocalFile(hostPath);
+    QCOMPARE(KiriView::navigationSourceUrl(portalUrl), hostUrl);
+
+    const KiriView::DirectoryNavigationLocation navigationLocation
+        = KiriView::directoryNavigationLocationForFileUrl(portalUrl);
+    QCOMPARE(navigationLocation.fileUrl, hostUrl);
+    QCOMPARE(navigationLocation.directoryUrl,
+        QUrl::fromLocalFile(directory.filePath(QStringLiteral("host/"))));
 }
 
 void TestImageUrl::kioFuseArchivePathsRestoreSupportedArchiveSchemes()
