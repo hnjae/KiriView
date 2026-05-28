@@ -51,7 +51,7 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject *docume
                 m_openController->finishAnimationLoadWithError(errorString);
             },
         },
-        runtimeDependencies.predecodeCacheByteBudget);
+        runtimeDependencies.cacheBudgets);
     m_deletionController = std::make_unique<ImageDocumentDeletionController>(documentObject, state,
         *m_presentationController, runtimeDependencies.candidateProvider,
         std::move(runtimeDependencies.fileOperations),
@@ -91,7 +91,7 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject *docume
         });
     m_predecodeController = std::make_unique<ImageDocumentPredecodeController>(
         documentObject, state, *m_presentationController, runtimeDependencies.candidateProvider,
-        runtimeDependencies.imageDecode, runtimeDependencies.predecodeCacheByteBudget,
+        runtimeDependencies.imageDecode, runtimeDependencies.cacheBudgets.predecodeCacheByteBudget,
         [this]() { return m_navigationService->currentPageNumber(); },
         std::move(runtimeDependencies.powerSaver),
         runtimeDependencies.ordinaryDirectMediaPredecodeEnabled);
@@ -108,7 +108,7 @@ ImageDocumentRuntimeControllers::ImageDocumentRuntimeControllers(QObject *docume
             },
         },
         runtimeDependencies.candidateProvider, runtimeDependencies.imageDecode,
-        runtimeDependencies.predecodeCacheByteBudget);
+        runtimeDependencies.cacheBudgets);
     m_navigationController = std::make_unique<ImageDocumentNavigationController>(state,
         *m_presentationController, *m_navigationService, *m_spreadController,
         [this](ImageDocumentRuntimePlan plan) { dispatchPlan(plan); });

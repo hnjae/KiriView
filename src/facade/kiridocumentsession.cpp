@@ -3,12 +3,12 @@
 
 #include "facade/kiridocumentsession.h"
 
+#include "cache/imagecachepolicy.h"
 #include "facade/documentsessionpublicsignals.h"
 #include "facade/kiriimagedocument.h"
 #include "facade/kirivideodocument.h"
 #include "localization/activenavigationboundarytext.h"
 #include "navigation/mediaformatregistry.h"
-#include "predecode/predecodecachebudget.h"
 
 #include <memory>
 #include <optional>
@@ -84,12 +84,19 @@ KiriView::ImageDocumentRuntimeDependencyOverrides imageDocumentDependenciesWithP
     return dependencies;
 }
 
-KiriView::DocumentSessionRuntimeDependencies documentSessionDependenciesWithPredecodeCacheBudget(
+KiriView::DocumentSessionRuntimeDependencies documentSessionDependenciesWithResolvedCacheBudgets(
     KiriView::DocumentSessionRuntimeDependencies dependencies)
 {
-    dependencies.imageDocumentDependencies.predecodeCacheByteBudget
-        = KiriView::resolvedPredecodeCacheByteBudget(
-            dependencies.imageDocumentDependencies.predecodeCacheByteBudget);
+    KiriView::ImageCacheBudgetRequest request
+        = KiriView::imageDocumentCacheBudgetRequestWithDefaults(
+            dependencies.imageDocumentDependencies.cacheBudgetRequest);
+    if (request.predecodeCacheByteBudget <= 0 || request.staticTileCacheByteBudget <= 0) {
+        const KiriView::ImageCacheBudgets cacheBudgets
+            = KiriView::resolvedImageCacheBudgets(request, KiriView::systemMemorySnapshot());
+        request.predecodeCacheByteBudget = cacheBudgets.predecodeCacheByteBudget;
+        request.staticTileCacheByteBudget = cacheBudgets.staticTileCacheByteBudget;
+    }
+    dependencies.imageDocumentDependencies.cacheBudgetRequest = request;
     return dependencies;
 }
 
@@ -122,7 +129,7 @@ KiriDocumentSession::KiriDocumentSession(QObject *parent)
 KiriDocumentSession::KiriDocumentSession(
     KiriView::DocumentSessionRuntimeDependencies dependencies, QObject *parent)
     : KiriDocumentSession(
-          documentSessionDependenciesWithPredecodeCacheBudget(std::move(dependencies)),
+          documentSessionDependenciesWithResolvedCacheBudgets(std::move(dependencies)),
           ResolvedDependenciesTag {}, parent)
 {
 }

@@ -4,6 +4,8 @@
 #ifndef KIRIVIEW_IMAGECACHEPOLICY_H
 #define KIRIVIEW_IMAGECACHEPOLICY_H
 
+#include "system/systemmemory.h"
+
 #include <QtGlobal>
 #include <cstddef>
 #include <vector>
@@ -19,12 +21,25 @@ struct ImageCacheRetainedEntry {
     qsizetype byteCost = 0;
 };
 
+struct ImageCacheBudgetRequest {
+    qsizetype predecodeCacheByteBudget = 0;
+    qsizetype staticTileCacheByteBudget = 0;
+    qsizetype staticTileCachePreferredByteBudget = 0;
+};
+
+struct ImageCacheBudgets {
+    qsizetype predecodeCacheByteBudget = 0;
+    qsizetype staticTileCacheByteBudget = 0;
+};
+
 std::vector<ImageCacheRetainedEntry> lruCacheRetentionPlan(
     const std::vector<ImageCacheRetentionEntry> &entries, qsizetype byteBudget);
 qsizetype predecodeCachePreferredByteBudget();
 qsizetype predecodeCacheByteBudgetForSystemMemory(qsizetype systemMemoryByteSize);
 qsizetype staticTileCacheByteBudgetForSystemMemory(
     qsizetype systemMemoryByteSize, qsizetype preferredByteBudget);
+ImageCacheBudgets resolvedImageCacheBudgets(
+    ImageCacheBudgetRequest request, SystemMemorySnapshot systemMemory);
 }
 
 #endif

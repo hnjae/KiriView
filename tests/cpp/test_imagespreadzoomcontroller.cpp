@@ -25,12 +25,22 @@ bool hasZoomChange(const KiriView::ImageZoomChangeSet &changes)
         || changes.maximumManualZoomPercentChanged || changes.scheduleVisibleTileDecode;
 }
 
+KiriView::ImageCacheBudgets testCacheBudgets()
+{
+    return KiriView::ImageCacheBudgets {
+        1024 * 1024,
+        512 * 1024,
+    };
+}
+
 class SpreadZoomFixture
 {
 public:
     SpreadZoomFixture()
-        : primary(&context, [this]() { return renderContext(); }, {})
-        , secondary(&context, [this]() { return renderContext(); }, {})
+        : primary(
+              &context, [this]() { return renderContext(); }, {}, testCacheBudgets())
+        , secondary(
+              &context, [this]() { return renderContext(); }, {}, testCacheBudgets())
         , controller([this]() { return renderContext(); }, primary, secondary)
     {
         primary.setViewportSize(QSizeF(800.0, 600.0));

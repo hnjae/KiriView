@@ -32,16 +32,25 @@ using FakeCandidateProvider = KiriView::TestSupport::FakeImageDocumentPageCandid
 
 constexpr qsizetype testCacheByteBudget = 1024 * 1024;
 
+KiriView::ImageCacheBudgets testCacheBudgets()
+{
+    return KiriView::ImageCacheBudgets {
+        testCacheByteBudget,
+        testCacheByteBudget,
+    };
+}
+
 KiriView::ImagePresentationController createPresentationController(QObject *parent)
 {
-    return KiriView::ImagePresentationController(parent,
+    return KiriView::ImagePresentationController(
+        parent,
         []() {
             return KiriView::ImageDocumentRenderContext {
                 2.0,
                 KiriView::fallbackTextureSizeMax,
             };
         },
-        {});
+        {}, testCacheBudgets());
 }
 }
 

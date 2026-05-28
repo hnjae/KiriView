@@ -4,7 +4,6 @@
 #include "presentation/imagepresentationcontroller.h"
 
 #include "async/imagecallback.h"
-#include "cache/imagecachepolicy.h"
 #include "presentation/imageanimationplayer.h"
 #include "presentation/imagepresentationviewportcontroller.h"
 #include "rendering/displayedimagesurfacestate.h"
@@ -16,11 +15,10 @@
 namespace KiriView {
 ImagePresentationController::ImagePresentationController(QObject *context,
     RenderContextProvider renderContextProvider, ImagePresentationController::Callbacks callbacks,
-    qsizetype predecodeCacheByteBudget)
+    ImageCacheBudgets cacheBudgets)
     : m_callbacks(std::move(callbacks))
-    , m_predecodeCacheByteBudget(predecodeCacheByteBudget > 0 ? predecodeCacheByteBudget
-                                                              : predecodeCachePreferredByteBudget())
-    , m_staticTileCacheByteBudget(StaticTileSurface::defaultTileCacheByteBudget())
+    , m_predecodeCacheByteBudget(cacheBudgets.predecodeCacheByteBudget)
+    , m_staticTileCacheByteBudget(cacheBudgets.staticTileCacheByteBudget)
 {
     m_displayedSurfaceState = std::make_unique<DisplayedImageSurfaceState>();
     m_viewportController = std::make_unique<ImagePresentationViewportController>(

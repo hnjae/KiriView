@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_IMAGESPREADPRESENTATIONCONTROLLER_H
 #define KIRIVIEW_IMAGESPREADPRESENTATIONCONTROLLER_H
 
+#include "cache/imagecachepolicy.h"
 #include "decoding/imagedecodedependencies.h"
 #include "document/imagedocumentstate.h"
 #include "navigation/imagedocumentpagecandidateprovider.h"
@@ -57,7 +58,7 @@ public:
     ImageSpreadPresentationController(QObject *parent, RenderContextProvider renderContextProvider,
         ImageDocumentState &state, ImagePresentationController &primaryPresentation,
         Callbacks callbacks, ImageDocumentPageCandidateProvider candidateProvider,
-        ImageDecodeDependencies decodeDependencies, qsizetype predecodeCacheByteBudget = 0);
+        ImageDecodeDependencies decodeDependencies, ImageCacheBudgets cacheBudgets);
     ~ImageSpreadPresentationController();
 
     bool transitionInProgress() const;

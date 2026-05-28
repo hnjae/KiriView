@@ -28,6 +28,14 @@ KiriView::ImageDocumentRenderContext renderContext()
     };
 }
 
+KiriView::ImageCacheBudgets testCacheBudgets()
+{
+    return KiriView::ImageCacheBudgets {
+        1024 * 1024,
+        512 * 1024,
+    };
+}
+
 KiriView::DisplayedImageLocation displayedLocation(const QUrl &url)
 {
     return KiriView::DisplayedImageLocation::fromUrl(url);
@@ -54,7 +62,7 @@ public:
                   [this]() { ++visibilityChangedCount; },
                   [this](const QUrl &url) { return findPredecodedImage(url); },
               },
-              {}, {})
+              {}, {}, testCacheBudgets())
     {
         controller.setViewportSize(QSizeF(800.0, 600.0));
     }

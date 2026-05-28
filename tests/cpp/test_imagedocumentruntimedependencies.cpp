@@ -4,6 +4,7 @@
 #include "document/imagedocumentruntimedependencies.h"
 
 #include "cache/imagecachepolicy.h"
+#include "rendering/staticimage.h"
 
 #include <QByteArray>
 #include <QObject>
@@ -54,8 +55,12 @@ void TestImageDocumentRuntimeDependencies::defaultDependenciesUseMediaEntrySourc
     QVERIFY(resolved.imageDecode.dataDecoder);
     QVERIFY(resolved.fileOperations);
     QVERIFY(resolved.powerSaver.monitor);
-    QVERIFY(resolved.predecodeCacheByteBudget > 0);
-    QVERIFY(resolved.predecodeCacheByteBudget <= KiriView::predecodeCachePreferredByteBudget());
+    QVERIFY(resolved.cacheBudgets.predecodeCacheByteBudget > 0);
+    QVERIFY(resolved.cacheBudgets.predecodeCacheByteBudget
+        <= KiriView::predecodeCachePreferredByteBudget());
+    QVERIFY(resolved.cacheBudgets.staticTileCacheByteBudget > 0);
+    QVERIFY(resolved.cacheBudgets.staticTileCacheByteBudget
+        <= KiriView::imageFullDecodeFallbackByteLimit);
 }
 
 void TestImageDocumentRuntimeDependencies::partialNonSourceOverridesStillUseMediaEntrySourceStore()
@@ -151,7 +156,8 @@ void TestImageDocumentRuntimeDependencies::
               ++powerSaverMonitorCount;
               return std::make_unique<FakePowerSaverMonitor>();
           };
-    dependencies.predecodeCacheByteBudget = 4096;
+    dependencies.cacheBudgetRequest.predecodeCacheByteBudget = 4096;
+    dependencies.cacheBudgetRequest.staticTileCacheByteBudget = 8192;
 
     KiriView::ImageDocumentRuntimeDependencies resolved
         = KiriView::resolveImageDocumentRuntimeDependencies(std::move(dependencies), this);
@@ -165,7 +171,8 @@ void TestImageDocumentRuntimeDependencies::
     QVERIFY(resolved.imageDecode.dataDecoder);
     QVERIFY(resolved.fileOperations);
     QVERIFY(resolved.powerSaver.monitor);
-    QCOMPARE(resolved.predecodeCacheByteBudget, qsizetype(4096));
+    QCOMPARE(resolved.cacheBudgets.predecodeCacheByteBudget, qsizetype(4096));
+    QCOMPARE(resolved.cacheBudgets.staticTileCacheByteBudget, qsizetype(8192));
 
     bool candidatesReported = false;
     QByteArray loadedData;

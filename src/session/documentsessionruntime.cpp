@@ -10,7 +10,6 @@
 #include "navigation/mediaformatregistry.h"
 #include "navigation/navigationlogging.h"
 #include "predecode/mediapredecodecoordinator.h"
-#include "predecode/predecodecachebudget.h"
 #include "session/activenavigationthumbnailprojection.h"
 #include "session/mediaopenwithtarget.h"
 
@@ -84,8 +83,9 @@ DocumentSessionRuntime::DocumentSessionRuntime(QObject *owner, KiriImageDocument
     , m_mediaPredecodeCoordinator(std::make_unique<MediaPredecodeCoordinator>(owner,
           std::move(dependencies.imageDocumentDependencies.imageDecode),
           std::move(dependencies.imageDocumentDependencies.powerSaver),
-          KiriView::resolvedPredecodeCacheByteBudget(
-              dependencies.imageDocumentDependencies.predecodeCacheByteBudget)))
+          resolveImageDocumentCacheBudgets(
+              dependencies.imageDocumentDependencies.cacheBudgetRequest)
+              .predecodeCacheByteBudget))
 {
     connectDocuments();
 }

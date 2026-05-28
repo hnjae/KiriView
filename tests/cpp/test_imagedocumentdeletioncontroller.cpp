@@ -20,6 +20,14 @@ using KiriView::TestSupport::imageDocumentPageCandidate;
 using KiriView::TestSupport::localUrl;
 using KiriView::TestSupport::testImage;
 
+KiriView::ImageCacheBudgets testCacheBudgets()
+{
+    return KiriView::ImageCacheBudgets {
+        1024 * 1024,
+        512 * 1024,
+    };
+}
+
 struct ManualImageDocumentPageCandidateLoad {
     QObject *object = nullptr;
     QUrl url;
@@ -106,7 +114,7 @@ void TestImageDocumentDeletionController::canceledFileDeletionCompletionIsIgnore
     QObject parent;
     KiriView::ImageDocumentState state;
     KiriView::ImagePresentationController presentation(
-        &parent, []() { return KiriView::ImageDocumentRenderContext {}; }, {});
+        &parent, []() { return KiriView::ImageDocumentRenderContext {}; }, {}, testCacheBudgets());
     KiriView::TestSupport::ManualFileOperationProvider fileOperations;
     ManualDeletionCandidateProvider candidateProvider;
     std::vector<KiriView::ImageDocumentRuntimePlan> runtimePlans;
@@ -147,7 +155,7 @@ void TestImageDocumentDeletionController::canceledFallbackCandidateCompletionIsI
     QObject parent;
     KiriView::ImageDocumentState state;
     KiriView::ImagePresentationController presentation(
-        &parent, []() { return KiriView::ImageDocumentRenderContext {}; }, {});
+        &parent, []() { return KiriView::ImageDocumentRenderContext {}; }, {}, testCacheBudgets());
     KiriView::TestSupport::ManualFileOperationProvider fileOperations;
     ManualDeletionCandidateProvider candidateProvider;
     std::vector<KiriView::ImageDocumentRuntimePlan> runtimePlans;

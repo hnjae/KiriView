@@ -22,6 +22,7 @@ using KiriView::TestSupport::staticTestImagePayload;
 using KiriView::TestSupport::testImage;
 
 constexpr qsizetype testPredecodeCacheByteBudget = 1024 * 1024;
+constexpr qsizetype testStaticTileCacheByteBudget = 512 * 1024;
 
 KiriView::ImageLoadSession loadSession(const QUrl &url)
 {
@@ -31,14 +32,19 @@ KiriView::ImageLoadSession loadSession(const QUrl &url)
 
 KiriView::ImagePresentationController presentationController(QObject *parent)
 {
-    return KiriView::ImagePresentationController(parent,
+    return KiriView::ImagePresentationController(
+        parent,
         []() {
             return KiriView::ImageDocumentRenderContext {
                 1.0,
                 KiriView::fallbackTextureSizeMax,
             };
         },
-        {});
+        {},
+        KiriView::ImageCacheBudgets {
+            testPredecodeCacheByteBudget,
+            testStaticTileCacheByteBudget,
+        });
 }
 
 template <typename Load> const Load *planPayload(const KiriView::ImagePresentationLoadPlan &plan)

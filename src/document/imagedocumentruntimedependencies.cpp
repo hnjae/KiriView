@@ -4,7 +4,7 @@
 #include "imagedocumentruntimedependencies.h"
 
 #include "archive/mediaentrysourcestore.h"
-#include "predecode/predecodecachebudget.h"
+#include "rendering/staticimage.h"
 
 #include <utility>
 
@@ -22,6 +22,27 @@ bool shouldUseMediaEntrySourceStore(
 namespace KiriView {
 ImageDocumentRuntimeDependencies::~ImageDocumentRuntimeDependencies() = default;
 
+ImageCacheBudgetRequest imageDocumentCacheBudgetRequestWithDefaults(ImageCacheBudgetRequest request)
+{
+    if (request.staticTileCachePreferredByteBudget <= 0) {
+        request.staticTileCachePreferredByteBudget = imageFullDecodeFallbackByteLimit;
+    }
+    return request;
+}
+
+ImageCacheBudgets resolveImageDocumentCacheBudgets(ImageCacheBudgetRequest request)
+{
+    request = imageDocumentCacheBudgetRequestWithDefaults(request);
+    if (request.predecodeCacheByteBudget > 0 && request.staticTileCacheByteBudget > 0) {
+        return ImageCacheBudgets {
+            request.predecodeCacheByteBudget,
+            request.staticTileCacheByteBudget,
+        };
+    }
+
+    return resolvedImageCacheBudgets(request, systemMemorySnapshot());
+}
+
 ImageDocumentRuntimeDependencies resolveImageDocumentRuntimeDependencies(
     ImageDocumentRuntimeDependencyOverrides overrides, QObject *parent)
 {
@@ -34,8 +55,8 @@ ImageDocumentRuntimeDependencies resolveImageDocumentRuntimeDependencies(
     overrides.fileOperations
         = fileOperationProviderWithDefault(std::move(overrides.fileOperations));
     overrides.powerSaver = powerSaverProviderWithDefault(std::move(overrides.powerSaver));
-    overrides.predecodeCacheByteBudget
-        = KiriView::resolvedPredecodeCacheByteBudget(overrides.predecodeCacheByteBudget);
+    const ImageCacheBudgets cacheBudgets
+        = resolveImageDocumentCacheBudgets(overrides.cacheBudgetRequest);
 
     std::unique_ptr<MediaEntrySourceStore> mediaEntrySourceStore;
     if (useMediaEntrySourceStore) {
@@ -52,7 +73,7 @@ ImageDocumentRuntimeDependencies resolveImageDocumentRuntimeDependencies(
         std::move(overrides.imageDecode),
         std::move(overrides.fileOperations),
         std::move(overrides.powerSaver),
-        overrides.predecodeCacheByteBudget,
+        cacheBudgets,
         std::move(mediaEntrySourceStore),
         std::move(overrides.externalPredecodedImageFinder),
         overrides.ordinaryDirectMediaPredecodeEnabled,

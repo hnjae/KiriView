@@ -3,7 +3,6 @@
 
 #include "imagepredecodecoordinator.h"
 
-#include "predecodecachebudget.h"
 #include "predecodelogging.h"
 #include "predecodewindowplan.h"
 
@@ -14,12 +13,6 @@
 #include <vector>
 
 namespace KiriView {
-ImagePredecodeCoordinator::ImagePredecodeCoordinator(QObject *parent)
-    : ImagePredecodeCoordinator(parent, ImageDocumentPageCandidateProvider {},
-          ImageDecodeDependencies {}, PowerSaverProvider {}, defaultPredecodeCacheByteBudget())
-{
-}
-
 ImagePredecodeCoordinator::ImagePredecodeCoordinator(QObject *parent,
     ImageDocumentPageCandidateProvider candidateProvider,
     ImageDecodeDependencies decodeDependencies, PowerSaverProvider powerSaverProvider,

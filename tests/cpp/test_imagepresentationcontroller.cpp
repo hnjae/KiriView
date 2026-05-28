@@ -33,6 +33,14 @@ QByteArray smallSvgData()
                              "<path d=\"M4 4h24v24H4z\" fill=\"red\"/>"
                              "</svg>");
 }
+
+KiriView::ImageCacheBudgets testCacheBudgets()
+{
+    return KiriView::ImageCacheBudgets {
+        1024 * 1024,
+        4096,
+    };
+}
 }
 
 class TestImagePresentationController : public QObject
@@ -58,7 +66,8 @@ void TestImagePresentationController::displayedImageChangesSynchronizeViewportTh
         KiriView::ImagePresentationController::Callbacks {
             [&changes](KiriView::ImageDocumentChange change) { changes.push_back(change); },
             {},
-        });
+        },
+        testCacheBudgets());
     controller.setViewportSize(QSizeF(200.0, 100.0));
 
     changes.clear();
@@ -99,14 +108,15 @@ void TestImagePresentationController::smallSvgUsesStaticTileSurfaceInsteadOfLega
     QVERIFY2(!preview.isNull(), qPrintable(errorString));
     QCOMPARE(preview.size(), source->imageSize());
 
-    KiriView::ImagePresentationController controller(this,
+    KiriView::ImagePresentationController controller(
+        this,
         []() {
             return KiriView::ImageDocumentRenderContext {
                 1.0,
                 KiriView::fallbackTextureSizeMax,
             };
         },
-        {});
+        {}, testCacheBudgets());
     controller.setViewportSize(QSizeF(32.0, 32.0));
     controller.setStaticImage(
         KiriView::StaticImagePayload { std::move(source), preview, {} }, true);
@@ -115,6 +125,7 @@ void TestImagePresentationController::smallSvgUsesStaticTileSurfaceInsteadOfLega
     QVERIFY(surface != nullptr);
     QVERIFY(surface->staticTileSurface() != nullptr);
     QVERIFY(surface->legacyFrameSurface() == nullptr);
+    QCOMPARE(surface->staticTileSurface()->tileCacheByteBudget(), qsizetype(4096));
 }
 
 QTEST_GUILESS_MAIN(TestImagePresentationController)

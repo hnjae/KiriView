@@ -28,7 +28,6 @@ class ImagePredecodeCoordinator final : public QObject
 public:
     using Context = PredecodeScheduleContext;
 
-    explicit ImagePredecodeCoordinator(QObject *parent = nullptr);
     ImagePredecodeCoordinator(QObject *parent, ImageDocumentPageCandidateProvider candidateProvider,
         ImageDecodeDependencies decodeDependencies, PowerSaverProvider powerSaverProvider,
         qsizetype cacheByteBudget);

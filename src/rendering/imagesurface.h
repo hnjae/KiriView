@@ -38,9 +38,6 @@ public:
     void clearTiles();
     qsizetype tileCacheByteBudget() const;
 
-    static qsizetype defaultTileCacheByteBudget();
-    static qsizetype tileCacheByteBudgetForSystemMemory(qsizetype systemMemoryByteSize);
-
 private:
     StaticImagePayload m_image;
     TilePyramid m_pyramid;

@@ -29,6 +29,14 @@ KiriView::ImageDocumentRenderContext renderContext()
     };
 }
 
+KiriView::ImageCacheBudgets testCacheBudgets()
+{
+    return KiriView::ImageCacheBudgets {
+        1024 * 1024,
+        512 * 1024,
+    };
+}
+
 KiriView::OpenedCollectionScopeLocation openedCollectionScope()
 {
     return KiriView::OpenedCollectionScopeLocation::fromUrls(
@@ -57,7 +65,7 @@ class SpreadPresentationFixture
 {
 public:
     SpreadPresentationFixture()
-        : primaryPresentation(&context, renderContext, {})
+        : primaryPresentation(&context, renderContext, {}, testCacheBudgets())
         , controller(&context, renderContext, state, primaryPresentation,
               KiriView::ImageSpreadPresentationController::Callbacks {
                   {},
@@ -65,7 +73,7 @@ public:
                   [this]() { return snapshot; },
                   {},
               },
-              {}, {})
+              {}, {}, testCacheBudgets())
     {
         primaryPresentation.setViewportSize(QSizeF(800.0, 600.0));
     }

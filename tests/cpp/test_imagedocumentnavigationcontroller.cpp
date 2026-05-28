@@ -40,6 +40,14 @@ KiriView::ImageDocumentRenderContext renderContext()
     };
 }
 
+KiriView::ImageCacheBudgets testCacheBudgets()
+{
+    return KiriView::ImageCacheBudgets {
+        1024 * 1024,
+        512 * 1024,
+    };
+}
+
 template <typename Operation>
 const Operation *findOperation(const KiriView::ImageDocumentRuntimePlan &plan)
 {
@@ -56,7 +64,7 @@ class DocumentNavigationFixture
 {
 public:
     DocumentNavigationFixture()
-        : presentation(&context, renderContext, {})
+        : presentation(&context, renderContext, {}, testCacheBudgets())
         , navigation(&context, candidateProvider.provider(),
               KiriView::ImageDocumentPageNavigationService::Callbacks {
                   [this](KiriView::ImageDocumentPageNavigationPlan plan) {
@@ -78,7 +86,8 @@ public:
                   {},
               },
               candidateProvider.provider(),
-              imageDecodeDependenciesFor(dataLoader, staticImageDataDecoder(testImage())))
+              imageDecodeDependenciesFor(dataLoader, staticImageDataDecoder(testImage())),
+              testCacheBudgets())
         , controller(state, presentation, navigation, spread,
               [this](KiriView::ImageDocumentRuntimePlan plan) {
                   runtimePlans.push_back(std::move(plan));

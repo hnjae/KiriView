@@ -42,7 +42,6 @@ private Q_SLOTS:
     void staticImagePayloadReportsByteCostWithinBudget();
     void staticImagePayloadByteCostSaturatesOversizedSources();
     void staticTileSurfaceUsesExplicitCacheBudget();
-    void tileCacheByteBudgetUsesFullDecodeLimitAndSystemMemoryCap();
     void fullImageSurfacePolicyRequiresMatchingPreviewWithinTextureLimit();
     void displayedImageSurfaceExposesOnlyActivePayload();
     void displayedImageSurfaceUsesStableUniqueIdentity();
@@ -88,21 +87,6 @@ void TestImageSurface::staticTileSurfaceUsesExplicitCacheBudget()
     const KiriView::StaticTileSurface surface(std::move(staticImage), 4096);
 
     QCOMPARE(surface.tileCacheByteBudget(), qsizetype(4096));
-}
-
-void TestImageSurface::tileCacheByteBudgetUsesFullDecodeLimitAndSystemMemoryCap()
-{
-    constexpr qsizetype preferredByteBudget = KiriView::imageFullDecodeFallbackByteLimit;
-
-    QCOMPARE(
-        KiriView::StaticTileSurface::tileCacheByteBudgetForSystemMemory(0), preferredByteBudget);
-    QCOMPARE(KiriView::StaticTileSurface::tileCacheByteBudgetForSystemMemory(preferredByteBudget),
-        preferredByteBudget / 16);
-    QCOMPARE(
-        KiriView::StaticTileSurface::tileCacheByteBudgetForSystemMemory(preferredByteBudget * 32),
-        preferredByteBudget);
-    QVERIFY(KiriView::StaticTileSurface::defaultTileCacheByteBudget() > 0);
-    QVERIFY(KiriView::StaticTileSurface::defaultTileCacheByteBudget() <= preferredByteBudget);
 }
 
 void TestImageSurface::fullImageSurfacePolicyRequiresMatchingPreviewWithinTextureLimit()

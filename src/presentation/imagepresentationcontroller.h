@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_IMAGEPRESENTATIONCONTROLLER_H
 #define KIRIVIEW_IMAGEPRESENTATIONCONTROLLER_H
 
+#include "cache/imagecachepolicy.h"
 #include "document/imagedocumenttypes.h"
 #include "presentation/imagezoomstate.h"
 #include "rendering/imagerendercontext.h"
@@ -41,7 +42,7 @@ public:
     };
 
     ImagePresentationController(QObject *context, RenderContextProvider renderContextProvider,
-        Callbacks callbacks, qsizetype predecodeCacheByteBudget = 0);
+        Callbacks callbacks, ImageCacheBudgets cacheBudgets);
     ~ImagePresentationController();
 
     QSize imageSize() const;

@@ -29,7 +29,6 @@ public:
         ImageFirstDisplayDecodeContext firstDisplayContext;
     };
 
-    explicit MediaPredecodeCoordinator(QObject *parent = nullptr);
     MediaPredecodeCoordinator(QObject *parent, ImageDecodeDependencies decodeDependencies,
         PowerSaverProvider powerSaverProvider, qsizetype cacheByteBudget);
 

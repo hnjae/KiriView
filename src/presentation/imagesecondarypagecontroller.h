@@ -4,6 +4,7 @@
 #ifndef KIRIVIEW_IMAGESECONDARYPAGECONTROLLER_H
 #define KIRIVIEW_IMAGESECONDARYPAGECONTROLLER_H
 
+#include "cache/imagecachepolicy.h"
 #include "decoding/imagedecodedependencies.h"
 #include "document/imagedocumenttypes.h"
 #include "document/imageloadtypes.h"
@@ -49,7 +50,7 @@ public:
 
     ImageSecondaryPageController(QObject *parent, RenderContextProvider renderContextProvider,
         Callbacks callbacks, ImageDocumentPageCandidateProvider candidateProvider,
-        ImageDecodeDependencies decodeDependencies, qsizetype predecodeCacheByteBudget = 0);
+        ImageDecodeDependencies decodeDependencies, ImageCacheBudgets cacheBudgets);
     ~ImageSecondaryPageController();
 
     ImagePresentationController &presentationController();

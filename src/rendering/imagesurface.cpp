@@ -4,9 +4,7 @@
 #include "imagesurface.h"
 
 #include "bridge/qtgeometryconversion.h"
-#include "cache/imagecachepolicy.h"
 #include "kiriview/src/policy/imagerendergeometry.cxx.h"
-#include "system/systemmemory.h"
 
 #include <atomic>
 #include <optional>
@@ -62,17 +60,6 @@ bool StaticTileSurface::insertTile(DecodedTile tile) { return m_tileCache.insert
 void StaticTileSurface::clearTiles() { m_tileCache.clear(); }
 
 qsizetype StaticTileSurface::tileCacheByteBudget() const { return m_tileCache.byteBudget(); }
-
-qsizetype StaticTileSurface::defaultTileCacheByteBudget()
-{
-    return tileCacheByteBudgetForSystemMemory(systemMemorySnapshot().physicalByteSize);
-}
-
-qsizetype StaticTileSurface::tileCacheByteBudgetForSystemMemory(qsizetype systemMemoryByteSize)
-{
-    return staticTileCacheByteBudgetForSystemMemory(
-        systemMemoryByteSize, imageFullDecodeFallbackByteLimit);
-}
 
 bool staticImageFitsFullImageSurface(const StaticImagePayload &image, int maximumTextureSize)
 {

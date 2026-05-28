@@ -5,6 +5,7 @@
 #define KIRIVIEW_IMAGEDOCUMENTRUNTIMEDEPENDENCIES_H
 
 #include "archive/mediaentrysourcebackend.h"
+#include "cache/imagecachepolicy.h"
 #include "decoding/imagedecodedependencies.h"
 #include "filedeletion.h"
 #include "navigation/imagedocumentpagecandidateprovider.h"
@@ -31,7 +32,7 @@ struct ImageDocumentRuntimeDependencyOverrides {
     MediaEntrySourceFactory mediaEntrySourceFactory;
     PowerSaverProvider powerSaver;
     ExternalPredecodedImageFinder externalPredecodedImageFinder;
-    qsizetype predecodeCacheByteBudget = 0;
+    ImageCacheBudgetRequest cacheBudgetRequest;
     bool ordinaryDirectMediaPredecodeEnabled = true;
 };
 
@@ -40,7 +41,7 @@ struct ImageDocumentRuntimeDependencies {
     ImageDecodeDependencies imageDecode;
     FileOperationProvider fileOperations;
     PowerSaverProvider powerSaver;
-    qsizetype predecodeCacheByteBudget = 0;
+    ImageCacheBudgets cacheBudgets;
     std::unique_ptr<MediaEntrySourceStore> mediaEntrySourceStore;
     ExternalPredecodedImageFinder externalPredecodedImageFinder;
     bool ordinaryDirectMediaPredecodeEnabled = true;
@@ -50,6 +51,9 @@ struct ImageDocumentRuntimeDependencies {
 
 ImageDocumentRuntimeDependencies resolveImageDocumentRuntimeDependencies(
     ImageDocumentRuntimeDependencyOverrides overrides, QObject *parent);
+ImageCacheBudgetRequest imageDocumentCacheBudgetRequestWithDefaults(
+    ImageCacheBudgetRequest request);
+ImageCacheBudgets resolveImageDocumentCacheBudgets(ImageCacheBudgetRequest request);
 }
 
 #endif
