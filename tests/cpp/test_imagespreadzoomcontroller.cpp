@@ -73,6 +73,8 @@ private Q_SLOTS:
     void updateFromPrimaryOwnsSpreadZoomState();
     void manualZoomReportsOnlyActualSpreadZoomChanges();
     void renderContextChangesReportDerivedZoomChanges();
+    void pageVisibleRectsUseExplicitSpreadRect();
+    void rightToLeftReadingReprojectsExplicitSpreadRect();
 };
 
 void TestImageSpreadZoomController::updateFromPrimaryOwnsSpreadZoomState()
@@ -95,7 +97,7 @@ void TestImageSpreadZoomController::updateFromPrimaryOwnsSpreadZoomState()
     QVERIFY(KiriView::imageZoomApproximatelyEqual(
         fixture.controller.secondaryDisplaySize(), QSizeF(400.0, 600.0)));
 
-    fixture.controller.applyZoomStateToPages(false);
+    fixture.controller.applyZoomStateToPages(QRectF(), false);
     QCOMPARE(fixture.primary.zoomMode(), KiriView::ImageZoomMode::Manual);
     QCOMPARE(fixture.secondary.zoomMode(), KiriView::ImageZoomMode::Manual);
 }
@@ -104,7 +106,7 @@ void TestImageSpreadZoomController::manualZoomReportsOnlyActualSpreadZoomChanges
 {
     SpreadZoomFixture fixture;
     fixture.controller.updateFromPrimaryPresentation();
-    fixture.controller.applyZoomStateToPages(false);
+    fixture.controller.applyZoomStateToPages(QRectF(), false);
 
     const KiriView::ImageZoomChangeSet changes = fixture.controller.setZoomPercent(125.0);
 
@@ -115,7 +117,7 @@ void TestImageSpreadZoomController::manualZoomReportsOnlyActualSpreadZoomChanges
     QVERIFY(changes.displaySizeChanged);
     QVERIFY(changes.scheduleVisibleTileDecode);
     QVERIFY(KiriView::imageZoomApproximatelyEqual(fixture.controller.zoomPercent(), 125.0));
-    fixture.controller.applyZoomStateToPages(false);
+    fixture.controller.applyZoomStateToPages(QRectF(), false);
     QVERIFY(KiriView::imageZoomApproximatelyEqual(fixture.primary.zoomPercent(), 125.0));
     QVERIFY(KiriView::imageZoomApproximatelyEqual(fixture.secondary.zoomPercent(), 125.0));
 
@@ -142,6 +144,31 @@ void TestImageSpreadZoomController::renderContextChangesReportDerivedZoomChanges
     QVERIFY(changes.scheduleVisibleTileDecode);
     QVERIFY(KiriView::imageZoomApproximatelyEqual(
         fixture.controller.displaySize(), QSizeF(800.0, 600.0)));
+}
+
+void TestImageSpreadZoomController::pageVisibleRectsUseExplicitSpreadRect()
+{
+    SpreadZoomFixture fixture;
+    fixture.controller.updateFromPrimaryPresentation();
+
+    fixture.controller.applyVisibleItemRects(QRectF(0.0, 0.0, 400.0, 600.0), false);
+    QCOMPARE(fixture.primary.visibleItemRect(), QRectF(0.0, 0.0, 400.0, 600.0));
+    QVERIFY(fixture.secondary.visibleItemRect().isEmpty());
+
+    fixture.controller.applyVisibleItemRects(QRectF(400.0, 0.0, 400.0, 600.0), false);
+    QVERIFY(fixture.primary.visibleItemRect().isEmpty());
+    QCOMPARE(fixture.secondary.visibleItemRect(), QRectF(0.0, 0.0, 400.0, 600.0));
+}
+
+void TestImageSpreadZoomController::rightToLeftReadingReprojectsExplicitSpreadRect()
+{
+    SpreadZoomFixture fixture;
+    fixture.controller.updateFromPrimaryPresentation();
+
+    fixture.controller.applyVisibleItemRects(QRectF(0.0, 0.0, 400.0, 600.0), true);
+
+    QVERIFY(fixture.primary.visibleItemRect().isEmpty());
+    QCOMPARE(fixture.secondary.visibleItemRect(), QRectF(0.0, 0.0, 400.0, 600.0));
 }
 
 QTEST_GUILESS_MAIN(TestImageSpreadZoomController)

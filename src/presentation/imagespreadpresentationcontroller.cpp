@@ -636,7 +636,8 @@ void ImageSpreadPresentationController::applySpreadZoomChanges(
         if (spreadZoomChangesAffectViewportFrame(changes)) {
             refreshViewportFrame();
         }
-        m_zoomController->applyZoomStateToPages(rightToLeftReadingActive());
+        m_zoomController->applyZoomStateToPages(
+            m_viewportFrame.visibleItemRect, rightToLeftReadingActive());
     }
 
     if (notifyPublicChanges) {
@@ -682,8 +683,8 @@ void ImageSpreadPresentationController::applyViewportFrameVisibleItemRect(bool f
     }
 
     if (secondaryPageVisible()) {
-        m_zoomController->setVisibleItemRect(m_viewportFrame.visibleItemRect);
-        m_zoomController->applyVisibleItemRects(rightToLeftReadingActive());
+        m_zoomController->applyVisibleItemRects(
+            m_viewportFrame.visibleItemRect, rightToLeftReadingActive());
         notify(ImageDocumentChange::VisibleItemRect);
         return;
     }

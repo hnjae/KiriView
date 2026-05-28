@@ -29,13 +29,6 @@ ImageSpreadZoomController::ImageSpreadZoomController(RenderContextProvider rende
 {
 }
 
-QRectF ImageSpreadZoomController::visibleItemRect() const { return m_visibleItemRect; }
-
-void ImageSpreadZoomController::setVisibleItemRect(const QRectF &visibleItemRect)
-{
-    m_visibleItemRect = visibleItemRect;
-}
-
 QSizeF ImageSpreadZoomController::displaySize() const
 {
     return m_zoomWorkflowState.zoomState().displaySize();
@@ -142,20 +135,22 @@ ImageZoomChangeSet ImageSpreadZoomController::updateRenderContext()
     });
 }
 
-void ImageSpreadZoomController::applyZoomStateToPages(bool rightToLeftReading)
+void ImageSpreadZoomController::applyZoomStateToPages(
+    const QRectF &visibleItemRect, bool rightToLeftReading)
 {
-    applyVisibleItemRects(rightToLeftReading);
+    applyVisibleItemRects(visibleItemRect, rightToLeftReading);
     applyZoomPercentToPages();
 }
 
-void ImageSpreadZoomController::applyVisibleItemRects(bool rightToLeftReading)
+void ImageSpreadZoomController::applyVisibleItemRects(
+    const QRectF &visibleItemRect, bool rightToLeftReading)
 {
     const QRectF primaryRect = primaryPageRect(rightToLeftReading);
     const QRectF secondaryRect = secondaryPageRect(rightToLeftReading);
     applyPageVisibleItemRect(
-        m_primaryPresentation, imageSpreadVisiblePageRect(m_visibleItemRect, primaryRect));
+        m_primaryPresentation, imageSpreadVisiblePageRect(visibleItemRect, primaryRect));
     applyPageVisibleItemRect(
-        m_secondaryPresentation, imageSpreadVisiblePageRect(m_visibleItemRect, secondaryRect));
+        m_secondaryPresentation, imageSpreadVisiblePageRect(visibleItemRect, secondaryRect));
 }
 
 void ImageSpreadZoomController::applyZoomToPrimaryPage(ImageZoomMode zoomMode, qreal zoomPercent)

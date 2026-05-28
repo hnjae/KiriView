@@ -121,6 +121,7 @@ class TestImageSpreadPresentationController : public QObject
 
 private Q_SLOTS:
     void pageWidthCacheBelongsToSpreadNavigationOwner();
+    void spreadVisibleRectOwnsPageVisibleRectProjection();
 };
 
 void TestImageSpreadPresentationController::pageWidthCacheBelongsToSpreadNavigationOwner()
@@ -143,6 +144,36 @@ void TestImageSpreadPresentationController::pageWidthCacheBelongsToSpreadNavigat
 
     QVERIFY(target.handledBySpread);
     QCOMPARE(target.pageNumber, 4);
+}
+
+void TestImageSpreadPresentationController::spreadVisibleRectOwnsPageVisibleRectProjection()
+{
+    SpreadPresentationFixture fixture;
+
+    fixture.displayPrimaryPage(fixture.pageUrls.at(4), QSize(800, 1200), 5);
+    fixture.predecodedImageSizes[fixture.pageUrls.at(5)] = QSize(800, 1200);
+    fixture.controller.setTwoPageModeEnabled(true);
+    fixture.controller.refreshSecondaryPage();
+    QVERIFY(fixture.controller.secondaryPageVisible());
+
+    fixture.controller.setZoomPercent(100.0);
+    fixture.controller.setVisibleItemRect(QRectF(800.0, 0.0, 800.0, 600.0));
+
+    QCOMPARE(fixture.controller.visibleItemRect(), QRectF(800.0, 0.0, 800.0, 600.0));
+    QVERIFY(fixture.controller.renderSnapshot(KiriView::DisplayedPageRole::Primary)
+            .visibleItemRect.isEmpty());
+    QCOMPARE(
+        fixture.controller.renderSnapshot(KiriView::DisplayedPageRole::Secondary).visibleItemRect,
+        QRectF(0.0, 0.0, 800.0, 600.0));
+
+    fixture.controller.setRightToLeftReadingEnabled(true);
+
+    QCOMPARE(fixture.controller.visibleItemRect(), QRectF(800.0, 0.0, 800.0, 600.0));
+    QCOMPARE(
+        fixture.controller.renderSnapshot(KiriView::DisplayedPageRole::Primary).visibleItemRect,
+        QRectF(0.0, 0.0, 800.0, 600.0));
+    QVERIFY(fixture.controller.renderSnapshot(KiriView::DisplayedPageRole::Secondary)
+            .visibleItemRect.isEmpty());
 }
 
 QTEST_GUILESS_MAIN(TestImageSpreadPresentationController)

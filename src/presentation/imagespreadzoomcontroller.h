@@ -24,8 +24,6 @@ public:
         ImagePresentationController &primaryPresentation,
         ImagePresentationController &secondaryPresentation);
 
-    QRectF visibleItemRect() const;
-    void setVisibleItemRect(const QRectF &visibleItemRect);
     QSizeF displaySize() const;
     QSizeF primaryDisplaySize() const;
     QSizeF secondaryDisplaySize() const;
@@ -42,8 +40,8 @@ public:
     ImageZoomChangeSet resetZoom();
     ImageZoomChangeSet updateFromPrimaryPresentation();
     ImageZoomChangeSet updateRenderContext();
-    void applyZoomStateToPages(bool rightToLeftReading);
-    void applyVisibleItemRects(bool rightToLeftReading);
+    void applyZoomStateToPages(const QRectF &visibleItemRect, bool rightToLeftReading);
+    void applyVisibleItemRects(const QRectF &visibleItemRect, bool rightToLeftReading);
     void applyZoomToPrimaryPage(ImageZoomMode zoomMode, qreal zoomPercent);
     void applyStoredZoomToPrimaryPage();
 
@@ -59,7 +57,6 @@ private:
     ImageZoomWorkflowState m_zoomWorkflowState;
     ImagePresentationController &m_primaryPresentation;
     ImagePresentationController &m_secondaryPresentation;
-    QRectF m_visibleItemRect;
 };
 }
 
